@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/05/28 08:44:34 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/06/11 19:28:15 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1062,7 +1062,7 @@ modification to @email{ava@@math.jhu.ed, Valery Alexeev's} @file{russian.el}
 which can be obtained from
 @end quotation
 
-@uref{http://ftpsearch.lycos.com/?query=russian.el.Z&form=medium}.
+@uref{http://www.math.uga.edu/~valery/russian.el}.
 
 @email{d.barsky@@ee.surrey.ac.uk, Dima Barsky} writes:
 
