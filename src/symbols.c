@@ -3362,6 +3362,8 @@ defkeyword_massage_name (Lisp_Object *location, const char *name)
 static void
 check_sane_subr (Lisp_Subr *subr, Lisp_Object sym)
 {
+  Lisp_Object f;
+
   assert (subr->min_args >= 0);
   assert (subr->min_args <= SUBR_MAX_ARGS);
 
@@ -3373,7 +3375,8 @@ check_sane_subr (Lisp_Subr *subr, Lisp_Object sym)
       assert (subr->min_args <= subr->max_args);
     }
 
-  assert (UNBOUNDP (XSYMBOL (sym)->function));
+  f = XSYMBOL (sym)->function;
+  assert (UNBOUNDP (f) || (CONSP (f) && EQ (XCAR (f), Qautoload)));
 }
 #else
 #define check_sane_subr(subr, sym) /* nothing */

@@ -1,3 +1,8 @@
+2002-06-26  Jerry James  <james@xemacs.org>
+
+	* symbols.c (check_sane_subr): Let the symbol be bound if it is an
+	autoload cookie.
+
 2002-06-24  Andy Piper  <andy@xemacs.org>
 
 	* toolbar-x.c (console_type_create_toolbar_x): declare

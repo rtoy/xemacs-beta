@@ -148,6 +148,7 @@ been generated automatically, with a reference to the keymap."
 
   `(progn 
        (derived-mode-init-mode-variables (quote ,child))
+       (put (quote ,child) 'derived-mode-parent (quote ,parent))
        (defun ,child ()
 	 ,docstring
 	 (interactive)
@@ -186,6 +187,17 @@ Use the `derived-mode-parent' property of the symbol to trace backwards."
   (while (get mode 'derived-mode-parent)
     (setq mode (get mode 'derived-mode-parent)))
   mode)
+
+;; PUBLIC: find if the current mode derives from another.
+;; from GNU Emacs 21 subr.el
+
+(defun derived-mode-p (&rest modes)
+  "Non-nil if the current major mode is derived from one of MODES.
+Uses the `derived-mode-parent' property of the symbol to trace backwards."
+  (let ((parent major-mode))
+    (while (and (not (memq parent modes))
+		(setq parent (get parent 'derived-mode-parent))))
+    parent))
 
 
 ;; Inline functions to construct various names from a mode name.

@@ -1,3 +1,9 @@
+2002-06-26  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* derived.el (define-derived-mode): Put `derived-mode-parent'
+	property on child.
+	(derived-mode-p): New function; sync with GNU Emacs 21.
+
 2002-06-16  Andy Piper  <andy@xemacs.org>
 
 	* menubar-items.el (default-menubar): enable windows printing on
