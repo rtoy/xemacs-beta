@@ -122,7 +122,7 @@
 		(delete-file file-c)
 		(push file-c deleted)))))
 
-	(setq files (set-difference files deleted))))
+	(setq files (set-difference files deleted :test 'equal))))
 
       (puthash dir files dirfiles-table)
 

@@ -1,7 +1,7 @@
 ;;; make-docfile.el --- Cache docstrings in external file
 
 ;; Copyright (C) 1985, 1986, 1992-1995, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2002 Ben Wing.
+;; Copyright (C) 2002, 2003 Ben Wing.
 
 ;; Author: Unknown
 ;; Maintainer: Steven L Baur <steve@xemacs.org>
@@ -45,6 +45,10 @@
 (defvar site-file-list nil)
 (defvar docfile-out-of-date nil)
 
+(defun message (fmt &rest args)
+  (princ (apply #'format fmt args))
+  (terpri))
+
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
 
@@ -66,18 +70,66 @@
 	  (setq command-line-args (cdr (cdr command-line-args)))))))
 (setq options (nreverse options))
 
-;; (print (concat "Options: " (prin1-to-string options)))
+;; (message (concat "Options: " (prin1-to-string options)))
+
+;; insert-file-contents-internal calls out to `format-decode' afterwards,
+;; so it must be defined.  if non-zero, it tries to be a bunch more stuff
+;; so say, "NOOOOOOOOOOOOO!  Basta!  Ca soufit!   Enough, already, OK?"
+(defun format-decode (fuck me harder) 0)
 
 ;; Next process the list of C files.
-(while command-line-args
-  (let ((arg (car command-line-args)))
-    (if (null (member arg processed))
-	(progn
+(defun process-args (args)
+  (while args
+    (let ((arg (car args)))
+      ;; When called from xemacs.mak, we need to do some frobbing on the
+      ;; args given to us -- remove NEEDTODUMP and make-docfile.exe,
+      ;; convert .obj files into .c files in the source directory,
+      ;; handle response files (beginning with @, specifying arguments),
+      ;; due to line-length limitations in the shell.
+      (if (string-match "^@" arg)
+	  ;; MS Windows response file
+	  ;; no generate-new-buffer so use its implementation.
+	  (let ((buf (get-buffer-create (generate-new-buffer-name "foo"))))
+	    (set-buffer buf)
+	    (insert-file-contents-internal (substring arg 1))
+	    ;; now majorly grind up the response file.
+	    ;; backslashes get doubled, quotes around strings,
+	    ;; get rid of pesky CR's and NL's, and put parens around
+	    ;; the whole thing so we have a valid list of strings.
+	    (goto-char (point-max))
+	    (insert "\")")
+	    (goto-char (point-min))
+	    (insert "(\"")
+	    (while (search-forward "\\" nil t)
+	      (replace-match "\\\\" nil t))
+	    (goto-char (point-min))
+	    (while (search-forward "\n" nil t)
+	      (replace-match "" nil t))
+	    (goto-char (point-min))
+	    (while (search-forward "\r" nil t)
+	      (replace-match "" nil t))
+	    (goto-char (point-min))
+	    (while (search-forward " " nil t)
+	      (replace-match "\" \"" nil t))
+	    (goto-char (point-min))
+	    (process-args (read buf)))
+	;; remove NEEDTODUMP and make-docfile.exe, convert .obj files into
+	;; .c files in the source directory.
+	(when (and (not (string-match "\\(NEEDTODUMP\\|\\.exe$\\)" arg))
+		   (not (member arg processed)))
+	  (when (string-match "\\(.*\\)\\.obj$" arg)
+	    (setq arg (concat (file-name-nondirectory
+			       ;; no match-string so use its implementation.
+			       (substring arg (match-beginning 1)
+					  (match-end 1)))
+			      ".c")))
 	  (if (and (null docfile-out-of-date)
 		   (file-newer-than-file-p arg docfile))
 	      (setq docfile-out-of-date t))
-	  (setq processed (cons arg processed)))))
-  (setq command-line-args (cdr command-line-args)))
+	  (setq processed (cons arg processed))))
+      (setq args (cdr args)))))
+
+(process-args command-line-args)
 
 ;; Then process the list of Lisp files.
 (let ((build-root (expand-file-name ".." invocation-directory)))
@@ -109,11 +161,11 @@
       (setq arg (locate-library arg0))
       (if (null arg)
 	  (progn
-	  (princ (format "Error:  dumped file %s does not exist\n" arg0))
+	  (message "Error: dumped file %s does not exist" arg0)
 	  ;; Uncomment in case of difficulties
-	  ;;(print (format "late-packages: %S" late-packages))
-	  ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p)))
-	  ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
+	  ;;(message "late-packages: %S" late-packages)
+	  ;;(message "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p))
+	  ;;(message "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p))
 	  )
 	(if (null (member arg processed))
 	    (progn
@@ -138,12 +190,12 @@
 	(setq site-load-packages (cdr site-load-packages)))))
 
 ;(let ((autoloads (packages-list-autoloads-path)))
-;  ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
+;  ;; (message (concat "Autoloads: " (prin1-to-string autoloads)))
 ;  (while autoloads
 ;    (let ((arg (car autoloads)))
 ;      (if (null (member arg processed))
 ;	  (progn
-;	    ;; (print arg)
+;	    ;; (message arg)
 ;	    (if (and (null docfile-out-of-date)
 ;		     (file-newer-than-file-p arg docfile))
 ;		(setq docfile-out-of-date t))
@@ -154,45 +206,49 @@
 
 (setq processed (nreverse processed))
 
-;; (print (prin1-to-string (append options processed)))
+(terpri)
 
-(if docfile-out-of-date
-    (progn
-      (princ "Spawning make-docfile ...")
-      ;; (print (prin1-to-string (append options processed)))
+;(message (prin1-to-string (append options processed)))
 
-      (setq exec-path (list (concat default-directory "../lib-src")))
+(when docfile-out-of-date
+  (condition-case nil
+      (delete-file docfile)
+    (error nil))
+  (message "Spawning make-docfile ...")
+  ;; (message (prin1-to-string (append options processed)))
 
-      ;; (locate-file-clear-hashing nil)
-      (if (memq system-type '(berkeley-unix next-mach))
-	  ;; Suboptimal, but we have a unresolved bug somewhere in the
-	  ;; low-level process code.  #### Now that we've switched to using
-	  ;; the regular asynch process code, we should try removing this.
-	  (call-process-internal
-	   "/bin/csh"
+  (setq exec-path (list (concat default-directory "../lib-src")))
+
+  ;; (locate-file-clear-hashing nil)
+  (if (memq system-type '(berkeley-unix next-mach))
+      ;; Suboptimal, but we have a unresolved bug somewhere in the
+      ;; low-level process code.  #### Now that we've switched to using
+      ;; the regular asynch process code, we should try removing this.
+      (call-process-internal
+       "/bin/csh"
+       nil
+       t
+       nil
+       "-fc"
+       (mapconcat
+	#'identity
+	(append
+	 (list (concat default-directory "../lib-src/make-docfile"))
+	 options processed)
+	" "))
+    ;; (message (prin1-to-string (append options processed)))
+    (apply 'call-process-internal
+	   ;; (concat default-directory "../lib-src/make-docfile")
+	   "make-docfile"
 	   nil
 	   t
 	   nil
-	   "-fc"
-	   (mapconcat
-	    #'identity
-	    (append
-	     (list (concat default-directory "../lib-src/make-docfile"))
-	     options processed)
-	    " "))
-	;; (print (prin1-to-string (append options processed)))
-	(apply 'call-process-internal
-	       ;; (concat default-directory "../lib-src/make-docfile")
-	       "make-docfile"
-	       nil
-	       t
-	       nil
-	       (append options processed)))
+	   (append options processed)))
 
-      (princ "Spawning make-docfile ...done\n")
-      ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
-      )
-  (princ "DOC file is up to date\n"))
+  (message "Spawning make-docfile ...done")
+  ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
+  )
+(message "DOC file is up to date")
 
 (kill-emacs)
 

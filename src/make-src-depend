@@ -1,24 +1,29 @@
 : #-*- Perl -*-
+
+### make-src-depend --- update the Makefile dependency information for XEmacs
+
 # Copyright (C) 1998 Free Software Foundation, Inc.
 
-# This file is part of XEmacs.
-#
-# XEmacs is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any
-# later version.
-#
-# XEmacs is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with XEmacs; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
+## Author: Martin Buchholz <martin@xemacs.org>
+## Maintainer: XEmacs Development Team
 
-# Author: Martin Buchholz
+## This file is part of XEmacs.
+
+## XEmacs is free software; you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## XEmacs is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with XEmacs; see the file COPYING.  If not, write to the Free
+## Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
 eval 'exec perl -w -S $0 ${1+"$@"}'
   if 0;
 
@@ -29,7 +34,11 @@ my ($myName, $srcdir, %exists, %uses, %generated_header);
 Usage: $myName
 
 Generates Makefile dependencies for the XEmacs src directory.
-The dependencies are written to stdout.\n";
+The dependencies are written to stdout.
+
+If --quick-build, don't include config.h and lisp.h in the dependencies,
+for faster rebuilding.
+";
 
 die $usage if @ARGV;
 
@@ -94,7 +103,16 @@ LISP_UNION_H=lisp-disunion.h
 ";
 
 my @LISP_H = ('lisp.h', sort keys %{$uses{'lisp.h'}});
-print "LISP_H=@{[grep (!/lisp-(dis)?union\.h/, @LISP_H)]} \$(LISP_UNION_H)\n";
+print "
+#if defined(QUICK_BUILD)
+CONFIG_H=
+LISP_H=
+#else
+CONFIG_H=config.h
+LISP_H=@{[grep (!/lisp-(dis)?union\.h/, @LISP_H)]} \$(LISP_UNION_H)
+#endif
+
+";
 
 sub PrintDeps {
   my $file = shift;
@@ -102,6 +120,12 @@ sub PrintDeps {
   if (exists $uses{$file}{'lisp.h'}) {
     delete @{%{$uses{$file}}}{@LISP_H};
     $uses{$file}{'$(LISP_H)'} = 1;
+  }
+  # Note: If both config.h and lisp.h are dependencies, config.h got deleted
+  # by the last clause.
+  if (exists $uses{$file}{'config.h'}) {
+    delete $uses{$file}{'config.h'};
+    $uses{$file}{'$(CONFIG_H)'} = 1;
   }
   print "@{[sort keys %{$uses{$file}}]}\n";
 }
@@ -117,9 +141,12 @@ sub PrintPatternDeps {
 }
 
 PrintPatternDeps ('-msw\\.',   "HAVE_MS_WINDOWS");
-PrintPatternDeps ('-x\\.',     "HAVE_X_WINDOWS");
+PrintPatternDeps ('-xlike',   "HAVE_XLIKE");
+# X-specific files: *-x.c *-x-impl.h xgccache.c balloon_help.c x*.h Emacs*.[ch]
+PrintPatternDeps ('-x\\.|xgccache|balloon_help|^Emacs',     "HAVE_X_WINDOWS");
 PrintPatternDeps ('-tty\\.',   "HAVE_TTY");
-PrintPatternDeps ('-gtk\\.',   "HAVE_GTK");
+# GTK-specific files: *-gtk.[ch] *-gtk-*.[ch] gtk-*.[ch] emacs-marshals.c emacs-widget-accessors.c glade.c ui-byhand.c
+PrintPatternDeps ('gtk|emacs-marshals|emacs-widget-accessors|glade|ui-byhand',   "HAVE_GTK");
 PrintPatternDeps ('^database', "HAVE_DATABASE");
 PrintPatternDeps ('^mule',     "MULE");
 PrintPatternDeps ('^(?:External|extw-)', "EXTERNAL_WIDGET");

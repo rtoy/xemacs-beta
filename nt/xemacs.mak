@@ -1,7 +1,7 @@
 # Makefile for Microsoft NMAKE	-*- Makefile -*-
 #
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
-#   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+#   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 #   Copyright (C) 1997, 1998, 2000 Jonathan Harris.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
@@ -1045,7 +1045,7 @@ $(OUTDIR)\temacs.res: $(NT)\xemacs.rc
 	rc -Fo$@ xemacs.rc
 
 
-PROGNAME=$(TEMACS_DIR)\xemacs.exe
+PROGNAME = $(TEMACS_DIR)\xemacs.exe
 BATCH = -no-packages -batch
 BATCH_PACKAGES = -vanilla -batch
 TEMACS_BATCH = "$(LIB_SRC)\i" "$(TEMACS)" $(BATCH)
@@ -1307,24 +1307,25 @@ docfile ::
 	if exist $(DOC) $(DEL) $(DOC)
 docfile :: $(DOC)
 
-# This takes 5 seconds on my Pentium 233.  If you are running on a
-# much slower machine and are bothered by the time, modify make-docfile.c
-# to contain special code to frob $(OUTDIR)\foo.obj into the right file.
-make-docargs: $(TEMACS_OBJS)
-	@echo Creating make-docfile argument file ...
-	-$(DEL) $(OUTDIR)\make-docfile.tmp
-	@!echo $(SRC)\$(**B).c >> $(OUTDIR)\make-docfile.tmp
-	@echo Done.
-
-$(DOC): $(LIB_SRC)\make-docfile.exe make-docargs
-	if exist $(DOC) $(DEL) $(DOC)
+$(DOC): $(LIB_SRC)\make-docfile.exe $(TEMACS_DIR)\NEEDTODUMP $(TEMACS_OBJS)
 	cd $(TEMACS_DIR)
-	$(TEMACS_BATCH) -l $(LISP)\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) @$(OUTDIR)\make-docfile.tmp
+!if $(QUICK_BUILD)
+	if not exist $(DOC) $(TEMACS_BATCH) -l $(LISP)\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages @<<
+$(**)
+<<
+!else
+	$(TEMACS_BATCH) -l $(LISP)\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages @<<
+$(**)
+<<
+!endif
 
 update-elc:
 	cd $(TEMACS_DIR)
 	$(TEMACS_BATCH) -l $(LISP)\update-elc.el
+
+# Update out-of-date .elcs, other than needed for dumping.
+update-elc-2:
+	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
 # This file is touched by update-elc.el when redumping is necessary.
 $(TEMACS_DIR)\NEEDTODUMP :
@@ -1333,10 +1334,7 @@ $(TEMACS_DIR)\NEEDTODUMP :
 # This rule dumps xemacs and then possibly spawns sub-make if PURESPACE
 # requirements have changed.
 
-$(TEMACS_DIR)\SATISFIED: $(PROGNAME)
-
 $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
-	@echo >$(TEMACS_DIR)\SATISFIED
 	cd $(TEMACS_DIR)
 	$(TEMACS_BATCH) -l $(LISP)\loadup.el dump
 !if $(USE_PORTABLE_DUMPER)
@@ -1348,8 +1346,6 @@ $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 <<
 	-$(DEL) $(TEMACS_DIR)\xemacs.dmp
 !endif
-	cd $(NT)
-	@if not exist $(TEMACS_DIR)\SATISFIED $(MAKE) /$(MAKEFLAGS) -nologo -f xemacs.mak $@
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
@@ -1598,10 +1594,6 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 	@echo --------------------------------------------------------------------
 	@type $(XEMACS)\Installation
 	@echo --------------------------------------------------------------------
-
-# Update out-of-date .elcs, other than needed for dumping.
-update-elc-2:
-	$(XEMACS_BATCH) -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

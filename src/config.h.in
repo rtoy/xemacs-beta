@@ -203,12 +203,16 @@ things are arranged in config.h.in.  In particular:
 #undef LIBGLADE_XML_TXTDOMAIN
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined(HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
 #define HAVE_WINDOW_SYSTEM
 #endif
 
+#if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS)
+#define HAVE_XLIKE
+#endif
+
 /* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined(HAVE_MSG_SELECT)
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MSG_SELECT)
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 

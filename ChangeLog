@@ -1,3 +1,9 @@
+2003-02-15  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (batch_packages): Run update-elc-2 with -no-autoloads
+	to avoid multiple autoload-loading problem.
+	* configure.usage (--error-checking): Document quick-build better.
+
 2003-01-28  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in (opsys): (AIX specific)

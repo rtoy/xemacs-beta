@@ -524,10 +524,15 @@ dynodump_deps = ../dynodump/dynodump.so
 #endif /* DYNODUMP */
 
 ${libsrc}DOC: ${EXE_TARGET} update-elc.stamp
-	$(RM) ${libsrc}DOC; \
+#ifdef QUICK_BUILD
+	if test ! -f $@ ; then \
+#else
+	if true ; then \
+#endif
 	${DUMPENV} ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
-		${obj_src} ${mallocdocsrc} ${rallocdocsrc} ${extra_doc_files}
+		${obj_src} ${mallocdocsrc} ${rallocdocsrc} \
+		${extra_doc_files} ; fi
 
 dump_elcs: dump-elcs
 

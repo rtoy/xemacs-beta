@@ -1,3 +1,30 @@
+2003-02-15  Ben Wing  <ben@xemacs.org>
+
+	* make-docfile.el:
+	* make-docfile.el (message): New.
+	* make-docfile.el (format-decode): New.
+	* make-docfile.el (process-args): New.
+	* make-docfile.el ((preloaded-file-list)):
+	* make-docfile.el (docfile-out-of-date):
+	Use `message' (defined in this file) in place of `princ'/`print',
+	and put in a terpri, so that we get correct newline behavior.
+	Rewrite if-progn -> when and a few similar stylistic niceties.
+	And the big change: Allow MS Windows to specify the object files
+	directly and frob them into C files here (formerly this was done
+	in xemacs.mak, and very slooooooooooooooooooowly).  Due to
+	line-length limitations in CMD, we need to use a "response file"
+	to hold the arguments, so when we see a response file argument
+	(preceded by an @), read in the args (a bit of trickiness to do
+	this), and process recursively.  Also frob .obj -> .c as mentioned
+	earlier and handle other junk dependencies that need to be removed
+	(NEEDTODUMP, make-docfile.exe).
+	
+	* update-elc-2.el (do-update-elc-2):
+	Use :test `equal' in call to set-difference.
+	
+	* update-elc.el:
+	Put back commented out kill-emacs, update header comment.
+
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
 	* autoload.el (generate-file-autoloads):

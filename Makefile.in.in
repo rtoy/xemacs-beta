@@ -285,7 +285,7 @@ batch_packages = -vanilla -batch
 ## the way.
 all-elc all-elcs: lib-src lwlib dump-elcs src
 	${blddir}/src/${PROGNAME} ${batch} \
-		-l update-elc-2.el -f batch-update-elc-2 lisp
+		-no-autoloads -l update-elc-2.el -f batch-update-elc-2 lisp
 
 ## Sub-target for all-elc.
 dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs

@@ -750,10 +750,10 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
     defined (ERROR_CHECK_MALLOC) && \
     !defined (HAVE_LIBMCHECK)
   */
-#if defined(LOSING_GCC_DESTRUCTOR_FREE_BUG)
+#if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
   /* Prior to XEmacs 21, this was `#if 0'ed out.  */
   /* I'm enabling this because it is the only reliable way I've found to */
-  /* prevent a very annoying problem where GCC will attempt to free(3) */
+  /* prevent a very annoying problem where GCC will attempt to free (3) */
   /* memory at exit() and cause a coredump. */
   init_free_hook ();
 #endif
@@ -777,9 +777,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
   /* ralloc can only be used if using the GNU memory allocator. */
   init_ralloc ();
-#elif defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
+#elif defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
   if (initialized)
-    init_ralloc();
+    init_ralloc ();
 #endif
 
 #ifdef HAVE_SOCKS
@@ -1272,7 +1272,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
 #endif
       syms_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
+#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
       syms_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       syms_of_rangetab ();
@@ -1647,7 +1647,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 	 -- xmalloc*(), xnew*(), and friends
 	 -- Dynarr_*()
 	 -- Blocktype_*()
-	 -- Fprovide(symbol)
+	 -- Fprovide (symbol)
 	 -- intern()
 	 -- Fput()
          -- dump_add_*()
@@ -1721,7 +1721,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #ifdef HAVE_X_WINDOWS
       vars_of_event_Xt ();
 #endif
-#if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
+#if defined (HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
       vars_of_event_tty ();
 #endif
 #ifdef HAVE_MS_WINDOWS
@@ -1794,7 +1794,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
 
       vars_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
+#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       vars_of_redisplay ();
@@ -2120,7 +2120,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
       reinit_vars_of_device ();
       reinit_vars_of_eval ();
-#if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
+#if defined (HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
       reinit_vars_of_event_tty ();
 #endif
       reinit_vars_of_event_stream ();
@@ -2277,7 +2277,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
   if (!restart)
     {
       Vinvocation_name = Fcar (Vcommand_line_args);
-      if (XSTRING_DATA(Vinvocation_name)[0] == '-')
+      if (XSTRING_DATA (Vinvocation_name)[0] == '-')
 	{
 	  /* XEmacs as a login shell, oh goody! */
 	  Vinvocation_name = build_intstring (egetenv ("SHELL"));
@@ -2307,7 +2307,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       Vinvocation_directory = Ffile_name_directory (Vinvocation_directory);
     }
 
-#if defined(HAVE_SHLIB) && !defined(WIN32_NATIVE)
+#if defined (HAVE_SHLIB) && !defined (WIN32_NATIVE)
   /* This is Unix only.  MS Windows NT has a library call that does
      The Right Thing on that system.  Rumor has it, this must be
      called for GNU dld in temacs and xemacs.  */
@@ -2651,7 +2651,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   unbind_to (0); /* this closes loadup.el */
   purify_flag = 0;
   run_temacs_argc = nargs + 1;
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#if defined (HEAP_IN_DATA) && !defined (PDUMP)
   report_sheap_usage (0);
 #endif
   LONGJMP (run_temacs_catch, 1);
@@ -2775,10 +2775,10 @@ main (int argc, char **argv, char **envp)
       free (malloc_state_ptr);
 #endif
       /* mmap works in glibc-2.1, glibc-2.0 (Non-Mule only) and Linux libc5 */
-#if (defined(__GLIBC__) && __GLIBC_MINOR__ >= 1) || \
-    defined(_NO_MALLOC_WARNING_) || \
-    (defined(__GLIBC__) && __GLIBC_MINOR__ < 1 && !defined(MULE)) || \
-    defined(DEBUG_DOUG_LEA_MALLOC)
+#if (defined (__GLIBC__) && __GLIBC_MINOR__ >= 1) || \
+    defined (_NO_MALLOC_WARNING_) || \
+    (defined (__GLIBC__) && __GLIBC_MINOR__ < 1 && !defined (MULE)) || \
+    defined (DEBUG_DOUG_LEA_MALLOC)
       mallopt (M_MMAP_MAX, 64);
 #endif
 #ifdef REL_ALLOC
@@ -2852,7 +2852,7 @@ and announce itself normally when it is run.
   opurify = purify_flag;
   purify_flag = 0;
 
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#if defined (HEAP_IN_DATA) && !defined (PDUMP)
   report_sheap_usage (1);
 #endif
 
@@ -3258,7 +3258,7 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 /* The following needs conditionalization on whether either XEmacs or */
 /* various system shared libraries have been built and linked with */
 /* GCC >= 2.8.  -slb */
-#if defined(GNU_MALLOC)
+#if defined (GNU_MALLOC)
 static void
 voodoo_free_hook (void *mem)
 {
@@ -3328,7 +3328,7 @@ all of which are called before XEmacs is actually killed.
 
   shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
 
-#if defined(GNU_MALLOC)
+#if defined (GNU_MALLOC)
   __free_hook =
 #ifdef __GNUC__ /* prototype of __free_hook varies with glibc version */
     (__typeof__ (__free_hook))
@@ -3601,7 +3601,7 @@ assert_failed (const char *file, int line, const char *expr)
 #if !defined (ASSERTIONS_DONT_ABORT)
 #ifdef _MSC_VER
   /* Calling abort() directly just seems to exit, in a way we can't
-     trap. (#### The docs say it does raise(SIGABRT), which we should be
+     trap. (#### The docs say it does raise (SIGABRT), which we should be
      able to trap.  Perhaps we're messing up somewhere?  Or perhaps MS is
      messed up.)
 
@@ -4024,13 +4024,13 @@ Mail spool locking method suggested by configure.  This is one
 of the symbols in MAIL-LOCK-METHODS.
 */ );
   {
-#if defined(MAIL_LOCK_FLOCK) && defined(HAVE_FLOCK)
+#if defined (MAIL_LOCK_FLOCK) && defined (HAVE_FLOCK)
     Vconfigure_mail_lock_method = intern ("flock");
-#elif defined(MAIL_LOCK_LOCKF) && defined(HAVE_LOCKF)
+#elif defined (MAIL_LOCK_LOCKF) && defined (HAVE_LOCKF)
     Vconfigure_mail_lock_method = intern ("lockf");
-#elif defined(MAIL_LOCK_MMDF) && defined(HAVE_MMDF)
+#elif defined (MAIL_LOCK_MMDF) && defined (HAVE_MMDF)
     Vconfigure_mail_lock_method = intern ("mmdf");
-#elif defined(MAIL_LOCK_LOCKING) && defined(HAVE_LOCKING)
+#elif defined (MAIL_LOCK_LOCKING) && defined (HAVE_LOCKING)
     Vconfigure_mail_lock_method = intern ("locking");
 #else
     Vconfigure_mail_lock_method = intern ("dot");
@@ -4258,7 +4258,7 @@ The configured initial path for info documentation.
 #endif
 }
 
-#if defined(__sgi) && !defined(PDUMP)
+#if defined (__sgi) && !defined (PDUMP)
 /* This is so tremendously ugly I'd puke. But then, it works.
  * The target is to override the static constructor from the
  * libiflPNG.so library which is masquerading as libz, and

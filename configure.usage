@@ -306,9 +306,12 @@ Debugging options:
                         XEmacs will still work (more or less) without them.
                         Potentially dangerous if you don't know what you're
                         doing. This (1) doesn't garbage-collect after loading
-                        each file during dumping, and (2) doesn't
-                        automatically rebuild the DOC file. (Remove it by hand
-                        to get it rebuilt.)
+                        each file during dumping, (2) doesn't
+                        automatically rebuild the DOC file (remove it by hand
+                        to get it rebuilt), (3) Removes config.h, lisp.h and
+                        associated files from the dependency lists, so changes
+                        to these files don't automatically cause all .c files
+                        to be rebuilt.
 --use-union-type        Enable or disable use of a union, instead of an
                         int, for the fundamental Lisp_Object type; this
                         provides stricter type-checking.  WARNING: This has

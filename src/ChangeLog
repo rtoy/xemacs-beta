@@ -1,3 +1,22 @@
+2003-02-15  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (dynodump_deps):
+	Don't delete the DOC file.  Implement quick-building here: not
+	building the DOC file unless it doesn't exist, as the quick-build
+	docs say.
+
+	* config.h.in: Style changes.  Add HAVE_XLIKE.
+	* emacs.c (main_1):
+	* emacs.c (main):
+	* emacs.c (Fdump_emacs):
+	* emacs.c (voodoo_free_hook):
+	* emacs.c (Fkill_emacs):
+	* emacs.c (assert_failed):
+	* emacs.c (vars_of_emacs):
+	* emacs.c (__sti__iflPNGFile_c___):
+	Nothing but niggly spacing changes -- one space before a paren
+	starting a function-call arglist, please.
+
 2003-02-14  Ben Wing  <ben@xemacs.org>
 
 	* buffer.c:

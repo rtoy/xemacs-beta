@@ -1,4 +1,4 @@
-;;; update-elc.el --- Bytecompile out-of-date dumped files
+;;; update-elc.el --- Bytecompile out-of-date dumped files, pre-dumping
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Sun Microsystems, Inc.
@@ -397,6 +397,6 @@
 	 ;;(print command-line-args)
 	 (load "loadup-el.el"))))
 
-;(kill-emacs)
+(kill-emacs)
 
 ;;; update-elc.el ends here
