@@ -1,3 +1,7 @@
+2004-04-06  Jerry James  <james@xemacs.org>
+
+	* number-mp.c (bignum_to_double): Original algorithm was wrong.
+
 2004-04-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lisp.h (Other numeric types): Band-aid: #define make_integer.

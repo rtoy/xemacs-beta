@@ -159,17 +159,18 @@ double
 bignum_to_double (bignum b)
 {
   short rem, sign;
-  double retval = 0.0;
+  double retval = 0.0, factor = 1.0;
   REGISTER unsigned int i;
   MINT *quo;
 
   sign = MP_MCMP (b, bignum_zero) < 0 ? -1 : 1;
   quo = MP_ITOM (sign);
   MP_MULT (b, quo, quo);
-  for (i = 0U; MP_MCMP(quo, bignum_zero) > 0; i++)
+  for (i = 0U; MP_MCMP (quo, bignum_zero) > 0; i++)
     {
       MP_SDIV (quo, 256, quo, &rem);
-      retval += rem * i * 256;
+      retval += rem * factor;
+      factor *= 256.0;
     }
   MP_MFREE (quo);
   return retval * sign;
