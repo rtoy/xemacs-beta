@@ -1,3 +1,8 @@
+2003-02-23  Ben Wing  <ben@xemacs.org>
+
+	* eval.c (unbind_to_hairy):
+	damn those off-by-one errors.
+
 2003-02-21  Ben Wing  <ben@xemacs.org>
 
 	* redisplay.c:

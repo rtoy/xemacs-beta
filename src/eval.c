@@ -5962,7 +5962,7 @@ unbind_to_hairy (int count)
       /* Do this check BEFORE decrementing the values below, because once
 	 they're decremented, GC protection is lost on
 	 specpdl_ptr->old_value. */
-      if (specpdl_ptr->func == Fprogn)
+      if (specpdl_ptr[-1].func == Fprogn)
 	{
 	  /* Allow QUIT within unwind-protect routines, but defer any
 	     existing QUIT until afterwards.  Only do this, however, for
