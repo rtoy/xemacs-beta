@@ -246,6 +246,7 @@ Lisp_Object Qdebug_on_error, Qstack_trace_on_error;
 Lisp_Object Qdebug_on_signal, Qstack_trace_on_signal;
 Lisp_Object Qdebugger;
 Lisp_Object Qinhibit_quit;
+Lisp_Object Qfinalize_list;
 Lisp_Object Qrun_hooks;
 Lisp_Object Qsetq;
 Lisp_Object Qdisplay_warning;
@@ -3686,6 +3687,14 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	      funcall_alloca_count = 0;
 	    }
 	}
+      if (need_to_signal_post_gc)
+	{
+	  static void run_post_gc_hook(void); /* forward */
+
+	  need_to_signal_post_gc = 0;
+	  recompute_funcall_allocation_flag();
+	  run_post_gc_hook();
+	}
     }
 
   if (++lisp_eval_depth > max_lisp_eval_depth)
@@ -5511,6 +5520,20 @@ va_run_hook_with_args_in_buffer_trapping_problems (const CIbyte *
 		   RUN_HOOKS_TO_COMPLETION, flags));
 }
 
+static void
+run_post_gc_hook()
+{
+  Lisp_Object args[2];
+
+  args[0] = Qpost_gc_hook;
+  args[1] = Fcons (Fcons (Qfinalize_list, zap_finalize_list()), Qnil);
+  
+  run_hook_with_args_trapping_problems
+    ("Error in post-gc-hook",
+     2, args,
+     RUN_HOOKS_TO_COMPLETION,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+}
 
 /************************************************************************/
 /*		       The special binding stack			*/
@@ -6224,6 +6247,7 @@ syms_of_eval (void)
   DEFSYMBOL (Qvalues);
   DEFSYMBOL (Qdisplay_warning);
   DEFSYMBOL (Qrun_hooks);
+  DEFSYMBOL (Qfinalize_list);
   DEFSYMBOL (Qif);
 
   DEFSUBR (For);

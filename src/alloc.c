@@ -96,6 +96,7 @@ static Fixnum debug_allocation_backtrace_length;
 static EMACS_INT consing_since_gc;
 int need_to_garbage_collect;
 int need_to_check_c_alloca;
+int need_to_signal_post_gc;
 int funcall_allocation_flag;
 Bytecount __temp_alloca_size__;
 Bytecount funcall_alloca_count;
@@ -3626,6 +3627,9 @@ garbage_collect_1 (void)
      have infinite GC recursion. */
   speccount = begin_gc_forbidden ();
 
+  need_to_signal_post_gc = 0;
+  recompute_funcall_allocation_flag();
+
   if (!gc_hooks_inhibited)
     run_hook_trapping_problems
       ("Error in pre-gc-hook", Qpre_gc_hook,
@@ -3770,7 +3774,8 @@ garbage_collect_1 (void)
      iterate until nothing more gets marked. */
 
   while (finish_marking_weak_hash_tables () > 0 ||
-	 finish_marking_weak_lists       () > 0)
+	 finish_marking_weak_lists       () > 0 ||
+	 finish_marking_ephemerons       () > 0)
     ;
 
   /* And prune (this needs to be called after everything else has been
@@ -3782,6 +3787,7 @@ garbage_collect_1 (void)
   prune_specifiers ();
   prune_syntax_tables ();
 
+  prune_ephemerons ();
   prune_weak_boxes ();
 
   gc_sweep ();
@@ -3800,10 +3806,6 @@ garbage_collect_1 (void)
   run_post_gc_actions ();
 
   /******* End of garbage collection ********/
-
-  run_hook_trapping_problems
-    ("Error in post-gc-hook", Qpost_gc_hook,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* Now remove the GC cursor/message */
   if (!noninteractive)
@@ -3837,6 +3839,10 @@ garbage_collect_1 (void)
     }
 
   UNGCPRO;
+
+  need_to_signal_post_gc = 1;
+  funcall_allocation_flag = 1;
+
   return;
 }
 
@@ -4012,7 +4018,10 @@ This may be helpful in debugging XEmacs's memory usage.
 void
 recompute_funcall_allocation_flag (void)
 {
-  funcall_allocation_flag = need_to_garbage_collect || need_to_check_c_alloca;
+  funcall_allocation_flag =
+    need_to_garbage_collect ||
+    need_to_check_c_alloca ||
+    need_to_signal_post_gc;
 }
 
 /* True if it's time to garbage collect now. */
@@ -4427,8 +4436,8 @@ consing, and do not interact with the user.
   DEFVAR_LISP ("post-gc-hook", &Vpost_gc_hook /*
 Function or functions to be run just after each garbage collection.
 Interrupts, garbage collection, and errors are inhibited while this hook
-runs, so be extremely careful in what you add here.  In particular, avoid
-consing, and do not interact with the user.
+runs.  Each hook is called with one argument which is an alist with
+finalization data.
 */ );
   Vpost_gc_hook = Qnil;
 
