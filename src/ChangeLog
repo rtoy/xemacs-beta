@@ -1,3 +1,7 @@
+2003-02-06  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+         * sysdll.c: Included lisp.h to define needed alloca_array.
+
 2003-02-07  Jerry James  <james@xemacs.org>
 
 	* sysdep.c (strlwr): Return the parameter.
