@@ -144,7 +144,7 @@ struct rune
 
 
   unsigned char cursor_type;	/* is this rune covered by the cursor? */
-  unsigned char type;		/* type of rune object */
+  unsigned int type;		/* type of rune object */
                                 /* We used to do bitfields here, but if I
                                    (JV) count correctly that doesn't matter
                                    for the size of the structure. All the bit
