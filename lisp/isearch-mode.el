@@ -431,7 +431,10 @@ Type \\[isearch-whitespace-chars] to match all whitespace chars in regexp.
  back to what has
  been found successfully.
 \\[isearch-abort] when search is successful aborts and moves point to\
- starting point.
+ starting point,
+ leaving the search string at the head of the search ring.  Note that this
+ behavior differs from GNU Emacs, which forgets the current search string
+ on abort regardless of success or failure.
 
 Also supported is a search ring of the previous 16 search strings.
 Type \\[isearch-ring-advance] to search for the next item in the search ring.
@@ -864,6 +867,11 @@ If first char entered is \\[isearch-yank-word], then do word search instead."
 
 (defun isearch-abort ()
   "Abort incremental search mode if searching is successful, signaling quit.
+Leave the search string at the head of the search ring.  Note that this
+behavior differs from GNU Emacs, which forgets the current search string
+on abort regardless of success or failure.  Use `isearch-cancel' to abort
+and forget regardless of success or failure.
+
 Otherwise, revert to previous successful search and continue searching.
 Use `isearch-exit' to quit without signaling."
   (interactive)

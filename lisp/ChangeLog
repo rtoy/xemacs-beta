@@ -1,3 +1,8 @@
+2004-05-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* isearch-mode.el (isearch-forward, isearch-abort): Document that our
+	behavior of `isearch-abort' differs from that of GNU Emacs.
+
 2004-05-08  Sven Grundmann  <sven@xemacs.org>
 
 	* etags.el:
