@@ -1,3 +1,8 @@
+2002-07-08  Daiki Ueno  <daiki@xemacs.org>
+
+	* glyphs-x.c (x_unmap_subwindow): Deal with the substantial windows.
+	(x_map_subwindow): Likewise.
+
 2002-07-08  Mike Sperber <mike@xemacs.org>
 
 	* text.h: Only include wchar.h if we have it; define wcslen

@@ -2028,6 +2028,9 @@ x_unmap_subwindow (Lisp_Image_Instance *p)
       XUnmapWindow
 	(IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
 	 IMAGE_INSTANCE_X_CLIPWINDOW (p));
+      XUnmapSubwindows
+	(IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
+	 IMAGE_INSTANCE_X_CLIPWINDOW (p));
     }
   else				/* must be a widget */
     {
@@ -2057,8 +2060,12 @@ x_map_subwindow (Lisp_Image_Instance *p, int x, int y,
       XMoveWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
 		   subwindow, -dga->xoffset, -dga->yoffset);
       if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
-	XMapWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
-		    IMAGE_INSTANCE_X_CLIPWINDOW (p));
+	{
+	  XMapWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
+		      IMAGE_INSTANCE_X_CLIPWINDOW (p));
+	  XMapSubwindows (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
+			  IMAGE_INSTANCE_X_CLIPWINDOW (p));
+	}
     }
   else				/* must be a widget */
     {
