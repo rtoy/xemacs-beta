@@ -1,3 +1,7 @@
+2001-05-24  Norbert Koch  <nk@LF.net>
+
+	* doprnt.c (emacs_doprnt_1): forgotten sons of Ben's error patch
+
 2001-05-06  Karl M. Hegbloom  <karlheg@hegbloom.net>
 
 	* config.h.in: HAVE_MKSTEMP

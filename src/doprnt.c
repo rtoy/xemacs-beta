@@ -559,7 +559,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	      if (!INT_OR_FLOATP (obj))
 		{
 		  syntax_error ("format specifier %%%c doesn't match argument type",
-			 ch);
+			 make_char (ch));
 		}
 	      else if (strchr (double_converters, ch))
 		arg.d = XFLOATINT (obj);
@@ -585,7 +585,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	      a = (Emchar) arg.l;
 
 	      if (!valid_char_p (a))
-	 syntax_error ("invalid character value %d to %%c spec", a);
+	 syntax_error ("invalid character value %d to %%c spec", make_char (a));
 
 	      charlen = set_charptr_emchar (charbuf, a);
 	      doprnt_1 (stream, charbuf, charlen, spec->minwidth,
