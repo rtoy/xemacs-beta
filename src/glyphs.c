@@ -2327,8 +2327,18 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object string = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
+  assert (!NILP (string));
+
   /* Should never get here with a domain other than a window. */
-  assert (!NILP (string) && WINDOWP (DOMAIN_WINDOW (domain)));
+#ifndef NDEBUG
+  /* Work Around for an Intel Compiler 7.0 internal error */
+  /* assert (WINDOWP (DOMAIN_WINDOW (domain))); internal error: 0_5086 */
+  {
+    Lisp_Object w = DOMAIN_WINDOW (domain);
+    assert (WINDOWP (w));
+  }
+#endif
+
   if (dest_mask & IMAGE_TEXT_MASK)
     {
       IMAGE_INSTANCE_TYPE (ii) = IMAGE_TEXT;
@@ -3957,6 +3967,22 @@ glyph_image_instance_maybe (Lisp_Object glyph_or_image, Lisp_Object window)
   return instance;
 }
 
+inline static int
+image_instance_needs_layout (Lisp_Object instance)
+{
+  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (instance);
+
+  if (IMAGE_INSTANCE_DIRTYP (ii) && IMAGE_INSTANCE_LAYOUT_CHANGED (ii))
+    {
+      return 1;
+    }
+  else
+    {
+      Lisp_Object iif = IMAGE_INSTANCE_FRAME (ii);
+      return FRAMEP (iif) && XFRAME (iif)->size_changed;
+    }
+}
+
 /*****************************************************************************
  glyph_width
 
@@ -3972,7 +3998,7 @@ glyph_width (Lisp_Object glyph_or_image, Lisp_Object domain)
   if (!IMAGE_INSTANCEP (instance))
     return 0;
 
-  if (XIMAGE_INSTANCE_NEEDS_LAYOUT (instance))
+  if (image_instance_needs_layout (instance))
     image_instance_layout (instance, IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNCHANGED_GEOMETRY,
@@ -4002,7 +4028,7 @@ glyph_ascent (Lisp_Object glyph_or_image, Lisp_Object domain)
   if (!IMAGE_INSTANCEP (instance))
     return 0;
 
-  if (XIMAGE_INSTANCE_NEEDS_LAYOUT (instance))
+  if (image_instance_needs_layout (instance))
     image_instance_layout (instance, IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNCHANGED_GEOMETRY,
@@ -4022,7 +4048,7 @@ glyph_descent (Lisp_Object glyph_or_image, Lisp_Object domain)
   if (!IMAGE_INSTANCEP (instance))
     return 0;
 
-  if (XIMAGE_INSTANCE_NEEDS_LAYOUT (instance))
+  if (image_instance_needs_layout (instance))
     image_instance_layout (instance, IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNCHANGED_GEOMETRY,
@@ -4044,7 +4070,7 @@ glyph_height (Lisp_Object glyph_or_image, Lisp_Object domain)
   if (!IMAGE_INSTANCEP (instance))
     return 0;
 
-  if (XIMAGE_INSTANCE_NEEDS_LAYOUT (instance))
+  if (image_instance_needs_layout (instance))
     image_instance_layout (instance, IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNSPECIFIED_GEOMETRY,
 			   IMAGE_UNCHANGED_GEOMETRY,

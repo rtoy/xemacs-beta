@@ -1,3 +1,18 @@
+2003-04-14  Steve Youngs  <youngs@xemacs.org>
+
+	* glyphs.c:
+	* glyphs.c (nothing_instantiate):
+	* glyphs.c (Fmake_glyph_internal):
+	* glyphs.c (Fglyphp):
+	* glyphs.c (glyph_image_instance):
+	* glyphs.c (glyph_image_instance_maybe):
+	* glyphs.c (glyph_width):
+	Work around a problem compiling with --use-union-type using
+	Intel's ICC compiler.
+	From Martin Buchholz <martin@xemacs.org>
+	See
+	<http://list-archive.xemacs.org/xemacs-patches/200301/msg00132.html> 
+
 2003-04-08  Mike Sperber  <mike@xemacs.org>
 
 	* Makefile.in.in ($(BLDSRC)/NEEDTODUMP): Depends on $(RAW_EXE).
