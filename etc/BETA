@@ -582,7 +582,7 @@ rapid acceptance of the package.
 For help in creating new packages, see the (rather sparse) discussions
 in the XEmacs User's Guide and the Lisp Reference Manual.  The XEmacs
 Package Release Engineer (Ville Skyttä <scop@xemacs.org> is currently
-serving with Peter Brown <rendhalver@xemacs.org> assisting; Steve
+serving with Norbert Koch <viteno@xemacs.org> assisting; Steve
 Youngs <youngs@xemacs.org> and Stephen Turnbull <stephen@xemacs.org>
 also can help) are the most likely sources of advice.
 
