@@ -349,7 +349,7 @@ while (0)
 
 #else /* ERROR_CHECK_MALLOC */
 
-#define MALLOC_BEGIN(block)
+#define MALLOC_BEGIN()
 #define FREE_OR_REALLOC_BEGIN(block)
 #define MALLOC_END()
 

@@ -1972,8 +1972,9 @@ unicode_multibyte_convert_size (const char *srctext, const void *src,
 				Bytecount src_size, int to_unicode, int cp)
 {
   alloca_convert_vals vals;
-
-  assert (find_pos_of_existing_active_alloca_convert (srctext) < 0);
+  
+  int pos = find_pos_of_existing_active_alloca_convert (srctext);
+  assert (pos < 0);
 
   vals.srctext = srctext;
 

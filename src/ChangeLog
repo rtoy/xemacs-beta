@@ -1,3 +1,10 @@
+2005-03-13  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	Fix native Windows build if DEBUG_XEMACS is not defined.
+	* alloc.c (MALLOC_BEGIN): Remove unused parameter.
+	* intl-win32.c (unicode_multibyte_convert_size): Move function
+	call out of assert.
+
 2005-03-11  David Robinow <drobinow@yahoo.com>
 
 	* syssignal.h: Configure always sets HAVE_DECL_SYS_SIGLIST.  Test
