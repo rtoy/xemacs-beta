@@ -436,6 +436,10 @@ int asynch_device_change_pending;
 int toolbar_changed;
 int toolbar_changed_set;
 
+/* Nonzero if some frame has changed the layout of internal elements
+   (gutters or toolbars). */
+int frame_layout_changed;
+
 /* non-nil if any gutter has changed */
 int gutter_changed;
 int gutter_changed_set;
@@ -6571,8 +6575,13 @@ redisplay_frame (struct frame *f, int preemption_check)
   update_frame_menubars (f);
 #endif /* HAVE_MENUBARS */
 #ifdef HAVE_TOOLBARS
-  /* Update the toolbars. */
-  update_frame_toolbars (f);
+  /* Update the toolbars geometry. We don't update the toolbars
+     themselves at this point since the space they are trying to
+     occupy may currently by occupied by gutter elements. Instead we
+     update the geometry, then update the gutter geometry, then update
+     the gutters - which will cause mapped windows to be repositioned
+     - and finally update the toolbars. */
+  update_frame_toolbars_geometry (f);
 #endif /* HAVE_TOOLBARS */
   /* Gutter update proper has to be done inside display when no frame
      size changes can occur, thus we separately update the gutter
@@ -6651,6 +6660,14 @@ redisplay_frame (struct frame *f, int preemption_check)
   MAYBE_DEVMETH (d, frame_output_end, (f));
 
   update_frame_title (f);
+
+#ifdef HAVE_TOOLBARS
+  /* Finally update the toolbars. It seems its possible to get in a
+     cycle between updating the gutter and the toolbars. Basically we
+     want to end up with both being up-to-date and this doesn't seem
+     possible in a single pass. */
+  update_frame_toolbars (f);
+#endif /* HAVE_TOOLBARS */
 
   CLASS_RESET_CHANGED_FLAGS (f);
   f->window_face_cache_reset = 0;

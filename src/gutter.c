@@ -588,6 +588,7 @@ update_gutter_geometry (struct frame *f, enum gutter_pos pos)
       pixel_to_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
 			  &width, &height);
       change_frame_size (f, height, width, 0);
+      MARK_FRAME_LAYOUT_CHANGED (f);
     }
 
   /* Mark sizes as up-to-date. */
@@ -597,7 +598,9 @@ update_gutter_geometry (struct frame *f, enum gutter_pos pos)
 void
 update_frame_gutter_geometry (struct frame *f)
 {
-  if (f->gutter_changed || f->windows_structure_changed)
+  if (f->gutter_changed 
+      || f->frame_layout_changed 
+      || f->windows_structure_changed)
     {
       enum gutter_pos pos;
 
@@ -619,7 +622,7 @@ update_frame_gutters (struct frame *f)
       f->gutter_changed || f->glyphs_changed ||
       f->size_changed || f->subwindows_changed ||
       f->windows_changed || f->windows_structure_changed ||
-      f->extents_changed)
+      f->extents_changed || f->frame_layout_changed)
     {
       enum gutter_pos pos;
 

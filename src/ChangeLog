@@ -1,3 +1,49 @@
+2002-06-24  Andy Piper  <andy@xemacs.org>
+
+	* toolbar-x.c (console_type_create_toolbar_x): declare
+	x_clear_frame_toolbars.
+	* toolbar-gtk.c (console_type_create_toolbar_gtk): ditto.
+	* toolbar-common.h (common_clear_frame_toolbars): ditto.
+
+	* toolbar-common.c (COMMON_OUTPUT_BUTTONS_LOOP): output button if
+	whole toolbar was cleared.
+
+	* toolbar-msw.c (mswindows_clear_frame_toolbars): new
+	function. Split out from mswindows_output_frame_toolbars.
+	(mswindows_output_frame_toolbars): move clear pieces to
+	mswindows_output_frame_toolbars.
+
+	* toolbar-common.c (common_clear_frame_toolbars): new function. Split
+	out from gtk_output_frame_toolbars.
+	(common_output_frame_toolbars): move clear pieces to
+	gtk_clear_frame_toolbars.
+
+	* console-impl.h (struct console_methods): add
+	clear_frame_toolbars_method.
+
+	* redisplay.c (redisplay_frame): call
+	update_frame_toolbars_geometry and re-order update_frame_toolbars.
+
+	* toolbar.h: declare update_frame_toolbars_geometry.
+
+	* toolbar.c (update_frame_toolbars_geometry): new function. Split
+	out from update_frame_toolbars.  Call clear_frame_toolbars.
+	(update_frame_toolbars): only output, do not change geometry.
+
+	* redisplay.c: add frame_layout_changed.
+
+	* redisplay.h: add frame_layout_changed.
+	(CLASS_RESET_CHANGED_FLAGS): set it.
+	(GLOBAL_RESET_CHANGED_FLAGS): ditto.
+	(CLASS_REDISPLAY_FLAGS_CHANGEDP): test it.
+	(GLOBAL_REDISPLAY_FLAGS_CHANGEDP): ditto.
+
+	* device-impl.h (struct device): add frame_layout_changed.
+	(MARK_DEVICE_FRAME_LAYOUT_CHANGED): new.
+
+	* frame-impl.h (struct frame): add frame_layout_changed.
+	(MARK_FRAME_LAYOUT_CHANGED): new.
+
 2002-07-02  Paul Moore  <gustav@morpheus.demon.co.uk>
 
 	* console-msw.h:

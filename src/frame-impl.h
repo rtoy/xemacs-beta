@@ -172,6 +172,8 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int extents_changed :1;
   unsigned int faces_changed :1;
   unsigned int frame_changed :1;
+  unsigned int frame_layout_changed :1;	/* The layout of frame
+ 					   elements has changed. */
   unsigned int subwindows_changed :1;
   unsigned int subwindows_state_changed :1;
   unsigned int glyphs_changed :1;
@@ -396,6 +398,19 @@ extern int frame_changed;
     }							\
   else							\
     frame_changed = 1;					\
+} while (0)
+
+#define MARK_FRAME_LAYOUT_CHANGED(f) do {		\
+  struct frame *mfc_f = (f);				\
+  mfc_f->frame_layout_changed = 1;			\
+  mfc_f->modiff++;					\
+  if (!NILP (mfc_f->device))				\
+    {							\
+      struct device *mfc_d = XDEVICE (mfc_f->device);	\
+      MARK_DEVICE_FRAME_LAYOUT_CHANGED (mfc_d);		\
+    }							\
+  else							\
+    frame_layout_changed = 1;				\
 } while (0)
 
 #define MARK_FRAME_WINDOWS_CHANGED(f) do {		\

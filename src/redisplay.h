@@ -479,6 +479,10 @@ extern int size_changed;
 /* Nonzero if some device has signaled that it wants to change size. */
 extern int asynch_device_change_pending;
 
+/* Nonzero if some frame has changed the layout of internal elements
+   (gutters or toolbars). */
+extern int frame_layout_changed;
+
 /* Nonzero if any toolbar has changed. */
 extern int toolbar_changed;
 extern int toolbar_changed_set;
@@ -549,6 +553,7 @@ void mark_subwindows_state_changed (void);
   (p)->extents_changed = 0;			\
   (p)->faces_changed = 0;			\
   (p)->frame_changed = 0;			\
+  (p)->frame_layout_changed = 0;		\
   (p)->icon_changed = 0;			\
   (p)->menubar_changed = 0;			\
   (p)->modeline_changed = 0;			\
@@ -567,6 +572,7 @@ void mark_subwindows_state_changed (void);
   clip_changed = 0;				\
   extents_changed = 0;				\
   frame_changed = 0;				\
+  frame_layout_changed = 0;			\
   icon_changed = 0;				\
   menubar_changed = 0;				\
   modeline_changed = 0;				\
@@ -586,6 +592,7 @@ void mark_subwindows_state_changed (void);
     (p)->extents_changed ||			\
     (p)->faces_changed ||			\
     (p)->frame_changed ||			\
+    (p)->frame_layout_changed ||		\
     (p)->icon_changed ||			\
     (p)->menubar_changed ||			\
     (p)->modeline_changed ||			\
@@ -605,6 +612,7 @@ void mark_subwindows_state_changed (void);
     extents_changed ||				\
     faces_changed ||				\
     frame_changed ||				\
+    frame_layout_changed ||			\
     icon_changed ||				\
     menubar_changed ||				\
     modeline_changed ||				\

@@ -88,6 +88,8 @@ struct device
   unsigned int extents_changed :1;
   unsigned int faces_changed :1;
   unsigned int frame_changed :1;
+  unsigned int frame_layout_changed :1;	/* The layout of frame
+					   elements has changed. */
   unsigned int glyphs_changed :1;
   unsigned int subwindows_changed :1;
   unsigned int subwindows_state_changed :1;
@@ -321,6 +323,9 @@ error_check_device_type (struct device *d, Lisp_Object sym)
 
 #define MARK_DEVICE_FRAME_CHANGED(d)			\
   ((void) (frame_changed = (d)->frame_changed = 1))
+
+#define MARK_DEVICE_FRAME_LAYOUT_CHANGED(d)			\
+  ((void) (frame_layout_changed = (d)->frame_layout_changed = 1))
 
 #define MARK_DEVICE_WINDOWS_CHANGED(d)			\
   ((void) (windows_changed = (d)->windows_changed = 1))

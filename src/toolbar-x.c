@@ -50,6 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #define x_output_toolbar_button common_output_toolbar_button
 #define x_redraw_exposed_toolbars common_redraw_exposed_toolbars
 #define x_redraw_frame_toolbars common_redraw_frame_toolbars
+#define x_clear_frame_toolbars common_clear_frame_toolbars
 
 static void
 x_initialize_frame_toolbars (struct frame *f)
@@ -77,6 +78,7 @@ void
 console_type_create_toolbar_x (void)
 {
   CONSOLE_HAS_METHOD (x, output_frame_toolbars);
+  CONSOLE_HAS_METHOD (x, clear_frame_toolbars);
   CONSOLE_HAS_METHOD (x, initialize_frame_toolbars);
   CONSOLE_HAS_METHOD (x, free_frame_toolbars);
   CONSOLE_HAS_METHOD (x, output_toolbar_button);

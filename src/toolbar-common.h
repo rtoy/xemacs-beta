@@ -16,5 +16,6 @@ extern void common_redraw_exposed_toolbars (struct frame *f,
 					    int width, int height);
 extern void common_redraw_frame_toolbars (struct frame *f);
 extern void common_output_toolbar_button (struct frame *f, Lisp_Object button);
+extern void common_clear_frame_toolbars (struct frame *f);
 
 #endif /* __TOOLBAR_COMMON_H__ */

@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #define gtk_output_toolbar_button common_output_toolbar_button
 #define gtk_redraw_exposed_toolbars common_redraw_exposed_toolbars
 #define gtk_redraw_frame_toolbars common_redraw_frame_toolbars
+#define gtk_clear_frame_toolbars common_clear_frame_toolbars
 
 
 static void
@@ -63,6 +64,7 @@ void
 console_type_create_toolbar_gtk (void)
 {
   CONSOLE_HAS_METHOD (gtk, output_frame_toolbars);
+  CONSOLE_HAS_METHOD (gtk, clear_frame_toolbars);
   CONSOLE_HAS_METHOD (gtk, initialize_frame_toolbars);
   CONSOLE_HAS_METHOD (gtk, free_frame_toolbars);
   CONSOLE_HAS_METHOD (gtk, output_toolbar_button);
