@@ -578,8 +578,8 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
 ;; If you want to create a file, first visit that file with C-x C-f,
 ;; then enter the text in that file's own buffer. (C-x is the standard
-;; XEmacs abbreviation for `Control+X', i.e. hold down the Control key
-;; while hitting the X key.)
+;; XEmacs abbreviation for `Control+x', i.e. hold down the Control key
+;; while hitting the x key.)
 ;;
 ;; For Lisp evaluation, type an expression, move to the end and hit C-j.
 
