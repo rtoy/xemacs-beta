@@ -1,3 +1,10 @@
+2003-09-15  Jerry James  <james@xemacs.org>
+
+	* syswindows.h: Quiet compiler warnings about struct stat.
+	(W32API_VER):
+	(W32API_INSTALLED_VER): New macros to compare w32api versions.
+	(_SHQUERYRBINFO): Define for w32api < 2.4 only.
+
 2003-09-11  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c: Clean up #ifdef USE_KKCC, move stack code to better

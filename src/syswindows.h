@@ -151,11 +151,13 @@ extern __inline void *GetFiberData (void);
 
 #ifdef CYGWIN_HEADERS
 
+#include <cygwin/stat.h> /* for struct stat */
 #include <w32api.h> /* for version info */
 
-#if __W32API_MAJOR_VERSION > 2 || (__W32API_MAJOR_VERSION == 2 && __W32API_MINOR_VERSION >= 2)
-#define W32API_2_2
-#endif
+/* Test for a specific version of w32api */
+#define W32API_VER(major,minor) (((major) << 16) + (minor))
+#define W32API_INSTALLED_VER \
+  W32API_VER (__W32API_MAJOR_VERSION, __W32API_MINOR_VERSION)
 
 /* Various brokennesses in various versions of Cygwin */
 
@@ -362,7 +364,7 @@ typedef struct tagNMDATETIMEFORMATW
   WCHAR szDisplay[64];
 } NMDATETIMEFORMATW, FAR * LPNMDATETIMEFORMATW;
 
-#ifndef W32API_2_2
+#if W32API_INSTALLED_VER < W32API_VER(2,2)
 
 typedef struct tagNMTTDISPIFNOA
 {
@@ -388,7 +390,7 @@ typedef struct tagNMTTDISPINFOW
 #endif
 } NMTTDISPINFOW, FAR *LPNMTTDISPINFOW;
 
-#endif /* not W32API_2_2 */
+#endif /* W32API_INSTALLED_VER < W32API_VER(2,2) */
 
 #endif /* (_WIN32_IE >= 0x0400) */
 
@@ -474,12 +476,14 @@ typedef struct tagNMTTDISPINFOW
 
 #include <imm.h>
 
+#if W32API_INSTALLED_VER < W32API_VER(2,4)
 typedef struct _SHQUERYRBINFO
 {
   DWORD cbSize;
   __int64 i64Size;
   __int64 i64NumItems;
 } SHQUERYRBINFO, *LPSHQUERYRBINFO;
+#endif
 
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
