@@ -35,6 +35,7 @@ consulted for a more detailed list of changes.
   -- Bignums have been implemented.
   -- Windows users have benefit of the full Win32 Unicode API.
   -- (in process) Xft provides antialiased fonts on X11.
+  -- "XEmacs" used as X11 application class
 
 ** Bignum implementation.
 
@@ -42,6 +43,18 @@ Integer computations no longer overflow, rational arithmetic "just
 works", and very precise floating point calculation is available.
 This also means that large buffers (over 2^30 = 1GB) can be
 manipulated.
+
+** "XEmacs" used as X11 application class
+
+Previously, XEmacs checked the X11 resource database for resources starting
+with XEmacs, and used "XEmacs" as its application class if any existed,
+otherwise using "Emacs" for backward compatibility.  Because of divergence
+between the reseource GNU Emacs and XEmacs use, this has been changed; if
+you don't have the time to migrate your resource DB right now, set
+USE_EMACS_AS_DEFAULT_APPLICATION_CLASS in your environment before starting
+XEmacs, for the old behavior.  This workaround will go away in the course of
+the next major release, though, so you will have to migrate your resources
+at some point. 
 
 
 * Changes in XEmacs 21.4

@@ -1,3 +1,14 @@
+2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-x.c (x_init_device): Only do the old application class
+	determination behaviour if the
+	USE_EMACS_AS_DEFAULT_APPLICATION_CLASS environment variable is
+	set; otherwise, we use XEmacs. 
+	* device-x.c (vars_of_device_x): Update the docstring for
+	x-emacs-application-class. 
+	* frame.c: default-frame-name is now "XEmacs", unless the old X11
+	resources behaviour has been requested. 
+
 2005-03-15  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c: Dynamically allocate KKCC backtrace stack and some

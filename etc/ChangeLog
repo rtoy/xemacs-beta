@@ -1,3 +1,8 @@
+2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* NEWS: Mention the move to XEmacs as the application class. 
+	* sample.Xresources: Emacs as app class -> XEmacs as app class
+
 2005-03-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* TUTORIAL: Typo fixes from Jon Ericson.

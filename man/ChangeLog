@@ -1,3 +1,10 @@
+2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* xemacs/custom.texi (X Resources):
+	"Emacs" as the application class -> "XEmacs" as the application
+	class, mention the old resource class determination behaviour, and
+	how one can temporarily re-instate it. 
+	
 2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (The XEmacs Split):

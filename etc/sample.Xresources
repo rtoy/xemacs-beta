@@ -27,66 +27,66 @@
 ! one of "black" or "white" on monochrome systems.
 ! 
 ! The valid color names on your system can be found by looking in the file
-! `rgb.txt', usually found in /usr/lib/X11/ or /usr/openwin/lib/X11/.
+! `rgb.txt', usually found in /usr/X11R6/lib/X11/ or /usr/openwin/lib/X11/.
 
 ! Set the foreground and background colors of the `default' face.
 ! The default face colors are the base for most of the other faces'
 ! colors.  The default background is gray80, and the default foreground
 ! is black.
-Emacs.default.attributeBackground:	gray80
-Emacs.default.attributeForeground:	black
+XEmacs.default.attributeBackground:	gray80
+XEmacs.default.attributeForeground:	black
 
 ! Set the modeline colors.
-Emacs.modeline*attributeForeground:	Black
-Emacs.modeline*attributeBackground:	Gray75
+XEmacs.modeline*attributeForeground:	Black
+XEmacs.modeline*attributeBackground:	Gray75
 
 ! Set the color of the text cursor.
-Emacs.text-cursor*attributeBackground:	Red3
+XEmacs.text-cursor*attributeBackground:	Red3
 
 ! If you want to set the color of the mouse pointer, do this:
-! Emacs.pointer*attributeForeground:	Black
+! XEmacs.pointer*attributeForeground:	Black
 ! If you want to set the background of the mouse pointer, do this:
-! Emacs.pointer*attributeBackground:	White
+! XEmacs.pointer*attributeBackground:	White
 ! Note that by default, the pointer foreground and background are the same
 ! as the default face.
 
 ! Set the menubar colors.  This overrides the default foreground and
 ! background colors specified above.
-Emacs*menubar*Foreground:		Gray30
-Emacs*menubar*Background:		Gray75
+XEmacs*menubar*Foreground:		Gray30
+XEmacs*menubar*Background:		Gray75
 ! This is for buttons in the menubar.  
 ! Yellow would be better, but that would map to white on monochrome.
-Emacs*menubar.buttonForeground:		Blue
-Emacs*XlwMenu.selectColor:		ForestGreen
-Emacs*XmToggleButton.selectColor:	ForestGreen
+XEmacs*menubar.buttonForeground:		Blue
+XEmacs*XlwMenu.selectColor:		ForestGreen
+XEmacs*XmToggleButton.selectColor:	ForestGreen
 
 ! Specify the colors of popup menus.
-Emacs*popup*Foreground:			Black
-Emacs*popup*Background:			Gray75
+XEmacs*popup*Foreground:			Black
+XEmacs*popup*Background:			Gray75
 
 ! Specify the colors of the various sub-widgets of the dialog boxes.
-Emacs*dialog*Foreground:		Black
+XEmacs*dialog*Foreground:		Black
 ! #A5C0C1 is a shade of blue
-Emacs*dialog*Background:		#A5C0C1
+XEmacs*dialog*Background:		#A5C0C1
 ! The following three are for Motif dialog boxes ...
-Emacs*dialog*XmTextField*Background:	WhiteSmoke
-Emacs*dialog*XmText*Background:		WhiteSmoke
-Emacs*dialog*XmList*Background:		WhiteSmoke
+XEmacs*dialog*XmTextField*Background:	WhiteSmoke
+XEmacs*dialog*XmText*Background:		WhiteSmoke
+XEmacs*dialog*XmList*Background:		WhiteSmoke
 ! While this one is for Athena dialog boxes.
-Emacs*dialog*Command*Background:	WhiteSmoke
+XEmacs*dialog*Command*Background:	WhiteSmoke
 
 ! Athena dialog boxes are sometimes built with the Xaw3d
 ! variant of the Athena toolkit.
 ! XEmacs being nice to 8bit displays, it defaults to:
-Emacs*dialog*Command*beNiceToColormap:	true
+XEmacs*dialog*Command*beNiceToColormap:	true
 ! If you are shocked by the ugliness of the 3d rendition,
 ! you may want to set (even on 8bit displays) the above to false.
 
 ! Xlw Scrollbar colors
-Emacs*XlwScrollBar.Foreground:		Gray30
-Emacs*XlwScrollBar.Background:		Gray75
-Emacs*XmScrollBar.Foreground:		Gray30
-Emacs*XmScrollBar.Background:		Gray75
+XEmacs*XlwScrollBar.Foreground:		Gray30
+XEmacs*XlwScrollBar.Background:		Gray75
+XEmacs*XmScrollBar.Foreground:		Gray30
+XEmacs*XmScrollBar.Background:		Gray75
 
 !
 ! The Lucid Scrollbar supports two added resources, SliderStyle is either
@@ -95,8 +95,8 @@ Emacs*XmScrollBar.Background:		Gray75
 ! either "opposite" (default) or "same".  Opposite puts the arrows at opposite
 ! of the scrollbar, same puts both arrows at the same end, like the Amiga.
 !
-! Emacs*XlwScrollBar.SliderStyle:    dimple
-! Emacs*XlwScrollBar.ArrowPosition:  opposite
+! XEmacs*XlwScrollBar.SliderStyle:    dimple
+! XEmacs*XlwScrollBar.ArrowPosition:  opposite
 
 
 !
@@ -107,53 +107,53 @@ Emacs*XmScrollBar.Background:		Gray75
 !
 ! To change the heights and widths of the toolbars:
 !
-! Emacs.topToolBarHeight:		37
-! Emacs.bottomToolBarHeight:		0
-! Emacs.leftToolBarWidth:		0
-! Emacs.rightToolBarWidth:		0
+! XEmacs.topToolBarHeight:		37
+! XEmacs.bottomToolBarHeight:		0
+! XEmacs.leftToolBarWidth:		0
+! XEmacs.rightToolBarWidth:		0
 
-Emacs*topToolBarShadowColor:		Gray90
-Emacs*bottomToolBarShadowColor:		Gray40
-Emacs*backgroundToolBarColor:		Gray75
-Emacs*toolBarShadowThickness:		2
+XEmacs*topToolBarShadowColor:		Gray90
+XEmacs*bottomToolBarShadowColor:		Gray40
+XEmacs*backgroundToolBarColor:		Gray75
+XEmacs*toolBarShadowThickness:		2
 
 
 ! If you want to turn off vertical scrollbars, or change the default
 ! pixel width of the vertical scrollbars, do it like this (0 width
 ! means no vertical scrollbars):
 ! 
-! Emacs.scrollBarWidth: 0
+! XEmacs.scrollBarWidth: 0
 ! 
 ! To change it for a particular frame, do this:
 ! 
-! Emacs*FRAME-NAME.scrollBarWidth: 0
+! XEmacs*FRAME-NAME.scrollBarWidth: 0
 
 
 ! If you want to turn off horizontal scrollbars, or change the default
 ! pixel height of the horizontal scrollbars, do it like this (0 height
 ! means no horizontal scrollbars):
 ! 
-! Emacs.scrollBarHeight: 0
+! XEmacs.scrollBarHeight: 0
 ! 
 ! To change it for a particular frame, do this:
 ! 
-! Emacs*FRAME-NAME.scrollBarHeight: 0
+! XEmacs*FRAME-NAME.scrollBarHeight: 0
 
 
 ! To dynamically change the labels used for menubar buttons...
 ! 
-! Emacs*XlwMenu.resourceLabels: True
-! Emacs*XlwMenu.newFrame.labelString: Open Another Window
+! XEmacs*XlwMenu.resourceLabels: True
+! XEmacs*XlwMenu.newFrame.labelString: Open Another Window
 
 ! To have the Motif scrollbars on the left instead of the right, do this:
 ! 
-! Emacs*scrollBarPlacement: BOTTOM_LEFT
+! XEmacs*scrollBarPlacement: BOTTOM_LEFT
 !
 ! To have the Athena scrollbars on the right, use `BOTTOM_RIGHT' instead
 
 ! To have Motif scrollbars act more like Xt scrollbars...
 !
-! Emacs*XmScrollBar.translations: #override \n\
+! XEmacs*XmScrollBar.translations: #override \n\
 !     <Btn1Down>:     PageDownOrRight(0)    \n\
 !     <Btn3Down>:     PageUpOrLeft(0)
 
@@ -179,22 +179,22 @@ Emacs*toolBarShadowThickness:		2
 ! by lisp code which tries a number of different possibilities in order
 ! of preference.  If you wish to override it, use this:
 ! 
-! Emacs.default.attributeFont:  -*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
+! XEmacs.default.attributeFont:  -*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
 
 ! If you choose a font which does not have an italic version, you can specify
 ! some other font to use for it here:
 ! 
-! Emacs.italic.attributeFont:  -*-courier-medium-o-*-*-*-120-*-*-*-*-iso8859-*
+! XEmacs.italic.attributeFont:  -*-courier-medium-o-*-*-*-120-*-*-*-*-iso8859-*
 ! 
 ! If you choose a font which does not have a bold-italic version,
 ! you can specify some other font to use for it here:
 ! 
-! Emacs.bold-italic.attributeFont:  -*-courier-bold-o-*-*-*-120-*-*-*-*-iso8859-*
+! XEmacs.bold-italic.attributeFont:  -*-courier-bold-o-*-*-*-120-*-*-*-*-iso8859-*
 ! 
 ! And here is how you would set the background color of the `highlight' face,
 ! but only on the screen named `debugger':
 ! 
-! Emacs*debugger.highlight.attributeBackground:		PaleTurquoise
+! XEmacs*debugger.highlight.attributeBackground:		PaleTurquoise
 ! 
 ! See the NEWS file (C-h n) for a more complete description of the resource
 ! syntax of faces.
@@ -230,29 +230,29 @@ Emacs*toolBarShadowThickness:		2
 ! (Motif uses `fontList' while most other things use `font' - if you don't
 ! know why you probably don't want to.)
 ! 
-Emacs*XmDialogShell*FontList:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
-Emacs*XmTextField*FontList:	-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
-Emacs*XmText*FontList:		-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
-Emacs*XmList*FontList:		-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
+XEmacs*XmDialogShell*FontList:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
+XEmacs*XmTextField*FontList:	-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
+XEmacs*XmText*FontList:		-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
+XEmacs*XmList*FontList:		-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*
 
 ! Font in the Athena dialog boxes.
 ! I think 14-point looks nicer than 12-point.
 ! Some people use 12-point anyway because you get more text, but
 ! there's no purpose at all in doing this for dialog boxes.
 
-Emacs*Dialog*Font:		-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-*
+XEmacs*Dialog*Font:		-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-*
 
 ! Dialog box translations.
 ! =======================
 
 ! This accelerator binds <return> in a dialog box to <activate> on button1
-Emacs*dialog*button1.accelerators:#override\
+XEmacs*dialog*button1.accelerators:#override\
 <KeyPress>Return: ArmAndActivate()\n\
 <KeyPress>KP_Enter: ArmAndActivate()\n\
 Ctrl<KeyPress>m: ArmAndActivate()\n
 
 ! Translations to make the TextField widget behave more like XEmacs
-Emacs*XmTextField.translations: #override\n\
+XEmacs*XmTextField.translations: #override\n\
 	!<Key>osfBackSpace:	delete-previous-character()\n\
 	!<Key>osfDelete:	delete-previous-character()\n\
 	!Ctrl<Key>h: 		delete-previous-character()\n\
@@ -280,7 +280,7 @@ Emacs*XmTextField.translations: #override\n\
 ! ArmAndActivate() for buttons that appear in dialog boxes.  This is
 ! not 100% Motif compliant but the benefits far outweight the
 ! compliancy problem.  
-Emacs*dialog*XmPushButton.translations:#override\n\
+XEmacs*dialog*XmPushButton.translations:#override\n\
     <Btn1Down>:         Arm()\n\
     <Btn1Down>,<Btn1Up>: Activate()\
 			Disarm()\n\
@@ -301,7 +301,7 @@ Emacs*dialog*XmPushButton.translations:#override\n\
 ! ximStyles is a (whitespace or comma-separated) list of XIMStyles in
 ! order of user's preference.  
 ! Choose a subset of the following styles or reorder to taste
-Emacs*ximStyles: XIMPreeditPosition|XIMStatusArea\
+XEmacs*ximStyles: XIMPreeditPosition|XIMStatusArea\
             XIMPreeditPosition|XIMStatusNothing\
             XIMPreeditPosition|XIMStatusNone\
             XIMPreeditNothing|XIMStatusArea\
@@ -312,8 +312,8 @@ Emacs*ximStyles: XIMPreeditPosition|XIMStatusArea\
             XIMPreeditNone|XIMStatusNone
 
 ! XIM Preedit and Status foreground and background
-Emacs*EmacsFrame.ximForeground: black
-Emacs*EmacsFrame.ximBackground: white
+XEmacs*EmacsFrame.ximForeground: black
+XEmacs*EmacsFrame.ximBackground: white
 
 ! XIM fontset (defaults to system fontset default)
-! Emacs*EmacsFrame.FontSet: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*
+! XEmacs*EmacsFrame.FontSet: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*

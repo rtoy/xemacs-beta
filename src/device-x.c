@@ -614,14 +614,22 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     LISP_STRING_TO_EXTERNAL (Vx_emacs_application_class, app_class, Qctext);
   else
     {
-      app_class = (NILP (Vx_emacs_application_class)  &&
-                   have_xemacs_resources_in_xrdb (dpy))
+      if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
+	{
+	  app_class = (NILP (Vx_emacs_application_class)  &&
+		       have_xemacs_resources_in_xrdb (dpy))
 #ifdef INFODOCK
-                  ? "InfoDock"
+	    ? "InfoDock"
 #else
-                  ? "XEmacs"
+	    ? "XEmacs"
 #endif
-                  : "Emacs";
+	    : "Emacs";
+	}
+      else 
+	{
+	  app_class = "XEmacs";
+	}
+
       /* need to update Vx_emacs_application_class: */
       Vx_emacs_application_class = build_string (app_class);
     }
@@ -2096,14 +2104,14 @@ must be made before the connection to the X server is initialized, that is,
 this variable may only be changed before emacs is dumped, or by setting it
 in the file lisp/term/x-win.el.
 
-If this variable is nil before the connection to the X server is first
-initialized (which it is by default), the X resource database will be
-consulted and the value will be set according to whether any resources
-are found for the application class `XEmacs'.  If the user has set any
-resources for the XEmacs application class, the XEmacs process will use
-the application class `XEmacs'.  Otherwise, the XEmacs process will use
-the application class `Emacs' which is backwards compatible to previous
-XEmacs versions but may conflict with resources intended for GNU Emacs.
+If this variable is nil on startup, the application uses `XEmacs'.  Versions
+previous to 21.5.21 examined the resource database and used `XEmacs' if any
+resources beginning with that string existed, and `Emacs' otherwise, for
+greated backward compatibility. However, this has always tended to conflict
+with GNU Emacs, so this behavior is deprecated--in the short term, you can
+restore it in a post-21.5.21 XEmacs by setting the
+USE_EMACS_AS_DEFAULT_APPLICATION_CLASS environment variable to some value,
+but in the medium and long term, you should migrate your X resources.
 */ );
   Vx_emacs_application_class = Qnil;
 

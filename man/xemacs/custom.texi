@@ -2145,42 +2145,54 @@ This section is not written yet.  Try the Lisp Reference Manual:
 @cindex X resources
 @findex x-create-frame
 
-Historically, XEmacs has used the X resource application class @samp{Emacs}
+Historically, XEmacs used the X resource application class @samp{Emacs}
 for its resources.  Unfortunately, GNU Emacs uses the same application
 class, and resources are not compatible between the two Emacsen.  This
-sharing of the application class often leads to trouble if you want to
+sharing of the application class often led to trouble if you wanted to
 run both variants.
 
-Starting with XEmacs 21, XEmacs uses the class @samp{XEmacs} if it finds
-any XEmacs resources in the resource database when the X connection is
-initialized.  Otherwise, it will use the class @samp{Emacs} for
-backwards compatibility.  The variable @code{x-emacs-application-class}
-may be consulted to determine the application class being used.
+XEmacs now uses the X resource application class @samp{XEmacs}.
+Versions since 21.5.21 normally do this without any acrobatics of code,
+but previous versions checked the X resource database for resources
+starting in @samp{XEmacs}, and if none were found, they used
+@samp{Emacs}, for greater backward compatibility.  Currently, we advise
+moving your X resources to using the @samp{XEmacs} class, but if, in the
+short term, you want to stay with the old behavior, you can start XEmacs
+with the environment variable @b{USE_EMACS_AS_DEFAULT_APPLICATION_CLASS}
+set to some value; this will restore the pre-21.5.21 behavior.
 
-The examples in this section assume the application class is @samp{Emacs}.
+The examples in this section assume the application class is
+@samp{XEmacs}. From Lisp, you can examine the
+@code{x-emacs-application-class} variable to determine which is being
+used in the running application. 
 
-The Emacs resources are generally set per-frame. Each Emacs frame can have
-its own name or the same name as another, depending on the name passed to the
-@code{make-frame} function.
+XEmacs' resources are generally set per-frame. Each XEmacs frame can
+have its own name or the same name as another, depending on the name
+passed to the @code{make-frame} function.  Up until 21.5.21, the default
+frame name was @samp{emacs}; since then, it has been @samp{XEmacs}, but
+in the short term the old default can be restored by the
+@b{USE_EMACS_AS_DEFAULT_APPLICATION_CLASS} environment variable
+mentioned above. See the docstring for the Lisp variable
+`default-frame-name'.
 
 You can specify resources for all frames with the syntax:
 
 @example
-Emacs*parameter: value
+XEmacs*parameter: value
 @end example
 @noindent
 
 or
 
 @example
-Emacs*EmacsFrame.parameter:value
+XEmacs*EmacsFrame.parameter:value
 @end example
 @noindent
 
 You can specify resources for a particular frame with the syntax:
 
 @example
-Emacs*FRAME-NAME.parameter: value
+XEmacs*FRAME-NAME.parameter: value
 @end example
 @noindent
 
@@ -2196,58 +2208,58 @@ Emacs*FRAME-NAME.parameter: value
 @node Geometry Resources
 @subsection Geometry Resources
 
-To make the default size of all Emacs frames be 80 columns by 55 lines,
+To make the default size of all XEmacs frames be 80 columns by 55 lines,
 do this:
 
 @example
-Emacs*EmacsFrame.geometry: 80x55
+XEmacs*EmacsFrame.geometry: 80x55
 @end example
 @noindent
 
 To set the geometry of a particular frame named @samp{fred}, do this:
 
 @example
-Emacs*fred.geometry: 80x55
+XEmacs*fred.geometry: 80x55
 @end example
 @noindent
 
 Important! Do not use the following syntax:
 
 @example
-Emacs*geometry: 80x55
+XEmacs*geometry: 80x55
 @end example
 @noindent
 
 You should never use @code{*geometry} with any X application. It does
-not say "make the geometry of Emacs be 80 columns by 55 lines."  It
-really says, "make Emacs and all subwindows thereof be 80x55 in whatever
+not say "make the geometry of XEmacs be 80 columns by 55 lines."  It
+really says, "make XEmacs and all subwindows thereof be 80x55 in whatever
 units they care to measure in."  In particular, that is both telling the
-Emacs text pane to be 80x55 in characters, and telling the menubar pane
+XEmacs text pane to be 80x55 in characters, and telling the menubar pane
 to be 80x55 pixels, which is surely not what you want.
 
 As a special case, this geometry specification also works (and sets the
-default size of all Emacs frames to 80 columns by 55 lines):
+default size of all XEmacs frames to 80 columns by 55 lines):
 
 @example
-Emacs.geometry: 80x55
+XEmacs.geometry: 80x55
 @end example
 @noindent
 
 since that is the syntax used with most other applications (since most
-other applications have only one top-level window, unlike Emacs).  In
+other applications have only one top-level window, unlike XEmacs).  In
 general, however, the top-level shell (the unmapped ApplicationShell
-widget named @samp{Emacs} that is the parent of the shell widgets that
+widget named @samp{XEmacs} that is the parent of the shell widgets that
 actually manage the individual frames) does not have any interesting
 resources on it, and you should set the resources on the frames instead.
 
 The @code{-geometry} command-line argument sets only the geometry of the
-initial frame created by Emacs.
+initial frame created by XEmacs.
 
 A more complete explanation of geometry-handling is
 
 @itemize @bullet
 @item
-The @code{-geometry} command-line option sets the @code{Emacs.geometry}
+The @code{-geometry} command-line option sets the @code{XEmacs.geometry}
 resource, that is, the geometry of the ApplicationShell.
 
 @item
@@ -2261,7 +2273,7 @@ the ApplicationShell.
 
 @item
 For the first frame created, the position of the frame is taken from the
-ApplicationShell (@code{Emacs.geometry}) if it is specified, otherwise
+ApplicationShell (@code{XEmacs.geometry}) if it is specified, otherwise
 from the geometry of the frame.
 
 @item
@@ -2277,15 +2289,15 @@ frames created in various ways.
 @subsection Iconic Resources
 
 Analogous to @code{-geometry}, the @code{-iconic} command-line option
-sets the iconic flag of the ApplicationShell (@code{Emacs.iconic}) and
+sets the iconic flag of the ApplicationShell (@code{XEmacs.iconic}) and
 always applies to the first frame created regardless of its name.
 However, it is possible to set the iconic flag on particular frames (by
-name) by using the @code{Emacs*FRAME-NAME.iconic} resource.
+name) by using the @code{XEmacs*FRAME-NAME.iconic} resource.
 
 @node Resource List
 @subsection Resource List
 
-Emacs frames accept the following resources:
+XEmacs frames accept the following resources:
 
 @table @asis
 @item @code{geometry} (class @code{Geometry}): string
@@ -2382,7 +2394,7 @@ when the connection to the X server goes over a low-bandwidth line
 such as a modem connection.
 @end table
 
-Emacs devices accept the following resources:
+XEmacs devices accept the following resources:
 
 @table @asis
 @item @code{textPointer} (class @code{Cursor}): cursor-name
@@ -2425,14 +2437,14 @@ resources are used to initialize the variables
 The attributes of faces are also per-frame. They can be specified as:
 
 @example
-Emacs.FACE_NAME.parameter: value
+XEmacs.FACE_NAME.parameter: value
 @end example
 @noindent
 
 or
 
 @example
-Emacs*FRAME_NAME.FACE_NAME.parameter: value
+XEmacs*FRAME_NAME.FACE_NAME.parameter: value
 @end example
 @noindent
 
@@ -2447,7 +2459,7 @@ The font of this face.
 The foreground and background colors of this face.
 
 @item @code{attributeBackgroundPixmap} (class @code{AttributeBackgroundPixmap}): file-name
-The name of an @sc{xbm} file (or @sc{xpm} file, if your version of Emacs
+The name of an @sc{xbm} file (or @sc{xpm} file, if your version of XEmacs
 supports @sc{xpm}), to use as a background stipple.
 
 @item @code{attributeUnderline} (class @code{AttributeUnderline}): boolean
@@ -2456,8 +2468,8 @@ Whether text in this face should be underlined.
 
 All text is displayed in some face, defaulting to the face named
 @code{default}.  To set the font of normal text, use
-@code{Emacs*default.attributeFont}. To set it in the frame named
-@code{fred}, use @code{Emacs*fred.default.attributeFont}.
+@code{XEmacs*default.attributeFont}. To set it in the frame named
+@code{fred}, use @code{XEmacs*fred.default.attributeFont}.
 
 These are the names of the predefined faces:
 
@@ -2466,15 +2478,15 @@ These are the names of the predefined faces:
 Everything inherits from this.
 
 @item bold
-If this is not specified in the resource database, Emacs tries to find a
+If this is not specified in the resource database, XEmacs tries to find a
 bold version of the font of the default face.
 
 @item italic
-If this is not specified in the resource database, Emacs tries to find
+If this is not specified in the resource database, XEmacs tries to find
 an italic version of the font of the default face.
 
 @item bold-italic
-If this is not specified in the resource database, Emacs tries to find a
+If this is not specified in the resource database, XEmacs tries to find a
 bold-italic version of the font of the default face.
 
 @item modeline
@@ -2569,11 +2581,11 @@ proper, it does not use the face mechanism for specifying fonts and
 colors: It uses whatever resources are appropriate to the type of widget
 which is used to implement it.
 
-If Emacs was compiled to use only the Lucid Motif-lookalike menu widgets,
+If XEmacs was compiled to use only the Lucid Motif-lookalike menu widgets,
 then one way to specify the font of the menubar would be
 
 @example
-Emacs*menubar*font: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
+XEmacs*menubar*font: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
 @end example
 
 If both the Lucid Motif-lookalike menu widgets and X Font Sets are
@@ -2593,7 +2605,7 @@ resources (eg, menubars) are ignored in favor of the corresponding
 If the Motif library is being used, then one would have to use
 
 @example
-Emacs*menubar*fontList: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
+XEmacs*menubar*fontList: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
 @end example
 
 because the Motif library uses the @code{fontList} resource name instead

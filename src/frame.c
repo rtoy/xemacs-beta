@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "gutter.h"
 #include "menubar.h"
+#include "process.h"		/* for egetenv */
 #include "redisplay.h"
 #include "scrollbar.h"
 #include "toolbar.h"
@@ -492,10 +493,28 @@ See `set-frame-properties', `default-x-frame-plist', and
       CHECK_STRING (name);
       frame_name_is_defaulted = 0;
     }
-  else if (STRINGP (Vdefault_frame_name))
-    name = Vdefault_frame_name;
-  else
-    name = build_string ("emacs");
+  else if (!initialized)
+    {
+      /* We leave Vdefault_frame_name alone here so that it'll remain Qnil
+	 in the dumped executable, and we can choose it at runtime. */
+      name = build_string("XEmacs");
+    }
+  else if (NILP (Vdefault_frame_name)) 
+    { 
+      if (egetenv ("USE_EMACS_AS_DEFAULT_APPLICATION_CLASS"))
+	{
+	  Vdefault_frame_name = build_string ("emacs"); 
+	}
+      else  
+	{
+	  Vdefault_frame_name = build_string ("XEmacs"); 
+	}
+    }
+
+  if (NILP(name) && STRINGP(Vdefault_frame_name))
+    {
+      name = Vdefault_frame_name;
+    }
 
   if (!NILP (Fstring_match (make_string ((const Ibyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
@@ -3815,12 +3834,14 @@ The default name to assign to newly-created frames.
 This can be overridden by arguments to `make-frame'.  This must be a string.
 This is used primarily for picking up X resources, and is *not* the title
 of the frame. (See `frame-title-format'.)
+
+Previous to 21.5.21, this defaulted to `emacs'; since that release, it has
+defaulted to `XEmacs'. In the short term you can restore the old default by
+setting the environment variable USE_EMACS_AS_DEFAULT_APPLICATION_CLASS
+(which does affect the frame name, despite what it's called) to some value
+before starting XEmacs, but this is deprecated.
 */ );
-#ifndef INFODOCK
-  Vdefault_frame_name = build_string ("emacs");
-#else
-  Vdefault_frame_name = build_string ("InfoDock");
-#endif
+  Vdefault_frame_name = Qnil;
 
   DEFVAR_LISP ("default-frame-plist", &Vdefault_frame_plist /*
 Plist of default values for frame creation, other than the first one.
