@@ -34,7 +34,7 @@ main (int argc, char *argv[])
 #include <stdio.h>
 #include <stdlib.h>
 int
-main ()
+main (int argc, char *argv[])
 {
   /* Linux /bin/mail, if it exists, is NOT the Unix v7 mail that
      fakemail depends on!  This causes garbled mail.  Better to

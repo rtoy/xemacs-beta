@@ -1,5 +1,13 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* frame.el (display-mouse-p):
+	Fix warning.
+
+	* cl.el (cl-random-time):
+	Conditionalize on coerce-number as Jerry says it's OK.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* code-init.el (set-eol-detection):
 	* code-init.el (coding-system-default-variable-list):
 	* code-init.el (get-coding-system-variable):
@@ -10,18 +18,6 @@
 
 2004-11-17  Ben Wing  <ben@xemacs.org>
 
-	* cl.el (cl-random-time):
-	Conditionalize on coerce-number as Jerry says it's OK.
-	
-	* font-lock.el (c-font-lock-keywords-2): Removed.
-	* font-lock.el (xemacs-c-font-lock-keywords-2): New.
-	* font-lock.el (c-font-lock-keywords-3): Removed.
-	* font-lock.el (xemacs-c-font-lock-keywords-3): New.
-	Fix naming problem.
-	
-	* frame.el (display-mouse-p):
-	Fix warning.
-	
 	* fill.el:
 	* fill.el (canonically-space-region):
 	* fill.el (fill-region-as-paragraph):

@@ -1186,7 +1186,7 @@ selected frame)."
   (case (framep-on-display display)
     ;; We assume X, NeXTstep, and GTK *always* have a pointing device
     ((x ns gtk) t)
-    (mswindows (> mswindows-num-mouse-buttons 0))
+    (mswindows (> (declare-boundp mswindows-num-mouse-buttons) 0))
     (tty
      (and-fboundp 'gpm-is-supported-p
        (gpm-is-supported-p (display-device display))))
