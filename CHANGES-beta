@@ -1,3 +1,39 @@
+to 21.5.14 "cassava"
+
+This release has a few documentation updates thanks to Steve
+Turnbull, better Makefile handling for modules on MacOSX from
+Andrew Begel and Jerry James.  Also, it is now possible for the
+user to specify the location of the package-index file for PUI to
+use, see `package-get-package-index-file-location'.
+
+Build
+
+-- Autoconf tweaks for building modules on MacOSX - James.
+-- GCC fixes in ellcc.c - James.
+-- Module Makefile fixes - Begel, James.
+-- Fix shadow warning in regex.c - James.
+
+Documentation
+
+-- New TeXinfo node "Searching and Matching" - Turnbull.
+-- New section "Legacy Versions" in FAQ - Turnbull.
+-- New FAQ question Q8.0.1 - Turnbull.
+-- Update split-string specs in "Regexp Search" - Turnbull.
+
+Internals
+
+-- Package index file updated - Koch.
+-- Add some debug checks in file-coding.c - Turnbull.
+
+Lisp API
+
+-- Make error message report the sym checked in
+     `autoload-featurep-protect-autoloads' -- Turnbull.
+-- `split-string' tweaks - Turnbull.
+-- Make the location of the package-index file user customisable - Youngs.
+-- Turn on package-index file PGP verification - Youngs.
+-- Only use message if interactive for functions in replace.el - Josefsson.
+
 to 21.5.13 "cauliflower"
 
 Remember that bug that made return behave as linefeed in a TTY?  It's

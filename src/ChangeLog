@@ -1,3 +1,7 @@
+2003-06-01  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.14 "cassava" is released.
+
 2003-05-20  Jerry James  <james@xemacs.org>
 
 	* regex.c (re_match_2_internal): pos -> charpos to fix shadow warning.

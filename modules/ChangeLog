@@ -1,3 +1,7 @@
+2003-06-01  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.14 "cassava" is released.
+
 2003-05-09  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
 	* common/Makefile.common: Move use of srcdir below its definition.
