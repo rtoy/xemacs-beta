@@ -133,14 +133,9 @@
 ;; #### The second Assert fails (once interpreted, once compiled) on 21.4.9
 ;; with sjt's version of Andy's syntax-text-property-killer patch.
 (with-temp-buffer
-  (if (not (fboundp 'c-mode))
-      ;; #### This whole thing should go inside a macro Skip-Test
-      (let* ((reason "c-mode unavailable")
-	     (count (gethash reason skipped-test-reasons)))
-	;;(message "%S: %S" reason count)
-	(puthash reason (if (null count) 1 (1+ count))
-		 skipped-test-reasons)
-	(Print-Skip "comment and parse-partial-sexp tests" reason))
+  (Skip-Test-Unless (fboundp 'c-mode)
+		    "c-mode unavailable"
+		    "comment and parse-partial-sexp tests"
     (c-mode)
     
     (insert "// comment\n")

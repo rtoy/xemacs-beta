@@ -229,10 +229,8 @@
   (Assert (string= (match-string 1) nil)))
 
 ;; Test word boundaries
-(Assert (= (string-match " \\<a" " a") 0))
-(Assert (= (string-match "a\\> " "a ") 0))
-(Assert (= (string-match " \\ba" " a") 0))
-(Assert (= (string-match "a\\b " "a ") 0))
+(Assert (= (string-match "\\<a" " a") 1))
+(Assert (= (string-match "a\\>" "a ") 0))
 (Assert (= (string-match "\\ba" " a") 1))
 (Assert (= (string-match "a\\b" "a ") 0))
 ;; should work at target boundaries
@@ -240,6 +238,10 @@
 (Assert (= (string-match "a\\>" "a") 0))
 (Assert (= (string-match "\\ba" "a") 0))
 (Assert (= (string-match "a\\b" "a") 0))
+;; Check for weirdness
+(Assert (not (string-match " \\> " "  ")))
+(Assert (not (string-match " \\< " "  ")))
+(Assert (not (string-match " \\b " "  ")))
 ;; but not if the "word" would be on the null side of the boundary!
 (Assert (not (string-match "\\<" "")))
 (Assert (not (string-match "\\>" "")))
@@ -247,7 +249,8 @@
 (Assert (not (string-match "\\> " " ")))
 (Assert (not (string-match "a\\<" "a")))
 (Assert (not (string-match "\\>a" "a")))
-;; Expect these to fail :-(
-(Assert (not (string-match "\\b" "")))
-(Assert (not (string-match " \\b" " ")))
-(Assert (not (string-match "\\b " " ")))
+(Known-Bug-Expect-Failure
+ (Assert (not (string-match "\\b" "")))
+ (Assert (not (string-match "\\b" " ")))
+ (Assert (not (string-match " \\b" " ")))
+ (Assert (not (string-match "\\b " " "))))

@@ -1,3 +1,15 @@
+2002-10-19  Stephen Turnbull  <steve@tleepslib1>
+
+	* automated/test-harness.el (test-harness-expect-bug): New variable.
+	(Known-Bug-Expect-Failure): New macro.
+	(Skip-Test-Unless): New macro.
+	(Check-Message): Use Skip-Test-Unless.
+	(test-harness-from-buffer): Type fixes.
+
+	* automated/regexp-tests.el: Use Known-Bug-Expect-Failure.
+
+	* automated/syntax-tests.el: Use Skip-Test-Unless.
+
 2002-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/regexp-tests.el: Add test for stale subexpr match-data.

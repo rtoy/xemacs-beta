@@ -30,7 +30,13 @@
 ;;; A test suite harness for testing XEmacs.
 ;;; The actual tests are in other files in this directory.
 ;;; Basically you just create files of emacs-lisp, and use the
-;;; Assert, Check-Error, and Check-Message functions to create tests.
+;;; Assert, Check-Error, Check-Message, and Check-Error-Message functions
+;;; to create tests.  See `test-harness-from-buffer' below.
+;;; Don't suppress tests just because they're due to known bugs not yet
+;;; fixed -- use the Known-Bug-Expect-Failure wrapper macro to mark them.
+;;; A lot of the tests we run push limits; suppress Ebola message with the
+;;; Ignore-Ebola wrapper macro.
+;;; 
 ;;; You run the tests using M-x test-emacs-test-file,
 ;;; or $(EMACS) -batch -l .../test-harness.el -f batch-test-emacs file ...
 ;;; which is run for you by the `make check' target in the top-level Makefile.
@@ -135,9 +141,18 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	(pass-stream nil))
     (with-output-to-temp-buffer "*Test-Log*"
       (princ (format "Testing %s...\n\n" filename))
+
+      (defconst test-harness-expect-bug nil)
+
+      (defmacro Known-Bug-Expect-Failure (&rest body)
+	`(let ((test-harness-expect-bug t)) ,@body))
     
       (defun Print-Failure (fmt &rest args)
-	(setq fmt (concat "FAIL: " fmt))
+	(setq fmt (format "%s: %s"
+			  (if test-harness-expect-bug
+			      "KNOWN BUG"
+			    "FAIL")
+			  fmt))
 	(if (noninteractive) (apply #'message fmt args))
 	(princ (concat (apply #'format fmt args) "\n")))
 
@@ -147,9 +162,20 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	     (princ (concat (apply #'format fmt args) "\n"))))
 
       (defun Print-Skip (test reason &optional fmt &rest args)
-	(setq fmt (concat "SKIP: %S.  REASON: %S" fmt))
+	(setq fmt (concat "SKIP: %S BECAUSE %S" fmt))
 	(princ (concat (apply #'format fmt test reason args) "\n")))
 
+      (defmacro Skip-Test-Unless (condition reason description &rest body)
+	"Unless CONDITION is satisfied, skip test BODY.
+REASON is a description of the condition failure, and must be unique (it
+is used as a hash key).  DESCRIPTION describes the tests that were skipped.
+BODY is a sequence of expressions and may contain several tests."
+	`(if (not ,condition)
+	     (let ((count (gethash ,reason skipped-test-reasons)))
+	       (puthash ,reason (if (null count) 1 (1+ count))
+			skipped-test-reasons)
+	       (Print-Skip ,description ,reason))
+	   ,@body))
 
       (defmacro Assert (assertion)
 	`(condition-case error-info
@@ -210,14 +236,9 @@ The output file's name is made by appending `c' to the end of FILENAME."
 
 
       (defmacro Check-Message (expected-message-regexp &rest body)
-	(if (not (fboundp 'defadvice))
-	    ;; #### This whole thing should go inside a macro Skip-Test
-	    (let* ((reason "advice unavailable")
-		   (count (gethash reason skipped-test-reasons)))
-	      ;(message "%S: %S" reason count)
-	      (puthash reason (if (null count) 1 (1+ count))
-		       skipped-test-reasons)
-	      `(Print-Skip ,expected-message-regexp ,reason))
+	(Skip-Test-Unless (fboundp 'defadvice)
+			  "can't defadvice"
+			  expected-message-regexp
 	  (let ((quoted-body (if (= 1 (length body))
 				 `(quote ,(car body))
 			       `(quote (progn ,@body)))))
@@ -307,7 +328,7 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	(maphash (lambda (key value)
 		   (setq reasons
 			 (concat reasons
-				 (format "\n    %d tests skipped because %s"
+				 (format "\n    %d tests skipped because %s."
 					 value key))))
 		 skipped-test-reasons)
 	(when (> (length reasons) 1)
