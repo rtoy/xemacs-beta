@@ -1147,6 +1147,21 @@ remove_waitable_handle (HANDLE h)
 }
 #endif /* HAVE_MSG_SELECT */
 
+/*
+ * Given a lisp process pointer remove the corresponding process handle
+ * from mswindows_waitable_handles if it is in it.  Normally the handle is
+ * removed when the process terminates, but if the lisp process structure
+ * is deleted before the process terminates we must delete the process
+ * handle since it will be invalid and will cause the wait to fail
+ */
+void
+mswindows_unwait_process (Lisp_Process *p)
+{
+#ifndef HAVE_MSG_SELECT
+  remove_waitable_handle (get_nt_process_handle (p));
+#endif /* HAVE_MSG_SELECT */
+}
+
 
 /************************************************************************/
 /*                             Event pump                               */

@@ -1,3 +1,11 @@
+2002-03-14  Mike Alexander  <mta@arbortext.com>
+
+	* event-msw.c (mswindows_unwait_process): New, remove process from
+	wait list
+	* process-nt.c (nt_finalize_process_data): Call
+	mswindows_unwait_process 
+	* console-msw.h: Declare mswindows_unwait_process
+
 2002-03-21  William M. Perry  <wmperry@gnu.org>
 
 	* event-gtk.c (emacs_gtk_force_event_pending): Bogus definition
