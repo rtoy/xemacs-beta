@@ -96,19 +96,23 @@ If a device type, search all devices of that type.
 If `window-system', search all devices on window-system consoles.
 Any other non-nil value means search all devices."
   ;; If we start from the minibuffer window, don't fail to come back to it.
-  (if (window-minibuffer-p (selected-window))
-      (setq minibuf t))
-  ;; Note that, like next-window & previous-window, this behaves a little
-  ;; strangely if the selected window is on an invisible frame: it hits
-  ;; some of the windows on that frame, and all windows on visible frames.
-  (let* ((walk-windows-start (selected-window))
-	 (walk-windows-current walk-windows-start))
-    (while (progn
-	     (setq walk-windows-current
-		   (next-window walk-windows-current minibuf which-frames
-				which-devices))
-	     (funcall function walk-windows-current)
-	     (not (eq walk-windows-current walk-windows-start))))))
+  (let ((arg (cond
+	      ((framep which-frames) which-frames)
+	      ((devicep which-devices) which-devices)
+	      (t nil))))
+    (if (window-minibuffer-p (selected-window arg))
+	(setq minibuf t))
+    ;; Note that, like next-window & previous-window, this behaves a little
+    ;; strangely if the selected window is on an invisible frame: it hits
+    ;; some of the windows on that frame, and all windows on visible frames.
+    (let* ((walk-windows-start (selected-window arg))
+	   (walk-windows-current walk-windows-start))
+      (while (progn
+	       (setq walk-windows-current
+		     (next-window walk-windows-current minibuf which-frames
+				  which-devices))
+	       (funcall function walk-windows-current)
+	       (not (eq walk-windows-current walk-windows-start)))))))
 ;; The old XEmacs definition of the above clause.  It's more correct in
 ;; that it will never hit a window that's already been hit even if you
 ;; do something odd like `delete-other-windows', but has the problem

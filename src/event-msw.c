@@ -3366,9 +3366,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    }
 	  else
 	    {
-	      GetClientRect(hwnd, &rect);
-	      FRAME_PIXWIDTH(frame) = rect.right;
-	      FRAME_PIXHEIGHT(frame) = rect.bottom;
+	      GetClientRect (hwnd, &rect);
+	      FRAME_PIXWIDTH (frame) = rect.right;
+	      FRAME_PIXHEIGHT (frame) = rect.bottom;
 
 	      pixel_to_real_char_size (frame, rect.right, rect.bottom,
 				       &FRAME_MSWINDOWS_CHARWIDTH (frame),
@@ -3406,7 +3406,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
                       FRAME_VISIBLE_P (frame) = 1;
                     }
 
-		  if (!msframe->sizing || mswindows_dynamic_frame_resize)
+		  if (frame->init_finished &&
+		      (!msframe->sizing || mswindows_dynamic_frame_resize))
 		    redisplay ();
 		}
 	    }
@@ -3428,11 +3429,11 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	   efficiency, the code below has about one in 4 billion
 	   probability that the HDC is not recreated, provided that
 	   XEmacs is running sufficiently longer than 52 days. */
-	if (DEVICE_MSWINDOWS_UPDATE_TICK(d) != message_tick)
+	if (DEVICE_MSWINDOWS_UPDATE_TICK (d) != message_tick)
 	  {
-	    DEVICE_MSWINDOWS_UPDATE_TICK(d) = message_tick;
-	    DeleteDC (DEVICE_MSWINDOWS_HCDC(d));
-	    DEVICE_MSWINDOWS_HCDC(d) = CreateCompatibleDC (NULL);
+	    DEVICE_MSWINDOWS_UPDATE_TICK (d) = message_tick;
+	    DeleteDC (DEVICE_MSWINDOWS_HCDC (d));
+	    DEVICE_MSWINDOWS_HCDC (d) = CreateCompatibleDC (NULL);
 	  }
       }
       break;
@@ -3507,8 +3508,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
     case WM_HSCROLL:
       {
 	/* Direction of scroll is determined by scrollbar instance. */
-	int code = (int) LOWORD(wParam);
-	int pos = (short int) HIWORD(wParam);
+	int code = (int) LOWORD (wParam);
+	int pos = (short int) HIWORD (wParam);
 	HWND hwndScrollBar = (HWND) lParam;
 	struct gcpro gcpro1, gcpro2;
 

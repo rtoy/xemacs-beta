@@ -164,10 +164,6 @@ Boston, MA 02111-1307, USA.  */
 
   WINDOW_SLOT (line_cache_last_updated)
 
-  /* If redisplay in this window goes beyond this buffer position,
-     must run the redisplay-end-trigger-functions.  */
-  WINDOW_SLOT (redisplay_end_trigger)
-
   /*** Non-specifier vars of window and window config ***/
 
   /* Non-nil means window is marked as dedicated.  */

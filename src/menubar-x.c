@@ -389,17 +389,21 @@ protected_menu_item_descriptor_to_widget_value (Lisp_Object desc,
 						int filter_p)
 {
   struct menu_item_descriptor_to_widget_value midtwv;
+  int depth = internal_bind_int (&in_menu_callback, 1);
+  Lisp_Object retval;
 
   midtwv.desc = desc;
   midtwv.menu_type = menu_type;
   midtwv.deep_p = deep_p;
   midtwv.filter_p = filter_p;
 
-  if (UNBOUNDP
-      (event_stream_protect_modal_loop
-       ("Error during menu callback",
-	protected_menu_item_descriptor_to_widget_value_1, &midtwv,
-	UNINHIBIT_QUIT)))
+  retval = event_stream_protect_modal_loop
+    ("Error during menu callback",
+     protected_menu_item_descriptor_to_widget_value_1, &midtwv,
+     UNINHIBIT_QUIT);
+  unbind_to (depth);
+
+  if (UNBOUNDP (retval))
     return 0;
 
   return midtwv.wv;

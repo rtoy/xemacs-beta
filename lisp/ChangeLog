@@ -1,3 +1,22 @@
+2003-02-09  Ben Wing  <ben@xemacs.org>
+
+	* window.el (walk-windows):
+	walk-windows was broken when a frame was given to WHICH-FRAMES.
+	it would loop forever.  The FSF version fixes this but i didn't
+	sync to them because (a) it conses (bad for lazy-lock), (b) it
+	calls select-window.
+
+2003-02-09  Ben Wing  <ben@xemacs.org>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-form):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	Review carefully and sync up to 20.7 except for areas as noted.
+
 2003-02-07  Ben Wing  <ben@xemacs.org>
 
 	* hyper-apropos.el:

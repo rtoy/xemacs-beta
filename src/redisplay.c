@@ -488,21 +488,7 @@ Lisp_Object Voverlay_arrow_position;
 /* String to display for the arrow.  */
 Lisp_Object Voverlay_arrow_string;
 
-Lisp_Object Vwindow_size_change_functions;
-Lisp_Object Vwindow_scroll_functions;
-Lisp_Object Qredisplay_end_trigger_functions, Vredisplay_end_trigger_functions;
-
 Lisp_Object Qbuffer_list_changed_hook, Vbuffer_list_changed_hook;
-
-
-#define INHIBIT_REDISPLAY_HOOKS  /* #### Until we've thought about
-				    this more. */
-#ifndef INHIBIT_REDISPLAY_HOOKS
-/* #### Chuck says: I think this needs more thought.
-   Think about this for 19.14. */
-Lisp_Object Vpre_redisplay_hook, Vpost_redisplay_hook;
-Lisp_Object Qpre_redisplay_hook, Qpost_redisplay_hook;
-#endif /* INHIBIT_REDISPLAY_HOOKS */
 
 static Fixnum last_display_warning_tick;
 static Fixnum display_warning_tick;
@@ -6591,53 +6577,19 @@ redisplay_windows (Lisp_Object window, int skip_selected)
     }
 }
 
-static int
-call_redisplay_end_triggers (struct window *w, void *closure)
-{
-  Charbpos lrpos = w->last_redisplay_pos;
-  w->last_redisplay_pos = 0;
-  if (!NILP (w->buffer)
-      && !NILP (w->redisplay_end_trigger)
-      && lrpos > 0)
-    {
-      Charbpos pos;
-
-      if (MARKERP (w->redisplay_end_trigger)
-	  && XMARKER (w->redisplay_end_trigger)->buffer != 0)
-	pos = marker_position (w->redisplay_end_trigger);
-      else if (INTP (w->redisplay_end_trigger))
-	pos = XINT (w->redisplay_end_trigger);
-      else
-	{
-	  w->redisplay_end_trigger = Qnil;
-	  return 0;
-	}
-
-      if (lrpos >= pos)
-	{
-	  Lisp_Object window = wrap_window (w);
-
-	  va_run_hook_with_args_in_buffer_trapping_problems
-	    ("Error in redisplay end trigger",
-	     XBUFFER (w->buffer),
-	     Qredisplay_end_trigger_functions,
-	     2, window,
-	     w->redisplay_end_trigger,
-	     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-	  w->redisplay_end_trigger = Qnil;
-	}
-    }
-
-  return 0;
-}
-
-/* Ensure that all windows on the given frame are correctly displayed. */
+/* Ensure that all windows on the given frame are correctly displayed.
+   Return non-zero if pre-empted. */
 
 int
 redisplay_frame (struct frame *f, int preemption_check)
 {
   struct device *d = XDEVICE (f->device);
   int depth;
+
+  assert (f->init_finished);
+
+  if (FRAME_STREAM_P (f)) /* nothing to do */
+    return 0;
 
   if (preemption_check
       && !DEVICE_IMPL_FLAG (d, XDEVIMPF_DONT_PREEMPT_REDISPLAY))
@@ -6800,7 +6752,6 @@ redisplay_frame (struct frame *f, int preemption_check)
   /* Allow frame size changes to occur again. */
   exit_redisplay_critical_section (depth);
 
-  map_windows (f, call_redisplay_end_triggers, 0);
   return 0;
 }
 
@@ -7003,24 +6954,8 @@ redisplay_no_pre_idle_hook (void)
 	 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
       last_display_warning_tick = display_warning_tick;
     }
-  /* The run_hook_trapping_problems functions are smart enough not
-     to do any evalling if the hook function is empty, so there
-     should not be any significant time loss. */
-#ifndef INHIBIT_REDISPLAY_HOOKS
-  run_hook_trapping_problems
-    ("Error in pre-redisplay-hook",
-     Qpre_redisplay_hook,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-#endif /* INHIBIT_REDISPLAY_HOOKS */
 
   redisplay_without_hooks ();
-
-#ifndef INHIBIT_REDISPLAY_HOOKS
-  run_hook_trapping_problems
-    ("Error in post-redisplay-hook",
-     Qpost_redisplay_hook,
-     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-#endif /* INHIBIT_REDISPLAY_HOOKS */
 }
 
 Lisp_Object
@@ -9187,6 +9122,9 @@ Ensure that all minibuffers are correctly showing the echo area.
       struct device *d = XDEVICE (XCAR (devcons));
       Lisp_Object frmcons;
 
+      if (DEVICE_STREAM_P (d))
+	continue;
+
       DEVICE_FRAME_LOOP (frmcons, d)
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
@@ -9213,8 +9151,6 @@ Ensure that all minibuffers are correctly showing the echo area.
 	      redisplay_window (window, 0);
 	      exit_redisplay_critical_section (depth);
 	      MAYBE_DEVMETH (d, frame_output_end, (f));
-
-	      call_redisplay_end_triggers (XWINDOW (window), 0);
 	    }
 	}
     }
@@ -9354,7 +9290,10 @@ FRAME defaults to the selected frame if omitted.
 */
   (frame))
 {
-  redisplay_redraw_cursor (decode_frame (frame), 1);
+  struct frame *f = decode_frame (frame);
+
+  if (!FRAME_STREAM_P (f))
+    redisplay_redraw_cursor (f, 1);
   return Qnil;
 }
 
@@ -9699,13 +9638,8 @@ void
 syms_of_redisplay (void)
 {
   DEFSYMBOL (Qcursor_in_echo_area);
-#ifndef INHIBIT_REDISPLAY_HOOKS
-  DEFSYMBOL (Qpre_redisplay_hook);
-  DEFSYMBOL (Qpost_redisplay_hook);
-#endif /* INHIBIT_REDISPLAY_HOOKS */
   DEFSYMBOL (Qdisplay_warning_buffer);
   DEFSYMBOL (Qbar_cursor);
-  DEFSYMBOL (Qredisplay_end_trigger_functions);
   DEFSYMBOL (Qtop_bottom);
   DEFSYMBOL (Qbuffer_list_changed_hook);
 
@@ -9856,18 +9790,6 @@ Non-nil means put cursor in minibuffer, at end of any message there.
 */ );
   Vbar_cursor = Qnil;
 
-#ifndef INHIBIT_REDISPLAY_HOOKS
-  xxDEFVAR_LISP ("pre-redisplay-hook", &Vpre_redisplay_hook /*
-Function or functions to run before every redisplay.
-*/ );
-  Vpre_redisplay_hook = Qnil;
-
-  xxDEFVAR_LISP ("post-redisplay-hook", &Vpost_redisplay_hook /*
-Function or functions to run after every redisplay.
-*/ );
-  Vpost_redisplay_hook = Qnil;
-#endif /* INHIBIT_REDISPLAY_HOOKS */
-
   DEFVAR_LISP ("buffer-list-changed-hook", &Vbuffer_list_changed_hook /*
 Function or functions to call when a frame's buffer list has changed.
 This is called during redisplay, before redisplaying each frame.
@@ -9890,32 +9812,6 @@ will be displayed when the binding no longer applies.
   /* reset to 0 by startup.el after the splash screen has displayed.
      This way, the warnings don't obliterate the splash screen. */
   inhibit_warning_display = 1;
-
-  DEFVAR_LISP ("window-size-change-functions",
-               &Vwindow_size_change_functions /*
-Not currently implemented.
-Functions called before redisplay, if window sizes have changed.
-The value should be a list of functions that take one argument.
-Just before redisplay, for each frame, if any of its windows have changed
-size since the last redisplay, or have been split or deleted,
-all the functions in the list are called, with the frame as argument.
-*/ );
-  Vwindow_size_change_functions = Qnil;
-
-  DEFVAR_LISP ("window-scroll-functions", &Vwindow_scroll_functions /*
-Not currently implemented.
-Functions to call before redisplaying a window with scrolling.
-Each function is called with two arguments, the window
-and its new display-start position.  Note that the value of `window-end'
-is not valid when these functions are called.
-*/ );
-  Vwindow_scroll_functions = Qnil;
-
-  DEFVAR_LISP ("redisplay-end-trigger-functions",
-               &Vredisplay_end_trigger_functions /*
-See `set-window-redisplay-end-trigger'.
-*/ );
-  Vredisplay_end_trigger_functions = Qnil;
 
   DEFVAR_BOOL ("column-number-start-at-one", &column_number_start_at_one /*
 *Non-nil means column display number starts at 1.

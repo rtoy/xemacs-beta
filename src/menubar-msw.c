@@ -738,6 +738,8 @@ Lisp_Object
 mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
 {
   struct handle_wm_initmenu z;
+  int depth = internal_bind_int (&in_menu_callback, 1);
+  Lisp_Object retval;
 
   z.menu = hmenu;
   z.frame = frm;
@@ -748,9 +750,12 @@ mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
 
      #### This is bogus because by the very act of calling
      event_stream_protect_modal_loop(), we disable event retrieval! */
-  return event_stream_protect_modal_loop ("Error during menu handling",
-					  unsafe_handle_wm_initmenupopup, &z,
-					  UNINHIBIT_QUIT);
+  retval = event_stream_protect_modal_loop ("Error during menu handling",
+					    unsafe_handle_wm_initmenupopup, &z,
+					    UNINHIBIT_QUIT);
+  unbind_to (depth);
+
+  return retval;
 }
 
 Lisp_Object

@@ -1739,34 +1739,6 @@ NCOL should be zero or positive.
   return ncol;
 }
 
-#if 0 /* bogus FSF crock */
-
-DEFUN ("window-redisplay-end-trigger",
-	 Fwindow_redisplay_end_trigger, 0, 1, 0, /*
-Return WINDOW's redisplay end trigger value.
-See `set-window-redisplay-end-trigger' for more information.
-*/
-	 (window))
-{
-  return decode_window (window)->redisplay_end_trigger;
-}
-
-DEFUN ("set-window-redisplay-end-trigger",
-	 Fset_window_redisplay_end_trigger, 2, 2, 0, /*
-Set WINDOW's redisplay end trigger value to VALUE.
-VALUE should be a buffer position (typically a marker) or nil.
-If it is a buffer position, then if redisplay in WINDOW reaches a position
-beyond VALUE, the functions in `redisplay-end-trigger-functions' are called
-with two arguments: WINDOW, and the end trigger value.
-Afterwards the end-trigger value is reset to nil.
-*/
-	 (window, value))
-{
-  return (decode_window (window)->redisplay_end_trigger = value);
-}
-
-#endif /* 0 */
-
 DEFUN ("window-pixel-edges", Fwindow_pixel_edges, 0, 1, 0, /*
 Return a list of the pixel edge coordinates of WINDOW.
 The returned list is of the form (LEFT TOP RIGHT BOTTOM),
@@ -5404,10 +5376,6 @@ syms_of_window (void)
   DEFSUBR (Fset_window_hscroll);
   DEFSUBR (Fmodeline_hscroll);
   DEFSUBR (Fset_modeline_hscroll);
-#if 0 /* bogus FSF crock */
-  DEFSUBR (Fwindow_redisplay_end_trigger);
-  DEFSUBR (Fset_window_redisplay_end_trigger);
-#endif
   DEFSUBR (Fwindow_pixel_edges);
   DEFSUBR (Fwindow_text_area_pixel_edges);
   DEFSUBR (Fwindow_point);

@@ -1278,7 +1278,9 @@ redisplay_unmap_subwindows (struct frame* f, int x, int y, int width, int height
  Potentially subwindows from the area in the box defined by the given
  parameters.
  ****************************************************************************/
-void redisplay_unmap_subwindows_maybe (struct frame* f, int x, int y, int width, int height)
+void
+redisplay_unmap_subwindows_maybe (struct frame *f, int x, int y, int width,
+				  int height)
 {
   if (!NILP (XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))))
     {
@@ -1286,8 +1288,9 @@ void redisplay_unmap_subwindows_maybe (struct frame* f, int x, int y, int width,
     }
 }
 
-static void redisplay_unmap_subwindows_except_us (struct frame* f, int x, int y, int width,
-						  int height, Lisp_Object subwindow)
+static void
+redisplay_unmap_subwindows_except_us (struct frame *f, int x, int y, int width,
+				      int height, Lisp_Object subwindow)
 {
   if (!NILP (XWEAK_LIST_LIST (FRAME_SUBWINDOW_CACHE (f))))
     {

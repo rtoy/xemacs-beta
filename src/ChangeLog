@@ -1,3 +1,54 @@
+2003-02-09  Ben Wing  <ben@xemacs.org>
+
+	* console-stream.c:
+	* console-stream.c (stream_clear_region):
+	* console-stream.c (console_type_create_stream):
+	Abort when any attempts to output a stream console are made.
+	Should be caught sooner.
+	
+	* event-msw.c (mswindows_wnd_proc):
+	Don't redisplay() during sizing when the frame has not yet been
+	initialized completely.
+	
+	* event-stream.c (Fnext_event):
+	* menubar-msw.c (mswindows_handle_wm_initmenupopup):
+	* menubar-x.c (protected_menu_item_descriptor_to_widget_value):
+	* menubar.c:
+	* menubar.h:
+	Restore in_menu_callback.  Bind it in menubar-{msw,x}.c when
+	calling filter functions and the like.  Conditionalize on it, not
+	in_modal_loop, when issuing error in `next-event', otherwise we
+	bite the dust immediately -- event-msw.c purposely calls
+	Fnext_event() in a modal loop, and knows what it's doing.
+	
+	* redisplay-output.c (redisplay_unmap_subwindows_maybe):
+	* redisplay-output.c (redisplay_unmap_subwindows_except_us):
+	Formatting fixes.
+	
+	* redisplay.c:
+	* redisplay.c (redisplay_frame):
+	* redisplay.c (Fredisplay_echo_area):
+	* redisplay.c (redisplay_no_pre_idle_hook):
+	* redisplay.c (syms_of_redisplay):
+	* redisplay.c (vars_of_redisplay):
+	* window.c (Fwindow_pixel_edges):
+	* window.c (syms_of_window):
+	* winslots.h:
+	Delete lots of carcasses of attempts to add redisplay support for
+	font-lock -- `pre/post-redisplay-hook', unimplemented junk from
+	FSF (redisplay-end-trigger, `window-scroll-functions',
+	`window-size-change-functions').  If we want to port some
+	redisplay support from FSF, port the `fontified' property.
+
+	* redisplay.c (redisplay_frame):
+	Put in a check here (as well as redisplay_device()) for a stream
+	frame.  We can get here directly through Lisp fun
+	`redisplay-frame'.  Abort if frame not initialized.
+	
+	* redisplay.c (Fredisplay_echo_area):
+	* redisplay.c (Fforce_cursor_redisplay):
+	Check for stream frames/devices.
+
 2003-02-09  Steve Youngs  <youngs@xemacs.org>
 
 	* s/darwin.h (DLSYM_NEEDS_UNDERSCORE): Define it.

@@ -1,6 +1,6 @@
 /* Stream device functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -216,12 +216,44 @@ stream_eol_cursor_width (void)
   return 1;
 }
 
+/* We used to try and check for redisplaying on stream devices (e.g. in
+   redisplay_device(), and beg out if so.  However, we didn't always manage
+   completely.  Now we do manage completely, and to verify this we abort if
+   we try to display a stream device.  This might fix some crashes I've
+   been getting in pdump -- the only difference between crash and non-crash
+   is a few changes to the redisplay critical-section handling. */
+
+static void
+stream_window_output_begin (struct window *w)
+{
+  abort ();
+}
+
+static void
+stream_window_output_end (struct window *w)
+{
+  abort ();
+}
+
+static void
+stream_frame_output_begin (struct frame *f)
+{
+  abort ();
+}
+
+static void
+stream_frame_output_end (struct frame *f)
+{
+  abort ();
+}
+
 static void
 stream_output_display_block (struct window *w, struct display_line *dl,
 			     int block, int start, int end,
 			     int start_pixpos, int cursor_start,
 			     int cursor_width, int cursor_height)
 {
+  abort ();
 }
 
 static void
@@ -230,6 +262,7 @@ stream_clear_region (Lisp_Object window, struct device* d, struct frame * f,
 		     int width, int height, Lisp_Object fcolor,
 		     Lisp_Object bcolor, Lisp_Object background_pixmap)
 {
+  abort ();
 }
 
 static int
@@ -278,12 +311,16 @@ console_type_create_stream (void)
   CONSOLE_HAS_METHOD (stream, init_frame_1);
 
   /* redisplay methods */
+  CONSOLE_HAS_METHOD (stream, text_width);
   CONSOLE_HAS_METHOD (stream, left_margin_width);
   CONSOLE_HAS_METHOD (stream, right_margin_width);
-  CONSOLE_HAS_METHOD (stream, text_width);
-  CONSOLE_HAS_METHOD (stream, output_display_block);
   CONSOLE_HAS_METHOD (stream, divider_height);
   CONSOLE_HAS_METHOD (stream, eol_cursor_width);
+  CONSOLE_HAS_METHOD (stream, window_output_begin);
+  CONSOLE_HAS_METHOD (stream, window_output_end);
+  CONSOLE_HAS_METHOD (stream, frame_output_begin);
+  CONSOLE_HAS_METHOD (stream, frame_output_end);
+  CONSOLE_HAS_METHOD (stream, output_display_block);
   CONSOLE_HAS_METHOD (stream, clear_region);
   CONSOLE_HAS_METHOD (stream, flash);
   CONSOLE_HAS_METHOD (stream, ring_bell);

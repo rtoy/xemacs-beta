@@ -2243,9 +2243,13 @@ The returned event will be one of the following types:
      for a timeout event, which will still get retrieved in such a case.
      However, the code to error in such a case has already been present for
      a long time without obvious problems so leaving it in isn't so
-     bad. --ben */
-  if (in_modal_loop)
-    invalid_operation ("Attempt to call next-event inside modal loop",
+     bad.
+
+     #### I used to conditionalize on in_modal_loop but that fails utterly
+     because event-msw.c specifically calls Fnext_event() inside of a modal
+     loop to clear the dispatch queue. --ben */
+  if (in_menu_callback)
+    invalid_operation ("Attempt to call next-event inside menu callback",
 		       Qunbound);
 
   depth = begin_dont_check_for_quit ();

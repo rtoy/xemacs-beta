@@ -67,6 +67,7 @@ Lisp_Object command_builder_operate_menu_accelerator (struct command_builder
 extern int popup_menu_up_p;
 extern int menubar_show_keybindings;
 extern int popup_menu_titles;
+extern int in_menu_callback;
 
 #endif /* HAVE_MENUBARS */
 
