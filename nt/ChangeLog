@@ -1,3 +1,36 @@
+2002-12-16  Ben Wing  <ben@xemacs.org>
+
+	* README (NOTE):
+	* config.inc.samp:
+	* config.inc.samp (PACKAGE_PREFIX):
+	* config.inc.samp (GTK_DIR):
+	* config.inc.samp (COMPFACE_DIR):
+	* config.inc.samp (USE_FASTCALL):
+	* config.inc.samp (HAVE_VC6): New.
+	* config.inc.samp (PROFILE_SUPPORT):
+	* config.inc.samp (DEBUG_XEMACS):
+	* config.inc.samp (USE_PORTABLE_DUMPER):
+	* config.inc.samp (USE_KKCC): New.
+	* config.inc.samp (USE_UNION_TYPE): New.
+	* xemacs.dsp (CFG):
+	* xemacs.mak (HAVE_VC6):
+	* xemacs.mak (ERROR_CHECK_ALL): New.
+	* xemacs.mak (CPLUSPLUS_COMPILE): New.
+	* xemacs.mak (USE_KKCC): New.
+	* xemacs.mak (USE_UNION_TYPE): New.
+	* xemacs.mak (USE_PORTABLE_DUMPER):
+	* xemacs.mak (PROFILE_FLAGS):
+	* xemacs.mak (CPLUSPLUS_COMPILE_FLAGS): New.
+	* xemacs.mak (DUMPER_DEFINES):
+	* xemacs.mak (KKCC_DEFINES): New.
+	* xemacs.mak (DEFINES):
+	* xemacs.mak (LASTFILE_FLAGS):
+	* xemacs.mak (TEMACS_CPP_FLAGS_NO_CFLAGS):
+	* xemacs.mak (OS):
+
+	Support C++ compilation, KKCC compilation.  See src/ChangeLog.
+	Add stuff about the evilness of USE_UNION_TYPE.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.

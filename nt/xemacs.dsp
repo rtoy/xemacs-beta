@@ -58,7 +58,7 @@ CFG=xemacs - Win32 Debug
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "..\src"
 # PROP Intermediate_Dir "obj"
-# PROP Cmd_Line "NMAKE /k /f xemacs.mak"
+# PROP Cmd_Line "NMAKE /f xemacs.mak"
 # PROP Rebuild_Opt "/a"
 # PROP Target_File "..\src\xemacs.exe"
 # PROP Bsc_Name "..\src\temacs.bsc"

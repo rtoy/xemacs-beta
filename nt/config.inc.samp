@@ -1,11 +1,15 @@
 # -*- mode: makefile -*-
 
 ############################################################################
+#                            Install options                               #
+############################################################################
 
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 
 PACKAGE_PREFIX=c:\Program Files\XEmacs
 
+############################################################################
+#                      Compiled-in features: basic                         #
 ############################################################################
 
 # Multilingual support.
@@ -26,6 +30,8 @@ X11_DIR=
 HAVE_GTK=0
 GTK_DIR=
 
+############################################################################
+#                  Compiled-in features: graphics formats                  #
 ############################################################################
 
 # Set this to enable XPM support (virtually mandatory), and specify
@@ -56,12 +62,15 @@ HAVE_XFACE=0
 COMPFACE_DIR=
 
 ############################################################################
+#                            Build settings                                #
+############################################################################
 
 # Set this to specify the location of makeinfo. (If not set, XEmacs will
-# attempt to use its built-in texinfo support when building info files.)
-MAKEINFO=c:\src\texinfo-4.0\makeinfo\makeinfo.exe
-
-############################################################################
+# attempt to use its built-in, much slower texinfo support when building
+# info files.) If you are building XEmacs yourself, you probably have
+# Cygwin sitting around already.  If not, you should.  Cygwin provides a
+# `makeinfo.exe' in /usr/bin/makeinfo.
+MAKEINFO=c:\cygwin\usr\bin\makeinfo.exe
 
 # Set this to turn on optimization when compiling.
 OPTIMIZED_BUILD=0
@@ -71,13 +80,16 @@ OPTIMIZED_BUILD=0
 # #### Change to 1 when I check in the ws with support for fastcall
 USE_FASTCALL=0
 
-# Set this to compile in support for profiling.  If you want line-by-line
-# profiling under VC++, you also need debugging turned on.
-PROFILE_SUPPORT=0
+# True if running VC++ 6 or later.
+HAVE_VC6=1
 
 ############################################################################
 #                          Development options                             #
 ############################################################################
+
+# Set this to compile in support for profiling.  If you want line-by-line
+# profiling under VC++, you also need debugging turned on.
+PROFILE_SUPPORT=0
 
 # Set this to enable debug code in XEmacs that doesn't slow things down,
 # and to add debugging information to the executable. (The code that's
@@ -87,14 +99,16 @@ PROFILE_SUPPORT=0
 # variable, below.)
 DEBUG_XEMACS=1
 
-# True if running VC++ 6 or later.
-HAVE_VC6=1
-
 # Uncomment this to turn off or on the error-checking code, which adds
 # abundant internal error checking (and slows things down a lot).  Normally,
 # leave this alone -- it will be on for beta builds and off for release
 # builds.
 # ERROR_CHECK_ALL=0
+
+# Uncomment this to turn on or off whether we compile source files as C++
+# files.  This turns on additional error checking of various sorts.  Normally,
+# leave it alone -- it will be on when ERROR_CHECK_ALL is on.
+# CPLUSPLUS_COMPILE=0
 
 # Set this to speed up building, for development purposes.
 QUICK_BUILD=0
@@ -111,17 +125,31 @@ DEPEND=0
 # routines, instead of the older "unexec" routines in unexnt.c.
 USE_PORTABLE_DUMPER=1
 
-# Set this to get improved type checking of Lisp_Objects -- with this
-# setting, they're declared as unions instead of ints, and so places where
-# a Lisp_Object is mistakenly passed to a routine expecting an int (or
-# vice-versa), or a check is written `if (foo)' instead of `if (!NILP
-# (foo))', will be flagged as errors. (All of these do NOT lead to the
-# expected results!  Qnil is not represented as 0 (so if (foo) will
-# *ALWAYS* be true for a Lisp_Object), the representation of an integer as
-# a Lisp_Object is not just the integer's numeric value (but usually 2x the
-# integer +/- 1).
+# Set this to use new experimental GC algorithms.
+USE_KKCC=0
 
-# Some also claim it simplifies debugging, but I don't really believe them.
-# Definitely don't do your normal builds this way, because you may well get
-# less efficiency, and could conceivably trigger compiler bugs (has definitely happened, many times, with gcc).
-# USE_UNION_TYPE=1
+# Set this to turn on the use of the union type, which gets you improved
+# type checking of Lisp_Objects -- they're declared as unions instead of
+# ints, and so places where a Lisp_Object is mistakenly passed to a routine
+# expecting an int (or vice-versa), or a check is written `if (foo)'
+# instead of `if (!NILP (foo))', will be flagged as errors. (All of these
+# do NOT lead to the expected results!  Qnil is not represented as 0 [so if
+# (foo) will *ALWAYS* be true for a Lisp_Object], and the representation of
+# an integer as a Lisp_Object is not just the integer's numeric value, but
+# usually 2x the integer +/- 1.)
+
+# There used to be a claim that it simplified debugging.  There may have
+# been a grain of truth to this pre-19.8, when there was no lrecord type
+# and all objects had a separate type appearing in the tag.  Nowadays,
+# however, there is no debugging gain, and in fact frequent debugging *LOSS*,
+# since many debuggers don't handle unions very well, and usually there is
+# no way to directly specify a union from a debugging prompt.
+
+# Furthermore, release builds should *NOT* be done this way because (a) you
+# may get less efficiency, with compilers that can't figure out how to
+# optimize the union into a machine word; (b) even worse, the union type
+# often triggers compiler bugs, especially when combined with Mule and
+# error-checking.  This has been the case with various times using GCC,
+# *AND CURRENTLY HAPPENS WITH VC++*, at least when using pdump.  Therefore,
+# be warned!
+USE_UNION_TYPE=0

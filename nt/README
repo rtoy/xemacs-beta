@@ -281,13 +281,19 @@ very useful unless you build a debug version of XEmacs:
     MS Developer Studio.  Build and debug your XEmacs this way.
 
 3.  To display the contents of a lisp variable, type Shift-F9 (or use the
-    menu) to bring up the QuickWatch window, type debug_print(variable) and
-    click Recalculate. The output will appear in a console window, as well
-    as in the Debug window in MS Developer Studio.
+    menu) to bring up the QuickWatch window, type dp(variable) and click
+    Recalculate. The output will appear in a console window, as well as in
+    the Debug window in MS Developer Studio.
 
-4.  To view Lisp variables in the "Watch" window wrap the variable in one of
+4.  To display a current Lisp backtrace, type db() in the QuickWatch window,
+    as in the previous item.
+
+5.  To view Lisp variables in the "Watch" window wrap the variable in one of
     the helper functions from the file src\console-msw.c, for example type
     DSTRING(variable) in the "Watch" window to inspect a Lisp string.
+
+6.  For further information on debugging XEmacs, see the item
+    `How to Debug an XEmacs problem with a debugger' in the XEmacs FAQ.
 
 
 * Known Problems

@@ -188,9 +188,28 @@ DEBUG_XEMACS=0
 !if !defined(HAVE_VC6)
 HAVE_VC6=1
 !endif
+
 !if !defined(ERROR_CHECK_ALL)
-# Turn off when not a beta XEmacs.
+!if "$(emacs_is_beta)" != ""
 ERROR_CHECK_ALL=1
+!else
+ERROR_CHECK_ALL=0
+!endif
+!endif
+
+!if !defined(CPLUSPLUS_COMPILE)
+!if $(ERROR_CHECK_ALL)
+CPLUSPLUS_COMPILE=1
+!else
+CPLUSPLUS_COMPILE=0
+!endif
+!endif
+
+!if !defined(USE_KKCC)
+USE_KKCC=0
+!endif
+!if !defined(USE_UNION_TYPE)
+USE_UNION_TYPE=0
 !endif
 !if !defined(QUICK_BUILD)
 QUICK_BUILD=0
@@ -204,14 +223,8 @@ DEPEND=0
 !if !defined(USE_PORTABLE_DUMPER)
 USE_PORTABLE_DUMPER=1
 !endif
-!if !defined(USE_UNION_TYPE)
-USE_UNION_TYPE=0
-!endif
 !if !defined(USE_MINITAR)
 USE_MINITAR=$(HAVE_ZLIB)
-!endif
-!if !defined(USE_KKCC)
-USE_KKCC=1
 !endif
 
 # A little bit of adhockery. Default to use system malloc and
@@ -430,6 +443,12 @@ PROFILE_FLAGS=-profile
 PROFILE_FLAGS=
 !endif
 
+!if $(CPLUSPLUS_COMPILE)
+CPLUSPLUS_COMPILE_FLAGS=-TP
+!else
+CPLUSPLUS_COMPILE_FLAGS=
+!endif
+
 CFLAGS_NO_OPT=-nologo -W3 -DSTRICT $(DEBUG_FLAGS_COMPILE)
 
 CFLAGS_NO_LIB=$(CFLAGS_NO_OPT) $(OPTFLAGS)
@@ -527,6 +546,10 @@ UNION_DEFINES=-DUSE_UNION_TYPE
 DUMPER_DEFINES=-DPDUMP
 !endif
 
+!if $(USE_KKCC)
+KKCC_DEFINES=-DUSE_KKCC
+!endif
+
 !if $(USE_SYSTEM_MALLOC)
 MALLOC_DEFINES=-DSYSTEM_MALLOC
 !else
@@ -548,8 +571,8 @@ PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
 INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(NT)\inc -I$(SRC) -I$(LWLIB_SRCDIR)
 
 DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) $(UNION_DEFINES) \
-	$(DUMPER_DEFINES) $(MALLOC_DEFINES) $(QUICK_DEFINES) \
-	$(ERROR_CHECK_DEFINES) \
+	$(DUMPER_DEFINES) $(KKCC_DEFINES) $(MALLOC_DEFINES) \
+	$(QUICK_DEFINES) $(ERROR_CHECK_DEFINES) \
 	-DWIN32_LEAN_AND_MEAN -DWIN32_NATIVE -Demacs \
 	-DHAVE_CONFIG_H $(PROGRAM_DEFINES) $(PATH_DEFINES)
 
@@ -664,7 +687,7 @@ LIB_SRC_TOOLS = \
 
 LASTFILE=$(OUTDIR)\lastfile.lib
 LASTFILE_SRC=$(SRC)
-LASTFILE_FLAGS=$(CFLAGS) $(INCLUDES) -Fo$@ -Fd$* -c
+LASTFILE_FLAGS=$(CFLAGS) $(CPLUSPLUS_COMPILE_FLAGS) $(INCLUDES) -Fo$@ -Fd$* -c
 LASTFILE_OBJS= \
 	$(OUTDIR)\lastfile.obj
 
@@ -749,7 +772,8 @@ TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) -base:0x1000000\
  -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
  -heap:0x00100000 -nodefaultlib $(PROFILE_FLAGS) setargv.obj
-TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
+TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
+ $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  $(EMACS_BETA_VERSION) \
@@ -1460,6 +1484,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !if defined(CCV)
   Using compiler "$(CC) $(CFLAGS)".
 !endif
+!if $(CPLUSPLUS_COMPILE)
+  Compiling as C++.
+!endif
   Installing XEmacs in "$(INSTALL_DIR:\=\\)".
   Package path is $(PATH_PACKAGEPATH).
 !if $(INFODOCK)
@@ -1477,8 +1504,8 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !if $(HAVE_GTK)
   --------------------------------------------------------------------
   WARNING: You specified HAVE_GTK=1, but we are compiling WITHOUT GTK support.
-  WARNING: gtk-xemacs is not currently supported on MSWindows (mingw or msvc).
-  WARNING: Yes, we know that gtk has been ported to native MSWindows, but
+  WARNING: gtk-xemacs is not currently supported on MS Windows (mingw or msvc).
+  WARNING: Yes, we know that gtk has been ported to native MS Windows, but
   WARNING: XEmacs is not yet ready to use that port.
   --------------------------------------------------------------------
 !endif
@@ -1531,6 +1558,12 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
 !endif
 !if $(USE_UNION_TYPE)
   Using union type for Lisp object storage.
+  WARNING: ---------------------------------------------------------
+  WARNING: This tends to trigger compiler bugs, especially when combined
+  WARNING: with MULE and ERROR_CHECKING.  Crashes in pdump have recently
+  WARNING: been observed using Visual C++ in combination with union type,
+  WARNING: MULE, and ERROR_CHECKING.
+  WARNING: ---------------------------------------------------------
 !endif
 !if $(USE_PORTABLE_DUMPER)
   Using portable dumper.
@@ -1542,7 +1575,12 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) confi
   Using DLL version of C runtime library.
 !endif
 !if $(ERROR_CHECK_ALL)
-  Compiling in extra internal error-checking. XEmacs will be slow!
+  Compiling in extra internal error-checking.
+  WARNING: ---------------------------------------------------------
+  WARNING: Compiling in support for runtime error checking.
+  WARNING: XEmacs will run noticeably more slowly as a result.
+  WARNING: Error checking is on by default for XEmacs beta releases.
+  WARNING: ---------------------------------------------------------
 !endif
 !if $(DEBUG_XEMACS)
   Compiling in debugging support (no slowdown).
