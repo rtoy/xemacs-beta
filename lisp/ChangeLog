@@ -1,5 +1,15 @@
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
+	* about.el:
+	* about.el (xemacs-hackers):
+	* about.el (about-personal-info):
+	* about.el (about-hacker-contribution):
+	* about.el (about-hackers):
+	Add Aidan, alexm.  Update my info.  Sort list of ancillary
+	contributors, delete a couple of duplicates.
+
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
 	* dumped-lisp.el (preloaded-file-list):
 	Document that paragraphs needs easy-mmode.
 	
