@@ -1,3 +1,7 @@
+2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.19 "chives" is released.
+
 2004-11-05  Ben Wing  <ben@xemacs.org>
 
 	* res.rc:
@@ -504,6 +508,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.32 2005/01/26 05:11:01 ben Exp $
-$Revision: 1.32 $
+%%% $Id: ChangeLog,v 1.33 2005/02/18 06:30:00 stephent Exp $
+$Revision: 1.33 $
 

@@ -1,3 +1,7 @@
+2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.19 "chives" is released.
+
 2005-02-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.el (pop-to-buffer):
