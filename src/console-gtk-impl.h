@@ -1,4 +1,4 @@
-/* Define X specific console, device, and frame object for XEmacs.
+/* Define GTK specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 2002 Ben Wing.
@@ -28,6 +28,8 @@ Boston, MA 02111-1307, USA.  */
    Ultimately based on FSF, then later on JWZ work for Lemacs.
    Rewritten over time by Ben Wing and Chuck Thompson (original
       multi-device work by Chuck Thompson).
+   Gtk version by William M. Perry
+
  */
 
 #ifndef INCLUDED_console_gtk_impl_h_
@@ -172,6 +174,12 @@ struct gtk_frame
   /* Are we iconfied right now? */
   unsigned int iconified_p :1;
 
+  /* Data for widget callbacks.  It is impossible to pass all the necessary
+     data through the GTK signal API so instead it is registered here and the
+     hash key is passed instead. */
+  Lisp_Object widget_instance_hash_table;
+  Lisp_Object widget_callback_hash_table;
+  Lisp_Object widget_callback_ex_hash_table;
 };
 
 #define FRAME_GTK_DATA(f) FRAME_TYPE_DATA (f, gtk)
@@ -195,8 +203,19 @@ struct gtk_frame
 #define FRAME_GTK_TOTALLY_VISIBLE_P(f) (FRAME_GTK_DATA (f)->totally_visible_p)
 #define FRAME_GTK_VISIBLE_P(f) (FRAME_GTK_DATA (f)->visible_p)
 #define FRAME_GTK_TOP_LEVEL_FRAME_P(f) (FRAME_GTK_DATA (f)->top_level_frame_p)
+#define FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE(f) (FRAME_GTK_DATA (f)->widget_instance_hash_table)
+#define FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE(f) (FRAME_GTK_DATA (f)->widget_callback_hash_table)
+#define FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE(f) (FRAME_GTK_DATA (f)->widget_callback_ex_hash_table)
 
 extern struct console_type *gtk_console_type;
+
+/* Special data used to quickly identify the frame that contains a widget. */
+#define GTK_DATA_FRAME_IDENTIFIER "xemacs::frame"
+
+/* The hashcode in the frame hash table of a tab_control tab's callback data. */
+#define GTK_DATA_TAB_HASHCODE_IDENTIFIER "xemacs::tab_hashcode"
+
+#define GTK_DATA_GUI_IDENTIFIER "xemacs::gui_id"
 
 #endif /* HAVE_GTK */
 #endif /* INCLUDED_console_gtk_impl_h_ */

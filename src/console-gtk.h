@@ -48,6 +48,7 @@ extern int gtk_interline_space;
 
 extern int gtk_selection_timeout;
 
+struct frame *gtk_widget_to_frame (GtkWidget *);
 struct frame *gtk_any_window_to_frame (struct device *d, GdkWindow *);
 struct frame *gtk_window_to_frame (struct device *d, GdkWindow *);
 struct frame *gtk_any_widget_or_parent_to_frame (struct device *d, GtkWidget *widget);

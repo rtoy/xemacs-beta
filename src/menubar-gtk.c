@@ -734,28 +734,13 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
   return (menu_item);
 }
 
-static struct frame *
-__get_channel (GtkWidget *w)
-{
-  struct frame *f = NULL;
-
-  for (; w; w = w->parent)
-    {
-      if ((f = (struct frame *) gtk_object_get_data (GTK_OBJECT (w), "xemacs::frame")))
-	return (f);
-    }
-
-  return (selected_frame());
-}
-
-
 /* Called whenever a button, radio, or toggle is selected in the menu */
 static void
 __generic_button_callback (GtkMenuItem *item, gpointer user_data)
 {
   Lisp_Object callback, function, data, channel;
 
-  channel = wrap_frame (__get_channel (GTK_WIDGET (item)));
+  channel = wrap_frame (gtk_widget_to_frame (GTK_WIDGET (item)));
 
   callback = VOID_TO_LISP (user_data);
 

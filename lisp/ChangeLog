@@ -1,3 +1,10 @@
+2004-07-02  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* widgets-gtk.el (gtk-widget-instantiate-notebook-internal):
+	Loading items into the notebook is now done by C code.
+	* widgets-gtk.el (gtk-widget-instantiate-internal):
+	Style no longer changed.
+
 2004-06-24  Jerry James  <james@xemacs.org>
 
 	* cl-compat.el: Synch with Emacs 21.3.

@@ -1,3 +1,38 @@
+2004-07-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* console-gtk-impl.h:
+	* console-gtk-impl.h (struct gtk_frame):
+	* console-gtk-impl.h (FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE):
+	  Add hash tables track tab_control callback data.
+	  Added #defines for GTK object data names.
+	* console-gtk.h: Declaration of gtk_widget_to_frame().
+	* frame-gtk.c (gtk_widget_to_frame): New.
+	* frame-gtk.c (gtk_create_widgets):
+	* frame-gtk.c (allocate_gtk_frame_struct):
+	* frame-gtk.c (gtk_mark_frame):
+	Manage frame callbakc hash tables.
+	* glyphs-gtk.c (gtk_map_subwindow): Fix size and moving bugs.
+	* glyphs-gtk.c (gtk_redisplay_widget): Use correct size for widgets.
+	* glyphs-gtk.c (gtk_widget_instantiate_1): Force reconsideration
+	of widget size.
+	* glyphs-gtk.c (gtk_widget_query_geometry): New
+	* glyphs-gtk.c (gtk_register_gui_item): New
+	* glyphs-gtk.c (gtk_add_tab_item): New
+	* glyphs-gtk.c (gtk_tab_control_callback): New
+	* glyphs-gtk.c (gtk_tab_control_instantiate): New
+	* glyphs-gtk.c (gtk_tab_control_redisplay): Set notebook page.
+	Use correct list when loading item.
+	* glyphs-gtk.c (image_instantiator_format_create_glyphs_gtk):
+	Register new methods.
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Use XEmacs size, not
+	default size, for widgets.
+	* gui-gtk.c: Improved comment.
+	* gui-x.c:  Improved comment.
+	* menubar-gtk.c (__generic_button_callback): Use
+	gtk_widget_to_frame instead of __get_channel.
+	* scrollbar-gtk.c:
+	* ui-gtk.c: Use symbolic names for GTK object data.
+
 2004-07-06  Lutz Euler  <lutz.euler@freenet.de>
 
 	* syntax.c (setup_syntax_cache): Fix behavior for buffers

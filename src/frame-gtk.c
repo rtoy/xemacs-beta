@@ -1,4 +1,4 @@
-/* Functions for the X window system.
+/* Functions for the GTK toolkit.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
 
@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "dragdrop.h"
 #endif
 
+#include "elhash.h"
 #include "console-gtk-impl.h"
 #include "glyphs-gtk.h"
 #include "objects-gtk-impl.h"
@@ -55,7 +56,6 @@ Boston, MA 02111-1307, USA.  */
 #define INTERNAL_BORDER_WIDTH 0
 
 #define TRANSIENT_DATA_IDENTIFIER "xemacs::transient_for"
-#define FRAME_DATA_IDENTIFIER "xemacs::frame"
 #define UNMAPPED_DATA_IDENTIFIER "xemacs::initially_unmapped"
 
 #define STUPID_X_SPECIFIC_GTK_STUFF
@@ -112,6 +112,23 @@ const struct sized_memory_description gtk_frame_data_description = {
 /************************************************************************/
 /*                          helper functions                            */
 /************************************************************************/
+
+/* Return the Emacs frame-object which contains the given widget. */
+struct frame *
+gtk_widget_to_frame (GtkWidget *w)
+{
+  struct frame *f = NULL;
+
+  for (; w; w = w->parent)
+    {
+      if ((f = (struct frame *) gtk_object_get_data (GTK_OBJECT (w),
+						     GTK_DATA_FRAME_IDENTIFIER)))
+	return (f);
+    }
+
+  return (selected_frame());
+}
+
 
 /* Return the Emacs frame-object corresponding to an X window */
 struct frame *
@@ -824,7 +841,9 @@ gtk_create_widgets (struct frame *f, Lisp_Object lisp_window_id, Lisp_Object par
 
   gtk_container_set_border_width (GTK_CONTAINER (shell), 0);
 
-  gtk_object_set_data (GTK_OBJECT (shell), FRAME_DATA_IDENTIFIER, f);
+  /* Add a mapping from widget to frame to help widget callbacks quickly find
+     their corresponding frame. */
+  gtk_object_set_data (GTK_OBJECT (shell), GTK_DATA_FRAME_IDENTIFIER, f);
 
   FRAME_GTK_SHELL_WIDGET (f) = shell;
 
@@ -953,6 +972,18 @@ allocate_gtk_frame_struct (struct frame *f)
   FRAME_GTK_MENUBAR_DATA (f) = Qnil;
   for (i = 0; i < 3; i++)
     FRAME_GTK_LISP_WIDGETS (f)[i] = Qnil;
+
+  /*
+    Hashtables of callback data for glyphs on the frame.  Make them EQ because
+    we only use ints as keys.  Otherwise we run into stickiness in redisplay
+    because internal_equal() can QUIT.  See enter_redisplay_critical_section().
+*/
+  FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f) =
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+  FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f) =
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
+  FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f) =
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
 }
 
 
@@ -1040,6 +1071,9 @@ gtk_mark_frame (struct frame *f)
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[0]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[1]);
   mark_object (FRAME_GTK_LISP_WIDGETS (f)[2]);
+  mark_object (FRAME_GTK_WIDGET_INSTANCE_HASH_TABLE (f));
+  mark_object (FRAME_GTK_WIDGET_CALLBACK_HASH_TABLE (f));
+  mark_object (FRAME_GTK_WIDGET_CALLBACK_EX_HASH_TABLE (f));
 }
 
 static void

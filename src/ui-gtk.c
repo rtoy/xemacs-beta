@@ -11,7 +11,7 @@
 #include "lisp.h"
 
 #include "buffer.h"
-#include "console-gtk.h"
+#include "console-gtk-impl.h"
 #include "device.h"
 #include "elhash.h"
 #include "event-gtk.h"
@@ -980,7 +980,7 @@ Lisp_Object build_gtk_object (GtkObject *obj)
   emacs_gtk_object_data *data = NULL;
   GUI_ID id = 0;
 
-  id = (GUI_ID) gtk_object_get_data (obj, "xemacs::gui_id");
+  id = (GUI_ID) gtk_object_get_data (obj, GTK_DATA_GUI_IDENTIFIER);
 
   if (id)
     {
@@ -996,7 +996,7 @@ Lisp_Object build_gtk_object (GtkObject *obj)
       retval = wrap_emacs_gtk_object (data);
 
       id = new_gui_id ();
-      gtk_object_set_data (obj, "xemacs::gui_id", (gpointer) id);
+      gtk_object_set_data (obj, GTK_DATA_GUI_IDENTIFIER, (gpointer) id);
       gcpro_popup_callbacks (id, retval);
       gtk_object_ref (obj);
       gtk_signal_connect (obj, "destroy", GTK_SIGNAL_FUNC (__notice_object_destruction), (gpointer)id);

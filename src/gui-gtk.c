@@ -1,4 +1,4 @@
-/* General GUI code -- X-specific. (menubars, scrollbars, toolbars, dialogs)
+/* General GUI code -- GTK-specific. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.

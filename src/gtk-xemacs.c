@@ -271,14 +271,58 @@ gtk_xemacs_size_request (GtkWidget *widget, GtkRequisition *requisition)
       }
 }
 
+/* Assign a size and position to the child widgets.  This differs from the
+   super class method in that for all widgets except the scrollbars the size
+   and position are not caclulated here.  This is because these widgets have
+   this function performed for them by the redisplay code (see
+   gtk_map_subwindow()). If the superclass method is called then the widgets
+   can change size and position as the two pieces of code move the widgets at
+   random.
+*/
 static void
 gtk_xemacs_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 {
     GtkXEmacs *x = GTK_XEMACS (widget);
+    GtkFixed *fixed = GTK_FIXED (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
     int columns, rows;
+    GList *children;
+    guint16 border_width;
 
-    parent_class->size_allocate(widget, allocation);
+    widget->allocation = *allocation;
+    if (GTK_WIDGET_REALIZED (widget))
+      gdk_window_move_resize (widget->window,
+			      allocation->x, 
+			      allocation->y,
+			      allocation->width, 
+			      allocation->height);
+
+    border_width = GTK_CONTAINER (fixed)->border_width;
+  
+    children = fixed->children;
+    while (children)
+      {
+	GtkFixedChild* child = children->data;
+	children = children->next;
+      
+	/*
+	  Scrollbars are the only widget that is managed by GTK.  See
+	  comments in gtk_create_scrollbar_instance().
+	*/
+	if (GTK_WIDGET_VISIBLE (child->widget) &&
+	    gtk_type_is_a(GTK_OBJECT_TYPE(child->widget), GTK_TYPE_SCROLLBAR))
+	  {
+	    GtkAllocation child_allocation;
+	    GtkRequisition child_requisition;
+
+	    gtk_widget_get_child_requisition (child->widget, &child_requisition);
+	    child_allocation.x = child->x + border_width;
+	    child_allocation.y = child->y + border_width;
+	    child_allocation.width = child_requisition.width;
+	    child_allocation.height = child_requisition.height;
+	    gtk_widget_size_allocate (child->widget, &child_allocation);
+	  }
+      }
 
     if (f)
       {

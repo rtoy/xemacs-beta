@@ -1,4 +1,4 @@
-/* scrollbar implementation -- X interface.
+/* scrollbar implementation -- GTK interface.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Amdhal Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -97,8 +97,8 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_GTK_VDRAG_ORIG_VALUE (instance) = -1;
   SCROLLBAR_GTK_LAST_VALUE (instance) = adj->value;
 
-  gtk_object_set_data (GTK_OBJECT (adj), "xemacs::gui_id", (void *) SCROLLBAR_GTK_ID (instance));
-  gtk_object_set_data (GTK_OBJECT (adj), "xemacs::frame", f);
+  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER, (void *) SCROLLBAR_GTK_ID (instance));
+  gtk_object_set_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER, f);
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
@@ -364,9 +364,9 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
 {
   /* This function can GC */
   int vertical = (int) user_data;
-  struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), "xemacs::frame");
+  struct frame *f = (struct frame*) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_FRAME_IDENTIFIER);
   struct scrollbar_instance *instance;
-  GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), "xemacs::gui_id");
+  GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), GTK_DATA_GUI_IDENTIFIER);
   Lisp_Object win, frame;
   struct window_mirror *mirror;
   Lisp_Object event_type = Qnil;

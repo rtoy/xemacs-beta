@@ -90,11 +90,11 @@
 (defun gtk-widget-instantiate-notebook-internal (plist instance)
   (let ((widget (gtk-notebook-new))
 	(items (plist-get plist :items)))
-    (while items
-      (gtk-notebook-append-page widget
-				(gtk-vbox-new nil 3)
-				(gtk-label-new (aref (car items) 0)))
-      (setq items (cdr items)))
+;    (while items
+;      (gtk-notebook-append-page widget
+;				(gtk-vbox-new nil 3)
+;				(gtk-label-new (aref (car items) 0)))
+;      (setq items (cdr items)))
     widget))
 
 (defun gtk-widget-instantiate-progress-internal (plist instance)
@@ -135,11 +135,11 @@
 	 (plist (cdr (map 'list 'identity instantiator)))
 	 (widget (funcall (or (get type 'instantiator) 'ignore)
 			  plist instance)))
-    (add-timeout 0.1 (lambda (obj)
-		       (gtk-widget-set-style obj
-					     (gtk-widget-get-style
-					      (frame-property nil 'text-widget))))
-		 widget)
+;    (add-timeout 0.1 (lambda (obj)
+;		       (gtk-widget-set-style obj
+;					     (gtk-widget-get-style
+;					      (frame-property nil 'text-widget))))
+;		 widget)
     widget))
 
 (defun gtk-widget-property-internal ()
