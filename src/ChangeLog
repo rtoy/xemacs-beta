@@ -1,3 +1,8 @@
+2003-01-14  Sergey Okhapkin <sos@prospect.com.ru>
+
+	* Makefile.in.in (ldflags): re-order sections for gcc 3.2.
+	* s/cygwin.sc: new linker file.
+
 2003-01-11  Mike Sperber  <mike@xemacs.org>
 
 	* window.c (Fdelete_window): Make sure that
