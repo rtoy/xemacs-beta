@@ -114,6 +114,9 @@
 						    :value (nil)
 						    (symbol
 						     :tag "Condition"))))
+	     (modifier-keys-sticky-time keyboard
+					(choice (integer :tag "Milliseconds")
+						(const :tag "Unbounded" 'unbounded)))
 	     ;; buffer-local
 	     (case-fold-search matching boolean)
 	     (ctl-arrow display (choice (integer 160)

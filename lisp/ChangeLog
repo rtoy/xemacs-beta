@@ -1,3 +1,18 @@
+2002-01-14  Björn Torkelsson  <torkel@pdc.kth.se>
+
+	* menubar-items.el (default-menubar): Open URLs menubar entries
+	  moved to mail-lib
+
+2002-01-16  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* cus-start.el: customize the builtin variable
+	'modifier-keys-sticky-time'.
+
+2002-01-09  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* help.el (describe-mode): synched with FSF 19.34; handle nil
+	minor mode indicators.
+
 2001-12-04  Christoph Wedler  <Christoph.Wedler@sap.com>
 
 	* window.el (window-list): Deletia.  A function with the same name,
