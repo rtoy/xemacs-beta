@@ -1,5 +1,14 @@
 2004-06-07  Adrian Aichner  <adrian@xemacs.org>
 
+	* cus-edit.el (custom-browse-visibility): Typo fix.
+	* cus-edit.el (custom-variable-value-create): Ditto.
+	* cus-edit.el (custom-save-variables): Simply use push instead of
+	make-list and nconc, as suggested by Hrvoje and already used in
+	21.4.
+	* cus-edit.el (custom-save-faces): Ditto.
+
+2004-06-07  Adrian Aichner  <adrian@xemacs.org>
+
 	* mule/ethio-util.el (ethio-sera-to-fidel-region): Phrase
 	duplication typo fixes for typos found by
 	xemacs-builds/adrian/typology/phrase-duplication-typo.pl.

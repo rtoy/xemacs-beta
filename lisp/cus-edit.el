@@ -1234,7 +1234,7 @@ item in another window.\n\n"))
   (goto-char (point-min)))
 
 (define-widget 'custom-browse-visibility 'item
-  "Control visibility of of items in the customize tree browser."
+  "Control visibility of items in the customize tree browser."
   :format "%[[%t]%]"
   :action 'custom-browse-visibility-action)
 
@@ -2041,7 +2041,7 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 	  ;; Don't push it !!! Custom assumes that the first child is the
 	  ;; value one.
 	  (setq children (append children (list comment-widget)))))
-      ;; Update the rest of the properties properties.
+      ;; Update the rest of the properties.
       (widget-put widget :custom-form form)
       (widget-put widget :children children)
       ;; Now update the state.
@@ -3471,13 +3471,12 @@ SYMBOL must be a customized variable."
      (custom-save-loaded-themes)
      (custom-save-resets 'theme-value 'custom-reset-variables nil)
      (let ((standard-output (current-buffer))
-           ;; To make nconc work
-           (sorted-list (make-list 1 t)))
+           (sorted-list ()))
        ;; First create a sorted list of saved variables.
        (mapatoms
         (lambda (symbol)
           (when (custom-save-variable-p symbol)
-            (nconc sorted-list (list symbol)))))
+            (push symbol sorted-list))))
        (setq sorted-list (sort (cdr sorted-list) 'string<))
 
        (unless (bolp)
@@ -3544,13 +3543,12 @@ SYMBOL must be a customized face."
     ;;                        'custom-set-faces)
     (custom-save-resets 'theme-face 'custom-reset-faces '(default))
     (let ((standard-output (current-buffer))
-          ;; To make nconc work
-          (sorted-list (make-list 1 t)))
+          (sorted-list ()))
       ;; Create a sorted list of faces
       (mapatoms
        (lambda (symbol)
          (when (custom-save-face-p symbol)
-           (nconc sorted-list (list symbol)))))
+           (push symbol sorted-list))))
       (setq sorted-list (sort (cdr sorted-list) 'string<))
       
       (unless (bolp)
