@@ -1,3 +1,7 @@
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
 2003-01-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* sigpipe.c: New file.  Crashes 21.1 but not 21.4 or 21.5 (I

@@ -1,3 +1,7 @@
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
 2003-02-15  Ben Wing  <ben@xemacs.org>
 
 	* make-docfile.el:
@@ -265,13 +269,13 @@
 
 2003-02-02  Steve Youngs  <youngs@xemacs.org>
 
-	* about.el (xemacs-hackers): Add Jerry, Ville, Rendhalver
+	* about.el (xemacs-hackers): Add Jerry, Ville, 
 	(about-current-release-maintainers): Remove Martin, Jason.  Add
-	Jerry, Ville, Rendhalver.
+	Jerry, Ville.
 	(about-other-current-hackers): Add Martin, Jason.
-	(about-personal-info): Update me.  Add Jerry, Ville, Rendhalver.
+	(about-personal-info): Update me.  Add Jerry, Ville.
 	(about-hacker-contribution): Update me, Martin, Steve T.  Add
-	Jerry, Ville, Rendhalver.
+	Jerry, Ville.
 
 2003-01-18  Stephen J. Turnbull  <stephen@xemacs.org>
 

@@ -1,3 +1,7 @@
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
 2003-02-07  Jerry James  <james@xemacs.org>
 
 	* ldap/eldap.c: Add unload_eldap prototype to fix warning.

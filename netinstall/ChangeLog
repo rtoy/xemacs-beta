@@ -1,3 +1,7 @@
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.
@@ -467,6 +471,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.23 2003/01/05 05:13:39 youngs Exp $
-$Revision: 1.23 $
+%%% $Id: ChangeLog,v 1.24 2003/02/16 06:13:32 youngs Exp $
+$Revision: 1.24 $
 

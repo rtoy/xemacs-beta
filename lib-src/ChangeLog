@@ -1,3 +1,7 @@
+2003-02-16  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.11 "cabbage" is released.
+
 2003-01-14  Jerry James  <james@xemacs.org>
 
 	* ellcc.c (do_compile_mode): Search XEmacs directories first for

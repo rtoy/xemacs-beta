@@ -1,3 +1,152 @@
+to 21.5.11 "cabbage"
+
+Lots of improvements and fixes this time around.  One of our key
+players, Ben Wing, has drastically improved font-locking (go turn on
+lazy-lock to check it out).  Apart from many other bug fixes, Ben
+has also given us a speed up to the build process (--quick-build
+configure option).
+
+Other stars we should mention are:  Mike Sperber, for window
+configuration fixes and updates; Stephen Turnbull for build fixes,
+documentation and typo fixes.  Stephen also gave us some major updates
+to autoload.el and wid-edit.el.  And also Jerry James with some more
+DSO updates.
+
+Here are the highlights:
+
+Build
+
+-- Updates to test suite - Turnbull.
+-- Use -no-autoloads with update-elc-2 - Wing.
+-- Check for strupr and strlwr - Sperber.
+-- Delete auto-autoloads.el* & cutom-load.el* files on make clean - Turnbull.
+-- Fix --srcdir processing - Turnbull.
+-- Define DLSYM_NEEDS_UNDERSCORE on Darwin - Turnbull.
+-- Use opsys=aix4-2 for AIX 5 and above - Buchholz.
+-- Make ellcc search XEmacs directories for include files 1st - James. 
+-- Set stack-trace-on-error, load-always-display-messages - Wing.
+-- Overhaul update-elc.el, cus-dep, autoload (speed ups) - Wing.
+-- Various compiler warning fixes - Wing.
+-- FreeBSD updates in modules/Makefile.common - Pluim.
+-- Warning fix in eldap.c - James.
+-- Support C++ & KKCC compilation in Windows - Wing.
+-- Various fixups in nt/config.in.samp - Wing.
+-- Fixes in xemacs.mak - Wing.
+-- Clean up compile errors with C++ under Windows - Wing.
+-- Re-order sections in ldflags for gcc 3.2 - Okhapkin.
+-- Restore USE_XFONTSET - Turnbull.
+-- New symbol: DLSYM_NEEDS_UNDERSCORE - Turnbull.
+-- Guard against multiple definitions of _ALL_SOURCE - Buchholz.
+-- QUICK_BUILD updates - Wing.
+
+Documentation
+
+-- Major update to configure.usage - Wing.
+-- New developer bio's - James, Skyttä, Golubev.
+-- Amendments/additions to PROBLEMS:
+	- PostgreSQL DSO with --error-checking=all - James.
+	- Consolidate Motif problems into one section - Turnbull.
+-- Amendments/additions to INSTALL:
+	- Recommend Mule - Turnbull.
+	- Deprecate stripped binaries - Turnbull.
+-- General tidy up of etc/BETA, rewrite sections dealing with packages
+   and building from scratch - Youngs.
+-- General doc fixes, typos etc - Youngs, Turnbull, Palmer, Wing.
+-- Fix xref in Auto-Saving - Aichner.
+-- Update Local.rules File section in packages.texi - Youngs.
+-- Clarify package hierarchy structure - Turnbull.
+-- Major fixup of internals.texi - Wing.
+-- Lots of Mule rewriting in lispref/mule.texi - Wing.
+-- Document USE_UNION_TYPE evilness - Wing.
+-- Document event-matches-key-specifier-p better - Wing.
+-- Change illegal (for C) '//' comments to '/* */' - Shelton, Turnbull.
+
+Internals
+
+-- Synch rcs2log to GNU upstream - Youngs.
+-- Use symbolic name `XtExposeCompressMaximal' instead of `TRUE' in
+   xlwMenuClassRec - Buchholz.
+-- In xm_update_progress, don't define unless LWLIB_WIDGETS_MOTIF - Buchholz. 
+-- Rename class -> class_ & new -> new_ - Wing.
+-- KKCC update in postgresql.c - Wing.
+-- KKCC update in eldap.c - James.
+-- Fix for unix_create_process - Ueno.
+-- Set stack reserve size during unexec() - Piper.
+-- Use 'struct htentry' not 'struct hentry' in elhash.c - Wing.
+-- New macros ALIST_LOOP_3, ALIST_LOOP_4.
+-- Fix 'xemacs -batch -l dunnet' under Cygwin - Wing.
+-- Implement delaying of XFlush() if pending expose events - Wing.
+-- Fix some longstanding bugs in X quit handling - Wing.
+-- Correct the message output upon crashing to be more up-to-date - Wing.
+-- Add dp() & db() as short synonyms of debug_print() &
+   debug_backtrace() - Wing.
+-- Add C++ error-checking code to verify problems with GCPRO/UNGCPRO - Wing.
+-- Change the way gap arrays are allocated (for KKCC) - Wing.
+-- Now lcrecords set the type of items sitting on the free list to
+   lcrecord_type_free - Wing.
+-- All lcrecord allocation functions now zero out the returned
+   lcrecords - Wing.
+-- Additional asserts in FREE_FIXED_TYPE - Wing.
+-- Make bit vectors lcrecords, like vectors - Wing.
+-- MARKED_SLOT() call no longer includes semicolon - Wing.
+-- Factor out some code duplicated in KKCC and pdump - Wing.
+-- KKCC updates - Wing.
+-- Add a fifth field "flags" to memory_description - Wing.
+-- Add support for "description maps" - Wing.
+-- Redo XD_UNION so it works inline and change format to provide info
+   for pdump - Wing.
+-- Textual changes: 
+	- lrecord_description -> memory_description - Wing.
+	- struct_description -> sized_memory_description - Wing.
+-- Initialize protect_me field of popup_data in set_frame_menubar - Sperber
+-- GTK updates - Sperber.
+-- Don't lead to a crash if dealing with a dead
+   window/frame/device/console - Sperber.
+-- Prevent crash for combination windows - Sperber.
+-- Window fixes in Fdelete_window - Sperber.
+-- Module updates in emodules.h - James.
+-- Fprovide from 'vars_of_file_coding' not 'syms_of_file_coding' - Turnbull.
+-- Fix syntax of macro in 'mark_object_maybe_checking_free - Turnbull.
+-- Eliminate bogus require-prints-loading-message - Wing.
+-- Turn on `load-warn-when-source-newer' by default - Wing.
+-- Fix up crashes when selecting menubar items due to lack of GCPROing
+   - Wing.
+-- Implement tail-recursion in KKCC - Wing.
+-- Fix UTF-(8|16) detector - Wing.
+-- Fix problems with reentrant calling of lwlib and associated crashes
+   when selecting menu items - Wing.
+-- Improve redisplay handling of preemption - Wing.
+-- Return the parameter from strlvr, strupr, depend on !HAVE_STRUPR - James.
+-- In sysdll.c included lisp.h to define needed alloca_array - Begel.
+-- Pull GC_CHECK_NOT_FREE out of USE_KKCC - Sperber.
+-- Abort when any attempts to output a stream console are made - Wing.
+-- Formatting fixes in redisplay-output.c - Wing.
+-- Clean up redisplay a bit - Wing.
+-- Fix scrollbar code TTY devices don't have them - Sperber.
+-- Major reworking of profile code - Wing.
+-- Dramatically improve redisplay speed over slow X connections - Buchholz.
+-- Move syntax table description from buffer.c to syntax.c - Wing.
+-- Updates to char,mirror,syntax tables code - Wing.
+-- Niggly whitespace fixups - Wing.
+
+Lisp API
+
+-- Updates to (japan|cryil)-util.el - Turnbull.
+-- Updates to how XEmacs computes various paths - Sperber.
+-- Window configuration fixes - Sperber, Wing.
+-- Make Info-insert-dir end n separator - Buchholz.
+-- Drastically reorganise autoload.el - Turnbull.
+-- Omit M-S-home/end from motion keys - Wing.
+-- Synch wid-edit to GNU/Emacs 21.3.50 - Turnbull.
+-- Updates to hyper-apropos - Wing.
+-- Reorganise Help -> Info submenu - Wing.
+-- Fix bug when end > start in text-props - Wing.
+-- Fix walk-windows - Wing.
+-- Fix for call to set-language-unicode-precedence-list - Nyyss~nen.
+-- Synch up byte-optimize.el - Wing.
+-- Include FUNLIST argument to generate-c-file-autoloads-1 - Wing.
+
+
 to 21.5.10 "burdock"
 
 Please accept my apologies for the very long wait between releases
