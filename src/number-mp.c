@@ -193,6 +193,7 @@ bignum_set_string (bignum b, const char *s, int base)
 {
   MINT *mbase;
   short digit;
+  int neg = 0;
 
   if (base == 0)
     {
@@ -212,6 +213,12 @@ bignum_set_string (bignum b, const char *s, int base)
 
   /* FIXME: signal something if base is < 2 or doesn't fit into a short. */
 
+  if (*s == '-')
+    {
+      s++;
+      neg = 1;
+    }
+
   mbase = MP_ITOM ((short) base);
   MP_MOVE (bignum_zero, b);
   
@@ -225,6 +232,9 @@ bignum_set_string (bignum b, const char *s, int base)
       MP_MADD (b, temp, b);
       MP_MFREE (temp);
     }
+
+  if (neg)
+    MP_MSUB (bignum_zero, b, b);
 
   return (digit >= 0) ? -1 : 0;
 }

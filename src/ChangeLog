@@ -1,5 +1,9 @@
 2004-04-06  Jerry James  <james@xemacs.org>
 
+	* number-mp.c (bignum_set_string): Read negative numbers correctly.
+
+2004-04-06  Jerry James  <james@xemacs.org>
+
 	* data.c (Flogand): Fix for --use-union-type.
 	* data.c (Flogior): Ditto.
 
