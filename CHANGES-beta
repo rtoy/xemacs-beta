@@ -13,12 +13,15 @@ to 21.5.1 "anise"
    -- Fix shy group regexp code
    -- etc. etc.
 
+-- The `short-name' argument to make-charset now works correctly 
+   -- Yoshiaki Kasahara
 -- `custom' changes -- Didier Verna
 -- SET_FACE_PROPERTY bug fix -- Jerry James
 -- Unix tty configury changes -- Martin Buchholz
 -- Fix compile error with g++ on bsdi -- Martin Buchholz
 -- Fix crash with xlc -O3 -- Martin Buchholz
 -- Fix link error with (pre-release) gcc 3.0 -- Martin Buchholz
+-- Fix build error if system has makeinfo 3.12 -- Martin Buchholz
 -- Speed up `intern' and hash tables containing strings -- Martin Buchholz
 -- Make hash table mapping safe -- Martin Buchholz
 
