@@ -1991,7 +1991,7 @@ With ARG, insert that many delimiters."
 
 (defun ethio-gemination nil
   "Compose the character before the point with the Ethiopic gemination mark.
-If the characater is already composed, decompose it and remove the gemination
+If the character is already composed, decompose it and remove the gemination
 mark."
   (interactive "*")
   (cond

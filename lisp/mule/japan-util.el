@@ -36,7 +36,7 @@
 (defun setup-japanese-environment-internal ()
   (cond ((eq system-type 'ms-dos)
 	 (prefer-coding-system 'shift_jis))
-	((eq system-type 'usg-unix-v)
+	(t
 	 (prefer-coding-system 'euc-jp)))
   (setq sentence-end-save sentence-end)
   (setq sentence-end (concat sentence-end "\\|[。？！]")))

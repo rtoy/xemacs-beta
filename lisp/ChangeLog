@@ -1,3 +1,15 @@
+2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/japan-util.el (setup-japanese-environment-internal):
+	usg-unix-v is not a suitable catchall.
+
+	* mule/viet-util.el: 
+	* mule/ethio-util.el:
+	characater -> character.
+
+	* mule/cyril-util.el (cyrillic-language-alist): There is no such
+	language as Serbo-Croatian, according to Hrvoje, who oughtta know.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.
