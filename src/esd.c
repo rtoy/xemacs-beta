@@ -61,7 +61,7 @@ int esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
   ffmt = analyze_format(data,&fmt,&speed,&tracks,&parsesndfile);
 
   if (ffmt != fmtRaw && ffmt != fmtSunAudio && ffmt != fmtWave) {
-    sound_warn("audio: Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)");
+    sound_warn("Unsupported file format (neither RAW, nor Sun/DECAudio, nor WAVE)");
       return 0;
   }
 
@@ -85,16 +85,24 @@ int esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
       flags |= ESD_BITS16;
       break;
     default:
-      sound_warn ("audio: byte format %d unimplemented", fmt);
-      return 0;
+      {
+	Extbyte warn_buf[255];
+	sprintf (warn_buf, "byte format %d unimplemented", fmt);
+	sound_warn (warn_buf);
+	return 0;
+      }
     }
   switch (tracks)
     {
     case 1: flags |= ESD_MONO; break;
     case 2: flags |= ESD_STEREO; break;
     default:
-      sound_warn ("audio: %d channels - only 1 or 2 supported", tracks);
-      return 0;
+      {
+	Extbyte warn_buf[255];
+	sprintf (warn_buf, "%d channels - only 1 or 2 supported", tracks);
+	sound_warn (warn_buf);
+	return 0;
+      }
     }
 
   sock = esd_play_stream(flags, speed, NULL, "xemacs");
@@ -108,11 +116,13 @@ int esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
     for (cptr = optr; (crtn = sndcnv((void **)&cptr,&prtn,
                                     (void **)&sptr)) > 0; ) {
       if ((wrtn = write(sock,sptr,crtn)) < 0) {
-	sound_perror ("audio: write error");
+	sound_perror ("write error");
        goto END_OF_PLAY;
       }
       if (wrtn != crtn) {
-	sound_warn ("audio: only wrote %d of %d bytes", wrtn, crtn);
+	Extbyte warn_buf[255];
+	sprintf (warn_buf , "only wrote %d of %d bytes", wrtn, crtn);
+	sound_warn (warn_buf);
        goto END_OF_PLAY;
       }
     }

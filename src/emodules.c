@@ -32,6 +32,8 @@ int load_modules_quietly;
 /* Load path */
 Lisp_Object Vmodule_load_path;
 
+Lisp_Object Qdll_error;
+
 typedef struct _emodules_list
 {
   int used;             /* Is this slot used?                           */
@@ -527,6 +529,7 @@ emodules_doc_sym (const char *symname, const char *doc)
 void
 syms_of_module (void)
 {
+  DEFERROR_STANDARD (Qdll_error, Qerror);
   DEFSUBR(Fload_module);
   DEFSUBR(Flist_modules);
 #ifdef DANGEROUS_NASTY_SCARY_MONSTER

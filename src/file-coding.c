@@ -37,8 +37,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "file-coding.h"
 
-Lisp_Object Qtext_conversion_error;
-
 Lisp_Object Vkeyboard_coding_system;
 Lisp_Object Vterminal_coding_system;
 Lisp_Object Vcoding_system_for_read;
@@ -5588,8 +5586,6 @@ void
 syms_of_file_coding (void)
 {
   INIT_LRECORD_IMPLEMENTATION (coding_system);
-
-  DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
   DEFSUBR (Fcoding_system_p);
   DEFSUBR (Ffind_coding_system);

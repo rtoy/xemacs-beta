@@ -386,8 +386,8 @@ size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
   dest    = miscplay_sndbuf;
   while (count--)
     {
-      *dest++ = (UChar_Binary)(((int)*((signed Char_Binary *)(src)) +
-				 (int)*((signed Char_Binary *)(src+1))) / 2);
+      *dest++ = (UChar_Binary)(((int)*((Char_Binary *)(src)) +
+				 (int)*((Char_Binary *)(src+1))) / 2);
       src  += 2;
     }
   *data   = src;
@@ -410,8 +410,8 @@ size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
   dest    = miscplay_sndbuf;
   while (count--)
     {
-      *dest++ = (UChar_Binary)(((int)*((signed Char_Binary *)(src)) +
-				 (int)*((signed Char_Binary *)(src+1))) / 2) ^ 0x80;
+      *dest++ = (UChar_Binary)(((int)*((Char_Binary *)(src)) +
+				 (int)*((Char_Binary *)(src+1))) / 2) ^ 0x80;
       src += 2;
     }
   *data   = src;
@@ -440,7 +440,7 @@ size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
 
 /* Convert a number in the range -32768..32767 to an 8 bit ulaw encoded
    number --- I hope, I got this conversion right :-) */
-static inline signed Char_Binary int2ulaw(int i)
+static inline Char_Binary int2ulaw(int i)
 {
     /* Lookup table for fast calculation of number of bits that need shifting*/
     static short int t_bits[128] = {
@@ -664,7 +664,7 @@ size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((signed Char_Binary *)src)[1] ^ (signed Char_Binary)0x80);
+    *dest++ = (UChar_Binary)(((Char_Binary *)src)[1] ^ (Char_Binary)0x80);
     src += 2;
   }
   *data = src;
@@ -686,7 +686,7 @@ size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((signed Char_Binary *)src)[0] ^ (signed Char_Binary)0x80);
+    *dest++ = (UChar_Binary)(((Char_Binary *)src)[0] ^ (Char_Binary)0x80);
     src += 2;
   }
   *data = src;
@@ -709,8 +709,8 @@ size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((int)((signed Char_Binary *)src)[1] +
-                              (int)((signed Char_Binary *)src)[3]) / 2 ^ 0x80);
+    *dest++ = (UChar_Binary)(((int)((Char_Binary *)src)[1] +
+                              (int)((Char_Binary *)src)[3]) / 2 ^ 0x80);
     src += 4;
   }
   *data = src;
@@ -733,8 +733,8 @@ size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
   *outbuf =
   dest    = miscplay_sndbuf;
   while (count--) {
-    *dest++ = (UChar_Binary)(((int)((signed Char_Binary *)src)[0] +
-                              (int)((signed Char_Binary *)src)[2]) / 2 ^ 0x80);
+    *dest++ = (UChar_Binary)(((int)((Char_Binary *)src)[0] +
+                              (int)((Char_Binary *)src)[2]) / 2 ^ 0x80);
     src += 4;
   }
   *data = src;

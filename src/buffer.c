@@ -93,6 +93,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 
+Lisp_Object Qtext_conversion_error;
+
 struct buffer *current_buffer;	/* the current buffer */
 
 /* This structure holds the default values of the buffer-local variables
@@ -2095,6 +2097,8 @@ void
 syms_of_buffer (void)
 {
   INIT_LRECORD_IMPLEMENTATION (buffer);
+
+  DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
   DEFSYMBOL (Qbuffer_live_p);
   DEFSYMBOL (Qbuffer_or_string_p);

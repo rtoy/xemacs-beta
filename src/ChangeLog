@@ -1,3 +1,27 @@
+2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* buffer.c (Qtext_conversion_error): Moved from file-coding.c
+	so that --with-file-coding=no will compile corectly.
+	* buffer.c (syms_of_buffer): Define Qtext_conversion_error.
+	Also moved from file-coding.c
+	* file-coding.c (Qtext_conversion_error): Moved to buffer.c
+	* file-coding.c (syms_of_file_coding): Moved Qtext_conversion_error
+	initialization to buffer.c
+	* emodules.c (Qdll_error): New error.
+	* emodules.c (syms_of_module): Declare Qdll_error.
+
+	* esd.c (esd_play_sound_data): sound_warn accepts only one arg.
+	* miscplay.c (sndcnv8S_2mono):
+	* miscplay.c (sndcnv2monounsigned):
+	* miscplay.c (int2ulaw):
+	* miscplay.c (sndcnv2byteLE):
+	* miscplay.c (sndcnv2byteBE):
+	* miscplay.c (sndcnv2monobyteLE):
+	* miscplay.c (sndcnv2monobyteBE): Replace signed Char_Binary with
+	Char_Binary.  There's no type called signed char in C.
+	Also remove audio: from error message.  sound_warn and sound_perror
+	prepends them.
+
 2001-05-24  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (objs):
