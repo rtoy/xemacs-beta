@@ -147,7 +147,7 @@
     (pez      "Peter Pezaris"     "pez@xemacs.org")
     (piper    "Andy Piper"        "andy@xemacs.org")
     (pittman  "Daniel Pittman"    "pittman@xemacs.org")
-    (purvis   "Malcolm Purvis"    "mpurvis@xemacs.org")
+    (purvis   "Malcolm Purvis"    "malcolmp@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@xemacs.org")
     (rose     "John Rose"         "rose@xemacs.org")
     (rossini  "Anthony Rossini"   "rossini@xemacs.org")

@@ -1,3 +1,7 @@
+2004-09-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* about.el (xemacs-hackers): Fix Malcolm's address.
+
 2004-09-22  Jerry James  <james@xemacs.org>
 
 	* itimer.el (set-itimer-name): Do not uniquify names, as requested
