@@ -1,5 +1,21 @@
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
+	* lread.c:
+	* lread.c (check_if_suppressed):
+	* lread.c (Fload_internal):
+	* lread.c (locate_file_in_directory_mapper):
+	* lread.c (readevalloop):
+	* lread.c (syms_of_lread):
+	* lread.c (vars_of_lread):
+	* lisp.h:
+	Remove undeeded Vload_file_name_internal_the_purecopy,
+	Qload_file_name -- use internal_bind_lisp_object instead of
+	specbind.
+
+	Add load-suppress-alist.
+
+2005-02-02  Ben Wing  <ben@xemacs.org>
+
 	* menubar.c:
 	* menubar.c (Fcompare_menu_text):
 	New fun to compare menu itext as if the two were normalized.
@@ -10,38 +26,6 @@
 	Remove unneeded BUFFER argument.  Don't downcase.
 	(This will be done in compare-menu-text.)
 	Document that return value may be same string.
-	
-2005-02-02  Ben Wing  <ben@xemacs.org>
-
-	* lread.c:
-	* lread.c (check_if_suppressed):
-	* lread.c (Fload_internal):
-	* lread.c (locate_file_in_directory_mapper):
-	* lread.c (readevalloop):
-	* lread.c (syms_of_lread):
-	* lread.c (vars_of_lread):
-	* menubar.c:
-	* menubar.c (Fcompare_menu_text):
-	* menubar.c (Fnormalize_menu_text):
-	* menubar.c (syms_of_menubar):
-	* menubar.c (vars_of_menubar):
-
-2004-11-09  Ben Wing  <ben@xemacs.org>
-
-	* lisp.h:
-	
-	* lread.c:
-	* lread.c (check_if_suppressed):
-	* lread.c (Fload_internal):
-	* lread.c (locate_file_in_directory_mapper):
-	* lread.c (readevalloop):
-	* lread.c (syms_of_lread):
-	* lread.c (vars_of_lread):
-	Remove undeeded Vload_file_name_internal_the_purecopy,
-	Qload_file_name -- use internal_bind_lisp_object instead of
-	specbind.
-
-	Add load-suppress-alist.
 	
 2003-02-15  Ben Wing  <ben@xemacs.org>
 

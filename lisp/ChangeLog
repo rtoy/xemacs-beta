@@ -1,5 +1,50 @@
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
+	* easy-mmode.el, regexp-opt.el:
+	Move these files into core.
+	Uncomment stuff depending on new custom.el.
+	
+	* autoload.el:
+	* autoload.el (generate-autoload-function): New.
+	* autoload.el (autoload-feature-suffix): New.
+	* autoload.el (generate-autoload-section-continuation): New.
+	* autoload.el (make-autoload):
+	* autoload.el (generate-file-autoloads):
+	* autoload.el (generate-autoload-type-section):
+	* autoload.el (process-one-lisp-autoload): New.
+	* autoload.el (generate-lisp-file-autoloads-1):
+	* autoload.el (generate-c-file-autoloads-1):
+	* autoload.el (generate-custom-defines): New.
+	* autoload.el (print-autoload): Removed.
+	* autoload.el (autoload-print-form): New.
+	* autoload.el (defcustom):
+	* autoload.el (autoload-read-section-header): New.
+	* autoload.el (update-file-autoloads):
+	* autoload.el (update-autoloads-here): Removed.
+	* autoload.el (batch-update-directory-custom-defines): New.
+	* autoload.el (update-autoload-files):
+	* autoload.el (autoload-update-directory-autoloads): Removed.
+	* autoload.el (batch-update-directory-autoloads): New.
+	* autoload.el (autoload-featurep-protect-autoloads):
+	* autoload.el (update-autoloads-from-directory): Removed.
+	* autoload.el (update-custom-define-files): New.
+	* autoload.el (autoload-make-feature-name):
+	* autoload.el (batch-update-autoloads):
+	* autoload.el (batch-update-directory): Removed.
+	* autoload.el (batch-update-one-directory): Removed.
+	* autoload.el (batch-force-update-one-directory): Removed.
+	Major update.  Sync with FSF 21.2.
+	Create the ability to make custom-defines files.
+
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el (do-autoload-commands):
+	Rewrite to use new autoload API.
+	
+	* update-elc.el (lisp-files-needing-early-byte-compilation):
+	Add easy-mmode.
+
+2005-02-02  Ben Wing  <ben@xemacs.org>
+
 	* behavior.el:
 	* behavior.el (behavior-group-hash-table): New.
 	* behavior.el (behavior-override-hash-table): New.
@@ -207,42 +252,6 @@
 
 2004-11-09  Ben Wing  <ben@xemacs.org>
 
-	* easy-mmode.el, regexp-opt.el:
-	Move these files into core.
-	Uncomment stuff depending on new custom.el.
-	
-	* autoload.el:
-	* autoload.el (generate-autoload-function): New.
-	* autoload.el (autoload-feature-suffix): New.
-	* autoload.el (generate-autoload-section-continuation): New.
-	* autoload.el (make-autoload):
-	* autoload.el (generate-file-autoloads):
-	* autoload.el (generate-autoload-type-section):
-	* autoload.el (process-one-lisp-autoload): New.
-	* autoload.el (generate-lisp-file-autoloads-1):
-	* autoload.el (generate-c-file-autoloads-1):
-	* autoload.el (generate-custom-defines): New.
-	* autoload.el (print-autoload): Removed.
-	* autoload.el (autoload-print-form): New.
-	* autoload.el (defcustom):
-	* autoload.el (autoload-read-section-header): New.
-	* autoload.el (update-file-autoloads):
-	* autoload.el (update-autoloads-here): Removed.
-	* autoload.el (batch-update-directory-custom-defines): New.
-	* autoload.el (update-autoload-files):
-	* autoload.el (autoload-update-directory-autoloads): Removed.
-	* autoload.el (batch-update-directory-autoloads): New.
-	* autoload.el (autoload-featurep-protect-autoloads):
-	* autoload.el (update-autoloads-from-directory): Removed.
-	* autoload.el (update-custom-define-files): New.
-	* autoload.el (autoload-make-feature-name):
-	* autoload.el (batch-update-autoloads):
-	* autoload.el (batch-update-directory): Removed.
-	* autoload.el (batch-update-one-directory): Removed.
-	* autoload.el (batch-force-update-one-directory): Removed.
-	Major update.  Sync with FSF 21.2.
-	Create the ability to make custom-defines files.
-
 	* paragraphs.el:
 	* paragraphs.el (paragraphs): New.
 	* paragraphs.el (use-hard-newlines): Removed.
@@ -259,12 +268,6 @@
 	* paragraphs.el (transpose-sentences):
 	Sync to 21.3.  Depends on easy-mmode in core.
 
-	* update-elc-2.el (batch-update-elc-2):
-	* update-elc.el (do-autoload-commands):
-	Rewrite to use new autoload API.
-	
-	* update-elc.el (lisp-files-needing-early-byte-compilation):
-	Add easy-mmode.
 
 2005-01-31  Ben Wing  <ben@xemacs.org>
 

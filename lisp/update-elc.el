@@ -106,7 +106,7 @@
 ;; early byte compilation.  These are files loaded by update-elc.el in
 ;; order to do the compilation of all the rest of the files.
 (defvar lisp-files-needing-early-byte-compilation
-  '(;"easy-mmode"
+  '("easy-mmode"
     "autoload"
     "shadow"
     "cl-macs"))
@@ -312,10 +312,10 @@ If any of these files are changed, we need to redump.")
 		need-to-rebuild-mule-autoloads)
 	    (list "-l" "autoload"))
 	(if need-to-rebuild-autoloads
-	    (list "-f" "autoload-update-directory-autoloads"
+	    (list "-f" "batch-update-directory-autoloads"
 		  "auto" source-lisp))
 	(if need-to-rebuild-mule-autoloads
-	    (list "-f" "autoload-update-directory-autoloads"
+	    (list "-f" "batch-update-directory-autoloads"
 		  "mule" source-lisp-mule))
 	(if need-to-recompile-autoloads
 	    (list "-f" "batch-byte-compile-one-file"

@@ -149,32 +149,25 @@
     ;; way is slow, so we avoid it when possible.
     (when (file-exists-p (expand-file-name "REBUILD_AUTOLOADS"
 					   invocation-directory))
-      (let ((generated-autoload-file (expand-file-name "auto-autoloads.el" dir))
-	    (autoload-package-name "auto")) ; feature prefix
-	;; if we were instructed to rebuild the autoloads, force the file
-	;; to be touched even w/o changes; otherwise, we won't ever stop
-	;; being told to rebuild them.
-	(update-autoload-files (list dir) nil t)
-	(byte-recompile-file generated-autoload-file 0))
+      ;; if we were instructed to rebuild the autoloads, force the file
+      ;; to be touched even w/o changes; otherwise, we won't ever stop
+      ;; being told to rebuild them.
+      (update-autoload-files dir "auto" nil t)
+      (byte-recompile-file (expand-file-name "auto-autoloads.el" dir) 0)
       (when (featurep 'mule)
-	(let* ((muledir (expand-file-name "../lisp/mule" (file-truename dir)))
-	       (generated-autoload-file
-		(expand-file-name "auto-autoloads.el" muledir))
-	       (autoload-package-name "mule")) ; feature prefix
+	(let ((muledir (expand-file-name "../lisp/mule" (file-truename dir))))
 	  ;; force here just like above.
-	  (update-autoload-files (list muledir) nil t)
-	  (byte-recompile-file generated-autoload-file 0))))
+	  (update-autoload-files muledir "mule" nil t)
+	  (byte-recompile-file (expand-file-name "auto-autoloads.el" dir) 0))))
     (when (featurep 'modules)
       (let* ((moddir (expand-file-name "../modules" (file-truename dir)))
-	     (generated-autoload-file
-	      (expand-file-name "auto-autoloads.el" moddir))
-	     (autoload-package-name "modules")) ; feature prefix
-	(update-autoload-files
+	     (autofile (expand-file-name "auto-autoloads.el" moddir)))
+	(update-autoload-files 
 	 (delete (concat (file-name-as-directory moddir) ".")
 		 (delete (concat (file-name-as-directory moddir) "..")
 			 (directory-files moddir t nil nil 0)))
-	 t)
-	(byte-recompile-file generated-autoload-file 0)))
+	 "modules" autofile)
+	(byte-recompile-file autofile 0)))
     ;; now load the (perhaps newly rebuilt) autoloads; we were called with
     ;; -no-autoloads so they're not already loaded.
     (load (expand-file-name "auto-autoloads" lisp-directory))

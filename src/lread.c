@@ -59,8 +59,8 @@ Lisp_Object Qbackquote, Qbacktick, Qcomma, Qcomma_at, Qcomma_dot;
 #endif
 Lisp_Object Qvariable_domain;	/* I18N3 */
 Lisp_Object Vvalues, Vstandard_input, Vafter_load_alist;
-Lisp_Object Qcurrent_load_list;
-Lisp_Object Qload, Qload_file_name, Qload_internal, Qfset;
+Lisp_Object Vload_suppress_alist;
+Lisp_Object Qload, Qload_internal, Qfset;
 
 /* Hash-table that maps directory names to hashes of their contents.  */
 static Lisp_Object Vlocate_file_hash_table;
@@ -117,8 +117,6 @@ Lisp_Object Vload_file_name;
 /* Same as Vload_file_name but not Lisp-accessible.  This ensures that
    our #$ checks are reliable. */
 Lisp_Object Vload_file_name_internal;
-
-Lisp_Object Vload_file_name_internal_the_purecopy;
 
 /* Function to use for reading, in `load' and friends.  */
 Lisp_Object Vload_read_function;
@@ -338,6 +336,50 @@ load_unwind (Lisp_Object stream)  /* used as unwind-protect function in load */
 {
   Lstream_close (XLSTREAM (stream));
   return Qnil;
+}
+
+/* Check if NONRELOC/RELOC (an absolute filename) is suppressed according
+   to load-suppress-alist. */
+static int
+check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
+{
+  Bytecount len;
+
+  if (!NILP (reloc))
+    {
+      nonreloc = XSTRING_DATA (reloc);
+      len = XSTRING_LENGTH (reloc);
+    }
+  else
+    len = qxestrlen (nonreloc);
+
+  if (len >= 4 && !qxestrcmp_ascii (nonreloc + len - 4, ".elc"))
+    len -= 4;
+  else if (len >= 3 && !qxestrcmp_ascii (nonreloc + len - 3, ".el"))
+    len -= 3;
+
+  EXTERNAL_LIST_LOOP_2 (acons, Vload_suppress_alist)
+    {
+      if (CONSP (acons) && STRINGP (XCAR (acons)))
+	{
+	  Lisp_Object name = XCAR (acons);
+	  if (XSTRING_LENGTH (name) == len &&
+	      !memcmp (XSTRING_DATA (name), nonreloc, len))
+	    {
+	      struct gcpro gcpro1;
+	      Lisp_Object val;
+
+	      GCPRO1 (reloc);
+	      val = Feval (XCDR (acons));
+	      UNGCPRO;
+
+	      if (!NILP (val))
+		return 1;
+	    }
+	}
+    }
+
+  return 0;
 }
 
 /* The plague is coming.
@@ -689,12 +731,11 @@ do {								\
     internal_bind_lisp_object (&Vload_descriptor_list,
 			       Fcons (make_int (fd), Vload_descriptor_list));
     internal_bind_lisp_object (&Vload_file_name_internal, found);
-    internal_bind_lisp_object (&Vload_file_name_internal_the_purecopy, Qnil);
     /* this is not a simple internal_bind. */
     record_unwind_protect (load_force_doc_string_unwind,
 			   Vload_force_doc_string_list);
     Vload_force_doc_string_list = Qnil;
-    specbind (Qload_file_name, found);
+    internal_bind_lisp_object (&Vload_file_name, found);
 #ifdef I18N3
     /* set it to nil; a call to #'domain will set it. */
     internal_bind_lisp_object (&Vfile_domain, Qnil);
@@ -817,6 +858,9 @@ file name when searching.
 If MODE is non-nil, it should be a symbol or a list of symbol representing
 requirements.  Allowed symbols are `exists', `executable', `writable', and
 `readable'.  If MODE is nil, it defaults to `readable'.
+
+Filenames are checked against `load-suppress-alist' to determine if they
+should be ignored.
 
 `locate-file' keeps hash tables of the directories it searches through,
 in order to speed things up.  It tries valiantly to not get confused in
@@ -1024,11 +1068,14 @@ locate_file_in_directory_mapper (Ibyte *fn, void *arg)
 
       if (closure->fd >= 0)
 	{
-	  /* We succeeded; return this descriptor and filename.  */
-	  if (closure->storeptr)
-	    *closure->storeptr = build_intstring (fn);
+	  if (!check_if_suppressed (fn, Qnil))
+	    {
+	      /* We succeeded; return this descriptor and filename.  */
+	      if (closure->storeptr)
+		*closure->storeptr = build_intstring (fn);
 
-	  return 1;
+	      return 1;
+	    }
 	}
     }
   /* Keep mapping. */
@@ -1178,7 +1225,7 @@ can be used if the internal tables grow too large, or when dumping.
    just look for one for which access(file,MODE) succeeds.  In this case,
    returns a nonnegative value on success.  On failure, returns -1.
 
-   If STOREPTR is nonzero, it points to a slot where the name of
+   If STOREPTR is non-nil, it points to a slot where the name of
    the file actually found should be stored as a Lisp string.
    Nil is stored there on failure.
 
@@ -1377,7 +1424,7 @@ readevalloop (Lisp_Object readcharfun,
      READCHARFUN (which can be a stream) to Lisp.  --hniksic */
   /*specbind (Qstandard_input, readcharfun);*/
 
-  specbind (Qcurrent_load_list, Qnil);
+  internal_bind_lisp_object (&Vcurrent_load_list, Qnil);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   Vcurrent_compiled_function_annotation = Qnil;
@@ -3072,9 +3119,7 @@ syms_of_lread (void)
 
   DEFSYMBOL (Qstandard_input);
   DEFSYMBOL (Qread_char);
-  DEFSYMBOL (Qcurrent_load_list);
   DEFSYMBOL (Qload);
-  DEFSYMBOL (Qload_file_name);
   DEFSYMBOL (Qload_internal);
   DEFSYMBOL (Qfset);
 
@@ -3140,6 +3185,16 @@ directory in which the XEmacs executable resides.
   DEFVAR_BOOL ("load-in-progress", &load_in_progress /*
 Non-nil iff inside of `load'.
 */ );
+
+  DEFVAR_LISP ("load-suppress-alist", &Vload_suppress_alist /*
+An alist of expressions controlling whether particular files can be loaded.
+Each element looks like (FILENAME EXPR).
+FILENAME should be a full pathname, but without the .el suffix.
+When `load' is run and is about to load the specified file, it evaluates
+the form to determine if the file can be loaded.
+This variable is normally initialized automatically.
+*/ );
+  Vload_suppress_alist = Qnil;
 
   DEFVAR_LISP ("after-load-alist", &Vafter_load_alist /*
 An alist of expressions to be evalled when particular files are loaded.
@@ -3254,9 +3309,6 @@ character escape syntaxes or just read them incorrectly.
 
   Vload_file_name_internal = Qnil;
   staticpro (&Vload_file_name_internal);
-
-  Vload_file_name_internal_the_purecopy = Qnil;
-  staticpro (&Vload_file_name_internal_the_purecopy);
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   Vcurrent_compiled_function_annotation = Qnil;
