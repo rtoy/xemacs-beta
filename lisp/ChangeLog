@@ -1,3 +1,8 @@
+2002-06-22  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* subr.el (add-to-list): Sync with GNU Emacs 21.2, adding the
+	"&optional append" argument.
+
 2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* unicode.el (load-unicode-tables): Comment loading 8859-1.TXT.
