@@ -208,6 +208,9 @@ USE_UNION_TYPE=0
 !if !defined(USE_MINITAR)
 USE_MINITAR=$(HAVE_ZLIB)
 !endif
+!if !defined(USE_KKCC)
+USE_KKCC=1
+!endif
 
 # A little bit of adhockery. Default to use system malloc and
 # DLL version of the C runtime library when using portable
@@ -1531,7 +1534,7 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
   Using system malloc.
 !endif
 !if $(USE_CRTDLL)
-  Using DLL version of C runtime library
+  Using DLL version of C runtime library.
 !endif
 !if $(ERROR_CHECK_ALL)
   Compiling in extra internal error-checking. XEmacs will be slow!
@@ -1544,6 +1547,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 !endif
 !if $(QUICK_BUILD)
   Disabling non-essential build actions.  Use with care!
+!endif
+!if $(USE_KKCC)
+  Using new experimental GC algorithms.
 !endif
 <<NOKEEP
 	@echo --------------------------------------------------------------------
