@@ -1492,7 +1492,7 @@ parse_font_spec (const Ibyte *namestr,
       C_STRING_TO_TSTR (fontname, extfontname);
       if (logfont)
 	{
-          xetcsncpy ((Extbyte *) logfont->lfFaceName, extfontname,
+          qxetcsncpy ((Extbyte *) logfont->lfFaceName, extfontname,
 	             LF_FACESIZE - 1);
 	  logfont->lfFaceName[LF_FACESIZE - 1] = 0;
 	}

@@ -212,8 +212,8 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	{
 	  Charcount len = eicharlen (win32pattern) - 1;
 	  if (!IS_DIRECTORY_SEP (eigetch_char (win32pattern, len)))
-	    eicat_c (win32pattern, "\\");
-	  eicat_c (win32pattern, "*");
+	    eicat_ascii (win32pattern, "\\");
+	  eicat_ascii (win32pattern, "*");
 	}
       eito_external (win32pattern, Qmswindows_tstr);
 
@@ -312,17 +312,17 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
   file_size =
     file->nFileSizeHigh * (double)UINT_MAX + file->nFileSizeLow;
 #if INDENT_LISTING
-  eicat_c (puta, "  ");
+  eicat_ascii (puta, "  ");
 #endif
   if (display_size)
     {
       sprintf (buf, "%6d ", (int)((file_size + 1023.) / 1024.));
-      eicat_c (puta, buf);
+      eicat_ascii (puta, buf);
     }
   if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    eicat_c (puta, "d");
+    eicat_ascii (puta, "d");
   else
-    eicat_c (puta, "-");
+    eicat_ascii (puta, "-");
   buf[0] = buf[3] = buf[6] = 'r';
   if (file->dwFileAttributes & FILE_ATTRIBUTE_READONLY)
     buf[1] = buf[4] = buf[7] = '-';
@@ -355,11 +355,11 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
       buf[2] = buf[5] = buf[8] = '-';
   }
   buf[9] = '\0';
-  eicat_c (puta, buf);
+  eicat_ascii (puta, buf);
   if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-      eicat_c (puta, "   2 ");
+      eicat_ascii (puta, "   2 ");
   else
-      eicat_c (puta, "   1 ");
+      eicat_ascii (puta, "   1 ");
   luser = Fuser_login_name (Qnil);
   if (!STRINGP (luser))
     sprintf (buf, "%-9d", 0);
@@ -427,10 +427,10 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
     }
   }
 
-  eicat_c (puta, buf);
+  eicat_ascii (puta, buf);
   eicat_raw (puta, file->cFileName, qxestrlen (file->cFileName));
   if (add_newline)
-    eicat_c (puta, "\n");
+    eicat_ascii (puta, "\n");
 
   return eimake_string (puta);
 }

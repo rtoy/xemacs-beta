@@ -916,7 +916,7 @@ mswindows_handle_page_setup_dialog_box (struct frame *UNUSED (f),
 
     qxeGetLocaleInfo (LOCALE_USER_DEFAULT, LOCALE_IMEASURE,
 		      measure, sizeof (measure) / XETCHAR_SIZE);
-    data = xetcscmp (measure, XETEXT ("0"));
+    data = qxetcscmp (measure, XETEXT ("0"));
 
     memset (&pd, 0, sizeof (pd));
     pd.lStructSize = sizeof (pd);

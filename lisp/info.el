@@ -392,7 +392,7 @@ This variable is ignored unless running under XEmacs."
   "*List of additional directories to search for Info documentation
 files.  These directories are not searched for merging the `dir'
 file. An example might be something like:
-\"/usr/local/lib/xemacs/packages/lisp/calc/\""
+\"/usr/local/lib/xemacs/xemacs-packages/lisp/calc/\""
   :type '(repeat directory)
   :group 'info)
 

@@ -1,3 +1,310 @@
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* xemacs/packages.texi (Packages):
+	* xemacs/packages.texi (Manually):
+	* xemacs/packages.texi (Building Packages):
+	* xemacs/packages.texi (Local.rules File):
+	* xemacs/packages.texi (Available Packages):
+	Add long form of Lisp Reference Manual to links.
+	Add links pointing to Lisp Reference Manual for more detailed
+	package discussion.
+	
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* lispref/range-tables.texi (Range Tables):
+	* lispref/range-tables.texi (Introduction to Range Tables):
+	* lispref/range-tables.texi (Working With Range Tables):
+	Document range-table changes.
+
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (A History of Emacs):
+	Update history section.
+
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi:
+	* xemacs-faq.texi (fix-main-menu): New.
+	* xemacs-faq.texi (fix-omitted-menu-lines): New.
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (Introduction):
+	* xemacs-faq.texi (Q1.0.1):
+	* xemacs-faq.texi (Q1.0.2):
+	* xemacs-faq.texi (Q1.0.4):
+	* xemacs-faq.texi (Q1.0.5):
+	* xemacs-faq.texi (Q1.0.6):
+	* xemacs-faq.texi (Q1.0.7):
+	* xemacs-faq.texi (Q1.0.8):
+	* xemacs-faq.texi (Q1.0.9):
+	* xemacs-faq.texi (Q1.0.10):
+	* xemacs-faq.texi (Q1.0.11):
+	* xemacs-faq.texi (Q1.0.12):
+	* xemacs-faq.texi (Q1.0.13):
+	* xemacs-faq.texi (Q1.0.14):
+	* xemacs-faq.texi (Q1.1.1):
+	* xemacs-faq.texi (Q1.1.2):
+	* xemacs-faq.texi (Q1.1.3):
+	* xemacs-faq.texi (Q1.1.4):
+	* xemacs-faq.texi (Q1.1.5):
+	* xemacs-faq.texi (Q1.1.6):
+	* xemacs-faq.texi (Q1.1.7):
+	* xemacs-faq.texi (Q1.1.8):
+	* xemacs-faq.texi (Q1.1.9):
+	* xemacs-faq.texi (Q1.2.1):
+	* xemacs-faq.texi (Q1.2.2):
+	* xemacs-faq.texi (Q1.2.3):
+	* xemacs-faq.texi (Q1.3.1):
+	* xemacs-faq.texi (Q1.3.2):
+	* xemacs-faq.texi (Q1.3.3):
+	* xemacs-faq.texi (Q1.4.1):
+	* xemacs-faq.texi (Q1.4.2):
+	* xemacs-faq.texi (Q1.4.3):
+	* xemacs-faq.texi (Q1.4.4):
+	* xemacs-faq.texi (Q1.4.5):
+	* xemacs-faq.texi (Q1.4.6):
+	* xemacs-faq.texi (Q1.4.7):
+	* xemacs-faq.texi (Q1.4.8):
+	* xemacs-faq.texi (Q1.4.9):
+	* xemacs-faq.texi (Q1.5.1):
+	* xemacs-faq.texi (Q1.5.2):
+	* xemacs-faq.texi (Q1.5.3):
+	* xemacs-faq.texi (Q1.5.4):
+	* xemacs-faq.texi (Q1.5.5):
+	* xemacs-faq.texi (Q1.5.6):
+	* xemacs-faq.texi (Q1.5.7):
+	* xemacs-faq.texi (Q1.5.8):
+	* xemacs-faq.texi (Installation):
+	* xemacs-faq.texi (Q2.0.1):
+	* xemacs-faq.texi (Q2.0.2):
+	* xemacs-faq.texi (Q2.0.3):
+	* xemacs-faq.texi (Q2.0.4):
+	* xemacs-faq.texi (Q2.0.5):
+	* xemacs-faq.texi (Q2.0.6):
+	* xemacs-faq.texi (Q2.0.7):
+	* xemacs-faq.texi (Q2.1.1):
+	* xemacs-faq.texi (Q2.1.2):
+	* xemacs-faq.texi (Q2.1.3):
+	* xemacs-faq.texi (Q2.1.4):
+	* xemacs-faq.texi (Q2.2.1):
+	* xemacs-faq.texi (Q2.2.2):
+	* xemacs-faq.texi (Q2.2.3):
+	* xemacs-faq.texi (Q2.2.4):
+	* xemacs-faq.texi (Q2.2.5):
+	* xemacs-faq.texi (Q2.2.6):
+	* xemacs-faq.texi (Q2.2.7):
+	* xemacs-faq.texi (Q2.2.8):
+	* xemacs-faq.texi (Q2.3.1):
+	* xemacs-faq.texi (Q2.3.2):
+	* xemacs-faq.texi (Q2.3.3):
+	* xemacs-faq.texi (Q2.3.4):
+	* xemacs-faq.texi (Q2.3.5):
+	* xemacs-faq.texi (Q2.3.6):
+	* xemacs-faq.texi (Q2.3.7):
+	* xemacs-faq.texi (Q2.3.8):
+	* xemacs-faq.texi (Q2.3.9):
+	* xemacs-faq.texi (Q2.3.10):
+	* xemacs-faq.texi (Q2.3.11):
+	* xemacs-faq.texi (Q2.4.1):
+	* xemacs-faq.texi (Q2.4.2):
+	* xemacs-faq.texi (Q2.4.3):
+	* xemacs-faq.texi (Q2.4.4):
+	* xemacs-faq.texi (Q2.4.5):
+	* xemacs-faq.texi (Q2.4.6):
+	* xemacs-faq.texi (Display Subsystems):
+	* xemacs-faq.texi (running-xemacs): Removed.
+	* xemacs-faq.texi (Q3.0.1):
+	* xemacs-faq.texi (Q3.0.2):
+	* xemacs-faq.texi (Q3.0.3):
+	* xemacs-faq.texi (Q3.0.4):
+	* xemacs-faq.texi (Q3.0.5):
+	* xemacs-faq.texi (Q3.0.6):
+	* xemacs-faq.texi (foo-old-losing-code-p): Removed.
+	* xemacs-faq.texi (Q3.0.7):
+	* xemacs-faq.texi (Q3.0.8):
+	* xemacs-faq.texi (Q3.0.9):
+	* xemacs-faq.texi (Q3.0.10):
+	* xemacs-faq.texi (Q3.1.1):
+	* xemacs-faq.texi (Q3.1.2):
+	* xemacs-faq.texi (Q3.1.3):
+	* xemacs-faq.texi (Q3.1.4):
+	* xemacs-faq.texi (Q3.1.5):
+	* xemacs-faq.texi (Q3.2.1):
+	* xemacs-faq.texi (Q3.2.2):
+	* xemacs-faq.texi (Q3.2.3):
+	* xemacs-faq.texi (Q3.2.4):
+	* xemacs-faq.texi (Q3.2.5):
+	* xemacs-faq.texi (Q3.2.6):
+	* xemacs-faq.texi (Q3.2.7):
+	* xemacs-faq.texi (Q3.2.8):
+	* xemacs-faq.texi (Q3.2.9):
+	* xemacs-faq.texi (Q3.3.1):
+	* xemacs-faq.texi (Q3.3.2):
+	* xemacs-faq.texi (Q3.3.3):
+	* xemacs-faq.texi (Q3.3.4):
+	* xemacs-faq.texi (Q3.3.5):
+	* xemacs-faq.texi (Q3.3.6):
+	* xemacs-faq.texi (Q3.4.1):
+	* xemacs-faq.texi (Q3.4.2):
+	* xemacs-faq.texi (Q3.4.3):
+	* xemacs-faq.texi (Q3.4.4):
+	* xemacs-faq.texi (Q3.4.5):
+	* xemacs-faq.texi (Q3.4.6):
+	* xemacs-faq.texi (Q3.5.1):
+	* xemacs-faq.texi (Q3.5.2):
+	* xemacs-faq.texi (Q3.5.3):
+	* xemacs-faq.texi (Q3.5.4):
+	* xemacs-faq.texi (Q3.6.1):
+	* xemacs-faq.texi (Q3.6.2):
+	* xemacs-faq.texi (Q3.6.3):
+	* xemacs-faq.texi (Q3.7.1):
+	* xemacs-faq.texi (Q3.7.2):
+	* xemacs-faq.texi (Q3.7.3):
+	* xemacs-faq.texi (Q3.7.4):
+	* xemacs-faq.texi (Q3.7.5):
+	* xemacs-faq.texi (Q3.7.6):
+	* xemacs-faq.texi (Q3.7.7):
+	* xemacs-faq.texi (Q3.7.8):
+	* xemacs-faq.texi (Q3.8.1):
+	* xemacs-faq.texi (Q3.8.2):
+	* xemacs-faq.texi (Q3.8.3):
+	* xemacs-faq.texi (my-toggle-toolbar): New.
+	* xemacs-faq.texi (Q3.8.4):
+	* xemacs-faq.texi (scroll-one-line-up): Removed.
+	* xemacs-faq.texi (scroll-one-line-down): Removed.
+	* xemacs-faq.texi (Q3.8.5):
+	* xemacs-faq.texi (Q3.9.1):
+	* xemacs-faq.texi (Q3.9.2):
+	* xemacs-faq.texi (Q3.9.3):
+	* xemacs-faq.texi (Q3.9.4):
+	* xemacs-faq.texi (Q3.9.5):
+	* xemacs-faq.texi (External Subsystems):
+	* xemacs-faq.texi (Q4.0.1):
+	* xemacs-faq.texi (Q4.0.2):
+	* xemacs-faq.texi (Q4.0.3):
+	* xemacs-faq.texi (Q4.0.4):
+	* xemacs-faq.texi (Q4.0.5):
+	* xemacs-faq.texi (Q4.0.6):
+	* xemacs-faq.texi (global-map): Removed.
+	* xemacs-faq.texi (Q4.1.1):
+	* xemacs-faq.texi (Q4.1.2):
+	* xemacs-faq.texi (Q4.2.1):
+	* xemacs-faq.texi (Q4.2.2):
+	* xemacs-faq.texi (Q4.2.3):
+	* xemacs-faq.texi (Q4.2.4):
+	* xemacs-faq.texi (Q4.3.1):
+	* xemacs-faq.texi (Q4.3.2):
+	* xemacs-faq.texi (Q4.3.3):
+	* xemacs-faq.texi (Q4.3.4):
+	* xemacs-faq.texi (Q4.4.1):
+	* xemacs-faq.texi (Q4.4.2):
+	* xemacs-faq.texi (Q4.4.3):
+	* xemacs-faq.texi (Q4.4.4):
+	* xemacs-faq.texi (Q4.4.5):
+	* xemacs-faq.texi (Q4.5.1):
+	* xemacs-faq.texi (Q4.5.2):
+	* xemacs-faq.texi (Q4.5.3):
+	* xemacs-faq.texi (Q4.5.4):
+	* xemacs-faq.texi (Q4.5.5):
+	* xemacs-faq.texi (Q4.6.1):
+	* xemacs-faq.texi (Q4.6.2):
+	* xemacs-faq.texi (Q4.6.3):
+	* xemacs-faq.texi (Q4.6.4):
+	* xemacs-faq.texi (Q4.7.1):
+	* xemacs-faq.texi (Q4.7.2):
+	* xemacs-faq.texi (Q4.7.3):
+	* xemacs-faq.texi (Q4.8.1):
+	* xemacs-faq.texi (Q4.8.2):
+	* xemacs-faq.texi (Q4.8.3):
+	* xemacs-faq.texi (Q4.8.4):
+	* xemacs-faq.texi (Internet):
+	* xemacs-faq.texi (Q5.0.1):
+	* xemacs-faq.texi (Q5.0.2):
+	* xemacs-faq.texi (Q5.0.3):
+	* xemacs-faq.texi (Q5.0.4):
+	* xemacs-faq.texi (Q5.0.5):
+	* xemacs-faq.texi (Q5.0.6):
+	* xemacs-faq.texi (Q5.0.7):
+	* xemacs-faq.texi (Q5.0.8):
+	* xemacs-faq.texi (Q5.0.9):
+	* xemacs-faq.texi (Q5.0.10):
+	* xemacs-faq.texi (Q5.0.11):
+	* xemacs-faq.texi (Q5.1.1):
+	* xemacs-faq.texi (Q5.1.2):
+	* xemacs-faq.texi (Q5.1.3):
+	* xemacs-faq.texi (Q5.1.4):
+	* xemacs-faq.texi (Q5.1.5):
+	* xemacs-faq.texi (Q5.1.6):
+	* xemacs-faq.texi (Q5.2.1):
+	* xemacs-faq.texi (Q5.2.2):
+	* xemacs-faq.texi (Q5.3.1):
+	* xemacs-faq.texi (Q5.3.2):
+	* xemacs-faq.texi (Q5.4.1):
+	* xemacs-faq.texi (Q5.4.2):
+	* xemacs-faq.texi (Q5.4.3):
+	* xemacs-faq.texi (Advanced):
+	* xemacs-faq.texi (Q6.0.1):
+	* xemacs-faq.texi (Q6.0.2):
+	* xemacs-faq.texi (Q6.1.1):
+	* xemacs-faq.texi (Q6.1.2):
+	* xemacs-faq.texi (Q6.1.3):
+	* xemacs-faq.texi (Q6.1.4):
+	* xemacs-faq.texi (Q6.1.5):
+	* xemacs-faq.texi (Q6.1.6):
+	* xemacs-faq.texi (Q6.2.1):
+	* xemacs-faq.texi (Q6.2.2):
+	* xemacs-faq.texi (Q6.2.3):
+	* xemacs-faq.texi (Q6.2.4):
+	* xemacs-faq.texi (Q6.2.5):
+	* xemacs-faq.texi (Q6.2.6):
+	* xemacs-faq.texi (Q6.2.7):
+	* xemacs-faq.texi (Q6.2.8):
+	* xemacs-faq.texi (Q6.2.9):
+	* xemacs-faq.texi (Q6.2.10):
+	* xemacs-faq.texi (Q6.2.11):
+	* xemacs-faq.texi (Q6.3.1):
+	* xemacs-faq.texi (Q6.3.2):
+	* xemacs-faq.texi (Q6.3.3):
+	* xemacs-faq.texi (Q6.3.4):
+	* xemacs-faq.texi (Current Events):
+	* xemacs-faq.texi (Q7.0.1):
+	* xemacs-faq.texi (Q7.0.2):
+	* xemacs-faq.texi (Q7.0.3):
+	* xemacs-faq.texi (Q7.0.5):
+	* xemacs-faq.texi (Q7.0.6):
+	* xemacs-faq.texi (Legacy Versions):
+	* xemacs-faq.texi (my-function): Removed.
+	* xemacs-faq.texi (Q8.0.1):
+
+	The section on Troubleshooting (now 2.3) has been completely
+	written and includes a lot of stuff that is not properly
+	documented anywhere else.  A fair amount of obsolete info has been
+	deleted and I've incorporated the comments that people (mostly
+	Stephen T) made.  Former chapter 3 has been split up in two, one
+	pertaining to basic I/O and the other to external I/O.  What were
+	formerly chapters 5 and 6 no longer exist as such; the info in
+	them has been distributed across various other chapters.  Old
+	chapter 4 got split up, part going to the new chapter 4 on
+	external I/O and part going to the new chapter 5 on the Internet.
+	In this new chapter, stuff not pertaining to a specific package
+	(e.g. VM or GNUS) was taken out of package-specific sections and a
+	general mail section was constituted.  Part of old chapter 5
+	remains in a new chapter 6 devoted to Emacs Lisp and other
+	advanced stuff, and a section from old chapter 3 on basic
+	init-file Lisp and some stuff from old chapter 5 on Info.  The
+	rest of chapter 5 was just "misc" and has gotten scattered to the
+	winds (mostly in chapters 3 and 4).  Old chapter 6 has also gotten
+	quite scattered; there is no longer any section specifically
+	devoted to Windows except one of the Installation sections (along
+	with a section specfically devoted to Unix), and the rest has
+	moved to join the appropriate non-Windows-specific section
+	elsewhere.  A lot of chapters had their sections rearranged and
+	likewise for sections having entries rearranged, with the
+	intention that the new arrangement should be more natural.  In
+	general I hope that stuff should be much easier to locate.  I also
+	rewrote the entries on the relation between XEmacs and GNU Emacs
+	on the authors of XEmacs, including lots of info on who wrote
+	specific subsections.
+
 2004-12-05  Adrian Aichner  <adrian@xemacs.org>
 
 	* Makefile (TEXI2HTML): Changed to produce unsplit output.

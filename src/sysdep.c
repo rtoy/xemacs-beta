@@ -3139,7 +3139,7 @@ qxe_allocating_getcwd (void)
 	}
     }
 #else
-  Extbyte chingame_limitos_arbitrarios[PATH_MAX];
+  Extbyte chingame_limitos_arbitrarios[PATH_MAX_EXTERNAL];
   Ibyte *ret2;
 
   if (!getwd (chingame_limitos_arbitrarios))

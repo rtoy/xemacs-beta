@@ -3207,7 +3207,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
                    may be copying an ANSI string into it.  Easiest to just
                    zero the whole thing. */
 		xzero (*tttextw->szText);
-		xetcsncpy ((Extbyte *) tttextw->szText, btextext, 79);
+		qxetcsncpy ((Extbyte *) tttextw->szText, btextext, 79);
 	      }
 	    else
 	      tttextw->lpszText = NULL;
@@ -3782,7 +3782,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 			    Extbyte *fname_unicode;
 			    WIN32_FIND_DATAW wfd;
 			    LPWSTR resolved =
-			      alloca_array (WCHAR, PATH_MAX + 1);
+			      alloca_array (WCHAR, PATH_MAX_EXTERNAL + 1);
 
 			    TO_EXTERNAL_FORMAT (DATA, (fname, fnamelen),
 						C_STRING_ALLOCA,
@@ -3806,10 +3806,10 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				/* Another Cygwin prototype error,
 				   fixed in v2.2 of w32api */
 				XECOMCALL4 (psl, GetPath, (LPSTR) resolved,
-					    PATH_MAX, &wfd, 0)
+					    PATH_MAX_EXTERNAL, &wfd, 0)
 #else
 				XECOMCALL4 (psl, GetPath, resolved,
-					    PATH_MAX, &wfd, 0)
+					    PATH_MAX_EXTERNAL, &wfd, 0)
 #endif
 				== S_OK)
 			      TO_INTERNAL_FORMAT (C_STRING, resolved,
@@ -3842,7 +3842,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 			    Extbyte *fname_unicode;
 			    WIN32_FIND_DATAA wfd;
 			    LPSTR resolved =
-			      alloca_array (CHAR, PATH_MAX + 1);
+			      alloca_array (CHAR, PATH_MAX_EXTERNAL + 1);
 
 			    /* Always Unicode.  Not obvious from the
                                IPersistFile documentation, but look under
@@ -3856,7 +3856,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 					    (LPWSTR) fname_unicode,
 					    STGM_READ) == S_OK
 				&& XECOMCALL4 (psl, GetPath, resolved,
-					       PATH_MAX, &wfd, 0) == S_OK)
+					       PATH_MAX_EXTERNAL, &wfd, 0) == S_OK)
 			      TO_INTERNAL_FORMAT (C_STRING, resolved,
 						  ALLOCA, (fname, fnamelen),
 						  Qmswindows_tstr);

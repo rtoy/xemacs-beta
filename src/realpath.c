@@ -105,7 +105,7 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 	errno = ENOENT;
 	return -1;
       }
-    else if (qxestrlen (name) >= PATH_MAX)
+    else if (qxestrlen (name) >= PATH_MAX_INTERNAL)
       {
 	errno = ENAMETOOLONG;
 	return -1;
@@ -170,12 +170,12 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 Ibyte *
 qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 {
-  Ibyte copy_path[PATH_MAX];
+  Ibyte copy_path[PATH_MAX_INTERNAL];
   Ibyte *new_path = resolved_path;
   Ibyte *max_path;
 #if defined (HAVE_READLINK) || defined (WIN32_ANY)
   int readlinks = 0;
-  Ibyte link_path[PATH_MAX];
+  Ibyte link_path[PATH_MAX_INTERNAL];
   int n;
   int abslen = abs_start (path);
 #endif
@@ -185,7 +185,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
   /* Make a copy of the source path since we may need to modify it. */
   qxestrcpy (copy_path, path);
   path = copy_path;
-  max_path = copy_path + PATH_MAX - 2;
+  max_path = copy_path + PATH_MAX_INTERNAL - 2;
 
   if (0)
     ;
@@ -216,14 +216,14 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
   /* No drive letter, but a beginning slash? Prepend drive letter. */
   else if (abslen == 1)
     {
-      get_initial_directory (new_path, PATH_MAX - 1);
+      get_initial_directory (new_path, PATH_MAX_INTERNAL - 1);
       new_path += 3;
       path++;
     }
   /* Just a path name, prepend the current directory */
   else
     {
-      get_initial_directory (new_path, PATH_MAX - 1);
+      get_initial_directory (new_path, PATH_MAX_INTERNAL - 1);
       new_path += qxestrlen (new_path);
       if (!IS_DIRECTORY_SEP (new_path[-1]))
 	*new_path++ = DIRECTORY_SEP;
@@ -232,7 +232,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
   /* If it's a relative pathname use get_initial_directory for starters. */
   else if (abslen == 0)
     {
-      get_initial_directory (new_path, PATH_MAX - 1);
+      get_initial_directory (new_path, PATH_MAX_INTERNAL - 1);
       new_path += qxestrlen (new_path);
       if (!IS_DIRECTORY_SEP (new_path[-1]))
 	*new_path++ = DIRECTORY_SEP;
@@ -297,7 +297,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
       /* See if latest pathname component is a symlink or needs case
 	 correction. */
       *new_path = '\0';
-      n = readlink_and_correct_case (resolved_path, link_path, PATH_MAX - 1);
+      n = readlink_and_correct_case (resolved_path, link_path, PATH_MAX_INTERNAL - 1);
 
       if (n < 0)
 	{
@@ -337,7 +337,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 	    assert (new_path > resolved_path);
 
 	  /* Safe sex check. */
-	  if (qxestrlen (path) + n >= PATH_MAX)
+	  if (qxestrlen (path) + n >= PATH_MAX_INTERNAL)
 	    {
 	      errno = ENAMETOOLONG;
 	      return NULL;

@@ -1,3 +1,9 @@
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* make-docfile.c (main):
+	* make-docfile.c (scan_c_file):
+	Use QXE_PATH_MAX.
+
 2004-11-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* ellcc.h.in: Use XE_CFLAGS, not CFLAGS.

@@ -220,11 +220,11 @@ main (int argc, char **argv)
 	  /* Allow a file containing files to process, for use w/MS Windows
 	     (where command-line length limits are more problematic) */
 	  FILE *argfile = fopen (argv[i] + 1, READ_TEXT);
-	  char arg[PATH_MAX];
+	  char arg[QXE_PATH_MAX];
 
 	  if (!argfile)
 	    fatal ("Unable to open argument file %s", argv[i] + 1);
-	  while (fgets (arg, PATH_MAX, argfile))
+	  while (fgets (arg, QXE_PATH_MAX, argfile))
 	    {
 	      if (arg[strlen (arg) - 1] == '\n')
 		arg[strlen (arg) - 1] = '\0'; /* chop \n */
@@ -640,10 +640,10 @@ scan_c_file (const char *filename, const char *mode)
   register int defvarflag;
   int minargs, maxargs;
   int l = strlen (filename);
-  char f[PATH_MAX];
+  char f[QXE_PATH_MAX];
 
   /* XEmacs change: different method for checking filename extension */
-  if (l > PATH_MAX - 1)
+  if (l > QXE_PATH_MAX - 1)
     {
 #ifdef ENAMETOOLONG
       errno = ENAMETOOLONG;

@@ -504,13 +504,13 @@ Write your filter like this:
        )
 	"---"
       ["%_Cut Rectangle" kill-rectangle]
+      ["%_Prefix Rectangle..." string-rectangle]
       ("Other %_Rectangles/Register"
        ["%_Yank Rectangle" yank-rectangle]
        ["Rectangle %_to Register" copy-rectangle-to-register]
        ["Rectangle %_from Register" insert-register]
        ["%_Delete Rectangle" clear-rectangle]
        ["%_Open Rectangle" open-rectangle]
-       ["%_Prefix Rectangle..." string-rectangle]
        ["Rectangle %_Mousing"
 	(customize-set-variable	'mouse-track-rectangle-p
 				(not mouse-track-rectangle-p))
@@ -555,7 +555,7 @@ Write your filter like this:
 	["Edit Ta%_b Stops" edit-tab-stops]
 	)
 	"---"
-       ("S%_pell-Check"
+       ("Spell-Chec%_k"
 	["%_Buffer" ispell-buffer
 	 :active (fboundp 'ispell-buffer)]
 	"---"

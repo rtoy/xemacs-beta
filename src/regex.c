@@ -419,7 +419,7 @@ Lisp_Object Vthe_lisp_rangetab;
 void
 vars_of_regex (void)
 {
-  Vthe_lisp_rangetab = Fmake_range_table ();
+  Vthe_lisp_rangetab = Fmake_range_table (Qstart_closed_end_closed);
   staticpro (&Vthe_lisp_rangetab);
 }
 

@@ -3335,26 +3335,26 @@ of a key read from the user rather than a character from a buffer.
       LIST_LOOP (rest, key)
 	{
 	  Lisp_Object keysym = XCAR (rest);
-	  if (EQ (keysym, Qcontrol))    eicat_c (bufp, "C-");
-	  else if (EQ (keysym, Qctrl))  eicat_c (bufp, "C-");
-	  else if (EQ (keysym, Qmeta))  eicat_c (bufp, "M-");
-	  else if (EQ (keysym, Qsuper)) eicat_c (bufp, "S-");
-	  else if (EQ (keysym, Qhyper)) eicat_c (bufp, "H-");
-	  else if (EQ (keysym, Qalt))	eicat_c (bufp, "A-");
-	  else if (EQ (keysym, Qshift)) eicat_c (bufp, "Sh-");
+	  if (EQ (keysym, Qcontrol))    eicat_ascii (bufp, "C-");
+	  else if (EQ (keysym, Qctrl))  eicat_ascii (bufp, "C-");
+	  else if (EQ (keysym, Qmeta))  eicat_ascii (bufp, "M-");
+	  else if (EQ (keysym, Qsuper)) eicat_ascii (bufp, "S-");
+	  else if (EQ (keysym, Qhyper)) eicat_ascii (bufp, "H-");
+	  else if (EQ (keysym, Qalt))	eicat_ascii (bufp, "A-");
+	  else if (EQ (keysym, Qshift)) eicat_ascii (bufp, "Sh-");
 	  else if (CHAR_OR_CHAR_INTP (keysym))
 	    eicat_ch (bufp, XCHAR_OR_CHAR_INT (keysym));
 	  else
 	    {
 	      CHECK_SYMBOL (keysym);
 #if 0                           /* This is bogus */
-	      if (EQ (keysym, QKlinefeed))	 eicat_c (bufp, "LFD");
-	      else if (EQ (keysym, QKtab))	 eicat_c (bufp, "TAB");
-	      else if (EQ (keysym, QKreturn))	 eicat_c (bufp, "RET");
-	      else if (EQ (keysym, QKescape))	 eicat_c (bufp, "ESC");
-	      else if (EQ (keysym, QKdelete))	 eicat_c (bufp, "DEL");
-	      else if (EQ (keysym, QKspace))	 eicat_c (bufp, "SPC");
-	      else if (EQ (keysym, QKbackspace)) eicat_c (bufp, "BS");
+	      if (EQ (keysym, QKlinefeed))	 eicat_ascii (bufp, "LFD");
+	      else if (EQ (keysym, QKtab))	 eicat_ascii (bufp, "TAB");
+	      else if (EQ (keysym, QKreturn))	 eicat_ascii (bufp, "RET");
+	      else if (EQ (keysym, QKescape))	 eicat_ascii (bufp, "ESC");
+	      else if (EQ (keysym, QKdelete))	 eicat_ascii (bufp, "DEL");
+	      else if (EQ (keysym, QKspace))	 eicat_ascii (bufp, "SPC");
+	      else if (EQ (keysym, QKbackspace)) eicat_ascii (bufp, "BS");
 	      else
 #endif
 		eicat_lstr (bufp, XSYMBOL (keysym)->name);
@@ -3567,7 +3567,7 @@ format_raw_keys (Lisp_Key_Data *keys, int count, Eistring *buf)
       XSET_EVENT_KEY_MODIFIERS (event, KEY_DATA_MODIFIERS (&keys[i]));
       format_event_object (buf, event, 1);
       if (i < count - 1)
-	eicat_c (buf, " ");
+	eicat_ascii (buf, " ");
     }
   Fdeallocate_event (event);
 }

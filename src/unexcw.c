@@ -102,7 +102,7 @@ unexec (char *out_name, char *in_name, uintptr_t UNUSED (start_data),
 {
   /* ugly nt hack - should be in lisp */
   int a_new, a_out = -1;
-  char new_name[PATH_MAX], a_name[PATH_MAX];
+  char new_name[PATH_MAX_EXTERNAL], a_name[PATH_MAX_EXTERNAL];
   char *ptr;
   
   /* Make sure that the input and output filenames have the

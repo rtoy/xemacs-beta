@@ -2205,12 +2205,28 @@ EXTERNAL_PROPERTY_LIST_LOOP_7 (key, value, list, len, tail,		\
 	    ((void) signal_circular_property_list_error (list)) :	\
 	    ((void) 0)))))
 
-#define PROPERTY_LIST_LOOP(tail, key, value, plist)	\
-  for (tail = plist;					\
-       NILP (tail) ? 0 :				\
-	 (key   = XCAR (tail), tail = XCDR (tail),	\
-	  value = XCAR (tail), tail = XCDR (tail), 1);	\
+#define PRIVATE_PROPERTY_LIST_LOOP_4(tail, key, value, plist)	\
+  for (tail = plist;						\
+       NILP (tail) ? 0 :					\
+	 (key   = XCAR (tail), tail = XCDR (tail),		\
+	  value = XCAR (tail), tail = XCDR (tail), 1);		\
        )
+
+#define PROPERTY_LIST_LOOP_3(key, value, plist)			\
+  Lisp_Object key, value, tail_##key;				\
+  PRIVATE_PROPERTY_LIST_LOOP_4 (tail_##key, key, value, plist)
+
+#define GC_PROPERTY_LIST_LOOP_3(key, value, plist)		\
+do {								\
+  XGCDECL3 (key);						\
+  Lisp_Object key, value, tail_##key;				\
+  XGCPRO3 (key, key, value, tail_##key);			\
+  PRIVATE_PROPERTY_LIST_LOOP_4 (tail_##key, key, value, plist)
+
+#define END_GC_PROPERTY_LIST_LOOP(key)		\
+  XUNGCPRO (key);				\
+}						\
+while (0)
 
 /* Return 1 if LIST is properly acyclic and nil-terminated, else 0. */
 DECLARE_INLINE_HEADER (
@@ -4595,8 +4611,13 @@ void internal_object_printer (Lisp_Object, Lisp_Object, int);
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);
 EXFUN (Fget_range_table, 3);
-EXFUN (Fmake_range_table, 0);
+EXFUN (Fmake_range_table, 1);
 EXFUN (Fput_range_table, 4);
+
+extern Lisp_Object Qstart_closed_end_open;
+extern Lisp_Object Qstart_open_end_open;
+extern Lisp_Object Qstart_closed_end_closed;
+extern Lisp_Object Qstart_open_end_closed;
 
 void put_range_table (Lisp_Object, EMACS_INT, EMACS_INT, Lisp_Object);
 int unified_range_table_bytes_needed (Lisp_Object);

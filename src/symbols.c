@@ -2100,9 +2100,8 @@ of previous SYMBOLs.
        (args))
 {
   /* This function can GC */
-  Lisp_Object symbol, tail, val = Qnil;
   int nargs;
-  struct gcpro gcpro1;
+  Lisp_Object retval = Qnil;
 
   GET_LIST_LENGTH (args, nargs);
 
@@ -2110,16 +2109,15 @@ of previous SYMBOLs.
     Fsignal (Qwrong_number_of_arguments,
 	     list2 (Qsetq_default, make_int (nargs)));
 
-  GCPRO1 (val);
-
-  PROPERTY_LIST_LOOP (tail, symbol, val, args)
+  GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
       val = Feval (val);
       Fset_default (symbol, val);
+      retval = val;
     }
 
-  UNGCPRO;
-  return val;
+  END_GC_PROPERTY_LIST_LOOP (symbol);
+  return retval;
 }
 
 /* Lisp functions for creating and removing buffer-local variables.  */

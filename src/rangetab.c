@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with range tables.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,10 +30,54 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qrange_tablep;
 Lisp_Object Qrange_table;
 
+Lisp_Object Qstart_closed_end_open;
+Lisp_Object Qstart_open_end_open;
+Lisp_Object Qstart_closed_end_closed;
+Lisp_Object Qstart_open_end_closed;
+
 
 /************************************************************************/
 /*                            Range table object                        */
 /************************************************************************/
+
+static enum range_table_type
+range_table_symbol_to_type (Lisp_Object symbol)
+{
+  if (NILP (symbol))
+    return RANGE_START_CLOSED_END_OPEN;
+
+  CHECK_SYMBOL (symbol);
+  if (EQ (symbol, Qstart_closed_end_open))
+    return RANGE_START_CLOSED_END_OPEN;
+  if (EQ (symbol, Qstart_closed_end_closed))
+    return RANGE_START_CLOSED_END_CLOSED;
+  if (EQ (symbol, Qstart_open_end_open))
+    return RANGE_START_OPEN_END_OPEN;
+  if (EQ (symbol, Qstart_open_end_closed))
+    return RANGE_START_OPEN_END_CLOSED;
+
+  invalid_constant ("Unknown range table type", symbol);
+  RETURN_NOT_REACHED (RANGE_START_CLOSED_END_OPEN);
+}
+
+static Lisp_Object
+range_table_type_to_symbol (enum range_table_type type)
+{
+  switch (type)
+    {
+    case RANGE_START_CLOSED_END_OPEN:
+      return Qstart_closed_end_open;
+    case RANGE_START_CLOSED_END_CLOSED:
+      return Qstart_closed_end_closed;
+    case RANGE_START_OPEN_END_OPEN:
+      return Qstart_open_end_open;
+    case RANGE_START_OPEN_END_CLOSED:
+      return Qstart_open_end_closed;
+    }
+
+  abort ();
+  return Qnil;
+}
 
 /* We use a sorted array of ranges.
 
@@ -58,20 +102,37 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
 
-  write_c_string (printcharfun, "#s(range-table data (");
+  if (print_readably)
+    write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
+			   1, range_table_type_to_symbol (rt->type));
+  else
+    write_c_string (printcharfun, "#<range-table ");
   for (i = 0; i < Dynarr_length (rt->entries); i++)
     {
       struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
+      int so, ec;
       if (i > 0)
 	write_c_string (printcharfun, " ");
-      if (rte->first == rte->last)
-	write_fmt_string (printcharfun, "%ld ", (long) (rte->first));
-      else
-	write_fmt_string (printcharfun, "(%ld %ld) ", (long) (rte->first),
-			  (long) (rte->last));
+      switch (rt->type)
+	{
+	case RANGE_START_CLOSED_END_OPEN: so = 0, ec = 0; break;
+	case RANGE_START_CLOSED_END_CLOSED: so = 0, ec = 1; break;
+	case RANGE_START_OPEN_END_OPEN: so = 1, ec = 0; break;
+	case RANGE_START_OPEN_END_CLOSED: so = 1; ec = 1; break;
+	default: abort (); so = 0, ec = 0; break;
+	}
+      write_fmt_string (printcharfun, "%c%ld %ld%c ",
+			print_readably ? '(' : so ? '(' : '[',
+			(long) (rte->first - so),
+			(long) (rte->last - ec),
+			print_readably ? ')' : ec ? ']' : ')'
+			);
       print_internal (rte->val, printcharfun, 1);
     }
-  write_c_string (printcharfun, "))");
+  if (print_readably)
+    write_c_string (printcharfun, "))");
+  else
+    write_fmt_string (printcharfun, " 0x%x>", rt->header.uid);
 }
 
 static int
@@ -180,7 +241,7 @@ verify_range_table (Lisp_Range_Table *rt)
       struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
       assert (rte->last >= rte->first);
       if (i > 0)
-	assert (Dynarr_at (rt->entries, i - 1).last < rte->first);
+	assert (Dynarr_at (rt->entries, i - 1).last <= rte->first);
     }
 }
 
@@ -207,8 +268,8 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
 	 of the list), so NEWPOS must round down. */
       int newpos = (left + right) >> 1;
       struct range_table_entry *entry = tab + newpos;
-      if (pos > entry->last)
-	left = newpos+1;
+      if (pos >= entry->last)
+	left = newpos + 1;
       else if (pos < entry->first)
 	right = newpos;
       else
@@ -226,16 +287,50 @@ Return non-nil if OBJECT is a range table.
   return RANGE_TABLEP (object) ? Qt : Qnil;
 }
 
-DEFUN ("make-range-table", Fmake_range_table, 0, 0, 0, /*
+DEFUN ("range-table-type", Frange_table_type, 1, 1, 0, /*
+Return non-nil if OBJECT is a range table.
+*/
+       (range_table))
+{
+  CHECK_RANGE_TABLE (range_table);
+  return range_table_type_to_symbol (XRANGE_TABLE (range_table)->type);
+}
+
+DEFUN ("make-range-table", Fmake_range_table, 0, 1, 0, /*
 Return a new, empty range table.
 You can manipulate it using `put-range-table', `get-range-table',
 `remove-range-table', and `clear-range-table'.
+Range tables allow you to efficiently set values for ranges of integers.
+
+ TYPE is a symbol indicating how ranges are assumed to function at their
+ ends.  It can be one of
+ 
+ SYMBOL                                     RANGE-START         RANGE-END
+ ------                                     -----------         ---------
+ `start-closed-end-open'  (the default)     closed              open
+ `start-closed-end-closed'                  closed              closed
+ `start-open-end-open'                      open                open
+ `start-open-end-closed'                    open                closed
+ 
+ A `closed' endpoint of a range means that the number at that end is included
+ in the range.  For an `open' endpoint, the number would not be included.
+ 
+ For example, a closed-open range from 5 to 20 would be indicated as [5,
+ 20) where a bracket indicates a closed end and a parenthesis an open end,
+ and would mean `all the numbers between 5 and 20', including 5 but not 20.
+ This seems a little strange at first but is in fact extremely common in
+ the outside world as well as in computers and makes things work sensibly.
+ For example, if I say "there are seven days between today and next week
+ today", I'm including today but not next week today; if I included both,
+ there would be eight days.  Similarly, there are 15 (= 20 - 5) elements in
+ the range [5, 20), but 16 in the range [5, 20].
 */
-       ())
+       (type))
 {
   Lisp_Range_Table *rt = alloc_lcrecord_type (Lisp_Range_Table,
 					      &lrecord_range_table);
   rt->entries = Dynarr_new (range_table_entry);
+  rt->type = range_table_symbol_to_type (type);
   return wrap_range_table (rt);
 }
 
@@ -253,6 +348,7 @@ The values will not themselves be copied.
 
   rtnew = alloc_lcrecord_type (Lisp_Range_Table, &lrecord_range_table);
   rtnew->entries = Dynarr_new (range_table_entry);
+  rtnew->type = rt->type;
 
   Dynarr_add_many (rtnew->entries, Dynarr_atp (rt->entries, 0),
 		   Dynarr_length (rt->entries));
@@ -284,6 +380,24 @@ put_range_table (Lisp_Object table, EMACS_INT first,
   int insert_me_here = -1;
   Lisp_Range_Table *rt = XRANGE_TABLE (table);
 
+  /* Fix up the numbers in accordance with the open/closedness to make
+     them behave like default open/closed. */
+
+  switch (rt->type)
+    {
+    case RANGE_START_CLOSED_END_OPEN: break;
+    case RANGE_START_CLOSED_END_CLOSED: last++; break;
+    case RANGE_START_OPEN_END_OPEN: first++; break;
+    case RANGE_START_OPEN_END_CLOSED: first++, last++; break;
+    }
+
+  if (first == last)
+    return;
+  if (first > last)
+    /* This will happen if originally first == last and both ends are
+       open. #### Should we signal an error? */
+    return;
+
   /* Now insert in the proper place.  This gets tricky because
      we may be overlapping one or more existing ranges and need
      to fix them up. */
@@ -304,44 +418,55 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 	/* completely after the new range.  No more possibilities of
 	   finding overlapping ranges. */
 	break;
+      /* At this point the existing ENTRY overlaps or touches the new one. */
       if (entry->first < first && entry->last <= last)
 	{
 	  /* looks like:
 
-	                 [ NEW ]
-	         [ EXISTING ]
+	                 [ NEW )
+                [ EXISTING )
+
+	     or
+
+	                 [ NEW )
+              [ EXISTING )
 
 	   */
 	  /* truncate the end off of it. */
-	  entry->last = first - 1;
+	  entry->last = first;
 	}
       else if (entry->first < first && entry->last > last)
 	/* looks like:
 
-	         [ NEW ]
-	       [ EXISTING ]
+	         [ NEW )
+	       [ EXISTING )
 
 	 */
 	/* need to split this one in two. */
 	{
 	  struct range_table_entry insert_me_too;
 
-	  insert_me_too.first = last + 1;
+	  insert_me_too.first = last;
 	  insert_me_too.last = entry->last;
 	  insert_me_too.val = entry->val;
-	  entry->last = first - 1;
+	  entry->last = first;
 	  Dynarr_insert_many (rt->entries, &insert_me_too, 1, i + 1);
 	}
-      else if (entry->last > last)
+      else if (entry->last >= last)
 	{
 	  /* looks like:
 
-	       [ NEW ]
-	         [ EXISTING ]
+	       [ NEW )
+                   [ EXISTING )
+
+             or
+
+	       [ NEW )
+	             [ EXISTING )
 
 	   */
 	  /* truncate the start off of it. */
-	  entry->first = last + 1;
+	  entry->first = last;
 	}
       else
 	{
@@ -377,7 +502,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     {
       struct range_table_entry *entry = Dynarr_atp (rt->entries,
 						    insert_me_here - 1);
-      if (EQ (val, entry->val) && entry->last == first - 1)
+      if (EQ (val, entry->val) && entry->last == first)
 	{
 	  entry->last = last;
 	  Dynarr_delete_many (rt->entries, insert_me_here, 1);
@@ -392,7 +517,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     {
       struct range_table_entry *entry = Dynarr_atp (rt->entries,
 						    insert_me_here + 1);
-      if (EQ (val, entry->val) && entry->first == last + 1)
+      if (EQ (val, entry->val) && entry->first == last)
 	{
 	  entry->first = first;
 	  Dynarr_delete_many (rt->entries, insert_me_here, 1);
@@ -401,7 +526,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 }
 
 DEFUN ("put-range-table", Fput_range_table, 4, 4, 0, /*
-Set the value for range (START, END) to be VALUE in RANGE-TABLE.
+Set the value for range START .. END to be VALUE in RANGE-TABLE.
 */
        (start, end, value, range_table))
 {
@@ -421,7 +546,7 @@ Set the value for range (START, END) to be VALUE in RANGE-TABLE.
 }
 
 DEFUN ("remove-range-table", Fremove_range_table, 3, 3, 0, /*
-Remove the value for range (START, END) in RANGE-TABLE.
+Remove the value for range START .. END in RANGE-TABLE.
 */
        (start, end, range_table))
 {
@@ -491,6 +616,15 @@ exactly once) if FUNCTION modifies or deletes the current entry
 /************************************************************************/
 
 static int
+rangetab_type_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+			Error_Behavior UNUSED (errb))
+{
+  /* #### should deal with ERRB */
+  range_table_symbol_to_type (value);
+  return 1;
+}
+
+static int
 rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			Error_Behavior UNUSED (errb))
 {
@@ -509,26 +643,30 @@ rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 }
 
 static Lisp_Object
-rangetab_instantiate (Lisp_Object data)
+rangetab_instantiate (Lisp_Object plist)
 {
-  Lisp_Object rangetab = Fmake_range_table ();
+  Lisp_Object data = Qnil, type = Qnil;
 
-  if (!NILP (data))
+  PROPERTY_LIST_LOOP_3 (key, value, plist)
     {
-      data = Fcar (Fcdr (data)); /* skip over 'data keyword */
-      while (!NILP (data))
-	{
-	  Lisp_Object range = Fcar (data);
-	  Lisp_Object val = Fcar (Fcdr (data));
-
-	  data = Fcdr (Fcdr (data));
-	  if (CONSP (range))
-	    Fput_range_table (Fcar (range), Fcar (Fcdr (range)), val,
-			      rangetab);
-	  else
-	    Fput_range_table (range, range, val, rangetab);
-	}
+      if (EQ (key, Qtype)) type = value;
+      else if (EQ (key, Qdata)) data = value;
+      else
+	abort ();
     }
+
+  Lisp_Object rangetab = Fmake_range_table (type);
+
+  {
+    PROPERTY_LIST_LOOP_3 (range, val, data)
+      {
+	if (CONSP (range))
+	  Fput_range_table (Fcar (range), Fcar (Fcdr (range)), val,
+			    rangetab);
+	else
+	  Fput_range_table (range, range, val, rangetab);
+      }
+  }
 
   return rangetab;
 }
@@ -733,7 +871,13 @@ syms_of_rangetab (void)
   DEFSYMBOL_MULTIWORD_PREDICATE (Qrange_tablep);
   DEFSYMBOL (Qrange_table);
 
+  DEFSYMBOL (Qstart_closed_end_open);
+  DEFSYMBOL (Qstart_open_end_open);
+  DEFSYMBOL (Qstart_closed_end_closed);
+  DEFSYMBOL (Qstart_open_end_closed);
+
   DEFSUBR (Frange_table_p);
+  DEFSUBR (Frange_table_type);
   DEFSUBR (Fmake_range_table);
   DEFSUBR (Fcopy_range_table);
   DEFSUBR (Fget_range_table);
@@ -751,4 +895,5 @@ structure_type_create_rangetab (void)
   st = define_structure_type (Qrange_table, 0, rangetab_instantiate);
 
   define_structure_type_keyword (st, Qdata, rangetab_data_validate);
+  define_structure_type_keyword (st, Qtype, rangetab_type_validate);
 }

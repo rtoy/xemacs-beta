@@ -128,16 +128,16 @@ create_profile_tables (void)
   create_timing_profile_table ();
   if (NILP (Vtotal_timing_profile_table))
     Vtotal_timing_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   if (NILP (Vcall_count_profile_table))
     Vcall_count_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   if (NILP (Vgc_usage_profile_table))
     Vgc_usage_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   if (NILP (Vtotal_gc_usage_profile_table))
     Vtotal_gc_usage_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+      make_lisp_hash_table (1000, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
 }
 
 static Lisp_Object
@@ -178,13 +178,8 @@ current_profile_function (void)
 void
 profile_record_consing (EMACS_INT size)
 {
-  Lisp_Object fun;
-  Lisp_Object count;
-
   in_profiling++;
-  fun = current_profile_function ();
-  count = Fgethash (fun, Vgc_usage_profile_table, Qzero);
-  Fputhash (fun, make_int (size + XINT (count)), Vgc_usage_profile_table);
+  inchash_eq (current_profile_function (), Vgc_usage_profile_table, size);
   in_profiling--;
 }
 
@@ -228,11 +223,7 @@ profile_record_about_to_call (struct backtrace *bt)
   /* See comments in create_timing_profile_table(). */
   pregrow_hash_table_if_necessary (big_profile_table, EXTRA_BREATHING_ROOM);
   profiling_lock = 0;
-  Fputhash (*bt->function,
-	    make_int (1 + XINT (Fgethash (*bt->function,
-					  Vcall_count_profile_table,
-					  Qzero))),
-	    Vcall_count_profile_table);
+  inchash_eq (*bt->function, Vcall_count_profile_table, 1);
   /* This may be set if the function was in its preamble at the time that
      `start-profiling' was called.  If so, we shouldn't reset the values
      because we may get inconsistent results, since we have already started

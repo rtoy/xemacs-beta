@@ -1341,7 +1341,7 @@ No component of the resulting pathname will be a symbolic link, as
   }
 
   {
-    Ibyte resolved_path[PATH_MAX];
+    Ibyte resolved_path[PATH_MAX_INTERNAL];
     Bytecount elen = XSTRING_LENGTH (expanded_name);
     Ibyte *path;
     Ibyte *p;

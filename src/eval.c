@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1154,25 +1154,24 @@ The return value of the `setq' form is the value of the last VAL.
        (args))
 {
   /* This function can GC */
-  Lisp_Object symbol, tail, val = Qnil;
   int nargs;
-  struct gcpro gcpro1;
+  Lisp_Object retval = Qnil;
 
   GET_LIST_LENGTH (args, nargs);
 
   if (nargs & 1)		/* Odd number of arguments? */
     Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, make_int (nargs)));
 
-  GCPRO1 (val);
-
-  PROPERTY_LIST_LOOP (tail, symbol, val, args)
+  GC_PROPERTY_LIST_LOOP_3 (symbol, val, args)
     {
       val = Feval (val);
       Fset (symbol, val);
+      retval = val;
     }
 
-  UNGCPRO;
-  return val;
+  END_GC_PROPERTY_LIST_LOOP (symbol);
+
+  return retval;
 }
 
 DEFUN ("quote", Fquote, 1, UNEVALLED, 0, /*
@@ -4825,7 +4824,8 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
     (struct call_trapping_problems *) get_opaque_ptr (opaque);
 
   if (!(inhibit_flags & INHIBIT_WARNING_ISSUE)
-      && !warning_will_be_discarded (current_warning_level ()))
+      && !warning_will_be_discarded (current_warning_level ())
+      && !EQ (error_conditions, Qquit))
     {
       struct gcpro gcpro1;
       Lisp_Object lstream = Qnil;
@@ -4898,7 +4898,7 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	     p->thrown_tag, p->thrown_value);
 	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
 	}
-      else if (p->caught_error)
+      else if (p->caught_error && !EQ (p->error_conditions, Qquit))
 	{
 	  Lisp_Object errstr;
 	  /* #### This should call

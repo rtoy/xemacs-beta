@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/12/05 22:30:40 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/12/06 03:51:29 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -1255,9 +1255,9 @@ code in it.
 
 There is also a port of XEmacs 19.14 that works on all recent versions
 of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
-Pitts Jarvis}.  It runs in an equivalent of TTY mode only (one single
-Macintosh window, 25 colors), but has a large number of Mac-specific
-additions.  It's available at
+Pitts Jarvis} (recently deceased).  It runs in an equivalent of TTY
+mode only (one single Macintosh window, 25 colors), but has a large
+number of Mac-specific additions.  It's available at
 @uref{http://homepage.mac.com/pjarvis/xemacs.html}.
 
 @node Q1.1.7, Q1.1.8, Q1.1.6, Introduction

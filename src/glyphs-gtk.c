@@ -1701,7 +1701,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   GdkColor fg, bg;
   GdkFont *source, *mask;
-  char source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
+  char source_name[PATH_MAX_INTERNAL], mask_name[PATH_MAX_INTERNAL], dummy;
   int source_char, mask_char;
   int count;
   Lisp_Object foreground, background;

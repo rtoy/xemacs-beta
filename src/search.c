@@ -3173,6 +3173,6 @@ occur and a back reference to one of them is directly followed by a digit.
 */ );
   warn_about_possibly_incompatible_back_references = 1;
 
-  Vskip_chars_range_table = Fmake_range_table ();
+  Vskip_chars_range_table = Fmake_range_table (Qstart_closed_end_closed);
   staticpro (&Vskip_chars_range_table);
 }

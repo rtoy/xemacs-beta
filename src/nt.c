@@ -1084,12 +1084,12 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
       struct
 	{
 	  WIN32_STREAM_ID wid;
-	  WCHAR wbuffer[MAX_PATH];	/* extra space for link name */
+	  WCHAR wbuffer[_MAX_PATH];	/* extra space for link name */
 	} data;
 
       TO_EXTERNAL_FORMAT (C_STRING, new,
 			  ALLOCA, (newuni, wlen), Qmswindows_unicode);
-      if (wlen / sizeof (WCHAR) < MAX_PATH)
+      if (wlen / sizeof (WCHAR) < _MAX_PATH)
 	{
 	  LPVOID context = NULL;
 	  DWORD wbytes = 0;
@@ -1998,7 +1998,7 @@ All path elements in FILENAME are converted to their short names.
 */
        (filename))
 {
-  Extbyte shortname[MAX_PATH * MAX_XETCHAR_SIZE];
+  Extbyte shortname[PATH_MAX_EXTERNAL];
   Extbyte *fileext;
   Ibyte *shortint;
 

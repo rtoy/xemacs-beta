@@ -2486,7 +2486,7 @@ static HTREEITEM add_tree_item (Lisp_Object image_instance,
   else
     LISP_STRING_TO_TSTR (item, tvitem.item.pszText);
       
-  tvitem.item.cchTextMax = xetcslen ((Extbyte *) tvitem.item.pszText);
+  tvitem.item.cchTextMax = qxetcslen ((Extbyte *) tvitem.item.pszText);
       
   if ((ret = (HTREEITEM) qxeSendMessage (wnd, TVM_INSERTITEM,
 					 0, (LPARAM) &tvitem)) == 0)
@@ -2605,7 +2605,7 @@ add_tab_item (Lisp_Object image_instance,
       LISP_STRING_TO_TSTR (item, tcitem.pszText);
     }
 
-  tcitem.cchTextMax = xetcslen ((Extbyte *) tcitem.pszText);
+  tcitem.cchTextMax = qxetcslen ((Extbyte *) tcitem.pszText);
 
   if ((ret = qxeSendMessage (wnd, TCM_INSERTITEM, i, (LPARAM) &tcitem)) < 0)
     gui_error ("error adding tab entry", item);

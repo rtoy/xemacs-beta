@@ -1542,20 +1542,20 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
 	UNGCPRO;
 	return;
       }
-    case magic_eval_event:	eicat_c (buf, "magic-eval"); return;
-    case pointer_motion_event:	eicat_c (buf, "motion");     return;
-    case misc_user_event:	eicat_c (buf, "misc-user");  return;
-    case eval_event:		eicat_c (buf, "eval");	     return;
-    case process_event:		eicat_c (buf, "process");    return;
-    case timeout_event:		eicat_c (buf, "timeout");    return;
-    case empty_event:		eicat_c (buf, "empty");	     return;
-    case dead_event:		eicat_c (buf, "DEAD-EVENT"); return;
+    case magic_eval_event:	eicat_ascii (buf, "magic-eval"); return;
+    case pointer_motion_event:	eicat_ascii (buf, "motion");     return;
+    case misc_user_event:	eicat_ascii (buf, "misc-user");  return;
+    case eval_event:		eicat_ascii (buf, "eval");	     return;
+    case process_event:		eicat_ascii (buf, "process");    return;
+    case timeout_event:		eicat_ascii (buf, "timeout");    return;
+    case empty_event:		eicat_ascii (buf, "empty");	     return;
+    case dead_event:		eicat_ascii (buf, "DEAD-EVENT"); return;
     default:
       abort ();
       return;
     }
 #define modprint(x,y) \
-  do { if (brief) eicat_c (buf, (y)); else eicat_c (buf, (x)); } while (0)
+  do { if (brief) eicat_ascii (buf, (y)); else eicat_ascii (buf, (x)); } while (0)
   if (mod & XEMACS_MOD_CONTROL) modprint ("control-", "C-");
   if (mod & XEMACS_MOD_META)    modprint ("meta-",    "M-");
   if (mod & XEMACS_MOD_SUPER)   modprint ("super-",   "S-");
@@ -1564,7 +1564,7 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
   if (mod & XEMACS_MOD_SHIFT)   modprint ("shift-",   "Sh-");
   if (mouse_p)
     {
-      eicat_c (buf, "button");
+      eicat_ascii (buf, "button");
       --mouse_p;
     }
 
@@ -1586,14 +1586,14 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
 	  else if (EQ (key, QKbackspace)) str = "BS";
 	}
       if (str)
-	eicat_c (buf, str);
+	eicat_ascii (buf, str);
       else
 	eicat_lstr (buf, XSYMBOL (key)->name);
     }
   else
     abort ();
   if (mouse_p)
-    eicat_c (buf, "up");
+    eicat_ascii (buf, "up");
 }
 
 void

@@ -1,6 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -267,19 +267,42 @@ Boston, MA 02111-1307, USA.  */
 #define S_ISNWK(m) (((m) & S_IFMT) == S_IFNWK)
 #endif
 
-/* Client .c files should simply use `PATH_MAX'. */
-#ifndef PATH_MAX
-# if defined (_MAX_PATH)
+/* Determining the maximum pathname length.
+
+   NOTE: IN GENERAL, YOU SHOULD NOT USE THIS.
+   If at all possible, avoid using fixed-length buffers of any sort.
+   You cannot guarantee on many systems that pathnames won't exceed
+   these limits for one reason or another.
+
+   Unfortunately, there is no universal agreement over whether these
+   values should include a final null-terminator or not.  Even recent
+   versions of Linux (circa 2002) are switching from the not-including-
+   terminator kind to the including-terminator kind.  So we assume that
+   the including-terminator kind will be even (usually is), and round
+   up as necessary. */
+    
+#define ROUND_UP_TO_EVEN_NUMBER(val) (((val + 1) >> 1) << 1)
+#ifdef PATH_MAX
+# define QXE_PATH_MAX ROUND_UP_TO_EVEN_NUMBER (PATH_MAX)
+#elif defined (_MAX_PATH)
 /* MS Win -- and preferable to _POSIX_PATH_MAX, which is also defined */
-#  define PATH_MAX _MAX_PATH
-# elif defined (_POSIX_PATH_MAX)
-#  define PATH_MAX _POSIX_PATH_MAX
-# elif defined (MAXPATHLEN)
-#  define PATH_MAX MAXPATHLEN
-# else
-#  define PATH_MAX 1024
-# endif
+# define QXE_PATH_MAX ROUND_UP_TO_EVEN_NUMBER (_MAX_PATH)
+#elif defined (_POSIX_PATH_MAX)
+# define QXE_PATH_MAX ROUND_UP_TO_EVEN_NUMBER (_POSIX_PATH_MAX)
+#elif defined (MAXPATHLEN)
+# define QXE_PATH_MAX ROUND_UP_TO_EVEN_NUMBER (MAXPATHLEN)
+#else
+# define QXE_PATH_MAX 1024
 #endif
+
+/* Client .c files should use PATH_MAX_INTERNAL or PATH_MAX_EXTERNAL
+   if they must use either one at all. */
+
+/* Use for internally formatted text, which can potentially have up to
+   four bytes per character */
+#define PATH_MAX_INTERNAL (QXE_PATH_MAX * MAX_ICHAR_LEN)
+/* Use for externally formatted text. */
+#define PATH_MAX_EXTERNAL (QXE_PATH_MAX * MAX_XETCHAR_SIZE)
 
 /* The following definitions are needed under Windows, at least */
 #ifndef X_OK

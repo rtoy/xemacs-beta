@@ -1,3 +1,11 @@
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* info.el (Info-additional-search-directory-list):
+	Correct doc string giving example package path.
+	
+	* menubar-items.el (default-menubar):
+	Move Prefix Rectangle command up one level.
+
 2004-11-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* mule/devan-util.el (devanagari-composite-glyph-unit): doctring

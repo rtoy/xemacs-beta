@@ -1873,15 +1873,32 @@ pdump_file_try (Wexttext *exe_path)
 int
 pdump_load (const Wexttext *argv0)
 {
-  Wexttext exe_path[PATH_MAX];
 #ifdef WIN32_NATIVE
-  qxeGetModuleFileName (NULL, (Extbyte *) exe_path, PATH_MAX);
+  Wexttext *exe_path = NULL;
+  int bufsize = 4096;
+  int cchpathsize;
+
+  /* Copied from mswindows_get_module_file_name ().  Not clear if it's
+     kosher to malloc() yet. */
+  while (1)
+    {
+      exe_path = alloca_array (Wexttext, bufsize);
+      cchpathsize = qxeGetModuleFileName (NULL, (Extbyte *) exe_path,
+					  bufsize);
+      if (!cchpathsize)
+	goto fail;
+      if (cchpathsize + 1 <= bufsize)
+	break;
+      bufsize *= 2;
+    }
+
   if (!XEUNICODE_P)
     {
       Wexttext *wexe = MULTIBYTE_TO_WEXTTEXT ((Extbyte *) exe_path);
       wext_strcpy (exe_path, wexe);
     }
 #else /* !WIN32_NATIVE */
+  Wexttext *exe_path;
   Wexttext *w;
   const Wexttext *dir, *p;
 
@@ -1914,6 +1931,7 @@ pdump_load (const Wexttext *argv0)
     {
       /* invocation-name includes a directory component -- presumably it
 	 is relative to cwd, not $PATH */
+      exe_path = alloca_array (Wexttext, 1 + wext_strlen (dir));
       wext_strcpy (exe_path, dir);
     }
   else
@@ -1921,6 +1939,9 @@ pdump_load (const Wexttext *argv0)
       const Wexttext *path = wext_getenv ("PATH"); /* not egetenv --
 						     not yet init. */
       const Wexttext *name = p;
+      exe_path = alloca_array (Wexttext,
+			       10 + max (wext_strlen (name),
+					 wext_strlen (path)));
       for (;;)
 	{
 	  p = path;
@@ -1954,7 +1975,7 @@ pdump_load (const Wexttext *argv0)
 	      wext_sprintf (exe_path, "./%s", name);
 	      break;
 	    }
-	  path = p+1;
+	  path = p + 1;
 	}
     }
 #endif /* WIN32_NATIVE */
@@ -1977,6 +1998,8 @@ pdump_load (const Wexttext *argv0)
 	}
       pdump_free ();
     }
+
+fail:
 #endif
 
   in_pdump = 0;

@@ -133,11 +133,11 @@ _start (void)
      won't work.)  */
   if (heap_state == HEAP_UNLOADED) 
     {
-      Extbyte executable_path[MAX_PATH * MAX_XETCHAR_SIZE];
+      Extbyte executable_path[PATH_MAX_EXTERNAL];
 
       /* Don't use mswindows_get_module_file_name() because it uses
 	 xmalloc() */
-      if (qxeGetModuleFileName (NULL, executable_path, MAX_PATH) == 0)
+      if (qxeGetModuleFileName (NULL, executable_path, _MAX_PATH) == 0)
 	{
 	  exit (1);
 	}
@@ -150,8 +150,8 @@ _start (void)
 	
 	/* To allow profiling, make sure executable_path names the .exe
 	   file, not the file created by the profiler */
-	p = xetcsrchr (executable_path, '\\');
-	xetcscpy (p + 1, XETEXT (PATH_PROGNAME ".exe"));
+	p = qxetcsrchr (executable_path, '\\');
+	qxetcscpy (p + 1, XETEXT (PATH_PROGNAME ".exe"));
       }
 #endif
 

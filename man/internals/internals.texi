@@ -964,21 +964,34 @@ basically no changes for Xemacs.
 @cindex Free Software Foundation
 
   XEmacs is a powerful, customizable text editor and development
-environment.  It began as Lucid Emacs, which was in turn derived from
-GNU Emacs, a program written by Richard Stallman of the Free Software
-Foundation.  GNU Emacs dates back to the 1970's, and was modelled
-after a package called ``Emacs'', written in 1976, that was a set of
-macros on top of TECO, an old, old text editor written at MIT on the
-DEC PDP 10 under one of the earliest time-sharing operating systems,
-ITS (Incompatible Timesharing System). (ITS dates back well before
-Unix.) ITS, TECO, and Emacs were products of a group of people at MIT
-who called themselves ``hackers'', who shared an idealistic belief
-system about the free exchange of information and were fanatical in
-their devotion to and time spent with computers. (The hacker
-subculture dates back to the late 1950's at MIT and is described in
-detail in Steven Levy's book @cite{Hackers}.  This book also includes
-a lot of information about Stallman himself and the development of
-Lisp, a programming language developed at MIT that underlies Emacs.)
+environment.  It began in 1991 as Lucid Emacs, which was in turn
+derived from GNU Emacs, a program written by Richard Stallman of the
+Free Software Foundation.  GNU Emacs dates back to 1985 and was
+modelled after Unipress Emacs, an editor written by James Gosling in
+1981 and based on a series of other "Emacs"-like editors, including
+EINE (EINE Is Not EMACS), c. 1976, by Dan Weinreb, which run on the
+MIT Lisp Machine and was the first Emacs written in Lisp; ZWEI (ZWEI
+Was EINE Initially), c. 1978, by Dan Weinreb and Mike McMahon; Multics
+Emacs, c. 1978, by Bernie Greenberg, which was written in MacLisp and
+also used Lisp as its extension language; and ZMACS, c. 1980, a direct
+descendant of ZWEI that on ran the Symbolics LM-2, LMI LispM, and
+later, TI Explorer (1983-1989).  These in turn were inspired by the
+first Emacs, a package called EMACS, written in 1976 by Richard
+Stallman, Guy Steele, and Dave Moon.  This was a merger of TECMAC and
+TMACS, a pair of "TECO-macro realtime editors" written by Guy Steele,
+Dave Moon, Richard Greenblatt, Charles Frankston, et al., and added a
+dynamic loader and Meta-key cmds.  It ran under ITS (the Incompatible
+Timesharing System) on a DEC PDP 10 and under TWENEX on a Tops-20 and
+was written in TECO and PDP 10 assembly.  ITS was one of the first
+time-sharing operating systems and dates back well before Unix.  ITS,
+TECO, and Emacs were products of a group of people at MIT who called
+themselves ``hackers'', who shared an idealistic belief system about
+the free exchange of information and were fanatical in their devotion
+to and time spent with computers. (The hacker subculture dates back to
+the late 1950's at MIT and is described in detail in Steven Levy's
+book @cite{Hackers}.  This book also includes a lot of information
+about Stallman himself and the development of Lisp, a programming
+language developed at MIT that underlies Emacs.)
 
 @menu
 * Through Version 18::          Unification prevails.

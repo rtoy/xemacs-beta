@@ -1,3 +1,101 @@
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* elhash.c:
+	* elhash.c (find_htentry):
+	* elhash.c (inchash_eq):
+	* elhash.h:
+	* profile.c (create_profile_tables):
+	* profile.c (profile_record_consing):
+	* profile.c (profile_record_about_to_call):
+	Create inchash_eq() to allow direct incrementing of hash-table
+	entry.  Use in profile.c to try to reduce profiling overhead.
+	Increase initial size of profile hash tables to reduce profiling
+	overhead.
+	
+	* buffer.c (init_initial_directory):
+	* device-msw.c (mswindows_handle_page_setup_dialog_box):
+	* dialog-msw.c (handle_directory_proc):
+	* dialog-msw.c (handle_file_dialog_box):
+	* dialog-msw.c:
+	* dired-msw.c (mswindows_format_file):
+	* dired-msw.c (mswindows_get_files):
+	* editfns.c (Ftemp_directory):
+	* event-msw.c (mswindows_wnd_proc):
+	* events.c (format_event_object):
+	* glyphs-msw.c (add_tab_item):
+	* glyphs-msw.c (add_tree_item):
+	* keymap.c (Fsingle_key_description):
+	* keymap.c (format_raw_keys):
+	* objects-msw.c (parse_font_spec):
+	* process-nt.c (nt_create_process):
+	* syswindows.h (build_tstr_string):
+	* syswindows.h (qxetcslen):
+	* text.c (eicmp_1):
+	* text.h (eicat_ascii):
+	* text.h (eicmp_ascii):
+	* text.h (eicpy_ascii):
+	* text.h (eicpy_ascii_len):
+	* text.h (eistr_ascii):
+	* text.h (eisub_ascii):
+	* text.h:
+	* unexnt.c (_start):
+	Rename xetcs* -> qxetcs* for consistency with qxestr*.
+	Rename ei*_c(_*) -> ei*_ascii(_*) since they work with ASCII-only
+	strings not "C strings", whatever those are.  This is the last
+	place where "c" was incorrectly being used for "ascii".
+
+	* dialog-msw.c (handle_directory_proc):
+	* dialog-msw.c (handle_directory_dialog_box):
+	* dumper.c:
+	* event-msw.c (mswindows_wnd_proc):
+	* fileio.c (Ffile_truename):
+	* glyphs-gtk.c (font_instantiate):
+	* glyphs-x.c (font_instantiate):
+	* nt.c (Fmswindows_short_file_name):
+	* nt.c (mswindows_link):
+	* process-nt.c (nt_create_process):
+	* realpath.c (readlink_and_correct_case):
+	* realpath.c (qxe_realpath):
+	* sysdep.c (qxe_allocating_getcwd):
+	* sysfile.h:
+	* unexcw.c (unexec):
+	* unexnext.c (unexec):
+	* unexnt.c (_start):
+	Try to avoid differences in systems that do or do not include
+	final null byte in PATH_MAX.  Create PATH_MAX_INTERNAL and
+	PATH_MAX_EXTERNAL and use them everywhere.  Rewrite code in
+	dumper.c to avoid use of PATH_MAX.  When necessary in nt.c,
+	use _MAX_PATH instead of MAX_PATH to be consistent with
+	other places.
+	
+	* text.c (dfc_convert_to_internal_format):
+	Code to short-circuit when binary or Unicode was not working
+	due to EOL wrapping.  Fix this code to work when either no
+	EOL autodetection or no CR's or LF's in the text.
+
+	* lisp.h:
+	* rangetab.c:
+	* rangetab.c (range_table_symbol_to_type):
+	* rangetab.c (range_table_type_to_symbol):
+	* rangetab.c (print_range_table):
+	* rangetab.c (verify_range_table):
+	* rangetab.c (get_range_table):
+	* rangetab.c (Frange_table_type):
+	* rangetab.c (Fcopy_range_table):
+	* rangetab.c (put_range_table):
+	* rangetab.c (Fput_range_table):
+	* rangetab.c (Fremove_range_table):
+	* rangetab.c (rangetab_type_validate):
+	* rangetab.c (rangetab_instantiate):
+	* rangetab.c (syms_of_rangetab):
+	* rangetab.c (structure_type_create_rangetab):
+	* rangetab.h:
+	* rangetab.h (enum range_table_type):
+	* regex.c (vars_of_regex):
+	* search.c (vars_of_search):
+	Implement different types of ranges (open/closed start and end).
+	Change default to be start-closed, end-open.
+
 2004-11-12  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* Makefile.in.in: Fix pdump build for Cygwin.

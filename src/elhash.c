@@ -1,6 +1,6 @@
 /* Implementation of the hash table lisp object type.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2004 Ben Wing.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -402,9 +402,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     write_c_string (printcharfun, ")");
   else
-    {
-      write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
-    }
+    write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
 }
 
 static void
@@ -790,12 +788,8 @@ hash_table_instantiate (Lisp_Object plist)
   Lisp_Object weakness	       = Qnil;
   Lisp_Object data	       = Qnil;
 
-  while (!NILP (plist))
+  PROPERTY_LIST_LOOP_3 (key, value, plist)
     {
-      Lisp_Object key, value;
-      key   = XCAR (plist); plist = XCDR (plist);
-      value = XCAR (plist); plist = XCDR (plist);
-
       if      (EQ (key, Qtest))		    test	     = value;
       else if (EQ (key, Qsize))		    size	     = value;
       else if (EQ (key, Qrehash_size))	    rehash_size	     = value;
@@ -1063,6 +1057,35 @@ find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
       break;
 
   return probe;
+}
+
+/* A version of Fputhash() that increments the value by the specified
+   amount and dispenses will all error checks.  Assumes that tables does
+   comparison using EQ.  Used by the profiling routines to avoid
+   overhead -- profiling overhead was being recorded at up to 15% of the
+   total time. */
+
+void
+inchash_eq (Lisp_Object key, Lisp_Object table, EMACS_INT offset)
+{
+  Lisp_Hash_Table *ht = XHASH_TABLE (table);
+  htentry *entries = ht->hentries;
+  htentry *probe = entries + HASHCODE (key, ht);
+
+  LINEAR_PROBING_LOOP (probe, entries, ht->size)
+    if (EQ (probe->key, key))
+      break;
+
+  if (!HTENTRY_CLEAR_P (probe))
+    probe->value = make_int (XINT (probe->value) + offset);
+  else
+    {
+      probe->key   = key;
+      probe->value = make_int (offset);
+
+      if (++ht->count >= ht->rehash_count)
+	enlarge_hash_table (ht);
+    }
 }
 
 DEFUN ("gethash", Fgethash, 2, 3, 0, /*

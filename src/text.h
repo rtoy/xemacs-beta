@@ -1420,10 +1420,10 @@ next_string_index (Lisp_Object s, Bytecount idx)
         ... from raw internal-format data in the specified format that is
         "null-terminated" (the meaning of this depends on the nature of
         the specific format).
-   void eicpy_c (Eistring *eistr, const Ascbyte *c_string);
+   void eicpy_ascii (Eistring *eistr, const Ascbyte *ascstr);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
-   void eicpy_c_len (Eistring *eistr, const Ascbyte *c_string, len);
+   void eicpy_ascii_len (Eistring *eistr, const Ascbyte *ascstr, len);
         ... from an ASCII string, with length specified.  Non-ASCII characters
 	in the string are *ILLEGAL* (read abort() with error-checking defined).
    void eicpy_ext (Eistring *eistr, const Extbyte *extdata,
@@ -1563,7 +1563,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
 
    void eicat_ei (Eistring *eistr, Eistring *eistr2);
         ... from another Eistring.
-   void eicat_c (Eistring *eistr, Ascbyte *c_string);
+   void eicat_ascii (Eistring *eistr, Ascbyte *ascstr);
         ... from an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
    void eicat_raw (ei, const Ibyte *data, Bytecount len);
@@ -1592,8 +1592,8 @@ next_string_index (Lisp_Object s, Bytecount idx)
    void eisub_ei (Eistring *eistr, Bytecount off, Charcount charoff,
 		  Bytecount len, Charcount charlen, Eistring *eistr2);
         ... with another Eistring.
-   void eisub_c (Eistring *eistr, Bytecount off, Charcount charoff,
-		 Bytecount len, Charcount charlen, Ascbyte *c_string);
+   void eisub_ascii (Eistring *eistr, Bytecount off, Charcount charoff,
+		 Bytecount len, Charcount charlen, Ascbyte *ascstr);
         ... with an ASCII null-terminated string.  Non-ASCII characters in
 	the string are *ILLEGAL* (read abort() with error-checking defined).
    void eisub_ch (Eistring *eistr, Bytecount off, Charcount charoff,
@@ -1660,17 +1660,17 @@ next_string_index (Lisp_Object s, Bytecount idx)
    Charcount eirstr_ei_off_char (Eistring *eistr, Eistring *eistr2,
 				 Bytecount off, Charcount charoff);
 
-   Bytecount eistr_c (Eistring *eistr, Ascbyte *c_string);
-   Charcount eistr_c_char (Eistring *eistr, Ascbyte *c_string);
-   Bytecount eistr_c_off (Eistring *eistr, Ascbyte *c_string, Bytecount off,
+   Bytecount eistr_ascii (Eistring *eistr, Ascbyte *ascstr);
+   Charcount eistr_ascii_char (Eistring *eistr, Ascbyte *ascstr);
+   Bytecount eistr_ascii_off (Eistring *eistr, Ascbyte *ascstr, Bytecount off,
 			   Charcount charoff);
-   Charcount eistr_c_off_char (Eistring *eistr, Ascbyte *c_string,
+   Charcount eistr_ascii_off_char (Eistring *eistr, Ascbyte *ascstr,
 			       Bytecount off, Charcount charoff);
-   Bytecount eirstr_c (Eistring *eistr, Ascbyte *c_string);
-   Charcount eirstr_c_char (Eistring *eistr, Ascbyte *c_string);
-   Bytecount eirstr_c_off (Eistring *eistr, Ascbyte *c_string,
+   Bytecount eirstr_ascii (Eistring *eistr, Ascbyte *ascstr);
+   Charcount eirstr_ascii_char (Eistring *eistr, Ascbyte *ascstr);
+   Bytecount eirstr_ascii_off (Eistring *eistr, Ascbyte *ascstr,
 			   Bytecount off, Charcount charoff);
-   Charcount eirstr_c_off_char (Eistring *eistr, Ascbyte *c_string,
+   Charcount eirstr_ascii_off_char (Eistring *eistr, Ascbyte *ascstr,
 				Bytecount off, Charcount charoff);
 
 
@@ -1711,17 +1711,17 @@ next_string_index (Lisp_Object s, Bytecount idx)
 			      Charcount charoff, Bytecount len,
 			      Charcount charlen, Eistring *eistr2);
 
-   int eicmp_c (Eistring *eistr, Ascbyte *c_string);
-   int eicmp_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
-                    Bytecount len, Charcount charlen, Ascbyte *c_string);
-   int eicasecmp_c (Eistring *eistr, Ascbyte *c_string);
-   int eicasecmp_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
+   int eicmp_ascii (Eistring *eistr, Ascbyte *ascstr);
+   int eicmp_off_ascii (Eistring *eistr, Bytecount off, Charcount charoff,
+                    Bytecount len, Charcount charlen, Ascbyte *ascstr);
+   int eicasecmp_ascii (Eistring *eistr, Ascbyte *ascstr);
+   int eicasecmp_off_ascii (Eistring *eistr, Bytecount off, Charcount charoff,
                         Bytecount len, Charcount charlen,
-                        Ascbyte *c_string);
-   int eicasecmp_i18n_c (Eistring *eistr, Ascbyte *c_string);
-   int eicasecmp_i18n_off_c (Eistring *eistr, Bytecount off, Charcount charoff,
+                        Ascbyte *ascstr);
+   int eicasecmp_i18n_ascii (Eistring *eistr, Ascbyte *ascstr);
+   int eicasecmp_i18n_off_ascii (Eistring *eistr, Bytecount off, Charcount charoff,
                              Bytecount len, Charcount charlen,
-                             Ascbyte *c_string);
+                             Ascbyte *ascstr);
 
 
     ********************************************** 
@@ -1982,17 +1982,17 @@ do {							\
   EI_ALLOC_AND_COPY (ei, ei12p2, ei12p2len, 1);		\
 } while (0)
 
-#define eicpy_c(ei, c_string)			\
+#define eicpy_ascii(ei, ascstr)			\
 do {						\
-  const Ascbyte *ei4 = (c_string);		\
+  const Ascbyte *ei4 = (ascstr);		\
 						\
   ASSERT_ASCTEXT_ASCII (ei4);			\
   eicpy_ext (ei, ei4, Qbinary);			\
 } while (0)
 
-#define eicpy_c_len(ei, c_string, c_len)	\
+#define eicpy_ascii_len(ei, ascstr, c_len)	\
 do {						\
-  const Ascbyte *ei6 = (c_string);		\
+  const Ascbyte *ei6 = (ascstr);		\
   int ei6len = (c_len);				\
 						\
   ASSERT_ASCTEXT_ASCII_LEN (ei6, ei6len);	\
@@ -2207,9 +2207,9 @@ do {								\
   eicat_1 (ei, ei9->data_, ei9->bytelen_, ei9->charlen_);	\
 } while (0)
 
-#define eicat_c(ei, c_string)					\
+#define eicat_ascii(ei, ascstr)					\
 do {								\
-  const Ascbyte *ei15 = (c_string);				\
+  const Ascbyte *ei15 = (ascstr);				\
   int ei15len = strlen (ei15);					\
 								\
   ASSERT_ASCTEXT_ASCII_LEN (ei15, ei15len);			\
@@ -2286,9 +2286,9 @@ do {									\
 	   ei19->charlen_);						\
 } while (0)
 
-#define eisub_c(ei, off, charoff, len, charlen, c_string)	\
+#define eisub_ascii(ei, off, charoff, len, charlen, ascstr)	\
 do {								\
-  const Ascbyte *ei20 = (c_string);				\
+  const Ascbyte *ei20 = (ascstr);				\
   int ei20len = strlen (ei20);					\
   ASSERT_ASCTEXT_ASCII_LEN (ei20, ei20len);			\
   eisub_1 (ei, off, charoff, len, charlen, ei20, ei20len, -1);	\
@@ -2369,21 +2369,21 @@ do {									\
 #define eirstr_ei_off_char(eistr, eistr2, off, charoff) \
   NOT YET IMPLEMENTED
 
-#define eistr_c(eistr, c_string) \
+#define eistr_ascii(eistr, ascstr) \
   NOT YET IMPLEMENTED
-#define eistr_c_char(eistr, c_string) \
+#define eistr_ascii_char(eistr, ascstr) \
   NOT YET IMPLEMENTED
-#define eistr_c_off(eistr, c_string, off, charoff) \
+#define eistr_ascii_off(eistr, ascstr, off, charoff) \
   NOT YET IMPLEMENTED
-#define eistr_c_off_char(eistr, c_string, off, charoff) \
+#define eistr_ascii_off_char(eistr, ascstr, off, charoff) \
   NOT YET IMPLEMENTED
-#define eirstr_c(eistr, c_string) \
+#define eirstr_ascii(eistr, ascstr) \
   NOT YET IMPLEMENTED
-#define eirstr_c_char(eistr, c_string) \
+#define eirstr_ascii_char(eistr, ascstr) \
   NOT YET IMPLEMENTED
-#define eirstr_c_off(eistr, c_string, off, charoff) \
+#define eirstr_ascii_off(eistr, ascstr, off, charoff) \
   NOT YET IMPLEMENTED
-#define eirstr_c_off_char(eistr, c_string, off, charoff) \
+#define eirstr_ascii_off_char(eistr, ascstr, off, charoff) \
   NOT YET IMPLEMENTED
 
 
@@ -2406,18 +2406,18 @@ int eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 #define eicasecmp_i18n_off_ei(eistr, off, charoff, len, charlen, eistr2) \
   eicmp_1 (eistr, off, charoff, len, charlen, 0, eistr2, 0, 2)
 
-#define eicmp_c(eistr, c_string) \
-  eicmp_1 (eistr, 0, -1, -1, -1, c_string, 0, 1, 0)
-#define eicmp_off_c(eistr, off, charoff, len, charlen, c_string) \
-  eicmp_1 (eistr, off, charoff, len, charlen, c_string, 0, 1, 0)
-#define eicasecmp_c(eistr, c_string) \
-  eicmp_1 (eistr, 0, -1, -1, -1, c_string, 0, 1, 1)
-#define eicasecmp_off_c(eistr, off, charoff, len, charlen, c_string) \
-  eicmp_1 (eistr, off, charoff, len, charlen, c_string, 0, 1, 1)
-#define eicasecmp_i18n_c(eistr, c_string) \
-  eicmp_1 (eistr, 0, -1, -1, -1, c_string, 0, 1, 2)
-#define eicasecmp_i18n_off_c(eistr, off, charoff, len, charlen, c_string) \
-  eicmp_1 (eistr, off, charoff, len, charlen, c_string, 0, 1, 2)
+#define eicmp_ascii(eistr, ascstr) \
+  eicmp_1 (eistr, 0, -1, -1, -1, (const Ibyte *) ascstr, 0, 1, 0)
+#define eicmp_off_ascii(eistr, off, charoff, len, charlen, ascstr) \
+  eicmp_1 (eistr, off, charoff, len, charlen, (const Ibyte *) ascstr, 0, 1, 0)
+#define eicasecmp_ascii(eistr, ascstr) \
+  eicmp_1 (eistr, 0, -1, -1, -1, (const Ibyte *) ascstr, 0, 1, 1)
+#define eicasecmp_off_ascii(eistr, off, charoff, len, charlen, ascstr) \
+  eicmp_1 (eistr, off, charoff, len, charlen, (const Ibyte *) ascstr, 0, 1, 1)
+#define eicasecmp_i18n_ascii(eistr, ascstr) \
+  eicmp_1 (eistr, 0, -1, -1, -1, (const Ibyte *) ascstr, 0, 1, 2)
+#define eicasecmp_i18n_off_ascii(eistr, off, charoff, len, charlen, ascstr) \
+  eicmp_1 (eistr, off, charoff, len, charlen, (const Ibyte *) ascstr, 0, 1, 2)
 
 
 /*   ----- Case-changing the Eistring -----   */

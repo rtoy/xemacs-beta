@@ -1838,7 +1838,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Display *dpy;
   XColor fg, bg;
   Font source, mask;
-  Ibyte source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
+  Ibyte source_name[PATH_MAX_INTERNAL], mask_name[PATH_MAX_INTERNAL], dummy;
   int source_char, mask_char;
   int count;
   Lisp_Object foreground, background;

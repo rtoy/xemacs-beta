@@ -2136,7 +2136,7 @@ eito_malloc_1 (Eistring *ei)
 int
 eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 	 Bytecount len, Charcount charlen, const Ibyte *data,
-	 const Eistring *ei2, int is_c, int fold_case)
+	 const Eistring *ei2, int is_ascii, int fold_case)
 {
   assert ((off < 0) != (charoff < 0));
   if (off < 0)
@@ -2153,7 +2153,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
   assert (off >= 0 && off <= ei->bytelen_);
   assert (len >= 0 && off + len <= ei->bytelen_);
   assert ((data == 0) != (ei == 0)); 
-  assert ((is_c != 0) == (data != 0));
+  assert ((is_ascii != 0) == (data != 0));
   assert (fold_case >= 0 && fold_case <= 2);
 
   {
@@ -2171,7 +2171,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 	dstlen = ei2->bytelen_;
       }
 
-    if (is_c)
+    if (is_ascii)
       ASSERT_ASCTEXT_ASCII_LEN ((Ascbyte *) dst, dstlen);
 
     return (fold_case == 0 ? qxememcmp4 (src, len, dst, dstlen) :
@@ -4253,6 +4253,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
      places. */
   int count;
   Ibyte_dynarr *conversion_in_dynarr;
+  Lisp_Object underlying_cs;
   PROFILE_DECLARE ();
 
   assert (!inhibit_non_essential_conversion_operations);
@@ -4277,18 +4278,37 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   internal_bind_int (&dfc_convert_to_internal_format_in_use,
 		     dfc_convert_to_internal_format_in_use + 1);
 
-  coding_system = get_coding_system_for_text_file (coding_system, 1);
+  /* The second call does the equivalent of both calls, but we need
+     the result after the first call (which wraps just a to-text
+     converter) as well as the result after the second call (which
+     also wraps an EOL-detection converter). */
+  underlying_cs = get_coding_system_for_text_file (coding_system, 0);
+  coding_system = get_coding_system_for_text_file (underlying_cs, 1);
 
   if (source_type != DFC_TYPE_LISP_LSTREAM &&
       sink_type   != DFC_TYPE_LISP_LSTREAM &&
-      coding_system_is_binary (coding_system))
+      coding_system_is_binary (underlying_cs))
     {
 #ifdef MULE
-      const Ibyte *ptr = (const Ibyte *) source->data.ptr;
+      const Ibyte *ptr;
       Bytecount len = source->data.len;
-      const Ibyte *end = ptr + len;
+      const Ibyte *end;
 
-      for (; ptr < end; ptr++)
+      /* Make sure no EOL conversion is needed.  With a little work we
+	 could handle EOL conversion as well but it may not be needed as an
+	 optimization. */
+      if (!EQ (coding_system, underlying_cs))
+	{
+	  for (ptr = (const Ibyte *) source->data.ptr, end = ptr + len;
+	       ptr < end; ptr++)
+	    {
+	      if (*ptr == '\r' || *ptr == '\n')
+		goto the_hard_way;
+	    }
+	}
+
+      for (ptr = (const Ibyte *) source->data.ptr, end = ptr + len;
+	   ptr < end; ptr++)
         {
           Ibyte c = *ptr;
 
@@ -4314,25 +4334,38 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
      involved */
   else if (source_type != DFC_TYPE_LISP_LSTREAM &&
 	   sink_type   != DFC_TYPE_LISP_LSTREAM &&
-	   dfc_coding_system_is_unicode (coding_system))
+	   dfc_coding_system_is_unicode (underlying_cs))
     {
-      const Ibyte *ptr = (const Ibyte *) source->data.ptr + 1;
+      const Ibyte *ptr;
       Bytecount len = source->data.len;
-      const Ibyte *end = ptr + len;
+      const Ibyte *end;
 
       if (len & 1)
 	goto the_hard_way;
 
-      for (; ptr < end; ptr += 2)
+      /* Make sure only ASCII/Latin-1 is involved */
+      for (ptr = (const Ibyte *) source->data.ptr + 1, end = ptr + len;
+	   ptr < end; ptr += 2)
 	{
 	  if (*ptr)
 	    goto the_hard_way;
 	}
 
-      ptr = (const Ibyte *) source->data.ptr;
-      end = ptr + len;
+      /* Make sure no EOL conversion is needed.  With a little work we
+	 could handle EOL conversion as well but it may not be needed as an
+	 optimization. */
+      if (!EQ (coding_system, underlying_cs))
+	{
+	  for (ptr = (const Ibyte *) source->data.ptr, end = ptr + len;
+	       ptr < end; ptr += 2)
+	    {
+	      if (*ptr == '\r' || *ptr == '\n')
+		goto the_hard_way;
+	    }
+	}
 
-      for (; ptr < end; ptr += 2)
+      for (ptr = (const Ibyte *) source->data.ptr, end = ptr + len;
+	   ptr < end; ptr += 2)
 	{
           Ibyte c = *ptr;
 
@@ -4360,9 +4393,9 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       Lisp_Object instream, outstream;
       Lstream *reader, *writer;
 
-#ifdef WIN32_ANY
+#if defined (WIN32_ANY) || defined (MULE)
     the_hard_way:
-#endif /* WIN32_ANY */
+#endif
       delete_count = 0;
       if (source_type == DFC_TYPE_LISP_LSTREAM)
 	instream = source->lisp_object;

@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with range tables.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -39,10 +39,19 @@ typedef struct
   Dynarr_declare (range_table_entry);
 } range_table_entry_dynarr;
 
+enum range_table_type
+{
+  RANGE_START_CLOSED_END_OPEN,
+  RANGE_START_CLOSED_END_CLOSED,
+  RANGE_START_OPEN_END_CLOSED,
+  RANGE_START_OPEN_END_OPEN
+};
+
 struct Lisp_Range_Table
 {
   struct lcrecord_header header;
   range_table_entry_dynarr *entries;
+  enum range_table_type type;
 };
 typedef struct Lisp_Range_Table Lisp_Range_Table;
 

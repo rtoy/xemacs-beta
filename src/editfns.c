@@ -607,7 +607,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
       DECLARE_EISTRING (eipath);
       Ibyte *path;
 
-      eicpy_c (eipath, "/tmp/");
+      eicpy_ascii (eipath, "/tmp/");
       eicat_rawz (eipath, login_name);
       path = eidata (eipath);
       if (qxe_lstat (path, &st) < 0 && errno == ENOENT)
@@ -618,7 +618,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
       else
 	{
 	  eicpy_rawz (eipath, egetenv ("HOME"));
-	  eicat_c (eipath, "/tmp/");
+	  eicat_ascii (eipath, "/tmp/");
 	  path = eidata (eipath);
 	  if (qxe_stat (path, &st) < 0 && errno == ENOENT)
 	    {
@@ -627,7 +627,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
 
 	      qxe_mkdir (path, 0700);	/* ignore retvals */
 	      eicpy_ei (eiwarnpath, eipath);
-	      eicat_c (eiwarnpath, ".created_by_xemacs");
+	      eicat_ascii (eiwarnpath, ".created_by_xemacs");
 	      if ((fd = qxe_open (eidata (eiwarnpath),
 				  O_WRONLY | O_CREAT, 0644)) > 0)
 		{

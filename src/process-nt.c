@@ -771,7 +771,7 @@ nt_create_process (Lisp_Process *p,
       {
 	DECLARE_EISTRING (progext);
 	eicpy_lstr (progext, program);
-	eicat_c (progext, ".exe");
+	eicat_ascii (progext, ".exe");
 	eito_external (progext, Qmswindows_tstr);
 	image_type = qxeSHGetFileInfo (eiextdata (progext), 0, NULL, 0,
 				       SHGFI_EXETYPE);
@@ -950,7 +950,7 @@ nt_create_process (Lisp_Process *p,
        while leaving the real app name as argv[0].  */
     if (is_dos_app)
       {
-	cmdname = alloca_ibytes (PATH_MAX);
+	cmdname = alloca_ibytes (PATH_MAX_INTERNAL);
 	if (egetenv ("CMDPROXY"))
 	  qxestrcpy (cmdname, egetenv ("CMDPROXY"));
 	else

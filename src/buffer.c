@@ -2912,7 +2912,7 @@ init_initial_directory (void)
     Extbyte *modname = mswindows_get_module_file_name ();
       
     assert (modname);
-    p = xetcsrchr (modname, '\\');
+    p = qxetcsrchr (modname, '\\');
     assert (p);
     XECOPY_TCHAR (p, '\0');
   

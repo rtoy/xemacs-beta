@@ -760,26 +760,26 @@ extern int mswindows_windows9x_p;
 #define XETEXT(arg) XETEXT1(arg)
 #define XECOPY_TCHAR(ptr, ch) \
   (XEUNICODE_P ? (* (LPWSTR) (ptr) = L##ch) : (* (LPSTR) (ptr) = (ch)))
-#define xetcslen(arg) \
+#define qxetcslen(arg) \
   (XEUNICODE_P ? wcslen ((wchar_t *) arg) : strlen (arg))
-#define xetcsbytelen(arg) \
+#define qxetcsbytelen(arg) \
   (XEUNICODE_P ? wcslen ((wchar_t *) arg) * XETCHAR_SIZE : strlen (arg))
-#define xetcscmp(s1, s2) \
+#define qxetcscmp(s1, s2) \
   (XEUNICODE_P ? wcscmp ((wchar_t *) s1, (wchar_t *) s2) \
    : strcmp (s1, s2))
-#define xetcscpy(s1, s2) \
+#define qxetcscpy(s1, s2) \
   (XEUNICODE_P ? (char *) wcscpy ((wchar_t *) s1, (wchar_t *) s2) \
    : strcpy (s1, s2))
-#define xetcsncpy(s1, s2, n) \
+#define qxetcsncpy(s1, s2, n) \
   (XEUNICODE_P ? (char *) wcsncpy ((wchar_t *) s1, (wchar_t *) s2, n) \
    : strncpy (s1, s2, n))
-#define xetcschr(s, ch) \
+#define qxetcschr(s, ch) \
   (XEUNICODE_P ? (char *) wcschr ((wchar_t *) s, (WCHAR) ch) \
    : strchr (s, ch))
-#define xetcsrchr(s, ch) \
+#define qxetcsrchr(s, ch) \
   (XEUNICODE_P ? (char *) wcsrchr ((wchar_t *) s, (WCHAR) ch) \
    : strrchr (s, ch))
-#define xetcsdup(s) \
+#define qxetcsdup(s) \
   (XEUNICODE_P ? (char *) wcsdup ((wchar_t *) s) \
    : xstrdup (s))
 
@@ -793,7 +793,7 @@ extern int mswindows_windows9x_p;
   EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
 
 #define build_tstr_string(in) \
-  make_ext_string (in, xetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+  make_ext_string (in, qxetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
 
 #define MAX_ANSI_CHAR_LEN 1
 #define MAX_UNICODE_CHAR_LEN 2

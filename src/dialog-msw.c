@@ -1,6 +1,6 @@
 /* Implements elisp-programmable dialog boxes -- MS Windows interface.
    Copyright (C) 1998 Kirill M. Katsnelson <kkm@kis.ru>
-   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -344,7 +344,7 @@ static int
 CALLBACK handle_directory_proc (HWND hwnd, UINT msg,
 				LPARAM lParam, LPARAM lpData)
 {
-  Extbyte szDir[MAX_PATH * MAX_XETCHAR_SIZE];
+  Extbyte szDir[PATH_MAX_EXTERNAL];
   struct param_data *pd = (struct param_data *) lpData;
   
   switch (msg)
@@ -365,7 +365,7 @@ CALLBACK handle_directory_proc (HWND hwnd, UINT msg,
       if (pd->validate)
 	return TRUE;
       else
-	pd->unknown_fname = xetcsdup ((Extbyte *) lParam);
+	pd->unknown_fname = qxetcsdup ((Extbyte *) lParam);
       break;
       
     default:
@@ -430,7 +430,7 @@ handle_directory_dialog_box (struct frame *f, Lisp_Object keys)
       pidl = qxeSHBrowseForFolder (&bi);
       if (pidl)
 	{
-	  Extbyte *szDir = alloca_extbytes (MAX_PATH * MAX_XETCHAR_SIZE);
+	  Extbyte *szDir = alloca_extbytes (PATH_MAX_EXTERNAL);
 	  
 	  if (qxeSHGetPathFromIDList (pidl, szDir))
 	    ret = tstr_to_local_file_format (szDir);
@@ -466,7 +466,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
   ofn.hwndOwner = FRAME_MSWINDOWS_HANDLE (f);
   ofn.lpstrFile = (XELPTSTR) fnbuf;
   ofn.nMaxFile = sizeof (fnbuf) / XETCHAR_SIZE;
-  xetcscpy (fnbuf, XETEXT (""));
+  qxetcscpy (fnbuf, XETEXT (""));
   
   LOCAL_FILE_FORMAT_TO_TSTR (Fexpand_file_name (build_string (""), Qnil),
 			     ofn.lpstrInitialDir);
@@ -480,7 +480,7 @@ handle_file_dialog_box (struct frame *f, Lisp_Object keys)
 	    
 	    CHECK_STRING (value);
 	    LOCAL_FILE_FORMAT_TO_TSTR (value, fnout);
-	    xetcscpy (fnbuf, fnout);
+	    qxetcscpy (fnbuf, fnout);
 	  }
 	else if (EQ (key, Q_title))
 	  {

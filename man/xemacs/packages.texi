@@ -15,6 +15,9 @@ packages to install; the actual installation process is easy.
 This gives an installer the ability to tailor an XEmacs installation for
 local needs with safe removal of unnecessary code.
 
+@emph{NOTE}: For detailed information about how the package
+hierarchies work, @xref{Package Overview,,,lispref, XEmacs Lisp Reference Manual}.
+
 @menu
 * Package Terminology:: Understanding different kinds of packages.
 * Installing Packages:: How to install packages.
@@ -301,7 +304,7 @@ have the form @file{name-<version>-pkg.tar.gz} and are gzipped tar files. For
 a fresh install it is sufficient to untar the file at the top of the
 package hierarchy. 
 
-Note: If you are upgrading packages already installed, it's best to
+@emph{NOTE}: If you are upgrading packages already installed, it's best to
 remove the old package first @ref{Removing Packages}.
 
 For example if we are installing the @file{xemacs-base}
@@ -329,6 +332,9 @@ Or if you have GNU tar, the last step can be:
 
    tar zxvf /path/to/mule-base-1.37-pkg.tar.gz RET
 @end example
+
+@emph{NOTE}: For more detailed information about how the package
+hierarchies work, @xref{Package Overview,,,lispref, XEmacs Lisp Reference Manual}.
 
 @node Sumo, Which Packages, Manually, Installing Packages
 @comment  node-name,  next,  previous,  up
@@ -431,7 +437,7 @@ tarballs for installation into your own XEmacs installations or for
 distributing to others.
 
 For a list and description of the different @file{Makefile} targets,
-@xref{Makefile Targets,,,lispref}.
+@xref{Makefile Targets,,,lispref, XEmacs Lisp Reference Manual}.
 
 @node Local.rules File, Available Packages, Building Packages, Packages
 @comment  node-name,  next,  previous,  up
@@ -443,7 +449,7 @@ file, @file{Local.rules.template}.  Simply copy that to
 @file{Local.rules} and edit it to suit your needs.
 
 For a complete discussion of the @file{Local.rules} file,
-@xref{Local.rules File,,,lispref}.
+@xref{Local.rules File,,,lispref, XEmacs Lisp Reference Manual}.
 
 @node Available Packages,  , Local.rules File, Packages
 @comment  node-name,  next,  previous,  up
