@@ -1,3 +1,11 @@
+2002-02-13  Ben Wing  <ben@xemacs.org>
+
+	* event-stream.c (reset_key_echo):
+	* event-stream.c (reset_this_command_keys):
+	* event-stream.c (execute_command_event):
+	If console is dead as a result of C-x 5 0, then post-command stuff
+	needs to be careful and do only non-console-specific stuff.
+
 2002-02-11  Mike Sperber  <mike@xemacs.org>
 
 	* device-x.c: 
