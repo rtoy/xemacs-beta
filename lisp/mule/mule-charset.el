@@ -77,6 +77,10 @@ BUFFER defaults to the current buffer if omitted."
 
 (defalias 'find-charset-string 'charsets-in-string)
 (defalias 'find-charset-region 'charsets-in-region)
+
+(defun string-to-char-list (str)
+  (mapcar 'identity str))
+
 
 ;;;; Charset accessors
 

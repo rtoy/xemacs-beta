@@ -1,3 +1,14 @@
+2002-04-25  Steve Youngs  <youngs@xemacs.org>
+
+	* mule/mule-charset.el (string-to-char-list): New.  This used to
+	be in 'mule-misc.el' but that file has been removed.
+
+2002-04-14  Steve Youngs  <youngs@xemacs.org>
+
+	* obsolete.el (find-non-ascii-charset-region): A couple of
+	packages use this.
+	(find-non-ascii-charset-string): Ditto.
+
 2002-04-14  Ben Wing  <ben@xemacs.org>
 
 	* abbrev.el:

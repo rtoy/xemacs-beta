@@ -309,6 +309,9 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   1)
 (make-obsolete 'char-bytes "This function always returns 1")
 
+(define-obsolete-function-alias 'find-non-ascii-charset-region 'charsets-in-region)
+(define-obsolete-function-alias 'find-non-ascii-charset-string 'charsets-in-string)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 
 ;; the functionality of column.el has been moved into C
