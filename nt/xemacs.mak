@@ -152,6 +152,12 @@ HAVE_GIF=1
 !if !defined(HAVE_GTK)
 HAVE_GTK=0
 !endif
+!if !defined(HAVE_MENUBARS)
+HAVE_MENUBARS=1
+!endif
+!if !defined(HAVE_SCROLLBARS)
+HAVE_SCROLLBARS=1
+!endif
 !if !defined(HAVE_TOOLBARS)
 HAVE_TOOLBARS=$(HAVE_XPM)
 !endif
@@ -369,7 +375,6 @@ LIBC_LIB=libc.lib
 CFLAGS_NO_LIB=-nologo -W3 $(DEBUGFLAGS) $(OPTFLAGS)
 CFLAGS=$(CFLAGS_NO_LIB) $(C_LIBFLAG)
 
-
 !if $(HAVE_X_WINDOWS)
 X_DEFINES=-DHAVE_X_WINDOWS
 X_INCLUDES=-I$(X11_DIR)\include
@@ -377,9 +382,10 @@ X_LIBS=-libpath:$(X11_DIR)\lib Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X1
 !endif
 
 !if $(HAVE_MS_WINDOWS)
-MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS -DHAVE_MENUBARS
+MSW_DEFINES=-DHAVE_MS_WINDOWS
 MSW_INCLUDES=
-MSW_LIBS=
+MSW_LIBS=comctl32.lib
+
 !if $(HAVE_MSW_C_DIRED)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_MSW_C_DIRED
 MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
@@ -418,15 +424,20 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_ZLIB
 MSW_INCLUDES=$(MSW_INCLUDES) -I"$(ZLIB_DIR)"
 MSW_LIBS=$(MSW_LIBS) "$(ZLIB_DIR)\zlib.lib"
 !endif
+!if $(HAVE_MENUBARS)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_MENUBARS
+MSW_MENUBAR_OBJ=$(OUTDIR)\menubar.obj $(OUTDIR)\menubar-msw.obj
+!endif
+!if $(HAVE_SCROLLBARS)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_SCROLLBARS
+MSW_SCROLLBAR_OBJ=$(OUTDIR)\scrollbar.obj $(OUTDIR)\scrollbar-msw.obj
+!endif
 !if $(HAVE_TOOLBARS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
 MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
 !endif
 !if $(HAVE_WIDGETS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_WIDGETS
-!endif
-!if $(HAVE_TOOLBARS) || $(HAVE_WIDGETS)
-MSW_LIBS=$(MSW_LIBS) comctl32.lib
 !endif
 !if $(HAVE_DIALOGS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
@@ -545,24 +556,18 @@ CONFIG_VALUES = $(LIB_SRC)\config.values
 # Inferred rule
 {$(LIB_SRC)}.c{$(LIB_SRC)}.exe :
 	cd $(LIB_SRC)
-	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** -link -incremental:no setargv.obj
+	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ -Fd$* $** -link -incremental:no setargv.obj user32.lib wsock32.lib
 	cd $(NT)
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(LIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
-$(LIB_SRC)/movemail.exe: $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
-	cd $(LIB_SRC)
-	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** wsock32.lib -link -incremental:no
-	cd $(NT)
-
-$(LIB_SRC)/winclient.exe: $(LIB_SRC)/winclient.c
-	cd $(LIB_SRC)
-	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** user32.lib -link -incremental:no
-	cd $(NT)
+$(LIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 
 $(LIB_SRC)/minitar.exe : $(NT)/minitar.c
-	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_NO_LIB) -Fe$@ $** "$(ZLIB_DIR)\zlib.lib" -link -incremental:no
+	cd $(LIB_SRC)
+	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_NO_LIB) -Fe$@ -Fd$* $** -link -incremental:no "$(ZLIB_DIR)\zlib.lib"
+	cd $(NT)
 
 LIB_SRC_TOOLS = \
 	$(LIB_SRC)/etags.exe		\
@@ -731,12 +736,12 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\frame-msw.obj \
 	$(OUTDIR)\glyphs-msw.obj \
 	$(OUTDIR)\gui-msw.obj \
-	$(OUTDIR)\menubar-msw.obj \
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
-	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\select-msw.obj \
 	$(MSW_C_DIRED_OBJ) \
+	$(MSW_MENUBAR_OBJ) \
+	$(MSW_SCROLLBAR_OBJ) \
 	$(MSW_TOOLBAR_OBJ) \
 	$(MSW_DIALOG_OBJ) \
 	$(MSW_GIF_OBJ)
@@ -840,7 +845,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\lread.obj \
 	$(OUTDIR)\lstream.obj \
 	$(OUTDIR)\macros.obj \
-	$(OUTDIR)\menubar.obj \
 	$(OUTDIR)\marker.obj \
 	$(OUTDIR)\md5.obj \
 	$(OUTDIR)\minibuf.obj \
@@ -857,7 +861,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\redisplay-output.obj \
 	$(OUTDIR)\redisplay.obj \
 	$(OUTDIR)\regex.obj \
-	$(OUTDIR)\scrollbar.obj \
 	$(OUTDIR)\search.obj \
 	$(OUTDIR)\select.obj \
 	$(OUTDIR)\signal.obj \

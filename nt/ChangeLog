@@ -1,3 +1,24 @@
+2002-05-06  Jonathan Harris  <jonathan@xemacs.org>
+
+	* README:
+	Remove references to obsolete MSVC5 and NT 3.51 configurations.
+	
+	* config.inc.samp (HAVE_TIFF): Update PNG version to 1.0.9.
+	
+	* xemacs.mak (HAVE_MENUBARS): New
+	* xemacs.mak (HAVE_SCROLLBARS): New
+	* xemacs.mak (MSW_DEFINES):
+	* xemacs.mak (MSW_LIBS):
+	* xemacs.mak (TEMACS_MSW_OBJS):
+	* xemacs.mak (TEMACS_OBJS):
+	Make HAVE_MENUBARS and HAVE_SCROLLBARS optional.
+	
+	* xemacs.mak (LIB_SRC_TOOLS):
+	Generate correctly-named debug program databases for lib-src helpers.
+
+	* xemacs-vc50.dsp: Removed.
+	* xemacs-vc50.dsw: Removed.
+
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (CFLAGS_NO_LIB): New.

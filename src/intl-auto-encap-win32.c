@@ -2587,6 +2587,8 @@ qxeGetLongPathName (const Extbyte * lpszShortPath, Extbyte * lpszLongPath, DWORD
     return GetLongPathNameA ((LPCSTR) lpszShortPath, (LPSTR) lpszLongPath, cchBuffer);
 }
 
+/* Skipping GetEnvironmentStrings because misnamed ANSI version of the function */
+
 BOOL
 qxeFreeEnvironmentStrings (Extbyte * arg1)
 {

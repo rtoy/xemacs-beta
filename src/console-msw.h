@@ -367,9 +367,11 @@ void mswindows_get_workspace_coords (RECT *rc);
 
 Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
+#ifdef HAVE_MENUBARS
 int mswindows_char_is_accelerator (struct frame *f, Emchar ch);
 Lisp_Object mswindows_translate_menu_or_dialog_item (Lisp_Object item,
 						     Emchar *accel);
+#endif
 
 #ifdef HAVE_TOOLBARS
 Lisp_Object mswindows_get_toolbar_button_text (struct frame *f,

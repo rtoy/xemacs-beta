@@ -39,7 +39,7 @@ HAVE_GIF=1
 # Set this to enable PNG support (virtually mandatory), and specify
 # the directories containing png and zlib.
 HAVE_PNG=1
-PNG_DIR=c:\src\libpng-1.0.5
+PNG_DIR=c:\src\libpng-1.0.9
 ZLIB_DIR=c:\src\zlib
 
 # Set this to enable TIFF support, and specify the directory containing tiff.

@@ -217,7 +217,7 @@ file WINBASE.H
 yes GetBinaryType
 yes GetShortPathName
 yes GetLongPathName
-yes GetEnvironmentStrings
+skip GetEnvironmentStrings misnamed ANSI version of the function
 yes FreeEnvironmentStrings
 yes FormatMessage
 yes CreateMailslot

@@ -1835,6 +1835,8 @@ DWORD qxeGetShortPathName (const Extbyte * lpszLongPath, Extbyte * lpszShortPath
 #endif
 DWORD qxeGetLongPathName (const Extbyte * lpszShortPath, Extbyte * lpszLongPath, DWORD cchBuffer);
 
+/* Skipping GetEnvironmentStrings because misnamed ANSI version of the function */
+
 #ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef FreeEnvironmentStrings
 #define FreeEnvironmentStrings error use qxeFreeEnvironmentStrings or FreeEnvironmentStringsA/FreeEnvironmentStringsW

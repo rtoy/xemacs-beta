@@ -258,12 +258,7 @@ mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 static void
 mswindows_init_frame_3 (struct frame *f)
 {
-  /* Don't do this earlier or we get a WM_PAINT before the frame is ready.
-   * The SW_x parameter in the first call that an app makes to ShowWindow is
-   * ignored, and the parameter specified in the caller's STARTUPINFO is
-   * substituted instead. That parameter is SW_HIDE if we were started by
-   * runemacs, so call this twice. #### runemacs is evil */
-  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOWNORMAL);
+  /* Don't do this earlier or we get a WM_PAINT before the frame is ready */
   ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOWNORMAL);
   SetForegroundWindow (FRAME_MSWINDOWS_HANDLE (f));
   DragAcceptFiles (FRAME_MSWINDOWS_HANDLE (f), TRUE);

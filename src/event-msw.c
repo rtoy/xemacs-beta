@@ -2364,9 +2364,11 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		keymap_sticky[extendedp ? VK_RMENU : VK_LMENU] |= 0x80;
 	      }
 
+#ifdef HAVE_MENUBARS
 	    if (!NILP (Vmenu_accelerator_enabled) &&
 		!(mods & XEMACS_MOD_SHIFT) && message_ == WM_SYSKEYDOWN)
 	      potential_accelerator = 1;
+#endif
 
 	    /* Remove shift modifier from an ascii character */
 	    mods &= ~XEMACS_MOD_SHIFT;
@@ -2449,12 +2451,15 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		      mods_with_quit |= FAKE_MOD_QUIT_CRITICAL;
 		    mswindows_quit_chars_count++;
 		  }
+#ifdef HAVE_MENUBARS
 		else if (potential_accelerator && !got_accelerator &&
 			 mswindows_char_is_accelerator (frame, ch))
 		  {
 		    got_accelerator = 1;
 		    break;
 		  }
+#endif /* HAVE_MENUBARS */
+
 		lastev = mswindows_enqueue_keypress_event (hwnd,
 							   make_char (ch),
 							   mods_with_quit);

@@ -211,7 +211,7 @@ typedef int ssize_t;
 #define MAIL_USE_LOCKING
 
 /* See unexnt.c */
-#if (_MSC_VER >= 1100)
+#if (_MSC_VER >= 1100) && !defined(PDUMP)
 #define DUMP_SEPARATE_SECTION
 #endif
 #ifdef DUMP_SEPARATE_SECTION
@@ -219,17 +219,14 @@ typedef int ssize_t;
 #pragma bss_seg("xdata")
 #endif
 
-#ifdef HAVE_SCROLLBARS
-/* Ensure the NT 4 mouse definitions in winuser.h are available */
+#ifdef emacs
+/* intl-auto-encap-win32.[ch] assumes _WIN32_WINNT>=0x0400
+   We don't want this set when building command-line helpers in lib-src */
 # ifndef _WIN32_WINNT
 #  define _WIN32_WINNT 0x0400
 # endif
 #endif
 
-/* Force the various NT 4 structures and constants to be included; we're
-   careful not to call (or even link with) functions not in NT 3.51 when
-   running on 3.51, but when running on NT 4 or Win9x, we use the later
-   functions, and need their headers. */
 /* The VC++ (5.0, at least) headers treat WINVER non-existent as 0x0400 */
 #if defined (WINVER) && WINVER < 0x0400
 # undef WINVER

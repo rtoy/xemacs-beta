@@ -1,3 +1,25 @@
+2002-05-06  Jonathan Harris  <jonathan@xemacs.org>
+
+	* console-msw.h:
+	* event-msw.c (mswindows_wnd_proc):
+	Condition references to menu accelerator functions on HAVE_MENUBARS.
+	
+	* frame-msw.c (mswindows_init_frame_3):
+	Remove obsolete runemacs hack which called ShowWindow() twice.
+	
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h:
+	* intl-encap-win32.c:
+	Use handwritten version of GetEnvironmentStrings() in
+	intl-encap-win32.c.
+
+	* ntproc.c: Removed.
+
+	* s/windowsnt.h:
+	Disable .data section renaming hack when using portable dumping.
+	Force _WIN32_WINNT = 0x0400 since intl-auto-encap-win32.[ch]
+	requires this.
+	
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (batch_test_emacs):
