@@ -1,3 +1,10 @@
+2003-08-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi: Update copyright notice.
+	(GCPROing): Add missing period.
+	(Adding Global Lisp Variables): general.c -> general-slots.h.
+	(A Reader's Guide to XEmacs Coding Conventions): New node.
+
 2003-09-20  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* xemacs/mini.texi (Minibuffer): Add customizing message display
