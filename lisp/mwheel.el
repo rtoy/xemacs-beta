@@ -49,21 +49,24 @@
  '(event-basic-type
    posn-window event-start mwheel-event-window mwheel-event-button))
 
-(defcustom mwheel-scroll-amount '(5 . 1)
+(defcustom mwheel-scroll-amount '(5 1 nil)
   "Amount to scroll windows by when spinning the mouse wheel.
-This is actually a cons cell, where the first item is the amount to scroll
-on a normal wheel event, and the second is the amount to scroll when the
-wheel is moved with the shift key depressed.
+A list with 3 elements specifying the amount to scroll on: a normal wheel
+event, a wheel event with the shift key pressed, and a wheel event with the
+control key pressed, in that order.
 
 Each item should be the number of lines to scroll, or `nil' for near
 full screen.
 A near full screen is `next-screen-context-lines' less than a full screen."
   :group 'mouse
-  :type '(cons
+  :type '(list
 	  (choice :tag "Normal"
 		  (const :tag "Full screen" :value nil)
 		  (integer :tag "Specific # of lines"))
 	  (choice :tag "Shifted"
+		  (const :tag "Full screen" :value nil)
+		  (integer :tag "Specific # of lines"))
+	  (choice :tag "Controlled"
 		  (const :tag "Full screen" :value nil)
 		  (integer :tag "Specific # of lines"))))
 
@@ -93,8 +96,10 @@ This can be slightly disconcerting, but some people may prefer it."
 			(selected-window)
 		      (select-window (mwheel-event-window event)))))
 	(amt (if (memq 'shift (event-modifiers event))
-		 (cdr mwheel-scroll-amount)
-	       (car mwheel-scroll-amount))))
+		 (cadr mwheel-scroll-amount)
+	       (if (memq 'control (event-modifiers event))
+		   (caddr mwheel-scroll-amount)
+		 (car mwheel-scroll-amount)))))
     (unwind-protect
 	(case (mwheel-event-button event)
 	  (4 (scroll-down amt))
@@ -107,7 +112,9 @@ This can be slightly disconcerting, but some people may prefer it."
 (defun mwheel-install ()
   "Enable mouse wheel support."
   (interactive)
-  (let ((keys '([(mouse-4)] [(shift mouse-4)] [(mouse-5)] [(shift mouse-5)])))
+  (let ((keys '([(mouse-4)] [(shift mouse-4)] [(control mouse-4)]
+		[(mouse-5)] [(shift mouse-5)] [(control mouse-5)])))
+
     ;; This condition-case is here because Emacs 19 will throw an error
     ;; if you try to define a key that it does not know about.  I for one
     ;; prefer to just unconditionally do a mwheel-install in my .emacs, so
