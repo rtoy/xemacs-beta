@@ -1,3 +1,7 @@
+2002-07-14  Adrian Aichner  <adrian@xemacs.org>
+
+	* etags.c: It's XEmacs, not Xemacs.
+
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.7 "broccoflower" is released.
@@ -272,7 +276,7 @@
 2001-01-30  Francesco Potorti`  <pot@gnu.org>
 
 	* etags.c: [WIN32-NATIVE]: #undef MSDOS, #undef WINDOWSNT and
-	#define it for the sake of Xemacs.
+	#define it for the sake of XEmacs.
 	[WINDOWSNT]: #undef HAVE_NTGUI even if built without
 	HAVE_CONFIG_H.  This change only affects a standalone etags.
 	[WINDOWSNT]: #undef DOS_NT and #define it even if built with

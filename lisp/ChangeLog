@@ -1,3 +1,7 @@
+2002-07-14  Adrian Aichner  <adrian@xemacs.org>
+
+	* ChangeLog: It's XEmacs, not Xemacs.
+
 2001-07-10  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* mule/kinsoku.el (kinsoku-bol-p): Work with ascii and non-ascii
@@ -11732,7 +11736,7 @@ Sun Mar 29 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* faces.el: Most face initialization moved out of
 	  init-other-random-faces to the top level so that the
-	  initialization happens before Xemacs is dumped.  Much
+	  initialization happens before XEmacs is dumped.  Much
 	  of the fascist "face-differs-from-default-p or FROB!"
 	  code has been retired in favor of letting the user do
 	  what they want to do.  Face initialization code changed
