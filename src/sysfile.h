@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include <errno.h>
 
 #ifndef WIN32_NATIVE
-# include <sys/errno.h>          /* <errno.h> does not always imply this */
+# include <sys/errno.h>		/* <errno.h> does not always imply this */
 #endif
 
 #ifdef HAVE_UNISTD_H
