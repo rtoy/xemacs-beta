@@ -1,3 +1,8 @@
+2001-05-29  Mike Alexander  <mta@arbortext.com>
+
+	* console-msw.h (FRAME_MSPRINTER_CHARHEIGHT): Unswap
+	FRAME_MSPRINTER_CHARWIDTH and FRAME_MSPRINTER_CHARHEIGHT 
+
 2001-05-26  Ben Wing  <ben@xemacs.org>
 
 	* buffer.c:
