@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/09/16 21:11:15 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/11/27 18:54:56 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -28,7 +28,6 @@
 
 @node Top, Introduction, (dir), (dir)
 @top XEmacs FAQ
-@unnumbered Introduction
 
 This is the guide to the XEmacs Frequently Asked Questions list---a
 compendium of questions and answers pertaining to one of the finest
@@ -6602,7 +6601,7 @@ version.  For a fuller list, see the @file{NEWS} in the @file{etc}
 directory of the XEmacs distribution, or use @kbd{C-h n} or the
 @samp{Help} menu to view this file inside of XEmacs.
 
-@unnumberedsubsubsec User-visible changes
+@unnumberedsubsubsec User-visible changes in XEmacs 21.4
 
 @itemize @bullet
 
@@ -6687,7 +6686,7 @@ Other init-file-related changes. (Init file in your home directory may be called
 Etags changes.  See @file{NEWS} for full details.
 @end itemize
 
-@unnumberedsubsubsec Lisp and internal changes
+@unnumberedsubsubsec Lisp and internal changes in XEmacs 21.4
 
 Not yet written.
 
@@ -6707,7 +6706,7 @@ version.  For a fuller list, see the @file{NEWS} in the @file{etc}
 directory of the XEmacs distribution, or use @kbd{C-h n} or the
 @samp{Help} menu to view this file inside of XEmacs.
 
-@unnumberedsubsubsec User-visible changes
+@unnumberedsubsubsec User-visible changes in XEmacs 21.1
 
 @itemize @bullet
 
@@ -6770,7 +6769,7 @@ menubars if XEmacs is built with the right support.
 
 @end itemize
 
-@unnumberedsubsubsec Lisp and internal changes
+@unnumberedsubsubsec Lisp and internal changes in XEmacs 21.1
 
 @itemize @bullet
 
