@@ -1,3 +1,7 @@
+2004-09-10  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* Makefile.in.in: Enable support for parallel builds.
+
 2004-08-26  Jerry James  <james@xemacs.org>
 
 	* device-x.c (x_init_device): Remove unused variable device.

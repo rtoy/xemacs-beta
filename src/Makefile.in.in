@@ -521,19 +521,19 @@ build-the-mofo: update-elc-2 $(mo_file) $(other_files) $(LISP)/finder-inf.el loa
 #ifdef HAVE_X_WINDOWS
 lwlib_deps = $(lwlib_lib)
 $(lwlib_lib):
-	cd ../lwlib && $(RECURSIVE_MAKE)
+	+cd ../lwlib && $(RECURSIVE_MAKE)
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
 ../dynodump/dynodump.so:
-	cd ../dynodump && $(RECURSIVE_MAKE)
+	+cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
 link_deps = $(start_files) $(objs) $(otherobjs) $(lwlib_deps) $(dynodump_deps)
 
 $(LIB_SRC)/make-dump-id:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
+	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-dump-id
 
 dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
 	$(LIB_SRC)/make-dump-id
@@ -569,7 +569,7 @@ $(BLDSRC)/NEEDTODUMP: $(RAW_EXE) FRC.needtodump
 obj_src = $(objs:.o=.c)
 
 $(LIB_SRC)/make-docfile:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
+	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-docfile
 
 $(LIB_SRC)/DOC: $(LIB_SRC)/make-docfile $(BLDSRC)/NEEDTODUMP $(temacs_deps)
 #ifdef QUICK_BUILD
@@ -654,7 +654,7 @@ fastdump: $(RAW_EXE)
 
 .PHONY: all-elc
 all-elc:
-	cd .. && $(RECURSIVE_MAKE)
+	+cd .. && $(RECURSIVE_MAKE)
 
 #########################################################################
 ##                     Subsidiary dependency rules                     ##
@@ -682,10 +682,10 @@ $(LIB_SRC)/emacs.mo: $(LIB_SRC)/emacs.po
 	cd $(LIB_SRC)/ && $(msgfmt) -o emacs.mo emacs.po
 
 $(LIB_SRC)/make-msgfile:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-msgfile
+	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-msgfile
 
 $(LIB_SRC)/make-po:
-	cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-po
+	+cd $(LIB_SRC) && $(RECURSIVE_MAKE) make-po
 
 #endif /* I18N3 */
 

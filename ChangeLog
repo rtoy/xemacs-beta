@@ -1,3 +1,8 @@
+2004-09-10  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* INSTALL: A POSIX compatible Make is required for builds.
+	* Makefile.in.in: Enable support for parallel builds.
+
 2004-08-12  "Johann 'Myrkraverk' Oskarsson" <myrkraverk@users.sourceforge.net>
 
 	* config.guess: Identify PlayStation2.
