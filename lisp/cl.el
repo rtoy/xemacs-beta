@@ -215,7 +215,7 @@ Keywords supported:  :test :test-not :key"
 (defun cl-set-substring (str start end val)
   (if end (if (< end 0) (incf end (length str)))
     (setq end (length str)))
-  (if (< start 0) (incf start str))
+  (if (< start 0) (incf start (length str)))
   (concat (and (> start 0) (substring str 0 start))
 	  val
 	  (and (< end (length str)) (substring str end))))

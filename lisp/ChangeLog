@@ -1,3 +1,8 @@
+2004-06-16  Jerry James  <james@xemacs.org>
+
+	* cl.el (cl-set-substring): Increment start by the length of the
+	string, not the string itself.
+
 2004-06-07  Jerry James  <james@xemacs.org>
 
 	* derived.el: Synch with Emacs 21.3.
