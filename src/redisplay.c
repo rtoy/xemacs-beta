@@ -6473,7 +6473,7 @@ redisplay_device (struct device *d, int automatic)
     {
       if (CLASS_REDISPLAY_FLAGS_CHANGEDP(f))
 	{
-	  int preempted = redisplay_frame (f, 0);
+	  int preempted = redisplay_frame (f, 1);
 	  if (preempted)
 	    return 1;
 	}
@@ -6502,7 +6502,7 @@ redisplay_device (struct device *d, int automatic)
 	{
 	  if (CLASS_REDISPLAY_FLAGS_CHANGEDP (f))
 	    {
-	      int preempted = redisplay_frame (f, 0);
+	      int preempted = redisplay_frame (f, 1);
 	      if (preempted)
 		return 1;
 	    }

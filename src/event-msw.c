@@ -2962,7 +2962,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    if (psl->lpVtbl->QueryInterface (psl, &IID_IPersistFile,
 						     &ppf) == S_OK)
 		      {
-			WORD wsz[PATH_MAX];
+			OLECHAR wsz[PATH_MAX];
 			WIN32_FIND_DATA wfd;
 			LPSTR resolved = (char *) xmalloc (PATH_MAX+1);
 

@@ -1,3 +1,9 @@
+2001-05-24  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* redisplay.c (redisplay_device): Allow preemption on redisplay.
+
+	* event-msw.c (WM_DROPFILES): Use correct type for OLE characters.
+
 2001-05-29  Mike Alexander  <mta@arbortext.com>
 
 	* console-msw.h (FRAME_MSPRINTER_CHARHEIGHT): Unswap
