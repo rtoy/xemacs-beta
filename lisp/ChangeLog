@@ -1,3 +1,7 @@
+2004-06-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* help.el (with-syntax-table): Removed.  (Prefer version in subr.el.)
+
 2004-06-16  Jerry James  <james@xemacs.org>
 
 	* cl.el (cl-set-substring): Increment start by the length of the

@@ -1011,17 +1011,6 @@ Miscellaneous:
 )
   help-map)
 
-(defmacro with-syntax-table (syntab &rest body)
-  "Evaluate BODY with the SYNTAB as the current syntax table."
-  `(let ((stab (syntax-table)))
-     (unwind-protect
-	 (progn
-	   (set-syntax-table (copy-syntax-table ,syntab))
-	   ,@body)
-       (set-syntax-table stab))))
-(put 'with-syntax-table 'lisp-indent-function 1)
-(put 'with-syntax-table 'edebug-form-spec '(form body))
-
 (defun function-called-at-point ()
   "Return the function which is called by the list containing point.
 If that gives no function, return the function whose name is around point.
