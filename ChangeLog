@@ -1,3 +1,9 @@
+2004-04-05  Jerry James  <james@xemacs.org>
+
+	* configure.in (use_number_lib): New.  Values are "gmp" or "mp".
+	* configure.in: Use it. Report it. Check for size of a double.
+	* configure.usage: Tell how to use use-number-lib.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.

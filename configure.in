@@ -400,6 +400,7 @@ with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
+use_number_lib="no"
 dnl pdump defaults per opsys, do not default it here
 pdump=""
 dnl dragndrop is still experimental, except on Windows.  When it is stable,
@@ -699,6 +700,17 @@ The default is to autodetect native and NAS sound support."])
 	    locking )	val=locking  ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
   \`lockf', \`flock', \`file', \`locking', or \`mmdf'."]) ;;
+	  esac
+          eval "$opt=\"$val\""
+        ;;
+
+	dnl Enhanced Lisp numbers
+	"use_number_lib" )
+	  case "$val" in
+	    gmp ) val=gmp ;;
+	    mp )  val=mp ;;
+	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
+  \`gmp' or \`mp'."]) ;;
 	  esac
           eval "$opt=\"$val\""
         ;;
@@ -2739,6 +2751,7 @@ AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(double)
 
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
@@ -4853,6 +4866,35 @@ if test "$usage_tracking" = "yes"; then
   XE_PREPEND(-Bstatic -lut -Bdynamic, LIBS)
 fi
 
+dnl Enhanced number support
+if test "$use_number_lib" = "gmp"; then
+  AC_CHECK_HEADER(gmp.h, [
+    AC_CHECK_LIB(gmp, __gmpz_init, have_mpz_init=yes)])
+  if test "$have_mpz_init" = "yes"; then
+    AC_DEFINE(WITH_NUMBER_TYPES)
+    AC_DEFINE(WITH_GMP)
+    XE_PREPEND(-lgmp, LIBS)
+  else
+    XE_DIE("Required GMP numeric support cannot be provided.")
+  fi
+elif test "$use_number_lib" = "mp"; then
+  AC_CHECK_HEADER(mp.h, [
+    AC_CHECK_LIB(mp, mp_mfree, have_mp_mfree=yes, [
+      AC_CHECK_LIB(mp, mfree, have_mfree=yes)])])
+  if test "$have_mp_mfree" = "yes"; then
+    AC_DEFINE(MP_PREFIX)
+    XE_PREPEND(-lmp, LIBS)
+    AC_CHECK_FUNC(mp_move, [AC_DEFINE(HAVE_MP_MOVE)])
+  elif test "$have_mfree" = "yes"; then
+    XE_PREPEND(-lmp, LIBS)
+    AC_CHECK_FUNC(move, [AC_DEFINE(HAVE_MP_MOVE)])
+  else
+    XE_DIE("Required MP numeric support cannot be provided.")
+  fi
+  AC_DEFINE(WITH_NUMBER_TYPES)
+  AC_DEFINE(WITH_MP)
+fi
+
 dnl Unfortunately, just because we can link doesn't mean we can run.
 dnl One of the above link tests may have succeeded but caused resulting
 dnl executables to fail to run.  Also any tests using AC_TRY_RUN will
@@ -5456,6 +5498,8 @@ test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
+test "$use_number_lib" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$use_number_lib" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
 if test "$use_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."
   echo "  WARNING: ---------------------------------------------------------"
