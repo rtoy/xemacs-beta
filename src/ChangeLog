@@ -1,3 +1,43 @@
+2001-05-03  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* lisp.h: (dump_add_opaque): make varaddress parameter const.
+
+	* dumper.c (struct pdump_opaque): make varaddress const.
+	(dump_add_opaque): make varaddress parameter const.
+	(pdump_load_finish): override const when copying into
+	info.varaddress.
+
+2001-05-02  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* console.h (struct console_methods): Added flags member.
+	(CONSOLE_IMPLEMENTATION_FLAGS): Defined.
+	(CONMETH_IMPL_FLAG): 
+	(CONSOLE_IMPL_FLAG): Macro to check implememntation flags.
+	Defined XDEVIMPF_DONT_PREEMPT_REDISPLAY.
+
+	* device.c (window_system_pixelated_geometry): Use the above macros.
+
+	* device.h (DEVICE_IMPL_FLAG): Macro to check a device
+	implememntation flag.
+	* device.h (DEVICE_DISPLAY_P): Use it.
+
+	* frame.c (delete_frame_internal): Use the above macro.
+
+	* redisplay.c (redisplay_device): Use it.
+	(redisplay_device): Obey XDEVIMPF_DONT_PREEMPT_REDISPLAY.
+	(redisplay_frame): Ditto.
+
+	* device-msw.c (mswindows_device_implementation_flags): Removed.
+	(msprinter_device_implementation_flags): Removed.
+	(console_type_create_device_mswindows): Removed references to
+	implementation_flags methods, set implementation flags here.
+	(console_type_create_device_mswindows): Added XDEVIMPF_DONT_PREEMPT.
+
+	* device-gtk.c (gtk_device_implementation_flags): Removed method.
+	(console_type_create_device_gtk): Removed method declaration.
+	Added commented out statement which semantically matches the
+	commented out statement in the above removed method.
+
 2001-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* regex.c (DECLARE_NOTHING): Define if !emacs && REGEX_MALLOC.

@@ -340,12 +340,6 @@ mswindows_device_system_metrics (struct device *d,
   return Qunbound;
 }
 
-static unsigned int
-mswindows_device_implementation_flags (void)
-{
-  return XDEVIMPF_PIXEL_GEOMETRY;
-}
-
 
 /************************************************************************/
 /*                          printer helpers                             */
@@ -533,14 +527,6 @@ msprinter_mark_device (struct device *d)
   mark_object (DEVICE_MSPRINTER_DEVMODE (d));
 }
 
-static unsigned int
-msprinter_device_implementation_flags (void)
-{
-  return (  XDEVIMPF_PIXEL_GEOMETRY
-	  | XDEVIMPF_IS_A_PRINTER
-	  | XDEVIMPF_NO_AUTO_REDISPLAY
-	  | XDEVIMPF_FRAMELESS_OK );
-}
 
 /************************************************************************/
 /*                      printer Lisp subroutines                        */
@@ -1304,13 +1290,17 @@ console_type_create_device_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, mark_device);
   CONSOLE_HAS_METHOD (mswindows, delete_device);
   CONSOLE_HAS_METHOD (mswindows, device_system_metrics);
-  CONSOLE_HAS_METHOD (mswindows, device_implementation_flags);
+  CONSOLE_IMPLEMENTATION_FLAGS (mswindows, XDEVIMPF_PIXEL_GEOMETRY);
 
   CONSOLE_HAS_METHOD (msprinter, init_device);
   CONSOLE_HAS_METHOD (msprinter, mark_device);
   CONSOLE_HAS_METHOD (msprinter, delete_device);
   CONSOLE_HAS_METHOD (msprinter, device_system_metrics);
-  CONSOLE_HAS_METHOD (msprinter, device_implementation_flags);
+  CONSOLE_IMPLEMENTATION_FLAGS (msprinter, (XDEVIMPF_PIXEL_GEOMETRY
+					    | XDEVIMPF_IS_A_PRINTER
+					    | XDEVIMPF_NO_AUTO_REDISPLAY
+					    | XDEVIMPF_DONT_PREEMPT_REDISPLAY
+					    | XDEVIMPF_FRAMELESS_OK));
 }
 
 

@@ -2163,7 +2163,7 @@ void dump_add_root_struct_ptr (void *, const struct struct_description *);
 
 /* dump_add_opaque (&var, size) dumps the opaque static structure `var'. */
 #ifdef PDUMP
-void dump_add_opaque (void *, size_t);
+void dump_add_opaque (const void *, size_t);
 #else
 #define dump_add_opaque(varaddr,size) DO_NOTHING
 #endif

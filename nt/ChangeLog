@@ -1,3 +1,7 @@
+2001-05-01  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* xemacs.mak: Use link to make .rsrc writable, not editbin.
+
 2001-05-10  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (TEMACS_LIBS):

@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct
 {
-  void *varaddress;
+  const void *varaddress;
   size_t size;
 } pdump_opaque;
 
@@ -84,7 +84,7 @@ static Lisp_Object_ptr_dynarr *pdump_weak_object_chains;
 /* Mark SIZE bytes at non-heap address VARADDRESS for dumping as is,
    without any bit-twiddling. */
 void
-dump_add_opaque (void *varaddress, size_t size)
+dump_add_opaque (const void *varaddress, size_t size)
 {
   pdump_opaque info;
   info.varaddress = varaddress;
@@ -1114,7 +1114,7 @@ pdump_load_finish (void)
   for (i=0; i<header->nb_opaques; i++)
     {
       pdump_opaque info = PDUMP_READ_ALIGNED (p, pdump_opaque);
-      memcpy (info.varaddress, p, info.size);
+      memcpy ((void*)info.varaddress, p, info.size);
       p += info.size;
     }
 
