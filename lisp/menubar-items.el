@@ -1524,7 +1524,7 @@ Write your filter like this:
       ["Go To %_Previous Buffer" switch-to-other-buffer]
       ["Go To %_Buffer..." switch-to-buffer]
       "----"
-      ["%_List All Buffers" list-buffers]
+      ["%_List All Buffers" list-all-buffers]
       ["%_Delete Buffer" kill-this-buffer
        :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
       "----"
@@ -1796,6 +1796,14 @@ for `buffers-menu-sort-function'."
 		 function)
   :group 'buffers-menu)
 
+(defcustom list-all-buffers-function 'list-buffers
+  "*Function that `list-all-buffers' calls."
+  :type '(choice (const list-buffers)
+		 (const ibuffer)
+		 (const ibuffer-other-window)
+		 function)
+  :group 'buffers-menu)
+
 (defun sort-buffers-menu-alphabetically (buf1 buf2)
   "For use as a value of `buffers-menu-sort-function'.
 Sorts the buffers in alphabetical order by name, but puts buffers beginning
@@ -1989,6 +1997,13 @@ items by redefining the function `format-buffers-menu-line'."
       (setq buffers (build-buffers-menu-internal buffers)))
     (append menu buffers)
     ))
+
+(defun list-all-buffers ()
+  "Display a list of buffers.  Calls `list-all-buffers-function'."
+  (interactive)
+  (funcall (if (fboundp list-all-buffers-function)
+	       list-all-buffers-function
+	     'list-buffers)))
 
 
 ;;; The Options menu

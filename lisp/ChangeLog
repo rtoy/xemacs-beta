@@ -1,3 +1,14 @@
+2002-03-20  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* menubar-items.el (list-all-buffers): New function.
+	(list-all-buffers-function): New customizable variable.
+	(default-menubar): Replace list-buffers with list-all-buffers.
+
+2002-03-04  Simon Josefsson  <jas@extundo.com>
+
+	* files.el (auto-mode-alist): Move Sieve to a place where the
+	comment is more appropriate for it.
+
 2002-03-20  Ben Wing  <ben@xemacs.org>
 
 	* mule\mule-category.el:
