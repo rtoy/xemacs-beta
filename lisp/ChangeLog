@@ -1,3 +1,35 @@
+2005-03-17  Mike Sperber  <mike@xemacs.org>
+
+	* files.el: Merge the following changes from GNU Emacs:
+
+	2005-01-04  Andreas Schwab  <schwab@suse.de>
+	
+		* files.el (insert-directory): Only look for error lines in
+		inserted text.  Don't move too far after processing --dired markers.
+	
+	2004-12-27  Richard M. Stallman  <rms@gnu.org>
+	
+		* files.el (insert-directory-ls-version): New variable.
+		(insert-directory): When ls returns an error, test the version
+		number to decide what the return code means.
+		With --dired output format, detect and distinguish lines
+		that are really error messages.
+		(insert-directory-adj-pos): New function.
+	
+	2004-09-25  Stefan Monnier  <monnier@iro.umontreal.ca>
+	
+		* files.el (insert-directory): Obey --dired even with symlinks.
+	
+	2004-05-25  Luc Teirlinck  <teirllm@auburn.edu>
+	
+		(insert-directory): Check that lines were really inserted by
+		the --dired switch, before erasing them.
+	
+	2004-04-17  Richard M. Stallman  <rms@gnu.org>
+	
+		* files.el (insert-directory): Delete any error msg output by the
+		`insert-directory-program'.
+	
 2005-03-12  Fabrice Popineau <Fabrice.Popineau@supelec.fr> 
 
 	* select.el (get-selection): As described in

@@ -4085,6 +4085,8 @@ PATTERN that already quotes some of the special characters."
 
 ;; END SYNC WITH FSF 21.2.
 
+(defvar insert-directory-ls-version 'unknown)
+
 (defun insert-directory (file switches &optional wildcard full-directory-p)
   "Insert directory listing for FILE, formatted according to SWITCHES.
 Leaves point after the inserted text.
@@ -4165,13 +4167,73 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 					      ;;#### Unix-specific
 					      ".")
 				    file))))))))
+
+	  ;; If we got "//DIRED//" in the output, it means we got a real
+	  ;; directory listing, even if `ls' returned nonzero.
+	  ;; So ignore any errors.
+	  (when (if (stringp switches)
+		    (string-match "--dired\\>" switches)
+		  (member "--dired" switches))
+	    (save-excursion
+	      (forward-line -2)
+	      (when (looking-at "//SUBDIRED//")
+		(forward-line -1))
+	      (if (looking-at "//DIRED//")
+		  (setq result 0))))
+
+	  (when (and (not (eq 0 result))
+		     (eq insert-directory-ls-version 'unknown))
+	    ;; The first time ls returns an error,
+	    ;; find the version numbers of ls,
+	    ;; and set insert-directory-ls-version
+	    ;; to > if it is more than 5.2.1, < if it is less, nil if it
+	    ;; is equal or if the info cannot be obtained.
+	    ;; (That can mean it isn't GNU ls.)
+	    (let ((version-out
+		   (with-temp-buffer
+		     (call-process "ls" nil t nil "--version")
+		     (buffer-string))))
+	      (if (string-match "ls (.*utils) \\([0-9.]*\\)$" version-out)
+		  (let* ((version (match-string 1 version-out))
+			 (split (split-string version "[.]"))
+			 (numbers (mapcar 'string-to-int split))
+			 (min '(5 2 1))
+			 comparison)
+		    (while (and (not comparison) (or numbers min))
+		      (cond ((null min)
+			     (setq comparison '>))
+			    ((null numbers)
+			     (setq comparison '<))
+			    ((> (car numbers) (car min))
+			     (setq comparison '>))
+			    ((< (car numbers) (car min))
+			     (setq comparison '<))
+			    (t
+			     (setq numbers (cdr numbers)
+				   min (cdr min)))))
+		    (setq insert-directory-ls-version (or comparison '=)))
+		(setq insert-directory-ls-version nil))))
+
+	  ;; For GNU ls versions 5.2.2 and up, ignore minor errors.
+	  (when (and (eq 1 result) (eq insert-directory-ls-version '>))
+	    (setq result 0))
+
 	;; If `insert-directory-program' failed, signal an error.
-	(if (/= result 0)
-	    ;; On non-Posix systems, we cannot open a directory, so
-	    ;; don't even try, because that will always result in
-	    ;; the ubiquitous "Access denied".  Instead, show the
-	    ;; command line so the user can try to guess what went wrong.
-	    (error "Listing directory failed."))
+	(unless (eq 0 result)
+	  ;; Delete the error message it may have output.
+	  (delete-region beg (point))
+	  ;; On non-Posix systems, we cannot open a directory, so
+	  ;; don't even try, because that will always result in
+	  ;; the ubiquitous "Access denied".  Instead, show the
+	  ;; command line so the user can try to guess what went wrong.
+	  (if (and (file-directory-p file)
+		   (memq system-type '(ms-dos windows-nt)))
+	      (error
+	       "Reading directory: \"%s %s -- %s\" exited with status %s"
+	       insert-directory-program
+	       (if (listp switches) (concat switches) switches)
+	       file result)
+	    (error "Listing directory failed")))
 
 	(when (or (and (listp switches)
 		       (member "--dired" switches))
@@ -4180,28 +4242,64 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 	  (when (looking-at "//SUBDIRED//")
 	    (delete-region (point) (progn (forward-line 1) (point)))
 	    (forward-line -1))
-	  (let ((end (line-end-position)))
-	    (forward-word 1)
-	    (forward-char 3)
-	    (while (< (point) end)
-	      (let ((start (+ beg (read (current-buffer))))
-		    (end (+ beg (read (current-buffer)))))
-		(if (= (char-after end) ?\n)
-		    (let ((filename-extent (make-extent start end)))
-		      (set-extent-property filename-extent 'dired-file-name t)
-		      (set-extent-property filename-extent 'start-open t)
-		      (set-extent-property filename-extent 'end-open t))
-		  ;; It seems that we can't trust ls's output as to
-		  ;; byte positions of filenames.
-		  (map-extents
-		   #'(lambda (extent maparg)
-		       (delete-extent extent)
-		       nil)
-		   nil beg (point) nil nil 'dired-file-name)
-		  (end-of-line))))
-	    (goto-char end)
-	    (beginning-of-line)
-	    (delete-region (point) (progn (forward-line 2) (point))))))))))
+	  (if (looking-at "//DIRED//")
+	      (let ((end (line-end-position))
+		    (linebeg (point))
+		    error-lines)
+		;; Find all the lines that are error messages,
+		;; and record the bounds of each one.
+		(goto-char beg)
+		(while (< (point) linebeg)
+		  (or (eql (following-char) ?\s)
+		      (push (list (point) (line-end-position)) error-lines))
+		  (forward-line 1))
+		(setq error-lines (nreverse error-lines))
+		;; Now read the numeric positions of file names.
+		(goto-char linebeg)
+		(forward-word 1)
+		(forward-char 3)
+		(while (< (point) end)
+		  (let ((start (insert-directory-adj-pos
+				(+ beg (read (current-buffer)))
+				error-lines))
+			(end (insert-directory-adj-pos
+			      (+ beg (read (current-buffer)))
+			      error-lines)))
+		    (if (memq (char-after end) '(?\n ?\ ))
+			;; End is followed by \n or by " -> ".
+			(let ((filename-extent (make-extent start end)))
+			  (set-extent-property filename-extent 'dired-file-name t)
+			  (set-extent-property filename-extent 'start-open t)
+			  (set-extent-property filename-extent 'end-open t))
+		      ;; It seems that we can't trust ls's output as to
+		      ;; byte positions of filenames.
+		      (map-extents
+		       #'(lambda (extent maparg)
+			   (delete-extent extent)
+			   nil)
+		       nil beg (point) nil nil 'dired-file-name)
+		      (end-of-line))))
+		(goto-char end)
+		(beginning-of-line)
+		(delete-region (point) (progn (forward-line 1) (point))))
+	    ;; Take care of the case where the ls output contains a
+	    ;; "//DIRED-OPTIONS//"-line, but no "//DIRED//"-line
+	    ;; and we went one line too far back (see above).
+	    (forward-line 1))
+	  (if (looking-at "//DIRED-OPTIONS//")
+	      (delete-region (point) (progn (forward-line 1) (point))))))))))
+
+(defun insert-directory-adj-pos (pos error-lines)
+  "Convert `ls --dired' file name position value POS to a buffer position.
+File name position values returned in ls --dired output
+count only stdout; they don't count the error messages sent to stderr.
+So this function converts to them to real buffer positions.
+ERROR-LINES is a list of buffer positions of error message lines,
+of the form (START END)."
+  (while (and error-lines (< (caar error-lines) pos))
+    (setq pos (+ pos (- (nth 1 (car error-lines)) (nth 0 (car error-lines)))))
+    (pop error-lines))
+  pos)
 
 ;; BEGIN SYNC WITH FSF 21.2.
 
