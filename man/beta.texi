@@ -377,10 +377,9 @@ experienced, you should put various flags in.  Here is what we suggest:
 It's a good idea to use
 
 @example
---extra-verbose
---debug
---memory-usage-stats
---error-checking=all
+--enable-debug
+--enable-memory-usage-stats
+--enable-error-checking=all
 @end example
 
 These turn on extra debugging info and checks.  The last one in particular
@@ -392,10 +391,10 @@ reports much more useful.
 You should also strongly consider
 
 @example
---with-mule
---use-pkcc
---pdump
---with-clash-detection
+--enable-mule
+--enable-kkcc
+--enable-pdump
+--enable-clash-detection
 --with-wmcommand
 --with-xfs
 @end example
@@ -406,8 +405,8 @@ These turn on optional features, which can always use testing.
 If you have gcc, consider using
 
 @example
---compiler=gcc
---xemacs-compiler=g++
+--with-compiler=gcc
+--with-xemacs-compiler=g++
 @end example
 
 This will compile XEmacs using g++, which will turn on a lot of additional
@@ -418,7 +417,7 @@ If your packages are not installed under /usr/local, you should add a
 line like
 
 @example
---package-path=~/.xemacs::/xemacs/site-packages:/xemacs/xemacs-packages:/xemacs/mule-packages
+--with-package-path=~/.xemacs::/xemacs/site-packages:/xemacs/xemacs-packages:/xemacs/mule-packages
 @end example
 
 @item
@@ -435,12 +434,12 @@ directories and use an option like
 populate your build directory.
 
 @item
-Use --site-prefixes (or --site-includes and --site-libraries) if you have
-some packages that XEmacs can compile with that are located in an unusual
-place.  For example:
+Use --with-site-prefixes (or --with-site-includes and
+---with-site-libraries) if you have some packages that XEmacs can
+compile with that are located in an unusual place.  For example:
 
 @example
---site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1
+--with-site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1
 @end example
 
 @item
@@ -455,33 +454,41 @@ like the following.  (this summary is also available as the file
 the command @kbd{M-x describe-installation RET}).
 
 @example
-uname -a: Linux eicq 2.4.20 #1 Wed Dec 18 02:14:29 EST 2002 i586 unknown
+uname -a: Darwin laptop.local 7.7.0 Darwin Kernel Version 7.7.0: Sun Nov  7 16:06:51 PST 2004; root:xnu/xnu-517.9.5.obj~1/RELEASE_PPC  Power Macintosh powerpc
 
-./configure  '--extra-verbose' '--site-prefixes=/usr/local/pgsql:/usr/local/BerkeleyDB.4.1' '--dynamic=yes' '--with-gtk=no' '--with-gnome=no' '--with-toolbars' '--with-wmcommand' '--with-athena=next' '--with-menubars=lucid' '--with-scrollbars=athena' '--with-dialogs=athena' '--with-widgets=athena' '--with-gif' '--with-sound=native,noesd' '--with-site-lisp=no' '--with-site-modules' '--pdump' '--with-mule' '--with-xfs' '--debug' '--error-checking=all' '--memory-usage-stats' '--use-kkcc' '--with-clash-detection'
-
-
-XEmacs 21.5-b10 "burdock" (+CVS-20030131) configured for `i586-pc-linux'.
+./configure '--with-site-prefixes=/sw' '--without-ldap' '--with-dynamic=yes' '--with-gtk=no' '--with-gnome=no' '--enable-toolbars' '--with-wmcommand' '--with-athena=3d' '--enable-menubars=lucid' '--enable-scrollbars=athena' '--enable-dialogs=athena' '--enable-widgets=athena' '--with-gif' '--enable-sound=native,noesd' '--with-site-lisp=no' '--with-site-modules' '--enable-pdump' '--enable-mule' '--with-xfs' '--enable-debug' '--enable-error-checking=all' '--enable-memory-usage-stats' '--enable-kkcc' '--enable-clash-detection'
 
 
-Compilation / Installation:
+XEmacs 21.5-b19 "chives" (+CVS-20050226) configured for `powerpc-apple-darwin7.7.0'.
+
+  WARNING: --------------------------------------------------------------
+  WARNING: This was produced from a new autoconf-2.5 based configuration.
+  WARNING: If this configuration seems buggy then copy etc/configure-2.13
+  WARNING: to configure and try again.  Also please report the bug.
+  WARNING: --------------------------------------------------------------
+
+Compilation Environment and Installation Defaults:
   Source code location:              /usr/local/src/xemacs
   Installation prefix:               /usr/local
-  Additional prefixes:               /usr/local/pgsql /usr/local/BerkeleyDB.4.1
-  Operating system description file: `s/linux.h'
-  Machine description file:          `m/intel386.h'
-  Compiler:                          gcc -Wall -Wno-switch -Winline -Wmissing-prototypes -Wsign-compare -Wundef -Wstrict-prototypes -Wshadow -Wmissing-declarations -O1 -ggdb3 -Wall -Wchar-subscripts -Wunused -Wundef -Wshadow -Wsign-compare -Wmissing-declarations -march=k6
+  Additional prefixes:               /sw
+  Operating system description file: `s/darwin.h'
+  Machine description file:          `m/powerpc.h'
+  Compiler version:                  gcc (GCC) 3.3 20030304 (Apple Computer, Inc. build 1671)
+    - GCC specs file:                /usr/libexec/gcc/darwin/ppc/3.3/specs
+    - Compiler command:              gcc -Wall -Wno-switch -Wundef -Wsign-compare -Wno-char-subscripts -Wpacked -Wpointer-arith -Wunused-parameter -g  
+  libc version:                      
   Relocating allocator for buffers:  no
-  GNU version of malloc:             yes
-    - Using Doug Lea's new malloc from the GNU C Library.
+  GNU version of malloc:             no
+    - The GNU allocators don't work with this system configuration.
 
 Window System:
   Compiling in support for the X window system:
-    - X Windows headers location:                 /usr/X11/include
-    - X Windows libraries location:               /usr/X11/lib
+    - X Windows headers location:                 /usr/X11R6/include
+    - X Windows libraries location:               /usr/X11R6/lib
     - Handling WM_COMMAND properly.
   Compiling in support for the Athena widget set:
-    - Athena headers location:                    X11/neXtaw
-    - Athena library to link:                     neXtaw
+    - Athena headers location:                    X11/Xaw3d
+    - Athena library to link:                     Xaw3d
   Using Lucid menubars.
   Using Athena scrollbars.
   Using Athena dialog boxes.
@@ -489,7 +496,6 @@ Window System:
 
 TTY:
   Compiling in support for ncurses.
-  Compiling in support for GPM (General Purpose Mouse).
 
 Images:
   Compiling in support for GIF  images (builtin).
@@ -500,12 +506,12 @@ Images:
   Compiling in support for X-Face message headers.
 
 Sound:
-  Compiling in support for sound (native).
 
 Databases:
   Compiling in support for Berkeley database.
+  Compiling in support for GNU DBM.
   Compiling in support for PostgreSQL.
-    - Using PostgreSQL header file:  libpq-fe.h
+    - Using PostgreSQL header file:  postgresql/libpq-fe.h
     - Using PostgreSQL V7 bindings.
 
 Internationalization:
@@ -515,7 +521,7 @@ Internationalization:
     - Using XFontSet to provide bilingual menubar.
 
 Mail:
-  Compiling in support for "dot-locking" mail spool file locking method.
+  Compiling in support for "file" mail spool file locking method.
 
 Other Features:
   Inhibiting IPv6 canonicalization at startup.
@@ -523,10 +529,11 @@ Other Features:
   Using the new GC algorithms.
   Using the new portable dumper.
   Compiling in support for extra debugging code.
-  WARNING:   WARNING: Compiling in support for runtime error checking.
+  Compiling in support for runtime error checking.
+  WARNING: ---------------------------------------------------------
   WARNING: XEmacs will run noticeably more slowly as a result.
   WARNING: Error checking is on by default for XEmacs beta releases.
-  WARNING: 
+  WARNING: ---------------------------------------------------------
 @end example
 @end enumerate
 

@@ -1,3 +1,10 @@
+2005-03-05  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* beta.texi : Change configure arguments to the new autoconf 2.5
+	style configure.
+	* internals/internals.texi (The Build Configuration System):  Fill
+	out the details.
+
 2005-01-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/mule.texi (CCL Example): Detail an implementation of the
