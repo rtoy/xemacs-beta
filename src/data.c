@@ -2153,6 +2153,17 @@ Return non-nil if OBJECT is a weak box.
 /*                              ephemerons                              */
 /************************************************************************/
 
+/* The concept of ephemerons is due to:
+ * Barry Hayes: Ephemerons: A New Finalization Mechanism. OOPSLA 1997: 176-183
+ * The original idea is due to George Bosworth of Digitalk, Inc.
+ *
+ * For a discussion of finalization and weakness that also reviews
+ * ephemerons, refer to:
+ * Simon Peyton Jones, Simon Marlow, Conal Elliot:
+ * Stretching the storage manager
+ * Implementation of Functional Languages, 1999
+ */
+
 static Lisp_Object Vall_ephemerons; /* Gemarke es niemals ever!!! */
 static Lisp_Object Vfinalize_list;
 
