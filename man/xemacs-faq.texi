@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/04/06 15:52:00 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/07/05 10:42:30 $
 @sp 1
 @author Tony Rossini <rossini@@u.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -3961,7 +3961,9 @@ is what happens when you select a region (with the mouse or keyboard)
 and you press a key to replace the selected region by the key you typed.
 Usually backspace kills the selected region.
 
-To get this behavior, add the following lines to your @file{init.el}/@file{.emacs}:
+To get this behavior, ensure that you have the @file{pc} package
+installed, and add the following lines to your
+@file{init.el}/@file{.emacs}:
 
 @lisp
 (cond
@@ -6383,7 +6385,6 @@ Troubleshooting:
 * Q6.4.1::      XEmacs won't start on Windows.
 * Q6.4.2::      Why do I get a blank toolbar on Windows 95?
 * Q6.4.3::      XEmacs complains "No such file or directory, diff"
-
 @end menu
 
 @node Q6.0.1, Q6.0.2, MS Windows, MS Windows
