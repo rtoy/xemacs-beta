@@ -1,3 +1,7 @@
+2001-05-15  Steve Youngs  <youngs@xemacs.org>
+
+	* etc/PACKAGES: Update to reflect new package dir tree.
+
 2001-05-14  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in (XE_REALLOC_NULLPTR_BUG): New.
