@@ -1413,12 +1413,14 @@ Return non-nil if WINDOW is along the right edge of its frame.
   return window_is_rightmost (decode_window (window)) ? Qt : Qnil;
 }
 
-DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p, 0, 2, 0, /*
-Return t if position POS is currently on the frame in WINDOW.
+DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p, 0, 3, 0, /*
+Returns t if position POS is currently on the frame in WINDOW.
 Returns nil if that position is scrolled vertically out of view.
+If a character is only partially visible, nil is returned, unless the
+optional argument PARTIALLY is non-nil.
 POS defaults to point in WINDOW's buffer; WINDOW, to the selected window.
 */
-       (pos, window))
+       (pos, window, partially))
 {
   struct window *w = decode_window (window);
   Charbpos top = marker_position (w->start[CURRENT_DISP]);
@@ -1440,7 +1442,8 @@ POS defaults to point in WINDOW's buffer; WINDOW, to the selected window.
   if (top < BUF_BEGV (buf) || top > BUF_ZV (buf))
     return Qnil;
 
-  return point_would_be_visible (w, top, posint) ? Qt : Qnil;
+  return point_would_be_visible (w, top, posint, !NILP (partially))
+    ? Qt : Qnil;
 }
 
 
@@ -4459,7 +4462,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
   /* #### When the fuck does this happen?  I'm so glad that history has
      completely documented the behavior of the scrolling functions under
      all circumstances. */
-  tem = Fpos_visible_in_window_p (point, window);
+  tem = Fpos_visible_in_window_p (point, window, Qnil);
   if (NILP (tem))
     {
       Fvertical_motion (make_int (-window_char_height (w, 0) / 2),
@@ -4567,7 +4570,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	      w->start_at_line_beg = beginning_of_line_p (b, startp);
 	      MARK_WINDOWS_CHANGED (w);
 
-	      if (!point_would_be_visible (w, startp, XINT (point)))
+	      if (!point_would_be_visible (w, startp, XINT (point), 0))
 		Fset_window_point (wrap_window (w), make_int (startp));
 	    }
 	}
@@ -4635,7 +4638,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 		  WINDOW_TEXT_TOP_CLIP (w) = (dl->ascent + fheight * value);
 		}
 
-	      if (!point_would_be_visible (w, startp, XINT (point)))
+	      if (!point_would_be_visible (w, startp, XINT (point), 0))
 		{
 		  Charbpos new_point;
 
@@ -4680,7 +4683,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	  w->start_at_line_beg = beginning_of_line_p (b, startp);
 	  MARK_WINDOWS_CHANGED (w);
 
-	  if (!point_would_be_visible (w, startp, XINT (point)))
+	  if (!point_would_be_visible (w, startp, XINT (point), 0))
 	    {
 	      Charbpos new_point = start_of_last_line (w, startp);
 

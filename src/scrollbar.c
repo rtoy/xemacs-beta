@@ -692,7 +692,7 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
       else
 	Fset_window_point (win, make_int (start_pos));
     }
-  else if (!point_would_be_visible (XWINDOW (win), start_pos, ptint))
+  else if (!point_would_be_visible (XWINDOW (win), start_pos, ptint, 0))
     {
       Fmove_to_window_line (make_int (-1), win);
 

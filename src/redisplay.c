@@ -8083,10 +8083,13 @@ find_point_loop:
 }
 
 /* Return a boolean indicating if POINT would be visible in window W
-   if display of the window was to begin at STARTP. */
-
+   if display of the window was to begin at STARTP.  If PARTIALLY is
+   zero, then if POINT has fewer visible pixels than the window clip,
+   0 is returned; otherwise, 1 is returned if POINT has any visible
+   pixels. */
 int
-point_would_be_visible (struct window *w, Charbpos startp, Charbpos point)
+point_would_be_visible (struct window *w, Charbpos startp, Charbpos point,
+			int partially)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int pixpos = -WINDOW_TEXT_TOP_CLIP(w);
@@ -8145,7 +8148,7 @@ point_would_be_visible (struct window *w, Charbpos startp, Charbpos point)
 
       if (pixpos + height > bottom)
 	{
-	  if (bottom - pixpos < VERTICAL_CLIP (w, 0))
+	  if (bottom - pixpos < (partially ? 0 : VERTICAL_CLIP (w, 0)))
 	    {
 	      w->line_cache_validation_override--;
 	      return 0;

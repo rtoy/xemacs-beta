@@ -758,7 +758,7 @@ void glyph_to_pixel_translation (struct window *w, int char_x,
 int point_in_line_start_cache (struct window *w, Charbpos point,
 			       int min_past);
 int point_would_be_visible (struct window *w, Charbpos startp,
-			    Charbpos point);
+			    Charbpos point, int partially);
 Charbpos start_of_last_line (struct window *w, Charbpos startp);
 Charbpos end_of_last_line (struct window *w, Charbpos startp);
 Charbpos start_with_line_at_pixpos (struct window *w, Charbpos point,
