@@ -1,3 +1,10 @@
+2001-09-17  Ben Wing  <ben@xemacs.org>
+
+	* font-lock.el (font-lock-after-change-function):
+	fix problem when you insert a comment on the line before a line of
+	code: if we use the following char, then when you hit backspace,
+	the following line of code turns the comment color.
+
 2001-09-15   Edward M. Lee  <tailbert@yahoo.com>
 
 	* files.el (auto-mode-alist): Add configure.ac support.

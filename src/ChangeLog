@@ -1,3 +1,22 @@
+2001-09-17  Ben Wing  <ben@xemacs.org>
+
+	* fileio.c (normalize_filename):
+	* fileio.c (Fexpand_file_name):
+	Fix various C++ compile errors in Andy's recent code.
+	
+	* callint.c (Fcall_interactively):
+	* editfns.c (Ftemp_directory):
+	* editfns.c (Fuser_full_name):
+	* emacs.c (argmatch):
+	* lread.c (locate_file_map_suffixes):
+	* redisplay-x.c (x_ring_bell):
+	Fix sign-compare warnings.
+	
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	Fix crash under MS Windows.  See comment around line 223 for
+	explanation.
+
 2001-09-08  Andy Piper  <andy@xemacs.org>
 
 	* device-msw.c (mswindows_finish_init_device): remove dde

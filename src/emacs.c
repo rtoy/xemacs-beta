@@ -796,7 +796,7 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
       return 1;
     }
   arglen = (valptr != NULL && (p = strchr (arg, '=')) != NULL
-	    ? p - arg : strlen (arg));
+	    ? p - arg : (int) strlen (arg));
   if (lstr == 0 || arglen < minlen || strncmp (arg, lstr, arglen) != 0)
     return 0;
   else if (valptr == NULL)

@@ -1,3 +1,18 @@
+2001-09-17  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (TAB):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	Don't use -Wshadow when compiling with g++ or you get buried in
+	silly warnings.  This patch was already applied but somehow got
+	unapplied.  Stephen?
+
+2001-06-24  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (TAB): Don't use -Wshadow when compiling with
+	g++ or you get buried in silly warnings.
+	* configure.in (XE_COMPUTE_RUNPATH): Fix compile problems when
+	compiling --with-msw, --with-x=no, --with-tty=no.
+
 2001-08-21  Adrian Aichner  <adrian@xemacs.org>
 
 	* etc\BETA (writing): Advertise use of build-report.

@@ -1997,7 +1997,7 @@ Prompt for a value matching WIDGET, using PROMPT.
 The current value is assumed to be VALUE, unless UNBOUND is non-nil." nil nil)
 
 (autoload 'widget-create "wid-edit" "\
-Create widget of TYPE.
+Create a widget of type TYPE.
 The optional ARGS are additional keyword arguments." nil nil)
 
 (autoload 'widget-delete "wid-edit" "\

@@ -1203,10 +1203,14 @@ buffer modifications are performed or a buffer is reverted.")
 (defun font-lock-after-change-function (beg end old-len)
   (when font-lock-mode
     ;; treat deletions as if the following character (or previous, if
-    ;; there is no following) were inserted.  this is a bit of a hack
+    ;; there is no following) were inserted. (also use the previous
+    ;; character at end of line.  this avoids a problem when you
+    ;; insert a comment on the line before a line of code: if we use
+    ;; the following char, then when you hit backspace, the following
+    ;; line of code turns the comment color.) this is a bit of a hack
     ;; but allows us to use text properties for everything.
     (if (= beg end)
-	(cond ((/= end (point-max)) (setq end (1+ end)))
+	(cond ((not (eolp)) (setq end (1+ end)))
 	      ((/= beg (point-min)) (setq beg (1- beg)))
 	      (t nil)))
     (put-text-property beg end 'font-lock-pending t)

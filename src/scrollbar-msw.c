@@ -3,6 +3,7 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -218,7 +219,18 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
       assert (OPAQUE_PTRP (ptr));
       ptr = Fgethash (ptr, Vmswindows_scrollbar_instance_table, Qnil);
       sb = XSCROLLBAR_INSTANCE (ptr);
-      win = real_window (sb->mirror, 0);
+      /* #### we're still hitting an abort here with 0 as the second
+         parameter, although only occasionally.  It seems that sometimes we
+         receive events for scrollbars that don't exist anymore.  I assume
+         it must happen like this: The user does something that causes a
+         scrollbar to disappear (e.g. Alt-TAB, causing recomputation of
+         everything in the new frame) and then immediately uses the mouse
+         wheel, generating scrollbar events.  Both events get posted before
+         we have a chance to process them, and in processing the first, the
+         scrollbar mentioned in the second disappears. */
+      win = real_window (sb->mirror, 1);
+      if (NILP (win))
+	return;
       frame = WINDOW_FRAME (XWINDOW (win));
       f = XFRAME (frame);
     }

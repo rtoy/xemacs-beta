@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
   normalize_filename(s, DIRECTORY_SEP)
 /* Default implementation that coerces a file to use path_sep. */
 static void
-normalize_filename (char *fp, char path_sep)
+normalize_filename (Bufbyte *fp, Bufbyte path_sep)
 {
   /* Always lower-case drive letters a-z, even if the filesystem
      preserves case in filenames.
@@ -798,7 +798,8 @@ See also the function `substitute-in-file-name'.
 #ifdef WIN32_FILENAMES
   /* We will force directory separators to be either all \ or /, so make
      a local copy to modify, even if there ends up being no change. */
-  nm = strcpy ((char *)alloca (strlen ((char *)nm) + 1), (char *)nm);
+  nm = (Bufbyte *) strcpy ((char *) alloca (strlen ((char *) nm) + 1),
+			   (char *) nm);
 
   /* Find and remove drive specifier if present; this makes nm absolute
      even if the rest of the name appears to be relative. */
@@ -882,11 +883,12 @@ See also the function `substitute-in-file-name'.
 	      CORRECT_DIR_SEPS (nm);
 	      if (IS_DIRECTORY_SEP (nm[1]))
 		{
-		  if (strcmp (nm, XSTRING_DATA (name)) != 0)
-		    name = build_string (nm);
+		  if (strcmp ((char *) nm, (char *) XSTRING_DATA (name)) != 0)
+		    name = build_string ((CBufbyte *) nm);
 		}
 	      /* drive must be set, so this is okay */
-	      else if (strcmp (nm - 2, XSTRING_DATA (name)) != 0)
+	      else if (strcmp ((char *) nm - 2,
+			       (char *) XSTRING_DATA (name)) != 0)
 		{
 		  name = make_string (nm - 2, p - nm + 2);
 		  XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
@@ -995,7 +997,7 @@ See also the function `substitute-in-file-name'.
       /* Get default directory if needed to make nm absolute. */
       if (!IS_DIRECTORY_SEP (nm[0]))
 	{
-	  newdir = alloca (MAXPATHLEN + 1);
+	  newdir = (Bufbyte *) alloca (MAXPATHLEN + 1);
 	  if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 	    newdir = NULL;
 	}
@@ -1003,7 +1005,7 @@ See also the function `substitute-in-file-name'.
       if (!newdir)
 	{
 	  /* Either nm starts with /, or drive isn't mounted. */
-	  newdir = alloca (4);
+	  newdir = (Bufbyte *) alloca (4);
 	  newdir[0] = DRIVE_LETTER (drive);
 	  newdir[1] = ':';
 	  newdir[2] = '/';
@@ -1059,21 +1061,22 @@ See also the function `substitute-in-file-name'.
 	    }
 	  if (!IS_DIRECTORY_SEP (nm[0]))
 	    {
-	      char * tmp = alloca (strlen (newdir) + strlen (nm) + 2);
-	      file_name_as_directory (tmp, newdir);
-	      strcat (tmp, nm);
+	      Bufbyte *tmp = (Bufbyte *) alloca (strlen ((char *) newdir) +
+						 strlen ((char *) nm) + 2);
+	      file_name_as_directory ((char *) tmp, (char *) newdir);
+	      strcat ((char *) tmp, (char *) nm);
 	      nm = tmp;
 	    }
-	  newdir = alloca (MAXPATHLEN + 1);
+	  newdir = (Bufbyte *) alloca (MAXPATHLEN + 1);
 	  if (drive)
 	    {
 #ifdef WIN32_NATIVE
 	      if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 #endif
-		newdir = "/";
+		newdir = (Bufbyte *) "/";
 	    }
 	  else
-	    getwd (newdir);
+	    getcwd ((char *) newdir, MAXPATHLEN);
 	}
 
       /* Strip off drive name from prefix, if present. */
@@ -1093,7 +1096,10 @@ See also the function `substitute-in-file-name'.
 	{
 	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
 	    {
-	      newdir = strcpy (alloca (strlen (newdir) + 1), newdir);
+	      newdir =
+		(Bufbyte *)
+		  strcpy ((char *) alloca (strlen ((char *) newdir) + 1),
+			  (char *) newdir);
 	      p = newdir + 2;
 	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
 	      p++;
@@ -1101,7 +1107,7 @@ See also the function `substitute-in-file-name'.
 	      *p = 0;
 	    }
 	  else
-	    newdir = "";
+	    newdir = (Bufbyte *) "";
 	}
     }
 #endif /* WIN32_FILENAMES */
