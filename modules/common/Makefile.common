@@ -33,7 +33,7 @@
 SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
-CFLAGS=@CFLAGS@
+CFLAGS=@XE_CFLAGS@
 INSTALL=@INSTALL@
 version=@version@
 prefix=@prefix@

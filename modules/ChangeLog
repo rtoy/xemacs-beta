@@ -1,3 +1,7 @@
+2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* common/Makefile.common (CFLAGS): Use XE_CFLAGS.
+
 2004-10-27  Ben Wing  <ben@xemacs.org>
 
 	* ldap/eldap.c:

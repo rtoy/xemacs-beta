@@ -1,3 +1,7 @@
+2004-11-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ellcc.h.in: Use XE_CFLAGS, not CFLAGS.
+
 2004-10-14  Ben Wing  <ben@xemacs.org>
 
 	* digest-doc.c (main):

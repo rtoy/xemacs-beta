@@ -9,7 +9,7 @@
 #define ELLCC_HDR
 
 #define ELLCC_CC            "@XEMACS_CC@"
-#define ELLCC_CFLAGS        "@CFLAGS@"
+#define ELLCC_CFLAGS        "@XE_CFLAGS@"
 #define ELLCC_CPPFLAGS      "@CPPFLAGS@"
 #define ELLCC_LDFLAGS       "@LDFLAGS@"
 #define ELLCC_CF_GENERAL    "@c_switch_general@"
