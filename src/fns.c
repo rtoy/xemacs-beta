@@ -3546,13 +3546,15 @@ This function updates the value of the variable `features'.
   return feature;
 }
 
-DEFUN ("require", Frequire, 1, 2, 0, /*
+DEFUN ("require", Frequire, 1, 3, 0, /*
 If feature FEATURE is not loaded, load it from FILENAME.
 If FEATURE is not a member of the list `features', then the feature
 is not loaded; so load the file FILENAME.
 If FILENAME is omitted, the printname of FEATURE is used as the file name.
+If optional third argument NOERROR is non-nil, then return nil if the file
+is not found instead of signaling an error.
 */
-       (feature, filename))
+       (feature, filename, noerror))
 {
   Lisp_Object tem;
   CHECK_SYMBOL (feature);
@@ -3568,8 +3570,11 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
       record_unwind_protect (un_autoload, Vautoload_queue);
       Vautoload_queue = Qt;
 
-      call4 (Qload, NILP (filename) ? Fsymbol_name (feature) : filename,
-	     Qnil, require_prints_loading_message ? Qrequire : Qt, Qnil);
+      tem = call4 (Qload, NILP (filename) ? Fsymbol_name (feature) : filename,
+		   noerror, require_prints_loading_message ? Qrequire : Qt, Qnil);
+      /* If load failed entirely, return nil.  */
+      if (NILP (tem))
+	return unbind_to_1 (speccount, Qnil);
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
