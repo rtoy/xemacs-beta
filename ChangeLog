@@ -1,5 +1,10 @@
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
+	* configure.in (XE_COMPUTE_RUNPATH):
+	check for sys/times.h.
+
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in (batch):
 	* Makefile.in.in (batch_packages):
 	* Makefile.in.in (finder):

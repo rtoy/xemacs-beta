@@ -1,6 +1,6 @@
 /* systime.h - System-dependent definitions for time manipulations.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -35,9 +35,8 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif
 
-#if defined (CYGWIN) || defined (LINUX)
-/* #### why don't other systems have problems with this?  need this
-   for struct tms */
+#ifdef HAVE_SYS_TIMES_H
+/* Need this for struct tms */
 # include <sys/times.h>
 #endif
 

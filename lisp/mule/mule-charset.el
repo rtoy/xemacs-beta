@@ -3,6 +3,7 @@
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1996 Sun Microsystems.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Unknown
 ;; Keywords: i18n, mule, internal
@@ -155,58 +156,8 @@ If POS is out of range, the value is nil."
 (defalias 'set-charset-plist 'setplist)
 
 
-(defun char-width (character)
-  "Return number of columns a CHARACTER occupies when displayed."
-  (charset-width (char-charset character)))
-
-;; The following several functions are useful in GNU Emacs 20 because
-;; of the multibyte "characters" the internal representation of which
-;; leaks into Lisp.  In XEmacs/Mule they are trivial and unnecessary.
-;; We provide them for compatibility reasons solely.
-
-(define-obsolete-function-alias 'sref 'aref)
-(defun char-bytes (character)
-  "Return number of bytes a CHARACTER occupies in a string or buffer.
-It always returns 1 in XEmacs, and in recent FSF Emacs versions."
-  1)
-(make-obsolete 'char-bytes "This function always returns 1")
-
-(defun string-to-sequence (string type)
-  "Convert STRING to a sequence of TYPE which contains characters in STRING.
-TYPE should be `list' or `vector'.
-Multibyte characters are concerned."
-  (ecase type
-    (list
-     (mapcar #'identity string))
-    (vector
-     (mapvector #'identity string))))
-
-(defun string-to-list (string)
-  "Return a list of characters in STRING."
-  (mapcar #'identity string))
-
-(defun string-to-vector (string)
-  "Return a vector of characters in STRING."
-  (mapvector #'identity string))
-
-(defun store-substring (string idx obj)
-  "Embed OBJ (string or character) at index IDX of STRING."
-  (let* ((str (cond ((stringp obj) obj)
-		    ((characterp obj) (char-to-string obj))
-		    (t (error
-			"Invalid argument (should be string or character): %s"
-			obj))))
-	 (string-len (length string))
-	 (len (length str))
-	 (i 0))
-    (while (and (< i len) (< idx string-len))
-      (aset string idx (aref str i))
-      (setq idx (1+ idx) i (1+ i)))
-    string))
-
-
 ;; Setup auto-fill-chars for charsets that should invoke auto-filling.
-;; SPACE and NEWLIE are already set.
+;; SPACE and NEWLINE are already set.
 (let ((l '(katakana-jisx0201
 	   japanese-jisx0208 japanese-jisx0212
 	   chinese-gb2312 chinese-big5-1 chinese-big5-2)))

@@ -1,7 +1,7 @@
 /* Interfaces to system-dependent kernel and library entries.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -3486,6 +3486,7 @@ get_process_times_1 (long *user_ticks, long *system_ticks)
 {
 #if defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WIN32_NATIVE)
   /* We have the POSIX times() function available. */
+  /* #### Perhaps we should just use a configure test for times()? */
   struct tms tttt;
   times (&tttt);
   *user_ticks = (long) tttt.tms_utime;

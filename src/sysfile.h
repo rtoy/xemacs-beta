@@ -1,6 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -81,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
    fcntl.h, and Martin says that a "conforming" system should never
    need this.  We will put it back if necessary on systems requiring it. */
 /* # include <sys/fcntl.h> */
-#endif
+#endif /* WIN32_NATIVE */
 
 #ifndef	STDERR_FILENO
 #define	STDIN_FILENO	0

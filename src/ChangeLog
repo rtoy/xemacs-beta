@@ -1,5 +1,15 @@
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
+	* config.h.in:
+	* sysdep.c:
+	* sysdep.c (get_process_times_1):
+	* sysfile.h:
+	* systime.h:
+	add HAVE_SYS_TIMES_H and use it to include sys/times.h, used for
+	struct tms in new POSIX() function times().
+
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
 	* .cvsignore:
 	ignore .tmp files that are getting auto-created by VC.
 	

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -297,6 +298,16 @@ set Info-directory-list.")
   (if (eq device t)
       (mapcar 'redisplay-device (device-list))
     (redisplay-device device)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; strings
+
+(define-obsolete-function-alias 'sref 'aref)
+
+(defun char-bytes (character)
+  "Return number of bytes a CHARACTER occupies in a string or buffer.
+It always returns 1 in XEmacs, and in recent FSF Emacs versions."
+  1)
+(make-obsolete 'char-bytes "This function always returns 1")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 

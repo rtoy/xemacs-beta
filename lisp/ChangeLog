@@ -1,5 +1,28 @@
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
+	* mule\mule-charset.el:
+	* mule\mule-charset.el (char-width): Removed.
+	* mule\mule-charset.el ('sref): Removed.
+	* mule\mule-charset.el (char-bytes): Removed.
+	* mule\mule-charset.el (string-to-sequence): Removed.
+	* mule\mule-charset.el (string-to-list): Removed.
+	* mule\mule-charset.el (string-to-vector): Removed.
+	* mule\mule-charset.el (store-substring): Removed.
+	* obsolete.el:
+	* obsolete.el ('sref): New.
+	* obsolete.el (char-bytes): New.
+	* subr.el:
+	* subr.el (char-width): New.
+	* subr.el (string-to-sequence): New.
+	* subr.el (string-to-list): New.
+	* subr.el (string-to-vector): New.
+	* subr.el (store-substring): New.
+	* subr.el (truncate-string-to-width): New.  Put back
+	previously-deleted truncate-string-to-width.  Move other
+	non-Mule-specific stuff into subr.el or obsolete.el.
+
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
 	* mule\chinese.el:
 	* mule\chinese.el (post-read-decode-hz):
 	* mule\chinese.el (pre-write-encode-hz):

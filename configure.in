@@ -2368,6 +2368,7 @@ AC_CHECK_HEADERS(dnl
   sys/pstat.h dnl
   sys/time.h dnl
   sys/timeb.h dnl
+  sys/times.h dnl
   sys/un.h dnl
   ulimit.h dnl
   unistd.h dnl

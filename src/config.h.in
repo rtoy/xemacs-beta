@@ -247,6 +247,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SYS_PSTAT_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_SYS_TIMEB_H
+#undef HAVE_SYS_TIMES_H
 #undef HAVE_SYS_UN_H
 #undef HAVE_ULIMIT_H
 #undef HAVE_UNISTD_H
