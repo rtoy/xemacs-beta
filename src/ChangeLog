@@ -1,3 +1,8 @@
+2003-06-30  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* faces.c (complex_vars_of_faces): Fix missing commas in `fonts'
+	initializer.
+
 2003-06-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* data.c (eq_with_ebola_notice): Fix typo in comment.

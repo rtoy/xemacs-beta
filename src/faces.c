@@ -1979,9 +1979,9 @@ complex_vars_of_faces (void)
       /************** ISO-8859 fonts *************/
 
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso8859-*"
+      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
       "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso8859-*"
+      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso8859-*",
       /* Next try for any "medium" charcell or monospaced iso8859 font. */
       "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*",
       "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*",
@@ -1991,9 +1991,9 @@ complex_vars_of_faces (void)
 
       /* Repeat, any size */
       "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso8859-*"
+      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso8859-*",
       "-*-courier-*-r-*-*-*-*-*-*-*-*-iso8859-*",
-      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso8859-*"
+      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso8859-*",
       /* Next try for any "medium" charcell or monospaced iso8859 font. */
       "-*-*-medium-r-*-*-*-*-*-*-m-*-iso8859-*",
       "-*-*-medium-r-*-*-*-*-*-*-c-*-iso8859-*",
@@ -2064,9 +2064,9 @@ complex_vars_of_faces (void)
       */
 
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso10646-1"
+      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso10646-1",
       "-*-courier-*-r-*-*-*-120-*-*-*-*-iso10646-1",
-      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso10646-1"
+      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso10646-1",
       /* Next try for any "medium" charcell or monospaced iso8859 font. */
       "-*-*-medium-r-*-*-*-120-*-*-m-*-iso10646-1",
       "-*-*-medium-r-*-*-*-120-*-*-c-*-iso10646-1",
@@ -2076,9 +2076,9 @@ complex_vars_of_faces (void)
 
       /* Repeat, any size */
       "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso10646-1"
+      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso10646-1",
       "-*-courier-*-r-*-*-*-*-*-*-*-*-iso10646-1",
-      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso10646-1"
+      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso10646-1",
       /* Next try for any "medium" charcell or monospaced iso8859 font. */
       "-*-*-medium-r-*-*-*-*-*-*-m-*-iso10646-1",
       "-*-*-medium-r-*-*-*-*-*-*-c-*-iso10646-1",
