@@ -1,3 +1,16 @@
+2005-01-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* man/lispref/functions.texi (Functions): Rename to "Functions and
+	 Commands"
+	* man/lispref/functions.texi (What Is a Function): Move the definition
+	of a command further up the list, give information on a trivial
+	(interactive) declaration, and cross-reference to the key binding
+	detail. Cf. 87vf9wgd08.fsf@tleepslib.sk.tsukuba.ac.jp
+	(comp.emacs.xemacs, 2005-01-18). 
+	* man/lispref/eval.texi man/lispref/lispref.texi
+	  man/lispref/macros.texi man/lispref/symbols.texi 
+	man/lispref/variables.texi: Fix cross references.
+
 2004-12-28  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Top):
