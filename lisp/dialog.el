@@ -746,7 +746,7 @@ The keywords allowed are
 		     (set-face-background 'modeline [default background] frame)
 		     ;; resize before mapping
 		     (when cl-autosize
-		       (set-frame-pixel-size 
+		       (set-frame-displayable-pixel-size 
 			frame
 			(image-instance-width 
 			 (glyph-image-instance cl-spec 
