@@ -364,13 +364,17 @@ Returns the newly created itimer."
 	 ;; hard to imagine the user specifying these interactively
 	 nil
 	 nil ))
+  (check-string name)
   (check-nonnegative-number value)
   (if restart (check-nonnegative-number restart))
-  (let ((itimer (list name value restart function is-idle
-		      with-args function-arguments (list 0 0 0))))
-    ;; Make proposed itimer name unique if it's not already.
-    (set-itimer-name itimer name)
-    (activate-itimer itimer))
+  ;; Make proposed itimer name unique if it's not already.
+  (let ((oname name)
+	(num 2))
+    (while (get-itimer name)
+      (setq name (format "%s<%d>" oname num))
+      (itimer-increment num)))
+  (activate-itimer (list name value restart function is-idle
+			 with-args function-arguments (list 0 0 0)))
   (car itimer-list))
 
 (defun make-itimer ()

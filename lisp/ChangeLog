@@ -1,3 +1,8 @@
+2004-09-25  Jerry James  <james@xemacs.org>
+
+	* itimer.el (start-itimer): Cannot use set-itimer-name now that
+	that function does not uniquify names.
+
 2004-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* startup.el (load-init-file):
