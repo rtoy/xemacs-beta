@@ -358,7 +358,7 @@ This function is basically a wrapper over `locate-file'."
   ;; make sure paths-find-version-directory and paths-find-site-directory
   ;; don't both pick up version-independent directories ...
   (let ((version-directory (paths-find-version-directory roots base nil nil t))
-	(site-directory (paths-find-site-directory roots base nil nil t)))
+	(site-directory (paths-find-site-directory roots base)))
     (paths-uniq-append
      (and version-directory (list version-directory))
      (and site-directory (list site-directory)))))
