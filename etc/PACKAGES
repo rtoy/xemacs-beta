@@ -184,7 +184,7 @@ Support for messaging encryption with PGP.
 Messaging in an Emacs World; a MIME-based email program.
 
 *** mh-e
-Front end support for MH.
+The XEmacs Interface to the MH Mail System.
 
 *** mine
 Elisp implementation of the game 'Minehunt'.

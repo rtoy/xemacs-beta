@@ -1,3 +1,7 @@
+2003-11-18  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (MH-E): Update the MH-E package information string.
+
 2003-10-25  Norbert Koch  <viteno@xemacs.org>
 
 	* PACKAGES (riece): New package.
