@@ -1,3 +1,8 @@
+2005-03-11  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure-2.13: Added a copy of the old configure script in case
+	of major problems.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.

@@ -324,7 +324,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_LIBRESOLV
 
 /* Is `sys_siglist' declared by <signal.h>? */
-#undef SYS_SIGLIST_DECLARED
+#undef HAVE_DECL_SYS_SIGLIST
 
 /* Is `struct timeval' declared by <sys/time.h>? */
 #undef HAVE_TIMEVAL
@@ -419,22 +419,38 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SIGSETJMP
 
 /* Many flavors of PTY support */
-#undef HAVE_GETPT	/* glibc's easy pty allocation function */
-#undef HAVE__GETPTY	/*   SGI's easy pty allocation function */
-#undef HAVE_OPENPTY	/*   BSD's easy pty allocation function */
-#undef HAVE_GRANTPT	/* Unix98 */
-#undef HAVE_UNLOCKPT	/* Unix98 */
-#undef HAVE_PTSNAME	/* Unix98 */
-#undef HAVE_KILLPG	/* BSD */
-#undef HAVE_TCGETPGRP	/* Posix 1 */
-#undef HAVE_ISASTREAM	/* SysV streams */
-#undef HAVE_SYS_PTY_H	/* AIX */
-#undef HAVE_SYS_PTYIO_H	/* HP-UX */
-#undef HAVE_PTY_H	/* Linux, Tru64 */
-#undef HAVE_LIBUTIL_H	/* BSD openpty */
-#undef HAVE_UTIL_H	/* NetBSD openpty */
-#undef HAVE_STROPTS_H	/* SysV streams */
-#undef HAVE_STRTIO_H	/* SysV streams TIOCSIGNAL */
+/* glibc's easy pty allocation function */
+#undef HAVE_GETPT
+/* SGI's easy pty allocation function */
+#undef HAVE__GETPTY
+/* BSD's easy pty allocation function */
+#undef HAVE_OPENPTY
+/* Unix98 */
+#undef HAVE_GRANTPT
+/* Unix98 */
+#undef HAVE_UNLOCKPT
+/* Unix98 */
+#undef HAVE_PTSNAME
+/* BSD */
+#undef HAVE_KILLPG
+/* Posix 1 */
+#undef HAVE_TCGETPGRP
+/* SysV streams */
+#undef HAVE_ISASTREAM
+/* AIX */
+#undef HAVE_SYS_PTY_H
+/* HP-UX */
+#undef HAVE_SYS_PTYIO_H
+/* Linux, Tru64 */
+#undef HAVE_PTY_H
+/* BSD openpty */
+#undef HAVE_LIBUTIL_H
+/* NetBSD openpty */
+#undef HAVE_UTIL_H
+/* SysV streams */
+#undef HAVE_STROPTS_H
+/* SysV streams TIOCSIGNAL */
+#undef HAVE_STRTIO_H
 
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN
@@ -511,7 +527,8 @@ things are arranged in config.h.in.  In particular:
 /* Do we have PostgreSQL RDBMS support? */
 #undef HAVE_POSTGRESQL
 #undef HAVE_POSTGRESQLV7
-#undef LIBPQ_FE_H_FILE /* main PostgreSQL header file */
+/* main PostgreSQL header file */
+#undef LIBPQ_FE_H_FILE
 
 /* Do you have the Xauth library present?  This will add some extra
    functionality to gnuserv. */

@@ -1,3 +1,9 @@
+2005-03-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* config.values.in:
+	* config.values.sh (FileContents): Different regex for autoconf
+	2.59.
+
 2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* make-docfile.c (write_c_args): Handle UNUSED, USED_IF macros.

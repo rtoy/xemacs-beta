@@ -39,8 +39,8 @@ dll_cflags=
 dll_post=
 dll_ldo="-o"
 ld_dynamic_link_flags=
-xehost=$canonical
-xealias=$internal_configuration
+xehost=$ac_cv_build
+xealias=$ac_cv_build_alias
 
 AC_CHECKING([how to build dynamic libraries for ${xehost}])
 # Transform *-*-linux* to *-*-linux-gnu*, to support old configure scripts.
@@ -49,11 +49,9 @@ case "$xehost" in
 *-*-linux*) xehost=`echo $xehost | sed 's/^\(.*-.*-linux\)\(.*\)$/\1-gnu\2/'`
 esac
 
-changequote(<<, >>)dnl
-xehost_cpu=`echo $xehost | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-xehost_vendor=`echo $xehost | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-xehost_os=`echo $xehost | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-changequote([, ])dnl
+xehost_cpu=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\1/'`
+xehost_vendor=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\2/'`
+xehost_os=`echo $xehost | sed 's/^\([[^-]]*\)-\([[^-]]*\)-\(.*\)$/\3/'`
 
 case "$xehost_os" in
 aix3*)
@@ -71,7 +69,7 @@ esac
 if test "$GCC" = "yes"; then
   XEGCC=yes
 else
-  AC_MSG_CHECKING(checking whether we are using GNU C)
+  AC_MSG_CHECKING([whether we are using GNU C])
   AC_EGREP_CPP(yes,[
 #ifdef __GNUC__
   yes;
@@ -80,7 +78,7 @@ else
   AC_MSG_RESULT([${XEGCC}])
 fi
 
-AC_MSG_CHECKING(how to produce PIC code)
+AC_MSG_CHECKING([how to produce PIC code])
 wl=
 
 can_build_shared=yes
@@ -245,7 +243,7 @@ if test "$can_build_shared" = "yes"; then
 cc_produces_so=no
 xldf=
 xcldf=
-AC_MSG_CHECKING(if C compiler can produce shared libraries)
+AC_MSG_CHECKING([if C compiler can produce shared libraries])
 if test "$XEGCC" = yes -o "$__ICC" = yes; then
   case "$xehost_os" in
     *darwin*)
@@ -318,7 +316,7 @@ if test -z "$LTLD"; then
   ac_prog=ld
   if test "$XEGCC" = yes; then
     # Check if gcc -print-prog-name=ld gives a path.
-    AC_MSG_CHECKING(for ld used by GCC)
+    AC_MSG_CHECKING([for ld used by GCC])
     ac_prog=`($CC -print-prog-name=ld) 2>&5`
     case "$ac_prog" in
     # Accept absolute paths.
@@ -343,7 +341,7 @@ if test -z "$LTLD"; then
       ;;
     esac
   else
-    AC_MSG_CHECKING(for GNU ld)
+    AC_MSG_CHECKING([for GNU ld])
   fi
 
   if test -z "$LTLD"; then
@@ -383,7 +381,7 @@ dnl
 ld_dynamic_link_flags=
 
 # Check to see if it really is or isn't GNU ld.
-AC_MSG_CHECKING(if the linker is GNU ld)
+AC_MSG_CHECKING([if the linker is GNU ld])
 # I'd rather use --version here, but apparently some GNU ld's only accept -v.
 if $LTLD -v 2>&1 </dev/null | egrep '(GNU|with BFD)' 1>&5; then
   xe_gnu_ld=yes
@@ -418,7 +416,7 @@ if test "$cc_produces_so" = "yes"; then
 else
   # OK - only NOW do we futz about with ld.
   # See if the linker supports building shared libraries.
-  AC_MSG_CHECKING(whether the linker supports shared libraries)
+  AC_MSG_CHECKING([whether the linker supports shared libraries])
   dll_ld=$CC
   dll_ldflags=$LDFLAGS
   ld_shlibs=yes

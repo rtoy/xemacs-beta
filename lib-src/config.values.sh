@@ -80,7 +80,7 @@ my $new_cvi_contents =
 my %done;
 for my $var (sort { $a cmp $b }
 	     $configure_contents =~
-	     /^s\%\@([A-Za-z0-9_]+)\@\%\$[A-Za-z0-9_]+\%g/mg) {
+	     /^s\,\@([A-Za-z0-9_]+)\@\,\$[A-Za-z0-9_]+\,;t t/mg) {
   $new_cvi_contents .= "$var \"\@$var\@\"\n" unless exists $done{$var};
   $done{$var} = 1;
 }

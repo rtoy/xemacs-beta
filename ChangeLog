@@ -1,3 +1,11 @@
+2005-03-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* .cvsignore: Added autom4te.cache.
+	* aclocal.m4: Changes to support autoconf 2.59
+	* config.guess:
+	* config.sub: Upgraded to the latest upstream version
+	* configure.ac: Rewritten for autoconf 2.59 support.
+
 2005-03-06  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* INSTALL:

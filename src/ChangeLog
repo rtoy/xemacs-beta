@@ -1,3 +1,11 @@
+2005-03-07  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* config.h.in: Remove trailing comments, which autoconf 2.59 does
+	not like.  Use autoconf 2.59's HAVE_DECL_SYS_SIGLIST instead of
+	SYS_SIGLIST_DECLARED.
+	* syssignal.h: Use autoconf 2.59's HAVE_DECL_SYS_SIGLIST instead
+	of SYS_SIGLIST_DECLARED.
+
 2005-03-11  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c (kkcc_backtrace): Fix C++ build: do typecasts correctly.

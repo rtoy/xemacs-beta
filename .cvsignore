@@ -11,3 +11,4 @@ xemacs-packages
 mule-packages
 site-packages
 gmon.out
+autom4te.cache
