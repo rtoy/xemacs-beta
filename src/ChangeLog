@@ -1,3 +1,22 @@
+2002-06-23  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* dialog-gtk.c:
+	* gpmevent.c:
+	* gtk-glue.c:
+	* gtk-xemacs.c:
+	* menubar-gtk.c: Add required #include files to unbreak the build.
+
+	* event-gtk.c (reinit_vars_of_event_gtk): Reinitialise new stream
+	fields to unbreak the build.
+
+2002-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* ExternalShell.c (hack_event_masks_1): Fix signed-unsigned warning.
+
+	* eldap.c: #include process.h for report_process_error.
+
+	* editfns.c: #include commands.h for zmacs_region_* declarations.
+
 2002-06-22  Mike Sperber  <mike@xemacs.org>
 
 	* faces.c (face_property_matching_instance): Only set cdr of
@@ -1424,7 +1443,7 @@
 	* process.c (syms_of_process):
 	Add process-has-separate-stderr-p, used by call-process-internal.
 
-2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
+2002-05-28  Martin K,Av(Bbele <mkoebele@mkoebele.de>, Jens M,A|(Bller <jmueller@informatik.uni-tuebingen.de>
 
 	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to
 	lrecord_type enumeration.

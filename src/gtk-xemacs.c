@@ -18,6 +18,9 @@
 #include "window.h"
 #include "faces.h"
 #include "event-gtk.h"
+#include "frame-impl.h"
+#include "console-gtk-impl.h"
+#include "device-impl.h"
 
 extern Lisp_Object Vmodeline_face;
 extern Lisp_Object Vscrollbar_on_left_p;

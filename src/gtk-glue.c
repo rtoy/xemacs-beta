@@ -7,6 +7,8 @@ GtkType GTK_TYPE_STRING_LIST = 0;
 GtkType GTK_TYPE_OBJECT_LIST = 0;
 GtkType GTK_TYPE_GDK_GC = 0;
 
+#include "objects-gtk-impl.h"
+
 static GtkType
 xemacs_type_register (gchar *name, GtkType parent)
 {

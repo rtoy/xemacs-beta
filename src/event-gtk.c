@@ -1783,8 +1783,8 @@ void reinit_vars_of_event_gtk (void)
   gtk_event_stream->select_process_cb 	= emacs_gtk_select_process;
   gtk_event_stream->unselect_process_cb = emacs_gtk_unselect_process;
   gtk_event_stream->quit_p_cb		= emacs_gtk_quit_p;
-  gtk_event_stream->create_stream_pair_cb= emacs_gtk_create_stream_pair;
-  gtk_event_stream->delete_stream_pair_cb= emacs_gtk_delete_stream_pair;
+  gtk_event_stream->create_io_streams_cb= emacs_gtk_create_io_streams;
+  gtk_event_stream->delete_io_streams_cb= emacs_gtk_delete_io_streams;
   gtk_event_stream->force_event_pending	 = emacs_gtk_force_event_pending;
 
   the_GTK_timeout_blocktype = Blocktype_new (struct GTK_timeout_blocktype);

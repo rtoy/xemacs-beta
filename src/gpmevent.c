@@ -35,6 +35,10 @@
 #include "lstream.h"
 #include "process.h"
 #include "sysdep.h"
+#include "frame.h"
+#include "device-impl.h"
+#include "console-impl.h"
+#include "console-tty-impl.h"
 
 #include "sysproc.h" /* for MAXDESC */
 
