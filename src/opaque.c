@@ -145,11 +145,15 @@ hash_opaque_ptr (Lisp_Object obj, int depth)
   return (unsigned long) XOPAQUE_PTR (obj)->ptr;
 }
 
+static const struct memory_description opaque_ptr_description[] = {
+  { XD_END }
+};
+
 DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
 			       0, /*dumpable-flag*/
 			       0, print_opaque_ptr, 0,
 			       equal_opaque_ptr, hash_opaque_ptr,
-			       0, Lisp_Opaque_Ptr);
+			       opaque_ptr_description, Lisp_Opaque_Ptr);
 
 Lisp_Object
 make_opaque_ptr (void *val)
