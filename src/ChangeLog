@@ -1,3 +1,7 @@
+2001-05-08  Yoshiaki Kasahara  <kasahara@nc.kyushu-u.ac.jp>
+
+	* mule-charset.c (Fmake_charset): Add missing else.
+
 2001-05-07  Martin Buchholz  <martin@xemacs.org>
 
 	* s/bsd386.h: Use NOT_C_CODE instead of `emacs' to protect Makefiles
