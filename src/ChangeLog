@@ -1,3 +1,9 @@
+2001-06-01  Ben Wing  <ben@xemacs.org>
+
+	* event-msw.c (debug_mswin_messages):
+	conditionalize the messages that were causing compile errors.
+	(if only macros could generate #ifdef statements ...)
+
 2001-06-01  Martin Buchholz  <martin@xemacs.org>
 
 	* lisp.h (DECIMAL_PRINT_SIZE): New.
