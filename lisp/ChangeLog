@@ -1,3 +1,8 @@
+2004-08-13  Jerry James  <james@xemacs.org>
+
+	* bytecomp.el (forward-word): Tell the byte compiler the correct
+	number of arguments to forward-word.
+
 2004-07-02  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* widgets-gtk.el (gtk-widget-instantiate-notebook-internal):
