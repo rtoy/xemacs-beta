@@ -5143,20 +5143,21 @@ malloced_storage_size (void *ptr, Bytecount claimed_size,
 # endif
   if (claimed_size < 4096)
     {
-      int log = 1;
+      /* fxg: rename log->log2 to supress gcc3 shadow warning */
+      int log2 = 1;
 
       /* compute the log base two, more or less, then use it to compute
 	 the block size needed. */
       claimed_size--;
       /* It's big, it's heavy, it's wood! */
       while ((claimed_size /= 2) != 0)
-	++log;
+	++log2;
       claimed_size = 1;
       /* It's better than bad, it's good! */
-      while (log > 0)
+      while (log2 > 0)
         {
 	  claimed_size *= 2;
-          log--;
+          log2--;
         }
       /* We have to come up with some average about the amount of
 	 blocks used. */
@@ -5184,20 +5185,21 @@ malloced_storage_size (void *ptr, Bytecount claimed_size,
   claimed_size += 8;
 # endif
   {
-    int log = 1;
+    /* fxg: rename log->log2 to supress gcc3 shadow warning */
+    int log2 = 1;
 
     /* compute the log base two, more or less, then use it to compute
        the block size needed. */
     claimed_size--;
     /* It's big, it's heavy, it's wood! */
     while ((claimed_size /= 2) != 0)
-      ++log;
+      ++log2;
     claimed_size = 1;
     /* It's better than bad, it's good! */
-    while (log > 0)
+    while (log2 > 0)
       {
 	claimed_size *= 2;
-        log--;
+        log2--;
       }
   }
 

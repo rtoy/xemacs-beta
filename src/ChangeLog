@@ -1,3 +1,8 @@
+2004-08-18  Felix H. Gatzemeier  <f.g@tzemeier.info>
+
+	* alloc.c (malloced_storage_size): Renamed log to log2, twice,
+	to fix a shadow warning in gcc 3.3.4.
+
 2004-09-10  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* Makefile.in.in: Enable support for parallel builds.
