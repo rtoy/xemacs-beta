@@ -151,10 +151,8 @@ a future Emacs interpreter will be able to use it.")
 (defun eql (a b)    ; See compiler macro in cl-macs.el
   "Return t if the two args are the same Lisp object.
 Floating-point numbers of equal value are `eql', but they may not be `eq'."
-  (if (floatp a)
-      (equal a b)
-    (eq a b)))
-
+  (or (eq a b)
+      (and (numberp a) (numberp b) (equal a b))))
 
 ;;; Generalized variables.  These macros are defined here so that they
 ;;; can safely be used in .emacs files.
@@ -313,7 +311,9 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 (defun cl-random-time ()
   (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
     (while (>= (decf i) 0) (setq v (+ (* v 3) (aref time i))))
-    v))
+    (if (featurep 'number-types)
+	(coerce-number v 'fixnum)
+      v)))
 
 (defvar *gensym-counter* (* (logand (cl-random-time) 1023) 100))
 
@@ -364,11 +364,13 @@ The name is made by appending a number to PREFIX, default \"G\"."
 
 (defvar *random-state* (vector 'cl-random-state-tag -1 30 (cl-random-time)))
 
+;; These constants are defined in C when 'number-types is provided.
+(unless (featurep 'number-types)
 ;;; We use `eval' in case VALBITS differs from compile-time to load-time.
-(defconst most-positive-fixnum (eval '(lsh -1 -1))
-  "The integer closest in value to positive infinity.")
-(defconst most-negative-fixnum (eval '(- -1 (lsh -1 -1)))
-  "The integer closest in value to negative infinity.")
+  (defconst most-positive-fixnum (eval '(lsh -1 -1))
+    "The integer closest in value to positive infinity.")
+  (defconst most-negative-fixnum (eval '(- -1 (lsh -1 -1)))
+    "The integer closest in value to negative infinity."))
 
 ;;; The following are set by code in cl-extra.el
 (defconst most-positive-float nil

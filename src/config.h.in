@@ -893,6 +893,7 @@ extern "C" {
 #undef SIZEOF_LONG
 #undef SIZEOF_LONG_LONG
 #undef SIZEOF_VOID_P
+#undef SIZEOF_DOUBLE
 
 /* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
    but the standard is <inttypes.h>
@@ -912,6 +913,14 @@ extern "C" {
 #define LONGBITS (SIZEOF_LONG * BITS_PER_CHAR)
 #define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
+#define DOUBLE_BITS (SIZEOF_DOUBLE * BITS_PER_CHAR)
+
+/* Enhanced numeric support */
+#undef WITH_NUMBER_TYPES
+#undef WITH_GMP
+#undef WITH_MP
+#undef MP_PREFIX
+#undef HAVE_MP_MOVE
 
 /* Use `INLINE_HEADER' to define inline functions in .h files.
    Use `inline static' to define inline functions in .c files.

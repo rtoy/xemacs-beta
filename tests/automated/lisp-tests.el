@@ -229,8 +229,27 @@
 (Assert (= (+ 1.0 1) 2.0))
 (Assert (= (+ 1.0 1 1) 3.0))
 (Assert (= (+ 1 1 1.0) 3.0))
-(Assert (eq (1+ most-positive-fixnum) most-negative-fixnum))
-(Assert (eq (+ most-positive-fixnum 1) most-negative-fixnum))
+(if (featurep 'bignum)
+    (progn
+      (Assert (bignump (1+ most-positive-fixnum)))
+      (Assert (eq most-positive-fixnum (1- (1+ most-positive-fixnum))))
+      (Assert (bignump (+ most-positive-fixnum 1)))
+      (Assert (eq most-positive-fixnum (- (+ most-positive-fixnum 1) 1)))
+      (Assert (= (1+ most-positive-fixnum) (- most-negative-fixnum)))
+      (Assert (zerop (+ (* 3 most-negative-fixnum) (* 3 most-positive-fixnum)
+			3))))
+  (Assert (eq (1+ most-positive-fixnum) most-negative-fixnum))
+  (Assert (eq (+ most-positive-fixnum 1) most-negative-fixnum)))
+
+(when (featurep 'ratio)
+  (let ((threefourths (read "3/4"))
+	(threehalfs (read "3/2"))
+	(bigpos (div (+ most-positive-fixnum 2) (1+ most-positive-fixnum)))
+	(bigneg (div (+ most-positive-fixnum 2) most-negative-fixnum))
+	(negone (div (1+ most-positive-fixnum) most-negative-fixnum)))
+    (Assert (= negone -1))
+    (Assert (= threehalfs (+ threefourths threefourths)))
+    (Assert (zerop (+ bigpos bigneg)))))
 
 ;; Test `-'
 (Check-Error wrong-number-of-arguments (-))
@@ -257,8 +276,28 @@
 (Assert (= (- 1.5 1) .5))
 (Assert (= (- 1 1.5) (- .5)))
 
-(Assert (eq (1- most-negative-fixnum) most-positive-fixnum))
-(Assert (eq (- most-negative-fixnum 1) most-positive-fixnum))
+(if (featurep 'bignum)
+    (progn
+      (Assert (bignump (1- most-negative-fixnum)))
+      (Assert (eq most-negative-fixnum (1+ (1- most-negative-fixnum))))
+      (Assert (bignump (- most-negative-fixnum 1)))
+      (Assert (eq most-negative-fixnum (+ (- most-negative-fixnum 1) 1)))
+      (Assert (= (1- most-negative-fixnum) (- 0 most-positive-fixnum 2)))
+      (Assert (eq (- (- most-positive-fixnum most-negative-fixnum)
+		     (* 2 most-positive-fixnum))
+		  1)))
+  (Assert (eq (1- most-negative-fixnum) most-positive-fixnum))
+  (Assert (eq (- most-negative-fixnum 1) most-positive-fixnum)))
+
+(when (featurep 'ratio)
+  (let ((threefourths (read "3/4"))
+	(threehalfs (read "3/2"))
+	(bigpos (div (+ most-positive-fixnum 2) (1+ most-positive-fixnum)))
+	(bigneg (div most-positive-fixnum most-negative-fixnum))
+	(negone (div (1+ most-positive-fixnum) most-negative-fixnum)))
+    (Assert (= (- negone) 1))
+    (Assert (= threefourths (- threehalfs threefourths)))
+    (Assert (= (- bigpos bigneg) 2))))
 
 ;; Test `/'
 
@@ -286,6 +325,28 @@
 (dolist (two '(2 2.0 ?\02))
   (Assert (= (/ 3.0 two) 1.5)))
 
+(when (featurep 'bignum)
+  (let* ((million 1000000)
+	 (billion (* million 1000))	;; American, not British, billion
+	 (trillion (* billion 1000)))
+    (Assert (= (/ billion 1000) (/ trillion million) million 1000000.0))
+    (Assert (= (/ billion -1000) (/ trillion (- million)) (- million)))
+    (Assert (= (/ trillion 1000) billion 1000000000.0))
+    (Assert (= (/ trillion -1000) (- billion) -1000000000.0))
+    (Assert (= (/ trillion 10) (* 100 billion) 100000000000.0))
+    (Assert (= (/ (- trillion) 10) (* -100 billion) -100000000000.0))))
+
+(when (featurep 'ratio)
+  (let ((half (div 1 2))
+	(fivefourths (div 5 4))
+	(fivehalfs (div 5 2)))
+    (Assert (= half (read "3000000000/6000000000")))
+    (Assert (= (/ fivehalfs fivefourths) 2))
+    (Assert (= (/ fivefourths fivehalfs) half))
+    (Assert (= (- half) (read "-3000000000/6000000000")))
+    (Assert (= (/ fivehalfs (- fivefourths)) -2))
+    (Assert (= (/ (- fivefourths) fivehalfs) (- half)))))
+
 ;; Test `*'
 (Assert (= 1 (*)))
 
@@ -305,6 +366,19 @@
     (Assert (= (* 1.5 two) three))
     (dolist (five '(5 5.0 ?\05))
       (Assert (= 30 (* five two three))))))
+
+(when (featurep 'bignum)
+  (let ((64K 65536))
+    (Assert (= (* 64K 64K) (read "4294967296")))
+    (Assert (= (* (- 64K) 64K) (read "-4294967296")))
+    (Assert (/= (* -1 most-negative-fixnum) most-negative-fixnum))))
+
+(when (featurep 'ratio)
+  (let ((half (div 1 2))
+	(fivefourths (div 5 4))
+	(twofifths (div 2 5)))
+    (Assert (= (* fivefourths twofifths) half))
+    (Assert (= (* half twofifths) (read "3/15")))))
 
 ;; Test `+'
 (Assert (= 0 (+)))
@@ -336,6 +410,20 @@
     (Assert (= two (max one two)))
     (Assert (= two (max one two two)))
     (Assert (= two (max two two one)))))
+
+(when (featurep 'bignum)
+  (let ((big (1+ most-positive-fixnum))
+	(small (1- most-negative-fixnum)))
+    (Assert (= big (max 1 1000000.0 most-positive-fixnum big)))
+    (Assert (= small (min -1 -1000000.0 most-negative-fixnum small)))))
+
+(when (featurep 'ratio)
+  (let* ((big (1+ most-positive-fixnum))
+	 (small (1- most-negative-fixnum))
+	 (bigr (div (* 5 (1+ most-positive-fixnum)) 4))
+	 (smallr (- bigr)))
+    (Assert (= bigr (max 1 1000000.0 most-positive-fixnum big bigr)))
+    (Assert (= smallr (min -1 -1000000.0 most-negative-fixnum small smallr)))))
 
 ;; The byte compiler has special handling for these constructs:
 (let ((three 3) (five 5))
@@ -476,7 +564,13 @@
   (division-test ?\07)
   (division-test (Int-to-Marker 7)))
 
-
+(when (featurep 'bignum)
+  (let ((big (+ (* 7 most-positive-fixnum 6)))
+	(negbig (- (* 7 most-negative-fixnum 6))))
+    (= (% big (1+ most-positive-fixnum)) most-positive-fixnum)
+    (= (% negbig (1- most-negative-fixnum)) most-negative-fixnum)
+    (= (mod big (1+ most-positive-fixnum)) most-positive-fixnum)
+    (= (mod negbig (1- most-negative-fixnum)) most-negative-fixnum)))
 
 ;;-----------------------------------------------------
 ;; Arithmetic comparison operations
@@ -566,6 +660,42 @@
 (Assert (not (eq (point) (point-marker))))
 (Assert (= 1 (Int-to-Marker 1)))
 (Assert (= (point) (point-marker)))
+
+(when (featurep 'bignum)
+  (let ((big1 (1+ most-positive-fixnum))
+	(big2 (* 10 most-positive-fixnum))
+	(small1 (1- most-negative-fixnum))
+	(small2 (* 10 most-negative-fixnum)))
+    (Assert (< small2 small1 most-negative-fixnum most-positive-fixnum big1
+	       big2))
+    (Assert (<= small2 small1 most-negative-fixnum most-positive-fixnum big1
+		big2))
+    (Assert (> big2 big1 most-positive-fixnum most-negative-fixnum small1
+	       small2))
+    (Assert (>= big2 big1 most-positive-fixnum most-negative-fixnum small1
+		small2))
+    (Assert (/= small2 small1 most-negative-fixnum most-positive-fixnum big1
+		big2))))
+
+(when (featurep 'ratio)
+  (let ((big1 (div (* 10 most-positive-fixnum) 4))
+	(big2 (div (* 5 most-positive-fixnum) 2))
+	(big3 (div (* 7 most-positive-fixnum) 2))
+	(small1 (div (* 10 most-negative-fixnum) 4))
+	(small2 (div (* 5 most-negative-fixnum) 2))
+	(small3 (div (* 7 most-negative-fixnum) 2)))
+    (Assert (= big1 big2))
+    (Assert (= small1 small2))
+    (Assert (< small3 small1 most-negative-fixnum most-positive-fixnum big1
+	       big3))
+    (Assert (<= small3 small2 small1 most-negative-fixnum most-positive-fixnum
+		big1 big2 big3))
+    (Assert (> big3 big1 most-positive-fixnum most-negative-fixnum small1
+	       small3))
+    (Assert (>= big3 big2 big1 most-positive-fixnum most-negative-fixnum
+		small1 small2 small3))
+    (Assert (/= big3 big1 most-positive-fixnum most-negative-fixnum small1
+		small3))))
 
 ;;-----------------------------------------------------
 ;; testing list-walker functions
@@ -1135,10 +1265,16 @@
 
 ;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
 ;;; What to do if "%u" is used with a negative number?
-;;; The most reasonable thing seems to be to print an un-read-able number.
-;;; The printed value might be useful to a human, if not to Emacs Lisp.
-(Check-Error invalid-read-syntax (read (format "%u" most-negative-fixnum)))
-(Check-Error invalid-read-syntax (read (format "%u" -1)))
+;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an
+;;; un-read-able number.  The printed value might be useful to a human, if not
+;;; to Emacs Lisp.
+;;; For bignum XEmacsen, we make %u with a negative value throw an error.
+(if (featurep 'bignum)
+    (progn
+      (Check-Error wrong-type-argument (format "%u" most-negative-fixnum))
+      (Check-Error wrong-type-argument (format "%u" -1)))
+  (Check-Error invalid-read-syntax (read (format "%u" most-negative-fixnum)))
+  (Check-Error invalid-read-syntax (read (format "%u" -1))))
 
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))

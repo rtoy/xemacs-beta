@@ -119,10 +119,15 @@ static const char *float_error_fn_name;
 
 
 /* Convert float to Lisp Integer if it fits, else signal a range
-   error using the given arguments.  */
+   error using the given arguments.  If bignums are available, range errors
+   are never signaled.  */
 static Lisp_Object
 float_to_int (double x, const char *name, Lisp_Object num, Lisp_Object num2)
 {
+#ifdef HAVE_BIGNUM
+  bignum_set_double (scratch_bignum, x);
+  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
   if (x >= ((EMACS_INT) 1 << (VALBITS-1))
       || x <= - ((EMACS_INT) 1 << (VALBITS-1)) - (EMACS_INT) 1)
   {
@@ -132,6 +137,7 @@ float_to_int (double x, const char *name, Lisp_Object num, Lisp_Object num2)
       range_error (name, num);
   }
   return (make_int ((EMACS_INT) x));
+#endif /* HAVE_BIGNUM */
 }
 
 
@@ -198,6 +204,21 @@ extract_float (Lisp_Object num)
 
   if (INTP (num))
     return (double) XINT (num);
+
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (num))
+    return bignum_to_double (XBIGNUM_DATA (num));
+#endif
+
+#ifdef HAVE_RATIO
+  if (RATIOP (num))
+    return ratio_to_double (XRATIO_DATA (num));
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (num))
+    return bigfloat_to_double (XBIGFLOAT_DATA (num));
+#endif
 
   return extract_float (wrong_type_argument (Qnumberp, num));
 }
@@ -421,6 +442,21 @@ Return the exponential NUMBER1 ** NUMBER2.
 */
        (number1, number2))
 {
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number1) && INTP (number2))
+    {
+      if (INTP (number1))
+	{
+	  bignum_set_long (scratch_bignum2, XREALINT (number1));
+	  bignum_pow (scratch_bignum, scratch_bignum2, XREALINT (number2));
+	}
+      else
+	bignum_pow (scratch_bignum, XBIGNUM_DATA (number1),
+		    XREALINT (number2));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#endif
+
   if (INTP (number1) && /* common lisp spec */
       INTP (number2)) /* don't promote, if both are ints */
     {
@@ -450,6 +486,23 @@ Return the exponential NUMBER1 ** NUMBER2.
 	}
       return make_int (retval);
     }
+
+#if defined(HAVE_BIGFLOAT) && defined(bigfloat_pow)
+  if (BIGFLOATP (number1) && INTEGERP (number2))
+    {
+      unsigned long exp;
+
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (number2))
+	exp = bignum_to_ulong (XBIGNUM_DATA (number2));
+      else
+#endif
+	exp = XUINT (number2);
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number1));
+      bigfloat_pow (scratch_bigfloat, XBIGFLOAT_DATA (number1), exp);
+      return make_bigfloat_bf (scratch_bigfloat);
+    }
+#endif
 
   {
     double f1 = extract_float (number1);
@@ -516,7 +569,17 @@ Return the square root of NUMBER.
 */
        (number))
 {
-  double d = extract_float (number);
+  double d;
+
+#if defined(HAVE_BIGFLOAT) && defined(bigfloat_sqrt)
+  if (BIGFLOATP (number))
+    {
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_sqrt (scratch_bigfloat, XBIGFLOAT_DATA (number));
+      return make_bigfloat_bf (scratch_bigfloat);
+    }
+#endif /* HAVE_BIGFLOAT */
+  d = extract_float (number);
 #ifdef FLOAT_CHECK_DOMAIN
   if (d < 0.0)
     domain_error ("sqrt", number);
@@ -648,7 +711,43 @@ Return the absolute value of NUMBER.
     }
 
   if (INTP (number))
+#ifdef HAVE_BIGNUM
+    /* The most negative Lisp fixnum will overflow */
+    return (XINT (number) >= 0) ? number : make_integer (- XINT (number));
+#else
     return (XINT (number) >= 0) ? number : make_int (- XINT (number));
+#endif
+
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      if (bignum_sign (XBIGNUM_DATA (number)) >= 0)
+	return number;
+      bignum_abs (scratch_bignum, XBIGNUM_DATA (number));
+      return make_bignum_bg (scratch_bignum);
+    }
+#endif
+
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      if (ratio_sign (XRATIO_DATA (number)) >= 0)
+	return number;
+      ratio_abs (scratch_ratio, XRATIO_DATA (number));
+      return make_ratio_rt (scratch_ratio);
+    }
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      if (bigfloat_sign (XBIGFLOAT_DATA (number)) >= 0)
+	return number;
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_abs (scratch_bigfloat, XBIGFLOAT_DATA (number));
+      return make_bigfloat_bf (scratch_bigfloat);
+    }
+#endif
 
   return Fabs (wrong_type_argument (Qnumberp, number));
 }
@@ -660,6 +759,29 @@ Return the floating point number numerically equal to NUMBER.
 {
   if (INTP (number))
     return make_float ((double) XINT (number));
+
+#ifdef HAVE_BIGNUM
+  if (BIGFLOATP (number))
+    {
+#ifdef HAVE_BIGFLOAT
+      if (ZEROP (Vdefault_float_precision))
+#endif
+	return make_float (bignum_to_double (XBIGNUM_DATA (number)));
+#ifdef HAVE_BIGFLOAT
+      else
+	{
+	  bigfloat_set_prec (scratch_bigfloat, bigfloat_get_default_prec ());
+	  bigfloat_set_bignum (scratch_bigfloat, XBIGNUM_DATA (number));
+	  return make_bigfloat_bf (scratch_bigfloat);
+	}
+#endif /* HAVE_BIGFLOAT */
+    }
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    make_float (ratio_to_double (XRATIO_DATA (number)));
+#endif
 
   if (FLOATP (number))		/* give 'em the same float back */
     return number;
@@ -730,8 +852,35 @@ Return the smallest integer no less than NUMBER.  (Round toward +inf.)
       return (float_to_int (d, "ceiling", number, Qunbound));
     }
 
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number))
+#else
   if (INTP (number))
+#endif
     return number;
+
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      bignum_ceil (scratch_bignum, XRATIO_NUMERATOR (number),
+		   XRATIO_DENOMINATOR (number));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_ceil (scratch_bigfloat, XBIGFLOAT_DATA (number));
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+#endif /* HAVE_BIGFLOAT */
 
   return Fceiling (wrong_type_argument (Qnumberp, number));
 }
@@ -744,6 +893,99 @@ greater than NUMBER/DIVISOR.
 */
        (number, divisor))
 {
+#ifdef WITH_NUMBER_TYPES
+  CHECK_REAL (number);
+  if (NILP (divisor))
+    {
+      if (FLOATP (number))
+	{
+	  double d;
+	  IN_FLOAT ((d = floor (XFLOAT_DATA (number))), "floor", number);
+	  return (float_to_int (d, "floor", number, Qunbound));
+	}
+#ifdef HAVE_RATIO
+      else if (RATIOP (number))
+	{
+	  bignum_floor (scratch_bignum, XRATIO_NUMERATOR (number),
+			XRATIO_DENOMINATOR (number));
+	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+	}
+#endif
+#ifdef HAVE_BIGFLOAT
+      else if (BIGFLOATP (number))
+	{
+	  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+	  bigfloat_floor (scratch_bigfloat, XBIGFLOAT_DATA (number));
+	  return make_bigfloat_bf (scratch_bigfloat);
+	}
+#endif
+      return number;
+    }
+  else
+    {
+      CHECK_REAL (divisor);
+      switch (promote_args (&number, &divisor))
+	{
+	case FIXNUM_T:
+	  {
+	    EMACS_INT i1 = XREALINT (number);
+	    EMACS_INT i2 = XREALINT (divisor);
+
+	    if (i2 == 0)
+	      Fsignal (Qarith_error, Qnil);
+
+	    /* With C's /, the result is implementation-defined if either
+	       operand is negative, so use only nonnegative operands.  */
+	    i1 = (i2 < 0
+		  ? (i1 <= 0  ?  -i1 / -i2  :  -1 - ((i1 - 1) / -i2))
+		  : (i1 < 0  ?  -1 - ((-1 - i1) / i2)  :  i1 / i2));
+
+	    return make_int (i1);
+	  }
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  bignum_floor (scratch_bignum, XBIGNUM_DATA (number),
+			XBIGNUM_DATA (divisor));
+	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#endif
+	case FLOAT_T:
+	  {
+	    double f1 = extract_float (number);
+	    double f2 = extract_float (divisor);
+
+	    if (f2 == 0.0)
+	      Fsignal (Qarith_error, Qnil);
+
+	    IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
+	    return float_to_int (f1, "floor", number, divisor);
+	  }
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  ratio_div (scratch_ratio, XRATIO_DATA (number),
+		     XRATIO_DATA (divisor));
+	  bignum_floor (scratch_bignum, ratio_numerator (scratch_ratio),
+			ratio_denominator (scratch_ratio));
+	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#endif
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  bigfloat_set_prec (scratch_bigfloat,
+			     max (XBIGFLOAT_GET_PREC (number),
+				  XBIGFLOAT_GET_PREC (divisor)));
+	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (number),
+			XBIGFLOAT_DATA (divisor));
+	  bigfloat_floor (scratch_bigfloat, scratch_bigfloat);
+	  return make_bigfloat_bf (scratch_bigfloat);
+#endif
+	}
+    }
+#else /* !WITH_NUMBER_TYPES */
   CHECK_INT_OR_FLOAT (number);
 
   if (! NILP (divisor))
@@ -787,6 +1029,7 @@ greater than NUMBER/DIVISOR.
     }
 
   return number;
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("round", Fround, 1, 1, 0, /*
@@ -802,8 +1045,50 @@ Return the nearest integer to NUMBER.
       return (float_to_int (d, "round", number, Qunbound));
     }
 
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number))
+#else
   if (INTP (number))
+#endif
     return number;
+
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      if (bignum_divisible_p (XRATIO_NUMERATOR (number),
+			      XRATIO_DENOMINATOR (number)))
+	{
+	  bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
+		      XRATIO_DENOMINATOR (number));
+	}
+      else
+	{
+	  bignum_add (scratch_bignum2, XRATIO_NUMERATOR (number),
+		      XRATIO_DENOMINATOR (number));
+	  bignum_div (scratch_bignum, scratch_bignum2,
+		      XRATIO_DENOMINATOR (number));
+	}
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      unsigned long prec = XBIGFLOAT_GET_PREC (number);
+      bigfloat_set_prec (scratch_bigfloat, prec);
+      bigfloat_set_prec (scratch_bigfloat2, prec);
+      bigfloat_set_double (scratch_bigfloat2,
+			   bigfloat_sign (XBIGFLOAT_DATA (number)) * 0.5);
+      bigfloat_floor (scratch_bigfloat, scratch_bigfloat2);
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+#endif /* HAVE_BIGFLOAT */
 
   return Fround (wrong_type_argument (Qnumberp, number));
 }
@@ -817,8 +1102,35 @@ Rounds the value toward zero.
   if (FLOATP (number))
     return float_to_int (XFLOAT_DATA (number), "truncate", number, Qunbound);
 
+#ifdef HAVE_BIGNUM
+  if (INTEGERP (number))
+#else
   if (INTP (number))
+#endif
     return number;
+
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      bignum_div (scratch_bignum, XRATIO_NUMERATOR (number),
+		  XRATIO_DENOMINATOR (number));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_trunc (scratch_bigfloat, XBIGFLOAT_DATA (number));
+#ifdef HAVE_BIGNUM
+      bignum_set_bigfloat (scratch_bignum, scratch_bigfloat);
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+      return make_int ((EMACS_INT) bigfloat_to_long (scratch_bigfloat));
+#endif /* HAVE_BIGNUM */
+    }
+#endif /* HAVE_BIGFLOAT */
 
   return Ftruncate (wrong_type_argument (Qnumberp, number));
 }

@@ -246,10 +246,19 @@ bytecode_negate (Lisp_Object obj)
 {
  retry:
 
-  if (INTP    (obj)) return make_int (- XINT (obj));
+  if (INTP    (obj)) return make_integer (- XINT (obj));
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
-  if (CHARP   (obj)) return make_int (- ((int) XCHAR (obj)));
-  if (MARKERP (obj)) return make_int (- ((int) marker_position (obj)));
+  if (CHARP   (obj)) return make_integer (- ((int) XCHAR (obj)));
+  if (MARKERP (obj)) return make_integer (- ((int) marker_position (obj)));
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (obj)) BIGNUM_ARITH_RETURN (obj, neg);
+#endif
+#ifdef HAVE_RATIO
+  if (RATIOP (obj)) RATIO_ARITH_RETURN (obj, neg);
+#endif
+#ifdef HAVE_BIG_FLOAT
+  if (BIGFLOAT_P (obj)) BIGFLOAT_ARITH_RETURN (obj, neg);
+#endif
 
   obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);
   goto retry;
@@ -279,6 +288,33 @@ bytecode_nreverse (Lisp_Object list)
 static int
 bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
+#ifdef WITH_NUMBER_TYPES
+  switch (promote_args (&obj1, &obj2))
+    {
+    case FIXNUM_T:
+      {
+	EMACS_INT ival1 = XREALINT (obj1), ival2 = XREALINT (obj2);
+	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+      }
+#ifdef HAVE_BIGNUM
+    case BIGNUM_T:
+      return bignum_cmp (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
+#endif
+#ifdef HAVE_RATIO
+    case RATIO_T:
+      return ratio_cmp (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+#endif
+    case FLOAT_T:
+      {
+	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
+	return dval1 < dval2 ? -1 : dval1 > dval2 ? 1 : 0;
+      }
+#ifdef HAVE_BIGFLOAT
+    case BIGFLOAT_T:
+      return bigfloat_cmp (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
+#endif
+    }
+#else /* !WITH_NUMBER_TYPES */
   retry:
 
   {
@@ -324,11 +360,151 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 
     return dval1 < dval2 ? -1 : dval1 > dval2 ? 1 : 0;
   }
+#endif /* WITH_NUMBER_TYPES */
 }
 
 static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
+#ifdef WITH_NUMBER_TYPES
+  switch (promote_args (&obj1, &obj2))
+    {
+    case FIXNUM_T:
+      {
+	EMACS_INT ival1 = XREALINT (obj1), ival2 = XREALINT (obj2);
+	switch (opcode)
+	  {
+	  case Bplus: ival1 += ival2; break;
+	  case Bdiff: ival1 -= ival2; break;
+	  case Bmult:
+#ifdef HAVE_BIGNUM
+	    /* Due to potential overflow, we compute using bignums */
+	    bignum_set_long (scratch_bignum, ival1);
+	    bignum_set_long (scratch_bignum2, ival2);
+	    bignum_mul (scratch_bignum, scratch_bignum, scratch_bignum2);
+	    return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+	    ival1 *= ival2; break;
+#endif
+	  case Bquo:
+	    if (ival2 == 0) Fsignal (Qarith_error, Qnil);
+	    ival1 /= ival2;
+	    break;
+	  case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
+	  case Bmin:  if (ival1 > ival2) ival1 = ival2; break;
+	  }
+	return make_integer (ival1);
+      }
+#ifdef HAVE_BIGNUM
+    case BIGNUM_T:
+      switch (opcode)
+	{
+	case Bplus:
+	  bignum_add (scratch_bignum, XBIGNUM_DATA (obj1),
+		      XBIGNUM_DATA (obj2));
+	  break;
+	case Bdiff:
+	  bignum_sub (scratch_bignum, XBIGNUM_DATA (obj1),
+		      XBIGNUM_DATA (obj2));
+	  break;
+	case Bmult:
+	  bignum_mul (scratch_bignum, XBIGNUM_DATA (obj1),
+		      XBIGNUM_DATA (obj2));
+	  break;
+	case Bquo:
+	  if (bignum_sign (XBIGNUM_DATA (obj2)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  bignum_div (scratch_bignum, XBIGNUM_DATA (obj1),
+		      XBIGNUM_DATA (obj2));
+	  break;
+	case Bmax:
+	  return bignum_gt (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2))
+	    ? obj1 : obj2;
+	case Bmin:
+	  return bignum_lt (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2))
+	    ? obj1 : obj2;
+	}
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#endif
+#ifdef HAVE_RATIO
+    case RATIO_T:
+      switch (opcode)
+	{
+	case Bplus:
+	  ratio_add (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+	  break;
+	case Bdiff:
+	  ratio_sub (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+	  break;
+	case Bmult:
+	  ratio_mul (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+	  break;
+	case Bquo:
+	  if (ratio_sign (XRATIO_DATA (obj2)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  ratio_div (scratch_ratio, XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+	  break;
+	case Bmax:
+	  return ratio_gt (XRATIO_DATA (obj1), XRATIO_DATA (obj2))
+	    ? obj1 : obj2;
+	case Bmin:
+	  return ratio_lt (XRATIO_DATA (obj1), XRATIO_DATA (obj2))
+	    ? obj1 : obj2;
+	}
+      return make_ratio_rt (scratch_ratio);
+#endif
+    case FLOAT_T:
+      {
+	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
+	switch (opcode)
+	  {
+	  case Bplus: dval1 += dval2; break;
+	  case Bdiff: dval1 -= dval2; break;
+	  case Bmult: dval1 *= dval2; break;
+	  case Bquo:
+	    if (dval2 == 0.0) Fsignal (Qarith_error, Qnil);
+	    dval1 /= dval2;
+	    break;
+	  case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
+	  case Bmin:  if (dval1 > dval2) dval1 = dval2; break;
+	  }
+	return make_float (dval1);
+      }
+#ifdef HAVE_BIGFLOAT
+    case BIGFLOAT_T:
+      bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (obj1),
+						XBIGFLOAT_GET_PREC (obj2)));
+      switch (opcode)
+	{
+	case Bplus:
+	  bigfloat_add (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
+			XBIGFLOAT_DATA (obj2));
+	  break;
+	case Bdiff:
+	  bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
+			XBIGFLOAT_DATA (obj2));
+	  break;
+	case Bmult:
+	  bigfloat_mul (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
+			XBIGFLOAT_DATA (obj2));
+	  break;
+	case Bquo:
+	  if (bigfloat_sign (XBIGFLOAT_DATA (obj2)) == 0)
+	    Fsignal (Qarith_error, Qnil);
+	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (obj1),
+			XBIGFLOAT_DATA (obj2));
+	  break;
+	case Bmax:
+	  return bigfloat_gt (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2))
+	    ? obj1 : obj2;
+	case Bmin:
+	  return bigfloat_lt (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2))
+	    ? obj1 : obj2;
+	}
+      return make_bigfloat_bf (scratch_bigfloat);
+#endif
+    }
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT ival1, ival2;
   int float_p;
 
@@ -390,6 +566,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	}
       return make_float (dval1);
     }
+#endif /* WITH_NUMBER_TYPES */
 }
 
 
@@ -806,11 +983,19 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bnumberp:
+#ifdef WITH_NUMBER_TYPES
+	  TOP = NUMBERP (TOP) ? Qt : Qnil;
+#else
 	  TOP = INT_OR_FLOATP (TOP) ? Qt : Qnil;
+#endif
 	  break;
 
 	case Bintegerp:
+#ifdef HAVE_BIGNUM
+	  TOP = INTEGERP (TOP) ? Qt : Qnil;
+#else
 	  TOP = INTP (TOP) ? Qt : Qnil;
+#endif
 	  break;
 
 	case Beq:
@@ -907,11 +1092,19 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bsub1:
+#ifdef HAVE_BIGNUM
+	  TOP = Fsub1 (TOP);
+#else
 	  TOP = INTP (TOP) ? INT_MINUS1 (TOP) : Fsub1 (TOP);
+#endif
 	  break;
 
 	case Badd1:
+#ifdef HAVE_BIGNUM
+	  TOP = Fadd1 (TOP);
+#else
 	  TOP = INTP (TOP) ? INT_PLUS1 (TOP) : Fadd1 (TOP);
+#endif
 	  break;
 
 
@@ -966,9 +1159,13 @@ execute_optimized_program (const Opbyte *program,
 	  {
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
+#ifdef HAVE_BIGNUM
+	    TOP = bytecode_arithop (arg1, arg2, opcode);
+#else
 	    TOP = INTP (arg1) && INTP (arg2) ?
 	      INT_PLUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
+#endif
 	    break;
 	  }
 
@@ -976,9 +1173,13 @@ execute_optimized_program (const Opbyte *program,
 	  {
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
+#ifdef HAVE_BIGNUM
+	    TOP = bytecode_arithop (arg1, arg2, opcode);
+#else
 	    TOP = INTP (arg1) && INTP (arg2) ?
 	      INT_MINUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
+#endif
 	    break;
 	  }
 

@@ -3377,6 +3377,14 @@ END_C_DECLS
 /************************************************************************/
 
 /************************************************************************/
+/*		             Other numeric types      	                */
+/************************************************************************/
+#ifdef WITH_NUMBER_TYPES
+#include "number.h"
+#endif
+
+
+/************************************************************************/
 /*                              prototypes                              */
 /************************************************************************/
 
@@ -4333,6 +4341,9 @@ void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
 EXFUN (Flocate_file_clear_hashing, 1);
 int isfloat_string (const char *);
+#ifdef HAVE_RATIO
+int isratio_string (const char *);
+#endif
 
 /* Well, I've decided to enable this. -- ben */
 /* And I've decided to make it work right.  -- sb */
@@ -5062,8 +5073,8 @@ extern Lisp_Object Qlong_name, Qmacro, Qmakunbound, Qmalformed_list;
 extern Lisp_Object Qmalformed_property_list, Qmark, Qmodule;
 extern Lisp_Object Qmono_pixmap_image_instance_p, Qmouse_leave_buffer_hook;
 extern Lisp_Object Qnative_layout, Qnatnump, Qnetwork_error, Qno_catch;
-extern Lisp_Object Qnothing_image_instance_p, Qnumber_char_or_marker_p;
-extern Lisp_Object Qnumberp, Qout_of_memory;
+extern Lisp_Object Qnonnegativep, Qnothing_image_instance_p;
+extern Lisp_Object Qnumber_char_or_marker_p, Qnumberp, Qout_of_memory;
 extern Lisp_Object Qoverflow_error, Qpoint, Qpointer_glyph_p;
 extern Lisp_Object Qpointer_image_instance_p, Qprint_length;
 extern Lisp_Object Qprint_string_length, Qprinting_unreadable_object;

@@ -6,6 +6,7 @@
    Rewritten by mly to use varargs.h.
    Rewritten from scratch by Ben Wing (February 1995) for Mule; expanded
    to full printf spec.
+   Support for bignums, ratios, and bigfloats added April 2004 by Jerry James.
 
 This file is part of XEmacs.
 
@@ -33,11 +34,24 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 
 static const char * const valid_flags = "-+ #0";
-static const char * const valid_converters = "dic" "ouxX" "feEgG" "sS";
+static const char * const valid_converters = "dic" "ouxX" "feEgG" "sS"
+#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
+  "npyY"
+#endif
+#ifdef HAVE_BIGFLOAT
+  "FhHkK"
+#endif
+  ;
 static const char * const int_converters = "dic";
 static const char * const unsigned_int_converters = "ouxX";
 static const char * const double_converters = "feEgG";
 static const char * const string_converters = "sS";
+#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
+static const char * const bignum_converters = "npyY";
+#endif
+#ifdef HAVE_BIGFLOAT
+static const char * const bigfloat_converters = "FhHkK";
+#endif
 
 typedef struct printf_spec printf_spec;
 struct printf_spec
@@ -70,6 +84,7 @@ union printf_arg
   unsigned long ul;
   double d;
   Ibyte *bp;
+  Lisp_Object obj;
 };
 
 /* We maintain a list of all the % specs in the specification,
@@ -385,6 +400,14 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	arg.d = va_arg (vargs, double);
       else if (strchr (string_converters, ch))
 	arg.bp = va_arg (vargs, Ibyte *);
+#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
+      else if (strchr (bignum_converters, ch))
+	arg.obj = va_arg (vargs, Lisp_Object);
+#endif
+#ifdef HAVE_BIGFLOAT
+      else if (strchr (bigfloat_converters, ch))
+	arg.obj = va_arg (vargs, Lisp_Object);
+#endif
       else abort ();
 
       Dynarr_add (args, arg);
@@ -568,26 +591,120 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      Lisp_Object obj = largs[spec->argnum - 1];
 	      if (CHARP (obj))
 		obj = make_int (XCHAR (obj));
+#ifdef WITH_NUMBER_TYPES
+	      if (!NUMBERP (obj))
+#else
 	      if (!INT_OR_FLOATP (obj))
+#endif
 		{
 		  syntax_error
 		    ("format specifier %%%c doesn't match argument type",
 		     make_char (ch));
 		}
 	      else if (strchr (double_converters, ch))
-		arg.d = XFLOATINT (obj);
+		{
+#ifdef WITH_NUMBER_TYPES
+		  if (INTP (obj) || FLOATP (obj))
+		    arg.d = XFLOATINT (obj);
+#ifdef HAVE_BIGNUM
+		  else if (BIGNUMP (obj))
+		    arg.d = bignum_to_double (XBIGNUM_DATA (obj));
+#endif
+#ifdef HAVE_RATIO
+		  else if (RATIOP (obj))
+		    arg.d = ratio_to_double (XRATIO_DATA (obj));
+#endif
+#ifdef HAVE_BIGFLOAT
+		  else if (BIGFLOATP (obj))
+		    {
+		      arg.obj = obj;
+		      switch (ch)
+			{
+			case 'f': ch = 'F'; break;
+			case 'e': ch = 'h'; break;
+			case 'E': ch = 'H'; break;
+			case 'g': ch = 'k'; break;
+			case 'G': ch = 'K'; break;
+			}
+		    }
+#endif
+#else /* !WITH_NUMBER_TYPES */
+		  arg.d = XFLOATINT (obj);
+#endif /* WITH_NUMBER_TYPES */
+		}
 	      else
 		{
 		  if (FLOATP (obj))
 		    obj = Ftruncate (obj);
-
-		  if (strchr (unsigned_int_converters, ch))
-		    arg.ul = (unsigned long) XINT (obj);
-		  else
-		    arg.l = XINT (obj);
+#ifdef HAVE_BIGFLOAT
+		  else if (BIGFLOATP (obj))
+		    {
+#ifdef HAVE_BIGNUM
+		      bignum_set_bigfloat (scratch_bignum,
+					   XBIGFLOAT_DATA (obj));
+		      if (strchr (unsigned_int_converters, ch) &&
+			  bignum_sign (scratch_bignum) < 0)
+			dead_wrong_type_argument (Qnonnegativep, obj);
+		      obj =
+			Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else /* !HAVE_BIGNUM */
+		      obj = make_int (bigfloat_to_long (XBIGFLOAT_DATA (obj)));
+#endif /* HAVE_BIGNUM */
+		    }
+#endif /* HAVE_BIGFLOAT */
+#ifdef HAVE_RATIO
+		  else if (RATIOP (obj))
+		    {
+		      arg.obj = obj;
+		      switch (ch)
+			{
+			case 'i': case 'd': ch = 'n'; break;
+			case 'o': ch = 'p'; break;
+			case 'x': ch = 'y'; break;
+			case 'X': ch = 'Y'; break;
+			default: /* ch == 'u' */
+			  if (strchr (unsigned_int_converters, ch) &&
+			      ratio_sign (XRATIO_DATA (obj)) < 0)
+			    dead_wrong_type_argument (Qnonnegativep, obj);
+			  else
+			    ch = 'n';
+			}
+		    }
+#endif
+#ifdef HAVE_BIGNUM
+		  if (BIGNUMP (obj))
+		    {
+		      arg.obj = obj;
+		      switch (ch)
+			{
+			case 'i': case 'd': ch = 'n'; break;
+			case 'o': ch = 'p'; break;
+			case 'x': ch = 'y'; break;
+			case 'X': ch = 'Y'; break;
+			default: /* ch == 'u' */
+			  if (strchr (unsigned_int_converters, ch) &&
+			      bignum_sign (XBIGNUM_DATA (obj)) < 0)
+			    dead_wrong_type_argument (Qnatnump, obj);
+			  else
+			    ch = 'n';
+			}
+		    }
+#endif
+		  if (INTP (obj))
+		    {
+		      if (strchr (unsigned_int_converters, ch))
+			{
+#ifdef HAVE_BIGNUM
+			  if (XINT (obj) < 0)
+			    dead_wrong_type_argument (Qnatnump, obj);
+#endif
+			  arg.ul = (unsigned long) XUINT (obj);
+			}
+		      else
+			arg.l = XINT (obj);
+		    }
 		}
 	    }
-
 
 	  if (ch == 'c')
 	    {
@@ -605,6 +722,44 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,
 			-1, spec->minus_flag, spec->zero_flag);
 	    }
+#if defined(HAVE_BIGNUM) || defined(HAVE_RATIO)
+	  else if (strchr (bignum_converters, ch))
+	    {
+#ifdef HAVE_BIGNUM
+	      if (BIGNUMP (arg.obj))
+		{
+		  char *text_to_print =
+		    bignum_to_string (XBIGNUM_DATA (arg.obj),
+				      ch == 'n' ? 10 :
+				      (ch == 'p' ? 8 : 16));
+		  doprnt_2 (stream, text_to_print, strlen (text_to_print),
+			    spec->minwidth, -1, spec->minus_flag,
+			    spec->zero_flag);
+		}
+#endif
+#ifdef HAVE_RATIO
+	      if (RATIOP (arg.obj))
+		{
+		  char *text_to_print =
+		    ratio_to_string (XRATIO_DATA (arg.obj),
+				     ch == 'n' ? 10 :
+				     (ch == 'p' ? 8 : 16));
+		  doprnt_2 (stream, text_to_print, strlen (text_to_print),
+			    spec->minwidth, -1, spec->minus_flag,
+			    spec->zero_flag);
+		}
+#endif
+	    }
+#endif /* HAVE_BIGNUM || HAVE_RATIO */
+#ifdef HAVE_BIGFLOAT
+	  else if (strchr (bigfloat_converters, ch))
+	    {
+	      char *text_to_print =
+		bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
+	      doprnt_2 (stream, text_to_print, strlen (text_to_print),
+			spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+	    }
+#endif /* HAVE_BIGFLOAT */
 	  else
 	    {
 	      /* ASCII Decimal representation uses 2.4 times as many

@@ -1301,6 +1301,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #ifdef HAVE_SHLIB
       syms_of_module ();
 #endif
+#ifdef WITH_NUMBER_TYPES
+      syms_of_number ();
+#endif
       syms_of_objects ();
       syms_of_print ();
 #if !defined (NO_SUBPROCESSES)
@@ -1816,6 +1819,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       vars_of_dired_mswindows ();
       vars_of_nt ();
 #endif
+#ifdef WITH_NUMBER_TYPES
+      vars_of_number ();
+#endif
       vars_of_objects ();
       vars_of_print ();
 
@@ -2274,6 +2280,12 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
   init_initial_directory ();		/* get the directory to use for the
 					   "*scratch*" buffer, etc. */
+
+#ifdef WITH_NUMBER_TYPES
+  /* Set up bignums, ratios, bigfloats, complex numbers.
+     This must be done before the Lisp reader is set up. */
+  init_number ();
+#endif
 
   init_lread ();	/* Set up the Lisp reader. */
   init_cmdargs (argc, (Extbyte **) argv,

@@ -53,7 +53,7 @@ Lisp_Object Qio_error, Qfile_error, Qconversion_error, Qend_of_file;
 Lisp_Object Qtext_conversion_error;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
 Lisp_Object Qsingularity_error, Qoverflow_error, Qunderflow_error;
-Lisp_Object Qintegerp, Qnatnump, Qsymbolp;
+Lisp_Object Qintegerp, Qnatnump, Qnonnegativep, Qsymbolp;
 Lisp_Object Qlistp, Qtrue_list_p, Qweak_listp;
 Lisp_Object Qconsp, Qsubrp;
 Lisp_Object Qcharacterp, Qstringp, Qarrayp, Qsequencep, Qvectorp;
@@ -460,6 +460,16 @@ confoundedness in older versions of E-Lisp.
   return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
 }
 
+#ifdef HAVE_BIGNUM
+/* In this case, integerp is defined in number.c. */
+DEFUN ("fixnump", Ffixnump, 1, 1, 0, /*
+Return t if OBJECT is a fixnum.
+*/
+       (object))
+{
+  return INTP (object) ? Qt : Qnil;
+}
+#else
 DEFUN ("integerp", Fintegerp, 1, 1, 0, /*
 Return t if OBJECT is an integer.
 */
@@ -467,6 +477,7 @@ Return t if OBJECT is an integer.
 {
   return INTP (object) ? Qt : Qnil;
 }
+#endif
 
 DEFUN ("integer-or-marker-p", Finteger_or_marker_p, 1, 1, 0, /*
 Return t if OBJECT is an integer or a marker (editor pointer).
@@ -497,7 +508,29 @@ Return t if OBJECT is a nonnegative integer.
 */
        (object))
 {
-  return NATNUMP (object) ? Qt : Qnil;
+  return NATNUMP (object)
+#ifdef HAVE_BIGNUM
+    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
+#endif
+    ? Qt : Qnil;
+}
+
+DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
+Return t if OBJECT is a nonnegative number.
+*/
+       (object))
+{
+  return NATNUMP (object)
+#ifdef HAVE_BIGNUM
+    || (BIGNUMP (object) && bignum_sign (XBIGNUM_DATA (object)) >= 0)
+#endif
+#ifdef HAVE_RATIO
+    || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
+#endif
+#ifdef HAVE_BIGFLOAT
+    || (BIGFLOATP (object) && bigfloat_sign (XBIGFLOAT_DATA (object)) >= 0)
+#endif
+    ? Qt : Qnil;
 }
 
 DEFUN ("bitp", Fbitp, 1, 1, 0, /*
@@ -513,7 +546,11 @@ Return t if OBJECT is a number (floating point or integer).
 */
        (object))
 {
+#ifdef WITH_NUMBER_TYPES
+  return NUMBERP (object) ? Qt : Qnil;
+#else
   return INT_OR_FLOATP (object) ? Qt : Qnil;
+#endif
 }
 
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p, 1, 1, 0, /*
@@ -854,7 +891,66 @@ integer_char_or_marker_to_int (Lisp_Object obj)
     }
 }
 
-#define ARITHCOMPARE_MANY(op)					\
+#ifdef WITH_NUMBER_TYPES
+
+#ifdef HAVE_BIGNUM
+#define BIGNUM_CASE(op)							\
+	case BIGNUM_T:							\
+	  if (!bignum_##op (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2)))	\
+	    return Qnil;						\
+	  break;
+#else
+#define BIGNUM_CASE(op)
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+#define RATIO_CASE(op)							\
+	case RATIO_T:							\
+	  if (!ratio_##op (XRATIO_DATA (obj1), XRATIO_DATA (obj2)))	\
+	    return Qnil;						\
+	  break;
+#else
+#define RATIO_CASE(op)
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+#define BIGFLOAT_CASE(op)						\
+	case BIGFLOAT_T:						\
+	  if (!bigfloat_##op (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2))) \
+	    return Qnil;						\
+	  break;
+#else
+#define BIGFLOAT_CASE(op)
+#endif /* HAVE_BIGFLOAT */
+
+#define ARITHCOMPARE_MANY(c_op,op)				\
+{								\
+  REGISTER int i;						\
+  Lisp_Object obj1, obj2;					\
+								\
+  for (i = 1; i < nargs; i++)					\
+    {								\
+      obj1 = args[i - 1];					\
+      obj2 = args[i];						\
+      switch (promote_args (&obj1, &obj2))			\
+	{							\
+	case FIXNUM_T:						\
+	  if (!(XREALINT (obj1) c_op XREALINT (obj2)))		\
+	    return Qnil;					\
+	  break;						\
+	BIGNUM_CASE (op)					\
+	RATIO_CASE (op)						\
+	case FLOAT_T:						\
+	  if (!(XFLOAT_DATA (obj1) c_op XFLOAT_DATA (obj2)))	\
+	    return Qnil;					\
+	  break;						\
+	BIGFLOAT_CASE (op)					\
+	}							\
+    }								\
+  return Qt;							\
+}
+#else /* !WITH_NUMBER_TYPES */
+#define ARITHCOMPARE_MANY(c_op,op)				\
 {								\
   int_or_double iod1, iod2, *p = &iod1, *q = &iod2;		\
   Lisp_Object *args_end = args + nargs;				\
@@ -866,8 +962,8 @@ integer_char_or_marker_to_int (Lisp_Object obj)
       number_char_or_marker_to_int_or_double (*args++, q);	\
 								\
       if (!((p->int_p && q->int_p) ?				\
-	    (p->c.ival op q->c.ival) :				\
-	    ((p->int_p ? (double) p->c.ival : p->c.dval) op	\
+	    (p->c.ival c_op q->c.ival) :			\
+	    ((p->int_p ? (double) p->c.ival : p->c.dval) c_op	\
 	     (q->int_p ? (double) q->c.ival : q->c.dval))))	\
 	return Qnil;						\
 								\
@@ -875,6 +971,7 @@ integer_char_or_marker_to_int (Lisp_Object obj)
     }								\
   return Qt;							\
 }
+#endif /* WITH_NUMBER_TYPES */
 
 DEFUN ("=", Feqlsign, 1, MANY, 0, /*
 Return t if all the arguments are numerically equal.
@@ -882,7 +979,7 @@ The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  ARITHCOMPARE_MANY (==)
+  ARITHCOMPARE_MANY (==, eql)
 }
 
 DEFUN ("<", Flss, 1, MANY, 0, /*
@@ -891,7 +988,7 @@ The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  ARITHCOMPARE_MANY (<)
+  ARITHCOMPARE_MANY (<, lt)
 }
 
 DEFUN (">", Fgtr, 1, MANY, 0, /*
@@ -900,7 +997,7 @@ The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  ARITHCOMPARE_MANY (>)
+  ARITHCOMPARE_MANY (>, gt)
 }
 
 DEFUN ("<=", Fleq, 1, MANY, 0, /*
@@ -909,7 +1006,7 @@ The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  ARITHCOMPARE_MANY (<=)
+  ARITHCOMPARE_MANY (<=, le)
 }
 
 DEFUN (">=", Fgeq, 1, MANY, 0, /*
@@ -918,15 +1015,64 @@ The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
-  ARITHCOMPARE_MANY (>=)
+  ARITHCOMPARE_MANY (>=, ge)
 }
 
+/* Unlike all the other comparisons, this is an O(N*N) algorithm.  But who
+   cares?  Inspection of all elisp code distributed by xemacs.org shows that
+   it is almost always called with 2 arguments, rarely with 3, and never with
+   more than 3.  The constant factors of algorithms with better asymptotic
+   complexity are higher, which means that those algorithms will run SLOWER
+   than this one in the common case.  Optimize the common case! */
 DEFUN ("/=", Fneq, 1, MANY, 0, /*
 Return t if no two arguments are numerically equal.
 The arguments may be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i, j;
+  Lisp_Object obj1, obj2;
+
+  for (i = 0; i < nargs - 1; i++)
+    {
+      obj1 = args[i];
+      for (j = i + 1; j < nargs; j++)
+	{
+	  obj2 = args[j];
+	  switch (promote_args (&obj1, &obj2))
+	    {
+	    case FIXNUM_T:
+	      if (XREALINT (obj1) == XREALINT (obj2))
+		return Qnil;
+	      break;
+#ifdef HAVE_BIGNUM
+	    case BIGNUM_T:
+	      if (bignum_eql (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2)))
+		return Qnil;
+	      break;
+#endif
+#ifdef HAVE_RATIO
+	    case RATIO_T:
+	      if (ratio_eql (XRATIO_DATA (obj1), XRATIO_DATA (obj2)))
+		return Qnil;
+	      break;
+#endif
+	    case FLOAT_T:
+	      if (XFLOAT_DATA (obj1) == XFLOAT_DATA (obj2))
+		return Qnil;
+	      break;
+#ifdef HAVE_BIGFLOAT
+	    case BIGFLOAT_T:
+	      if (bigfloat_eql (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2)))
+		return Qnil;
+	      break;
+#endif
+	    }
+	}
+    }
+  return Qt;
+#else /* !WITH_NUMBER_TYPES */
   Lisp_Object *args_end = args + nargs;
   Lisp_Object *p, *q;
 
@@ -949,6 +1095,7 @@ The arguments may be numbers, characters or markers.
 	}
     }
   return Qt;
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("zerop", Fzerop, 1, 1, 0, /*
@@ -959,8 +1106,20 @@ Return t if NUMBER is zero.
  retry:
   if (INTP (number))
     return EQ (number, Qzero) ? Qt : Qnil;
+#ifdef HAVE_BIGNUM
+  else if (BIGNUMP (number))
+    return bignum_sign (XBIGNUM_DATA (number)) == 0 ? Qt : Qnil;
+#endif
+#ifdef HAVE_RATIO
+  else if (RATIOP (number))
+    return ratio_sign (XRATIO_DATA (number)) == 0 ? Qt : Qnil;
+#endif
   else if (FLOATP (number))
     return XFLOAT_DATA (number) == 0.0 ? Qt : Qnil;
+#ifdef HAVE_BIGFLOAT
+  else if (BIGFLOATP (number))
+    return bigfloat_sign (XBIGFLOAT_DATA (number)) == 0 ? Qt : Qnil;
+#endif
   else
     {
       number = wrong_type_argument (Qnumberp, number);
@@ -1001,10 +1160,15 @@ DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
 Convert NUMBER to a string by printing it in decimal.
 Uses a minus sign if negative.
 NUMBER may be an integer or a floating point number.
+If supported, it may also be a ratio.
 */
        (number))
 {
+#ifdef WITH_NUMBER_TYPES
+  CHECK_NUMBER (number);
+#else
   CHECK_INT_OR_FLOAT (number);
+#endif
 
   if (FLOATP (number))
     {
@@ -1013,6 +1177,33 @@ NUMBER may be an integer or a floating point number.
       float_to_string (pigbuf, XFLOAT_DATA (number));
       return build_string (pigbuf);
     }
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      char *str = bignum_to_string (XBIGNUM_DATA (number), 10);
+      Lisp_Object retval = build_string (str);
+      xfree (str, char *);
+      return retval;
+    }
+#endif
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      char *str = ratio_to_string (XRATIO_DATA (number), 10);
+      Lisp_Object retval = build_string (str);
+      xfree (str, char *);
+      return retval;
+    }
+#endif
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      char *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
+      Lisp_Object retval = build_string (str);
+      xfree (str, char *);
+      return retval;
+    }
+#endif
 
   {
     char buffer[DECIMAL_PRINT_SIZE (long)];
@@ -1037,6 +1228,7 @@ digit_to_number (int character, int base)
 DEFUN ("string-to-number", Fstring_to_number, 1, 2, 0, /*
 Convert STRING to a number by parsing it as a number in base BASE.
 This parses both integers and floating point numbers.
+If they are supported, it also reads ratios.
 It ignores leading spaces and tabs.
 
 If BASE is nil or omitted, base 10 is used.
@@ -1067,8 +1259,36 @@ Floating point numbers always use base 10.
     p++;
 
   if (isfloat_string (p) && b == 10)
-    return make_float (atof (p));
+    {
+#ifdef HAVE_BIGFLOAT
+      if (ZEROP (Vdefault_float_precision))
+#endif
+	return make_float (atof (p));
+#ifdef HAVE_BIGFLOAT
+      else
+	{
+	  bigfloat_set_prec (scratch_bigfloat, bigfloat_get_default_prec ());
+	  bigfloat_set_string (scratch_bigfloat, p, b);
+	  return make_bigfloat_bf (scratch_bigfloat);
+	}
+#endif
+    }
 
+#ifdef HAVE_RATIO
+  if (qxestrchr (p, '/') != NULL)
+    {
+      ratio_set_string (scratch_ratio, p, b);
+      return make_ratio_rt (scratch_ratio);
+    }
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGNUM
+  /* GMP bignum_set_string returns random values when fed an empty string */
+  if (*p == '\0')
+    return make_int (0);
+  bignum_set_string (scratch_bignum, p, b);
+  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
   if (b == 10)
     {
       /* Use the system-provided functions for base 10. */
@@ -1101,6 +1321,7 @@ Floating point numbers always use base 10.
 	}
       return make_int (negative * v);
     }
+#endif /* HAVE_BIGNUM */
 }
 
 
@@ -1110,6 +1331,49 @@ The arguments should all be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i;
+  Lisp_Object accum = make_int (0), addend;
+
+  for (i = 0; i < nargs; i++)
+    {
+      addend = args[i];
+      switch (promote_args (&accum, &addend))
+	{
+	case FIXNUM_T:
+	  accum = make_integer (XREALINT (accum) + XREALINT (addend));
+	  break;
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  bignum_add (scratch_bignum, XBIGNUM_DATA (accum),
+		      XBIGNUM_DATA (addend));
+	  accum = make_bignum_bg (scratch_bignum);
+	  break;
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  ratio_add (scratch_ratio, XRATIO_DATA (accum),
+		     XRATIO_DATA (addend));
+	  accum = make_ratio_rt (scratch_ratio);
+	  break;
+#endif
+	case FLOAT_T:
+	  accum = make_float (XFLOAT_DATA (accum) + XFLOAT_DATA (addend));
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  bigfloat_set_prec (scratch_bigfloat,
+			     max (XBIGFLOAT_GET_PREC (addend),
+				  XBIGFLOAT_GET_PREC (accum)));
+	  bigfloat_add (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+			XBIGFLOAT_DATA (addend));
+	  accum = make_bigfloat_bf (scratch_bigfloat);
+	  break;
+#endif
+	}
+    }
+  return Fcanonicalize_number (accum);
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT iaccum = 0;
   Lisp_Object *args_end = args + nargs;
 
@@ -1129,6 +1393,7 @@ The arguments should all be numbers, characters or markers.
     }
 
   return make_int (iaccum);
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("-", Fminus, 1, MANY, 0, /*
@@ -1138,6 +1403,87 @@ subtracts all but the first from the first.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i;
+  Lisp_Object accum = args[0], subtrahend;
+
+  if (nargs == 1)
+    {
+      if (CHARP (accum))
+	accum = make_int (XCHAR (accum));
+      else if (MARKERP (accum))
+	accum = make_int (marker_position (accum));
+
+      /* Invert the sign of accum */
+      CHECK_NUMBER (accum);
+      switch (get_number_type (accum))
+	{
+	case FIXNUM_T:
+	  return make_integer (-XREALINT (accum));
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  bignum_neg (scratch_bignum, XBIGNUM_DATA (accum));
+	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  ratio_neg (scratch_ratio, XRATIO_DATA (accum));
+	  return make_ratio_rt (scratch_ratio);
+#endif
+	case FLOAT_T:
+	  return make_float (-XFLOAT_DATA (accum));
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (accum));
+	  bigfloat_neg (scratch_bigfloat, XBIGFLOAT_DATA (accum));
+	  return make_bigfloat_bf (scratch_bigfloat);
+#endif
+	}
+    }
+  else
+    {
+      /* Subtrace the remaining arguments from accum */
+      for (i = 1; i < nargs; i++)
+	{
+	  subtrahend = args[i];
+	  switch (promote_args (&accum, &subtrahend))
+	    {
+	    case FIXNUM_T:
+	      accum = make_integer (XREALINT (accum) - XREALINT (subtrahend));
+	      break;
+#ifdef HAVE_BIGNUM
+	    case BIGNUM_T:
+	      bignum_sub (scratch_bignum, XBIGNUM_DATA (accum),
+			  XBIGNUM_DATA (subtrahend));
+	      accum = make_bignum_bg (scratch_bignum);
+	      break;
+#endif
+#ifdef HAVE_RATIO
+	    case RATIO_T:
+	      ratio_sub (scratch_ratio, XRATIO_DATA (accum),
+			 XRATIO_DATA (subtrahend));
+	      accum = make_ratio_rt (scratch_ratio);
+	      break;
+#endif
+	    case FLOAT_T:
+	      accum =
+		make_float (XFLOAT_DATA (accum) - XFLOAT_DATA (subtrahend));
+	      break;
+#ifdef HAVE_BIGFLOAT
+	    case BIGFLOAT_T:
+	      bigfloat_set_prec (scratch_bigfloat,
+				 max (XBIGFLOAT_GET_PREC (subtrahend),
+				      XBIGFLOAT_GET_PREC (accum)));
+	      bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+			    XBIGFLOAT_DATA (subtrahend));
+	      accum = make_bigfloat_bf (scratch_bigfloat);
+	      break;
+#endif
+	    }
+	}
+    }
+  return Fcanonicalize_number (accum);
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT iaccum;
   double daccum;
   Lisp_Object *args_end = args + nargs;
@@ -1170,6 +1516,7 @@ subtracts all but the first from the first.
   for (; args < args_end; args++)
     daccum -= number_char_or_marker_to_double (*args);
   return make_float (daccum);
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("*", Ftimes, 0, MANY, 0, /*
@@ -1178,6 +1525,47 @@ The arguments should all be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i;
+  /* Start with a bignum to avoid overflow */
+  Lisp_Object accum = make_bignum (1L), multiplier;
+
+  for (i = 0; i < nargs; i++)
+    {
+      multiplier = args[i];
+      switch (promote_args (&accum, &multiplier))
+	{
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  bignum_mul (scratch_bignum, XBIGNUM_DATA (accum),
+		      XBIGNUM_DATA (multiplier));
+	  accum = make_bignum_bg (scratch_bignum);
+	  break;
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  ratio_mul (scratch_ratio, XRATIO_DATA (accum),
+		     XRATIO_DATA (multiplier));
+	  accum = make_ratio_rt (scratch_ratio);
+	  break;
+#endif
+	case FLOAT_T:
+	  accum = make_float (XFLOAT_DATA (accum) * XFLOAT_DATA (multiplier));
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  bigfloat_set_prec (scratch_bigfloat,
+			     max (XBIGFLOAT_GET_PREC (multiplier),
+				  XBIGFLOAT_GET_PREC (accum)));
+	  bigfloat_mul (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+			XBIGFLOAT_DATA (multiplier));
+	  accum = make_bigfloat_bf (scratch_bigfloat);
+	  break;
+#endif
+	}
+    }
+  return Fcanonicalize_number (accum);
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT iaccum = 1;
   Lisp_Object *args_end = args + nargs;
 
@@ -1197,7 +1585,77 @@ The arguments should all be numbers, characters or markers.
     }
 
   return make_int (iaccum);
+#endif /* WITH_NUMBER_TYPES */
 }
+
+#ifdef HAVE_RATIO
+DEFUN ("div", Fdiv, 1, MANY, 0, /*
+Same as `/', but dividing integers creates a ratio instead of truncating.
+Note that this is a departure from Common Lisp, where / creates ratios when
+dividing integers.  Having a separate function lets us avoid breaking existing
+Emacs Lisp code that expects / to do integer division.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  REGISTER int i;
+  Lisp_Object accum, divisor;
+
+  if (nargs == 1)
+    {
+      i = 0;
+      accum = make_int (1);
+    }
+  else
+    {
+      i = 1;
+      accum = args[0];
+    }
+  for (; i < nargs; i++)
+    {
+      divisor = args[i];
+      switch (promote_args (&accum, &divisor))
+	{
+	case FIXNUM_T:
+	  if (XREALINT (divisor) == 0) goto divide_by_zero;
+	  bignum_set_long (scratch_bignum, XREALINT (accum));
+	  bignum_set_long (scratch_bignum2, XREALINT (divisor));
+	  accum = make_ratio_bg (scratch_bignum, scratch_bignum2);
+	  break;
+	case BIGNUM_T:
+	  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0) goto divide_by_zero;
+	  accum = make_ratio_bg (XBIGNUM_DATA (accum), XBIGNUM_DATA (divisor));
+	  break;
+	case RATIO_T:
+	  if (ratio_sign (XRATIO_DATA (divisor)) == 0) goto divide_by_zero;
+	  ratio_div (scratch_ratio, XRATIO_DATA (accum),
+		     XRATIO_DATA (divisor));
+	  accum = make_ratio_rt (scratch_ratio);
+	  break;
+	case FLOAT_T:
+	  if (XFLOAT_DATA (divisor) == 0.0) goto divide_by_zero;
+	  accum = make_float (XFLOAT_DATA (accum) / XFLOAT_DATA (divisor));
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+	    goto divide_by_zero;
+	  bigfloat_set_prec (scratch_bigfloat,
+			     max (XBIGFLOAT_GET_PREC (divisor),
+				  XBIGFLOAT_GET_PREC (accum)));
+	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+			XBIGFLOAT_DATA (divisor));
+	  accum = make_bigfloat_bf (scratch_bigfloat);
+	  break;
+#endif
+	}
+    }
+  return Fcanonicalize_number (accum);
+
+ divide_by_zero:
+  Fsignal (Qarith_error, Qnil);
+  return Qnil; /* not (usually) reached */
+}
+#endif /* HAVE_RATIO */
 
 DEFUN ("/", Fquo, 1, MANY, 0, /*
 Return first argument divided by all the remaining arguments.
@@ -1206,6 +1664,65 @@ With one argument, reciprocates the argument.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i;
+  Lisp_Object accum, divisor;
+
+  if (nargs == 1)
+    {
+      i = 0;
+      accum = make_int (1);
+    }
+  else
+    {
+      i = 1;
+      accum = args[0];
+    }
+  for (; i < nargs; i++)
+    {
+      divisor = args[i];
+      switch (promote_args (&accum, &divisor))
+	{
+	case FIXNUM_T:
+	  if (XREALINT (divisor) == 0) goto divide_by_zero;
+	  accum = make_integer (XREALINT (accum) / XREALINT (divisor));
+	  break;
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  if (bignum_sign (XBIGNUM_DATA (divisor)) == 0) goto divide_by_zero;
+	  bignum_div (scratch_bignum, XBIGNUM_DATA (accum),
+		      XBIGNUM_DATA (divisor));
+	  accum = make_bignum_bg (scratch_bignum);
+	  break;
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  if (ratio_sign (XRATIO_DATA (divisor)) == 0) goto divide_by_zero;
+	  ratio_div (scratch_ratio, XRATIO_DATA (accum),
+		     XRATIO_DATA (divisor));
+	  accum = make_ratio_rt (scratch_ratio);
+	  break;
+#endif
+	case FLOAT_T:
+	  if (XFLOAT_DATA (divisor) == 0.0) goto divide_by_zero;
+	  accum = make_float (XFLOAT_DATA (accum) / XFLOAT_DATA (divisor));
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  if (bigfloat_sign (XBIGFLOAT_DATA (divisor)) == 0)
+	    goto divide_by_zero;
+	  bigfloat_set_prec (scratch_bigfloat,
+			     max (XBIGFLOAT_GET_PREC (divisor),
+				  XBIGFLOAT_GET_PREC (accum)));
+	  bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (accum),
+			XBIGFLOAT_DATA (divisor));
+	  accum = make_bigfloat_bf (scratch_bigfloat);
+	  break;
+#endif
+	}
+    }
+  return Fcanonicalize_number (accum);
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT iaccum;
   double daccum;
   Lisp_Object *args_end = args + nargs;
@@ -1251,6 +1768,7 @@ With one argument, reciprocates the argument.
       daccum /= dval;
     }
   return make_float (daccum);
+#endif /* WITH_NUMBER_TYPES */
 
  divide_by_zero:
   Fsignal (Qarith_error, Qnil);
@@ -1259,12 +1777,59 @@ With one argument, reciprocates the argument.
 
 DEFUN ("max", Fmax, 1, MANY, 0, /*
 Return largest of all the arguments.
-All arguments must be numbers, characters or markers.
+All arguments must be real numbers, characters or markers.
 The value is always a number; markers and characters are converted
 to numbers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i, maxindex = 0;
+  Lisp_Object comp1, comp2;
+
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+  if (CHARP (args[0]))
+    args[0] = make_int (XCHAR (args[0]));
+  else if (MARKERP (args[0]))
+    args[0] = make_int (marker_position (args[0]));
+  for (i = 1; i < nargs; i++)
+    {
+    retry:
+      comp1 = args[maxindex];
+      comp2 = args[i];
+      switch (promote_args (&comp1, &comp2))
+	{
+	case FIXNUM_T:
+	  if (XREALINT (comp1) < XREALINT (comp2))
+	    maxindex = i;
+	  break;
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  if (bignum_lt (XBIGNUM_DATA (comp1), XBIGNUM_DATA (comp2)))
+	    maxindex = i;
+	  break;
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  if (ratio_lt (XRATIO_DATA (comp1), XRATIO_DATA (comp2)))
+	    maxindex = i;
+	  break;
+#endif
+	case FLOAT_T:
+	  if (XFLOAT_DATA (comp1) < XFLOAT_DATA (comp2))
+	    maxindex = i;
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  if (bigfloat_lt (XBIGFLOAT_DATA (comp1), XBIGFLOAT_DATA (comp2)))
+	    maxindex = i;
+	  break;
+#endif
+	}
+    }
+  return args[maxindex];
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT imax;
   double dmax;
   Lisp_Object *args_end = args + nargs;
@@ -1303,6 +1868,7 @@ to numbers.
       if (dmax < dval) dmax = dval;
     }
   return make_float (dmax);
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("min", Fmin, 1, MANY, 0, /*
@@ -1313,6 +1879,52 @@ to numbers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef WITH_NUMBER_TYPES
+  REGISTER int i, minindex = 0;
+  Lisp_Object comp1, comp2;
+
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+  if (CHARP (args[0]))
+    args[0] = make_int (XCHAR (args[0]));
+  else if (MARKERP (args[0]))
+    args[0] = make_int (marker_position (args[0]));
+  for (i = 1; i < nargs; i++)
+    {
+      comp1 = args[minindex];
+      comp2 = args[i];
+      switch (promote_args (&comp1, &comp2))
+	{
+	case FIXNUM_T:
+	  if (XREALINT (comp1) > XREALINT (comp2))
+	    minindex = i;
+	  break;
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  if (bignum_gt (XBIGNUM_DATA (comp1), XBIGNUM_DATA (comp2)))
+	    minindex = i;
+	  break;
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  if (ratio_gt (XRATIO_DATA (comp1), XRATIO_DATA (comp2)))
+	    minindex = i;
+	  break;
+#endif
+	case FLOAT_T:
+	  if (XFLOAT_DATA (comp1) > XFLOAT_DATA (comp2))
+	    minindex = i;
+	  break;
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  if (bigfloat_gt (XBIGFLOAT_DATA (comp1), XBIGFLOAT_DATA (comp2)))
+	    minindex = i;
+	  break;
+#endif
+	}
+    }
+  return args[minindex];
+#else /* !WITH_NUMBER_TYPES */
   EMACS_INT imin;
   double dmin;
   Lisp_Object *args_end = args + nargs;
@@ -1351,6 +1963,7 @@ to numbers.
       if (dmin > dval) dmin = dval;
     }
   return make_float (dmin);
+#endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("logand", Flogand, 0, MANY, 0, /*
@@ -1359,6 +1972,43 @@ Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef HAVE_BIGNUM
+  REGISTER int i;
+  Lisp_Object result, other;
+
+  if (nargs == 0)
+    return make_int (~0);
+
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+
+  result = args[0];
+  if (CHARP (result))
+    result = make_int (XCHAR (result));
+  else if (MARKERP (result))
+    result = make_int (marker_position (result));
+  for (i = 1; i < nargs; i++)
+    {
+      while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
+	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+      other = args[i];
+      switch (promote_args (&result, &other))
+	{
+	case FIXNUM_T:
+	  /* This looks evil, but it isn't.  The bits identifying the objects
+	     as fixnums will be present in both, so & will preserve them.
+	     The only bits possibly turned off are the actual data bits. */
+	  result &= other;
+	  break;
+	case BIGNUM_T:
+	  bignum_and (scratch_bignum, XBIGNUM_DATA (result),
+		      XBIGNUM_DATA (other));
+	  result = make_bignum_bg (scratch_bignum);
+	  break;
+	}
+    }
+  return Fcanonicalize_number (result);
+#else /* !HAVE_BIGNUM */
   EMACS_INT bits = ~0;
   Lisp_Object *args_end = args + nargs;
 
@@ -1366,6 +2016,7 @@ Arguments may be integers, or markers or characters converted to integers.
     bits &= integer_char_or_marker_to_int (*args++);
 
   return make_int (bits);
+#endif /* HAVE_BIGNUM */
 }
 
 DEFUN ("logior", Flogior, 0, MANY, 0, /*
@@ -1374,6 +2025,43 @@ Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef HAVE_BIGNUM
+  REGISTER int i;
+  Lisp_Object result, other;
+
+  if (nargs == 0)
+    return make_int (0);
+
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+
+  result = args[0];
+  if (CHARP (result))
+    result = make_int (XCHAR (result));
+  else if (MARKERP (result))
+    result = make_int (marker_position (result));
+  for (i = 1; i < nargs; i++)
+    {
+      while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
+	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+      other = args[i];
+      switch (promote_args (&result, &other))
+	{
+	case FIXNUM_T:
+	  /* This looks evil, but it isn't.  The bits identifying the objects
+	     as fixnums are the same in both, so | will preserve them.  The
+	     only bits possibly turned on are the actual data bits. */
+	  result |= other;
+	  break;
+	case BIGNUM_T:
+	  bignum_ior (scratch_bignum, XBIGNUM_DATA (result),
+		      XBIGNUM_DATA (other));
+	  result = make_bignum_bg (scratch_bignum);
+	  break;
+	}
+    }
+  return Fcanonicalize_number (result);
+#else /* !HAVE_BIGNUM */
   EMACS_INT bits = 0;
   Lisp_Object *args_end = args + nargs;
 
@@ -1381,6 +2069,7 @@ Arguments may be integers, or markers or characters converted to integers.
     bits |= integer_char_or_marker_to_int (*args++);
 
   return make_int (bits);
+#endif /* HAVE_BIGNUM */
 }
 
 DEFUN ("logxor", Flogxor, 0, MANY, 0, /*
@@ -1389,6 +2078,39 @@ Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
+#ifdef HAVE_BIGNUM
+  REGISTER int i;
+  Lisp_Object result, other;
+
+  if (nargs == 0)
+    return make_int (0);
+
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || INTEGERP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+
+  result = args[0];
+  if (CHARP (result))
+    result = make_int (XCHAR (result));
+  else if (MARKERP (result))
+    result = make_int (marker_position (result));
+  for (i = 1; i < nargs; i++)
+    {
+      while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
+	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
+      other = args[i];
+      if (promote_args (&result, &other) == FIXNUM_T)
+	{
+	  result = make_int (XREALINT (result) ^ XREALINT (other));
+	}
+      else
+	{
+	  bignum_xor (scratch_bignum, XBIGNUM_DATA (result),
+		      XBIGNUM_DATA (other));
+	  result = make_bignum_bg (scratch_bignum);
+	}
+    }
+  return Fcanonicalize_number (result);
+#else /* !HAVE_BIGNUM */
   EMACS_INT bits = 0;
   Lisp_Object *args_end = args + nargs;
 
@@ -1396,6 +2118,7 @@ Arguments may be integers, or markers or characters converted to integers.
     bits ^= integer_char_or_marker_to_int (*args++);
 
   return make_int (bits);
+#endif /* !HAVE_BIGNUM */
 }
 
 DEFUN ("lognot", Flognot, 1, 1, 0, /*
@@ -1404,6 +2127,13 @@ NUMBER may be an integer, marker or character converted to integer.
 */
        (number))
 {
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      bignum_not (scratch_bignum, XBIGNUM_DATA (number));
+      return make_bignum_bg (scratch_bignum);
+    }
+#endif /* HAVE_BIGNUM */
   return make_int (~ integer_char_or_marker_to_int (number));
 }
 
@@ -1413,6 +2143,27 @@ Both must be integers, characters or markers.
 */
        (number1, number2))
 {
+#ifdef HAVE_BIGNUM
+  while (!(CHARP (number1) || MARKERP (number1) || INTEGERP (number1)))
+    number1 = wrong_type_argument (Qnumber_char_or_marker_p, number1);
+  while (!(CHARP (number2) || MARKERP (number2) || INTEGERP (number2)))
+    number2 = wrong_type_argument (Qnumber_char_or_marker_p, number2);
+
+  if (promote_args (&number1, &number2) == FIXNUM_T)
+    {
+      if (XREALINT (number2) == 0)
+	Fsignal (Qarith_error, Qnil);
+      return make_int (XREALINT (number1) % XREALINT (number2));
+    }
+  else
+    {
+      if (bignum_sign (XBIGNUM_DATA (number2)) == 0)
+	Fsignal (Qarith_error, Qnil);
+      bignum_mod (scratch_bignum, XBIGNUM_DATA (number1),
+		  XBIGNUM_DATA (number2));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#else /* !HAVE_BIGNUM */
   EMACS_INT ival1 = integer_char_or_marker_to_int (number1);
   EMACS_INT ival2 = integer_char_or_marker_to_int (number2);
 
@@ -1420,6 +2171,7 @@ Both must be integers, characters or markers.
     Fsignal (Qarith_error, Qnil);
 
   return make_int (ival1 % ival2);
+#endif /* HAVE_BIGNUM */
 }
 
 /* Note, ANSI *requires* the presence of the fmod() library routine.
@@ -1445,6 +2197,62 @@ If either argument is a float, a float will be returned.
 */
        (x, y))
 {
+#ifdef WITH_NUMBER_TYPES
+  while (!(CHARP (x) || MARKERP (x) || REALP (x)))
+    x = wrong_type_argument (Qnumber_char_or_marker_p, x);
+  while (!(CHARP (y) || MARKERP (y) || REALP (y)))
+    y = wrong_type_argument (Qnumber_char_or_marker_p, y);
+  switch (promote_args (&x, &y))
+    {
+    case FIXNUM_T:
+      {
+	EMACS_INT ival;
+	if (XREALINT (y) == 0) goto divide_by_zero;
+	ival = XREALINT (x) % XREALINT (y);
+	/* If the "remainder" comes out with the wrong sign, fix it.  */
+	if (XREALINT (y) < 0 ? ival > 0 : ival < 0)
+	  ival += XREALINT (y);
+	return make_int (ival);
+      }
+#ifdef HAVE_BIGNUM
+    case BIGNUM_T:
+      if (bignum_sign (XBIGNUM_DATA (y)) == 0) goto divide_by_zero;
+      bignum_mod (scratch_bignum, XBIGNUM_DATA (x), XBIGNUM_DATA (y));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#endif
+#ifdef HAVE_RATIO
+    case RATIO_T:
+      if (ratio_sign (XRATIO_DATA (y)) == 0) goto divide_by_zero;
+      ratio_div (scratch_ratio, XRATIO_DATA (x), XRATIO_DATA (y));
+      bignum_div (scratch_bignum, ratio_numerator (scratch_ratio),
+		  ratio_denominator (scratch_ratio));
+      ratio_set_bignum (scratch_ratio, scratch_bignum);
+      ratio_mul (scratch_ratio, scratch_ratio, XRATIO_DATA (y));
+      ratio_sub (scratch_ratio, XRATIO_DATA (x), scratch_ratio);
+      return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+#endif
+    case FLOAT_T:
+    {
+      double dval;
+      if (XFLOAT_DATA (y) == 0.0) goto divide_by_zero;
+      dval = fmod (XFLOAT_DATA (x), XFLOAT_DATA (y));
+      /* If the "remainder" comes out with the wrong sign, fix it.  */
+      if (XFLOAT_DATA (y) < 0 ? dval > 0 : dval < 0)
+	dval += XFLOAT_DATA (y);
+      return make_float (dval);
+    }
+#ifdef HAVE_BIGFLOAT
+    case BIGFLOAT_T:
+      bigfloat_set_prec (scratch_bigfloat,
+			 max (XBIGFLOAT_GET_PREC (x), XBIGFLOAT_GET_PREC (y)));
+      bigfloat_div (scratch_bigfloat, XBIGFLOAT_DATA (x), XBIGFLOAT_DATA (y));
+      bigfloat_trunc (scratch_bigfloat, scratch_bigfloat);
+      bigfloat_mul (scratch_bigfloat, scratch_bigfloat, XBIGFLOAT_DATA (y));
+      bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (x), scratch_bigfloat);
+      return make_bigfloat_bf (scratch_bigfloat);
+#endif
+    }
+#else /* !WITH_NUMBER_TYPES */
   int_or_double iod1, iod2;
   number_char_or_marker_to_int_or_double (x, &iod1);
   number_char_or_marker_to_int_or_double (y, &iod2);
@@ -1475,6 +2283,7 @@ If either argument is a float, a float will be returned.
 
     return make_int (ival);
   }
+#endif /* WITH_NUMBER_TYPES */
 
  divide_by_zero:
   Fsignal (Qarith_error, Qnil);
@@ -1485,6 +2294,8 @@ DEFUN ("ash", Fash, 2, 2, 0, /*
 Return VALUE with its bits shifted left by COUNT.
 If COUNT is negative, shifting is actually to the right.
 In this case, the sign bit is duplicated.
+This function cannot be applied to bignums, as there is no leftmost sign bit
+to be duplicated.  Use `lsh' instead.
 */
        (value, count))
 {
@@ -1503,12 +2314,47 @@ In this case, zeros are shifted in on the left.
 */
        (value, count))
 {
+#ifdef HAVE_BIGNUM
+  while (!(CHARP (value) || MARKERP (value) || INTEGERP (value)))
+    wrong_type_argument (Qnumber_char_or_marker_p, value);
+  CONCHECK_INTEGER (count);
+
+  if (promote_args (&value, &count) == FIXNUM_T)
+    {
+      if (XREALINT (count) <= 0)
+	return make_int (XREALINT (value) >> -XREALINT (count));
+      /* Use bignums to avoid overflow */
+      bignum_set_long (scratch_bignum2, XREALINT (value));
+      bignum_lshift (scratch_bignum, scratch_bignum2, XREALINT (count));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+  else
+    {
+      if (bignum_sign (XBIGNUM_DATA (count)) <= 0)
+	{
+	  bignum_neg (scratch_bignum, XBIGNUM_DATA (count));
+	  if (!bignum_fits_ulong_p (scratch_bignum))
+	    args_out_of_range (Qnumber_char_or_marker_p, count);
+	  bignum_rshift (scratch_bignum2, XBIGNUM_DATA (value),
+			 bignum_to_ulong (scratch_bignum));
+	}
+      else
+	{
+	  if (!bignum_fits_ulong_p (XBIGNUM_DATA (count)))
+	    args_out_of_range (Qnumber_char_or_marker_p, count);
+	  bignum_lshift (scratch_bignum2, XBIGNUM_DATA (value),
+			 bignum_to_ulong (XBIGNUM_DATA (count)));
+	}
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum2));
+    }
+#else /* !HAVE_BIGNUM */
   CHECK_INT_COERCE_CHAR (value);
   CONCHECK_INT (count);
 
   return make_int (XINT (count) > 0 ?
 		   XUINT (value) <<  XINT (count) :
 		   XUINT (value) >> -XINT (count));
+#endif /* HAVE_BIGNUM */
 }
 
 DEFUN ("1+", Fadd1, 1, 1, 0, /*
@@ -1519,10 +2365,37 @@ Markers and characters are converted to integers.
 {
  retry:
 
-  if (INTP    (number)) return make_int (XINT  (number) + 1);
-  if (CHARP   (number)) return make_int (XCHAR (number) + 1);
-  if (MARKERP (number)) return make_int (marker_position (number) + 1);
+  if (INTP    (number)) return make_integer (XINT (number) + 1);
+  if (CHARP   (number)) return make_integer (XCHAR (number) + 1);
+  if (MARKERP (number)) return make_integer (marker_position (number) + 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) + 1.0);
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      bignum_set_long (scratch_bignum, 1L);
+      bignum_add (scratch_bignum2, XBIGNUM_DATA (number), scratch_bignum);
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum2));
+    }
+#endif
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      ratio_set_long (scratch_ratio, 1L);
+      ratio_add (scratch_ratio, XRATIO_DATA (number), scratch_ratio);
+      /* No need to canonicalize after adding 1 */
+      return make_ratio_rt (scratch_ratio);
+    }
+#endif
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_set_long (scratch_bigfloat, 1L);
+      bigfloat_add (scratch_bigfloat, XBIGFLOAT_DATA (number),
+		    scratch_bigfloat);
+      return make_bigfloat_bf (scratch_bigfloat);
+    }
+#endif
 
   number = wrong_type_argument (Qnumber_char_or_marker_p, number);
   goto retry;
@@ -1536,10 +2409,37 @@ Markers and characters are converted to integers.
 {
  retry:
 
-  if (INTP    (number)) return make_int (XINT  (number) - 1);
-  if (CHARP   (number)) return make_int (XCHAR (number) - 1);
-  if (MARKERP (number)) return make_int (marker_position (number) - 1);
+  if (INTP    (number)) return make_integer (XINT (number) - 1);
+  if (CHARP   (number)) return make_integer (XCHAR (number) - 1);
+  if (MARKERP (number)) return make_integer (marker_position (number) - 1);
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) - 1.0);
+#ifdef HAVE_BIGNUM
+  if (BIGNUMP (number))
+    {
+      bignum_set_long (scratch_bignum, 1L);
+      bignum_sub (scratch_bignum2, XBIGNUM_DATA (number), scratch_bignum);
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum2));
+    }
+#endif
+#ifdef HAVE_RATIO
+  if (RATIOP (number))
+    {
+      ratio_set_long (scratch_ratio, 1L);
+      ratio_sub (scratch_ratio, XRATIO_DATA (number), scratch_ratio);
+      /* No need to canonicalize after subtracting 1 */
+      return make_ratio_rt (scratch_ratio);
+    }
+#endif
+#ifdef HAVE_BIGFLOAT
+  if (BIGFLOATP (number))
+    {
+      bigfloat_set_prec (scratch_bigfloat, XBIGFLOAT_GET_PREC (number));
+      bigfloat_set_long (scratch_bigfloat, 1L);
+      bigfloat_sub (scratch_bigfloat, XBIGFLOAT_DATA (number),
+		    scratch_bigfloat);
+      return make_bigfloat_bf (scratch_bigfloat);
+    }
+#endif
 
   number = wrong_type_argument (Qnumber_char_or_marker_p, number);
   goto retry;
@@ -2487,6 +3387,7 @@ syms_of_data (void)
   DEFSYMBOL (Qintegerp);
   DEFSYMBOL (Qcharacterp);
   DEFSYMBOL (Qnatnump);
+  DEFSYMBOL (Qnonnegativep);
   DEFSYMBOL (Qstringp);
   DEFSYMBOL (Qarrayp);
   DEFSYMBOL (Qsequencep);
@@ -2508,6 +3409,9 @@ syms_of_data (void)
 
   DEFSUBR (Fwrong_type_argument);
 
+#ifdef HAVE_RATIO
+  DEFSUBR (Fdiv);
+#endif
   DEFSUBR (Feq);
   DEFSUBR (Fold_eq);
   DEFSUBR (Fnull);
@@ -2523,7 +3427,11 @@ syms_of_data (void)
   DEFSUBR (Fchar_to_int);
   DEFSUBR (Fint_to_char);
   DEFSUBR (Fchar_or_char_int_p);
+#ifdef HAVE_BIGNUM
+  DEFSUBR (Ffixnump);
+#else
   DEFSUBR (Fintegerp);
+#endif
   DEFSUBR (Finteger_or_marker_p);
   DEFSUBR (Finteger_or_char_p);
   DEFSUBR (Finteger_char_or_marker_p);
@@ -2532,6 +3440,7 @@ syms_of_data (void)
   DEFSUBR (Fnumber_char_or_marker_p);
   DEFSUBR (Ffloatp);
   DEFSUBR (Fnatnump);
+  DEFSUBR (Fnonnegativep);
   DEFSUBR (Fsymbolp);
   DEFSUBR (Fkeywordp);
   DEFSUBR (Fstringp);

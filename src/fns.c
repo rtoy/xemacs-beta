@@ -149,9 +149,9 @@ Return the argument unchanged.
 
 DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
-All integers representable in Lisp are equally likely.
-  On most systems, this is 28 bits' worth.
+All fixnums are equally likely.  On most systems, this is 31 bits' worth.
 With positive integer argument N, return random number in interval [0,N).
+N can be a bignum, in which case the range of possible values is extended.
 With argument t, set the random number seed from the current time and pid.
 */
        (limit))
@@ -175,6 +175,13 @@ With argument t, set the random number seed from the current time and pid.
 	val = get_random () / denominator;
       while (val >= XINT (limit));
     }
+#ifdef HAVE_BIGNUM
+  else if (BIGNUMP (limit))
+    {
+      bignum_random (scratch_bignum, XBIGNUM_DATA (limit));
+      return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+    }
+#endif
   else
     val = get_random ();
 
@@ -2840,8 +2847,33 @@ internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth)
   QUIT;
   if (EQ_WITH_EBOLA_NOTICE (obj1, obj2))
     return 1;
+#ifdef WITH_NUMBER_TYPES
+  if (NUMBERP (obj1) && NUMBERP (obj2))
+    {
+      switch (promote_args (&obj1, &obj2))
+	{
+	case FIXNUM_T:
+	  return XREALINT (obj1) == XREALINT (obj2);
+#ifdef HAVE_BIGNUM
+	case BIGNUM_T:
+	  return bignum_eql (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
+#endif
+#ifdef HAVE_RATIO
+	case RATIO_T:
+	  return ratio_eql (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
+#endif
+	case FLOAT_T:
+	  return XFLOAT_DATA (obj1) == XFLOAT_DATA (obj2);
+#ifdef HAVE_BIGFLOAT
+	case BIGFLOAT_T:
+	  return bigfloat_eql (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
+#endif
+	}
+    }
+#else
   if ((INTP (obj1) && FLOATP (obj2)) || (FLOATP (obj1) && INTP (obj2)))
     return extract_float (obj1) == extract_float (obj2);
+#endif
   if (CHARP (obj1) && CHARP (obj2))
     return DOWNCASE (0, XCHAR (obj1)) == DOWNCASE (0, XCHAR (obj2));
   if (XTYPE (obj1) != XTYPE (obj2))

@@ -645,8 +645,8 @@ dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
    may be more efficient when there are only a small number of them.
 
    The types that are stored in these large blocks (or "frob blocks")
-   are cons, float, compiled-function, symbol, marker, extent, event,
-   and string.
+   are cons, all number types except fixnum, compiled-function, symbol,
+   marker, extent, event, and string.
 
    Note that strings are special in that they are actually stored in
    two parts: a structure containing information about the string, and
@@ -1163,6 +1163,8 @@ Return a new list of length LENGTH, with each element being OBJECT.
 /*			  Float allocation				*/
 /************************************************************************/
 
+/*** With enhanced number support, these are short floats */
+
 DECLARE_FIXED_TYPE_ALLOC (float, Lisp_Float);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_float 1000
 
@@ -1182,6 +1184,124 @@ make_float (double float_value)
   return wrap_float (f);
 }
 
+
+/************************************************************************/
+/*			Enhanced number allocation			*/
+/************************************************************************/
+
+/*** Bignum ***/
+#ifdef HAVE_BIGNUM
+DECLARE_FIXED_TYPE_ALLOC (bignum, Lisp_Bignum);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_bignum 250
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum (long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOCATE_FIXED_TYPE (bignum, Lisp_Bignum, b);
+  set_lheader_implementation (&b->lheader, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_long (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_bg (bignum bg)
+{
+  Lisp_Bignum *b;
+
+  ALLOCATE_FIXED_TYPE (bignum, Lisp_Bignum, b);
+  set_lheader_implementation (&b->lheader, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set (bignum_data (b), bg);
+  return wrap_bignum (b);
+}
+#endif /* HAVE_BIGNUM */
+
+/*** Ratio ***/
+#ifdef HAVE_RATIO
+DECLARE_FIXED_TYPE_ALLOC (ratio, Lisp_Ratio);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_ratio 250
+
+Lisp_Object
+make_ratio (long numerator, unsigned long denominator)
+{
+  Lisp_Ratio *r;
+
+  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
+  set_lheader_implementation (&r->lheader, &lrecord_ratio);
+  ratio_init (ratio_data (r));
+  ratio_set_long_ulong (ratio_data (r), numerator, denominator);
+  ratio_canonicalize (ratio_data (r));
+  return wrap_ratio (r);
+}
+
+Lisp_Object
+make_ratio_bg (bignum numerator, bignum denominator)
+{
+  Lisp_Ratio *r;
+
+  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
+  set_lheader_implementation (&r->lheader, &lrecord_ratio);
+  ratio_init (ratio_data (r));
+  ratio_set_bignum_bignum (ratio_data (r), numerator, denominator);
+  ratio_canonicalize (ratio_data (r));
+  return wrap_ratio (r);
+}
+
+Lisp_Object
+make_ratio_rt (ratio rat)
+{
+  Lisp_Ratio *r;
+
+  ALLOCATE_FIXED_TYPE (ratio, Lisp_Ratio, r);
+  set_lheader_implementation (&r->lheader, &lrecord_ratio);
+  ratio_init (ratio_data (r));
+  ratio_set (ratio_data (r), rat);
+  return wrap_ratio (r);
+}
+#endif /* HAVE_RATIO */
+
+/*** Bigfloat ***/
+#ifdef HAVE_BIGFLOAT
+DECLARE_FIXED_TYPE_ALLOC (bigfloat, Lisp_Bigfloat);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_bigfloat 250
+
+/* This function creates a bigfloat with the default precision if the
+   PRECISION argument is zero. */
+Lisp_Object
+make_bigfloat (double float_value, unsigned long precision)
+{
+  Lisp_Bigfloat *f;
+
+  ALLOCATE_FIXED_TYPE (bigfloat, Lisp_Bigfloat, f);
+  set_lheader_implementation (&f->lheader, &lrecord_bigfloat);
+  if (precision == 0UL)
+    bigfloat_init (bigfloat_data (f));
+  else
+    bigfloat_init_prec (bigfloat_data (f), precision);
+  bigfloat_set_double (bigfloat_data (f), float_value);
+  return wrap_bigfloat (f);
+}
+
+/* This function creates a bigfloat with the precision of its argument */
+Lisp_Object
+make_bigfloat_bf (bigfloat float_value)
+{
+  Lisp_Bigfloat *f;
+
+  ALLOCATE_FIXED_TYPE (bigfloat, Lisp_Bigfloat, f);
+  set_lheader_implementation (&f->lheader, &lrecord_bigfloat);
+  bigfloat_init_prec (bigfloat_data (f), bigfloat_get_prec (float_value));
+  bigfloat_set (bigfloat_data (f), float_value);
+  return wrap_bigfloat (f);
+}
+#endif /* HAVE_BIGFLOAT */
 
 /************************************************************************/
 /*			   Vector allocation				*/
@@ -3786,6 +3906,39 @@ sweep_floats (void)
   SWEEP_FIXED_TYPE_BLOCK (float, Lisp_Float);
 }
 
+#ifdef HAVE_BIGNUM
+static void
+sweep_bignums (void)
+{
+#define UNMARK_bignum(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_bignum(ptr) bignum_fini (ptr->data)
+
+  SWEEP_FIXED_TYPE_BLOCK (bignum, Lisp_Bignum);
+}
+#endif /* HAVE_BIGNUM */
+
+#ifdef HAVE_RATIO
+static void
+sweep_ratios (void)
+{
+#define UNMARK_ratio(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_ratio(ptr) ratio_fini (ptr->data)
+
+  SWEEP_FIXED_TYPE_BLOCK (ratio, Lisp_Ratio);
+}
+#endif /* HAVE_RATIO */
+
+#ifdef HAVE_BIGFLOAT
+static void
+sweep_bigfloats (void)
+{
+#define UNMARK_bigfloat(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_bigfloat(ptr) bigfloat_fini (ptr->bf)
+
+  SWEEP_FIXED_TYPE_BLOCK (bigfloat, Lisp_Bigfloat);
+}
+#endif
+
 static void
 sweep_symbols (void)
 {
@@ -4236,6 +4389,21 @@ gc_sweep (void)
 
   /* Put all unmarked floats on free list */
   sweep_floats ();
+
+#ifdef HAVE_BIGNUM
+  /* Put all unmarked bignums on free list */
+  sweep_bignums ();
+#endif
+
+#ifdef HAVE_RATIO
+  /* Put all unmarked ratios on free list */
+  sweep_ratios ();
+#endif
+
+#ifdef HAVE_BIGFLOAT
+  /* Put all unmarked bigfloats on free list */
+  sweep_bigfloats ();
+#endif
 
   /* Put all unmarked symbols on free list */
   sweep_symbols ();
@@ -4796,6 +4964,21 @@ Garbage collection happens automatically if you cons more than
   HACK_O_MATIC (float, "float-storage", pl);
   pl = gc_plist_hack ("floats-free", gc_count_num_float_freelist, pl);
   pl = gc_plist_hack ("floats-used", gc_count_num_float_in_use, pl);
+#ifdef HAVE_BIGNUM
+  HACK_O_MATIC (bignum, "bignum-storage", pl);
+  pl = gc_plist_hack ("bignums-free", gc_count_num_bignum_freelist, pl);
+  pl = gc_plist_hack ("bignums-used", gc_count_num_bignum_in_use, pl);
+#endif /* HAVE_BIGNUM */
+#ifdef HAVE_RATIO
+  HACK_O_MATIC (ratio, "ratio-storage", pl);
+  pl = gc_plist_hack ("ratios-free", gc_count_num_ratio_freelist, pl);
+  pl = gc_plist_hack ("ratios-used", gc_count_num_ratio_in_use, pl);
+#endif /* HAVE_RATIO */
+#ifdef HAVE_BIGFLOAT
+  HACK_O_MATIC (bigfloat, "bigfloat-storage", pl);
+  pl = gc_plist_hack ("bigfloats-free", gc_count_num_bigfloat_freelist, pl);
+  pl = gc_plist_hack ("bigfloats-used", gc_count_num_bigfloat_in_use, pl);
+#endif /* HAVE_BIGFLOAT */
   HACK_O_MATIC (string, "string-header-storage", pl);
   pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
@@ -5079,6 +5262,15 @@ common_init_alloc_early (void)
   init_symbol_alloc ();
   init_compiled_function_alloc ();
   init_float_alloc ();
+#ifdef HAVE_BIGNUM
+  init_bignum_alloc ();
+#endif
+#ifdef HAVE_RATIO
+  init_ratio_alloc ();
+#endif
+#ifdef HAVE_BIGFLOAT
+  init_bigfloat_alloc ();
+#endif
   init_marker_alloc ();
   init_extent_alloc ();
   init_event_alloc ();

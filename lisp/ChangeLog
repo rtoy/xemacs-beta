@@ -1,3 +1,12 @@
+2004-04-05  Jerry James  <james@xemacs.org>
+
+	* cl-extra.el (coerce): Add support for general numeric conversions.
+	* cl.el (eql): Update for more number types.
+	* cl.el (cl-random-time): Ensure the result is a fixnum.
+	* cl.el (most-positive-fixnum): Do not define in Lisp if enhanced
+	number types are available.
+	* cl.el (most-negative-fixnum): Ditto.
+
 2004-03-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* code-process.el (call-process-region): Correct start and end

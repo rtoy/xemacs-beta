@@ -1,3 +1,89 @@
+2004-04-05  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (number_objs): New.
+	* Makefile.in.in (objs): Use it.
+	* alloc.c: Make comment more precise.
+	* alloc.c (make_bignum): New function.
+	* alloc.c (make_bignum_bg): New function.
+	* alloc.c (make_ratio): New function.
+	* alloc.c (make_ratio_bg): New function.
+	* alloc.c (make_ratio_rt): New function.
+	* alloc.c (make_bigfloat): New function.
+	* alloc.c (make_bigfloat_bf): New function.
+	* alloc.c (sweep_bignums): New function.
+	* alloc.c (sweep_ratios): New function.
+	* alloc.c (sweep_bigfloats): New function.
+	* alloc.c (gc_sweep): Use the new sweep functions.
+	* alloc.c (Fgarbage_collect): Report collected number objects.
+	* alloc.c (common_init_alloc_early): Initialize number allocators.
+	* bytecode.c (bytecode_negate): Negate more number types.
+	* bytecode.c (bytecode_arithcompare): Compare more number types.
+	* bytecode.c (bytecode_arithop): Operate on more number types.
+	* bytecode.c (execute_optimized_program): Several changes in
+	support of the new number types.
+	* config.h.in: Add SIZEOF_DOUBLE, DOUBLE_BITS, WITH_NUMBER_TYPES,
+	WITH_GMP, WITH_MP, MP_PREFIX, and HAVE_MP_MOVE.
+	* data.c: Add symbol Qnonnegativep.
+	* data.c (Ffixnump): New function.
+	* data.c (Fnatnump): Work with bignums alos.
+	* data.c (Fnonnegativep): New function.
+	* data.c (Fnumberp): Return t for any number type.
+	* data.c (ARITHCOMPARE_MANY): Add cases for the new number types.
+	* data.c (Feqlsign): Work with the new number types.
+	* data.c (Flss): Ditto.
+	* data.c (Fgtr): Ditto.
+	* data.c (Fleq): Ditto.
+	* data.c (Fgeq): Ditto.
+	* data.c (Fneq): Ditto.
+	* data.c (Fzerop): Ditto.
+	* data.c (Fnumber_to_string): Ditto.
+	* data.c (Fstring_to_number): Ditto.
+	* data.c (Fplus): Ditto.
+	* data.c (Fminus): Ditto.
+	* data.c (Ftimes): Ditto.
+	* data.c (Fdiv): New function to produce ratios.
+	* data.c (Fquo): Work with the new number types.
+	* data.c (Fmax): Ditto.
+	* data.c (Fmin): Ditto.
+	* data.c (Flogand): Ditto.
+	* data.c (Flogior): Ditto.
+	* data.c (Flogxor): Ditto.
+	* data.c (Flognot): Ditto.
+	* data.c (Frem): Ditto.
+	* data.c (Fmod): Ditto.
+	* data.c (Fash): Ditto.
+	* data.c (Flsh): Ditto.
+	* data.c (Fadd1): Ditto.
+	* data.c (Fsub1): Ditto.
+	* data.c (syms_of_data): Declare new symbols and Lisp functions.
+	* depend: Regenerate.
+	* doprnt.c: Add converters for the new number types.
+	* doprnt.c (union printf_arg): Add new obj field.
+	* doprnt.c (get_doprnt_args): Use the new converters.
+	* doprnt.c (emacs_doprnt_1): Convert and print the new number types.
+	* emacs.c (main_1): Call syms_of_, vars_of_, and init_number.
+	* floatfns.c (float_to_int): Convert to bignums if necessary.
+	* floatfns.c (extract_float): Extract the new number types.
+	* floatfns.c (Fexpt): Work with bignums.
+	* floatfns.c (Fsqrt): Ditto.
+	* floatfns.c (Fabs): Work with the new number types.
+	* floatfns.c (Ffloat): Ditto.
+	* floatfns.c (Fceiling): Ditto.
+	* floatfns.c (Ffloor): Ditto.
+	* floatfns.c (Fround): Ditto.
+	* floatfns.c (Ftruncate): Ditto.
+	* fns.c (Frandom): Update docstring and accept bignum limits.
+	* fns.c (internal_equalp): Work with the new number types.
+	* general-slots.h: Add new type name symbols.
+	* lisp.h: Include number.h.  Add isratio_string prototype.
+	Declare Qnonnegativep and Qnumberp.
+	* lread.c (read_atom): Read ratios.
+	* lread.c (parse_integer): Read bignums.
+	* lread.c (isratio_string): New functions.
+	* lrecord.h (lrecord_type): Add new number type values.
+	* symsinit.h: Declare syms_of_, vars_of_, and init_number.
+	* sysdep.c (seed_random): Set the bignum random seed.
+
 2004-03-30  Zajcev Evgeny  <zevlg@yandex.ru>
 
 	* window.c: Declare `allow_deletion_of_last_visible_frame' extern.

@@ -204,6 +204,13 @@ mule_canna_objs=mule-canna.o
 mule_wnn_objs=mule-wnnfns.o
 #endif
 
+#ifdef WITH_GMP
+number_objs=number-gmp.o number.o
+#endif
+#ifdef WITH_MP
+number_objs=number-mp.o number.o
+#endif
+
 #if defined(HAVE_POSTGRESQL) && !defined(HAVE_SHLIB)
 postgresql_objs=$(BLDMODULES)/postgresql/postgresql.o
 #endif
@@ -268,8 +275,8 @@ objs=\
  hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
  macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
- $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) objects.o opaque.o\
- $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
+ $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) $(number_objs) objects.o\
+ opaque.o $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\

@@ -80,6 +80,9 @@ TYPE is a Common Lisp type specifier."
 	((and (eq type 'character) (char-int-p x)) (int-char x))
 	((and (eq type 'integer) (characterp x)) (char-int x))
 	((eq type 'float) (float x))
+	((and (featurep 'number-types)
+	      (memq type '(integer ratio bigfloat))
+	      (coerce-number x type)))
 	((eq type 'bit-vector) (if (bit-vector-p x) x
 				 (apply 'bit-vector (append x nil))))
 	((eq type 'weak-list)

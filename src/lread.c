@@ -1848,6 +1848,14 @@ read_atom (Lisp_Object readcharfun,
 #endif
 	    }
 	}
+#ifdef HAVE_RATIO
+      if (isratio_string (read_ptr))
+	{
+	  ratio_set_string (scratch_ratio, read_ptr, 0);
+	  ratio_canonicalize (scratch_ratio);
+	  return Fcanonicalize_number (make_ratio_rt (scratch_ratio));
+	}
+#endif
       if (isfloat_string (read_ptr))
 	return make_float (atof (read_ptr));
     }
@@ -1920,11 +1928,18 @@ parse_integer (const Ibyte *buf, Bytecount len, int base)
     return result;
   }
  overflow:
+#ifdef HAVE_BIGNUM
+  {
+    bignum_set_string (scratch_bignum, buf, 0);
+    return make_bignum_bg (scratch_bignum);
+  }
+#else
   return Fsignal (Qinvalid_read_syntax,
                   list3 (build_msg_string
 			 ("Integer constant overflow in reader"),
                          make_string (buf, len),
                          make_int (base)));
+#endif /* HAVE_BIGNUM */
  loser:
   return Fsignal (Qinvalid_read_syntax,
                   list3 (build_msg_string
@@ -2653,6 +2668,39 @@ isfloat_string (const char *cp)
 	      || state == (LEAD_INT|DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)
 	      || state == (DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)));
 }
+
+#ifdef HAVE_RATIO
+int
+isratio_string (const char *cp)
+{
+  /* Possible minus sign */
+  if (*cp == '-')
+    cp++;
+
+  /* Numerator */
+  if (*cp < '0' || *cp > '9')
+    return 0;
+
+  do {
+    cp++;
+  } while (*cp >= '0' && *cp <= '9');
+
+  /* Slash */
+  if (*cp++ != '/')
+    return 0;
+
+  /* Denominator */
+  if (*cp < '0' || *cp > '9')
+    return 0;
+
+  do {
+    cp++;
+  } while (*cp >= '0' && *cp <= '9');
+
+  return *cp == '\0' || *cp == ' ' || *cp =='\t' || *cp == '\n' ||
+    *cp == '\r' || *cp == '\f';
+}
+#endif
 
 static void *
 sequence_reader (Lisp_Object readcharfun,

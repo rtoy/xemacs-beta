@@ -151,6 +151,7 @@ void syms_of_mule_charset (void);
 void syms_of_mule_coding (void);
 void syms_of_mule_wnn (void);
 void syms_of_nt (void);
+void syms_of_number (void);
 void syms_of_objects (void);
 void syms_of_objects_mswindows (void);
 void syms_of_objects_tty (void);
@@ -391,6 +392,7 @@ void reinit_vars_of_mule_coding (void);
 void vars_of_mule_wnn (void);
 void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
+void vars_of_number (void);
 void vars_of_objects (void);
 void reinit_vars_of_objects (void);
 void vars_of_objects_tty (void);
@@ -547,5 +549,9 @@ void vars_of_ui_gtk (void);
 void complex_vars_of_glyphs_gtk (void);
 void init_event_gtk_late (void);
 void console_type_create_select_gtk (void);
+
+/* Enhanced number initialization: must be done only at runtime due to complex
+   interactions with the supporting libraries. */
+void init_number (void);
 
 #endif /* INCLUDED_symsinit_h_ */

@@ -3635,6 +3635,9 @@ seed_random (long arg)
   srand ((unsigned int)arg);
 # endif
 #endif
+#ifdef HAVE_BIGNUM
+  bignum_random_seed ((unsigned long) arg);
+#endif
 }
 
 /*
