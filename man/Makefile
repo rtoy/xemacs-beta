@@ -27,7 +27,7 @@ TEXI2HTML = texi2html -verbose -split chapter
 RM = rm -f
 
 .SUFFIXES:
-.SUFFIXES: .html .info .texi .dvi
+.SUFFIXES: .html .info .texi .dvi .pdf
 
 RECURSIVE_MAKE = $(MAKE) $(MFLAGS) MAKEINFO='$(MAKEINFO)' TEXI2DVI='$(TEXI2DVI)'
 
@@ -88,6 +88,23 @@ dvi_files = \
 	widget.dvi \
 	xemacs.dvi \
 	xemacs-faq.dvi
+
+pdf_files = \
+       cl.pdf \
+       custom.pdf \
+       emodules.pdf \
+       external-widget.pdf \
+       info.pdf \
+       lispref.pdf \
+       internals.pdf \
+       new-users-guide.pdf \
+       standards.pdf \
+       term.pdf \
+       termcap.pdf \
+       texinfo.pdf \
+       widget.pdf \
+       xemacs.pdf \
+       xemacs-faq.pdf
 
 xemacs-srcs = \
 	xemacs/abbrevs.texi \
@@ -281,7 +298,7 @@ lispref : $(INFODIR)/lispref.info
 internals : $(INFODIR)/internals.info
 new-users-guide.info : $(INFODIR)/new-users-guide.info
 
-.PHONY : xemacs lispref internals new-users-guide info dvi
+.PHONY : xemacs lispref internals new-users-guide info dvi pdf
 
 info : $(info_files)
 html : $(html_files)
@@ -297,6 +314,9 @@ html : $(html_files)
 .texi.dvi:
 	-$(TEXI2DVI) $<
 
+.texi.pdf:
+	-$(TEXI2DVI) --pdf $<
+
 xemacs.dvi : $(xemacs-srcs)
 	$(TEXI2DVI) -I xemacs xemacs/xemacs.texi
 
@@ -311,12 +331,26 @@ new-users-guide.dvi : $(new-users-guide-srcs)
 
 dvi : $(dvi_files)
 
+xemacs.pdf: $(xemacs-srcs)
+	$(TEXI2DVI) --pdf -I xemacs xemacs/xemacs.texi
+
+lispref.pdf: $(lispref-srcs)
+	$(TEXI2DVI) --pdf -I lispref lispref/lispref.texi
+
+internals.pdf: $(internals-srcs)
+	$(TEXI2DVI) --pdf -I internals internals/internals.texi
+
+new-users-guide.pdf: $(new-users-guide-srcs)
+	$(TEXI2DVI) --pdf -I new-users-guide new-users-guide/new-users-guide.texi
+
+pdf: $(pdf_files)
+
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	$(RM) *.toc *.aux *.log *.op *.cp *.cps *.fn *.fns
 	$(RM) *.ky *.kys *.pg *.pgs *.tp *.tps *.vr *.vrs
 clean: mostlyclean
-	$(RM) core *.dvi
+	$(RM) core *.dvi *.pdf
 distclean: clean
 realclean: distclean
 extraclean: distclean

@@ -1,3 +1,7 @@
+2003-09-19  Sandra Wambold  <wambold@xemacs.org>
+
+	* Makefile: add targets to produce PDF files
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
