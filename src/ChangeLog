@@ -1,3 +1,14 @@
+2002-07-31  Didier Verna  <didier@xemacs.org>
+
+	* file-coding.c (make_coding_system_1): Add missing call to
+	`xfree (newname)'.
+
+	* fix memory leak introduced by
+	2002-04-14  Ben Wing  <ben@xemacs.org>:
+	alloc.c (Fmake_byte_code): don't xnew_array of size 0.
+	(sweep_compiled_functions): define ADDITIONAL_FREE_compiled_function
+	to free the args field when needed.
+
 2002-07-31  David Bush  <David.Bush@intel.com>
 
 	* eldap.c: Add the dumpable-flag to the USE_KKCC version of 

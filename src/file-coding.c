@@ -1176,6 +1176,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
 
       newname = emacs_sprintf_malloc (NULL, "Int%d", coding_system_tick);
       defmnem = build_intstring (newname);
+      xfree (newname);
     }
   else
     CHECK_SYMBOL (name_or_existing);

@@ -1537,7 +1537,8 @@ This is terrible behavior which is retained for compatibility with old
 	}
     }
   
-    f->args = xnew_array (Lisp_Object, totalargs);
+    if (totalargs)
+      f->args = xnew_array (Lisp_Object, totalargs);
 
     {
       LIST_LOOP_2 (arg, arglist)
@@ -3621,7 +3622,8 @@ static void
 sweep_compiled_functions (void)
 {
 #define UNMARK_compiled_function(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
-#define ADDITIONAL_FREE_compiled_function(ptr)
+#define ADDITIONAL_FREE_compiled_function(ptr) \
+  if (ptr->args_in_array) xfree (ptr->args)
 
   SWEEP_FIXED_TYPE_BLOCK (compiled_function, Lisp_Compiled_Function);
 }
