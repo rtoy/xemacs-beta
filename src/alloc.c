@@ -3125,6 +3125,10 @@ lispdesc_structure_size (const void *obj,
 
 #endif /* defined (USE_KKCC) || defined (PDUMP) */
 
+#define GC_CHECK_NOT_FREE(lheader)					\
+      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
+			  ! ((struct lcrecord_header *) lheader)->free)
+
 #ifdef USE_KKCC
 /* The following functions implement the new mark algorithm. 
    They mark objects according to their descriptions.  They 
@@ -3133,11 +3137,6 @@ lispdesc_structure_size (const void *obj,
 static void mark_struct_contents (const void *data,
 				  const struct sized_memory_description *sdesc,
 				  int count);
-
-#define GC_CHECK_NOT_FREE(lheader)					\
-      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
-			  ! ((struct lcrecord_header *) lheader)->free)
-
 
 #ifdef ERROR_CHECK_GC
 #define KKCC_DO_CHECK_FREE(obj, allow_free)			\

@@ -1,3 +1,7 @@
+2003-02-07  Mike Sperber  <mike@xemacs.org>
+
+	* alloc.c (GC_CHECK_NOT_FREE): Pull this out of USE_KKCC.
+
 2003-02-07  Ben Wing  <ben@xemacs.org>
 
 	* lread.c (Fload_internal):
@@ -167,7 +171,6 @@
 	Document exact functioning of `vertical-motion' better, and its
 	differences from GNU Emacs.
 	
-
 2003-02-06  Ben Wing  <ben@xemacs.org>
 
 	* unicode.c:
