@@ -1,3 +1,7 @@
+2002-10-17  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* PROBLEMS (Missing charsets): Remove ambiguity.
+
 2002-10-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* INSTALL (PREREQUISITES): Recommend Texinfo 4.2.
