@@ -1,7 +1,24 @@
+2002-11-11  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* etc/Emacs.ad (Emacs.bold-italic.attributeFont): Per G. Boffi.
+
+2002-11-04  giacomo boffi  <giacomo.boffi@polimi.it>
+
+	* sample.Xdefaults (Emacs.default.attributeForeground): Add an
+	example of setting the default bold-italic face.
+
+2002-10-30  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* etc/TUTORIAL.ja: Typo fix.
+
 2002-10-25  Steve Youngs  <youngs@xemacs.org>
 
 	* TUTORIAL.fr (suivante): Typo fix.
 	From juergen stuber <stuberj@mines.inpl-nancy.fr>.
+
+2002-10-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/BETA: Improve descriptions of XEmacs Patches; mention Design.
 
 2002-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -29,6 +46,10 @@
 2002-07-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-icon.xpm: It's XEmacs, not Xemacs.
+
+2002-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/BETA (Large contributions): New section.  Reorganize file.
 
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
