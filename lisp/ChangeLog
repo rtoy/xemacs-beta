@@ -1,3 +1,30 @@
+2003-01-10  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el: Revert his change
+	
+		2003-01-10  Mike Sperber  <mike@xemacs.org>
+
+		* window-xemacs.el (window-reduce-to-one): Rewrite in terms of
+		`delete-other-windows.'
+		(window-find-buffer-subwindow): Add.
+
+	It caused subtle breakage.  (And add a comment to that effect.)
+	
+2003-01-13  Mike Sperber <mike@xemacs.org>
+
+	* packages.el: 
+	* find-paths.el: Revert this change
+
+		2000-04-01  Mike Sperber  <mike@xemacs.org>
+
+		* packages.el (packages-find-package-directories): Added support
+		for external package hierarchies with in-place installations.
+
+		* find-paths.el (paths-root-in-place-p): Added.
+		(paths-find-emacs-directory): Added support for external
+		directories with in-place installations.
+		(paths-find-site-directory): Ditto.
+
 2003-01-19  Mike Sperber  <mike@xemacs.org>
 
 	* startup.el (normal-top-level): Compute `emacs-data-roots.'  Call
