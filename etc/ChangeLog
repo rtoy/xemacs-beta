@@ -1,3 +1,7 @@
+2004-03-30  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES: Introduce new packages escreen, xlib, and xwem.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.
