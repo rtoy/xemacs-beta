@@ -1224,7 +1224,7 @@ xxML and hairy script languages !)  and the Scheme language.\n"))
     (pelegri
      (widget-insert
       "\
-I did my my PhD at UCB and a postdoc at CSL/PARC.  I joined Sun in 1990,
+I did my PhD at UCB and a postdoc at CSL/PARC.  I joined Sun in 1990,
 spent some time in DevPro (that is when I made my contribution to
 XEmacs) and joined JavaSoft in fall '95, where I've been the lead for
 several JSP-related specifications and JAX-RPC.  I'm currently the Web

@@ -951,7 +951,7 @@ Returns the modified PACKAGE-LIST.  Any missing fields are created."
 (defun package-get-staging-dir (filename)
   "Return a good place to stash FILENAME when it is retrieved.
 Use `package-get-dir' for directory to store stuff.
-Creates `package-get-dir'  it it doesn't exist."
+Creates `package-get-dir'  if it doesn't exist."
   (interactive "FPackage filename: ")
   (if (not (file-exists-p package-get-dir))
       (make-directory package-get-dir))

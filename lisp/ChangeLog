@@ -1,3 +1,11 @@
+2001-07-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* about.el (about-personal-info): Fix word duplication typos.
+	* dialog.el (make-dialog-box): Ditto.
+	* lisp-mode.el (lisp-indent-function): Ditto.
+	* package-admin.el (package-admin-delete-binary-package): Ditto.
+	* package-get.el (package-get-staging-dir): Ditto.
+
 2001-07-14  Sean MacLennan  <seanm@storm.ca>
 
 	* package-admin.el (package-install-hook): New.

@@ -290,7 +290,7 @@ select a different printer and/or change printer options.  Connection
 name can change as a result of selecting a different printer device.  If
 a device is specified, then changes are stored into the settings object
 currently selected into that printer.  If a settings object is supplied,
-then changes are recorded into it, and, it it is selected into a
+then changes are recorded into it, and, it is selected into a
 printer, then changes are propagated to that printer 
 too.
 
@@ -338,7 +338,7 @@ can select a different printer and/or change printer options.
 Connection name can change as a result of selecting a different printer
 device.  If a device is specified, then changes are stored into the
 settings object currently selected into that printer.  If a settings
-object is supplied, then changes are recorded into it, and, it it is
+object is supplied, then changes are recorded into it, and, it is
 selected into a printer, then changes are propagated to that printer
 too.
 

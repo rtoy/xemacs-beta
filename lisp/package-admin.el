@@ -439,7 +439,7 @@ PACKAGE is a symbol, not a string."
 		  ;; Make sure that the file is writable.
 		  ;; (This is important under MS Windows.)
 		  ;; I do not know why it important under MS Windows but
-		  ;;    1. It bombs out out when the file does not exist. This can be condition-cased
+		  ;;    1. It bombs out when the file does not exist. This can be condition-cased
 		  ;;    2. If I removed the write permissions, I do not want XEmacs to just ignore them.
 		  ;;       If it wants to, XEmacs may ask, but that is about all
 		  ;; (set-file-modes file 438) ;; 438 -> #o666
