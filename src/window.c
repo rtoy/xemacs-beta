@@ -1942,10 +1942,22 @@ mark_window_as_deleted (struct window *w)
      reinitialized by the window-configuration code as necessary. */
   finalize_window ((void *) w, 0);
 
-  /* Nobody should be accessing anything in this object any more, and
-     making them Qnil allows for better GC'ing in case a pointer to
-     the dead window continues to hang around.  Zero all other structs
-     in case someone tries to access something through them.
+  /* "Nobody should be accessing anything in this object any more...",
+     I said, but unfortunately that's not quite true.
+     set-window-configuration undeletes the window and relies on
+     certain items to be there already.  Fuckme!  we really should
+     rewrite it in Lisp and just recreate the windows. (But does any
+     code depend on the pointers being the same?  At the very least,
+     we should reinit everything in the window.)
+
+     Nobody should be accessing anything in this object any more,
+     and making them Qnil allows for better GC'ing in case a pointer
+     to the dead window continues to hang around.  Zero all other
+     structs in case someone tries to access something through them.
+
+     (So, in point of fact, we zero out all of the "saved" slots,
+     which are obviously restored from the window config, plus the
+     slots which were already zeroed.)
 
      As an example of why setting the values to Qnil is good, here
      is an old comment:
@@ -1963,10 +1975,16 @@ mark_window_as_deleted (struct window *w)
      window-config data), we set them all to nil so that we
      are able to collect more actual garbage. */
 
-  zero_lcrecord (w);
-
-#define WINDOW_SLOT(slot) w->slot = Qnil;
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare) w->slot = Qnil;
 #include "winslots.h"
+
+  w->next = Qnil;
+  w->prev = Qnil;
+  w->hchild = Qnil;
+  w->vchild = Qnil;
+  w->parent = Qnil;
+  w->subwindow_instance_cache = Qnil;
 
   w->dead = 1;
 }

@@ -1,3 +1,12 @@
+2001-06-18  Ben Wing  <ben@xemacs.org>
+
+	* window.c:
+	* window.c (mark_window_as_deleted):
+	* window.c (WINDOW_SLOT):
+	We can't actually zero out everything in the window when deleting
+	it.  set-window-configuration assumes that various slots of the
+	deleted window are still accurate.
+
 2001-06-17  Ben Wing  <ben@xemacs.org>
 
 	---------------------------------------------------------------
