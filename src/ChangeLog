@@ -1,3 +1,8 @@
+2002-03-21  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
+
+	* event-gtk.c (emacs_gtk_format_magic_event):  Fixed compilation
+	typos.
+
 2002-03-20  Ben Wing  <ben@xemacs.org>
 
 	* chartab.c:

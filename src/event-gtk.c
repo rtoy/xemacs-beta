@@ -211,10 +211,10 @@ handle_client_message (struct frame *f, GdkEvent *event)
 static void
 emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
 {
-  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
+  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (emacs_event));
   if (CONSOLE_GTK_P (XCONSOLE (console)))
-    write_c_string (gtk_event_name (event->event.magic.underlying_gdk_event.
-				    type));
+    write_c_string (gtk_event_name (emacs_event->event.magic.underlying_gdk_event.type),
+		    pstream);
 }
 
 static int
