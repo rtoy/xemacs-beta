@@ -1,3 +1,8 @@
+2005-03-15  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Include <X11/Intrinsic.h> when checking for
+	<Xaw/XawInit.h> usability.
+
 2005-03-23  Vin Shelton  <acs@xemacs.org>
 
 	* configure.in: Remove -fno-gnu-linker option from Solaris

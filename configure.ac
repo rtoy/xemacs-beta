@@ -3928,7 +3928,10 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
       [AC_MSG_WARN([Could not find a non-3d Athena header set.])],
       [AC_CHECK_HEADER(X11/Xaw/XawInit.h,
         [athena_h_path=X11/Xaw],
-        [AC_MSG_WARN([Could not find a non-3d Athena header set.])])])
+        [AC_MSG_WARN([Could not find a non-3d Athena header set.])],
+[
+#include <X11/Intrinsic.h>
+])])
   else
     dnl The three-d Athena headers are so much more slippery.
     dnl Curse this `Lets replace standard libraries' thing that they did. :/
@@ -3939,6 +3942,7 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
+#include <X11/Intrinsic.h.>
 ])
 
     dnl Is the variant specific header directory directly under include?
@@ -3950,6 +3954,7 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
+#include <X11/Intrinsic.h>
 ])
     fi
 
@@ -3965,6 +3970,7 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
+#include <X11/Intrinsic.h>
 ])
     fi
 
@@ -3980,6 +3986,7 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
+#include <X11/Intrinsic.h>
 ])
     fi
 
