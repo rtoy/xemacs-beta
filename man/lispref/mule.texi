@@ -2097,7 +2097,7 @@ initialized as constants.
 * Characters to be preserved:: No transformation needed for these characters.
 * The program to decode to internal format:: .
 * The program to encode from internal format:: . 
-
+* The actual coding system:: .
 @end menu
 
 @node Four bits to ASCII, URI Encoding constants, , CCL Example
@@ -2117,7 +2117,7 @@ after this file is loaded gives the ASCII encoding of 7.
   (let ((val (make-vector 256 0))
 	(i 0))
     (while (< i (length val))
-      (aset val i (char-int (aref (format "%02X" i) 0)))
+      (aset val i (char-to-int (aref (format "%02X" i) 0)))
       (setq i (1+ i)))
     val)
   "Table to find an ASCII version of an octet's most significant 4 bits.")
@@ -2125,7 +2125,7 @@ after this file is loaded gives the ASCII encoding of 7.
 
   The next table, @code{url-coding-low-order-nybble-as-ascii} is almost
 the same thing, but this time it has a map for the hex encoding of the
-low-order four bits.  So the sixty-fifth entry (offset @samp{#x51}) is
+low-order four bits.  So the sixty-fifth entry (offset @samp{#x41}) is
 the ASCII encoding of `1', the hundred-and-twenty-second (offset
 @samp{#x7a}) is the ASCII encoding of `A'.
 
@@ -2134,7 +2134,7 @@ the ASCII encoding of `1', the hundred-and-twenty-second (offset
   (let ((val (make-vector 256 0))
 	(i 0))
     (while (< i (length val))
-      (aset val i (char-int (aref (format "%02X" i) 1)))
+      (aset val i (char-to-int (aref (format "%02X" i) 1)))
       (setq i (1+ i)))
     val)
   "Table to find an ASCII version of an octet's least significant 4 bits.")
@@ -2154,14 +2154,14 @@ the space character.  When doing this in CCL, we use the
 @code{url-coding-escaped-space-code} variable. 
   
 @example
-(defvar url-coding-escape-character-code (char-int ?%)
+(defvar url-coding-escape-character-code (char-to-int ?%)
   "The code point for the percentage sign, in ASCII.")
 
-(defvar url-coding-escaped-space-code (char-int ?+)
+(defvar url-coding-escaped-space-code (char-to-int ?+)
   "The URL-encoded value of the space character, that is, +.")
 @end example
 
-@node Numeric to ASCII-hexadecimal conversion
+@node Numeric to ASCII-hexadecimal conversion, Characters to be preserved, URI Encoding constants, CCL Example
 @subsubsection Numeric to ASCII-hexadecimal conversion
 
   Now, we have a couple of utility tables that wouldn't be necessary in
@@ -2177,7 +2177,7 @@ a few examples.)
   (let ((i 0)
 	(val (make-vector 16 0)))
     (while (< i 16)
-      (aset val i (char-int (aref (format "%X" i) 0)))
+      (aset val i (char-to-int (aref (format "%X" i) 0)))
       (setq i (1+ i)))
     val)
   "A map from a hexadecimal digit's numeric value to its encoding in ASCII.")
@@ -2193,7 +2193,7 @@ a few examples.)
   "A map from Latin 1 code points to their values as hexadecimal digits.")
 @end example
 
-@node Characters to be preserved
+@node Characters to be preserved, The program to decode to internal format, Numeric to ASCII-hexadecimal conversion, CCL Example
 @subsubsection Characters to be preserved
 
   And finally, the last of these tables.  URL encoding says that
@@ -2227,7 +2227,7 @@ every nanosecond counts.
 octet as its ASCII encoding.")
 @end example
 
-@node The program to decode to internal format
+@node The program to decode to internal format, The program to encode from internal format, Characters to be preserved, CCL Example
 @subsubsection The program to decode to internal format
 
   After the almost interminable tables, we get to the CCL.  The first
@@ -2288,7 +2288,7 @@ buffer, and move to the next iteration of the loop.
 internal encoding. ")
 @end example
 
-@node The program to encode from internal format
+@node The program to encode from internal format, The actual coding system, The program to decode to internal format, CCL Example
 @subsubsection The program to encode from internal format
 
   Next, we see the CCL program to encode ASCII text as URL coded text.
@@ -2323,6 +2323,36 @@ We then read an octet from the input into @samp{r0}, and repeat the loop.
        (repeat))))
   "CCL program to encode octets (almost) according to RFC 1738")
 @end example
+
+@node The actual coding system, , The program to encode from internal format, CCL Example
+@subsubsection The actual coding system
+
+To actually create the coding system, we call
+@samp{make-coding-system}.  The first argument is the symbol that is to
+be the name of the coding system, in our case @samp{url-coding}. The
+second specifies that the coding system is to be of type
+@samp{ccl}---there are several other coding system types available,
+including, see the documentation for @samp{make-coding-system} for the
+full list. Then there's a documentation string describing the wherefore
+and caveats of the coding system, and the final argument is a property
+list giving information about the CCL programs and the coding system's
+mnemonic. 
+
+@example
+(make-coding-system 
+ 'url-coding 'ccl 
+ "The coding used by application/x-www-form-urlencoded HTTP applications.
+This coding form doesn't specify anything about non-ASCII characters, so
+make sure you've transformed to a seven-bit coding system first."
+ '(decode ccl-decode-urlcoding
+   encode ccl-encode-urlcoding
+   mnemonic "URLenc"))
+@end example
+
+If you're lucky, the @samp{url-coding} coding system describe here
+should be available in the XEmacs package system. Otherwise, downloading
+it from @samp{http://www.parhasard.net/url-coding.el} should work for
+the foreseeable future. 
 
 @node Category Tables, Unicode Support, CCL, MULE
 @section Category Tables
