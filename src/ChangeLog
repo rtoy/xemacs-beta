@@ -1,3 +1,7 @@
+2001-05-07  Martin Buchholz  <martin@xemacs.org>
+
+	* s/bsd386.h: Use NOT_C_CODE instead of `emacs' to protect Makefiles
+
 2001-05-08  Martin Buchholz  <martin@xemacs.org>
 
 	* s/bsdos4.h: Protect C code with #ifndef NOT_C_CODE.

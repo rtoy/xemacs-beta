@@ -18,7 +18,7 @@
 #define LIBS_SYSTEM "-lutil -lcompat"
 
 /* This silences a few compilation warnings.  */
-#ifdef emacs
+#ifndef NOT_C_CODE
 #undef BSD
 #include <sys/param.h> /* To get BSD defined consistently.  */
 #endif
