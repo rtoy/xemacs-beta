@@ -939,10 +939,10 @@ END_C_DECLS
 
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)			\
 do {								\
-  Ibyte *lttff;						\
+  Ibyte *lttff;							\
 								\
   LOCAL_TO_WIN32_FILE_FORMAT (XSTRING_DATA (path), lttff);	\
-  C_STRING_TO_TSTR (lttff, out);				\
+  PATHNAME_CONVERT_OUT (lttff, out);				\
 } while (0)
 
 Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
@@ -1006,40 +1006,40 @@ do {							\
 
 #ifdef CYGWIN
 
-#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)		     \
-do									     \
-{									     \
-  Ibyte *lffmutt_fname1;						     \
-  Ibyte *lffmutt_pathint = XSTRING_DATA (lispstr);			     \
-									     \
-  if ((lffmutt_fname1 = qxestrchr (lffmutt_pathint, ':')) != NULL	     \
-      && *++lffmutt_fname1 == '/' && *++lffmutt_fname1 == '/')		     \
-    {									     \
-      /* If URL style file, the innards may have Cygwin mount points and     \
-	 the like.  so separate out the innards, process them, and put back  \
-	 together. */							     \
-      if (qxestrncasecmp_ascii (lffmutt_pathint, "file://", 7) == 0)	     \
-	{								     \
-	  Ibyte *lffmutt_path1, *lffmutt_path2;			     \
-	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1);   \
-	  if (lffmutt_path1 == lffmutt_pathint + 7) /* Optimization */	     \
-	    lffmutt_path2 = lffmutt_pathint;				     \
-	  else								     \
-	    {								     \
+#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)		\
+do									\
+{									\
+  Ibyte *lffmutt_fname1;						\
+  Ibyte *lffmutt_pathint = XSTRING_DATA (lispstr);			\
+									\
+  if ((lffmutt_fname1 = qxestrchr (lffmutt_pathint, ':')) != NULL	\
+      && *++lffmutt_fname1 == '/' && *++lffmutt_fname1 == '/')		\
+    {									\
+      /* If URL style file, the innards may have Cygwin mount points and \
+	 the like.  so separate out the innards, process them, and put back \
+	 together. */							\
+      if (qxestrncasecmp_ascii (lffmutt_pathint, "file://", 7) == 0)	\
+	{								\
+	  Ibyte *lffmutt_path1, *lffmutt_path2;				\
+	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1); \
+	  if (lffmutt_path1 == lffmutt_pathint + 7) /* Optimization */	\
+	    lffmutt_path2 = lffmutt_pathint;				\
+	  else								\
+	    {								\
 	      lffmutt_path2 = alloca_ibytes (7 + qxestrlen (lffmutt_path1) \
-					       + 1);			     \
-	      qxestrncpy (lffmutt_path2, lffmutt_pathint, 7);		     \
-	      qxestrcpy (lffmutt_path2 + 7, lffmutt_path1);		     \
-	    }								     \
-	  C_STRING_TO_TSTR (lffmutt_path2, pathout);			     \
-	}								     \
-      else								     \
-	/* A straight URL, just convert */				     \
-	LISP_STRING_TO_TSTR (lispstr, pathout);				     \
-    }									     \
-  else									     \
-    /* Not URL-style, must be a straight filename. */			     \
-    LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout);			     \
+					       + 1);			\
+	      qxestrncpy (lffmutt_path2, lffmutt_pathint, 7);		\
+	      qxestrcpy (lffmutt_path2 + 7, lffmutt_path1);		\
+	    }								\
+	  C_STRING_TO_TSTR (lffmutt_path2, pathout);			\
+	}								\
+      else								\
+	/* A straight URL, just convert */				\
+	LISP_STRING_TO_TSTR (lispstr, pathout);				\
+    }									\
+  else									\
+    /* Not URL-style, must be a straight filename. */			\
+    LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout);			\
 } while (0)
 
 #else /* not CYGWIN */
@@ -1176,6 +1176,7 @@ DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);
+Ibyte *mswindows_read_link (const Ibyte *fname);
 
 /* in intl-win32.c */
 extern Lisp_Object Qmswindows_tstr, Qmswindows_unicode;

@@ -2391,7 +2391,7 @@ do {									\
 
 int eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 	     Bytecount len, Charcount charlen, const Ibyte *data,
-	     const Eistring *ei2, int is_c, int fold_case);
+	     const Eistring *ei2, int is_ascii, int fold_case);
 
 #define eicmp_ei(eistr, eistr2) \
   eicmp_1 (eistr, 0, -1, -1, -1, 0, eistr2, 0, 0)

@@ -1,7 +1,7 @@
 /* Sound functions.
    Copyright (C) 1992, 1993, 1994 Lucid Inc.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2004 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -161,20 +161,17 @@ Windows the sound file must be in WAV format.
 #ifdef HAVE_NATIVE_SOUND
   if (NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
     {
-      Extbyte *fileext;
-
-#ifdef WIN32_NATIVE
-      /* #### more garbage.  we should be passing the internal file name
-	 to play_sound_file. */
-      LISP_STRING_TO_EXTERNAL (file, fileext, Qmswindows_tstr);
+#ifdef WIN32_ANY
+      nt_play_sound_file (file, vol);
 #else
-      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
-#endif
+      Extbyte *fileext;
+      LISP_PATHNAME_CONVERT_OUT (file, fileext);
       /* The sound code doesn't like getting SIGIO interrupts.
 	 Unix sucks! */
       stop_interrupts ();
       play_sound_file (fileext, vol);
       start_interrupts ();
+#endif /* WIN32_NATIVE */
       QUIT;
     }
 #endif /* HAVE_NATIVE_SOUND */

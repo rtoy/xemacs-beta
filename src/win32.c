@@ -23,6 +23,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #include "buffer.h"
 #include "console-msw.h"
+#include "hash.h"
+#include "profile.h"
 
 #include "sysfile.h"
 #include "sysproc.h"
@@ -46,7 +48,10 @@ Info on Windows issues:
    nil means no, t means yes. */
 Lisp_Object Vmswindows_downcase_file_names;
 
+struct hash_table *mswindows_read_link_hash;
+
 int mswindows_windows9x_p;
+Boolint mswindows_shortcuts_are_symlinks;
 
 pfSwitchToThread_t xSwitchToThread;
 
@@ -341,6 +346,7 @@ otherwise it is an integer representing a ShowWindow flag:
 
     if (STRINGP (operation))
       LISP_STRING_TO_TSTR (operation, opext);
+    /* #### What about path names, which may be links? */
     if (STRINGP (parameters))
       LISP_STRING_TO_TSTR (parameters, parmext);
     if (STRINGP (current_dir))
@@ -403,6 +409,228 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 }
 #endif
 
+struct read_link_hash
+{
+  Ibyte *resolved;
+  DWORD ticks;
+};
+
+static Ibyte *
+mswindows_read_link_1 (const Ibyte *fname)
+{
+#ifdef NO_CYGWIN_COM_SUPPORT
+  return NULL;
+#else
+  Ibyte *retval = NULL;
+  Extbyte *fnameext;
+  HANDLE fh;
+  struct read_link_hash *rlh;
+  DWORD ticks;
+
+  /* The call below to resolve a link is rather time-consuming.
+     I tried implementing a simple cache based on creation and write time
+     of the file, but that didn't help enough -- maybe 30% faster but still
+     a lot of time spent here.  So just do something cheesy and don't
+     check again if we've recently (< a second) done so. */
+
+  if (!mswindows_read_link_hash)
+    mswindows_read_link_hash = make_string_hash_table (1000);
+  C_STRING_TO_TSTR (fname, fnameext);
+
+  /* See if we can find a cached value. */
+
+  /* The intermediate cast fools gcc into not outputting strict-aliasing
+     complaints */
+  ticks = GetTickCount ();
+  if (!gethash (fname, mswindows_read_link_hash,
+		(const void **) (void *) &rlh))
+    {
+      rlh = xnew_and_zero (struct read_link_hash);
+      puthash (qxestrdup (fname), rlh, mswindows_read_link_hash);
+    }
+  else if (ticks - rlh->ticks < 1000)
+    {
+      return rlh->resolved ? qxestrdup (rlh->resolved) : NULL;
+    }
+
+  rlh->ticks = ticks;
+
+  /* Retrieve creation/write time of link file. */
+
+  /* No access rights required to get info.  */
+  if ((fh = qxeCreateFile (fnameext, 0, 0, NULL, OPEN_EXISTING, 0, NULL))
+      == INVALID_HANDLE_VALUE)
+    {
+      CloseHandle (fh);
+      return NULL;
+    }
+
+  CloseHandle (fh);
+
+  /* ####
+		   
+  Note the following in the docs:
+		   
+  Note: The IShellLink interface has an ANSI version
+  (IShellLinkA) and a Unicode version (IShellLinkW). The
+  version that will be used depends on whether you compile
+  for ANSI or Unicode. However, Microsoft® Windows 95 and
+  Microsoft® Windows 98 only support IShellLinkA.
+		   
+  We haven't yet implemented COM support in the
+  Unicode-splitting library.  I don't quite understand how
+  COM works yet, but it looks like what's happening is
+  that the ShellLink class implements both the IShellLinkA
+  and IShellLinkW interfaces.  To make this work at
+  run-time, we have to do something like this:
+		   
+  -- define a new interface qxeIShellLink that uses
+  Extbyte * instead of LPSTR or LPWSTR. (not totally
+  necessary since Extbyte * == LPSTR).
+		   
+  -- define a new class qxeShellLink that implements
+  qxeIShellLink.  the methods on this class need to create
+  a shadow ShellLink object to do all the real work, and
+  call the corresponding function from either the
+  IShellLinkA or IShellLinkW interfaces on this object,
+  depending on whether XEUNICODE_P is defined.
+		   
+  -- with appropriate preprocessor magic, of course, we
+  could make things appear transparent; but we've decided
+  not to do preprocessor magic for the moment.
+  */
+
+  /* #### Not Unicode-split for the moment; we have to do it
+     ourselves. */
+  if (XEUNICODE_P)
+    {
+      IShellLinkW *psl;
+
+      if (CoCreateInstance (
+			    XECOMID (CLSID_ShellLink),
+			    NULL,
+			    CLSCTX_INPROC_SERVER,
+			    XECOMID (IID_IShellLinkW),
+			    &VOIDP_CAST (psl)) == S_OK)
+	{
+	  IPersistFile *ppf;
+
+	  if (XECOMCALL2 (psl, QueryInterface,
+			  XECOMID (IID_IPersistFile),
+			  &VOIDP_CAST (ppf)) == S_OK)
+	    {
+	      Extbyte *fname_unicode;
+	      WIN32_FIND_DATAW wfd;
+	      LPWSTR resolved = alloca_array (WCHAR, PATH_MAX_EXTERNAL + 1);
+
+	      /* Always Unicode.  Not obvious from the
+		 IPersistFile documentation, but look under
+		 "Shell Link" for example code. */
+	      fname_unicode = fnameext;
+
+	      if (XECOMCALL2 (ppf, Load,
+			      (LPWSTR) fname_unicode,
+			      STGM_READ) == S_OK &&
+		  /* #### YUCK!  Docs read
+
+		  cchMaxPath 
+
+		  Maximum number of bytes to copy to the buffer pointed
+		  to by the pszFile parameter.
+
+		  But "cch" means "count of characters", not bytes.
+		  I'll assume the doc writers messed up and the
+		  programmer was correct.  Also, this approach is safe
+		  even if it's actually the other way around. */
+#if defined (CYGWIN_HEADERS) && W32API_INSTALLED_VER < W32API_VER(2,2)
+		  /* Another Cygwin prototype error,
+		     fixed in v2.2 of w32api */
+		  XECOMCALL4 (psl, GetPath, (LPSTR) resolved,
+			      PATH_MAX_EXTERNAL, &wfd, 0)
+#else
+		  XECOMCALL4 (psl, GetPath, resolved,
+			      PATH_MAX_EXTERNAL, &wfd, 0)
+#endif
+		  == S_OK)
+		TSTR_TO_C_STRING_MALLOC (resolved, retval);
+
+	      XECOMCALL0 (ppf, Release);
+	    }
+
+	  XECOMCALL0 (psl, Release);
+	}
+    }
+  else
+    {
+      IShellLinkA *psl;
+
+      if (CoCreateInstance (
+			    XECOMID (CLSID_ShellLink),
+			    NULL,
+			    CLSCTX_INPROC_SERVER,
+			    XECOMID (IID_IShellLinkA),
+			    &VOIDP_CAST (psl)) == S_OK)
+	{
+	  IPersistFile *ppf;
+
+	  if (XECOMCALL2 (psl, QueryInterface,
+			  XECOMID (IID_IPersistFile),
+			  &VOIDP_CAST (ppf)) == S_OK)
+	    {
+	      Extbyte *fname_unicode;
+	      WIN32_FIND_DATAA wfd;
+	      LPSTR resolved = alloca_array (CHAR, PATH_MAX_EXTERNAL + 1);
+
+	      /* Always Unicode.  Not obvious from the
+		 IPersistFile documentation, but look under
+		 "Shell Link" for example code. */
+	      C_STRING_TO_EXTERNAL (fname, fname_unicode,
+				    Qmswindows_unicode);
+
+	      if (XECOMCALL2 (ppf, Load,
+			      (LPWSTR) fname_unicode,
+			      STGM_READ) == S_OK
+		  && XECOMCALL4 (psl, GetPath, resolved,
+				 PATH_MAX_EXTERNAL, &wfd, 0) == S_OK)
+		TSTR_TO_C_STRING_MALLOC (resolved, retval);
+
+	      XECOMCALL0 (ppf, Release);
+	    }
+
+	  XECOMCALL0 (psl, Release);
+	}
+    }
+
+  /* Cache newly found value */
+  if (rlh->resolved)
+    xfree (rlh->resolved, Ibyte *);
+  rlh->resolved = retval ? qxestrdup (retval) : NULL;
+
+  return retval;
+#endif /* NO_CYGWIN_COM_SUPPORT */
+}
+
+/* Resolve a file that may be a shortcut.  Accepts either a file ending
+   with .LNK or without the ending.  If a shortcut is found, returns
+   a value that you must xfree(); otherwise NULL. */
+
+Ibyte *
+mswindows_read_link (const Ibyte *fname)
+{
+  int len = qxestrlen (fname);
+  if (len > 4 && !qxestrcasecmp_ascii (fname + len - 4, ".LNK"))
+    return mswindows_read_link_1 (fname);
+  else
+    {
+      DECLARE_EISTRING (name2);
+
+      eicpy_rawz (name2, fname);
+      eicat_ascii (name2, ".LNK");
+      return mswindows_read_link_1 (eidata (name2));
+    }
+}
+
+
 #if defined (WIN32_NATIVE) || defined (CYGWIN_BROKEN_SIGNALS)
 
 /* setitimer() does not exist on native MS Windows, and appears broken
@@ -414,7 +642,6 @@ No expansion is performed, all conversion is done by the cygwin runtime.
    mechanism for SIGCHLD.  Yuck.)
  */
 
-
 /*--------------------------------------------------------------------*/
 /*                             Signal support                         */
 /*--------------------------------------------------------------------*/
@@ -664,11 +891,20 @@ syms_of_win32 (void)
 void
 vars_of_win32 (void)
 {
-  DEFVAR_LISP ("mswindows-downcase-file-names", &Vmswindows_downcase_file_names /*
+  DEFVAR_LISP ("mswindows-downcase-file-names",
+	       &Vmswindows_downcase_file_names /*
 Non-nil means convert all-upper case file names to lower case.
 This applies when performing completions and file name expansion.
 */ );
   Vmswindows_downcase_file_names = Qnil;
+
+  DEFVAR_BOOL ("mswindows-shortcuts-are-symlinks",
+	       &mswindows_shortcuts_are_symlinks /*
+Non-nil means shortcuts (.LNK files) are treated as symbolic links.
+This works also for symlinks created under Cygwin, because they use .LNK
+files to implement symbolic links.
+*/ );
+  mswindows_shortcuts_are_symlinks = 1;
 }
 
 void

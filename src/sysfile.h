@@ -238,6 +238,13 @@ Boston, MA 02111-1307, USA.  */
 #undef S_ISSOCK
 #endif /* STAT_MACROS_BROKEN.  */
 
+#ifdef WIN32_NATIVE
+/* This is the standard value for S_IFLNK.  All of the S_... flags that
+   exist in the MSVCRT have standard values, so their bit tests will
+   magically work. */
+#define S_IFLNK 0120000
+#endif
+
 #if !defined(S_ISBLK) && defined(S_IFBLK)
 #define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
 #endif
@@ -376,7 +383,8 @@ int qxe_lstat (const Ibyte *path, struct stat *buf);
 int qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz);
 int qxe_fstat (int fd, struct stat *buf);
 int qxe_stat (const Ibyte *path, struct stat *buf);
-Ibyte *qxe_realpath (const Ibyte *path, Ibyte resolved_path []);
+Ibyte *qxe_realpath (const Ibyte *path, Ibyte resolved_path [],
+		     Boolint links_only);
 
 /* encapsulations: file-manipulation calls */
 
@@ -398,6 +406,10 @@ int qxe_unlink (const Ibyte *path);
    must be declared here to ensure that struct stat is properly formed
    on systems like SCO 3.2v5 */
 void filemodestring (struct stat *, char *);
+
+#ifdef WIN32_ANY
+extern int mswindows_shortcuts_are_symlinks;
+#endif
 
 #endif /* emacs */
 
@@ -506,6 +518,50 @@ DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 #define IS_ANY_SEP(c) IS_DIRECTORY_SEP (c)
 
 #endif /* WIN32_ANY */
+
+#if defined (WIN32_NATIVE)
+#define PATHNAME_RESOLVE_LINKS(path, pathout)		\
+do							\
+{							\
+  if (mswindows_shortcuts_are_symlinks)			\
+    {							\
+      Ibyte *_prl_path_ = (Ibyte *) (path);		\
+      Ibyte _prl_path2_[PATH_MAX_INTERNAL];		\
+							\
+      if (!qxe_realpath (_prl_path_, _prl_path2_, 1))	\
+	(pathout) = _prl_path_;				\
+      else						\
+	IBYTE_STRING_TO_ALLOCA (_prl_path2_, pathout);	\
+    }							\
+  else (pathout) = (Ibyte *) (path);			\
+} while (0)
+#else
+#define PATHNAME_RESOLVE_LINKS(path, pathout) ((pathout) = (Ibyte *) (path))
+#endif
+
+#define LISP_PATHNAME_RESOLVE_LINKS(path, pathout) \
+  PATHNAME_RESOLVE_LINKS (XSTRING_DATA (path), pathout)
+
+/* The documentation in VC++ claims that the pathname library functions
+   accept strings in the current locale-specific encoding, but that's
+   false, because they just call the native Win32 routines directly, which
+   always use the system-default encoding (which is what Qmswindows_tstr
+   will give us when not XEUNICODE_P). */
+#ifdef WIN32_NATIVE
+# define PATHNAME_CONVERT_OUT(path, pathout)	\
+do						\
+{						\
+  const Ibyte *_pco_path_;			\
+  PATHNAME_RESOLVE_LINKS (path, _pco_path_);	\
+  C_STRING_TO_TSTR (_pco_path_, pathout);	\
+} while (0)
+#else
+# define PATHNAME_CONVERT_OUT(path, pathout) \
+  C_STRING_TO_EXTERNAL (path, pathout, Qfile_name)
+#endif
+
+#define LISP_PATHNAME_CONVERT_OUT(path, pathout) \
+  PATHNAME_CONVERT_OUT (XSTRING_DATA (path), pathout)
 
 #endif /* emacs */
 

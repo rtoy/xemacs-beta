@@ -1,7 +1,7 @@
 /*
  * realpath.c -- canonicalize pathname by removing symlinks
  * Copyright (C) 1993 Rick Sladkey <jrs@world.std.com>
- * Copyright (C) 2001, 2002 Ben Wing.
+ * Copyright (C) 2001, 2002, 2004 Ben Wing.
  *
 
 This file is part of XEmacs.
@@ -31,6 +31,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "profile.h"
+
 #include "sysfile.h"
 #include "sysdir.h"
 
@@ -42,6 +44,8 @@ Boston, MA 02111-1307, USA.  */
 #define ELOOP 10062 /* = WSAELOOP in winsock.h */
 #endif
 #endif
+
+Lisp_Object QSin_qxe_realpath;
 
 /* Length of start of absolute filename. */
 static int 
@@ -60,24 +64,30 @@ abs_start (const Ibyte *name)
 #endif
 }
 
-/* Find real name of a file by resolving symbolic links and (under Windows)
-   looking up the correct case of the file as it appears on the file
-   system.
+/* Find real name of a file by resolving symbolic links and/or shortcuts
+   under Windows (.LNK links), if such support is enabled.
+
+   If no link found, and LINKS_ONLY is false, look up the correct case in
+   the file system of the last component.
 
    Under Windows, UNC servers and shares are lower-cased.  Directories must
    be given without trailing '/'. One day, this could read Win2K's reparse
-   points. */
+   points.
+
+   Returns length of characters copied info BUF.
+   DOES NOT ZERO TERMINATE!!!!!
+*/
 
 static int
-readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
-			   int size)
+readlink_or_correct_case (const Ibyte *name, Ibyte *buf, Bytecount size,
+			  Boolint links_only)
 {
 #ifndef WIN32_ANY
-  return qxe_readlink (name, buf, size);
+  return qxe_readlink (name, buf, (size_t) size);
 #else
 # ifdef CYGWIN
   Ibyte *tmp;
-  int n = qxe_readlink (name, buf, size);
+  int n = qxe_readlink (name, buf, (size_t) size);
   if (n >= 0 || errno != EINVAL)
     return n;
 
@@ -87,7 +97,32 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
     alloca_ibytes (cygwin_posix_to_win32_path_list_buf_size ((char *) name));
   cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
   name = tmp;
+# else
+  if (mswindows_shortcuts_are_symlinks)
+    {
+      Ibyte *tmp = mswindows_read_link (name);
+
+      if (tmp != NULL)
+	{
+	  /* Fucking fixed buffers. */
+	  Bytecount len = qxestrlen (tmp);
+	  if (len > size)
+	    {
+	      errno = ENAMETOOLONG;
+	      return -1;
+	    }
+	  memcpy (buf, tmp, len);
+	  xfree (tmp, Ibyte *);
+	  return len;
+	}
+    }
 # endif
+
+  if (links_only)
+    {
+      errno = EINVAL;
+      return -1;
+    }
 
   {
     int len = 0;
@@ -144,16 +179,16 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 	FindClose (dir_handle);
       }
 
-    if ((len = eilen (result)) < size)
+    if ((len = eilen (result)) <= size)
       {
 	DECLARE_EISTRING (eilastname);
 
 	eicpy_rawz (eilastname, lastname);
 	if (eicmp_ei (eilastname, result) == 0)
-	  /* Signal that the name is already OK. */
-	  err = EINVAL;
+          /* Signal that the name is already OK. */
+          err = EINVAL;
 	else
-	  memcpy (buf, eidata (result), len + 1);
+	  memcpy (buf, eidata (result), len);
       }
     else
       err = ENAMETOOLONG;
@@ -165,20 +200,28 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 }
 
 /* Mule Note: This function works with and returns
-   internally-formatted strings. */
+   internally-formatted strings.
+
+   if LINKS_ONLY is true, don't do case canonicalization under
+   Windows. */
 
 Ibyte *
-qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
+qxe_realpath (const Ibyte *path, Ibyte *resolved_path, Boolint links_only)
 {
   Ibyte copy_path[PATH_MAX_INTERNAL];
   Ibyte *new_path = resolved_path;
   Ibyte *max_path;
+  Ibyte *retval = NULL;
 #if defined (HAVE_READLINK) || defined (WIN32_ANY)
   int readlinks = 0;
   Ibyte link_path[PATH_MAX_INTERNAL];
   int n;
   int abslen = abs_start (path);
 #endif
+
+  PROFILE_DECLARE ();
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_qxe_realpath);
 
  restart:
 
@@ -288,7 +331,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 	  if (path > max_path)
 	    {
 	      errno = ENAMETOOLONG;
-	      return NULL;
+	      goto done;
 	    }
 	  *new_path++ = *path++;
 	}
@@ -297,7 +340,8 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
       /* See if latest pathname component is a symlink or needs case
 	 correction. */
       *new_path = '\0';
-      n = readlink_and_correct_case (resolved_path, link_path, PATH_MAX_INTERNAL - 1);
+      n = readlink_or_correct_case (resolved_path, link_path,
+				    PATH_MAX_INTERNAL - 1, links_only);
 
       if (n < 0)
 	{
@@ -308,7 +352,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 #else
 	  if (errno != EINVAL) 
 #endif
-	    return NULL;
+	    goto done;
 	}
       else
 	{
@@ -316,7 +360,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 	  if (readlinks++ > MAX_READLINKS)
 	    {
 	      errno = ELOOP;
-	      return NULL;
+	      goto done;
 	    }
 
 	  /* Note: readlink doesn't add the null byte. */
@@ -340,7 +384,7 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 	  if (qxestrlen (path) + n >= PATH_MAX_INTERNAL)
 	    {
 	      errno = ENAMETOOLONG;
-	      return NULL;
+	      goto done;
 	    }
 
 	  /* Insert symlink contents into path. */
@@ -360,5 +404,16 @@ qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
   /* Make sure it's null terminated. */
   *new_path = '\0';
 
-  return resolved_path;
+  retval = resolved_path;
+done:
+  PROFILE_RECORD_EXITING_SECTION (QSin_qxe_realpath);
+  return retval;
+}
+
+void
+vars_of_realpath (void)
+{
+  QSin_qxe_realpath =
+    build_msg_string ("(in qxe_realpath)");
+  staticpro (&QSin_qxe_realpath);
 }

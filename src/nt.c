@@ -30,7 +30,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    incomplete synching, so beware.)
    Synched (completely!) with Emacs 20.6 by Ben Wing, 6-23-00.
    Largely rewritten by Ben Wing for XEmacs Mule support.
-   Synched (completely!) with Emacs 21.1.103 by Ben Wing, 6-13-01.
+   Synched (completely!) with Emacs 21.0.103 by Ben Wing, 6-13-01.
 */
 
 /* This file Mule-ized by Ben Wing, 6-23-00. */
@@ -295,7 +295,7 @@ get_long_basename (Ibyte *name)
   if (qxestrpbrk (name, "*?|<>\""))
     return 0;
 
-  C_STRING_TO_TSTR (name, nameext);
+  PATHNAME_CONVERT_OUT (name, nameext);
   dir_handle = qxeFindFirstFile (nameext, &find_data);
   if (dir_handle != INVALID_HANDLE_VALUE)
     {
@@ -663,7 +663,7 @@ get_cached_volume_information (Ibyte *root_dir)
       Ibyte drive[3] = { root_dir[0], ':' };
       Extbyte *driveext;
 
-      C_STRING_TO_TSTR (drive, driveext);
+      PATHNAME_CONVERT_OUT (drive, driveext);
       if (qxeWNetGetConnection (driveext, remote_name,
 				sizeof (remote_name) / XETCHAR_SIZE)
 	  == NO_ERROR)
@@ -682,7 +682,7 @@ get_cached_volume_information (Ibyte *root_dir)
       Extbyte type[256 * MAX_XETCHAR_SIZE];
       Extbyte *rootdirext;
 
-      C_STRING_TO_TSTR (root_dir, rootdirext);
+      PATHNAME_CONVERT_OUT (root_dir, rootdirext);
 
       /* Info is not cached, or is stale. */
       if (!qxeGetVolumeInformation (rootdirext,
@@ -869,16 +869,16 @@ mswindows_readdir (DIR *UNUSED (dirp))
     {
       DECLARE_EISTRING (filename);
       Ichar lastch;
+      Extbyte *fileext;
 
       eicpy_rawz (filename, dir_pathname);
       lastch = eigetch_char (filename, eicharlen (filename) - 1);
       if (!IS_DIRECTORY_SEP (lastch))
 	eicat_ch (filename, '\\');
       eicat_ch (filename, '*');
-      eito_external (filename, Qmswindows_tstr);
+      PATHNAME_CONVERT_OUT (eidata (filename), fileext);
 
-      dir_find_handle = qxeFindFirstFile (eiextdata (filename),
-					  &dir_find_data);
+      dir_find_handle = qxeFindFirstFile (fileext, &dir_find_data);
 
       if (dir_find_handle == INVALID_HANDLE_VALUE)
 	return NULL;
@@ -901,6 +901,33 @@ mswindows_readdir (DIR *UNUSED (dirp))
   {
     DECLARE_EISTRING (found);
     Bytecount namlen;
+
+    if (mswindows_shortcuts_are_symlinks)
+      {
+	int len = qxestrlen (val);
+	if (len > 4 && !qxestrcasecmp_ascii (val + len - 4, ".LNK"))
+	  {
+	    /* If we've found a valid link, then chop off the .LNK ending */
+	    DECLARE_EISTRING (linkname);
+	    Ichar lastch;
+	    Ibyte *resolved;
+
+	    /* First check if link is valid */
+	    PATHNAME_RESOLVE_LINKS (dir_pathname, resolved);
+	    eicpy_rawz (linkname, resolved);
+	    lastch = eigetch_char (linkname, eicharlen (linkname) - 1);
+	    if (!IS_DIRECTORY_SEP (lastch))
+	      eicat_ch (linkname, '\\');
+	    eicat_rawz (linkname, val);
+	    resolved = mswindows_read_link (eidata (linkname));
+	    if (resolved)
+	      {
+		xfree (resolved, Ibyte *);
+		len -= 4;
+		val[len] = '\0';
+	      }
+	  }
+      }
 
     eicpy_rawz (found, val);
     if (need_to_free)
@@ -930,7 +957,7 @@ open_unc_volume (const Ibyte *path)
   nr.dwDisplayType = RESOURCEDISPLAYTYPE_SERVER; 
   nr.dwUsage = RESOURCEUSAGE_CONTAINER; 
   nr.lpLocalName = NULL;
-  C_STRING_TO_TSTR (path, nr.lpRemoteName);
+  PATHNAME_CONVERT_OUT (path, nr.lpRemoteName);
   nr.lpComment = NULL; 
   nr.lpProvider = NULL;   
 
@@ -1023,7 +1050,7 @@ mswindows_access (const Ibyte *path, int mode)
     {
       Extbyte *pathext;
 
-      C_STRING_TO_TSTR (path, pathext);
+      PATHNAME_CONVERT_OUT (path, pathext);
       if ((attributes = qxeGetFileAttributes (pathext)) == -1)
 	{
 	  /* Should try mapping GetLastError to errno; for now just indicate
@@ -1066,7 +1093,7 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
       return -1;
     }
 
-  C_STRING_TO_TSTR (old, oldext);
+  PATHNAME_CONVERT_OUT (old, oldext);
   fileh = qxeCreateFile (oldext, 0, 0, NULL, OPEN_EXISTING,
 			 FILE_FLAG_BACKUP_SEMANTICS, NULL);
   if (fileh != INVALID_HANDLE_VALUE)
@@ -1175,8 +1202,8 @@ mswindows_rename (const Ibyte *oldname, const Ibyte *newname)
 	     seems to make the second rename work properly.  */
 	  qxesprintf (p, "_.%s.%u", o, i);
 	  i++;
-	  C_STRING_TO_EXTERNAL (oldname, oldext, Qfile_name);
-	  C_STRING_TO_EXTERNAL (temp, tempext, Qfile_name);
+	  PATHNAME_CONVERT_OUT (oldname, oldext);
+	  PATHNAME_CONVERT_OUT (temp, tempext);
 	  result = rename (oldext, tempext);
 	}
       /* This loop must surely terminate!  */
@@ -1198,15 +1225,28 @@ mswindows_rename (const Ibyte *oldname, const Ibyte *newname)
   {
     Extbyte *newext, *tempext;
     
-    C_STRING_TO_EXTERNAL (newname, newext, Qfile_name);
-    C_STRING_TO_EXTERNAL (temp, tempext, Qfile_name);
-    result = rename (tempext, newext);
-
-    if (result < 0
-	&& (errno == EEXIST || errno == EACCES)
-	&& _chmod (newext, 0666) == 0
-	&& _unlink (newext) == 0)
-      result = rename (tempext, newext);
+    PATHNAME_CONVERT_OUT (newname, newext);
+    PATHNAME_CONVERT_OUT (temp, tempext);
+    if (XEUNICODE_P)
+      {
+	result = _wrename ((const wchar_t *) tempext,
+			   (const wchar_t *) newext);
+	if (result < 0
+	    && (errno == EEXIST || errno == EACCES)
+	    && _wchmod ((const wchar_t *) newext, 0666) == 0
+	    && _wunlink ((const wchar_t *) newext) == 0)
+	  result = _wrename ((const wchar_t *) tempext,
+			     (const wchar_t *) newext);
+      }
+    else
+      {
+	result = rename (tempext, newext);
+	if (result < 0
+	    && (errno == EEXIST || errno == EACCES)
+	    && _chmod (newext, 0666) == 0
+	    && _unlink (newext) == 0)
+	  result = rename (tempext, newext);
+      }
   }
 
   return result;
@@ -1217,10 +1257,18 @@ mswindows_unlink (const Ibyte *path)
 {
   Extbyte *pathout;
 
-  C_STRING_TO_EXTERNAL (path, pathout, Qfile_name);
+  PATHNAME_CONVERT_OUT (path, pathout);
   /* On Unix, unlink works without write permission. */
-  _chmod (pathout, 0666);
-  return _unlink (pathout);
+  if (XEUNICODE_P)
+    {
+      _wchmod ((const wchar_t *) pathout, 0666);
+      return _wunlink ((const wchar_t *) pathout);
+    }
+  else
+    {
+      _chmod (pathout, 0666);
+      return _unlink (pathout);
+    }
 }
 
 static FILETIME utc_base_ft;
@@ -1510,6 +1558,8 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
     {
       if (!IS_DIRECTORY_SEP (name[len-1]))
 	qxestrcat (name, (Ibyte *) "\\");
+      /* File has already been resolved and we don't want to do it again
+	 in case of lstat() */
       C_STRING_TO_TSTR (name, nameext);
       if (qxeGetDriveType (nameext) < 2)
 	{
@@ -1574,13 +1624,15 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
   else 
     {
       if (!NILP (Vmswindows_get_true_file_attributes))
+	/* File has already been resolved and we don't want to do it again
+	   in case of lstat() */
 	C_STRING_TO_TSTR (name, nameext);
       if (!NILP (Vmswindows_get_true_file_attributes)
 	  /* No access rights required to get info.  */
 	  && (fh = qxeCreateFile (nameext, 0, 0, NULL, OPEN_EXISTING, 0, NULL))
 	  != INVALID_HANDLE_VALUE)
 	{
-	  /* This is more accurate in terms of gettting the correct number
+	  /* This is more accurate in terms of getting the correct number
 	     of links, but is quite slow (it is noticable when Emacs is
 	     making a list of file name completions). */
 	  BY_HANDLE_FILE_INFORMATION info;
@@ -1622,6 +1674,22 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
 	  buf->st_mode = _S_IFREG;
 	  buf->st_nlink = 1;
 	  fake_inode = 0;
+	}
+
+      if (mswindows_shortcuts_are_symlinks &&
+	  buf->st_mode == _S_IFREG)
+	{
+	  len = qxestrlen (name);
+	  if (len > 4 && !qxestrcasecmp_ascii (name + len - 4, ".LNK"))
+	    {
+	      /* check if link is valid */
+	      Ibyte *resolved = mswindows_read_link (name);
+	      if (resolved)
+		{
+		  xfree (resolved, Ibyte *);
+		  buf->st_mode = S_IFLNK;
+		}
+	    }
 	}
     }
 
@@ -1698,7 +1766,7 @@ mswindows_utime (Lisp_Object path, struct utimbuf *times)
       times = &deftime;
     }
 
-  LISP_STRING_TO_TSTR (path, filename);
+  LISP_PATHNAME_CONVERT_OUT (path, filename);
   /* APA: SetFileTime fails to set mtime correctly (always 1-Jan-1970) */
 #if 0
   /* Need write access to set times.  */
@@ -1768,7 +1836,7 @@ open_input_file (file_data *p_file, const Ibyte *filename)
   DWORD size, upper_size;
   Extbyte *fileext;
 
-  C_STRING_TO_TSTR (filename, fileext);
+  PATHNAME_CONVERT_OUT (filename, fileext);
 
   file = qxeCreateFile (fileext, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -1804,7 +1872,7 @@ open_output_file (file_data *p_file, const Ibyte *filename,
   void *file_base;
   Extbyte *fileext;
 
-  C_STRING_TO_TSTR (filename, fileext);
+  PATHNAME_CONVERT_OUT (filename, fileext);
 
   file = qxeCreateFile (fileext, GENERIC_READ | GENERIC_WRITE, 0, NULL,
 			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
@@ -2007,7 +2075,7 @@ All path elements in FILENAME are converted to their short names.
   /* first expand it.  */
   filename = Fexpand_file_name (filename, Qnil);
 
-  LISP_STRING_TO_TSTR (filename, fileext);
+  LISP_PATHNAME_CONVERT_OUT (filename, fileext);
   /* luckily, this returns the short version of each element in the path.  */
   if (qxeGetShortPathName (fileext, shortname,
 			   sizeof (shortname) / XETCHAR_SIZE) == 0)
@@ -2121,7 +2189,7 @@ init_nt (void)
     {
       Extbyte *driveext;
 
-      C_STRING_TO_TSTR (drive, driveext);
+      PATHNAME_CONVERT_OUT (drive, driveext);
 
       /* Record if this drive letter refers to a fixed drive. */
       fixed_drives[DRIVE_INDEX (*drive)] =

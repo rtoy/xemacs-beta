@@ -3712,6 +3712,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    Extbyte *fname_ext;
 	    Bytecount fnamelen;
 	    Charcount len = qxeDragQueryFile ((HDROP) wParam, i, NULL, 0);
+	    int freeme = 0;
 	    /* The URLs that we make here aren't correct according to section
 	     * 3.10 of rfc1738 because they're missing the //<host>/ part and
 	     * because they may contain reserved characters. But that's OK -
@@ -3723,156 +3724,20 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				ALLOCA, (fname, fnamelen),
 				Qmswindows_tstr);
 
+
 	    /* May be a shell link aka "shortcut" - replace fname if so */
-#if !defined (NO_CYGWIN_COM_SUPPORT)
 	    if (!qxestrcasecmp_ascii (fname + fnamelen - 4, ".LNK"))
 	      {
-		/* ####
-		   
-		   Note the following in the docs:
-		   
-		   Note: The IShellLink interface has an ANSI version
-		   (IShellLinkA) and a Unicode version (IShellLinkW). The
-		   version that will be used depends on whether you compile
-		   for ANSI or Unicode. However, Microsoft® Windows 95 and
-		   Microsoft® Windows 98 only support IShellLinkA.
-		   
-		   We haven't yet implemented COM support in the
-		   Unicode-splitting library.  I don't quite understand how
-		   COM works yet, but it looks like what's happening is
-		   that the ShellLink class implements both the IShellLinkA
-		   and IShellLinkW interfaces.  To make this work at
-		   run-time, we have to do something like this:
-		   
-		   -- define a new interface qxeIShellLink that uses
-		   Extbyte * instead of LPSTR or LPWSTR. (not totally
-		   necessary since Extbyte * == LPSTR).
-		   
-		   -- define a new class qxeShellLink that implements
-		   qxeIShellLink.  the methods on this class need to create
-		   a shadow ShellLink object to do all the real work, and
-		   call the corresponding function from either the
-		   IShellLinkA or IShellLinkW interfaces on this object,
-		   depending on whether XEUNICODE_P is defined.
-		   
-		   -- with appropriate preprocessor magic, of course, we
-		   could make things appear transparent; but we've decided
-		   not to do preprocessor magic for the moment.
-		   */
-
-		/* #### Not Unicode-split for the moment; we have to do it
-                   ourselves. */
-		if (XEUNICODE_P)
-		  {
-		    IShellLinkW *psl;
-
-		    if (CoCreateInstance (
-					  XECOMID (CLSID_ShellLink),
-					  NULL,
-					  CLSCTX_INPROC_SERVER,
-					  XECOMID (IID_IShellLinkW),
-					  &VOIDP_CAST (psl)) == S_OK)
-		      {
-			IPersistFile *ppf;
-
-			if (XECOMCALL2 (psl, QueryInterface,
-					XECOMID (IID_IPersistFile),
-					&VOIDP_CAST (ppf)) == S_OK)
-			  {
-			    Extbyte *fname_unicode;
-			    WIN32_FIND_DATAW wfd;
-			    LPWSTR resolved =
-			      alloca_array (WCHAR, PATH_MAX_EXTERNAL + 1);
-
-			    TO_EXTERNAL_FORMAT (DATA, (fname, fnamelen),
-						C_STRING_ALLOCA,
-						fname_unicode,
-						Qmswindows_unicode);
-
-			    if (XECOMCALL2 (ppf, Load,
-					    (LPWSTR) fname_unicode,
-					    STGM_READ) == S_OK &&
-				/* #### YUCK!  Docs read
-
-   cchMaxPath 
-
-        Maximum number of bytes to copy to the buffer pointed to by the
-	pszFile parameter.
-
-   But "cch" means "count of characters", not bytes.  I'll assume the doc
-   writers messed up and the programmer was correct.  Also, this approach
-   is safe even if it's actually the other way around. */
-#if defined (CYGWIN_HEADERS) && W32API_INSTALLED_VER < W32API_VER(2,2)
-				/* Another Cygwin prototype error,
-				   fixed in v2.2 of w32api */
-				XECOMCALL4 (psl, GetPath, (LPSTR) resolved,
-					    PATH_MAX_EXTERNAL, &wfd, 0)
-#else
-				XECOMCALL4 (psl, GetPath, resolved,
-					    PATH_MAX_EXTERNAL, &wfd, 0)
-#endif
-				== S_OK)
-			      TO_INTERNAL_FORMAT (C_STRING, resolved,
-						  ALLOCA, (fname, fnamelen),
-						  Qmswindows_tstr);
-
-			    XECOMCALL0 (ppf, Release);
-			  }
-
-			XECOMCALL0 (psl, Release);
-		      }
-		  }
-		else
-		  {
-		    IShellLinkA *psl;
-
-		    if (CoCreateInstance (
-					  XECOMID (CLSID_ShellLink),
-					  NULL,
-					  CLSCTX_INPROC_SERVER,
-					  XECOMID (IID_IShellLinkA),
-					  &VOIDP_CAST (psl)) == S_OK)
-		      {
-			IPersistFile *ppf;
-
-			if (XECOMCALL2 (psl, QueryInterface,
-					XECOMID (IID_IPersistFile),
-					&VOIDP_CAST (ppf)) == S_OK)
-			  {
-			    Extbyte *fname_unicode;
-			    WIN32_FIND_DATAA wfd;
-			    LPSTR resolved =
-			      alloca_array (CHAR, PATH_MAX_EXTERNAL + 1);
-
-			    /* Always Unicode.  Not obvious from the
-                               IPersistFile documentation, but look under
-                               "Shell Link" for example code. */
-			    TO_EXTERNAL_FORMAT (DATA, (fname, fnamelen),
-						C_STRING_ALLOCA,
-						fname_unicode,
-						Qmswindows_unicode);
-
-			    if (XECOMCALL2 (ppf, Load,
-					    (LPWSTR) fname_unicode,
-					    STGM_READ) == S_OK
-				&& XECOMCALL4 (psl, GetPath, resolved,
-					       PATH_MAX_EXTERNAL, &wfd, 0) == S_OK)
-			      TO_INTERNAL_FORMAT (C_STRING, resolved,
-						  ALLOCA, (fname, fnamelen),
-						  Qmswindows_tstr);
-
-			    XECOMCALL0 (ppf, Release);
-			  }
-
-			XECOMCALL0 (psl, Release);
-		      }
-		  }
+		fname = mswindows_read_link (fname);
+		freeme = 1;
 	      }
-#endif /* !defined (NO_CYGWIN_COM_SUPPORT) */
+
 	    {
-	      fname = urlify_filename (fname);
-	      l_item = build_intstring (fname);
-	      xfree (fname, Ibyte *);
+	      Ibyte *fname2 = urlify_filename (fname);
+	      l_item = build_intstring (fname2);
+	      xfree (fname2, Ibyte *);
+	      if (freeme)
+		xfree (fname, Ibyte *);
 	      l_dndlist = Fcons (l_item, l_dndlist);
 	    }
 	  }

@@ -1,3 +1,18 @@
+2004-11-17  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp:
+	* xemacs.mak (HAVE_WIDGETS):
+	* xemacs.mak (MSW_DEFINES):
+	* xemacs.mak (  NOTE):
+
+2004-11-13  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp:
+	* xemacs.mak (HAVE_WIDGETS):
+	* xemacs.mak (MSW_DEFINES):
+	* xemacs.mak (  NOTE):
+	Support HAVE_WINDOWS_SHORTCUTS_AS_LINKS.
+
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak ({$(MANDIR)}.texi{$(INFODIR)}.info):

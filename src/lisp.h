@@ -4305,6 +4305,8 @@ DECLARE_DOESNT_RETURN (report_file_error (const CIbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 int internal_delete_file (Lisp_Object);
+Ibyte *find_end_of_directory_component (const Ibyte *path,
+					Bytecount len);
 
 /* Defined in filelock.c */
 EXFUN (Funlock_buffer, 0);

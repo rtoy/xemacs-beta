@@ -192,7 +192,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
   int findex;
   DECLARE_EISTRING (win32pattern);
   HANDLE fh;
-  int				errm;
+  int errm;
 
   while (1)
     {
@@ -206,8 +206,13 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
       /* Now *bufp is the compiled form of PATTERN; don't call anything
 	 which might compile a new regexp until we're done with the loop! */
 
+      {
+	Ibyte *dir2;
+	LISP_PATHNAME_RESOLVE_LINKS (dirfile, dir2);
+	eicpy_rawz (win32pattern, dir2);
+      }
+
       /* for Win32, we need to insure that the pathname ends with "\*". */
-      eicpy_lstr (win32pattern, dirfile);
       if (!nowild)
 	{
 	  Charcount len = eicharlen (win32pattern) - 1;

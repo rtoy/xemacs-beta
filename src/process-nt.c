@@ -764,13 +764,15 @@ nt_create_process (Lisp_Process *p,
     if (mswindows_is_executable (XSTRING_DATA (program)))
       {
 	Extbyte *progext;
-	LISP_STRING_TO_TSTR (program, progext);
+	LISP_PATHNAME_CONVERT_OUT (program, progext);
 	image_type = qxeSHGetFileInfo (progext, 0, NULL, 0, SHGFI_EXETYPE);
       }
     else
       {
 	DECLARE_EISTRING (progext);
-	eicpy_lstr (progext, program);
+	Ibyte *prog2;
+	LISP_PATHNAME_RESOLVE_LINKS (program, prog2);
+	eicpy_rawz (progext, prog2);
 	eicat_ascii (progext, ".exe");
 	eito_external (progext, Qmswindows_tstr);
 	image_type = qxeSHGetFileInfo (eiextdata (progext), 0, NULL, 0,
@@ -858,6 +860,7 @@ nt_create_process (Lisp_Process *p,
 	("Bogus return value from `mswindows-construct-process-command-line'",
 	 args_or_ret);
 
+    /* #### What about path names, which may be links? */
     LISP_STRING_TO_TSTR (args_or_ret, command_line);
 
     UNGCPRO; /* args_or_ret */
@@ -994,7 +997,7 @@ nt_create_process (Lisp_Process *p,
     {
       Extbyte *curdirext;
 
-      LISP_STRING_TO_TSTR (cur_dir, curdirext);
+      LISP_PATHNAME_CONVERT_OUT (cur_dir, curdirext);
 
       err = (qxeCreateProcess (NULL, command_line, NULL, NULL, TRUE,
 			       (XEUNICODE_P ?

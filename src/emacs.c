@@ -2085,6 +2085,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
+      vars_of_realpath ();
       vars_of_redisplay ();
       vars_of_regex ();
 #ifdef HAVE_SCROLLBARS

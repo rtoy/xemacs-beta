@@ -406,6 +406,7 @@ void vars_of_process_nt (void);
 void vars_of_process_unix (void);
 void vars_of_profile (void);
 void vars_of_ralloc (void);
+void vars_of_realpath (void);
 void vars_of_redisplay (void);
 void vars_of_regex (void);
 void vars_of_scrollbar_x (void);

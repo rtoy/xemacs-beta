@@ -628,7 +628,7 @@ sys_subshell (void)
   if (sh == 0)
     sh = (Ibyte *) "sh";
 
-  C_STRING_TO_EXTERNAL (sh, shext, Qfile_name);
+  PATHNAME_CONVERT_OUT (sh, shext);
 
   UNGCPRO;
 
@@ -638,7 +638,10 @@ sys_subshell (void)
     qxe_chdir (str);
 
   /* Waits for process completion */
-  if (_spawnlp (_P_WAIT, shext, shext, NULL) != 0)
+  if (XEUNICODE_P ?
+      _wspawnlp (_P_WAIT, (const wchar_t *) shext,
+		 (const wchar_t *) shext, NULL) != 0 :
+      _spawnlp (_P_WAIT, shext, shext, NULL) != 0)
     report_process_error ("Can't spawn subshell", Qunbound);
   else
     return; /* we're done, no need to wait for termination */
@@ -2537,18 +2540,6 @@ strerror (int errnum)
 /*                    Encapsulations of system calls                    */
 /************************************************************************/
 
-/* The documentation in VC++ claims that the pathname library functions
-   accept strings in the current locale-specific encoding, but that's
-   false, because they just call the native Win32 routines directly, which
-   always use the system-default encoding (which is what Qmswindows_tstr
-   will give us when not XEUNICODE_P). */
-#ifdef WIN32_NATIVE
-#define PATHNAME_CONVERT_OUT(path, pathout) C_STRING_TO_TSTR (path, pathout)
-#else
-#define PATHNAME_CONVERT_OUT(path, pathout) \
-  C_STRING_TO_EXTERNAL (path, pathout, Qfile_name)
-#endif
-
 /***************** low-level calls ****************/
 
 /*
@@ -3180,6 +3171,51 @@ qxe_lstat (const Ibyte *path, struct stat *buf)
      In that case, use ordinary stat instead.  */
 #ifndef S_IFLNK
   return qxe_stat (path, buf);
+#elif defined (WIN32_NATIVE)
+  if (mswindows_shortcuts_are_symlinks)
+    {
+      /* We want to resolve the directory component and leave the rest
+	 alone. */
+      Ibyte *dirend = find_end_of_directory_component (path, qxestrlen (path));
+      Bytecount len;
+      
+      if (dirend != path)
+	{
+	  Ibyte *resdir;
+	  Ichar lastch;
+	  DECLARE_EISTRING (resname);
+	  DECLARE_EISTRING (dir);
+	  
+	  eicpy_raw (dir, path, dirend - path);
+	  PATHNAME_RESOLVE_LINKS (eidata (dir), resdir);
+	  eicpy_rawz (resname, resdir);
+	  lastch = eigetch_char (resname, eicharlen (resname) - 1);
+	  if (!IS_DIRECTORY_SEP (lastch))
+	    eicat_ch (resname, '\\');
+	  eicat_rawz (resname, dirend);
+	  path = eidata (resname);
+	}
+
+      /* However, if what we are trying to stat is a link, we need to add
+	 the .LNK so that the actual file is statted. */
+      len = qxestrlen (path);
+      if (len > 4 && qxestrcasecmp_ascii (path + len - 4, ".LNK"))
+	{
+	  DECLARE_EISTRING (name2);
+	  Ibyte *resolved;
+	
+	  eicpy_rawz (name2, path);
+	  eicat_ascii (name2, ".LNK");
+	  resolved = mswindows_read_link (eidata (name2));
+	  if (resolved)
+	    {
+	      xfree (resolved, Ibyte *);
+	      return mswindows_stat (eidata (name2), buf);
+	    }
+	}
+    }
+
+  return mswindows_stat (path, buf);
 #else
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -3227,7 +3263,9 @@ int
 qxe_stat (const Ibyte *path, struct stat *buf)
 {
 #ifdef WIN32_NATIVE
-  return mswindows_stat (path, buf);
+  Ibyte *resolved;
+  PATHNAME_RESOLVE_LINKS (path, resolved);
+  return mswindows_stat (resolved, buf);
 #else /* not WIN32_NATIVE */
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);

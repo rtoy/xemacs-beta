@@ -23,6 +23,7 @@ Boston, MA 02111-1307, USA.  */
 /* More syncing: FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
    (Note: Sync messages from Marc Paquette may indicate
    incomplete synching, so beware.) */
+/* Some functions synched with FSF 21.0.103. */
 /* Mule-ized completely except for the #if 0-code including decrypt-string
    and encrypt-string. --ben 7-2-00 */
 /* #if 0-code Mule-ized, 2-22-03. --ben */
@@ -38,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "profile.h"
 #include "process.h"
 #include "redisplay.h"
 #include "sysdep.h"
@@ -128,6 +130,8 @@ Lisp_Object Qauto_saving;
 Lisp_Object Qcar_less_than_car;
 
 Lisp_Object Qcompute_buffer_file_truename;
+
+Lisp_Object QSin_expand_file_name;
 
 EXFUN (Frunning_temacs_p, 0);
 
@@ -325,6 +329,25 @@ call3_check_string (Lisp_Object fn, Lisp_Object arg0,
 }
 
 
+
+Ibyte *
+find_end_of_directory_component (const Ibyte *path, Bytecount len)
+{
+  const Ibyte *p = path + len;
+
+  while (p != path && !IS_DIRECTORY_SEP (p[-1])
+#ifdef WIN32_FILENAMES
+	 /* only recognise drive specifier at the beginning */
+	 && !(p[-1] == ':'
+	      /* handle the "/:d:foo" and "/:foo" cases correctly  */
+	      && ((p == path + 2 && !IS_DIRECTORY_SEP (*path))
+		  || (p == path + 4 && IS_DIRECTORY_SEP (*path))))
+#endif
+	 ) p--;
+
+  return (Ibyte *) p;
+}
+
 DEFUN ("file-name-directory", Ffile_name_directory, 1, 1, 0, /*
 Return the directory component in file name FILENAME.
 Return nil if FILENAME does not include a directory.
@@ -352,17 +375,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 #endif
   beg = XSTRING_DATA (filename);
   /* XEmacs: no need to alloca-copy here */
-  p = beg + XSTRING_LENGTH (filename);
-
-  while (p != beg && !IS_DIRECTORY_SEP (p[-1])
-#ifdef WIN32_FILENAMES
-	 /* only recognise drive specifier at the beginning */
-	 && !(p[-1] == ':'
-	      /* handle the "/:d:foo" and "/:foo" cases correctly  */
-	      && ((p == beg + 2 && !IS_DIRECTORY_SEP (*beg))
-		  || (p == beg + 4 && IS_DIRECTORY_SEP (*beg))))
-#endif
-	 ) p--;
+  p = find_end_of_directory_component (beg, XSTRING_LENGTH (filename));
 
   if (p == beg)
     return Qnil;
@@ -522,7 +535,11 @@ except for (file-name-as-directory \"\") => \"./\".
     return call2_check_string (handler, Qfile_name_as_directory, filename);
 
   buf = alloca_ibytes (XSTRING_LENGTH (filename) + 10);
-  return build_intstring (file_name_as_directory (buf, XSTRING_DATA (filename)));
+  file_name_as_directory (buf, XSTRING_DATA (filename));
+  if (qxestrcmp (buf, XSTRING_DATA (filename)))
+    return build_intstring (buf);
+  else
+    return filename;
 }
 
 /*
@@ -735,6 +752,9 @@ See also the function `substitute-in-file-name'.
   int length;
   Lisp_Object handler = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
+  PROFILE_DECLARE ();
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_expand_file_name);
 
   /* both of these get set below */
   GCPRO3 (name, default_directory, handler);
@@ -745,8 +765,10 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    RETURN_UNGCPRO (call3_check_string (handler, Qexpand_file_name,
-					name, default_directory));
+    RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
+				   call3_check_string
+				   (handler, Qexpand_file_name,
+				    name, default_directory));
 
   /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
   if (NILP (default_directory))
@@ -762,8 +784,9 @@ See also the function `substitute-in-file-name'.
     {
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
-	RETURN_UNGCPRO (call3 (handler, Qexpand_file_name,
-			       name, default_directory));
+	RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
+				       call3 (handler, Qexpand_file_name,
+					      name, default_directory));
     }
 
   o = XSTRING_DATA (default_directory);
@@ -927,13 +950,14 @@ See also the function `substitute-in-file-name'.
 		    }
 		}
 	      xfree (newnm, Ibyte *);
-	      RETURN_UNGCPRO (name);
+	      RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
 	    }
 #endif /* WIN32_FILENAMES */
 #ifndef WIN32_NATIVE
 	  if (nm == XSTRING_DATA (name))
-	    RETURN_UNGCPRO (name);
-	  RETURN_UNGCPRO (build_intstring (nm));
+	    RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, name);
+	  RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
+					 build_intstring (nm));
 #endif /* not WIN32_NATIVE */
 	}
     }
@@ -1301,10 +1325,11 @@ See also the function `substitute-in-file-name'.
     Lisp_Object result = build_intstring (newtarget);
     xfree (newtarget, Ibyte *);
 
-    RETURN_UNGCPRO (result);
+    RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name, result);
   }
 #else /* not WIN32_FILENAMES */
-  RETURN_UNGCPRO (make_string (target, o - target));
+  RETURN_UNGCPRO_EXIT_PROFILING (QSin_expand_file_name,
+				 make_string (target, o - target));
 #endif /* not WIN32_FILENAMES */
 }
 
@@ -1360,7 +1385,7 @@ No component of the resulting pathname will be a symbolic link, as
     p = path;
 
     /* Try doing it all at once. */
-    if (!qxe_realpath (path, resolved_path))
+    if (!qxe_realpath (path, resolved_path, 0))
       {
 	/* Didn't resolve it -- have to do it one component at a time. */
 	/* "realpath" is a typically useless, stupid un*x piece of crap.
@@ -1379,7 +1404,11 @@ No component of the resulting pathname will be a symbolic link, as
 	   resolved_name are undefined."
 
 	   Since we depend on undocumented semantics of various system
-	   realpath()s, we just use our own version in realpath.c. */
+	   realpath()s, we just use our own version in realpath.c.
+
+	   Note also that our own version differs in its semantics from any
+	   standard version, since it accepts and returns internal-format
+	   text, not external-format. */
 	for (;;)
 	  {
 	    Ibyte *pos;
@@ -1402,7 +1431,7 @@ No component of the resulting pathname will be a symbolic link, as
 	    if (p != pos)
 	      p = 0;
 
-	    if (qxe_realpath (path, resolved_path))
+	    if (qxe_realpath (path, resolved_path, 0))
 	      {
 		if (p)
 		  *p = DIRECTORY_SEP;
@@ -2338,7 +2367,7 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     RETURN_UNGCPRO (call2 (handler, Qfile_readable_p, abspath));
 
-#if defined(WIN32_FILENAMES)
+#if defined (WIN32_FILENAMES)
   /* Under MS-DOS and Windows, open does not work for directories.  */
   UNGCPRO;
   if (qxe_access (XSTRING_DATA (abspath), 0) == 0)
@@ -2443,9 +2472,42 @@ Otherwise returns nil.
   val = make_string (buf, valsize);
   xfree (buf, Ibyte *);
   return val;
-#else /* not HAVE_READLINK */
+#elif defined (WIN32_NATIVE)
+  if (mswindows_shortcuts_are_symlinks)
+    {
+      /* We want to resolve the directory component and leave the rest
+	 alone. */
+      Ibyte *path = XSTRING_DATA (filename);
+      Ibyte *dirend =
+	find_end_of_directory_component (path, XSTRING_LENGTH (filename));
+      Ibyte *fname;
+      DECLARE_EISTRING (dir);
+      
+      if (dirend != path)
+	{
+	  Ibyte *resdir;
+	  DECLARE_EISTRING (resname);
+	  
+	  eicpy_raw (dir, path, dirend - path);
+	  PATHNAME_RESOLVE_LINKS (eidata (dir), resdir);
+	  eicpy_rawz (resname, resdir);
+	  eicat_rawz (resname, dirend);
+	  path = eidata (resname);
+	}
+      
+      fname = mswindows_read_link (path);
+      if (!fname)
+	return Qnil;
+      {
+	Lisp_Object val = build_intstring (fname);
+	xfree (fname, Ibyte *);
+	return val;
+      }
+    }
   return Qnil;
-#endif /* not HAVE_READLINK */
+#else
+  return Qnil;
+#endif
 }
 
 DEFUN ("file-directory-p", Ffile_directory_p, 1, 1, 0, /*
@@ -2499,7 +2561,7 @@ searchable directory.
     return call2 (handler, Qfile_accessible_directory_p,
 		  filename);
 
-#if !defined(WIN32_NATIVE)
+#if !defined (WIN32_NATIVE)
   if (NILP (Ffile_directory_p (filename)))
       return (Qnil);
   else
@@ -4300,6 +4362,10 @@ syms_of_fileio (void)
 void
 vars_of_fileio (void)
 {
+  QSin_expand_file_name =
+    build_msg_string ("(in expand-file-name)");
+  staticpro (&QSin_expand_file_name);
+
   DEFVAR_LISP ("auto-save-file-format", &Vauto_save_file_format /*
 *Format in which to write auto-save files.
 Should be a list of symbols naming formats that are defined in `format-alist'.

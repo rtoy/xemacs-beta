@@ -35,14 +35,12 @@ static int play_sound_data_1 (Binbyte *data, int length,
 			      int volume, int convert);
 
 void
-play_sound_file (Extbyte *sound_file, int UNUSED (volume))
+nt_play_sound_file (Lisp_Object path, int UNUSED (volume))
 {
   DWORD flags = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
-  Lisp_Object fname =
-    Ffile_name_nondirectory (build_tstr_string (sound_file));
+  Lisp_Object fname = Ffile_name_nondirectory (path);
   Extbyte *fnameext;
 
-  CHECK_STRING (fname);
   LISP_STRING_TO_TSTR (fname, fnameext);
 
   if (qxeSearchPath (NULL, fnameext, NULL, 0, NULL, NULL) == 0)
@@ -50,9 +48,9 @@ play_sound_file (Extbyte *sound_file, int UNUSED (volume))
       /* file isn't in the path so read it as data */
       int size;
       Binbyte *data;
-      int ofd = qxe_open (XSTRING_DATA (fname), O_RDONLY | OPEN_BINARY, 0);
+      int ofd = qxe_open (XSTRING_DATA (path), O_RDONLY | OPEN_BINARY, 0);
       
-      if (ofd <0)
+      if (ofd < 0)
 	return;
 
       size = lseek (ofd, 0, SEEK_END);

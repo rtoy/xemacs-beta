@@ -1,7 +1,7 @@
 /* Generic glyph/image implementation + display tables
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2004 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
 
@@ -2917,11 +2917,13 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
 Lisp_Object
 pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
 {
-  char **data;
+  Ascbyte **data;
   int result;
-  char *fname = 0;
+  Extbyte *fname = 0;
+  Ibyte *resolved;
 
-  LISP_STRING_TO_EXTERNAL (name, fname, Qfile_name);
+  LISP_PATHNAME_RESOLVE_LINKS (name, resolved);
+  C_STRING_TO_EXTERNAL (resolved, fname, Qfile_name);
   result = XpmReadFileToData (fname, &data);
 
   if (result == XpmSuccess)
