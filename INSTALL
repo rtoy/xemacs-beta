@@ -386,14 +386,14 @@ building XEmacs.
 
 The `--with-canna' option enables the use of the Canna Japanese input
 method.  This is stable code and fairly well tested.  In order to use
-it, you will have to have the Canna server installed and running.
-Canna versions 3.2pl2 and 3.5b2 are known to work.  Version 3.2pl2 is
-considered most stable than version 3.5b2.  If Canna is already
-installed, configure will autodetect it, so you never need to
-explicitly use this option unless your Canna libraries are somewhere
-strange.  Canna run time support is currently bundled with the
-`mule-base' package so there is nothing additional to install in order
-to use it.
+it, you will have to have the Canna server installed and running.  Canna
+versions 3.2pl2, 3.5b2, and 3.7p3 are known to work.  Version 3.2pl2 is
+considered more stable than version 3.5b2; the stability of 3.7p3 is
+still unknown.  If Canna is already installed, configure will autodetect
+it, so you never need to explicitly use this option unless your Canna
+libraries are somewhere strange.  Canna run time support is currently
+bundled with the `mule-base' package so there is nothing additional to
+install in order to use it.
 
 The `--with-wnn' and `--with-wnn6' options are for compiling with the Wnn
 multi-language input method.  `--with-wnn' is for compiling with Wnn-4.2,
