@@ -58,7 +58,7 @@ DECLARE_LRECORD (ldap, Lisp_LDAP);
 
 Lisp_Object Fldapp (Lisp_Object object);
 Lisp_Object Fldap_host (Lisp_Object ldap);
-Lisp_Object Fldap_status (Lisp_Object ldap);
+Lisp_Object Fldap_live_p (Lisp_Object ldap);
 Lisp_Object Fldap_open (Lisp_Object host,
                         Lisp_Object ldap_plist);
 Lisp_Object Fldap_close (Lisp_Object ldap);

@@ -1,3 +1,12 @@
+2002-08-29  Jerry James  <james@xemacs.org>
+
+	* eldap.c: Put #endif tokens in a comment.
+
+	* eldap.c (Fldap_status):
+	* eldap.c (syms_of_eldap):
+	* eldap.h:
+	Change to Fldap_live_p to match Lisp name.
+
 2002-08-19  Andy Piper  <andy@xemacs.org>
 
 	* fileio.c (Ffile_truename): on cygwin using win32 normalize to

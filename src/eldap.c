@@ -103,7 +103,7 @@ static const struct lrecord_description ldap_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_LDAP, host) },
   { XD_END }
 };
-#endif USE_KKCC
+#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_ldap (Lisp_Object obj)
@@ -183,7 +183,7 @@ Return the server host of the connection LDAP, as a string.
   return (XLDAP (ldap))->host;
 }
 
-DEFUN ("ldap-live-p", Fldap_status, 1, 1, 0, /*
+DEFUN ("ldap-live-p", Fldap_live_p, 1, 1, 0, /*
 Return t if LDAP is an active LDAP connection.
 */
        (ldap))
@@ -825,7 +825,7 @@ syms_of_eldap (void)
 
   DEFSUBR (Fldapp);
   DEFSUBR (Fldap_host);
-  DEFSUBR (Fldap_status);
+  DEFSUBR (Fldap_live_p);
   DEFSUBR (Fldap_open);
   DEFSUBR (Fldap_close);
   DEFSUBR (Fldap_search_basic);
