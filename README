@@ -110,6 +110,107 @@ See `etc/MAILINGLISTS' for more information on mailing lists relating
 to XEmacs.
 
 
+*** How do I get started developing XEmacs?
+
+First, get yourself set up under CVS so that you can access the CVS
+repositories containing the XEmacs sources and the XEmacs packages.
+
+Next, set up your layout.  This is important, as a good layout will
+facilitate getting things done efficiently, while a bad layout will could
+lead to disaster, as you can't figure out which code is the most recent,
+which can be thrown away, etc.  We suggest the following layout: (feel free
+to make changes)
+
+-- Everything goes under /src/xemacs (use a different directory if you
+   want).  From now, instead of saying /src/xemacs, we use <xsrc-top>, to
+   make it easier in case someone picked a different directory.
+
+-- Package source is in <xsrc-top>/package-src.
+
+-- Installed packages go under <xsrc-top>/xemacs-packages, and
+   <xsrc-top>/mule-packages.
+
+-- A "workspace" is a complete copy of the sources, in which you do work of
+   a particular kind.  Workspaces can be differentiated by which branch of
+   the source tree they extend off of -- usually either the stable or
+   experimental, unless other branches have been created (for example, Ben
+   created a branch for his Mule work because (1) the project was long-term
+   and involved an enormous number of changes, (2) people wanted to be able
+   to look at what his work in progress, and (3) he wanted to be able to
+   check things in and in general use source-code control, since it was a
+   long-term project).  Workspaces are also differentiated in what their
+   purpose is -- general working workspace, workspace for particular
+   projects, workspace keeping the latest copy of the code in one of the
+   branches without mods, etc.
+
+-- Various workspaces are subdirectories under <xsrc-top>, e.g.:
+
+   -- <xsrc-top>/working (the workspace you're actively working on,
+      periodically synched up with the latest trunk)
+
+   -- <xsrc-top>/stable (for making changes to the stable version of
+      XEmacs, which sits on a branch)
+
+   -- <xsrc-top>/unsigned-removal (a workspace for a specific, difficult
+      task that's going to affect lots of source and take a long time, and
+      so best done in its own workspace without the interference of other
+      work you're doing.  Also, you can commit just this one large change,
+      separate from all the other changes).
+
+   -- <xsrc-top>/latest (a copy of the latest sources on the trunk,
+      i.e. the experimental version of XEmacs, with no patches in it;
+      either update it periodically, by hand, or set up a cron job to do it
+      automatically).  Set it up so it can be built, and build it so you
+      have a working XEmacs. (Building it might also go into the cron job.)
+
+      This workspace serves a number of purposes:
+      -- 1. You always have a recent version of XEmacs you can compare
+            against when something you're working on breaks.  It's true
+            that you can do this with cvs diff, but when you need to do
+            some serious investigation, this method just fails.
+      -- 2. You (almost) always have a working, up-to-date executable that
+            can be used when your executable is crashing and you need to
+            keep developing it, or when you need an `xemacs' to build
+            packages, etc.
+      -- 3. When creating new workspaces, you can just copy the `latest'
+            workspace using GNU cp -a.  You have all the .elc's built,
+            everything else probably configured, any spare files in place
+            (e.g. some annoying xpm.dll under Windows, etc.).
+
+   -- <xsrc-top>/latest-stable/ (equivalent to <xsrc-top>/latest/, but
+      for the Stable branch of XEmacs, rather than the Experimental branch
+      of XEmacs).  This may or may not be necessary depending on how much
+      development you do of the stable branch.
+
+-- <xsrc-top>/xemacsweb is a workspace for working on the XEmacs web site.
+
+-- <xsrc-top>/in-patches for patches received from email and saved to files.
+
+-- <xsrc-top>/out-patches for locally-generated patches to be sent to
+   xemacs-patches@xemacs.org.  Less useful now that the patcher util has been
+   developed.
+
+-- <xsrc-top>/build, for build trees when compiling and testing XEmacs with
+   various configuration options turned off and on.  The scripts in
+   xemacs-builds/ben (see below) can be used to automate building XEmacs
+   workspaces with many different configuration options and automatically
+   filtering out the normal output so that you see only the abnormal
+   output.
+
+-- <xsrc-top>/xemacs-builds, for the xemacs-builds module, which you need
+   to check out separately in CVS.  This contains scripts used for building
+   XEmacs, automating and simplifying using CVS, etc.  Under various
+   people's directories are their own build and other scripts.  The
+   currently most-maintained scripts are under ben/, where there are easily
+   configurable scripts that can be used to easily build any workspace
+   (esp. if you've more or less followed the layout presented above)
+   unattended, with one or more configuration states (there's a
+   pre-determined list of the most useful, but it's easy to change).  The
+   output is filtered and split up in various ways so that you can identify
+   which output came from where, and you can see the output either full or
+   with all "normal" output except occasional status messages filtered so
+   that you only see the abnormal ones.
+
 *** What's the basic layout of the code?
 
 The file `configure' is a shell script to acclimate XEmacs to the

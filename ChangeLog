@@ -1,3 +1,54 @@
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* README (http):
+	Include a long, long description of the suggested directory layout
+	for developing XEmacs.  This should probably go as part of a
+	larger document, a "Getting Started with Developing XEmacs".  ####
+	Does such a document exist?
+
+	* etc\unicode\mule-ucs\*: New directory, containing translation
+	files for the remaining charsets that are not in
+	unicode\unicode-consortium but are in mule-ucs.
+
+	* etc\unicode\other\*: New directory, containing translation
+	files made up on an ad-hoc basis.
+
+	* etc\unicode\README: Update.
+
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* Some ChangeLog entries from stuff that got applied long ago
+	never got checked in, due to the nasty SCCS "oops, i forgot again
+	..." bug.
+
+2001-05-04  Ben Wing  <ben@xemacs.org>
+
+       * etc\check_cygwin_setup.sh (distdir): Update for current
+       Cygwin reality.
+
+       * etc\NEWS: Remove kill-whole-line changes.
+
+2001-05-04  Ben Wing  <ben@xemacs.org>
+
+       * PROBLEMS:
+       * PROBLEMS (Note):
+       Correct general info about init file.
+       Fix up Cygwin, Windows sections.
+
+2001-04-17  Ben Wing  <ben@xemacs.org>
+
+       * etc\NEWS: More changes.
+
+       * etc\sample.init.el (grep-all-files-in-current-directory-and-below):
+       Missing argument.
+
+2001-04-15  Ben Wing  <ben@xemacs.org>
+
+       * etc\NEWS:
+       * etc\NEWS (C):
+       * etc\NEWS (commands):
+       Many, many changes for XEmacs 21.4.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (XE_COMPUTE_RUNPATH):
