@@ -2980,10 +2980,9 @@ if test "$cflags_warning_specified" = "no"; then
   elif test "$CC" = "xlc"; then
     cflags_warning="-qinfo"
   elif test "$GCC" = "yes"; then
-    cflags_warning="-Wall -Wno-switch -Wmissing-prototypes"
+    cflags_warning="-Wall -Wno-switch -Wundef"
                 
                 cflags_warning="$cflags_warning -Wsign-compare -Wno-char-subscripts"
-    cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
     test "$__GCC3" = "yes" && cflags_warning="$cflags_warning -Wpacked"
             test "$have_glibc" != "yes" && \
       cflags_warning="$cflags_warning -Wpointer-arith"
@@ -2993,6 +2992,7 @@ if test "$cflags_warning_specified" = "no"; then
       xe_cflags_warning="$cflags_warning -Wunused-parameter"
     fi
     cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
+    cflags_warning="$cflags_warning -Wmissing-prototypes -Wstrict-prototypes"
           elif test "$__ICC" = "yes"; then
     cflags_warning="-Wall -w1 -we147"
     fi
@@ -4853,12 +4853,12 @@ cat > conftest.$ac_ext <<EOF
 #line 4854 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(short));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:4865: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
@@ -4895,12 +4895,12 @@ cat > conftest.$ac_ext <<EOF
 #line 4896 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(int));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:4907: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
@@ -4931,12 +4931,12 @@ cat > conftest.$ac_ext <<EOF
 #line 4932 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(long));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:4943: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
@@ -4967,12 +4967,12 @@ cat > conftest.$ac_ext <<EOF
 #line 4968 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(long long));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:4979: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
@@ -5003,12 +5003,12 @@ cat > conftest.$ac_ext <<EOF
 #line 5004 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(void *));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:5015: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
@@ -5039,12 +5039,12 @@ cat > conftest.$ac_ext <<EOF
 #line 5040 "configure"
 #include "confdefs.h"
 #include <stdio.h>
-main()
+int main()
 {
   FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
+  if (!f) return(1);
   fprintf(f, "%d\n", sizeof(double));
-  exit(0);
+  return(0);
 }
 EOF
 if { (eval echo configure:5051: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5

@@ -37,6 +37,8 @@
 
 ;;; Code:
 
+(require 'easy-mmode)
+
 (defgroup paragraphs nil
   "Paragraph and sentence parsing."
   :group 'editing)
@@ -147,7 +149,7 @@ without a period."
 (defcustom sentence-end
   (purecopy
    ;; This is a bit stupid since it's not auto-updated when the
-   ;; other variables are changes, but it's still useful info.
+   ;; other variables are changed, but it's still useful info.
    (concat (if sentence-end-without-period "\\w  \\|")
 	   "[.?!$B!#!%!)!*$A!##.#?#!$(0!$!%!)!*$(G!$!%!)!*(B][]\"')}]*"
 	   (if sentence-end-double-space

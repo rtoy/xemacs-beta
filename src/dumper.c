@@ -1819,12 +1819,12 @@ pdump_load_finish (void)
   p = pdump_start + header->stab_offset;
 
   /* Get the cv_data array */
-  p = (char *) ALIGN_PTR (p, pdump_cv_data_dump_info);
+  p = (Rawbyte *) ALIGN_PTR (p, pdump_cv_data_dump_info);
   pdump_loaded_cv_data = (pdump_cv_data_dump_info *)p;
   p += header->nb_cv_data*sizeof(pdump_cv_data_dump_info);
 
   /* Build the cv_ptr array */
-  p = (char *) ALIGN_PTR (p, pdump_cv_ptr_dump_info);
+  p = (Rawbyte *) ALIGN_PTR (p, pdump_cv_ptr_dump_info);
   pdump_loaded_cv_ptr =
     alloca_array (pdump_cv_ptr_load_info, header->nb_cv_ptr);
   for (i = 0; i < header->nb_cv_ptr; i++)

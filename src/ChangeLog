@@ -1,5 +1,9 @@
 2005-02-03  Jerry James  <james@xemacs.org>
 
+	* dumper.c (pdump_load_finish): Cast to Rawbyte * instead of char *.
+
+2005-02-03  Jerry James  <james@xemacs.org>
+
 	* config.h.in: Remove #define this c_this.
 	* device-x.c (construct_name_list): Rename this -> this_widget.
 	* eval.c (wants_debugger): Rename this -> curr.
