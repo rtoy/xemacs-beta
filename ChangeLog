@@ -1,3 +1,9 @@
+2002-10-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (Check for POSIX functions):  New section head.
+	getaddrinfo is detected on HP-UX 11.XX, but appears to be
+	non-functional.  Disable it.  Based on work by Darryl Okahata.
+	
 2002-10-18  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
 
 	* PROBLEMS (Running/Cygwin): "No cygXpm-noX" fatal error.
