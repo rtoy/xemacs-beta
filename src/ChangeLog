@@ -1,3 +1,8 @@
+2004-04-15  Jerry James  <james@xemacs.org>
+
+	* number.c (Foddp): Lisp name should be oddp, not odd.  Thanks to
+	Olivier Galibert.
+
 2003-12-07  Olivier Galibert  <galibert@pobox.com>
 
 	* Makefile.in.in: Add in-executable dump file support.

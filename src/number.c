@@ -135,7 +135,7 @@ Return t if INTEGER is even, nil otherwise.
 	  : XTYPE (integer) == Lisp_Type_Int_Even) ? Qt : Qnil;
 }
 
-DEFUN ("odd", Foddp, 1, 1, 0, /*
+DEFUN ("oddp", Foddp, 1, 1, 0, /*
 Return t if INTEGER is odd, nil otherwise.
 */
        (integer))
