@@ -1,3 +1,8 @@
+2001-08-29  Jered Floyd  <jered@MIT.EDU>
+
+	* configure.in (moduledir,sitemoduledir,archlibdir):
+        Place arch-specific files under ${libdir}, not under ${datadir}.
+
 2001-09-25  Didier Verna  <didier@xemacs.org>
 
 	* configure.ac: new. Autoconf 2.5x guard.
