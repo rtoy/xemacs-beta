@@ -1,3 +1,7 @@
+2002-02-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-Xm.c (make_dialog): Fix XmProcessTraversal crash.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.
