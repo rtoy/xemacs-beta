@@ -137,11 +137,13 @@ affect one frame instead of all frames."
 
 (defvar font-menu-preferred-resolution
   (make-specifier-and-init 'generic '((global ((mswindows) . ":")
+					      ((gtk) . "*-*")
 					      ((x) . "*-*"))) t)
   "Preferred horizontal and vertical font menu resolution (e.g. \"75:75\").")
 
 (defvar font-menu-size-scaling
   (make-specifier-and-init 'integer '((global ((mswindows) . 1)
+					      ((gtk) . 10)
 					      ((x) . 10))) t)
   "Scale factor used in defining font sizes.")
 
@@ -284,7 +286,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	 (font-data (font-menu-font-data 'default dcache))
 	 (from-family (aref font-data 1))
 	 (from-size   (aref font-data 2))
-	   (from-weight (aref font-data 3))
+	 (from-weight (aref font-data 3))
 	 (from-slant  (aref font-data 4))
   	 (face-list-to-change (delq 'default (face-list)))
 	 new-default-face-font)
@@ -315,7 +317,9 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(condition-case c
 	    (font-menu-change-face face
 				   from-family from-weight from-size
-				   family      weight      size)
+				   (or family from-family)
+				   (or weight from-weight)
+				   (or size from-size))
 	  (error
 	   (display-error c nil)
 	   (sit-for 1)))))
@@ -330,7 +334,7 @@ or if you change your font path, you can call this to re-initialize the menus."
       ;; OK Let Customize do it.
       (custom-set-face-update-spec 'default
 				   (list (list 'type (device-type)))
-				   (list :family family
+				   (list :family (or family from-family)
 					 :size (concat
 						(int-to-string
 						 (/ (or size from-size)

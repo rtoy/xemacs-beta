@@ -1,3 +1,13 @@
+2002-11-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Synch to 21.4 (suggested by Edward M. Lee <edward@tailifer.com>):
+
+	* font-menu.el (font-menu-set-font): Make sure values for family,
+	size, and weight are defaulted non-nil.  Fix indentation.
+	(font-menu-size-scaling): 
+	(font-menu-preferred-resolution):
+	Provide specs for GTK+.
+
 2002-11-03  Mike Sperber <mike@xemacs.org>
 
 	* code-process.el (call-process-region): Preserve return value
