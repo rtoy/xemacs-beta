@@ -52,6 +52,9 @@ char pot_etags_version[] = "@(#) pot revision number is 14.28";
 # undef static
 # define ETAGS_REGEXPS		/* use the regexp features */
 # define LONG_OPTIONS		/* accept long options */
+# ifndef __P
+#   define __P(args) args
+# endif
 # ifndef PTR
 #   define PTR void *
 # endif

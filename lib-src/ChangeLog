@@ -1,3 +1,7 @@
+2001-12-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* etags.c: Define __P if not already defined.
+
 2001-12-19  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* Makefile.in.in (etags_args): Define EMACS_NAME to XEmacs.
