@@ -789,6 +789,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
   /* ralloc can only be used if using the GNU memory allocator. */
   init_ralloc ();
+#ifdef PDUMP
+  init_ralloc ();
+#endif
 #elif defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
   if (initialized)
     init_ralloc();

@@ -1,3 +1,8 @@
+2002-07-03  Mike Sperber <mike@xemacs.org>
+
+	* emacs.c (main_1): We need to call init_ralloc twice for PDUMP,
+	otherwice ralloc won't do anything for us.
+
 2002-07-01  Mike Sperber <mike@xemacs.org>
 
 	* process-unix.c (unix_send_process): Mark coding_outstream as
