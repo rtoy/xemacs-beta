@@ -54,6 +54,7 @@
 #define IDB_CHECK_NO                    124
 #define IDB_CHECK_NA                    125
 #define IDB_GNU                         126
+#define IDD_UNINSTALL                   127
 #define IDC_SOURCE_DOWNLOAD             1000
 #define IDC_SOURCE_NETINST              1001
 #define IDC_SOURCE_CWD                  1002
@@ -94,9 +95,20 @@
 #define IDC_ROOT_DESKTOP                1041
 #define IDC_ROOT_MENU                   1042
 #define IDC_LOCAL_DIR_BROWSE            1043
+#define IDC_TXT_TYPE                    1043
 #define IDC_LOCAL_DIR                   1044
+#define IDC_JAVA_TYPE                   1044
 #define IDC_INSTALL_NATIVE              1045
+#define IDC_C_TYPE                      1045
 #define IDC_INSTALL_CYGWIN              1046
+#define IDC_CPP_TYPE                    1046
+#define IDC_UNINS_PKG                   1047
+#define IDC_ELISP_TYPE                  1047
+#define IDC_UNINS_FILE                  1048
+#define IDC_UNINS_DISKFULL              1049
+#define IDC_UNINS_IPROGRESS             1050
+#define IDC_UNINS_PPROGRESS             1051
+#define IDC_UNINS_ACTION                1052
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

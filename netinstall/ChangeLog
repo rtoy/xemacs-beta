@@ -1,3 +1,54 @@
+2001-09-08  Andy Piper  <andy@xemacs.org>
+
+	* Makefile.in.in (OBJS):
+	* Makefile.in.in (all):
+	* Makefile.in.in (extraclean):
+	* choose.cc (base):
+	* desktop.cc:
+	* desktop.cc (remove_link):
+	* desktop.cc (start_menu):
+	* desktop.cc (desktop_icon):
+	* desktop.cc (remove_desktop_setup):
+	* desktop.cc (do_desktop_setup):
+	* desktop.cc (load_dialog):
+	* desktop.cc (save_dialog):
+	* desktop.cc (do_desktop):
+	* dialog.h:
+	* download.cc (download_one):
+	* ini.h (pinfo):
+	* main.cc (WinMain):
+	* nio-ie5.cc:
+	* regedit.cc:
+	* regedit.cc (create_xemacs_root):
+	* regedit.cc (set_app_path):
+	* regedit.cc (set_install_path):
+	* regedit.cc (setup_explorer):
+	* regedit.cc (remove_app_path):
+	* regedit.cc (remove_uninstall_path):
+	* regedit.h (remove_app_path):
+	* reginfo.h:
+	* reginfo.h (XEMACS_INFO_XEMACS_ORG_REGISTRY_NAME):
+	* reginfo.h (XEMACS_NATIVE_ARCH_NAME):
+	* res.rc:
+	* resource.h (IDD_UNINSTALL):
+	* resource.h (IDC_TXT_TYPE):
+	* root.cc:
+	* root.cc (browse_cb):
+	* root.cc (set_default_root):
+	* splash.cc (do_splash):
+	* state.h:
+	* state.h (MIRROR_SITE):
+	* uninstall.cc:
+	* uninstall.cc (dialog_proc):
+	* uninstall.cc (progress):
+	* uninstall.cc (uninstall_one):
+	* uninstall.cc (do_uninstall):
+	* uninstall.cc (read_installed_db):
+	* uninstall.cc (uninstall_all):
+	* win32.h:
+	* win32.h (NOCOMATTRIBUTE): Update netinstaller to support
+	uninstallation and register standard file-types.
+
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.3 "asparagus" is released.
@@ -226,3 +277,7 @@
 2000-11-12  Andy Piper  <andy@xemacs.org>
 
 	* all: port from cygwin setup.
+
+%%% $Id: ChangeLog,v 1.7 2001/09/09 04:37:46 andyp Exp $
+$Revision: 1.7 $
+

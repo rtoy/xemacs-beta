@@ -1,3 +1,29 @@
+2001-09-08  Andy Piper  <andy@xemacs.org>
+
+	* device-msw.c (mswindows_finish_init_device): remove dde
+	initialization.
+	* device-msw.c (mswindows_init_dde): factor out from
+	mswindows_finish_init_device()
+	* device-msw.c (init_mswindows_very_early): new function
+	initialize but don't enable dde.
+	* emacs.c (main_1): call init_mswindows_very_early.
+	* event-msw.c:
+	* event-msw.c (mswindows_dde_callback): only execute when we are
+	ready.
+	* symsinit.h: declare init_mswindows_very_early.
+
+2001-09-08  Andy Piper  <andy@xemacs.org>
+
+	* fileio.c (normalize_filename): copied from nt.c
+	* (Ffile_name_directory): enable win32 paths under cygwin.
+	* (Ffile_name_nondirectory): ditto.
+	* (directory_file_name): ditto.
+	* (Fexpand_file_name): ditto.
+	* (Ffile_truename): ditto.
+	* (Fsubstitute_in_file_name): ditto.
+	* (Ffile_name_absolute_p): ditto.
+	* (Ffile_readable_p): ditto.
+
 2001-07-30  Adrian Aichner  <adrian@xemacs.org>
 
 	* event-msw.c: Typo fix.

@@ -111,6 +111,7 @@ OBJS = \
 	ini.o \
 	inilex.o \
 	iniparse.o \
+	init.o \
 	install.o \
 	localdir.o \
 	log.o \
@@ -135,6 +136,7 @@ OBJS = \
 	splash.o \
 	state.o \
 	tar.o \
+	uninstall.o \
 	version.o
 
 .SUFFIXES:
@@ -151,12 +153,12 @@ setup.exe: $(OBJS)
 		-L$(MINGW_ZLIB_DIR) -lz -lmingw32
 	@chmod a-x $@
 
-setup.ini: setup.exe
+setup-bin.ini: setup.exe
 	V=`grep '^\$$Revision.*' $(srcdir)/ChangeLog \
 	| sed -e 's/\$$Revision:* *//' \
 	  -e 's/ *$$.*//'` ;\
 	$(XEMACS) -batch -vanilla -l ${srcdir}/../lisp/package-net.el \
-		-f package-net-batch-convert-index-to-ini . $$V
+		-f package-net-batch-generate-bin-ini . $$V
 
 install:
 	@echo; echo "Installing net setup."
@@ -207,7 +209,7 @@ choose.o: choose.cc win32.h dialog.h resource.h state.h ini.h concat.h \
  msg.h log.h find.h reginfo.h
 concat.o: concat.cc
 desktop.o: desktop.cc win32.h resource.h ini.h msg.h state.h concat.h \
- mkdir.h dialog.h version.h port.h
+ mkdir.h dialog.h version.h port.h reginfo.h
 dialog.o: dialog.cc win32.h dialog.h msg.h log.h
 diskfull.o: diskfull.cc win32.h diskfull.h
 download.o: download.cc win32.h resource.h msg.h ini.h dialog.h \
@@ -227,6 +229,10 @@ iniparse.o: iniparse.c ini.h \
  iniparse.h \
  port.h
 install.o: install.cc win32.h \
+ resource.h ini.h dialog.h concat.h geturl.h mkdir.h state.h tar.h \
+ diskfull.h msg.h regedit.h reginfo.h log.h hash.h port.h
+init.o: init.cc win32.h resource.h dialog.h state.h msg.h log.h 
+uninstall.o: uninstall.cc win32.h \
  resource.h ini.h dialog.h concat.h geturl.h mkdir.h state.h tar.h \
  diskfull.h msg.h regedit.h reginfo.h log.h hash.h port.h
 localdir.o: localdir.cc win32.h dialog.h resource.h state.h msg.h \

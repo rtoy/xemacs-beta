@@ -1607,6 +1607,8 @@ mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
  * depends on dnd support.
  */
 #ifdef HAVE_DRAGNDROP
+extern int mswindows_dde_enable;
+
 HDDEDATA CALLBACK
 mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 			HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
@@ -1633,6 +1635,9 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
       return (HDDEDATA)NULL;
 
     case XTYP_EXECUTE:
+      if (!mswindows_dde_enable)
+	return (HDDEDATA) DDE_FBUSY;
+
       if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
@@ -1640,7 +1645,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	  char *end;
 	  char *filename;
 	  struct gcpro gcpro1, gcpro2;
-          Lisp_Object l_dndlist = Qnil;
+	  Lisp_Object l_dndlist = Qnil;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	  Lisp_Object frmcons, devcons, concons;
 	  Lisp_Event *event = XEVENT (emacs_event);
