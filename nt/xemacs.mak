@@ -1457,7 +1457,6 @@ install:	all
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
 	@$(COPY) $(SRCROOT)\PROBLEMS "$(INSTALL_DIR)\"
-	@$(COPY) $(SRCROOT)\BUGS "$(INSTALL_DIR)\"
 	@$(COPY) $(SRCROOT)\README "$(INSTALL_DIR)\"
 	@$(COPY) $(SRCROOT)\COPYING "$(INSTALL_DIR)\"
 	@$(COPY) $(SRCROOT)\Installation "$(INSTALL_DIR)\"

@@ -1,3 +1,7 @@
+2005-02-22  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (install): Don't copy BUGS, which has been removed.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.
