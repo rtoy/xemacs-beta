@@ -425,7 +425,7 @@ gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
-static Lisp_Object gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset);
+static Lisp_Object gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset, int stage);
 
 #endif /* MULE */
 

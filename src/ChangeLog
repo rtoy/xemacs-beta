@@ -38,7 +38,6 @@
 	* alloc.c: Fix various kkcc-related nits that show up in MULE and
 	union-type builds.
 
->>>>>>> 1.488
 2002-07-31  David Bush  <David.Bush@intel.com>
 
 	* events.c (event_equal): Correct comparison in MS Windows
