@@ -1,3 +1,9 @@
+2003-02-07  Ben Wing  <ben@xemacs.org>
+
+	* lread.c (Fload_internal):
+	Eliminate printing `done' messages noninteractively since it's now
+	obvious which files are loaded by which others.
+
 2003-02-06  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
          * sysdll.c: Included lisp.h to define needed alloca_array.

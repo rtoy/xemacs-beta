@@ -1,3 +1,24 @@
+2003-02-07  Ben Wing  <ben@xemacs.org>
+
+	* hyper-apropos.el:
+	* hyper-apropos.el (hyper-apropos):
+	* hyper-apropos.el (hyper-apropos-grok-functions):
+	* hyper-apropos.el (hyper-apropos-grok-variables):
+	Separate obsolete and non-obsolete stuff and make sure we note
+	when obsolete funs are just aliases for others.  Also fix some
+	problems with doc string hacking.
+	
+	* menubar-items.el:
+	* menubar-items.el (default-menubar):
+	Change the Help->Info submenu a bit.
+	
+	* text-props.el (text-property-any):
+	* text-props.el (text-property-not-all):
+	Fix bug when end > start.
+	
+	* update-elc.el (unbytecompiled-lisp-files):
+	Add raw-process.el.
+
 2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Synch to GNU Emacs 21.3.50:
