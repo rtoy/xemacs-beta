@@ -597,9 +597,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      if (!INT_OR_FLOATP (obj))
 #endif
 		{
-		  syntax_error
-		    ("format specifier %%%c doesn't match argument type",
-		     make_char (ch));
+		  /* WARNING!  This MUST be big enough for the sprintf below */
+		  CIbyte message[48];
+		  sprintf (message,
+			   "format specifier %%%c doesn't match argument type",
+			   ch);
+		  syntax_error (message, Qnil);
 		}
 	      else if (strchr (double_converters, ch))
 		{
@@ -715,8 +718,13 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      a = (Ichar) arg.l;
 
 	      if (!valid_ichar_p (a))
-		syntax_error ("invalid character value %d to %%c spec",
-			      make_int (a));
+		{
+		  /* WARNING!  This MUST be big enough for the sprintf below */
+		  CIbyte message[60];
+		  sprintf (message, "invalid character value %d to %%c spec",
+			   a);
+		  syntax_error (message, Qnil);
+		}
 
 	      charlen = set_itext_ichar (charbuf, a);
 	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,

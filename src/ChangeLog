@@ -1,3 +1,10 @@
+2004-08-18  Felix H. Gatzemeier  <f.g@tzemeier.info>
+
+	* doprnt.c (emacs_doprnt_1): Use sprintf to format error messages
+	from the formatting function.
+	* eval.c (syntax_error): Emphasize that `reason' is not processed
+	as a format string.
+
 2004-09-11  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* config.h.in: Added entries for sys/resource.h, sys/vlimit.h,

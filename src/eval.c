@@ -2833,6 +2833,7 @@ signal_circular_property_list_error (Lisp_Object list)
   signal_error (Qcircular_property_list, 0, list);
 }
 
+/* Called from within emacs_doprnt_1, so REASON is not formatted. */
 DOESNT_RETURN
 syntax_error (const CIbyte *reason, Lisp_Object frob)
 {
