@@ -1,4 +1,4 @@
-/* Implements an elisp-programmable menubar -- X interface.
+/* Implements an elisp-programmable menubar -- Gtk interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
    Copyright (C) 2002, 2003 Ben Wing.
@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #define SUBMENU_TYPE	1
 #define POPUP_TYPE	2
 
-static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr);
+static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group);
 
 #define FRAME_GTK_MENUBAR_DATA(f) (FRAME_GTK_DATA (f)->menubar_data)
 #define XFRAME_GTK_MENUBAR_DATA_LASTBUFF(f) XCAR (FRAME_GTK_MENUBAR_DATA (f))
@@ -113,7 +113,7 @@ gtk_xemacs_menubar_get_type (void)
   return xemacs_menubar_type;
 }
 
-static GtkWidgetClass *parent_class;
+static GtkWidgetClass *menubar_parent_class;
 
 static void
 gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
@@ -121,7 +121,7 @@ gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
   GtkWidgetClass *widget_class;
 
   widget_class = (GtkWidgetClass*) klass;
-  parent_class = (GtkWidgetClass *) gtk_type_class (gtk_menu_bar_get_type ());
+  menubar_parent_class = (GtkWidgetClass *) gtk_type_class (gtk_menu_bar_get_type ());
 
   widget_class->size_request = gtk_xemacs_menubar_size_request;
 }
@@ -137,7 +137,7 @@ gtk_xemacs_menubar_size_request	(GtkWidget *widget, GtkRequisition *requisition)
   GtkXEmacsMenubar *x = GTK_XEMACS_MENUBAR (widget);
   GtkRequisition frame_size;
 
-  parent_class->size_request (widget, requisition);
+  menubar_parent_class->size_request (widget, requisition);
 
   /* #### BILL!
   ** We should really only do this if the menu has not been detached!
@@ -160,6 +160,117 @@ gtk_xemacs_menubar_new (struct frame *f)
   return (GTK_WIDGET (menubar));
 }
 
+/*
+ * Label with XEmacs accelerator character support.
+ *
+ * The default interfaces to GtkAccelLabel does not understand XEmacs
+ * keystroke printing conventions, nor is it convenient in the places where is
+ * it needed.  This subclass provides an alternative interface more suited to
+ * XEmacs needs but does not add new functionality.
+ */
+#define GTK_TYPE_XEMACS_ACCEL_LABEL	       (gtk_xemacs_accel_label_get_type ())
+#define GTK_XEMACS_ACCEL_LABEL(obj)	       (GTK_CHECK_CAST ((obj), GTK_TYPE_ACCEL_LABEL, GtkXEmacsAccelLabel))
+#define GTK_XEMACS_ACCEL_LABEL_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), GTK_TYPE_ACCEL_LABEL, GtkXEmacsAccelLabelClass))
+#define GTK_IS_XEMACS_ACCEL_LABEL(obj)	       (GTK_CHECK_TYPE ((obj), GTK_TYPE_XEMACS_ACCEL_LABEL))
+#define GTK_IS_XEMACS_ACCEL_LABEL_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), GTK_TYPE_XEMACS_ACCEL_LABEL))
+
+typedef struct _GtkXEmacsAccelLabel	    GtkXEmacsAccelLabel;
+typedef struct _GtkXEmacsAccelLabelClass  GtkXEmacsAccelLabelClass;
+
+/* Instance structure. No additional fields required. */
+struct _GtkXEmacsAccelLabel
+{
+  GtkAccelLabel label;
+};
+
+/* Class structure. No additional fields required. */
+struct _GtkXEmacsAccelLabelClass
+{
+  GtkAccelLabelClass	 parent_class;
+};
+
+static GtkType	  gtk_xemacs_accel_label_get_type(void);
+static GtkWidget* gtk_xemacs_accel_label_new(const gchar *string);
+static void       gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l,
+				       Lisp_Object keys);
+static void       gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *klass);
+static void       gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs);
+
+static GtkType
+gtk_xemacs_accel_label_get_type(void)
+{
+  static GtkType xemacs_accel_label_type = 0;
+
+  if (!xemacs_accel_label_type)
+    {
+      static const GtkTypeInfo xemacs_accel_label_info =
+      {
+	"GtkXEmacsAccelLabel",
+	sizeof (GtkXEmacsAccelLabel),
+	sizeof (GtkXEmacsAccelLabelClass),
+	(GtkClassInitFunc) gtk_xemacs_accel_label_class_init,
+	(GtkObjectInitFunc) gtk_xemacs_accel_label_init,
+	/* reserved_1 */ NULL,
+        /* reserved_2 */ NULL,
+        (GtkClassInitFunc) NULL,
+      };
+
+      xemacs_accel_label_type = gtk_type_unique (gtk_accel_label_get_type(), &xemacs_accel_label_info);
+    }
+
+  return xemacs_accel_label_type;
+}
+
+static void
+gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *klass)
+{
+  /* Nothing to do. */
+}
+
+static void
+gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs)
+{
+  /* Nothing to do. */
+}
+
+static GtkWidget*
+gtk_xemacs_accel_label_new (const gchar *string)
+{
+  GtkXEmacsAccelLabel *xemacs_accel_label;
+  
+  xemacs_accel_label = (GtkXEmacsAccelLabel*) gtk_type_new (GTK_TYPE_XEMACS_ACCEL_LABEL);
+  
+  if (string && *string)
+    gtk_label_set_text (GTK_LABEL (xemacs_accel_label), string);
+  
+  return GTK_WIDGET (xemacs_accel_label);
+}
+
+/* Make the string <keys> the accelerator string for the label. */
+static void
+gtk_xemacs_set_accel_keys(GtkXEmacsAccelLabel* l, Lisp_Object keys)
+{
+  g_return_if_fail (l != NULL);
+  g_return_if_fail (GTK_IS_XEMACS_ACCEL_LABEL (l));
+
+  /* Disable the standard way of finding the accelerator string for the
+     label. */
+  gtk_accel_label_set_accel_widget (GTK_ACCEL_LABEL(l), NULL);
+
+  /* Set the string straight from the object. */
+  if (STRINGP (keys) && XSTRING_LENGTH (keys))
+    {
+      C_STRING_TO_EXTERNAL_MALLOC(XSTRING_DATA (keys),
+				  l->label.accel_string,
+				  Qctext);
+    }
+  else
+    {
+      /* l->label.accel_string = NULL;*/
+    }
+}
+
+
 /* We now return you to your regularly scheduled menus... */
 
 int dockable_menubar;
@@ -320,7 +431,8 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
 	}
       else
 	{
-	  next = menu_descriptor_to_widget_1 (child);
+	  next = menu_descriptor_to_widget_1 (child,
+					      gtk_menu_ensure_uline_accel_group (GTK_MENU (item->submenu)));
 	}
 
       if (!next)
@@ -355,10 +467,66 @@ __kill_stupid_gtk_timer (GtkObject *obj, gpointer user_data)
     }
 }
 
+/* Convert the XEmacs menu accelerator representation to Gtk mnemonic form. If
+  no accelerator has been provided, put one at the start of the string (this
+  mirrors the behaviour under X).  This algorithm is also found in
+  dialog-gtk.el:gtk-popup-convert-underscores.
+*/
 static char *
-remove_underscores(const Ibyte* name)
+convert_underscores(const Ibyte *name)
 {
-  char *rval = (char*) xmalloc_and_zero (strlen((char*) name) + 1);
+  char *rval;
+  int i,j;
+  int found_accel = FALSE;
+  int underscores = 0;
+
+  for (i = 0; name[i]; ++i)
+    if (name[i] == '%' && name[i+1] == '_')
+      {
+	found_accel = TRUE;
+      }
+    else if (name[i] == '_')
+      {
+	underscores++;
+      }
+
+  /* Allocate space for the original string, plus zero byte plus extra space
+     for all quoted underscores plus possible additional leading accelerator. */
+  rval = (char*) xmalloc_and_zero (qxestrlen(name) + 1 + underscores
+				   + (found_accel ? 0 : 1));
+
+  if (!found_accel)
+    rval[0] = '_';
+
+  for (i = 0, j = (found_accel ? 0 : 1); name[i]; i++)
+    {
+      if (name[i]=='%')
+	{
+	  i++;
+	  if (!(name[i]))
+	    continue;
+	  
+	  if ((name[i] != '_') && (name[i] != '%'))
+	    i--;
+
+	  found_accel = TRUE;
+	}
+      else if (name[i] == '_')
+	{
+	  rval[j++] = '_';
+	}
+
+      rval[j++] = name[i];
+    }
+
+  return rval;
+}
+
+/* Remove the XEmacs menu accellerator representation from a string. */
+static char *
+remove_underscores(const Ibyte *name)
+{
+  char *rval = (char*) xmalloc_and_zero (qxestrlen(name) + 1);
   int i,j;
 
   for (i = 0, j = 0; name[i]; i++)
@@ -368,7 +536,9 @@ remove_underscores(const Ibyte* name)
 	if (!(name[i]))
 	  continue;
 
-	if ((name[i] == '_'))
+	if ((name[i] != '_') && (name[i] != '%'))
+	  i--;
+	else
 	  continue;
       }
       rval[j++] = name[i];
@@ -381,7 +551,8 @@ remove_underscores(const Ibyte* name)
    DESCR is either a list (meaning a submenu), a vector, or nil (if
    you include a :filter keyword) */
 static GtkWidget *
-menu_convert (Lisp_Object desc, GtkWidget *reuse)
+menu_convert (Lisp_Object desc, GtkWidget *reuse,
+	      GtkAccelGroup* menubar_accel_group)
 {
   GtkWidget *menu_item = NULL;
   GtkWidget *submenu = NULL;
@@ -398,8 +569,23 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse)
 
       if (!reuse)
 	{
-	  char *temp_menu_name = remove_underscores (XSTRING_DATA (XCAR (desc)));
-	  menu_item = gtk_menu_item_new_with_label (temp_menu_name);
+	  char *temp_menu_name = convert_underscores (XSTRING_DATA (XCAR (desc)));
+	  GtkWidget* accel_label = gtk_xemacs_accel_label_new(NULL);
+	  guint accel_key;
+
+	  gtk_misc_set_alignment (GTK_MISC (accel_label), 0.0, 0.5);
+	  accel_key = gtk_label_parse_uline (GTK_LABEL (accel_label), temp_menu_name);
+
+	  menu_item = gtk_menu_item_new ();
+	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
+	  gtk_widget_show (accel_label);
+
+	  if (menubar_accel_group)
+	    gtk_widget_add_accelerator (menu_item,
+					"activate_item",
+					menubar_accel_group,
+					accel_key, GDK_MOD1_MASK,
+					GTK_ACCEL_LOCKED);
 	  free (temp_menu_name);
 	}
       else
@@ -583,7 +769,7 @@ __generic_button_callback (GtkMenuItem *item, gpointer user_data)
    It is only called from menu_item_descriptor_to_widget_value, which
    prohibits GC. */
 static GtkWidget *
-menu_descriptor_to_widget_1 (Lisp_Object descr)
+menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 {
   if (STRINGP (descr))
     {
@@ -596,7 +782,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
   else if (LISTP (descr))
     {
       /* It is a submenu */
-      return (menu_convert (descr, NULL));
+      return (menu_convert (descr, NULL, accel_group));
     }
   else if (VECTORP (descr))
     {
@@ -617,6 +803,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
       int plist_p;
       int selected_spec = 0, included_spec = 0;
       GtkWidget *widget = NULL;
+      guint accel_key;
 
       if (length < 2)
 	sferror ("button descriptors must be at least 2 long", descr);
@@ -712,8 +899,9 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
 	      sprintf ((char*) label_buffer, "%s ", XSTRING_DATA (name));
 	    }
 
-	  temp_label = remove_underscores (label_buffer);
-	  main_label = gtk_accel_label_new (temp_label);
+	  temp_label = convert_underscores (label_buffer);
+	  main_label = gtk_xemacs_accel_label_new (NULL);
+	  accel_key = gtk_label_parse_uline (GTK_LABEL (main_label), temp_label);
 	  free (temp_label);
 	}
 
@@ -837,42 +1025,23 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
 			  GTK_SIGNAL_FUNC (__generic_button_callback),
 			  LISP_TO_VOID (callback));
 
-      /* We cheat here... GtkAccelLabel usually builds its
-	 `accel_string' from the widget it is attached to, but we do
-	 not want to go thru the overhead of converting our nice
-	 string back into the modifier + key format that requires,
-	 just so that they can convert it back into a (possibly
-	 different/wrong) string
-
-	 We set the label string manually, and things should 'just
-	 work'
-
-	 In an ideal world we would just subclass GtkLabel ourselves,
-	 but I have known for a very long time that this is not an
-	 ideal world.
-
-	 #### Should do menu shortcuts `correctly' one of these days.
+      /* Now that all the information about the menu item is know, set the
+	 remaining properties.
       */
       
       if (main_label)
 	{
-	  GtkAccelLabel *l = GTK_ACCEL_LABEL (main_label);
-
 	  gtk_container_add (GTK_CONTAINER (widget), main_label);
 
-	  gtk_accel_label_set_accel_widget (l, NULL);
-	  gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	  gtk_misc_set_alignment (GTK_MISC (main_label), 0.0, 0.5);
+	  gtk_xemacs_set_accel_keys(GTK_XEMACS_ACCEL_LABEL(main_label), keys);
 
-	  if (STRINGP (keys) && XSTRING_LENGTH (keys))
-	    {
-	      C_STRING_TO_EXTERNAL_MALLOC (XSTRING_DATA (keys), l->accel_string,
-					   Qctext);
-	      stderr_out ("accel: %s\n", l->accel_string);
-	    }
-	  else
-	    {
-	      /* l->accel_string = ""; */
-	    }
+	  if (accel_group)
+	    gtk_widget_add_accelerator (widget,
+					"activate_item",
+					accel_group,
+					accel_key, 0,
+					GTK_ACCEL_LOCKED);
 	}
 
       return (widget);
@@ -885,13 +1054,13 @@ menu_descriptor_to_widget_1 (Lisp_Object descr)
 }
 
 static GtkWidget *
-menu_descriptor_to_widget (Lisp_Object descr)
+menu_descriptor_to_widget (Lisp_Object descr, GtkAccelGroup* accel_group)
 {
   GtkWidget *rval = NULL;
   int count = begin_gc_forbidden ();
 
   /* Cannot GC from here on out... */
-  rval = menu_descriptor_to_widget_1 (descr);
+  rval = menu_descriptor_to_widget_1 (descr, accel_group);
   unbind_to (count);
   return (rval);
   
@@ -901,23 +1070,24 @@ static gboolean
 menu_can_reuse_widget (GtkWidget *child, const Ibyte *label)
 {
   /* Everything up at the top level was done using
-  ** gtk_menu_item_new_with_label(), but we still double check to make
+  ** gtk_xemacs_accel_label_new(), but we still double check to make
   ** sure we don't seriously foobar ourselves.
   */
-  char *temp_label = NULL;
-  gpointer possible_child = g_list_nth_data (gtk_container_children (GTK_CONTAINER (child)), 0);
+  gpointer possible_child =
+    g_list_nth_data (gtk_container_children (GTK_CONTAINER (child)), 0);
+  gboolean ret_val = FALSE;
 
   if (possible_child && GTK_IS_LABEL (possible_child))
     {
-      if (!temp_label) temp_label = remove_underscores (label);
+      char *temp_label = remove_underscores (label);
+
       if (!strcmp (GTK_LABEL (possible_child)->label, temp_label))
-	{
-	  free (temp_label);
-	  return (TRUE);
-	}
+	ret_val = TRUE;
+
+      free (temp_label);
     }
-  if (temp_label) free (temp_label);
-  return (FALSE);
+
+  return ret_val;
 }
 
 /* Converts a menubar description into a GtkMenuBar... a menubar is a
@@ -933,12 +1103,15 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
   GtkWidget *menubar = FRAME_GTK_MENUBAR_WIDGET (f);
   GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (menubar), XEMACS_MENU_GUIID_TAG);
   guint menu_position = 0;
+  GtkAccelGroup *menubar_accel_group;
 
   /* Remove any existing protection for old menu items */
   ungcpro_popup_callbacks (id);
 
   /* GCPRO the whole damn thing */
   gcpro_popup_callbacks (id, descr);
+
+  menubar_accel_group = gtk_accel_group_new();
 
   EXTERNAL_LIST_LOOP (tail, value)
     {
@@ -957,7 +1130,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	  /* It is a button description */
 	  GtkWidget *item;
 
-	  item = menu_descriptor_to_widget (item_descr);
+	  item = menu_descriptor_to_widget (item_descr, menubar_accel_group);
 	  gtk_widget_set_name (item, "XEmacsMenuButton");
 
 	  if (!item)
@@ -979,12 +1152,13 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	  if (current_child && menu_can_reuse_widget (GTK_WIDGET (current_child),
 						      XSTRING_DATA (XCAR (item_descr))))
 	    {
-	      widget = menu_convert (item_descr, GTK_WIDGET (current_child));
+	      widget = menu_convert (item_descr, GTK_WIDGET (current_child),
+				     menubar_accel_group);
 	      reused_p = TRUE;
 	    }
 	  else
 	    {
-	      widget = menu_convert (item_descr, NULL);
+	      widget = menu_convert (item_descr, NULL, menubar_accel_group);
 	      if (current_child) gtk_widget_destroy (GTK_WIDGET (current_child));
 	      gtk_menu_bar_insert (GTK_MENU_BAR (menubar), widget, menu_position);
 	    }
@@ -1023,6 +1197,10 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	  }
       }
   }
+
+  /* Attach the new accelerator group to the frame. */
+  gtk_window_add_accel_group (GTK_WINDOW (FRAME_GTK_SHELL_WIDGET(f)),
+			      menubar_accel_group);
 }
 
 
@@ -1246,7 +1424,7 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   CHECK_STRING (XCAR (menu_desc));
 
   /* Now lets get down to business... */
-  widget = menu_descriptor_to_widget (menu_desc);
+  widget = menu_descriptor_to_widget (menu_desc, NULL);
   menu = GTK_MENU_ITEM (widget)->submenu;
   gtk_widget_set_name (widget, "XEmacsPopupMenu");
   id = gtk_object_get_data (GTK_OBJECT (widget), XEMACS_MENU_GUIID_TAG);
@@ -1290,7 +1468,7 @@ See the definition of `popup-menu' for more information on the format of MENU.
 */
        (menu))
 {
-  GtkWidget *w = menu_descriptor_to_widget (menu);
+  GtkWidget *w = menu_descriptor_to_widget (menu, NULL);
 
   return (w ? build_gtk_object (GTK_OBJECT (w)) : Qnil);
 }
@@ -1333,3 +1511,6 @@ If non-nil, menus can be torn off into their own top-level windows.
 #endif
   reinit_vars_of_menubar_gtk ();
 }
+
+/*---------------------------------------------------------------------------*/
+

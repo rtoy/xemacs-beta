@@ -35,6 +35,9 @@
  '(gtk-import-function-internal
    gtk-call-function gtk-import-variable-internal gtk-ctree-recurse))
 
+(gtk-import-function GtkAccelGroup gtk_accel_group_new)
+
+
 (gtk-import-function GtkType gtk_accel_label_get_type)
 (gtk-import-function GtkWidget gtk_accel_label_new GtkString)
 (gtk-import-function guint gtk_accel_label_get_accel_width GtkAccelLabel)

@@ -1,3 +1,13 @@
+2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* gtk-widgets.el: New import: gtk-accel-group-new.
+	* dialog-gtk.el:
+	* dialog-gtk.el (gtk-popup-convert-underscores): New.
+	* dialog-gtk.el (popup-builtin-question-dialog):
+
+	Added support for dialog button mnemonics.
+
+
 2004-04-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* cl.el (gensym, gentemp): Improve docstrings.

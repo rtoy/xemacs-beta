@@ -1,3 +1,25 @@
+2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* event-gtk.c:
+	* event-gtk.c (gtk_event_to_emacs_event):
+	* menubar-gtk.c:
+	* menubar-gtk.c (gtk_xemacs_menubar_class_init):
+	* menubar-gtk.c (gtk_xemacs_menubar_size_request):
+	* menubar-gtk.c (gtk_xemacs_accel_label_get_type):
+	* menubar-gtk.c (gtk_xemacs_set_accel_keys):
+	* menubar-gtk.c (__activate_menu):
+	* menubar-gtk.c (convert_underscores):
+	* menubar-gtk.c (remove_underscores):
+	* menubar-gtk.c (menu_convert):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar-gtk.c (menu_descriptor_to_widget):
+	* menubar-gtk.c (menu_can_reuse_widget):
+	* menubar-gtk.c (menu_create_menubar):
+	* menubar-gtk.c (gtk_popup_menu):
+	* menubar-gtk.c (Fgtk_build_xemacs_menu):
+
+	Added support for Gtk menu bar and menu item mnemonics.
+
 2004-05-10  Jerry James  <james@xemacs.org>
 
 	* config.h.in: Add HAVE_LTDL.
