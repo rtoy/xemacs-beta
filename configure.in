@@ -793,7 +793,7 @@ The default is to autodetect all sound support."])
 	    g | gt | gtk )				val=gtk    ;;
 	    m | ms | msw )				val=msw    ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
-  \`gtk\', \`lucid', \`motif', \`athena', \`yes', or \`no'."]) ;;
+  \`gtk', \`lucid', \`motif', \`athena', \`yes', or \`no'."]) ;;
 	  esac
 	  eval "$opt=\"$val\""
 	;;

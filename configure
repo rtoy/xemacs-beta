@@ -741,7 +741,7 @@ EOF
 	    m | ms | msw )				val=msw    ;;
 	    * ) (echo "$progname: Usage error:"
 echo " " "The \`--$optname' option must have one of these values:
-  \`gtk\', \`lucid', \`motif', \`athena', \`yes', or \`no'."
+  \`gtk', \`lucid', \`motif', \`athena', \`yes', or \`no'."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1 ;;
 	  esac
 	  eval "$opt=\"$val\""
