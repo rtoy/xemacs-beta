@@ -1,5 +1,9 @@
 2004-08-26  Jerry James  <james@xemacs.org>
 
+	* eval.c (Ffuncall): Remove unused variable orig_fun.
+
+2004-08-26  Jerry James  <james@xemacs.org>
+
 	* event-Xt.c (emacs_Xt_unselect_console): Remove unused variable
 	console.
 

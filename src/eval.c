@@ -3762,7 +3762,6 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   struct backtrace backtrace;
   int fun_nargs = nargs - 1;
   Lisp_Object *fun_args = args + 1;
-  Lisp_Object orig_fun;
 
   /* QUIT will check for proper redisplay wrapping */
 
@@ -3809,8 +3808,6 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 
   if (debug_on_next_call)
     do_debug_on_call (Qlambda);
-
-  orig_fun = args[0];
 
  retry:
 
