@@ -450,6 +450,7 @@ used interactively, for example from a mail or news buffer."
 		       ((locate-file "pgp" exec-path)
 			(mc-setversion "2.6")))
 		 (error "Can't find a suitable pgp executable"))
+		(autoload 'mc-verify "mc-toplev")
 		(mc-verify)
 		(setq package-get-continue-update-base t))
 	    (if (yes-or-no-p

@@ -1,3 +1,8 @@
+2001-12-03  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-update-base-from-buffer): Add
+	autoload for 'mc-verify'.
+
 2001-12-02  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-base-filename): Rename default file
