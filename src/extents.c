@@ -1308,6 +1308,8 @@ buffer_or_string_stack_of_extents_force (Lisp_Object object)
   return info->soe;
 }
 
+/* #### don't even think of #define'ing this, the prototype of
+   print_extent_1 has changed! */
 /* #define SOE_DEBUG */
 
 #ifdef SOE_DEBUG
