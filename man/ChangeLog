@@ -1,3 +1,13 @@
+2004-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/glyphs.texi (Creating Glyphs): Improve discussion, fix a
+	couple of typos.
+
+	* lispref/faces.texi (Face Properties): Background pixmaps
+	can be used on GTK and MS Windows.
+	(Face Convenience Functions): Cross-reference glyph interface.
+	Background pixmap is an image specifier, not a glyph.
+
 2004-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/numbers.texi (Comparison of Numbers): Clarify bigfloat eql.
