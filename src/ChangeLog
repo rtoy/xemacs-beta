@@ -1,3 +1,7 @@
+2002-01-04  Martin Buchholz  <martin@xemacs.org>
+
+	* keymap.c (define_key_alternate_name): Parenthesize EQ.
+
 2001-12-22  William M. Perry  <wmperry@gnu.org>
 
 	* glyphs-gtk.c (gtk_xpm_instantiate): Don't bother doing the
