@@ -1,5 +1,7 @@
 2001-05-25  Martin Buchholz  <martin@xemacs.org>
 
+	* print.c (print_internal): Fix compile error.
+
 	* miscplay.c (waverequire): Don't inline.
 	Gcc can't inline functions that call alloca.
 
