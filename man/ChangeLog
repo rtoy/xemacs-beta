@@ -1,3 +1,8 @@
+2002-02-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi (Documenting Packages): New node.
+	(Makefile Variables): Fix typo per Steve Youngs.
+
 2002-02-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* external-widget.texi

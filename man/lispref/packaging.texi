@@ -51,6 +51,7 @@ Packaging Lisp Libraries:
 * Building Packages::      Turn packaged source into a tarball.
 * Local.rules File::       Tell the @xpms{} about your host.
 * Creating Packages::      Tell the @xpms{} about your package.
+* Documenting Packages::   Explain your package to users and hackers.
 @c * History::                     History of the @xpms{}
 @c * Installation::                Installing the @xpms{} with your (X)Emacs.
 @c * Configuration::               Configuring the @xpms{} for use.
@@ -721,7 +722,7 @@ The path to your @file{makeinfo} program
 
 @c #### The following section is lifted verbatim from the XEmacs User's
 @c      Manual, file packages.texi.
-@node Creating Packages, Issues, Local.rules File, Packaging
+@node Creating Packages, Documenting Packages, Local.rules File, Packaging
 @comment  node-name,  next,  previous,  up
 @cindex creating packages
 @heading Creating Packages:
@@ -1174,7 +1175,7 @@ The name to be used for Info files and man pages.
 Any data files, such as pixmaps, READMEs, and ChangeLogs.  These must be
 paths relative to the root of the package's source tree.  These files
 will be copied to @samp{$(DATA_DEST)} for installation.  Any directory
-component component of the path for a file will be stripped, so that the
+component of the path for a file will be stripped, so that the
 file ends up in @samp{$(DATA_DEST)}, not in a subdiredtory.  If there are
 several destination directories, the forms @samp{$(DATA_FILES_@var{n})}
 and @samp{$(DATA_DEST_@var{n})} (@var{n} may take values in 1-40) must
@@ -1277,7 +1278,42 @@ packages have needs beyond the basic templates.  See @file{XEmacs.rules}
 or a future revision of this manual for details.
 
 
-@node Issues, , Creating Packages, Packaging
+@node Documenting Packages, Issues, Creating Packages, Packaging
+@comment  node-name,  next,  previous,  up
+@cindex documenting packages
+@heading Documenting Packages:
+
+@c #### Add a documentation section to Internals, and xref here.
+Some random notes on documenting your package.
+
+Do write a Texinfo file.  It's not that hard to do basically, and even
+using the more advanced features of Texinfo soon become natural.  For a
+start, just grab the template @file{Samples/package.texi} from the
+@xpms{} source tree, and drop your current README into the Top node.  At
+least this way your documentation will be accessible from the standard
+Info readers.  Next, try to add lots of cross-referencing and logical
+markup, and then node structure.
+
+Address both end users and developer issues.  You may not be the
+maintainer forever.
+
+If you are maintaining a package that is part of the GNU Emacs
+distribution, you'll likely find that you occasionally synchronize your
+package with the GNU Emacs sources.  When you synch a file,
+conventionally you should place a comment just above the standard
+@code{;;; Code} comment that looks like this:
+
+@example
+;; Synched with:
+;; GNU Emacs 21.1, 2002-02-08, Stephen Turnbull <stephen@@xemacs.org>
+@end example
+
+This comment is a status flag; the ChangeLog doesn't really give the
+same information.
+
+Do maintain a detailed ChangeLog.
+
+@node Issues, , Documenting Packages, Packaging
 @section Issues
 
 To be completed.
