@@ -80,6 +80,10 @@ and are lists of vectors.  See @code{default-toolbar} for a description
 of the exact format.
 @end defun
 
+The default toolbar is created in @file{toolbar-items.el}.  An example
+which modifies an existing toolbar (by adding a button) is presented in
+the specifier section @xref{Simple Specifier Usage}.
+
 @node Toolbar Descriptor Format
 @section Toolbar Descriptor Format
 

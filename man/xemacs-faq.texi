@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/10/18 05:43:35 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/12/02 17:56:58 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -794,7 +794,7 @@ developers responsible for recent releases are:
 @end html
 
 
-@item @email{turnbull@@sk.tsukuba.ac.jp, Steven Turnbull}
+@item @email{stephen@@xemacs.org, Stephen Turnbull}
 
 
 @item @email{ben@@xemacs.org, Ben Wing}
@@ -912,10 +912,12 @@ crash some time ago.
 @unnumberedsubsec Q1.3.1: What is the status of internationalization support aka MULE (including Asian language support?
 
 Both the stable and development versions of XEmacs include
-internationalization support (aka MULE).  MULE currently works on UNIX
-and Linux systems; work for supporting MULE on Windows operating systems
-is in progress.  Binaries compiled without MULE support run faster than
-MULE capable XEmacsen.
+internationalization support (aka MULE).  MULE currently (21.4) works on
+UNIX and Linux systems.  It is possible to build with MULE on Windows
+systems, but if you really need MULE on Windows, it is recommended that
+you build and use the development (21.5) version, and deal with the
+instability of the development tree.  Binaries compiled without MULE
+support run faster than MULE capable XEmacsen.
 
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
 @unnumberedsubsec Q1.3.2: How can I help with internationalization?
@@ -925,20 +927,31 @@ If you would like to help, you may want to join the
 people who speak/write languages other than English, who are willing to
 use XEmacs/MULE regularly, and have some experience with Elisp.
 
+Translations of the TUTORIAL and man page are welcome, and XEmacs does
+support multilingual menus, but we have few current translations.
+
 @xref{Q1.1.2}.
 
 @node Q1.3.3, Q1.3.4, Q1.3.2, Introduction
 @unnumberedsubsec Q1.3.3: How do I type non-ASCII characters?
 
-See question 3.5.7 (@pxref{Q3.5.7}) in part 3 of this FAQ.
+See question 3.5.7 (@pxref{Q3.5.7}) in part 3 of this FAQ for some
+simple methods that also work in non-MULE builds of XEmacs (but only for
+one-octet coded character sets, and mostly for ISO 8859/1).  Many of the
+methods available for Cyrillic (@pxref{Q1.3.7}) work without MULE.
+MULE has more general capabilities.  @xref{Q1.3.5}.
+
+@xref{Q3.2.7}, which covers display of non-ASCII characters.
 
 @node Q1.3.4, Q1.3.5, Q1.3.3, Introduction
 @unnumberedsubsec Q1.3.4: Can XEmacs messages come out in a different language?
 
-The message-catalog support has mostly been written but doesn't
-currently work.  The first release of XEmacs 20 will @emph{not} support
-it.  However, menubar localization @emph{does} work.  To
-enable it, add to your @file{Emacs} file entries like this:
+The message-catalog support was written but is badly bit-rotted.  XEmacs
+20 and 21 did @emph{not} support it, and early releases of XEmacs 22
+will not either.
+
+However, menubar localization @emph{does} work.  To enable it, add to
+your @file{Emacs} file entries like this:
 
 @example
 Emacs*XlwMenu.resourceLabels:                   True
@@ -952,30 +965,73 @@ removing punctuation and capitalizing as above.
 @node Q1.3.5, Q1.3.6, Q1.3.4, Introduction
 @unnumberedsubsec Q1.3.5: Please explain the various input methods in MULE/XEmacs
 
-@email{morioka@@jaist.ac.jp, MORIOKA Tomohiko} writes:
+Mule supports a wide variety of input methods.  There are three basic
+classes: Lisp implementations, generic platform support, and library
+interfaces.
 
-@quotation
-Original Mule supports the following input methods: Wnn4, Wnn6, Canna, SJ3
-and XIM. Interfaces for Wnn and SJ3 uses the @code{egg} user
-interface. Interface for Canna does not use @samp{egg}. I don't know
-about XIM. It is to support ATOK, of course, it may work for another
-servers.
+@emph{Lisp implementations} include Quail, which provides table-driven input
+methods for almost all the character sets that Mule supports (including
+all of the ISO 8859 family, the Indic languages, Thai, and so on), and
+SKK, for Japanese.  (SKK also supports an interface to an external
+"dictionary server" process.)  Quail supports both typical "dead-key"
+methods (eg, in the "latin-1-prefix" method, @kbd{" a} produces ä, LATIN
+SMALL LETTER A WITH DIAERESIS), and the complex dictionary-based phonetic
+methods used for Asian ideographic languages like Chinese.
+
+Lisp implementations can be less powerful (but they are not perceptibly
+inefficient), and of course are not portable to non-Emacs applications.
+The incompatibility can be very annoying.  On the other hand, they
+require no special platform support or external libraries, so if you can
+display the characters, Mule can input them for you and you can edit,
+anywhere.
+
+@emph{Generic platform support} is currently limited to the X Input
+Method (XIM) framework, although support for MSIME (for MS Windows) is
+planned, and IIIMF (Sun's Internet-Intranet Input Method Framework)
+support is extremely desirable.  XIM is enabled at build time by use of
+the @samp{--with-xim} flag to @code{configure}.  For use of XIM, see
+your platform documentation.  However, normally the input method you use
+is specified via the @samp{LANG} and @samp{XMODIFIERS} environment
+variables.
+
+Of course, input skills are portable across most applications.  However,
+especially in modern GUI systems the habit of using bucky bits has
+fallen into sad disuse, and many XIM systems are poorly configured for
+use with Emacs.  For example, the kinput2 input manager (a separate
+process providing an interface between Japanese dictionary servers such
+as Canna and Wnn, and the application) tends to gobble up keystrokes
+generating Meta characters.  This means that to edit while using an XIM
+input method, you must toggle the input method off every time you want
+to use @kbd{M-f}.  Your mileage may vary.
+
+@emph{Library interfaces} are most common for Japanese, although Wnn
+supports Chinese (traditional and simplified) and Korean.  There are
+Chinese and Korean input servers available, but we do not know of any
+patches for XEmacs to use them directly.  You can use them via
+IM-enabled terminals, by manipulating the terminal coding systems.  We
+describe only the Japanese-oriented systems here.  The advantage of
+these systems is that they are very powerful, and on platforms where
+they are available there is typically a wide range of applications that
+support them.  Thus your input skills are portable across applications.
+
+Mule provides built-in interfaces to the following input methods: Wnn4,
+Wnn6, Canna, and SJ3.  These can be configured at build time.  There are
+patches available (no URL, sorry) to support the SKK server, as well.
+Wnn and SJ3 use the @code{egg} user interface.  The interface for Canna
+is specialized to Canna.
 
 Wnn supports Japanese, Chinese and Korean. It is made by OMRON and Kyôto
-university. It is a powerful and complex system.  Wnn4 is free and Wnn6
-is not free.
+University. It is a powerful and complex system.  Wnn4 is free and Wnn6
+is not.  Wnn uses grammatical hints and probability of word association,
+so in principle Wnn can be cleverer than other methods.
 
-Canna supports only Japanese. It is made by NEC. It is a simple and
-powerful system. Canna uses only grammar (Wnn uses grammar and
-probability between words), so I think Wnn is cleverer than Canna,
-however Canna users made a good grammar and dictionary.  So for standard
-modern Japanese, Canna seems cleverer than Wnn4. In addition, the UNIX
-version of Canna is free (now there is a Microsoft Windows version).
+Canna, made by NEC, supports only Japanese.  It is a simple and powerful
+system. Canna uses only grammar, but its grammar and dictionary are
+quite sophisticated.  So for standard modern Japanese, Canna seems
+cleverer than Wnn4. In addition, the UNIX version of Canna is free (now
+there is a Microsoft Windows version).
 
-SJ3 supports only Japanese. It is made by Sony.  XIM supports was made
-to use ATOK (a major input method in personal computer world).  XIM is
-the standard for accessing input methods bundled in Japanese versions of
-Solaris.  (XEmacs 20 will support XIM input).
+SJ3, by Sony, supports only Japanese.
 
 Egg consists of following parts:
 
@@ -986,35 +1042,50 @@ It translates ASCII inputs to Kana/PinYin/Hangul characters.
 
 @item
 Kana/PinYin/Hangul to Kanji transfer layer.
-It is interface layer for network Kana-Kanji server (Wnn and Sj3).
+The interface layer to network Kana-Kanji server (Wnn and Sj3).
 @end enumerate
 
-These input methods are modal, namely there are mode, alphabet mode and
-Kana-Kanji transfer mode.  However there are mode-less input methods for
-Egg and Canna.  @samp{Boiled-egg} is a mode-less input method running on
-Egg.  For Canna, @samp{canna.el} has a tiny boiled-egg like command,
-@code{(canna-boil)}, and there are some boiled-egg like utilities.  In
-addition, it was planned to make an abstraction for all transfer type
-input methods.  However authors of input methods are busy, so maybe this
-plan is stopped.  Perhaps after Mule merged GNU Emacs will be released,
-it will be continued.
-@end quotation
+These input methods are modal.  They have a raw (alphabet) mode, a
+phonetic input mode, and Kana-Kanji transfer mode.  However there are
+mode-less input methods for Egg and Canna.  @samp{boiled-egg} is a
+mode-less input method running on Egg.  For Canna, @samp{canna.el} has a
+tiny boiled-egg-like command, @code{(canna-boil)}, and there are some
+boiled-egg-like utilities.
+
+Much of this information was provided by @email{morioka@@jaist.ac.jp,
+MORIOKA Tomohiko}.
 
 @node Q1.3.6, Q1.3.7, Q1.3.5, Introduction
 @unnumberedsubsec Q1.3.6: How do I portably code for MULE/XEmacs?
 
+MULE has evolved rapidly over the last few years, and the original third
+party patch (for GNU Emacs 19), GNU Emacs 20+, and XEmacs 20+ have quite
+different implementations.  The APIs also vary although recent versions
+of XEmacs have tended to converge to the GNU Emacs standard.
+
+MULE implementations are going to continue to evolve.  Both GNU Emacs
+and XEmacs are working hard on Unicode support, which will involve new
+APIs and probably variations on old ones.  For XEmacs 22, the old ISO
+2022-based system for recognizing encodings will be replaced by a much
+more flexible system, which should improve accuracy of automatic coding
+detections, but will also involve new APIs.
+
 @email{morioka@@jaist.ac.jp, MORIOKA Tomohiko} writes:
 
 @quotation
-MULE and XEmacs are quite different. So the application
-implementor must write separate code for these mule variants.
+The application implementor must write separate code for these mule
+variants.  [Please don't hesitate to report these variants to us; they
+are not, strictly speaking, bugs, but they give third-party developers
+the same kind of creepy-crawly feeling.  We'll do what we can. -- Ed.]
 
 MULE and the next version of Emacs are similar but the symbols are very
 different---requiring separate code as well.
 
 Namely we must support 3 kinds of mule variants and 4 or 5 or 6 kinds of
 emacs variants... (;_;) I'm shocked, so I wrote a wrapper package called
-@code{emu} to provide a common interface.
+@code{emu} to provide a common interface.  [There is an XEmacs package
+of APEL which provides much more comprehensive coverage.  Be careful,
+however; APEL has problems of its own. -- Ed.]
 
 I have the following suggestions about dealing with mule variants:
 
@@ -1508,6 +1579,9 @@ site
 @*
 @end iftex
 @uref{ftp://ftp.xemacs.org/pub/xemacs/aux/}.
+[These tarballs and this FAQ are wa-a-ay out of date.  Sorry, I'm not
+currently network-capable, and I will probably forgot to update this
+before submitting the patch. -- Ed.]
 
 @c Changed June Link above, <URL:ftp://ftp.xemacs.org/pub/aux/> was dead.
 @c This list is a pain in the you-know-what to keep in synch with the
@@ -1779,6 +1853,12 @@ you are using.
 @item
 If the problem happened on a tty, please include the terminal type.
 @end enumerate
+
+Much of the information above is automatically generated by @kbd{M-x
+report-emacs-bug}.  Even more, and often useful, information can be
+generated by redirecting the output of @code{make} and @code{make check}
+to a file (@file{beta.err} is the default used by @code{build-report}),
+and executing @kbd{M-x build-report}.
 
 @node Q2.1.2, Q2.1.3, Q2.1.1, Installation
 @unnumberedsubsec Q2.1.2: Cryptic Minibuffer messages.
@@ -2939,7 +3019,7 @@ Right Thing using this Lisp code:
     (set-device-class nil 'color))
 @end lisp
 
-@node Q3.2.6, Q3.3.1, Q3.2.5, Customization
+@node Q3.2.6, Q3.2.7, Q3.2.5, Customization
 @unnumberedsubsec Q3.2.6: Can I have pixmap backgrounds in XEmacs?
 @c New
 @email{jvillaci@@wahnsinnig.extreme.indiana.edu, Juan Villacis} writes:
@@ -2967,7 +3047,34 @@ and so on.  You can also do this interactively via @kbd{M-x edit-faces}.
 
 @end quotation
 
-@node Q3.3.1, Q3.3.2, Q3.2.6, Customization
+@node Q3.2.7, Q3.3.1, Q3.2.6, Customization
+@unnumberedsubsec Q3.2.7: How do I display non-ASCII characters?
+@c New
+
+If you're using a Mule-enabled XEmacs, then display is automatic.  If
+you're not seeing the characters you expect, either (1) you don't have
+appropriate fonts available or (2) XEmacs did not correctly detect the
+coding system (@pxref{Recognize Coding, , , xemacs}).  In case (1),
+install fonts as is customary for your platform.  In case (2), you
+need to tell XEmacs explicitly what coding systems you're using.
+@ref{Specify Coding, , , xemacs}.
+
+If your XEmacs is not Mule-enabled, and for some reason getting a
+Mule-enabled XEmacs seems like the wrong thing to do, all is not lost.
+You can arrange it by brute force.  In @file{event-Xt.c} (suppress the
+urge to look in this file---play Doom instead, because you'll survive
+longer), it is written: 
+
+@quotation
+In a non-Mule world, a user can still have a multi-lingual editor, by
+doing @code{(set-face-font "-*-iso8859-2" (current-buffer))} for all
+their Latin-2 buffers, etc.
+@end quotation
+
+For the related problem of @emph{inputting} non-ASCII characters in a
+non-Mule XEmacs, @xref{Q3.5.7}.
+
+@node Q3.3.1, Q3.3.2, Q3.2.7, Customization
 @unnumberedsec 3.3: The Modeline
 @unnumberedsubsec Q3.3.1: How can I make the modeline go away?
 
@@ -3325,6 +3432,9 @@ etc.
 
 Running @samp{xmodmap -pk} will list all of the defined keysyms.
 @end quotation
+
+For the related problem of @emph{displaying} non-ASCII characters in a
+non-Mule XEmacs, @xref{Q3.2.7}.
 
 @node Q3.5.8, Q3.5.9, Q3.5.7, Customization
 @unnumberedsubsec Q3.5.8: [This question intentionally left blank]

@@ -1,6 +1,7 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
 @c Copyright (C) 1995, 1996 Ben Wing.
+@c Copyright (C) 2002 Free Software Foundation, Inc.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/specifiers.info
 @node Specifiers, Faces and Window-System Objects, Extents, top
@@ -8,14 +9,13 @@
 @cindex specifier
 
 A specifier is an object used to keep track of a property whose value
-may vary depending on the particular situation (e.g. particular buffer
-displayed in a particular window) that it is used in.  The value of many
-built-in properties, such as the font, foreground, background, and such
-properties of a face and variables such as
-@code{modeline-shadow-thickness} and @code{top-toolbar-height}, is
-actually a specifier object.  The specifier object, in turn, is
-``instanced'' in a particular situation to yield the real value
-of the property in that situation.
+should vary according to @emph{display context}, a window, a frame, or
+device.  The value of many built-in properties, such as the font,
+foreground, background, and such properties of a face and variables
+such as @code{modeline-shadow-thickness} and
+@code{top-toolbar-height}, is actually a specifier object.  The
+specifier object, in turn, is ``instanced'' in a particular situation
+to yield the real value of the property in the current context.
 
 @defun specifierp object
 This function returns non-@code{nil} if @var{object} is a specifier.
@@ -26,6 +26,7 @@ This function returns non-@code{nil} if @var{object} is a specifier.
                                 display and other properties to vary
                                 (under user control) in a wide variety
                                 of contexts.
+* Simple Specifier Usage::      Getting started with specifiers.
 * Specifiers In-Depth::         Gory details about specifier innards.
 * Specifier Instancing::        Instancing means obtaining the ``value'' of
                                 a specifier in a particular context.
@@ -48,14 +49,16 @@ This function returns non-@code{nil} if @var{object} is a specifier.
 @node Introduction to Specifiers
 @section Introduction to Specifiers
 
-Sometimes you may want the value of a property to vary depending on
-the context the property is used in.  A simple example of this in XEmacs
-is buffer-local variables.  For example, the variable
+Perhaps the most useful way to explain specifiers is via an analogy.
+Emacs Lisp programmers are used to @emph{buffer-local variables}
+@ref{buffer-local variables}.  For example, the variable
 @code{modeline-format}, which controls the format of the modeline, can
 have different values depending on the particular buffer being edited.
 The variable has a default value which most modes will use, but a
-specialized package such as Calendar might change the variable so
-as to tailor the modeline to its own purposes.
+specialized package such as Calendar might change the variable so as
+to tailor the modeline to its own purposes.  Other variables are
+perhaps best thought of as ``mode local,'' such as font-lock keywords,
+but they are implemented as buffer locals.
 
 Other properties (such as those that can be changed by the
 @code{modify-frame-parameters} function, for example the color of the
@@ -70,11 +73,41 @@ displayed on a particular frame, another value in all other buffers
 displayed in all other frames on any mono (two-color, e.g. black and
 white only) displays, and a default value in all other circumstances.
 
-A @dfn{specifier} is a generalization of this, allowing a great deal
-of flexibility in controlling exactly what value a property has in which
-circumstances.  It is most commonly used for display properties, such as
-an image or the foreground color of a face.  As a simple example, you can
-specify that the foreground of the default face be
+Specifiers generalize both buffer- and frame-local properties.
+Specifiers vary according to the @emph{display} context.  Font-lock
+keywords in a buffer will be the same no matter which window the
+buffer is displayed in, but windows on TTY devices will simply not be
+capable of the flexibility that windows on modern GUI devices are.
+Specifiers provide a way for the programmer to @emph{declare} that a
+emphasized text should be italic on GUI devices and inverse video on
+TTYs.  They also provide a way for the programmer to declare
+fallbacks, so that a color specified as ``chartreuse'' where possible
+can fall back to ``yellow'' on devices where only ANSI (4-bit) color
+is available.  The complex calculations and device querying are
+transparent to both user and programmer.  You ask for what you want;
+it's up to XEmacs to provide it, or a reasonable approximation.
+
+We call such a declaration a @dfn{specification}.  A @dfn{specification}
+applies in a particular @dfn{locale}, which is a window, buffer, frame,
+device, or the global locale.  The value part of the specification is
+called an @dfn{instantiator}.  The process of determining the value in a
+particular context, or @dfn{domain}, is called @dfn{instantiation} or
+@dfn{instancing}.  A domain is a window, frame, or device.
+
+The difference between @dfn{locale} and @dfn{domain} is somewhat subtle.
+You may think of a locale as a class of domains, which may span
+different devices.  Since the specification is abstract (a Lisp form),
+you can state it without reference to a device.  On the other hand, when
+you instantiate a specification, you must know the type of the device.
+It is useless to specify that ``blue mean italic'' on a monochrome
+device.  Thus instantiation requires specification of the device on
+which it will be rendered.
+
+Thus a @dfn{specifier} allows a great deal of flexibility in
+controlling exactly what value a property has in which circumstances.
+It is most commonly used for display properties, such as an image or
+the foreground color of a face.  As a simple example, you can specify
+that the foreground of the default face be
 
 @itemize @bullet
 @item
@@ -97,6 +130,150 @@ red for all other buffers displayed on a color device
 @item
 white for all other buffers
 @end itemize
+
+@node Simple Specifier Usage
+@section Simple Specifier Usage
+@cindex specifier examples
+@cindex examples, specifier
+@cindex adding a button to a toolbar
+@cindex toolbar button, adding
+
+A useful specifier application is adding a button to a toolbar.  XEmacs
+provides several toolbars, one along each edge of the frame.  Normally
+only one is used at a time, the default.  The default toolbar is
+actually a specifier object which is the value of @code{default-toolbar}.
+
+The specification of a toolbar is simple:  it is a list of buttons.
+Each button is a vector with four elements:  an icon, a command, the
+enabled flag, and a help string.  Let's retrieve the instance of the
+toolbar you see in the selected frame.
+
+@example
+(specifier-instance default-toolbar)
+@end example
+
+The value returned is, as promised, a list of vectors.  Now let's build
+up a button, and add it to the toolbar.  Our button will invoke the last
+defined keyboard macro.  This is an alternative to
+@code{name-last-kbd-macro} for creating a persistent macro, rather than
+an alias for @kbd{C-x e}.
+
+A toolbar button icon can be quite sophisticated, with different images
+for button up, button down, and disabled states, and a similar set with
+captions.  We'll use a very simple icon, but we have to jump through a
+few non-obvious hoops designed to support the sophisticated applications.
+The rest of the button descriptor is straightforward.
+
+@example
+(setq toolbar-my-kbd-macro-button
+  `[ (list (make-glyph "MyKbdMac"))
+     (lambda () (interactive) (execute-kbd-macro ,last-kbd-macro))
+     t
+     "Execute a previously defined keyboard macro." ])
+
+(set-specifier default-toolbar
+               (cons toolbar-my-kbd-macro-button
+                     (specifier-specs default-toolbar 'global))
+               'global)
+@end example
+
+To remove the button, just substitute the function @code{delete} for the
+@code{cons} above.
+
+What is the difference between @code{specifier-instance}, which we used
+in the example of retrieving the toolbar descriptor, and
+@code{specifier-specs}, which was used in the toolbar manipulating code?
+@code{specifier-specs} retrieves a copy of the instantiator, which is
+abstract and does not depend on context.  @code{specifier-instance}, on
+the other hand, actually instantiates the specification, and returns the
+result for the given context.  Another way to express this is:
+@code{specifier-specs} takes a @emph{locale} as an argument, while
+@code{specifier-instance} takes a @emph{domain}.  The reason for
+providing @code{specifier-instance} is that sometimes you wish to see
+the object that XEmacs will actually use.  @code{specifier-specs}, on
+the other hand, shows you what the programmer (or user) requested.  When
+a program manipulates specifications, clearly it's the latter that is
+desirable.
+
+In the case of the toolbar descriptor, it turns out that these are the
+same:  the instancing process is trivial.  However, many specifications
+have non-trivial instancing.  Compare the results of the following forms
+on my system.  (The @samp{(cdr (first ...))} form is due to my use of
+Mule.  On non-Mule XEmacsen, just use @code{specifier-specs}.)
+
+@example
+(cdr (first (specifier-specs (face-font 'default) 'global)))
+=> "-*--14-*jisx0208*-0"
+
+(specifier-instance (face-font 'default))
+#<font-instance "-*--14-*jisx0208*-0" on #<x-device on ":0.0" 0x970> 0xe0028b 0x176b>
+@end example
+
+In this case, @code{specifier-instance} returns an opaque object;
+programs can't work on it, they can only pass it around.  Worse, in some
+environments the instantiation will fail, resulting in a different value
+(when another instantiation succeeds), or worse yet, an error, if all
+attempts to instance the specifier fail.  @code{specifier-instance} is
+context-dependent, even for the exact same specification.
+@code{specifier-specs} is deterministic, and only depends on the
+specifications.
+
+Note that in the toolbar-changing code we operate in the global locale.
+This means that narrower locales, if they have specifications, will
+shadow our changes.  (Specifier instancing does not merge
+specifications.  It selects the "highest-priority successful
+specification" and instances that.)
+
+In fact, in our example, it seems pretty likely that different buffers
+@emph{should} have different buttons.  (The icon can be the same, but
+the keyboard macro you create in a Dired buffer is highly unlikely to be
+useful in a LaTeX buffer!)  Here's one way to implement this:
+
+@example
+(setq toolbar-my-kbd-macro-button
+  `[ (list (make-glyph "MyKbdMac"))
+     (lambda () (interactive) (execute-kbd-macro ,last-kbd-macro))
+     t
+     "Execute a previously defined keyboard macro." ])
+
+(set-specifier default-toolbar
+               (cons toolbar-my-kbd-macro-button
+                     (cond ((specifier-specs default-toolbar
+                                             (current-buffer)))
+                           ((specifier-specs default-toolbar
+                                             'global)))
+               (current-buffer))
+@end example
+
+Finally, a cautionary note: the use of @code{specifier-specs} in the
+code above is for expository purposes.  Don't use it in production code.
+In fact, the @code{set-specifier} form above is likely to fail
+occasionally, because you can add many specifications for the same
+locale.
+
+In these cases, @code{specifier-specs} will return a list.  A further
+refinement is that a specification may be associated with a set of
+@dfn{specifier tags}.  If the list of specifier tags is non-nil, then
+@code{specifier-specs} will return a cons of the tag set and the
+instantiator.  Evidently @code{specifier-specs} is a bit unreliable.
+(For toolbars, the code above should work 99% of the time, because
+toolbars are rarely changed.  Since instantiation is trivial, multiple
+specs are not useful---the first one always succeeds.)
+
+In fact, @code{specifier-specs} is intended to be used to display specs
+to humans with a minimum of clutter.  The robust way to access
+specifications is via @code{specifier-spec-list}.  @xref{Adding
+Specifications}, for the definition of @dfn{spec-list}.
+@xref{Retrieving Specifications} for documentation of
+@code{specifier-specs} and @code{specifier-spec-list}. To get the
+desired effect, replace the form @code{(specifier-spec default-toolbar
+'global)} with
+
+@example
+(cdr (second (first (specifier-spec-list default-toolbar 'global))))
+@end example
+
+(It should be obvious why the example uses the lazy unreliable method!)
 
 @node Specifiers In-Depth
 @section In-Depth Overview of a Specifier
@@ -121,12 +298,36 @@ white for all other buffers
 @cindex specifier, tag
 @cindex specifier, tag set
 
-A specifier object encapsulates a set of @dfn{specifications}, each of
-which says what its value should be if a particular condition applies.
+Having variables vary according the editing context is very useful, and
+the buffer is the natural ``atomic'' unit of editing context.  In a GUI
+environment, it can be similarly useful to have variables whose values
+vary according to display context.  The atomic unit of display context
+is the Emacs window.  Buffers are cleanly grouped by modes, but windows
+are not so easily pigeonholed.  On the one hand, a window displays a
+buffer, and thus one possible hierarchy is window, buffer, mode.  On the
+other, a window is a component of a frame.  This generates the window,
+frame, device hierarchy.  Finally, there are objects such as toolbars
+whose properties are described by specifiers.  These do not fit
+naturally into either hierarchy.  This problem is as yet not cleanly
+solved.
+
+Another potential source of conceptual confusion is the instantiation
+process.  Instantiating a buffer-local variable is simple: at any given
+point in time there is a current buffer, and its local values are used
+and set whenever the variable is accessed, unless the programmer goes to
+some special effort (uses @code{default-value} and @code{set-default}.
+However, a specifier object encapsulates a set of @dfn{specifications},
+each of which says what its value should be if a particular condition
+applies.  Several such conditions might apply simultaneously in a given
+window.
+
 For example, one specification might be ``The value should be
 darkseagreen2 on X devices'' another might be ``The value should be blue
-in the *Help* buffer''.  In specifier terminology, these conditions are
-called @dfn{locales} and the values are called @dfn{instantiators}.
+in the *Help* buffer''.  So what do we do for "the *Help* buffer on an X
+device"?  The answer is simple: give each type of locale a priority and
+check them in priority order, returning the first instantiator that
+successfully instantiates a value.
+
 Given a specifier, a logical question is ``What is its value in a
 particular situation?'' This involves looking through the specifications
 to see which ones apply to this particular situation, and perhaps
@@ -139,6 +340,13 @@ a particular window, it retrieves the specifier for the foreground color
 of the default face and @dfn{instances} it in the domain given by that
 window; in other words, it asks the specifier, ``What is your value in
 this window?''.
+
+Note that the redisplay example is in a sense canonical.  That is,
+specifiers are designed to present a uniform and @emph{efficient} API
+to redisplay.  It is the efficiency constraint that motivates the
+introduction of specifier tags, and many restrictions on access (for
+example, a buffer is not a domain, and you cannot instantiate a
+specifier over a buffer).
 
 More specifically, a specifier contains a set of @dfn{specifications},
 each of which associates a @dfn{locale} (a window object, a buffer
@@ -160,8 +368,9 @@ same specifier and not interfere with each other.  Each tag can have a
 device. (If a tag does not have a predicate, it matches all devices.)
 All tags in a tag set must match a device for the associated inst-pair
 to be instantiable over that device.  (A null tag set is perfectly
-valid.)
+valid, and trivially matches all devices.)
 
+@c #### don't we have more device types now, gtk, ms-windows, mac-carbon?
 The valid device types (normally @code{x}, @code{tty}, and
 @code{stream}) and device classes (normally @code{color},
 @code{grayscale}, and @code{mono}) can always be used as tags, and match

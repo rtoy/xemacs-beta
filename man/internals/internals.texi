@@ -3470,11 +3470,20 @@ command-line like this:
 $ xemacs -batch -l test-harness.elc -f batch-test-emacs TEST-FILE
 @end example
 
-If something goes wrong, you can run the test suite interactively by
-loading @file{test-harness.el} into a running XEmacs and typing
-@kbd{M-x test-emacs-test-file RET <filename> RET}.  You will see a log of
-passed and failed tests, which should allow you to investigate the
-source of the error and ultimately fix the bug.
+If a test fails and you need more information, you can run the test
+suite interactively by loading @file{test-harness.el} into a running
+XEmacs and typing @kbd{M-x test-emacs-test-file RET <filename> RET}.
+You will see a log of passed and failed tests, which should allow you to
+investigate the source of the error and ultimately fix the bug.  If you
+are not capable of, or don't have time for, debugging it yourself,
+please do report the failures using @kbd{M-x report-emacs-bug} or
+@kbd{M-x build-report}.
+
+@deffn Command test-emacs-test-file file
+Runs the tests in @var{file}.  @file{test-harness.el} must be loaded.
+Defines all the macros described in this node, and undefines them when
+done.
+@end deffn
 
 Adding a new test file is trivial: just create a new file here and it
 will be run.  There is no need to byte-compile any of the files in
@@ -3484,7 +3493,34 @@ byte-compilation.
 Look at the existing test cases for the examples of coding test cases.
 It all boils down to your imagination and judicious use of the macros
 @code{Assert}, @code{Check-Error}, @code{Check-Error-Message}, and
-@code{Check-Message}.
+@code{Check-Message}.  Note that all of these macros are defined only
+for the duration of the test: they do not exist in the global
+environment.
+
+@deffn Macro Assert expr
+Check that @var{expr} is non-nil at this point in the test.
+@end deffn
+
+@deffn Macro Check-Error expected-error body
+Check that execution of @var{body} causes @var{expected-error} to be
+signaled.  @var{body} is a @code{progn}-like body, and may contain
+several expressions.  @var{expected-error} is a symbol defined as
+an error by @code{define-error}.
+@end deffn
+
+@deffn Macro Check-Error-Message expected-error expected-error-regexp body
+Check that execution of @var{body} causes @var{expected-error} to be
+signaled, and generate a message matching @var{expected-error-regexp}.
+@var{body} is a @code{progn}-like body, and may contain several
+expressions.  @var{expected-error} is a symbol defined as an error
+by @code{define-error}.
+@end deffn
+
+@deffn Macro Check-Message expected-message body
+Check that execution of @var{body} causes @var{expected-message} to be
+generated (using @code{message} or a similar function).  @var{body} is a
+@code{progn}-like body, and may contain several expressions.
+@end deffn
 
 Here's a simple example checking case-sensitive and case-insensitive
 comparisons from @file{case-tests.el}.
@@ -3509,37 +3545,78 @@ comparisons from @file{case-tests.el}.
     (Assert (eq (search-forward "Test Buffer" nil t) 12))))
 @end example
 
-This example could be inserted in a file in @file{tests/automated}, and
-it would be a complete test, automatically executed when you run
+This example could be saved in a file in @file{tests/automated}, and it
+would constitute a complete test, automatically executed when you run
 @kbd{make check} after building XEmacs.  More complex tests may require
 substantial temporary scaffolding to create the environment that elicits
-the bugs, but the top-level Makefile and @file{test-harness.el} handle
-the running and collection of results from the @code{Assert},
+the bugs, but the top-level @file{Makefile} and @file{test-harness.el}
+handle the running and collection of results from the @code{Assert},
 @code{Check-Error}, @code{Check-Error-Message}, and @code{Check-Message}
 macros.
+
+Don't suppress tests just because they're due to known bugs not yet
+fixed---use the @code{Known-Bug-Expect-Failure} wrapper macro to mark
+them.
+
+@deffn Macro Known-Bug-Expect-Failure body
+Arrange for failing tests in @var{body} to generate messages prefixed
+with "KNOWN BUG:" instead of "FAIL:".  @var{body} is a @code{progn}-like
+body, and may contain several tests.
+@end deffn
+
+A lot of the tests we run push limits; suppress Ebola warning messages
+with the @code{Ignore-Ebola} wrapper macro.
+
+@deffn Macro Ignore-Ebola body
+Suppress Ebola warning messages while running tests in @var{body}.
+@var{body} is a @code{progn}-like body, and may contain several tests.
+@end deffn
+
+Both macros are defined temporarily within the test function.  Simple
+examples:
+
+@example
+;; Apparently Ignore-Ebola is a solution with no problem to address.
+;; There are no examples in 21.5, anyway.
+
+;; from regexp-tests.el
+(Known-Bug-Expect-Failure
+ (Assert (not (string-match "\\b" "")))
+ (Assert (not (string-match " \\b" " "))))
+@end example
 
 In general, you should avoid using functionality from packages in your
 tests, because you can't be sure that everyone will have the required
 package.  However, if you've got a test that works, by all means add it.
 Simply wrap the test in an appropriate test, add a notice that the test
-was skipped, and update the @code{skipped-test-reasons} hashtable.
-Here's an example from @file{syntax-tests.el}:
+was skipped, and update the @code{skipped-test-reasons} hashtable.  The
+wrapper macro @code{Skip-Test-Unless} is provided to handle common
+cases.
+
+@defvar skipped-test-reasons
+Hash table counting the number of times a particular reason is given for
+skipping tests.  This is only defined within @code{test-emacs-test-file}.
+@end defvar
+
+@deffn Macro Skip-Test-Unless prerequisite reason description body
+@var{prerequisite} is usually a feature test (@code{featurep},
+@code{boundp}, @code{fboundp}).  @var{reason} is a string describing the
+prerequisite; it must be unique because it is used as a hash key in a
+table of reasons for skipping tests.  @var{description} describes the
+tests being skipped, for the test result summary.  @var{body} is a
+@code{progn}-like body, and may contain several tests.
+@end deffn
+
+@code{Skip-Test-Unless} is defined temporarily within the test function.
+Here's an example of usage from @file{syntax-tests.el}:
 
 @example
 ;; Test forward-comment at buffer boundaries
 (with-temp-buffer
-
   ;; try to use exactly what you need: featurep, boundp, fboundp
-  (if (not (fboundp 'c-mode))
-
-      ;; We should provide a standard function for this boilerplate,
-      ;; probably called `Skip-Test' -- check for that API with C-h f
-      (let* ((reason "c-mode unavailable")
-	     (count (gethash reason skipped-test-reasons)))
-	(puthash reason (if (null count) 1 (1+ count))
-		 skipped-test-reasons)
-	(Print-Skip "comment and parse-partial-sexp tests" reason))
-
+  (Skip-Test-Unless (fboundp 'c-mode)
+                    "c-mode unavailable"
+                    "comment and parse-partial-sexp tests"
     ;; and here's the test code
     (c-mode)
     (insert "// comment\n")
@@ -3553,11 +3630,11 @@ Here's an example from @file{syntax-tests.el}:
       (parse-partial-sexp point (point-max)))))
 @end example
 
-@code{Skip-Test} is intended for use with features that are normally
+@code{Skip-Test-Unless} is intended for use with features that are normally
 present in typical configurations.  For truly optional features, or
 tests that apply to one of several alternative implementations (eg, to
 GTK widgets, but not Athena, Motif, MS Windows, or Carbon), simply
-silently omit the test.
+silently suppress the test if the feature is not available.
 
 
 @node CVS Techniques, A Summary of the Various XEmacs Modules, Regression Testing XEmacs, Top

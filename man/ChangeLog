@@ -1,4 +1,27 @@
-2002-10-29  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+2002-11-29  Stephen Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi (Simple Specifier Usage): New node.
+	(Specifiers): Adjust node pointers.
+	(Simple Specifier Usage): Revise.  Adjust node pointers.
+
+	* lispref/toolbar.texi (Creating Toolbar): Xref specifier example.
+
+2002-10-20  Stephen Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q3.2.7): New FAQ on displaying non-ASCII.
+	(Q3.5.7, Q1.3.3): Cross-reference it.
+
+2002-10-20  Stephen Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q2.1.1): Mention bug report commands.
+	(Q2.0.9): Note how out-of-date the entry is.
+	(Q1.3.1, Q1.3.2, Q1.3.3, Q1.3.4, Q1.3.5, Q1.3.6): Revise/update.
+	(Q1.2.1): Fix typo.
+
+	* internals/internals.texi (Regression Testing XEmacs): Thorough
+	rewrite, documenting macros explicitly.
+
+2002-10-29  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/compile.texi (Compilation Options): New node.
 	(Byte Compilation): Add it to menu.
@@ -7,12 +30,12 @@
 	(Dynamic Loading):
 	Document some variable defaults.
 
-2002-11-07  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+2002-11-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Low-Level Modules): Add urefs to Doug
 	Lea's and Wolfram Gloger's home pages.
 
-2002-10-18  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+2002-10-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q2.0.16): New FAQ on "no cygXpm-noX" fatal error.
 	(Q6.1.4): Document cygXpm-noX.
