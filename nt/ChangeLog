@@ -1,3 +1,7 @@
+2002-03-26  Vin Shelton  <acs@xemacs.org>
+
+	* xemacs.mak: Added special rule to build winclient.exe.
+
 2002-04-23  Jonathan Harris  <jonathan@xemacs.org>
 
 	* README: Document build for latest versions of zlib & png

@@ -443,9 +443,10 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	      Lisp_Object instance;
 	      struct display_box dbox;
 	      struct display_glyph_area dga;
+
 	      redisplay_calculate_display_boxes (dl, rb->xpos, rb->object.dglyph.xoffset,
-						 start_pixpos, rb->width,
-						 &dbox, &dga);
+						 rb->object.dglyph.yoffset, start_pixpos,
+                                                 rb->width, &dbox, &dga);
 
 	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,

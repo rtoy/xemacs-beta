@@ -189,6 +189,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
   int findex;
   DECLARE_EISTRING (win32pattern);
   HANDLE fh;
+  int				errm;
 
   while (1)
     {
@@ -221,6 +222,8 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
        */
       findex = 0;
       fh = INVALID_HANDLE_VALUE;
+      errm = SetErrorMode (SEM_FAILCRITICALERRORS
+			   | SEM_NOOPENFILEERRORBOX);
 
       while (1)
 	{
@@ -234,15 +237,21 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	    {
 	      fh = qxeFindFirstFile (eiextdata (win32pattern), &finddat);
 	      if (fh == INVALID_HANDLE_VALUE)
-		report_file_error ("Opening directory", dirfile);
+		{
+		  SetErrorMode (errm);
+		  report_file_error ("Opening directory", dirfile);
+		}
 	    }
 	  else
 	    {
 	      if (! qxeFindNextFile (fh, &finddat))
 		{
-		  if (GetLastError () == ERROR_NO_MORE_FILES)
-		    break;
-		  FindClose (fh);
+		  if (GetLastError() == ERROR_NO_MORE_FILES)
+		    {
+		      break;
+		    }
+		  FindClose(fh);
+		  SetErrorMode (errm);
 		  report_file_error ("Reading directory", dirfile);
 		}
 	    }
@@ -283,6 +292,8 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	FindClose (fh);
       break;
     }
+
+  SetErrorMode (errm);
   return (files);
 }
 

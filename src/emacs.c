@@ -3045,7 +3045,7 @@ pause_so_user_can_read_messages (int allow_further)
 {
   static int already_paused;
 
-  if (already_paused)
+  if (already_paused || !noninteractive)
     return;
   if (!allow_further)
     already_paused = 1;

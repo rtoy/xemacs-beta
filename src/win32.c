@@ -332,24 +332,38 @@ otherwise it is an integer representing a ShowWindow flag:
   if (STRINGP (document))
     {
 #ifdef CYGWIN
-      Intbyte *docint = XSTRING_DATA (document);
-      /* If URL style file, the innards may have Cygwin mount points and
-         the like.  so separate out the innards, process them, and put back
-         together. */
-      if (qxestrncasecmp_c (docint, "file://", 7) == 0)
-	{
-	  Intbyte *fname_windows;
-	  Intbyte *docint_windows;
+      Extbyte *fname1;
+      Extbyte *fname2;
+      int pos, sz;
+      LISP_STRING_TO_TSTR (document, doc);
 
-	  LOCAL_TO_WIN32_FILE_FORMAT (docint + 7, fname_windows);
-	  docint_windows = alloca_intbytes (7 + qxestrlen (fname_windows) + 1);
-	  qxestrcpy_c (docint_windows, "file://");
-	  qxestrcat (docint_windows, fname_windows);
-	  C_STRING_TO_TSTR (docint, doc);
+      if ((fname1 = strchr (doc, ':')) != NULL
+	  && *++fname1 == '/' && *++fname1 == '/')
+	{
+	  /* If URL style file, the innards may have Cygwin mount points and
+	     the like.  so separate out the innards, process them, and put back
+	     together. */
+	  if (qxestrncasecmp (doc, "file://", 7) == 0)
+	    {
+	      fname1++;
+	      pos = fname1 - doc;
+	      if (!(isalpha (fname1[0]) && (IS_DEVICE_SEP (fname1[1]))))
+		{
+		  sz = cygwin_posix_to_win32_path_list_buf_size (fname1);
+		  fname2 = alloca (sz + pos);
+		  qxestrncpy (fname2, doc, pos);
+		  doc = fname2;
+		  fname2 += pos;
+		  cygwin_posix_to_win32_path_list (fname1, fname2);
+		}
+	    }
 	}
-      else
-#endif
+      else {
+	/* Not URL-style, must be a straight filename. */
 	LOCAL_FILE_FORMAT_TO_TSTR (document, doc);
+      }
+#endif
+
     }
 
     ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,

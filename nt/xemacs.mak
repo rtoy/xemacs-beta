@@ -553,6 +553,12 @@ $(LIB_SRC)/movemail.exe: $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 	cd $(LIB_SRC)
 	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** wsock32.lib -link -incremental:no
 	cd $(NT)
+
+$(LIB_SRC)/winclient.exe: $(LIB_SRC)/winclient.c
+	cd $(LIB_SRC)
+	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** user32.lib -link -incremental:no
+	cd $(NT)
+
 $(LIB_SRC)/minitar.exe : $(NT)/minitar.c
 	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** "$(ZLIB_DIR)\zlib.lib" -link -incremental:no
 
@@ -560,6 +566,7 @@ LIB_SRC_TOOLS = \
 	$(LIB_SRC)/etags.exe		\
 	$(LIB_SRC)/hexl.exe		\
 	$(LIB_SRC)/i.exe		\
+	$(LIB_SRC)/winclient.exe	\
 	$(LIB_SRC)/make-docfile.exe	\
 	$(LIB_SRC)/mmencode.exe		\
 	$(LIB_SRC)/movemail.exe		\

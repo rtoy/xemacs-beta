@@ -1,3 +1,134 @@
+2002-04-24  Andy Piper  <andy@xemacs.org>
+
+	* redisplay.c (create_text_block): Don't actually add propagation
+	data if the line ends after we have added a glyph.
+
+	* lisp.h (Dynarr_end): Fix definition.
+
+2002-04-22  Andy Piper  <andy@xemacs.org>
+
+	* extents.c (extent_fragment_update): check for glyphs we have
+	previously displayed.
+	* extents.c (print_extent_1): warning removal.
+	* extents.h: change prototype.
+	* redisplay-output.c (redisplay_normalize_glyph_area): calculate
+	widths correctly for wide glyphs.
+	* redisplay.c (position_redisplay_data_type): add end_glyph_width.
+	* redisplay.c (prop_type): add PROP_GLYPH.
+	* redisplay.c (struct prop_block): add glyph type
+	* redisplay.c (add_glyph_rune): when adding part of a glyph add it
+	to the propagation data.
+	* redisplay.c (create_text_block): if there is a glyph in the
+	propagation data use it to salt extent_fragment_update.
+	* redisplay.c (create_string_text_block): ditto.
+
+2002-04-13  Nix  <nix@esperi.demon.co.uk>
+
+	* redisplay.h (struct rune): Add ascent, descent, and yoffset fields.
+	* redisplay-output.c (compare_runes): Compare them.
+	* redisplay.c: Update copyright date.
+	* redisplay.c (pos_data): Add need_baseline_computation field.
+	* redisplay.c (add_glyph_rune): Update ascent, descent, and
+	need_baseline_computation; zero yoffset. Set max_pixmap_height
+	for all pixmaps, not just automatically positioned ones.
+	* redisplay.c (calculate_yoffset): New, compute yoffset values.
+	* redisplay.c (calculate_baseline): New, compute textual baseline.
+	* redisplay.c (add_glyph_rune): Call them.
+	* redisplay.c (create_text_block): Likewise.
+	* redisplay.c (create_overlay_glyph_block): Likewise.
+	* redisplay.c (add_margin_runes): Likewise.
+	* redisplay.c (create_string_text_block): Likewise. Fix tabdamage.
+
+	* redisplay.h: (redisplay_calculate_display_boxes): Change prototype.
+	* redisplay-output.c (redisplay_calculate_display_boxes): Use yoffset.
+	* redisplay-msw.c (mswindows_output_blank): Pass 0 as yoffset.
+	* redisplay-msw.c (mswindows_output_string): Likewise.
+	* redisplay-msw.c (mswindows_output_display_block): Pass yoffset.
+	* redisplay-gtk.c (gtk_output_display_block): Likewise.
+	* redisplay-x.c (x_output_display_block): Likewise.
+
+2002-04-02  Andy Piper  <andy@xemacs.org>
+
+	* dired-msw.c (mswindows_get_files): 
+	* nt.c (mswindows_stat): SetErrorMode() so that file errors are
+	completely handled by XEmacs. Suggested by Thomas Vogler
+	<mail@thomas-vogler.de>.
+
+2002-04-01  Andy Piper  <andy@xemacs.org>
+
+	* emacs.c (Fkill_emacs): Only output message box in interactive
+	mode.
+
+2002-03-14  Mike Alexander  <mta@arbortext.com>
+
+	* event-msw.c (mswindows_unwait_process): New, remove process from
+	wait list
+	* process-nt.c (nt_finalize_process_data): Call
+	mswindows_unwait_process
+	* console-msw.h: Declare mswindows_unwait_process
+
+2002-03-20  Andy Piper  <andy@xemacs.org>
+
+	* menubar-msw.c (mswindows_popup_menu): warning removal.
+	* dialog-msw.c (dialog_popped_down): ditto.
+
+2002-02-13  Andy Piper  <andy@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): only mark the frame visible if
+	we did in fact enqueue the XM_MAPFRAME event.
+
+2002-02-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* redisplay.c (mark_redisplay): Remove call to
+	update_frame_window_mirror.
+
+2002-01-03  Andy Piper  <andy@xemacs.org>
+
+	* realpath.c (ABS_LENGTH): dtrt for cygwin systems using drive
+	letters.
+	(xrealpath): ditto.
+
+2001-12-11  Andy Piper  <andy@xemacs.org>
+
+	* dialog-msw.c (dialog_popped_down): new function. unset popup_up_p.
+	* dialog-msw.c (mswindows_make_dialog_box_internal): set
+	popup_up_p.
+	* menubar-msw.c (unsafe_handle_wm_initmenupopup_1): ditto.
+	* menubar-msw.c (mswindows_handle_wm_command): ditto.
+	* menubar-msw.c (mswindows_popup_menu): ditto.
+
+2001-11-24  Andy Piper  <andy@xemacs.org>
+
+	* window.c (Fsplit_window): Doc return type.
+
+2001-07-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* event-msw.c: Typo fix.
+	* event-msw.c (mswindows_wnd_proc): Set FRAME_VISIBLE_P after
+	magic XM_MAPFRAME event has been sent.
+
+2001-11-23  Andy Piper  <andy@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): Don't pump mousewheel events.
+
+2001-11-21  Andy Piper  <andy@xemacs.org>
+
+	* scrollbar-msw.c (mswindows_handle_mousewheel_event): cope with
+	mouse events outside the frame.
+
+2001-11-15  Andy Piper  <andy@xemacs.org>
+
+	(Fmswindows_shell_execute): fix handling of URL's under cygwin (again).
+
+2001-11-14  Andy Piper  <andy@xemacs.org>
+
+	* nt.c (REG_ROOT): change registry key to XEmacs.
+
+2001-10-29  Andy Piper  <andy@xemacs.org>
+
+	* dialog-msw.c (handle_directory_dialog_box): quit if the user
+	cancels.
+
 2002-04-15  Ben Wing  <ben@xemacs.org>
 
 	* process.c: Need sysdep.h for environ.
@@ -3065,12 +3196,6 @@
 	* (Fsubstitute_in_file_name): ditto.
 	* (Ffile_name_absolute_p): ditto.
 	* (Ffile_readable_p): ditto.
-
-2001-07-30  Adrian Aichner  <adrian@xemacs.org>
-
-	* event-msw.c: Typo fix.
-	* event-msw.c (mswindows_wnd_proc): Set FRAME_VISIBLE_P after
-	magic XM_MAPFRAME event has been sent.
 
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 

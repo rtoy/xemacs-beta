@@ -1,3 +1,57 @@
+2002-04-09  Andy Piper  <andy@xemacs.org>
+
+	* files.el (revert-buffer): use revert-buffer-internal if it looks
+	like doing so will not result in any user-visible changes.
+	(revert-buffer-internal): new function. Do the actual process of
+	reversion and then see whether the result is any different to what
+	we have already. If it is not then do nothing.
+
+2002-02-04  Andy Piper  <andy@xemacs.org>
+
+	* files.el (convert-standard-filename): Fix for short filename
+	Peter Arius <pas@methodpark.de>
+
+2001-12-16  Andy Piper  <andy@xemacs.org>
+
+	* package-get.el (package-get-update-all): Make sure installed.db
+	gets updated after updating packages.
+
+2001-12-11  Andy Piper  <andy@xemacs.org>
+
+	* menubar.el (get-popup-menu-response): re-order so that it works
+	on more sane/facist window systems.
+
+2001-12-03  Andy Piper  <andy@xemacs.org>
+
+	* faces.el (frob-face-property): don't infloop in face frobbing
+	from Jan Vroonhof <jan@xemacs.org>.
+
+2001-11-30  Andy Piper  <andy@xemacs.org>
+
+	* printer.el (generic-print-region): fix for non-MS systems from
+	Mike Fabian.
+
+2001-11-30  Jan Vroonhof  <jan@xemacs.org>
+
+	* font.el (font-window-system-mappings): Add mapping for Gtk
+	(assume identical to X)	
+
+2001-11-30  Jan Vroonhof  <jan@xemacs.org>
+
+	* faces.el (frob-face-property): Follow face fall-back hierarchy
+	properly for face properties without an instance. Only do manual
+	copy form 'default in last resort. This handles in particular
+	the case where 'default itself has only a fall-back (which is
+	the case by default on windows).
+
+2001-11-24  Andy Piper  <andy@xemacs.org>
+
+	* printer.el (generic-print-region): set default-frame-plist to
+	nil while creating the printer frame so that sizes reflect the
+	printed page.
+
+	* faces.el (face-complain-about-font): Don't complain on printers.
+
 2002-04-25  Steve Youngs  <youngs@xemacs.org>
 
 	* mule/mule-charset.el (string-to-char-list): New.  This used to

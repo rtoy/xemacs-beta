@@ -282,6 +282,7 @@ mswindows_output_blank (struct window *w, struct display_line *dl,
       struct display_glyph_area dga;
       redisplay_calculate_display_boxes (dl, rb->xpos, 
 					 /*rb->object.dglyph.xoffset*/ 0,
+                                         /*rb->object.dglyph.yoffset*/ 0,
 					 start_pixpos, rb->width,
 					 &db, &dga);
       /* blank the background in the appropriate color */
@@ -495,7 +496,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
     {
       struct display_box db;
       struct display_glyph_area dga;
-      redisplay_calculate_display_boxes (dl, xpos + xoffset, 0,
+      redisplay_calculate_display_boxes (dl, xpos + xoffset, 0, 0,
 					 clip_start, width, &db, &dga);
       /* blank the background in the appropriate color */
       mswindows_update_dc (hdc,
@@ -1145,8 +1146,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	      struct display_glyph_area dga;
 
 	      redisplay_calculate_display_boxes (dl, rb->xpos, rb->object.dglyph.xoffset,
-						 start_pixpos, rb->width,
-						 &dbox, &dga);
+						 rb->object.dglyph.yoffset,
+                                                 start_pixpos, rb->width, &dbox, &dga);
 
 	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,

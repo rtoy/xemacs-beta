@@ -147,6 +147,9 @@ struct rune
                                    If this is a rune in the modeline
                                    then this might be nil. */
 
+      int ascent;               /* Ascent of this glyph, in pixels. */
+      int descent;              /* Descent of this glyph, in pixels. */
+      int yoffset;              /* Offset from line top to reach glyph top */
       int xoffset;		/* Number of pixels that need to be
 				   chopped off the left of the glyph.
 				   This has the effect of shifting the
@@ -774,9 +777,8 @@ void redisplay_output_pixmap (struct window *w,
 			      int cursor_width,
 			      int cursor_height, int offset_bitmap);
 int redisplay_calculate_display_boxes (struct display_line *dl, int xpos,
-				       int xoffset, int start_pixpos,
-				       int width,
-				       struct display_box* dest,
+				       int xoffset, int yoffset, int start_pixpos,
+                                       int width, struct display_box* dest,
 				       struct display_glyph_area* src);
 int redisplay_normalize_glyph_area (struct display_box* dest,
 				    struct display_glyph_area* glyphsrc);

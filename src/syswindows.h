@@ -410,11 +410,14 @@ typedef struct tagNMTTDISPINFOW {
 #else
 #define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDA
 #endif
-#endif /* not BFFM_VALIDATEFAILED */
+#endif
 
 /* winnls.h defines */
+#ifndef MAC_CHARSET
+#define MAC_CHARSET 		77
+#endif
 #ifndef LOCALE_RETURN_NUMBER
-#define LOCALE_RETURN_NUMBER 0x20000000
+#define LOCALE_RETURN_NUMBER	0x20000000
 #endif
 
 /* OEM resources */

@@ -1458,6 +1458,7 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
   Bytecount len;
   int rootdir = FALSE;
   Extbyte *nameext;
+  int errm;
 
   if (path == NULL || buf == NULL)
     {
@@ -1466,6 +1467,8 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
     }
 
   name = qxestrcpy (alloca_intbytes (qxestrlen (path) + 10), path);
+  errm = SetErrorMode (SEM_FAILCRITICALERRORS
+		       | SEM_NOOPENFILEERRORBOX);
 
   get_volume_info (name, &path);
   /* must be valid filename, no wild cards or other invalid characters */
@@ -1511,6 +1514,7 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
       C_STRING_TO_TSTR (name, nameext);
       if (qxeGetDriveType (nameext) < 2)
 	{
+	  SetErrorMode (errm);
 	  errno = ENOENT;
 	  return -1;
 	}
@@ -1552,6 +1556,7 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
 	  fh = qxeFindFirstFile (nameext, &wfd);
 	  if (fh == INVALID_HANDLE_VALUE)
 	    {
+	      SetErrorMode (errm);
 	      errno = ENOENT;
 	      return -1;
 	    }
@@ -1620,6 +1625,8 @@ mswindows_stat (const Intbyte *path, struct stat *buf)
 	  fake_inode = 0;
 	}
     }
+
+  SetErrorMode (errm);
 
 #if 0
   /* XEmacs: Removed the fake-inodes code here, which was if 0'd out.

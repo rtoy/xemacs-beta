@@ -315,7 +315,10 @@ do_desktop_setup()
 	      log (0, "Registering .cpp files");
 	      setup_explorer ("cpp", "C++ Source file", batname);
 	      setup_explorer ("cc", "C++ Source file", batname);
+	      setup_explorer ("cxx", "C++ Source file", batname);
 	      setup_explorer ("hh", "C++ Header file", batname);
+	      setup_explorer ("hpp", "C++ Header file", batname);
+	      setup_explorer ("hxx", "C++ Header file", batname);
 	    }
 	  if (reg_c)
 	    {

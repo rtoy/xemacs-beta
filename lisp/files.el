@@ -377,7 +377,8 @@ and ignores this variable."
       (let ((name (copy-sequence filename))
 	    (start 0))
 	;; leave ':' if part of drive specifier
-	(if (eq (aref name 1) ?:)
+ 	(if (and (> (length name) 1)
+ 		 (eq (aref name 1) ?:))
 	    (setq start 2))
 	;; destructively replace invalid filename characters with !
 	(while (string-match "[?*:<>|\"\000-\037]" name start)
@@ -2809,7 +2810,12 @@ If the value of `revert-buffer-function' is non-nil, it is called to
 do all the work for this command.  Otherwise, the hooks
 `before-revert-hook' and `after-revert-hook' are run at the beginning
 and the end, and if `revert-buffer-insert-file-contents-function' is
-non-nil, it is called instead of rereading visited file contents."
+non-nil, it is called instead of rereading visited file contents.
+
+If the buffer has not been obviously modified, and no auto-save file
+exists, then `revert-buffer-internal' is
+called. `revert-buffer-internal' will not actually change the buffer
+at all if reversion would not cause any user-visible changes."
 
   ;; I admit it's odd to reverse the sense of the prefix argument, but
   ;; there is a lot of code out there which assumes that the first
@@ -2821,6 +2827,8 @@ non-nil, it is called instead of rereading visited file contents."
   (if revert-buffer-function
       (funcall revert-buffer-function ignore-auto noconfirm)
     (let* ((opoint (point))
+	   (newbuf nil)
+	   (delay-prompt nil)
 	   (auto-save-p (and (not ignore-auto)
                              (recent-auto-save-p)
 			     buffer-auto-save-file-name
@@ -2838,103 +2846,152 @@ non-nil, it is called instead of rereading visited file contents."
 			(dolist (rx revert-without-query found)
 			  (when (string-match rx file-name)
 			    (setq found t)))))
+		 ;; If we might perform an optimized revert then we
+		 ;; want to delay prompting in case we don't need to
+		 ;; do it at all
+		 (and (not auto-save-p)
+		      (not (buffer-modified-p))
+		      (setq delay-prompt t))
 		 (yes-or-no-p (format "Revert buffer from file %s? "
 				      file-name)))
 	     (run-hooks 'before-revert-hook)
-	     ;; If file was backed up but has changed since,
-	     ;; we should make another backup.
-	     (and (not auto-save-p)
-		  (not (verify-visited-file-modtime (current-buffer)))
-		  (setq buffer-backed-up nil))
-	     ;; Get rid of all undo records for this buffer.
-	     (or (eq buffer-undo-list t)
-		 (setq buffer-undo-list nil))
-	     ;; Effectively copy the after-revert-hook status,
-	     ;; since after-find-file will clobber it.
-	     (let ((global-hook (default-value 'after-revert-hook))
-		   (local-hook-p (local-variable-p 'after-revert-hook
-						   (current-buffer)))
-		   (local-hook (and (local-variable-p 'after-revert-hook
-						      (current-buffer))
-				    after-revert-hook)))
-	       (let (buffer-read-only
-		     ;; Don't make undo records for the reversion.
-		     (buffer-undo-list t))
-		 (if revert-buffer-insert-file-contents-function
-		     (funcall revert-buffer-insert-file-contents-function
-			      file-name auto-save-p)
-		   (if (not (file-exists-p file-name))
-		       (error "File %s no longer exists!" file-name))
-		   ;; Bind buffer-file-name to nil
-		   ;; so that we don't try to lock the file.
-		   (let ((buffer-file-name nil))
-		     (or auto-save-p
-			 (unlock-buffer)))
-		   (widen)
-		   ;; When reading in an autosave, it's encoded using
-		   ;; `escape-quoted', so we need to use it. (It is always
-		   ;; safe to specify `escape-quoted':
-		   ;;
-		   ;; 1. If file-coding but no Mule, `escape-quoted' is
-                   ;;    aliased to `binary'.
-                   ;; 2. If no file-coding, all coding systems devolve into
-                   ;;    `binary'.
-                   ;; 3. ASCII and ISO8859-1 are encoded the same in both
-                   ;;    `binary' and `escape-quoted', so they will be
-                   ;;     compatible for the most part.)
-		   ;;
-		   ;; Otherwise, use coding-system-for-read if explicitly
-		   ;; given (e.g. the "Revert Buffer with Specified
-		   ;; Encoding" menu entries), or use the coding system
-		   ;; that the file was loaded as.
-		   (let* ((coding-system-for-read
-			   (if auto-save-p 'escape-quoted
-			     (or coding-system-for-read
-				 buffer-file-coding-system-when-loaded)))
-			  ;; If the bfcs wasn't changed from its original
-			  ;; value (other than possible EOL change), then we
-			  ;; should update it for the new coding system.
-			  (should-update-bfcs
-			   (eq (coding-system-base
+	     ;; Only perform our optimized revert if nothing obvious
+	     ;; has changed.
+	     (cond ((or auto-save-p
+			(buffer-modified-p)
+			(and (setq newbuf (revert-buffer-internal
+					   file-name))
+			     (and delay-prompt
+				  (yes-or-no-p 
+				   (format "Revert buffer from file %s? "
+					   file-name)))))
+		    ;; If file was backed up but has changed since,
+		    ;; we should make another backup.
+		    (and (not auto-save-p)
+			 (not (verify-visited-file-modtime (current-buffer)))
+			 (setq buffer-backed-up nil))
+		    ;; Get rid of all undo records for this buffer.
+		    (or (eq buffer-undo-list t)
+			(setq buffer-undo-list nil))
+		    ;; Effectively copy the after-revert-hook status,
+		    ;; since after-find-file will clobber it.
+		    (let ((global-hook (default-value 'after-revert-hook))
+			  (local-hook-p (local-variable-p 'after-revert-hook
+							  (current-buffer)))
+			  (local-hook (and (local-variable-p 'after-revert-hook
+							     (current-buffer))
+					   after-revert-hook)))
+		      (let (buffer-read-only
+			    ;; Don't make undo records for the reversion.
+			    (buffer-undo-list t))
+			(if revert-buffer-insert-file-contents-function
+			    (funcall revert-buffer-insert-file-contents-function
+				     file-name auto-save-p)
+			  (if (not (file-exists-p file-name))
+			      (error "File %s no longer exists!" file-name))
+			  ;; Bind buffer-file-name to nil
+			  ;; so that we don't try to lock the file.
+			  (let ((buffer-file-name nil))
+			    (or auto-save-p
+				(unlock-buffer)))
+			  (widen)
+			  ;; When reading in an autosave, it's encoded using
+			  ;; `escape-quoted', so we need to use it. (It is always
+			  ;; safe to specify `escape-quoted':
+			  ;;
+			  ;; 1. If file-coding but no Mule, `escape-quoted' is
+			  ;;    aliased to `binary'.
+			  ;; 2. If no file-coding, all coding systems devolve into
+			  ;;    `binary'.
+			  ;; 3. ASCII and ISO8859-1 are encoded the same in both
+			  ;;    `binary' and `escape-quoted', so they will be
+			  ;;     compatible for the most part.)
+			  ;;
+			  ;; Otherwise, use coding-system-for-read if explicitly
+			  ;; given (e.g. the "Revert Buffer with Specified
+			  ;; Encoding" menu entries), or use the coding system
+			  ;; that the file was loaded as.
+			  (let* ((coding-system-for-read
+				  (if auto-save-p 'escape-quoted
+				    (or coding-system-for-read
+					buffer-file-coding-system-when-loaded)))
+				 ;; If the bfcs wasn't changed from its original
+				 ;; value (other than possible EOL change), then we
+				 ;; should update it for the new coding system.
+				 (should-update-bfcs
+				  (eq (coding-system-base
+				       buffer-file-coding-system-when-loaded)
+				      (coding-system-base
+				       buffer-file-coding-system)))
+				 (old-bfcs buffer-file-coding-system)
+				 ;; But if the EOL was changed, match it in the new
+				 ;; value of bfcs.
+				 (adjust-eol
+				  (and should-update-bfcs
+				       (not
+					(eq (get-coding-system
+					     buffer-file-coding-system-when-loaded)
+					    (get-coding-system
+					     buffer-file-coding-system))))))
+			    (insert-file-contents file-name (not auto-save-p)
+						  nil nil t)
+			    (when should-update-bfcs
+			      (setq buffer-file-coding-system old-bfcs)
+			      (set-buffer-file-coding-system
+			       (if adjust-eol
+				   (coding-system-base
+				    buffer-file-coding-system-when-loaded)
 				 buffer-file-coding-system-when-loaded)
-			       (coding-system-base
-				buffer-file-coding-system)))
-			  (old-bfcs buffer-file-coding-system)
-			  ;; But if the EOL was changed, match it in the new
-			  ;; value of bfcs.
-			  (adjust-eol
-			   (and should-update-bfcs
-				(not
-				 (eq (get-coding-system
-				      buffer-file-coding-system-when-loaded)
-				     (get-coding-system
-				      buffer-file-coding-system))))))
-		     (insert-file-contents file-name (not auto-save-p)
-					   nil nil t)
-		     (when should-update-bfcs
-		       (setq buffer-file-coding-system old-bfcs)
-		       (set-buffer-file-coding-system
-			(if adjust-eol
-			    (coding-system-base
-			     buffer-file-coding-system-when-loaded)
-			  buffer-file-coding-system-when-loaded)
-			(not adjust-eol))))))
-	       (goto-char (min opoint (point-max)))
-	       ;; Recompute the truename in case changes in symlinks
-	       ;; have changed the truename.
-	       ;XEmacs: already done by insert-file-contents
-	       ;;(setq buffer-file-truename
-		     ;;(abbreviate-file-name (file-truename buffer-file-name)))
-	       (after-find-file nil nil t t preserve-modes)
-	       ;; Run after-revert-hook as it was before we reverted.
-	       (setq-default revert-buffer-internal-hook global-hook)
-	       (if local-hook-p
-		   (progn
-		     (make-local-variable 'revert-buffer-internal-hook)
-		     (setq revert-buffer-internal-hook local-hook))
-		 (kill-local-variable 'revert-buffer-internal-hook))
-	       (run-hooks 'revert-buffer-internal-hook))
+			       (not adjust-eol))))))
+		      (goto-char (min opoint (point-max)))
+		      ;; Recompute the truename in case changes in symlinks
+		      ;; have changed the truename.
+		      ;;XEmacs: already done by insert-file-contents
+		      ;;(setq buffer-file-truename
+		      ;;(abbreviate-file-name (file-truename buffer-file-name)))
+		      (after-find-file nil nil t t preserve-modes)
+		      ;; Run after-revert-hook as it was before we reverted.
+		      (setq-default revert-buffer-internal-hook global-hook)
+		      (if local-hook-p
+			  (progn
+			    (make-local-variable 'revert-buffer-internal-hook)
+			    (setq revert-buffer-internal-hook local-hook))
+			(kill-local-variable 'revert-buffer-internal-hook))
+		      (run-hooks 'revert-buffer-internal-hook)))
+		   ((null newbuf)
+		    ;; The resultant buffer is identical, alter
+		    ;; modtime, update mods and exit
+		    (set-visited-file-modtime)
+		    (after-find-file nil nil t t t))
+		   (t t))
 	     t)))))
+
+(defun revert-buffer-internal (&optional file-name)
+  (let* ((newbuf (get-buffer-create " *revert*"))
+	 bmin bmax)
+    (save-excursion
+      (set-buffer newbuf)
+      (let (buffer-read-only
+	    (buffer-undo-list t)
+	    after-change-function
+	    after-change-functions
+	    before-change-function
+	    before-change-functions)
+	(if revert-buffer-insert-file-contents-function
+	    (funcall revert-buffer-insert-file-contents-function
+		     file-name nil)
+	  (if (not (file-exists-p file-name))
+	      (error "File %s no longer exists!" file-name))
+	  (widen)
+	  (insert-file-contents file-name t nil nil t)
+	  (setq bmin (point-min)
+		bmax (point-max)))))
+    (if (not (and (eq bmin (point-min))
+		  (eq bmax (point-max))
+		  (eq (compare-buffer-substrings 
+		       newbuf bmin bmax (current-buffer) bmin bmax) 0)))
+	newbuf
+      nil)))
 
 (defun recover-file (file)
   "Visit file FILE, but get contents from its last auto-save file."

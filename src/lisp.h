@@ -892,7 +892,7 @@ void Dynarr_free (void *d);
 #define Dynarr_at(d, pos) ((d)->base[pos])
 #define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
 #define Dynarr_begin(d) Dynarr_atp (d, 0)
-#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d))
+#define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d) - 1)
 #define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
 
 #ifdef ERROR_CHECK_STRUCTURES

@@ -352,19 +352,22 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
      frame. */
   if (ScreenToClient (FRAME_MSWINDOWS_HANDLE (XFRAME (frame)), 
 		      &donde_esta) != 0)
-    /* stderr_out ("donde_esta: %d %d\n", donde_esta.x, donde_esta.y); */
-    pixel_to_glyph_translation (XFRAME (frame), donde_esta.x, donde_esta.y,
-				&mene, &_mene, &tekel, &upharsin,
-				&needle_in_haystack,
-				&mens, &sana, &in, &corpore, &sano);
-
-  if (needle_in_haystack)
     {
-      win = wrap_window (needle_in_haystack);
-      /* stderr_out ("found needle\n");
-	 debug_print (win); */
+      /* stderr_out ("donde_esta: %d %d\n", donde_esta.x, donde_esta.y); */
+      pixel_to_glyph_translation (XFRAME (frame), donde_esta.x, donde_esta.y,
+				  &mene, &_mene, &tekel, &upharsin,
+				  &needle_in_haystack,
+				  &mens, &sana, &in, &corpore, &sano);
+      
+      if (needle_in_haystack)
+	{
+	  win = wrap_window (needle_in_haystack);
+	  /* stderr_out ("found needle\n");
+	     debug_print (win); */
+	}
     }
-  else
+  
+  if (!needle_in_haystack)
     {
       win = FRAME_SELECTED_WINDOW (XFRAME (frame));
       needle_in_haystack = XWINDOW (win);

@@ -3042,12 +3042,13 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		}
 	      else
 		{
-		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame))
+		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame)) {
 		    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
-		  /* APA: Now that the magic XM_MAPFRAME event has
-		   * been sent we can mark the frame as visible (just
-		   * like 21.1 did). */
-		  FRAME_VISIBLE_P (frame) = 1;
+		    /* APA: Now that the magic XM_MAPFRAME event has
+		     * been sent we can mark the frame as visible (just
+		     * like 21.1 did). */
+		    FRAME_VISIBLE_P (frame) = 1;
+		  }
 
 		  if (!msframe->sizing || mswindows_dynamic_frame_resize)
 		    redisplay ();

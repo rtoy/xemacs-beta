@@ -35,6 +35,20 @@ Boston, MA 02111-1307, USA.  */
 
 #define MAX_READLINKS 32
 
+#if defined (HAVE_SYS_PARAM_H) && !defined (WIN32_NATIVE)
+#include <sys/param.h>
+#endif
+
+#ifdef WIN32_NATIVE
+#include <direct.h>
+#endif
+
+#include <sys/stat.h>			/* for S_IFLNK */
+
+#if defined(WIN32_NATIVE) || defined(CYGWIN)
+#define WIN32_FILENAMES
+#endif
+
 /* First char after start of absolute filename. */
 #define ABS_START(name) (name + ABS_LENGTH (name))
 
@@ -45,8 +59,13 @@ static int mswindows_abs_start (const Intbyte *name);
 # define readlink_and_correct_case mswindows_readlink_and_correct_case
 #else
 # ifdef CYGWIN
-#  define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? \
-                            (IS_DIRECTORY_SEP (name[1]) ? 2 : 1) : 0)
+#  ifdef WIN32_FILENAMES
+#   define ABS_LENGTH(name) (mswindows_abs_start (name))
+static int mswindows_abs_start (const Intbyte * name);
+#  else
+#   define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? \
+                             (IS_DIRECTORY_SEP (name[1]) ? 2 : 1) : 0)
+#  endif
 #  define readlink_and_correct_case cygwin_readlink_and_correct_case
 # else
 #  define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? 1 : 0)
@@ -154,7 +173,7 @@ cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
 }
 #endif /* CYGWIN */
 
-#ifdef WIN32_NATIVE
+#ifdef WIN32_FILENAMES
 #ifndef ELOOP
 #define ELOOP 10062 /* = WSAELOOP in winsock.h */
 #endif
@@ -193,9 +212,11 @@ qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
   path = copy_path;
   max_path = copy_path + PATH_MAX - 2;
 
-#ifdef WIN32_NATIVE
+  if (0)
+    ;
+#ifdef WIN32_FILENAMES
   /* Check for c:/... or //server/... */
-  if (abslen == 2 || abslen == 3)
+  else if (abslen == 2 || abslen == 3)
     {
       qxestrncpy (new_path, path, abslen);
       /* Make sure drive letter is lowercased. */
@@ -204,6 +225,8 @@ qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
       new_path += abslen;
       path += abslen;
     }
+#endif
+#ifdef WIN32_NATIVE
   /* No drive letter, but a beginning slash? Prepend drive letter. */
   else if (abslen == 1)
     {
@@ -212,7 +235,7 @@ qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
       path++;
     }
   /* Just a path name, prepend the current directory */
-  else
+  else if (1)
     {
       get_initial_directory (new_path, PATH_MAX - 1);
       new_path += qxestrlen (new_path);
@@ -221,7 +244,7 @@ qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
     }
 #else
   /* If it's a relative pathname use get_initial_directory for starters. */
-  if (abslen == 0)
+  else if (abslen == 0)
     {
       get_initial_directory (new_path, PATH_MAX - 1);
       new_path += qxestrlen (new_path);

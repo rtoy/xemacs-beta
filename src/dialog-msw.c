@@ -782,7 +782,7 @@ mswindows_make_dialog_box_internal (struct frame* f, Lisp_Object type,
   int unbind_count = specpdl_depth ();
   record_unwind_protect (dialog_popped_down, Qnil);
   popup_up_p++;
-  
+
   if (EQ (type, Qfile))
     return unbind_to_1 (unbind_count, handle_file_dialog_box (f, keys));
   else if (EQ (type, Qdirectory))
