@@ -793,6 +793,8 @@ The default is to autodetect native and NAS sound support."])
 	    a | at | ath | athe | athen | athena )	val=athena ;;
 	    n | no | non | none )			val=no     ;;
 	    y | ye | yes )				val=yes    ;;
+	    dnl Explicit --with-widgets on command line means yes.
+            "")						val=yes    ;;
 	    g | gt | gtk )				val=gtk    ;;
 	    ms | msw )					val=msw    ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
@@ -3411,7 +3413,15 @@ if test "$with_x11" = "yes"; then
   AC_CHECKING(for X11 graphics libraries)
 fi
 
-if test "$with_x11" = "yes" -a "$with_widgets" = "athena"; then
+dnl We don't automatically trigger widgets if athena is present
+dnl because of stability concerns.
+dnl But if the user wants widgets, still offer him autodetections
+case "$with_widgets" in
+  "yes" | "athena")		detect_athena=yes ;;
+   *)				detect_athena=no ;;
+esac
+
+if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
   AC_CHECKING(for the Athena widgets)
 
   dnl What in heck did the user actually want?
@@ -3510,7 +3520,7 @@ if test "$with_x11" = "yes" -a "$with_widgets" = "athena"; then
 
 else
   have_xaw=no
-fi dnl "$with_x11" = "yes" -a "$with_widgets" = "athena"
+fi dnl "$with_x11" = "yes" -a "detect_athena" = "yes"
 
 if test "$with_x11" = "yes"; then
   dnl autodetect Motif - but only add to libs_x later (if necessary)

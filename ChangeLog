@@ -1,3 +1,8 @@
+2002-01-07  Jan Vroonhof  <jan@xemacs.org>
+
+	* configure.in: Make explicit "--with-widgets" mean "=yes".
+	If "--with-widgets=yes" autodetect athena.
+
 2002-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.4 "bamboo" is released.
