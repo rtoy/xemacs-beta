@@ -417,6 +417,10 @@ ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
 DUMP_TARGET = $(PROGNAME).dmp
 RAW_EXE  = $(PROGNAME)
 DUMP_ID     = dump-id.o
+#ifndef WIN32_NATIVE
+DUMP_TARGET = $(PROGNAME)
+RAW_EXE  = temacs
+#endif
 #else
 DUMP_TARGET = $(PROGNAME)
 RAW_EXE  = temacs
@@ -536,14 +540,18 @@ dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
 
 ## (2) Link the XEmacs executable
 
-temacs_deps = $(link_deps) $(DUMP_ID)
-
-temacs_link_args = \
- $(start_flags) $(ldflags) \
- -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
-
-$(RAW_EXE): $(temacs_deps)
-	$(LD) $(temacs_link_args)
+#if !defined(PDUMP) || defined(WIN32_NATIVE)
+$(RAW_EXE): $(link_deps) $(DUMP_ID)
+	$(LD) $(start_flags) $(ldflags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
+#else
+$(RAW_EXE): $(link_deps) $(DUMP_ID)
+	if test -f dump-size ; then \
+		$(CC) -c $(cflags) -DMAX_SIZE=`cat dump-size` $(SRC)/dump-data.c ;\
+	else \
+		$(CC) -c $(cflags) -DMAX_SIZE=0 $(SRC)/dump-data.c ;\
+	fi
+	$(LD) $(start_flags) $(ldflags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) dump-data.o $(LIBES)
+#endif
 
 ## (3) Update the .elc's needed for dumping
 
@@ -585,6 +593,26 @@ $(DUMP_TARGET): $(RAW_EXE) $(BLDSRC)/NEEDTODUMP $(LIB_SRC)/DOC
 #else
 	@$(RM) $@
 	$(dump_temacs)
+#endif
+#if defined(PDUMP) && !defined(WIN32_NATIVE)
+	if test -f dump-size; then \
+		$(LIB_SRC)/insert-data-in-exec $(RAW_EXE) $(DUMP_TARGET).dmp $(DUMP_TARGET) `$(DO_TEMACS) -si`; \
+		ret=$$? ; \
+		if test $${ret} -eq 2; then \
+			$(RM) dump-size ; \
+		else \
+			if test $${ret} -eq 1; then \
+				exit 1; \
+			else \
+				chmod +x $(DUMP_TARGET) ; \
+			fi ; \
+		fi ; \
+	fi
+	if ! test -f dump-size; then \
+		$(LIB_SRC)/insert-data-in-exec -s $(DUMP_TARGET).dmp > dump-size ; \
+		$(RM) dump-data.o $(DUMP_TARGET) $(DUMP_TARGET).dmp $(RAW_EXE);\
+		$(RECURSIVE_MAKE) $@; \
+	fi
 #endif
 
 ## (6) Update the remaining .elc's, post-dumping

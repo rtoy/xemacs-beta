@@ -1,3 +1,17 @@
+2003-12-07  Olivier Galibert  <galibert@pobox.com>
+
+	* Makefile.in.in: Add in-executable dump file support.
+
+	* dump-data.h (dumped_data_get): Added.
+
+	* dump-data.c: Added.
+
+	* emacs.c (main_1): Add support for -si.
+
+	* dumper.c (pdump_ram_try): Added.  Tries getting the dump file
+	from within the executable itself.
+	(pdump_load): Call pdump_ram_try.
+
 2004-04-15  Jerry James  <james@xemacs.org>
 
 	* data.c (Fstring_to_number): Skip leading '-' when finding the

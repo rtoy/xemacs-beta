@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 #endif
+#include "dump-data.h"
 #endif
 
 typedef struct
@@ -1507,6 +1508,16 @@ pdump_file_get (const char *path)
   retry_close (fd);
   return 1;
 }
+
+static int
+pdump_ram_try (void)
+{
+  pdump_start = dumped_data_get();
+  pdump_length = dumped_data_size();
+
+  return pdump_load_check();
+}
+
 #endif /* !WIN32_NATIVE */
 
 
@@ -1553,11 +1564,18 @@ int
 pdump_load (const Extbyte *argv0)
 {
   Extbyte exe_path[PATH_MAX];
+
 #ifdef WIN32_NATIVE
   GetModuleFileNameA (NULL, exe_path, PATH_MAX);
 #else /* !WIN32_NATIVE */
   Extbyte *w;
   const Extbyte *dir, *p;
+
+  if(pdump_ram_try()) {
+    pdump_load_finish();
+    in_pdump = 0;
+    return 1;
+  }
 
   in_pdump = 1;
   dir = argv0;

@@ -1,3 +1,9 @@
+2003-12-07  Olivier Galibert  <galibert@pobox.com>
+
+	* Makefile.in.in (insert-data-in-exec): Added target.
+
+	* insert-data-in-exec.c: Added.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.
@@ -359,7 +365,6 @@
 
 	* XEmacs 21.5.0 "alfalfa" is released.
 
->>>>>>> 1.136
 2000-08-01  Jon Schewe  <jpschewe@eggplant.mtu.net>
 
 	* gnuclient.c (filename_expand): Let Cygwin convert Windows path
