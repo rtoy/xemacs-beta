@@ -204,7 +204,8 @@ is_in_dialog_box (Widget w)
 
 /* update the label of anything subclass of a label */
 static void
-xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
+xm_update_label (widget_instance* UNUSED (instance), Widget widget,
+		 widget_value* val)
 {
   XmString built_string = NULL;
   XmString key_string   = NULL;
@@ -350,8 +351,8 @@ xm_update_pushbutton (widget_instance* instance, Widget widget,
 
 #ifdef LWLIB_WIDGETS_MOTIF
 static void
-xm_update_progress (widget_instance* instance, Widget scale,
-		      widget_value* val)
+xm_update_progress (widget_instance* UNUSED (instance), Widget scale,
+		    widget_value* val)
 {
   Arg al[20];
   int ac = 0;
@@ -1040,7 +1041,8 @@ xm_update_one_value (widget_instance* instance, Widget widget,
    I could not find a way to do that with accelerators.
  */
 static void
-activate_button (Widget widget, XtPointer closure, XtPointer call_data)
+activate_button (Widget UNUSED (widget), XtPointer closure,
+		 XtPointer UNUSED (call_data))
 {
   Widget button = (Widget)closure;
   XtCallCallbacks (button, XmNactivateCallback, NULL);
@@ -1098,7 +1100,7 @@ static char disable_dnd_trans[] = "<Btn2Down>: ";
 
 
 static Widget
-make_dialog (char* name, Widget parent, Boolean pop_up_p,
+make_dialog (char* UNUSED (name), Widget parent, Boolean pop_up_p,
 	     const char* shell_title, const char* icon_name,
 	     Boolean text_input_slot, Boolean radio_box, Boolean list,
 	     int left_buttons, int right_buttons)
@@ -2209,15 +2211,16 @@ xm_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 #if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_WIDGETS_MOTIF)
 static void
-mark_dead_instance_destroyed (Widget widget, XtPointer closure,
-			      XtPointer call_data)
+mark_dead_instance_destroyed (Widget UNUSED (widget), XtPointer closure,
+			      XtPointer UNUSED (call_data))
 {
   destroyed_instance* instance = (destroyed_instance*)closure;
   instance->widget = NULL;
 }
 
 static void
-xm_nosel_callback (Widget widget, XtPointer closure, XtPointer call_data)
+xm_nosel_callback (Widget widget, XtPointer closure,
+		   XtPointer UNUSED (call_data))
 {
   /* This callback is only called when a dialog box is dismissed with the wm's
      destroy button (WM_DELETE_WINDOW.)  We want the dialog box to be destroyed

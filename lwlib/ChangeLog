@@ -1,3 +1,13 @@
+2004-09-27  Jerry James  <james@xemacs.org>
+
+	* lwlib-Xm.c (xm_update_label):
+	(xm_update_progress):
+	(activate_button):
+	(make_dialog):
+	(mark_dead_instance_destroyed):
+	(xm_nosel_callback):
+	Mark more unused parameters with the UNUSED macro.
+
 2004-09-14  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (cppflags): Make compiler.h available.

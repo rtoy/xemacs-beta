@@ -150,7 +150,13 @@ int synch_process_retcode;
 /* Arrange for character C to be read as the next input from
    the terminal.  */
 void
-stuff_char (struct console *con, int c)
+stuff_char (struct console *con,
+#ifdef TIOCSTI
+	    int c
+#else
+	    int UNUSED (c)
+#endif
+	    )
 {
   int input_fd;
 
@@ -169,7 +175,13 @@ stuff_char (struct console *con, int c)
 #endif /* HAVE_TTY */
 
 void
-set_exclusive_use (int fd)
+set_exclusive_use (
+#ifdef FIOCLEX
+		   int fd
+#else
+		   int UNUSED (fd)
+#endif
+		   )
 {
 #ifdef FIOCLEX
   ioctl (fd, FIOCLEX, 0);
