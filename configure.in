@@ -381,7 +381,8 @@ with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
-pdump="no"
+dnl pdump defaults per opsys
+pdump=""
 dnl dragndrop is still experimental, except on Windows.  When it is stable, comment out the following line:
 with_dragndrop_default="no"
 dnl Too annoying, even if mandated by IPv6 (and I'm not even sure of that)
@@ -1240,7 +1241,6 @@ case "$canonical" in
   *-*-darwin*)
     opsys=darwin
     RANLIB="ranlib -c" dnl Avoids a link error with lwlib-config.c
-    pdump=yes          dnl No "native" working dumper available
     ;;
 
   dnl Data General AViiON Machines
@@ -1595,6 +1595,17 @@ else
   echo "Using configure-time autodetection only."
 fi
 
+dnl --------------------------------------------------------------
+dnl $opsys detection complete; defaults depending on $opsys follow
+dnl --------------------------------------------------------------
+
+if test -z "$pdump"; then
+  case "$opsys" in
+    linux* )      pdump=yes ;;    dnl glibc 2.3.1 seems to hose unexec
+    *-*-darwin* ) pdump=yes ;;    dnl No "native" working dumper available
+    *)            pdump=no ;;
+  esac
+fi
 
 if test -z "$dynamic"; then
   case "$opsys" in
