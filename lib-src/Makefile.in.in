@@ -294,8 +294,8 @@ regex.o: ${srcdir}/../src/regex.c ${top_srcdir}/src/regex.h
 	$(CC) -c $(cflags) \
 	-DINHIBIT_STRING_HEADER ${top_srcdir}/src/regex.c
 
-etags_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/etags.c \
-	$(GETOPTOBJS) regex.o $(ldflags)
+etags_args = $(cflags) -DEMACS_NAME='"XEmacs"' -DVERSION='"${version}"' \
+	${srcdir}/etags.c $(GETOPTOBJS) regex.o $(ldflags)
 etags_deps = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
 
 etags: ${etags_deps}

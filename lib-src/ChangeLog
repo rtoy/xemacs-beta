@@ -1,3 +1,26 @@
+2001-12-19  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* Makefile.in.in (etags_args): Define EMACS_NAME to XEmacs.
+
+	* etags.c: Sync with pot version 14.28.
+	Additional change for XEmacs to define PTR macro.
+
+	2001-12-12  Francesco Potorti`  <pot@gnu.org>
+
+	* etags.c (PHP_functions): New function by Diez B. Roggisch,
+	heavily adapted by me, for parsing PHP.
+	(LOOKING_AT): New macro.
+	(Perl_functions, Python_functions, PHP_functions)
+	(Scheme_functions, Texinfo_nodes): Use it.
+	(Perl_functions): Use strneq.
+	(prolog_pred): Renamed to prolog_pr.
+	(prolog_pr): Recognise Prolog rules (thanks to Geert Kloosterman)
+	in addition to predicates.
+	[ETAGS_REGEXPS] [!HAVE_CONFIG_H] [__CYGWIN__]: Prevent
+	unmodified compile, as Cygwin's regex.h is incompatible with us
+	(thanks to Markus Hoenicka).
+	[!HAVE_CONFIG_H] [!__STDC__]: #define const as the empty string.
+
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.3 "asparagus" is released.

@@ -1,3 +1,7 @@
+2001-12-19  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* xemacs/programs.texi: Etags update from Francesco.
+
 2001-12-18  Valdis.Kletnieks <Valdis.Kletnieks@vt.edu>
 
 	* xemacs/programs.texi (Tags): Add node name to Ebrowse
