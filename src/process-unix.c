@@ -1119,6 +1119,7 @@ unix_create_process (Lisp_Process *p,
 #endif
 
   set_descriptor_non_blocking (inchannel);
+  set_descriptor_non_blocking (outchannel);
   if (errchannel >= 0)
     set_descriptor_non_blocking (errchannel);
 

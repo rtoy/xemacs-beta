@@ -1,3 +1,8 @@
+2002-12-17  Daiki Ueno  <daiki@xemacs.org>
+
+	* process-unix.c (unix_create_process): Set pipe write descriptor
+	non-blocking.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.
