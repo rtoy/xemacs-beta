@@ -66,8 +66,9 @@ BUFFER is the buffer or (buffer-name) to associate with the process.
  Process output goes at end of that buffer, unless you specify
  an output stream or filter function to handle the output.
  BUFFER may be also nil, meaning that this process is not associated
- with any buffer
-Third arg is command name, the name of a shell command.
+ with any buffer.
+Variables `shell-file-name' and `shell-command-switch' are used to
+start the process.
 Remaining arguments are the arguments for the command.
 Wildcards and redirection are handled as usual in the shell."
   ;; We used to use `exec' to replace the shell with the command,

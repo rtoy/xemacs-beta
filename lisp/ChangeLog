@@ -1,3 +1,7 @@
+2005-01-09  Adrian Aichner  <adrian@xemacs.org>
+
+	* process.el (start-process-shell-command): Correct docstring.
+
 2005-01-03  Mike Sperber  <mike@xemacs.org>
 
 	* dumped-lisp.el (preloaded-file-list): Prefix Mule files with
