@@ -1,3 +1,7 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* xlwgauge.c (GaugeConvert): Fix type-punning warning.
+
 2004-04-23  Jerry James  <james@xemacs.org>
 
 	* xlwradio.c (RadioExpose): Do not blindly copy one GC over

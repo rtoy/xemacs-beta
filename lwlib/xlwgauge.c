@@ -649,7 +649,8 @@ GaugeConvert (Widget	w,
 #ifdef HAVE_XMU
 	if( *target == XA_TARGETS(XtDisplay(w)) )
 	{
-	  Atom *rval, *stdTargets ;
+	  XPointer stdTargets;
+	  Atom *rval ;
 	  unsigned long stdLength ;
 
 	  /* XmuConvertStandardSelection can handle this.  This function
@@ -659,7 +660,7 @@ GaugeConvert (Widget	w,
 
 	  req = XtGetSelectionRequest(w, *selection, NULL) ;
 	  XmuConvertStandardSelection(w, req->time, selection, target,
-	  	type, (XPointer*)&stdTargets, &stdLength, format) ;
+	  	type, &stdTargets, &stdLength, format) ;
 
 	  *type = XA_ATOM ;		/* TODO: needed? */
 	  *length = stdLength + 3 ;
@@ -668,7 +669,7 @@ GaugeConvert (Widget	w,
 	  *rval++ = XA_INTEGER ;
 	  *rval++ = XA_STRING ;
 	  *rval++ = XA_TEXT(XtDisplay(w)) ;
-	  memcpy((char *)rval, (char *)stdTargets, stdLength*sizeof(Atom)) ;
+	  memcpy(rval, stdTargets, stdLength*sizeof(Atom)) ;
 	  XtFree((char*) stdTargets) ;
 	  *format = 8*sizeof(Atom) ;	/* TODO: needed? */
 	  return True ;

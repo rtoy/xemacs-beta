@@ -274,7 +274,7 @@ linux_play_data_or_file(int fd, UChar_Binary *data,
   size_t         (*sndcnv)(void **dayta,size_t *sz,void **);
   fmtType        ffmt;
   int            fmt,speed,tracks;
-  UChar_Binary *pptr,*optr,*cptr,*sptr;
+  void           *pptr, *optr, *cptr, *sptr;
   int            wrtn,rrtn,crtn,prtn;
   UChar_Binary         sndbuf[SNDBUFSZ];
 
@@ -323,10 +323,8 @@ linux_play_data_or_file(int fd, UChar_Binary *data,
                device; repeat until all data has been processed */
   rrtn = length;
   do {
-    for (pptr = data; (prtn = parsesndfile((void **)&pptr,(size_t *)&rrtn,
-					   (void **)&optr)) > 0; )
-      for (cptr = optr; (crtn = sndcnv((void **)&cptr,(size_t *) &prtn,
-				       (void **)&sptr)) > 0; ) {
+    for (pptr = data; (prtn = parsesndfile(&pptr,(size_t *)&rrtn,&optr)) > 0; )
+      for (cptr = optr; (crtn = sndcnv(&cptr,(size_t *) &prtn,&sptr)) > 0; ) {
 	for (;;) {
 	  if ((wrtn = write(audio_fd,sptr,crtn)) < 0) {
 	    sound_perror("write"); goto END_OF_PLAY; }
