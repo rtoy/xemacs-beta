@@ -31,10 +31,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LIBS_DEBUG
 
-/* XXX emacs should not expect TAB3 to be defined.  */
-#define TABDLY OXTABS
-#define TAB3 OXTABS
-
 /* GNU needs its own crt0, and libc defines data_start.  */
 #define ORDINARY_LINK
 #define DATA_START ({ extern int data_start; (char *) &data_start; })

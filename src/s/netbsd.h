@@ -20,10 +20,6 @@
 
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 
-/* netbsd uses OXTABS instead of the expected TAB3.  */
-#define TABDLY OXTABS
-#define TAB3 OXTABS
-
 #define A_TEXT_OFFSET(x) (sizeof (struct exec))
 #define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
 

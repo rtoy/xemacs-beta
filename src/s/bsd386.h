@@ -17,11 +17,6 @@
 #define LIBS_DEBUG
 #define LIBS_SYSTEM "-lutil -lcompat"
 
-/* System uses OXTABS instead of the expected TAB3.
-   (Copied from netbsd.h.)  */
-#define TABDLY OXTABS
-#define TAB3 OXTABS
-
 /* This silences a few compilation warnings.  */
 #ifdef emacs
 #undef BSD

@@ -117,10 +117,8 @@ typedef unsigned short mode_t;
 #undef NONSYSTEM_DIR_LIBRARY
 #define signal_handler_t int
 #define pid_t int
-#undef BSD_TERMIOS
 #undef HAVE_TERMIOS
 #undef HAVE_TERMIO
-#define TAB3 XTABS
 #define C_OPTIMIZE_SWITCH "-pipe"
 #undef HAVE_SETITIMER
 
