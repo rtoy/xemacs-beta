@@ -1,3 +1,7 @@
+2003-02-07  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c: Add unload_eldap prototype to fix warning.
+
 2003-01-30  Robert Pluim  <rpluim@bigfoot.com>
 
 	* Makefile.common: FreeBSD make compatability fixes: expand
