@@ -222,14 +222,10 @@ void gtk_output_string (struct window *w, struct display_line *dl,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);
-void gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p,
-			    int x, int y, int clip_x, int clip_y,
-			    int clip_width, int clip_height, int width,
-			    int height, int pixmap_offset,
-			    GdkColor *fg, GdkColor *bg,
-			    GdkGC *override_gc);
 void gtk_output_shadows (struct frame *f, int x, int y, int width,
 		       int height, int shadow_thickness);
+GdkGC *gtk_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
+		   Lisp_Object bg_pmap, Lisp_Object lwidth);
 
 int gtk_initialize_frame_menubar (struct frame *f);
 void gtk_init_modifier_mapping (struct device *d);

@@ -1,4 +1,4 @@
-/* X output and frame manipulation routines.
+/* GTK output and frame manipulation routines.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -55,18 +55,22 @@ Boston, MA 02111-1307, USA.  */
 
 #define EOL_CURSOR_WIDTH	5
 
-static void gtk_output_pixmap (struct window *w, struct display_line *dl,
-			       Lisp_Object image_instance, int xpos,
-			       int xoffset,
-			       int start_pixpos, int width, face_index findex,
-			       int cursor_start, int cursor_width,
-			       int cursor_height);
+static void gtk_output_pixmap (struct window *w,
+			       Lisp_Object image_instance,
+			       struct display_box *db,
+			       struct display_glyph_area *dga,
+			       face_index findex,
+			       int cursor_start,
+			       int cursor_width,
+			       int cursor_height,
+			       int bgpixmap);
 static void gtk_output_vertical_divider (struct window *w, int clear);
 static void gtk_output_blank (struct window *w, struct display_line *dl,
 			      struct rune *rb, int start_pixpos,
 			      int cursor_start, int cursor_width);
-static void gtk_output_hline (struct window *w, struct display_line *dl,
-			      struct rune *rb);
+static void gtk_output_horizontal_line (struct window *w,
+					struct display_line *dl,
+					struct rune *rb);
 static void gtk_redraw_exposed_window (struct window *w, int x, int y,
 				       int width, int height);
 static void gtk_redraw_exposed_windows (Lisp_Object window, int x, int y,
@@ -399,7 +403,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
                      We borrow the shadow_thickness_changed flag for
                      now. */
 		  w->shadow_thickness_changed = 1;
-		  gtk_output_hline (w, dl, rb);
+		  gtk_output_horizontal_line (w, dl, rb);
 		}
 
 	      elt++;
@@ -449,10 +453,9 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 
 		  case IMAGE_MONO_PIXMAP:
 		  case IMAGE_COLOR_PIXMAP:
-		    gtk_output_pixmap (w, dl, instance, xpos,
-				       rb->object.dglyph.xoffset, start_pixpos,
-				       rb->width, findex, cursor_start,
-				       cursor_width, cursor_height);
+		    redisplay_output_pixmap (w, instance, &dbox, &dga,
+					     findex,cursor_start,
+					     cursor_width, cursor_height, 0);
 		    break;
 
 		  case IMAGE_POINTER:
@@ -643,14 +646,14 @@ gtk_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
  Starting Y position of cursor is the top of the text line.
  The cursor is drawn sometimes whether or not CURSOR is set. ???
  ****************************************************************************/
-void
-gdk_draw_text_image (GdkDrawable *drawable,
-		     GdkFont     *font,
-		     GdkGC       *gc,
-		     gint         x,
-		     gint         y,
-		     const gchar *text,
-		     gint         text_length);
+static
+void gdk_draw_text_image (GdkDrawable *drawable,
+			  GdkFont     *font,
+			  GdkGC       *gc,
+			  gint         x,
+			  gint         y,
+			  const gchar *text,
+			  gint         text_length);
 
 void
 gtk_output_string (struct window *w, struct display_line *dl,
@@ -1045,10 +1048,10 @@ our_draw_bitmap (GdkDrawable *drawable,
 		 gint         width,
 		 gint         height);
 
-void
+static void
 gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
-		       int y, int clip_x, int clip_y, int clip_width,
-		       int clip_height, int width, int height, int pixmap_offset,
+		       int y, int xoffset, int yoffset,
+		       int width, int height, 
 		       GdkColor *fg, GdkColor *bg, GdkGC *override_gc)
 {
   struct device *d = XDEVICE (f->device);
@@ -1057,7 +1060,6 @@ gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
   GdkGC *gc;
   GdkGCValues gcv;
   unsigned long pixmap_mask;
-  int need_clipping = (clip_x || clip_y);
 
   if (!override_gc)
     {
@@ -1071,8 +1073,8 @@ gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 	{
 	  gcv.function = GDK_COPY;
 	  gcv.clip_mask = IMAGE_INSTANCE_GTK_MASK (p);
-	  gcv.clip_x_origin = x;
-	  gcv.clip_y_origin = y - pixmap_offset;
+	  gcv.clip_x_origin = x - xoffset;
+	  gcv.clip_y_origin = y - yoffset;
 	  pixmap_mask |= (GDK_GC_FUNCTION | GDK_GC_CLIP_MASK | GDK_GC_CLIP_X_ORIGIN |
 			  GDK_GC_CLIP_Y_ORIGIN);
 	  /* Can't set a clip rectangle below because we already have a mask.
@@ -1080,8 +1082,9 @@ gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 	     everything outside the clip region.  Is it worth it?
 	     Is it possible to get an equivalent effect by changing the
 	     args to XCopyArea below rather than messing with a clip box?
-	     - dkindred@cs.cmu.edu */
-	  need_clipping = 0;
+	     - dkindred@cs.cmu.edu
+	     Yes. We don't clip at all now - andy@xemacs.org
+          */
 	}
 
       gc = gc_cache_lookup (DEVICE_GTK_GC_CACHE (d), &gcv, pixmap_mask);
@@ -1092,47 +1095,32 @@ gtk_output_gdk_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
       /* override_gc might have a mask already--we don't want to nuke it.
 	 Maybe we can insist that override_gc have no mask, or use
 	 one of the suggestions above. */
-      need_clipping = 0;
-    }
-
-  if (need_clipping)
-    {
-      GdkRectangle clip_box;
-
-      clip_box.x = clip_x;
-      clip_box.y = clip_y;
-      clip_box.width = clip_width;
-      clip_box.height = clip_height;
-
-      gdk_gc_set_clip_rectangle (gc, &clip_box);
-      gdk_gc_set_clip_origin (gc, x, y);
     }
 
   if (IMAGE_INSTANCE_PIXMAP_DEPTH (p) > 0)
     {
       gdk_draw_pixmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       0, pixmap_offset, x, y, width, height);
+		       xoffset, yoffset, x, y, width, height);
     }
   else
     {
       our_draw_bitmap (GDK_DRAWABLE (x_win), gc,
 		       IMAGE_INSTANCE_GTK_PIXMAP (p),
-		       0, pixmap_offset, x, y, width, height);
+		       xoffset, yoffset, x, y, width, height);
     }
-
-  if (need_clipping)
-  {
-      gdk_gc_set_clip_rectangle (gc, NULL);
-      gdk_gc_set_clip_origin (gc, 0, 0);
-  }
 }
 
 static void
-gtk_output_pixmap (struct window *w, struct display_line *dl,
-		   Lisp_Object image_instance, int xpos, int xoffset,
-		   int start_pixpos, int width, face_index findex,
-		   int cursor_start, int cursor_width, int cursor_height)
+gtk_output_pixmap (struct window *w,
+		   Lisp_Object image_instance,
+		   struct display_box *db,
+		   struct display_glyph_area *dga,
+		   face_index findex,
+		   int cursor_start,
+		   int cursor_width,
+		   int cursor_height,
+		   int bg_pixmap)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -1140,88 +1128,8 @@ gtk_output_pixmap (struct window *w, struct display_line *dl,
   Lisp_Object window;
 
   GdkWindow *x_win = GET_GTK_WIDGET_WINDOW (FRAME_GTK_TEXT_WIDGET (f));
-  int lheight = dl->ascent + dl->descent - dl->clip;
-  int pheight = ((int) IMAGE_INSTANCE_PIXMAP_HEIGHT (p) > lheight ? lheight :
-		 IMAGE_INSTANCE_PIXMAP_HEIGHT (p));
-  int pwidth = min (width + xoffset, (int) IMAGE_INSTANCE_PIXMAP_WIDTH (p));
-  int clip_x, clip_y, clip_width, clip_height;
-
-  /* The pixmap_offset is used to center the pixmap on lines which are
-     shorter than it is.  This results in odd effects when scrolling
-     pixmaps off of the bottom.  Let's try not using it. */
-#if 0
-  int pixmap_offset = (int) (IMAGE_INSTANCE_PIXMAP_HEIGHT (p) - lheight) / 2;
-#else
-  int pixmap_offset = 0;
-#endif
 
   XSETWINDOW (window, w);
-
-  if ((start_pixpos >= 0 && start_pixpos > xpos) || xoffset)
-    {
-      if (start_pixpos > xpos && start_pixpos > xpos + width)
-	return;
-
-      clip_x = xoffset;
-      clip_width = width;
-      if (start_pixpos > xpos)
-	{
-	  clip_x += (start_pixpos - xpos);
-	  clip_width -= (start_pixpos - xpos);
-	}
-    }
-  else
-    {
-      clip_x = 0;
-      clip_width = 0;
-    }
-
-  /* Place markers for possible future functionality (clipping the top
-     half instead of the bottom half; think pixel scrolling). */
-  clip_y = 0;
-  clip_height = pheight;
-
-  /* Clear the area the pixmap is going into.  The pixmap itself will
-     always take care of the full width.  We don't want to clear where
-     it is going to go in order to avoid flicker.  So, all we have to
-     take care of is any area above or below the pixmap. */
-  /* #### We take a shortcut for now.  We know that since we have
-     pixmap_offset hardwired to 0 that the pixmap is against the top
-     edge so all we have to worry about is below it. */
-  /* #### Unless the pixmap has a mask in which case we have to clear
-     the whole damn thing since we can't yet clear just the area not
-     included in the mask. */
-  if (((int) (dl->ypos - dl->ascent + pheight) <
-       (int) (dl->ypos + dl->descent - dl->clip))
-      || IMAGE_INSTANCE_GTK_MASK (p))
-    {
-      int clear_x, clear_y, clear_width, clear_height;
-
-      if (IMAGE_INSTANCE_GTK_MASK (p))
-	{
-	  clear_y = dl->ypos - dl->ascent;
-	  clear_height = lheight;
-	}
-      else
-	{
-	  clear_y = dl->ypos - dl->ascent + pheight;
-	  clear_height = lheight - pheight;
-	}
-
-      if (start_pixpos >= 0 && start_pixpos > xpos)
-	{
-	  clear_x = start_pixpos;
-	  clear_width = xpos + width - start_pixpos;
-	}
-      else
-	{
-	  clear_x = xpos;
-	  clear_width = width;
-	}
-
-      redisplay_clear_region (window, findex, clear_x, clear_y,
-			      clear_width, clear_height);
-    }
 
   /* Output the pixmap. */
   {
@@ -1233,20 +1141,19 @@ gtk_output_pixmap (struct window *w, struct display_line *dl,
     tmp_pixel = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
     tmp_bcolor = COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (tmp_pixel));
 
-    gtk_output_gdk_pixmap (f, p, xpos - xoffset, dl->ypos - dl->ascent, clip_x,
-			   clip_y, clip_width, clip_height,
-			   pwidth, pheight, pixmap_offset,
-			   tmp_fcolor, tmp_bcolor, 0);
+    gtk_output_gdk_pixmap (f, p, db->xpos, db->ypos,
+			   dga->xoffset, dga->yoffset,
+			   dga->width, dga->height,
+			   tmp_fcolor, tmp_bcolor, NULL);
   }
 
   /* Draw a cursor over top of the pixmap. */
-  if (cursor_width && cursor_height && (cursor_start >= xpos)
+  if (cursor_width && cursor_height && (cursor_start >= db->xpos)
       && !NILP (w->text_cursor_visible_p)
-      && (cursor_start < xpos + pwidth))
+      && (cursor_start < (db->xpos + dga->width)))
     {
       GdkGC *gc;
       int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-      int y = dl->ypos - dl->ascent;
       struct face_cachel *cursor_cachel =
 	WINDOW_FACE_CACHEL (w,
 			    get_builtin_face_cache_index
@@ -1254,11 +1161,11 @@ gtk_output_pixmap (struct window *w, struct display_line *dl,
 
       gc = gtk_get_gc (d, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
 
-      if (cursor_width > xpos + pwidth - cursor_start)
-	cursor_width = xpos + pwidth - cursor_start;
+      if (cursor_width > db->xpos + dga->width - cursor_start)
+	cursor_width = db->xpos + dga->width - cursor_start;
 
       gdk_draw_rectangle (GDK_DRAWABLE (x_win), gc, focus ? TRUE : FALSE,
-			  cursor_start, y, cursor_width,
+			  cursor_start, db->ypos, cursor_width,
 			  cursor_height);
     }
 }
@@ -1426,12 +1333,14 @@ gtk_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 }
 
 /*****************************************************************************
- gtk_output_hline
+ gtk_output_horizontal_line
 
  Output a horizontal line in the foreground of its face.
  ****************************************************************************/
 static void
-gtk_output_hline (struct window *w, struct display_line *dl, struct rune *rb)
+gtk_output_horizontal_line (struct window *w,
+			    struct display_line *dl,
+			    struct rune *rb)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -1919,8 +1828,11 @@ gtk_bevel_area (struct window *w, face_index findex,
 static void
 gtk_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
-	/* Gdk does not allow us to control the duration / pitch / volume */
-	gdk_beep ();
+  /* Gdk does not allow us to control the duration / pitch / volume */
+  if (volume > 0)
+    {
+      gdk_beep ();
+    }
 }
 
 
@@ -1944,7 +1856,7 @@ console_type_create_redisplay_gtk (void)
   CONSOLE_HAS_METHOD (gtk, ring_bell);
   CONSOLE_HAS_METHOD (gtk, bevel_area);
   CONSOLE_HAS_METHOD (gtk, output_string);
-  /*  CONSOLE_HAS_METHOD (gtk, output_pixmap); */
+  CONSOLE_HAS_METHOD (gtk, output_pixmap);
 }
 
 /* This makes me feel incredibly dirty... but there is no other way to
@@ -1954,14 +1866,14 @@ console_type_create_redisplay_gtk (void)
 
 #include <gdk/gdkx.h>
 
-void
-gdk_draw_text_image (GdkDrawable *drawable,
-		     GdkFont     *font,
-		     GdkGC       *gc,
-		     gint         x,
-		     gint         y,
-		     const gchar *text,
-		     gint         text_length)
+static
+void gdk_draw_text_image (GdkDrawable *drawable,
+			  GdkFont     *font,
+			  GdkGC       *gc,
+			  gint         x,
+			  gint         y,
+			  const gchar *text,
+			  gint         text_length)
 {
 #if !USE_X_SPECIFIC_DRAW_ROUTINES
   int width = gdk_text_measure (font, text, text_length);

@@ -1,3 +1,37 @@
+2001-12-22  William M. Perry  <wmperry@gnu.org>
+
+	* glyphs-gtk.c (gtk_xpm_instantiate): Don't bother doing the
+	xpm-color-symbols checks, they are impossible to implement with
+	GTK's XPM implementation. :(
+
+2001-12-13  William M. Perry  <wmperry@gnu.org>
+
+	* select-gtk.c (gtk_own_selection): Update to follow the new
+	method signature.  Ignore owned_p as it appears to only be used
+	for motif hacks.
+
+	* redisplay-gtk.c (gtk_output_string): Fixed some warnings about
+	signed/unsigned comparison.
+	(gtk_output_gdk_pixmap): Remove clipping code as per change by
+	andy@xemacs.org to the X11 code.
+	(gtk_output_pixmap): Make this follow the output_pixmap method
+	conventions and expose it.
+	(gtk_output_horizontal_line): Renamed from output_hline, and
+	expose it in our method structure.
+	(gtk_ring_bell): Don't ring the bell if volume <= 0
+
+	* toolbar-gtk.c (gtk_output_toolbar_button): 
+	(gtk_output_frame_toolbars): 
+	(gtk_redraw_exposed_toolbars): 
+	(gtk_redraw_frame_toolbars): These are now just aliases for the
+	common_XXX() routines in toolbar-common.c
+
+	* toolbar-common.c: New common toolbar implementation.  This file
+	uses only the redisplay_XXX() functions and device methods to draw
+	the toolbar, and so should be portable across all windowing
+	systems (other than tty, and even then I imagine text-based stuff
+	would work if you had a way to select it).
+
 2001-12-11  Andy Piper  <andy@xemacs.org>
 
 	* dialog-msw.c (dialog_popped_down): new function. unset popup_up_p.

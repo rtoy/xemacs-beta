@@ -703,4 +703,3 @@ common_redraw_frame_toolbars (struct frame *f)
     common_redraw_exposed_toolbars (f, 0, 0, FRAME_PIXWIDTH (f),
 				    FRAME_PIXHEIGHT (f));
 }
-

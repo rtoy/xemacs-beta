@@ -1,4 +1,4 @@
-/* X-specific Lisp objects.
+/* GTK-specific Lisp objects.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
@@ -1083,6 +1083,7 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /**********************************************************************
  *                             XPM                                    *
  **********************************************************************/
+
 static void
 write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 {
@@ -1182,77 +1183,9 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
     report_file_error ("Writing temp file", build_string (filename_out));
 }
 
-struct color_symbol
-{
-  char*		name;
-  GdkColor	color;
-};
-
-static struct color_symbol*
-extract_xpm_color_names (Lisp_Object device,
-			 Lisp_Object domain,
-			 Lisp_Object color_symbol_alist,
-			 int* nsymbols)
-{
-  /* This function can GC */
-  Lisp_Object rest;
-  Lisp_Object results = Qnil;
-  int i, j;
-  struct color_symbol *colortbl;
-  struct gcpro gcpro1, gcpro2;
-
-  GCPRO2 (results, device);
-
-  /* We built up results to be (("name" . #<color>) ...) so that if an
-     error happens we don't lose any malloc()ed data, or more importantly,
-     leave any pixels allocated in the server. */
-  i = 0;
-  LIST_LOOP (rest, color_symbol_alist)
-    {
-      Lisp_Object cons = XCAR (rest);
-      Lisp_Object name = XCAR (cons);
-      Lisp_Object value = XCDR (cons);
-      if (NILP (value))
-	continue;
-      if (STRINGP (value))
-	value =
-	  Fmake_color_instance
-	  (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
-      else
-        {
-          assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, domain, Qnil, Qnil);
-        }
-
-      if (NILP (value))
-        continue;
-      results = noseeum_cons (noseeum_cons (name, value), results);
-      i++;
-    }
-  UNGCPRO;			/* no more evaluation */
-
-  *nsymbols=i;
-  if (i == 0) return 0;
-
-  colortbl = xnew_array_and_zero (struct color_symbol, i);
-
-  for (j=0; j<i; j++)
-    {
-      Lisp_Object cons = XCAR (results);
-      colortbl[j].color = 
-	* COLOR_INSTANCE_GTK_COLOR (XCOLOR_INSTANCE (XCDR (cons)));
-
-      colortbl[j].name = (char *) XSTRING_DATA (XCAR (cons));
-      free_cons (XCONS (cons));
-      cons = results;
-      results = XCDR (results);
-      free_cons (XCONS (cons));
-    }
-  return colortbl;
-}
-
 static void
-gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+gtk_xpm_instantiate (Lisp_Object image_instance,
+		     Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		     int dest_mask, Lisp_Object domain)
 {
@@ -1267,9 +1200,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   GdkPixmap *pixmap;
   GdkPixmap *mask = 0;
   GdkWindow *window = 0;
-  int nsymbols = 0, i = 0;
-  struct color_symbol *color_symbols = NULL;
-  GdkColor *transparent_color = NULL;
+  int i = 0;
   Lisp_Object color_symbol_alist = find_keyword_in_vector (instantiator,
 							   Q_color_symbols);
   enum image_instance_type type;
@@ -1300,22 +1231,9 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  /* Need to get the transparent color here */
-  color_symbols = extract_xpm_color_names (device, domain, color_symbol_alist, &nsymbols);
-  for (i = 0; i < nsymbols; i++)
-    {
-      if (!strcasecmp ("BgColor", color_symbols[i].name) ||
-	  !strcasecmp ("None", color_symbols[i].name))
-	{
-	  transparent_color = &color_symbols[i].color;
-	}
-    }
-
   write_lisp_string_to_temp_file (data, temp_file_name);
-  pixmap = gdk_pixmap_create_from_xpm (window, &mask, transparent_color, temp_file_name);
+  pixmap = gdk_pixmap_create_from_xpm (window, &mask, NULL, temp_file_name);
   unlink (temp_file_name);
-
-  if (color_symbols) xfree (color_symbols);
 
   if (!pixmap)
   {
@@ -1383,6 +1301,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       abort ();
     }
 }
+
 #endif /* HAVE_XPM */
 
 
