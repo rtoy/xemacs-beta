@@ -1,3 +1,9 @@
+2001-12-29  Steve Youngs  <youngs@xemacs.org>
+
+	* etc/package-index.LATEST.gpg: Update.
+
+	* etc/package-index.LATEST.pgp: Update.
+
 2001-12-18  Adrian Aichner  <adrian@xemacs.org>
 
 	* info\.cvsignore: Correct pattern to match all info files.
