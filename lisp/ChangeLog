@@ -1,3 +1,11 @@
+2003-07-05  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-admin.el (package-admin-find-top-directory): Simplify
+	directory comparisions and fix substring errors on short path
+	components.
+	* package-get.el (package-get-package-index-file-location):
+	Default to first component of "EMACSPACKAGEPATH", if set.
+
 2003-06-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bytecomp.el (byte-compile-lambda): Discard docstring only if it
