@@ -1,3 +1,8 @@
+2000-04-22  zhaoway  <zw@debian.org>
+
+	* event-stream.c (is_scrollbar_event): Return 0 when XEmacs is
+	compiled without scrollbars.
+
 2001-05-05  Martin Buchholz  <martin@xemacs.org>
 
 	TTY configury portability improvements.
