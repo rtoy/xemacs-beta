@@ -1,3 +1,9 @@
+2002-10-24  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-widget.c (layout_query_geometry): add in fiddle
+	factor. Include border text in width layout calculation.
+	(layout_layout): use BORDER_FIDDLE_FACTOR instead of 10.
+
 2002-10-24  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* fns.c (Frequire): Add optional `noerror' argument.
