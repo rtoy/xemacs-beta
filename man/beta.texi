@@ -1,5 +1,10 @@
 \input texinfo  @c -*-texinfo-*-
 
+@c This file is in Texinfo format.
+@c If for some reason you do not have the formatted version available,
+@c this file is more or less readable as plain text.
+@c Skip to the line beginning "@node Introduction".
+
 @c %**start of header
 @setfilename ../info/beta.info
 @settitle Info on beta versions of XEmacs
@@ -14,6 +19,7 @@
 This file describes info relevant to beta versions of XEmacs.
 
 Copyright @copyright{} 2005 Ben Wing.
+Copyright @copyright{} 2005 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -80,6 +86,7 @@ This Info file describes info relevant to beta versions of XEmacs.
 * Compiling Beta XEmacs::       
 * Packages::                    
 * Improving XEmacs::            
+* Index:: 
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -691,7 +698,7 @@ And then:
 $ make install
 @end example
 
-@node Improving XEmacs,  , Packages, Top
+@node Improving XEmacs,  Index, Packages, Top
 @chapter Improving XEmacs
 
 @menu
@@ -878,12 +885,12 @@ You don't have to become the maintainer, but it virtually ensures
 rapid acceptance of the package.
 
 For help in creating new packages, see the (rather sparse) discussions
-in the XEmacs User's Guide and the Lisp Reference Manual.  The XEmacs
-Package Release Engineer (Ville Skyttä @uref{mailto:scop@@xemacs.org}
-is currently serving with Norbert Koch @uref{mailto:viteno@@xemacs.org}
-assisting; Steve Youngs @uref{mailto:youngs@@xemacs.org} and Stephen
-Turnbull @uref{mailto:stephen@@xemacs.org} also can help) are the most
-likely sources of advice.
+in the XEmacs User's Guide and the Lisp Reference Manual.  The
+participants in the XEmacs Beta mailing list
+@uref{mailto:xemacs-beta@@xemacs.org} and the XEmacs Package Release
+Engineer are the most likely sources of advice.  See
+@uref{http://www.xemacs.org/Develop/jobs.html#package,jobs.html} for
+current information about package release engineers.
 
 @node Syncing with GNU Emacs,  , New packages, Large contributions
 @subsection Syncing with GNU Emacs
@@ -897,7 +904,9 @@ special attention:
 @itemize @bullet
 @item
 Recent GNU Emacsen cannot be built without Mule, but XEmacs can.
-Make sure your changes do not assume the presence of Mule.
+Make sure that changes that depend on the presence of Mule are
+appropriately conditionalized, with @samp{#ifdef MULE} in C code and
+with @samp{(featurep 'mule)} in Lisp.
 
 @item
 GNU Emacs nomenclature often differs from that of XEmacs.
@@ -913,13 +922,16 @@ synchronization has taken place, to what degree, and when.  For this
 purpose, we use comments of the form
 
 @example
-/* Synched up with: FSF 21.3 by Stephen Turnbull */
+/* Synched up with: GNU 21.3 by Stephen Turnbull */
 @end example
 
 in the source file itself, as the last element of the prefatory
 material (copyright notice and commentary).  Obviously the comment
 marker needs to be changed to leading semicolons for Lisp, but
-otherwise the format is the same.
+otherwise the format is the same.  (Older sync comments may have ``FSF''
+in place of ``GNU''.  They're equally accurate in our opinion, but
+Richard Stallman and other GNU developers consider the term ``FSF
+Emacs'' ``insulting''.  Please use ``GNU'' in new sync comments.)
 
 Of course you should note syncing as the purpose in the ChangeLog,
 too.  But entries get buried deep in the ChangeLog file, and may even
@@ -938,7 +950,7 @@ remains in the GNU Emacs core, as well to core Lisp in XEmacs.
 @contents
 @c That's all
 
-@node Index,  , Defining Variables, Top
+@node Index,  , Improving XEmacs, Top
 @unnumbered Index
 
 @printindex cp

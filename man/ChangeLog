@@ -1,3 +1,29 @@
+2005-02-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* beta.texi: Update Copyright.  Add pointer comment.
+
+	(New packages): Remove personal names, point at jobs.html
+	instead.
+
+	(Syncing with GNU Emacs): Change "don't assume Mule" to
+	"conditionalize Mule dependencies correctly".  RMS stroking: use
+	"GNU", not "FSF", in sync notices.
+
+2005-02-02  Robert Delius Royar <xemacs@frinabulax.org>
+
+	* beta.texi (Top):
+	Add reference to Index in catalog to prevent 
+	errors compiling with GNU makeinfo 4.5.
+
+	* beta.texi (Syncing with GNU Emacs):
+	Add forward reference to Index in next node to prevent 
+	errors compiling with GNU makeinfo 4.5.
+
+	* beta.texi (Index):
+	Add backward reference to Syncing with GNU Emacs to
+	replace obsolete reference to Defining Variables to 
+	prevent errors compiling with GNU makeinfo 4.5.
+
 2005-01-31  Ben Wing  <ben@xemacs.org>
 
 	* xemacs/help.texi (Misc Help):
