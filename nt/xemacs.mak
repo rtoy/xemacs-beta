@@ -69,10 +69,13 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+!if "$(emacs_beta_version)" != ""
 !if "$(emacs_is_beta)" != ""
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
+XEMACS_VERSION_STRING=$(XEMACS_VERSION_STRING)-b$(emacs_beta_version)
 !else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version).$(emacs_beta_version)
+XEMACS_VERSION_STRING=$(XEMACS_VERSION_STRING).$(emacs_beta_version)
+!endif
 !endif
 PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
@@ -829,8 +832,12 @@ DOC_SRC11=\
 
 # This may not exist
 !if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 EMACS_BETA_VERSION=-DEMACS_BETA_VERSION=$(emacs_beta_version)
-!ENDIF
+!else
+EMACS_PATCH_LEVEL=-DEMACS_PATCH_LEVEL=$(emacs_beta_version)
+!endif
+!endif
 
 !if !$(USE_PORTABLE_DUMPER)
 TEMACS_ENTRYPOINT=-entry:_start
@@ -1338,7 +1345,7 @@ LOADPATH=$(LISP)
 
 # Rebuild docfile target
 docfile ::
-	if exist $(DOC) $(DEL) $(DOC)
+	if exist $(DOC) del $(DOC)
 docfile :: $(DOC)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(DOC_SRC10) $(DOC_SRC11)
