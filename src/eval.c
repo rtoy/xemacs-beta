@@ -440,10 +440,18 @@ static const struct lrecord_description subr_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
+				     1, /*dumpable-flag*/
+				     0, print_subr, 0, 0, 0,
+				     subr_description,
+				     Lisp_Subr);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
 				     0, print_subr, 0, 0, 0,
 				     subr_description,
 				     Lisp_Subr);
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*			 Entering the debugger				*/
