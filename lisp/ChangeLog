@@ -1,3 +1,8 @@
+2004-06-18  Jerry James  <james@xemacs.org>
+
+	* derived.el (define-derived-mode): Put the arguments to
+	derived-mode-merge-syntax-tables in the correct order.
+
 2004-06-17  Jerry James  <james@xemacs.org>
 
 	* derived.el (define-derived-mode): XEmacs does not have

@@ -224,7 +224,7 @@ The new mode runs the hook constructed by the function
 		,(when declare-syntax
 		   ;; XEmacs change: we do not have char-table-parent
 		   `(derived-mode-merge-syntax-tables
-		     ,syntax (syntax-table)))))
+		     (syntax-table) ,syntax))))
 
 	  (use-local-map ,map)
 	  ,(when syntax `(set-syntax-table ,syntax))
