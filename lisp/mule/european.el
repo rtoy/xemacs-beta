@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2002 Free Software Foundation
 
 ;; Keywords: multilingual, European
 
@@ -25,7 +26,7 @@
 
 ;;; Commentary:
 
-;; For Europeans, five character sets ISO8859-1,2,3,4,9 are supported.
+;; Support six Latin coded character sets ISO8859-1,2,3,4,9,15.
 
 ;; #### latin.el would be a better name for this file.
 
@@ -38,6 +39,19 @@
 (modify-syntax-entry (make-char 'latin-iso8859-1 32) "w") ; no-break space
 (modify-syntax-entry ?,AW(B "_")
 (modify-syntax-entry ?,Aw(B "_")
+
+;; For syntax of Latin-9 characters.
+;; Based on Latin-1 and differences from Jukka Korpela
+;; http://www.cs.tut.fi/~jkorpela/latin9.html
+(loop for c in '(?,b&(B ?,b((B ?,b4(B ?,b8(B ?,b<(B ?,b=(B ?,b>(B)
+      do (modify-syntax-entry c "w"))
+
+(loop for c from 64 to 127              ; from ',b@(B' to ',b(B'
+      do (modify-syntax-entry (make-char 'latin-iso8859-1 c) "w"))
+
+(modify-syntax-entry (make-char 'latin-iso8859-15 32) "w") ; no-break space
+(modify-syntax-entry ?,bW(B "_")
+(modify-syntax-entry ?,bw(B "_")
 
 ;; For syntax of Latin-2
 (loop for c in '(?,B!(B ?,B#(B ?,B%(B ?,B&(B ?,B)(B ?,B*(B ?,B+(B ?,B,(B ?,B.(B ?,B/(B ?,B1(B ?,B3(B ?,B5(B ?,B6(B ?,B9(B ?,B:(B ?,B;(B ?,B<(B)
@@ -148,6 +162,52 @@ These languages are supported with the Latin-1 (ISO-8859-1) character set:
 ")))
  '("European"))
 
+
+;; Latin-9 (ISO-8859-15)
+;; Latin-1 plus Euro, plus a few accented characters
+
+;; (make-charset 'latin-iso8859-15
+;;   "Latin-9, aka Latin-1 with Euro etc"
+;;   '(short-name "Latin 9"
+;;     long-name  "Latin-9 (typically GR of ISO 8859/15)"
+;;     registry   "iso8859-15"
+;;     dimension  1
+;;     columns    1
+;;     chars      96
+;;     final      ?b                  ; ISO-IR-203
+;;     graphic    1
+;;     direction  l2r))
+
+(make-coding-system
+ 'iso-8859-15 'iso2022
+  "ISO 4873 conforming 8-bit code (ASCII + Latin 9; aka Latin-1 with Euro)"
+  `(mnemonic "MIME/Ltn-9"		; bletch
+    eol-type nil
+    charset-g0 ascii
+    charset-g1 latin-iso8859-15
+    charset-g2 t
+    charset-g3 t
+    ))
+
+(defun setup-latin9-environment ()
+  "Set up multilingual environment (MULE) for European Latin-9 users."
+  (interactive)
+  (set-language-environment "Latin-9"))
+
+(set-language-info-alist
+ "Latin-9" '((charset ascii latin-iso8859-15)
+	     (coding-system iso-8859-15)
+	     (coding-priority iso-8859-15)
+	     (input-method . "latin-1-prefix")  ; FIXME!!
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!, my ")
+	     (documentation . "\
+This language environment is a generic one for Latin-9 (ISO-8859-15)
+character set which supports the Euro sign and the following languages:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish."))
+  '("European"))
+ 
 
 ;; Latin-2 (ISO-8859-2)
 

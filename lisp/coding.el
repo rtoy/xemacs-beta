@@ -305,4 +305,4 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (define-obsolete-variable-alias
   'pathname-coding-system 'file-name-coding-system)
 
-;;; mule-coding.el ends here
+;;; coding.el ends here

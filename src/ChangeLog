@@ -1,3 +1,12 @@
+2002-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule-charset.c (global):
+	(syms_of_mule_charset):
+	(complex_vars_of_mule_charset):
+	Declare and initialize Vcharset_latin_iso8859_15.
+
+	* mule-charset.h (LEADING_BYTE_OFFICIAL_1): Add LATIN_ISO8859_15.
+
 2002-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.4 "bamboo" is released.

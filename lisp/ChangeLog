@@ -1,3 +1,11 @@
+2002-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* coding.el: Fix typo in comment.
+
+2002-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/european.el (Latin-9): Add ISO 8859/15 support.
+
 2002-01-09  Simon Josefsson  <jas@extundo.com>
 
 	* files.el (auto-mode-alist): Support Sieve (*.siv, *.sieve).

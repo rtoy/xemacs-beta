@@ -50,6 +50,7 @@ Lisp_Object Vcharset_katakana_jisx0201;
 Lisp_Object Vcharset_latin_jisx0201;
 Lisp_Object Vcharset_cyrillic_iso8859_5;
 Lisp_Object Vcharset_latin_iso8859_9;
+Lisp_Object Vcharset_latin_iso8859_15;
 Lisp_Object Vcharset_japanese_jisx0208_1978;
 Lisp_Object Vcharset_chinese_gb2312;
 Lisp_Object Vcharset_japanese_jisx0208;
@@ -135,6 +136,7 @@ Lisp_Object Qascii,
   Qlatin_jisx0201,
   Qcyrillic_iso8859_5,
   Qlatin_iso8859_9,
+  Qlatin_iso8859_15,
   Qjapanese_jisx0208_1978,
   Qchinese_gb2312,
   Qjapanese_jisx0208,
@@ -1305,6 +1307,7 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qlatin_jisx0201);
   DEFSYMBOL (Qcyrillic_iso8859_5);
   DEFSYMBOL (Qlatin_iso8859_9);
+  DEFSYMBOL (Qlatin_iso8859_15);
   DEFSYMBOL (Qjapanese_jisx0208_1978);
   DEFSYMBOL (Qchinese_gb2312);
   DEFSYMBOL (Qjapanese_jisx0208);
@@ -1476,6 +1479,15 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-9 (Latin-5)"),
 		  build_string ("ISO8859-9 (Latin-5)"),
 		  build_string ("iso8859-9"));
+  staticpro (&Vcharset_latin_iso8859_15);
+  Vcharset_latin_iso8859_15 =
+    make_charset (LEADING_BYTE_LATIN_ISO8859_15, Qlatin_iso8859_15, 2,
+		  CHARSET_TYPE_96, 1, 1, 'b',
+		  CHARSET_LEFT_TO_RIGHT,
+		  build_string ("Latin-9"),
+		  build_string ("ISO8859-15 (Latin-9)"),
+		  build_string ("ISO8859-15 (Latin-9)"),
+		  build_string ("iso8859-15"));
   staticpro (&Vcharset_japanese_jisx0208_1978);
   Vcharset_japanese_jisx0208_1978 =
     make_charset (LEADING_BYTE_JAPANESE_JISX0208_1978, Qjapanese_jisx0208_1978, 3,
