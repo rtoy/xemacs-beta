@@ -1,3 +1,11 @@
+2002-08-02  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* font-lock.el: Some faces and doc typo fixes from GNU Emacs.
+	(font-lock-doc-face): New alias to font-lock-doc-string-face.
+	(font-lock-builtin-face): New.
+	(font-lock-constant-face): New.
+	(font-lock-face-list): Add builtin and constant faces.
+
 2002-07-27  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.8 "broccoli" is released.
