@@ -1,3 +1,8 @@
+2002-09-12  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* hyper-apropos.el (hyper-apropos-popup-menu): Add "Find Variable"
+	menu entry for `hyper-apropos-find-variable'.
+
 2002-09-03  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* help.el (view-lossage): Change interactive spec to "P".

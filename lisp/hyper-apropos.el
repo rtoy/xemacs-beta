@@ -1321,7 +1321,8 @@ window.  (See also `find-variable'.)"
 		    customizable-p)
 	    (vector "Show keys for"     'hyper-apropos-where-is      command-p)
 	    (vector "Invoke command"	'hyper-apropos-invoke-fn     command-p)
-	    (vector "Find function"    'hyper-apropos-find-function function-p)
+	    (vector "Find function"	'hyper-apropos-find-function function-p)
+	    (vector "Find variable"	'hyper-apropos-find-variable variable-p)
 	    (vector "Find tag"		'hyper-apropos-find-tag	notjunk)
 	    (and apropos-p
 		 ["Add keyword..." hyper-apropos-add-keyword	t])
