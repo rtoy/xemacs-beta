@@ -2078,7 +2078,7 @@ if test "$cflags_warning_specified" = "no"; then
     dnl **** If more gcc/g++ flags are added, from here on must handle
     dnl **** cflags_warning and xe_cflags_warning in parallel
   elif test "$__ICC" = "yes"; then
-    cflags_warning="-Wall -w1"
+    cflags_warning="-Wall -w1 -we147"
   dnl ### Add optimal cflags_warning support for other compilers HERE!
   fi
 fi

@@ -2939,7 +2939,7 @@ if test "$cflags_warning_specified" = "no"; then
       xe_cflags_warning="$cflags_warning -Weffc++"
     cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
           elif test "$__ICC" = "yes"; then
-    cflags_warning="-Wall -w1"
+    cflags_warning="-Wall -w1 -we147"
     fi
 fi
 test -z "$xe_cflags_warning" && xe_cflags_warning="$cflags_warning"

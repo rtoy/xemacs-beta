@@ -1,3 +1,8 @@
+2004-04-30  Jerry James  <james@xemacs.org>
+
+	* configure.in: Turn ICC warning 147 into an error to get a good
+	XRegisterIMInstantiateCallback prototype.
+
 2004-04-28  Jerry James  <james@xemacs.org>
 
 	* configure.in: Get version information for both icc and icpc.
