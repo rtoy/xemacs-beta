@@ -56,8 +56,9 @@ DEL=del
 
 # Define the 'copy' command to use
 # Suppress confirmation for overwriting files
-COPY=xcopy /q /y
-COPYDIR=xcopy /q /y /e
+# Use /r (instead of /y), which exists on Windows NT 4 and 5.
+COPY=xcopy /q /r
+COPYDIR=xcopy /q /r /e
 
 # Program name and version
 

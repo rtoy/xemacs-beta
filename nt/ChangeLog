@@ -1,3 +1,8 @@
+2001-09-28  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (COPY): Use xcopy /r for NT 4.0 compatibility.
+	* xemacs.mak (COPYDIR): Ditto
+
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.3 "asparagus" is released.
