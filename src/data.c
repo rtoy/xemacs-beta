@@ -2132,72 +2132,106 @@ Return non-nil if OBJECT is a weak box.
  */
 
 static Lisp_Object Vall_ephemerons; /* Gemarke es niemals ever!!! */
+static Lisp_Object Vnew_all_ephemerons;
 static Lisp_Object Vfinalize_list;
 
-int
-finish_marking_ephemerons(void)
+void
+init_marking_ephemerons(void)
 {
-  Lisp_Object rest;
-  int did_mark = 0;
-
-  for (rest = Vall_ephemerons;
-       !NILP (rest);
-       rest = XEPHEMERON_NEXT (rest))
-    {
-      if (marked_p (rest) && ! marked_p (XEPHEMERON (rest)->cons_chain))
-	{
-	  MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
-	  mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
-	  did_mark = 1;
-	}
-    }
-  return did_mark;
+  Vnew_all_ephemerons = Qnil;
 }
 
-void
-prune_ephemerons(void)
-{
-  int removep = 0;
-  Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
+/* Move all live ephemerons with live keys over to
+ * Vnew_all_ephemerons, marking the values and finalizers along the
+ * way. */
 
-  while (! NILP (rest))
+int
+continue_marking_ephemerons(void)
+{
+  Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
+  int did_mark = 0;
+
+  while (!NILP (rest))
     {
       next = XEPHEMERON_NEXT (rest);
 
       if (marked_p (rest))
-	/* The ephemeron itself is live ... */
 	{
-	  if (! marked_p(XEPHEMERON (rest)->key))
-	    /* ... but its key is garbage */
+	  MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
+	  if (marked_p (XEPHEMERON (rest)->key))
 	    {
-	      removep = 1;
-	      XSET_EPHEMERON_VALUE (rest, Qnil);
-	      if (! NILP (XEPHEMERON_FINALIZER (rest)))
-		/* Register the finalizer */
-		{
-		  XSET_EPHEMERON_NEXT (rest, Vfinalize_list);
-		  Vfinalize_list = XEPHEMERON (rest)->cons_chain;
-		}
+	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
+	      did_mark = 1;
+	      XSET_EPHEMERON_NEXT (rest, Vnew_all_ephemerons);
+	      Vnew_all_ephemerons = rest;
+	      if (NILP (prev))
+		Vall_ephemerons = next;
+	      else
+		XSET_EPHEMERON_NEXT (prev, next);
 	    }
-	}
-      else
-	/* The ephemeron itself is dead. */
-	removep = 1;
-
-      if (removep)
-	{
-	  /* Remove it from the list. */
-	  if (NILP (prev))
-	    Vall_ephemerons = next;
 	  else
-	    XSET_EPHEMERON_NEXT (prev, next);
-	  removep = 0;
+	    prev = rest;
 	}
       else
 	prev = rest;
 
       rest = next;
     }
+
+  return did_mark;
+}
+
+/* At this point, everything that's in Vall_ephemerons is dead.
+ * Well, almost: we still need to run the finalizers, so we need to
+ * resurrect them.
+ */
+
+int
+finish_marking_ephemerons(void)
+{
+  Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
+  int did_mark = 0;
+
+  while (! NILP (rest))
+    {
+      next = XEPHEMERON_NEXT (rest);
+
+      if (marked_p (rest))
+	/* The ephemeron itself is live, but its key is garbage */
+	{
+	  /* tombstone */
+	  XSET_EPHEMERON_VALUE (rest, Qnil);
+
+	  if (! NILP (XEPHEMERON_FINALIZER (rest)))
+	    {
+	      MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
+	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
+
+	      /* Register the finalizer */
+	      XSET_EPHEMERON_NEXT (rest, Vfinalize_list);
+	      Vfinalize_list = XEPHEMERON (rest)->cons_chain;
+	      did_mark = 1;
+	    }
+
+	  /* Remove it from the list. */
+	  if (NILP (prev))
+	    Vall_ephemerons = next;
+	  else
+	    XSET_EPHEMERON_NEXT (prev, next);
+	}
+      else
+	prev = rest;
+
+      rest = next;
+    }
+  
+  return did_mark;
+}
+
+void
+prune_ephemerons(void)
+{
+  Vall_ephemerons = Vnew_all_ephemerons;
 }
 
 Lisp_Object
@@ -2282,13 +2316,13 @@ DEFINE_LRECORD_IMPLEMENTATION ("ephemeron", ephemeron,
 			       struct ephemeron);
 
 DEFUN ("make-ephemeron", Fmake_ephemeron, 2, 3, 0, /*
-Return a new ephemeron with key KEY, value CONTENTS, and finalizer FINALIZER.
-The ephemeron is a reference to CONTENTS which may be extracted with
-`ephemeron-ref'.  CONTENTS is only reachable through the ephemeron as
+Return a new ephemeron with key KEY, value VALUE, and finalizer FINALIZER.
+The ephemeron is a reference to VALUE which may be extracted with
+`ephemeron-ref'.  VALUE is only reachable through the ephemeron as
 long as KEY is reachable; the ephemeron does not contribute to the
 reachability of KEY.  When KEY becomes unreachable while the ephemeron
-itself is still reachable, CONTENTS is queued for finalization: FINALIZER
-will possibly be called on CONTENTS some time in the future.  Moreover,
+itself is still reachable, VALUE is queued for finalization: FINALIZER
+will possibly be called on VALUE some time in the future.  Moreover,
 future calls to `ephemeron-ref' will return NIL.
 */
        (key, value, finalizer))

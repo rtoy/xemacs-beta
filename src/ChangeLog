@@ -1,3 +1,16 @@
+2003-07-24  Mike Sperber  <mike@xemacs.org>
+
+	* lisp.h: 
+	* data.c: 
+	(init_marking_ephemerons): 
+	(continue_marking_ephemerons): 
+	(finish_marking_ephemerons): 
+	(prune_ephemerons): 
+	* alloc.c (garbage_collect_1): Rewrite the ephemeron marker once
+	again to allow ephemerons to be used for implementing simple
+	object finalization.
+	* data.c (Fmake_ephemeron): Fix comments
+
 2003-06-14  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* .gdbinit (pobj): Fix printing of symbol names.

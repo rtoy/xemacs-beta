@@ -4609,10 +4609,19 @@ garbage_collect_1 (void)
      a weak hash table might be unmarked, but after processing a later
      weak hash table, the former one might get marked.  So we have to
      iterate until nothing more gets marked. */
-
+  
+  init_marking_ephemerons ();
   while (finish_marking_weak_hash_tables () > 0 ||
 	 finish_marking_weak_lists       () > 0 ||
-	 finish_marking_ephemerons       () > 0)
+	 continue_marking_ephemerons     () > 0)
+    ;
+
+  /* At this point, we know which objects need to be finalized: we
+     still need to resurrect them */
+
+  while (finish_marking_ephemerons       () > 0 ||
+	 finish_marking_weak_lists       () > 0 ||
+	 finish_marking_weak_hash_tables () > 0)
     ;
 
   /* And prune (this needs to be called after everything else has been

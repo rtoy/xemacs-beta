@@ -2756,6 +2756,8 @@ struct ephemeron
 
 void prune_ephemerons (void);
 Lisp_Object ephemeron_value(Lisp_Object ephi);
+void init_marking_ephemerons(void);
+int continue_marking_ephemerons(void);
 int finish_marking_ephemerons(void);
 Lisp_Object zap_finalize_list(void);
 Lisp_Object make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer);
