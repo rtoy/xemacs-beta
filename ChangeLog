@@ -1,3 +1,8 @@
+2004-04-12  Kaarthik Sivakumar  <kaarthik@comcast.net>
+
+	* configure.in: Check for libmp dependencies before checking for
+	the existence of the move function.
+
 2004-03-04  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* configure.in (src/Makefile): No longer include a special linker
