@@ -530,7 +530,7 @@ file into which the autoloads will be generated, and the autoloads
 for all files and directories will go into that same file.
 
 If FORCE is non-nil, always save out the autoload files even if unchanged."
-  (let ((defdir default-directory)
+  (let ((defdir (directory-file-name default-directory))
 	(enable-local-eval nil))	; Don't query in batch mode.
     ;; (message "Updating autoloads in %s..." generated-autoload-file)
     (dolist (arg files-or-dirs)

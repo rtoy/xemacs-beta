@@ -1,3 +1,8 @@
+2001-08-08  Didier Verna  <didier@xemacs.org>
+
+	* autoload.el (update-autoload-files): make defdir a file name,
+	not directory name.
+
 2001-08-06  Steve Youngs  <youngs@xemacs.org>
 
 	* menubar-items.el (default-menubar): Use 'report-xemacs-bug'.
@@ -102,7 +107,7 @@
 	* term\apollo.el (apollo-mouse-cancel-cut-copy-paste): Removed.
 	* term\apollo.el (install-apollo-dm-preemptive-key-bindings): Removed.
 	Kill kill kill.  Sync with FSF and remove most crap.
-	
+
 	* term\linux.el:
 	* term\linux.el (function-key-map): Removed.
 	Sync with FSF.  Don't define most defns, because they are
@@ -114,7 +119,7 @@
 
 	* term\cygwin.el:
 	New.  Load term/linux.
-	
+
 	* term\lk201.el:
 	* term\news.el:
 	* term\news.el (news-fkey-prefix)): New.
@@ -143,7 +148,7 @@
 2001-06-17  Ben Wing  <ben@xemacs.org>
 
 	For 21.4:
-	
+
 	* update-elc-2.el (do-update-elc-2):
 	* update-elc-2.el (batch-update-elc-2):
 	Correct misplaced parentheses, making lisp/mule not get
@@ -185,7 +190,7 @@
 	* simple.el (transpose-subr):
 	transpose-line-up/down will now move the region up or down by
 	a line if active.
-	
+
 2001-06-08  Mike Sperber <mike@xemacs.org>
 
 	* files.el (save-some-buffers-1): Don't zap the help window right
@@ -196,12 +201,12 @@
 	* process.el: comment about shell-command-switch.
 	* process.el (shell-quote-argument): Need to quote a null
 	argument, too.  From Dan Holmsand.
-	
+
 	* startup.el (normal-top-level): Delete some unused FSF junk.
 	* startup.el (command-line-early):
-	
+
 	* startup.el (command-line): Call MS Windows init function.
-	
+
 	* win32-native.el:
 	* win32-native.el (mswindows-system-shells): New.
 	* win32-native.el (mswindows-system-shell-p): New.
@@ -244,7 +249,7 @@
 	in the generated file.  Put in a comment at the top of the
 	generated file that it _IS_ auto-generated, and should not be
 	edited by hand.
-	
+
 
 	* gtk-widget-accessors.el (define-widget-accessors): Use
 	wtaerror() instead of signal_simple_error.
@@ -307,7 +312,7 @@
 
 	* autoload.el (batch-force-update-one-directory):
 	Oops, off by one argument.
-	
+
 	* mouse.el:
 	* mouse.el (Mouse-track-gensym): New.
 	* mouse.el (mouse-track-run-hook):
@@ -321,7 +326,7 @@
 	(let-binding doesn't work when the hooks have been made local.)
 	modify mouse-track-run-hook accordingly, and fix mouse-track-default
 	and mouse-track-insert to use the new functionality.
-	
+
 	* printer.el (generic-print-region):
 	Oops, off by one paren.
 
@@ -345,10 +350,10 @@
 
 	* find-paths.el (paths-find-recursive-path):
 	fix error with null EXCLUDE-REGEXP.
-	
+
 	* font-lock.el (font-lock-mode):
 	fix problem reported by hrvoje with buffers starting with a space.
-	
+
 	* lib-complete.el:
 	* lib-complete.el (find-library-source-path): New.
 	* lib-complete.el (find-library):
@@ -424,11 +429,11 @@
 	implement printing the selection when it's selected.
 
 	unrelated:
-	
+
 	* minibuf.el (input-error):
 	* subr.el (error):
 	a couple of error cleanups.
-	
+
 	* update-elc.el ((preloaded-file-list site-load-packages need-to-dump dumped-exe)):
 	* update-elc.el (update-elc-files-to-compile):
 	if bytecomp or byte-optimize need recompiling, then load
@@ -456,16 +461,16 @@
 	Implement Page Setup.  Handle errors properly.
 
 	unrelated:
-	
+
 	* gtk-init.el: Fix the warning properly.
 
-	
+
 2001-05-04  Ben Wing  <ben@xemacs.org>
 
 	* printer.el (generic-print-buffer):
 	* printer.el (generic-print-region):
 	Enable dialog boxes.  Apply workaround recommended by Kirill.
-	
+
 	* simple.el (kill-whole-line):
 	* simple.el (kill-line-1):
 	* simple.el (kill-entire-line):
@@ -741,7 +746,7 @@
 	rectangle, not register (more commonly used), and put rectangle
 	first.  Fix the Edit Init File entry to never load the .elc file.
 	Simplify the default-popup-menu.  Add Cmds->Tabs menu.
-	
+
 	* menubar.el (popup-buffer-menu): Doc fix.
 	* menubar.el ((boundp 'menu-accelerator-map)):
 	Use kp-left not kp_left, etc.
@@ -750,14 +755,14 @@
 
 	* bytecomp-runtime.el (byte-compiler-options):
 	Correct doc string.
-	
+
 	* easymenu.el (easy-menu-do-define): fix extra quote.
 
 	* fill.el (fill-paragraph-or-region):
 	Rewrite to be more correct -- use call-interactively so that
 	we always get exactly the same behavior as if the functions
 	were called directly.
-	
+
 	* font-lock.el (font-lock-fontify-pending-extents):
 	* gutter-items.el (clear-progress-feedback):
 	* gutter-items.el (abort-progress-feedback):
@@ -773,7 +778,7 @@
 
 	* keymap.el (key-sequence-list-description):
 	Clean up fun to always correctly canonicalize.
-	
+
 	* simple.el:
 	* simple.el (delete-forward-p):
 	* simple.el (comment-padding): New.
@@ -781,14 +786,14 @@
 	* simple.el (do-auto-fill):
 	* simple.el (indent-new-comment-line):
 	Clean up Kinsoku comments, synch comment-region with FSF 20.7.
-	
+
 	* simple.el (region-exists-p):
 	* simple.el (region-active-p):
 	Add comment about which one is correct to use in menu specs.
 
 	* sound.el (load-sound-file):
 	Minor code clean up.
-	
+
 	* startup.el:
 	* startup.el (command-line-early):
 	* startup.el (initial-scratch-message):
@@ -806,7 +811,7 @@
 
 	* hash-table.el: New file, useful utility functions.
 	* dumped-lisp.el (preloaded-file-list): Dump hash-table.el.
-	
+
 2001-05-03  Adrian Aichner  <adrian@xemacs.org>
 
 	* build-report.el: Remove CVS keywords since this file has been in
@@ -834,14 +839,14 @@
 	* about.el (about-personal-info):
 	* about.el (about-hacker-contribution):
 	More contributions.
-	
+
 	* simple.el (handle-post-motion-command):
 	Fix spurious setting of zmacs-region-stays to t after a non-shift
 	motion command.
 
 	* etags.el (find-tag-internal):
 	Sync up with FSF 20.7, to fix bugs handling some etags line formats.
-	
+
 	* gtk-init.el (init-post-gtk-win):
 	* msw-init.el (init-post-mswindows-win):
 	* x-init.el:
@@ -859,10 +864,10 @@
 	* toolbar.el:
 	Move non-window-system specific code that was duplicated in
 	all window systems into the generic code.
-	
+
 	* gutter.el:
 	* gutter.el (init-gutter): Removed. (unused)
-	
+
 	* mouse.el:
 	* mouse.el (default-mouse-track-maybe-own-selection):
 	* mouse.el (mouse-track-activate-rectangular-selection): New.
