@@ -25,6 +25,8 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;;; Synched with: ???  Partially synched to 21.2 by Ben Wing.
+
 ;;; Commentary:
 
 ;; This file is dumped with XEmacs.
@@ -41,6 +43,8 @@
 ;; loading, all provides (and fsets) will be undone.  put it first to
 ;; prevent require/provide loop with custom and cus-face.
 (provide 'custom)
+
+;; BEGIN SYNC WITH FSF 21.2
 
 (eval-when-compile
   (load "cl-macs" nil t)
@@ -73,7 +77,12 @@ symbol."
 
 (defun custom-initialize-set (symbol value)
   "Initialize SYMBOL with VALUE.
-Like `custom-initialize-default', but use the function specified by
+If the symbol doesn't have a default binding already,
+then set it using its `:set' function (or `set-default' if it has none).
+The value is either the value in the symbol's `saved-value' property,
+if any, or VALUE.
+
+This is like `custom-initialize-default', but uses the function specified by
 `:set' to initialize SYMBOL."
   (unless (default-boundp symbol)
     (funcall (or (get symbol 'custom-set) 'set-default)
@@ -84,6 +93,12 @@ Like `custom-initialize-default', but use the function specified by
 
 (defun custom-initialize-reset (symbol value)
   "Initialize SYMBOL with VALUE.
+Set the symbol, using its `:set' function (or `set-default' if it has none).
+The value is either the symbol's current value
+ \(as obtained using the `:get' function), if any,
+or the value in the symbol's `saved-value' property if any,
+or (last of all) VALUE.
+
 Like `custom-initialize-set', but use the function specified by
 `:get' to reinitialize SYMBOL if it is already bound."
     (funcall (or (get symbol 'custom-set) 'set-default)
@@ -99,7 +114,8 @@ Like `custom-initialize-set', but use the function specified by
 (defun custom-initialize-changed (symbol value)
   "Initialize SYMBOL with VALUE.
 Like `custom-initialize-reset', but only use the `:set' function if the
-not using the standard setting.  Otherwise, use the `set-default'."
+not using the standard setting.
+For the standard setting, use `set-default'."
   (cond ((default-boundp symbol)
          (funcall (or (get symbol 'custom-set) 'set-default)
                   symbol
@@ -112,10 +128,12 @@ not using the standard setting.  Otherwise, use the `set-default'."
         (t
          (set-default symbol (eval value)))))
 
-(defun custom-declare-variable (symbol value doc &rest args)
-  "Like `defcustom', but SYMBOL and VALUE are evaluated as normal arguments."
+(defun custom-declare-variable (symbol default doc &rest args)
+  "Like `defcustom', but SYMBOL and DEFAULT are evaluated as normal arguments.
+DEFAULT should be an expression to evaluate to compute the default value,
+not the default value itself."
   ;; Remember the standard setting.
-  (put symbol 'standard-value (list value))
+  (put symbol 'standard-value (list default))
   ;; Maybe this option was rogue in an earlier version.  It no longer is.
   (when (eq (get symbol 'force-value) 'rogue)
     ;; It no longer is.
@@ -156,7 +174,7 @@ not using the standard setting.  Otherwise, use the `set-default'."
                                         'custom-variable))))))
     (put symbol 'custom-requests requests)
     ;; Do the actual initialization.
-    (funcall initialize symbol value))
+    (funcall initialize symbol default))
   ;; #### This is a rough equivalent of LOADHIST_ATTACH.  However,
   ;; LOADHIST_ATTACH also checks for `initialized'.
   (push symbol current-load-list)
@@ -173,36 +191,43 @@ The remaining arguments should have the form
 
    [KEYWORD VALUE]...
 
-The following KEYWORD's are defined:
+The following keywords are meaningful:
 
 :type   VALUE should be a widget type for editing the symbols value.
         The default is `sexp'.
 :options VALUE should be a list of valid members of the widget type.
 :group  VALUE should be a customization group.
         Add SYMBOL to that group.
-:initialize VALUE should be a function used to initialize the
+:initialize
+        VALUE should be a function used to initialize the
         variable.  It takes two arguments, the symbol and value
         given in the `defcustom' call.  The default is
-        `custom-initialize-set'
-:set    VALUE should be a function to set the value of the symbol.
-        It takes two arguments, the symbol to set and the value to
-        give it.  The default is `custom-set-default'.
+        `custom-initialize-reset'
+:set	VALUE should be a function to set the value of the symbol.
+	It takes two arguments, the symbol to set and the value to
+	give it.  The default choice of function is `custom-set-default'.
 :get    VALUE should be a function to extract the value of symbol.
-        The function takes one argument, a symbol, and should return
-        the current value for that symbol.  The default is
-        `default-value'.
-:require VALUE should be a feature symbol.  Each feature will be
-        required after initialization, of the user have saved this
-        option.
-:version VALUE should be a string specifying that the variable was
+	The function takes one argument, a symbol, and should return
+	the current value for that symbol.  The default choice of function
+	is `custom-default-value'. #### XEmacs used to say `default-value';
+        is that right?
+:require
+	VALUE should be a feature symbol.  If you save a value
+	for this option, then when your custom init file loads the value,
+	it does (require VALUE) first.
+:version
+        VALUE should be a string specifying that the variable was
         first introduced, or its default value was changed, in Emacs
         version VERSION.
-:set-after VARIABLE specifies that SYMBOL should be set after VARIABLE when
+:set-after VARIABLE
+	Specifies that SYMBOL should be set after VARIABLE when
 	both have been customized.
 
 Read the section about customization in the Emacs Lisp manual for more
 information."
   `(custom-declare-variable (quote ,symbol) (quote ,value) ,doc ,@args))
+
+;; END SYNC WITH FSF 21.2
 
 ;;; The `defface' Macro.
 
@@ -712,5 +737,14 @@ this sets the local binding in that buffer instead."
     (set-default variable value)))
 
 ;;; The End.
+
+;; BEGIN SYNC WITH FSF 21.2
+
+;; Process the defcustoms for variables loaded before this file.
+(while custom-declare-variable-list
+  (apply 'custom-declare-variable (car custom-declare-variable-list))
+  (setq custom-declare-variable-list (cdr custom-declare-variable-list)))
+
+;; END SYNC WITH FSF 21.2
 
 ;; custom.el ends here

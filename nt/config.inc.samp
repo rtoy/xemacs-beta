@@ -112,9 +112,6 @@ OPTIMIZED_BUILD=0
 # #### Change to 1 when I check in the ws with support for fastcall
 USE_FASTCALL=0
 
-# True if running VC++ 6 or later.
-HAVE_VC6=1
-
 ############################################################################
 #                          Development options                             #
 ############################################################################
@@ -131,6 +128,12 @@ PROFILE_SUPPORT=0
 # variable, below.)
 DEBUG_XEMACS=1
 
+# Set this to enable support for edit-and-continue under VC++.
+# WARNING: This turns on incremental linking, which is known to lead to
+# occasional weird crashes in pdump loading.  If that happens, do a
+# nmake -f xemacs.mak clean so that temacs.exe and xemacs.exe get removed.
+SUPPORT_EDIT_AND_CONTINUE=0
+
 # Uncomment this to turn off or on the error-checking code, which adds
 # abundant internal error checking (and slows things down a lot).  Normally,
 # leave this alone -- it will be on for beta builds and off for release
@@ -143,6 +146,10 @@ DEBUG_XEMACS=1
 # CPLUSPLUS_COMPILE=0
 
 # Set this to speed up building, for development purposes.
+# WARNING: This may not completely rebuild all targets.  In particular,
+# DOC is not rebuilt, and changes to lisp.h and config.h do not trigger
+# mass rebuilding.  Other things may also be enabled that are not safe
+# for release builds.
 QUICK_BUILD=0
 
 # Set this to see exactly which compilation commands are being run (not

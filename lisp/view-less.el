@@ -48,6 +48,7 @@
 (defvar view-default-lines 10
   "Default value for the \"d\" and \"u\" commands in view-mode")
 
+;;;###autoload
 (defvar view-minor-mode nil
   "Non-nil when view-mode is active.  Call `view-mode' to toggle.")
 (make-variable-buffer-local 'view-minor-mode)

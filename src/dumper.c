@@ -1,7 +1,7 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -410,6 +410,20 @@ pdump_backtrace (void)
 }
 
 static void
+pdump_unsupported_dump_type (enum memory_description_type type,
+			     int do_backtrace)
+{
+  stderr_out ("Unsupported dump type : %d\n", type);
+#ifdef WIN32_NATIVE
+  stderr_out ("Are you compiling with SUPPORT_EDIT_AND_CONTINUE?\n");
+  stderr_out ("See the PROBLEMS file.\n");
+#endif
+  if (do_backtrace)
+    pdump_backtrace ();
+  abort ();
+}
+
+static void
 pdump_bump_depth (void)
 {
   int me = pdump_depth++;
@@ -545,9 +559,7 @@ pdump_register_sub (const void *data, const struct memory_description *desc)
 	  break;
 
 	default:
-	  stderr_out ("Unsupported dump type : %d\n", desc1->type);
-	  pdump_backtrace ();
-	  abort ();
+	  pdump_unsupported_dump_type (desc1->type, 1);
 	}
     }
 }
@@ -807,8 +819,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      break;
 
 	    default:
-	      stderr_out ("Unsupported dump type : %d\n", desc1->type);
-	      abort ();
+	      pdump_unsupported_dump_type (desc1->type, 0);
 	    }
 	}
     }
@@ -942,8 +953,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	  break;
 
 	default:
-	  stderr_out ("Unsupported dump type : %d\n", desc1->type);
-	  abort ();
+	  pdump_unsupported_dump_type (desc1->type, 0);
 	}
     }
 }
@@ -997,8 +1007,10 @@ pdump_dump_root_struct_ptrs (void)
   pdump_static_pointer *data = alloca_array (pdump_static_pointer, count);
   for (i = 0; i < count; i++)
     {
-      data[i].address = (char **) Dynarr_atp (pdump_root_struct_ptrs, i)->ptraddress;
-      data[i].value   = (char *) pdump_get_entry (* data[i].address)->save_offset;
+      data[i].address =
+	(char **) Dynarr_atp (pdump_root_struct_ptrs, i)->ptraddress;
+      data[i].value   =
+	(char *) pdump_get_entry (* data[i].address)->save_offset;
     }
   PDUMP_ALIGN_OUTPUT (pdump_static_pointer);
   retry_fwrite (data, sizeof (pdump_static_pointer), count, pdump_out);

@@ -3746,9 +3746,7 @@ run_post_gc_hook (void)
   args[1] = Fcons (Fcons (Qfinalize_list, zap_finalize_list ()), Qnil);
   
   run_hook_with_args_trapping_problems
-    ("Error in post-gc-hook",
-     2, args,
-     RUN_HOOKS_TO_COMPLETION,
+    (Qgarbage_collecting, 2, args, RUN_HOOKS_TO_COMPLETION,
      INHIBIT_QUIT | NO_INHIBIT_ERRORS);
 }
 
@@ -4818,14 +4816,14 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
 {
   struct call_trapping_problems *p =
     (struct call_trapping_problems *) get_opaque_ptr (opaque);
-  struct gcpro gcpro1;
-  Lisp_Object lstream = Qnil;
-  Lisp_Object errstr;
-  int speccount = specpdl_depth ();
 
   if (!(inhibit_flags & INHIBIT_WARNING_ISSUE)
       && !warning_will_be_discarded (current_warning_level ()))
     {
+      struct gcpro gcpro1;
+      Lisp_Object lstream = Qnil;
+      int speccount = specpdl_depth ();
+
       /* We're no longer protected against errors or quit here, so at
 	 least let's temporarily inhibit quit.  We definitely do not
 	 want to inhibit quit during the calling of the function
@@ -4840,19 +4838,6 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
       p->backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
       Lstream_delete (XLSTREAM (lstream));
       UNGCPRO;
-
-      /* #### This should call
-	 (with-output-to-string (display-error (cons error_conditions data))
-	 but that stuff is all in Lisp currently. */
-      errstr =
-	emacs_sprintf_string_lisp
-	("%s: (%s %s)\n\nBacktrace follows:\n\n%s",
-	 Qnil, 4,
-	 build_msg_string (p->warning_string ? p->warning_string : "error"),
-	 error_conditions, data, p->backtrace);
-
-      warn_when_safe_lispobj (p->warning_class, current_warning_level (),
-			      errstr);
 
       unbind_to (speccount);
     }
@@ -4880,6 +4865,52 @@ call_trapping_problems_1 (Lisp_Object opaque)
 {
   return call_with_condition_handler (flagged_a_squirmer, opaque,
 				      call_trapping_problems_2, opaque);
+}
+
+static void
+issue_call_trapping_problems_warning (Lisp_Object warning_class,
+				      const CIbyte *warning_string,
+				      struct call_trapping_problems_result *p)
+{
+  if (!warning_will_be_discarded (current_warning_level ()))
+    {
+      int depth = specpdl_depth ();
+
+      /* We're no longer protected against errors or quit here, so at
+	 least let's temporarily inhibit quit. */
+      specbind (Qinhibit_quit, Qt);
+
+      if (p->caught_throw)
+	{
+	  Lisp_Object errstr =
+	    emacs_sprintf_string_lisp
+	    ("%s: Attempt to throw outside of function "
+	     "to catch `%s' with value `%s'",
+	     Qnil, 3,
+	     build_msg_string (warning_string ? warning_string : "error"),
+	     p->thrown_tag, p->thrown_value);
+	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
+	}
+      else if (p->caught_error)
+	{
+	  Lisp_Object errstr;
+	  /* #### This should call
+	     (with-output-to-string (display-error (cons error_conditions
+	                                                 data))
+	     but that stuff is all in Lisp currently. */
+	  errstr =
+	    emacs_sprintf_string_lisp
+	    ("%s: (%s %s)\n\nBacktrace follows:\n\n%s",
+	     Qnil, 4,
+	     build_msg_string (warning_string ? warning_string : "error"),
+	     p->error_conditions, p->data, p->backtrace);
+
+	  warn_when_safe_lispobj (warning_class, current_warning_level (),
+				  errstr);
+	}
+
+      unbind_to (depth);
+    }
 }
 
 /* Turn on the trapping flags in FLAGS -- see call_trapping_problems().
@@ -4943,6 +4974,11 @@ set_trapping_problems_flags (int flags)
 
    (If FLAGS contains INHIBIT_WARNING_ISSUE, no warnings are issued;
    this applies to recursive invocations of call_trapping_problems, too.
+
+   If FLAGS contains POSTPONE_WARNING_ISSUE, no warnings are issued;
+   but values useful for generating a warning are still computed (in
+   particular, the backtrace), so that the calling function can issue
+   a warning.
 
    If FLAGS contains ISSUE_WARNINGS_AT_DEBUG_LEVEL, warnings will be
    issued, but at level `debug', which normally is below the minimum
@@ -5065,6 +5101,7 @@ call_trapping_problems (Lisp_Object warning_class,
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct call_trapping_problems package;
+  struct call_trapping_problems_result real_problem;
   Lisp_Object opaque, thrown_tag, tem;
   int thrown = 0;
 
@@ -5109,59 +5146,43 @@ call_trapping_problems (Lisp_Object warning_class,
     /* Nothing special. */
     tem = (fun) (arg);
 
-  if (thrown && !EQ (thrown_tag, package.catchtag)
-      && !(flags & INHIBIT_WARNING_ISSUE)
-      && !warning_will_be_discarded (current_warning_level ()))
+  if (!problem)
+    problem = &real_problem;
+
+  if (!thrown)
     {
-      Lisp_Object errstr;
-
-      if (!(flags & INHIBIT_QUIT))
-	/* We're no longer protected against errors or quit here, so at
-	   least let's temporarily inhibit quit. */
-	specbind (Qinhibit_quit, Qt);
-      errstr =
-	emacs_sprintf_string_lisp
-	("%s: Attempt to throw outside of function "
-	 "to catch `%s' with value `%s'",
-	 Qnil, 3, build_msg_string (warning_string ? warning_string : "error"),
-	 thrown_tag, tem);
-
-      warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
+      problem->caught_error = 0;
+      problem->caught_throw = 0;
+      problem->error_conditions = Qnil;
+      problem->data = Qnil;
+      problem->backtrace = Qnil;
+      problem->thrown_tag = Qnil;
+      problem->thrown_value = Qnil;
+    }
+  else if (EQ (thrown_tag, package.catchtag))
+    {
+      problem->caught_error = 1;
+      problem->caught_throw = 0;
+      problem->error_conditions = package.error_conditions;
+      problem->data = package.data;
+      problem->backtrace = package.backtrace;
+      problem->thrown_tag = Qnil;
+      problem->thrown_value = Qnil;
+    }
+  else
+    {
+      problem->caught_error = 0;
+      problem->caught_throw = 1;
+      problem->error_conditions = Qnil;
+      problem->data = Qnil;
+      problem->backtrace = Qnil;
+      problem->thrown_tag = thrown_tag;
+      problem->thrown_value = tem;
     }
 
-  if (problem)
-    {
-      if (!thrown)
-	{
-	  problem->caught_error = 0;
-	  problem->caught_throw = 0;
-	  problem->error_conditions = Qnil;
-	  problem->data = Qnil;
-	  problem->backtrace = Qnil;
-	  problem->thrown_tag = Qnil;
-	  problem->thrown_value = Qnil;
-	}
-      else if (EQ (thrown_tag, package.catchtag))
-	{
-	  problem->caught_error = 1;
-	  problem->caught_throw = 0;
-	  problem->error_conditions = package.error_conditions;
-	  problem->data = package.data;
-	  problem->backtrace = package.backtrace;
-	  problem->thrown_tag = Qnil;
-	  problem->thrown_value = Qnil;
-	}
-      else
-	{
-	  problem->caught_error = 0;
-	  problem->caught_throw = 1;
-	  problem->error_conditions = Qnil;
-	  problem->data = Qnil;
-	  problem->backtrace = Qnil;
-	  problem->thrown_tag = thrown_tag;
-	  problem->thrown_value = tem;
-	}
-    }
+  if (!(flags & INHIBIT_WARNING_ISSUE) && !(flags & POSTPONE_WARNING_ISSUE))
+    issue_call_trapping_problems_warning (warning_class, warning_string,
+					  problem);
 
   if (!NILP (package.catchtag) &&
       !EQ (package.catchtag, Vcatch_everything_tag))
@@ -5472,11 +5493,11 @@ eval_in_buffer_trapping_problems (const CIbyte *warning_string,
 }
 
 Lisp_Object
-run_hook_trapping_problems (const CIbyte *warning_string,
+run_hook_trapping_problems (Lisp_Object warning_class,
 			    Lisp_Object hook_symbol,
 			    int flags)
 {
-  return run_hook_with_args_trapping_problems (warning_string, 1, &hook_symbol,
+  return run_hook_with_args_trapping_problems (warning_class, 1, &hook_symbol,
 					       RUN_HOOKS_TO_COMPLETION,
 					       flags);
 }
@@ -5494,9 +5515,8 @@ safe_run_hook_trapping_problems_1 (void *puta)
    if an error occurs (but not a quit). */
 
 Lisp_Object
-safe_run_hook_trapping_problems (const CIbyte *warning_string,
-				 Lisp_Object hook_symbol,
-				 int flags)
+safe_run_hook_trapping_problems (Lisp_Object warning_class,
+				 Lisp_Object hook_symbol, int flags)
 {
   Lisp_Object tem;
   struct gcpro gcpro1, gcpro2;
@@ -5509,14 +5529,32 @@ safe_run_hook_trapping_problems (const CIbyte *warning_string,
     return Qnil;
 
   GCPRO2 (hook_symbol, tem);
-  tem = call_trapping_problems (Qerror, warning_string, flags,
+  tem = call_trapping_problems (Qerror, NULL,
+				flags | POSTPONE_WARNING_ISSUE,
 				&prob,
 				safe_run_hook_trapping_problems_1,
 				LISP_TO_VOID (hook_symbol));
-  if (prob.caught_throw || (prob.caught_error && !EQ (prob.error_conditions,
-						      Qquit)))
-    Fset (hook_symbol, Qnil);
-  RETURN_UNGCPRO (tem);
+  {
+    Lisp_Object hook_name = XSYMBOL_NAME (hook_symbol);
+    Ibyte *hook_str = XSTRING_DATA (hook_name);
+    Ibyte *err = alloca_ibytes (XSTRING_LENGTH (hook_name) + 100);
+
+    if (prob.caught_throw || (prob.caught_error && !EQ (prob.error_conditions,
+							Qquit)))
+      {
+	Fset (hook_symbol, Qnil);
+	qxesprintf (err, "Error in `%s' (resetting to nil)", hook_str);
+      }
+    else
+      qxesprintf (err, "Quit in `%s'", hook_str);
+
+  
+    issue_call_trapping_problems_warning (warning_class, (CIbyte *) err,
+					  &prob);
+  }
+
+  UNGCPRO;
+  return tem;
 }
 
 struct run_hook_with_args_in_buffer_trapping_problems
@@ -5541,7 +5579,7 @@ run_hook_with_args_in_buffer_trapping_problems_1 (void *puta)
    call_trapping_problems! */
 
 Lisp_Object
-run_hook_with_args_in_buffer_trapping_problems (const CIbyte *warning_string,
+run_hook_with_args_in_buffer_trapping_problems (Lisp_Object warning_class,
 						struct buffer *buf, int nargs,
 						Lisp_Object *args,
 						enum run_hooks_condition cond,
@@ -5550,6 +5588,9 @@ run_hook_with_args_in_buffer_trapping_problems (const CIbyte *warning_string,
   Lisp_Object sym, val, ret;
   struct run_hook_with_args_in_buffer_trapping_problems diversity_and_distrust;
   struct gcpro gcpro1;
+  Lisp_Object hook_name;
+  Ibyte *hook_str;
+  Ibyte *err;
 
   if (!initialized || preparing_for_armageddon)
     /* We need to bail out of here pronto. */
@@ -5569,27 +5610,30 @@ run_hook_with_args_in_buffer_trapping_problems (const CIbyte *warning_string,
   diversity_and_distrust.args = args;
   diversity_and_distrust.cond = cond;
 
+  hook_name = XSYMBOL_NAME (args[0]);
+  hook_str = XSTRING_DATA (hook_name);
+  err = alloca_ibytes (XSTRING_LENGTH (hook_name) + 100);
+  qxesprintf (err, "Error in `%s'", hook_str);
   RETURN_UNGCPRO
     (call_trapping_problems
-     (Qerror, warning_string,
-      flags, 0,
+     (warning_class, (CIbyte *) err, flags, 0,
       run_hook_with_args_in_buffer_trapping_problems_1,
       &diversity_and_distrust));
 }
 
 Lisp_Object
-run_hook_with_args_trapping_problems (const CIbyte *warning_string,
+run_hook_with_args_trapping_problems (Lisp_Object warning_class,
 				      int nargs,
 				      Lisp_Object *args,
 				      enum run_hooks_condition cond,
 				      int flags)
 {
   return run_hook_with_args_in_buffer_trapping_problems
-    (warning_string, current_buffer, nargs, args, cond, flags);
+    (warning_class, current_buffer, nargs, args, cond, flags);
 }
 
 Lisp_Object
-va_run_hook_with_args_trapping_problems (const CIbyte *warning_string,
+va_run_hook_with_args_trapping_problems (Lisp_Object warning_class,
 					 Lisp_Object hook_var,
 					 int nargs, ...)
 {
@@ -5609,13 +5653,12 @@ va_run_hook_with_args_trapping_problems (const CIbyte *warning_string,
 
   GCPRO1_ARRAY (funcall_args, nargs + 1);
   RETURN_UNGCPRO (run_hook_with_args_in_buffer_trapping_problems
-		  (warning_string, current_buffer, nargs + 1, funcall_args,
+		  (warning_class, current_buffer, nargs + 1, funcall_args,
 		   RUN_HOOKS_TO_COMPLETION, flags));
 }
 
 Lisp_Object
-va_run_hook_with_args_in_buffer_trapping_problems (const CIbyte *
-						   warning_string,
+va_run_hook_with_args_in_buffer_trapping_problems (Lisp_Object warning_class,
 						   struct buffer *buf,
 						   Lisp_Object hook_var,
 						   int nargs, ...)
@@ -5636,7 +5679,7 @@ va_run_hook_with_args_in_buffer_trapping_problems (const CIbyte *
 
   GCPRO1_ARRAY (funcall_args, nargs + 1);
   RETURN_UNGCPRO (run_hook_with_args_in_buffer_trapping_problems
-		  (warning_string, buf, nargs + 1, funcall_args,
+		  (warning_class, buf, nargs + 1, funcall_args,
 		   RUN_HOOKS_TO_COMPLETION, flags));
 }
 
@@ -5876,7 +5919,7 @@ restore_int (Lisp_Object cons)
 /* Establish an unwind-protect which will restore the int pointed to
    by ADDR with the value VAL.  This function works correctly with
    all ints, even those that don't fit into a Lisp integer. */
-static int
+int
 record_unwind_protect_restoring_int (int *addr, int val)
 {
   Lisp_Object opaque = make_opaque_ptr (addr);

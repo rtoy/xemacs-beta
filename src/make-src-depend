@@ -124,6 +124,9 @@ sub PrintDeps {
     delete $uses{$file}{'config.h'};
     $uses{$file}{'$(CONFIG_H)'} = 1;
   }
+  # Huge hack.  With QUICK_BUILD, general.c has no dependence on
+  # general-slots.h but really should.
+  $uses{$file}{'general-slots.h'} = 1 if $file eq "general.c";
   print "@{[sort keys %{$uses{$file}}]}\n";
 }
 

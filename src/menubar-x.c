@@ -496,7 +496,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	 a pointer back to lisp data needs to be hidden away somewhere.  So
 	 that an INCREMENTAL_TYPE widget_value can be recreated...  Hmmmmm. */
       run_hook_trapping_problems
-	("Error in activate-menubar-hook", Qactivate_menubar_hook,
+	(Qmenubar, Qactivate_menubar_hook,
 	 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
       set_frame_menubar (f, 1, 0);
       DEVICE_X_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =

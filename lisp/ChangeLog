@@ -1,3 +1,197 @@
+2003-03-01  Ben Wing  <ben@xemacs.org>
+
+	* cmdloop.el:
+	* cmdloop.el (read-quoted-char-radix): New.
+	* cmdloop.el (read-quoted-char):
+	* cmdloop.el (momentary-string-display):
+	* custom.el:
+	* custom.el (custom-initialize-set):
+	* custom.el (custom-initialize-reset):
+	* custom.el (custom-initialize-changed):
+	* custom.el (custom-declare-variable):
+	* custom.el (defcustom):
+	* dumped-lisp.el (preloaded-file-list):
+	* files.el:
+	* files.el (delete-auto-save-files): New.
+	* files.el (directory-abbrev-alist):
+	* files.el (make-backup-files):
+	* files.el (backup-by-copying-when-privileged-mismatch): New.
+	* files.el (normal-backup-enable-predicate): New.
+	* files.el (buffer-offer-save):
+	* files.el (small-temporary-file-directory): New.
+	* files.el (null-device): New.
+	* files.el (version-control):
+	* files.el (auto-save-file-name-transforms): New.
+	* files.el (save-abbrevs):
+	* files.el (find-directory-functions): New.
+	* files.el (find-file-not-found-hooks):
+	* files.el (write-file-hooks):
+	* files.el (write-contents-hooks):
+	* files.el (write-file-data-hooks):
+	* files.el (enable-local-variables):
+	* files.el ((fboundp 'file-locked-p)):
+	* files.el (view-read-only): New.
+	* files.el (cd-absolute):
+	* files.el (load-file):
+	* files.el (file-local-copy):
+	* files.el (file-chase-links):
+	* files.el (switch-to-buffer-other-window):
+	* files.el (switch-to-buffer-other-frame):
+	* files.el (find-file):
+	* files.el (find-file-other-window):
+	* files.el (find-file-other-frame):
+	* files.el (find-file-read-only):
+	* files.el (find-file-read-only-other-window):
+	* files.el (find-file-read-only-other-frame):
+	* files.el (abbreviate-file-name):
+	* files.el (find-buffer-visiting):
+	* files.el (find-file-wildcards): New.
+	* files.el (find-file-suppress-same-file-warnings): New.
+	* files.el (find-file-noselect): New.
+	* files.el (find-file-noselect-1): New.
+	* files.el (insert-file-contents-literally):
+	* files.el (insert-file-literally): New.
+	* files.el (after-find-file-from-revert-buffer):
+	* files.el (after-find-file):
+	* files.el (normal-mode):
+	* files.el (find-file-literally): New.
+	* files.el (dabbrev-case-fold-search):
+	* files.el (hack-one-local-variable-quotep): New.
+	* files.el (hack-one-local-variable):
+	* files.el (set-visited-file-name):
+	* files.el (write-file):
+	* files.el (backup-buffer):
+	* files.el (make-backup-file-name-function): New.
+	* files.el (backup-directory-alist): New.
+	* files.el (make-backup-file-name):
+	* files.el (make-backup-file-name-1): New.
+	* files.el (backup-extract-version-start):
+	* files.el (backup-extract-version-start)): New.
+	* files.el (file-relative-name):
+	* files.el (save-buffer):
+	* files.el (delete-auto-save-file-if-necessary):
+	* files.el (save-buffer-coding-system): New.
+	* files.el (basic-save-buffer):
+	* files.el (basic-save-buffer-1):
+	* files.el (basic-save-buffer-2): New.
+	* files.el (save-some-buffers):
+	* files.el (save-some-buffers-1):
+	* files.el (toggle-read-only):
+	* files.el (file-newest-backup):
+	* files.el (rename-uniquely):
+	* files.el (revert-buffer-insert-file-contents-function):
+	* files.el (recover-file):
+	* files.el (recover-session):
+	* files.el (recover-session-finish):
+	* files.el (kill-some-buffers):
+	* files.el (wildcard-to-regexp):
+	* files.el (file-expand-wildcards): New.
+	* files.el (list-directory):
+	* files.el (shell-quote-wildcard-pattern): New.
+	* files.el (insert-directory-safely): New.
+	* files.el (confirm-kill-emacs): New.
+	* files.el (save-buffers-kill-emacs):
+	* files.el (file-name-non-special): New.
+	* keydefs.el (global-map): New.
+	* keymap.el:
+	* keymap.el (kbd): Removed.
+	* keymap.el (substitute-key-definition):
+	* lisp-mode.el (construct-lisp-mode-menu):
+	* make-docfile.el (custom-declare-variable-list): New.
+	* replace.el:
+	* replace.el (match-string): Removed.
+	* replace.el (save-match-data): Removed.
+	* simple.el:
+	* simple.el (comment-column): Removed.
+	* simple.el (comment-start): Removed.
+	* simple.el (comment-start-skip): Removed.
+	* simple.el (comment-end): Removed.
+	* simple.el (comment-indent-hook): Removed.
+	* simple.el (comment-indent-function): Removed.
+	* simple.el (block-comment-start): Removed.
+	* simple.el (block-comment-end): Removed.
+	* simple.el (indent-for-comment): Removed.
+	* simple.el (set-comment-column): Removed.
+	* simple.el (kill-comment): Removed.
+	* simple.el (comment-padding): Removed.
+	* simple.el (comment-region): Removed.
+	* simple.el (comment-multi-line): Removed.
+	* simple.el (set-selective-display):
+	* simple.el (indent-new-comment-line): Removed.
+	* simple.el (overwrite-mode-textual):
+	* simple.el (overwrite-mode):
+	* simple.el (binary-overwrite-mode):
+	* simple.el (mail-user-agent):
+	* simple.el (rfc822-goto-eoh): New.
+	* simple.el (sendmail-user-agent-compose):
+	* simple.el (mh-e-user-agent):
+	* simple.el (set-variable-value-history): New.
+	* simple.el (set-variable):
+	* simple.el (clone-buffer-hook): New.
+	* simple.el (clone-process): New.
+	* simple.el (clone-buffer): New.
+	* simple.el (clone-indirect-buffer): New.
+	* simple.el (clone-indirect-buffer-other-window): New.
+	* subr.el:
+	* subr.el (custom-declare-variable-list): New.
+	* subr.el (custom-declare-variable-early): New.
+	* subr.el (assoc-default): New.
+	* subr.el (assoc-ignore-case): New.
+	* subr.el (assoc-ignore-representation): New.
+	* subr.el (member-ignore-case): New.
+	* subr.el ('move-marker): New.
+	* subr.el ('beep): New.
+	* subr.el ('indent-to-column): New.
+	* subr.el ('backward-delete-char): New.
+	* subr.el ('search-forward-regexp): New.
+	* subr.el ('search-backward-regexp): New.
+	* subr.el ('remove-directory): New.
+	* subr.el ('set-match-data): New.
+	* subr.el ('send-string-to-terminal): New.
+	* subr.el (make-local-hook):
+	* subr.el (add-hook):
+	* subr.el (remove-hook):
+	* subr.el (add-local-hook):
+	* subr.el (remove-local-hook):
+	* subr.el (add-one-shot-hook):
+	* subr.el (add-local-one-shot-hook):
+	* subr.el (string-equal-ignore-case): Removed.
+	* subr.el (with-current-buffer):
+	* subr.el (with-output-to-string): Removed.
+	* subr.el (replace-in-string): Removed.
+	* subr.el (split-string): Removed.
+	* subr.el (with-temp-message):
+	* subr.el (with-syntax-table): New.
+	* subr.el (save-match-data): New.
+	* subr.el (match-string): New.
+	* subr.el (match-string-no-properties): New.
+	* subr.el (subst-char-in-string): New.
+	* subr.el (replace-regexp-in-string): New.
+	* subr.el (truncate-string-to-width):
+	* subr.el (eval-after-load):
+	* view-less.el:
+	* wid-edit.el:
+	* wid-edit.el (widget-url-link-action):
+	Lots of syncing with FSF 21.2.
+	Use if-fboundp in wid-edit.el.
+	New file newcomment.el from FSF.
+
+2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Add markers for use of
+	defcustom v. custom-declare-variable-early.
+
+	* make-docfile.el (custom-declare-variable-list): Defvar to prevent
+	custom (required from raw-process) from barfing a void-variable error.
+
+2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* view-less.el (view-minor-mode): Add autoload cookie.
+
+2003-02-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* view-less.el (view-minor-mode): Add autoload cookie.
+
 2003-02-28  Ben Wing  <ben@xemacs.org>
 
 	* dump-paths.el:

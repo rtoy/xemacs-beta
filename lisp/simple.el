@@ -25,6 +25,8 @@
 ;; 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.34 [But not very closely].
+;;; Occasional synching to FSF 21.2, as marked.  Comment stuff also
+;;; synched, and in newcomment.el.
 
 ;;; Commentary:
 
@@ -2681,295 +2683,6 @@ of lines."
 	  (setq arg (1+ arg)))))))
 
 
-(defcustom comment-column 32
-  "*Column to indent right-margin comments to.
-Setting this variable automatically makes it local to the current buffer.
-Each mode establishes a different default value for this variable; you
-can set the value for a particular mode using that mode's hook."
-  :type 'integer
-  :group 'fill-comments)
-(make-variable-buffer-local 'comment-column)
-
-(defcustom comment-start nil
-  "*String to insert to start a new comment, or nil if no comment syntax."
-  :type '(choice (const :tag "None" nil)
-		 string)
-  :group 'fill-comments)
-
-(defcustom comment-start-skip nil
-  "*Regexp to match the start of a comment plus everything up to its body.
-If there are any \\(...\\) pairs, the comment delimiter text is held to begin
-at the place matched by the close of the first pair."
-  :type '(choice (const :tag "None" nil)
-		 regexp)
-  :group 'fill-comments)
-
-(defcustom comment-end ""
-  "*String to insert to end a new comment.
-Should be an empty string if comments are terminated by end-of-line."
-  :type 'string
-  :group 'fill-comments)
-
-(defconst comment-indent-hook nil
-  "Obsolete variable for function to compute desired indentation for a comment.
-Use `comment-indent-function' instead.
-This function is called with no args with point at the beginning of
-the comment's starting delimiter.")
-
-(defconst comment-indent-function
-  ;; XEmacs - add at least one space after the end of the text on the
-  ;; current line...
-  (lambda ()
-    (save-excursion
-      (beginning-of-line)
-      (let ((eol (save-excursion (end-of-line) (point))))
-	(and comment-start-skip
-	     (re-search-forward comment-start-skip eol t)
-	     (setq eol (match-beginning 0)))
-	(goto-char eol)
-	(skip-chars-backward " \t")
-	(max comment-column (1+ (current-column))))))
-  "Function to compute desired indentation for a comment.
-This function is called with no args with point at the beginning of
-the comment's starting delimiter.")
-
-(defcustom block-comment-start nil
-  "*String to insert to start a new comment on a line by itself.
-If nil, use `comment-start' instead.
-Note that the regular expression `comment-start-skip' should skip this string
-as well as the `comment-start' string."
-  :type '(choice (const :tag "Use `comment-start'" nil)
-		 string)
-  :group 'fill-comments)
-
-(defcustom block-comment-end nil
-  "*String to insert to end a new comment on a line by itself.
-Should be an empty string if comments are terminated by end-of-line.
-If nil, use `comment-end' instead."
-  :type '(choice (const :tag "Use `comment-end'" nil)
-		 string)
-  :group 'fill-comments)
-
-(defun indent-for-comment ()
-  "Indent this line's comment to comment column, or insert an empty
-comment.  Comments starting in column 0 are not moved."
-  (interactive "*")
-  (let* ((empty (save-excursion (beginning-of-line)
-				(looking-at "[ \t]*$")))
-	 (starter (or (and empty block-comment-start) comment-start))
-	 (ender (or (and empty block-comment-end) comment-end)))
-    (if (null starter)
-	(error "No comment syntax defined")
-      (let* ((eolpos (save-excursion (end-of-line) (point)))
-	     cpos indent begpos)
-	(beginning-of-line)
-	(if (re-search-forward comment-start-skip eolpos 'move)
-	    (progn (setq cpos (point-marker))
-		   ;; Find the start of the comment delimiter.
-		   ;; If there were paren-pairs in comment-start-skip,
-		   ;; position at the end of the first pair.
-		   (if (match-end 1)
-		       (goto-char (match-end 1))
-		     ;; If comment-start-skip matched a string with
-		     ;; internal whitespace (not final whitespace) then
-		     ;; the delimiter start at the end of that
-		     ;; whitespace.  Otherwise, it starts at the
-		     ;; beginning of what was matched.
-		     (skip-syntax-backward " " (match-beginning 0))
-		     (skip-syntax-backward "^ " (match-beginning 0)))))
-	(setq begpos (point))
-	;; Compute desired indent.
-        ;; XEmacs change: Preserve indentation of comments starting in
-        ;; column 0, as documented.
-	(cond
-	 ((= (current-column) 0)
-	  (goto-char begpos))
-	 ((= (current-column)
-	     (setq indent (funcall comment-indent-function)))
-	  (goto-char begpos))
-	 (t
-	  ;; If that's different from current, change it.
-	  (skip-chars-backward " \t")
-	  (delete-region (point) begpos)
-	  (indent-to indent)))
-	;; An existing comment?
-	(if cpos
-	    (progn (goto-char cpos)
-		   (set-marker cpos nil))
-	  ;; No, insert one.
-	  (insert starter)
-	  (save-excursion
-	    (insert ender)))))))
-
-(defun set-comment-column (arg)
-  "Set the comment column based on point.
-With no arg, set the comment column to the current column.
-With just minus as arg, kill any comment on this line.
-With any other arg, set comment column to indentation of the previous comment
- and then align or create a comment on this line at that column."
-  (interactive "P")
-  (if (eq arg '-)
-      (kill-comment nil)
-    (if arg
-	(progn
-	  (save-excursion
-	    (beginning-of-line)
-	    (re-search-backward comment-start-skip)
-	    (beginning-of-line)
-	    (re-search-forward comment-start-skip)
-	    (goto-char (match-beginning 0))
-	    (setq comment-column (current-column))
-	    (lmessage 'command "Comment column set to %d" comment-column))
-	  (indent-for-comment))
-      (setq comment-column (current-column))
-      (lmessage 'command "Comment column set to %d" comment-column))))
-
-(defun kill-comment (arg)
-  "Kill the comment on this line, if any.
-With argument, kill comments on that many lines starting with this one."
-  ;; this function loses in a lot of situations.  it incorrectly recognizes
-  ;; comment delimiters sometimes (ergo, inside a string), doesn't work
-  ;; with multi-line comments, can kill extra whitespace if comment wasn't
-  ;; through end-of-line, et cetera.
-  (interactive "*P")
-  (or comment-start-skip (error "No comment syntax defined"))
-  (let ((count (prefix-numeric-value arg)) endc)
-    (while (> count 0)
-      (save-excursion
-	(end-of-line)
-	(setq endc (point))
-	(beginning-of-line)
-	(and (string< "" comment-end)
-	     (setq endc
-		   (progn
-		     (re-search-forward (regexp-quote comment-end) endc 'move)
-		     (skip-chars-forward " \t")
-		     (point))))
-	(beginning-of-line)
-	(if (re-search-forward comment-start-skip endc t)
-	    (progn
-	      (goto-char (match-beginning 0))
-	      (skip-chars-backward " \t")
-	      (kill-region (point) endc)
-	      ;; to catch comments a line beginnings
-	      (indent-according-to-mode))))
-      (if arg (forward-line 1))
-      (setq count (1- count)))))
-
-;; This variable: Synched up with 20.7.
-(defvar comment-padding 1
-  "Number of spaces `comment-region' puts between comment chars and text.
-
-Extra spacing between the comment characters and the comment text
-makes the comment easier to read.  Default is 1.  Nil means 0 and is
-more efficient.")
-
-;; This function: Synched up with 20.7.
-(defun comment-region (start end &optional arg)
-  "Comment or uncomment each line in the region.
-With just C-u prefix arg, uncomment each line in region.
-Numeric prefix arg ARG means use ARG comment characters.
-If ARG is negative, delete that many comment characters instead.
-Comments are terminated on each line, even for syntax in which newline does
-not end the comment.  Blank lines do not get comments."
-  ;; if someone wants it to only put a comment-start at the beginning and
-  ;; comment-end at the end then typing it, C-x C-x, closing it, C-x C-x
-  ;; is easy enough.  No option is made here for other than commenting
-  ;; every line.
-  (interactive "r\nP")
-  (or comment-start (error "No comment syntax is defined"))
-  (if (> start end) (let (mid) (setq mid start start end end mid)))
-  (save-excursion
-    (save-restriction
-      (let ((cs comment-start) (ce comment-end)
-	    (cp (when comment-padding
-		  (make-string comment-padding ? )))
-	    numarg)
-        (if (consp arg) (setq numarg t)
-	  (setq numarg (prefix-numeric-value arg))
-	  ;; For positive arg > 1, replicate the comment delims now,
-	  ;; then insert the replicated strings just once.
-	  (while (> numarg 1)
-	    (setq cs (concat cs comment-start)
-		  ce (concat ce comment-end))
-	    (setq numarg (1- numarg))))
-	;; Loop over all lines from START to END.
-        (narrow-to-region start end)
-        (goto-char start)
-	;; if user didn't specify how many comments to remove, be smart
-	;; and remove the minimal number that all lines have.  that way,
-	;; comments in a region of Elisp code that gets commented out will
-	;; get put back correctly.
-	(if (eq numarg t)
-	    (let ((min-comments 999999))
-	      (while (not (eobp))
-		(let ((this-comments 0))
-		  (while (looking-at (regexp-quote cs))
-		    (incf this-comments)
-		    (forward-char (length cs)))
-		  (if (and (> this-comments 0) (< this-comments min-comments))
-		      (setq min-comments this-comments))
-		  (forward-line 1)))
-	      (if (< min-comments 999999)
-		  (setq numarg (- min-comments)))
-	      (goto-char start)))
-	(if (or (eq numarg t) (< numarg 0))
-	    (while (not (eobp))
-	      (let (found-comment)
-		;; Delete comment start from beginning of line.
-		(if (eq numarg t)
-		    (while (looking-at (regexp-quote cs))
-		      (setq found-comment t)
-		      (delete-char (length cs)))
-		  (let ((count numarg))
-		    (while (and (> 1 (setq count (1+ count)))
-				(looking-at (regexp-quote cs)))
-		      (setq found-comment t)
-		      (delete-char (length cs)))))
-		;; Delete comment padding from beginning of line
-		(when (and found-comment comment-padding
-			   (looking-at (regexp-quote cp)))
-		  (delete-char comment-padding))
-		;; Delete comment end from end of line.
-                (if (string= "" ce)
-		    nil
-		  (if (eq numarg t)
-		      (progn
-			(end-of-line)
-			;; This is questionable if comment-end ends in
-			;; whitespace.  That is pretty brain-damaged,
-			;; though.
-			(while (progn (skip-chars-backward " \t")
-				      (and (>= (- (point) (point-min))
-					       (length ce))
-					   (save-excursion
-					     (backward-char (length ce))
-					     (looking-at (regexp-quote ce)))))
-			  (delete-char (- (length ce)))))
-		    (let ((count numarg))
-		      (while (> 1 (setq count (1+ count)))
-			(end-of-line)
-			;; This is questionable if comment-end ends in
-			;; whitespace.  That is pretty brain-damaged though
-			(skip-chars-backward " \t")
-			(if (>= (- (point) (point-min)) (length ce))
-			    (save-excursion
-			      (backward-char (length ce))
-			      (if (looking-at (regexp-quote ce))
-				  (delete-char (length ce)))))))))
-		(forward-line 1)))
-
-	  (when comment-padding
-	    (setq cs (concat cs cp)))
-	  (while (not (eobp))
-	    ;; Insert at beginning and at end.
-            (if (looking-at "[ \t]*$") ()
-              (insert cs)
-              (if (string= "" ce) ()
-                (end-of-line)
-                (insert ce)))
-            (search-forward "\n" nil 'move)))))))
-
 ;; XEmacs
 (defun prefix-region (prefix)
   "Add a prefix string to each line between mark and point."
@@ -3334,98 +3047,9 @@ The variable `fill-column' has a separate value for each buffer."
 	 (error "set-fill-column requires an explicit argument")))
   (lmessage 'command "fill-column set to %d" fill-column))
 
-(defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
-  "*Non-nil means \\[indent-new-comment-line] should continue same comment
-on new line, with no new terminator or starter.
-This is obsolete because you might as well use \\[newline-and-indent]."
-  :type 'boolean
-  :group 'fill-comments)
 
-(defun indent-new-comment-line (&optional soft)
-  "Break line at point and indent, continuing comment if within one.
-This indents the body of the continued comment
-under the previous comment line.
+;; BEGIN SYNCHED WITH FSF 21.2.
 
-This command is intended for styles where you write a comment per line,
-starting a new comment (and terminating it if necessary) on each line.
-If you want to continue one comment across several lines, use \\[newline-and-indent].
-
-If a fill column is specified, it overrides the use of the comment column
-or comment indentation.
-
-The inserted newline is marked hard if `use-hard-newlines' is true,
-unless optional argument SOFT is non-nil."
-  (interactive)
-  (let (comcol comstart)
-    (skip-chars-backward " \t")
-    (if (featurep 'mule)
-	(declare-fboundp (kinsoku-process)))
-    (delete-region (point)
-		   (progn (skip-chars-forward " \t")
-			  (point)))
-    (if soft (insert ?\n) (newline 1))
-    (if fill-prefix
-	(progn
-	  (indent-to-left-margin)
-	  (insert fill-prefix))
-    ;; #### - Eric Eide reverts to v18 semantics for this function in
-    ;; fa-extras, which I'm not gonna do.  His changes are to (1) execute
-    ;; the save-excursion below unconditionally, and (2) uncomment the check
-    ;; for (not comment-multi-line) further below.  --Stig
-      ;;#### jhod: probably need to fix this for kinsoku processing
-      (if (not comment-multi-line)
-	  (save-excursion
-	    (if (and comment-start-skip
-		     (let ((opoint (point)))
-		       (forward-line -1)
-		       (re-search-forward comment-start-skip opoint t)))
-		;; The old line is a comment.
-		;; Set WIN to the pos of the comment-start.
-		;; But if the comment is empty, look at preceding lines
-		;; to find one that has a nonempty comment.
-
-		;; If comment-start-skip contains a \(...\) pair,
-		;; the real comment delimiter starts at the end of that pair.
-		(let ((win (or (match-end 1) (match-beginning 0))))
-		  (while (and (eolp) (not (bobp))
-			      (let (opoint)
-				(beginning-of-line)
-				(setq opoint (point))
-				(forward-line -1)
-				(re-search-forward comment-start-skip opoint t)))
-		    (setq win (or (match-end 1) (match-beginning 0))))
-		  ;; Indent this line like what we found.
-		  (goto-char win)
-		  (setq comcol (current-column))
-		  (setq comstart
-			(buffer-substring (point) (match-end 0)))))))
-      (if (and comcol (not fill-prefix))  ; XEmacs - (ENE) from fa-extras.
-	  (let ((comment-column comcol)
-		(comment-start comstart)
-		(block-comment-start comstart)
-		(comment-end comment-end))
-	    (and comment-end (not (equal comment-end ""))
-  ;	       (if (not comment-multi-line)
-		     (progn
-		       (backward-char 1)
-		       (insert comment-end)
-		       (forward-char 1))
-  ;		 (setq comment-column (+ comment-column (length comment-start))
-  ;		       comment-start "")
-  ;		   )
-		 )
-	    (if (not (eolp))
-		(setq comment-end ""))
-	    (insert ?\n)
-	    (backward-char 1)
-	    (indent-for-comment)
-	    (save-excursion
-	      ;; Make sure we delete the newline inserted above.
-	      (end-of-line)
-	      (delete-char 1)))
-	(indent-according-to-mode)))))
-
-
 (defun set-selective-display (arg)
   "Set `selective-display' to ARG; clear it if no arg.
 When the value of `selective-display' is a number > 0,
@@ -3471,14 +3095,14 @@ state before disabling selective display."
 
 (add-hook 'change-major-mode-hook 'nuke-selective-display)
 
-(defconst overwrite-mode-textual " Ovwrt"
+(defvar overwrite-mode-textual " Ovwrt"
   "The string displayed in the mode line when in overwrite mode.")
-(defconst overwrite-mode-binary " Bin Ovwrt"
+(defvar overwrite-mode-binary " Bin Ovwrt"
   "The string displayed in the mode line when in binary overwrite mode.")
 
 (defun overwrite-mode (arg)
   "Toggle overwrite mode.
-With arg, enable overwrite mode if arg is positive, else disable.
+With arg, turn overwrite mode on iff arg is positive.
 In overwrite mode, printing characters typed in replace existing text
 on a one-for-one basis, rather than pushing it to the right.  At the
 end of a line, such characters extend the line.  Before a tab,
@@ -3494,7 +3118,7 @@ is supposed to make it easier to insert characters when necessary."
 
 (defun binary-overwrite-mode (arg)
   "Toggle binary overwrite mode.
-With arg, enable binary overwrite mode if arg is positive, else disable.
+With arg, turn binary overwrite mode on iff arg is positive.
 In binary overwrite mode, printing characters typed in replace
 existing text.  Newlines are not treated specially, so typing at the
 end of a line joins the line to the next, with the typed character
@@ -3513,6 +3137,9 @@ specialization of overwrite-mode, entered by setting the
 	      (> (prefix-numeric-value arg) 0))
 	    'overwrite-mode-binary))
   (redraw-modeline))
+
+;; END SYNCHED WITH FSF 21.2.
+
 
 (defcustom line-number-mode t
   "*Non-nil means display line number in modeline."
@@ -3672,26 +3299,43 @@ when it is off screen."
 ;;                          mail composition code                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; BEGIN SYNCHED WITH FSF 21.2.
+
 (defcustom mail-user-agent 'sendmail-user-agent
   "*Your preference for a mail composition package.
-Various Emacs Lisp packages (e.g. reporter) require you to compose an
+Various Emacs Lisp packages (e.g. Reporter) require you to compose an
 outgoing email message.  This variable lets you specify which
 mail-sending package you prefer.
 
 Valid values include:
 
-    sendmail-user-agent -- use the default Emacs Mail package
-    mh-e-user-agent     -- use the Emacs interface to the MH mail system
-    message-user-agent  -- use the GNUS mail sending package
+  `sendmail-user-agent' -- use the default Emacs Mail package.
+                           See Info node `(emacs)Sending Mail'.
+  `mh-e-user-agent'     -- use the Emacs interface to the MH mail system.
+                           See Info node `(mh-e)'.
+  `message-user-agent'  -- use the Gnus Message package.
+                           See Info node `(message)'.
+  `gnus-user-agent'     -- like `message-user-agent', but with Gnus
+                           paraphernalia, particularly the Gcc: header for
+                           archiving.
 
 Additional valid symbols may be available; check with the author of
-your package for details."
+your package for details.  The function should return non-nil if it
+succeeds.
+
+See also `read-mail-command' concerning reading mail."
   :type '(radio (function-item :tag "Default Emacs mail"
 			       :format "%t\n"
 			       sendmail-user-agent)
-		(function-item :tag "Gnus mail sending package"
+		(function-item :tag "Emacs interface to MH"
+			       :format "%t\n"
+			       mh-e-user-agent)
+		(function-item :tag "Gnus Message package"
 			       :format "%t\n"
 			       message-user-agent)
+		(function-item :tag "Gnus Message with full Gnus features"
+			       :format "%t\n"
+			       gnus-user-agent)
 		(function :tag "Other"))
   :group 'mail)
 
@@ -3737,6 +3381,13 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
   'message-mail 'message-send-and-exit
   'message-kill-buffer 'message-send-hook)
 
+(defun rfc822-goto-eoh ()
+  ;; Go to header delimiter line in a mail message, following RFC822 rules
+  (goto-char (point-min))
+  (while (looking-at "^[^: \n]+:\\|^[ \t]")
+    (forward-line 1))
+  (point))
+
 (defun sendmail-user-agent-compose (&optional to subject other-headers continue
 					      switch-function yank-action
 					      send-actions)
@@ -3747,24 +3398,28 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
 	    (same-window-regexps nil))
 	(funcall switch-function "*mail*")))
   (let ((cc (cdr (assoc-ignore-case "cc" other-headers)))
-	(in-reply-to (cdr (assoc-ignore-case "in-reply-to" other-headers))))
+	(in-reply-to (cdr (assoc-ignore-case "in-reply-to" other-headers)))
+	(body (cdr (assoc-ignore-case "body" other-headers))))
     (or (declare-fboundp
 	 (mail continue to subject in-reply-to cc yank-action send-actions))
 	continue
 	(error "Message aborted"))
     (save-excursion
-      (goto-char (point-min))
-      (search-forward (declare-boundp mail-header-separator))
-      (beginning-of-line)
+      (rfc822-goto-eoh)
       (while other-headers
-	(if (not (member (car (car other-headers)) '("in-reply-to" "cc")))
+	(unless (member* (car (car other-headers))
+			 '("in-reply-to" "cc" "body")
+			 :test 'equalp)
 	    (insert (car (car other-headers)) ": "
 		    (cdr (car other-headers)) "\n"))
 	(setq other-headers (cdr other-headers)))
+      (when body
+	(forward-line 1)
+	(insert body))
       t)))
 
 (define-mail-user-agent 'mh-e-user-agent
-  'mh-user-agent-compose 'mh-send-letter 'mh-fully-kill-draft
+  'mh-smail-batch 'mh-send-letter 'mh-fully-kill-draft
   'mh-before-send-letter-hook)
 
 (defun compose-mail (&optional to subject other-headers continue
@@ -3822,48 +3477,199 @@ Each action has the form (FUNCTION . ARGS)."
 ;;                             set variable                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defvar set-variable-value-history nil
+  "History of values entered with `set-variable'.")
+
 (defun set-variable (var val)
   "Set VARIABLE to VALUE.  VALUE is a Lisp object.
-When using this interactively, supply a Lisp expression for VALUE.
+When using this interactively, enter a Lisp object for VALUE.
 If you want VALUE to be a string, you must surround it with doublequotes.
+VALUE is used literally, not evaluated.
+
 If VARIABLE is a specifier, VALUE is added to it as an instantiator in
 the 'global locale with nil tag set (see `set-specifier').
 
 If VARIABLE has a `variable-interactive' property, that is used as if
-it were the arg to `interactive' (which see) to interactively read the value."
+it were the arg to `interactive' (which see) to interactively read VALUE.
+
+If VARIABLE has been defined with `defcustom', then the type information
+in the definition is used to check that VALUE is valid."
   (interactive
-   (let* ((var (read-variable "Set variable: "))
-	  ;; #### - yucky code replication here.  This should use something
-	  ;; from help.el or hyper-apropos.el
-	  (myhelp
-	   #'(lambda ()
-	      (with-output-to-temp-buffer "*Help*"
-		(prin1 var)
-		(princ "\nDocumentation:\n")
-		(princ (substring (documentation-property var 'variable-documentation)
-				  1))
-		(if (boundp var)
-		    (let ((print-length 20))
-		      (princ "\n\nCurrent value: ")
-		      (prin1 (symbol-value var))))
-		(save-excursion
-		  (set-buffer standard-output)
-		  (help-mode))
-		nil)))
-	  (minibuffer-help-form
-	   '(funcall myhelp)))
-     (list var
-	   (let ((prop (get var 'variable-interactive)))
-	     (if prop
-		 ;; Use VAR's `variable-interactive' property
-		 ;; as an interactive spec for prompting.
-		 (call-interactively (list 'lambda '(arg)
-					   (list 'interactive prop)
-					   'arg))
-	       (eval-minibuffer (format "Set %s to value: " var)))))))
+   (let* ((default-var (variable-at-point))
+          (var (if (symbolp default-var)
+                   (read-variable (format "Set variable (default %s): " default-var)
+                                  default-var)
+                 (read-variable "Set variable: ")))
+		      (minibuffer-help-form '(describe-variable var))
+		      (prop (get var 'variable-interactive))
+		      (prompt (format "Set %s to value: " var))
+		      (val (if prop
+			       ;; Use VAR's `variable-interactive' property
+			       ;; as an interactive spec for prompting.
+			       (call-interactively `(lambda (arg)
+						      (interactive ,prop)
+						      arg))
+			     (read
+			      (read-string prompt nil
+					   'set-variable-value-history)))))
+		 (list var val)))
+
+  (let ((type (get var 'custom-type)))
+    (when type
+      ;; Match with custom type.
+      (require 'cus-edit)
+      (setq type (widget-convert type))
+      (unless (widget-apply type :match val)
+	(error "Value `%S' does not match type %S of %S"
+	       val (car type) var))))
   (if (and (boundp var) (specifierp (symbol-value var)))
       (set-specifier (symbol-value var) val)
-    (set var val)))
+    (set var val))
+
+  ;; Force a thorough redisplay for the case that the variable
+  ;; has an effect on the display, like `tab-width' has.
+  (force-mode-line-update))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                    forking a twin copy of a buffer                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar clone-buffer-hook nil
+  "Normal hook to run in the new buffer at the end of `clone-buffer'.")
+
+(defun clone-process (process &optional newname)
+  "Create a twin copy of PROCESS.
+If NEWNAME is nil, it defaults to PROCESS' name;
+NEWNAME is modified by adding or incrementing <N> at the end as necessary.
+If PROCESS is associated with a buffer, the new process will be associated
+  with the current buffer instead.
+Returns nil if PROCESS has already terminated."
+  (setq newname (or newname (process-name process)))
+  (if (string-match "<[0-9]+>\\'" newname)
+      (setq newname (substring newname 0 (match-beginning 0))))
+  (when (memq (process-status process) '(run stop open))
+    (let* ((process-connection-type (process-tty-name process))
+	   (old-kwoq (process-kill-without-query process nil))
+	   (new-process
+	    (if (memq (process-status process) '(open))
+		(apply 'open-network-stream newname
+		       (if (process-buffer process) (current-buffer))
+		       ;; FSF: (process-contact process)
+		       (process-command process))
+	      (apply 'start-process newname
+		     (if (process-buffer process) (current-buffer))
+		     (process-command process)))))
+      (process-kill-without-query new-process old-kwoq)
+      (process-kill-without-query process old-kwoq)
+      ;; FSF 21.2:
+;       (set-process-inherit-coding-system-flag
+;        new-process (process-inherit-coding-system-flag process))
+      (set-process-filter new-process (process-filter process))
+      (set-process-sentinel new-process (process-sentinel process))
+      new-process)))
+
+;; things to maybe add (currently partly covered by `funcall mode':
+;; - syntax-table
+;; - overlays
+(defun clone-buffer (&optional newname display-flag)
+  "Create a twin copy of the current buffer.
+If NEWNAME is nil, it defaults to the current buffer's name;
+NEWNAME is modified by adding or incrementing <N> at the end as necessary.
+
+If DISPLAY-FLAG is non-nil, the new buffer is shown with `pop-to-buffer'.
+This runs the normal hook `clone-buffer-hook' in the new buffer
+after it has been set up properly in other respects."
+  (interactive (list (if current-prefix-arg (read-string "Name: "))
+		     t))
+  (if buffer-file-name
+      (error "Cannot clone a file-visiting buffer"))
+  (if (get major-mode 'no-clone)
+      (error "Cannot clone a buffer in %s mode" mode-name))
+  (setq newname (or newname (buffer-name)))
+  (if (string-match "<[0-9]+>\\'" newname)
+      (setq newname (substring newname 0 (match-beginning 0))))
+  (let ((buf (current-buffer))
+	(ptmin (point-min))
+	(ptmax (point-max))
+	(pt (point))
+	(mk (mark t)) ;(if mark-active (mark t)))
+	(modified (buffer-modified-p))
+	(mode major-mode)
+	(lvars (buffer-local-variables))
+	(process (get-buffer-process (current-buffer)))
+	(new (generate-new-buffer (or newname (buffer-name)))))
+    (save-restriction
+      (widen)
+      (with-current-buffer new
+	(insert-buffer-substring buf)))
+    (with-current-buffer new
+      (narrow-to-region ptmin ptmax)
+      (goto-char pt)
+      (if mk (set-mark mk))
+      (set-buffer-modified-p modified)
+
+      ;; Clone the old buffer's process, if any.
+      (when process (clone-process process))
+
+      ;; Now set up the major mode.
+      (funcall mode)
+
+      ;; Set up other local variables.
+      (mapcar (lambda (v)
+		(condition-case ()	;in case var is read-only
+		    (if (symbolp v)
+			(makunbound v)
+		      (set (make-local-variable (car v)) (cdr v)))
+		  (error nil)))
+	      lvars)
+
+      ;; Run any hooks (typically set up by the major mode
+      ;; for cloning to work properly).
+      (run-hooks 'clone-buffer-hook))
+    (if display-flag (pop-to-buffer new))
+    new))
+
+
+(defun clone-indirect-buffer (newname display-flag &optional norecord)
+  "Create an indirect buffer that is a twin copy of the current buffer.
+
+Give the indirect buffer name NEWNAME.  Interactively, read NEW-NAME
+from the minibuffer when invoked with a prefix arg.  If NEWNAME is nil
+or if not called with a prefix arg, NEWNAME defaults to the current
+buffer's name.  The name is modified by adding a `<N>' suffix to it
+or by incrementing the N in an existing suffix.
+
+DISPLAY-FLAG non-nil means show the new buffer with `pop-to-buffer'.
+This is always done when called interactively.
+
+Optional last arg NORECORD non-nil means do not put this buffer at the
+front of the list of recently selected ones."
+  (interactive (list (if current-prefix-arg
+			 (read-string "BName of indirect buffer: "))
+		     t))
+  (setq newname (or newname (buffer-name)))
+  (if (string-match "<[0-9]+>\\'" newname)
+      (setq newname (substring newname 0 (match-beginning 0))))
+  (let* ((name (generate-new-buffer-name newname))
+	 (buffer (make-indirect-buffer (current-buffer) name t)))
+    (when display-flag
+      (pop-to-buffer buffer norecord))
+    buffer))
+
+
+(defun clone-indirect-buffer-other-window (buffer &optional norecord)
+  "Create an indirect buffer that is a twin copy of BUFFER.
+Select the new buffer in another window.
+Optional second arg NORECORD non-nil means do not put this buffer at
+the front of the list of recently selected ones."
+  (interactive "bClone buffer in other window: ")
+  (let ((pop-up-windows t))
+    (set-buffer buffer)
+    (clone-indirect-buffer nil t norecord)))
+
+;; END SYNCHED WITH FSF 21.2.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,3 +1,25 @@
+2003-03-01  Ben Wing  <ben@xemacs.org>
+
+	* PROBLEMS: Delete.
+
+	* config.inc.samp (USE_FASTCALL):
+	* config.inc.samp (HAVE_VC6): Removed.
+	* config.inc.samp (DEBUG_XEMACS):
+	* config.inc.samp (SUPPORT_EDIT_AND_CONTINUE): New.
+	* xemacs.mak (DEBUG_XEMACS):
+	* xemacs.mak (HAVE_VC6): Removed.
+	* xemacs.mak (SUPPORT_EDIT_AND_CONTINUE): New.
+	* xemacs.mak (CCV):
+	* xemacs.mak (LIB_SRC_CFLAGS): New.
+	* xemacs.mak (ETAGS_DEPS):
+	* xemacs.mak (OS):
+	* xemacs.mak (TEMACS_LFLAGS):
+	Eliminate HAVE_VC6, use SUPPORT_EDIT_AND_CONTINUE in its place.
+	No incremental linking unless SUPPORT_EDIT_AND_CONTINUE, since it
+	can cause nasty crashes in pdump.  Put warnings about this in
+	config.inc.samp.  Report the full compile flags used for src
+	and lib-src in the Installation output.
+
 2003-02-28  Ben Wing  <ben@xemacs.org>
 
 	* README:

@@ -1145,6 +1145,13 @@ xmalloc_and_record_unwind (Bytecount size)
 extern Bytecount __temp_alloca_size__;
 extern Bytecount funcall_alloca_count;
 
+#ifdef ERROR_CHECK_MALLOC
+extern int regex_malloc_disallowed;
+#define REGEX_MALLOC_CHECK() assert (!regex_malloc_disallowed)
+#else
+#define REGEX_MALLOC_CHECK() ((void) 0)
+#endif
+
 /* Do stack or heap alloca() depending on size.
 
 NOTE: The use of a global temporary like this is unsafe if ALLOCA() occurs
@@ -1153,7 +1160,8 @@ alternative is to force all callers to declare a local temporary if the
 expression has side effects -- something easy to forget. */
 
 #define ALLOCA(size)					\
-  (__temp_alloca_size__ = (size),			\
+  (REGEX_MALLOC_CHECK (),				\
+   __temp_alloca_size__ = (size),			\
    __temp_alloca_size__  > MAX_ALLOCA_VS_C_ALLOCA ?	\
    xemacs_c_alloca (__temp_alloca_size__) :		\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
@@ -1172,7 +1180,8 @@ expression has side effects -- something easy to forget. */
    function! */
 
 #define MALLOC_OR_ALLOCA(size)				\
-  (__temp_alloca_size__ = (size),			\
+  (REGEX_MALLOC_CHECK (),				\
+   __temp_alloca_size__ = (size),			\
    __temp_alloca_size__  > MAX_ALLOCA_VS_MALLOC ?	\
    xmalloc_and_record_unwind (__temp_alloca_size__) :	\
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
@@ -1187,6 +1196,7 @@ expression has side effects -- something easy to forget. */
    which ensures constant amortized time per element. */
 #define DO_REALLOC(basevar, sizevar, needed_size, type)	do {	\
   Bytecount do_realloc_needed_size = (needed_size);		\
+  REGEX_MALLOC_CHECK ();					\
   if ((sizevar) < do_realloc_needed_size)			\
     {								\
       if ((sizevar) < 32)					\
@@ -3560,7 +3570,7 @@ extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
 extern int need_to_check_c_alloca;
 extern int need_to_signal_post_gc;
-extern Lisp_Object Qpost_gc_hook;
+extern Lisp_Object Qpost_gc_hook, Qgarbage_collecting;
 void recompute_funcall_allocation_flag (void);
 
 #ifdef MEMORY_USAGE_STATS
@@ -4038,6 +4048,7 @@ struct call_trapping_problems_result
 #define INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY (1<<14)
 #define INHIBIT_ENTERING_DEBUGGER (1<<15)
 #define CALL_WITH_SUSPENDED_ERRORS (1<<16)
+#define POSTPONE_WARNING_ISSUE (1<<17)
 
 enum check_allowed_operation
 {
@@ -4086,32 +4097,27 @@ Lisp_Object call5_trapping_problems (const char *, Lisp_Object, Lisp_Object,
 				   Lisp_Object, int);
 Lisp_Object eval_in_buffer_trapping_problems (const char *, struct buffer *,
 					    Lisp_Object, int);
-Lisp_Object run_hook_trapping_problems (const char *, Lisp_Object, int);
-Lisp_Object safe_run_hook_trapping_problems (const char *, Lisp_Object, int);
-Lisp_Object run_hook_with_args_in_buffer_trapping_problems (const char
-							    *warning_string,
-							    struct buffer
-							    *buf, int nargs,
+Lisp_Object run_hook_trapping_problems (Lisp_Object, Lisp_Object, int);
+Lisp_Object safe_run_hook_trapping_problems (Lisp_Object, Lisp_Object, int);
+Lisp_Object run_hook_with_args_in_buffer_trapping_problems (Lisp_Object,
+							    struct buffer *,
+							    int nargs,
 							    Lisp_Object *args,
 							    enum
 							    run_hooks_condition
 							    cond, int flags);
-Lisp_Object run_hook_with_args_trapping_problems (const char *warning_string,
+Lisp_Object run_hook_with_args_trapping_problems (Lisp_Object,
 						  int nargs,
 						  Lisp_Object *args,
 						  enum run_hooks_condition
 						  cond,
 						  int flags);
-Lisp_Object va_run_hook_with_args_trapping_problems (const char
-						     *warning_string,
+Lisp_Object va_run_hook_with_args_trapping_problems (Lisp_Object,
 						     Lisp_Object hook_var,
 						     int nargs, ...);
-Lisp_Object va_run_hook_with_args_in_buffer_trapping_problems (const char
-							       *warning_string,
-							       struct buffer
-							       *buf,
-							       Lisp_Object
-							       hook_var,
+Lisp_Object va_run_hook_with_args_in_buffer_trapping_problems (Lisp_Object,
+							       struct buffer *,
+							       Lisp_Object,
 							       int nargs, ...);
 Lisp_Object call_with_suspended_errors (lisp_fn_t, Lisp_Object,
 					Lisp_Object,
@@ -4133,6 +4139,7 @@ void specbind (Lisp_Object, Lisp_Object);
 int record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
 int record_unwind_protect_freeing (void *ptr);
 int record_unwind_protect_freeing_dynarr (void *ptr);
+int record_unwind_protect_restoring_int (int *addr, int val);
 int internal_bind_int (int *addr, int newval);
 int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
 void do_autoload (Lisp_Object, Lisp_Object); /* GCPROs both arguments */

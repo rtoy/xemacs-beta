@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -736,7 +736,7 @@ signal_first_change (struct buffer *buf)
 	  set_buffer_internal (buf);
 	  in_first_change = 1;
 	  run_hook_trapping_problems
-	    (0, Qfirst_change_hook,
+	    (Qchange, Qfirst_change_hook,
 	     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	  unbind_to (speccount);
 	}
@@ -807,12 +807,12 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 	    {
 	      set_buffer_internal (buf);
 	      va_run_hook_with_args_trapping_problems
-		(0, Qbefore_change_functions, 2,
+		(Qchange, Qbefore_change_functions, 2,
 		 make_int (start), make_int (end),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
 	      va_run_hook_with_args_trapping_problems
-		(0, Qbefore_change_function, 2,
+		(Qchange, Qbefore_change_function, 2,
 		 make_int (start), make_int (end),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	    }
@@ -896,13 +896,13 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
 	      /* The actual after-change functions take slightly
 		 different arguments than what we were passed. */
 	      va_run_hook_with_args_trapping_problems
-		(0, Qafter_change_functions, 3,
+		(Qchange, Qafter_change_functions, 3,
 		 make_int (start), make_int (new_end),
 		 make_int (orig_end - start),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
 	      va_run_hook_with_args_trapping_problems
-		(0, Qafter_change_function, 3,
+		(Qchange, Qafter_change_function, 3,
 		 make_int (start), make_int (new_end),
 		 make_int (orig_end - start),
 		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);

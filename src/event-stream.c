@@ -2181,8 +2181,7 @@ run_pre_idle_hook (void)
   if (!NILP (Vpre_idle_hook)
       && !detect_input_pending (1))
     safe_run_hook_trapping_problems
-      ("Error in `pre-idle-hook' (setting hook to nil)",
-       Qpre_idle_hook,
+      (Qredisplay, Qpre_idle_hook,
        /* Quit is inhibited as a result of being within next-event so
 	  we need to fix that. */
        INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION | UNINHIBIT_QUIT);
@@ -4259,8 +4258,8 @@ pre_command_hook (void)
   last_point_position_buffer = wrap_buffer (current_buffer);
   /* This function can GC */
   safe_run_hook_trapping_problems
-    ("Error in `pre-command-hook' (setting hook to nil)",
-     Qpre_command_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+    (Qcommand, Qpre_command_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* This is a kludge, but necessary; see simple.el */
   call0 (Qhandle_pre_motion_command);
@@ -4304,23 +4303,8 @@ post_command_hook (void)
     zmacs_update_region ();
 
   safe_run_hook_trapping_problems
-    ("Error in `post-command-hook' (setting hook to nil)",
-     Qpost_command_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-
-#if 0 /* FSF Emacs crap */
-  if (!NILP (Vdeferred_action_list))
-    call0 (Vdeferred_action_function);
-
-  if (NILP (Vunread_command_events)
-      && NILP (Vexecuting_macro)
-      && !NILP (Vpost_command_idle_hook)
-      && !NILP (Fsit_for (make_float ((double) post_command_idle_delay
-				      / 1000000), Qnil)))
-  safe_run_hook_trapping_problems
-    ("Error in `post-command-idle-hook' (setting hook to nil)",
-     Qpost_command_idle_hook,
+    (Qcommand, Qpost_command_hook,
      INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
-#endif /* FSF Emacs crap */
 
 #if 0 /* FSF Emacs */
   if (!NILP (current_buffer->mark_active))

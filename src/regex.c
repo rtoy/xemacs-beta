@@ -5,7 +5,7 @@
 
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 2001, 2002, 2003 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -125,6 +125,47 @@ offset_to_charxpos (Lisp_Object lispobj, int off)
   else
     return 0;
 }
+
+#ifdef REL_ALLOC
+
+/* STRING1 is the value of STRING1 given to re_match_2().  LISPOBJ is
+   the Lisp object (if any) from which the string is taken.  If LISPOBJ
+   is a buffer, return a relocation offset to be added to all pointers to
+   string data so that they will be accurate again, after an allocation or
+   reallocation that potentially relocated the buffer data.
+*/
+static Bytecount
+offset_post_relocation (Lisp_Object lispobj, char *string1)
+{
+  struct buffer *buf;
+  
+  if (!BUFFERP (lispobj))
+    return 0;
+  return (BYTE_BUF_BYTE_ADDRESS (XBUFFER (lispobj),
+				BYTE_BUF_BEGV (XBUFFER (lispobj))) -
+	  string1);
+}
+
+#endif /* REL_ALLOC */
+
+#ifdef ERROR_CHECK_MALLOC
+
+/* NOTE that this can run malloc() so you need to adjust afterwards. */
+
+static int
+bind_regex_malloc_disallowed (int value)
+{
+  /* Tricky, because the act of binding can run malloc(). */
+  int old_regex_malloc_disallowed = regex_malloc_disallowed;
+  int depth;
+  regex_malloc_disallowed = 0;
+  depth = record_unwind_protect_restoring_int (&regex_malloc_disallowed,
+					       old_regex_malloc_disallowed);
+  regex_malloc_disallowed = value;
+  return depth;
+}
+
+#endif /* ERROR_CHECK_MALLOC */
 
 #else  /* not emacs */
 
@@ -300,11 +341,61 @@ init_syntax_once (void)
    not functions -- `alloca'-allocated space disappears at the end of the
    function it is called in.  */
 
+#ifndef emacs
+#define ALLOCA alloca
+#define xmalloc malloc
+#define xrealloc realloc
+#define xfree free
+#endif
+
+#ifdef emacs
+#define ALLOCA_GARBAGE_COLLECT()		\
+do						\
+{						\
+  if (need_to_check_c_alloca)			\
+    xemacs_c_alloca (0);			\
+} while (0)
+#elif defined (C_ALLOCA)
+#define ALLOCA_GARBAGE_COLLECT() alloca (0)
+#else
+#define ALLOCA_GARBAGE_COLLECT()
+#endif
+
+#ifndef emacs
+/* So we can use just it to conditionalize on */
+#undef ERROR_CHECK_MALLOC
+#endif
+
+#ifdef ERROR_CHECK_MALLOC
+/* When REL_ALLOC, malloc() is problematic because it could potentially
+   cause all rel-alloc()ed data -- including buffer text -- to be relocated.
+   We deal with this by checking for such relocation whenever we have
+   executed a statement that may call malloc() -- or alloca(), which may
+   end up calling malloc() in some circumstances -- and recomputing all
+   of our string pointers in re_match_2_internal() and re_search_2().
+   However, if malloc() or alloca() happens and we don't know about it,
+   we could still be screwed.  So we set up a system where we indicate all
+   places where we are prepared for malloc() or alloca(), and in any
+   other circumstances, calls to those functions (from anywhere inside of
+   XEmacs!) will abort().  We do this even when REL_ALLOC is not defined
+   so that we catch these problems sooner, since many developers and beta
+   testers will not be running with REL_ALLOC. */
+int regex_malloc_disallowed;
+#define BEGIN_REGEX_MALLOC_OK() regex_malloc_disallowed = 0
+#define END_REGEX_MALLOC_OK() regex_malloc_disallowed = 1
+#define UNBIND_REGEX_MALLOC_CHECK() unbind_to (depth)
+#else
+#define BEGIN_REGEX_MALLOC_OK()
+#define END_REGEX_MALLOC_OK()
+#define UNBIND_REGEX_MALLOC_CHECK()
+#endif
+
+
 #ifdef REGEX_MALLOC
 
-#define REGEX_ALLOCATE malloc
-#define REGEX_REALLOCATE(source, osize, nsize) realloc (source, nsize)
-#define REGEX_FREE free
+#define REGEX_ALLOCATE xmalloc
+#define REGEX_REALLOCATE(source, osize, nsize) xrealloc (source, nsize)
+#define REGEX_FREE xfree
 
 #else /* not REGEX_MALLOC  */
 
@@ -329,11 +420,11 @@ void *alloca ();
 
 #endif /* not alloca */
 
-#define REGEX_ALLOCATE alloca
+#define REGEX_ALLOCATE ALLOCA
 
 /* Assumes a `char *destination' variable.  */
 #define REGEX_REALLOCATE(source, osize, nsize)				\
-  (destination = (char *) alloca (nsize),				\
+  (destination = (char *) ALLOCA (nsize),				\
    memmove (destination, source, osize),				\
    destination)
 
@@ -356,13 +447,13 @@ void *alloca ();
 
 #ifdef REGEX_MALLOC
 
-#define REGEX_ALLOCATE_STACK malloc
-#define REGEX_REALLOCATE_STACK(source, osize, nsize) realloc (source, nsize)
-#define REGEX_FREE_STACK free
+#define REGEX_ALLOCATE_STACK xmalloc
+#define REGEX_REALLOCATE_STACK(source, osize, nsize) xrealloc (source, nsize)
+#define REGEX_FREE_STACK xfree
 
 #else /* not REGEX_MALLOC */
 
-#define REGEX_ALLOCATE_STACK alloca
+#define REGEX_ALLOCATE_STACK ALLOCA
 
 #define REGEX_REALLOCATE_STACK(source, osize, nsize)			\
    REGEX_REALLOCATE (source, osize, nsize)
@@ -380,8 +471,8 @@ void *alloca ();
   (size1 && string1 <= (ptr) && (ptr) <= string1 + size1)
 
 /* (Re)Allocate N items of type T using malloc, or fail.  */
-#define TALLOC(n, t) ((t *) malloc ((n) * sizeof (t)))
-#define RETALLOC(addr, n, t) ((addr) = (t *) realloc (addr, (n) * sizeof (t)))
+#define TALLOC(n, t) ((t *) xmalloc ((n) * sizeof (t)))
+#define RETALLOC(addr, n, t) ((addr) = (t *) xrealloc (addr, (n) * sizeof (t)))
 #define REGEX_TALLOC(n, t) ((t *) REGEX_ALLOCATE ((n) * sizeof (t)))
 
 #define BYTEWIDTH 8 /* In bits.  */
@@ -1115,6 +1206,26 @@ static const char *re_error_msgid[] =
 
 /* Avoiding alloca during matching, to placate r_alloc.  */
 
+/* About these various flags:
+
+   MATCH_MAY_ALLOCATE indicates that it's OK to do allocation in the
+   searching and matching functions.  In this case, we use local variables
+   to hold the values allocated.  If not, we use *global* variables, which
+   are pre-allocated.  NOTE: XEmacs ***MUST*** run with MATCH_MAY_ALLOCATE,
+   because the regexp routines may get called reentrantly as a result of
+   QUIT processing (e.g. under Windows: re_match -> QUIT -> quit_p -> drain
+   events -> process WM_INITMENU -> call filter -> re_match; see stack
+   trace in signal.c), so we cannot have any global variables (unless we do
+   lots of trickiness including some unwind-protects, which isn't worth it
+   at this point).
+
+   REL_ALLOC means that the relocating allocator is in use, for buffers
+   and such.  REGEX_REL_ALLOC means that we use rel-alloc to manage the
+   fail stack, which may grow quite large.  REGEX_MALLOC means we use
+   malloc() in place of alloca() to allocate the fail stack -- only
+   applicable if REGEX_REL_ALLOC is not defined.
+*/
+
 /* Define MATCH_MAY_ALLOCATE unless we need to make sure that the
    searching and matching functions should not call alloca.  On some
    systems, alloca is implemented in terms of malloc, and if we're
@@ -1147,21 +1258,25 @@ static const char *re_error_msgid[] =
    matching routines; then we don't notice interrupts when they come
    in.  So, Emacs blocks input around all regexp calls except the
    matching calls, which it leaves unprotected, in the faith that they
-   will not malloc.]] This previous paragraph is irrelevant.
+   will not malloc.]] This previous paragraph is irrelevant under XEmacs,
+   as we *do not* do anything so stupid as process input from within a
+   signal handler.
 
-   XEmacs: We *do not* do anything so stupid as process input from within a
-   signal handler.  However, the regexp routines may get called reentrantly
-   as a result of QUIT processing (e.g. under Windows: re_match -> QUIT ->
-   quit_p -> drain events -> process WM_INITMENU -> call filter ->
-   re_match; see stack trace in signal.c), so we cannot have any global
-   variables (unless we do lots of trickiness including some
-   unwind-protects, which isn't worth it at this point).  The first
-   paragraph appears utterly garbled to me -- shouldn't *ANY* use of
-   rel-alloc to different potentially cause buffer data to be relocated?  I
+   However, the regexp routines may get called reentrantly as a result of
+   QUIT processing (e.g. under Windows: re_match -> QUIT -> quit_p -> drain
+   events -> process WM_INITMENU -> call filter -> re_match; see stack
+   trace in signal.c), so we cannot have any global variables (unless we do
+   lots of trickiness including some unwind-protects, which isn't worth it
+   at this point).  Hence we MUST have MATCH_MAY_ALLOCATE defined.
+
+   Also, the first paragraph does not make complete sense to me -- what
+   about the use of rel-alloc to handle the fail stacks?  Shouldn't these
+   reallocations potentially cause buffer data to be relocated as well?  I
    must be missing something, though -- perhaps the writer above is
    assuming that the failure stack(s) will always be allocated after the
    buffer data, and thus reallocating them with rel-alloc won't move buffer
-   data. --ben */
+   data. (In fact, a cursory glance at the code in ralloc.c seems to
+   confirm this.) --ben */
 
 /* Normally, this is fine.  */
 #define MATCH_MAY_ALLOCATE
@@ -1178,14 +1293,12 @@ static const char *re_error_msgid[] =
    failure stack, but we would still use it for the register vectors;
    so REL_ALLOC should not affect this.  */
 
-/* XEmacs change emacs -> REL_ALLOC */
-#if (defined (C_ALLOCA) || defined (REGEX_MALLOC)) && defined (REL_ALLOC)
+/* XEmacs can handle REL_ALLOC and malloc() OK */
+#if !defined (emacs) && (defined (C_ALLOCA) || defined (REGEX_MALLOC)) && defined (REL_ALLOC)
 #undef MATCH_MAY_ALLOCATE
 #endif
 
-/* #### need better check */
-
-#if !defined (MATCH_MAY_ALLOCATE) && defined (emacs) && defined (HAVE_MS_WINDOWS)
+#if !defined (MATCH_MAY_ALLOCATE) && defined (emacs)
 #error regex must be handle reentrancy; MATCH_MAY_ALLOCATE must be defined
 #endif
 
@@ -1238,16 +1351,20 @@ typedef struct
    Do `return -2' if the alloc fails.  */
 
 #ifdef MATCH_MAY_ALLOCATE
-#define INIT_FAIL_STACK()						\
-  do {									\
-    fail_stack.stack = (fail_stack_elt_t *)				\
-      REGEX_ALLOCATE_STACK (INIT_FAILURE_ALLOC * sizeof (fail_stack_elt_t));	\
-									\
-    if (fail_stack.stack == NULL)					\
-      return -2;							\
-									\
-    fail_stack.size = INIT_FAILURE_ALLOC;				\
-    fail_stack.avail = 0;						\
+#define INIT_FAIL_STACK()				\
+  do {							\
+    fail_stack.stack = (fail_stack_elt_t *)		\
+      REGEX_ALLOCATE_STACK (INIT_FAILURE_ALLOC *	\
+			    sizeof (fail_stack_elt_t));	\
+							\
+    if (fail_stack.stack == NULL)			\
+      {							\
+        UNBIND_REGEX_MALLOC_CHECK ();			\
+	return -2;					\
+      }							\
+							\
+    fail_stack.size = INIT_FAILURE_ALLOC;		\
+    fail_stack.avail = 0;				\
   } while (0)
 
 #define RESET_FAIL_STACK()  REGEX_FREE_STACK (fail_stack.stack)
@@ -1281,6 +1398,93 @@ typedef struct
       : ((fail_stack).size <<= 1, 					\
          1)))
 
+#if !defined (emacs) || !defined (REL_ALLOC)
+#define RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS()
+#else
+/* Don't change NULL pointers */
+#define ADD_IF_NZ(val) if (val) val += rmdp_offset
+#define RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS()			\
+do									\
+{									\
+  Bytecount rmdp_offset = offset_post_relocation (lispobj, string1);	\
+									\
+  if (rmdp_offset)							\
+    {									\
+      int i;								\
+									\
+      ADD_IF_NZ (string1);						\
+      ADD_IF_NZ (string2);						\
+      ADD_IF_NZ (d);							\
+      ADD_IF_NZ (dend);							\
+      ADD_IF_NZ (end1);							\
+      ADD_IF_NZ (end2);							\
+      ADD_IF_NZ (end_match_1);						\
+      ADD_IF_NZ (end_match_2);						\
+									\
+      if (bufp->re_ngroups)						\
+	{								\
+	  for (i = 0; i < numregs; i++)					\
+	    {								\
+	      ADD_IF_NZ (regstart[i]);					\
+	      ADD_IF_NZ (regend[i]);					\
+	      ADD_IF_NZ (old_regstart[i]);				\
+	      ADD_IF_NZ (old_regend[i]);				\
+	      ADD_IF_NZ (best_regstart[i]);				\
+	      ADD_IF_NZ (best_regend[i]);				\
+	      ADD_IF_NZ (reg_dummy[i]);					\
+	    }								\
+	}								\
+									\
+      ADD_IF_NZ (match_end);						\
+    }									\
+} while (0)
+#endif /* !defined (emacs) || !defined (REL_ALLOC) */
+
+#if !defined (emacs) || !defined (REL_ALLOC)
+#define RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS()
+#else
+#define RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS()			\
+do									\
+{									\
+  Bytecount rmdp_offset = offset_post_relocation (lispobj, str1);	\
+									\
+  if (rmdp_offset)							\
+    {									\
+      int i;								\
+									\
+      ADD_IF_NZ (str1);							\
+      ADD_IF_NZ (str2);							\
+      ADD_IF_NZ (string1);						\
+      ADD_IF_NZ (string2);						\
+      ADD_IF_NZ (d);							\
+									\
+									\
+									\
+      ADD_IF_NZ (dend);							\
+      ADD_IF_NZ (end1);							\
+      ADD_IF_NZ (end2);							\
+      ADD_IF_NZ (end_match_1);						\
+      ADD_IF_NZ (end_match_2);						\
+									\
+      if (bufp->re_ngroups)						\
+	{								\
+	  for (i = 0; i < numregs; i++)					\
+	    {								\
+	      ADD_IF_NZ (regstart[i]);					\
+	      ADD_IF_NZ (regend[i]);					\
+	      ADD_IF_NZ (old_regstart[i]);				\
+	      ADD_IF_NZ (old_regend[i]);				\
+	      ADD_IF_NZ (best_regstart[i]);				\
+	      ADD_IF_NZ (best_regend[i]);				\
+	      ADD_IF_NZ (reg_dummy[i]);					\
+	    }								\
+	}								\
+									\
+      ADD_IF_NZ (match_end);						\
+    }									\
+} while (0)
+
+#endif /* emacs */
 
 /* Push pointer POINTER on FAIL_STACK.
    Return 1 if was able to do so and 0 if ran out of memory allocating
@@ -1363,13 +1567,20 @@ do {									\
   /* Ensure we have enough space allocated for what we will push.  */	\
   while (REMAINING_AVAIL_SLOTS < NUM_FAILURE_ITEMS)			\
     {									\
+      BEGIN_REGEX_MALLOC_OK ();						\
       if (!DOUBLE_FAIL_STACK (fail_stack))				\
-	return failure_code;						\
-									\
+	{								\
+          END_REGEX_MALLOC_OK ();					\
+	  UNBIND_REGEX_MALLOC_CHECK ();					\
+	  return failure_code;						\
+	}								\
+      END_REGEX_MALLOC_OK ();						\
       DEBUG_PRINT2 ("\n  Doubled stack; size now: %ld\n",		\
 		    (long) (fail_stack).size);				\
       DEBUG_PRINT2 ("  slots available: %ld\n",				\
 		    (long) REMAINING_AVAIL_SLOTS);			\
+									\
+      RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();			\
     }									\
 									\
   /* Push the info, starting with the registers.  */			\
@@ -1676,29 +1887,30 @@ static unsigned char reg_unset_dummy;
    reset the pointers that pointed into the old block to point to the
    correct places in the new one.  If extending the buffer results in it
    being larger than MAX_BUF_SIZE, then flag memory exhausted.  */
-#define EXTEND_BUFFER()							\
-  do { 									\
-    re_char *old_buffer = bufp->buffer;					\
-    if (bufp->allocated == MAX_BUF_SIZE) 				\
-      return REG_ESIZE;							\
-    bufp->allocated <<= 1;						\
-    if (bufp->allocated > MAX_BUF_SIZE)					\
-      bufp->allocated = MAX_BUF_SIZE; 					\
-    bufp->buffer = (unsigned char *) realloc (bufp->buffer, bufp->allocated);\
-    if (bufp->buffer == NULL)						\
-      return REG_ESPACE;						\
-    /* If the buffer moved, move all the pointers into it.  */		\
-    if (old_buffer != bufp->buffer)					\
-      {									\
-        buf_end = (buf_end - old_buffer) + bufp->buffer;		\
-        begalt = (begalt - old_buffer) + bufp->buffer;			\
-        if (fixup_alt_jump)						\
-          fixup_alt_jump = (fixup_alt_jump - old_buffer) + bufp->buffer;\
-        if (laststart)							\
-          laststart = (laststart - old_buffer) + bufp->buffer;		\
-        if (pending_exact)						\
-          pending_exact = (pending_exact - old_buffer) + bufp->buffer;	\
-      }									\
+#define EXTEND_BUFFER()							 \
+  do {									 \
+    re_char *old_buffer = bufp->buffer;					 \
+    if (bufp->allocated == MAX_BUF_SIZE)				 \
+      return REG_ESIZE;							 \
+    bufp->allocated <<= 1;						 \
+    if (bufp->allocated > MAX_BUF_SIZE)					 \
+      bufp->allocated = MAX_BUF_SIZE;					 \
+    bufp->buffer =							 \
+      (unsigned char *) xrealloc (bufp->buffer, bufp->allocated);	 \
+    if (bufp->buffer == NULL)						 \
+      return REG_ESPACE;						 \
+    /* If the buffer moved, move all the pointers into it.  */		 \
+    if (old_buffer != bufp->buffer)					 \
+      {									 \
+        buf_end = (buf_end - old_buffer) + bufp->buffer;		 \
+        begalt = (begalt - old_buffer) + bufp->buffer;			 \
+        if (fixup_alt_jump)						 \
+          fixup_alt_jump = (fixup_alt_jump - old_buffer) + bufp->buffer; \
+        if (laststart)							 \
+          laststart = (laststart - old_buffer) + bufp->buffer;		 \
+        if (pending_exact)						 \
+          pending_exact = (pending_exact - old_buffer) + bufp->buffer;	 \
+      }									 \
   } while (0)
 
 
@@ -1913,7 +2125,11 @@ regex_grow_registers (int num_regs)
 
 /* Return, freeing storage we allocated.  */
 #define FREE_STACK_RETURN(value)		\
-  return (free (compile_stack.stack), value)
+do						\
+{						\
+  xfree (compile_stack.stack);			\
+  return value;					\
+} while (0)
 
 static reg_errcode_t
 regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
@@ -3216,7 +3432,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
   if (syntax & RE_NO_POSIX_BACKTRACKING)
     BUF_PUSH (succeed);
 
-  free (compile_stack.stack);
+  xfree (compile_stack.stack);
 
   /* We have succeeded; set the length of the buffer.  */
   bufp->used = buf_end - bufp->buffer;
@@ -3243,7 +3459,6 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
       {
 	fail_stack.size = (2 * re_max_failures * MAX_FAILURE_ITEMS);
 
-#ifdef emacs
 	if (! fail_stack.stack)
 	  fail_stack.stack
 	    = (fail_stack_elt_t *) xmalloc (fail_stack.size
@@ -3253,17 +3468,6 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 	    = (fail_stack_elt_t *) xrealloc (fail_stack.stack,
 					     (fail_stack.size
 					      * sizeof (fail_stack_elt_t)));
-#else /* not emacs */
-	if (! fail_stack.stack)
-	  fail_stack.stack
-	    = (fail_stack_elt_t *) malloc (fail_stack.size
-					   * sizeof (fail_stack_elt_t));
-	else
-	  fail_stack.stack
-	    = (fail_stack_elt_t *) realloc (fail_stack.stack,
-					    (fail_stack.size
-					     * sizeof (fail_stack_elt_t)));
-#endif /* emacs */
       }
 
     regex_grow_registers (num_regs);
@@ -3548,6 +3752,13 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 
   /* We aren't doing a `succeed_n' to begin with.  */
   re_bool succeed_n_p = false;
+
+#ifdef ERROR_CHECK_MALLOC
+  /* The pattern comes from string data, not buffer data.  We don't access
+     any buffer data, so we don't have to worry about malloc() (but the
+     disallowed flag may have been set by a caller). */
+  int depth = bind_regex_malloc_disallowed (0);
+#endif
 
   assert (fastmap != NULL && p != NULL);
 
@@ -3838,6 +4049,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	case categoryspec:
 	case notcategoryspec:
 	  bufp->can_be_null = 1;
+	  UNBIND_REGEX_MALLOC_CHECK ();
 	  return 0;
 /* end if category patch */
 #endif /* MULE */
@@ -3915,6 +4127,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
               if (!PUSH_PATTERN_OP (p + j, fail_stack))
 		{
 		  RESET_FAIL_STACK ();
+		  UNBIND_REGEX_MALLOC_CHECK ();
 		  return -2;
 		}
             }
@@ -3976,6 +4189,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 
  done:
   RESET_FAIL_STACK ();
+  UNBIND_REGEX_MALLOC_CHECK ();
   return 0;
 } /* re_compile_fastmap */
 
@@ -4072,6 +4286,9 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   re_char *d;
 #ifdef emacs
   Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#ifdef ERROR_CHECK_MALLOC
+  int depth;
+#endif
 #endif /* emacs */
 #if 1
   int forward_search_p;
@@ -4120,10 +4337,23 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
     }
 #endif /* emacs */
 
+#ifdef ERROR_CHECK_MALLOC
+  /* Do this after the above return()s. */
+  depth = bind_regex_malloc_disallowed (1);
+#endif
+
   /* Update the fastmap now if not correct already.  */
+  BEGIN_REGEX_MALLOC_OK ();
   if (fastmap && !bufp->fastmap_accurate)
     if (re_compile_fastmap (bufp RE_LISP_SHORT_CONTEXT_ARGS) == -2)
-      return -2;
+      {
+	END_REGEX_MALLOC_OK ();
+	UNBIND_REGEX_MALLOC_CHECK ();
+	return -2;
+      }
+
+  END_REGEX_MALLOC_OK ();
+  RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 
 #ifdef REGEX_BEGLINE_CHECK
   {
@@ -4142,9 +4372,12 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 #endif
 
 #ifdef emacs
+  BEGIN_REGEX_MALLOC_OK ();
   scache = setup_syntax_cache (scache, lispobj, lispbuf,
 			       offset_to_charxpos (lispobj, startpos),
 			       1);
+  END_REGEX_MALLOC_OK ();
+  RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 #endif
 
   /* Loop through the string, looking for a place to start matching.  */
@@ -4274,7 +4507,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
 #if 1
-		assert (!forward_search_p || range >= 0);
+		      assert (!forward_search_p || range >= 0);
 #endif
 		    }
 		}
@@ -4292,7 +4525,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
 #if 1
-		assert (!forward_search_p || range >= 0);
+		      assert (!forward_search_p || range >= 0);
 #endif
 		    }
 		}
@@ -4338,27 +4571,44 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
       /* If can't match the null string, and that's all we have left, fail.  */
       if (range >= 0 && startpos == total_size && fastmap
           && !bufp->can_be_null)
-	return -1;
+	{
+	  UNBIND_REGEX_MALLOC_CHECK ();
+	  return -1;
+	}
 
 #ifdef emacs /* XEmacs added, w/removal of immediate_quit */
       if (!no_quit_in_re_search)
-	QUIT;
+	{
+	  BEGIN_REGEX_MALLOC_OK ();
+	  QUIT;
+	  END_REGEX_MALLOC_OK ();
+	  RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	}
+
 #endif
+      BEGIN_REGEX_MALLOC_OK ();
       val = re_match_2_internal (bufp, string1, size1, string2, size2,
 				 startpos, regs, stop
 				 RE_LISP_CONTEXT_ARGS);
 #ifndef REGEX_MALLOC
-#ifdef C_ALLOCA
-      alloca (0);
+      ALLOCA_GARBAGE_COLLECT ();
 #endif
-#endif
+      END_REGEX_MALLOC_OK ();
+      RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 
       if (val >= 0)
-	return startpos;
+	{
+	  UNBIND_REGEX_MALLOC_CHECK ();
+	  return startpos;
+	}
 
       if (val == -2)
-	return -2;
+	{
+	  UNBIND_REGEX_MALLOC_CHECK ();
+	  return -2;
+	}
 
+      RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
     advance:
       if (!range)
 	break;
@@ -4390,6 +4640,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	  startpos -= d_size;
 	}
     }
+  UNBIND_REGEX_MALLOC_CHECK ();
   return -1;
 } /* re_search_2 */
 
@@ -4442,6 +4693,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 #define FREE_VAR(var) if (var) REGEX_FREE (var); var = NULL
 #define FREE_VARIABLES()						\
   do {									\
+    UNBIND_REGEX_MALLOC_CHECK ();					\
     REGEX_FREE_STACK (fail_stack.stack);				\
     FREE_VAR (regstart);						\
     FREE_VAR (regend);							\
@@ -4454,7 +4706,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
     FREE_VAR (reg_info_dummy);						\
   } while (0)
 #else /* not MATCH_MAY_ALLOCATE */
-#define FREE_VARIABLES() ((void)0) /* Do nothing!  But inhibit gcc warning.  */
+#define FREE_VARIABLES()			\
+  do {						\
+    UNBIND_REGEX_MALLOC_CHECK ();		\
+  } while (0)
 #endif /* MATCH_MAY_ALLOCATE */
 
 /* These values must meet several constraints.  They must not be valid
@@ -4480,7 +4735,7 @@ re_match (struct re_pattern_buffer *bufp, const char *string, int size,
   int result = re_match_2_internal (bufp, NULL, 0, (re_char *) string, size,
 				    pos, regs, size
 				    RE_LISP_CONTEXT_ARGS);
-  alloca (0);
+  ALLOCA_GARBAGE_COLLECT ();
   return result;
 }
 #endif /* not emacs */
@@ -4517,7 +4772,7 @@ re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
 				pos, regs, stop
 				RE_LISP_CONTEXT_ARGS);
 
-  alloca (0);
+  ALLOCA_GARBAGE_COLLECT ();
   return result;
 }
 
@@ -4659,11 +4914,16 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 #ifdef emacs
   Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#ifdef ERROR_CHECK_MALLOC
+  int depth = bind_regex_malloc_disallowed (1);
+#endif
 #endif /* emacs */
 
   DEBUG_PRINT1 ("\n\nEntering re_match_2.\n");
 
+  BEGIN_REGEX_MALLOC_OK ();
   INIT_FAIL_STACK ();
+  END_REGEX_MALLOC_OK ();
 
 #ifdef MATCH_MAY_ALLOCATE
   /* Do not bother to initialize all the register variables if there are
@@ -4673,6 +4933,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
      array indexing.  We should fix this.  */
   if (bufp->re_ngroups)
     {
+      BEGIN_REGEX_MALLOC_OK ();
       regstart       = REGEX_TALLOC (num_regs, re_char *);
       regend         = REGEX_TALLOC (num_regs, re_char *);
       old_regstart   = REGEX_TALLOC (num_regs, re_char *);
@@ -4682,6 +4943,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
       reg_info       = REGEX_TALLOC (num_regs, register_info_type);
       reg_dummy      = REGEX_TALLOC (num_regs, re_char *);
       reg_info_dummy = REGEX_TALLOC (num_regs, register_info_type);
+      END_REGEX_MALLOC_OK ();
 
       if (!(regstart && regend && old_regstart && old_regend && reg_info
             && best_regstart && best_regend && reg_dummy && reg_info_dummy))
@@ -4699,6 +4961,20 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
       reg_info = reg_info_dummy = (register_info_type *) NULL;
     }
 #endif /* MATCH_MAY_ALLOCATE */
+
+#if defined (emacs) && defined (REL_ALLOC)
+  {
+    /* If the allocations above (or the call to setup_syntax_cache() in
+       re_match_2) caused a rel-alloc relocation, then fix up the data
+       pointers */
+    Bytecount offset = offset_post_relocation (lispobj, string1);
+    if (offset)
+      {
+	string1 += offset;
+	string2 += offset;
+      }
+  }
+#endif /* defined (emacs) && defined (REL_ALLOC) */
 
   /* The starting position is bogus.  */
   if (pos < 0 || pos > size1 + size2)
@@ -4775,7 +5051,12 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
       DEBUG_PRINT2 ("\n0x%lx: ", (long) p);
 #ifdef emacs /* XEmacs added, w/removal of immediate_quit */
       if (!no_quit_in_re_search)
-	QUIT;
+	{
+	  BEGIN_REGEX_MALLOC_OK ();
+	  QUIT;
+	  END_REGEX_MALLOC_OK ();
+	  RE_SEARCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	}
 #endif
 
       if (p == pend)
@@ -4857,8 +5138,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		       extra element beyond `num_regs' for the `-1' marker
 		       GNU code uses.  */
 		    regs->num_regs = MAX (RE_NREGS, num_nonshy_regs + 1);
+		    BEGIN_REGEX_MALLOC_OK ();
 		    regs->start = TALLOC (regs->num_regs, regoff_t);
 		    regs->end = TALLOC (regs->num_regs, regoff_t);
+		    END_REGEX_MALLOC_OK ();
+		    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 		    if (regs->start == NULL || regs->end == NULL)
 		      {
 			FREE_VARIABLES ();
@@ -4873,8 +5157,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		    if (regs->num_regs < num_nonshy_regs + 1)
 		      {
 			regs->num_regs = num_nonshy_regs + 1;
+			BEGIN_REGEX_MALLOC_OK ();
 			RETALLOC (regs->start, regs->num_regs, regoff_t);
 			RETALLOC (regs->end, regs->num_regs, regoff_t);
+			END_REGEX_MALLOC_OK ();
+			RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 			if (regs->start == NULL || regs->end == NULL)
 			  {
 			    FREE_VARIABLES ();
@@ -5815,6 +6102,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 		pos_before =
 		  offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)) - 1;
+		BEGIN_REGEX_MALLOC_OK ();
 		UPDATE_SYNTAX_CACHE (scache, pos_before);
 #endif
 		syn1 = SYNTAX_FROM_CACHE (scache, emch1);
@@ -5824,6 +6112,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		syn2 = SYNTAX_FROM_CACHE (scache, emch2);
 
 		result = ((syn1 == Sword) != (syn2 == Sword));
+		END_REGEX_MALLOC_OK ();
+		RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 	      }
 	    if (result == should_succeed)
 	      break;
@@ -5848,21 +6138,30 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      */
 	    re_char *dtmp = POS_AFTER_GAP_UNSAFE (d);
 	    Ichar emch = itext_ichar_fmt (dtmp, fmt, lispobj);
+	    int tempres;
+	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
-	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
+	    tempres = (SYNTAX_FROM_CACHE (scache, emch) != Sword);
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	    if (tempres)
 	      goto fail;
 	    if (AT_STRINGS_BEG (d))
 	      break;
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
 	    DEC_IBYTEPTR_FMT (dtmp, fmt);
 	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
+	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    UPDATE_SYNTAX_CACHE_BACKWARD (scache, charpos - 1);
 #endif
-	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
+	    tempres = (SYNTAX_FROM_CACHE (scache, emch) != Sword);
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	    if (tempres)
 	      break;
 	    goto fail;
 	  }
@@ -5882,23 +6181,35 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      */
 	    re_char *dtmp;
 	    Ichar emch;
+	    int tempres;
+	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
 	    DEC_IBYTEPTR_FMT (dtmp, fmt);
 	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
-	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
+	    BEGIN_REGEX_MALLOC_OK ();
+	    tempres = (SYNTAX_FROM_CACHE (scache, emch) != Sword);
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	    if (tempres)
 	      goto fail;
 	    if (AT_STRINGS_END (d))
 	      break;
 	    dtmp = POS_AFTER_GAP_UNSAFE (d);
 	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
+	    BEGIN_REGEX_MALLOC_OK ();
 #ifdef emacs
 	    UPDATE_SYNTAX_CACHE_FORWARD (scache, charpos + 1);
 #endif
-	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
+	    tempres = (SYNTAX_FROM_CACHE (scache, emch) != Sword);
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
+	    if (tempres)
 	      break;
 	    goto fail;
 	  }
@@ -5944,12 +6255,18 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    Ichar emch;
 
 	    REGEX_PREFETCH ();
+	    BEGIN_REGEX_MALLOC_OK ();
 	    UPDATE_SYNTAX_CACHE
 	      (scache, offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)));
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 
 	    emch = itext_ichar_fmt (d, fmt, lispobj);
+	    BEGIN_REGEX_MALLOC_OK ();
 	    matches = (SYNTAX_FROM_CACHE (scache, emch) ==
 		       (enum syntaxcode) mcnt);
+	    END_REGEX_MALLOC_OK ();
+	    RE_MATCH_RELOCATE_MOVEABLE_DATA_POINTERS ();
 	    INC_IBYTEPTR_FMT (d, fmt);
 	    if (matches != should_succeed)
 	      goto fail;
@@ -6074,7 +6391,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   FREE_VARIABLES ();
 
   return -1;         			/* Failure to match.  */
-} /* re_match_2 */
+} /* re_match_2_internal */
 
 /* Subroutine definitions for re_match_2.  */
 
@@ -6415,12 +6732,12 @@ re_comp (const char *s)
 
   if (!re_comp_buf.buffer)
     {
-      re_comp_buf.buffer = (unsigned char *) malloc (200);
+      re_comp_buf.buffer = (unsigned char *) xmalloc (200);
       if (re_comp_buf.buffer == NULL)
         return gettext (re_error_msgid[(int) REG_ESPACE]);
       re_comp_buf.allocated = 200;
 
-      re_comp_buf.fastmap = (char *) malloc (1 << BYTEWIDTH);
+      re_comp_buf.fastmap = (char *) xmalloc (1 << BYTEWIDTH);
       if (re_comp_buf.fastmap == NULL)
 	return gettext (re_error_msgid[(int) REG_ESPACE]);
     }
@@ -6514,7 +6831,7 @@ regcomp (regex_t *preg, const char *pattern, int cflags)
     {
       int i;
 
-      preg->translate = (char *) malloc (CHAR_SET_SIZE);
+      preg->translate = (char *) xmalloc (CHAR_SET_SIZE);
       if (preg->translate == NULL)
         return (int) REG_ESPACE;
 
@@ -6613,8 +6930,8 @@ regexec (const regex_t *preg, const char *string, size_t nmatch,
         }
 
       /* If we needed the temporary register info, free the space now.  */
-      free (regs.start);
-      free (regs.end);
+      xfree (regs.start);
+      xfree (regs.end);
     }
 
   /* We want zero return to mean success, unlike `re_search'.  */
@@ -6666,19 +6983,19 @@ void
 regfree (regex_t *preg)
 {
   if (preg->buffer != NULL)
-    free (preg->buffer);
+    xfree (preg->buffer);
   preg->buffer = NULL;
 
   preg->allocated = 0;
   preg->used = 0;
 
   if (preg->fastmap != NULL)
-    free (preg->fastmap);
+    xfree (preg->fastmap);
   preg->fastmap = NULL;
   preg->fastmap_accurate = 0;
 
   if (preg->translate != NULL)
-    free (preg->translate);
+    xfree (preg->translate);
   preg->translate = NULL;
 }
 

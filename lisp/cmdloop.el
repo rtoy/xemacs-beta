@@ -1,7 +1,7 @@
 ;;; cmdloop.el --- support functions for the top-level command loop.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2001, 2002 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003 Ben Wing.
  
 ;; Author: Richard Mlynarik
 ;; Date: 8-Jul-92
@@ -26,6 +26,7 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30. (Some of the stuff below is in FSF's subr.el.)
+;;; Some parts synched with FSF 21.2.
 
 ;;; Commentary:
 
@@ -519,21 +520,45 @@ the wrong thing for you to be using: consider using the
 	     (null ch)))
     ch))
 
+;;;; Input and display facilities.
+
+;; BEGIN SYNCHED WITH FSF 21.2.
+
+(defvar read-quoted-char-radix 8
+  "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
+Legitimate radix values are 8, 10 and 16.")
+
+(custom-declare-variable-early
+ 'read-quoted-char-radix 8 
+ "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
+Legitimate radix values are 8, 10 and 16."
+  :type '(choice (const 8) (const 10) (const 16))
+  :group 'editing-basics)
+
 (defun read-quoted-char (&optional prompt)
-  "Like `read-char', except that if the first character read is an octal
-digit, we read up to two more octal digits and return the character
-represented by the octal number consisting of those digits.
-Optional argument PROMPT specifies a string to use to prompt the user."
-  (let ((count 0) (code 0) done
+  "Like `read-char', but do not allow quitting.
+Also, if the first character read is an octal digit,
+we read any number of octal digits and return the
+specified character code.  Any nondigit terminates the sequence.
+If the terminator is RET, it is discarded;
+any other terminator is used itself as input.
+
+The optional argument PROMPT specifies a string to use to prompt the user.
+The variable `read-quoted-char-radix' controls which radix to use
+for numeric input."
+  (let (;(message-log-max nil)
+	done (first t) (code 0) char event
 	(prompt (and prompt (gettext prompt)))
-	char event)
-    (while (and (not done) (< count 3))
-      (let ((inhibit-quit (zerop count))
+	)
+    (while (not done)
+      (let ((inhibit-quit first)
 	    ;; Don't let C-h get the help message--only help function keys.
 	    (help-char nil)
 	    (help-form
 	     "Type the special character you want to use,
-or three octal digits representing its character code."))
+or the octal character code.
+RET terminates the character code and is discarded;
+any other non-digit terminates the character code and is then used as input."))
 	(and prompt (display-message 'prompt (format "%s-" prompt)))
 	(setq event (next-command-event)
 	      char (or (event-to-character event nil nil t)
@@ -541,22 +566,93 @@ or three octal digits representing its character code."))
 			       (list "key read cannot be inserted in a buffer"
 				     event))))
 	(if inhibit-quit (setq quit-flag nil)))
-      (cond ((<= ?0 char ?7)
-	     (setq code (+ (* code 8) (- char ?0))
-		   count (1+ count))
-	     (when prompt
-	       (display-message 'prompt
-		 (setq prompt (format "%s %c" prompt char)))))
-	    ((> count 0)
-	     (setq unread-command-event event
+      ;; Translate TAB key into control-I ASCII character, and so on.
+      (and char
+	   (let ((translated (lookup-key function-key-map (vector char))))
+	     (if (arrayp translated)
+		 (setq char (aref translated 0)))))
+      (cond ((null char))
+	    ((not (characterp char))
+	     (setq unread-command-events (list char)
 		   done t))
-	    (t (setq code (char-int char)
-		     done t))))
-    (int-char code)
-    ;; Turn a meta-character into a character with the 0200 bit set.
-;    (logior (if (/= (logand code ?\M-\^@) 0) 128 0)
-;	    (logand 255 code))))
-    ))
+; 	    ((/= (logand char ?\M-\^@) 0)
+; 	     ;; Turn a meta-character into a character with the 0200 bit set.
+; 	     (setq code (logior (logand char (lognot ?\M-\^@)) 128)
+; 		   done t))
+	    ((and (<= ?0 char) (< char (+ ?0 (min 10 read-quoted-char-radix))))
+	     (setq code (+ (* code read-quoted-char-radix) (- char ?0)))
+	     (and prompt (setq prompt (display-message 'prompt
+					(format "%s %c" prompt char)))))
+	    ((and (<= ?a (downcase char))
+		  (< (downcase char) (+ ?a -10 (min 26 read-quoted-char-radix))))
+	     (setq code (+ (* code read-quoted-char-radix)
+			   (+ 10 (- (downcase char) ?a))))
+	     (and prompt (setq prompt (display-message 'prompt
+					(format "%s %c" prompt char)))))
+	    ((and (not first) (eq char ?\C-m))
+	     (setq done t))
+	    ((not first)
+	     (setq unread-command-events (list char)
+		   done t))
+	    (t (setq code char
+		     done t)))
+      (setq first nil))
+    (int-to-char code)))
+
+;; in passwd.el.
+; (defun read-passwd (prompt &optional confirm default)
+;   "Read a password, prompting with PROMPT.  Echo `.' for each character typed.
+; End with RET, LFD, or ESC.  DEL or C-h rubs out.  C-u kills line.
+; Optional argument CONFIRM, if non-nil, then read it twice to make sure.
+; Optional DEFAULT is a default password to use instead of empty input."
+;   (if confirm
+;       (let (success)
+; 	(while (not success)
+; 	  (let ((first (read-passwd prompt nil default))
+; 		(second (read-passwd "Confirm password: " nil default)))
+; 	    (if (equal first second)
+; 		(progn
+; 		  (and (arrayp second) (fillarray second ?\0))
+; 		  (setq success first))
+; 	      (and (arrayp first) (fillarray first ?\0))
+; 	      (and (arrayp second) (fillarray second ?\0))
+; 	      (message "Password not repeated accurately; please start over")
+; 	      (sit-for 1))))
+; 	success)
+;     (let ((pass nil)
+; 	  (c 0)
+; 	  (echo-keystrokes 0)
+; 	  (cursor-in-echo-area t))
+;       (while (progn (message "%s%s"
+; 			     prompt
+; 			     (make-string (length pass) ?.))
+; 		    (setq c (read-char-exclusive nil t))
+; 		    (and (/= c ?\r) (/= c ?\n) (/= c ?\e)))
+; 	(clear-this-command-keys)
+; 	(if (= c ?\C-u)
+; 	    (progn
+; 	      (and (arrayp pass) (fillarray pass ?\0))
+; 	      (setq pass ""))
+; 	  (if (and (/= c ?\b) (/= c ?\177))
+; 	      (let* ((new-char (char-to-string c))
+; 		     (new-pass (concat pass new-char)))
+; 		(and (arrayp pass) (fillarray pass ?\0))
+; 		(fillarray new-char ?\0)
+; 		(setq c ?\0)
+; 		(setq pass new-pass))
+; 	    (if (> (length pass) 0)
+; 		(let ((new-pass (substring pass 0 -1)))
+; 		  (and (arrayp pass) (fillarray pass ?\0))
+; 		  (setq pass new-pass))))))
+;       (message nil)
+;       (or pass default ""))))
+
+;; aliased to redraw-modeline, a built-in.
+; (defun force-mode-line-update (&optional all)
+;   "Force the mode-line of the current buffer to be redisplayed.
+; With optional non-nil ALL, force redisplay of all mode-lines."
+;   (if all (save-excursion (set-buffer (other-buffer))))
+;   (set-buffer-modified-p (buffer-modified-p)))
 
 (defun momentary-string-display (string pos &optional exit-char message) 
   "Momentarily display STRING in the buffer at POS.
@@ -566,7 +662,7 @@ otherwise it is then available as input (as a command if nothing else).
 Display MESSAGE (optional fourth arg) in the echo area.
 If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
   (or exit-char (setq exit-char ?\ ))
-  (let ((buffer-read-only nil)
+  (let ((inhibit-read-only t)
 	;; Don't modify the undo list at all.
 	(buffer-undo-list t)
 	(modified (buffer-modified-p))
@@ -580,8 +676,8 @@ If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
 	    (setq buffer-file-name nil)
 	    (insert-before-markers (gettext string))
 	    (setq insert-end (point))
-	    ;; If the message end is off frame, recenter now.
-	    (if (> (window-end) insert-end)
+	    ;; If the message end is off screen, recenter now.
+	    (if (< (window-end nil t) insert-end)
 		(recenter (/ (window-height) 2)))
 	    ;; If that pushed message start off the frame,
 	    ;; scroll to start it at the top of the frame.
@@ -594,11 +690,13 @@ If MESSAGE is nil, instructions to type EXIT-CHAR are displayed there."
 		   (single-key-description exit-char))
 	  (let ((event (save-excursion (next-command-event))))
 	    (or (eq (event-to-character event) exit-char)
-		(setq unread-command-event event))))
+		(setq unread-command-events (list event)))))
       (if insert-end
 	  (save-excursion
 	    (delete-region pos insert-end)))
       (setq buffer-file-name name)
       (set-buffer-modified-p modified))))
+
+;; END SYNCHED WITH FSF 21.2.
 
 ;;; cmdloop.el ends here

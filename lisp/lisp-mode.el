@@ -72,9 +72,7 @@
 			 (indent-sexp)))]
 	"---"
 	["%_Comment Out Region" comment-region :active (region-exists-p)]
-	["Unc%_omment Region" (comment-region (region-beginning)
-					      (region-end) '(4))
-	 :active (region-exists-p)]
+	["Unc%_omment Region" uncomment-region :active (region-exists-p)]
 	"---"
 	,@(if popup-p
 	    '(["%_Find Function"

@@ -161,8 +161,8 @@ PROFILE_SUPPORT=0
 !if !defined(DEBUG_XEMACS)
 DEBUG_XEMACS=0
 !endif
-!if !defined(HAVE_VC6)
-HAVE_VC6=1
+!if !defined(SUPPORT_EDIT_AND_CONTINUE)
+SUPPORT_EDIT_AND_CONTINUE=0
 !endif
 
 !if !defined(ERROR_CHECK_ALL)
@@ -520,13 +520,17 @@ CCV=@$(CC)
 !if $(DEBUG_XEMACS)
 
 # ---- Debugging support ----
-! if $(HAVE_VC6)
+! if $(SUPPORT_EDIT_AND_CONTINUE)
 # support edit-and-continue
 DEBUG_FLAGS_COMPILE=-ZI
+# WARNING: There is a very good reason for -incremental:no, as it can cause
+# all sorts of weird crashes in or after a pdump load.  We must allow
+# incremental linking for edit-and-continue to work, however.
+DEBUG_FLAGS_LINK=-debug:full
 ! else
 DEBUG_FLAGS_COMPILE=-Zi
+DEBUG_FLAGS_LINK=-debug:full -incremental:no
 ! endif
-DEBUG_FLAGS_LINK=-debug:full
 DEBUG_DEFINES=-DDEBUG_XEMACS -D_DEBUG 
 #BROWSERFLAGS=-Fr -Fd$(OUTDIR)\temacs.pdb
 BROWSERFLAGS=-Fr$*.sbr -Fd$(OUTDIR)\temacs.pdb
@@ -882,14 +886,16 @@ CONFIG_VALUES = $(BLDLIB_SRC)\config.values
 LINK_DEPENDENCY_ARGS = -Fe$@ -Fd$* $** -link $(DEBUG_FLAGS_LINK)
 LINK_STANDARD_LIBRARY_ARGS = setargv.obj user32.lib wsock32.lib
 
+LIB_SRC_CFLAGS = $(CFLAGS) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES)
+
 # Inferred rule
 {$(LIB_SRC)}.c{$(BLDLIB_SRC)}.exe :
-	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) $(LINK_DEPENDENCY_ARGS) $(LINK_STANDARD_LIBRARY_ARGS)
+	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) $(LINK_STANDARD_LIBRARY_ARGS)
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(BLDLIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
-	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) $(LINK_DEPENDENCY_ARGS) -stack:0x800000 $(LINK_STANDARD_LIBRARY_ARGS)
+	$(CCV) $(LIB_SRC_CFLAGS) $(LINK_DEPENDENCY_ARGS) -stack:0x800000 $(LINK_STANDARD_LIBRARY_ARGS)
 
 $(BLDLIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 
@@ -1131,7 +1137,8 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=) $(xemacs_extra_name:"=) co
   Building XEmacs into compiled tree "$(BLDROOT:\=\\)".
 !endif
 !if defined(CCV)
-  Using compiler "$(CC) $(CFLAGS)".
+  For src, using compiler "$(CC) $(TEMACS_CPP_FLAGS)".
+  For lib-src, using compiler "$(CC) $(LIB_SRC_CFLAGS)".
 !endif
 !if $(CPLUSPLUS_COMPILE)
   Compiling as C++.
@@ -1262,8 +1269,8 @@ TEMACS_LIBS=$(LASTFILE) $(MSW_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
  mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
-TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) -base:0x1000000\
- -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows\
+TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) \
+ -base:0x1000000 -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows \
  -pdb:$(BLDSRC)\temacs.pdb -map:$(BLDSRC)\temacs.map \
  -heap:0x00100000 -nodefaultlib $(PROFILE_FLAGS) setargv.obj
 

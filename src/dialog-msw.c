@@ -1,6 +1,6 @@
 /* Implements elisp-programmable dialog boxes -- MS Windows interface.
    Copyright (C) 1998 Kirill M. Katsnelson <kkm@kis.ru>
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -230,7 +230,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 	  mswindows_enqueue_misc_user_event (did->frame, Qrun_hooks,
 					     Qmenu_no_selection_hook);
 	va_run_hook_with_args_trapping_problems
-	  (0, Qdelete_dialog_box_hook, 1, data, 0);
+	  (Qdialog, Qdelete_dialog_box_hook, 1, data, 0);
 
 	DestroyWindow (hwnd);
       }

@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1993-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+;; Copyright (C) 2003 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internals, dumped
@@ -37,21 +38,15 @@
 
 ;;; Code:
 
-(put 'undefined 'suppress-keymap t)
+;; BEGIN SYNCHED WITH FSF 21.2.
 
 (defun undefined ()
   (interactive)
   (ding))
 
-(defmacro kbd (keys)
-  "Convert KEYS to the internal Emacs key representation.
-KEYS should be a string in the format used for saving keyboard macros
-\(see `insert-kbd-macro')."
-  (if (or (stringp keys)
-	  (vectorp keys))
-      ;; #### need to move xemacs-base into the core!!!!!!
-      (declare-fboundp (read-kbd-macro keys))
-    `(declare-fboundp (read-kbd-macro ,keys))))
+;Prevent the \{...} documentation construct
+;from mentioning keys that run this command.
+(put 'undefined 'suppress-keymap t)
 
 (defun suppress-keymap (map &optional nodigits)
   "Make MAP override all normally self-inserting keys to be undefined.
@@ -65,6 +60,8 @@ but optional second arg NODIGITS non-nil treats them like other chars."
 	(while (<= (aref string 0) ?9)
 	  (define-key map string 'digit-argument)
 	  (incf (aref string 0))))))
+
+;Unneeded in XEmacs (defvar key-substitution-in-progress nil
 
 (defun substitute-key-definition (olddef newdef keymap &optional oldmap prefix)
   "Replace OLDDEF with NEWDEF for any keys in KEYMAP now defined as OLDDEF.
@@ -84,7 +81,12 @@ KEYMAP are redefined.  See also `accessible-keymaps'."
 	    maps (cdr maps))
       ;; Substitute in this keymap
       (map-keymap #'(lambda (key binding)
-		      (if (eq binding olddef)
+		      (if (or (eq binding olddef)
+			      ;; Compare with equal if definition is a key
+			      ;; sequence.  That is useful for operating on
+			      ;; function-key-map.
+			      (and (or (stringp binding) (vectorp binding))
+				   (equal binding olddef)))
 			  ;; The new bindings always go in KEYMAP even if we
 			  ;; found them in OLDMAP or one of its children.
 			  ;; If KEYMAP will be shadowing OLDMAP, then do not
@@ -103,6 +105,38 @@ KEYMAP are redefined.  See also `accessible-keymaps'."
 		  map)
       )))
 
+;; FSF garbage.  They misguidedly tried to put menu entries into keymaps,
+;; and needed stuff like the following.  Eventually they admitted defeat
+;; and switched to our method.
+
+; (defun define-key-after (keymap key definition &optional after)
+;   "Add binding in KEYMAP for KEY => DEFINITION, right after AFTER's binding.
+; This is like `define-key' except that the binding for KEY is placed
+; just after the binding for the event AFTER, instead of at the beginning
+; of the map.  Note that AFTER must be an event type (like KEY), NOT a command
+; \(like DEFINITION).
+;
+; If AFTER is t or omitted, the new binding goes at the end of the keymap.
+;
+; KEY must contain just one event type--that is to say, it must be a
+; string or vector of length 1, but AFTER should be a single event
+; type--a symbol or a character, not a sequence.
+;
+; Bindings are always added before any inherited map.
+;
+; The order of bindings in a keymap matters when it is used as a menu."
+
+(defmacro kbd (keys)
+  "Convert KEYS to the internal Emacs key representation.
+KEYS should be a string constant in the format used for
+saving keyboard macros (see `insert-kbd-macro')."
+  (if (or (stringp keys)
+	  (vectorp keys))
+      ;; #### need to move xemacs-base into the core!!!!!!
+      (declare-fboundp (read-kbd-macro keys))
+    `(declare-fboundp (read-kbd-macro ,keys))))
+
+;; END SYNCHED WITH FSF 21.2.
 
 ;; This used to wrap forms into an interactive lambda.  It is unclear
 ;; to me why this is needed in this function.  Anyway,

@@ -122,6 +122,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x\C-d" 'list-directory)
 (define-key global-map "\C-x\C-c" 'save-buffers-kill-emacs)
 
+(define-key global-map "\C-x4c" 'clone-indirect-buffer-other-window)
 (define-key global-map "\C-x4f" 'find-file-other-window)
 (define-key global-map "\C-x4r" 'find-file-read-only-other-window)
 (define-key global-map "\C-x4\C-f" 'find-file-other-window)

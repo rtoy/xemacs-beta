@@ -315,6 +315,7 @@ set_alloc_mins_and_maxes (void *val, Bytecount size)
 
 #ifdef ERROR_CHECK_MALLOC
 static int in_malloc;
+extern int regex_malloc_disallowed;
 #endif
 
 #undef xmalloc
@@ -324,6 +325,7 @@ xmalloc (Bytecount size)
   void *val;
 #ifdef ERROR_CHECK_MALLOC
   assert (!in_malloc);
+  assert (!regex_malloc_disallowed);
   in_malloc = 1;
 #endif
   val = malloc (size);
@@ -342,6 +344,7 @@ xcalloc (Elemcount nelem, Bytecount elsize)
   void *val;
 #ifdef ERROR_CHECK_MALLOC
   assert (!in_malloc);
+  assert (!regex_malloc_disallowed);
   in_malloc = 1;
 #endif
   val= calloc (nelem, elsize);
@@ -366,6 +369,7 @@ xrealloc (void *block, Bytecount size)
 {
 #ifdef ERROR_CHECK_MALLOC
   assert (!in_malloc);
+  assert (!regex_malloc_disallowed);
   in_malloc = 1;
 #endif
   block = realloc (block, size);
@@ -392,6 +396,7 @@ xfree (void *block)
   assert (block != (void *) 0xDEADBEEF);
   assert (block);
   assert (!in_malloc);
+  assert (!regex_malloc_disallowed);
   in_malloc = 1;
 #endif /* ERROR_CHECK_MALLOC */
   free (block);
@@ -4448,7 +4453,7 @@ garbage_collect_1 (void)
 
   if (!gc_hooks_inhibited)
     run_hook_trapping_problems
-      ("Error in pre-gc-hook", Qpre_gc_hook,
+      (Qgarbage_collecting, Qpre_gc_hook,
        INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* Now show the GC cursor/message. */

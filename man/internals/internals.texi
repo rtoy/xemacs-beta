@@ -113,6 +113,7 @@ This Info file contains v1.4 of the XEmacs Internals Manual, March 2001.
 * XEmacs From the Outside::     A broad conceptual overview.
 * The Lisp Language::           An overview.
 * XEmacs From the Perspective of Building::
+* Build-Time Dependencies::
 * XEmacs From the Inside::
 * The XEmacs Object System (Abstractly Speaking)::
 * How Lisp Objects Are Represented in C::
@@ -1131,7 +1132,7 @@ intentionally.  XEmacs implements an API for programs written in Lisp
 that makes it a full-fledged application platform, very much like an OS
 inside the real OS.
 
-@node XEmacs From the Perspective of Building, XEmacs From the Inside, The Lisp Language, Top
+@node XEmacs From the Perspective of Building, Build-Time Dependencies, The Lisp Language, Top
 @chapter XEmacs From the Perspective of Building
 @cindex XEmacs from the perspective of building
 @cindex building, XEmacs from the perspective of
@@ -1240,9 +1241,73 @@ by using the incantation @code{temacs -batch -l loadup.el run-temacs}.
 This is useful when the dumping procedure described above is broken, or
 when using certain program debugging tools such as Purify.  These tools
 get mighty confused by the tricks played by the XEmacs build process,
-such as allocation memory in one process, and freeing it in the next.
+such as allocating memory in one process, and freeing it in the next.
 
-@node XEmacs From the Inside, The XEmacs Object System (Abstractly Speaking), XEmacs From the Perspective of Building, Top
+@node Build-Time Dependencies, XEmacs From the Inside, XEmacs From the Perspective of Building, Top
+@chapter Build-Time Dependencies
+@cindex build-time dependencies
+@cindex dependencies, build-time
+
+This is a collection of random notes on build-time dependencies as of
+about XEmacs 21.5.11.  Of course we use @file{make} to manage most
+dependencies, especially for the C code.  The main thing here is for the
+Release Engineer to run the @file{src/make-src-depend} script every so
+often, at least at every release.
+
+However, since most of XEmacs is written in Lisp, and we compile and
+preload the Lisp for efficiency, managing Lisp compilation using
+@file{make} would imply running XEmacs hundreds of times.  This would
+make the build process unbearably long.  Thus those processes that
+require running the same Lisp programs on many files are managed using
+Lisp driver functions rather than @file{make}.  The situation is further
+complicated by the fact that documentation strings are kept in an
+external database, and referenced in the dumped XEmacs by file offset.
+Finally, the Lisp files are processed to collect autoloaded function
+information and customize dependencies, which are then written into
+generated Lisp files.
+
+About this, Ben sez:
+
+@quotation
+@enumerate 1
+@item
+Redumping depends on up-to-date dumped @file{.elc} files and @file{DOC}
+but not directly on auto-autoloads.
+
+@item
+Rebuilding dumped @file{.elc} files depends on auto-autoloads being
+up-to-date.
+
+@item
+Building the @file{DOC} file depends on up-to-date dumped @file{.elc}
+files but not directly on auto-autoloads.
+
+@item
+Recompiling anything depends on @file{bytecomp.elc} and
+@file{byte-optimize.elc} being up-to-date.
+@end enumerate
+
+Put these together and you'll see it's perfectly acceptable to build
+auto-autoloads *after* dumping if no @file{.elc} files are out-of-date.
+@end quotation
+
+These Lisp driver programs typically run from temacs, not a dumped
+XEmacs.  The simplest (but time-consuming) way to achieve a sane
+environment for running Lisp is to load @file{loadup.el} or
+@file{loadup-el.el}.  (The latter is used to avoid loading possibly
+out-of-date compiled Lisp files.)  If this is not done, you have to
+construct the environment yourself.  See @file{dumped-lisp.el} to see
+how it is done in the dumped XEmacs.
+
+One potential gotcha is that very early customizations are now handled
+by adding the definitions to the special variable
+@code{custom-declare-variable-list}, defined in @file{subr.el}.  If you
+use any higher-level functionality that might load @file{custom.el}, but
+you do not need @file{subr.el}, you should @samp{defvar}
+@code{custom-declare-variable-list} to prevent the @samp{void-variable}
+error.  (Currently this is only needed for @file{make-docfile.el}.)
+
+@node XEmacs From the Inside, The XEmacs Object System (Abstractly Speaking), Build-Time Dependencies, Top
 @chapter XEmacs From the Inside
 @cindex XEmacs from the inside
 @cindex inside, XEmacs from the

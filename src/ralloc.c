@@ -65,6 +65,8 @@ void refill_memory_reserve (void);
 
 #else	/* Not emacs.  */
 
+#define REGEX_MALLOC_CHECK()
+
 #include <stddef.h>
 
 typedef void *POINTER;
@@ -943,6 +945,8 @@ r_alloc (POINTER *ptr, size_t size)
 {
   bloc_ptr new_bloc;
 
+  REGEX_MALLOC_CHECK ();
+
   if (! r_alloc_initialized)
     init_ralloc ();
 
@@ -966,6 +970,8 @@ void
 r_alloc_free (POINTER *ptr)
 {
   register bloc_ptr dead_bloc;
+
+  REGEX_MALLOC_CHECK ();
 
   if (! r_alloc_initialized)
     init_ralloc ();
@@ -1001,6 +1007,8 @@ POINTER
 r_re_alloc (POINTER *ptr, size_t size)
 {
   register bloc_ptr bloc;
+
+  REGEX_MALLOC_CHECK ();
 
   if (! r_alloc_initialized)
     init_ralloc ();
@@ -1854,6 +1862,8 @@ r_alloc (POINTER *ptr, size_t size)
 {
   MMAP_HANDLE mh;
 
+  REGEX_MALLOC_CHECK ();
+
   switch(r_alloc_initialized)
     {
     case 0:
@@ -1896,6 +1906,8 @@ void r_alloc_free (POINTER *ptr);
 void
 r_alloc_free (POINTER *ptr)
 {
+  REGEX_MALLOC_CHECK ();
+
   switch( r_alloc_initialized) {
     case 0:
       abort();
@@ -1938,6 +1950,8 @@ POINTER r_re_alloc (POINTER *ptr, size_t sz);
 POINTER
 r_re_alloc (POINTER *ptr, size_t sz)
 {
+  REGEX_MALLOC_CHECK ();
+
   if (r_alloc_initialized == 0)
     {
       abort ();

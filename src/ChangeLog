@@ -1,3 +1,112 @@
+2003-03-01  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xrealloc):
+	* alloc.c (endif):
+	* lisp.h (ALLOCA):
+	* lisp.h (MALLOC_OR_ALLOCA):
+	* lisp.h (DO_REALLOC):
+	* ralloc.c:
+	* ralloc.c (REGEX_MALLOC_CHECK):
+	* ralloc.c (r_alloc):
+	* ralloc.c (r_alloc_free):
+	* ralloc.c (r_re_alloc):
+	* regex.c:
+	* regex.c (REGEX_ALLOCATE):
+	* regex.c (REGEX_REALLOCATE):
+	* regex.c (REGEX_ALLOCATE_STACK):
+	* regex.c (TALLOC):
+	* regex.c (INIT_FAIL_STACK):
+	* regex.c (PUSH_FAILURE_POINT):
+	* regex.c (EXTEND_BUFFER):
+	* regex.c (FREE_STACK_RETURN):
+	* regex.c (regex_compile):
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_search_2):
+	* regex.c (FREE_VARIABLES):
+	* regex.c (re_match):
+	* regex.c (re_match_2):
+	* regex.c (re_match_2_internal):
+	* regex.c (re_comp):
+	* regex.c (regcomp):
+	* regex.c (regexec):
+	* regex.c (regfree):
+	Use ALLOCA() in regex.c to avoid excessive stack allocation.
+	Also fix subtle problem with REL_ALLOC() -- any call to malloc()
+	(direct or indirect) may relocate rel-alloced data, causing
+	buffer text to shift.  After any such call, regex must update
+	all its pointers to such data.  Add a system, when
+	ERROR_CHECK_MALLOC, whereby regex.c indicates all the places
+	it is prepared to handle malloc()/realloc()/free(), and any
+	calls anywhere in XEmacs outside of this will trigger an abort.
+
+	* alloc.c (garbage_collect_1):
+	* dialog-msw.c:
+	* dialog-msw.c (dialog_proc):
+	* eval.c:
+	* eval.c (run_post_gc_hook):
+	* eval.c (flagged_a_squirmer):
+	* eval.c (issue_call_trapping_problems_warning):
+	* eval.c (call_trapping_problems):
+	* eval.c (run_hook_trapping_problems):
+	* eval.c (safe_run_hook_trapping_problems):
+	* eval.c (run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (run_hook_with_args_trapping_problems):
+	* eval.c (va_run_hook_with_args_trapping_problems):
+	* eval.c (va_run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (record_unwind_protect_restoring_int):
+	* event-stream.c (run_pre_idle_hook):
+	* event-stream.c (pre_command_hook):
+	* event-stream.c (post_command_hook):
+	* general-slots.h:
+	* insdel.c:
+	* insdel.c (signal_first_change):
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+	* lisp.h (POSTPONE_WARNING_ISSUE):
+	* lisp.h:
+	* menubar-msw.c:
+	* menubar-msw.c (unsafe_handle_wm_initmenu_1):
+	* menubar-x.c (pre_activate_callback):
+	Change *run_hook*_trapping_problems to take a warning class, not
+	a string.  Factor out code to issue warnings, add flag to
+	call_trapping_problems() to postpone warning issue, and make
+	*run_hook*_trapping_problems issue their own warnings tailored
+	to the hook, postponed in the case of safe_run_hook_trapping_problems()
+	so that the appropriate message can be issued about resetting to
+	nil only when not `quit'.  Make record_unwind_protect_restoring_int()
+	non-static.
+
+	* dumper.c:
+	* dumper.c (pdump_unsupported_dump_type):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_reloc_one):
+	* dumper.c (pdump_dump_root_struct_ptrs):
+	Issue notes about incremental linking problems under Windows.
+	
+	* fileio.c:
+	* fileio.c (barf_or_query_if_file_exists):
+	* fileio.c (Fsysnetunam):
+	* fileio.c (Fencrypt_string):
+	* fileio.c (Fdecrypt_string):
+	* fileio.c (Fdo_auto_save):
+	Mule-ize encrypt/decrypt-string code.
+	
+	* text.h (DEC_IBYTEPTR):
+	* text.h (EI_ALLOC):
+	* text.h (eicpy_lstr):
+	* text.h (eicpy_raw_fmt):
+	* text.h (eicpy_ch):
+	* text.h (eicat_ch):
+	* text.h (eisub_ei):
+	* text.h (eisub_ch):
+	* text.h (eito_external):
+	* text.h (EI_CASECHANGE):
+	Spacing changes.
+
 2003-02-28  Ben Wing  <ben@xemacs.org>
 
 	* m/acorn.h:

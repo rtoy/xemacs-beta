@@ -1024,23 +1024,4 @@ When searching for a match, this function uses
 ;				'query-replace 'region))))
 ;	 (move-overlay replace-overlay start end (current-buffer)))))
 
-(defun match-string (num &optional string)
-  "Return string of text matched by last search.
-NUM specifies which parenthesized expression in the last regexp.
- Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
-Zero means the entire text matched by the whole regexp or whole string.
-STRING should be given if the last search was by `string-match' on STRING."
-  (if (match-beginning num)
-      (if string
-          (substring string (match-beginning num) (match-end num))
-        (buffer-substring (match-beginning num) (match-end num)))))
-
-(defmacro save-match-data (&rest body)
-  "Execute BODY forms, restoring the global value of the match data."
-  (let ((original (make-symbol "match-data")))
-    (list 'let (list (list original '(match-data)))
-	  (list 'unwind-protect
-		(cons 'progn body)
-		(list 'store-match-data original)))))
-
 ;;; replace.el ends here

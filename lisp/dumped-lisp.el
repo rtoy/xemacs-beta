@@ -8,11 +8,16 @@ in dumped-lisp.el and is not itself listed.")
 
 (setq preloaded-file-list
       (list
+       ;; do not defcustom any variables in these files
+
        "backquote" 		; needed for defsubst etc.
        "bytecomp-runtime"	; define defsubst
        "find-paths"
        "packages"		; Bootstrap run-time lisp environment
        "setup-paths"
+
+       ;; use custom-declare-variable-early, not defcustom, in these files
+
        "subr" 			; load the most basic Lisp functions
        "post-gc"
        "replace" 		; match-string used in version.el.
@@ -26,6 +31,9 @@ in dumped-lisp.el and is not itself listed.")
        "custom"		; Before the world so everything can be
 			; customized
        "cus-start"	; for customization of builtin variables
+
+       ;; OK, you can use defcustom from here on
+
        "cmdloop"
        "keymap"
        "syntax"
@@ -52,6 +60,7 @@ in dumped-lisp.el and is not itself listed.")
        "window"		; simple needs `save-window-excursion'
        "window-xemacs"
        "simple"
+       "newcomment"
        "keydefs"		; Before loaddefs so that keymap vars exist.
        "abbrev"
        "derived"

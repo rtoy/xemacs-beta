@@ -490,7 +490,7 @@ do {									   \
 #ifdef ERROR_CHECK_TEXT
 /* We use a separate definition to avoid warnings about unused dc_ptr1 */
 #define DEC_IBYTEPTR(ptr) do {						      \
-  const Ibyte *dc_ptr1 = (ptr);					      \
+  const Ibyte *dc_ptr1 = (ptr);						      \
   do {									      \
     (ptr)--;								      \
   } while (!valid_ibyteptr_p (ptr));					      \
@@ -1880,7 +1880,7 @@ do {									      \
 	{								      \
 	  if ((ei)->mallocp_)						      \
 	    /* xrealloc always preserves existing data as much as possible */ \
-	    (ei)->data_ = (Ibyte *) xrealloc ((ei)->data_, ei1newsize);     \
+	    (ei)->data_ = (Ibyte *) xrealloc ((ei)->data_, ei1newsize);       \
 	  else								      \
 	    {								      \
 	      /* We don't have realloc, so ALLOCA() more space and copy the   \
@@ -1936,7 +1936,7 @@ do {									\
 do {									\
   Lisp_Object ei3 = (lisp_string);					\
   EI_ALLOC_AND_COPY (ei, XSTRING_DATA (ei3), XSTRING_LENGTH (ei3),	\
-		     string_char_length (ei3));			\
+		     string_char_length (ei3));				\
 } while (0)
 
 #define eicpy_lstr_off(ei, lisp_string, off, charoff, len, charlen)	\
@@ -1958,7 +1958,7 @@ do {									\
 
 #define eicpy_raw_fmt(ei, ptr, len, fmt, object)			\
 do {									\
-  const Ibyte *ei12ptr = (ptr);					\
+  const Ibyte *ei12ptr = (ptr);						\
   Internal_Format ei12fmt = (fmt);					\
   int ei12len = (len);							\
   assert (ei12fmt == FORMAT_DEFAULT);					\
@@ -1979,11 +1979,11 @@ do {									\
 
 #define eicpy_rawz(ei, ptr) eicpy_rawz_fmt (ei, ptr, FORMAT_DEFAULT, Qnil)
 
-#define eicpy_ch(ei, ch)					\
-do {								\
+#define eicpy_ch(ei, ch)				\
+do {							\
   Ibyte ei12p2[MAX_ICHAR_LEN];				\
   Bytecount ei12p2len = set_itext_ichar (ei12p2, ch);	\
-  EI_ALLOC_AND_COPY (ei, ei12p2, ei12p2len, 1);			\
+  EI_ALLOC_AND_COPY (ei, ei12p2, ei12p2len, 1);		\
 } while (0)
 
 #define eicpy_c(ei, c_string)			\
@@ -2244,7 +2244,7 @@ do {								\
 
 #define eicat_ch(ei, ch)				\
 do {							\
-  Ibyte ei22ch[MAX_ICHAR_LEN];			\
+  Ibyte ei22ch[MAX_ICHAR_LEN];				\
   Bytecount ei22len = set_itext_ichar (ei22ch, ch);	\
   eicat_1 (ei, ei22ch, ei22len, 1);			\
 } while (0)
@@ -2285,7 +2285,7 @@ do {									 \
 
 #define eisub_ei(ei, off, charoff, len, charlen, ei2)			\
 do {									\
-  const Eistring *ei19 = (ei2);					\
+  const Eistring *ei19 = (ei2);						\
   eisub_1 (ei, off, charoff, len, charlen, ei19->data_, ei19->bytelen_,	\
 	   ei19->charlen_);						\
 } while (0)
@@ -2300,7 +2300,7 @@ do {								\
 
 #define eisub_ch(ei, off, charoff, len, charlen, ch)		\
 do {								\
-  Ibyte ei21ch[MAX_ICHAR_LEN];				\
+  Ibyte ei21ch[MAX_ICHAR_LEN];					\
   Bytecount ei21len = set_itext_ichar (ei21ch, ch);		\
   eisub_1 (ei, off, charoff, len, charlen, ei21ch, ei21len, 1);	\
 } while (0)
@@ -2311,7 +2311,7 @@ do {								\
 
 /*   ----- Converting to an external format -----   */
 
-#define eito_external(ei, codesys)				\
+#define eito_external(ei, codesys)					\
 do {									\
   if ((ei)->mallocp_)							\
     {									\
@@ -2322,7 +2322,7 @@ do {									\
 	}								\
       TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
 			  MALLOC, ((ei)->extdata_, (ei)->extlen_),	\
-			  codesys);				\
+			  codesys);					\
     }									\
   else									\
     TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
@@ -2432,15 +2432,15 @@ int eistr_casefiddle_1 (Ibyte *olddata, Bytecount len, Ibyte *newdata,
 #define EI_CASECHANGE(ei, downp)					\
 do {									\
   int ei11new_allocmax = (ei)->charlen_ * MAX_ICHAR_LEN + 1;		\
-  Ibyte *ei11storage =						\
-     (Ibyte *) alloca_array (Ibyte, ei11new_allocmax);	\
+  Ibyte *ei11storage =							\
+     (Ibyte *) alloca_array (Ibyte, ei11new_allocmax);			\
   int ei11newlen = eistr_casefiddle_1 ((ei)->data_, (ei)->bytelen_,	\
 				       ei11storage, downp);		\
 									\
   if (ei11newlen)							\
     {									\
       (ei)->max_size_allocated_ = ei11new_allocmax;			\
-      (ei)->data_ = ei11storage;						\
+      (ei)->data_ = ei11storage;					\
       (ei)->bytelen_ = ei11newlen;					\
       /* charlen is the same. */					\
     }									\

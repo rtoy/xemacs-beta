@@ -152,7 +152,7 @@ fns.o: $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h co
 font-lock.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h insdel.h syntax.h
 frame.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h events.h extents.h faces.h frame-impl.h frame.h frameslots.h glyphs.h gui.h gutter.h menubar.h redisplay.h scrollbar.h specifier.h systime.h toolbar.h window-impl.h window.h winslots.h
 free-hook.o: $(LISP_H) hash.h
-general.o: $(LISP_H)
+general.o: $(LISP_H) general-slots.h
 getloadavg.o: $(LISP_H) sysfile.h syssignal.h
 gif_io.o: $(LISP_H) gifrlib.h sysfile.h
 glyphs-eimage.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h conslots.h console-impl.h console.h device-impl.h device.h devslots.h faces.h file-coding.h frame.h gifrlib.h glyphs.h lstream.h objects-impl.h objects.h opaque.h redisplay.h scrollbar.h specifier.h sysfile.h window-impl.h window.h winslots.h

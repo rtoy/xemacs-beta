@@ -145,6 +145,7 @@
 
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
+(defvar custom-declare-variable-list nil) ; unclean
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")

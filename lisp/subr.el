@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992, 1994-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -25,7 +25,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.34.  Some things synched up with later versions.
 
 ;;; Commentary:
 
@@ -36,8 +36,18 @@
 ;; of commentary just to give diff(1) something to synch itself with to
 ;; provide useful context diffs. -sb
 
-;;; Code:
+;; BEGIN SYNCHED WITH FSF 21.2
 
+;;; Code:
+(defvar custom-declare-variable-list nil
+  "Record `defcustom' calls made before `custom.el' is loaded to handle them.
+Each element of this list holds the arguments to one call to `defcustom'.")
+
+;; Use this, rather than defcustom, in subr.el and other files loaded
+;; before custom.el.
+(defun custom-declare-variable-early (&rest arguments)
+  (setq custom-declare-variable-list
+	(cons arguments custom-declare-variable-list)))
 
 ;;;; Lisp language features.
 
@@ -58,6 +68,36 @@ It may also be omitted.
 BODY should be a list of lisp expressions."
   `(function (lambda ,@cdr)))
 
+;; FSF 21.2 has various basic macros here.  We don't because they're either
+;; in cl*.el (which we dump and hence is always available) or built-in.
+
+;; More powerful versions in cl.el.
+;(defmacro push (newelt listname)
+;(defmacro pop (listname)
+
+;; Built-in.
+;(defmacro when (cond &rest body)
+;(defmacro unless (cond &rest body)
+
+;; More powerful versions in cl-macs.el.
+;(defmacro dolist (spec &rest body)
+;(defmacro dotimes (spec &rest body)
+
+;; In cl.el.  Ours are defun, but cl arranges for them to be inlined anyway.
+;(defsubst caar (x)
+;(defsubst cadr (x)
+;(defsubst cdar (x)
+;(defsubst cddr (x)
+
+;; Built-in.  Our `last' is more powerful in that it handles circularity.
+;(defun last (x &optional n)
+;(defun butlast (x &optional n)
+;(defun nbutlast (x &optional n)
+
+;; In cl-seq.el.
+;(defun remove (elt seq)
+;(defun remq (elt list)
+
 (defmacro defun-when-void (&rest args)
   "Define a function, just like `defun', unless it's already defined.
 Used for compatibility among different emacs variants."
@@ -73,6 +113,52 @@ Used for compatibility among different emacs variants."
      (define-function ,@args)))
 
 
+(defun assoc-default (key alist &optional test default)
+  "Find object KEY in a pseudo-alist ALIST.
+ALIST is a list of conses or objects.  Each element (or the element's car,
+if it is a cons) is compared with KEY by evaluating (TEST (car elt) KEY).
+If that is non-nil, the element matches;
+then `assoc-default' returns the element's cdr, if it is a cons,
+or DEFAULT if the element is not a cons.
+
+If no element matches, the value is nil.
+If TEST is omitted or nil, `equal' is used."
+  (let (found (tail alist) value)
+    (while (and tail (not found))
+      (let ((elt (car tail)))
+	(when (funcall (or test 'equal) (if (consp elt) (car elt) elt) key)
+	  (setq found t value (if (consp elt) (cdr elt) default))))
+      (setq tail (cdr tail)))
+    value))
+
+(defun assoc-ignore-case (key alist)
+  "Like `assoc', but ignores differences in case and text representation.
+KEY must be a string.  Upper-case and lower-case letters are treated as equal."
+  (let (element)
+    (while (and alist (not element))
+      (if (eq t (compare-strings key 0 nil (car (car alist)) 0 nil t))
+	  (setq element (car alist)))
+      (setq alist (cdr alist)))
+    element))
+
+(defun assoc-ignore-representation (key alist)
+  "Like `assoc', but ignores differences in text representation.
+KEY must be a string."
+  (let (element)
+    (while (and alist (not element))
+      (if (eq t (compare-strings key 0 nil (car (car alist)) 0 nil))
+	  (setq element (car alist)))
+      (setq alist (cdr alist)))
+    element))
+
+(defun member-ignore-case (elt list)
+  "Like `member', but ignores differences in case and text representation.
+ELT must be a string.  Upper-case and lower-case letters are treated as equal."
+  (while (and list (not (eq t (compare-strings elt 0 nil (car list) 0 nil t))))
+    (setq list (cdr list)))
+  list)
+
+
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
 
@@ -85,8 +171,22 @@ Used for compatibility among different emacs variants."
 
 ;; XEmacs: This stuff is done in C Code.
 
-;;;; Obsolescent names for functions.
-;; XEmacs: not used.
+;;;; Obsolescent names for functions generally appear elsewhere, in
+;;;; obsolete.el or in the files they are related do.  Many very old
+;;;; obsolete stuff has been removed entirely (e.g. anything with `dot' in
+;;;; place of `point').
+
+; alternate names (not obsolete)
+(if (not (fboundp 'mod)) (define-function 'mod '%))
+(define-function 'move-marker 'set-marker)
+(define-function 'beep 'ding)		; preserve lingual purity
+(define-function 'indent-to-column 'indent-to)
+(define-function 'backward-delete-char 'delete-backward-char)
+(define-function 'search-forward-regexp (symbol-function 're-search-forward))
+(define-function 'search-backward-regexp (symbol-function 're-search-backward))
+(define-function 'remove-directory 'delete-directory)
+(define-function 'set-match-data 'store-match-data)
+(define-function 'send-string-to-terminal 'external-debugging-output)
 
 ;; XEmacs:
 (defun local-variable-if-set-p (sym buffer)
@@ -103,6 +203,11 @@ called on SYM."
 
 (defun make-local-hook (hook)
   "Make the hook HOOK local to the current buffer.
+The return value is HOOK.
+
+You never need to call this function now that `add-hook' does it for you
+if its LOCAL argument is non-nil.
+
 When a hook is local, its local and global values
 work in concert: running the hook actually runs all the hook
 functions listed in *either* the local value *or* the global value
@@ -118,14 +223,13 @@ one.
 This function does nothing if HOOK is already local in the current
 buffer.
 
-Do not use `make-local-variable' to make a hook variable buffer-local.
-
-See also `add-local-hook' and `remove-local-hook'."
+Do not use `make-local-variable' to make a hook variable buffer-local."
   (if (local-variable-p hook (current-buffer)) ; XEmacs
       nil
     (or (boundp hook) (set hook nil))
     (make-local-variable hook)
-    (set hook (list t))))
+    (set hook (list t)))
+  hook)
 
 (defun add-hook (hook function &optional append local)
   "Add to the value of HOOK the function FUNCTION.
@@ -136,7 +240,7 @@ FUNCTION is added at the end.
 
 The optional fourth argument, LOCAL, if non-nil, says to modify
 the hook's buffer-local value rather than its default value.
-This makes no difference if the hook is not buffer-local.
+This makes the hook buffer-local if needed.
 To make a hook variable buffer-local, always use
 `make-local-hook', not `make-local-variable'.
 
@@ -146,35 +250,27 @@ function, it is changed to a list of functions.
 
 You can remove this hook yourself using `remove-hook'.
 
-See also `add-local-hook' and `add-one-shot-hook'."
+See also `add-one-shot-hook'."
   (or (boundp hook) (set hook nil))
   (or (default-boundp hook) (set-default hook nil))
-  ;; If the hook value is a single function, turn it into a list.
-  (let ((old (symbol-value hook)))
-    (if (or (not (listp old)) (eq (car old) 'lambda))
-	(set hook (list old))))
-  (if (or local
-	  ;; Detect the case where make-local-variable was used on a hook
-	  ;; and do what we used to do.
-	  (and (local-variable-if-set-p hook (current-buffer)) ; XEmacs
-	       (not (memq t (symbol-value hook)))))
-      ;; Alter the local value only.
-      (or (if (consp function)
-	      (member function (symbol-value hook))
-	    (memq function (symbol-value hook)))
-	  (set hook
-	       (if append
-		   (append (symbol-value hook) (list function))
-		 (cons function (symbol-value hook)))))
-    ;; Alter the global value (which is also the only value,
-    ;; if the hook doesn't have a local value).
-    (or (if (consp function)
-	    (member function (default-value hook))
-	  (memq function (default-value hook)))
-	(set-default hook
-		     (if append
-			 (append (default-value hook) (list function))
-		       (cons function (default-value hook)))))))
+  (if local (unless (local-variable-if-set-p hook (current-buffer)) ; XEmacs
+	      (make-local-hook hook))
+    ;; Detect the case where make-local-variable was used on a hook
+    ;; and do what we used to do.
+    (unless (and (consp (symbol-value hook)) (memq t (symbol-value hook)))
+      (setq local t)))
+  (let ((hook-value (if local (symbol-value hook) (default-value hook))))
+    ;; If the hook value is a single function, turn it into a list.
+    (when (or (not (listp hook-value)) (eq (car hook-value) 'lambda))
+      (setq hook-value (list hook-value)))
+    ;; Do the actual addition if necessary
+    (unless (member function hook-value)
+      (setq hook-value
+	    (if append
+		(append hook-value (list function))
+	      (cons function hook-value))))
+    ;; Set the actual variable
+    (if local (set hook hook-value) (set-default hook hook-value))))
 
 (defun remove-hook (hook function &optional local)
   "Remove from the value of HOOK the function FUNCTION.
@@ -184,73 +280,54 @@ list of hooks to run in HOOK, then nothing is done.  See `add-hook'.
 
 The optional third argument, LOCAL, if non-nil, says to modify
 the hook's buffer-local value rather than its default value.
-This makes no difference if the hook is not buffer-local.
+This makes the hook buffer-local if needed.
 To make a hook variable buffer-local, always use
 `make-local-hook', not `make-local-variable'."
-  (if (or (not (boundp hook))		;unbound symbol, or
-	  (not (default-boundp 'hook))
-	  (null (symbol-value hook))	;value is nil, or
-	  (null function))		;function is nil, then
-      nil				;Do nothing.
-    (flet ((hook-remove
-	     (function hook-value)
-	     (flet ((hook-test
-		      (fn hel)
-		      (or (equal fn hel)
-			  (and (symbolp hel)
-			       (equal fn
-				      (get hel 'one-shot-hook-fun))))))
-	       (if (and (consp hook-value)
-		     (not (functionp hook-value)))
-		   (if (member* function hook-value :test 'hook-test)
-		     (setq hook-value
-			   (delete* function (copy-sequence hook-value)
-				    :test 'hook-test)))
-		 (if (equal hook-value function)
-		   (setq hook-value nil)))
-	       hook-value)))
-      (if (or local
-	    ;; Detect the case where make-local-variable was used on a hook
-	    ;; and do what we used to do.
-	    (and (local-variable-p hook (current-buffer))
-		 (not (memq t (symbol-value hook)))))
-	  (set hook (hook-remove function (symbol-value hook)))
-	(set-default hook (hook-remove function (default-value hook)))))))
+  (or (boundp hook) (set hook nil))
+  (or (default-boundp hook) (set-default hook nil))
+  (if local (unless (local-variable-if-set-p hook (current-buffer)) ; XEmacs
+	      (make-local-hook hook))
+    ;; Detect the case where make-local-variable was used on a hook
+    ;; and do what we used to do.
+    (unless (and (consp (symbol-value hook)) (memq t (symbol-value hook)))
+      (setq local t)))
+  (let ((hook-value (if local (symbol-value hook) (default-value hook))))
+    ;; Remove the function, for both the list and the non-list cases.
+    ;; XEmacs: add hook-test, for handling one-shot hooks.
+    (flet ((hook-test
+	     (fn hel)
+	     (or (equal fn hel)
+		 (and (symbolp hel)
+		      (equal fn
+			     (get hel 'one-shot-hook-fun))))))
+      (if (or (not (listp hook-value)) (eq (car hook-value) 'lambda))
+	  (if (equal hook-value function) (setq hook-value nil))
+	(setq hook-value (delete* function (copy-sequence hook-value)
+				  :test 'hook-test)))
+      ;; If the function is on the global hook, we need to shadow it locally
+      ;;(when (and local (member* function (default-value hook)
+      ;;                          :test 'hook-test)
+      ;;	       (not (member* (cons 'not function) hook-value
+      ;;                             :test 'hook-test)))
+      ;;  (push (cons 'not function) hook-value))
+      ;; Set the actual variable
+      (if local (set hook hook-value) (set-default hook hook-value)))))
 
 ;; XEmacs addition
 ;; #### we need a coherent scheme for indicating compatibility info,
 ;; so that it can be programmatically retrieved.
 (defun add-local-hook (hook function &optional append)
   "Add to the local value of HOOK the function FUNCTION.
-This modifies only the buffer-local value for the hook (which is
-automatically make buffer-local, if necessary), not its default value.
-FUNCTION is not added if already present.
-FUNCTION is added (if necessary) at the beginning of the hook list
-unless the optional argument APPEND is non-nil, in which case
-FUNCTION is added at the end.
-
-HOOK should be a symbol, and FUNCTION may be any valid function.  If
-HOOK is void, it is first set to nil.  If HOOK's value is a single
-function, it is changed to a list of functions.
-
-You can remove this hook yourself using `remove-local-hook'.
-
-See also `add-hook' and `make-local-hook'."
-  (make-local-hook hook)
+You don't need this any more.  It's equivalent to specifying the LOCAL
+argument to `add-hook'."
   (add-hook hook function append t))
 
 ;; XEmacs addition
 (defun remove-local-hook (hook function)
   "Remove from the local value of HOOK the function FUNCTION.
-This modifies only the buffer-local value for the hook, not its default
-value. (Nothing happens if the hook is not buffer-local.)
-HOOK should be a symbol, and FUNCTION may be any valid function.  If
-FUNCTION isn't the value of HOOK, or, if FUNCTION doesn't appear in the
-list of hooks to run in HOOK, then nothing is done.  See `add-hook'.
-
-See also `add-local-hook' and `make-local-hook'."
-  (if (local-variable-p hook (current-buffer))
-      (remove-hook hook function t)))
+You don't need this any more.  It's equivalent to specifying the LOCAL
+argument to `remove-hook'."
+  (remove-hook hook function t))
 
 (defun add-one-shot-hook (hook function &optional append local)
   "Add to the value of HOOK the one-shot function FUNCTION.
@@ -267,7 +344,7 @@ function, it is changed to a list of functions.
 
 You can remove this hook yourself using `remove-hook'.
 
-See also `add-hook', `add-local-hook', and `add-local-one-shot-hook'."
+See also `add-hook'."
   (let ((sym (gensym)))
     (fset sym `(lambda (&rest args)
 		 (unwind-protect
@@ -278,27 +355,8 @@ See also `add-hook', `add-local-hook', and `add-local-one-shot-hook'."
 
 (defun add-local-one-shot-hook (hook function &optional append)
   "Add to the local value of HOOK the one-shot function FUNCTION.
-FUNCTION will automatically be removed from the hook the first time
-after it runs (whether to completion or to an error).
-FUNCTION is not added if already present.
-FUNCTION is added (if necessary) at the beginning of the hook list
-unless the optional argument APPEND is non-nil, in which case
-FUNCTION is added at the end.
-
-The optional fourth argument, LOCAL, if non-nil, says to modify
-the hook's buffer-local value rather than its default value.
-This makes no difference if the hook is not buffer-local.
-To make a hook variable buffer-local, always use
-`make-local-hook', not `make-local-variable'.
-
-HOOK should be a symbol, and FUNCTION may be any valid function.  If
-HOOK is void, it is first set to nil.  If HOOK's value is a single
-function, it is changed to a list of functions.
-
-You can remove this hook yourself using `remove-local-hook'.
-
-See also `add-hook', `add-local-hook', and `add-local-one-shot-hook'."
-  (make-local-hook hook)
+You don't need this any more.  It's equivalent to specifying the LOCAL
+argument to `add-one-shot-hook'."
   (add-one-shot-hook hook function append t))
 
 (defun add-to-list (list-var element &optional append)
@@ -319,6 +377,8 @@ other hooks, such as major mode hooks, can do the job."
          (if append
              (append (symbol-value list-var) (list element))
            (cons element (symbol-value list-var))))))
+
+;; END SYNCHED WITH FSF 21.2
 
 ;; XEmacs additions
 ;; called by Fkill_buffer()
@@ -368,22 +428,234 @@ NOTE: At some point, this will be moved into C and will be very fast."
   (with-current-buffer buffer
     (set sym val)))
 
-;;;; String functions.
+
+;; BEGIN SYNCHED WITH FSF 21.2
 
-;; XEmacs
-(defun string-equal-ignore-case (str1 str2)
-  "Return t if two strings have identical contents, ignoring case differences.
-Case is not significant.  Text properties and extents are ignored.
-Symbols are also allowed; their print names are used instead.
+;; #### #### #### AAaargh!  Must be in C, because it is used insanely
+;; early in the bootstrap process.
+;(defun split-path (path)
+;  "Explode a search path into a list of strings.
+;The path components are separated with the characters specified
+;with `path-separator'."
+;  (while (or (not stringp path-separator)
+;	     (/= (length path-separator) 1))
+;    (setq path-separator (signal 'error (list "\
+;`path-separator' should be set to a single-character string"
+;					      path-separator))))
+;  (split-string-by-char path (aref separator 0)))
 
-See also `equalp'."
-  (if (symbolp str1)
-      (setq str1 (symbol-name str1)))
-  (if (symbolp str2)
-      (setq str2 (symbol-name str2)))
-  (eq t (compare-strings str1 nil nil str2 nil nil t)))
+(defmacro with-current-buffer (buffer &rest body)
+  "Temporarily make BUFFER the current buffer and execute the forms in BODY.
+The value returned is the value of the last form in BODY.
+See also `with-temp-buffer'."
+  `(save-current-buffer
+     (set-buffer ,buffer)
+     ,@body))
 
-;; XEmacs
+(defmacro with-temp-file (filename &rest forms)
+  "Create a new buffer, evaluate FORMS there, and write the buffer to FILENAME.
+The value of the last form in FORMS is returned, like `progn'.
+See also `with-temp-buffer'."
+  (let ((temp-file (make-symbol "temp-file"))
+	(temp-buffer (make-symbol "temp-buffer")))
+    `(let ((,temp-file ,filename)
+	   (,temp-buffer
+	    (get-buffer-create (generate-new-buffer-name " *temp file*"))))
+       (unwind-protect
+	   (prog1
+	       (with-current-buffer ,temp-buffer
+		 ,@forms)
+	     (with-current-buffer ,temp-buffer
+               (widen)
+	       (write-region (point-min) (point-max) ,temp-file nil 0)))
+	 (and (buffer-name ,temp-buffer)
+	      (kill-buffer ,temp-buffer))))))
+
+;; FSF compatibility
+(defmacro with-temp-message (message &rest body)
+  "Display MESSAGE temporarily while BODY is evaluated.
+The original message is restored to the echo area after BODY has finished.
+The value returned is the value of the last form in BODY.
+If MESSAGE is nil, the echo area and message log buffer are unchanged.
+Use a MESSAGE of \"\" to temporarily clear the echo area.
+
+Note that this function exists for FSF compatibility purposes.  A better way
+under XEmacs is to give the message a particular label (see `display-message');
+then, the old message is automatically restored when you clear your message
+with `clear-message'."
+;; FSF additional doc string from 21.2:
+;; MESSAGE is written to the message log buffer if `message-log-max' is non-nil.
+  (let ((current-message (make-symbol "current-message"))
+	(temp-message (make-symbol "with-temp-message")))
+    `(let ((,temp-message ,message)
+	   (,current-message))
+       (unwind-protect
+	   (progn
+	     (when ,temp-message
+	       (setq ,current-message (current-message))
+	       (message "%s" ,temp-message))
+	     ,@body)
+	 (and ,temp-message ,current-message
+	      (message "%s" ,current-message))))))
+
+(defmacro with-temp-buffer (&rest forms)
+  "Create a temporary buffer, and evaluate FORMS there like `progn'.
+See also `with-temp-file' and `with-output-to-string'."
+  (let ((temp-buffer (make-symbol "temp-buffer")))
+    `(let ((,temp-buffer
+	    (get-buffer-create (generate-new-buffer-name " *temp*"))))
+       (unwind-protect
+	   (with-current-buffer ,temp-buffer
+	     ,@forms)
+	 (and (buffer-name ,temp-buffer)
+	      (kill-buffer ,temp-buffer))))))
+
+(defmacro with-output-to-string (&rest body)
+  "Execute BODY, return the text it sent to `standard-output', as a string."
+  `(let ((standard-output
+	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
+     (let ((standard-output standard-output))
+       ,@body)
+     (with-current-buffer standard-output
+       (prog1
+	   (buffer-string)
+	 (kill-buffer nil)))))
+
+;; FSF 21.2.
+
+; (defmacro combine-after-change-calls (&rest body)
+;   "Execute BODY, but don't call the after-change functions till the end.
+; If BODY makes changes in the buffer, they are recorded
+; and the functions on `after-change-functions' are called several times
+; when BODY is finished.
+; The return value is the value of the last form in BODY.
+
+; If `before-change-functions' is non-nil, then calls to the after-change
+; functions can't be deferred, so in that case this macro has no effect.
+
+; Do not alter `after-change-functions' or `before-change-functions'
+; in BODY."
+;   `(unwind-protect
+;        (let ((combine-after-change-calls t))
+; 	 . ,body)
+;      (combine-after-change-execute)))
+
+(defmacro with-syntax-table (table &rest body)
+  "Evaluate BODY with syntax table of current buffer set to a copy of TABLE.
+The syntax table of the current buffer is saved, BODY is evaluated, and the
+saved table is restored, even in case of an abnormal exit.
+Value is what BODY returns."
+  (let ((old-table (make-symbol "table"))
+	(old-buffer (make-symbol "buffer")))
+    `(let ((,old-table (syntax-table))
+	   (,old-buffer (current-buffer)))
+       (unwind-protect
+	   (progn
+	     (set-syntax-table (copy-syntax-table ,table))
+	     ,@body)
+	 (save-current-buffer
+	   (set-buffer ,old-buffer)
+	   (set-syntax-table ,old-table))))))
+
+(put 'with-syntax-table 'lisp-indent-function 1)
+(put 'with-syntax-table 'edebug-form-spec '(form body))
+
+
+;; Moved from mule-coding.el.
+(defmacro with-string-as-buffer-contents (str &rest body)
+  "With the contents of the current buffer being STR, run BODY.
+Returns the new contents of the buffer, as modified by BODY.
+The original current buffer is restored afterwards."
+  `(with-temp-buffer
+     (insert ,str)
+     ,@body
+     (buffer-string)))
+
+
+(defmacro save-match-data (&rest body)
+  "Execute BODY forms, restoring the global value of the match data."
+  (let ((original (make-symbol "match-data")))
+    (list 'let (list (list original '(match-data)))
+	  (list 'unwind-protect
+		(cons 'progn body)
+		(list 'store-match-data original)))))
+
+
+(defun match-string (num &optional string)
+  "Return string of text matched by last search.
+NUM specifies which parenthesized expression in the last regexp.
+ Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
+Zero means the entire text matched by the whole regexp or whole string.
+STRING should be given if the last search was by `string-match' on STRING."
+  (if (match-beginning num)
+      (if string
+          (substring string (match-beginning num) (match-end num))
+        (buffer-substring (match-beginning num) (match-end num)))))
+
+(defun match-string-no-properties (num &optional string)
+  "Return string of text matched by last search, without text properties.
+NUM specifies which parenthesized expression in the last regexp.
+ Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
+Zero means the entire text matched by the whole regexp or whole string.
+STRING should be given if the last search was by `string-match' on STRING."
+  (if (match-beginning num)
+      (if string
+	  (let ((result
+		 (substring string (match-beginning num) (match-end num))))
+	    (set-text-properties 0 (length result) nil result)
+	    result)
+	(buffer-substring-no-properties (match-beginning num)
+					(match-end num)))))
+
+(defun split-string (string &optional separators)
+  "Splits STRING into substrings where there are matches for SEPARATORS.
+Each match for SEPARATORS is a splitting point.
+The substrings between the splitting points are made into a list
+which is returned.
+If SEPARATORS is absent, it defaults to \"[ \\f\\t\\n\\r\\v]+\".
+
+If there is match for SEPARATORS at the beginning of STRING, we do not
+include a null substring for that.  Likewise, if there is a match
+at the end of STRING, we don't include a null substring for that.
+
+Modifies the match data; use `save-match-data' if necessary."
+  (let ((rexp (or separators "[ \f\t\n\r\v]+"))
+	(start 0)
+	notfirst
+	(list nil))
+    (while (and (string-match rexp string
+			      (if (and notfirst
+				       (= start (match-beginning 0))
+				       (< start (length string)))
+				  (1+ start) start))
+		(< (match-beginning 0) (length string)))
+      (setq notfirst t)
+      (or (eq (match-beginning 0) 0)
+	  (and (eq (match-beginning 0) (match-end 0))
+	       (eq (match-beginning 0) start))
+	  (setq list
+		(cons (substring string start (match-beginning 0))
+		      list)))
+      (setq start (match-end 0)))
+    (or (eq start (length string))
+	(setq list
+	      (cons (substring string start)
+		    list)))
+    (nreverse list)))
+
+(defun subst-char-in-string (fromchar tochar string &optional inplace)
+  "Replace FROMCHAR with TOCHAR in STRING each time it occurs.
+Unless optional argument INPLACE is non-nil, return a new string."
+  (let ((i (length string))
+	(newstr (if inplace string (copy-sequence string))))
+    (while (> i 0)
+      (setq i (1- i))
+      (if (eq (aref newstr i) fromchar)
+	  (aset newstr i tochar)))
+    newstr))
+
+
+;; XEmacs addition:
 (defun replace-in-string (str regexp newtext &optional literal)
   "Replace all matches in STR for REGEXP with NEWTEXT string,
  and returns the new string.
@@ -416,112 +688,80 @@ Otherwise treat `\\' in NEWTEXT as special:
 	      str newstr))
       str)))
 
-(defun split-string (string &optional pattern)
-  "Return a list of substrings of STRING which are separated by PATTERN.
-If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
-  (or pattern
-      (setq pattern "[ \f\t\n\r\v]+"))
-  (let (parts (start 0) (len (length string)))
-    (if (string-match pattern string)
-	(setq parts (cons (substring string 0 (match-beginning 0)) parts)
-	      start (match-end 0)))
-    (while (and (< start len)
-		(string-match pattern string (if (> start (match-beginning 0))
-						 start
-					       (1+ start))))
-      (setq parts (cons (substring string start (match-beginning 0)) parts)
-	    start (match-end 0)))
-    (nreverse (cons (substring string start) parts))))
+(defun replace-regexp-in-string (regexp rep string &optional
+					fixedcase literal subexp start)
+  "Replace all matches for REGEXP with REP in STRING.
 
-;; #### #### #### AAaargh!  Must be in C, because it is used insanely
-;; early in the bootstrap process.
-;(defun split-path (path)
-;  "Explode a search path into a list of strings.
-;The path components are separated with the characters specified
-;with `path-separator'."
-;  (while (or (not stringp path-separator)
-;	     (/= (length path-separator) 1))
-;    (setq path-separator (signal 'error (list "\
-;`path-separator' should be set to a single-character string"
-;					      path-separator))))
-;  (split-string-by-char path (aref separator 0)))
+Return a new string containing the replacements.
 
-(defmacro with-output-to-string (&rest body)
-  "Execute BODY, return the text it sent to `standard-output', as a string."
-  `(let ((standard-output
-	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
-     (let ((standard-output standard-output))
-       ,@body)
-     (with-current-buffer standard-output
-       (prog1
-	   (buffer-string)
-	 (kill-buffer nil)))))
+Optional arguments FIXEDCASE, LITERAL and SUBEXP are like the
+arguments with the same names of function `replace-match'.  If START
+is non-nil, start replacements at that index in STRING.
 
-(defmacro with-current-buffer (buffer &rest body)
-  "Temporarily make BUFFER the current buffer and execute the forms in BODY.
-The value returned is the value of the last form in BODY.
-See also `with-temp-buffer'."
-  `(save-current-buffer
-     (set-buffer ,buffer)
-     ,@body))
+REP is either a string used as the NEWTEXT arg of `replace-match' or a
+function.  If it is a function it is applied to each match to generate
+the replacement passed to `replace-match'; the match-data at this
+point are such that match 0 is the function's argument.
 
-(defmacro with-temp-file (filename &rest forms)
-  "Create a new buffer, evaluate FORMS there, and write the buffer to FILENAME.
-The value of the last form in FORMS is returned, like `progn'.
-See also `with-temp-buffer'."
-  (let ((temp-file (make-symbol "temp-file"))
-	(temp-buffer (make-symbol "temp-buffer")))
-    `(let ((,temp-file ,filename)
-	   (,temp-buffer
-	    (get-buffer-create (generate-new-buffer-name " *temp file*"))))
-       (unwind-protect
-	   (prog1
-	       (with-current-buffer ,temp-buffer
-		 ,@forms)
-	     (with-current-buffer ,temp-buffer
-               (widen)
-	       (write-region (point-min) (point-max) ,temp-file nil 0)))
-	 (and (buffer-name ,temp-buffer)
-	      (kill-buffer ,temp-buffer))))))
+To replace only the first match (if any), make REGEXP match up to \\'
+and replace a sub-expression, e.g.
+  (replace-regexp-in-string \"\\(foo\\).*\\'\" \"bar\" \" foo foo\" nil nil 1)
+    => \" bar foo\"
+"
 
-(defmacro with-temp-message (message &rest body)
-  "Display MESSAGE temporarily while BODY is evaluated.
-The original message is restored to the echo area after BODY has finished.
-The value returned is the value of the last form in BODY."
-  (let ((current-message (make-symbol "current-message"))
-	(temp-message (make-symbol "with-temp-message")))
-    `(let ((,temp-message ,message)
-	   (,current-message))
-       (unwind-protect
-	   (progn
-	     (when ,temp-message
-	       (setq ,current-message (current-message))
-	       (message "%s" ,temp-message))
-	     ,@body)
-	 (and ,temp-message ,current-message
-	      (message "%s" ,current-message))))))
+  ;; To avoid excessive consing from multiple matches in long strings,
+  ;; don't just call `replace-match' continually.  Walk down the
+  ;; string looking for matches of REGEXP and building up a (reversed)
+  ;; list MATCHES.  This comprises segments of STRING which weren't
+  ;; matched interspersed with replacements for segments that were.
+  ;; [For a `large' number of replacments it's more efficient to
+  ;; operate in a temporary buffer; we can't tell from the function's
+  ;; args whether to choose the buffer-based implementation, though it
+  ;; might be reasonable to do so for long enough STRING.]
+  (let ((l (length string))
+	(start (or start 0))
+	matches str mb me)
+    (save-match-data
+      (while (and (< start l) (string-match regexp string start))
+	(setq mb (match-beginning 0)
+	      me (match-end 0))
+	;; If we matched the empty string, make sure we advance by one char
+	(when (= me mb) (setq me (min l (1+ mb))))
+	;; Generate a replacement for the matched substring.
+	;; Operate only on the substring to minimize string consing.
+	;; Set up match data for the substring for replacement;
+	;; presumably this is likely to be faster than munging the
+	;; match data directly in Lisp.
+	(string-match regexp (setq str (substring string mb me)))
+	(setq matches
+	      (cons (replace-match (if (stringp rep)
+				       rep
+				     (funcall rep (match-string 0 str)))
+				   fixedcase literal str subexp)
+		    (cons (substring string start mb) ; unmatched prefix
+			  matches)))
+	(setq start me))
+      ;; Reconstruct a string from the pieces.
+      (setq matches (cons (substring string start l) matches)) ; leftover
+      (apply #'concat (nreverse matches)))))
 
-(defmacro with-temp-buffer (&rest forms)
-  "Create a temporary buffer, and evaluate FORMS there like `progn'.
-See also `with-temp-file' and `with-output-to-string'."
-  (let ((temp-buffer (make-symbol "temp-buffer")))
-    `(let ((,temp-buffer
-	    (get-buffer-create (generate-new-buffer-name " *temp*"))))
-       (unwind-protect
-	   (with-current-buffer ,temp-buffer
-	     ,@forms)
-	 (and (buffer-name ,temp-buffer)
-	      (kill-buffer ,temp-buffer))))))
+;; END SYNCHED WITH FSF 21.2
 
-;; Moved from mule-coding.el.
-(defmacro with-string-as-buffer-contents (str &rest body)
-  "With the contents of the current buffer being STR, run BODY.
-Returns the new contents of the buffer, as modified by BODY.
-The original current buffer is restored afterwards."
-  `(with-temp-buffer
-     (insert ,str)
-     ,@body
-     (buffer-string)))
+
+;;; Basic string functions
+
+;; XEmacs
+(defun string-equal-ignore-case (str1 str2)
+  "Return t if two strings have identical contents, ignoring case differences.
+Case is not significant.  Text properties and extents are ignored.
+Symbols are also allowed; their print names are used instead.
+
+See also `equalp'."
+  (if (symbolp str1)
+      (setq str1 (symbol-name str1)))
+  (if (symbolp str2)
+      (setq str2 (symbol-name str2)))
+  (eq t (compare-strings str1 nil nil str2 nil nil t)))
 
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Return the extent created."
@@ -606,7 +846,7 @@ TYPE should be `list' or `vector'."
 ;; From FSF 21.1; ELLIPSES is XEmacs addition.
 
 (defun truncate-string-to-width (str end-column &optional start-column padding
-				     ellipses)
+				 ellipses)
   "Truncate string STR to end at column END-COLUMN.
 The optional 3rd arg START-COLUMN, if non-nil, specifies
 the starting column; that means to return the characters occupying
@@ -1224,6 +1464,8 @@ function were (buffer-string &optional START END BUFFER)."
     ;; Probably the old way.
     (buffer-substring buffer old-end old-buffer))))
 
+;; BEGIN SYNC WITH FSF 21.2
+
 ;; This was not present before.  I think Jamie had some objections
 ;; to this, so I'm leaving this undefined for now. --ben
 
@@ -1244,7 +1486,13 @@ function were (buffer-string &optional START END BUFFER)."
 This makes or adds to an entry on `after-load-alist'.
 If FILE is already loaded, evaluate FORM right now.
 It does nothing if FORM is already on the list for FILE.
-FILE should be the name of a library, with no directory name."
+FILE must match exactly.  Normally FILE is the name of a library,
+with no directory or extension specified, since that is how `load'
+is normally called."
+  ;; Make sure `load-history' contains the files dumped with Emacs
+  ;; for the case that FILE is one of the files dumped with Emacs.
+  (if-fboundp 'load-symbol-file-load-history
+      (load-symbol-file-load-history))
   ;; Make sure there is an element for FILE.
   (or (assoc file after-load-alist)
       (setq after-load-alist (cons (list file) after-load-alist)))
@@ -1266,16 +1514,6 @@ FILE should be the name of a library, with no directory name."
   (eval-after-load file (read)))
 (make-compatible 'eval-next-after-load "")
 
-; alternate names (not obsolete)
-(if (not (fboundp 'mod)) (define-function 'mod '%))
-(define-function 'move-marker 'set-marker)
-(define-function 'beep 'ding)		; preserve lingual purity
-(define-function 'indent-to-column 'indent-to)
-(define-function 'backward-delete-char 'delete-backward-char)
-(define-function 'search-forward-regexp (symbol-function 're-search-forward))
-(define-function 'search-backward-regexp (symbol-function 're-search-backward))
-(define-function 'remove-directory 'delete-directory)
-(define-function 'set-match-data 'store-match-data)
-(define-function 'send-string-to-terminal 'external-debugging-output)
+;; END SYNC WITH FSF 21.2
 
 ;;; subr.el ends here

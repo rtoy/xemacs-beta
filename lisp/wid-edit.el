@@ -942,6 +942,7 @@ The child is not converted."
   "Make a deep copy of WIDGET."
   (widget-apply (copy-sequence widget) :copy))
 
+;;;###autoload
 (defun widget-convert (type &rest args)
   "Convert TYPE to a widget without inserting it in the buffer.
 The optional ARGS are additional keyword arguments."
@@ -2079,7 +2080,7 @@ If END is omitted, it defaults to the length of LIST."
 
 (defun widget-url-link-action (widget &optional event)
   "Open the url specified by WIDGET."
-  (if (fboundp 'browse-url)
+  (if-fboundp 'browse-url
       (browse-url (widget-value widget))
     ;; #### Should subclass a 'missing-package error.
     (error 'unimplemented

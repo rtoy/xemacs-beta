@@ -1,6 +1,6 @@
 /* File IO for XEmacs.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
    incomplete synching, so beware.) */
 /* Mule-ized completely except for the #if 0-code including decrypt-string
    and encrypt-string. --ben 7-2-00 */
+/* #if 0-code Mule-ized, 2-22-03. --ben */
 
 
 #include <config.h>
@@ -1698,7 +1699,7 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
    If the file does not exist, STATPTR->st_mode is set to 0.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
+barf_or_query_if_file_exists (Lisp_Object absname, const CIbyte *querystring,
 			      int interactive, struct stat *statptr)
 {
   /* This function can call Lisp.  GC checked 2000-07-28 ben */
@@ -2193,8 +2194,8 @@ Open a network connection to PATH using LOGIN as the login string.
        (path, login))
 {
   int netresult;
-  const char *path_ext;
-  const char *login_ext;
+  const Extbyte *path_ext;
+  const Extbyte *login_ext;
 
   CHECK_STRING (path);
   CHECK_STRING (login);
@@ -3667,28 +3668,31 @@ Encrypt STRING using KEY.
 */
        (string, key))
 {
-  char *encrypted_string, *raw_key;
-  int rounded_size, extra, key_size;
+  Extbyte *encrypted_string, *raw_key;
+  Extbyte *string_ext, *key_ext;
+  Bytecount string_size_ext, key_size_ext, rounded_size, extra, key_size;
 
-  /* !!#### May produce bogus data under Mule. */
   CHECK_STRING (string);
   CHECK_STRING (key);
 
-  extra = XSTRING_LENGTH (string) % CRYPT_BLOCK_SIZE;
-  rounded_size = XSTRING_LENGTH (string) + extra;
+  LISP_STRING_TO_SIZED_EXTERNAL (string, string_ext, string_size_ext, Qbinary);
+  LISP_STRING_TO_SIZED_EXTERNAL (key, key_ext, key_size_ext, Qbinary);
+
+  extra = string_size_ext % CRYPT_BLOCK_SIZE;
+  rounded_size = string_size_ext + extra;
   encrypted_string = ALLOCA (rounded_size + 1);
-  memcpy (encrypted_string, XSTRING_DATA (string), XSTRING_LENGTH (string));
+  memcpy (encrypted_string, string_ext, string_size_ext);
   memset (encrypted_string + rounded_size - extra, 0, extra + 1);
 
-  key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
+  key_size = min (CRYPT_KEY_SIZE, key_size_ext);
 
   raw_key = ALLOCA (CRYPT_KEY_SIZE + 1);
-  memcpy (raw_key, XSTRING_DATA (key), key_size);
+  memcpy (raw_key, key_ext, key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
   ecb_crypt (raw_key, encrypted_string, rounded_size,
 	     DES_ENCRYPT | DES_SW);
-  return make_string (encrypted_string, rounded_size);
+  return make_ext_string (encrypted_string, rounded_size, Qbinary);
 }
 
 DEFUN ("decrypt-string", Fdecrypt_string, 2, 2, 0, /*
@@ -3696,27 +3700,30 @@ Decrypt STRING using KEY.
 */
        (string, key))
 {
-  /* !!#### May produce bogus data under Mule. */
-  char *decrypted_string, *raw_key;
-  int string_size, key_size;
+  Extbyte *decrypted_string, *raw_key;
+  Extbyte *string_ext, *key_ext;
+  Bytecount string_size_ext, key_size_ext, string_size, key_size;
 
   CHECK_STRING (string);
   CHECK_STRING (key);
 
-  string_size = XSTRING_LENGTH (string) + 1;
+  LISP_STRING_TO_SIZED_EXTERNAL (string, string_ext, string_size_ext, Qbinary);
+  LISP_STRING_TO_SIZED_EXTERNAL (key, key_ext, key_size_ext, Qbinary);
+
+  string_size = string_size_ext + 1;
   decrypted_string = ALLOCA (string_size);
-  memcpy (decrypted_string, XSTRING_DATA (string), string_size);
+  memcpy (decrypted_string, string_ext, string_size);
   decrypted_string[string_size - 1] = '\0';
 
-  key_size = min (CRYPT_KEY_SIZE, XSTRING_LENGTH (key))
+  key_size = min (CRYPT_KEY_SIZE, key_size_ext);
 
   raw_key = ALLOCA (CRYPT_KEY_SIZE + 1);
-  memcpy (raw_key, XSTRING_DATA (key), key_size);
+  memcpy (raw_key, key_ext, key_size);
   memset (raw_key + key_size, 0, (CRYPT_KEY_SIZE + 1) - key_size);
 
 
   ecb_crypt (raw_key, decrypted_string, string_size, D | DES_SW);
-  return make_string (decrypted_string, string_size - 1);
+  return make_ext_string (decrypted_string, string_size - 1, Qbinary);
 }
 #endif /* 0 */
 
@@ -4040,10 +4047,9 @@ Non-nil second argument means save only current buffer.
 	      set_buffer_internal (b);
 	      if (!auto_saved && NILP (no_message))
 		{
-		  static const unsigned char *msg
-		    = (const unsigned char *) "Auto-saving...";
+		  static const Ibyte *msg = (const Ibyte *) "Auto-saving...";
 		  echo_area_message (selected_frame (), msg, Qnil,
-				     0, strlen ((const char *) msg),
+				     0, qxestrlen (msg),
 				     Qauto_saving);
 		}
 
@@ -4150,10 +4156,9 @@ Non-nil second argument means save only current buffer.
   if (auto_saved && NILP (no_message)
       && NILP (clear_echo_area (selected_frame (), Qauto_saving, 0)))
     {
-      static const unsigned char *msg
-        = (const unsigned char *)"Auto-saving...done";
+      static const Ibyte *msg = (const Ibyte *)"Auto-saving...done";
       echo_area_message (selected_frame (), msg, Qnil, 0,
-			 strlen ((const char *) msg), Qauto_saving);
+			 qxestrlen (msg), Qauto_saving);
     }
 
   Vquit_flag = oquit;

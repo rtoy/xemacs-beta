@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
    Copyright (C) 1997 Kirill M. Katsnelson <kkm@kis.ru>.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -655,7 +655,7 @@ unsafe_handle_wm_initmenu_1 (struct frame *f)
   /* We simply ignore return value. In any case, we construct the bar
      on the fly */
   run_hook_trapping_problems
-    ("Error in activate-menubar-hook", Qactivate_menubar_hook,
+    (Qmenubar, Qactivate_menubar_hook,
      INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   update_frame_menubar_maybe (f);
