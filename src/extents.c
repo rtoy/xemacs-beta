@@ -1,6 +1,6 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation, Inc.
    Copyright (c) 1995 Sun Microsystems, Inc.
-   Copyright (c) 1995, 1996, 2000, 2002, 2003 Ben Wing.
+   Copyright (c) 1995, 1996, 2000, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -7081,21 +7081,28 @@ Used as the `paste-function' property of `text-prop' extents.
 }
 
 Bytexpos
-next_single_property_change (Bytexpos pos, Lisp_Object prop,
-			     Lisp_Object object, Bytexpos limit)
+next_previous_single_property_change (Bytexpos pos, Lisp_Object prop,
+				      Lisp_Object object, Bytexpos limit,
+				      Boolint next, Boolint text_props_only)
 {
   Lisp_Object extent, value;
   int limit_was_nil;
-
+  enum extent_at_flag at_flag = next ? EXTENT_AT_AFTER : EXTENT_AT_BEFORE;
   if (limit < 0)
     {
-      limit = buffer_or_string_accessible_end_byte (object);
+      limit = (next ? buffer_or_string_accessible_end_byte :
+	       buffer_or_string_accessible_begin_byte) (object);
       limit_was_nil = 1;
     }
   else
     limit_was_nil = 0;
 
-  extent = extent_at (pos, object, prop, 0, EXTENT_AT_AFTER, 0);
+  /* Retrieve initial property value to compare against */
+  extent = extent_at (pos, object, prop, 0, at_flag, 0);
+  /* If we only want text-prop extents, ignore all others */
+  if (text_props_only && !NILP (extent) && 
+      NILP (Fextent_property (extent, Qtext_prop, Qnil)))
+    extent = Qnil;
   if (!NILP (extent))
     value = Fextent_property (extent, prop, Qnil);
   else
@@ -7103,10 +7110,15 @@ next_single_property_change (Bytexpos pos, Lisp_Object prop,
 
   while (1)
     {
-      pos = extent_find_end_of_run (object, pos, 1);
-      if (pos >= limit)
-	break; /* property is the same all the way to the end */
-      extent = extent_at (pos, object, prop, 0, EXTENT_AT_AFTER, 0);
+      pos = (next ? extent_find_end_of_run : extent_find_beginning_of_run)
+	(object, pos, 1);
+      if (next ? pos >= limit : pos <= limit)
+	break; /* property is the same all the way to the beginning/end */
+      extent = extent_at (pos, object, prop, 0, at_flag, 0);
+      /* If we only want text-prop extents, ignore all others */
+      if (text_props_only && !NILP (extent) && 
+	  NILP (Fextent_property (extent, Qtext_prop, Qnil)))
+	extent = Qnil;
       if ((NILP (extent) && !NILP (value)) ||
 	  (!NILP (extent) && !EQ (value,
 				  Fextent_property (extent, prop, Qnil))))
@@ -7119,43 +7131,24 @@ next_single_property_change (Bytexpos pos, Lisp_Object prop,
     return limit;
 }
 
-Bytexpos
-previous_single_property_change (Bytexpos pos, Lisp_Object prop,
-				 Lisp_Object object, Bytexpos limit)
+static Lisp_Object
+next_previous_single_property_change_fn (Lisp_Object pos, Lisp_Object prop,
+					 Lisp_Object object, Lisp_Object limit,
+					 Boolint next, Boolint text_props_only)
 {
-  Lisp_Object extent, value;
-  int limit_was_nil;
+  Bytexpos xpos;
+  Bytexpos blim;
 
-  if (limit < 0)
-    {
-      limit = buffer_or_string_accessible_begin_byte (object);
-      limit_was_nil = 1;
-    }
+  object = decode_buffer_or_string (object);
+  xpos = get_buffer_or_string_pos_byte (object, pos, 0);
+  blim = !NILP (limit) ? get_buffer_or_string_pos_byte (object, limit, 0) : -1;
+  blim = next_previous_single_property_change (xpos, prop, object, blim,
+					       next, text_props_only);
+
+  if (blim < 0)
+    return Qnil;
   else
-    limit_was_nil = 0;
-
-  extent = extent_at (pos, object, prop, 0, EXTENT_AT_BEFORE, 0);
-  if (!NILP (extent))
-    value = Fextent_property (extent, prop, Qnil);
-  else
-    value = Qnil;
-
-  while (1)
-    {
-      pos = extent_find_beginning_of_run (object, pos, 1);
-      if (pos <= limit)
-	break; /* property is the same all the way to the end */
-      extent = extent_at (pos, object, prop, 0, EXTENT_AT_BEFORE, 0);
-      if ((NILP (extent) && !NILP (value)) ||
-	  (!NILP (extent) && !EQ (value,
-				  Fextent_property (extent, prop, Qnil))))
-	return pos;
-    }
-
-  if (limit_was_nil)
-    return -1;
-  else
-    return limit;
+    return make_int (buffer_or_string_bytexpos_to_charxpos (object, blim));
 }
 
 DEFUN ("next-single-property-change", Fnext_single_property_change,
@@ -7175,22 +7168,14 @@ If two or more extents with conflicting non-nil values for PROP overlap
  a particular character, it is undefined which value is considered to be
  the value of PROP. (Note that this situation will not happen if you always
  use the text-property primitives.)
+
+This function looks only at extents created using the text-property primitives.
+To look at all extents, use `next-single-char-property-change'.
 */
        (pos, prop, object, limit))
 {
-  Bytexpos xpos;
-  Bytexpos blim;
-
-  object = decode_buffer_or_string (object);
-  xpos = get_buffer_or_string_pos_byte (object, pos, 0);
-  blim = !NILP (limit) ? get_buffer_or_string_pos_byte (object, limit, 0) : -1;
-
-  blim = next_single_property_change (xpos, prop, object, blim);
-
-  if (blim < 0)
-    return Qnil;
-  else
-    return make_int (buffer_or_string_bytexpos_to_charxpos (object, blim));
+  return next_previous_single_property_change_fn (pos, prop, object, limit,
+						  1, 1);
 }
 
 DEFUN ("previous-single-property-change", Fprevious_single_property_change,
@@ -7210,22 +7195,69 @@ If two or more extents with conflicting non-nil values for PROP overlap
  a particular character, it is undefined which value is considered to be
  the value of PROP. (Note that this situation will not happen if you always
  use the text-property primitives.)
+
+This function looks only at extents created using the text-property primitives.
+To look at all extents, use `next-single-char-property-change'.
 */
        (pos, prop, object, limit))
 {
-  Bytexpos xpos;
-  Bytexpos blim;
+  return next_previous_single_property_change_fn (pos, prop, object, limit,
+						  0, 1);
+}
 
-  object = decode_buffer_or_string (object);
-  xpos = get_buffer_or_string_pos_byte (object, pos, 0);
-  blim = !NILP (limit) ? get_buffer_or_string_pos_byte (object, limit, 0) : -1;
+DEFUN ("next-single-char-property-change", Fnext_single_char_property_change,
+       2, 4, 0, /*
+Return the position of next property change for a specific property.
+Scans characters forward from POS till it finds a change in the PROP
+ property, then returns the position of the change.  The optional third
+ argument OBJECT is the buffer or string to scan (defaults to the current
+ buffer).
+The property values are compared with `eq'.
+Return nil if the property is constant all the way to the end of OBJECT.
+If the value is non-nil, it is a position greater than POS, never equal.
 
-  blim = previous_single_property_change (xpos, prop, object, blim);
+If the optional fourth argument LIMIT is non-nil, don't search
+ past position LIMIT; return LIMIT if nothing is found before LIMIT.
+If two or more extents with conflicting non-nil values for PROP overlap
+ a particular character, it is undefined which value is considered to be
+ the value of PROP. (Note that this situation will not happen if you always
+ use the text-property primitives.)
 
-  if (blim < 0)
-    return Qnil;
-  else
-    return make_int (buffer_or_string_bytexpos_to_charxpos (object, blim));
+This function looks at all extents.  To look at only extents created using the
+text-property primitives, use `next-single-char-property-change'.
+*/
+       (pos, prop, object, limit))
+{
+  return next_previous_single_property_change_fn (pos, prop, object, limit,
+						  1, 0);
+}
+
+DEFUN ("previous-single-char-property-change",
+       Fprevious_single_char_property_change,
+       2, 4, 0, /*
+Return the position of next property change for a specific property.
+Scans characters backward from POS till it finds a change in the PROP
+ property, then returns the position of the change.  The optional third
+ argument OBJECT is the buffer or string to scan (defaults to the current
+ buffer).
+The property values are compared with `eq'.
+Return nil if the property is constant all the way to the start of OBJECT.
+If the value is non-nil, it is a position less than POS, never equal.
+
+If the optional fourth argument LIMIT is non-nil, don't search back
+ past position LIMIT; return LIMIT if nothing is found until LIMIT.
+If two or more extents with conflicting non-nil values for PROP overlap
+ a particular character, it is undefined which value is considered to be
+ the value of PROP. (Note that this situation will not happen if you always
+ use the text-property primitives.)
+
+This function looks at all extents.  To look at only extents created using the
+text-property primitives, use `next-single-char-property-change'.
+*/
+       (pos, prop, object, limit))
+{
+  return next_previous_single_property_change_fn (pos, prop, object, limit,
+						  0, 0);
 }
 
 #ifdef MEMORY_USAGE_STATS
@@ -7364,6 +7396,8 @@ syms_of_extents (void)
   DEFSUBR (Ftext_prop_extent_paste_function);
   DEFSUBR (Fnext_single_property_change);
   DEFSUBR (Fprevious_single_property_change);
+  DEFSUBR (Fnext_single_char_property_change);
+  DEFSUBR (Fprevious_single_char_property_change);
 }
 
 void

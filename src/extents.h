@@ -110,7 +110,7 @@ EXFUN (Fget_char_property, 4);
 EXFUN (Fmake_extent, 3);
 EXFUN (Fnext_extent_change, 2);
 EXFUN (Fprevious_extent_change, 2);
-EXFUN (Fprevious_single_property_change, 4);
+EXFUN (Fprevious_single_char_property_change, 4);
 EXFUN (Fset_extent_endpoints, 4);
 EXFUN (Fset_extent_parent, 2);
 EXFUN (Fset_extent_property, 3);
@@ -125,10 +125,11 @@ enum extent_at_flag
 
 Bytexpos extent_endpoint_byte (EXTENT extent, int endp);
 Charxpos extent_endpoint_char (EXTENT extent, int endp);
-Bytexpos next_single_property_change (Bytexpos pos, Lisp_Object prop,
-				      Lisp_Object object, Bytexpos limit);
-Bytexpos previous_single_property_change (Bytexpos pos, Lisp_Object prop,
-					  Lisp_Object object, Bytexpos limit);
+Bytexpos next_previous_single_property_change (Bytexpos pos, Lisp_Object prop,
+					       Lisp_Object object,
+					       Bytexpos limit,
+					       Boolint next,
+					       Boolint text_props_only);
 Lisp_Object get_char_property (Bytexpos position, Lisp_Object prop,
 			       Lisp_Object object, enum extent_at_flag fl,
 			       int text_props_only);

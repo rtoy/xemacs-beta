@@ -448,8 +448,8 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 
   tmp_table = get_char_property (pos, Qsyntax_table, cache->object,
 				 EXTENT_AT_AFTER, 0);
-  lim = next_single_property_change (pos, Qsyntax_table, cache->object,
-				     -1);
+  lim = next_previous_single_property_change (pos, Qsyntax_table,
+					      cache->object, -1, 1, 0);
   if (lim < 0)
     {
       next = buffer_or_string_absolute_end_byte (cache->object);
@@ -460,8 +460,8 @@ update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
 
   if (pos < buffer_or_string_absolute_end_byte (cache->object))
     pos = next_bytexpos (cache->object, pos);
-  lim = previous_single_property_change (pos, Qsyntax_table, cache->object,
-					 -1);
+  lim = next_previous_single_property_change (pos, Qsyntax_table,
+					      cache->object, -1, 0, 0);
   if (lim < 0)
     {
       prev = buffer_or_string_absolute_begin_byte (cache->object);

@@ -71,8 +71,8 @@ last_visible_position (Charbpos pos, struct buffer *buf)
   Lisp_Object value;
 
   buffer = wrap_buffer (buf);
-  value = Fprevious_single_property_change (make_int (pos), Qinvisible,
-					    buffer, Qnil);
+  value = Fprevious_single_char_property_change (make_int (pos), Qinvisible,
+						 buffer, Qnil);
   if (NILP (value))
     return 0; /* no visible position found */
   else

@@ -1,3 +1,8 @@
+2004-11-05  Ben Wing  <ben@xemacs.org>
+
+	* res.rc:
+	Fix ^M brokenness.
+
 2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.18 "chestnut" is released.
@@ -499,6 +504,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.31 2004/10/22 05:18:37 stephent Exp $
-$Revision: 1.31 $
+%%% $Id: ChangeLog,v 1.32 2005/01/26 05:11:01 ben Exp $
+$Revision: 1.32 $
 

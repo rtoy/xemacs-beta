@@ -1,5 +1,17 @@
 2005-01-25  Ben Wing  <ben@xemacs.org>
 
+	* extents.c:
+	* extents.c (next_previous_single_property_change):
+	* extents.c (next_previous_single_property_change_fn):
+	* extents.c (syms_of_extents):
+	* extents.h:
+	* indent.c (last_visible_position):
+	* syntax.c (update_syntax_cache):
+	Implement next/previous-single-char-property-change and make
+	next/previous-single-property-change work like in FSF.
+
+2005-01-25  Ben Wing  <ben@xemacs.org>
+
 	* Makefile.in.in:
 	* Makefile.in.in (%.o):
 	Don't compile executable as Windows (-mwindows) under Cygwin.
