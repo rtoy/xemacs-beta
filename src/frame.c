@@ -118,7 +118,16 @@ Lisp_Object Vframe_being_created;
 Lisp_Object Qframe_being_created;
 
 static void store_minibuf_frame_prop (struct frame *f, Lisp_Object val);
-static void frame_conversion_internal (struct frame *f, int pixel_to_char,
+
+typedef enum  {
+  DISPLAYABLE_PIXEL_TO_CHAR,
+  TOTAL_PIXEL_TO_CHAR,
+  CHAR_TO_TOTAL_PIXEL,
+  CHAR_TO_DISPLAYABLE_PIXEL,
+} pixel_to_char_mode_t;
+
+static void frame_conversion_internal (struct frame *f,
+				       pixel_to_char_mode_t pixel_to_char,
 				       int *pixel_width, int *pixel_height,
 				       int *char_width, int *char_height,
 				       int real_face);
@@ -2651,19 +2660,63 @@ Do not modify this list; use `set-frame-property' instead.
 
 
 DEFUN ("frame-pixel-height", Fframe_pixel_height, 0, 1, 0, /*
-Return the height in pixels of FRAME.
+Return the total height in pixels of FRAME.
 */
        (frame))
 {
   return make_int (decode_frame (frame)->pixheight);
 }
 
+DEFUN ("frame-displayable-pixel-height", Fframe_displayable_pixel_height, 0, 1, 0, /*
+Return the height of the displayable area in pixels of FRAME.
+*/
+       (frame))
+{
+  struct frame *f = decode_frame (frame);
+  int height, pheight;
+  frame = wrap_frame (f);
+
+  if (!window_system_pixelated_geometry (frame)) 
+    {
+      height = FRAME_HEIGHT (f);
+
+      frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
+				 0, &pheight, 0, &height, 0);
+    }
+  else 
+    pheight = FRAME_PIXHEIGHT (f);
+
+  return make_int (pheight);
+}
+
 DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
-Return the width in pixels of FRAME.
+Return the total width in pixels of FRAME.
 */
        (frame))
 {
   return make_int (decode_frame (frame)->pixwidth);
+}
+
+DEFUN ("frame-displayable-pixel-width", Fframe_displayable_pixel_width, 0, 1, 0, /*
+Return the width of the displayable area in pixels of FRAME.
+*/
+       (frame))
+{
+  struct frame *f = decode_frame (frame);
+  int width, pwidth;
+  frame = wrap_frame (f);
+
+  if (!window_system_pixelated_geometry (frame)) 
+    {
+      width = FRAME_WIDTH (f);
+
+      frame_conversion_internal (f, CHAR_TO_DISPLAYABLE_PIXEL,
+				 &pwidth, 0, &width, 0, 0);
+    }
+  else 
+    pwidth = FRAME_PIXWIDTH (f);
+
+  return make_int (pwidth);
 }
 
 DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
@@ -2729,7 +2782,7 @@ but that the idea of the actual height of the frame should not be changed.
 }
 
 DEFUN ("set-frame-pixel-height", Fset_frame_pixel_height, 2, 3, 0, /*
-Specify that the frame FRAME is HEIGHT pixels tall.
+Specify that the frame FRAME is a total of HEIGHT pixels tall.
 Optional third arg non-nil means that redisplay should be HEIGHT pixels tall
 but that the idea of the actual height of the frame should not be changed.
 */
@@ -2744,10 +2797,8 @@ but that the idea of the actual height of the frame should not be changed.
     {
       int h = XINT (height);
       width = FRAME_WIDTH (f);
-      /* Simply using pixel_to_real_char_size here is not good
-	 enough since we end up with a total frame size of HEIGHT
-	 rather than a displayable height of HEIGHT. */
-      frame_conversion_internal (f, 2, 0, &h, 0, &pheight, 0);
+
+      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
     }
   else 
     {
@@ -2758,6 +2809,35 @@ but that the idea of the actual height of the frame should not be changed.
   internal_set_frame_size (f, width, pheight, !NILP (pretend));
   return frame;
 }
+
+DEFUN ("set-frame-displayable-pixel-height", Fset_frame_displayable_pixel_height, 2, 3, 0, /*
+Specify that the displayable area of frame FRAME is HEIGHT pixels tall.
+Optional third arg non-nil means that redisplay should be HEIGHT pixels tall
+but that the idea of the actual height of the frame should not be changed.
+*/
+       (frame, height, pretend))
+{
+  struct frame *f = decode_frame (frame);
+  int pheight, width;
+  frame = wrap_frame (f);
+  CHECK_INT (height);
+
+  if (!window_system_pixelated_geometry (frame)) 
+    {
+      int h = XINT (height);
+      width = FRAME_WIDTH (f);
+      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, 0, &h, 0, &pheight, 0);
+    }
+  else 
+    {
+      width = FRAME_PIXWIDTH (f);
+      pheight = XINT (height);
+    }
+
+  internal_set_frame_size (f, width, pheight, !NILP (pretend));
+  return frame;
+}
+
 
 DEFUN ("set-frame-width", Fset_frame_width, 2, 3, 0, /*
 Specify that the frame FRAME has COLS columns.
@@ -2787,7 +2867,7 @@ but that the idea of the actual width of the frame should not be changed.
 }
 
 DEFUN ("set-frame-pixel-width", Fset_frame_pixel_width, 2, 3, 0, /*
-Specify that the frame FRAME is WIDTH pixels wide.
+Specify that the frame FRAME is a total of WIDTH pixels wide.
 Optional third arg non-nil means that redisplay should be WIDTH wide
 but that the idea of the actual height of the frame should not be changed.
 */
@@ -2802,10 +2882,35 @@ but that the idea of the actual height of the frame should not be changed.
     {
       int w = XINT (width);
       height = FRAME_HEIGHT (f);
-      /* Simply using pixel_to_real_char_size here is not good
-	 enough since we end up with a total frame size of WIDTH
-	 rather than a displayable height of WIDTH. */
-      frame_conversion_internal (f, 2, &w, 0, &pwidth, 0, 0);
+      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, &w, 0, &pwidth, 0, 0);
+    }
+  else
+    {
+      height = FRAME_PIXHEIGHT (f);
+      pwidth = XINT (width);
+    }
+
+  internal_set_frame_size (f, pwidth, height, !NILP (pretend));
+  return frame;
+}
+
+DEFUN ("set-frame-displayable-pixel-width", Fset_frame_displayable_pixel_width, 2, 3, 0, /*
+Specify that the displayable area of frame FRAME is WIDTH pixels wide.
+Optional third arg non-nil means that redisplay should be WIDTH wide
+but that the idea of the actual height of the frame should not be changed.
+*/
+       (frame, width, pretend))
+{
+  struct frame *f = decode_frame (frame);
+  int height, pwidth;
+  frame = wrap_frame (f);
+  CHECK_INT (width);
+
+  if (!window_system_pixelated_geometry (frame))
+    {
+      int w = XINT (width);
+      height = FRAME_HEIGHT (f);
+      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, &w, 0, &pwidth, 0, 0);
     }
   else
     {
@@ -2843,7 +2948,7 @@ but that the idea of the actual size of the frame should not be changed.
 }
 
 DEFUN ("set-frame-pixel-size", Fset_frame_pixel_size, 3, 4, 0, /*
-Set the size of FRAME to WIDTH by HEIGHT, measured in pixels.
+Set the total size of FRAME to WIDTH by HEIGHT, measured in pixels.
 Optional fourth arg non-nil means that redisplay should use WIDTH by HEIGHT
 but that the idea of the actual size of the frame should not be changed.
 */
@@ -2859,10 +2964,36 @@ but that the idea of the actual size of the frame should not be changed.
     {
       int w = XINT (width);
       int h = XINT (height);
-      /* Simply using pixel_to_real_char_size here is not good enough
-	 since we end up with a total frame size of WIDTH x HEIGHT
-	 rather than a displayable height of WIDTH x HEIGHT. */
-      frame_conversion_internal (f, 2, &w, &h, &pwidth, &pheight, 0);
+      frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR, &w, &h, &pwidth, &pheight, 0);
+    }
+  else
+    {
+      pheight = XINT (height);
+      pwidth = XINT (width);
+    }
+
+  internal_set_frame_size (f, pwidth, pheight, !NILP (pretend));
+  return frame;
+}
+
+DEFUN ("set-frame-displayable-pixel-size", Fset_frame_displayable_pixel_size, 3, 4, 0, /*
+Set the displayable size of FRAME to WIDTH by HEIGHT, measured in pixels.
+Optional fourth arg non-nil means that redisplay should use WIDTH by HEIGHT
+but that the idea of the actual size of the frame should not be changed.
+*/
+       (frame, width, height, pretend))
+{
+  struct frame *f = decode_frame (frame);
+  int pheight, pwidth;
+  frame = wrap_frame (f);
+  CHECK_INT (width);
+  CHECK_INT (height);
+
+  if (!window_system_pixelated_geometry (frame)) 
+    {
+      int w = XINT (width);
+      int h = XINT (height);
+      frame_conversion_internal (f, DISPLAYABLE_PIXEL_TO_CHAR, &w, &h, &pwidth, &pheight, 0);
     }
   else
     {
@@ -2898,7 +3029,8 @@ the rightmost or bottommost possible position (that stays within the screen).
    Function get_default_char_pixel_size() removed because it's
    exactly the same as default_face_height_and_width(). */
 static void
-frame_conversion_internal (struct frame *f, int pixel_to_char,
+frame_conversion_internal (struct frame *f,
+			   pixel_to_char_mode_t pixel_to_char,
 			   int *pixel_width, int *pixel_height,
 			   int *char_width, int *char_height,
 			   int real_face)
@@ -2935,28 +3067,34 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
 
      #### Consider rounding up to 0.5 characters to avoid adding too
      much space. */
-  if (pixel_to_char > 1)
+  switch (pixel_to_char)
     {
+    case DISPLAYABLE_PIXEL_TO_CHAR:
       if (char_width)
 	*char_width = ROUND_UP (*pixel_width, cpw) / cpw;
       if (char_height)
 	*char_height = ROUND_UP (*pixel_height, cph) / cph;
-    }
-  /* Convert to chars so that the total frame size is pixel_width x
-     pixel_height. */
-  else if (pixel_to_char)
-    {
+      break;
+    case TOTAL_PIXEL_TO_CHAR:
+      /* Convert to chars so that the total frame size is pixel_width x
+	 pixel_height. */
       if (char_width)
 	*char_width = 1 + ((*pixel_width - egw) - bdr - obw) / cpw;
       if (char_height)
 	*char_height = (*pixel_height - bdr - obh) / cph;
-    }
-  else
-    {
+      break;
+    case CHAR_TO_TOTAL_PIXEL:
       if (pixel_width)
 	*pixel_width = (*char_width - 1) * cpw + egw + bdr + obw;
       if (pixel_height)
 	*pixel_height = *char_height * cph + bdr + obh;
+      break;
+    case CHAR_TO_DISPLAYABLE_PIXEL:
+      if (pixel_width)
+	*pixel_width = *char_width * cpw;
+      if (pixel_height)
+	*pixel_height = *char_height * cph;
+      break;
     }
 }
 
@@ -2975,7 +3113,8 @@ void
 pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 		    int *char_width, int *char_height)
 {
-  frame_conversion_internal (f, 1, &pixel_width, &pixel_height, char_width,
+  frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR,
+			     &pixel_width, &pixel_height, char_width,
 			     char_height, 0);
 }
 
@@ -2991,7 +3130,8 @@ void
 char_to_pixel_size (struct frame *f, int char_width, int char_height,
 		    int *pixel_width, int *pixel_height)
 {
-  frame_conversion_internal (f, 0, pixel_width, pixel_height, &char_width,
+  frame_conversion_internal (f, CHAR_TO_TOTAL_PIXEL,
+			     pixel_width, pixel_height, &char_width,
 			     &char_height, 0);
 }
 
@@ -3014,7 +3154,8 @@ void
 pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
 			 int *char_width, int *char_height)
 {
-  frame_conversion_internal (f, 1, &pixel_width, &pixel_height, char_width,
+  frame_conversion_internal (f, TOTAL_PIXEL_TO_CHAR,
+			     &pixel_width, &pixel_height, char_width,
 			     char_height, 1);
 }
 
@@ -3022,7 +3163,8 @@ void
 char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
 			 int *pixel_width, int *pixel_height)
 {
-  frame_conversion_internal (f, 0, pixel_width, pixel_height, &char_width,
+  frame_conversion_internal (f, CHAR_TO_TOTAL_PIXEL,
+			     pixel_width, pixel_height, &char_width,
 			     &char_height, 1);
 }
 
@@ -3500,15 +3642,20 @@ syms_of_frame (void)
   DEFSUBR (Fframe_properties);
   DEFSUBR (Fset_frame_properties);
   DEFSUBR (Fframe_pixel_height);
+  DEFSUBR (Fframe_displayable_pixel_height);
   DEFSUBR (Fframe_pixel_width);
+  DEFSUBR (Fframe_displayable_pixel_width);
   DEFSUBR (Fframe_name);
   DEFSUBR (Fframe_modified_tick);
   DEFSUBR (Fset_frame_height);
   DEFSUBR (Fset_frame_width);
   DEFSUBR (Fset_frame_size);
   DEFSUBR (Fset_frame_pixel_height);
+  DEFSUBR (Fset_frame_displayable_pixel_height);
   DEFSUBR (Fset_frame_pixel_width);
+  DEFSUBR (Fset_frame_displayable_pixel_width);
   DEFSUBR (Fset_frame_pixel_size);
+  DEFSUBR (Fset_frame_displayable_pixel_size);
   DEFSUBR (Fset_frame_position);
   DEFSUBR (Fset_frame_pointer);
   DEFSUBR (Fprint_job_page_number);
