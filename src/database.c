@@ -418,7 +418,7 @@ berkdb_get (Lisp_Database *db, Lisp_Object key)
 #endif /* DB_VERSION_MAJOR */
 
   if (!status)
-    return make_ext_string (valdatum.data, valdatum.size,
+    return make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
 			    db->coding_system);
 
 #if DB_VERSION_MAJOR == 1
@@ -528,9 +528,9 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
 	 status == 0;
 	 status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
       {
-	key = make_ext_string (keydatum.data, keydatum.size,
+	key = make_ext_string ((const Extbyte *) keydatum.data, keydatum.size,
 			       db->coding_system);
-	val = make_ext_string (valdatum.data, valdatum.size,
+	val = make_ext_string ((const Extbyte *) valdatum.data, valdatum.size,
 			       db->coding_system);
 	call2 (func, key, val);
       }

@@ -1,3 +1,8 @@
+2003-08-26  Nickolay Pakoulin  <npak@ispras.ru>
+
+	* database.c (berkdb_get):
+	(berkdb_map): Add type casts to satisfy C++ compilers.
+
 2003-08-25  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c (kkcc_gc_stack_init):
