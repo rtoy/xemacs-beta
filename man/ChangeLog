@@ -22,11 +22,6 @@
 
 	* XEmacs 21.5.8 "broccoli" is released.
 
-2002-07-13  Adrian Aichner  <adrian@xemacs.org>
-
-	* xemacs/packages.texi (Installing Packages): Fix reference to
-	EFS.
-
 2002-07-06  Adrian Aichner  <adrian@xemacs.org>
 
 	* new-users-guide/custom1.texi (Customizing key Bindings): Fix
