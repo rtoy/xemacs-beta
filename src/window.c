@@ -5256,7 +5256,7 @@ get_current_pixel_pos (Lisp_Object window, Lisp_Object pos,
 	      for (i = 0; i < Dynarr_length (db->runes); i++)
 		{
 		  *rb = Dynarr_atp (db->runes, i);
-		  if (point <= *rb->charpos)
+		  if (point <= (*rb)->charpos)
 		    goto found_charpos;
 		}
 	      return 0;
