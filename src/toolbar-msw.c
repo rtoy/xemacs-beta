@@ -294,7 +294,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			  if (! (bitmap = mswindows_create_resized_bitmap 
 				 (p, f, bmwidth, bmheight)))
 			    {
-			      xfree (button_tbl);
+			      xfree (button_tbl, TBBUTTON *);
 			      if (ilist) ImageList_Destroy (ilist);
 			      gui_error ("Couldn't resize pixmap", instance);
 			    }
@@ -317,7 +317,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 					 ? ILC_MASK  : 0) | ILC_COLOR24, 
 					nbuttons, nbuttons * 2 )))
 			{
-			  xfree (button_tbl);
+			  xfree (button_tbl, TBBUTTON *);
 			  gui_error ("Couldn't create image list", instance);
 			}
 
@@ -332,7 +332,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			    mask ? mask 
 			    : IMAGE_INSTANCE_MSWINDOWS_MASK (p))) < 0)
 			{
-			  xfree (button_tbl);
+			  xfree (button_tbl, TBBUTTON *);
 			  if (ilist)
 			    ImageList_Destroy (ilist);
 			  gui_error 
@@ -394,7 +394,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			      NULL, 
 			      NULL))==NULL)
 	{
-	  xfree (button_tbl);
+	  xfree (button_tbl, TBBUTTON *);
 	  ImageList_Destroy (ilist);
 	  gui_error ("couldn't create toolbar", Qunbound);
 	}
@@ -467,7 +467,8 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
          happen otherwise. */
       mswindows_move_toolbar (f, pos);
 
-      if (button_tbl) xfree (button_tbl);
+      if (button_tbl)
+	xfree (button_tbl, TBBUTTON *);
 
       SET_TOOLBAR_WAS_VISIBLE_FLAG (f, pos, 1);
     }

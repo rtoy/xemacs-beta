@@ -392,7 +392,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	  p = beg + qxestrlen (beg);
 	}
       if (wd)
-	xfree (wd);
+	xfree (wd, Ibyte *);
     }
 
 #if 0 /* No! This screws up efs, which calls file-name-directory on URL's
@@ -401,14 +401,11 @@ Given a Unix syntax file name, returns a string ending in slash.
   {
     Bytecount len = p - beg;
     Ibyte *newbeg = alloca_ibytes (len + 1);
-    Lisp_Object return_me;
 
     qxestrncpy (newbeg, beg, len);
     newbeg[len] = '\0';
     newbeg = mswindows_canonicalize_filename (newbeg);
-    return_me = build_intstring (newbeg);
-    xfree (newbeg);
-    return return_me;
+    return build_intstring (newbeg);
   }
 #endif
 #endif /* not WIN32_NATIVE */
@@ -930,7 +927,7 @@ See also the function `substitute-in-file-name'.
 		      XSTRING_DATA (name)[1] = ':';
 		    }
 		}
-	      xfree (newnm);
+	      xfree (newnm, Ibyte *);
 	      RETURN_UNGCPRO (name);
 	    }
 #endif /* WIN32_FILENAMES */
@@ -1042,7 +1039,7 @@ See also the function `substitute-in-file-name'.
 	  if (newcwd)
 	    {
 	      IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-	      xfree (newcwd);
+	      xfree (newcwd, Ibyte *);
 	    }
 	  else
 	    newdir = NULL;
@@ -1128,7 +1125,7 @@ See also the function `substitute-in-file-name'.
 	      if (newcwd)
 		{
 		  IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
-		  xfree (newcwd);
+		  xfree (newcwd, Ibyte *);
 		}
 	      else
 #endif
@@ -1304,7 +1301,7 @@ See also the function `substitute-in-file-name'.
   {
     Ibyte *newtarget = mswindows_canonicalize_filename (target);
     Lisp_Object result = build_intstring (newtarget);
-    xfree (newtarget);
+    xfree (newtarget, Ibyte *);
 
     RETURN_UNGCPRO (result);
   }
@@ -2436,16 +2433,16 @@ Otherwise returns nil.
 			      buf, bufsize);
       if (valsize < bufsize) break;
       /* Buffer was not long enough */
-      xfree (buf);
+      xfree (buf, Ibyte *);
       bufsize *= 2;
     }
   if (valsize == -1)
     {
-      xfree (buf);
+      xfree (buf, Ibyte *);
       return Qnil;
     }
   val = make_string (buf, valsize);
-  xfree (buf);
+  xfree (buf, Ibyte *);
   return val;
 #else /* not HAVE_READLINK */
   return Qnil;

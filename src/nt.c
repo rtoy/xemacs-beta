@@ -338,16 +338,16 @@ mswindows_get_long_filename (Ibyte *name)
 	      *p++ = '\\';
 	      eicat_ch (o, '\\');
 	    }
-	  xfree (component);
+	  xfree (component, Ibyte *);
 	}
       else
 	{
-	  xfree (full);
+	  xfree (full, Ibyte *);
 	  return 0;
 	}
     }
 
-  xfree (full);
+  xfree (full, Ibyte *);
   return eicpyout_malloc (o, 0);
 }
 
@@ -394,7 +394,8 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 			      &cbData) == ERROR_SUCCESS)
 	return (lpvalue);
 
-      if (lpvalue) xfree (lpvalue);
+      if (lpvalue)
+	xfree (lpvalue, LPBYTE);
 	
       RegCloseKey (hrootkey);
     } 
@@ -411,7 +412,8 @@ nt_get_resource (Ibyte *key, LPDWORD lpdwtype)
 			      &cbData) == ERROR_SUCCESS)
 	return (lpvalue);
 	
-      if (lpvalue) xfree (lpvalue);
+      if (lpvalue)
+	xfree (lpvalue, LPBYTE);
 	
       RegCloseKey (hrootkey);
     } 
@@ -494,7 +496,7 @@ init_mswindows_environment (void)
 		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 
-	    xfree (lpval);
+	    xfree (lpval, LPBYTE);
 	  }
       }
   }
@@ -703,8 +705,8 @@ get_cached_volume_information (Ibyte *root_dir)
 	}
       else
 	{
-	  xfree (info->name);
-	  xfree (info->type);
+	  xfree (info->name, Ibyte *);
+	  xfree (info->type, Ibyte *);
 	}
 
       TSTR_TO_C_STRING_MALLOC (name, info->name);
@@ -826,7 +828,7 @@ mswindows_opendir (const Ibyte *filename)
     return NULL;
 
   if (dir_pathname)
-    xfree (dir_pathname);
+    xfree (dir_pathname, Ibyte *);
   dir_pathname = qxestrdup (filename);
 
   return dirp;
@@ -848,7 +850,7 @@ mswindows_closedir (DIR *dirp)
       retval = close_unc_volume (wnet_enum_handle);
       wnet_enum_handle = INVALID_HANDLE_VALUE;
     }
-  xfree (dirp);
+  xfree (dirp, DIR *);
 
   return retval;
 }
@@ -905,7 +907,7 @@ mswindows_readdir (DIR *dirp)
 
     eicpy_rawz (found, val);
     if (need_to_free)
-      xfree (val);
+      xfree (val, Ibyte *);
 
     if (!NILP (Vmswindows_downcase_file_names))
       eilwr (found);
@@ -1750,7 +1752,7 @@ mswindows_getdcwd (int drivelet)
   else
     cwdext = _getdcwd (drivelet, NULL, 0);
   TSTR_TO_C_STRING_MALLOC (cwdext, cwd);
-  xfree (cwdext);
+  xfree (cwdext, Extbyte *);
   return cwd;
 }
 
@@ -2041,8 +2043,8 @@ All path elements in FILENAME are converted to their long names.
 
   canon = mswindows_canonicalize_filename (longname);
   ret = build_intstring (canon);
-  xfree (canon);
-  xfree (longname);
+  xfree (canon, Ibyte *);
+  xfree (longname, Ibyte *);
   return ret;
 }
 

@@ -5950,7 +5950,7 @@ internal_bind_int (int *addr, int newval)
 static Lisp_Object
 free_pointer (Lisp_Object opaque)
 {
-  xfree (get_opaque_ptr (opaque));
+  xfree (get_opaque_ptr (opaque), void *);
   free_opaque_ptr (opaque);
   return Qnil;
 }

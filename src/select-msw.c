@@ -324,7 +324,7 @@ mswindows_own_selection (Lisp_Object selection_name,
     {
       CloseClipboard ();
 
-      xfree (src);
+      xfree (src, void *);
       return Qnil;
     }
 
@@ -335,12 +335,12 @@ mswindows_own_selection (Lisp_Object selection_name,
       GlobalFree (hValue);
       CloseClipboard ();
 
-      xfree (src);
+      xfree (src, void *);
       return Qnil;
     }
 
   memcpy (dst, src, size);
-  xfree (src);
+  xfree (src, void *);
 
   GlobalUnlock (hValue);
 

@@ -143,13 +143,13 @@ free_gc_cache (struct gc_cache *cache)
     {
       XFreeGC (cache->dpy, rest->gc);
       next = rest->next;
-      xfree (rest);
+      xfree (rest, struct gc_cache_cell *);
       rest = next;
     }
 #ifdef GCCACHE_HASH
   free_hash_table (cache->table);
 #endif
-  xfree (cache);
+  xfree (cache, struct gc_cache *);
 }
 
 GC

@@ -252,7 +252,7 @@ release_breathing_space (void)
     {
       void *tmp = breathing_space;
       breathing_space = 0;
-      xfree (tmp);
+      xfree (tmp, void *);
     }
 }
 
@@ -383,11 +383,7 @@ xrealloc (void *block, Bytecount size)
 }
 
 void
-#ifdef ERROR_CHECK_MALLOC
 xfree_1 (void *block)
-#else
-xfree (void *block)
-#endif
 {
 #ifdef ERROR_CHECK_MALLOC
   /* Unbelievably, calling free() on 0xDEADBEEF doesn't cause an
@@ -2265,7 +2261,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 		      XSTRING_LENGTH (s) + 1 - pos);
 	    }
 	  XSET_STRING_DATA (s, new_data);
-	  xfree (old_data);
+	  xfree (old_data, Ibyte *);
 	}
     }
   else /* old string is small */
@@ -3598,7 +3594,7 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
           *prev = next;
 	  tick_lcrecord_stats (h, 1);
 	  /* used to call finalizer right here. */
-	  xfree (header);
+	  xfree (header, struct lcrecord_header *);
 	  header = next;
 	}
     }
@@ -3722,7 +3718,7 @@ do {									     \
 	  SFTB_current = SFTB_current->prev;				     \
 	  {								     \
 	    *SFTB_prev = SFTB_current;					     \
-	    xfree (SFTB_victim_block);					     \
+	    xfree (SFTB_victim_block, struct typename##_block *);	     \
 	    /* Restore free list to what it was before victim was swept */   \
 	    typename##_free_list = SFTB_old_free_list;			     \
 	    num_free -= SFTB_limit;					     \
@@ -3816,7 +3812,7 @@ sweep_compiled_functions (void)
 {
 #define UNMARK_compiled_function(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
 #define ADDITIONAL_FREE_compiled_function(ptr) \
-  if (ptr->args_in_array) xfree (ptr->args)
+  if (ptr->args_in_array) xfree (ptr->args, Lisp_Object *)
 
   SWEEP_FIXED_TYPE_BLOCK (compiled_function, Lisp_Compiled_Function);
 }
@@ -4154,7 +4150,7 @@ compact_string_chars (void)
     for (victim = to_sb->next; victim; )
       {
 	struct string_chars_block *next = victim->next;
-	xfree (victim);
+	xfree (victim, struct string_chars_block *);
 	victim = next;
       }
 
@@ -4211,7 +4207,7 @@ sweep_strings (void)
 #define ADDITIONAL_FREE_string(ptr) do {	\
     Bytecount size = ptr->size_;		\
     if (BIG_STRING_SIZE_P (size))		\
-      xfree (ptr->data_);			\
+      xfree (ptr->data_, Ibyte *);		\
   } while (0)
 
   SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);

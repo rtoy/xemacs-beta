@@ -1458,7 +1458,7 @@ pdump_resource_get (void)
 static void
 pdump_file_free (void)
 {
-  xfree (pdump_start);
+  xfree (pdump_start, char *);
 }
 
 #ifdef HAVE_MMAP

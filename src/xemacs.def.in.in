@@ -134,11 +134,7 @@ write_fmt_string_lisp
 write_string
 wrong_type_argument		/* CONCHECK_xxx */
 xemacs_c_alloca			/* ALLOCA */
-#ifdef ERROR_CHECK_MALLOC
 xfree_1				/* xfree */
-#else
-xfree
-#endif
 xmalloc
 xmalloc_and_zero
 xrealloc

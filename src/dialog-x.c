@@ -207,7 +207,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 	  {
 	    allow_text_p = 0;	 /* only allow text field at the front */
 	    if (wv->value)
-	      xfree (wv->value);
+	      xfree (wv->value, char *);
 	    wv->value = wv->name;	/* what a mess... */
 	    wv->name = xstrdup (button_names [n]);
 

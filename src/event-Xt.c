@@ -1406,7 +1406,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		      l_item = make_string ((Ibyte *)hurl, strlen (hurl));
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
-		      xfree (hurl);
+		      xfree (hurl, char *);
 		    }
 		  l_type = Qdragdrop_URL;
 		}
@@ -1443,7 +1443,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 						   strlen (hurl)) );
 		  l_type = Qdragdrop_URL;
 
-		  xfree (hurl);
+		  xfree (hurl, char *);
 		}
 		break;
 	      case DndURL:
@@ -2348,7 +2348,7 @@ unselect_filedesc (int fd)
 	}
     }
   XtRemoveInput (closure->id);
-  xfree (closure);
+  xfree (closure, struct what_is_ready_closure *);
   filedesc_to_what_closure[fd] = 0;
 }
 

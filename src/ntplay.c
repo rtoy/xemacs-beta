@@ -68,7 +68,7 @@ play_sound_file (Extbyte *sound_file, int volume)
       if (retry_read (ofd, data, size) != size)
 	{
 	  retry_close (ofd);
-	  xfree (data);
+	  xfree (data, UChar_Binary *);
 	  return;
 	}
       retry_close (ofd);
@@ -90,7 +90,7 @@ play_sound_data_1 (UChar_Binary *data, int length, int volume,
   if (sound_data)
     {
       qxePlaySound (NULL, NULL, flags);
-      xfree (sound_data);
+      xfree (sound_data, UChar_Binary *);
       sound_data = 0;
     }
 

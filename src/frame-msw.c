@@ -328,7 +328,7 @@ mswindows_delete_frame (struct frame *f)
 #endif
       ReleaseDC (FRAME_MSWINDOWS_HANDLE (f), FRAME_MSWINDOWS_DC (f));
       DestroyWindow (FRAME_MSWINDOWS_HANDLE (f));
-      xfree (f->frame_data);
+      xfree (f->frame_data, void *);
     }
   f->frame_data = 0;
 }
@@ -978,7 +978,7 @@ msprinter_delete_frame (struct frame *f)
 	EndPage (hdc);
       if (FRAME_MSPRINTER_JOB_STARTED (f))
 	EndDoc (hdc);
-      xfree (f->frame_data);
+      xfree (f->frame_data, void *);
     }
 
   f->frame_data = 0;

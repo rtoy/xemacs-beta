@@ -212,14 +212,15 @@ emacs_gtk_selection_handle (GtkWidget *widget,
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     cl->successful = TRUE;
-    xfree (data);
+    xfree (data, UChar_Binary *);
   }
 
   unbind_to (count);
 
  DONE_LABEL:
 
-  if (cl) xfree (cl);
+  if (cl)
+    xfree (cl, struct _selection_closure *);
 
   UNGCPRO;
 

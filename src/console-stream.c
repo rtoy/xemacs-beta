@@ -123,7 +123,7 @@ stream_delete_console (struct console *con)
       if (stream_con->in != stdin)
 	retry_fclose (stream_con->in);
 
-      xfree (stream_con);
+      xfree (stream_con, struct stream_console *);
       CONSOLE_STREAM_DATA (con) = NULL;
     }
 }

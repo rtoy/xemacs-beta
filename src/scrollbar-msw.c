@@ -100,7 +100,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
   assert (!NILP (ptr));
   DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
   if (sb->scrollbar_data)
-    xfree (sb->scrollbar_data);
+    xfree (sb->scrollbar_data, void *);
 }
 
 static void

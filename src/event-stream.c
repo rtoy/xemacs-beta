@@ -401,7 +401,7 @@ finalize_command_builder (void *header, int for_disksave)
       struct command_builder *b = (struct command_builder *) header;
       if (b->echo_buf)
 	{
-	  xfree (b->echo_buf);
+	  xfree (b->echo_buf, Ibyte *);
 	  b->echo_buf = 0;
 	}
     }
@@ -494,7 +494,7 @@ free_command_builder (struct command_builder *builder)
 {
   if (builder->echo_buf)
     {
-      xfree (builder->echo_buf);
+      xfree (builder->echo_buf, Ibyte *);
       builder->echo_buf = NULL;
     }
   free_managed_lcrecord (Vcommand_builder_free_list,

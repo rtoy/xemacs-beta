@@ -202,7 +202,7 @@ static BITMAPINFO *convert_EImage_to_DIBitmap (Lisp_Object device,
 
       if (!bmp_data)
 	{
-	  xfree (bmp_info);
+	  xfree (bmp_info, BITMAPINFO *);
 	  return NULL;
 	}
 
@@ -233,7 +233,7 @@ static BITMAPINFO *convert_EImage_to_DIBitmap (Lisp_Object device,
 					     sizeof(RGBQUAD) * ncolors);
       if (!bmp_info)
 	{
-	  xfree (qtable);
+	  xfree (qtable, quant_table *);
 	  return NULL;
 	}
 
@@ -251,8 +251,8 @@ static BITMAPINFO *convert_EImage_to_DIBitmap (Lisp_Object device,
 
       if (!*bmp_data)
 	{
-	  xfree (qtable);
-	  xfree (bmp_info);
+	  xfree (qtable, quant_table *);
+	  xfree (bmp_info, BITMAPINFO *);
 	  return NULL;
 	}
 
@@ -279,7 +279,7 @@ static BITMAPINFO *convert_EImage_to_DIBitmap (Lisp_Object device,
 	      *dp++ = QUANT_GET_COLOR (qtable,rd,gr,bl);
 	    }
 	}
-      xfree (qtable);
+      xfree (qtable, quant_table *);
     }
   /* fix up the standard stuff */
   bmp_info->bmiHeader.biWidth = width;
@@ -472,8 +472,8 @@ mswindows_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 	image_instance_add_dibitmap (ii, bmp_info, bmp_data, bmp_bits, slice,
 				     instantiator);
 
-      xfree (bmp_info);
-      xfree (bmp_data);
+      xfree (bmp_info, BITMAPINFO *);
+      xfree (bmp_data, UChar_Binary *);
     }
 }
 
@@ -538,7 +538,7 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance *image,
 				 (void **)&and_bits,
 				 0,0)))
     {
-      xfree (bmp_info);
+      xfree (bmp_info, BITMAPINFO *);
       return;
     }
 
@@ -565,7 +565,7 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance *image,
 		 bmp_info,
 		 DIB_RGB_COLORS) <= 0)
     {
-      xfree (bmp_info);
+      xfree (bmp_info, BITMAPINFO *);
       return;
     }
 
@@ -597,8 +597,8 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance *image,
 	     bmp_info,
 	     DIB_RGB_COLORS);
 
-  xfree (bmp_info);
-  xfree (dibits);
+  xfree (bmp_info, BITMAPINFO *);
+  xfree (dibits, UChar_Binary *);
 
   SelectObject(hcdc, old);
 
@@ -849,7 +849,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
   colortbl = xnew_array_and_zero (COLORREF, xpmimage.ncolors);
   if (!colortbl)
     {
-      xfree (*data);
+      xfree (*data, UChar_Binary *);
       XpmFreeXpmImage (&xpmimage);
       XpmFreeXpmInfo (&xpminfo);
       return 0;
@@ -905,8 +905,8 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
 	}
 
     label_no_color:
-      xfree (*data);
-      xfree (colortbl);
+      xfree (*data, UChar_Binary *);
+      xfree (colortbl, COLORREF *);
       XpmFreeXpmImage (&xpmimage);
       XpmFreeXpmInfo (&xpminfo);
       return 0;
@@ -932,7 +932,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
 
   XpmFreeXpmImage (&xpmimage);
   XpmFreeXpmInfo (&xpminfo);
-  xfree (colortbl);
+  xfree (colortbl, COLORREF *);
   return TRUE;
 }
 
@@ -982,9 +982,9 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
     {
       while (nsymbols--)
 	{
-	  xfree (color_symbols[nsymbols].name);
+	  xfree (color_symbols[nsymbols].name, Ibyte *);
 	}
-      xfree(color_symbols);
+      xfree(color_symbols, struct color_symbol *);
     }
 
   /* build a bitmap from the eimage */
@@ -994,15 +994,15 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
       signal_image_error ("XPM to EImage conversion failed",
 			  image_instance);
     }
-  xfree (eimage);
+  xfree (eimage, UChar_Binary *);
 
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
 				     bmp_data, bmp_bits, 1, instantiator,
 				     x_hot, y_hot, transp);
 
-  xfree (bmp_info);
-  xfree (bmp_data);
+  xfree (bmp_info, BITMAPINFO *);
+  xfree (bmp_data, UChar_Binary *);
 }
 #endif /* HAVE_XPM */
 
@@ -1353,7 +1353,7 @@ xbm_create_bitmap_from_data (HDC hdc, const UChar_Binary *data,
 
   if (!new_data)
     {
-      xfree (bmp_info);
+      xfree (bmp_info, BITMAPINFO *);
       return NULL;
     }
 
@@ -1404,17 +1404,17 @@ xbm_create_bitmap_from_data (HDC hdc, const UChar_Binary *data,
 			     &bmp_buf,
 			     0,0);
 
-  xfree (bmp_info);
+  xfree (bmp_info, BITMAPINFO *);
 
   if (!bitmap || !bmp_buf)
     {
-      xfree (new_data);
+      xfree (new_data, UChar_Binary *);
       return NULL;
     }
 
   /* copy in the actual bitmap */
   memcpy (bmp_buf, new_data, height * new_width);
-  xfree (new_data);
+  xfree (new_data, UChar_Binary *);
 
   return bitmap;
 }
@@ -1776,7 +1776,7 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 		    DeleteObject (IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE (p, i));
 		  IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE (p, i) = 0;
 		}
-	      xfree (IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES (p));
+	      xfree (IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES (p), HBITMAP *);
 	      IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES (p) = 0;
 	    }
 	  if (IMAGE_INSTANCE_MSWINDOWS_MASK (p))
@@ -1790,7 +1790,7 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 
   if (p->data)
     {
-      xfree (p->data);
+      xfree (p->data, void *);
       p->data = 0;
     }
 }

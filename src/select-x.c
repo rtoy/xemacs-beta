@@ -642,7 +642,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     event->type = 0;
-    xfree (data);
+    xfree (data, UChar_Binary *);
   }
 
   unbind_to (count);
@@ -771,7 +771,7 @@ unexpect_property_change (int tick)
 	    prev->next = rest->next;
 	  else
 	    for_whom_the_bell_tolls = rest->next;
-	  xfree (rest);
+	  xfree (rest, struct prop_location *);
 	  return;
 	}
       prev = rest;
@@ -806,13 +806,13 @@ x_handle_property_notify (XPropertyEvent *event)
 		      XSTRING_DATA
 		      (XSYMBOL (x_atom_to_symbol
 				(get_device_from_display (event->display),
-				 event->atom))->name);
+				 event->atom))->name));
 #endif
 	  if (prev)
 	    prev->next = rest->next;
 	  else
 	    for_whom_the_bell_tolls = rest->next;
-	  xfree (rest);
+	  xfree (rest, struct prop_location *);
 	  return;
 	}
       prev = rest;
@@ -1074,7 +1074,8 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 	  stderr_out ("  read INCR done\n");
 #endif
 	  unexpect_property_change (prop_id);
-	  if (tmp_data) xfree (tmp_data);
+	  if (tmp_data)
+	    xfree (tmp_data, UChar_Binary *);
 	  break;
 	}
 #if 0
@@ -1091,7 +1092,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 	}
       memcpy ((*data_ret) + offset, tmp_data, tmp_size_bytes);
       offset += tmp_size_bytes;
-      xfree (tmp_data);
+      xfree (tmp_data, UChar_Binary *);
     }
 }
 
@@ -1140,7 +1141,7 @@ x_get_window_property_as_lisp_data (Display *display,
       Bytecount min_size_bytes =
 	/* careful here. */
 	(Bytecount) (* ((unsigned int *) data));
-      xfree (data);
+      xfree (data, UChar_Binary *);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
 				     &actual_type, &actual_format,
@@ -1152,7 +1153,7 @@ x_get_window_property_as_lisp_data (Display *display,
   val = selection_data_to_lisp_data (d, data, bytes,
 				     actual_type, actual_format);
 
-  xfree (data);
+  xfree (data, UChar_Binary *);
   return val;
 }
 
@@ -1284,7 +1285,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
 			  memchr (data, 0x1b, bytes) ?
 			  Qctext : Qbinary)
 	 : Qnil);
-  xfree (data);
+  xfree (data, UChar_Binary *);
   return ret;
 }
 

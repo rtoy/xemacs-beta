@@ -272,7 +272,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 #endif
 	    }
 	}
-      xfree(qtable);
+      xfree (qtable, quant_table *);
     } else {
       unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
       junk = vis->red_mask;
@@ -438,7 +438,7 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
 		    XFreePixmap (dpy, IMAGE_INSTANCE_X_PIXMAP_SLICE (p,i));
 		    IMAGE_INSTANCE_X_PIXMAP_SLICE (p, i) = 0;
 		  }
-	      xfree (IMAGE_INSTANCE_X_PIXMAP_SLICES (p));
+	      xfree (IMAGE_INSTANCE_X_PIXMAP_SLICES (p), Pixmap *);
 	      IMAGE_INSTANCE_X_PIXMAP_SLICES (p) = 0;
 	    }
 
@@ -466,11 +466,11 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
       && IMAGE_INSTANCE_TYPE (p) != IMAGE_SUBWINDOW
       && IMAGE_INSTANCE_X_PIXELS (p))
     {
-      xfree (IMAGE_INSTANCE_X_PIXELS (p));
+      xfree (IMAGE_INSTANCE_X_PIXELS (p), unsigned long *);
       IMAGE_INSTANCE_X_PIXELS (p) = 0;
     }
 
-  xfree (p->data);
+  xfree (p->data, void *);
   p->data = 0;
 }
 
@@ -862,7 +862,8 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 					 &pixtbl, &npixels);
       if (!ximage)
 	{
-	  if (pixtbl) xfree (pixtbl);
+	  if (pixtbl)
+	    xfree (pixtbl, unsigned long *);
 	  signal_image_error("EImage to XImage conversion failed", instantiator);
 	}
 
@@ -878,7 +879,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 	{
 	  if (ximage->data)
 	    {
-	      xfree (ximage->data);
+	      xfree (ximage->data, char *);
 	      ximage->data = 0;
 	    }
 	  XDestroyImage (ximage);
@@ -1301,8 +1302,8 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       int i;
 
       for (i = 0; i < (int) xpmattrs.numsymbols; i++)
-	xfree (color_symbols[i].name);
-      xfree (color_symbols);
+	xfree (color_symbols[i].name, char *);
+      xfree (color_symbols, XpmColorSymbol *);
       xpmattrs.colorsymbols = 0; /* in case XpmFreeAttr is too smart... */
       xpmattrs.numsymbols = 0;
     }

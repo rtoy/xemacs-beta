@@ -159,7 +159,7 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
 	    }
 	    gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
 	}
-      xfree (c->data);
+      xfree (c->data, void *);
       c->data = 0;
     }
 }
@@ -322,7 +322,7 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 	{
 	    gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
 	}
-      xfree (f->data);
+      xfree (f->data, void *);
       f->data = 0;
     }
 }

@@ -100,9 +100,8 @@ tty_init_device (struct device *d, Lisp_Object props)
 static void
 free_tty_device_struct (struct device *d)
 {
-  struct tty_device *td = (struct tty_device *) d->device_data;
-  if (td)
-    xfree (td);
+  if (d->device_data)
+    xfree (d->device_data, void *);
 }
 
 static void

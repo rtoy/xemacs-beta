@@ -304,7 +304,7 @@ x_finalize_color_instance (Lisp_Color_Instance *c)
 			   &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
 	    }
 	}
-      xfree (c->data);
+      xfree (c->data, void *);
       c->data = 0;
     }
 }
@@ -474,7 +474,7 @@ x_finalize_font_instance (Lisp_Font_Instance *f)
 
 	  XFreeFont (dpy, FONT_INSTANCE_X_FONT (f));
 	}
-      xfree (f->data);
+      xfree (f->data, void *);
       f->data = 0;
     }
 }

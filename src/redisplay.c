@@ -1675,7 +1675,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  break;
 	case PROP_STRING:
 	  if (pb->data.p_string.str)
-	    xfree (pb->data.p_string.str);
+	    xfree (pb->data.p_string.str, Ibyte *);
 	  /* #### bogus bogus -- this doesn't do anything!
 	     Should probably call add_ibyte_string_runes(),
 	     once that function is fixed. */

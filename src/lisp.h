@@ -1223,16 +1223,15 @@ expression has side effects -- something easy to forget. */
     }								\
 } while (0)
 
-#ifdef ERROR_CHECK_MALLOC
 MODULE_API void xfree_1 (void *);
-#define xfree(lvalue) do			\
+#ifdef ERROR_CHECK_MALLOC
+#define xfree(lvalue,type) do			\
 {						\
-  void **xfree_ptr = (void **) &(lvalue);	\
-  xfree_1 (*xfree_ptr);				\
-  *xfree_ptr = (void *) 0xDEADBEEF;		\
+  xfree_1 (lvalue);				\
+  lvalue = (type) 0xDEADBEEF;			\
 } while (0)
 #else
-MODULE_API void xfree (void *);
+#define xfree(lvalue,type) xfree_1 (lvalue)
 #endif /* ERROR_CHECK_MALLOC */
 
 /* ------------------------ dynamic arrays ------------------- */
@@ -1435,14 +1434,14 @@ struct console_type_entry;
 typedef unsigned int USID;
 typedef int face_index;
 typedef int glyph_index;
-typedef struct lstream Lstream; /* lstream-impl.h */
+typedef struct lstream Lstream; /* lstream.h */
 typedef struct extent *EXTENT; /* extents-impl.h */
 typedef struct Lisp_Event Lisp_Event; /* "events.h" */
 typedef struct Lisp_Face Lisp_Face;   /* "faces-impl.h" */
 typedef struct Lisp_Process Lisp_Process; /* "procimpl.h" */
 typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* objects-impl.h */
 typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* objects-impl.h */
-typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs-impl.h */
+typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs.h */
 typedef struct Lisp_Gui_Item Lisp_Gui_Item;
 
 /* ------------------------------- */

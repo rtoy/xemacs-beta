@@ -170,7 +170,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
     }
   UNGCPRO;
   if (buffer != buf) /* We must have allocated buffer above */
-    xfree (buffer);
+    xfree (buffer, Ibyte *);
   return return_me;
 }
 
@@ -995,7 +995,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
     tem = make_string (buf, bufp - buf);
   else
     tem = string;
-  xfree (buf);
+  xfree (buf, Ibyte *);
   UNGCPRO;
   return tem;
 }

@@ -200,7 +200,7 @@ static void
 tty_finalize_color_instance (Lisp_Color_Instance *c)
 {
   if (c->data)
-    xfree (c->data);
+    xfree (c->data, void *);
 }
 
 static int
@@ -287,7 +287,7 @@ static void
 tty_finalize_font_instance (Lisp_Font_Instance *f)
 {
   if (f->data)
-    xfree (f->data);
+    xfree (f->data, void *);
 }
 
 static Lisp_Object

@@ -1,3 +1,93 @@
+2003-09-25  Jerry James  <james@xemacs.org>
+
+	* alloc.c (xfree_1): Use this name even when not error checking.
+	* device-tty.c (free_tty_device_struct): Use xfree type parameter,
+	but error-checking version alters the original, not a local copy.
+	* fileio.c (Ffile_name_directory): Don't xfree alloca'd memory;
+	this is in an #if 0, but fix it anyway just in case.
+	* lisp.h: Add a type parameter to the xfree declaration, and
+	remove the alias when ERROR_CHECK_MALLOC is defined.
+	Fix 2 incorrect comments pointing to structure declarations.
+	* tparam.c: Remove unused free macro, and duplicate xmalloc and
+	xrealloc declarations.
+	* ui-gtk.c (CONVERT_RETVAL): Add type parameter to use of xfree,
+	and fix some minor whitespace problems.
+	* xemacs.def.in.in: Unconditionally export xfree_1
+	
+	* alloc.c:
+	* alloca.c:
+	* buffer.c:
+	* buffer.h:
+	* console-stream.c:
+	* console-tty.c:
+	* device-gtk.c:
+	* device-msw.c:
+	* device-x.c:
+	* dialog-msw.c:
+	* dialog-x.c:
+	* dired-msw.c:
+	* dired.c:
+	* doc.c:
+	* dumper.c:
+	* dynarr.c:
+	* editfns.c:
+	* elhash.c:
+	* emacs.c:
+	* emodules.c:
+	* eval.c:
+	* event-Xt.c:
+	* event-gtk.c:
+	* event-msw.c:
+	* event-stream.c:
+	* extents.c:
+	* file-coding.c:
+	* fileio.c:
+	* filelock.c:
+	* frame-gtk.c:
+	* frame-msw.c:
+	* frame-x.c:
+	* frame.c:
+	* gccache-gtk.c:
+	* glyphs-eimage.c:
+	* glyphs-gtk.c:
+	* glyphs-msw.c:
+	* glyphs-x.c:
+	* gui-x.c:
+	* hash.c:
+	* hftctl.c:
+	* imgproc.c:
+	* insdel.c:
+	* intl-win32.c:
+	* keymap.c:
+	* lstream.c:
+	* mule-coding.c:
+	* nt.c:
+	* ntplay.c:
+	* objects-gtk.c:
+	* objects-msw.c:
+	* objects-tty.c:
+	* objects-x.c:
+	* process.c:
+	* redisplay.c:
+	* regex.c:
+	* scrollbar-gtk.c:
+	* scrollbar-msw.c:
+	* scrollbar-x.c:
+	* select-gtk.c:
+	* select-msw.c:
+	* select-x.c:
+	* specifier.c:
+	* syntax.c:
+	* sysdep.c:
+	* termcap.c:
+	* tests.c:
+	* text.c:
+	* text.h:
+	* toolbar-msw.c:
+	* unicode.c:
+	* xgccache.c:
+	Add type parameter to uses of xfree.
+
 2003-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* search.c (trivial_regexp_p): Regexps containing "\{" are

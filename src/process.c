@@ -201,7 +201,7 @@ finalize_process (void *header, int for_disksave)
     {
       MAYBE_PROCMETH (finalize_process_data, (p, for_disksave));
       if (!for_disksave)
-	xfree (p->process_data);
+	xfree (p->process_data, void *);
     }
 }
 

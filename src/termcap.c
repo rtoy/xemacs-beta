@@ -411,7 +411,7 @@ tgetent (bp, name)
 
       /* Free old `term' if appropriate.  */
       if (term != name)
-	xfree (term);
+	xfree (term, const char *);
 
       /* If BP is malloc'd by us, make sure it is big enough.  */
       if (malloc_size)
@@ -441,7 +441,7 @@ tgetent (bp, name)
     }
 
   retry_close (fd);
-  xfree (buf.beg);
+  xfree (buf.beg, char *);
 
   if (malloc_size)
     {
@@ -651,7 +651,7 @@ tprint (cap)
 	  printf ("\\%0o", *y);
 	else
 	  putchar (*y);
-      xfree (x);
+      xfree (x, char *);
     }
   else
     printf ("none");

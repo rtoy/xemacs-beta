@@ -63,7 +63,7 @@ gtk_free_scrollbar_instance (struct scrollbar_instance *instance)
     }
 
   if (instance->scrollbar_data)
-    xfree (instance->scrollbar_data);
+    xfree (instance->scrollbar_data, void *);
 }
 
 /* A device method. */

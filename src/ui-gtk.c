@@ -347,7 +347,7 @@ typedef GList * (*__LIST_fn) ();
   do {							\
     void *v = GTK_VALUE_POINTER(a);			\
     switch (GTK_FUNDAMENTAL_TYPE (a.type))		\
-    {							\
+      {							\
 	CONVERT_SINGLE_TYPE(a,CHAR,gchar);		\
 	CONVERT_SINGLE_TYPE(a,UCHAR,guchar);		\
 	CONVERT_SINGLE_TYPE(a,BOOL,gboolean);		\
@@ -363,11 +363,11 @@ typedef GList * (*__LIST_fn) ();
 	CONVERT_SINGLE_TYPE(a,BOXED,void *);		\
 	CONVERT_SINGLE_TYPE(a,POINTER,void *);		\
 	CONVERT_SINGLE_TYPE(a,OBJECT,GtkObject *);	\
-	default:					\
-	GTK_VALUE_POINTER (a) = * (void **) v;	\
+      default:						\
+	GTK_VALUE_POINTER (a) = * (void **) v;		\
 	break;						\
-    }							\
-    if (freep) xfree(v);				\
+      }							\
+    if (freep) xfree(v, void *);			\
   } while (0)
 
 static gpointer __allocate_object_storage (GtkType t)

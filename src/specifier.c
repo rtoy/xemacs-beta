@@ -302,7 +302,7 @@ finalize_specifier (void *header, int for_disksave)
   /* don't be snafued by the disksave finalization. */
   if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
     {
-      xfree (sp->caching);
+      xfree (sp->caching, struct specifier_caching *);
       sp->caching = 0;
     }
 }

@@ -1824,9 +1824,9 @@ uninit_buffer_text (struct buffer *b)
   if (!b->base_buffer)
     {
       BUFFER_FREE (b->text->beg);
-      xfree (b->text->changes);
+      xfree (b->text->changes, struct buffer_text_change_data *);
     }
-  xfree (b->changes);
+  xfree (b->changes, struct each_buffer_change_data *);
 
 #ifdef REGION_CACHE_NEEDS_WORK
   if (b->newline_cache)

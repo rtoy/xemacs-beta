@@ -198,9 +198,9 @@ void
 free_popup_widget_value_tree (widget_value *wv)
 {
   if (! wv) return;
-  if (wv->key) xfree (wv->key);
-  if (wv->value) xfree (wv->value);
-  if (wv->name) xfree (wv->name);
+  if (wv->key) xfree (wv->key, char *);
+  if (wv->value) xfree (wv->value, char *);
+  if (wv->name) xfree (wv->name, char *);
 
   wv->name = wv->value = wv->key = (char *) 0xDEADBEEF; /* -559038737 base 10*/
 

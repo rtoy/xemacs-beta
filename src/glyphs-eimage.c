@@ -158,7 +158,8 @@ jpeg_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->instream)
     retry_fclose (data->instream);
 
-  if (data->eimage) xfree (data->eimage);
+  if (data->eimage)
+    xfree (data->eimage, UChar_Binary *);
 
   return Qnil;
 }
@@ -553,7 +554,7 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
       GifFree(data->giffile);
     }
   if (data->eimage)
-    xfree (data->eimage);
+    xfree (data->eimage, UChar_Binary *);
 
   return Qnil;
 }
@@ -842,7 +843,8 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->instream)
     retry_fclose (data->instream);
 
-  if (data->eimage) xfree(data->eimage);
+  if (data->eimage)
+    xfree(data->eimage, UChar_Binary *);
 
   return Qnil;
 }
@@ -1023,7 +1025,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     }
 #endif
 
-    xfree (row_pointers);
+    xfree (row_pointers, UChar_Binary **);
   }
 
   /* now instantiate */
@@ -1083,7 +1085,7 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
       TIFFClose(data->tiff);
     }
   if (data->eimage)
-    xfree (data->eimage);
+    xfree (data->eimage, UChar_Binary *);
 
   return Qnil;
 }

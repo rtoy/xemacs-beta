@@ -385,7 +385,7 @@ init_buffer_syntax_cache (struct buffer *buf)
 void
 uninit_buffer_syntax_cache (struct buffer *buf)
 {
-  xfree (buf->syntax_cache);
+  xfree (buf->syntax_cache, struct syntax_cache *);
   buf->syntax_cache = 0;
 }
 

@@ -739,7 +739,7 @@ static void
 free_gap_array (Gap_Array *ga)
 {
   gap_array_delete_all_markers (ga);
-  xfree (ga);
+  xfree (ga, Gap_Array *);
 }
 
 
@@ -948,7 +948,7 @@ free_extent_list (Extent_List *el)
 {
   free_gap_array (el->start);
   free_gap_array (el->end);
-  xfree (el);
+  xfree (el, Extent_List *);
 }
 
 
@@ -1664,7 +1664,7 @@ static void
 free_soe (struct stack_of_extents *soe)
 {
   free_extent_list (soe->extents);
-  xfree (soe);
+  xfree (soe, struct stack_of_extents *);
 }
 
 /* ------------------------------- */
@@ -2776,7 +2776,7 @@ extent_fragment_delete (struct extent_fragment *ef)
   Dynarr_free (ef->extents);
   Dynarr_free (ef->begin_glyphs);
   Dynarr_free (ef->end_glyphs);
-  xfree (ef);
+  xfree (ef, struct extent_fragment *);
 }
 
 static int

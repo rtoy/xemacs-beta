@@ -577,8 +577,8 @@ free_user_cache (struct user_cache *cache)
 {
   int i;
   for (i = 0; i < cache->length; i++)
-    xfree (cache->user_names[i].ptr);
-  xfree (cache->user_names);
+    xfree (cache->user_names[i].ptr, Ibyte *);
+  xfree (cache->user_names, struct user_name *);
   xzero (*cache);
 }
 

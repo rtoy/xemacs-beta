@@ -223,9 +223,9 @@ Dynarr_free (void *d)
   Dynarr *dy = (Dynarr *) d;
 
   if (dy->base && !DUMPEDP (dy->base))
-    xfree (dy->base);
+    xfree (dy->base, void *);
   if(!DUMPEDP (dy))
-    xfree (dy);
+    xfree (dy, Dynarr *);
 }
 
 #ifdef MEMORY_USAGE_STATS

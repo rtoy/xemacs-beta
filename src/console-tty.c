@@ -196,10 +196,10 @@ free_tty_console_struct (struct console *con)
     {
       if (tty_con->term_entry_buffer) /* allocated in term_init () */
 	{
-	  xfree (tty_con->term_entry_buffer);
+	  xfree (tty_con->term_entry_buffer, char *);
 	  tty_con->term_entry_buffer = NULL;
 	}
-      xfree (tty_con);
+      xfree (tty_con, struct tty_console *);
       CONSOLE_TTY_DATA (con) = NULL;
     }
 }

@@ -248,10 +248,10 @@ attempt_module_delete (int mod)
 {
   if (dll_close (modules[mod].dlhandle) == 0)
     {
-      xfree (modules[mod].soname);
-      xfree (modules[mod].modname);
-      xfree (modules[mod].modver);
-      xfree (modules[mod].modtitle);
+      xfree (modules[mod].soname, CIbyte *);
+      xfree (modules[mod].modname, CIbyte *);
+      xfree (modules[mod].modver, CIbyte *);
+      xfree (modules[mod].modtitle, CIbyte *);
       modules[mod].dlhandle = 0;
       modules[mod].used = 0;
     }

@@ -1964,7 +1964,7 @@ convert_multibyte_to_internal_malloc (const Extbyte *src, Bytecount n,
   TO_INTERNAL_FORMAT (DATA, (unidata, size), MALLOC, (intdata, size),
 		      Qmswindows_unicode);
 
-  xfree (unidata);
+  xfree (unidata, Extbyte *);
 
   if (size_out)
     *size_out = size;

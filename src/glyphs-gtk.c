@@ -260,7 +260,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 #endif
 	    }
 	}
-      xfree(qtable);
+      xfree(qtable, quant_table *);
     } else {
       unsigned long rshift,gshift,bshift,rbits,gbits,bbits,junk;
       junk = vis->red_mask;
@@ -414,7 +414,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 		    gdk_pixmap_unref (IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p,i));
 		    IMAGE_INSTANCE_GTK_PIXMAP_SLICE (p, i) = 0;
 		  }
-	      xfree (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p));
+	      xfree (IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p), GdkPixmap **);
 	      IMAGE_INSTANCE_GTK_PIXMAP_SLICES (p) = 0;
 	    }
 
@@ -442,11 +442,11 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
       && IMAGE_INSTANCE_TYPE (p) != IMAGE_SUBWINDOW
       && IMAGE_INSTANCE_GTK_PIXELS (p))
     {
-      xfree (IMAGE_INSTANCE_GTK_PIXELS (p));
+      xfree (IMAGE_INSTANCE_GTK_PIXELS (p), unsigned long *);
       IMAGE_INSTANCE_GTK_PIXELS (p) = 0;
     }
 
-  xfree (p->data);
+  xfree (p->data, void *);
   p->data = 0;
 }
 
@@ -838,7 +838,8 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 					      &pixtbl, &npixels);
       if (!gdk_image)
 	{
-	  if (pixtbl) xfree (pixtbl);
+	  if (pixtbl)
+	    xfree (pixtbl, unsigned long *);
 	  signal_image_error("EImage to GdkImage conversion failed", instantiator);
 	}
 
@@ -1292,7 +1293,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   }
   qxe_unlink (XSTRING_DATA (tempfile));
 
-  if (color_symbols) xfree (color_symbols);
+  if (color_symbols)
+    xfree (color_symbols, struct color_symbol *);
 
   if (!pixmap)
     signal_image_error ("Error reading pixmap", data);

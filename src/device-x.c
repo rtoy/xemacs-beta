@@ -878,7 +878,7 @@ x_mark_device (struct device *d)
 static void
 free_x_device_struct (struct device *d)
 {
-  xfree (d->device_data);
+  xfree (d->device_data, void *);
 }
 
 static void

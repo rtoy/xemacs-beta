@@ -26,12 +26,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef realloc
 #undef malloc
-#undef free
 #define realloc xrealloc
 #define malloc xmalloc
-#define free xfree
-extern void *xmalloc (Bytecount size);
-extern void *xrealloc (void *, Bytecount size);
 
 /* Assuming STRING is the value of a termcap string entry
    containing `%' constructs to expand parameters,

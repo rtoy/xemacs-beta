@@ -278,7 +278,7 @@ mswindows_delete_device (struct device *d)
 #endif
 
   DeleteDC (DEVICE_MSWINDOWS_HCDC (d));
-  xfree (d->device_data);
+  xfree (d->device_data, void *);
 }
 
 void
@@ -545,7 +545,7 @@ msprinter_delete_device (struct device *d)
 	  DEVICE_MSPRINTER_DEVMODE (d) = Qnil;
 	}
 
-      xfree (d->device_data);
+      xfree (d->device_data, void *);
     }
 }
 

@@ -163,8 +163,8 @@ clrhash (struct hash_table *hash_table)
 void
 free_hash_table (struct hash_table *hash_table)
 {
-  xfree (hash_table->harray);
-  xfree (hash_table);
+  xfree (hash_table->harray, hentry *);
+  xfree (hash_table, struct hash_table *);
 }
 
 struct hash_table*
@@ -207,7 +207,7 @@ grow_hash_table (struct hash_table *hash_table, Elemcount new_size)
     rehash (old_harray, hash_table, old_size);
   }
 
-  xfree (old_harray);
+  xfree (old_harray, hentry *);
 }
 
 void

@@ -1304,8 +1304,8 @@ gtk_delete_frame (struct frame *f)
     gtk_widget_destroy (w);
 
     if (FRAME_GTK_GEOM_FREE_ME_PLEASE (f))
-	xfree (FRAME_GTK_GEOM_FREE_ME_PLEASE (f));
-    xfree (f->frame_data);
+	xfree (FRAME_GTK_GEOM_FREE_ME_PLEASE (f), char *);
+    xfree (f->frame_data, void *);
     f->frame_data = 0;
 }
 

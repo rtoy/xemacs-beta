@@ -3808,7 +3808,7 @@ where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
     result = Fnreverse (result);
 
   if (c.keys_so_far_malloced)
-    xfree (c.keys_so_far);
+    xfree (c.keys_so_far, Lisp_Key_Data *);
   return result;
 }
 

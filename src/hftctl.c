@@ -338,6 +338,6 @@ WR_REQ (fd, request, cmdlen, cmd, resplen)
   /* write request to terminal   */
   if (write(fd,p.c,size) == -1) return (-1);
   if (p.req != &req)		/* free if allocated           */
-    xfree (p.c);
+    xfree (p.c, char *);
   return (0);
 }

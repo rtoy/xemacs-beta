@@ -3344,7 +3344,7 @@ new_dfc_convert_alloca (const char *srctext, void *alloca_data)
   vals = Dynarr_atp (active_dfc_e2c, i);
   assert (alloca_data);
   memcpy (alloca_data, vals->dst, vals->dst_size + 2);
-  xfree (vals->dst);
+  xfree (vals->dst, void *);
   Dynarr_delete (active_dfc_e2c, i);
   return alloca_data;
 }

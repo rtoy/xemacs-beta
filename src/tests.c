@@ -131,7 +131,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (ptr, len, ext_latin);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      LISP_OPAQUE, opaque,
@@ -149,7 +149,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (ptr, len, int_latin2);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin) - 1),
 		      LISP_STRING, string,
@@ -233,21 +233,21 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      Qbinary);
   DFC_CHECK_DATA_COND_MULE (ptr, len, ext_latin, int_latin1);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      MALLOC, (ptr, len),
 		      Qbinary);
   DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_tilde, int_latin2);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin1, sizeof (int_latin1) - 1),
 		      MALLOC, (ptr, len),
 		      intern ("iso-8859-1"));
   DFC_CHECK_DATA_COND_MULE (ptr, len, ext_latin, int_latin1);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin1, sizeof (int_latin1) - 1),
 		      LISP_OPAQUE, opaque,
@@ -284,14 +284,14 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      intern ("iso-8859-1"));
   DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, int_latin1, ext_latin);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin)),
 		      MALLOC, (ptr, len),
 		      Qnil);
   DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, int_latin1, ext_latin);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   TO_INTERNAL_FORMAT (DATA, (ext_latin, sizeof (ext_latin) - 1),
 		      LISP_STRING, string,
@@ -317,7 +317,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      Qbinary);
   DFC_CHECK_DATA_COND_EOL_NUL (ptr, len, ext_unix, int_foo);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),
@@ -343,7 +343,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      MALLOC, (ptr, len),
 		      intern ("no-conversion-mac"));
   DFC_CHECK_DATA_COND_EOL (ptr, len, ext_mac, int_foo);
-  xfree (ptr);
+  xfree (ptr, void *);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),

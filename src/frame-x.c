@@ -1006,7 +1006,7 @@ x_cde_destroy_callback (Widget widget, XtPointer clientData,
     }
 
   /* free the data string */
-  xfree (clientData);
+  xfree (clientData, XtPointer);
 
   CurrentDragWidget = NULL;
 }
@@ -1164,7 +1164,7 @@ WARNING: can only handle plain/text and file: transfers!
 	      if (!STRINGP (XCAR (item)))
 		{
 		  numItems=0;
-		  xfree(Ctext);
+		  xfree(Ctext, char *);
 		  Ctext=NULL;
 		  break;
 		}
@@ -1242,7 +1242,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  l_data = Fcons (make_string ((Ibyte* )hurl,
 				       strlen (hurl)),
 			  l_data);
-	  xfree (hurl);
+	  xfree (hurl, char *);
 	}
     }
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
@@ -1339,7 +1339,7 @@ The type defaults to DndText (4).
 	    {
 	      if (!STRINGP (XCAR (run)))
 		{
-		  xfree (dnd_data);
+		  xfree (dnd_data, char *);
 		  return Qnil;
 		}
 	      len = XSTRING_LENGTH (XCAR (run)) + 1;
@@ -1403,7 +1403,7 @@ The type defaults to DndText (4).
 
       DndSetData(dnd_typ, (unsigned char *)dnd_data, dnd_len);
       if (dnd_dealloc)
-	xfree (dnd_data);
+	xfree (dnd_data, char *);
 
       /* the next thing blocks everything... */
       if (DndHandleDragging(wid, &x_event))
@@ -2677,13 +2677,13 @@ x_delete_frame (struct frame *f)
 
   if (FRAME_X_GEOM_FREE_ME_PLEASE (f))
     {
-      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f));
+      xfree (FRAME_X_GEOM_FREE_ME_PLEASE (f), char *);
       FRAME_X_GEOM_FREE_ME_PLEASE (f) = 0;
     }
 
   if (f->frame_data)
     {
-      xfree (f->frame_data);
+      xfree (f->frame_data, void *);
       f->frame_data = 0;
     }
 }
