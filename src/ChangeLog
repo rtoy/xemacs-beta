@@ -1,3 +1,8 @@
+2001-08-13  Ben Wing  <ben@xemacs.org>
+
+	* regex.c: need to include stddef.h for ptrdiff_t on Solaris, when
+	regex.c is compiled as part of lib-src.
+
 2001-06-24  Ben Wing  <ben@xemacs.org>
 
 	* EmacsFrame.c (EmacsFrameSetValues):

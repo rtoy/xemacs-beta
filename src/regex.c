@@ -62,6 +62,7 @@
 
 /* We need this for `regex.h', and perhaps for the Emacs include files.  */
 #include <sys/types.h>
+#include <stddef.h> /* needed for ptrdiff_t under Solaris */
 
 /* This is for other GNU distributions with internationalized messages.  */
 #if defined (I18N3) && (defined (HAVE_LIBINTL_H) || defined (_LIBC))
