@@ -159,6 +159,12 @@ use when compiling XEmacs.  Otherwise the value of the environment
 variable CFLAGS is consulted.  If that is also undefined, CFLAGS
 defaults to "-g -O" for gcc and "-g" for all other compilers.
 
+The xemacs executable can be built using a C++ compiler.  However,
+because configure and programs in lib-src require a C compiler, two
+compilers must be used at different times during the build process.
+Use something like `configure --compiler=gcc --xemacs-compiler=g++'.
+This option is intended for use by the maintainers.
+
 The `--dynamic' option specifies that configure should try to link
 emacs dynamically rather than statically.
 

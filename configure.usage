@@ -29,6 +29,7 @@ General options:
 Compilation options:
 
 --compiler=PROG         C compiler to use
+--xemacs-compiler=PROG  compiler to use to compile just the xemacs executable
 --with-gcc (*)          Use GCC to compile XEmacs.
 --cflags=FLAGS          Compiler flags (such as -O)
 --cpp=PROG              C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)
@@ -278,6 +279,7 @@ environment   corresponding
 variable      configure flag
 -----------   --------------
 CC            --compiler
+XEMACS_CC     --xemacs-compiler
 CPP           --cpp
 CFLAGS        --cflags
 CPPFLAGS      --cppflags

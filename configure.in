@@ -349,10 +349,6 @@ with_menubars=''
 with_scrollbars=''
 with_widgets=''
 with_dialogs=''
-dnl The following will be overridden if we are under Cygwin and compile
-dnl with MS Windows support.  Set this to yes as soon as we've fixed
-dnl the coding-system defaults to be binary in all cases under Unix.
-with_file_coding='no'
 cpp='' cppflags='' libs='' ldflags=''
 extra_includes=''
 dynamic=''
@@ -529,6 +525,7 @@ while test $# != 0; do
 	dnl The cache-file option is ignored (for compatibility with other configures)
 	srcdir		| \
 	compiler	| \
+       xemacs_compiler | \
 	cflags		| \
 	cpp		| \
 	cppflags	| \
@@ -3616,6 +3613,9 @@ if test "$with_file_coding" = "yes" && test "$with_mule" = "no"; then
   XE_ADD_OBJS(file-coding.o)
 fi
 
+dnl will change to yes as soon as my mule ws is merged in.
+test -z "$with_file_coding" && with_file_coding=no
+
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)
   AC_DEFINE(MULE)
@@ -4084,12 +4084,13 @@ if test "$with_native_sound" != "no"; then
   dnl Win32 Native uses native sound
   if test -z "$sound_found"; then
     if test "$with_msw" = "yes"; then
-    sound_found=yes
-    native_sound_lib=
+      sound_found=yes
+      native_sound_lib=
+      XE_ADD_OBJS(ntplay.o)
     fi
   fi
 
-  dnl Check for Linux/BSD native sound
+  dnl Check for Linux/BSD native sound (also on recent Cygwins)
   if test -z "$sound_found"; then
     for dir in "machine" "sys" "linux"; do
       AC_CHECK_HEADER(${dir}/soundcard.h,
@@ -4710,9 +4711,18 @@ AC_SUBST(sound_cflags)
 AC_SUBST(RANLIB)
 AC_SUBST(dynodump_arch)
 
-dnl Preliminary support for using a different compiler for xemacs itself.
-dnl Useful for building XEmacs with a C++ or 64-bit compiler.
-: ${XEMACS_CC:=$CC}
+dnl Support for using a different compiler for xemacs itself.
+dnl Useful for building XEmacs with a C++ compiler.
+dnl For example, `configure --compiler=gcc --xemacs-compiler=g++
+
+dnl The compiler used to build xemacs, as opposed to the compiler
+dnl used by configure and lib-src, is determined from the following
+dnl sources, in order of priority:
+dnl o --xemacs-compiler configure flag
+dnl o XEMACS_CC environment variable
+dnl o same as the regular compiler, (determined previously)
+test -n "$xemacs_compiler" && XEMACS_CC="$xemacs_compiler"
+: ${XEMACS_CC:="$CC"}
 AC_SUBST(XEMACS_CC)
 
 dnl The default is yes

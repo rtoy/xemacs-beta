@@ -1,3 +1,22 @@
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (AC_INIT_PARSE_ARGS):
+	* configure.in (USAGE_ERROR):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	Fix problems detecting both native and Linux sound on Cygwin
+	when compiled with --with-msw=no.
+
+	Rearrange file-coding handling a bit to avoid warning when
+	compiling with Mule.
+
+2001-05-28  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in (--xemacs-compiler): New.
+	* configure.usage:
+	* INSTALL:
+	Document XEMACS_CC and corresponding compiler option --xemacs-compiler.
+	Explain how to build xemacs using a C++ compiler.
+
 2001-05-29  Martin Buchholz  <martin@xemacs.org>
 
 	* configure.in: Remove stray backslash.
