@@ -1337,7 +1337,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 ;;    (insert "For customization examples, see the files ")
 ;;    (funcall present-file "sample.emacs")
 ;;    (insert " and ")
-;;    (funcall present-file "sample.Xdefaults")
+;;    (funcall present-file "sample.Xresources")
 ;;    (insert (format "\nin the directory %s." data-directory)))
 
 (defun startup-set-invocation-environment ()

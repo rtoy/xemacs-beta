@@ -249,12 +249,12 @@
 (Assert (not (string-match "\\> " " ")))
 (Assert (not (string-match "a\\<" "a")))
 (Assert (not (string-match "\\>a" "a")))
-;; Added Known-Bug 2002-09-09
-(Known-Bug-Expect-Failure
- (Assert (not (string-match "\\b" "")))
- (Assert (not (string-match "\\b" " ")))
- (Assert (not (string-match " \\b" " ")))
- (Assert (not (string-match "\\b " " "))))
+;; Added Known-Bug 2002-09-09 sjt
+;; Fixed bug 2003-03-21 sjt
+(Assert (not (string-match "\\b" "")))
+(Assert (not (string-match "\\b" " ")))
+(Assert (not (string-match " \\b" " ")))
+(Assert (not (string-match "\\b " " ")))
 
 ;; Character classes are broken in Mule as of 21.5.9
 ;; Added Known-Bug 2002-12-27

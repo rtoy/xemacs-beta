@@ -21,11 +21,11 @@ LPF			Information about the League for Programming Freedom
 MACHINES		List of known machines configurations (OLD)
 MAILINGLISTS		List of available Mailing lists
 MORE.STUFF		List of useful unbundled packages
-NEWS			XEmacs 21.2 release information
+NEWS			XEmacs 21.4 release information
 ORDERS
 ORDERS.EUROPE
 ORDERS.JAPAN		Order forms for GNU software
-PACKAGES		List of packages available for 21.2 release
+PACKAGES		List of packages available for 21.4 release
 README			This file
 README.HYPERBOLE
 README.OO-BROWSER	How to obtain Hyperbole and the OO-Browser
@@ -60,7 +60,8 @@ recycle.xpm
 recycle2.xpm		Two versions of oversized Recycle cursor
 refcard.ps.gz		Postscript version of XEmacs reference card
 refcard.tex		XEmacs reference card
-sample.Xdefaults	Example ~/.Xdefaults file
+sample.Xdefaults	(legacy -- to be removed)
+sample.Xresources	Example ~/.Xresources file
 sample.init.el		Example ~/.xemacs/init.el file
 sink.xbm		A Gnu icon
 sparcworks/		Support files for Sparcworks

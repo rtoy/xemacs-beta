@@ -1,3 +1,7 @@
+2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xlwscrollbar.c: Global substitution of .Xresources for .Xdefaults.
+
 2003-02-28  Ben Wing  <ben@xemacs.org>
 
 	* lwlib-Xm.c:

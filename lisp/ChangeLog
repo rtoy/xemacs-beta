@@ -1,3 +1,9 @@
+2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* menubar-items.el (default-menubar):
+	* startup.el (in comment): 
+	Global substitution: .Xresources for .Xdefaults.
+
 2003-03-24  Jerry James  <james@xemacs.org>
 
 	* window-xemacs.el (saved-window-equal): Use equal instead of = to

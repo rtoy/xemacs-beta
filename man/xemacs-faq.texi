@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/03/26 06:10:47 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/03/27 12:57:48 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -2827,13 +2827,13 @@ Try it out with @kbd{M-x customize-browse}
 Search through the @file{NEWS} file for @samp{X Resources}.  A fairly
 comprehensive list is given after it.
 
-In addition, an @file{app-defaults} file is supplied,
-@file{etc/Emacs.ad} listing the defaults.  The file
-@file{etc/sample.Xresources} gives a set of defaults that you might
-consider.  It is essentially the same as @file{etc/Emacs.ad} but some
-entries are slightly altered.  Be careful about installing the contents
-of this file into your @file{.Xresources} or @file{.Xresources} file if
-you use GNU Emacs under X11 as well.
+In addition, an @file{app-defaults} file @file{etc/Emacs.ad} is
+supplied, listing the defaults.  The file @file{etc/sample.Xresources}
+gives a different set of defaults that you might consider for
+installation in your @file{~/.Xresources} file.  It is nearly the same
+as @file{etc/Emacs.ad}, but a few entries are altered.  Be careful about
+installing the contents of this file into your @file{.Xresources} (or
+legacy @file{.Xdefaults}) file if you use GNU Emacs under X11 as well.
 
 @node Q3.1.2, Q3.1.3, Q3.1.1, Customization
 @unnumberedsubsec Q3.1.2: How can I detect a color display?
@@ -3002,14 +3002,16 @@ Emacs*menubar*font:           fixed
 Emacs.modeline.attributeFont: fixed
 @end example
 
-This is confusing because @samp{default} and @samp{modeline} faces, and
-can be found listed with all faces in the current mode by using
-@kbd{M-x set-face-font (enter) ?}.  They use the face-specific resource
-@samp{attributeFont}, while menubar is a normal X thing that uses the
-specification @samp{font}.  With Motif it @emph{may be} necessary to use
-@samp{fontList} instead of @samp{font}.  With Mule in non-Motif
-configurations it @emph{is} necessary to use @samp{fontSet} instead of
-@samp{font}.
+This is confusing because @samp{default} and @samp{modeline} are face
+names, and can be found listed with all faces in the current mode by
+using @kbd{M-x set-face-font (enter) ?}.  They use the face-specific
+resource @samp{attributeFont}
+
+On the other hand, @samp{menubar} is a normal X thing that uses the
+resource @samp{font}.  With Motif it @emph{may be} necessary to use
+@samp{fontList} @emph{instead of} @samp{font}.  In @emph{non-Motif}
+configurations with Mule it @emph{is} necessary to use @samp{fontSet}
+instead of @samp{font}.  (Sorry, there just is no simple recipe here.)
 
 @node Q3.2.3, Q3.2.4, Q3.2.2, Customization
 @unnumberedsubsec Q3.2.3: How can I set the colors when highlighting a region?
@@ -3780,11 +3782,11 @@ this resource is not recognized at all; you have to say:
 Emacs*menubar*fontList: FONT
 @end example
 
-If you are using the Lucid menubar, for backward compatibility of user
-configurations, the @samp{font} resource is recognized.  Since this is
-not supported by Motif itself, the code is a kludge and the @samp{font}
-resource will be recognized only if the @samp{fontList} resource
-resource is unset.  This means that the resource
+If you are using the Lucid menubar, for backward compatibility with
+existing user configurations, the @samp{font} resource is recognized.
+Since this is not supported by Motif itself, the code is a kludge and
+the @samp{font} resource will be recognized only if the @samp{fontList}
+resource resource is unset.  This means that the resource
 
 @example
 *fontList: FONT
@@ -3798,9 +3800,11 @@ Emacs*menubar*font: FONT
 
 even though the latter is more specific.
 
-With Mule in non-Motif configurations it @emph{is} necessary to use
-@code{fontSet} @emph{instead of} @code{font}; the backward compatibility
-kludge was never implemented for non-Motif builds.  Example:
+In non-Motif configurations using @samp{--with-mule} and
+@samp{--with-xfs} it @emph{is} necessary to use the @code{fontSet}
+resource @emph{instead of} the @code{font} resource.  The backward
+compatibility kludge was never implemented for non-Motif builds.
+Example:
 
 @example
 *fontSet: FONT

@@ -1,3 +1,12 @@
+2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Emacs.ad: Global substition of .Xresources for .Xdefaults.
+	* sample.Xresources: Replaces sample.Xdefaults.
+	* sample.Xdefaults: Replace contents with pointer to
+	sample.Xresources.
+	* README: Change name of sample.Xdefaults to sample.Xresources.
+	Substitute 21.4 for 21.2.
+
 2003-03-03  Ville Skyttä  <scop@xemacs.org>
 
 	* BETA (New packages): Introduce Norbert Koch.

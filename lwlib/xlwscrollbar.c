@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
  * Athena-style scrollbar button bindings added on Sun Dec 24 22:03:57 1995
  * by Jonathan Stigelman <Stig@hackvan.com>...   Ho ho ho!
  *
- * To use them, put this resource in your .Xdefaults
+ * To use them, put this resource in your .Xresources
  *
  * Emacs*XlwScrollBar.translations: #override \n\
  *   <Btn1Down>:     PageDownOrRight()	  \n\

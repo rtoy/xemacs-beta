@@ -310,7 +310,7 @@ for menubars, although conformance is not yet perfect.  The menu at the
 extreme right is the @samp{Help} menu, which should always be
 available.  It provides access to all the XEmacs help facilities
 available through @kbd{C-h}, as well as samples of various configuration
-files like @samp{~/.Xdefaults} and @samp{~/.emacs}.  At the extreme left
+files like @samp{~/.Xresources} and @samp{~/.emacs}.  At the extreme left
 is the @samp{Files} menu, which provides the usual file reading,
 writing, and printing operations, as well as operations like revert
 buffer from most recent save.  The next menu from the left is the
@@ -531,7 +531,7 @@ considered obsolete.
 For values specific to the first XEmacs frame, you must use X resources.
 The variable @code{x-frame-defaults} takes an alist of default frame
 creation parameters for X window frames.  These override what is
-specified in @file{~/.Xdefaults} but are overridden by the arguments to
+specified in @file{~/.Xresources} but are overridden by the arguments to
 the particular call to @code{x-create-frame}.
 
 @vindex create-frame-hook

@@ -990,7 +990,7 @@ directory.  Try using that one.
 *** My X resources used to work, and now some of them are being ignored.
 
 Check the resources in .../etc/Emacs.ad (which is the same as the file
-sample.Xdefaults).  Perhaps some of the default resources built in to
+sample.Xresources).  Perhaps some of the default resources built in to
 emacs are now overriding your existing resources.  Copy and edit the
 resources in Emacs.ad as necessary.
 
@@ -1201,7 +1201,7 @@ Some compilers have trouble with gmalloc.c and ralloc.c; try recompiling
 without optimization.  If that doesn't work, try recompiling with
 SYSTEM_MALLOC defined, and/or with REL_ALLOC undefined.
 
-*** A position you specified in .Xdefaults is ignored, using twm.
+*** A position you specified in .Xresources is ignored, using twm.
 
 twm normally ignores "program-specified" positions.
 You can tell it to obey them with this command in your `.twmrc' file:
@@ -1335,7 +1335,7 @@ happen in a non-login shell.
 
 *** The popup menu appears at the bottom/right of my screen.
 
-You probably have something like the following in your ~/.Xdefaults
+You probably have something like the following in your ~/.Xresources
 
 	Emacs.geometry:		81x56--9--1
 
@@ -1382,7 +1382,7 @@ Workarounds:
 ** AIX
 *** Your Delete key sends a Backspace to the terminal, using an AIXterm.
 
-The solution is to include in your .Xdefaults the lines:
+The solution is to include in your .Xresources the lines:
 
    *aixterm.Translations: #override <Key>BackSpace: string(0x7f)
    aixterm*ttyModes: erase ^?

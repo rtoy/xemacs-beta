@@ -1654,10 +1654,10 @@ Write your filter like this:
 	(Help-find-file (locate-data-file "sample.gtkrc"))
 	:included (featurep 'gtk)
 	:active (locate-data-file "sample.gtkrc")]
-       ["View Sample .%_Xdefaults"
-	(Help-find-file (locate-data-file "sample.Xdefaults"))
+       ["View Sample .%_Xresources"
+	(Help-find-file (locate-data-file "sample.Xresources"))
 	:included (featurep 'x)
-	:active (locate-data-file "sample.Xdefaults")]
+	:active (locate-data-file "sample.Xresources")]
        ["View Sample %_enriched.doc"
 	(Help-find-file (locate-data-file "enriched.doc"))
 	:active (locate-data-file "enriched.doc")])

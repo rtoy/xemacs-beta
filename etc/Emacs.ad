@@ -1,6 +1,6 @@
 ! This is the app-defaults file for XEmacs.
 !
-! This used to be identical to sample.Xdefaults, but the resources
+! This used to be identical to sample.Xresources, but the resources
 ! below have been rewritten to be as general as possible to avoid
 ! overriding user resources.  Other than the form rewriting, both
 ! files should be kept in sync. 
@@ -12,7 +12,7 @@
 ! However, you may copy .../etc/Emacs.ad to /usr/lib/X11/app-defaults/Emacs
 ! (or whatever the standard app-defaults directory is at your site) to cause
 ! it to be consulted at run-time.  (Do this only for site-wide customizations:
-! personal customizations should be put into ~/.Xdefaults instead.)
+! personal customizations should be put into ~/.Xresources instead.)
 ! Note that the file must be named Emacs, not XEmacs.
 ! 
 ! See the NEWS file (C-h n) or XEmacs manual (C-h i) for a description of
