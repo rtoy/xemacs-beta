@@ -70,16 +70,16 @@
 	   )
       (set-face-foreground 'highlight
 			   (nth prelight (plist-get style 'text))
-			   device)
+			   nil '(gtk default))
       (set-face-background 'highlight
 			   (nth prelight (plist-get style 'background))
-			   device)
+			   nil '(gtk default))
       (set-face-foreground 'zmacs-region
 			   (nth selected (plist-get style 'text))
-			   device)
+			   nil '(gtk default))
       (set-face-background 'zmacs-region
 			   (nth selected (plist-get style 'background))
-			   device))
+			   nil '(gtk default))
     (set-face-background 'text-cursor "red3" device)))
 
 ;;; This is called from `init-frame-faces', which is called from

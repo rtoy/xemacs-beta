@@ -1,3 +1,10 @@
+2001-11-29  John Paul Wallington <jpw@shootybangbang.com>
+
+	* gtk-faces.el (gtk-init-device-faces): Replaced device locale 
+	argument in set-face-background/foreground forms with 
+	'(default gtk) tag set to make the faces customizable, as
+	suggested by Jan Vroonhof.
+
 2001-12-15  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* modeline.el:
