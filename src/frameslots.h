@@ -21,6 +21,15 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30.  Split out of frame.h.  */
 
+/* We define the Lisp_Objects in the frame structure in a separate file
+   because there are numerous places we want to iterate over them, such
+   as when defining them in the structure, initializing them, or marking
+   them.
+
+   To use, define MARKED_SLOT before including this file.  In the structure
+   definition, you also need to define FRAME_SLOT_DECLARATION.  No need to
+   undefine either value; that happens automatically.  */
+
 #ifdef FRAME_SLOT_DECLARATION
 #define MARKED_SLOT_ARRAY(slot, size) MARKED_SLOT(slot[size])
 #else
@@ -80,6 +89,11 @@ Boston, MA 02111-1307, USA.  */
      This will only be a minibuf window if we are a minibuf-only
      frame. */
   MARKED_SLOT (last_nonminibuf_window);
+
+  /* This frame's root window mirror.  This structure exactly mirrors
+     the frame's window structure but contains only pointers to the
+     display structures. */
+  MARKED_SLOT (root_mirror);
 
   /* frame property list */
   MARKED_SLOT (plist);

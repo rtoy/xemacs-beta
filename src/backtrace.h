@@ -79,7 +79,11 @@ struct catchtag
     JMP_BUF jmp;
     struct backtrace *backlist;
 #if 0 /* FSFmacs */
-    /* #### */
+    /* FSF uses a separate handler stack to hold condition-cases,
+       where we use Vcondition_handlers.  We should switch to their
+       system becaue it avoids the need to mess around with consing
+       up stuff and then dangerously freeing it.  See comment in
+       condition_case_unwind(). */
     struct handler *handlerlist;
 #endif
     int lisp_eval_depth;

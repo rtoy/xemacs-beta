@@ -78,6 +78,22 @@ static void update_scrollbar_instance (struct window *w, int vertical,
 				       struct scrollbar_instance *instance);
 
 
+static Lisp_Object
+mark_scrollbar_instance (Lisp_Object obj)
+{
+  struct scrollbar_instance *data = XSCROLLBAR_INSTANCE (obj);
+  mark_object (wrap_window_mirror (data->mirror));
+  if (data->next)
+    return wrap_scrollbar_instance (data->next);
+  else
+    return Qnil;
+}
+
+DEFINE_LRECORD_IMPLEMENTATION ("scrollbar-instance", scrollbar_instance,
+			       mark_scrollbar_instance,
+			       internal_object_printer, 0, 0, 0, 0,
+			       struct scrollbar_instance);
+
 static void
 free_scrollbar_instance (struct scrollbar_instance *instance,
 			 struct frame *frame)
@@ -89,7 +105,8 @@ free_scrollbar_instance (struct scrollbar_instance *instance,
       struct device *d = XDEVICE (frame->device);
 
       MAYBE_DEVMETH (d, free_scrollbar_instance, (instance));
-      xfree (instance);
+      /* not worth calling free_managed_lcrecord() -- scrollbar instances
+	 are not created that frequently and it's dangerous. */
     }
 }
 
@@ -148,7 +165,7 @@ free_frame_scrollbars (struct frame *f)
   if (f->mirror_dirty)
     update_frame_window_mirror (f);
 
-  free_scrollbars_loop (f->root_window, f->root_mirror);
+  free_scrollbars_loop (f->root_window, XWINDOW_MIRROR (f->root_mirror));
 
   while (FRAME_SB_VCACHE (f))
     {
@@ -173,8 +190,10 @@ create_scrollbar_instance (struct frame *f, int vertical)
 {
   struct device *d = XDEVICE (f->device);
   struct scrollbar_instance *instance =
-    xnew_and_zero (struct scrollbar_instance);
+    alloc_lcrecord_type (struct scrollbar_instance,
+			 &lrecord_scrollbar_instance);
 
+  zero_lcrecord (instance);
   MAYBE_DEVMETH (d, create_scrollbar_instance, (f, vertical, instance));
 
   return instance;
@@ -894,6 +913,8 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 void
 syms_of_scrollbar (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (scrollbar_instance);
+
   DEFSYMBOL (Qscrollbar_line_up);
   DEFSYMBOL (Qscrollbar_line_down);
   DEFSYMBOL (Qscrollbar_page_up);

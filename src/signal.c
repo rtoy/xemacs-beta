@@ -287,10 +287,25 @@ qxe_setitimer (int kind, const struct itimerval *itnew,
 {
 #if defined (WIN32_NATIVE) || defined (CYGWIN)
   /* setitimer() does not exist on native MS Windows, and appears broken
-     on Cygwin.  See win32.c. */
+     on Cygwin.  See win32.c.
+     
+     We are emulating the Unix98 setitimer() function, as found in its
+     incarnations on modern versions of Unix.  Note however that in
+     the win32.c version, ITNEW and ITOLD must be equal if both are
+     non-zero, due to limitations in the underlying multimedia-timer
+     API. */
   return mswindows_setitimer (kind, itnew, itold);
 #else
-  return setitimer (kind, itnew, itold);
+  /* YUCK!  glibc defines setitimer's first argument as
+     enum __itimer_which, not int, which causes compile errors if
+     we call setitimer() in the obvious way. */
+  switch (kind)
+    {
+    case ITIMER_REAL: return setitimer (ITIMER_REAL, itnew, itold);
+    case ITIMER_VIRTUAL: return setitimer (ITIMER_VIRTUAL, itnew, itold);
+    case ITIMER_PROF: return setitimer (ITIMER_PROF, itnew, itold);
+    default: abort (); return 0;
+    }
 #endif
 }
 

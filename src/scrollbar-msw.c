@@ -27,8 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-msw.h"
+#include "elhash.h"
 #include "events.h"
 #include "frame.h"
+#include "opaque.h"
 #include "scrollbar-msw.h"
 #include "scrollbar.h"
 #include "specifier.h"
@@ -42,11 +44,17 @@ Boston, MA 02111-1307, USA.  */
 
 static int vertical_drag_in_progress = 0;
 
+/* As long as the HWND is around, the scrollbar instance must be GC-protected.
+   We have gotten crashes, apparently from trying to access a dead, freed
+   frame inside of a window mirror pointed to by the scrollbar structure. */
+static Lisp_Object Vmswindows_scrollbar_instance_table;
+
 static void
 mswindows_create_scrollbar_instance (struct frame *f, int vertical,
 				     struct scrollbar_instance *sb)
 {
   int orientation;
+  Lisp_Object ptr;
 
   sb->scrollbar_data = xnew_and_zero (struct mswindows_scrollbar_data);
 
@@ -63,26 +71,26 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
 		    NULL, NULL, NULL);
   SCROLLBAR_MSW_INFO (sb).cbSize = sizeof (SCROLLINFO);
   SCROLLBAR_MSW_INFO (sb).fMask = SIF_ALL;
-  GetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
-		&SCROLLBAR_MSW_INFO (sb));
-  SetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA, (LONG) sb);
-
-#if 0
-  {
-    HWND h = SCROLLBAR_MSW_HANDLE (sb);
-    int x = SetWindowLong (SCROLLBAR_MSW_HANDLE(sb), GWL_USERDATA, (LONG)sb);
-    int y = GetLastError();
-    struct scrollbar_instance *z =
-      (struct scrollbar_instance *)GetWindowLong (SCROLLBAR_MSW_HANDLE(sb),
-						  GWL_USERDATA);
-    *z = *z;
-  }
-#endif
+  GetScrollInfo (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
+		 &SCROLLBAR_MSW_INFO (sb));
+  ptr = make_opaque_ptr (SCROLLBAR_MSW_HANDLE (sb));
+  Fputhash (ptr, wrap_scrollbar_instance (sb),
+	    Vmswindows_scrollbar_instance_table);
+  SetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA,
+		 (LONG) LISP_TO_VOID (ptr));
 }
 
 static void
 mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
 {
+  void *opaque =
+    (void *) GetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
+  Lisp_Object ptr;
+
+  VOID_TO_LISP (ptr, opaque);
+  assert (OPAQUE_PTRP (ptr));
+  ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
+  assert (!NILP (ptr));
   DestroyWindow (SCROLLBAR_MSW_HANDLE (sb));
   if (sb->scrollbar_data)
     xfree (sb->scrollbar_data);
@@ -161,10 +169,10 @@ mswindows_update_scrollbar_instance_values (struct window *w,
 
   if (pos_changed)
     {
-      MoveWindow(SCROLLBAR_MSW_HANDLE (sb),
-		 new_scrollbar_x, new_scrollbar_y,
-		 new_scrollbar_width, new_scrollbar_height,
-		 TRUE);
+      MoveWindow (SCROLLBAR_MSW_HANDLE (sb),
+		  new_scrollbar_x, new_scrollbar_y,
+		  new_scrollbar_width, new_scrollbar_height,
+		  TRUE);
     }
 }
 
@@ -188,28 +196,36 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
 {
   struct frame *f;
   Lisp_Object win, frame;
-  struct scrollbar_instance *sb;
+  struct scrollbar_instance *sb = 0;
+  void *v;
   SCROLLINFO scrollinfo;
   int vert = GetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
   int value;
 
-  sb = (struct scrollbar_instance *) GetWindowLong (hwnd, GWL_USERDATA);
-  if (!sb)
+  v = (void *) GetWindowLong (hwnd, GWL_USERDATA);
+  if (!v)
     {
+      /* apparently this can happen, as it was definitely necessary
+	 to put the check in for sb below (VERTICAL_SCROLLBAR_DRAG_HACK) */
       frame = mswindows_find_frame (hwnd);
       f = XFRAME (frame);
       win = FRAME_SELECTED_WINDOW (f);
     }
   else
     {
+      Lisp_Object ptr;
+      VOID_TO_LISP (ptr, v);
+      assert (OPAQUE_PTRP (ptr));
+      ptr = Fgethash (ptr, Vmswindows_scrollbar_instance_table, Qnil);
+      sb = XSCROLLBAR_INSTANCE (ptr);
       win = real_window (sb->mirror, 0);
-      frame = XWINDOW (win)->frame;
+      frame = WINDOW_FRAME (XWINDOW (win));
       f = XFRAME (frame);
     }
 
-  /* SB_LINEDOWN == SB_CHARLEFT etc. This is the way they will
-     always be - any Windows is binary compatible backward with
-     old programs */
+  /* SB_LINEDOWN == SB_CHARLEFT etc.  This is the way they will
+     always be -- any Windows is binary compatible backward with
+     old programs. */
 
   switch (code)
     {
@@ -407,7 +423,8 @@ mswindows_compute_scrollbar_instance_usage (struct device *d,
 /*          Device-specific ghost specifiers initialization             */
 /************************************************************************/
 
-DEFUN ("mswindows-init-scrollbar-metrics", Fmswindows_init_scrollbar_metrics, 1, 1, 0, /*
+DEFUN ("mswindows-init-scrollbar-metrics", Fmswindows_init_scrollbar_metrics,
+       1, 1, 0, /*
 */
        (locale))
 {
@@ -443,14 +460,21 @@ console_type_create_scrollbar_mswindows (void)
 }
 
 void
-syms_of_scrollbar_mswindows(void)
+syms_of_scrollbar_mswindows (void)
 {
   DEFSUBR (Fmswindows_init_scrollbar_metrics);
 }
 
 void
-vars_of_scrollbar_mswindows(void)
+vars_of_scrollbar_mswindows (void)
 {
   Fprovide (intern ("mswindows-scrollbars"));
 }
 
+void
+complex_vars_of_scrollbar_mswindows (void)
+{
+  staticpro (&Vmswindows_scrollbar_instance_table);
+  Vmswindows_scrollbar_instance_table =
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+}

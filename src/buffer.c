@@ -238,7 +238,6 @@ mark_buffer (Lisp_Object obj)
 
 #define MARKED_SLOT(x) mark_object (buf->x)
 #include "bufslots.h"
-#undef MARKED_SLOT
 
   mark_object (buf->extent_info);
   if (buf->text)
@@ -697,7 +696,6 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
       b->slot = def->slot;						\
   }
 #include "bufslots.h"
-#undef MARKED_SLOT
 }
 
 
@@ -846,7 +844,6 @@ No argument or nil as argument means use current buffer as BUFFER.
         result = Fcons (Fcons (syms->slot, buf->slot), result);	\
     }
 #include "bufslots.h"
-#undef MARKED_SLOT
   }
   return result;
 }
@@ -2383,7 +2380,6 @@ nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
 
 #define MARKED_SLOT(x)	b->x = zap
 #include "bufslots.h"
-#undef MARKED_SLOT
 }
 
 static void
@@ -3028,7 +3024,6 @@ handled:
       != !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)))	\
   abort ()
 #include "bufslots.h"
-#undef MARKED_SLOT
 
   {
     Lisp_Object scratch = Fget_buffer_create (QSscratch);

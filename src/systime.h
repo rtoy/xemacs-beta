@@ -273,6 +273,11 @@ int mswindows_setitimer (int kind, const struct itimerval *itnew,
    somewhere else.  This is doubly true when the redefinition occurs
    in out-of-the way s+m files and only on certainly systems.
 
+   The name "qxe" was chosen because it is a unique string that is not
+   going to be found anywhere else in the sources (unlike, for example,
+   the prefixes "xemacs" or "sys") and is easy to type.  Alternative
+   names are certainly possible, and suggestions are welcome.
+
    By making the encapsulation explicit we might be making the code
    that uses is slightly less pretty, but this is more than compensated
    for by the huge increase in clarity.
@@ -288,6 +293,22 @@ int mswindows_setitimer (int kind, const struct itimerval *itnew,
    function; but be aware that the reimplementation may be incomplete
    or differ in important respects.  This is especially the case
    when attempts are made to implement Unix functions on MS Windows.
+
+   (The comment on the particular encapsulation should describe what
+   standard function is being emulated, if this is not obvious, and
+   what the differences, if any, from that standard function are.)
+
+   An example of this is the qxe_setitimer() function.  This attempts
+   to emulate the POSIX (Unix98?) standard setitimer(), as found on
+   all modern versions of Unix.  Normally, we just call the system-
+   provided setitimer() function.  When emulated on MS Windows and
+   Cygwin, however, the ITNEW and ITOLD values cannot be different
+   from each other if both are non-zero, due to limitations in the
+   underlying multimedia-timer API.  By simply using setitimer() with
+   preprocessor tricks, a programmer would almost have to be a
+   mind-reader to figure this out.  With the explicit encapsulation, a
+   programmer need only look at the definition of qxe_setitimer() to
+   see what its semantics are.
 */
 
 int qxe_setitimer (int kind, const struct itimerval *itnew,

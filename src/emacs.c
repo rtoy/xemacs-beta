@@ -2016,9 +2016,13 @@ main_1 (int argc, char **argv, char **envp, int restart)
       complex_vars_of_menubar ();
 #endif
 
-      /* This calls Fmake_glyph_internal(). */
 #ifdef HAVE_SCROLLBARS
+      /* This calls Fmake_glyph_internal(). */
       complex_vars_of_scrollbar ();
+#ifdef HAVE_MS_WINDOWS
+      /* Calls make_lisp_hash_table(). */
+      complex_vars_of_scrollbar_mswindows ();
+#endif
 #endif
 
       /* This calls allocate_glyph(). */
@@ -2181,7 +2185,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 #endif /* HAVE_X_WINDOWS */
 
-#if defined(MULE) && defined(HAVE_WNN)
+#if defined (MULE) && defined (HAVE_WNN)
       reinit_vars_of_mule_wnn ();
 #endif
 

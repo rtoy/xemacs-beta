@@ -83,25 +83,8 @@ mark_device (Lisp_Object obj)
 {
   struct device *d = XDEVICE (obj);
 
-  mark_object (d->name);
-  mark_object (d->connection);
-  mark_object (d->canon_connection);
-  mark_object (d->console);
-  mark_object (d->selected_frame);
-  mark_object (d->frame_with_focus_real);
-  mark_object (d->frame_with_focus_for_hooks);
-  mark_object (d->frame_that_ought_to_have_focus);
-  mark_object (d->device_class);
-  mark_object (d->user_defined_tags);
-  mark_object (d->pixel_to_glyph_cache.obj1);
-  mark_object (d->pixel_to_glyph_cache.obj2);
-
-  mark_object (d->color_instance_cache);
-  mark_object (d->font_instance_cache);
-#ifdef MULE
-  mark_object (d->charset_font_cache);
-#endif
-  mark_object (d->image_instance_cache);
+#define MARKED_SLOT(x) mark_object (d->x)
+#include "devslots.h"
 
   if (d->devmeths)
     {
@@ -161,6 +144,15 @@ Return a list of valid device classes.
   return Fcopy_sequence (Vdevice_class_list);
 }
 
+static void
+nuke_all_device_slots (struct device *d, Lisp_Object zap)
+{
+  zero_lcrecord (d);
+
+#define MARKED_SLOT(x)	d->x = zap
+#include "devslots.h"
+}
+
 static struct device *
 allocate_device (Lisp_Object console)
 {
@@ -168,25 +160,12 @@ allocate_device (Lisp_Object console)
   struct device *d = alloc_lcrecord_type (struct device, &lrecord_device);
   struct gcpro gcpro1;
 
-  zero_lcrecord (d);
-
   XSETDEVICE (device, d);
   GCPRO1 (device);
 
-  d->name = Qnil;
-  d->console = console;
-  d->connection = Qnil;
-  d->canon_connection = Qnil;
-  d->frame_list = Qnil;
-  d->selected_frame = Qnil;
-  d->frame_with_focus_real = Qnil;
-  d->frame_with_focus_for_hooks = Qnil;
-  d->frame_that_ought_to_have_focus = Qnil;
-  d->device_class = Qnil;
-  d->user_defined_tags = Qnil;
-  d->pixel_to_glyph_cache.obj1 = Qnil;
-  d->pixel_to_glyph_cache.obj2 = Qnil;
+  nuke_all_device_slots (d, Qnil);
 
+  d->console = console;
   d->infd = d->outfd = -1;
 
   /* #### is 20 reasonable? */
@@ -302,7 +281,8 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
   CHECK_LIVE_FRAME (frame);
 
   if (! EQ (device, FRAME_DEVICE (XFRAME (frame))))
-    invalid_argument ("In `set-device-selected-frame', FRAME is not on DEVICE", Qunbound);
+    invalid_argument ("In `set-device-selected-frame', FRAME is not on DEVICE",
+		      Qunbound);
 
   if (EQ (device, Fselected_device (Qnil)))
     return Fselect_frame (frame);
@@ -823,8 +803,17 @@ delete_device_internal (struct device *d, int force,
   MAYBE_DEVMETH (d, delete_device, (d));
 
   CONSOLE_DEVICE_LIST (c) = delq_no_quit (device, CONSOLE_DEVICE_LIST (c));
+
   RESET_CHANGED_SET_FLAGS;
+
+  /* Nobody should be accessing anything in this object any more, and
+     making all Lisp_Objects Qnil allows for better GC'ing in case a
+     pointer to the dead device continues to hang around.  Zero all
+     other structs in case someone tries to access something through
+     them. */
+  nuke_all_device_slots (d, Qnil);
   d->devmeths = dead_console_methods;
+
   UNGCPRO;
 }
 
@@ -1362,5 +1351,5 @@ One argument, the to-be-deleted device.
   staticpro (&Vdevice_class_list);
 
   /* Death to devices.el !!! */
-  Fprovide(intern("devices"));
+  Fprovide (intern ("devices"));
 }

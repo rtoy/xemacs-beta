@@ -34,6 +34,7 @@ DECLARE_LRECORD (emacs_ffi, emacs_ffi_data);
 
 #define XFFI(x) XRECORD (x, emacs_ffi, emacs_ffi_data)
 #define XSETFFI(x,p) XSETRECORD (x, p, emacs_ffi)
+#define wrap_emacs_ffi(p) wrap_record (p, emacs_ffi)
 #define FFIP(x) RECORDP (x, emacs_ffi)
 #define CHECK_FFI(x) CHECK_RECORD (x, emacs_ffi)
 
@@ -49,6 +50,7 @@ DECLARE_LRECORD (emacs_gtk_object, emacs_gtk_object_data);
 
 #define XGTK_OBJECT(x) XRECORD (x, emacs_gtk_object, emacs_gtk_object_data)
 #define XSETGTK_OBJECT(x,p) XSETRECORD (x, p, emacs_gtk_object)
+#define wrap_emacs_gtk_object(p) wrap_record (p, emacs_gtk_object)
 #define GTK_OBJECTP(x) RECORDP (x, emacs_gtk_object)
 #define CHECK_GTK_OBJECT(x) CHECK_RECORD (x, emacs_gtk_object)
 
@@ -65,6 +67,7 @@ DECLARE_LRECORD (emacs_gtk_boxed, emacs_gtk_boxed_data);
 
 #define XGTK_BOXED(x) XRECORD (x, emacs_gtk_boxed, emacs_gtk_boxed_data)
 #define XSETGTK_BOXED(x,p) XSETRECORD (x, p, emacs_gtk_boxed)
+#define wrap_emacs_gtk_boxed(p) wrap_record (p, emacs_gtk_boxed)
 #define GTK_BOXEDP(x) RECORDP (x, emacs_gtk_boxed)
 #define CHECK_GTK_BOXED(x) CHECK_RECORD (x, emacs_gtk_boxed)
 

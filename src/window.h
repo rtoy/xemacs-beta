@@ -89,21 +89,6 @@ struct window
 {
   struct lcrecord_header header;
 
-  /* The frame this window is on.  */
-  Lisp_Object frame;
-  /* t if this window is a minibuffer window.  */
-  Lisp_Object mini_p;
-  /* Following child (to right or down) at same level of tree */
-  Lisp_Object next;
-  /* Preceding child (to left or up) at same level of tree */
-  Lisp_Object prev;
-  /* First child of this window. */
-  /* vchild is used if this is a vertical combination,
-     hchild if this is a horizontal combination. */
-  Lisp_Object hchild, vchild;
-  /* The window this one is a child of. */
-  Lisp_Object parent;
-
   /* The upper left corner coordinates of this window,
      as integers (pixels) relative to upper left corner of frame = 0, 0 */
   int pixel_left;
@@ -112,20 +97,6 @@ struct window
   int pixel_height;
   int pixel_width;
 
-  /* The buffer displayed in this window */
-  /* Of the fields vchild, hchild and buffer, only one is non-nil.  */
-  Lisp_Object buffer;
-  /* A marker pointing to where in the text to start displaying */
-  /* need one for each set of display structures */
-  Lisp_Object start[3];
-  /* A marker pointing to where in the text point is in this window,
-     used only when the window is not selected.
-     This exists so that when multiple windows show one buffer
-     each one can have its own value of point.  */
-  /* need one for each set of display structures */
-  Lisp_Object pointm[3];
-  /* A marker pointing to where in the text the scrollbar is pointing */
-  Lisp_Object sb_point;
   /* Number of columns display within the window is scrolled to the left. */
   int hscroll;
   /* Idem for the window's modeline */
@@ -138,33 +109,14 @@ struct window
      scrolling. Hscroll will remain constant but this will be
      incremented to incrementally shift lines left.*/
   int left_xoffset;
-  /* Number saying how recently window was selected */
-  Lisp_Object use_time;
-  /* text.modified of displayed buffer as of last time display completed */
-  Lisp_Object last_modified[3];
-  /* Value of point at that time */
-  Lisp_Object last_point[3];
-  /* Value of start at that time */
-  Lisp_Object last_start[3];
-  /* buf.face_change as of last time display completed */
-  Lisp_Object last_facechange[3];
 
   /* face cache elements correct for this window and its current buffer */
   face_cachel_dynarr *face_cachels;
   /* glyph cache elements correct for this window and its current buffer */
   glyph_cachel_dynarr *glyph_cachels;
-  /* we cannot have a per-device cache of widgets / subwindows because
-     each visible instance needs to be a separate instance. The lowest
-     level of granularity we can get easily is the window that the
-     subwindow is in. This will fail if we attach the same subwindow
-     twice to a buffer. However, we are quite unlikely to do this,
-     especially with buttons which will need individual callbacks. The
-     proper solution is probably not worth the effort. */
-  Lisp_Object subwindow_instance_cache;
   /* List of starting positions for display lines.  Only valid if
      buffer has not changed. */
   line_start_cache_dynarr *line_start_cache;
-  Lisp_Object line_cache_last_updated;
   int line_cache_validation_override;
 
   /* Length of longest line currently displayed.  Used to control the
@@ -180,10 +132,6 @@ struct window
   /* need one for each set of display structures */
   int window_end_pos[3];
 
-  /* If redisplay in this window goes beyond this buffer position,
-     must run the redisplay-end-trigger-functions.  */
-  Lisp_Object redisplay_end_trigger;
-
   /* Set by the extent code when extents in the gutter are changed. */
   int gutter_extent_modiff[4];
 
@@ -192,7 +140,7 @@ struct window
   Bufpos last_redisplay_pos;
 
 #define WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT(slot, compare) Lisp_Object slot
+#define WINDOW_SLOT(slot) Lisp_Object slot;
 #include "winslots.h"
 
   /* one-bit flags: */
@@ -217,12 +165,22 @@ struct window
   unsigned int need_vertical_divider_valid_p :1;
 };
 
+DECLARE_LRECORD (window, struct window);
+#define XWINDOW(x) XRECORD (x, window, struct window)
+#define XSETWINDOW(x, p) XSETRECORD (x, p, window)
+#define wrap_window(p) wrap_record (p, window)
+#define WINDOWP(x) RECORDP (x, window)
+#define CHECK_WINDOW(x) CHECK_RECORD (x, window)
+#define CONCHECK_WINDOW(x) CONCHECK_RECORD (x, window)
+
 #define CURRENT_DISP	0
 #define DESIRED_DISP	1
 #define CMOTION_DISP	2
 
 struct window_mirror
 {
+  struct lcrecord_header header;
+
   /* Frame this mirror is on. */
   struct frame *frame;
 
@@ -259,14 +217,13 @@ struct window_mirror
   unsigned int truncate_win :1;
 };
 
-#ifdef emacs  /* some things other than emacs want the structs */
-
-DECLARE_LRECORD (window, struct window);
-#define XWINDOW(x) XRECORD (x, window, struct window)
-#define XSETWINDOW(x, p) XSETRECORD (x, p, window)
-#define WINDOWP(x) RECORDP (x, window)
-#define CHECK_WINDOW(x) CHECK_RECORD (x, window)
-#define CONCHECK_WINDOW(x) CONCHECK_RECORD (x, window)
+DECLARE_LRECORD (window_mirror, struct window_mirror);
+#define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
+#define XSETWINDOW_MIRROR(x, p) XSETRECORD (x, p, window_mirror)
+#define wrap_window_mirror(p) wrap_record (p, window_mirror)
+#define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
+#define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)
+#define CONCHECK_WINDOW_MIRROR(x) CONCHECK_RECORD (x, window_mirror)
 
 #define WINDOW_LIVE_P(x) (!(x)->dead)
 #define CHECK_LIVE_WINDOW(x) do {			\
@@ -375,7 +332,6 @@ int frame_size_valid_p (struct frame *frame, int rows, int cols);
 struct window *decode_window (Lisp_Object window);
 struct window *find_window_by_pixel_pos (int pix_x, int pix_y, Lisp_Object win);
 
-/* new functions to handle the window mirror */
 void free_window_mirror (struct window_mirror *mir);
 Lisp_Object real_window (struct window_mirror *mir, int no_abort);
 struct window_mirror *find_window_mirror (struct window *w);
@@ -438,7 +394,5 @@ int window_divider_width (struct window *w);
  (MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED (win) > 10 		\
   ? 10								\
   : MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED (win))
-
-#endif /* emacs */
 
 #endif /* INCLUDED_window_h_ */

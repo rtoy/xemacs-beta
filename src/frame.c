@@ -133,6 +133,15 @@ mark_frame (Lisp_Object obj)
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
     MAYBE_FRAMEMETH (f, mark_frame, (f));
 
+#ifdef HAVE_SCROLLBARS
+  if (f->sb_vcache)
+    mark_object (wrap_scrollbar_instance (f->sb_vcache));
+  if (f->sb_hcache)
+    mark_object (wrap_scrollbar_instance (f->sb_hcache));
+#endif
+
+  mark_gutters (f);
+
   return Qnil;
 }
 
@@ -161,6 +170,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
 static void
 nuke_all_frame_slots (struct frame *f)
 {
+  zero_lcrecord (f);
+
 #define MARKED_SLOT(x)	f->x = Qnil
 #include "frameslots.h"
 }
@@ -177,7 +188,6 @@ allocate_frame_core (Lisp_Object device)
   Lisp_Object root_window;
   struct frame *f = alloc_lcrecord_type (struct frame, &lrecord_frame);
 
-  zero_lcrecord (f);
   nuke_all_frame_slots (f);
   XSETFRAME (frame, f);
 
@@ -1570,10 +1580,9 @@ delete_frame_internal (struct frame *f, int force,
   d->frame_list = delq_no_quit (frame, d->frame_list);
   RESET_CHANGED_SET_FLAGS;
 
-  f->dead = 1;
   f->visible = 0;
 
-  free_window_mirror (f->root_mirror);
+  free_window_mirror (XWINDOW_MIRROR (f->root_mirror));
 /*  free_line_insertion_deletion_costs (f); */
 
   /* If we've deleted the last non-minibuf frame, then try to find
@@ -1660,12 +1669,15 @@ delete_frame_internal (struct frame *f, int force,
 	con->default_minibuffer_frame = Qnil;
     }
 
-  nuke_all_frame_slots (f); /* nobody should be accessing the device
-			       or anything else any more, and making
-			       them Qnil allows for better GC'ing
-			       in case a pointer to the dead frame
-			       continues to hang around. */
+  /* Nobody should be accessing anything in this object any more, and
+     making all Lisp_Objects Qnil allows for better GC'ing in case a
+     pointer to the dead frame continues to hang around.  Zero all
+     other structs in case someone tries to access something through
+     them. */
+
+  nuke_all_frame_slots (f);
   f->framemeths = dead_console_methods;
+
   UNGCPRO;
 }
 

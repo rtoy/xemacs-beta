@@ -521,22 +521,25 @@ clear_gutter (struct frame *f, enum gutter_pos pos)
   redisplay_clear_region (window, findex, x, y, width, height);
 }
 
-/* #### I don't currently believe that redisplay needs to mark the
+/* [[#### I don't currently believe that redisplay needs to mark the
    glyphs in its structures since these will always be referenced from
    somewhere else. However, I'm not sure enough to stake my life on it
-   at this point, so we do the safe thing. */
+   at this point, so we do the safe thing.]]
+
+   ALWAYS mark everything. --ben */
 
 /* See the comment in image_instantiate_cache_result as to why marking
    the glyph will also mark the image_instance. */
 void
-mark_gutters (struct frame* f)
+mark_gutters (struct frame *f)
 {
   enum gutter_pos pos;
   GUTTER_POS_LOOP (pos)
     {
       if (f->current_display_lines[pos])
 	mark_redisplay_structs (f->current_display_lines[pos]);
-      /* #### Do we really need to mark the desired lines? */
+      /* [[#### Do we really need to mark the desired lines?]]
+         ALWAYS mark everything. --ben */
       if (f->desired_display_lines[pos])
 	mark_redisplay_structs (f->desired_display_lines[pos]);
     }

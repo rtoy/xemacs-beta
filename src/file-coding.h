@@ -144,6 +144,7 @@ typedef struct Lisp_Coding_System Lisp_Coding_System;
 DECLARE_LRECORD (coding_system, Lisp_Coding_System);
 #define XCODING_SYSTEM(x) XRECORD (x, coding_system, Lisp_Coding_System)
 #define XSETCODING_SYSTEM(x, p) XSETRECORD (x, p, coding_system)
+#define wrap_coding_system(p) wrap_record (p, coding_system)
 #define CODING_SYSTEMP(x) RECORDP (x, coding_system)
 #define CHECK_CODING_SYSTEM(x) CHECK_RECORD (x, coding_system)
 #define CONCHECK_CODING_SYSTEM(x) CONCHECK_RECORD (x, coding_system)

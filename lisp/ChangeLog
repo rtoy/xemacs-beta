@@ -1,3 +1,12 @@
+2001-06-17  Ben Wing  <ben@xemacs.org>
+
+	For 21.4:
+	
+	* update-elc-2.el (do-update-elc-2):
+	* update-elc-2.el (batch-update-elc-2):
+	Correct misplaced parentheses, making lisp/mule not get
+	recompiled.
+
 2001-06-10  Ben Wing  <ben@xemacs.org>
 
 	* alist.el:

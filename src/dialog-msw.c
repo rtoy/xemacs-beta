@@ -175,7 +175,8 @@ mark_mswindows_dialog_id (Lisp_Object obj)
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("mswindows-dialog-id", mswindows_dialog_id,
-			       mark_mswindows_dialog_id, 0, 0, 0, 0, 0,
+			       mark_mswindows_dialog_id,
+			       internal_object_printer, 0, 0, 0, 0,
 			       struct mswindows_dialog_id);
 
 /* Dialog procedure */

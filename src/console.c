@@ -104,7 +104,6 @@ mark_console (Lisp_Object obj)
 
 #define MARKED_SLOT(x) mark_object (con->x)
 #include "conslots.h"
-#undef MARKED_SLOT
 
   /* Can be zero for Vconsole_defaults, Vconsole_local_symbols */
   if (con->conmeths)
@@ -580,6 +579,15 @@ find_nonminibuffer_frame_not_on_console (Lisp_Object console)
 			  LISP_TO_VOID (console));
 }
 
+static void
+nuke_all_console_slots (struct console *con, Lisp_Object zap)
+{
+  zero_lcrecord (con);
+
+#define MARKED_SLOT(x)	con->x = zap
+#include "conslots.h"
+}
+
 /* Delete console CON.
 
    If FORCE is non-zero, allow deletion of the only frame.
@@ -719,7 +727,15 @@ delete_console_internal (struct console *con, int force,
   MAYBE_CONMETH (con, delete_console, (con));
 
   Vconsole_list = delq_no_quit (console, Vconsole_list);
+
   RESET_CHANGED_SET_FLAGS;
+
+  /* Nobody should be accessing anything in this object any more, and
+     making all Lisp_Objects Qnil allows for better GC'ing in case a
+     pointer to the dead console continues to hang around.  Zero all
+     other structs in case someone tries to access something through
+     them. */
+  nuke_all_console_slots (con, Qnil);
   con->conmeths = dead_console_methods;
 
   UNGCPRO;
@@ -1203,37 +1219,38 @@ One argument, the to-be-deleted console.
 #endif
 }
 
-/* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
-#define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun) do {	\
-  static const struct symbol_value_forward I_hate_C =				\
-  { /* struct symbol_value_forward */						\
-    { /* struct symbol_value_magic */						\
-      { /* struct lcrecord_header */						\
-	{ /* struct lrecord_header */						\
-	  lrecord_type_symbol_value_forward, /* lrecord_type_index */		\
-	  1, /* mark bit */							\
-	  1, /* c_readonly bit */						\
-	  1  /* lisp_readonly bit */						\
-	},									\
-	0, /* next */								\
-	0, /* uid  */								\
-	0  /* free */								\
-      },									\
-      &(console_local_flags.field_name), 					\
-      forward_type								\
-    },										\
-    magicfun									\
-  };										\
-										\
-  {										\
-    int offset = ((char *)symbol_value_forward_forward (&I_hate_C)		\
-		  - (char *)&console_local_flags);				\
-										\
-    defvar_magic (lname, &I_hate_C);						\
-										\
-    *((Lisp_Object *)(offset + (char *)XCONSOLE (Vconsole_local_symbols)))	\
-      = intern (lname);								\
-  }										\
+/* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */ \
+#define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun)   \
+do {									    \
+  static const struct symbol_value_forward I_hate_C =			    \
+  { /* struct symbol_value_forward */					    \
+    { /* struct symbol_value_magic */					    \
+      { /* struct lcrecord_header */					    \
+	{ /* struct lrecord_header */					    \
+	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	    \
+	  1, /* mark bit */						    \
+	  1, /* c_readonly bit */					    \
+	  1  /* lisp_readonly bit */					    \
+	},								    \
+	0, /* next */							    \
+	0, /* uid  */							    \
+	0  /* free */							    \
+      },								    \
+      &(console_local_flags.field_name),				    \
+      forward_type							    \
+    },									    \
+    magicfun								    \
+  };									    \
+									    \
+  {									    \
+    int offset = ((char *)symbol_value_forward_forward (&I_hate_C)	    \
+		  - (char *)&console_local_flags);			    \
+									    \
+    defvar_magic (lname, &I_hate_C);					    \
+									    \
+    *((Lisp_Object *)(offset + (char *)XCONSOLE (Vconsole_local_symbols)))  \
+      = intern (lname);							    \
+  }									    \
 } while (0)
 
 #define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)		\
@@ -1252,16 +1269,6 @@ One argument, the to-be-deleted console.
 			  SYMVAL_DEFAULT_CONSOLE_FORWARD, magicfun)
 #define DEFVAR_CONSOLE_DEFAULTS(lname, field_name)			\
 	DEFVAR_CONSOLE_DEFAULTS_MAGIC (lname, field_name, 0)
-
-static void
-nuke_all_console_slots (struct console *con, Lisp_Object zap)
-{
-  zero_lcrecord (con);
-
-#define MARKED_SLOT(x)	con->x = zap
-#include "conslots.h"
-#undef MARKED_SLOT
-}
 
 static void
 common_init_complex_vars_of_console (void)
@@ -1467,5 +1474,4 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
       != !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)))	\
   abort ()
 #include "conslots.h"
-#undef MARKED_SLOT
 }

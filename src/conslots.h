@@ -20,10 +20,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. (see FSF keyboard.h.) */
 
-/* In the declaration of the console structure, this file is included
-   after defining MARKED_SLOT(x) to be Lisp_Object x; i.e. just a slot
-   definition.  In the garbage collector this file is included after
-   defining MARKED_SLOT(x) to be mark_object(console->x). */
+/* We define the Lisp_Objects in the console structure in a separate file
+   because there are numerous places we want to iterate over them, such
+   as when defining them in the structure, initializing them, or marking
+   them.
+
+   To use, define MARKED_SLOT before including this file.  No need to
+   undefine; that happens automatically. */
 
 #ifndef CONSOLE_SLOTS_FIRST_NAME
 #define CONSOLE_SLOTS_FIRST_NAME name
@@ -101,3 +104,4 @@ Boston, MA 02111-1307, USA.  */
 #define CONSOLE_SLOTS_LAST_NAME function_key_map
 #endif
 
+#undef MARKED_SLOT

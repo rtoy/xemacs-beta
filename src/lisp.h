@@ -676,6 +676,7 @@ struct Lisp_Buffer_Cons
 DECLARE_LRECORD (cons, Lisp_Cons);
 #define XCONS(x) XRECORD (x, cons, Lisp_Cons)
 #define XSETCONS(x, p) XSETRECORD (x, p, cons)
+#define wrap_cons(p) wrap_record (p, cons)
 #define CONSP(x) RECORDP (x, cons)
 #define CHECK_CONS(x) CHECK_RECORD (x, cons)
 #define CONCHECK_CONS(x) CONCHECK_RECORD (x, cons)
@@ -1163,6 +1164,7 @@ typedef struct Lisp_String Lisp_String;
 DECLARE_LRECORD (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
 #define XSETSTRING(x, p) XSETRECORD (x, p, string)
+#define wrap_string(p) wrap_record (p, string)
 #define STRINGP(x) RECORDP (x, string)
 #define CHECK_STRING(x) CHECK_RECORD (x, string)
 #define CONCHECK_STRING(x) CONCHECK_RECORD (x, string)
@@ -1254,6 +1256,7 @@ typedef struct Lisp_Vector Lisp_Vector;
 DECLARE_LRECORD (vector, Lisp_Vector);
 #define XVECTOR(x) XRECORD (x, vector, Lisp_Vector)
 #define XSETVECTOR(x, p) XSETRECORD (x, p, vector)
+#define wrap_vector(p) wrap_record (p, vector)
 #define VECTORP(x) RECORDP (x, vector)
 #define CHECK_VECTOR(x) CHECK_RECORD (x, vector)
 #define CONCHECK_VECTOR(x) CONCHECK_RECORD (x, vector)
@@ -1292,6 +1295,7 @@ typedef struct Lisp_Bit_Vector Lisp_Bit_Vector;
 DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
 #define XBIT_VECTOR(x) XRECORD (x, bit_vector, Lisp_Bit_Vector)
 #define XSETBIT_VECTOR(x, p) XSETRECORD (x, p, bit_vector)
+#define wrap_bit_vector(p) wrap_record (p, bit_vector)
 #define BIT_VECTORP(x) RECORDP (x, bit_vector)
 #define CHECK_BIT_VECTOR(x) CHECK_RECORD (x, bit_vector)
 #define CONCHECK_BIT_VECTOR(x) CONCHECK_RECORD (x, bit_vector)
@@ -1357,6 +1361,7 @@ struct Lisp_Symbol
 DECLARE_LRECORD (symbol, Lisp_Symbol);
 #define XSYMBOL(x) XRECORD (x, symbol, Lisp_Symbol)
 #define XSETSYMBOL(x, p) XSETRECORD (x, p, symbol)
+#define wrap_symbol(p) wrap_record (p, symbol)
 #define SYMBOLP(x) RECORDP (x, symbol)
 #define CHECK_SYMBOL(x) CHECK_RECORD (x, symbol)
 #define CONCHECK_SYMBOL(x) CONCHECK_RECORD (x, symbol)
@@ -1386,6 +1391,7 @@ typedef struct Lisp_Subr Lisp_Subr;
 DECLARE_LRECORD (subr, Lisp_Subr);
 #define XSUBR(x) XRECORD (x, subr, Lisp_Subr)
 #define XSETSUBR(x, p) XSETRECORD (x, p, subr)
+#define wrap_subr(p) wrap_record (p, subr)
 #define SUBRP(x) RECORDP (x, subr)
 #define CHECK_SUBR(x) CHECK_RECORD (x, subr)
 #define CONCHECK_SUBR(x) CONCHECK_RECORD (x, subr)
@@ -1412,6 +1418,7 @@ struct Lisp_Marker
 DECLARE_LRECORD (marker, Lisp_Marker);
 #define XMARKER(x) XRECORD (x, marker, Lisp_Marker)
 #define XSETMARKER(x, p) XSETRECORD (x, p, marker)
+#define wrap_marker(p) wrap_record (p, marker)
 #define MARKERP(x) RECORDP (x, marker)
 #define CHECK_MARKER(x) CHECK_RECORD (x, marker)
 #define CONCHECK_MARKER(x) CONCHECK_RECORD (x, marker)
@@ -1465,6 +1472,7 @@ typedef struct Lisp_Float Lisp_Float;
 DECLARE_LRECORD (float, Lisp_Float);
 #define XFLOAT(x) XRECORD (x, float, Lisp_Float)
 #define XSETFLOAT(x, p) XSETRECORD (x, p, float)
+#define wrap_float(p) wrap_record (p, float)
 #define FLOATP(x) RECORDP (x, float)
 #define CHECK_FLOAT(x) CHECK_RECORD (x, float)
 #define CONCHECK_FLOAT(x) CONCHECK_RECORD (x, float)
@@ -1664,6 +1672,7 @@ struct weak_list
 DECLARE_LRECORD (weak_list, struct weak_list);
 #define XWEAK_LIST(x) XRECORD (x, weak_list, struct weak_list)
 #define XSETWEAK_LIST(x, p) XSETRECORD (x, p, weak_list)
+#define wrap_weak_list(p) wrap_record (p, weak_list)
 #define WEAK_LISTP(x) RECORDP (x, weak_list)
 #define CHECK_WEAK_LIST(x) CHECK_RECORD (x, weak_list)
 #define CONCHECK_WEAK_LIST(x) CONCHECK_RECORD (x, weak_list)
@@ -1689,6 +1698,7 @@ struct lcrecord_list
 DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
 #define XLCRECORD_LIST(x) XRECORD (x, lcrecord_list, struct lcrecord_list)
 #define XSETLCRECORD_LIST(x, p) XSETRECORD (x, p, lcrecord_list)
+#define wrap_lcrecord_list(p) wrap_record (p, lcrecord_list)
 #define LCRECORD_LISTP(x) RECORDP (x, lcrecord_list)
 /* #define CHECK_LCRECORD_LIST(x) CHECK_RECORD (x, lcrecord_list)
    Lcrecord lists should never escape to the Lisp level, so

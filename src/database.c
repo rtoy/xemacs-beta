@@ -111,6 +111,7 @@ struct Lisp_Database
 
 #define XDATABASE(x) XRECORD (x, database, Lisp_Database)
 #define XSETDATABASE(x, p) XSETRECORD (x, p, database)
+#define wrap_database(p) wrap_record (p, database)
 #define DATABASEP(x) RECORDP (x, database)
 #define CHECK_DATABASE(x) CHECK_RECORD (x, database)
 #define CONCHECK_DATABASE(x) CONCHECK_RECORD (x, database)

@@ -118,9 +118,9 @@ make_char (Emchar val)
   return obj;
 }
 
-INLINE_HEADER Lisp_Object wrap_object (void *ptr);
+INLINE_HEADER Lisp_Object wrap_pointer_1 (void *ptr);
 INLINE_HEADER Lisp_Object
-wrap_object (void *ptr)
+wrap_pointer_1 (void *ptr)
 {
   Lisp_Object obj;
   XSETOBJ (obj, ptr);

@@ -1,3 +1,316 @@
+2001-06-17  Ben Wing  <ben@xemacs.org>
+
+	---------------------------------------------------------------
+ 	                     DOCUMENTATION FIXES:
+	---------------------------------------------------------------
+
+	* eval.c (Ffunction_min_args):
+	* eval.c (Ffunction_max_args):
+	Correct documentation.
+	
+	* elhash.c (Fremhash): Doc correction.
+	
+	---------------------------------------------------------------
+	                     LISP OBJECT CLEANUP:
+	---------------------------------------------------------------
+
+	* bytecode.h (wrap_compiled_function):
+	* buffer.h (wrap_buffer):
+	* casetab.h (wrap_case_table):
+	* chartab.h (wrap_char_table_entry):
+	* chartab.h (wrap_char_table):
+	* console-msw.h (wrap_devmode):
+	* console-msw.h (wrap_mswindows_dialog_id):
+	* console.h (wrap_console):
+	* database.c (wrap_database):
+	* device.h (wrap_device):
+	* eldap.h (wrap_ldap):
+	* elhash.h (wrap_hash_table):
+	* events.h (wrap_timeout):
+	* events.h (wrap_event):
+	* extents.h (wrap_extent):
+	* extents.h (wrap_extent_auxiliary):
+	* extents.h (wrap_extent_info):
+	* faces.h (wrap_face):
+	* file-coding.h (wrap_coding_system):
+	* frame.h (wrap_frame):
+	* glyphs.h (wrap_image_instance):
+	* glyphs.h (wrap_glyph):
+	* gui-x.h (wrap_popup_data):
+	* gui.h (wrap_gui_item):
+	* keymap.h (wrap_keymap):
+	* lisp-disunion.h (wrap_pointer_1):
+	* lisp-union.h (wrap_pointer_1):
+	* lisp.h (wrap_cons):
+	* lisp.h (wrap_string):
+	* lisp.h (wrap_vector):
+	* lisp.h (wrap_bit_vector):
+	* lisp.h (wrap_symbol):
+	* lisp.h (wrap_subr):
+	* lisp.h (wrap_marker):
+	* lisp.h (wrap_float):
+	* lisp.h (wrap_weak_list):
+	* lisp.h (wrap_lcrecord_list):
+	* lrecord.h (wrap_record_1):
+	* lstream.h (wrap_lstream):
+	* mule-charset.h (wrap_charset):
+	* objects.h (wrap_color_instance):
+	* objects.h (wrap_font_instance):
+	* opaque.h (wrap_opaque):
+	* opaque.h (wrap_opaque_ptr):
+	* postgresql.h (wrap_pgconn):
+	* postgresql.h (wrap_pgresult):
+	* process.h (wrap_process):
+	* rangetab.h (wrap_range_table):
+	* specifier.h (wrap_specifier):
+	* toolbar.h (wrap_toolbar_button):
+	* tooltalk.h (wrap_tooltalk_message):
+	* tooltalk.h (wrap_tooltalk_pattern):
+	* ui-gtk.h (wrap_emacs_ffi):
+	* ui-gtk.h (wrap_emacs_gtk_object):
+	* ui-gtk.h (wrap_emacs_gtk_boxed):
+	* lstream.h (wrap_lstream):
+	* device.h (wrap_device): New.
+	* frame.h (wrap_frame): New.
+	* lisp-disunion.h (wrap_object):
+	* lisp-disunion.h (XSETOBJ):
+	* lrecord.h:
+	Add wrap_* to all objects (it was already there for a few of them)
+	-- an expression to encapsulate a pointer into a Lisp object,
+	rather than the inconvenient XSET*.  "wrap" was chosen because
+	"make" as in make_int(), make_char() is not appropriate. (It
+	implies allocation.  The issue does not exist for ints and chars
+	because they are not allocated.)
+
+	Full error checking has been added to these expressions.  When
+	used without error checking, non-union build, use of these
+	expressions will incur no loss of efficiency. (In fact, XSET* is
+	now defined in terms of wrap_* in a non-union build.) In a union
+	build, you will also get no loss of efficiency provided that you
+	have a decent optimizing compiler, and a compiler that either
+	understands inlines or automatically inlines those particular
+	functions. (And since people don't normally do their production
+	builds on union, it doesn't matter.)
+
+	Update the sample Lisp object definition in lrecord.h accordingly.
+	
+	* dumper.c (pdump_dump_root_objects):
+	* dumper.c (pdump_load_finish):
+	Fix places in dumper that referenced wrap_object to reference
+	its new name, wrap_pointer_1.
+
+	* buffer.c (mark_buffer):
+	* buffer.c (reset_buffer_local_variables):
+	* buffer.c (Fbuffer_local_variables):
+	* buffer.c (nuke_all_buffer_slots):
+	* buffer.c (complex_vars_of_buffer):
+	* bufslots.h:
+	* conslots.h:
+	* console.c:
+	* console.c (mark_console):
+	* console.c (nuke_all_console_slots):
+	* console.c (delete_console_internal):
+	* console.c (common_init_complex_vars_of_console):
+	* console.c (complex_vars_of_console):
+	* console.h (struct console):
+	* devslots.h: NEW FILE.
+	* device.c:
+	* device.c (MARKED_SLOT):
+	* device.c (mark_device):
+	* device.c (nuke_all_device_slots):
+	* device.c (allocate_device):
+	* device.c (Fset_device_selected_frame):
+	* device.c (delete_device_internal):
+	* device.c (vars_of_device):
+	* device.h (struct device):
+	* device.h (MARKED_SLOT):
+	* frame.c (nuke_all_frame_slots):
+	* frame.c (allocate_frame_core):
+	* frame.c (delete_frame_internal):
+	* frame.h (struct frame):
+	* frame.h (FRAME_LIVE_P):
+	* frameslots.h:
+	* window.c (mark_window):
+	* window.c (WINDOW_SLOT):
+	* window.c (allocate_window):
+	* window.c (mark_window_as_deleted):
+	* window.c (wrap_window_configuration):
+	* window.c (Fset_window_configuration):
+	* window.h:
+	* window.h (struct window):
+	* window.h (WINDOW_SLOT):
+	* winslots.h:
+	-- Extract out the Lisp objects of `struct device' into devslots.h,
+	just like for the other structures.
+	-- Extract out the remaining (not copied into the window config)
+	Lisp objects in `struct window' into winslots.h; use different
+	macros (WINDOW_SLOT vs. WINDOW_SAVED_SLOT) to differentiate them.
+	-- Eliminate the `dead' flag of `struct frame', since it
+	duplicates information already available in `framemeths', and fix
+	FRAME_LIVE_P accordingly. (Devices and consoles already work this
+	way.)
+	-- In *slots.h, switch to system where MARKED_SLOT is automatically
+	undef'd at the end of the file. (Follows what winslots.h already
+	does.)
+	-- Update the comments at the beginning of *slots.h to be accurate.
+	-- When making any of the above objects dead, zero it out entirely
+	and reset all Lisp object slots to Qnil. (We were already doing
+	this somewhat, but not consistently.) This (1) Eliminates the
+	possibility of extra objects hanging around that ought to be
+	GC'd, (2) Causes an immediate crash if anyone tries to access a
+	structure in one of these objects, (3) Ensures consistent behavior
+	wrt dead objects.
+
+	* dialog-msw.c:
+	Use internal_object_printer, since this object should not escape.
+	
+	---------------------------------------------------------------
+ 	  FIXING A CRASH THAT I HIT ONCE (AND A RELATED BAD BEHAVIOR):
+	---------------------------------------------------------------
+
+	* eval.c (unwind_to_catch):
+	* eval.c (condition_bind_unwind):
+	* eval.c (condition_case_unwind):
+	* eval.c (condition_case_1):
+	Fix up some comments about the FSF implementation.
+	Fix two nasty bugs:
+
+	(1) condition_case_unwind frees the conses sitting in the
+	catch->tag slot too quickly, resulting in a crash that I hit.
+	(2) catches need to be unwound one at a time when calling
+	unwind-protect code, rather than all at once at the end; otherwise,
+	incorrect behavior can result. (A comment shows exactly how.)
+	
+	* backtrace.h:
+	Improve comment about FSF differences in the handler stack.
+
+	---------------------------------------------------------------
+	FIXING A CRASH THAT I REPEATEDLY HIT WHEN USING THE MOUSE WHEEL
+	UNDER MSWINDOWS:
+	---------------------------------------------------------------
+
+	Basic idea: My crash is due either to a dead, non-marked,
+	GC-collected frame inside of a window mirror, or a prematurely
+	freed window mirror.  We need to mark the Lisp objects inside of
+	window mirrors.  Tracking the lifespan of window mirrors and
+	scrollbar instances is extremely hard, and there may well be
+	lurking bugs where such objects are freed too soon.  The only safe
+	way to fix these problems (and it fixes both problems at once) is
+	to make both of these structures Lisp objects.
+	
+	* lrecord.h (lrecord_type):
+	* emacs.c (main_1):
+	* inline.c:
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
+	* scrollbar-gtk.c (find_scrollbar_window_mirror):
+	* scrollbar-gtk.c (scrollbar_cb):
+	* scrollbar-gtk.c (gtk_scrollbar_pointer_changed_in_window):
+	* scrollbar-gtk.c (gtk_update_frame_scrollbars):
+	* scrollbar-msw.c:
+	* scrollbar-msw.c (mswindows_create_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_update_scrollbar_instance_values):
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	* scrollbar-msw.c (syms_of_scrollbar_mswindows):
+	* scrollbar-msw.c (vars_of_scrollbar_mswindows):
+	* scrollbar-msw.c (complex_vars_of_scrollbar_mswindows):
+	* scrollbar-x.c (find_scrollbar_window_mirror):
+	* scrollbar-x.c (x_update_frame_scrollbars):
+	* scrollbar.c:
+	* scrollbar.c (mark_scrollbar_instance):
+	* scrollbar.c (free_scrollbar_instance):
+	* scrollbar.c (free_frame_scrollbars):
+	* scrollbar.c (create_scrollbar_instance):
+	* scrollbar.c (syms_of_scrollbar):
+	* scrollbar.h:
+	* scrollbar.h (struct scrollbar_instance):
+	* symsinit.h:
+	Make scrollbar instances actual Lisp objects.  Mark the window
+	mirrors in them.  inline.c needs to know about scrollbar.h now.
+	Record the new type in lrecord.h.  Fix up scrollbar-*.c
+	appropriately.  Create a hash table in scrollbar-msw.c so that the
+	scrollbar instances stored in scrollbar HWND's are properly
+	GC-protected.  Create complex_vars_of_scrollbar_mswindows() to
+	create the hash table at startup, and call it from emacs.c.  Don't
+	store the scrollbar instance as a property of the GTK scrollbar,
+	as it's not used and if we did this, we'd have to separately
+	GC-protect it in a hash table, like in MS Windows.
+
+	* lrecord.h (lrecord_type):
+	* frame.h (struct frame):
+	* frame.c (delete_frame_internal):
+	* frameslots.h:
+	* redisplay.c:
+	* window.c:
+	* window.c (mark_window_mirror):
+	* window.c (new_window_mirror):
+	* window.c (update_frame_window_mirror):
+	* window.c (free_window_mirror):
+	* window.c (find_window_mirror):
+	* window.c (syms_of_window):
+	* window.c (real_window):
+	* window.h (struct window_mirror):
+	Move mark_window_mirror from redisplay.c to window.c.  Make window
+	mirrors actual Lisp objects.  Tell lrecord.h about them.  Change
+	the window mirror member of struct frame from a pointer to a Lisp
+	object, and add XWINDOW_MIRROR in appropriate places.  Mark the
+	scrollbar instances in the window mirror.
+
+	* redisplay.c:
+	* redisplay.h:
+	* alloc.c (garbage_collect_1):
+	Delete mark_redisplay.  Don't call mark_redisplay.  We now mark
+	frame-specific structures in mark_frame.
+
+	NOTE: I also deleted an extremely questionable call to
+	update_frame_window_mirrors().  It was extremely questionable
+	before, and now totally impossible, since it will create
+	Lisp objects during redisplay.
+	
+	* frame.c (mark_frame):
+	Mark the scrollbar instances, which are now Lisp objects.
+	Call mark_gutter() here, not in mark_redisplay().
+	
+	* gutter.c:
+	Update comments about correct marking.
+	
+	---------------------------------------------------------------
+ 	                  ISSUES BROUGHT UP BY MARTIN:
+	---------------------------------------------------------------
+
+	* buffer.h (DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA):
+	Put back these macros the way Steve T and I think they ought to be.
+	I already explained in a previous changelog entry why I think these
+	macros should be the way I'd defined them.  Once again:
+
+	We fix these macros so they don't care about the type of their
+	lvalues.  The non-C-string equivalents of these already function
+	in the same way, and it's correct because it should be OK to pass
+	in a CBufbyte *, a BufByte *, a Char_Binary *, an UChar_Binary *,
+	etc.  The whole reason for these different types is to work around
+	errors caused by signed-vs-unsigned non-matching types.  Any
+	possible error that might be caught in a DFC macro would also be
+	caught wherever the argument is used elsewhere.  So creating
+	multiple macro versions would add no useful error-checking and
+	just further complicate an already complicated area.
+
+	As for Martin's "ANSI aliasing" bug, XEmacs is not ANSI-aliasing
+	clean and probably never will be.  Unless the board agrees to
+	change XEmacs in this way (and we really don't want to go down
+	that road), this is not a bug.
+
+	* sound.h (sound_perror):
+	Undo Martin's type change.
+
+	* signal.c (qxe_setitimer):
+	Fix problem identified by Martin with Linux and g++ due to
+	non-standard declaration of setitimer().
+	
+	* systime.h:
+	Update the docs for "qxe_" to point out why making the
+	encapsulation explicit is always the right way to go. (setitimer()
+	itself serves as an example.)
+
 2001-06-11  Martin Buchholz  <martin@xemacs.org>
 
 	* buffer.h (DFC_C_STRING_ALLOCA_USE_CONVERTED_DATA):
@@ -1406,7 +1719,6 @@
 	* lread.c (syms_of_lread):
 	* lread.c (vars_of_lread):
 	* lstream.c (Lstream_internal_error):
-	* lstream.h (wrap_lstream):
 	* macros.c (Fstart_kbd_macro):
 	* macros.c (Fend_kbd_macro):
 	* macros.c (pop_kbd_macro_event):
@@ -5921,7 +6233,6 @@ Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245
         [6].
         [7].
 
-        * device.h (wrap_device): New.
         First of its kind; meant to replace XSETDEVICE.
 
         * dialog-msw.c: Many file-dialog symbols.
@@ -6164,7 +6475,6 @@ Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245
         * frame.c:
         * frame.c (Fmouse_pixel_position): Minor doc fixes.
 
-        * frame.h (wrap_frame): New.
         Macro like wrap_device.
 
         * general.c:
@@ -6238,7 +6548,6 @@ Fatal error: assertion failed, file /project/xemacs/ws/dev/src/frame.h, line 245
         * keymap.h:
         Support new button modifiers.
 
-        * lisp-disunion.h (wrap_object):
         * lisp-disunion.h (XSETOBJ):
         Rename make_obj to wrap_object.
 

@@ -100,7 +100,6 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
   gtk_object_set_data (GTK_OBJECT (adj), "xemacs::gui_id", (void *) SCROLLBAR_GTK_ID (instance));
   gtk_object_set_data (GTK_OBJECT (adj), "xemacs::frame", f);
-  gtk_object_set_data (GTK_OBJECT (adj), "xemacs::sb_instance", instance);
 
   sb = GTK_SCROLLBAR (vertical ? gtk_vscrollbar_new (adj) : gtk_hscrollbar_new (adj));
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
@@ -357,7 +356,8 @@ find_scrollbar_window_mirror (struct frame *f, GUI_ID id)
   if (f->mirror_dirty)
     update_frame_window_mirror (f);
   return gtk_scrollbar_loop (GTK_FIND_SCROLLBAR_WINDOW_MIRROR, f->root_window,
-			     f->root_mirror, id, (GdkWindow *) NULL);
+			     XWINDOW_MIRROR (f->root_mirror), id,
+			     (GdkWindow *) NULL);
 }
 
 static gboolean
@@ -366,7 +366,7 @@ scrollbar_cb (GtkAdjustment *adj, gpointer user_data)
   /* This function can GC */
   int vertical = (int) user_data;
   struct frame *f = gtk_object_get_data (GTK_OBJECT (adj), "xemacs::frame");
-  struct scrollbar_instance *instance = gtk_object_get_data (GTK_OBJECT (adj), "xemacs::sb_instance");
+  struct scrollbar_instance *instance;
   GUI_ID id = (GUI_ID) gtk_object_get_data (GTK_OBJECT (adj), "xemacs::gui_id");
   Lisp_Object win, frame;
   struct window_mirror *mirror;
@@ -427,8 +427,8 @@ gtk_scrollbar_pointer_changed_in_window (struct window *w)
   Lisp_Object window;
 
   XSETWINDOW (window, w);
-  gtk_scrollbar_loop (GTK_SET_SCROLLBAR_POINTER, window, find_window_mirror (w),
-		      0, (GdkWindow *) NULL);
+  gtk_scrollbar_loop (GTK_SET_SCROLLBAR_POINTER, window,
+		      find_window_mirror (w), 0, (GdkWindow *) NULL);
 }
 
 /* #### BILL!!! This comment is not true for Gtk - should it be? */
@@ -440,7 +440,8 @@ gtk_update_frame_scrollbars (struct frame *f)
   /* Consider this code to be "in_display" so that we abort() if Fsignal()
      gets called. */
   in_display++;
-  gtk_scrollbar_loop (GTK_UPDATE_FRAME_SCROLLBARS, f->root_window, f->root_mirror,
+  gtk_scrollbar_loop (GTK_UPDATE_FRAME_SCROLLBARS, f->root_window,
+		      XWINDOW_MIRROR (f->root_mirror),
 		      0, (GdkWindow *) NULL);
   in_display--;
   if (in_display < 0) abort ();

@@ -171,10 +171,12 @@ enum lrecord_type
   lrecord_type_device,
   lrecord_type_frame,
   lrecord_type_window,
+  lrecord_type_window_mirror,
   lrecord_type_window_configuration,
   lrecord_type_gui_item,
   lrecord_type_popup_data,
   lrecord_type_toolbar_button,
+  lrecord_type_scrollbar_instance,
   lrecord_type_color_instance,
   lrecord_type_font_instance,
   lrecord_type_image_instance,
@@ -268,7 +270,7 @@ struct lrecord_implementation
   unsigned int basic_p :1;
 };
 
-/* All the built-in lisp object types are enumerated in `enum record_type'.
+/* All the built-in lisp object types are enumerated in `enum lrecord_type'.
    Additional ones may be defined by a module (none yet).  We leave some
    room in `lrecord_implementations_table' for such new lisp object types. */
 #define MODULE_DEFINABLE_TYPE_COUNT 32
@@ -512,8 +514,8 @@ extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
    struct lcrecord_header header;
 
-   2. Put a DECLARE_LRECORD() for the object below the struct definition,
-   along with the standard XFOO/XSETFOO junk.
+   2. Put the "standard junk" (DECLARE_RECORD()/XFOO/XSETFOO/etc.) below the
+      struct definition -- see below.
 
    3. Add this header file to inline.c.
 
@@ -566,9 +568,12 @@ struct toolbar_button
   int border_width;
 };
 
+[[ the standard junk: ]]
+
 DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
 #define XSETTOOLBAR_BUTTON(x, p) XSETRECORD (x, p, toolbar_button)
+#define wrap_toolbar_button(p) wrap_record (p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
 #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
@@ -596,9 +601,12 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
+[[ If your object should never escape to Lisp, declare its print method
+   as internal_object_printer instead of 0. ]]
+
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
-			       mark_toolbar_button, 0, 0, 0, 0, 0,
-			       struct toolbar_button);
+			       mark_toolbar_button, 0,
+			       0, 0, 0, 0, struct toolbar_button);
 
 ...
 
@@ -684,6 +692,18 @@ extern Lisp_Object Q##c_name##p
   assert (RECORD_TYPEP (var, lrecord_type_##c_name));		\
 } while (0)
 
+INLINE_HEADER Lisp_Object wrap_record_1 (void *ptr, enum lrecord_type ty);
+INLINE_HEADER Lisp_Object
+wrap_record_1 (void *ptr, enum lrecord_type ty)
+{
+  Lisp_Object obj;
+  XSETOBJ (obj, ptr);
+  assert (RECORD_TYPEP (obj, ty));
+  return obj;
+}
+
+#define wrap_record(ptr, ty) wrap_record_1 (ptr, lrecord_type_##ty)
+
 #else /* not ERROR_CHECK_TYPECHECK */
 
 # define DECLARE_LRECORD(c_name, structtype)			\
@@ -699,6 +719,9 @@ extern Lisp_Object Q##c_name##p
 # define XNONRECORD(x, c_name, type_enum, structtype)		\
   ((structtype *) XPNTR (x))
 # define XSETRECORD(var, p, c_name) XSETOBJ (var, p)
+/* wrap_pointer_1 is so named as a suggestion not to use it unless you
+   know what you're doing. */
+#define wrap_record(ptr, ty) wrap_pointer_1 (ptr)
 
 #endif /* not ERROR_CHECK_TYPECHECK */
 

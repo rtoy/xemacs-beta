@@ -52,6 +52,7 @@ DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
 #define XCHAR_TABLE_ENTRY(x) \
   XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
 #define XSETCHAR_TABLE_ENTRY(x, p) XSETRECORD (x, p, char_table_entry)
+#define wrap_char_table_entry(p) wrap_record (p, char_table_entry)
 #define CHAR_TABLE_ENTRYP(x) RECORDP (x, char_table_entry)
 /* #define CHECK_CHAR_TABLE_ENTRY(x) CHECK_RECORD (x, char_table_entry)
    char table entries should never escape to Lisp */
@@ -122,6 +123,7 @@ typedef struct Lisp_Char_Table Lisp_Char_Table;
 DECLARE_LRECORD (char_table, Lisp_Char_Table);
 #define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
 #define XSETCHAR_TABLE(x, p) XSETRECORD (x, p, char_table)
+#define wrap_char_table(p) wrap_record (p, char_table)
 #define CHAR_TABLEP(x) RECORDP (x, char_table)
 #define CHECK_CHAR_TABLE(x) CHECK_RECORD (x, char_table)
 #define CONCHECK_CHAR_TABLE(x) CONCHECK_RECORD (x, char_table)

@@ -242,6 +242,7 @@ typedef struct Lisp_Specifier Lisp_Specifier;
 DECLARE_LRECORD (specifier, Lisp_Specifier);
 #define XSPECIFIER(x) XRECORD (x, specifier, Lisp_Specifier)
 #define XSETSPECIFIER(x, p) XSETRECORD (x, p, specifier)
+#define wrap_specifier(p) wrap_record (p, specifier)
 #define SPECIFIERP(x) RECORDP (x, specifier)
 #define CHECK_SPECIFIER(x) CHECK_RECORD (x, specifier)
 #define CONCHECK_SPECIFIER(x) CONCHECK_RECORD (x, specifier)

@@ -44,6 +44,7 @@ typedef struct Lisp_LDAP Lisp_LDAP;
 DECLARE_LRECORD (ldap, Lisp_LDAP);
 #define XLDAP(x) XRECORD (x, ldap, Lisp_LDAP)
 #define XSETLDAP(x, p) XSETRECORD (x, p, ldap)
+#define wrap_ldap(p) wrap_record (p, ldap)
 #define LDAPP(x) RECORDP (x, ldap)
 #define CHECK_LDAP(x) CHECK_RECORD (x, ldap)
 #define CONCHECK_LDAP(x) CONCHECK_RECORD (x, ldap)

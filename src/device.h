@@ -72,90 +72,6 @@ struct device
      through device->console, but it's faster this way. */
   struct console_methods *devmeths;
 
-  /* Name of this device, for resourcing and printing purposes.
-     If not explicitly given, it's initialized in a device-specific
-     manner. */
-  Lisp_Object name;
-
-  /* What this device is connected to */
-  Lisp_Object connection;
-
-  /* A canonical name for the connection that is used to determine
-     whether `make-device' is being called on an existing device. */
-  Lisp_Object canon_connection;
-
-  /* List of frames on this device. */
-  Lisp_Object frame_list;
-
-  /* The console this device is on. */
-  Lisp_Object console;
-
-  /* Frame which is "currently selected".  This is what `selected-frame'
-     returns and is the default frame for many operations.  This may
-     not be the same as frame_with_focus; `select-frame' changes the
-     selected_frame but not the frame_with_focus.  However, eventually
-     either the two values will be the same, or frame_with_focus will
-     be nil: right before waiting for an event, the focus is changed
-     to point to the selected_frame if XEmacs currently has the focus
-     on this device.  Note that frame_with_focus may be nil (none of the
-     frames on this device have the window-system focus), but
-     selected_frame will never be nil if there are any frames on
-     the device. */
-  Lisp_Object selected_frame;
-  /* Frame that currently contains the window-manager focus, or none.
-     Note that we've split frame_with_focus into two variables.
-     frame_with_focus_real is the value we use most of the time,
-     but frame_with_focus_for_hooks is used for running the select-frame-hook
-     and deselect-frame-hook.  We do this because we split the focus handling
-     into two parts: one part (deals with drawing the solid/box cursor)
-     runs as soon as a focus event is received; the other (running the
-     hooks) runs after any pending sit-for/sleep-for/accept-process-output
-     calls are done. */
-  Lisp_Object frame_with_focus_real;
-  Lisp_Object frame_with_focus_for_hooks;
-  /* If we have recently issued a request to change the focus as a
-     result of select-frame having been called, the following variable
-     records the frame we are trying to focus on.  The reason for this
-     is that the window manager may not grant our request to change
-     the focus (so we can't just change frame_with_focus), and we don't
-     want to keep sending requests again and again to the window manager.
-     This variable is reset whenever a focus-change event is seen. */
-  Lisp_Object frame_that_ought_to_have_focus;
-
-  /* Color class of this device. */
-  Lisp_Object device_class;
-
-  /* Alist of values for user-defined tags in this device. */
-  Lisp_Object user_defined_tags;
-
-  /* Hash tables for device-specific objects (fonts, colors, etc).
-     These are key-weak hash tables (or hash tables containing key-weak
-     hash tables) so that they disappear when the key goes away. */
-
-  /* This is a simple key-weak hash table hashing color names to
-     instances. */
-  Lisp_Object color_instance_cache;
-
-  /* This is a simple key-weak hash table hashing font names to
-     instances. */
-  Lisp_Object font_instance_cache;
-
-#ifdef MULE
-  /* This is a bi-level cache, where the hash table in this slot here
-     indexes charset objects to key-weak hash tables, which in turn
-     index font names to more specific font names that match the
-     given charset's registry.  This speeds up the horrendously
-     slow XListFonts() operation that needs to be done in order
-     to determine an appropriate font. */
-  Lisp_Object charset_font_cache;
-#endif
-
-  /* This is a bi-level cache, where the hash table in this slot here
-     indexes image-instance-type masks (there are currently 6
-     image-instance types and thus 64 possible masks) to key-weak hash
-     tables like the one for colors. */
-  Lisp_Object image_instance_cache;
-
   /* A structure of auxiliary data specific to the device type.
      struct x_device is used for X window frames; defined in console-x.h
      struct tty_device is used to TTY's; defined in console-tty.h */
@@ -196,6 +112,8 @@ struct device
   unsigned int on_console_p :1;
   unsigned int connected_to_nas_p :1;
 
+#define MARKED_SLOT(x) Lisp_Object x
+#include "devslots.h"
 
   /* File descriptors for input and output.  Much of the time
      (but not always) these will be the same.  For an X device,
@@ -221,7 +139,7 @@ struct device
 DECLARE_LRECORD (device, struct device);
 #define XDEVICE(x) XRECORD (x, device, struct device)
 #define XSETDEVICE(x, p) XSETRECORD (x, p, device)
-#define wrap_device(p) wrap_object (p)
+#define wrap_device(p) wrap_record (p, device)
 #define DEVICEP(x) RECORDP (x, device)
 #define CHECK_DEVICE(x) CHECK_RECORD (x, device)
 #define CONCHECK_DEVICE(x) CONCHECK_RECORD (x, device)

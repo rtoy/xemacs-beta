@@ -225,6 +225,7 @@ struct face_cachel
 DECLARE_LRECORD (face, Lisp_Face);
 #define XFACE(x) XRECORD (x, face, Lisp_Face)
 #define XSETFACE(x, p) XSETRECORD (x, p, face)
+#define wrap_face(p) wrap_record (p, face)
 #define FACEP(x) RECORDP (x, face)
 #define CHECK_FACE(x) CHECK_RECORD (x, face)
 

@@ -29,6 +29,7 @@ DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
 
 #define XHASH_TABLE(x) XRECORD (x, hash_table, Lisp_Hash_Table)
 #define XSETHASH_TABLE(x, p) XSETRECORD (x, p, hash_table)
+#define wrap_hash_table(p) wrap_record (p, hash_table)
 #define HASH_TABLEP(x) RECORDP (x, hash_table)
 #define CHECK_HASH_TABLE(x) CHECK_RECORD (x, hash_table)
 #define CONCHECK_HASH_TABLE(x) CONCHECK_RECORD (x, hash_table)

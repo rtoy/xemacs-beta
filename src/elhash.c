@@ -1092,6 +1092,7 @@ remhash_1 (Lisp_Hash_Table *ht, hentry *entries, hentry *probe)
 DEFUN ("remhash", Fremhash, 2, 2, 0, /*
 Remove the entry for KEY from HASH-TABLE.
 Do nothing if there is no entry for KEY in HASH-TABLE.
+Return non-nil if an entry was removed.
 */
        (key, hash_table))
 {

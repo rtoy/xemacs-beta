@@ -384,7 +384,7 @@ find_scrollbar_window_mirror (struct frame *f, LWLIB_ID id)
   if (f->mirror_dirty)
     update_frame_window_mirror (f);
   return x_scrollbar_loop (X_FIND_SCROLLBAR_WINDOW_MIRROR, f->root_window,
-			   f->root_mirror, id, (Window) NULL);
+			   XWINDOW_MIRROR (f->root_mirror), id, (Window) NULL);
 }
 
 /*
@@ -688,8 +688,8 @@ x_update_frame_scrollbars (struct frame *f)
   /* Consider this code to be "in_display" so that we abort() if Fsignal()
      gets called. */
   in_display++;
-  x_scrollbar_loop (X_UPDATE_FRAME_SCROLLBARS, f->root_window, f->root_mirror,
-		    0, (Window) NULL);
+  x_scrollbar_loop (X_UPDATE_FRAME_SCROLLBARS, f->root_window,
+		    XWINDOW_MIRROR (f->root_mirror), 0, (Window) NULL);
   in_display--;
   if (in_display < 0) abort ();
 }

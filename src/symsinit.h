@@ -411,6 +411,7 @@ void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_alloc (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_scrollbar (void);
+void complex_vars_of_scrollbar_mswindows (void);
 void complex_vars_of_frame (void);
 void complex_vars_of_casetab (void);
 void complex_vars_of_syntax (void);

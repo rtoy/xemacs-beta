@@ -27,10 +27,13 @@ Boston, MA 02111-1307, USA.  */
    XEmacs: a few other changes.
  */
 
-/* In the declaration of the buffer structure, this file is included
-   after defining MARKED_SLOT(x) to be Lisp_Object x; i.e. just a slot
-   definition.  In the garbage collector this file is included after
-   defining MARKED_SLOT(x) to be mark_object(buffer->x). */
+/* We define the Lisp_Objects in the buffer structure in a separate file
+   because there are numerous places we want to iterate over them, such
+   as when defining them in the structure, initializing them, or marking
+   them.
+
+   To use, define MARKED_SLOT before including this file.  No need to
+   undefine; that happens automatically. */
 
 #ifndef BUFFER_SLOTS_FIRST_NAME
 #define BUFFER_SLOTS_FIRST_NAME name
@@ -222,9 +225,4 @@ Boston, MA 02111-1307, USA.  */
 #define BUFFER_SLOTS_LAST_NAME modeline_extent_table
 #endif
 
-#if 0 /* FSFmacs */
-    /* This is silly and stupid */
-    /* These are so we don't have to recompile everything
-       the next few times we add a new slot.  */
-    MARKED_SLOT (extra1, extra2, extra3);
-#endif
+#undef MARKED_SLOT

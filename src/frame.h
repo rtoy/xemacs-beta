@@ -87,15 +87,10 @@ struct frame
      dependencies. */
   int internal_border_width;
 
-  /* This frame's root window mirror.  This structure exactly mirrors
-     the frame's window structure but contains only pointers to the
-     display structures. */
-  struct window_mirror *root_mirror;
-
   int modiff;
 
-  struct expose_ignore* subwindow_exposures;
-  struct expose_ignore* subwindow_exposures_tail;
+  struct expose_ignore *subwindow_exposures;
+  struct expose_ignore *subwindow_exposures_tail;
 
 #ifdef HAVE_SCROLLBARS
   /* frame-local scrollbar information.  See scrollbar.c. */
@@ -150,9 +145,6 @@ Value : Emacs meaning                           :f-v-p : X meaning
 
   /* Is frame marked for deletion?  This is used in XSetErrorHandler().  */
   unsigned int being_deleted :1;
-
-  /* Nonzero if this frame has been destroyed. */
-  unsigned int dead :1;
 
   /* Nonzero if last attempt at redisplay on this frame was preempted.  */
   unsigned int display_preempted :1;
@@ -245,7 +237,7 @@ extern Lisp_Object Vmouse_motion_handler;
 DECLARE_LRECORD (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
 #define XSETFRAME(x, p) XSETRECORD (x, p, frame)
-#define wrap_frame(p) wrap_object (p)
+#define wrap_frame(p) wrap_record (p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
 #define CHECK_FRAME(x) CHECK_RECORD (x, frame)
 #define CONCHECK_FRAME(x) CONCHECK_RECORD (x, frame)
@@ -505,7 +497,7 @@ extern int frame_changed;
 #define SET_FRAME_CLEAR(f) MARK_FRAME_CHANGED (f); (f)->clear = 1
 #define FRAME_DEVICE(f) ((f)->device)
 #define FRAME_CONSOLE(f) DEVICE_CONSOLE (XDEVICE (FRAME_DEVICE (f)))
-#define FRAME_LIVE_P(f) (!(f)->dead)
+#define FRAME_LIVE_P(f) (!EQ (FRAME_TYPE (f), Qdead))
 
 #define FRAME_MINIBUF_ONLY_P(f) \
   EQ (FRAME_ROOT_WINDOW (f), FRAME_MINIBUF_WINDOW (f))

@@ -128,6 +128,7 @@ struct Lisp_Color_Instance
 DECLARE_LRECORD (color_instance, Lisp_Color_Instance);
 #define XCOLOR_INSTANCE(x) XRECORD (x, color_instance, Lisp_Color_Instance)
 #define XSETCOLOR_INSTANCE(x, p) XSETRECORD (x, p, color_instance)
+#define wrap_color_instance(p) wrap_record (p, color_instance)
 #define COLOR_INSTANCEP(x) RECORDP (x, color_instance)
 #define CHECK_COLOR_INSTANCE(x) CHECK_RECORD (x, color_instance)
 #define CONCHECK_COLOR_INSTANCE(x) CONCHECK_RECORD (x, color_instance)
@@ -142,6 +143,7 @@ DECLARE_LRECORD (color_instance, Lisp_Color_Instance);
 DECLARE_LRECORD (font_instance, Lisp_Font_Instance);
 #define XFONT_INSTANCE(x) XRECORD (x, font_instance, Lisp_Font_Instance)
 #define XSETFONT_INSTANCE(x, p) XSETRECORD (x, p, font_instance)
+#define wrap_font_instance(p) wrap_record (p, font_instance)
 #define FONT_INSTANCEP(x) RECORDP (x, font_instance)
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)

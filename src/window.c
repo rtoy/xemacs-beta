@@ -149,30 +149,11 @@ static Lisp_Object
 mark_window (Lisp_Object obj)
 {
   struct window *window = XWINDOW (obj);
-  mark_object (window->frame);
-  mark_object (window->mini_p);
-  mark_object (window->next);
-  mark_object (window->prev);
-  mark_object (window->hchild);
-  mark_object (window->vchild);
-  mark_object (window->parent);
-  mark_object (window->buffer);
-  MARK_DISP_VARIABLE (start);
-  MARK_DISP_VARIABLE (pointm);
-  mark_object (window->sb_point);	/* #### move to scrollbar.c? */
-  mark_object (window->use_time);
-  MARK_DISP_VARIABLE (last_modified);
-  MARK_DISP_VARIABLE (last_point);
-  MARK_DISP_VARIABLE (last_start);
-  MARK_DISP_VARIABLE (last_facechange);
-  mark_object (window->line_cache_last_updated);
-  mark_object (window->redisplay_end_trigger);
-  mark_object (window->subwindow_instance_cache);
 
   mark_face_cachels (window->face_cachels);
   mark_glyph_cachels (window->glyph_cachels);
 
-#define WINDOW_SLOT(slot, compare) mark_object (window->slot)
+#define WINDOW_SLOT(slot) mark_object (window->slot);
 #include "winslots.h"
 
   return Qnil;
@@ -261,14 +242,10 @@ allocate_window (void)
   XSETWINDOW (val, p);
 
   p->dead = 0;
-  p->frame = Qnil;
-  p->mini_p = Qnil;
-  p->next = Qnil;
-  p->prev = Qnil;
-  p->hchild = Qnil;
-  p->vchild = Qnil;
-  p->parent = Qnil;
-  p->buffer = Qnil;
+
+#define WINDOW_SLOT(slot) p->slot = Qnil;
+#include "winslots.h"
+
   INIT_DISP_VARIABLE (start, Fmake_marker ());
   INIT_DISP_VARIABLE (pointm, Fmake_marker ());
   p->sb_point = Fmake_marker ();
@@ -286,15 +263,11 @@ allocate_window (void)
   INIT_DISP_VARIABLE (last_point_x, 0);
   INIT_DISP_VARIABLE (last_point_y, 0);
   INIT_DISP_VARIABLE (window_end_pos, 0);
-  p->redisplay_end_trigger = Qnil;
 
   p->gutter_extent_modiff[0] = 0;
   p->gutter_extent_modiff[1] = 0;
   p->gutter_extent_modiff[2] = 0;
   p->gutter_extent_modiff[3] = 0;
-
-#define WINDOW_SLOT(slot, compare) p->slot = Qnil
-#include "winslots.h"
 
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
@@ -302,6 +275,10 @@ allocate_window (void)
   return val;
 }
 #undef INIT_DISP_VARIABLE
+
+/************************************************************************/
+/*                        Window mirror structure                       */
+/************************************************************************/
 
 /*
  * The redisplay structures used to be stored with each window.  While
@@ -322,23 +299,71 @@ allocate_window (void)
  * the display structures.
  */
 
+/* NOTE: The window-mirror structure formerly was not a Lisp object, and
+   marking was handled specially.  I've gotten recurring crashes, however,
+   using the mouse wheel under Windows, where either the window mirror
+   accessed through a scrollbar instance, or the frame pointed to by that
+   window mirror, gets garbaged.  Things are tricky under windows because
+   the scrollbar instances are stored in HWND-specific data.  Furthermore,
+   we have scrollbar-instance caches to complicate things.  Both of these
+   make it very difficult (for me at least, not being intimately familiar
+   with the redisplay code) to track exactly when and where a particular
+   window mirror or scrollbar instance has pointers to it, or whether a
+   window mirror might have a dead frame or buffer in it (i.e. not
+   necessarily gc-protected by being on a global list).  By far the safest
+   thing, then, is to make both structures Lisp objects and not explicitly
+   xfree() them.  This should make no practical difference in memory usage
+   because neither structure is created very often (only when windows are
+   created or deleted). --ben */
+
+static Lisp_Object
+mark_window_mirror (Lisp_Object obj)
+{
+  struct window_mirror *mir = XWINDOW_MIRROR (obj);
+
+  if (mir->current_display_lines)
+    mark_redisplay_structs (mir->current_display_lines);
+  if (mir->desired_display_lines)
+    mark_redisplay_structs (mir->desired_display_lines);
+
+  if (mir->hchild)
+    mark_object (wrap_window_mirror (mir->hchild));
+  if (mir->vchild)
+    mark_object (wrap_window_mirror (mir->vchild));
+
+  if (mir->frame)
+    mark_object (wrap_frame (mir->frame));
+  if (mir->buffer)
+    mark_object (wrap_buffer (mir->buffer));
+
+#ifdef HAVE_SCROLLBARS
+  if (mir->scrollbar_vertical_instance)
+    mark_object (wrap_scrollbar_instance (mir->scrollbar_vertical_instance));
+  if (mir->scrollbar_horizontal_instance)
+    mark_object (wrap_scrollbar_instance (mir->scrollbar_horizontal_instance));
+#endif /* HAVE_SCROLLBARS */
+  if (mir->next)
+    return wrap_window_mirror (mir->next);
+  else
+    return Qnil;
+}
+
+DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
+                               mark_window_mirror, internal_object_printer,
+			       0, 0, 0, 0, struct window_mirror);
+
 /* Create a new window mirror structure and associated redisplay
    structs. */
 static struct window_mirror *
 new_window_mirror (struct frame *f)
 {
-  struct window_mirror *t = xnew_and_zero (struct window_mirror);
+  struct window_mirror *t =
+    alloc_lcrecord_type (struct window_mirror, &lrecord_window_mirror);
+  zero_lcrecord (t);
 
   t->frame = f;
-
   t->current_display_lines = Dynarr_new (display_line);
   t->desired_display_lines = Dynarr_new (display_line);
-  t->buffer = NULL;
-
-#ifdef HAVE_SCROLLBARS
-  t->scrollbar_vertical_instance = NULL;
-  t->scrollbar_horizontal_instance = NULL;
-#endif
 
   return t;
 }
@@ -456,7 +481,11 @@ find_window_mirror_internal (Lisp_Object win, struct window_mirror *rmir,
 void
 update_frame_window_mirror (struct frame *f)
 {
-  f->root_mirror = update_mirror_internal (f->root_window, f->root_mirror);
+  f->root_mirror =
+    wrap_window_mirror (update_mirror_internal
+			(f->root_window,
+			 NILP (f->root_mirror) ? 0 :
+			 XWINDOW_MIRROR (f->root_mirror)));
   f->mirror_dirty = 0;
 }
 
@@ -467,7 +496,6 @@ free_window_mirror (struct window_mirror *mir)
 {
   while (mir)
     {
-      struct window_mirror *prev = mir;
       if (mir->hchild) free_window_mirror (mir->hchild);
       if (mir->vchild) free_window_mirror (mir->vchild);
 #ifdef HAVE_SCROLLBARS
@@ -475,7 +503,10 @@ free_window_mirror (struct window_mirror *mir)
 #endif
       free_display_structs (mir);
       mir = mir->next;
-      xfree (prev);
+      /* not worth calling free_managed_lcrecord() -- window mirrors
+	 are not created that frequently and it's dangerous.  we don't
+	 know for sure that there aren't other pointers around -- e.g.
+	 in a scrollbar instance. */
     }
 }
 
@@ -484,8 +515,9 @@ free_window_mirror (struct window_mirror *mir)
 Lisp_Object
 real_window (struct window_mirror *mir, int no_abort)
 {
-  Lisp_Object retval = real_window_internal (mir->frame->root_window,
-					     mir->frame->root_mirror, mir);
+  Lisp_Object retval =
+    real_window_internal (mir->frame->root_window,
+			  XWINDOW_MIRROR (mir->frame->root_mirror), mir);
   if (NILP (retval) && !no_abort)
     abort ();
 
@@ -500,7 +532,8 @@ find_window_mirror (struct window *w)
   struct frame *f = XFRAME (w->frame);
   if (f->mirror_dirty)
     update_frame_window_mirror (f);
-  return find_window_mirror_internal (f->root_window, f->root_mirror, w);
+  return find_window_mirror_internal (f->root_window,
+				      XWINDOW_MIRROR (f->root_mirror), w);
 }
 
 /*****************************************************************************
@@ -1904,7 +1937,20 @@ mark_window_as_deleted (struct window *w)
   ERROR_CHECK_SUBWINDOW_CACHE (w);
   window_unmap_subwindows (w);
 
-  /* In the loop
+  /* Free the extra data structures attached to windows immediately so
+     they don't sit around consuming excess space.  They will be
+     reinitialized by the window-configuration code as necessary. */
+  finalize_window ((void *) w, 0);
+
+  /* Nobody should be accessing anything in this object any more, and
+     making them Qnil allows for better GC'ing in case a pointer to
+     the dead window continues to hang around.  Zero all other structs
+     in case someone tries to access something through them.
+
+     As an example of why setting the values to Qnil is good, here
+     is an old comment:
+
+     In the loop
      (while t (split-window) (delete-window))
      we end up with a tree of deleted windows which are all connected
      through the `next' slot.  This might not seem so bad, as they're
@@ -1916,19 +1962,13 @@ mark_window_as_deleted (struct window *w)
      pointers to other windows (they are all recreated from the
      window-config data), we set them all to nil so that we
      are able to collect more actual garbage. */
-  w->next = Qnil;
-  w->prev = Qnil;
-  w->hchild = Qnil;
-  w->vchild = Qnil;
-  w->parent = Qnil;
-  w->subwindow_instance_cache = Qnil;
+
+  zero_lcrecord (w);
+
+#define WINDOW_SLOT(slot) w->slot = Qnil;
+#include "winslots.h"
 
   w->dead = 1;
-
-  /* Free the extra data structures attached to windows immediately so
-     they don't sit around consuming excess space.  They will be
-     reinitialized by the window-configuration code as necessary. */
-  finalize_window ((void *) w, 0);
 }
 
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
@@ -5002,7 +5042,8 @@ struct saved_window
   char start_at_line_beg; /* boolean */
 
 #define WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT(slot, compare) Lisp_Object slot
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare) Lisp_Object slot;
 #include "winslots.h"
 };
 
@@ -5032,6 +5073,7 @@ struct window_config
 #define SAVED_WINDOW_N(conf, n) (&((conf)->saved_windows[(n)]))
 #define XWINDOW_CONFIGURATION(x) XRECORD (x, window_configuration, struct window_config)
 #define XSETWINDOW_CONFIGURATION(x, p) XSETRECORD (x, p, window_configuration)
+#define wrap_window_configuration(p) wrap_record (p, window_configuration)
 #define WINDOW_CONFIGURATIONP(x) RECORDP (x, window_configuration)
 #define CHECK_WINDOW_CONFIGURATION(x) CHECK_RECORD (x, window_configuration)
 
@@ -5061,7 +5103,8 @@ mark_window_config (Lisp_Object obj)
 	 aren't they?  -- kkm */
       mark_object (s->dedicated);
 #else
-#define WINDOW_SLOT(slot, compare) mark_object (s->slot)
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare) mark_object (s->slot);
 #include "winslots.h"
 #endif
     }
@@ -5108,7 +5151,8 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
 static int
 saved_window_equal (struct saved_window *win1, struct saved_window *win2)
 {
-#define WINDOW_SLOT(slot, compare)		\
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare)	\
   if (!compare (win1->slot, win2->slot))	\
     return 0;
 #include "winslots.h"
@@ -5498,8 +5542,9 @@ by `current-window-configuration' (which see).
 	  SET_LAST_FACECHANGE (w);
 	  w->config_mark = 0;
 
-	  /* #### Consider making the instance cache a winslot. */
-#define WINDOW_SLOT(slot, compare) w->slot = p->slot
+	  /* #### Consider making the instance cache a WINDOW_SAVED_SLOT. */
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare) w->slot = p->slot;
 #include "winslots.h"
 
 	  /* Reinstall the saved buffer and pointers into it.  */
@@ -5784,7 +5829,8 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       p->hscroll = w->hscroll;
       p->modeline_hscroll = w->modeline_hscroll;
 
-#define WINDOW_SLOT(slot, compare) p->slot = w->slot
+#define WINDOW_SLOT(slot)
+#define WINDOW_SAVED_SLOT(slot, compare) p->slot = w->slot;
 #include "winslots.h"
 
       if (!NILP (w->buffer))
@@ -6063,6 +6109,7 @@ syms_of_window (void)
 {
   INIT_LRECORD_IMPLEMENTATION (window);
   INIT_LRECORD_IMPLEMENTATION (window_configuration);
+  INIT_LRECORD_IMPLEMENTATION (window_mirror);
 
   DEFSYMBOL (Qwindowp);
   DEFSYMBOL (Qwindow_live_p);

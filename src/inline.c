@@ -77,6 +77,10 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #endif
 
+#ifdef HAVE_SCROLLBARS
+#include "scrollbar.h"
+#endif
+
 #ifdef HAVE_DATABASE
 #include "database.h"
 #endif

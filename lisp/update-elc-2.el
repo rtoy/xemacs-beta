@@ -113,7 +113,7 @@
 	  (when (and (file-exists-p file-c)
 		     (not (file-exists-p file)))
 	    (message "Removing %s; no corresponding .el" file-c)
-	    (delete-file file-c))))
+	    (delete-file file-c)))))
 
     ;; We descend recursively
     (let ((dirs (directory-files dir t nil t))
@@ -124,8 +124,7 @@
                    (file-directory-p dir))
           (do-update-elc-2 dir compile-stage-p seen))))
 
-    )))
-
+    ))
 
 (defun batch-update-elc-2 ()
   (defvar command-line-args-left)

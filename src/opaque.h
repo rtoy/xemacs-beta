@@ -36,6 +36,7 @@ typedef struct Lisp_Opaque
 DECLARE_LRECORD (opaque, Lisp_Opaque);
 #define XOPAQUE(x) XRECORD (x, opaque, Lisp_Opaque)
 #define XSETOPAQUE(x, p) XSETRECORD (x, p, opaque)
+#define wrap_opaque(p) wrap_record (p, opaque)
 #define OPAQUEP(x) RECORDP (x, opaque)
 /* #define CHECK_OPAQUE(x) CHECK_RECORD (x, opaque)
    Opaque pointers should never escape to the Lisp level, so
@@ -63,6 +64,7 @@ typedef struct Lisp_Opaque_Ptr
 DECLARE_LRECORD (opaque_ptr, Lisp_Opaque_Ptr);
 #define XOPAQUE_PTR(x) XRECORD (x, opaque_ptr, Lisp_Opaque_Ptr)
 #define XSETOPAQUE_PTR(x, p) XSETRECORD (x, p, opaque_ptr)
+#define wrap_opaque_ptr(p) wrap_record (p, opaque_ptr)
 #define OPAQUE_PTRP(x) RECORDP (x, opaque_ptr)
 
 Lisp_Object make_opaque_ptr (void *val);

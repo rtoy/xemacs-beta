@@ -252,7 +252,7 @@ typedef struct
 } glyph_block_dynarr;
 
 /*************************************************************************/
-/*                              display lines                             */
+/*                              display lines                            */
 /*************************************************************************/
 
 /*  Modeline commentary: IMO the modeline is handled very badly, we
@@ -723,7 +723,6 @@ int pixel_to_glyph_translation (struct frame *f, int x_coord,
 				Lisp_Object *obj1, Lisp_Object *obj2);
 void glyph_to_pixel_translation (struct window *w, int char_x,
 				 int char_y, int *pix_x, int *pix_y);
-void mark_redisplay (void);
 int point_in_line_start_cache (struct window *w, Bufpos point,
 			       int min_past);
 int point_would_be_visible (struct window *w, Bufpos startp,
@@ -753,22 +752,30 @@ int get_next_display_block (layout_bounds bounds,
 			    int *next_start);
 void redisplay_output_layout (Lisp_Object domain,
 			      Lisp_Object image_instance,
-			      struct display_box* db, struct display_glyph_area* dga,
-			      face_index findex, int cursor_start, int cursor_width,
+			      struct display_box* db,
+			      struct display_glyph_area* dga,
+			      face_index findex, int cursor_start,
+			      int cursor_width,
 			      int cursor_height);
 void redisplay_output_subwindow (struct window *w,
 				 Lisp_Object image_instance,
-				 struct display_box* db, struct display_glyph_area* dga,
-				 face_index findex, int cursor_start, int cursor_width,
+				 struct display_box* db,
+				 struct display_glyph_area* dga,
+				 face_index findex, int cursor_start,
+				 int cursor_width,
 				 int cursor_height);
-void redisplay_unmap_subwindows_maybe (struct frame* f, int x, int y, int width, int height);
+void redisplay_unmap_subwindows_maybe (struct frame* f, int x, int y,
+				       int width, int height);
 void redisplay_output_pixmap (struct window *w,
 			      Lisp_Object image_instance,
-			      struct display_box* db, struct display_glyph_area* dga,
-			      face_index findex, int cursor_start, int cursor_width,
+			      struct display_box* db,
+			      struct display_glyph_area* dga,
+			      face_index findex, int cursor_start,
+			      int cursor_width,
 			      int cursor_height, int offset_bitmap);
 int redisplay_calculate_display_boxes (struct display_line *dl, int xpos,
-				       int xoffset, int start_pixpos, int width,
+				       int xoffset, int start_pixpos,
+				       int width,
 				       struct display_box* dest,
 				       struct display_glyph_area* src);
 int redisplay_normalize_glyph_area (struct display_box* dest,

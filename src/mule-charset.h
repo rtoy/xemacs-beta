@@ -496,6 +496,7 @@ typedef struct Lisp_Charset Lisp_Charset;
 DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET(x) XRECORD (x, charset, Lisp_Charset)
 #define XSETCHARSET(x, p) XSETRECORD (x, p, charset)
+#define wrap_charset(p) wrap_record (p, charset)
 #define CHARSETP(x) RECORDP (x, charset)
 #define CHECK_CHARSET(x) CHECK_RECORD (x, charset)
 #define CONCHECK_CHARSET(x) CONCHECK_RECORD (x, charset)

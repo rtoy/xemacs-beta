@@ -1343,10 +1343,7 @@ internal_catch (Lisp_Object tag,
 static void
 unwind_to_catch (struct catchtag *c, Lisp_Object val)
 {
-#if 0 /* FSFmacs */
-  /* #### */
   REGISTER int last_time;
-#endif
 
   /* Unwind the specbind, catch, and handler stacks back to CATCH
      Before each catch is discarded, unbind all special bindings
@@ -1365,8 +1362,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
   set_poll_suppress_count (catch->poll_suppress_count);
 #endif
 
-#if 0 /* FSFmacs */
-  /* #### FSFmacs has the following loop.  Is it more correct? */
+#if 1
   do
     {
       last_time = catchlist == c;
@@ -1374,21 +1370,40 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
       /* Unwind the specpdl stack, and then restore the proper set of
          handlers.  */
       unbind_to (catchlist->pdlcount, Qnil);
-      handlerlist = catchlist->handlerlist;
       catchlist = catchlist->next;
 #ifdef ERROR_CHECK_TYPECHECK
       check_error_state_sanity ();
 #endif
     }
   while (! last_time);
-#else /* Actual XEmacs code */
+#else
+  /* Former XEmacs code.  This is definitely not as correct because
+     there may be a number of catches we're unwinding, and a number
+     of unwind-protects in the process.  By not undoing the catches till
+     the end, there may be invalid catches still current. (This would
+     be a particular problem with code like this:
+
+     (catch 'foo
+       (call-some-code-which-does...
+        (catch 'bar
+          (unwind-protect
+              (call-some-code-which-does...
+               (catch 'bar
+                 (call-some-code-which-does...
+                  (throw 'foo nil))))
+            (throw 'bar nil)))))
+
+     This would try to throw to the inner (catch 'bar)!
+
+     --ben
+   */
   /* Unwind the specpdl stack */
   unbind_to (c->pdlcount, Qnil);
   catchlist = c->next;
 #ifdef ERROR_CHECK_TYPECHECK
   check_error_state_sanity ();
 #endif
-#endif
+#endif /* Former code */
 
   gcprolist = c->gcpro;
   backtrace_list = c->backlist;
@@ -1504,6 +1519,9 @@ If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
 static Lisp_Object
 condition_bind_unwind (Lisp_Object loser)
 {
+  /* There is no problem freeing stuff here like there is in
+     condition_case_unwind(), because there are no outside pointers
+     (like the tag below in the catchlist) pointing to the objects. */
   Lisp_Cons *victim;
   /* ((handler-fun . handler-args) ... other handlers) */
   Lisp_Object tem = XCAR (loser);
@@ -1526,17 +1544,32 @@ condition_bind_unwind (Lisp_Object loser)
 static Lisp_Object
 condition_case_unwind (Lisp_Object loser)
 {
-  Lisp_Cons *victim;
-
   /* ((<unbound> . clauses) ... other handlers */
-  victim = XCONS (XCAR (loser));
-  free_cons (victim);
+  /* NO! Doing this now leaves the tag deleted in a still-active
+     catch.  With the recent changes to unwind_to_catch(), the
+     evil situation might not happen any more; it certainly could
+     happen before because it did.  But it's very precarious to rely
+     on something like this.  #### Instead we should rewrite, adopting
+     the FSF's mechanism with a struct handler instead of
+     Vcondition_handlers; then we have NO Lisp-object structures used
+     to hold all of the values, and there's no possibility either of
+     crashes from freeing objects too quickly, or objects not getting
+     freed and hanging around till the next GC.
 
-  victim = XCONS (loser);
+     In practice, the extra consing here should not matter because
+     it only happens when we throw past the condition-case, which almost
+     always is the result of an error.  Most of the time, there will be
+     no error, and we will free the objects below in the main function.
+
+     --ben
+
+     DO NOT DO: free_cons (XCAR (loser));
+     */
+
   if (EQ (loser, Vcondition_handlers)) /* may have been rebound to some tail */
-    Vcondition_handlers = victim->cdr;
+    Vcondition_handlers = XCDR (loser);
 
-  free_cons (victim);
+  /* DO NOT DO: free_cons (loser); */
   return Qnil;
 }
 
@@ -1599,7 +1632,7 @@ condition_case_1 (Lisp_Object handlers,
 {
   int speccount = specpdl_depth();
   struct catchtag c;
-  struct gcpro gcpro1;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
 #if 0 /* FSFmacs */
   c.tag = Qnil;
@@ -1607,9 +1640,18 @@ condition_case_1 (Lisp_Object handlers,
   /* Do consing now so out-of-memory error happens up front */
   /* (unbound . stuff) is a special condition-case kludge marker
      which is known specially by Fsignal.
-     This is an abomination, but to fix it would require either
+     [[ This is an abomination, but to fix it would require either
      making condition_case cons (a union of the conditions of the clauses)
-     or changing the byte-compiler output (no thanks). */
+     or changing the byte-compiler output (no thanks).]]
+
+     The above comment is clearly wrong.  FSF does not do it this way
+     and did not change the byte-compiler output.  Instead they use a
+     `struct handler' to hold the various values (in place of our
+     Vcondition_handlers) and chain them together, with pointers from
+     the `struct catchtag' to the `struct handler'.  We should perhaps
+     consider moving to something similar, but not before I merge my
+     stderr-proc workspace, which contains changes to these
+     functions. --ben */
   c.tag = noseeum_cons (noseeum_cons (Qunbound, handlers),
 			Vcondition_handlers);
 #endif
@@ -1647,22 +1689,27 @@ condition_case_1 (Lisp_Object handlers,
   Vcondition_handlers = c.tag;
 #endif
   GCPRO1 (harg);                /* Somebody has to gc-protect */
-
   c.val = ((*bfun) (barg));
-
-  /* The following is *not* true: (ben)
-
-     ungcpro, restoring catchlist and condition_handlers are actually
-     redundant since unbind_to now restores them.  But it looks funny not to
-     have this code here, and it doesn't cost anything, so I'm leaving it.*/
   UNGCPRO;
+
+  /* Once we change `catchlist' below, the stuff in c will not be GCPRO'd. */
+  GCPRO3 (harg, c.val, c.tag);
+
   catchlist = c.next;
 #ifdef ERROR_CHECK_TYPECHECK
   check_error_state_sanity ();
 #endif
+  /* Note: The unbind also resets Vcondition_handlers.  Maybe we should
+     delete this here. */
   Vcondition_handlers = XCDR (c.tag);
+  unbind_to (speccount, Qnil);
 
-  return unbind_to (speccount, c.val);
+  UNGCPRO;
+  /* free the conses *after* the unbind, because the unbind will run
+     condition_case_unwind above. */
+  free_cons (XCONS (XCAR (c.tag)));
+  free_cons (XCONS (c.tag));
+  return c.val;
 }
 
 static Lisp_Object
@@ -3603,7 +3650,7 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 }
 
 DEFUN ("function-min-args", Ffunction_min_args, 1, 1, 0, /*
-Return the number of arguments a function may be called with.
+Return the minimum number of arguments a function may be called with.
 The function may be any form that can be passed to `funcall',
 any special form, or any macro.
 */
@@ -3613,7 +3660,7 @@ any special form, or any macro.
 }
 
 DEFUN ("function-max-args", Ffunction_max_args, 1, 1, 0, /*
-Return the number of arguments a function may be called with.
+Return the maximum number of arguments a function may be called with.
 The function may be any form that can be passed to `funcall',
 any special form, or any macro.
 If the function takes an arbitrary number of arguments or is

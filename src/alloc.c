@@ -3476,7 +3476,6 @@ garbage_collect_1 (void)
       }
   }
 
-  mark_redisplay ();
   mark_profiling_info ();
 
   /* OK, now do the after-mark stuff.  This is for things that

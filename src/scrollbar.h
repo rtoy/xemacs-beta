@@ -27,6 +27,8 @@ Boston, MA 02111-1307, USA.  */
 
 struct scrollbar_instance
 {
+  struct lcrecord_header header;
+
   /* Used by the frame caches. */
   struct scrollbar_instance *next;
 
@@ -44,6 +46,14 @@ struct scrollbar_instance
      scrollbar-x.h */
   void *scrollbar_data;
 };
+
+DECLARE_LRECORD (scrollbar_instance, struct scrollbar_instance);
+#define XSCROLLBAR_INSTANCE(x) XRECORD (x, scrollbar_instance, struct scrollbar_instance)
+#define XSETSCROLLBAR_INSTANCE(x, p) XSETRECORD (x, p, scrollbar_instance)
+#define wrap_scrollbar_instance(p) wrap_record (p, scrollbar_instance)
+#define SCROLLBAR_INSTANCEP(x) RECORDP (x, scrollbar_instance)
+#define CHECK_SCROLLBAR_INSTANCE(x) CHECK_RECORD (x, scrollbar_instance)
+#define CONCHECK_SCROLLBAR_INSTANCE(x) CONCHECK_RECORD (x, scrollbar_instance)
 
 #define SCROLLBAR_INSTANCE_FRAME(inst) (inst->mirror->frame)
 

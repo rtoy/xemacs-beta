@@ -63,6 +63,7 @@ struct Lisp_Gui_Item
 DECLARE_LRECORD (gui_item, Lisp_Gui_Item);
 #define XGUI_ITEM(x) XRECORD (x, gui_item, Lisp_Gui_Item)
 #define XSETGUI_ITEM(x, p) XSETRECORD (x, p, gui_item)
+#define wrap_gui_item(p) wrap_record (p, gui_item)
 #define GUI_ITEMP(x) RECORDP (x, gui_item)
 #define CHECK_GUI_ITEM(x) CHECK_RECORD (x, gui_item)
 #define CONCHECK_GUI_ITEM(x) CONCHECK_RECORD (x, gui_item)

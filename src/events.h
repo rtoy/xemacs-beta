@@ -462,6 +462,7 @@ typedef struct Lisp_Timeout Lisp_Timeout;
 DECLARE_LRECORD (timeout, Lisp_Timeout);
 #define XTIMEOUT(x) XRECORD (x, timeout, Lisp_Timeout)
 #define XSETTIMEOUT(x, p) XSETRECORD (x, p, timeout)
+#define wrap_timeout(p) wrap_record (p, timeout)
 #define TIMEOUTP(x) RECORDP (x, timeout)
 #define CHECK_TIMEOUT(x) CHECK_RECORD (x, timeout)
 #define CONCHECK_TIMEOUT(x) CONCHECK_RECORD (x, timeout)
@@ -496,6 +497,7 @@ struct Lisp_Event
 DECLARE_LRECORD (event, Lisp_Event);
 #define XEVENT(x) XRECORD (x, event, Lisp_Event)
 #define XSETEVENT(x, p) XSETRECORD (x, p, event)
+#define wrap_event(p) wrap_record (p, event)
 #define EVENTP(x) RECORDP (x, event)
 #define CHECK_EVENT(x) CHECK_RECORD (x, event)
 #define CONCHECK_EVENT(x) CONCHECK_RECORD (x, event)
