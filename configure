@@ -5033,16 +5033,16 @@ echo "configure:5031: checking for GTK configuration script" >&5
       possible_version=`${possible} --version 2> /dev/null`
       if test "x${possible_version}" != "x"; then
               GTK_CONFIG="${possible}"
+	      case "${possible_version}" in
+        	1.0.*) echo "configure: warning: GTK 1.2 is required, please upgrade your version of GTK." 1>&2; with_gtk=no;;
+	        1.3.*) echo "configure: warning: GTK 1.3 is not supported right now" 1>&2; with_gtk=no;;
+		1.2.*)
+			with_gtk=yes
+			break
+			;;
+	        *)     echo "configure: warning: Found unsupported version of GTK: $possible_version" 1>&2;;
+	      esac
       fi
-      case "${possible_version}" in
-        1.0.*) echo "configure: warning: GTK 1.2 is required, please upgrade your version of GTK." 1>&2; with_gtk=no;;
-        1.3.*) echo "configure: warning: GTK 1.3 is not supported right now" 1>&2; with_gtk=no;;
-	1.2.*)
-		with_gtk=yes
-		break
-		;;
-        *)     echo "configure: warning: Found unsupported version of GTK: $possible_version" 1>&2;;
-      esac
    done
    echo "$ac_t""${GTK_CONFIG}" 1>&6
 fi
