@@ -1,3 +1,8 @@
+2001-05-11  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* lisp.h (EMACS_INT_MAX): This should be one bit less since
+	EMACS_INT is signed.
+
 2001-05-13  Mike Alexander  <mta@arbortext.com>
 
 	* frame-msw.c (mswindows_make_frame_visible): Call SetActiveWindow
