@@ -2876,7 +2876,7 @@ Lisp_Object specifier_instance_no_quit (Lisp_Object, Lisp_Object, Lisp_Object,
 					Error_behavior, int, Lisp_Object);
 
 /* Defined in symbols.c */
-int hash_string (const Bufbyte *, Bytecount);
+unsigned int hash_string (const Bufbyte *, Bytecount);
 Lisp_Object intern (const char *);
 Lisp_Object oblookup (Lisp_Object, const Bufbyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);

@@ -114,7 +114,7 @@ dynarr.o: $(LISP_H)
 ecrt0.o: config.h
 editfns.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h commands.h conslots.h console.h device.h events.h extents.h frame.h frameslots.h glyphs.h gui.h insdel.h line-number.h mule-charset.h redisplay.h scrollbar.h specifier.h sysdep.h sysfile.h syspwd.h systime.h toolbar.h window.h winslots.h
 eldap.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h eldap.h mule-charset.h opaque.h sysdep.h
-elhash.o: $(LISP_H) bytecode.h elhash.h
+elhash.o: $(LISP_H) bytecode.h elhash.h opaque.h
 emacs-marshals.o: hash.h
 emacs-widget-accessors.o: 
 emacs.o: $(LISP_H) backtrace.h buffer.h bufslots.h casetab.h chartab.h commands.h conslots.h console.h device.h dumper.h frame.h frameslots.h glyphs.h gui.h mule-charset.h nt.h paths.h process.h redisplay.h scrollbar.h specifier.h sysdep.h sysdll.h sysfile.h syssignal.h systime.h systty.h syswindows.h toolbar.h window.h winslots.h
@@ -215,7 +215,7 @@ sysdep.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h conslots.h console-s
 sysdll.o: config.h sysdll.h
 termcap.o: $(LISP_H) conslots.h console.h device.h
 terminfo.o: config.h
-tests.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h lstream.h mule-charset.h opaque.h
+tests.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h elhash.h lstream.h mule-charset.h opaque.h
 toolbar.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h conslots.h console.h device.h frame.h frameslots.h glyphs.h gui.h mule-charset.h redisplay.h scrollbar.h specifier.h toolbar.h window.h winslots.h
 tooltalk.o: $(LISP_H) buffer.h bufslots.h casetab.h chartab.h elhash.h mule-charset.h process.h syssignal.h tooltalk.h
 tparam.o: config.h

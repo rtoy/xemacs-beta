@@ -341,7 +341,7 @@ OBARRAY defaults to the value of the variable `obarray'.
 Lisp_Object
 oblookup (Lisp_Object obarray, const Bufbyte *ptr, Bytecount size)
 {
-  int hash, obsize;
+  unsigned int hash, obsize;
   Lisp_Symbol *tail;
   Lisp_Object bucket;
 
@@ -374,40 +374,20 @@ oblookup (Lisp_Object obarray, const Bufbyte *ptr, Bytecount size)
   return make_int (hash);
 }
 
-#if 0 /* Emacs 19.34 */
-int
+/* An excellent string hashing function.
+   Adapted from glib's g_str_hash().
+   Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
+   Do a web search for "g_str_hash X31_HASH" if you want to know more. */
+unsigned int
 hash_string (const Bufbyte *ptr, Bytecount len)
 {
-  const Bufbyte *p = ptr;
-  const Bufbyte *end = p + len;
-  Bufbyte c;
-  int hash = 0;
+  unsigned int hash;
 
-  while (p != end)
-    {
-      c = *p++;
-      if (c >= 0140) c -= 40;
-      hash = ((hash<<3) + (hash>>28) + c);
-    }
-  return hash & 07777777777;
-}
-#endif
+  for (hash = 0; len; len--, ptr++)
+    /* (31 * hash) will probably be optimized to ((hash << 5) - hash). */
+    hash = 31 * hash + *ptr;
 
-/* derived from hashpjw, Dragon Book P436. */
-int
-hash_string (const Bufbyte *ptr, Bytecount len)
-{
-  int hash = 0;
-
-  while (len-- > 0)
-    {
-      int g;
-      hash = (hash << 4) + *ptr++;
-      g = hash & 0xf0000000;
-      if (g)
-	hash = (hash ^ (g >> 24)) ^ g;
-    }
-  return hash & 07777777777;
+  return hash;
 }
 
 /* Map FN over OBARRAY.  The mapping is stopped when FN returns a
@@ -3250,7 +3230,7 @@ init_symbols_once_early (void)
   staticpro (&initial_obarray);
   /* Intern nil in the obarray */
   {
-    int hash = hash_string (string_data (XSYMBOL (Qnil)->name), 3);
+    unsigned int hash = hash_string (string_data (XSYMBOL (Qnil)->name), 3);
     XVECTOR_DATA (Vobarray)[hash % OBARRAY_SIZE] = Qnil;
   }
 

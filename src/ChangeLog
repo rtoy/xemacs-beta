@@ -1,3 +1,13 @@
+2001-04-30  Martin Buchholz  <martin@xemacs.org>
+
+	Make string hashing more efficient.
+	Makes intern much faster.
+	Makes hash tables containing strings faster.
+	* symbols.c (hash_string): A much better hash function.
+	Change prototype to return unsigned value.
+	(init_symbols_once_early): Use unsigned type for hash value.
+	(oblookup): Use unsigned type for hash value.
+
 2001-04-04  Martin Buchholz  <martin@xemacs.org>
 
 	* keymap.c (Fmap_keymap): Revert to previous implementation, since
