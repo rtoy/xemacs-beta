@@ -106,7 +106,7 @@ in dumped-lisp.el and is not itself listed.")
        "iso8859-1"		; This must be before any modes
 				; (sets standard syntax table.)
        "easy-mmode"		; Added for 21.5.
-       "paragraphs"
+       "paragraphs"             ; needs easy-mmode
        "easymenu"		; Added for 20.3.
        "lisp-mode"
        "text-mode"
