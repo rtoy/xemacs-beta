@@ -1,3 +1,7 @@
+2001-09-15   Edward M. Lee  <tailbert@yahoo.com>
+
+	* files.el (auto-mode-alist): Add configure.ac support.
+
 2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.3 "asparagus" is released.
@@ -5,7 +9,7 @@
 2001-08-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* README:  Partial update.
-	
+
 2001-08-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* wid-edit.el (widget-specify-secret):
@@ -37,7 +41,7 @@
 	* term\AT386.el (AT386-keypad-map):
 	* term\AT386.el (AT386-keypad-map)): New.
 	Fix warnings.
-	
+
 	* term\linux.el:
 	* term\lk201.el:
 	* term\news.el:

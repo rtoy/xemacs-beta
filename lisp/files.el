@@ -1224,7 +1224,7 @@ run `normal-mode' explicitly."
     ;; Windows syntax.
     ("[/\\][._].*emacs\\'" . emacs-lisp-mode)
     ("\\.m4\\'" . autoconf-mode)
-    ("configure\\.in\\'" . autoconf-mode)
+    ("configure\\.\\(in\\|ac\\)\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
     ("\\.ma?ke?\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
