@@ -1,6 +1,6 @@
 /* System description file for Windows 9x and NT.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -179,13 +179,6 @@ __MINGW32__ -> MINGW
 #ifdef DEBUG_XEMACS
 #define USE_ASSERTIONS
 #define MEMORY_USAGE_STATS
-#define ERROR_CHECK_EXTENTS
-#define ERROR_CHECK_TYPECHECK
-#define ERROR_CHECK_CHARBPOS
-#define ERROR_CHECK_GC
-#define ERROR_CHECK_MALLOC
-#define ERROR_CHECK_BYTE_CODE
-#define ERROR_CHECK_GLYPHS
 #endif /* DEBUG_XEMACS */
 
 #define HAVE_DRAGNDROP

@@ -3850,10 +3850,14 @@ This is a list of symbols, initialized at build-time.  Legal symbols
 are:
 
 extents		- check extents prior to each extent change;
-typecheck	- check types strictly, aborting in case of error;
+types		- check types strictly;
 malloc		- check operation of malloc;
 gc		- check garbage collection;
-charbpos		- check buffer positions.
+text		- check text and buffer positions;
+display		- check redisplay structure consistency;
+glyphs		- check glyph structure consistency;
+byte-code	- check byte-code consistency;.
+structures	- check other structure consistency.
 
 quick-build     - user has requested the "quick-build" configure option.
 */ );
@@ -3862,8 +3866,8 @@ quick-build     - user has requested the "quick-build" configure option.
   Vinternal_error_checking = Fcons (intern ("extents"),
 				    Vinternal_error_checking);
 #endif
-#ifdef ERROR_CHECK_TYPECHECK
-  Vinternal_error_checking = Fcons (intern ("typecheck"),
+#ifdef ERROR_CHECK_TYPES
+  Vinternal_error_checking = Fcons (intern ("types"),
 				    Vinternal_error_checking);
 #endif
 #ifdef ERROR_CHECK_MALLOC
@@ -3874,8 +3878,24 @@ quick-build     - user has requested the "quick-build" configure option.
   Vinternal_error_checking = Fcons (intern ("gc"),
 				    Vinternal_error_checking);
 #endif
-#ifdef ERROR_CHECK_CHARBPOS
-  Vinternal_error_checking = Fcons (intern ("charbpos"),
+#ifdef ERROR_CHECK_TEXT
+  Vinternal_error_checking = Fcons (intern ("text"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_DISPLAY
+  Vinternal_error_checking = Fcons (intern ("display"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_GLYPHS
+  Vinternal_error_checking = Fcons (intern ("glyphs"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_BYTE_CODE
+  Vinternal_error_checking = Fcons (intern ("byte-code"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_STRUCTURES
+  Vinternal_error_checking = Fcons (intern ("structures"),
 				    Vinternal_error_checking);
 #endif
 #ifdef QUICK_BUILD

@@ -1,7 +1,7 @@
 /* fast dired replacement routines for mswindows.
    Copyright (C) 1998 Darryl Okahata
    Portions Copyright (C) 1992, 1994 by Sebastian Kremer <sk@thp.uni-koeln.de>
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -546,15 +546,13 @@ switches do not contain `d', so that a full listing is expected.
 	  total_size += floor ((file_size + 512.) / 1024.);
 	}
       {
-	Intbyte tempbuf[666];
-
-	qxesprintf (tempbuf,
+	write_fmt_string (wrap_buffer (current_buffer),
 #if INDENT_LISTING
-		    /* ANSI C compilers auto-concatenate adjacent strings */
-		    "  "
+			  /* ANSI C compilers auto-concatenate adjacent
+                             strings */
+			  "  "
 #endif
-		    "total %.0f\n", total_size);
-	buffer_insert1 (current_buffer, build_intstring (tempbuf));
+			  "total %.0f\n", total_size);
       }
     }
   for (i = 0; i < Dynarr_length (files); ++i)

@@ -1898,7 +1898,6 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   int docp = f->flags.documentationp;
   int intp = f->flags.interactivep;
   struct gcpro gcpro1, gcpro2;
-  char buf[100];
   GCPRO2 (obj, printcharfun);
 
   write_c_string (print_readably ? "#[" : "#<compiled-function ", printcharfun);
@@ -1907,11 +1906,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     {
       Lisp_Object ann = compiled_function_annotation (f);
       if (!NILP (ann))
-	{
-	  write_c_string ("(from ", printcharfun);
-	  print_internal (ann, printcharfun, 1);
-	  write_c_string (") ", printcharfun);
-	}
+	write_fmt_string_lisp (printcharfun, "(from %S) ", 1, ann);
     }
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
   /* COMPILED_ARGLIST = 0 */
@@ -1926,9 +1921,8 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     if (STRINGP (instructions) && !print_readably)
       {
 	/* We don't usually want to see that junk in the bytecode. */
-	sprintf (buf, "\"...(%ld)\"",
-		 (long) XSTRING_CHAR_LENGTH (instructions));
-	write_c_string (buf, printcharfun);
+	write_fmt_string (printcharfun, "\"...(%ld)\"",
+			  (long) XSTRING_CHAR_LENGTH (instructions));
       }
     else
       print_internal (instructions, printcharfun, escapeflag);
@@ -1940,8 +1934,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   print_internal (compiled_function_constants (f), printcharfun, escapeflag);
 
   /* COMPILED_STACK_DEPTH = 3 */
-  sprintf (buf, " %d", compiled_function_stack_depth (f));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " %d", compiled_function_stack_depth (f));
 
   /* COMPILED_DOC_STRING = 4 */
   if (docp || intp)

@@ -38,17 +38,20 @@ Boston, MA 02111-1307, USA.  */
 #include "backtrace.h"
 #include "buffer.h"
 #include "bytecode.h"
-#include "console-tty.h"
-#include "console-stream.h"
+#include "device.h"
 #include "extents.h"
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "opaque.h"
-#include "sysfile.h"
+
+#include "console-tty.h"
+#include "console-stream.h"
 #ifdef WIN32_NATIVE
 #include "console-msw.h"
 #endif
+
+#include "sysfile.h"
 
 #include <float.h>
 /* Define if not in float.h */
@@ -544,7 +547,7 @@ void
 write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream)
 {
   /* This function can GC */
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   assert (size >= 0);
 #endif
   output_string (stream, str, Qnil, 0, size);
@@ -1359,7 +1362,6 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 {
   struct lcrecord_header *header =
     (struct lcrecord_header *) XPNTR (obj);
-  char buf[200];
 
   if (print_readably)
     printing_unreadable_object
@@ -1367,21 +1369,19 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
        LHEADER_IMPLEMENTATION (&header->lheader)->name,
        header->uid);
 
-  sprintf (buf, "#<%s 0x%x>",
-	   LHEADER_IMPLEMENTATION (&header->lheader)->name,
-	   header->uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<%s 0x%x>",
+		    LHEADER_IMPLEMENTATION (&header->lheader)->name,
+		    header->uid);
 }
 
 void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int escapeflag)
 {
-  char buf[200];
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
-	   XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-	   (unsigned long) XPNTR (obj));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun,
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
+		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
+		    (unsigned long) XPNTR (obj));
 }
 
 void
@@ -1406,10 +1406,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       
 	  if (!debug_can_access_memory (lheader, sizeof (*lheader)))
 	    {
-	      char buf[128];
-
-	      sprintf (buf, "#<EMACS BUG: BAD MEMORY %p>", lheader);
-	      write_c_string (buf, printcharfun);
+	      write_fmt_string (printcharfun, "#<EMACS BUG: BAD MEMORY %p>",
+				lheader);
 	      return;
 	    }
 	  else
@@ -1418,11 +1416,9 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 	      if ((int) lheader->type >= lrecord_type_count)
 		{
-		  char buf[128];
-		  
-		  sprintf (buf, "#<EMACS BUG: bad type %d BAD MEMORY %p>",
-			   lheader->type, lheader);
-		  write_c_string (buf, printcharfun);
+		  write_fmt_string (printcharfun,
+				    "#<EMACS BUG: bad type %d BAD MEMORY %p>",
+				    lheader->type, lheader);
 		  return;
 		}
 
@@ -1433,11 +1429,9 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		    impl->size_in_bytes_method (lheader) :
 		    impl->static_size)))
 		{
-		  char buf[128];
-		  
-		  sprintf (buf, "#<EMACS BUG: type %s BAD MEMORY %p>",
-			   impl->name, lheader);
-		  write_c_string (buf, printcharfun);
+		  write_fmt_string (printcharfun,
+				    "#<EMACS BUG: type %s BAD MEMORY %p>",
+				    impl->name, lheader);
 		  return;
 		}
 
@@ -1447,11 +1441,10 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		  if (!debug_can_access_memory
 		      (l->data_, l->size_))
 		    {
-		      char buf[128];
-		  
-		      sprintf (buf, "#<EMACS BUG: %p (BAD STRING DATA %p)>",
-			       lheader, l->data_);
-		      write_c_string (buf, printcharfun);
+		      write_fmt_string
+			(printcharfun,
+			 "#<EMACS BUG: %p (BAD STRING DATA %p)>",
+			 lheader, l->data_);
 		      return;
 		    }
 		}
@@ -1599,22 +1592,20 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     default:
       {
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 	abort ();
-#else  /* not ERROR_CHECK_TYPECHECK */
-	char buf[128];
+#else  /* not ERROR_CHECK_TYPES */
 	/* We're in trouble if this happens! */
 	if (print_readably)
 	  signal_error (Qinternal_error, "printing illegal data type #o%03o",
 			make_int (XTYPE (obj)));
 	write_c_string ("#<EMACS BUG: ILLEGAL DATATYPE ",
 			printcharfun);
-	sprintf (buf, "(#o%3o)", (int) XTYPE (obj));
-	write_c_string (buf, printcharfun);
+	write_fmt_string (printcharfun, "(#o%3o)", (int) XTYPE (obj));
 	write_c_string
 	  (" Save your buffers immediately and please report this bug>",
 	   printcharfun);
-#endif /* not ERROR_CHECK_TYPECHECK */
+#endif /* not ERROR_CHECK_TYPES */
 	break;
       }
     }

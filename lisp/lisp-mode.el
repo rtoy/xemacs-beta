@@ -62,6 +62,20 @@
 	["Evaluate %_Whole Buffer" ,(popup-wrap 'eval-current-buffer)]
 	["Evaluate Last %_S-expression" ,(popup-wrap 'eval-last-sexp)]
 	"---"
+	["%_Indent Region or Balanced Expression"
+	 ,(popup-wrap '(if (region-exists-p)
+			   (call-interactively 'indent-region)
+			 (call-interactively 'indent-sexp)))]
+	["I%_ndent Defun"
+	 ,(popup-wrap '(progn
+			 (beginning-of-defun)
+			 (indent-sexp)))]
+	"---"
+	["%_Comment Out Region" comment-region :active (region-exists-p)]
+	["Unc%_omment Region" (comment-region (region-beginning)
+					      (region-end) '(4))
+	 :active (region-exists-p)]
+	"---"
 	,@(if popup-p
 	    '(["%_Find Function"
 	       (find-function (menu-call-at-event '(function-at-point)))
@@ -101,19 +115,10 @@
 	["%_Untrace All Functions" untrace-all
 	 :active (fboundp 'untrace-all)]
 	"---"
-	["%_Comment Out Region" comment-region :active (region-exists-p)]
-	["Unc%_omment Region" (comment-region (region-beginning)
-					      (region-end) '(4))
-	 :active (region-exists-p)]
-	"---"
-	["%_Indent Region or Balanced Expression"
-	 ,(popup-wrap '(if (region-exists-p)
-			   (call-interactively 'indent-region)
-			 (call-interactively 'indent-sexp)))]
-	["I%_ndent Defun"
-	 ,(popup-wrap '(progn
-			 (beginning-of-defun)
-			 (indent-sexp)))]
+	["Display %_Macro Expansion of Balanced Expression"
+	 ,(popup-wrap 'macroexpand-sexp)]
+	["Display Recursive Macro E%_xpansion of Balanced Expression"
+	 ,(popup-wrap 'macroexpand-all-sexp)]
 	"---"
 	"Look for debug-on-error under Options->Troubleshooting"
 	)))

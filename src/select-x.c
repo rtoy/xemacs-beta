@@ -27,13 +27,15 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "charset.h"
+#include "device.h"
+#include "frame.h"
+#include "opaque.h"
+#include "select.h"
+
 #include "console-x.h"
 #include "objects-x.h"
 
-#include "frame.h"
-#include "opaque.h"
 #include "systime.h"
-#include "select.h"
 
 int lisp_to_time (Lisp_Object, time_t *);
 Lisp_Object time_to_lisp (time_t);

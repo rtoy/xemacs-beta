@@ -564,7 +564,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
 		 than ideal in that subprocesses tend to stick around
 		 until the machine is shutdown, but at least it
 		 doesn't freeze the 16-bit subsystem.  */
-	      PostMessage (cp->hwnd, WM_QUIT, 0xff, 0);
+	      qxePostMessage (cp->hwnd, WM_QUIT, 0xff, 0);
 #endif
 	      if (!TerminateProcess (h_process, 0xff))
 		{
@@ -578,7 +578,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
 	    }
 	  else
 #endif
-	    PostMessage (cp->hwnd, WM_CLOSE, 0, 0);
+	    qxePostMessage (cp->hwnd, WM_CLOSE, 0, 0);
 	}
       /* Kill the process.  On W32 this doesn't kill child processes
 	 so it doesn't work very well for shells which is why it's not
@@ -1205,7 +1205,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
   while (1)
     {
       MSG msg;
-      GetMessage (&msg, hwnd, 0, 0);
+      qxeGetMessage (&msg, hwnd, 0, 0);
       if (msg.message == XM_SOCKREPLY)
 	{
 	  /* Ok, got an answer */
@@ -1222,7 +1222,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 	      REALLY_QUIT;
 	    }
 	}
-      DispatchMessage (&msg);
+      qxeDispatchMessage (&msg);
     }
 
  done:

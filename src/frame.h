@@ -23,17 +23,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_frame_h_
 #define INCLUDED_frame_h_
 
-#ifdef HAVE_SCROLLBARS
-#include "scrollbar.h"
-#endif
-
-#ifdef HAVE_TOOLBARS
-#include "toolbar.h"
-#endif
-
-#include "device.h"
-#include "glyphs.h"
 #include "redisplay.h"
+#include "console.h" /* for error_check_frame_type */
 
 #define FRAME_TYPE_NAME(f) ((f)->framemeths->name)
 #define FRAME_TYPE(f) ((f)->framemeths->symbol)
@@ -254,7 +245,7 @@ DECLARE_LRECORD (frame, struct frame);
 
 #define FRAME_TYPE_P(f, type)	EQ (FRAME_TYPE (f), Q##type)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 INLINE_HEADER struct frame *
 error_check_frame_type (struct frame * f, Lisp_Object sym);
 INLINE_HEADER struct frame *

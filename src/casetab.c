@@ -74,12 +74,9 @@ static void
 print_case_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
-  char buf[200];
   if (print_readably)
     printing_unreadable_object ("#<case-table 0x%x", ct->header.uid);
-  write_c_string ("#<case-table ", printcharfun);
-  sprintf (buf, "0x%x>", ct->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<case-table 0x%x>", ct->header.uid);
 }
 
 static const struct lrecord_description case_table_description [] = {

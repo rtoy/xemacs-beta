@@ -33,16 +33,18 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "console-tty.h"
+#include "device.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
 #include "lstream.h"
-#include "objects-tty.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+
+#include "console-tty.h"
+#include "objects-tty.h"
 
 /* These headers #define all kinds of common words like "columns"...
    What a bunch of losers.  If we were to include them, we'd have to

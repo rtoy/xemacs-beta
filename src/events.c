@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "buffer.h"
 #include "console.h"
-#include "console-tty.h" /* for stuff in character_to_event */
 #include "device.h"
 #include "extents.h"
 #include "events.h"
@@ -37,7 +36,10 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h" /* for key_desc_list_to_event() */
 #include "lstream.h"
 #include "redisplay.h"
+#include "toolbar.h"
 #include "window.h"
+
+#include "console-tty.h" /* for stuff in character_to_event */
 
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
@@ -175,29 +177,21 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	break;
       }
     case process_event:
-	write_c_string ("#<process-event ", printcharfun);
-	print_internal (XEVENT (obj)->event.process.process, printcharfun, 1);
+	write_fmt_string_lisp (printcharfun, "#<process-event %S", 1, XEVENT (obj)->event.process.process);
 	break;
     case timeout_event:
-	write_c_string ("#<timeout-event ", printcharfun);
-	print_internal (XEVENT (obj)->event.timeout.object, printcharfun, 1);
+	write_fmt_string_lisp (printcharfun, "#<timeout-event %S", 1, XEVENT (obj)->event.timeout.object);
 	break;
     case empty_event:
 	write_c_string ("#<empty-event", printcharfun);
 	break;
     case misc_user_event:
-	write_c_string ("#<misc-user-event (", printcharfun);
-	print_internal (XEVENT (obj)->event.misc.function, printcharfun, 1);
-	write_c_string (" ", printcharfun);
-	print_internal (XEVENT (obj)->event.misc.object, printcharfun, 1);
-	write_c_string (")", printcharfun);
+	write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S", 1, XEVENT (obj)->event.misc.function);
+	write_fmt_string_lisp (printcharfun, " %S)", 1, XEVENT (obj)->event.misc.object);
 	break;
     case eval_event:
-	write_c_string ("#<eval-event (", printcharfun);
-	print_internal (XEVENT (obj)->event.eval.function, printcharfun, 1);
-	write_c_string (" ", printcharfun);
-	print_internal (XEVENT (obj)->event.eval.object, printcharfun, 1);
-	write_c_string (")", printcharfun);
+	write_fmt_string_lisp (printcharfun, "#<eval-event (%S", 1, XEVENT (obj)->event.eval.function);
+	write_fmt_string_lisp (printcharfun, " %S)", 1, XEVENT (obj)->event.eval.object);
 	break;
     case dead_event:
 	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
@@ -930,11 +924,11 @@ transfer_event_chain_pointer (Lisp_Object pointer, Lisp_Object old_chain,
   if (NILP (pointer))
     return Qnil;
   assert (!NILP (old_chain));
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_STRUCTURES
   /* make sure we're actually in the chain */
   event_chain_find_previous (old_chain, pointer);
   assert (event_chain_count (old_chain) == event_chain_count (new_chain));
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_STRUCTURES */
   return event_chain_nth (new_chain,
 			  event_chain_count (old_chain) -
 			  event_chain_count (pointer));

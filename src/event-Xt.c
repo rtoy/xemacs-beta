@@ -25,23 +25,29 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "../lwlib/lwlib.h"
-#include "EmacsFrame.h"
-
 #include "blocktype.h"
 #include "charset.h"
 #include "console.h"
-#include "console-tty.h"
+#include "device.h"
+#include "elhash.h"
 #include "events.h"
+#include "file-coding.h"
 #include "frame.h"
-#include "objects-x.h"
+#include "glyphs.h"
+#include "lstream.h"
 #include "process.h"
 #include "redisplay.h"
-#include "elhash.h"
+#include "window.h"
 
-#include "systime.h"
+#include "console-tty.h"
+
+#include "console-x.h"
+#include "objects-x.h"
+#include "../lwlib/lwlib.h"
+#include "EmacsFrame.h"
+
 #include "sysproc.h" /* for MAXDESC */
+#include "systime.h"
 
 #include "xintrinsicp.h"	/* CoreP.h needs this */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
@@ -49,12 +55,8 @@ Boston, MA 02111-1307, USA.  */
 				   use XtGetValues(), but ... */
 #include <X11/ShellP.h>
 
-#ifdef HAVE_XIM
-#ifdef XIM_MOTIF
+#if defined (HAVE_XIM) && defined (XIM_MOTIF)
 #include <Xm/Xm.h>
-#endif
-#include "lstream.h"
-#include "file-coding.h"
 #endif
 
 #ifdef HAVE_DRAGNDROP
@@ -1057,7 +1059,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
         /* #### Use get_coding_system_for_text_file (Vcomposed_input_coding_system, 0) */
 	instream =
 	  make_coding_input_stream
-	    (XLSTREAM (fb_instream), Qundecided, CODING_DECODE);
+	    (XLSTREAM (fb_instream), Qundecided, CODING_DECODE, 0);
 
 	istr = XLSTREAM (instream);
 

@@ -29,18 +29,20 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "glyphs-x.h"
-#include "objects-x.h"
-#include <X11/Shell.h>
-#include "EmacsFrameP.h"
-#include "EmacsManager.h"	/* for EmacsManagerChangeSize */
-#include "xmu.h"
-
+#include "device.h"
 #include "faces.h"
 #include "frame.h"
 #include "toolbar.h"
 #include "window.h"
+
+#include "console-x.h"
+#include "glyphs-x.h"
+#include "objects-x.h"
+
+#include <X11/Shell.h>
+#include "EmacsFrameP.h"
+#include "EmacsManager.h"	/* for EmacsManagerChangeSize */
+#include "xmu.h"
 
 static void EmacsFrameClassInitialize (void);
 static void EmacsFrameInitialize (Widget, Widget, ArgList, Cardinal *);

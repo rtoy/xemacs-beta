@@ -164,14 +164,12 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Tooltalk_Message *p = XTOOLTALK_MESSAGE (obj);
 
-  char buf[200];
-
   if (print_readably)
     printing_unreadable_object ("#<tooltalk_message 0x%x>",
 				p->header.uid);
 
-  sprintf (buf, "#<tooltalk_message id:0x%lx 0x%x>", (long) (p->m), p->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<tooltalk_message id:0x%lx 0x%x>",
+		    (long) (p->m), p->header.uid);
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
@@ -236,14 +234,12 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lisp_Tooltalk_Pattern *p = XTOOLTALK_PATTERN (obj);
 
-  char buf[200];
-
   if (print_readably)
     printing_unreadable_object ("#<tooltalk_pattern 0x%x>",
 				p->header.uid);
 
-  sprintf (buf, "#<tooltalk_pattern id:0x%lx 0x%x>", (long) (p->p), p->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<tooltalk_pattern id:0x%lx 0x%x>",
+		    (long) (p->p), p->header.uid);
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,

@@ -39,7 +39,20 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "buffer.h"
+#include "device.h"
+#include "events.h"
+#include "faces.h"
+#include "frame.h"
+#include "glyphs.h"
+#include "lstream.h"
+#include "process.h"
+#include "redisplay.h"
+#include "sysdep.h"
+#include "window.h"
+
 #include "console-msw.h"
+#include "objects-msw.h"
 
 #ifdef HAVE_SCROLLBARS
 # include "scrollbar-msw.h"
@@ -53,18 +66,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_DRAGNDROP
 # include "dragdrop.h"
 #endif
-
-#include "buffer.h"
-#include "device.h"
-#include "events.h"
-#include "faces.h"
-#include "frame.h"
-#include "lstream.h"
-#include "objects-msw.h"
-#include "process.h"
-#include "redisplay.h"
-#include "sysdep.h"
-#include "window.h"
 
 #include "sysfile.h"
 #include "sysproc.h"
@@ -2514,7 +2515,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    /* VERY CONFUSING!  See intl-win32.c. */
 		    lcid = lcid & 0xFFFF;
 
-		    virtual_key = MapVirtualKeyEx (scan, 1, (HKL) lcid);
+		    virtual_key = qxeMapVirtualKeyEx (scan, 1, (HKL) lcid);
 		    if (!vk_only)
 		      {
 			if (XEUNICODE_P)

@@ -106,19 +106,15 @@ mark_ldap (Lisp_Object obj)
 static void
 print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[32];
-
   Lisp_LDAP *ldap = XLDAP (obj);
 
   if (print_readably)
     printing_unreadable_object ("#<ldap %s>", XSTRING_DATA (ldap->host));
 
-  write_c_string ("#<ldap ", printcharfun);
-  print_internal (ldap->host, printcharfun, 1);
+  write_fmt_string_lisp (printcharfun, "#<ldap %S", 1, ldap->host);
   if (!ldap->ld)
     write_c_string ("(dead) ",printcharfun);
-  sprintf (buf, " 0x%lx>", (long)ldap);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%lx>", (long)ldap);
 }
 
 static Lisp_LDAP *

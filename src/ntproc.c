@@ -163,7 +163,7 @@ void _DebPrint (const char *fmt, ...)
   va_start (args, fmt);
   vsprintf (buf, fmt, args);
   va_end (args);
-  OutputDebugString (buf);
+  OutputDebugStringA (buf);
 #endif
 }
 
@@ -200,10 +200,10 @@ new_child (void)
   cp->status = STATUS_READ_ERROR;
 
   /* use manual reset event so that select() will function properly */
-  cp->char_avail = CreateEvent (NULL, TRUE, FALSE, NULL);
+  cp->char_avail = CreateEventA (NULL, TRUE, FALSE, NULL);
   if (cp->char_avail)
     {
-      cp->char_consumed = CreateEvent (NULL, FALSE, FALSE, NULL);
+      cp->char_consumed = CreateEventA (NULL, FALSE, FALSE, NULL);
       if (cp->char_consumed)
         {
 	  cp->thrd = CreateThread (NULL, 1024, reader_thread, cp, 0, &id);
@@ -498,7 +498,7 @@ create_child (const char *exe, char *cmdline, char *env,
   strcpy (dir, process_dir);
   unixtodos_filename (dir);
   
-  if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
+  if (!CreateProcessA (exe, cmdline, &sec_attrs, NULL, TRUE,
 		      (!NILP (Vwin32_start_process_share_console)
 		       ? CREATE_NEW_PROCESS_GROUP
 		       : CREATE_NEW_CONSOLE),
@@ -856,7 +856,7 @@ find_child_console (HWND hwnd, child_process * cp)
     {
       char window_class[32];
 
-      GetClassName (hwnd, window_class, sizeof (window_class));
+      GetClassNameA (hwnd, window_class, sizeof (window_class));
       if (strcmp (window_class,
 		  mswindows_windows9x_p
 		  ? "tty"
@@ -909,16 +909,16 @@ kill_will_disappear_soon (int pid, int sig)
     {
       if (NILP (Vwin32_start_process_share_console) && cp && cp->hwnd)
 	{
-	  BYTE control_scan_code = (BYTE) MapVirtualKey (VK_CONTROL, 0);
+	  BYTE control_scan_code = (BYTE) MapVirtualKeyA (VK_CONTROL, 0);
 	  BYTE vk_break_code = VK_CANCEL;
-	  BYTE break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
+	  BYTE break_scan_code = (BYTE) MapVirtualKeyA (vk_break_code, 0);
 	  HWND foreground_window;
 
 	  if (break_scan_code == 0)
 	    {
 	      /* Fake Ctrl-C if we can't manage Ctrl-Break. */
 	      vk_break_code = 'C';
-	      break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
+	      break_scan_code = (BYTE) MapVirtualKeyA (vk_break_code, 0);
 	    }
 
 	  foreground_window = GetForegroundWindow ();
@@ -990,7 +990,7 @@ kill_will_disappear_soon (int pid, int sig)
 	    }
 	  else
 #endif
-	    PostMessage (cp->hwnd, WM_CLOSE, 0, 0);
+	    PostMessageA (cp->hwnd, WM_CLOSE, 0, 0);
 	}
       /* Kill the process.  On Win32 this doesn't kill child processes
 	 so it doesn't work very well for shells which is why it's not

@@ -1,3 +1,254 @@
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* s/windowsnt.h:
+	Use new ERROR_CHECK_ALL; not related to DEBUG_XEMACS.
+
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (resize_string):
+	* alloc.c (make_string):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (common_init_alloc_once_early):
+	* backtrace.h:
+	* buffer.c:
+	* buffer.c (print_buffer):
+	* buffer.c (Fkill_buffer):
+	* buffer.h:
+	* buffer.h (membpos_to_bytebpos):
+	* bytecode.c (print_compiled_function):
+	* callproc.c (Fold_call_process_internal):
+	* casetab.c (print_case_table):
+	* charset.h (CHARSET_BY_LEADING_BYTE):
+	* charset.h (MAKE_CHAR):
+	* charset.h (breakup_char_1):
+	* chartab.c:
+	* chartab.c (print_chartab_range):
+	* chartab.c (print_chartab_two_byte_charset):
+	* chartab.c (print_char_table):
+	* chartab.c (Fchar_table_p):
+	* chartab.c (Fchar_table_type_list):
+	* chartab.c (Fvalid_char_table_type_p):
+	* chartab.c (Fchar_table_type):
+	* chartab.c (Fput_char_table):
+	* chartab.c (check_category_char):
+	* cmdloop.c:
+	* config.h.in:
+	* console-msw.c (GetConsoleHwnd):
+	* console-stream.c:
+	* console-tty.c:
+	* console-tty.c (tty_init_console):
+	* console.c:
+	* console.c (print_console):
+	* console.h (error_check_console_type):
+	* data.c (print_weak_list):
+	* device-msw.c:
+	* device-msw.c (mswindows_handle_page_setup_dialog_box):
+	* device-msw.c (print_devmode):
+	* device.c:
+	* device.c (print_device):
+	* device.h (error_check_device_type):
+	* dired-msw.c:
+	* dired-msw.c (Fmswindows_insert_directory):
+	* dired.c:
+	* dumper.c:
+	* dumper.c (pdump_file_get):
+	* dumper.c (pdump_resource_get):
+	* dumper.c (pdump_load):
+	* editfns.c:
+	* editfns.c (save_excursion_save):
+	* eldap.c (print_ldap):
+	* elhash.c:
+	* elhash.c (check_hash_table_invariants):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (print_hash_table):
+	* elhash.c (free_hentries):
+	* emacs.c (vars_of_emacs):
+	* eval.c:
+	* eval.c (internal_catch):
+	* eval.c (unwind_to_catch):
+	* eval.c (condition_case_1):
+	* eval.c (check_error_state_sanity):
+	* event-Xt.c:
+	* event-Xt.c (x_to_emacs_keysym):
+	* event-gtk.c (gtk_to_emacs_keysym):
+	* event-msw.c:
+	* event-msw.c (mswindows_wnd_proc):
+	* event-stream.c:
+	* events.c:
+	* events.c (print_event):
+	* events.c (transfer_event_chain_pointer):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* faces.c (print_face):
+	* file-coding.c:
+	* file-coding.c (print_coding_system_in_print_method):
+	* file-coding.c (coding_closer):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (make_coding_input_stream):
+	* file-coding.c (make_coding_output_stream):
+	* file-coding.c (encode_decode_coding_region):
+	* file-coding.c (chain_init_coding_streams_1):
+	* file-coding.c (undecided_convert):
+	* file-coding.c (detect_coding_stream):
+	* file-coding.h:
+	* file-coding.h (_coding_system_data):
+	* file-coding.h (XSETCODING_SYSTEM_OF_TYPE):
+	* file-coding.h (struct coding_stream):
+	* fileio.c:
+	* frame-msw.c:
+	* frame.c:
+	* frame.c (print_frame):
+	* frame.h:
+	* frame.h (error_check_frame_type):
+	* glyphs-gtk.c:
+	* glyphs-gtk.c (gtk_print_image_instance):
+	* glyphs-gtk.c (write_lisp_string_to_temp_file):
+	* glyphs-msw.c:
+	* glyphs-msw.c (mswindows_print_image_instance):
+	* glyphs-msw.c (mswindows_progress_gauge_redisplay):
+	* glyphs-shared.c:
+	* glyphs-widget.c:
+	* glyphs-x.c (x_print_image_instance):
+	* glyphs-x.c (x_progress_gauge_redisplay):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (print_glyph):
+	* glyphs.h:
+	* glyphs.h (GLYPH_CACHEL_WIDTH):
+	* glyphs.h (GLYPH_CACHEL_GLYPH):
+	* insdel.c (fixup_internal_substring):
+	* insdel.c (buffer_insert_lisp_string_1):
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.c (qxeGetLongPathName):
+	* intl-auto-encap-win32.h:
+	* intl-encap-win32.c:
+	* intl-encap-win32.c (qxeDefMDIChildProc):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* keymap.c (print_keymap):
+	* lisp-union.h:
+	* lisp-union.h (wrap_pointer_1):
+	* lisp.h:
+	* lread.c (Fload_internal):
+	* lrecord.h:
+	* lrecord.h (MAKE_LRECORD_IMPLEMENTATION):
+	* lrecord.h (MAKE_EXTERNAL_LRECORD_IMPLEMENTATION):
+	* lrecord.h (wrap_record_1):
+	* lstream.c (print_lstream):
+	* lstream.h (error_check_lstream_type):
+	* macros.c:
+	* marker.c:
+	* marker.c (print_marker):
+	* marker.c (unchain_marker):
+	* marker.c (bi_marker_position):
+	* marker.c (set_bi_marker_position):
+	* md5.c:
+	* md5.c (Fmd5):
+	* menubar-x.c:
+	* menubar-x.c (command_builder_operate_menu_accelerator):
+	* menubar.c:
+	* mule-coding.c (iso2022_print):
+	* mule-coding.c (FROB):
+	* ntproc.c (_DebPrint):
+	* ntproc.c (new_child):
+	* ntproc.c (create_child):
+	* ntproc.c (find_child_console):
+	* ntproc.c (kill_will_disappear_soon):
+	* objects-gtk.c (gtk_print_color_instance):
+	* objects-gtk.c (gtk_print_font_instance):
+	* objects-msw.c:
+	* objects-msw.c (mswindows_font_instance_truename):
+	* objects-x.c:
+	* objects-x.c (x_print_color_instance):
+	* objects-x.c (x_print_font_instance):
+	* objects.c:
+	* objects.c (print_color_instance):
+	* objects.c (print_font_instance):
+	* opaque.c:
+	* opaque.c (print_opaque):
+	* opaque.c (print_opaque_ptr):
+	* print.c:
+	* print.c (write_string_1):
+	* print.c (default_object_printer):
+	* print.c (internal_object_printer):
+	* print.c (print_internal):
+	* process-nt.c (send_signal_the_95_way):
+	* process-nt.c (get_internet_address):
+	* process-unix.c (unix_send_process):
+	* process.c:
+	* process.c (print_process):
+	* process.c (init_process_io_handles):
+	* rangetab.c:
+	* rangetab.c (print_range_table):
+	* redisplay-msw.c:
+	* redisplay-output.c (sync_display_line_structs):
+	* redisplay.c:
+	* redisplay.c (ensure_modeline_generated):
+	* redisplay.c (redisplay_without_hooks):
+	* redisplay.c (sledgehammer_check_redisplay_structs_1):
+	* regex.c:
+	* regex.c (re_match_2_internal):
+	* scrollbar-msw.c:
+	* select-msw.c:
+	* select-msw.c (mswindows_selection_data_type_name):
+	* signal.c:
+	* specifier.c:
+	* specifier.c (print_specifier):
+	* specifier.h:
+	* specifier.h (_specifier_data):
+	* symbols.c (mark_symbol_value_buffer_local):
+	* symbols.c (print_symbol_value_magic):
+	* sysdep.c:
+	* syswindows.h:
+	* syswindows.h (ERROR_WHEN_NONINTERCEPTED_FUNS_USED):
+	* text.c:
+	* text.c (bytecount_to_charcount):
+	* text.c (charcount_to_bytecount):
+	* text.c (charbpos_to_bytebpos_func):
+	* text.c (bytebpos_to_charbpos_func):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* text.c (Lstream_get_emchar_1):
+	* text.h:
+	* text.h (DECLARE_INLINE_HEADER):
+	* toolbar-msw.c:
+	* tooltalk.c (print_tooltalk_message):
+	* tooltalk.c (print_tooltalk_pattern):
+	* ui-gtk.c (ffi_object_printer):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* unicode.c:
+	* unicode.c (Fchar_to_unicode):
+	* unicode.c (unicode_print):
+	* unicode.c (syms_of_unicode):
+	* window.c:
+	* window.c (print_window):
+	* window.c (print_window_config):
+
+	Redo error-checking macros: ERROR_CHECK_TYPECHECK ->
+	ERROR_CHECK_TYPES, ERROR_CHECK_CHARBPOS -> ERROR_CHECK_TEXT, add
+	ERROR_CHECK_DISPLAY, ERROR_CHECK_STRUCTURES.  Document these in
+	config.h.in.  Fix code to follow docs.  Fix *_checking_assert()
+	in accordance with new names.
+
+	Attempt to fix periodic redisplay crash freeing display line
+	structures.  Add first implementation of sledgehammer redisplay
+	check.
+
+	Redo print_*() to use write_fmt_string(), write_fmt_string_lisp().
+
+	Fix bug in md5 handling.
+
+	Rename character-to-unicode to char-to-unicode; same for
+	unicode-to-char{acter}.
+
+	Move chartab documentation to `make-char-table'.
+
+	Some header cleanup.
+
+	Clean up remaining places where nonintercepted Windows calls are
+	being used.
+	
 2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
 
 	* device-msw.c (plist_get_margin): Add arg specifying mm or inches

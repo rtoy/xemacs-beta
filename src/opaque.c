@@ -1,6 +1,6 @@
 /* Opaque Lisp objects.
    Copyright (C) 1993, 1994, 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -45,11 +45,11 @@ static void
 print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   const Lisp_Opaque *p = XOPAQUE (obj);
-  char buf[200];
 
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (opaque, size=%lu) 0x%lx>",
-	   (long)(p->size), (unsigned long) p);
-  write_c_string (buf, printcharfun);
+  write_fmt_string
+    (printcharfun,
+     "#<INTERNAL OBJECT (XEmacs bug?) (opaque, size=%lu) 0x%lx>",
+     (long)(p->size), (unsigned long) p);
 }
 
 inline static Bytecount
@@ -126,11 +126,11 @@ static void
 print_opaque_ptr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   const Lisp_Opaque_Ptr *p = XOPAQUE_PTR (obj);
-  char buf[200];
 
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (opaque-ptr, adr=0x%lx) 0x%lx>",
-	   (long)(p->ptr), (unsigned long) p);
-  write_c_string (buf, printcharfun);
+  write_fmt_string
+    (printcharfun,
+     "#<INTERNAL OBJECT (XEmacs bug?) (opaque-ptr, adr=0x%lx) 0x%lx>",
+     (long)(p->ptr), (unsigned long) p);
 }
 
 static int

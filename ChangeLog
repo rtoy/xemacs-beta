@@ -1,3 +1,12 @@
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* TODO.ben-mule-21-5 (bugs): Update.
+	
+	* configure.in (USAGE_ERROR):
+	* configure.in (CANONICALIZE_PATH):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	Fix for new error-checking types.
+
 2002-03-28  Ben Wing  <ben@xemacs.org>
 
 	* etc/ChangeLog: New file.

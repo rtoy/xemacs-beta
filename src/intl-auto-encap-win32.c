@@ -60,6 +60,8 @@ qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
 
 /* Error if GetStringTypeEx used: not used, not examined yet */
 
+/* Error if GetStringType used: no such fun; A and W versions have different nos. of args */
+
 /* Error if FoldString used: not used, not examined yet */
 
 /* Error if EnumSystemLocales used: not used, not examined yet */
@@ -2583,15 +2585,6 @@ qxeGetLongPathName (const Extbyte * lpszShortPath, Extbyte * lpszLongPath, DWORD
     return GetLongPathNameW ((LPCWSTR) lpszShortPath, (LPWSTR) lpszLongPath, cchBuffer);
   else
     return GetLongPathNameA ((LPCSTR) lpszShortPath, (LPSTR) lpszLongPath, cchBuffer);
-}
-
-Extbyte *
-qxeGetEnvironmentStrings (void)
-{
-  if (XEUNICODE_P)
-    return (Extbyte *) GetEnvironmentStringsW ();
-  else
-    return (Extbyte *) GetEnvironmentStringsA ();
 }
 
 BOOL

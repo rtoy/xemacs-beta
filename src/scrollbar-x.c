@@ -28,14 +28,16 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "device.h"
+#include "frame.h"
+#include "window.h"
+
 #include "console-x.h"
-#include "EmacsFrame.h"
 #include "glyphs-x.h"
 #include "gui-x.h"
 #include "scrollbar-x.h"
 
-#include "frame.h"
-#include "window.h"
+#include "EmacsFrame.h"
 
 static void x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 						  XtPointer client_data);

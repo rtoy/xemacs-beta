@@ -1,5 +1,6 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- non-union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -80,6 +81,7 @@ typedef EMACS_INT Lisp_Object;
 #define Lisp_Type_Int_Bit (Lisp_Type_Int_Even & Lisp_Type_Int_Odd)
 #define wrap_pointer_1(ptr) ((Lisp_Object) (ptr))
 #define make_int(x) ((Lisp_Object) (((x) << INT_GCBITS) | Lisp_Type_Int_Bit))
+#define volatile_make_int(x) make_int (x)
 #define make_char(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
 #define VALMASK (((1UL << VALBITS) - 1UL) << GCTYPEBITS)
 #define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) & ~VALMASK))

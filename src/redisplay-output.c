@@ -107,16 +107,16 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
 			   display_line_dynarr *cdla,
 			   display_line_dynarr *ddla)
 {
-  int cdla_len = Dynarr_length (cdla);
-
   struct display_line dl, *clp, *dlp;
   int db_elt;
+  int local = 0;
 
   dlp = Dynarr_atp (ddla, line);
   if (line >= Dynarr_largest (cdla))
     {
       clp = &dl;
       clp->display_blocks = Dynarr_new (display_block);
+      local = 1;
     }
   else
     {
@@ -143,40 +143,42 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
     clp->right_glyphs = 0;
   }
 
-  if (!do_blocks && line >= cdla_len)
+  if (do_blocks || line < Dynarr_length (cdla))
     {
-      Dynarr_add (cdla, *clp);
-      return;
+      for (db_elt = 0; db_elt < Dynarr_length (dlp->display_blocks); db_elt++)
+	{
+	  struct display_block db, *cdb;
+	  struct display_block *ddb = Dynarr_atp (dlp->display_blocks, db_elt);
+
+	  if (db_elt >= Dynarr_largest (clp->display_blocks))
+	    {
+	      cdb = &db;
+	      memcpy (cdb, ddb, sizeof (struct display_block));
+	      cdb->runes = Dynarr_new (rune);
+	      Dynarr_add (clp->display_blocks, *cdb);
+	    }
+	  else
+	    {
+	      rune_dynarr *tr;
+
+	      cdb = Dynarr_atp (clp->display_blocks, db_elt);
+	      tr = cdb->runes;
+	      memcpy (cdb, ddb, sizeof (struct display_block));
+	      cdb->runes = tr;
+	      Dynarr_increment (clp->display_blocks);
+	    }
+
+	  sync_rune_structs (w, cdb->runes, ddb->runes);
+	}
     }
 
-  for (db_elt = 0; db_elt < Dynarr_length (dlp->display_blocks); db_elt++)
-    {
-      struct display_block db, *cdb;
-      struct display_block *ddb = Dynarr_atp (dlp->display_blocks, db_elt);
-
-      if (db_elt >= Dynarr_largest (clp->display_blocks))
-	{
-	  cdb = &db;
-	  memcpy (cdb, ddb, sizeof (struct display_block));
-	  cdb->runes = Dynarr_new (rune);
-	  Dynarr_add (clp->display_blocks, *cdb);
-	}
-      else
-	{
-	  rune_dynarr *tr;
-
-	  cdb = Dynarr_atp (clp->display_blocks, db_elt);
-	  tr = cdb->runes;
-	  memcpy (cdb, ddb, sizeof (struct display_block));
-	  cdb->runes = tr;
-	  Dynarr_increment (clp->display_blocks);
-	}
-
-      sync_rune_structs (w, cdb->runes, ddb->runes);
-    }
-
-  if (line >= cdla_len)
+  if (local)
     Dynarr_add (cdla, *clp);
+  else if (line >= Dynarr_length (cdla))
+    {
+      assert (line == Dynarr_length (cdla));
+      Dynarr_increment (cdla);
+    }
 }
 
 /*****************************************************************************

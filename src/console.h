@@ -486,7 +486,7 @@ DECLARE_LRECORD (console, struct console);
 
 #define CONSOLE_TYPE_P(con, type) EQ (CONSOLE_TYPE (con), Q##type)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 INLINE_HEADER struct console *
 error_check_console_type (struct console *con, Lisp_Object sym);
 INLINE_HEADER struct console *

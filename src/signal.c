@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console.h"
+#include "device.h"
 #include "events.h" /* for signal_fake_event() */
 #include "frame.h"
 #include "process.h"

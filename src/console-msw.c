@@ -87,29 +87,39 @@ mswindows_initially_selected_for_input (struct console *con)
 
 static HWND mswindows_console_hwnd = 0;
 
-#define KLUDGE_BUFSIZE 1024 /* buffer size for console window titles */
-
-/* Direct from the horse's mouth: Microsoft KB article Q124103 */
+/* Based on Microsoft KB article Q124103 */
 static HWND
 GetConsoleHwnd (void)
 { 
-  HWND hwndFound;         /* this is what is returned to the caller */
-  char pszNewWindowTitle[KLUDGE_BUFSIZE]; /* contains fabricated WindowTitle */
-  char pszOldWindowTitle[KLUDGE_BUFSIZE]; /* contains original WindowTitle */
+  HWND hwndFound;
+  Intbyte newtitleint[200];
+  Extbyte *newtitle;
+  Extbyte *oldtitle;
+  int numchars;
 
   /* fetch current window title */
 
-  GetConsoleTitle (pszOldWindowTitle, KLUDGE_BUFSIZE);
+  {
+    int size = 64;
+    do
+      {
+	size *= 2;
+	oldtitle = alloca_extbytes (size * XETCHAR_SIZE);
+	numchars = qxeGetConsoleTitle (oldtitle, size);
+      }
+    while (numchars >= size - 1);
+  }
 
-  /* format a "unique" NewWindowTitle */
+  /* format a "unique" new title */
 
-  sprintf (pszNewWindowTitle, "%ld/%ld",
-	   GetTickCount (),
-	   GetCurrentProcessId ());
+  qxesprintf (newtitleint, "%ld/%ld", GetTickCount (),
+	      GetCurrentProcessId ());
+
+  C_STRING_TO_TSTR (newtitleint, newtitle);
 
   /* change current window title */
 
-  SetConsoleTitle (pszNewWindowTitle);
+  qxeSetConsoleTitle (newtitle);
 
   /* ensure window title has been updated */
 
@@ -117,13 +127,13 @@ GetConsoleHwnd (void)
 
   /* look for NewWindowTitle */
 
-  hwndFound=FindWindow (NULL, pszNewWindowTitle);
+  hwndFound = qxeFindWindow (NULL, newtitle);
 
   /* restore original window title */
 
-  SetConsoleTitle (pszOldWindowTitle);
+  qxeSetConsoleTitle (oldtitle);
 
-  return (hwndFound);
+  return hwndFound;
 } 
 
 static HWND

@@ -22,6 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* !!#### Not yet Mule-ized */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -1505,7 +1507,7 @@ static int
 pdump_file_get (const char *path)
 {
 
-  pdump_hFile = CreateFile (path,
+  pdump_hFile = CreateFileA (path,
 		            GENERIC_READ + GENERIC_WRITE,  /* Required for copy on write */
 			    0,		            /* Not shared */
 			    NULL,		    /* Not inheritable */
@@ -1516,7 +1518,7 @@ pdump_file_get (const char *path)
     return 0;
 
   pdump_length = GetFileSize (pdump_hFile, NULL);
-  pdump_hMap = CreateFileMapping (pdump_hFile,
+  pdump_hMap = CreateFileMappingA (pdump_hFile,
 				  NULL,		    /* No security attributes */
 				  PAGE_WRITECOPY,   /* Copy on write */
 				  0,		    /* Max size, high half */
@@ -1559,7 +1561,7 @@ pdump_resource_get (void)
      other than the dumped data, which should be private to each process, we
      make the whole resource section read/write so we don't have to copy it. */
 
-  hRes = FindResource (NULL, MAKEINTRESOURCE(101), "DUMP");
+  hRes = FindResourceA (NULL, MAKEINTRESOURCE (101), "DUMP");
   if (hRes == NULL)
     return 0;
 
@@ -1684,7 +1686,7 @@ pdump_load (const Extbyte *argv0)
 {
   Extbyte exe_path[PATH_MAX];
 #ifdef WIN32_NATIVE
-  GetModuleFileName (NULL, exe_path, PATH_MAX);
+  GetModuleFileNameA (NULL, exe_path, PATH_MAX);
 #else /* !WIN32_NATIVE */
   Extbyte *w;
   const Extbyte *dir, *p;

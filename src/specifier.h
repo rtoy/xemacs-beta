@@ -279,7 +279,7 @@ DECLARE_LRECORD (specifier, Lisp_Specifier);
 #define specifier_data_offset offsetof (Lisp_Specifier, data)
 extern const struct lrecord_description specifier_empty_extra_description[];
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 #define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods;		\
 INLINE_HEADER struct type##_specifier *					\
@@ -310,7 +310,7 @@ DECLARE_NOTHING
 #else
 #define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_TYPES */
 
 #define DEFINE_SPECIFIER_TYPE(type)					\
 struct specifier_methods * type##_specifier_methods
@@ -358,7 +358,7 @@ do {									\
 
 #define GHOST_SPECIFIER(sp) XSPECIFIER ((sp)->fallback)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 # define SPECIFIER_TYPE_DATA(sp, type) \
    error_check_##type##_specifier_data (sp)
 #else
@@ -369,12 +369,12 @@ do {									\
      : (sp)->data))
 #endif
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 # define XSPECIFIER_TYPE(x, type)	\
    error_check_##type##_specifier_type (x)
 #else
 # define XSPECIFIER_TYPE(x, type) XSPECIFIER (x)
-#endif /* ERROR_CHECK_TYPE_CHECK */
+#endif /* ERROR_CHECK_TYPES */
 
 #define SPECIFIER_TYPEP(x, type)			\
   (SPECIFIERP (x) && SPECIFIER_TYPE_P (XSPECIFIER (x), type))

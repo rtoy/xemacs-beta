@@ -412,6 +412,11 @@ typedef struct tagNMTTDISPINFOW {
 #endif
 #endif /* not BFFM_VALIDATEFAILED */
 
+/* winnls.h defines */
+#ifndef LOCALE_RETURN_NUMBER
+#define LOCALE_RETURN_NUMBER 0x20000000
+#endif
+
 /* OEM resources */
 #ifndef OCR_ICOCUR
 #define OCR_ICOCUR          32647
@@ -485,67 +490,230 @@ size_t	wcsxfrm (wchar_t*, const wchar_t*, size_t);
 
 /* See intl-encap-win32.c for more information about Unicode-encapsulation */
 
+#define ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+
 #include "intl-auto-encap-win32.h"
 
 /* would be encapsulatable but for parsing problems */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DefWindowProc
+#define DefWindowProc error use qxeDefWindowProc or DefWindowProcA/DefWindowProcW
+#endif
 LRESULT qxeDefWindowProc (HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef CallWindowProc
+#define CallWindowProc error use qxeCallWindowProc or CallWindowProcA/CallWindowProcW
+#endif
 LRESULT qxeCallWindowProc (WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg,
 			   WPARAM wParam, LPARAM lParam);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DefDlgProc
+#define DefDlgProc error use qxeDefDlgProc or DefDlgProcA/DefDlgProcW
+#endif
 LRESULT qxeDefDlgProc (HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SetWindowsHook
+#define SetWindowsHook error use qxeSetWindowsHook or SetWindowsHookA/SetWindowsHookW
+#endif
 HHOOK qxeSetWindowsHook (int nFilterType, HOOKPROC pfnFilterProc);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DefMDIChildProc
+#define DefMDIChildProc error use qxeDefMDIChildProc or DefMDIChildProcA/DefMDIChildProcW
+#endif
 LRESULT qxeDefMDIChildProc (HWND hWnd, UINT uMsg, WPARAM wParam,
 			    LPARAM lParam);
 
+#undef GetEnvironmentStrings
+#undef GetEnvironmentStringsA
+#define GetEnvironmentStringsA GetEnvironmentStrings
+Extbyte * qxeGetEnvironmentStrings (void);
+
 /* would be encapsulatable but for Cygwin problems */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegConnectRegistry
+#define RegConnectRegistry error use qxeRegConnectRegistry or RegConnectRegistryA/RegConnectRegistryW
+#endif
 LONG qxeRegConnectRegistry (const Extbyte * lpMachineName, HKEY hKey, PHKEY phkResult);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ExtractIconEx
+#define ExtractIconEx error use qxeExtractIconEx or ExtractIconExA/ExtractIconExW
+#endif
 UINT qxeExtractIconEx (const Extbyte * lpszFile, int nIconIndex, HICON FAR * phiconLarge, HICON FAR * phiconSmall, UINT nIcons);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef GetICMProfile
+#define GetICMProfile error use qxeGetICMProfile or GetICMProfileA/GetICMProfileW
+#endif
 BOOL qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef UpdateICMRegKey
+#define UpdateICMRegKey error use qxeUpdateICMRegKey or UpdateICMRegKeyA/UpdateICMRegKeyW
+#endif
 BOOL qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4);
 
 /* files */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef FindFirstFile
+#define FindFirstFile error use qxeFindFirstFile or FindFirstFileA/FindFirstFileW
+#endif
 HANDLE qxeFindFirstFile (const Extbyte *lpFileName,
 			 WIN32_FIND_DATAW *lpFindFileData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef FindNextFile
+#define FindNextFile error use qxeFindNextFile or FindNextFileA/FindNextFileW
+#endif
 BOOL qxeFindNextFile (HANDLE hFindFile, WIN32_FIND_DATAW *lpFindFileData);
 
 /* shell */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SHGetFileInfo
+#define SHGetFileInfo error use qxeSHGetFileInfo or SHGetFileInfoA/SHGetFileInfoW
+#endif
 DWORD qxeSHGetFileInfo (const Extbyte *pszPath, DWORD dwFileAttributes,
 			SHFILEINFOW *psfi, UINT cbFileInfo, UINT uFlags);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SHBrowseForFolder
+#define SHBrowseForFolder error use qxeSHBrowseForFolder or SHBrowseForFolderA/SHBrowseForFolderW
+#endif
 LPITEMIDLIST qxeSHBrowseForFolder (LPBROWSEINFOW lpbi);
+
+/* Not Unicode-split */
 VOID qxeSHAddToRecentDocs (UINT uFlags, LPCVOID pv);
+
+/* Not Unicode-split */
 VOID qxeSHChangeNotify (LONG wEventId, UINT uFlags, LPCVOID dwItem1,
 			LPCVOID dwItem2);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SHGetDataFromIDList
+#define SHGetDataFromIDList error use qxeSHGetDataFromIDList or SHGetDataFromIDListA/SHGetDataFromIDListW
+#endif
 HRESULT qxeSHGetDataFromIDList (IShellFolder *psf, LPCITEMIDLIST pidl,
 				int nFormat, PVOID pv, int cb);
 
 /* devmode */
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef CreateDC
+#define CreateDC error use qxeCreateDC or CreateDCA/CreateDCW
+#endif
 HDC qxeCreateDC (const Extbyte *lpszDriver, const Extbyte *lpszDevice,
 		 const Extbyte *lpszOutput, CONST DEVMODEW *lpInitData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ResetDC
+#define ResetDC error use qxeResetDC or ResetDCA/ResetDCW
+#endif
 HDC qxeResetDC (HDC hdc, CONST DEVMODEW *lpInitData);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef OpenPrinter
+#define OpenPrinter error use qxeOpenPrinter or OpenPrinterA/OpenPrinterW
+#endif
 DWORD qxeOpenPrinter (Extbyte *pPrinterName, LPHANDLE phPrinter,
 		      LPPRINTER_DEFAULTSW pDefaultconst);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef DocumentProperties
+#define DocumentProperties error use qxeDocumentProperties or DocumentPropertiesA/DocumentPropertiesW
+#endif
 LONG qxeDocumentProperties (HWND hWnd, HANDLE hPrinter, Extbyte *pDeviceName,
 			    DEVMODEW *pDevModeOutput, DEVMODEW *pDevModeInput,
 			    DWORD fMode);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef PrintDlg
+#define PrintDlg error use qxePrintDlg or PrintDlgA/PrintDlgW
+#endif
 BOOL qxePrintDlg (PRINTDLGW *lppd);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef PageSetupDlg
+#define PageSetupDlg error use qxePageSetupDlg or PageSetupDlgA/PageSetupDlgW
+#endif
 BOOL qxePageSetupDlg (PAGESETUPDLGW *lppd);
 
 /* fonts */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef EnumFontFamiliesEx
+#define EnumFontFamiliesEx error use qxeEnumFontFamiliesEx or EnumFontFamiliesExA/EnumFontFamiliesExW
+#endif
 int qxeEnumFontFamiliesEx (HDC hdc, LOGFONTW *lpLogfont,
 			   FONTENUMPROCW lpEnumFontFamProc, LPARAM lParam,
 			   DWORD dwFlags);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef CreateFontIndirect
+#define CreateFontIndirect error use qxeCreateFontIndirect or CreateFontIndirectA/CreateFontIndirectW
+#endif
 HFONT qxeCreateFontIndirect (CONST LOGFONTW *lplf);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmSetCompositionFont
+#define ImmSetCompositionFont error use qxeImmSetCompositionFont or ImmSetCompositionFontA/ImmSetCompositionFontW
+#endif
 BOOL qxeImmSetCompositionFont (HIMC imc, LOGFONTW *lplf);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef ImmGetCompositionFont
+#define ImmGetCompositionFont error use qxeImmGetCompositionFont or ImmGetCompositionFontA/ImmGetCompositionFontW
+#endif
 BOOL qxeImmGetCompositionFont (HIMC imc, LOGFONTW *lplf);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef GetObject
+#define GetObject error use qxeGetObject or GetObjectA/GetObjectW
+#endif
 int qxeGetObject (HGDIOBJ hgdiobj, int cbBuffer, LPVOID lpvObject);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef GetTextMetrics
+#define GetTextMetrics error use qxeGetTextMetrics or GetTextMetricsA/GetTextMetricsW
+#endif
 BOOL qxeGetTextMetrics (HDC hdc, LPTEXTMETRICW lptm);
 
 /* COMMCTRL.H */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef SendMessage
+#define SendMessage error use qxeSendMessage or SendMessageA/SendMessageW
+#endif
 LRESULT qxeSendMessage (HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 /* windows */
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegisterClass
+#define RegisterClass error use qxeRegisterClass or RegisterClassA/RegisterClassW
+#endif
 ATOM qxeRegisterClass (CONST WNDCLASSW * lpWndClass);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef UnregisterClass
+#define UnregisterClass error use qxeUnregisterClass or UnregisterClassA/UnregisterClassW
+#endif
 BOOL qxeUnregisterClass (const Extbyte * lpClassName, HINSTANCE hInstance);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef RegisterClassEx
+#define RegisterClassEx error use qxeRegisterClassEx or RegisterClassExA/RegisterClassExW
+#endif
 ATOM qxeRegisterClassEx (CONST WNDCLASSEXW * arg1);
+
+#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
+#undef CreateWindow
+#define CreateWindow error use qxeCreateWindow or CreateWindowA/CreateWindowW
+#endif
 #define qxeCreateWindow(lpClassName, lpWindowName, dwStyle, x, y,	     \
                         nWidth, nHeight, hWndParent, hMenu, hInstance,	     \
 			lpParam)					     \

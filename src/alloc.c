@@ -161,7 +161,7 @@ Lisp_Object Qgarbage_collecting;
 /* Non-zero means we're in the process of doing the dump */
 int purify_flag;
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 
 Error_Behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN, ERROR_ME_DEBUG_WARN;
 
@@ -1876,7 +1876,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
   verify_string_chars_integrity ();
 #endif
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   if (pos >= 0)
     {
       assert (pos <= XSTRING_LENGTH (s));
@@ -1888,7 +1888,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
       if (delta < 0)
 	assert ((-delta) <= XSTRING_LENGTH (s));
     }
-#endif /* ERROR_CHECK_CHARBPOS */
+#endif /* ERROR_CHECK_TEXT */
 
   if (delta == 0)
     /* simplest case: no size change. */
@@ -2137,7 +2137,7 @@ make_string (const Intbyte *contents, Bytecount length)
   Lisp_Object val;
 
   /* Make sure we find out about bad make_string's when they happen */
-#if defined (ERROR_CHECK_CHARBPOS) && defined (MULE)
+#if defined (ERROR_CHECK_TEXT) && defined (MULE)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
 
@@ -2202,7 +2202,7 @@ make_string_nocopy (const Intbyte *contents, Bytecount length)
   Lisp_Object val;
 
   /* Make sure we find out about bad make_string_nocopy's when they happen */
-#if defined (ERROR_CHECK_CHARBPOS) && defined (MULE)
+#if defined (ERROR_CHECK_TEXT) && defined (MULE)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
 
@@ -4124,7 +4124,7 @@ common_init_alloc_once_early (void)
   gc_currently_forbidden = 0;
   gc_hooks_inhibited = 0;
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
   ERROR_ME.really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
     666;
   ERROR_ME_NOT.
@@ -4135,7 +4135,7 @@ common_init_alloc_once_early (void)
   ERROR_ME_DEBUG_WARN.
     really_unlikely_name_to_have_accidentally_in_a_non_errb_structure =
       8675309;
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_TYPES */
 }
 
 static void

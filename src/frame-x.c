@@ -28,7 +28,20 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#include "buffer.h"
+#include "device.h"
+#include "events.h"
+#include "extents.h"
+#include "faces.h"
+#include "frame.h"
+#include "window.h"
+#include "gutter.h"
+
 #include "console-x.h"
+#include "glyphs-x.h"
+#include "objects-x.h"
+#include "scrollbar-x.h"
+
 #include "xintrinsicp.h"	/* CoreP.h needs this */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
@@ -42,17 +55,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef EXTERNAL_WIDGET
 #include "ExternalShell.h"
 #endif
-#include "glyphs-x.h"
-#include "objects-x.h"
-#include "scrollbar-x.h"
-
-#include "buffer.h"
-#include "events.h"
-#include "extents.h"
-#include "faces.h"
-#include "frame.h"
-#include "window.h"
-#include "gutter.h"
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"

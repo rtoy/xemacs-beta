@@ -86,6 +86,8 @@
 				; auto-gc-threshold
 	"itimer-autosave"
 	"printer"
+	"behavior"
+	"behavior-defs"
 	"diagnose"
 
 	;;;;;;;;;;;;;;;;;; GUI support

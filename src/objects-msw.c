@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw.h"
 #include "objects-msw.h"
+
 #include "buffer.h"
 #include "charset.h"
 #include "device.h"
@@ -1741,21 +1742,21 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   switch (nsep)
     {
     case 0:
-      qxestrcat (name, ":Regular:10::Western");
+      qxestrcat_c (name, ":Regular:10::Western");
       break;
     case 1:
-      qxestrcat (name, ":10::Western");
+      qxestrcat_c (name, ":10::Western");
       break;
     case 2:
-      qxestrcat (name, "::Western");
+      qxestrcat_c (name, "::Western");
       break;
     case 3:
-      qxestrcat (name, ":Western");
+      qxestrcat_c (name, ":Western");
       break;
     default:;
     }
 
-  return build_string (name);
+  return build_intstring (name);
 }
 
 #ifdef MULE

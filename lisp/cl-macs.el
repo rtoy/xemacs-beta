@@ -1,6 +1,7 @@
 ;;; cl-macs.el --- Common Lisp extensions for XEmacs Lisp (part four)
 
 ;; Copyright (C) 1993 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;; Version: 2.02
@@ -597,17 +598,268 @@ This is compatible with Common Lisp, but note that `defun' and
 ;;;###autoload
 (defmacro loop (&rest args)
   "(loop CLAUSE...): The Common Lisp `loop' macro.
+
+The loop macro consists of a series of clauses, which do things like
+iterate variables, set conditions for exiting the loop, accumulating values
+to be returned as the return value of the loop, and executing arbitrary
+blocks of code.  Each clause is proceed in turn, and the loop executes its
+body repeatedly until an exit condition is hit.
+
+It's important to understand that loop clauses such as `for' and `while',
+which look like loop-establishing constructs, don't actually *establish* a
+loop\; the looping is established by the `loop' clause itself, which will
+repeatedly process its body until told to stop.  `while' merely establishes
+a condition which, when true, causes the loop to finish, and `for' sets a
+variable to different values on each iteration (e.g. successive elements of
+a list) and sets an exit condition when there are no more values.  This
+means, for example, that if two `for' clauses appear, you don't get two
+nested loops, but instead two variables that are stepped in parallel, and
+two exit conditions, either of which, if triggered, will cause the loop to
+end.  Similarly for a loop with a `for' and a `while' clause.  For example:
+
+\(loop
+  for x in list
+  while x
+  do ...)
+
+In each successive iteration, X is set to the next element of the list.  If
+there are no more elements, or if any element is nil (the `while' clause),
+the loop exits.  Otherwise, the block of code following `do' is executed.)
+
+This example also shows that some clauses establish variable bindings --
+essentially like a `let' binding -- and that following clauses can
+reference these variables.  Furthermore, the entire loop is surrounded by a
+block named nil (unless the `named' clause is given), so you can return
+from the loop using the macro `return'. (The other way to exit the loop is
+through the macro `loop-finish'.  The difference is that some loop clauses
+establish or accumulate a value to be returned, and `loop-finish' returns
+this. `return', however, can only return an explicitly-specified value.
+NOTE CAREFULLY: There is a loop clause called `return' as well as a
+standard Lisp macro called `return'.  Normally they work similarly\; but if
+you give the loop a name with `named', you will need to use the macro
+`return-from'.)
+
+Another extremely useful feature of loops is called \"destructuring\".  If,
+in place of VAR, a list (possibly dotted, possibly a tree of arbitary
+complexity) is given, the value to be assigned is assumed to have a similar
+structure to the list given, and variables in the list will be matched up
+with corresponding elements in the structure.  For example:
+
+\(loop
+  for (x y) in '((foo 1) (bar 2) (baz 3))
+  do (puthash x y some-hash-table))
+
+will add three elements to a hash table, mapping foo -> 1, bar -> 2, and
+baz -> 3.  As other examples, you can conveniently process alists using
+
+\(loop for (x . y) in alist do ...)
+
+and plists using
+
+\(loop for (x y) on plist by #'cddr do ...)
+
+Destructuring is forgiving in that mismatches in the number of elements on
+either size will be handled gracefully, either by ignoring or initializing
+to nil.
+
+If you don't understand how a particular loop clause works, create an
+example and use `macroexpand-sexp' to expand the macro.
+
 Valid clauses are:
-  for VAR from/upfrom/downfrom NUM to/upto/downto/above/below NUM by NUM,
-  for VAR in LIST by FUNC, for VAR on LIST by FUNC, for VAR = INIT then EXPR,
-  for VAR across ARRAY, repeat NUM, with VAR = INIT, while COND, until COND,
-  always COND, never COND, thereis COND, collect EXPR into VAR,
-  append EXPR into VAR, nconc EXPR into VAR, sum EXPR into VAR,
-  count EXPR into VAR, maximize EXPR into VAR, minimize EXPR into VAR,
-  if COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...],
-  unless COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...],
-  do EXPRS..., initially EXPRS..., finally EXPRS..., return EXPR,
-  finally return EXPR, named NAME."
+
+\(NOTE: Keywords in lowercase\; slashes separate different possibilities
+for keywords, some of which are synonymous\; brackets indicate optional
+parts of the clause.  In all of the clauses with `being', the word `being',
+the words `each' or `the', and the difference between singular and plural
+keywords are all just syntactic sugar.  Stylistically, you should write
+either `being each foo' or `being the foos'.)
+
+  for VAR from/upfrom/downfrom NUM1 to/upto/downto/above/below NUM2 [by NUMSTEP]
+    Step VAR across numbers.  `upfrom', `upto', and `below' explicitly
+    indicate upward stepping\; `downfrom', `downto', and `above' explicitly
+    indicate downward stepping. (If none of these is given, the default is
+    upward.) `to', `upto', and `downto' cause stepping to include NUM2 as
+    the last iteration, while `above' and `below' stop just before reaching
+    NUM2.  `by' can be given to indicate a stepping increment other than 1.
+
+  for VAR in LIST [by FUNC]
+    Step VAR over elements of a LIST.  FUNC specifies how to get successive
+    sublists and defaults to `cdr'.
+
+  for VAR on LIST [by FUNC]
+    Step VAR over tails of a LIST.  FUNC specifies how to get successive
+    sublists and defaults to `cdr'.
+
+  for VAR in-ref LIST [by FUNC]
+    Step VAR over elements of a LIST, like `for ... in', except the VAR is
+    bound using `symbol-macrolet' instead of `let'.  In essence, VAR is set
+    to a \"reference\" to the list element instead of the element itself\;
+    this us, you can destructively modify the list using `setf' on VAR, and
+    any changes to the list will \"magically\" reflect themselves in
+    subsequent uses of VAR.
+
+  for VAR = INIT [then EXPR]
+    Set VAR on each iteration of the loop.  If only INIT is given, use it
+    on each iteration.  Otherwise, use INIT on the first iteration and EXPR
+    on subsequent ones.
+
+  for VAR across/across-ref ARRAY
+    Step VAR across a sequence other than a list (string, vector, bit
+    vector).  If `across-ref' is given, VAR is bound using
+    `symbol-macrolet' instead of `let' -- see above.
+
+  for VAR being each/the element/elements in/of/in-ref/of-ref SEQUENCE [using (index INDEX-VAR)]
+    Step VAR across any sequence.  A variable can be specified with a
+    `using' phrase to receive the index, starting at 0.  If `in-ref' or
+    `of-ref' is given, VAR is bound using `symbol-macrolet' instead of
+    `let' -- see above.
+
+  for VAR being each/the hash-key/hash-keys/hash-value/hash-values in/of HASH-TABLE [using (hash-value/hash-key OTHER-VAR)]
+
+  for VAR being each/the hash-key/hash-keys/hash-value/hash-values in/of HASH-TABLE [using (hash-value/hash-key OTHER-VAR)]
+    Map VAR over a hash table.  The various keywords are synonymous except
+    those that distinguish between keys and values.  The `using' phrase is
+    optional and allows both key and value to be bound.
+
+  for VAR being each/the symbol/present-symbol/external-symbol/symbols/present-symbols/external-symbols in/of OBARRAY
+    Map VAR over the symbols in an obarray.  All symbol keywords are
+    currently synonymous.
+
+  for VAR being each/the extent/extents [in/of BUFFER-OR-STRING] [from POS] [to POS]
+    Map VAR over the extents in a buffer or string, defaulting to the
+    current buffer, the beginning and the end, respectively.
+
+  for VAR being each/the interval/intervals [in/of BUFFER-OR-STRING] [property PROPERTY] [from POS] [to POS]
+    Map VAR over the intervals without property change in a buffer or
+    string, defaulting to the current buffer, the beginning and the end,
+    respectively.  If PROPERTY is given, iteration occurs using
+    `next-single-property-change'\; otherwise, using
+    `next-property-change'.
+
+  for VAR being each/the window/windows [in/of FRAME]
+    Step VAR over the windows in FRAME, defaulting to the selected frame.
+
+  for VAR being each/the frame/frames
+    Step VAR over all frames.
+
+  for VAR being each/the buffer/buffers [by FUNC]
+    Step VAR over all buffers.  This is actually equivalent to
+    `for VAR in (buffer-list) [by FUNC]'.
+
+  for VAR being each/the key-code/key-codes/key-seq/key-seqs/key-binding/key-bindings in KEYMAP [using (key-code/key-codes/key-seq/key-seqs/key-binding/key-bindings OTHER-VAR)]
+    Map VAR over the entries in a keymap.  Keyword `key-seq' causes
+    recursive mapping over prefix keymaps occurring in the keymap, with VAR
+    getting the built-up sequence (a vector).  Otherwise, mapping does not
+    occur recursively.  `key-code' and `key-seq' refer to what is bound
+    (second argument of `define-key'), and `key-binding' what it's bound to
+    (third argument of `define-key').
+
+  as VAR ...
+    `as' is a synonym for `for'.
+
+  and VAR ...
+    `and' clauses have the same syntax as `for' clauses except that the
+    variables in the clause are bound in parallel with a preceding
+    `and'/`for' clause instead of in series.
+
+  with VAR = INIT
+    Set VAR to INIT once, before doing any iterations.
+
+  repeat NUM
+    Exit the loop if more than NUM iterations have occurred.
+
+  while COND
+    Exit the loop if COND isn't true.
+
+  until COND
+    Exit the loop if COND is true.
+
+  collect EXPR [into VAR]
+    Push EXPR onto the end of a list of values -- stored either in VAR or a
+    temporary variable that will be returned as the return value of the
+    loop if it terminates through an exit condition or a call to
+    `loop-finish'.
+
+  append EXPR [into VAR]
+    Append EXPR (a list) onto the end of a list of values, like `collect'.
+
+  nconc EXPR [into VAR]
+    Nconc EXPR (a list) onto the end of a list of values, like `collect'.
+
+  concat EXPR [into VAR]
+    Concatenate EXPR (a string) onto the end of a string of values, like
+    `collect'.
+
+  vconcat EXPR [into VAR]
+    Concatenate EXPR (a vector) onto the end of a vector of values, like
+    `collect'.
+
+  bvconcat EXPR [into VAR]
+    Concatenate EXPR (a bit vector) onto the end of a bit vector of values,
+    like `collect'.
+
+  sum EXPR [into VAR]
+    Add EXPR to a value, like `collect'.
+
+  count EXPR [into VAR]
+    If EXPR is true, increment a value by 1, like `collect'.
+
+  maximize EXPR [into VAR]
+    IF EXPR is greater than a value, replace the value with EXPR, like
+    `collect'.
+
+  minimize EXPR [into VAR]
+    IF EXPR is less than a value, replace the value with EXPR, like
+    `collect'.
+
+  always COND
+    If COND is true, continue the loop and set the loop return value (the
+    same value that's manipulated by `collect' and friends and is returned
+    by a normal loop exit or an exit using `loop-finish') to t\; otherwise,
+    exit the loop and return nil.  The effect is to determine and return
+    whether a condition is true \"always\" (all iterations of the loop).
+
+  never COND
+    If COND is false, continue the loop and set the loop return value (like
+    `always') to t\; otherwise, exit the loop and return nil.  The effect
+    is to determine and return whether a condition is \"never\" true (all
+    iterations of the loop).
+
+  thereis COND
+    If COND is true, exit the loop and return COND.
+
+  if/when COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...]
+    If COND is true, execute the directly following clause(s)\; otherwise,
+    execute the clauses following `else'.
+
+  unless COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...]
+    If COND is false, execute the directly following clause(s)\; otherwise, execute the clauses following `else'.
+
+  do EXPRS...
+    Execute the expressions (any Lisp forms).
+
+  initially EXPRS...
+    Execute EXPR once, before doing any iterations, and after values have
+    been set using `with'.
+
+  finally EXPRS...
+    Execute EXPR once, directly before the loop terminates.  This will not
+    be executed if the loop terminates prematurely as a result of `always',
+    `never', `thereis', or `return'.
+
+  return EXPR
+    Exit from the loop and return EXPR.
+
+  finally return EXPR
+    Specify the value to be returned when the loop exits. (Unlike `return',
+    this doesn't cause the loop to immediately exit\; it will exit whenever
+    it normally would have.) This takes precedence over a return value
+    specified with `collect' and friends or `always' and friends.
+
+  named NAME
+    Specify the name for block surrounding the loop, in place of nil.
+    (See `block'.)
+"
   (if (not (memq t (mapcar 'symbolp (delq nil (delq t (copy-list args))))))
       (list 'block nil (list* 'while t args))
     (let ((loop-name nil)	(loop-bindings nil)
@@ -882,16 +1134,19 @@ Valid clauses are:
 
 	       ((memq word key-types)
 		(or (memq (car args) '(in of)) (error "Expected `of'"))
-		(let ((map (cl-pop2 args))
-		      (other (if (eq (car args) 'using)
-				 (if (and (= (length (cadr args)) 2)
-					  (memq (caadr args) key-types)
-					  (not (eq (caadr args) word)))
-				     (cadr (cl-pop2 args))
-				   (error "Bad `using' clause"))
+		(let* ((map (cl-pop2 args))
+		       other-word
+		       (other (if (eq (car args) 'using)
+				  (if (and (= (length (cadr args)) 2)
+					   (memq (setq other-word (caadr args))
+						 key-types)
+					   (not (eq (caadr args) word)))
+				      (cadr (cl-pop2 args))
+				    (error "Bad `using' clause"))
 			       (gensym))))
-		  (if (memq word '(key-binding key-bindings))
-		      (setq var (prog1 other (setq other var))))
+		  (when (memq word '(key-binding key-bindings))
+		    (setq var (prog1 other (setq other var)))
+		    (and other-word (setq word other-word)))
 		  (setq loop-map-form
 			(list (if (memq word '(key-seq key-seqs))
 				  'cl-map-keymap-recursively 'cl-map-keymap)
@@ -982,6 +1237,11 @@ Valid clauses are:
       (let ((what (cl-pop args))
 	    (var (cl-loop-handle-accum [])))
 	(cl-push (list 'progn (list 'callf 'vconcat var what) t) loop-body)))
+
+     ((memq word '(bvconcat bvconcating))
+      (let ((what (cl-pop args))
+	    (var (cl-loop-handle-accum #*)))
+	(cl-push (list 'progn (list 'callf 'bvconcat var what) t) loop-body)))
 
      ((memq word '(sum summing))
       (let ((what (cl-pop args))

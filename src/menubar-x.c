@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001 ,2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -36,13 +36,9 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "EmacsFrame.h"
-#include "gui-x.h"
-#include "../lwlib/lwlib.h"
-
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
+#include "device.h"
 #include "events.h"
 #include "frame.h"
 #include "gui.h"
@@ -50,6 +46,12 @@ Boston, MA 02111-1307, USA.  */
 #include "menubar.h"
 #include "opaque.h"
 #include "window.h"
+
+#include "console-x.h"
+#include "gui-x.h"
+
+#include "EmacsFrame.h"
+#include "../lwlib/lwlib.h"
 
 static int set_frame_menubar (struct frame *f,
 			      int deep_p,
@@ -984,15 +986,13 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
   {
     int i;
     Lisp_Object t;
-    char buf[50];
 
     t = builder->current_events;
     i = 0;
     while (!NILP (t))
       {
 	i++;
-	sprintf (buf,"OPERATE (%d): ",i);
-	write_c_string (buf, Qexternal_debugging_output);
+	write_fmt_string (Qexternal_debugging_output, "OPERATE (%d): ",i);
 	print_internal (t, Qexternal_debugging_output, 1);
 	write_c_string ("\n", Qexternal_debugging_output);
 	t = XEVENT_NEXT (t);

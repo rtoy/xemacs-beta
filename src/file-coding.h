@@ -448,7 +448,7 @@ struct coding_system_methods
 #define coding_system_data_offset (offsetof (Lisp_Coding_System, data))
 extern const struct lrecord_description coding_system_empty_extra_description[];
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 #define DECLARE_CODING_SYSTEM_TYPE(type)				\
 									\
 extern struct coding_system_methods * type##_coding_system_methods;	\
@@ -487,7 +487,7 @@ DECLARE_NOTHING
 #else
 #define DECLARE_CODING_SYSTEM_TYPE(type)				\
 extern struct coding_system_methods * type##_coding_system_methods
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_TYPES */
 
 #define DEFINE_CODING_SYSTEM_TYPE(type)					\
 struct coding_system_methods * type##_coding_system_methods
@@ -544,7 +544,7 @@ do {								\
 #define XCODING_SYSTEM_TYPE_P(cs, type) \
   CODING_SYSTEM_TYPE_P (XCODING_SYSTEM (cs), type)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 # define CODING_SYSTEM_TYPE_DATA(cs, type) \
    error_check_##type##_coding_system_data (cs)
 #else
@@ -556,7 +556,7 @@ do {								\
 #define XCODING_SYSTEM_TYPE_DATA(cs, type) \
   CODING_SYSTEM_TYPE_DATA (XCODING_SYSTEM_OF_TYPE (cs, type), type)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 # define XCODING_SYSTEM_OF_TYPE(x, type)	\
    error_check_##type##_coding_system_type (x)
 # define XSETCODING_SYSTEM_OF_TYPE(x, p, type)	do		\
@@ -917,7 +917,7 @@ struct coding_stream
 
   /* Coding-system-specific data holding extra state about the
      conversion.  Logically a struct TYPE_coding_stream; a pointer
-     to such a struct, with (when ERROR_CHECK_TYPECHECK is defined)
+     to such a struct, with (when ERROR_CHECK_TYPES is defined)
      error-checking that this is really a structure of that type
      (checking the corresponding coding system type) can be retrieved using
      CODING_STREAM_TYPE_DATA().  Allocated at the same time that
@@ -928,13 +928,16 @@ struct coding_stream
 
   enum encode_decode direction;
 
+  /* If set, don't close the stream at the other end when being closed. */
+  unsigned int no_close_other:1;
+  
   /* #### Temporary test */
   unsigned int finalized:1;
 };
 
 #define CODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, coding)    
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 # define CODING_STREAM_TYPE_DATA(s, type) \
    error_check_##type##_coding_stream_data (s)
 #else
@@ -1055,9 +1058,11 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Lisp_Object description,
 					 Lisp_Object props);
 Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
-				      enum encode_decode direction);
+				      enum encode_decode direction,
+				      int no_close_other);
 Lisp_Object make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
-				       enum encode_decode direction);
+				       enum encode_decode direction,
+				       int no_close_other);
 void set_detection_results (struct detection_state *st, int detector,
 			    int given);
 

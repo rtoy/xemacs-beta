@@ -276,7 +276,7 @@ extern int specpdl_size;
     }							\
 } while (0)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_STRUCTURES
 #define CHECK_SPECBIND_VARIABLE assert (specpdl_ptr->func == 0)
 #else
 #define CHECK_SPECBIND_VARIABLE DO_NOTHING

@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "faces.h"
 #include "frame.h"
+#include "glyphs.h"
 #include "objects.h"
 #include "specifier.h"
 #include "window.h"
@@ -72,20 +73,16 @@ static void
 print_color_instance (Lisp_Object obj, Lisp_Object printcharfun,
 		      int escapeflag)
 {
-  char buf[100];
   Lisp_Color_Instance *c = XCOLOR_INSTANCE (obj);
   if (print_readably)
     printing_unreadable_object ("#<color-instance 0x%x>",
            c->header.uid);
-  write_c_string ("#<color-instance ", printcharfun);
-  print_internal (c->name, printcharfun, 0);
-  write_c_string (" on ", printcharfun);
-  print_internal (c->device, printcharfun, 0);
+  write_fmt_string_lisp (printcharfun, "#<color-instance %s", 1, c->name);
+  write_fmt_string_lisp (printcharfun, " on %s", 1, c->device);
   if (!NILP (c->device)) /* Vthe_null_color_instance */
     MAYBE_DEVMETH (XDEVICE (c->device), print_color_instance,
 		   (c, printcharfun, escapeflag));
-  sprintf (buf, " 0x%x>", c->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%x>", c->header.uid);
 }
 
 static void
@@ -250,19 +247,15 @@ mark_font_instance (Lisp_Object obj)
 static void
 print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[200];
   Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
   if (print_readably)
     printing_unreadable_object ("#<font-instance 0x%x>", f->header.uid);
-  write_c_string ("#<font-instance ", printcharfun);
-  print_internal (f->name, printcharfun, 1);
-  write_c_string (" on ", printcharfun);
-  print_internal (f->device, printcharfun, 0);
+  write_fmt_string_lisp (printcharfun, "#<font-instance %S", 1, f->name);
+  write_fmt_string_lisp (printcharfun, " on %s", 1, f->device);
   if (!NILP (f->device))
     MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
 		   (f, printcharfun, escapeflag));
-  sprintf (buf, " 0x%x>", f->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%x>", f->header.uid);
 }
 
 static void

@@ -342,11 +342,11 @@ CHARSET_BY_LEADING_BYTE (int lb)
 {
   extern struct charset_lookup *chlook;
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TEXT
   /* When error-checking is on, x86 GCC 2.95.2 -O3 miscompiles the
      following unless we introduce `tem'. */
   int tem = lb;
-  type_checking_assert (tem >= MIN_LEADING_BYTE && tem <= 0xFF);
+  text_checking_assert (tem >= MIN_LEADING_BYTE && tem <= 0xFF);
 #endif
   return chlook->charset_by_leading_byte[lb - MIN_LEADING_BYTE];
 }
@@ -491,7 +491,7 @@ MAKE_CHAR_1 (Lisp_Object charset, int c1, int c2)
 	     FIELD1_TO_PRIVATE_LEADING_BYTE) << 14) | ((c1) << 7) | (c2);
 }
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 INLINE_HEADER Emchar MAKE_CHAR (Lisp_Object charset, int c1, int c2);
 INLINE_HEADER Emchar
 MAKE_CHAR (Lisp_Object charset, int c1, int c2)
@@ -520,7 +520,7 @@ INLINE_HEADER void breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1,
 INLINE_HEADER void
 breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
 {
-  charbpos_checking_assert (valid_char_p (c));
+  text_checking_assert (valid_char_p (c));
   *charset = CHAR_CHARSET (c);
   BREAKUP_CHAR_1_UNSAFE (c, *charset, *c1, *c2);
 }

@@ -65,6 +65,12 @@ MAKEINFO=c:\src\texinfo-4.0\makeinfo\makeinfo.exe
 # Set this to enable some debug code that doesn't slow things down.
 DEBUG_XEMACS=1
 
+# Uncomment this to turn off or on the error-checking code, which adds
+# abundant internal error checking (and slows things down a lot).  Normally,
+# leave this alone -- it will be on for beta builds and off for release
+# builds.
+# ERROR_CHECK_ALL=0
+
 # Set this to speed up building, for development purposes.
 QUICK_BUILD=0
 

@@ -690,7 +690,7 @@ do {							\
 			   block_size);
     lispstream = make_coding_input_stream
       (XLSTREAM (lispstream), get_coding_system_for_text_file (codesys, 1),
-       CODING_DECODE);
+       CODING_DECODE, 0);
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
     /* NOTE: Order of these is very important.  Don't rearrange them. */

@@ -1,6 +1,6 @@
 /* XEmacs routines to deal with range tables.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -55,7 +55,6 @@ static void
 print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
-  char buf[200];
   int i;
 
   write_c_string ("#s(range-table data (", printcharfun);
@@ -65,10 +64,10 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       if (i > 0)
 	write_c_string (" ", printcharfun);
       if (rte->first == rte->last)
-	sprintf (buf, "%ld ", (long) (rte->first));
+	write_fmt_string (printcharfun, "%ld ", (long) (rte->first));
       else
-	sprintf (buf, "(%ld %ld) ", (long) (rte->first), (long) (rte->last));
-      write_c_string (buf, printcharfun);
+	write_fmt_string (printcharfun, "(%ld %ld) ", (long) (rte->first),
+			  (long) (rte->last));
       print_internal (rte->val, printcharfun, 1);
     }
   write_c_string ("))", printcharfun);
@@ -167,7 +166,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
 /*                        Range table operations                        */
 /************************************************************************/
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_STRUCTURES
 
 static void
 verify_range_table (Lisp_Range_Table *rt)

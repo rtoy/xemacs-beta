@@ -4482,7 +4482,7 @@ re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
   return result;
 }
 
-#if defined (ERROR_CHECK_CHARBPOS) && defined (emacs)
+#if defined (ERROR_CHECK_TEXT) && defined (emacs)
 int in_re_match_2_internal;
 
 /* #### I am seeing an error (once) where regex_match_object gets set
@@ -4501,7 +4501,7 @@ restore_in_re_match_2_internal (Lisp_Object val)
 
 #define RESTORE_IN_MATCH_FLAG do {} while (0)
 
-#endif /* defined (ERROR_CHECK_CHARBPOS) && defined (emacs) */
+#endif /* defined (ERROR_CHECK_TEXT) && defined (emacs) */
 
 
 /* This is a separate function so that we can force an alloca cleanup
@@ -4639,7 +4639,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   /* 1 if this match is the best seen so far.  */
   re_bool best_match_p;
 
-#if defined (ERROR_CHECK_CHARBPOS) && defined (emacs)
+#if defined (ERROR_CHECK_TEXT) && defined (emacs)
   int speccount = specpdl_depth ();
 
 #if 0
@@ -4648,7 +4648,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #endif
   in_re_match_2_internal = 1;
   record_unwind_protect (restore_in_re_match_2_internal, Qnil);
-#endif /* defined (ERROR_CHECK_CHARBPOS) && defined (emacs) */
+#endif /* defined (ERROR_CHECK_TEXT) && defined (emacs) */
 
   DEBUG_PRINT1 ("\n\nEntering re_match_2.\n");
 

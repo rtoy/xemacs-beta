@@ -1,7 +1,7 @@
 /* md5.c - Functions to compute MD5 message digest of files or memory blocks
    according to the definition of MD5 in RFC 1321 from April 1992.
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
    NOTE: The canonical source of this file is maintained with the GNU C
    Library.  Bugs can be reported to bug-glibc@prep.ai.mit.edu.
 
@@ -515,11 +515,10 @@ file-coding or Mule support.  Otherwise, they are ignored.
   unsigned char thehash[33];
   int i;
 
-  Lisp_Object instream;
-  struct gcpro gcpro1;
-  Lisp_Object raw_instream;
-  struct gcpro ngcpro1;
+  Lisp_Object raw_instream = Qnil, instream = Qnil;
+  struct gcpro gcpro1, gcpro2;
 
+  GCPRO2 (raw_instream, instream);
   /* Set up the input stream.  */
   if (BUFFERP (object))
     {
@@ -530,7 +529,7 @@ file-coding or Mule support.  Otherwise, they are ignored.
       /* Figure out where we need to get info from */
       get_buffer_range_char (b, start, end, &begv, &endv, GB_ALLOW_NIL);
 
-      instream = make_lisp_buffer_input_stream (b, begv, endv, 0);
+      raw_instream = make_lisp_buffer_input_stream (b, begv, endv, 0);
     }
   else
     {
@@ -538,15 +537,15 @@ file-coding or Mule support.  Otherwise, they are ignored.
       CHECK_STRING (object);
       get_string_range_byte (object, start, end, &bstart, &bend,
 			     GB_HISTORICAL_STRING_BEHAVIOR);
-      instream = make_lisp_string_input_stream (object, bstart, bend - bstart);
+      raw_instream = make_lisp_string_input_stream (object, bstart,
+						    bend - bstart);
     }
-  GCPRO1 (instream);
 
   /* Determine the coding and set up the conversion stream.  */
-  coding = md5_coding_system (object, coding, instream, !NILP (noerror));
-  raw_instream = instream;
-  instream = make_coding_input_stream (XLSTREAM (instream), coding, CODING_ENCODE);
-  NGCPRO1 (raw_instream);
+  coding = md5_coding_system (object, coding, raw_instream, !NILP (noerror));
+  Lstream_rewind (XLSTREAM (raw_instream));
+  instream = make_coding_input_stream (XLSTREAM (raw_instream), coding,
+				       CODING_ENCODE, 0);
 
   /* Initialize MD5 context.  */
   md5_init_ctx (&ctx);
@@ -565,7 +564,6 @@ file-coding or Mule support.  Otherwise, they are ignored.
     }
   Lstream_delete (XLSTREAM (instream));
   Lstream_delete (XLSTREAM (raw_instream));
-  NUNGCPRO;
   UNGCPRO;
 
   md5_finish_ctx (&ctx, digest);

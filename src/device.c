@@ -1,7 +1,7 @@
 /* Generic device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995, 1996, 2002 Ben Wing
 
 This file is part of XEmacs.
 
@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysdep.h"
+#include "toolbar.h"
 #include "window.h"
 
 #ifdef HAVE_SCROLLBARS
@@ -99,22 +100,16 @@ static void
 print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct device *d = XDEVICE (obj);
-  char buf[256];
 
   if (print_readably)
     printing_unreadable_object ("#<device %s 0x%x>",
 				XSTRING_DATA (d->name), d->header.uid);
 
-  sprintf (buf, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
-	   DEVICE_TYPE_NAME (d));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
+		    DEVICE_TYPE_NAME (d));
   if (DEVICE_LIVE_P (d) && !NILP (DEVICE_CONNECTION (d)))
-    {
-      write_c_string (" on ", printcharfun);
-      print_internal (DEVICE_CONNECTION (d), printcharfun, 1);
-    }
-  sprintf (buf, " 0x%x>", d->header.uid);
-  write_c_string (buf, printcharfun);
+    write_fmt_string_lisp (printcharfun, " on %S", 1, DEVICE_CONNECTION (d));
+  write_fmt_string (printcharfun, " 0x%x>", d->header.uid);
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("device", device,

@@ -24,18 +24,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "lstream.h"
+
+#include "bytecode.h"
 #include "console.h"
 #include "device.h"
 #include "faces.h"
-#include "glyphs.h"
-#include "objects.h"
-#include "bytecode.h"
-#include "window.h"
-#include "buffer.h"
 #include "frame.h"
+#include "glyphs.h"
+#include "gui.h"
 #include "insdel.h"
+#include "lstream.h"
+#include "objects.h"
 #include "opaque.h"
+#include "window.h"
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (button);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (combo_box);

@@ -30,22 +30,23 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "casetab.h"
+#include "chartab.h"
 #include "commands.h"
+#include "device.h"
 #include "events.h"             /* for EVENTP */
 #include "extents.h"
 #include "frame.h"
 #include "insdel.h"
-#include "window.h"
-#include "casetab.h"
-#include "chartab.h"
 #include "line-number.h"
+#include "window.h"
 
-#include "systime.h"
 #include "sysdep.h"
-#include "syspwd.h"
-#include "sysproc.h" /* for qxe_getpid() */
-#include "sysfile.h"
 #include "sysdir.h"
+#include "sysfile.h"
+#include "sysproc.h" /* for qxe_getpid() */
+#include "syspwd.h"
+#include "systime.h"
 
 /* Some static data, and a function to initialize it for each run */
 
@@ -332,7 +333,7 @@ save_excursion_save (void)
   /* #### Huh?  --hniksic */
   /*if (preparing_for_armageddon) return Qnil;*/
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   assert (XINT (Fpoint (Qnil)) ==
 	  XINT (Fmarker_position (Fpoint_marker (Qt, Qnil))));
 #endif

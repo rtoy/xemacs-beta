@@ -53,7 +53,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "buffer.h"
+#include "device.h"
+#include "faces.h"
+#include "file-coding.h"
+#include "frame.h"
+#include "gui.h"
+#include "imgproc.h"
+#include "insdel.h"
 #include "lstream.h"
+#include "opaque.h"
+#include "window.h"
+
 #include "console-x.h"
 #include "glyphs-x.h"
 #include "objects-x.h"
@@ -62,22 +74,10 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "xmu.h"
 
-#include "buffer.h"
-#include "window.h"
-#include "frame.h"
-#include "insdel.h"
-#include "opaque.h"
-#include "gui.h"
-#include "faces.h"
-
-#include "imgproc.h"
-
 #include "sysfile.h"
 #include "sysproc.h" /* for qxe_getpid() */
 
 #include <setjmp.h>
-
-#include "file-coding.h"
 
 #ifdef LWLIB_WIDGETS_MOTIF
 #include <Xm/Xm.h>
@@ -369,19 +369,17 @@ x_print_image_instance (Lisp_Image_Instance *p,
 			Lisp_Object printcharfun,
 			int escapeflag)
 {
-  char buf[100];
-
   switch (IMAGE_INSTANCE_TYPE (p))
     {
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      sprintf (buf, " (0x%lx", (unsigned long) IMAGE_INSTANCE_X_PIXMAP (p));
-      write_c_string (buf, printcharfun);
+      write_fmt_string (printcharfun, " (0x%lx",
+			(unsigned long) IMAGE_INSTANCE_X_PIXMAP (p));
       if (IMAGE_INSTANCE_X_MASK (p))
 	{
-	  sprintf (buf, "/0x%lx", (unsigned long) IMAGE_INSTANCE_X_MASK (p));
-	  write_c_string (buf, printcharfun);
+	  write_fmt_string (printcharfun, "/0x%lx",
+			    (unsigned long) IMAGE_INSTANCE_X_MASK (p));
 	}
       write_c_string (")", printcharfun);
       break;
@@ -2594,9 +2592,6 @@ x_progress_gauge_redisplay (Lisp_Object image_instance)
     {
       Arg al [1];
       Lisp_Object val;
-#ifdef ERROR_CHECK_GLYPHS
-      assert (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p)));
-#endif
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p))->value;
       XtSetArg (al[0], XtNvalue, XINT (val));
       XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (p), al, 1);

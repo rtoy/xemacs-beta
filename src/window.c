@@ -30,15 +30,16 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "commands.h"
+#include "device.h"
+#include "elhash.h"
 #include "faces.h"
 #include "frame.h"
-#include "objects.h"
 #include "glyphs.h"
+#include "gutter.h"
+#include "objects.h"
 #include "redisplay.h"
 #include "window.h"
-#include "elhash.h"
-#include "commands.h"
-#include "gutter.h"
 
 Lisp_Object Qwindowp, Qwindow_live_p, Qwindow_configurationp;
 Lisp_Object Qdisplay_buffer;
@@ -164,8 +165,6 @@ mark_window (Lisp_Object obj)
 static void
 print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[200];
-
   if (print_readably)
     printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
 
@@ -173,11 +172,9 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (!NILP (XWINDOW (obj)->buffer))
     {
       Lisp_Object name = XBUFFER (XWINDOW (obj)->buffer)->name;
-      write_c_string (" on ", printcharfun);
-      print_internal (name, printcharfun, 1);
+      write_fmt_string_lisp (printcharfun, " on %S", 1, name);
     }
-  sprintf (buf, " 0x%x>", XWINDOW (obj)->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%x>", XWINDOW (obj)->header.uid);
 }
 
 static void
@@ -4889,6 +4886,8 @@ map_windows_1 (Lisp_Object window,
    non-zero, the mapping is halted.  Otherwise, map_windows() maps
    over all windows in F.
 
+   If F is null, map over all frames on all devices and consoles.
+
    If MAPFUN creates or deletes windows, the behavior is undefined.  */
 
 int
@@ -5156,13 +5155,11 @@ static void
 print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct window_config *config = XWINDOW_CONFIGURATION (obj);
-  char buf[200];
   if (print_readably)
     printing_unreadable_object ("#<window-configuration 0x%x>",
 				config->header.uid);
   write_c_string ("#<window-configuration ", printcharfun);
-  sprintf (buf, "0x%x>", config->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "0x%x>", config->header.uid);
 }
 
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",

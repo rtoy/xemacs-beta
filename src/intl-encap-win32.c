@@ -210,6 +210,8 @@ pointer to another split-sized structure.
 
 begin-unicode-encapsulation-script
 
+// dir c:\Program Files\Microsoft Visual Studio\VC98\Include\
+
 file WINBASE.H
 
 yes GetBinaryType
@@ -1049,6 +1051,7 @@ no EnumTimeFormats not used, not examined yet
 no EnumDateFormats not used, not examined yet
 no EnumDateFormatsEx not used, not examined yet
 no GetStringTypeEx not used, not examined yet
+no GetStringType no such fun; A and W versions have different nos. of args
 no FoldString not used, not examined yet
 no EnumSystemLocales not used, not examined yet
 no EnumSystemCodePages not used, not examined yet
@@ -1108,8 +1111,6 @@ yes RegUnLoadKey
 yes InitiateSystemShutdown
 yes AbortSystemShutdown
 
-end-unicode-encapsulation-script
-
 file EXCPT.H
 
 // nothing
@@ -1133,6 +1134,8 @@ file RPC.H
 file NB30.H
 
 // nothing
+
+end-unicode-encapsulation-script
 
 file WINSOCK2.H
 
@@ -1251,6 +1254,17 @@ qxeDefMDIChildProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return DefMDIChildProcW (hWnd, uMsg, wParam, lParam);
   else
     return DefMDIChildProcA (hWnd, uMsg, wParam, lParam);
+}
+
+/* This one has two entry points called GetEnvironmentStringsW and
+   GetEnvironmentStrings. (misnamed A version) */
+Extbyte *
+qxeGetEnvironmentStrings (void)
+{
+  if (XEUNICODE_P)
+    return (Extbyte *) GetEnvironmentStringsW ();
+  else
+    return (Extbyte *) GetEnvironmentStrings ();
 }
 
 

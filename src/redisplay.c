@@ -264,6 +264,8 @@ static void update_line_start_cache (struct window *w, Charbpos from, Charbpos t
 				     Charbpos point, int no_regen);
 static int point_visible (struct window *w, Charbpos point, int type);
 
+static void sledgehammer_check_redisplay_structs (void);
+
 /* This used to be 10 but 30 seems to give much better performance. */
 #define INIT_MAX_PREEMPTS	30
 static int max_preempts;
@@ -4226,10 +4228,7 @@ ensure_modeline_generated (struct window *w, int type)
       if (Dynarr_length (dla) == 0)
 	{
 	  if (Dynarr_largest (dla) > 0)
-	    {
-	      struct display_line *mlp = Dynarr_atp (dla, 0);
-	      Dynarr_add (dla, *mlp);
-	    }
+	    Dynarr_increment (dla);
 	  else
 	    {
 	      struct display_line modeline;
@@ -6627,6 +6626,9 @@ redisplay_without_hooks (void)
 
  done:
   unbind_to (count);
+#ifdef ERROR_CHECK_DISPLAY
+  sledgehammer_check_redisplay_structs ();
+#endif /* ERROR_CHECK_DISPLAY */
 }
 
 void
@@ -9135,6 +9137,35 @@ compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+static int
+sledgehammer_check_redisplay_structs_1 (struct window *w, void *closure)
+{
+  int i, j;
+  display_line_dynarr *dl;
+
+  dl = window_display_lines (w, CURRENT_DISP);
+  
+  for (i = 0; i < Dynarr_largest (dl); i++)
+    for (j = i + 1; j < Dynarr_largest (dl); j++)
+      assert (Dynarr_atp (dl, i)->display_blocks !=
+	      Dynarr_atp (dl, j)->display_blocks);
+
+  dl = window_display_lines (w, DESIRED_DISP);
+
+  for (i = 0; i < Dynarr_largest (dl); i++)
+    for (j = i + 1; j < Dynarr_largest (dl); j++)
+      assert (Dynarr_atp (dl, i)->display_blocks !=
+	      Dynarr_atp (dl, j)->display_blocks);
+
+  return 0;
+}
+
+static void
+sledgehammer_check_redisplay_structs (void)
+{
+  map_windows (0, sledgehammer_check_redisplay_structs_1, NULL);
+}
 
 
 /***************************************************************************/

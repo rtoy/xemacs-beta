@@ -38,12 +38,15 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-msw.h"
-#include "console-stream.h"
-#include "objects-msw.h"
+#include "device.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
+
+#include "console-msw.h"
+#include "console-stream.h"
+#include "objects-msw.h"
+
 #include "sysdep.h"
 
 /* win32 DDE management library globals */
@@ -860,7 +863,7 @@ mswindows_handle_page_setup_dialog_box (struct frame *f, Lisp_Object keys)
   if ((UNBOUNDP (device) && UNBOUNDP (settings)) ||
       (!UNBOUNDP (device) && !UNBOUNDP (settings)))
     sferror ("Exactly one of :device and :printer-settings must be given",
-		  keys);
+	     keys);
 
   if (UNBOUNDP (device))
     device = settings;
@@ -871,8 +874,8 @@ mswindows_handle_page_setup_dialog_box (struct frame *f, Lisp_Object keys)
     DWORD data;
 
     qxeGetLocaleInfo (LOCALE_USER_DEFAULT,
-		      LOCALE_IMEASURE|LOCALE_RETURN_NUMBER,
-		      (Extbyte *) &data, sizeof(data));
+		      LOCALE_IMEASURE | LOCALE_RETURN_NUMBER,
+		      (Extbyte *) &data, sizeof (data));
 
     memset (&pd, 0, sizeof (pd));
     pd.lStructSize = sizeof (pd);
@@ -1068,25 +1071,16 @@ static void
 print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
 	       int escapeflag)
 {
-  CIntbyte buf[100];
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
     printing_unreadable_object ("#<msprinter-settings 0x%x>",
 				dm->header.uid);
   write_c_string ("#<msprinter-settings", printcharfun);
   if (!NILP (dm->printer_name))
-    {
-      write_c_string (" for ", printcharfun);
-      print_internal (dm->printer_name, printcharfun, 1);
-    }
+    write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
   if (!NILP (dm->device))
-    {
-      write_c_string (" (currently on ", printcharfun);
-      print_internal (dm->device, printcharfun, 0);
-      write_c_string (")", printcharfun);
-    }
-  sprintf (buf, " 0x%x>", dm->header.uid);
-  write_c_string (buf, printcharfun);
+    write_fmt_string_lisp (printcharfun, " (currently on %s)", 1, dm->device);
+  write_fmt_string (printcharfun, " 0x%x>", dm->header.uid);
 }
 
 static void

@@ -28,14 +28,17 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-stream.h"
-#include "console-tty.h"
+#include "device.h"
 #include "events.h"
 #include "frame.h"
 #include "redisplay.h"
 #include "sysdep.h"
-#include "sysfile.h"
 #include "window.h"
+
+#include "console-stream.h"
+#include "console-tty.h"
+
+#include "sysfile.h"
 
 DEFINE_CONSOLE_TYPE (stream);
 

@@ -125,6 +125,44 @@ Any other non-nil value means search all devices."
 ;				       walk-windows-history))
 ;      (funcall function walk-windows-current))))
 
+(defun get-window-with-predicate (predicate &optional minibuf
+					    all-frames default)
+  "Return a window satisfying PREDICATE.
+
+This function cycles through all visible windows using `walk-windows',
+calling PREDICATE on each one.  PREDICATE is called with a window as
+argument.  The first window for which PREDICATE returns a non-nil
+value is returned.  If no window satisfies PREDICATE, DEFAULT is
+returned.
+
+Optional second arg MINIBUF t means count the minibuffer window even
+if not active.  MINIBUF nil or omitted means count the minibuffer iff
+it is active.  MINIBUF neither t nor nil means not to count the
+minibuffer even if it is active.
+
+Several frames may share a single minibuffer; if the minibuffer
+counts, all windows on all frames that share that minibuffer count
+too.  Therefore, if you are using a separate minibuffer frame
+and the minibuffer is active and MINIBUF says it counts,
+`walk-windows' includes the windows in the frame from which you
+entered the minibuffer, as well as the minibuffer window.
+
+ALL-FRAMES is the optional third argument.
+ALL-FRAMES nil or omitted means cycle within the frames as specified above.
+ALL-FRAMES = `visible' means include windows on all visible frames.
+ALL-FRAMES = 0 means include windows on all visible and iconified frames.
+ALL-FRAMES = t means include windows on all frames including invisible frames.
+If ALL-FRAMES is a frame, it means include windows on that frame.
+Anything else means restrict to the selected frame."
+  (catch 'found
+    (walk-windows #'(lambda (window)
+		      (when (funcall predicate window)
+			(throw 'found window)))
+		  minibuf all-frames)
+    default))
+
+(defalias 'some-window 'get-window-with-predicate)
+
 (defun minibuffer-window-active-p (window)
   "Return t if WINDOW (a minibuffer window) is now active."
   (eq window (active-minibuffer-window)))
@@ -149,13 +187,26 @@ The value returned is the value of the last form in BODY."
 
 (defun count-windows (&optional minibuf)
    "Return the number of visible windows.
-Optional arg MINIBUF non-nil means count the minibuffer
+This counts the windows in the selected frame and (if the minibuffer is
+to be counted) its minibuffer frame (if that's not the same frame).
+The optional arg MINIBUF non-nil means count the minibuffer
 even if it is inactive."
    (let ((count 0))
      (walk-windows (function (lambda (w)
 			       (setq count (+ count 1))))
 		   minibuf)
      count))
+
+(defun window-safely-shrinkable-p (&optional window)
+  "Non-nil if the WINDOW can be shrunk without shrinking other windows.
+If WINDOW is nil or omitted, it defaults to the currently selected window."
+  (save-selected-window
+    (when window (select-window window))
+    (or (and (not (eq window (frame-first-window)))
+	     (= (car (window-pixel-edges))
+		(car (window-pixel-edges (previous-window)))))
+	(= (car (window-pixel-edges))
+	   (car (window-pixel-edges (next-window)))))))
 
 (defun balance-windows ()
   "Make all visible windows the same height (approximately)."
@@ -285,6 +336,145 @@ No arg means split equally."
   "Make current window ARG columns narrower."
   (interactive "p")
   (shrink-window arg t))
+
+; (defun window-buffer-height (window)
+;   "Return the height (in screen lines) of the buffer that WINDOW is displaying."
+;   (save-excursion
+;     (set-buffer (window-buffer window))
+;     (goto-char (point-min))
+;     (let ((ignore-final-newline
+;            ;; If buffer ends with a newline, ignore it when counting height
+;            ;; unless point is after it.
+;            (and (not (eobp)) (eq ?\n (char-after (1- (point-max)))))))
+;       (+ 1 (nth 2 (compute-motion (point-min)
+;                                   '(0 . 0)
+;                                   (- (point-max) (if ignore-final-newline 1 0))
+;                                   (cons 0 100000000)
+;                                   (window-width window)
+;                                   nil
+;                                   window))))))
+
+(defun count-screen-lines (&optional beg end count-final-newline window)
+  "Return the number of screen lines in the region.
+The number of screen lines may be different from the number of actual lines,
+due to line breaking, display table, etc.
+
+Optional arguments BEG and END default to `point-min' and `point-max'
+respectively.
+
+If region ends with a newline, ignore it unless optional third argument
+COUNT-FINAL-NEWLINE is non-nil.
+
+The optional fourth argument WINDOW specifies the window used for obtaining
+parameters such as width, horizontal scrolling, and so on.  The default is
+to use the selected window's parameters.
+
+Like `vertical-motion', `count-screen-lines' always uses the current buffer,
+regardless of which buffer is displayed in WINDOW.  This makes possible to use
+`count-screen-lines' in any buffer, whether or not it is currently displayed
+in some window."
+  (unless beg
+    (setq beg (point-min)))
+  (unless end
+    (setq end (point-max)))
+  (if (= beg end)
+      0
+    (save-excursion
+      (save-restriction
+        (widen)
+        (narrow-to-region (min beg end)
+                          (if (and (not count-final-newline)
+                                   (= ?\n (char-before (max beg end))))
+                              (1- (max beg end))
+                            (max beg end)))
+        (goto-char (point-min))
+        (1+ (vertical-motion (buffer-size) window))))))
+
+; (defun fit-window-to-buffer (&optional window max-height min-height)
+;   "Make WINDOW the right size to display its contents exactly.
+; If WINDOW is omitted or nil, it defaults to the selected window.
+; If the optional argument MAX-HEIGHT is supplied, it is the maximum height
+;   the window is allowed to be, defaulting to the frame height.
+; If the optional argument MIN-HEIGHT is supplied, it is the minimum
+;   height the window is allowed to be, defaulting to `window-min-height'.
+
+; The heights in MAX-HEIGHT and MIN-HEIGHT include the mode-line and/or
+; header-line."
+;   (interactive)
+
+;   (when (null window)
+;     (setq window (selected-window)))
+;   (when (null max-height)
+;     (setq max-height (frame-height (window-frame window))))
+
+;   (let* ((buf
+; 	  ;; Buffer that is displayed in WINDOW
+; 	  (window-buffer window))
+; 	 (window-height
+; 	  ;; The current height of WINDOW
+; 	  (window-height window))
+; 	 (desired-height
+; 	  ;; The height necessary to show the buffer displayed by WINDOW
+; 	  ;; (`count-screen-lines' always works on the current buffer).
+; 	  (with-current-buffer buf
+; 	    (+ (count-screen-lines)
+; 	       ;; If the buffer is empty, (count-screen-lines) is
+; 	       ;; zero.  But, even in that case, we need one text line
+; 	       ;; for cursor.
+; 	       (if (= (point-min) (point-max))
+; 		   1 0)
+; 	       ;; For non-minibuffers, count the mode-line, if any
+; 	       (if (and (not (window-minibuffer-p window))
+; 			mode-line-format)
+; 		   1 0)
+; 	       ;; Count the header-line, if any
+; 	       (if header-line-format 1 0))))
+; 	 (delta
+; 	  ;; Calculate how much the window height has to change to show
+; 	  ;; desired-height lines, constrained by MIN-HEIGHT and MAX-HEIGHT.
+; 	  (- (max (min desired-height max-height)
+; 		  (or min-height window-min-height))
+; 	     window-height))
+; 	 ;; We do our own height checking, so avoid any restrictions due to
+; 	 ;; window-min-height.
+; 	 (window-min-height 1))
+
+;     ;; Don't try to redisplay with the cursor at the end
+;     ;; on its own line--that would force a scroll and spoil things.
+;     (when (with-current-buffer buf
+; 	    (and (eobp) (bolp) (not (bobp))))
+;       (set-window-point window (1- (window-point window))))
+
+;     (save-selected-window
+;       (select-window window)
+
+;       ;; Adjust WINDOW to the nominally correct size (which may actually
+;       ;; be slightly off because of variable height text, etc).
+;       (unless (zerop delta)
+; 	(enlarge-window delta))
+
+;       ;; Check if the last line is surely fully visible.  If not,
+;       ;; enlarge the window.
+;       (let ((end (with-current-buffer buf
+; 		   (save-excursion
+; 		     (goto-char (point-max))
+; 		     (when (and (bolp) (not (bobp)))
+; 		       ;; Don't include final newline
+; 		       (backward-char 1))
+; 		     (when truncate-lines
+; 		       ;; If line-wrapping is turned off, test the
+; 		       ;; beginning of the last line for visibility
+; 		       ;; instead of the end, as the end of the line
+; 		       ;; could be invisible by virtue of extending past
+; 		       ;; the edge of the window.
+; 		       (forward-line 0))
+; 		     (point)))))
+; 	(set-window-vscroll window 0)
+; 	(while (and (< desired-height max-height)
+; 		    (= desired-height (window-height window))
+; 		    (not (pos-visible-in-window-p end window)))
+; 	  (enlarge-window 1)
+; 	  (setq desired-height (1+ desired-height)))))))
 
 (defun shrink-window-if-larger-than-buffer (&optional window)
   "Shrink the WINDOW to be as small as possible to display its contents.

@@ -1301,7 +1301,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 	  /* Lstream_write() will never successfully write less than
 	     the amount sent in.  In the worst case, it just buffers
 	     the unwritten data. */
-	  writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM(p)), chunkbuf,
+	  writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM (p)), chunkbuf,
 				    chunklen);
 	  {
 	    int save_errno = errno;
@@ -1317,7 +1317,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 	      /* Buffer is full.  Wait, accepting input;
 		 that may allow the program
 		 to finish doing output and read more.  */
-	      Faccept_process_output (Qnil, make_int (1), Qnil);
+	      Faccept_process_output (Qnil, volatile_make_int (1), Qnil);
 	      /* It could have *really* finished, deleting the process */
 	      if (NILP(p->pipe_outstream))
 		return;
@@ -1345,7 +1345,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
     }
 
   old_sigpipe = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, send_process_trap);
-  Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
+  Lstream_flush (XLSTREAM (DATA_OUTSTREAM (p)));
   EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 }
 

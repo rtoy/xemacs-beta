@@ -83,7 +83,7 @@ extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
 /* Number of bytes in the string representation of a character. */
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TEXT
 
 INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file,
 					     int line);
@@ -97,11 +97,11 @@ REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file, int line)
 #define REP_BYTES_BY_FIRST_BYTE(fb) \
   REP_BYTES_BY_FIRST_BYTE_1 (fb, __FILE__, __LINE__) 
 
-#else /* ERROR_CHECK_TYPECHECK */
+#else /* ERROR_CHECK_TEXT */
 
 #define REP_BYTES_BY_FIRST_BYTE(fb) (rep_bytes_by_first_byte[fb])
 
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_TEXT */
 
 /* Is this character represented by more than one byte in a string? */
 
@@ -260,7 +260,7 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 # define VALID_CHARPTR_P(ptr) 1
 #endif
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 # define ASSERT_VALID_CHARPTR(ptr) assert (VALID_CHARPTR_P (ptr))
 #else
 # define ASSERT_VALID_CHARPTR(ptr)
@@ -283,7 +283,7 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
   (ptr)--;				\
 } while (!VALID_CHARPTR_P (ptr))
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 #define INC_CHARPTR(ptr) do {		\
   ASSERT_VALID_CHARPTR (ptr);		\
   REAL_INC_CHARPTR (ptr);		\
@@ -303,11 +303,11 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
   (ptr) = (Intbyte *) dc_ptr2;			\
 } while (0)
 
-#else /* ! ERROR_CHECK_CHARBPOS */
+#else /* ! ERROR_CHECK_TEXT */
 #define INC_CHARBYTEBPOS(ptr, pos) REAL_INC_CHARBYTEBPOS (ptr, pos)
 #define INC_CHARPTR(ptr) REAL_INC_CHARPTR (ptr)
 #define DEC_CHARPTR(ptr) REAL_DEC_CHARPTR (ptr)
-#endif /* ! ERROR_CHECK_CHARBPOS */
+#endif /* ! ERROR_CHECK_TEXT */
 
 #ifdef MULE
 
@@ -1111,7 +1111,7 @@ do {							\
   memcpy ((ei)->data_, data, (ei)->bytelen_);		\
 } while (0)
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 #define EI_ASSERT_ASCII(ptr, len)			\
 do {							\
   int ei5;						\
@@ -1349,17 +1349,17 @@ DECLARE_INLINE_HEADER (Bytecount eiincpos_1 (Eistring *eistr,
   Intbyte *pos = eistr->data_ + bytepos;
   int i;
 
-  charbpos_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
-  charbpos_checking_assert (n >= 0 && n <= eistr->charlen_);
+  text_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
+  text_checking_assert (n >= 0 && n <= eistr->charlen_);
   /* We could check N more correctly now, but that would require a
      call to bytecount_to_charcount(), which would be needlessly
      expensive (it would convert O(N) algorithms into O(N^2) algorithms
-     with ERROR_CHECK_CHARBPOS, which would be bad).  If N is bad, we are
+     with ERROR_CHECK_TEXT, which would be bad).  If N is bad, we are
      guaranteed to catch it either inside INC_CHARPTR() or in the check
      below. */
   for (i = 0; i < n; i++)
     INC_CHARPTR (pos);
-  charbpos_checking_assert (pos - eistr->data_ <= eistr->bytelen_);
+  text_checking_assert (pos - eistr->data_ <= eistr->bytelen_);
   return pos - eistr->data_;
 }
 
@@ -1373,12 +1373,12 @@ DECLARE_INLINE_HEADER (Bytecount eidecpos_1 (Eistring *eistr,
   Intbyte *pos = eistr->data_ + bytepos;
   int i;
 
-  charbpos_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
-  charbpos_checking_assert (n >= 0 && n <= eistr->charlen_);
+  text_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
+  text_checking_assert (n >= 0 && n <= eistr->charlen_);
   /* We could check N more correctly now, but ...  see above. */
   for (i = 0; i < n; i++)
     DEC_CHARPTR (pos);
-  charbpos_checking_assert (pos - eistr->data_ <= eistr->bytelen_);
+  text_checking_assert (pos - eistr->data_ <= eistr->bytelen_);
   return pos - eistr->data_;
 }
 

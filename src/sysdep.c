@@ -45,35 +45,38 @@ Boston, MA 02111-1307, USA.  */
 /*          basic includes         */
 /* ------------------------------- */
 
-#ifdef HAVE_TTY
-#include "console-tty.h"
-#else
-#include "syssignal.h"
-#include "systty.h"
-#endif /* HAVE_TTY */
-
-#include "console-stream.h"
 
 #include "buffer.h"
+#include "device.h"
 #include "events.h"
 #include "frame.h"
-#include "redisplay.h"
 #include "process.h"
+#include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
 
-#include <setjmp.h>
-#include "sysfile.h"
-#include "syswait.h"
-#include "sysdir.h"
-#include "systime.h"
-#include "syssignal.h"
-#include "syspwd.h"
-#include "sysproc.h"
+#ifdef HAVE_TTY
+#include "console-tty.h"
+#else
+#endif /* HAVE_TTY */
 
+#include "console-stream.h"
 #ifdef WIN32_NATIVE
 #include "syswindows.h"
 #endif
+
+#include "sysdir.h"
+#include "sysfile.h"
+#include "sysproc.h"
+#include "syspwd.h"
+#include "syssignal.h"
+#include "syssignal.h"
+#include "systime.h"
+#include "systty.h"
+#include "syswait.h"
+
+#include <setjmp.h>
+
 
 /* ------------------------------- */
 /*         TTY definitions         */

@@ -222,19 +222,10 @@ print_chartab_range (Emchar first, Emchar last, Lisp_Object val,
 		     Lisp_Object printcharfun)
 {
   if (first != last)
-    {
-      write_c_string (" (", printcharfun);
-      print_internal (make_char (first), printcharfun, 0);
-      write_c_string (" ", printcharfun);
-      print_internal (make_char (last), printcharfun, 0);
-      write_c_string (") ", printcharfun);
-    }
+    write_fmt_string_lisp (printcharfun, " (%s %s)", 2,
+			   make_char (first), make_char (last));
   else
-    {
-      write_c_string (" ", printcharfun);
-      print_internal (make_char (first), printcharfun, 0);
-      write_c_string (" ", printcharfun);
-    }
+    write_fmt_string_lisp (printcharfun, " %s ", 1, make_char (first));
   print_internal (val, printcharfun, 1);
 }
 
@@ -302,13 +293,9 @@ print_chartab_two_byte_charset (Lisp_Object charset,
 
       if (!CHAR_TABLE_ENTRYP (jen))
 	{
-	  char buf[100];
-
-	  write_c_string (" [", printcharfun);
-	  print_internal (XCHARSET_NAME (charset), printcharfun, 0);
-	  sprintf (buf, " %d] ", i);
-	  write_c_string (buf, printcharfun);
-	  print_internal (jen, printcharfun, 0);
+	  write_fmt_string_lisp (printcharfun, " [%s %d] %s",
+				 3, XCHARSET_NAME (charset),
+				 make_int (i), jen);
 	}
       else
 	print_chartab_charset_row (charset, i, XCHAR_TABLE_ENTRY (jen),
@@ -368,11 +355,8 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  continue;
 	if (!CHAR_TABLE_ENTRYP (ann))
 	  {
-	    write_c_string (" ", printcharfun);
-	    print_internal (XCHARSET_NAME (charset),
-			    printcharfun, 0);
-	    write_c_string (" ", printcharfun);
-	    print_internal (ann, printcharfun, 0);
+	    write_fmt_string_lisp (printcharfun, " %s %s", 2,
+				   XCHARSET_NAME (charset), ann);
 	  }
 	else
 	  {
@@ -445,36 +429,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.
-
-A char table is a table that maps characters (or ranges of characters)
-to values.  Char tables are specialized for characters, only allowing
-particular sorts of ranges to be assigned values.  Although this
-loses in generality, it makes for extremely fast (constant-time)
-lookups, and thus is feasible for applications that do an extremely
-large number of lookups (e.g. scanning a buffer for a character in
-a particular syntax, where a lookup in the syntax table must occur
-once per character).
-
-When Mule support exists, the types of ranges that can be assigned
-values are
-
--- all characters
--- an entire charset
--- a single row in a two-octet charset
--- a single character
-
-When Mule support is not present, the types of ranges that can be
-assigned values are
-
--- all characters
--- a single character
-
-To create a char table, use `make-char-table'.
-To modify a char table, use `put-char-table' or `remove-char-table'.
-To retrieve the value for a particular character, use `get-char-table'.
-See also `map-char-table', `clear-char-table', `copy-char-table',
-`valid-char-table-type-p', `char-table-type-list',
-`valid-char-table-value-p', and `check-char-table-value'.
 */
        (object))
 {
@@ -483,7 +437,7 @@ See also `map-char-table', `clear-char-table', `copy-char-table',
 
 DEFUN ("char-table-type-list", Fchar_table_type_list, 0, 0, 0, /*
 Return a list of the recognized char table types.
-See `valid-char-table-type-p'.
+See `make-char-table'.
 */
        ())
 {
@@ -496,31 +450,7 @@ See `valid-char-table-type-p'.
 
 DEFUN ("valid-char-table-type-p", Fvalid_char_table_type_p, 1, 1, 0, /*
 Return t if TYPE if a recognized char table type.
-
-Each char table type is used for a different purpose and allows different
-sorts of values.  The different char table types are
-
-`category'
-	Used for category tables, which specify the regexp categories
-	that a character is in.  The valid values are nil or a
-	bit vector of 95 elements.  Higher-level Lisp functions are
-	provided for working with category tables.  Currently categories
-	and category tables only exist when Mule support is present.
-`char'
-	A generalized char table, for mapping from one character to
-	another.  Used for case tables, syntax matching tables,
-	`keyboard-translate-table', etc.  The valid values are characters.
-`generic'
-        An even more generalized char table, for mapping from a
-	character to anything.
-`display'
-	Used for display tables, which specify how a particular character
-	is to appear when displayed.  #### Not yet implemented.
-`syntax'
-	Used for syntax tables, which specify the syntax of a particular
-	character.  Higher-level Lisp functions are provided for
-	working with syntax tables.  The valid values are integers.
-
+See `make-char-table'.
 */
        (type))
 {
@@ -535,7 +465,7 @@ sorts of values.  The different char table types are
 
 DEFUN ("char-table-type", Fchar_table_type, 1, 1, 0, /*
 Return the type of CHAR-TABLE.
-See `valid-char-table-type-p'.
+See `make-char-table'.
 */
        (char_table))
 {
@@ -595,8 +525,60 @@ Reset CHAR-TABLE to its default state.
 
 DEFUN ("make-char-table", Fmake_char_table, 1, 1, 0, /*
 Return a new, empty char table of type TYPE.
-Currently recognized types are 'char, 'category, 'display, 'generic,
-and 'syntax.  See `valid-char-table-type-p'.
+
+A char table is a table that maps characters (or ranges of characters)
+to values.  Char tables are specialized for characters, only allowing
+particular sorts of ranges to be assigned values.  Although this
+loses in generality, it makes for extremely fast (constant-time)
+lookups, and thus is feasible for applications that do an extremely
+large number of lookups (e.g. scanning a buffer for a character in
+a particular syntax, where a lookup in the syntax table must occur
+once per character).
+
+When Mule support exists, the types of ranges that can be assigned
+values are
+
+-- all characters
+-- an entire charset
+-- a single row in a two-octet charset
+-- a single character
+
+When Mule support is not present, the types of ranges that can be
+assigned values are
+
+-- all characters
+-- a single character
+
+To create a char table, use `make-char-table'.
+To modify a char table, use `put-char-table' or `remove-char-table'.
+To retrieve the value for a particular character, use `get-char-table'.
+See also `map-char-table', `clear-char-table', `copy-char-table',
+`char-table-p', `valid-char-table-type-p', `char-table-type-list',
+`valid-char-table-value-p', and `check-char-table-value'.
+
+Each char table type is used for a different purpose and allows different
+sorts of values.  The different char table types are
+
+`category'
+	Used for category tables, which specify the regexp categories
+	that a character is in.  The valid values are nil or a
+	bit vector of 95 elements.  Higher-level Lisp functions are
+	provided for working with category tables.  Currently categories
+	and category tables only exist when Mule support is present.
+`char'
+	A generalized char table, for mapping from one character to
+	another.  Used for case tables, syntax matching tables,
+	`keyboard-translate-table', etc.  The valid values are characters.
+`generic'
+        An even more generalized char table, for mapping from a
+	character to anything.
+`display'
+	Used for display tables, which specify how a particular character
+	is to appear when displayed.  #### Not yet implemented.
+`syntax'
+	Used for syntax tables, which specify the syntax of a particular
+	character.  Higher-level Lisp functions are provided for
+	working with syntax tables.  The valid values are integers.
 */
        (type))
 {
@@ -1149,7 +1131,7 @@ one of the following:
 -- A single character
 
 VALUE must be a value appropriate for the type of CHAR-TABLE.
-See `valid-char-table-type-p'.
+See `make-char-table'.
 */
        (range, value, char_table))
 {
@@ -1619,10 +1601,8 @@ check_category_char (Emchar ch, Lisp_Object table,
 {
   REGISTER Lisp_Object temp;
   Lisp_Char_Table *ctbl;
-#ifdef ERROR_CHECK_TYPECHECK
   if (NILP (Fcategory_table_p (table)))
     wtaerror ("Expected category table", table);
-#endif
   ctbl = XCHAR_TABLE (table);
   temp = get_char_table (ch, ctbl);
   if (NILP (temp))

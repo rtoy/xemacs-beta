@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -354,20 +354,16 @@ gtk_print_image_instance (struct Lisp_Image_Instance *p,
 			  Lisp_Object printcharfun,
 			  int escapeflag)
 {
-  char buf[100];
-
   switch (IMAGE_INSTANCE_TYPE (p))
     {
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      sprintf (buf, " (0x%lx", (unsigned long) IMAGE_INSTANCE_GTK_PIXMAP (p));
-      write_c_string (buf, printcharfun);
+      write_fmt_string (printcharfun, " (0x%lx",
+			(unsigned long) IMAGE_INSTANCE_GTK_PIXMAP (p));
       if (IMAGE_INSTANCE_GTK_MASK (p))
-	{
-	  sprintf (buf, "/0x%lx", (unsigned long) IMAGE_INSTANCE_GTK_MASK (p));
-	  write_c_string (buf, printcharfun);
-	}
+	write_fmt_string (printcharfun, "/0x%lx",
+			  (unsigned long) IMAGE_INSTANCE_GTK_MASK (p));
       write_c_string (")", printcharfun);
       break;
 #if HAVE_SUBWINDOWS
@@ -1126,7 +1122,7 @@ write_lisp_string_to_temp_file (Lisp_Object string)
   ostr = XLSTREAM (outstream);
   /* setup the conversion stream */
   conv_out_stream =
-    make_coding_output_stream (ostr, Qbinary, CODING_ENCODE);
+    make_coding_output_stream (ostr, Qbinary, CODING_ENCODE, 0);
   costr = XLSTREAM (conv_out_stream);
   GCPRO4 (tempfile, instream, outstream, conv_out_stream);
 

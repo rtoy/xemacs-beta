@@ -31,14 +31,15 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "device.h"
 #include "events.h"
+#include "file-coding.h"
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"             /* minibuf_level */
-#include "file-coding.h"
 
 #include "sysfile.h"
 #include "sysproc.h"
@@ -3007,7 +3008,7 @@ under Mule, is very difficult.)
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
     stream = make_coding_input_stream
       (XLSTREAM (stream), get_coding_system_for_text_file (codesys, 1),
-       CODING_DECODE);
+       CODING_DECODE, 0);
     Lstream_set_character_mode (XLSTREAM (stream));
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
 
@@ -3337,7 +3338,8 @@ here because write-region handler writers need to be aware of it.
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
     outstream =
-      make_coding_output_stream (XLSTREAM (outstream), codesys, CODING_ENCODE);
+      make_coding_output_stream (XLSTREAM (outstream), codesys,
+				 CODING_ENCODE, 0);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
     if (STRINGP (start))

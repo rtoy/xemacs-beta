@@ -1589,12 +1589,9 @@ print_weak_list (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("#<weak-list>");
 
-  write_c_string ("#<weak-list ", printcharfun);
-  print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
-		  printcharfun, 0);
-  write_c_string (" ", printcharfun);
-  print_internal (XWEAK_LIST (obj)->list, printcharfun, escapeflag);
-  write_c_string (">", printcharfun);
+  write_fmt_string_lisp (printcharfun, "#<weak-list %s %S>", 2,
+			 encode_weak_list_type (XWEAK_LIST (obj)->type),
+			 XWEAK_LIST (obj)->list);
 }
 
 static int

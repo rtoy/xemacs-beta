@@ -1,7 +1,7 @@
 /* TTY console functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -116,14 +116,14 @@ tty_init_console (struct console *con, Lisp_Object props)
   tty_con->instream =
     make_coding_input_stream (XLSTREAM (tty_con->instream),
 			      get_coding_system_for_text_file (Qkeyboard, 0),
-			      CODING_DECODE);
+			      CODING_DECODE, 0);
   Lstream_set_buffering (XLSTREAM (tty_con->instream), LSTREAM_UNBUFFERED, 0);
   Lstream_set_character_mode (XLSTREAM (tty_con->instream));
   tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0);
   tty_con->outstream =
     make_coding_output_stream (XLSTREAM (tty_con->outstream),
 			       get_coding_system_for_text_file (Qterminal, 0),
-			       CODING_ENCODE);
+			       CODING_ENCODE, 0);
   tty_con->terminal_type = terminal_type;
   tty_con->controlling_process = controlling_process;
 

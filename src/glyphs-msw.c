@@ -30,23 +30,24 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "device.h"
+#include "elhash.h"
+#include "faces.h"
+#include "file-coding.h"
+#include "frame.h"
+#include "gui.h"
+#include "imgproc.h"
+#include "insdel.h"
 #include "lstream.h"
+#include "opaque.h"
+#include "sysdep.h"
+#include "sysfile.h"
+#include "window.h"
 
 #include "console-msw.h"
 #include "glyphs-msw.h"
 #include "objects-msw.h"
-
-#include "window.h"
-#include "elhash.h"
-#include "buffer.h"
-#include "frame.h"
-#include "insdel.h"
-#include "opaque.h"
-#include "sysdep.h"
-#include "sysfile.h"
-#include "faces.h"
-#include "imgproc.h"
-#include "file-coding.h"
 
 #define WIDGET_GLYPH_SLOT 0
 
@@ -1703,21 +1704,17 @@ mswindows_print_image_instance (Lisp_Image_Instance *p,
 				Lisp_Object printcharfun,
 				int escapeflag)
 {
-  char buf[100];
-
   switch (IMAGE_INSTANCE_TYPE (p))
     {
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      sprintf (buf, " (0x%lx",
-	       (unsigned long) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
-      write_c_string (buf, printcharfun);
+      write_fmt_string (printcharfun, " (0x%lx",
+			(unsigned long) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
       if (IMAGE_INSTANCE_MSWINDOWS_MASK (p))
 	{
-	  sprintf (buf, "/0x%lx",
-		   (unsigned long) IMAGE_INSTANCE_MSWINDOWS_MASK (p));
-	  write_c_string (buf, printcharfun);
+	  write_fmt_string (printcharfun, "/0x%lx",
+			    (unsigned long) IMAGE_INSTANCE_MSWINDOWS_MASK (p));
 	}
       write_c_string (")", printcharfun);
       break;
@@ -2860,9 +2857,6 @@ mswindows_progress_gauge_redisplay (Lisp_Object image_instance)
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii))
     {
       Lisp_Object val;
-#ifdef ERROR_CHECK_GLYPHS
-      assert (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)));
-#endif
       val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
 #ifdef DEBUG_WIDGET_OUTPUT
       stderr_out ("progress gauge displayed value on %p updated to %ld\n",

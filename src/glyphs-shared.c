@@ -31,18 +31,20 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "lstream.h"
 
-#include "window.h"
-#include "elhash.h"
 #include "buffer.h"
+#include "elhash.h"
+#include "faces.h"
 #include "frame.h"
+#include "glyphs.h"
+#include "imgproc.h"
 #include "insdel.h"
+#include "lstream.h"
 #include "opaque.h"
 #include "sysdep.h"
+#include "window.h"
+
 #include "sysfile.h"
-#include "faces.h"
-#include "imgproc.h"
 
 Lisp_Object Q_resource_type, Q_resource_id;
 

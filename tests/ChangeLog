@@ -1,3 +1,8 @@
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* automated/mule-tests.el ((featurep 'mule)):
+	Fix for new Unicode support.
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
 	* The Great Mule Merge: placeholder.

@@ -1,3 +1,8 @@
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* make-mswin-unicode.pl: Don't be fucked up by CRLF.  Output code
+	to force errors when nonintercepted Windows calls issued.
+
 2002-03-14  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
         * make-mswin-unicode.pl: Pick up location of include files from

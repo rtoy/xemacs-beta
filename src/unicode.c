@@ -1113,7 +1113,7 @@ CHARACTER is one of the following:
 
 #endif /* MULE */
 
-DEFUN ("character-to-unicode", Fcharacter_to_unicode, 1, 1, 0, /*
+DEFUN ("char-to-unicode", Fchar_to_unicode, 1, 1, 0, /*
 Convert character to Unicode codepoint.
 When there is no international support (i.e. MULE is not defined),
 this function simply does `char-to-int'.
@@ -1128,7 +1128,7 @@ this function simply does `char-to-int'.
 #endif /* MULE */
 }
 
-DEFUN ("unicode-to-character", Funicode_to_character, 1, 2, 0, /*
+DEFUN ("unicode-to-char", Funicode_to_char, 1, 2, 0, /*
 Convert Unicode codepoint to character.
 CODE should be a non-negative integer.
 If CHARSETS is given, it should be a list of charsets, and only those
@@ -2112,8 +2112,7 @@ unicode_getprop (Lisp_Object coding_system, Lisp_Object prop)
 static void
 unicode_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 {
-  write_c_string ("(", printcharfun);
-  print_internal (unicode_getprop (cs, Qtype), printcharfun, 0);
+  write_fmt_string_lisp (printcharfun, "(%s", 1, unicode_getprop (cs, Qtype));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
     write_c_string (", little-endian", printcharfun);
   if (XCODING_SYSTEM_UNICODE_NEED_BOM (cs))
@@ -2155,8 +2154,8 @@ syms_of_unicode (void)
   DEFSYMBOL (Qignore_first_column);
 #endif /* MULE */
 
-  DEFSUBR (Fcharacter_to_unicode);
-  DEFSUBR (Funicode_to_character);
+  DEFSUBR (Fchar_to_unicode);
+  DEFSUBR (Funicode_to_char);
 
   DEFSYMBOL (Qunicode);
   DEFSYMBOL (Qucs_4);

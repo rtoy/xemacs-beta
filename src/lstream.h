@@ -247,7 +247,7 @@ struct lstream
 #define LSTREAM_TYPE_P(lstr, type) \
   ((lstr)->imp == lstream_##type)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 INLINE_HEADER struct lstream *
 error_check_lstream_type (struct lstream *stream,
 			  const Lstream_implementation *imp);

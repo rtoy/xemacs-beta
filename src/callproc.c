@@ -469,7 +469,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       make_coding_input_stream
 	(XLSTREAM (instream),
 	 get_coding_system_for_text_file (Vcoding_system_for_read, 1),
-	 CODING_DECODE);
+	 CODING_DECODE, 0);
     Lstream_set_character_mode (XLSTREAM (instream));
     NGCPRO1 (instream);
     while (1)

@@ -1274,7 +1274,7 @@ bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
      we will get no farther than here.
 
      This also catches len < 0. */
-  charbpos_checking_assert (ptr == end);
+  text_checking_assert (ptr == end);
 
   return count;
 }
@@ -1287,7 +1287,7 @@ charcount_to_bytecount (const Intbyte *ptr, Charcount len)
 {
   const Intbyte *newptr = ptr;
 
-  charbpos_checking_assert (len >= 0);
+  text_checking_assert (len >= 0);
   while (len > 0)
     {
       INC_CHARPTR (newptr);
@@ -1405,7 +1405,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
 	  size = 1;
 	}
     }
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   else if (x >= bufmin)
     abort ();
 #endif
@@ -1683,7 +1683,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 	  size = 1;
 	}
     }
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   else if (x >= bytmin)
     abort ();
 #endif
@@ -2031,7 +2031,7 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
 
 #endif /* MULE */
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 
 Bytebpos
 charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
@@ -2048,7 +2048,7 @@ bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
   return real_bytebpos_to_charbpos (buf, x);
 }
 
-#endif /* ERROR_CHECK_CHARBPOS */
+#endif /* ERROR_CHECK_TEXT */
 
 
 /************************************************************************/
@@ -2522,7 +2522,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	    Dynarr_add (conversion_out_dynarr, (Extbyte) c);
 	    INC_CHARPTR (ptr);
 	  }
-	charbpos_checking_assert (ptr == end);
+	text_checking_assert (ptr == end);
       }
 #else
       Dynarr_add_many (conversion_out_dynarr, ptr, len);
@@ -2600,7 +2600,8 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	}
 
       streams_to_delete[delete_count++] = outstream =
-	make_coding_output_stream (XLSTREAM (outstream), coding_system, CODING_ENCODE);
+	make_coding_output_stream (XLSTREAM (outstream), coding_system,
+				   CODING_ENCODE, 0);
 
       reader = XLSTREAM (instream);
       writer = XLSTREAM (outstream);
@@ -2784,7 +2785,8 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	}
 
       streams_to_delete[delete_count++] = outstream =
-	make_coding_output_stream (XLSTREAM (outstream), coding_system, CODING_DECODE);
+	make_coding_output_stream (XLSTREAM (outstream), coding_system,
+				   CODING_DECODE, 0);
 
       reader = XLSTREAM (instream);
       writer = XLSTREAM (outstream);
@@ -3015,7 +3017,7 @@ Lstream_get_emchar_1 (Lstream *stream, int ch)
   for (bytes = REP_BYTES_BY_FIRST_BYTE (ch) - 1; bytes; bytes--)
     {
       int c = Lstream_getc (stream);
-      charbpos_checking_assert (c >= 0);
+      text_checking_assert (c >= 0);
       *++strptr = (Intbyte) c;
     }
   return charptr_emchar (str);

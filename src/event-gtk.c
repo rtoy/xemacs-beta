@@ -457,7 +457,7 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
          (Vcomposed_input_coding_system, 0) */
       instream =
 	make_coding_input_stream (XLSTREAM (fb_instream),
-				  Qundecided, CODING_DECODE);
+				  Qundecided, CODING_DECODE, 0);
       
       istr = XLSTREAM (instream);
 

@@ -30,18 +30,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "xintrinsicp.h"	/* CoreP.h needs this */
-#include <X11/CoreP.h>		/* Numerous places access the fields of
-				   a core widget directly.  We could
-				   use XtGetValues(), but ... */
-#include "xgccache.h"
-#include <X11/Shell.h>
-#include "xmu.h"
-#include "glyphs-x.h"
-#include "objects-x.h"
-
 #include "buffer.h"
+#include "device.h"
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
@@ -50,8 +40,20 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
+#include "console-x.h"
+#include "glyphs-x.h"
+#include "objects-x.h"
+
 #include "sysfile.h"
 #include "systime.h"
+
+#include "xintrinsicp.h"	/* CoreP.h needs this */
+#include <X11/CoreP.h>		/* Numerous places access the fields of
+				   a core widget directly.  We could
+				   use XtGetValues(), but ... */
+#include "xgccache.h"
+#include <X11/Shell.h>
+#include "xmu.h"
 
 #if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
 #include "sysdll.h"

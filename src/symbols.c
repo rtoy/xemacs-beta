@@ -918,7 +918,7 @@ mark_symbol_value_buffer_local (Lisp_Object obj)
 {
   struct symbol_value_buffer_local *bfwd;
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
   assert (XSYMBOL_VALUE_MAGIC_TYPE (obj) == SYMVAL_BUFFER_LOCAL ||
 	  XSYMBOL_VALUE_MAGIC_TYPE (obj) == SYMVAL_SOME_BUFFER_LOCAL);
 #endif
@@ -964,12 +964,11 @@ void
 print_symbol_value_magic (Lisp_Object obj,
 			  Lisp_Object printcharfun, int escapeflag)
 {
-  char buf[200];
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%lx>",
-	   XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
-	   XSYMBOL_VALUE_MAGIC_TYPE (obj),
-	   (long) XPNTR (obj));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun,
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%lx>",
+		    XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
+		    XSYMBOL_VALUE_MAGIC_TYPE (obj),
+		    (long) XPNTR (obj));
 }
 
 static const struct lrecord_description symbol_value_forward_description[] = {

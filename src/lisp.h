@@ -146,6 +146,7 @@ typedef int Emchar;
    buffer.h (where they rightfully belong) to avoid syntax errors
    in function prototypes. */
 
+
 typedef EMACS_INT Charbpos;
 typedef EMACS_INT Bytebpos;
 typedef EMACS_INT Membpos;
@@ -433,7 +434,7 @@ void Dynarr_free (void *d);
 #define Dynarr_end(d) Dynarr_atp (d, Dynarr_length (d))
 #define Dynarr_sizeof(d) ((d)->cur * (d)->elsize)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_STRUCTURES
 DECLARE_INLINE_HEADER (
 Dynarr *
 Dynarr_verify_1 (void *d, const char *file, int line)
@@ -448,7 +449,7 @@ Dynarr_verify_1 (void *d, const char *file, int line)
 #define Dynarr_verify(d) Dynarr_verify_1 (d, __FILE__, __LINE__)
 #else
 #define Dynarr_verify(d) (d)
-#endif /* ERROR_CHECK_TYPECHECK */
+#endif /* ERROR_CHECK_STRUCTURES */
 
 #define Dynarr_length(d) (Dynarr_verify (d)->cur)
 #define Dynarr_largest(d) (Dynarr_verify (d)->largest)
@@ -508,7 +509,7 @@ Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 /*    Error_Behavior typedefs      */
 /* ------------------------------- */
 
-#ifndef ERROR_CHECK_TYPECHECK
+#ifndef ERROR_CHECK_TYPES
 
 typedef enum error_behavior
 {
@@ -1399,7 +1400,7 @@ Bytecount charcount_to_bytecount (const Intbyte *ptr, Charcount len);
 #define XSET_STRING_ASCII_BEGIN(s, val) \
   ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 #define SLEDGEHAMMER_CHECK_ASCII_BEGIN
 #endif
 
@@ -1762,7 +1763,7 @@ DECLARE_LRECORD (marker, Lisp_Marker);
 
 #define CHARP(x) (XTYPE (x) == Lisp_Type_Char)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 
 INLINE_HEADER Emchar XCHAR_1 (Lisp_Object obj, const char *file, int line);
 INLINE_HEADER Emchar
@@ -1842,7 +1843,7 @@ DECLARE_LRECORD (float, Lisp_Float);
 
 #define ZEROP(x) EQ (x, Qzero)
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 
 #define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
 #define XINT(x) XINT_1 (x, __FILE__, __LINE__) 

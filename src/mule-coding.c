@@ -2657,17 +2657,15 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
       if (i > 0)
 	write_c_string (", ", printcharfun);
       write_fmt_string (printcharfun, "g%d=", i);
-      print_internal (CHARSETP (charset) ? XCHARSET_NAME (charset) : charset,
-		      printcharfun, 0);
+      print_internal (CHARSETP (charset) ? XCHARSET_NAME (charset) : charset, printcharfun, 0);
       if (XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (cs, i))
 	write_c_string ("(force)", printcharfun);
     }
 
-#define FROB(prop)				\
-  if (!NILP (iso2022_getprop (cs, prop)))	\
-    {						\
-      write_c_string (", ", printcharfun);	\
-      print_internal (prop, printcharfun, 0);	\
+#define FROB(prop)					\
+  if (!NILP (iso2022_getprop (cs, prop)))		\
+    {							\
+      write_fmt_string (printcharfun, ", %s", prop);	\
     }
   
   FROB (Qshort);
@@ -2684,16 +2682,14 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
       (XCODING_SYSTEM_ISO2022_INPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_c_string (", input-charset-conversion=", printcharfun);
-	print_internal (val, printcharfun, 0);
+	write_fmt_string_lisp (printcharfun, ", input-charset-conversion=%s", 1, val);
       }
     val =
       unparse_charset_conversion_specs
       (XCODING_SYSTEM_ISO2022_OUTPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_c_string (", output-charset-conversion=", printcharfun);
-	print_internal (val, printcharfun, 0);
+	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s", 1, val);
       }
     write_c_string (")", printcharfun);
   }

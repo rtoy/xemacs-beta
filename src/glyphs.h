@@ -1,4 +1,4 @@
-/* Generic glyph data structures + display tables
+ /* Generic glyph data structures + display tables
    Copyright (C) 1994 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996 Ben Wing
 
@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_glyphs_h_
 
 #include "specifier.h"
-#include "gui.h"
+#include "window.h" /* need for GLYPH_CACHEL_WIDTH */
 
 /************************************************************************/
 /*			Image Instantiators				*/
@@ -1059,8 +1059,6 @@ struct glyph_cachel
 
 #ifdef ERROR_CHECK_GLYPHS
 
-#include "window.h"
-
 INLINE_HEADER int
 GLYPH_CACHEL_WIDTH (struct window *window, int ind);
 INLINE_HEADER int
@@ -1091,7 +1089,7 @@ GLYPH_CACHEL_DESCENT (struct window *window, int ind)
 
 #else /* not ERROR_CHECK_GLYPHS */
 
-#define GLYPH_CACHEL_WIDTH(window, ind)		\
+#define GLYPH_CACHEL_WIDTH(window, ind)			\
   Dynarr_atp (window->glyph_cachels, ind)->width
 #define GLYPH_CACHEL_ASCENT(window, ind)		\
   Dynarr_atp (window->glyph_cachels, ind)->ascent
@@ -1102,7 +1100,7 @@ GLYPH_CACHEL_DESCENT (struct window *window, int ind)
 
 #define GLYPH_CACHEL(window, ind)			\
   Dynarr_atp (window->glyph_cachels, ind)
-#define GLYPH_CACHEL_GLYPH(window, ind)		\
+#define GLYPH_CACHEL_GLYPH(window, ind)			\
   Dynarr_atp (window->glyph_cachels, ind)->glyph
 #define GLYPH_CACHEL_DIRTYP(window, ind)		\
   Dynarr_atp (window->glyph_cachels, ind)->dirty

@@ -994,7 +994,7 @@ fixup_internal_substring (const Intbyte *nonreloc, Lisp_Object reloc,
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   assert (*len >= 0);
   if (STRINGP (reloc))
     {
@@ -1207,9 +1207,6 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Charbpos pos, Lisp_Object str,
 			     int flags)
 {
   /* This function can GC */
-#ifdef ERROR_CHECK_TYPECHECK
-  assert (STRINGP (str));
-#endif
   return buffer_insert_string_1 (buf, pos, 0, str, 0,
 				 XSTRING_LENGTH (str),
 				 flags);

@@ -11,16 +11,6 @@ bugs:
 
 -- Memory ballooning in some cases.  Not yet understood.
 
--- Occasional crash when freeing display structures.  The problem seems to
-   be this: A window has a "display line dynarr"; each display line has a
-   "display block dynarr".  Sometimes this display block dynarr is getting
-   freed twice.  It appears from looking at the code that sometimes a
-   display line from somewhere in the dynarr gets added to the end -- hence
-   two pointers to the same display block dynarr.  need to review this
-   code.
-
--- md5 doesn't work. (Lstream not open errors) Causes w3 to fail.
-
 -- other test suite failures?
 
 -- need to review the handling of sounds.  seems that not everything is
@@ -35,6 +25,23 @@ bugs:
 -- problems with process input: |uniq (for example) leaves ^M's at end of
    line.
 
+-- carefully review looking up of fonts by charset, esp. wrt the last
+   element of a font spec.
+
+-- add package support to ignore certain files -- *-util.el for languages.
+
+-- review use of escape-quoted in auto_save_1() vs. the buffer's own coding
+   system.
+
+fixed bugs???
+
+-- Occasional crash when freeing display structures.  The problem seems to
+   be this: A window has a "display line dynarr"; each display line has a
+   "display block dynarr".  Sometimes this display block dynarr is getting
+   freed twice.  It appears from looking at the code that sometimes a
+   display line from somewhere in the dynarr gets added to the end -- hence
+   two pointers to the same display block dynarr.  need to review this
+   code.
 
 August 29, 2001.
 

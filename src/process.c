@@ -38,7 +38,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"
+#include "device.h"
 #include "events.h"
+#include "file-coding.h"
 #include "frame.h"
 #include "hash.h"
 #include "insdel.h"
@@ -47,7 +49,6 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "procimpl.h"
 #include "window.h"
-#include "file-coding.h"
 
 #include "sysfile.h"
 #include "sysproc.h"
@@ -157,8 +158,7 @@ print_process (Lisp_Object object, Lisp_Object printcharfun, int escapeflag)
       print_internal (process->name, printcharfun, 1);
       write_c_string ((netp ? " " : " pid "), printcharfun);
       print_internal (process->pid, printcharfun, 1);
-      write_c_string (" state:", printcharfun);
-      print_internal (process->status_symbol, printcharfun, 1);
+      write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
       write_c_string (">", printcharfun);
     }
@@ -525,10 +525,12 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
   MAYBE_PROCMETH (init_process_io_handles, (p, in, out, flags));
 
   p->coding_instream =
-    make_coding_input_stream (XLSTREAM (p->pipe_instream), incode, CODING_DECODE);
+    make_coding_input_stream (XLSTREAM (p->pipe_instream), incode,
+			      CODING_DECODE, 0);
   Lstream_set_character_mode (XLSTREAM (p->coding_instream));
   p->coding_outstream =
-    make_coding_output_stream (XLSTREAM (p->pipe_outstream), outcode, CODING_ENCODE);
+    make_coding_output_stream (XLSTREAM (p->pipe_outstream), outcode,
+			       CODING_ENCODE, 0);
 }
 
 static void

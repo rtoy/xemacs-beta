@@ -30,14 +30,16 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "events.h"
-#include "macros.h"
+
+#include "buffer.h"
 #include "commands.h"
 #include "console.h"
-#include "buffer.h"
-#include "window.h"
+#include "device.h"
+#include "events.h"
 #include "frame.h"
 #include "keymap.h"
+#include "macros.h"
+#include "window.h"
 
 Lisp_Object Qexecute_kbd_macro;
 

@@ -280,8 +280,11 @@ static Lisp_Object Vcondition_handlers;
 static int throw_level;
 #endif
 
-#ifdef ERROR_CHECK_TYPECHECK
-void check_error_state_sanity (void);
+#ifdef ERROR_CHECK_STRUCTURES
+static void check_error_state_sanity (void);
+#define CHECK_ERROR_STATE_SANITY() check_error_state_sanity ()
+#else
+#define CHECK_ERROR_STATE_SANITY()
 #endif
 
 
@@ -1326,9 +1329,7 @@ internal_catch (Lisp_Object tag,
   c.val = (*func) (arg);
   if (threw) *threw = 0;
   catchlist = c.next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
+  CHECK_ERROR_STATE_SANITY ();
   return c.val;
 }
 
@@ -1380,9 +1381,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
          handlers.  */
       unbind_to (catchlist->pdlcount);
       catchlist = catchlist->next;
-#ifdef ERROR_CHECK_TYPECHECK
-      check_error_state_sanity ();
-#endif
+      CHECK_ERROR_STATE_SANITY ();
     }
   while (! last_time);
 #else
@@ -1409,9 +1408,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
   /* Unwind the specpdl stack */
   unbind_to (c->pdlcount);
   catchlist = c->next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
+  CHECK_ERROR_STATE_SANITY ();
 #endif /* Former code */
 
   gcprolist = c->gcpro;
@@ -1705,9 +1702,7 @@ condition_case_1 (Lisp_Object handlers,
   GCPRO3 (harg, c.val, c.tag);
 
   catchlist = c.next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
+  CHECK_ERROR_STATE_SANITY ();
   /* Note: The unbind also resets Vcondition_handlers.  Maybe we should
      delete this here. */
   Vcondition_handlers = XCDR (c.tag);
@@ -2129,8 +2124,8 @@ signal_error_1 (Lisp_Object sig, Lisp_Object data)
   for (;;)
     Fsignal (sig, data);
 }
-#ifdef ERROR_CHECK_TYPECHECK
-void
+#ifdef ERROR_CHECK_STRUCTURES
+static void
 check_error_state_sanity (void)
 {
   struct catchtag *c;

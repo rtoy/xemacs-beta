@@ -29,6 +29,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"             /* for Vbuffer_alist */
 #include "console.h"
+#include "device.h"
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
@@ -38,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 #include "menubar.h"
 #include "redisplay.h"
 #include "scrollbar.h"
+#include "toolbar.h"
 #include "window.h"
 
 Lisp_Object Vselect_frame_hook, Qselect_frame_hook;
@@ -149,18 +151,15 @@ static void
 print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct frame *frm = XFRAME (obj);
-  char buf[200];
 
   if (print_readably)
     printing_unreadable_object ("#<frame %s 0x%x>",
 				XSTRING_DATA (frm->name), frm->header.uid);
 
-  sprintf (buf, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
-	   FRAME_TYPE_NAME (frm));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<%s-frame ", !FRAME_LIVE_P (frm) ? "dead" :
+		    FRAME_TYPE_NAME (frm));
   print_internal (frm->name, printcharfun, 1);
-  sprintf (buf, " 0x%x>", frm->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,

@@ -1,5 +1,6 @@
 /* Markers: examining, setting and killing.
    Copyright (C) 1985, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -56,7 +57,6 @@ static void
 print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Marker *marker = XMARKER (obj);
-  char buf[200];
 
   if (print_readably)
     printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
@@ -66,12 +66,10 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     write_c_string (GETTEXT ("in no buffer"), printcharfun);
   else
     {
-      sprintf (buf, "at %ld in ", (long) marker_position (obj));
-      write_c_string (buf, printcharfun);
+      write_fmt_string (printcharfun, "at %ld in ", (long) marker_position (obj));
       print_internal (marker->buffer->name, printcharfun, 0);
     }
-  sprintf (buf, " 0x%lx>", (long) marker);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%lx>", (long) marker);
 }
 
 static int
@@ -299,7 +297,7 @@ unchain_marker (Lisp_Object m)
   if (b == 0)
     return;
 
-#ifdef ERROR_CHECK_GC
+#ifdef ERROR_CHECK_STRUCTURES
   assert (BUFFER_LIVE_P (b));
 #endif
 
@@ -310,7 +308,7 @@ unchain_marker (Lisp_Object m)
   else
     BUF_MARKERS (b) = marker_next (marker);
 
-#ifdef ERROR_CHECK_GC
+#ifdef ERROR_CHECK_STRUCTURES
   assert (marker != XMARKER (b->point_marker));
 #endif
 
@@ -335,7 +333,7 @@ bi_marker_position (Lisp_Object marker)
      positions. */
   pos = membpos_to_bytebpos (buf, m->membpos);
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
 #endif
@@ -363,7 +361,7 @@ set_bi_marker_position (Lisp_Object marker, Bytebpos pos)
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
 #endif

@@ -72,6 +72,7 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "casetab.h"
 #include "commands.h"
+#include "device.h"
 #include "elhash.h"
 #include "extents.h"
 #include "faces.h"
@@ -259,15 +260,9 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else if (!BUFFER_LIVE_P (b))
     write_c_string ("#<killed buffer>", printcharfun);
   else if (escapeflag)
-    {
-      write_c_string ("#<buffer ", printcharfun);
-      print_internal (b->name, printcharfun, 1);
-      write_c_string (">", printcharfun);
-    }
+    write_fmt_string_lisp (printcharfun, "#<buffer %S>", 1, b->name);
   else
-    {
-      print_internal (b->name, printcharfun, 0);
-    }
+    print_internal (b->name, printcharfun, 0);
 }
 
 /* We do not need a finalize method to handle a buffer's children list
@@ -1288,7 +1283,7 @@ with `delete-process'.
     uninit_buffer_extents (b);
     if (b->base_buffer)
       {
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_STRUCTURES
 	assert (!NILP (memq_no_quit (buf, b->base_buffer->indirect_children)));
 #endif
 	b->base_buffer->indirect_children =

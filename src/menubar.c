@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h"
 #include "menubar.h"
 #include "redisplay.h"
+#include "specifier.h"
 #include "window.h"
 
 int menubar_show_keybindings;

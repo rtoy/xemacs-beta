@@ -35,15 +35,16 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "elhash.h"
-#include "console-msw.h"
-#include "glyphs-msw.h"
+#include "device.h"
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
 #include "redisplay.h"
 #include "window.h"
+
+#include "console-msw.h"
+#include "glyphs-msw.h"
 
 #define MSWINDOWS_FRAME_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW)
 #define MSWINDOWS_POPUP_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP \

@@ -560,8 +560,7 @@ static void
 print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 				     int escapeflag)
 {
-  print_internal (XCODING_SYSTEM_NAME (cs), printcharfun, 0);
-  write_c_string ("[", printcharfun);
+  write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
   write_c_string ("]", printcharfun);
 }
@@ -2209,7 +2208,10 @@ coding_closer (Lstream *stream)
       str->convert_from = 0;
     }
 
-  return Lstream_close (str->other_end);
+  if (str->no_close_other)
+    return Lstream_flush (str->other_end);
+  else
+    return Lstream_close (str->other_end);
 }
 
 static void
@@ -2302,7 +2304,8 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
 
 static Lisp_Object
 make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
-		      const char *mode, enum encode_decode direction)
+		      const char *mode, enum encode_decode direction,
+		      int no_close_other)
 {
   Lstream *lstr = Lstream_new (lstream_coding, mode);
   struct coding_stream *str = CODING_STREAM_DATA (lstr);
@@ -2316,22 +2319,29 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->convert_to = Dynarr_new (unsigned_char);
   str->convert_from = Dynarr_new (unsigned_char);
   str->direction = direction;
+  str->no_close_other = no_close_other;
   set_coding_stream_coding_system (lstr, codesys);
   return wrap_lstream (lstr);
 }
 
+/* If NO_CLOSE_OTHER is non-zero, don't close STREAM (the stream at the
+   other end) when this stream is closed. */
 Lisp_Object
 make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
-			  enum encode_decode direction)
+			  enum encode_decode direction, int no_close_other)
 {
-  return make_coding_stream_1 (stream, codesys, "r", direction);
+  return make_coding_stream_1 (stream, codesys, "r", direction,
+                               no_close_other);
 }
 
+/* If NO_CLOSE_OTHER is non-zero, don't close STREAM (the stream at the
+   other end) when this stream is closed. */
 Lisp_Object
 make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
-			  enum encode_decode direction)
+			  enum encode_decode direction, int no_close_other)
 {
-  return make_coding_stream_1 (stream, codesys, "w", direction);
+  return make_coding_stream_1 (stream, codesys, "w", direction,
+                               no_close_other);
 }
 
 static Lisp_Object
@@ -2372,18 +2382,19 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
       XCODING_SYSTEM_EOL_TYPE (coding_system) == EOL_AUTODETECT)
     next = auto_outstream =
       make_coding_output_stream
-	(XLSTREAM (next), Fget_coding_system (Qconvert_eol_autodetect), CODING_DECODE);
+	(XLSTREAM (next), Fget_coding_system (Qconvert_eol_autodetect),
+	 CODING_DECODE, 0);
     
   if (!sink_char)
     next = from_outstream =
-      make_coding_output_stream (XLSTREAM (next), Qbinary, CODING_DECODE);
+      make_coding_output_stream (XLSTREAM (next), Qbinary, CODING_DECODE, 0);
   outstream = make_coding_output_stream (XLSTREAM (next), coding_system,
-					 direction);
+					 direction, 0);
   if (!source_char)
     {
       to_outstream =
 	make_coding_output_stream (XLSTREAM (outstream),
-				   Qbinary, CODING_ENCODE);
+				   Qbinary, CODING_ENCODE, 0);
       ostr = XLSTREAM (to_outstream);
     }
   else
@@ -2691,7 +2702,7 @@ chain_init_coding_streams_1 (struct chain_coding_stream *data,
 	make_coding_output_stream
 	  (XLSTREAM (lstream_out),
 	   codesys[direction == CODING_ENCODE ? ncodesys - (i + 1) : i],
-	   direction);
+	   direction, 0);
       lstream_out = data->lstreams[i];
       Lstream_set_buffering (XLSTREAM (lstream_out), LSTREAM_UNBUFFERED,
 			     0);
@@ -3904,7 +3915,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		make_coding_output_stream
 		  (XLSTREAM (data->c.lstreams[data->c.lstream_count - 1]),
 		   Fget_coding_system (Qconvert_eol_autodetect),
-		   CODING_DECODE);
+		   CODING_DECODE, 0);
 	      Lstream_set_buffering
 		(XLSTREAM (data->c.lstreams[1]),
 		 LSTREAM_UNBUFFERED, 0);
@@ -3915,7 +3926,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 	      (XLSTREAM (data->c.lstreams[1]),
 	       /* Substitute binary if we need to detect the encoding */
 	       csdata->do_coding ? Qbinary : csdata->cs,
-	       CODING_DECODE);
+	       CODING_DECODE, 0);
 	  Lstream_set_buffering (XLSTREAM (data->c.lstreams[0]),
 				 LSTREAM_UNBUFFERED, 0);
 
@@ -4124,6 +4135,9 @@ Return the coding system associated with a coding category.
   return Qnil;
 }
 
+/* Detect the encoding of STREAM.  Assumes stream is at the begnning and will
+   read through to the end of STREAM, leaving it there but open. */
+
 Lisp_Object
 detect_coding_stream (Lisp_Object stream)
 {
@@ -4133,11 +4147,11 @@ detect_coding_stream (Lisp_Object stream)
   Lisp_Object binary_instream =
     make_coding_input_stream
       (XLSTREAM (stream), Qbinary,
-       CODING_ENCODE);
+       CODING_ENCODE, 1);
   Lisp_Object decstream =
     make_coding_input_stream 
       (XLSTREAM (binary_instream),
-       Qundecided, CODING_DECODE);
+       Qundecided, CODING_DECODE, 0);
   Lstream *decstr = XLSTREAM (decstream);
   
   GCPRO3 (decstream, stream, binary_instream);

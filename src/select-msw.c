@@ -1,6 +1,6 @@
 /* mswindows selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -467,11 +467,10 @@ mswindows_selection_data_type_name (Lisp_Object type_id)
 
   /* Microsoft, stupid Microsoft */
   {
-    int size, new_size = 128;
+    int size = 64;
     do
       {
-	size = new_size;
-	new_size *= 2;
+	size *= 2;
 	namebuf = alloca_extbytes (size * XETCHAR_SIZE);
 	numchars = qxeGetClipboardFormatName (format, namebuf, size);
       }

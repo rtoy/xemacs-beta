@@ -1,6 +1,6 @@
 /* Implementation of the hash table lisp object type.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -120,15 +120,7 @@ struct Lisp_Hash_Table
 	  (probe = entries, !HENTRY_CLEAR_P (probe)) : 0);	\
        probe++)
 
-#ifndef ERROR_CHECK_HASH_TABLE
-# ifdef ERROR_CHECK_TYPECHECK
-#  define ERROR_CHECK_HASH_TABLE 1
-# else
-#  define ERROR_CHECK_HASH_TABLE 0
-# endif
-#endif
-
-#if ERROR_CHECK_HASH_TABLE
+#ifdef ERROR_CHECK_STRUCTURES
 static void
 check_hash_table_invariants (Lisp_Hash_Table *ht)
 {
@@ -335,8 +327,7 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	    break;
 	  }
 	print_internal (e->key, printcharfun, 1);
-	write_c_string (" ", printcharfun);
-	print_internal (e->value, printcharfun, 1);
+	write_fmt_string_lisp (printcharfun, " %S", 1, e->value);
 	count++;
       }
 
@@ -347,7 +338,6 @@ static void
 print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
-  char buf[128];
 
   write_c_string (print_readably ? "#s(hash-table" : "#<hash-table",
 		  printcharfun);
@@ -367,21 +357,21 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (ht->count || !print_readably)
     {
       if (print_readably)
-	sprintf (buf, " size %ld", (long) ht->count);
+	write_fmt_string (printcharfun, " size %ld", (long) ht->count);
       else
-	sprintf (buf, " size %ld/%ld", (long) ht->count, (long) ht->size);
-      write_c_string (buf, printcharfun);
+	write_fmt_string (printcharfun, " size %ld/%ld", (long) ht->count,
+			  (long) ht->size);
     }
 
   if (ht->weakness != HASH_TABLE_NON_WEAK)
     {
-      sprintf (buf, " weakness %s",
-	       (ht->weakness == HASH_TABLE_WEAK		  ? "key-and-value" :
-		ht->weakness == HASH_TABLE_KEY_WEAK	  ? "key" :
-		ht->weakness == HASH_TABLE_VALUE_WEAK	  ? "value" :
-		ht->weakness == HASH_TABLE_KEY_VALUE_WEAK ? "key-or-value" :
-		"you-d-better-not-see-this"));
-      write_c_string (buf, printcharfun);
+      write_fmt_string
+	(printcharfun, " weakness %s",
+	 (ht->weakness == HASH_TABLE_WEAK	    ? "key-and-value" :
+	  ht->weakness == HASH_TABLE_KEY_WEAK	    ? "key" :
+	  ht->weakness == HASH_TABLE_VALUE_WEAK	    ? "value" :
+	  ht->weakness == HASH_TABLE_KEY_VALUE_WEAK ? "key-or-value" :
+	  "you-d-better-not-see-this"));
     }
 
   if (ht->count)
@@ -391,15 +381,14 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     write_c_string (")", printcharfun);
   else
     {
-      sprintf (buf, " 0x%x>", ht->header.uid);
-      write_c_string (buf, printcharfun);
+      write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
     }
 }
 
 static void
 free_hentries (hentry *hentries, size_t size)
 {
-#if ERROR_CHECK_HASH_TABLE
+#ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
   hentry *e, *sentinel;
 

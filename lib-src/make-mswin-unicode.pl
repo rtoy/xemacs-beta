@@ -47,6 +47,9 @@ but is time-consuming, and is not supported standardly only due to
 evil marketing decisions made by Microsoft.  See src/intl-win32.c
 for more information.
 
+In XEmacs, this file is normally run using `nmake -f xemacs.mak
+unicode-encapsulate'.
+
 This script processes the specified files, looking for commands
 indicating library routines to Unicode-encapsulate, as follows:
 
@@ -139,6 +142,10 @@ my @current_bracket;
 while (<>)
   {
     chomp;
+    # remove trailing CR. #### Should not be necessary!  Perl should be
+    # opening these in text mode by default, as the docs claim, and
+    # automatically remove the CR's.
+    tr/\r//d;
 
   if (/^begin-unicode-encapsulation-script$/)
     {
@@ -324,6 +331,10 @@ foreach my $file (keys %files)
 		    $rettype =~ s/\bLPWSTR\b/Extbyte */;
 		    $rettype =~ s/\bLPCWSTR\b/const Extbyte */;
 		  }
+		print HOUT "#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED\n";
+		print HOUT "#undef $fun\n";
+		print HOUT "#define $fun error use qxe$fun or ${fun}A/${fun}W\n";
+		print HOUT "#endif\n";
 		if (defined ($reason))
 		  {
 		    print COUT "/* NOTE: $reason */\n";
@@ -385,6 +396,7 @@ foreach my $file (keys %files)
 		print HOUT "#endif /* $bracket */\n";
 		print COUT "#endif /* $bracket */\n\n";
 	      }
+	    print HOUT "\n";
 	  }
       }
   }

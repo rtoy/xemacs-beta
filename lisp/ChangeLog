@@ -1,3 +1,42 @@
+2002-03-31  Ben Wing  <ben@xemacs.org>
+
+	* behavior.el:
+	* behavior.el (within-behavior-enabling-disabling): New.
+	* behavior.el (behaviors): New.
+	* behavior.el (enabled-behavior-list): New.
+	* behavior.el (define-behavior):
+	* behavior.el (behavior-enabled-p):
+	* behavior.el (enable-behavior):
+	* behavior.el (disable-behavior):
+	* dumped-lisp.el (preloaded-file-list):
+	* menubar-items.el (default-menubar):
+	Add support for saving using custom.  Load into a dumped XEmacs.
+	Correct :title to :short-doc in accordance with behavior-defs.el.
+	Add a submenu under Options for turning on/off behaviors.
+
+	* cl-macs.el:
+	* cl-macs.el (loop):
+	* cl-macs.el (cl-parse-loop-clause):
+	Properly document `loop'.  Fix a minor bug in keymap iteration and
+	add support for bit-vector iteration.
+
+	* lisp-mode.el (construct-lisp-mode-menu):
+	Rearrange and add items for macro expanding.
+	
+	* menubar-items.el (menu-split-long-menu):
+	* menubar-items.el (menu-sort-menu):
+	Document connection between these two functions.
+
+	* window.el:
+	* window.el (get-window-with-predicate): New.
+	* window.el (ALL-FRAMES): New.
+	* window.el ('some-window): New.
+	* window.el (count-windows):
+	* window.el (window-safely-shrinkable-p): New.
+	* window.el (count-screen-lines): New.
+	* window.el (shrink-window-if-larger-than-buffer):
+	Port stuff from GNU 21.1.
+
 2002-03-24  Ben Wing  <ben@xemacs.org>
 
 	* mule/english.el (ascii-right-to-left):

@@ -1175,18 +1175,6 @@ mark_timeout (Lisp_Object obj)
   return tm->object;
 }
 
-/* Should never, ever be called. (except by an external debugger) */
-static void
-print_timeout (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
-{
-  const Lisp_Timeout *t = XTIMEOUT (obj);
-  char buf[64];
-
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (timeout) 0x%lx>",
-	   (unsigned long) t);
-  write_c_string (buf, printcharfun);
-}
-
 static const struct lrecord_description timeout_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Timeout, function) },
   { XD_LISP_OBJECT, offsetof (Lisp_Timeout, object) },
@@ -1194,7 +1182,7 @@ static const struct lrecord_description timeout_description[] = {
 };
 
 DEFINE_LRECORD_IMPLEMENTATION ("timeout", timeout,
-			       mark_timeout, print_timeout,
+			       mark_timeout, internal_object_printer,
 			       0, 0, 0, timeout_description, Lisp_Timeout);
 
 /* Generate a timeout and return its ID. */
@@ -4620,7 +4608,7 @@ If FILENAME is nil, close any open dribble file.
       Vdribble_file =
 	make_coding_output_stream
 	  (XLSTREAM (Vdribble_file),
-	   Qescape_quoted, CODING_ENCODE);
+	   Qescape_quoted, CODING_ENCODE, 0);
 #endif
     }
   return Qnil;

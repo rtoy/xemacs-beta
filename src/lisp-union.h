@@ -1,6 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -93,6 +94,18 @@ make_int (EMACS_INT val)
   return obj;
 }
 
+/* Ugh, need different definition to avoid compiler complaint in
+   unix_send_process() */
+INLINE_HEADER Lisp_Object volatile_make_int (EMACS_INT val);
+INLINE_HEADER Lisp_Object
+volatile_make_int (EMACS_INT val)
+{
+  volatile Lisp_Object obj;
+  obj.s.bits = 1;
+  obj.s.val = val;
+  return obj;
+}
+
 INLINE_HEADER Lisp_Object make_char (Emchar val);
 INLINE_HEADER Lisp_Object
 make_char (Emchar val)
@@ -103,9 +116,9 @@ make_char (Emchar val)
   return obj;
 }
 
-INLINE_HEADER Lisp_Object wrap_pointer_1 (void *ptr);
+INLINE_HEADER Lisp_Object wrap_pointer_1 (const void *ptr);
 INLINE_HEADER Lisp_Object
-wrap_pointer_1 (void *ptr)
+wrap_pointer_1 (const void *ptr)
 {
   Lisp_Object obj;
   obj.ui = (EMACS_UINT) ptr;

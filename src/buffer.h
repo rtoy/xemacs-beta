@@ -359,7 +359,7 @@ INLINE_HEADER Bytebpos membpos_to_bytebpos (struct buffer *buf, Membpos x);
 INLINE_HEADER Bytebpos
 membpos_to_bytebpos (struct buffer *buf, Membpos x)
 {
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
   assert (valid_membpos_p (buf, x));
 #endif
   return (Bytebpos) ((x > (Membpos) buf->text->gpt) ?
@@ -493,7 +493,7 @@ membpos_to_bytebpos (struct buffer *buf, Membpos x)
 # define VALID_BYTEBPOS_P(buf, x) 1
 #endif
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 
 # define ASSERT_VALID_BYTEBPOS_UNSAFE(buf, x) do {		\
   assert (BUFFER_LIVE_P (buf));					\
@@ -511,12 +511,12 @@ membpos_to_bytebpos (struct buffer *buf, Membpos x)
   assert (VALID_BYTEBPOS_P (buf, x));				\
 } while (0)
 
-#else /* not ERROR_CHECK_CHARBPOS */
+#else /* not ERROR_CHECK_TEXT */
 # define ASSERT_VALID_BYTEBPOS_UNSAFE(buf, x)
 # define ASSERT_VALID_BYTEBPOS_BACKWARD_UNSAFE(buf, x)
 # define ASSERT_VALID_BYTEBPOS_FORWARD_UNSAFE(buf, x)
 
-#endif /* not ERROR_CHECK_CHARBPOS */
+#endif /* not ERROR_CHECK_TEXT */
 
 /* Note that, although the Mule version will work fine for non-Mule
    as well (it should reduce down to nothing), we provide a separate
@@ -548,7 +548,7 @@ membpos_to_bytebpos (struct buffer *buf, Membpos x)
 # define VALIDATE_BYTEBPOS_FORWARD(buf, x)
 #endif
 
-/* Note that in the simplest case (no MULE, no ERROR_CHECK_CHARBPOS),
+/* Note that in the simplest case (no MULE, no ERROR_CHECK_TEXT),
    this crap reduces down to simply (x)++. */
 
 #define INC_BYTEBPOS(buf, x) do				\
@@ -562,7 +562,7 @@ membpos_to_bytebpos (struct buffer *buf, Membpos x)
   VALIDATE_BYTEBPOS_FORWARD (buf, x);			\
 } while (0)
 
-/* Note that in the simplest case (no MULE, no ERROR_CHECK_CHARBPOS),
+/* Note that in the simplest case (no MULE, no ERROR_CHECK_TEXT),
    this crap reduces down to simply (x)--. */
 
 #define DEC_BYTEBPOS(buf, x) do				\
@@ -703,17 +703,17 @@ real_bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
 
 #endif /* not MULE */
 
-#ifdef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_TEXT
 
 Bytebpos charbpos_to_bytebpos (struct buffer *buf, Charbpos x);
 Charbpos bytebpos_to_charbpos (struct buffer *buf, Bytebpos x);
 
-#else /* not ERROR_CHECK_CHARBPOS */
+#else /* not ERROR_CHECK_TEXT */
 
 #define charbpos_to_bytebpos real_charbpos_to_bytebpos
 #define bytebpos_to_charbpos real_bytebpos_to_charbpos
 
-#endif /* not ERROR_CHECK_CHARBPOS */
+#endif /* not ERROR_CHECK_TEXT */
 
 #define make_charbpos(buf, ind) make_int (bytebpos_to_charbpos (buf, ind))
 

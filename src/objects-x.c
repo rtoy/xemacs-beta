@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -285,11 +285,9 @@ x_print_color_instance (Lisp_Color_Instance *c,
 			Lisp_Object printcharfun,
 			int escapeflag)
 {
-  char buf[100];
   XColor color = COLOR_INSTANCE_X_COLOR (c);
-  sprintf (buf, " %ld=(%X,%X,%X)",
-	   color.pixel, color.red, color.green, color.blue);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " %ld=(%X,%X,%X)",
+		    color.pixel, color.red, color.green, color.blue);
 }
 
 static void
@@ -467,9 +465,8 @@ x_print_font_instance (Lisp_Font_Instance *f,
 		       Lisp_Object printcharfun,
 		       int escapeflag)
 {
-  char buf[200];
-  sprintf (buf, " 0x%lx", (unsigned long) FONT_INSTANCE_X_FONT (f)->fid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%lx",
+		    (unsigned long) FONT_INSTANCE_X_FONT (f)->fid);
 }
 
 static void

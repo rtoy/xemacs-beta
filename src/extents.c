@@ -2978,12 +2978,10 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       Lisp_Object v = XCAR (XCDR (tail));
       if (NILP (v)) continue;
-      print_internal (XCAR (tail), printcharfun, escapeflag);
-      write_c_string (" ", printcharfun);
+      write_fmt_string_lisp (printcharfun, "%S ", 1, XCAR (tail));
     }
 
-  sprintf (buf, "0x%lx", (long) ext);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "0x%lx", (long) ext);
 }
 
 static void
@@ -3037,14 +3035,11 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	write_c_string ("#<destroyed extent", printcharfun);
       else
 	{
-	  char *buf = (char *)
-	    alloca (strlen (title) + strlen (name) + strlen (posttitle) + 1);
 	  write_c_string ("#<extent ", printcharfun);
 	  print_extent_1 (obj, printcharfun, escapeflag);
 	  write_c_string (extent_detached_p (XEXTENT (obj))
 			  ? " from " : " in ", printcharfun);
-	  sprintf (buf, "%s%s%s", title, name, posttitle);
-	  write_c_string (buf, printcharfun);
+	  write_fmt_string (printcharfun, "%s%s%s", title, name, posttitle);
 	}
     }
   else

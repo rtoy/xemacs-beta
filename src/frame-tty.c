@@ -27,10 +27,11 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-tty.h"
+#include "device.h"
+#include "events.h"
 #include "frame.h"
 
-#include "events.h"
+#include "console-tty.h"
 
 
 /* Default properties to use when creating frames.  */

@@ -1832,11 +1832,8 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs,
     print_internal (make_int (data->cp), printcharfun, 1);
   else
     {
-      print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qlocale),
-		      printcharfun, 0);
-      write_c_string (", ", printcharfun);
-      print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qcode_page),
-		      printcharfun, 0);
+      write_fmt_string_lisp (printcharfun, "%s, ", 1, mswindows_multibyte_to_unicode_getprop (cs, Qlocale));
+      print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qcode_page), printcharfun, 0);
     }
   write_c_string (")", printcharfun);
 }

@@ -30,15 +30,17 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-msw.h"
+#include "device.h"
 #include "elhash.h"
 #include "events.h"
 #include "frame.h"
 #include "opaque.h"
-#include "scrollbar-msw.h"
 #include "scrollbar.h"
 #include "specifier.h"
 #include "window.h"
+
+#include "console-msw.h"
+#include "scrollbar-msw.h"
 
 /* We use a similar sort of vertical scrollbar drag hack for mswindows
  * scrollbars as is used for Motif or Lucid scrollbars under X.

@@ -691,11 +691,11 @@ The default is to autodetect native and NAS sound support."])
 	      extents )       error_check_extents=yes ;;
 	      noextents )     error_check_extents=no ;;
 
-	      typecheck )     error_check_typecheck=yes ;;
-	      notypecheck )   error_check_typecheck=no ;;
+	      types )         error_check_types=yes ;;
+	      notypes )       error_check_types=no ;;
 
-	      charbpos )	      error_check_charbpos=yes ;;
-	      nocharbpos )      error_check_charbpos=no ;;
+	      text )          error_check_text=yes ;;
+	      notext )        error_check_text=no ;;
 
 	      gc )	      error_check_gc=yes ;;
 	      nogc )          error_check_gc=no ;;
@@ -706,28 +706,36 @@ The default is to autodetect native and NAS sound support."])
 	      byte_code )     error_check_byte_code=yes ;;
 	      nobyte_code )   error_check_byte_code=no ;;
 
-	      glyphs )     error_check_glyphs=yes ;;
-	      noglyphs )   error_check_glyphs=no ;;
+	      glyphs )        error_check_glyphs=yes ;;
+	      noglyphs )      error_check_glyphs=no ;;
+
+	      display )       error_check_display=yes ;;
+	      nodisplay )     error_check_display=no ;;
+
+	      structures )    error_check_structures=yes ;;
+	      nostructures )  error_check_structures=no ;;
 
 	      * ) bogus_error_check=yes ;;
 	    esac
 	    if test "$bogus_error_check" -o \
 	         \( -n "$new_default" -a -n "$echeck_notfirst" \) ; then
 		if test "$error_check_default" = yes ; then
-		  types="\`all' (default), \`none', \`noextents', \`notypecheck', \`nocharbpos', \`nogc', \`nomalloc', \`noglyphs' and \`nobyte-code'."
+		  types="\`all' (default), \`none', \`noextents', \`notypes', \`notext', \`nogc', \`nomalloc', \`noglyphs', \`nobyte-code', \`nodisplay', \`nostructures'."
 		else
-		  types="\`all', \`none' (default), \`extents', \`typecheck', \`charbpos', \`gc', \`malloc', \`glyphs' and \`byte-code'."
+		  types="\`all', \`none' (default), \`extents', \`types', \`text', \`gc', \`malloc', \`glyphs', \`byte-code', \`display', \`structures'."
 		fi
 		USAGE_ERROR(["Valid types for the \`--$optname' option are:
   $types."])
 	    elif test -n "$new_default" ; then
 		error_check_extents=$new_default
-		error_check_typecheck=$new_default
-		error_check_charbpos=$new_default
+		error_check_types=$new_default
+		error_check_text=$new_default
 		error_check_gc=$new_default
 		error_check_malloc=$new_default
 		error_check_byte_code=$new_default
 		error_check_glyphs=$new_default
+		error_check_display=$new_default
+		error_check_structures=$new_default
 		new_default=	# reset this
 	    fi
 	    echeck_notfirst=true
@@ -1016,13 +1024,15 @@ dnl ----------------------------------
 dnl Error checking default to "yes" in beta versions, to "no" in releases.
 dnl Same goes for --debug and --extra-verbosity.
 if test -n "$emacs_is_beta"; then beta=yes; else beta=no; fi
-test "${error_check_extents=$beta}"   = yes && AC_DEFINE(ERROR_CHECK_EXTENTS)
-test "${error_check_typecheck=$beta}" = yes && AC_DEFINE(ERROR_CHECK_TYPECHECK)
-test "${error_check_charbpos=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_CHARBPOS)
-test "${error_check_gc=$beta}"        = yes && AC_DEFINE(ERROR_CHECK_GC)
-test "${error_check_malloc=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
-test "${error_check_byte_code=$beta}" = yes && AC_DEFINE(ERROR_CHECK_BYTE_CODE)
-test "${error_check_glyphs=$beta}" = yes && AC_DEFINE(ERROR_CHECK_GLYPHS)
+test "${error_check_extents=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_EXTENTS)
+test "${error_check_types=$beta}"      = yes && AC_DEFINE(ERROR_CHECK_TYPES)
+test "${error_check_text=$beta}"       = yes && AC_DEFINE(ERROR_CHECK_TEXT)
+test "${error_check_gc=$beta}"         = yes && AC_DEFINE(ERROR_CHECK_GC)
+test "${error_check_malloc=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
+test "${error_check_byte_code=$beta}"  = yes && AC_DEFINE(ERROR_CHECK_BYTE_CODE)
+test "${error_check_glyphs=$beta}"     = yes && AC_DEFINE(ERROR_CHECK_GLYPHS)
+test "${error_check_display=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_DISPLAY)
+test "${error_check_structures=$beta}" = yes && AC_DEFINE(ERROR_CHECK_STRUCTURES)
 dnl debug=yes must be set when error checking is present.  This should be
 dnl fixed up.
 dnl debug implies other options
@@ -5008,7 +5018,7 @@ test "$use_union_type" = yes && echo "  Using the union type for Lisp_Objects."
 test "$pdump" = yes && echo "  Using the new portable dumper."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
-if test "$error_check_extents $error_check_typecheck $error_check_charbpos $error_check_gc $error_check_malloc $error_check_glyphs" \
+if test "$error_check_extents $error_check_types $error_check_text $error_check_gc $error_check_malloc $error_check_glyphs $error_check_byte_code $error_check_display $error_check_structures" \
   != "no no no no no no"; then
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: Compiling in support for runtime error checking."

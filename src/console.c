@@ -1,6 +1,6 @@
 /* The console object.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -27,12 +27,14 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "console-tty.h"
+#include "device.h"
 #include "events.h"
 #include "frame.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+
+#include "console-tty.h"
 
 Lisp_Object Vconsole_list, Vselected_console;
 
@@ -119,22 +121,17 @@ static void
 print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct console *con = XCONSOLE (obj);
-  char buf[256];
 
   if (print_readably)
     printing_unreadable_object ("#<console %s 0x%x>",
 				XSTRING_DATA (con->name), con->header.uid);
 
-  sprintf (buf, "#<%s-console", !CONSOLE_LIVE_P (con) ? "dead" :
-	   CONSOLE_TYPE_NAME (con));
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<%s-console",
+		    !CONSOLE_LIVE_P (con) ? "dead" : CONSOLE_TYPE_NAME (con));
   if (CONSOLE_LIVE_P (con) && !NILP (CONSOLE_CONNECTION (con)))
-    {
-      write_c_string (" on ", printcharfun);
-      print_internal (CONSOLE_CONNECTION (con), printcharfun, 1);
-    }
-  sprintf (buf, " 0x%x>", con->header.uid);
-  write_c_string (buf, printcharfun);
+    write_fmt_string_lisp (printcharfun, " on %S", 1,
+			   CONSOLE_CONNECTION (con));
+  write_fmt_string (printcharfun, " 0x%x>", con->header.uid);
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("console", console,

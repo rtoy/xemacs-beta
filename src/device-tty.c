@@ -27,14 +27,16 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-tty.h"
-#include "console-stream.h"
+#include "device.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
 #include "lstream.h"
 #include "redisplay.h"
 #include "sysdep.h"
+
+#include "console-tty.h"
+#include "console-stream.h"
 
 #include "sysfile.h"
 #include "syssignal.h" /* for SIGWINCH */

@@ -32,13 +32,14 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "chartab.h"
 #include "device.h"
 #include "frame.h"
+#include "glyphs.h"
 #include "opaque.h"
+#include "rangetab.h"
 #include "specifier.h"
 #include "window.h"
-#include "chartab.h"
-#include "rangetab.h"
 
 Lisp_Object Qspecifierp;
 Lisp_Object Qremove_tag_set_prepend, Qremove_tag_set_append;
@@ -265,7 +266,6 @@ static void
 print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Specifier *sp = XSPECIFIER (obj);
-  char buf[100];
   int count = specpdl_depth ();
   Lisp_Object the_specs;
 
@@ -273,8 +273,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     printing_unreadable_object ("#<%s-specifier 0x%x>",
 				sp->methods->name, sp->header.uid);
 
-  sprintf (buf, "#<%s-specifier global=", sp->methods->name);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, "#<%s-specifier global=", sp->methods->name);
   specbind (Qprint_string_length, make_int (100));
   specbind (Qprint_length, make_int (5));
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
@@ -285,12 +284,10 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     print_internal (the_specs, printcharfun, 1);
   if (!NILP (sp->fallback))
     {
-      write_c_string (" fallback=", printcharfun);
-      print_internal (sp->fallback, printcharfun, escapeflag);
+      write_fmt_string_lisp (printcharfun, " fallback=%S", 1, sp->fallback);
     }
   unbind_to (count);
-  sprintf (buf, " 0x%x>", sp->header.uid);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun, " 0x%x>", sp->header.uid);
 }
 
 static void

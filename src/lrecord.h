@@ -535,10 +535,10 @@ struct struct_description
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
  */
 
-#if defined (ERROR_CHECK_TYPECHECK)
-# define DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)
+#if defined (ERROR_CHECK_TYPES)
+# define DECLARE_ERROR_CHECK_TYPES(c_name, structtype)
 #else
-# define DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)
+# define DECLARE_ERROR_CHECK_TYPES(c_name, structtype)
 #endif
 
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
@@ -563,7 +563,7 @@ MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,0,0
 MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, marker, printer, nuker, equal, hash, desc,			\
     getprop, putprop, remprop, plist, size, sizer,			\
@@ -582,7 +582,7 @@ DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,pr
 MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
   { name, marker, printer, nuker, equal, hash, desc,			\
@@ -747,7 +747,7 @@ and DEFINE_LRECORD_IMPLEMENTATION.
 */
 
 
-#ifdef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPES
 
 # define DECLARE_LRECORD(c_name, structtype)				  \
 extern const struct lrecord_implementation lrecord_##c_name;		  \
@@ -790,10 +790,11 @@ extern Lisp_Object Q##c_name##p
 # define XNONRECORD(x, c_name, type_enum, structtype) \
   error_check_##c_name (x, __FILE__, __LINE__)
 
-INLINE_HEADER Lisp_Object wrap_record_1 (void *ptr, enum lrecord_type ty,
+INLINE_HEADER Lisp_Object wrap_record_1 (const void *ptr, enum lrecord_type ty,
 					 const char *file, int line);
 INLINE_HEADER Lisp_Object
-wrap_record_1 (void *ptr, enum lrecord_type ty, const char *file, int line)
+wrap_record_1 (const void *ptr, enum lrecord_type ty, const char *file,
+	       int line)
 {
   Lisp_Object obj = wrap_pointer_1 (ptr);
 
@@ -804,7 +805,7 @@ wrap_record_1 (void *ptr, enum lrecord_type ty, const char *file, int line)
 #define wrap_record(ptr, ty) \
   wrap_record_1 (ptr, lrecord_type_##ty, __FILE__, __LINE__)
 
-#else /* not ERROR_CHECK_TYPECHECK */
+#else /* not ERROR_CHECK_TYPES */
 
 # define DECLARE_LRECORD(c_name, structtype)			\
 extern Lisp_Object Q##c_name##p;				\
@@ -822,7 +823,7 @@ extern Lisp_Object Q##c_name##p
    know what you're doing. */
 #define wrap_record(ptr, ty) wrap_pointer_1 (ptr)
 
-#endif /* not ERROR_CHECK_TYPECHECK */
+#endif /* not ERROR_CHECK_TYPES */
 
 #define RECORDP(x, c_name) RECORD_TYPEP (x, lrecord_type_##c_name)
 

@@ -30,29 +30,32 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "EmacsFrame.h"
-#include "EmacsFrameP.h"
-#include "xgccache.h"
-#include "glyphs-x.h"
-#include "objects-x.h"
-
 #include "buffer.h"
 #include "debug.h"
+#include "device.h"
 #include "faces.h"
+#include "file-coding.h"
 #include "frame.h"
 #include "gutter.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
-#include <X11/bitmaps/gray>
-
-#include "sysproc.h" /* for select() */
 
 #ifdef MULE
 #include "mule-ccl.h"
-#include "file-coding.h" /* for CCL conversion */
 #endif
+
+#include "console-x.h"
+#include "glyphs-x.h"
+#include "objects-x.h"
+#include "xgccache.h"
+
+#include "EmacsFrame.h"
+#include "EmacsFrameP.h"
+
+#include "sysproc.h" /* for select() */
+
+#include <X11/bitmaps/gray>
 
 /* Number of pixels below each line. */
 int x_interline_space; /* #### implement me */

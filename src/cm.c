@@ -26,10 +26,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-tty.h"
+#include "device.h"
 #include "frame.h"
 #include "lstream.h"
 #include "redisplay.h"
+
+#include "console-tty.h"
 
 #define	EXPENSIVE 2000
 

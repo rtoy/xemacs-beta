@@ -61,11 +61,10 @@ static void
 print_lstream (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lstream *lstr = XLSTREAM (obj);
-  char buf[200];
 
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%lx>",
-	   lstr->imp->name, (long) lstr);
-  write_c_string (buf, printcharfun);
+  write_fmt_string (printcharfun,
+		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%lx>",
+		    lstr->imp->name, (long) lstr);
 }
 
 static void

@@ -159,7 +159,13 @@ the last entry in the menu."
 		 (function)))
 
 (defun menu-split-long-menu (menu)
-  "Split MENU according to `menu-max-items' and add accelerator specs."
+  "Split MENU according to `menu-max-items' and add accelerator specs.
+
+You should normally use the idiom
+
+\(menu-split-long-menu (menu-sort-menu menu))
+
+See also `menu-sort-menu'."
   (let ((len (length menu)))
     (if (or (null menu-max-items)
 	    (<= len menu-max-items))
@@ -194,7 +200,13 @@ the last entry in the menu."
 	(submenu-generate-accelerator-spec (nreverse result))))))
 
 (defun menu-sort-menu (menu)
-  "Sort MENU alphabetically."
+  "Sort MENU alphabetically.
+
+You should normally use the idiom
+
+\(menu-split-long-menu (menu-sort-menu menu))
+
+See also `menu-split-long-menu'."
   (sort menu
 	#'(lambda (a b) (string-lessp (aref a 0) (aref b 0)))))
 
@@ -801,6 +813,23 @@ Write your filter like this:
       )
 
      ("%_Options"
+      ("%_Behaviors"
+       :filter 
+       (lambda (menu)
+	 (menu-split-long-menu
+	  (menu-sort-menu
+	   (loop for behavior being the hash-keys in behavior-hash-table
+	     using (hash-value plist)
+	     collect (vector (format "%s (%s)" behavior
+				     (getf plist :short-doc))
+			     `(if (memq ',behavior enabled-behavior-list)
+				  (disable-behavior ',behavior)
+				(enable-behavior ',behavior))
+			     :style 'toggle
+			     :selected `(memq ',behavior
+					      enabled-behavior-list))
+	     )))))
+
       ("%_Advanced (Customize)"
        ("%_Emacs" :filter (lambda (&rest junk)
 			    (cdr (custom-menu-create 'emacs))))
