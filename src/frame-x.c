@@ -310,25 +310,27 @@ x_wm_hack_wm_protocols (Widget widget)
   assert (XtIsWMShell (widget));
 
   {
-    Atom type, *atoms = 0;
+    Atom type;
     int format = 0;
     unsigned long nitems = 0;
     unsigned long bytes_after;
+    unsigned char *prop_return = 0; /* semantically a void* */
 
     if (Success == XGetWindowProperty (dpy, w, DEVICE_XATOM_WM_PROTOCOLS (d),
 				       0, 100, False, XA_ATOM,
 				       &type, &format, &nitems, &bytes_after,
-				       (unsigned char **) &atoms)
+				       &prop_return)
 	&& format == 32 && type == XA_ATOM)
       while (nitems > 0)
 	{
+	  Atom *atoms = (Atom *) prop_return;
 	  nitems--;
-	  if (atoms [nitems] == DEVICE_XATOM_WM_DELETE_WINDOW (d))
+	  if (atoms[nitems] == DEVICE_XATOM_WM_DELETE_WINDOW (d))
 	    need_delete = 0;
-	  else if (atoms [nitems] == DEVICE_XATOM_WM_TAKE_FOCUS (d))
+	  else if (atoms[nitems] == DEVICE_XATOM_WM_TAKE_FOCUS (d))
 	    need_focus = 0;
 	}
-    if (atoms) XFree ((char *) atoms);
+    if (prop_return) XFree ((char *) prop_return);
   }
   {
     Atom props [10];
@@ -416,7 +418,7 @@ x_frame_window_state (struct frame *f)
   Atom actual_type;
   int actual_format;
   unsigned long nitems, bytesafter;
-  unsigned long *datap = 0;
+  unsigned char *datap = 0;
   Widget widget;
   int result = -1;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
@@ -426,11 +428,12 @@ x_frame_window_state (struct frame *f)
 				     DEVICE_XATOM_WM_STATE (d), 0, 2, False,
 				     DEVICE_XATOM_WM_STATE (d), &actual_type,
 				     &actual_format, &nitems, &bytesafter,
-				     (unsigned char **) &datap)
+				     &datap)
       && datap)
     {
+      unsigned long *ul_result_ptr = (unsigned long *) datap;
       if (nitems <= 2)	/* "suggested" by ICCCM version 1 */
-	result = (int) datap[0];
+	result = (int) ul_result_ptr[0];
       XFree ((char *) datap);
     }
 

@@ -1,3 +1,13 @@
+2003-11-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame-x.c (x_wm_hack_wm_protocols):
+	(x_frame_window_state):
+	Get casts right to avoid aliasing issues.
+
+	* glyphs.c (process_image_string_instantiator):
+	(Fset_console_type_image_conversion_list):
+	Change identifier to quiet compiler.
+
 2003-11-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bytecode.c (execute_optimized_program): GCPRO_STACK main loop.

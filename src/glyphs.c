@@ -321,13 +321,13 @@ specifiers will not be affected.
 	invalid_argument ("Invalid mapping form", mapping);
       else
 	{
-	  Lisp_Object exp = XCAR (mapping);
+	  Lisp_Object regexp = XCAR (mapping);
 	  Lisp_Object typevec = XCAR (XCDR (mapping));
 	  Lisp_Object pos = Qnil;
 	  Lisp_Object newvec;
 	  struct gcpro gcpro1;
 
-	  CHECK_STRING (exp);
+	  CHECK_STRING (regexp);
 	  CHECK_VECTOR (typevec);
 	  if (!NILP (XCDR (XCDR (mapping))))
 	    {
@@ -341,7 +341,7 @@ specifiers will not be affected.
 
 	  newvec = Fcopy_sequence (typevec);
 	  if (INTP (pos))
-	    XVECTOR_DATA (newvec)[XINT (pos)] = exp;
+	    XVECTOR_DATA (newvec)[XINT (pos)] = regexp;
 	  GCPRO1 (newvec);
 	  image_validate (newvec);
 	  UNGCPRO;
@@ -377,7 +377,7 @@ process_image_string_instantiator (Lisp_Object data,
   LIST_LOOP (tail, *get_image_conversion_list (console_type))
     {
       Lisp_Object mapping = XCAR (tail);
-      Lisp_Object exp = XCAR (mapping);
+      Lisp_Object regexp = XCAR (mapping);
       Lisp_Object typevec = XCAR (XCDR (mapping));
 
       /* if the result is of a type that can't be instantiated
@@ -388,7 +388,7 @@ process_image_string_instantiator (Lisp_Object data,
 			   (INSTANTIATOR_TYPE (typevec), ERROR_ME),
 			   possible_dest_types, ())))
 	continue;
-      if (fast_string_match (exp, 0, data, 0, -1, 0, ERROR_ME, 0) >= 0)
+      if (fast_string_match (regexp, 0, data, 0, -1, 0, ERROR_ME, 0) >= 0)
 	{
 	  if (!NILP (XCDR (XCDR (mapping))))
 	    {
