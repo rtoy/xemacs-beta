@@ -238,7 +238,7 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 ## instead, we have written out explicit code in the `install' targets.
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
-GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h
+GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h src/xemacs.def
 
 ## MAKE_SUBDIR will always be of the form lib-src ... src, where
 ## `...' includes various other directories that may be inserted by
@@ -335,6 +335,9 @@ src/paths.h: ${srcdir}/src/paths.h.in
 	./config.status && touch $@
 
 lwlib/config.h: ${srcdir}/lwlib/config.h.in
+	./config.status && touch $@
+
+src/xemacs.def: $(srcdir)/src/xemacs.def.in.in
 	./config.status && touch $@
 
 ## ==================== Installation ====================

@@ -5343,7 +5343,7 @@ for file in $internal_makefile_list; do
   esac
   XE_APPEND($file, ac_output_files)
 done
-ac_output_files="$ac_output_files src/paths.h lib-src/config.values"
+ac_output_files="$ac_output_files src/paths.h src/xemacs.def.in lib-src/config.values"
 test "$with_modules" = "yes" && XE_APPEND(lib-src/ellcc.h, ac_output_files)
 
 AC_OUTPUT($ac_output_files,
@@ -5395,6 +5395,10 @@ dnl Restore lines quoted above to original contents.
 
     CPP_MAKEFILE(,Makefile)
     CPP_MAKEFILE(-DUSE_GNU_MAKE,GNUmakefile)
+    if test -e "xemacs.def.in"; then
+      cp -f xemacs.def.in junk.c
+      CPP_MAKEFILE(,xemacs.def)
+    fi
 changequote([,])dnl
     rm -f junk.c
   )

@@ -1,3 +1,11 @@
+2003-08-18  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (GENERATED_HEADERS): Add xemacs.def.
+	* Makefile.in.in: Regenerate if xemacs.def.in.in is touched.
+	* aclocal.m4 (XE_SHLIB_STUFF): Allow modules with Cygwin.
+	* aclocal.m4 (cygwin_warn): Removed.
+	* configure.in (XE_COMPUTE_RUNPATH): Process xemacs.def.in.in.
+
 2003-08-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.usage (Window System): `lucid' option often means `Motif'.
