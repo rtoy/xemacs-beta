@@ -139,7 +139,7 @@ int main(int argc, char **argv)
   }
 
   if(size_dump > max_size) {
-    fprintf(stderr, "Dump file too big for available space (max=%ld, dump=%ld)\n", max_size, size);
+    fprintf(stderr, "Dump file too big for available space (max=%ld, dump=%ld)\n", max_size, size_dump);
     exit(2);
   }
 
