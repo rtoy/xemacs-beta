@@ -1,3 +1,7 @@
+2002-05-02  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get): Use 'warn' instead of 'lwarn'.
+
 2002-05-01  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-update-base-entry): Remove code to

@@ -763,11 +763,9 @@ successfully installed but errors occurred during initialization, or
                    (string-to-number latest)
                  latest))
             (if (not (null version))
-                (lwarn 'packages
-		    "Installing %s package version %s, you had a newer version %s"
+                (warn "Installing %s package version %s, you had a newer version %s"
 		  package latest installed)
-              (lwarn 'packages
-		  "Skipping %s package, you have a newer version %s"
+              (warn "Skipping %s package, you have a newer version %s"
 		package installed)
               (throw 'skip-update t))))
 
