@@ -5019,7 +5019,7 @@ test "$pdump" = yes && echo "  Using the new portable dumper."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
 if test "$error_check_extents $error_check_types $error_check_text $error_check_gc $error_check_malloc $error_check_glyphs $error_check_byte_code $error_check_display $error_check_structures" \
-  != "no no no no no no"; then
+  != "no no no no no no no no no"; then
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: Compiling in support for runtime error checking."
   echo "  WARNING: XEmacs will run noticeably more slowly as a result."
