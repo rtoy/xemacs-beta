@@ -33,13 +33,25 @@
 
 ;;; Code:
 
-(defvar selected-text-type
-  (if (featurep 'mule) '(COMPOUND_TEXT STRING) 'STRING)
-  "The type atom used to obtain selections from the X server.
-Can be either a valid X selection data type, or a list of such types.
-COMPOUND_TEXT and STRING are the most commonly used data types.
-If a list is provided, the types are tried in sequence until
-there is a successful conversion.")
+;; We prefer UTF8_STRING to COMPOUND_TEXT because, even though the latter
+;; gives us more information when taking data from other XEmacs invocations,
+;; Mozilla will happily give us broken COMPOUND_TEXT where a non-broken
+;; UTF8_STRING is available. 
+(defvar selection-preferred-types
+  (let ((res '(UTF8_STRING COMPOUND_TEXT STRING image/png image/gif
+	       image/jpeg image/tiff image/xpm image/xbm)))
+    (unless (featurep 'mule) (delq 'COMPOUND_TEXT res))
+    res)
+  "An ordered list of X11 type atoms for selections we want to receive.
+We prefer UTF8_STRING over COMPOUND_TEXT, for compatibility with a certain
+widely-used browser suite, and COMPOUND_TEXT over STRING. (COMPOUND_TEXT
+isn't available on non-Mule.) We also accept several image types.
+
+For compatibility, this can be a single atom. ")
+
+;; Renamed because it was just ridiculous for it to be mostly image formats
+;; and named selected-text-type. 
+(define-obsolete-variable-alias 'selected-text-type 'selection-preferred-types)
 
 (defvar selection-sets-clipboard nil
   "Controls the selection's relationship to the clipboard.
@@ -56,7 +68,7 @@ properly."
        (cut-copy-clear-internal 'copy)))
 
 (defun kill-primary-selection ()
-  "Copy the selection to the Clipboard and the kill ring, then deleted it.
+  "Copy the selection to the Clipboard and the kill ring, then delete it.
 This is similar to the command \\[kill-region] except that it will
 save to the Clipboard even if that command doesn't, and it handles rectangles
 properly."
@@ -97,34 +109,56 @@ This will do nothing under anything other than X.")
 
 (defun get-selection-no-error (&optional type data-type)
   "Return the value of a window-system selection.
-The argument TYPE (default `PRIMARY') says which selection,
-and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
-says how to convert the data. Returns NIL if there is no selection."
+The argument TYPE (default `PRIMARY') says which selection, and the argument
+DATA-TYPE (defaulting to the value of `selection-preferred-types'), says how
+to convert the data. Returns NIL if there is no selection."
   (condition-case nil (get-selection type data-type) (t nil)))
 
 (defun get-selection (&optional type data-type)
   "Return the value of a window-system selection.
-The argument TYPE (default `PRIMARY') says which selection,
-and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
-says how to convert the data. If there is no selection an error is signalled.
-Not suitable in a `interprogram-paste-function', q.v."
+The argument TYPE (default `PRIMARY') says which selection, and the argument
+DATA-TYPE (defaulting to the value of, and compatible with,
+`selection-preferred-types') says how to convert the data. If
+there is no selection an error is signalled.  Not suitable in a
+`interprogram-paste-function', q.v."
   (or type (setq type 'PRIMARY))
-  (or data-type (setq data-type selected-text-type))
+  (or data-type (setq data-type selection-preferred-types))
   (if (consp data-type)
-      (condition-case err
-	  (get-selection-internal type (car data-type))
-	(selection-conversion-error
-	 (if (cdr data-type)
-	     (get-selection type (cdr data-type))
-	   (signal (car err) (cdr err)))))
+      ;; TARGETS is a vector; we want a list so we can memq --> append it to
+      ;; nil.
+      (let ((targets (append (get-selection-internal type 'TARGETS) nil))
+	    res)
+	(catch 'converted
+	  (if targets
+	      (dolist (current-preference data-type)
+		(condition-case err
+		    (if (and (memq current-preference targets)
+			     (setq res (get-selection-internal
+					type current-preference)))
+			(throw 'converted res))
+		  (selection-conversion-error
+		   nil))))
+	  ;; The source app didn't offer us anything compatible in TARGETS,
+	  ;; or they're not negotiating at all. (That is, we're probably not
+	  ;; on X11.) Try to convert to the types specified by our caller,
+	  ;; and throw an error if the last one of those fails.
+	  (while data-type
+	    (condition-case err
+		(progn
+		  (setq res (get-selection-internal type (car data-type)))
+		  (throw 'converted res))
+	      (selection-conversion-error
+	       (if (cdr data-type)
+		   (setq data-type (pop data-type))
+		 (signal (car err) (cdr err))))))))
     (get-selection-internal type data-type)))
 
 (defun get-selection-foreign (&optional type data-type)
   "Return the value of a window-system selection, or nil if XEmacs owns it.
-The argument TYPE (default `PRIMARY') says which selection,
-and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
-says how to convert the data. If there is no selection an error is signalled.
-See `interprogram-paste-function' for more information."
+The argument TYPE (default `PRIMARY') says which selection, and the argument
+DATA-TYPE (defaulting to the value of `selection-preferred-types' which see)
+says how to convert the data. If there is no selection an error is
+signalled.  See `interprogram-paste-function' for more information."
   (unless (selection-owner-p type)
     (get-selection type data-type)))
 
@@ -255,6 +289,8 @@ primary selection."
   ;; Given a selection, this makes an extent in the buffer which holds that
   ;; selection, for highlighting purposes.  If the selection isn't associated
   ;; with a buffer, this does nothing.
+  ;; 
+  ;; Something similar needs to be hooked into the rectangle functions. 
   (let ((buffer nil)
 	(valid (and (extentp previous-extent)
 		    (extent-object previous-extent)
@@ -391,8 +427,9 @@ for the specified SELECTION. Return nil if this is impossible, or a
 suitable internal representation otherwise."
   (when value
     (let ((handler-fn (cdr (assq type selection-converter-in-alist))))
-      (when handler-fn
-	(apply handler-fn (list selection type value))))))
+      (if handler-fn
+          (apply handler-fn (list selection type value))
+        value))))
 
 (defun select-convert-out (selection type value)
   "Attempt to convert the specified internal VALUE for the specified DATA-TYPE
@@ -439,12 +476,41 @@ nil if this is impossible, or a suitable representation otherwise."
 	     (buffer-substring (car value) (cdr value)))))
 	(t nil)))
 
+(defun select-convert-to-timestamp (selection type value)
+  (let ((ts (get-xemacs-selection-timestamp selection)))
+    (if ts (cons 'TIMESTAMP ts))))
+
+(defun select-convert-to-utf-8-text (selection type value)
+  (cond ((stringp value)
+	 (cons 'UTF8_STRING (encode-coding-string value 'utf-8)))
+	((extentp value)
+	 (save-excursion
+	   (set-buffer (extent-object value))
+	   (save-restriction
+	     (widen)
+	     (cons 'UTF8_STRING 
+		   (encode-coding-string 
+		    (buffer-substring (extent-start-position value)
+				      (extent-end-position value)) 'utf-8)))))
+	((and (consp value)
+	      (markerp (car value))
+	      (markerp (cdr value)))
+	 (or (eq (marker-buffer (car value)) (marker-buffer (cdr value)))
+	     (signal 'error
+		     (list "markers must be in the same buffer"
+			   (car value) (cdr value))))
+	 (save-excursion
+	   (set-buffer (or (marker-buffer (car value))
+			   (error "selection is in a killed buffer")))
+	   (save-restriction
+	     (widen)
+	     (cons 'UTF8_STRING (encode-coding-string 
+				 (buffer-substring (car value) (cdr value))
+				 'utf-8)))))
+	(t nil)))
+
 (defun select-coerce-to-text (selection type value)
   (select-convert-to-text selection type value))
-
-(defun select-convert-from-text (selection type value)
-  (when (stringp value)
-    value))
 
 (defun select-convert-to-string (selection type value)
   (let ((outval (select-convert-to-text selection type value)))
@@ -477,9 +543,6 @@ nil if this is impossible, or a suitable representation otherwise."
 	(cons (ash value -16) (logand value 65535))
       nil)))
 
-(defun select-convert-from-length (selection type value)
-  (select-convert-to-length selection type value))
-
 (defun select-convert-to-targets (selection type value)
   ;; return a vector of atoms, but remove duplicates first.
   (let* ((all (cons 'TIMESTAMP (mapcar 'car selection-converter-alist)))
@@ -508,10 +571,6 @@ nil if this is impossible, or a suitable representation otherwise."
 	 (buffer-file-name (or (marker-buffer (car value))
 			       (error "selection is in a killed buffer"))))
 	(t nil)))
-
-(defun select-convert-from-filename (selection type value)
-  (when (stringp value)
-    value))
 
 (defun select-convert-to-charpos (selection type value)
   (let (a b tmp)
@@ -682,35 +741,89 @@ nil if this is impossible, or a suitable representation otherwise."
 	(t nil)
 	))
 
+(defun select-convert-from-ip-address (selection type value)
+  (if (and (stringp value)
+           (= (length value) 4))
+      (format "%d.%d.%d.%d"
+              (aref value 0) (aref value 1) (aref value 2) (aref value 3))))
+
 (defun select-convert-to-atom (selection type value)
   (and (symbolp value) value))
 
+(defun select-convert-from-utf-8-text (selection type value)
+  (decode-coding-string value 'utf-8))
+
+(defun select-convert-from-utf-16-le-text (selection type value)
+  (decode-coding-string value 'utf-16-le))
+
+;; Image conversion. 
+(defun select-convert-from-image-data (image-type value)
+  "Take an image type specification--one of the image types this XEmacs
+supports--and some data in that format, return a space, with a glyph
+corresponding to that data as an end-glyph extent property of that space. "
+  (let* ((str (make-string 1 ?\ ))
+	 (extent (make-extent 0 1 str))
+	 (glyph (make-glyph (vector image-type ':data value))))
+    (when glyph
+      (set-extent-property extent 'invisible t)
+      (set-extent-property extent 'start-open t)
+      (set-extent-property extent 'end-open t)
+      (set-extent-property extent 'duplicable t)
+      (set-extent-property extent 'atomic t)
+      (set-extent-end-glyph extent glyph)
+      str)))
+
+;; Could automate defining these functions these with a macro, but damned if
+;; I can get that to work. Anyway, this is more readable.
+
+(defun select-convert-from-image/gif (selection type value)
+  (if (featurep 'gif) (select-convert-from-image-data 'gif value)))
+
+(defun select-convert-from-image/jpeg (selection type value)
+  (if (featurep 'jpeg) (select-convert-from-image-data 'jpeg value)))
+
+(defun select-convert-from-image/png (selection type value)
+  (if (featurep 'png) (select-convert-from-image-data 'png value)))
+
+(defun select-convert-from-image/tiff (selection type value)
+  (if (featurep 'tiff) (select-convert-from-image-data 'tiff value)))
+
+(defun select-convert-from-image/xpm (selection type value)
+  (if (featurep 'xpm) (select-convert-from-image-data 'xpm value)))
+
+(defun select-convert-from-image/xbm (selection type value)
+  (if (featurep 'xbm) (select-convert-from-image-data 'xbm value)))
+
 ;;; CF_xxx conversions
 (defun select-convert-from-cf-text (selection type value)
-  (let ((value (decode-coding-string value 'mswindows-multibyte)))
-    (replace-in-string (if (string-match "\0" value)
-			   (substring value 0 (match-beginning 0))
-			 value)
-		       "\\(\r\n\\|\n\r\\)" "\n" t)))
+  (if (find-coding-system 'mswindows-multibyte)
+      (let ((value (decode-coding-string value 'mswindows-multibyte)))
+	(replace-in-string (if (string-match "\0" value)
+			       (substring value 0 (match-beginning 0))
+			     value)
+			   "\\(\r\n\\|\n\r\\)" "\n" t))))
 
 (defun select-convert-from-cf-unicodetext (selection type value)
-  (let ((value (decode-coding-string value 'mswindows-unicode)))
-    (replace-in-string (if (string-match "\0" value)
-			   (substring value 0 (match-beginning 0))
-			 value)
-		       "\\(\r\n\\|\n\r\\)" "\n" t)))
+  (if (find-coding-system 'mswindows-unicode)
+      (let ((value (decode-coding-string value 'mswindows-unicode)))
+	(replace-in-string (if (string-match "\0" value)
+			       (substring value 0 (match-beginning 0))
+			     value)
+			   "\\(\r\n\\|\n\r\\)" "\n" t))))
 
 (defun select-convert-to-cf-text (selection type value)
-  (let ((text (select-convert-to-text selection type value)))
-    (encode-coding-string
-     (concat (replace-in-string text "\n" "\r\n" t) "\0")
-     'mswindows-multibyte)))
+  (if (find-coding-system 'mswindows-multibyte)
+      (let ((text (select-convert-to-text selection type value)))
+	(encode-coding-string
+	 (concat (replace-in-string text "\n" "\r\n" t) "\0")
+	 'mswindows-multibyte))))
 
 (defun select-convert-to-cf-unicodetext (selection type value)
-  (let ((text (select-convert-to-text selection type value)))
-    (encode-coding-string
-     (concat (replace-in-string text "\n" "\r\n" t) "\0")
-     'mswindows-unicode)))
+  (if (find-coding-system 'mswindows-unicode)
+      (let ((text (select-convert-to-text selection type value)))
+	(encode-coding-string
+	 (concat (replace-in-string text "\n" "\r\n" t) "\0")
+	 'mswindows-unicode))))
 
 ;;; Appenders
 (defun select-append-to-text (selection type value1 value2)
@@ -788,7 +901,9 @@ nil if this is impossible, or a suitable representation otherwise."
 
 ;; Types listed in here can be selections of XEmacs
 (setq selection-converter-out-alist
-      '((TEXT . select-convert-to-text)
+      '((TIMESTAMP . select-convert-to-timestamp)
+	(UTF8_STRING . select-convert-to-utf-8-text)	
+	(TEXT . select-convert-to-text)
 	(STRING . select-convert-to-string)
 	(COMPOUND_TEXT . select-convert-to-compound-text)
 	(TARGETS . select-convert-to-targets)
@@ -813,21 +928,28 @@ nil if this is impossible, or a suitable representation otherwise."
 ;; Types listed here can be selections foreign to XEmacs
 (setq selection-converter-in-alist
       '(; Specific types that get handled by generic converters
-	(COMPOUND_TEXT . select-convert-from-text)
-	(SOURCE_LOC . select-convert-from-text)
-	(OWNER_OS . select-convert-from-text)
-	(HOST_NAME . select-convert-from-text)
-	(USER . select-convert-from-text)
-	(CLASS . select-convert-from-text)
-	(NAME . select-convert-from-text)
-	; Generic types
 	(INTEGER . select-convert-from-integer)
-	(TEXT . select-convert-from-text)
-	(STRING . select-convert-from-text)
-	(LENGTH . select-convert-from-length)
-	(FILE_NAME . select-convert-from-filename)
+ 	(TIMESTAMP . select-convert-from-integer)
+ 	(LENGTH . select-convert-from-integer)
+ 	(LIST_LENGTH . select-convert-from-integer)
+ 	(CLIENT_WINDOW . select-convert-from-integer)
+ 	(PROCESS . select-convert-from-integer)
+ 	(IP_ADDRESS . select-convert-from-ip-address)
+	;; We go after UTF8_STRING in preference to STRING because Mozilla,
+	;; at least, does bad things with non-Latin-1 Unicode characters in
+	;; STRING.
+ 	(UTF8_STRING . select-convert-from-utf-8-text)
 	(CF_TEXT . select-convert-from-cf-text)
 	(CF_UNICODETEXT . select-convert-from-cf-unicodetext)
+ 	(text/html . select-convert-from-utf-16-le-text)  ; Mozilla
+ 	(text/_moz_htmlcontext . select-convert-from-utf-16-le-text)
+ 	(text/_moz_htmlinfo . select-convert-from-utf-16-le-text)
+	(image/png . select-convert-from-image/png)
+	(image/gif . select-convert-from-image/gif)
+	(image/jpeg  . select-convert-from-image/jpeg )
+	(image/tiff  . select-convert-from-image/tiff )
+	(image/xpm . select-convert-from-image/xpm)
+	(image/xbm . select-convert-from-image/xbm)
 	))
 
 ;; Types listed here have special coercion functions that can munge
