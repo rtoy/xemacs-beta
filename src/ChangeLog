@@ -1,3 +1,7 @@
+2004-04-18  Olivier Galibert  <galibert@pobox.com>
+
+	* emacs.c (main_1): Fix stupid logic error in -si handling.
+
 2004-04-15  Jerry James  <james@xemacs.org>
 
 	* number.c (Foddp): Lisp name should be oddp, not odd.  Thanks to
