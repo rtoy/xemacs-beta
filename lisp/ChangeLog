@@ -1,3 +1,8 @@
+2002-06-04  Jerry James <james@eecs.ku.edu>
+
+	* find-paths.el (paths-find-architecture-directory): Search in
+	`system-configuration'/`base', not `base'`system-configuration'.
+
 2002-06-03  Andy Piper  <andy@xemacs.org>
 
 	* dialog-items.el (make-search-dialog): align various subcontrols
