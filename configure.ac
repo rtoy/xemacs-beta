@@ -492,7 +492,7 @@ dnl --use-kkcc                --enable-kkcc
 
 dnl parse flags
 AC_ARG_WITH([prefix],
-	AC_HELP_STRING([--with-prefix=no],[Don't compile the value of --prefix into the executable.]),
+	AC_HELP_STRING([--with-prefix=no],[Don't compile the value for `prefix' into the executable.]),
 	[true], [with_prefix=yes])
 AC_ARG_WITH([site-lisp],
 	AC_HELP_STRING([--with-site-lisp=no],[Allow for a site-lisp directory in the XEmacs hierarchy searched before the installation packages.]),
@@ -751,7 +751,7 @@ AC_ARG_WITH([compiler],
 AC_ARG_WITH([xemacs-compiler],
 	AC_HELP_STRING([--with-xemacs-compiler],[compiler to use to compile just the xemacs executable and C modules.
 			If you want to compile XEmacs as C++, use e.g.
-			`--xemacs-compiler=g++'.  This turns on a lot of
+			`--with-xemacs-compiler=g++'.  This turns on a lot of
 			additional error-checking.]),
 	[], [])
 
@@ -818,7 +818,7 @@ XE_COMPLEX_ARG_ENABLE([database],
 	[
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	USAGE_ERROR("Only one of \`dbm' and \`gnudbm' may be specified
-with the \`--$optname' option.")
+with the \`--enable-database' option.")
 fi
 ],
 [],
@@ -1685,7 +1685,7 @@ if test "$enable_clash_detection" != "no"; then
 fi
 
 dnl Choose a compiler from (in order)
-dnl --compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
+dnl --with-compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
 test -n "$with_compiler" && CC="$with_compiler"
 if test "$with_gcc" = "no"; then dnl Try to find a non-gcc compiler
   case "$CC" in "" | *gcc* ) CC="${NON_GNU_CC-cc}" ;; esac
@@ -1753,7 +1753,7 @@ dnl For example, `configure --compiler=gcc --xemacs-compiler=g++
 dnl The compiler used to build xemacs, as opposed to the compiler
 dnl used by configure and lib-src, is determined from the following
 dnl sources, in order of priority:
-dnl o --xemacs-compiler configure flag
+dnl o --with-xemacs-compiler configure flag
 dnl o XEMACS_CC environment variable
 dnl o same as the regular compiler, (determined previously)
 

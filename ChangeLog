@@ -1,3 +1,9 @@
+2005-03-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure: Regenerate. 
+	* configure.ac (XE_COMPLEX_ARG_ENABLE): --OPTION -> --with-OPTION
+	in various docstrings and error messages. 
+
 2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (--with-cflags-optimization):

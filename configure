@@ -967,7 +967,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
 
-  --with-prefix=no        Don't compile the value of --prefix into the
+  --with-prefix=no        Don't compile the value for `prefix' into the
                           executable.
   --with-site-lisp=no     Allow for a site-lisp directory in the XEmacs
                           hierarchy searched before the installation packages.
@@ -1072,8 +1072,9 @@ Optional Packages:
   --with-compiler         C compiler to use
   --with-xemacs-compiler  compiler to use to compile just the xemacs
                           executable and C modules. If you want to compile
-                          XEmacs as C++, use e.g. `--xemacs-compiler=g++'.
-                          This turns on a lot of additional error-checking.
+                          XEmacs as C++, use e.g.
+                          `--with-xemacs-compiler=g++'. This turns on a lot of
+                          additional error-checking.
   --with-cflags           Compiler flags (such as -O); setting this overrides
                           all default compiler flags except those that control
                           warnings.
@@ -2334,7 +2335,7 @@ unset _enable_database_default _enable_database_all_default x y
 if test "$enable_database_dbm"  = "yes" -a "$enable_database_gdbm" = "yes"; then
 	(echo "$progname: Usage error:"
 echo " " "Only one of \`dbm' and \`gnudbm' may be specified
-with the \`--$optname' option."
+with the \`--enable-database' option."
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 fi
 
