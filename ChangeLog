@@ -1,3 +1,10 @@
+2001-05-29  Martin Buchholz  <martin@xemacs.org>
+
+	* Makefile.in.in: `make distclean' would fail if srcdir != blddir.
+	Remove SUBDIR_DISTCLEAN until such a time as the module subdir is
+	properly integrated into the build system.
+	Only create ${moduledir} and ${sitemoduledir} if HAVE_SHLIB.
+
 2001-05-30  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (AC_INIT_PARSE_ARGS):

@@ -225,9 +225,6 @@ MAKE_SUBDIR = @MAKE_SUBDIR@
 ## Subdirectories that can be made recursively.
 SUBDIR = ${MAKE_SUBDIR} man  
 
-## Subdirectories that must be cleaned on distclean
-SUBDIR_DISTCLEAN = ${SUBDIR} modules/sample modules/ldap modules/zlib modules/base64
-
 ## The makefiles of the directories in ${MAKE_SUBDIR}.
 SUBDIR_MAKEFILES = @SUBDIR_MAKEFILES@
 
@@ -492,7 +489,10 @@ gzip-el:
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${docdir} ${infodir} ${archlibdir} \
 	  ${mandir} ${bindir} ${datadir} ${libdir} ${pkgdir} \
-	  ${sitelispdir} ${moduledir} ${sitemoduledir}
+#ifdef HAVE_SHLIB
+	  ${moduledir} ${sitemoduledir} \
+#endif
+	  ${sitelispdir}
 
 ## Delete all the installed files that the `install' target would
 ## create (but not the noninstalled files such as `make all' would
@@ -564,7 +564,7 @@ top_distclean=\
 	$(RM) -r site-packages xemacs-packages mule-packages site-lisp
 
 distclean: FRC.distclean
-	for d in $(SUBDIR_DISTCLEAN); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
+	for d in $(SUBDIR); do (cd ./$$d && $(RECURSIVE_MAKE) $@); done
 	-${top_distclean}
 
 ## `realclean'
