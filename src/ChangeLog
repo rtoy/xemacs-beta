@@ -1,3 +1,21 @@
+2002-09-22  Mike Sperber <mike@xemacs.org>
+
+	* specifier.c (specifier_add_spec): Don't do anything if NILP
+	(inst_list)---otherwise, assertions in the rest of the specifier
+	code get violated.
+
+2002-09-20  Mike Sperber <mike@xemacs.org>
+
+	(This partially gets back my patch from 2002-07-20 without the
+	bug.)
+	* process-unix.c (child_setup): Remove Ben's comment noting
+	confusion over the file descriptors >= 3: close_process_descs()
+	doesn't close all.  Fix fd range to go up to MAXDESC-1 instead
+	of 64.
+	(unix_create_process): Call begin_dont_check_for_quit to inhibit
+	unwanted interaction (and thus breaking of X event synchronicity)
+	in the child.
+
 2002-08-08  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in: ldap.o and postgresql.o have moved.

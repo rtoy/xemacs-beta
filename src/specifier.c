@@ -1750,6 +1750,9 @@ specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
   Lisp_Object list_to_build_up = Qnil;
   struct gcpro gcpro1;
 
+  if (NILP (inst_list))
+    return;
+
   GCPRO1 (list_to_build_up);
   list_to_build_up = build_up_processed_list (specifier, locale, inst_list);
   /* Now handle REMOVE_LOCALE_TYPE and REMOVE_ALL.  These are the

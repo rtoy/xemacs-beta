@@ -1024,16 +1024,14 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
   retry_close (out);
   retry_close (err);
 
-  /* I can't think of any reason why child processes need any more
-     than the standard 3 file descriptors.  It would be cleaner to
+  /* Close non-process-related file descriptors. It would be cleaner to
      close just the ones that need to be, but the following brute
-     force approach is certainly effective, and not too slow.
+     force approach is certainly effective, and not too slow. */
 
-     #### Who the hell added this?  We already close the descriptors
-     by using close_process_descs()!!! --ben */
   {
     int fd;
-    for (fd = 3; fd <= 64; fd++)
+
+    for (fd = 3; fd < MAXDESC; fd++)
       retry_close (fd);
   }
 
@@ -1140,6 +1138,10 @@ unix_create_process (Lisp_Process *p,
 	int xforkin = forkin;
 	int xforkout = forkout;
 	int xforkerr = forkerr;
+
+	/* Checking for quit in the child is bad because that will 
+	   cause I/O, and that, in turn, can confuse the X connection. */
+	begin_dont_check_for_quit();
 
 	/* Disconnect the current controlling terminal, pursuant to
 	   making the pty be the controlling terminal of the process.
