@@ -40,8 +40,9 @@
 ;;; Code:
 
 (defun make-autoload (form file)
-  "Turn FORM, a defun or defmacro, into an autoload for source file FILE.
-Returns nil if FORM is not a defun, define-skeleton or defmacro."
+  "Turn a definition generator FORM into an autoload for source file FILE.
+Returns nil if FORM is not a defun, defun*, defmacro, defmacro*,
+define-skeleton, or define-derived-mode."
   (let ((car (car-safe form)))
     (if (memq car '(defun defun* define-skeleton defmacro defmacro*
 		     define-derived-mode))
@@ -118,6 +119,7 @@ the section of autoloads for a file.")
 (put 'defmacro 'doc-string-elt 3)
 (put 'defmacro* 'doc-string-elt 3)
 (put 'define-skeleton 'doc-string-elt 3)
+(put 'define-derived-mode 'doc-string-elt 4)
 
 (defun autoload-trim-file-name (file)
   "Returns a relative pathname of FILE including the last directory."

@@ -320,7 +320,7 @@ Package/module options:
 			startup.  Also implies `-vanilla'.
   -no-packages          Pretend like the packages don't exist.  Don't put
                         any packages in the load path or set up any package
-                        autoloads.  Also Implies `-vanilla'.  Use this when
+                        autoloads.  Also implies `-vanilla'.  Use this when
                         running XEmacs in batch mode when you aren't using
                         any functionality in packages and want to make sure
                         that you get no interference from packages
