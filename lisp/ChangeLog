@@ -1,3 +1,8 @@
+2003-02-12  Jerry James  <james@xemacs.org>
+
+	* about.el (about-url-alist): Add my home page.
+	* about.el (about-personal-info): Flatter myself.
+
 2002-11-01  Ilpo Nyyss~nen  <iny@iki.fi>
 
 	* mule/mule-cmds.el (finish-set-language-environment): Fix for

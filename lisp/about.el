@@ -204,6 +204,7 @@
     (dv         . "http://www.lrde.epita.fr/~didier/")
     (fabrice    . "http://www.ese-metz.fr/~popineau/")
     (fptex      . "http://www.fptex.org/")
+    (james      . "http://www.ittc.ku.edu/~james/")
     (jason      . "http://www.mastaler.com/")
     (juhp       . "http://www.01.246.ne.jp/~juhp/")
     (jwz        . "http://www.jwz.org/")
@@ -1033,7 +1034,19 @@ believe now. Oh well, such is life.\n"))
     (james
      (widget-insert
       "\
-Sorry, no personal information available about me yet.\n"))
+Jerry James was managing a software development project as a Ph.D.
+student when two of his M.S. student helpers convinced him to switch
+from FSF Emacs to XEmacs.  He thought that Gnus looked a lot cooler in
+XEmacs, and soon had a web page containing small patches to XEmacs
+20.3, which were picked up by the Debian Linux distribution.
+
+He has since given up his native California to join the faculty at the
+University of Kansas.  He is learning to like the weather in Lawrence,
+Kansas, where he lives with his wife and 3 children.  His work on XEmacs
+mostly consists of extensions to the loadable module support in XEmacs,
+which was introduced by J. Kean Johnston and others.  He has a ")
+     (about-url-link 'james "home page" "Visit Jerry's home page")
+     (widget-insert " (doesn't everybody?)\n"))
     (jan
      (widget-insert "\
 Jan Vroonhof has been using XEmacs since he needed to write .tex files

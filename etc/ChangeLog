@@ -1,3 +1,7 @@
+2003-02-12  Jerry James  <james@xemacs.org>
+
+	* photos/james.png, photos/jamesm.png: New files.
+
 2003-02-04  Steve Youngs  <youngs@xemacs.org>
 
 	* BETA: '-no-autoloads' implies '-vanilla' so suggest people
