@@ -1452,16 +1452,16 @@ installation::
 OS: $(OS)
 !endif
 
-XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") $(xemacs_extra_name:"=\") configured for `$(EMACS_CONFIGURATION)'.
+XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) $(xemacs_extra_name:"=) configured for `$(EMACS_CONFIGURATION)'.
 
-  Building XEmacs using \"$(MAKE:\=\\)\".
-  Building XEmacs using make flags \"$(MAKEFLAGS)\".
-  Building XEmacs in \"$(MAKEDIR:\=\\)\".
+  Building XEmacs using "$(MAKE:\=\\)".
+  Building XEmacs using make flags "$(MAKEFLAGS)".
+  Building XEmacs in "$(MAKEDIR:\=\\)".
 !if defined(CCV)
-  Using compiler \"$(CC) $(CFLAGS)\".
+  Using compiler "$(CC) $(CFLAGS)".
 !endif
-  Installing XEmacs in \"$(INSTALL_DIR:\=\\)\".
-  Package path is $(PATH_PACKAGEPATH:"=\").
+  Installing XEmacs in "$(INSTALL_DIR:\=\\)".
+  Package path is $(PATH_PACKAGEPATH).
 !if $(INFODOCK)
   Building InfoDock.
 !endif
