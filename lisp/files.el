@@ -1193,7 +1193,7 @@ run `normal-mode' explicitly."
     ("\\.m?spec$" .sh-mode)
     ;; The following come after the ChangeLog pattern for the sake of
     ;; ChangeLog.1, etc. and after the .scm.[0-9] pattern too.
-    ("\\.[12345678]\\'" . nroff-mode)
+    ("\\.[123456789]\\'" . nroff-mode)
     ("\\.[tT]e[xX]\\'" . tex-mode)
     ("\\.\\(?:sty\\|cls\\|bbl\\)\\'" . latex-mode)
     ("\\.bib\\'" . bibtex-mode)

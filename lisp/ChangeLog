@@ -1,3 +1,7 @@
+2001-07-26  Mike Sperber <mike@xemacs.org>
+
+	* files.el (auto-mode-alist): .9 files are man pages, too.
+
 2001-12-04  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* paragraphs.el (mark-paragraph): synched with FSF; 
