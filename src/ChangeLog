@@ -1,3 +1,12 @@
+2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* alloc.c (allocate_big_string_chars): New.
+	(make_uninit_string): Use it.
+	(resize_string): Use it.  Bump cons counter on realloc, too.
+
+	Based on analysis and patch by Martin Buchholz <martin@xemacs.org>:
+	<15409.4809.288773.686482@gargle.gargle.HOWL>.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

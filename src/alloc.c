@@ -2090,6 +2090,14 @@ init_string_chars_alloc (void)
   current_string_chars_block = first_string_chars_block;
 }
 
+static Ibyte *
+allocate_big_string_chars (Bytecount length)
+{
+  Ibyte *p = xnew_array (Ibyte, length);
+  INCREMENT_CONS_COUNTER (length, "string chars");
+  return p;
+}
+
 static struct string_chars *
 allocate_string_chars_struct (Lisp_Object string_it_goes_with,
 			      Bytecount fullsize)
@@ -2164,7 +2172,7 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   
   set_lispstringp_data (s, BIG_STRING_FULLSIZE_P (fullsize)
-		   ? xnew_array (Ibyte, length + 1)
+		   ? allocate_big_string_chars (length + 1)
 		   : allocate_string_chars_struct (wrap_string (s),
 						   fullsize)->chars);
 
@@ -2240,6 +2248,9 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	  if (delta > 0 && pos >= 0)
 	    memmove (XSTRING_DATA (s) + pos + delta, XSTRING_DATA (s) + pos,
 		     len);
+	  /* Bump the cons counter.
+	     Conservative; Martin let the increment be delta. */
+	  INCREMENT_CONS_COUNTER (newfullsize, "string chars");
 	}
       else /* String has been demoted from BIG_STRING. */
 	{
@@ -2280,7 +2291,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	  Ibyte *old_data = XSTRING_DATA (s);
 	  Ibyte *new_data =
 	    BIG_STRING_FULLSIZE_P (newfullsize)
-	    ? xnew_array (Ibyte, XSTRING_LENGTH (s) + delta + 1)
+	    ? allocate_big_string_chars (XSTRING_LENGTH (s) + delta + 1)
 	    : allocate_string_chars_struct (s, newfullsize)->chars;
 
 	  if (pos >= 0)
