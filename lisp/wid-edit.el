@@ -343,7 +343,10 @@ new value."
   (widget-specify-secret widget))
 
 (defun widget-specify-secret (field)
-  "Replace text in FIELD with value of `:secret', if non-nil."
+  "Replace text in FIELD with value of `:secret', if non-nil.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (let ((secret (widget-get field :secret))
 	(size (widget-get field :size)))
     (when secret
@@ -552,7 +555,7 @@ The value can later be retrieved with `widget-get'."
 	  widget-shadow-subrs)
   (defun widget-get (widget property)
     "In WIDGET, get the value of PROPERTY.
-The value could either be specified when the widget was created, or
+The value may have been specified when the widget was created, or
 later with `widget-put'."
     (let ((missing t)
 	  value tmp)
@@ -603,12 +606,12 @@ ARGS are passed as extra arguments to the function."
 					 :value-to-internal value)))
 
 (defun widget-default-get (widget)
-  "Extract the defaylt value of WIDGET."
+  "Extract the default value of WIDGET."
   (or (widget-get widget :value)
       (widget-apply widget :default-get)))
 
 (defun widget-match-inline (widget vals)
-  ;; In WIDGET, match the start of VALS.
+  "In WIDGET, match the start of VALS."
   (cond ((widget-get widget :inline)
 	 (widget-apply widget :match-inline vals))
 	((and (listp vals)
@@ -845,14 +848,14 @@ INSTANTIATOR is the vector used to create the glyph."
 
 ;;;###autoload
 (defun widget-create (type &rest args)
-  "Create widget of TYPE.
+  "Create a widget of type TYPE.
 The optional ARGS are additional keyword arguments."
   (let ((widget (apply 'widget-convert type args)))
     (widget-apply widget :create)
     widget))
 
 (defun widget-create-child-and-convert (parent type &rest args)
-  "As part of the widget PARENT, create a child widget TYPE.
+  "As a child of widget PARENT, create a widget of type TYPE.
 The child is converted, using the keyword arguments ARGS."
   (let ((widget (apply 'widget-convert type args)))
     (widget-put widget :parent parent)
@@ -864,7 +867,8 @@ The child is converted, using the keyword arguments ARGS."
     widget))
 
 (defun widget-create-child (parent type)
-  "Create widget of TYPE."
+  "As a child of widget PARENT, create a widget of type TYPE.
+The child is not converted."
   (let ((widget (copy-sequence type)))
     (widget-put widget :parent parent)
     (unless (widget-get widget :indent)
@@ -913,7 +917,7 @@ The optional ARGS are additional keyword arguments."
 	    (setq args (nthcdr 2 args))
 	  (widget-put widget :args args)
 	  (setq args nil))))
-    ;; Then Convert the widget.
+    ;; Then convert the widget.
     (setq type widget)
     (while type
       (let ((convert-widget (plist-get (cdr type) :convert-widget)))
@@ -946,11 +950,12 @@ The optional ARGS are additional keyword arguments."
 (defun widget-convert-text (type from to
 				 &optional button-from button-to
 				 &rest args)
-  "Return a widget of type TYPE with endpoint FROM TO.
-Optional ARGS are extra keyword arguments for TYPE.
-and TO will be used as the widgets end points. If optional arguments
-BUTTON-FROM and BUTTON-TO are given, these will be used as the widgets
-button end points.
+  "Return a widget of type TYPE with endpoints FROM and TO.
+No text will be inserted in the buffer.  Instead the positions FROM and TO
+will be used as the widget's end points.  The widget is ``wrapped around''
+the text between them.
+If optional arguments BUTTON-FROM and BUTTON-TO are given, these will be
+used as the widget's button end points.
 Optional ARGS are extra keyword arguments for TYPE."
   (let ((widget (apply 'widget-convert type :delete 'widget-leave-text args))
 	(from (copy-marker from))
@@ -964,11 +969,11 @@ Optional ARGS are extra keyword arguments for TYPE."
     widget))
 
 (defun widget-convert-button (type from to &rest args)
-  "Return a widget of type TYPE with endpoint FROM TO.
+  "Return a widget of type TYPE with endpoints FROM and TO.
 Optional ARGS are extra keyword arguments for TYPE.
-No text will be inserted to the buffer, instead the text between FROM
-and TO will be used as the widgets end points, as well as the widgets
-button end points."
+No text will be inserted in the buffer.  Instead the positions FROM and TO
+will be used as the widget's end points, as well as the widget's button's
+end points.  The widget is ``wrapped around'' the text between them."
   (apply 'widget-convert-text type from to from to args))
 
 (defun widget-leave-text (widget)
@@ -1054,7 +1059,7 @@ Recommended as a parent keymap for modes using widgets.")
 
 
 (defun widget-field-activate (pos &optional event)
-  "Invoke the ediable field at point."
+  "Invoke the editable field at point."
   (interactive "@d")
   (let ((field (widget-field-find pos)))
     (if field
@@ -1312,7 +1317,10 @@ With optional ARG, move across that many fields."
   (widget-move (- arg)))
 
 (defun widget-beginning-of-line ()
-  "Go to beginning of field or beginning of line, whichever is first."
+  "Go to beginning of field or beginning of line, whichever is first.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (interactive "_")
   (let* ((field (widget-field-find (point)))
 	 (start (and field (widget-field-start field))))
@@ -1321,7 +1329,10 @@ With optional ARG, move across that many fields."
       (call-interactively 'beginning-of-line))))
 
 (defun widget-end-of-line ()
-  "Go to end of field or end of line, whichever is first."
+  "Go to end of field or end of line, whichever is first.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (interactive "_")
   (let* ((field (widget-field-find (point)))
 	 (end (and field (widget-field-end field))))
@@ -1330,7 +1341,10 @@ With optional ARG, move across that many fields."
       (call-interactively 'end-of-line))))
 
 (defun widget-kill-line ()
-  "Kill to end of field or end of line, whichever is first."
+  "Kill to end of field or end of line, whichever is first.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (interactive)
   (let* ((field (widget-field-find (point)))
 	 (newline (save-excursion (forward-line 1) (point)))
@@ -1425,17 +1439,26 @@ When not inside a field, move to the previous button or field."
 (make-variable-buffer-local 'widget-field-was)
 
 (defun widget-field-buffer (widget)
-  "Return the start of WIDGET's editing field."
+  "Return the buffer containing WIDGET.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (let ((extent (widget-get widget :field-extent)))
     (and extent (extent-object extent))))
 
 (defun widget-field-start (widget)
-  "Return the start of WIDGET's editing field."
+  "Return the start of WIDGET's editing field.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (let ((extent (widget-get widget :field-extent)))
     (and extent (extent-start-position extent))))
 
 (defun widget-field-end (widget)
-  "Return the end of WIDGET's editing field."
+  "Return the end of WIDGET's editing field.
+
+It is an error to use this function after creating the widget but before
+invoking `widget-setup'."
   (let ((extent (widget-get widget :field-extent)))
     ;; Don't subtract one if local-map works at the end of the extent.
     (and extent (if (or widget-field-add-space
@@ -1445,7 +1468,10 @@ When not inside a field, move to the previous button or field."
 
 (defun widget-field-find (pos)
   "Return the field at POS.
-Unlike (get-char-property POS 'field) this, works with empty fields too."
+Unlike (get-char-property POS 'field) this, works with empty fields too.
+
+Warning: using this function after creating the widget but before invoking
+`widget-setup' will always fail."
   (let ((field-extent (map-extents (lambda (extent ignore)
 				     extent)
 				   nil pos pos nil nil 'field)))
@@ -1467,6 +1493,8 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 ;	  (setq found field))))
 ;    found))
 
+;; Warning: using this function after creating the widget but before
+;; invoking `widget-setup' will always fail.
 (defun widget-before-change (from to)
   ;; Barf if the text changed is outside the editable fields.
   (unless inhibit-read-only
@@ -2966,7 +2994,7 @@ when he invoked the menu."
 ;;; The `group' Widget.
 
 (define-widget 'group 'default
-  "A widget which group other widgets inside."
+  "A widget which groups other widgets inside."
   :convert-widget 'widget-types-convert-widget
   :format "%v"
   :value-create 'widget-group-value-create
@@ -3518,12 +3546,12 @@ To use this type, you must define :match or :match-alternatives."
 	   (characterp value)))
 
 (define-widget 'list 'group
-  "A lisp list."
+  "A Lisp list."
   :tag "List"
   :format "%{%t%}:\n%v")
 
 (define-widget 'vector 'group
-  "A lisp vector."
+  "A Lisp vector."
   :tag "Vector"
   :format "%{%t%}:\n%v"
   :match 'widget-vector-match

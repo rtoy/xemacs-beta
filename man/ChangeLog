@@ -1,3 +1,8 @@
+2001-08-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* widget.texi (Basic Types, Defining New Widgets):
+	Distinguish between :action and :notify.
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

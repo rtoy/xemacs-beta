@@ -1,3 +1,32 @@
+2001-08-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* README:  Partial update.
+	
+2001-08-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* wid-edit.el (widget-specify-secret):
+	(widget-get):
+	(widget-default-get):
+	(widget-match-inline):
+	(widget-create):
+	(widget-create-child-and-convert):
+	(widget-create-child):
+	(widget-convert-text):
+	(widget-convert-button):
+	(widget-field-activate):
+	(widget-beginning-of-line):
+	(widget-end-of-line):
+	(widget-kill-line):
+	(widget-field-buffer):
+	(widget-field-start):
+	(widget-field-end):
+	(widget-field-find):
+	(widget-before-change):
+	(`group' Widget):
+	('list Widget):
+	('vector Widget):
+	Document usage conditions, fix typos.
+
 2001-06-19  Ben Wing  <ben@xemacs.org>
 
 	* term\AT386.el:

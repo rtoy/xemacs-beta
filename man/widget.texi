@@ -542,7 +542,9 @@ A function called each time the widget or a nested widget is changed.
 The function is called with two or three arguments.  The first argument
 is the widget itself, the second argument is the widget that was
 changed, and the third argument is the event leading to the change, if
-any. 
+any.  In editable fields, this includes all insertions, deletions,
+@emph{etc}.  To watch only for ``final'' actions, redefine the
+@code{:action} callback.
 
 @item :menu-tag
 Tag used in the menu when the widget is used as an option in a
@@ -1469,7 +1471,9 @@ escape sequences as well as give an error for unknown escapes.
 
 @item :action
 Function to handle user initiated events.  By default, @code{:notify}
-the parent. 
+the parent.  Actions normally do not include mere edits, but refer to
+things like invoking buttons or hitting enter in an editable field.  To
+watch for any change, redefine the @code{:notify} callback.
 
 The following predefined function can be used here:
 
