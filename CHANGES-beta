@@ -1,4 +1,5 @@
-to 21.2.47 "Zephir"
+to 21.5.0 "alfalfa"
+-- Switch to new beta series
 
 to 21.2.46 "Urania"
 -- GTK code has been merged as an experimental display type -- William Perry
