@@ -1,3 +1,7 @@
+2003-09-16  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* xemacs.def.in.in: Add lrecord_memory_descriptions.
+
 2003-09-15  Jerry James  <james@xemacs.org>
 
 	* depend: Regenerate.

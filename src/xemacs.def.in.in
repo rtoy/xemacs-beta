@@ -169,7 +169,11 @@ initialized			/* LOADHIST_ATTACH */
 lrecord_cons			/* CONSP */
 lrecord_implementations_table	/* RECORD_DUMPABLE */
 lrecord_marker			/* MARKERP */
+#ifdef USE_KKCC
+lrecord_memory_descriptions	/* INIT_LRECORD_IMPLEMENTATION */
+#else
 lrecord_markers			/* INIT_LRECORD_IMPLEMENTATION */
+#endif
 lrecord_string			/* STRINGP */
 lrecord_symbol	 		/* SYMBOLP */
 lrecord_type_count		/* INIT_EXTERNAL_LRECORD_IMPLEMENTATION */
