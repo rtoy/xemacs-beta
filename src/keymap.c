@@ -2990,8 +2990,7 @@ faster.
      (function, keymap, sort_first))
 {
   /* This function can GC */
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  Lisp_Object table = Qnil;
+  struct gcpro gcpro1, gcpro2;
 
  /* tolerate obviously transposed args */
   if (!NILP (Fkeymapp (function)))
@@ -3000,17 +2999,9 @@ faster.
       function = keymap;
       keymap = tmp;
     }
-
-  GCPRO3 (function, keymap, table);
+  GCPRO2 (function, keymap);
   keymap = get_keymap (keymap, 1, 1);
-
-  /* elisp_maphash does not allow mapping functions to modify the hash
-     table being mapped over.  Since map-keymap explicitly allows a
-     mapping function to modify KEYMAP, we map over a copy of the hash
-     table instead.  */
-  table = Fcopy_hash_table (XKEYMAP (keymap)->table);
-
-  map_keymap (table, !NILP (sort_first),
+  map_keymap (XKEYMAP (keymap)->table, !NILP (sort_first),
 	      map_keymap_mapper, LISP_TO_VOID (function));
   UNGCPRO;
   return Qnil;

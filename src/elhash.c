@@ -22,10 +22,39 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file implements the hash table lisp object type.
+
+   The hash table technique used is "linear probing".  Collisions are
+   resolved by putting the item in the next empty place in the array
+   following the collision.  Finding a hash entry performs a linear
+   search in the cluster starting at the hash value.
+
+   On deletions from the hash table, the entries immediately following
+   the deleted entry are re-entered in the hash table.  We do not have
+   a special way to mark deleted entries (known as "tombstones").
+
+   At the end of the hash entries ("hentries"), we leave room for an
+   entry that is always empty (the "sentinel").
+
+   The traditional literature on hash table implementation
+   (e.g. Knuth) suggests that too much "primary clustering" occurs
+   with linear probing.  However, this literature was written when
+   locality of reference was not a factor.  The discrepancy between
+   CPU speeds and memory speeds is increasing, and the speed of access
+   to memory is highly dependent on memory caches which work best when
+   there is high locality of data reference.  Random access to memory
+   is up to 20 times as expensive as access to the nearest address
+   (and getting worse).  So linear probing makes sense.
+
+   But the representation doesn't actually matter that much with the
+   current elisp engine.  Funcall is sufficiently slow that the choice
+   of hash table implementation is noise.  */
+
 #include <config.h>
 #include "lisp.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "opaque.h"
 
 Lisp_Object Qhash_tablep;
 static Lisp_Object Qhashtable, Qhash_table;
@@ -106,15 +135,6 @@ check_hash_table_invariants (Lisp_Hash_Table *ht)
 #else
 #define check_hash_table_invariants(ht)
 #endif
-
-/* We use linear probing instead of double hashing, despite its lack
-   of blessing by Knuth and company, because, as a result of the
-   increasing discrepancy between CPU speeds and memory speeds, cache
-   behavior is becoming increasingly important, e.g:
-
-   For a trivial loop, the penalty for non-sequential access of an array is:
-    - a factor of 3-4 on Pentium Pro 200 Mhz
-    - a factor of 10  on Ultrasparc  300 Mhz */
 
 /* Return a suitable size for a hash table, with at least SIZE slots. */
 static size_t
@@ -373,13 +393,27 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
+free_hentries (hentry *hentries, size_t size)
+{
+#if ERROR_CHECK_HASH_TABLE
+  /* Ensure a crash if other code uses the discarded entries afterwards. */
+  hentry *e, *sentinel;
+
+  for (e = hentries, sentinel = e + size; e < sentinel; e++)
+    * (unsigned long *) e = 0xdeadbeef;
+#endif
+
+  if (!DUMPEDP (hentries))
+    xfree (hentries);
+}
+
+static void
 finalize_hash_table (void *header, int for_disksave)
 {
   if (!for_disksave)
     {
       Lisp_Hash_Table *ht = (Lisp_Hash_Table *) header;
-
-      xfree (ht->hentries);
+      free_hentries (ht->hentries, ht->size);
       ht->hentries = 0;
     }
 }
@@ -942,8 +976,7 @@ resize_hash_table (Lisp_Hash_Table *ht, size_t new_size)
 	*probe = *e;
       }
 
-  if (!DUMPEDP (old_entries))
-    xfree (old_entries);
+  free_hentries (old_entries, old_size);
 }
 
 /* After a hash table has been saved to disk and later restored by the
@@ -1171,52 +1204,86 @@ This can be one of `non-weak', `weak', `key-weak' or `value-weak'.
 /************************************************************************/
 /*			    Mapping Functions				*/
 /************************************************************************/
+
+/* We need to be careful when mapping over hash tables because the
+   hash table might be modified during the mapping operation:
+   - by the mapping function
+   - by gc (if the hash table is weak)
+
+   So we make a copy of the hentries at the beginning of the mapping
+   operation, and iterate over the copy. */
+static Lisp_Object
+maphash_unwind (Lisp_Object unwind_obj)
+{
+  void *ptr = (void *) get_opaque_ptr (unwind_obj);
+  xfree (ptr);
+  free_opaque_ptr (unwind_obj);
+  return Qnil;
+}
+
+/* Return a malloced array of alternating key/value pairs from HT. */
+static Lisp_Object *
+copy_compress_hentries (const Lisp_Hash_Table *ht)
+{
+  Lisp_Object * const objs =
+    /* If the hash table is empty, ht->count could be 0. */
+    xnew_array (Lisp_Object, 2 * (ht->count > 0 ? ht->count : 1));
+  const hentry *e, *sentinel;
+  Lisp_Object *pobj;
+
+  for (e = ht->hentries, sentinel = e + ht->size, pobj = objs; e < sentinel; e++)
+    if (!HENTRY_CLEAR_P (e))
+      {
+	*(pobj++) = e->key;
+	*(pobj++) = e->value;
+      }
+
+  type_checking_assert (pobj == objs + 2 * ht->count);
+
+  return objs;
+}
+
 DEFUN ("maphash", Fmaphash, 2, 2, 0, /*
 Map FUNCTION over entries in HASH-TABLE, calling it with two args,
 each key and value in HASH-TABLE.
 
-FUNCTION may not modify HASH-TABLE, with the one exception that FUNCTION
+FUNCTION must not modify HASH-TABLE, with the one exception that FUNCTION
 may remhash or puthash the entry currently being processed by FUNCTION.
 */
        (function, hash_table))
 {
-  const Lisp_Hash_Table *ht = xhash_table (hash_table);
-  const hentry *e, *sentinel;
+  const Lisp_Hash_Table * const ht = xhash_table (hash_table);
+  Lisp_Object * const objs = copy_compress_hentries (ht);
+  Lisp_Object args[3];
+  const Lisp_Object *pobj, *end;
+  int speccount = specpdl_depth ();
+  struct gcpro gcpro1;
 
-  for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
-      {
-	Lisp_Object args[3], key;
-      again:
-	key = e->key;
-	args[0] = function;
-	args[1] = key;
-	args[2] = e->value;
-	Ffuncall (countof (args), args);
-	/* Has FUNCTION done a remhash? */
-	if (!EQ (key, e->key) && !HENTRY_CLEAR_P (e))
-	  goto again;
-      }
+  record_unwind_protect (maphash_unwind, make_opaque_ptr ((void *)objs));
+  GCPRO1 (objs[0]);
+  gcpro1.nvars = 2 * ht->count;
+
+  args[0] = function;
+
+  for (pobj = objs, end = pobj + 2 * ht->count; pobj < end; pobj += 2)
+    {
+      args[1] = pobj[0];
+      args[2] = pobj[1];
+      Ffuncall (countof (args), args);
+    }
+
+  unbind_to (speccount, Qnil);
+  UNGCPRO;
 
   return Qnil;
 }
 
-/* #### If the Lisp function being called does a puthash and this
-   #### causes the hash table to be resized, the results will be quite
-   #### random and we will likely crash.  To fix this, either set a
-   #### flag in the hash table while we're mapping and signal an error
-   #### when new entries are added, or fix things to make this
-   #### operation work properly, like this: Store two hash tables in
-   #### each hash table object -- the second one is written to when
-   #### you do a puthash inside of a mapping operation, and the
-   #### various operations need to check both hash tables for entries.
-   #### As soon as the last maphash over a particular hash table
-   #### object terminates, the entries in the second table are added
-   #### to the first (using an unwind-protect). --ben */
-
-/* Map *C* function FUNCTION over the elements of a lisp hash table. */
+/* Map *C* function FUNCTION over the elements of a non-weak lisp hash table.
+   FUNCTION must not modify HASH-TABLE, with the one exception that FUNCTION
+   may puthash the entry currently being processed by FUNCTION.
+   Mapping terminates if FUNCTION returns something other than 0. */
 void
-elisp_maphash (maphash_function_t function,
+elisp_maphash_unsafe (maphash_function_t function,
 	       Lisp_Object hash_table, void *extra_arg)
 {
   const Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
@@ -1224,37 +1291,57 @@ elisp_maphash (maphash_function_t function,
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
     if (!HENTRY_CLEAR_P (e))
-      {
-	Lisp_Object key;
-      again:
-	key = e->key;
-	if (function (key, e->value, extra_arg))
-	  return;
-	/* Has FUNCTION done a remhash? */
-	if (!EQ (key, e->key) && !HENTRY_CLEAR_P (e))
-	  goto again;
-      }
+      if (function (e->key, e->value, extra_arg))
+	return;
 }
 
-/* Remove all elements of a lisp hash table satisfying *C* predicate PREDICATE. */
+/* Map *C* function FUNCTION over the elements of a lisp hash table.
+   It is safe for FUNCTION to modify HASH-TABLE.
+   Mapping terminates if FUNCTION returns something other than 0. */
+void
+elisp_maphash (maphash_function_t function,
+	       Lisp_Object hash_table, void *extra_arg)
+{
+  const Lisp_Hash_Table * const ht = xhash_table (hash_table);
+  Lisp_Object * const objs = copy_compress_hentries (ht);
+  const Lisp_Object *pobj, *end;
+  int speccount = specpdl_depth ();
+  struct gcpro gcpro1;
+
+  record_unwind_protect (maphash_unwind, make_opaque_ptr ((void *)objs));
+  GCPRO1 (objs[0]);
+  gcpro1.nvars = 2 * ht->count;
+
+  for (pobj = objs, end = pobj + 2 * ht->count; pobj < end; pobj += 2)
+    if (function (pobj[0], pobj[1], extra_arg))
+      break;
+
+  unbind_to (speccount, Qnil);
+  UNGCPRO;
+}
+
+/* Remove all elements of a lisp hash table satisfying *C* predicate PREDICATE.
+   PREDICATE must not modify HASH-TABLE. */
 void
 elisp_map_remhash (maphash_function_t predicate,
 		   Lisp_Object hash_table, void *extra_arg)
 {
-  Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
-  hentry *e, *entries, *sentinel;
+  const Lisp_Hash_Table * const ht = xhash_table (hash_table);
+  Lisp_Object * const objs = copy_compress_hentries (ht);
+  const Lisp_Object *pobj, *end;
+  int speccount = specpdl_depth ();
+  struct gcpro gcpro1;
 
-  for (e = entries = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
-      {
-      again:
-	if (predicate (e->key, e->value, extra_arg))
-	  {
-	    remhash_1 (ht, entries, e);
-	    if (!HENTRY_CLEAR_P (e))
-	      goto again;
-	  }
-      }
+  record_unwind_protect (maphash_unwind, make_opaque_ptr ((void *)objs));
+  GCPRO1 (objs[0]);
+  gcpro1.nvars = 2 * ht->count;
+
+  for (pobj = objs, end = pobj + 2 * ht->count; pobj < end; pobj += 2)
+    if (predicate (pobj[0], pobj[1], extra_arg))
+      Fremhash (pobj[0], hash_table);
+
+  unbind_to (speccount, Qnil);
+  UNGCPRO;
 }
 
 

@@ -1,3 +1,25 @@
+2001-04-04  Martin Buchholz  <martin@xemacs.org>
+
+	* keymap.c (Fmap_keymap): Revert to previous implementation, since
+	elisp_maphash is now safe.
+
+	* elhash.c: Remove erroneously added comment.
+	* elhash.c (copy_compress_hentries): New.
+	(Fmaphash): Use copy_compress_hentries.
+	(elisp_maphash): Use copy_compress_hentries.
+	(elisp_map_remhash): Use copy_compress_hentries.
+	(elisp_maphash_unsafe): New.
+	* elhash.h: Add prototype for elisp_maphash_unsafe.
+
+	* elhash.c (Fmaphash):
+	Avoid crashes/unpredictable behavior if a hash table is modified
+	during a mapping function, perhaps indirectly via gc.
+	(free_hentries): New.
+	Avoid crash if a pdumped hash table is collected.
+	(maphash_unwind): New.
+
+	* tests.c: Add C-level hash table tests.
+
 2001-04-28  Ben Wing  <ben@xemacs.org>
 
 	* buffer.c (Ferase_buffer):

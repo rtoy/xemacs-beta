@@ -29,6 +29,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "buffer.h"
 #include "lstream.h"
+#include "elhash.h"
 #include "opaque.h"
 
 static Lisp_Object Vtest_function_list;
@@ -409,6 +410,86 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 }
 
 
+/* Hash Table testing */
+
+typedef struct
+{
+  Lisp_Object hash_table;
+  EMACS_INT sum;
+} test_hash_tables_data;
+
+
+static int
+test_hash_tables_mapper (Lisp_Object key, Lisp_Object value,
+			 void *extra_arg)
+{
+  test_hash_tables_data *p = (test_hash_tables_data *) extra_arg;
+  p->sum += XINT (value);
+  return 0;
+}
+
+static int
+test_hash_tables_modifying_mapper (Lisp_Object key, Lisp_Object value,
+				   void *extra_arg)
+{
+  test_hash_tables_data *p = (test_hash_tables_data *) extra_arg;
+  Fputhash (make_int (- XINT (key)),
+	    make_int (2 * XINT (value)),
+	    p->hash_table);
+  p->sum += XINT (value);
+  return 0;
+}
+
+static int
+test_hash_tables_predicate (Lisp_Object key, Lisp_Object value,
+			    void *extra_arg)
+{
+  return XINT (key) < 0;
+}
+
+
+DEFUN ("test-hash-tables", Ftest_hash_tables, 0, 0, "", /*
+Test C interface to hash tables.
+*/
+       ())
+{
+  test_hash_tables_data data;
+  data.hash_table = make_lisp_hash_table (50, HASH_TABLE_NON_WEAK,
+					  HASH_TABLE_EQUAL);
+
+  Fputhash (make_int (1), make_int (2), data.hash_table);
+  Fputhash (make_int (3), make_int (4), data.hash_table);
+
+  data.sum = 0;
+  elisp_maphash_unsafe (test_hash_tables_mapper,
+			data.hash_table, (void *) &data);
+  assert (data.sum == 2 + 4);
+
+  data.sum = 0;
+  elisp_maphash (test_hash_tables_modifying_mapper,
+		 data.hash_table, (void *) &data);
+  assert (data.sum == 2 + 4);
+
+  /* hash table now contains:  (1, 2) (3, 4) (-1, 2*2) (-3, 2*4) */
+
+  data.sum = 0;
+  elisp_maphash_unsafe (test_hash_tables_mapper,
+			data.hash_table, (void *) &data);
+  assert (data.sum == 3 * (2 + 4));
+
+  /* Remove entries with negative keys, added by modifying mapper */
+  elisp_map_remhash (test_hash_tables_predicate,
+		     data.hash_table, 0);
+
+  data.sum = 0;
+  elisp_maphash_unsafe (test_hash_tables_mapper,
+			data.hash_table, (void *) &data);
+  assert (data.sum == 2 + 4);
+
+  return intern ("PASS");
+}
+
+
 
 #define TESTS_DEFSUBR(Fname) do {		\
   DEFSUBR (Fname);				\
@@ -423,6 +504,7 @@ syms_of_tests (void)
   Vtest_function_list = Qnil;
 
   TESTS_DEFSUBR (Ftest_data_format_conversion);
+  TESTS_DEFSUBR (Ftest_hash_tables);
   /* Add other test functions here with TESTS_DEFSUBR */
 }
 

@@ -87,6 +87,9 @@ Lisp_Object make_lisp_hash_table (size_t size,
 void elisp_maphash (maphash_function_t function,
 		    Lisp_Object hash_table, void *extra_arg);
 
+void elisp_maphash_unsafe (maphash_function_t function,
+			   Lisp_Object hash_table, void *extra_arg);
+
 void elisp_map_remhash (maphash_function_t predicate,
 			Lisp_Object hash_table, void *extra_arg);
 
