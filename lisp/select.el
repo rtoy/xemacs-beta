@@ -146,10 +146,11 @@ there is no selection an error is signalled.  Not suitable in a
 	    (condition-case err
 		(progn
 		  (setq res (get-selection-internal type (car data-type)))
-		  (throw 'converted res))
+		  (if res (throw 'converted res) 
+		    (signal 'selection-conversion-error nil)))
 	      (selection-conversion-error
 	       (if (cdr data-type)
-		   (setq data-type (pop data-type))
+		   (setq data-type (cdr data-type))
 		 (signal (car err) (cdr err))))))))
     (get-selection-internal type data-type)))
 

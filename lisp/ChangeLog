@@ -1,3 +1,11 @@
+2005-03-12  Fabrice Popineau <Fabrice.Popineau@supelec.fr> 
+
+	* select.el (get-selection): As described in
+	u0nj9nvq.fsf@esemetz.metz.supelec.fr , get-selection-internal
+	returns nil instead of signalling a selection-conversion
+	error on win32. Also, Aidan had a logic error while traversing a
+	list. 
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.
