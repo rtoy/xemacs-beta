@@ -1825,11 +1825,8 @@ BOOL qxeGetBinaryType (const Extbyte * lpApplicationName, LPDWORD lpBinaryType);
 #endif
 DWORD qxeGetShortPathName (const Extbyte * lpszLongPath, Extbyte * lpszShortPath, DWORD cchBuffer);
 
-#ifdef ERROR_WHEN_NONINTERCEPTED_FUNS_USED
 #undef GetLongPathName
-#define GetLongPathName error use qxeGetLongPathName or GetLongPathNameA/GetLongPathNameW
-#endif
-DWORD qxeGetLongPathName (const Extbyte * lpszShortPath, Extbyte * lpszLongPath, DWORD cchBuffer);
+#define GetLongPathName error Win98/2K+ only
 
 /* Skipping GetEnvironmentStrings because misnamed ANSI version of the function */
 

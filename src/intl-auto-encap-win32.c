@@ -2571,14 +2571,7 @@ qxeGetShortPathName (const Extbyte * lpszLongPath, Extbyte * lpszShortPath, DWOR
     return GetShortPathNameA ((LPCSTR) lpszLongPath, (LPSTR) lpszShortPath, cchBuffer);
 }
 
-DWORD
-qxeGetLongPathName (const Extbyte * lpszShortPath, Extbyte * lpszLongPath, DWORD cchBuffer)
-{
-  if (XEUNICODE_P)
-    return GetLongPathNameW ((LPCWSTR) lpszShortPath, (LPWSTR) lpszLongPath, cchBuffer);
-  else
-    return GetLongPathNameA ((LPCSTR) lpszShortPath, (LPSTR) lpszLongPath, cchBuffer);
-}
+/* Error if GetLongPathName used: Win98/2K+ only */
 
 /* Skipping GetEnvironmentStrings because misnamed ANSI version of the function */
 

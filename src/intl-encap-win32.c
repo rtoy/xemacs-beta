@@ -216,7 +216,7 @@ file WINBASE.H
 
 yes GetBinaryType
 yes GetShortPathName
-yes GetLongPathName
+no GetLongPathName Win98/2K+ only
 skip GetEnvironmentStrings misnamed ANSI version of the function
 yes FreeEnvironmentStrings
 yes FormatMessage
