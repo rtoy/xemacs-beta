@@ -1,3 +1,7 @@
+2003-06-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.usage (--cflags-warning): Change underscore to hyphen.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

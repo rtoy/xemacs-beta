@@ -39,7 +39,7 @@ Compilation options:
 --cflags=FLAGS          Compiler flags (such as -O); setting this overrides
                         all default compiler flags except those that control
                         warnings.
---cflags_warning=FLAGS  Override compiler flags used to control warnings.
+--cflags-warning=FLAGS  Override compiler flags used to control warnings.
                         Normally, don't set this, as XEmacs already turns on
                         the maximum safe warning level.
 --cpp=PROG              C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)
