@@ -1,3 +1,8 @@
+2003-04-16  Jerry James  <james@xemacs.org>
+
+	* keydefs.el: Remove mappings for keys mapped to the nowhere
+	defined function function-key-error.
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.
