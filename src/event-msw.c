@@ -1369,7 +1369,7 @@ mswindows_need_event_in_modal_loop (int badly_p)
 
       /* Fetch and dispatch any pending timers */
       if (GetMessage (&msg, NULL, WM_TIMER, WM_TIMER) > 0)
-       DispatchMessage (&msg);
+	DispatchMessage (&msg);
     }
 }
 
@@ -1401,10 +1401,10 @@ mswindows_need_event (int badly_p)
 	  EMACS_SET_SECS_USECS (sometime, 0, 0);
 	  EMACS_TIME_TO_SELECT_TIME (sometime, select_time_to_block);
 	  pointer_to_this = &select_time_to_block;
-         if (mswindows_in_modal_loop)
-           /* In modal loop with badly_p false, don't care about
-              Windows events. */
-           FD_CLR (windows_fd, &temp_mask);
+	  if (mswindows_in_modal_loop)
+	    /* In modal loop with badly_p false, don't care about 
+	       Windows events. */
+	    FD_CLR (windows_fd, &temp_mask);
 	}
 
       active = select (MAXDESC, &temp_mask, 0, 0, pointer_to_this);
@@ -1418,10 +1418,10 @@ mswindows_need_event (int badly_p)
 	{
 	  if (FD_ISSET (windows_fd, &temp_mask))
 	    {
-             if (mswindows_in_modal_loop)
-               mswindows_need_event_in_modal_loop (badly_p);
-             else
-               mswindows_drain_windows_queue ();
+	      if (mswindows_in_modal_loop)
+		mswindows_need_event_in_modal_loop (badly_p);
+	      else
+		mswindows_drain_windows_queue ();
 	    }
 	  else
 	    {
@@ -1488,22 +1488,22 @@ mswindows_need_event (int badly_p)
       /* Now try getting a message or process event */
       DWORD what_events;
       if (mswindows_in_modal_loop)
-       /* In a modal loop, only look for timer events, and only if
-          we really need one. */
-       {
-         if (badly_p)
-           what_events = QS_TIMER;
-         else
-           what_events = 0;
-       }
+	/* In a modal loop, only look for timer events, and only if
+	   we really need one. */
+	{
+	  if (badly_p)
+	    what_events = QS_TIMER;
+	  else
+	    what_events = 0;
+	}
       else
-       /* Look for any event */
-       what_events = QS_ALLINPUT;
+	/* Look for any event */
+	what_events = QS_ALLINPUT;
 
       active = MsgWaitForMultipleObjects (mswindows_waitable_count,
 					  mswindows_waitable_handles,
 					  FALSE, badly_p ? INFINITE : 0,
-                                         what_events);
+					  what_events);
 
       /* This will assert if handle being waited for becomes abandoned.
 	 Not the case currently tho */
@@ -1519,10 +1519,10 @@ mswindows_need_event (int badly_p)
       else if (active == WAIT_OBJECT_0 + mswindows_waitable_count)
 	{
 	  /* Got your message, thanks */
-         if (mswindows_in_modal_loop)
-           mswindows_need_event_in_modal_loop (badly_p);
-         else
-           mswindows_drain_windows_queue ();
+	  if (mswindows_in_modal_loop)
+	    mswindows_need_event_in_modal_loop (badly_p);
+	  else
+	    mswindows_drain_windows_queue ();
 	}
       else
 	{
@@ -1539,12 +1539,12 @@ mswindows_need_event (int badly_p)
 	    {
 	      /* None. This means that the process handle itself has signaled.
 		 Remove the handle from the wait vector, and make status_notify
-                note the exited process.  First find the process object if
-                possible. */
-             LIST_LOOP_3 (vaffanculo, Vprocess_list, vproctail)
-               if (get_nt_process_handle (XPROCESS (vaffanculo)) ==
-                   mswindows_waitable_handles [ix])
-                 break;
+		 note the exited process.  First find the process object if 
+	         possible. */
+	      LIST_LOOP_3 (vaffanculo, Vprocess_list, vproctail)
+		if (get_nt_process_handle (XPROCESS (vaffanculo)) ==
+		    mswindows_waitable_handles [ix])
+		  break;
 	      mswindows_waitable_handles [ix] =
 		mswindows_waitable_handles [--mswindows_waitable_count];
 	      kick_status_notify ();
@@ -1553,11 +1553,11 @@ mswindows_need_event (int badly_p)
 		 process, and (2) status notifications will happen in
 		 accept-process-output, sleep-for, and sit-for. */
 	      /* #### horrible kludge till my real process fixes go in.
-                #### Replaced with a slightly less horrible kluge that
-                     at least finds the right process instead of axing the
-                     first one on the list.
+		 #### Replaced with a slightly less horrible kluge that
+		      at least finds the right process instead of axing the
+		      first one on the list.
 	       */
-             if (!NILP (vproctail))
+	      if (!NILP (vproctail))
 		{
 		  mswindows_enqueue_process_event (XPROCESS (vaffanculo));
 		}
