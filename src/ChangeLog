@@ -49,11 +49,6 @@
 	* redisplay.c (Fforce_cursor_redisplay):
 	Check for stream frames/devices.
 
-2003-02-09  Steve Youngs  <youngs@xemacs.org>
-
-	* s/darwin.h (DLSYM_NEEDS_UNDERSCORE): Define it.
-	From Andrew Begel <abegel@cs.berkeley.edu>
-
 2003-02-07  Mike Sperber  <mike@xemacs.org>
 
 	* alloc.c (GC_CHECK_NOT_FREE): Pull this out of USE_KKCC.
