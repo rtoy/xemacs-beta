@@ -1,3 +1,10 @@
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Revert Steve Youngs's patch, and set default for
+	ESD in the Defaults section.  Improve comments.
+
+	* configure: Regenerate.
+
 2003-05-07  Steve Youngs  <youngs@xemacs.org>
 
 	* configure.in: Default ESD sound to off.

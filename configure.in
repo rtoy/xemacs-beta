@@ -332,9 +332,11 @@ dnl as are present, but some seds (like Ultrix's sed) don't allow you to
 dnl apply * to a \( \) group.  Bleah.
 progname="`echo $0 | sed 's:^\./\./:\./:'`"
 
-dnl -----------------------------
+dnl -----------------------------------------------------------------
 dnl Establish some default values
-dnl -----------------------------
+dnl Some switches have idiosyncratic syntax, but in most cases a null
+dnl value means to autodetect
+dnl -----------------------------------------------------------------
 
 XE_APPEND(lib-src, MAKE_SUBDIR)
 XE_APPEND(lib-src, INSTALL_ARCH_DEP_SUBDIR)
@@ -380,6 +382,10 @@ with_msw=''
 rel_alloc='default'
 with_system_malloc='default'
 with_dlmalloc='default'
+dnl ESD Considered Harmful (plays nasty games with interrupts)
+with_native_sound=''
+with_nas_sound=''
+with_esd_sound='no'
 native_sound_lib=''
 dnl These should be set to the empty string when we want gtk / gnome to
 dnl be auto-detected instead of manually specified.
@@ -389,17 +395,17 @@ dnl use_assertions should be 'yes' by default.  Too many people in this
 dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
 use_assertions="yes"
-dnl the following is set to yes or no later.
 with_toolbars=""
 with_tty=""
 use_union_type="no"
 with_dnet=""
-dnl pdump defaults per opsys
+dnl pdump defaults per opsys, do not default it here
 pdump=""
-dnl dragndrop is still experimental, except on Windows.  When it is stable, comment out the following line:
+dnl dragndrop is still experimental, except on Windows.  When it is stable,
+dnl comment out the following line:
 with_dragndrop_default="no"
 dnl Too annoying, even if mandated by IPv6 (and I'm not even sure of that)
-dnl #### Change this to yes when somebody understands IPv6 and handle bugs.
+dnl Change this to yes when somebody understands IPv6 and handle bugs.
 with_ipv6_cname="no"
 
 dnl ------------------
@@ -4303,8 +4309,8 @@ if test "$with_nas_sound" != "no"; then
   fi
 fi
 
-dnl ESD Sound support (default to off)
-if test "$with_esd_sound" != "no" -a "x$with_esd_sound" != "x"; then
+dnl ESD Sound support
+if test "$with_esd_sound" != "no"; then
   AC_CHECK_PROG(have_esd_config, esd-config, yes, no)
   if test "$have_esd_config" = "yes"; then
     save_c_switch_site="$c_switch_site" save_LIBS="$LIBS"
