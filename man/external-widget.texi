@@ -173,7 +173,7 @@ exiting the client program.
 #include "ExternalClient.h"
 
 main (int argc, char *argv[])
-{
+@{
   Widget toplevel, emacs;
   XtAppContext app;
 
@@ -193,16 +193,16 @@ main (int argc, char *argv[])
   printf ("(make-frame '(window-id \"%d\"))\n", XtWindow(emacs));
 
   XtAppMainLoop (app);
-}
+@}
 
 /* This function doesn't belong here but somehow it's not getting resolved
    from the library. */
 void
 fatal (char *msg)
-{
+@{
   fprintf (stderr, "%s", msg);
   exit (1);
-}
+@}
 @end example
 
 
