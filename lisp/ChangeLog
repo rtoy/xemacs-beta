@@ -1,3 +1,8 @@
+2002-10-24  Andy Piper  <andy@xemacs.org>
+
+	* dialog.el (make-dialog-box): for general dialogs only
+	delete-frame-hook will be run.
+
 2002-10-10  Jerry James  <james@xemacs.org>
 
 	* autoload.el (generate-file-autoloads-1): Use new print-autoload

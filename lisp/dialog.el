@@ -662,7 +662,9 @@ The keywords allowed are
 				   'internal-make-dialog-box-exit did)
 				  (remove-hook 'delete-dialog-box-hook
 					       ',sym))))
-		       (add-hook 'delete-dialog-box-hook sym)
+		       (if (framep id)
+			   (add-hook 'delete-frame-hook sym)
+			 (add-hook 'delete-dialog-box-hook sym))
 		       (mapc 'disable-frame frames)
 		       (block nil
 			 (while t
