@@ -1,3 +1,8 @@
+2005-02-07  Ben Wing  <ben@xemacs.org>
+
+	* menubar.el (find-menu-item-1):
+	Forgot to rename this when find-menu-item-1 was extracted.
+
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
 	* autoload.el (batch-update-autoloads):

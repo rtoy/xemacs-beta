@@ -202,7 +202,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	  (setq rest (cdr rest))))
       (if (cdr item-path-list)
 	  (cond ((consp result)
-		 (find-menu-item (cdr result) (cdr item-path-list) result))
+		 (find-menu-item-1 (cdr result) (cdr item-path-list) result))
 		(result
 		 (signal 'error (list (gettext "not a submenu") result)))
 		(t
