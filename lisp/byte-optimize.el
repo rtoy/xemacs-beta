@@ -855,13 +855,13 @@
 (put 'max 'byte-optimizer 'byte-optimize-associative-math)
 (put 'min 'byte-optimizer 'byte-optimize-associative-math)
 
-(put '=   'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'eq  'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'eql 'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'equal   'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'string= 'byte-optimizer 'byte-optimize-binary-predicate)
 (put 'string-equal 'byte-optimizer 'byte-optimize-binary-predicate)
 
+(put '=   'byte-optimizer 'byte-optimize-predicate)
 (put '<   'byte-optimizer 'byte-optimize-predicate)
 (put '>   'byte-optimizer 'byte-optimize-predicate)
 (put '<=  'byte-optimizer 'byte-optimize-predicate)
