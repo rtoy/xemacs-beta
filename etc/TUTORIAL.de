@@ -320,11 +320,11 @@ bewege die aktuelle Zeile ebensoviele Zeilen vom oberen
 Bildschirmrand." C-u 0 C-l bedeutet also "Bau den Bildschirm, mit der
 aktuellen Zeile ganz oben, neu auf.")
 
->> Tippe CONTROL-x 2
+>> Tippe Control-x 2
    Beachte wie das Fenster schrumpft, während ein neues mit Teilen
    derselben Datei erscheint.
 
->> Tippe C-x 1 und sehe das neue Fenster verschwinden.
+>> Tippe C-x 1 und sieh das neue Fenster verschwinden.
 
 
 * EINFÜGEN UND LÖSCHEN
@@ -786,7 +786,7 @@ area nimmt die unterste Zeile im Emacs-Fenster ein.
 * MODUSZEILE
 ------------
 
-Die Zeile über der echo area wird "mode line" genannt.  Die Moduszeile
+Die Zeile über der echo area wird "modeline" genannt.  Die Moduszeile
 zeigt etwa folgendes:
 
 --**-XEmacs: TUTORIAL.de       (Fundamental)--L791--67%----------------
@@ -845,7 +845,7 @@ immer C-h m verwenden.
    des Emacs-Fensters zu bekommen.
 >> Tippe C-h m um den Unterschied zwischen Text- und Fundamental-Modus
    zu sehen.
->> Tippe C-x 1 um die  Dokumentation wieder verschwinden zu lassen.
+>> Tippe q um die Dokumentation wieder verschwinden zu lassen.
 
 Hauptmodi heißen so, weil es auch Untermodi gibt. Untermodi sind keine
 Alternativen zu Hauptmodi, sondern bewirken kleine Veränderungen
@@ -912,10 +912,11 @@ Deine Eingabe wartet.  <Return> bricht die Suche ab.
 >> Tippe <Return> zum Abbrechen der Suche.
 
 Hast Du gesehen was passiert?  Emacs, in der inkrementellen Suche,
-versucht zu dem String zu springen, den Du bisher getippt hast.  Um
-zum nächsten Auftreten von "Textzeiger" zu gelangen, tippst Du einfach
-wieder C-s.  Gibt es kein weiteres Vorkommen, so piepst Emacs und
-zeigt die Suche als fehlgeschlagen an. C-g bricht die Suche auch ab.
+versucht zu dem String zu springen, den Du bisher getippt hast und
+hebt ihn für Dich hervor.  Um zum nächsten Auftreten von "Textzeiger"
+zu gelangen, tippst Du einfach wieder C-s.  Gibt es kein weiteres
+Vorkommen, so piepst Emacs und zeigt die Suche als fehlgeschlagen
+an. C-g bricht die Suche auch ab.
 
 ACHTUNG: Auf manchen Systemen wird C-s den Bildschirm anhalten und Du
 wirst keine weitere Ausgabe von Emacs sehen.  Dies bedeutet, daß auf
@@ -1081,9 +1082,7 @@ C-h c.
 
 Dies zeigt sowohl die Dokumentation der Funktion, als auch ihren
 Namen, in einem eigenen Emacs-Fenster.  Wenn Du mit dem Lesen fertig
-bist, tippe C-x 1 um den Hilfetext loszuwerden.  Du mußt dies nicht
-gleich tun.  Du kannst etwas bearbeiten, das sich auf den Hilfetext
-bezieht und dann C-x 1 tippen.
+bist, tippe q um den Hilfetext loszuwerden.
 
 Hier sind einige andere nützliche C-h Möglichkeiten:
 
@@ -1094,22 +1093,17 @@ Hier sind einige andere nützliche C-h Möglichkeiten:
    Dies gibt Dir all die Information die Emacs zu der Funktion hat, welche
    C-p implementiert.
 
-   C-h a        Befehls-Apropos.  Tippe ein Schlüsselwort und Emacs listet
-                alle Befehle die es enthalten.
-                Diese Befehle können alle mit M-x aufgerufen werden.
-                Für einige Befehle listet das Befehls-Apropos eine
-                Buchstaben-Sequenz, die den Befehl ausführt.
+   C-h a        Hyper-Apropos.  Tippe ein Schlüsselwort und Emacs listet
+                alle Funktionen und Variablen die es enthalten.
+                Für Befehle die mit M-x aufgerufen werden können wird
+                links ein Stern angezeigt.
 
->> Tippe C-h a file<Return>.
+>> Tippe C-h a newline<Return>.
 
-Dies zeigt in einem anderen Fenster eine Liste aller M-x Befehle die
-"file" in ihrem Namen haben.  Du wirst Buchstaben-Sequenzen wie C-x
-C-f mit dem entsprechenden Befehl, wie etwa find-file, aufgelistet
-sehen.
-
->> Tippe C-M-v um das Hilfe Fenster zu rollen. Mache dies ein paar mal.
-   
->> Tippe C-x 1 um das Fenster loszuwerden.
+Dies zeigt eine Liste aller Funktionen und Variablen die "newline" in
+ihrem Namen haben.  Drücke <Return> oder klicke die mittlere Maustaste
+um mehr über eine Funktion oder Variable zu erfahren.  Tippe q um
+Hyper-Apropos zu verlassen.
 
 
 * ZUM SCHLUß

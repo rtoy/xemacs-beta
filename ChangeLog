@@ -1,3 +1,8 @@
+2001-07-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* etc\TUTORIAL: Fix minor typo.
+	* etc\TUTORIAL.de: Sync with TUTORIAL.
+
 2001-06-21  Ben Wing  <ben@xemacs.org>
 
 	* README:

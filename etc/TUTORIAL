@@ -1063,7 +1063,7 @@ Here are some other useful C-h options:
 
    C-h a	Hyper Apropos.  Type in a keyword and Emacs will list
 		all the functions and variables whose names contain
-		that keyword.  The commands that can be invoked with
+		that keyword.  For commands that can be invoked with
 		Meta-x, an asterisk will be displayed to the left.
 
 >> Type C-h a newline<Return>.
