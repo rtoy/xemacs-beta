@@ -1,3 +1,8 @@
+2001-12-04  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* paragraphs.el (mark-paragraph): synched with FSF; 
+        added optional argument.
+
 2001-12-03  Didier Verna  <didier@xemacs.org>
 
 	* rect.el: autoload `replace-rectangle'.

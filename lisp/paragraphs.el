@@ -1,6 +1,7 @@
 ;;; paragraphs.el --- paragraph and sentence parsing.
 
-;; Copyright (C) 1985, 86, 87, 91, 94, 95, 97 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 87, 91, 94, 95, 97, 2001 
+;;   Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: wp, dumped
@@ -292,13 +293,19 @@ See `forward-paragraph' for more information."
   (or arg (setq arg 1))
   (forward-paragraph (- arg)))
 
-(defun mark-paragraph ()
+(defun mark-paragraph (&optional arg)
   "Put point at beginning of this paragraph, mark at end.
-The paragraph marked is the one that contains point or follows point."
-  (interactive)
-  (forward-paragraph 1)
+The paragraph marked is the one that contains point or follows point.
+With arg N, puts mark at end of following N paragraphs;
+negative arg -N means point is put at end of this paragraph, mark is put
+at beginning of this or a previous paragraph."
+  (interactive "p")
+  (unless arg (setq arg 1))
+  (when (zerop arg)
+    (error "Cannot mark zero paragraphs"))
+  (forward-paragraph arg)
   (push-mark nil t t)
-  (backward-paragraph 1))
+  (backward-paragraph arg))
 
 (defun kill-paragraph (arg)
   "Kill forward to end of paragraph.
