@@ -1,7 +1,7 @@
 2003-03-22  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak (installation): Restore version convention in
-	enerated Installation file.
+	generated Installation file.
 
 2003-03-09  Ben Wing  <ben@xemacs.org>
 
