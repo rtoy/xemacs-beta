@@ -1,3 +1,7 @@
+2004-10-07  Jerry James  <james@xemacs.org>
+
+	* etags.c: Update to author version 17.6.
+
 2004-09-14  Jerry James  <james@xemacs.org>
 
 	* digest-doc.c (main): Remove unused argc and argv.

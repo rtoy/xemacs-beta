@@ -1,3 +1,9 @@
+2004-10-07  Jerry James  <james@xemacs.org>
+
+	* ETAGS.EBNF:
+	* etags.1:
+	Update to author version 17.6.
+
 2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* NEWS (Introduction): Rewording.
