@@ -1,3 +1,8 @@
+2003-08-04  Norbert Koch  <viteno@xemacs.org>
+	    Stephen J. Turnbull <stephen@xemacs.org>
+
+	* PACKAGES: Sync with package-tree contents.  Style conformance.
+
 2003-07-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* etc/README.HYPERBOLE: 
