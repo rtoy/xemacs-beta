@@ -3669,7 +3669,7 @@ if test "$with_x11" = "yes"; then
   test "$with_menubars"   != "no"  && XE_ADD_OBJS(menubar-x.o)
   test "$with_scrollbars" != "no"  && XE_ADD_OBJS(scrollbar-x.o)
   test "$with_dialogs"    != "no"  && XE_ADD_OBJS(dialog-x.o)
-  test "$with_toolbars"   != "no"  && XE_ADD_OBJS(toolbar-x.o)
+  test "$with_toolbars"   != "no"  && XE_ADD_OBJS(toolbar-common.o toolbar-x.o)
   test "$all_widgets" != "no no no no no" && XE_ADD_OBJS(gui-x.o)
 fi
 

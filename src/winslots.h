@@ -195,6 +195,7 @@ Boston, MA 02111-1307, USA.  */
   WINDOW_SAVED_SLOT (default_toolbar_height, EQ)
   WINDOW_SAVED_SLOT (default_toolbar_visible_p, EQ)
   WINDOW_SAVED_SLOT (default_toolbar_border_width, EQ)
+  WINDOW_SAVED_SLOT (toolbar_shadow_thickness, EQ)
 #endif /* HAVE_TOOLBARS */
 
   /* Gutter specification for each of the four positions.

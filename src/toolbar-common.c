@@ -65,6 +65,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "toolbar-common.h"
 
+extern Lisp_Object Vtoolbar_shadow_thickness;
+
 static void __prepare_button_area (struct frame *f,
 				   struct toolbar_button *tb)
 {
@@ -77,7 +79,8 @@ static void __prepare_button_area (struct frame *f,
   struct device *d = XDEVICE (f->device);
   Lisp_Object  window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   struct window *w = XWINDOW (window);
-  int shadow_thickness = 2;
+  int shadow_thickness;
+  int def_shadow_thickness = XINT (Fspecifier_instance(Vtoolbar_shadow_thickness, window, Qnil, Qnil));
   face_index toolbar_findex;
 
   if (tb->vertical)
@@ -102,7 +105,7 @@ static void __prepare_button_area (struct frame *f,
   */
   if (EQ (Qt, tb->up_glyph))
     {
-      shadow_thickness = 2;
+      shadow_thickness = def_shadow_thickness;
     }
   else if (NILP (tb->up_glyph))
     {
@@ -113,9 +116,9 @@ static void __prepare_button_area (struct frame *f,
       if (tb->enabled)
 	{
 	  if (tb->down)
-	    shadow_thickness = -2;
+	    shadow_thickness = -def_shadow_thickness;
 	  else
-	    shadow_thickness = 2;
+	    shadow_thickness = def_shadow_thickness;
 	}
       else
 	{
@@ -698,7 +701,6 @@ common_redraw_frame_toolbars (struct frame *f)
      particular before we have actually mapped it.  That routine can
      call this one.  So, we need to make sure that the frame is
      actually ready before we try and draw all over it. */
-
   if (__INTERNAL_MAPPED_P(f))
     common_redraw_exposed_toolbars (f, 0, 0, FRAME_PIXWIDTH (f),
 				    FRAME_PIXHEIGHT (f));

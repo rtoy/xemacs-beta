@@ -1,5 +1,25 @@
 2002-02-02  William M. Perry  <wmperry@gnu.org>
 
+	* winslots.h: New toolbar_shadow_thickness slot.
+
+	* toolbar.c (Vtoolbar_shadow_thickness): New specifier to control
+	thickness of toolbar shadows instead of relying on X resourcs.
+	(toolbar_shadows_changed): New function to redraw toolbars if the
+	thickness specifier is changed.
+	(specifier_vars_of_toolbar): Arrange for caching and defaults for
+	toolbar-shadow-thickness.
+
+	* toolbar-x.c: Use the new redisplay-based toolbar code.
+
+	* toolbar-common.c (__prepare_button_area): Look at
+	toolbar-shadow-thickness specifier instead of window-system
+	specific stuff.
+
+	* gtk-xemacs.c (smash_scrollbar_specifiers): New function to set
+	the toolbar-shadow-thickness specifier from GTK styles.
+
+	* frameslots.h: New toolbar_shadow_thickness slot.
+
 	* glyphs-gtk.c (extract_xpm_color_names): Resurrect the xpm color
 	symbols stuff because the GTK XPM libraries do very weird things
 	if you don't specify the transparency at all.  Reverting the patch

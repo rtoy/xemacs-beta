@@ -199,9 +199,23 @@ smash_scrollbar_specifiers (struct frame *f, GtkStyle *style)
   Fadd_spec_to_specifier (Vscrollbar_width, make_int (vsize), frame, Qnil, Qnil);
   Fadd_spec_to_specifier (Vscrollbar_height, make_int (hsize), frame, Qnil, Qnil);
 }
-#else
-#define smash_scrollbar_specifiers(x,y)
 #endif /* HAVE_SCROLLBARS */
+
+#ifdef HAVE_TOOLBARS
+extern Lisp_Object Vtoolbar_shadow_thickness;
+
+static void
+smash_toolbar_specifiers(struct frame *f, GtkStyle *style)
+{
+  Lisp_Object frame;
+  GtkStyleClass *klass = (GtkStyleClass *) style->klass;
+
+  XSETFRAME (frame,f);
+
+  Fadd_spec_to_specifier (Vtoolbar_shadow_thickness, make_int (klass->xthickness),
+			  Qnil, list2 (Qgtk, Qdefault), Qprepend);
+}
+#endif /* HAVE_TOOLBARS */
 
 static void
 gtk_xemacs_realize (GtkWidget *widget)
@@ -224,7 +238,12 @@ gtk_xemacs_style_set (GtkWidget *widget, GtkStyle *previous_style)
 #if 0
       smash_face_fallbacks (x->f, new_style);
 #endif
+#ifdef HAVE_SCROLLBARS
       smash_scrollbar_specifiers (x->f, new_style);
+#endif
+#ifdef HAVE_TOOLBARS
+      smash_toolbar_specifiers (x->f, new_style);
+#endif
     }
 }
 

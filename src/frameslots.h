@@ -146,6 +146,7 @@ Boston, MA 02111-1307, USA.  */
   MARKED_SLOT (default_toolbar_height);
   MARKED_SLOT (default_toolbar_visible_p);
   MARKED_SLOT (default_toolbar_border_width);
+  MARKED_SLOT (toolbar_shadow_thickness);
 
   /* List of toolbar buttons of current toolbars */
   MARKED_SLOT_ARRAY (toolbar_buttons, 4);

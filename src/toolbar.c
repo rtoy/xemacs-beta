@@ -45,6 +45,7 @@ Lisp_Object Vtoolbar_border_width[4];
 Lisp_Object Vdefault_toolbar, Vdefault_toolbar_visible_p;
 Lisp_Object Vdefault_toolbar_width, Vdefault_toolbar_height;
 Lisp_Object Vdefault_toolbar_border_width;
+Lisp_Object Vtoolbar_shadow_thickness;
 
 Lisp_Object Vdefault_toolbar_position;
 Lisp_Object Vtoolbar_buttons_captioned_p;
@@ -1248,6 +1249,23 @@ toolbar_buttons_captioned_p_changed (Lisp_Object specifier, struct window *w,
   MARK_TOOLBAR_CHANGED;
 }
 
+static void
+toolbar_shadows_changed (Lisp_Object specifier, struct window *w,
+			 Lisp_Object oldval)
+{
+  struct frame *f = XFRAME (w->frame);
+
+  if (!f->frame_data)
+    {
+      /* If there is not frame data yet, we need to get the hell out
+      ** of here.  This can happen when the initial frame is being
+      ** created and we set our specifiers internally.
+      */
+      return;
+    }
+  MAYBE_DEVMETH (XDEVICE (f->device), redraw_frame_toolbars, (f));
+}
+
 
 void
 syms_of_toolbar (void)
@@ -1606,6 +1624,35 @@ See `default-toolbar-height' for more information.
 			 toolbar_geometry_changed_in_window,
 			 offsetof (struct frame, toolbar_size[RIGHT_TOOLBAR]),
 			 frame_size_slipped, 0);
+
+  DEFVAR_SPECIFIER ("toolbar-shadow-thickness",
+		    &Vtoolbar_shadow_thickness /*
+*Width of shadows around toolbar buttons.
+This is a specifier; use `set-specifier' to change it.
+*/ );
+  Vtoolbar_shadow_thickness = Fmake_specifier (Qnatnum);
+  set_specifier_caching(Vtoolbar_shadow_thickness,
+			offsetof (struct window, toolbar_shadow_thickness),
+			toolbar_shadows_changed,
+			0,0, 0);
+
+  fb = Qnil;
+
+#ifdef HAVE_TTY
+  fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
+#endif
+#ifdef HAVE_GTK
+  fb = Fcons (Fcons (list1 (Qgtk), make_int (2)), fb);
+#endif
+#ifdef HAVE_X_WINDOWS
+  fb = Fcons (Fcons (list1 (Qx), make_int (2)), fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+  fb = Fcons (Fcons (list1 (Qmswindows), make_int (2)), fb);
+#endif
+
+  if (!NILP (fb))
+    set_specifier_fallback (Vtoolbar_shadow_thickness, fb);
 
   fb = Qnil;
 #ifdef HAVE_TTY
