@@ -1,3 +1,9 @@
+2001-08-06  Steve Youngs  <youngs@xemacs.org>
+
+	* menubar-items.el (default-menubar): Use 'report-xemacs-bug'.
+
+	* lisp-mnt.el (lm-report-bug): Use 'report-xemacs-bug-beta-address'.
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

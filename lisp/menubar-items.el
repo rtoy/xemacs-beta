@@ -1515,8 +1515,8 @@ which will not be used as accelerators."
        ["%_Unix Manual..." manual-entry])
       "-----"
       ["%_Recent Messages" view-lossage]
-      ["Send %_Bug Report..." report-emacs-bug
-       :active (fboundp 'report-emacs-bug)])))
+      ["Send %_Bug Report..." report-xemacs-bug
+       :active (fboundp 'report-xemacs-bug)])))
 
 
 (defun maybe-add-init-button ()
