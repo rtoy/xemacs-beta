@@ -1,3 +1,7 @@
+2001-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* XEmacs 21.5.0 "alfalfa" is released.
+
 2001-03-31  Mike Sperber <mike@xemacs.org>
 
 	* search.c (Freplace_match): [Again] support FSF-style

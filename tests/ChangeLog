@@ -1,3 +1,7 @@
+2001-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* XEmacs 21.5.0 "alfalfa" is released.
+
 2001-03-23  Martin Buchholz  <martin@xemacs.org>
 
 	* automated/lisp-tests.el:

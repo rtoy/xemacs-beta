@@ -1,3 +1,7 @@
+2001-04-18  Martin Buchholz  <martin@xemacs.org>
+
+	* XEmacs 21.5.0 "alfalfa" is released.
+
 2001-04-17  Didier Verna  <didier@xemacs.org>
 
 	* startup.el (load-user-init-file): define `custom-file' before
