@@ -29,18 +29,18 @@ Boston, MA 02111-1307, USA.  */
 void play_sound_file (Extbyte *name, int volume);
 int play_sound_data (UChar_Binary *data, int length, int volume);
 
-# define sound_perror(string)						 \
-do {									 \
-  Bufbyte *errmess;                                                     \
-  Bufbyte *string_int;                                                  \
-  /* #### fix this to GET_STRERROR in my mule ws */			 \
-  EXTERNAL_TO_C_STRING (strerror (errno), errmess, Qnative);		 \
-  EXTERNAL_TO_C_STRING (string, string_int, Qnative);			 \
-  warn_when_safe (Qsound, Qerror, "audio: %s, %s", string_int, errmess); \
+# define sound_perror(string)							\
+do {										\
+  CBufbyte *errmess;								\
+  CBufbyte *string_int;								\
+  /* #### fix this to GET_STRERROR in my mule ws */				\
+  EXTERNAL_TO_C_STRING (strerror (errno), errmess, Qnative);			\
+  EXTERNAL_TO_C_STRING (string, string_int, Qnative);				\
+  warn_when_safe (Qsound, Qerror, "audio: %s, %s", string_int, errmess);	\
 } while (0)
 # define sound_warn(string)					\
 do {								\
-  Bufbyte *string_int;                                         \
+  CBufbyte *string_int;						\
   EXTERNAL_TO_C_STRING (GETTEXT (string), string_int, Qnative);	\
   warn_when_safe (Qsound, Qwarning, "audio: %s", string_int);	\
 } while (0)
