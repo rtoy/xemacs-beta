@@ -1,3 +1,7 @@
+2002-05-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS (General): Decribe failed AUTH with EFS.
+
 2002-04-23  Olivier Galibert  <galibert@pobox.com>
 
 	* configure.in: Fix the "error checking" warning.
