@@ -52,6 +52,12 @@
  *      4/11/94, rjc    Added wait_for_sounds to be called when user wants to
  *			be sure all play has finished.
  *      1998-10-01 rlt  Added support for WAVE files.
+ *      2002-10-16      Jon Trulson modifed this to work with NAS releases
+ *                      1.5f and higher.  We were using the private variable
+ *                      SoundFileInfo that doesn't exist anymore.  But preserve
+ *                      backward compatibility.  This will not work for some
+ *                      versions of NAS around 1.5b to 1.5f or so.  Known to
+ *                      work on 1.2p5 and 1.6.
  */
 
 #include <config.h>
@@ -960,13 +966,28 @@ SoundOpenDataForReading (UChar_Binary *data,
 
 {
   Sound s;
+#if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
+  SoundFileInfoProc toProc;
+#endif
 
   if (!(s = (Sound) malloc (sizeof (SoundRec))))
     return NULL;
 
   if ((s->formatInfo = SndOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
+#if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
+      if ((toProc = SoundFileGetProc(SoundFileFormatSnd, 
+				     SoundFileInfoProcTo)) == NULL)
+	{
+	  SndCloseFile ((SndInfo *) (s->formatInfo));
+	  free (s);
+
+	  return NULL;
+	}
+      if (!((*toProc)(s)))
+#else
       if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatSnd].toSound)) (s))
+#endif
 	{
 	  SndCloseFile ((SndInfo *) (s->formatInfo));
 	  free (s);
@@ -975,7 +996,19 @@ SoundOpenDataForReading (UChar_Binary *data,
     }
   else if ((s->formatInfo = WaveOpenDataForReading ((Char_Binary *) data, length)) != NULL)
     {
+#if (AudioLibraryVersionMajor >= 2 ) && (AudioLibraryVersionMinor >= 3)
+      if ((toProc = SoundFileGetProc(SoundFileFormatWave, 
+				     SoundFileInfoProcTo)) == NULL)
+	{
+	  WaveCloseFile ((WaveInfo *) (s->formatInfo));
+	  free (s);
+
+	  return NULL;
+	}
+      if (!((*toProc)(s)))
+#else
       if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatWave].toSound)) (s))
+#endif
 	{
 	  WaveCloseFile ((WaveInfo *) (s->formatInfo));
 	  free (s);
