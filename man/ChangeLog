@@ -1,3 +1,71 @@
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi:
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (Introduction):
+	* xemacs-faq.texi (Q1.2.2):
+	* xemacs-faq.texi (Q1.2.5):
+	* xemacs-faq.texi (Q1.2.9):
+	* xemacs-faq.texi (Q1.2.10):
+	* xemacs-faq.texi (Q1.2.11):
+	* xemacs-faq.texi (Q1.2.12):
+	* xemacs-faq.texi (Q1.4.2):
+	* xemacs-faq.texi (Q1.5.2):
+	* xemacs-faq.texi (Q1.5.3):
+	* xemacs-faq.texi (Q1.5.4):
+	* xemacs-faq.texi (Q1.5.5):
+	* xemacs-faq.texi (Q1.6.6):
+	* xemacs-faq.texi (Q1.7.1):
+	* xemacs-faq.texi (Q1.7.2):
+	* xemacs-faq.texi (Q1.7.3):
+	* xemacs-faq.texi (Q1.7.4):
+	* xemacs-faq.texi (Installation):
+	* xemacs-faq.texi (Q2.0.1):
+	* xemacs-faq.texi (Q2.0.2):
+	* xemacs-faq.texi (Q2.0.3):
+	* xemacs-faq.texi (Q2.0.4):
+	* xemacs-faq.texi (Q2.0.5):
+	* xemacs-faq.texi (Q2.1.1):
+	* xemacs-faq.texi (Q2.1.2):
+	* xemacs-faq.texi (Q2.1.3):
+	* xemacs-faq.texi (Q2.1.4):
+	* xemacs-faq.texi (Q2.1.5):
+	* xemacs-faq.texi (Q2.1.6):
+	* xemacs-faq.texi (Q2.1.7):
+	* xemacs-faq.texi (Q2.2.1):
+	* xemacs-faq.texi (Q2.2.2):
+	* xemacs-faq.texi (Q2.3.1):
+	* xemacs-faq.texi (Q2.3.2):
+	* xemacs-faq.texi (Q2.3.3):
+	* xemacs-faq.texi (Q2.3.4):
+	* xemacs-faq.texi (Q2.3.5):
+	* xemacs-faq.texi (Q2.3.6):
+	* xemacs-faq.texi (Q2.3.7):
+	* xemacs-faq.texi (Q2.3.8):
+	* xemacs-faq.texi (Q2.4.1):
+	* xemacs-faq.texi (Q2.4.2):
+	* xemacs-faq.texi (Q2.4.3):
+	* xemacs-faq.texi (Q2.4.4):
+	* xemacs-faq.texi (Q2.4.5):
+	* xemacs-faq.texi (Q2.4.6):
+	* xemacs-faq.texi (Q2.4.7):
+	* xemacs-faq.texi (Q2.4.8):
+	* xemacs-faq.texi (Q2.4.9):
+	* xemacs-faq.texi (Q2.4.10):
+	* xemacs-faq.texi (Q2.4.11):
+	* xemacs-faq.texi (Q2.4.12):
+	* xemacs-faq.texi (Q2.5.1):
+	* xemacs-faq.texi (Q2.5.2):
+	* xemacs-faq.texi (Q2.5.3):
+	* xemacs-faq.texi (Q2.5.4):
+	* xemacs-faq.texi (Q2.5.5):
+	* xemacs-faq.texi (Legacy Versions):
+	* xemacs-faq.texi (Q10.0.1):
+	* xemacs-faq.texi (Q10.0.2):
+	Flesh out intro section on packages and section on installing
+	packages.  Incorporate README, README.packages, BUGS, etc/PACKAGES.
+	Various other changes.
+
 2005-02-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* beta.texi: Update Copyright.  Add pointer comment.

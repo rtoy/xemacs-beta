@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/01/31 20:08:48 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/02/04 02:51:21 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -55,12 +55,7 @@ magic to coerce them into the right format and cut and paste as necessary:
 
 Then,
 
-1. Use the Lisp line below to get the spacing correct for the Q#.#.#
-   menu entries.
-
-(set (make-local-variable 'texinfo-column-for-description) 14)
-
-2. C-u C-c C-u m (C-u M-x texinfo-master-menu) will update the menus
+6. C-u C-c C-u m (C-u M-x texinfo-master-menu) will update the menus
    and nodes.  However, it appears that even though it tries to
    preserve the existing menu structure as much as possible, it
    doesn't do a perfect job.  It messes up in at least two ways: The
@@ -70,19 +65,25 @@ Then,
    sometimes random things get screwed up in individual parts of the
    menus.  Therefore:
 
-   1. Copy the whole detailmenu beforehand.
-   2. Run C-u C-C C-u m to fix up the nodes.
-   3. Run `fix-main-menu' and `fix-omitted-menu-lines'.
-   4. Check the new detailmenu carefully to see if anything is screwed up
+   1. Use the Lisp line below to get the spacing correct for the Q#.#.#
+   menu entries.
+
+(set (make-local-variable 'texinfo-column-for-description) 14)
+
+   2. Copy the whole detailmenu beforehand.
+   3. Run C-u C-c C-u m to fix up the nodes.
+   4. Run `fix-main-menu' and `fix-omitted-menu-lines'.
+   5. Check the new detailmenu carefully to see if anything is screwed up
       compared to the old detailmenu you copied.
-   5. If so, paste back the appropriate sections and fix up the corresponding
+   6. If so, paste back the appropriate sections and fix up the corresponding
       part of the chapter-specific menu.
 
 (defun fix-main-menu ()
   (interactive)
   (save-restriction
     (let (p q)
-      (search-forward "@menu")
+      (goto-char (point-min))
+      (re-search-forward "^@menu")
       (setq p (match-beginning 0))
       (re-search-forward "^$")
       (setq q (match-end 0))
@@ -94,22 +95,22 @@ Then,
 (defun fix-omitted-menu-lines ()
   (interactive)
   (save-excursion
-    (loop for x from 1 to 7 do
+    (loop for x from 1 to 10 do
       (goto-char (point-min))
       (re-search-forward (format "@unnumberedsec \\(%d.0: .*\\)" x))
       (let ((line (match-string 1)))
-	(search-backward "@menu")
+	(re-search-backward "^@menu")
 	(forward-line 1)
-	(unless (looking-at "[0-9].0:")
+	(unless (looking-at "[0-9]+.0:")
 	  (insert line)
 	  (insert "\n"))
 	(goto-char (point-min))
-	(search-forward "@menu")
+	(re-search-forward "^@menu")
 	(search-forward (format "Q%d.0.1:" x))
 	(forward-line -1)
-	(unless (looking-at "[0-9].0:")
-	  (insert line)
-	  (insert "\n"))))))
+	(unless (looking-at "[0-9]+.0:")
+	  (insert "\n")
+	  (insert line))))))
 
  *****************************************
  *****            Other work         *****
@@ -235,14 +236,16 @@ library directory>/info/}. For example in
 1.4: Getting Help
 * Q1.4.1::    Where can I get help?
 * Q1.4.2::    Which mailing lists are there?
-* Q1.4.2::    Where are the mailing lists archived?
-* Q1.4.3::    How can I get two instances of info?
-* Q1.4.4::    How do I add new Info directories?
+* Q1.4.3::    Where are the mailing lists archived?
+* Q1.4.4::    How can I get two instances of info?
+* Q1.4.5::    How do I add new Info directories?
 
 1.5: Contributing to XEmacs
 * Q1.5.1::    How do I submit changes to the FAQ?
 * Q1.5.2::    How do I become a beta tester?
 * Q1.5.3::    How do I contribute to XEmacs itself?
+* Q1.5.4::    How do I get started developing XEmacs?
+* Q1.5.5::    What's the basic layout of the code?
 
 1.6: Politics (XEmacs vs. GNU Emacs)
 * Q1.6.1::    What is GNU Emacs?
@@ -253,7 +256,10 @@ library directory>/info/}. For example in
 * Q1.6.6::    Why haven't XEmacs and GNU Emacs merged?
 
 1.7: External Packages
-* Q1.7.1::    Which external packages are there?
+* Q1.7.1::    What is the package system?
+* Q1.7.2::    Which external packages are there?
+* Q1.7.3::    Do I need to have the packages to run XEmacs? 
+* Q1.7.4::    Is there a way to find which package has particular functionality?
 
 1.8: Internationalization
 * Q1.8.1::    What is the status of internationalization support aka MULE (including Asian language support)?
@@ -268,49 +274,57 @@ library directory>/info/}. For example in
 
 2 Installation and Troubleshooting
 
-2.0: Installation (General), Packages
-* Q2.0.1::    How do I install the packages?
-* Q2.0.2::    I don't need no steenkin' packages.  Do I?
-* Q2.0.3::    Where do I find external libraries?
-* Q2.0.4::    How do I specify the paths that XEmacs uses for finding files?
-* Q2.0.5::    Running XEmacs without installing
-* Q2.0.6::    XEmacs is too big
-* Q2.0.7::    EFS fails with "500 AUTH not understood" (NEW)
+2.0: Installation (General)
+* Q2.0.1::    How do I build and install XEmacs?
+* Q2.0.2::    Where do I find external libraries?
+* Q2.0.3::    How do I specify the paths that XEmacs uses for finding files?
+* Q2.0.4::    Running XEmacs without installing
+* Q2.0.5::    XEmacs is too big
 
-2.1: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
-* Q2.1.1::    Libraries in non-standard locations
-* Q2.1.2::    Why can't I strip XEmacs?
+2.1: Package Installation
+* Q2.1.1::    How do I install the packages?
+* Q2.1.2::    Can I install the packages individually?
+* Q2.1.3::    Can I install the packages automatically?
+* Q2.1.4::    Can I upgrade or remove packages?
+* Q2.1.5::    Which packages to install?
+* Q2.1.6::    Can you describe the package location process in more detail?
+* Q2.1.7::    EFS fails with "500 AUTH not understood"
 
-2.2: Windows Installation (Windows, Cygwin, MinGW)
-* Q2.2.1::    What exactly are all the different ways to build XEmacs under Windows?
-* Q2.2.2::    What compiler/libraries do I need to compile XEmacs?
-* Q2.2.3::    How do I compile the native port?
-* Q2.2.4::    What do I need for Cygwin?
-* Q2.2.5::    How do I compile under Cygwin?
-* Q2.2.6::    How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
-* Q2.2.7::    How do I compile with X support?
-* Q2.2.8::    Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
+2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
+* Q2.2.1::    Libraries in non-standard locations
+* Q2.2.2::    Why can't I strip XEmacs?
 
-2.3: General Troubleshooting
-* Q2.3.1::    Help!  XEmacs just crashed on me!
-* Q2.3.2::    XEmacs crashes and I compiled it myself.
-* Q2.3.3::    How to debug an XEmacs problem with a debugger
-* Q2.3.4::    I get a cryptic error message when trying to do something.
-* Q2.3.5::    XEmacs hangs when I try to do something.
-* Q2.3.6::    I get an error message when XEmacs is running in batch mode.
-* Q2.3.7::    The keyboard or mouse is not working properly, or I have some other event-related problem.
-* Q2.3.8::    @kbd{C-g} doesn't work for me.  Is it broken?
-* Q2.3.9::    How do I debug process-related problems?
-* Q2.3.10::   XEmacs is outputting lots of X errors.
-* Q2.3.11::   After upgrading, XEmacs won't do `foo' any more!
+2.3: Windows Installation (Windows, Cygwin, MinGW)
+* Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
+* Q2.3.2::    What compiler/libraries do I need to compile XEmacs?
+* Q2.3.3::    How do I compile the native port?
+* Q2.3.4::    What do I need for Cygwin?
+* Q2.3.5::    How do I compile under Cygwin?
+* Q2.3.6::    How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
+* Q2.3.7::    How do I compile with X support?
+* Q2.3.8::    Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
 
-2.4: Startup-Related Problems
-* Q2.4.1::    XEmacs cannot connect to my X Terminal!
-* Q2.4.2::    XEmacs won't start on Windows.
-* Q2.4.3::    XEmacs won't start without network.
-* Q2.4.4::    Startup warnings about deducing proper fonts?
-* Q2.4.5::    Warnings from incorrect key modifiers.
-* Q2.4.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
+2.4: General Troubleshooting
+* Q2.4.1::    How do I deal with bugs or with problems building, installing, or running?
+* Q2.4.2::    Help!  XEmacs just crashed on me!
+* Q2.4.3::    XEmacs crashes and I compiled it myself.
+* Q2.4.4::    How to debug an XEmacs problem with a debugger
+* Q2.4.5::    I get a cryptic error message when trying to do something.
+* Q2.4.6::    XEmacs hangs when I try to do something.
+* Q2.4.7::    I get an error message when XEmacs is running in batch mode.
+* Q2.4.8::    The keyboard or mouse is not working properly, or I have some other event-related problem.
+* Q2.4.9::    @kbd{C-g} doesn't work for me.  Is it broken?
+* Q2.4.10::   How do I debug process-related problems?
+* Q2.4.11::   XEmacs is outputting lots of X errors.
+* Q2.4.12::   After upgrading, XEmacs won't do `foo' any more!
+
+2.5: Startup-Related Problems
+* Q2.5.1::    XEmacs cannot connect to my X Terminal!
+* Q2.5.2::    Startup problems related to paths or package locations.
+* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.4::    Startup warnings about deducing proper fonts?
+* Q2.5.5::    Warnings from incorrect key modifiers.
+* Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
 
 3 Editing Functions
 
@@ -509,10 +523,10 @@ library directory>/info/}. For example in
 * Q7.1.11::   My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
 
 7.2: Mathematics
-* Q7.1.1::    What are bignums, ratios, and bigfloats in Lisp?
-* Q7.1.2::    XEmacs segfaults when I use very big numbers!
-* Q7.1.3::    Bignums are really slow!
-* Q7.1.4::    Equal bignums don't compare as equal!  What gives?
+* Q7.2.1::    What are bignums, ratios, and bigfloats in Lisp?
+* Q7.2.2::    XEmacs segfaults when I use very big numbers!
+* Q7.2.3::    Bignums are really slow!
+* Q7.2.4::    Equal bignums don't compare as equal!  What gives?
 
 8 Other External Packages
 
@@ -547,6 +561,8 @@ library directory>/info/}. For example in
 
 10.0: XEmacs 21.1
 * Q10.0.1::   Gnus 5.10 won't display smileys in XEmacs 21.1.
+* Q10.0.2::   XEmacs won't start on Windows in XEmacs 21.1.
+
 @end detailmenu
 @end menu
 
@@ -612,7 +628,6 @@ Include @samp{XEmacs FAQ} on the Subject: line.
 * Q1.2.12::   Is there a port of XEmacs to VMS?
 
 1.3: Getting Started
-* Q1.2.13::   
 * Q1.3.1::    What is an @file{init.el} or @file{.emacs} and is there a sample one?
 * Q1.3.2::    Where do I put my @file{init.el} file?
 * Q1.3.3::    Can I use the same @file{init.el} with the other Emacs?
@@ -625,14 +640,16 @@ Include @samp{XEmacs FAQ} on the Subject: line.
 1.4: Getting Help
 * Q1.4.1::    Where can I get help?
 * Q1.4.2::    Which mailing lists are there?
-* Q1.4.3::    How can I get two instances of info?
-* Q1.4.4::    How do I add new Info directories?
+* Q1.4.3::    Where are the mailing lists archived?
+* Q1.4.4::    How can I get two instances of info?
+* Q1.4.5::    How do I add new Info directories?
 
 1.5: Contributing to XEmacs
-* Q1.4.5::    
 * Q1.5.1::    How do I submit changes to the FAQ?
 * Q1.5.2::    How do I become a beta tester?
 * Q1.5.3::    How do I contribute to XEmacs itself?
+* Q1.5.4::    How do I get started developing XEmacs?
+* Q1.5.5::    What's the basic layout of the code?
 
 1.6: Politics (XEmacs vs. GNU Emacs)
 * Q1.6.1::    What is GNU Emacs?
@@ -643,7 +660,10 @@ Include @samp{XEmacs FAQ} on the Subject: line.
 * Q1.6.6::    Why haven't XEmacs and GNU Emacs merged?
 
 1.7: External Packages
-* Q1.7.1::    Which external packages are there?
+* Q1.7.1::    What is the package system?
+* Q1.7.2::    Which external packages are there?
+* Q1.7.3::    Do I need to have the packages to run XEmacs? 
+* Q1.7.4::    Is there a way to find which package has particular functionality?
 
 1.8: Internationalization
 * Q1.8.1::    What is the status of internationalization support aka MULE (including Asian language support)?
@@ -1042,6 +1062,16 @@ full color support on a color-capable character terminal.
 @node Q1.2.2, Q1.2.3, Q1.2.1, Introduction
 @unnumberedsubsec Q1.2.2: What versions of Unix does XEmacs run on?
 
+XEmacs is regularly tested on Linux, Solaris, SunOS, HP/UX, FreeBSD,
+OpenBSD, BSD/OS aka BSDI, Tru64 aka DEC/OSF, SCO5, and probably
+others.  It should work on all versions of Unix created in the last 10
+years or so, perhaps with a bit of work on more obscure platforms to
+correct bit-rot.  It uses a sophisticated configuration system to
+auto-detect zillions of features that are implemented differently in
+different versions of Unix, so it will probably work on your vendor's
+version, possibly with a bit of tweaking, even if we've never heard of
+it.
+
 For problems with particular machines and versions of Unix, see the
 @file{PROBLEMS} file.
 
@@ -1150,7 +1180,7 @@ Win32 GUI, and can be built with support for all three simultaneously.
 If you build with Win32 GUI support then the Cygwin version uses the
 majority of the Windows-specific code, which is mostly related to
 display.  If you want to build with X support you need X libraries (and
-an X server to display XEmacs on); see @ref{Q2.2.7}.  TTY and Win32 GUI
+an X server to display XEmacs on); see @ref{Q2.3.7}.  TTY and Win32 GUI
 require no additional libraries beyond what comes standard with Cygwin.
 
 The advantages of the Cygwin version are that it integrates well with
@@ -1316,42 +1346,30 @@ number of Mac-specific additions.  It's available at
 @uref{http://homepage.mac.com/pjarvis/xemacs.html}.
 
 @node Q1.2.9, Q1.2.10, Q1.2.8, Introduction
-@unnumberedsubsec Q1.2.9: Is there a port of XEmacs to the Macintosh?
-
-Yes.
-
-XEmacs 21.5 (perhaps 21.4 also?) works on MacOS X, although it certainly
-will not feel very much like a Mac application as it has no Mac-specific
-code in it.
-
-There is also a port of XEmacs 19.14 that works on all recent versions
-of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
-Pitts Jarvis} (recently deceased).  It runs in an equivalent of TTY
-mode only (one single Macintosh window, 25 colors), but has a large
-number of Mac-specific additions.  It's available at
-@uref{http://homepage.mac.com/pjarvis/xemacs.html}.
-
-@node Q1.2.10, Q1.2.11, Q1.2.9, Introduction
-@unnumberedsubsec Q1.2.10: Is there a port of XEmacs to MS-DOS?
+@unnumberedsubsec Q1.2.9: Is there a port of XEmacs to MS-DOS?
 
 No.  We have never supported running on MS-DOS or Windows 3.1, and in
-fact have long since deleted all MS-DOS-related code.
+fact have long since deleted all MS-DOS-related code.  We're not
+particularly interested in patches for these platforms, as they would
+introduce huge amounts of code clutter due to the woefully
+underfeatured nature of these systems. (See GNU Emacs for a port to
+MS-DOS.)
 
-@node Q1.2.11, Q1.2.12, Q1.2.10, Introduction
-@unnumberedsubsec Q1.2.11: Is there a port of XEmacs to OS/2?
+@node Q1.2.10, Q1.2.11, Q1.2.9, Introduction
+@unnumberedsubsec Q1.2.10: Is there a port of XEmacs to OS/2?
 
 No, but Alexander Nikolaev <avn_1251@@mail.ru> was at one point
 working on it.
 
-@node Q1.2.12, Q1.2.13, Q1.2.11, Introduction
-@unnumberedsubsec Q1.2.12: Is there a port of XEmacs to NextStep?
+@node Q1.2.11, Q1.2.12, Q1.2.10, Introduction
+@unnumberedsubsec Q1.2.11: Is there a port of XEmacs to NextStep?
 
 Carl Edman, apparently no longer at @email{cedman@@princeton.edu}, did
 the port of GNU Emacs to NeXTstep and expressed interest in doing the
 XEmacs port, but never went any farther.
 
-@node Q1.2.13, Q1.3.1, Q1.2.12, Introduction
-@unnumberedsubsec Q1.2.13: Is there a port of XEmacs to VMS?
+@node Q1.2.12, Q1.3.1, Q1.2.11, Introduction
+@unnumberedsubsec Q1.2.12: Is there a port of XEmacs to VMS?
 
 VMS has never been supported by XEmacs.  In fact, all the old VMS code
 inherited from GNU Emacs has been removed.  Sorry, all you VMS fans
@@ -1359,7 +1377,7 @@ out there.
 
 @unnumberedsec 1.3: Getting Started
 
-@node Q1.3.1, Q1.3.2, Q1.2.13, Introduction
+@node Q1.3.1, Q1.3.2, Q1.2.12, Introduction
 @unnumberedsubsec Q1.3.1: What is an @file{init.el} or @file{.emacs} and is there a sample one?
 
 The @file{init.el} or @file{.emacs} file is used to customize XEmacs to
@@ -1556,19 +1574,17 @@ volume list for announcements concerning the XEmacs project
 and new releases of the XEmacs software.
 
 @item xemacs-beta
-is an open list for bug
-reports about beta versions of XEmacs.  This includes the bug
-reports themselves, by both users and developers, as well as
-queries, follow-ups, and discussions further determining their
-nature and status.  This is the primary channel for this kind
-of discussion; related code changes will usually not be
-applied until they have been discussed here.  When such
-discussions touch on significant changes to the code (in
-particular, structural changes), or on changes to API's or
-external functionality, they should be moved to
-@samp{xemacs-design}.  Requests and proposals for
-non-bug-related changes do not belong on @samp{xemacs-beta},
-and should be sent to @samp{xemacs-design} instead.
+is an open list for bug reports about beta versions of XEmacs.  This
+includes the bug reports themselves, by both users and developers, as
+well as queries, follow-ups, and discussions further determining their
+nature and status.  This is the primary channel for this kind of
+discussion; related code changes will usually not be applied until
+they have been discussed here.  When such discussions touch on
+significant changes to the code (in particular, structural changes),
+or on changes to API's or external functionality, they should be moved
+to @samp{xemacs-design}.  Requests and proposals for non-bug-related
+changes do not belong on @samp{xemacs-beta}, and should be sent to
+@samp{xemacs-design} instead.
 
 @item xemacs-beta-ja
 is an open list for bug
@@ -1734,7 +1750,7 @@ the line @samp{subscribe} in the body of the message.
 Be prepared to get your hands dirty, as beta testers are expected to
 identify problems as best they can.
 
-@node Q1.5.3, Q1.6.1, Q1.5.2, Introduction
+@node Q1.5.3, Q1.5.4, Q1.5.2, Introduction
 @unnumberedsubsec Q1.5.3: How do I contribute to XEmacs itself?
 
 It depends on the knowledge and time you possess.  If you are able, by
@@ -1778,9 +1794,182 @@ Write the code to implement a feature and send us a patch.
 always hope :)
 @end quotation
 
+@node Q1.5.4, Q1.5.5, Q1.5.3, Introduction
+@unnumberedsubsec Q1.5.4: How do I get started developing XEmacs?
+
+First, get yourself set up under CVS so that you can access the CVS
+repositories containing the XEmacs sources and the XEmacs packages.
+
+Next, set up your layout.  This is important, as a good layout will
+facilitate getting things done efficiently, while a bad layout will could
+lead to disaster, as you can't figure out which code is the most recent,
+which can be thrown away, etc.  We suggest the following layout: (feel free
+to make changes)
+
+@itemize @bullet
+@item
+Everything goes under @file{/src/xemacs} (use a different directory if
+you want).  From now, instead of saying @file{/src/xemacs}, we use
+@file{<xsrc-top>}, to make it easier in case someone picked a
+different directory.
+
+@item
+Package source is in @file{<xsrc-top>/package-src}.
+
+@item
+Installed packages go under @file{<xsrc-top>/xemacs-packages}, and
+@file{<xsrc-top>/mule-packages}.
+
+@item
+A "workspace" is a complete copy of the sources, in which you do work of
+a particular kind.  Workspaces can be differentiated by which branch of
+the source tree they extend off of -- usually either the stable or
+experimental, unless other branches have been created (for example, Ben
+created a branch for his Mule work because (1) the project was long-term
+and involved an enormous number of changes, (2) people wanted to be able
+to look at what his work in progress, and (3) he wanted to be able to
+check things in and in general use source-code control, since it was a
+long-term project).  Workspaces are also differentiated in what their
+purpose is -- general working workspace, workspace for particular
+projects, workspace keeping the latest copy of the code in one of the
+branches without mods, etc.
+
+@item
+Various workspaces are subdirectories under @file{<xsrc-top>}, e.g.:
+
+@itemize @bullet
+@item
+@file{<xsrc-top>/working} (the workspace you're actively working on,
+periodically synched up with the latest trunk)
+
+@item
+@file{<xsrc-top>/stable} (for making changes to the stable version of
+XEmacs, which sits on a branch)
+
+@item
+@file{<xsrc-top>/unsigned-removal} (a workspace for a specific, difficult
+task that's going to affect lots of source and take a long time, and
+so best done in its own workspace without the interference of other
+work you're doing.  Also, you can commit just this one large change,
+separate from all the other changes).
+
+@item
+@file{<xsrc-top>/latest} (a copy of the latest sources on the trunk,
+i.e. the experimental version of XEmacs, with no patches in it;
+either update it periodically, by hand, or set up a cron job to do it
+automatically).  Set it up so it can be built, and build it so you
+have a working XEmacs. (Building it might also go into the cron job.)
+
+This workspace serves a number of purposes:
+@enumerate
+@item
+You always have a recent version of XEmacs you can compare
+against when something you're working on breaks.  It's true
+that you can do this with cvs diff, but when you need to do
+some serious investigation, this method just fails.
+@item
+You (almost) always have a working, up-to-date executable that
+can be used when your executable is crashing and you need to
+keep developing it, or when you need an `xemacs' to build
+packages, etc.
+@item
+When creating new workspaces, you can just copy the `latest'
+workspace using GNU @code{cp -a}.  You have all the .elc's built,
+everything else probably configured, any spare files in place
+(e.g. some annoying xpm.dll under Windows, etc.).
+@end enumerate
+
+@item
+@file{<xsrc-top>/latest-stable/} (equivalent to @file{<xsrc-top>/latest/}, but
+for the Stable branch of XEmacs, rather than the Experimental branch
+of XEmacs).  This may or may not be necessary depending on how much
+development you do of the stable branch.
+@end itemize
+
+@item
+@file{<xsrc-top>/xemacsweb} is a workspace for working on the XEmacs
+web site.
+
+@item
+@file{<xsrc-top>/in-patches} for patches received from email and saved
+to files.
+
+@item
+@file{<xsrc-top>/out-patches} for locally-generated patches to be sent
+to @email{xemacs-patches@@xemacs.org}.  Less useful now that the
+patcher util has been developed.
+
+@item
+@file{<xsrc-top>/build}, for build trees when compiling and testing XEmacs with
+various configuration options turned off and on.  The scripts in
+xemacs-builds/ben (see below) can be used to automate building XEmacs
+workspaces with many different configuration options and automatically
+filtering out the normal output so that you see only the abnormal
+output.
+
+@item
+@file{<xsrc-top>/xemacs-builds}, for the xemacs-builds module, which you need
+to check out separately in CVS.  This contains scripts used for building
+XEmacs, automating and simplifying using CVS, etc.  Under various
+people's directories are their own build and other scripts.  The
+currently most-maintained scripts are under ben/, where there are easily
+configurable scripts that can be used to easily build any workspace
+(esp. if you've more or less followed the layout presented above)
+unattended, with one or more configuration states (there's a
+pre-determined list of the most useful, but it's easy to change).  The
+output is filtered and split up in various ways so that you can identify
+which output came from where, and you can see the output either full or
+with all "normal" output except occasional status messages filtered so
+that you only see the abnormal ones.
+@end itemize
+
+@node Q1.5.5, Q1.6.1, Q1.5.4, Introduction
+@unnumberedsubsec Q1.5.5: What's the basic layout of the code?
+
+The file @file{configure} is a shell script to acclimate XEmacs to the
+oddities of your processor and operating system.  It will create a
+file named @file{Makefile} (a script for the @file{make} program), which helps
+automate the process of building and installing emacs.  See INSTALL
+for more detailed information.
+
+The file @file{configure.in} is the input used by the autoconf program to
+construct the @file{configure} script.  Since XEmacs has configuration
+requirements that autoconf can't meet, @file{configure.in} uses an unholy
+marriage of custom-baked configuration code and autoconf macros; it
+may be wise to avoid rebuilding @file{configure} from @file{configure.in} when
+possible.
+
+The file @file{Makefile.in} is a template used by @file{configure} to create
+@file{Makefile}.
+
+There are several subdirectories:
+
+@enumerate
+@item
+@file{src} holds the C code for XEmacs (the XEmacs Lisp interpreter and its
+primitives, the redisplay code, and some basic editing functions).
+@item
+@file{lisp} holds the XEmacs Lisp code for XEmacs (most everything else).
+@item
+@file{lib-src} holds the source code for some utility programs for use by
+or with XEmacs, like movemail and etags.
+@item
+@file{etc} holds miscellaneous architecture-independent data files
+XEmacs uses, like the tutorial text.  The contents of the @file{lisp},
+@file{info} and @file{man} subdirectories are architecture-independent too.
+@item
+@file{lwlib} holds the C code for the X toolkit objects used by XEmacs.
+@item
+@file{info} holds the Info documentation tree for XEmacs.
+@item
+@file{man} holds the source code for the XEmacs online documentation.
+@item
+@file{nt} holds files used compiling XEmacs under Microsoft Windows.
+@end enumerate
+
 @unnumberedsec 1.6: Politics (XEmacs vs. GNU Emacs)
 
-@node Q1.6.1, Q1.6.2, Q1.5.3, Introduction
+@node Q1.6.1, Q1.6.2, Q1.5.5, Introduction
 @unnumberedsubsec Q1.6.1: What is GNU Emacs?
 
 GNU Emacs and XEmacs are related open-source text editors.  Both
@@ -2114,8 +2303,23 @@ that often result.  Mail your questions to
 
 @unnumberedsec 1.7: External Packages
 
-@node Q1.7.1, Q1.8.1, Q1.6.6, Introduction
-@unnumberedsubsec Q1.7.1: Which external packages are there?
+@node Q1.7.1, Q1.7.2, Q1.6.6, Introduction
+@unnumberedsubsec Q1.7.1: What is the package system?
+
+In order to reduce the size and increase the maintainability of
+XEmacs, the majority of the Elisp packages that came with previous
+releases have been unbundled.  They have been replaced by the package
+system.  Each elisp add-on (or groups of them when they are small) now
+comes in its own tarball that contains a small search hierarchy.
+
+You select just the ones you need.  Install them by untarring them into
+the right place.  On startup XEmacs will find them, set up the load
+path correctly, install autoloads, etc, etc.
+
+@xref{Q2.1.1}, for more info on how to download and install the packages.
+
+@node Q1.7.2, Q1.7.3, Q1.7.1, Introduction
+@unnumberedsubsec Q1.7.2: Which external packages are there?
 
 @subheading Normal Packages
 
@@ -2527,9 +2731,33 @@ Another Japanese Language Input Method.  Can be used without a
 separate process running as a dictionary server.
 @end table
 
+@node Q1.7.3, Q1.7.4, Q1.7.2, Introduction
+@unnumberedsubsec Q1.7.3: Do I need to have the packages to run XEmacs?
+
+Strictly speaking, no.  XEmacs will build and install just fine without
+any packages installed.  However, only the most basic editing functions
+will be available with no packages installed, so installing packages is
+an essential part of making your installed XEmacs _useful_.
+
+@node Q1.7.4, Q1.8.1, Q1.7.3, Introduction
+@unnumberedsubsec Q1.7.4: Is there a way to find which package has particular functionality?
+
+If you want to find out which package contains the functionality you
+are looking for, use @kbd{M-x package-get-package-provider}, and give it a
+symbol that is likely to be in that package.  
+
+For example, if some code you want to use has a @code{(require 'thingatpt)}
+in it:
+
+@example
+	M-x package-get-package-provider RET thingatpt RET
+@end example
+
+which will return something like: @samp{(fsf-compat "1.08").}
+
 @unnumberedsec 1.8: Internationalization
 
-@node Q1.8.1, Q1.8.2, Q1.7.1, Introduction
+@node Q1.8.1, Q1.8.2, Q1.7.4, Introduction
 @unnumberedsubsec Q1.8.1: What is the status of internationalization support aka MULE (including Asian language support)?
 
 Both the stable and development versions of XEmacs include
@@ -2840,140 +3068,78 @@ This is part 2 of the XEmacs Frequently Asked Questions list.  This
 section is devoted to Installation, Maintenance and Troubleshooting.
 
 @menu
-2.0: Installation (General), Packages
-* Q2.0.1::    How do I install the packages?
-* Q2.0.2::    I don't need no steenkin' packages.  Do I?
-* Q2.0.3::    Where do I find external libraries?
-* Q2.0.4::    How do I specify the paths that XEmacs uses for finding files?
-* Q2.0.5::    Running XEmacs without installing
-* Q2.0.6::    XEmacs is too big
-* Q2.0.7::    EFS fails with "500 AUTH not understood" (NEW)
+2.0: Installation (General)
+* Q2.0.1::    How do I build and install XEmacs?
+* Q2.0.2::    Where do I find external libraries?
+* Q2.0.3::    How do I specify the paths that XEmacs uses for finding files?
+* Q2.0.4::    Running XEmacs without installing
+* Q2.0.5::    XEmacs is too big
 
-2.1: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
-* Q2.1.1::    Libraries in non-standard locations
-* Q2.1.2::    Why can't I strip XEmacs?
+2.1: Package Installation
+* Q2.1.1::    How do I install the packages?
+* Q2.1.2::    Can I install the packages individually?
+* Q2.1.3::    Can I install the packages automatically?
+* Q2.1.4::    Can I upgrade or remove packages?
+* Q2.1.5::    Which packages to install?
+* Q2.1.6::    Can you describe the package location process in more detail?
+* Q2.1.7::    EFS fails with "500 AUTH not understood"
 
-2.2: Windows Installation (Windows, Cygwin, MinGW)
-* Q2.2.1::    What exactly are all the different ways to build XEmacs under Windows?
-* Q2.2.2::    What compiler/libraries do I need to compile XEmacs?
-* Q2.2.3::    How do I compile the native port?
-* Q2.2.4::    What do I need for Cygwin?
-* Q2.2.5::    How do I compile under Cygwin?
-* Q2.2.6::    How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
-* Q2.2.7::    How do I compile with X support?
-* Q2.2.8::    Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
+2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
+* Q2.2.1::    Libraries in non-standard locations
+* Q2.2.2::    Why can't I strip XEmacs?
 
-2.3: General Troubleshooting
-* Q2.3.1::    Help!  XEmacs just crashed on me!
-* Q2.3.2::    XEmacs crashes and I compiled it myself.
-* Q2.3.3::    How to debug an XEmacs problem with a debugger
-* Q2.3.4::    I get a cryptic error message when trying to do something.
-* Q2.3.5::    XEmacs hangs when I try to do something.
-* Q2.3.6::    I get an error message when XEmacs is running in batch mode.
-* Q2.3.7::    The keyboard or mouse is not working properly, or I have some other event-related problem.
-* Q2.3.8::    @kbd{C-g} doesn't work for me.  Is it broken?
-* Q2.3.9::    How do I debug process-related problems?
-* Q2.3.10::   XEmacs is outputting lots of X errors.
-* Q2.3.11::   After upgrading, XEmacs won't do `foo' any more!
+2.3: Windows Installation (Windows, Cygwin, MinGW)
+* Q2.3.1::    What exactly are all the different ways to build XEmacs under Windows?
+* Q2.3.2::    What compiler/libraries do I need to compile XEmacs?
+* Q2.3.3::    How do I compile the native port?
+* Q2.3.4::    What do I need for Cygwin?
+* Q2.3.5::    How do I compile under Cygwin?
+* Q2.3.6::    How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
+* Q2.3.7::    How do I compile with X support?
+* Q2.3.8::    Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
 
-2.4: Startup-Related Problems
-* Q2.4.1::    XEmacs cannot connect to my X Terminal!
-* Q2.4.2::    XEmacs won't start on Windows.
-* Q2.4.3::    XEmacs won't start without network.
-* Q2.4.4::    Startup warnings about deducing proper fonts?
-* Q2.4.5::    Warnings from incorrect key modifiers.
-* Q2.4.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
+2.4: General Troubleshooting
+* Q2.4.1::    How do I deal with bugs or with problems building, installing, or running?
+* Q2.4.2::    Help!  XEmacs just crashed on me!
+* Q2.4.3::    XEmacs crashes and I compiled it myself.
+* Q2.4.4::    How to debug an XEmacs problem with a debugger
+* Q2.4.5::    I get a cryptic error message when trying to do something.
+* Q2.4.6::    XEmacs hangs when I try to do something.
+* Q2.4.7::    I get an error message when XEmacs is running in batch mode.
+* Q2.4.8::    The keyboard or mouse is not working properly, or I have some other event-related problem.
+* Q2.4.9::    @kbd{C-g} doesn't work for me.  Is it broken?
+* Q2.4.10::   How do I debug process-related problems?
+* Q2.4.11::   XEmacs is outputting lots of X errors.
+* Q2.4.12::   After upgrading, XEmacs won't do `foo' any more!
+
+2.5: Startup-Related Problems
+* Q2.5.1::    XEmacs cannot connect to my X Terminal!
+* Q2.5.2::    Startup problems related to paths or package locations.
+* Q2.5.3::    XEmacs won't start without network.
+* Q2.5.4::    Startup warnings about deducing proper fonts?
+* Q2.5.5::    Warnings from incorrect key modifiers.
+* Q2.5.6::    XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
 @end menu
 
-@unnumberedsec 2.0: Installation (General), Packages
+@unnumberedsec 2.0: Installation (General)
 
 @node Q2.0.1, Q2.0.2, Installation, Installation
-@unnumberedsubsec Q2.0.1: How do I install the packages?
+@unnumberedsubsec Q2.0.1: How do I build and install XEmacs?
 
-Many people really liked the old way that packages were bundled and do
-not want to mess with packages at all.  You can grab all the packages at
-once like you used to with old XEmacs versions.  Download the file
+See the file @file{etc/NEWS} for information on new features and other
+user-visible changes since the last version of XEmacs.
 
-@file{xemacs-sumo.tar.gz}
+The file @file{INSTALL} in the top-level directory says how to bring
+up XEmacs on Unix and Cygwin, once you have loaded the entire subtree
+of this directory.
 
-For an XEmacs compiled with Mule you also need
+See the file @file{nt/README} for instructions on building XEmacs for
+Microsoft Windows.
 
-@file{xemacs-mule-sumo.tar.gz}
-
-These are in the @file{packages} directory on your XEmacs mirror
-archive.  N.B. They are called 'Sumo Tarballs' for good reason. They
-are currently about 15MB and 2.3MB (gzipped) respectively.
-
-Install them on Unix and Mac OS X using the shell/Terminal command
-
-@code{cd $prefix/lib/xemacs ; gunzip -c <tarballname> | tar xf -}
-
-Where @samp{$prefix} is what you gave to the @samp{--prefix} flag to
-@file{configure}, and defaults to @file{/usr/local}.
-
-If you have the packages somewhere nonstandard and don't want to
-bother with @samp{$prefix} (for example, you're a developer and are
-compiling the packages yourself, and want your own private copy of
-everything), you can also directly specify this using @file{configure}.
-To do this under 21.5 and above use the @samp{--package-prefix} parameter
-to specify the directory under which you untarred the above tarballs.
-Under 21.4 and previous you need to use @samp{--package-path},
-something like this:
-
-@example
-   configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
-@end example
-
-Under Windows, you need to place the above @samp{tar.gz} files in the
-directory specified using the @samp{PACKAGE_PREFIX} value in
-@file{nt/config.inc} and by default is @file{\Program Files\XEmacs}.
-(To untar a @samp{tar.gz} file you will need to use a utility such as
-WinZip, unless you have Cygwin or a similar environment installed, in
-which case the above Unix shell command should work fine.) If you want
-the packages somewhere else, just change @samp{PACKAGE_PREFIX}.
-
-Note that XEmacs finds the packages automatically anywhere underneath
-the directory tree where it expects to find the packages.  All you
-need to do is put stuff there; you don't need to run any program to
-tell XEmacs to find the packges, or do anything of that sort.
-
-See @file{README.packages} in the top-level source directory for more
-detailed installation instructions.
-
-As the Sumo tarballs are not regenerated as often as the individual
-packages, it is recommended that you use the automatic package tools
-afterwards to pick up any recent updates.
-
-@emph{More detailed info}: If the package path is not explicitly
-specified, XEmacs looks for the package directory
-@file{xemacs-packages} (and @file{mule-packages}, etc.) first under
-@samp{~/.xemacs}, then for a sister directory
-@file{lib/xemacs-VERSION} of the directory in which the XEmacs
-executable is located, then for a sister directory @file{lib/xemacs}.
-The XEmacs executable (under Unix at least) is installed by default in
-@file{/usr/local/bin}; this explains why XEmacs in its default
-installation will find packages that you put under
-@file{/usr/local/lib/xemacs}.
-
-#### I'm not sure what exactly happens when the package path is
-specifically given, as is the case when the @samp{--package-prefix} or
-@samp{--package-path} options are given to @file{configure}, and
-always under Microsoft Windows.
-
-@emph{NOTE}: For detailed information about how the package
-hierarchies work, @xref{Package Overview,,,lispref, the XEmacs Lisp
-Reference Manual}.
+@xref{Q2.1.1}, for the installation of (essential) add on packages.
 
 @node Q2.0.2, Q2.0.3, Q2.0.1, Installation
-@unnumberedsubsec Q2.0.2: I don't need no steenkin' packages.  Do I?
-
-Strictly speaking, no.  XEmacs will build and install just fine without
-any packages installed.  However, only the most basic editing functions
-will be available with no packages installed, so installing packages is
-an essential part of making your installed XEmacs _useful_.
-
-@node Q2.0.3, Q2.0.4, Q2.0.2, Installation
-@unnumberedsubsec Q2.0.3: Where do I find external libraries?
+@unnumberedsubsec Q2.0.2: Where do I find external libraries?
 
 All external libraries used by XEmacs can be found on the XEmacs web
 site
@@ -2988,8 +3154,8 @@ We try to keep the libraries up-to-date but may not always succeed.
 Check the above page for the canonical locations of the external libraries,
 allowing you to download the latest, bleeding-edge versions.
 
-@node Q2.0.4, Q2.0.5, Q2.0.3, Installation
-@unnumberedsubsec Q2.0.4: How do I specify the paths that XEmacs uses for finding files?
+@node Q2.0.3, Q2.0.4, Q2.0.2, Installation
+@unnumberedsubsec Q2.0.3: How do I specify the paths that XEmacs uses for finding files?
 
 You can specify what paths to use by using a number of different flags
 when running configure.  See the section MAKE VARIABLES in the top-level
@@ -3003,8 +3169,8 @@ be specified by passing the @code{--prefix} flag to configure.  For a
 description of the XEmacs install tree, please consult the @file{NEWS}
 file.
 
-@node Q2.0.5, Q2.0.6, Q2.0.4, Installation
-@unnumberedsubsec Q2.0.5: Running XEmacs without installing
+@node Q2.0.4, Q2.0.5, Q2.0.3, Installation
+@unnumberedsubsec Q2.0.4: Running XEmacs without installing
 
 How can I just try XEmacs without installing it?
 
@@ -3024,8 +3190,8 @@ tree to instead of @file{/src/xemacs-21.5}).
 
 This will let you run XEmacs without massive copying.
 
-@node Q2.0.6, Q2.0.7, Q2.0.5, Installation
-@unnumberedsubsec Q2.0.6: XEmacs is too big
+@node Q2.0.5, Q2.1.1, Q2.0.4, Installation
+@unnumberedsubsec Q2.0.5: XEmacs is too big
 
 The space required by the installation directories can be
 reduced dramatically if desired.  Gzip all the .el files.  Remove all
@@ -3054,8 +3220,311 @@ you wish to delete, and then @kbd{x} to delete them.
 
 Another method is to do @code{M-x package-get-delete-package}.
 
-@node Q2.0.7, Q2.1.1, Q2.0.6, Installation
-@unnumberedsubsec Q2.0.7: EFS fails with "500 AUTH not understood" (NEW)
+@unnumberedsec 2.1: Package Installation
+
+@node Q2.1.1, Q2.1.2, Q2.0.5, Installation
+@unnumberedsubsec Q2.1.1: How do I install the packages?
+
+There are three ways to install the packages.
+
+@enumerate
+@item
+Manually, all at once, using the 'Sumo Tarball'.
+@item
+Manually, using individual package tarballs.
+@item
+Automatically, using the package tools from XEmacs.
+@end enumerate
+
+If you don't want to mess with the packages, it is easiest to just
+grab them manually, all at once. (For the other two ways,
+@xref{Q2.1.2}, and @xref{Q2.1.3}.) Download the file
+
+@file{xemacs-sumo.tar.gz}
+
+For an XEmacs compiled with Mule you also need
+
+@file{xemacs-mule-sumo.tar.gz}
+
+These are in the @file{packages} directory on your XEmacs mirror
+archive: @uref{ftp://ftp.xemacs.org/pub/xemacs/packages} or its
+mirrors.  N.B. They are called 'Sumo Tarballs' for good reason. They
+are currently about 19MB and 4.5MB (gzipped) respectively.
+
+Install them on Unix and Mac OS X using the shell/Terminal command
+
+@code{cd $prefix/lib/xemacs ; gunzip -c <tarballname> | tar xf -}
+
+Where @samp{$prefix} is what you gave to the @samp{--prefix} flag to
+@file{configure}, and defaults to @file{/usr/local}.
+
+If you have GNU tar you can use:
+
+@code{cd $prefix/lib/xemacs ; tar zxvf <tarballname>}
+
+If you have the packages somewhere nonstandard and don't want to
+bother with @samp{$prefix} (for example, you're a developer and are
+compiling the packages yourself, and want your own private copy of
+everything), you can also directly specify this using @file{configure}.
+To do this under 21.5 and above use the @samp{--package-prefix} parameter
+to specify the directory under which you untarred the above tarballs.
+Under 21.4 and previous you need to use @samp{--package-path},
+something like this:
+
+@example
+   configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
+@end example
+
+Under Windows, you need to place the above @samp{tar.gz} files in the
+directory specified using the @samp{PACKAGE_PREFIX} value in
+@file{nt/config.inc} and by default is @file{\Program Files\XEmacs}.
+(To untar a @samp{tar.gz} file you will need to use a utility such as
+WinZip, unless you have Cygwin or a similar environment installed, in
+which case the above Unix shell command should work fine.) If you want
+the packages somewhere else, just change @samp{PACKAGE_PREFIX}.
+
+Note that XEmacs finds the packages automatically anywhere underneath
+the directory tree where it expects to find the packages.  All you
+need to do is put stuff there; you don't need to run any program to
+tell XEmacs to find the packges, or do anything of that sort.
+
+However, XEmacs will only notice newly installed packages when it
+starts up, so you will have to restart if you are already running
+XEmacs.
+
+For more details, @xref{Startup Paths,,,xemacs, the XEmacs User's
+Manual}, and @xref{Packages,,,xemacs, the XEmacs User's Manual}.
+
+As the Sumo tarballs are not regenerated as often as the individual
+packages, it is recommended that you use the automatic package tools
+afterwards to pick up any recent updates.
+
+@emph{NOTE}: For detailed information about how the package
+hierarchies work, @xref{Package Overview,,,lispref, the XEmacs Lisp
+Reference Manual}.
+
+@node Q2.1.2, Q2.1.3, Q2.1.1, Installation
+@unnumberedsubsec Q2.1.2: Can I install the packages individually?
+
+Yes, you can download individual packages from the FTP site (@pxref{Q2.1.1}).  Since packages are automatically noticed at startup, you just have to put them in the right place.
+
+Note: If you are upgrading packages already installed, it's best to
+remove the old package first (@pxref{Q2.1.4}).
+
+For example if we are installing the @samp{xemacs-base}
+package (version 1.48):
+
+@example
+   mkdir $prefix/lib/xemacs/xemacs-packages RET # if it does not exist yet
+   cd $prefix/lib/xemacs/xemacs-packages RET
+   gunzip -c /path/to/xemacs-base-1.48-pkg.tar.gz | tar xvf - RET
+@end example
+
+Or if you have GNU tar, the last step can be:
+
+@example
+   tar zxvf /path/to/xemacs-base-1.48-pkg.tar.gz RET
+@end example
+
+For MULE related packages, it is best to untar into the @samp{mule-packages}
+hierarchy, i.e. for the @samp{mule-base} package, version 1.37:
+
+@example
+   mkdir $prefix/lib/xemacs/mule-packages RET # if it does not exist yet
+   cd $prefix/lib/xemacs/mule-packages RET
+   gunzip -c /path/to/mule-base-1.37-pkg.tar.gz | tar xvf - RET
+@end example
+
+Or if you have GNU tar, the last step can be:
+
+@example
+   tar zxvf /path/to/mule-base-1.37-pkg.tar.gz RET
+@end example
+
+@node Q2.1.3, Q2.1.4, Q2.1.2, Installation
+@unnumberedsubsec Q2.1.3: Can I install the packages automatically?
+
+XEmacs comes with some tools to make the periodic updating and
+installing easier. It will notice if new packages or versions are
+available and will fetch them from the FTP site.
+
+Unfortunately this requires that a few packages are already in place.
+You will have to install them by hand as above or use a SUMO tarball.
+This requirement will hopefully go away in the future. The packages
+you need are:
+
+@example
+   efs          - To fetch the files from the FTP site or mirrors.
+   xemacs-base  - Needed by efs.
+@end example
+
+and optionally:
+
+@example
+   mailcrypt    - For PGP verification of the package-index file.
+@end example
+
+After installing these by hand, fire up XEmacs and follow these
+steps.
+
+@enumerate
+@item
+Choose a download site.
+@itemize @bullet
+@item
+via menu: Tools -> Packages -> Set Download Site 
+@item
+via keyb: M-x customize-variable RET package-get-remote RET
+(put in the details of remote host and directory)
+@end itemize
+
+If the package tarballs _AND_ the package-index file are in a
+local directory, you can: M-x pui-set-local-package-get-directory RET
+
+@item
+Obtain a list of packages and display the list in a buffer named
+"*Packages*".
+@itemize @bullet
+@item
+menu: Tools -> Packages -> List & Install
+@item
+keyb: M-x pui-list-packages RET
+@end itemize
+
+XEmacs will now connect to the remote site and download the
+latest package-index file.
+
+The resulting buffer, "*Packages*" has brief instructions at the
+end of the buffer.
+
+@item
+Choose the packages you wish to install.
+@itemize @bullet
+@item
+mouse: Click button 2 on the package name.
+@item
+keyb: RET on the package name
+@end itemize
+
+@item
+Make sure you have everything you need.
+@itemize @bullet
+@item
+menu: Packages -> Add Required
+@item
+keyb: r
+@end itemize
+
+XEmacs will now search for packages that are required by the
+ones that you have chosen to install and offer to select
+those packages also.
+
+For novices and gurus alike, this step can save your bacon.
+It's easy to forget to install a critical package.
+
+@item
+Download and install the packages.
+@itemize @bullet
+@item
+menu: Packages -> Install/Remove Selected
+@item
+keyb: x
+@end itemize
+@end enumerate
+
+@node Q2.1.4, Q2.1.5, Q2.1.3, Installation
+@unnumberedsubsec Q2.1.4: Can I upgrade or remove packages?
+
+As the exact files and their locations contained in a package may
+change it is recommended to remove a package first before installing a
+new version. In order to facilitate removal each package contains an
+pgkinfo/MANIFEST.pkgname file which list all the files belong to the
+package. M-x package-admin-delete-binary-package RET can be used to
+remove a package using this file.
+
+Note that the interactive package tools included with XEmacs already do
+this for you.
+
+@node Q2.1.5, Q2.1.6, Q2.1.4, Installation
+@unnumberedsubsec Q2.1.5: Which packages to install?
+
+Unless you are an advanced user, just install everything.
+
+If you really want to install only what's absolutely needed, a good
+minimal set of packages for XEmacs-latin1 would be
+
+@example
+xemacs-base, xemacs-devel, c-support, cc-mode, debug, dired, efs,
+edit-utils, fsf-compat, mail-lib, net-utils, os-utils, prog-modes,
+text-modes, time, mailcrypt
+@end example
+
+If you are using the XEmacs package tools, don't forget to do:
+
+@example
+	Packages -> Add Required
+@end example
+
+To make sure you have everything that the packages you have chosen to
+install need.
+
+@xref{Q1.7.2}, for a description of the various packages.
+
+@node Q2.1.6, Q2.1.7, Q2.1.5, Installation
+@unnumberedsubsec Q2.1.6: Can you describe the package location process in more detail?
+
+On startup XEmacs looks for packages in so-called package hierarchies.
+Normally, there are three system wide hierarchies, like this:
+
+@example
+$prefix/lib/xemacs/xemacs-packages/
+     Normal packages go here.
+
+$prefix/lib/xemacs/mule-packages/
+     Mule packages go here and are only searched by MULE-enabled XEmacsen.
+
+$prefix/lib/xemacs/site-packages/
+     Local and 3rd party packages go here.
+@end example
+
+This is what you get when you untar the SUMO tarballs under
+@file{$prefix/lib/xemacs}.
+
+@file{$prefix} is specified using the @samp{--prefix} parameter to
+@file{configure}, and defaults to @file{usr/local}.
+
+If the package path is not explicitly specified, XEmacs looks for the
+package directory @file{xemacs-packages} (and @file{mule-packages} and
+@file{site-packages}) first under @samp{~/.xemacs}, then for a sister
+directory @file{lib/xemacs-VERSION} of the directory in which the
+XEmacs executable is located, then for a sister directory
+@file{lib/xemacs}.  The XEmacs executable (under Unix at least) is
+installed by default in @file{/usr/local/bin}; this explains why
+XEmacs in its default installation will find packages that you put
+under @file{/usr/local/lib/xemacs}.
+
+You can specify where exactly XEmacs looks for packages by using the
+@samp{--package-prefix} or @samp{--package-path} parameters to
+@file{configure} (or the equivalent settings in @file{config.inc},
+under Windows), or setting the @samp{EMACSPACKAGEPATH} environment
+variable (which has the same format as @samp{--package-path}).
+@xref{Q2.1.1}.
+
+See @file{configure.usage} for more info about the format of these
+@file{configure} parameters.
+
+In addition to the system wide packages, each user can have his own
+packages installed under @file{~/.xemacs/}. If you want to install
+packages there using the interactive tools, you need to set
+@code{package-get-install-to-user-init-directory} to @code{t}.
+
+The site-packages hierarchy replaces the old @file{site-lisp}
+directory.  XEmacs no longer looks into a @file{site-lisp} directly by
+default.  A good place to put @file{site-start.el} would be in
+@file{$prefix/lib/xemacs/site-packages/lisp/}.
+
+@node Q2.1.7, Q2.2.1, Q2.1.6, Installation
+@unnumberedsubsec Q2.1.7: EFS fails with "500 AUTH not understood" (NEW)
 
 A typical error: FTP Error: USER request failed; 500 AUTH not understood.
 
@@ -3069,10 +3538,10 @@ and notes that you need to add an element (often "-u") to
 `efs-ftp-program-args'.  Use M-x customize-variable, and verify the
 needed flag with `man ftp' or other local documentation.
 
-@unnumberedsec 2.1: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
+@unnumberedsec 2.2: Unix/Mac OS X Installation (Also Relevant to Cygwin, MinGW)
 
-@node Q2.1.1, Q2.1.2, Q2.0.7, Installation
-@unnumberedsubsec Q2.1.1: Libraries in non-standard locations
+@node Q2.2.1, Q2.2.2, Q2.1.7, Installation
+@unnumberedsubsec Q2.2.1: Libraries in non-standard locations
 
 If your libraries are in a non-standard location, you can specify the location
 using the following flags to @file{configure}:
@@ -3088,8 +3557,8 @@ If you have multiple paths to specify, use the following syntax:
 --site-libraries='/path/one /path/two /path/etc'
 @end example
 
-@node Q2.1.2, Q2.2.1, Q2.1.1, Installation
-@unnumberedsubsec Q2.1.2: Why can't I strip XEmacs?
+@node Q2.2.2, Q2.3.1, Q2.2.1, Installation
+@unnumberedsubsec Q2.2.2: Why can't I strip XEmacs?
 
 @email{cognot@@fronsac.ensg.u-nancy.fr, Richard Cognot} writes:
 
@@ -3143,10 +3612,10 @@ cp lib-src/DOC-19.16-XEmacs
 @end enumerate
 @end quotation
 
-@unnumberedsec 2.2: Windows Installation (Windows, Cygwin, MinGW)
+@unnumberedsec 2.3: Windows Installation (Windows, Cygwin, MinGW)
 
-@node Q2.2.1, Q2.2.2, Q2.1.2, Installation
-@unnumberedsubsec Q2.2.1: What exactly are all the different ways to build XEmacs under Windows?
+@node Q2.3.1, Q2.3.2, Q2.2.2, Installation
+@unnumberedsubsec Q2.3.1: What exactly are all the different ways to build XEmacs under Windows?
 
 XEmacs can be built in several ways in the MS Windows environment.
 
@@ -3174,8 +3643,8 @@ you want an MS Windows versin of XEmacs that supports X, use the Cygwin
 version. (The X support there is actively maintained, so that Windows
 developers can test the X support in XEmacs.)
 
-@node Q2.2.2, Q2.2.3, Q2.2.1, Installation
-@unnumberedsubsec Q2.2.2: What compiler/libraries do I need to compile XEmacs?
+@node Q2.3.2, Q2.3.3, Q2.3.1, Installation
+@unnumberedsubsec Q2.3.2: What compiler/libraries do I need to compile XEmacs?
 
 You need Visual C++ 4.2, 5.0, or 6.0 for the native version. (We have
 some beta testers currently trying to compile with VC.NET, aka version
@@ -3185,14 +3654,14 @@ the compiler used for those versions.  @xref{Q1.2.5, What are Cygwin
 and MinGW, and do I need them to run XEmacs?}, for more information on
 Cygwin and MinGW.
 
-@node Q2.2.3, Q2.2.4, Q2.2.2, Installation
-@unnumberedsubsec Q2.2.3: How do I compile the native port?
+@node Q2.3.3, Q2.3.4, Q2.3.2, Installation
+@unnumberedsubsec Q2.3.3: How do I compile the native port?
 
 Please read the file @file{nt/README} in the XEmacs distribution, which
 contains the full description.
 
-@node Q2.2.4, Q2.2.5, Q2.2.3, Installation
-@unnumberedsubsec Q2.2.4: What do I need for Cygwin?
+@node Q2.3.4, Q2.3.5, Q2.3.3, Installation
+@unnumberedsubsec Q2.3.4: What do I need for Cygwin?
 
 You can find the Cygwin tools and compiler at:
 
@@ -3211,8 +3680,8 @@ library, which must be specifically selected in the Cygwin netinstaller;
 it is not selected by default.  The package has had various names.
 Currently it is called @file{cygXpm-noX4.dll}.
 
-@node Q2.2.5, Q2.2.6, Q2.2.4, Installation
-@unnumberedsubsec Q2.2.5: How do I compile under Cygwin?
+@node Q2.3.5, Q2.3.6, Q2.3.4, Installation
+@unnumberedsubsec Q2.3.5: How do I compile under Cygwin?
 
 Similar as on Unix; use the usual `configure' and `make' process.
 Some problems to watch out for:
@@ -3260,8 +3729,8 @@ directory of the XEmacs sources.
 @end itemize
 
 
-@node Q2.2.6, Q2.2.7, Q2.2.5, Installation
-@unnumberedsubsec Q2.2.6: How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
+@node Q2.3.6, Q2.3.7, Q2.3.5, Installation
+@unnumberedsubsec Q2.3.6: How do I compile using MinGW (aka @samp{the -mno-cygwin flag to gcc})?
 
 Similar to the method for Unix.  Things to remember:
 
@@ -3285,8 +3754,8 @@ to @file{configure}, e.g.
 @samp{./configure --site-prefixes=/build/libs i586-pc-mingw32}.
 @end itemize
 
-@node Q2.2.7, Q2.2.8, Q2.2.6, Installation
-@unnumberedsubsec Q2.2.7: How do I compile with X support?
+@node Q2.3.7, Q2.3.8, Q2.3.6, Installation
+@unnumberedsubsec Q2.3.7: How do I compile with X support?
 
 To compile under Cygwin, all you need to do is install XFree86, which
 is available as part of the standard Cygwin installation.
@@ -3299,28 +3768,69 @@ probably won't work.  But if it want to try, it's described in
 libraries from @uref{http://ftp.x.org}, and compile them.  If the
 precompiled versions are available somewhere, we don't know of it.
 
-@node Q2.2.8, Q2.3.1, Q2.2.7, Installation
-@unnumberedsubsec Q2.2.8: Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
+@node Q2.3.8, Q2.4.1, Q2.3.7, Installation
+@unnumberedsubsec Q2.3.8: Cygwin XEmacs won't start -- cygXpm-noX4.dll was not found (NEW)
 
 The Cygwin binary distributed with the netinstaller uses an external DLL
 to handle XPM images (such as toolbar buttons).  You may get an error like
 
-    This application has failed to start because cygXpm-noX4.dll was not found.
-    Re-installing the application may fix this problem.
+@example
+This application has failed to start because cygXpm-noX4.dll was not found.
+Re-installing the application may fix this problem.
+@end example
 
 Andy Piper <andy@@xemacs.org> sez:
 
-    cygXpm-noX4 is part of the cygwin distribution under libraries or
-    graphics, but is not installed by default. You need to run the
-    cygwin setup again and select this package.
+@example
+cygXpm-noX4 is part of the cygwin distribution under libraries or
+graphics, but is not installed by default. You need to run the
+cygwin setup again and select this package.
+@end example
 
 Ie, reinstalling XEmacs won't help because it is not part of the XEmacs
 distribution.
 
-@unnumberedsec 2.3: General Troubleshooting
+@unnumberedsec 2.4: General Troubleshooting
 
-@node Q2.3.1, Q2.3.2, Q2.2.8, Installation
-@unnumberedsubsec Q2.3.1: Help!  XEmacs just crashed on me!
+@node Q2.4.1, Q2.4.2, Q2.3.8, Installation
+@unnumberedsubsec Q2.4.1: How do I deal with bugs or with problems building, installing, or running?
+
+The file @file{PROBLEMS} contains information on many common problems that
+occur in building, installing and running XEmacs.
+
+Reports of bugs in XEmacs should be sent to
+@email{xemacs-beta@@xemacs.org}.  You can also post to the newsgroup
+comp.emacs.xemacs (or equivalentlt, send to the mailing list
+@email{xemacs@@xemacs.org}), but it is less likely that the developers
+will see it in a timely fashion.  @xref{Bugs,,, xemacs, the XEmacs
+User's Manual}, for more information on how to report bugs.
+@xref{Q1.4.2}, for more information on mailing lists relating to
+XEmacs.
+
+There are three ways to read the Bugs section.
+
+@enumerate
+@item
+In a printed copy of the XEmacs manual.
+
+@item
+With Info.  First, start XEmacs.  From the menu, select
+@samp{Help->Info (Online Docs)->Info Contents} to enter Info, then
+click on @samp{XEmacs}, then on @samp{Bugs}.  Or, use the keyboard: do
+@kbd{C-h i} to enter Info, then @kbd{m XEmacs RET} to get to the Emacs
+manual, then @kbd{m Bugs RET} to get to the section on bugs.  Or use
+standalone Info in a like manner.  (Standalone Info is part of the
+Texinfo distribution, not part of the XEmacs distribution.)
+
+@item
+By hand.  Do
+@example
+cat info/xemacs* | more "+/^File: xemacs.info,  Node: Bugs,"
+@end example
+@end enumerate
+
+@node Q2.4.2, Q2.4.3, Q2.4.1, Installation
+@unnumberedsubsec Q2.4.2: Help!  XEmacs just crashed on me!
 
 First of all, don't panic.  Whenever XEmacs crashes, it tries extremely
 hard to auto-save all of your files before dying.  (The main time that
@@ -3386,7 +3896,7 @@ of XEmacs was compiled without debugging information or had the
 debugging information stripped.  A compilation with optimization can
 also result in partly or completely garbaged stack trace.  In such
 cases, you will need to recompile XEmacs with debugging information
-and without optimization; @xref{Q2.3.3, How to debug an XEmacs problem
+and without optimization; @xref{Q2.4.4, How to debug an XEmacs problem
 with a debugger}.  Note also that core files currently don't work at
 all under Cygwin, and the only way to get a backtrace is to run XEmacs
 from gdb.
@@ -3397,7 +3907,7 @@ and Lisp backtraces and submit a bug report including full
 configuration information as described above, as this will greatly
 assist in the process of tracking down the bug.  However, even partial
 information is better than none.  The process of getting backtraces
-from gdb is described in detail in @ref{Q2.3.3, How to debug an XEmacs
+from gdb is described in detail in @ref{Q2.4.4, How to debug an XEmacs
 problem with a debugger}.
 
 If you're under Microsoft Windows, you're out of luck unless you happen
@@ -3442,12 +3952,12 @@ to a file (@file{beta.err} is the default used by @code{build-report}),
 and executing @kbd{M-x build-report}.
 
 
-@node Q2.3.2, Q2.3.3, Q2.3.1, Installation
-@unnumberedsubsec Q2.3.2: XEmacs crashes and I compiled it myself.
+@node Q2.4.3, Q2.4.4, Q2.4.2, Installation
+@unnumberedsubsec Q2.4.3: XEmacs crashes and I compiled it myself.
 
 There have been a variety of reports of crashes due to compilers with
 buggy optimizers.  If you are compiling with optimization, consider
-turning it off (@pxref{Q2.3.3, How to debug an XEmacs problem with a
+turning it off (@pxref{Q2.4.4, How to debug an XEmacs problem with a
 debugger}) and recompiling.
 
 Please see the @file{PROBLEMS} file that comes with XEmacs (it's in
@@ -3459,8 +3969,8 @@ If you compiled XEmacs using @samp{--use-union-type} (or the option
 recompiling again without it.  The union type has been known to trigger
 compiler errors in a number of cases.
 
-@node Q2.3.3, Q2.3.4, Q2.3.2, Installation
-@unnumberedsubsec Q2.3.3: How to debug an XEmacs problem with a debugger
+@node Q2.4.4, Q2.4.5, Q2.4.3, Installation
+@unnumberedsubsec Q2.4.4: How to debug an XEmacs problem with a debugger
 
 If XEmacs does crash on you, one of the most productive things you can
 do to help get the bug fixed is to poke around a bit with the debugger.
@@ -3697,8 +4207,8 @@ further information about debugging XEmacs.
 
 @end itemize
 
-@node Q2.3.4, Q2.3.5, Q2.3.3, Installation
-@unnumberedsubsec Q2.3.4: I get a cryptic error message when trying to do something.
+@node Q2.4.5, Q2.4.6, Q2.4.4, Installation
+@unnumberedsubsec Q2.4.5: I get a cryptic error message when trying to do something.
 
 When I try to use some particular option of some particular package, I
 get a cryptic error message in the minibuffer.
@@ -3732,8 +4242,8 @@ Reproduce the error.
 For more information on debugging Lisp code, @xref{Debugging,,,
 lispref, XEmacs Lisp Reference Manual}.
 
-@node Q2.3.5, Q2.3.6, Q2.3.4, Installation
-@unnumberedsubsec Q2.3.5: XEmacs hangs when I try to do something.
+@node Q2.4.6, Q2.4.7, Q2.4.5, Installation
+@unnumberedsubsec Q2.4.6: XEmacs hangs when I try to do something.
 
 XEmacs might just be slow; some operations take a long time.  XEmacs
 may also be waiting on a response from the network, for example when
@@ -3744,7 +4254,7 @@ example, Lisp code explicitly disabled this by setting
 @code{inhibit-quit}), you can use the "critical quit" mechanism by
 typing @kbd{Control-Shift-G}.  This should also pop you into the
 debugger and give you a backtrace, which can tell you where the
-problem is (@pxref{Q2.3.3, How to debug an XEmacs problem with a
+problem is (@pxref{Q2.4.4, How to debug an XEmacs problem with a
 debugger}). (Note that setting @code{debug-on-quit} or selecting
 @samp{Options->Troubleshooting->Debug on Quit} will also cause regular
 @kbd{C-g} to enter the debugger and give you a backtrace.)
@@ -3755,11 +4265,11 @@ signal using the @samp{kill} command.
 
 If the Lisp backtrace isn't enlightening, or if XEmacs is so hung that
 you can't interrupt it at all, you could try attaching to the process
-and getting a C stack backtrace.  @xref{Q2.3.3, How to debug an XEmacs
+and getting a C stack backtrace.  @xref{Q2.4.4, How to debug an XEmacs
 problem with a debugger}.
 
-@node Q2.3.6, Q2.3.7, Q2.3.5, Installation
-@unnumberedsubsec Q2.3.6: I get an error message when XEmacs is running in batch mode.
+@node Q2.4.7, Q2.4.8, Q2.4.6, Installation
+@unnumberedsubsec Q2.4.7: I get an error message when XEmacs is running in batch mode.
 
 Typically this happens when you are trying to compile some Elisp code.
 If you are doing this as part of XEmacs or the XEmacs packages, you
@@ -3776,7 +4286,7 @@ executed at startup time.
 
 If the backtrace is not sufficiently useful in helping you diagnose
 the problem, you should consider using a debugger such as GDB.
-@xref{Q2.3.3, How to debug an XEmacs problem with a debugger}.  You
+@xref{Q2.4.4, How to debug an XEmacs problem with a debugger}.  You
 probably want to set a breakpoint on @code{signal_1}.  Since such
 errors often occur during compiling, which is often triggered by a
 complex command run from a make suite, it may be easier to attach to
@@ -3797,8 +4307,8 @@ guaranteed to kill XEmacs! (But in this situation, XEmacs is about to
 die anyway, and if no debugger is present, this will usefully dump
 core.)
 
-@node Q2.3.7, Q2.3.8, Q2.3.6, Installation
-@unnumberedsubsec Q2.3.7: The keyboard or mouse is not working properly, or I have some other event-related problem.
+@node Q2.4.8, Q2.4.9, Q2.4.7, Installation
+@unnumberedsubsec Q2.4.8: The keyboard or mouse is not working properly, or I have some other event-related problem.
 
 XEmacs has various facilities for debugging event handling.
 
@@ -3820,8 +4330,8 @@ you regular output.  The value @samp{2} gives you verbose output,
 including all parameters.  The value @samp{3} gives you
 super-gorily-detailed output.)
 
-@node Q2.3.8, Q2.3.9, Q2.3.7, Installation
-@unnumberedsubsec Q2.3.8: @kbd{C-g} doesn't work for me.  Is it broken?
+@node Q2.4.9, Q2.4.10, Q2.4.8, Installation
+@unnumberedsubsec Q2.4.9: @kbd{C-g} doesn't work for me.  Is it broken?
 
 @kbd{C-g} does work for most people in most circumstances.  If it
 doesn't, there are two possible explanations:
@@ -3833,7 +4343,7 @@ can happen when code is wrapped with a binding of @code{inhibit-quit}
 to @code{t}; you should still be able interrupt XEmacs using "critical
 quit".  On the other hand, XEmacs may be seriously wedged. (If you're
 lucky, sending @samp{SIGINT} to the XEmacs process will interrupt it.) 
-@xref{Q2.3.5, XEmacs hangs when I try to do something.}.
+@xref{Q2.4.6, XEmacs hangs when I try to do something.}.
 
 @item
 @kbd{C-g} is indeed broken on your system.  To test, try executing
@@ -3843,8 +4353,8 @@ where @samp{SIGIO} was broken, but @samp{BROKEN_SIGIO} wasn't defined.
 However, there may not be very many such systems nowadays.
 @end enumerate
 
-@node Q2.3.9, Q2.3.10, Q2.3.8, Installation
-@unnumberedsubsec Q2.3.9: How do I debug process-related problems?
+@node Q2.4.10, Q2.4.11, Q2.4.9, Installation
+@unnumberedsubsec Q2.4.10: How do I debug process-related problems?
 
 Under MS Windows, you can set the variable
 @code{debug-mswindows-process-command-lines} to non-@samp{nil} to get
@@ -3861,17 +4371,17 @@ XEmacs uses the variable
 command line from a list of arguments based on the command to be run,
 but it is (and cannot be) a perfect solution.)
 
-@node Q2.3.10, Q2.3.11, Q2.3.9, Installation
-@unnumberedsubsec Q2.3.10: XEmacs is outputting lots of X errors.
+@node Q2.4.11, Q2.4.12, Q2.4.10, Installation
+@unnumberedsubsec Q2.4.11: XEmacs is outputting lots of X errors.
 
 If this is happening, we would very much like to know what's causing
-them.  To find this out, see @ref{Q2.3.3, How to debug an XEmacs
+them.  To find this out, see @ref{Q2.4.4, How to debug an XEmacs
 problem with a debugger}.  Try to get both a C and Lisp backtrace, and
 send them along with the full error output to
 @email{xemacs-beta@@xemacs.org}.
 
-@node Q2.3.11, Q2.4.1, Q2.3.10, Installation
-@unnumberedsubsec Q2.3.11: After upgrading, XEmacs won't do `foo' any more!
+@node Q2.4.12, Q2.5.1, Q2.4.11, Installation
+@unnumberedsubsec Q2.4.12: After upgrading, XEmacs won't do `foo' any more!
 
 You have been used to doing `foo', but now when you invoke it (or
 click the toolbar button or select the menu item), nothing (or an
@@ -3879,42 +4389,39 @@ error) happens.  The simplest explanation is that you are missing a
 package that is essential to you.  You can either track it down and
 install it (there is a list of packages and brief descriptions of
 their contents in @file{etc/PACKAGES}), or install the `Sumo Tarball'
-(@pxref{Q2.0.2, How do I figure out which packages to install?}).
+(@pxref{Q2.1.2, How do I figure out which packages to install?}).
 
 @c #### should xref to XEmacs manual here
 
-@unnumberedsec 2.4: Startup-Related Problems
+@unnumberedsec 2.5: Startup-Related Problems
 
-@node Q2.4.1, Q2.4.2, Q2.3.11, Installation
-@unnumberedsubsec Q2.4.1: XEmacs cannot connect to my X Terminal!
+@node Q2.5.1, Q2.5.2, Q2.4.12, Installation
+@unnumberedsubsec Q2.5.1: XEmacs cannot connect to my X Terminal!
 
 Help!  I can not get XEmacs to display on my Envizex X-terminal!
 
 Try setting the @code{DISPLAY} variable using the numeric IP address of
 the host you are running XEmacs from.
 
-@node Q2.4.2, Q2.4.3, Q2.4.1, Installation
-@unnumberedsubsec Q2.4.2: XEmacs won't start on Windows.
+@node Q2.5.2, Q2.5.3, Q2.5.1, Installation
+@unnumberedsubsec Q2.5.2 Startup problems related to paths or package locations.
 
-XEmacs relies on a process called "dumping" to generate a working
-executable. Under MS-Windows this process effectively fixes the memory
-addresses of information in the executable. When XEmacs starts up it tries
-to reserve these memory addresses so that the dumping process can be
-reversed -- putting the information back at the correct addresses.
-Unfortunately some .DLLs (for instance the soundblaster driver) occupy
-memory addresses that can conflict with those needed by the dumped XEmacs
-executable. In this instance XEmacs will fail to start without any
-explanation. Note that this is extremely machine specific.
+First of all, if XEmacs can't find the packages, check to make sure
+that you put the packages in the right place, or that you told XEmacs
+where to look for the packages when you compiled it.  @xref{Q2.1.1}.
 
-21.1.10 includes a fix for this that makes more intelligent guesses
-about which memory addresses will be free, and this should cure the
-problem for most people.  21.4 implements "portable dumping", which
-eliminates the problem altogether.  We recommend you use the 21.4
-binaries, but you can use the 21.1 binaries if you are very paranoid
-about stability.  @xref{Q1.1.2, Are binaries available?}.
+If something is still going wrong, or you get a startup warning about
+not being able to deduce some paths, you can get detailed information
+on the path-searching process at startup by setting the environment
+variable @samp{EMACSDEBUGPATHS} to a non-null value.  One thing to
+look for if you're having package problems is the value of
+@samp{configure-package-path}.  This corresponds to what was compiled
+into XEmacs using the @samp{--package-prefix} or @samp{--package-path}
+parameter (@pxref{Q2.1.1}).  If this has the value of @samp{nil},
+this means that no value was compiled into XEmacs using these parameters.
 
-@node Q2.4.3, Q2.4.4, Q2.4.2, Installation
-@unnumberedsubsec Q2.4.3: XEmacs won't start without network.
+@node Q2.5.3, Q2.5.4, Q2.5.2, Installation
+@unnumberedsubsec Q2.5.3: XEmacs won't start without network.
 
 If XEmacs starts when you're on the network, but fails when you're not
 on the network, you may be missing a "localhost" entry in your
@@ -3926,8 +4433,8 @@ on the network, you may be missing a "localhost" entry in your
 
 Add that line, and XEmacs will be happy.
 
-@node Q2.4.4, Q2.4.5, Q2.4.3, Installation
-@unnumberedsubsec Q2.4.4: Startup warnings about deducing proper fonts?
+@node Q2.5.4, Q2.5.5, Q2.5.3, Installation
+@unnumberedsubsec Q2.5.4: Startup warnings about deducing proper fonts?
 
 How can I avoid the startup warnings about deducing proper fonts?
 
@@ -3954,8 +4461,8 @@ time, you can set this:
 
 The buffer still exists; it just isn't in your face.
 
-@node Q2.4.5, Q2.4.6, Q2.4.4, Installation
-@unnumberedsubsec Q2.4.5: Warnings from incorrect key modifiers.
+@node Q2.5.5, Q2.5.6, Q2.5.4, Installation
+@unnumberedsubsec Q2.5.5: Warnings from incorrect key modifiers.
 
 The following information comes from the @file{PROBLEMS} file that comes
 with XEmacs.
@@ -3980,8 +4487,8 @@ add mod2 = Mode_switch
 EOF
 @end example
 
-@node Q2.4.6,  , Q2.4.5, Installation
-@unnumberedsubsec Q2.4.6: XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
+@node Q2.5.6,  , Q2.5.5, Installation
+@unnumberedsubsec Q2.5.6: XEmacs 21.1 on Windows used to spawn an ugly console window on every startup.  Has that been fixed?
 
 Yes.
 
@@ -8003,11 +8510,12 @@ to released XEmacsen, but users can apply themselves) are also accepted.
 @menu
 10.0: XEmacs 21.1
 * Q10.0.1::   Gnus 5.10 won't display smileys in XEmacs 21.1.
+* Q10.0.2::   XEmacs won't start on Windows in XEmacs 21.1.
 @end menu
 
 @unnumberedsec 10.0: XEmacs 21.1
 
-@node Q10.0.1,  , Legacy Versions, Legacy Versions
+@node Q10.0.1, Q10.0.2, Legacy Versions, Legacy Versions
 @unnumberedsubsec Q10.0.1: Gnus 5.10 won't display smileys in XEmacs 21.1.
 
 @email{eeide@@cs.utah.edu, Eric Eide} wrote:
@@ -8044,5 +8552,25 @@ Do this:
 The image-mode stuff is gone from format-alist in the 21.4
 branch, praise be.
 @end quotation
+
+@node Q10.0.2,  , Q10.0.1, Legacy Versions
+@unnumberedsubsec Q10.0.2: XEmacs won't start on Windows in XEmacs 21.1.
+
+XEmacs relies on a process called "dumping" to generate a working
+executable. Under MS-Windows this process effectively fixes the memory
+addresses of information in the executable. When XEmacs starts up it tries
+to reserve these memory addresses so that the dumping process can be
+reversed -- putting the information back at the correct addresses.
+Unfortunately some .DLLs (for instance the soundblaster driver) occupy
+memory addresses that can conflict with those needed by the dumped XEmacs
+executable. In this instance XEmacs will fail to start without any
+explanation. Note that this is extremely machine specific.
+
+21.1.10 includes a fix for this that makes more intelligent guesses
+about which memory addresses will be free, and this should cure the
+problem for most people.  21.4 implements "portable dumping", which
+eliminates the problem altogether.  We recommend you use the 21.4
+binaries, but you can use the 21.1 binaries if you are very paranoid
+about stability.  @xref{Q1.1.2, Are binaries available?}.
 
 @bye
