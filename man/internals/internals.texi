@@ -638,6 +638,7 @@ Future Work
 * Future Work -- Display Tables::  
 * Future Work -- Making Elisp Function Calls Faster::  
 * Future Work -- Lisp Engine Replacement::  
+* Future Work -- Better Rendering Support::
 
 Future Work -- Toolbars
 
@@ -17523,6 +17524,7 @@ The DOC file contents should probably end up in the dump file.
 * Future Work -- Display Tables::  
 * Future Work -- Making Elisp Function Calls Faster::  
 * Future Work -- Lisp Engine Replacement::  
+* Future Work -- Better Rendering Support::  
 @end menu
 
 @node Future Work -- General Suggestions, Future Work -- Elisp Compatibility Package, Future Work, Future Work
@@ -22362,7 +22364,7 @@ probably not worth doing on the first pass.)
 
 @end itemize
 
-@node Future Work -- Lisp Engine Replacement,  , Future Work -- Making Elisp Function Calls Faster, Future Work
+@node Future Work -- Lisp Engine Replacement,  Future Work -- Better Rendering Support, Future Work -- Making Elisp Function Calls Faster, Future Work
 @section Future Work -- Lisp Engine Replacement
 @cindex future work, lisp engine replacement
 @cindex lisp engine replacement, future work
@@ -22972,6 +22974,256 @@ This seems like it might be up your alley.  This stuff has been
 ad-hocked since kingdom come, and it's high time that we make this
 work properly so that it could be relied upon, and a lot of things
 could "just work".
+
+
+@node Future Work -- Better Rendering Support, , Future Work -- Lisp Engine Replacement,  Future Work
+@section Future Work -- Better Rendering Support
+@cindex future work, better rendering support
+@cindex better rendering support, future work
+
+This section was written by Stephen Turnbull <stephen@@xemacs.org>, so
+don't blame Ben (or Eric and Matthias, for that matter).  Feel free to
+add, edit, and share the blame, guys!
+
+@c #### make these @urlref's!!
+As of late November 2004, this principally means adding support for the
+@file{Xft} library, which provides a more robust @emph{font
+configuration} mechanism via Keith Packard's @file{fontconfig} library
+improved glyph rendering, including antialiasing, via the
+@file{freetype} library, and client-side rendering (saving bandwidth and
+server memory) via the @file{XRender extension}.  In fact, patches which
+provide Xft support have been available for several years, but the
+authors have been unwilling to deal with several important issues which
+block integration.  These are @emph{Mule}, and more generally,
+@emph{face} support; @emph{widget} support (including the toolbar and
+menubar); and @emph{redisplay refactoring}.
+
+@c Describe Alexey Gladkov and Yury Konovalov's work.
+
+However, in late 2003 Eric Knauel <knauel@@informatik.uni-tuebingen.de>
+and Matthias Neubauer <neubauer@@informatik.uni-freiburg.de> put forward
+a relatively complete patch which was robust to daily use in ISO 8859-1
+locales, and Stephen Turnbull began work on the integration issues.  At
+this point a (private) CVS branch is available for Stephen's patch
+(branch point tag @samp{sjt-xft-bp}, branch tag @samp{sjt-xft}), and
+one may be made available for the Knauel-Matthias patch soon.
+
+@menu
+* Better Rendering Support -- Issues::
+* Better Rendering Support -- Implementation::
+* Better Rendering Support -- Current Status::
+* Better Rendering Support -- Configuration with the Interim Patches::
+@end menu
+
+
+@node Better Rendering Support -- Issues, Better Rendering Support -- Implementation, , Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Issues
+@cindex better rendering support, issues
+@cindex issues, better rendering support
+
+Of course it's ``unfair'' to demand that the implementers of a nice
+feature like anti-aliasing support deal with accumulated cruft of the
+last few years, but somebody must, sometime soon.  Even core developers
+are complaining about how slow XEmacs is in some applications, and there
+is reason to believe that some of the problem is in redisplay.
+Adding more @emph{ad hoc} features to redisplay will make the whole
+module more complex and unintelligible.  Even if it doesn't inherently
+further detract from efficiency, it will surely make reform and
+refactoring harder.
+
+Similar considerations apply to Mule support.  If Xft support is not
+carefully designed, or implemented with Mule support soon, it will
+undoubtedly make later Mule implementation far more difficult than it
+needs to be, and require redundant work be done (@emph{e.g.}, on
+@samp{Options} menu support).
+
+Besides the design issue---and many users are requesting more
+flexibility, primarily face support, from the widgets---with widget
+support there is also an aesthetic issue.  It is horribly unimpressive to
+have clunky bitmapped fonts on the decorations when pleasant antialiased
+fonts are available in the buffer.
+
+Finally, these issues interact.  Widgets and faces are inherently
+heavyweight objects, requiring orders of magnitude more computation than
+simply displaying a string in a fixed font.  This will have an
+efficiency impact, of course.  And they interact with each other; Mule
+was designed for use in buffers and display in Emacs windows---but a
+widget's content is usually not a buffer, and widgets need not be
+displayed in a window, but may appear in other contexts, especially in
+the gutters.  So specifiers will probably have to be reworked, in order
+to properly support display of different faces in non-buffer, non-window
+contexts.
+
+@node Better Rendering Support -- Implementation, Better Rendering Support -- Current Status, Better Rendering Support -- Issues, Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Implementation
+@cindex better rendering support, implementation
+@cindex implementation, better rendering support
+
+Stephen is thinking in terms of the following components of a
+comprehensive proposal.
+
+@table @strong
+@item Font configuration
+In XEmacs, font configuration is handled via @emph{faces}.  Currently
+XEmacs uses a special type of @emph{font specifier} to map XEmacs
+locales to font names.  Especially under X11, this can cause annoying
+problems because of the unreliability of X servers' mappings from
+@samp{XLFD} names to X11 fonts, over which XEmacs has no influence
+whatsoever.  However, the @file{fontconfig} library which is used with
+@file{Xft} provides much more reliable mapping, along with a more
+reliably parsable naming scheme similar to that used by TrueType fonts
+on MS Windows and the Macintosh.  Since the capabilities of font
+specifiers and @file{fontconfig} overlap, we should consider using
+@file{fontconfig} instead of @samp{XLFD} names.  This implies that use
+of @file{Xft}'s rendering functionality should be separated from use of
+@file{fontconfig}.
+
+@item Rendering engine objects
+With the introduction of the ``Xft patch,'' the X11, Macintosh, and MS
+Windows platforms are all able to support multiple font rendering
+engines in the same binary.  Generically, there are several tasks that
+must be accomplished to render text on the display.  In both cases the
+code is rather disorganized, with substantial cross-platform duplication
+of similar routines.  While it may not be worthwhile to go the whole way
+to @samp{RENDERER_HAS_METHOD} and @samp{MAYBE_RENDMETH}, refactoring
+these modules around the notion of interfacing a ``generic rendering
+engine interface'' to ``text'' seems like a plausible way to focus this
+work.
+
+@item Colors, fonts, and faces
+Besides the rendering engine itself, the XEmacs implementations of these
+objects are poorly supported by current widget implementations,
+including the traditional menubar and toolbar, as well as the more
+recent button, tab control, and progress bar widgets.  The refactoring
+suggested under ``Rendering engine objects'' should be conducted with an
+eye to making these widgets support faces, perhaps even to the extent of
+allowing rendering to X pixmaps (which some Athena widgets support,
+although they will not support rendering via Xft directly). Especially
+with @samp{XRender} technology this should not be horribly inefficient.
+
+@item Specifiers, charsets, and languages
+Traditionally Mule uses a rather rigid and low-level abstraction, the
+@emph{charset}, to characterize font repertoires.  Unfortunately,
+support for a given charset is generally neither necessary nor
+sufficient to support a language.  Worse, although X11's only means for
+indicating font repertoires is the font's @emph{registry}, the actual
+repertoire of many fonts is either deficient or font-dependent.  The
+only convenience is that the registry maps directly to a Mule charset in
+most cases, and vice versa.
+
+To date, XEmacs Mule has supported identification of appropriate fonts
+to support a language's repertoire of characters by identifying the
+repertoire as a subset of a union of charsets.  To each charset there is
+a regular expression matching the registry portion of a font name.  Then
+instantiation of a font proceeds by identifying the specifier domain,
+and then walking down the list of specifications, matching the regexp
+against font names until a match is found.  That font is requested from
+the system, and if not found, the process continues similarly until a
+font that can be loaded is found.
+
+This has several problems.  First, there's no guarantee that the union
+will be disjoint.  This problem manifests both in the case of display of
+Unicode representations of text in the @samp{POSIX} default locale,
+where glyphs are typically drawn from several inappropriate fonts.  A
+similar problem often occurs, though for a different reason, in
+multilingual messages composed using @file{Gnus}'s @samp{message-mode}
+and MIME support.  This problem @emph{cannot} be avoided with the
+current design; it is quite possible that a font desired in one context
+will be shadowed by a font intended to get higher priority in a
+semantically different but syntactically similar (as far as Mule can
+tell) context.  (Of course, one could attach a different face as a text
+property, but that requires programming support; it can't be done by
+user configuration.)  The problem is only exacerbated as more and more
+Unicode fonts, supporting large repertoires with substantial overlap
+across fonts, are designed and published.
+
+A second problem is that registry names are often inaccurate.  For
+example, the Japanese JIS X 0208 standard was first published in 1978
+(as a relabelling of an older standard).  It was then revised in 1983,
+again in 1990, and once again in 2000, with slight changes to the
+repertoire and mapping in each revision.  Technically, these standards
+can be distinguished in properly named fonts as @samp{jisx0208.1978},
+@samp{jisx0208.1983}, @samp{jisx0208.1990}, @samp{jisx0208.2000}, but
+all of them are commonly simply labelled @samp{jisx0208}, and Western
+distributors, of course, generally lack the expertise to correctly
+relabel them.
+
+A third problem is that you generally can't tell if there are ``holes''
+in the repertoire until you try to display the glyph.
+
+The TrueType fonts (and the later OpenType standard) provides for a
+proper character set query (as a Boolean vector indexed by Unicode code
+points), as well as providing a list of supported languages.
+
+I propose that we take advantage of these latter facilities by allowing
+a font to be specified either as a string (a font name), or as a list
+whose head is the font name and whose tail is a list of languages and
+Mule charsets (for backward compatibility) that user intends to use the
+font to display.  This will probably require a change to the specifier
+code.
+
+As mentioned above, specifiers will probably also have to be enhanced to
+recognize @samp{widget} locales and domains, instead of the current hack
+where special @samp{widget} and @samp{gui-element} faces are created.
+
+@item Customize
+
+Customize needs to deal with all this stuff!!
+@end table
+
+
+@node Better Rendering Support -- Current Status, Better Rendering Support -- Configuration with the Interim Patches, Better Rendering Support -- Implementation, Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Current Status
+@cindex better rendering support, current status
+@cindex current status, better rendering support
+
+Stephen has a branch containing his stuff in XEmacs CVS.  The branch
+point tag is @samp{sjt-xft-bp}, roughly corresponding to XEmacs 21.5.18,
+and branch tag is @samp{sjt-xft}.
+
+@node Better Rendering Support -- Configuration with the Interim Patches, , Better Rendering Support -- Current Status, Future Work -- Better Rendering Support
+@subsection Better Rendering Support -- Configuration with the Interim Patches
+@cindex better rendering support, configuration with the interim patches
+@cindex configuration with the interim patches, better rendering support
+
+For Stephen's @samp{sjt-xft} branch, you should keep the following in
+mind when configuring:
+
+@itemize
+@item
+The only way to configure widget fonts at the present time is to use X
+resources (or hack the source and rebuild).  Currently supported widgets
+are
+    @itemize
+    @item
+    menubars
+    @item
+    tab controls
+    @end itemize
+@item
+Because fonts supporting other languages tend to support English as
+well, if you want to use one font for English and another for the other
+language, you must use the @code{append} method when adding font
+specifications for the other language.
+
+However, this leaves you with a problem if you want to change the other
+language's font: you have to remove the existing specification so it
+won't shadow the new one when you append.
+
+I use @code{define-specifier-tag} like this:
+
+@example
+(define-specifier-tag 'lang-ja)
+;; No, I don't try to do real work with this font!  But it makes it
+;; obvious that I got the requested font.  :-)
+(set-face-font 'default "AirCut-14")
+(set-face-font 'default "Kochi Mincho-14" nil '(lang-ja) 'append)
+;; Oops, too sober.  Try something to match AirCut.
+(set-face-font 'default "Mikachan-14"
+               nil '(lang-ja) 'remove-tag-set-append)
+@end example
+@end itemize
+
 
 @node Future Work Discussion, Old Future Work, Future Work, Top
 @chapter Future Work Discussion
