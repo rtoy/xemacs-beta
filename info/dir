@@ -36,23 +36,23 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 XEmacs 21.5
 ===========
-* XEmacs::           XEmacs User's Manual.
-* Lispref::          XEmacs Lisp Reference Manual.
-* New-Users-Guide::  Getting Started with XEmacs.
-* XEmacs-FAQ::       XEmacs Frequently Asked Questions for 21.4.
-* Info::             Guide to Info, the XEmacs online documentation system.
-* Internals::        Guide to the internals of XEmacs.
+* XEmacs: (xemacs).          XEmacs Editor.
+* Lispref: (lispref).        XEmacs Lisp Reference Manual.
+* Intro: (new-users-guide).  Introduction to the XEmacs Editor.
+* FAQ: (xemacs-faq).         XEmacs FAQ.
+* Info: (info).              Documentation browsing system.
+* Internals: (internals).    XEmacs Internals Manual.
+
 
 Other Documentation:
 
-* CL::              A Common Lisp compatibility package for Emacs-Lisp.
-* Custom::          Customization Library for Emacs.
-* Emodules::        XEmacs dynamically loadable module support.
-* External-Widget:: Use XEmacs as a text widget inside of another program.
-* Standards::       GNU coding standards.
-* Term::            A mode to control inferior processes (a comint replacement)
-* Termcap::         The termcap library, which enables application programs
-                    to handle all types of character-display terminals.
-* Texinfo::         The GNU documentation format.
-* Widget::          An Emacs Lisp widget library.
+* Common Lisp: (cl).                   XEmacs Common Lisp emulation package.
+* Customizations: (custom).            Customization Library.
+* Emodules: (emodules).                XEmacs dynamically loadable module support.
+* External Widget: (external-widget).  External Client Widget.
+* Standards: (standards).              GNU coding standards.
+* Term mode: (term).                   XEmacs Terminal Emulator Mode.
+* Termcap: (termcap).                  Termcap library of the GNU system.
+* Texinfo: (texinfo).                  The GNU documentation format.
+* Widgets: (widget).                   The Emacs Widget Library.
 
