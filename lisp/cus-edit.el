@@ -940,6 +940,9 @@ If SYMBOL is nil, customize all faces."
 			    "*Customize Saved*"))))
 
 ;;;###autoload
+(defalias 'apropos-customize 'customize-apropos)
+
+;;;###autoload
 (defun customize-apropos (regexp &optional all)
   "Customize all user options matching REGEXP.
 If ALL is `options', include only options.
