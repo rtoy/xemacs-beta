@@ -1,3 +1,15 @@
+2001-12-02  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-base-filename): Rename default file
+	to 'package-index.LATEST.gpg'
+	(package-get-require-signed-base-updates): Update doc string.
+
+2001-11-29  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-entries-are-signed): New.
+	(package-get-continue-update-base): New.
+	(package-get-update-base-from-buffer): Use them.  Fix PGP code. 
+
 2001-11-29  Adrian Aichner  <adrian@xemacs.org>
 
 	* menubar-items.el (Menubar-items-truncate-list): Removed.

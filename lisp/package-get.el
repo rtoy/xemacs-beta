@@ -252,7 +252,7 @@ copy.  Otherwise, keep it around."
 ;; #### it may make sense for this to be a list of names.
 ;; #### also, should we rename "*base*" to "*index*" or "*db*"?
 ;;      "base" is a pretty poor name.
-(defcustom package-get-base-filename "package-index.LATEST.pgp"
+(defcustom package-get-base-filename "package-index.LATEST.gpg"
   "*Name of the default package-get database file.
 This may either be a relative path, in which case it is interpreted
 with respect to `package-get-remote', or an absolute path."
@@ -272,9 +272,15 @@ Otherwise respect the `force-current' argument of `package-get-require-base'."
 (defcustom package-get-require-signed-base-updates nil
   "*If set to a non-nil value, require explicit user confirmation for updates
 to the package-get database which cannot have their signature verified via PGP.
-When nil, updates which are not PGP signed are allowed without confirmation."
+When nil, no PGP verification will be done."
   :type 'boolean
   :group 'package-get)
+
+(defvar package-entries-are-signed nil
+  "Non-nil when the package index file has been PGP signed.")
+
+(defvar package-get-continue-update-base nil
+  "Non-nil update the index even if it hasn't been signed.")
 
 (defvar package-get-was-current nil
   "Non-nil we did our best to fetch a current database.")
@@ -426,39 +432,36 @@ used interactively, for example from a mail or news buffer."
         (setq beg (match-beginning 0))
         (setq content-beg (match-end 0)))
       (when (re-search-forward package-get-pgp-signature-begin-line nil t)
-        (setq content-end (match-beginning 0)))
+        (setq content-end (match-beginning 0))
+	(setq package-entries-are-signed t))
       (when (re-search-forward package-get-pgp-signature-end-line nil t)
         (setq end (point)))
-      (if (not (and content-beg content-end beg end))
-          (or (not package-get-require-signed-base-updates)
-              (yes-or-no-p "Package-get entries not PGP signed, continue? ")
-              (error "Package-get database not updated")))
-      (if (and content-beg content-end beg end)
-          (if (not (condition-case nil
-                       (or (fboundp 'mc-pgp-verify-region)
-                           (load-library "mc-pgp")
-                           (fboundp 'mc-pgp-verify-region))
-                     (error nil)))
-              (or (not package-get-require-signed-base-updates)
-                  (yes-or-no-p
-                   "No mailcrypt; can't verify package-get DB signature, continue? ")
-                  (error "Package-get database not updated"))))
-      (if (and beg end
-               (fboundp 'mc-pgp-verify-region)
-               (or (not
-                    (condition-case err
-                        (declare-fboundp (mc-pgp-verify-region beg end))
-                      (file-error
-                       (and (string-match "No such file" (nth 2 err))
-                            (or (not package-get-require-signed-base-updates)
-                                (yes-or-no-p
-                                 (concat "Can't find PGP, continue without "
-                                         "package-get DB verification? ")))))
-                      (t nil)))))
-          (error "Package-get PGP signature failed to verify"))
+      (setq package-get-continue-update-base t)
+      (if package-get-require-signed-base-updates 
+	  (if package-entries-are-signed
+	      (progn
+		(setq package-get-continue-update-base nil)
+		(autoload 'mc-setversion "mc-setversion")
+		(or
+		 (cond ((locate-file "gpg" exec-path)
+			(mc-setversion "gpg"))
+		       ((locate-file "pgpe" exec-path)
+			(mc-setversion "5.0"))
+		       ((locate-file "pgp" exec-path)
+			(mc-setversion "2.6")))
+		 (error "Can't find a suitable pgp executable"))
+		(mc-verify)
+		(setq package-get-continue-update-base t))
+	    (if (yes-or-no-p
+		 "Package Index is not PGP signed.  Continue anyway? ")
+		(setq package-get-continue-update-base t)
+	      (error "Package database not updated")
+	      (setq package-get-continue-update-base nil))))
       ;; ToDo: We should call package-get-maybe-save-index on the region
-      (package-get-update-base-entries content-beg content-end)
-      (message "Updated package-get database"))))
+      (if package-get-continue-update-base
+	  (progn
+	    (package-get-update-base-entries content-beg content-end)
+	    (message "Updated package-get database"))))))
 
 (defun package-get-update-base-entries (start end)
   "Update the package-get database with the entries found between
