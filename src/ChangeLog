@@ -1,6 +1,17 @@
-2005-01-24  Ben Wing  <ben@xemacs.org>
+2005-01-25  Ben Wing  <ben@xemacs.org>
 
-	* s/windowsnt.h:
+	* Makefile.in.in:
+	* Makefile.in.in (%.o):
+	Don't compile executable as Windows (-mwindows) under Cygwin.
+	Semi-recent changes to Cygwin's executable-startup handling make
+	it impossible to access the TTY this way.
+
+	Don't use special linker file under Cygwin (cygwin.sc) except
+	when non-PDUMP (even in this case it is highly questionable); you
+	get errors like
+
+      1 [main] temacs 1364 fhandler_console::fixup_after_exec: error opening input console handle after exec, errno 13, Win32 error 5
+   5820 [main] temacs 1364 fhandler_console::fixup_after_exec: error opening output console handle after exec, errno 13, Win32 error 5
 
 2005-01-24  Ben Wing  <ben@xemacs.org>
 

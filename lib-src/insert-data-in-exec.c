@@ -121,7 +121,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "dumped_data found at offset 0x%lx, patching.\n", i);
 
   sprintf(msg, "Opening %s failed", argv[2]);
-  dump = fopen(argv[2], "r");
+  dump = fopen(argv[2], "rb");
   if(!dump) {
     perror(msg);
     exit(1);

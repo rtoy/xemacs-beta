@@ -1,3 +1,8 @@
+2005-01-25  Ben Wing  <ben@xemacs.org>
+
+	* insert-data-in-exec.c (main):
+	Need to open everything as binary.
+
 2004-12-06  Ben Wing  <ben@xemacs.org>
 
 	* i.c (pump):
