@@ -4394,17 +4394,25 @@ if test "$with_native_sound" != "no"; then
 
   dnl Autodetect Sun native sound from SUNWaudmo package
   if test -z "$sound_found" -a -d "/usr/demo/SOUND"; then
-    sound_found=yes
-    XE_ADD_OBJS(sunplay.o)
-    if test -d "/usr/demo/SOUND/include"
-      then sound_cflags="-I/usr/demo/SOUND/include"
-      else sound_cflags="-I/usr/demo/SOUND"
+    if test -d "/usr/demo/SOUND/include/multimedia"; then
+      sun_sound_cflags="-I/usr/demo/SOUND/include"
+    elif test -d "/usr/demo/SOUND/multimedia"; then
+      sun_sound_cflags="-I/usr/demo/SOUND"
     fi
-    if test -z "$native_sound_lib" ; then
-      if test -r "/usr/demo/SOUND/lib/libaudio.a"
-        then native_sound_lib="/usr/demo/SOUND/lib/libaudio.a"
-        else native_sound_lib="/usr/demo/SOUND/libaudio.a"
-      fi
+
+    if test -n "$native_sound_lib"; then
+      sun_sound_lib="$native_sound_lib"
+    elif test -r "/usr/demo/SOUND/lib/libaudio.a"; then
+      sun_sound_lib="/usr/demo/SOUND/lib/libaudio.a"
+    elif test -r "/usr/demo/SOUND/libaudio.a"; then
+      sun_sound_lib="/usr/demo/SOUND/libaudio.a"
+    fi
+
+    if test -n "$sun_sound_cflags" -a -n "$sun_sound_lib"; then
+      native_sound_lib="$sun_sound_lib"
+      sound_cflags="$sun_sound_cflags"
+      sound_found=yes
+      XE_ADD_OBJS(sunplay.o)
     fi
   fi
 

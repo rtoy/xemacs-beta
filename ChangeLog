@@ -1,3 +1,13 @@
+2003-09-20  Steve Youngs  <youngs@xemacs.org>
+
+	* configure: Re-generate after Martin's configure.in patch.
+
+2003-09-20  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: XEmacs failed to build on Solaris9.
+	Solaris9 comes with /usr/demo/SOUND, but no headers or libraries
+	therein.
+
 2003-09-18  Steve Youngs  <youngs@xemacs.org>
 
 	* configure: Re-generate after Martin's configure.in patch.
