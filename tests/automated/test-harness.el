@@ -322,7 +322,7 @@ BODY is a sequence of expressions and may contain several tests."
 	     (basename (file-name-nondirectory filename))
 	     (summary-msg
 	      (if (> total 0)
-		  (format "%s: %d of %d (%d%%) tests successful."
+		  (format "%s: %d of %d tests successful (%d%%)."
 			  basename passes total (/ (* 100 passes) total))
 		(format "%s: No tests run" basename)))
 	     (reasons ""))

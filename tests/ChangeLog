@@ -1,3 +1,13 @@
+2003-01-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* sigpipe.c: New file.  Crashes 21.1 but not 21.4 or 21.5 (I
+	think).  Thanks to Richard Mlynarik <mly@pobox.com>.
+
+2003-01-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-from-buffer): Move
+	success rate report to end of line where it's easier to see.
+
 2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/mule-tests.el: Test cases for charset-in-* functions.
