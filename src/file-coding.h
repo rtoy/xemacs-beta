@@ -179,7 +179,7 @@ enum eol_type
   EOL_LF,
   EOL_CRLF,
   EOL_CR,
-  EOL_AUTODETECT,
+  EOL_AUTODETECT
 };
 
 struct Lisp_Coding_System
@@ -226,7 +226,7 @@ enum coding_system_variant
   ccl_coding_system,
   shift_jis_coding_system,
   big5_coding_system,
-  unicode_coding_system,
+  unicode_coding_system
 };
 
 struct coding_system_methods
@@ -730,7 +730,7 @@ enum detection_result
   DET_QUITE_IMPROBABLE = -2,
   /* An erroneous sequence was seen. */
   DET_NEARLY_IMPOSSIBLE = -3,
-  DET_LOWEST = -3,
+  DET_LOWEST = -3
  };
 
 extern int coding_detector_count;

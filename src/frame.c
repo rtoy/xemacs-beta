@@ -123,7 +123,7 @@ typedef enum  {
   DISPLAYABLE_PIXEL_TO_CHAR,
   TOTAL_PIXEL_TO_CHAR,
   CHAR_TO_TOTAL_PIXEL,
-  CHAR_TO_DISPLAYABLE_PIXEL,
+  CHAR_TO_DISPLAYABLE_PIXEL
 } pixel_to_char_mode_t;
 
 static void frame_conversion_internal (struct frame *f,

@@ -811,8 +811,9 @@ enum data_description_entry_flags
      lcrecord-lists, where the objects have had their type changed to
      lrecord_type_free and also have had their free bit set, but we mark
      them as normal. */
-  XD_FLAG_FREE_LISP_OBJECT = 8,
+  XD_FLAG_FREE_LISP_OBJECT = 8
 #if 0
+  ,
   /* Suggestions for other possible flags: */
 
   /* Eliminate XD_UNION_DYNAMIC_SIZE and replace it with a flag, like this. */
@@ -824,7 +825,7 @@ enum data_description_entry_flags
      expanded and we need to stick a pointer in the second slot (although
      we could still ensure that the second slot in the first entry was NULL
      or <0). */
-  XD_FLAG_DESCRIPTION_MAP = 32,
+  XD_FLAG_DESCRIPTION_MAP = 32
 #endif
 };
 

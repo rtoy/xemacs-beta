@@ -187,7 +187,7 @@ Boston, MA 02111-1307, USA.  */
 #define INT_32_BIT short
 #define UINT_32_BIT unsigned short
 #define MAKE_32_BIT_UNSIGNED_CONSTANT(num) num##U
-#elif /* Unable to find a 32-bit integral type! */
+#elif 1 /* Unable to find a 32-bit integral type! */
 #error What kind of strange-ass system are you running on?
 #endif
 
@@ -4055,7 +4055,7 @@ enum check_allowed_operation
   OPERATION_DELETE_OBJECT,
   OPERATION_CREATE_OBJECT,
   OPERATION_MODIFY_BUFFER_TEXT,
-  OPERATION_MODIFY_OBJECT_PROPERTY,
+  OPERATION_MODIFY_OBJECT_PROPERTY
 };
 
 int get_inhibit_flags (void);

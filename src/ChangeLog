@@ -1,3 +1,25 @@
+2003-04-24  Matthew O. Persico  <persicom@acedsl.com>
+
+        * unicode.c: Removed trailing commas in some enums; older
+        (Solaris 2.7 cc) compiler produced volumous warnings.
+
+        * text.c: Replaced char initialization of static Ibyte
+        strcasecmp_charmap[] with octal numeric init. Apparently older
+        (Solaris 2.7 cc) compiler treats quoted octals as signed,
+        causing 256 signed-assigned-to-unsigned warnings.
+
+        * lrecord.h: Removed trailing commas in some enums; older
+        (Solaris 2.7 cc) compiler produced volumous warnings.
+
+        * lisp.h: Removed trailing commas in some enums; older
+        (Solaris 2.7 cc) compiler produced volumous warnings.
+
+        * frame.c:  Removed trailing commas in some enums; older
+        (Solaris 2.7 cc) compiler produced volumous warnings.
+
+        * file-coding.h: Removed trailing commas in some enums; older
+        (Solaris 2.7 cc) compiler produced volumous warnings.
+
 2003-04-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix stale match data after failed search bug.

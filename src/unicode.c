@@ -1474,7 +1474,7 @@ enum unicode_type
   UNICODE_UTF_16,
   UNICODE_UTF_8,
   UNICODE_UTF_7,
-  UNICODE_UCS_4,
+  UNICODE_UCS_4
 };
 
 struct unicode_coding_system
