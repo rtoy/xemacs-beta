@@ -1,4 +1,8 @@
-2003-04-05  Martin Buchholz  <martin@xemacs.org>
+2003-05-06  Martin Buchholz  <martin@xemacs.org>
+
+	* database.c: Berkeley DB wants __STDC__ to be defined.
+
+2003-05-04  Martin Buchholz  <martin@xemacs.org>
 
 	* EmacsFrameP.h (EmacsFramePart):
 	Kludge to allow compiling with Motif1, but linking with Motif2.

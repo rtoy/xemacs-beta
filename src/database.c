@@ -57,6 +57,10 @@ typedef uint64_t u_int64_t;
 #endif /* __FreeBSD__ */
 #endif /* HAVE_INTTYPES_H */
 #endif /* !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1) */
+/* Berkeley DB wants __STDC__ to be defined; else if does `#define const' */
+#if ! defined (__STDC__) && ! defined(__cplusplus)
+#define __STDC__ 0
+#endif
 #include DB_H_FILE              /* Berkeley db's header file */
 #ifndef DB_VERSION_MAJOR
 # define DB_VERSION_MAJOR 1
