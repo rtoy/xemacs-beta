@@ -1,3 +1,7 @@
+2003-03-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* INSTALL: Give location of Darwin X11 downloads.
+
 2003-02-09  Ville Skyttä  <scop@xemacs.org>
 
 	* configure: Remove pkgdir and all references to it (unused).

@@ -73,12 +73,17 @@ ADD-ON LIBRARIES
 ================
 
 Decide which libraries you would like to use with XEmacs, but are not
-yet available on your system.  On some systems, Motif and CDE are
-optional additions.  On Solaris, the SUNWaudmo package enables native
-sound support.  There are also a number of free software applications
-that XEmacs can use.  If these are not yet available on your system,
-obtain, build and install those external libraries before building
-XEmacs.  The libraries XEmacs can use are:
+yet available on your system.  On some systems, X11, Motif and CDE are
+optional additions.  On MacOS/X systems, you may download X11R6 for
+Mac OS X from http://www.apple.com/macosx/x11/download/.  You need
+both the runtime libraries and the SDK (in a sidebar of that page at
+the time of writing).  There is also a 3rd-party implementation of
+X11R6 for the Mac at http://www.xdarwin.org/.  On Solaris, the
+SUNWaudmo package enables native sound support.  There are also a
+number of free software applications that XEmacs can use.  If these
+are not yet available on your system, obtain, build and install those
+external libraries before building XEmacs.  The libraries XEmacs can
+use are:
 
    Xaw3d, XPM, JPEG, compface, PNG, zlib, GNU DBM, Berkeley DB, socks,
    term, NAS, Canna, Kinput2, SJ3, Wnn, PostgreSQL, LDAP.
