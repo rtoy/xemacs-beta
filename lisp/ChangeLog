@@ -1,5 +1,9 @@
 2001-05-12  Ben Wing  <ben@xemacs.org>
 
+	* .cvsignore: auto-autoloads/custom-load need to be added now that they're not in cvs.
+
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
 	* find-paths.el (paths-find-recursive-path):
 	fix error with null EXCLUDE-REGEXP.
 	

@@ -1,5 +1,9 @@
 2001-05-12  Ben Wing  <ben@xemacs.org>
 
+	* .cvsignore: add xemacs.opt, a VC-generated file.
+	
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
 	* event-msw.c (mswindows_dde_callback):
 	* event-msw.c (mswindows_wnd_proc):
 	eliminate cygwin warnings.
