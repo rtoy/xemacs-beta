@@ -1,3 +1,17 @@
+2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Use XE_CFLAGS for XEMACS_CC.
+	Kludge: warn about CC and XEMACS_CC not from same vendor (gcc only).
+	Various comment fixups.
+	Delete dead code for finding srcdir.
+
+	* Makefile.in.in (clean): Force deletion of generated Lisp load files.
+
+2003-11-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Report cc and libc version info.  Detection code
+	by Valdis Kletnieks <Valdis.Kletnieks@vt.edu>.  Tweaked for Debian.
+
 2004-01-20  Jerry James  <james@xemacs.org>
 
 	* configure.in: The icc compiler pretends to be gcc.  It isn't.

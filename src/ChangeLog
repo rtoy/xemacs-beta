@@ -1,3 +1,7 @@
+2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in:  Use XE_CFLAGS, not CFLAGS.
+
 2004-01-21  Jerry James  <james@xemacs.org>
 
 	* unicode.c (struct unicode_coding_system): Make one bit fields

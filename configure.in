@@ -76,6 +76,7 @@ define([PRINT_VAR],[for var in patsubst([$1],[[
 dnl Disable cache files:
 dnl This is controversial, but I am convinced this is the right way to go,
 dnl at least by default.  Otherwise there are too many surprises.
+dnl It's been several years, and nobody noticed. -- sjt, 2004-01-28
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 define([AC_CACHE_VAL], [
@@ -248,10 +249,6 @@ dnl Changes i986-pc-linux-gnu to i986-pc-linux, as God (not RMS) intended.
 define([XE_STRIP_4TH_COMPONENT],
 [$1=`echo "$$1" | sed '[s/^\([^-][^-]*-[^-][^-]*-[^-][^-]*\)-.*$/\1/]'`])
 
-dnl Initialize some variables set by options.
-dnl The variables have the same names as the options, with
-dnl dashes changed to underlines.
-
 define([USAGE_ERROR],
 [(echo "$progname: Usage error:"
 echo " " $1
@@ -279,11 +276,12 @@ else
   if test -n "$CDPATH"; then CDPATH="."; export CDPATH; fi
 fi
 
-dnl srcdir is used internally by autoconf macros
-dnl parse it here
-for xe_parse_arg in "$@"; do
+dnl Find the source directory.
+dnl srcdir is used internally by autoconf macros,
+dnl so parse it here.
+for xe_parse_arg; do
   case $xe_parse_arg in
-    --srcdir) USAGE_ERROR("The \`--srcdir' option requires a boolean value: \`yes' or \`no'.") ;;
+    --srcdir) USAGE_ERROR(["The \`--srcdir' option requires a string value."]) ;;
     --srcdir=*) srcdir=`echo $xe_parse_arg | sed -e 's/--srcdir=//'` ;;
     *) ;;
   esac
@@ -310,7 +308,8 @@ x_libraries=NONE
 
 dnl Initialize some other variables.
 subdirs=
-MFLAGS= MAKEFLAGS=
+MFLAGS=
+MAKEFLAGS=
 SHELL=${CONFIG_SHELL-/bin/sh}
 dnl Maximum number of lines to put in a shell here document.
 ac_max_here_lines=12
@@ -318,6 +317,7 @@ ac_max_here_lines=12
 
 AC_INIT(src/lisp.h)dnl
 AC_CONFIG_HEADER(src/config.h lwlib/config.h)
+
 dnl Remove any more than one leading "." element from the path name.
 dnl If we do not remove them, then another "./" will be prepended to
 dnl the file name each time we use config.status, and the program name
@@ -443,7 +443,7 @@ while test $# != 0; do
   arg="$1"; shift
   case "$arg" in
     --no-create|--no-recursion) ;;
-    --srcdir=*) ;;
+    --srcdir=*) ;;    dnl Ignore here; parsed during AC_INIT.
     dnl Anything starting with a hyphen we assume is an option.
     -* )
       dnl Separate the switch name from the value it is being given.
@@ -768,11 +768,6 @@ The default is to autodetect native and NAS sound support."])
 	  done
 	;;
 
-	dnl Has the user tried to tell us where the X files are?
-	dnl I think these are dopey, but no less than three alpha
-	dnl testers, at large sites, have said they have their X files
-	dnl installed in odd places.
-
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | \
@@ -897,39 +892,7 @@ fi
 dnl CDE requires tooltalk
 XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
 
-dnl Find the source directory.
-case "$srcdir" in
-
-  dnl If srcdir is not specified, try directory part of $0, ".", or "..".
-  "" )
-    for dir in "`echo $0 | sed 's|//|/|' | sed 's|/[[^/]]*$||'`" "." ".." ; do
-      if test -f "$dir/src/lisp.h" -a \
-	      -f "$dir/lisp/version.el" ; then
-        srcdir="$dir"
-        break
-      fi
-    done
-    if test -z "$srcdir" ; then
-      USAGE_ERROR(["None of the path to configure, the current directory,
-  and its parent seem to contain the XEmacs sources.  If you do not want
-  to build XEmacs in its source tree, you should run \`$progname' in the
-  directory in which you wish to build XEmacs, using the \`--srcdir' option
-  to say where the sources may be found."])
-    fi
-  ;;
-
-  dnl Otherwise, check if the directory they specified is okay.
-  * )
-    if test ! -f "$srcdir/src/lisp.h" -o \
-	    ! -f "$srcdir/lisp/version.el" ; then
-      USAGE_ERROR(["The directory specified with the \`--srcdir' option,
-  \`$srcdir', doesn't seem to contain the XEmacs sources.  You should
-  either run the \`$progname' script at the top of the XEmacs source
-  tree, or use the \`--srcdir' option to specify the XEmacs source directory."])
-    fi
-  ;;
-esac
-
+dnl Done parsing options.
 dnl ###########################################################################
 if test -z "$configuration"; then
   dnl Guess the configuration
@@ -1020,7 +983,7 @@ if test -n "$emacs_beta_version" ; then
   fi
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
-if test "X$xemacs_extra_name" != "X"; then
+if test "$xemacs_extra_name" != ""; then
   AC_DEFINE_UNQUOTED(XEMACS_EXTRA_NAME, "$xemacs_extra_name")
 fi
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
@@ -1722,6 +1685,21 @@ return 0;
 esac])
 fi
 
+dnl Support for using a different compiler for xemacs itself.
+dnl Useful for building XEmacs with a C++ compiler.
+dnl For example, `configure --compiler=gcc --xemacs-compiler=g++
+
+dnl The compiler used to build xemacs, as opposed to the compiler
+dnl used by configure and lib-src, is determined from the following
+dnl sources, in order of priority:
+dnl o --xemacs-compiler configure flag
+dnl o XEMACS_CC environment variable
+dnl o same as the regular compiler, (determined previously)
+
+dnl We don't do AC_PROG_CC for XEMACS_CC; if we can't trust these people....
+test -n "$xemacs_compiler" && XEMACS_CC="$xemacs_compiler"
+: ${XEMACS_CC:="$CC"}
+
 dnl Figure out what C preprocessor to use.
 
 dnl On Sun systems, people sometimes set up the variable CPP
@@ -1992,6 +1970,25 @@ if test "$__USLC__" = yes; then
   test "$need_kalloca" = "yes" && XE_APPEND(-Kalloca,c_switch_system)
 fi
 
+dnl If we're specifying XEMACS_CC, it'd better be in the same family
+dnl as CC or the following flag calculations are bogus.
+dnl #### We may want to actually error and abort here, but I am not sure.
+if test "$CC" != "$XEMACS_CC"; then
+  if test "$XEMACS_CC" = "g++" -a "$GCC" != "yes"; then
+    AC_MSG_WARN([CC and g++ are mismatched; XE_CFLAGS may be wrong])
+    xemacs_cc_cc_mismatch=yes
+  elif test -n "$GCC" -a "$XEMACS_CC" != "g++"; then
+    AC_MSG_WARN([gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong])
+    xemacs_cc_cc_mismatch=yes
+  dnl #### Add other detectable mismatches here.
+  else
+    xemacs_cc_cc_mismatch=no
+  fi
+fi
+
+dnl #### This may need to be overhauled so that all of XEMACS_CC's flags
+dnl are handled separately, not just the xe_cflags_warning stuff.
+
 dnl Calculate value of CFLAGS:
 dnl Use either command line flag, environment var, or autodetection
 if test "$cflags_specified" = "no"; then
@@ -1999,9 +1996,6 @@ if test "$cflags_specified" = "no"; then
   dnl Should we take debugging options into consideration?
   if test "$GCC" = "yes"; then
     CFLAGS="-g -O3"
-    dnl I'm not convinced this is a good idea any more. -sb
-    dnl test "$opsys $machine" = "linux intel386" && \
-    dnl CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__SUNPRO_C" = "yes"; then
     case "$opsys" in
       sol2    ) CFLAGS="-xO4" ;;
@@ -2019,52 +2013,58 @@ if test "$cflags_specified" = "no"; then
   fi
 fi
 
-dnl Calculate warning flags.  We now separate the flags for warnings from
-dnl the other flags because we really really want the warnings to be seen
-dnl by everyone.
+dnl Calculate warning flags.  We separate the flags for warnings from
+dnl the other flags because we want to force the warnings to be seen
+dnl by everyone who doesn't specifically override them.
+
+dnl If this stays nil, it will be set to cflags_warning before use.
+xe_cflags_warning=""
 
 if test "$cflags_warning_specified" = "no"; then
   dnl Following warning flags are known to work well.
-  if test "$GCC" = "yes"; then
-    cflags_warning="-Wall -Wno-switch -Winline -Wmissing-prototypes"
-    dnl Yuck, bad compares have been worth at least 3 crashes!
-    cflags_warning="$cflags_warning -Wsign-compare"
-    dnl NOTE: The following three, as well as -Wmissing-declarations and
-    dnl -Weffc++ below, have been recently added.  If you are getting
-    dnl grief from them, please notify ben@xemacs.org!
-    cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
-    if test "$__GCC3" = "yes"; then
-      cflags_warning="$cflags_warning -Wpacked"
-    fi
-    dnl With g++, -Wshadow produces five zillion utterly random warnings --
-    dnl a local var named `buffer' conflicts with `struct buffer' for
-    dnl example.  Even with gcc, -Wshadow is questionable because of its
-    dnl complaints about parameters with the same names as global functions.
-    if test "$xemacs_compiler" != "g++"; then
-    dnl no -Wmissing-declarations under g++.
-      cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
-    else
-      cflags_warning="$cflags_warning -Weffc++"
-    fi
-    dnl glibc is intentionally not `-Wpointer-arith'-clean.
-    dnl Ulrich Drepper has rejected patches to fix the glibc header files.
-    test "$have_glibc" != "yes" && \
-      cflags_warning="$cflags_warning -Wpointer-arith"
-  elif test "$__SUNPRO_C" = "yes"; then
+  if test "$__SUNPRO_C" = "yes"; then
     case "$opsys" in
       sol2    ) cflags_warning="-v" ;;
     esac
   elif test "$CC" = "xlc"; then
     cflags_warning="-qinfo"
+  elif test "$GCC" = "yes"; then
+    cflags_warning="-Wall -Wno-switch -Winline -Wmissing-prototypes"
+    dnl Yuck, bad compares have been worth at least 3 crashes!
+    cflags_warning="$cflags_warning -Wsign-compare"
+    cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
+    if test "$__GCC3" = "yes"; then
+      cflags_warning="$cflags_warning -Wpacked"
+    fi
+    dnl Warning flags for the XEMACS_CC compiler
+    dnl With g++, -Wshadow produces five zillion utterly random warnings --
+    dnl a local var named `buffer' conflicts with `struct buffer' for
+    dnl example.  Even with gcc, -Wshadow is questionable because of its
+    dnl complaints about parameters with the same names as global functions.
+    dnl There is no -Wmissing-declarations under g++.
+    dnl But gcc warns about -Weffc++ in C compiles.
+    test "$xemacs_compiler" = "g++" && \
+      xe_cflags_warning="$cflags_warning -Weffc++"
+    cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
+    dnl glibc is intentionally not `-Wpointer-arith'-clean.
+    dnl Ulrich Drepper has rejected patches to fix the glibc header files.
+    test "$have_glibc" != "yes" && \
+      cflags_warning="$cflags_warning -Wpointer-arith"
   elif test "$__ICC" = "yes"; then
     cflags_warning="-Wall -w1"
+    dnl **** If more gcc/g++ flags are added, from here on must handle
+    dnl **** cflags_warning and xe_cflags_warning in parallel
   dnl ### Add optimal cflags_warning support for other compilers HERE!
   fi
 fi
 
 dnl Now combine all C flags.  Put the warning flags first so that
 dnl user-specified flags will override.
+dnl Flags for CC:
 CFLAGS="$cflags_warning $CFLAGS"
+dnl Flags for XEMACS_CC:
+test -z "xe_cflags_warning" && xe_cflags_warning=cflags_warning
+XE_CFLAGS="$xe_cflags_warning $CFLAGS"
 
 dnl Search for GCC specific build problems we know about
 if test "$GCC" = "yes"; then
@@ -2222,6 +2222,122 @@ fi
 test "$GCC" != "yes" && lib_gcc=
 AC_SUBST(ld)
 AC_SUBST(lib_gcc)
+
+dnl ---------------------------------------------------------------
+dnl Get version information for:
+dnl C compiler, libc
+dnl #### should do CC compiler, too, if different from XEMACS_CC
+dnl ---------------------------------------------------------------
+
+compiler_version=""
+gcc_compiler_specs=""
+libc_version=""
+
+AC_MSG_CHECKING(for compiler version information)
+
+dnl First try portable compilers, then crack system secrets
+dnl #### Is this code correct if $XEMACS_CC != $CC?  XEMACS_CC hasn't been
+dnl run through the AC_PROG_CC mill.
+dnl Would anybody really build libsrc with GCC and XEmacs with non-GCC?
+if test "$GCC" = "yes"; then
+  compiler_version=`$XEMACS_CC --version | head -1`
+  gcc_compiler_specs=`$XEMACS_CC -v 2>&1 | sed 's/.* \([[^ ]]\)/\1/' | head -1`
+else case "$XEMACS_CC" in
+  dnl The Intel cc compiler
+  icc*)
+    compiler_version=`icc -V 2>&1 | head -1`
+    ;;
+  dnl non-gcc machine-specific magic - contributions welcome
+  *) case "$canonical" in
+	*-*-aix*   ) 
+          dnl Yes, it's this ugly for AIX...
+	  realcc=`which $XEMACS_CC`
+	  dnl Might be a symlink created by replaceCset command
+	  if test -L $realcc ; then
+	    ccdir=`dirname $realcc`
+	    ccprog=`/bin/ls -l $realcc | sed 's/.* \([[^ ]]\)/\1/'`
+	    dnl This doesn't handle ../../xlc type stuff, but I've not seen one...
+	    case $ccprog in
+		*/*) realcc=$ccprog;;
+		*) realcc=$ccdir/$ccprog;;
+	    esac
+	  fi
+	  lpp=`lslpp -wqc $realcc | cut -f2 -d:`
+	  if test ! -z "$lpp" ; then
+	    lppstr=`lslpp -Lqc $lpp`
+	    lpplev=`echo "$lppstr" | cut -f3 -d:`
+	    lppdesc=`echo "$lppstr" | cut -f8 -d:`
+	  fi
+	  if test ! -z "$lpplev" ; then
+	    compiler_version="$lpp $lpplev - $lppdesc"
+	  fi
+	;;
+
+	*-*-solaris*)
+	  compiler_version=`$XEMACS_CC -V 2>&1 | head -1`
+	;;
+
+	alpha*-dec-osf*)
+	  compiler_version=`$XEMACS_CC -V | tr '\n' ' '`
+	;;
+
+	mips-sgi-irix*)
+	  compiler_version=`$XEMACS_CC -version`
+	;;
+    esac
+  esac
+fi
+
+dnl Awww, shucks.
+if test -z "$compiler_version"; then
+  compiler_version="detection failed (please report this)"
+fi
+
+AC_MSG_CHECKING(for compiler version information)
+
+case "$canonical" in
+	*-*-linux*)
+	  dnl #### who would ever _not_ be running the distro's libc?
+	  dnl Maybe it would be better to get/augment this info with ldd?
+	  if test -f /etc/redhat-release ; then
+	    libc_version=`rpm -q glibc`
+	  elif test -f /etc/debian_version ; then
+	    libc_version=`dpkg-query --showformat='${version}' --show libc6`
+	    libc_version="GNU libc $libc_version (Debian)"
+	  dnl need SuSE et al checks here...
+	  fi
+	  dnl #### Tested on Debian, does this actually work elsewhere?  ;-)
+          if test -z "$libc_version"; then
+	    libc_version=`ls /lib/libc-*.so | sed -e 's,/lib/libc-\(.*\)\.so,\1,'`
+          fi
+	;;
+
+	*-*-aix*)
+	  libc_version="bos.rte.libc `lslpp -Lqc bos.rte.libc | cut -f3 -d:`" 
+	;;
+
+	*-*-solaris*)
+	  libc=`pkginfo -l SUNWcsl | grep VERSION: | awk '{print $2}'`
+	  libc_version="SUNWcsl $libc"
+
+	;;
+
+	mips-sgi-irix*)
+	  libc_version="IRIX libc `uname -sRm`"
+	;;
+	  
+	alpha*-dec-osf*)
+	dnl Another ugly case
+	  (cd /usr/.smdb.;
+		libc_version=` grep -h libc.so *.inv | awk '$9 == "f" {print $12}' | tr '\n' ','`
+	  )
+	;;
+esac
+
+dnl Awww, shucks.
+if test -z "libc_version"; then
+  libc_version="detection failed (please report this)"
+fi
 
 dnl ---------------------------------------------------------------
 dnl Add site and system specific flags to compile and link commands
@@ -3185,18 +3301,7 @@ dnl This one is for the static initializeds variables in
 dnl offix.c, so that the thing is dumped after lastfile.o
 AC_SUBST(dnd_objs)
 
-dnl Support for using a different compiler for xemacs itself.
-dnl Useful for building XEmacs with a C++ compiler.
-dnl For example, `configure --compiler=gcc --xemacs-compiler=g++
-
-dnl The compiler used to build xemacs, as opposed to the compiler
-dnl used by configure and lib-src, is determined from the following
-dnl sources, in order of priority:
-dnl o --xemacs-compiler configure flag
-dnl o XEMACS_CC environment variable
-dnl o same as the regular compiler, (determined previously)
-test -n "$xemacs_compiler" && XEMACS_CC="$xemacs_compiler"
-: ${XEMACS_CC:="$CC"}
+dnl Autodetect dll support
 
 dnl If g++ is used, we have to explicitly link modules with -lstdc++ on Cygwin
 dnl to avoid undefined symbol errors.  This will never hurt, so just do it on
@@ -3208,7 +3313,6 @@ else
 fi
 AC_SUBST(LIBSTDCPP)
 
-dnl Autodetect dll support
 dnl This must come before the detection code for anything that is in a module
 if test "$with_modules" != "no"; then
   AC_CHECKING(for module support)
@@ -5062,6 +5166,7 @@ AC_SUBST(RANLIB)
 AC_SUBST(dynodump_arch)
 
 AC_SUBST(XEMACS_CC)
+AC_SUBST(XE_CFLAGS)
 
 dnl The default is yes
 if test "$with_prefix" = "yes"; then
@@ -5118,6 +5223,9 @@ dnl -------------------------------
 dnl Report on what we decided to do
 dnl -------------------------------
 
+dnl #### We should tag this as the _build_ environment.
+dnl Before doing that, though, must check if tools care about line 1.
+
 (
 dnl /etc/osversion is on SONY NEWS-OS
 if test -f /etc/osversion; then dnl SONY NEWS-OS
@@ -5146,7 +5254,7 @@ echo "
 XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$canonical'.
 "
 echo "
-Compilation / Installation:"
+Compilation Environment and Installation Defaults:"
 echo "  Source code location:              $srcdir"
 echo "  Installation prefix:               $prefix"
 if test -n "$site_includes"; then
@@ -5171,7 +5279,19 @@ then echo "  Machine description file:          \`$machfile'"
 else echo "  Not using any machine description file"
 fi
 
-echo "  Compiler:                          $XEMACS_CC $CFLAGS"
+echo "  Compiler version:                  $compiler_version"
+if test -n "$gcc_compiler_specs"; then
+  echo "    - GCC specs file:                $gcc_compiler_specs"
+fi
+echo "    - Compiler command:              $XEMACS_CC $XE_CFLAGS"
+if test "$CC" != "$XEMACS_CC"; then
+  echo "  Compiler version for lib-src:      (detection code unimplemented)"
+  echo "    - Compiler command for lib-src:  $CC $CFLAGS"
+  if test "$xemacs_cc_cc_mismatch" = "yes"; then
+    echo "  WARNING: CC and XEMACS_CC mismatched; check CFLAGS carefully."
+  fi
+fi
+echo "  libc version:                      $libc_version"
 echo "  Relocating allocator for buffers:  $rel_alloc"
 echo "  GNU version of malloc:             ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
