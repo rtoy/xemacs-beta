@@ -1,3 +1,10 @@
+2004-06-26  Steve Youngs  <steve@youngs.au.com>
+
+	* package-get.el (package-get-info-name-array): New.
+	(package-get-info-info-array): New.
+	(package-get-info): Use them, adding completion.
+	(package-get-list-packages-where): Add completion.
+
 2004-06-21  Adrian Aichner  <adrian@xemacs.org>
 
 	* package-ui.el (pui-help-echo): Fix false cvs conflict by

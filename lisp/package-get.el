@@ -854,6 +854,36 @@ Return `t' upon complete success, `nil' if any errors occurred."
 	  t)
       nil)))
 
+(defun package-get-info-name-array ()
+  "Internal, used by `package-get-info'."
+  (let ((pkgs package-get-base)
+        names)
+    (while pkgs
+      (setq names (let ((name (caar pkgs)))
+		    (push (cons (format "%s" name) name) names)))
+      (setq pkgs (cdr pkgs)))
+    names))
+
+(defconst package-get-info-info-array
+  '(("standards-version" . standards-version)
+    ("version" . version)
+    ("author-version" . author-version)
+    ("date" . date)
+    ("build-date" . build-date)
+    ("maintainer" . maintainer)
+    ("distribution" . distribution)
+    ("priority" . priority)
+    ("category" . category)
+    ("dump" . dump)
+    ("description" . description)
+    ("filename" . filename)
+    ("md5sum" . md5sum)
+    ("size" . size)
+    ("provides" . provides)
+    ("requires" . requires)
+    ("type" . type))
+  "Internal, used by `package-get-info'.")
+
 ;;;###autoload
 (defun package-get-info (package information &optional arg remote)
   "Get information about a package.
@@ -884,21 +914,40 @@ Argument INFORMATION is a symbol that can be any one of:
    requires              A list of packages that this package requires.
    type                  Can be either \"regular\" or \"single-file\".
 
-If optional argument ARG is non-nil insert INFORMATION into current
-buffer at point.  This is very useful for doing things like inserting
-a maintainer's email address into a mail buffer.
+Optional argument ARG is a prefix arg.  Without a value, ie, just
+doing `C-u M-x package-get-info' will insert the information at point
+in the current buffer using a local package list.
+
+ARG can also be given a value of 2 or 3.  If 2, use a remote package
+list, displaying the information in the minubuffer.  If 3, use a remote
+package list and insert the information at point in the current buffer.
 
 If optional argument REMOTE is non-nil use a package list from a
-remote site.  For this to work `package-get-remote' must be non-nil.
+remote site.  
+
+To use a remote package list, either via the prefix argument ARG or
+via the REMOTE argument `package-get-remote' must be non-nil.  If
+`package-get-remote' is nil, the local package list will be used.
 
 If this function is called interactively it will display INFORMATION
 in the minibuffer."
-  (interactive "SPackage: \nSInfo: \nP")
-    (if remote
-	(package-get-require-base t)
-      (package-get-require-base nil))
-    (let ((all-pkgs package-get-base)
-	  info)
+  (interactive "i\ni\np")
+  (if (and package-get-remote
+	   (or (eq arg 2)
+	       (eq arg 3)
+	       remote))
+      (package-get-require-base t)
+    (package-get-require-base nil))
+  (let ((all-pkgs package-get-base)
+	(package (or package
+		     (intern (completing-read 
+			      "Package: "
+			      (package-get-info-name-array) nil t))))
+	(information (or information
+			 (intern (completing-read
+				  "Info: "
+				  package-get-info-info-array nil t))))
+	info)
       (loop until (equal package (caar all-pkgs))
 	do (setq all-pkgs (cdr all-pkgs))
 	do (if (not all-pkgs)
@@ -906,14 +955,13 @@ in the minibuffer."
 		      (format "%s is not a valid package" package))))
       (setq info (plist-get (cadar all-pkgs) information))
       (if (interactive-p)
-	  (if arg
+	  (if (or (eq arg 3)
+		  (eq arg 4))
 	      (insert (format "%s" info))
 	    (if (package-get-key package :version)
 		(message "%s" info)
 	      (message "%s (Package: %s is not installed)" info package)))
-	(if arg
-	    (insert (format "%s" info))
-	  info))))
+	info)))
 
 ;;;###autoload
 (defun package-get-list-packages-where (item field &optional arg)
@@ -941,7 +989,19 @@ any one of:
 
 Optional Argument ARG, a prefix arg, insert output at point in the
 current buffer."
-  (interactive "SList packages that have (item): \nSin their (field): \nP")
+  (interactive 
+   (list (intern (read-string "List packages that contain (text): "))
+	 (intern (completing-read "in their package-info field (completion available): "
+				  '(("description" . description)
+				    ("category" . category)
+				    ("maintainer" . maintainer)
+				    ("build-date" . build-date)
+				    ("date" . date)
+				    ("type" . type)
+				    ("requires" . requires)
+				    ("provides" . provides)
+				    ("priority" . priority)) nil t))
+	 current-prefix-arg))
   (package-get-require-base nil)
   (let ((pkgs package-get-base)
 	(strings '(description category maintainer build-date date))
