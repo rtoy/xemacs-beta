@@ -44,7 +44,7 @@
 Each element of this list holds the arguments to one call to `defcustom'.")
 
 ;; Use this, rather than defcustom, in subr.el and other files loaded
-;; before custom.el.
+;; before custom.el.  See dumped-lisp.el.
 (defun custom-declare-variable-early (&rest arguments)
   (setq custom-declare-variable-list
 	(cons arguments custom-declare-variable-list)))

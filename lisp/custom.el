@@ -741,6 +741,9 @@ this sets the local binding in that buffer instead."
 ;; BEGIN SYNC WITH FSF 21.2
 
 ;; Process the defcustoms for variables loaded before this file.
+;; `custom-declare-variable-list' is defvar'd in subr.el.  Utility programs
+;; run from temacs that do not load subr.el should defvar it themselves.
+;; (As of 21.5.11, make-docfile.el.)
 (while custom-declare-variable-list
   (apply 'custom-declare-variable (car custom-declare-variable-list))
   (setq custom-declare-variable-list (cdr custom-declare-variable-list)))
