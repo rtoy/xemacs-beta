@@ -2904,9 +2904,9 @@ if test "$cflags_warning_specified" = "no"; then
             fi
 fi
 
-CFLAGS="$cflags_warning $CFLAGS"
 test -z "xe_cflags_warning" && xe_cflags_warning=cflags_warning
 XE_CFLAGS="$xe_cflags_warning $CFLAGS"
+CFLAGS="$cflags_warning $CFLAGS"
 
 if test "$GCC" = "yes"; then
 echo $ac_n "checking for buggy gcc versions""... $ac_c" 1>&6

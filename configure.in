@@ -2061,11 +2061,12 @@ fi
 
 dnl Now combine all C flags.  Put the warning flags first so that
 dnl user-specified flags will override.
-dnl Flags for CC:
-CFLAGS="$cflags_warning $CFLAGS"
+dnl Do XE_CFLAGS before adding warning flags to CFLAGS.
 dnl Flags for XEMACS_CC:
 test -z "xe_cflags_warning" && xe_cflags_warning=cflags_warning
 XE_CFLAGS="$xe_cflags_warning $CFLAGS"
+dnl Flags for CC:
+CFLAGS="$cflags_warning $CFLAGS"
 
 dnl Search for GCC specific build problems we know about
 if test "$GCC" = "yes"; then

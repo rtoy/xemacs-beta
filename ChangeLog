@@ -1,6 +1,13 @@
+2004-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (CFLAGS): Do XE_CFLAGS before adding warning flags to
+	CFLAGS.  Thanks to Jerry James for reporting the bug.
+
 2004-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (AC_INIT_PARSE_ARGS): Use Solaris-compatible `for'.
+	Thanks to Vin Shelton for noticing the bug, and Hrvoje Niksic for
+	the more elegant fix.
 
 2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
