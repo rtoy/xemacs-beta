@@ -170,6 +170,10 @@ int always_gc;			/* Debugging hack; equivalent to
 /* Nonzero during gc */
 int gc_in_progress;
 
+/* Nonzero means display messages at beginning and end of GC.  */
+
+int garbage_collection_messages;
+
 /* Number of times GC has happened at this level or below.
  * Level 0 is most volatile, contrary to usual convention.
  *  (Of course, there's only one level at present) */
@@ -4302,13 +4306,16 @@ garbage_collect_1 (void)
       /* Don't print messages to the stream device. */
       if (!cursor_changed && !FRAME_STREAM_P (f))
 	{
-	  Lisp_Object args[2], whole_msg;
-	  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
-		     build_msg_string (gc_default_message));
-	  args[1] = build_string ("...");
-	  whole_msg = Fconcat (2, args);
-	  echo_area_message (f, (Ibyte *) 0, whole_msg, 0, -1,
-			     Qgarbage_collecting);
+	  if (garbage_collection_messages)
+	    {
+	      Lisp_Object args[2], whole_msg;
+	      args[0] = (STRINGP (Vgc_message) ? Vgc_message :
+			 build_msg_string (gc_default_message));
+	      args[1] = build_string ("...");
+	      whole_msg = Fconcat (2, args);
+	      echo_area_message (f, (Ibyte *) 0, whole_msg, 0, -1,
+				 Qgarbage_collecting);
+	    }
 	}
     }
 
@@ -4463,14 +4470,17 @@ garbage_collect_1 (void)
 	  if (NILP (clear_echo_area (selected_frame (),
 				     Qgarbage_collecting, 0)))
 	    {
-	      Lisp_Object args[2], whole_msg;
-	      args[0] = (STRINGP (Vgc_message) ? Vgc_message :
-			 build_msg_string (gc_default_message));
-	      args[1] = build_msg_string ("... done");
-	      whole_msg = Fconcat (2, args);
-	      echo_area_message (selected_frame (), (Ibyte *) 0,
-				 whole_msg, 0, -1,
-				 Qgarbage_collecting);
+	      if (garbage_collection_messages)
+		{
+		  Lisp_Object args[2], whole_msg;
+		  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
+			     build_msg_string (gc_default_message));
+		  args[1] = build_msg_string ("... done");
+		  whole_msg = Fconcat (2, args);
+		  echo_area_message (selected_frame (), (Ibyte *) 0,
+				     whole_msg, 0, -1,
+				     Qgarbage_collecting);
+		}
 	    }
 	}
     }
@@ -5075,6 +5085,11 @@ Length (in stack frames) of short backtrace printed out by `debug-allocation'.
 Non-nil means loading Lisp code in order to dump an executable.
 This means that certain objects should be allocated in readonly space.
 */ );
+
+  DEFVAR_BOOL ("garbage-collection-messages", &garbage_collection_messages /*
+ Non-nil means display messages at start and end of garbage collection.
+*/ );
+  garbage_collection_messages = 0;
 
   DEFVAR_LISP ("pre-gc-hook", &Vpre_gc_hook /*
 Function or functions to be run just before each garbage collection.

@@ -49,6 +49,7 @@
 	     (debug-on-quit debug boolean)
 	     (delete-auto-save-files auto-save boolean)
 	     (delete-exited-processes processes-basics boolean)
+	     (garbage-collection-messages alloc boolean)
 	     (indent-tabs-mode editing-basics boolean)
 	     (load-ignore-elc-files maint boolean)
 	     (load-ignore-out-of-date-elc-files maint boolean)

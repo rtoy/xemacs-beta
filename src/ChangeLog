@@ -1,3 +1,9 @@
+2002-12-03  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* alloc.c (garbage_collection_messages): New variable.
+	(vars_of_alloc): Declare and initialise it.
+	(garbage_collect_1): Respect it.
+
 2002-12-02  Mike Sperber <mike@xemacs.org>
 
 	* The Great Window Configuration rewrite: Re-implement window
