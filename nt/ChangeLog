@@ -1,3 +1,8 @@
+2002-04-23  Jonathan Harris  <jonathan@xemacs.org>
+
+	* README: Document build for latest versions of zlib & png
+	* xpm.mak: Default to using MSVCRT as the C runtime
+
 2002-04-14  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp (HAVE_MS_WINDOWS):
