@@ -4387,7 +4387,7 @@ __sti__iflPNGFile_c___ (void)
 		the way at the end to make sure that all calls to abort()
 		anywhere in the above code go through assert_failed(). */
 
-void
+DOESNT_RETURN
 really_abort (void)
 {
   abort ();

@@ -3739,7 +3739,7 @@ extern Fixnum emacs_priority;
 extern int suppress_early_error_handler_backtrace;
 void debug_break (void);
 int debug_can_access_memory (void *ptr, Bytecount len);
-void really_abort (void);
+DECLARE_DOESNT_RETURN (really_abort (void));
 void zero_out_command_line_status_vars (void);
 
 /* Defined in emodules.c */

@@ -1,3 +1,8 @@
+2004-08-10  Jerry James  <james@xemacs.org>
+
+	* emacs.c (really_abort): make its return type DOESNT_RETURN.
+	* lisp.h: declare really_abort with DECLARE_DOESNT_RETURN.
+
 2004-08-04  Jerry James  <james@xemacs.org>
 
 	* regex.c: Fix the previous patch by moving to the right place.
