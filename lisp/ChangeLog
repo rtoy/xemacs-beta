@@ -1,3 +1,8 @@
+2005-03-25  Ralf Angeli  <angeli@iwi.uni-sb.de> 
+ 
+        * font.el (font-spatial-to-canonical): Correct calculation of 
+        return value for pixel-based input value. 
+ 
 2005-03-17  Mike Sperber  <mike@xemacs.org>
 
 	* files.el: Merge the following changes from GNU Emacs:
