@@ -7,6 +7,7 @@
 	"setup-paths"
 	"dump-paths"
 	"subr" 			; load the most basic Lisp functions
+	"post-gc"
 	"replace" 		; match-string used in version.el.
 	; Ignore compiled-by-mistake version.elc
 	"version.el"
