@@ -328,11 +328,7 @@ if this is nil (the default), then `load-path' is searched."
   (let ((path (if (or (null library) (equal library ""))
 		   nil
 		(locate-file library (or find-library-source-path load-path)
-			     ;; decompression doesn't work with Mule -slb
-			     ;; !!#### fix this
-			     (if (featurep 'mule)
-				 ":.el:.elc"
-			       ":.el:.el.gz:.el.Z:.elc")))))
+			       ":.el:.el.gz:.el.Z:.elc"))))
     (if path (funcall (if (fboundp display-function)
 			  display-function 'find-file)
 		      path codesys)

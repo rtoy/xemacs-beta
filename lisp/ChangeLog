@@ -1,3 +1,8 @@
+2002-08-03  Steve Youngs  <youngs@xemacs.org>
+
+	* lib-complete.el (find-library): Remove check for mule because
+	decompression DOES work on Mule.
+
 2002-05-29  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* mule/japan-util.el (setup-japanese-environment-internal): Use
