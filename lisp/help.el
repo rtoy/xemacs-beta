@@ -1,7 +1,7 @@
 ;;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2001, 2002 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: help, internal, dumped
@@ -696,12 +696,17 @@ describes the minor mode."
 (defun describe-distribution ()
   "Display info on how to obtain the latest version of XEmacs."
   (interactive)
-  (Help-find-file (locate-data-file "DISTRIB")))
+  (save-window-excursion
+    (info)
+    (Info-find-node "xemacs-faq" "Q1.1.1"))
+  (switch-to-buffer "*info*"))
 
 (defun describe-beta ()
   "Display info on how to deal with Beta versions of XEmacs."
   (interactive)
-  (Help-find-file (locate-data-file "BETA")))
+  (save-window-excursion
+    (info "(beta)Top"))
+  (switch-to-buffer "*info*"))
 
 (defun describe-copying ()
   "Display info on how you may redistribute copies of XEmacs."
@@ -712,11 +717,6 @@ describes the minor mode."
   "Show a list of all defined mouse buttons, and their definitions."
   (interactive)
   (describe-bindings nil t))
-
-(defun describe-project ()
-  "Display info on the GNU project."
-  (interactive)
-  (Help-find-file (locate-data-file "GNU")))
 
 (defun describe-no-warranty ()
   "Display info on all the kinds of warranty XEmacs does NOT have."

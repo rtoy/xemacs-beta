@@ -996,27 +996,12 @@ that they might get from you.  The precise conditions are found in
 the GNU General Public License that comes with XEmacs and also appears
 following this section.
 
-The easiest way to get a copy of XEmacs is from someone else who has it.
-You need not ask for permission to do so, or tell any one else; just copy
-it.
-
-If you have access to the Internet, you can get the latest version of
-XEmacs from the anonymous FTP server @file{ftp.xemacs.org} in the directory
-@file{/pub/xemacs}.  It can also be found at numerous other archive
-sites around the world; check the file @file{etc/DISTRIB} in an XEmacs
-distribution for the latest known list.
-
+To get XEmacs, go to @uref{http://www.xemacs.org/Download/}.
 
 @unnumberedsec Getting Other Versions of Emacs
 
-The Free Software Foundation's version of Emacs (called @dfn{FSF Emacs}
-in this manual and often referred to as @dfn{GNU Emacs}) is available
-by anonymous FTP from @file{prep.ai.mit.edu}.
-
-Win-Emacs, an older version of XEmacs that runs on Microsoft Windows
-and Windows NT, is available by anonymous FTP from @file{ftp.netcom.com}
-in the directory @file{/pub/pe/pearl}, or from @file{ftp.cica.indiana.edu}
-as the files @file{wemdemo*.zip} in the directory @file{/pub/pc/win3/demo}.
+The Free Software Foundation's version of Emacs (@dfn{GNU Emacs}) is
+available at @uref{http://www.gnu.org/software/emacs/emacs.html}.
 
 @node Intro, Glossary, Distrib, Top
 @unnumbered Introduction
@@ -1025,9 +1010,8 @@ as the files @file{wemdemo*.zip} in the directory @file{/pub/pc/win3/demo}.
 self-documenting, customizable, extensible real-time display editor
 Emacs.  XEmacs provides many powerful display and user-interface
 capabilities not found in other Emacsen and is mostly upwardly
-compatible with GNU Emacs from the Free Software Foundation
-(referred to as @dfn{FSF Emacs} in this manual).  XEmacs also
-comes standard with a great number of useful packages.
+compatible with GNU Emacs from the Free Software Foundation.  XEmacs
+also comes standard with a great number of useful packages.
 
   We say that XEmacs is a @dfn{display} editor because normally the text
 being edited is visible on the screen and is updated automatically as you

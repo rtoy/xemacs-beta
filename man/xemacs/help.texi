@@ -442,13 +442,12 @@ actually @kbd{C-M-h}, which marks a defun.)
 information.  @kbd{C-h C-w} (@code{describe-no-warranty}) displays the
 full details on the complete absence of warranty for XEmacs.  @kbd{C-h
 n} (@code{view-emacs-news}) displays the file @file{xemacs/etc/NEWS},
-which contains documentation on XEmacs changes arranged chronologically.
-@kbd{C-h F} (@code{xemacs-local-faq}) displays local version of the
-XEmacs frequently-answered-questions-list.  @kbd{C-h t}
-(@code{help-with-tutorial}) displays the learn-by-doing XEmacs
-tutorial. @kbd{C-h C-c} (@code{describe-copying}) displays the file
-@file{xemacs/etc/COPYING}, which tells you the conditions you must obey
-in distributing copies of XEmacs.  @kbd{C-h C-d}
-(@code{describe-distribution}) displays another file named
-@file{xemacs/etc/DISTRIB}, which tells you how you can order a copy of
-the latest version of XEmacs.
+which contains documentation on XEmacs changes arranged
+chronologically.  @kbd{C-h F} (@code{xemacs-local-faq}) displays the
+local version of the XEmacs FAQ (Frequently Answered Questions list).
+@kbd{C-h t} (@code{help-with-tutorial}) displays the learn-by-doing
+XEmacs tutorial. @kbd{C-h C-c} (@code{describe-copying}) displays the
+file @file{xemacs/etc/COPYING}, which tells you the conditions you
+must obey in distributing copies of XEmacs.  @kbd{C-h C-d}
+(@code{describe-distribution} displays the section of the FAQ that
+tells you how you can get the latest version of XEmacs.

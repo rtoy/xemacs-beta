@@ -1,3 +1,8 @@
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (install):
+	Also copy BUGS, README, COPYING and Installation.
+
 2005-01-28  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp (COMPFACE_DIR):

@@ -1457,8 +1457,16 @@ install:	all
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
 	@$(COPY) $(SRCROOT)\PROBLEMS "$(INSTALL_DIR)\"
+	@$(COPY) $(SRCROOT)\BUGS "$(INSTALL_DIR)\"
+	@$(COPY) $(SRCROOT)\README "$(INSTALL_DIR)\"
+	@$(COPY) $(SRCROOT)\COPYING "$(INSTALL_DIR)\"
+	@$(COPY) $(SRCROOT)\Installation "$(INSTALL_DIR)\"
 	@$(COPY) PlaceHolder "$(INSTALL_DIR)\lock\"
 	-$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
+#	@$(COPY) $(BLDLIB_SRC)\*.exe "$(INSTALL_DIR)\lib-src\"
+#	@$(COPY) $(BLDLIB_SRC)\DOC "$(INSTALL_DIR)\lib-src\"
+#	@$(COPY) $(CONFIG_VALUES) "$(INSTALL_DIR)\lib-src\"
+#	@$(COPY) $(BLDSRC)\xemacs.exe "$(INSTALL_DIR)\bin\"
 	@$(COPY) $(BLDLIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
 	@$(COPY) $(BLDLIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
 	@$(COPY) $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"

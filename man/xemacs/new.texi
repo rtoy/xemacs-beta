@@ -235,39 +235,74 @@ commands are invoked only when you are in XEmacs:
 
 @cindex version number
 @example
-(cond ((string-match "Lucid" emacs-version)
+(cond ((string-match "XEmacs" emacs-version)
        ;;
-       ;; Code for any version of Lucid Emacs or XEmacs goes here
+       ;; Code for any version of XEmacs goes here.
+       ;;
+       ))
+
+(cond ((not (string-match "XEmacs" emacs-version)))
+       ;;
+       ;; Code for any version of GNU Emacs goes here.
        ;;
        ))
 
 (cond ((and (string-match "XEmacs" emacs-version)
-            (or (> emacs-major-version 19)
-                (>= emacs-minor-version 12)))
+            (emacs-version>= 21 4))
        ;;
-       ;; Code which requires XEmacs version 19.12 or newer goes here
-       ;;
-       ))
-
-(cond ((>= emacs-major-version 19)
-       ;;
-       ;; Code for any vintage-19 emacs goes here
+       ;; Code which requires XEmacs version 21.4 or newer goes here
        ;;
        ))
 
-(cond ((and (not (string-match "Lucid" emacs-version))
-            (= emacs-major-version 19))
+(cond ((and (string-match "XEmacs" emacs-version)
+            (emacs-version>= 21 4 12)
+            (not (emacs-version>= 21 4 15)))
        ;;
-       ;; Code specific to FSF Emacs 19 (not XEmacs) goes here
+       ;; Code which requires exactly XEmacs version 21.4.12 through
+       ;; 21.4.14, inclusive, goes here. (e.g. A bug was introduced in
+       ;; 21.4.12 and fixed in 21.4.15 but many of the versions of
+       ;; XEmacs around in the computer laboratory run those versions,
+       ;; so I need to introduce a workaround.  In such a case, you
+       ;; should ideally try to conditionalize on something else,
+       ;; e.g. a feature symbol or a simple test that can be run to
+       ;; smoke out the bug.)
        ;;
        ))
 
-(cond ((< emacs-major-version 19)
+(cond ((and (not (string-match "XEmacs" emacs-version)
+            (emacs-version>= 20 2))
        ;;
-       ;; Code specific to emacs 18 goes here
+       ;; Code which requires GNU Emacs version 20.2 or newer, but not XEmacs,
+       ;; goes here
        ;;
        ))
+
 @end example
+
+@emph{NOTE}: @strong{DO} use @code{(emacs-version>= ...)}.  @strong{DO NOT}
+try to do this yourself using @code{emacs-major-version} and
+@code{emacs-minor-version}.  You will, with high probability, get it
+wrong.  Typical attempts to replace @code{(emacs-version>= 21 4)} use
+
+@example
+(and (>= emacs-major-version 21)
+     (>= emacs-minor-version 4))
+@end example
+
+which correctly excludes 21.3 and all previous versions,
+but also excludes 22.0 through 22.3, 23.0 through 23.3, etc.
+
+A "more clever" version, as advocated in earlier versions
+of this very manual, was like this:
+
+@example
+(or (> emacs-major-version 21)
+    (>= emacs-minor-version 4))
+@end example
+
+which correctly includes 21.4 and all following versions,
+but also includes 20.4 through 20.99999, 19.4 through
+19.99999, etc.
 
 Alternatively, use @file{.xemacs/init.el} for an init file.  @xref{Init File}.
 

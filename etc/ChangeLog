@@ -1,3 +1,28 @@
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	Delete stuff that is irrelevant, mislocated or woefully out-of-date.
+
+	* GNU: Delete.
+	* SERVICE: Delete.
+	* ORDERS, ORDERS.EUROPE, ORDERS.JAPAN: Delete.
+	* CHARSETS, CODINGS: Delete.
+	* DEBUG, LPF, MORE.STUFF, MOTIVATION: Delete.
+	* aliases.ksh: Delete. (moved to xemacs-builds/steve)
+	* README.HYPERBOLE, README.OO-BROWSER: Delete.
+	* chr.png, chrm.png: Move to photos/.
+	* check_cygwin_setup.sh: Delete.
+	* gnu.xpm, gnu.xbm, sink.xbm: Delete.
+	* ms-kermit, ms-kermit-7bit: Delete.
+	* TERMS: Delete.
+
+	* DISTRIB, FTP, MACHINES, MAILINGLISTS, PACKAGES:
+	Delete and move to FAQ.
+
+	* BETA:
+	Delete and move to man/beta.texi.
+
+	* README: Update.
+
 2004-11-13  Ben Wing  <ben@xemacs.org>
 
 	* CODING-STANDARDS: Delete and incorporate into Internals manual.

@@ -42,6 +42,7 @@ HTMLDIR = ../html
 PHOTODIR = ../etc/photos
 
 info_files = \
+	$(INFODIR)/beta.info \
 	$(INFODIR)/cl.info \
 	$(INFODIR)/custom.info \
 	$(INFODIR)/emodules.info \
@@ -59,6 +60,7 @@ info_files = \
 	$(INFODIR)/xemacs-faq.info
 
 html_files = \
+	$(HTMLDIR)/beta.html \
 	$(HTMLDIR)/cl.html \
 	$(HTMLDIR)/custom.html \
 	$(HTMLDIR)/emodules.html \
@@ -76,6 +78,7 @@ html_files = \
 	$(HTMLDIR)/xemacs-faq.html
 
 dvi_files = \
+	beta.dvi \
 	cl.dvi \
 	custom.dvi \
 	emodules.dvi \
@@ -93,6 +96,7 @@ dvi_files = \
 	xemacs-faq.dvi
 
 pdf_files = \
+       beta.pdf \
        cl.pdf \
        custom.pdf \
        emodules.pdf \
@@ -237,6 +241,9 @@ new-users-guide-srcs = \
 	new-users-guide/search.texi \
 	new-users-guide/xmenu.texi
 
+$(INFODIR)/beta.info : beta.texi
+	$(MAKEINFO) -o $(INFODIR)/beta.info beta.texi
+
 $(INFODIR)/cl.info : cl.texi
 	$(MAKEINFO) -o $(INFODIR)/cl.info cl.texi
 
@@ -339,6 +346,9 @@ extraclean: distclean
 	$(RM) *~ \#* */*~ */\#*
 
 ############################################################################
+
+$(HTMLDIR)/beta.html : beta.texi
+	$(TEXI2HTML) beta.texi
 
 $(HTMLDIR)/cl.html : cl.texi
 	$(TEXI2HTML_SPLIT) cl.texi

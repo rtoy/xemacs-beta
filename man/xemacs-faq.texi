@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2004/12/29 05:08:26 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2005/01/31 20:08:48 $
 @sp 1
 @author Ben Wing <ben@@xemacs.org>
 @author Tony Rossini <rossini@@u.washington.edu>
@@ -194,63 +194,77 @@ library directory>/info/}. For example in
 
 1 Introduction, Policy, Credits
 
-1.0: Introduction
+1.0: What is XEmacs?
 * Q1.0.1::    What is XEmacs?
 * Q1.0.2::    What is the current version of XEmacs?
-* Q1.0.3::    Where can I find it?
-* Q1.0.4::    Are binaries available?
-* Q1.0.5::    How does XEmacs differ from GNU Emacs?
-* Q1.0.6::    How much does XEmacs differ?
-* Q1.0.7::    Is XEmacs "GNU"?
-* Q1.0.8::    What is the correct way to refer to XEmacs and GNU Emacs?
-* Q1.0.9::    Why haven't XEmacs and GNU Emacs merged?
-* Q1.0.10::   Where can I get help?
-* Q1.0.11::   Where are the mailing lists archived?
-* Q1.0.12::   How do you pronounce XEmacs?
-* Q1.0.13::   What does XEmacs look like?
-* Q1.0.14::   Where can I obtain a printed copy of the XEmacs User's Manual?
+* Q1.0.3::    How do you pronounce XEmacs?
+* Q1.0.4::    What does XEmacs look like?
+* Q1.0.5::    Who wrote XEmacs?
+* Q1.0.6::    Who wrote the FAQ?
 
-1.1: Versions for Different Operating Systems
-* Q1.1.1::    Do I need X11 to run XEmacs?
-* Q1.1.2::    Is there a port of XEmacs to Microsoft Windows?
-* Q1.1.3::    Can I build XEmacs on MS Windows with X support?  Do I need to?
-* Q1.1.4::    What are Cygwin and MinGW, and do I need them to run XEmacs?
-* Q1.1.5::    What are the differences between the various MS Windows emacsen?
-* Q1.1.6::    Is there a port of XEmacs to the Macintosh?
-* Q1.1.7::    Is there a port of XEmacs to NextStep?
-* Q1.1.8::    Is there a port of XEmacs to OS/2?
-* Q1.1.9::    How does the port cope with differences in the Windows user interface?
+1.1: Getting XEmacs
+* Q1.1.1::    Where can I find XEmacs?
+* Q1.1.2::    Are binaries available?
+* Q1.1.3::    How do I get the bleeding-edge sources?
+* Q1.1.4::    Where can I obtain a printed copy of the XEmacs User's Manual?
 
-1.2: Policies
-* Q1.2.1::    What is the FAQ editorial policy?
-* Q1.2.2::    How do I become a beta tester?
-* Q1.2.3::    How do I contribute to XEmacs itself?
+1.2: Versions for Different Operating Systems
+* Q1.2.1::    Do I need X11 to run XEmacs?
+* Q1.2.2::    What versions of Unix does XEmacs run on?
+* Q1.2.3::    Is there a port of XEmacs to Microsoft Windows?
+* Q1.2.4::    Can I build XEmacs on MS Windows with X support?  Do I need to?
+* Q1.2.5::    What are Cygwin and MinGW, and do I need them to run XEmacs?
+* Q1.2.6::    What are the differences between the various MS Windows emacsen?
+* Q1.2.7::    How does the port cope with differences in the Windows user interface?
+* Q1.2.8::    Is there a port of XEmacs to the Macintosh?
+* Q1.2.9::    Is there a port of XEmacs to MS-DOS?
+* Q1.2.10::   Is there a port of XEmacs to OS/2?
+* Q1.2.11::   Is there a port of XEmacs to NextStep?
+* Q1.2.12::   Is there a port of XEmacs to VMS?
 
-1.3: Credits
-* Q1.3.1::    Who wrote XEmacs?
-* Q1.3.2::    Who contributed to this version of the FAQ?
-* Q1.3.3::    Who contributed to the FAQ in the past?
+1.3: Getting Started
+* Q1.3.1::    What is an @file{init.el} or @file{.emacs} and is there a sample one?
+* Q1.3.2::    Where do I put my @file{init.el} file?
+* Q1.3.3::    Can I use the same @file{init.el} with the other Emacs?
+* Q1.3.4::    Any good XEmacs tutorials around?
+* Q1.3.5::    May I see an example of a useful XEmacs Lisp function?
+* Q1.3.6::    And how do I bind it to a key?
+* Q1.3.7::    What's the difference between a macro and a function?
+* Q1.3.8::    What is @code{Custom}?
 
-1.4: Internationalization
-* Q1.4.1::    What is the status of internationalization support aka MULE (including Asian language support)?
-* Q1.4.2::    How can I help with internationalization?
-* Q1.4.3::    How do I type non-ASCII characters?
-* Q1.4.4::    Can XEmacs messages come out in a different language?
-* Q1.4.5::    Please explain the various input methods in MULE/XEmacs
-* Q1.4.6::    How do I portably code for MULE/XEmacs?
-* Q1.4.7::    How about Cyrillic modes?
-* Q1.4.8::    Does XEmacs support Unicode?
-* Q1.4.9::    How does XEmacs display Unicode?
+1.4: Getting Help
+* Q1.4.1::    Where can I get help?
+* Q1.4.2::    Which mailing lists are there?
+* Q1.4.2::    Where are the mailing lists archived?
+* Q1.4.3::    How can I get two instances of info?
+* Q1.4.4::    How do I add new Info directories?
 
-1.5: Getting Started
-* Q1.5.1::    What is an @file{init.el} or @file{.emacs} and is there a sample one?
-* Q1.5.2::    Where do I put my @file{init.el} file?
-* Q1.5.3::    Can I use the same @file{init.el} with the other Emacs?
-* Q1.5.4::    Any good XEmacs tutorials around?
-* Q1.5.5::    May I see an example of a useful XEmacs Lisp function?
-* Q1.5.6::    And how do I bind it to a key?
-* Q1.5.7::    What's the difference between a macro and a function?
-* Q1.5.8::    What is @code{Custom}?
+1.5: Contributing to XEmacs
+* Q1.5.1::    How do I submit changes to the FAQ?
+* Q1.5.2::    How do I become a beta tester?
+* Q1.5.3::    How do I contribute to XEmacs itself?
+
+1.6: Politics (XEmacs vs. GNU Emacs)
+* Q1.6.1::    What is GNU Emacs?
+* Q1.6.2::    How does XEmacs differ from GNU Emacs?
+* Q1.6.3::    How much does XEmacs differ?
+* Q1.6.4::    Is XEmacs "GNU"?
+* Q1.6.5::    What is the correct way to refer to XEmacs and GNU Emacs?
+* Q1.6.6::    Why haven't XEmacs and GNU Emacs merged?
+
+1.7: External Packages
+* Q1.7.1::    Which external packages are there?
+
+1.8: Internationalization
+* Q1.8.1::    What is the status of internationalization support aka MULE (including Asian language support)?
+* Q1.8.2::    How can I help with internationalization?
+* Q1.8.3::    How do I type non-ASCII characters?
+* Q1.8.4::    Can XEmacs messages come out in a different language?
+* Q1.8.5::    Please explain the various input methods in MULE/XEmacs
+* Q1.8.6::    How do I portably code for MULE/XEmacs?
+* Q1.8.7::    How about Cyrillic modes?
+* Q1.8.8::    Does XEmacs support Unicode?
+* Q1.8.9::    How does XEmacs display Unicode?
 
 2 Installation and Troubleshooting
 
@@ -473,36 +487,32 @@ library directory>/info/}. For example in
 
 7 Advanced Customization Using XEmacs Lisp
 
-7.0: Online Help
-* Q7.0.1::    How can I get two instances of info?
-* Q7.0.2::    How do I add new Info directories?
+7.0: Emacs Lisp and @file{init.el}
+* Q7.0.1::    What version of Emacs am I running?
+* Q7.0.2::    How can I evaluate Emacs-Lisp expressions?
+* Q7.0.3::    @code{(setq tab-width 6)} behaves oddly.
+* Q7.0.4::    How can I add directories to the @code{load-path}?
+* Q7.0.5::    How to check if a lisp function is defined?
+* Q7.0.6::    Can I force the output of @code{(face-list)} to a buffer?
 
-7.1: Emacs Lisp and @file{init.el}
-* Q7.1.1::    What version of Emacs am I running?
-* Q7.1.2::    How can I evaluate Emacs-Lisp expressions?
-* Q7.1.3::    @code{(setq tab-width 6)} behaves oddly.
-* Q7.1.4::    How can I add directories to the @code{load-path}?
-* Q7.1.5::    How to check if a lisp function is defined?
-* Q7.1.6::    Can I force the output of @code{(face-list)} to a buffer?
+7.1: Emacs Lisp Programming Techniques
+* Q7.1.1::    What is the difference in key sequences between XEmacs and GNU Emacs?
+* Q7.1.2::    Can I generate "fake" keyboard events?
+* Q7.1.3::    Could you explain @code{read-kbd-macro} in more detail?
+* Q7.1.4::    What is the performance hit of @code{let}?
+* Q7.1.5::    What is the recommended use of @code{setq}?
+* Q7.1.6::    What is the typical misuse of @code{setq}?
+* Q7.1.7::    I like the @code{do} form of cl, does it slow things down?
+* Q7.1.8::    I like recursion, does it slow things down?
+* Q7.1.9::    How do I put a glyph as annotation in a buffer?
+* Q7.1.10::   @code{map-extents} won't traverse all of my extents!
+* Q7.1.11::   My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
 
-7.2: Emacs Lisp Programming Techniques
-* Q7.2.1::    What is the difference in key sequences between XEmacs and GNU Emacs?
-* Q7.2.2::    Can I generate "fake" keyboard events?
-* Q7.2.3::    Could you explain @code{read-kbd-macro} in more detail?
-* Q7.2.4::    What is the performance hit of @code{let}?
-* Q7.2.5::    What is the recommended use of @code{setq}?
-* Q7.2.6::    What is the typical misuse of @code{setq}?
-* Q7.2.7::    I like the @code{do} form of cl, does it slow things down?
-* Q7.2.8::    I like recursion, does it slow things down?
-* Q7.2.9::    How do I put a glyph as annotation in a buffer?
-* Q7.2.10::   @code{map-extents} won't traverse all of my extents!
-* Q7.2.11::   My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
-
-7.3: Mathematics
-* Q7.3.1::    What are bignums, ratios, and bigfloats in Lisp?
-* Q7.3.2::    XEmacs segfaults when I use very big numbers!
-* Q7.3.3::    Bignums are really slow!
-* Q7.3.4::    Equal bignums don't compare as equal!  What gives?
+7.2: Mathematics
+* Q7.1.1::    What are bignums, ratios, and bigfloats in Lisp?
+* Q7.1.2::    XEmacs segfaults when I use very big numbers!
+* Q7.1.3::    Bignums are really slow!
+* Q7.1.4::    Equal bignums don't compare as equal!  What gives?
 
 8 Other External Packages
 
@@ -537,7 +547,6 @@ library directory>/info/}. For example in
 
 10.0: XEmacs 21.1
 * Q10.0.1::   Gnus 5.10 won't display smileys in XEmacs 21.1.
-
 @end detailmenu
 @end menu
 
@@ -574,66 +583,81 @@ this FAQ please send email to @email{xemacs-beta@@xemacs.org}.
 Include @samp{XEmacs FAQ} on the Subject: line.
 
 @menu
-1.0: Introduction
+1.0: What is XEmacs?
 * Q1.0.1::    What is XEmacs?
 * Q1.0.2::    What is the current version of XEmacs?
-* Q1.0.3::    Where can I find it?
-* Q1.0.4::    Are binaries available?
-* Q1.0.5::    How does XEmacs differ from GNU Emacs?
-* Q1.0.6::    How much does XEmacs differ?
-* Q1.0.7::    Is XEmacs "GNU"?
-* Q1.0.8::    What is the correct way to refer to XEmacs and GNU Emacs?
-* Q1.0.9::    Why haven't XEmacs and GNU Emacs merged?
-* Q1.0.10::   Where can I get help?
-* Q1.0.11::   Where are the mailing lists archived?
-* Q1.0.12::   How do you pronounce XEmacs?
-* Q1.0.13::   What does XEmacs look like?
-* Q1.0.14::   Where can I obtain a printed copy of the XEmacs User's Manual?
+* Q1.0.3::    How do you pronounce XEmacs?
+* Q1.0.4::    What does XEmacs look like?
+* Q1.0.5::    Who wrote XEmacs?
+* Q1.0.6::    Who wrote the FAQ?
 
-1.1: Versions for Different Operating Systems
-* Q1.1.1::    Do I need X11 to run XEmacs?
-* Q1.1.2::    Is there a port of XEmacs to Microsoft Windows?
-* Q1.1.3::    Can I build XEmacs on MS Windows with X support?  Do I need to?
-* Q1.1.4::    What are Cygwin and MinGW, and do I need them to run XEmacs?
-* Q1.1.5::    What are the differences between the various MS Windows emacsen?
-* Q1.1.6::    Is there a port of XEmacs to the Macintosh?
-* Q1.1.7::    Is there a port of XEmacs to NextStep?
-* Q1.1.8::    Is there a port of XEmacs to OS/2?
-* Q1.1.9::    How does the port cope with differences in the Windows user interface?
+1.1: Getting XEmacs
+* Q1.1.1::    Where can I find XEmacs?
+* Q1.1.2::    Are binaries available?
+* Q1.1.3::    How do I get the bleeding-edge sources?
+* Q1.1.4::    Where can I obtain a printed copy of the XEmacs User's Manual?
 
-1.2: Policies
-* Q1.2.1::    What is the FAQ editorial policy?
-* Q1.2.2::    How do I become a beta tester?
-* Q1.2.3::    How do I contribute to XEmacs itself?
+1.2: Versions for Different Operating Systems
+* Q1.2.1::    Do I need X11 to run XEmacs?
+* Q1.2.2::    What versions of Unix does XEmacs run on?
+* Q1.2.3::    Is there a port of XEmacs to Microsoft Windows?
+* Q1.2.4::    Can I build XEmacs on MS Windows with X support?  Do I need to?
+* Q1.2.5::    What are Cygwin and MinGW, and do I need them to run XEmacs?
+* Q1.2.6::    What are the differences between the various MS Windows emacsen?
+* Q1.2.7::    How does the port cope with differences in the Windows user interface?
+* Q1.2.8::    Is there a port of XEmacs to the Macintosh?
+* Q1.2.9::    Is there a port of XEmacs to MS-DOS?
+* Q1.2.10::   Is there a port of XEmacs to OS/2?
+* Q1.2.11::   Is there a port of XEmacs to NextStep?
+* Q1.2.12::   Is there a port of XEmacs to VMS?
 
-1.3: Credits
-* Q1.3.1::    Who wrote XEmacs?
-* Q1.3.2::    Who contributed to this version of the FAQ?
-* Q1.3.3::    Who contributed to the FAQ in the past?
+1.3: Getting Started
+* Q1.2.13::   
+* Q1.3.1::    What is an @file{init.el} or @file{.emacs} and is there a sample one?
+* Q1.3.2::    Where do I put my @file{init.el} file?
+* Q1.3.3::    Can I use the same @file{init.el} with the other Emacs?
+* Q1.3.4::    Any good XEmacs tutorials around?
+* Q1.3.5::    May I see an example of a useful XEmacs Lisp function?
+* Q1.3.6::    And how do I bind it to a key?
+* Q1.3.7::    What's the difference between a macro and a function?
+* Q1.3.8::    What is @code{Custom}?
 
-1.4: Internationalization
-* Q1.4.1::    What is the status of internationalization support aka MULE (including Asian language support)?
-* Q1.4.2::    How can I help with internationalization?
-* Q1.4.3::    How do I type non-ASCII characters?
-* Q1.4.4::    Can XEmacs messages come out in a different language?
-* Q1.4.5::    Please explain the various input methods in MULE/XEmacs
-* Q1.4.6::    How do I portably code for MULE/XEmacs?
-* Q1.4.7::    How about Cyrillic modes?
-* Q1.4.8::    Does XEmacs support Unicode?
-* Q1.4.9::    How does XEmacs display Unicode?
+1.4: Getting Help
+* Q1.4.1::    Where can I get help?
+* Q1.4.2::    Which mailing lists are there?
+* Q1.4.3::    How can I get two instances of info?
+* Q1.4.4::    How do I add new Info directories?
 
-1.5: Getting Started
-* Q1.5.1::    What is an @file{init.el} or @file{.emacs} and is there a sample one?
-* Q1.5.2::    Where do I put my @file{init.el} file?
-* Q1.5.3::    Can I use the same @file{init.el} with the other Emacs?
-* Q1.5.4::    Any good XEmacs tutorials around?
-* Q1.5.5::    May I see an example of a useful XEmacs Lisp function?
-* Q1.5.6::    And how do I bind it to a key?
-* Q1.5.7::    What's the difference between a macro and a function?
-* Q1.5.8::    What is @code{Custom}?
+1.5: Contributing to XEmacs
+* Q1.4.5::    
+* Q1.5.1::    How do I submit changes to the FAQ?
+* Q1.5.2::    How do I become a beta tester?
+* Q1.5.3::    How do I contribute to XEmacs itself?
+
+1.6: Politics (XEmacs vs. GNU Emacs)
+* Q1.6.1::    What is GNU Emacs?
+* Q1.6.2::    How does XEmacs differ from GNU Emacs?
+* Q1.6.3::    How much does XEmacs differ?
+* Q1.6.4::    Is XEmacs "GNU"?
+* Q1.6.5::    What is the correct way to refer to XEmacs and GNU Emacs?
+* Q1.6.6::    Why haven't XEmacs and GNU Emacs merged?
+
+1.7: External Packages
+* Q1.7.1::    Which external packages are there?
+
+1.8: Internationalization
+* Q1.8.1::    What is the status of internationalization support aka MULE (including Asian language support)?
+* Q1.8.2::    How can I help with internationalization?
+* Q1.8.3::    How do I type non-ASCII characters?
+* Q1.8.4::    Can XEmacs messages come out in a different language?
+* Q1.8.5::    Please explain the various input methods in MULE/XEmacs
+* Q1.8.6::    How do I portably code for MULE/XEmacs?
+* Q1.8.7::    How about Cyrillic modes?
+* Q1.8.8::    Does XEmacs support Unicode?
+* Q1.8.9::    How does XEmacs display Unicode?
 @end menu
 
-@unnumberedsec 1.0: Introduction
+@unnumberedsec 1.0: What is XEmacs?
 
 @node Q1.0.1, Q1.0.2, Introduction, Introduction
 @unnumberedsubsec Q1.0.1: What is XEmacs?
@@ -667,16 +691,308 @@ XEmacs 19.16, released in November, 1997. was the last release of v19,
 and was also the last version without international language support.
 
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
-@unnumberedsubsec Q1.0.3: Where can I find it?
+@unnumberedsubsec Q1.0.3: How do you pronounce XEmacs?
 
-The canonical source and binaries can be found at:
-
-@example
-@uref{http://ftp.xemacs.org/pub/xemacs/}
-@end example
+The most common pronounciation is @samp{Eks eemax}.
 
 @node Q1.0.4, Q1.0.5, Q1.0.3, Introduction
-@unnumberedsubsec Q1.0.4: Are binaries available?
+@unnumberedsubsec Q1.0.4: What does XEmacs look like?
+
+Screen snapshots are available at
+@uref{http://www.xemacs.org/About/Screenshots/index.html}
+as part of the XEmacs website.
+
+@node Q1.0.5, Q1.0.6, Q1.0.4, Introduction
+@unnumberedsubsec Q1.0.5: Who wrote XEmacs?
+
+XEmacs is the result of the time and effort of many people, and the
+active developers have changed over time.  There are two major
+components of the XEmacs effort -- writing the code itself and providing
+all the support work (testing the code, releasing beta and final
+versions, handling patches, reading bug reports, maintaining the web
+site, managing the mailing lists, etc. etc.).  Neither component would
+work without the other.
+
+@subheading CODING
+
+The primary code contributor over the years has been Ben Wing (active
+since late 1992).  Between 1991 and 1995, large amounts of coding was
+contributed by Jamie Zawinski and Chuck Thompson.  Many other people
+have authored major subsystems or otherwise contributed large amounts of
+code, including Andy Piper, Hrvoje Niksic, Jerry James, Jonathan Harris,
+Kyle Jones, Martin Buchholz, Michael Sperber, Olivier Galibert, Richard
+Mlynarik, Stig, William Perry and plenty of others.
+
+Primary XEmacs-specific subsystems and their authors:
+
+@table @asis
+@item Objects
+@itemize @minus
+@item
+Conversion from 26-bit to 28-bit pointers and integers, lrecords, lcrecords: Richard Mlynarik, 1994
+@item
+Conversion to 32-bit pointers and 31-bit integers: Kyle Jones, Martin Buchholz
+@item
+Portable dumper, object descriptions: Olivier Galibert
+@item
+KKCC (new garbage collector), ephemerons, weak boxes: Michael Sperber and students
+@item
+Random object work (object equal and hash methods, weak lists, lcrecord lists, bit vectors, dynarr, blocktype, opaque, string resizing): Ben Wing
+@item
+Profiling: Ben Wing
+@item
+Some byte-compilation and hash-table improvements: Martin Buchholz
+@item
+Bignum: Jerry James
+@end itemize
+
+@item Internationalization/Mule
+@itemize @minus
+@item
+mostly Ben Wing; many ideas for future work, Stephen Turnbull
+@end itemize
+
+@item I/O
+@itemize @minus
+@item
+Basic event/event-stream implementation: Jamie Zawinski
+@item
+Most event work since 1994: Ben Wing
+@item
+Asynchronous stuff (async timeouts, signals, quit-checking): Ben Wing
+@item
+Process method abstraction, Windows process work: Kirill Katsnelson
+@item
+Misc-user events, async timeouts, most quit-checking and signal code, most other work since 1994: Ben Wing
+@item
+Lstreams: Ben Wing
+@end itemize
+
+@item Display
+@itemize @minus
+@item
+Redisplay mechanism: implementation, Chuck Thompson; additional work, lots of people
+@item
+Glyphs: mostly Ben Wing
+@item
+Specifiers: Ben Wing
+@item
+Extents: initial implementation, someone at Lucid; rewrite, 1994, Ben Wing
+@item
+Widgets: Andy Piper
+@item
+JPEG/PNG/TIFF image converters: Ben Wing, William Perry, Jareth Hein, others (see comment in @file{glyphs-eimage.c})
+@item
+Menus: Jamie Zawinski, someone at Lucid (Lucid menus)
+@item
+Scrollbars: Chuck Thompson, ??? (Lucid scrollbar)
+@item
+Multi-device/device-independence work (console/device/etc methods): Ben Wing, prototype by chuck thompson
+@item
+Faces: first implementation, Jamie Zawinski; second, chuck; third, Ben Wing
+@item
+Fonts/colors: first implementation, Jamie Zawinski; further work, Ben Wing
+@item
+Toolbars: implementation, chuck, much interface work, Ben Wing
+@item
+Gutters, tabs: andy piper
+@end itemize
+
+@item Device subsystems
+@itemize @minus
+@item
+X Windows: Jamie Zawinksi, Ben Wing, others
+@item
+GTK: William Perry, Malcolm Purvis
+@item
+MS Windows: initial implementation, Jonathan Harris; some more work, Andy Piper, Ben Wing
+@item
+TTY: Chuck Thompson, Ben Wing
+@item
+Cygwin: Andy Piper
+@end itemize
+
+@item Misc
+@itemize @minus
+@item
+Configure: initial porting from fsf, Chuck Thompson; conversion to autoconf 2, much rewriting, Martin Buchholz
+@item
+Most initialization-related code: Ben Wing
+@item
+Internals manual, much of Lisp manual: Ben Wing
+@item
+FSF synching: initial sync with FSF 19, Richard Mlynarik, further work, Ben Wing
+@end itemize
+@end table
+
+@subheading SUPPORT
+
+Currently, support duties are handled by many different people.
+
+Release managers have been
+
+@itemize @minus
+@item
+Stephen Turnbull (April 2001 - January 2003, March 2004 - present, 21.2.47 - 21.4.12, 21.5.2 - 21.5.7, 21.5.17 - present)
+@item
+Vin Shelton (May 2003 - present, 21.4.13 - present)
+@item
+Steve Youngs (July 2002 - September 2003, 21.5.8 - 21.5.16)
+@item
+Martin Buchholz (December 1998, November 1999 - May 2001, 21.2.7 - 21.2.8, 21.2.21 - 21.2.46, 21.5.0 - 21.5.1)
+@item
+Steve Baur (early 1997 - December 1998, February 1999 - November 1999, 19.15 - 21.2.5, 21.2.9 - 21.2.20)
+@item
+Andy Piper (December 1998, 21.2.6)
+@item
+Chuck Thompson (June 1994 - September 1996, 19.11 - 19.14)
+@item
+Jamie Zawinski (April 1991 - June 1994, 19.0 - 19.10)
+@end itemize
+
+The recent overlapping dates are intentional, since two or three trees
+are maintained simultaneously at any point.
+
+Other major support work:
+
+@itemize @minus
+@item
+Adrian Aichner wrote and maintains the web site.
+@item
+Stephen Turnbull has produced many of the beta and semi-stable releases
+and has attempted to be the "face" of XEmacs on the newsgroups and
+mailing lists.
+@item
+Steve Youngs currently produces the beta releases (???).
+@item
+Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
+maintaining the packages.
+@item
+Vin Shelton maintains the stable releases.
+@item
+Testing - #### Norbert, Adrian, ???
+@end itemize
+
+Portraits and email of some of the major developers:
+
+@itemize @bullet
+@item @email{andy@@xemacs.org, Andy Piper}
+@html
+<br><img src="piper.png" alt="Portrait of Andy Piper"><br>
+@end html
+
+@item @email{ben@@xemacs.org, Ben Wing}
+@html
+<br><img src="ben.png" alt="Portrait of Ben Wing"><br>
+@end html
+
+@item @email{cthomp@@xemacs.org, Chuck Thompson}
+@html
+<br><img src="cthomp.png" alt="Portrait of Chuck Thompson"><br>
+@end html
+
+@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
+
+@html
+<br><img src="hniksic.png" alt="Portrait of Hrvoje Niksic"><br>
+@end html
+
+@item @email{jwz@@jwz.org, Jamie Zawinski}
+@html
+<br><img src="jwz.png" alt="Portrait of Jamie Zawinski"><br>
+@end html
+
+@item @email{martin@@xemacs.org, Martin Buchholz}
+@html
+<br><img src="martin.png" alt="Portrait of Martin Buchholz"><br>
+@end html
+
+@item @email{mly@@adoc.xerox.com, Richard Mlynarik}
+@html
+<br><img src="mly.png" alt="Portrait of Richard Mlynarik"><br>
+@end html
+
+@item @email{stephen@@xemacs.org, Stephen Turnbull}
+
+@item @email{steve@@xemacs.org, Steve Baur}
+@html
+<br><img src="slb.png" alt="Portrait of Steve Baur"><br>
+@end html
+@end itemize
+
+Many other people have contributed to XEmacs; this is partially
+enumerated in the @samp{About XEmacs} option in the Help menu.
+
+@node Q1.0.6, Q1.1.1, Q1.0.5, Introduction
+@unnumberedsubsec Q1.0.6: Who wrote the FAQ?
+
+The current version of this FAQ was created by @email{ben@@xemacs.org,
+Ben Wing}.
+
+Previous contributors to the FAQ include
+
+@itemize @bullet
+@item @email{steve@@xemacs.org, SL Baur}
+
+@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
+
+@item @email{binge@@aloft.att.com, Curtis.N.Bingham}
+
+@item @email{bruncott@@dormeur.inria.fr, Georges Brun-Cottan}
+
+@item @email{rjc@@cogsci.ed.ac.uk, Richard Caley}
+
+@item @email{cognot@@ensg.u-nancy.fr, Richard Cognot}
+
+@item @email{daku@@nortel.ca, Mark Daku}
+
+@item @email{wgd@@martigny.ai.mit.edu, William G. Dubuque}
+
+@item @email{eeide@@cs.utah.edu, Eric Eide}
+
+@item @email{af@@biomath.jussieu.fr, Alain Fauconnet}
+
+@item @email{cflatter@@nrao.edu, Chris Flatters}
+
+@item @email{ginsparg@@adra.com, Evelyn Ginsparg}
+
+@item @email{hall@@aplcenmp.apl.jhu.edu, Marty Hall}
+
+@item @email{dkindred@@cmu.edu, Darrell Kindred}
+
+@item @email{dmoore@@ucsd.edu, David Moore}
+
+@item @email{arup+@@cmu.edu, Arup Mukherjee}
+
+@item @email{nickel@@prz.tu-berlin.de, Juergen Nickelsen}
+
+@item @email{powell@@csl.ncsa.uiuc.edu, Kevin R. Powell}
+
+@item @email{dworkin@@ccs.neu.edu, Justin Sheehy}
+
+@item @email{stig@@hackvan.com, Stig}
+
+@item @email{Aki.Vehtari@@hut.fi, Aki Vehtari}
+@end itemize
+
+@unnumberedsec 1.1: Getting XEmacs
+
+@node Q1.1.1, Q1.1.2, Q1.0.6, Introduction
+@unnumberedsubsec Q1.1.1: Where can I find XEmacs?
+
+To download XEmacs, visit the XEmacs WWW page at
+@uref{http://www.xemacs.org/Download/}.  The most up-to-date list of
+distribution sites can always be found there.  Try to pick a site that
+is networkologically close to you.  If you know of other mirrors of
+the XEmacs archives, please send e-mail to
+@uref{mailto:webmaster@@xemacs.org} and we will list them here as well.
+
+The canonical distribution point is ftp.xemacs.org, available either
+through HTTP (@uref{http://ftp.xemacs.org/}) or anonymous FTP
+(@uref{ftp://ftp.xemacs.org/pub/xemacs/}).
+
+@node Q1.1.2, Q1.1.3, Q1.1.1, Introduction
+@unnumberedsubsec Q1.1.2: Are binaries available?
 
 MS Windows binaries are available at
 @uref{http://www.xemacs.org/Download/win32/} for the native versions
@@ -691,8 +1007,790 @@ common Unix versions and under Mac OS X and comes with an extensive
 configure script that is able to automatically detect most aspects of
 the configuration of your particular system.
 
-@node Q1.0.5, Q1.0.6, Q1.0.4, Introduction
-@unnumberedsubsec Q1.0.5: How does XEmacs differ from GNU Emacs?
+@node Q1.1.3, Q1.1.4, Q1.1.2, Introduction
+@unnumberedsubsec Q1.1.3: How do I get the bleeding-edge sources?
+
+If you are interested in developing XEmacs, or getting the absolutely most
+recent, up-to-the-moment, bleeding-edge source code, you can directly
+access the master CVS source tree (read-only, of course, until you ask for
+and are granted permission to directly modify portions of the source tree)
+at cvs.xemacs.org.  Directions on how to access the source tree are located
+at @uref{http://www.xemacs.org/Develop/cvsaccess.html}.
+
+Nightly CVS snapshots are available at
+@uref{http://www.dk.xemacs.org/Download/CVS-snapshots/}.
+
+@node Q1.1.4, Q1.2.1, Q1.1.3, Introduction
+@unnumberedsubsec Q1.1.4: Where can I obtain a printed copy of the XEmacs User's Manual?
+
+Pre-printed manuals are not available.  If you are familiar with
+TeX, you can generate your own manual from the XEmacs sources.
+
+HTML and Postscript versions of XEmacs manuals are available from the
+XEmacs web site at
+@uref{http://www.xemacs.org/Documentation/index.html}.
+
+@unnumberedsec 1.2: Versions for Different Operating Systems
+
+@node Q1.2.1, Q1.2.2, Q1.1.4, Introduction
+@unnumberedsubsec Q1.2.1: Do I need X11 to run XEmacs?
+
+No.  The name @dfn{XEmacs} is unfortunate in the sense that it is
+@strong{not} an X Window System-only version of Emacs.  XEmacs has
+full color support on a color-capable character terminal.
+
+@node Q1.2.2, Q1.2.3, Q1.2.1, Introduction
+@unnumberedsubsec Q1.2.2: What versions of Unix does XEmacs run on?
+
+For problems with particular machines and versions of Unix, see the
+@file{PROBLEMS} file.
+
+Much effort has gone into making XEmacs work on as many different
+machines, configurations, and compilers as possible.
+
+Much effort has gone into making XEmacs 64-bit clean.
+
+Much effort has gone into removing system-specific code, and replacing
+such code with autodetection at configure time.
+
+The XEmacs core should build "out of the box" on most Unix-like systems.
+
+XEmacs 21.2 was tested and @samp{make check} succeeded on these Unix
+configurations as of 2001-02-10:
+
+@example
+alphaev56-dec-osf4.0e (both Compaq C and gcc)
+i386-unknown-freebsd4.2
+i386-unknown-netbsdelf1.5
+i586-sco-sysv5uw7.0.1 (both SCO's cc and gcc)
+i686-pc-linux-gnu
+hppa2.0-hp-hpux10.20 (both HP's ANSI cc and gcc)
+mips-sgi-irix6.5 (both MIPSpro cc and gcc)
+rs6000-ibm-aix4.3.0.0 (both IBM's xlc and gcc)
+sparc-sun-solaris2.6 (both Sun's Forte C and gcc)
+sparc-sun-solaris2.7 (both Sun's Forte C and gcc)
+sparc-sun-sunos4.1.4 (gcc)
+@end example
+
+Some systems have a dual mode 32-bit/64-bit compiler.  On most of
+these, XEmacs requires the @samp{--pdump} configure option to build
+correctly with the 64-bit version of the compiler.
+
+@example
+mips-sgi-irix6.5, CC="gcc -mabi=64"
+mips-sgi-irix6.5, CC="cc -64"
+rs6000-ibm-aix4.3.0.0, CC="cc -q64"
+@end example
+
+On most of these systems, XEmacs also builds with a C++ compiler,
+but not "out of the box".  This feature is only for use by the
+maintainers.
+
+XEmacs 21.2 is known @emph{not} to work on any machines with m680x0
+processors.  Sorry, all you sun3 and Unix PC nostalgia buffs out there.
+
+VMS has never been supported by XEmacs.  In fact, all the old VMS code
+inherited from Emacs has been removed.  Sorry, all you VMS fans out there.
+
+@node Q1.2.3, Q1.2.4, Q1.2.2, Introduction
+@unnumberedsubsec Q1.2.3: Is there a port of XEmacs to Microsoft Windows?
+
+Yes.  Beginning with release 21.0, XEmacs has worked under MS Windows
+and is fully-featured and actively developed.  A group of dedicated
+developers actively maintains and improves the Windows-specific
+portions of the code.  Some of the core developers, in fact, use
+Windows as their only development environment, and some features, such
+as printing, actually work better on Windows than native Unix and Mac
+OS X.  The mailing list at @email{xemacs-winnt@@xemacs.org} is dedicated
+to that effort (please use the -request address to
+subscribe). (Despite its name, XEmacs actually works on all versions
+of Windows.)
+
+The list name is misleading, as XEmacs supports and has been compiled on
+Windows 95, Windows 98, Windows NT, Windows 2000, Windows ME, Windows
+XP, and all newer versions of Windows.  The MS Windows-specific code is
+based on Microsoft Win32 API, and will not work on MS Windows 3.x or on
+MS-DOS.
+
+XEmacs also supports the Cygwin and MinGW development and runtime
+environments, where it also uses native Windows code for graphical
+features.  In addition, under Cygwin it is possible to compile XEmacs
+to use an X server (and XFree86 is available as part of the standard
+Cygwin installation).
+
+@node Q1.2.4, Q1.2.5, Q1.2.3, Introduction
+@unnumberedsubsec Q1.2.4: Can I build XEmacs on MS Windows with X support?  Do I need to?
+
+Yes, you can, but no you do not need to.  In fact, we recommend that you
+use a native-GUI version unless you have a specific need for an X
+version.
+
+@node Q1.2.5, Q1.2.6, Q1.2.4, Introduction
+@unnumberedsubsec Q1.2.5: What are Cygwin and MinGW, and do I need them to run XEmacs?
+
+To answer the second part of the question: No, you, you don't need
+Cygwin or MinGW to build or to run XEmacs.  But if you have them and
+want to use them, XEmacs supports these environments.
+
+(One important reason to support Cygwin is that it lets the MS Windows
+developers test out their code in a Unix environment without actually
+having to have a Unix machine around.  For this reason alone, Cygwin
+support is likely to remain supported for a long time in XEmacs.  Same
+goes for the X support under Cygwin, for the same reasons.  MinGW
+support, on the other hand, depends on volunteers to keep it up to date;
+but this is generally not hard.)
+
+Cygwin is a set of tools providing Unix-like API on top of Win32.
+It makes it easy to port large Unix programs without significant
+changes to their source code.  It is a development environment as well
+as a runtime environment.
+
+When built with Cygwin, XEmacs supports all display types -- TTY, X &
+Win32 GUI, and can be built with support for all three simultaneously.
+If you build with Win32 GUI support then the Cygwin version uses the
+majority of the Windows-specific code, which is mostly related to
+display.  If you want to build with X support you need X libraries (and
+an X server to display XEmacs on); see @ref{Q2.2.7}.  TTY and Win32 GUI
+require no additional libraries beyond what comes standard with Cygwin.
+
+The advantages of the Cygwin version are that it integrates well with
+the Cygwin environment for existing Cygwin users; uses configure so
+building with different features is very easy; and actively supports X &
+TTY.  Furthermore, the entire Cygwin environment and compiler are free,
+whereas Visual C++ costs money.
+
+The disadvantage is that it requires the whole Cygwin environment,
+whereas the native port requires only a suitable MS Windows compiler.
+Also, it follows the Unix filesystem and process model very closely
+(some will undoubtedly view this as an advantage).
+
+See @uref{http://www.cygwin.com/} for more information on
+Cygwin.
+
+MinGW is a collection of header files and import libraries that allow
+one to use GCC under the Cygwin environment to compile and produce
+exactly the same native Win32 programs that you can using Visual C++.
+Programs compiled with MinGW make use of the standard Microsoft runtime
+library @file{MSVCRT.DLL}, present on all Windows systems, and look,
+feel, and act like a standard Visual-C-produced application. (The only
+difference is the compiler.) This means that, unlike a
+standardly-compiled Cygwin application, no extra runtime support
+(e.g. Cygwin's @file{cygwin1.dll}) is required.  This, along with the
+fact that GCC is free (and works in a nice Unix-y way in a nice Unix-y
+environment, for those die-hard Unix hackers out there), is the main
+advantage of MinGW.  It is also potentially faster than Cygwin because
+it has less overhead when calling Windows, but you lose the POSIX
+emulation layer, which makes Unix programs harder to port. (But this is
+irrelevant for XEmacs since it's already ported to Win32.)
+
+See @uref{http://www.mingw.org/} for more information on MinGW.
+
+@node Q1.2.6, Q1.2.7, Q1.2.5, Introduction
+@unnumberedsubsec Q1.2.6: What are the differences between the various MS Windows emacsen?
+
+XEmacs, Win-Emacs, DOS Emacs, NT Emacs, this is all very confusing.
+Could you briefly explain the differences between them?
+
+Here is a recount of various Emacs versions running on MS Windows:
+
+@itemize @bullet
+
+@item
+XEmacs
+
+@itemize @minus
+
+@item
+Beginning with XEmacs 19.12, XEmacs' architecture was redesigned
+in such a way to allow clean support of multiple window systems.  At
+this time the TTY support was added, making X and TTY the first two
+"window systems" supported by XEmacs.  The 19.12 design is the basis for
+the current native MS Windows code.
+
+@item
+Some time during 1997, David Hobley (soon joined by Marc Paquette)
+imported some of the NT-specific portions of GNU Emacs, making XEmacs
+with X support compile under Windows NT, and creating the "X" port.
+
+@item
+Several months later, Jonathan Harris sent out initial patches to use
+the Win32 API, thus creating the native port.  Since then, various
+people have contributed, including Kirill M. Katsnelson (contributed
+support for menubars, subprocesses and network, as well as loads of
+other code), Andy Piper (ported XEmacs to Cygwin environment,
+contributed Windows unexec, Windows-specific glyphs and toolbars code,
+and more), Ben Wing (loads of improvements; primary MS Windows developer
+since 2000), Jeff Sparkes (contributed scrollbars support) and many
+others.
+@end itemize
+
+@item
+NT Emacs
+
+@itemize @minus
+
+@item
+NT Emacs was an early version of GNU Emacs 19 modified to compile and
+run under MS Windows 95 and NT using the native Win32 API.  It was
+written by Geoff Voelker, and has long since been incorporated into
+the mainline GNU Emacs distribution.
+@end itemize
+
+@item
+Win-Emacs
+
+@itemize @minus
+
+@item
+Win-Emacs was a port of Lucid Emacs 19.6 to MS Windows using X
+compatibility libraries.  Win-Emacs was written by Ben Wing.  The MS
+Windows code never made it back to Lucid Emacs, and its creator (Pearl
+Software) has long since gone out of business.
+@end itemize
+
+@item
+GNU Emacs for DOS
+
+@itemize @minus
+
+@item
+GNU Emacs features support for MS-DOS and DJGPP (D.J. Delorie's DOS
+port of GCC).  Such an Emacs is heavily underfeatured, because it does
+not support long file names, lacks proper subprocesses support, and
+is far too big compared with typical DOS editors.
+@end itemize
+
+@item
+GNU Emacs compiled with Win32
+
+@itemize @minus
+
+@item
+Starting with GNU Emacs 19.30, it has been possible to compile GNU Emacs
+under MS Windows using the DJGPP compiler and X libraries.  The result
+is very similar to GNU Emacs compiled under MS DOS, only it works
+somewhat better because it runs in 32-bit mode, makes use of all the
+system memory, supports long file names, etc.
+@end itemize
+
+@end itemize
+
+@node Q1.2.7, Q1.2.8, Q1.2.6, Introduction
+@unnumberedsubsec Q1.2.7: How does the port cope with differences in the Windows user interface?
+
+The XEmacs (and Emacs in general) user interface is pretty different
+from what is expected of a typical MS Windows program.  How does the MS
+Windows port cope with it?
+
+As a general rule, we follow native MS Windows conventions as much as
+possible.  21.4 is a fairly complete Windows application, supporting
+native printing, system file dialog boxes, tool tips, etc.  In cases
+where there's a clear UI conflict, we currently use normal Unix XEmacs
+behavior by default, but make sure the MS Windows "look and feel" (mark
+via shift-arrow, self-inserting deletes region, Alt selects menu items,
+etc.) is easily configurable (respectively: using the variable
+@code{shifted-motion-keys-select-region} in 21.4 and above [it's in fact
+the default in these versions], or the @file{pc-select} package; using
+the @file{pending-del} package; and setting the variable
+@code{menu-accelerator-enabled} to @code{menu-force} in 21.4 and above).
+In fact, if you use the sample @file{init.el} file as your init file,
+you will get all these behaviors automatically turned on.
+
+In future versions, some of these features might be turned on by
+default in the MS Windows environment.
+
+@node Q1.2.8, Q1.2.9, Q1.2.7, Introduction
+@unnumberedsubsec Q1.2.8: Is there a port of XEmacs to the Macintosh?
+
+Yes.
+
+XEmacs 21.5 (perhaps 21.4 also?) works on MacOS X, although it certainly
+will not feel very much like a Mac application as it has no Mac-specific
+code in it.
+
+There is also a port of XEmacs 19.14 that works on all recent versions
+of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
+Pitts Jarvis} (recently deceased).  It runs in an equivalent of TTY
+mode only (one single Macintosh window, 25 colors), but has a large
+number of Mac-specific additions.  It's available at
+@uref{http://homepage.mac.com/pjarvis/xemacs.html}.
+
+@node Q1.2.9, Q1.2.10, Q1.2.8, Introduction
+@unnumberedsubsec Q1.2.9: Is there a port of XEmacs to the Macintosh?
+
+Yes.
+
+XEmacs 21.5 (perhaps 21.4 also?) works on MacOS X, although it certainly
+will not feel very much like a Mac application as it has no Mac-specific
+code in it.
+
+There is also a port of XEmacs 19.14 that works on all recent versions
+of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
+Pitts Jarvis} (recently deceased).  It runs in an equivalent of TTY
+mode only (one single Macintosh window, 25 colors), but has a large
+number of Mac-specific additions.  It's available at
+@uref{http://homepage.mac.com/pjarvis/xemacs.html}.
+
+@node Q1.2.10, Q1.2.11, Q1.2.9, Introduction
+@unnumberedsubsec Q1.2.10: Is there a port of XEmacs to MS-DOS?
+
+No.  We have never supported running on MS-DOS or Windows 3.1, and in
+fact have long since deleted all MS-DOS-related code.
+
+@node Q1.2.11, Q1.2.12, Q1.2.10, Introduction
+@unnumberedsubsec Q1.2.11: Is there a port of XEmacs to OS/2?
+
+No, but Alexander Nikolaev <avn_1251@@mail.ru> was at one point
+working on it.
+
+@node Q1.2.12, Q1.2.13, Q1.2.11, Introduction
+@unnumberedsubsec Q1.2.12: Is there a port of XEmacs to NextStep?
+
+Carl Edman, apparently no longer at @email{cedman@@princeton.edu}, did
+the port of GNU Emacs to NeXTstep and expressed interest in doing the
+XEmacs port, but never went any farther.
+
+@node Q1.2.13, Q1.3.1, Q1.2.12, Introduction
+@unnumberedsubsec Q1.2.13: Is there a port of XEmacs to VMS?
+
+VMS has never been supported by XEmacs.  In fact, all the old VMS code
+inherited from GNU Emacs has been removed.  Sorry, all you VMS fans
+out there.
+
+@unnumberedsec 1.3: Getting Started
+
+@node Q1.3.1, Q1.3.2, Q1.2.13, Introduction
+@unnumberedsubsec Q1.3.1: What is an @file{init.el} or @file{.emacs} and is there a sample one?
+
+The @file{init.el} or @file{.emacs} file is used to customize XEmacs to
+your tastes.  Starting in 21.4, the preferred location for the init file
+is @file{~/.xemacs/init.el}; in previous versions, it was
+@file{~/.emacs}.  21.4 still accepts the old location, but the first
+time you run it, it will ask to migrate your file to the new location.
+If you answer yes, the file will be moved, and a "compatibility"
+@file{.emacs} file will be placed in the old location so that you can
+still run older versions of XEmacs, and versions of GNU Emacs, which
+expect the old location.  The @file{.emacs} file present is just a stub
+that loads the real file in @file{~/.xemacs/init.el}.
+
+No two init files are alike, nor are they expected to be alike, but
+that's the point.  The XEmacs distribution contains an excellent starter
+example in the @file{etc/} directory called @file{sample.init.el}
+(starting in 21.4) or @file{sample.emacs} in older versions.  Copy this
+file from there to @file{~/.xemacs/init.el} (starting in 21.4) or
+@file{~/.emacs} in older versions, where @samp{~} means your home
+directory, of course.  Then edit it to suit.
+
+You may bring the @file{sample.init.el} or @file{sample.emacs} file into
+an XEmacs buffer from the menubar. (The menu entry for it is always
+under the @samp{Help} menu, but its location under that has changed in
+various versions.  Recently, look under the @samp{Samples} submenu.)  To
+determine the location of the @file{etc/} directory type the command
+@kbd{C-h v data-directory @key{RET}}.
+
+@node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
+@unnumberedsubsec Q1.3.2: Where do I put my @file{init.el} file?
+
+@file{init.el} is the name of the init file starting with 21.4, and is
+located in the subdirectory @file{.xemacs/} of your home directory.  In
+prior versions, the init file is called @file{.emacs} and is located in
+your home directory.
+
+Your home directory under Windows is determined by the @samp{HOME}
+environment variable.  If this is not set, it defaults to @samp{C:\}.
+To set this variable, modify @file{AUTOEXEC.BAT} under Windows 95/98, or
+select @samp{Control Panel->System->Advanced->Environment Variables...}
+under Windows NT/2000.
+
+@node Q1.3.3, Q1.3.4, Q1.3.2, Introduction
+@unnumberedsubsec Q1.3.3: Can I use the same @file{init.el} with the other Emacs?
+
+Yes.  The sample @file{init.el} included in the XEmacs
+distribution will show you how to handle different versions and flavors
+of Emacs.
+
+@node Q1.3.4, Q1.3.5, Q1.3.3, Introduction
+@unnumberedsubsec Q1.3.4: Any good XEmacs tutorials around?
+
+There's the XEmacs tutorial available from the Help Menu under
+@samp{Help->Tutorials}, or by typing @kbd{C-h t}. To check whether
+it's available in a non-english language, type @kbd{C-u C-h t TAB}, type
+the first letters of your preferred language, then type @key{RET}.
+
+@comment There's an Emacs Lisp tutorial at
+@comment
+@comment @example
+@comment @uref{ftp://prep.ai.mit.edu/pub/gnu/emacs-lisp-intro-1.04.tar.gz}.
+@comment @end example
+@comment
+@comment @email{erik@@petaxp.rug.ac.be, Erik Sundermann} has made a tutorial web
+@comment page at
+@comment @iftex
+@comment @*
+@comment @end iftex
+@comment @uref{http://petaxp.rug.ac.be/~erik/xemacs/}.
+
+@node Q1.3.5, Q1.3.6, Q1.3.4, Introduction
+@unnumberedsubsec Q1.3.5: May I see an example of a useful XEmacs Lisp function?
+
+The following function does a little bit of everything useful.  It does
+something with the prefix argument, it examines the text around the
+cursor, and it's interactive so it may be bound to a key.  It inserts
+copies of the current word the cursor is sitting on at the cursor.  If
+you give it a prefix argument: @kbd{C-u 3 M-x double-word} then it will
+insert 3 copies.
+
+@lisp
+(defun double-word (count)
+  "Insert a copy of the current word underneath the cursor"
+  (interactive "*p")
+  (let (here there string)
+    (save-excursion
+      (forward-word -1)
+      (setq here (point))
+      (forward-word 1)
+      (setq there (point))
+      (setq string (buffer-substring here there)))
+    (while (>= count 1)
+      (insert string)
+      (decf count))))
+@end lisp
+
+The best way to see what is going on here is to let XEmacs tell you.
+Put the code into an XEmacs buffer, and do a @kbd{C-h f} with the cursor
+sitting just to the right of the function you want explained.  Eg.  move
+the cursor to the SPACE between @code{interactive} and @samp{"*p"} and
+hit @kbd{C-h f} to see what the function @code{interactive} does.  Doing
+this will tell you that the @code{*} requires a writable buffer, and
+@code{p} converts the prefix argument to a number, and
+@code{interactive} allows you to execute the command with @kbd{M-x}.
+
+@node Q1.3.6, Q1.3.7, Q1.3.5, Introduction
+@unnumberedsubsec Q1.3.6: And how do I bind it to a key?
+
+To bind to a key do:
+
+@lisp
+(global-set-key "\C-cd" 'double-word)
+@end lisp
+
+Or interactively, @kbd{M-x global-set-key} and follow the prompts.
+
+@node Q1.3.7, Q1.3.8, Q1.3.6, Introduction
+@unnumberedsubsec Q1.3.7: What's the difference between a macro and a function?
+
+Quoting from the Lisp Reference (a.k.a @dfn{Lispref}) Manual:
+
+@dfn{Macros} enable you to define new control constructs and other
+language features.  A macro is defined much like a function, but instead
+of telling how to compute a value, it tells how to compute another Lisp
+expression which will in turn compute the value.  We call this
+expression the @dfn{expansion} of the macro.
+
+Macros can do this because they operate on the unevaluated expressions
+for the arguments, not on the argument values as functions do.  They can
+therefore construct an expansion containing these argument expressions
+or parts of them.
+
+Do not confuse the two terms with @dfn{keyboard macros}, which are
+another matter, entirely.  A keyboard macro is a key bound to several
+other keys.  Refer to manual for details.
+
+@node Q1.3.8, Q1.4.1, Q1.3.7, Introduction
+@unnumberedsubsec Q1.3.8: What is @code{Custom}?
+
+@code{Custom} is a system for customizing XEmacs options.
+
+You can access @code{Advanced (Customize)} from the @code{Options} menu
+or invoking one of customize commands by typing eg.
+@kbd{M-x customize}, @kbd{M-x customize-face},
+@kbd{M-x customize-variable} or @kbd{M-x customize-apropos}.
+
+There is also new @samp{browser} mode for Customize.
+Try it out with @kbd{M-x customize-browse}
+
+@unnumberedsec 1.4: Getting Help
+
+@node Q1.4.1, Q1.4.2, Q1.3.8, Introduction
+@unnumberedsubsec Q1.4.1: Where can I get help?
+
+Probably the easiest way, if everything is installed, is to use Info, by
+pressing @kbd{C-h i}, or looking for an Info item on the
+Help Menu.  @kbd{M-x apropos} can be used to look for particular commands.
+
+For items not found in the manual, try reading this FAQ
+and reading the Usenet group comp.emacs.xemacs.
+
+If you choose to post to a newsgroup, @strong{please use
+comp.emacs.xemacs}.  Please do not post XEmacs related questions to
+gnu.emacs.help.
+
+If you cannot post or read Usenet news, there is a corresponding mailing
+list @email{xemacs-news@@xemacs.org} which is available.  It can be
+subscribed to via the Mailman Web interface or by sending mail to to
+@email{xemacs-news-request@@xemacs.org} with @samp{subscribe} in the
+body of the message.  See also
+@uref{http://www.xemacs.org/Lists/#xemacs-news}.  To cancel a
+subscription, you may use the @email{xemacs-news-request@@xemacs.org}
+address or the Web interface.  Send a message with a subject of
+@samp{unsubscribe} to be removed.
+
+@node Q1.4.2, Q1.4.3, Q1.4.1, Introduction
+@unnumberedsubsec Q1.4.2: Which mailing lists are there?
+
+For complete, up-to-date info on the lists and how to subscribe, see
+@uref{http://www.xemacs.org/Lists/}.
+
+@table @samp
+
+@item comp.emacs.xemacs
+is a Usenet newsgroup
+for XEmacs users to discuss problems and issues that arise
+for them.  It's not generally an appropriate place to ask
+about apparent bugs (use @samp{xemacs-beta}), or future plans
+(use @samp{xemacs-design}).
+
+@item xemacs-announce
+is a read-only, low
+volume list for announcements concerning the XEmacs project
+and new releases of the XEmacs software.
+
+@item xemacs-beta
+is an open list for bug
+reports about beta versions of XEmacs.  This includes the bug
+reports themselves, by both users and developers, as well as
+queries, follow-ups, and discussions further determining their
+nature and status.  This is the primary channel for this kind
+of discussion; related code changes will usually not be
+applied until they have been discussed here.  When such
+discussions touch on significant changes to the code (in
+particular, structural changes), or on changes to API's or
+external functionality, they should be moved to
+@samp{xemacs-design}.  Requests and proposals for
+non-bug-related changes do not belong on @samp{xemacs-beta},
+and should be sent to @samp{xemacs-design} instead.
+
+@item xemacs-beta-ja
+is an open list for bug
+reports and design discussion related to Mule features,
+including Japanese handling, in beta versions of XEmacs.
+Japanese is the preferred language of discussion.  For most
+timely presentation to reviewers, please consider sending
+appropriate discussion to @samp{xemacs-mule} or
+@samp{xemacs-design} in English when convenient for
+the participants in discussion.  When possible, bug reports
+not related to Mule (including Japanese) should be reported on
+@samp{xemacs-beta} in English.
+
+@item xemacs-buildreports
+is an open list for
+submission of build-reports on beta versions of XEmacs. For
+information on what the build-reports should contain, please
+see the `etc/BETA' file which is included in each beta
+distribution.
+
+@item xemacs-cvs
+is a read-only list for notices
+and information on what has been committed to the XEmacs CVS
+trees, by whom, and for what.
+
+@item xemacs-design
+is an open list for
+discussing the design of XEmacs.  This includes discussion
+about planned and ongoing changes to functionality and API
+changes and additions as well as requests for them.  This is
+the primary channel for this kind of discussion; related code
+changes will usually not be applied until they have been
+discussed here.  This does not include bug reports, which go
+to @samp{xemacs-beta}.
+
+@item xemacs-mule
+is an open mailing list for
+discussion of International extensions to XEmacs including
+Mule, XIM, I18n issues, etc, and is not confined to
+developmental issues. This list is not restricted to
+English, postings in all languages are welcome.
+
+@item xemacs-news
+is an open list for discussion
+and bug reporting for XEmacs.  This mailing list is
+bi-directionally gatewayed with the USENET newsgroup
+comp.emacs.xemacs.
+
+@item xemacs-nt
+is a developers-only mailing
+list and is intended for people who wish to work actively on
+the porting of XEmacs to Microsoft Windows NT and Microsoft
+Windows '95.
+
+@item xemacs-patches
+is an open, moderated
+list for submission of patches to the XEmacs distribution
+and its packages. Anyone may subscribe or submit to
+xemacs-patches, but all submissions are reviewed by the list
+moderator before they are distributed to the
+list. Discussion is not appropriate on xemacs-patches.
+
+@item xemacs-users-ja
+is an open list for
+discussion and bug reporting for XEmacs.  Japanese is the
+preferred language of discussion.  It is not gated to
+comp.emacs.xemacs or the @samp{xemacs} list.  For
+fastest response, bugs not specifically related to Japanese
+or Mule features should be reported on
+@samp{xemacs-beta} (in English).
+
+@item xemacs-users-ru
+is an open list for
+discussion and bug reporting for XEmacs.  Russian is the
+preferred language of discussion.  It is not gated to
+comp.emacs.xemacs or the @samp{xemacs} list.  For
+fastest response, bugs not specifically related to Russian
+or Mule features should be reported on
+@samp{xemacs-beta} (in English).
+@end table
+
+@node Q1.4.3, Q1.4.4, Q1.4.2, Introduction
+@unnumberedsubsec Q1.4.3: Where are the mailing lists archived?
+
+The archives can be found at @uref{http://list-archive.xemacs.org}
+
+@node Q1.4.4, Q1.4.5, Q1.4.3, Introduction
+@unnumberedsubsec Q1.4.4: How can I get two instances of info?
+
+Before 21.4, you can't.  The @code{info} package does not provide for
+multiple info buffers.  In 21.4, this should be fixed. #### how?
+
+@node Q1.4.5, Q1.5.1, Q1.4.4, Introduction
+@unnumberedsubsec Q1.4.5: How do I add new Info directories?
+
+You use something like:
+
+@lisp
+(setq Info-directory-list (cons
+                           (expand-file-name "~/info")
+                           Info-default-directory-list))
+@end lisp
+
+@email{davidm@@prism.kla.com, David Masterson} writes:
+
+@quotation
+Emacs Info and XEmacs Info do many things differently.  If you're trying to
+support a number of versions of Emacs, here are some notes to remember:
+
+@enumerate
+@item
+Emacs Info scans @code{Info-directory-list} from right-to-left while
+XEmacs Info reads it from left-to-right, so append to the @emph{correct}
+end of the list.
+
+@item
+Use @code{Info-default-directory-list} to initialize
+@code{Info-directory-list} @emph{if} it is available at startup, but not
+all Emacsen define it.
+
+@item
+Emacs Info looks for a standard @file{dir} file in each of the
+directories scanned from #1 and magically concatenates them together.
+
+@item
+XEmacs Info looks for a @file{localdir} file (which consists of just the
+menu entries from a @file{dir} file) in each of the directories scanned
+from #1 (except the first), does a simple concatenation of them, and
+magically attaches the resulting list to the end of the menu in the
+@file{dir} file in the first directory.
+@end enumerate
+
+Another alternative is to convert the documentation to HTML with
+texi2html and read it from a web browser like Lynx or W3.
+@end quotation
+
+@unnumberedsec 1.5: Contributing to XEmacs
+
+@node Q1.5.1, Q1.5.2, Q1.4.5, Introduction
+@unnumberedsubsec Q1.5.1: How do I submit changes to the FAQ?
+
+The FAQ is actively maintained and modified regularly.  All links should
+be up to date.  Unfortunately, some of the information is out of date --
+a situation which the FAQ maintainer is working on.  All submissions are
+welcome, please e-mail submissions to @email{faq@@xemacs.org, XEmacs FAQ
+maintainers}.
+
+Please make sure that @samp{XEmacs FAQ} appears on the Subject: line.
+If you think you have a better way of answering a question, or think a
+question should be included, we'd like to hear about it.  Questions and
+answers included into the FAQ will be edited for spelling and grammar
+and will be attributed.  Answers appearing without attribution are
+either from versions of the FAQ dated before May 1996 or are from
+previous FAQ maintainers.  Answers quoted from Usenet news articles will
+always be attributed, regardless of the author.
+
+@node Q1.5.2, Q1.5.3, Q1.5.1, Introduction
+@unnumberedsubsec Q1.5.2: How do I become a beta tester?
+
+Send an email message to @email{xemacs-beta-request@@xemacs.org} with
+the line @samp{subscribe} in the body of the message.
+
+Be prepared to get your hands dirty, as beta testers are expected to
+identify problems as best they can.
+
+@node Q1.5.3, Q1.6.1, Q1.5.2, Introduction
+@unnumberedsubsec Q1.5.3: How do I contribute to XEmacs itself?
+
+It depends on the knowledge and time you possess.  If you are able, by
+all means become a beta tester (@pxref{Q1.5.2}).  If you are a
+programmer, try to build XEmacs and see if you can improve it.
+
+Otherwise, you can still help by using XEmacs as your everyday editor
+(for pre-built binary versions, @pxref{Q1.1.2}) and reporting bugs you
+find to the mailing list.
+
+Another area where we need help is the documentation: We need good
+documentation for building XEmacs and for using it.  This FAQ is a
+small step in that direction.
+
+Ben Wing @email{ben@@xemacs.org} writes:
+
+@quotation
+BTW if you have a wish list of things that you want added, you have to
+speak up about it!  More specifically, you can do the following if you
+want a feature added (in increasing order of usefulness):
+
+@itemize @bullet
+@item
+Make a posting about a feature you want added.
+
+@item
+Become a beta tester and make more postings about those same features.
+
+@item
+Convince us that you're going to use the features in some cool and
+useful way.
+
+@item
+Come up with a clear and well-thought-out API concerning the features.
+
+@item
+Write the code to implement a feature and send us a patch.
+@end itemize
+
+(not that we're necessarily requiring you to write the code, but we can
+always hope :)
+@end quotation
+
+@unnumberedsec 1.6: Politics (XEmacs vs. GNU Emacs)
+
+@node Q1.6.1, Q1.6.2, Q1.5.3, Introduction
+@unnumberedsubsec Q1.6.1: What is GNU Emacs?
+
+GNU Emacs and XEmacs are related open-source text editors.  Both
+derive from GNU Emacs version 18; the split between the two happened
+in 1991 (for comparison, the oldest versions of GNU Emacs date from
+1984).  For information on GNU Emacs, see
+@uref{http://www.gnu.org/software/emacs/emacs.html}.
+
+@node Q1.6.2, Q1.6.3, Q1.6.1, Introduction
+@unnumberedsubsec Q1.6.2: How does XEmacs differ from GNU Emacs?
 
 For a detailed description of the differences between GNU Emacs and
 XEmacs and a detailed history of XEmacs, check out the
@@ -850,11 +1948,11 @@ LISP libraries who are willing to maintain XEmacs packaged versions
 automatically qualify for CVS accounts for their packages.
 @end table
 
-@node Q1.0.6, Q1.0.7, Q1.0.5, Introduction
-@unnumberedsubsec Q1.0.6: How much does XEmacs differ?
+@node Q1.6.3, Q1.6.4, Q1.6.2, Introduction
+@unnumberedsubsec Q1.6.3: How much does XEmacs differ?
 
 RMS has asserted at times that XEmacs is merely a "patch" on top of
-GNU Emacs (@pxref{Q1.0.7}).  In fact, probably not more than 5% of the
+GNU Emacs (@pxref{Q1.6.4}).  In fact, probably not more than 5% of the
 code, if that, remains unchanged, and nearly 14 years of work has gone
 into XEmacs at this point. (GNU Emacs itself is only than 20 years
 old, and thus XEmacs has existed as a separate product for over 2/3 of
@@ -870,8 +1968,8 @@ developers are instructed by RMS not to even look at XEmacs source code!
 This stems from self-imposed licensing restrictions on the part of GNU
 Emacs -- and almost certainly out of hostility, as well.)
 
-@node Q1.0.7, Q1.0.8, Q1.0.6, Introduction
-@unnumberedsubsec Q1.0.7: Is XEmacs "GNU"?
+@node Q1.6.4, Q1.6.5, Q1.6.3, Introduction
+@unnumberedsubsec Q1.6.4: Is XEmacs "GNU"?
 
 RMS insists on the term "GNU XEmacs" and maintains that
 
@@ -884,7 +1982,7 @@ is why the term "GNU XEmacs" is legitimate.
 @end quotation
 
 In fact, FSF is @emph{not} the copyright holder for most of the code,
-as very little unmodified FSF code remains (@pxref{Q1.0.6}).
+as very little unmodified FSF code remains (@pxref{Q1.6.3}).
 
 Furthermore, RMS's assertion that XEmacs is "GNU" seems rather bizarre
 to the XEmacs developers given RMS's hostility and general lack of
@@ -897,8 +1995,8 @@ from an endorsement.  In fact, the GNU Project distributes a number of
 non-GNU software projects on the FSF web site, but again XEmacs is not
 one of them.
 
-@node Q1.0.8, Q1.0.9, Q1.0.7, Introduction
-@unnumberedsubsec Q1.0.8: What is the correct way to refer to XEmacs and GNU Emacs?
+@node Q1.6.5, Q1.6.6, Q1.6.4, Introduction
+@unnumberedsubsec Q1.6.5: What is the correct way to refer to XEmacs and GNU Emacs?
 
 Unfortunately even the naming of these two applications has become
 politicized.  Much of this stems from RMS, who has a history of
@@ -907,12 +2005,12 @@ and "GNU/Linux".) We would prefer that the terms "XEmacs" and "GNU
 Emacs" be used, which are neutral and acceptable to most people.  RMS,
 however, is not willing to accept these terms.  He insists that, if
 his product is called "GNU Emacs", then ours must be called "GNU
-XEmacs". (For our opinion of this term, @xref{Q1.0.7}.) On the other
+XEmacs". (For our opinion of this term, @xref{Q1.6.4}.) On the other
 hand, if our product is to be called "XEmacs", as we prefer, then his
 product must simply be called "Emacs".  The intent of this seems
 clear: RMS wants to make sure the names reflect his view that his
 version is the "real" Emacs and ours is merely a derivative,
-second-class product (@pxref{Q1.0.6}).
+second-class product (@pxref{Q1.6.3}).
 
 The XEmacs developers hope that you will use the neutral terms
 "XEmacs" and "GNU Emacs" for these two specific products. "Emacs", on
@@ -933,8 +2031,8 @@ Emacs, produced by James Gosling.  RMS, however, considers such terms
 to be insulting, so we refrain from using them as much as possible in
 preference to GNU Emacs.)
 
-@node Q1.0.9, Q1.0.10, Q1.0.8, Introduction
-@unnumberedsubsec Q1.0.9: Why haven't XEmacs and GNU Emacs merged?
+@node Q1.6.6, Q1.7.1, Q1.6.5, Introduction
+@unnumberedsubsec Q1.6.6: Why haven't XEmacs and GNU Emacs merged?
 
 There are currently irreconcilable differences in the views about
 technical, programming, design, organizational and legal matters
@@ -1014,655 +2112,425 @@ avoid posting to the newsgroups, because of the very heated flamewars
 that often result.  Mail your questions to
 @email{xemacs-beta@@xemacs.org} and @email{emacs-devel@@gnu.org}.
 
-@node Q1.0.10, Q1.0.11, Q1.0.9, Introduction
-@unnumberedsubsec Q1.0.10: Where can I get help?
+@unnumberedsec 1.7: External Packages
 
-Probably the easiest way, if everything is installed, is to use Info, by
-pressing @kbd{C-h i}, or looking for an Info item on the
-Help Menu.  @kbd{M-x apropos} can be used to look for particular commands.
+@node Q1.7.1, Q1.8.1, Q1.6.6, Introduction
+@unnumberedsubsec Q1.7.1: Which external packages are there?
 
-For items not found in the manual, try reading this FAQ
-and reading the Usenet group comp.emacs.xemacs.
+@subheading Normal Packages
 
-If you choose to post to a newsgroup, @strong{please use
-comp.emacs.xemacs}.  Please do not post XEmacs related questions to
-gnu.emacs.help.
-
-If you cannot post or read Usenet news, there is a corresponding mailing
-list @email{xemacs-news@@xemacs.org} which is available.  It can be
-subscribed to via the Mailman Web interface or by sending mail to to
-@email{xemacs-news-request@@xemacs.org} with @samp{subscribe} in the
-body of the message.  See also
-@uref{http://www.xemacs.org/Lists/#xemacs-news}.  To cancel a
-subscription, you may use the @email{xemacs-news-request@@xemacs.org}
-address or the Web interface.  Send a message with a subject of
-@samp{unsubscribe} to be removed.
-
-@node Q1.0.11, Q1.0.12, Q1.0.10, Introduction
-@unnumberedsubsec Q1.0.11: Where are the mailing lists archived?
-
-The archives can be found at @uref{http://list-archive.xemacs.org}
-
-@node Q1.0.12, Q1.0.13, Q1.0.11, Introduction
-@unnumberedsubsec Q1.0.12: How do you pronounce XEmacs?
-
-The most common pronounciation is @samp{Eks eemax}.
-
-@node Q1.0.13, Q1.0.14, Q1.0.12, Introduction
-@unnumberedsubsec Q1.0.13: What does XEmacs look like?
-
-Screen snapshots are available at
-@uref{http://www.xemacs.org/About/Screenshots/index.html}
-as part of the XEmacs website.
-
-@node Q1.0.14, Q1.1.1, Q1.0.13, Introduction
-@unnumberedsubsec Q1.0.14: Where can I obtain a printed copy of the XEmacs User's Manual?
-
-Pre-printed manuals are not available.  If you are familiar with
-TeX, you can generate your own manual from the XEmacs sources.
-
-HTML and Postscript versions of XEmacs manuals are available from the
-XEmacs web site at
-@uref{http://www.xemacs.org/Documentation/index.html}.
-
-@unnumberedsec 1.1: Versions for Different Operating Systems
-
-@node Q1.1.1, Q1.1.2, Q1.0.14, Introduction
-@unnumberedsubsec Q1.1.1: Do I need X11 to run XEmacs?
-
-No.  The name @dfn{XEmacs} is unfortunate in the sense that it is
-@strong{not} an X Window System-only version of Emacs.  XEmacs has
-full color support on a color-capable character terminal.
-
-@node Q1.1.2, Q1.1.3, Q1.1.1, Introduction
-@unnumberedsubsec Q1.1.2: Is there a port of XEmacs to Microsoft Windows?
-
-Yes.  Beginning with release 21.0, XEmacs has worked under MS Windows
-and is fully-featured and actively developed.  A group of dedicated
-developers actively maintains and improves the Windows-specific
-portions of the code.  Some of the core developers, in fact, use
-Windows as their only development environment, and some features, such
-as printing, actually work better on Windows than native Unix and Mac
-OS X.  The mailing list at @email{xemacs-winnt@@xemacs.org} is dedicated
-to that effort (please use the -request address to
-subscribe). (Despite its name, XEmacs actually works on all versions
-of Windows.)
-
-The list name is misleading, as XEmacs supports and has been compiled on
-Windows 95, Windows 98, Windows NT, Windows 2000, Windows ME, Windows
-XP, and all newer versions of Windows.  The MS Windows-specific code is
-based on Microsoft Win32 API, and will not work on MS Windows 3.x or on
-MS-DOS.
-
-XEmacs also supports the Cygwin and MinGW development and runtime
-environments, where it also uses native Windows code for graphical
-features.  In addition, under Cygwin it is possible to compile XEmacs
-to use an X server (and XFree86 is available as part of the standard
-Cygwin installation).
-
-@node Q1.1.3, Q1.1.4, Q1.1.2, Introduction
-@unnumberedsubsec Q1.1.3: Can I build XEmacs on MS Windows with X support?  Do I need to?
-
-Yes, you can, but no you do not need to.  In fact, we recommend that you
-use a native-GUI version unless you have a specific need for an X
-version.
-
-@node Q1.1.4, Q1.1.5, Q1.1.3, Introduction
-@unnumberedsubsec Q1.1.4: What are Cygwin and MinGW, and do I need them to run XEmacs?
-
-To answer the second part of the question: No, you, you don't need
-Cygwin or MinGW to build or to run XEmacs.  But if you have them and
-want to use them, XEmacs supports these environments.
-
-(One important reason to support Cygwin is that it lets the MS Windows
-developers test out their code in a Unix environment without actually
-having to have a Unix machine around.  For this reason alone, Cygwin
-support is likely to remain supported for a long time in XEmacs.  Same
-goes for the X support under Cygwin, for the same reasons.  MinGW
-support, on the other hand, depends on volunteers to keep it up to date;
-but this is generally not hard.)
-
-Cygwin is a set of tools providing Unix-like API on top of Win32.
-It makes it easy to port large Unix programs without significant
-changes to their source code.  It is a development environment as well
-as a runtime environment.
-
-When built with Cygwin, XEmacs supports all display types -- TTY, X &
-Win32 GUI, and can be built with support for all three simultaneously.
-If you build with Win32 GUI support then the Cygwin version uses the
-majority of the Windows-specific code, which is mostly related to
-display.  If you want to build with X support you need X libraries (and
-an X server to display XEmacs on); see @ref{Q2.2.7}.  TTY and Win32 GUI
-require no additional libraries beyond what comes standard with Cygwin.
-
-The advantages of the Cygwin version are that it integrates well with
-the Cygwin environment for existing Cygwin users; uses configure so
-building with different features is very easy; and actively supports X &
-TTY.  Furthermore, the entire Cygwin environment and compiler are free,
-whereas Visual C++ costs money.
-
-The disadvantage is that it requires the whole Cygwin environment,
-whereas the native port requires only a suitable MS Windows compiler.
-Also, it follows the Unix filesystem and process model very closely
-(some will undoubtedly view this as an advantage).
-
-See @uref{http://www.cygwin.com/} for more information on
-Cygwin.
-
-MinGW is a collection of header files and import libraries that allow
-one to use GCC under the Cygwin environment to compile and produce
-exactly the same native Win32 programs that you can using Visual C++.
-Programs compiled with MinGW make use of the standard Microsoft runtime
-library @file{MSVCRT.DLL}, present on all Windows systems, and look,
-feel, and act like a standard Visual-C-produced application. (The only
-difference is the compiler.) This means that, unlike a
-standardly-compiled Cygwin application, no extra runtime support
-(e.g. Cygwin's @file{cygwin1.dll}) is required.  This, along with the
-fact that GCC is free (and works in a nice Unix-y way in a nice Unix-y
-environment, for those die-hard Unix hackers out there), is the main
-advantage of MinGW.  It is also potentially faster than Cygwin because
-it has less overhead when calling Windows, but you lose the POSIX
-emulation layer, which makes Unix programs harder to port. (But this is
-irrelevant for XEmacs since it's already ported to Win32.)
-
-See @uref{http://www.mingw.org/} for more information on MinGW.
-
-@node Q1.1.5, Q1.1.6, Q1.1.4, Introduction
-@unnumberedsubsec Q1.1.5: What are the differences between the various MS Windows emacsen?
-
-XEmacs, Win-Emacs, DOS Emacs, NT Emacs, this is all very confusing.
-Could you briefly explain the differences between them?
-
-Here is a recount of various Emacs versions running on MS Windows:
-
-@itemize @bullet
-
-@item
-XEmacs
-
-@itemize @minus
-
-@item
-Beginning with XEmacs 19.12, XEmacs' architecture was redesigned
-in such a way to allow clean support of multiple window systems.  At
-this time the TTY support was added, making X and TTY the first two
-"window systems" supported by XEmacs.  The 19.12 design is the basis for
-the current native MS Windows code.
-
-@item
-Some time during 1997, David Hobley (soon joined by Marc Paquette)
-imported some of the NT-specific portions of GNU Emacs, making XEmacs
-with X support compile under Windows NT, and creating the "X" port.
-
-@item
-Several months later, Jonathan Harris sent out initial patches to use
-the Win32 API, thus creating the native port.  Since then, various
-people have contributed, including Kirill M. Katsnelson (contributed
-support for menubars, subprocesses and network, as well as loads of
-other code), Andy Piper (ported XEmacs to Cygwin environment,
-contributed Windows unexec, Windows-specific glyphs and toolbars code,
-and more), Ben Wing (loads of improvements; primary MS Windows developer
-since 2000), Jeff Sparkes (contributed scrollbars support) and many
-others.
-@end itemize
-
-@item
-NT Emacs
-
-@itemize @minus
-
-@item
-NT Emacs was an early version of GNU Emacs 19 modified to compile and
-run under MS Windows 95 and NT using the native Win32 API.  It was
-written by Geoff Voelker, and has long since been incorporated into
-the mainline GNU Emacs distribution.
-@end itemize
-
-@item
-Win-Emacs
-
-@itemize @minus
-
-@item
-Win-Emacs was a port of Lucid Emacs 19.6 to MS Windows using X
-compatibility libraries.  Win-Emacs was written by Ben Wing.  The MS
-Windows code never made it back to Lucid Emacs, and its creator (Pearl
-Software) has long since gone out of business.
-@end itemize
-
-@item
-GNU Emacs for DOS
-
-@itemize @minus
-
-@item
-GNU Emacs features support for MS-DOS and DJGPP (D.J. Delorie's DOS
-port of GCC).  Such an Emacs is heavily underfeatured, because it does
-not support long file names, lacks proper subprocesses support, and
-is far too big compared with typical DOS editors.
-@end itemize
-
-@item
-GNU Emacs compiled with Win32
-
-@itemize @minus
-
-@item
-Starting with GNU Emacs 19.30, it has been possible to compile GNU Emacs
-under MS Windows using the DJGPP compiler and X libraries.  The result
-is very similar to GNU Emacs compiled under MS DOS, only it works
-somewhat better because it runs in 32-bit mode, makes use of all the
-system memory, supports long file names, etc.
-@end itemize
-
-@end itemize
-
-@node Q1.1.6, Q1.1.7, Q1.1.5, Introduction
-@unnumberedsubsec Q1.1.6: Is there a port of XEmacs to the Macintosh?
-
-Yes.
-
-XEmacs 21.5 (perhaps 21.4 also?) works on MacOS X, although it certainly
-will not feel very much like a Mac application as it has no Mac-specific
-code in it.
-
-There is also a port of XEmacs 19.14 that works on all recent versions
-of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
-Pitts Jarvis} (recently deceased).  It runs in an equivalent of TTY
-mode only (one single Macintosh window, 25 colors), but has a large
-number of Mac-specific additions.  It's available at
-@uref{http://homepage.mac.com/pjarvis/xemacs.html}.
-
-@node Q1.1.7, Q1.1.8, Q1.1.6, Introduction
-@unnumberedsubsec Q1.1.7: Is there a port of XEmacs to NextStep?
-
-Carl Edman, apparently no longer at @email{cedman@@princeton.edu}, did
-the port of GNU Emacs to NeXTstep and expressed interest in doing the
-XEmacs port, but never went any farther.
-
-@node Q1.1.8, Q1.1.9, Q1.1.7, Introduction
-@unnumberedsubsec Q1.1.8: Is there a port of XEmacs to OS/2?
-
-No, but Alexander Nikolaev <avn_1251@@mail.ru> is working on it.
-
-@node Q1.1.9, Q1.2.1, Q1.1.8, Introduction
-@unnumberedsubsec Q1.1.9: How does the port cope with differences in the Windows user interface?
-
-The XEmacs (and Emacs in general) user interface is pretty different
-from what is expected of a typical MS Windows program.  How does the MS
-Windows port cope with it?
-
-As a general rule, we follow native MS Windows conventions as much as
-possible.  21.4 is a fairly complete Windows application, supporting
-native printing, system file dialog boxes, tool tips, etc.  In cases
-where there's a clear UI conflict, we currently use normal Unix XEmacs
-behavior by default, but make sure the MS Windows "look and feel" (mark
-via shift-arrow, self-inserting deletes region, Alt selects menu items,
-etc.) is easily configurable (respectively: using the variable
-@code{shifted-motion-keys-select-region} in 21.4 and above [it's in fact
-the default in these versions], or the @file{pc-select} package; using
-the @file{pending-del} package; and setting the variable
-@code{menu-accelerator-enabled} to @code{menu-force} in 21.4 and above).
-In fact, if you use the sample @file{init.el} file as your init file,
-you will get all these behaviors automatically turned on.
-
-In future versions, some of these features might be turned on by
-default in the MS Windows environment.
-
-@unnumberedsec 1.2: Policies
-
-@node Q1.2.1, Q1.2.2, Q1.1.9, Introduction
-@unnumberedsubsec Q1.2.1: What is the FAQ editorial policy?
-
-The FAQ is actively maintained and modified regularly.  All links should
-be up to date.  Unfortunately, some of the information is out of date --
-a situation which the FAQ maintainer is working on.  All submissions are
-welcome, please e-mail submissions to @email{faq@@xemacs.org, XEmacs FAQ
-maintainers}.
-
-Please make sure that @samp{XEmacs FAQ} appears on the Subject: line.
-If you think you have a better way of answering a question, or think a
-question should be included, we'd like to hear about it.  Questions and
-answers included into the FAQ will be edited for spelling and grammar
-and will be attributed.  Answers appearing without attribution are
-either from versions of the FAQ dated before May 1996 or are from
-previous FAQ maintainers.  Answers quoted from Usenet news articles will
-always be attributed, regardless of the author.
-
-@node Q1.2.2, Q1.2.3, Q1.2.1, Introduction
-@unnumberedsubsec Q1.2.2: How do I become a beta tester?
-
-Send an email message to @email{xemacs-beta-request@@xemacs.org} with
-the line @samp{subscribe} in the body of the message.
-
-Be prepared to get your hands dirty, as beta testers are expected to
-identify problems as best they can.
-
-@node Q1.2.3, Q1.3.1, Q1.2.2, Introduction
-@unnumberedsubsec Q1.2.3: How do I contribute to XEmacs itself?
-
-It depends on the knowledge and time you possess.  If you are able, by
-all means become a beta tester (@pxref{Q1.2.2}).  If you are a
-programmer, try to build XEmacs and see if you can improve it.
-
-Otherwise, you can still help by using XEmacs as your everyday editor
-(for pre-built binary versions, @pxref{Q1.0.4}) and reporting bugs you
-find to the mailing list.
-
-Another area where we need help is the documentation: We need good
-documentation for building XEmacs and for using it.  This FAQ is a
-small step in that direction.
-
-Ben Wing @email{ben@@xemacs.org} writes:
-
-@quotation
-BTW if you have a wish list of things that you want added, you have to
-speak up about it!  More specifically, you can do the following if you
-want a feature added (in increasing order of usefulness):
-
-@itemize @bullet
-@item
-Make a posting about a feature you want added.
-
-@item
-Become a beta tester and make more postings about those same features.
-
-@item
-Convince us that you're going to use the features in some cool and
-useful way.
-
-@item
-Come up with a clear and well-thought-out API concerning the features.
-
-@item
-Write the code to implement a feature and send us a patch.
-@end itemize
-
-(not that we're necessarily requiring you to write the code, but we can
-always hope :)
-@end quotation
-
-@unnumberedsec 1.3: Credits
-
-@node Q1.3.1, Q1.3.2, Q1.2.3, Introduction
-@unnumberedsubsec Q1.3.1: Who wrote XEmacs?
-
-XEmacs is the result of the time and effort of many people, and the
-active developers have changed over time.  There are two major
-components of the XEmacs effort -- writing the code itself and providing
-all the support work (testing the code, releasing beta and final
-versions, handling patches, reading bug reports, maintaining the web
-site, managing the mailing lists, etc. etc.).  Neither component would
-work without the other.
-
-@subheading CODING
-
-The primary code contributor over the years has been Ben Wing (active
-since late 1992).  Between 1991 and 1995, large amounts of coding was
-contributed by Jamie Zawinski and Chuck Thompson.  Many other people
-have authored major subsystems or otherwise contributed large amounts of
-code, including Andy Piper, Hrvoje Niksic, Jerry James, Jonathan Harris,
-Kyle Jones, Martin Buchholz, Michael Sperber, Olivier Galibert, Richard
-Mlynarik, Stig, William Perry and plenty of others.
-
-Primary XEmacs-specific subsystems and their authors:
+A very broad collection of elisp packages.
 
 @table @asis
-@item Objects
-@itemize @minus
-@item
-Conversion from 26-bit to 28-bit pointers and integers, lrecords, lcrecords: Richard Mlynarik, 1994
-@item
-Conversion to 32-bit pointers and 31-bit integers: Kyle Jones, Martin Buchholz
-@item
-Portable dumper, object descriptions: Olivier Galibert
-@item
-KKCC (new garbage collector), ephemerons, weak boxes: Michael Sperber and students
-@item
-Random object work (object equal and hash methods, weak lists, lcrecord lists, bit vectors, dynarr, blocktype, opaque, string resizing): Ben Wing
-@item
-Profiling: Ben Wing
-@item
-Some byte-compilation and hash-table improvements: Martin Buchholz
-@item
-Bignum: Jerry James
-@end itemize
+@item Sun
+Support for Sparcworks.
 
-@item Internationalization/Mule
-@itemize @minus
-@item
-mostly Ben Wing; many ideas for future work, Stephen Turnbull
-@end itemize
+@item ada
+Ada language support.
 
-@item I/O
-@itemize @minus
-@item
-Basic event/event-stream implementation: Jamie Zawinski
-@item
-Most event work since 1994: Ben Wing
-@item
-Asynchronous stuff (async timeouts, signals, quit-checking): Ben Wing
-@item
-Process method abstraction, Windows process work: Kirill Katsnelson
-@item
-Misc-user events, async timeouts, most quit-checking and signal code, most other work since 1994: Ben Wing
-@item
-Lstreams: Ben Wing
-@end itemize
+@item apel
+A Portable Emacs Library.  Used by XEmacs MIME support.
 
-@item Display
-@itemize @minus
-@item
-Redisplay mechanism: implementation, Chuck Thompson; additional work, lots of people
-@item
-Glyphs: mostly Ben Wing
-@item
-Specifiers: Ben Wing
-@item
-Extents: initial implementation, someone at Lucid; rewrite, 1994, Ben Wing
-@item
-Widgets: Andy Piper
-@item
-JPEG/PNG/TIFF image converters: Ben Wing, William Perry, Jareth Hein, others (see comment in @file{glyphs-eimage.c})
-@item
-Menus: Jamie Zawinski, someone at Lucid (Lucid menus)
-@item
-Scrollbars: Chuck Thompson, ??? (Lucid scrollbar)
-@item
-Multi-device/device-independence work (console/device/etc methods): Ben Wing, prototype by chuck thompson
-@item
-Faces: first implementation, Jamie Zawinski; second, chuck; third, Ben Wing
-@item
-Fonts/colors: first implementation, Jamie Zawinski; further work, Ben Wing
-@item
-Toolbars: implementation, chuck, much interface work, Ben Wing
-@item
-Gutters, tabs: andy piper
-@end itemize
+@item auctex
+Basic TeX/LaTeX support.
 
-@item Device subsystems
-@itemize @minus
-@item
-X Windows: Jamie Zawinksi, Ben Wing, others
-@item
-GTK: William Perry, Malcolm Purvis
-@item
-MS Windows: initial implementation, Jonathan Harris; some more work, Andy Piper, Ben Wing
-@item
-TTY: Chuck Thompson, Ben Wing
-@item
-Cygwin: Andy Piper
-@end itemize
+@item bbdb
+The Big Brother Data Base: a rolodex-like database program.
 
-@item Misc
-@itemize @minus
-@item
-Configure: initial porting from fsf, Chuck Thompson; conversion to autoconf 2, much rewriting, Martin Buchholz
-@item
-Most initialization-related code: Ben Wing
-@item
-Internals manual, much of Lisp manual: Ben Wing
-@item
-FSF synching: initial sync with FSF 19, Richard Mlynarik, further work, Ben Wing
-@end itemize
+@item build
+Build XEmacs from within (UNIX, Windows).
+
+@item c-support
+Basic single-file add-ons for editing C code.
+
+@item calc
+Emacs calculator.
+
+@item calendar
+Calendar and diary support.
+
+@item cc-mode
+C, C++, Objective-C, Java, CORBA IDL, Pike and AWK language support.
+
+@item clearcase
+New Clearcase Version Control for XEmacs (UNIX, Windows).
+
+@item clearcase
+Support for the Clearcase version control system.
+
+@item cookie
+"Fortune cookie"-style messages. Includes Spook (suspicious phrases) 
+and Yow (Zippy quotes).
+
+@item crisp
+Crisp/Brief emulation.
+
+@item debug
+GUD, gdb, dbx debugging support.
+
+@item dictionary
+Interface to RFC2229 dictionary servers.
+
+@item dired
+The DIRectory EDitor is for manipulating, and running commands on
+files in a directory.
+
+@item docbookide
+DocBook editing support.
+
+@item ecb
+Emacs source code browser.
+
+@item ecrypto
+Crypto functionality in Emacs Lisp.
+
+@item edebug
+An Emacs Lisp debugger.
+
+@item ediff
+Interface over GNU patch.
+
+@item edit-utils
+Miscellaneous editor extensions, you probably need this.
+
+@item edt
+DEC EDIT/EDT emulation.
+
+@item efs
+Treat files on remote systems the same as local files.
+
+@item eieio
+Enhanced Implementation of Emacs Interpreted Objects.
+
+@item elib
+Portable Emacs Lisp utilities library.
+
+@item emerge
+Another interface over GNU patch.
+
+@item erc
+ERC is an Emacs InternetRelayChat client.
+
+@item escreen
+Multiple editing sessions withing a single frame (like screen).
+
+@item eshell
+Command shell implemented entirely in Emacs Lisp.
+
+@item ess
+ESS: Emacs Speaks Statistics.
+
+@item eterm
+Terminal emulation.
+
+@item eudc
+Emacs Unified Directory Client (LDAP, PH).
+
+@item footnote
+Footnoting in mail message editing modes.
+
+@item forms
+Forms editing support (obsolete, use Widget instead).
+
+@item fortran-modes
+Fortran support.
+
+@item fortran-modes
+Fortran language support.
+
+@item frame-icon
+Set up mode-specific icons for each frame under XEmacs.
+
+@item fsf-compat
+GNU Emacs compatibility files.
+
+@item games
+Tetris, Sokoban, and Snake.
+
+@item general-docs
+General documentation.  Presently, empty.
+
+@item gnats
+XEmacs bug reports.
+
+@item gnus
+The Gnus Newsreader and Mailreader.
+
+@item haskell-mode
+Haskell editing support.
+
+@item hm--html-menus
+HTML editing.
+
+@item hyperbole
+Hyperbole: The Everyday Info Manager.
+
+@item ibuffer
+Advanced replacement for buffer-menu.
+
+@item idlwave
+Editing and Shell mode for the Interactive Data Language.
+
+@item igrep
+Enhanced front-end for Grep.
+
+@item ilisp
+Front-end for interacting with Inferior Lisp (external lisps).
+
+@item ispell
+Spell-checking with GNU ispell.
+
+@item jde
+Integrated Development Environment for Java.
+
+@item liece
+IRC (Internet Relay Chat) client for Emacs.  Note, this package is
+deprecated and will be removed, use riece instead.
+
+@item mail-lib
+Fundamental lisp files for providing email support.
+
+@item mailcrypt
+Support for messaging encryption with PGP.
+
+@item mew
+Messaging in an Emacs World; a MIME-based email program.
+
+@item mh-e
+The XEmacs Interface to the MH Mail System.
+
+@item mine
+Elisp implementation of the game 'Minehunt'.
+
+@item misc-games
+Other amusements and diversions.
+
+@item mmm-mode
+Support for Multiple Major Modes within a single buffer.
+
+@item net-utils
+Miscellaneous Networking Utilities.
+
+@item ocaml
+Objective Caml editing support.
+
+@item oo-browser
+OO-Browser: The Multi-Language Object-Oriented Code Browser.
+
+@item ocaml
+Objective Caml editing support.
+
+@item os-utils
+Miscellaneous single-file O/S utilities, for printing, archiving,
+compression, remote shells, etc.
+
+@item pc
+PC style interface emulation.
+
+@item pcl-cvs
+CVS frontend.
+
+@item pcomplete
+Provides programmatic completion.
+
+@item perl-modes
+Perl support.
+
+@item pgg
+Emacs interface to various PGP implementations.
+
+@item prog-modes
+Support for various programming languages.
+
+@item ps-print
+Printing functions and utilities.
+
+@item psgml
+Validated HTML/SGML editing.
+
+@item psgml-dtds
+A collection of DTDs for psgml.  Note that this package is deprecated
+and will be removed in the future, most likely Q2/2003.  Instead of using
+this, you should install needed DTDs yourself.
+
+@item python-modes
+Python language support.
+
+@item reftex
+Emacs support for LaTeX cross-references, citations.
+
+@item riece
+IRC (Internet Relay Chat) client for Emacs.
+
+@item rmail
+An obsolete Emacs mailer.  If you do not already use it don't start.
+
+@item ruby-modes
+Ruby support.
+
+@item sasl
+Simple Authentication and Security Layer (SASL) library.
+
+@item scheme
+Front-end support for Inferior Scheme.
+
+@item semantic
+Semantic bovinator (Yacc/Lex for XEmacs). Includes Senator.
+
+@item sgml
+SGML/Linuxdoc-SGML editing.
+
+@item sh-script
+Support for editing shell scripts.
+
+@item sieve
+Manage Sieve email filtering scripts.
+
+@item slider
+User interface tool.
+
+@item sml-mode
+SML editing support.
+
+@item sounds-au
+XEmacs Sun sound files.
+
+@item sounds-wav
+XEmacs Microsoft sound files.
+
+@item speedbar
+Provides a separate frame with convenient references.
+
+@item strokes
+Mouse enhancement utility.
+
+@item supercite
+An Emacs citation tool for News & Mail messages.
+
+@item texinfo
+XEmacs TeXinfo support.
+
+@item text-modes
+Miscellaneous support for editing text files.
+
+@item textools
+Miscellaneous TeX support.
+
+@item time
+Display time & date on the modeline.
+
+@item tm
+Emacs MIME support. Not needed for gnus >= 5.8.0.
+
+@item tooltalk
+Support for building with Tooltalk.
+
+@item tpu
+DEC EDIT/TPU support.
+
+@item tramp
+Remote shell-based file editing.  This is similar to EFS or Ange-FTP,
+but works with rsh/ssh and rcp/scp.
+
+@item vc
+Version Control for Free systems.
+
+@item vc-cc
+Version Control for ClearCase (UnFree) systems.
+
+@item vhdl
+Support for VHDL.
+
+@item view-process
+A Unix process browsing tool.
+
+@item viper
+VI emulation support.
+
+@item vm
+An Emacs mailer.
+
+@item w3
+A Web browser.
+
+@item x-symbol
+Semi WYSIWYG for LaTeX, HTML, etc, using additional fonts.
+
+@item xemacs-base
+Fundamental XEmacs support, you almost certainly need this.
+
+@item xemacs-devel
+XEmacs Lisp developer support.  This package contains utilities for
+supporting Lisp development.  It is a single-file package so it may be 
+tailored.
+
+@item xlib
+Emacs interface to X server.
+
+@item xslide
+XSL editing support.
+
+@item xslt-process
+A minor mode for (X)Emacs which allows running an XSLT processor on a
+buffer.
+
+@item xwem
+X Emacs Window Manager.
+
+@item zenirc
+ZENIRC IRC Client.
 @end table
 
-@subheading SUPPORT
+@subheading Mule Support (mule)
 
-Currently, support duties are handled by many different people.
+MULti-lingual Enhancement.  Support for world scripts such as
+Latin, Arabic, Cyrillic, Chinese, Japanese, Greek, Hebrew etc.
+To use these packages your XEmacs must be compiled with Mule
+support.
 
-Release managers have been
+@table @asis
+@item edict
+MULE: Lisp Interface to EDICT, Kanji Dictionary.
 
-@itemize @minus
-@item
-Stephen Turnbull (April 2001 - present, 21.x - 21.x?)
-@item
-Vin Shelton?
-@item
-Steve Youngs (July 2002 - present??, 21.x - 21.x?)
-@item
-Martin Buchholz (December 1998 - May 2001, 21.x - 21.x?)
-@item
-Steve Baur (early 1997 - November 1998, 19.15 - 21.0)
-@item
-Chuck Thompson (June 1994 - September 1996, 19.11 - 19.14)
-@item
-Jamie Zawinski (April 1991 - June 1994, 19.0 - 19.10)
-@end itemize
+@item egg-its
+MULE: Wnn (4.2 and 6) support.  SJ3 support.
 
-The recent overlapping dates are intentional, since two or three trees
-are maintained simultaneously at any point.
+@item latin-unity
+MULE: find single ISO 8859 character set to encode a buffer.
 
-Other major support work:
+@item latin-unity
+Unify character sets in a buffer. When characters belong to disjoint
+character sets, this attempts to translate the characters so
+that they belong to one character set. If the buffer coding system is
+not sufficient, this suggests different coding systems.
 
-@itemize @minus
-@item
-Adrian Aichner wrote and maintains the web site.
-@item
-Stephen Turnbull has produced many of the beta and semi-stable releases
-and has attempted to be the "face" of XEmacs on the newsgroups and
-mailing lists.
-@item
-Steve Youngs currently produces the beta releases (???).
-@item
-Steve Youngs, Ville Skytta, and now Norbert Koch have taken turns
-maintaining the packages.
-@item
-Vin Shelton maintains the stable releases.
-@item
-Testing - #### Norbert, Adrian, ???
-@end itemize
+@item leim
+MULE: Quail.  All non-English and non-Japanese language support.
 
-Portraits and email of some of the major developers:
+@item locale
+MULE: Localized menubars and localized splash screens.
 
-@itemize @bullet
-@item @email{andy@@xemacs.org, Andy Piper}
-@html
-<br><img src="piper.png" alt="Portrait of Andy Piper"><br>
-@end html
+@item lookup
+Dictionary support. (This isn't an English dictionary program)
 
-@item @email{ben@@xemacs.org, Ben Wing}
-@html
-<br><img src="ben.png" alt="Portrait of Ben Wing"><br>
-@end html
+@item mule-base
+MULE: Basic Mule support, required for building with Mule.
 
-@item @email{cthomp@@xemacs.org, Chuck Thompson}
-@html
-<br><img src="cthomp.png" alt="Portrait of Chuck Thompson"><br>
-@end html
+@item mule-ucs
+MULE: Extended coding systems (including Unicode) for XEmacs.
 
-@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
+@item mule-ucs
+Extended coding systems (including Unicode) for XEmacs.
 
-@html
-<br><img src="hniksic.png" alt="Portrait of Hrvoje Niksic"><br>
-@end html
+@item skk
+Another Japanese Language Input Method.  Can be used without a
+separate process running as a dictionary server.
+@end table
 
-@item @email{jwz@@jwz.org, Jamie Zawinski}
-@html
-<br><img src="jwz.png" alt="Portrait of Jamie Zawinski"><br>
-@end html
+@unnumberedsec 1.8: Internationalization
 
-@item @email{martin@@xemacs.org, Martin Buchholz}
-@html
-<br><img src="martin.png" alt="Portrait of Martin Buchholz"><br>
-@end html
-
-@item @email{mly@@adoc.xerox.com, Richard Mlynarik}
-@html
-<br><img src="mly.png" alt="Portrait of Richard Mlynarik"><br>
-@end html
-
-@item @email{stephen@@xemacs.org, Stephen Turnbull}
-
-@item @email{steve@@xemacs.org, Steve Baur}
-@html
-<br><img src="slb.png" alt="Portrait of Steve Baur"><br>
-@end html
-@end itemize
-
-Many other people have contributed to XEmacs; this is partially
-enumerated in the @samp{About XEmacs} option in the Help menu.
-
-@node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
-@unnumberedsubsec Q1.3.2: Who contributed to this version of the FAQ?
-
-The current version of this FAQ was created by @email{ben@@xemacs.org,
-Ben Wing}.
-
-@node Q1.3.3, Q1.4.1, Q1.3.2, Introduction
-@unnumberedsubsec Q1.3.3: Who contributed to the FAQ in the past?
-
-This is only a partial list, as many names were lost in a hard disk
-crash some time ago.
-
-@itemize @bullet
-@item @email{steve@@xemacs.org, SL Baur}
-
-@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
-
-@item @email{binge@@aloft.att.com, Curtis.N.Bingham}
-
-@item @email{bruncott@@dormeur.inria.fr, Georges Brun-Cottan}
-
-@item @email{rjc@@cogsci.ed.ac.uk, Richard Caley}
-
-@item @email{cognot@@ensg.u-nancy.fr, Richard Cognot}
-
-@item @email{daku@@nortel.ca, Mark Daku}
-
-@item @email{wgd@@martigny.ai.mit.edu, William G. Dubuque}
-
-@item @email{eeide@@cs.utah.edu, Eric Eide}
-
-@item @email{af@@biomath.jussieu.fr, Alain Fauconnet}
-
-@item @email{cflatter@@nrao.edu, Chris Flatters}
-
-@item @email{ginsparg@@adra.com, Evelyn Ginsparg}
-
-@item @email{hall@@aplcenmp.apl.jhu.edu, Marty Hall}
-
-@item @email{dkindred@@cmu.edu, Darrell Kindred}
-
-@item @email{dmoore@@ucsd.edu, David Moore}
-
-@item @email{arup+@@cmu.edu, Arup Mukherjee}
-
-@item @email{nickel@@prz.tu-berlin.de, Juergen Nickelsen}
-
-@item @email{powell@@csl.ncsa.uiuc.edu, Kevin R. Powell}
-
-@item @email{dworkin@@ccs.neu.edu, Justin Sheehy}
-
-@item @email{stig@@hackvan.com, Stig}
-
-@item @email{Aki.Vehtari@@hut.fi, Aki Vehtari}
-@end itemize
-
-@unnumberedsec 1.4: Internationalization
-
-@node Q1.4.1, Q1.4.2, Q1.3.3, Introduction
-@unnumberedsubsec Q1.4.1: What is the status of internationalization support aka MULE (including Asian language support)?
+@node Q1.8.1, Q1.8.2, Q1.7.1, Introduction
+@unnumberedsubsec Q1.8.1: What is the status of internationalization support aka MULE (including Asian language support)?
 
 Both the stable and development versions of XEmacs include
 internationalization support (aka MULE).  MULE currently (21.4) works on
@@ -1672,8 +2540,8 @@ you build and use the development (21.5) version, and deal with the
 instability of the development tree.  Binaries compiled without MULE
 support run faster than MULE capable XEmacsen.
 
-@node Q1.4.2, Q1.4.3, Q1.4.1, Introduction
-@unnumberedsubsec Q1.4.2: How can I help with internationalization?
+@node Q1.8.2, Q1.8.3, Q1.8.1, Introduction
+@unnumberedsubsec Q1.8.2: How can I help with internationalization?
 
 If you would like to help, you may want to join the
 @email{xemacs-mule@@xemacs.org} mailing list.  Especially needed are
@@ -1683,24 +2551,24 @@ use XEmacs/MULE regularly, and have some experience with Elisp.
 Translations of the TUTORIAL and man page are welcome, and XEmacs does
 support multilingual menus, but we have few current translations.
 
-@xref{Q1.2.2, How do I become a Beta Tester?}.
+@xref{Q1.5.2, How do I become a Beta Tester?}.
 
-@node Q1.4.3, Q1.4.4, Q1.4.2, Introduction
-@unnumberedsubsec Q1.4.3: How do I type non-ASCII characters?
+@node Q1.8.3, Q1.8.4, Q1.8.2, Introduction
+@unnumberedsubsec Q1.8.3: How do I type non-ASCII characters?
 
 @xref{Q3.0.6, How can you type in special characters in XEmacs?}, in
 part 3 of this FAQ, for some simple methods that also work in non-MULE
 builds of XEmacs (but only for one-octet coded character sets, and
 mostly for ISO 8859/1).  Many of the methods available for Cyrillic
-(@pxref{Q1.4.7, How about Cyrillic modes?}) work without MULE.  MULE
-has more general capabilities.  @xref{Q1.4.5, Please explain the
+(@pxref{Q1.8.7, How about Cyrillic modes?}) work without MULE.  MULE
+has more general capabilities.  @xref{Q1.8.5, Please explain the
 various input methods in MULE/XEmacs}.
 
 @xref{Q4.0.8, How do I display non-ASCII characters?}, which covers
 display of non-ASCII characters.
 
-@node Q1.4.4, Q1.4.5, Q1.4.3, Introduction
-@unnumberedsubsec Q1.4.4: Can XEmacs messages come out in a different language?
+@node Q1.8.4, Q1.8.5, Q1.8.3, Introduction
+@unnumberedsubsec Q1.8.4: Can XEmacs messages come out in a different language?
 
 The message-catalog support was written but is badly bit-rotted.  XEmacs
 20 and 21 did @emph{not} support it, and early releases of XEmacs 22
@@ -1718,8 +2586,8 @@ Emacs*XlwMenu.openInOtherWindow.labelString: 	In anderem Fenster oeffnen
 The name of the resource is derived from the non-localized entry by
 removing punctuation and capitalizing as above.
 
-@node Q1.4.5, Q1.4.6, Q1.4.4, Introduction
-@unnumberedsubsec Q1.4.5: Please explain the various input methods in MULE/XEmacs
+@node Q1.8.5, Q1.8.6, Q1.8.4, Introduction
+@unnumberedsubsec Q1.8.5: Please explain the various input methods in MULE/XEmacs
 
 Mule supports a wide variety of input methods.  There are three basic
 classes: Lisp implementations, generic platform support, and library
@@ -1811,8 +2679,8 @@ boiled-egg-like utilities.
 Much of this information was provided by @email{morioka@@jaist.ac.jp,
 MORIOKA Tomohiko}.
 
-@node Q1.4.6, Q1.4.7, Q1.4.5, Introduction
-@unnumberedsubsec Q1.4.6: How do I portably code for MULE/XEmacs?
+@node Q1.8.6, Q1.8.7, Q1.8.5, Introduction
+@unnumberedsubsec Q1.8.6: How do I portably code for MULE/XEmacs?
 
 MULE has evolved rapidly over the last few years, and the original third
 party patch (for GNU Emacs 19), GNU Emacs 20+, and XEmacs 20+ have quite
@@ -1876,8 +2744,8 @@ Following is a sample to distinguish mule variants:
 @end lisp
 @end quotation
 
-@node Q1.4.7, Q1.4.8, Q1.4.6, Introduction
-@unnumberedsubsec Q1.4.7: How about Cyrillic modes?
+@node Q1.8.7, Q1.8.8, Q1.8.6, Introduction
+@unnumberedsubsec Q1.8.7: How about Cyrillic modes?
 
 @email{ilya@@math.ohio-state.edu, Ilya Zakharevich} writes:
 
@@ -1914,8 +2782,8 @@ The fullest resource I found on Russian language use (in and out of
 XEmacs) is @uref{http://www.ibiblio.org/sergei/Software/Software.html}
 @end quotation
 
-@node Q1.4.8, Q1.4.9, Q1.4.7, Introduction
-@unnumberedsubsec Q1.4.8: Does XEmacs support Unicode?
+@node Q1.8.8, Q1.8.9, Q1.8.7, Introduction
+@unnumberedsubsec Q1.8.8: Does XEmacs support Unicode?
 
 To get Unicode support, you need a Mule-enabled XEmacs.
 
@@ -1923,7 +2791,7 @@ To get Unicode support, you need a Mule-enabled XEmacs.
 don't yet use it as the internal encoding.
 
 21.4 supports Unicode partially -- as an external encoding for files,
-processes, and terminals, but without font support.  @xref{Q1.4.9, How
+processes, and terminals, but without font support.  @xref{Q1.8.9, How
 does XEmacs display Unicode?}.  To get Unicode support in 21.4,
 install Mule-UCS from packages in the usual way, and put
 
@@ -1938,13 +2806,13 @@ view the documentation of @code{set-coding-priority-list} if you find
 that files that are not UTF-8 are being mis-recognized as UTF-8.
 
 Install standard national fonts (not Unicode fonts) for all character
-sets you use.  @xref{Q1.4.9, How does XEmacs display Unicode??}.
+sets you use.  @xref{Q1.8.9, How does XEmacs display Unicode??}.
 
 Mule-UCS also supports 16-bit forms of Unicode (UTF-16).  It does not
 support 31-bit forms of Unicode (UTF-32 or UCS-4).
 
-@node Q1.4.9, Q1.5.1, Q1.4.8, Introduction
-@unnumberedsubsec Q1.4.9: How does XEmacs display Unicode?
+@node Q1.8.9,  , Q1.8.8, Introduction
+@unnumberedsubsec Q1.8.9: How does XEmacs display Unicode?
 
 Mule doesn't have a Unicode charset internally, so there's nothing to
 bind a Unicode registry to.  It would not be straightforward to create,
@@ -1964,158 +2832,6 @@ extreme hackery.  You can run -nw with (set-terminal-coding-system
 'utf-8) if you really want a Unicode font for some reason.
 
 Real Unicode support will be introduced in XEmacs 22.0.
-
-@unnumberedsec 1.5: Getting Started
-
-@node Q1.5.1, Q1.5.2, Q1.4.9, Introduction
-@unnumberedsubsec Q1.5.1: What is an @file{init.el} or @file{.emacs} and is there a sample one?
-
-The @file{init.el} or @file{.emacs} file is used to customize XEmacs to
-your tastes.  Starting in 21.4, the preferred location for the init file
-is @file{~/.xemacs/init.el}; in previous versions, it was
-@file{~/.emacs}.  21.4 still accepts the old location, but the first
-time you run it, it will ask to migrate your file to the new location.
-If you answer yes, the file will be moved, and a "compatibility"
-@file{.emacs} file will be placed in the old location so that you can
-still run older versions of XEmacs, and versions of GNU Emacs, which
-expect the old location.  The @file{.emacs} file present is just a stub
-that loads the real file in @file{~/.xemacs/init.el}.
-
-No two init files are alike, nor are they expected to be alike, but
-that's the point.  The XEmacs distribution contains an excellent starter
-example in the @file{etc/} directory called @file{sample.init.el}
-(starting in 21.4) or @file{sample.emacs} in older versions.  Copy this
-file from there to @file{~/.xemacs/init.el} (starting in 21.4) or
-@file{~/.emacs} in older versions, where @samp{~} means your home
-directory, of course.  Then edit it to suit.
-
-You may bring the @file{sample.init.el} or @file{sample.emacs} file into
-an XEmacs buffer from the menubar. (The menu entry for it is always
-under the @samp{Help} menu, but its location under that has changed in
-various versions.  Recently, look under the @samp{Samples} submenu.)  To
-determine the location of the @file{etc/} directory type the command
-@kbd{C-h v data-directory @key{RET}}.
-
-@node Q1.5.2, Q1.5.3, Q1.5.1, Introduction
-@unnumberedsubsec Q1.5.2: Where do I put my @file{init.el} file?
-
-@file{init.el} is the name of the init file starting with 21.4, and is
-located in the subdirectory @file{.xemacs/} of your home directory.  In
-prior versions, the init file is called @file{.emacs} and is located in
-your home directory.
-
-Your home directory under Windows is determined by the @samp{HOME}
-environment variable.  If this is not set, it defaults to @samp{C:\}.
-To set this variable, modify @file{AUTOEXEC.BAT} under Windows 95/98, or
-select @samp{Control Panel->System->Advanced->Environment Variables...}
-under Windows NT/2000.
-
-@node Q1.5.3, Q1.5.4, Q1.5.2, Introduction
-@unnumberedsubsec Q1.5.3: Can I use the same @file{init.el} with the other Emacs?
-
-Yes.  The sample @file{init.el} included in the XEmacs
-distribution will show you how to handle different versions and flavors
-of Emacs.
-
-@node Q1.5.4, Q1.5.5, Q1.5.3, Introduction
-@unnumberedsubsec Q1.5.4: Any good XEmacs tutorials around?
-
-There's the XEmacs tutorial available from the Help Menu under
-@samp{Help->Tutorials}, or by typing @kbd{C-h t}. To check whether
-it's available in a non-english language, type @kbd{C-u C-h t TAB}, type
-the first letters of your preferred language, then type @key{RET}.
-
-@comment There's an Emacs Lisp tutorial at
-@comment
-@comment @example
-@comment @uref{ftp://prep.ai.mit.edu/pub/gnu/emacs-lisp-intro-1.04.tar.gz}.
-@comment @end example
-@comment
-@comment @email{erik@@petaxp.rug.ac.be, Erik Sundermann} has made a tutorial web
-@comment page at
-@comment @iftex
-@comment @*
-@comment @end iftex
-@comment @uref{http://petaxp.rug.ac.be/~erik/xemacs/}.
-
-@node Q1.5.5, Q1.5.6, Q1.5.4, Introduction
-@unnumberedsubsec Q1.5.5: May I see an example of a useful XEmacs Lisp function?
-
-The following function does a little bit of everything useful.  It does
-something with the prefix argument, it examines the text around the
-cursor, and it's interactive so it may be bound to a key.  It inserts
-copies of the current word the cursor is sitting on at the cursor.  If
-you give it a prefix argument: @kbd{C-u 3 M-x double-word} then it will
-insert 3 copies.
-
-@lisp
-(defun double-word (count)
-  "Insert a copy of the current word underneath the cursor"
-  (interactive "*p")
-  (let (here there string)
-    (save-excursion
-      (forward-word -1)
-      (setq here (point))
-      (forward-word 1)
-      (setq there (point))
-      (setq string (buffer-substring here there)))
-    (while (>= count 1)
-      (insert string)
-      (decf count))))
-@end lisp
-
-The best way to see what is going on here is to let XEmacs tell you.
-Put the code into an XEmacs buffer, and do a @kbd{C-h f} with the cursor
-sitting just to the right of the function you want explained.  Eg.  move
-the cursor to the SPACE between @code{interactive} and @samp{"*p"} and
-hit @kbd{C-h f} to see what the function @code{interactive} does.  Doing
-this will tell you that the @code{*} requires a writable buffer, and
-@code{p} converts the prefix argument to a number, and
-@code{interactive} allows you to execute the command with @kbd{M-x}.
-
-@node Q1.5.6, Q1.5.7, Q1.5.5, Introduction
-@unnumberedsubsec Q1.5.6: And how do I bind it to a key?
-
-To bind to a key do:
-
-@lisp
-(global-set-key "\C-cd" 'double-word)
-@end lisp
-
-Or interactively, @kbd{M-x global-set-key} and follow the prompts.
-
-@node Q1.5.7, Q1.5.8, Q1.5.6, Introduction
-@unnumberedsubsec Q1.5.7: What's the difference between a macro and a function?
-
-Quoting from the Lisp Reference (a.k.a @dfn{Lispref}) Manual:
-
-@dfn{Macros} enable you to define new control constructs and other
-language features.  A macro is defined much like a function, but instead
-of telling how to compute a value, it tells how to compute another Lisp
-expression which will in turn compute the value.  We call this
-expression the @dfn{expansion} of the macro.
-
-Macros can do this because they operate on the unevaluated expressions
-for the arguments, not on the argument values as functions do.  They can
-therefore construct an expansion containing these argument expressions
-or parts of them.
-
-Do not confuse the two terms with @dfn{keyboard macros}, which are
-another matter, entirely.  A keyboard macro is a key bound to several
-other keys.  Refer to manual for details.
-
-@node Q1.5.8,  , Q1.5.7, Introduction
-@unnumberedsubsec Q1.5.8: What is @code{Custom}?
-
-@code{Custom} is a system for customizing XEmacs options.
-
-You can access @code{Advanced (Customize)} from the @code{Options} menu
-or invoking one of customize commands by typing eg.
-@kbd{M-x customize}, @kbd{M-x customize-face},
-@kbd{M-x customize-variable} or @kbd{M-x customize-apropos}.
-
-There is also new @samp{browser} mode for Customize.
-Try it out with @kbd{M-x customize-browse}
 
 @node Installation, Editing, Introduction, Top
 @unnumbered 2 Installation and Troubleshooting
@@ -2442,11 +3158,11 @@ support.  Almost all development is geared towards this version, and
 there is little reason not to use it.
 
 The second way to build is the Cygwin port.  It takes advantage of
-Cygnus emulation library under Win32.  @xref{Q1.1.4, What are Cygwin
+Cygnus emulation library under Win32.  @xref{Q1.2.5, What are Cygwin
 and MinGW, and do I need them to run XEmacs?}, for more information.
 
 A third way is the MinGW port.  It uses the Cygwin environment to
-build but does not require it at runtime.  @xref{Q1.1.4, What are
+build but does not require it at runtime.  @xref{Q1.2.5, What are
 Cygwin and MinGW, and do I need them to run XEmacs?}, for more
 information.
 
@@ -2465,7 +3181,7 @@ You need Visual C++ 4.2, 5.0, or 6.0 for the native version. (We have
 some beta testers currently trying to compile with VC.NET, aka version
 7.0, but we can't yet report complete success.) For the Cygwin and
 MinGW versions, you need the Cygwin environment, which comes with GCC,
-the compiler used for those versions.  @xref{Q1.1.4, What are Cygwin
+the compiler used for those versions.  @xref{Q1.2.5, What are Cygwin
 and MinGW, and do I need them to run XEmacs?}, for more information on
 Cygwin and MinGW.
 
@@ -3195,7 +3911,7 @@ about which memory addresses will be free, and this should cure the
 problem for most people.  21.4 implements "portable dumping", which
 eliminates the problem altogether.  We recommend you use the 21.4
 binaries, but you can use the 21.1 binaries if you are very paranoid
-about stability.  @xref{Q1.0.4, Are binaries available?}.
+about stability.  @xref{Q1.1.2, Are binaries available?}.
 
 @node Q2.4.3, Q2.4.4, Q2.4.2, Installation
 @unnumberedsubsec Q2.4.3: XEmacs won't start without network.
@@ -5957,94 +6673,38 @@ This is part 7 of the XEmacs Frequently Asked Questions list.  This
 section is devoted to advanced customization using XEmacs Lisp.
 
 @menu
-7.0: Online Help
-* Q7.0.1::    How can I get two instances of info?
-* Q7.0.2::    How do I add new Info directories?
+7.0: Emacs Lisp and @file{init.el}
+* Q7.0.1::    What version of Emacs am I running?
+* Q7.0.2::    How can I evaluate Emacs-Lisp expressions?
+* Q7.0.3::    @code{(setq tab-width 6)} behaves oddly.
+* Q7.0.4::    How can I add directories to the @code{load-path}?
+* Q7.0.5::    How to check if a lisp function is defined?
+* Q7.0.6::    Can I force the output of @code{(face-list)} to a buffer?
 
-7.1: Emacs Lisp and @file{init.el}
-* Q7.1.1::    What version of Emacs am I running?
-* Q7.1.2::    How can I evaluate Emacs-Lisp expressions?
-* Q7.1.3::    @code{(setq tab-width 6)} behaves oddly.
-* Q7.1.4::    How can I add directories to the @code{load-path}?
-* Q7.1.5::    How to check if a lisp function is defined?
-* Q7.1.6::    Can I force the output of @code{(face-list)} to a buffer?
+7.1: Emacs Lisp Programming Techniques
+* Q7.1.1::    What is the difference in key sequences between XEmacs and GNU Emacs?
+* Q7.1.2::    Can I generate "fake" keyboard events?
+* Q7.1.3::    Could you explain @code{read-kbd-macro} in more detail?
+* Q7.1.4::    What is the performance hit of @code{let}?
+* Q7.1.5::    What is the recommended use of @code{setq}?
+* Q7.1.6::    What is the typical misuse of @code{setq}?
+* Q7.1.7::    I like the @code{do} form of cl, does it slow things down?
+* Q7.1.8::    I like recursion, does it slow things down?
+* Q7.1.9::    How do I put a glyph as annotation in a buffer?
+* Q7.1.10::   @code{map-extents} won't traverse all of my extents!
+* Q7.1.11::   My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
 
-7.2: Emacs Lisp Programming Techniques
-* Q7.2.1::    What is the difference in key sequences between XEmacs and GNU Emacs?
-* Q7.2.2::    Can I generate "fake" keyboard events?
-* Q7.2.3::    Could you explain @code{read-kbd-macro} in more detail?
-* Q7.2.4::    What is the performance hit of @code{let}?
-* Q7.2.5::    What is the recommended use of @code{setq}?
-* Q7.2.6::    What is the typical misuse of @code{setq}?
-* Q7.2.7::    I like the @code{do} form of cl, does it slow things down?
-* Q7.2.8::    I like recursion, does it slow things down?
-* Q7.2.9::    How do I put a glyph as annotation in a buffer?
-* Q7.2.10::   @code{map-extents} won't traverse all of my extents!
-* Q7.2.11::   My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
-
-7.3: Mathematics
-* Q7.3.1::    What are bignums, ratios, and bigfloats in Lisp?
-* Q7.3.2::    XEmacs segfaults when I use very big numbers!
-* Q7.3.3::    Bignums are really slow!
-* Q7.3.4::    Equal bignums don't compare as equal!  What gives?
+7.2: Mathematics
+* Q7.2.1::    What are bignums, ratios, and bigfloats in Lisp?
+* Q7.2.2::    XEmacs segfaults when I use very big numbers!
+* Q7.2.3::    Bignums are really slow!
+* Q7.2.4::    Equal bignums don't compare as equal!  What gives?
 @end menu
 
-@unnumberedsec 7.0: Online Help
+@unnumberedsec 7.0: Emacs Lisp and @file{init.el}
 
 @node Q7.0.1, Q7.0.2, Advanced, Advanced
-@unnumberedsubsec Q7.0.1: How can I get two instances of info?
-
-Before 21.4, you can't.  The @code{info} package does not provide for
-multiple info buffers.  In 21.4, this should be fixed. #### how?
-
-@node Q7.0.2, Q7.1.1, Q7.0.1, Advanced
-@unnumberedsubsec Q7.0.2: How do I add new Info directories?
-
-You use something like:
-
-@lisp
-(setq Info-directory-list (cons
-                           (expand-file-name "~/info")
-                           Info-default-directory-list))
-@end lisp
-
-@email{davidm@@prism.kla.com, David Masterson} writes:
-
-@quotation
-Emacs Info and XEmacs Info do many things differently.  If you're trying to
-support a number of versions of Emacs, here are some notes to remember:
-
-@enumerate
-@item
-Emacs Info scans @code{Info-directory-list} from right-to-left while
-XEmacs Info reads it from left-to-right, so append to the @emph{correct}
-end of the list.
-
-@item
-Use @code{Info-default-directory-list} to initialize
-@code{Info-directory-list} @emph{if} it is available at startup, but not
-all Emacsen define it.
-
-@item
-Emacs Info looks for a standard @file{dir} file in each of the
-directories scanned from #1 and magically concatenates them together.
-
-@item
-XEmacs Info looks for a @file{localdir} file (which consists of just the
-menu entries from a @file{dir} file) in each of the directories scanned
-from #1 (except the first), does a simple concatenation of them, and
-magically attaches the resulting list to the end of the menu in the
-@file{dir} file in the first directory.
-@end enumerate
-
-Another alternative is to convert the documentation to HTML with
-texi2html and read it from a web browser like Lynx or W3.
-@end quotation
-
-@unnumberedsec 7.1: Emacs Lisp and @file{init.el}
-
-@node Q7.1.1, Q7.1.2, Q7.0.2, Advanced
-@unnumberedsubsec Q7.1.1: What version of Emacs am I running?
+@unnumberedsubsec Q7.0.1: What version of Emacs am I running?
 
 How can @file{init.el} determine which of the family of
 Emacsen I am using?
@@ -6061,8 +6721,8 @@ For all new code, all you really need to do is:
 (defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 @end lisp
 
-@node Q7.1.2, Q7.1.3, Q7.1.1, Advanced
-@unnumberedsubsec Q7.1.2: How can I evaluate Emacs-Lisp expressions?
+@node Q7.0.2, Q7.0.3, Q7.0.1, Advanced
+@unnumberedsubsec Q7.0.2: How can I evaluate Emacs-Lisp expressions?
 
 I know I can evaluate Elisp expressions from @code{*scratch*} buffer
 with @kbd{C-j} after the expression.  How do I do it from another
@@ -6071,8 +6731,8 @@ buffer?
 Press @kbd{M-:} (the default binding of @code{eval-expression}), and
 enter the expression to the minibuffer.
 
-@node Q7.1.3, Q7.1.4, Q7.1.2, Advanced
-@unnumberedsubsec Q7.1.3: @code{(setq tab-width 6)} behaves oddly.
+@node Q7.0.3, Q7.0.4, Q7.0.2, Advanced
+@unnumberedsubsec Q7.0.3: @code{(setq tab-width 6)} behaves oddly.
 
 If you put @code{(setq tab-width 6)} in your
 @file{init.el} file it does not work!  Is there a reason
@@ -6081,8 +6741,8 @@ for this?  If you do it at the EVAL prompt it works fine!! How strange.
 Use @code{setq-default} instead, since @code{tab-width} is
 all-buffer-local.
 
-@node Q7.1.4, Q7.1.5, Q7.1.3, Advanced
-@unnumberedsubsec Q7.1.4: How can I add directories to the @code{load-path}?
+@node Q7.0.4, Q7.0.5, Q7.0.3, Advanced
+@unnumberedsubsec Q7.0.4: How can I add directories to the @code{load-path}?
 
 Here are two ways to do that, one that puts your directories at the
 front of the load-path, the other at the end:
@@ -6109,8 +6769,8 @@ To add directories using Unix shell metacharacters use
 @end lisp
 @end quotation
 
-@node Q7.1.5, Q7.1.6, Q7.1.4, Advanced
-@unnumberedsubsec Q7.1.5: How to check if a lisp function is defined?
+@node Q7.0.5, Q7.0.6, Q7.0.4, Advanced
+@unnumberedsubsec Q7.0.5: How to check if a lisp function is defined?
 
 Use the following elisp:
 
@@ -6134,8 +6794,8 @@ There is an incredible amount of broken code out there which could work
 much better more often in more places if it did the above instead of
 trying to divine its environment from the value of one variable.
 
-@node Q7.1.6, Q7.2.1, Q7.1.5, Advanced
-@unnumberedsubsec Q7.1.6: Can I force the output of @code{(face-list)} to a buffer?
+@node Q7.0.6, Q7.1.1, Q7.0.5, Advanced
+@unnumberedsubsec Q7.0.6: Can I force the output of @code{(face-list)} to a buffer?
 
 It would be good having it in a buffer, as the output of
 @code{(face-list)} is too wide to fit to a minibuffer.
@@ -6147,10 +6807,10 @@ If the minibuffer smallness is the only problem you encounter, you can
 simply press @kbd{C-h l} to get the former minibuffer contents in a
 buffer.
 
-@unnumberedsec 7.2: Emacs Lisp Programming Techniques
+@unnumberedsec 7.1: Emacs Lisp Programming Techniques
 
-@node Q7.2.1, Q7.2.2, Q7.1.6, Advanced
-@unnumberedsubsec Q7.2.1: What is the difference in key sequences between XEmacs and GNU Emacs?
+@node Q7.1.1, Q7.1.2, Q7.0.6, Advanced
+@unnumberedsubsec Q7.1.1: What is the difference in key sequences between XEmacs and GNU Emacs?
 
 @email{clerik@@naggum.no, Erik Naggum} writes;
 
@@ -6182,8 +6842,8 @@ Another (even safer) way to be sure of the key-sequences is to use the
 <up>}, and converts it to the internal key representation of the Emacs
 you use.  The function is available both on XEmacs and GNU Emacs.
 
-@node Q7.2.2, Q7.2.3, Q7.2.1, Advanced
-@unnumberedsubsec Q7.2.2: Can I generate "fake" keyboard events?
+@node Q7.1.2, Q7.1.3, Q7.1.1, Advanced
+@unnumberedsubsec Q7.1.2: Can I generate "fake" keyboard events?
 
 I wonder if there is an interactive function that can generate
 @dfn{fake} keyboard events.  This way, I could simply map them inside
@@ -6203,8 +6863,8 @@ This seems to work:
   (lambda () (interactive) (cg--generate-char-event 4)))
 @end lisp
 
-@node Q7.2.3, Q7.2.4, Q7.2.2, Advanced
-@unnumberedsubsec Q7.2.3: Could you explain @code{read-kbd-macro} in more detail?
+@node Q7.1.3, Q7.1.4, Q7.1.2, Advanced
+@unnumberedsubsec Q7.1.3: Could you explain @code{read-kbd-macro} in more detail?
 
 The @code{read-kbd-macro} function returns the internal Emacs
 representation of a human-readable string (which is its argument).
@@ -6294,8 +6954,8 @@ seven keys but @code{<right>} is a single function key.  When in doubt,
 use whitespace.
 @end quotation
 
-@node Q7.2.4, Q7.2.5, Q7.2.3, Advanced
-@unnumberedsubsec Q7.2.4: What is the performance hit of @code{let}?
+@node Q7.1.4, Q7.1.5, Q7.1.3, Advanced
+@unnumberedsubsec Q7.1.4: What is the performance hit of @code{let}?
 
 In most cases, not noticeable.  Besides, there's no avoiding
 @code{let}---you have to bind your local variables, after all.  Some
@@ -6304,8 +6964,8 @@ function.  I think because of clarity and maintenance (and possible
 future implementation), @code{let}-s should be used (nested) in a way to
 provide the clearest code.
 
-@node Q7.2.5, Q7.2.6, Q7.2.4, Advanced
-@unnumberedsubsec Q7.2.5: What is the recommended use of @code{setq}?
+@node Q7.1.5, Q7.1.6, Q7.1.4, Advanced
+@unnumberedsubsec Q7.1.5: What is the recommended use of @code{setq}?
 
 @itemize @bullet
 @item Global variables
@@ -6367,8 +7027,8 @@ returns the value of @code{inbox}, which can be reused, for instance:
 @end lisp
 @end itemize
 
-@node Q7.2.6, Q7.2.7, Q7.2.5, Advanced
-@unnumberedsubsec Q7.2.6: What is the typical misuse of @code{setq}?
+@node Q7.1.6, Q7.1.7, Q7.1.5, Advanced
+@unnumberedsubsec Q7.1.6: What is the typical misuse of @code{setq}?
 
 A typical misuse is probably @code{setq}ing a variable that was meant to
 be local.  Such a variable will remain bound forever, never to be
@@ -6409,8 +7069,8 @@ While compiling toplevel forms:
 ** assignment to free variable flurghoze
 @end lisp
 
-@node Q7.2.7, Q7.2.8, Q7.2.6, Advanced
-@unnumberedsubsec Q7.2.7: I like the @code{do} form of cl, does it slow things down?
+@node Q7.1.7, Q7.1.8, Q7.1.6, Advanced
+@unnumberedsubsec Q7.1.7: I like the @code{do} form of cl, does it slow things down?
 
 It shouldn't.  Here is what Dave Gillespie has to say about cl.el
 performance:
@@ -6451,8 +7111,8 @@ You can find out how a macro expands by using the @code{cl-prettyexpand}
 function.
 @end quotation
 
-@node Q7.2.8, Q7.2.9, Q7.2.7, Advanced
-@unnumberedsubsec Q7.2.8: I like recursion, does it slow things down?
+@node Q7.1.8, Q7.1.9, Q7.1.7, Advanced
+@unnumberedsubsec Q7.1.8: I like recursion, does it slow things down?
 
 Yes.  The Emacs byte-compiler cannot do much to optimize recursion.  But
 think well whether this is a real concern in Emacs.  Much of the Emacs
@@ -6462,8 +7122,8 @@ fact that it is an interpreter.
 Please try not to make your code much uglier to gain a very small speed
 gain.  It's not usually worth it.
 
-@node Q7.2.9, Q7.2.10, Q7.2.8, Advanced
-@unnumberedsubsec Q7.2.9: How do I put a glyph as annotation in a buffer?
+@node Q7.1.9, Q7.1.10, Q7.1.8, Advanced
+@unnumberedsubsec Q7.1.9: How do I put a glyph as annotation in a buffer?
 
 Here is a solution that will insert the glyph annotation at the
 beginning of buffer:
@@ -6489,8 +7149,8 @@ You can turn this to a function (that optionally prompts you for a file
 name), and inserts the glyph at @code{(point)} instead of
 @code{(point-min)}.
 
-@node Q7.2.10, Q7.2.11, Q7.2.9, Advanced
-@unnumberedsubsec Q7.2.10: @code{map-extents} won't traverse all of my extents!
+@node Q7.1.10, Q7.1.11, Q7.1.9, Advanced
+@unnumberedsubsec Q7.1.10: @code{map-extents} won't traverse all of my extents!
 
 I tried to use @code{map-extents} to do an operation on all the extents
 in a region.  However, it seems to quit after processing a random number
@@ -6520,8 +7180,8 @@ is:
                nil))
 @end lisp
 
-@node Q7.2.11, Q7.3.1, Q7.2.10, Advanced
-@unnumberedsubsec Q7.2.11: My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
+@node Q7.1.11, Q7.2.1, Q7.1.10, Advanced
+@unnumberedsubsec Q7.1.11: My elisp program is horribly slow.  Is there an easy way to find out where it spends time?
 @c New
 
 @email{hniksic@@xemacs.org, Hrvoje Niksic} writes:
@@ -6532,10 +7192,10 @@ results using @kbd{M-x profile-results}.  It should give you an idea of
 where the time is being spent.
 @end quotation
 
-@unnumberedsec 7.3: Mathematics
+@unnumberedsec 7.2: Mathematics
 
-@node Q7.3.1, Q7.3.2, Q7.2.11, Advanced
-@unnumberedsubsec Q7.3.1: What are bignums, ratios, and bigfloats in Lisp?
+@node Q7.2.1, Q7.2.2, Q7.1.11, Advanced
+@unnumberedsubsec Q7.2.1: What are bignums, ratios, and bigfloats in Lisp?
 
 Thanks to @email{james@@xemacs.org, Jerry James}, XEmacs 21.5.18 and
 later can use the capabilities of multiple-precision libraries that may
@@ -6563,7 +7223,7 @@ User-visible changes in behavior include (in probable order of annoyance)
 @itemize
 @item
 Arithmetic can cause a segfault, depending on your MP library
-@ref{Q7.3.2, XEmacs segfaults when I use very big numbers!}.
+@ref{Q7.2.2, XEmacs segfaults when I use very big numbers!}.
 
 @item
 Terminology is not Common-Lisp-conforming.  For example, ``integer'' for
@@ -6589,7 +7249,7 @@ ratios, so there should be few surprises with type conflicts, but they
 can't be ruled out.  ``Arbitrary'' precision means precisely what it
 says.  If you work with extremely large numbers, your machine may
 arbitrarily decide to hand you an unpleasant surprise rather than a
-bignum @ref{Q7.3.2, XEmacs segfaults when I use very big numbers!}.
+bignum @ref{Q7.2.2, XEmacs segfaults when I use very big numbers!}.
 
 To configure with GNU MP, add
 @samp{--use-number-lib=gmp}
@@ -6604,8 +7264,8 @@ eventually, but if your skills run more to analysis and documentation
 than to writing new code, feel free to fill in the gap!
 
 
-@node Q7.3.2, Q7.3.3, Q7.3.1, Advanced
-@unnumberedsubsec Q7.3.2: XEmacs segfaults when I use very big numbers!
+@node Q7.2.2, Q7.2.3, Q7.2.1, Advanced
+@unnumberedsubsec Q7.2.2: XEmacs segfaults when I use very big numbers!
 
 GMP by default allocates temporaries on the stack.  If you run out of
 stack space, you're dead; there is no way that we know of to reliably
@@ -6622,8 +7282,8 @@ BSD MP implementations vary across vendors, but how much, we do not know
 yet.)
 
 
-@node Q7.3.3, Q7.3.4, Q7.3.2, Advanced
-@unnumberedsubsec Q7.3.3: Bignums are really slow!
+@node Q7.2.3, Q7.2.4, Q7.2.2, Advanced
+@unnumberedsubsec Q7.2.3: Bignums are really slow!
 
 Many Linux distributions compile all their packages for the i386, and
 this is costly.  An optimized version can give you two or three orders
@@ -6631,8 +7291,8 @@ of magnitude better performance for a Pentium III or IV.  (Yes, really.
 See @uref{http://www.swox.com/gmp/gmp-speed.html}.)
 
 
-@node Q7.3.4,  , Q7.3.3, Advanced
-@unnumberedsubsec Q7.3.4: Equal bignums don't compare as equal!  What gives?
+@node Q7.2.4,  , Q7.2.3, Advanced
+@unnumberedsubsec Q7.2.4: Equal bignums don't compare as equal!  What gives?
 
 Ah, Grasshopper, I see you are using @code{(eq x y)}.  The Bodhisattva
 CLTL2 warned of the illusion that equal numbers would be @samp{eq}!
@@ -6654,6 +7314,7 @@ section is devoted to miscellaneous external packages not covered
 elsewhere in XEmacs.
 
 @menu
+8.0: TeX
 * Q8.0.1::    Is there something better than LaTeX mode?
 * Q8.0.2::    What is AUCTeX?  Where do you get it?
 * Q8.0.3::    Problems installing AUCTeX.
@@ -7010,6 +7671,7 @@ Information on older versions of XEmacs can be find in @file{ONEWS} in
 the same directory, or @file{OONEWS} for really old versions.
 
 @menu
+9.0: Changes
 * Q9.0.1::    What new features will be in XEmacs soon?
 * Q9.0.2::    What's new in XEmacs 21.4?
 * Q9.0.3::    What's new in XEmacs 21.1?
@@ -7339,6 +8001,7 @@ updated versions of packages, but bug fixes (which will not be applied
 to released XEmacsen, but users can apply themselves) are also accepted.
 
 @menu
+10.0: XEmacs 21.1
 * Q10.0.1::   Gnus 5.10 won't display smileys in XEmacs 21.1.
 @end menu
 

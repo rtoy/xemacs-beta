@@ -1,3 +1,112 @@
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	* xemacs/help.texi (Misc Help):
+	Delete references to DISTRIB.  Point to FAQ.
+	
+	* xemacs/new.texi:
+	Update sample code for version checking.
+	
+	* xemacs/xemacs.texi (Distrib):
+	* xemacs/xemacs.texi (Intro):
+	Delete references to DISTRIB.  Point directly to web site.
+	Update stuff referring to GNU Emacs.  Delete references to Win-Emacs.
+
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	* Makefile:
+	* Makefile (info_files):
+	* Makefile (html_files):
+	* Makefile (dvi_files):
+	* Makefile (pdf_files):
+	* Makefile ($(INFODIR)/beta.info):
+	Add beta.texi and built files.
+	
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (Introduction):
+	* xemacs-faq.texi (Q1.0.3):
+	* xemacs-faq.texi (Q1.0.4):
+	* xemacs-faq.texi (Q1.0.5):
+	* xemacs-faq.texi (Q1.0.6):
+	* xemacs-faq.texi (Q1.1.1):
+	* xemacs-faq.texi (Q1.1.2):
+	* xemacs-faq.texi (Q1.1.3):
+	* xemacs-faq.texi (Q1.1.4):
+	* xemacs-faq.texi (Q1.2.1):
+	* xemacs-faq.texi (Q1.2.2):
+	* xemacs-faq.texi (Q1.2.3):
+	* xemacs-faq.texi (Q1.2.4):
+	* xemacs-faq.texi (Q1.2.5):
+	* xemacs-faq.texi (Q1.2.6):
+	* xemacs-faq.texi (Q1.2.7):
+	* xemacs-faq.texi (Q1.2.8):
+	* xemacs-faq.texi (Q1.2.9):
+	* xemacs-faq.texi (Q1.2.10):
+	* xemacs-faq.texi (Q1.2.11):
+	* xemacs-faq.texi (Q1.2.12):
+	* xemacs-faq.texi (Q1.2.13):
+	* xemacs-faq.texi (Q1.3.1):
+	* xemacs-faq.texi (Q1.3.2):
+	* xemacs-faq.texi (Q1.3.3):
+	* xemacs-faq.texi (Q1.3.4):
+	* xemacs-faq.texi (Q1.3.5):
+	* xemacs-faq.texi (Q1.3.6):
+	* xemacs-faq.texi (Q1.3.7):
+	* xemacs-faq.texi (Q1.3.8):
+	* xemacs-faq.texi (Q1.4.1):
+	* xemacs-faq.texi (Q1.4.2):
+	* xemacs-faq.texi (double-word): New.
+	* xemacs-faq.texi (Q1.4.3):
+	* xemacs-faq.texi (Q1.4.4):
+	* xemacs-faq.texi (Q1.4.5):
+	* xemacs-faq.texi (Q1.5.1):
+	* xemacs-faq.texi (Q1.5.2):
+	* xemacs-faq.texi (Q1.5.3):
+	* xemacs-faq.texi (Q1.6.1):
+	* xemacs-faq.texi (Q1.6.2):
+	* xemacs-faq.texi (Q1.6.3):
+	* xemacs-faq.texi (Q1.6.4):
+	* xemacs-faq.texi (Q1.6.5):
+	* xemacs-faq.texi (Q1.6.6):
+	* xemacs-faq.texi (Q1.7.1):
+	* xemacs-faq.texi (Q1.8.1):
+	* xemacs-faq.texi (Q1.8.2):
+	* xemacs-faq.texi (Q1.8.3):
+	* xemacs-faq.texi (Q1.8.4):
+	* xemacs-faq.texi (Q1.8.5):
+	* xemacs-faq.texi (Q1.8.6):
+	* xemacs-faq.texi (Q1.8.7):
+	* xemacs-faq.texi (Q1.8.8):
+	* xemacs-faq.texi (Q1.8.9):
+	* xemacs-faq.texi (Q2.2.1):
+	* xemacs-faq.texi (Q2.2.2):
+	* xemacs-faq.texi (Q2.4.2):
+	* xemacs-faq.texi (Advanced):
+	* xemacs-faq.texi (Q7.0.1):
+	* xemacs-faq.texi (Q7.0.2):
+	* xemacs-faq.texi (Q7.0.3):
+	* xemacs-faq.texi (Q7.0.4):
+	* xemacs-faq.texi (Q7.0.5):
+	* xemacs-faq.texi (Q7.0.6):
+	* xemacs-faq.texi (Q7.1.1):
+	* xemacs-faq.texi (Q7.1.2):
+	* xemacs-faq.texi (Q7.1.3):
+	* xemacs-faq.texi (Q7.1.4):
+	* xemacs-faq.texi (Q7.1.5):
+	* xemacs-faq.texi (Q7.1.6):
+	* xemacs-faq.texi (Q7.1.7):
+	* xemacs-faq.texi (Q7.1.8):
+	* xemacs-faq.texi (Q7.1.9):
+	* xemacs-faq.texi (Q7.1.10):
+	* xemacs-faq.texi (Q7.1.11):
+	* xemacs-faq.texi (Q7.2.1):
+	* xemacs-faq.texi (Q7.2.2):
+	* xemacs-faq.texi (Q7.2.3):
+	* xemacs-faq.texi (Other Packages):
+	* xemacs-faq.texi (Current Events):
+	* xemacs-faq.texi (Legacy Versions):
+	Major overhaul of section 1.  Add mailing list info, update
+	downloading info, add info on CVS, etc.
+
 2004-10-17  Shyamal Prasad  <shyamal@member.fsf.org>
 
 	* xemacs/programs.texi (Program Modes): Updated it to reflect

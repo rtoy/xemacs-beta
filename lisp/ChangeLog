@@ -1,3 +1,10 @@
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	* help.el:
+	* help.el (describe-distribution): Go to appropriate FAQ entry.
+	* help.el (describe-beta): Go to info file.
+	* help.el (describe-project): Removed.
+
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
 	* font-menu.el:
