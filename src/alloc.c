@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -3134,18 +3134,30 @@ static void mark_struct_contents (const void *data,
 				  const struct sized_memory_description *sdesc,
 				  int count);
 
+#define GC_CHECK_NOT_FREE(lheader)					\
+      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||	\
+			  ! ((struct lcrecord_header *) lheader)->free)
+
+
+#ifdef ERROR_CHECK_GC
+#define KKCC_DO_CHECK_FREE(obj, allow_free)			\
+do								\
+{								\
+  if (!allow_free && XTYPE (obj) == Lisp_Type_Record)		\
+    {								\
+      struct lrecord_header *lheader = XRECORD_LHEADER (obj);	\
+      GC_CHECK_NOT_FREE (lheader);				\
+    }								\
+} while (0)
+#else
+#define KKCC_DO_CHECK_FREE(obj, allow_free)
+#endif
 
 #ifdef ERROR_CHECK_GC
 void
 mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
 {
-
-  if (!allow_free && XTYPE (obj) == Lisp_Type_Record)
-    {
-      struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||
-			  ! ((struct lcrecord_header *) lheader)->free);
-    }
+  KKCC_DO_CHECK_FREE (obj, allow_free);
   mark_object (obj);
 }
 #else
@@ -3165,6 +3177,8 @@ mark_with_description (const void *data,
 #ifdef ERROR_CHECK_GC
   static int last_occurred_flags;
 #endif
+
+ tail_recurse:
 
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
@@ -3273,12 +3287,47 @@ mark_with_description (const void *data,
 
   if (mark_last_occurred_object)
     {
+      Lisp_Object obj = *last_occurred_object;
+
+    old_tail_recurse:
       /* NOTE: The second parameter isn't even evaluated
 	 non-ERROR_CHECK_GC, so it's OK for the variable not to exist.
        */
-      mark_object_maybe_checking_free (*last_occurred_object,
-				       last_occurred_flags &
-				       XD_FLAG_FREE_LISP_OBJECT);
+      KKCC_DO_CHECK_FREE
+	(obj, (last_occurred_flags & XD_FLAG_FREE_LISP_OBJECT) != 0);
+
+      if (XTYPE (obj) == Lisp_Type_Record)
+	{
+	  struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+
+	  GC_CHECK_LHEADER_INVARIANTS (lheader);
+
+	  /* All c_readonly objects have their mark bit set,
+	     so that we only need to check the mark bit here. */
+	  if (! MARKED_RECORD_HEADER_P (lheader))
+	    {
+	      MARK_RECORD_HEADER (lheader);
+
+	      {
+		desc = LHEADER_IMPLEMENTATION (lheader)->description;
+		if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
+		  {
+		    data = lheader;
+		    mark_last_occurred_object = 0;
+		    goto tail_recurse;
+		  }
+		else 
+		  {
+		    if (RECORD_MARKER (lheader))
+		      {
+			obj = RECORD_MARKER (lheader) (obj);
+			if (!NILP (obj)) goto old_tail_recurse;
+		      }
+		  }
+	      }
+	    }
+	}
+
       mark_last_occurred_object = 0;
     }
 }
@@ -3324,10 +3373,8 @@ mark_object (Lisp_Object obj)
 
 #ifndef USE_KKCC
       /* We handle this separately, above, so we can mark free objects */
-      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||
-			  ! ((struct lcrecord_header *) lheader)->free);
+      GC_CHECK_NOT_FREE (lheader);
 #endif /* not USE_KKCC */
-
 
       /* All c_readonly objects have their mark bit set,
 	 so that we only need to check the mark bit here. */
@@ -3337,16 +3384,10 @@ mark_object (Lisp_Object obj)
 
 	  {
 #ifdef USE_KKCC
-	    const struct lrecord_implementation *imp;
 	    const struct memory_description *desc;
-
-	    imp = LHEADER_IMPLEMENTATION (lheader);
-	    desc = imp->description;
-	  
+	    desc = LHEADER_IMPLEMENTATION (lheader)->description;
 	    if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
-	      {
-		mark_with_description (lheader, desc);
-	      }
+	      mark_with_description (lheader, desc);
 	    else 
 #endif /* USE_KKCC */
 	      {

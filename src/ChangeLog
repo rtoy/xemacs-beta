@@ -1,3 +1,14 @@
+2003-02-06  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (GC_CHECK_NOT_FREE):
+	* alloc.c (mark_object_maybe_checking_free):
+	* alloc.c (mark_with_description):
+	* alloc.c (mark_object):
+	Implement tail-recursion in KKCC when the last-marked object is
+	a Lisp object, to avoid stack-overflow errors when marking long
+	lists.  Factor out some duplicated error-checking into macros.
+
 2003-02-05  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (update-elc.stamp):
