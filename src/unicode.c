@@ -27,10 +27,10 @@ Boston, MA 02111-1307, USA.  */
    Written by Ben Wing <ben@xemacs.org>, June, 2001.
    Separated out into this file, August, 2001.
    Includes Unicode coding systems, some parts of which have been written
-   by someone else.
+   by someone else.  #### Morioka and Hayashi, I think.
 
    As of September 2001, the detection code is here and abstraction of the
-   detection system is finished.  the unicode detectors have been rewritten
+   detection system is finished.  The unicode detectors have been rewritten
    to include multiple levels of likelihood.
    */
 
@@ -47,7 +47,15 @@ Boston, MA 02111-1307, USA.  */
    problem in that they can't handle two characters mapping to a
    single Unicode codepoint or vice-versa in a single charset table.
    It's not clear there is any way to handle this and still make the
-   sledgehammer routines useful. */
+   sledgehammer routines useful.
+
+   Inquiring Minds Want To Know Dept: does the above WARNING mean that
+   _if_ it happens, then it will signal error, or then it will do
+   something evil and unpredictable?  Signaling an error is OK: for
+   all national standards, the national to Unicode map is an inclusion
+   (1-to-1).  Any character set that does not behave that way is
+   broken according to the Unicode standard. */
+
 /* #define SLEDGEHAMMER_CHECK_UNICODE */
 
   /* We currently use the following format for tables:
@@ -153,6 +161,8 @@ Lisp_Object Qutf_16_little_endian_bom;
 
 #ifdef MULE 
 
+/* #### Using ints for to_unicode is OK (as long as they are >= 32 bits).
+   However, shouldn't the shorts below be unsigned? */
 static int *to_unicode_blank_1;
 static int **to_unicode_blank_2;
 
@@ -302,6 +312,8 @@ init_blank_unicode_tables (void)
   from_unicode_blank_4 = xnew_array (short ***, 256);
   for (i = 0; i < 256; i++)
     {
+      /* #### IMWTK: Why does using -1 here work? Simply because there are
+         no existing 96x96 charsets? */
       from_unicode_blank_1[i] = (short) -1;
       from_unicode_blank_2[i] = from_unicode_blank_1;
       from_unicode_blank_3[i] = from_unicode_blank_2;
@@ -312,6 +324,7 @@ init_blank_unicode_tables (void)
   to_unicode_blank_2 = xnew_array (int *, 96);
   for (i = 0; i < 96; i++)
     {
+      /* Here -1 is guaranteed OK. */
       to_unicode_blank_1[i] = -1;
       to_unicode_blank_2[i] = to_unicode_blank_1;
     }
@@ -354,6 +367,8 @@ create_new_from_unicode_table (int level)
     }
 }
 
+/* Allocate and blank the tables.
+   Loading them up is done by parse-unicode-translation-table. */
 void
 init_charset_unicode_tables (Lisp_Object charset)
 {
@@ -783,8 +798,14 @@ set_unicode_conversion (Ichar chr, int code)
 
   BREAKUP_ICHAR (chr, charset, c1, c2);
 
-  assert (!EQ (charset, Vcharset_ascii));
-  assert (!EQ (charset, Vcharset_control_1));
+  /* I tried an assert on code > 255 || chr == code, but that fails because
+     Mule gives many Latin characters separate code points for different
+     ISO 8859 coded character sets.  Obvious in hindsight.... */
+  assert (!EQ (charset, Vcharset_ascii) || chr == code);
+  assert (!EQ (charset, Vcharset_latin_iso8859_1) || chr == code);
+  assert (!EQ (charset, Vcharset_control_1) || chr == code);
+
+  /* This assert is needed because it is simply unimplemented. */
   assert (!EQ (charset, Vcharset_composite));
 
 #ifdef SLEDGEHAMMER_CHECK_UNICODE
@@ -919,6 +940,7 @@ ichar_to_unicode (Ichar chr)
   int c1, c2;
 
   type_checking_assert (valid_ichar_p (chr));
+  /* This shortcut depends on the representation of an Ichar, see text.c. */
   if (chr < 256)
     return (int) chr;
 
@@ -932,7 +954,7 @@ ichar_to_unicode (Ichar chr)
 }
 
 static Ichar
-unicode_to_char (int code, Lisp_Object_dynarr *charsets)
+unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 {
   int u1, u2, u3, u4;
   int code_levels;
@@ -940,7 +962,10 @@ unicode_to_char (int code, Lisp_Object_dynarr *charsets)
   int n = Dynarr_length (charsets);
 
   type_checking_assert (code >= 0);
-  if (code < 256)
+  /* This shortcut depends on the representation of an Ichar, see text.c.
+     Note that it may _not_ be extended to U+00A0 to U+00FF (many ISO 8859
+     coded character sets have points that map into that region). */
+  if (code < 0xA0)
     return (Ichar) code;
 
   BREAKUP_UNICODE_CODE (code, u4, u3, u2, u1, code_levels);
@@ -971,6 +996,10 @@ unicode_to_char (int code, Lisp_Object_dynarr *charsets)
   return (Ichar) -1;
 }
 
+/* Add charsets to precedence list.
+   LIST must be a list of charsets.  Charsets which are in the list more
+   than once are given the precedence implied by their earliest appearance.
+   Later appearances are ignored. */
 static void
 add_charsets_to_precedence_list (Lisp_Object list, int *lbs,
 				 Lisp_Object_dynarr *dynarr)
@@ -982,13 +1011,18 @@ add_charsets_to_precedence_list (Lisp_Object list, int *lbs,
 	int lb = XCHARSET_LEADING_BYTE (charset);
 	if (lbs[lb - MIN_LEADING_BYTE] == 0)
 	  {
-	    Dynarr_add (unicode_precedence_dynarr, charset);
+	    Dynarr_add (dynarr, charset);
 	    lbs[lb - MIN_LEADING_BYTE] = 1;
 	  }
       }
   }
 }
 
+/* Rebuild the charset precedence array.
+   The "charsets preferred for the current language" get highest precedence,
+   followed by the "charsets preferred by default", ordered as in
+   Vlanguage_unicode_precedence_list and Vdefault_unicode_precedence_list,
+   respectively.  All remaining charsets follow in an arbitrary order. */
 void
 recalculate_unicode_precedence (void)
 {
@@ -1016,18 +1050,49 @@ recalculate_unicode_precedence (void)
     }
 }
 
-DEFUN ("set-language-unicode-precedence-list",
-       Fset_language_unicode_precedence_list,
-       1, 1, 0, /*
-Set the language-specific precedence list used for Unicode decoding.
-This is a list of charsets, which are consulted in order for a translation
-matching a given Unicode character.  If no matches are found, the charsets
-in the default precedence list (see `set-default-unicode-precedence-list')
-are consulted, and then all remaining charsets, in some arbitrary order.
+DEFUN ("unicode-precedence-list", 
+       Funicode_precedence_list,
+       0, 0, 0, /*
+Return the precedence order among charsets used for Unicode decoding.
+
+Value is a list of charsets, which are searched in order for a translation
+matching a given Unicode character.
+
+The highest precedence is given to the language-specific precedence list of
+charsets, defined by `set-language-unicode-precedence-list'.  These are
+followed by charsets in the default precedence list, defined by
+`set-default-unicode-precedence-list'.  Charsets occurring multiple times are
+given precedence according to their first occurrance in either list.  These
+are followed by the remaining charsets, in some arbitrary order.
 
 The language-specific precedence list is meant to be set as part of the
 language environment initialization; the default precedence list is meant
 to be set by the user.
+*/
+       ())
+{
+  int i;
+  Lisp_Object list = Qnil;
+
+  for (i = Dynarr_length (unicode_precedence_dynarr) - 1; i >= 0; i--)
+    list = Fcons (Dynarr_at (unicode_precedence_dynarr, i), list);
+  return list;
+}
+
+
+/* #### This interface is wrong.  Cyrillic users and Chinese users are going
+   to have varying opinions about whether ISO Cyrillic, KOI8-R, or Windows
+   1251 should take precedence, and whether Big Five or CNS should take
+   precedence, respectively.  This means that users are sometimes going to
+   want to set Vlanguage_unicode_precedence_list.
+   Furthermore, this should be language-local (buffer-local would be a
+   reasonable approximation). */
+DEFUN ("set-language-unicode-precedence-list",
+       Fset_language_unicode_precedence_list,
+       1, 1, 0, /*
+Set the language-specific precedence of charsets in Unicode decoding.
+LIST is a list of charsets.
+See `unicode-precedence-list' for more information.
 */
        (list))
 {
@@ -1045,7 +1110,7 @@ DEFUN ("language-unicode-precedence-list",
        Flanguage_unicode_precedence_list,
        0, 0, 0, /*
 Return the language-specific precedence list used for Unicode decoding.
-See `set-language-unicode-precedence-list' for more information.
+See `unicode-precedence-list' for more information.
 */
        ())
 {
@@ -1056,8 +1121,8 @@ DEFUN ("set-default-unicode-precedence-list",
        Fset_default_unicode_precedence_list,
        1, 1, 0, /*
 Set the default precedence list used for Unicode decoding.
-This is meant to be set by the user.  See
-`set-language-unicode-precedence-list' for more information.
+This is intended to be set by the user.  See
+`unicode-precedence-list' for more information.
 */
        (list))
 {
@@ -1075,7 +1140,7 @@ DEFUN ("default-unicode-precedence-list",
        Fdefault_unicode_precedence_list,
        0, 0, 0, /*
 Return the default precedence list used for Unicode decoding.
-See `set-language-unicode-precedence-list' for more information.
+See `unicode-precedence-list' for more information.
 */
        ())
 {
@@ -1085,29 +1150,48 @@ See `set-language-unicode-precedence-list' for more information.
 DEFUN ("set-unicode-conversion", Fset_unicode_conversion,
        2, 2, 0, /*
 Add conversion information between Unicode codepoints and characters.
+Conversions for U+0000 to U+00FF are hardwired to ASCII, Control-1, and
+Latin-1.  Attempts to set these values will raise an error.
+
 CHARACTER is one of the following:
 
 -- A character (in which case CODE must be a non-negative integer; values
    above 2^20 - 1 are allowed for the purpose of specifying private
-   characters, but will cause errors when converted to utf-16)
+   characters, but are illegal in standard Unicode---they will cause errors
+   when converted to utf-16)
 -- A vector of characters (in which case CODE must be a vector of integers
    of the same length)
 */
        (character, code))
 {
   Lisp_Object charset;
+  int ichar, unicode;
 
   CHECK_CHAR (character);
   CHECK_NATNUM (code);
 
-  charset = ichar_charset (XCHAR (character));
-  if (EQ (charset, Vcharset_ascii) ||
-      EQ (charset, Vcharset_control_1) ||
-      EQ (charset, Vcharset_composite))
-    signal_error (Qinvalid_argument, "Cannot set Unicode translation for ASCII, Control-1 or Composite chars",
+  unicode = XINT (code);
+  ichar = XCHAR (character);
+  charset = ichar_charset (ichar);
+
+  /* The translations of ASCII, Control-1, and Latin-1 code points are
+     hard-coded in ichar_to_unicode and unicode_to_ichar.
+
+     Checking unicode < 256 && ichar != unicode is wrong because Mule gives
+     many Latin characters code points in a few different character sets. */
+  if ((EQ (charset, Vcharset_ascii) ||
+       EQ (charset, Vcharset_control_1) ||
+       EQ (charset, Vcharset_latin_iso8859_1))
+      && unicode != ichar)
+    signal_error (Qinvalid_argument, "Can't change Unicode translation for ASCII, Control-1 or Latin-1 char",
 		  character);
 
-  set_unicode_conversion (XCHAR (character), XINT (code));
+  /* #### Composite characters are not properly implemented yet. */
+  if (EQ (charset, Vcharset_composite))
+    signal_error (Qinvalid_argument, "Can't set Unicode translation for Composite char",
+		  character);
+
+  set_unicode_conversion (ichar, unicode);
   return Qnil;
 }
 
@@ -1115,8 +1199,8 @@ CHARACTER is one of the following:
 
 DEFUN ("char-to-unicode", Fchar_to_unicode, 1, 1, 0, /*
 Convert character to Unicode codepoint.
-When there is no international support (i.e. MULE is not defined),
-this function simply does `char-to-int'.
+When there is no international support (i.e. the 'mule feature is not
+present), this function simply does `char-to-int'.
 */
        (character))
 {
@@ -1136,9 +1220,9 @@ charsets will be consulted, in the given order, for a translation.
 Otherwise, the default ordering of all charsets will be given (see
 `set-unicode-charset-precedence').
 
-When there is no international support (i.e. MULE is not defined),
-this function simply does `int-to-char' and ignores the CHARSETS
-argument..
+When there is no international support (i.e. the 'mule feature is not
+present), this function simply does `int-to-char' and ignores the CHARSETS
+argument.
 */
        (code, charsets))
 {
@@ -1156,7 +1240,7 @@ argument..
 
   if (NILP (charsets))
     {
-      Ichar ret = unicode_to_char (c, unicode_precedence_dynarr);
+      Ichar ret = unicode_to_ichar (c, unicode_precedence_dynarr);
       if (ret == -1)
 	return Qnil;
       return make_char (ret);
@@ -1166,7 +1250,7 @@ argument..
   memset (lbs, 0, NUM_LEADING_BYTES * sizeof (int));
   add_charsets_to_precedence_list (charsets, lbs, dyn);
   {
-    Ichar ret = unicode_to_char (c, unicode_precedence_dynarr);
+    Ichar ret = unicode_to_ichar (c, dyn);
     Dynarr_free (dyn);
     if (ret == -1)
       return Qnil;
@@ -1188,36 +1272,37 @@ cerrar_el_fulano (Lisp_Object fulano)
   return Qnil;
 }
 
+/* #### shouldn't this interface be called load-unicode-mapping-table
+   for consistency with Unicode Consortium terminology? */
 DEFUN ("parse-unicode-translation-table", Fparse_unicode_translation_table,
        2, 6, 0, /*
-Parse Unicode translation data in FILENAME for CHARSET.
+Load Unicode tables with the Unicode mapping data in FILENAME for CHARSET.
 Data is text, in the form of one translation per line -- charset
 codepoint followed by Unicode codepoint.  Numbers are decimal or hex
 \(preceded by 0x).  Comments are marked with a #.  Charset codepoints
-for two-dimensional charsets should have the first octet stored in the
+for two-dimensional charsets have the first octet stored in the
 high 8 bits of the hex number and the second in the low 8 bits.
 
 If START and END are given, only charset codepoints within the given
-range will be processed.  If OFFSET is given, that value will be added
-to all charset codepoints in the file to obtain the internal charset
-codepoint.  START and END apply to the codepoints in the file, before
-OFFSET is applied.
+range will be processed.  (START and END apply to the codepoints in the
+file, before OFFSET is applied.)
 
-\(Note that, as usual, we assume that octets are in the range 32 to
-127 or 33 to 126.  If you have a table in kuten form, with octets in
-the range 1 to 94, you will have to use an offset of 5140,
-i.e. 0x2020.)
+If OFFSET is given, that value will be added to all charset codepoints
+in the file to obtain the internal charset codepoint.  \(We assume
+that octets in the table are in the range 33 to 126 or 32 to 127.  If
+you have a table in ku-ten form, with octets in the range 1 to 94, you
+will have to use an offset of 5140, i.e. 0x2020.)
 
 FLAGS, if specified, control further how the tables are interpreted
-and are used to special-case certain known table weirdnesses in the
-Unicode tables:
+and are used to special-case certain known format deviations in the
+Unicode tables or in the charset:
 
 `ignore-first-column'
-  Exactly as it sounds.  The JIS X 0208 tables have 3 columns of data instead
-  of 2; the first is the Shift-JIS codepoint.
+  The JIS X 0208 tables have 3 columns of data instead of 2.  The first
+  column contains the Shift-JIS codepoint, which we ignore.
 `big5'
-  The charset codepoint is a Big Five codepoint; convert it to the
-  proper hacked-up codepoint in `chinese-big5-1' or `chinese-big5-2'.
+  The charset codepoints are Big Five codepoints; convert it to the
+  hacked-up Mule codepoint in `chinese-big5-1' or `chinese-big5-2'.
 */
      (filename, charset, start, end, offset, flags))
 {
@@ -1259,7 +1344,7 @@ Unicode tables:
 	  big5 = 1;
 	else
 	  invalid_constant
-	    ("Unrecognized `parse-unicode-table' flag", elt);
+	    ("Unrecognized `parse-unicode-translation-table' flag", elt);
       }
   }
 
@@ -1434,7 +1519,7 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
   else
     {
 #ifdef MULE
-      Ichar chr = unicode_to_char (ch, unicode_precedence_dynarr);
+      Ichar chr = unicode_to_ichar (ch, unicode_precedence_dynarr);
 
       if (chr != -1)
 	{
@@ -2143,6 +2228,7 @@ void
 syms_of_unicode (void)
 {
 #ifdef MULE
+  DEFSUBR (Funicode_precedence_list);
   DEFSUBR (Fset_language_unicode_precedence_list);
   DEFSUBR (Flanguage_unicode_precedence_list);
   DEFSUBR (Fset_default_unicode_precedence_list);

@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "sysdep.h"
 #include "buffer.h"
+#include "process.h"		/* for report_process_error */
 
 #include <errno.h>
 

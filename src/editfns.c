@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "casetab.h"
 #include "chartab.h"
+#include "commands.h"		/* for zmacs_region functions */
 #include "device.h"
 #include "events.h"             /* for EVENTP */
 #include "frame.h"

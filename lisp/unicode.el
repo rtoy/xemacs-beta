@@ -82,10 +82,17 @@
   "Initialize the Unicode translation tables for all standard charsets."
   (let ((parse-args
 	 '(("unicode/unicode-consortium"
+	    ;; Due to the braindamaged way Mule treats the ASCII and Control-1
+	    ;; charsets' types, trying to load them results in out-of-range
+	    ;; warnings at unicode.c:1439.  They're no-ops anyway, they're
+	    ;; hardwired in unicode.c (unicode_to_ichar, ichar_to_unicode).
+	    ;; ("8859-1.TXT" ascii #x00 #x7F #x0)
+	    ;; ("8859-1.TXT" control-1 #x80 #x9F #x-80)
+            ;; The 8859-1.TXT G1 assignments are half no-ops, hardwired in
+	    ;; unicode.c ichar_to_unicode, but not in unicode_to_ichar.
 	    ("8859-1.TXT" latin-iso8859-1 #xA0 #xFF #x-80)
 	    ;; "8859-10.TXT"
 	    ;; "8859-13.TXT"
-	    ;; "8859-14.TXT"
 	    ("8859-14.TXT" latin-iso8859-14 #xA0 #xFF #x-80)
 	    ("8859-15.TXT" latin-iso8859-15 #xA0 #xFF #x-80)
 	    ("8859-2.TXT" latin-iso8859-2 #xA0 #xFF #x-80)

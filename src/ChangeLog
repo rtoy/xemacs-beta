@@ -1,3 +1,28 @@
+2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* unicode.c: Improve top-level comments and many docstrings.
+
+	(Fparse_unicode_translation_table): Use right function name in error.
+
+	(unicode_to_ichar): Renamed from unicode_to_char.
+	(Funicode_to_char): 
+	(decode_unicode_char):
+	Use new name.
+
+	(add_charsets_to_precedence_list): Change the dynarr argument
+	instead of the global precedence list.
+
+	(Funicode_precedence_list): New function.
+	(Fset_language_unicode_precedence_list,
+	 Flanguage_unicode_precedence_list,
+	 Fset_default_unicode_precedence_list,
+	 Fdefault_unicode_precedence_list):
+	Docstrings refer to docstring of Funicode_precedence_list.
+
+	(set_unicode_conversion): Assert attempts to change Basic Latin
+	(Unicode BMP, row 00).
+	(Fset_unicode_conversion): Signal error on changes to Basic Latin.
+
 2002-06-23  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* dialog-gtk.c:
