@@ -1,3 +1,39 @@
+to 21.5.13 "cauliflower"
+
+
+Here are the highlights:
+
+Build
+
+-- Don't look for Motif if it's already been found - Buchholz.
+-- Autoconf fixes for building modules on MacOS X - Begel.
+-- Darwin, Cygwin, BerkDB autoconf fixes - Turnbull.
+-- Make DEFUNed functions be tags - Buchholz.
+-- Allow compiling with Motif 1 and linking with Motif 2 - Buchholz.
+
+
+
+Documentation
+
+-- New section in PROBLEMS auxilary programs for Windows - Turnbull.
+-- FAQ updates
+	Q6.4.3 New aux programs for Windows - Turnbull.
+
+
+Internals
+
+-- Don't use the u_int8_t etc typedefs on FreeBSD in database.c - Pluim.
+-- Better support for externally defined lrecord types - Begel.
+
+
+Lisp API
+
+-- Fix bug preventing installing new packages - Youngs.
+-- Put exit message on separate line in `command-error' - Turnbull.
+-- Temporarily turn off PGP verification of package-index - Youngs.
+-- Remove keymapings for 'function-key-error' - James.
+
+
 to 21.5.12 "carrot"
 
 Lots of updates, fixes, and features from Ben Wing (he never stops).
