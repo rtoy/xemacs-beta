@@ -1,5 +1,10 @@
 2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/european.el: Fix a comment typo pointed out by Jerry James
+	in psu0olr8z7.fsf@diannao.ittc.ku.edu.
+
+2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* mule/european.el: Create the 8859-16 character set and coding system.
 	* mule/european.el (latin-iso8859-16): Make the character set available.
 

@@ -4,7 +4,7 @@
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 ;; Copyright (C) 2001 Ben Wing.
-;; Copyright (C) 2002 Free Software Foundation
+;; Copyright (C) 2002, 2005 Free Software Foundation
 
 ;; Keywords: multilingual, European
 
@@ -27,8 +27,8 @@
 
 ;;; Commentary:
 
-;; For Europeans, seven coded character sets ISO8859-1,2,3,4,9,10 are supported.
-;; Note: ISO 8859/15 (Latin-9) is supported via the latin-unity package.
+;; For Roman-alphabet-using Europeans, eight coded character sets,
+;; ISO8859-1,2,3,4,9,14,15,16 are supported.
 
 ;; #### latin.el would be a better name for this file.
 
