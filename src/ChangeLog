@@ -1,3 +1,7 @@
+2003-04-08  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in ($(BLDSRC)/NEEDTODUMP): Depends on $(RAW_EXE).
+
 2003-03-31  Mike Alexander  <mta@arbortext.com>
 
 	* frame-msw.c (mswindows_set_frame_size): Call change_frame_size.

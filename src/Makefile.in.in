@@ -541,7 +541,7 @@ FRC.needtodump:
 ## This file is touched by update-elc.el when redumping is necessary.
 ## We use $(BLDSRC) == `.' here to help keep sync with nt/xemacs.mak,
 ## where $(BLDSRC) is not `.'.
-$(BLDSRC)/NEEDTODUMP: FRC.needtodump
+$(BLDSRC)/NEEDTODUMP: $(RAW_EXE) FRC.needtodump
 	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
 
 ## (4) Build the DOC file
