@@ -1,3 +1,7 @@
+2004-03-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* sample.init.el: Typo and copycat fix.
+
 2003-11-28  Norbert Koch  <viteno@xemacs.org>
 
 	* PACKAGES (erc): new.

@@ -273,7 +273,7 @@ Non-nil if we need to inhibit XEmacs from loading custom.el after init.el.")
 ;; and in fact all we've done is copied the definition.  Note again
 ;; how we check to avoid clobbering an existing definition. (It's good
 ;; style to do this, in case some improvement was made to the
-;; already-existing function -- otherwise we might subsitute an older
+;; already-existing function -- otherwise we might substitute an older
 ;; definition and possibly break some code elsewhere.)
 ;;
 ;; NOTE ALSO: It is in general *NOT* a good idea to do what we're
@@ -1263,7 +1263,7 @@ previous with \\[backward-sexp]."
 
 
 ;;; ********************
-;;; Filladapt is a syntax-highlighting package.  When it is enabled it
+;;; Filladapt is an adaptive text-filling package.  When it is enabled it
 ;;; makes filling (e.g. using M-q) much much smarter about paragraphs
 ;;; that are indented and/or are set off with semicolons, dashes, etc.
 
