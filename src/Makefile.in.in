@@ -133,15 +133,15 @@ X11_libs = $(LIBI18N)
 
 #########################################################################
 
-# Object files needed for compilation.
+## Object files needed for compilation.
 
-# NOTE: Some of the object files are specified in this file, and
-# others in configure.in.  The general rule is that they be specified
-# here whenever they have clear dependencies on configure defines.
-# They should be in configure.in when there is no configure define or
-# when there is extremely hairy code to determine which files are
-# needed (e.g. native sound support) and it would be pointless to
-# duplicate that code.
+## NOTE: Some of the object files are specified in this file, and
+## others in configure.in.  The general rule is that they be specified
+## here whenever they have clear dependencies on configure defines.
+## They should be in configure.in when there is no configure define or
+## when there is extremely hairy code to determine which files are
+## needed (e.g. native sound support) and it would be pointless to
+## duplicate that code.
 
 gui_objs=
 #ifdef HAVE_MENUBARS
