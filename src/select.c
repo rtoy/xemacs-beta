@@ -289,6 +289,14 @@ It defaults to the selected device.
 
   /* have to do device specific stuff last so that methods can access the
      selection_alist */
+
+  /* If you are re-implementing this for another redisplay type, either make
+     certain that the selection time will fit within thirty-two bits, or
+     redesign get-xemacs-selection-timestamp to return, say, a bignum, and
+     convert the device-specific timestamp to a bignum before storing it in
+     this list. The current practice is to blindly assume that the timestamp
+     is thirty-two bits, which will work for extant architectures. */
+
   if (HAS_DEVMETH_P (XDEVICE (device), own_selection))
     selection_time = DEVMETH (XDEVICE (device), own_selection,
 			      (selection_name, selection_value,
@@ -492,18 +500,36 @@ Optionally, the window-system DATA-TYPE and the DEVICE may be specified.
     : Qnil;
 }
 
+Lisp_Object
+get_selection_raw_time(Lisp_Object selection)
+{
+  Lisp_Object local_value = assq_no_quit (selection, Vselection_alist);  
+
+  if (!NILP (local_value))
+    {
+    return XCAR (XCDR (XCDR (local_value)));
+    }
+  return Qnil;
+}
+
 /* Get the timestamp of the given selection */
-DEFUN ("get-selection-timestamp", Fget_selection_timestamp, 1, 1, 0, /*
-Return the timestamp associated with the specified SELECTION, if it exists.
-Note that the timestamp is a device-specific object, and may not actually be
-visible from Lisp.
+DEFUN ("get-xemacs-selection-timestamp", Fget_selection_timestamp, 1, 1, 0, /*
+Return timestamp for SELECTION, if belongs to XEmacs and exists.
+
+The timestamp is a cons of two integers, the first being the higher-order
+sixteen bits of the device-specific thirty-two-bit quantity, the second
+being the lower-order sixteen bits of same. Expect to see this API change
+when and if redisplay on a window system with timestamps wider than 32bits
+happens.
 */
        (selection))
 {
-  Lisp_Object local_value = assq_no_quit (selection, Vselection_alist);
+  Lisp_Object val = get_selection_raw_time(selection);
 
-  if (!NILP (local_value))
-    return XCAR (XCDR (XCDR (local_value)));
+  if (!NILP (val))
+    {
+      return word_to_lisp(* (UINT_32_BIT *) XOPAQUE_DATA (val));
+    }
 
   return Qnil;
 }

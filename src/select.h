@@ -57,12 +57,13 @@ void handle_selection_clear (Lisp_Object selection_symbol);
 
 void select_notify_buffer_kill (Lisp_Object buffer);
 
+Lisp_Object get_selection_raw_time(Lisp_Object selection);
+
 /* Lisp functions we export for other files' use */
 EXFUN (Fregister_selection_data_type, 2);
 EXFUN (Fselection_data_type_name, 2);
 EXFUN (Favailable_selection_types, 2);
 EXFUN (Fselection_owner_p, 1);
 EXFUN (Fselection_exists_p, 3);
-EXFUN (Fget_selection_timestamp, 1);
 
 #endif /* INCLUDED_select_h_ */

@@ -43,7 +43,7 @@
 (define-obsolete-function-alias 'x-selection-owner-p 'selection-owner-p)
 (define-obsolete-variable-alias 'x-selection-converter-alist 'selection-converter-alist)
 (define-obsolete-variable-alias 'x-lost-selection-hooks 'lost-selection-hooks)
-(define-obsolete-variable-alias 'x-selected-text-type 'selected-text-type)
+(define-obsolete-variable-alias 'x-selected-text-type 'selection-preferred-types)
 (define-obsolete-function-alias 'x-valid-simple-selection-p 'valid-simple-selection-p)
 (define-obsolete-function-alias 'x-own-selection 'own-selection)
 (define-obsolete-function-alias 'x-disown-selection 'disown-selection)

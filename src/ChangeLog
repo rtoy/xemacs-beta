@@ -1,3 +1,28 @@
+2005-02-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-gtk.c (emacs_gtk_selection_clear_event_handle):
+	Use get_selection_raw_timestamp instead of Fget_selection_timestamp. 
+	* select-gtk.c (gtk_own_selection):
+	Cross reference to some debate in select-x.c
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	Discuss Time vs. time_t--I think Time is _always_ thirty-two-bit
+	and time_t is variable in size. 
+	* select-x.c (x_handle_selection_clear):
+	Replace call to Fget_selection_timestamp with call to
+	get_selection_raw_time, check that pasted data pointer is non-zero
+	before trying to free it. 
+	* select.c:
+	* select.c (Fown_selection_internal):
+	Informative comment! Shouldn't actually be needed outside of the X
+	world. 
+	* select.c (get_selection_raw_time): New function. 
+	* select.c (Fget_selection_timestamp): Rework to use
+	get_selection_raw_time.
+	* select.h:
+	Make get_selection_raw_time available. 
+	
 2005-02-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select-x.c (x_reply_selection_request): Use XtRegisterDrawable 

@@ -158,7 +158,7 @@ emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
     target_symbol = fetch_multiple_target (selection_data);
 #endif
 
-  temp_obj = Fget_selection_timestamp (selection_symbol);
+  temp_obj = get_selection_raw_time(selection_symbol);
 
   if (NILP (temp_obj))
     {
@@ -255,7 +255,7 @@ emacs_gtk_selection_clear_event_handle (GtkWidget *UNUSED (widget),
 
   selection_symbol = atom_to_symbol (d, selection);
 
-  local_selection_time_lisp = Fget_selection_timestamp (selection_symbol);
+  local_selection_time_lisp = get_selection_raw_time (selection_symbol);
 
   /* We don't own the selection, so that's fine. */
   if (NILP (local_selection_time_lisp))
@@ -428,13 +428,14 @@ gtk_own_selection (Lisp_Object selection_name,
 			   selection_atom,
 			   thyme);
 
-  /* We do NOT use time_to_lisp() here any more, like we used to.
+  /* [[ We do NOT use time_to_lisp() here any more, like we used to.
      That assumed equivalence of time_t and Time, which is not
      necessarily the case (e.g. under OSF on the Alphas, where
      Time is a 64-bit quantity and time_t is a 32-bit quantity).
 
-     Opaque pointers are the clean way to go here.
-  */
+     Opaque pointers are the clean way to go here. ]] 
+
+     See my comment on the same issue in select-x.c -- Aidan. */
   return make_opaque (&thyme, sizeof (thyme));
 }
 

@@ -1,3 +1,75 @@
+2005-02-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el (selected-text-type): Removed.
+	* select.el (selection-preferred-types): New.
+	* select.el ('selected-text-type): New.
+	Rename selected-text-type to selection-preferred-types, now that
+	it's full of image types as fallbacks. Define an alias to the old
+	name. 
+	* select.el (kill-primary-selection): deleted -> delete
+
+	* select.el (get-selection-no-error):
+	* select.el (get-selection):
+	* select.el (get-selection-foreign):
+	Reference selection-preferred-types instead of giving details of
+	which types these functions default to wanting. 
+	
+	* select.el (select-make-extent-for-selection): Comment that we
+	need to hook something similar into the rectangle functions. 
+
+	* select.el (select-convert-in):
+	If we don't have a handler for an X11 selection, pass the value
+	itself as a string. Fixes X11 atoms.
+	
+	* select.el (select-convert-to-timestamp): New.
+	Uses get-xemacs-selection-timestamp. 
+
+	* select.el (select-convert-to-utf-8-text): New.
+	* select.el (select-convert-from-text): Removed.
+	The change in select-convert-in makes this irrelevant.
+	
+	* select.el (select-convert-from-length): Removed.
+	We have a more generic integer conversion routine here. 
+
+	* select.el (select-convert-from-filename): Removed.
+	The generic string conversion handles this. 
+
+	* select.el (select-convert-from-ip-address): New.
+	Whee. 
+	
+	* select.el (select-convert-from-utf-8-text): New.
+	* select.el (select-convert-from-utf-16-le-text): New.
+	The various Mozilla-specific types need the utf-16 conversion;
+	utf-8 conversion is _in_ this season, didn't you know?
+
+	* select.el (select-convert-from-image-data): New.
+	Generic convert-an-image-to-a-space-with-end-glyph function. Used
+	by the next six functions. 
+
+	* select.el (select-convert-from-image/gif): New.
+	* select.el (select-convert-from-image/jpeg): New.
+	* select.el (select-convert-from-image/png): New.
+	* select.el (select-convert-from-image/tiff): New.
+	* select.el (select-convert-from-image/xpm): New.
+	* select.el (select-convert-from-image/xbm): New.
+	Check if we have support for a given image format; if so, pass
+	back a space with the corresponding selection's image attached as
+	glyph data. 
+
+	* select.el (select-convert-from-cf-unicodetext):
+	* select.el (select-convert-to-cf-text):
+	* select.el (select-convert-to-cf-unicodetext):
+	Check that the corresponding Windows coding systems are available
+	before trying to convert. 
+	
+	* select.el (selection-converter-out-alist):
+	* select.el (selection-converter-in-alist):
+	Update both lists to reflect the other changes in the file. 
+	
+	* x-select.el (x-selected-text-type):
+	Update the define-obsolete-variable-alias now selected-text-type
+	is called something else. 
+	
 2005-02-25  Adrian Aichner  <adrian@xemacs.org>
 
 	* diagnose.el: Fix typo.

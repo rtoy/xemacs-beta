@@ -237,13 +237,21 @@ x_own_selection (Lisp_Object selection_name,
 
   XSetSelectionOwner (display, selection_atom, selecting_window, thyme);
 
-  /* We do NOT use time_to_lisp() here any more, like we used to.
+  /* [[ We do NOT use time_to_lisp() here any more, like we used to.
      That assumed equivalence of time_t and Time, which is not
      necessarily the case (e.g. under OSF on the Alphas, where
-     Time is a 64-bit quantity and time_t is a 32-bit quantity).
+     Time is a 64-bit quantity and time_t is a 32-bit quantity).]]
 
-     Opaque pointers are the clean way to go here.
-  */
+     This is wrong--on Digital Unix, time_t is a sixty-four-bit quantity,
+     and Time is, as the X protocol dictates, a thirty-two-bit quantity.
+
+     [[ Opaque pointers are the clean way to go here. ]]
+
+     Again, I disagree--the Lisp selection infrastructure needs to be
+     able to manipulate the selection timestamps if it is, as we want
+     it to, to be able to do most of the work. Though I have moved the
+     conversion to lisp to get-xemacs-selection-timestamp. -- Aidan. */
+	
   selection_time = make_opaque (&thyme, sizeof (thyme));
 
 #ifdef MOTIF_CLIPBOARDS
@@ -617,7 +625,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     target_symbol = fetch_multiple_target (event);
 #endif
 
-  temp_obj = Fget_selection_timestamp (selection_symbol);
+  temp_obj = get_selection_raw_time (selection_symbol);
 
   if (NILP (temp_obj))
     {
@@ -665,7 +673,12 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     event->type = 0;
-    xfree (data, Rawbyte *);
+    /* Data need not have been allocated; cf. select-convert-to-delete in
+       lisp/select.el . */
+    if ((Rawbyte *)0 != data)
+    {
+      xfree (data, Rawbyte *);
+    }
   }
 
   unbind_to (count);
@@ -705,7 +718,7 @@ x_handle_selection_clear (XSelectionClearEvent *event)
 
   selection_symbol = x_atom_to_symbol (d, selection);
 
-  local_selection_time_lisp = Fget_selection_timestamp (selection_symbol);
+  local_selection_time_lisp = get_selection_raw_time (selection_symbol);
 
   /* We don't own the selection, so that's fine. */
   if (NILP (local_selection_time_lisp))
