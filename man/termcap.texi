@@ -1147,7 +1147,7 @@ obey.
 does not touch (@pxref{Status Line}).
 
 Some terminals have a special line that is used only as a status line.
-For these terminals, there is no need for an @samp{-s} variant; the
+For these terminals, there is no need for a @samp{-s} variant; the
 status line commands should be defined by default.  On other
 terminals, enabling a status line means removing one screen line from
 ordinary use and reducing the effective screen height.  For these

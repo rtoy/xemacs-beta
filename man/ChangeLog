@@ -1,3 +1,23 @@
+2002-07-05  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs/menus.texi (Edit Menu): Typo fixes for incorrect use of
+	indef. art. "an".
+
+2002-07-05  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/control.texi (Processing of Errors): Ditto.
+	* lispref/mule.texi (ISO 2022): Ditto.
+	* lispref/packaging.texi (Package Terminology): Ditto.
+	* lispref/text.texi (Transformations): Ditto.
+
+2002-07-05  Adrian Aichner  <adrian@xemacs.org>
+
+	* termcap.texi (Naming): Ditto.
+	* texinfo.texi (itemize): Ditto.
+	* texinfo.texi (Tips): Ditto.
+	* widget.texi (Introduction): Ditto.
+	* widget.texi (group): Ditto.
+
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.7 "broccoflower" is released.

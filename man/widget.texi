@@ -69,7 +69,7 @@ visible in the buffer.
 A simple constant widget intended to be used in the @code{menu-choice} and
 @code{radio-button-choice} widgets. 
 @item choice-item
-An button item only intended for use in choices.  When invoked, the user
+A button item only intended for use in choices.  When invoked, the user
 will be asked to select another option from the choice widget.
 @item toggle
 A simple @samp{on}/@samp{off} switch.
@@ -1031,7 +1031,7 @@ List whose car is the type of the list elements.
 @comment  node-name,  next,  previous,  up
 @subsection The @code{group} Widget
 
-This widget simply group other widget together.
+This widget simply groups other widget together.
 
 Syntax:
 

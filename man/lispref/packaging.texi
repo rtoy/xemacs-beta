@@ -462,7 +462,7 @@ safely remove any of the component libraries.
 
 @item Single-File Packages
 @cindex single-file package
-A single-file package is an collection of thematically related but
+A single-file package is a collection of thematically related but
 otherwise independent Lisp libraries.  These libraries are bundled
 together for convenience of the maintainers.  Usually individual
 libraries may be deleted at will without any loss of functionality of

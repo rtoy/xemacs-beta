@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.15 2001/04/13 09:11:29 michaels Exp $
+@c $Id: texinfo.texi,v 1.16 2002/07/05 20:35:47 adrian Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
@@ -7789,7 +7789,7 @@ interline whitespace in either case.)  Except when the entries are
 very brief, these blank lines make the list look better.@refill
 
 Here is an example of the use of @code{@@itemize}, followed by the
-output it produces.  Note that @code{@@bullet} produces an @samp{*} in
+output it produces.  Note that @code{@@bullet} produces a @samp{*} in
 Info and a round dot in @TeX{}.@refill
 
 @example
@@ -14919,7 +14919,7 @@ Evidently, @samp{au} is an abbreviation for ``author''.
 @end example
 
 @noindent
-since @samp{au} does @emph{not} serve as an  abbreviation for
+since @samp{au} does @emph{not} serve as an abbreviation for
 @samp{author.} (with a period following the word).
 
 @subsubheading Introducing New Terms
