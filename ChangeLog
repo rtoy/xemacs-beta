@@ -1,3 +1,7 @@
+2001-12-18  Jan Vroonhof  <jan@xemacs.org>
+
+	* etc/photos/jan.png: Add mug shot.
+
 2001-12-16  Adrian Aichner  <adrian@xemacs.org>
 
 	* info\.cvsignore: Info files are generated, so let's ignore them
