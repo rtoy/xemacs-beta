@@ -456,9 +456,10 @@ msprinter_init_device (struct device *d, Lisp_Object props)
     signal_open_printer_error (d);
 
   pdm = (DEVMODE*) xmalloc (dm_size);
-  DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
-		      printer_name, pdm,
-		      NULL, DM_OUT_BUFFER);
+  if (DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
+			  printer_name, pdm,
+			  NULL, DM_OUT_BUFFER) < 0)
+    signal_open_printer_error (d);
 
   assert (DEVMODE_SIZE (pdm) <= dm_size);
 

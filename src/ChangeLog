@@ -1,3 +1,8 @@
+2001-05-20  Mike Alexander  <mta@arbortext.com>
+
+	* device-msw.c (msprinter_init_device): Don't assert out if the
+	printer isn't reachable on the net.
+
 2001-05-21  Martin Buchholz  <martin@xemacs.org>
 
 	* gui-x.c (sanity_check_lwlib): Remove.
