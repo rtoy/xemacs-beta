@@ -1,3 +1,9 @@
+2004-06-29  Jerry James  <james@xemacs.org>
+
+	* specifier.c (check_valid_inst_list): Change LIST_LOOP to
+	EXTERNAL_LIST_LOOP_2.
+	* specifier.c (check_valid_spec_list): Ditto.
+
 2004-06-16  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* malloc.c (morecore): siz is a long because in some architectures

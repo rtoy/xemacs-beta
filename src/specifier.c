@@ -1233,20 +1233,11 @@ static Lisp_Object
 check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
 		       Error_Behavior errb)
 {
-  Lisp_Object rest;
-
-  LIST_LOOP (rest, inst_list)
+  EXTERNAL_LIST_LOOP_2 (inst_pair, inst_list)
     {
-      Lisp_Object inst_pair, tag_set;
+      Lisp_Object tag_set;
 
-      if (!CONSP (rest))
-	{
-	  maybe_sferror (
-				   "Invalid instantiator list", inst_list,
-				     Qspecifier, errb);
-	  return Qnil;
-	}
-      if (!CONSP (inst_pair = XCAR (rest)))
+      if (!CONSP (inst_pair))
 	{
 	  maybe_sferror (
 				   "Invalid instantiator pair", inst_pair,
@@ -1292,12 +1283,10 @@ static Lisp_Object
 check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
 		       Error_Behavior errb)
 {
-  Lisp_Object rest;
-
-  LIST_LOOP (rest, spec_list)
+  EXTERNAL_LIST_LOOP_2 (spec, spec_list)
     {
-      Lisp_Object spec, locale;
-      if (!CONSP (rest) || !CONSP (spec = XCAR (rest)))
+      Lisp_Object locale;
+      if (!CONSP (spec))
 	{
 	  maybe_sferror (
 				   "Invalid specification list", spec_list,
