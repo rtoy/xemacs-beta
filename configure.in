@@ -4192,7 +4192,7 @@ if test "$with_tty" = "yes"  ; then
       XE_ADD_OBJS(tparam.o)
       dnl The HP-UX curses library seems to have a badly broken version of select(2)
       dnl that makes "poll: interrupted system call" messages to appear and
-      dnl Emacs suprocesses to hang (e.g. TeX compilation w/ AUCTeX) */
+      dnl Emacs subprocesses to hang (e.g. TeX compilation w/ AUCTeX) */
       case "$opsys" in *-hp-hpux* ) libs_termcap="-ltermcap" ;; esac
       if test -n "$libs_termcap"; then
 	XE_PREPEND($libs_termcap, LIBS)
