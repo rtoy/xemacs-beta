@@ -1,3 +1,8 @@
+2003-05-05  Steve Youngs  <youngs@xemacs.org>
+
+	* lwlib-Xm.c (xm_update_one_widget): Only call
+	`xm_update_progress' if `LWLIB_WIDGETS_MOTIF' is defined.
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.
