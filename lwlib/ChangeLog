@@ -1,3 +1,8 @@
+2003-01-31  Martin Buchholz  <martin@xemacs.org>
+
+	* lwlib-Xm.c (xm_update_progress): 
+	Don't define unless LWLIB_WIDGETS_MOTIF.
+
 2003-02-05  Ben Wing  <ben@xemacs.org>
 
 	* lwlib-Xm.c:
