@@ -1,3 +1,8 @@
+2002-07-17  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-update-base-from-buffer): Re-write
+	so it doesn't rely on the APEL package.
+
 2002-07-16  Didier Verna  <didier@xemacs.org>
 
 	* subr.el (replace-in-string): fix case fold bug introduced by

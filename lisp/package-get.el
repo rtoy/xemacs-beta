@@ -441,23 +441,29 @@ used interactively, for example from a mail or news buffer."
       (setq package-get-continue-update-base t)
       (if package-get-require-signed-base-updates 
 	  (if package-entries-are-signed
-	      (progn
-		(setq package-get-continue-update-base nil)
-		(autoload 'mc-setversion "mc-setversion")
-		(with-fboundp 'mc-setversion
-		  (if-boundp 'exec-suffix-list
-		      (or
-		       (cond ((locate-file "gpg" exec-path exec-suffix-list)
-			      (mc-setversion "gpg"))
-			     ((locate-file "pgpe" exec-path exec-suffix-list)
-			      (mc-setversion "5.0"))
-			     ((locate-file "pgp" exec-path exec-suffix-list)
-			      (mc-setversion "2.6")))
-		       (error "Can't find a suitable pgp executable"))
-		    (error 'unimplemented "`apel' package unavailable")))
-		(autoload 'mc-verify "mc-toplev")
-		(declare-fboundp (mc-verify))
-		(setq package-get-continue-update-base t))
+	      (if (featurep 'mailcrypt-autoloads)
+		  (progn
+		    (setq package-get-continue-update-base nil)
+		    (autoload 'mc-setversion "mc-setversion")
+		    (cond ((locate-file "gpg" exec-path
+					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
+					'executable)
+			   (mc-setversion "gpg"))
+			  ((locate-file "pgpe" exec-path
+					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
+					'executable)
+			   (mc-setversion "5.0"))
+			  ((locate-file "pgp" exec-path
+					'("" ".btm" ".bat" ".cmd" ".exe" ".com")
+					'executable)
+			   (mc-setversion "2.6"))
+			  (t
+			   (error 'search-failed 
+				  "Can't find a suitable PGP executable")))
+		    (autoload 'mc-verify "mc-toplev")
+		    (declare-fboundp (mc-verify))
+		    (setq package-get-continue-update-base t))
+		(error 'unimplemented "`mailcrypt' package unavailable"))
 	    (if (yes-or-no-p
 		 "Package Index is not PGP signed.  Continue anyway? ")
 		(setq package-get-continue-update-base t)
