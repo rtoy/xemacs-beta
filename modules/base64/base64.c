@@ -67,7 +67,7 @@ determined.  Else assume binary coding if all else fails.
 	if (BUFFERP (object))
 	{
 		struct buffer *b = XBUFFER (object);
-		Bufpos begv, endv;
+		Charbpos begv, endv;
 		/* Figure out where we need to get info from */
 		get_buffer_range_char (b, start, end, &begv, &endv, GB_ALLOW_NIL);
 
@@ -257,7 +257,7 @@ determined.  Else assume binary coding if all else fails.
 	if (BUFFERP (object))
 	{
 		struct buffer *b = XBUFFER (object);
-		Bufpos begv, endv;
+		Charbpos begv, endv;
 		/* Figure out where we need to get info from */
 		get_buffer_range_char (b, start, end, &begv, &endv, GB_ALLOW_NIL);
 

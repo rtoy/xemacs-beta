@@ -1,0 +1,5 @@
+2002-02-14  Sean MacLennan  <seanm@seanm.ca>
+
+	* base64/base64.c - update Bufpos => Charbpos
+
+
