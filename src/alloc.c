@@ -3343,18 +3343,18 @@ kkcc_backtrace (void)
   stderr_out ("KKCC mark stack backtrace :\n");
   for (i = kkcc_bt_depth - 1; i >= 0; i--)
     {
+      Lisp_Object obj = wrap_pointer_1 (kkcc_bt[i].obj);
       stderr_out (" [%d]", i);
-      if ((((struct lrecord_header *) kkcc_bt[i].obj)->type
-	   >= lrecord_type_free)
-	  || (!LRECORDP (kkcc_bt[i].obj))
-	  || (!XRECORD_LHEADER_IMPLEMENTATION (kkcc_bt[i].obj)))
+      if ((XRECORD_LHEADER (obj)->type >= lrecord_type_free)
+	  || (!LRECORDP (obj))
+	  || (!XRECORD_LHEADER_IMPLEMENTATION (obj)))
 	{
 	  stderr_out (" non Lisp Object");
 	}
       else
 	{
 	  stderr_out (" %s",
-		      XRECORD_LHEADER_IMPLEMENTATION (kkcc_bt[i].obj)->name);
+		      XRECORD_LHEADER_IMPLEMENTATION (obj)->name);
 	}
       stderr_out (" (addr: 0x%x, desc: 0x%x, ",
 		  (int) kkcc_bt[i].obj,

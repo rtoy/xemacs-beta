@@ -1,3 +1,7 @@
+2005-03-11  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* alloc.c (kkcc_backtrace): Fix C++ build: do typecasts correctly.
+
 2005-03-09  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* database.c (berkdb_map): Add typecasts.
