@@ -336,23 +336,6 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
   return wv;
 }
 
-static widget_value *
-menu_item_descriptor_to_widget_value (Lisp_Object desc,
-				      int menu_type, /* if this is a menubar,
-							popup or sub menu */
-				      int deep_p,    /*  */
-				      int filter_p)  /* if :filter forms
-							should run now */
-{
-  widget_value *wv;
-  int count = begin_gc_forbidden ();
-  /* Can't GC! */
-  wv = menu_item_descriptor_to_widget_value_1 (desc, menu_type, deep_p,
-					       filter_p, 0);
-  unbind_to (count);
-  return wv;
-}
-
 struct menu_item_descriptor_to_widget_value
 {
   Lisp_Object desc;
@@ -365,11 +348,14 @@ protected_menu_item_descriptor_to_widget_value_1 (void *gack)
 {
   struct menu_item_descriptor_to_widget_value *midtwv =
     (struct menu_item_descriptor_to_widget_value *) gack;
-
-  midtwv->wv = menu_item_descriptor_to_widget_value (midtwv->desc,
-						     midtwv->menu_type,
-						     midtwv->deep_p,
-						     midtwv->filter_p);
+  int count = begin_gc_forbidden ();
+  /* Can't GC! */
+  midtwv->wv = menu_item_descriptor_to_widget_value_1 (midtwv->desc,
+						       midtwv->menu_type,
+						       midtwv->deep_p,
+						       midtwv->filter_p,
+						       0);
+  unbind_to (count);
   return Qnil;
 }
 
@@ -401,6 +387,36 @@ protected_menu_item_descriptor_to_widget_value (Lisp_Object desc,
 
   if (UNBOUNDP (retval))
     return 0;
+
+  return midtwv.wv;
+}
+
+/* The two callers of menu_item_descriptor_to_widget_value may both run while
+   in redisplay.  Some descriptor to widget value conversions call Feval, and
+   at least one calls QUIT.  Hence, we have to establish protection here.. */
+
+static widget_value *
+menu_item_descriptor_to_widget_value (Lisp_Object desc,
+				      int menu_type, /* if this is a menubar,
+							popup or sub menu */
+				      int deep_p,    /*  */
+				      int filter_p)  /* if :filter forms
+							should run now */
+{
+  struct menu_item_descriptor_to_widget_value midtwv;
+  Lisp_Object retval;
+
+  midtwv.desc = desc;
+  midtwv.menu_type = menu_type;
+  midtwv.deep_p = deep_p;
+  midtwv.filter_p = filter_p;
+
+  retval = call_trapping_problems
+    (Qevent, "Error during menu construction", 0, NULL,
+     protected_menu_item_descriptor_to_widget_value_1, &midtwv);
+
+  if (UNBOUNDP (retval))
+    return NULL;
 
   return midtwv.wv;
 }

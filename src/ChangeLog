@@ -1,3 +1,11 @@
+2004-02-17  Jerry James  <james@xemacs.org>
+
+	* menubar-x.c (protected_menu_item_descriptor_to_widget_value_1):
+	Move begin_gc_forbidden() here so it affects all callers.
+	* menubar-x.c (menu_item_descriptor_to_widget_value): Call
+	protected_menu_item_descriptor_to_widget_value_1 with
+	call_trapping_problems.
+
 2004-02-16  Jerry James  <james@xemacs.org>
 
 	* gui-x.c (wv_set_evalable_slot): Check for eval within redisplay.
