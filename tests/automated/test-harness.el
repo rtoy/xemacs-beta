@@ -210,18 +210,25 @@ BODY is a sequence of expressions and may contain several tests."
 	       (Print-Skip ,description ,reason))
 	   ,@body))
 
-      (defmacro Assert (assertion)
+      (defmacro Assert (assertion &optional failing-case)
 	`(condition-case error-info
-	     (progn
-	       (assert ,assertion)
-	       (Print-Pass "%S" (quote ,assertion))
-	       (incf passes))
-	   (cl-assertion-failed
-	    (Print-Failure "Assertion failed: %S" (quote ,assertion))
-	    (incf assertion-failures))
-	   (t (Print-Failure "%S ==> error: %S" (quote ,assertion) error-info)
-	      (incf other-failures)
-	      )))
+	  (progn
+	    (assert ,assertion)
+	    (Print-Pass "%S" (quote ,assertion))
+	    (incf passes))
+	  (cl-assertion-failed
+	   (Print-Failure (if ,failing-case
+			      "Assertion failed: %S; failing case = %S"
+			    "Assertion failed: %S")
+			  (quote ,assertion) ,failing-case)
+	   (incf assertion-failures))
+	  (t (Print-Failure (if ,failing-case
+				"%S ==> error: %S; failing case =  %S"
+			      "%S ==> error: %S")
+			    (quote ,assertion) error-info ,failing-case)
+	     (incf other-failures)
+	     )))
+
 
       (defmacro Check-Error (expected-error &rest body)
 	(let ((quoted-body (if (= 1 (length body))

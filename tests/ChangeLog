@@ -1,3 +1,12 @@
+2004-04-21  Jerry James  <james@xemacs.org>
+
+	* automated/test-harness.el (Assert): Add an optional failing-case
+	arg so we can see what the test was trying to do when it failed.
+	* automated/lisp-tests.el: Use the failing-case arg for Asserts
+	with variables.  Use eql on tests that might produce bignums.  Fix
+	test for non-bignum XEmacsen that fails because
+	(eq most-negative-fixnum (- most-negative-fixnum)).
+
 2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* automated/mule-tests.el: Inhibit GC to speed up BIG_STRING tests.
