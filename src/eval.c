@@ -1403,6 +1403,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	      if (EQ (tem, Qt) || EQ (tem, Qmacro))
 		{
 		  /* Yes, load it and try again.  */
+		  /* do_autoload GCPROs both arguments */
 		  do_autoload (def, sym);
 		  continue;
 		}
@@ -3036,7 +3037,10 @@ when reading the arguments.
     {
       final = indirect_function (cmd, 1);
       if (CONSP (final) && EQ (Fcar (final), Qautoload))
-	do_autoload (final, cmd);
+	{
+	  /* do_autoload GCPROs both arguments */
+	  do_autoload (final, cmd);
+	}
       else
 	break;
     }
@@ -3212,6 +3216,7 @@ un_autoload (Lisp_Object oldqueue)
   return Qnil;
 }
 
+/* do_autoload GCPROs both arguments */
 void
 do_autoload (Lisp_Object fundef,
              Lisp_Object funname)
@@ -3219,10 +3224,10 @@ do_autoload (Lisp_Object fundef,
   /* This function can GC */
   int speccount = specpdl_depth();
   Lisp_Object fun = funname;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
   CHECK_SYMBOL (funname);
-  GCPRO2 (fun, funname);
+  GCPRO3 (fundef, funname, fun);
 
   /* Value saved here is to be restored into Vautoload_queue */
   record_unwind_protect (un_autoload, Vautoload_queue);
@@ -3610,6 +3615,7 @@ Evaluate FORM and return its value.
 
       if (EQ (funcar, Qautoload))
 	{
+	  /* do_autoload GCPROs both arguments */
 	  do_autoload (fun, original_fun);
 	  goto retry;
 	}
@@ -3802,6 +3808,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	}
       else if (EQ (funcar, Qautoload))
 	{
+	  /* do_autoload GCPROs both arguments */
 	  do_autoload (fun, args[0]);
 	  goto retry;
 	}
@@ -3892,11 +3899,8 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 	}
       else if (EQ (funcar, Qautoload))
 	{
-	  struct gcpro gcpro1;
-
-	  GCPRO1 (function);
+	  /* do_autoload GCPROs both arguments */
 	  do_autoload (function, orig_function);
-	  UNGCPRO;
 	  function = orig_function;
 	  goto retry;
 	}

@@ -3980,7 +3980,7 @@ int record_unwind_protect_freeing (void *ptr);
 int record_unwind_protect_freeing_dynarr (void *ptr);
 int internal_bind_int (int *addr, int newval);
 int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
-void do_autoload (Lisp_Object, Lisp_Object);
+void do_autoload (Lisp_Object, Lisp_Object); /* GCPROs both arguments */
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
 void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,

@@ -369,8 +369,9 @@ when reading the arguments.
 
       if (EQ (funcar, Qautoload))
 	{
-	  struct gcpro gcpro1, gcpro2;
-	  GCPRO2 (function, prefix);
+	  struct gcpro gcpro1;
+	  GCPRO1 (prefix);
+	  /* do_autoload GCPROs both arguments */
 	  do_autoload (fun, function);
 	  UNGCPRO;
 	  goto retry;
