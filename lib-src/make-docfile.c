@@ -22,7 +22,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: FSF 21.2. */
+/* Synched up with: FSF 21.3. */
 
 /* The arguments given to this program are all the C and Lisp source files
  of XEmacs.  .elc and .el and .c files are allowed.
@@ -563,8 +563,9 @@ write_c_args (FILE *out, const char *func, char *buf, int minargs, int maxargs)
 	 as spaces.  Collapse adjacent spaces into one.  */
       if (c == '_')
 	c = '-';
-      else if (c == ',' || c == '\n')
+      else if (c == ',' /* || c == '\n' */)
 	c = ' ';
+      /* XEmacs change: handle \n below for readability */
 
 #if 0
       /* In C code, `default' is a reserved word, so we spell it
@@ -588,6 +589,18 @@ write_c_args (FILE *out, const char *func, char *buf, int minargs, int maxargs)
 	{
 	  in_ident = 0;
 	  just_spaced = 0;
+	}
+      /* XEmacs change: if the character is carriage return or linefeed,
+	 escape it for the compiler */
+      else if (c == '\n')
+	{
+	  putc('\\', out);
+	  putc('\n', out);
+	}
+      else if (c == '\r')
+	{
+	  putc('\\', out);
+	  putc('\r', out);
 	}
       else if (c != ' ' || !just_spaced)
 	{
