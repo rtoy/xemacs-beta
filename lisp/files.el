@@ -2107,7 +2107,7 @@ ISO 2022 encoding of most non-ASCII charsets."
   (save-excursion
     (with-temp-buffer
       (let ((coding-system-for-read 'raw-text))
-	(insert-file-contents file nil 1 3001))
+	(insert-file-contents file nil 0 3000))
       (goto-char (point-min))
       (or (and (looking-at
 		"^[^\n]*-\\*-[^\n]*coding: \\([^ \t\n;]+\\)[^\n]*-\\*-")
