@@ -4427,7 +4427,8 @@ struct expose_ignore_blocktype
 } *the_expose_ignore_blocktype;
 
 int
-check_for_ignored_expose (struct frame* f, int x, int y, int width, int height)
+check_for_ignored_expose (struct frame* f, unsigned int x, unsigned int y,
+			  unsigned int width, unsigned int height)
 {
   struct expose_ignore *ei, *prev;
   /* the ignore list is FIFO so we should generally get a match with
@@ -4499,7 +4500,9 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
  See if there is a subwindow that completely encloses the requested
  area.
  ****************************************************************************/
-int find_matching_subwindow (struct frame* f, int x, int y, int width, int height)
+int find_matching_subwindow (struct frame* f, unsigned int x, 
+			     unsigned int y, unsigned int width, 
+			     unsigned int height)
 {
   Lisp_Object rest;
 

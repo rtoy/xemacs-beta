@@ -415,7 +415,7 @@ xlw_update_tab_control (widget_instance* instance, Widget widget, widget_value* 
 {
   Widget* children;
   unsigned int num_children;
-  int i;
+  Dimension i;
   widget_value *cur = 0;
 
   XtRemoveAllCallbacks (widget, XtNcallback);

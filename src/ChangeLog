@@ -1,3 +1,12 @@
+2001-07-27  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-x.c (x_progress_gauge_redisplay):
+	* glyphs.c (check_for_ignored_expose):
+	* glyphs.c (find_matching_subwindow):
+	* glyphs.h:
+	* gutter.c (output_gutter):
+	* gutter.c (redraw_exposed_gutter): warning elimination.
+
 2001-07-26  Adrian Aichner  <adrian@xemacs.org>
 
 	* event-Xt.c (handle_map_event): Fix word duplication typos.

@@ -80,6 +80,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef LWLIB_WIDGETS_MOTIF
 #include <Xm/Xm.h>
+#include <Xm/Scale.h>
 #endif
 #include <X11/IntrinsicP.h>
 
@@ -2667,18 +2668,18 @@ x_progress_gauge_instantiate (Lisp_Object image_instance, Lisp_Object instantiat
 static void
 x_progress_gauge_redisplay (Lisp_Object image_instance)
 {
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
 
-  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii))
+  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
     {
       Arg al [1];
       Lisp_Object val;
 #ifdef ERROR_CHECK_GLYPHS
-      assert (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)));
+      assert (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p)));
 #endif
-      val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
+      val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p))->value;
       XtSetArg (al[0], XtNvalue, XINT (val));
-      XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 1);
+      XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (p), al, 1);
     }
 }
 

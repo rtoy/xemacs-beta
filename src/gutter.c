@@ -424,7 +424,10 @@ output_gutter (struct frame *f, enum gutter_pos pos, int force)
       (f->extents_changed && w->gutter_extent_modiff[pos]))
     {
 #ifdef DEBUG_GUTTERS
-      printf ("gutter redisplay [%dx%d@%d+%d] triggered by %s,\n", 
+      stderr_out ("gutter redisplay [%s %dx%d@%d+%d] triggered by %s,\n", 
+	      pos == TOP_GUTTER ? "TOP" :
+	      pos == BOTTOM_GUTTER ? "BOTTOM" :
+	      pos == LEFT_GUTTER ? "LEFT" : "RIGHT",
 	      width, height, x, y, force ? "force" :
 	      f->faces_changed ? "f->faces_changed" :
 	      f->frame_changed ? "f->frame_changed" :
@@ -671,7 +674,7 @@ redraw_exposed_gutter (struct frame *f, enum gutter_pos pos, int x, int y,
     return;
 
 #ifdef DEBUG_WIDGETS
-  printf ("redrawing gutter after expose %d+%d, %dx%d\n",
+  stderr_out ("redrawing gutter after expose %d+%d, %dx%d\n",
 	  x, y, width, height);
 #endif
   /* #### optimize this - redrawing the whole gutter for every expose

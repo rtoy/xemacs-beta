@@ -1137,7 +1137,9 @@ void get_display_tables (struct window *, face_index,
 void unmap_subwindow (Lisp_Object subwindow);
 void map_subwindow (Lisp_Object subwindow, int x, int y,
 		    struct display_glyph_area *dga);
-int find_matching_subwindow (struct frame* f, int x, int y, int width, int height);
+int find_matching_subwindow (struct frame* f, 
+			     unsigned int x, unsigned int y, 
+			     unsigned int width, unsigned int height);
 void redisplay_widget (Lisp_Object widget);
 void update_widget_instances (Lisp_Object frame);
 void redisplay_subwindow (Lisp_Object subwindow);
@@ -1155,7 +1157,9 @@ struct expose_ignore
   struct expose_ignore *next;
 };
 
-int check_for_ignored_expose (struct frame* f, int x, int y, int width, int height);
+int check_for_ignored_expose (struct frame* f, unsigned int x, 
+			      unsigned int y, unsigned int width, 
+			      unsigned int height);
 extern int hold_ignored_expose_registration;
 
 #endif /* INCLUDED_glyphs_h_ */
