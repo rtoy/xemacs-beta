@@ -1,3 +1,17 @@
+2004-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* bytecode.c (execute_optimized_program):
+	Identify and mark more potential GC locations.
+	Remove dead STATIC_GCPRO_STACK code and CPP constructs.
+	Document GCPRO_STACK usage.
+
+	* fns.c (Fnthcdr):
+	(Fnth):
+	(Felt):
+	Propagate "This function can GC"s.
+	(Fput):
+	Propagate "This function cannot GC"s.
+
 2004-02-17  Jerry James  <james@xemacs.org>
 
 	* menubar-x.c (protected_menu_item_descriptor_to_widget_value_1):

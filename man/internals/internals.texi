@@ -5943,20 +5943,37 @@ a lot, in fact), allocate objects during their operation.  Quite
 frequently, there will be no other pointer to the object while the
 function is running, and if a garbage collection occurs and the object
 needs to be referenced again, bad things will happen.  The solution is
-to mark those objects with @code{GCPRO}.  Unfortunately this is easy to
-forget, and there is basically no way around this problem.  Here are
-some rules, though:
+to mark those references with @code{GCPRO}.  Note that it is a
+@emph{reference} that is marked with @code{GCPRO}, not an object.  If
+you declare a @code{Lisp_Object} variable, assign to it, @code{GCPRO}
+it, and then assign to it again, the first object assigned @emph{is not}
+protected, while the second object @emph{is} protected.  Unfortunately
+@code{GCPRO}ing is easy to forget, and there is basically no way around
+this problem.  Here are some rules, though:
 
 @enumerate
 @item
-For every @code{GCPRO@var{n}}, there have to be declarations of
-@code{struct gcpro gcpro1, gcpro2}, etc.
+A garbage collection can occur whenever anything calls @code{Feval}, or
+whenever a @code{QUIT} can occur where execution can continue past
+this. (Remember, this is almost anywhere.)  Note that @code{Fsignal} can
+GC, and it can return (even though it normally doesn't).  This means
+that you must @code{GCPRO} before calling most of the error functions,
+including the @samp{CONCHECK} family of macros, if references occur
+after the call.
 
 @item
 You @emph{must} @code{UNGCPRO} anything that's @code{GCPRO}ed, and you
 @emph{must not} @code{UNGCPRO} if you haven't @code{GCPRO}ed.  Getting
 either of these wrong will lead to crashes, often in completely random
-places unrelated to where the problem lies.
+places unrelated to where the problem lies.  There are some functions
+(@code{Fsignal} is the canonical example) which may or may not return.
+In these cases, the function is responsible for cleaning up the
+@code{GCPRO}s if it doesn't return, so you should treat it as an
+ordinary function.
+
+@item
+For every @code{GCPRO@var{n}}, there have to be declarations of
+@code{struct gcpro gcpro1, gcpro2, ..., gcpro@var{n}}.
 
 @item
 The way this actually works is that all currently active @code{GCPRO}s
@@ -6013,11 +6030,6 @@ of circumstances, e.g. with @code{Fcons()}, etc.), you are responsible
 for @code{GCPRO}ing them, unless you are @emph{absolutely sure} that
 there's no possibility that a garbage-collection can occur while you
 need to use the object.  Even then, consider @code{GCPRO}ing.
-
-@item
-A garbage collection can occur whenever anything calls @code{Feval}, or
-whenever a QUIT can occur where execution can continue past
-this. (Remember, this is almost anywhere.)
 
 @item
 If you have the @emph{least smidgeon of doubt} about whether

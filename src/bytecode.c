@@ -447,6 +447,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
    but don't pop it. */
 #define TOP (*stack_ptr)
 
+/* See comment before the big switch in execute_optimized_program(). */
 #define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
 
 /* The actual interpreter for byte code.
@@ -476,25 +477,40 @@ execute_optimized_program (const Opbyte *program,
   Lisp_Object *stack_end = stack_beg + stack_depth;
 #endif
 
-#if STATIC_GCPRO_STACK
-  /* Initialize all the objects on the stack to Qnil,
-     so we can GCPRO the whole stack.
-     The first element of the stack is actually a dummy. */
-  {
-    int i;
-    Lisp_Object *p;
-    for (i = stack_depth, p = stack_ptr; i--;)
-      *++p = Qnil;
-  }
-#endif  
+  /* We used to GCPRO the whole interpreter stack before entering this while
+     loop (21.5.14 and before), but that interferes with collection of weakly
+     referenced objects.  Although strictly speaking there's no promise that
+     weak references will disappear by any given point in time, they should
+     be collected at the first opportunity.  Waiting until exit from the
+     function caused test failures because "stale" objects "above" the top of
+     the stack were still GCPROed, and they were not getting collected until
+     after exit from the (byte-compiled) test!
+
+     Now the idea is to dynamically adjust the array of GCPROed objects to
+     include only the "active" region of the stack.
+
+     We use the "GCPRO1 the array base and set the nvars member" method.  It
+     would be slightly inefficient but correct to use GCPRO1_ARRAY here.  It
+     would just redundantly set nvars.
+     #### Maybe it would be clearer to use GCPRO1_ARRAY and do GCPRO_STACK
+     after the switch?
+
+     GCPRO_STACK is something of a misnomer, because it suggests that a
+     struct gcpro is initialized each time.  This is false; only the nvars
+     member of a single struct gcpro is being adjusted.  This works because
+     each time a new object is assigned to a stack location, the old object
+     loses its reference and is effectively UNGCPROed, and the new object is
+     automatically GCPROed as long as nvars is correct.  Only when we
+     return from the interpreter do we need to finalize the struct gcpro
+     itself, and that's done at case Breturn.
+  */
   GCPRO1 (stack_ptr[1]);
-#if STATIC_GCPRO_STACK
-  gcpro1.nvars = stack_depth;
-#endif  
 
   while (1)
     {
       REGISTER Opcode opcode = (Opcode) READ_UINT_1;
+
+      GCPRO_STACK;		/* Get nvars right before maybe signaling. */
 #ifdef ERROR_CHECK_BYTE_CODE
       if (stack_ptr > stack_end)
 	stack_overflow ("byte code stack overflow", Qunbound);
@@ -508,9 +524,6 @@ execute_optimized_program (const Opbyte *program,
       meter_code (prev_opcode, this_opcode);
 #endif
 
-#if !STATIC_GCPRO_STACK
-      GCPRO_STACK;
-#endif
       switch (opcode)
 	{
 	  REGISTER int n;
@@ -539,6 +552,8 @@ execute_optimized_program (const Opbyte *program,
 	  Lisp_Object symbol = constants_data[n];
 	  Lisp_Object value = XSYMBOL (symbol)->value;
 	  if (SYMBOL_VALUE_MAGIC_P (value))
+	    /* I GCPRO_STACKed Fsymbol_value elsewhere, but I dunno why. */
+	    /* GCPRO_STACK; */
 	    value = Fsymbol_value (symbol);
 	  PUSH (value);
 	  break;
@@ -616,6 +631,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bcall+7:
 	  n = (opcode <  Bcall+6 ? opcode - Bcall :
 	       opcode == Bcall+6 ? READ_UINT_1 : READ_UINT_2);
+	  /* #### Shouldn't this be just before the Ffuncall?
+	     Neither Fget nor Fput can GC. */
 	  /* GCPRO_STACK; */
 	  DISCARD (n);
 #ifdef BYTE_CODE_METER
@@ -745,10 +762,14 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Bcar:
+	  /* Fcar can GC via wrong_type_argument. */
+	  /* GCPRO_STACK; */
 	  TOP = CONSP (TOP) ? XCAR (TOP) : Fcar (TOP);
 	  break;
 
 	case Bcdr:
+	  /* Fcdr can GC via wrong_type_argument. */
+	  /* GCPRO_STACK; */
 	  TOP = CONSP (TOP) ? XCDR (TOP) : Fcdr (TOP);
 	  break;
 
@@ -762,6 +783,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bnth:
 	  {
 	    Lisp_Object arg = POP;
+	    /* Fcar and Fnthcdr can GC via wrong_type_argument. */
+	    /* GCPRO_STACK; */
 	    TOP = Fcar (Fnthcdr (TOP, arg));
 	    break;
 	  }
@@ -848,6 +871,8 @@ execute_optimized_program (const Opbyte *program,
 	  n = READ_UINT_1;
 	do_concat:
 	  DISCARD (n - 1);
+	  /* Apparently `concat' can GC; Fconcat GCPROs its arguments. */
+	  /* GCPRO_STACK; */
 	  TOP = Fconcat (n, &TOP);
 	  break;
 
@@ -865,6 +890,7 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bsymbol_value:
+	  /* Why does this need GCPRO_STACK?  If not, remove others, too. */
 	  /* GCPRO_STACK; */
 	  TOP = Fsymbol_value (TOP);
 	  break;
@@ -931,6 +957,8 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bnconc:
 	  DISCARD (1);
+	  /* nconc2 GCPROs before calling this. */
+	  /* GCPRO_STACK; */
 	  TOP = bytecode_nconc2 (&TOP);
 	  break;
 
@@ -969,12 +997,16 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Binsert:
+	  /* Says it can GC. */
+	  /* GCPRO_STACK; */
 	  TOP = Finsert (1, &TOP);
 	  break;
 
 	case BinsertN:
 	  n = READ_UINT_1;
 	  DISCARD (n - 1);
+	  /* See Binsert. */
+	  /* GCPRO_STACK; */
 	  TOP = Finsert (n, &TOP);
 	  break;
 
@@ -1004,6 +1036,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bequal:
 	  {
 	    Lisp_Object arg = POP;
+	    /* Can QUIT, so can GC, right? */
+	    /* GCPRO_STACK; */
 	    TOP = Fequal (TOP, arg);
 	    break;
 	  }
@@ -1025,6 +1059,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bmember:
 	  {
 	    Lisp_Object arg = POP;
+	    /* Can QUIT, so can GC, right? */
+	    /* GCPRO_STACK; */
 	    TOP = Fmember (TOP, arg);
 	    break;
 	  }
@@ -1059,6 +1095,8 @@ execute_optimized_program (const Opbyte *program,
 	case Bskip_chars_forward:
 	  {
 	    Lisp_Object arg = POP;
+	    /* Can QUIT, so can GC, right? */
+	    /* GCPRO_STACK; */
 	    TOP = Fskip_chars_forward (TOP, arg, Qnil);
 	    break;
 	  }

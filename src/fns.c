@@ -1140,6 +1140,7 @@ Take cdr N times on LIST, and return the result.
 */
        (n, list))
 {
+  /* This function can GC */
   REGISTER EMACS_INT i;
   REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
@@ -1164,6 +1165,7 @@ N counts from zero.  If LIST is not that long, nil is returned.
 */
        (n, list))
 {
+  /* This function can GC */
   return Fcar (Fnthcdr (n, list));
 }
 
@@ -1172,6 +1174,7 @@ Return element of SEQUENCE at index N.
 */
        (sequence, n))
 {
+  /* This function can GC */
  retry:
   CHECK_INT_COERCE_CHAR (n); /* yuck! */
   if (LISTP (sequence))
@@ -2720,6 +2723,7 @@ See also `get', `remprop', and `object-plist'.
 */
        (object, property, value))
 {
+  /* This function cannot GC */
   CHECK_LISP_WRITEABLE (object);
 
   if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->putprop)
