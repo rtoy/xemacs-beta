@@ -1,3 +1,11 @@
+2002-02-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fileio.c (Ffind_file_name_handler): Improve docstring.
+
+2002-01-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fns.c (Fmapconcat): Improve docstring.
+
 2002-01-03  Eric Gillespie, Jr.  <epg@pretzelnet.org>
 
 	* device-gtk.c: Add prototype for
