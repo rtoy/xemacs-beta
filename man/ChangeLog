@@ -1,3 +1,8 @@
+2002-10-29  Ville Skyttä  <scop@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	The canonical location for FAQ on the website is /FAQ/.
+
 2002-11-12  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* xemacs/custom.texi (Face Customization):
