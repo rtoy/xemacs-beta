@@ -1,0 +1,164 @@
+2002-07-17  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+	    Mike Sperber <mike@xemacs.org>
+
+	New KKCC-GC mark algorithm:
+	configure flag : --use-kkcc
+
+	For better understanding, first a few words about the mark algorithm 
+	up to now:
+	Every Lisp_Object has its own mark method, which calls mark_object
+	with the stuff to be marked.
+	Also, many Lisp_Objects have pdump descriptions, which are used by 
+	the portable dumper. The dumper gets all the information it needs 
+	about the Lisp_Object from the descriptions.
+
+	Also the garbage collector can use the information in the pdump
+	descriptions, so we can get rid of the mark methods.
+	That is what we have been doing.
+
+	
+	DUMPABLE FLAG
+	-------------
+	First we added a dumpable flag to lrecord_implementation. It shows,
+	if the object is dumpable and should be processed by the dumper.
+	The dumpable flag is the third argument of a lrecord_implementation
+	definition (DEFINE_LRECORD_IMPLEMENTATION).
+	If it is set to 1, the dumper processes the descriptions and dumps
+	the Object, if it is set to 0, the dumper does not care about it.
+		
+
+	XD_UNION
+	--------
+	We implemented XD_UNION support in (mark_with_description), so
+	we can describe exspecially console/device specific data with XD_UNION.
+	To describe with XD_UNION, we added a field to these objects, which 
+	holds the variant type of the object. This field is initialized in 
+	the appendant constructor. The variant is an integer, it has also to 
+	be described in an description, if XD_UNION is used.
+
+	Here is a pattern of a XD_UNION usage:
+
+	First, the existing variants are listed.
+	enum example_variant
+	{
+	  first_choice,
+	  second_choice
+	};
+
+	Then a field which holds the variant is added to the Lisp_Object.
+	This field determines, where pointer points to.
+	struct Lisp_...
+	{
+	  enum example_variant which_variant;
+	  ...
+	  void *pointer;
+	}
+	The variant field must be initialized in the constructor(s).
+
+	In the description, the first entry should be the which_variant field,
+	on which XD_UNION refers.
+	static const struct lrecord_description ..._description [] = {
+	  { XD_INT, offsetof (struct Lisp_..., which_variant) },
+	  ...
+	  { XD_UNION, offsetof (struct Lisp_..., which_variant), 
+	    XD_INDIRECT (0, 0), variant_description },
+	  ...
+	};
+
+	The variant_description looks like this:
+	static const struct struct_description variant_description []= {
+	  { first_choice, first_choice_description},
+	  { second_choice, second_choice__description},
+	  { XD_END }
+	};
+
+	first- and second_choice_description are common lrecord_descriptions:
+	static const struct lrecord_description first_choice_description [] = {
+	  ...
+	  { XD_END }
+	}
+	
+
+
+	TODO
+	----
+
+	The following objects have currently no description:
+	* alloc.c: lcrecord_list
+	mark_object is never called, marking is done per mane.
+
+	* buffer.c: mark_buffer
+	mark_conses_in_list implements weakness???
+
+	* extents.c: extent_info
+	loop to mark elements in list.
+
+	* frame.c: frame
+	calls mark_gutters, that calls mark_redisplay_structs	
+
+	* glyphs.c: image_instance
+	XD_UNION or convert the union members to Lisp_Objects (see Lisp_Event)
+
+	* gui-x.c: popup_data
+	calls lw_map_widget_values
+
+	* window.c: window
+	calls mark_face_cachels and mark_glyph_cachels
+
+		    window_configuration
+	loop to mark saved_windows
+
+	            window_mirror
+	calls mark_redisplay_structs
+
+	* lstream.c: lstream
+	
+
+	After all Lisp_Objects have pdump descriptions, 
+	(mark_with_description) can get rid of the mark_object calls.
+
+	
+	There are a few Lisp_Objects, where there occured differences and 
+	inexactness between the mark-method and the pdump description.
+	All these Lisp_Objects get dumped, so their descriptions have been
+	written, before we started our work:
+
+	* alloc.c: cons
+	description: car and cdr
+	mark: cdr is marked, only if its != Qnil
+
+	* alloc.c: string
+	description:
+	mark:
+
+	* elhash.c: hash_table
+	description: the weakness receives no consideration
+	mark: weakness == HASH_TABLE_NON_WEAK
+
+	* eval.c: subr
+	description: XD_DOC_STRING doc
+	mark: empty, nothing is marked
+
+	* file-coding.c: coding_system
+	description: 
+	mark:
+
+	* frame.c: bit_vektor
+	description: XD_LISP_OBJECT next
+	mark: empty, nothing is marked
+
+	* marker.c: marker
+	description: prev & next (marker's chain)
+	mark: do not mark through marker's chain!
+
+	* specifier.c: specifier
+	description: XD_STRUCT_PTR caching
+	mark: caching is not marked
+
+	* symbols.c: symbol-value-lisp-magic
+	description: only handler[] is described
+	mark: even harg[] and shadowed are marked
+
+	* data.c: ephemeron
+	description: everything is marked, there is no weakness!
