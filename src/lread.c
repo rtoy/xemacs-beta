@@ -358,26 +358,28 @@ check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
   else if (len >= 3 && !qxestrcmp_ascii (nonreloc + len - 3, ".el"))
     len -= 3;
 
-  EXTERNAL_LIST_LOOP_2 (acons, Vload_suppress_alist)
-    {
-      if (CONSP (acons) && STRINGP (XCAR (acons)))
-	{
-	  Lisp_Object name = XCAR (acons);
-	  if (XSTRING_LENGTH (name) == len &&
-	      !memcmp (XSTRING_DATA (name), nonreloc, len))
-	    {
-	      struct gcpro gcpro1;
-	      Lisp_Object val;
+  {
+      EXTERNAL_LIST_LOOP_2 (acons, Vload_suppress_alist)
+      {
+	  if (CONSP (acons) && STRINGP (XCAR (acons)))
+	  {
+	      Lisp_Object name = XCAR (acons);
+	      if (XSTRING_LENGTH (name) == len &&
+		  !memcmp (XSTRING_DATA (name), nonreloc, len))
+	      {
+		  struct gcpro gcpro1;
+		  Lisp_Object val;
 
-	      GCPRO1 (reloc);
-	      val = Feval (XCDR (acons));
-	      UNGCPRO;
+		  GCPRO1 (reloc);
+		  val = Feval (XCDR (acons));
+		  UNGCPRO;
 
-	      if (!NILP (val))
-		return 1;
-	    }
-	}
-    }
+		  if (!NILP (val))
+		      return 1;
+	      }
+	  }
+      }
+  }
 
   return 0;
 }

@@ -1,3 +1,9 @@
+2005-02-04  Vin Shelton  <acs@xemacs.org>
+
+	* lread.c (check_if_suppressed, check_if_suppressed):
+	EXTERNAL_LIST_LOOP_2 declares variables and must be enclosed in
+	braces.  Thanks, Fabrice.
+
 2005-02-03  David Evers  <extsw@appliedgenerics.com>
 
 	* process-unix.c (unix_send_process): Flush the last chunk, even
