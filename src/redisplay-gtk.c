@@ -31,26 +31,26 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "gccache-gtk.h"
-#include "glyphs-gtk.h"
-#include "objects-gtk.h"
-
 #include "buffer.h"
 #include "debug.h"
+#include "device-impl.h"
 #include "faces.h"
-#include "frame.h"
+#include "file-coding.h"
+#include "frame-impl.h"
 #include "gutter.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
-#include "device.h"
+
+#include "console-gtk-impl.h"
+#include "gccache-gtk.h"
+#include "glyphs-gtk.h"
+#include "objects-gtk-impl.h"
 
 #include "sysproc.h" /* for select() */
 
 #ifdef MULE
 #include "mule-ccl.h"
-#include "file-coding.h" /* for CCL conversion */
 #endif
 
 #define CONST const

@@ -38,11 +38,11 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"
-#include "frame.h"
-#include "window.h"
+#include "frame-impl.h"
+#include "window-impl.h"
 
-#include "console-msw.h"
-#include "objects-msw.h"
+#include "console-msw-impl.h"
+#include "objects-msw-impl.h"
 
 #ifndef CYGWIN_HEADERS
 # include <mbctype.h>
@@ -64,6 +64,7 @@ Lisp_Object Qansi, Qoem, Qmac, Qebcdic;
 #ifdef MULE
 
 static Lisp_Object Vmswindows_charset_code_page_table;
+static Lisp_Object Vmswindows_charset_registry_table;
 
 LCID current_locale;
 
@@ -1023,7 +1024,7 @@ Recognized sub-language names are
 
 #ifdef DEBUG_XEMACS
 
-static int getacp (void);
+int getacp (void);
 int
 getacp (void)
 {
@@ -1262,6 +1263,56 @@ mswindows_get_code_page_charset (int code_page)
       charset_code_page = Fmswindows_charset_code_page (XCAR (charset_tail));
       if (INTP (charset_code_page) &&
 	  code_page == XINT (charset_code_page))
+	{
+	  charset = Fget_charset (XCAR (charset_tail));
+	  break;
+	}
+    }
+  return charset;
+}
+
+DEFUN ("mswindows-charset-registry", 
+       Fmswindows_charset_registry, 1, 1, 0, /*
+Return the registry for the CHARSET.
+This is the last item in an MS Windows font spec.
+
+#### This function may be changed in the near future.
+*/
+       (charset))
+{
+  charset = Fget_charset (charset);
+  return Fgethash (charset, Vmswindows_charset_registry_table, Qnil);
+}
+
+DEFUN ("mswindows-set-charset-registry", 
+       Fmswindows_set_charset_registry, 2, 2, 0, /*
+Set the REGISTRY for the CHARSET.
+
+#### This function may be changed once full Unicode support is present.
+*/
+       (charset, registry))
+{
+  charset = Fget_charset (charset);
+  CHECK_STRING (registry);
+  Fputhash (charset, registry, Vmswindows_charset_registry_table);
+  invalidate_charset_font_caches (charset);
+  face_property_was_changed (Vdefault_face, Qfont, Qglobal);
+  return Qnil;
+}
+
+Lisp_Object 
+mswindows_get_registry_charset (Ibyte *registry)
+{
+  Lisp_Object charset_tail;
+  Lisp_Object charset = Qunbound;
+
+  LIST_LOOP (charset_tail, Fcharset_list ())
+    {
+      Lisp_Object charset_registry;
+
+      charset_registry = Fmswindows_charset_registry (XCAR (charset_tail));
+      if (STRINGP (charset_registry) &&
+	  !qxestrcasecmp (XSTRING_DATA (charset_registry), registry))
 	{
 	  charset = Fget_charset (XCAR (charset_tail));
 	  break;
@@ -2126,6 +2177,8 @@ syms_of_intl_win32 (void)
   DEFSUBR (Fmswindows_supported_locales);
   DEFSUBR (Fmswindows_charset_code_page);
   DEFSUBR (Fmswindows_set_charset_code_page);
+  DEFSUBR (Fmswindows_charset_registry);
+  DEFSUBR (Fmswindows_set_charset_registry);
 
 #if 0
   DEFSUBR (Fmswindows_get_locale_info);
@@ -2198,6 +2251,9 @@ vars_of_intl_win32 (void)
   Vmswindows_charset_code_page_table =
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   staticpro (&Vmswindows_charset_code_page_table);
+  Vmswindows_charset_registry_table =
+    make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  staticpro (&Vmswindows_charset_registry_table);
 #endif /* MULE */
 }
 

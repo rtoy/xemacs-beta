@@ -29,9 +29,10 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
 #include "process.h" /* canonicalize_host_name */
 #include "redisplay.h" /* for display_arg */
+
+#include "console-gtk-impl.h"
 
 DEFINE_CONSOLE_TYPE (gtk);
 

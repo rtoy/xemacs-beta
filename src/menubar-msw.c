@@ -84,16 +84,16 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "elhash.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "lisp.h"
 #include "menubar.h"
 #include "menubar-msw.h"
 #include "opaque.h"
-#include "window.h"
+#include "window-impl.h"
 
 /* #### */
 #define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH 0

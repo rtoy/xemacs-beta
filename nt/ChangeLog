@@ -1,3 +1,86 @@
+2002-06-20  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp (OPTIMIZED_BUILD):
+	* config.inc.samp (USE_FASTCALL): New.
+	* config.inc.samp (PROFILE_SUPPORT): New.
+	* config.inc.samp (DEBUG_XEMACS):
+	* config.inc.samp (HAVE_VC6): New.
+	* config.inc.samp (USE_PORTABLE_DUMPER):
+	Clean up, add args to control fastcall (not yet supported!  the
+	changes needed are in another ws of mine), profile support, vc6
+	support, union-type.
+	
+	* xemacs.dsp (CFG):
+	* xemacs.mak (HAVE_DIALOGS):
+	* xemacs.mak (HAVE_MSW_C_DIRED): Removed.
+	* xemacs.mak (USE_FASTCALL): New.
+	* xemacs.mak (PROFILE_SUPPORT): New.
+	* xemacs.mak (HAVE_VC6): New.
+	* xemacs.mak (QUICK_BUILD):
+	* xemacs.mak (VERBOSECC): New.
+	* xemacs.mak (DEPEND): New.
+	* xemacs.mak (CONFIG_ERROR):
+	* xemacs.mak (CCV):
+	* xemacs.mak (DEBUGFLAGS): Removed.
+	* xemacs.mak (OPTFLAGS): Removed.
+	* xemacs.mak (DEBUG_FLAGS_COMPILE): New.
+	* xemacs.mak (DEBUG_FLAGS_LINK): New.
+	* xemacs.mak (DEBUG_DEFINES): New.
+	* xemacs.mak (BROWSERFLAGS): New.
+	* xemacs.mak (LIBC_LIB):
+	* xemacs.mak (OPTFLAGS_FASTCALL): New.
+	* xemacs.mak (OPTFLAGS_CDECL): New.
+	* xemacs.mak (PROFILE_FLAGS): New.
+	* xemacs.mak (CFLAGS_NO_OPT): New.
+	* xemacs.mak (CFLAGS_CDECL_NO_LIB): New.
+	* xemacs.mak (CFLAGS_CDECL): New.
+	* xemacs.mak (MSW_LIBS):
+	* xemacs.mak (MSW_DEFINES): Removed.
+	* xemacs.mak (MSW_C_DIRED_OBJ): Removed.
+	* xemacs.mak (MULE_DEFINES):
+	* xemacs.mak (DEBUG_FLAGS): Removed.
+	* xemacs.mak (LINK_DEPENDENCY_ARGS):
+	* xemacs.mak (ETAGS_DEPS):
+	* xemacs.mak (LIB_SRC_TOOLS):
+	* xemacs.mak (TEMACS_LFLAGS):
+	* xemacs.mak (TEMACS_CPP_FLAGS): Removed.
+	* xemacs.mak (TEMACS_CPP_FLAGS_NO_CFLAGS): New.
+	* xemacs.mak (TEMACS_CPP_CDECL_FLAGS): New.
+	* xemacs.mak (TEMACS_MSW_OBJS):
+	* xemacs.mak (TEMACS_OBJS):
+	* xemacs.mak (.SUFFIXES):
+	* xemacs.mak (create-list-file): New.
+	* xemacs.mak (compile-list-file): New.
+	* xemacs.mak (TEMACS_DUMP_ID_OBJ): New.
+	* xemacs.mak (PROGNAME):
+	* xemacs.mak (temacs_loadup):
+	* xemacs.mak (check):
+	* xemacs.mak (check-temacs):
+	* xemacs.mak (make-docargs):
+	* xemacs.mak (update-elc):
+	* xemacs.mak (install):
+	* xemacs.mak (mostlyclean):
+	* xemacs.mak (versionclean):
+	* xemacs.mak (OS):
+	Semi-major overhaul.
+
+	Fix bug where dump-id was always getting recomputed, forcing a
+	redump even when nothing changed.
+
+	Add support for fastcall.  Support edit-and-continue (on by
+	default) with vc6.  Use incremental linking when doing a debug
+	compilation.  Add support for profiling.
+
+	Consolidate the various debug flags.
+
+	Partial support for "batch-compiling" -- compiling many files on a
+	single invocation of the compiler.  Doesn't seem to help that much
+	for me, so it's not finished or enabled by default.
+
+	Remove HAVE_MSW_C_DIRED, we always do.
+
+	Correct some sloppy use of directories.
+	
 2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
 
 	* xemacs.mak: Define STACK_TRACE_EYE_CATCHER.

@@ -1,3 +1,188 @@
+2002-06-20  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-msw-init-late.el:
+	Specify charset->windows-registry conversion.
+	
+	* mule/mule-x-init.el:
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font):
+	* mule/mule-x-init.el (init-mule-x-win):
+	Delete extra mule font additions here.  Put them in faces.c.
+
+2002-06-20  Ben Wing  <ben@xemacs.org>
+
+	* cl-macs.el (defun*):
+	* cl-macs.el (defmacro*):
+	* cl-macs.el (destructuring-bind):
+	Document better.
+	
+	* font-lock.el (lisp-font-lock-keywords-1):
+	Move Lisp function regexp to lisp-mode.el.
+
+	* lisp-mode.el:
+	* lisp-mode.el (lisp-function-and-type-regexp): New.
+	* lisp-mode.el (lisp-flet-regexp): New.
+	* lisp-mode.el (lisp-indent-function):
+	* lisp-mode.el (lisp-indent-quoteform): New.
+	Various indentation fixes:
+	
+	Handle flet functions better.
+	Handle argument lists in defuns and flets.
+	Handle quoted lists, e.g. property lists -- don't indent like
+	function calls.  Distinguish between lambdas and other lists.
+	
+	* lisp-mode.el (save-selected-device): Handle this form.
+
+	* faces.el:
+	* faces.el (face-property-instance):
+	* faces.el (face-property-matching-instance):
+	* faces.el (set-face-property):
+	* faces.el (set-face-display-table):
+	* faces.el (set-face-underline-p):
+	* faces.el (set-face-strikethru-p):
+	* faces.el (set-face-highlight-p):
+	* faces.el (set-face-blinking-p):
+	* faces.el (face-equal):
+	* faces.el (try-font-name):
+	* faces.el (face-frob-from-locale-first): New.
+	* faces.el (frob-face-property): Removed.
+	* faces.el (included): Removed.
+	* faces.el (frob-face-property-1): Removed.
+	* faces.el (frob-face-font-2): Removed.
+	* faces.el (Face-frob-property-device-considered-current): New.
+	* faces.el (Face-frob-property): New.
+	* faces.el (make-face-family):
+	* faces.el (make-face-bold):
+	* faces.el (make-face-italic):
+	* faces.el (NOTE): New.
+	* faces.el (functions): New.
+	* faces.el (make-face-bold-italic):
+	* faces.el (make-face-unbold):
+	* faces.el (make-face-unitalic):
+	* faces.el (make-face-size):
+	* faces.el (make-face-smaller):
+	* faces.el (make-face-larger):
+	* faces.el (get-frame-background-mode):
+	* faces.el (init-global-faces):
+	* font-menu.el:
+	* font-menu.el (font-menu-set-font):
+	* font-menu.el (font-menu-change-face):
+	* font.el:
+	* font.el (mswindows-font-weight-mappings):
+	* font.el (font-mswindows-font-regexp): Removed.
+	* font.el (mswindows-font-create-object):
+	* font.el (mswindows-font-create-name):
+	* gtk-faces.el (gtk-init-global-faces):
+	* msw-faces.el:
+	* msw-faces.el (mswindows-init-device-faces):
+	* msw-faces.el (mswindows-font-regexp): Removed.
+	* msw-faces.el (mswindows-font-canonicalize-name): Removed.
+	* msw-faces.el (mswindows-canonicalize-font-name): New.
+	* msw-faces.el (mswindows-parse-font-style): New.
+	* msw-faces.el (mswindows-construct-font-style): New.
+	* msw-faces.el (mswindows-frob-font-style): New.
+	* msw-faces.el (mswindows-frob-font-style-and-sizify): New.
+	* msw-faces.el (mswindows-nonbold-weight-regexp): New.
+	* msw-faces.el (mswindows-make-font-unbold):
+	* msw-faces.el (mswindows-bold-weight-regexp): New.
+	* msw-faces.el (mswindows-make-font-italic):
+	* msw-faces.el (mswindows-make-font-bold-mapper): New.
+	* msw-faces.el (mswindows-make-font-unitalic):
+	* msw-faces.el (mswindows-make-font-nonbold-mapper): New.
+	* msw-faces.el (mswindows-make-font-italic-mapper): New.
+	* msw-faces.el (mswindows-make-font-bold-italic):
+	* msw-faces.el (mswindows-make-font-unitalic-mapper): New.
+	* msw-faces.el (mswindows-make-font-bold-italic-mapper): New.
+	* msw-faces.el (mswindows-find-smaller-font):
+	* msw-faces.el (mswindows-find-larger-font):
+	* msw-faces.el (mswindows-available-font-sizes): New.
+	* msw-faces.el (mswindows-frob-font-size): New.
+	* msw-font-menu.el:
+	* msw-font-menu.el (mswindows-font-menu-junk-families):
+	* msw-font-menu.el (mswindows-font-menu-registry-encoding): Removed.
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* msw-font-menu.el (mswindows-font-menu-font-data):
+	* msw-font-menu.el (mswindows-font-menu-load-font):
+	* x-faces.el:
+	* x-faces.el (x-init-global-faces):
+	* x-faces.el (x-init-device-faces):
+	* x-init.el (init-x-win):
+	* x-init.el (init-post-x-win):
+
+	Major overhaul of face-handling code:
+
+	-- Fix lots of bogus code in msw-faces.el, msw-font-menu.el,
+	font-menu.el that was "truenaming" font specs -- i.e. in the
+	process of frobbing a particular field in a general user-specified
+	font spec with wildcarded fields, sticking in particular values
+	for all the remaining wildcarded fields.  This bug was rampant
+	everywhere except in x-faces.el (the oldest and only correctly
+	written code).  This also means that we need to work with font
+	names at all times and not font instances, because a font instance
+	is essentially a truenamed font.
+	
+	-- Total rewrite of extremely junky code in msw-faces.el.  Work
+	with names as well as font instances, and return names; stop
+	truenaming when canonicalizing and frobbing; fix handling of the
+	combined style field, i.e. weight/slant (also fixed in font.el).
+	
+	-- Totally rewrite the frobbing functions in faces.el.  This time,
+	we frob all the instantiators rather than just computing a single
+	instance value and working backwards.  That way, e.g., `bold' will
+	work for all charsets that have bold available, rather than only
+	for whatever charset was part of the computed font instance
+	(another example of the truename virus).  Also fix up code to look
+	at the fallbacks (all of them) when no global value present, so we
+	don't need to put something in the global value.  Intelligently
+	handle a request to frob a buffer locale, rather than signalling
+	an error.  When frobbing instantiators, try hard to figure out
+	what device type is associated with them, and frob each according
+	to its own proper device type.  Correctly handle inheritance
+	vectors given as instantiators.  Preserve existing tags when
+	putting back frobbed instantiators.  Extract out general
+	specifier-frobbing code into specifier.el.  Document everything
+	cleanly.  Do lots of other things better, etc.
+
+	-- Don't duplicatively set a global specification for the default
+	font -- it's already in the fallback and we no longer need a
+	default global specification present.  Delete various code in
+	x-faces.el and msw-faces.el that duplicated the lists of fonts in
+	faces.c.
+
+	-- init-global-faces was not being called at all under MS Windows!
+	Major bogosity. That caused device-specific values to get stuck
+	into all the fonts, making it very hard to change them -- setting
+	global specs caused nothing to happen.
+
+	-- Correct weight names in font.el.
+
+	-- Lots more font fixups in objects*.c.
+	
+	* Printer.el (generic-print-region):
+	Warning fix.
+	
+	* specifier.el:
+	* specifier.el (map-specifier):
+	* specifier.el (modify-specifier-instances):
+	* specifier.el (instance-to-instantiator): New.
+	* specifier.el (device-type-matches-spec): New.
+	* specifier.el (add-tag-to-inst-list): New.
+	* specifier.el (derive-domain-from-locale): New.
+	* specifier.el (derive-device-type-from-tag-set): New.
+	* specifier.el (Specifically): New.
+	* specifier.el (derive-device-type-from-locale-and-tag-set): New.
+	* specifier.el (derive-specifier-specs-from-locale): New.
+	Add more args to map-specifier.
+
+	Add various "heuristic" specifier functions to aid in creation of
+	specifier-munging code such as in faces.el.
+
+	* subr.el:
+	* subr.el (args-out-of-range): New.
+	* subr.el (argument-in-range-p): New.
+	* subr.el (check-argument-range): New.
+	New functions.
+	
+
 2002-06-04  Andy Piper  <andy@xemacs.org>
 
 	* startup.el (normal-top-level): Fix bad merge.

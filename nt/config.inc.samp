@@ -66,6 +66,15 @@ MAKEINFO=c:\src\texinfo-4.0\makeinfo\makeinfo.exe
 # Set this to turn on optimization when compiling.
 OPTIMIZED_BUILD=0
 
+# Set this to build with the fastcall calling convention, which uses registers
+# instead of the stack and should speed things up a bit
+# #### Change to 1 when I check in the ws with support for fastcall
+USE_FASTCALL=0
+
+# Set this to compile in support for profiling.  If you want line-by-line
+# profiling under VC++, you also need debugging turned on.
+PROFILE_SUPPORT=0
+
 ############################################################################
 #                          Development options                             #
 ############################################################################
@@ -77,6 +86,9 @@ OPTIMIZED_BUILD=0
 # i.e. internal error-checking -- is controlled by the ERROR_CHECK_ALL
 # variable, below.)
 DEBUG_XEMACS=1
+
+# True if running VC++ 6 or later.
+HAVE_VC6=1
 
 # Uncomment this to turn off or on the error-checking code, which adds
 # abundant internal error checking (and slows things down a lot).  Normally,
@@ -98,3 +110,18 @@ DEPEND=0
 # Set this to use the portable dumper for dumping the preloaded Lisp
 # routines, instead of the older "unexec" routines in unexnt.c.
 USE_PORTABLE_DUMPER=1
+
+# Set this to get improved type checking of Lisp_Objects -- with this
+# setting, they're declared as unions instead of ints, and so places where
+# a Lisp_Object is mistakenly passed to a routine expecting an int (or
+# vice-versa), or a check is written `if (foo)' instead of `if (!NILP
+# (foo))', will be flagged as errors. (All of these do NOT lead to the
+# expected results!  Qnil is not represented as 0 (so if (foo) will
+# *ALWAYS* be true for a Lisp_Object), the representation of an integer as
+# a Lisp_Object is not just the integer's numeric value (but usually 2x the
+# integer +/- 1).
+
+# Some also claim it simplifies debugging, but I don't really believe them.
+# Definitely don't do your normal builds this way, because you may well get
+# less efficiency, and could conceivably trigger compiler bugs (has definitely happened, many times, with gcc).
+# USE_UNION_TYPE=1

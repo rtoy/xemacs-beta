@@ -1,7 +1,7 @@
 ;;; specifier.el --- Lisp interface to specifiers
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996, 2000 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2002 Ben Wing.
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: internal, dumped
@@ -50,7 +50,8 @@ form.  See `canonicalize-spec-list'."
 
 ;; God damn, do I hate dynamic scoping.
 
-(defun map-specifier (ms-specifier ms-func &optional ms-locale ms-maparg)
+(defun map-specifier (ms-specifier ms-func &optional ms-locale ms-maparg
+		      ms-tag-set ms-exact-p)
   "Apply MS-FUNC to the specification(s) for MS-LOCALE in MS-SPECIFIER.
 
 If MS-LOCALE is a locale, MS-FUNC will be called for that locale.
@@ -58,13 +59,16 @@ If MS-LOCALE is a locale type, MS-FUNC will be mapped over all locales
 of that type.  If MS-LOCALE is 'all or nil, MS-FUNC will be mapped
 over all locales in MS-SPECIFIER.
 
+MS-TAG-SET and MS-EXACT-P are as in `specifier-spec-list'.
+
 MS-FUNC is called with four arguments: the MS-SPECIFIER, the locale
 being mapped over, the inst-list for that locale, and the
 optional MS-MAPARG.  If any invocation of MS-FUNC returns non-nil,
 the mapping will stop and the returned value becomes the
 value returned from `map-specifier'.  Otherwise, `map-specifier'
 returns nil."
-  (let ((ms-specs (specifier-spec-list ms-specifier ms-locale))
+  (let ((ms-specs (specifier-spec-list ms-specifier ms-locale ms-tag-set
+				       ms-exact-p))
 	ms-result)
     (while (and ms-specs (not ms-result))
       (let ((ms-this-spec (car ms-specs)))
@@ -408,7 +412,7 @@ is no possibility for ambiguity and no need to go through the function
   value)
 
 (defun modify-specifier-instances (specifier func &optional args force default
-					     locale tag-set)
+				   locale tag-set)
   "Modify all specifications that match LOCALE and TAG-SET by FUNC.
 
 For each specification that exists for SPECIFIER, in locale LOCALE
@@ -612,5 +616,359 @@ detail in the doc string for `current-display-table'."
 ;; about clobbering user settings.
 
 (define-specifier-tag 'default)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;                    "Heuristic" specifier functions                ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; "Heuristic" is a euphemism for kludge.  This stuff works well in
+;;; practice, though.
+
+;;; You might view all the contortions we do here and in Face-frob-property
+;;; as indicative of design failures with specifiers, and perhaps you're
+;;; right.  But in fact almost all code that attempts to interface to
+;;; humans and produce "intuitive" results gets messy, particularly with a
+;;; system as complicated as specifiers, whose complexity results from an
+;;; attempt to work well in many different circumstances.  We could create
+;;; a much simpler system, but the tradeoff would be that you'd have to
+;;; programmatically control all the stuff that gets handled automatically
+;;; by setting the right specifiers -- and then things wouldn't "just work"
+;;; if the user simultaneously creates a TTY and X device, or X devices on
+;;; different types of machines, or wants some buffers to display
+;;; differently from others, etc. without a lot of hook functions and other
+;;; glue machinery to set everything up.  The result would be just as much
+;;; complexity, but worse, and much harder to control, since there wouldn't
+;;; be any standard framework for managing all these hook functions and the
+;;; user would have to be able to write lots of Lisp code to get things
+;;; working.
+
+;;; The problem is that we have no high-level code, e.g. custom, to make it
+;;; easy for the user to control specifiers nicely.  The following
+;;; lower-level code, though, should make it easier to implement the
+;;; high-level code.
+
+;;; #### Something like Face-frob-property, but more general, should be
+;;; created for general specifier frobbing.
+
+;;; #### Other possible extensions to specifiers would be
+;;;
+;;; (a) the ability to create specifications for particular types of
+;;;     buffers, e.g. all C-mode buffers one way, all text-mode buffers
+;;;     another way, etc.  Perhaps this should be implemented through hook
+;;;     functions; but that wouldn't easily allow you to `make-face-bold'
+;;;     and have it work on these other kinds of specifications.  Probably
+;;;     a better way is to extend the tag mechanism so that it can specify
+;;;     things other than device types.  One way would be to simply allow
+;;;     tags to have arbitrary elisp attached to them -- a function that
+;;;     takes a domain and returns whether the attached instantiator
+;;;     applies.  This should be doable given (a) that we now have code to
+;;;     allow elisp to be run inside a "sandbox", sufficiently protected
+;;;     that it can even be called from redisplay, and (b) the large amount
+;;;     of caching we already have, which would minimize the speed hit.
+;;;     However, this still runs into problems -- (a) it requires
+;;;     programming to get anything at all done, and (b) you'll get
+;;;     horrible namespace clashes very quickly.  Another possibility to be
+;;;     used in conjunction with this would be vector tags, with an
+;;;     extendable mechanism to control their syntax.  For example,
+;;;
+;;;     [tag :mode 'c] (buffer in c-mode)
+;;;     [tag :buffer-name "\\*Help: function"] (help-on-function buffers)
+;;;     [tag :buffer-coding-system 'japanese-euc] (buffer's coding system is
+;;;	     		                   EUC-JP)
+;;;     [tag :buffer-file-name "^#.*#$"] (autosave files)
+;;;     [tag :language-environment "French"] (whenever the global language
+;;;                                           environment is French)
+;;;     [tag :font-height-minimum '(default 12)] (if the height of the default
+;;;						  font is at least 12 pixels
+;;;						  in this domain)
+;;;                                                         
+;;;     The general idea is that the properties allowable in a tag vector
+;;;     are extendable, just by specifying the property name and a function
+;;;     of two arguments, the property value and the domain, which should
+;;;     return whether the tag applies.  You could imagine very complex
+;;;     behavior (e.g. combining two tags in a single tag set makes an
+;;;     `and', and putting the two tags separately with separate (perhaps
+;;;     identical) instantiators makes an `or'.  You could effectively do a
+;;;     lot of what you might want to do with hooks, but in a much more
+;;;     controllable fashion.  Obviously, much of this complexity wouldn't
+;;;     necessarily be directly set by the user -- they wouldn't probably
+;;;     do more than simple tags based on mode, buffer or file name, etc.
+;;;     But a higher-level interface could easily have various possible
+;;;     "behaviors" to choose from, implemented using this mechanism.
+;;;
+;;;     #### WE NEED CUSTOM SUPPORT!
+;;;
+;;; (b) Another possibility is "partial" inheritance.  For example --
+;;;     toolbars and menubars are complex specifications.  Currently the
+;;;     only way to make a change is to copy the entire value and make the
+;;;     necessary modifications.  What we would like instead is to be able
+;;;     to construct a mini-menubar that says something like "add this menu
+;;;     here" and combine with everything else.  That would require a
+;;;     slightly different approach to instantiation.  Currently it just
+;;;     searches up the tree from specific to general, looking for a match;
+;;;     from this match, it generates the instance.  Instead, it would
+;;;     potentially have to record all the matches it found and pass a list
+;;;     of them to the instantiation function.  To implement this, we would
+;;;     create another specifier method "instantiator_inherits_up", which
+;;;     looks at the instantiator to determine if it calls for combining
+;;;     itself with the value higher up.  this tells the specifier code
+;;;     whether to stop now or keep going.  It would then pass a Dynarr of
+;;;     the instantiators to the instantiate method, which might be a
+;;;     special version, e.g. "instantiate_multi".
+
+(defun instance-to-instantiator (inst)
+  "Convert an instance to an instantiator.
+If we have an instance object, we fetch the instantiator that generated the object.  Otherwise, we just return the instance."
+  (cond ((font-instance-p inst)
+	 (setq inst (font-instance-name inst)))
+	((color-instance-p inst)
+	 (setq inst (color-instance-name inst)))
+	((image-instance-p inst)
+	 (setq inst (image-instance-instantiator inst)))
+	(t inst)))
+
+(defun device-type-matches-spec (devtype devtype-spec)
+  ;; Return DEVTYPE (a devtype) if it matches DEVTYPE-SPEC, else nil.
+  ;; DEVTYPE-SPEC can be nil (all types OK), a device type (only that type
+  ;; OK), or `window-system' -- window system device types OK.
+  (cond ((not devtype-spec) devtype)
+	((eq devtype-spec 'window-system)
+	 (and (not (memq devtype '(tty stream))) devtype))
+	(t (and (eq devtype devtype-spec) devtype))))
+
+(defun add-tag-to-inst-list (inst-list tag-set)
+  "Add TAG-SET (tag or tag-set) to all tags in INST-LIST."
+  ;; Ah, all is sweetness and light with `loop'
+  (if (null tag-set) inst-list
+    (loop for (t2 . x2) in inst-list
+      for newt2 = (delete-duplicates
+		   (append (if (listp tag-set) tag-set (list tag-set))
+			   (if (listp t2) t2 (list t2))))
+      collect (cons newt2 x2))))
+
+(defun derive-domain-from-locale (locale &optional devtype-spec current-device)
+  "Given a locale, try to derive the \"most reasonable\" domain.
+
+This is a heuristic \(\"works most of the time\") algorithm.
+
+\[Remember that, in specifiers, locales are what you attach specifications or
+\"instantiators\" to, and domains are the contexts in which you can
+retrieve the value or \"instance\" of the specifier.  Not all locales are
+domains.  In particular, buffers are locales but not domains because
+buffers may be displayed in different windows on different frames, and thus
+end up with different values if the frames each have a frame-local
+instantiator and the instantiators are different.  However, we may well
+find ourselves in a situation where we want to figure out the most likely
+value of a specifier in a buffer -- for example we might conceptually want
+to make a buffer's modeline face be bold, so we need to figure out what the
+current face is.  If the buffer already has an instantiator, it's easy; but
+if it doesn't, we want to do something reasonable rather than just issue an
+error, even though technically the value is not well-defined.  We want
+something that gives the right answer most of the time.]
+
+LOCALE is a specifier locale -- i.e. a buffer, window, frame, device, the
+symbol `global', or nil, meaning the same as `global'.
+
+DEVTYPE-SPEC, if given, can restrict the possible return values to domains
+on devices of that device type; or if it's `window-system', to domains on
+window-system devices.
+
+CURRENT-DEVICE is what should be considered as the \"selected device\" when
+this value is needed.  It defaults to the currently selected device.
+
+-- If LOCALE is a domain, it's simply returned.
+-- If LOCALE is `all', `global', or nil, we return CURRENT-DEVICE.
+-- If LOCALE is a buffer, we use `get-buffer-window' to find a window viewing
+   the buffer, and return it if there is one; otherwise we return the selected
+   window on CURRENT-DEVICE.
+
+The return value may be nil if the only possible values don't agree with
+DEVTYPE-SPEC."
+  ;; DEVICE aims to be the selected device, but picks some other
+  ;; device if that won't work.  may be nil.
+  (let* ((device (or current-device (selected-device)))
+	 (device (if (device-type-matches-spec (device-type device)
+					       devtype-spec)
+		     device
+		   (first
+		    (delete-if-not
+		     #'(lambda (x)
+			 (device-type-matches-spec (device-type x)
+						   devtype-spec))
+		     (device-list))))))
+    (cond ((memq locale '(all nil global)) device)
+	  ((valid-specifier-domain-p locale)
+	   (and (device-type-matches-spec (device-type (dfw-device locale))
+					  devtype-spec)
+		locale))
+	  ((bufferp locale)
+	   (let ((win (get-buffer-window locale t devtype-spec)))
+	     (or win (and device (selected-window device))))))))
+
+(defun derive-device-type-from-tag-set (tag-set &optional try-stages
+					devtype-spec current-device)
+  "Given a tag set, try (heuristically) to get a device type from it.
+
+There are three stages that this function proceeds through, each one trying
+harder than the previous to get a value.  TRY-STAGES controls how many
+stages to try.  If nil or 1, only stage 1 is done; if 2; stages 1 and 2 are
+done; if 3, stages 1-3 are done; if t, all stages are done (currently 1-3).
+
+Stage 1 looks at the tags themselves to see if any of them are device-type
+tags.  If so, it returns the device type.  If there is more than one device
+type, this tag can never match anything, but we go ahead and return one of
+them.  If no device types in the tags, we fail.
+
+Stage 2 runs all devices through the tag set to see if any match, and
+accumulate a list of device types of all matching devices.  If there is
+exactly one device type in the list, we return it, else fail.
+
+Stage 3 picks up from where stage 2 left off, and tries hard to return
+*SOME* device type in all possible situations, modulo the DEVTYPE-SPEC
+flag. \(DEVTYPE-SPEC and CURRENT-DEVICE are the same as in
+`derive-domain-from-locale'.)
+
+Specifically:
+
+\(a) if no matching devices, return the selected device's type.
+\(b) if more than device type and the selected device's type is
+     listed, use it.
+\(c) else, pick one of the device types (currently the first).
+
+This will never return a device type that's incompatible with the
+DEVTYPE-SPEC flag; thus, it may return nil."
+  (or try-stages (setq try-stages 1))
+  (if (eq try-stages t) (setq try-stages 3))
+  (check-argument-range try-stages 1 3)
+  (flet ((delete-wrong-type (x)
+	   (delete-if-not
+	    #'(lambda (y)
+		(device-type-matches-spec y devtype-spec))
+	    x)))
+    (let ((both (intersection (device-type-list)
+			      (canonicalize-tag-set tag-set))))
+      ;; shouldn't be more than one (will fail), but whatever
+      (if both (first (delete-wrong-type both))
+	(and (>= try-stages 2)
+	     ;; no device types mentioned.  try the hard way,
+	     ;; i.e. check each existing device to see if it will
+	     ;; pass muster.
+	     (let ((okdevs
+		    (delete-wrong-type
+		     (delete-duplicates
+		      (mapcan
+		       #'(lambda (dev)
+			   (and (device-matches-specifier-tag-set-p
+				 dev tag-set)
+				(list (device-type dev))))
+		       (device-list)))))
+		   (devtype (cond ((or (null devtype-spec)
+				       (eq devtype-spec 'window-system))
+				   (let ((dev (derive-domain-from-locale
+					       'global devtype-spec
+					       current-device)))
+				     (and dev (device-type dev))))
+				  (t devtype-spec))))
+	       (cond ((= 1 (length okdevs)) (car okdevs))
+		     ((< try-stages 3) nil)
+		     ((null okdevs) devtype)
+		     ((memq devtype okdevs) devtype)
+		     (t (car okdevs)))))))))
+
+;; Sheesh, the things you do to get "intuitive" behavior.
+(defun derive-device-type-from-locale-and-tag-set (locale tag-set
+						   &optional devtype-spec
+						   current-device)
+  "Try to derive a device type from a locale and tag set.
+
+If the locale is a domain, use the domain's device type.  Else, if the tag
+set uniquely specifies a device type, use it.  Else, if a buffer is given,
+find a window visiting the buffer, and if any, use its device type.
+Finally, go back to the tag set and \"try harder\" -- if the selected
+device matches the tag set, use its device type, else use some valid device
+type from the tag set.
+
+DEVTYPE-SPEC and CURRENT-DEVICE as in `derive-domain-from-locale'."
+
+  (cond ((valid-specifier-domain-p locale)
+	 ;; if locale is a domain, then it must match DEVTYPE-SPEC,
+	 ;; or we exit immediately with nil.
+	 (device-type-matches-spec (device-type (dfw-device locale))
+				   devtype-spec))
+	((derive-device-type-from-tag-set tag-set 2 devtype-spec
+					  current-device))
+	((and (bufferp locale)
+	      (let ((win (get-buffer-window locale t devtype-spec)))
+		(and win (device-type (dfw-device win))))))
+	((derive-device-type-from-tag-set tag-set t devtype-spec
+					  current-device))))
+
+(defun derive-specifier-specs-from-locale (specifier locale
+					   &optional devtype-spec
+					   current-device
+					   global-use-fallback)
+  "Heuristically find the specs of a specifier in a locale.
+
+This tries to find some reasonable instantiators that are most likely to
+correspond to the specifier's \"value\" (i.e. instance) in a particular
+locale, even when the user has not specifically set any such instantiators.
+This is useful for functions that want to modify the instance of a
+specifier in a particular locale, and only in that locale.
+
+Keep in mind that this is a heuristic (i.e. kludge) function, and that it
+may not always give the right results, since the operation is not
+technically well-defined in many cases! (See `derive-domain-from-locale'.)
+
+DEVTYPE-SPEC and CURRENT-DEVICE are as in `derive-domain-from-locale'.
+
+The return value is an inst-list, i.e.
+
+   ((TAG-SET . INSTANTIATOR) ...)
+
+More specifically, if there is already a spec in the locale, it's just
+returned.  Otherwise, if LOCALE is `global', `all', or nil: If
+GLOBAL-USE-FALLBACK is non-nil, the fallback is fetched, and returned, with
+`default' added to the tag set; else, we use CURRENT-DEVICE (defaulting to
+the selected device) as a domain and proceed as in the following.  If
+LOCALE is a domain (window, frame, device), the specifier's instance in
+that domain is computed, and converted back to an instantiator
+\(`instance-to-instantiator').  Else, if LOCALE is a buffer, we use
+`derive-domain-from-locale' to heuristically get a likely domain, and
+proceed as if LOCALE were a domain."
+  (if (memq locale '(all nil)) (setq locale 'global))
+  (let ((current (specifier-spec-list specifier locale)))
+    (if current (cdar current)
+      ;; case 1: a global locale, fallbacks
+      (cond ((and (eq locale 'global) global-use-fallback)
+	     ;; if nothing there globally, retrieve the fallback.
+	     ;; this is either an inst-list or a specifier.  in the
+	     ;; latter case, we need to recursively retrieve its
+	     ;; fallback.
+	     (let (sofar
+		   (fallback (specifier-fallback specifier)))
+	       (while (specifierp fallback)
+		 (setq sofar (nconc sofar
+				    (cdar (specifier-spec-list fallback
+							       'global))))
+		 (setq fallback (specifier-fallback fallback)))
+	       (add-tag-to-inst-list (nconc sofar fallback) 'default)))
+	    (t
+	     (let (domain)
+	       ;; case 2: window, frame, device locale
+	       (cond ((eq locale 'global)
+		      (setq domain (or current-device (selected-device))))
+		     ((valid-specifier-domain-p locale)
+		      (setq domain locale))
+		     ;; case 3: buffer locale
+		     ((bufferp locale)
+		      (setq domain (derive-domain-from-locale
+				    locale devtype-spec current-device)))
+		     (t nil))
+	       ;; retrieve an instance, convert back to instantiator
+	       (when domain
+		 (let ((inst
+			(instance-to-instantiator
+			 (specifier-instance specifier domain))))
+		   (list (cons nil inst))))))))))
 
 ;;; specifier.el ends here

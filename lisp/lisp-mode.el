@@ -675,6 +675,40 @@ of the start of the containing expression."
               (t
                normal-indent))))))
 
+(defvar lisp-function-and-type-regexp
+  (concat "def\\("
+	  ;; def but not define-.
+	  "\\(un\\|advice\\|alias\\|macro\\*?\\|setf\\|subst\\*?\\|"
+	  "-edebug-spec\\|"
+	  ;; CLOS
+	  "method\\|generic\\|"
+	  ;; define-*
+	  "ine-\\(?:"
+	  ;; basic Lisp stuff
+	  "compiler-macro\\|function\\|function-when-void\\|modify-macro\\|"
+	  "setf-method\\|"
+	  ;; obsolete/compatible support, XEmacs-specific
+	  "compatible-function-alias\\|obsolete-function-alias\\|"
+	  ;; XEmacs-specific, supporting stuff inside of XEmacs
+	  "ccl-program\\|device-method\\*?\\|prefix-command\\|skeleton"
+          "\\)\\)\\|"
+	  ;; Structure declarations.
+	  "\\(class\\|struct\\|type\\)\\)\\>")
+  "Regular expression to match the function and type keywords used in Lisp.
+This matches, for example, the string \"defun\", as well as defsetf,
+defsubst*, define-prefix-command, etc.  Match string 1 matches everything
+but the three-letter \"def\" string at the beginning.  Match string 2
+matches everything after that, when it's *NOT* a \"type\" declaration --
+which includes defclass, defstruct, and deftype.  Match string 3 is similar
+to match string 2 in that it matches everything after the \"def\", when
+\(and only when) the keyword matched *IS* a type declaration.  You can use
+match strings 2 and 3 to easily determine whether a function or type was
+matched.  The regex is terminated with a \\\> so that there must be a
+word-end; i.e. defunbbb won't match.")
+
+(defvar lisp-flet-regexp
+  "(\\(flet\\|macrolet\\|labels\\)\\(\\s-\\|\n\\)")
+
 (defun lisp-indent-function (indent-point state)
   ;; free reference to `calculate-lisp-indent-last-sexp'
   ;; in #'calculate-lisp-indent
@@ -697,19 +731,91 @@ of the start of the containing expression."
           ;; inside the innermost containing sexp.
           (backward-prefix-chars)
           (current-column))
-      (let ((function (buffer-substring (point)
+
+      ;; Now come a bunch of ad-hoc checks to see if we're in particular
+      ;; places (defining an flet function, in the argument list of a
+      ;; regular or flet function, in a quoted list, etc.) where the
+      ;; regular indenting doesn't work well.
+
+      ;; #### All this stuff here should be generalized so that
+      ;; you can specify, for various functions, how you want
+      ;; particular arguments handled -- in some way that works
+      ;; recursively, so it can handle flet and such.
+      
+      (let* ((function (buffer-substring (point)
 					(progn (forward-sexp 1) (point))))
-	    method)
-	(if (condition-case nil
+	     (quote (condition-case nil
+			(save-excursion
+			  (backward-up-list 1)
+			  (memq (char-before (point)) '(?' ?`)))))
+	     method)
+	(cond
+	 ;; if we're indenting a quoted list, and the first word is not
+	 ;; lambda, line up second line below first with no indentation,
+	 ;; so that property lists indent correctly.
+	 ((and quote (not (equal function "lambda")))
+	  (setq method 'lisp-indent-quoteform))
+	 ;; do the same if we're indenting the arg list of a def* form.
+	 ((let ((p (point)))
+	    (condition-case nil
 		(save-excursion
-		  (backward-up-list 1)
-		  (backward-up-list 1)
-		  (backward-up-list 1)
-		  (looking-at "(\\(flet\\|macrolet\\|labels\\)\\s-"))
-	      (error nil))
-	    (setq method 'defun)
-	  (setq method (or (get (intern-soft function) 'lisp-indent-function)
-			   (get (intern-soft function) 'lisp-indent-hook))))
+		  (backward-up-list 2)
+		  ;; make sure we're indeed the second argument of the
+		  ;; def* form.
+		  (and (eq (point) (save-excursion
+				     (goto-char p)
+				     (backward-up-list 1)
+				     (backward-sexp 2)
+				     (1- (point))))
+		       ;; check to see that the function is a def* type
+		       (eq (char-after) ?\()
+		       (progn (forward-char 1) t)
+		       (looking-at lisp-function-and-type-regexp)
+		       ;; defstruct may have slot option specs, which
+		       ;; should probably be reverse-indented like
+		       ;; normal, because the slot name is the first
+		       ;; in the list. #### Review this.
+		       (not (equal (match-string 0) "defstruct"))))
+	      (error nil)))
+	  (setq method 'lisp-indent-quoteform))
+
+	 ;; handle functions in flet forms
+	 ((let ((p (point)))
+	    (condition-case nil
+		(save-excursion
+		  (backward-up-list 3)
+		  ;; make sure we're indeed a function, i.e. inside the
+		  ;; first form after the flet.
+		  (and (eq (point) (save-excursion
+				     (goto-char p)
+				     (backward-up-list 2)
+				     (backward-sexp 1)
+				     (1- (point))))
+		       (looking-at lisp-flet-regexp)))
+	      (error nil)))
+	  (setq method 'defun))
+
+	 ;; handle the arg lists in functions in flet forms
+	 ((let ((p (point)))
+	    (condition-case nil
+		(save-excursion
+		  (backward-up-list 2)
+		  ;; make sure we're indeed the arg list -- i.e. the first
+		  ;; element after the function name.
+		  (and (eq (point) (save-excursion
+				     (goto-char p)
+				     (backward-up-list 1)
+				     (backward-sexp 1)
+				     (1- (point))))
+		       (progn
+			 (backward-up-list 2)
+			 (looking-at lisp-flet-regexp))))
+	      (error nil)))
+	  (setq method 'lisp-indent-quoteform))
+	 (t
+	  (setq method
+		(or (get (intern-soft function) 'lisp-indent-function)
+		    (get (intern-soft function) 'lisp-indent-hook)))))
 	(cond ((or (eq method 'defun)
 		   (and (null method)
 			(> (length function) 3)
@@ -720,6 +826,14 @@ of the start of the containing expression."
 				     indent-point normal-indent))
 	      (method
 		(funcall method state indent-point)))))))
+
+(defun lisp-indent-quoteform (state indent-point)
+  (goto-char (car (cdr state)))
+  (forward-line 1)
+  (if (> (point) (car (cdr (cdr state))))
+      (progn
+	(goto-char (car (cdr state)))
+	(+ 1 (current-column)))))
 
 (defvar lisp-body-indent 2
   "Number of columns to indent the second line of a `(def...)' form.")
@@ -796,6 +910,8 @@ of the start of the containing expression."
 (put 'with-selected-window 'lisp-indent-function 1)
 (put 'save-selected-frame 'lisp-indent-function 0)
 (put 'with-selected-frame 'lisp-indent-function 1)
+(put 'save-selected-device 'lisp-indent-function 0)
+(put 'with-selected-device 'lisp-indent-function 1)
 (put 'save-restriction 'lisp-indent-function 0)
 (put 'save-match-data 'lisp-indent-function 0)
 (put 'let 'lisp-indent-function 1)

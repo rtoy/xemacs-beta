@@ -852,6 +852,8 @@ ascii_strcasecmp (const char *s1, const char *s2)
     }
 }
 
+#if defined (NEED_LUCID) || defined (NEED_ATHENA) || defined (NEED_MOTIF)
+
 static widget_creation_function
 find_in_table (const char *type, const widget_creation_entry table[])
 {
@@ -861,6 +863,8 @@ find_in_table (const char *type, const widget_creation_entry table[])
       return cur->function;
   return NULL;
 }
+
+#endif
 
 static Boolean
 dialog_spec_p (const char *name)

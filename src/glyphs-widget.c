@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "bytecode.h"
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"

@@ -33,13 +33,13 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "elhash.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "opaque.h"
 #include "scrollbar.h"
 #include "specifier.h"
-#include "window.h"
+#include "window-impl.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "scrollbar-msw.h"
 
 /* We use a similar sort of vertical scrollbar drag hack for mswindows

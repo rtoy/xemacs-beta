@@ -26,12 +26,12 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
-#include "objects.h"
+#include "objects-impl.h"
 #include "specifier.h"
 #include "window.h"
 
@@ -238,6 +238,7 @@ mark_font_instance (Lisp_Object obj)
   Lisp_Font_Instance *f = XFONT_INSTANCE (obj);
 
   mark_object (f->name);
+  mark_object (f->truename);
   if (!NILP (f->device)) /* Vthe_null_font_instance */
     MAYBE_DEVMETH (XDEVICE (f->device), mark_font_instance, (f));
 
@@ -325,6 +326,7 @@ these objects are GCed, the underlying X data is deallocated as well.
 
   f = alloc_lcrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
   f->name = name;
+  f->truename = Qnil;
   f->device = device;
 
   f->data = 0;
@@ -665,24 +667,58 @@ font_mark (Lisp_Object obj)
 
 #ifdef MULE
 
-int
+/* Given a truename font spec (i.e. the font spec should have its registry
+   field filled in), does it support displaying characters from CHARSET? */
+
+static int
 font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			   const Ibyte *nonreloc, Lisp_Object reloc,
-			   Bytecount offset, Bytecount length)
+			   Bytecount offset, Bytecount length,
+			   int stage)
 {
   return DEVMETH_OR_GIVEN (d, font_spec_matches_charset,
-			   (d, charset, nonreloc, reloc, offset, length),
+			   (d, charset, nonreloc, reloc, offset, length,
+			    stage),
 			   1);
 }
 
 static void
 font_validate_matchspec (Lisp_Object matchspec)
 {
-  Fget_charset (matchspec);
+  CHECK_CONS (matchspec);
+  Fget_charset (XCAR (matchspec));
 }
 
 #endif /* MULE */
 
+void
+initialize_charset_font_caches (struct device *d)
+{
+  /* Note that the following tables are bi-level. */
+  d->charset_font_cache_stage_1 =
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  d->charset_font_cache_stage_2 =
+    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+}
+
+void
+invalidate_charset_font_caches (Lisp_Object charset)
+{
+  /* Invalidate font cache entries for charset on all devices. */
+  Lisp_Object devcons, concons, hash_table;
+  DEVICE_LOOP_NO_BREAK (devcons, concons)
+    {
+      struct device *d = XDEVICE (XCAR (devcons));
+      hash_table = Fgethash (charset, d->charset_font_cache_stage_1,
+			     Qunbound);
+      if (!UNBOUNDP (hash_table))
+        Fclrhash (hash_table);
+      hash_table = Fgethash (charset, d->charset_font_cache_stage_2,
+			     Qunbound);
+      if (!UNBOUNDP (hash_table))
+        Fclrhash (hash_table);
+    }
+}
 
 static Lisp_Object
 font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
@@ -694,10 +730,15 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
   Lisp_Object device = DOMAIN_DEVICE (domain);
   struct device *d = XDEVICE (device);
   Lisp_Object instance;
+  Lisp_Object charset = Qnil;
+  int stage = 0;
 
 #ifdef MULE
   if (!UNBOUNDP (matchspec))
-    matchspec = Fget_charset (matchspec);
+    {
+      charset = Fget_charset (XCAR (matchspec));
+      stage = NILP (XCDR (matchspec)) ? 0 : 1;
+    }
 #endif
 
   if (FONT_INSTANCEP (instantiator))
@@ -706,10 +747,10 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
           || EQ (device, XFONT_INSTANCE (instantiator)->device))
 	{
 #ifdef MULE
-	  if (font_spec_matches_charset (d, matchspec, 0,
+	  if (font_spec_matches_charset (d, charset, 0,
 					 Ffont_instance_truename
 					 (instantiator),
-					 0, -1))
+					 0, -1, stage))
 	    return instantiator;
 #else
 	  return instantiator;
@@ -720,8 +761,11 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 
   if (STRINGP (instantiator))
     {
+      Lisp_Object cache = stage ? d->charset_font_cache_stage_2 :
+        d->charset_font_cache_stage_1;
+
 #ifdef MULE
-      if (!UNBOUNDP (matchspec))
+      if (!NILP (charset))
 	{
 	  /* The instantiator is a font spec that could match many
 	     different fonts.  We need to find one of those fonts
@@ -731,14 +775,13 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	     iterate over all possible fonts, and a regexp match
 	     on each one.  So we cache the results. */
 	  Lisp_Object matching_font = Qunbound;
-	  Lisp_Object hash_table = Fgethash (matchspec, d->charset_font_cache,
-					  Qunbound);
+	  Lisp_Object hash_table = Fgethash (charset, cache, Qunbound);
 	  if (UNBOUNDP (hash_table))
 	    {
 	      /* need to make a sub hash table. */
 	      hash_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
 						 HASH_TABLE_EQUAL);
-	      Fputhash (matchspec, hash_table, d->charset_font_cache);
+	      Fputhash (charset, hash_table, cache);
 	    }
 	  else
 	    matching_font = Fgethash (instantiator, hash_table, Qunbound);
@@ -748,7 +791,7 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	      /* make sure we cache the failures, too. */
 	      matching_font =
                 DEVMETH_OR_GIVEN (d, find_charset_font,
-                                  (device, instantiator, matchspec),
+                                  (device, instantiator, charset, stage),
                                   instantiator);
 	      Fputhash (instantiator, matching_font, hash_table);
 	    }
@@ -759,13 +802,13 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 #endif /* MULE */
 
       /* First, look to see if we can retrieve a cached value. */
-      instance = Fgethash (instantiator, d->font_instance_cache, Qunbound);
+      instance = Fgethash (instantiator, cache, Qunbound);
       /* Otherwise, make a new one. */
       if (UNBOUNDP (instance))
 	{
 	  /* make sure we cache the failures, too. */
 	  instance = Fmake_font_instance (instantiator, device, Qt);
-	  Fputhash (instantiator, instance, d->font_instance_cache);
+	  Fputhash (instantiator, instance, cache);
 	}
 
       return NILP (instance) ? Qunbound : instance;
@@ -775,7 +818,7 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
       assert (XVECTOR_LENGTH (instantiator) == 1);
       return (face_property_matching_instance
 	      (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
-	       matchspec, domain, ERROR_ME, 0, depth));
+	       charset, domain, ERROR_ME, 0, depth));
     }
   else if (NILP (instantiator))
     return Qunbound;
@@ -1094,6 +1137,7 @@ reinit_vars_of_objects (void)
     Lisp_Font_Instance *f =
       alloc_lcrecord_type (Lisp_Font_Instance, &lrecord_font_instance);
     f->name = Qnil;
+    f->truename = Qnil;
     f->device = Qnil;
     f->data = 0;
 

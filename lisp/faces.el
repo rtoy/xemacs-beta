@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
-;; Copyright (C) 1995, 1996 Ben Wing
+;; Copyright (C) 1995, 1996, 2002 Ben Wing
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: faces, internal, dumped
@@ -166,7 +166,7 @@ See `set-face-property' for the built-in property-names."
 	(put face property specifier)))))
 
 (defun face-property-instance (face property
-				    &optional domain default no-fallback)
+			       &optional domain default no-fallback)
   "Return the instance of FACE's PROPERTY in the specified DOMAIN.
 
 Under most circumstances, DOMAIN will be a particular window,
@@ -216,8 +216,8 @@ Optional arguments DEFAULT and NO-FALLBACK are the same as in
     value))
 
 (defun face-property-matching-instance (face property matchspec
-					     &optional domain default
-					     no-fallback)
+					&optional domain default
+					no-fallback)
   "Return the instance of FACE's PROPERTY matching MATCHSPEC in DOMAIN.
 Currently the only useful value for MATCHSPEC is a charset, when used
 in conjunction with the face's font; this allows you to retrieve a
@@ -231,12 +231,22 @@ matching process."
   (setq face (get-face face))
   (let ((value (get face property)))
     (if (specifierp value)
-	(setq value (specifier-matching-instance value matchspec domain
-						 default no-fallback)))
+	(setq value (if (or (charsetp matchspec)
+			    (and (symbolp matchspec)
+				 (find-charset matchspec)))
+			(or 
+			 (specifier-matching-instance
+			  value (cons matchspec nil) domain default
+			  no-fallback)
+			 (specifier-matching-instance
+			  value (cons matchspec t) domain default
+			  no-fallback))
+		      (specifier-matching-instance value matchspec domain
+						   default no-fallback))))
     value))
 
 (defun set-face-property (face property value &optional locale tag-set
-			       how-to-add)
+			  how-to-add)
   "Change a property of FACE.
 
 NOTE: If you want to remove a property from a face, use `remove-face-property'
@@ -636,7 +646,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'display-table domain default no-fallback))
 
 (defun set-face-display-table (face display-table &optional locale tag-set
-				    how-to-add)
+			       how-to-add)
   "Change the display table of FACE to DISPLAY-TABLE in LOCALE.
 DISPLAY-TABLE should be a vector as returned by `make-display-table'.
 
@@ -655,7 +665,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'underline domain default no-fallback))
 
 (defun set-face-underline-p (face underline-p &optional locale tag-set
-				  how-to-add)
+			     how-to-add)
   "Change the underline property of FACE to UNDERLINE-P.
 UNDERLINE-P is normally a face-boolean instantiator; see
  `make-face-boolean-specifier'.
@@ -670,7 +680,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'strikethru domain default no-fallback))
 
 (defun set-face-strikethru-p (face strikethru-p &optional locale tag-set
-				  how-to-add)
+			      how-to-add)
   "Change whether FACE is strikethru-d (i.e. struck through) in LOCALE.
 STRIKETHRU-P is normally a face-boolean instantiator; see
  `make-face-boolean-specifier'.
@@ -685,7 +695,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'highlight domain default no-fallback))
 
 (defun set-face-highlight-p (face highlight-p &optional locale tag-set
-				  how-to-add)
+			     how-to-add)
   "Change whether FACE is highlighted in LOCALE (TTY locales only).
 HIGHLIGHT-P is normally a face-boolean instantiator; see
  `make-face-boolean-specifier'.
@@ -714,7 +724,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'blinking domain default no-fallback))
 
 (defun set-face-blinking-p (face blinking-p &optional locale tag-set
-				 how-to-add)
+			    how-to-add)
   "Change whether FACE is blinking in LOCALE (TTY locales only).
 BLINKING-P is normally a face-boolean instantiator; see
  `make-face-boolean-specifier'.
@@ -766,11 +776,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
     (and (face-equal-loop common-props face1 face2 domain)
 	 (cond ((eq 'tty (device-type device))
 		(face-equal-loop tty-props face1 face2 domain))
- 	       ;; #### Why isn't this (console-on-window-system-p (device-console device))?
- 	       ;; #### FIXME!
-	       ((or (eq 'x (device-type device))
-		    (eq 'gtk (device-type device))
-		    (eq 'mswindows (device-type device)))
+	       ((console-on-window-system-p (device-console device))
 		(face-equal-loop win-props face1 face2 domain))
 	       (t t)))))
 
@@ -779,12 +785,19 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (not (face-equal face 'default domain)))
 
-; moved from x-faces.el
 (defun try-font-name (name &optional device)
+  "Return NAME if it's a valid font name on DEVICE, else nil."
   ;; yes, name really should be here twice.
   (and name (make-font-instance name device t) name))
 
 
+
+(defcustom face-frob-from-locale-first nil
+  "*If non nil, use kludgy way of frobbing fonts suitable for non-mule
+multi-charset environments."
+  :group 'faces
+  :type 'boolean)
+
 ;; This function is a terrible, disgusting hack!!!!  Need to
 ;; separate out the font elements as separate face properties!
 
@@ -803,204 +816,263 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 ;; WE DEMAND LEXICAL SCOPING!!!
 ;; WE DEMAND LEXICAL SCOPING!!!
 ;; WE DEMAND LEXICAL SCOPING!!!
-(defun frob-face-property (face property func device-tags &optional
-locale tags)
-  "Change the specifier for FACE's PROPERTY according to FUNC, in LOCALE.
-This function is ugly and messy and is primarily used as an internal
-helper function for `make-face-bold' et al., so you probably don't
-want to use it or read the rest of the documentation.  But if you do ...
 
-FUNC should be a function of two arguments (an instance and a device)
-that returns a modified name that is valid for the given device.
-If LOCALE specifies a valid domain (i.e. a window, frame, or device),
-this function instantiates the specifier over that domain, applies FUNC
-to the resulting instance, and adds the result back as an instantiator
-for that locale.  Otherwise, LOCALE should be a locale, locale type, or
-'all (defaults to 'all if omitted).  For each specification thusly
-included: if the locale given is a valid domain, FUNC will be
-iterated over all valid instantiators for the device of the domain
-until a non-nil result is found (if there is no such result, the
-first valid instantiator is used), and that result substituted for
-the specification; otherwise, the process just outlined is
-iterated over each existing device and the concatenated results
-substituted for the specification.
+;; When we are initializing a device, it won't be selected; we communicate
+;; the device to consider as selected using this variable.
+(defvar Face-frob-property-device-considered-current nil)
 
-DEVICE-TAGS is a list of tags that each device must match in order for
-the function to be called on it."
-  (let ((sp (face-property face property))
-	temp-sp)
-    (if (valid-specifier-domain-p locale)
-	;; this is easy.
-	(let* ((inst (face-property-instance face property locale))
-	       (name (and inst
-			  (device-matches-specifier-tag-set-p
-			   (dfw-device locale) device-tags)
-			  (funcall func inst (dfw-device locale)))))
-	  (when name
-	    (add-spec-to-specifier sp name locale tags)))
-      ;; otherwise, map over all specifications ...
-      ;; but first, some further kludging:
-      ;; (1) if we're frobbing the global property, make sure
-      ;;     that something is there (copy from the default face,
-      ;;     if necessary).  Otherwise, something like
-      ;;     (make-face-larger 'modeline)
-      ;;     won't do anything at all if the modeline simply
-      ;;     inherits its font from 'default.
-      ;; (2) if we're frobbing a particular locale, nothing would
-      ;;     happen if that locale has no instantiators.  So signal
-      ;;     an error to indicate this.
+(defun Face-frob-property (face locale tag-set exact-p
+			   unfrobbed-face frobbed-face
+			   win-prop tty-props
+			   frob-mapping standard-face-mapping)
+  ;; implement the semantics of `make-face-bold' et al.  FACE, LOCALE, TAG-SET
+  ;; and EXACT-P are as in that call.  UNFROBBED-FACE and FROBBED-FACE are
+  ;; what we expect the original face and the result to look like,
+  ;; respectively.  TTY-PROPS is a list of face properties to frob in place
+  ;; of `font' for TTY's.  FROB-MAPPING is either a plist mapping device
+  ;; types to functions of two args (NAME DEVICE) that will frob the
+  ;; instantiator as appropriate for the device type (this includes TTY's),
+  ;; or a function to handle the mapping for all device types.
+  ;; STANDARD-FACE-MAPPING is an alist of mappings of inheritance
+  ;; instantiators to be replaced with other inheritance instantiators, meant
+  ;; for e.g. converting [bold] into [bold-italic].
 
+  ;; #### it would be nice if this function could be generalized to be
+  ;; a general specifier frobber.  but so much of what it does is specific
+  ;; to faces -- e.g. handling of inheritance, standard faces,
+  ;; special-casing in various ways for tty's, etc.  i've already extracted
+  ;; as much of the functionality as i can into subfunctions in the
+  ;; heuristic section of specifier.el.
 
-      (setq temp-sp (copy-specifier sp))
-      (if (or (eq locale 'global) (eq locale 'all) (not locale))
-	  (when (not (specifier-specs temp-sp 'global))
-	    ;; Try fallback via the official ways and then do it "by hand"
-	    (let* ((fallback (specifier-fallback sp))
-		   (fallback-sp 
-		    (cond ((specifierp fallback) fallback)
-			  ;; just an inst list
-			  (fallback
-			   (make-specifier-and-init (specifier-type sp)
-						    fallback))
-			  ((eq (get-face face) (get-face 'default))
-			   (error "Unable to find global specification"))
-			  ;; If no fallback we snoop from default
-			  (t (face-property 'default property)))))
-	      (copy-specifier fallback-sp temp-sp 'global))))
-      (if (and (valid-specifier-locale-p locale)
-	       (not (specifier-specs temp-sp locale)))
-	  (error "Property must have a specification in locale %S" locale))
-      (map-specifier
-       temp-sp
-       (lambda (sp-arg locale inst-list func)
-	 (let* ((device (dfw-device locale))
-		;; if a device can be derived from the locale,
-		;; call frob-face-property-1 for that device.
-		;; Otherwise map frob-face-property-1 over each device.
-		(result
-		 (if device
-		     (list (and (device-matches-specifier-tag-set-p
-				 device device-tags)
-				(frob-face-property-1 sp-arg device inst-list
-						      func)))
-		   (mapcar (lambda (device)
-			     (and (device-matches-specifier-tag-set-p
-				   device device-tags)
-				  (frob-face-property-1 sp-arg device
-							inst-list func)))
-			   (device-list))))
-		new-result)
-	   ;; remove duplicates and nils from the obtained list of
-	   ;; instantiators. Also add tags amd remove 'defaults'.
-	   (mapcar (lambda (arg)
-		     (when arg
-		       (if (not (consp arg))
-			   (setq arg (cons tags arg))
-			 (setcar arg (append tags (delete 'default
-							  (car arg))))))
-		     (when (and arg (not (member arg new-result)))
-		       (setq new-result (cons arg new-result))))
-		   result)
-	   ;; add back in.
-	   (add-spec-list-to-specifier sp (list (cons locale new-result)))
-	   ;; tell map-specifier to keep going.
-	   nil))
-       locale
-       func))))
+  ;; #### Note: The old code was totally different (and there was much less
+  ;; of it).  It didn't bother with trying to frob all the instantiators,
+  ;; or handle inheritance vectors as instantiators, or do something
+  ;; sensible with buffer locales, or many other things. (It always, or
+  ;; usually, did a specifier-instance and frobbed the result.) But it did
+  ;; do three things we don't:
+  ;;
+  ;; (1) Map over all devices when processing global or buffer locales.
+  ;;     Should we be doing this in stages 2 and/or 3?  The fact that we
+  ;;     now process all fallback instantiators seems to make this less
+  ;;     necessary, at least for global locales.
+  ;;
+  ;; (2) Remove all instantiators tagged with `default' when putting the
+  ;;     instantiators back.  I don't see why this is necessary, but maybe
+  ;;     it is.
+  ;;
+  ;; (3) Pay attention to the face-frob-from-locale-first variable. ####
+  ;;     I don't understand its purpose.  Undocumented hacks like this,
+  ;;     clearly added after-the-fact, don't deserve to live.  DOCUMENT
+  ;;     THIS SHIT!
 
-(defun frob-face-property-1 (sp device inst-list func)
-  (let
-      (first-valid result)
-    (while (and inst-list (not result))
-      (let* ((inst-pair (car inst-list))
-	     (tag-set (car inst-pair))
-	     (sp-inst (specifier-instance-from-inst-list
-		       sp device (list inst-pair))))
-	(if sp-inst
-	    (progn
-	      (if (not first-valid)
-		  (setq first-valid inst-pair))
-	      (setq result (funcall func sp-inst device))
-              (if result
-                  (setq result (cons tag-set result))))))
-      (setq inst-list (cdr inst-list)))
-    (or result first-valid)))
+  (flet
+      (
 
-(defcustom face-frob-from-locale-first nil
-  "*If non nil, use kludgy way of frobbing fonts suitable for non-mule
-multi-charset environments."
-  :group 'faces
-  :type 'boolean)
+       ;; non-nil if either instantiator non-nil, or nil instantiators allowed.
+       (nil-instantiator-ok (inst devtype-spec)
+	 (or inst (eq devtype-spec 'tty)))
 
-(defun frob-face-font-2 (face locale tags unfrobbed-face frobbed-face
-			      tty-thunk ws-thunk standard-face-mapping)
-  ;; another kludge to make things more intuitive.  If we're
-  ;; inheriting from a standard face in this locale, frob the
-  ;; inheritance as appropriate.  Else, if, after the first
-  ;; window-system frobbing pass, the face hasn't changed and still
-  ;; looks like the standard unfrobbed face (e.g. 'default), make it
-  ;; inherit from the standard frobbed face (e.g. 'bold).  Regardless
-  ;; of things, do the TTY frobbing.
+       ;; if LOCALE is a global locale (all, nil, global), return 'global,
+       ;; else nil.
+       (global-locale (locale)
+	 (and (memq locale '(all nil global)) 'global))
 
-  ;; yuck -- The LOCALE argument to make-face-bold is not actually a locale,
-  ;; but is a "locale, locale-type, or nil for all".  So ...  do our extra
-  ;; frobbing only if it's actually a locale; or for nil, do the frobbing
-  ;; on 'global.  This specifier stuff needs some rethinking.
-  (let* ((the-locale (cond ((null locale) 'global)
-			   ((valid-specifier-locale-p locale) locale)
-			   (t nil)))
-	 (spec-list
-	  (and
-	   the-locale
-	   (specifier-spec-list (get (get-face face) 'font) the-locale tags t)))
-	 (change-it
-	  (and
-	   spec-list
-	   (cdr (assoc (cdadar spec-list) standard-face-mapping)))))
-    (if (and change-it
-	     (not (memq (face-name (find-face face))
-			'(default bold italic bold-italic))))
-	(progn
-	  (or (equal change-it t)
-	      (set-face-property face 'font change-it the-locale tags))
-	  (funcall tty-thunk))
-      (let* ((domain (cond ((null the-locale) nil)
-			   ((valid-specifier-domain-p the-locale) the-locale)
-			   ;; OK, this next one is truly a kludge, but
-			   ;; it results in more intuitive behavior most
-			   ;; of the time. (really!)
-			   ((or (eq the-locale 'global) (eq the-locale 'all))
-			    (selected-device))
-			   (t nil)))
-	     (inst (and domain (face-property-instance face 'font domain))))
-	;; If it's reasonable to do the inherit-from-standard-face trick,
-	;; and it's called for, then do it now.
-	(if (and
-	     face-frob-from-locale-first
-	     (eq the-locale 'global)
-	     domain
-	     (equal inst (face-property-instance face 'font domain))
-	     ;; don't do it for standard faces, or you'll get inheritance loops.
-	     ;; #### This makes XEmacs seg fault! fix this bug.
-	     (not (memq (face-name (find-face face))
-			'(default bold italic bold-italic)))
-	     (equal (face-property-instance face 'font domain)
-		    (face-property-instance unfrobbed-face 'font domain)))
-	    (set-face-property face 'font (vector frobbed-face)
-			       the-locale tags)
-	  ;; and only otherwise try to build new property value artificially
-	  (funcall tty-thunk)
-	  (funcall ws-thunk)
-	  (and
-	   domain
-	   (equal inst (face-property-instance face 'font domain))
-	   ;; don't do it for standard faces, or you'll get inheritance loops.
-	   ;; #### This makes XEmacs seg fault! fix this bug.
-	   (not (memq (face-name (find-face face))
-		      '(default bold italic bold-italic)))
-	   (equal (face-property-instance face 'font domain)
-		  (face-property-instance unfrobbed-face 'font domain))
-	   (set-face-property face 'font (vector frobbed-face) the-locale tags)))))))
+       ;; Given a locale and the inst-list from that locale, frob the
+       ;; instantiators according to FROB-MAPPING, a plist mapping device
+       ;; types to functions that frob instantiators of that device type.
+       ;; NOTE: TAG-SET and FROB-MAPPING from environment.
+       (frob-face-inst-list (locale inst-list prop devtype-spec)
+	 (let* ((ffpdev Face-frob-property-device-considered-current)
+		(results
+		 ;; for each inst-pair, frob it (the result will be 0 or
+		 ;; more inst-pairs; we may get more than one if, e.g. the
+		 ;; instantiator specifies inheritance and we expand the
+		 ;; inheritance); then nconc the results together
+		 (loop for (tag-set . x) in inst-list
+		   for devtype = (derive-device-type-from-locale-and-tag-set
+				  locale tag-set devtype-spec ffpdev)
+		   ;; devtype may be nil if it fails to match DEVTYPE-SPEC
+		   if devtype
+		   if (let* ((mapper (if (functionp frob-mapping) frob-mapping
+				       (plist-get frob-mapping devtype)))
+			     (result
+			      (cond
+			       ;; if a vector ...
+			       ((vectorp x)
+				(let ((change-to
+				       (cdr (assoc x standard-face-mapping))))
+				  (cond
+				   ;; (1) handle standard mappings/null vectors
+				   ((or change-to (null (length x)))
+				    (list (cons tag-set
+						(cond ((eq change-to t) x)
+						      (change-to)
+						      (t x)))))
+				   ;; (2) inheritance vectors.  retrieve the
+				   ;; inherited value and recursively frob.
+				   ;; stick the tag-set into the result.
+				   (t (let*
+					  ((subprop
+					    (if (> (length x) 1) (elt x 1)
+					      prop))
+					   (subinsts
+					    (frob-face-inst-list
+					     locale
+					     (cdar
+					      (specifier-spec-list
+					       (face-property (elt x 0)
+							      subprop)))
+					     subprop devtype-spec)))
+					;; #### we don't currently handle
+					;; the "reverse the sense" flag on
+					;; tty inheritance vectors.
+					(add-tag-to-inst-list subinsts
+							      tag-set))))))
+			       ;; (3) not a vector.  just process it.
+			       (t
+				(let ((value
+				       (if (eq devtype-spec 'tty)
+					   (funcall mapper x)
+					 (funcall mapper x
+						  (derive-domain-from-locale
+						   locale devtype-spec
+						   ffpdev)))))
+				  (and (nil-instantiator-ok value devtype-spec)
+				       (list (cons tag-set value))))))))
+			;; if we're adding to a tty, we need to tag our
+			;; additions with `tty'; see [note 1] below.  we leave
+			;; the old spec in place, however -- if e.g. we're
+			;; italicizing a font that was always set to be
+			;; underlined, even on window systems, then we still
+			;; want the underline there.  unless we put the old
+			;; spec back, the underline will disappear, since
+			;; the new specs are all tagged with `tty'.  this
+			;; doesn't apply to the [note 1] situations below
+			;; because there we're just adding, not substituting.
+			(if (and (eq 'tty devtype-spec)
+				 (not (or (eq 'tty tag-set)
+					  (memq 'tty tag-set))))
+			    (nconc (add-tag-to-inst-list result 'tty)
+				   (list (cons tag-set x)))
+			  result))
+		   nconc it)))
+	   (delete-duplicates results :test #'equal)))
+
+       ;; Frob INST-LIST, which came from LOCALE, and put the new value back
+       ;; into SP at LOCALE.  THUNK is a cons of (PROP . DEVTYPE-SPEC), the
+       ;; property being processed and whether this is a TTY property or a
+       ;; win property.
+       (frob-locale (sp locale inst-list thunk)
+	 (let ((newinst (frob-face-inst-list locale inst-list
+					     (car thunk) (cdr thunk))))
+	   (remove-specifier sp locale tag-set exact-p)
+	   (add-spec-list-to-specifier sp (list (cons locale newinst))))
+	 ;; map-specifier should keep going
+	 nil)
+
+       ;; map over all specified locales in LOCALE; for each locale,
+       ;; frob the instantiators in that locale in the specifier in both
+       ;; WIN-PROP and TTY-PROPS in FACE.  Takes values from environment.
+       (map-over-locales (locale)
+	 (map-specifier (get face win-prop) #'frob-locale locale
+			(cons win-prop 'window-system)
+			tag-set exact-p)
+	 (loop for prop in tty-props do
+	   (map-specifier (get face prop) #'frob-locale locale
+			  (cons prop 'tty)
+			  tag-set exact-p)))
+
+       ;; end of flets
+       )
+
+    ;; the function itself
+
+    (let* ((ffpdev Face-frob-property-device-considered-current)
+	   (do-later-stages
+	    (or (global-locale locale)
+		(valid-specifier-domain-p locale)
+		(bufferp locale)))
+	   (domain (and do-later-stages
+			(derive-domain-from-locale locale 'window-system
+						   ffpdev)))
+	   (check-differences
+	    (and unfrobbed-face frobbed-face domain
+		 (not (memq (face-name face)
+			    '(default bold italic bold-italic)))))
+	   (orig-instance
+	    (and check-differences
+		 (face-property-instance face win-prop domain))))
+
+      ;; first do the frobbing
+      (setq face (get-face face))
+      (map-over-locales locale)
+
+      (when do-later-stages
+
+	(if (global-locale locale) (setq locale 'global))
+
+	;; now do the second stage -- if there's nothing there, try
+	;; harder to find an instantiator, and frob it.
+	(let (do-something)
+	  (loop for prop in (cons win-prop tty-props)
+	    for propspec = (get face prop)
+	    for devtype-spec = (if (eq prop win-prop) 'window-system 'tty)
+	    if propspec
+	    do
+	    (or (specifier-spec-list propspec locale)
+		(let ((doit (derive-specifier-specs-from-locale
+			     propspec locale devtype-spec ffpdev
+			     ;; #### does this make sense?  When no tags
+			     ;; given, frob the whole list of fallbacks when
+			     ;; global, else just retrieve a current-device
+			     ;; value.  this tries to mirror normal practices,
+			     ;; where with no tags you want everything frobbed,
+			     ;; but with a tag you want only the tag frobbed
+			     ;; and hence you probably don't want lots and lots
+			     ;; of items there. (#### Perhaps the best way --
+			     ;; or at least a way with some theoretical
+			     ;; justifiability -- is to fetch the fallbacks
+			     ;; that match the TAG-SET/EXACT-P, and if none,
+			     ;; fall back onto doing the selected-device
+			     ;; trick.)
+			     (and (not tag-set) (not exact-p)))))
+		  (if (and (not doit) (eq locale 'global))
+		      (error
+		       "No fallback for specifier property %s in face %s???"
+		       prop face))
+		  ;; [note 1] whenever we add to a tty property,
+		  ;; make sure we tag our additions with `tty' to
+		  ;; avoid accidentally messing things up on window
+		  ;; systems (e.g. when making things italic we
+		  ;; don't want to set the underline property on
+		  ;; window systems)
+		  (when doit
+		    (add-spec-list-to-specifier
+		     propspec
+		     (list (cons locale
+				 (add-tag-to-inst-list
+				  doit
+				  (append (if (listp tag-set) tag-set
+					    (list tag-set))
+					  (if (eq devtype-spec 'tty) '(tty)))
+				  ))))
+		    (setq do-something t)))))
+	  (when do-something
+	    (map-over-locales (or (global-locale locale) locale))))
+
+	;; then do the third stage -- check for whether we have to do
+	;; the inheritance trick.
+
+	(when (and check-differences
+		   (let ((new-instance
+			  (face-property-instance face win-prop domain)))
+		     (and
+		      (equal orig-instance new-instance)
+		      (equal orig-instance
+			     (face-property-instance unfrobbed-face win-prop
+						     domain)))))
+	  (set-face-property face win-prop (vector frobbed-face)
+			     (or (global-locale locale) locale) tag-set))))))
 
 ;; WE DEMAND FOUNDRY FROBBING!
 
@@ -1008,253 +1080,263 @@ multi-charset environments."
 ;; Thx Jan Vroonhof, Ref xemacs-beta <87oflypbum.fsf@petteflet.ntlworld.com>
 ;; Brainlessly derived from make-face-size by Stephen; don't blame Jan.
 ;; I'm long since flown to Rio, it does you little good to blame me, either.
-(defun make-face-family (face family &optional locale tags)
-  "Set FACE's family to FAMILY in LOCALE, if possible.
+(defun make-face-family (face family &optional locale tags exact-p)
+  "Set FACE's family to FAMILY in LOCALE, if possible."
+  (interactive (list (read-face-name "Set family of which face: ")
+		     (read-string "Family to set: ")))
 
-Add/replace settings specified by TAGS only."
-  (frob-face-property face 'font
-		      ;; uses dynamic scope of family
-		      #'(lambda (f d)
+  (Face-frob-property face locale tags exact-p
+		      nil nil 'font nil
+		      `(lambda (f d)
 			  ;; keep the dependency on font.el for now
-			  (let ((fo (font-create-object (font-instance-name f)
-							d)))
-			    (set-font-family fo family)
+			  (let ((fo (font-create-object f d)))
+			    (set-font-family fo ,family)
 			    (font-create-name fo d)))
-		      nil locale tags))
+		      nil))
 
 ;; Style (ie, typographical face) frobbing
-(defun make-face-bold (face &optional locale tags)
+(defun make-face-bold (face &optional locale tags exact-p)
   "Make FACE bold in LOCALE, if possible.
-This will attempt to make the font bold for X/MSW locales and will set the
-highlight flag for TTY locales.
+This will attempt to make the font bold for window-system locales and will
+set the highlight flag for TTY locales.
 
-If LOCALE is nil, omitted, or `all', this will attempt to frob all
-font specifications for FACE to make them appear bold.  Similarly, if
-LOCALE is a locale type, this frobs all font specifications for locales
-of that type.  If LOCALE is a particular locale, what happens depends on
-what sort of locale is given.  If you gave a device, frame, or window,
-then it's always possible to determine what the font actually will be,
-so this is determined and the resulting font is frobbed and added back as a
-specification for this locale.  If LOCALE is a buffer, however, you can't
-determine what the font will actually be unless there's actually a
-specification given for that particular buffer (otherwise, it depends
-on what window and frame the buffer appears in, and might not even be
-well-defined if the buffer appears multiple times in different places);
-therefore you will get an error unless there's a specification for the
-buffer.
+The actual behavior of this function is somewhat messy, in an attempt to
+get more intuitive behavior in quite a lot of different circumstances. (You
+might view this as indicative of design failures with specifiers, but in
+fact almost all code that attempts to interface to humans and produce
+\"intuitive\" results gets messy, particularly with a system as complicated
+as specifiers, whose complexity results from an attempt to work well in
+many different circumstances.)
 
-Finally, in some cases (specifically, when LOCALE is not a locale type),
-if the frobbing didn't actually make the font look any different
-\(this happens, for example, if your font specification is already bold
-or has no bold equivalent), and currently looks like the font of the
-'default face, it is set to inherit from the 'bold face.  This is kludgy
-but it makes `make-face-bold' have more intuitive behavior in many
-circumstances."
+The meaning of LOCALE is the same as for `specifier-spec-list', i.e.:
+
+-- If LOCALE is nil, omitted, or `all', this will attempt to \"frob\" all
+   font specifications for FACE to make them appear bold (i.e. the
+   specifications are replaced with equivalent specifications, where the
+   font names have been changed to the closest bold font).
+
+-- If LOCALE is a locale type \(`buffer', `window', etc.), this frobs all
+   font specifications for locales of that type.
+
+-- If LOCALE is a particular locale, this frobs all font specifications for
+   that locale.
+
+If TAGS is given, this only processes instantiators whose tag set includes
+all tags mentioned in TAGS.  In addition, if EXACT-P is non-nil, only
+instantiators whose tag set exactly matches TAGS are processed; otherwise,
+additional tags may be present in the instantiator's tag set.
+
+This function proceeeds in three stages.
+
+STAGE 1: Frob the settings that are already present.
+STAGE 2: (if called for) Ensure that *some* setting exists in the locale
+         that was given, finding it in various ways and frobbing it as in
+         stage 1.  This ensures that there is an actual setting for
+         the locale, so you will get the expected buffer-local/frame-local
+         behavior -- changes to the global value, to other locales, won't
+         affect this locale, (b) the face will actually look bold in
+         the locale.
+STAGE 3: (if called for) 
+
+The way the frobbing works depends on the device type -- first on whether
+or not it's TTY, and second, if it's a window-system device type, on which
+particular window-system device type.  For locales with a specific device
+type, we do the frobbing in the context of that device type -- this means
+that for TTY device types we set the highlight flag, and for window-system
+device types we modify the font spec according to the rules for font specs
+of that device type.  For global locales, we may process both the highlight
+flag and the font specs (depending on the device types compiled into this
+XEmacs).  When processing font specs, we check the tag set associated with
+each font spec to see if it's specific to a particular device type; if so,
+we frob it in the context of that type, else we use the type of the current
+device. (A hack, but works well in practice -- and if a new device is
+created, we will automatically frob all the standard fonts to make sure
+they display OK on that device.)
+
+If LOCALE is not a locale type, and both TAGS and EXACT-P are omitted, we
+do further frobbing in an attempt to give more intuitive behavior.
+
+First, if there are no specifications in LOCALE (if LOCALE is `all', we act
+as if it were `global' for this step), we do our utmost to put a
+specification there; otherwise, this function will have no effect.  For
+device, frame, or window locales, the face's font is instantiated using the
+locale as a domain, and the resulting font is frobbed and added back as a
+specification for this locale.  If LOCALE is `global', we retrieve the
+fallback specs and frob them.  If LOCALE is a buffer, things get tricky
+since you can't instantiate a specifier in a buffer domain \(the buffer can
+appear in multiple places, or in different places over time, so this
+operation is not well-defined).  We used to signal an error in this case,
+but now we instead try to do something logical so that we work somewhat
+similarly to buffer-local variables.  Specifically, we use
+`get-buffer-window' to find a window viewing the buffer, and if there is
+one, use this as a domain to instantiate the font, and frob the resulting
+value.  Otherwise, we use the selected window for the same purpose.
+
+Finally, if the frobbing didn't actually make the font look any different
+in whatever domain we instantiated the font in (this happens, for example,
+if your font specification is already bold or has no bold equivalent; note
+that in this step, we use the selected device in place of `global' or `all'
+-- another hack, but works well in practice since there's usually only one
+device), and the font currently looks like the font of the `default' face,
+it is set to inherit from the `bold' face.
+
+NOTE: For the other functions defined below, the identity of these two
+standard faces mentioned in the previous paragraph, and the TTY properties
+that are modified, may be different, and whether the TTY property or
+properties are set or unset may be different.  For example, for
+`make-face-unitalic', the last sentence in the previous paragraph would
+read \"... and the font currently looks like the font of the `italic' face,
+it is set to inherit from the `default' face.\", and the second sentence in
+the first paragraph would read \"This will attempt to make the font
+non-italic for window-system locales and will unset the underline flag for
+TTY locales.\"
+
+Here's a table indicating the behavior differences with the different
+functions:
+
+function                face1     face2         tty-props            tty-val
+----------------------------------------------------------------------------
+make-face-bold          default   bold          highlight            t
+make-face-italic        default   italic        underline            t
+make-face-bold-italic   default   bold-italic   highlight,underline  t
+make-face-unbold        bold      default       highlight            nil
+make-face-unitalic      italic    default       underline            nil
+"
   (interactive (list (read-face-name "Make which face bold: ")))
-  (frob-face-font-2
-   face locale tags 'default 'bold
-   (lambda ()
-     ;; handle TTY specific entries
-     (when (featurep 'tty)
-       (set-face-highlight-p face t locale (cons 'tty tags))))
-   (lambda ()
-     ;; handle window-system specific entries
-     (when (featurep 'gtk)
-       (frob-face-property face 'font 'gtk-make-font-bold
-			   '(gtk) locale tags))
-     (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-bold
-			   '(x) locale tags))
-     (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-bold
-			   '(mswindows) locale tags)
-       (frob-face-property face 'font 'mswindows-make-font-bold
-			   '(msprinter) locale tags))
-     )
-   '(([default] . [bold])
-     ([bold] . t)
-     ([italic] . [bold-italic])
-     ([bold-italic] . t))))
+  (Face-frob-property face locale tags exact-p
+		      'default 'bold 'font '(highlight)
+		      '(tty		(lambda (x) t)
+			x		x-make-font-bold
+			gtk		gtk-make-font-bold
+			mswindows	mswindows-make-font-bold
+			msprinter	mswindows-make-font-bold)
+		      '(([default] . [bold])
+			([bold] . t)
+			([italic] . [bold-italic])
+			([bold-italic] . t))))
 
-(defun make-face-italic (face &optional locale tags)
+(defun make-face-italic (face &optional locale tags exact-p)
   "Make FACE italic in LOCALE, if possible.
 This will attempt to make the font italic for X/MS Windows locales and
 will set the underline flag for TTY locales.  See `make-face-bold' for
 the semantics of the LOCALE argument and for more specifics on exactly
 how this function works."
   (interactive (list (read-face-name "Make which face italic: ")))
-  (frob-face-font-2
-   face locale tags 'default 'italic
-   (lambda ()
-     ;; handle TTY specific entries
-     (when (featurep 'tty)
-       (set-face-underline-p face t locale (cons 'tty tags))))
-   (lambda ()
-     ;; handle window-system specific entries
-     (when (featurep 'gtk)
-       (frob-face-property face 'font 'gtk-make-font-italic
-			   '(gtk) locale tags))
-     (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-italic
-			   '(x) locale tags))
-     (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-italic
-			   '(mswindows) locale tags)
-       (frob-face-property face 'font 'mswindows-make-font-italic
-			   '(msprinter) locale tags))
-     )
-   '(([default] . [italic])
-     ([bold] . [bold-italic])
-     ([italic] . t)
-     ([bold-italic] . t))))
+  (Face-frob-property face locale tags exact-p
+		      'default 'italic 'font '(underline)
+		      '(tty		(lambda (x) t)
+			x		x-make-font-italic
+			gtk		gtk-make-font-italic
+			mswindows	mswindows-make-font-italic
+			msprinter	mswindows-make-font-italic)
+		      '(([default] . [italic])
+			([bold] . [bold-italic])
+			([italic] . t)
+			([bold-italic] . t))))
 
-(defun make-face-bold-italic (face &optional locale tags)
+(defun make-face-bold-italic (face &optional locale tags exact-p)
   "Make FACE bold and italic in LOCALE, if possible.
 This will attempt to make the font bold-italic for X/MS Windows
 locales and will set the highlight and underline flags for TTY
 locales.  See `make-face-bold' for the semantics of the LOCALE
 argument and for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face bold-italic: ")))
-  (frob-face-font-2
-   face locale tags 'default 'bold-italic
-   (lambda ()
-     ;; handle TTY specific entries
-     (when (featurep 'tty)
-       (set-face-highlight-p face t locale (cons 'tty tags))
-       (set-face-underline-p face t locale (cons 'tty tags))))
-   (lambda ()
-     ;; handle window-system specific entries
-     (when (featurep 'gtk)
-       (frob-face-property face 'font 'gtk-make-font-bold-italic
-			   '(gtk) locale tags))
-     (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-bold-italic
-			   '(x) locale tags))
-     (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-bold-italic
-			   '(mswindows) locale tags)
-       (frob-face-property face 'font 'mswindows-make-font-bold-italic
-			   '(msprinter) locale tags))
-     )
-   '(([default] . [italic])
-     ([bold] . [bold-italic])
-     ([italic] . [bold-italic])
-     ([bold-italic] . t))))
+  (Face-frob-property face locale tags exact-p
+		      'default 'bold-italic 'font '(underline highlight)
+		      '(tty		(lambda (x) t)
+			x		x-make-font-bold-italic
+			gtk		gtk-make-font-bold-italic
+			mswindows	mswindows-make-font-bold-italic
+			msprinter	mswindows-make-font-bold-italic)
+		      '(([default] . [italic])
+			([bold] . [bold-italic])
+			([italic] . [bold-italic])
+			([bold-italic] . t))))
 
-(defun make-face-unbold (face &optional locale tags)
+
+(defun make-face-unbold (face &optional locale tags exact-p)
   "Make FACE non-bold in LOCALE, if possible.
 This will attempt to make the font non-bold for X/MS Windows locales
 and will unset the highlight flag for TTY locales.  See
 `make-face-bold' for the semantics of the LOCALE argument and for more
 specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-bold: ")))
-  (frob-face-font-2
-   face locale tags 'bold 'default
-   (lambda ()
-     ;; handle TTY specific entries
-     (when (featurep 'tty)
-       (set-face-highlight-p face nil locale (cons 'tty tags))))
-   (lambda ()
-     ;; handle window-system specific entries
-     (when (featurep 'gtk)
-       (frob-face-property face 'font 'gtk-make-font-unbold
-			   '(gtk) locale tags))
-     (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-unbold
-			   '(x) locale tags))
-     (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-unbold
-			   '(mswindows) locale tags)
-       (frob-face-property face 'font 'mswindows-make-font-unbold
-			   '(msprinter) locale tags))
-     )
-   '(([default] . t)
-     ([bold] . [default])
-     ([italic] . t)
-     ([bold-italic] . [italic]))))
+  (Face-frob-property face locale tags exact-p
+		      'bold 'default 'font '(highlight)
+		      '(tty		(lambda (x) nil)
+			x		x-make-font-unbold
+			gtk		gtk-make-font-unbold
+			mswindows	mswindows-make-font-unbold
+			msprinter	mswindows-make-font-unbold)
+		      '(([default] . t)
+			([bold] . [default])
+			([italic] . t)
+			([bold-italic] . [italic]))))
 
-(defun make-face-unitalic (face &optional locale tags)
+(defun make-face-unitalic (face &optional locale tags exact-p)
   "Make FACE non-italic in LOCALE, if possible.
 This will attempt to make the font non-italic for X/MS Windows locales
 and will unset the underline flag for TTY locales.  See
 `make-face-bold' for the semantics of the LOCALE argument and for more
 specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-italic: ")))
-  (frob-face-font-2
-   face locale tags 'italic 'default
-   (lambda ()
-     ;; handle TTY specific entries
-     (when (featurep 'tty)
-       (set-face-underline-p face nil locale (cons 'tty tags))))
-   (lambda ()
-     ;; handle window-system specific entries
-     (when (featurep 'gtk)
-       (frob-face-property face 'font 'gtk-make-font-unitalic
-			   '(gtk) locale tags))
-     (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-unitalic
-			   '(x) locale tags))
-     (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-unitalic
-			   '(mswindows) locale tags)
-       (frob-face-property face 'font 'mswindows-make-font-unitalic
-			   '(msprinter) locale tags))
-     )
-   '(([default] . t)
-     ([bold] . t)
-     ([italic] . [default])
-     ([bold-italic] . [bold]))))
+  (Face-frob-property face locale tags exact-p
+		      'italic 'default 'font '(underline)
+		      '(tty		(lambda (x) nil)
+			x		x-make-font-unitalic
+			gtk		gtk-make-font-unitalic
+			mswindows	mswindows-make-font-unitalic
+			msprinter	mswindows-make-font-unitalic)
+		      '(([default] . t)
+			([bold] . t)
+			([italic] . [default])
+			([bold-italic] . [bold]))))
 
 
 ;; Size frobbing
 ;; Thx Jan Vroonhof, Ref xemacs-beta <87oflypbum.fsf@petteflet.ntlworld.com>
 ;; Jan had a separate helper function 
-(defun make-face-size (face size &optional locale tags)
-  "Adjust FACE to SIZE in LOCALE, if possible.
-
-Add/replace settings specified by TAGS only."
-  (frob-face-property face 'font
-		      ;; uses dynamic scope of size
-		      #'(lambda (f d)
-			  ;; keep the dependency on font.el for now
-			  (let ((fo (font-create-object (font-instance-name f)
-							d)))
-			    (set-font-size fo size)
-			    (font-create-name fo d)))
-		      nil locale tags))
+(defun make-face-size (face size &optional locale tags exact-p)
+  "Adjust FACE to SIZE in LOCALE, if possible."
+  (interactive (list (read-face-name "Set size of which face: ")
+		     (read-number "Size to set: " t 10)))
+  (Face-frob-property face locale tags exact-p
+		      nil nil 'font nil
+		      `(lambda (f d)
+			 ;; keep the dependency on font.el for now
+			 (let ((fo (font-create-object f d)))
+			   (set-font-size fo ,size)
+			   (font-create-name fo d)))
+		      nil))
 
 ;; Why do the following two functions lose so badly in so many
 ;; circumstances?
 
-(defun make-face-smaller (face &optional locale)
+(defun make-face-smaller (face &optional locale tags exact-p)
   "Make the font of FACE be smaller, if possible.
 LOCALE works as in `make-face-bold' et al., but the ``inheriting-
 from-the-bold-face'' operations described there are not done
 because they don't make sense in this context."
   (interactive (list (read-face-name "Shrink which face: ")))
-  ;; handle X specific entries
-  (when (featurep 'x)
-    (frob-face-property face 'font 'x-find-smaller-font
-			'(x) locale))
-  (when (featurep 'mswindows)
-    (frob-face-property face 'font 'mswindows-find-smaller-font
-			'(mswindows) locale)
-    (frob-face-property face 'font 'mswindows-find-smaller-font
-			'(msprinter) locale)))
+  (Face-frob-property face locale tags exact-p
+		      nil nil 'font nil
+		      '(x		x-find-smaller-font
+			gtk		gtk-find-smaller-font
+			mswindows	mswindows-find-smaller-font
+			msprinter	mswindows-find-smaller-font)
+		      nil))
 
-(defun make-face-larger (face &optional locale)
+(defun make-face-larger (face &optional locale tags exact-p)
   "Make the font of FACE be larger, if possible.
 See `make-face-smaller' for the semantics of the LOCALE argument."
   (interactive (list (read-face-name "Enlarge which face: ")))
-  ;; handle X specific entries
-  (when (featurep 'x)
-    (frob-face-property face 'font 'x-find-larger-font
-			'(x) locale))
-  (when (featurep 'mswindows)
-    (frob-face-property face 'font 'mswindows-find-larger-font
-			'(mswindows) locale)
-    (frob-face-property face 'font 'mswindows-find-larger-font
-			'(msprinter) locale)))
+  (Face-frob-property face locale tags exact-p
+		      nil nil 'font nil
+		      '(x		x-find-larger-font
+			gtk		gtk-find-larger-font
+			mswindows	mswindows-find-larger-font
+			msprinter	mswindows-find-larger-font)
+		      nil))
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."
@@ -1320,9 +1402,12 @@ examine the brightness for you."
 		   (if (< (apply '+ (color-instance-rgb-components
 				     color-instance)) 65536)
 		       'dark 'light)
-		 ;; Here, we get an error on a TTY.  As we don't have
-		 ;; a good way of detecting whether a TTY is light or
-		 ;; dark, we'll guess it's dark.
+		 ;; Here, we get an error on a TTY (Return value from
+		 ;; color-instance-rgb-components is nil), and on the
+		 ;; initial stream device (Return value from
+		 ;; face-background-instance is nil).  As we don't have a
+		 ;; good way of detecting whether a TTY is light or dark,
+		 ;; we'll guess it's dark.
 		 (error 'dark))))
     (set-frame-property frame 'background-mode mode)
     mode))
@@ -1587,42 +1672,36 @@ and 'global)."
 	  ;; Is there anything which should be done for TTY's?
 	  )))
 
-;; #### This is somewhat X-specific, and is called when the first
-;; X device is created (even if there were TTY devices created
-;; beforehand).  The concept of resources has not been generalized
-;; outside of X-specificness, so we have to live with this
-;; breach of device-independence.
+;; Called when the first device created.
 
-(defun init-global-faces ()
-  ;; Look for global face resources.
-  (loop for face in (face-list) do
-	(init-face-from-resources face 'global))
-  ;; Further X frobbing.
-  (and (featurep 'x) (declare-fboundp (x-init-global-faces)))
-  (and (featurep 'gtk) (declare-fboundp (gtk-init-global-faces)))
-  (and (featurep 'mswindows) (declare-fboundp (mswindows-init-global-faces)))
+(defun init-global-faces (device)
+  (let ((Face-frob-property-device-considered-current device))
+    ;; Look for global face resources.
+    (loop for face in (face-list) do
+      (init-face-from-resources face 'global))
+    ;; Further frobbing.
+    (and (featurep 'x) (declare-fboundp (x-init-global-faces)))
+    (and (featurep 'gtk) (declare-fboundp (gtk-init-global-faces)))
+    (and (featurep 'mswindows) (declare-fboundp (mswindows-init-global-faces)))
 
-  ;; for bold and the like, make the global specification be bold etc.
-  ;; if the user didn't already specify a value.  These will also be
-  ;; frobbed further in init-other-random-faces.
-  (unless (face-font 'bold 'global)
-    (make-face-bold 'bold 'global))
-  ;;
-  (unless (face-font 'italic 'global)
-    (make-face-italic 'italic 'global))
-  ;;
-  (unless (face-font 'bold-italic 'global)
-    (make-face-bold-italic 'bold-italic 'global)
+    ;; for bold and the like, make the global specification be bold etc.
+    ;; if the user didn't already specify a value.  These will also be
+    ;; frobbed further in init-other-random-faces.
+    (unless (face-font 'bold 'global)
+      (make-face-bold 'bold 'global))
+    ;;
+    (unless (face-font 'italic 'global)
+      (make-face-italic 'italic 'global))
+    ;;
     (unless (face-font 'bold-italic 'global)
-      (copy-face 'bold 'bold-italic)
-      (make-face-italic 'bold-italic)))
+      (make-face-bold-italic 'bold-italic 'global)
+      (unless (face-font 'bold-italic 'global)
+	(copy-face 'bold 'bold-italic)
+	(make-face-italic 'bold-italic)))
 
-  (when (face-equal 'bold 'bold-italic)
-    (copy-face 'italic 'bold-italic)
-    (make-face-bold 'bold-italic))
-  ;;
-  ;; Nothing more to be done for X or TTY's?
-  )
+    (when (face-equal 'bold 'bold-italic device)
+      (copy-face 'italic 'bold-italic)
+      (make-face-bold 'bold-italic))))
 
 
 ;; These warnings are there for a reason.  Just specify your fonts

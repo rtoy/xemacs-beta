@@ -142,7 +142,7 @@ Boston, MA 02111-1307, USA.  */
 #include "backtrace.h"
 #include "bytecode.h"
 #include "buffer.h"
-#include "console.h"
+#include "console-impl.h"
 #include "device.h"
 #include "frame.h"
 #include "lstream.h"
@@ -455,17 +455,6 @@ current_warning_level (void)
     return Qdebug;
   else
     return Qwarning;
-}
-
-/* unwind-protect used by call_debugger() to restore the value of
-   entering_debugger. (We cannot use specbind() because the
-   variable is not Lisp-accessible.) */
-
-static Lisp_Object
-restore_entering_debugger (Lisp_Object arg)
-{
-  entering_debugger = ! NILP (arg);
-  return arg;
 }
 
 /* Actually call the debugger.  ARG is a list of args that will be
@@ -2124,7 +2113,10 @@ extern int in_display;
    that won't get signalled for errors occurring when
    call_with_suspended_errors() was invoked. */
 
-static void
+/* Don't make static or it might be compiled away */
+void signal_1 (void);
+
+void
 signal_1 (void)
 {
 }
@@ -6006,7 +5998,10 @@ unwind-protects, as well as function calls, were made.
 
   entering_debugger = 0;
 
-  Vprint_level = make_int (3);
+  if (!NILP (detailed))
+    Vprint_level = make_int (50);
+  else
+    Vprint_level = make_int (3);
   print_readably = 0;
   print_escape_newlines = 1;
 

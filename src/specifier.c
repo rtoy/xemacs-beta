@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "chartab.h"
-#include "device.h"
+#include "device-impl.h"
 #include "frame.h"
 #include "glyphs.h"
 #include "opaque.h"
@@ -274,8 +274,13 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 				sp->methods->name, sp->header.uid);
 
   write_fmt_string (printcharfun, "#<%s-specifier global=", sp->methods->name);
+#if 0
+  /* #### Not obvious this is useful, and overrides user settings; if we
+     resurrect this, create variables like `print-specifier-length' so it
+     can be controlled. */
   specbind (Qprint_string_length, make_int (100));
   specbind (Qprint_length, make_int (5));
+#endif
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
   if (NILP (the_specs))
     /* there are no global specs */
@@ -1017,7 +1022,6 @@ setup_device_initial_specifier_tags (struct device *d)
   Lisp_Object rest, rest2;
   Lisp_Object device = wrap_device (d);
 
-
   DEVICE_USER_DEFINED_TAGS (d) = Fcopy_alist (Vuser_defined_tags);
 
   /* Now set up the initial values */
@@ -1031,7 +1035,8 @@ setup_device_initial_specifier_tags (struct device *d)
       if (NILP (predicate))
 	XCDR (XCAR (rest2)) = Qt;
       else
-	XCDR (XCAR (rest2)) = !NILP (call1 (predicate, device)) ? Qt : Qnil;
+	XCDR (XCAR (rest2)) =
+	  !NILP (call_critical_lisp_code (d, predicate, device)) ? Qt : Qnil;
     }
 }
 
@@ -2716,11 +2721,14 @@ dependent on the particular type of specifier.  Here are some examples:
    display table is not there. (Chartable specifiers are not yet
    implemented.)
 
--- For font specifiers, MATCHSPEC should be a charset, and the specification
-   (a font string) must have a registry that matches the charset's registry.
-   (This only makes sense with Mule support.) This makes it easy to choose a
-   font that can display a particular character. (This is what redisplay
-   does, in fact.)
+-- For font specifiers, MATCHSPEC should be a list (CHARSET . SECOND-STAGE-P),
+   and the specification (a font string) must have a registry that matches
+   the charset's registry.  (This only makes sense with Mule support.) This
+   makes it easy to choose a font that can display a particular
+   character. (This is what redisplay does, in fact.) SECOND-STAGE-P means
+   to ignore the font's registry and instead look at the characters in the
+   font to see if the font can support the charset.  This currently only makes
+   sense under MS Windows.
 */
        (specifier, matchspec, domain, default_, no_fallback))
 {

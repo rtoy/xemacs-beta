@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -30,12 +30,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "objects-gtk.h"
-
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "insdel.h"
+
+#include "console-gtk-impl.h"
+#include "objects-gtk-impl.h"
 
 /* sigh */
 #include <gdk/gdkx.h>
@@ -235,7 +235,6 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct gtk_font_instance_data);
-  FONT_INSTANCE_GTK_TRUENAME (f) = Qnil;
   FONT_INSTANCE_GTK_FONT (f) = gf;
   f->ascent = gf->ascent;
   f->descent = gf->descent;
@@ -306,12 +305,6 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
 }
 
 static void
-gtk_mark_font_instance (struct Lisp_Font_Instance *f)
-{
-  mark_object (FONT_INSTANCE_GTK_TRUENAME (f));
-}
-
-static void
 gtk_print_font_instance (struct Lisp_Font_Instance *f,
 			 Lisp_Object printcharfun,
 			 int escapeflag)
@@ -341,18 +334,18 @@ static Lisp_Object __gtk_list_fonts_internal (const char *pattern);
 static Lisp_Object
 gtk_font_instance_truename (struct Lisp_Font_Instance *f, Error_Behavior errb)
 {
-  if (NILP (FONT_INSTANCE_GTK_TRUENAME (f)))
+  if (NILP (FONT_INSTANCE_TRUENAME (f)))
     {
-      FONT_INSTANCE_GTK_TRUENAME (f) = __get_gtk_font_truename (FONT_INSTANCE_GTK_FONT (f), 1);
+      FONT_INSTANCE_TRUENAME (f) = __get_gtk_font_truename (FONT_INSTANCE_GTK_FONT (f), 1);
 
-      if (NILP (FONT_INSTANCE_GTK_TRUENAME (f)))
+      if (NILP (FONT_INSTANCE_TRUENAME (f)))
 	{
 	  /* Ok, just this once, return the font name as the truename.
 	     (This is only used by Fequal() right now.) */
 	  return f->name;
 	}
     }
-  return (FONT_INSTANCE_GTK_TRUENAME (f));
+  return (FONT_INSTANCE_TRUENAME (f));
 }
 
 static Lisp_Object
@@ -380,8 +373,12 @@ gtk_list_fonts (Lisp_Object pattern, Lisp_Object device)
 static int
 gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			       const Ibyte *nonreloc, Lisp_Object reloc,
-			       Bytecount offset, Bytecount length)
+			       Bytecount offset, Bytecount length,
+			       int stage)
 {
+  if (stage)
+    return 0;
+
   if (UNBOUNDP (charset))
     return 1;
   /* Hack! Short font names don't have the registry in them,
@@ -456,7 +453,6 @@ console_type_create_objects_gtk (void)
   CONSOLE_HAS_METHOD (gtk, valid_color_name_p);
 
   CONSOLE_HAS_METHOD (gtk, initialize_font_instance);
-  CONSOLE_HAS_METHOD (gtk, mark_font_instance);
   CONSOLE_HAS_METHOD (gtk, print_font_instance);
   CONSOLE_HAS_METHOD (gtk, finalize_font_instance);
   CONSOLE_HAS_METHOD (gtk, font_instance_truename);
@@ -484,13 +480,17 @@ vars_of_objects_gtk (void)
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
-gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
+gtk_find_charset_font (Lisp_Object device, Lisp_Object font,
+		       Lisp_Object charset, int stage)
 {
   char **names;
   int count = 0;
   Lisp_Object result = Qnil;
   const char *patternext;
   int i;
+
+  if (stage)
+    return Qnil;
 
   TO_EXTERNAL_FORMAT (LISP_STRING, font, C_STRING_ALLOCA, patternext, Qbinary);
 
@@ -505,7 +505,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset
       TO_INTERNAL_FORMAT (C_STRING, names[i], ALLOCA, (intname, intlen),
 			  Qctext);
       if (gtk_font_spec_matches_charset (XDEVICE (device), charset,
-					 intname, Qnil, 0, -1))
+					 intname, Qnil, 0, -1, 0))
 	{
 	  result = make_string ((char *) intname, intlen);
 	  break;
@@ -518,7 +518,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset
   /* Check for a short font name. */
   if (NILP (result)
       && gtk_font_spec_matches_charset (XDEVICE (device), charset, 0,
-					font, 0, -1))
+					font, 0, -1, 0))
     return font;
 
   return result;

@@ -25,8 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "frame.h"
-#include "device.h"
+#include "frame-impl.h"
 
 Lisp_Object Vdelete_dialog_box_hook;
 Lisp_Object Qdelete_dialog_box_hook;
@@ -40,15 +39,14 @@ a list of the remaining arguments.
      (type, keys))
 {
   struct frame *f = selected_frame ();
-  struct device *d = XDEVICE (f->device);
 
   CHECK_SYMBOL (type);
 
-  if (!HAS_DEVMETH_P (d, make_dialog_box_internal))
+  if (!HAS_FRAMEMETH_P (f, make_dialog_box_internal))
     signal_error (Qunimplemented,
-		  "Device does not support dialogs", f->device);
+		  "Device does not support dialogs", FRAME_DEVICE (f));
 
-  return DEVMETH (d, make_dialog_box_internal, (f, type, keys));
+  return FRAMEMETH (f, make_dialog_box_internal, (f, type, keys));
 }
 
 void

@@ -75,17 +75,17 @@ Boston, MA 02111-1307, USA.  */
 #include "blocktype.h"
 #include "buffer.h"
 #include "commands.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "insdel.h"		/* for buffer_reset_changes */
 #include "keymap.h"
 #include "lstream.h"
 #include "macros.h"		/* for defining_keyboard_macro */
 #include "menubar.h"            /* #### for evil kludges. */
 #include "process.h"
-#include "window.h"
+#include "window-impl.h"
 
 #include "sysdep.h"		/* init_poll_for_quit() */
 #include "syssignal.h"		/* SIGCHLD, etc. */

@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"
-#include "console.h"
+#include "console-impl.h"
 #include "device.h"
 #include "events.h"
 #include "frame.h"

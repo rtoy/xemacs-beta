@@ -28,26 +28,14 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console.h"
 
-DECLARE_CONSOLE_TYPE (stream);
-
-struct stream_console
-{
-  FILE *in;
-  FILE *out;
-  FILE *err;
-  int needs_newline;
-};
-
-#define CONSOLE_STREAM_DATA(con) CONSOLE_TYPE_DATA (con, stream)
-
 extern Lisp_Object Vterminal_console, Vterminal_frame, Vterminal_device;
 
-Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
+Lisp_Object stream_semi_canonicalize_console_connection (Lisp_Object,
+							 Error_Behavior);
+Lisp_Object stream_canonicalize_console_connection (Lisp_Object,
+						    Error_Behavior);
+Lisp_Object stream_semi_canonicalize_device_connection (Lisp_Object,
 							Error_Behavior);
-Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
+Lisp_Object stream_canonicalize_device_connection (Lisp_Object,
 						   Error_Behavior);
-Lisp_Object stream_semi_canonicalize_device_connection(Lisp_Object,
-						       Error_Behavior);
-Lisp_Object stream_canonicalize_device_connection(Lisp_Object,
-						  Error_Behavior);
 #endif /* INCLUDED_console_stream_h_ */

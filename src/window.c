@@ -41,15 +41,15 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "gutter.h"
 #include "objects.h"
 #include "redisplay.h"
-#include "window.h"
+#include "window-impl.h"
 
 Lisp_Object Qwindowp, Qwindow_live_p, Qwindow_configurationp;
 Lisp_Object Qdisplay_buffer;
@@ -1351,6 +1351,24 @@ decode_window (Lisp_Object window)
 
   CHECK_LIVE_WINDOW (window);
   return XWINDOW (window);
+}
+
+int
+window_live_p (struct window *w)
+{
+  return WINDOW_LIVE_P (w);
+}
+
+Lisp_Object
+window_frame (struct window *w)
+{
+  return WINDOW_FRAME (w);
+}
+
+Lisp_Object
+window_buffer (struct window *w)
+{
+  return WINDOW_BUFFER (w);
 }
 
 DEFUN ("window-buffer", Fwindow_buffer, 0, 1, 0, /*

@@ -26,9 +26,9 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "toolbar.h"
 #include "window.h"
@@ -53,12 +53,12 @@ Boston, MA 02111-1307, USA.  */
 ** Use __INTERNAL_FLUSH to do this.  It is passed a device.
 */
 #if defined(HAVE_GTK)
-#include "console-gtk.h"
+#include "console-gtk-impl.h"
 #define __INTERNAL_MAPPED_P(f) GTK_WIDGET_REALIZED (FRAME_GTK_TEXT_WIDGET (f))
 #define __INTERNAL_FLUSH(d) gdk_flush()
 #define __INTERNAL_APPROPRIATENESS_CHECK(f) assert(FRAME_GTK_P (f))
 #elif defined(HAVE_X_WINDOWS)
-#include "console-x.h"
+#include "console-x-impl.h"
 #define __INTERNAL_MAPPED_P(f) XtIsRealized (FRAME_X_SHELL_WIDGET (f))
 #define __INTERNAL_APPROPRIATENESS_CHECK(f) assert(FRAME_X_P (f))
 #define __INTERNAL_FLUSH(d) XFlush (DEVICE_X_DISPLAY (d))

@@ -27,10 +27,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "gui.h"
-#include "elhash.h"
+
 #include "buffer.h"
 #include "bytecode.h"
+#include "elhash.h"
+#include "gui.h"
+#include "menubar.h"
 
 Lisp_Object Qmenu_no_selection_hook;
 Lisp_Object Vmenu_no_selection_hook;

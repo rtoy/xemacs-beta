@@ -83,3 +83,9 @@ int killpg (int pgrp, int sig);
  It sets the Lisp variable system-type.  */
 
 #define SYSTEM_TYPE "cygwin32"
+
+/* Cygwin bogusly forgets to copy mmap()ed regions into the child when
+   a fork is done; thus, any reference to anything in mmap()ed space
+   (under PDUMP, in particular, this bites, since all data loaded from
+   PDUMP is normally done using mmap()) will cause an immediate segfault. */
+#undef HAVE_MMAP

@@ -1,7 +1,7 @@
 /* X-specific Lisp objects.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -31,38 +31,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_X_WINDOWS
 
-/*****************************************************************************
- Color-Instance
- ****************************************************************************/
-
-struct x_color_instance_data
-{
-  XColor color;
-  char dealloc_on_gc;
-};
-
-#define X_COLOR_INSTANCE_DATA(c) ((struct x_color_instance_data *) (c)->data)
-#define COLOR_INSTANCE_X_COLOR(c) (X_COLOR_INSTANCE_DATA (c)->color)
-#define COLOR_INSTANCE_X_DEALLOC(c) (X_COLOR_INSTANCE_DATA (c)->dealloc_on_gc)
-
 int allocate_nearest_color (Display *display, Colormap screen_colormap,
 			    Visual *visual, XColor *color_def);
-
-/*****************************************************************************
- Font-Instance
- ****************************************************************************/
-
-struct x_font_instance_data
-{
-  /* X-specific information */
-  Lisp_Object truename;
-  XFontStruct *font;
-};
-
-#define X_FONT_INSTANCE_DATA(f) ((struct x_font_instance_data *) (f)->data)
-#define FONT_INSTANCE_X_FONT(f) (X_FONT_INSTANCE_DATA (f)->font)
-#define FONT_INSTANCE_X_TRUENAME(f) (X_FONT_INSTANCE_DATA (f)->truename)
-
 #endif /* HAVE_X_WINDOWS */
 
 #endif /* INCLUDED_objects_x_h_ */

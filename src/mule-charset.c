@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "lstream.h"
 #include "mule-ccl.h"
+#include "objects.h"
 
 /* The various pre-defined charsets. */
 
@@ -856,20 +857,6 @@ Set the 'ccl-program property of CHARSET to CCL-PROGRAM.
   XCHARSET_CCL_PROGRAM (charset) = ccl_program;
   face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
-}
-
-static void
-invalidate_charset_font_caches (Lisp_Object charset)
-{
-  /* Invalidate font cache entries for charset on all devices. */
-  Lisp_Object devcons, concons, hash_table;
-  DEVICE_LOOP_NO_BREAK (devcons, concons)
-    {
-      struct device *d = XDEVICE (XCAR (devcons));
-      hash_table = Fgethash (charset, d->charset_font_cache, Qunbound);
-      if (!UNBOUNDP (hash_table))
-        Fclrhash (hash_table);
-    }
 }
 
 /* Japanese folks may want to (set-charset-registry 'ascii "jisx0201") */

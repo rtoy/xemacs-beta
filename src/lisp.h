@@ -1284,14 +1284,14 @@ struct console_type_entry;
 typedef unsigned int USID;
 typedef int face_index;
 typedef int glyph_index;
-typedef struct lstream Lstream;
-typedef struct extent *EXTENT;
+typedef struct lstream Lstream; /* lstream-impl.h */
+typedef struct extent *EXTENT; /* extents-impl.h */
 typedef struct Lisp_Event Lisp_Event; /* "events.h" */
-typedef struct Lisp_Face Lisp_Face;   /* "faces.h" */
+typedef struct Lisp_Face Lisp_Face;   /* "faces-impl.h" */
 typedef struct Lisp_Process Lisp_Process; /* "procimpl.h" */
-typedef struct Lisp_Color_Instance Lisp_Color_Instance;
-typedef struct Lisp_Font_Instance Lisp_Font_Instance;
-typedef struct Lisp_Image_Instance Lisp_Image_Instance;
+typedef struct Lisp_Color_Instance Lisp_Color_Instance; /* objects-impl.h */
+typedef struct Lisp_Font_Instance Lisp_Font_Instance; /* objects-impl.h */
+typedef struct Lisp_Image_Instance Lisp_Image_Instance; /* glyphs-impl.h */
 typedef struct Lisp_Gui_Item Lisp_Gui_Item;
 
 /* ------------------------------- */
@@ -3457,16 +3457,6 @@ EXFUN (Fend_of_line, 2);
 EXFUN (Fforward_char, 2);
 EXFUN (Fforward_line, 2);
 
-/* Defined in console.c */
-void stuff_buffered_input (Lisp_Object);
-
-/* Defined in console-msw.c */
-EXFUN (Fmswindows_message_box, 3);
-extern int mswindows_message_outputted;
-void mswindows_hide_console (void);
-int mswindows_output_console_string (const Ibyte *ptr, Bytecount len);
-void write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len);
-
 /* Defined in data.c */
 EXFUN (Fadd1, 1);
 EXFUN (Faref, 2);
@@ -3977,71 +3967,6 @@ EXFUN (Fevent_x_pixel, 1);
 EXFUN (Fevent_y_pixel, 1);
 
 
-/* Defined in extents.c */
-EXFUN (Fextent_at, 5);
-EXFUN (Fextent_property, 3);
-EXFUN (Fput_text_property, 5);
-
-EXFUN (Fdetach_extent, 1);
-EXFUN (Fextent_end_position, 1);
-EXFUN (Fextent_object, 1);
-EXFUN (Fextent_properties, 1);
-EXFUN (Fextent_start_position, 1);
-EXFUN (Fget_char_property, 4);
-EXFUN (Fmake_extent, 3);
-EXFUN (Fnext_extent_change, 2);
-EXFUN (Fprevious_extent_change, 2);
-EXFUN (Fprevious_single_property_change, 4);
-EXFUN (Fset_extent_endpoints, 4);
-EXFUN (Fset_extent_parent, 2);
-EXFUN (Fset_extent_property, 3);
-
-enum extent_at_flag
-{
-  EXTENT_AT_DEFAULT = 0,
-  EXTENT_AT_AFTER = 0,
-  EXTENT_AT_BEFORE,
-  EXTENT_AT_AT
-};
-
-Bytexpos extent_endpoint_byte (EXTENT extent, int endp);
-Charxpos extent_endpoint_char (EXTENT extent, int endp);
-Bytexpos next_single_property_change (Bytexpos pos, Lisp_Object prop,
-				      Lisp_Object object, Bytexpos limit);
-Bytexpos previous_single_property_change (Bytexpos pos, Lisp_Object prop,
-					  Lisp_Object object, Bytexpos limit);
-Lisp_Object get_char_property (Bytexpos position, Lisp_Object prop,
-			       Lisp_Object object, enum extent_at_flag fl,
-			       int text_props_only);
-void adjust_extents (Lisp_Object object, Memxpos from,
-		     Memxpos to, int amount);
-void adjust_extents_for_deletion (Lisp_Object object, Bytexpos from,
-				  Bytexpos to, int gapsize,
-				  int numdel, int movegapsize);
-void verify_extent_modification (Lisp_Object object, Bytexpos from,
-				 Bytexpos to,
-				 Lisp_Object inhibit_read_only_value);
-void process_extents_for_insertion (Lisp_Object object,
-				    Bytexpos opoint, Bytecount length);
-void process_extents_for_deletion (Lisp_Object object, Bytexpos from,
-				   Bytexpos to, int destroy_them);
-/* Note the following function is in Charbpos's */
-void report_extent_modification (Lisp_Object buffer, Charbpos start,
-				 Charbpos end, int afterp);
-void add_string_extents (Lisp_Object string, struct buffer *buf,
-			 Bytexpos opoint, Bytecount length);
-void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
-			       Bytexpos opoint, Bytecount length,
-			       Bytecount pos);
-void copy_string_extents (Lisp_Object new_string,
-			  Lisp_Object old_string,
-			  Bytecount new_pos, Bytecount old_pos,
-			  Bytecount length);
-void detach_all_extents (Lisp_Object object);
-Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
-		       Lisp_Object property, EXTENT before,
-		       enum extent_at_flag at_flag, int all_extents);
-
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);
 EXFUN (Fcoding_category_system, 1);
@@ -4240,9 +4165,6 @@ Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
 Lisp_Object add_prefix_to_symbol (const Char_ASCII *ascii_string,
 				  Lisp_Object symbol);
 
-/* Defined in frame.c */
-EXFUN (Fselected_frame, 1);
-
 /* Defined in free-hook.c */
 EXFUN (Freally_free, 1);
 
@@ -4282,20 +4204,6 @@ void set_buffer_point (struct buffer *buf, Charbpos pos, Bytebpos bipos);
 
 /* Defined in intl.c */
 EXFUN (Fgettext, 1);
-
-
-/* Defined in intl-win32.c */
-EXFUN (Fmswindows_set_current_locale, 1);
-EXFUN (Fmswindows_current_locale, 0);
-EXFUN (Fmswindows_user_default_locale, 0);
-EXFUN (Fmswindows_system_default_locale, 0);
-EXFUN (Fmswindows_locale_code_page, 1);
-EXFUN (Fmswindows_supported_locales, 0);
-EXFUN (Fmswindows_charset_code_page, 1);
-EXFUN (Fmswindows_set_charset_code_page, 2);
-
-extern Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
-extern Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 
 /* Defined in keymap.c */
 EXFUN (Fdefine_key, 3);
@@ -4353,11 +4261,6 @@ int compute_buffer_marker_usage (struct buffer *, struct overhead_stats *);
 #endif
 void init_buffer_markers (struct buffer *b);
 void uninit_buffer_markers (struct buffer *b);
-
-/* Defined in menubar.c */
-extern int popup_menu_up_p;
-extern int menubar_show_keybindings;
-extern int popup_menu_titles;
 
 /* Defined in minibuf.c */
 extern int minibuf_level;
@@ -4450,20 +4353,6 @@ void internal_object_printer (Lisp_Object, Lisp_Object, int);
 void debug_short_backtrace (int);
 void debug_backtrace (void);
 
-/* Defined in process.c */
-EXFUN (Fdelete_process, 1);
-EXFUN (Fget_buffer_process, 1);
-EXFUN (Fget_process, 1);
-EXFUN (Fprocess_status, 1);
-
-DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
-DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
-extern Lisp_Object Vlisp_EXEC_SUFFIXES;
-
-Ibyte *egetenv (const CIbyte *var);
-void eputenv (const CIbyte *var, const CIbyte *value);
-extern int env_initted;
-
 /* Defined in profile.c */
 void mark_profiling_info (void);
 void profile_increase_call_count (Lisp_Object);
@@ -4512,7 +4401,6 @@ Bytecount fast_string_match (Lisp_Object, const Ibyte *,
 			     Lisp_Object, Bytecount,
 			     Bytecount, int, Error_Behavior, int);
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
-void restore_match_data (void);
 extern Fixnum warn_about_possibly_incompatible_back_references;
 
 
@@ -4964,12 +4852,6 @@ int run_time_remap (char *);
 
 /* Defined in vm-limit.c */
 void memory_warnings (void *, void (*) (const char *));
-
-/* Defined in window.c */
-EXFUN (Fcurrent_window_configuration, 1);
-
-Lisp_Object save_window_excursion_unwind (Lisp_Object);
-Lisp_Object display_buffer (Lisp_Object, Lisp_Object, Lisp_Object);
 
 /*--------------- prototypes for constant symbols  ------------*/
 

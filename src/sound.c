@@ -33,9 +33,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #ifdef HAVE_X_WINDOWS
-#include "console-x.h"
+#include "console-x-impl.h"
 #endif
-#include "device.h"
+#include "device-impl.h"
 #include "redisplay.h"
 #include "sound.h"
 
@@ -45,6 +45,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_NATIVE_SOUND
 # include "sysproc.h"
+#endif
+
+#ifdef WIN32_NATIVE
+#include "syswindows.h"
 #endif
 
 #ifdef HAVE_ESD_SOUND

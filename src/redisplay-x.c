@@ -32,10 +32,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "debug.h"
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
 #include "file-coding.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gutter.h"
 #include "redisplay.h"
 #include "sysdep.h"
@@ -45,9 +45,9 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-ccl.h"
 #endif
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "objects-x-impl.h"
 #include "xgccache.h"
 
 #include "EmacsFrame.h"

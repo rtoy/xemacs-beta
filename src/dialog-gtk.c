@@ -24,9 +24,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "gui-gtk.h"
-
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
 #include "events.h"
@@ -34,6 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #include "gui.h"
 #include "opaque.h"
 #include "window.h"
+
+#include "console-gtk.h"
+#include "gui-gtk.h"
 
 Lisp_Object Qgtk_make_dialog_box_internal;
 

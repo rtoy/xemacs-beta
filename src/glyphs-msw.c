@@ -31,11 +31,11 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "faces.h"
 #include "file-coding.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "imgproc.h"
 #include "insdel.h"
@@ -45,9 +45,9 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "window.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw.h"
+#include "objects-msw-impl.h"
 
 #define WIDGET_GLYPH_SLOT 0
 
@@ -1852,15 +1852,17 @@ mswindows_widget_hfont (Lisp_Object face,
   return mswindows_get_hfont (XFONT_INSTANCE (font), under, strike);
 }
 
+#ifdef DEFER_WINDOW_POS
+
 static HDWP
 begin_defer_window_pos (struct frame *f)
 {
-#ifdef DEFER_WINDOW_POS
   if (FRAME_MSWINDOWS_DATA (f)->hdwp == 0)
     FRAME_MSWINDOWS_DATA (f)->hdwp = BeginDeferWindowPos (10);
-#endif
   return FRAME_MSWINDOWS_DATA (f)->hdwp;
 }
+
+#endif
 
 /* unmap the image if it is a widget. This is used by redisplay via
    redisplay_unmap_subwindows */

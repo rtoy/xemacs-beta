@@ -31,13 +31,15 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "events.h"
+
 #include "buffer.h"
-#include "device.h"
-#include "console-gtk.h"
-#include "select.h"
-#include "opaque.h"
+#include "device-impl.h"
+#include "events.h"
 #include "frame.h"
+#include "opaque.h"
+#include "select.h"
+
+#include "console-gtk-impl.h"
 
 static Lisp_Object Vretrieved_selection;
 static gboolean waiting_for_selection;

@@ -30,14 +30,17 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "console-impl.h"
+#include "device-impl.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
 
-#include "console-tty.h"
+#ifdef HAVE_TTY
+#include "console-tty-impl.h"
+#endif
 
 Lisp_Object Vconsole_list, Vselected_console;
 
@@ -218,6 +221,18 @@ Return nil otherwise.
        (object))
 {
   return CDFW_CONSOLE (object);
+}
+
+int
+console_live_p (struct console *c)
+{
+  return CONSOLE_LIVE_P (c);
+}
+
+Lisp_Object
+console_device_list (struct console *c)
+{
+  return CONSOLE_DEVICE_LIST (c);
 }
 
 

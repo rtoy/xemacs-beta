@@ -29,13 +29,13 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "toolbar.h"
 #include "window.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
 #include "objects-x.h"
 
@@ -382,7 +382,6 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
   EmacsFrame cur = (EmacsFrame) cur_widget;
   EmacsFrame new = (EmacsFrame) new_widget;
   struct frame *f = new->emacs_frame.frame;
-  Lisp_Object frame = wrap_frame (f);
   in_resource_setting++;
   /* This function does not need to do much.  Pretty much everything
      interesting will get done in the resize method, which will
@@ -420,13 +419,13 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	Fadd_spec_to_specifier
 	  (Vscrollbar_width,
 	   make_int (new->emacs_frame.scrollbar_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.scrollbar_height !=
 	  new->emacs_frame.scrollbar_height)
 	Fadd_spec_to_specifier
 	  (Vscrollbar_height,
 	   make_int (new->emacs_frame.scrollbar_height),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_SCROLLBARS */
 #ifdef HAVE_TOOLBARS
       if (cur->emacs_frame.top_toolbar_height !=
@@ -434,49 +433,49 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[TOP_TOOLBAR],
 	   make_int (new->emacs_frame.top_toolbar_height),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_height !=
 	  new->emacs_frame.bottom_toolbar_height)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[BOTTOM_TOOLBAR],
 	   make_int (new->emacs_frame.bottom_toolbar_height),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_width !=
 	  new->emacs_frame.left_toolbar_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[LEFT_TOOLBAR],
 	   make_int (new->emacs_frame.left_toolbar_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_width !=
 	  new->emacs_frame.right_toolbar_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_size[RIGHT_TOOLBAR],
 	   make_int (new->emacs_frame.right_toolbar_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.top_toolbar_border_width !=
 	  new->emacs_frame.top_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[TOP_TOOLBAR],
 	   make_int (new->emacs_frame.top_toolbar_border_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.bottom_toolbar_border_width !=
 	  new->emacs_frame.bottom_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[BOTTOM_TOOLBAR],
 	   make_int (new->emacs_frame.bottom_toolbar_border_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.left_toolbar_border_width !=
 	  new->emacs_frame.left_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[LEFT_TOOLBAR],
 	   make_int (new->emacs_frame.left_toolbar_border_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
       if (cur->emacs_frame.right_toolbar_border_width !=
 	  new->emacs_frame.right_toolbar_border_width)
 	Fadd_spec_to_specifier
 	  (Vtoolbar_border_width[RIGHT_TOOLBAR],
 	   make_int (new->emacs_frame.right_toolbar_border_width),
-	   frame, Qnil, Qnil);
+	   wrap_frame (f), Qnil, Qnil);
 #endif /* HAVE_TOOLBARS */
 
   in_resource_setting--;

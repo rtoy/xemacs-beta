@@ -28,11 +28,11 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
-#include "frame.h"
+#include "device-impl.h"
+#include "frame-impl.h"
 #include "window.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
 #include "gui-x.h"
 #include "scrollbar-x.h"

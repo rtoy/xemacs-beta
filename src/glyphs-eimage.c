@@ -48,10 +48,10 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "lstream.h"
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
 #include "glyphs.h"
-#include "objects.h"
+#include "objects-impl.h"
 
 #include "buffer.h"
 #include "frame.h"

@@ -86,30 +86,8 @@
 (defun gtk-init-frame-faces (frame)
   )
 
-;;; gtk-init-global-faces is responsible for ensuring that the
-;;; default face has some reasonable fallbacks if nothing else is
-;;; specified.
-;;;
 (defun gtk-init-global-faces ()
-  (let* ((dev nil)
-	 (default-font (or (face-font 'default 'global)
-			   ;;(plist-get (gtk-style-info dev) 'font)
-			   "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*"))
-	 (italic-font (or (gtk-make-font-italic default-font dev) default-font))
-	 (bold-font (or (gtk-make-font-bold default-font dev) default-font))
-	 (bi-font (or (gtk-make-font-bold-italic default-font dev) default-font)))
-
-    (or (face-font 'default 'global)
-	(set-face-font 'default default-font 'global '(gtk default)))
-
-    (or (face-font 'bold 'global)
-	(set-face-font 'bold bold-font 'global '(gtk default)))
-
-    (or (face-font 'bold-italic 'global)
-	(set-face-font 'bold-italic bi-font 'global '(gtk default)))
-
-    (or (face-font 'italic 'global)
-	(set-face-font 'italic italic-font 'global '(gtk default)))))
+  )
 
 
 ;;; Lots of this stolen from x-faces.el - I'm not sure if this will

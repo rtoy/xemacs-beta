@@ -34,14 +34,14 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
-#include "frame.h"
+#include "device-impl.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "keymap.h"
 #include "menubar.h"
 #include "redisplay.h"
 #include "specifier.h"
-#include "window.h"
+#include "window-impl.h"
 
 int menubar_show_keybindings;
 Lisp_Object Vmenubar_configuration;

@@ -27,12 +27,12 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "charset.h"
-#include "device.h"
-#include "frame.h"
+#include "device-impl.h"
+#include "frame-impl.h"
 #include "opaque.h"
 #include "select.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "objects-x.h"
 
 #include "systime.h"

@@ -31,9 +31,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "bytecode.h"
-#include "console.h"
+#include "console-impl.h"
 #include "elhash.h"
 #include "events.h"
+#include "extents.h"
 #include "frame.h"
 #include "insdel.h"
 #include "keymap.h"

@@ -37,9 +37,10 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "process.h"
 #include "redisplay.h"
 #include "sysdep.h"
-#include "window.h"             /* minibuf_level */
+#include "window-impl.h"
 
 #include "sysfile.h"
 #include "sysproc.h"

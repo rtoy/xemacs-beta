@@ -27,28 +27,28 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "ui-gtk.h"
-#include "glyphs-gtk.h"
-#include "objects-gtk.h"
-#include "scrollbar-gtk.h"
-
-#include "gtk-xemacs.h"
-
 #include "buffer.h"
+#include "device-impl.h"
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
-#include "frame.h"
-#include "device.h"
+#include "frame-impl.h"
 #include "window.h"
-
-#ifdef HAVE_GNOME
-#include <libgnomeui/libgnomeui.h>
-#endif
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
+#endif
+
+#include "console-gtk-impl.h"
+#include "glyphs-gtk.h"
+#include "objects-gtk-impl.h"
+#include "scrollbar-gtk.h"
+#include "ui-gtk.h"
+
+#include "gtk-xemacs.h"
+
+#ifdef HAVE_GNOME
+#include <libgnomeui/libgnomeui.h>
 #endif
 
 #define BORDER_WIDTH 0

@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "device.h"
-#include "console-tty.h"
+#include "console-tty-impl.h"
 #include "events.h"
 #include "frame.h"
 #include "process.h"

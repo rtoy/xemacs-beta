@@ -28,29 +28,29 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-
 #include "blocktype.h"
 #include "buffer.h"
 #include "commands.h"
 #include "console.h"
-#include "console-tty.h"
+#include "device-impl.h"
+#include "elhash.h"
 #include "events.h"
-#include "frame.h"
-#include "objects-gtk.h"
+#include "file-coding.h"
+#include "frame-impl.h"
+#include "lstream.h"
 #include "process.h"
 #include "redisplay.h"
-#include "elhash.h"
 #include "window.h"
-#include "device.h"
+
+#include "console-tty.h"
+
+#include "console-gtk-impl.h"
+#include "objects-gtk.h"
 
 #include "gtk-xemacs.h"
 
 #include "systime.h"
 #include "sysproc.h" /* for MAXDESC */
-
-#include "lstream.h"
-#include "file-coding.h"
 
 #include <gdk/gdkkeysyms.h>
 
@@ -150,10 +150,12 @@ change_frame_visibility (struct frame *f, int is_visible)
   if (!FRAME_VISIBLE_P (f) && is_visible)
     {
       FRAME_VISIBLE_P (f) = is_visible;
-      /* This improves the double flicker when uniconifying a frame
+      /* [[ This improves the double flicker when uniconifying a frame
 	 some.  A lot of it is not showing a buffer which has changed
 	 while the frame was iconified.  To fix it further requires
-	 the good 'ol double redisplay structure. */
+	 the good 'ol double redisplay structure. ]] -- comment is
+	 invalid, obviously predates 19.12, when the double redisplay
+	 structure (i.e. current + desired) was put back  in. --ben */
       MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
       va_run_hook_with_args (Qmap_frame_hook, 1, frame);
     }
@@ -1206,9 +1208,11 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
   struct gtk_device *gd = NULL;
   gboolean accept_any_window = FALSE;
 
+  /* #### Under what circumstances can this happen???? Hunt out the code that
+     sets frame to 0 and fix it instead. */
   if (!frame)
     {
-      frame = XFRAME (Fselected_frame (Vdefault_gtk_device));
+      frame = XFRAME (Fselected_frame (get_default_device (Qgtk)));
       accept_any_window = TRUE;
     }
 

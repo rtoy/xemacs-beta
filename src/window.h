@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -32,138 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "scrollbar.h"
 #endif
 
-/* All windows in use are arranged into a tree, with pointers up and down.
-
-Windows that are leaves of the tree are actually displayed
-and show the contents of buffers.  Windows that are not leaves
-are used for representing the way groups of leaf windows are
-arranged on the frame.  Leaf windows never become non-leaves.
-They are deleted only by calling delete-window on them (but
-this can be done implicitly).  Combination windows can be created
-and deleted at any time.
-
-A leaf window has a non-nil buffer field, and also
- has markers in its start and pointm fields.  Non-leaf windows
- have nil in these fields.
-
-Non-leaf windows are either vertical or horizontal combinations.
-
-A vertical combination window has children that are arranged on the frame
-one above the next.  Its vchild field points to the uppermost child.
-The parent field of each of the children points to the vertical
-combination window.  The next field of each child points to the
-child below it, or is nil for the lowest child.  The prev field
-of each child points to the child above it, or is nil for the
-highest child.
-
-A horizontal combination window has children that are side by side.
-Its hchild field points to the leftmost child.  In each child
-the next field points to the child to the right and the prev field
-points to the child to the left.
-
-The children of a vertical combination window may be leaf windows
-or horizontal combination windows.  The children of a horizontal
-combination window may be leaf windows or vertical combination windows.
-
-At the top of the tree are two windows which have nil as parent.
-The second of these is minibuf_window.  The first one manages all
-the frame area that is not minibuffer, and is called the root window.
-Different windows can be the root at different times;
-initially the root window is a leaf window, but if more windows
-are created then that leaf window ceases to be root and a newly
-made combination window becomes root instead.
-
-In any case, on screens which have an ordinary window and a
-minibuffer, prev of the minibuf window is the root window and next of
-the root window is the minibuf window.  On minibufferless screens or
-minibuffer-only screens, the root window and the minibuffer window are
-one and the same, so its prev and next members are nil.
-
-A dead window has the `dead' flag set on it.  Note that unlike other
-dead objects, dead windows can be made live again through restoring a
-window configuration.  This means that the values in a dead window
-need to be preserved, except for those that are reconstructed by from
-the window configuration. */
-
-struct window
-{
-  struct lcrecord_header header;
-
-  /* The upper left corner coordinates of this window,
-     as integers (pixels) relative to upper left corner of frame = 0, 0 */
-  int pixel_left;
-  int pixel_top;
-  /* The size of the window (in pixels) */
-  int pixel_height;
-  int pixel_width;
-
-  /* Number of columns display within the window is scrolled to the left. */
-  int hscroll;
-  /* Idem for the window's modeline */
-  Charcount modeline_hscroll;
-  /* Amount to clip off the top line for pixel-based scrolling. Point
-     will remain constant but this will be incremented to
-     incrementally shift lines up. */
-  int top_yoffset;
-  /* Amount to clip off the left of the lines for pixel-based
-     scrolling. Hscroll will remain constant but this will be
-     incremented to incrementally shift lines left.*/
-  int left_xoffset;
-
-  /* face cache elements correct for this window and its current buffer */
-  face_cachel_dynarr *face_cachels;
-  /* glyph cache elements correct for this window and its current buffer */
-  glyph_cachel_dynarr *glyph_cachels;
-  /* List of starting positions for display lines.  Only valid if
-     buffer has not changed. */
-  line_start_cache_dynarr *line_start_cache;
-  int line_cache_validation_override;
-
-  /* Length of longest line currently displayed.  Used to control the
-     width of the horizontal scrollbars. */
-  int max_line_len;
-
-  /* Frame coords of point at that time */
-  int last_point_x[3];
-  int last_point_y[3];
-
-  /* Number of characters in buffer past bottom of window,
-     as of last redisplay that finished. */
-  /* need one for each set of display structures */
-  int window_end_pos[3];
-
-  /* Set by the extent code when extents in the gutter are changed. */
-  int gutter_extent_modiff[4];
-
-  /* Set by redisplay to the last position seen.  This is used
-     to implement the redisplay-end-trigger-functions. */
-  Charbpos last_redisplay_pos;
-
-#define WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT(slot) Lisp_Object slot;
-#include "winslots.h"
-
-  /* one-bit flags: */
-
-  /* marker used when restoring a window configuration */
-  unsigned int config_mark :1;
-  /* Non-zero means window was dead. */
-  unsigned int dead :1;
-  /* Non-zero means next redisplay must use the value of start
-     set up for it in advance.  Set by scrolling commands.  */
-  unsigned int force_start :1;
-  /* Non-zero means must regenerate modeline of this window */
-  unsigned int redo_modeline :1;
-  /* Non-zero means current value of `start'
-     was the beginning of a line when it was chosen.  */
-  unsigned int start_at_line_beg :1;
-  /* new redisplay flag */
-  unsigned int windows_changed :1;
-  unsigned int shadow_thickness_changed :1;
-  /* Vertical divider flag and validity of it */
-  unsigned int need_vertical_divider_p :1;
-  unsigned int need_vertical_divider_valid_p :1;
-};
+struct window;
 
 DECLARE_LRECORD (window, struct window);
 #define XWINDOW(x) XRECORD (x, window, struct window)
@@ -172,58 +41,33 @@ DECLARE_LRECORD (window, struct window);
 #define CHECK_WINDOW(x) CHECK_RECORD (x, window)
 #define CONCHECK_WINDOW(x) CONCHECK_RECORD (x, window)
 
-#define CURRENT_DISP	0
-#define DESIRED_DISP	1
-#define CMOTION_DISP	2
+/* Basic properties available to non-privileged users; redefined in
+   window-impl.h */
 
-struct window_mirror
-{
-  struct lcrecord_header header;
+int window_live_p (struct window *w);
+Lisp_Object window_frame (struct window *w);
+Lisp_Object window_buffer (struct window *w);
 
-  /* Frame this mirror is on. */
-  struct frame *frame;
+#define WINDOW_LIVE_P(w) window_live_p (w)
+#define WINDOW_FRAME(w) window_frame (w)
+#define WINDOW_BUFFER(w) window_buffer (w)
 
-  /* Following child (to right or down) at same level of tree */
-  struct window_mirror *next;
+#define WINDOW_XFRAME(w) XFRAME (WINDOW_FRAME (w))
+#define WINDOW_DEVICE(w) XFRAME_DEVICE (WINDOW_FRAME (w))
+#define WINDOW_XDEVICE(w) XDEVICE (WINDOW_DEVICE (w))
+#define WINDOW_CONSOLE(w) XDEVICE_CONSOLE (WINDOW_DEVICE (w))
+#define WINDOW_XCONSOLE(w) XCONSOLE (WINDOW_CONSOLE (w))
+#define WINDOW_XBUFFER(w) XBUFFER (WINDOW_BUFFER (w))
 
-  /* There is no prev field because we never traverse this structure
-     backwards.  Same goes for the parent field. */
+#define XWINDOW_FRAME(w) WINDOW_FRAME (XWINDOW (w))
+#define XWINDOW_XFRAME(w) XFRAME (XWINDOW_FRAME (w))
+#define XWINDOW_DEVICE(w) XFRAME_DEVICE (XWINDOW_FRAME (w))
+#define XWINDOW_XDEVICE(w) XDEVICE (XWINDOW_DEVICE (w))
+#define XWINDOW_CONSOLE(w) XDEVICE_CONSOLE (XWINDOW_DEVICE (w))
+#define XWINDOW_XCONSOLE(w) XCONSOLE (XWINDOW_CONSOLE (w))
+#define XWINDOW_BUFFER(w) WINDOW_BUFFER (XWINDOW (w))
+#define XWINDOW_XBUFFER(w) XBUFFER (XWINDOW_BUFFER (w))
 
-  /* First child of this window. */
-  /* vchild is used if this is a vertical combination,
-     hchild if this is a horizontal combination. */
-  struct window_mirror *hchild, *vchild;
-
-  /* Dynamic array of display lines */
-  display_line_dynarr *current_display_lines;
-  display_line_dynarr *desired_display_lines;
-
-  /* Buffer current_display_lines represent. */
-  struct buffer *buffer;
-
-#ifdef HAVE_SCROLLBARS
-  /* Scrollbars associated with window, if any. */
-  struct scrollbar_instance *scrollbar_vertical_instance;
-  struct scrollbar_instance *scrollbar_horizontal_instance;
-#endif /* HAVE_SCROLLBARS */
-
-  /* Flag indicating whether a subwindow is currently being displayed. */
-  unsigned int subwindows_being_displayed :1;
-
-  /* Keep track of the truncation status in this window so we can
-     detect when it has changed.  #### Magic variables would be a huge
-     win here. */
-  unsigned int truncate_win :1;
-};
-
-DECLARE_LRECORD (window_mirror, struct window_mirror);
-#define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
-#define wrap_window_mirror(p) wrap_record (p, window_mirror)
-#define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
-#define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)
-#define CONCHECK_WINDOW_MIRROR(x) CONCHECK_RECORD (x, window_mirror)
-
-#define WINDOW_LIVE_P(x) (!(x)->dead)
 #define CHECK_LIVE_WINDOW(x) do {			\
   CHECK_WINDOW (x);					\
   if (!WINDOW_LIVE_P (XWINDOW (x)))			\
@@ -235,37 +79,14 @@ DECLARE_LRECORD (window_mirror, struct window_mirror);
     x = wrong_type_argument (Qwindow_live_p, (x));	\
 } while (0)
 
-/* 1 if W is a minibuffer window.  */
-#define MINI_WINDOW_P(W)  (!NILP ((W)->mini_p))
+struct window_mirror;
 
-/* 1 if we are dealing with a parentless window (this includes the
-   root window on a frame and the minibuffer window; both of these
-   are siblings). */
-#define TOP_LEVEL_WINDOW_P(w) NILP ((w)->parent)
-
-/* Set all redisplay flags indicating a window has changed */
-#define MARK_WINDOWS_CHANGED(w) do {			\
-  (w)->windows_changed = 1;				\
-  if (!NILP (w->frame))					\
-    {							\
-      struct frame *mwc_frame = XFRAME (w->frame);	\
-      MARK_FRAME_WINDOWS_CHANGED (mwc_frame);		\
-    }							\
-  else							\
-    windows_changed = 1;				\
-} while (0)
-
-/* #### This should be fixed not to call MARK_FRAME_CHANGED because
-   faces are cached per window.  Also, other code which changes window's
-   face should use this macro.
-*/
-#define MARK_WINDOW_FACES_CHANGED(w)	\
-  MARK_FRAME_FACES_CHANGED (XFRAME ((w)->frame))
-
-#define WINDOW_TTY_P(w) FRAME_TTY_P (XFRAME ((w)->frame))
-#define WINDOW_X_P(w)   FRAME_X_P   (XFRAME ((w)->frame))
-#define WINDOW_NS_P(w)  FRAME_NS_P  (XFRAME ((w)->frame))
-#define WINDOW_WIN_P(w) FRAME_WIN_P (XFRAME ((w)->frame))
+DECLARE_LRECORD (window_mirror, struct window_mirror);
+#define XWINDOW_MIRROR(x) XRECORD (x, window_mirror, struct window_mirror)
+#define wrap_window_mirror(p) wrap_record (p, window_mirror)
+#define WINDOW_MIRRORP(x) RECORDP (x, window_mirror)
+#define CHECK_WINDOW_MIRROR(x) CHECK_RECORD (x, window_mirror)
+#define CONCHECK_WINDOW_MIRROR(x) CONCHECK_RECORD (x, window_mirror)
 
 DECLARE_LRECORD (window_configuration, struct window_config);
 
@@ -283,6 +104,10 @@ EXFUN (Fwindow_buffer, 1);
 EXFUN (Fwindow_highest_p, 1);
 EXFUN (Fwindow_point, 1);
 EXFUN (Fwindow_start, 1);
+EXFUN (Fcurrent_window_configuration, 1);
+
+Lisp_Object save_window_excursion_unwind (Lisp_Object);
+Lisp_Object display_buffer (Lisp_Object, Lisp_Object, Lisp_Object);
 
 /* The minibuffer window of the selected frame.
    Note that you cannot test for minibufferness of an arbitrary window
@@ -346,51 +171,5 @@ void some_window_value_changed (Lisp_Object specifier, struct window *w,
 int invalidate_vertical_divider_cache_in_window (struct window *w,
 						 void *u_n_u_s_e_d);
 int window_divider_width (struct window *w);
-
-#define WINDOW_FRAME(w) ((w)->frame)
-#define WINDOW_XFRAME(w) XFRAME (WINDOW_FRAME (w))
-#define WINDOW_BUFFER(w) ((w)->buffer)
-#define WINDOW_XBUFFER(w) XBUFFER (WINDOW_BUFFER (w))
-#define WINDOW_DEVICE(w) FRAME_DEVICE (XFRAME (WINDOW_FRAME (w)))
-#define WINDOW_XDEVICE(w) XDEVICE (WINDOW_DEVICE (w))
-#define WINDOW_CONSOLE(w) DEVICE_CONSOLE (XDEVICE (WINDOW_DEVICE (w)))
-#define WINDOW_XCONSOLE(w) XCONSOLE (WINDOW_CONSOLE (w))
-
-/* XEmacs window size and positioning macros. */
-#define WINDOW_TOP(w) ((w)->pixel_top)
-#define WINDOW_TEXT_TOP(w) (WINDOW_TOP (w) + window_top_gutter_height (w))
-#define WINDOW_TEXT_TOP_CLIP(w) ((w)->top_yoffset)
-#define WINDOW_BOTTOM(w) ((w)->pixel_top + (w)->pixel_height)
-#define WINDOW_TEXT_BOTTOM(w) (WINDOW_BOTTOM (w) - window_bottom_gutter_height (w))
-#define WINDOW_LEFT(w) ((w)->pixel_left)
-#define WINDOW_TEXT_LEFT(w) (WINDOW_LEFT (w) + window_left_gutter_width (w, 0))
-#define WINDOW_MODELINE_LEFT(w)	\
-  (WINDOW_LEFT (w) + window_left_gutter_width (w, 1))
-#define WINDOW_RIGHT(w) ((w)->pixel_left + (w)->pixel_width)
-#define WINDOW_TEXT_RIGHT(w)	\
-  (WINDOW_RIGHT (w) - window_right_gutter_width (w, 0))
-#define WINDOW_MODELINE_RIGHT(w)	\
-  (WINDOW_RIGHT (w) - window_right_gutter_width (w, 1))
-
-#define WINDOW_HEIGHT(w) ((w)->pixel_height)
-#define WINDOW_TEXT_HEIGHT(w) (WINDOW_TEXT_BOTTOM (w) - WINDOW_TEXT_TOP (w))
-#define WINDOW_WIDTH(w) ((w)->pixel_width)
-#define WINDOW_TEXT_WIDTH(w) (WINDOW_TEXT_RIGHT (w) - WINDOW_TEXT_LEFT (w))
-
-#define WINDOW_HAS_MODELINE_P(w) (!NILP (w->has_modeline_p))
-
-#define MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED(win)		\
- abs ((!WINDOW_HAS_MODELINE_P (win)				\
-       ? ((XINT (win->modeline_shadow_thickness) > 1)		\
-	  ? XINT (win->modeline_shadow_thickness) - 1		\
-	  : ((XINT (win->modeline_shadow_thickness) < -1)	\
-	     ? XINT (win->modeline_shadow_thickness) + 1	\
-	     : XINT (win->modeline_shadow_thickness)))		\
-       : XINT (win->modeline_shadow_thickness)))
-
-#define MODELINE_SHADOW_THICKNESS(win)				\
- (MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED (win) > 10 		\
-  ? 10								\
-  : MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED (win))
 
 #endif /* INCLUDED_window_h_ */

@@ -34,12 +34,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "buffer.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "select.h"
 #include "opaque.h"
 #include "file-coding.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 
 static int in_own_selection;
 

@@ -1,6 +1,7 @@
 /* Device functions for X windows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -28,21 +29,21 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
+#include "buffer.h"
+#include "device-impl.h"
+#include "elhash.h"
+#include "events.h"
+#include "faces.h"
+#include "frame-impl.h"
+#include "redisplay.h"
+#include "sysdep.h"
+#include "window.h"
+
+#include "console-gtk-impl.h"
 #include "gccache-gtk.h"
 #include "glyphs-gtk.h"
 #include "objects-gtk.h"
 #include "gtk-xemacs.h"
-
-#include "buffer.h"
-#include "events.h"
-#include "faces.h"
-#include "frame.h"
-#include "device.h"
-#include "redisplay.h"
-#include "sysdep.h"
-#include "window.h"
-#include "elhash.h"
 
 #include "sysfile.h"
 #include "systime.h"
@@ -54,8 +55,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_BONOBO
 #include <bonobo.h>
 #endif
-
-Lisp_Object Vdefault_gtk_device;
 
 /* Qdisplay in general.c */
 Lisp_Object Qinit_pre_gtk_win, Qinit_post_gtk_win;
@@ -371,22 +370,6 @@ gtk_delete_device (struct device *d)
 #endif
     }
 
-  if (EQ (device, Vdefault_gtk_device))
-    {
-      Lisp_Object devcons, concons;
-      /* #### handle deleting last X device */
-      Vdefault_gtk_device = Qnil;
-      DEVICE_LOOP_NO_BREAK (devcons, concons)
-	{
-	  if (DEVICE_GTK_P (XDEVICE (XCAR (devcons))) &&
-	      !EQ (device, XCAR (devcons)))
-	    {
-	      Vdefault_gtk_device = XCAR (devcons);
-	      goto double_break;
-	    }
-	}
-    }
- double_break:
   free_gtk_device_struct (d);
 }
 
@@ -412,15 +395,6 @@ gtk_event_name (GdkEventType event_type)
 /************************************************************************/
 /*                   display information functions                      */
 /************************************************************************/
-
-DEFUN ("default-gtk-device", Fdefault_gtk_device, 0, 0, 0, /*
-Return the default GTK device for resourcing.
-This is the first-created GTK device that still exists.
-*/
-       ())
-{
-  return Vdefault_gtk_device;
-}
 
 DEFUN ("gtk-display-visual-class", Fgtk_display_visual_class, 0, 1, 0, /*
 Return the visual class of the GTK display DEVICE is using.
@@ -698,7 +672,6 @@ Get the style information for a Gtk device.
 void
 syms_of_device_gtk (void)
 {
-  DEFSUBR (Fdefault_gtk_device);
   DEFSUBR (Fgtk_keysym_on_keyboard_p);
   DEFSUBR (Fgtk_display_visual_class);
   DEFSUBR (Fgtk_display_visual_depth);
@@ -732,8 +705,6 @@ vars_of_device_gtk (void)
 {
   Fprovide (Qgtk);
 
-  staticpro (&Vdefault_gtk_device);
-
   DEFVAR_LISP ("gtk-initial-argv-list", &Vgtk_initial_argv_list /*
 You don't want to know.
 This is used during startup to communicate the remaining arguments in
@@ -749,7 +720,6 @@ You don't want to know.
 This is used during startup to communicate the default geometry to GTK.
 */ );
 
-  Vdefault_gtk_device = Qnil;
   Vgtk_initial_geometry = Qnil;
   Vgtk_initial_argv_list = Qnil;
 }

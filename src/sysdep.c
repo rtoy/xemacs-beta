@@ -47,7 +47,7 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "frame.h"
 #include "process.h"
@@ -56,11 +56,11 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #ifdef HAVE_TTY
-#include "console-tty.h"
+#include "console-tty-impl.h"
 #else
 #endif /* HAVE_TTY */
 
-#include "console-stream.h"
+#include "console-stream-impl.h"
 #ifdef WIN32_NATIVE
 #include "syswindows.h"
 #endif
@@ -186,7 +186,7 @@ set_descriptor_non_blocking (int fd)
      It seems that O_NONBLOCK applies only to FIFOs?  From
      lowry@watson.ibm.com (Andy Lowry). */
   /* #### Should this be conditionalized on FIONBIO? */
-#if defined (STRIDE) || defined (pfa) || defined (AIX)
+#if defined (STRIDE) || (defined (pfa) && defined (HAVE_PTYS)) || defined (AIX)
   {
     int one = 1;
     ioctl (fd, FIONBIO, &one);
@@ -529,17 +529,13 @@ child_setup_tty (int out)
 
 #if !defined (SIGTSTP) && !defined (USG_JOBCTRL)
 
-#if defined(__STDC__) || defined(_MSC_VER)
 #define SIG_PARAM_TYPE int
-#else
-#define SIG_PARAM_TYPE
-#endif
 
 /* Record a signal code and the handler for it.  */
 struct save_signal
 {
   int code;
-  SIGTYPE (*handler) (SIG_PARAM_TYPE);
+  RETSIGTYPE (XCDECL * handler) (SIG_PARAM_TYPE);
 };
 
 static void
@@ -548,7 +544,7 @@ save_signal_handlers (struct save_signal *saved_handlers)
   while (saved_handlers->code)
     {
       saved_handlers->handler
-	= (SIGTYPE (*) (SIG_PARAM_TYPE)) EMACS_SIGNAL (saved_handlers->code, SIG_IGN);
+	= (RETSIGTYPE (XCDECL *) (SIG_PARAM_TYPE)) EMACS_SIGNAL (saved_handlers->code, SIG_IGN);
       saved_handlers++;
     }
 }
@@ -2536,7 +2532,7 @@ underlying_open (const Extbyte *path, int oflag, int mode)
 
 /* Like qxe_open() below but operates on externally-encoded filenames. */
 
-int
+int XCDECL
 retry_open (const Extbyte *path, int oflag, ...)
 {
   int mode;
@@ -2562,7 +2558,7 @@ retry_open (const Extbyte *path, int oflag, ...)
 /* The basic external entry point to open().  Handles conversion to
    external encoding, interruptions, etc. */
 
-int
+int XCDECL
 qxe_open (const Ibyte *path, int oflag, ...)
 {
   Extbyte *pathout;
@@ -3166,14 +3162,7 @@ int
 qxe_rename (const Ibyte *old, const Ibyte *new)
 {
 #ifdef WIN32_NATIVE
-  /* Windows rename fails if NEW exists */
-  if (mswindows_rename (old, new) == 0)
-    return 0;
-  /* In some cases errno is EACCES if NEW exists */
-  if (errno != EEXIST && errno != EACCES)
-    return -1;
-  if (mswindows_unlink (new) != 0)
-    return -1;
+  return mswindows_rename (old, new);
 #else /* not WIN32_NATIVE */
   Extbyte *oldout, *newout;
   PATHNAME_CONVERT_OUT (old, oldout);

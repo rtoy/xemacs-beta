@@ -28,19 +28,22 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
+#include "buffer.h"
+#include "device-impl.h"
+#include "events.h"
+#include "frame.h"
+#include "glyphs.h"
+#include "gui.h"
+#include "menubar.h"
+#include "opaque.h"
+#include "redisplay.h"
+
+#include "console-x-impl.h"
+#include "gui-x.h"
+
 #ifdef LWLIB_USES_MOTIF
 #include <Xm/Xm.h> /* for XmVersion */
 #endif
-#include "gui-x.h"
-#include "buffer.h"
-#include "device.h"
-#include "events.h"
-#include "frame.h"
-#include "gui.h"
-#include "glyphs.h"
-#include "redisplay.h"
-#include "opaque.h"
 
 /* we need a unique id for each popup menu, dialog box, and scrollbar */
 static LWLIB_ID lwlib_id_tick;
@@ -219,9 +222,11 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_widget_or_parent_to_frame (d, widget);
 
+#ifdef HAVE_MENUBARS
   /* set in lwlib to the time stamp associated with the most recent menu
      operation */
   extern Time x_focus_timestamp_really_sucks_fix_me_better;
+#endif
 
   if (!f)
     return;
@@ -291,7 +296,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events have been dispatched to emacs
      */
-#if defined(HAVE_MENUBARS)
+#ifdef HAVE_MENUBARS
   DEVICE_X_MOUSE_TIMESTAMP (d) = x_focus_timestamp_really_sucks_fix_me_better;
 #else
   DEVICE_X_MOUSE_TIMESTAMP (d) = DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d);

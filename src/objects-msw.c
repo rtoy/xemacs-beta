@@ -38,12 +38,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-msw.h"
-#include "objects-msw.h"
+#include "console-msw-impl.h"
+#include "objects-msw-impl.h"
 
 #include "buffer.h"
 #include "charset.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "insdel.h"
 #include "opaque.h"
@@ -751,8 +751,8 @@ static const fontmap_t fontweight_map[] =
   {"Black"		, FW_BLACK}
 };
 
-/* Default charset first, no synonyms allowed because these names are
- * matched against the names reported by win32 by match_font() */
+/* Default charset must be listed first, no synonyms allowed because these
+ * names are matched against the names reported by win32 by match_font() */
 static const fontmap_t charset_map[] =
 {
   {"Western"		, ANSI_CHARSET}, /* Latin 1 */
@@ -1142,8 +1142,14 @@ font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
 
   /* Add the font name to the list if not already there */
   fontname_lispstr = build_intstring (fontname);
-  if (NILP (Fmember (fontname_lispstr, font_enum->list)))
-    font_enum->list = Fcons (fontname_lispstr, font_enum->list);
+  if (NILP (Fassoc (fontname_lispstr, font_enum->list)))
+    font_enum->list =
+      Fcons (Fcons (fontname_lispstr,
+		    /* TMPF_FIXED_PITCH is backwards from what you expect!
+		       If set, it means NOT fixed pitch. */
+		    (lpntme->ntmTm.tmPitchAndFamily & TMPF_FIXED_PITCH) ?
+		    Qnil : Qt),
+	     font_enum->list);
 
   return 1;
 }
@@ -1157,6 +1163,94 @@ font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
   return qxeEnumFontFamiliesEx (font_enum->hdc, &lpelfe->elfLogFont,
 				(FONTENUMPROCW) font_enum_callback_2,
 				(LPARAM) font_enum, 0);
+}
+
+/* Function for sorting lists of fonts as obtained from
+   mswindows_enumerate_fonts().  These come in a known format:
+   "family::::charset" for TrueType fonts, "family::size::charset"
+   otherwise. */
+
+static int
+sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
+			 Lisp_Object pred)
+{
+  Ibyte *font1, *font2;
+  Ibyte *c1, *c2;
+  int t1, t2;
+
+  /*
+    1. fixed over proportional.
+    2. Western over other charsets.
+    3. TrueType over non-TrueType.
+    4. Within non-TrueType, sizes closer to 10pt over sizes farther from 10pt.
+    5. Courier New over other families.
+  */
+
+  /* The sort function should return > 0 if OBJ1 < OBJ2, < 0 otherwise.
+     NOTE: This is backwards from the way qsort() works. */
+
+  t1 = !NILP (XCDR (obj1));
+  t2 = !NILP (XCDR (obj2));
+
+  if (t1 && !t2)
+    return 1;
+  if (t2 && !t1)
+    return -1;
+
+  font1 = XSTRING_DATA (XCAR (obj1));
+  font2 = XSTRING_DATA (XCAR (obj2));
+
+  c1 = qxestrrchr (font1, ':');
+  c2 = qxestrrchr (font2, ':');
+
+  t1 = !qxestrcasecmp_c (c1 + 1, "western");
+  t2 = !qxestrcasecmp_c (c2 + 1, "western");
+
+  if (t1 && !t2)
+    return 1;
+  if (t2 && !t1)
+    return -1;
+
+  c1 -= 2;
+  c2 -= 2;
+  t1 = *c1 == ':';
+  t2 = *c2 == ':';
+
+  if (t1 && !t2)
+    return 1;
+  if (t2 && !t1)
+    return -1;
+
+  if (!t1 && !t2)
+    {
+      while (isdigit (*c1))
+	c1--;
+      while (isdigit (*c2))
+	c2--;
+
+      t1 = qxeatoi (c1 + 1) - 10;
+      t2 = qxeatoi (c2 + 1) - 10;
+
+      if (abs (t1) < abs (t2))
+	return 1;
+      else if (abs (t2) < abs (t1))
+	return -1;
+      else if (t1 < t2)
+	/* Prefer a smaller font over a larger one just as far away
+	   because the smaller one won't upset the total line height if it's
+	   just a few chars. */
+	return 1;
+    }
+
+  t1 = !qxestrncasecmp_c (font1, "courier new:", 12);
+  t2 = !qxestrncasecmp_c (font2, "courier new:", 12);
+
+  if (t1 && !t2)
+    return 1;
+  if (t2 && !t1)
+    return -1;
+
+  return -1;
 }
 
 /*
@@ -1182,7 +1276,7 @@ mswindows_enumerate_fonts (HDC hdc)
   qxeEnumFontFamiliesEx (hdc, &logfont, (FONTENUMPROCW) font_enum_callback_1,
 			 (LPARAM) (&font_enum), 0);
 
-  return font_enum.list;
+  return list_sort (font_enum.list, Qnil, sort_font_list_function);
 }
 
 static HFONT
@@ -1320,20 +1414,36 @@ mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
 static void
 mswindows_finalize_font_instance (Lisp_Font_Instance *f);
 
-static HFONT
-create_hfont_from_font_spec (const Ibyte *namestr,
-			     HDC hdc,
-			     Lisp_Object name_for_errors,
-			     Lisp_Object device_font_list,
-			     Error_Behavior errb)
+/* Parse the font spec in NAMESTR.  Maybe issue errors, according to ERRB;
+   NAME_FOR_ERRORS is the Lisp string to use when issuing errors.  Store
+   the five parts of the font spec into the given strings, which should be
+   declared as
+
+   Ibyte fontname[LF_FACESIZE], weight[LF_FACESIZE], points[8];
+   Ibyte effects[LF_FACESIZE], charset[LF_FACESIZE];
+
+   If LOGFONT is given, store the necessary information in LOGFONT to
+   create a font object.  If LOGFONT is given, HDC must also be given;
+   else, NULL can be given for both.
+   
+   Return 1 if ok, 0 if error.
+   */
+static int
+parse_font_spec (const Ibyte *namestr,
+		 HDC hdc,
+		 Lisp_Object name_for_errors,
+		 Error_Behavior errb,
+		 LOGFONTW *logfont,
+		 Ibyte *fontname,
+		 Ibyte *weight,
+		 Ibyte *points,
+		 Ibyte *effects,
+		 Ibyte *charset)
 {
-  LOGFONTW logfont;
   int fields, i;
   int pt;
-  Ibyte fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
-  Ibyte effects[LF_FACESIZE], charset[LF_FACESIZE];
+  Ibyte *style;
   Ibyte *c;
-  HFONT hfont;
 
   /*
    * mswindows fonts look like:
@@ -1348,6 +1458,15 @@ create_hfont_from_font_spec (const Ibyte *namestr,
    *	Courier New:Bold Italic:10:underline strikeout:western
    */
 
+  fontname[0] = 0;
+  weight[0] = 0;
+  points[0] = 0;
+  effects[0] = 0;
+  charset[0] = 0;
+
+  if (logfont)
+    xzero (*logfont);
+
   fields = sscanf ((CIbyte *) namestr, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
 		   fontname, weight, points, effects, charset);
 
@@ -1361,7 +1480,7 @@ create_hfont_from_font_spec (const Ibyte *namestr,
     {
       maybe_signal_error (Qinvalid_argument, "Invalid font", name_for_errors,
 			  Qfont, errb);
-      return NULL;
+      return 0;
     }
 
   if (fields > 0 && qxestrlen (fontname))
@@ -1369,14 +1488,12 @@ create_hfont_from_font_spec (const Ibyte *namestr,
       Extbyte *extfontname;
 
       C_STRING_TO_TSTR (fontname, extfontname);
-      xetcsncpy ((Extbyte *) logfont.lfFaceName, extfontname, LF_FACESIZE - 1);
-      logfont.lfFaceName[LF_FACESIZE - 1] = 0;
-    }
-  else
-    {
-      maybe_signal_error (Qinvalid_argument, "Must specify a font name",
-			  name_for_errors, Qfont, errb);
-      return NULL;
+      if (logfont)
+	{
+          xetcsncpy ((Extbyte *) logfont->lfFaceName, extfontname,
+	             LF_FACESIZE - 1);
+	  logfont->lfFaceName[LF_FACESIZE - 1] = 0;
+	}
     }
 
   /* weight */
@@ -1385,31 +1502,33 @@ create_hfont_from_font_spec (const Ibyte *namestr,
 
   /* Maybe split weight into weight and style */
   if ((c = qxestrchr (weight, ' ')))
-  {
-    *c = '\0';
-    style = c + 1;
-  }
+    {
+      *c = '\0';
+      style = c + 1;
+    }
   else
     style = NULL;
 
   for (i = 0; i < countof (fontweight_map); i++)
     if (!qxestrcasecmp_c (weight, fontweight_map[i].name))
       {
-	logfont.lfWeight = fontweight_map[i].value;
+	if (logfont)
+	  logfont->lfWeight = fontweight_map[i].value;
 	break;
       }
   if (i == countof (fontweight_map))	/* No matching weight */
     {
       if (!style)
 	{
-	  logfont.lfWeight = FW_REGULAR;
+	  if (logfont)
+	    logfont->lfWeight = FW_REGULAR;
 	  style = weight;	/* May have specified style without weight */
 	}
       else
 	{
 	  maybe_signal_error (Qinvalid_constant, "Invalid font weight",
 			      name_for_errors, Qfont, errb);
-	  return NULL;
+	  return 0;
 	}
     }
 
@@ -1417,41 +1536,59 @@ create_hfont_from_font_spec (const Ibyte *namestr,
     {
       /* #### what about oblique? */
       if (qxestrcasecmp_c (style, "italic") == 0)
-	logfont.lfItalic = TRUE;
+	{
+	  if (logfont)
+	    logfont->lfItalic = TRUE;
+	}
       else
 	{
 	  maybe_signal_error (Qinvalid_constant,
 			      "Invalid font weight or style",
 			      name_for_errors, Qfont, errb);
-	  return NULL;
+	  return 0;
       }
 
       /* Glue weight and style together again */
       if (weight != style)
         *c = ' ';
     }
-  else
-    logfont.lfItalic = FALSE;
+  else if (logfont)
+    logfont->lfItalic = FALSE;
 
-  if (fields < 3)
-    pt = 10;	/* #### Should we reject strings that don't specify a size? */
-  else if ((pt = qxeatoi (points)) == 0)
+  if (fields < 3 || !qxestrcmp_c (points, ""))
+    ;
+  else if (points[0] == '0' ||
+	   qxestrspn (points, "0123456789") < qxestrlen (points))
     {
       maybe_signal_error (Qinvalid_argument, "Invalid font pointsize",
 			  name_for_errors, Qfont, errb);
-      return NULL;
+      return 0;
+    }
+  else
+    {
+      pt = qxeatoi (points);
+
+      if (logfont)
+	{
+	  /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform
+	     SDK */
+	  logfont->lfHeight = -MulDiv (pt, GetDeviceCaps (hdc, LOGPIXELSY),
+				       72);
+	  logfont->lfWidth = 0;
+	}
     }
 
-  /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform SDK */
-  logfont.lfHeight = -MulDiv (pt, GetDeviceCaps (hdc, LOGPIXELSY), 72);
-  logfont.lfWidth = 0;
-
   /* Effects */
-  logfont.lfUnderline = FALSE;
-  logfont.lfStrikeOut = FALSE;
+  if (logfont)
+    {
+      logfont->lfUnderline = FALSE;
+      logfont->lfStrikeOut = FALSE;
+    }
+
   if (fields >= 4 && effects[0] != '\0')
     {
       Ibyte *effects2;
+      int underline = FALSE, strikeout = FALSE;
 
       /* Maybe split effects into effects and effects2 */
       if ((c = qxestrchr (effects, ' ')))
@@ -1463,43 +1600,47 @@ create_hfont_from_font_spec (const Ibyte *namestr,
         effects2 = NULL;
 
       if (qxestrcasecmp_c (effects, "underline") == 0)
-	logfont.lfUnderline = TRUE;
+	underline = TRUE;
       else if (qxestrcasecmp_c (effects, "strikeout") == 0)
-	logfont.lfStrikeOut = TRUE;
+	strikeout = TRUE;
       else
         {
           maybe_signal_error (Qinvalid_constant, "Invalid font effect",
 			      name_for_errors, Qfont, errb);
-	  return NULL;
+	  return 0;
 	}
 
       if (effects2 && effects2[0] != '\0')
 	{
 	  if (qxestrcasecmp_c (effects2, "underline") == 0)
-	    logfont.lfUnderline = TRUE;
+	    underline = TRUE;
 	  else if (qxestrcasecmp_c (effects2, "strikeout") == 0)
-	    logfont.lfStrikeOut = TRUE;
+	    strikeout = TRUE;
 	  else
 	    {
 	      maybe_signal_error (Qinvalid_constant, "Invalid font effect",
 				  name_for_errors, Qfont, errb);
-	      return NULL;
+	      return 0;
 	    }
         }
 
-      /* Regenerate sanitised effects string */
-      if (logfont.lfUnderline)
+      /* Regenerate sanitized effects string */
+      if (underline)
 	{
-	  if (logfont.lfStrikeOut)
+	  if (strikeout)
 	    qxestrcpy_c (effects, "underline strikeout");
 	  else
 	    qxestrcpy_c (effects, "underline");
 	}
-      else if (logfont.lfStrikeOut)
+      else if (strikeout)
 	qxestrcpy_c (effects, "strikeout");
+
+      if (logfont)
+	{
+	  logfont->lfUnderline = underline;
+	  logfont->lfStrikeOut = strikeout;
+	}
     }
-  else
-    effects[0] = '\0';
 
   /* Charset */
   /* charset can be specified even if earlier fields haven't been */
@@ -1511,75 +1652,172 @@ create_hfont_from_font_spec (const Ibyte *namestr,
 	  qxestrncpy (charset, c + 1, LF_FACESIZE);
 	  charset[LF_FACESIZE - 1] = '\0';
 	}
-      else
-	qxestrcpy_c (charset, charset_map[0].name);
     }
 
-  for (i = 0; i < countof (charset_map); i++)
-    if (!qxestrcasecmp_c (charset, charset_map[i].name))
-      {
-	logfont.lfCharSet = charset_map[i].value;
-	break;
-      }
-
-  if (i == countof (charset_map))	/* No matching charset */
+  /* NOTE: If you give a blank charset spec, we will normally not get here
+     under Mule unless we explicitly call `make-font-instance'!  This is
+     because the C code instantiates fonts using particular charsets, by
+     way of specifier_matching_instance().  Before instantiating the font,
+     font_instantiate() calls the devmeth find_matching_font(), which gets
+     a truename font spec with the registry (i.e. the charset spec) filled
+     in appropriately to the charset. */
+  if (!qxestrcmp_c (charset, ""))
+    ;
+  else
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid charset",
-			  name_for_errors, Qfont, errb);
-      return NULL;
+      for (i = 0; i < countof (charset_map); i++)
+	if (!qxestrcasecmp_c (charset, charset_map[i].name))
+	  {
+	    if (logfont)
+	      logfont->lfCharSet = charset_map[i].value;
+	    break;
+	  }
+
+      if (i == countof (charset_map))	/* No matching charset */
+	{
+	  maybe_signal_error (Qinvalid_argument, "Invalid charset",
+			      name_for_errors, Qfont, errb);
+	  return 0;
+	}
     }
 
-  /* Misc crud */
-  logfont.lfEscapement = logfont.lfOrientation = 0;
+  if (logfont)
+    {
+      /* Misc crud */
 #if 1
-  logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-  logfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-  logfont.lfQuality = DEFAULT_QUALITY;
+      logfont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+      logfont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+      logfont->lfQuality = DEFAULT_QUALITY;
 #else
-  logfont.lfOutPrecision = OUT_STROKE_PRECIS;
-  logfont.lfClipPrecision = CLIP_STROKE_PRECIS;
-  logfont.lfQuality = PROOF_QUALITY;
+      logfont->lfOutPrecision = OUT_STROKE_PRECIS;
+      logfont->lfClipPrecision = CLIP_STROKE_PRECIS;
+      logfont->lfQuality = PROOF_QUALITY;
 #endif
-  /* Default to monospaced if the specified fontname doesn't exist. */
-  logfont.lfPitchAndFamily = FF_MODERN;
+      /* Default to monospaced if the specified fontname doesn't exist. */
+      logfont->lfPitchAndFamily = FF_MODERN;
+    }
 
-  /* Windows will silently substitute a default font if the fontname specifies
-     a non-existent font. This is bad for screen fonts because it doesn't
-     allow higher-level code to see the error and to act appropriately.
-     For instance complex_vars_of_faces() sets up a fallback list of fonts
-     for the default face. */
+  return 1;
+}
+
+/*
+  mswindows fonts look like:
+  	[fontname[:style[:pointsize[:effects]]]][:charset]
+   A maximal mswindows font spec looks like:
+  	Courier New:Bold Italic:10:underline strikeout:Western
+
+  A missing weight/style field is the same as Regular, and a missing
+  effects field is left alone, and means no effects; but a missing
+  fontname, pointsize or charset field means any will do.  We prefer
+  Courier New, 10, Western.  See sort function above. */
+
+static HFONT
+create_hfont_from_font_spec (const Ibyte *namestr,
+			     HDC hdc,
+			     Lisp_Object name_for_errors,
+			     Lisp_Object device_font_list,
+			     Error_Behavior errb,
+			     Lisp_Object *truename_ret)
+{
+  LOGFONTW logfont;
+  HFONT hfont;
+  Ibyte fontname[LF_FACESIZE], weight[LF_FACESIZE], points[8];
+  Ibyte effects[LF_FACESIZE], charset[LF_FACESIZE];
+  Ibyte truename[MSW_FONTSIZE];
+  Ibyte truername[MSW_FONTSIZE];
+
+  /* Windows will silently substitute a default font if the fontname
+     specifies a non-existent font.  This is bad for screen fonts because
+     it doesn't allow higher-level code to see the error and to act
+     appropriately.  For instance complex_vars_of_faces() sets up a
+     fallback list of fonts for the default face.  Instead, we look at all
+     the possibilities and pick one that works, handling missing pointsize
+     and charset fields appropriately.
+
+     For printer fonts, we used to go ahead and let Windows choose the
+     font, and for those devices, then, DEVICE_FONT_LIST would be nil.
+     However, this causes problems with the font-matching code below, which
+     needs a list of fonts so it can pick the right one for Mule.
+
+     Thus, the code below to handle a nil DEVICE_FONT_LIST is not currently
+     used. */
 
   if (!NILP (device_font_list))
     {
-      Lisp_Object fonttail;
-      Ibyte truename[MSW_FONTSIZE];
+      Lisp_Object fonttail = Qnil;
 
-      qxesprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects,
-		  charset);
-      LIST_LOOP (fonttail, device_font_list)
+      if (!parse_font_spec (namestr, 0, name_for_errors,
+			    errb, 0, fontname, weight, points,
+			    effects, charset))
+	return 0;
+
+      /* The fonts in the device font list always specify fontname and
+	 charset, but often times not the size; so if we don't have the
+	 size specified either, do a round with size 10 so we'll always end
+	 up with a size in the truename (if we fail this one but succeed
+	 the next one, we'll have chosen a non-TrueType font, and in those
+	 cases the size is specified in the font list item. */
+
+      if (!points[0])
 	{
-	  if (match_font (XSTRING_DATA (XCAR (fonttail)), truename,
-			  NULL))
-	    break;
+	  qxesprintf (truename, "%s:%s:10:%s:%s",
+		      fontname, weight, effects, charset);
+
+	  LIST_LOOP (fonttail, device_font_list)
+	    {
+	      if (match_font (XSTRING_DATA (XCAR (XCAR (fonttail))),
+			      truename, truername))
+		break;
+	    }
 	}
+
+      if (NILP (fonttail))
+	{
+	  qxesprintf (truename, "%s:%s:%s:%s:%s",
+		      fontname, weight, points, effects, charset);
+
+	  LIST_LOOP (fonttail, device_font_list)
+	    {
+	      if (match_font (XSTRING_DATA (XCAR (XCAR (fonttail))),
+			      truename, truername))
+		break;
+	    }
+	}
+
       if (NILP (fonttail))
 	{
 	  maybe_signal_error (Qinvalid_argument, "No matching font",
 			      name_for_errors, Qfont, errb);
-	  return NULL;
+	  return 0;
 	}
+
+      if (!parse_font_spec (truername, hdc, name_for_errors,
+			    ERROR_ME_DEBUG_WARN, &logfont, fontname, weight,
+			    points, effects, charset))
+	signal_error (Qinternal_error, "Bad value in device font list?",
+		      build_intstring (truername));
     }
+  else if (!parse_font_spec (namestr, hdc, name_for_errors,
+			     errb, &logfont, fontname, weight, points,
+			     effects, charset))
+    return 0;
 
   if ((hfont = qxeCreateFontIndirect (&logfont)) == NULL)
     {
       maybe_signal_error (Qgui_error, "Couldn't create font",
 			  name_for_errors, Qfont, errb);
-      return NULL;
+      return 0;
     }
 
+  /* #### Truename will not have all its fields filled in when we have no
+     list of fonts.  Doesn't really matter now, since we always have one.
+     See above. */
+  qxesprintf (truename, "%s:%s:%s:%s:%s", fontname, weight,
+	      points, effects, charset);
+  
+  *truename_ret = build_intstring (truename);
   return hfont;
 }
-
 
 /*
  * This is a work horse for both mswindows_initialize_font_instance and
@@ -1593,11 +1831,13 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   HFONT hfont, hfont2;
   TEXTMETRICW metrics;
   Ibyte *namestr = XSTRING_DATA (name);
+  Lisp_Object truename;
 
   hfont = create_hfont_from_font_spec (namestr, hdc, name, device_font_list,
-				       errb);
+				       errb, &truename);
+  f->truename = truename;
   f->data = xnew_and_zero (struct mswindows_font_instance_data);
-  FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0) = hfont;
+  FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0) = hfont;
 
   /* Some underlined fonts have the descent of one pixel more than their
      non-underlined counterparts. Font variants though are assumed to have
@@ -1700,7 +1940,8 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
     {
       Ibyte fontname[MSW_FONTSIZE];
 
-      if (match_font (XSTRING_DATA (XCAR (fonttail)), XSTRING_DATA (pattern),
+      if (match_font (XSTRING_DATA (XCAR (XCAR (fonttail))),
+		      XSTRING_DATA (pattern),
 		      fontname))
 	result = Fcons (build_intstring (fontname), result);
     }
@@ -1708,117 +1949,28 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
   return Fnreverse (result);
 }
 
-/* Fill in missing parts of a font spec. This is primarily intended as a
- * helper function for the functions below.
- * mswindows fonts look like:
- *	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
- * A minimal mswindows font spec looks like:
- *	Courier New
- * A maximal mswindows font spec looks like:
- *	Courier New:Bold Italic:10:underline strikeout:Western
- * Missing parts of the font spec should be filled in with these values:
- *	Courier New:Regular:10::Western */
 static Lisp_Object
 mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 {
-  /* #### does not handle charset at end!!!  charset can be given even
-     when previous fields are not.
-
-     #### does not canonicalize given fields!  needs to be merged
-     with initialize_font_instance(). */
-
-  int nsep = 0;
-  Ibyte *ptr = (Ibyte *) XSTRING_DATA (f->name);
-  Ibyte *name = (Ibyte *) ALLOCA (XSTRING_LENGTH (f->name) + 19);
-
-  qxestrcpy (name, ptr);
-
-  while ((ptr = qxestrchr (ptr, ':')) != 0)
-    {
-      ptr++;
-      nsep++;
-    }
-
-  switch (nsep)
-    {
-    case 0:
-      qxestrcat_c (name, ":Regular:10::Western");
-      break;
-    case 1:
-      qxestrcat_c (name, ":10::Western");
-      break;
-    case 2:
-      qxestrcat_c (name, "::Western");
-      break;
-    case 3:
-      qxestrcat_c (name, ":Western");
-      break;
-    default:;
-    }
-
-  return build_intstring (name);
+  return f->truename;
 }
 
 #ifdef MULE
 
 static int
-mswindows_font_spec_matches_charset_stage_1 (const Ibyte *font_charset,
-					     Lisp_Object charset)
+mswindows_font_spec_matches_charset_stage_1 (struct device *d,
+					     Lisp_Object charset,
+					     const Ibyte *nonreloc,
+					     Lisp_Object reloc,
+					     Bytecount offset,
+					     Bytecount length)
 {
-  int i, ms_charset = 0;
-  CHARSETINFO info;
-  int font_code_page;
-  Lisp_Object charset_code_page;
-
-  /* Get code page from the font spec */
-  
-  for (i = 0; i < countof (charset_map); i++)
-    if (qxestrcasecmp_c (font_charset, charset_map[i].name) == 0)
-      {
-	ms_charset = charset_map[i].value;
-	break;
-      }
-  if (i == countof (charset_map))
-    return 0;
-
-  /* For border-glyph use */
-  if (ms_charset == SYMBOL_CHARSET)
-    ms_charset = ANSI_CHARSET;
-
-  if (!TranslateCharsetInfo ((DWORD *) ms_charset, &info, TCI_SRCCHARSET))
-    return 0;
-
-  font_code_page = info.ciACP;
-
-  /* Get code page for the charset */
-  charset_code_page = Fmswindows_charset_code_page (charset);
-  if (!INTP (charset_code_page))
-    return 0;
-
-  return font_code_page == XINT (charset_code_page);
-}
-
-static int
-mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-				     const Ibyte *nonreloc,
-				     Lisp_Object reloc,
-				     Bytecount offset, Bytecount length)
-{
-  const Ibyte *the_nonreloc = nonreloc;
   int i;
+  Lisp_Object charset_registry;
+  const Ibyte *font_charset;
+  const Ibyte *the_nonreloc = nonreloc;
   const Ibyte *c;
   Bytecount the_length = length;
-
-/* The idea is that, when trying to find a suitable font for a character,
-   we first see if the character comes from one of the known charsets
-   listed above; if so, we try to find a font which is declared as being of
-   that charset (that's the last element of the font spec).  If so, this
-   means that the font is specifically designed for the charset, and we
-   prefer it.  However, there are only a limited number of defined
-   charsets, and new ones aren't being defined; so if we fail the first
-   stage, we search through each font looking at the Unicode subranges it
-   supports, to see if the character comes from that subrange.
-*/
 
   if (UNBOUNDP (charset))
     return 1;
@@ -1839,126 +1991,220 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
       c = newc;
     }
 
-  if (i >= 4 && mswindows_font_spec_matches_charset_stage_1 (c, charset))
+  if (i < 4)
+    return 0;
+
+  font_charset = c;
+
+  /* For border-glyph use */
+  if (!qxestrcasecmp_c (font_charset, "symbol"))
+    font_charset = (const Ibyte *) "western";
+
+  /* Get code page for the charset */
+  charset_registry = Fmswindows_charset_registry (charset);
+  if (!STRINGP (charset_registry))
+    return 0;
+
+  return !qxestrcasecmp (XSTRING_DATA (charset_registry), font_charset);
+}
+
+/*
+
+1. handle standard mapping and inheritance vectors properly in Face-frob-property.
+2. finish impl of mswindows-charset-registry.
+3. see if everything works under fixup, now that i copied the stuff over.
+4. consider generalizing Face-frob-property to frob-specifier.
+5. maybe extract some of the flets out of Face-frob-property as useful specifier frobbing. 
+6. eventually this stuff's got to be checked in!!!!
+*/
+
+static int
+mswindows_font_spec_matches_charset_stage_2 (struct device *d,
+					     Lisp_Object charset,
+					     const Ibyte *nonreloc,
+					     Lisp_Object reloc,
+					     Bytecount offset,
+					     Bytecount length)
+{
+  const Ibyte *the_nonreloc = nonreloc;
+  FONTSIGNATURE fs;
+  FONTSIGNATURE *fsp = &fs;
+  struct gcpro gcpro1;
+  Lisp_Object fontsig;
+  Bytecount the_length = length;
+  int i;
+
+  if (UNBOUNDP (charset))
     return 1;
 
-  /* Stage 2. */
+  if (!the_nonreloc)
+    the_nonreloc = XSTRING_DATA (reloc);
+  fixup_internal_substring (nonreloc, reloc, offset, &the_length);
+  the_nonreloc += offset;
+
+  /* Get the list of Unicode subranges corresponding to the font.  This
+     is contained inside of FONTSIGNATURE data, obtained by calling
+     GetTextCharsetInfo on a font object, which we need to create from the
+     spec.  See if the FONTSIGNATURE data is already cached.  If not, get
+     it and cache it. */
+  if (!STRINGP (reloc) || the_nonreloc != XSTRING_DATA (reloc))
+    reloc = build_intstring (the_nonreloc);
+  GCPRO1 (reloc);
+  fontsig = Fgethash (reloc, Vfont_signature_data, Qunbound);
+
+  if (!UNBOUNDP (fontsig))
+    {
+      fsp = (FONTSIGNATURE *) XOPAQUE_DATA (fontsig);
+      UNGCPRO;
+    }
+  else
+    {
+      HDC hdc = CreateCompatibleDC (NULL);
+      Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
+      Lisp_Object truename;
+      HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
+						 font_list,
+						 ERROR_ME_DEBUG_WARN,
+						 &truename);
+
+      if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
+	{
+	nope:
+	  DeleteDC (hdc);
+	  UNGCPRO;
+	  return 0;
+	}
+    
+      if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
+	{
+	  SelectObject (hdc, hfont);
+	  goto nope;
+	}
+      SelectObject (hdc, hfont);
+      DeleteDC (hdc);
+      Fputhash (reloc, make_opaque (&fs, sizeof (fs)), Vfont_signature_data);
+      UNGCPRO;
+    }
+
   {
-    FONTSIGNATURE fs;
-    FONTSIGNATURE *fsp = &fs;
-    struct gcpro gcpro1;
-    Lisp_Object fontsig;
+    int lowlim, highlim;
+    int dim, j, cp = -1;
 
-    /* Get the list of Unicode subranges corresponding to the font.  This
-      is contained inside of FONTSIGNATURE data, obtained by calling
-      GetTextCharsetInfo on a font object, which we need to create from the
-      spec.  See if the FONTSIGNATURE data is already cached.  If not, get
-      it and cache it. */
-    if (!STRINGP (reloc) || the_nonreloc != XSTRING_DATA (reloc))
-      reloc = build_intstring (the_nonreloc);
-    GCPRO1 (reloc);
-    fontsig = Fgethash (reloc, Vfont_signature_data, Qunbound);
+    /* Try to find a Unicode char in the charset.  #### This is somewhat
+       bogus.  See below.
 
-    if (!UNBOUNDP (fontsig))
+       #### Cache me baby!!!!!!!!!!!!!
+    */
+    get_charset_limits (charset, &lowlim, &highlim);
+    dim = XCHARSET_DIMENSION (charset);
+
+    if (dim == 1)
       {
-	fsp = (FONTSIGNATURE *) XOPAQUE_DATA (fontsig);
-	UNGCPRO;
+	for (i = lowlim; i <= highlim; i++)
+	  if ((cp = ichar_to_unicode (make_ichar (charset, i, 0))) >= 0)
+	    break;
       }
     else
       {
-	HDC hdc = CreateCompatibleDC (NULL);
-	Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
-	HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
-						   font_list,
-						   ERROR_ME_DEBUG_WARN);
+	for (i = lowlim; i <= highlim; i++)
+	  for (j = lowlim; j <= highlim; j++)
+	    if ((cp = ichar_to_unicode (make_ichar (charset, i, j))) >= 0)
+	      break;
+      }
+      
+    if (cp < 0)
+      return 0;
 
-	if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
+    /* Check to see, for each subrange supported by the font,
+       whether the Unicode char is within that subrange.  If any match,
+       the font supports the char (whereby, the charset, bogusly). */
+      
+    for (i = 0; i < 128; i++)
+      {
+	if (fsp->fsUsb[i >> 5] & (1 << (i & 32)))
 	  {
-	  nope:
-	    DeleteDC (hdc);
-	    UNGCPRO;
-	    return 0;
+	    for (j = 0; j < unicode_subrange_table[i].no_subranges; j++)
+	      if (cp >= unicode_subrange_table[i].subranges[j].start &&
+		  cp <= unicode_subrange_table[i].subranges[j].end)
+		return 1;
 	  }
-    
-	if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
-	  {
-	    SelectObject (hdc, hfont);
-	    goto nope;
-	  }
-	SelectObject (hdc, hfont);
-	DeleteDC (hdc);
-	Fputhash (reloc, make_opaque (&fs, sizeof (fs)), Vfont_signature_data);
-	UNGCPRO;
       }
 
-    {
-      int lowlim, highlim;
-      int dim, j, cp = -1;
-
-      /* Try to find a Unicode char in the charset.  #### This is somewhat
-	 bogus.  We should really be doing these checks on the char level,
-	 not the charset level.  There's no guarantee that a charset covers
-	 a single Unicode range.  Furthermore, this is extremely wasteful.
-	 We should be doing this when we're about to redisplay and already
-	 have the Unicode codepoints in hand.
-
-	 #### Cache me baby!!!!!!!!!!!!!
-       */
-      get_charset_limits (charset, &lowlim, &highlim);
-      dim = XCHARSET_DIMENSION (charset);
-
-      if (dim == 1)
-	{
-	  for (i = lowlim; i <= highlim; i++)
-	    if ((cp = ichar_to_unicode (make_ichar (charset, i, 0))) >= 0)
-	      break;
-	}
-      else
-	{
-	  for (i = lowlim; i <= highlim; i++)
-	    for (j = lowlim; j <= highlim; j++)
-	      if ((cp = ichar_to_unicode (make_ichar (charset, i, j))) >= 0)
-		break;
-	}
-      
-      if (cp < 0)
-	return 0;
-
-      /* Check to see, for each subrange supported by the font,
-	 whether the Unicode char is within that subrange.  If any match,
-	 the font supports the char (whereby, the charset, bogusly). */
-      
-      for (i = 0; i < 128; i++)
-	{
-	  if (fsp->fsUsb[i >> 5] & (1 << (i & 32)))
-	    {
-	      for (j = 0; j < unicode_subrange_table[i].no_subranges; j++)
-		if (cp >= unicode_subrange_table[i].subranges[j].start &&
-		    cp <= unicode_subrange_table[i].subranges[j].end)
-		  return 1;
-	    }
-	}
-
-      return 0;
-    }
+    return 0;
   }
 }
 
-/* find a font spec that matches font spec FONT and also matches
+/*
+  Given a truename font spec, does it match CHARSET?
+
+  We try two stages:
+
+  -- First see if the charset corresponds to one of the predefined Windows
+  charsets; if so, we see if the registry (that's the last element of the
+  font spec) is that same charset.  If so, this means that the font is
+  specifically designed for the charset, and we prefer it.
+
+  -- However, there are only a limited number of defined Windows charsets,
+  and new ones aren't being defined; so if we fail the first stage, we find
+  a character from the charset with a Unicode equivalent, and see if the
+  font can display this character.  we do that by retrieving the Unicode
+  ranges that the font supports, to see if the character comes from that
+  subrange.
+
+  #### Note: We really want to be doing all these checks at the character
+  level, not the charset level.  There's no guarantee that a charset covers
+  a single Unicode range.  Furthermore, this is extremely wasteful.  We
+  should be doing this when we're about to redisplay and already have the
+  Unicode codepoints in hand.
+*/
+
+static int
+mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+				     const Ibyte *nonreloc,
+				     Lisp_Object reloc,
+				     Bytecount offset, Bytecount length,
+				     int stage)
+{
+  return stage ?
+     mswindows_font_spec_matches_charset_stage_2 (d, charset, nonreloc,
+						  reloc, offset, length)
+    : mswindows_font_spec_matches_charset_stage_1 (d, charset, nonreloc,
+						   reloc, offset, length);
+}
+
+
+/* Find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
+
 static Lisp_Object
 mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
-			     Lisp_Object charset)
+			     Lisp_Object charset, int stage)
 {
   Lisp_Object fontlist, fonttail;
 
+  /* If FONT specifies a particular charset, this will only list fonts with
+     that charset; otherwise, it will list fonts with all charsets. */
   fontlist = mswindows_list_fonts (font, device);
-  LIST_LOOP (fonttail, fontlist)
+
+  if (!stage)
     {
-      if (mswindows_font_spec_matches_charset
-	  (XDEVICE (device), charset, 0, XCAR (fonttail), 0, -1))
-	return XCAR (fonttail);
+      LIST_LOOP (fonttail, fontlist)
+	{
+	  if (mswindows_font_spec_matches_charset_stage_1
+	      (XDEVICE (device), charset, 0, XCAR (fonttail), 0, -1))
+	    return XCAR (fonttail);
+	}
     }
+  else
+    {
+      LIST_LOOP (fonttail, fontlist)
+	{
+	  if (mswindows_font_spec_matches_charset_stage_2
+	      (XDEVICE (device), charset, 0, XCAR (fonttail), 0, -1))
+	    return XCAR (fonttail);
+	}
+    }
+
   return Qnil;
 }
 

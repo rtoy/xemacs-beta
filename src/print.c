@@ -38,15 +38,15 @@ Boston, MA 02111-1307, USA.  */
 #include "backtrace.h"
 #include "buffer.h"
 #include "bytecode.h"
-#include "device.h"
+#include "device-impl.h"
 #include "extents.h"
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "opaque.h"
 
-#include "console-tty.h"
-#include "console-stream.h"
+#include "console-tty-impl.h"
+#include "console-stream-impl.h"
 #ifdef WIN32_NATIVE
 #include "console-msw.h"
 #endif

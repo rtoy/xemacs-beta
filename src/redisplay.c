@@ -57,21 +57,21 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "commands.h"
 #include "debug.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
-#include "extents.h"
+#include "extents-impl.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "gutter.h"
 #include "insdel.h"
 #include "menubar.h"
-#include "objects.h"
+#include "objects-impl.h"
 #include "process.h"
 #include "redisplay.h"
 #include "toolbar.h"
-#include "window.h"
+#include "window-impl.h"
 #include "line-number.h"
 #include "file-coding.h"
 
@@ -9226,7 +9226,7 @@ FRAME defaults to the selected frame if omitted.
 
 /***************************************************************************/
 /*									   */
-/*                     Lisp-variable change triggers                       */
+/*                               Change flags                              */
 /*									   */
 /***************************************************************************/
 
@@ -9287,6 +9287,78 @@ text_cursor_visible_p_changed (Lisp_Object specifier, struct window *w,
 {
   if (XFRAME (w->frame)->init_finished)
     Fforce_cursor_redisplay (w->frame);
+}
+
+void
+mark_buffers_changed (void)
+{
+  MARK_TYPE_CHANGED (buffers);
+}
+
+void
+mark_clip_changed (void)
+{
+  MARK_TYPE_CHANGED (clip);
+}
+
+void
+mark_extents_changed (void)
+{
+  MARK_TYPE_CHANGED (extents);
+}
+
+void
+mark_icon_changed (void)
+{
+  MARK_TYPE_CHANGED (icon);
+}
+
+void
+mark_menubar_changed (void)
+{
+  MARK_TYPE_CHANGED (menubar);
+}
+
+void
+mark_modeline_changed (void)
+{
+  MARK_TYPE_CHANGED (modeline);
+}
+
+void
+mark_point_changed (void)
+{
+  MARK_TYPE_CHANGED (point);
+}
+
+void
+mark_toolbar_changed (void)
+{
+  MARK_TYPE_CHANGED (toolbar);
+}
+
+void
+mark_gutter_changed (void)
+{
+  MARK_TYPE_CHANGED (gutter);
+}
+
+void
+mark_glyphs_changed (void)
+{
+  MARK_TYPE_CHANGED (glyphs);
+}
+
+void
+mark_subwindows_changed (void)
+{
+  MARK_TYPE_CHANGED (subwindows);
+}
+
+void
+mark_subwindows_state_changed (void)
+{
+  MARK_TYPE_CHANGED (subwindows_state);
 }
 
 #ifdef MEMORY_USAGE_STATS

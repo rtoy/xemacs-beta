@@ -32,12 +32,13 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "keymap.h"
+#include "objects.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysdep.h"
@@ -53,10 +54,12 @@ Boston, MA 02111-1307, USA.  */
 /* Vdefault_device is the firstly-created non-stream device that's still
    around.  We don't really use it anywhere currently, but it might
    be used for resourcing at some point.  (Currently we use
-   Vdefault_x_device.) */
+   the default X device -- see Vdefault_device_plist.) */
 Lisp_Object Vdefault_device;
 
 Lisp_Object Vcreate_device_hook, Vdelete_device_hook;
+
+static Lisp_Object Vdefault_device_plist;
 
 /* Device classes */
 /* Qcolor defined in general.c */
@@ -173,9 +176,7 @@ allocate_device (Lisp_Object console)
   d->font_instance_cache =
     make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQUAL);
 #ifdef MULE
-  /* Note that the following table is bi-level. */
-  d->charset_font_cache =
-    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  initialize_charset_font_caches (d);
 #endif
   /*
      Note that the image instance cache is actually bi-level.
@@ -208,6 +209,24 @@ Return nil otherwise.
        (object))
 {
   return DFW_DEVICE (object);
+}
+
+Lisp_Object
+device_console (struct device *d)
+{
+  return DEVICE_CONSOLE (d);
+}
+
+int
+device_live_p (struct device *d)
+{
+  return DEVICE_LIVE_P (d);
+}
+
+Lisp_Object
+device_frame_list (struct device *d)
+{
+  return DEVICE_FRAME_LIST (d);
 }
 
 
@@ -333,8 +352,6 @@ DEVICE defaults to the selected device if omitted.
   return DEVICE_CONSOLE (decode_device (device));
 }
 
-#ifdef HAVE_WINDOW_SYSTEM
-
 static void
 init_global_resources (struct device *d)
 {
@@ -347,8 +364,6 @@ init_global_resources (struct device *d)
 #endif
 }
 
-#endif
-
 static void
 init_device_resources (struct device *d)
 {
@@ -359,6 +374,45 @@ init_device_resources (struct device *d)
 #ifdef HAVE_TOOLBARS
   init_device_toolbars (d);
 #endif
+}
+
+DEFUN ("default-device", Fdefault_device, 0, 1, 0, /*
+Return the default device of type TYPE.
+This is generally the first-created device of that TYPE that still exists.
+It is used for resourcing and certain other things.  On MS Windows, it
+is not very useful because there is generally only one device.
+If TYPE is omitted, it is derived from the selected device.
+If there is no default device of TYPE, nil is returned.
+*/
+       (type))
+{
+  if (NILP (type))
+    type = XDEVICE_TYPE (Fselected_device (Qnil));
+  else
+    /* For errors */
+    decode_console_type (type, ERROR_ME);
+
+  return Fplist_get (Vdefault_device_plist, type, Qnil);
+}
+
+/* Return the default device for a device type. */
+Lisp_Object
+get_default_device (Lisp_Object type)
+{
+  return Fplist_get (Vdefault_device_plist, type, Qnil);
+}
+
+/* Set the default device for a device type. */
+void
+set_default_device (Lisp_Object type, Lisp_Object device)
+{
+  Vdefault_device_plist = Fplist_put (Vdefault_device_plist, type, device);
+}
+
+void
+clear_default_devices (void)
+{
+  Vdefault_device_plist = Qnil;
 }
 
 static Lisp_Object
@@ -510,27 +564,16 @@ have no effect.
   int speccount = specpdl_depth();
 
   struct gcpro gcpro1, gcpro2, gcpro3;
-#ifdef HAVE_X_WINDOWS
-  /* #### icky-poo.  If this is the first X device we are creating,
-     then retrieve the global face resources.  We have to do it
-     here, at the same time as (or just before) the device face
-     resources are retrieved; specifically, it needs to be done
-     after the device has been created but before any frames have
-     been popped up or much anything else has been done.  It's
-     possible for other devices to specify different global
-     resources (there's a property on each X server's root window
-     that holds some resources); tough luck for the moment.
-
-     This is a nasty violation of device independence, but
-     there's not a whole lot I can figure out to do about it.
-     The real problem is that the concept of resources is not
-     generalized away from X.  Similar resource-related
-     device-independence violations occur in faces.el. */
-  int first_x_device = NILP (Vdefault_x_device) && EQ (type, Qx);
-#endif
-#ifdef HAVE_GTK
-  int first_gtk_device = NILP (Vdefault_gtk_device) && EQ (type, Qgtk);
-#endif
+  /* If this is the first device we are creating of a particular type
+     (e.g. X), then retrieve the global face resources.  We have to do it
+     here, at the same time as (or just before) the device face resources
+     are retrieved; specifically, it needs to be done after the device has
+     been created but before any frames have been popped up or much
+     anything else has been done.  It's possible for other devices to
+     specify different global resources (there's a property on each X
+     server's root window that holds some resources); tough luck for the
+     moment. */
+  int first = NILP (get_default_device (type));
 
   GCPRO3 (device, console, name);
 
@@ -553,7 +596,7 @@ have no effect.
     console = create_console (name, type, conconnect, props);
   }
 
-  record_unwind_protect(delete_deviceless_console, console);
+  record_unwind_protect (delete_deviceless_console, console);
 
   con = XCONSOLE (console);
   d = allocate_device (console);
@@ -571,6 +614,10 @@ have no effect.
 
   /* Do it this way so that the device list is in order of creation */
   con->device_list = nconc2 (con->device_list, Fcons (device, Qnil));
+
+  if (NILP (get_default_device (type)))
+    set_default_device (type, device);
+
   note_object_created (device);
 
   RESET_CHANGED_SET_FLAGS;
@@ -578,24 +625,27 @@ have no effect.
     Vdefault_device = device;
 
   init_device_sound (d);
-#ifdef HAVE_X_WINDOWS
-  if (first_x_device)
-    init_global_resources (d);
-#endif
-#ifdef HAVE_GTK
-  if (first_gtk_device)
-    init_global_resources (d);
-#endif
-  init_device_resources (d);
-
-  MAYBE_DEVMETH (d, finish_init_device, (d, props));
 
   /* If this is the first device on the console, make it the selected one. */
   if (NILP (CONSOLE_SELECTED_DEVICE (con)))
     CONSOLE_SELECTED_DEVICE (con) = device;
 
-  /* #### the following should trap errors. */
+  /* Needed before initialization of resources because they may do things
+     with the tags, esp. the face code.  For example,
+     init-other-random-faces calls face-property-instance, and the
+     specifier code checks inst-pairs by seeing if the device matches the
+     tag; this fails for tags such as `default', if we haven't set up the
+     tags yet. */
   setup_device_initial_specifier_tags (d);
+
+  if (!EQ (type, Qstream))
+    {
+      if (first)
+	init_global_resources (d);
+      init_device_resources (d);
+    }
+
+  MAYBE_DEVMETH (d, finish_init_device, (d, props));
 
   UNGCPRO;
   unbind_to (speccount);
@@ -806,6 +856,29 @@ delete_device_internal (struct device *d, int force,
     Vdefault_device = find_other_device (device, 0);
 
   MAYBE_DEVMETH (d, delete_device, (d));
+
+  /* Now see if we're the default device, and thus need to be changed. */
+  {
+    /* Device type still OK, not set to null till down below. */
+    Lisp_Object dt = DEVICE_TYPE (d);
+
+    if (EQ (device, get_default_device (dt)))
+      {
+	Lisp_Object devcons, concons;
+	/* #### handle deleting last device */
+	set_default_device (dt, Qnil);
+	DEVICE_LOOP_NO_BREAK (devcons, concons)
+	  {
+	    if (EQ (dt, XDEVICE_TYPE (XCAR (devcons))) &&
+		!EQ (device, XCAR (devcons)))
+	      {
+		set_default_device (dt, XCAR (devcons));
+		goto double_break;
+	      }
+	  }
+      }
+  }
+ double_break:
 
   CONSOLE_DEVICE_LIST (c) = delq_no_quit (device, CONSOLE_DEVICE_LIST (c));
 
@@ -1219,7 +1292,7 @@ unlock_device (Lisp_Object d)
   return Qnil;
 }
 
-void
+Lisp_Object
 call_critical_lisp_code (struct device *d, Lisp_Object function,
 			 Lisp_Object object)
 {
@@ -1227,6 +1300,7 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
   int count = begin_gc_forbidden ();
   struct gcpro gcpro1;
   Lisp_Object args[3];
+  Lisp_Object retval;
 
   specbind (Qinhibit_quit, Qt);
   record_unwind_protect (unlock_device, wrap_device (d));
@@ -1248,11 +1322,11 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
 
   /* It's useful to have an error handler; otherwise an infinite
      loop may result. */
-  Fcall_with_condition_handler (!NILP (object) ? 3 : 2, args);
+  retval = Fcall_with_condition_handler (!NILP (object) ? 3 : 2, args);
 
   UNGCPRO;
 
-  unbind_to (count);
+  return unbind_to_1 (count, retval);
 }
 
 
@@ -1280,6 +1354,7 @@ syms_of_device (void)
   DEFSUBR (Ffind_device);
   DEFSUBR (Fget_device);
   DEFSUBR (Fmake_device);
+  DEFSUBR (Fdefault_device);
   DEFSUBR (Fdelete_device);
   DEFSUBR (Fdevice_frame_list);
   DEFSUBR (Fdevice_class);
@@ -1368,6 +1443,10 @@ Function or functions to call when a device is deleted.
 One argument, the to-be-deleted device.
 */ );
   Vdelete_device_hook = Qnil;
+
+  /* Plist of device types and their default devices. */
+  Vdefault_device_plist = Qnil;
+  staticpro (&Vdefault_device_plist);
 
   Vdevice_class_list = list3 (Qcolor, Qgrayscale, Qmono);
   staticpro (&Vdevice_class_list);

@@ -113,7 +113,31 @@
 (defmacro defun* (name args &rest body)
   "(defun* NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
 Like normal `defun', except ARGLIST allows full Common Lisp conventions,
-and BODY is implicitly surrounded by (block NAME ...)."
+and BODY is implicitly surrounded by (block NAME ...).
+
+\"Full Common Lisp conventions\" means that:
+
+-- In addition to &optional and &rest, the lambda-list keywords &key,
+   &allow-other-keys, and &aux are allowed.
+
+-- The format of the arguments to &optional is expanded: As well as simple
+   variables, they can be lists of the form (VAR [INITFORM [SVAR]]); when
+   no argument is available for VAR, INITFORM is evaluated (or nil, if
+   INITFORM is omitted) and stored as VAR's value, and SVAR is bound to t.
+   If an arguent is available for VAR, and INITFORM is unused, SVAR is
+   bound to nil.
+
+-- &key specifies keyword arguments.  The format of each argument is
+   VAR || ( { VAR || (KEYWORD VAR) } [INITFORM [SVAR]])  -- #### document me.
+
+-- &allow-other-keys means that if other keyword arguments are given that are
+   not specifically list in the arg list, they are allowed, rather than an
+   error being signalled.  They can be retrieved with an &rest form.
+
+-- &aux specifies extra bindings, exactly like a `let*' enclosing the body.
+   The format of each binding is VAR || (VAR [INITFORM]) -- exactly like the
+   format of `let'/`let*' bindings.
+"
   (let* ((res (cl-transform-lambda (cons args body) name))
 	 (form (list* 'defun name (cdr res))))
     (if (car res) (list 'progn (car res) form) form)))
@@ -122,7 +146,43 @@ and BODY is implicitly surrounded by (block NAME ...)."
 (defmacro defmacro* (name args &rest body)
   "(defmacro* NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
 Like normal `defmacro', except ARGLIST allows full Common Lisp conventions,
-and BODY is implicitly surrounded by (block NAME ...)."
+and BODY is implicitly surrounded by (block NAME ...).
+
+\"Full Common Lisp conventions\" means that:
+
+-- The lambda-list keywords &optional, &rest, &key, &allow-other-keys, and
+   &aux are allowed, as in `defun*'.
+
+-- Three additional lambda-list keywords are allowed: &body, &whole, and
+   &environment.  #### Document me.
+
+-- The macro arg list syntax allows for \"destructuring\" -- see also
+   `destructuring-bind', which destructures exactly like `defmacro*', and
+   `loop', which does a rather different way of destructuring.  Anywhere
+   that a simple argument may appear, and (if following a lambda-list
+   keyword) a list may not normally appear, an embedded lambda list can be
+   substituted.  (The format of the embedded lambda list is exactly the
+   same as for a top-level list except that &environment is not allowed.)
+   When matching this lambda list against a caller-specified argument, that
+   argument is treated as a list and normal lambda-list processing occurs,
+   just as if the entire operation were happening at top level.
+   Furthermore, any lambda list, embedded or top-level, can be dotted at its
+   end, and this will cause matching with an appropriate dotted list given
+   as an argument.
+
+   See `loop' for practical examples of destructuring, but
+   keep in mind that `loop' destructuring is somewhat different from macro
+   destructuring in that
+
+   (a) Macro destructuring has extra features in the various lambda-list
+       keywords, allowing for special processing of a list other than just
+       simple matching.
+   (b) Macro destructuring is strict, in that an error is signalled if the
+       actual structure does not match the expected structure.  On the
+       other hand, loop destructuring is lax -- extra arguments in a list
+       are ignored, not enough arguments cause the remaining parameters to
+       receive a value of nil, etc.
+"
   (let* ((res (cl-transform-lambda (cons args body) name))
 	 (form (list* 'defmacro name (cdr res))))
     (if (car res) (list 'progn (car res) form) form)))
@@ -370,6 +430,26 @@ Supports Common Lisp lambda lists."
 
 ;;;###autoload
 (defmacro destructuring-bind (args expr &rest body)
+  "Bind the arguments in ARGS to EXPR then eval BODY.
+This is similar to `let' but it does \"destructuring\", in that it matches
+the structure of ARGS to the structure of EXPR and binds corresponding
+arguments in ARGS to their values in EXPR.  The format of ARGS, and the
+way the destructuring works, is exactly like the destructuring that occurs
+in `defmacro*'; see that for more information.
+
+An alternative means of destructuring is using the `loop' macro. `loop'
+gives practical examples of destructuring.  `defmacro*' describes the
+differences between loop and macro-style destructuring.
+
+You can rewrite a call to (destructuring-bind ARGS EXPR &rest BODY) using
+`loop', approximately like this:
+
+  (loop for ARGS = EXPR
+    return (progn BODY))
+
+I say \"approximately\" because the destructuring works in a somewhat
+different fashion, although for most reasonably simple constructs the
+results will be the same."
   (let* ((bind-lets nil) (bind-forms nil) (bind-inits nil)
 	 (bind-defs nil) (bind-block 'cl-none))
     (cl-do-arglist (or args '(&aux)) expr)

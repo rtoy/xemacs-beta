@@ -98,8 +98,10 @@ TODO (in rough order of priority):
 
 #include "lisp.h"
 #include "sysdep.h"
+
 #include "buffer.h"
 #include "postgresql.h"
+#include "process.h"
 
 #ifdef RUNNING_XEMACS_21_1 /* handle interface changes */
 #define PG_OS_CODING FORMAT_FILENAME

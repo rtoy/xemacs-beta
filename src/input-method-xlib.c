@@ -71,15 +71,18 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
+#include "buffer.h"
+#include "device-impl.h"
+#include "events.h"
+#include "frame-impl.h"
+#include "window-impl.h"
+
+#include "console-x-impl.h"
+#include "EmacsFrame.h"
+
 #include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include <X11/Xlib.h>
-#include "frame.h"
-#include "device.h"
-#include "window.h"
-#include "buffer.h"
-#include "console-x.h"
-#include "EmacsFrame.h"
-#include "events.h"
 
 #if !defined (XIM_XLIB) && !defined (USE_XFONTSET)
 #error  neither XIM_XLIB nor USE_XFONTSET is defined??

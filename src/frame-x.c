@@ -29,17 +29,17 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
-#include "frame.h"
-#include "window.h"
+#include "frame-impl.h"
 #include "gutter.h"
+#include "window.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
+#include "objects-x-impl.h"
 #include "scrollbar-x.h"
 
 #include "xintrinsicp.h"	/* CoreP.h needs this */

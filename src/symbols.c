@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"		/* for Vbuffer_defaults */
-#include "console.h"
+#include "console-impl.h"
 #include "elhash.h"
 
 Lisp_Object Qad_advice_info, Qad_activate;

@@ -33,14 +33,14 @@ Boston, MA 02111-1307, USA.  */
 #include "blocktype.h"
 #include "buffer.h"
 #include "chartab.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "gui.h"
 #include "insdel.h"
-#include "objects.h"
+#include "objects-impl.h"
 #include "opaque.h"
 #include "rangetab.h"
 #include "redisplay.h"
@@ -187,7 +187,7 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object format,
     }
 
   maybe_invalid_argument ("Invalid image-instantiator format", format,
-			     Qimage, errb);
+			  Qimage, errb);
 
   return 0;
 }
@@ -1595,6 +1595,15 @@ Return the name of the given image instance.
 {
   CHECK_IMAGE_INSTANCE (image_instance);
   return XIMAGE_INSTANCE_NAME (image_instance);
+}
+
+DEFUN ("image-instance-instantiator", Fimage_instance_instantiator, 1, 1, 0, /*
+Return the instantiator that was used to create the image instance.
+*/
+       (image_instance))
+{
+  CHECK_IMAGE_INSTANCE (image_instance);
+  return XIMAGE_INSTANCE_INSTANTIATOR (image_instance);
 }
 
 DEFUN ("image-instance-domain", Fimage_instance_domain, 1, 1, 0, /*
@@ -5037,6 +5046,7 @@ syms_of_glyphs (void)
   DEFSUBR (Fimage_instance_type_list);
   DEFSUBR (Fimage_instance_name);
   DEFSUBR (Fimage_instance_domain);
+  DEFSUBR (Fimage_instance_instantiator);
   DEFSUBR (Fimage_instance_string);
   DEFSUBR (Fimage_instance_file_name);
   DEFSUBR (Fimage_instance_mask_file_name);

@@ -31,12 +31,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "objects-x.h"
-
 #include "charset.h"
-#include "device.h"
+#include "device-impl.h"
 #include "insdel.h"
+
+#include "console-x-impl.h"
+#include "objects-x-impl.h"
 
 int x_handle_non_fully_specified_fonts;
 
@@ -390,7 +390,6 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct x_font_instance_data);
-  FONT_INSTANCE_X_TRUENAME (f) = Qnil;
   FONT_INSTANCE_X_FONT (f) = xf;
   f->ascent = xf->ascent;
   f->descent = xf->descent;
@@ -452,12 +451,6 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 			!xf->all_chars_exist));
 
   return 1;
-}
-
-static void
-x_mark_font_instance (Lisp_Font_Instance *f)
-{
-  mark_object (FONT_INSTANCE_X_TRUENAME (f));
 }
 
 static void
@@ -775,17 +768,17 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 {
   struct device *d = XDEVICE (f->device);
 
-  if (NILP (FONT_INSTANCE_X_TRUENAME (f)))
+  if (NILP (FONT_INSTANCE_TRUENAME (f)))
     {
       Display *dpy = DEVICE_X_DISPLAY (d);
       {
 	Extbyte *nameext;
 
 	LISP_STRING_TO_EXTERNAL (f->name, nameext, Qx_font_name_encoding);
-	FONT_INSTANCE_X_TRUENAME (f) =
+	FONT_INSTANCE_TRUENAME (f) =
 	  x_font_truename (dpy, nameext, FONT_INSTANCE_X_FONT (f));
       }
-      if (NILP (FONT_INSTANCE_X_TRUENAME (f)))
+      if (NILP (FONT_INSTANCE_TRUENAME (f)))
 	{
 	  Lisp_Object font_instance = wrap_font_instance (f);
 
@@ -797,7 +790,7 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 	  return f->name;
 	}
     }
-  return FONT_INSTANCE_X_TRUENAME (f);
+  return FONT_INSTANCE_TRUENAME (f);
 }
 
 static Lisp_Object
@@ -884,8 +877,12 @@ x_list_fonts (Lisp_Object pattern, Lisp_Object device)
 static int
 x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			     const Ibyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount length)
+			     Bytecount offset, Bytecount length,
+			     int stage)
 {
+  if (stage)
+    return 0;
+
   if (UNBOUNDP (charset))
     return 1;
   /* Hack! Short font names don't have the registry in them,
@@ -933,13 +930,17 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
-x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
+x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset,
+		     int stage)
 {
   Extbyte **names;
   int count = 0;
   Lisp_Object result = Qnil;
   const Extbyte *patternext;
   int i;
+
+  if (stage)
+    return Qnil;
 
   LISP_STRING_TO_EXTERNAL (font, patternext, Qx_font_name_encoding);
 
@@ -955,7 +956,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
 			  ALLOCA, (intname, intlen),
 			  Qx_font_name_encoding);
       if (x_font_spec_matches_charset (XDEVICE (device), charset,
-				       intname, Qnil, 0, -1))
+				       intname, Qnil, 0, -1, 0))
 	{
 	  result = make_string (intname, intlen);
 	  break;
@@ -968,7 +969,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
   /* Check for a short font name. */
   if (NILP (result)
       && x_font_spec_matches_charset (XDEVICE (device), charset, 0,
-				      font, 0, -1))
+				      font, 0, -1, 0))
     return font;
 
   return result;
@@ -1000,7 +1001,6 @@ console_type_create_objects_x (void)
   CONSOLE_HAS_METHOD (x, valid_color_name_p);
 
   CONSOLE_HAS_METHOD (x, initialize_font_instance);
-  CONSOLE_HAS_METHOD (x, mark_font_instance);
   CONSOLE_HAS_METHOD (x, print_font_instance);
   CONSOLE_HAS_METHOD (x, finalize_font_instance);
   CONSOLE_HAS_METHOD (x, font_instance_truename);

@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "events.h"
 #include "opaque.h"
 

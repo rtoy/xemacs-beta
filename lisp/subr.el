@@ -914,6 +914,41 @@ to ARGUMENT.  Otherwise, this function signals a non-continuable
     `(if (not (,(eval predicate) ,argument))
 	 (signal-error 'wrong-type-argument (list ,predicate ,argument)))))
 
+(defun args-out-of-range (value min max)
+  "Signal an error until the correct in-range value is given by the user.
+This function loops, signalling a continuable `args-out-of-range' error
+with VALUE, MIN and MAX as the data associated with the error and then
+checking the returned value to make sure it's not outside the given
+boundaries \(nil for either means no boundary on that side).  At that
+point, the gotten value is returned."
+  (loop
+    for newval = (signal 'args-out-of-range (list value min max))
+    do (setq value newval)
+    finally return value
+    while (not (argument-in-range-p value min max))))
+
+(defun argument-in-range-p (argument min max)
+  "Return true if ARGUMENT is within the range of [MIN, MAX].
+This includes boundaries.  nil for either value means no limit on that side."
+  (and (or (not min) (<= min argument))
+       (or (not max) (<= argument max))))
+
+(defmacro check-argument-range (argument min max)
+  "Check that ARGUMENT is within the range [MIN, MAX].
+This is a macro, and ARGUMENT is not evaluated.  If ARGUMENT is an lvalue,
+this function signals a continuable `args-out-of-range' error until the
+returned value is within range, and assigns the returned value
+to ARGUMENT.  Otherwise, this function signals a non-continuable
+`args-out-of-range' error if the returned value is out of range."
+  (if (symbolp argument)
+      `(if (not (argument-in-range-p ,argument ,min ,max))
+	(setq ,argument
+	      (args-out-of-range ,argument ,min ,max)))
+    (let ((newsym (gensym)))
+      `(let ((,newsym ,argument))
+	(if (not (argument-in-range-p ,newsym ,min ,max))
+	    (signal-error 'args-out-of-range ,newsym ,min ,max))))))
+
 (defun signal-error (error-symbol data)
   "Signal a non-continuable error.  Args are ERROR-SYMBOL, and associated DATA.
 An error symbol is a symbol defined using `define-error'.

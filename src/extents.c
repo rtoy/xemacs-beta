@@ -218,7 +218,7 @@ Boston, MA 02111-1307, USA.  */
 #include "debug.h"
 #include "device.h"
 #include "elhash.h"
-#include "extents.h"
+#include "extents-impl.h"
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"

@@ -39,6 +39,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "lisp.h"
 
 #include "buffer.h"
+#include "process.h"
 
 #include "sysdir.h"
 #include "sysfile.h"
@@ -1199,7 +1200,7 @@ mswindows_rename (const Ibyte *oldname, const Ibyte *newname)
     result = rename (tempext, newext);
 
     if (result < 0
-	&& errno == EEXIST
+	&& (errno == EEXIST || errno == EACCES)
 	&& _chmod (newext, 0666) == 0
 	&& _unlink (newext) == 0)
       result = rename (tempext, newext);

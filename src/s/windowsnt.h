@@ -233,12 +233,25 @@ typedef int ssize_t;
 # define WINVER 0x0400
 #endif
 
+/* Vararg routines, main(), and callback routines for library functions
+   (qsort(), signal(), etc.) need to be __cdecl if we use the fastcall
+   convention by default (a good idea, since it speeds things up). #### Why
+   do they have to complain about this?  Why not just do the right thing
+   automatically?
+
+   Prefix with X because plain CDECL is already defined by the VC++ header
+   files. */
+#define XCDECL __cdecl
+
 /* MSVC 6.0 has a mechanism to declare functions which never return */
 #if (_MSC_VER >= 1200)
 #define DOESNT_RETURN __declspec(noreturn) void
 #define DECLARE_DOESNT_RETURN(decl) __declspec(noreturn) extern void decl
 #define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
-          __declspec(noreturn) extern void decl PRINTF_ARGS(str,idx)
+          __declspec(noreturn) extern void __cdecl decl PRINTF_ARGS(str,idx)
+#else
+#define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
+          extern void __cdecl decl PRINTF_ARGS(str,idx)
 #endif /* MSVC 6.0 */
 
 /* MSVC warnings no-no crap. When adding one to this section,

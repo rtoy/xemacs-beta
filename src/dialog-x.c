@@ -27,18 +27,18 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "EmacsFrame.h"
-#include "gui-x.h"
-
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "opaque.h"
 #include "window.h"
 
+#include "console-x-impl.h"
+#include "gui-x.h"
+
+#include "EmacsFrame.h"
 
 static void
 maybe_run_dbox_text_callback (LWLIB_ID id)

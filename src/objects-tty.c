@@ -24,9 +24,9 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-tty.h"
+#include "console-tty-impl.h"
 #include "insdel.h"
-#include "objects-tty.h"
+#include "objects-tty-impl.h"
 #include "device.h"
 #include "charset.h"
 
@@ -283,9 +283,13 @@ tty_list_fonts (Lisp_Object pattern, Lisp_Object device)
 static int
 tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			       const Ibyte *nonreloc, Lisp_Object reloc,
-			       Bytecount offset, Bytecount length)
+			       Bytecount offset, Bytecount length,
+			       int stage)
 {
   const Ibyte *the_nonreloc = nonreloc;
+
+  if (stage)
+    return 0;
 
   if (!the_nonreloc)
     the_nonreloc = XSTRING_DATA (reloc);
@@ -308,14 +312,17 @@ tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
    (the registry of) CHARSET. */
 static Lisp_Object
 tty_find_charset_font (Lisp_Object device, Lisp_Object font,
-		       Lisp_Object charset)
+		       Lisp_Object charset, int stage)
 {
   Ibyte *fontname = XSTRING_DATA (font);
+
+  if (stage)
+    return Qnil;
 
   if (strchr ((const char *) fontname, '/'))
     {
       if (tty_font_spec_matches_charset (XDEVICE (device), charset, 0,
-					 font, 0, -1))
+					 font, 0, -1, 0))
 	return font;
       return Qnil;
     }

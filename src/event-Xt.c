@@ -28,11 +28,11 @@ Boston, MA 02111-1307, USA.  */
 #include "blocktype.h"
 #include "charset.h"
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
 #include "file-coding.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "lstream.h"
 #include "process.h"
@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "objects-x.h"
 #include "../lwlib/lwlib.h"
 #include "EmacsFrame.h"
@@ -1680,10 +1680,12 @@ change_frame_visibility (struct frame *f, int is_visible)
   if (!FRAME_VISIBLE_P (f) && is_visible)
     {
       FRAME_VISIBLE_P (f) = is_visible;
-      /* This improves the double flicker when uniconifying a frame
+      /* [[ This improves the double flicker when uniconifying a frame
 	 some.  A lot of it is not showing a buffer which has changed
 	 while the frame was iconified.  To fix it further requires
-	 the good 'ol double redisplay structure. */
+	 the good 'ol double redisplay structure. ]] -- comment is
+	 invalid, obviously predates 19.12, when the double redisplay
+	 structure (i.e. current + desired) was put back  in. --ben */
       MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
       va_run_hook_with_args (Qmap_frame_hook, 1, frame);
     }

@@ -32,13 +32,12 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "casetab.h"
 #include "chartab.h"
-#include "commands.h"
 #include "device.h"
 #include "events.h"             /* for EVENTP */
-#include "extents.h"
 #include "frame.h"
 #include "insdel.h"
 #include "line-number.h"
+#include "process.h"
 #include "window.h"
 
 #include "sysdep.h"

@@ -33,10 +33,10 @@ Boston, MA 02111-1307, USA.  */
 #include "commands.h"
 #include "console-stream.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "insdel.h"
 #include "redisplay.h"
-#include "window.h"
+#include "window-impl.h"
 
 /* Depth in minibuffer invocations.  */
 int minibuf_level;

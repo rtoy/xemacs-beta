@@ -25,9 +25,9 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h" /* for signal_fake_event() */
-#include "frame.h"
+#include "frame-impl.h"
 #include "process.h"
 
 #include "sysdep.h"
@@ -768,13 +768,6 @@ interrupt_signal (int sig)
   --ben
  */
 
-
-static Lisp_Object
-restore_dont_check_for_quit (Lisp_Object val)
-{
-  dont_check_for_quit = XINT (val);
-  return Qnil;
-}
 
 /* Defer all checking or processing of C-g.  You can do this, for example,
    if you want to read C-g's as events. (In that case, you should set

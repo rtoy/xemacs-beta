@@ -25,11 +25,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "redisplay.h"
 #include "gui.h"
 #include "glyphs.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "elhash.h"
 #include "events.h"
 #include "buffer.h"

@@ -34,16 +34,6 @@ Boston, MA 02111-1307, USA.  */
  Color-Instance
  ****************************************************************************/
 
-struct gtk_color_instance_data
-{
-  GdkColor *color;
-  char dealloc_on_gc;
-};
-
-#define GTK_COLOR_INSTANCE_DATA(c) ((struct gtk_color_instance_data *) (c)->data)
-#define COLOR_INSTANCE_GTK_COLOR(c) (GTK_COLOR_INSTANCE_DATA (c)->color)
-#define COLOR_INSTANCE_GTK_DEALLOC(c) (GTK_COLOR_INSTANCE_DATA (c)->dealloc_on_gc)
-
 int allocate_nearest_color (GdkColormap *screen_colormap, GdkVisual *visual,
 							GdkColor *color_def);
 int gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
@@ -52,17 +42,6 @@ int gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
 /*****************************************************************************
  Font-Instance
  ****************************************************************************/
-
-struct gtk_font_instance_data
-{
-  /* Gtk-specific information */
-  Lisp_Object truename;
-  GdkFont *font;
-};
-
-#define GTK_FONT_INSTANCE_DATA(f) ((struct gtk_font_instance_data *) (f)->data)
-#define FONT_INSTANCE_GTK_FONT(f) (GTK_FONT_INSTANCE_DATA (f)->font)
-#define FONT_INSTANCE_GTK_TRUENAME(f) (GTK_FONT_INSTANCE_DATA (f)->truename)
 
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_OBJECTS_GTK_H_ */

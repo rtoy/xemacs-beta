@@ -45,6 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "extents.h"
 #include "frame.h"
+#include "process.h"
 #include "systime.h"
 #include "insdel.h"
 #include "lstream.h"
@@ -1813,10 +1814,13 @@ static Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
                                int (*pred_fn) (Lisp_Object, Lisp_Object,
                                                Lisp_Object lisp_arg));
 
+/* The sort function should return > 0 if OBJ1 < OBJ2, < 0 otherwise.
+   NOTE: This is backwards from the way qsort() works. */
+
 Lisp_Object
 list_sort (Lisp_Object list,
            Lisp_Object lisp_arg,
-           int (*pred_fn) (Lisp_Object, Lisp_Object,
+           int (*pred_fn) (Lisp_Object obj1, Lisp_Object obj2,
                            Lisp_Object lisp_arg))
 {
   struct gcpro gcpro1, gcpro2, gcpro3;

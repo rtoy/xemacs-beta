@@ -382,7 +382,7 @@ syntax_cache_table_was_changed (struct buffer *buf)
 void
 signal_syntax_table_extent_changed (EXTENT extent)
 {
-  Lisp_Object buffer = extent_object (extent);
+  Lisp_Object buffer = Fextent_object (wrap_extent (extent));
   if (BUFFERP (buffer))
     {
       struct syntax_cache *cache = XBUFFER (buffer)->syntax_cache;

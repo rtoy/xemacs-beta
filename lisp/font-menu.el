@@ -64,10 +64,6 @@
 ;;; `reset-device-font-menus' to rebuild the menus from all currently
 ;;; available fonts.
 ;;;
-;;; There is knowledge here about the regexp match numbers in
-;;; `mswindows-font-regexp' and `mswindows-font-regexp-foundry-and-family' defined in
-;;; mswindows-faces.el.
-;;;
 ;;; There are at least three kinds of fonts under X11r5:
 ;;;
 ;;; - bitmap fonts, which can be assumed to look as good as possible;
@@ -297,14 +293,15 @@ or if you change your font path, you can call this to re-initialize the menus."
     (when weight
       (signal 'error '("Setting weight currently not supported")))
     (setq new-default-face-font
-	  (font-menu-load-font
-	   (or family from-family)
-	   (or weight from-weight)
-	   (or size   from-size)
-	   from-slant
-	   (specifier-instance
-	    font-menu-preferred-resolution (selected-device))))
-    ;; This is such a gross hack. The border-glyph face under
+	  (font-instance-name
+	   (font-menu-load-font
+	    (or family from-family)
+	    (or weight from-weight)
+	    (or size   from-size)
+	    from-slant
+	    (specifier-instance
+	     font-menu-preferred-resolution (selected-device)))))
+    ;; #### This is such a gross hack. The border-glyph face under
     ;; mswindows is in a symbol font. Thus it will not appear in the
     ;; cache - being a junk family.  What we should do is change the
     ;; size but not the family, but this is more work than I care to
@@ -368,13 +365,14 @@ or if you change your font path, you can call this to re-initialize the menus."
 		(to-weight (string-equal face-weight from-weight))
 		(to-size   (=            face-size   from-size))))
       (set-face-font face
-		     (font-menu-load-font (or to-family face-family)
-					  (or to-weight face-weight)
-					  (or to-size   face-size)
-					  face-slant
-					  (specifier-instance
-					   font-menu-preferred-resolution
-					   (selected-device)))
+		     (font-instance-name
+		      (font-menu-load-font (or to-family face-family)
+					   (or to-weight face-weight)
+					   (or to-size   face-size)
+					   face-slant
+					   (specifier-instance
+					    font-menu-preferred-resolution
+					    (selected-device))))
 		     (and font-menu-this-frame-only-p
 			  (selected-frame))))))
 

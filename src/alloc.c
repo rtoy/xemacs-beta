@@ -49,10 +49,11 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "elhash.h"
 #include "events.h"
-#include "extents.h"
-#include "frame.h"
+#include "extents-impl.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "opaque.h"
+#include "process.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysfile.h"
@@ -3475,6 +3476,7 @@ disksave_object_finalization (void)
   Flocate_file_clear_hashing (Qt);
   uncache_home_directory ();
   zero_out_command_line_status_vars ();
+  clear_default_devices ();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))
@@ -3608,7 +3610,7 @@ garbage_collect_1 (void)
     Lisp_Object device = Fselected_device (Qnil);
     if (NILP (device)) /* Could happen during startup, eg. if always_gc */
       return;
-    frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
+    frame = Fselected_frame (device);
     if (NILP (frame))
       invalid_state ("No frames exist on device", device);
     f = XFRAME (frame);

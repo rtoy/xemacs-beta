@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "redisplay.h"
 
-#include "console-tty.h"
+#include "console-tty-impl.h"
 
 #define	EXPENSIVE 2000
 

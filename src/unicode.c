@@ -1178,6 +1178,8 @@ argument..
 #endif /* MULE */
 }
 
+#ifdef MULE
+
 static Lisp_Object
 cerrar_el_fulano (Lisp_Object fulano)
 {
@@ -1185,8 +1187,6 @@ cerrar_el_fulano (Lisp_Object fulano)
   retry_fclose (file);
   return Qnil;
 }
-
-#ifdef MULE
 
 DEFUN ("parse-unicode-translation-table", Fparse_unicode_translation_table,
        2, 6, 0, /*

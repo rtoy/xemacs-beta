@@ -30,13 +30,13 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
-#include "extents.h"
+#include "extents-impl.h" /* for extent_face */
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
-#include "objects.h"
+#include "objects-impl.h"
 #include "specifier.h"
 #include "window.h"
 
@@ -553,9 +553,24 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				 Lisp_Object depth)
 {
   Lisp_Object retval;
+  Lisp_Object matchspec = Qunbound;
+  struct gcpro gcpro1;
 
-  retval = specifier_instance_no_quit (Fget (face, property, Qnil), charset,
+  if (!NILP (charset))
+    matchspec = noseeum_cons (charset, Qnil);
+  GCPRO1 (matchspec);
+  retval = specifier_instance_no_quit (Fget (face, property, Qnil), matchspec,
 				       domain, errb, no_fallback, depth);
+  if (UNBOUNDP (retval))
+    {
+      Fsetcdr (matchspec, Qt);
+      retval = specifier_instance_no_quit (Fget (face, property, Qnil),
+					   matchspec, domain, errb,
+					   no_fallback, depth);
+    }
+  UNGCPRO;
+  if (CONSP (matchspec))
+    free_cons (matchspec);
 
   if (UNBOUNDP (retval) && !no_fallback)
     {
@@ -866,9 +881,7 @@ init_global_faces (struct device *d)
   /* When making the initial terminal device, there is no Lisp code
      loaded, so we can't do this. */
   if (initialized && !noninteractive)
-    {
-      call_critical_lisp_code (d, Qinit_global_faces, Qnil);
-    }
+    call_critical_lisp_code (d, Qinit_global_faces, wrap_device (d));
 }
 
 void
@@ -879,11 +892,7 @@ init_device_faces (struct device *d)
   /* When making the initial terminal device, there is no Lisp code
      loaded, so we can't do this. */
   if (initialized)
-    {
-      Lisp_Object tdevice = wrap_device (d);
-
-      call_critical_lisp_code (d, Qinit_device_faces, tdevice);
-    }
+    call_critical_lisp_code (d, Qinit_device_faces, wrap_device (d));
 }
 
 void
@@ -988,6 +997,7 @@ Here's an approach that should keep things clean and unconfused:
    keep them in a chain, and use them to allocate new
    elements when possible instead of increasing the Dynarr.
 
+--ben (?? At least I think I wrote this!)
    */
 
 /* mark for GC a dynarr of face cachels. */
@@ -1959,34 +1969,136 @@ complex_vars_of_faces (void)
   {
     Lisp_Object inst_list = Qnil;
 
-#if defined(HAVE_X_WINDOWS) || defined(HAVE_GTK)
-    /* This is kind of ugly because stephen wanted this to be CPP
-    ** identical to the old version, at least for the initial
-    ** checkin
-    **
-    ** WMP March 9, 2001
-    */
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_GTK)
     
-    /* The same gory list from x-faces.el.
-       (#### Perhaps we should remove the stuff from x-faces.el
-       and only depend on this stuff here?  That should work.)
-     */
     const Char_ASCII *fonts[] =
     {
+      /************** ISO-8859 fonts *************/
+
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
-      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso8859-*"
       "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso8859-*"
+      /* Next try for any "medium" charcell or monospaced iso8859 font. */
       "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*",
       "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*",
+      /* Next try for any charcell or monospaced iso8859 font. */
       "-*-*-*-r-*-*-*-120-*-*-m-*-iso8859-*",
       "-*-*-*-r-*-*-*-120-*-*-c-*-iso8859-*",
+
+      /* Repeat, any size */
+      "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso8859-*",
+      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso8859-*"
+      "-*-courier-*-r-*-*-*-*-*-*-*-*-iso8859-*",
+      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso8859-*"
+      /* Next try for any "medium" charcell or monospaced iso8859 font. */
+      "-*-*-medium-r-*-*-*-*-*-*-m-*-iso8859-*",
+      "-*-*-medium-r-*-*-*-*-*-*-c-*-iso8859-*",
+      /* Next try for any charcell or monospaced iso8859 font. */
+      "-*-*-*-r-*-*-*-*-*-*-m-*-iso8859-*",
+      "-*-*-*-r-*-*-*-*-*-*-c-*-iso8859-*",
+
+      /* Non-proportional fonts -- last resort. */
       "-*-*-*-r-*-*-*-120-*-*-*-*-iso8859-*",
+      "-*-*-*-r-*-*-*-*-*-*-*-*-iso8859-*",
+      "-*-*-*-*-*-*-*-*-*-*-*-*-iso8859-*",
+
+      /************* Japanese fonts ************/
+
+      /* Following 3 fonts proposed by Teruhiko.Kurosaka@Japan.eng.sun */
+      "-sun-gothic-medium-r-normal--14-120-75-75-c-60-jisx0201.1976-0",
+      "-sun-gothic-medium-r-normal--14-120-75-75-c-120-jisx0208.1983-0",
+      "-wadalab-gothic-medium-r-normal--14-120-75-75-c-120-jisx0212.1990-0",
+      
+      /* Other Japanese fonts */
+      "-*-fixed-medium-r-*--*-jisx0201.1976-*",
+      "-*-fixed-medium-r-*--*-jisx0208.1983-*",
+      "-*-fixed-medium-r-*--*-jisx0212*-*",
+      "-*-*-*-r-*--*-jisx0201.1976-*",
+      "-*-*-*-r-*--*-jisx0208.1983-*",
+      "-*-*-*-r-*--*-jisx0212*-*",
+
+      /************* Chinese fonts ************/
+
+      "-*-*-medium-r-*--*-gb2312.1980-*",
+      "-*-fixed-medium-r-*--*-cns11643*-*",
+       
+      "-*-fixed-medium-r-*--*-big5*-*,"
+      "-*-fixed-medium-r-*--*-sisheng_cwnn-0",
+
+      /************* Korean fonts *************/
+
+      "-*-mincho-medium-r-*--*-ksc5601.1987-*",
+
+      /************* Thai fonts **************/
+
+      "-*-fixed-medium-r-*--*-tis620.2529-1",
+
+      /************* Other fonts (nonstandard) *************/
+       
+      "-*-fixed-medium-r-*--*-viscii1.1-1",
+      "-*-fixed-medium-r-*--*-mulearabic-*",
+      "-*-fixed-medium-r-*--*-muleipa-*",
+      "-*-fixed-medium-r-*--*-ethio-*",
+
+      /************* Unicode fonts **************/
+
+      /* #### We don't yet support Unicode fonts, but doing so would not be
+	 hard because all the machinery has already been added for Windows
+	 support.  We need to do this:
+
+	 (1) Add "stage 2" support in find_charset_font()/etc.; this finds
+	 an appropriate Unicode font after all the charset-specific fonts
+	 have been checked.  This should look at the per-char font info and
+	 check whether we have support for some of the chars in the
+	 charset. (#### Bogus, but that's the way it currently works)
+
+	 (2) Record in the font instance a flag indicating when we're
+	 dealing with a Unicode font.
+
+	 (3) Notice this flag in separate_textual_runs() and translate the
+	 text into Unicode if so.
+      */
+
+      "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso10646-1",
+      "-*-fixed-medium-r-*-*-*-120-*-*-*-*-iso10646-1"
+      "-*-courier-*-r-*-*-*-120-*-*-*-*-iso10646-1",
+      "-*-fixed-*-r-*-*-*-120-*-*-*-*-iso10646-1"
+      /* Next try for any "medium" charcell or monospaced iso8859 font. */
+      "-*-*-medium-r-*-*-*-120-*-*-m-*-iso10646-1",
+      "-*-*-medium-r-*-*-*-120-*-*-c-*-iso10646-1",
+      /* Next try for any charcell or monospaced iso8859 font. */
+      "-*-*-*-r-*-*-*-120-*-*-m-*-iso10646-1",
+      "-*-*-*-r-*-*-*-120-*-*-c-*-iso10646-1",
+
+      /* Repeat, any size */
+      "-*-courier-medium-r-*-*-*-*-*-*-*-*-iso10646-1",
+      "-*-fixed-medium-r-*-*-*-*-*-*-*-*-iso10646-1"
+      "-*-courier-*-r-*-*-*-*-*-*-*-*-iso10646-1",
+      "-*-fixed-*-r-*-*-*-*-*-*-*-*-iso10646-1"
+      /* Next try for any "medium" charcell or monospaced iso8859 font. */
+      "-*-*-medium-r-*-*-*-*-*-*-m-*-iso10646-1",
+      "-*-*-medium-r-*-*-*-*-*-*-c-*-iso10646-1",
+      /* Next try for any charcell or monospaced iso8859 font. */
+      "-*-*-*-r-*-*-*-*-*-*-m-*-iso10646-1",
+      "-*-*-*-r-*-*-*-*-*-*-c-*-iso10646-1",
+
+      /* Non-proportional fonts -- last resort. */
+      "-*-*-*-r-*-*-*-120-*-*-*-*-iso10646-1",
+      "-*-*-*-r-*-*-*-*-*-*-*-*-iso10646-1",
+      "-*-*-*-*-*-*-*-*-*-*-*-*-iso10646-1",
+
+      /*********** Last resort ***********/
+
+      /* Boy, we sure are losing now.  Try the above, but in any encoding. */
       "-*-*-medium-r-*-*-*-120-*-*-m-*-*-*",
       "-*-*-medium-r-*-*-*-120-*-*-c-*-*-*",
       "-*-*-*-r-*-*-*-120-*-*-m-*-*-*",
       "-*-*-*-r-*-*-*-120-*-*-c-*-*-*",
+      /* Hello?  Please? */
       "-*-*-*-r-*-*-*-120-*-*-*-*-*-*",
       "-*-*-*-*-*-*-*-120-*-*-*-*-*-*",
+      "-*-*-*-*-*-*-*-*-*-*-*-*-*-*",
       "*"
     };
     const Char_ASCII **fontptr;
@@ -2013,8 +2125,6 @@ complex_vars_of_faces (void)
     {
        const Char_ASCII *mswfonts[] =
  	    {
- 	      "Courier New:Regular:10::Western",
- 	      "Courier:Regular:10::Western",
  	      "Courier New:Regular:10::",
  	      "Courier:Regular:10::",
  	      ":Regular:10::"

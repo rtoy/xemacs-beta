@@ -38,12 +38,12 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "console-stream.h"
 #include "objects-msw.h"
 

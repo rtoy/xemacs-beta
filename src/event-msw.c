@@ -62,10 +62,10 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "lstream.h"
 #include "process.h"
@@ -73,8 +73,8 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
-#include "console-msw.h"
-#include "objects-msw.h"
+#include "console-msw-impl.h"
+#include "objects-msw-impl.h"
 
 #ifdef HAVE_SCROLLBARS
 # include "scrollbar-msw.h"

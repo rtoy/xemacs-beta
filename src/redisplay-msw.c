@@ -40,18 +40,18 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "charset.h"
 #include "debug.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gutter.h"
 #include "redisplay.h"
 #include "sysdep.h"
-#include "window.h"
+#include "window-impl.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw.h"
+#include "objects-msw-impl.h"
 
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 

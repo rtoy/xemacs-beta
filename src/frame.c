@@ -29,11 +29,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"             /* for Vbuffer_alist */
 #include "console.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "extents.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "gutter.h"
 #include "menubar.h"
@@ -605,6 +605,18 @@ decode_frame_or_selected (Lisp_Object cdf)
   if (DEVICEP (cdf))
     cdf = DEVICE_SELECTED_FRAME (decode_device (cdf));
   return decode_frame (cdf);
+}
+
+Lisp_Object
+frame_device (struct frame *f)
+{
+  return FRAME_DEVICE (f);
+}
+
+int
+frame_live_p (struct frame *f)
+{
+  return FRAME_LIVE_P (f);
 }
 
 

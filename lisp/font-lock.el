@@ -1944,30 +1944,28 @@ START should be at the beginning of a line."
    ;; generally more like variables (no parameters), and the function and
    ;; keyword colors are currently the same, while the variable color is
    ;; different, which looks better.
-   (list (concat "^(\\(def\\("
-		  ;; Function declarations.
-		 "\\(un\\|advice\\|alias\\|macro\\|macro\\*\\|setf\\|subst\\|"
-		 "subst\\*\\|-edebug-spec\\|"
-		 "ine-\\(ccl-program\\|compatible-function-alias\\|"
-		 "compiler-macro\\|device-method\\|device-method\\*\\|"
-		 "function\\|function-when-void\\|modify-macro\\|"
-		 "obsolete-function-alias\\|prefix-command\\|setf-method\\|"
-		 "skeleton\\)\\)\\|"
-		  ;; Structure declarations.
-		  "\\(class\\|struct\\|type\\)\\|"
-		  ;; Former variable declarations, but woefully inadequate.
-		  ;"\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|var\\|custom\\)\\|"
-		  ;; Everything else is a function declaration.
-		  "\\([^ \t\n\(\)]+\\)"
-		  "\\)\\)\\>"
-		  ;; Any whitespace and declared object.
-		  "[ \t'\(]*"
-		  "\\([^ \t\n\)]+\\)?")
-	  '(1 font-lock-keyword-face)
-	  '(7 (cond ((match-beginning 3) 'font-lock-function-name-face)
-		    ((match-beginning 5) 'font-lock-type-face)
-		    (t 'font-lock-variable-name-face))
-	      nil t))
+   (list (concat
+	  "^(\\(" lisp-function-and-type-regexp
+	  ;; Former variable declarations, but woefully inadequate.
+	  ;; "\\|def\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|"
+	  ;; "var\\|custom\\)"
+	  ;; Everything else is a variable declaration.
+	  ;; anything else is a variable
+	  "\\|def\\([^ \t\n\(\)]+\\)"
+	  ;; make sure we are at end of word.
+	  "\\)\\>"
+	  ;; Any whitespace following and declared object.
+	  "[ \t'\(]*"
+	  "\\([^ \t\n\)]+\\)?")
+	 ;; Note about numbering:  #1 is the grouping around the whole
+	 ;; keyword.  #2 - #4 are in lisp-function-and-type-regexp.
+	 ;; #5 is for variables. (Must be set if neither #3 nor #4 are.)
+	 ;; #6 for the following object.
+	 '(1 font-lock-keyword-face)
+	 '(6 (cond ((match-beginning 3) 'font-lock-function-name-face)
+		   ((match-beginning 4) 'font-lock-type-face)
+		   (t 'font-lock-variable-name-face))
+	   nil t))
    )
  "Subdued level highlighting Lisp modes.")
 

@@ -27,15 +27,18 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-tty.h"
+#include "console-tty-impl.h"
 #include "console-stream.h"
+
 #include "faces.h"
+#include "file-coding.h"
 #include "frame.h"
-#include "lstream.h"
 #include "glyphs.h"
+#include "lstream.h"
+#include "process.h"
+
 #include "sysdep.h"
 #include "sysfile.h"
-#include "file-coding.h"
 
 DEFINE_CONSOLE_TYPE (tty);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);

@@ -1,6 +1,7 @@
 ;; msw-font-menu.el --- Managing menus of mswindows fonts.
 
 ;; Copyright (C) 1999 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Adapted from x-font-menu.el by Andy Piper <andy@xemacs.org>
 
@@ -21,6 +22,13 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;;; Known Problems:
+;;; ===============
+;;; There is knowledge here about the regexp match numbers in
+;;; `mswindows-font-regexp' and `mswindows-font-regexp-foundry-and-family' defined in
+;;; mswindows-faces.el.
+;;;
+
 ;;; mswindows fonts look like:
 ;;;	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
 ;;; ie:
@@ -39,9 +47,6 @@
 
 (require 'font-menu)
 (globally-declare-boundp 'mswindows-font-regexp)
-
-(defvar mswindows-font-menu-registry-encoding nil
-  "Registry and encoding to use with font menu fonts.")
 
 (defvar mswindows-font-menu-junk-families
   (mapconcat
@@ -65,7 +70,6 @@ when they are selected for the first time.  If you add fonts to your system,
 or if you change your font path, you can call this to re-initialize the menus."
   (unless mswindows-font-regexp-ascii
     (setq mswindows-font-regexp-ascii "Western"))
-  (setq mswindows-font-menu-registry-encoding "Western")
   (let ((case-fold-search t)
 	family size weight entry
 	dev-cache cache families sizes weights)
@@ -75,8 +79,9 @@ or if you change your font path, you can call this to re-initialize the menus."
 			(t debug)))
       (when (and (string-match mswindows-font-regexp-ascii name)
 		 (string-match mswindows-font-regexp name))
-	(setq weight (capitalize (match-string 2 name))
-	      size   (string-to-int (or (match-string 4 name) "0"))
+	(setq weight (capitalize (car (mswindows-parse-font-style
+				       (match-string 2 name))))
+	      size   (string-to-int (match-string 3 name))
 	      family (match-string 1 name))
 	(unless (string-match mswindows-font-menu-junk-families family)
 	  (setq entry (or (vassoc name cache)
@@ -174,15 +179,16 @@ or if you change your font path, you can call this to re-initialize the menus."
       (return-from mswindows-font-menu-font-data (make-vector 5 nil)))
     
     (when (string-match mswindows-font-regexp name)
-      (setq weight (match-string 2 name))
-      (setq size   (string-to-int (or (match-string 4 name) "0"))))
+      (setq weight (car (mswindows-parse-font-style (match-string 2 name))))
+      (setq size   (string-to-int (match-string 3 name))))
       
     (when (string-match mswindows-font-regexp truename)
-      (when (not (member weight (aref entry 1)))
-	(setq weight (match-string 2 truename)))
-      (when (not (member size   (aref entry 2)))
-	(setq size (string-to-int (or (match-string 4 truename) "0"))))
-      (setq slant (match-string 5 truename)))
+      (destructuring-bind (newweight . slant)
+	  (mswindows-parse-font-style (match-string 2 truename))
+	(when (not (member weight (aref entry 1)))
+	  (setq weight newweight))
+	(when (not (member size   (aref entry 2)))
+	  (setq size (string-to-int (match-string 3 truename))))))
       
     (vector entry family size weight slant)))
 
@@ -195,14 +201,15 @@ The weight, slant and resolution are only hints."
       (dolist (weight (list weight ""))
 	(dolist (slant
 		 ;; oblique is not currently implemented
-		 (cond ((string-equal slant "Oblique") '(" Italic" ""))
-		       ((string-equal slant "Italic") '(" Italic" ""))
+		 (cond ((string-equal slant "Oblique") '("Italic" ""))
+		       ((string-equal slant "Italic") '("Italic" ""))
 		       (t (list slant ""))))
 	  (when (setq font
 		      (make-font-instance
-		       (concat  family ":" weight slant ":"
-				size "::"
-				mswindows-font-menu-registry-encoding)
+		       (concat
+			family ":"
+			(mswindows-construct-font-style weight slant) ":"
+			size "::")
 		       nil t))
 	    (throw 'got-font font)))))))
 

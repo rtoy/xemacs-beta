@@ -59,8 +59,20 @@ DECLARE_LRECORD (process, Lisp_Process);
     dead_wrong_type_argument (Qprocess_readable_p, (x));	\
 } while (0)
 
+EXFUN (Fdelete_process, 1);
+EXFUN (Fget_buffer_process, 1);
+EXFUN (Fget_process, 1);
+EXFUN (Fprocess_status, 1);
 EXFUN (Fprocess_kill_without_query, 2);
 EXFUN (Fprocess_id, 1);
+
+DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
+extern Lisp_Object Vlisp_EXEC_SUFFIXES;
+
+Ibyte *egetenv (const CIbyte *var);
+void eputenv (const CIbyte *var, const CIbyte *value);
+extern int env_initted;
 
 extern Lisp_Object Qprocess_live_p;
 

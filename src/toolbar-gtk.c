@@ -25,9 +25,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+
 #include "frame.h"
+
 #include "toolbar-common.h"
-#include "console-gtk.h"
+
+#include "console-gtk-impl.h"
 
 /* We should really create a 'common' console type and fill it with
 ** all the shared code.  We would then just use

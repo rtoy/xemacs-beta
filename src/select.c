@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "extents.h"
 #include "console.h"
 #include "objects.h"

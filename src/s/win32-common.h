@@ -1,6 +1,6 @@
 /* Common system description file for cygwin32/windowsnt/mingw32.
    Copyright (C) 1993, 1994, 1995, 1999 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,15 +22,9 @@ Boston, MA 02111-1307, USA.  */
 /* Do not define LOAD_AVE_TYPE or LOAD_AVE_CVT
    since there is no load average available. */
 
-/* If you are compiling with a non-C calling convention but need to
-   declare vararg routines differently, put it here */
-#define _VARARGS_ __cdecl
-
-/* If you are providing a function to something that will call the
-   function back (like a signal handler and signal, or main) its calling
-   convention must be whatever standard the libraries expect */
-#define _CALLBACK_ __cdecl
-
 #define NO_MATHERR
 
 #define EXEC_SUFFIXES   ".exe:.com:.bat:.cmd:"
+
+/* Define an identifier for all MS Windows systems -- Cygwin, native, MinGW */
+#define WIN32_ANY

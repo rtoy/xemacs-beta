@@ -2,6 +2,7 @@
 
 ;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
 ;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: wmperry
 ;; Maintainer: XEmacs Development Team
@@ -11,7 +12,7 @@
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 1, or (at your option)
+;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
 ;; XEmacs is distributed in the hope that it will be useful, but
@@ -34,6 +35,8 @@
  '(x-list-fonts
    mswindows-list-fonts ns-list-fonts internal-facep fontsetp get-font-info
    get-fontset-info mswindows-define-rgb-color cancel-function-timers
+   mswindows-font-regexp mswindows-canonicalize-font-name
+   mswindows-parse-font-style mswindows-construct-font-style
    ;; #### perhaps we should rewrite font-warn to avoid the warning
    font-warn))
 
@@ -780,40 +783,20 @@ The type may be the strings \"px\", \"pix\", or \"pixel\" (pixels), \"pt\" or
 ;;; The window-system dependent code (mswindows-style)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; mswindows fonts look like:
-;;;	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
-;;; A minimal mswindows font spec looks like:
-;;;	Courier New
-;;; A maximal mswindows font spec looks like:
-;;;	Courier New:Bold Italic:10:underline strikeout:western
-;;; Missing parts of the font spec should be filled in with these values:
-;;;	Courier New:Regular:10::western
-;;  "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
-(defvar font-mswindows-font-regexp
-  (let
-      ((- 		":")
-       (fontname	"\\([a-zA-Z ]+\\)")
-       (weight		"\\([a-zA-Z]*\\)")
-       (style		"\\( [a-zA-Z]*\\)?")
-       (pointsize	"\\([0-9]+\\)")
-       (effects		"\\([a-zA-Z ]*\\)")
-       (charset		"\\([a-zA-Z 0-9]*\\)")
-       )
-    (concat "^"
-	    fontname - weight style - pointsize - effects - charset "$")))
-
 (defconst mswindows-font-weight-mappings
-  '((:extra-light . "Extralight")
+  '((:thin        . "Thin")
+    (:extra-light . "Extra Light")
     (:light       . "Light")
-    (:demi-light  . "Demilight")
-    (:demi        . "Demi")
-    (:book        . "Book")
+    (:demi-light  . "Light")
+    (:demi        . "Light")
+    (:book        . "Medium")
     (:medium      . "Medium")
     (:normal      . "Normal")
-    (:demi-bold   . "Demibold")
+    (:demi-bold   . "Demi Bold")
     (:bold        . "Bold")
     (:regular	  . "Regular")
-    (:extra-bold  . "Extrabold"))
+    (:extra-bold  . "Extra Bold")
+    (:heavy       . "Heavy"))
   "An assoc list mapping keywords to actual mswindows specific strings
 for use in the 'weight' field of an mswindows font string.")
 
@@ -838,41 +821,46 @@ for use in the 'weight' field of an mswindows font string.")
 (defun mswindows-font-create-object (fontname &optional device)
   "Return a font descriptor object for FONTNAME, appropriate for MS Windows devices."
   (let ((case-fold-search t)
-	(font (declare-fboundp (mswindows-font-canonicalize-name fontname))))
+	(font (declare-fboundp (mswindows-canonicalize-font-name fontname))))
     (if (or (not (stringp font))
-	    (not (string-match font-mswindows-font-regexp font)))
+	    (not (string-match mswindows-font-regexp font)))
 	(make-font)
       (let ((family	(match-string 1 font))
-	    (weight	(match-string 2 font))
-	    (style	(match-string 3 font))
-	    (pointsize	(match-string 4 font))
-	    (effects	(match-string 5 font))
-	    (charset	(match-string 6 font))
+	    (style	(match-string 2 font))
+	    (pointsize	(match-string 3 font))
+	    (effects	(match-string 4 font))
+	    (charset	(match-string 5 font))
 	    (retval nil)
 	    (size nil)
 	    (case-fold-search t)
 	    )
-	(if pointsize (setq size (concat pointsize "pt")))
-	(if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
-	(setq retval (make-font :family family
-				:weight weight
-				:size size
-				:encoding charset))
-	(set-font-bold-p retval (eq :bold weight))
-	(cond
-	 ((null style) nil)
-	 ((string-match "^ *[iI]talic" style)
-	  (set-font-italic-p retval t)))
-	(cond
-	 ((null effects) nil)
-	 ((string-match "^[uU]nderline [sS]trikeout" effects)
-	  (set-font-underline-p retval t)
-	  (set-font-strikethru-p retval t))
-	 ((string-match "[uU]nderline" effects)
-	  (set-font-underline-p retval t))
-	 ((string-match "[sS]trikeout" effects)
-	  (set-font-strikethru-p retval t)))
-	retval))))
+	(destructuring-bind (weight . slant)
+	    (mswindows-parse-font-style style)
+	  (if (equal pointsize "") (setq pointsize nil))
+	  (if pointsize (setq size (concat pointsize "pt")))
+	  (if weight (setq weight
+			   (intern-soft
+			    (concat ":" (downcase (replace-in-string
+						   weight " " "-"))))))
+	  (setq retval (make-font :family family
+				  :weight weight
+				  :size size
+				  :encoding charset))
+	  (set-font-bold-p retval (eq :bold weight))
+	  (cond
+	   ((null slant) nil)
+	   ((string-match "[iI]talic" slant)
+	    (set-font-italic-p retval t)))
+	  (cond
+	   ((null effects) nil)
+	   ((string-match "^[uU]nderline [sS]trikeout" effects)
+	    (set-font-underline-p retval t)
+	    (set-font-strikethru-p retval t))
+	   ((string-match "[uU]nderline" effects)
+	    (set-font-underline-p retval t))
+	   ((string-match "[sS]trikeout" effects)
+	    (set-font-strikethru-p retval t)))
+	  retval)))))
 
 (defun mswindows-font-create-name (fontobj &optional device)
   "Return a font name constructed from FONTOBJ, appropriate for MS Windows devices."
@@ -893,8 +881,7 @@ for use in the 'weight' field of an mswindows font string.")
 		     (font-size default)))
 	   (underline-p (font-underline-p fontobj))
 	   (strikeout-p (font-strikethru-p fontobj))
-	   (encoding (or (font-encoding fontobj)
-			 (font-encoding default))))
+	   (encoding (font-encoding fontobj)))
       (if (stringp family)
 	  (setq family (list family)))
       (setq weight (font-higher-weight weight
@@ -920,10 +907,12 @@ for use in the 'weight' field of an mswindows font string.")
 			    family))
 	    ;; We treat oblique and italic as equivalent.  Don't ask.
             ;; Courier New:Bold Italic:10:underline strikeout:western
-	    (setq font-name (format "%s:%s%s:%s:%s:%s"
-				    cur-family weight
-				    (if (font-italic-p fontobj)
-					" Italic" "")
+	    (setq font-name (format "%s:%s:%s:%s:%s"
+				    cur-family
+				    (mswindows-construct-font-style
+				     weight
+				     (if (font-italic-p fontobj)
+					 "Italic" ""))
 				    (if size
 					(int-to-string size) "10")
 				    (if underline-p

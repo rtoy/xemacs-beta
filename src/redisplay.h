@@ -518,19 +518,30 @@ extern int windows_structure_changed;
     object##_changed_set = 1; }					\
   }  while (0)
 
-#define MARK_BUFFERS_CHANGED MARK_TYPE_CHANGED (buffers)
-#define MARK_CLIP_CHANGED MARK_TYPE_CHANGED (clip)
-#define MARK_EXTENTS_CHANGED MARK_TYPE_CHANGED (extents)
-#define MARK_ICON_CHANGED MARK_TYPE_CHANGED (icon)
-#define MARK_MENUBAR_CHANGED MARK_TYPE_CHANGED (menubar)
-#define MARK_MODELINE_CHANGED MARK_TYPE_CHANGED (modeline)
-#define MARK_POINT_CHANGED MARK_TYPE_CHANGED (point)
-#define MARK_TOOLBAR_CHANGED MARK_TYPE_CHANGED (toolbar)
-#define MARK_GUTTER_CHANGED MARK_TYPE_CHANGED (gutter)
-#define MARK_GLYPHS_CHANGED MARK_TYPE_CHANGED (glyphs)
-#define MARK_SUBWINDOWS_CHANGED MARK_TYPE_CHANGED (subwindows)
-#define MARK_SUBWINDOWS_STATE_CHANGED MARK_TYPE_CHANGED (subwindows_state)
-
+void mark_buffers_changed (void);
+#define MARK_BUFFERS_CHANGED mark_buffers_changed ()
+void mark_clip_changed (void);
+#define MARK_CLIP_CHANGED mark_clip_changed ()
+void mark_extents_changed (void);
+#define MARK_EXTENTS_CHANGED mark_extents_changed ()
+void mark_icon_changed (void);
+#define MARK_ICON_CHANGED mark_icon_changed ()
+void mark_menubar_changed (void);
+#define MARK_MENUBAR_CHANGED mark_menubar_changed ()
+void mark_modeline_changed (void);
+#define MARK_MODELINE_CHANGED mark_modeline_changed ()
+void mark_point_changed (void);
+#define MARK_POINT_CHANGED mark_point_changed ()
+void mark_toolbar_changed (void);
+#define MARK_TOOLBAR_CHANGED mark_toolbar_changed ()
+void mark_gutter_changed (void);
+#define MARK_GUTTER_CHANGED mark_gutter_changed ()
+void mark_glyphs_changed (void);
+#define MARK_GLYPHS_CHANGED mark_glyphs_changed ()
+void mark_subwindows_changed (void);
+#define MARK_SUBWINDOWS_CHANGED mark_subwindows_changed ()
+void mark_subwindows_state_changed (void);
+#define MARK_SUBWINDOWS_STATE_CHANGED mark_subwindows_state_changed ()
 
 #define CLASS_RESET_CHANGED_FLAGS(p) do {	\
   (p)->buffers_changed = 0;			\

@@ -31,16 +31,16 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
 #include "objects-x.h"
 
@@ -63,7 +63,6 @@ Boston, MA 02111-1307, USA.  */
 #include "offix.h"
 #endif
 
-Lisp_Object Vdefault_x_device;
 #ifdef MULE
 Lisp_Object Vx_app_defaults_directory;
 Lisp_Object Qget_coding_system_from_locale;
@@ -626,8 +625,6 @@ x_init_device (struct device *d, Lisp_Object props)
   speed_up_interrupts ();
 
   screen = DefaultScreen (dpy);
-  if (NILP (Vdefault_x_device))
-    Vdefault_x_device = device;
 
 #ifdef MULE
   {
@@ -915,22 +912,6 @@ x_delete_device (struct device *d)
 #endif
     }
 
-  if (EQ (device, Vdefault_x_device))
-    {
-      Lisp_Object devcons, concons;
-      /* #### handle deleting last X device */
-      Vdefault_x_device = Qnil;
-      DEVICE_LOOP_NO_BREAK (devcons, concons)
-	{
-	  if (DEVICE_X_P (XDEVICE (XCAR (devcons))) &&
-	      !EQ (device, XCAR (devcons)))
-	    {
-	      Vdefault_x_device = XCAR (devcons);
-	      goto double_break;
-	    }
-	}
-    }
- double_break:
   free_x_device_struct (d);
 }
 
@@ -1335,7 +1316,7 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
       if (DEVICEP (device) && !DEVICE_X_P (XDEVICE (device)))
 	device = Qnil;
       if (NILP (device))
-	device = Vdefault_x_device;
+	device = get_default_device (Qx);
       if (NILP (device))
 	{
 	  *display_out = 0;
@@ -1644,10 +1625,11 @@ standard resource specification.
 DEFUN ("default-x-device", Fdefault_x_device, 0, 0, 0, /*
 Return the default X device for resourcing.
 This is the first-created X device that still exists.
+See also `default-device'.
 */
        ())
 {
-  return Vdefault_x_device;
+  return get_default_device (Qx);
 }
 
 DEFUN ("x-display-visual-class", Fx_display_visual_class, 0, 1, 0, /*
@@ -2114,7 +2096,4 @@ where the localized init files are.
 #endif
 
   Fprovide (Qx);
-
-  staticpro (&Vdefault_x_device);
-  Vdefault_x_device = Qnil;
 }

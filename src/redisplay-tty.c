@@ -33,18 +33,18 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "glyphs.h"
 #include "lstream.h"
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
 
-#include "console-tty.h"
-#include "objects-tty.h"
+#include "console-tty-impl.h"
+#include "objects-tty-impl.h"
 
 #include "syssignal.h"
 

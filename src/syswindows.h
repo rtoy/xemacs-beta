@@ -1053,7 +1053,7 @@ void mswindows_executable_type (const Ibyte * filename, int * is_dos_app,
 				int * is_cygnus_app);
 Ibyte *mswindows_getdcwd (int drivelet);
 
-/* In process-nt.c */
+/* in process-nt.c */
 extern int mswindows_compare_env (const void *strp1, const void *strp2);
 
 /* in win32.c */
@@ -1063,5 +1063,9 @@ DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);
+
+/* in intl-win32.c */
+extern Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
+extern Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 
 #endif /* INCLUDED_syswindows_h_ */

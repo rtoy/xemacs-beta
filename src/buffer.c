@@ -80,12 +80,12 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 #include "casetab.h"
 #include "commands.h"
-#include "device.h"
+#include "device-impl.h"
 #include "elhash.h"
 #include "extents.h"
 #include "faces.h"
 #include "file-coding.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "process.h"            /* for kill_buffer_processes */
@@ -1187,7 +1187,7 @@ with `delete-process'.
     return Qnil;
 
   /* Don't kill the minibuffer now current.  */
-  if (EQ (buf, XWINDOW (minibuf_window)->buffer))
+  if (EQ (buf, XWINDOW_BUFFER (minibuf_window)))
     return Qnil;
 
   /* When we kill a base buffer, kill all its indirect buffers.

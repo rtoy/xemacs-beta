@@ -28,18 +28,19 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-x.h"
-#include "glyphs-x.h"
-#include "objects-x.h"
-#include "EmacsFrame.h"
-#include "EmacsFrameP.h"
-
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "toolbar.h"
 #include "window.h"
 
 #include "toolbar-common.h"
+
+#include "console-x-impl.h"
+#include "glyphs-x.h"
+#include "objects-x.h"
+
+#include "EmacsFrame.h"
+#include "EmacsFrameP.h"
 
 /* We should really create a 'common' console type and fill it with
 ** all the shared code.  We would then just use

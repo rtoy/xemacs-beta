@@ -111,7 +111,6 @@ Fixnum warn_about_possibly_incompatible_back_references;
 Lisp_Object Vskip_chars_range_table;
 
 static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
-static void save_search_regs (void);
 static Charbpos simple_search (struct buffer *buf, Ibyte *base_pat,
 			       Bytecount len, Bytebpos pos, Bytebpos lim,
 			       EMACS_INT n, Lisp_Object trt);
@@ -599,7 +598,7 @@ newline_cache_on_off (struct buffer *buf)
 
 static Bytebpos
 byte_scan_buffer (struct buffer *buf, Ichar target, Bytebpos st, Bytebpos en,
-		EMACS_INT count, EMACS_INT *shortage, int allow_quit)
+		  EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   Bytebpos lim = en > 0 ? en :
     ((count > 0) ? BYTE_BUF_ZV (buf) : BYTE_BUF_BEGV (buf));
@@ -830,6 +829,7 @@ find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to,
   return pos;
 }
 
+/* This function synched with FSF 21.1 */
 static Lisp_Object
 skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    Lisp_Object string, Lisp_Object lim)
@@ -896,6 +896,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    {
 	      Ichar cend;
 
+	      /* Skip over the dash.  */
 	      p++;
 	      if (p == pend) break;
 	      cend = itext_ichar (p);
@@ -920,6 +921,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	}
     }
 
+  /* #### Not in FSF 21.1 */
   if (syntaxp && fastmap['-'] != 0)
     fastmap[' '] = 1;
 
@@ -933,36 +935,46 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
   {
     Charbpos start_point = BUF_PT (buf);
+    Charbpos pos = start_point;
+    Charbpos pos_byte = BYTE_BUF_PT (buf);
 
     if (syntaxp)
       {
-	scache = setup_buffer_syntax_cache (buf, BUF_PT (buf),
-					    forwardp ? 1 : -1);
+	scache = setup_buffer_syntax_cache (buf, pos, forwardp ? 1 : -1);
 	/* All syntax designators are normal chars so nothing strange
 	   to worry about */
 	if (forwardp)
 	  {
-	    while (BUF_PT (buf) < limit
-		   && fastmap[(unsigned char)
-                              syntax_code_spec
-			      [(int) SYNTAX_FROM_CACHE
-			       (scache, BUF_FETCH_CHAR (buf, BUF_PT (buf)))]])
-	      {
-		BUF_SET_PT (buf, BUF_PT (buf) + 1);
-		UPDATE_SYNTAX_CACHE_FORWARD (scache, BUF_PT (buf));
-	      }
+	    if (pos < limit)
+	      while (fastmap[(unsigned char)
+			     syntax_code_spec
+			     [(int) SYNTAX_FROM_CACHE
+			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+		{
+		  pos++;
+		  INC_BYTEBPOS (buf, pos_byte);
+		  if (pos >= XINT (lim))
+		    break;
+		  UPDATE_SYNTAX_CACHE_FORWARD (scache, pos);
+		}
 	  }
 	else
 	  {
-	    while (BUF_PT (buf) > limit
-		   && fastmap[(unsigned char)
-                              syntax_code_spec
-			      [(int) SYNTAX_FROM_CACHE
-			       (scache,
-			       BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1))]])
+	    while (pos > limit)
 	      {
-		BUF_SET_PT (buf, BUF_PT (buf) - 1);
-		UPDATE_SYNTAX_CACHE_BACKWARD (scache, BUF_PT (buf) - 1);
+		Charbpos savepos = pos_byte;
+		pos--;
+		DEC_BYTEBPOS (buf, pos_byte);
+		UPDATE_SYNTAX_CACHE_BACKWARD (scache, pos);
+		if (!fastmap[(unsigned char)
+			     syntax_code_spec
+			     [(int) SYNTAX_FROM_CACHE
+			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+		  {
+		    pos++;
+		    pos_byte = savepos;
+		    break;
+		  }
 	      }
 	  }
       }
@@ -970,36 +982,47 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       {
 	if (forwardp)
 	  {
-	    while (BUF_PT (buf) < limit)
+	    while (pos < limit)
 	      {
-		Ichar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf));
+		Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
 		if ((ch < 0400) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
 		     == negate))
-		  BUF_SET_PT (buf, BUF_PT (buf) + 1);
+		  {
+		    pos++;
+		    INC_BYTEBPOS (buf, pos_byte);
+		  }
 		else
 		  break;
 	      }
 	  }
 	else
 	  {
-	    while (BUF_PT (buf) > limit)
+	    while (pos > limit)
 	      {
-		Ichar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1);
+		Charbpos prev_pos_byte = pos_byte;
+		Ichar ch;
+
+		DEC_BYTEBPOS (buf, prev_pos_byte);
+		ch = BYTE_BUF_FETCH_CHAR (buf, prev_pos_byte);
 		if ((ch < 0400) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
 					     Qnil))
 		     == negate))
-		  BUF_SET_PT (buf, BUF_PT (buf) - 1);
+		  {
+		    pos--;
+		    pos_byte = prev_pos_byte;
+		  }
                 else
                   break;
 	      }
 	  }
       }
     QUIT;
+    BOTH_BUF_SET_PT (buf, pos, pos_byte);
     return make_int (BUF_PT (buf) - start_point);
   }
 }
@@ -2912,48 +2935,6 @@ LIST should have been created by calling `match-data' previously.
     }
 
   return Qnil;
-}
-
-/* If non-zero the match data have been saved in saved_search_regs
-   during the execution of a sentinel or filter. */
-static int search_regs_saved;
-static struct re_registers saved_search_regs;
-
-/* Called from Flooking_at, Fstring_match, search_buffer, Fstore_match_data
-   if asynchronous code (filter or sentinel) is running. */
-static void
-save_search_regs (void)
-{
-  if (!search_regs_saved)
-    {
-      saved_search_regs.num_regs = search_regs.num_regs;
-      saved_search_regs.start = search_regs.start;
-      saved_search_regs.end = search_regs.end;
-      search_regs.num_regs = 0;
-      search_regs.start = 0;
-      search_regs.end = 0;
-
-      search_regs_saved = 1;
-    }
-}
-
-/* Called upon exit from filters and sentinels. */
-void
-restore_match_data (void)
-{
-  if (search_regs_saved)
-    {
-      if (search_regs.num_regs > 0)
-	{
-	  xfree (search_regs.start);
-	  xfree (search_regs.end);
-	}
-      search_regs.num_regs = saved_search_regs.num_regs;
-      search_regs.start = saved_search_regs.start;
-      search_regs.end = saved_search_regs.end;
-
-      search_regs_saved = 0;
-    }
 }
 
 /* Quote a string to inactivate reg-expr chars */

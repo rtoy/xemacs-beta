@@ -41,7 +41,7 @@ Since the options that are substituted by configure are written in
 config.h.in with #undef, it is easy to make this file serve as
 config.h under Windows NT.  Options that are set by the user are
 specified in the file config.inc.samp, which is included by xemacs.mak
-(the makefile) and used to set command-line options to the
+\(the makefile) and used to set command-line options to the
 compiler.  The sorts of options that relate to the system and not to
 the user and which are normally auto-determined by configure are set
 in windowsnt.h.
@@ -255,7 +255,34 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SYS_WAIT_H
 #undef HAVE_LIBINTL_H
 #undef HAVE_X11_XLOCALE_H
+
+/* About __STDC__: Different compilers differ wrt __STDC__.  Sunpro C
+    defines it, but its value is 0 unless we disable non-ANSI extensions.
+    VC++ doesn't define it at all unless we disable non-ANSI extensions.
+    But these compilers are all ANSI-compliant. So don't go testing
+    __STDC__ anywhere except in code that runs only on known
+    compilers. --ben
+
+    Jamie wrote the following:
+
+    [[ The ANSI standard says that defining __STDC__ to a non-zero value
+    means that the compiler conforms to that standard.  The standard
+    requires certain header files and library functions to be present.
+    Therefore, if your compiler defines __STDC__ to non-0 but does not have
+    ANSI headers and the ANSI library routines, then your compiler is
+    buggy.  Conversely, an ANSI-conforming environment (which has both the
+    ANSI headers and library routines, i.e., stdlib.h and `memmove') does
+    not necessarily define the STDC_HEADERS flag.  Lucid Emacs requires an
+    ANSI compiler.  Therefore, there is no need to consult the abominable
+    STDC_HEADERS flag.  -- jwz ]]
+
+    In reality, we should not be testing STDC_HEADERS at all except
+    possibly in code we're purposely keeping in close sync with FSF code.
+    STDC_HEADERS should be defined on *ALL* compilers.
+*/
+
 #undef STDC_HEADERS
+
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
 
@@ -586,6 +613,14 @@ things are arranged in config.h.in.  In particular:
  */
 #undef QUICK_BUILD
 
+/* If true, run the compiler with many files at once rather than one at a
+   time.  May speed up compilation time with some compilers, particularly
+   if the entire compilation happens in a single process -- the process can
+   cache the results of processing include files.  This definitely helps
+   with VC++ (although it doesn't use Makefile.in.in) but not with GCC,
+   which runs many processes per file to compile. */
+#undef BATCH_COMPILER_RUNS
+
 /* If defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
    definitions isn't right with 64-bit systems.  */
@@ -700,20 +735,24 @@ extern "C" {
 #define SYSTEM_MALLOC
 #endif
 
-/* Use the relocating allocator for buffer space? */
-#undef REL_ALLOC
-
 /* Define the return type of signal handlers if the s/xxx.h file
    did not already do so. */
 #define RETSIGTYPE void
 
+#ifndef XCDECL
+#define XCDECL
+#endif
+
 /* SIGTYPE is the macro we actually use. */
 #ifndef SIGTYPE
-#define SIGTYPE RETSIGTYPE
+#define SIGTYPE RETSIGTYPE XCDECL
 #define SIGRETURN return
 #endif
 
 #ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
+
+/* Use the relocating allocator for buffer space? */
+#undef REL_ALLOC
 
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */

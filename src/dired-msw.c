@@ -78,13 +78,15 @@ Boston, MA 02111-1307, USA.  */
 #include "regex.h"
 #include "syntax.h"
 
+#include "console-msw.h"
+
 #include "sysdir.h"
 #include "sysfile.h"
 #include "sysfloat.h"
 #include "sysproc.h"
 #include "syspwd.h"
 #include "systime.h"
-#include "syswindows.h"
+
 
 static int mswindows_ls_sort_case_insensitive;
 static Fixnum mswindows_ls_round_file_size;

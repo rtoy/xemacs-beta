@@ -32,11 +32,16 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "console-impl.h"
 #include "device.h"
 #include "commands.h"
 #include "frame.h"
 #include "events.h"
 #include "window.h"
+
+#ifdef HAVE_MS_WINDOWS
+#include "console-msw.h"
+#endif
 
 /* Current depth in recursive edits.  */
 Fixnum command_loop_level;
@@ -359,11 +364,10 @@ Alternately, `(throw 'exit t)' makes this function signal an error.
   MARK_MODELINE_CHANGED;
 
   record_unwind_protect (recursive_edit_unwind,
-			 ((current_buffer
-                           != XBUFFER (XWINDOW (Fselected_window
-						(Qnil))->buffer))
+			 current_buffer
+			 != XWINDOW_XBUFFER (Fselected_window (Qnil))
                           ? Fcurrent_buffer ()
-                          : Qnil));
+                          : Qnil);
 
   specbind (Qstandard_output, Qt);
   specbind (Qstandard_input, Qt);
@@ -546,9 +550,9 @@ Don't call this unless you know what you're doing.
 	Lisp_Object selected_window = Fselected_window (Qnil);
 
 	if (!NILP (selected_window) &&
-	    (XBUFFER (XWINDOW (selected_window)->buffer) != current_buffer))
+	    XWINDOW_XBUFFER (selected_window) != current_buffer)
 	  {
-	    set_buffer_internal (XBUFFER (XWINDOW (selected_window)->buffer));
+	    set_buffer_internal (XWINDOW_XBUFFER (selected_window));
 	  }
       }
 

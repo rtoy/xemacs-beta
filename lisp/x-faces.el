@@ -1,7 +1,7 @@
 ;;; x-faces.el --- X-specific face frobnication, aka black magic.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996 Ben Wing.
+;; Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
 ;; Maintainer: XEmacs Development Team
@@ -617,10 +617,6 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; specified.
 ;;;
 (defun x-init-global-faces ()
-  (or (face-font 'default 'global)
-      (set-face-font 'default
-		     "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*"
-		     'global '(x default)))
   (or (face-foreground 'default 'global)
       (set-face-foreground 'default "black" 'global '(x default)))
   (or (face-background 'default 'global)
@@ -633,67 +629,43 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;;
   ;; If the "default" face didn't have a font specified, try to pick one.
   ;;
-  (or
-   (face-font-instance 'default device)
-   ;;
-   ;; No font specified in the resource database; try to cope.
-   ;;
-   ;; At first I wanted to do this by just putting a font-spec in the
-   ;; fallback resources passed to XtAppInitialize(), but that fails
-   ;; if there is an Emacs app-defaults file which doesn't specify a
-   ;; font: apparently the fallback resources are not consulted when
-   ;; there is an app-defaults file, which seems pretty bogus to me.
-   ;;
-   ;; We should also probably try "*xtDefaultFont", but I think that it
-   ;; might be legal to specify that as "xtDefaultFont:", that is, at
-   ;; top level, instead of "*xtDefaultFont:", that is, applicable to
-   ;; every application.  `x-get-resource' can't handle that right now.
-   ;; Anyway, xtDefaultFont is probably variable-width.
-   ;;
-   ;; Some who have LucidaTypewriter think it's a better font than Courier,
-   ;; but it has the bug that there are no italic and bold italic versions.
-   ;; We could hair this code up to try and mix-and-match fonts to get a
-   ;; full complement, but really, why bother.  It's just a default.
-   ;;
-   (let (new-x-font)
-     (setq new-x-font (or
-      ;;
-      ;; We default to looking for iso8859 fonts.  Using a wildcard for the
-      ;; encoding would be bad, because that can cause English speakers to get
-      ;; Kanji fonts by default.  It is safe to assume that people using a
-      ;; language other than English have both set $LANG, and have specified
-      ;; their `font' and `fontList' resources.  In any event, it's better to
-      ;; err on the side of the English speaker in this case because they are
-      ;; much less likely to have encountered this problem, and are thus less
-      ;; likely to know what to do about it.
+  ;; (or
+  ;; (face-font-instance 'default device)
+  ;;
+  ;; [[ No font specified in the resource database; try to cope. ]]
+  ;;
+  ;; NOTE: In reality, this will never happen.  The fallbacks will always
+  ;; be tried, and the last fallback is "*", which should get any font.  No
+  ;; need to put the same checks here as in the fallbacks.  These comments
+  ;; appear to be pre-19.12. --ben
 
-      ;; Try for Courier.  Almost everyone has that.  (Does anyone not?)
-      (make-font-instance
-       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*" device t)
-      (make-font-instance
-       "-*-courier-*-r-*-*-*-120-*-*-*-*-iso8859-*" device t)
-      ;; Next try for any "medium" charcell or monospaced iso8859 font.
-      (make-font-instance "-*-*-medium-r-*-*-*-120-*-*-m-*-iso8859-*" device t)
-      (make-font-instance "-*-*-medium-r-*-*-*-120-*-*-c-*-iso8859-*" device t)
-      ;; Next try for any charcell or monospaced iso8859 font.
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-m-*-iso8859-*" device t)
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-c-*-iso8859-*" device t)
-      ;; Ok, let's at least try to stay in 8859...
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-*-*-iso8859-*" device t)
-      ;; Boy, we sure are losing now.  Try the above, but in any encoding.
-      (make-font-instance "-*-*-medium-r-*-*-*-120-*-*-m-*-*-*" device t)
-      (make-font-instance "-*-*-medium-r-*-*-*-120-*-*-c-*-*-*" device t)
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-m-*-*-*" device t)
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-c-*-*-*" device t)
-      (make-font-instance "-*-*-*-r-*-*-*-120-*-*-*-*-*-*" device t)
-      ;; Hello?  Please?
-      (make-font-instance "-*-*-*-*-*-*-*-120-*-*-*-*-*-*" device t)
-      (make-font-instance "*" device t)
-      ;; if we get to here we're screwed, and faces.c will fatal()...
-      ))
-     (if (not (face-font 'default 'global))
-	 (set-face-font 'default new-x-font)
-       (set-face-font 'default new-x-font device))))
+  ;; [[ At first I wanted to do this by just putting a font-spec in the
+  ;; fallback resources passed to XtAppInitialize(), but that fails
+  ;; if there is an Emacs app-defaults file which doesn't specify a
+  ;; font: apparently the fallback resources are not consulted when
+  ;; there is an app-defaults file, which seems pretty bogus to me.
+  ;;
+  ;; We should also probably try "*xtDefaultFont", but I think that it
+  ;; might be legal to specify that as "xtDefaultFont:", that is, at
+  ;; top level, instead of "*xtDefaultFont:", that is, applicable to
+  ;; every application.  `x-get-resource' can't handle that right now.
+  ;; Anyway, xtDefaultFont is probably variable-width.
+  ;;
+  ;; Some who have LucidaTypewriter think it's a better font than Courier,
+  ;; but it has the bug that there are no italic and bold italic versions.
+  ;; We could hair this code up to try and mix-and-match fonts to get a
+  ;; full complement, but really, why bother.  It's just a default. ]]
+  ;;
+  ;; [[ We default to looking for iso8859 fonts.  Using a wildcard for the
+  ;; encoding would be bad, because that can cause English speakers to get
+  ;; Kanji fonts by default.  It is safe to assume that people using a
+  ;; language other than English have both set $LANG, and have specified
+  ;; their `font' and `fontList' resources.  In any event, it's better to
+  ;; err on the side of the English speaker in this case because they are
+  ;; much less likely to have encountered this problem, and are thus less
+  ;; likely to know what to do about it. ]]
+
+
   ;;
   ;; If the "default" face didn't have both colors specified, then pick
   ;; some, taking into account whether one of the colors was specified.

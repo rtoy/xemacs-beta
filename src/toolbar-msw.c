@@ -38,14 +38,14 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "elhash.h"
 #include "faces.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "toolbar.h"
 #include "window.h"
 
-#include "console-msw.h"
+#include "console-msw-impl.h"
 #include "glyphs-msw.h"
-#include "objects-msw.h"
+// #include "objects-msw.h"
 
 #define TOOLBAR_ITEM_ID_MIN 0x4000
 #define TOOLBAR_ITEM_ID_MAX 0x7FFF
@@ -100,9 +100,9 @@ static void
 mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
 			 int thickness_change)
 {
-  HIMAGELIST ilist=NULL;
+  HIMAGELIST ilist = NULL;
   int i;
-  HWND toolbarwnd = TOOLBAR_HANDLE(f, pos);
+  HWND toolbarwnd = TOOLBAR_HANDLE (f, pos);
   if (toolbarwnd)
     {
       TBBUTTON info;
@@ -584,14 +584,6 @@ mswindows_free_frame_toolbars (struct frame *f)
   DELETE_TOOLBAR(LEFT_TOOLBAR);
   DELETE_TOOLBAR(RIGHT_TOOLBAR);
 #undef DELETE_TOOLBAR
-}
-
-/* map toolbar hwnd to pos */
-static int
-mswindows_find_toolbar_pos (struct frame *f, HWND ctrl)
-{
-  int id = GetDlgCtrlID (ctrl);
-  return id ? id - TOOLBAR_ID_BIAS : -1;
 }
 
 Lisp_Object 

@@ -49,30 +49,29 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "lstream.h"
-#include "console-gtk.h"
-#include "glyphs.h"
-#include "glyphs-gtk.h"
-#include "objects-gtk.h"
-#include "gui-gtk.h"
-#include "ui-gtk.h"
 
 #include "buffer.h"
-#include "window.h"
-#include "device.h"
-#include "gui.h"
-#include "frame.h"
-#include "insdel.h"
-#include "opaque.h"
+#include "device-impl.h"
 #include "faces.h"
-
+#include "file-coding.h"
+#include "frame-impl.h"
+#include "glyphs.h"
+#include "gui.h"
 #include "imgproc.h"
+#include "insdel.h"
+#include "lstream.h"
+#include "opaque.h"
+#include "window.h"
+
+#include "console-gtk-impl.h"
+#include "glyphs-gtk.h"
+#include "gui-gtk.h"
+#include "objects-gtk-impl.h"
+#include "ui-gtk.h"
 
 #include "sysfile.h"
 
 #include <setjmp.h>
-
-#include "file-coding.h"
 
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (string);
@@ -554,10 +553,6 @@ gtk_locate_pixmap_file (Lisp_Object name)
       else
 	return Qnil;
     }
-
-  if (NILP (Vdefault_gtk_device))
-    /* This may occur during intialization. */
-    return Qnil;
 
   if (NILP (Vgtk_bitmap_file_path))
     {

@@ -1,5 +1,6 @@
 /* Definitions of marked slots in consoles
    Copyright (C) 1990, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -104,7 +105,10 @@ Boston, MA 02111-1307, USA.  */
      given charset's registry.  This speeds up the horrendously
      slow XListFonts() operation that needs to be done in order
      to determine an appropriate font. */
-  MARKED_SLOT (charset_font_cache);
+  MARKED_SLOT (charset_font_cache_stage_1);
+
+  /* Similar cache for stage 2, if it exists.  See objects.c. */
+  MARKED_SLOT (charset_font_cache_stage_2);
 #endif
 
   /* This is a bi-level cache, where the hash table in this slot here

@@ -1,3 +1,345 @@
+2002-06-20  Ben Wing  <ben@xemacs.org>
+
+	* s/cygwin32.h:
+	Allow pdump to work under Cygwin (mmap is broken, so need to undefine
+	HAVE_MMAP).
+	
+	* s/win32-common.h:
+	* s/win32-common.h (NO_MATHERR):
+	* s/windowsnt.h:
+
+	Support for fastcall.  Add WIN32_ANY for identifying all Win32
+	variants (Cygwin, native, MinGW).  Both of these are properly used
+	in another ws.
+
+2002-06-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (disksave_object_finalization):
+	* alloc.c (garbage_collect_1):
+	* balloon-x.c:
+	* balloon-x.c (alloc_color):
+	* balloon-x.c (init):
+	* buffer.c:
+	* buffer.c (Fkill_buffer):
+	* bytecode.c:
+	* callint.c:
+	* cm.c:
+	* cmdloop.c:
+	* cmdloop.c (Frecursive_edit):
+	* cmdloop.c (Fcommand_loop_1):
+	* cmds.c:
+	* console-gtk.c:
+	* console-gtk.h:
+	* console-msw.c:
+	* console-msw.h:
+	* console-msw.h (struct):
+	* console-msw.h (wrap_mswindows_dialog_id):
+	* console-stream.c:
+	* console-stream.h:
+	* console-stream.h (stream_canonicalize_device_connection):
+	* console-tty.c:
+	* console-tty.h:
+	* console-x.c:
+	* console-x.h:
+	* console-x.h (Xt_SET_VALUE):
+	* console.c:
+	* console.c (Fcdfw_console):
+	* console.h:
+	* console.h (CDFW_CONSOLE):
+	* device-gtk.c:
+	* device-gtk.c (gtk_delete_device):
+	* device-gtk.c (Fgtk_display_visual_class):
+	* device-gtk.c (syms_of_device_gtk):
+	* device-gtk.c (vars_of_device_gtk):
+	* device-msw.c:
+	* device-tty.c:
+	* device-x.c:
+	* device-x.c (x_init_device):
+	* device-x.c (x_delete_device):
+	* device-x.c (x_get_resource_prefix):
+	* device-x.c (Fdefault_x_device):
+	* device-x.c (vars_of_device_x):
+	* device.c:
+	* device.c (allocate_device):
+	* device.c (device_console):
+	* device.c (init_global_resources):
+	* device.c (init_device_resources):
+	* device.c (Fdefault_device):
+	* device.c (Fmake_device):
+	* device.c (delete_device_internal):
+	* device.c (call_critical_lisp_code):
+	* device.c (syms_of_device):
+	* device.c (vars_of_device):
+	* device.h:
+	* devslots.h:
+	* dialog-gtk.c:
+	* dialog-msw.c:
+	* dialog-x.c:
+	* dialog.c:
+	* dialog.c (Fmake_dialog_box_internal):
+	* dired-msw.c:
+	* editfns.c:
+	* emacs.c:
+	* event-Xt.c:
+	* event-Xt.c (change_frame_visibility):
+	* event-gtk.c:
+	* event-gtk.c (change_frame_visibility):
+	* event-gtk.c (gtk_event_to_emacs_event):
+	* event-msw.c:
+	* event-stream.c:
+	* event-tty.c:
+	* event-unixoid.c:
+	* events.c:
+	* extents.c:
+	* extents.h:
+	* extents.h (glyph_layout):
+	* faces.c:
+	* faces.c (face_property_matching_instance):
+	* faces.c (init_global_faces):
+	* faces.c (init_device_faces):
+	* faces.c (complex_vars_of_faces):
+	* fileio.c:
+	* fns.c:
+	* frame-gtk.c:
+	* frame-gtk.c (INTERNAL_BORDER_WIDTH):
+	* frame-msw.c:
+	* frame-tty.c:
+	* frame-x.c:
+	* frame.c:
+	* frame.c (decode_frame_or_selected):
+	* frame.h:
+	* frame.h (FW_FRAME):
+	* frame.h (Value): Removed.
+	* frame.h (0): Removed.
+	* glyphs-eimage.c:
+	* glyphs-gtk.c:
+	* glyphs-gtk.c (gtk_locate_pixmap_file):
+	* glyphs-msw.c:
+	* glyphs-widget.c:
+	* glyphs-x.c:
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs.c:
+	* glyphs.c (decode_device_ii_format):
+	* glyphs.c (Fimage_instance_instantiator):
+	* glyphs.c (syms_of_glyphs):
+	* glyphs.h:
+	* gui-gtk.c:
+	* gui-msw.c:
+	* gui-x.c:
+	* gui-x.c (popup_selection_callback):
+	* gui.c:
+	* gutter.c:
+	* input-method-xlib.c:
+	* intl-encap-win32.c:
+	* intl-win32.c:
+	* intl-win32.c (getacp):
+	* intl-win32.c (mswindows_get_registry_charset):
+	* intl-win32.c (syms_of_intl_win32):
+	* intl-win32.c (vars_of_intl_win32):
+	* keymap.c:
+	* lisp.h:
+	* macros.c:
+	* menubar-gtk.c:
+	* menubar-msw.c:
+	* menubar-x.c:
+	* menubar.c:
+	* menubar.h:
+	* minibuf.c:
+	* mule-charset.c:
+	* mule-charset.c (Fset_charset_ccl_program):
+	* nt.c:
+	* objects-gtk.c:
+	* objects-gtk.c (gtk_initialize_font_instance):
+	* objects-gtk.c (gtk_print_font_instance):
+	* objects-gtk.c (gtk_font_instance_truename):
+	* objects-gtk.c (gtk_font_spec_matches_charset):
+	* objects-gtk.c (console_type_create_objects_gtk):
+	* objects-gtk.c (gtk_find_charset_font):
+	* objects-gtk.h:
+	* objects-msw.c:
+	* objects-msw.c (charset_map):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (sort_font_list_function):
+	* objects-msw.c (mswindows_enumerate_fonts):
+	* objects-msw.c (parse_font_spec):
+	* objects-msw.c (create_hfont_from_font_spec):
+	* objects-msw.c (initialize_font_instance):
+	* objects-msw.c (mswindows_list_fonts):
+	* objects-msw.c (mswindows_font_instance_truename):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_2):
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-msw.c (mswindows_find_charset_font):
+	* objects-msw.h:
+	* objects-msw.h (mswindows_color_to_string):
+	* objects-tty.c:
+	* objects-tty.c (tty_font_spec_matches_charset):
+	* objects-tty.c (tty_find_charset_font):
+	* objects-tty.h:
+	* objects-x.c:
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (x_print_font_instance):
+	* objects-x.c (x_font_instance_truename):
+	* objects-x.c (x_font_spec_matches_charset):
+	* objects-x.c (x_find_charset_font):
+	* objects-x.c (console_type_create_objects_x):
+	* objects-x.h:
+	* objects.c:
+	* objects.c (mark_font_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (font_validate_matchspec):
+	* objects.c (initialize_charset_font_caches):
+	* objects.c (font_instantiate):
+	* objects.c (reinit_vars_of_objects):
+	* objects.h:
+	* postgresql.c:
+	* print.c:
+	* process.h:
+	* redisplay-gtk.c:
+	* redisplay-msw.c:
+	* redisplay-output.c:
+	* redisplay-tty.c:
+	* redisplay-x.c:
+	* redisplay.c:
+	* redisplay.c (text_cursor_visible_p_changed):
+	* redisplay.h:
+	* scrollbar-gtk.c:
+	* scrollbar-msw.c:
+	* scrollbar-x.c:
+	* scrollbar.c:
+	* select-gtk.c:
+	* select-msw.c:
+	* select-x.c:
+	* select.c:
+	* signal.c:
+	* sound.c:
+	* specifier.c:
+	* specifier.c (print_specifier):
+	* specifier.c (setup_device_initial_specifier_tags):
+	* specifier.c (Fspecifier_matching_instance):
+	* symbols.c:
+	* syntax.c (signal_syntax_table_extent_changed):
+	* sysdep.c:
+	* syssignal.h:
+	* syswindows.h:
+	* toolbar-common.c:
+	* toolbar-gtk.c:
+	* toolbar-msw.c:
+	* toolbar-msw.c (mswindows_clear_toolbar):
+	* toolbar-msw.c (mswindows_free_frame_toolbars):
+	* toolbar-x.c:
+	* toolbar.c:
+	* unicode.c:
+	* window.c:
+	* window.c (decode_window):
+	* window.h:
+	* window.h (WINDOW_XFRAME):
+	* window.h (XWINDOW_FRAME):
+	* window.h (CHECK_LIVE_WINDOW):
+	* window.h (window_divider_width):
+
+	The following are the major changes made:
+
+	(1) Separation of various header files into an external and an
+	internal version, similar to the existing separation of process.h
+	and procimpl.h.  Eventually this should be done for all Lisp
+	objects.  The external version has the same name as currently; the
+	internal adds -impl.  The external file has XFOO() macros for
+	objects, but the structure is opaque and defined only in the
+	internal file.  It's now reasonable to move all prototypes in
+	lisp.h into the appropriate external file, and this should be
+	done.  Currently, separation has been done on extents.h,
+	objects*.h, console.h, device.h, frame.h, and window.h.
+
+	For c/d/f/w, the most basic properties are available in the
+	external header file, with the macros resolving to functions.  In
+	the internal header file, the macros are redefined to directly
+	access the structure.  Also, the global MARK_FOO_CHANGED macros
+	have been made into functions so that they can be accessed without
+	needing to include lots of -impl headers -- they are used in
+	almost exclusively in non-time-critical functions, and take up
+	enough time that the function overhead will be negligible.
+	Similarly, the function overhead from making the basic properties
+	mentioned above into functions is negligible, and code that does
+	heavy accessing of c/d/f/w structures inevitably ends up needing
+	the internal header files, anyway.
+
+	(2) More face changes.
+
+	-- Major rewrite of objects-msw.c.  Now handles wildcard specs
+	properly, rather than "truenaming" (or even worse, signalling an
+	error, which previously happened with some of the fallbacks if you
+	tried to use them in make-font-instance!).
+
+	-- Split charset matching of fonts into two stages -- one to find
+	a font specifically designed for a particular charset (by
+	examining its registry), the second to find a Unicode font that
+	can support the charset.  This needs to proceed as two complete,
+	separate instantiations in order to work properly (otherwise many
+	of the fonts in the HELLO page look wrong).  This should also make
+	it easy to support iso10646 (Unicode) fonts under X.
+
+	-- All default values for fonts are now completely specified in
+	the fallbacks.  Stuff from mule-x-init.el has all been moved here,
+	merged with the existing specs, and totally rethought so you get
+	sensible results. (HELLO now looks much better!).
+
+	-- Generalize the "default X/GTK device" stuff into a
+	per-device-type "default device".
+
+	-- Add mswindows-{set-}charset-registry.  In time,
+	charset<->code-page conversion functions will be removed.
+
+	-- Wrap protective code around calls to compute device specifier tags,
+	and do this computation before calling the face initialization code
+	because the latter may need these tags to be correctly updated.
+
+	(3) Other changes.
+
+	* EmacsFrame.c:
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* glyphs-msw.c:
+	* eval.c:
+	* gui-x.c:
+	* intl-encap-win32.c:
+	* search.c (Fstore_match_data):
+	* search.c:
+	* signal.c:
+	* toolbar-msw.c:
+	* unicode.c:
+	Warning fixes.
+	
+	* config.h.in:
+	#undefs meant to be frobbed by configure *MUST* go inside of
+	#ifndef WIN32_NO_CONFIGURE, and everything else *MUST* go outside!
+
+	* eval.c (Fbacktrace):
+	Let detailed backtraces be detailed.
+	* specifier.c:
+	Don't override user's print-string-length/print-length settings.
+	
+	* glyphs.c: New function image-instance-instantiator.
+	
+	* config.h.in:
+	* sysdep.c (set_descriptor_non_blocking):
+	* sysdep.c (SIG_PARAM_TYPE):
+	* sysdep.c (struct save_signal):
+	* sysdep.c (save_signal_handlers):
+	* sysdep.c (retry_open):
+	* sysdep.c (qxe_open):
+	Changes for fastcall.
+
+	* sysdep.c (qxe_rename):
+	* nt.c (mswindows_rename):
+	Fix up a previous botched patch that tried to add support for both
+	EEXIST and EACCES.  IF THE BOTCHED PATCH WENT INTO 21.4, THIS FIXUP
+	NEEDS TO GO IN, TOO.
+
+	* search.c (skip_chars):
+	Fix *evil* crash due to incorrect synching of syntax-cache code
+	with 21.1.  THIS SHOULD GO INTO 21.4.
+
 2002-06-07  William M. Perry  <wmperry@gnu.org>
 
 	* frame-x.c (init_x_prop_symbols): Don't attempt to expose the

@@ -24,8 +24,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "device.h"
-#include "console-x.h"
+#include "device-impl.h"
+#include "console-x-impl.h"
 
 #include "balloon_help.h"
 
@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 static unsigned long
 alloc_color (Display* dpy, const char* colorname, int light)
 {
-  Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(Vdefault_x_device));
+  Colormap cmap = DEVICE_X_COLORMAP (XDEVICE (get_default_device (Qx)));
   unsigned long pixel = 0;
   XColor color;
 
@@ -84,7 +84,7 @@ init (void)
     {
       Pixel fg, bg, shine, shadow;
       XFontStruct* font;
-      Display *dpy = DEVICE_X_DISPLAY (XDEVICE (Vdefault_x_device));
+      Display *dpy = DEVICE_X_DISPLAY (XDEVICE (get_default_device (Qx)));
 
       fg = alloc_color (dpy, "grey60", 1);
       bg = alloc_color (dpy, "black", 0);

@@ -26,18 +26,18 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "gui-gtk.h"
-
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
-#include "ui-gtk.h"
-#include "gui.h"
-#include "events.h"
-#include "frame.h"
 #include "device.h"
+#include "events.h"
+#include "frame-impl.h"
+#include "gui.h"
 #include "opaque.h"
 #include "window.h"
+
+#include "console-gtk-impl.h"
+#include "gui-gtk.h"
+#include "ui-gtk.h"
 
 #ifdef HAVE_GNOME
 #include <libgnomeui/libgnomeui.h>

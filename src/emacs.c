@@ -273,7 +273,7 @@ version 18.59 released October 31, 1992.
 #endif
 
 #if defined (WIN32_NATIVE) || defined (CYGWIN)
-#include "syswindows.h"
+#include "console-msw.h"
 #endif
 
 /* For PATH_EXEC */

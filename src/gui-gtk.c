@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -26,13 +26,14 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-gtk.h"
-#include "gui-gtk.h"
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "frame.h"
 #include "gui.h"
 #include "opaque.h"
+
+#include "console-gtk-impl.h"
+#include "gui-gtk.h"
 
 #ifdef HAVE_POPUPS
 Lisp_Object Qmenu_no_selection_hook;

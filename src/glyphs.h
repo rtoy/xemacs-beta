@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_glyphs_h_
 
 #include "specifier.h"
-#include "window.h" /* need for GLYPH_CACHEL_WIDTH */
+#include "window-impl.h" /* need for GLYPH_CACHEL_WIDTH */
 
 /************************************************************************/
 /*			Image Instantiators				*/

@@ -38,16 +38,16 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "keymap.h"
 #include "menubar.h"
 #include "opaque.h"
-#include "window.h"
+#include "window-impl.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "gui-x.h"
 
 #include "EmacsFrame.h"

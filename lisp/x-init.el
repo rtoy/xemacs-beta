@@ -269,6 +269,7 @@
   (when (not x-win-initted)
     (defvar x-app-defaults-directory)
     (init-pre-x-win)
+    (if (featurep 'mule) (init-mule-x-win))
 
     ;; Open the X display when this file is loaded
     ;; (Note that the first frame is created later.)
@@ -288,7 +289,7 @@
 (defun init-post-x-win ()
   "Initialize X Windows at startup (post).  Don't call this."
   (when (not post-x-win-initted)
-    (if (featurep 'mule) (init-mule-x-win))
+    ;(if (featurep 'mule) (init-mule-x-win))
     ;; Motif-ish bindings
     ;; The following two were generally unliked.
     ;;(define-key global-map '(shift delete)   'kill-primary-selection)

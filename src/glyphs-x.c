@@ -55,23 +55,24 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "device.h"
+#include "device-impl.h"
 #include "faces.h"
 #include "file-coding.h"
-#include "frame.h"
+#include "frame-impl.h"
 #include "gui.h"
 #include "imgproc.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "opaque.h"
+#include "process.h" /* egetenv() */
 #include "window.h"
 
-#include "console-x.h"
+#include "console-x-impl.h"
 #include "glyphs-x.h"
-#include "objects-x.h"
 #ifdef HAVE_X_WIDGETS
 #include "gui-x.h"
 #endif
+#include "objects-x-impl.h"
 #include "xmu.h"
 
 #include "sysfile.h"
@@ -574,12 +575,15 @@ x_locate_pixmap_file (Lisp_Object name)
 	return Qnil;
     }
 
-  if (NILP (Vdefault_x_device))
-    /* This may occur during initialization. */
-    return Qnil;
-  else
-    /* We only check the bitmapFilePath resource on the original X device. */
-    display = DEVICE_X_DISPLAY (XDEVICE (Vdefault_x_device));
+  {
+    Lisp_Object defx = get_default_device (Qx);
+    if (NILP (defx))
+      /* This may occur during initialization. */
+      return Qnil;
+    else
+      /* We only check the bitmapFilePath resource on the original X device. */
+      display = DEVICE_X_DISPLAY (XDEVICE (defx));
+  }
 
 #ifdef USE_XBMLANGPATH
   {

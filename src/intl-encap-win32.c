@@ -1925,6 +1925,8 @@ copy_logfontw_to_logfonta (const LOGFONTW *src, LOGFONTA *dst)
   memcpy (dst, src, sizeof (LOGFONTA));
 }
 
+#if 0 /* unused */
+
 static void
 copy_enumlogfonta_to_enumlogfontw (const ENUMLOGFONTA *src, ENUMLOGFONTW *dst)
 {
@@ -1939,6 +1941,8 @@ copy_enumlogfonta_to_enumlogfontw (const ENUMLOGFONTA *src, ENUMLOGFONTW *dst)
   memcpy (dst->elfFullName, src->elfFullName, sizeof (src->elfFullName));
   memcpy (dst->elfStyle, src->elfStyle, sizeof (src->elfStyle));
 }
+
+#endif /* 0 */
 
 static void
 copy_enumlogfontexa_to_enumlogfontexw (const ENUMLOGFONTEXA *src,
@@ -1997,6 +2001,8 @@ copy_newtextmetricexa_to_newtextmetricexw (const NEWTEXTMETRICEXA *src,
   dst->ntmFontSig = src->ntmFontSig;
 }
 
+#if 0 /* unused */
+
 static void
 copy_textmetricw_to_textmetrica (const TEXTMETRICW *src,
 				       TEXTMETRICA *dst)
@@ -2013,6 +2019,8 @@ copy_textmetricw_to_textmetrica (const TEXTMETRICW *src,
   dst->tmDefaultChar = (BYTE) src->tmDefaultChar;
   dst->tmBreakChar = (BYTE) src->tmBreakChar;
 }
+
+#endif /* 0 */
 
 static void
 copy_textmetrica_to_textmetricw (const TEXTMETRICA *src,
