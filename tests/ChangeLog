@@ -1,3 +1,8 @@
+2003-08-19  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* automated/weak-tests.el: Added tests for weak-lists.
+
 2003-08-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/regexp-tests.el: Update copyright notice and
