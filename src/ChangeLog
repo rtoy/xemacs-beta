@@ -1,3 +1,8 @@
+2003-03-25  Andrew Begel  <abegel@cs.berkeley.edu>
+
+	* emodules.c (vars_of_module): Add .dylib as an acceptable shared
+	library file extension to support MacOS X.
+
 2003-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* database.c (Fopen_database): DB_AUTO_COMMIT is invalid in

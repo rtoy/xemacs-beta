@@ -634,9 +634,10 @@ Danger, danger, Will Robinson!
 */);
 
   /* #### Export this to Lisp */
-  Vmodule_extensions = list3 (build_string (".ell"),
+  Vmodule_extensions = list4 (build_string (".ell"),
 			      build_string (".so"),
-			      build_string (".dll"));
+			      build_string (".dll"),
+			      build_string (".dylib"));
   staticpro (&Vmodule_extensions);
 
   load_modules_quietly = 0;
