@@ -22,6 +22,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
 
+/* This file has been Mule-ized, Ben Wing, 4-13-02. */
+
 /* The linkers that come with MSVC >= 4.0 merge .bss into .data and reorder
  * uninitialised data so that the .data section looks like:
  *
@@ -118,6 +120,8 @@ _start (void)
 
   /* Cache system info, e.g., the NT page size.  */
   cache_system_info ();
+  /* Set OS type, so that tchar stuff below works */
+  init_win32_very_early ();
 
   /* If we're a dumped version of emacs then we need to recreate
      our heap and play tricks with our .bss section.  Do this before
@@ -126,9 +130,11 @@ _start (void)
      won't work.)  */
   if (heap_state == HEAP_UNLOADED) 
     {
-      char executable_path[PATH_MAX];
+      Extbyte executable_path[MAX_PATH * MAX_XETCHAR_SIZE];
 
-      if (GetModuleFileNameA (NULL, executable_path, PATH_MAX) == 0) 
+      /* Don't use mswindows_get_module_file_name() because it uses
+	 xmalloc() */
+      if (qxeGetModuleFileName (NULL, executable_path, MAX_PATH) == 0)
 	{
 	  exit (1);
 	}
@@ -137,10 +143,12 @@ _start (void)
 	 the renamed file still loads its heap from xemacs.exe --kkm */
 #if 0
       {
+	Extbyte *p;
+	
 	/* To allow profiling, make sure executable_path names the .exe
 	   file, not the file created by the profiler */
-	char *p = strrchr (executable_path, '\\');
-	strcpy (p+1, PATH_PROGNAME ".exe");
+	p = xetcsrchr (executable_path, '\\');
+	xetcscpy (p + 1, XETEXT (PATH_PROGNAME ".exe"));
       }
 #endif
 
@@ -168,29 +176,30 @@ _start (void)
 
 /* Dump out .data and .bss sections into a new executable.  */
 int
-unexec (char *new_name, char *old_name, unsigned int start_data,
+unexec (Intbyte *new_name, Intbyte *old_name, unsigned int start_data,
 	unsigned int start_bss, unsigned int entry_address)
 {
   file_data in_file, out_file;
-  char out_filename[PATH_MAX], in_filename[PATH_MAX];
+  Intbyte *out_filename = alloca_intbytes (qxestrlen (new_name) + 10);
+  Intbyte *in_filename = alloca_intbytes (qxestrlen (old_name) + 10);
   unsigned long size;
-  char *ptr;
+  Intbyte *ptr;
   HINSTANCE hImagehelp;
   
   /* Make sure that the input and output filenames have the
      ".exe" extension...patch them up if they don't.  */
-  strcpy (in_filename, old_name);
-  ptr = in_filename + strlen (in_filename) - 4;
-  if (strcmp (ptr, ".exe"))
-    strcat (in_filename, ".exe");
+  qxestrcpy (in_filename, old_name);
+  ptr = in_filename + qxestrlen (in_filename) - 4;
+  if (qxestrcmp (ptr, ".exe"))
+    qxestrcat (in_filename, ".exe");
 
-  strcpy (out_filename, new_name);
-  ptr = out_filename + strlen (out_filename) - 4;
-  if (strcmp (ptr, ".exe"))
-    strcat (out_filename, ".exe");
+  qxestrcpy (out_filename, new_name);
+  ptr = out_filename + qxestrlen (out_filename) - 4;
+  if (qxestrcmp (ptr, ".exe"))
+    qxestrcat (out_filename, ".exe");
 
-  printf ("Dumping from %s\n", in_filename);
-  printf ("          to %s\n", out_filename);
+  stdout_out ("Dumping from %s\n", in_filename);
+  stdout_out ("          to %s\n", out_filename);
 
   /* We need to round off our heap to NT's allocation unit (64KB).  */
   round_heap (get_allocation_unit ());
@@ -198,8 +207,8 @@ unexec (char *new_name, char *old_name, unsigned int start_data,
   /* Open the undumped executable file.  */
   if (!open_input_file (&in_file, in_filename))
     {
-      printf ("Failed to open %s (%d)...bailing.\n", 
-	      in_filename, GetLastError ());
+      stdout_out ("Failed to open %s (%d)...bailing.\n", 
+		  in_filename, GetLastError ());
       exit (1);
     }
 
@@ -209,12 +218,12 @@ unexec (char *new_name, char *old_name, unsigned int start_data,
   /* The size of the dumped executable is the size of the original
      executable plus the size of the heap and the size of the .bss section.  */
   heap_index_in_executable = (unsigned long)
-    round_to_next ((unsigned char *) in_file.size, get_allocation_unit ());
+    round_to_next ((UChar_Binary *) in_file.size, get_allocation_unit ());
   size = heap_index_in_executable + get_committed_heap_size () + bss_size;
   if (!open_output_file (&out_file, out_filename, size))
     {
-      printf ("Failed to open %s (%d)...bailing.\n", 
-	      out_filename, GetLastError ());
+      stdout_out ("Failed to open %s (%d)...bailing.\n", 
+		  out_filename, GetLastError ());
       exit (1);
     }
 
@@ -236,7 +245,8 @@ unexec (char *new_name, char *old_name, unsigned int start_data,
     pfnCheckSumMappedFile_t pfnCheckSumMappedFile;
 
     dos_header = (PIMAGE_DOS_HEADER) out_file.file_base;
-    nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header + dos_header->e_lfanew);
+    nt_header = (PIMAGE_NT_HEADERS) ((UChar_Binary *) dos_header +
+				     dos_header->e_lfanew);
 
     nt_header->OptionalHeader.CheckSum = 0;
 #if 0
@@ -276,21 +286,21 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
 			    DWORD *p_bss_size)
 {
   int n, start, len;
-  char map_filename[PATH_MAX];
-  char buffer[256];
+  Intbyte *map_filename = alloca_intbytes (qxestrlen (p_infile->name) + 10);
+  Extbyte buffer[256];
   FILE *map;
 
   /* Overwrite the .exe extension on the executable file name with
      the .map extension.  */
-  strcpy (map_filename, p_infile->name);
-  n = strlen (map_filename) - 3;
-  strcpy (&map_filename[n], "map");
+  qxestrcpy (map_filename, p_infile->name);
+  n = qxestrlen (map_filename) - 3;
+  qxestrcpy (&map_filename[n], "map");
 
-  map = fopen (map_filename, "r");
+  map = qxe_fopen (map_filename, "r");
   if (!map)
     {
-      printf ("Failed to open map file %s, error %d...bailing out.\n",
-	      map_filename, GetLastError ());
+      stdout_out ("Failed to open map file %s, error %d...bailing out.\n",
+		  map_filename, GetLastError ());
       exit (-1);
     }
 
@@ -301,6 +311,7 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
       n = sscanf (buffer, " %*d:%x %x", &start, &len);
       if (n != 2)
 	{
+	  /* printf with external data, stdout_out with internal */
 	  printf ("Failed to scan the .bss section line:\n%s", buffer);
 	  exit (-1);
 	}
@@ -318,29 +329,29 @@ get_section_info (file_data *p_infile)
   PIMAGE_DOS_HEADER dos_header;
   PIMAGE_NT_HEADERS nt_header;
   PIMAGE_SECTION_HEADER section, data_section;
-  unsigned char *ptr;
+  UChar_Binary *ptr;
   int i;
   
   dos_header = (PIMAGE_DOS_HEADER) p_infile->file_base;
   if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) 
     {
-      printf ("Unknown EXE header in %s...bailing.\n", p_infile->name);
+      stdout_out ("Unknown EXE header in %s...bailing.\n", p_infile->name);
       exit (1);
     }
   nt_header = (PIMAGE_NT_HEADERS) (((unsigned long) dos_header) + 
 				   dos_header->e_lfanew);
   if (nt_header == NULL) 
     {
-      printf ("Failed to find IMAGE_NT_HEADER in %s...bailing.\n", 
-	     p_infile->name);
+      stdout_out ("Failed to find IMAGE_NT_HEADER in %s...bailing.\n", 
+		  p_infile->name);
       exit (1);
     }
 
   /* Check the NT header signature ...  */
   if (nt_header->Signature != IMAGE_NT_SIGNATURE) 
     {
-      printf ("Invalid IMAGE_NT_SIGNATURE 0x%x in %s...bailing.\n",
-	      nt_header->Signature, p_infile->name);
+      stdout_out ("Invalid IMAGE_NT_SIGNATURE 0x%x in %s...bailing.\n",
+		  nt_header->Signature, p_infile->name);
     }
 
   /* Flip through the sections for .data and .bss ...  */
@@ -352,10 +363,10 @@ get_section_info (file_data *p_infile)
 	{
 	  extern int my_ebss;		/* From lastfile.c  */
 
-	  ptr = (char *) nt_header->OptionalHeader.ImageBase +
+	  ptr = (UChar_Binary *) nt_header->OptionalHeader.ImageBase +
 	    section->VirtualAddress;
 	  bss_start = ptr;
-	  bss_size = (char*)&my_ebss - (char*)bss_start;
+	  bss_size = (UChar_Binary*) &my_ebss - (UChar_Binary*) bss_start;
 	}
 
       if (!strcmp (section->Name, ".data")) 
@@ -363,11 +374,11 @@ get_section_info (file_data *p_infile)
       if (!strcmp (section->Name, "xdata"))
 #endif
 	{
-	  extern char my_edata[];	/* From lastfile.c  */
+	  extern Char_Binary my_edata[];	/* From lastfile.c  */
 
 	  /* The .data section.  */
 	  data_section = section;
-	  ptr = (char *) nt_header->OptionalHeader.ImageBase +
+	  ptr = (UChar_Binary *) nt_header->OptionalHeader.ImageBase +
 	    section->VirtualAddress;
 	  data_start_va = ptr;
 	  data_start_file = section->PointerToRawData;
@@ -382,8 +393,8 @@ get_section_info (file_data *p_infile)
 	  /* This code doesn't know how to grow the raw size of a section. */
 	  if (section->SizeOfRawData < section->Misc.VirtualSize)
 	    {
-	      printf ("The emacs data section is smaller than expected"
-		      "...bailing.\n");
+	      stdout_out ("The emacs data section is smaller than expected"
+			  "...bailing.\n");
 	      exit (1);
 	    }
 #endif
@@ -407,7 +418,7 @@ get_section_info (file_data *p_infile)
       get_bss_info_from_map_file (p_infile, &ptr, &bss_size);
       bss_start = ptr + nt_header->OptionalHeader.ImageBase
 	+ data_section->VirtualAddress;
-      bss_size = (char*)&my_ebss - (char*)bss_start;
+      bss_size = (UChar_Binary *) &my_ebss - (UChar_Binary *) bss_start;
     }
 #else
   bss_size = 0;
@@ -418,6 +429,7 @@ get_section_info (file_data *p_infile)
 /* The dump routines.  */
 
 #ifdef DEBUG_XEMACS
+/* printf with external data, stdout_out with internal */
 #define DUMP_MSG(x) printf x
 #else
 #define DUMP_MSG(x)
@@ -427,11 +439,11 @@ static void
 copy_executable_and_dump_data_section (file_data *p_infile,
 				       file_data *p_outfile)
 {
-  unsigned char *data_file, *data_va;
+  UChar_Binary *data_file, *data_va;
   unsigned long size, index;
 
   /* Get a pointer to where the raw data should go in the executable file.  */
-  data_file = (char *) p_outfile->file_base + data_start_file;
+  data_file = (UChar_Binary *) p_outfile->file_base + data_start_file;
 
   /* Get a pointer to the raw data in our address space.  */
   data_va = data_start_va;
@@ -447,7 +459,8 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("Dumping data section...\n"));
   DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", 
-	     (char*) data_file - (char *) p_outfile->file_base));
+	     (UChar_Binary *) data_file -
+	     (UChar_Binary *) p_outfile->file_base));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (data_file, data_va, size);
 
@@ -457,38 +470,38 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("\t0x%08x Offset in input file.\n", index));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", index));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
-  memcpy ((char *) p_outfile->file_base + index, 
-	  (char *) p_infile->file_base + index, size);
+  memcpy ((UChar_Binary *) p_outfile->file_base + index, 
+	  (UChar_Binary *) p_infile->file_base + index, size);
 }
 
 static void
 dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
 {
-    unsigned char *heap_data;
-    unsigned long size, index;
+  UChar_Binary *heap_data;
+  unsigned long size, index;
 
-    DUMP_MSG (("Dumping heap onto end of executable...\n"));
+  DUMP_MSG (("Dumping heap onto end of executable...\n"));
 
-    index = heap_index_in_executable;
-    size = get_committed_heap_size ();
-    heap_data = get_heap_start ();
+  index = heap_index_in_executable;
+  size = get_committed_heap_size ();
+  heap_data = get_heap_start ();
 
-    DUMP_MSG (("\t0x%08x Heap start in process.\n", heap_data));
-    DUMP_MSG (("\t0x%08x Heap offset in executable.\n", index));
-    DUMP_MSG (("\t0x%08x Heap size in bytes.\n", size));
+  DUMP_MSG (("\t0x%08x Heap start in process.\n", heap_data));
+  DUMP_MSG (("\t0x%08x Heap offset in executable.\n", index));
+  DUMP_MSG (("\t0x%08x Heap size in bytes.\n", size));
 
-    memcpy ((PUCHAR) p_outfile->file_base + index, heap_data, size);
+  memcpy ((PUCHAR) p_outfile->file_base + index, heap_data, size);
 
 #ifndef DUMP_SEPARATE_SECTION
-    DUMP_MSG (("Dumping bss onto end of executable...\n"));
+  DUMP_MSG (("Dumping bss onto end of executable...\n"));
     
-    index += size;
-    size = bss_size;
+  index += size;
+  size = bss_size;
 
-    DUMP_MSG (("\t0x%08x BSS start in process.\n", bss_start));
-    DUMP_MSG (("\t0x%08x BSS offset in executable.\n", index));
-    DUMP_MSG (("\t0x%08x BSS size in bytes.\n", size));
-    memcpy ((char *) p_outfile->file_base + index, bss_start, size);
+  DUMP_MSG (("\t0x%08x BSS start in process.\n", bss_start));
+  DUMP_MSG (("\t0x%08x BSS offset in executable.\n", index));
+  DUMP_MSG (("\t0x%08x BSS size in bytes.\n", size));
+  memcpy ((UChar_Binary *) p_outfile->file_base + index, bss_start, size);
 #endif
 }
 
@@ -500,14 +513,14 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
 /* Load the dumped .bss section into the .bss area of our address space.  */
 /* Already done if the .bss  was part of a separate emacs data section */
 void
-read_in_bss (char *filename)
+read_in_bss (Extbyte *filename)
 {
 #ifndef DUMP_SEPARATE_SECTION
   HANDLE file;
   unsigned long index, n_read;
 
-  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE)
     abort ();
   
@@ -527,21 +540,21 @@ read_in_bss (char *filename)
 
 /* Map the heap dumped into the executable file into our address space.  */
 void 
-map_in_heap (char *filename)
+map_in_heap (Extbyte *filename)
 {
   HANDLE file;
   HANDLE file_mapping;
   void  *file_base;
   unsigned long size, upper_size, n_read;
 
-  file = CreateFileA (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  file = qxeCreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
     abort ();
 
   size = GetFileSize (file, &upper_size);
-  file_mapping = CreateFileMappingA (file, NULL, PAGE_WRITECOPY, 
-				     0, size, NULL);
+  file_mapping = qxeCreateFileMapping (file, NULL, PAGE_WRITECOPY, 
+				       0, size, NULL);
   if (!file_mapping) 
     abort ();
 

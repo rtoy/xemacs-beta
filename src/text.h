@@ -85,9 +85,9 @@ extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
 #ifdef ERROR_CHECK_TEXT
 
-INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file,
-					     int line);
-INLINE_HEADER int
+INLINE_HEADER Bytecount REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file,
+						   int line);
+INLINE_HEADER Bytecount
 REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file, int line)
 {
   assert_at_line (fb < 0xA0, file, line);
@@ -323,10 +323,10 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
    readable. */
 DECLARE_INLINE_HEADER (
 Bytecount
-validate_intbyte_string_backward (Intbyte *ptr, Bytecount n)
+validate_intbyte_string_backward (const Intbyte *ptr, Bytecount n)
 )
 {
-  Intbyte *ptr2;
+  const Intbyte *ptr2;
 
   if (n == 0)
     return n;
@@ -374,8 +374,10 @@ charptr_n_addr (const Intbyte *ptr, Charcount offset)
 /* -------------------------------------------------------------------- */
 
 #define simple_charptr_emchar(ptr)		((Emchar) (ptr)[0])
-#define simple_set_charptr_emchar(ptr, x)	((ptr)[0] = (Intbyte) (x), 1)
-#define simple_charptr_copy_char(src, dst)	((dst)[0] = *(src), 1)
+#define simple_set_charptr_emchar(ptr, x) \
+	((ptr)[0] = (Intbyte) (x), (Bytecount) 1)
+#define simple_charptr_copy_char(src, dst) \
+	((dst)[0] = *(src), (Bytecount) 1)
 
 #ifdef MULE
 
@@ -1347,7 +1349,7 @@ DECLARE_INLINE_HEADER (Bytecount eiincpos_1 (Eistring *eistr,
 					     Charcount n))
 {
   Intbyte *pos = eistr->data_ + bytepos;
-  int i;
+  Charcount i;
 
   text_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
   text_checking_assert (n >= 0 && n <= eistr->charlen_);
@@ -1819,8 +1821,16 @@ do {									   \
   DFC_##sink_type##_USE_CONVERTED_DATA (sink);				   \
 } while (0)
 
+#ifdef __cplusplus
 
+/* Error if you try to use a union here: "member `struct {anonymous
+union}::{anonymous} {anonymous union}::data' with constructor not allowed
+in union" (Bytecount is a class) */
+
+typedef struct
+#else
 typedef union
+#endif
 {
   struct { const void *ptr; Bytecount len; } data;
   Lisp_Object lisp_object;

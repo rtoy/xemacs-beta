@@ -197,6 +197,19 @@ intern (const CIntbyte *str)
   return intern_int ((Intbyte *) str);
 }
 
+Lisp_Object
+intern_converting_underscores_to_dashes (const CIntbyte *str)
+{
+  Bytecount len = strlen (str);
+  CIntbyte *tmp = alloca_extbytes (len + 1);
+  Bytecount i;
+  strcpy (tmp, str);
+  for (i = 0; i < len; i++)
+    if (tmp[i] == '_')
+      tmp[i] = '-';
+  return intern_int ((Intbyte *) tmp);
+}
+
 DEFUN ("intern", Fintern, 1, 2, 0, /*
 Return the canonical symbol whose name is STRING.
 If there is none, one is created by this function and returned.

@@ -21,18 +21,20 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file has been Mule-ized except for `start-process-internal',
-   `open-network-stream-internal' and `open-multicast-group-internal'. */
+/* This file has been Mule-ized. */
 
 /* This file has been split into process.c and process-unix.c by
    Kirill M. Katsnelson <kkm@kis.ru>, so please bash him and not
-   the original author(s) */
+   the original author(s).
+
+   Non-synch-subprocess stuff (mostly process environment) moved from
+   callproc.c, 4-3-02, Ben Wing. */
 
 #include <config.h>
 
-#if !defined (NO_SUBPROCESSES)
-
-/* The entire file is within this conditional */
+#if defined (NO_SUBPROCESSES)
+#error "We don't support this anymore."
+#endif
 
 #include "lisp.h"
 
@@ -52,8 +54,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 #include "sysproc.h"
+#include "syssignal.h"
 #include "systime.h"
-#include "syssignal.h" /* Always include before systty.h */
 #include "systty.h"
 #include "syswait.h"
 
@@ -105,7 +107,6 @@ struct hash_table *usid_to_process;
 /* List of process objects. */
 Lisp_Object Vprocess_list;
 
-extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 Lisp_Object Vnull_device;
 
 /* Cons of coding systems used to initialize process I/O on a newly-
@@ -116,6 +117,18 @@ Lisp_Object Qprocess_error;
 Lisp_Object Qnetwork_error;
 
 Fixnum debug_process_io;
+
+Lisp_Object Vshell_file_name;
+
+/* The environment to pass to all subprocesses when they are started.
+   This is in the semi-bogus format of ("VAR=VAL" "VAR2=VAL2" ... )
+ */
+Lisp_Object Vprocess_environment;
+
+/* Make sure egetenv() not called too soon */
+int env_initted;
+
+Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
 
@@ -527,7 +540,6 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
   p->coding_instream =
     make_coding_input_stream (XLSTREAM (p->pipe_instream), incode,
 			      CODING_DECODE, 0);
-  Lstream_set_character_mode (XLSTREAM (p->coding_instream));
   p->coding_outstream =
     make_coding_output_stream (XLSTREAM (p->pipe_outstream), outcode,
 			       CODING_ENCODE, 0);
@@ -583,7 +595,6 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
        (int nargs, Lisp_Object *args))
 {
   /* This function can call lisp */
-  /* !!#### This function has not been Mule-ized */
   Lisp_Object buffer, name, program, process, current_dir;
   Lisp_Object tem;
   int speccount = specpdl_depth ();
@@ -665,8 +676,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   process = make_process_internal (name);
 
   XPROCESS (process)->buffer = buffer;
-  XPROCESS (process)->command = Flist (nargs - 2,
-				    args + 2);
+  XPROCESS (process)->command = Flist (nargs - 2, args + 2);
 
   /* Make the process marker point into the process buffer (if any).  */
   if (!NILP (buffer))
@@ -2048,20 +2058,6 @@ Return t if PROCESS will be killed without query when emacs is exited.
   return XPROCESS (process)->kill_without_query ? Qt : Qnil;
 }
 
-
-/* This is not named init_process in order to avoid a conflict with NS 3.3 */
-void
-init_xemacs_process (void)
-{
-  MAYBE_PROCMETH (init_process, ());
-
-  Vprocess_list = Qnil;
-
-  if (usid_to_process)
-    clrhash (usid_to_process);
-  else
-    usid_to_process = make_hash_table (32);
-}
 
 #if 0
 
@@ -2075,6 +2071,238 @@ t or pty (pty) or stream (socket connection).
 }
 
 #endif /* 0 */
+
+
+static int
+getenv_internal (const Intbyte *var,
+		 Bytecount varlen,
+		 Intbyte **value,
+		 Bytecount *valuelen)
+{
+  Lisp_Object scan;
+
+  assert (env_initted);
+
+  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
+    {
+      Lisp_Object entry = XCAR (scan);
+
+      if (STRINGP (entry)
+	  && XSTRING_LENGTH (entry) > varlen
+	  && XSTRING_BYTE (entry, varlen) == '='
+#ifdef WIN32_NATIVE
+	  /* NT environment variables are case insensitive.  */
+	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
+#else  /* not WIN32_NATIVE */
+	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
+#endif /* not WIN32_NATIVE */
+	  )
+	{
+	  *value    = XSTRING_DATA   (entry) + (varlen + 1);
+	  *valuelen = XSTRING_LENGTH (entry) - (varlen + 1);
+	  return 1;
+	}
+    }
+
+  return 0;
+}
+
+static void
+putenv_internal (const Intbyte *var,
+		 Bytecount varlen,
+		 const Intbyte *value,
+		 Bytecount valuelen)
+{
+  Lisp_Object scan;
+
+  assert (env_initted);
+
+  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
+    {
+      Lisp_Object entry = XCAR (scan);
+
+      if (STRINGP (entry)
+	  && XSTRING_LENGTH (entry) > varlen
+	  && XSTRING_BYTE (entry, varlen) == '='
+#ifdef WIN32_NATIVE
+	  /* NT environment variables are case insensitive.  */
+	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
+#else  /* not WIN32_NATIVE */
+	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
+#endif /* not WIN32_NATIVE */
+	  )
+	{
+	  XCAR (scan) = concat3 (make_string (var, varlen),
+				 build_string ("="),
+				 make_string (value, valuelen));
+	  return;
+	}
+    }
+
+  Vprocess_environment = Fcons (concat3 (make_string (var, varlen),
+					 build_string ("="),
+					 make_string (value, valuelen)),
+				Vprocess_environment);
+}
+
+/* NOTE:
+
+   FSF has this as a Lisp function, as follows.  Generally moving things
+   out of C and into Lisp is a good idea, but in this case the Lisp
+   function is used so early in the startup sequence that it would be ugly
+   to rearrange the early dumped code to accommodate this.
+   
+(defun getenv (variable)
+  "Get the value of environment variable VARIABLE.
+VARIABLE should be a string.  Value is nil if VARIABLE is undefined in
+the environment.  Otherwise, value is a string.
+
+This function consults the variable `process-environment'
+for its value."
+  (interactive (list (read-envvar-name "Get environment variable: " t)))
+  (let ((value (getenv-internal variable)))
+    (when (interactive-p)
+      (message "%s" (if value value "Not set")))
+    value))
+*/
+
+DEFUN ("getenv", Fgetenv, 1, 2, "sEnvironment variable: \np", /*
+Return the value of environment variable VAR, as a string.
+VAR is a string, the name of the variable.
+When invoked interactively, prints the value in the echo area.
+*/
+       (var, interactivep))
+{
+  Intbyte *value;
+  Bytecount valuelen;
+  Lisp_Object v = Qnil;
+  struct gcpro gcpro1;
+
+  CHECK_STRING (var);
+  GCPRO1 (v);
+  if (getenv_internal (XSTRING_DATA (var), XSTRING_LENGTH (var),
+		       &value, &valuelen))
+    v = make_string (value, valuelen);
+  if (!NILP (interactivep))
+    {
+      if (NILP (v))
+	message ("%s not defined in environment", XSTRING_DATA (var));
+      else
+	/* #### Should use Fprin1_to_string or Fprin1 to handle string
+           containing quotes correctly.  */
+	message ("\"%s\"", value);
+    }
+  RETURN_UNGCPRO (v);
+}
+
+/* A version of getenv that consults Vprocess_environment, easily
+   callable from C.
+
+   (At init time, Vprocess_environment is initialized from the
+   environment, stored in the global variable environ. [Note that
+   at startup time, `environ' should be the same as the envp parameter
+   passed to main(); however, later calls to putenv() may change
+   `environ', making the envp parameter inaccurate.] Calls to getenv()
+   and putenv() consult and modify `environ'.  However, once
+   Vprocess_environment is initted, XEmacs C code should *NEVER* call
+   getenv() or putenv() directly, because (1) Lisp code that modifies
+   the environment only modifies Vprocess_environment, not `environ';
+   and (2) Vprocess_environment is in internal format but `environ'
+   is in some external format, and getenv()/putenv() are not Mule-
+   encapsulated.
+
+   WARNING: This value points into Lisp string data and thus will become
+   invalid after a GC. */
+
+Intbyte *
+egetenv (const CIntbyte *var)
+{
+  /* This cannot GC -- 7-28-00 ben */
+  Intbyte *value;
+  Bytecount valuelen;
+
+  if (getenv_internal ((const Intbyte *) var, strlen (var), &value, &valuelen))
+    return value;
+  else
+    return 0;
+}
+
+void
+eputenv (const CIntbyte *var, const CIntbyte *value)
+{
+  putenv_internal ((Intbyte *) var, strlen (var), (Intbyte *) value,
+		   strlen (value));
+}
+
+
+/* This is not named init_process in order to avoid a conflict with NS 3.3 */
+void
+init_xemacs_process (void)
+{
+  /* This function can GC */
+
+  MAYBE_PROCMETH (init_process, ());
+
+  Vprocess_list = Qnil;
+
+  if (usid_to_process)
+    clrhash (usid_to_process);
+  else
+    usid_to_process = make_hash_table (32);
+  
+  {
+    /* jwz: always initialize Vprocess_environment, so that egetenv()
+       works in temacs. */
+    char **envp;
+    Vprocess_environment = Qnil;
+    for (envp = environ; envp && *envp; envp++)
+      Vprocess_environment =
+	Fcons (build_ext_string (*envp, Qnative), Vprocess_environment);
+    /* This gets set back to 0 in disksave_object_finalization() */
+    env_initted = 1;
+  }
+
+  {
+    /* Initialize shell-file-name from environment variables or best guess. */
+#ifdef WIN32_NATIVE
+    const Intbyte *shell = egetenv ("SHELL");
+    if (!shell) shell = egetenv ("COMSPEC");
+    /* Should never happen! */
+    if (!shell) shell =
+      (Intbyte *) (GetVersion () & 0x80000000 ? "command" : "cmd");
+#else /* not WIN32_NATIVE */
+    const Intbyte *shell = egetenv ("SHELL");
+    if (!shell) shell = (Intbyte *) "/bin/sh";
+#endif
+
+#if 0 /* defined (WIN32_NATIVE) */
+    /* BAD BAD BAD.  We do not wanting to be passing an XEmacs-created
+       SHELL var down to some inferior Cygwin process, which might get
+       screwed up.
+	 
+       There are a few broken apps (eterm/term.el, eterm/tshell.el,
+       os-utils/terminal.el, texinfo/tex-mode.el) where this will
+       cause problems.  Those broken apps don't look at
+       shell-file-name, instead just at explicit-shell-file-name,
+       ESHELL and SHELL.  They are apparently attempting to borrow
+       what `M-x shell' uses, but that latter also looks at
+       shell-file-name.  What we want is for all of these apps to look
+       at shell-file-name, so that the user can change the value of
+       shell-file-name and everything will work out hunky-dorey.
+       */
+    
+    if (!egetenv ("SHELL"))
+      {
+	Intbyte *faux_var = alloca_array (Intbyte, 7 + qxestrlen (shell));
+	qxesprintf (faux_var, "SHELL=%s", shell);
+	Vprocess_environment = Fcons (build_intstring (faux_var),
+				      Vprocess_environment);
+      }
+#endif /* 0 */
+
+    Vshell_file_name = build_intstring (shell);
+  }
+}
 
 void
 syms_of_process (void)
@@ -2144,6 +2372,7 @@ syms_of_process (void)
   DEFSUBR (Fset_process_output_coding_system);
   DEFSUBR (Fprocess_coding_system);
   DEFSUBR (Fset_process_coding_system);
+  DEFSUBR (Fgetenv);
 }
 
 void
@@ -2232,6 +2461,20 @@ The value takes effect when `open-network-stream-internal' is called.
 */ );
   network_stream_blocking_port_list = Qnil;
 #endif	/* PROCESS_IO_BLOCKING */
-}
 
-#endif /* not NO_SUBPROCESSES */
+  /* This function can GC */
+  DEFVAR_LISP ("shell-file-name", &Vshell_file_name /*
+*File name to load inferior shells from.
+Initialized from the SHELL environment variable.
+*/ );
+
+  DEFVAR_LISP ("process-environment", &Vprocess_environment /*
+List of environment variables for subprocesses to inherit.
+Each element should be a string of the form ENVVARNAME=VALUE.
+The environment which Emacs inherits is placed in this variable
+when Emacs starts.
+*/ );
+
+  Vlisp_EXEC_SUFFIXES = build_string (EXEC_SUFFIXES);
+  staticpro (&Vlisp_EXEC_SUFFIXES);
+}

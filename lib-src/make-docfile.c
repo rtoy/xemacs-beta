@@ -2,42 +2,42 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1998, 1999 J. Kean Johnston.
-   Copyright (C) 2001 Ben Wing.
-
-This file is part of XEmacs.
-
-XEmacs is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
-
-XEmacs is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+   Copyright (C) 2001, 2002 Ben Wing.
+   
+   This file is part of XEmacs.
+   
+   XEmacs is free software; you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation; either version 2, or (at your option) any
+   later version.
+   
+   XEmacs is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with XEmacs; see the file COPYING.  If not, write to
+   the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
 /* The arguments given to this program are all the C and Lisp source files
- of XEmacs.  .elc and .el and .c files are allowed.
- A .o or .obj file can also be specified; the .c file it was made from is used.
- This helps the makefile pass the correct list of files.
-
- The results, which go to standard output or to a file
- specified with -a or -o (-a to append, -o to start from nothing),
- are entries containing function or variable names and their documentation.
- Each entry starts with a ^_ character.
- Then comes F for a function or V for a variable.
- Then comes the function or variable name, terminated with a newline.
- Then comes the documentation for that function or variable.
-
- Added 19.15/20.1:  `-i site-packages' allow installer to dump extra packages
- without modifying Makefiles, etc.
+   of XEmacs.  .elc and .el and .c files are allowed.
+   A .o or .obj file can also be specified; the .c file it was made from is
+   used.  This helps the makefile pass the correct list of files.
+   
+   The results, which go to standard output or to a file
+   specified with -a or -o (-a to append, -o to start from nothing),
+   are entries containing function or variable names and their documentation.
+   Each entry starts with a ^_ character.
+   Then comes F for a function or V for a variable.
+   Then comes the function or variable name, terminated with a newline.
+   Then comes the documentation for that function or variable.
+   
+   Added 19.15/20.1:  `-i site-packages' allow installer to dump extra packages
+   without modifying Makefiles, etc.
  */
 
 #include <config.h>
@@ -124,36 +124,40 @@ xmalloc (unsigned int size)
 }
 
 static char *
-next_extra_elc(char *extra_elcs)
+next_extra_elc (char *extra_elcs)
 {
   static FILE *fp = NULL;
   static char line_buf[BUFSIZ];
   char *p = line_buf+1;
 
-  if (!fp) {
-    if (!extra_elcs) {
-      return NULL;
-    } else if (!(fp = fopen(extra_elcs, READ_BINARY))) {
-      /* It is not an error if this file doesn't exist. */
-      /*fatal("error opening site package file list", 0);*/
+  if (!fp)
+    {
+      if (!extra_elcs)
+	return NULL;
+      else if (!(fp = fopen (extra_elcs, READ_BINARY)))
+	{
+	  /* It is not an error if this file doesn't exist. */
+	  /*fatal ("error opening site package file list", 0);*/
+	  return NULL;
+	}
+      fgets (line_buf, BUFSIZ, fp);
+    }
+
+ again:
+  if (!fgets (line_buf, BUFSIZ, fp))
+    {
+      fclose (fp);
+      fp = NULL;
       return NULL;
     }
-    fgets(line_buf, BUFSIZ, fp);
-  }
-
-again:
-  if (!fgets(line_buf, BUFSIZ, fp)) {
-    fclose(fp);
-    fp = NULL;
-    return NULL;
-  }
   line_buf[0] = '\0';
-  if (strlen(p) <= 2 || strlen(p) >= (BUFSIZ - 5)) {
-    /* reject too short or too long lines */
-    goto again;
-  }
-  p[strlen(p) - 2] = '\0';
-  strcat(p, ".elc");
+  if (strlen (p) <= 2 || strlen (p) >= (BUFSIZ - 5))
+    {
+      /* reject too short or too long lines */
+      goto again;
+    }
+  p[strlen (p) - 2] = '\0';
+  strcat (p, ".elc");
 
   return p;
 }
@@ -201,10 +205,11 @@ main (int argc, char **argv)
       i += 2;
     }
 
-  if (argc > (i + 1) && !strcmp(argv[i], "-i")) {
-    extra_elcs = argv[i + 1];
-    i += 2;
-  }
+  if (argc > (i + 1) && !strcmp (argv[i], "-i"))
+    {
+      extra_elcs = argv[i + 1];
+      i += 2;
+    }
 
   if (outfile == 0)
     fatal ("No output file specified", "");
@@ -246,13 +251,13 @@ main (int argc, char **argv)
 	}
     }
 
-  if (extra_elcs) {
-    char *p;
+  if (extra_elcs)
+    {
+      char *p;
 
-    while ((p = next_extra_elc(extra_elcs)) != NULL) {
-      err_count += scan_file(p);
+      while ((p = next_extra_elc (extra_elcs)) != NULL)
+	err_count += scan_file (p);
     }
-  }
 
   putc ('\n', outfile);
   if (ellcc)
@@ -286,17 +291,102 @@ scan_file (const char *filename)
       return scan_c_file (filename, READ_TEXT);
     }
 }
+
+static int
+getc_skipping_iso2022 (FILE *file)
+{
+  register int c;
+  /* #### Kludge -- Ignore any ISO2022 sequences */
+  c = getc (file);
+  while (c == 27)
+    {
+      c = getc (file);
+      if (c == '$')
+	c = getc (file);
+      if (c >= '(' && c <= '/')
+	c = getc (file);
+      c = getc (file);
+    }
+  return c;
+}
+
+enum iso2022_state
+{
+  ISO_NOTHING,
+  ISO_ESC,
+  ISO_DOLLAR,
+  ISO_FINAL_IS_NEXT,
+  ISO_DOLLAR_AND_FINAL_IS_NEXT
+};
+
+static int non_ascii_p;
+
+static int
+getc_iso2022 (FILE *file)
+{
+  /* #### Kludge -- Parse ISO2022 sequences (more or less) */
+  static enum iso2022_state state;
+  static int prevc;
+  register int c;
+  c = getc (file);
+  switch (state)
+    {
+    case ISO_NOTHING:
+      if (c == 27)
+	state = ISO_ESC;
+      break;
+
+    case ISO_ESC:
+      if (c == '$')
+	state = ISO_DOLLAR;
+      else if (c >= '(' && c <= '/')
+	state = ISO_FINAL_IS_NEXT;
+      else
+	state = ISO_NOTHING;
+      break;
+
+    case ISO_DOLLAR:
+      if (c >= '(' && c <= '/')
+	state = ISO_DOLLAR_AND_FINAL_IS_NEXT;
+      else if (c >= '@' && c <= 'B') /* ESC $ @ etc */
+	{
+	  non_ascii_p = 1;
+	  state = ISO_NOTHING;
+	}
+      else
+	state = ISO_NOTHING;
+      break;
+
+    case ISO_FINAL_IS_NEXT:
+      if (prevc == '(' && c == 'B') /* ESC ( B, invoke ASCII */
+	non_ascii_p = 0;
+      else if (prevc == '(' || prevc == ',') /* ESC ( x or ESC , x */
+	non_ascii_p = 1;
+      state = ISO_NOTHING;
+      break;
+
+    case ISO_DOLLAR_AND_FINAL_IS_NEXT:
+      if (prevc == '(' || prevc == ',') /* ESC $ ( x or ESC $ , x */
+	non_ascii_p = 1;
+      state = ISO_NOTHING;
+      break;
+    }
+      
+  prevc = c;
+  return c;
+}
+
 
 char buf[128];
 
 /* Skip a C string from INFILE,
- and return the character that follows the closing ".
+   and return the character that follows the closing ".
  If printflag is positive, output string contents to outfile.
  If it is negative, store contents in buf.
  Convert escape sequences \n and \t to newline and tab;
  discard \ followed by newline.  */
 
-#define MDGET do { prevc = c; c = getc (infile); } while (0)
+#define MDGET do { prevc = c; c = getc_iso2022 (infile); } while (0)
 static int
 read_c_string (FILE *infile, int printflag, int c_docstring)
 {
@@ -307,9 +397,9 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
   MDGET;
   while (c != EOF)
     {
-      while ((c_docstring || c != '"') && c != EOF)
+      while ((c_docstring || c != '"' || non_ascii_p) && c != EOF)
 	{
-	  if (c == '*')
+	  if (c == '*' && !non_ascii_p)
 	    {
 	      int cc = getc (infile);
 	      if (cc == '/')
@@ -343,7 +433,7 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 		*p++ = '\n';
 	    }
 
-	  if (c == '\\')
+	  if (c == '\\' && !non_ascii_p)
 	    {
 	      MDGET;
 	      if (c == '\n')
@@ -364,7 +454,7 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 	      start = 0;
 	      if (printflag > 0)
 		{
-		  if (ellcc && c == '"')
+		  if (ellcc && c == '"' && !non_ascii_p)
 		    putc ('\\', outfile);
 		  putc (c, outfile);
 		}
@@ -381,22 +471,22 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 	      MDGET;
 	    }
 	  while (isspace (c));
-	  if (c != '"')
+	  if (c != '"' || non_ascii_p)
 	    break;
 	}
       else
 	{
 	  MDGET;
-	  if (c != '"')
+	  if (c != '"' || non_ascii_p)
 	    break;
 	  /* If we had a "", concatenate the two strings.  */
 	}
       MDGET;
     }
-
+  
   if (printflag < 0)
     *p = 0;
-
+  
   return c;
 }
 
@@ -437,7 +527,7 @@ write_c_args (FILE *out, const char *func, char *buff, int minargs,
       static char lo[] = "Lisp_Object";
       if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
 	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
-	  isspace((unsigned char) (* (p + sizeof (lo) - 1))))
+	  isspace ((unsigned char) (* (p + sizeof (lo) - 1))))
 	{
 	  p += (sizeof (lo) - 1);
 	  while (isspace ((unsigned char) (*p)))
@@ -495,7 +585,7 @@ write_c_args (FILE *out, const char *func, char *buff, int minargs,
 #endif
     }
   if (!ellcc)
-    putc ('\n', out); /* XEmacs addition */
+    putc ('\n', out);		/* XEmacs addition */
 }
 
 /* Read through a c file.  If a .o or .obj file is named,
@@ -617,7 +707,7 @@ scan_c_file (const char *filename, const char *mode)
 	commas = 2;
       else if (defvarflag)
 	commas = 1;
-      else  /* For DEFSIMPLE and DEFPRED */
+      else			/* For DEFSIMPLE and DEFPRED */
 	commas = 2;
 
       while (commas)
@@ -636,7 +726,7 @@ scan_c_file (const char *filename, const char *mode)
 		  ungetc (c, infile);
 		  if (commas == 2) /* pick up minargs */
 		    fscanf (infile, "%d", &minargs);
-		  else /* pick up maxargs */
+		  else		/* pick up maxargs */
 		    if (c == 'M' || c == 'U') /* MANY || UNEVALLED */
 		      maxargs = -1;
 		    else
@@ -672,15 +762,15 @@ scan_c_file (const char *filename, const char *mode)
 
       if (defunflag || defvarflag || c == '"')
 	{
-      if (ellcc)
-        fprintf (outfile, "  CDOC%s(\"%s\", \"\\\n",
-                 defvarflag ? "SYM" : "SUBR", buf);
-      else
-        {
-          putc (037, outfile);
-          putc (defvarflag ? 'V' : 'F', outfile);
-          fprintf (outfile, "%s\n", buf);
-        }
+	  if (ellcc)
+	    fprintf (outfile, "  CDOC%s(\"%s\", \"\\\n",
+		     defvarflag ? "SYM" : "SUBR", buf);
+	  else
+	    {
+	      putc (037, outfile);
+	      putc (defvarflag ? 'V' : 'F', outfile);
+	      fprintf (outfile, "%s\n", buf);
+	    }
 	  c = read_c_string (infile, 1, (defunflag || defvarflag));
 
 	  /* If this is a defun, find the arguments and print them.  If
@@ -690,7 +780,7 @@ scan_c_file (const char *filename, const char *mode)
 	  if (defunflag && maxargs != -1)
 	    {
 	      char argbuf[1024], *p = argbuf;
-#if 0 /* For old DEFUN's only */
+#if 0				/* For old DEFUN's only */
 	      while (c != ')')
 		{
 		  if (c < 0)
@@ -712,14 +802,14 @@ scan_c_file (const char *filename, const char *mode)
 	      while (c != ')');
 	      *p = '\0';
 	      /* Output them.  */
-          if (ellcc)
-            fprintf (outfile, "\\n\\\n\\n\\\n");
-          else
-            fprintf (outfile, "\n\n");
+	      if (ellcc)
+		fprintf (outfile, "\\n\\\n\\n\\\n");
+	      else
+		fprintf (outfile, "\n\n");
 	      write_c_args (outfile, buf, argbuf, minargs, maxargs);
 	    }
-      if (ellcc)
-        fprintf (outfile, "\\n\");\n\n");
+	  if (ellcc)
+	    fprintf (outfile, "\\n\");\n\n");
 	}
     }
  eof:
@@ -728,17 +818,17 @@ scan_c_file (const char *filename, const char *mode)
 }
 
 /* Read a file of Lisp code, compiled or interpreted.
- Looks for
-  (defun NAME ARGS DOCSTRING ...)
-  (defmacro NAME ARGS DOCSTRING ...)
-  (autoload (quote NAME) FILE DOCSTRING ...)
-  (defvar NAME VALUE DOCSTRING)
-  (defconst NAME VALUE DOCSTRING)
-  (fset (quote NAME) (make-byte-code ... DOCSTRING ...))
-  (fset (quote NAME) #[... DOCSTRING ...])
-  (defalias (quote NAME) #[... DOCSTRING ...])
- starting in column zero.
- (quote NAME) may appear as 'NAME as well.
+   Looks for
+   (defun NAME ARGS DOCSTRING ...)
+   (defmacro NAME ARGS DOCSTRING ...)
+   (autoload (quote NAME) FILE DOCSTRING ...)
+   (defvar NAME VALUE DOCSTRING)
+   (defconst NAME VALUE DOCSTRING)
+   (fset (quote NAME) (make-byte-code ... DOCSTRING ...))
+   (fset (quote NAME) #[... DOCSTRING ...])
+   (defalias (quote NAME) #[... DOCSTRING ...])
+   starting in column zero.
+   (quote NAME) may appear as 'NAME as well.
 
  We also look for #@LENGTH CONTENTS^_ at the beginning of the line.
  When we find that, we save it for the following defining-form,
@@ -792,7 +882,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
 
   if (! buffer[0])
     fprintf (stderr, "## expected a symbol, got '%c'\n", c);
-
+  
   skip_white (infile);
 }
 
@@ -807,7 +897,7 @@ scan_lisp_file (const char *filename, const char *mode)
   if (infile == NULL)
     {
       perror (filename);
-      return 0;				/* No error */
+      return 0;			/* No error */
     }
 
   c = '\n';
@@ -818,21 +908,21 @@ scan_lisp_file (const char *filename, const char *mode)
 
       if (c != '\n')
 	{
-	  c = getc (infile);
+	  c = getc_skipping_iso2022 (infile);
 	  continue;
 	}
-      c = getc (infile);
+      c = getc_skipping_iso2022 (infile);
       /* Detect a dynamic doc string and save it for the next expression.  */
       if (c == '#')
 	{
-	  c = getc (infile);
+	  c = getc_skipping_iso2022 (infile);
 	  if (c == '@')
 	    {
 	      int length = 0;
 	      int i;
 
 	      /* Read the length.  */
-	      while ((c = getc (infile),
+	      while ((c = getc_skipping_iso2022 (infile),
 		      c >= '0' && c <= '9'))
 		{
 		  length *= 10;
@@ -855,9 +945,9 @@ scan_lisp_file (const char *filename, const char *mode)
 		 but it is redundant in DOC.  So get rid of it here.  */
 	      saved_string[length - 1] = 0;
 	      /* Skip the newline.  */
-	      c = getc (infile);
+	      c = getc_skipping_iso2022 (infile);
 	      while (c != '\n')
-		c = getc (infile);
+		c = getc_skipping_iso2022 (infile);
 	    }
 	  continue;
 	}
@@ -875,11 +965,11 @@ scan_lisp_file (const char *filename, const char *mode)
 
 	  /* Skip the arguments: either "nil" or a list in parens */
 
-	  c = getc (infile);
-	  if (c == 'n') /* nil */
+	  c = getc_skipping_iso2022 (infile);
+	  if (c == 'n')		/* nil */
 	    {
-	      if ((c = getc (infile)) != 'i' ||
-		  (c = getc (infile)) != 'l')
+	      if ((c = getc_skipping_iso2022 (infile)) != 'i' ||
+		  (c = getc_skipping_iso2022 (infile)) != 'l')
 		{
 		  fprintf (stderr, "## unparsable arglist in %s (%s)\n",
 			   buffer, filename);
@@ -894,15 +984,15 @@ scan_lisp_file (const char *filename, const char *mode)
 	    }
 	  else
 	    while (c != ')')
-	      c = getc (infile);
+	      c = getc_skipping_iso2022 (infile);
 	  skip_white (infile);
 
 	  /* If the next three characters aren't `dquote bslash newline'
 	     then we're not reading a docstring.
-	   */
-	  if ((c = getc (infile)) != '"' ||
-	      (c = getc (infile)) != '\\' ||
-	      (c = getc (infile)) != '\n')
+	     */
+	  if ((c = getc_skipping_iso2022 (infile)) != '"' ||
+	      (c = getc_skipping_iso2022 (infile)) != '\\' ||
+	      (c = getc_skipping_iso2022 (infile)) != '\n')
 	    {
 #ifdef DEBUG
 	      fprintf (stderr, "## non-docstring in %s (%s)\n",
@@ -922,21 +1012,13 @@ scan_lisp_file (const char *filename, const char *mode)
 	  if (saved_string == 0)
 	    {
 
-	      /* Skip until the first newline; remember the two previous chars. */
+	      /* Skip until the first newline; remember the two previous
+                 chars. */
 	      while (c != '\n' && c >= 0)
 		{
-		  /* #### Kludge -- Ignore any ESC x x ISO2022 sequences */
-		  if (c == 27)
-		    {
-		      getc (infile);
-		      getc (infile);
-		      goto nextchar;
-		    }
-
 		  c2 = c1;
 		  c1 = c;
-		nextchar:
-		  c = getc (infile);
+		  c = getc_skipping_iso2022 (infile);
 		}
 
 	      /* If two previous characters were " and \,
@@ -957,7 +1039,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	  char c1 = 0, c2 = 0;
 	  type = 'F';
 
-	  c = getc (infile);
+	  c = getc_skipping_iso2022 (infile);
 	  if (c == '\'')
 	    read_lisp_symbol (infile, buffer);
 	  else
@@ -976,7 +1058,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  continue;
 		}
 	      read_lisp_symbol (infile, buffer);
-	      c = getc (infile);
+	      c = getc_skipping_iso2022 (infile);
 	      if (c != ')')
 		{
 		  fprintf (stderr,
@@ -988,12 +1070,13 @@ scan_lisp_file (const char *filename, const char *mode)
 
 	  if (saved_string == 0)
 	    {
-	      /* Skip until the first newline; remember the two previous chars. */
+	      /* Skip until the first newline; remember the two previous
+                 chars. */
 	      while (c != '\n' && c >= 0)
 		{
 		  c2 = c1;
 		  c1 = c;
-		  c = getc (infile);
+		  c = getc_skipping_iso2022 (infile);
 		}
 
 	      /* If two previous characters were " and \,
@@ -1012,7 +1095,7 @@ scan_lisp_file (const char *filename, const char *mode)
       else if (! strcmp (buffer, "autoload"))
 	{
 	  type = 'F';
-	  c = getc (infile);
+	  c = getc_skipping_iso2022 (infile);
 	  if (c == '\'')
 	    read_lisp_symbol (infile, buffer);
 	  else
@@ -1031,7 +1114,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		  continue;
 		}
 	      read_lisp_symbol (infile, buffer);
-	      c = getc (infile);
+	      c = getc_skipping_iso2022 (infile);
 	      if (c != ')')
 		{
 		  fprintf (stderr,
@@ -1041,7 +1124,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		}
 	    }
 	  skip_white (infile);
-	  if ((c = getc (infile)) != '\"')
+	  if ((c = getc_skipping_iso2022 (infile)) != '\"')
 	    {
 	      fprintf (stderr, "## autoload of %s unparsable (%s)\n",
 		       buffer, filename);
@@ -1054,9 +1137,9 @@ scan_lisp_file (const char *filename, const char *mode)
 	    {
 	      /* If the next three characters aren't `dquote bslash newline'
 		 then we're not reading a docstring.  */
-	      if ((c = getc (infile)) != '"'  ||
-		  (c = getc (infile)) != '\\' ||
-		  (c = getc (infile)) != '\n')
+	      if ((c = getc_skipping_iso2022 (infile)) != '"'  ||
+		  (c = getc_skipping_iso2022 (infile)) != '\\' ||
+		  (c = getc_skipping_iso2022 (infile)) != '\n')
 		{
 #ifdef DEBUG
 		  fprintf (stderr, "## non-docstring in %s (%s)\n",
@@ -1067,7 +1150,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	    }
 	}
 
-#if 0 /* causes crash */
+#if 0				/* causes crash */
       else if (! strcmp (buffer, "if") ||
 	       ! strcmp (buffer, "byte-code"))
 	;
@@ -1085,10 +1168,10 @@ scan_lisp_file (const char *filename, const char *mode)
       /* At this point, we should either use the previous
 	 dynamic doc string in saved_string
 	 or gobble a doc string from the input file.
-
+	 
 	 In the latter case, the opening quote (and leading
 	 backslash-newline) have already been read.  */
-      putc ('\n', outfile); /* XEmacs addition */
+      putc ('\n', outfile);	/* XEmacs addition */
       putc (037, outfile);
       putc (type, outfile);
       fprintf (outfile, "%s\n", buffer);

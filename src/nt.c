@@ -419,7 +419,7 @@ nt_get_resource (Intbyte *key, LPDWORD lpdwtype)
 }
 
 void
-init_environment (void)
+init_mswindows_environment (void)
 {
   /* Check for environment variables and use registry if they don't exist */
   /* Emacs 20.6 sets default values for these; not necessary here because
@@ -1747,92 +1747,6 @@ mswindows_getdcwd (int drivelet)
   return cwd;
 }
 
-void
-init_ntproc (void)
-{
-  /* Initial preparation for subprocess support: replace our standard
-     handles with non-inheritable versions. */
-  {
-    HANDLE parent;
-    HANDLE stdin_save =  INVALID_HANDLE_VALUE;
-    HANDLE stdout_save = INVALID_HANDLE_VALUE;
-    HANDLE stderr_save = INVALID_HANDLE_VALUE;
-
-    parent = GetCurrentProcess ();
-
-    /* ignore errors when duplicating and closing; typically the
-       handles will be invalid when running as a gui program. */
-    DuplicateHandle (parent, 
-		     GetStdHandle (STD_INPUT_HANDLE), 
-		     parent,
-		     &stdin_save, 
-		     0, 
-		     FALSE, 
-		     DUPLICATE_SAME_ACCESS);
-    
-    DuplicateHandle (parent,
-		     GetStdHandle (STD_OUTPUT_HANDLE),
-		     parent,
-		     &stdout_save,
-		     0,
-		     FALSE,
-		     DUPLICATE_SAME_ACCESS);
-    
-    DuplicateHandle (parent,
-		     GetStdHandle (STD_ERROR_HANDLE),
-		     parent,
-		     &stderr_save,
-		     0,
-		     FALSE,
-		     DUPLICATE_SAME_ACCESS);
-    
-    retry_fclose (stdin);
-    retry_fclose (stdout);
-    retry_fclose (stderr);
-
-    if (stdin_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stdin_save, O_TEXT);
-    else
-      _open ("nul", O_TEXT | O_NOINHERIT | O_RDONLY);
-    _fdopen (0, "r");
-
-    if (stdout_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stdout_save, O_TEXT);
-    else
-      _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
-    _fdopen (1, "w");
-
-    if (stderr_save != INVALID_HANDLE_VALUE)
-      _open_osfhandle ((long) stderr_save, O_TEXT);
-    else
-      _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
-    _fdopen (2, "w");
-  }
-
-  /* determine which drives are fixed, for get_cached_volume_information */
-  {
-    /* GetDriveType must have trailing backslash. */
-    Intbyte drive[] = "A:\\";
-
-    /* Loop over all possible drive letters */
-    while (*drive <= 'Z')
-    {
-      Extbyte *driveext;
-
-      C_STRING_TO_TSTR (drive, driveext);
-
-      /* Record if this drive letter refers to a fixed drive. */
-      fixed_drives[DRIVE_INDEX (*drive)] =
-	(qxeGetDriveType (driveext) == DRIVE_FIXED);
-
-      (*drive)++;
-    }
-
-    /* Reset the volume info cache.  */
-    volume_cache = NULL;
-  }
-}
-
 
 /*--------------------------------------------------------------------*/
 /*                        Memory-mapped files                         */
@@ -2123,6 +2037,96 @@ All path elements in FILENAME are converted to their long names.
   xfree (canon);
   xfree (longname);
   return ret;
+}
+
+
+void
+init_nt (void)
+{
+  /* Initial preparation for subprocess support: replace our standard
+     handles with non-inheritable versions.
+
+     #### Do we still need this?  This is left over from the old process
+     support. */
+  {
+    HANDLE parent;
+    HANDLE stdin_save =  INVALID_HANDLE_VALUE;
+    HANDLE stdout_save = INVALID_HANDLE_VALUE;
+    HANDLE stderr_save = INVALID_HANDLE_VALUE;
+
+    parent = GetCurrentProcess ();
+
+    /* ignore errors when duplicating and closing; typically the
+       handles will be invalid when running as a gui program. */
+    DuplicateHandle (parent, 
+		     GetStdHandle (STD_INPUT_HANDLE), 
+		     parent,
+		     &stdin_save, 
+		     0, 
+		     FALSE, 
+		     DUPLICATE_SAME_ACCESS);
+    
+    DuplicateHandle (parent,
+		     GetStdHandle (STD_OUTPUT_HANDLE),
+		     parent,
+		     &stdout_save,
+		     0,
+		     FALSE,
+		     DUPLICATE_SAME_ACCESS);
+    
+    DuplicateHandle (parent,
+		     GetStdHandle (STD_ERROR_HANDLE),
+		     parent,
+		     &stderr_save,
+		     0,
+		     FALSE,
+		     DUPLICATE_SAME_ACCESS);
+    
+    retry_fclose (stdin);
+    retry_fclose (stdout);
+    retry_fclose (stderr);
+
+    if (stdin_save != INVALID_HANDLE_VALUE)
+      _open_osfhandle ((long) stdin_save, O_TEXT);
+    else
+      _open ("nul", O_TEXT | O_NOINHERIT | O_RDONLY);
+    _fdopen (0, "r");
+
+    if (stdout_save != INVALID_HANDLE_VALUE)
+      _open_osfhandle ((long) stdout_save, O_TEXT);
+    else
+      _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
+    _fdopen (1, "w");
+
+    if (stderr_save != INVALID_HANDLE_VALUE)
+      _open_osfhandle ((long) stderr_save, O_TEXT);
+    else
+      _open ("nul", O_TEXT | O_NOINHERIT | O_WRONLY);
+    _fdopen (2, "w");
+  }
+
+  /* determine which drives are fixed, for get_cached_volume_information */
+  {
+    /* GetDriveType must have trailing backslash. */
+    Intbyte drive[] = "A:\\";
+
+    /* Loop over all possible drive letters */
+    while (*drive <= 'Z')
+    {
+      Extbyte *driveext;
+
+      C_STRING_TO_TSTR (drive, driveext);
+
+      /* Record if this drive letter refers to a fixed drive. */
+      fixed_drives[DRIVE_INDEX (*drive)] =
+	(qxeGetDriveType (driveext) == DRIVE_FIXED);
+
+      (*drive)++;
+    }
+
+    /* Reset the volume info cache.  */
+    volume_cache = NULL;
+  }
 }
 
 void

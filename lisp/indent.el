@@ -1,6 +1,7 @@
 ;;; indent.el --- indentation commands for XEmacs
 
 ;; Copyright (C) 1985, 1992, 1993, 1995, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages, tools, dumped
@@ -332,6 +333,39 @@ Called from a program, takes three args: START, END and COLUMN."
 	    (indent-to column 0))
 	(forward-line 1))
       (move-marker end nil))))
+
+(defvar indent-balanced-expression-function nil
+  "Short cut function to indent balanced expression.
+A value of nil means really run `indent-according-to-mode' on each line of
+balanced expression as computed with `forward-sexp'.")
+
+(defun indent-balanced-expression ()
+  "Indent each nonblank line in the balanced expression at point.
+Use `indent-balanced-expression-function' if that's non-nil, or find
+expression with `forward-sexp' and use `indent-region' on result."
+  (interactive "")
+  (let ((fun (or indent-balanced-expression-function
+		 (cond ((memq major-mode '(c-mode c++-mode java-mode objc-mode
+						  idl-mode pike-mode
+						  c++-c-mode elec-c-mode))
+			'c-indent-exp)
+		       ((memq major-mode
+			      '(lisp-mode
+				emacs-lisp-mode lisp-interaction-mode
+				scheme-mode inferior-scheme-mode
+				scheme-interaction-mode))
+			'indent-sexp)))))
+    (if fun (funcall fun)
+      (let ((end (save-excursion (forward-sexp) (point))))
+	(indent-region (point) end nil)))))
+
+(defun indent-region-or-balanced-expression ()
+  "Indent region if active, or balanced expression at point.
+See `indent-region' and `indent-balanced-expression'."
+  (interactive "")
+  (if (region-active-p)
+      (indent-region (region-beginning) (region-end) nil)
+    (indent-balanced-expression)))
 
 (defun indent-relative-maybe ()
   "Indent a new line like previous nonblank line."

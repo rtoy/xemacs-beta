@@ -302,7 +302,7 @@ BI_BUF_PTR_BYTE_POS (struct buffer *buf, Intbyte *ptr)
 {
   return (ptr - buf->text->beg + 1
 	  - ((ptr - buf->text->beg + 1) > buf->text->gpt
-	     ? buf->text->gap_size : 0));
+	     ? buf->text->gap_size : (Bytebpos) 0));
 }
 
 #define BUF_PTR_BYTE_POS(buf, ptr) \
@@ -676,7 +676,8 @@ real_charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
   if (x >= buf->text->mule_bufmin && x <= buf->text->mule_bufmax)
     return (buf->text->mule_bytmin +
 	    ((x - buf->text->mule_bufmin) << buf->text->mule_shifter) +
-	    (buf->text->mule_three_p ? (x - buf->text->mule_bufmin) : 0));
+	    (buf->text->mule_three_p ? (x - buf->text->mule_bufmin) :
+	     (Bytebpos) 0));
   else
     return charbpos_to_bytebpos_func (buf, x);
 }

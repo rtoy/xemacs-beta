@@ -98,7 +98,7 @@ Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
 If you quit, the process is killed with SIGINT, or SIGKILL if you
  quit again."
   ;; #### remove windows-nt check when this is ready for prime time.
-  (if (or (noninteractive) (not (eq 'windows-nt system-type)))
+  (if (not (eq 'windows-nt system-type))
       (apply 'old-call-process-internal program infile buffer display args)
     (let (proc inbuf errbuf discard)
       (unwind-protect

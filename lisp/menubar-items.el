@@ -424,17 +424,17 @@ Write your filter like this:
 
 
      ("C%_mds"
-      ["Repeat %_Last Complex Command..." repeat-complex-command]
+      ["Repeat Last %_Complex Command..." repeat-complex-command]
       ["E%_valuate Lisp Expression..." eval-expression]
       ["Execute %_Named Command..." execute-extended-command]
       "----"
-      ["Start %_Macro Recording" start-kbd-macro
+      ["Start %_Defining Macro" start-kbd-macro
        :included (not defining-kbd-macro)]
-      ["End %_Macro Recording" end-kbd-macro
+      ["Stop %_Defining Macro" end-kbd-macro
        :included defining-kbd-macro]
       ["E%_xecute Last Macro" call-last-kbd-macro
        :active last-kbd-macro]
-      ("%_Other Macro"
+      ("Other %_Macro"
        ["Edit %_Last Macro" edit-last-kbd-macro
 	:active last-kbd-macro]
        ["%_Edit Macro..." edit-kbd-macro]
@@ -460,24 +460,32 @@ Write your filter like this:
 	:active (region-exists-p)]
        )
       "----"
-      ("%_Abbrev"
        ["D%_ynamic Abbrev Expand" dabbrev-expand]
+       ["Define %_Global Abbrev for " add-global-abbrev
+	:suffix	(truncate-string-with-continuation-dots
+		 (abbrev-string-to-be-defined nil)
+		 40)]
+      ("Other %_Abbrev"
        ["Dynamic Abbrev %_Complete" dabbrev-completion]
        ["Dynamic Abbrev Complete in %_All Buffers" (dabbrev-completion 16)]
        "----"
        "----"
        ["%_Define Global Abbrev for " add-global-abbrev
-	:suffix	(abbrev-string-to-be-defined nil)
-	:active abbrev-mode]
+	:suffix	(truncate-string-with-continuation-dots
+		 (abbrev-string-to-be-defined nil)
+		 40)]
        ["Define %_Mode-Specific Abbrev for " add-mode-abbrev
-	:suffix	(abbrev-string-to-be-defined nil)
-	:active abbrev-mode]
+	:suffix	(truncate-string-with-continuation-dots
+		 (abbrev-string-to-be-defined nil)
+		 40)]
        ["Define Global Ex%_pansion for " inverse-add-global-abbrev
-	:suffix	(inverse-abbrev-string-to-be-defined 1)
-	:active abbrev-mode]
+	:suffix	(truncate-string-with-continuation-dots
+		 (inverse-abbrev-string-to-be-defined 1)
+		 40)]
        ["Define Mode-Specific Expa%_nsion for " inverse-add-mode-abbrev
-	:suffix	(inverse-abbrev-string-to-be-defined 1)
-	:active abbrev-mode]
+	:suffix	(truncate-string-with-continuation-dots
+		 (inverse-abbrev-string-to-be-defined 1)
+		 40)]
        "---"
        ["E%_xpand Abbrev" expand-abbrev]
        ["Expand Abbrevs in Re%_gion" expand-region-abbrevs
@@ -497,8 +505,9 @@ Write your filter like this:
        ["%_Save Abbrevs As..." write-abbrev-file]
        ["L%_oad Abbrevs..." read-abbrev-file]
        )
-      ("%_Rectangles"
-       ["%_Kill Rectangle" kill-rectangle]
+	"---"
+      ["%_Kill Rectangle" kill-rectangle]
+      ("Other %_Rectangles/Register"
        ["%_Yank Rectangle" yank-rectangle]
        ["Rectangle %_to Register" copy-rectangle-to-register]
        ["Rectangle %_from Register" insert-register]
@@ -509,61 +518,55 @@ Write your filter like this:
 	(customize-set-variable	'mouse-track-rectangle-p
 				(not mouse-track-rectangle-p))
 	:style toggle :selected mouse-track-rectangle-p]
-       )
-      ("Re%_gister"
+       "---"
        ["%_Copy to Register..." copy-to-register :active (region-exists-p)]
        ["%_Paste Register..." insert-register]
        "---"
        ["%_Save Point to Register" point-to-register]
        ["%_Jump to Register"  register-to-point]
        )
-      ("%_Sort"
-       ["%_Lines in Region" sort-lines :active (region-exists-p)]
-       ["%_Paragraphs in Region" sort-paragraphs :active (region-exists-p)]
-       ["P%_ages in Region" sort-pages :active (region-exists-p)]
-       ["%_Columns in Region" sort-columns :active (region-exists-p)]
-       ["%_Regexp..." sort-regexp-fields :active (region-exists-p)]
+	"---"
+       ["%_Sort Lines in Region" sort-lines :active (region-exists-p)]
+       ["%_Uppercase Region or Word" upcase-region-or-word]
+       ["%_Lowercase Region or Word" downcase-region-or-word]
+       ["%_Indent Region or Balanced Expression"
+	indent-region-or-balanced-expression]
+       ["%_Fill Paragraph or Region" fill-paragraph-or-region]
+       ("Other %_Text Commands"
+	["Sort %_Paragraphs in Region" sort-paragraphs :active (region-exists-p)]
+	["Sort Pa%_ges in Region" sort-pages :active (region-exists-p)]
+	["Sort C%_olumns in Region" sort-columns :active (region-exists-p)]
+	["Sort %_Regexp..." sort-regexp-fields :active (region-exists-p)]
+	"---"
+	["%_Capitalize Region" capitalize-region :active (region-exists-p)]
+	["Title-C%_ase Region" capitalize-region-as-title
+	 :active (region-exists-p)]
+	"----"
+	["C%_enter Region or Paragraph"
+	 (if (region-active-p) (center-region) (center-line))]
+	["Center %_Line" center-line]
+	"---"
+	["%_Indent Region Rigidly" indent-rigidly :active (region-exists-p)]
+	["In%_dent To Column..." indent-to-column]
+	"---"
+	["%_Untabify (Tabs to Spaces)" untabify :active (and (region-exists-p)
+							  (fboundp 'untabify))]
+	["%_Tabify (Spaces to Tabs)" tabify :active (and (region-exists-p)
+							(fboundp 'tabify))]
+	["Tab to Tab %_Stop" tab-to-tab-stop]
+	["Edit Ta%_b Stops" edit-tab-stops]
+	)
+	"---"
+       ("S%_pell-Check"
+	["%_Buffer" ispell-buffer
+	 :active (fboundp 'ispell-buffer)]
+	"---"
+	["%_Word" ispell-word]
+	["%_Complete Word" ispell-complete-word]
+	["%_Region" ispell-region]
+	)
        )
-      ("%_Change Case"
-       ["%_Upcase Region" upcase-region :active (region-exists-p)]
-       ["%_Downcase Region" downcase-region :active (region-exists-p)]
-       ["%_Capitalize Region" capitalize-region :active (region-exists-p)]
-       ["%_Title-Case Region" capitalize-region-as-title
-	:active (region-exists-p)]
-       )
-      ("Ce%_nter"
-       ["%_Line" center-line]
-       ["%_Paragraph" center-paragraph]
-       ["%_Region" center-region :active (region-exists-p)]
-       )
-      ("%_Indent"
-       ["%_As Previous Line" indent-relative]
-       ["%_To Column..." indent-to-column]
-       "---"
-       ["%_Region" indent-region :active (region-exists-p)]
-       ["%_Balanced Expression" indent-sexp]
-       ["%_C Expression" indent-c-exp]
-       )
-      ("%_Tabs"
-       ["%_Convert Tabs to Spaces" untabify :active (and (region-exists-p)
-							 (fboundp 'untabify))]
-       ["Convert %_Spaces to Tabs" tabify :active (and (region-exists-p)
-						       (fboundp 'tabify))]
-       "---"
-       ["%_Tab to Tab Stop" tab-to-tab-stop]
-       ["%_Move to Tab Stop" move-to-tab-stop]
-       ["%_Edit Tab Stops" edit-tab-stops]
-       )
-      ("S%_pell-Check"
-       ["%_Buffer" ispell-buffer
-	:active (fboundp 'ispell-buffer)]
-       "---"
-       ["%_Word" ispell-word]
-       ["%_Complete Word" ispell-complete-word]
-       ["%_Region" ispell-region]
-       )
-      )
-
+     
      ("%_Tools"
       ("%_Packages"
        ("%_Add Download Site"
@@ -2100,6 +2103,14 @@ If this is a relative filename, it is put into the same directory as your
 	      tutorial-supported-languages)))))
 
 (set-menubar default-menubar)
+
+(when (featurep 'menubar-items)
+  (loop for buf being the buffers do
+    (or (eq default-menubar (symbol-value-in-buffer 'current-menubar buf))
+	(with-current-buffer buf
+	  (condition-case nil
+	      (funcall major-mode)
+	    (error (setq current-menubar default-menubar)))))))
 
 
 ;;; Popup menus.

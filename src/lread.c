@@ -150,11 +150,6 @@ static int load_byte_code_version;
 /* An array describing all known built-in structure types */
 static structure_type_dynarr *the_structure_type_dynarr;
 
-#if 0 /* FSF defun hack */
-/* When nonzero, read conses in pure space */
-static int read_pure;
-#endif
-
 #if 0 /* FSF stuff */
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static int read_from_string_index;
@@ -192,7 +187,7 @@ static int read_from_string_limit;
    the containing objects that have (#$ . INT) conses in them (this
    will only be compiled-function objects and lists), and when the
    file is finished loading, we go through and fill in all the
-   doc strings at once. */
+   doc strings at once. --ben */
 
  /* This contains the last string skipped with #@.  */
 static char *saved_doc_string;
@@ -317,21 +312,6 @@ unreadchar (Lisp_Object readcharfun, Emchar c)
 
 static Lisp_Object read0 (Lisp_Object readcharfun);
 static Lisp_Object read1 (Lisp_Object readcharfun);
-/* allow_dotted_lists means that something like (foo bar . baz)
-   is acceptable.  If -1, means check for starting with defun
-   and make structure pure. (not implemented, probably for very
-   good reasons)
-*/
-/*
-   If check_for_doc_references, look for (#$ . INT) doc references
-   in the list and record if load_force_doc_strings is non-zero.
-   (Such doc references will be destroyed during the loadup phase
-   by replacing with Qzero, because Snarf-documentation will fill
-   them in again.)
-
-   WARNING: If you set this, you sure as hell better not call
-   free_list() on the returned list here. */
-
 static Lisp_Object read_list (Lisp_Object readcharfun,
                               Emchar terminator,
                               int allow_dotted_lists,
@@ -426,7 +406,7 @@ pas_de_holgazan_ici (int fd, Lisp_Object victim)
   pos = XINT (XCDR (victim));
   if (pos < 0)
     pos = -pos; /* kludge to mark a user variable */
-  tem = unparesseuxify_doc_string (fd, pos, 0, Vload_file_name_internal);
+  tem = unparesseuxify_doc_string (fd, pos, 0, Vload_file_name_internal, 0);
   if (!STRINGP (tem))
     signal_error_1 (Qinvalid_byte_code, tem);
   return tem;
@@ -462,7 +442,8 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	    {
 	      struct gcpro ngcpro1;
 	      Lisp_Object juan = (pas_de_holgazan_ici
-				  (fd, XCOMPILED_FUNCTION (john)->instructions));
+				  (fd,
+				   XCOMPILED_FUNCTION (john)->instructions));
 	      Lisp_Object ivan;
 
 	      NGCPRO1 (juan);
@@ -1367,15 +1348,6 @@ build_load_history (int loading, Lisp_Object source)
 #endif /* !LOADHIST */
 
 
-#if 0 /* FSFmacs defun hack */
-Lisp_Object
-unreadpure (void)	/* Used as unwind-protect function in readevalloop */
-{
-  read_pure = 0;
-  return Qnil;
-}
-#endif /* 0 */
-
 static void
 readevalloop (Lisp_Object readcharfun,
               Lisp_Object sourcename,
@@ -1429,25 +1401,12 @@ readevalloop (Lisp_Object readcharfun,
       if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r')
         continue;
 
-#if 0 /* FSFmacs defun hack */
-      if (purify_flag && c == '(')
-	{
-	  int count1 = specpdl_depth ();
-	  record_unwind_protect (unreadpure, Qnil);
-	  val = read_list (readcharfun, ')', -1, 1);
-	  unbind_to (count1);
-	}
+      unreadchar (readcharfun, c);
+      Vread_objects = Qnil;
+      if (NILP (Vload_read_function))
+	val = read0 (readcharfun);
       else
-#else /* No "defun hack" -- Emacs 19 uses read-time syntax for bytecodes */
-	{
-	  unreadchar (readcharfun, c);
-	  Vread_objects = Qnil;
-	  if (NILP (Vload_read_function))
-	    val = read0 (readcharfun);
-	  else
-	    val = call1 (Vload_read_function, readcharfun);
-	}
-#endif
+	val = call1 (Vload_read_function, readcharfun);
       val = (*evalfun) (val);
       if (printflag)
 	{
@@ -2845,14 +2804,6 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 	}
     }
 
-#if 0 /* FSFmacs defun hack, or something ... */
-  if (NILP (tail) && defun_hack && EQ (elt, Qdefun) && !read_pure)
-    {
-      record_unwind_protect (unreadpure, Qzero);
-      read_pure = 1;
-    }
-#endif
-
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (s->length == 1 && s->allow_dotted_lists && EQ (XCAR (s->head), Qfset))
     {
@@ -2875,10 +2826,20 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 }
 
 
-#if 0 /* FSFmacs defun hack */
-/* -1 for allow_dotted_lists means allow_dotted_lists and check
-   for starting with defun and make structure pure. */
-#endif
+/* allow_dotted_lists means that something like (foo bar . baz)
+   is acceptable.  If -1, means check for starting with defun
+   and make structure pure. (not implemented, probably for very
+   good reasons)
+
+   If check_for_doc_references, look for (#$ . INT) doc references
+   in the list and record if load_force_doc_strings is non-zero.
+   (Such doc references will be destroyed during the loadup phase
+   by replacing with Qzero, because Snarf-documentation will fill
+   them in again.)
+
+   WARNING: If you set this, you sure as hell better not call
+   free_list() on the returned list here.
+   */
 
 static Lisp_Object
 read_list (Lisp_Object readcharfun,
@@ -2997,12 +2958,7 @@ read_vector (Lisp_Object readcharfun,
   tem = s.head;
   len = XINT (Flength (tem));
 
-#if 0 /* FSFmacs defun hack */
-  if (read_pure)
-    s.head = make_pure_vector (len, Qnil);
-  else
-#endif
-    s.head = make_vector (len, Qnil);
+  s.head = make_vector (len, Qnil);
 
   for (i = 0, p = &(XVECTOR_DATA (s.head)[0]);
        i < len;

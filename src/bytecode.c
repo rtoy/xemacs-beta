@@ -1,7 +1,7 @@
 /* Execution of byte code produced by bytecomp.el.
    Implementation of compiled-function objects.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -209,18 +209,11 @@ enum Opcode /* Byte codes */
   Bconstant 		= 0300
 };
 typedef enum Opcode Opcode;
-typedef unsigned char Opbyte;
 
 
 Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
 				   const Opbyte *program_ptr,
 				   Opcode opcode);
-
-static Lisp_Object execute_optimized_program (const Opbyte *program,
-					      int stack_depth,
-					      Lisp_Object *constants_data);
-
-extern Lisp_Object Qand_rest, Qand_optional;
 
 /* Define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
    This isn't defined in FSF Emacs and isn't defined in XEmacs v19. */
@@ -464,74 +457,6 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 #endif /* !LISP_FLOAT_TYPE */
 }
 
-/* Apply compiled-function object FUN to the NARGS evaluated arguments
-   in ARGS, and return the result of evaluation. */
-Lisp_Object
-funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
-{
-  /* This function can GC */
-  int speccount = specpdl_depth();
-  REGISTER int i = 0;
-  Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
-  int optional = 0;
-
-  if (!OPAQUEP (f->instructions))
-    /* Lazily munge the instructions into a more efficient form */
-    optimize_compiled_function (fun);
-
-  /* optimize_compiled_function() guaranteed that f->specpdl_depth is
-     the required space on the specbinding stack for binding the args
-     and local variables of fun.   So just reserve it once. */
-  SPECPDL_RESERVE (f->specpdl_depth);
-
-  {
-    /* Fmake_byte_code() guaranteed that f->arglist is a valid list
-       containing only non-constant symbols. */
-    LIST_LOOP_3 (symbol, f->arglist, tail)
-      {
-	if (EQ (symbol, Qand_rest))
-	  {
-	    tail = XCDR (tail);
-	    symbol  = XCAR (tail);
-	    SPECBIND_FAST_UNSAFE (symbol, Flist (nargs - i, &args[i]));
-	    goto run_code;
-	  }
-	else if (EQ (symbol, Qand_optional))
-	  optional = 1;
-	else if (i == nargs && !optional)
-	  goto wrong_number_of_arguments;
-	else
-	  SPECBIND_FAST_UNSAFE (symbol, i < nargs ? args[i++] : Qnil);
-      }
-  }
-
-  if (i < nargs)
-    goto wrong_number_of_arguments;
-
- run_code:
-
-  {
-    Lisp_Object value =
-      execute_optimized_program ((Opbyte *) XOPAQUE_DATA (f->instructions),
-				 f->stack_depth,
-				 XVECTOR_DATA (f->constants));
-
-    /* The attempt to optimize this by only unbinding variables failed
-       because using buffer-local variables as function parameters
-       leads to specpdl_ptr->func != 0 */
-    /* UNBIND_TO_GCPRO_VARIABLES_ONLY (speccount, value); */
-    UNBIND_TO_GCPRO (speccount, value);
-    return value;
-  }
-
- wrong_number_of_arguments:
-  /* The actual printed compiled_function object is incomprehensible.
-     Check the backtrace to see if we can get a more meaningful symbol. */
-  if (EQ (fun, indirect_function (*backtrace_list->function, 0)))
-    fun = *backtrace_list->function;
-  return Fsignal (Qwrong_number_of_arguments, list2 (fun, make_int (nargs)));
-}
-
 
 /* Read next uint8 from the instruction stream. */
 #define READ_UINT_1 ((unsigned int) (unsigned char) *program_ptr++)
@@ -593,7 +518,7 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
    real benchmarking and profiling work -- martin */
 
 
-static Lisp_Object
+Lisp_Object
 execute_optimized_program (const Opbyte *program,
 			   int stack_depth,
 			   Lisp_Object *constants_data)
@@ -1962,6 +1887,7 @@ static Lisp_Object
 mark_compiled_function (Lisp_Object obj)
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
+  int i;
 
   mark_object (f->instructions);
   mark_object (f->arglist);
@@ -1969,6 +1895,9 @@ mark_compiled_function (Lisp_Object obj)
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   mark_object (f->annotated);
 #endif
+  for (i = 0; i < f->args_in_array; i++)
+    mark_object (f->args[i]);
+
   /* tail-recurse on constants */
   return f->constants;
 }
@@ -2001,7 +1930,20 @@ compiled_function_hash (Lisp_Object obj, int depth)
 		internal_hash (f->constants,    depth + 1));
 }
 
+static const struct lrecord_description lo_description_1[] = {
+  { XD_LISP_OBJECT, 0 },
+  { XD_END }
+};
+
+static const struct struct_description lo_description = {
+  sizeof (Lisp_Object),
+  lo_description_1
+};
+
 static const struct lrecord_description compiled_function_description[] = {
+  { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
+  { XD_STRUCT_PTR,  offsetof (Lisp_Compiled_Function, args),
+      XD_INDIRECT (0, 0), &lo_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },

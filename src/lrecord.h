@@ -336,16 +336,24 @@ extern int gc_in_progress;
    structures, whenever the structure size is given, rather than being
    defaulted by specifying 0 for the size.)
 
-   A struct_description is used for describing nested "structures".
-   (Again a misnomer, since it can be used for any blocks of memory,
-   not just structures.) It just contains a size for the memory block,
-   a pointer to an lrecord_description, and (for unions only) a union
-   constant, described below.  The size can be 0 (#### not yet
-   implemented!), in which case the size will be determined from the
-   largest offset logically referenced (i.e. last offset mentioned +
-   size of that object).  This is useful for stretchy arrays.
+   A struct_description is used for describing nested "structures".  (Again
+   a misnomer, since it can be used for any blocks of memory, not just
+   structures.) It just contains a size for the memory block, a pointer to
+   an lrecord_description, and (for unions only) a union constant,
+   described below.  The size can be 0, in which case the size will be
+   determined from the largest offset logically referenced (i.e. last
+   offset mentioned + size of that object).  This is useful for stretchy
+   arrays.
 
    Some example descriptions :
+
+   struct Lisp_String
+   {
+     struct lrecord_header lheader;
+     Bytecount size;
+     Intbyte *data;
+     Lisp_Object plist;
+   };
 
    static const struct lrecord_description cons_description[] = {
      { XD_LISP_OBJECT, offsetof (Lisp_Cons, car) },
@@ -355,16 +363,100 @@ extern int gc_in_progress;
 
    Which means "two lisp objects starting at the 'car' and 'cdr' elements"
 
-  static const struct lrecord_description string_description[] = {
-    { XD_BYTECOUNT,       offsetof (Lisp_String, size) },
-    { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data), XD_INDIRECT(0, 1) },
-    { XD_LISP_OBJECT,     offsetof (Lisp_String, plist) },
-    { XD_END }
-  };
-  "A pointer to string data at 'data', the size of the pointed array being the value
-   of the size variable plus 1, and one lisp object at 'plist'"
+   static const struct lrecord_description string_description[] = {
+     { XD_BYTECOUNT,       offsetof (Lisp_String, size) },
+     { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data), XD_INDIRECT(0, 1) },
+     { XD_LISP_OBJECT,     offsetof (Lisp_String, plist) },
+     { XD_END }
+   };
 
-  The existing types :
+   "A pointer to string data at 'data', the size of the pointed array being
+   the value of the size variable plus 1, and one lisp object at 'plist'"
+
+   If your object has a pointer to an array of Lisp_Objects in it, something
+   like this:
+
+   struct Lisp_Foo
+   {
+     ...;
+     int count;
+     Lisp_Object *objects;
+     ...;
+   }
+
+   You'd use XD_STRUCT_PTR, something like:
+
+   static const struct lrecord_description lo_description_1[] = {
+     { XD_LISP_OBJECT, 0 },
+     { XD_END }
+   };
+
+   static const struct struct_description lo_description = {
+     sizeof (Lisp_Object),
+     lo_description_1
+   };
+
+   static const struct lrecord_description foo_description[] = {
+     ...
+     { XD_INT,		offsetof (Lisp_Foo, count) },
+     { XD_STRUCT_PTR,	offsetof (Lisp_Foo, objects),
+       XD_INDIRECT (0, 0), &lo_description },
+     ...
+   };
+
+
+   Another example of XD_STRUCT_PTR:
+
+   typedef struct hentry
+   {
+     Lisp_Object key;
+     Lisp_Object value;
+   } hentry;
+   
+   struct Lisp_Hash_Table
+   {
+     struct lcrecord_header header;
+     Elemcount size;
+     Elemcount count;
+     Elemcount rehash_count;
+     double rehash_size;
+     double rehash_threshold;
+     Elemcount golden_ratio;
+     hash_table_hash_function_t hash_function;
+     hash_table_test_function_t test_function;
+     hentry *hentries;
+     enum hash_table_weakness weakness;
+     Lisp_Object next_weak;     // Used to chain together all of the weak
+   			        // hash tables.  Don't mark through this.
+   };
+
+   static const struct lrecord_description hentry_description_1[] = {
+     { XD_LISP_OBJECT, offsetof (hentry, key) },
+     { XD_LISP_OBJECT, offsetof (hentry, value) },
+     { XD_END }
+   };
+   
+   static const struct struct_description hentry_description = {
+     sizeof (hentry),
+     hentry_description_1
+   };
+   
+   const struct lrecord_description hash_table_description[] = {
+     { XD_ELEMCOUNT,     offsetof (Lisp_Hash_Table, size) },
+     { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT(0, 1),
+	 &hentry_description },
+     { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
+     { XD_END }
+   };
+
+   Note that we don't need to declare all the elements in the structure, just
+   the ones that need to be relocated (Lisp_Objects and structures) or that
+   need to be referenced as counts for relocated objects.
+
+
+   The existing types :
+
+
     XD_LISP_OBJECT
   A Lisp object.  This is also the type to use for pointers to other lrecords.
 

@@ -472,8 +472,6 @@ static void sort_args (int argc, char **argv);
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
 
-extern Lisp_Object Vlisp_EXEC_SUFFIXES;
-
 /* Nonzero if handling a fatal error already. */
 int fatal_error_in_progress;
 
@@ -518,16 +516,20 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 	  if (i == 0)
 	    {
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
-	      Extbyte full_exe_path[PATH_MAX];
+	      Extbyte *full_exe_path;
 	      Lisp_Object fullpath;
 
-	      qxeGetModuleFileName (NULL, full_exe_path, PATH_MAX);
+	      full_exe_path = mswindows_get_module_file_name ();
+	      assert (full_exe_path);
 	      fullpath = build_tstr_string (full_exe_path);
+	      xfree (full_exe_path);
 	      result = Fcons (fullpath, result);
-#if defined(HAVE_SHLIB)
+#ifdef HAVE_SHLIB
 	      {
 		Extbyte *fullpathext;
 
+		/* Don't use full_exe_path directly because it's probably
+		   in a different format. */
 		LISP_STRING_TO_EXTERNAL (fullpath, fullpathext,
 					 Qdll_filename_encoding);
 		(void) dll_init (fullpathext);
@@ -705,9 +707,9 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
      initialized!=0 && restart==0 => either xemacs after conventional dump,
                                      or xemacs post pdump_load()
 */
-DECLARE_DOESNT_RETURN (main_1 (int, char **, char **, int));
+DECLARE_DOESNT_RETURN (main_1 (int, Extbyte **, Extbyte **, int));
 DOESNT_RETURN
-main_1 (int argc, char **argv, char **envp, int restart)
+main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 {
   char stack_bottom_variable;
   int skip_args = 0;
@@ -717,6 +719,16 @@ main_1 (int argc, char **argv, char **envp, int restart)
   extern int malloc_cookie;
 #endif
 
+  /* !!#### Under MS Windows, this should all be rewritten to deal with
+     Unicode arguments and environment.  We need to retrieve the command
+     line with GetCommandLine and convert to argv format with
+     CommandLineToArgvW.  Unfortunately we have a bootstrapping problem
+     currently because we can't initialize the Unicode tables until we've
+     computed the location of data-directory, which doesn't happen till
+     startup.el, which is way late.  We need to be dumping the Unicode
+     data, which means we need to fix pdump to correctly dump the "union"
+     format used by the tables. */
+  
 #if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
      && !defined (DOUG_LEA_MALLOC))
   /* Make sure that any libraries we link against haven't installed a
@@ -1093,13 +1105,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
     purify_flag = 1;
 #endif
 
-  if (initialized)
-    {
-      /* Reset some vars that were also set during loadup (we called
-	 these same functions below) */
-      init_alloc_early ();
-    }
-
   if (!initialized)
     {
       /* Initialize things so that new Lisp objects
@@ -1126,11 +1131,16 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
+    }
 
-      /* Initialize some vars that will also be reset post-dumping
-         (see above) */
-      init_alloc_early ();
+  /* The following will get called in raw-temacs, post-dump/pdump-load XEmacs,
+     and run-temacs. */
 
+  /* Initialize some vars that will also be reset post-dumping */
+  init_alloc_early ();
+
+  if (!initialized)
+    {
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
@@ -1151,7 +1161,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
+#ifndef WIN32_NATIVE
       syms_of_callproc ();
+#endif
       syms_of_casefiddle ();
       syms_of_casetab ();
       syms_of_chartab ();
@@ -1650,7 +1662,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
-      vars_of_callproc ();
       vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
@@ -1673,7 +1684,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_editfns ();
       vars_of_emacs ();
       vars_of_eval ();
-      init_eval_early ();
+      init_eval_semi_early ();
 
 #ifdef HAVE_X_WINDOWS
       vars_of_event_Xt ();
@@ -1733,7 +1744,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 #ifdef WIN32_NATIVE
       vars_of_nt ();
-      vars_of_ntproc ();
 #endif
       vars_of_objects ();
       vars_of_print ();
@@ -1753,6 +1763,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       vars_of_redisplay ();
+      vars_of_regex ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar ();
 #endif
@@ -1914,19 +1925,18 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 function and another. */
 
 #ifdef MULE
-      /* These two depend on hash tables and various variables declared
-	 earlier.  The second may also depend on the first. */
+      /* This depends on vars initialized in vars_of_unicode(). */
       complex_vars_of_mule_charset ();
 #endif
+      /* This one doesn't depend on anything really, and could go into
+	 vars_of_(), but lots of lots of code gets called and it's easily
+	 possible that it could get changed to require being a
+	 complex_vars_of_(), for example if a charset appears anywhere,
+	 then we suddenly have dependence on the previous call. */
       complex_vars_of_file_coding ();
 #ifdef HAVE_WIN32_CODING_SYSTEMS
       complex_vars_of_intl_win32 ();
 #endif
-
-      /* Calls Fmake_range_table(). */
-      complex_vars_of_regex ();
-      /* Calls Fmake_range_table(). */
-      complex_vars_of_search ();
 
       /* Depends on specifiers. */
       complex_vars_of_faces ();
@@ -1960,10 +1970,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_SCROLLBARS
       /* This calls Fmake_glyph_internal(). */
       complex_vars_of_scrollbar ();
-#ifdef HAVE_MS_WINDOWS
-      /* Calls make_lisp_hash_table(). */
-      complex_vars_of_scrollbar_mswindows ();
-#endif
 #endif
 
       /* This calls allocate_glyph(). */
@@ -2020,6 +2026,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       reinit_alloc_once_early ();
       reinit_symbols_once_early ();
       reinit_opaque_once_early ();
+      reinit_eistring_once_early ();
 
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
@@ -2148,7 +2155,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
      engine. */
 
   if (initialized)
-    init_eval_early ();
+    init_eval_semi_early ();
 
 #ifdef MULE
   init_mule_charset ();
@@ -2178,19 +2185,19 @@ main_1 (int argc, char **argv, char **envp, int restart)
 		   on out! */
 #endif
 
-  init_callproc ();	/* Set up the process environment (so that egetenv
-			   works), the basic directory variables
-			   (exec-directory and so on), and stuff
-			   related to subprocesses.  This should be
-			   first because many of the functions below
-			   call egetenv() to get environment variables. */
+  init_xemacs_process (); /* Set up the process environment (so that
+			     egetenv works), the basic directory variables
+			     (exec-directory and so on), and stuff related
+			     to subprocesses.  This should be first because
+			     many of the functions below call egetenv() to
+			     get environment variables. */
 
 #ifdef WIN32_NATIVE
   /*
    * For Win32, call init_environment() to properly enter environment/registry
    * variables into Vprocess_environment.
    */
-  init_environment ();
+  init_mswindows_environment ();
 #endif
 
   init_initial_directory ();		/* get the directory to use for the
@@ -2202,7 +2209,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   init_buffer_2 ();	/* Set default directory of *scratch* buffer */
 
 #ifdef WIN32_NATIVE
-  init_ntproc ();
+  init_nt ();
   init_select_mswindows ();
 #endif
 
@@ -2212,7 +2219,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
   init_event_stream (); /* Set up so we can get user input. */
   init_macros (); /* set up so we can run macros. */
   init_editfns (); /* Determine the name of the user we're running as */
-  init_xemacs_process (); /* set up for calling subprocesses */
 #ifdef SUNPRO
   init_sunpro (); /* Set up Sunpro usage tracking */
 #endif
@@ -2827,8 +2833,15 @@ and announce itself normally when it is run.
   memory_warnings (my_edata, malloc_warning);
 #endif
 
-  UNGCPRO;
+  garbage_collect_1 ();
 
+#ifdef PDUMP
+  pdump ();
+#elif defined (WIN32_NATIVE)
+  unexec (XSTRING_DATA (filename),
+	  STRINGP (symfile) ? XSTRING_DATA (symfile) : 0,
+	  (uintptr_t) my_edata, 0, 0);
+#else
   {
     Extbyte *filename_ext;
     Extbyte *symfile_ext;
@@ -2840,15 +2853,9 @@ and announce itself normally when it is run.
     else
       symfile_ext = 0;
 
-    garbage_collect_1 ();
-
-#ifdef PDUMP
-    pdump ();
-#else
-
-#ifdef DOUG_LEA_MALLOC
+# ifdef DOUG_LEA_MALLOC
     malloc_state_ptr = malloc_get_state ();
-#endif
+# endif
   /* here we break our rule that the filename conversion should
      be performed at the actual time that the system call is made.
      It's a whole lot easier to do the conversion here than to
@@ -2856,14 +2863,15 @@ and announce itself normally when it is run.
      conversion is applied everywhere.  Don't worry about memory
      leakage because this call only happens once. */
     unexec (filename_ext, symfile_ext, (uintptr_t) my_edata, 0, 0);
-#ifdef DOUG_LEA_MALLOC
+# ifdef DOUG_LEA_MALLOC
     free (malloc_state_ptr);
-#endif
-#endif /* not PDUMP */
+# endif
   }
+#endif /* not PDUMP, not WIN32_NATIVE */
 
   purify_flag = opurify;
 
+  UNGCPRO;
   return Qnil;
 }
 
@@ -3281,6 +3289,24 @@ all of which are called before XEmacs is actually killed.
 /*   abnormal shutdowns: GP faults  */
 /* -------------------------------- */
 
+/* This is somewhat ad-hoc ...  figure out whether the user is developing
+   XEmacs, which means (under MS Windows) they have a system debugger
+   installed that catches GP faults in any application and lets them open
+   up MS Dev Studio and start debugging the application -- similar to
+   producing a core dump and then going back with a debugger to investigate
+   the core dump, except that the program is still running.  When this is
+   installed, it's better not to "pause so user gets messages" because the
+   debugger will pause anyway; and in case we're currently with a menu
+   popped up or somewhere else inside of an internal modal loop, we will
+   get wedged when we output the "pause". (It seems that the two modal
+   loops will fight each other and the return key will never be passed to
+   the "pause" handler so that XEmacs's GPF handler can return, resignal
+   the GPF, and properly go into the debugger.) */
+#if defined (ERROR_CHECK_TYPES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_STRUCTURES)
+#define USER_IS_DEVELOPING_XEMACS
+#endif
+
+					      
 /* Handle bus errors, illegal instruction, etc: actual implementation. */
 static void
 guts_of_fatal_error_signal (int sig)
@@ -3332,7 +3358,7 @@ guts_of_fatal_error_signal (int sig)
           }
       }
 # endif
-#ifdef HAVE_MS_WINDOWS
+#if defined (HAVE_MS_WINDOWS) && !defined (USER_IS_DEVELOPING_XEMACS)
       pause_so_user_can_read_messages (0);
 #endif
     }
@@ -3369,7 +3395,9 @@ mswindows_handle_hardware_exceptions_1 (void)
 {
   inhibit_non_essential_printing_operations = 1;
   preparing_for_armageddon = 1;
+#if !defined (USER_IS_DEVELOPING_XEMACS)
   pause_so_user_can_read_messages (0);
+#endif
   return EXCEPTION_EXECUTE_HANDLER;
 }
 

@@ -937,8 +937,8 @@ void close_file_data (file_data *p_file);
 #define get_nt_major_version()  	nt_major_version
 #define get_nt_minor_version()  	nt_minor_version
 
-extern unsigned char *get_data_start();
-extern unsigned char *get_data_end();
+unsigned char *get_data_start (void);
+unsigned char *get_data_end (void);
 extern unsigned long  data_region_size;
 extern unsigned long  reserved_heap_size;
 extern SYSTEM_INFO    sysinfo_cache;
@@ -950,27 +950,24 @@ extern int    	      nt_minor_version;
 #define UNINIT_PTR ((unsigned char*) 0xF0A0F0A0)
 #define UNINIT_LONG (0xF0A0F0A0L)
 
-/* Emulation of Unix sbrk().  */
-extern void *sbrk (unsigned long size);
-
 /* Recreate the heap created during dumping.  */
-extern void recreate_heap (char *executable_path);
+void recreate_heap (Extbyte *executable_path);
 
 /* Round the heap to this size.  */
-extern void round_heap (unsigned long size);
+void round_heap (unsigned long size);
 
 /* Load in the dumped .bss section.  */
-extern void read_in_bss (char *name);
+void read_in_bss (Extbyte *name);
 
 /* Map in the dumped heap.  */
-extern void map_in_heap (char *name);
+void map_in_heap (Extbyte *name);
 
 /* Cache system info, e.g., the NT page size.  */
-extern void cache_system_info (void);
+void cache_system_info (void);
 
 /* Round ADDRESS up to be aligned with ALIGN.  */
-extern unsigned char *round_to_next (unsigned char *address, 
-				     unsigned long align);
+unsigned char *round_to_next (unsigned char *address, 
+			      unsigned long align);
 #endif /* WIN32_NATIVE */
 
 /* ------------------------- Misc prototypes ------------------------- */
@@ -997,36 +994,12 @@ Intbyte *mswindows_getdcwd (int drivelet);
 /* In process-nt.c */
 extern int mswindows_compare_env (const void *strp1, const void *strp2);
 
-/* in sysdep.c */
-#ifdef WIN32_NATIVE
-void wait_for_termination (HANDLE pid);
-#endif
-
 /* in win32.c */
+Extbyte *mswindows_get_module_file_name (void);
 void mswindows_output_last_error (char *frob);
 DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
 						       Lisp_Object data,
 						       int errnum));
 Lisp_Object mswindows_lisp_error (int errnum);
-
-
-/*--------------------------------------------------------------------*/
-/*                        stuff in ntproc.c                           */
-/*                           DIE DIE DIE                              */
-/*--------------------------------------------------------------------*/
-
-/* Prepare our standard handles for proper inheritance by child processes.  */
-extern void prepare_standard_handles (int in, int out, 
-				      int err, HANDLE handles[4]);
-/* Reset our standard handles to their original state.  */
-extern void reset_standard_handles (int in, int out, 
-				    int err, HANDLE handles[4]);
-void set_process_dir (const char * dir);
-extern void init_ntproc (void);
-/* Will die as soon as callproc.c dies */
-int spawnve_will_die_soon (int mode, const Intbyte *cmdname,
-			   const Intbyte * const *argv,
-			   const Intbyte *const *envp);
-int pipe_will_die_soon (int *phandles);
 
 #endif /* INCLUDED_syswindows_h_ */

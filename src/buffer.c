@@ -1721,7 +1721,72 @@ represents all the memory concerned.
 }
 
 #endif /* MEMORY_USAGE_STATS */
-      
+
+#if defined (DEBUG_XEMACS) && defined (MULE)
+
+DEFUN ("buffer-char-byte-conversion-info", Fbuffer_char_byte_converion_info,
+       1, 1, 0, /*
+Return the current info used for char-byte conversion in BUFFER.
+The values returned are in the form of a plist of properties and values.
+*/
+       (buffer))
+{
+  struct buffer *b;
+  Lisp_Object plist = Qnil;
+
+  CHECK_BUFFER (buffer); /* dead buffers should be allowed, no? */
+  b = XBUFFER (buffer);
+
+#define ADD_INT(field) \
+  plist = cons3 (make_int (b->text->field), \
+		 intern_converting_underscores_to_dashes (#field), plist)
+#define ADD_BOOL(field) \
+  plist = cons3 (b->text->field ? Qt : Qnil, \
+		 intern_converting_underscores_to_dashes (#field), plist)
+  ADD_BOOL (entirely_ascii_p);
+  ADD_INT (bufz);
+  ADD_INT (z);
+  ADD_INT (mule_bufmin);
+  ADD_INT (mule_bufmax);
+  ADD_INT (mule_bytmin);
+  ADD_INT (mule_bytmax);
+  ADD_INT (mule_shifter);
+  ADD_BOOL (mule_three_p);
+  {
+    Lisp_Object pos[16];
+    int i;
+    for (i = 0; i < 16; i++)
+      pos[i] = make_int (b->text->mule_charbpos_cache[i]);
+    plist = cons3 (Flist (16, pos), intern ("mule-charbpos-cache"), plist);
+    for (i = 0; i < 16; i++)
+      pos[i] = make_int (b->text->mule_bytebpos_cache[i]);
+    plist = cons3 (Flist (16, pos), intern ("mule-bytebpos-cache"), plist);
+  }
+#undef ADD_INT
+#undef ADD_BOOL
+
+  return Fnreverse (plist);
+}
+
+DEFUN ("string-char-byte-conversion-info", Fstring_char_byte_converion_info, 1, 1, 0, /*
+Return the current info used for char-byte conversion in STRING.
+The values returned are in the form of a plist of properties and values.
+*/
+       (string))
+{
+  Lisp_Object plist = Qnil;
+  CHECK_STRING (string);
+
+  plist = cons3 (make_int (XSTRING_LENGTH (string)),
+		 intern ("byte-length"), plist);
+  plist = cons3 (make_int (XSTRING_ASCII_BEGIN (string)),
+		 intern ("ascii-begin"), plist);
+
+  return Fnreverse (plist);
+}
+
+#endif /* defined (DEBUG_XEMACS) && defined (MULE) */
+
 
 
 void
@@ -1788,6 +1853,10 @@ syms_of_buffer (void)
   DEFSUBR (Fkill_all_local_variables);
 #ifdef MEMORY_USAGE_STATS
   DEFSUBR (Fbuffer_memory_usage);
+#endif
+#if defined (DEBUG_XEMACS) && defined (MULE)
+  DEFSUBR (Fbuffer_char_byte_converion_info);
+  DEFSUBR (Fstring_char_byte_converion_info);
 #endif
 
   DEFERROR (Qprotected_field, "Attempt to modify a protected field",
@@ -2747,15 +2816,14 @@ init_initial_directory (void)
        when running subprocesses for the same reason.)  */
 
     Extbyte *p;
-    Extbyte modname[MAX_PATH * MAX_XETCHAR_SIZE];
+    Extbyte *modname = mswindows_get_module_file_name ();
       
-    if (!qxeGetModuleFileName (NULL, modname, MAX_PATH))
-      abort ();
-    if ((p = xetcsrchr (modname, '\\')) == NULL)
-      abort ();
+    assert (modname);
+    assert ((p = xetcsrchr (modname, '\\')));
     XECOPY_TCHAR (p, '\0');
   
     qxeSetCurrentDirectory (modname);
+    xfree (modname);
   }
 #endif
 }

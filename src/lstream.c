@@ -208,7 +208,12 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
    note the non-parallelism in who should set this mode on the stream: The
    *CALLER* sets character mode on read streams it creates; the *STREAM
    ITSELF* sets character mode on write streams, typically at creation
-   time. */
+   time.
+
+   (However, if a read stream always generates internal-format data, then
+   the callers will almost always want character mode, and it's allowed to
+   set this on behalf of the caller, as long as a flag can be provided at
+   creation time to disable this behavior.) */
 
 void
 Lstream_set_character_mode (Lstream *lstr)
@@ -232,12 +237,12 @@ Lstream_unset_character_mode (Lstream *lstr)
    object hanging around anywhere where they might be used!  When streams
    are chained together, be VERY CAREFUL of the order in which you delete
    them! (e.g. if the streams are in a singly-linked list, delete the head
-   first; this will close, and may send data down to the rest.  Then
+   first; this will close (but check the documentation, e.g. of
+   make_coding_input_stream()), and may send data down to the rest.  Then
    proceed to the rest, one by one.  If the chains are in a doubly-linked
    list, close all the streams first (again, from the head to the tail),
    disconnect the back links, then delete starting from the head.  In
-   general, it's a good idea to close everything before deleting
-   anything.
+   general, it's a good idea to close everything before deleting anything.
 
    NOTE: DO NOT CALL DURING GARBAGE COLLECTION (e.g. in a finalizer).  You
    will be aborted.  See free_managed_lcrecord(). */
@@ -599,8 +604,9 @@ Lstream_read_more (Lstream *lstr)
    any data at other times, particularly if SIZE is too small.  this needs
    to be fixed!). -1 means an error occurred and no bytes were read. */
 
-Bytecount
-Lstream_read (Lstream *lstr, void *data, Bytecount size)
+static Bytecount
+Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
+		int override_no_partial_chars)
 {
   unsigned char *p = (unsigned char *) data;
   Bytecount off = 0;
@@ -662,7 +668,8 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
 	}
     }
 
-  if (lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
+  if ((lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS) &&
+      !override_no_partial_chars)
     {
       /* It's quite possible for us to get passed an incomplete
 	 character at the end.  We need to spit back that
@@ -677,6 +684,13 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
 
   return off == 0 && error_occurred ? -1 : off;
 }
+
+Bytecount
+Lstream_read (Lstream *lstr, void *data, Bytecount size)
+{
+  return Lstream_read_1 (lstr, data, size, 0);
+}
+
 
 /* Push back SIZE bytes of DATA onto the input queue.  The next call
    to Lstream_read() with the same size will read the same bytes back.
@@ -827,7 +841,7 @@ int
 Lstream_fgetc (Lstream *lstr)
 {
   unsigned char ch;
-  if (Lstream_read (lstr, &ch, 1) <= 0)
+  if (Lstream_read_1 (lstr, &ch, 1, 1) <= 0)
     return -1;
   return ch;
 }
@@ -1012,6 +1026,25 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   return wrap_lstream (lstr);
 }
+
+/* Flags:
+   
+   LSTR_CLOSING
+   If set, close the descriptor or FILE * when the stream is closed.
+
+   LSTR_ALLOW_QUIT
+   If set, allow quitting out of the actual I/O.
+
+   LSTR_PTY_FLUSHING
+   If set and filedesc_stream_set_pty_flushing() has been called
+   on the stream, do not send more than pty_max_bytes on a single
+   line without flushing the data out using the eof_char.
+
+   LSTR_BLOCKED_OK
+   If set, an EWOULDBLOCK error is not treated as an error but
+   simply causes the write function to return 0 as the number
+   of bytes written out.
+ */
 
 Lisp_Object
 make_filedesc_input_stream (int filedesc, int offset, int count, int flags)

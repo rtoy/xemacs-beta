@@ -818,7 +818,7 @@ value of `user-full-name' is returned.
 #endif
   tem = ((!NILP (user) && !pw)
 	 ? Qnil
-	 : make_string (p, (q ? q - p : qxestrlen (p))));
+	 : make_string (p, (q ? (Bytecount) (q - p) : qxestrlen (p))));
 
 #ifdef AMPERSAND_FULL_NAME
   if (!NILP (tem))
@@ -1577,8 +1577,8 @@ text into.  If BUFFER is nil, the current buffer is assumed.
 {
   /* This function can GC */
   REGISTER Intbyte *string;
-  REGISTER int slen;
-  REGISTER int i, j;
+  REGISTER Bytecount slen;
+  REGISTER Bytecount i, j;
   REGISTER Bytecount n;
   REGISTER Bytecount charlen;
   Intbyte str[MAX_EMCHAR_LEN];
@@ -1598,7 +1598,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   n = cou * charlen;
   if (n <= 0)
     return Qnil;
-  slen = min (n, 768);
+  slen = min (n, (Bytecount) 768);
   string = alloca_array (Intbyte, slen);
   /* Write as many copies of the character into the temp string as will fit. */
   for (i = 0; i + charlen <= slen; i += charlen)

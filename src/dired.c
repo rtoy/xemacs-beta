@@ -418,7 +418,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 	  if (!passcount && ignored_extension_p)
 	    continue;
 
-	  if (!passcount && regexp_ignore_completion_p (d_name, Qnil, 0, cclen))
+	  if (!passcount && regexp_ignore_completion_p (d_name, Qnil, 0, len))
             continue;
 
           /* Update computation of how much all possible completions match */

@@ -1,5 +1,6 @@
 /* Definitions for asynchronous process control in XEmacs.
    Copyright (C) 1985, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -110,11 +111,7 @@ void kick_status_notify (void);
 
 void deactivate_process (Lisp_Object proc);
 
-#ifdef WIN32_NATIVE
-int
-#else
 void
-#endif
 child_setup (int in, int out, int err,
 	     Intbyte **new_argv, Lisp_Object current_dir);
 

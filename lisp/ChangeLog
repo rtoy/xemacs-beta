@@ -1,3 +1,58 @@
+2002-04-14  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.el:
+	* abbrev.el (abbrev-mode):
+	* abbrev.el (only-global-abbrevs):
+	* abbrev.el (defining-abbrev-turns-on-abbrev-mode): New.
+	* abbrev.el (define-abbrev-table):
+	* abbrev.el (global-abbrev-mode): New.
+	* abbrev.el (add-mode-abbrev):
+	* abbrev.el (add-global-abbrev):
+	* abbrev.el (inverse-add-mode-abbrev):
+	* abbrev.el (inverse-add-global-abbrev):
+	Add `global-abbrev-mode', which turns on or off abbrev-mode in all
+	buffers.  Added `defining-abbrev-turns-on-abbrev-mode' -- if
+	non-nil, defining an abbrev through an interactive function will
+	automatically turn on abbrev-mode, either globally or locally
+	depending on the command.  This is the "what you'd expect"
+	behavior.
+	* indent.el:
+	* indent.el (indent-balanced-expression-function): New.
+	* indent.el (indent-balanced-expression): New.
+	* indent.el (indent-region-or-balanced-expression): New.
+	general function for indenting a balanced expression in a
+	mode-correct way.  Works similar to indent-region in that a mode
+	can specify a specific command to do the whole operation; if not,
+	figure out the region using forward-sexp and indent each line
+	using indent-according-to-mode.
+	* keydefs.el:
+	* keydefs.el (global-map): Removed.
+	Modify M-C-backslash to do indent-region-or-balanced-expression.
+	Make S-Tab just insert a TAB char, like it's meant to do.
+	* make-docfile.el:
+	* make-docfile.el (docfile-out-of-date):
+	Now that we're using the call-process-in-lisp, we need to load
+	an extra file win32-native.el because we're running a bare temacs.
+	* menubar-items.el:
+	* menubar-items.el (default-menubar):
+	Totally redo the Cmds menu so that most used commands appear
+	directly on the menu and less used commands appear in submenus.
+	The old way may have been very pretty, but rather impractical.
+	* process.el (call-process-internal):
+	Under Windows, don't ever use old-call-process-internal, even
+	in batch mode.  We can do processes in batch mode.
+	* subr.el:
+	* subr.el (truncate-string-to-width):
+	* subr.el (truncate-string-with-continuation-dots): New.
+	* subr.el (plist-to-alist):
+	Someone recoded truncate-string-to-width, saying "the FSF version
+	is too complicated and does lots of hard-to-understand stuff" but
+	the resulting recoded version was *totally* wrong!  it
+	misunderstood the basic point of this function, which is work in
+	*columns* not chars.  i dumped ours and copied the version from
+	FSF 21.1.  Also added truncate-string-with-continuation-dots,
+	since this idiom is used often.  
+
 2002-04-07  William M. Perry  <wmperry@gnu.org>
 
 	* startup.el (command-line): Don't call init-menubar-at-startup

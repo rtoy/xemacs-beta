@@ -2893,7 +2893,8 @@ under Mule, is very difficult.)
 		break;
 	      charbpos = 0;
 	      while (charbpos < nread && same_at_start < BUF_ZV (buf)
-		     && BUF_FETCH_CHAR (buf, same_at_start) == buffer[charbpos])
+		     && BUF_FETCH_CHAR (buf, same_at_start) ==
+		     buffer[charbpos])
 		same_at_start++, charbpos++;
 	      /* If we found a discrepancy, stop the scan.
 		 Otherwise loop around and scan the next bufferful.  */
@@ -2916,7 +2917,7 @@ under Mule, is very difficult.)
 	  while (1)
 	    {
 	      int total_read, nread;
-	      Charbpos charbpos, curpos, trial;
+	      Charcount charbpos, curpos, trial;
 
 	      /* At what file position are we now scanning?  */
 	      curpos = st.st_size - (BUF_ZV (buf) - same_at_end);
@@ -3008,7 +3009,6 @@ under Mule, is very difficult.)
     stream = make_coding_input_stream
       (XLSTREAM (stream), get_coding_system_for_text_file (codesys, 1),
        CODING_DECODE, 0);
-    Lstream_set_character_mode (XLSTREAM (stream));
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
 
     record_unwind_protect (delete_stream_unwind, stream);

@@ -35,8 +35,12 @@ void init_signals_very_early (void);
 void init_win32_very_early (void);
 void init_mswindows_dde_very_early (void);
 
-/* Early Lisp-engine initialization (dump-time only for init,
-   dump-time and post-pdump-load-time for reinit). */
+/* Early Lisp-engine initialization -- dump-time only for init, dump-time
+   and post-pdump-load-time for reinit.  We call the reinit() routine
+   ourselves at post-pdump-load-time, but the init_() routine calls the
+   reinit() routine itself. (This is because sometimes the timing of when
+   to call the routine is tricky -- the init routine might need to do some
+   stuff, call the reinit() routine, and do some more stuff.) */
 
 void init_alloc_once_early (void);
 void reinit_alloc_once_early (void);
@@ -47,6 +51,18 @@ void reinit_opaque_once_early (void);
 void init_opaque_once_early (void);
 void init_elhash_once_early (void);
 void init_eistring_once_early (void);
+void reinit_eistring_once_early (void);
+
+/* Reset the Lisp engine.  Called both at dump-time, run-time and
+   run-temacs-time; at dump-time, it's called early, before any of the
+   vars() or complex_vars() routines.  Currently does almost nothing. */
+
+void init_alloc_early (void);
+
+/* Called somewhat randomly -- at dump-time, in the middle of the vars()
+   calls, and at run-time, just before the late initializations. */
+
+void init_eval_semi_early (void);
 
 /* Declare the built-in symbols and primitives (dump-time only). */
 
@@ -276,7 +292,6 @@ void vars_of_buffer (void);
 void reinit_vars_of_buffer (void);
 void vars_of_bytecode (void);
 void vars_of_callint (void);
-void vars_of_callproc (void);
 void vars_of_chartab (void);
 void vars_of_cmdloop (void);
 void vars_of_cmds (void);
@@ -373,7 +388,6 @@ void reinit_vars_of_mule_coding (void);
 void vars_of_mule_wnn (void);
 void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
-void vars_of_ntproc (void);
 void vars_of_objects (void);
 void reinit_vars_of_objects (void);
 void vars_of_objects_tty (void);
@@ -388,6 +402,7 @@ void vars_of_process_unix (void);
 void vars_of_profile (void);
 void vars_of_ralloc (void);
 void vars_of_redisplay (void);
+void vars_of_regex (void);
 void vars_of_scrollbar_x (void);
 void reinit_vars_of_scrollbar_x (void);
 void vars_of_scrollbar (void);
@@ -435,8 +450,6 @@ void specifier_vars_of_window (void);
    #### The reinit_() functions should be called from emacs.c, not the
    corresponding complex_vars_of_(). */
 
-void complex_vars_of_regex (void);
-void complex_vars_of_search (void);
 void complex_vars_of_faces (void);
 void complex_vars_of_mule_charset (void);
 void complex_vars_of_file_coding (void);
@@ -447,7 +460,6 @@ void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_alloc (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_scrollbar (void);
-void complex_vars_of_scrollbar_mswindows (void);
 void complex_vars_of_frame (void);
 void complex_vars_of_casetab (void);
 void complex_vars_of_syntax (void);
@@ -461,28 +473,19 @@ void complex_vars_of_minibuf (void);
 void reinit_complex_vars_of_minibuf (void);
 void complex_vars_of_keymap (void);
 
-/* Reset the Lisp engine.  Called both at dump-time and run-time;
-   at dump-time, it's called early, before any of the vars() or
-   complex_vars() routines. */
-
-void init_alloc_early (void);
-void init_eval_early (void);
-
 /* Late initialization -- stuff pertaining only to interactive usage,
    I/O, or Lisp reading. (Dump-time and run-time, but the code itself
    may conditionalize on this by checking the `initialized' variable.) */
 
 void init_buffer_1 (void);
 void init_buffer_2 (void);
-void init_callproc (void);
 void init_console_stream (int reinit);
 void init_device_tty (void);
 void init_editfns (void);
-void init_environment (void);
 void init_event_Xt_late (void);
+void init_event_mswindows_late (void);
 void init_event_stream (void);
 void init_event_tty_late (void);
-void init_event_mswindows_late (void);
 void init_event_unixoid (void);
 void init_file_coding (void);
 void init_hpplay (void);
@@ -490,15 +493,15 @@ void init_intl (void);
 void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
+void init_mswindows_environment (void);
 void init_mule_charset (void);
-void init_ntproc (void); /* #### delete me, please! */
-/* Not named init_process in order to avoid conflict with NS 3.3 */
-void init_xemacs_process (void);
+void init_nt (void);
 void init_postgresql_from_environment (void);
 void init_redisplay (void);
 void init_select_mswindows (void);
 void init_sunpro (void);
 void init_win32 (void);
+void init_xemacs_process (void);
 
 void syms_of_device_gtk (void);
 void syms_of_dialog_gtk (void);

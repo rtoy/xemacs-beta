@@ -2037,7 +2037,9 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
            and when we get 0, keep taking more data until we don't get 0 --
            we don't know how much data the conversion routine might need
            before it can generate any data of its own */
-	Bytecount readmore = max (size, str->one_byte_at_a_time ? 1 : 1024);
+	Bytecount readmore =
+	  str->one_byte_at_a_time ? (Bytecount) 1 :
+	    max (size, (Bytecount) 1024);
 
 	Dynarr_add_many (str->convert_from, 0, readmore);
 	read_size = Lstream_read (str->other_end,
@@ -2129,10 +2131,11 @@ encode_decode_source_sink_type_is_char (Lisp_Object cs,
    Lstream_set_character_mode(), which lays out rules for who is allowed to
    modify the character type mode on a stream.
 
-   NOTE: We could potentially implement the full-character checking stuff
-   ourselves, which might be a bit safer in case people mess up the
-   character mode themselves.  But people shouldn't be doing that -- don't
-   hide bugs -- and there's no sense duplicating code. */
+   If we're a read stream, we're always setting character mode on the
+   source, but we also set it on ourselves consistent with the flag that
+   can disable this (see again the comment above
+   Lstream_set_character_mode()).
+ */
 
 static void
 set_coding_character_mode (Lstream *stream)
@@ -2145,6 +2148,15 @@ set_coding_character_mode (Lstream *stream)
     Lstream_set_character_mode (stream_to_set);
   else
     Lstream_unset_character_mode (stream_to_set);
+  if (str->set_char_mode_on_us_when_reading &&
+      (stream->flags & LSTREAM_FL_READ))
+    {
+      if (encode_decode_source_sink_type_is_char
+	  (str->codesys, CODING_SINK, str->direction))
+	Lstream_set_character_mode (stream);
+      else
+	Lstream_unset_character_mode (stream);
+    }
 }
 
 static Lisp_Object
@@ -2319,17 +2331,37 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->convert_to = Dynarr_new (unsigned_char);
   str->convert_from = Dynarr_new (unsigned_char);
   str->direction = direction;
-  if (flags & CODE_FL_NO_CLOSE_OTHER)
+  if (flags & LSTREAM_FL_NO_CLOSE_OTHER)
     str->no_close_other = 1;
-  else if (flags & CODE_FL_READ_ONE_BYTE_AT_A_TIME)
+  if (flags & LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME)
     str->one_byte_at_a_time = 1;
+  if (!(flags & LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING))
+    str->set_char_mode_on_us_when_reading = 1;
     
   set_coding_stream_coding_system (lstr, codesys);
   return wrap_lstream (lstr);
 }
 
-/* FLAGS -- #### document me.  If NO_CLOSE_OTHER is non-zero, don't close
-   STREAM (the stream at the other end) when this stream is closed. */
+/* FLAGS:
+
+   LSTREAM_FL_NO_CLOSE_OTHER
+     Don't close STREAM (the stream at the other end) when this stream is
+     closed.
+
+   LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME
+     When reading from STREAM, read and process one byte at a time rather
+     than in large chunks.  This is for reading from TTY's, so we don't
+     block.  #### We should instead create a non-blocking filedesc stream
+     that emulates the behavior as necessary using select(), when the
+     fcntls don't work. (As seems to be the case on Cygwin.)
+
+  LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING
+     When reading from STREAM, read and process one byte at a time rather
+     than in large chunks.  This is for reading from TTY's, so we don't
+     block.  #### We should instead create a non-blocking filedesc stream
+     that emulates the behavior as necessary using select(), when the
+     fcntls don't work. (As seems to be the case on Cygwin.)
+*/
 Lisp_Object
 make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 			  enum encode_decode direction, int flags)
@@ -2338,8 +2370,12 @@ make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
                                flags);
 }
 
-/* FLAGS -- #### document me.  If NO_CLOSE_OTHER is non-zero, don't close
-   STREAM (the stream at the other end) when this stream is closed. */
+/* FLAGS:
+
+   LSTREAM_FL_NO_CLOSE_OTHER
+     Don't close STREAM (the stream at the other end) when this stream is
+     closed.
+ */
 Lisp_Object
 make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
 			  enum encode_decode direction, int flags)
@@ -4151,7 +4187,7 @@ detect_coding_stream (Lisp_Object stream)
   Lisp_Object binary_instream =
     make_coding_input_stream
       (XLSTREAM (stream), Qbinary,
-       CODING_ENCODE, CODE_FL_NO_CLOSE_OTHER);
+       CODING_ENCODE, LSTREAM_FL_NO_CLOSE_OTHER);
   Lisp_Object decstream =
     make_coding_input_stream 
       (XLSTREAM (binary_instream),

@@ -580,17 +580,14 @@ TYPE should be `list' or `vector'."
       (setq idx (1+ idx) i (1+ i)))
     string))
 
-;; #### This function is not compatible with FSF in some cases.  Hard
-;; to fix, because it is hard to trace the logic of the FSF function.
-;; In case we need the exact behavior, we can always copy the FSF
-;; version, which is very long and does lots of unnecessary stuff.
+;; From FSF 21.1
 (defun truncate-string-to-width (str end-column &optional start-column padding)
   "Truncate string STR to end at column END-COLUMN.
-The optional 2nd arg START-COLUMN, if non-nil, specifies
+The optional 3rd arg START-COLUMN, if non-nil, specifies
 the starting column; that means to return the characters occupying
 columns START-COLUMN ... END-COLUMN of STR.
 
-The optional 3rd arg PADDING, if non-nil, specifies a padding character
+The optional 4th arg PADDING, if non-nil, specifies a padding character
 to add at the end of the result if STR doesn't reach column END-COLUMN,
 or if END-COLUMN comes in the middle of a character in STR.
 PADDING is also added at the beginning of the result
@@ -600,11 +597,54 @@ If PADDING is nil, no padding is added in these cases, so
 the resulting string may be narrower than END-COLUMN."
   (or start-column
       (setq start-column 0))
-  (let ((len (length str)))
-    (concat (substring str (min start-column len) (min end-column len))
-	    (and padding (> end-column len)
-		 (make-string (- end-column len) padding)))))
+  (let ((len (length str))
+	(idx 0)
+	(column 0)
+	(head-padding "") (tail-padding "")
+	ch last-column last-idx from-idx)
+    (condition-case nil
+	(while (< column start-column)
+	  (setq ch (aref str idx)
+		column (+ column (char-width ch))
+		idx (1+ idx)))
+      (args-out-of-range (setq idx len)))
+    (if (< column start-column)
+	(if padding (make-string end-column padding) "")
+      (if (and padding (> column start-column))
+	  (setq head-padding (make-string (- column start-column) padding)))
+      (setq from-idx idx)
+      (if (< end-column column)
+	  (setq idx from-idx)
+	(condition-case nil
+	    (while (< column end-column)
+	      (setq last-column column
+		    last-idx idx
+		    ch (aref str idx)
+		    column (+ column (char-width ch))
+		    idx (1+ idx)))
+	  (args-out-of-range (setq idx len)))
+	(if (> column end-column)
+	    (setq column last-column idx last-idx))
+	(if (and padding (< column end-column))
+	    (setq tail-padding (make-string (- end-column column) padding))))
+      (setq str (substring str from-idx idx))
+      (if padding
+	  (concat head-padding str tail-padding)
+	str))))
 
+(defun truncate-string-with-continuation-dots (str end-column &optional
+						   dots-str)
+  "Truncate string STR to end at column END-COLUMN, adding dots if needed.
+The dots (normally `...', but can be controlled by DOTS-STR)' will be added
+in such a way that the total string occupies no more than END-COLUMN
+columns -- i.e. if the string goes past END-COLUMN, it will be truncated
+somewhere short of END-COLUMN so that, with the dots added, the string
+occupies END-COLUMN columns."
+  (if (<= (string-width str) end-column) str
+    (let* ((dots-str (or dots-str "..."))
+	   (dotswidth (string-width dots-str)))
+      (concat (truncate-string-to-width str (- end-column dotswidth))
+	      dots-str))))
 
 
 ;; alist/plist functions

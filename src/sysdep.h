@@ -1,6 +1,6 @@
 /* System-dependent prototypes
    Copyright (C) 1985, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -51,9 +51,7 @@ Intbyte get_eof_char (int fd);
 
 /* Wait for subprocess with process id `pid' to terminate and
    make sure it will get eliminated (not remain forever as a zombie) */
-#ifndef WIN32_NATIVE
 void wait_for_termination (int pid);
-#endif
 
 /* flush any pending output
  * (may flush input as well; it does not matter the way we use it)

@@ -1,3 +1,228 @@
+2002-04-14  Ben Wing  <ben@xemacs.org>
+
+	* lisp.h:
+	Add support for strong type-checking of Bytecount, Bytebpos,
+	Charcount, Charbpos, and others, by making them classes,
+	overloading the operators to provide integer-like operation and
+	carefully controlling what operations are allowed.  Not currently
+	enabled in C++ builds because there are still a number of compile
+	errors, and it won't really work till we merge in my "8-bit-Mule"
+	workspace, in which I make use of the new types Charxpos,
+	Bytexpos, Memxpos, representing a "position" either in a buffer or
+	a string. (This is especially important in the extent code.)
+	
+	* abbrev.c:
+	* abbrev.c (abbrev_oblookup):
+	* alloc.c (STRING_CHARS_BLOCK_SIZE):
+	* alloc.c (allocate_string_chars_struct):
+	* alloc.c (make_uninit_string):
+	* alloc.c (set_string_char):
+	* alloc.c (build_intstring):
+	* eval.c (record_unwind_protect_restoring_lisp_object):
+	* eval.c (record_unwind_protect_restoring_int):
+	* buffer.c (init_initial_directory):
+	* buffer.h (BI_BUF_PTR_BYTE_POS):
+	* buffer.h (real_charbpos_to_bytebpos):
+	* editfns.c (Fuser_full_name):
+	* editfns.c (Finsert_char):
+	* fns.c (Ffillarray):
+	* text.h:
+	* text.h (REP_BYTES_BY_FIRST_BYTE_1):
+	* text.h (simple_set_charptr_emchar):
+	* text.h (DECLARE_INLINE_HEADER):
+	* text.h (endif):
+	Warning fixes, some of them related to new C++ strict type
+	checking of Bytecount, Charbpos, etc.
+
+	* dired.c (file_name_completion):
+	Caught an actual error due to strong type checking -- char len
+	being passed when should be byte len.
+
+	* alloc.c:
+	* alloc.c (DECREMENT_CONS_COUNTER):
+	* alloc.c (memory_full):
+	* alloc.c (Fmake_byte_code):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (recompute_need_to_garbage_collect):
+	* alloc.c (common_init_alloc_once_early):
+	* backtrace.h:
+	* backtrace.h (SPECBIND_FAST_UNSAFE):
+	* bytecode.c:
+	* bytecode.c (execute_optimized_program):
+	* bytecode.c (mark_compiled_function):
+	* bytecode.h:
+	* bytecode.h (struct Lisp_Compiled_Function):
+	* eval.c:
+	* eval.c (handle_compiled_function_with_and_rest):
+	* eval.c (funcall_compiled_function):
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	* eval.c (function_argcount):
+	* sysdep.c (total_data_usage):
+	Further optimize Ffuncall:
+
+	-- process arg list at compiled-function creation time, converting
+	into an array for extra-quick access at funcall time.
+	-- rewrite funcall_compiled_function to use it, and inline this
+	function.
+	-- change the order of check for magic stuff in
+	SPECBIND_FAST_UNSAFE to be faster.
+	-- move the check for need to garbage collect into the allocation
+	code, so only a single flag needs to be checked in funcall.
+	
+
+	* buffer.c (Fstring_char_byte_converion_info):
+	* buffer.c (syms_of_buffer):
+	* symbols.c:
+	* symbols.c (intern_converting_underscores_to_dashes):
+
+	add debug funs to check on mule optimization info in buffers and
+	strings.
+
+	* eval.c (init_eval_semi_early):
+	* emacs.c (main_1):
+	* text.c (reinit_eistring_once_early):
+	* regex.c (vars_of_regex):
+	* scrollbar-msw.c (vars_of_scrollbar_mswindows):
+	* search.c (vars_of_search):
+	Fix evil crashes due to eistrings not properly reinitialized under
+	pdump.  Redo a bit some of the init routines; convert some
+	complex_vars_of() into simple vars_of(), because they didn't need
+	complex processing.
+
+	* callproc.c:
+	* callproc.c (call_process_kill):
+	* callproc.c (call_process_cleanup):
+	* callproc.c (Fold_call_process_internal):
+	* callproc.c (child_setup):
+	* callproc.c (syms_of_callproc):
+	* callproc.c (getenv): Removed.
+	* emacs.c:
+	* emacs.c (main_1):
+	* event-stream.c (check_event_stream_ok):
+	* event-stream.c (init_event_stream):
+	* nt.c:
+	* nt.c (init_mswindows_environment):
+	* nt.c (Fmswindows_long_file_name):
+	* nt.c (init_nt):
+	* process.c:
+	* process.c (init_process_io_handles):
+	* process.c (Fstart_process_internal):
+	* process.c (getenv_internal):
+	* process.c (putenv_internal):
+	* process.c (getenv): New.
+	* process.c (DEFUN):
+	* process.c (Fgetenv):
+	* process.c (egetenv):
+	* process.c (init_xemacs_process):
+	* process.c (syms_of_process):
+	* process.c (vars_of_process):
+	* process.h:
+	* sysdep.c (wait_for_termination):
+	* sysdep.c (init_baud_rate):
+	* sysdep.c (emacs_get_tty):
+	* sysdep.c (emacs_set_tty):
+	* sysdep.c (tty_init_sys_modes_on_device):
+	* sysdep.h:
+	* syssignal.h:
+	* syswindows.h:
+	* ntproc.c: Delete.  Hallelujah, praise the Lord, there is no god
+	but Allah!!!
+
+	fix so that processes can be invoked in bare temacs -- thereby
+	eliminating any need for callproc.c. (currently only eliminated
+	under NT.) remove all crufty and unnecessary old process code in
+	ntproc.c and elsewhere.  move non-callproc-specific stuff (mostly
+	environment) into process.c, so callproc.c can be left out under
+	NT.
+
+	* console-tty.c (tty_init_console):
+	* doc.c:
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (get_doc_string):
+	* doc.c (Fsnarf_documentation):
+	* file-coding.c:
+	* file-coding.c (coding_reader):
+	* file-coding.c (set_coding_character_mode):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (make_coding_output_stream):
+	* file-coding.c (detect_coding_stream):
+	* file-coding.h:
+	* file-coding.h (struct coding_stream):
+	* file-coding.h (LSTREAM_FL_NO_CLOSE_OTHER):
+	* lstream.c:
+	* lstream.c (Lstream_read_1):
+	* lstream.c (Lstream_read):
+	* lstream.c (Lstream_fgetc):
+	* lstream.h (lstream_implementation):
+
+	fix doc string handling so it works with Japanese, etc docs.
+	change handling of "character mode" so callers don't have to
+	manually set it (quite error-prone).
+
+	* event-msw.c (init_event_mswindows_late): spacing fixes.
+
+	* lread.c:
+	* lread.c (pas_de_holgazan_ici):
+	* lread.c (load_force_doc_string_unwind):
+	* lread.c (readevalloop):
+	* lread.c (read_list_conser):
+	* lread.c (read_vector):
+
+	eliminate unused crufty vintage-19 "FSF defun hack" code.
+
+	* lrecord.h: improve pdump description docs.
+	
+	* buffer.c:
+	* ntheap.c:
+	* ntheap.c (round_to_next):
+	* ntheap.c (get_data_start):
+	* ntheap.c (get_data_end):
+	* ntheap.c (allocate_heap):
+	* ntheap.c (sbrk):
+	* ntheap.c (recreate_heap):
+	* unexnt.c:
+	* unexnt.c (_start):
+	* unexnt.c (unexec):
+	* unexnt.c (get_bss_info_from_map_file):
+	* unexnt.c (get_section_info):
+	* unexnt.c (copy_executable_and_dump_data_section):
+	* unexnt.c (dump_bss_and_heap):
+	* unexnt.c (read_in_bss):
+	* unexnt.c (map_in_heap):
+	* win32.c:
+	* win32.c (mswindows_get_module_file_name):
+	* emacs.c (make_arg_list_1):
+	* emacs.c (Fdump_emacs):
+	Mule-ize some unexec and startup code.  It was pseudo-Mule-ized
+	before by simply always calling the ...A versions of functions,
+	but that won't cut it -- eventually we want to be able to run
+	properly even if XEmacs has been installed in a Japanese
+	directory. (The current problem is the timing of the loading of
+	the Unicode tables; this will eventually be fixed.) Go through and
+	fix various other places where the code was not Mule-clean.
+	Provide a function mswindows_get_module_file_name() to get our own
+	name without resort to PATH_MAX and such.  Add a big comment in
+	main() about the problem with Unicode table load timing that I
+	just alluded to.
+
+	* emacs.c (guts_of_fatal_error_signal):
+	* emacs.c (mswindows_handle_hardware_exceptions_1):
+	When error-checking is enabled (interpreted as "user is developing
+	XEmacs"), don't ask user to "pause to read messages" when a fatal
+	error has occurred, because it will wedge if we are in an inner
+	modal loop (typically when a menu is popped up) and make us unable
+	to get a useful stack trace in the debugger.
+	
+	* text.c (update_entirely_ascii_p_flag):
+	* text.c (charbpos_to_bytebpos_func):
+	* text.c (bytebpos_to_charbpos_func):
+	Correct update_entirely_ascii_p_flag to actually work.
+
+	* lisp.h:
+	* symsinit.h:
+	 declarations for above changes.
+
 2002-04-13  Jonathan Harris  <jonathan@xemacs.org>
 
 	* unexnt.c (_start):

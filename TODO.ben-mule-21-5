@@ -1,3 +1,15 @@
+April 11, 2002:
+
+Priority:
+
+1. Finish checking in current mule ws.
+2. Start working on bugs reported by others and noticed by me:
+   -- problems cutting and pasting binary data, e.g. from byte-compiler instructions
+   -- test suite failures
+   -- process i/o problems w.r.t. eol: |uniq (e.g.) leaves ^M's at end of
+      line; running "bash" as shell-file-name doesn't work because it doesn't
+      like the extra ^M's.
+
 March 20, 2002:
 
 bugs:

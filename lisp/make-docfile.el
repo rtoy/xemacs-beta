@@ -1,6 +1,7 @@
 ;;; make-docfile.el --- Cache docstrings in external file
 
 ;; Copyright (C) 1985, 1986, 1992-1995, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Unknown
 ;; Maintainer: Steven L Baur <steve@xemacs.org>
@@ -88,6 +89,8 @@
 (load "dump-paths.el")
 (require 'custom)
 (load "process")
+;; need for stuff called from C by process code
+(if (featurep 'windows-nt) (load "win32-native"))
 
 (let (preloaded-file-list)
   (load (expand-file-name "../lisp/dumped-lisp.el"))
@@ -162,7 +165,8 @@
       ;; (locate-file-clear-hashing nil)
       (if (memq system-type '(berkeley-unix next-mach))
 	  ;; Suboptimal, but we have a unresolved bug somewhere in the
-	  ;; low-level process code
+	  ;; low-level process code.  #### Now that we've switched to using
+	  ;; the regular asynch process code, we should try removing this.
 	  (call-process-internal
 	   "/bin/csh"
 	   nil

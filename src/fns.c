@@ -2887,7 +2887,7 @@ ARRAY is a vector, bit vector, or string.
 
       sledgehammer_check_ascii_begin (array);
       item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
-      new_bytecount = item_bytecount * XSTRING_CHAR_LENGTH (array);
+      new_bytecount = item_bytecount * (Bytecount) XSTRING_CHAR_LENGTH (array);
 
       resize_string (array, -1, new_bytecount - old_bytecount);
 

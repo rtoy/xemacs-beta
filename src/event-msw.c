@@ -4798,9 +4798,9 @@ init_event_mswindows_late (void)
 {
 #ifdef HAVE_MSG_SELECT
   windows_fd = retry_open ("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
-  assert (windows_fd>=0);
+  assert (windows_fd >= 0);
   FD_SET (windows_fd, &input_wait_mask);
-  FD_ZERO(&zero_mask);
+  FD_ZERO (&zero_mask);
 #endif
 
   event_stream = mswindows_event_stream;

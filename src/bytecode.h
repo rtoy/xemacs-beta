@@ -1,5 +1,6 @@
 /* Definitions for bytecode interpretation and compiled-function objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -61,6 +62,18 @@ struct Lisp_Compiled_Function
   Lisp_Object instructions;
   Lisp_Object constants;
   Lisp_Object arglist;
+  /* For speed, we unroll arglist into an array of argument symbols, so we
+     don't have to process arglist every time we make a function call. */
+  Lisp_Object *args;
+  /* Minimum and maximum number of arguments.  If MAX_ARGS == MANY, the
+     function was declared with &rest, and (args_in_array - 1) indicates
+     how many arguments there are before the &rest argument. (We could
+     munge the max_non_rest_args into max_args by using a negative number,
+     but that interferes with pdump marking.  We don't want to use a flag
+     to indicate &rest because that would add an extra check in the
+     simplest case.) */
+  int min_args, max_args;
+  int args_in_array;
   /* This uses the minimal number of conses; see accessors in data.c. */
   Lisp_Object doc_and_interactive;
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -84,9 +97,12 @@ Lisp_Object compiled_function_interactive   (Lisp_Compiled_Function *f);
 void set_compiled_function_documentation (Lisp_Compiled_Function *f,
 					  Lisp_Object new_doc);
 
-Lisp_Object funcall_compiled_function (Lisp_Object fun,
-				       int nargs, Lisp_Object args[]);
 void optimize_compiled_function (Lisp_Object compiled_function);
+
+typedef unsigned char Opbyte;
+Lisp_Object execute_optimized_program (const Opbyte *program,
+				       int stack_depth,
+				       Lisp_Object *constants_data);
 
 DECLARE_LRECORD (compiled_function, Lisp_Compiled_Function);
 #define XCOMPILED_FUNCTION(x) XRECORD (x, compiled_function, \

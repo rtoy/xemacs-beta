@@ -146,6 +146,7 @@ typedef int Emchar;
    buffer.h (where they rightfully belong) to avoid syntax errors
    in function prototypes. */
 
+#if !defined (__cplusplus) || !defined (CPLUSPLUS_INTEGRAL_CLASSES_NOT_YET)
 
 typedef EMACS_INT Charbpos;
 typedef EMACS_INT Bytebpos;
@@ -154,6 +155,460 @@ typedef EMACS_INT Membpos;
 /* Counts of bytes or chars */
 typedef EMACS_INT Bytecount;
 typedef EMACS_INT Charcount;
+
+/* Not yet used */
+typedef EMACS_INT Charxpos;
+typedef EMACS_INT Bytexpos;
+typedef EMACS_INT Memxpos;
+
+#else /* __cplusplus */
+
+/* Implement strong type-checking of the above integral types by declaring
+   them to be classes and using operator overloading.  Unfortunately this
+   is a huge pain in the ass because C++ doesn't strongly distinguish
+   "bool" and "size_t" from int.  The problem is especially bad with "bool"
+   -- if you want to be able to say 'if (len--)' where len is e.g. a
+   Bytecount, you need to declare a conversion operator to bool(); and
+   since bool is just an alias for int, you suddenly get tons and tons of
+   ambiguities, which need to be resolved by lots of laborious declarations
+   for every single possible type combination.  Hence the multitude of
+   declarations in DECLARE_INTCLASS_ARITH_COMPARE().  The bool/int
+   equivalence also means that we have to forcibly block the combinations
+   we don't want by creating overloaded versions of them and declaring them
+   private. */
+   
+#undef class
+#undef this
+
+class Bytecount;
+class Bytebpos;
+class Bytexpos;
+class Charcount;
+class Charbpos;
+class Charxpos;
+class Membpos;
+class Memxpos;
+
+/* Declare the arithmetic and comparison operations for an integral class,
+   i.e. one of the above classes.  If this is a "position" class, where the
+   difference between two positions is a different class (a "count" class),
+   then use POSCL for the position class and COUNTCL for the count class.
+   If this is a simple class, where all operations yield the same class,
+   substitute the same class for POSCL and COUNTCL. */
+
+#define DECLARE_INTCLASS_ARITH_COMPARE(poscl, countcl)			      \
+  poscl operator += (const countcl& l) { data += l.data; return *this; }      \
+  poscl operator -= (const countcl& l) { data -= l.data; return *this; }      \
+  poscl operator + (const countcl& l) const { return poscl (data + l.data); } \
+  poscl operator - (const countcl& l) const { return poscl (data - l.data); } \
+  poscl operator += (const int& l) { data += l; return *this; }		      \
+  poscl operator -= (const int& l) { data -= l; return *this; }		      \
+  poscl operator + (const int& l) const { return poscl (data + l); }	      \
+  poscl operator - (const int& l) const { return poscl (data - l); }	      \
+  poscl operator += (const unsigned int& l) { data += l; return *this; }      \
+  poscl operator -= (const unsigned int& l) { data -= l; return *this; }      \
+  poscl operator + (const unsigned int& l) const			      \
+    { return poscl (data + l); }					      \
+  poscl operator - (const unsigned int& l) const			      \
+    { return poscl (data - l); }					      \
+  poscl operator += (const long& l) { data += l; return *this; }	      \
+  poscl operator -= (const long& l) { data -= l; return *this; }	      \
+  poscl operator + (const long& l) const { return poscl (data + l); }	      \
+  poscl operator - (const long& l) const { return poscl (data - l); }	      \
+  poscl operator += (const unsigned long& l) { data += l; return *this; }     \
+  poscl operator -= (const unsigned long& l) { data -= l; return *this; }     \
+  poscl operator + (const unsigned long& l) const			      \
+    { return poscl (data + l); }					      \
+  poscl operator - (const unsigned long& l) const			      \
+    { return poscl (data - l); }					      \
+  poscl operator += (const short& l) { data += l; return *this; }	      \
+  poscl operator -= (const short& l) { data -= l; return *this; }	      \
+  poscl operator + (const short& l) const { return poscl (data + l); }	      \
+  poscl operator - (const short& l) const { return poscl (data - l); }	      \
+  poscl operator += (const unsigned short& l) { data += l; return *this; }    \
+  poscl operator -= (const unsigned short& l) { data -= l; return *this; }    \
+  poscl operator + (const unsigned short& l) const			      \
+    { return poscl (data + l); }					      \
+  poscl operator - (const unsigned short& l) const			      \
+    { return poscl (data - l); }					      \
+									      \
+  poscl operator *= (const countcl& l) { data *= l.data; return *this; }      \
+  poscl operator /= (const countcl& l) { data /= l.data; return *this; }      \
+  poscl operator * (const countcl& l) const { return poscl (data * l.data); } \
+  poscl operator / (const countcl& l) const { return poscl (data / l.data); } \
+  poscl operator *= (const int& l) { data *= l; return *this; }		      \
+  poscl operator /= (const int& l) { data /= l; return *this; }		      \
+  poscl operator * (const int& l) const { return poscl (data * l); }	      \
+  poscl operator / (const int& l) const { return poscl (data / l); }	      \
+  poscl operator *= (const unsigned int& l) { data *= l; return *this; }      \
+  poscl operator /= (const unsigned int& l) { data /= l; return *this; }      \
+  poscl operator * (const unsigned int& l) const { return poscl (data * l); } \
+  poscl operator / (const unsigned int& l) const { return poscl (data / l); } \
+  poscl operator *= (const long& l) { data *= l; return *this; }	      \
+  poscl operator /= (const long& l) { data /= l; return *this; }	      \
+  poscl operator * (const long& l) const { return poscl (data * l); }	      \
+  poscl operator / (const long& l) const { return poscl (data / l); }	      \
+  poscl operator *= (const unsigned long& l) { data *= l; return *this; }     \
+  poscl operator /= (const unsigned long& l) { data /= l; return *this; }     \
+  poscl operator * (const unsigned long& l) const			      \
+    { return poscl (data * l); }					      \
+  poscl operator / (const unsigned long& l) const			      \
+    { return poscl (data / l); }					      \
+  poscl operator *= (const short& l) { data *= l; return *this; }	      \
+  poscl operator /= (const short& l) { data /= l; return *this; }	      \
+  poscl operator * (const short& l) const { return poscl (data * l); }	      \
+  poscl operator / (const short& l) const { return poscl (data / l); }	      \
+  poscl operator *= (const unsigned short& l) { data *= l; return *this; }    \
+  poscl operator /= (const unsigned short& l) { data /= l; return *this; }    \
+  poscl operator * (const unsigned short& l) const			      \
+    { return poscl (data * l); }					      \
+  poscl operator / (const unsigned short& l) const			      \
+    { return poscl (data / l); }					      \
+									      \
+  poscl operator &= (const countcl& l) { data &= l.data; return *this; }      \
+  poscl operator |= (const countcl& l) { data |= l.data; return *this; }      \
+  poscl operator & (const countcl& l) const { return poscl (data & l.data); } \
+  poscl operator | (const countcl& l) const { return poscl (data | l.data); } \
+  poscl operator &= (const int& l) { data &= l; return *this; }		      \
+  poscl operator |= (const int& l) { data |= l; return *this; }		      \
+  poscl operator & (const int& l) const { return poscl (data & l); }	      \
+  poscl operator | (const int& l) const { return poscl (data | l); }	      \
+  poscl operator &= (const unsigned int& l) { data &= l; return *this; }      \
+  poscl operator |= (const unsigned int& l) { data |= l; return *this; }      \
+  poscl operator & (const unsigned int& l) const { return poscl (data & l); } \
+  poscl operator | (const unsigned int& l) const { return poscl (data | l); } \
+  poscl operator &= (const long& l) { data &= l; return *this; }	      \
+  poscl operator |= (const long& l) { data |= l; return *this; }	      \
+  poscl operator & (const long& l) const { return poscl (data & l); }	      \
+  poscl operator | (const long& l) const { return poscl (data | l); }	      \
+  poscl operator &= (const unsigned long& l) { data &= l; return *this; }     \
+  poscl operator |= (const unsigned long& l) { data |= l; return *this; }     \
+  poscl operator & (const unsigned long& l) const			      \
+    { return poscl (data & l); }					      \
+  poscl operator | (const unsigned long& l) const			      \
+    { return poscl (data | l); }					      \
+  poscl operator &= (const short& l) { data &= l; return *this; }	      \
+  poscl operator |= (const short& l) { data |= l; return *this; }	      \
+  poscl operator & (const short& l) const { return poscl (data & l); }	      \
+  poscl operator | (const short& l) const { return poscl (data | l); }	      \
+  poscl operator &= (const unsigned short& l) { data &= l; return *this; }    \
+  poscl operator |= (const unsigned short& l) { data |= l; return *this; }    \
+  poscl operator & (const unsigned short& l) const			      \
+    { return poscl (data & l); }					      \
+  poscl operator | (const unsigned short& l) const			      \
+    { return poscl (data | l); }					      \
+									      \
+  poscl operator - ()           { return poscl (-data); }		      \
+  poscl operator-- ()           { data--; return *this; }		      \
+  poscl operator-- (int)	     { data--; return poscl (data + 1); }     \
+  poscl operator++ ()           { data++; return *this; }		      \
+  poscl operator++ (int)        { data++; return poscl (data - 1); }	      \
+									      \
+  bool operator < (const poscl& l) const { return data < l.data; }	      \
+  bool operator <= (const poscl& l) const { return data <= l.data; }	      \
+  bool operator > (const poscl& l) const { return data > l.data; }	      \
+  bool operator >= (const poscl& l) const { return data >= l.data; }	      \
+  bool operator == (const poscl& l) const { return data == l.data; }	      \
+  bool operator != (const poscl& l) const { return data != l.data; }	      \
+  bool operator < (const int& l) const { return data < (EMACS_INT) l; }	      \
+  bool operator <= (const int& l) const { return data <= (EMACS_INT) l; }     \
+  bool operator > (const int& l) const { return data > (EMACS_INT) l; }	      \
+  bool operator >= (const int& l) const { return data >= (EMACS_INT) l; }     \
+  bool operator == (const int& l) const { return data == (EMACS_INT) l; }     \
+  bool operator != (const int& l) const { return data != (EMACS_INT) l; }     \
+  bool operator < (const unsigned int& l) const				      \
+    { return data < (EMACS_INT) l; }					      \
+  bool operator <= (const unsigned int& l) const			      \
+    { return data <= (EMACS_INT) l; }					      \
+  bool operator > (const unsigned int& l) const				      \
+    { return data > (EMACS_INT) l; }					      \
+  bool operator >= (const unsigned int& l) const			      \
+    { return data >= (EMACS_INT) l; }					      \
+  bool operator == (const unsigned int& l) const			      \
+    { return data == (EMACS_INT) l; }					      \
+  bool operator != (const unsigned int& l) const			      \
+    { return data != (EMACS_INT) l; }					      \
+  bool operator < (const long& l) const { return data < (EMACS_INT) l; }      \
+  bool operator <= (const long& l) const { return data <= (EMACS_INT) l; }    \
+  bool operator > (const long& l) const { return data > (EMACS_INT) l; }      \
+  bool operator >= (const long& l) const { return data >= (EMACS_INT) l; }    \
+  bool operator == (const long& l) const { return data == (EMACS_INT) l; }    \
+  bool operator != (const long& l) const { return data != (EMACS_INT) l; }    \
+  bool operator < (const unsigned long& l) const			      \
+    { return data < (EMACS_INT) l; }					      \
+  bool operator <= (const unsigned long& l) const			      \
+    { return data <= (EMACS_INT) l; }					      \
+  bool operator > (const unsigned long& l) const			      \
+    { return data > (EMACS_INT) l; }					      \
+  bool operator >= (const unsigned long& l) const			      \
+    { return data >= (EMACS_INT) l; }					      \
+  bool operator == (const unsigned long& l) const			      \
+    { return data == (EMACS_INT) l; }					      \
+  bool operator != (const unsigned long& l) const			      \
+    { return data != (EMACS_INT) l; }					      \
+  bool operator < (const short& l) const { return data < (EMACS_INT) l; }     \
+  bool operator <= (const short& l) const { return data <= (EMACS_INT) l; }   \
+  bool operator > (const short& l) const { return data > (EMACS_INT) l; }     \
+  bool operator >= (const short& l) const { return data >= (EMACS_INT) l; }   \
+  bool operator == (const short& l) const { return data == (EMACS_INT) l; }   \
+  bool operator != (const short& l) const { return data != (EMACS_INT) l; }   \
+  bool operator < (const unsigned short& l) const			      \
+    { return data < (EMACS_INT) l; }					      \
+  bool operator <= (const unsigned short& l) const			      \
+    { return data <= (EMACS_INT) l; }					      \
+  bool operator > (const unsigned short& l) const			      \
+    { return data > (EMACS_INT) l; }					      \
+  bool operator >= (const unsigned short& l) const			      \
+    { return data >= (EMACS_INT) l; }					      \
+  bool operator == (const unsigned short& l) const			      \
+    { return data == (EMACS_INT) l; }					      \
+  bool operator != (const unsigned short& l) const			      \
+    { return data != (EMACS_INT) l; }					      \
+  bool operator ! () const { return !data; }
+
+/* Declare the "bad" or disallowed arithmetic and comparion operations
+   between class GOOD and class BAD.  Meant to go inside the private
+   section of class GOOD. */
+
+#define DECLARE_BAD_INTCLASS_ARITH_COMPARE(good, bad)	\
+  good operator += (const bad& l) { return badret; }	\
+  good operator -= (const bad& l) { return badret; }	\
+  good operator *= (const bad& l) { return badret; }	\
+  good operator /= (const bad& l) { return badret; }	\
+  good operator + (const bad& l) { return badret; }	\
+  good operator - (const bad& l) { return badret; }	\
+  good operator * (const bad& l) { return badret; }	\
+  good operator / (const bad& l) { return badret; }	\
+							\
+  bool operator < (const bad& l)  { return 0; }		\
+  bool operator <= (const bad& l) { return 0; }		\
+  bool operator > (const bad& l)  { return 0; }		\
+  bool operator >= (const bad& l) { return 0; }		\
+  bool operator == (const bad& l) { return 0; }		\
+  bool operator != (const bad& l) { return 0; }
+
+/* Declare the "bad" or disallowed arithmetic operations between class GOOD
+   and another of the same class, for a position class.  Meant to go inside
+   the private section of class GOOD. */
+
+#define DECLARE_BAD_POS_CLASS_ARITH(good)		\
+  good operator += (const good& l) { return badret; }	\
+  good operator -= (const good& l) { return badret; }	\
+  good operator *= (const good& l) { return badret; }	\
+  good operator /= (const good& l) { return badret; }	\
+  good operator + (const good& l) { return badret; }	\
+  good operator * (const good& l) { return badret; }	\
+  good operator / (const good& l) { return badret; }
+
+/* Basic declaration at the top of all integral classes.  Don't call
+   directly, use one of the more specific versions below. */
+
+#define DECLARE_INTCLASS(cl)			\
+ public:					\
+  EMACS_INT data;				\
+  cl () { data = 0xCDCDCDCD; }			\
+  cl (int i) { data = i; }			\
+  cl (unsigned int i) { data = i; }		\
+  cl (long i) { data = i; }			\
+  cl (unsigned long i) { data = i; }		\
+  cl (short i) { data = i; }			\
+  cl (unsigned short i) { data = i; }		\
+  operator EMACS_INT ()  const { return data; }
+
+/* Basic declaration at the top of all count classes. */
+
+#define DECLARE_COUNT_CLASS(cl)				\
+  DECLARE_INTCLASS (cl)					\
+  DECLARE_INTCLASS_ARITH_COMPARE (cl, cl)		\
+ private:						\
+  static cl badret;
+
+/* Basic declaration at the bottom of the prelude of all position classes.
+   Don't call directly. */
+
+#define DECLARE_POS_CLASS_SECOND_HALF(cl, countcl)			     \
+  DECLARE_INTCLASS_ARITH_COMPARE (cl, countcl)				     \
+  countcl operator - (const cl& l) const { return countcl (data - l.data); } \
+ private:								     \
+  static cl badret;							     \
+  DECLARE_BAD_POS_INTCLASS_ARITH (cl)
+
+/* Basic declaration at the top of all buffer position classes. */
+
+#define DECLARE_BPOS_CLASS(cl, countcl)		\
+  DECLARE_INTCLASS (cl)				\
+  DECLARE_POS_CLASS_SECOND_HALF (cl, countcl)
+
+/* Basic declaration at the top of all X-position classes (that can refer
+   to buffers or strings).  CL1 and CL2 are the equivalent more specific
+   classes referring only to buffers or strings, respefitvely. */
+
+#define DECLARE_XPOS_CLASS(cl, countcl, cl1, cl2)	\
+  DECLARE_INTCLASS (cl)					\
+  cl (const cl1& x) { data = x.data; }			\
+  cl (const cl2& x) { data = x.data; }			\
+  operator cl1 () const { return cl1 (data); }		\
+  operator cl2 () const { return cl2 (data); }		\
+  DECLARE_POS_CLASS_SECOND_HALF (cl, countcl)
+
+/* Declare the "bad" or disallowed arithmetic and comparion operations
+   between class CHARCL (a character class) and various non-character
+   classes.  Meant to go inside the private section of class GOOD. */
+
+#define DECLARE_BAD_CHAR_INTCLASS_ARITH_COMPARE(charcl)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (charcl, Bytecount)	\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (charcl, Bytebpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (charcl, Bytexpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (charcl, Membpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (charcl, Memxpos)
+
+/* Declare the "bad" or disallowed arithmetic and comparion operations
+   between class BYTECL (a byte class) and various non-byte classes.
+   Meant to go inside the private section of class GOOD. */
+
+#define DECLARE_BAD_BYTE_INTCLASS_ARITH_COMPARE(bytecl)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charcount)	\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charbpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charxpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Membpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Memxpos)
+
+/* Declare the "bad" or disallowed arithmetic and comparion operations
+   between class BYTECL (a mem class) and various non-mem classes.
+   Meant to go inside the private section of class GOOD. */
+
+#define DECLARE_BAD_MEM_INTCLASS_ARITH_COMPARE(bytecl)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charcount)	\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charbpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Charxpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Bytebpos)		\
+  DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Bytexpos)
+
+class Charcount
+{
+  DECLARE_COUNT_CLASS (Charcount)
+  DECLARE_BAD_CHAR_INTCLASS_ARITH_COMPARE (Charcount)
+};
+
+class Charbpos
+{
+  DECLARE_BPOS_CLASS (Charbpos, Charcount)
+  DECLARE_BAD_CHAR_INTCLASS_ARITH_COMPARE (Charbpos)
+};
+
+class Charxpos
+{
+  DECLARE_XPOS_CLASS (Charxpos, Charcount, Charbpos, Charcount)
+  DECLARE_BAD_CHAR_INTCLASS_ARITH_COMPARE (Charxpos)
+};
+
+class Bytecount
+{
+  DECLARE_COUNT_CLASS (Bytecount)
+  DECLARE_BAD_BYTE_INTCLASS_ARITH_COMPARE (Bytecount)
+};
+
+class Bytebpos
+{
+  DECLARE_BPOS_CLASS (Bytebpos, Bytecount)
+  DECLARE_BAD_BYTE_INTCLASS_ARITH_COMPARE (Bytebpos)
+};
+
+class Bytexpos
+{
+  DECLARE_XPOS_CLASS (Bytexpos, Bytecount, Bytebpos, Bytecount)
+  DECLARE_BAD_BYTE_INTCLASS_ARITH_COMPARE (Bytexpos)
+};
+
+class Membpos
+{
+  DECLARE_BPOS_CLASS (Membpos, Bytecount)
+  DECLARE_BAD_MEM_INTCLASS_ARITH_COMPARE (Membpos)
+};
+
+class Memxpos
+{
+  DECLARE_XPOS_CLASS (Memxpos, Bytecount, Membpos, Bytecount)
+  DECLARE_BAD_MEM_INTCLASS_ARITH_COMPARE (Memxpos)
+};
+
+#define DECLARE_POINTER_TYPE_ARITH_COUNT(pointer, countcl)	\
+inline pointer operator += (pointer & x, const countcl& y)	\
+{ x += y.data; return x; }					\
+inline pointer operator -= (pointer & x, const countcl& y)	\
+{ x -= y.data; return x; }					\
+inline pointer operator + (pointer x, const countcl& y)		\
+{ return x + y.data; }						\
+inline pointer operator - (pointer x, const countcl& y)		\
+{ return x - y.data; }
+
+#define DECLARE_INTEGRAL_TYPE_ARITH_COUNT(integral, countcl)	\
+inline integral operator += (integral & x, const countcl& y)	\
+{ x += y.data; return x; }					\
+inline integral operator -= (integral & x, const countcl& y)	\
+{ x -= y.data; return x; }					\
+inline countcl operator + (integral x, const countcl& y)	\
+{ return countcl (x + y.data); }				\
+inline countcl operator - (integral x, const countcl& y)	\
+{ return countcl (x - y.data); }
+
+#define DECLARE_INTEGRAL_TYPE_COMPARE(integral, cl)	\
+inline bool operator < (integral x, const cl& y)	\
+  { return (EMACS_INT) x < y.data; }			\
+inline bool operator <= (integral x, const cl& y)	\
+  { return (EMACS_INT) x <= y.data; }			\
+inline bool operator > (integral x, const cl& y)	\
+  { return (EMACS_INT) x > y.data; }			\
+inline bool operator >= (integral x, const cl& y)	\
+  { return (EMACS_INT) x >= y.data; }			\
+inline bool operator == (integral x, const cl& y)	\
+  { return (EMACS_INT) x == y.data; }			\
+inline bool operator != (integral x, const cl& y)	\
+  { return (EMACS_INT) x != y.data; }
+
+#if 0
+/* Unfortunately C++ doesn't let you overload the ?: operator, so we have
+   to manually deal with ambiguities using casting */
+#define DECLARE_INTEGRAL_TYPE_TRISTATE(integral, cl)	\
+inline cl operator ?: (bool b, integral x, const cl& y)	\
+  { return b ? cl (x) : y; }				\
+inline cl operator ?: (bool b, const cl& x, integral y)	\
+  { return b ? x : cl (y); }
+#endif /* 0 */
+
+DECLARE_POINTER_TYPE_ARITH_COUNT (const Intbyte *, Bytecount);
+DECLARE_POINTER_TYPE_ARITH_COUNT (const Extbyte *, Bytecount);
+DECLARE_POINTER_TYPE_ARITH_COUNT (Intbyte *, Bytecount);
+DECLARE_POINTER_TYPE_ARITH_COUNT (Extbyte *, Bytecount);
+
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (int, Bytecount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (int, Charcount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (unsigned int, Bytecount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (unsigned int, Charcount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (long, Bytecount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (long, Charcount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (unsigned long, Bytecount);
+DECLARE_INTEGRAL_TYPE_ARITH_COUNT (unsigned long, Charcount);
+
+DECLARE_INTEGRAL_TYPE_COMPARE (int, Bytecount);
+DECLARE_INTEGRAL_TYPE_COMPARE (int, Charcount);
+DECLARE_INTEGRAL_TYPE_COMPARE (unsigned int, Bytecount);
+DECLARE_INTEGRAL_TYPE_COMPARE (unsigned int, Charcount);
+DECLARE_INTEGRAL_TYPE_COMPARE (long, Bytecount);
+DECLARE_INTEGRAL_TYPE_COMPARE (long, Charcount);
+DECLARE_INTEGRAL_TYPE_COMPARE (unsigned long, Bytecount);
+DECLARE_INTEGRAL_TYPE_COMPARE (unsigned long, Charcount);
+
+#if 0 /* doesn't work */
+inline Bytecount operator - (const Intbyte *x, const Intbyte *y)	\
+  { return Bytecount (x - y); }
+#endif
+
+#define class c_class
+#define this c_this
+
+#endif /* __cplusplus */
+
 /* Counts of elements */
 typedef EMACS_INT Elemcount;
 /* Hash codes */
@@ -1453,7 +1908,7 @@ string_index_byte_to_char (Lisp_Object s, Bytecount idx)
 {
   Charcount retval;
   if (idx <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = idx;
+    retval = (Charcount) idx;
   else
     retval = (XSTRING_ASCII_BEGIN (s) +
 	      bytecount_to_charcount (XSTRING_DATA (s) +
@@ -1473,7 +1928,7 @@ string_index_char_to_byte (Lisp_Object s, Charcount idx)
 {
   Bytecount retval;
   if (idx <= (Charcount) XSTRING_ASCII_BEGIN (s))
-    retval = idx;
+    retval = (Bytecount) idx;
   else
     retval = (XSTRING_ASCII_BEGIN (s) +
 	      charcount_to_bytecount (XSTRING_DATA (s) +
@@ -1494,10 +1949,10 @@ string_offset_byte_to_char_len (Lisp_Object s, Bytecount off, Bytecount len)
 {
   Charcount retval;
   if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = len;
+    retval = (Charcount) len;
   else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval =
-      XSTRING_ASCII_BEGIN (s) - off +
+      XSTRING_ASCII_BEGIN (s) - (Charcount) off +
 	bytecount_to_charcount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
 				len - (XSTRING_ASCII_BEGIN (s) - off));
   else
@@ -1516,13 +1971,16 @@ string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
 )
 {
   Bytecount retval;
-  if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = len;
+  /* casts to avoid errors from combining Bytecount/Charcount and warnings
+     from signed/unsigned comparisons */
+  if (off + (Bytecount) len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval = (Bytecount) len;
   else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
     retval =
       XSTRING_ASCII_BEGIN (s) - off +
 	charcount_to_bytecount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
-				len - (XSTRING_ASCII_BEGIN (s) - off));
+				len - (XSTRING_ASCII_BEGIN (s) -
+				       (Charcount) off));
   else
     retval = charcount_to_bytecount (XSTRING_DATA (s) + off, len);
 #ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
@@ -1532,7 +1990,7 @@ string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
 }
 
 DECLARE_INLINE_HEADER (
-Intbyte *
+const Intbyte *
 string_char_addr (Lisp_Object s, Charcount idx)
 )
 {
@@ -2699,7 +3157,7 @@ void free_marker (Lisp_Marker *);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
-int need_to_garbage_collect (void);
+extern int need_to_garbage_collect;
 
 #ifdef MEMORY_USAGE_STATS
 Bytecount malloced_storage_size (void *, Bytecount, struct overhead_stats *);
@@ -2811,7 +3269,10 @@ Lisp_Object make_directory_hash_table (const Intbyte *);
 Lisp_Object wasteful_word_to_lisp (unsigned int);
 
 /* Defined in doc.c */
-Lisp_Object unparesseuxify_doc_string (int, EMACS_INT, Intbyte *, Lisp_Object);
+Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
+				       Intbyte *name_nonreloc,
+				       Lisp_Object name_reloc,
+				       int standard_doc_file);
 Lisp_Object read_doc_string (Lisp_Object);
 
 /* Defined in doprnt.c */
@@ -3397,6 +3858,7 @@ void debug_backtrace (void);
 /* Defined in process.c */
 DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
 DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
+extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 /* Defined in profile.c */
 void mark_profiling_info (void);
@@ -3451,6 +3913,7 @@ Lisp_Object specifier_instance_no_quit (Lisp_Object, Lisp_Object, Lisp_Object,
 unsigned int hash_string (const Intbyte *, Bytecount);
 Lisp_Object intern_int (const Intbyte *str);
 Lisp_Object intern (const CIntbyte *str);
+Lisp_Object intern_converting_underscores_to_dashes (const CIntbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Intbyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
 Lisp_Object indirect_function (Lisp_Object, int);
@@ -3810,7 +4273,11 @@ void record_delete (struct buffer *, Charbpos, Charcount);
 void record_change (struct buffer *, Charbpos, Charcount);
 
 /* Defined in unex*.c */
-int unexec (char *, char *, uintptr_t, uintptr_t, uintptr_t);
+#ifdef WIN32_NATIVE
+int unexec (Intbyte *, Intbyte *, uintptr_t, uintptr_t, uintptr_t);
+#else
+int unexec (Extbyte *, Extbyte *, uintptr_t, uintptr_t, uintptr_t);
+#endif
 #ifdef RUN_TIME_REMAP
 int run_time_remap (char *);
 #endif
@@ -4109,15 +4576,16 @@ code)."
 
 */
 
-extern Lisp_Object Qactivate_menubar_hook, Qarith_error, Qarrayp, Qautoload;
-extern Lisp_Object Qbackground, Qbackground_pixmap, Qbeginning_of_buffer;
-extern Lisp_Object Qbitp, Qblinking, Qbuffer_glyph_p, Qbuffer_live_p;
-extern Lisp_Object Qbuffer_read_only, Qbyte_code, Qcall_interactively;
-extern Lisp_Object Qcategory_designator_p, Qcategory_table_value_p, Qcdr;
-extern Lisp_Object Qchar_or_string_p, Qcharacterp, Qcircular_list;
-extern Lisp_Object Qcircular_property_list, Qcolor_pixmap_image_instance_p;
-extern Lisp_Object Qcommandp, Qcompletion_ignore_case, Qconsole_live_p;
-extern Lisp_Object Qconst_specifier, Qconversion_error, Qcurrent_menubar;
+extern Lisp_Object Qactivate_menubar_hook, Qand_optional, Qand_rest;
+extern Lisp_Object Qarith_error, Qarrayp, Qautoload, Qbackground;
+extern Lisp_Object Qbackground_pixmap, Qbeginning_of_buffer, Qbitp, Qblinking;
+extern Lisp_Object Qbuffer_glyph_p, Qbuffer_live_p, Qbuffer_read_only;
+extern Lisp_Object Qbyte_code, Qcall_interactively, Qcategory_designator_p;
+extern Lisp_Object Qcategory_table_value_p, Qcdr, Qchar_or_string_p;
+extern Lisp_Object Qcharacterp, Qcircular_list, Qcircular_property_list;
+extern Lisp_Object Qcolor_pixmap_image_instance_p, Qcommandp;
+extern Lisp_Object Qcompletion_ignore_case, Qconsole_live_p, Qconst_specifier;
+extern Lisp_Object Qconversion_error, Qcurrent_menubar;
 extern Lisp_Object Qcyclic_variable_indirection, Qdefun, Qdevice_live_p, Qdim;
 extern Lisp_Object Qdirection, Qdisabled, Qdisabled_command_hook;
 extern Lisp_Object Qdisplay_table, Qdomain_error, Qediting_error;

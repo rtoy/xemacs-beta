@@ -1,6 +1,7 @@
 ;;; abbrev.el --- abbrev mode commands for Emacs
 
 ;; Copyright (C) 1985, 1986, 1987, 1992, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: abbrev, dumped
@@ -37,14 +38,25 @@
   :tag "Abbreviations"
   :group 'editing)
 
-(defgroup abbrev-mode nil
+(defcustom abbrev-mode nil
   "Word abbreviations mode."
+  :initialize #'set-default
+  :set #'(lambda (sym val)
+	   (global-abbrev-mode (if val 1 0)))
   :group 'abbrev)
 
-;jwz: this is preloaded so don't ;;;###autoload
-(defcustom only-global-abbrevs nil "\
-*Non-nil means user plans to use global abbrevs only.
+(defcustom only-global-abbrevs nil
+  "*Non-nil means user plans to use global abbrevs only.
 Makes the commands to define mode-specific abbrevs define global ones instead."
+  :type 'boolean
+  :group 'abbrev)
+
+(defcustom defining-abbrev-turns-on-abbrev-mode t
+  "*NOn-nil turns on abbrev-mode whenever an abbrev is defined.
+This occurs only when the user-level commands (e.g. `add-global-abbrev')
+are used.  abbrev-mode is turned on in all buffers or the current-buffer
+only, depending on whether a global or mode-specific abbrev is defined."
+  ;;#### should turn on in all buffers of current mode in mode-specific abbrev!
   :type 'boolean
   :group 'abbrev)
 
@@ -65,7 +77,6 @@ This causes `save-some-buffers' to offer to save the abbrevs.")
   (fillarray table 0)
   (setq abbrevs-changed t)
   nil)
-
 
 (defun define-abbrev-table (table-name definitions)
   "Define TABLE-NAME (a symbol) as an abbrev table name.
@@ -270,6 +281,22 @@ and be replaced by its expansion."
   ;; XEmacs change
   (redraw-modeline))
 
+;; XEmacs change
+(defun global-abbrev-mode (arg)
+  "Toggle abbrev mode in all buffers.
+With argument ARG, enable abbrev mode globally if ARG is positive, else
+disable.  In abbrev mode, inserting an abbreviation causes it to expand
+and be replaced by its expansion."
+  (interactive "P")
+  (let ((newval (if (null arg) (not abbrev-mode)
+		  (> (prefix-numeric-value arg) 0))))
+    (setq-default abbrev-mode newval)
+    (loop for buf being the buffers do
+      (if (not (eq (symbol-value-in-buffer 'abbrev-mode buf) newval))
+	  (with-current-buffer buf
+	    (setq abbrev-mode newval)))))
+  (redraw-modeline))
+
 
 (defvar edit-abbrevs-map nil
   "Keymap used in edit-abbrevs.")
@@ -423,11 +450,12 @@ ARG is the argument to `add-global-abbrev' or `add-mode-abbrev'."
 	  (save-excursion (backward-word arg) (point))))))
 
 (defun add-mode-abbrev (arg)
-  "Define mode-specific abbrev for last word(s) before point.
-Argument is how many words before point form the expansion;
-or zero means the region is the expansion.
-A negative argument means to undefine the specified abbrev.
-Reads the abbreviation in the minibuffer.
+  "Define mode-specific abbrev for region or last word(s) before point.
+If region active, use it as the expansion\; otherwise, choose the word
+before point.  A prefix argument specifies the number of words before point
+that form the expansion; or zero means the text between point and mark is
+the expansion.  A negative argument means to undefine the specified abbrev.
+This command uses the minibuffer to read the abbreviation.
 
 Don't use this function in a Lisp program; use `define-abbrev' instead."
   ;; XEmacs change:
@@ -437,19 +465,22 @@ Don't use this function in a Lisp program; use `define-abbrev' instead."
        global-abbrev-table
      (or local-abbrev-table
 	 (error "No per-mode abbrev table")))
-   "Mode" arg))
+   "Mode" arg)
+  (if defining-abbrev-turns-on-abbrev-mode (abbrev-mode 1)))
 
 (defun add-global-abbrev (arg)
-  "Define global (all modes) abbrev for last word(s) before point.
-The prefix argument specifies the number of words before point that form the
-expansion; or zero means the region is the expansion.
-A negative argument means to undefine the specified abbrev.
+  "Define global (all modes) abbrev for region or last word(s) before point.
+If region active, use it as the expansion\; otherwise, choose the word
+before point.  A prefix argument specifies the number of words before point
+that form the expansion; or zero means the text between point and mark is
+the expansion.  A negative argument means to undefine the specified abbrev.
 This command uses the minibuffer to read the abbreviation.
 
 Don't use this function in a Lisp program; use `define-abbrev' instead."
   ;; XEmacs change:
   (interactive "P")
-  (add-abbrev global-abbrev-table "Global" arg))
+  (add-abbrev global-abbrev-table "Global" arg)
+  (if defining-abbrev-turns-on-abbrev-mode (global-abbrev-mode 1)))
 
 (defun add-abbrev (table type arg)
   "Add an abbreviation to abbrev table TABLE.
@@ -492,7 +523,8 @@ Expands the abbreviation after defining it."
        global-abbrev-table
      (or local-abbrev-table
 	 (error "No per-mode abbrev table")))
-   "Mode" arg))
+   "Mode" arg)
+  (if defining-abbrev-turns-on-abbrev-mode (abbrev-mode 1)))
 
 (defun inverse-add-global-abbrev (arg)
   "Define last word before point as a global (mode-independent) abbrev.
@@ -500,7 +532,8 @@ With prefix argument N, defines the Nth word before point.
 This command uses the minibuffer to read the expansion.
 Expands the abbreviation after defining it."
   (interactive "p")
-  (inverse-add-abbrev global-abbrev-table "Global" arg))
+  (inverse-add-abbrev global-abbrev-table "Global" arg)
+  (if defining-abbrev-turns-on-abbrev-mode (global-abbrev-mode 1)))
 
 (defun inverse-add-abbrev (table type arg)
   (let (name nameloc exp)

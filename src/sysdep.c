@@ -198,11 +198,8 @@ wait_without_blocking (void)
 #endif /* NO_SUBPROCESSES */
 
 
-#ifdef WIN32_NATIVE
-void wait_for_termination (HANDLE pHandle)
-#else
-void wait_for_termination (int pid)
-#endif
+void
+wait_for_termination (int pid)
 {
   /* #### With the new improved SIGCHLD handling stuff, there is much
      less danger of race conditions and some of the comments below
@@ -313,48 +310,7 @@ void wait_for_termination (int pid)
      Since implementations may add their own error indicators on top,
      we ignore it by default.  */
 #elif defined (WIN32_NATIVE)
-  int ret = 0, status = 0;
-  if (pHandle == NULL)
-    {
-      warn_when_safe (Qprocess, Qwarning, "Cannot wait for unknown process to terminate");
-      return;
-    }
-  do
-    {
-      QUIT;
-      ret = WaitForSingleObject(pHandle, 100);
-    }
-  while (ret == WAIT_TIMEOUT);
-  if (ret == WAIT_FAILED)
-    {
-      warn_when_safe (Qprocess, Qwarning, "waiting for process failed");
-    }
-  if (ret == WAIT_ABANDONED)
-    {
-      warn_when_safe (Qprocess, Qwarning,
-		      "process to wait for has been abandoned");
-    }
-  if (ret == WAIT_OBJECT_0)
-    {
-      ret = GetExitCodeProcess(pHandle, &status);
-      if (ret)
-	{
-	  synch_process_alive = 0;
-	  synch_process_retcode = status;
-	}
-      else
-	{
-	  /* GetExitCodeProcess() didn't return a valid exit status,
-	     nothing to do.  APA */
-	  warn_when_safe (Qprocess, Qwarning,
-			  "failure to obtain process exit value");
-	}
-    }
-  if (pHandle != NULL && !CloseHandle(pHandle))
-    {
-      warn_when_safe (Qprocess, Qwarning,
-		      "failure to close unknown process");
-    }
+  /* not used */
 #elif defined (EMACS_BLOCK_SIGNAL) && !defined (BROKEN_WAIT_FOR_SIGNAL) && defined (SIGCHLD)
   while (1)
     {
@@ -925,9 +881,7 @@ init_baud_rate (struct device *d)
   {
     struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
     int input_fd = CONSOLE_TTY_DATA (con)->infd;
-#if defined (WIN32_NATIVE)
-    DEVICE_TTY_DATA (d)->ospeed = 15;
-#elif defined (HAVE_TERMIOS)
+#ifdef HAVE_TERMIOS
     struct termios sg;
 
     sg.c_cflag = B9600;
@@ -1398,7 +1352,7 @@ emacs_get_tty (int fd, struct emacs_tty *settings)
   if (ioctl (fd, TCGETA, &settings->main) < 0)
     return -1;
 
-#elif !defined (WIN32_NATIVE)
+#else
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, TIOCGETP, &settings->main) < 0)
     return -1;
@@ -1472,7 +1426,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   if (ioctl (fd, flushp ? TCSETAF : TCSETAW, &settings->main) < 0)
     return -1;
 
-#elif !defined (WIN32_NATIVE)
+#else
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, (flushp) ? TIOCSETP : TIOCSETN, &settings->main) < 0)
     return -1;
@@ -1665,14 +1619,12 @@ tty_init_sys_modes_on_device (struct device *d)
   tty.main.c_iflag &= ~BRKINT;
 #endif /* AIX */
 #else /* if not HAVE_TERMIO */
-#if !defined (WIN32_NATIVE)
   con->tty_erase_char = make_char (tty.main.sg_erase);
   tty.main.sg_flags &= ~(ECHO | CRMOD | XTABS);
   if (TTY_FLAGS (con).meta_key)
     tty.main.sg_flags |= ANYP;
   /* #### should we be using RAW mode here? */
   tty.main.sg_flags |= /* interrupt_input ? RAW : */ CBREAK;
-#endif /* not WIN32_NATIVE */
 #endif /* not HAVE_TERMIO */
 
   /* If going to use CBREAK mode, we must request C-g to interrupt
@@ -2229,8 +2181,6 @@ start_of_data (void)
 extern void *minimum_address_seen; /* from xmalloc() */
 extern void *maximum_address_seen; /* from xmalloc() */
 
-extern EMACS_INT consing_since_gc;
-
 Bytecount
 total_data_usage (void)
 {
@@ -2241,20 +2191,7 @@ total_data_usage (void)
 #endif
   
 #if !defined (WIN32_NATIVE) && !defined (CYGWIN)
-  void *data_end;
-
-  static EMACS_INT last_consing_since_gc;
-  static void *last_sbrk;
-
-  /* Random hack to avoid calling sbrk constantly (every funcall).  #### Is
-     it worth it? */
-  if (!last_sbrk || !(consing_since_gc >= last_consing_since_gc &&
-		      (consing_since_gc - last_consing_since_gc) < 1000))
-    {
-      last_sbrk = sbrk (0);
-      last_consing_since_gc = consing_since_gc;
-    }
-  data_end = last_sbrk;
+  void *data_end = sbrk (0);
 #else
   void *data_end = maximum_address_seen;
 #endif

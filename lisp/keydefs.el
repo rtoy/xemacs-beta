@@ -1,7 +1,7 @@
 ;;; keydefs.el --- Define standard keybindings.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2000, 2001 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -167,11 +167,11 @@ Keymap for characters following C-c.")
 
 ;;(define-key global-map "\t" 'self-insert-command)
 (define-key global-map "\t" 'indent-for-tab-command)
-(define-key global-map "\M-\C-\\" 'indent-region)
+(define-key global-map "\M-\C-\\" 'indent-region-or-balanced-expression)
 (define-key global-map "\C-x\t" 'indent-rigidly)
 (define-key global-map "\M-i" 'tab-to-tab-stop)
 ;; XEmacs addition:
-(define-key global-map [(shift tab)] 'tab-to-tab-stop)
+(define-key global-map [(shift tab)] 'self-insert-command)
 
 ;; FSFmacs isearch.el
 

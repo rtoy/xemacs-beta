@@ -26,9 +26,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    incomplete synching, so beware.)
  */
 
+/* This file has been Mule-ized, Ben Wing, 4-13-02. */
+
 #include <config.h>
 #include "lisp.h"
 
+#include "sysdep.h"
 #include "syswindows.h"
 
 /* This gives us the page size and the size of the allocation unit on NT.  */
@@ -49,39 +52,39 @@ cache_system_info (void)
 }
 
 /* Round ADDRESS up to be aligned with ALIGN.  */
-unsigned char *
-round_to_next (unsigned char *address, unsigned long align)
+UChar_Binary *
+round_to_next (UChar_Binary *address, unsigned long align)
 {
   unsigned long tmp;
 
   tmp = (unsigned long) address;
   tmp = (tmp + align - 1) / align;
 
-  return (unsigned char *) (tmp * align);
+  return (UChar_Binary *) (tmp * align);
 }
 
 /* Info for keeping track of our heap.  */
-unsigned char *data_region_base = UNINIT_PTR;
-unsigned char *data_region_end = UNINIT_PTR;
-unsigned char *real_data_region_end = UNINIT_PTR;
+UChar_Binary *data_region_base = UNINIT_PTR;
+UChar_Binary *data_region_end = UNINIT_PTR;
+UChar_Binary *real_data_region_end = UNINIT_PTR;
 unsigned long  data_region_size = UNINIT_LONG;
 unsigned long  reserved_heap_size = UNINIT_LONG;
 
 /* The start of the data segment.  */
-unsigned char *
+UChar_Binary *
 get_data_start (void)
 {
   return data_region_base;
 }
 
 /* The end of the data segment.  */
-unsigned char *
+UChar_Binary *
 get_data_end (void)
 {
   return data_region_end;
 }
 
-static unsigned char *
+static UChar_Binary *
 allocate_heap (void)
 {
   /* The base address for our GNU malloc heap is chosen in conjunction
@@ -145,7 +148,7 @@ allocate_heap (void)
 		      PAGE_NOACCESS);
 #endif
 
-  return (unsigned char*) ptr;
+  return (UChar_Binary *) ptr;
 }
 
 
@@ -174,7 +177,7 @@ sbrk (unsigned long increment)
   if (size < 0) 
     {
       int new_size;
-      unsigned char *new_data_region_end;
+      UChar_Binary *new_data_region_end;
 
       size = -size;
 
@@ -185,7 +188,7 @@ sbrk (unsigned long increment)
       /* We can only decommit full pages, so allow for 
 	 partial deallocation [cga].  */
       new_data_region_end = (data_region_end - size);
-      new_data_region_end = (unsigned char *)
+      new_data_region_end = (UChar_Binary *)
 	((long) (new_data_region_end + syspage_mask) & ~syspage_mask);
       new_size = real_data_region_end - new_data_region_end;
       real_data_region_end = new_data_region_end;
@@ -214,19 +217,19 @@ sbrk (unsigned long increment)
 
       /* We really only commit full pages, so record where
 	 the real end of committed memory is [cga].  */
-      real_data_region_end = (unsigned char *)
+      real_data_region_end = (UChar_Binary *)
 	  ((long) (data_region_end + syspage_mask) & ~syspage_mask);
     }
   
   return result;
 }
 
-#if !defined (CANNOT_DUMP) && !defined(HEAP_IN_DATA) && !defined(PDUMP)
+#if !defined (CANNOT_DUMP) && !defined (HEAP_IN_DATA) && !defined (PDUMP)
 
 /* Recreate the heap from the data that was dumped to the executable.
    EXECUTABLE_PATH tells us where to find the executable.  */
 void
-recreate_heap (char *executable_path)
+recreate_heap (Extbyte *executable_path)
 {
   /* First reserve the upper part of our heap.  (We reserve first
 	 because there have been problems in the past where doing the
@@ -236,36 +239,43 @@ recreate_heap (char *executable_path)
   void *tmp;
   MEMORY_BASIC_INFORMATION info;
   DWORD size;
-  unsigned char* base = get_heap_end ();
-  unsigned char* end  = base + get_reserved_heap_size () - get_committed_heap_size ();
+  UChar_Binary *base = get_heap_end ();
+  UChar_Binary *end  =
+    base + get_reserved_heap_size () - get_committed_heap_size ();
   VirtualQuery (base, &info, sizeof (info));
   if (info.State != MEM_FREE)
-	{
-	  /* Oops, something has already reserved or commited it, nothing we can do but exit */
-	  char buf[256];
-	  sprintf (buf,
-			   "XEmacs cannot start because the memory region required by the heap is not available.\n"
-			   "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, Size = 0x%lx, State = %s, Type = %s)",
-			   info.BaseAddress, info.AllocationBase, info.RegionSize,
-			   info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
-			   info.Type == MEM_IMAGE ? "IMAGE" : info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
-	  MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit(1);
-	}
+    {
+      /* Oops, something has already reserved or commited it, nothing
+	 we can do but exit */
+      Extbyte buf[256];
+      sprintf (buf,
+	       "XEmacs cannot start because the memory region required "
+	       "by the heap is not available.\n"
+	       "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, "
+	       "Size = 0x%lx, State = %s, Type = %s)",
+	       info.BaseAddress, info.AllocationBase, info.RegionSize,
+	       info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
+	       info.Type == MEM_IMAGE ? "IMAGE" :
+	       info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
+      MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+      exit(1);
+    }
 
   /* Now try and reserve as much as possible */
   size = min (info.RegionSize, (DWORD) (end - base));
   tmp = VirtualAlloc (base, size, MEM_RESERVE, PAGE_NOACCESS);
   if (!tmp)
-	{
-	  /* Can't reserve it, nothing we can do but exit */
-	  char buf[256];
-	  sprintf (buf,
-			   "XEmacs cannot start because it couldn't reserve space required for the heap.\n"
-			   "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))", base, size, GetLastError());
-	  MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit (1);
-	}
+    {
+      /* Can't reserve it, nothing we can do but exit */
+      Extbyte buf[256];
+      sprintf (buf,
+	       "XEmacs cannot start because it couldn't reserve space "
+	       "required for the heap.\n"
+	       "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))",
+	       base, size, GetLastError());
+      MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+      exit (1);
+    }
 
   /* We read in the data for the .bss section from the executable
      first and map in the heap from the executable second to prevent

@@ -79,7 +79,8 @@ Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 struct abbrev_match_mapper_closure {
   struct buffer *buf;
   Lisp_Char_Table *chartab;
-  Charcount point, maxlen;
+  Charbpos point;
+  Charcount maxlen;
   Lisp_Symbol *found;
 };
 
@@ -182,7 +183,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 {
   Charbpos wordstart, wordend;
   Intbyte *word, *p;
-  Bytecount idx;
+  Charbpos idx;
   Lisp_Object lookup;
 
   CHECK_VECTOR (obarray);

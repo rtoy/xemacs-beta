@@ -1,3 +1,40 @@
+2002-04-14  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp (HAVE_MS_WINDOWS):
+	* config.inc.samp (X11_DIR):
+	* config.inc.samp (ZLIB_DIR):
+	* config.inc.samp (MAKEINFO):
+	* config.inc.samp (OPTIMIZED_BUILD): New.
+	* config.inc.samp (DEPEND):
+	* config.inc.samp (USE_MINIMAL_TAGBITS): Removed.
+	* config.inc.samp (USE_INDEXED_LRECORD_IMPLEMENTATION): Removed.
+	* config.inc.samp (GUNG_HO): Removed.
+	* xemacs.mak (USE_MINITAR):
+	* xemacs.mak (USE_MINIMAL_TAGBITS): Removed.
+	* xemacs.mak (USE_INDEXED_LRECORD_IMPLEMENTATION): Removed.
+	* xemacs.mak (GUNG_HO): Removed.
+	* xemacs.mak (CONFIG_ERROR):
+	* xemacs.mak (DEBUGFLAGS): New.
+	* xemacs.mak (OPT): Removed.
+	* xemacs.mak (OPTFLAGS): New.
+	* xemacs.mak (CFLAGS):
+	* xemacs.mak (QUICK_DEFINES):
+	* xemacs.mak (TAGBITS_DEFINES): Removed.
+	* xemacs.mak (ERROR_CHECK_DEFINES): New.
+	* xemacs.mak (LRECORD_DEFINES): Removed.
+	* xemacs.mak (DEFINES):
+	* xemacs.mak (TEMACS_OBJS):
+	* xemacs.mak (OS):
+	Separate out debug and optimize flags.
+	Remove all vestiges of USE_MINIMAL_TAGBITS,
+	USE_INDEXED_LRECORD_IMPLEMENTATION, and GUNG_HO, since those
+	ifdefs have long been removed.
+	Make error-checking support actually work.
+	Some rearrangement of config.inc.samp to make it more logical.
+	Remove callproc.c and ntproc.c from xemacs.mak, no longer used.
+
+	Make pdump the default.
+
 2002-04-13  Jonathan Harris  <jonathan@xemacs.org>
 
 	* README: Document MSVC6 required

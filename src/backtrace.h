@@ -203,7 +203,9 @@ extern int specpdl_size;
   Lisp_Object SFU_newval = (value_object);				\
   Lisp_Symbol *SFU_sym   = XSYMBOL (SFU_symbol);			\
   Lisp_Object SFU_oldval = SFU_sym->value;				\
-  if (!SYMBOL_VALUE_MAGIC_P (SFU_oldval) || UNBOUNDP (SFU_oldval))	\
+  /* Most of the time, will be previously unbound.  #### With a bit of	\
+   rearranging, this could be reduced to only one check. */		\
+  if (UNBOUNDP (SFU_oldval) || !SYMBOL_VALUE_MAGIC_P (SFU_oldval))	\
     {									\
       specpdl_ptr->symbol    = SFU_symbol;				\
       specpdl_ptr->old_value = SFU_oldval;				\
@@ -216,7 +218,6 @@ extern int specpdl_size;
   else									\
     specbind_magic (SFU_symbol, SFU_newval);				\
 } while (0)
-
 /* Request enough room for SIZE future entries on special binding stack */
 #define SPECPDL_RESERVE(size) do {			\
   EMACS_INT SR_size = (size);				\

@@ -131,6 +131,27 @@ mswindows_canonicalize_filename (Intbyte *name)
   return eicpyout_malloc (newname, 0);
 }
 
+Extbyte *
+mswindows_get_module_file_name (void)
+{
+  Extbyte *path = NULL;
+  int bufsize = 4096;
+  int cchpathsize;
+  
+  while (1)
+    {
+      path = (Extbyte *) xrealloc (path, bufsize * XETCHAR_SIZE);
+      cchpathsize = qxeGetModuleFileName (NULL, path, bufsize);
+      if (!cchpathsize)
+	return 0;
+      if (cchpathsize + 1 <= bufsize)
+	break;
+      bufsize *= 2;
+    }
+
+  return path;
+}
+
 static void
 init_potentially_nonexistent_functions (void)
 {

@@ -105,7 +105,7 @@
 Lisp_Object Vthe_lisp_rangetab;
 
 void
-complex_vars_of_regex (void)
+vars_of_regex (void)
 {
   Vthe_lisp_rangetab = Fmake_range_table ();
   staticpro (&Vthe_lisp_rangetab);
@@ -114,7 +114,7 @@ complex_vars_of_regex (void)
 #else /* not MULE */
 
 void
-complex_vars_of_regex (void)
+vars_of_regex (void)
 {
 }
 

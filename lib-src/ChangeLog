@@ -1,3 +1,22 @@
+2002-04-14  Ben Wing  <ben@xemacs.org>
+
+	* make-docfile.c:
+	* make-docfile.c (next_extra_elc):
+	* make-docfile.c (again): Removed.
+	* make-docfile.c (main):
+	* make-docfile.c (getc_iso2022):
+	* make-docfile.c (MDGET):
+	* make-docfile.c (read_c_string):
+	* make-docfile.c (write_c_args):
+	* make-docfile.c (scan_c_file):
+	* make-docfile.c (read_lisp_symbol):
+	* make-docfile.c (scan_lisp_file):
+	Add basic support for handling ISO 2022 doc strings -- we parse
+	the basic charset designation sequences so we know whether we're
+	in ASCII and have to pay attention to end quotes and such.
+	
+	Reformat code according to coding standards.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.

@@ -475,30 +475,9 @@ static void
 check_event_stream_ok (enum event_stream_operation op)
 {
   if (!event_stream && noninteractive)
-    {
-      switch (op)
-	{
-	case EVENT_STREAM_PROCESS:
-	  invalid_operation ("Can't start subprocesses in -batch mode",
-			     Qunbound);
-	case EVENT_STREAM_TIMEOUT:
-	  invalid_operation ("Can't add timeouts in -batch mode", Qunbound);
-	case EVENT_STREAM_CONSOLE:
-	  invalid_operation ("Can't add consoles in -batch mode", Qunbound);
-	case EVENT_STREAM_READ:
-	  invalid_operation ("Can't read events in -batch mode", Qunbound);
-	case EVENT_STREAM_NOTHING:
-	  break;
-	default:
-	  abort ();
-	}
-    }
-  else if (!event_stream)
-    {
-      invalid_operation
-	("event-stream callbacks not initialized (internal error?)",
-	 Qunbound);
-    }
+    /* See comment in init_event_stream() */
+    init_event_stream ();
+  else assert (event_stream);
 }
 
 static int
@@ -5040,6 +5019,12 @@ Non-nil inhibits recording of input-events to recent-keys ring.
 void
 init_event_stream (void)
 {
+  /* Normally we don't initialize the event stream when running a bare
+     temacs (the check for initialized) because it may do various things
+     (e.g. under Xt) that we don't want any traces of in a dumped xemacs.
+     However, sometimes we need to process events in a bare temacs (in
+     particular, when make-docfile.el is executed); so we initialize as
+     necessary in check_event_stream_ok(). */
   if (initialized)
     {
 #ifdef HAVE_UNIXOID_EVENT_LOOP

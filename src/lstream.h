@@ -133,8 +133,8 @@ typedef struct lstream_implementation
 {
   const char *name;
   Bytecount size; /* Number of additional bytes to be
-			      allocated with this stream.  Access this
-			      data using Lstream_data(). */
+		     allocated with this stream.  Access this
+		     data using Lstream_data(). */
   /* Read some data from the stream's end and store it into DATA, which
      can hold SIZE bytes.  Return the number of bytes read.  A return
      value of 0 means no bytes can be read at this time.  This may
@@ -154,7 +154,7 @@ typedef struct lstream_implementation
      Lisp, thinks that it is bogus that the types and implementations
      of input and output streams are the same. */
   Bytecount (*reader) (Lstream *stream, unsigned char *data,
-				Bytecount size);
+		       Bytecount size);
   /* Send some data to the stream's end.  Data to be sent is in DATA
      and is SIZE bytes.  Return the number of bytes sent.  This
      function can send and return fewer bytes than is passed in; in
@@ -166,7 +166,7 @@ typedef struct lstream_implementation
      non-blocking file descriptor and are getting EWOULDBLOCK errors.)
      This function can be NULL if the stream is input-only. */
   Bytecount (*writer) (Lstream *stream, const unsigned char *data,
-				Bytecount size);
+		       Bytecount size);
   /* Return non-zero if the last write operation on the stream resulted
      in an attempt to block (EWOULDBLOCK). If this method does not
      exists, the implementation returns 0 */

@@ -70,6 +70,8 @@ Boston, MA 02111-1307, USA.  */
 
 EXFUN (Fgarbage_collect, 0);
 
+static void recompute_need_to_garbage_collect (void);
+
 #if 0 /* this is _way_ too slow to be part of the standard debug options */
 #if defined(DEBUG_XEMACS) && defined(MULE)
 #define VERIFY_STRING_CHARS_INTEGRITY
@@ -90,8 +92,17 @@ static Fixnum debug_allocation_backtrace_length;
 #endif
 
 /* Number of bytes of consing done since the last gc */
-EMACS_INT consing_since_gc;
-#define INCREMENT_CONS_COUNTER_1(size) (consing_since_gc += (size))
+static EMACS_INT consing_since_gc;
+int need_to_garbage_collect;
+
+/* Determine now whether we need to garbage collect or not, to make
+   Ffuncall() faster */
+#define INCREMENT_CONS_COUNTER_1(size)		\
+do						\
+{						\
+  consing_since_gc += (size);			\
+  recompute_need_to_garbage_collect ();		\
+} while (0)
 
 #define debug_allocation_backtrace()				\
 do {								\
@@ -130,6 +141,7 @@ do {								\
   consing_since_gc -= (size);			\
   if (consing_since_gc < 0)			\
     consing_since_gc = 0;			\
+  recompute_need_to_garbage_collect ();		\
 } while (0)
 
 /* Number of bytes of consing since gc before another gc should be done. */
@@ -244,6 +256,7 @@ memory_full (void)
      to win) than to loop beeping and barfing "Memory exhausted"
    */
   consing_since_gc = gc_cons_threshold + 1;
+  recompute_need_to_garbage_collect ();
   release_breathing_space ();
 
   /* Flush some histories which might conceivably contain garbalogical
@@ -1456,7 +1469,7 @@ This is terrible behavior which is retained for compatibility with old
   /* Check for valid formal parameter list now, to allow us to use
      SPECBIND_FAST_UNSAFE() later in funcall_compiled_function(). */
   {
-    EXTERNAL_LIST_LOOP_3 (symbol, arglist, tail)
+    EXTERNAL_LIST_LOOP_2 (symbol, arglist)
       {
 	CHECK_SYMBOL (symbol);
 	if (EQ (symbol, Qt)   ||
@@ -1469,6 +1482,47 @@ This is terrible behavior which is retained for compatibility with old
   }
   f->arglist = arglist;
 
+  {
+    int minargs = 0, maxargs = 0, totalargs = 0;
+    int optional_p = 0, rest_p = 0, i = 0;
+    {
+      LIST_LOOP_2 (arg, arglist)
+	{
+	  if (EQ (arg, Qand_optional))
+	    optional_p = 1;
+	  else if (EQ (arg, Qand_rest))
+	    rest_p = 1;
+	  else
+	    {
+	      if (rest_p)
+		{
+		  maxargs = MANY;
+		  totalargs++;
+		  break;
+		}
+	      if (!optional_p)
+		minargs++;
+	      maxargs++;
+	      totalargs++;
+	    }
+	}
+    }
+  
+    f->args = xnew_array (Lisp_Object, totalargs);
+
+    {
+      LIST_LOOP_2 (arg, arglist)
+	{
+	  if (!EQ (arg, Qand_optional) && !EQ (arg, Qand_rest))
+	    f->args[i++] = arg;
+	}
+    }
+
+    f->max_args = maxargs;
+    f->min_args = minargs;
+    f->args_in_array = totalargs;
+  }
+  
   /* `instructions' is a string or a cons (string . int) for a
      lazy-loaded function. */
   if (CONSP (instructions))
@@ -1756,9 +1810,9 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 
 /* String blocks contain this many useful bytes. */
 #define STRING_CHARS_BLOCK_SIZE					\
-((Bytecount) (8192 - MALLOC_OVERHEAD -				\
-	      ((2 * sizeof (struct string_chars_block *))	\
-	       + sizeof (EMACS_INT))))
+  ((Bytecount) (8192 - MALLOC_OVERHEAD -			\
+	        ((2 * sizeof (struct string_chars_block *))	\
+	         + sizeof (EMACS_INT))))
 /* Block header for small strings. */
 struct string_chars_block
 {
@@ -1811,7 +1865,7 @@ init_string_chars_alloc (void)
 
 static struct string_chars *
 allocate_string_chars_struct (Lisp_Object string_it_goes_with,
-			      EMACS_INT fullsize)
+			      Bytecount fullsize)
 {
   struct string_chars *s_chars;
 
@@ -1873,7 +1927,7 @@ Lisp_Object
 make_uninit_string (Bytecount length)
 {
   Lisp_String *s;
-  EMACS_INT fullsize = STRING_FULLSIZE (length);
+  Bytecount fullsize = STRING_FULLSIZE (length);
 
   assert (length >= 0 && fullsize > 0);
 
@@ -2070,12 +2124,12 @@ set_string_char (Lisp_Object s, Charcount i, Emchar c)
 	/* We've extended ascii_begin, and we have to figure out how much by */
 	{
 	  Bytecount j;
-	  for (j = i + 1; j < XSTRING_LENGTH (s); j++)
+	  for (j = (Bytecount) i + 1; j < XSTRING_LENGTH (s); j++)
 	    {
 	      if (!BYTE_ASCII_P (XSTRING_DATA (s)[j]))
 		break;
 	    }
-	  XSET_STRING_ASCII_BEGIN (s, min (j, MAX_STRING_ASCII_BEGIN));
+	  XSET_STRING_ASCII_BEGIN (s, min (j, (Bytecount) MAX_STRING_ASCII_BEGIN));
 	}
     }
   sledgehammer_check_ascii_begin (s);
@@ -2201,7 +2255,7 @@ Lisp_Object
 build_intstring (const Intbyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_string (str, (str ? qxestrlen (str) : 0));
+  return make_string (str, (str ? qxestrlen (str) : (Bytecount) 0));
 }
 
 Lisp_Object
@@ -3741,6 +3795,7 @@ garbage_collect_1 (void)
   if (gc_cons_threshold < 10000)
     gc_cons_threshold = 10000;
 #endif
+  recompute_need_to_garbage_collect ();
 
   inhibit_non_essential_printing_operations = 0;
   gc_in_progress = 0;
@@ -3956,15 +4011,20 @@ This may be helpful in debugging XEmacs's memory usage.
 }
 
 /* True if it's time to garbage collect now. */
-int
-need_to_garbage_collect (void)
+static void
+recompute_need_to_garbage_collect (void)
 {
   if (always_gc)
-    return 1;
-  
-  return (consing_since_gc > gc_cons_threshold &&
-	  (100 * consing_since_gc) / total_data_usage () >=
-	  gc_cons_percentage);
+    need_to_garbage_collect = 1;
+  else
+    need_to_garbage_collect =
+      (consing_since_gc > gc_cons_threshold
+#if 0 /* #### implement this better */
+       &&
+       (100 * consing_since_gc) / total_data_usage () >=
+       gc_cons_percentage
+#endif /* 0 */
+       );
 }
 
 
@@ -4169,6 +4229,8 @@ common_init_alloc_once_early (void)
 #endif
 
   consing_since_gc = 0;
+  need_to_garbage_collect = always_gc;
+
 #if 1
   gc_cons_threshold = 500000; /* XEmacs change */
 #else

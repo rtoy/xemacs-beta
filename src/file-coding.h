@@ -933,6 +933,10 @@ struct coding_stream
   /* If set, read only one byte at a time from other end to avoid any
      possible blocking. */
   unsigned int one_byte_at_a_time:1;
+  /* If set, and we're a read stream, we init char mode on ourselves as
+     necessary to prevent the caller from getting partial characters. (the
+     default) */
+  unsigned int set_char_mode_on_us_when_reading:1;
   
   /* #### Temporary test */
   unsigned int finalized:1;
@@ -1061,8 +1065,10 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Lisp_Object description,
 					 Lisp_Object props);
 
-#define CODE_FL_NO_CLOSE_OTHER (1 << 0)
-#define CODE_FL_READ_ONE_BYTE_AT_A_TIME (1 << 1)
+#define LSTREAM_FL_NO_CLOSE_OTHER	(1 << 16)
+#define LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME (1 << 17)
+#define LSTREAM_FL_NO_INIT_CHAR_MODE_WHEN_READING (1 << 18)
+
 Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 				      enum encode_decode direction,
 				      int flags);

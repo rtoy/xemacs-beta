@@ -23,14 +23,8 @@ Boston, MA 02111-1307, USA.  */
 /* Partly sync'ed with 19.36.4 */
 
 
-/* #### This ENTIRE file is only used in batch mode. (Well, almost;
-   certainly the main call-process stuff is only used in batch mode.)
-
-   We only need two things to get rid of both this and ntproc.c:
-
-   -- my `stderr-proc' ws, which adds support for a separate stderr
-      in asynch. subprocesses. (it's a feature in `old-call-process-internal'.)
-   -- a noninteractive event loop that supports processes.
+/* #### Everything in this file should go.  As soon as I merge my
+   stderr-proc WS, it will.
 */
 
 #include <config.h>
@@ -38,43 +32,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"
+#include "file-coding.h"
 #include "insdel.h"
 #include "lstream.h"
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"
-#include "file-coding.h"
 
-#include "systime.h"
-#include "sysproc.h"
-#include "sysfile.h" /* Always include after sysproc.h #### Why?  This
-			rule is not followed elsewhere in XEmacs, without
-			apparent problems */
-#include "syssignal.h" /* Always include before systty.h #### Why? This
-			rule is not followed elsewhere in XEmacs, without
-			apparent problems */
-#include "systty.h"
 #include "sysdir.h"
-
-#ifdef WIN32_NATIVE
-#include "syswindows.h"
-#endif
-
-#ifdef WIN32_NATIVE
-/* When we are starting external processes we need to know whether they
-   take binary input (no conversion) or text input (\n is converted to
-   \r\n).  Similarly for output: if newlines are written as \r\n then it's
-   text process output, otherwise it's binary.  */
-Lisp_Object Vbinary_process_input;
-Lisp_Object Vbinary_process_output;
-#endif /* WIN32_NATIVE */
-
-Lisp_Object Vshell_file_name;
-
-/* The environment to pass to all subprocesses when they are started.
-   This is in the semi-bogus format of ("VAR=VAL" "VAR2=VAL2" ... )
- */
-Lisp_Object Vprocess_environment;
+#include "sysfile.h"
+#include "sysproc.h"
+#include "syssignal.h"
+#include "systime.h"
+#include "systty.h"
 
 /* True iff we are about to fork off a synchronous process or if we
    are waiting for it.  */
@@ -93,11 +63,6 @@ int synch_process_retcode;
 
 /* Nonzero if this is termination due to exit.  */
 static int call_process_exited;
-
-/* Make sure egetenv() not called too soon */
-int env_initted;
-
-Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 static Lisp_Object
 call_process_kill (Lisp_Object fdpid)
@@ -130,18 +95,7 @@ call_process_cleanup (Lisp_Object fdpid)
     /* #### "c-G" -- need non-consing Single-key-description */
     message ("Waiting for process to die...(type C-g again to kill it instantly)");
 
-#ifdef WIN32_NATIVE
-    {
-      HANDLE pHandle = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
-      if (pHandle == NULL)
-	warn_when_safe (Qprocess, Qnotice,
-			"cannot open process (PID %d) for cleanup", pid);
-      else
-	wait_for_termination (pHandle);
-    }
-#else
     wait_for_termination (pid);
-#endif
 
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
@@ -183,9 +137,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   Lisp_Object infile, buffer, current_dir, display, path;
   int fd[2];
   int filefd;
-#ifdef WIN32_NATIVE
-  HANDLE pHandle;
-#endif
   int pid;
   char buf[16384];
   char *bufptr = buf;
@@ -326,11 +277,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     }
   else
     {
-#ifdef WIN32_NATIVE
-      pipe_will_die_soon (fd);
-#else
       pipe (fd);
-#endif
 #if 0
       /* Replaced by close_process_descs */
       set_exclusive_use (fd[0]);
@@ -355,14 +302,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     else if (STRINGP (error_file))
       {
 	fd_error = qxe_open (XSTRING_DATA (error_file),
-#ifdef WIN32_NATIVE
-			     O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
-			     S_IREAD | S_IWRITE
-#else  /* not WIN32_NATIVE */
 			     O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
-			     CREAT_MODE
-#endif /* not WIN32_NATIVE */
-			     );
+			     CREAT_MODE);
       }
 
     if (fd_error < 0)
@@ -376,26 +317,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	report_process_error ("Cannot open", Fcons (error_file, Qnil));
       }
 
-#ifdef WIN32_NATIVE
-    pid = child_setup (filefd, fd1, fd_error, new_argv, current_dir);
-    if (!INTP (buffer))
-      {
-	/* OpenProcess() as soon after child_setup as possible.  It's too
-	   late once the process terminated. */
-	pHandle = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
-#if 0
-	if (pHandle == NULL)
-	  {
-	    /* #### seems to cause crash in unbind_to_1(...) below. APA */
-	    warn_when_safe (Qprocess, Qnotice,
-			    "cannot open process to wait for");
-	  }
-#endif
-      }
-    /* Close STDERR into the parent process.  We no longer need it. */
-    if (fd_error >= 0)
-      retry_close (fd_error);
-#else  /* not WIN32_NATIVE */
     pid = fork ();
 
     if (pid == 0)
@@ -415,8 +336,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     if (fd_error >= 0)
       retry_close (fd_error);
 
-#endif /* not WIN32_NATIVE */
-
     /* Close most of our fd's, but not fd[0]
        since we will use that to read input from.  */
     retry_close (filefd);
@@ -424,7 +343,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       retry_close (fd1);
   }
 
-#ifndef WIN32_NATIVE
   if (pid < 0)
     {
       int save_errno = errno;
@@ -433,7 +351,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       errno = save_errno;
       report_process_error ("Doing fork", Qunbound);
     }
-#endif
 
   if (INTP (buffer))
     {
@@ -470,7 +387,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	(XLSTREAM (instream),
 	 get_coding_system_for_text_file (Vcoding_system_for_read, 1),
 	 CODING_DECODE, 0);
-    Lstream_set_character_mode (XLSTREAM (instream));
     NGCPRO1 (instream);
     while (1)
       {
@@ -530,11 +446,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     QUIT;
     /* Wait for it to terminate, unless it already has.  */
-#ifdef WIN32_NATIVE
-    wait_for_termination (pHandle);
-#else
     wait_for_termination (pid);
-#endif
 
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */
@@ -586,20 +498,12 @@ relocate_fd (int fd, int min)
    XEmacs?), this should be verified as an executable directory by the
    parent.  */
 
-#ifdef WIN32_NATIVE
-int
-#else
 void
-#endif
 child_setup (int in, int out, int err, Intbyte **new_argv,
 	     Lisp_Object current_dir)
 {
   Intbyte **env;
   Intbyte *pwd;
-#ifdef WIN32_NATIVE
-  int cpid;
-  HANDLE handles[4];
-#endif /* WIN32_NATIVE */
 
 #ifdef SET_EMACS_PRIORITY
   if (emacs_priority != 0)
@@ -621,13 +525,11 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
      event-tty.c) to allow for stream devices to be handled correctly.
      There isn't much to do, in fact, and I'll fix it shortly.  That
      way, the Lisp definition can be used non-interactively too. */
-#if !defined (NO_SUBPROCESSES) && !defined (WIN32_NATIVE)
+#if !defined (NO_SUBPROCESSES)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
-#ifndef WIN32_NATIVE
   close_load_descs ();
-#endif
 
   /* [[Note that use of alloca is always safe here.  It's obvious for systems
      that do not have true vfork or that have true (stack) alloca.
@@ -720,11 +622,6 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
     *new_env = 0;
   }
 
-#ifdef WIN32_NATIVE
-  prepare_standard_handles (in, out, err, handles);
-  /* #### junk!  But all this win32 code will die soon. */
-  set_process_dir ((char *) XSTRING_DATA (current_dir));
-#else  /* not WIN32_NATIVE */
   /* Make sure that in, out, and err are not actually already in
      descriptors zero, one, or two; this could happen if Emacs is
      started with its standard in, out, or error closed, as might
@@ -755,290 +652,20 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
     for (fd=3; fd<=64; fd++)
       retry_close (fd);
   }
-#endif /* not WIN32_NATIVE */
 
 #ifdef vipc
   something missing here;
 #endif /* vipc */
 
-#ifdef WIN32_NATIVE
-  /* Spawn the child.  (See ntproc.c:Spawnve).  */
-  /* #### junk!  arguments not converted.  But all this win32 code
-     will die soon. */
-  cpid = spawnve_will_die_soon (_P_NOWAIT, new_argv[0],
-				(const char* const*)new_argv,
-				(const char* const*)env);
-  if (cpid == -1)
-    /* An error occurred while trying to spawn the process.  */
-    report_process_error ("Spawning child process", Qunbound);
-  reset_standard_handles (in, out, err, handles);
-  return cpid;
-#else /* not WIN32_NATIVE */
   /* we've wrapped execve; it translates its arguments */
   qxe_execve (new_argv[0], new_argv, env);
 
   stdout_out ("Can't exec program %s\n", new_argv[0]);
   _exit (1);
-#endif /* not WIN32_NATIVE */
-}
-
-static int
-getenv_internal (const Intbyte *var,
-		 Bytecount varlen,
-		 Intbyte **value,
-		 Bytecount *valuelen)
-{
-  Lisp_Object scan;
-
-  assert (env_initted);
-
-  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
-    {
-      Lisp_Object entry = XCAR (scan);
-
-      if (STRINGP (entry)
-	  && XSTRING_LENGTH (entry) > varlen
-	  && XSTRING_BYTE (entry, varlen) == '='
-#ifdef WIN32_NATIVE
-	  /* NT environment variables are case insensitive.  */
-	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
-#else  /* not WIN32_NATIVE */
-	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
-#endif /* not WIN32_NATIVE */
-	  )
-	{
-	  *value    = XSTRING_DATA   (entry) + (varlen + 1);
-	  *valuelen = XSTRING_LENGTH (entry) - (varlen + 1);
-	  return 1;
-	}
-    }
-
-  return 0;
-}
-
-static void
-putenv_internal (const Intbyte *var,
-		 Bytecount varlen,
-		 const Intbyte *value,
-		 Bytecount valuelen)
-{
-  Lisp_Object scan;
-
-  assert (env_initted);
-
-  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
-    {
-      Lisp_Object entry = XCAR (scan);
-
-      if (STRINGP (entry)
-	  && XSTRING_LENGTH (entry) > varlen
-	  && XSTRING_BYTE (entry, varlen) == '='
-#ifdef WIN32_NATIVE
-	  /* NT environment variables are case insensitive.  */
-	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
-#else  /* not WIN32_NATIVE */
-	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
-#endif /* not WIN32_NATIVE */
-	  )
-	{
-	  XCAR (scan) = concat3 (make_string (var, varlen),
-				 build_string ("="),
-				 make_string (value, valuelen));
-	  return;
-	}
-    }
-
-  Vprocess_environment = Fcons (concat3 (make_string (var, varlen),
-					 build_string ("="),
-					 make_string (value, valuelen)),
-				Vprocess_environment);
-}
-
-/* NOTE:
-
-   FSF has this as a Lisp function, as follows.  Generally moving things
-   out of C and into Lisp is a good idea, but in this case the Lisp
-   function is used so early in the startup sequence that it would be ugly
-   to rearrange the early dumped code to accommodate this.
-   
-(defun getenv (variable)
-  "Get the value of environment variable VARIABLE.
-VARIABLE should be a string.  Value is nil if VARIABLE is undefined in
-the environment.  Otherwise, value is a string.
-
-This function consults the variable `process-environment'
-for its value."
-  (interactive (list (read-envvar-name "Get environment variable: " t)))
-  (let ((value (getenv-internal variable)))
-    (when (interactive-p)
-      (message "%s" (if value value "Not set")))
-    value))
-*/
-
-DEFUN ("getenv", Fgetenv, 1, 2, "sEnvironment variable: \np", /*
-Return the value of environment variable VAR, as a string.
-VAR is a string, the name of the variable.
-When invoked interactively, prints the value in the echo area.
-*/
-       (var, interactivep))
-{
-  Intbyte *value;
-  Bytecount valuelen;
-  Lisp_Object v = Qnil;
-  struct gcpro gcpro1;
-
-  CHECK_STRING (var);
-  GCPRO1 (v);
-  if (getenv_internal (XSTRING_DATA (var), XSTRING_LENGTH (var),
-		       &value, &valuelen))
-    v = make_string (value, valuelen);
-  if (!NILP (interactivep))
-    {
-      if (NILP (v))
-	message ("%s not defined in environment", XSTRING_DATA (var));
-      else
-	/* #### Should use Fprin1_to_string or Fprin1 to handle string
-           containing quotes correctly.  */
-	message ("\"%s\"", value);
-    }
-  RETURN_UNGCPRO (v);
-}
-
-/* A version of getenv that consults Vprocess_environment, easily
-   callable from C.
-
-   (At init time, Vprocess_environment is initialized from the
-   environment, stored in the global variable environ. [Note that
-   at startup time, `environ' should be the same as the envp parameter
-   passed to main(); however, later calls to putenv() may change
-   `environ', making the envp parameter inaccurate.] Calls to getenv()
-   and putenv() consult and modify `environ'.  However, once
-   Vprocess_environment is initted, XEmacs C code should *NEVER* call
-   getenv() or putenv() directly, because (1) Lisp code that modifies
-   the environment only modifies Vprocess_environment, not `environ';
-   and (2) Vprocess_environment is in internal format but `environ'
-   is in some external format, and getenv()/putenv() are not Mule-
-   encapsulated.
-
-   WARNING: This value points into Lisp string data and thus will become
-   invalid after a GC. */
-
-Intbyte *
-egetenv (const CIntbyte *var)
-{
-  /* This cannot GC -- 7-28-00 ben */
-  Intbyte *value;
-  Bytecount valuelen;
-
-  if (getenv_internal ((const Intbyte *) var, strlen (var), &value, &valuelen))
-    return value;
-  else
-    return 0;
-}
-
-void
-eputenv (const CIntbyte *var, const CIntbyte *value)
-{
-  putenv_internal ((Intbyte *) var, strlen (var), (Intbyte *) value,
-		   strlen (value));
-}
-
-
-void
-init_callproc (void)
-{
-  /* This function can GC */
-
-  {
-    /* jwz: always initialize Vprocess_environment, so that egetenv()
-       works in temacs. */
-    char **envp;
-    Vprocess_environment = Qnil;
-    for (envp = environ; envp && *envp; envp++)
-      Vprocess_environment =
-	Fcons (build_ext_string (*envp, Qnative), Vprocess_environment);
-    /* This gets set back to 0 in disksave_object_finalization() */
-    env_initted = 1;
-  }
-
-  {
-    /* Initialize shell-file-name from environment variables or best guess. */
-#ifdef WIN32_NATIVE
-    const Intbyte *shell = egetenv ("SHELL");
-    if (!shell) shell = egetenv ("COMSPEC");
-    /* Should never happen! */
-    if (!shell) shell =
-      (Intbyte *) (GetVersion () & 0x80000000 ? "command" : "cmd");
-#else /* not WIN32_NATIVE */
-    const Intbyte *shell = egetenv ("SHELL");
-    if (!shell) shell = (Intbyte *) "/bin/sh";
-#endif
-
-#if 0 /* defined (WIN32_NATIVE) */
-    /* BAD BAD BAD.  We do not wanting to be passing an XEmacs-created
-       SHELL var down to some inferior Cygwin process, which might get
-       screwed up.
-	 
-       There are a few broken apps (eterm/term.el, eterm/tshell.el,
-       os-utils/terminal.el, texinfo/tex-mode.el) where this will
-       cause problems.  Those broken apps don't look at
-       shell-file-name, instead just at explicit-shell-file-name,
-       ESHELL and SHELL.  They are apparently attempting to borrow
-       what `M-x shell' uses, but that latter also looks at
-       shell-file-name.  What we want is for all of these apps to look
-       at shell-file-name, so that the user can change the value of
-       shell-file-name and everything will work out hunky-dorey.
-       */
-    
-    if (!egetenv ("SHELL"))
-      {
-	Intbyte *faux_var = alloca_array (Intbyte, 7 + qxestrlen (shell));
-	qxesprintf (faux_var, "SHELL=%s", shell);
-	Vprocess_environment = Fcons (build_intstring (faux_var),
-				      Vprocess_environment);
-      }
-#endif /* 0 */
-
-    Vshell_file_name = build_intstring (shell);
-  }
 }
 
 void
 syms_of_callproc (void)
 {
   DEFSUBR (Fold_call_process_internal);
-  DEFSUBR (Fgetenv);
-}
-
-void
-vars_of_callproc (void)
-{
-  /* This function can GC */
-#ifdef WIN32_NATIVE
-  /* Will die as soon as callproc.c dies */
-  DEFVAR_LISP ("binary-process-input", &Vbinary_process_input /*
-*If non-nil then new subprocesses are assumed to take binary input.
-*/ );
-  Vbinary_process_input = Qnil;
-
-  DEFVAR_LISP ("binary-process-output", &Vbinary_process_output /*
-*If non-nil then new subprocesses are assumed to produce binary output.
-*/ );
-  Vbinary_process_output = Qnil;
-#endif /* WIN32_NATIVE */
-
-  DEFVAR_LISP ("shell-file-name", &Vshell_file_name /*
-*File name to load inferior shells from.
-Initialized from the SHELL environment variable.
-*/ );
-
-  DEFVAR_LISP ("process-environment", &Vprocess_environment /*
-List of environment variables for subprocesses to inherit.
-Each element should be a string of the form ENVVARNAME=VALUE.
-The environment which Emacs inherits is placed in this variable
-when Emacs starts.
-*/ );
-
-  Vlisp_EXEC_SUFFIXES = build_string (EXEC_SUFFIXES);
-  staticpro (&Vlisp_EXEC_SUFFIXES);
 }

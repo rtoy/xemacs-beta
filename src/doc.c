@@ -22,30 +22,32 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-/* This file has been Mule-ized except as noted. */
+/* This file has been Mule-ized. */
 
 #include <config.h>
 #include "lisp.h"
 
 #include "buffer.h"
 #include "bytecode.h"
+#include "file-coding.h"
 #include "insdel.h"
 #include "keymap.h"
+#include "lstream.h"
 #include "sysfile.h"
 
 Lisp_Object Vinternal_doc_file_name;
 
 Lisp_Object QSsubstitute;
 
-/* Read and return doc string from open file descriptor FD
-   at position POSITION.  Does not close the file.  Returns
-   string; or if error, returns a cons holding the error
-   data to pass to Fsignal.  NAME_NONRELOC and NAME_RELOC
-   are only used for the error messages. */
+/* Read and return doc string or instructions from open file descriptor FD
+   at position POSITION.  Does not close the file.  Returns string; or if
+   error, returns a cons holding the error data to pass to Fsignal.
+   NAME_NONRELOC and NAME_RELOC are only used for the error messages. */
 
 Lisp_Object
 unparesseuxify_doc_string (int fd, EMACS_INT position,
-                           Intbyte *name_nonreloc, Lisp_Object name_reloc)
+                           Intbyte *name_nonreloc, Lisp_Object name_reloc,
+			   int standard_doc_file)
 {
   Intbyte buf[512 * 32 + 1];
   Intbyte *buffer = buf;
@@ -53,6 +55,10 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
   Intbyte *from, *to;
   REGISTER Intbyte *p = buffer;
   Lisp_Object return_me;
+  Lisp_Object fdstream = Qnil, instream = Qnil;
+  struct gcpro gcpro1, gcpro2;
+
+  GCPRO2 (fdstream, instream);
 
   if (0 > lseek (fd, position, 0))
     {
@@ -64,6 +70,21 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       goto done;
     }
 
+  fdstream = make_filedesc_input_stream (fd, 0, -1, 0);
+  Lstream_set_buffering (XLSTREAM (fdstream), LSTREAM_UNBUFFERED, 0);
+  instream =
+    make_coding_input_stream
+      /* Major trouble if we are too clever when reading byte-code
+	 instructions!
+
+	 #### We should have a way of handling escape-quoted elc files
+	 (i.e. files with non-ASCII/Latin-1 chars in them).  Currently this
+	 is "solved" in bytecomp.el by never inserting lazy references in
+	 such files. */
+      (XLSTREAM (fdstream), standard_doc_file ? Qundecided : Qbinary,
+       CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (instream), LSTREAM_UNBUFFERED, 0);
+  
   /* Read the doc string into a buffer.
      Use the fixed buffer BUF if it is big enough; otherwise allocate one.
      We store the buffer in use in BUFFER and its size in BUFFER_SIZE.  */
@@ -91,7 +112,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       /* Don't read too much at one go.  */
       if (space_left > 1024 * 8)
 	space_left = 1024 * 8;
-      nread = retry_read (fd, p, space_left);
+      nread = Lstream_read (XLSTREAM (instream), p, space_left);
       if (nread < 0)
 	{
 	  return_me = list1 (build_msg_string
@@ -102,13 +123,13 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       if (!nread)
 	break;
       {
-        Intbyte *p1 = qxestrchr (p, '\037'); /* End of doc string marker */
-        if (p1)
-          {
-            *p1 = 0;
-            p = p1;
-            break;
-          }
+	Intbyte *p1 = qxestrchr (p, '\037'); /* End of doc string marker */
+	if (p1)
+	  {
+	    *p1 = 0;
+	    p = p1;
+	    break;
+	  }
       }
       p += nread;
     }
@@ -139,10 +160,15 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 	}
     }
 
-  /* !!#### mrb: following STILL completely broken */
-  return_me = make_ext_string ((Extbyte *) buffer, to - buffer, Qbinary);
+  return_me = make_string (buffer, to - buffer);
 
  done:
+  if (!NILP (instream))
+    {
+      Lstream_delete (XLSTREAM (instream));
+      Lstream_delete (XLSTREAM (fdstream));
+    }
+  UNGCPRO;
   if (buffer != buf) /* We must have allocated buffer above */
     xfree (buffer);
   return return_me;
@@ -172,10 +198,12 @@ get_doc_string (Lisp_Object filepos)
   EMACS_INT position;
   Lisp_Object file, tem;
   Lisp_Object name_reloc = Qnil;
+  int standard_doc_file = 0;
 
   if (INTP (filepos))
     {
       file = Vinternal_doc_file_name;
+      standard_doc_file = 1;
       position = XINT (filepos);
     }
   else if (CONSP (filepos) && INTP (XCDR (filepos)))
@@ -232,12 +260,13 @@ get_doc_string (Lisp_Object filepos)
 #endif /* CANNOT_DUMP */
 
       if (fd < 0)
-	signal_error (Qfile_error, "Cannot open doc string file",
-		      name_nonreloc ? build_intstring (name_nonreloc) :
-		      name_reloc);
+	report_file_error ("Cannot open doc string file",
+			   name_nonreloc ? build_intstring (name_nonreloc) :
+			   name_reloc);
     }
 
-  tem = unparesseuxify_doc_string (fd, position, name_nonreloc, name_reloc);
+  tem = unparesseuxify_doc_string (fd, position, name_nonreloc, name_reloc,
+				   standard_doc_file);
   retry_close (fd);
 
   if (!STRINGP (tem))
@@ -401,7 +430,6 @@ weird_doc (Lisp_Object sym, const CIntbyte *weirdness, const CIntbyte *type,
            weirdness, type, XSTRING_DATA (XSYMBOL (sym)->name), pos);
 }
 
-
 DEFUN ("Snarf-documentation", Fsnarf_documentation, 1, 1, 0, /*
 Used during Emacs initialization, before dumping runnable Emacs,
 to find pointers to doc strings stored in `.../lib-src/DOC' and
@@ -420,6 +448,14 @@ when doc strings are referred to in the dumped Emacs.
   Lisp_Object sym, fun, tem;
   Intbyte *name;
 
+  /* This function should not pass the data it's reading through a coding
+     stream.  The reason is that the only purpose of this function is to
+     find the file offsets for the documentation of the various functions,
+     not do anything with the documentation itself.  If we pass through a
+     coding stream, the pointers will get messed up when we start reading
+     ISO 2022 data because our pointers will reflect internal format, not
+     external format. */
+  
 #ifndef CANNOT_DUMP
   if (!purify_flag)
     invalid_operation ("Snarf-documentation can only be called in an undumped Emacs", Qunbound);
@@ -649,7 +685,6 @@ when doc strings are referred to in the dumped Emacs.
   retry_close (fd);
   return Qnil;
 }
-
 
 #if 1	/* Don't warn about functions whose doc was lost because they were
 	   wrapped by advice-freeze.el... */

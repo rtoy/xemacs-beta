@@ -1388,11 +1388,7 @@ charcount_to_bytecount (const Intbyte *ptr, Charcount len)
 inline static void
 update_entirely_ascii_p_flag (struct buffer *buf)
 {
-  buf->text->entirely_ascii_p =
-    (buf->text->mule_bufmin == 1 &&
-     buf->text->mule_bufmax == buf->text->bufz &&
-     !buf->text->mule_shifter &&
-     !buf->text->mule_three_p);
+  buf->text->entirely_ascii_p = buf->text->z == buf->text->bufz;
 }
 
 /* The next two functions are the actual meat behind the
@@ -1664,7 +1660,6 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
   buf->text->mule_bufmax = bufmax;
   buf->text->mule_bytmin = bytmin;
   buf->text->mule_bytmax = bytmax;
-  update_entirely_ascii_p_flag (buf);
   
   if (add_to_cache)
     {
@@ -1942,7 +1937,6 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
   buf->text->mule_bufmax = bufmax;
   buf->text->mule_bytmin = bytmin;
   buf->text->mule_bytmax = bytmax;
-  update_entirely_ascii_p_flag (buf);
 
   if (add_to_cache)
     {
@@ -3408,10 +3402,16 @@ Return a string of the characters comprising a composite character.
 /************************************************************************/
 
 void
-init_eistring_once_early (void)
+reinit_eistring_once_early (void)
 {
   the_eistring_malloc_zero_init = the_eistring_zero_init;
   the_eistring_malloc_zero_init.mallocp_ = 1;
+}
+
+void
+init_eistring_once_early (void)
+{
+  reinit_eistring_once_early ();
 }
 
 void

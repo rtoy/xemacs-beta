@@ -3106,11 +3106,7 @@ semantics.  This will occur in old code only where more than nine groups
 occur and a back reference to one of them is directly followed by a digit.
 */ );
   warn_about_possibly_incompatible_back_references = 1;
-}
 
-void
-complex_vars_of_search (void)
-{
   Vskip_chars_range_table = Fmake_range_table ();
   staticpro (&Vskip_chars_range_table);
 }

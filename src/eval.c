@@ -3145,6 +3145,21 @@ do_autoload (Lisp_Object fundef,
 /*			   eval, funcall, apply				*/
 /************************************************************************/
 
+/* NOTE: If you are hearing the endless complaint that function calls in
+   elisp are extremely slow, it just isn't true any more!  The stuff below
+   -- in particular, the calling of subrs and compiled functions, the most
+   common cases -- has been highly optimized.  There isn't a whole lot left
+   to do to squeeze more speed out except by switching to lexical
+   variables, which would eliminate the specbind loop. (But the real gain
+   from lexical variables would come from better optimization -- with
+   dynamic binding, you have the constant problem that any function call
+   that you haven't explicitly proven to be side-effect-free might
+   potentially side effect your local variables, which makes optimization
+   extremely difficult when there are function calls anywhere in a chunk of
+   code to be optimized.  Even worse, you don't know that *your* local
+   variables aren't side-effecting an outer function's local variables, so
+   it's impossible to optimize away almost *any* variable assignment.) */
+
 static Lisp_Object funcall_lambda (Lisp_Object fun,
 				   int nargs, Lisp_Object args[]);
 static int in_warnings;
@@ -3154,6 +3169,122 @@ in_warnings_restore (Lisp_Object minimus)
 {
   in_warnings = 0;
   return Qnil;
+}
+
+void handle_compiled_function_with_and_rest (Lisp_Compiled_Function *f,
+					     int nargs,
+					     Lisp_Object args[]);
+
+/* The theory behind making this a separate function is to shrink
+   funcall_compiled_function() so as to increase the likelihood of a cache
+   hit in the L1 cache -- &rest processing is not going to be fast anyway.
+   The idea is the same as with execute_rare_opcode() in bytecode.c.  We
+   make this non-static to ensure the compiler doesn't inline it. */
+
+void
+handle_compiled_function_with_and_rest (Lisp_Compiled_Function *f, int nargs,
+					Lisp_Object args[])
+{
+  REGISTER int i = 0;
+  int max_non_rest_args = f->args_in_array - 1;
+  int bindargs = min (nargs, max_non_rest_args);
+
+  for (i = 0; i < bindargs; i++)
+    SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+  for (i = bindargs; i < max_non_rest_args; i++)
+    SPECBIND_FAST_UNSAFE (f->args[i], Qnil);
+  SPECBIND_FAST_UNSAFE
+    (f->args[max_non_rest_args],
+     nargs > max_non_rest_args ?
+     Flist (nargs - max_non_rest_args, &args[max_non_rest_args]) :
+     Qnil);
+}
+
+/* Apply compiled-function object FUN to the NARGS evaluated arguments
+   in ARGS, and return the result of evaluation. */
+inline static Lisp_Object
+funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
+{
+  /* This function can GC */
+  int speccount = specpdl_depth();
+  REGISTER int i = 0;
+  Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
+
+  if (!OPAQUEP (f->instructions))
+    /* Lazily munge the instructions into a more efficient form */
+    optimize_compiled_function (fun);
+
+  /* optimize_compiled_function() guaranteed that f->specpdl_depth is
+     the required space on the specbinding stack for binding the args
+     and local variables of fun.   So just reserve it once. */
+  SPECPDL_RESERVE (f->specpdl_depth);
+
+  if (nargs == f->max_args) /* Optimize for the common case -- no unspecified
+			       optional arguments. */
+    {
+#if 1
+      for (i = 0; i < nargs; i++)
+	SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+#else
+      /* Here's an alternate way to write the loop that tries to further
+         optimize funcalls for functions with few arguments by partially
+         unrolling the loop.  It's not clear whether this is a win since it
+         increases the size of the function and the possibility of L1 cache
+         misses. (Microsoft VC++ 6 with /O2 /G5 generates 0x90 == 144 bytes
+         per SPECBIND_FAST_UNSAFE().) Tests under VC++ 6, running the byte
+         compiler repeatedly and looking at the total time, show very
+         little difference between the simple loop above, the unrolled code
+         below, and a "partly unrolled" solution with only cases 0-2 below
+         instead of 0-4.  Therefore, I'm keeping it at the simple loop
+         because it's smaller. */
+      switch (nargs)
+	{
+	default:
+	  for (i = nargs - 1; i >= 4; i--)
+	    SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+	case 4: SPECBIND_FAST_UNSAFE (f->args[3], args[3]);
+	case 3: SPECBIND_FAST_UNSAFE (f->args[2], args[2]);
+	case 2: SPECBIND_FAST_UNSAFE (f->args[1], args[1]);
+	case 1: SPECBIND_FAST_UNSAFE (f->args[0], args[0]);
+	case 0: break;
+	}
+#endif
+    }
+  else if (nargs < f->min_args)
+    goto wrong_number_of_arguments;
+  else if (nargs < f->max_args)
+    {
+      for (i = 0; i < nargs; i++)
+	SPECBIND_FAST_UNSAFE (f->args[i], args[i]);
+      for (i = nargs; i < f->max_args; i++)
+	SPECBIND_FAST_UNSAFE (f->args[i], Qnil);
+    }
+  else if (f->max_args == MANY)
+    handle_compiled_function_with_and_rest (f, nargs, args);
+  else
+    {
+    wrong_number_of_arguments:
+      /* The actual printed compiled_function object is incomprehensible.
+	 Check the backtrace to see if we can get a more meaningful symbol. */
+      if (EQ (fun, indirect_function (*backtrace_list->function, 0)))
+	fun = *backtrace_list->function;
+      return Fsignal (Qwrong_number_of_arguments,
+		      list2 (fun, make_int (nargs)));
+    }
+
+  {
+    Lisp_Object value =
+      execute_optimized_program ((Opbyte *) XOPAQUE_DATA (f->instructions),
+				 f->stack_depth,
+				 XVECTOR_DATA (f->constants));
+
+    /* The attempt to optimize this by only unbinding variables failed
+       because using buffer-local variables as function parameters
+       leads to specpdl_ptr->func != 0 */
+    /* UNBIND_TO_GCPRO_VARIABLES_ONLY (speccount, value); */
+    UNBIND_TO_GCPRO (speccount, value);
+    return value;
+  }
 }
 
 DEFUN ("eval", Feval, 1, 1, 0, /*
@@ -3207,7 +3338,7 @@ Evaluate FORM and return its value.
     }
 
   QUIT;
-  if (need_to_garbage_collect ())
+  if (need_to_garbage_collect)
     {
       struct gcpro gcpro1;
       GCPRO1 (form);
@@ -3431,7 +3562,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   Lisp_Object *fun_args = args + 1;
 
   QUIT;
-  if (need_to_garbage_collect ())
+  if (need_to_garbage_collect)
     /* Callers should gcpro lexpr args */
     garbage_collect_1 ();
 
@@ -3597,7 +3728,14 @@ function_argcount (Lisp_Object function, int function_min_args_p)
    }
   else if (COMPILED_FUNCTIONP (function))
     {
-      arglist = compiled_function_arglist (XCOMPILED_FUNCTION (function));
+      Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (function);
+      
+      if (function_min_args_p)
+	return make_int (f->min_args);
+      else if (f->max_args == MANY)
+	return Qnil;
+      else
+	return make_int (f->max_args);
     }
   else if (CONSP (function))
     {
@@ -4918,7 +5056,7 @@ restore_lisp_object (Lisp_Object cons)
 
 /* Establish an unwind-protect which will restore the Lisp_Object pointed to
    by ADDR with the value VAL. */
-int
+static int
 record_unwind_protect_restoring_lisp_object (Lisp_Object *addr,
 					     Lisp_Object val)
 {
@@ -4966,7 +5104,7 @@ restore_int (Lisp_Object cons)
 /* Establish an unwind-protect which will restore the int pointed to
    by ADDR with the value VAL.  This function works correctly with
    all ints, even those that don't fit into a Lisp integer. */
-int
+static int
 record_unwind_protect_restoring_int (int *addr, int val)
 {
   Lisp_Object opaque = make_opaque_ptr (addr);
@@ -5488,7 +5626,7 @@ syms_of_eval (void)
 }
 
 void
-init_eval_early (void)
+init_eval_semi_early (void)
 {
   specpdl_ptr = specpdl;
   specpdl_depth_counter = 0;

@@ -1,6 +1,7 @@
 /* syssignal.h - System-dependent definitions for signals.
    Copyright (C) 1992, 1993 Free Software Foundation, Inc.
-
+   Copyright (C) 1996 Ben Wing.
+   
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -243,14 +244,10 @@ signal_handler_t qxe_reliable_signal (int signal_number,
    Must do that using the killpg call.  */
 #ifdef HAVE_KILLPG
 #define EMACS_KILLPG(pid, signo) killpg (pid, signo)
-#else
-#ifdef WIN32_NATIVE
-/* Only needed in callproc.c, slated to go */
-int kill_will_disappear_soon (int pid, int sig);
-#define EMACS_KILLPG(pid, signo) kill_will_disappear_soon (pid, signo)
+#elif defined (WIN32_NATIVE)
+#define EMACS_KILLPG(pid, signo) should never be called
 #else
 #define EMACS_KILLPG(pid, signo) kill (-(pid), signo)
-#endif
 #endif
 
 #ifndef NSIG
