@@ -1,3 +1,20 @@
+2001-05-06  Ben Wing  <ben@xemacs.org>
+
+	* console-msw.h:
+	* device-msw.c:
+	* device-msw.c (print_dialog_worker):
+	* device-msw.c (mswindows_handle_print_dialog_box):
+	* device-msw.c (syms_of_device_mswindows):
+	* dialog-msw.c (mswindows_make_dialog_box_internal):
+	* general-slots.h:
+	implement printing the selection when it's selected.
+
+	unrelated:
+	
+	* mule-charset.c (Fset_charset_ccl_program):
+	* mule-charset.c (invalidate_charset_font_caches):
+	force redisplay when set-charset-ccl-program called.
+
 2001-05-04  Martin Buchholz  <martin@xemacs.org>
 
 	* s/bsdos4.h (openpty): Add declaration, missing from system headers.

@@ -636,7 +636,6 @@ error
     invalid-regexp
     specifier-syntax-error
 
-
   invalid-argument
     wrong-type-argument
     args-out-of-range

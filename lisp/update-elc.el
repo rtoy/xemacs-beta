@@ -99,7 +99,7 @@
     (setq preloaded-file-list
  	  (append package-preloaded-file-list
  		  preloaded-file-list
-		  '("bytecomp")
+		  '("bytecomp" "byte-optimize")
  		  packages-hardcoded-lisp)))
 
   (load (concat default-directory "../site-packages") t t)
@@ -166,11 +166,42 @@
 
 (if update-elc-files-to-compile
     (progn
-      (setq command-line-args
-	    (append '("-l" "loadup-el.el" "run-temacs"
-		      "-batch" "-q" "-no-site-file"
-		      "-l" "bytecomp" "-f" "batch-byte-compile")
-		    update-elc-files-to-compile))
+      (let ((bytecomp-arg (locate-library "bytecomp"))
+	    (byte-opt-arg (locate-library "byte-optimize")))
+	(if (string-match "\\.elc?\\'" bytecomp-arg)
+	    (setq bytecomp-arg (substring bytecomp-arg 0
+					  (match-beginning 0))))
+	(setq bytecomp-arg (concat bytecomp-arg ".el"))
+	(if (string-match "\\.elc?\\'" byte-opt-arg)
+	    (setq byte-opt-arg (substring byte-opt-arg 0
+					  (match-beginning 0))))
+	(setq byte-opt-arg (concat byte-opt-arg ".el"))
+	;; if bytecomp or byte-optimize need recompiling, then load
+	;; the .el version of them first, recompile them, and reload
+	;; the .elc versions to recompile everything else (so we won't
+	;; be waiting until the cows come home).
+	(setq command-line-args
+	      (append '("-l" "loadup-el.el" "run-temacs"
+			"-batch" "-q" "-no-site-file")
+		      (if (or
+			   (member bytecomp-arg update-elc-files-to-compile)
+			   (member byte-opt-arg update-elc-files-to-compile))
+			  (append
+			   '("-eval" "(setq load-ignore-elc-files t)"
+			     "-l" "bytecomp")
+			   (if (member bytecomp-arg
+				       update-elc-files-to-compile)
+			       (append '("-f" "batch-byte-compile-one-file")
+				       (list bytecomp-arg)))
+			   (if (member byte-opt-arg
+				       update-elc-files-to-compile)
+			       (append '("-f" "batch-byte-compile-one-file")
+				       (list byte-opt-arg)))
+			   '("-eval" "(setq load-ignore-elc-files nil)")))
+		      '("-l" "bytecomp" "-f" "batch-byte-compile")
+		      (delete byte-opt-arg
+			      (delete bytecomp-arg
+				      update-elc-files-to-compile)))))
       (load "loadup-el.el"))
   (condition-case nil
       (delete-file "../src/NOBYTECOMPILE")

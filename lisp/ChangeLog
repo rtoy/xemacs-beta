@@ -1,3 +1,24 @@
+2001-05-06  Ben Wing  <ben@xemacs.org>
+
+	* dialog.el (make-dialog-box):
+	* menubar-items.el (default-menubar):
+	* printer.el (generic-print-buffer):
+	* printer.el (generic-print-region):
+	implement printing the selection when it's selected.
+
+	unrelated:
+	
+	* minibuf.el (input-error):
+	* subr.el (error):
+	a couple of error cleanups.
+	
+	* update-elc.el ((preloaded-file-list site-load-packages need-to-dump dumped-exe)):
+	* update-elc.el (update-elc-files-to-compile):
+	if bytecomp or byte-optimize need recompiling, then load
+	the .el version of them first, recompile them, and reload
+	the .elc versions to recompile everything else (so we won't
+	be waiting until the cows come home).
+
 2001-05-05  Ben Wing  <ben@xemacs.org>
 
 	* subr.el (error):

@@ -1020,6 +1020,7 @@ Set the 'ccl-program property of CHARSET to CCL-PROGRAM.
   if (setup_ccl_program (&test_ccl, ccl_program) < 0)
     signal_simple_error ("Invalid ccl-program", ccl_program);
   XCHARSET_CCL_PROGRAM (charset) = ccl_program;
+  face_property_was_changed (Vdefault_face, Qfont, Qglobal);
   return Qnil;
 }
 
