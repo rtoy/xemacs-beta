@@ -1,3 +1,8 @@
+2001-04-24  Hrvoje Niksic  <hniksic@arsdigita.com>
+
+	* about.el (about-personal-info): Update my bio.
+	(about-hacker-contribution): Ditto.
+
 2001-04-23  Didier Verna  <didier@xemacs.org>
 
 	* cus-edit.el (custom-variable-pre-save): New.

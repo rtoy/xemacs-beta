@@ -214,8 +214,7 @@
     (stigb      . "http://www.tihlde.hist.no/~stigb/")
     (vin        . "http://www.upa.org/")
     (vladimir   . "http://www.leonora.org/~vladimir/")
-    (wget       . "http://www.wget.org/")
-    (wget-ftp   . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
+    (wget       . "http://sunsite.dk/wget/")
     (xemacs     . "http://www.xemacs.org/")
     (youngs     . "http://eicq.sourceforge.net/"))
   "Some of the more important URLs.")
@@ -957,16 +956,39 @@ Sorry, no personal information available about me yet.\n"))
 Sorry, no personal information available about me yet.\n"))
     (hniksic
      (widget-insert "\
-Hrvoje is a student at the Faculty of Electrical Engineering and
-Computing in Zagreb, Croatia, working part-time at system administration
-at SRCE.  His hobby is hacking free software, particularly XEmacs and
-GNU Wget, the latter being his very own creation.
+Hrvoje thinks he works in the server-side web business.  In reality,
+he cranks out huge quantities of HTML, Tcl, and Java for the German
+branch of ")
+     (about-url-link "http://www.arsdigita.com/"
+		     "ArsDigita, Inc." "www.arsdigita.com")
+     ;; Avoid literal I18N characters in strings.  *Displaying* a
+     ;; Latin 1 character should always be safe, though, with or
+     ;; without Mule.
+     (let ((muenchen (format "M%cnchen" (make-char 'latin-iso8859-1 252))))
+       (widget-insert (format "\
+  He joined the ranks of Gastarbeiters only
+recently; he is trying to learn German and get attuned to %s
+and Bav^H^H^HGermany.\n" muenchen)))
 
-For info on Wget, see ")
-     (about-url-link 'wget nil "Visit the Wget web page")
-     (widget-insert " or\n")
-     (about-url-link 'wget-ftp nil "Visit the Wget ftp page")
-     (widget-insert ".\n"))
+     (widget-insert "\
+
+Before ArsDigita, he worked as a programmer at ")
+     (about-url-link "http://www.iskon.hr/" "Iskon," "www.iskon.hr")
+     (widget-insert " a fast-growing
+Croatian ISP.  Even before that, he worked part-time for academic
+institutions like ")
+     (about-url-link "http://www.srce.hr/" "SRCE" "www.srce.hr")
+     (widget-insert " and ")
+     (about-url-link "http://www.carnet.hr/" "CARNet," "www.carnet.hr")
+     (widget-insert " and tried to attend university.
+
+He takes perverse pleasure in building and maintaining free software
+in his free time.  Apart from XEmacs, his major contribution is ")
+     (about-url-link 'wget "Wget," "Wget home page")
+     (widget-insert "
+his very own creation, now jointly maintained by a happy crew.
+
+He dreams of having a home page.\n"))
     (hobley
      (widget-insert "\
 I used to do real work, but now I am a Project Manager for one of the
@@ -1498,9 +1520,27 @@ early client of the external Emacs widget.\n"))
     (hniksic
      (widget-insert
       "\
-Hrvoje's contribution to XEmacs consists of a multitude of hours spent
-adding new features and bugs, and fixing old ones.  He dreams of
-writing a home page.\n"))
+Hrvoje's contribution to XEmacs consists of many hours spent working
+on code and taking part in public discussions.
+
+He wrote `savehist' and `htmlize' packages, the latter having a pretty
+large gathering of users.  He worked to improve many parts of XEmacs
+Lisp code, including isearch (FSF synch and new features), cl, edmacro
+\(FSF synch and an almost complete rewrite), profile, gnuserv,
+hyper-apropos, etags, about, and custom.
+
+He has worked on improving and optimizing the C core.  He ported many
+FSF core features such as indirect buffers, tty-erase-char,
+save-current-buffer and friends, debug-ignored-errors, etc.  He also
+wrote line numbering optimizations for large buffers, initial support
+for TTY frames, abbrev improvements, Lisp printer and reader
+improvements, support for extent modification functions, and lots of
+minor bugfixes, optimizations, and Muleifications.
+
+He contributed to Lispref and Internals documentation, including a
+section on writing Mule-compliant C code.  Maintains NEWS.  He
+participated on xemacs-beta since 1996 and on the Patch Review Board
+since its inception in 1998.\n"))
     (hobley
      (widget-insert
       "\
