@@ -13395,6 +13395,12 @@ These modules implement the @dfn{console} Lisp object type.  A console
 contains multiple display devices, but only one keyboard and mouse.
 Most of the time, a console will contain exactly one device.
 
+@strong{This model may no longer suffice.}  The X Window System (at
+least) now supports a variety of input devices, including touchscreens
+and tablets, as well as the traditional keyboard and mouse, and may even
+be able to support multiple instances of a single type of input device
+(especially pointing devices) on a single console.
+
 Consoles are the top of a lisp object inclusion hierarchy.  Consoles
 contain devices, which contain frames, which contain windows.
 
@@ -13420,6 +13426,57 @@ services for not only device operations but also for the frame, window,
 menubar, scrollbar, toolbar, and other displayable-object subsystems.
 The reason for this is that all of these subsystems have the same
 subtypes (X, TTY, NeXTstep, Microsoft Windows, etc.) as devices do.
+
+@strong{This abstraction is probably broken} (as of late 2004), at least
+for X consoles, with the advent of the @strong{Xft} library.  Xft is a
+complete break from the traditional approach to text rendering in the
+X11 environment, since fonts are composed of glyphs rendered by
+@emph{client-side} code.  These glyphs are then transmitted to the
+server as sets of trapezoids, and displayed by the @strong{XRender}
+extension (where available; the X11 core protocol can also be used, but
+this is slow).  The XRender extension is especially attractive because
+it allows modern image composition techniques to be used to render
+antialiased fonts.
+
+By contrast, the traditional approach renders fonts on the server side
+as a collection of bitmaps.  It is also possible use a @emph{font
+server} that knows how to render antialiased fonts, but for some reason
+this approach has never caught on.
+
+The problem that this creates for XEmacs is that the traditional (and
+still popular) widget sets, the various Athena variants and the Motif
+widget set, are based on the server-side rendering model.  Thus, even if
+XEmacs-specific widgets (such as the basic text window, the Lucid
+menubar, and the recently added tab control) can be adapted to render
+text via Xft, older widgets (such as buttons and labels) and ``modern''
+widgets derived from traditional widgets (the progress gauge) still
+expect their font resources to be converted to server-side fonts.  Then
+text is rendered by calls to the core protocol via Xlib, rather than by
+calls to the XRender protocol via Xft.
+
+It's even possible to imagine a situation where a widget is composed of
+components which draw their own text (@emph{predefined widgets}) as well
+as new components which can draw using more modern methods.  Handling
+this will either require reworking the Emacs face mechanism to provide a
+way to determine whether this widget can use that font, or ways to give
+each of several different widgets, even different components of a given
+widget, a different face property.  This is already an issue, as widgets
+generally derive their font from the gui-element face, but this might
+not be appropriate for widgets embedded in a buffer.
+
+There seem to be two overall ways to go.
+
+@enumerate
+@item
+Add face information to the Lucid widget library, and extend the
+coverage of that library to device types that aren't supported by it yet
+(MS Windows, and maybe TTY).
+
+@item
+Create a lighter-weight interface, perhaps an extension of the device
+interface, that allows widgets to access face information from the
+device it is implemented on.
+@end enumerate.
 
 
 

@@ -1,3 +1,9 @@
+2004-12-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Modules for the Basic Displayable Lisp
+	Objects): Comment on problems, and extensions needed to handle
+	native widgets properly.
+
 2004-12-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Better Rendering Support --
