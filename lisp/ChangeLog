@@ -1,3 +1,9 @@
+2001-04-18  Didier Verna  <didier@xemacs.org>
+
+	* cus-edit.el (Custom-reset-standard): reset to standard settings
+	not only when the buffer's :custom-state is 'modified, but also
+	when it is 'set or 'saved.
+
 2001-04-18  Martin Buchholz  <martin@xemacs.org>
 
 	* XEmacs 21.5.0 "alfalfa" is released.
