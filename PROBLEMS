@@ -631,6 +631,11 @@ using the default cygwin shell. (See above.)
 * Problems with running XEmacs
 ==============================
 ** General
+*** Starting with 21.4.x, killing text is absurdly slow.
+
+See FAQ Q3.10.6.  Should be available on the web near
+http://www.xemacs.org/faq/xemacs-faq.html#SEC160.
+
 *** Whenever I try to retrieve a remote file, I have problems.
 
 A typical error: FTP Error: USER request failed; 500 AUTH not understood.

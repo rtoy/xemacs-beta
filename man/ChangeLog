@@ -1,3 +1,8 @@
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Top, Customization, Q3.10.5, Q3.10.6):
+	New "killing is slow" FAQ and link updates.
+
 2002-06-17  Jerry James  <james@xemacs.org>
 
 	* emodules.texi (Loading other Modules): Describe why we do not

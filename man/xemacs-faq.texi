@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/06/11 19:28:15 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/07/02 12:27:58 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -268,6 +268,7 @@ Text Selections:
 * Q3.10.3::     Can I turn off the highlight during isearch?
 * Q3.10.4::     How do I turn off highlighting after @kbd{C-x C-p} (mark-page)?
 * Q3.10.5::     The region disappears when I hit the end of buffer while scrolling.
+* Q3.10.6::     Why is killing so slow?
 
 Major Subsystems
 
@@ -2515,6 +2516,7 @@ Text Selections:
 * Q3.10.3::     Can I turn off the highlight during isearch?
 * Q3.10.4::     How do I turn off highlighting after @kbd{C-x C-p} (mark-page)?
 * Q3.10.5::     The region disappears when I hit the end of buffer while scrolling.
+* Q3.10.6::     Why is killing so slow?
 @end menu
 
 @node Q3.0.1, Q3.0.2, Customization, Customization
@@ -3807,7 +3809,7 @@ Put this in your @code{.emacs}:
 
 Also see @ref{Q3.10.1}.
 
-@node Q3.10.5,  , Q3.10.4, Customization
+@node Q3.10.5, Q3.10.6, Q3.10.4, Customization
 @unnumberedsubsec Q3.10.5: The region disappears when I hit the end of buffer while scrolling.
 
 This has been fixed by default starting with XEmacs-20.3.
@@ -3837,6 +3839,73 @@ off like this:
 
 Thanks to @email{raman@@adobe.com, T. V. Raman} for assistance in deriving this
 answer.
+
+@node Q3.10.6,  , Q3.10.5, Customization
+@unnumberedsubsec Q3.10.6: Why is killing so slow?
+
+This actually is an X Windows question, although you'll notice it with
+keyboard operations as well as while using the GUI.  Basically, there
+are four ways to communicate interprogram via the X server:
+
+@table @strong
+@item Primary selection
+a transient selection that gets replaced every time a new selection is made
+
+@item Secondary selection
+for "exchanging" with the primary selection
+
+@item Cut buffers
+a clipboard internal to the X server (deprecated)
+
+@item Clipboard selection
+a selection with a notification protocol that allows a separate app to
+manage the clipboard
+@end table
+
+The cut buffers are deprecated because managing them is even more
+inefficient than the clipboard notification protocol.  The primary
+selection works fine for many users and applications, but is not very
+robust under intensive or sophisticated use.
+
+In Motif and MS Windows, a clipboard has become the primary means for
+managing cut and paste.  These means that "modern" applications tend to
+be oriented toward a true clipboard, rather than the primary selection.
+(On Windows, there is nothing equivalent to the primary selection.)
+It's not that XEmacs doesn't support the simple primary selection
+method, it's that more and more other applications don't.
+
+So the slowdown occurs because XEmacs now engages in the clipboard
+notification protocol on @emph{every} kill.  This is especially slow on
+Motif.
+
+With most people running most clients and server on the same host, and
+many of the rest working over very fast communication, you may expect
+that the situation is not going to improve.
+
+There are a number of workarounds.  The most effective is to use a
+special command to do selection ownership only when you intend to paste
+to another application.  Useful commands are @code{kill-primary-selection}
+and @code{copy-primary-selection}.  These work only on text selected
+with the mouse (probably; experiment), and are bound by default to the
+@kbd{Cut} and @kbd{Copy}, respectively, buttons on the toolbar.
+@code{copy-primary-selection} is also bound to @kbd{C-Insert}.  You can
+yank the clipboard contents with @code{yank-primary-selection}, bound to
+the @kbd{Paste} toolbar button and @kbd{Sh-Insert}.
+
+If you are communicating by cut and paste with applications that use the
+primary selection, then you can customize
+@code{interprogram-cut-function} to @code{nil}, restoring the XEmacs
+version 20 behavior.  How can you tell if a program will support this?
+Motifly-correct programs require the clipboard; you lose.  For others,
+only by trying it.  You also need to customize the complementary
+@code{interprogram-paste-function} to @code{nil}.  (Otherwise
+XEmacs-to-XEmacs pastes will not work correctly.)
+
+You may get some relief on Motif by setting
+@code{x-selection-strict-motif-ownership} to nil, but this means you will
+only intermittently be able to paste XEmacs kills to Motif applications.
+
+Thanks to Jeff Mincy and Glynn Clements for corrections.
 
 @node Subsystems, Miscellaneous, Customization, Top
 @unnumbered 4 Major Subsystems
