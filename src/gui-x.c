@@ -318,11 +318,12 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 
 #if 1
   /* Eval the activep slot of the menu item */
-# define wv_set_evalable_slot(slot,form) do {	\
-  Lisp_Object wses_form = (form);		\
-  (slot) = (NILP (wses_form) ? 0 :		\
-	    EQ (wses_form, Qt) ? 1 :		\
-	    !NILP (Feval (wses_form)));		\
+# define wv_set_evalable_slot(slot,form) do {				\
+  Lisp_Object wses_form = (form);					\
+  (slot) = (NILP (wses_form) ? 0 :					\
+	    EQ (wses_form, Qt) ? 1 :					\
+	    !NILP (in_display ? eval_within_redisplay (wses_form)	\
+		   : Feval (wses_form)));				\
 } while (0)
 #else
   /* Treat the activep slot of the menu item as a boolean */
