@@ -20,7 +20,24 @@
 	* automated/regexp-tests.el:
 	Test trivial subpatterns and backreferences with shy groups.
 
-2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
+2005-03-05  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* autoconf/regressiontest.pl: Added explict test for '--with-athena=3d'
+
+2005-01-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoconf/regressiontest.pl: Basename of configure need not be
+	"configure" and arguments differ.  HAVE_DECL_SYS_SIGLIST
+	differences are known spurious.  Delete those lines before diff.
+	Add my standard configure line to test hash.
+	Add usage notes.
+
+2005-01-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* autoconf: New directory for tests for configure.
+	* autoconf/regressiontest.pl: New file from Malcolm Purvis.
+
+004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/os-tests.el: New file.  Add tests for bug reported by
 	Katsumi Yamaoka 2004-10-26 <b9yvfcyuscf.fsf@jpl.org>.  Test
