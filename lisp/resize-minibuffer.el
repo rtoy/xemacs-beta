@@ -36,7 +36,7 @@
 
 ;; This file has received maintenance by the XEmacs development team.
 
-;; $Id: resize-minibuffer.el,v 1.3 2002/03/13 10:00:06 ben Exp $
+;; $Id: resize-minibuffer.el,v 1.4 2002/03/15 07:43:21 ben Exp $
 
 ;; This package allows the entire contents (or as much as possible) of the
 ;; minibuffer to be visible at once when typing.  As the end of a line is
@@ -160,12 +160,12 @@ counterparts."
 		       nil t)
 	     (make-local-hook 'post-command-hook)
 	     (add-hook 'post-command-hook 'resize-minibuffer-frame nil t)
-	     (unless (if-boundp 'icomplete-mode icomplete-mode)
+	     (unless (and-boundp 'icomplete-mode icomplete-mode)
 	       (resize-minibuffer-frame)))))
      (t
       (make-local-hook 'post-command-hook)
       (add-hook 'post-command-hook 'resize-minibuffer-window nil t)
-      (unless (if-boundp 'icomplete-mode icomplete-mode)
+      (unless (and-boundp 'icomplete-mode icomplete-mode)
 	(resize-minibuffer-window)))))))
 
 (defun resize-minibuffer-count-window-lines (&optional start end)

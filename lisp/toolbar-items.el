@@ -124,10 +124,10 @@
 (defun toolbar-paste ()
   (interactive)
   ;; This horrible kludge is for pending-delete to work correctly.
-  (and (boundp 'pending-delete-mode)
-       (declare-boundp pending-delete-mode)
-       (let ((this-command toolbar-paste-function))
-	 (declare-fboundp (pending-delete-pre-hook))))
+  (and-boundp 'pending-delete-mode
+    pending-delete-mode
+    (let ((this-command toolbar-paste-function))
+      (declare-fboundp (pending-delete-pre-hook))))
   (call-interactively toolbar-paste-function))
 
 (defcustom toolbar-undo-function 'undo
@@ -156,11 +156,14 @@
 
 (defun toolbar-ispell-internal ()
   (interactive)
-  (cond
-   ((region-active-p) (ispell-region (region-beginning) (region-end)))
-   ((eq major-mode 'mail-mode) (ispell-message))
-   ((eq major-mode 'message-mode) (ispell-message))
-   (t (ispell-buffer))))
+  (if-fboundp 'ispell-region
+      (with-fboundp '(ispell-message ispell-buffer)
+	(cond
+	 ((region-active-p) (ispell-region (region-beginning) (region-end)))
+	 ((eq major-mode 'mail-mode) (ispell-message))
+	 ((eq major-mode 'message-mode) (ispell-message))
+	 (t (ispell-buffer))))
+    (error 'unimplemented "`ispell' package unavailable")))
 
 (defcustom toolbar-ispell-function 'toolbar-ispell-internal
   "*Function to call when the ispell icon is selected."
@@ -294,19 +297,23 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
   "Run compile without having to touch the keyboard."
   (interactive)
   (declare (special compile-command toolbar-compile-already-run))
-  (require 'compile)
-  (if (boundp 'toolbar-compile-already-run)
-      (compile compile-command)
-    (setq toolbar-compile-already-run t)
-    (if (should-use-dialog-box-p)
-       (make-dialog-box 'question
-			:question (concat "Compile:\n        " compile-command)
-			:buttons
-			'(["Compile" (compile compile-command) t]
-			  ["Edit command" compile t]
-			  nil
-			  ["Cancel" (message "Quit") t]))
-      (compile compile-command))))
+  (if-fboundp 'compile
+      (progn
+	(require 'compile)
+	(if (boundp 'toolbar-compile-already-run)
+	    (compile compile-command)
+	  (setq toolbar-compile-already-run t)
+	  (if (should-use-dialog-box-p)
+	      (make-dialog-box 'question
+			       :question
+			       (concat "Compile:\n        " compile-command)
+			       :buttons
+			       '(["Compile" (compile compile-command) t]
+				 ["Edit command" compile t]
+				 nil
+				 ["Cancel" (message "Quit") t]))
+	    (compile compile-command))))
+    (error 'unimplemented "`compile' package unavailable")))
 
 ;;
 ;; toolbar news variables and defuns
@@ -369,23 +376,26 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 (defun toolbar-gnus ()
   "Run Gnus in a separate frame."
   (interactive)
-  (if (not toolbar-news-use-separate-frame)
-      (gnus)
-    (unless (frame-live-p toolbar-news-frame)
-      (setq toolbar-news-frame (make-frame toolbar-news-frame-plist))
-      (add-hook 'gnus-exit-gnus-hook
-		(lambda ()
-		  (when (frame-live-p toolbar-news-frame)
-		    (if (cdr (frame-list))
-			(delete-frame toolbar-news-frame))
-		    (setq toolbar-news-frame nil))))
-      (select-frame toolbar-news-frame)
-      (gnus))
-    (when (framep toolbar-news-frame)
-      (when (frame-iconified-p toolbar-news-frame)
-	(deiconify-frame toolbar-news-frame))
-      (select-frame toolbar-news-frame)
-      (raise-frame toolbar-news-frame))))
+  (if-fboundp 'gnus
+      (progn
+	(if (not toolbar-news-use-separate-frame)
+	    (gnus)
+	  (unless (frame-live-p toolbar-news-frame)
+	    (setq toolbar-news-frame (make-frame toolbar-news-frame-plist))
+	    (add-hook 'gnus-exit-gnus-hook
+		      (lambda ()
+			(when (frame-live-p toolbar-news-frame)
+			  (if (cdr (frame-list))
+			      (delete-frame toolbar-news-frame))
+			  (setq toolbar-news-frame nil))))
+	    (select-frame toolbar-news-frame)
+	    (gnus))
+	  (when (framep toolbar-news-frame)
+	    (when (frame-iconified-p toolbar-news-frame)
+	      (deiconify-frame toolbar-news-frame))
+	    (select-frame toolbar-news-frame)
+	    (raise-frame toolbar-news-frame))))
+    (error 'unimplemented "`gnus' package unavailable")))
 
 (defun toolbar-news ()
   "Run News."

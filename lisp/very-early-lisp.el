@@ -27,8 +27,12 @@
 
 ;;; Commentary:
 
-;; This file must be loaded by temacs if temacs is to process bytecode
-;; or dumped-lisp.el files.
+;; This file must be loaded by temacs if temacs is to process bytecode or
+;; dumped-lisp.el files.  The functions in here are used by dumped-lisp.el,
+;; and by files called dumped-lisp.el in packages when they need to have
+;; stuff dumped into XEmacs. (???? I thought we got rid of this entirely.
+;; The only thing left is egg-its/dumped-lisp.el.  We should fix it, then
+;; combine this file into our own dumped-lisp.el. --ben
 
 ;;; Code:
 

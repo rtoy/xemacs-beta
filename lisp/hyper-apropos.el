@@ -1232,7 +1232,9 @@ window.  (See also `find-function'.)"
 	 (setq fn nil))
      (list fn)))
   (if fn
-      (find-function-other-window fn)))
+      (if-fboundp 'find-function-other-window
+	  (find-function-other-window fn)
+	(error 'unimplemented "`find-func' package unavailable"))))
 
 (defun hyper-apropos-find-variable (fn)
   "Find the variable for the symbol on the current line in other
@@ -1243,7 +1245,9 @@ window.  (See also `find-variable'.)"
 	 (setq fn nil))
      (list fn)))
   (if fn
-      (find-variable-other-window fn)))
+      (if-fboundp 'find-variable-other-window
+	  (find-variable-other-window fn)
+	(error 'unimplemented "`find-func' package unavailable"))))
 
 ;; ---------------------------------------------------------------------- ;;
 

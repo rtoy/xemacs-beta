@@ -284,10 +284,10 @@ If so, return the true (non-nil) value returned by PREDICATE."
 	  (setq cl-mark (copy-marker (or cl-start (point-min))))
 	  (setq cl-mark2 (and cl-end (copy-marker cl-end))))
 	(while (and cl-next (or (not cl-mark2) (< cl-mark cl-mark2)))
-	  (setq cl-next (and (fboundp 'next-property-change)
-			     (if cl-prop (next-single-property-change
-					  cl-mark cl-prop cl-what)
-			       (next-property-change cl-mark cl-what)))
+	  (setq cl-next (and-fboundp 'next-property-change
+			  (if cl-prop (next-single-property-change
+				       cl-mark cl-prop cl-what)
+			    (next-property-change cl-mark cl-what)))
 		cl-next2 (or cl-next (save-excursion
 				       (set-buffer cl-what) (point-max))))
 	  (funcall cl-func (prog1 (marker-position cl-mark)
@@ -297,10 +297,10 @@ If so, return the true (non-nil) value returned by PREDICATE."
     (or cl-start (setq cl-start 0))
     (or cl-end (setq cl-end (length cl-what)))
     (while (< cl-start cl-end)
-      (let ((cl-next (or (and (fboundp 'next-property-change)
-			      (if cl-prop (next-single-property-change
-					   cl-start cl-prop cl-what)
-				(next-property-change cl-start cl-what)))
+      (let ((cl-next (or (and-fboundp 'next-property-change
+			   (if cl-prop (next-single-property-change
+					cl-start cl-prop cl-what)
+			     (next-property-change cl-start cl-what)))
 			 cl-end)))
 	(funcall cl-func cl-start (min cl-next cl-end))
 	(setq cl-start cl-next)))))

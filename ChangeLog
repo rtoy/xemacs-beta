@@ -1,6 +1,16 @@
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (batch):
+	* Makefile.in.in (batch_packages):
+	* Makefile.in.in (finder):
+	* Makefile.in.in (check-features):
+	* Makefile.in.in (install):
+	Use -no-packages to avoid problems with package files shadowing
+	core files (e.g. unicode.el in mule-ucs).
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
-	* The Great Mule Merge: placeholder.
+	* The Great Mule Merge: See CHANGES-ben-mule.
 
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 

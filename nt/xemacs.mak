@@ -1,6 +1,6 @@
 #   Makefile for Microsoft NMAKE
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
-#   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+#   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
 #
@@ -943,8 +943,12 @@ $(OUTDIR)\xemacs.res: xemacs.rc
 
 
 PROGNAME=$(SRC)\xemacs.exe
-TEMACS_BATCH="$(LIB_SRC)\i" "$(TEMACS)" -batch
-XEMACS_BATCH="$(LIB_SRC)\i" "$(PROGNAME)" -vanilla -batch
+BATCH = -no-packages -batch
+BATCH_PACKAGES = -vanilla -batch
+TEMACS_BATCH = "$(LIB_SRC)\i" "$(TEMACS)" $(BATCH)
+XEMACS_BATCH = "$(LIB_SRC)\i" "$(PROGNAME)" $(BATCH)
+XEMACS_BATCH_PACKAGES = "$(LIB_SRC)\i" "$(PROGNAME)" $(BATCH_PACKAGES)
+
 
 # Section handling automated tests starts here
 
@@ -954,7 +958,7 @@ dump_temacs   = $(temacs_loadup) dump
 run_temacs    = $(temacs_loadup) run-temacs
 ## We have automated tests!!
 testdir=../tests/automated
-batch_test_emacs=-batch -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+batch_test_emacs=$(BATCH) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
 
 # .PHONY: check check-temacs
 
@@ -994,7 +998,7 @@ tags:
 # Section handling info starts here
 
 !if !defined(MAKEINFO)
-MAKEINFO=$(XEMACS_BATCH) -l texinfmt -f batch-texinfo-format
+MAKEINFO=$(XEMACS_BATCH_PACKAGES) -l texinfmt -f batch-texinfo-format
 !endif
 
 MANDIR = $(XEMACS)\man
@@ -1175,7 +1179,7 @@ makeinfo-test:
 	@<<makeinfo_test.bat
 @echo off
 if exist "$(MAKEINFO)" goto test_done
-@$(XEMACS_BATCH) -eval "(condition-case nil (require (quote texinfo)) (t (kill-emacs 1)))"
+@$(XEMACS_BATCH_PACKAGES) -eval "(condition-case nil (require (quote texinfo)) (t (kill-emacs 1)))"
 @if not errorlevel 1 goto suggest_makeinfo
 @echo XEmacs 'info' cannot be built!
 @echo Install XEmacs package 'texinfo' (see README.packages).

@@ -700,7 +700,7 @@ of the start of the containing expression."
 		  (backward-up-list 1)
 		  (backward-up-list 1)
 		  (backward-up-list 1)
-		  (looking-at "(flet\\s-"))
+		  (looking-at "(\\(flet\\|macrolet\\|labels\\)\\s-"))
 	      (error nil))
 	    (setq method 'defun)
 	  (setq method (or (get (intern-soft function) 'lisp-indent-function)
@@ -777,6 +777,9 @@ of the start of the containing expression."
 ;; like defun if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
+;; NOTE: All def* functions are handled specially, no need to put them here.
+;; NOTE: All cl-* constructs are handled in cl.el.
+
 (put 'lambda 'lisp-indent-function 'defun)
 (put 'autoload 'lisp-indent-function 'defun)
 (put 'progn 'lisp-indent-function 0)
@@ -793,7 +796,6 @@ of the start of the containing expression."
 (put 'let 'lisp-indent-function 1)
 (put 'let* 'lisp-indent-function 1)
 (put 'let-specifier 'lisp-indent-function 1)
-(put 'flet 'lisp-indent-function 1)
 (put 'while 'lisp-indent-function 1)
 (put 'if 'lisp-indent-function 2)
 (put 'catch 'lisp-indent-function 1)

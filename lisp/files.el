@@ -2991,7 +2991,7 @@ Then you'll be asked about a number of files to recover."
   (if (null auto-save-list-file-prefix)
       (error
        "You set `auto-save-list-file-prefix' to disable making session files"))
-  (dired (concat auto-save-list-file-prefix "*"))
+  (declare-fboundp (dired (concat auto-save-list-file-prefix "*")))
   (goto-char (point-min))
   (or (looking-at "Move to the session you want to recover,")
       (let ((inhibit-read-only t))
@@ -3399,7 +3399,7 @@ absolute one."
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
 (defun file-remote-p (file-name)
   "Test whether FILE-NAME is looked for on a remote system."
-  (cond ((not allow-remote-paths) nil)
+  (cond ((not (declare-boundp allow-remote-paths)) nil)
 	((fboundp 'ange-ftp-ftp-path)
 	 (declare-fboundp (ange-ftp-ftp-path file-name)))
 	((fboundp 'efs-ftp-path)

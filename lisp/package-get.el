@@ -445,14 +445,16 @@ used interactively, for example from a mail or news buffer."
 		(setq package-get-continue-update-base nil)
 		(autoload 'mc-setversion "mc-setversion")
 		(with-fboundp 'mc-setversion
-		  (or
-		   (cond ((locate-file "gpg" exec-path exec-suffix-list)
-			  (mc-setversion "gpg"))
-			 ((locate-file "pgpe" exec-path exec-suffix-list)
-			  (mc-setversion "5.0"))
-			 ((locate-file "pgp" exec-path exec-suffix-list)
-			  (mc-setversion "2.6")))
-		   (error "Can't find a suitable pgp executable")))
+		  (if-boundp 'exec-suffix-list
+		      (or
+		       (cond ((locate-file "gpg" exec-path exec-suffix-list)
+			      (mc-setversion "gpg"))
+			     ((locate-file "pgpe" exec-path exec-suffix-list)
+			      (mc-setversion "5.0"))
+			     ((locate-file "pgp" exec-path exec-suffix-list)
+			      (mc-setversion "2.6")))
+		       (error "Can't find a suitable pgp executable"))
+		    (error 'unimplemented "`apel' package unavailable")))
 		(autoload 'mc-verify "mc-toplev")
 		(declare-fboundp (mc-verify))
 		(setq package-get-continue-update-base t))
@@ -966,8 +968,8 @@ Creates `package-get-dir'  if it doesn't exist."
   (if (not (file-exists-p package-get-dir))
       (make-directory package-get-dir))
   (expand-file-name
-   (file-name-nondirectory (or (and (fboundp 'efs-ftp-path)
-				    (nth 2 (efs-ftp-path filename)))
+   (file-name-nondirectory (or (and-fboundp 'efs-ftp-path
+				 (nth 2 (efs-ftp-path filename)))
 			       filename))
    (file-name-as-directory package-get-dir)))
 

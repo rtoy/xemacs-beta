@@ -280,9 +280,9 @@ See also function `auto-save-file-name-p'."
 			   ;; (to become non-dir part of filename) will
 			   ;; be escaped twice.  Don't care.
 			   (auto-save-escape-name (buffer-name))))
-	    (remote-p (and (stringp file-name)
-			   (fboundp 'efs-ftp-path)
-			   (efs-ftp-path file-name))))
+	    (remote-p (and-fboundp 'efs-ftp-path
+			(stringp file-name)
+			(efs-ftp-path file-name))))
 	;; Return the appropriate auto save file name:
 	(expand-file-name;; a buffername needs this, a filename not
 	 (cond (remote-p

@@ -1529,7 +1529,7 @@ Warning: using this function after creating the widget but before invoking
 	     ;; buffer before from/to.
 	     (condition-case nil
 		 (widget-apply from-field :notify from-field)
-	       (error (debug "Before Change"))))))))
+	       (error (declare-fboundp (debug "Before Change")))))))))
 
 (defun widget-add-change ()
   (make-local-hook 'post-command-hook)
@@ -1549,7 +1549,7 @@ Warning: using this function after creating the widget but before invoking
 	    (other (widget-field-find to)))
 	(when field
 	  (unless (eq field other)
-	    (debug "Change in different fields"))
+	    (declare-fboundp (debug "Change in different fields")))
 	  (let ((size (widget-get field :size)))
 	    (when size
 	      (let ((begin (widget-field-start field))
@@ -1574,7 +1574,7 @@ Warning: using this function after creating the widget but before invoking
 			   (delete-backward-char 1)))))))
 	    (widget-specify-secret field))
 	  (widget-apply field :notify field)))
-    (error (debug "After Change"))))
+    (error (declare-fboundp (debug "After Change")))))
 
 
 ;;; Widget Functions
@@ -2034,9 +2034,9 @@ If END is omitted, it defaults to the length of LIST."
 
 (defun widget-url-link-action (widget &optional event)
   "Open the url specified by WIDGET."
-  (if (fboundp 'browse-url)
+  (if-fboundp 'browse-url
       (browse-url (widget-value widget))
-    (error "Cannot follow URLs in this XEmacs")))
+    (error 'unimplemented "No `browse-url' package; cannot follow URLs in this XEmacs")))
 
 ;;; The `function-link' Widget.
 

@@ -49,8 +49,9 @@ KEYS should be a string in the format used for saving keyboard macros
 \(see `insert-kbd-macro')."
   (if (or (stringp keys)
 	  (vectorp keys))
-      (read-kbd-macro keys)
-    `(read-kbd-macro ,keys)))
+      ;; #### need to move xemacs-base into the core!!!!!!
+      (declare-fboundp (read-kbd-macro keys))
+    `(declare-fboundp (read-kbd-macro ,keys))))
 
 (defun suppress-keymap (map &optional nodigits)
   "Make MAP override all normally self-inserting keys to be undefined.

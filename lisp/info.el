@@ -661,9 +661,9 @@ node of a file of this name."
 			   "mailto\\|news\\|tn3270\\|ftp\\|http\\|file\\|"
 			   "telnet\\|gopher\\):")
 		   filename)
-    (if (fboundp 'browse-url)
+    (if-fboundp 'browse-url
 	(browse-url filename)
-      (error "Cannot follow URLs in this XEmacs")))
+      (error 'unimplemented "no `browse-url' package; Cannot follow URLs in this XEmacs")))
    (t
     (error "Info file %s does not exist" filename))))
 

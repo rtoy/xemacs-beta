@@ -226,16 +226,18 @@
 (defun gtk-make-font-unbold (font &optional device)
   (try-font-name (gtk-frob-font-weight font "medium") device))
 
-(defcustom *try-oblique-before-italic-fonts* t
+(defcustom try-oblique-before-italic-fonts t
   "*If nil, italic fonts are searched before oblique fonts.
 If non-nil, oblique fonts are tried before italic fonts.  This is mostly
 applicable to adobe-courier fonts"
   :type 'boolean
   :tag "Try Oblique Before Italic Fonts"
   :group 'x)
+(define-obsolete-variable-alias '*try-oblique-before-italic-fonts*
+  'try-oblique-before-italic-fonts)
 
 (defun gtk-make-font-italic (font &optional device)
-  (if *try-oblique-before-italic-fonts*
+  (if try-oblique-before-italic-fonts
       (or (try-font-name (gtk-frob-font-slant font "o") device)
 	  (try-font-name (gtk-frob-font-slant font "i") device))
     (or (try-font-name (gtk-frob-font-slant font "i") device)
@@ -245,7 +247,7 @@ applicable to adobe-courier fonts"
   (try-font-name (gtk-frob-font-slant font "r") device))
 
 (defun gtk-make-font-bold-italic (font &optional device)
-  (if *try-oblique-before-italic-fonts*
+  (if try-oblique-before-italic-fonts
       (or (try-font-name
 	   (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "o") device)
 	  (try-font-name

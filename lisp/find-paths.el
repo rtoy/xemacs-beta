@@ -31,8 +31,9 @@
 
 ;; This file is dumped with XEmacs.
 
-;; This file contains the library functionality to find paths into the
-;; XEmacs hierarchy.
+;; This file contains basic library functionality for manipulating paths
+;; and path lists and finding paths in the XEmacs hierarchy.
+
 
 ;;; Code:
 

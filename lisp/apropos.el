@@ -466,7 +466,7 @@ Will return nil instead."
       (setq function (cdr function)))
   ;; XEmacs change from: (setq function (if (byte-code-function-p function)
   (setq function (if (compiled-function-p function)
-		     (if (fboundp 'compiled-function-doc-string)
+		     (if-fboundp 'compiled-function-doc-string
 			 (compiled-function-doc-string function)
 		       (if (> (length function) 4)
 			   (aref function 4)))

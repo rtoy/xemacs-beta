@@ -57,9 +57,11 @@
 
 ;; Set the null device (for compile.el).
 ;; #### There should be such a global thingy as null-device - kkm
+(defvar grep-null-device)
 (setq grep-null-device "NUL")
 
 ;; Set the grep regexp to match entries with drive letters.
+(defvar grep-regexp-alist)
 (setq grep-regexp-alist
   '(("^\\(\\([a-zA-Z]:\\)?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]" 1 3)))
 

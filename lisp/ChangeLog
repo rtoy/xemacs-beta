@@ -1,3 +1,111 @@
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
+	* mule\chinese.el:
+	* mule\chinese.el (post-read-decode-hz):
+	* mule\chinese.el (pre-write-encode-hz):
+	* mule\japan-util.el (japanese-katakana-region):
+	* mule\japan-util.el (japanese-hiragana-region):
+	* mule\japan-util.el (japanese-zenkaku-region):
+	fix warnings.
+
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
+	* behavior-defs.el (func-menu):
+	* behavior-defs.el (filladapt):
+	fix errors with require.
+	
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (with-boundp):
+	* bytecomp-runtime.el (if-boundp):
+	* bytecomp-runtime.el (when-boundp):
+	* bytecomp-runtime.el (and-boundp): New.
+	* bytecomp-runtime.el (declare-boundp):
+	* bytecomp-runtime.el (globally-declare-boundp):
+	* bytecomp-runtime.el (with-fboundp):
+	* bytecomp-runtime.el (if-fboundp):
+	* bytecomp-runtime.el (when-fboundp):
+	* bytecomp-runtime.el (and-fboundp): New.
+	* bytecomp-runtime.el (declare-fboundp):
+	* bytecomp-runtime.el (globally-declare-fboundp):
+	* bytecomp-runtime.el (with-byte-compiler-warnings-suppressed):
+	add new funs {when,and}-{f}boundp, clean up docs.
+
+	* cus-edit.el (custom-save-variables):
+	pretty-print values.
+	
+	* dump-paths.el:
+	* dump-paths.el (startup-setup-paths): New.
+	* find-paths.el:
+	* startup.el (command-switch-alist):
+	* startup.el (command-line-do-help):
+	* startup.el (normal-top-level):
+	* startup.el (command-line-early):
+	* startup.el (command-line):
+	* startup.el (startup-find-roots-warning):
+	* startup.el (startup-setup-paths): Removed.
+	* startup.el (startup-load-autoloads):
+	* setup-paths.el:
+	fix problems/inconsistencies parsing options.  support new
+	-no-packages option.  merge code duplication in dump-paths and
+	startup.
+
+	* lisp-mode.el:
+	* lisp-mode.el (lisp-indent-function):
+	* lisp-mode.el (while):
+	indent macrolet and labels correctly.  update comments about
+	lisp-indent-function.  flet already handled in cl.
+	
+	* apropos.el (apropos-safe-documentation):
+	* auto-save.el (make-auto-save-file-name):
+	* buff-menu.el (default-list-buffers-identification):
+	* cl-extra.el (cl-map-intervals):
+	* dragdrop.el (experimental-dragdrop-drop-url-default):
+	* faces.el ((color '(red green blue yellow))):
+	* files.el (recover-session):
+	* files.el (file-remote-p):
+	* fill.el (find-space-insertable-point):
+	* font-lock.el (font-lock-thing-lock-cleanup):
+	* font-lock.el (font-lock-after-fontify-buffer):
+	* font.el (font-blink-initialize):
+	* gtk-faces.el (*try-oblique-before-italic-fonts*): Removed.
+	* gtk-faces.el (try-oblique-before-italic-fonts): New.
+	* gtk-faces.el ('*try-oblique-before-italic-fonts*): New.
+	* gtk-faces.el (gtk-make-font-italic):
+	* gtk-faces.el (gtk-make-font-bold-italic):
+	* gui.el (insert-gui-button):
+	* help.el (xemacs-www-page):
+	* help.el (xemacs-www-faq):
+	* hyper-apropos.el (hyper-apropos-find-function):
+	* hyper-apropos.el (hyper-apropos-find-variable):
+	* info.el (Info-find-node):
+	* isearch-mode.el (isearch-help-or-delete-char):
+	* keymap.el (kbd):
+	* lisp-mnt.el (lm-report-bug):
+	* mouse.el (mouse-eval-sexp):
+	* package-admin.el (package-admin-check-manifest):
+	* package-get.el (package-get-update-base-from-buffer):
+	* package-get.el (package-get-staging-dir):
+	* printer.el (generic-print-region):
+	* process.el (shell-command):
+	* process.el (shell-quote-argument):
+	* resize-minibuffer.el (resize-minibuffer-setup):
+	* simple.el (sendmail-user-agent-compose):
+	* toolbar-items.el (toolbar-paste):
+	* toolbar-items.el (toolbar-ispell-internal):
+	* toolbar-items.el (toolbar-compile):
+	* toolbar-items.el (toolbar-gnus):
+	* wid-edit.el (widget-before-change):
+	* wid-edit.el (widget-after-change):
+	* wid-edit.el (widget-url-link-action):
+	* win32-native.el (grep-null-device):
+	* win32-native.el (grep-null-device)): New.
+	* win32-native.el (grep-regexp-alist):
+	* win32-native.el (grep-regexp-alist)): New.
+	* win32-native.el (mswindows-system-shells):
+	fix warnings.
+
+	* very-early-lisp.el: update docs.
+
 2002-03-14  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* files.el (auto-mode-alist): GNUmakefile is a Makefile,

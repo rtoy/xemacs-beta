@@ -274,7 +274,13 @@ In either case, the output is inserted after point (leaving mark after it)."
       (if (string-match "[ \t]*&[ \t]*$" command)
 	  ;; Command ending with ampersand means asynchronous.
 	  (progn
-	    (background (substring command 0 (match-beginning 0))))
+	    (if-fboundp 'background
+		(background (substring command 0
+				       (match-beginning 0)))
+	      (error
+	       'unimplemented
+	       "backgrounding a shell command requires package `background'")))
+	    
 	(shell-command-on-region (point) (point) command output-buffer)))))
 
 ;; We have a sentinel to prevent insertion of a termination message
@@ -447,7 +453,7 @@ lost packets."
       ;; mswindows-construct-process-command-line!).  Putting quotes
       ;; around shell metachars gets through the last two, and applying
       ;; the normal VC runtime quoting works with practically all apps.
-      (mswindows-quote-one-vc-runtime-arg argument t)
+      (declare-fboundp (mswindows-quote-one-vc-runtime-arg argument t))
     (if (equal argument "")
 	"\"\""
       ;; Quote everything except POSIX filename characters.

@@ -246,7 +246,7 @@ Finds files and URLs. Returns nil if object does not contain URL data."
 		   ;; to-do: open ftp URLs with efs...
 		   (t 
 		    ;; some other URL, try to fire up some browser for it
-		    (if (fboundp 'browse-url)
+		    (if-fboundp 'browse-url
 			(browse-url (car data))
 		      (display-message 'error 
 			"Can't show URL, no browser selected"))))

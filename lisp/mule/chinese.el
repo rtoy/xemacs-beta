@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -30,6 +30,9 @@
 ;; supported.
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'china-util))
 
 ;; Syntax of Chinese characters.
 (modify-syntax-entry 'chinese-gb2312 "w")
@@ -200,7 +203,8 @@ G2: Sisheng (PinYin - ZhuYin)"
 (defun post-read-decode-hz (len)
   (let ((pos (point))
 	(buffer-modified-p (buffer-modified-p))
-	last-coding-system-used)
+	;last-coding-system-used
+	)
     (prog1
 	(decode-hz-region pos (+ pos len))
       (set-buffer-modified-p buffer-modified-p))))
@@ -211,8 +215,8 @@ G2: Sisheng (PinYin - ZhuYin)"
     (if (stringp from)
 	(insert from)
       (insert-buffer-substring buf from to))
-    (let (last-coding-system-used)
-      (encode-hz-region 1 (point-max)))
+    ;(let (last-coding-system-used)
+    (encode-hz-region 1 (point-max))
     nil))
 
 (set-language-info-alist

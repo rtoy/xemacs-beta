@@ -3415,6 +3415,7 @@ disksave_object_finalization (void)
   /* Release hash tables for locate_file */
   Flocate_file_clear_hashing (Qt);
   uncache_home_directory ();
+  zero_out_command_line_status_vars ();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))

@@ -21,3 +21,4 @@ update-elc.stamp
 xemacs
 xemacs.dmp
 xemacs.opt
+*.tmp

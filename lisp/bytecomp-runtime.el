@@ -210,8 +210,12 @@ VARIABLES can be a symbol or a list of symbols and must be quoted.  When
 compiling this file, the warnings `reference to free variable VARIABLE' and
 `assignment to free variable VARIABLE' will not occur anywhere in BODY, for
 any of the listed variables.  This is a clean way to avoid such warnings.
-See also `declare-boundp', `if-boundp', `when-boundp', and
-`globally-declare-boundp'."
+
+See also `if-boundp', `when-boundp', and `and-boundp' (ways to
+conditionalize on a variable being bound and avoid warnings),
+`declare-boundp' (issue a variable call without warnings), and
+`globally-declare-boundp' (avoid warnings throughout a file about a
+variable)."
   (setq variables (eval variables))
   (unless (consp variables)
       (setq variables (list variables)))
@@ -225,8 +229,7 @@ See also `declare-boundp', `if-boundp', `when-boundp', and
 VARIABLE should be a quoted symbol.  When compiling this file, the warnings
 `reference to free variable VARIABLE' and `assignment to free variable
 VARIABLE' will not occur anywhere in the if-statement.  This is a clean way
-to avoid such warnings.  See also `when-boundp', `declare-boundp',
-`with-boundp' and `globally-declare-boundp'."
+to avoid such warnings.  See also `with-boundp' and friends."
   `(with-boundp ,variable
      (if (boundp ,variable) ,then ,@else)))
 
@@ -236,10 +239,19 @@ to avoid such warnings.  See also `when-boundp', `declare-boundp',
 VARIABLE should be a quoted symbol.  When compiling this file, the warnings
 `reference to free variable VARIABLE' and `assignment to free variable
 VARIABLE' will not occur anywhere in the when-statement.  This is a clean
-way to avoid such warnings.  See also `if-boundp', `declare-boundp',
-`with-boundp' and `globally-declare-boundp'."
+way to avoid such warnings.  See also `with-boundp' and friends."
   `(with-boundp ,variable
      (when (boundp ,variable) ,@body)))
+
+(put 'and-boundp 'lisp-indent-function 1)
+(defmacro and-boundp (variable &rest args)
+  "Equivalent to (and (boundp VARIABLE) ARGS) but handles bytecomp warnings.
+VARIABLE should be a quoted symbol.  When compiling this file, the warnings
+`reference to free variable VARIABLE' and `assignment to free variable
+VARIABLE' will not occur anywhere in the and-statement.  This is a clean
+way to avoid such warnings.  See also `with-boundp' and friends."
+  `(with-boundp ,variable
+     (and (boundp ,variable) ,@args)))
 
 (defmacro declare-boundp (variable)
   "Evaluate VARIABLE without bytecomp warnings about the symbol.
@@ -251,7 +263,9 @@ Sample usage is
 which is equivalent to
 
   (with-boundp 'gpm-minor-mode
-    gpm-minor-mode)"
+    gpm-minor-mode)
+
+See also `with-boundp' and friends."
   `(with-boundp ',variable ,variable))
 
 (defmacro globally-declare-boundp (variables)
@@ -262,15 +276,15 @@ When compiling this file, the warnings `reference to free variable
 VARIABLE' and `assignment to free variable VARIABLE' will not occur
 regardless of where references to VARIABLE occur in the file.
 
-In general, you should *NOT* use this; use `declare-boundp', `if-boundp',
-`when-boundp', or `with-boundp' to wrap individual uses, as necessary.
-That way, you're more likely to remember to put in the explicit checks for
-the variable's existence that are usually necessary.  However,
-`globally-declare-boundp' is better in some circumstances, such as when
-writing an ELisp package that makes integral use of optionally-compiled-in
-functionality (typically, an interface onto a system library) and checks
-for the existence of the functionality at some entry point to the package.
-See `globally-declare-fboundp' for more information."
+In general, you should *NOT* use this; use `with-boundp' or its friends to
+wrap individual uses, as necessary.  That way, you're more likely to
+remember to put in the explicit checks for the variable's existence that
+are usually necessary.  However, `globally-declare-boundp' is better in
+some circumstances, such as when writing an ELisp package that makes
+integral use of optionally-compiled-in functionality (typically, an
+interface onto a system library) and checks for the existence of the
+functionality at some entry point to the package.  See
+`globally-declare-fboundp' for more information."
   (setq variables (eval variables))
   (if (not (consp variables))
       (setq variables (list variables)))
@@ -328,8 +342,13 @@ See `globally-declare-fboundp' for more information."
 FUNCTIONS can be a symbol or a list of symbols and must be quoted.  When
 compiling this file, the warning `the function FUNCTION is not known to be
 defined' will not occur anywhere in BODY, for any of the listed functions.
-This is a clean way to avoid such warnings.  See also `declare-fboundp',
-`if-fboundp', `when-fboundp', and `globally-declare-fboundp'."
+This is a clean way to avoid such warnings.
+
+See also `if-fboundp', `when-fboundp', and `and-fboundp' (ways to
+conditionalize on a function being bound and avoid warnings),
+`declare-fboundp' (issue a function call without warnings), and
+`globally-declare-fboundp' (avoid warnings throughout a file about a
+function)."
   `(with-fboundp-1 ,functions ,@body))
 
 (put 'if-fboundp 'lisp-indent-function 2)
@@ -338,8 +357,7 @@ This is a clean way to avoid such warnings.  See also `declare-fboundp',
 FUNCTION should be a quoted symbol.  When compiling this file, the warning
 `the function FUNCTION is not known to be defined' will not occur anywhere
 in the if-statement.  This is a clean way to avoid such warnings.  See also
-`when-fboundp', `declare-fboundp', `with-fboundp', and
-`globally-declare-fboundp'."
+`with-fboundp' and friends."
   `(with-fboundp ,function
      (if (fboundp ,function) ,then ,@else)))
 
@@ -348,11 +366,20 @@ in the if-statement.  This is a clean way to avoid such warnings.  See also
   "Equivalent to (when (fboundp FUNCTION) BODY) but handles bytecomp warnings.
 FUNCTION should be a quoted symbol.  When compiling this file, the warning
 `the function FUNCTION is not known to be defined' will not occur anywhere
-in the when-statement.  This is a clean way to avoid such warnings.  See
-also `if-fboundp', `declare-fboundp', `with-fboundp', and
-`globally-declare-fboundp'."
+in the when-statement.  This is a clean way to avoid such warnings.  See also
+`with-fboundp' and friends."
   `(with-fboundp ,function
      (when (fboundp ,function) ,@body)))
+
+(put 'and-fboundp 'lisp-indent-function 1)
+(defmacro and-fboundp (function &rest args)
+  "Equivalent to (and (fboundp FUNCTION) ARGS) but handles bytecomp warnings.
+FUNCTION should be a quoted symbol.  When compiling this file, the warning
+`the function FUNCTION is not known to be defined' will not occur anywhere
+in the and-statement.  This is a clean way to avoid such warnings.  See also
+`with-fboundp' and friends."
+  `(with-fboundp ,function
+     (and (fboundp ,function) ,@args)))
 
 (defmacro declare-fboundp (form)
   "Execute FORM (a function call) without bytecomp warnings about the call.
@@ -363,7 +390,9 @@ Sample usage is
 which is equivalent to
 
   (with-fboundp 'x-keysym-on-keyboard-sans-modifiers-p
-    (x-keysym-on-keyboard-sans-modifiers-p 'backspace))"
+    (x-keysym-on-keyboard-sans-modifiers-p 'backspace))
+
+See also `with-fboundp' and friends."
   `(with-fboundp ',(car form) ,form))
 
 (defmacro globally-declare-fboundp (functions)
@@ -374,18 +403,18 @@ When compiling this file, the warning `the function FUNCTION is not known
 to be defined' will not occur regardless of where calls to FUNCTION occur
 in the file.
 
-In general, you should *NOT* use this; use `declare-fboundp', `if-fboundp',
-`when-fboundp', or `with-fboundp' to wrap individual uses, as necessary.
-That way, you're more likely to remember to put in the explicit checks for
-the function's existence that are usually necessary.  However,
-`globally-declare-fboundp' is better in some circumstances, such as when
-writing an ELisp package that makes integral use of optionally-compiled-in
-functionality (typically, an interface onto a system library) and checks
-for the existence of the functionality at some entry point to the package.
-The file `ldap.el' is a good example: It provides a layer on top of the
-optional LDAP ELisp primitives, makes calls to them throughout its code,
-and verifies the presence of LDAP support at load time.  Putting calls to
-`declare-fboundp' throughout the code would be a major annoyance."
+In general, you should *NOT* use this; use `with-fboundp' or its friends to
+wrap individual uses, as necessary.  That way, you're more likely to
+remember to put in the explicit checks for the function's existence that
+are usually necessary.  However, `globally-declare-fboundp' is better in
+some circumstances, such as when writing an ELisp package that makes
+integral use of optionally-compiled-in functionality (typically, an
+interface onto a system library) and checks for the existence of the
+functionality at some entry point to the package.  The file `ldap.el' is a
+good example: It provides a layer on top of the optional LDAP ELisp
+primitives, makes calls to them throughout its code, and verifies the
+presence of LDAP support at load time.  Putting calls to `declare-fboundp'
+throughout the code would be a major annoyance."
   (when (cl-compiling-file)
     (setq functions (eval functions))
     (if (not (consp functions))
@@ -429,11 +458,9 @@ There are better ways of avoiding most of these warnings.  In particular:
 
 -- use (declare (special ...)) if you are making use of
    dynamically-scoped variables.
--- use `if-fboundp', `when-fboundp', `declare-fboundp', `with-fboundp', or
-   `globally-declare-fboundp' to avoid warnings about undefined functions
+-- use `with-fboundp' and friends to avoid warnings about undefined functions
    when you know the function actually exists.
--- use `if-boundp', `when-boundp', `declare-boundp', `with-boundp', or
-   `globally-declare-boundp' to avoid warnings about undefined variables
+-- use `with-boundp' and friends to avoid warnings about undefined variables
    when you know the variable actually exists.
 -- use `with-obsolete-variable' or `with-obsolete-function' if you
    are purposely using such a variable or function."

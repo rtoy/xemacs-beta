@@ -1667,18 +1667,18 @@ START should be at the beginning of a line."
 ;; because people know what they will do.
 ;; A hook is a mystery because it might do anything whatever. --rms.
 (defun font-lock-thing-lock-cleanup ()
-  (cond ((and (boundp 'fast-lock-mode) fast-lock-mode)
-	 (fast-lock-mode -1))
-	((and (boundp 'lazy-lock-mode) lazy-lock-mode)
-	 (lazy-lock-mode -1))
-	((and (boundp 'lazy-shot-mode) lazy-shot-mode)
-	 (lazy-shot-mode -1))))
+  (cond ((and-boundp 'fast-lock-mode fast-lock-mode)
+	 (declare-fboundp (fast-lock-mode -1)))
+	((and-boundp 'lazy-lock-mode lazy-lock-mode)
+	 (declare-fboundp (lazy-lock-mode -1)))
+	((and-boundp 'lazy-shot-mode lazy-shot-mode)
+	 (declare-fboundp (lazy-shot-mode -1)))))
 
 ; Do something special for these packages after fontifying.  I prefer a hook.
 (defun font-lock-after-fontify-buffer ()
-  (cond ((and (boundp 'fast-lock-mode) fast-lock-mode)
+  (cond ((and-boundp 'fast-lock-mode fast-lock-mode)
 	 (declare-fboundp (fast-lock-after-fontify-buffer)))
-	((and (boundp 'lazy-lock-mode) lazy-lock-mode)
+	((and-boundp 'lazy-lock-mode lazy-lock-mode)
 	 (declare-fboundp (lazy-lock-after-fontify-buffer)))))
 
 

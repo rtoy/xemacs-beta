@@ -3715,12 +3715,13 @@ The properties used on SYMBOL are `composefunc', `sendfunc',
 	(funcall switch-function "*mail*")))
   (let ((cc (cdr (assoc-ignore-case "cc" other-headers)))
 	(in-reply-to (cdr (assoc-ignore-case "in-reply-to" other-headers))))
-    (or (mail continue to subject in-reply-to cc yank-action send-actions)
+    (or (declare-fboundp
+	 (mail continue to subject in-reply-to cc yank-action send-actions))
 	continue
 	(error "Message aborted"))
     (save-excursion
       (goto-char (point-min))
-      (search-forward mail-header-separator)
+      (search-forward (declare-boundp mail-header-separator))
       (beginning-of-line)
       (while other-headers
 	(if (not (member (car (car other-headers)) '("in-reply-to" "cc")))

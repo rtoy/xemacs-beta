@@ -1404,9 +1404,9 @@ is returned."
 		  font-blink-interval))
    ((fboundp 'run-at-time)
     (cancel-function-timers 'font-blink-callback)
-    (run-at-time font-blink-interval
-		 font-blink-interval
-		 'font-blink-callback))
+    (declare-fboundp (run-at-time font-blink-interval
+				  font-blink-interval
+				  'font-blink-callback)))
    (t nil)))
 
 (provide 'font)

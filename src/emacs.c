@@ -434,8 +434,15 @@ int inhibit_site_lisp;
 /* Nonzero means don't perform site-modules searches at startup */
 int inhibit_site_modules;
 
+/* Nonzero means don't load user-init or site-start file */
+int vanilla_inhibiting;
+
 /* Nonzero means don't respect early packages at startup */
 int inhibit_early_packages;
+
+/* Nonzero means don't respect any packages at startup -- act as if they
+   don't exist. */
+int inhibit_all_packages;
 
 /* Nonzero means don't load package autoloads at startup */
 int inhibit_autoloads;
@@ -597,12 +604,12 @@ Return the directory name in which the Emacs executable was located.
 
 
 
-/* Test whether the next argument in ARGV matches SSTR or a prefix of
-   LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
-   (the argument is supposed to have a value) store in *VALPTR either
-   the next argument or the portion of this one after the equal sign.
-   ARGV is read starting at position *SKIPPTR; this index is advanced
-   by the number of arguments used.
+/* Test whether the next argument in ARGV matches SSTR or a prefix of LSTR
+   (at least MINLEN characters; if MINLEN is 0, set to size of LSTR).  If
+   so, then if VALPTR is non-null (the argument is supposed to have a
+   value) store in *VALPTR either the next argument or the portion of this
+   one after the equal sign.  ARGV is read starting at position *SKIPPTR;
+   this index is advanced by the number of arguments used.
 
    Too bad we can't just use getopt for all of this, but we don't have
    enough information to do it right.  */
@@ -635,6 +642,8 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
     }
   arglen = (valptr != NULL && (p = strchr (arg, '=')) != NULL
 	    ? p - arg : (int) strlen (arg));
+  if (lstr && !minlen)
+    minlen = strlen (lstr);
   if (lstr == 0 || arglen < minlen || strncmp (arg, lstr, arglen) != 0)
     return 0;
   else if (valptr == NULL)
@@ -717,7 +726,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
    * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
-   * does; it was provided by NeXT, and it presumable makes NS's mallocator
+   * does; it was provided by NeXT, and it presumably makes NS's mallocator
    * work with dumping.  But malloc_jumpstart() and malloc_freezedry() in
    * unexnext.c are both completely undocumented, even in NS header files!
    * But hey, it solves all NS related memory problems, so who's
@@ -790,8 +799,14 @@ main_1 (int argc, char **argv, char **envp, int restart)
   inhibit_window_system = 1;
 #endif
 
-  /* Handle the -sd/--show-dump-id switch, which means show the hex dump_id and quit */
-  if (argmatch (argv, argc, "-sd", "--show-dump-id", 9, NULL, &skip_args))
+  /* NOTE NOTE NOTE: Keep the following args in sync with the big list of
+     arguments below in standard_args[], with the help text in startup.el,
+     and with the list of non-clobbered variables near where pdump_load()
+     is called! */
+  
+  /* Handle the -sd/--show-dump-id switch, which means show the hex dump_id
+     and quit */
+  if (argmatch (argv, argc, "-sd", "--show-dump-id", 0, NULL, &skip_args))
     {
 #ifdef PDUMP
       printf ("%08x\n", dump_id);
@@ -804,7 +819,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   /* Handle the -t switch, which specifies filename to use as terminal */
   {
     Extbyte *term;
-    if (argmatch (argv, argc, "-t", "--terminal", 4, &term, &skip_args))
+    if (argmatch (argv, argc, "-t", "--terminal", 0, &term, &skip_args))
       {
 	retry_close (0);
 	retry_close (1);
@@ -822,18 +837,17 @@ main_1 (int argc, char **argv, char **envp, int restart)
       }
   }
 
-  /* Handle the --no-dump-file/-nd switch, which means don't load the dump file (ignored when not using pdump) */
-  if (argmatch (argv, argc, "-nd", "--no-dump-file", 7, NULL, &skip_args))
-    {
-      nodumpfile = 1;
-    }
+  /* Handle the --no-dump-file/-nd switch, which means don't load the dump
+     file (ignored when not using pdump) */
+  if (argmatch (argv, argc, "-nd", "--no-dump-file", 0, NULL, &skip_args))
+    nodumpfile = 1;
 
   /* Handle -nw switch */
-  if (argmatch (argv, argc, "-nw", "--no-windows", 6, NULL, &skip_args))
+  if (argmatch (argv, argc, "-nw", "--no-windows", 0, NULL, &skip_args))
     inhibit_window_system = 1;
 
   /* Handle the -batch switch, which means don't do interactive display.  */
-  if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
+  if (argmatch (argv, argc, "-batch", "--batch", 0, NULL, &skip_args))
     {
 #if 0 /* I don't think this is correct. */
       inhibit_autoloads = 1;
@@ -846,58 +860,50 @@ main_1 (int argc, char **argv, char **envp, int restart)
      versions of Unicode-split API's even on Windows NT, which has
      full Unicode support.  This helps flush out problems in the code
      we've written to convert between ANSI and Unicode. */
-  if (argmatch (argv, argc, "-nuni", "--no-unicode-lib-calls", 6, NULL,
+  if (argmatch (argv, argc, "-nuni", "--no-unicode-lib-calls", 0, NULL,
 		&skip_args))
     no_mswin_unicode_lib_calls = 1;
 #endif /* WIN32_NATIVE */
 
-  /* #### is it correct that -debug-paths is handled here (and presumably
-     removed), and then checked again below? */
   if (argmatch (argv, argc, "-debug-paths", "--debug-paths",
-		11, NULL, &skip_args))
-      debug_paths = 1;
+		0, NULL, &skip_args))
+    debug_paths = 1;
 
-  /* Partially handle -no-autoloads, -no-early-packages and -vanilla.  Packages */
-  /* are searched prior to the rest of the command line being parsed in */
-  /* startup.el */
-  if (argmatch (argv, argc, "-no-early-packages", "--no-early-packages",
-		6, NULL, &skip_args))
+  /* Handle (maybe partially) some inhibiting flags.  Packages are searched
+     prior to the rest of the command line being parsed in startup.el. */
+
+  if (argmatch (argv, argc, "-no-packages", "--no-packages",
+		0, NULL, &skip_args))
     {
+      inhibit_all_packages = 1;
       inhibit_early_packages = 1;
-      skip_args--;
+      vanilla_inhibiting = 1;
     }
+
+  if (argmatch (argv, argc, "-no-early-packages", "--no-early-packages",
+		0, NULL, &skip_args))
+    inhibit_early_packages = 1;
+
 #ifdef HAVE_SHLIB
   if (argmatch (argv, argc, "-no-site-modules", "--no-site-modules",
-		9, NULL, &skip_args))
-    {
-      inhibit_site_modules = 1;
-      skip_args--;
-    }
-#else
-  inhibit_site_modules = 1;
+		0, NULL, &skip_args))
 #endif
+    inhibit_site_modules = 1;
+  
   if (argmatch (argv, argc, "-vanilla", "--vanilla",
-		7, NULL, &skip_args))
+		0, NULL, &skip_args))
     {
       inhibit_early_packages = 1;
-      skip_args--;
+      vanilla_inhibiting = 1;
     }
 
   if (argmatch (argv, argc, "-no-autoloads", "--no-autoloads",
-		7, NULL, &skip_args))
+		0, NULL, &skip_args))
     {
-      /* Inhibit everything */
       inhibit_autoloads = 1;
-      skip_args--;
+      inhibit_early_packages = 1;
+      vanilla_inhibiting = 1;
     }
-
-  if (argmatch (argv, argc, "-debug-paths", "--debug-paths",
-		6, NULL, &skip_args))
-    {
-      debug_paths = 1;
-      skip_args--;
-    }
-
 
   /* Partially handle the -version and -help switches: they imply -batch,
      but are not removed from the list. */
@@ -1042,16 +1048,18 @@ main_1 (int argc, char **argv, char **envp, int restart)
       XEmacs is getting at run-time.  Such variables must be saved here,
       and restored after loading the dumped data.
 
-      Boy, this is ugly, but how else to do it?
+      (Remember: Only LISP-visible options that are set up to this point
+      need to be listed here.)
       */
 
       /* noninteractive1 is saved in noninteractive, which isn't
 	 LISP-visible */
       int inhibit_early_packages_save = inhibit_early_packages;
       int inhibit_autoloads_save      = inhibit_autoloads;
+      int inhibit_all_packages_save   = inhibit_all_packages;
+      int vanilla_inhibiting_save     = vanilla_inhibiting;
       int debug_paths_save            = debug_paths;
-      /* #### Give inhibit-site-lisp a command switch?  If so, uncomment: */
-      /* int inhibit_site_lisp_save      = inhibit_site_lisp; */
+      int inhibit_site_lisp_save      = inhibit_site_lisp;
       int inhibit_site_modules_save   = inhibit_site_modules;
 
       initialized = pdump_load (argv[0]);
@@ -1060,9 +1068,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
       noninteractive1        = noninteractive;
       inhibit_early_packages = inhibit_early_packages_save;
       inhibit_autoloads      = inhibit_autoloads_save;
+      inhibit_all_packages   = inhibit_all_packages_save;
+      vanilla_inhibiting     = vanilla_inhibiting_save;
       debug_paths            = debug_paths_save;
-      /* #### Give inhibit-site-lisp a command switch?  If so, uncomment: */
-      /* inhibit_site_lisp      = inhibit_site_lisp_save; */
+      inhibit_site_lisp      = inhibit_site_lisp_save;
       inhibit_site_modules   = inhibit_site_modules_save;
 
       if (initialized)
@@ -2316,7 +2325,8 @@ struct standard_args
 
 static const struct standard_args standard_args[] =
 {
-  /* Handled by main_1 above: */
+  /* Handled by main_1 above: Each must have its own priority and must be
+     in the order mentioned in main_1. */
   { "-sd", "--show-dump-id", 105, 0 },
   { "-t", "--terminal", 100, 1 },
   { "-nd", "--no-dump-file", 95, 0 },
@@ -2326,27 +2336,27 @@ static const struct standard_args standard_args[] =
   { "-nuni", "--no-unicode-lib-calls", 83, 0 },
 #endif /* WIN32_NATIVE */
   { "-debug-paths", "--debug-paths", 82, 0 },
-  { "-help", "--help", 80, 0 },
-  { "-version", "--version", 75, 0 },
-  { "-V", 0, 75, 0 },
-  { "-d", "--display", 80, 1 },
-  { "-display", 0, 80, 1 },
-  { "-NXHost",  0, 79, 0 },
-  { "-MachLaunch", 0, 79, 0},
+  { "-no-packages", "--no-packages", 81, 0 },
+  { "-no-early-packages", "--no-early-packages", 80, 0 },
+  { "-no-site-modules", "--no-site-modules", 78, 0 },
+  { "-vanilla", "--vanilla", 76, 0 },
+  { "-no-autoloads", "--no-autoloads", 74, 0 },
+  { "-help", "--help", 72, 0 },
+  { "-version", "--version", 70, 0 },
+  { "-V", 0, 68, 0 },
+  { "-d", "--display", 66, 1 },
+  { "-display", 0, 64, 1 },
 
   /* Handled by command-line-early in startup.el: */
   { "-q", "--no-init-file", 50, 0 },
-  { "-unmapped", 0, 50, 0 },
   { "-no-init-file", 0, 50, 0 },
-  { "-vanilla", "--vanilla", 50, 0 },
-  { "-no-autoloads", "--no-autoloads", 50, 0 },
-  { "-no-site-file", "--no-site-file", 40, 0 },
-  { "-no-early-packages", "--no-early-packages", 35, 0 },
-  { "-u", "--user", 30, 1 },
-  { "-user", 0, 30, 1 },
-  { "-debug-init", "--debug-init", 20, 0 },
-  { "-debug-paths", "--debug-paths", 20, 0 },
-  { "-eol", "--enable-eol-detection", 20, 0 },
+  { "-no-site-file", "--no-site-file", 50, 0 },
+  { "-unmapped", "--unmapped", 50, 0 },
+  { "-u", "--user", 50, 1 },
+  { "-user", 0, 50, 1 },
+  { "-user-init-file", "--user-init-file", 50, 1 },
+  { "-user-init-directory", "--user-init-directory", 50, 1 },
+  { "-debug-init", "--debug-init", 50, 0 },
 
   /* Xt options: */
   { "-i", "--icon-type", 15, 0 },
@@ -2375,6 +2385,8 @@ static const struct standard_args standard_args[] =
   { "-hb", "--horizontal-scroll-bars", 5, 0 },
   { "-vb", "--vertical-scroll-bars", 5, 0 },
 
+  { "-eol", "--enable-eol-detection", 2, 0 },
+  { "-enable-eol-detection", 0, 2, 0 },
   /* These have the same priority as ordinary file name args,
      so they are not reordered with respect to those.  */
   { "-L", "--directory", 0, 1 },
@@ -3621,6 +3633,31 @@ syms_of_emacs (void)
   DEFSYMBOL (Qsave_buffers_kill_emacs);
 }
 
+/* Yuck!  These variables may get set from command-line options when
+   dumping; if we don't clear them, they will still be on once the dumped
+   XEmacs reloads. (not an issue with pdump, as we kludge around this in
+   main_1().) */
+
+void
+zero_out_command_line_status_vars (void)
+{
+  vanilla_inhibiting = 0;
+  inhibit_early_packages = 0;
+  inhibit_all_packages = 0;
+  inhibit_autoloads = 0;
+  debug_paths = 0;
+#ifndef INHIBIT_SITE_LISP
+  inhibit_site_lisp = 0;
+#else
+  inhibit_site_lisp = 1;
+#endif
+#ifndef INHIBIT_SITE_MODULES
+  inhibit_site_modules = 0;
+#else
+  inhibit_site_modules = 1;
+#endif
+}
+
 void
 vars_of_emacs (void)
 {
@@ -3650,11 +3687,12 @@ if XEmacs was found there.
 */ );
 
 #if 0 /* FSFmacs */
-  xxDEFVAR_LISP ("installation-directory", &Vinstallation_directory,
-    "A directory within which to look for the `lib-src' and `etc' directories.\n"
-"This is non-nil when we can't find those directories in their standard\n"
-"installed locations, but we can find them\n"
-"near where the XEmacs executable was found.");
+  xxDEFVAR_LISP ("installation-directory", &Vinstallation_directory /*
+A directory within which to look for the `lib-src' and `etc' directories.
+This is non-nil when we can't find those directories in their standard
+installed locations, but we can find them ear where the XEmacs executable
+was found.
+*/ );
 #endif
 
   DEFVAR_LISP ("system-type", &Vsystem_type /*
@@ -3754,8 +3792,18 @@ Codename of this version of Emacs (a string).
 Non-nil means XEmacs is running without interactive terminal.
 */ );
 
+  DEFVAR_BOOL ("vanilla-inhibiting", &vanilla_inhibiting /*
+Set to non-nil when the user-init and site-start files should not be loaded.
+*/ );
+
   DEFVAR_BOOL ("inhibit-early-packages", &inhibit_early_packages /*
 Set to non-nil when the early packages should not be respected at startup.
+*/ );
+
+  DEFVAR_BOOL ("inhibit-all-packages", &inhibit_all_packages /*
+Set to non-nil when the no packages should not be respected at startup.
+XEmacs will utterly ignore the packages -- not in load-path, not set up as
+autoloads, nothing.
 */ );
 
   DEFVAR_BOOL ("inhibit-autoloads", &inhibit_autoloads /*

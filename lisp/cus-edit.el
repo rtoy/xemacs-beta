@@ -3404,12 +3404,15 @@ Leave point at the location of the call, or after the last expression."
 			       ;; support non-themed vars
 			       (and (null spec) (get symbol 'saved-value)))
  		      (princ "\n '(")
- 		      (prin1 symbol)
+		      (prin1 symbol)
  		      (princ " ")
 		      ;; This comment stuff is in the way ####
 		      ;; Is (eq (third spec) (car saved-value)) ????
  		      ;; (prin1 (third spec))
-		      (prin1 (car (get symbol 'saved-value)))
+		      ;; XEmacs -- pretty-print value if available
+		      (if-fboundp 'pp
+			  (pp (car (get symbol 'saved-value)))
+			(prin1 (car (get symbol 'saved-value))))
 		      (when (or now requests comment)
 			(princ (if now " t" " nil")))
 		      (when (or comment requests)

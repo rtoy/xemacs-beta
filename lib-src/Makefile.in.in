@@ -207,7 +207,7 @@ ${SCRIPTS}:
 #define MOVEMAIL_NEEDS_BLESSING
 blessmail = blessmail
 blessmail:
-	../src/xemacs -batch -l ../lisp/blessmail.el
+	../src/xemacs -batch -no-packages -l ../lisp/blessmail.el
 	chmod +x $@
 #endif /* movemail needs blessing */
 

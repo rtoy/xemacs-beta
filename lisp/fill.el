@@ -785,8 +785,8 @@ If the mark is not active, this applies to the current paragraph."
 ;; 97/3/14 jhod: This functions are added for Kinsoku support
 (defun find-space-insertable-point ()
  "Search backward for a permissible point for inserting justification spaces."
- (if (boundp 'space-insertable)
-     (if (re-search-backward (declare-boundp space-insertable) nil t)
+ (if-boundp 'space-insertable
+     (if (re-search-backward space-insertable nil t)
 	 (progn (forward-char 1)
 		t)
        nil)

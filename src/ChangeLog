@@ -1,3 +1,27 @@
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore:
+	ignore .tmp files that are getting auto-created by VC.
+	
+	* Makefile.in.in (release):
+	* Makefile.in.in (fastdump):
+	* Makefile.in.in (dynodump_deps):
+	* Makefile.in.in (dump-elcs):
+	* Makefile.in.in (batch_test_emacs):
+	* Makefile.in.in (run-rtcmacs):
+	Use -no-packages to avoid problems with package files shadowing
+	core files (e.g. unicode.el in mule-ucs).
+
+	* alloc.c (disksave_object_finalization):
+	* emacs.c:
+	* emacs.c (argmatch):
+	* emacs.c (main_1):
+	* emacs.c (standard_args):
+	* emacs.c (vars_of_emacs):
+	* lisp.h:
+	add new -no-packages.  make sure list of args for sorting is
+	actually correct.  clean up arg parsing code.
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
 	* The Great Mule Merge: placeholder.

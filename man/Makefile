@@ -267,7 +267,7 @@ $(INFODIR)/new-users-guide.info : $(new-users-guide-srcs)
 #	$(MAKEINFO) -o $(INFODIR)/w3.info w3.texi
 
 # EMACS = ../src/xemacs
-# EMACSFLAGS = -batch -q -no-site-file
+# EMACSFLAGS = -batch -vanilla
 
 # $(INFODIR)/vm.info : vm.texi
 #	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \
@@ -374,7 +374,7 @@ $(HTMLDIR)/new-users-guide.html : $(new-users-guide-srcs)
 #	$(TEXI2HTML) -subdir $(HTMLDIR) w3.texi
 
 # EMACS = ../src/xemacs
-# EMACSFLAGS = -batch -q -no-site-file
+# EMACSFLAGS = -batch -vanilla
 
 # $(HTMLDIR)/vm.html : vm.texi
 #	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \

@@ -974,9 +974,9 @@ backwards."
   (interactive)
   (if (and delete-key-deletes-forward
            (case (device-type)
-             ('tty (eq (declare-boundp tty-erase-char) ?\C-h))
-             ('x (not (declare-fboundp
-		       (x-keysym-on-keyboard-sans-modifiers-p 'backspace))))))
+             (tty (eq (declare-boundp tty-erase-char) ?\C-h))
+             (x (not (declare-fboundp
+		      (x-keysym-on-keyboard-sans-modifiers-p 'backspace))))))
       (isearch-delete-char)
     (isearch-mode-help)))
 

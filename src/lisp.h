@@ -2849,6 +2849,7 @@ extern int suppress_early_error_handler_backtrace;
 void debug_break (void);
 int debug_can_access_memory (void *ptr, Bytecount len);
 void really_abort (void);
+void zero_out_command_line_status_vars (void);
 
 /* Defined in eval.c */
 DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));

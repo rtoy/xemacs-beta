@@ -557,13 +557,15 @@ Prompts for bug subject.  Leaves you in a mail buffer."
   (let ((package	(lm-get-package-name))
 	(addr		(lm-maintainer))
 	(version	(lm-version)))
-    (mail nil
-	  (if addr
-	      (concat (car addr) " <" (cdr addr) ">")
-	    (or (and (boundp 'report-xemacs-bug-beta-address)
-		     (declare-boundp report-xemacs-bug-beta-address))
-		"<xemacs-beta@xemacs.org>"))
-	  topic)
+    (if-fboundp 'mail
+	(mail nil
+	      (if addr
+		  (concat (car addr) " <" (cdr addr) ">")
+		(or (and-boundp 'report-xemacs-bug-beta-address
+		      report-xemacs-bug-beta-address)
+		    "<xemacs-beta@xemacs.org>"))
+	      topic)
+      (error 'unimplemented "No mail package available"))
     (goto-char (point-max))
     (insert "\nIn "
 	    package

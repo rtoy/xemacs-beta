@@ -803,14 +803,14 @@ of the key sequence that ran this command."
 (defun xemacs-www-page ()
   "Go to the XEmacs World Wide Web page."
   (interactive)
-  (if (fboundp 'browse-url)
+  (if-fboundp 'browse-url
       (browse-url "http://www.xemacs.org/")
     (error "xemacs-www-page requires browse-url")))
 
 (defun xemacs-www-faq ()
   "View the latest and greatest XEmacs FAQ using the World Wide Web."
   (interactive)
-  (if (fboundp 'browse-url)
+  (if-fboundp 'browse-url
       (browse-url "http://www.xemacs.org/faq/index.html")
     (error "xemacs-www-faq requires browse-url")))
 

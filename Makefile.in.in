@@ -278,10 +278,13 @@ ${srcdir}/lib-src/config.values.in : ${srcdir}/configure
 depend ${srcdir}/src/depend:
 	cd ./src && $(RECURSIVE_MAKE) depend
 
+batch = -no-packages -batch
+batch_packages = -vanilla -batch
+
 ## Build XEmacs and recompile out-of-date and missing .elc files along
 ## the way.
 all-elc all-elcs: lib-src lwlib dump-elcs src
-	${blddir}/src/${PROGNAME} -batch -vanilla \
+	${blddir}/src/${PROGNAME} ${batch} \
 		-l update-elc-2.el -f batch-update-elc-2 lisp
 
 ## Sub-target for all-elc.
@@ -291,7 +294,7 @@ dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
 finder: src
 	@echo "Building finder database ..."
 	@(cd ./lisp; \
-		${blddir}/src/${PROGNAME} -batch -vanilla \
+		${blddir}/src/${PROGNAME} ${batch} \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 	@echo "Building finder database ...(done)"
@@ -299,7 +302,7 @@ finder: src
 lisp/finder-inf.el:
 	@echo "Building finder database ..."
 	@(cd ./lisp; \
-		${blddir}/src/${PROGNAME} -batch -vanilla \
+		${blddir}/src/${PROGNAME} ${batch} \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 	@echo "Building finder database ...(done)"
@@ -384,7 +387,7 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## all.  --cet
 
 check-features: all
-	${blddir}/src/${PROGNAME} -batch -l check-features.el
+	${blddir}/src/${PROGNAME} ${batch} -l check-features.el
 
 install-only: ${MAKE_SUBDIR} check-features install-arch-dep install-arch-indep
 

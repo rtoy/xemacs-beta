@@ -310,7 +310,10 @@ is the top-level directory under which the package was installed."
 		      (save-excursion
 			(set-buffer manifest-buf)
 			;; Put the files in sorted order
-			(sort-lines nil (point-min) (point-max))
+			(if-fboundp 'sort-lines
+			    (sort-lines nil (point-min) (point-max))
+			  (error 'unimplemented
+				 "`xemacs-base' not installed?"))
 			;; Write the file.
 			;; Note that using `write-region' *BYPASSES* any check
 			;; to see if XEmacs is currently editing/visiting the

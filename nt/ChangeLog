@@ -1,3 +1,14 @@
+2002-03-15  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak:
+	* xemacs.mak (BATCH):
+	* xemacs.mak (XEMACS_BATCH_PACKAGES):
+	* xemacs.mak (batch_test_emacs):
+	* xemacs.mak (MAKEINFO):
+	* xemacs.mak (makeinfo-test):
+	Use -no-packages to avoid problems with package files shadowing
+	core files (e.g. unicode.el in mule-ucs).
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
 	* The Great Mule Merge: placeholder.

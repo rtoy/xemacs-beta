@@ -1808,7 +1808,6 @@ in that frame; otherwise change each frame."
 (make-face 'secondary-selection "Secondary selection face.")
 
 ;; Several useful color faces.
-(eval-when-compile (load "cl-macs"))
 (dolist (color '(red green blue yellow))
   (make-face color (concat (symbol-name color) " text."))
   (set-face-foreground color (symbol-name color) nil 'color))

@@ -31,8 +31,9 @@
 
 ;; This file is dumped with XEmacs.
 
-;; This file describes and constructs the various paths into the
-;; XEmacs hierarchy from a global viewpoint.
+;; This file contains functions and variables that describe and construct
+;; the various paths into the XEmacs hierarchy from a global viewpoint.
+;; This file doesn't actually do anything.
 
 ;; It requires find-paths.el and packages.el.
 

@@ -509,8 +509,8 @@ to generate such a string.  This variable is always buffer-local.")
 (defun default-list-buffers-identification (output)
   (save-excursion
     (let ((file (or (buffer-file-name (current-buffer))
-		    (and (boundp 'list-buffers-directory)
-			 list-buffers-directory)))
+		    (and-boundp 'list-buffers-directory
+		      list-buffers-directory)))
 	  (size (buffer-size))
 	  (mode mode-name)
 	  eob p s col)

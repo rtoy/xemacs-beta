@@ -115,7 +115,10 @@ When ACTION is called, the buffer containing the button is made current."
 (defun insert-gui-button (button &optional pos buffer)
   "Insert GUI button BUTTON at POS in BUFFER."
   (check-argument-type 'gui-button-p button)
-  (make-annotation (make-glyph button)
-			       pos 'text buffer nil))
+  (if-fboundp 'make-annotation
+      (make-annotation (make-glyph button)
+		       pos 'text buffer nil)
+    (error 'unimplemented "insert-gui-button requires `annotations' package")))
+  
 
 ;;; gui.el ends here

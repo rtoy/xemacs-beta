@@ -274,9 +274,9 @@ It's also fantastic for debugging regular expressions."
 	     (<= (length result-str) (window-width (selected-window))))
 	(message "%s" result-str)
       (with-output-to-temp-buffer "*Mouse-Eval*"
-	(condition-case nil
+	(if-fboundp 'pprint
 	    (pprint val)
-	  (error (prin1 val))))
+	  (prin1 val)))
       )))
 
 (defun mouse-line-length (event)

@@ -456,7 +456,9 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-temacs_loadup = ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/loadup.el
+batch = -no-packages -batch
+batch_packages = -vanilla -batch
+temacs_loadup = ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/loadup.el
 dump_temacs   = ${temacs_loadup} dump
 run_temacs    = ${temacs_loadup} run-temacs
 debug_temacs = gdb ${EXE_TARGET}
@@ -466,9 +468,9 @@ release: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files}
 	ln ${EXE_TARGET} ${PROGNAME}
 #else
 	-if [ -w ${srcdir}/../lisp ]; then \
-	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/inc-vers; \
+	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/inc-vers; \
 	else true; fi
-	-./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/loadup.el dump
+	-./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/loadup.el dump
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
@@ -478,7 +480,7 @@ ${DUMP_TARGET}: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} update-elc.
 	-${dump_temacs}
 	@if test -f $@;        then if test -f SATISFIED; then \
 		echo "Testing for Lisp shadows ..."; \
-		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
+		./${PROGNAME} ${batch} -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
 	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
 	$(RM) $@; \
@@ -487,19 +489,19 @@ ${DUMP_TARGET}: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} update-elc.
 	@$(RM) $@
 	${dump_temacs}
 	@echo "Testing for Lisp shadows ..."
-	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
+	@./${PROGNAME} ${batch} -f list-load-path-shadows
 #endif
 
 fastdump: ${EXE_TARGET}
 	@$(RM) ${DUMP_TARGET} && touch SATISFIED
 	-${dump_temacs}
-	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
+	@./${PROGNAME} ${batch} -f list-load-path-shadows
 
 FRC.update-elc.stamp :
 
 update-elc.stamp : ${EXE_TARGET} FRC.update-elc.stamp
 	@touch NOBYTECOMPILE
-	./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/update-elc.el
+	./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/update-elc.el
 	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \
 	 $(RM) NOBYTECOMPILE
 
@@ -520,14 +522,14 @@ dynodump_deps = ../dynodump/dynodump.so
 
 ${libsrc}DOC: ${EXE_TARGET} update-elc.stamp
 	$(RM) ${libsrc}DOC; \
-	${DUMPENV} ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/make-docfile.el -- \
+	${DUMPENV} ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc} ${extra_doc_files}
 
 dump_elcs: dump-elcs
 
 dump-elcs: ${EXE_TARGET}
-	-${DUMPENV} ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/update-elc.el
+	-${DUMPENV} ./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/update-elc.el
 
 all-elc all-elcs:
 	cd .. && $(RECURSIVE_MAKE) all-elc
@@ -600,7 +602,7 @@ run-temacs: ${EXE_TARGET}
 
 ## We have automated tests!!
 testdir = ${srcdir}/../tests/automated
-batch_test_emacs = -batch -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
+batch_test_emacs = ${batch} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
 
 .PHONY: check check-temacs
 check:
@@ -631,7 +633,7 @@ run-rtcmacs: rtcmacs
 	ignore POLL; \
 	check -access; \
 	suppress rui; \
-	runargs -batch -l ${srcdir}/../lisp/loadup.el run-temacs -q; \
+	runargs ${batch} -l ${srcdir}/../lisp/loadup.el run-temacs -vanilla; \
 	run' rtcmacs
 
 debug-temacs: ${EXE_TARGET}

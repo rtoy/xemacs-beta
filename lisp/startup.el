@@ -227,6 +227,7 @@ after, and will not be true at any time before.")
     ("-i"	. command-line-do-insert)
     ("-kill"	. command-line-do-kill)
     ("-eol"     . command-line-do-enable-eol-detection)
+    ("-enable-eol-detection" . command-line-do-enable-eol-detection)
     ;; Options like +35 are handled specially.
     ;; Window-system, site, or package-specific code might add to this.
     ;; X11 handles its options by letting Xt remove args from this list.
@@ -311,10 +312,20 @@ Initialization files:
 
 Package/module options:
 
-  -no-early-packages	Do not process early packages.
   -vanilla		Equivalent to -q -no-site-file -no-early-packages.
+                        Useful if you think some user-init or site-init code
+                        is messing things up, or when running XEmacs in
+                        batch mode.
   -no-autoloads		Do not load global symbol files (auto-autoloads) at
 			startup.  Also implies `-vanilla'.
+  -no-packages          Pretend like the packages don't exist.  Don't put
+                        any packages in the load path or set up any package
+                        autoloads.  Also Implies `-vanilla'.  Use this when
+                        running XEmacs in batch mode when you aren't using
+                        any functionality in packages and want to make sure
+                        that you get no interference from packages
+                        (e.g. Lisp files that shadow core Lisp files).
+  -no-early-packages	Do not process early packages.
   -debug-paths          Display info about the runtime values of various
                         directory variables (e.g. for loading packages).
   -no-site-modules      Do not search site-modules directories for modules
@@ -516,9 +527,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 	  (startup-find-roots-warning))
       (startup-setup-paths emacs-roots
 			   user-init-directory
-			   inhibit-early-packages
+			   (cond (inhibit-all-packages t)
+				 (inhibit-early-packages '(early))
+				 (t nil))
 			   inhibit-site-lisp
-			   debug-paths)
+			   debug-paths
+			   nil)
       (startup-setup-paths-warning))
 
     (startup-load-autoloads)
@@ -590,36 +604,33 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
   ;;      (progn
   ;;	(standard-display-european t)
   ;;	(require 'iso-syntax)))
-
-  (setq load-user-init-file-p (not (noninteractive)))
-
+  
+  (if vanilla-inhibiting ;; set in main_1()
+      (setq load-user-init-file-p nil
+	    site-start-file nil)
+    (setq load-user-init-file-p (not (noninteractive))))
+  
   ;; Allow (at least) these arguments anywhere in the command line
-  (let ((new-args nil)
-	(arg      nil))
-    (while args
-      (setq arg (pop args))
+  (macrolet ((long-argmatch (match)
+	       ;; use a macro to avoid lots of concatting at runtime
+	       `(or (string= arg ,match)
+		    (string= arg ,(concat "-" match)))))
+    (let ((new-args nil)
+	  (arg      nil))
+      (while args
+	(setq arg (pop args))
       (cond
        ((or (string= arg "-q")
-	    (string= arg "-no-init-file"))
+	    (long-argmatch "-no-init-file"))
 	(setq load-user-init-file-p nil))
-       ((string= arg "-no-site-file")
+       ((long-argmatch "-no-site-file")
 	(setq site-start-file nil))
-       ((or (string= arg "-no-early-packages")
-	    (string= arg "--no-early-packages"))
-	(setq inhibit-early-packages t))
-       ((or (string= arg "-vanilla")
-	    (string= arg "--vanilla")
-	    ;; Some work on this one already done in emacs.c.
-	    (string= arg "-no-autoloads")
-	    (string= arg "--no-autoloads"))
-	(setq load-user-init-file-p nil
-	      site-start-file nil))
-       ((string= arg "-user-init-file")
+       ((long-argmatch "-user-init-file")
 	(setq user-init-file (pop args)))
-       ((string= arg "-user-init-directory")
+       ((long-argmatch "-user-init-directory")
 	(setq user-init-directory (file-name-as-directory (pop args))))
        ((or (string= arg "-u")
- 	    (string= arg "-user"))
+	    (long-argmatch "-user"))
 	(let* ((user (pop args))
 	       (home-user (concat "~" user)))
 	  (setq user-init-directory (file-name-as-directory
@@ -629,13 +640,10 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 		(find-user-init-file user-init-directory home-user))
 	  (setq custom-file
 		(make-custom-file-name user-init-file))))
-       ((string= arg "-debug-init")
+       ((long-argmatch "-debug-init")
 	(setq init-file-debug t))
-       ((string= arg "-unmapped")
+       ((long-argmatch "-unmapped")
 	(setq initial-frame-unmapped-p t))
-       ((or (string= arg "-debug-paths")
-	    (string= arg "--debug-paths"))
-	t)
        ((or (string= arg "--") (string= arg "-"))
 	(while args
 	  (push (pop args) new-args)))
@@ -644,7 +652,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
     (with-obsolete-variable 'init-file-user
       (setq init-file-user (and load-user-init-file-p "")))
 
-    (nreverse new-args)))
+    (nreverse new-args))))
 
 (defconst initial-scratch-message "\
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
@@ -673,7 +681,7 @@ If this is nil, no message will be displayed.")
       (setq command-line-args-left (command-line-early command-line-args-left))
 
       (when (eq system-type 'windows-nt)
-	(init-mswindows-at-startup))
+	(declare-fboundp (init-mswindows-at-startup)))
 
       ;; Setup the toolbar icon directory
       (when (featurep 'toolbar)
@@ -1335,119 +1343,6 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 	;; don't let /tmp_mnt/... get into the load-path or exec-path.
 	(abbreviate-file-name invocation-directory)))
 
-(defun startup-setup-paths (roots user-init-directory
-				  &optional
-				  inhibit-early-packages inhibit-site-lisp
-				  debug-paths)
-  "Setup all the various paths.
-ROOTS is a list of plausible roots of the XEmacs directory hierarchy.
-If INHIBIT-PACKAGES is non-NIL, don't do packages.
-If INHIBIT-SITE-LISP is non-NIL, don't do site-lisp.
-If DEBUG-PATHS is non-NIL, print paths as they are detected.
-It's idempotent, so call this as often as you like!"
-
-  (apply #'(lambda (early late last)
-	     (setq early-packages (and (not inhibit-early-packages)
-				       early))
-	     (setq late-packages late)
-	     (setq last-packages last))
-	 (packages-find-packages
-	  roots
-	  (packages-compute-package-locations user-init-directory)))
-
-  (setq early-package-load-path (packages-find-package-load-path early-packages))
-  (setq late-package-load-path (packages-find-package-load-path late-packages))
-  (setq last-package-load-path (packages-find-package-load-path last-packages))
-
-  (if debug-paths
-      (progn
-	(princ (format "configure-package-path:\n%S\n" configure-package-path)
-	       'external-debugging-output)
-	(princ (format "early-packages and early-package-load-path:\n%S\n%S\n"
-		       early-packages early-package-load-path)
-	       'external-debugging-output)
-	(princ (format "late-packages and late-package-load-path:\n%S\n%S\n"
-		       late-packages late-package-load-path)
-	       'external-debugging-output)
-	(princ (format "last-packages and last-package-load-path:\n%S\n%S\n"
-		       last-packages last-package-load-path)
-	       'external-debugging-output)))
-
-  (setq lisp-directory (paths-find-lisp-directory roots))
-
-  (if debug-paths
-      (princ (format "lisp-directory:\n%S\n" lisp-directory)
-	     'external-debugging-output))
-
-  (if (featurep 'mule)
-      (progn
-	(setq mule-lisp-directory
-	      (paths-find-mule-lisp-directory roots
-					      lisp-directory))
-	(if debug-paths
-	    (princ (format "mule-lisp-directory:\n%S\n"
-			   mule-lisp-directory)
-		   'external-debugging-output)))
-    (setq mule-lisp-directory '()))
-
-  (setq site-directory (and (null inhibit-site-lisp)
-			    (paths-find-site-lisp-directory roots)))
-
-  (if (and debug-paths (null inhibit-site-lisp))
-      (princ (format "site-directory:\n%S\n" site-directory)
-	     'external-debugging-output))
-
-  (setq load-path (paths-construct-load-path roots
-					     early-package-load-path
-					     late-package-load-path
-					     last-package-load-path
-					     lisp-directory
-					     site-directory
-					     mule-lisp-directory))
-
-  (setq Info-directory-list
-	(paths-construct-info-path roots
-				   early-packages late-packages last-packages))
-
-
-  (if debug-paths
-      (princ (format "Info-directory-list:\n%S\n" Info-directory-list)
-	     'external-debugging-output))
-
-  (setq exec-directory (paths-find-exec-directory roots))
-
-  (if debug-paths
-      (princ (format "exec-directory:\n%s\n" exec-directory)
-	     'external-debugging-output))
-
-  (setq exec-path
-	(paths-construct-exec-path roots exec-directory
-				   early-packages late-packages last-packages))
-
-  (if debug-paths
-      (princ (format "exec-path:\n%S\n" exec-path)
-	     'external-debugging-output))
-
-  (setq doc-directory (paths-find-doc-directory roots))
-
-  (if debug-paths
-      (princ (format "doc-directory:\n%S\n" doc-directory)
-	     'external-debugging-output))
-
-  (setq data-directory (paths-find-data-directory roots))
-
-  (if debug-paths
-      (princ (format "data-directory:\n%S\n" data-directory)
-	     'external-debugging-output))
-
-  (setq data-directory-list (paths-construct-data-directory-list data-directory
-								 early-packages
-								 late-packages
-								 last-packages))
-  (if debug-paths
-      (princ (format "data-directory-list:\n%S\n" data-directory-list)
-	     'external-debugging-output)))
-
 (defun startup-find-roots-warning ()
   (save-excursion
     (set-buffer (get-buffer-create " *warning-tmp*"))
@@ -1498,7 +1393,7 @@ It's idempotent, so call this as often as you like!"
       (load (expand-file-name (file-name-sans-extension autoload-file-name)
 			      lisp-directory) nil t))
 
-  (if (not inhibit-autoloads)
+  (if (and (not inhibit-autoloads) (not inhibit-all-packages))
       (progn
 	(if (not inhibit-early-packages)
 	    (packages-load-package-auto-autoloads early-package-load-path))
