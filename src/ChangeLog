@@ -1,3 +1,8 @@
+2002-07-31  David Bush  <David.Bush@intel.com>
+
+	* eldap.c: Add the dumpable-flag to the USE_KKCC version of 
+	DEFINE_LRECORD_IMPLEMENTATION for "ldap"
+
 2002-08-01  Mike Sperber <mike@xemacs.org>
 
 	* event-stream.c:

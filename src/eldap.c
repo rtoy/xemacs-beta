@@ -151,6 +151,7 @@ finalize_ldap (void *header, int for_disksave)
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap,
+			       0, /*dumpable-flag*/
                                mark_ldap, print_ldap, finalize_ldap,
                                NULL, NULL, ldap_description, Lisp_LDAP);
 #else /* not USE_KKCC */
