@@ -1417,7 +1417,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	/* We're in trouble if this happens! */
 	if (print_readably)
 	  signal_error (Qinternal_error, "printing illegal data type #o%03o",
-			(int) XTYPE (obj));
+			make_int (XTYPE (obj)));
 	write_c_string ("#<EMACS BUG: ILLEGAL DATATYPE ",
 			printcharfun);
 	sprintf (buf, "(#o%3o)", (int) XTYPE (obj));
