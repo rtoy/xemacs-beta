@@ -3966,6 +3966,11 @@ function_argcount (Lisp_Object function, int function_min_args_p)
     {
       Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (function);
       
+      if (!OPAQUEP (f->instructions))
+	      /* Lazily munge the instructions into a more efficient form */
+	      /* Needed to set max_args */
+	      optimize_compiled_function (function);
+
       if (function_min_args_p)
 	return make_int (f->min_args);
       else if (f->max_args == MANY)

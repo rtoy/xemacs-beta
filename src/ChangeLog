@@ -1,3 +1,19 @@
+2003-07-25  Eric Benson  <eric_a_benson@yahoo.com>
+
+	Delay the allocation and initialization of the args array in
+	compiled_function objects from creation until first use, thus
+	avoiding a bug in the portable dumper. See mail with subject
+	"Symbol's value as variable is void: region" in the July 2003
+	xemacs-beta archives.
+	* alloc.c (make_compiled_function): initialize args, max_args,
+	min_args, and args_in_array to zero.
+	(Fmake_byte_code): Removed allocation and initialization of args
+	array.
+	* bytecode.c (optimize_compiled_function): Added allocation and
+	initialization of args array.
+	* eval.c (function_argcount): Added call to
+	optimize_compiled_function.
+
 2003-10-07  Jerry James  <james@xemacs.org>
 
 	* emodules.c (vars_of_module): Make Vmodule_extensions visible to

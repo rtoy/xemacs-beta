@@ -1724,6 +1724,48 @@ optimize_compiled_function (Lisp_Object compiled_function)
   int varbind_count;
   Opbyte *program;
 
+  {
+    int minargs = 0, maxargs = 0, totalargs = 0;
+    int optional_p = 0, rest_p = 0, i = 0;
+    {
+      LIST_LOOP_2 (arg, f->arglist)
+	{
+	  if (EQ (arg, Qand_optional))
+	    optional_p = 1;
+	  else if (EQ (arg, Qand_rest))
+	    rest_p = 1;
+	  else
+	    {
+	      if (rest_p)
+		{
+		  maxargs = MANY;
+		  totalargs++;
+		  break;
+		}
+	      if (!optional_p)
+		minargs++;
+	      maxargs++;
+	      totalargs++;
+	    }
+	}
+    }
+  
+    if (totalargs)
+      f->args = xnew_array (Lisp_Object, totalargs);
+
+    {
+      LIST_LOOP_2 (arg, f->arglist)
+	{
+	  if (!EQ (arg, Qand_optional) && !EQ (arg, Qand_rest))
+	    f->args[i++] = arg;
+	}
+    }
+
+    f->max_args = maxargs;
+    f->min_args = minargs;
+    f->args_in_array = totalargs;
+  }
+  
   /* If we have not actually read the bytecode string
      and constants vector yet, fetch them from the file.  */
   if (CONSP (f->instructions))

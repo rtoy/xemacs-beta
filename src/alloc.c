@@ -1505,6 +1505,7 @@ make_compiled_function (void)
   f->instructions = Qzero;
   f->constants = Qzero;
   f->arglist = Qnil;
+  f->args = f->max_args = f->min_args = f->args_in_array = 0;
   f->doc_and_interactive = Qnil;
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   f->annotated = Qnil;
@@ -1559,48 +1560,6 @@ This is terrible behavior which is retained for compatibility with old
   }
   f->arglist = arglist;
 
-  {
-    int minargs = 0, maxargs = 0, totalargs = 0;
-    int optional_p = 0, rest_p = 0, i = 0;
-    {
-      LIST_LOOP_2 (arg, arglist)
-	{
-	  if (EQ (arg, Qand_optional))
-	    optional_p = 1;
-	  else if (EQ (arg, Qand_rest))
-	    rest_p = 1;
-	  else
-	    {
-	      if (rest_p)
-		{
-		  maxargs = MANY;
-		  totalargs++;
-		  break;
-		}
-	      if (!optional_p)
-		minargs++;
-	      maxargs++;
-	      totalargs++;
-	    }
-	}
-    }
-  
-    if (totalargs)
-      f->args = xnew_array (Lisp_Object, totalargs);
-
-    {
-      LIST_LOOP_2 (arg, arglist)
-	{
-	  if (!EQ (arg, Qand_optional) && !EQ (arg, Qand_rest))
-	    f->args[i++] = arg;
-	}
-    }
-
-    f->max_args = maxargs;
-    f->min_args = minargs;
-    f->args_in_array = totalargs;
-  }
-  
   /* `instructions' is a string or a cons (string . int) for a
      lazy-loaded function. */
   if (CONSP (instructions))
