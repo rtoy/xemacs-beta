@@ -1,5 +1,10 @@
 2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* select-x.c (x_reply_selection_request): Wrap
+	DEVICE_SELECTED_FRAME in XFRAME --> fixes a build failure. 
+
+2005-03-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* unicode.c: The Mule character encoding model means that extant
 	Unicode coding systems will lose data. Make this clear in the
 	docstring of unicode-to-char, give sample code to implement

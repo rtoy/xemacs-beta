@@ -529,7 +529,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
     {
       /* Send an INCR selection. */
       int prop_id;
-      Widget widget = FRAME_X_TEXT_WIDGET (DEVICE_SELECTED_FRAME(d));
+      Widget widget = FRAME_X_TEXT_WIDGET (XFRAME(DEVICE_SELECTED_FRAME(d)));
 
       if (x_window_to_frame (d, window)) /* #### debug */
 	invalid_operation ("attempt to transfer an INCR to ourself!",
