@@ -609,7 +609,7 @@ mark_profiling_info_maphash (const void *void_key,
 			     void *UNUSED (void_closure))
 {
 #ifdef USE_KKCC
-  kkcc_gc_stack_push_lisp_object (VOID_TO_LISP (void_key));
+  kkcc_gc_stack_push_lisp_object (VOID_TO_LISP (void_key), 0, -1);
 #else /* NOT USE_KKCC */
   mark_object (VOID_TO_LISP (void_key));
 #endif /* NOT USE_KKCC */

@@ -1,3 +1,24 @@
+2005-03-01  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* alloc.c: Add functionality for backtracing the KKCC mark
+	algorithm.
+	* alloc.c (kkcc_backtrace): New.
+	* alloc.c (kkcc_bt_push): New.
+	* alloc.c (kkcc_gc_stack_push):
+	* alloc.c (kkcc_gc_stack_push_lisp_object):
+	* alloc.c (mark_object_maybe_checking_free):
+	* alloc.c (mark_struct_contents):
+	* alloc.c (kkcc_marking):
+	* alloc.c (mark_object):
+	* data.c (finish_marking_weak_lists):
+	* data.c (continue_marking_ephemerons):
+	* data.c (finish_marking_ephemerons):
+	* elhash.c (MARK_OBJ):
+	* lisp.h:
+	* profile.c (mark_profiling_info_maphash): Add level (current
+	depth of mark tree) and pos (position within description) as
+	additional arguments to KKCC mark functions.
+
 2004-10-25  Mike Alexander  <mta@arbortext.com>
 
 	* Makefile.in.in (obj_src): Fix a typo in the PDUMP section

@@ -2739,7 +2739,7 @@ finish_marking_weak_lists (void)
 	  if (need_to_mark_elem && ! marked_p (elem))
 	    {
 #ifdef USE_KKCC
-	      kkcc_gc_stack_push_lisp_object (elem);
+	      kkcc_gc_stack_push_lisp_object (elem, 0, -1);
 #else /* NOT USE_KKCC */
 	      mark_object (elem);
 #endif /* NOT USE_KKCC */
@@ -2767,7 +2767,7 @@ finish_marking_weak_lists (void)
       if (!NILP (rest2) && ! marked_p (rest2))
 	{
 #ifdef USE_KKCC
-	  kkcc_gc_stack_push_lisp_object (rest2);
+	  kkcc_gc_stack_push_lisp_object (rest2, 0, -1);
 #else /* NOT USE_KKCC */
 	  mark_object (rest2);
 #endif /* NOT USE_KKCC */
@@ -3148,7 +3148,7 @@ continue_marking_ephemerons(void)
 	    {
 #ifdef USE_KKCC
 	      kkcc_gc_stack_push_lisp_object 
-	      (XCAR (XEPHEMERON (rest)->cons_chain));
+		(XCAR (XEPHEMERON (rest)->cons_chain), 0, -1);
 #else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
 #endif /* NOT USE_KKCC */
@@ -3198,7 +3198,7 @@ finish_marking_ephemerons(void)
 	      MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
 #ifdef USE_KKCC
 	      kkcc_gc_stack_push_lisp_object 
-	      (XCAR (XEPHEMERON (rest)->cons_chain));
+		(XCAR (XEPHEMERON (rest)->cons_chain), 0, -1);
 #else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
 #endif /* NOT USE_KKCC */
