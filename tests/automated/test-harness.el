@@ -48,6 +48,14 @@
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of emacs-tester.")
 
+(defvar test-harness-file-results-alist nil
+  "Each element is a list (FILE SUCCESSES TESTS).
+The order is the reverse of the order in which tests are run.
+
+FILE is a string naming the test file.
+SUCCESSES is a non-negative integer, the number of successes.
+TESTS is a non-negative integer, the number of tests run.")
+
 (defvar test-harness-risk-infloops nil
   "*Non-nil to run tests that may loop infinitely in buggy implementations.")
 
@@ -344,6 +352,9 @@ BODY is a sequence of expressions and may contain several tests."
     Probably XEmacs cannot find your installed packages.  Set EMACSPACKAGEPATH
     to the package hierarchy root or configure with --package-path to enable
     the skipped tests.")))
+	(setq test-harness-file-results-alist
+	      (cons (list filename passes total)
+		    test-harness-file-results-alist))
 	(message "%s" summary-msg))
       (when unexpected-test-suite-failure
 	(message "Test suite execution failed unexpectedly."))
@@ -353,6 +364,9 @@ BODY is a sequence of expressions and may contain several tests."
       (fmakunbound 'Check-Error-Message)
       (fmakunbound 'Ignore-Ebola)
       (fmakunbound 'Int-to-Marker)
+      (and noninteractive
+	   (message "%s" (buffer-substring-no-properties
+			  nil nil "*Test-Log*"))))))
       )))
 
 (defvar test-harness-results-point-max nil)
@@ -432,7 +446,45 @@ For example, invoke \"xemacs -batch -f batch-test-emacs tests/*.el\""
 		  (setq error t))))
 	(or (batch-test-emacs-1 file)
 	    (setq error t))))
-    (message "Done")
+    (let ((namelen 0)
+	  (succlen 0)
+	  (testlen 0)
+	  (results test-harness-file-results-alist))
+      ;; compute maximum lengths of variable components of report
+      ;; probably should just use (length "byte-compiler-tests.el")
+      ;; and 5-place sizes -- this will also work for the file-by-file
+      ;; printing when Adrian's kludge gets reverted
+      (flet ((print-width (i)
+	       (let ((x 10) (y 1))
+		 (while (>= i x)
+		   (setq x (* 10 x) y (1+ y)))
+		 y)))
+	(while results
+	  (let* ((head (car results))
+		 (nn (length (file-name-nondirectory (first head))))
+		 (ss (print-width (second head)))
+		 (tt (print-width (third head))))
+	    (when (> nn namelen) (setq namelen nn))
+	    (when (> ss succlen) (setq succlen ss))
+	    (when (> tt testlen) (setq testlen tt)))
+	  (setq results (cdr results))))
+      ;; create format and print
+      (let ((template
+	     (format "%%-%ds %%%dd of %%%dd tests successful (%%d%%%%)"
+		     (1+ namelen) succlen testlen))
+	    (results (reverse test-harness-file-results-alist)))
+	(while results
+	  (let* ((head (car results))
+		 (fname (file-name-nondirectory (first head)))
+		 (nsucc (second head))
+		 (ntest (third head)))
+	    (message template
+		     (concat fname ":")
+		     nsucc
+		     ntest
+		     (/ (* 100 nsucc) ntest))
+	    (setq results (cdr results))))))
+    (message "\nDone")
     (kill-emacs (if error 1 0))))
 
 (provide 'test-harness)
