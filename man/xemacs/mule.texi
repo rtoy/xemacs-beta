@@ -285,11 +285,12 @@ Describe the coding systems currently in use.
 
 @item M-x list-coding-systems
 Display a list of all the supported coding systems.
-@end table
 
 @item C-u M-x list-coding-systems
 Display comprehensive list of specific details of all supported coding
 systems.
+
+@end table
 
 @kindex C-x RET C
 @findex describe-coding-system
