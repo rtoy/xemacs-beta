@@ -1,5 +1,11 @@
 2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
+	* mule-ccl.c (Qccl_error): New error
+	* mule-ccl.c (syms_of_mule_ccl): Initialize Qccl_error.
+	* mule-charset.c (Fmake_charset): Call signal_error.
+
+2001-05-24  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
 	* buffer.c (Qtext_conversion_error): Moved from file-coding.c
 	so that --with-file-coding=no will compile corectly.
 	* buffer.c (syms_of_buffer): Define Qtext_conversion_error.

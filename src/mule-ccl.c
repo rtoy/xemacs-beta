@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* not emacs */
 
+Lisp_Object Qccl_error;
+
 /* This contains all code conversion map available to CCL.  */
 Lisp_Object Vcode_conversion_map_vector;
 
@@ -2228,6 +2230,8 @@ Return index number of the registered map.
 void
 syms_of_mule_ccl (void)
 {
+  DEFERROR_STANDARD (Qccl_error, Qconversion_error);
+
   DEFSUBR (Fccl_program_p);
   DEFSUBR (Fccl_execute);
   DEFSUBR (Fccl_execute_on_string);

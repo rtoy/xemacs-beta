@@ -784,8 +784,10 @@ character set.  Recognized properties are:
 
   if (!NILP (CHARSET_BY_ATTRIBUTES (type, final, CHARSET_LEFT_TO_RIGHT)) ||
       !NILP (CHARSET_BY_ATTRIBUTES (type, final, CHARSET_RIGHT_TO_LEFT)))
-    error
-      ("Character set already defined for this DIMENSION/CHARS/FINAL combo");
+    signal_error
+      (Qerror,
+       "Character set already defined for this DIMENSION/CHARS/FINAL combo",
+       Qunbound);
 
   id = get_unallocated_leading_byte (dimension);
 
