@@ -436,7 +436,8 @@ find_context (struct buffer *buf, Charbpos pt)
   setup_context_cache (buf, pt);
   pt = context_cache.cur_point;
 
-  scache = setup_buffer_syntax_cache (buf, pt - 1, 1);
+  scache = setup_buffer_syntax_cache (buf, pt > BUF_BEGV (buf) ? pt - 1 : pt,
+				      1);
   if (pt > BUF_BEGV (buf))
     {
       c = BUF_FETCH_CHAR (buf, pt - 1);

@@ -1,5 +1,10 @@
 2002-05-14  Ben Wing  <ben@xemacs.org>
 
+	* font-lock.c (find_context):
+	Don't use off the beginning position to initiate syntax cache.
+
+2002-05-14  Ben Wing  <ben@xemacs.org>
+
 	* text.c (copy_buffer_text_out): Fix bug leading to crashes
 	with multibyte text.
 	* win32.c (Fmswindows_shell_execute): Fix crash due to errant
