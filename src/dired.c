@@ -37,9 +37,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WIN32_NATIVE
 #include "syswindows.h"
-#include <lmaccess.h>
-#include <lmapibuf.h>
-#include <lmerr.h>
 #endif
 
 Lisp_Object Vcompletion_ignored_extensions;
@@ -662,44 +659,47 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 	  user_cache.length++;
         }
 #else
-      do
+      if (xNetUserEnum)
 	{
-	  USER_INFO_0 *bufptr;
-	  NET_API_STATUS status_status_statui_statum_statu;
-	  int i;
-
-          QUIT;
-	  status_status_statui_statum_statu =
-	    NetUserEnum (NULL, 0, 0, (LPBYTE *) &bufptr, 1024, &entriesread,
-			 &totalentries, &resume_handle);
-	  if (status_status_statui_statum_statu != NERR_Success &&
-	      status_status_statui_statum_statu != ERROR_MORE_DATA)
-	    invalid_operation ("Error enumerating users",
-			       make_int (GetLastError ()));
-	  for (i = 0; i < entriesread; i++)
+	  do
 	    {
-	      int nout =
-		WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
-				     bufptr[i].usri0_name,
-				     -1, 0, 0, "~", 0);
-	      void *outp = alloca (nout);
-	      WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
-				   bufptr[i].usri0_name, -1,
-				   (LPSTR) outp, nout, "~", 0);
-	      DO_REALLOC (user_cache.user_names, user_cache.size,
-			  user_cache.length + 1, struct user_name);
-	      TO_INTERNAL_FORMAT (C_STRING, outp,
-				  MALLOC,
-				  (user_cache.
-				   user_names[user_cache.length].ptr,
-				   user_cache.
-				   user_names[user_cache.length].len),
-				  Qmswindows_tstr);
-	      user_cache.length++;
+	      USER_INFO_0 *bufptr;
+	      NET_API_STATUS status_status_statui_statum_statu;
+	      int i;
+
+	      QUIT;
+	      status_status_statui_statum_statu =
+		xNetUserEnum (NULL, 0, 0, (LPBYTE *) &bufptr, 1024,
+			      &entriesread, &totalentries, &resume_handle);
+	      if (status_status_statui_statum_statu != NERR_Success &&
+		  status_status_statui_statum_statu != ERROR_MORE_DATA)
+		invalid_operation ("Error enumerating users",
+				   make_int (GetLastError ()));
+	      for (i = 0; i < entriesread; i++)
+		{
+		  int nout =
+		    WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
+					 bufptr[i].usri0_name,
+					 -1, 0, 0, "~", 0);
+		  void *outp = alloca (nout);
+		  WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
+				       bufptr[i].usri0_name, -1,
+				       (LPSTR) outp, nout, "~", 0);
+		  DO_REALLOC (user_cache.user_names, user_cache.size,
+			      user_cache.length + 1, struct user_name);
+		  TO_INTERNAL_FORMAT (C_STRING, outp,
+				      MALLOC,
+				      (user_cache.
+				       user_names[user_cache.length].ptr,
+				       user_cache.
+				       user_names[user_cache.length].len),
+				      Qmswindows_tstr);
+		  user_cache.length++;
+		}
+	      xNetApiBufferFree (bufptr);
 	    }
-	  NetApiBufferFree (bufptr);
+	  while (entriesread != totalentries);
 	}
-      while (entriesread != totalentries);
 #endif
 
       XCAR (cache_incomplete_p) = Qnil;

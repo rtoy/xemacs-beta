@@ -1,3 +1,16 @@
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
+	* etags.c:
+	* etags.c (print_help):
+	* etags.c (sym_type):
+	* etags.c (TOTAL_KEYWORDS):
+	* etags.c (hash):
+	* etags.c (in_word_set):
+	* etags.c (consider_token):
+	* etags.c (C_entries):
+	* etags.c (add_regex):
+	new version from Francesco.
+
 2001-05-09  Ben Wing  <ben@xemacs.org>
 
 	* etags.c (add_regex):

@@ -79,6 +79,10 @@ extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
 #include <ddeml.h>
 #endif
 
+#include <lmaccess.h>
+#include <lmapibuf.h>
+#include <lmerr.h>
+
 /* mmsystem.h defines. */
 #ifndef SND_ASYNC
 #define SND_ASYNC		1
@@ -288,5 +292,22 @@ extern DWORD (WINAPI *xSHGetFileInfoA) (LPCSTR, DWORD, SHFILEINFOA FAR *, UINT,
 					UINT);
 extern DWORD (WINAPI *xSHGetFileInfoW) (LPCWSTR, DWORD, SHFILEINFOW FAR *,
 					UINT, UINT);
+
+extern NET_API_STATUS (NET_API_FUNCTION *xNetUserEnum)
+     (
+      IN  LPCWSTR     servername OPTIONAL,
+      IN  DWORD      level,
+      IN  DWORD      filter,
+      OUT LPBYTE     *bufptr,
+      IN  DWORD      prefmaxlen,
+      OUT LPDWORD    entriesread,
+      OUT LPDWORD    totalentries,
+      IN OUT LPDWORD resume_handle OPTIONAL
+      );
+
+extern NET_API_STATUS (NET_API_FUNCTION *xNetApiBufferFree)
+     (
+      IN LPVOID Buffer
+      );
 
 #endif /* INCLUDED_syswindows_h_ */

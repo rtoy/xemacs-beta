@@ -1,3 +1,16 @@
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
+	* find-paths.el (paths-find-recursive-path):
+	fix error with null EXCLUDE-REGEXP.
+	
+	* font-lock.el (font-lock-mode):
+	fix problem reported by hrvoje with buffers starting with a space.
+	
+	* lib-complete.el:
+	* lib-complete.el (find-library-source-path): New.
+	* lib-complete.el (find-library):
+	add a variable to control where `find-library' looks, analogous to `find-function-source-path'.
+
 2001-05-10  Ben Wing  <ben@xemacs.org>
 
 	* mule\mule-coding.el:

@@ -1,3 +1,16 @@
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	eliminate cygwin warnings.
+
+	* dired.c:
+	* dired.c (user_name_completion):
+	* syswindows.h:
+	* win32.c:
+	* win32.c (init_potentially_nonexistent_functions):
+	find the Net* functions the hard way to avoid errors on win 9x.
+
 2001-05-10  Ben Wing  <ben@xemacs.org>
 
 	* dired.c:

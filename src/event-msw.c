@@ -1673,9 +1673,9 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	    return DDE_FNOTPROCESSED;
 
 #ifdef CYGWIN
-	  filename = alloca (cygwin32_win32_to_posix_path_list_buf_size (cmd) + 5);
+	  filename = alloca (cygwin_win32_to_posix_path_list_buf_size (cmd) + 5);
 	  strcpy (filename, "file:");
-	  cygwin32_win32_to_posix_path_list (cmd, filename+5);
+	  cygwin_win32_to_posix_path_list (cmd, filename+5);
 #else
 	  dostounix_filename (cmd);
 	  filename = alloca (strlen (cmd)+6);
@@ -2983,9 +2983,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 #endif
 
 #ifdef CYGWIN
-	    filename = xmalloc (cygwin32_win32_to_posix_path_list_buf_size (fname) + 5);
+	    filename = xmalloc (cygwin_win32_to_posix_path_list_buf_size (fname) + 5);
 	    strcpy (filename, "file:");
-	    cygwin32_win32_to_posix_path_list (fname, filename+5);
+	    cygwin_win32_to_posix_path_list (fname, filename+5);
 #else
 	    filename = (char *)xmalloc (len+6);
 	    strcat (strcpy (filename, "file:"), fname);

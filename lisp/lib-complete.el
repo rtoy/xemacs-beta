@@ -295,6 +295,21 @@ This is an interface to the function `load'."
 
 ;;=== find-library with completion (Author: Bob Weiner) ===================
 
+(defcustom find-library-source-path nil
+  "The default list of directories where find-library searches.
+
+If this variable is `nil' then find-library searches `load-path' by
+default.
+
+A good way to set this variable is like this:
+
+\(setq find-library-source-path
+  (paths-find-recursive-load-path
+    (list lisp-directory \"/src/xemacs/xemacs-packages-src/\")))
+"
+  :type '(repeat directory)
+  :group 'find-function)
+
 (defun find-library (library &optional codesys display-function)
   "Find and display in the current window the source for the Elisp LIBRARY.
 LIBRARY should be a name without any path information and may include or omit
@@ -302,14 +317,17 @@ the \".el\" suffix.  Under XEmacs/Mule, the optional second argument CODESYS
 specifies the coding system to use when decoding the file.  Interactively,
 with a prefix argument, this prompts for the coding system.  Optional third
 argument DISPLAY-FUNCTION must take two arguments, the filename to display
-and CODESYS.  The default for DISPLAY-FUNCTION is `find-file'."
+and CODESYS.  The default for DISPLAY-FUNCTION is `find-file'.
+
+This function searches `find-library-source-path' to find the library;
+if this is nil (the default), then `load-path' is searched."
   (interactive 
    (list (read-library-name "Find library: ")
 	 (if current-prefix-arg
 	     (read-coding-system "Coding System: "))))
   (let ((path (if (or (null library) (equal library ""))
 		   nil
-		(locate-file library load-path
+		(locate-file library (or find-library-source-path load-path)
 			     ;; decompression doesn't work with Mule -slb
 			     (if (featurep 'mule)
 				 ":.el:.elc"

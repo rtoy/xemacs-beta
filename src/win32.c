@@ -62,6 +62,25 @@ typedef DWORD (WINAPI *pfSHGetFileInfoW_t)
      (LPCWSTR, DWORD, SHFILEINFOW FAR *, UINT, UINT);
 pfSHGetFileInfoW_t xSHGetFileInfoW;
 
+typedef NET_API_STATUS (NET_API_FUNCTION *pfNetUserEnum_t)
+     (
+      IN  LPCWSTR     servername OPTIONAL,
+      IN  DWORD      level,
+      IN  DWORD      filter,
+      OUT LPBYTE     *bufptr,
+      IN  DWORD      prefmaxlen,
+      OUT LPDWORD    entriesread,
+      OUT LPDWORD    totalentries,
+      IN OUT LPDWORD resume_handle OPTIONAL
+      );
+pfNetUserEnum_t xNetUserEnum;
+
+typedef NET_API_STATUS (NET_API_FUNCTION *pfNetApiBufferFree_t)
+     (
+      IN LPVOID Buffer
+      );
+pfNetApiBufferFree_t xNetApiBufferFree;
+
 Lisp_Object
 tstr_to_local_file_format (Extbyte *pathout)
 {
@@ -81,6 +100,8 @@ init_potentially_nonexistent_functions (void)
   HMODULE h_user = GetModuleHandle ("user32");
   HMODULE h_gdi = GetModuleHandle ("gdi32");
   HMODULE h_shell = GetModuleHandle ("shell32");
+  /* the following does not seem to get mapped in automatically */
+  HMODULE h_netapi = LoadLibrary ("netapi32.dll");
 
   if (h_kernel)
     {
@@ -122,6 +143,14 @@ init_potentially_nonexistent_functions (void)
 	(pfSHGetFileInfoA_t) GetProcAddress (h_shell, "SHGetFileInfoA");
       xSHGetFileInfoW =
 	(pfSHGetFileInfoW_t) GetProcAddress (h_shell, "SHGetFileInfoW");
+    }
+
+  if (h_netapi)
+    {
+      xNetUserEnum =
+	(pfNetUserEnum_t) GetProcAddress (h_netapi, "NetUserEnum");
+      xNetApiBufferFree =
+	(pfNetApiBufferFree_t) GetProcAddress (h_netapi, "NetApiBufferFree");
     }
 }
 
