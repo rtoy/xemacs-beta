@@ -376,7 +376,8 @@ by `current-window-configuration'."
 	  (set-window-buffer window
 			     (saved-window-buffer saved-window))
 	  (set-window-start window
-			    (marker-position (saved-window-start-marker saved-window)))
+			    (marker-position (saved-window-start-marker saved-window))
+			    t)
 	  (set-window-point window
 			    (marker-position (saved-window-point-marker saved-window)))
 	  (set-marker (mark-marker t buffer)

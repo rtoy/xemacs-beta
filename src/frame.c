@@ -667,6 +667,7 @@ enter_redisplay_critical_section (void)
   something_happened++;
   record_unwind_protect (commit_ritual_suicide, Qnil);
 #endif
+  begin_gc_forbidden ();
   in_display = 1;
 
   return depth;
@@ -679,8 +680,8 @@ exit_redisplay_critical_section (int depth)
 
   in_display = 0;
 
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   unbind_to (depth);
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   something_happened--;
 #endif
 

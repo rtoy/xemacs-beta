@@ -1809,20 +1809,24 @@ If the last line is not clipped, return nil.
 
 DEFUN ("set-window-point", Fset_window_point, 2, 2, 0, /*
 Make point value in WINDOW be at position POS in WINDOW's buffer.
-If WINDOW is the selected window, this actually changes the buffer's point
-instead of the window's point. (The equivalence of the selected window's
-point with its buffer's point is maintained throughout XEmacs.)
+If WINDOW is the selected window, and window's buffer is the current
+buffer, this actually changes the buffer's point instead of the window's
+point. (The equivalence of the selected window's point with its buffer's
+point is maintained throughout XEmacs.  However, enforcing the additional
+restriction on the current buffer is "bug compatible" with FSF and is
+perhaps more logical.)
 */
        (window, pos))
 {
   struct window *w = decode_window (window);
 
   CHECK_INT_COERCE_MARKER (pos);
+
   /* Don't dereference selected-window because there may not
      be one -- e.g. at startup */
-  if (EQ (wrap_window (w), Fselected_window (Qnil)))
-    /* Even though window selected, buffer may not be current */
-    Fgoto_char (pos, w->buffer);
+  if (EQ (wrap_window (w), Fselected_window (Qnil))
+      && EQ (w->buffer, Fcurrent_buffer ()))
+    Fgoto_char (pos, Qnil);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP], pos, w->buffer);
 

@@ -1,3 +1,14 @@
+2002-12-15  Ben Wing  <ben@xemacs.org>
+
+	* window.c (Fset_window_point): Correct to FSF behavior.  This
+	fixes some bugs in GNUS reported by Jeff Miller.
+
+2002-12-14  Ben Wing  <ben@xemacs.org>
+
+	* frame.c (enter_redisplay_critical_section):
+	* frame.c (exit_redisplay_critical_section):
+	Inhibit GC during critical sections.
+
 2002-12-12  Andy Piper  <andy@xemacs.org>
 
 	* sheap.c (report_sheap_usage): fixup calculation.
