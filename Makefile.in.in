@@ -435,6 +435,9 @@ install-arch-dep: mkdir
 	      $(LN_S) ${prefix}/$${dir} ${exec_prefix}/$${dir}; fi; \
 	  done; \
 	fi
+#ifdef HAVE_SHLIB
+	$(INSTALL_DATA) $(srcdir)/modules/auto-autoloads.* $(moduledir)
+#endif
 
 install-arch-indep: mkdir info
 	-@set ${COPYDESTS} ; \

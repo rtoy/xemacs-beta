@@ -1,3 +1,14 @@
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (install-arch-dep): Install internal modules and
+	the corresponding autoload file.
+	* configure: Regenerate.
+	* configure.in: Detect module support early.
+	Define variables to be substituted in internal Makefiles.
+	Use ldap_libs instead of LIBS for LDAP libraries.
+	Use postgresql_libs instead of LIBS for PostgreSQL libraries.
+	Introduce ld_libs_module for seamless module/no-module support.
+
 2002-08-30  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.9 "brussels sprouts" is released.
