@@ -1,3 +1,7 @@
+2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.20 "cilantro" is released.
+
 2005-03-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode.el (decode-char): New. This is what the FSF Mule API
