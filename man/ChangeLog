@@ -1,3 +1,8 @@
+2002-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi (Makefile Variables): Document GENERATED
+	and PRELOADS.  Document DATA_FILES_n and DATA_DEST_n forms.
+
 2002-02-06  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q1.3.8, Q1.3.9): Unicode support via Mule-UCS.
