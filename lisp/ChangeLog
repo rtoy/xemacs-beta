@@ -1,3 +1,11 @@
+2002-02-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* toolbar.el (toolbar-visible-p):
+	(toolbar-captioned-p):
+	Prefix * to docstring, improve line break.
+	(default-toolbar-position): Prefix * to docstring, improve line break.
+	Reconfigure frame to preserve window dimensions if toolbar is moved.
+
 2002-01-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* code-files.el (convert-mbox-coding-system): Improve comment.
@@ -3658,7 +3666,7 @@
 	* gutter-items.el (make-search-dialog):
 	Change to new callback-ex api.
 
-2000-04-26  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+2000-04-26  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* help.el: (describe-installation): decode-coding-string is not
 	defined in a non MULE environment.
@@ -4534,7 +4542,7 @@
 	unexist function to help-map.
 	(describe-coding-system): Don't use already assigend `C'.
 
-2000-01-23  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+2000-01-23  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* info.el (Info-save-auto-generated-dir): nil -> 'never to make it
 	work in custom.
@@ -4570,7 +4578,7 @@
 	  part of the tag entry first instead of only looking in
 	  the context area.
 
-2000-01-23  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+2000-01-23  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* gutter-items.el: fixed typo(s) in customizing default-gutter-position
 	* toobar.el: fixed typo(s) in customizing default-toolbar-position
@@ -7953,7 +7961,7 @@
 	  mswindows-make-font-bold / -bold-italic: Supplied device was
 	  not being passed into call to mswindows-find-smaller-font.
 
-1998-09-10  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+1998-09-10  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* package-get.el (package-get-remote): Fix the path where to find
 	  the packages on xemacs.org.
@@ -8716,7 +8724,7 @@
 	* sound.el: default sound-ext to .wav under mswindows, .au
 	otherwise. load-default sounds without extensions.
 
-1998-05-27  Bjrn Torkelsson  <torkel@hpc2n.umu.se>
+1998-05-27  Björn Torkelsson  <torkel@hpc2n.umu.se>
 
 	* menubar-items.el (default-menubar): Dim out "Submit Bug Report"
 	if send-pr is not bound.
