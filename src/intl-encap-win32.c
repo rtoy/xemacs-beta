@@ -1025,35 +1025,35 @@ skip SHBrowseForFolder need to intercept callback for SendMessage
 // split flag SHARD_PATH; we intercept SHAddToRecentDocs
 skip SHGetDataFromIDList split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries
 
-end-unicode-encapsulation-script
-
 file WINNLS.H
 
-LOCALE_ENUMPROC
-CODEPAGE_ENUMPROC
-DATEFMT_ENUMPROC
-DATEFMT_ENUMPROCEX
-TIMEFMT_ENUMPROC
-CALINFO_ENUMPROC
-CALINFO_ENUMPROCEX
-GetCPInfoEx
-CompareString
-LCMapString
-GetLocaleInfo
-SetLocaleInfo
-GetTimeFormat
-GetDateFormat
-GetNumberFormat
-GetCurrencyFormat
-EnumCalendarInfo
-EnumCalendarInfoEx
-EnumTimeFormats
-EnumDateFormats
-EnumDateFormatsEx
-GetStringTypeEx
-FoldString
-EnumSystemLocales
-EnumSystemCodePages
+no LOCALE_ENUMPROC not used, not examined yet
+no CODEPAGE_ENUMPROC not used, not examined yet
+no DATEFMT_ENUMPROC not used, not examined yet
+no DATEFMT_ENUMPROCEX not used, not examined yet
+no TIMEFMT_ENUMPROC not used, not examined yet
+no CALINFO_ENUMPROC not used, not examined yet
+no CALINFO_ENUMPROCEX not used, not examined yet
+no GetCPInfoEx not used, not examined yet
+no CompareString not used, not examined yet
+no LCMapString not used, not examined yet
+yes GetLocaleInfo
+yes SetLocaleInfo
+no GetTimeFormat not used, not examined yet
+no GetDateFormat not used, not examined yet
+no GetNumberFormat not used, not examined yet
+no GetCurrencyFormat not used, not examined yet
+no EnumCalendarInfo not used, not examined yet
+no EnumCalendarInfoEx not used, not examined yet
+no EnumTimeFormats not used, not examined yet
+no EnumDateFormats not used, not examined yet
+no EnumDateFormatsEx not used, not examined yet
+no GetStringTypeEx not used, not examined yet
+no FoldString not used, not examined yet
+no EnumSystemLocales not used, not examined yet
+no EnumSystemCodePages not used, not examined yet
+
+end-unicode-encapsulation-script
 
 file WINVER.H
 

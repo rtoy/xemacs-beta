@@ -13,6 +13,61 @@
 
 
 /*----------------------------------------------------------------------*/
+/*                       Processing file WINNLS.H                       */
+/*----------------------------------------------------------------------*/
+
+/* Error if GetCPInfoEx used: not used, not examined yet */
+
+/* Error if CompareString used: not used, not examined yet */
+
+/* Error if LCMapString used: not used, not examined yet */
+
+int
+qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData)
+{
+  if (XEUNICODE_P)
+    return GetLocaleInfoW (Locale, LCType, (LPWSTR) lpLCData, cchData);
+  else
+    return GetLocaleInfoA (Locale, LCType, (LPSTR) lpLCData, cchData);
+}
+
+BOOL
+qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData)
+{
+  if (XEUNICODE_P)
+    return SetLocaleInfoW (Locale, LCType, (LPCWSTR) lpLCData);
+  else
+    return SetLocaleInfoA (Locale, LCType, (LPCSTR) lpLCData);
+}
+
+/* Error if GetTimeFormat used: not used, not examined yet */
+
+/* Error if GetDateFormat used: not used, not examined yet */
+
+/* Error if GetNumberFormat used: not used, not examined yet */
+
+/* Error if GetCurrencyFormat used: not used, not examined yet */
+
+/* Error if EnumCalendarInfo used: not used, not examined yet */
+
+/* Error if EnumCalendarInfoEx used: not used, not examined yet */
+
+/* Error if EnumTimeFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormats used: not used, not examined yet */
+
+/* Error if EnumDateFormatsEx used: not used, not examined yet */
+
+/* Error if GetStringTypeEx used: not used, not examined yet */
+
+/* Error if FoldString used: not used, not examined yet */
+
+/* Error if EnumSystemLocales used: not used, not examined yet */
+
+/* Error if EnumSystemCodePages used: not used, not examined yet */
+
+
+/*----------------------------------------------------------------------*/
 /*                      Processing file WINSPOOL.H                      */
 /*----------------------------------------------------------------------*/
 

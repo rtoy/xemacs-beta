@@ -3,6 +3,43 @@
 */
 
 
+/* Processing file WINNLS.H */
+
+#undef GetCPInfoEx
+#define GetCPInfoEx error not used, not examined yet
+#undef CompareString
+#define CompareString error not used, not examined yet
+#undef LCMapString
+#define LCMapString error not used, not examined yet
+int qxeGetLocaleInfo (LCID Locale, LCTYPE LCType, Extbyte * lpLCData, int cchData);
+BOOL qxeSetLocaleInfo (LCID Locale, LCTYPE LCType, const Extbyte * lpLCData);
+#undef GetTimeFormat
+#define GetTimeFormat error not used, not examined yet
+#undef GetDateFormat
+#define GetDateFormat error not used, not examined yet
+#undef GetNumberFormat
+#define GetNumberFormat error not used, not examined yet
+#undef GetCurrencyFormat
+#define GetCurrencyFormat error not used, not examined yet
+#undef EnumCalendarInfo
+#define EnumCalendarInfo error not used, not examined yet
+#undef EnumCalendarInfoEx
+#define EnumCalendarInfoEx error not used, not examined yet
+#undef EnumTimeFormats
+#define EnumTimeFormats error not used, not examined yet
+#undef EnumDateFormats
+#define EnumDateFormats error not used, not examined yet
+#undef EnumDateFormatsEx
+#define EnumDateFormatsEx error not used, not examined yet
+#undef GetStringTypeEx
+#define GetStringTypeEx error not used, not examined yet
+#undef FoldString
+#define FoldString error not used, not examined yet
+#undef EnumSystemLocales
+#define EnumSystemLocales error not used, not examined yet
+#undef EnumSystemCodePages
+#define EnumSystemCodePages error not used, not examined yet
+
 /* Processing file WINSPOOL.H */
 
 #if defined (HAVE_MS_WINDOWS)

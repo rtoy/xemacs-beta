@@ -1,3 +1,15 @@
+2002-03-29  Jonathan Harris  <jonathan@xemacs.org>
+
+	* device-msw.c (plist_get_margin): Add arg specifying mm or inches
+	* device-msw.c (plist_set_margin): Fix multiplicand used for mm
+	* device-msw.c (mswindows_handle_page_setup_dialog_box):
+	Detect and handle case where machine is set up for metric units
+	
+	* intl-auto-encap-win32.c:
+	* intl-auto-encap-win32.h:
+	* intl-encap-win32.c:
+	Add Get & SetLocaleInfo from winnls.h
+
 2002-03-29  William M. Perry  <wmperry@gnu.org>
 
 	* ui-gtk.c (Fgtk_import_function_internal): 
