@@ -1,3 +1,9 @@
+2003-09-07  Adrian Aichner  <adrian@xemacs.org>
+
+	* window-xemacs.el (display-buffer): Fix for `shrink-to-fit' by
+	Klaus Berndl, calling `shrink-window-if-larger-than-buffer' when
+	displaying buffer in question.
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
