@@ -1,3 +1,8 @@
+2003-02-04  Steve Youngs  <youngs@xemacs.org>
+
+	* BETA: '-no-autoloads' implies '-vanilla' so suggest people
+	invoke 'xemacs -no-autoloads' when trying to reproduce a bug.
+
 2003-02-03  Steve Youngs  <youngs@xemacs.org>
 
 	* BETA: Update.  General tidy up and rewrite sections dealing with

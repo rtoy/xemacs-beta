@@ -118,16 +118,16 @@ important are:
     problem is actually occurring.
  
 2.  Attempt to recreate the problem starting with an invocation of
-    XEmacs with `xemacs -vanilla -no-autoloads'.  Quite often,
-    problems are due to package interdependencies, and the like.
-    An actual bug in XEmacs should be reproducible in a default
-    configuration without loading any special packages (or the one
-    or two specific packages that cause the bug to appear).  If you
-    have trouble getting anything to work at all with the above
-    invocation, use `xemacs -vanilla' instead.  If you need to load
-    your user init file or the site file to get the problem to
-    occur, then it has something to do with them, and you should
-    try to isolate the issue in those files.
+    XEmacs with `xemacs -no-autoloads'.  Quite often, problems are
+    due to package interdependencies, and the like.  An actual bug
+    in XEmacs should be reproducible in a default configuration
+    without loading any special packages (or the one or two specific
+    packages that cause the bug to appear).  If you have trouble
+    getting anything to work at all with the above invocation, use
+    `xemacs -vanilla' instead.  If you need to load your user init
+    file or the site file to get the problem to occur, then it has
+    something to do with them, and you should try to isolate the
+    issue in those files.
 
 3.  A picture can be worth a thousand words.  When reporting an
     unusual display, it is generally best to capture the problem in a
