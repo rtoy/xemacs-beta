@@ -1,3 +1,7 @@
+2003-09-27  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/test-harness.el: Syntax emergency fix.
+
 2003-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/test-harness.el: Give the maintainers what they want.
