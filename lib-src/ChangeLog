@@ -1,3 +1,7 @@
+2003-05-29  Jerry James  <james@xemacs.org>
+
+	* ellcc.c: Rationalize and repair use of GCC function attributes.
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.

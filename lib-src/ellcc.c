@@ -79,6 +79,27 @@ See the samples for more details.
 #include <emodules.h>
 #include <ellcc.h> /* Generated files must be included using <...> */
 
+#ifndef ATTRIBUTE_MALLOC
+# if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__==2 && __GNUC_MINOR__>=96))
+#  define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
+# else
+#  define ATTRIBUTE_MALLOC
+# endif /* GCC version >= 2.96 */
+#endif /* ATTRIBUTE_MALLOC */
+
+#ifdef __GNUC_
+# define ATTRIBUTE_FATAL __attribute__ ((noreturn, format (printf, 1, 2)))
+#else
+# define ATTRIBUTE_FATAL
+#endif /* __GNUC__ */
+
+#if defined(__GNUC__) && (__GNUC__ >= 2 || (__GNUC__==2 && __GNUC_MINOR__>=5))
+# define ATTRIBUTE_CONST __attribute__ ((const))
+#else
+# define ATTRIBUTE_CONST
+#endif
+
+
 #ifndef HAVE_SHLIB
 int
 main (int argc, char *argv[])
@@ -142,11 +163,7 @@ do {						\
 enum mode { ELLCC_COMPILE_MODE, ELLCC_LINK_MODE, ELLCC_INIT_MODE };
 
 #ifdef DEBUG
-static const char *ellcc_mode_name (enum mode ellcc_mode)
-#if defined(__GNUC__) && __GNUC__ >= 2 && __GNUC_MINOR__ >= 5
-     __attribute__ ((const))
-#endif
-     ;
+static const char *ellcc_mode_name (enum mode ellcc_mode) ATTRIBUTE_CONST;
 
 static const char *
 ellcc_mode_name (enum mode ellcc_mode)
@@ -168,30 +185,10 @@ ellcc_mode_name (enum mode ellcc_mode)
  * Function Prototypes
  */
 
-static void *xmalloc (size_t size)
-#ifdef __GNUC__
-     __attribute__ ((malloc))
-#endif
-     ;
-
-static void *xrealloc (void *ptr, size_t size)
-#ifdef __GNUC__
-     __attribute__ ((malloc))
-#endif
-     ;
-
-static char *xstrdup (char *)
-#ifdef __GNUC__
-     __attribute__ ((malloc))
-#endif
-     ;
-
-static void fatal (char *, ...)
-#ifdef __GNUC__
-     __attribute__ ((noreturn, format (printf, 1, 2)))
-#endif
-     ;
-
+static void *xmalloc (size_t size) ATTRIBUTE_MALLOC;
+static void *xrealloc (void *ptr, size_t size) ATTRIBUTE_MALLOC;
+static char *xstrdup (char *) ATTRIBUTE_MALLOC;
+static void fatal (char *, ...) ATTRIBUTE_FATAL;
 static char ** add_string (char **, char *);
 static char ** add_to_argv (char **, const char *);
 static char ** do_compile_mode (void);
