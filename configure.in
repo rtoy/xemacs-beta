@@ -2015,6 +2015,21 @@ esac
 AC_MSG_RESULT(no)
 fi
 
+dnl GNU ld now defaults to combreloc, which screws up unexec, but not pdump.
+dnl Note that it's OK if the GNU style long option causes non-GNU ld to barf
+dnl a usage message, that's often good enough.  Please report it, though.
+dnl #### Should make this Solaris-friendly.
+dnl Link with -z nocombreloc for now.
+if test "$pdump" != "yes"; then
+  AC_MSG_CHECKING(for \"-z nocombreloc\" linker flag)
+  case "`ld --help 2>&1`" in
+    *-z\ nocombreloc* ) AC_MSG_RESULT(yes)
+      XE_PREPEND(-z nocombreloc, ld_switch_site) ;;
+    *) AC_MSG_RESULT(no) ;;
+  esac
+fi
+
+
 dnl Inform compiler that certain flags are meant for the linker
 dnl XE_PROTECT_LINKER_FLAGS(shell_var)
 define([XE_PROTECT_LINKER_FLAGS], [
@@ -2032,6 +2047,7 @@ if test "$GCC" = "yes"; then
 fi])dnl
 XE_PROTECT_LINKER_FLAGS(ld_switch_system)
 XE_PROTECT_LINKER_FLAGS(ld_switch_machine)
+XE_PROTECT_LINKER_FLAGS(ld_switch_site)
 XE_PROTECT_LINKER_FLAGS(LDFLAGS)
 XE_PROTECT_LINKER_FLAGS(ld_call_shared)
 
@@ -2544,20 +2560,6 @@ if test "$opsys" = "sol2"; then
       *) AC_MSG_RESULT(no) ;;
     esac
   fi
-fi
-
-dnl GNU ld now defaults to combreloc, which screws up unexec, but not pdump.
-dnl Note that it's OK if the GNU style long option causes non-GNU ld to barf
-dnl a usage message, that's often good enough.  Please report it, though.
-dnl #### Should make this Solaris-friendly.
-dnl Link with -z nocombreloc for now.
-if test "$pdump" != "yes"; then
-  AC_MSG_CHECKING(for \"-z nocombreloc\" linker flag)
-  case "`ld --help 2>&1`" in
-    *-z\ nocombreloc* ) AC_MSG_RESULT(yes)
-      XE_PREPEND(-z nocombreloc, ld_switch_site) ;;
-    *) AC_MSG_RESULT(no) ;;
-  esac
 fi
 
 dnl ----------------------
