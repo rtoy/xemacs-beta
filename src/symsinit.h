@@ -1,5 +1,6 @@
 /* Various initialization function prototypes.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -28,13 +29,14 @@ Boston, MA 02111-1307, USA.  */
 void init_data_very_early (void);
 void init_floatfns_very_early (void);
 void init_free_hook (void);
-void init_intl_very_early (void);
 void init_process_times_very_early (void);
 void init_ralloc (void);
 void init_signals_very_early (void);
-void init_mswindows_very_early (void);
+void init_win32_very_early (void);
+void init_mswindows_dde_very_early (void);
 
-/* Early Lisp-engine initialization (dump-time for init, run-time for reinit). */
+/* Early Lisp-engine initialization (dump-time only for init,
+   dump-time and post-pdump-load-time for reinit). */
 
 void init_alloc_once_early (void);
 void reinit_alloc_once_early (void);
@@ -43,6 +45,8 @@ void reinit_symbols_once_early (void);
 void init_errors_once_early (void);
 void reinit_opaque_once_early (void);
 void init_opaque_once_early (void);
+void init_elhash_once_early (void);
+void init_eistring_once_early (void);
 
 /* Declare the built-in symbols and primitives (dump-time only). */
 
@@ -58,33 +62,35 @@ void syms_of_casetab (void);
 void syms_of_chartab (void);
 void syms_of_cmdloop (void);
 void syms_of_cmds (void);
-void syms_of_console_tty (void);
-void syms_of_console_mswindows (void);
 void syms_of_console (void);
+void syms_of_console_mswindows (void);
+void syms_of_console_tty (void);
 void syms_of_data (void);
 void syms_of_database (void);
 void syms_of_debug (void);
-void syms_of_device_tty (void);
-void syms_of_device_mswindows (void);
-void syms_of_device_x (void);
 void syms_of_device (void);
+void syms_of_device_mswindows (void);
+void syms_of_device_tty (void);
+void syms_of_device_x (void);
+void syms_of_dialog (void);
 void syms_of_dialog_mswindows (void);
 void syms_of_dialog_x (void);
-void syms_of_dialog (void);
 void syms_of_dired (void);
 void syms_of_dired_mswindows (void);
 void syms_of_doc (void);
 void syms_of_dragdrop (void);
 void syms_of_editfns (void);
+void syms_of_eldap (void);
 void syms_of_elhash (void);
 void syms_of_emacs (void);
 void syms_of_eval (void);
-void syms_of_event_stream (void);
-void syms_of_event_mswindows (void);
 void syms_of_event_Xt (void);
+void syms_of_event_mswindows (void);
+void syms_of_event_stream (void);
 void syms_of_events (void);
 void syms_of_extents (void);
 void syms_of_faces (void);
+void syms_of_file_coding (void);
 void syms_of_fileio (void);
 void syms_of_filelock (void);
 void syms_of_floatfns (void);
@@ -92,43 +98,47 @@ void syms_of_fns (void);
 void syms_of_font_lock (void);
 void syms_of_frame (void);
 void syms_of_frame_mswindows (void);
+void syms_of_frame_tty (void);
 void syms_of_frame_x (void);
 void syms_of_free_hook (void);
 void syms_of_general (void);
-void syms_of_glyphs_x (void);
+void syms_of_glyphs (void);
 void syms_of_glyphs_eimage (void);
+void syms_of_glyphs_mswindows (void);
 void syms_of_glyphs_shared (void);
 void syms_of_glyphs_widget (void);
-void syms_of_glyphs_mswindows (void);
-void syms_of_glyphs (void);
+void syms_of_glyphs_x (void);
+void syms_of_gpmevent (void);
+void syms_of_gui (void);
 void syms_of_gui_mswindows (void);
 void syms_of_gui_x (void);
-void syms_of_gui (void);
 void syms_of_gutter (void);
 void syms_of_indent (void);
 void syms_of_input_method_xlib (void);
 void syms_of_intl (void);
+void syms_of_intl_win32 (void);
+void syms_of_intl_x (void);
 void syms_of_keymap (void);
 void syms_of_lread (void);
 void syms_of_macros (void);
 void syms_of_marker (void);
 void syms_of_md5 (void);
-void syms_of_menubar_x (void);
 void syms_of_menubar (void);
 void syms_of_menubar_mswindows (void);
+void syms_of_menubar_x (void);
 void syms_of_minibuf (void);
 void syms_of_module (void);
-void syms_of_mule (void);
 void syms_of_mule_canna (void);
 void syms_of_mule_ccl (void);
 void syms_of_mule_charset (void);
-void syms_of_file_coding (void);
+void syms_of_mule_coding (void);
 void syms_of_mule_wnn (void);
-void syms_of_ntproc (void);
+void syms_of_nt (void);
+void syms_of_objects (void);
+void syms_of_objects_mswindows (void);
 void syms_of_objects_tty (void);
 void syms_of_objects_x (void);
-void syms_of_objects_mswindows (void);
-void syms_of_objects (void);
+void syms_of_postgresql (void);
 void syms_of_print (void);
 void syms_of_process (void);
 void syms_of_process_nt (void);
@@ -141,6 +151,7 @@ void syms_of_scrollbar_mswindows(void);
 void syms_of_search (void);
 void syms_of_select (void);
 void syms_of_select_mswindows (void);
+void syms_of_select_x (void);
 void syms_of_signal (void);
 void syms_of_sound (void);
 void syms_of_specifier (void);
@@ -148,18 +159,17 @@ void syms_of_sunpro (void);
 void syms_of_symbols (void);
 void syms_of_syntax (void);
 void syms_of_tests (void);
+void syms_of_text (void);
 void syms_of_toolbar (void);
 void syms_of_tooltalk (void);
 void syms_of_undo (void);
+void syms_of_unicode (void);
 void syms_of_widget (void);
-void syms_of_window (void);
-void syms_of_select_x (void);
-void syms_of_eldap (void);
-void syms_of_postgresql (void);
-void syms_of_gpmevent (void);
 void syms_of_win32 (void);
+void syms_of_window (void);
 
-/* Initialize the console types (dump-time but for reinit_). */
+/* Initialize the console types (dump-time only for console_type_(),
+   post-pdump-load-time only for reinit_). */
 
 void console_type_create (void);
 void console_type_create_stream (void);
@@ -196,7 +206,8 @@ void console_type_create_glyphs_mswindows (void);
 void console_type_create_dialog_mswindows (void);
 void console_type_create_select_mswindows (void);
 
-/* Initialize the specifier types (dump-time only). */
+/* Initialize the specifier types (dump-time only for specifier_type_(),
+   post-pdump-load-time only for reinit_). */
 
 void specifier_type_create (void);
 void reinit_specifier_type_create (void);
@@ -208,6 +219,18 @@ void specifier_type_create_objects (void);
 void reinit_specifier_type_create_objects (void);
 void specifier_type_create_toolbar (void);
 void reinit_specifier_type_create_toolbar (void);
+
+/* Initialize the coding system types (dump-time only for
+   coding_system_type_(), post-pdump-load-time only for reinit_). */
+
+void coding_system_type_create (void);
+void reinit_coding_system_type_create (void);
+void coding_system_type_create_unicode (void);
+void reinit_coding_system_type_create_unicode (void);
+void coding_system_type_create_intl_win32 (void);
+void reinit_coding_system_type_create_intl_win32 (void);
+void coding_system_type_create_mule_coding (void);
+void reinit_coding_system_type_create_mule_coding (void);
 
 /* Initialize the structure types (dump-time only). */
 
@@ -242,7 +265,9 @@ void process_type_create_unix (void);
 
 void init_provide_once (void);
 
-/* Initialize most variables (dump-time for vars_, run-time for reinit_vars). */
+/* Initialize most variables (dump-time for vars_, dump-time and
+   post-pdump-load-time for reinit_vars).  #### The reinit_() functions
+   should be called from emacs.c, not the corresponding vars_of_(). */
 
 void vars_of_abbrev (void);
 void vars_of_alloc (void);
@@ -277,7 +302,6 @@ void vars_of_dired_mswindows (void);
 void vars_of_doc (void);
 void vars_of_dragdrop (void);
 void vars_of_editfns (void);
-void vars_of_elhash (void);
 void vars_of_emacs (void);
 void vars_of_eval (void);
 void reinit_vars_of_eval (void);
@@ -294,10 +318,13 @@ void reinit_vars_of_events (void);
 void vars_of_extents (void);
 void reinit_vars_of_extents (void);
 void vars_of_faces (void);
+void vars_of_file_coding (void);
+void reinit_vars_of_file_coding (void);
 void vars_of_fileio (void);
 void reinit_vars_of_fileio (void);
 void vars_of_filelock (void);
 void vars_of_floatfns (void);
+void vars_of_fns (void);
 void vars_of_font_lock (void);
 void reinit_vars_of_font_lock (void);
 void vars_of_frame_tty (void);
@@ -322,6 +349,7 @@ void vars_of_indent (void);
 void vars_of_insdel (void);
 void reinit_vars_of_insdel (void);
 void vars_of_intl (void);
+void vars_of_intl_win32 (void);
 void vars_of_keymap (void);
 void vars_of_lread (void);
 void reinit_vars_of_lread (void);
@@ -337,11 +365,11 @@ void vars_of_minibuf (void);
 void reinit_vars_of_minibuf (void);
 void vars_of_module (void);
 void reinit_vars_of_module (void);
-void vars_of_mule (void);
 void vars_of_mule_canna (void);
 void vars_of_mule_ccl(void);
 void vars_of_mule_charset (void);
-void vars_of_file_coding (void);
+void vars_of_mule_coding (void);
+void reinit_vars_of_mule_coding (void);
 void vars_of_mule_wnn (void);
 void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
@@ -359,7 +387,6 @@ void vars_of_process_unix (void);
 void vars_of_profile (void);
 void vars_of_ralloc (void);
 void vars_of_redisplay (void);
-void reinit_vars_of_redisplay (void);
 void vars_of_scrollbar_x (void);
 void reinit_vars_of_scrollbar_x (void);
 void vars_of_scrollbar (void);
@@ -374,12 +401,17 @@ void vars_of_sunpro (void);
 void vars_of_symbols (void);
 void vars_of_syntax (void);
 void vars_of_tests (void);
+void vars_of_text (void);
+void reinit_vars_of_text (void);
 void vars_of_toolbar (void);
 void vars_of_tooltalk (void);
 void vars_of_undo (void);
 void reinit_vars_of_undo (void);
+void vars_of_unicode (void);
+void reinit_vars_of_unicode (void);
 void vars_of_window (void);
 void reinit_vars_of_window (void);
+void vars_of_win32 (void);
 void vars_of_select_x (void);
 void reinit_vars_of_select_x (void);
 void vars_of_eldap (void);
@@ -396,16 +428,18 @@ void specifier_vars_of_scrollbar (void);
 void specifier_vars_of_toolbar (void);
 void specifier_vars_of_window (void);
 
-/* Initialize variables with complex dependencies
-   on other variables (dump-time for complex_vars_, run-time for reinit_). */
+/* Initialize variables with complex dependencies on other variables
+   (dump-time for complex_vars_, dump-time and post-pdump-load-time
+   for reinit_(), pdump-load-time-only for reinit_..._runtime_only()).
+   #### The reinit_() functions should be called from emacs.c, not the
+   corresponding complex_vars_of_(). */
 
 void complex_vars_of_regex (void);
 void complex_vars_of_search (void);
-void complex_vars_of_event_stream (void);
-void complex_vars_of_extents (void);
 void complex_vars_of_faces (void);
 void complex_vars_of_mule_charset (void);
 void complex_vars_of_file_coding (void);
+void complex_vars_of_intl_win32 (void);
 void complex_vars_of_glyphs (void);
 void complex_vars_of_glyphs_x (void);
 void complex_vars_of_glyphs_mswindows (void);
@@ -418,25 +452,27 @@ void complex_vars_of_casetab (void);
 void complex_vars_of_syntax (void);
 void complex_vars_of_chartab (void);
 void complex_vars_of_buffer (void);
-void reinit_complex_vars_of_buffer (void);
+void reinit_complex_vars_of_buffer_runtime_only (void);
 void complex_vars_of_console (void);
-void reinit_complex_vars_of_console (void);
+void reinit_complex_vars_of_console_runtime_only (void);
 void complex_vars_of_emacs (void);
 void complex_vars_of_minibuf (void);
 void reinit_complex_vars_of_minibuf (void);
-void complex_vars_of_callproc (void);
 void complex_vars_of_keymap (void);
 
-/* Reset the Lisp engine (run-time only). */
+/* Reset the Lisp engine.  Called both at dump-time and run-time;
+   at dump-time, it's called early, before any of the vars() or
+   complex_vars() routines. */
 
-void reinit_alloc (void);
-void reinit_eval (void);
-void init_postgresql_from_environment (void);
+void init_alloc_early (void);
+void init_eval_early (void);
 
 /* Late initialization -- stuff pertaining only to interactive usage,
-   I/O, or Lisp reading. (Dump-time and run-time.) */
+   I/O, or Lisp reading. (Dump-time and run-time, but the code itself
+   may conditionalize on this by checking the `initialized' variable.) */
 
-void init_buffer (void);
+void init_buffer_1 (void);
+void init_buffer_2 (void);
 void init_callproc (void);
 void init_console_stream (int reinit);
 void init_device_tty (void);
@@ -447,13 +483,19 @@ void init_event_stream (void);
 void init_event_tty_late (void);
 void init_event_mswindows_late (void);
 void init_event_unixoid (void);
+void init_file_coding (void);
 void init_hpplay (void);
+void init_intl (void);
+void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
+void init_mule_charset (void);
 void init_ntproc (void); /* #### delete me, please! */
 /* Not named init_process in order to avoid conflict with NS 3.3 */
 void init_xemacs_process (void);
+void init_postgresql_from_environment (void);
 void init_redisplay (void);
+void init_select_mswindows (void);
 void init_sunpro (void);
 void init_win32 (void);
 

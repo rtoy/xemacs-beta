@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems.
-;; Copyright (C) 1995, 1996, 2000 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2002 Ben Wing.
 
 ;; Author: Richard Mlynarik
 ;; Created: 2-Oct-92
@@ -2261,12 +2261,6 @@ On mswindows devices, this uses `mswindows-color-list'."
 		     initial-contents)))
 
 
-;; #### The doc string for read-non-nil-coding system gets lost if we
-;; only include these if the mule feature is present.  Strangely,
-;; read-coding-system doesn't.
-
-;;(if (featurep 'mule)
-
 (defun read-coding-system (prompt &optional default-coding-system)
   "Read a coding-system (or nil) from the minibuffer.
 Prompting with string PROMPT.
@@ -2289,8 +2283,6 @@ Prompt with string PROMPT."
 					    'find-coding-system
 					    t))))
     retval))
-
-;;) ;; end of (featurep 'mule)
 
 
 

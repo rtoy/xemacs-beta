@@ -1,4 +1,5 @@
 /* Copyright (C) 1985, 86, 87, 93, 94, 96 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -29,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdir.h"
 #include "syspwd.h"
 #include "syssignal.h" /* for kill */
+#include "sysproc.h" /* for qxe_getpid() */
 
 Lisp_Object Qask_user_about_supersession_threat;
 Lisp_Object Qask_user_about_lock;
@@ -71,16 +73,13 @@ int inhibit_clash_detection;
 
    --karl@cs.umb.edu/karl@hq.ileaf.com.  */
 
-/* Note that muleization is provided by using mule-encapsulated
-   versions of the system calls we use like symlink(), unlink(), etc... */
-
 
 /* Here is the structure that stores information about a lock.  */
 
 typedef struct
 {
-  char *user;
-  char *host;
+  Intbyte *user;
+  Intbyte *host;
   pid_t pid;
 } lock_info_type;
 
@@ -94,8 +93,8 @@ typedef struct
 /* Write the name of the lock file for FN into LFNAME.  Length will be
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = (char *) alloca (XSTRING_LENGTH (file) + 2 + 1), \
-   fill_in_lock_file_name ((Intbyte *) (lock), (file)))
+  (lock = (Intbyte *) alloca (XSTRING_LENGTH (file) + 2 + 1), \
+   fill_in_lock_file_name (lock, file))
 
 static void
 fill_in_lock_file_name (Intbyte *lockfile, Lisp_Object fn)
@@ -122,32 +121,33 @@ fill_in_lock_file_name (Intbyte *lockfile, Lisp_Object fn)
    Return 1 if successful, 0 if not.  */
 
 static int
-lock_file_1 (char *lfname, int force)
+lock_file_1 (Intbyte *lfname, int force)
 {
   /* Does not GC. */
   int err;
-  char *lock_info_str;
-  char *host_name;
-  char *user_name = user_login_name (NULL);
+  Intbyte *lock_info_str;
+  Intbyte *host_name;
+  Intbyte *user_name = user_login_name (NULL);
 
   if (user_name == NULL)
-    user_name = "";
+    user_name = (Intbyte *) "";
 
   if (STRINGP (Vsystem_name))
-    host_name = (char *) XSTRING_DATA (Vsystem_name);
+    host_name = XSTRING_DATA (Vsystem_name);
   else
-    host_name = "";
+    host_name = (Intbyte *) "";
 
-  lock_info_str = (char *)alloca (strlen (user_name) + strlen (host_name)
-			  + LOCK_PID_MAX + 5);
+  lock_info_str =
+    (Intbyte *) alloca (qxestrlen (user_name) + qxestrlen (host_name)
+			+ LOCK_PID_MAX + 5);
 
-  sprintf (lock_info_str, "%s@%s.%d", user_name, host_name, getpid ());
+  qxesprintf (lock_info_str, "%s@%s.%d", user_name, host_name, qxe_getpid ());
 
-  err = symlink (lock_info_str, lfname);
+  err = qxe_symlink (lock_info_str, lfname);
   if (err != 0 && errno == EEXIST && force)
     {
-      unlink (lfname);
-      err = symlink (lock_info_str, lfname);
+      qxe_unlink (lfname);
+      err = qxe_symlink (lock_info_str, lfname);
     }
 
   return err == 0;
@@ -159,21 +159,21 @@ lock_file_1 (char *lfname, int force)
    or -1 if something is wrong with the locking mechanism.  */
 
 static int
-current_lock_owner (lock_info_type *owner, char *lfname)
+current_lock_owner (lock_info_type *owner, Intbyte *lfname)
 {
   /* Does not GC. */
   int len, ret;
   int local_owner = 0;
-  char *at, *dot;
-  char *lfinfo = 0;
+  Intbyte *at, *dot;
+  Intbyte *lfinfo = 0;
   int bufsize = 50;
   /* Read arbitrarily-long contents of symlink.  Similar code in
      file-symlink-p in fileio.c.  */
   do
     {
       bufsize *= 2;
-      lfinfo = (char *) xrealloc (lfinfo, bufsize);
-      len = readlink (lfname, lfinfo, bufsize);
+      lfinfo = (Intbyte *) xrealloc (lfinfo, bufsize);
+      len = qxe_readlink (lfname, lfinfo, bufsize);
     }
   while (len >= bufsize);
 
@@ -197,24 +197,24 @@ current_lock_owner (lock_info_type *owner, char *lfname)
 
   /* Parse USER@HOST.PID.  If can't parse, return -1.  */
   /* The USER is everything before the first @.  */
-  at = strchr (lfinfo, '@');
-  dot = strrchr (lfinfo, '.');
+  at = qxestrchr (lfinfo, '@');
+  dot = qxestrrchr (lfinfo, '.');
   if (!at || !dot) {
     xfree (lfinfo);
     return -1;
   }
   len = at - lfinfo;
-  owner->user = (char *) xmalloc (len + 1);
-  strncpy (owner->user, lfinfo, len);
+  owner->user = (Intbyte *) xmalloc (len + 1);
+  qxestrncpy (owner->user, lfinfo, len);
   owner->user[len] = 0;
 
   /* The PID is everything after the last `.'.  */
-  owner->pid = atoi (dot + 1);
+  owner->pid = atoi ((CIntbyte *) dot + 1);
 
   /* The host is everything in between.  */
   len = dot - at - 1;
-  owner->host = (char *) xmalloc (len + 1);
-  strncpy (owner->host, at + 1, len);
+  owner->host = (Intbyte *) xmalloc (len + 1);
+  qxestrncpy (owner->host, at + 1, len);
   owner->host[len] = 0;
 
   /* We're done looking at the link info.  */
@@ -222,16 +222,16 @@ current_lock_owner (lock_info_type *owner, char *lfname)
 
   /* On current host?  */
   if (STRINGP (Fsystem_name ())
-      && strcmp (owner->host, (char *) XSTRING_DATA (Fsystem_name ())) == 0)
+      && qxestrcmp (owner->host, XSTRING_DATA (Fsystem_name ())) == 0)
     {
-      if (owner->pid == getpid ())
+      if (owner->pid == qxe_getpid ())
         ret = 2; /* We own it.  */
       else if (owner->pid > 0
                && (kill (owner->pid, 0) >= 0 || errno == EPERM))
         ret = 1; /* An existing process on this machine owns it.  */
       /* The owner process is dead or has a strange pid (<=0), so try to
          zap the lockfile.  */
-      else if (unlink (lfname) < 0)
+      else if (qxe_unlink (lfname) < 0)
         ret = -1;
       else
 	ret = 0;
@@ -257,10 +257,10 @@ current_lock_owner (lock_info_type *owner, char *lfname)
    Return -1 if cannot lock for any other reason.  */
 
 static int
-lock_if_free (lock_info_type *clasher, char *lfname)
+lock_if_free (lock_info_type *clasher, Intbyte *lfname)
 {
   /* Does not GC. */
-  if (lock_file_1 (lfname, 0) == 0)
+  if (lock_file_1 ((Intbyte *) lfname, 0) == 0)
     {
       int locker;
 
@@ -309,7 +309,7 @@ lock_file (Lisp_Object fn)
      comment.  -slb */
 
   register Lisp_Object attack, orig_fn;
-  register char *lfname, *locker;
+  register Intbyte *lfname, *locker;
   lock_info_type lock_info;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object old_current_buffer;
@@ -346,15 +346,16 @@ lock_file (Lisp_Object fn)
     goto done;
 
   /* Else consider breaking the lock */
-  locker = (char *) alloca (strlen (lock_info.user) + strlen (lock_info.host)
-			    + LOCK_PID_MAX + 9);
-  sprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,
-           lock_info.pid);
+  locker = (Intbyte *) alloca (qxestrlen (lock_info.user)
+			       + qxestrlen (lock_info.host)
+			       + LOCK_PID_MAX + 9);
+  qxesprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,
+	      lock_info.pid);
   FREE_LOCK_INFO (lock_info);
 
   attack = call2_in_buffer (BUFFERP (subject_buf) ? XBUFFER (subject_buf) :
 			    current_buffer, Qask_user_about_lock , fn,
-			    build_string (locker));
+			    build_intstring (locker));
   if (!NILP (attack) && current_buffer == XBUFFER (old_current_buffer))
     /* User says take the lock */
     {
@@ -370,7 +371,7 @@ void
 unlock_file (Lisp_Object fn)
 {
   /* This can GC */
-  register char *lfname;
+  register Intbyte *lfname;
   struct gcpro gcpro1;
 
   GCPRO1 (fn);
@@ -380,7 +381,7 @@ unlock_file (Lisp_Object fn)
   MAKE_LOCK_NAME (lfname, fn);
 
   if (current_lock_owner (0, lfname) == 2)
-    unlink (lfname);
+    qxe_unlink (lfname);
 
   UNGCPRO;
 }
@@ -453,7 +454,7 @@ t if it is locked by you, else a string of the name of the locker.
        (filename))
 {
   Lisp_Object ret;
-  register char *lfname;
+  register Intbyte *lfname;
   int owner;
   lock_info_type locker;
   struct gcpro gcpro1;
@@ -470,7 +471,7 @@ t if it is locked by you, else a string of the name of the locker.
   else if (owner == 2)
     ret = Qt;
   else
-    ret = build_string (locker.user);
+    ret = build_intstring (locker.user);
 
   if (owner > 0)
     FREE_LOCK_INFO (locker);

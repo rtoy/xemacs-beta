@@ -1,7 +1,7 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
 ;; Copyright (C) 1985-7, 1993,4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 2000 Ben Wing.
+;; Copyright (C) 1995, 2000, 2001 Ben Wing.
 
 ;; Author: Ben Wing
 ;; Maintainer: XEmacs Development Team
@@ -24,7 +24,8 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.30, except for setenv/getenv (synched with FSF
+;;; 21.0.105).
 
 ;;; Authorship:
 
@@ -465,5 +466,84 @@ lost packets."
     (call-process shell-file-name nil t nil shell-command-switch command)))
 
 (defalias 'exec-to-string 'shell-command-to-string)
+
+
+;; History list for environment variable names.
+(defvar read-envvar-name-history nil)
+
+(defun read-envvar-name (prompt &optional mustmatch)
+  "Read environment variable name, prompting with PROMPT.
+Optional second arg MUSTMATCH, if non-nil, means require existing envvar name.
+If it is also not t, RET does not exit if it does non-null completion."
+  (completing-read prompt
+		   (mapcar (function
+			    (lambda (enventry)
+			      (list (substring enventry 0
+					       (string-match "=" enventry)))))
+			   process-environment)
+		   nil mustmatch nil 'read-envvar-name-history))
+
+;; History list for VALUE argument to setenv.
+(defvar setenv-history nil)
+
+(defun setenv (variable &optional value unset)
+  "Set the value of the environment variable named VARIABLE to VALUE.
+VARIABLE should be a string.  VALUE is optional; if not provided or is
+`nil', the environment variable VARIABLE will be removed.  
+
+Interactively, a prefix argument means to unset the variable.
+Interactively, the current value (if any) of the variable
+appears at the front of the history list when you type in the new value.
+
+This function works by modifying `process-environment'."
+  (interactive
+   (if current-prefix-arg
+       (list (read-envvar-name "Clear environment variable: " 'exact) nil t)
+     (let ((var (read-envvar-name "Set environment variable: " nil)))
+       ;; Here finally we specify the args to call setenv with.
+       (list var (read-from-minibuffer (format "Set %s to value: " var)
+				       nil nil nil 'setenv-history
+				       (getenv var))))))
+  (if unset (setq value nil))
+  (if (string-match "=" variable)
+      (error "Environment variable name `%s' contains `='" variable)
+    (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))
+	  (case-fold-search nil)
+	  (scan process-environment)
+	  found)
+      (if (string-equal "TZ" variable)
+	  (set-time-zone-rule value))
+      (while scan
+	(cond ((string-match pattern (car scan))
+	       (setq found t)
+	       (if (eq nil value)
+		   (setq process-environment (delq (car scan) process-environment))
+		 (setcar scan (concat variable "=" value)))
+	       (setq scan nil)))
+	(setq scan (cdr scan)))
+      (or found
+	  (if value
+	      (setq process-environment
+		    (cons (concat variable "=" value)
+			  process-environment)))))))
+
+;; already in C.  Can't move it to Lisp too easily because it's needed
+;; extremely early in the Lisp loadup sequence.
+
+; (defun getenv (variable)
+;   "Get the value of environment variable VARIABLE.
+; VARIABLE should be a string.  Value is nil if VARIABLE is undefined in
+; the environment.  Otherwise, value is a string.
+;
+; This function consults the variable `process-environment'
+; for its value."
+;   (interactive (list (read-envvar-name "Get environment variable: " t)))
+;   (let ((value (getenv-internal variable)))
+;     (when (interactive-p)
+;       (message "%s" (if value value "Not set")))
+;     value))
+
+(provide 'env) ;; Yuck.  Formerly the above were in env.el, which did this
+	       ;; provide.
 
 ;;; process.el ends here

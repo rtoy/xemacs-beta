@@ -148,7 +148,7 @@ extern struct specbinding *specpdl_ptr;
 extern struct catchtag *catchlist;
 extern struct backtrace *backtrace_list;
 
-/* Most callers should simply use specbind() and unbind_to(), but if
+/* Most callers should simply use specbind() and unbind_to_1(), but if
    speed is REALLY IMPORTANT, you can use the faster macros below */
 void specbind_magic (Lisp_Object, Lisp_Object);
 void grow_specpdl (EMACS_INT reserved);
@@ -224,11 +224,12 @@ extern int specpdl_size;
     grow_specpdl (SR_size);				\
 } while (0)
 
-/* Inline version of unbind_to().
-   Use this instead of unbind_to() if speed is sufficiently important
-   to save the overhead of even a single function call.
+/* Inline version of unbind_to_1().
+   [[Use this instead of unbind_to_1() if speed is sufficiently important
+   to save the overhead of even a single function call.]]
+   This is bogus pseudo-optimization. --ben
 
-   Most of the time, unbind_to() is called only on ordinary
+   Most of the time, unbind_to_1() is called only on ordinary
    variables, so optimize for that.  */
 #define UNBIND_TO_GCPRO(count, value) do {		\
   int UNBIND_TO_count = (count);			\
@@ -253,7 +254,7 @@ extern int specpdl_size;
     }							\
 } while (0)
 
-/* A slightly faster inline version of unbind_to,
+/* A slightly faster inline version of unbind_to_1,
    that doesn't offer GCPROing services. */
 #define UNBIND_TO(count) do {				\
   int UNBIND_TO_count = (count);			\
@@ -284,7 +285,7 @@ extern int specpdl_size;
 #if 0
 /* Unused.  It's too hard to guarantee that the current bindings
    contain only variables.  */
-/* Another inline version of unbind_to().  VALUE is GC-protected.
+/* Another inline version of unbind_to_1().  VALUE is GC-protected.
    Caller guarantees that:
    - all of the elements on the binding stack are variable bindings.
    Else we crash.  */

@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000 Andy Piper
 
@@ -49,13 +49,15 @@ Boston, MA 02111-1307, USA.  */
    Convert images.el to C and stick it in here?
  */
 
+/* Mule-ized last 6-22-00 */
+
 #include <config.h>
 #include "lisp.h"
 #include "lstream.h"
 #include "console-x.h"
 #include "glyphs-x.h"
 #include "objects-x.h"
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 #include "gui-x.h"
 #endif
 #include "xmu.h"
@@ -71,12 +73,11 @@ Boston, MA 02111-1307, USA.  */
 #include "imgproc.h"
 
 #include "sysfile.h"
+#include "sysproc.h" /* for qxe_getpid() */
 
 #include <setjmp.h>
 
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #ifdef LWLIB_WIDGETS_MOTIF
 #include <Xm/Xm.h>
@@ -128,7 +129,7 @@ DEFINE_IMAGE_INSTANTIATOR_FORMAT (font);
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (autodetect);
 
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (layout);
 DEFINE_DEVICE_IIFORMAT (x, widget);
 DEFINE_DEVICE_IIFORMAT (x, native_layout);
@@ -149,7 +150,7 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 				     int dest_mask,
 				     Lisp_Object domain);
 
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 static void
 update_widget_face (widget_value* wv,
 		    Lisp_Image_Instance* ii, Lisp_Object domain);
@@ -173,7 +174,7 @@ emacs_Xt_handle_widget_losing_focus (struct frame* f, Widget losing_widget);
 /************************************************************************/
 static XImage *
 convert_EImage_to_XImage (Lisp_Object device, int width, int height,
-			  unsigned char *pic, unsigned long **pixtbl,
+			  UChar_Binary *pic, unsigned long **pixtbl,
 			  int *npixels)
 {
   Display *dpy;
@@ -182,7 +183,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   XImage *outimg;
   int depth, bitmap_pad, bits_per_pixel, byte_cnt, i, j;
   int rd,gr,bl,q;
-  unsigned char *data, *ip, *dp;
+  UChar_Binary *data, *ip, *dp;
   quant_table *qtable = 0;
   union {
     FOUR_BYTE_TYPE val;
@@ -221,7 +222,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   bits_per_pixel = outimg->bits_per_pixel;
   byte_cnt = bits_per_pixel >> 3;
 
-  data = (unsigned char *) xmalloc (outimg->bytes_per_line * height);
+  data = (UChar_Binary *) xmalloc (outimg->bytes_per_line * height);
   if (!data)
     {
       XDestroyImage (outimg);
@@ -405,7 +406,7 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
 	(XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
       if (0)
 	;
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_WIDGET)
 	{
 	  if (IMAGE_INSTANCE_SUBWINDOW_ID (p))
@@ -592,18 +593,20 @@ x_locate_pixmap_file (Lisp_Object name)
 
 #ifdef USE_XBMLANGPATH
   {
-    char *path = egetenv ("XBMLANGPATH");
+    Intbyte *path = egetenv ("XBMLANGPATH");
+    Extbyte *pathext;
     SubstitutionRec subs[1];
     subs[0].match = 'B';
-    subs[0].substitution = (char *) XSTRING_DATA (name);
+    LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
+    C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
     /* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
        We don't.  If you want it used, set it. */
-    if (path &&
-	(path = XtResolvePathname (display, "bitmaps", 0, 0, path,
-				   subs, XtNumber (subs), 0)))
+    if (pathext &&
+	(pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
+				      subs, XtNumber (subs), 0)))
       {
-	name = build_string (path);
-	XtFree (path);
+	name = build_ext_string (pathext, Qfile_name);
+	XtFree (pathext);
         return (name);
       }
   }
@@ -616,9 +619,14 @@ x_locate_pixmap_file (Lisp_Object name)
       if (XrmGetResource (XtDatabase (display),
 			  "bitmapFilePath", "BitmapFilePath", &type, &value)
 	  && !strcmp (type, "String"))
-	Vx_bitmap_file_path = decode_env_path (0, (char *) value.addr);
+	{
+	  Intbyte *path;
+
+	  EXTERNAL_TO_C_STRING (value.addr, path, Qfile_name);
+	  Vx_bitmap_file_path = split_env_path (0, path);
+	}
       Vx_bitmap_file_path = nconc2 (Vx_bitmap_file_path,
-				    (decode_path (BITMAPDIR)));
+				    (split_external_path (BITMAPDIR)));
     }
 
   {
@@ -642,109 +650,6 @@ locate_pixmap_file (Lisp_Object name)
 {
   return x_locate_pixmap_file (name);
 }
-
-#if 0
-static void
-write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
-{
-  Lisp_Object instream, outstream;
-  Lstream *istr, *ostr;
-  char tempbuf[1024]; /* some random amount */
-  int fubar = 0;
-  FILE *tmpfil;
-  static Extbyte_dynarr *conversion_out_dynarr;
-  Bytecount bstart, bend;
-  struct gcpro gcpro1, gcpro2;
-#ifdef FILE_CODING
-  Lisp_Object conv_out_stream;
-  Lstream *costr;
-  struct gcpro gcpro3;
-#endif
-
-  /* This function can GC */
-  if (!conversion_out_dynarr)
-    conversion_out_dynarr = Dynarr_new (Extbyte);
-  else
-    Dynarr_reset (conversion_out_dynarr);
-
-  /* Create the temporary file ... */
-  sprintf (filename_out, "/tmp/emacs%d.XXXXXX", (int) getpid ());
-  mktemp (filename_out);
-  tmpfil = fopen (filename_out, "w");
-  if (!tmpfil)
-    {
-      if (tmpfil)
-	{
-	  int old_errno = errno;
-	  fclose (tmpfil);
-	  unlink (filename_out);
-	  errno = old_errno;
-	}
-      report_file_error ("Creating temp file",
-			 build_string (filename_out));
-    }
-
-  CHECK_STRING (string);
-  get_string_range_byte (string, Qnil, Qnil, &bstart, &bend,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
-  instream = make_lisp_string_input_stream (string, bstart, bend);
-  istr = XLSTREAM (instream);
-  /* setup the out stream */
-  outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
-  ostr = XLSTREAM (outstream);
-#ifdef FILE_CODING
-  /* setup the conversion stream */
-  conv_out_stream = make_encoding_output_stream (ostr, Fget_coding_system(Qbinary));
-  costr = XLSTREAM (conv_out_stream);
-  GCPRO3 (instream, outstream, conv_out_stream);
-#else
-  GCPRO2 (instream, outstream);
-#endif
-
-  /* Get the data while doing the conversion */
-  while (1)
-    {
-      Bytecount size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
-      if (!size_in_bytes)
-	break;
-      /* It does seem the flushes are necessary... */
-#ifdef FILE_CODING
-      Lstream_write (costr, tempbuf, size_in_bytes);
-      Lstream_flush (costr);
-#else
-      Lstream_write (ostr, tempbuf, size_in_bytes);
-#endif
-      Lstream_flush (ostr);
-      if (fwrite ((unsigned char *)Dynarr_atp(conversion_out_dynarr, 0),
-		  Dynarr_length(conversion_out_dynarr), 1, tmpfil) != 1)
-	{
-	  fubar = 1;
-	  break;
-	}
-      /* reset the dynarr */
-      Lstream_rewind(ostr);
-    }
-
-  if (fclose (tmpfil) != 0)
-    fubar = 1;
-  Lstream_close (istr);
-#ifdef FILE_CODING
-  Lstream_close (costr);
-#endif
-  Lstream_close (ostr);
-
-  UNGCPRO;
-  Lstream_delete (istr);
-  Lstream_delete (ostr);
-#ifdef FILE_CODING
-  Lstream_delete (costr);
-#endif
-
-  if (fubar)
-    report_file_error ("Writing temp file",
-		       build_string (filename_out));
-}
-#endif /* 0 */
 
 
 /************************************************************************/
@@ -945,7 +850,7 @@ static void
 x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 				   int width, int height,
 				   int slices,
-				   unsigned char *eimage,
+				   UChar_Binary *eimage,
 				   int dest_mask,
 				   Lisp_Object instantiator,
 				   Lisp_Object domain)
@@ -994,14 +899,13 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 
 static Pixmap
 pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
-			/* Note that data is in ext-format! */
-			const char *bits)
+			Char_Binary *bits)
 {
-  return XCreatePixmapFromBitmapData
-    (DEVICE_X_DISPLAY (XDEVICE (device)),
-     XtWindow (DEVICE_XT_APP_SHELL (XDEVICE (device))),
-     (char *) bits, width, height,
-     1, 0, 1);
+  return XCreatePixmapFromBitmapData (DEVICE_X_DISPLAY (XDEVICE (device)),
+				      XtWindow (DEVICE_XT_APP_SHELL
+						(XDEVICE (device))),
+				      bits, width, height,
+				      1, 0, 1);
 }
 
 /* Given inline data for a mono pixmap, initialize the given
@@ -1010,8 +914,7 @@ pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
 static void
 init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     int width, int height,
-				     /* Note that data is in ext-format! */
-				     const char *bits,
+				     Char_Binary *bits,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
@@ -1064,7 +967,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
     case IMAGE_MONO_PIXMAP:
       {
 	IMAGE_INSTANCE_X_PIXMAP (ii) =
-	  pixmap_from_xbm_inline (device, width, height, (Extbyte *) bits);
+	  pixmap_from_xbm_inline (device, width, height, bits);
       }
       break;
 
@@ -1098,7 +1001,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 	IMAGE_INSTANCE_X_PIXMAP (ii) =
 	  XCreatePixmapFromBitmapData (dpy, draw,
-				       (char *) bits, width, height,
+				       (Char_Binary *) bits, width, height,
 				       fg, bg, d);
 	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = d;
       }
@@ -1113,7 +1016,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 
 	source =
 	  XCreatePixmapFromBitmapData (dpy, draw,
-				       (char *) bits, width, height,
+				       (Char_Binary *) bits, width, height,
 				       1, 0, 1);
 
 	if (NILP (foreground))
@@ -1148,8 +1051,7 @@ static void
 xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		   int dest_mask, int width, int height,
-		   /* Note that data is in ext-format! */
-		   const char *bits)
+		   Char_Binary *bits)
 {
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
@@ -1158,9 +1060,10 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (mask_data))
     {
-      const char *ext_data;
+      Char_Binary *ext_data;
 
-      LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), ext_data, Qbinary);
+      LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), ext_data,
+			       Qbinary);
       mask = pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				     XINT (XCAR (mask_data)),
 				     XINT (XCAR (XCDR (mask_data))),
@@ -1180,7 +1083,7 @@ x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  const char *ext_data;
+  Char_Binary *ext_data;
 
   assert (!NILP (data));
 
@@ -1269,9 +1172,10 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       if (! XAllocColor (dpy, cmap, &color))
 	abort ();  /* it must be allocable since we're just duplicating it */
 
-      symbols [i].name = (char *) XSTRING_DATA (XCAR (cons));
-      symbols [i].pixel = color.pixel;
-      symbols [i].value = 0;
+      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (cons), C_STRING_MALLOC,
+			  symbols[i].name, Qctext);
+      symbols[i].pixel = color.pixel;
+      symbols[i].value = 0;
       free_cons (XCONS (cons));
       cons = results;
       results = XCDR (results);
@@ -1387,13 +1291,24 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   color_symbols = extract_xpm_color_names (&xpmattrs, device, domain,
 					   color_symbol_alist);
 
-  result = XpmCreatePixmapFromBuffer (dpy,
-				      XtWindow(DEVICE_XT_APP_SHELL (XDEVICE(device))),
-				      (char *) XSTRING_DATA (data),
-				      &pixmap, &mask, &xpmattrs);
+  {
+    Extbyte *dataext;
+
+    LISP_STRING_TO_EXTERNAL (data, dataext, Qctext);
+
+    result =
+      XpmCreatePixmapFromBuffer (dpy,
+				 XtWindow
+				 (DEVICE_XT_APP_SHELL (XDEVICE(device))),
+				 dataext, &pixmap, &mask, &xpmattrs);
+  }
 
   if (color_symbols)
     {
+      int i;
+
+      for (i = 0; i < (int) xpmattrs.numsymbols; i++)
+	xfree (color_symbols[i].name);
       xfree (color_symbols);
       xpmattrs.colorsymbols = 0; /* in case XpmFreeAttr is too smart... */
       xpmattrs.numsymbols = 0;
@@ -1656,10 +1571,10 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
-  char *bits, *bp;
-  const char *p;
-  const char * volatile emsg = 0;
-  const char * volatile dstring;
+  Char_Binary *bits, *bp;
+  Char_Binary *p;
+  const Intbyte * volatile emsg = 0;
+  Char_Binary * volatile dstring;
 
   assert (!NILP (data));
 
@@ -1673,7 +1588,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Must use setjmp not SETJMP because we used jmp_buf above not JMP_BUF */
   if (!(stattis = setjmp (comp_env)))
     {
-      UnCompAll ((char *) dstring);
+      UnCompAll (dstring);
       UnGenFace ();
     }
 
@@ -1693,7 +1608,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (emsg)
     gui_error_2 (emsg, data, Qimage);
 
-  bp = bits = (char *) alloca (PIXELS / 8);
+  bp = bits = (Char_Binary *) alloca (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
@@ -1705,7 +1620,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	{
 	  n |= ((*p++) << b);
 	}
-      *bp++ = (char) n;
+      *bp++ = (Char_Binary) n;
     }
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
@@ -1896,14 +1811,17 @@ XLoadFont_error_handler (Display *dpy, XErrorEvent *xerror)
 }
 
 static Font
-safe_XLoadFont (Display *dpy, char *name)
+safe_XLoadFont (Display *dpy, Intbyte *name)
 {
   Font font;
   int (*old_handler) (Display *, XErrorEvent *);
+  Extbyte *nameext;
+
   XLoadFont_got_error = 0;
   XSync (dpy, 0);
   old_handler = XSetErrorHandler (XLoadFont_error_handler);
-  font = XLoadFont (dpy, name);
+  C_STRING_TO_EXTERNAL (name, nameext, Qfile_name);
+  font = XLoadFont (dpy, nameext);
   XSync (dpy, 0);
   XSetErrorHandler (old_handler);
   if (XLoadFont_got_error) return 0;
@@ -1928,7 +1846,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Display *dpy;
   XColor fg, bg;
   Font source, mask;
-  char source_name[MAXPATHLEN], mask_name[MAXPATHLEN], dummy;
+  Intbyte source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
   int source_char, mask_char;
   int count;
   Lisp_Object foreground, background;
@@ -1960,7 +1878,8 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  source_name, &source_char,
 		  mask_name, &mask_char, &dummy);
   /* Allow "%s %d %d" as well... */
-  if (count == 3 && (1 == sscanf (mask_name, "%d %c", &mask_char, &dummy)))
+  if (count == 3 && (1 == sscanf ((char *) mask_name, "%d %c", &mask_char,
+				  &dummy)))
     count = 4, mask_name[0] = 0;
 
   if (count != 2 && count != 4)
@@ -1968,7 +1887,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   source = safe_XLoadFont (dpy, source_name);
   if (! source)
     signal_error_2 (Qgui_error,
-		    "couldn't load font", build_string (source_name), data);
+		    "couldn't load font", build_intstring (source_name), data);
   if (count == 2)
     mask = 0;
   else if (!mask_name[0])
@@ -1979,7 +1898,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       if (!mask)
 	signal_continuable_error_2 (Qgui_error,
 				    "couldn't load font",
-				    build_string (mask_name), data);
+				    build_intstring (mask_name), data);
     }
   if (!mask)
     mask_char = 0;
@@ -2024,7 +1943,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
   int i;
-  const char *name_ext;
+  const Extbyte *name_ext;
   Lisp_Object foreground, background;
 
   if (!DEVICE_X_P (XDEVICE (device)))
@@ -2180,7 +2099,7 @@ static void
 x_redisplay_widget (Lisp_Image_Instance *p)
 {
   /* This function can GC if IN_REDISPLAY is false. */
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   widget_value* wv = 0;
 
   /* First get the items if they have changed since this is a
@@ -2229,7 +2148,7 @@ x_redisplay_widget (Lisp_Image_Instance *p)
   /* Possibly update the text. */
   if (IMAGE_INSTANCE_TEXT_CHANGED (p))
     {
-      char* str;
+      Extbyte* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
       LISP_STRING_TO_EXTERNAL (val, str, Qnative);
       wv->value = str;
@@ -2341,6 +2260,8 @@ Subwindows are not currently implemented.
   Atom property_atom;
   Lisp_Subwindow *sw;
   Display *dpy;
+  Extbyte *propext, *dataext;
+  Bytecount datalen;
 
   CHECK_SUBWINDOW (subwindow);
   CHECK_STRING (property);
@@ -2350,18 +2271,18 @@ Subwindows are not currently implemented.
   dpy = DisplayOfScreen (LISP_DEVICE_TO_X_SCREEN
 			 (FRAME_DEVICE (XFRAME (sw->frame))));
 
-  property_atom = XInternAtom (dpy, (char *) XSTRING_DATA (property), False);
+  LISP_TO_EXTERNAL (property, propext, Qctext);
+  TO_EXTERNAL_FORMAT (LISP_STRING, data,
+		      ALLOCA, (dataext, datalen), Qctext);
+  property_atom = XInternAtom (dpy, propext, False);
   XChangeProperty (dpy, sw->subwindow, property_atom, XA_STRING, 8,
-		   PropModeReplace,
-		   XSTRING_DATA   (data),
-		   XSTRING_LENGTH (data));
-
+		   PropModeReplace, dataext, datalen);
   return property;
 }
 #endif
 
 
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 
 /************************************************************************/
 /*                            widgets                            */
@@ -2558,7 +2479,8 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
 
 /* Instantiate a layout control for putting other widgets in. */
 static void
-x_native_layout_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+x_native_layout_instantiate (Lisp_Object image_instance,
+			     Lisp_Object instantiator,
 			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			     int dest_mask, Lisp_Object domain)
 {
@@ -2685,8 +2607,8 @@ x_progress_gauge_redisplay (Lisp_Object image_instance)
 /* instantiate an edit control */
 static void
 x_edit_field_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		    int dest_mask, Lisp_Object domain)
+			  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			  int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
@@ -2700,8 +2622,8 @@ x_edit_field_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /* instantiate a combo control */
 static void
 x_combo_box_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   widget_value * wv = 0;
@@ -2834,7 +2756,7 @@ x_label_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "button", wv);
 }
-#endif /* HAVE_WIDGETS */
+#endif /* HAVE_X_WIDGETS */
 
 
 /************************************************************************/
@@ -2872,7 +2794,7 @@ image_instantiator_format_create_glyphs_x (void)
 {
   IIFORMAT_VALID_CONSOLE (x, nothing);
   IIFORMAT_VALID_CONSOLE (x, string);
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   IIFORMAT_VALID_CONSOLE (x, layout);
 #endif
   IIFORMAT_VALID_CONSOLE (x, formatted_string);
@@ -2898,7 +2820,7 @@ image_instantiator_format_create_glyphs_x (void)
 
   INITIALIZE_DEVICE_IIFORMAT (x, subwindow);
   IIFORMAT_HAS_DEVMETHOD (x, subwindow, instantiate);
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   /* layout widget */
   INITIALIZE_DEVICE_IIFORMAT (x, native_layout);
   IIFORMAT_HAS_DEVMETHOD (x, native_layout, instantiate);

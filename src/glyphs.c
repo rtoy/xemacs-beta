@@ -1,7 +1,7 @@
 /* Generic glyph/image implementation + display tables
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2000 Ben Wing
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper
 
@@ -45,6 +45,8 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "specifier.h"
 #include "window.h"
+
+#include "sysfile.h"
 
 #if defined (HAVE_XPM) && !defined (HAVE_GTK)
 #include <X11/xpm.h>
@@ -582,7 +584,7 @@ make_string_from_file (Lisp_Object file)
   specbind (intern ("format-alist"), Qnil);
   Finsert_file_contents_internal (file, Qnil, Qnil, Qnil, Qnil, Qnil, Qnil);
   data = Fbuffer_substring (Qnil, Qnil, Qnil);
-  unbind_to (count, Qnil);
+  unbind_to (count);
   UNGCPRO;
   return data;
 }
@@ -933,11 +935,11 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
     case IMAGE_POINTER:
       if (STRINGP (IMAGE_INSTANCE_PIXMAP_FILENAME (ii)))
 	{
-	  char *s;
+	  Intbyte *s;
 	  Lisp_Object filename = IMAGE_INSTANCE_PIXMAP_FILENAME (ii);
-	  s = strrchr ((char *) XSTRING_DATA (filename), '/');
+	  s = qxestrrchr (XSTRING_DATA (filename), '/');
 	  if (s)
-	    print_internal (build_string (s + 1), printcharfun, 1);
+	    print_internal (build_intstring (s + 1), printcharfun, 1);
 	  else
 	    print_internal (filename, printcharfun, 1);
 	}
@@ -1380,11 +1382,9 @@ incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
   signal_error_1
     (Qinvalid_argument,
      list2
-     (emacs_doprnt_string_lisp_2
-      ((const Intbyte *)
-       "No compatible image-instance types given: wanted one of %s, got %s",
-       Qnil, -1, 2,
-       encode_image_instance_type_list (desired_dest_mask),
+     (emacs_sprintf_string_lisp
+      ("No compatible image-instance types given: wanted one of %s, got %s",
+       Qnil, 2, encode_image_instance_type_list (desired_dest_mask),
        encode_image_instance_type_list (given_dest_mask)),
       instantiator));
 }
@@ -2140,34 +2140,34 @@ invalidate_glyph_geometry_maybe (Lisp_Object glyph_or_ii, struct window* w)
 /*                              error helpers                           */
 /************************************************************************/
 DOESNT_RETURN
-signal_image_error (const char *reason, Lisp_Object frob)
+signal_image_error (const CIntbyte *reason, Lisp_Object frob)
 {
   signal_error (Qimage_conversion_error, reason, frob);
 }
 
 DOESNT_RETURN
-signal_image_error_2 (const char *reason, Lisp_Object frob0, Lisp_Object frob1)
+signal_image_error_2 (const CIntbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error_2 (Qimage_conversion_error, reason, frob0, frob1);
 }
 
 DOESNT_RETURN
-signal_double_image_error (const char *string1, const char *string2,
+signal_double_image_error (const CIntbyte *string1, const CIntbyte *string2,
 			   Lisp_Object data)
 {
   signal_error_1 (Qimage_conversion_error,
-                list3 (build_translated_string (string1),
-		       build_translated_string (string2),
+                list3 (build_msg_string (string1),
+		       build_msg_string (string2),
 		       data));
 }
 
 DOESNT_RETURN
-signal_double_image_error_2 (const char *string1, const char *string2,
+signal_double_image_error_2 (const CIntbyte *string1, const CIntbyte *string2,
 			     Lisp_Object data1, Lisp_Object data2)
 {
   signal_error_1 (Qimage_conversion_error,
-                list4 (build_translated_string (string1),
-		       build_translated_string (string2),
+                list4 (build_msg_string (string1),
+		       build_msg_string (string2),
 		       data1, data2));
 }
 
@@ -2587,13 +2587,10 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 		     int ok_if_data_invalid)
 {
   int w, h;
-  Extbyte *data;
+  UChar_Binary *data;
   int result;
-  const char *filename_ext;
 
-  LISP_STRING_TO_EXTERNAL (name, filename_ext, Qfile_name);
-  result = read_bitmap_data_from_file (filename_ext, &w, &h,
-				       (unsigned char **) &data, xhot, yhot);
+  result = read_bitmap_data_from_file (name, &w, &h, &data, xhot, yhot);
 
   if (result == BitmapSuccess)
     {
@@ -2601,7 +2598,7 @@ bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
       int len = (w + 7) / 8 * h;
 
       retval = list3 (make_int (w), make_int (h),
-		      make_ext_string (data, len, Qbinary));
+		      make_ext_string ((Extbyte *) data, len, Qbinary));
       XFree (data);
       return retval;
     }
@@ -2884,7 +2881,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
       XpmFree (data);
 
       set_buffer_internal (old_buffer);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
 
       RETURN_UNGCPRO (retval);
     }
@@ -3292,7 +3289,7 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	      assert (EQ (XIMAGE_INSTANCE_FRAME (instance),
 			  DOMAIN_FRAME (domain)));
 #endif
-	  unbind_to (speccount, Qnil);
+	  unbind_to (speccount);
 #ifdef ERROR_CHECK_GLYPHS
 	  if (image_instance_type_to_mask (XIMAGE_INSTANCE_TYPE (instance))
 	      & (IMAGE_SUBWINDOW_MASK | IMAGE_WIDGET_MASK))
@@ -4579,7 +4576,7 @@ redisplay_subwindow (Lisp_Object subwindow)
   IMAGE_INSTANCE_DISPLAY_HASH (ii) = internal_hash (subwindow,
 						    IMAGE_INSTANCE_HASH_DEPTH);
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
 }
 
 /* Determine whether an image_instance has changed structurally and

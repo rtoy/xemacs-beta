@@ -6,7 +6,7 @@ define([AC_INIT_NOTICE],
 #### Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 #### Copyright (C) 1993-1995 Board of Trustees, University of Illinois.
 #### Copyright (C) 1996, 1997 Sun Microsystems, Inc.
-#### Copyright (C) 1995, 1996 Ben Wing.
+#### Copyright (C) 1995, 1996, 2002 Ben Wing.
 #### Copyright (C) 2000, 2001 Martin Buchholz.
 #### Copyright (C) 1998, 1999 J. Kean Johnston.
 
@@ -373,8 +373,8 @@ with_tty=""
 use_union_type="no"
 with_dnet=""
 pdump="no"
-dnl dragndrop is still experimental.  When it is stable, comment out the following line:
-with_dragndrop="no"
+dnl dragndrop is still experimental, except on Windows.  When it is stable, comment out the following line:
+with_dragndrop_default="no"
 dnl Too annoying, even if mandated by IPv6 (and I'm not even sure of that)
 dnl #### Change this to yes when somebody understands IPv6 and handle bugs.
 with_ipv6_cname="no"
@@ -480,6 +480,7 @@ while test $# != 0; do
 	with_jpeg	| \
 	with_png	| \
 	with_tiff	| \
+	with_zlib	| \
 	with_wmcommand	| \
 	with_xmu	| \
 	with_purify	| \
@@ -487,9 +488,8 @@ while test $# != 0; do
 	with_toolbars	| \
 	with_tty	| \
 	with_xfs	| \
-	with_i18n3	| \
 	with_mule	| \
-	with_file_coding| \
+        with_default_eol_detection | \
 	with_canna	| \
 	with_wnn	| \
 	with_wnn6	| \
@@ -1027,9 +1027,8 @@ dnl debug=yes must be set when error checking is present.  This should be
 dnl fixed up.
 dnl debug implies other options
 if test "${debug:=$beta}" = "yes"; then
-  use_assertions=yes memory_usage_stats=yes
-  XE_ADD_OBJS(debug.o)
-  XE_ADD_OBJS(tests.o)
+  use_assertions=yes
+  memory_usage_stats=yes
   AC_DEFINE(DEBUG_XEMACS)
 fi
 test "$use_assertions"     = "yes" && AC_DEFINE(USE_ASSERTIONS)
@@ -1603,12 +1602,10 @@ test "$with_sparcworks" = "yes" && with_workshop=yes # compatibility alias
 XE_CHECK_FEATURE_DEPENDENCY(workshop, tooltalk)
 if test "$with_workshop" = "yes"; then
   AC_DEFINE(SUNPRO)
-  XE_ADD_OBJS(sunpro.o)
 fi
 
 if test "$with_clash_detection" != "no"; then
   AC_DEFINE(CLASH_DETECTION)
-  XE_ADD_OBJS(filelock.o)
 fi
 
 dnl Choose a compiler from (in order)
@@ -1916,9 +1913,10 @@ if test "$cflags_specified" = "no"; then
     CFLAGS="-g -O3 -Wall -Wno-switch -Winline -Wmissing-prototypes"
     dnl Yuck, bad compares have been worth at least 3 crashes!
     CFLAGS="$CFLAGS -Wsign-compare"
-    dnl You get five zillion shadowing warnings with g++.
-    dnl Even with gcc, -Wshadow is questionable because of its complaints
-    dnl about parameters with the same names as global functions.
+    dnl With g++, -Wshadow produces five zillion utterly random warnings --
+    dnl a local var named `buffer' conflicts with `struct buffer' for
+    dnl example.  Even with gcc, -Wshadow is questionable because of its
+    dnl complaints about parameters with the same names as global functions.
     if test "$xemacs_compiler" != "g++"; then
       CFLAGS="$CFLAGS -Wshadow"
     fi
@@ -2646,11 +2644,6 @@ if test "${GTK_CONFIG}" != "no"; then
       test "${with_dialogs}" != "no" && with_dialogs=gtk
       test "${with_widgets}" != "no" && with_widgets=gtk
 
-      XE_ADD_OBJS(console-gtk.o device-gtk.o event-gtk.o frame-gtk.o)
-      XE_ADD_OBJS(objects-gtk.o redisplay-gtk.o glyphs-gtk.o)
-      XE_ADD_OBJS(select-gtk.o gccache-gtk.o)
-      XE_ADD_OBJS(gtk-xemacs.o ui-gtk.o)
-
       dnl Check for libglade support (it rocks)
       OLD_CFLAGS="${CFLAGS}"
       OLD_CPPFLAGS="${CPPFLAGS}"
@@ -2929,36 +2922,29 @@ if test "$with_msw" != "no"; then
     fi
 
     install_pp="$blddir/lib-src/installexe.sh"
-    XE_APPEND(-lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lwinspool, libs_system)
-    test "$with_dragndrop" != no && XE_APPEND(msw, dragndrop_proto)
+    XE_APPEND(-limm32 -lshell32 -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -lole32 -luuid -lwinspool -lmpr, libs_system)
+    if test "$with_dragndrop" != no; then
+      XE_APPEND(msw, dragndrop_proto)
+      with_dragndrop=yes
+    fi
     if test "$window_system" != x11; then
- 	window_system=msw
-	test "$with_scrollbars" != "no" && with_scrollbars=msw \
-	    && XE_ADD_OBJS(scrollbar-msw.o)
-	test "$with_menubars"   != "no" && with_menubars=msw \
-	    && XE_ADD_OBJS(menubar-msw.o)
-	test "$with_toolbars"   != "no" && with_toolbars=msw \
-	    && XE_ADD_OBJS(toolbar-msw.o)
-	test "$with_dialogs"   != "no" && with_dialogs=msw \
-	    && XE_ADD_OBJS(dialog-msw.o)
-	test "$with_widgets"   != "no" && with_widgets=msw
-    else
-	test "$with_scrollbars" != "no" && XE_ADD_OBJS(scrollbar-msw.o)
-	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
-	test "$with_toolbars"   != "no" && XE_ADD_OBJS(toolbar-msw.o)
-	test "$with_dialogs"    != "no" && XE_ADD_OBJS(dialog-msw.o)
+      window_system=msw
+      test "$with_scrollbars" != "no" && with_scrollbars=msw
+      test "$with_menubars"   != "no" && with_menubars=msw
+      test "$with_toolbars"   != "no" && with_toolbars=msw
+      test "$with_dialogs"    != "no" && with_dialogs=msw
+      test "$with_widgets"    != "no" && with_widgets=msw
     fi
     dnl check for our special version of select
     AC_TRY_RUN([#include <fcntl.h>
     int main() { return (open("/dev/windows", O_RDONLY, 0) > 0)? 0 : 1; }],
-    [need_event_unixoid=yes; AC_DEFINE(HAVE_MSG_SELECT)])
-    with_file_coding=yes
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o gui-msw.o)
+    [AC_DEFINE(HAVE_MSG_SELECT)])
   fi
 fi
 
 AC_SUBST(install_pp)
 
+test -z "$with_dragndrop" && with_dragndrop="$with_dragndrop_default"
 test -z "$window_system" && window_system="none"
 
 dnl Test for features that require a window system - ANY window system
@@ -3009,7 +2995,7 @@ dnl for example not on AIX 4.3.
 if test "$with_x11" = "yes"; then
   AC_CHECK_HEADER(X11/extensions/shape.h, [
    AC_DEFINE(HAVE_BALLOON_HELP)
-   XE_ADD_OBJS(balloon_help.o balloon-x.o)])
+   ])
 fi
 
 dnl FSF 19.29 has some bitmapdir stuff here.
@@ -3085,7 +3071,6 @@ if test "$with_tooltalk" = "yes"; then
   AC_DEFINE(TOOLTALK)
   AC_DEFINE_UNQUOTED(TT_C_H_FILE, "$tt_c_h_file")
   XE_PREPEND($tt_libs, libs_x)
-  XE_ADD_OBJS(tooltalk.o)
 fi
 
 dnl Autodetect CDE
@@ -3168,7 +3153,6 @@ if test "$with_ldap" != "no"; then
 fi
 if test "$with_ldap" = "yes"; then
   AC_DEFINE(HAVE_LDAP)
-  XE_ADD_OBJS(eldap.o)
   if test "$with_ldap_nolber" = "yes" ; then
     XE_PREPEND(-lldap, LIBS)
   else
@@ -3211,7 +3195,6 @@ dnl Look for these standard header file locations, known to be used on Linux
                  AC_DEFINE(HAVE_POSTGRESQLV7)])
     AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
     XE_PREPEND(-lpq, LIBS)
-    XE_ADD_OBJS(postgresql.o)
   elif test "$with_postgresql" = "yes"; then
     XE_DIE("Required PostgreSQL support cannot be provided.  Check --site-prefixes.")
   fi
@@ -3321,7 +3304,6 @@ if test "$window_system" != "none"; then
   if test "$with_gif" != "no"; then
     with_gif="yes"
     AC_DEFINE(HAVE_GIF)
-    XE_ADD_OBJS(dgif_lib.o gif_io.o)
   fi
 
   dnl Too many stupid linkers can't detect cascaded lib dependencies until runtime
@@ -3552,6 +3534,7 @@ esac
 case "$with_dialogs" in "" | "yes" | "lucid" )
   if   test "$have_motif"     = "yes"; then with_dialogs="motif"
   elif test "$have_xaw"       = "yes"; then with_dialogs="athena"
+  elif test "$with_msw"       = "yes"; then with_dialogs="msw"
   else with_dialogs=no
   fi ;;
 esac
@@ -3561,6 +3544,7 @@ esac
 case "$with_widgets" in "" | "yes" | "lucid")
   if   test "$have_motif" = "yes"; then with_widgets="motif"
   elif test "$have_xaw"   = "yes"; then with_widgets="athena"
+  elif test "$with_msw"   = "yes"; then with_widgets="msw"
   else with_widgets=no
   fi ;;
 esac
@@ -3652,27 +3636,6 @@ test "$with_scrollbars" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "$with_dialogs"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "$with_widgets"    = "motif"  && AC_DEFINE(LWLIB_WIDGETS_MOTIF)
 
-test "$with_menubars"   != "no"    && XE_ADD_OBJS(menubar.o)
-test "$with_scrollbars" != "no"    && XE_ADD_OBJS(scrollbar.o)
-test "$with_dialogs"    != "no"    && XE_ADD_OBJS(dialog.o)
-test "$with_toolbars"   != "no"    && XE_ADD_OBJS(toolbar.o)
-
-if test "$with_gtk" = "yes"; then
-  test "$with_menubars"   != "no"      && XE_ADD_OBJS(menubar-gtk.o)
-  test "$with_scrollbars" != "no"      && XE_ADD_OBJS(scrollbar-gtk.o)
-  test "$with_dialogs"    != "no"      && XE_ADD_OBJS(dialog-gtk.o)
-  test "$with_toolbars"   != "no"      && XE_ADD_OBJS(toolbar-common.o toolbar-gtk.o)
-  test "$all_widgets" != "no no no no no" && XE_ADD_OBJS(gui-gtk.o)
-fi
-
-if test "$with_x11" = "yes"; then
-  test "$with_menubars"   != "no"  && XE_ADD_OBJS(menubar-x.o)
-  test "$with_scrollbars" != "no"  && XE_ADD_OBJS(scrollbar-x.o)
-  test "$with_dialogs"    != "no"  && XE_ADD_OBJS(dialog-x.o)
-  test "$with_toolbars"   != "no"  && XE_ADD_OBJS(toolbar-common.o toolbar-x.o)
-  test "$all_widgets" != "no no no no no" && XE_ADD_OBJS(gui-x.o)
-fi
-
 dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
@@ -3686,24 +3649,13 @@ dnl	echo "rerun configure with --with-mule=no"
 dnl	exit 1
 dnl fi
 
-if test "$with_file_coding" = "no" && test "$with_mule" = "yes"; then
-  AC_MSG_WARN([--with-file-coding forced to \`yes': Required for Mule support])
-  with_file_coding=yes
+if test "$with_default_eol_detection" = "yes"; then
+  AC_DEFINE(HAVE_DEFAULT_EOL_DETECTION)
 fi
-
-if test "$with_file_coding" = "yes" && test "$with_mule" = "no"; then
-  AC_DEFINE(FILE_CODING)
-  XE_ADD_OBJS(file-coding.o)
-fi
-
-dnl will change to yes as soon as my mule ws is merged in.
-test -z "$with_file_coding" && with_file_coding=no
 
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)
   AC_DEFINE(MULE)
-  AC_DEFINE(FILE_CODING)
-  XE_ADD_OBJS(mule.o mule-ccl.o mule-charset.o file-coding.o)
 
   dnl Use -lintl to get internationalized strerror for Mule
   AC_CHECK_HEADERS(libintl.h)
@@ -3770,7 +3722,6 @@ if test "$with_mule" = "yes" ; then
   if test "$with_wnn" = "yes"; then
     AC_DEFINE(HAVE_WNN)
     XE_PREPEND(-l$libwnn, libs_x)
-    XE_ADD_OBJS(mule-wnnfns.o)
     if test "$with_wnn6" != "no"; then
       AC_CHECK_LIB($libwnn, jl_fi_dic_list, with_wnn6=yes)
       test "$with_wnn6" = "yes" && AC_DEFINE(WNN6)
@@ -3800,7 +3751,6 @@ if test "$with_mule" = "yes" ; then
   if test "$with_canna" = "yes"; then
     AC_DEFINE(HAVE_CANNA)
     XE_PREPEND(-lcanna -lRKC, libs_x)
-    XE_ADD_OBJS(mule-canna.o)
   fi
 
 else dnl "$with_mule" = "no"
@@ -3821,7 +3771,7 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
-AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime getaddrinfo gethostname getnameinfo getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask snprintf stpcpy strerror tzset ulimit usleep waitpid vsnprintf fsync ftruncate umask)
+AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime getaddrinfo gethostname getnameinfo getpagesize gettimeofday getcwd getwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask snprintf stpcpy strerror symlink tzset ulimit usleep waitpid vsnprintf fsync ftruncate umask)
 
 dnl ----------------------------------------------------------------
 dnl Check for Unixoid pty/process support.
@@ -3863,9 +3813,6 @@ if test "$ac_cv_header_stropts_h" = "yes"; then
   AC_CHECK_FUNCS(isastream)
   AC_CHECK_HEADERS(strtio.h) dnl TIOCSIGNAL
 fi
-
-dnl Use our own realpath always.
-XE_ADD_OBJS(realpath.o)
 
 dnl Check whether the system provides getloadavg().
 AC_CHECK_FUNCS(getloadavg)
@@ -3986,11 +3933,6 @@ if test "$__DECC" != "yes"; then
   AC_FUNC_ALLOCA
   test -n "$ALLOCA" && XE_ADD_OBJS($ALLOCA)
 fi
-
-dnl Check whether vfork exists and works correctly. (This does more
-dnl than just check for its existence.) If so, it defines HAVE_VFORK_H.
-dnl If not, it defines vfork to be fork.
-AC_FUNC_VFORK
 
 dnl Check whether strcoll exists and works correctly. (This does more
 dnl than just check for its existence.) If so, it defines HAVE_STRCOLL.
@@ -4247,7 +4189,6 @@ test -z "$with_tty" && with_tty=yes
 if test "$with_tty" = "yes"  ; then
   AC_CHECKING(for TTY-related features)
   AC_DEFINE(HAVE_TTY)
-  XE_ADD_OBJS(console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o redisplay-tty.o cm.o)
 
   dnl Autodetect ncurses.
   if test -z "$with_ncurses"; then
@@ -4306,7 +4247,6 @@ if test "$with_tty" = "yes"  ; then
   test -z "$with_gpm" && { AC_CHECK_LIB(gpm, Gpm_Open, with_gpm=yes, with_gpm=no) }
   if test "$with_gpm" = "yes"; then
     AC_DEFINE(HAVE_GPM)
-    XE_ADD_OBJS(gpmevent.o)
     XE_PREPEND(-lgpm, LIBS)
   fi
 
@@ -4318,11 +4258,6 @@ else dnl "$with_tty" = "no"
     eval "with_${feature}=no"
   done
 fi dnl with_tty
-
-dnl Do we need event-unixoid.o ?
-dnl This is needed for X, or for TTY, or for MSWIN w/Cygwin select()
-dnl [but not Mingw MSWIN]
-test "$with_x11" = "yes" -o "$with_tty" = "yes" -o "$need_event_unixoid" = "yes" && XE_ADD_OBJS(event-unixoid.o)
 
 dnl Database support
 dnl We do not necessarily have to have libdb/lib(g)dbm for DB/(G)DBM support.
@@ -4422,7 +4357,6 @@ fi
 if test "$with_database_gdbm $with_database_dbm $with_database_berkdb" \
      != "no no no"; then
   AC_DEFINE(HAVE_DATABASE)
-  XE_ADD_OBJS(database.o)
 fi
 
 dnl Socks support
@@ -4476,7 +4410,6 @@ if test "$with_modules" != "no"; then
 
   if test "$can_build_shared" = "yes"; then
     AC_DEFINE(HAVE_SHLIB)
-    XE_ADD_OBJS(sysdll.o emodules.o)
     XE_APPEND(src, INSTALL_ARCH_DEP_SUBDIR)
     test -n "$libdl" && XE_PREPEND(-l${libdl}, LIBS)
     AC_CHECK_FUNCS(dlerror _dlerror)
@@ -4513,11 +4446,8 @@ AC_TRY_RUN([int main(int c,char *v[]){return 0;}],[:],[
   exit 1])
 
 dnl Process support
-if test "$win32_processes" = "yes"; then
-  XE_ADD_OBJS(process-nt.o)
-else
+if test "$win32_processes" != "yes"; then
   AC_DEFINE(HAVE_UNIX_PROCESSES)
-  XE_ADD_OBJS(process-unix.o)
 fi
 
 dnl --------------------------------
@@ -4848,7 +4778,6 @@ elif test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
-test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$quick_build"        = "yes" && AC_DEFINE(QUICK_BUILD)
@@ -5049,7 +4978,6 @@ fi
 echo "
 Internationalization:"
 test "$with_mule" = yes && echo "  Compiling in support for Mule (multi-lingual Emacs)."
-test "$with_file_coding" = yes && echo "  Compiling in support for file coding."
 test "$with_xim" != no && echo "  Compiling in support for XIM (X11R5+ I18N input method)."
 test "$with_xim" = motif && echo "    - Using Motif to provide XIM support."
 test "$with_xim" = xlib && echo "    - Using raw Xlib to provide XIM support."
@@ -5059,7 +4987,6 @@ if test "$with_wnn" = yes; then
   echo "  Compiling in support for the WNN input method on Mule."
   test "$with_wnn6" = yes && echo "    - Using WNN version 6."
 fi
-test "$with_i18n3" = yes && echo "  Compiling in support for I18N level 3 (doesn't currently work)."
 
 echo "
 Mail:"

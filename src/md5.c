@@ -1,6 +1,7 @@
 /* md5.c - Functions to compute MD5 message digest of files or memory blocks
    according to the definition of MD5 in RFC 1321 from April 1992.
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
    NOTE: The canonical source of this file is maintained with the GNU C
    Library.  Bugs can be reported to bug-glibc@prep.ai.mit.edu.
 
@@ -77,9 +78,7 @@ typedef u_int32_t md5_uint32;
 #include "lisp.h"
 #include "buffer.h"
 #include "lstream.h"
-#ifdef FILE_CODING
 # include "file-coding.h"
-#endif
 
 /* Structure to save state of computation between the single steps.  */
 struct md5_ctx
@@ -199,7 +198,7 @@ md5_stream (FILE *stream, void *resblock)
       /* Read block.  Take care for partial reads.  */
       do
 	{
-	  n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
+	  n = retry_fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
 	  sum += n;
 	}
@@ -459,7 +458,6 @@ md5_process_block (const void *buffer, size_t len, struct md5_ctx *ctx)
 
 
 #ifdef emacs
-#ifdef FILE_CODING
 /* Find out what format the buffer will be saved in, so we can make
    the digest based on what it will look like on disk.  */
 static Lisp_Object
@@ -471,44 +469,26 @@ md5_coding_system (Lisp_Object object, Lisp_Object coding, Lisp_Object istream,
   if (NILP (coding))
     {
       if (BUFFERP (object))
-	{
-	  /* Use the file coding for this buffer by default.  */
-	  coding_system = XBUFFER (object)->buffer_file_coding_system;
-	}
+	/* Use the file coding for this buffer by default.  */
+	coding = XBUFFER (object)->buffer_file_coding_system;
       else
-	{
-	  /* Attempt to autodetect the coding of the string.  This is
-             VERY hit-and-miss.  */
-	  eol_type_t eol = EOL_AUTODETECT;
-	  coding_system = Fget_coding_system (Qundecided);
-	  determine_real_coding_system (XLSTREAM (istream),
-					&coding_system, &eol);
-	}
-      if (NILP (coding_system)) 
+	/* Attempt to autodetect the coding of the string.  This is
+	   VERY hit-and-miss.  #### It shouldn't be. */
+	coding = detect_coding_stream (istream);
+    }
+
+  if (error_me_not)
+    {
+      coding_system = find_coding_system_for_text_file (coding, 0);
+      if (NILP (coding_system))
+	/* Default to binary.  */
 	coding_system = Fget_coding_system (Qbinary);
-      else
-	{
-	  coding_system = Ffind_coding_system (coding_system);
-	  if (NILP (coding_system))
-	    coding_system = Fget_coding_system (Qbinary);
-	}
     }
   else
-    {
-      coding_system = Ffind_coding_system (coding);
-      if (NILP (coding_system))
-	{
-	  if (error_me_not)
-	    /* Default to binary.  */
-	    coding_system = Fget_coding_system (Qbinary);
-	  else
-	    invalid_argument ("No such coding system", coding);
-	}
-    }
+    coding_system = get_coding_system_for_text_file (coding, 0);
+
   return coding_system;
 }
-#endif /* FILE_CODING */
-
 
 DEFUN ("md5", Fmd5, 1, 5, 0, /*
 Return the MD5 message digest of OBJECT, a buffer or string.
@@ -537,10 +517,8 @@ file-coding or Mule support.  Otherwise, they are ignored.
 
   Lisp_Object instream;
   struct gcpro gcpro1;
-#ifdef FILE_CODING
   Lisp_Object raw_instream;
   struct gcpro ngcpro1;
-#endif
 
   /* Set up the input stream.  */
   if (BUFFERP (object))
@@ -564,13 +542,11 @@ file-coding or Mule support.  Otherwise, they are ignored.
     }
   GCPRO1 (instream);
 
-#ifdef FILE_CODING
   /* Determine the coding and set up the conversion stream.  */
   coding = md5_coding_system (object, coding, instream, !NILP (noerror));
   raw_instream = instream;
-  instream = make_encoding_input_stream (XLSTREAM (instream), coding);
+  instream = make_coding_input_stream (XLSTREAM (instream), coding, CODING_ENCODE);
   NGCPRO1 (raw_instream);
-#endif
 
   /* Initialize MD5 context.  */
   md5_init_ctx (&ctx);
@@ -588,10 +564,8 @@ file-coding or Mule support.  Otherwise, they are ignored.
       md5_process_bytes (tempbuf, size_in_bytes, &ctx);
     }
   Lstream_delete (XLSTREAM (instream));
-#ifdef FILE_CODING
   Lstream_delete (XLSTREAM (raw_instream));
   NUNGCPRO;
-#endif
   UNGCPRO;
 
   md5_finish_ctx (&ctx, digest);

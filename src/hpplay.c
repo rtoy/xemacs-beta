@@ -279,6 +279,6 @@ not make your functions depend on it.
 void
 init_hpplay (void)
 {
-  if (getenv ("SPEAKER"))
-    Vhp_play_speaker = intern (getenv ("SPEAKER"));
+  if (egetenv ("SPEAKER"))
+    Vhp_play_speaker = intern (egetenv ("SPEAKER"));
 }

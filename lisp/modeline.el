@@ -1,7 +1,7 @@
 ;;; modeline.el --- modeline hackery.
 
 ;; Copyright (C) 1988, 1992-1994, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996 Ben Wing.
+;; Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -44,8 +44,9 @@
 	 (specifier-instance modeline-shadow-thickness)))
     (and (integerp thickness)
 	 (> thickness 0)))
-  "Whether the default toolbar is globally visible. This option can be
-customized through the options menu."
+  "Whether the default toolbar is globally visible.
+This option only has an effect when set using `customize-set-variable',
+or through the Options menu."
   :group 'display
   :type 'boolean
   :set #'(lambda (var val)
@@ -83,7 +84,9 @@ motion controls modeline scrolling).
 
 With a value of t, the modeline text is scrolled in the same direction as
 the mouse motion. With a value of 'scrollbar, the modeline is considered as
-a scrollbar for its own text, which then moves in the opposite direction."
+a scrollbar for its own text, which then moves in the opposite direction.
+
+This option should be set using `customize-set-variable'."
   :type '(choice (const :tag "none" nil)
 		 (const :tag "text" t)
 		 (const :tag "scrollbar" scrollbar))
@@ -563,8 +566,73 @@ parentheses on the modeline."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;                              Other                                  ;;;
+;;;                         Modeline definition                         ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro define-modeline-control (name contents doc-string &optional face
+					help-echo)
+  "Define a modeline control named NAME, a symbol.
+A modeline control is a section of the modeline whose contents can easily
+be changed independently of the rest of the modeline, which can have its
+own color, and which can have its own mouse commands, which apply when the
+mouse is over the control.
+
+Logically, a modeline control should be an object; but we have terrible
+object support in XEmacs, and so history has given us a series of related
+variables, which [hopefully] all follow the same conventions.
+
+Three variables are created:
+
+1. The variable holding the control specification is called
+   `modeline-NAME', and is automatically buffer-local.
+
+2. The variable holding the extent that covers the control area in the
+   modeline is called `modeline-NAME-extent'.  Onto this extent, colors and
+   keymaps (and possibly glyphs?) can be added, and will be noticed by the
+   modeline redisplay code.  The attachment of the extent and its control
+   is done somewhere in the modeline specification: either in the main spec
+   in `modeline-format', or in some other control, like this:
+
+   (cons modeline-NAME-extent 'modeline-NAME)
+
+3. The keymap holding the mousable commands for the control is called
+   `modeline-NAME-map'.  This is automatically attached to the extent by
+   this macro.
+
+Initial contents of the control are CONTENTS (see `modeline-format' for
+information about the structure of this contents).  DOC-STRING specifies
+help text that will be placed in the control variable's documentation,
+indicating what's supposed to be in the control.
+
+Optional argument FACE specifies the face of the control's
+extent. (`modeline-mousable' is a good choice if your control is, in fact,
+mousable (i.e. it has some mouse commands defined for it).  Optional
+argument HELP-ECHO specifies some help-echo to be displayed when the mouse
+moves over the control, indicating what mouse strokes are available.  "
+  (let ((control-var (intern (format "modeline-%s" name)))
+	(extent-var (intern (format "modeline-%s-extent" name)))
+	(map-var (intern (format "modeline-%s-map" name)))
+	)
+    `(progn
+       (defconst ,control-var ,contents
+	 ,(format "%s
+
+The format of the contents of this variable is documented in
+`modeline-format'.  The way the control is displayed can be changed by
+setting the face of `%s'.  Mouse commands
+for the control can be set using `%s'." doc-string extent-var map-var))
+       (make-variable-buffer-local ',control-var)
+       (defvar ,extent-var (make-extent nil nil)
+	 ,(format "Extent covering the `%s' control." control-var))
+       (defvar ,map-var (make-sparse-keymap 'modeline-narrowed-map)
+	 ,(format "Keymap consulted for mouse-clicks on the `%s' control."
+		  control-var))
+       (set-extent-face ,extent-var ,face)
+       (set-extent-keymap ,extent-var ,map-var)
+       (set-extent-property ,extent-var 'help-echo ,help-echo))))
+(put 'define-modeline-control 'lisp-indent-function 2)
+
+;; ------------------------ modeline buffer id -------------------
 
 (defun modeline-buffers-menu (event)
   (interactive "e")
@@ -576,13 +644,17 @@ parentheses on the modeline."
      )
    event))
 
-(defvar modeline-buffer-id-left-map
-  (make-sparse-keymap 'modeline-buffer-id-left-map)
-"Keymap consulted for mouse-clicks on the left half of the buffer-id string.")
+(define-modeline-control buffer-id-left
+  'modeline-modified-buffer-highlighted-name ;; "XEmacs:"
+  "Modeline control for left half of buffer ID."
+  'modeline-mousable
+  "button2 cycles to the previous buffer")
 
-(defvar modeline-buffer-id-right-map
-  (make-sparse-keymap 'modeline-buffer-id-right-map)
-"Keymap consulted for mouse-clicks on the right half of the buffer-id string.")
+(define-modeline-control buffer-id-right
+  'modeline-modified-buffer-non-highlighted-name ;; " %17b"
+  "Modeline control for right half of buffer ID."
+  nil
+  "button2 cycles to the next buffer")
 
 (define-key modeline-buffer-id-left-map 'button2 'mouse-unbury-buffer)
 (define-key modeline-buffer-id-right-map 'button2 'mouse-bury-buffer)
@@ -595,41 +667,106 @@ parentheses on the modeline."
 (when (featurep 'window-system)
   (set-face-foreground 'modeline-buffer-id "blue4" nil '(default color win))
   (set-face-font 'modeline-buffer-id [bold-italic] nil '(default mono win))
-  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale win)))
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale
+							  win)))
 (when (featurep 'tty)
   (set-face-font 'modeline-buffer-id [bold-italic] nil '(default tty)))
 
-(defvar modeline-buffer-id-extent (make-extent nil nil)
-  "Extent covering the whole of the buffer-id string.")
-(set-extent-face modeline-buffer-id-extent 'modeline-buffer-id)
-
-(defvar modeline-buffer-id-left-extent (make-extent nil nil)
-"Extent covering the left half of the buffer-id string.")
-(set-extent-keymap modeline-buffer-id-left-extent
-		   modeline-buffer-id-left-map)
-(set-extent-property modeline-buffer-id-left-extent 'help-echo
-		     "button2 cycles to the previous buffer")
-
-(defvar modeline-buffer-id-right-extent (make-extent nil nil)
-"Extent covering the right half of the buffer-id string.")
-(set-extent-keymap modeline-buffer-id-right-extent
-		   modeline-buffer-id-right-map)
-(set-extent-property modeline-buffer-id-right-extent 'help-echo
-		     "button2 cycles to the next buffer")
-
-(defconst modeline-buffer-identification
-  (list (cons modeline-buffer-id-left-extent "XEmacs%N:")
-					; this used to be "XEmacs:"
-	(cons modeline-buffer-id-right-extent " %17b"))
+(define-modeline-control buffer-id
+  (list (cons modeline-buffer-id-left-extent 'modeline-buffer-id-left)
+	(cons modeline-buffer-id-right-extent 'modeline-buffer-id-right))
   "Modeline control for identifying the buffer being displayed.
 Its default value is
 
-  (list (cons modeline-buffer-id-left-extent \"XEmacs%N:\")
-	(cons modeline-buffer-id-right-extent \" %17b\")))
+  (list (cons modeline-buffer-id-left-extent 'modeline-buffer-id-left)
+	(cons modeline-buffer-id-right-extent 'modeline-buffer-id-right))
 
 Major modes that edit things other than ordinary files may change this
-(e.g. Info, Dired,...).")
-(make-variable-buffer-local 'modeline-buffer-identification)
+(e.g. Info, Dired,...)."
+  'modeline-buffer-id)
+
+(defvaralias 'modeline-buffer-identification 'modeline-buffer-id)
+
+(defvar modeline-modified-buffer-non-highlighted-name nil)
+(make-variable-buffer-local 'modeline-modified-buffer-non-highlighted-name)
+(put 'modeline-modified-buffer-non-highlighted-name 'permanent-local t)
+
+(defvar modeline-modified-buffer-highlighted-name nil)
+(make-variable-buffer-local 'modeline-modified-buffer-highlighted-name)
+(put 'modeline-modified-buffer-highlighted-name 'permanent-local t)
+
+(defvar modeline-recorded-buffer-name nil)
+(make-variable-buffer-local 'modeline-recorded-buffer-name)
+(put 'modeline-recorded-buffer-name 'permanent-local t)
+
+(defvar modeline-recorded-buffer-file-name nil)
+(make-variable-buffer-local 'modeline-recorded-buffer-file-name)
+(put 'modeline-recorded-buffer-file-name 'permanent-local t)
+
+(add-hook 'buffer-list-changed-hook 'modeline-update-buffer-names)
+
+(defvar modeline-max-buffer-name-size 30)
+
+(defun modeline-update-buffer-names (frame)
+  (mapc #'(lambda (buf)
+	    (when (or (not (eq (buffer-name buf)
+			       (symbol-value-in-buffer
+				'modeline-recorded-buffer-name buf)))
+		      (not (eq (buffer-file-name buf)
+			       (symbol-value-in-buffer
+				'modeline-recorded-buffer-file-name buf))))
+	      ;(dp "processing %s" buf)
+	      (with-current-buffer buf
+		(setq modeline-recorded-buffer-name (buffer-name))
+		(setq modeline-recorded-buffer-file-name (buffer-file-name))
+		(if (not modeline-recorded-buffer-file-name)
+		    (setq modeline-modified-buffer-non-highlighted-name
+			  modeline-recorded-buffer-name
+			  modeline-modified-buffer-highlighted-name nil)
+		  (let ((fn
+			 (if (<= (length modeline-recorded-buffer-file-name)
+				 modeline-max-buffer-name-size)
+			     modeline-recorded-buffer-file-name
+			   (concat "..."
+				   (substring
+				    modeline-recorded-buffer-file-name
+				    (- modeline-max-buffer-name-size))))))
+		    (setq modeline-modified-buffer-non-highlighted-name
+			  ;; if the filename is very long, the entire
+			  ;; directory will get truncated to
+			  ;; non-existence.
+			  (let ((dir (file-name-directory fn)))
+			    (if dir
+				(concat " ("
+					(directory-file-name
+					 (file-name-directory fn))
+					")")
+			      ""))
+			  modeline-modified-buffer-highlighted-name
+				  (file-name-nondirectory fn))))
+		(redraw-modeline))))
+	(buffer-list)))
+
+(defcustom modeline-new-buffer-id-format t
+  "Whether the new format for the modeline buffer ID (with directory) is used.
+This option only has an effect when set using `customize-set-variable',
+or through the Options menu."
+  :group 'modeline
+  :type 'boolean
+  :set #'(lambda (var val)
+	   (if val
+	       (progn
+		 (setq-default modeline-buffer-id-left
+			       'modeline-modified-buffer-highlighted-name
+			       modeline-buffer-id-right
+			       'modeline-modified-buffer-non-highlighted-name)
+		 (set-extent-face modeline-buffer-id-left-extent
+				  'modeline-mousable))
+	     (setq-default modeline-buffer-id-left "XEmacs:"
+			   modeline-buffer-id-right '(" %17b"))
+	     (set-extent-face modeline-buffer-id-left-extent nil))))
+
+;; ------------------------ other modeline controls -------------------
 
 ;; These are for the sake of minor mode menu.  #### All of this is
 ;; kind of dirty.  `add-minor-mode' started out as a simple substitute
@@ -639,57 +776,18 @@ Major modes that edit things other than ordinary files may change this
 (add-minor-mode 'line-number-mode "")
 (add-minor-mode 'column-number-mode "")
 
-(defconst modeline-process nil
-  "Modeline control for displaying info on process status.
-Normally nil in most modes, since there is no process to display.")
-(make-variable-buffer-local 'modeline-process)
+(define-modeline-control coding-system '("%C")
+  "Modeline control for showing current coding system.")
+;; added March 7, 2002
+(define-obsolete-variable-alias 'modeline-multibyte-status
+  'modeline-coding-system)
 
-(defvar modeline-modified-map (make-sparse-keymap 'modeline-modified-map)
-  "Keymap consulted for mouse-clicks on the modeline-modified string.")
+(define-modeline-control modified '("--%1*%1+-")
+  "Modeline control for displaying whether current buffer is modified."
+  'modeline-mousable
+  "button2 toggles the buffer's read-only status")
 (define-key modeline-modified-map 'button2
   (make-modeline-command-wrapper 'modeline-toggle-read-only))
-
-(defvar modeline-modified-extent (make-extent nil nil)
-  "Extent covering the modeline-modified string.")
-(set-extent-face modeline-modified-extent 'modeline-mousable)
-(set-extent-keymap modeline-modified-extent modeline-modified-map)
-(set-extent-property modeline-modified-extent 'help-echo
-		     "button2 toggles the buffer's read-only status")
-
-(defconst modeline-modified '("--%1*%1+-")
-  "Modeline control for displaying whether current buffer is modified.")
-(make-variable-buffer-local 'modeline-modified)
-
-(defvar modeline-narrowed-map (make-sparse-keymap 'modeline-narrowed-map)
-  "Keymap consulted for mouse-clicks on the modeline-narrowed string.")
-(define-key modeline-narrowed-map 'button2
-  (make-modeline-command-wrapper 'widen))
-
-(defvar modeline-narrowed-extent (make-extent nil nil)
-  "Extent covering the modeline-narrowed string.")
-(set-extent-face modeline-narrowed-extent 'modeline-mousable)
-(set-extent-keymap modeline-narrowed-extent modeline-narrowed-map)
-(set-extent-property modeline-narrowed-extent 'help-echo
-		     "button2 widens the buffer")
-
-(setq-default
- modeline-format
- (list
-  ""
-  (cons modeline-modified-extent 'modeline-modified)
-  (cons modeline-buffer-id-extent 'modeline-buffer-identification)
-  "   "
-  'global-mode-string
-  "   %[("
-  (cons modeline-minor-mode-extent
-	(list "" 'mode-name 'minor-mode-alist))
-  (cons modeline-narrowed-extent "%n")
-  'modeline-process
-  ")%]----"
-  (list 'line-number-mode "L%l--")
-  (list 'column-number-mode "C%c--")
-  (cons -3 "%p")
-  "-%-"))
 
 ;;; Added for XEmacs 20.3.  Provide wrapper for vc since it may not always be
 ;;; present, and its symbols are not visible this early in the dump if it
@@ -705,5 +803,67 @@ otherwise it will call the usual `toggle-read-only'."
   (if-fboundp 'vc-toggle-read-only
       (vc-toggle-read-only)
     (toggle-read-only)))
+
+(define-modeline-control line-number (list 'line-number-mode "L%l ")
+  "Modeline control for displaying the line number of point.")
+(define-modeline-control column-number (list 'column-number-mode "C%c ")
+  "Modeline control for displaying the column number of point.")
+(define-modeline-control percentage (cons -3 "%p")
+  "Modeline control for displaying percentage of file above point.")
+
+(define-modeline-control position-status
+    (cons 15 (list
+	      (cons modeline-line-number-extent
+		    'modeline-line-number)
+	      (cons modeline-column-number-extent
+		    'modeline-column-number)
+	      (cons modeline-percentage-extent
+		    'modeline-percentage)))
+  "Modeline control for providing status about the location of point.
+Generally includes the line number of point, its column number, and the
+percentage of the file above point."
+  'modeline-buffer-id)
+
+(defconst modeline-tty-frame-specifier (make-specifier 'boolean))
+(add-hook 'create-frame-hook 'modeline-update-tty-frame-specifier)
+(defun modeline-update-tty-frame-specifier (f)
+  (if-fboundp 'frame-tty-p
+      (if (and (frame-tty-p f)
+	       (> (frame-property f 'frame-number) 1))
+	  (set-specifier modeline-tty-frame-specifier t f))))
+
+(define-modeline-control tty-frame-id (list modeline-tty-frame-specifier
+					    " [%S]"
+					    )
+  "Modeline control for showing which TTY frame is selected.")
+
+(define-modeline-control narrowed '("%n")
+  "Modeline control for displaying whether current buffer is narrowed."
+  'modeline-mousable
+  "button2 widens the buffer")
+(define-key modeline-narrowed-map 'button2
+  (make-modeline-command-wrapper 'widen))
+
+(define-modeline-control process nil
+  "Modeline control for displaying info on process status.
+Normally nil in most modes, since there is no process to display.")
+
+(setq-default
+ modeline-format
+ (list
+  ""
+  (cons modeline-coding-system-extent 'modeline-coding-system)
+  (cons modeline-modified-extent 'modeline-modified)
+  (cons modeline-position-status-extent 'modeline-position-status)
+  (cons modeline-tty-frame-id-extent 'modeline-tty-frame-id)
+  (cons modeline-buffer-id-extent 'modeline-buffer-id)
+  " "
+  'global-mode-string
+  " %[("
+  (cons modeline-minor-mode-extent
+	(list "" 'mode-name 'minor-mode-alist))
+  (cons modeline-narrowed-extent 'modeline-narrowed)
+  (cons modeline-process-extent 'modeline-process)
+  ")%]%-"))
 
 ;;; modeline.el ends here

@@ -171,19 +171,19 @@ what you give them.   Help stamp out software-hoarding!  */
  * [13]	PBIT    -A--	0x4f2d10     0xf2d10      0x17e0       	.rodata
  *	0	0	0x10         0x1          
  *
- * [14]	PBIT    WA--	0x5344f0     0xf44f0      0x4b3e4      	.data  <<<<<
+ * [14]	PBIT    WA--	0x5344f0     0xf44f0      0x4b3e4      	.data  <----
  *	0	0	0x10         0x1          
  *
  * [15]	PBIT    WA-G	0x57f8d4     0x13f8d4     0x2a84       	.got
  *	0	0	0x4          0x4          
  *
- * [16]	PBIT    WA-G	0x582360     0x142360     0x10         	.sdata <<<<<
+ * [16]	PBIT    WA-G	0x582360     0x142360     0x10         	.sdata <----
  *	0	0	0x10         0x1          
  *
- * [17]	NOBI    WA-G	0x582370     0x142370     0xb84        	.sbss  <<<<<
+ * [17]	NOBI    WA-G	0x582370     0x142370     0xb84        	.sbss  <----
  *	0	0	0x4          0            
  *
- * [18]	NOBI    WA--	0x582f00     0x142370     0x27ec0      	.bss   <<<<<
+ * [18]	NOBI    WA--	0x582f00     0x142370     0x27ec0      	.bss   <----
  *	0	0	0x10         0x1          
  *
  * [19]	SYMT    ----	0            0x142370     0x10e40      	.symtab
@@ -255,22 +255,22 @@ what you give them.   Help stamp out software-hoarding!  */
  * [13]	PBIT    -A--	0x4f2d10     0xf2d10      0x17e0       	.rodata
  *	0	0	0x10         0x1          
  *
- * [14]	PBIT    WA--	0x5344f0     0xf44f0      0x4b3e4      	.data  <<<<<
+ * [14]	PBIT    WA--	0x5344f0     0xf44f0      0x4b3e4      	.data  <----
  *	0	0	0x10         0x1          
  *
  * [15]	PBIT    WA-G	0x57f8d4     0x13f8d4     0x2a84       	.got
  *	0	0	0x4          0x4          
  *
- * [16]	PBIT    WA-G	0x582360     0x142360     0xb94        	.sdata <<<<<
+ * [16]	PBIT    WA-G	0x582360     0x142360     0xb94        	.sdata <----
  *	0	0	0x10         0x1          
  *
- * [17]	PBIT    WA--	0x582f00     0x142f00     0x94100      	.data  <<<<<
+ * [17]	PBIT    WA--	0x582f00     0x142f00     0x94100      	.data  <----
  *	0	0	0x10         0x1          
  *
- * [18]	NOBI    WA-G	0x617000     0x1d7000     0            	.sbss  <<<<<
+ * [18]	NOBI    WA-G	0x617000     0x1d7000     0            	.sbss  <----
  *	0	0	0x4          0            
  *
- * [19]	NOBI    WA--	0x617000     0x1d7000     0            	.bss   <<<<<
+ * [19]	NOBI    WA--	0x617000     0x1d7000     0            	.bss   <----
  *	0	0	0x4          0x1          
  *
  * [20]	SYMT    ----	0            0x1d7000     0x10e40      	.symtab

@@ -2,6 +2,7 @@
    Also takes args differently: pass one pointer to an array of strings
    in addition to the format string which is separate.
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
    Rewritten by mly to use varargs.h.
    Rewritten from scratch by Ben Wing (February 1995) for Mule; expanded
    to full printf spec.
@@ -98,7 +99,7 @@ typedef struct
    Note that MINLEN and MAXLEN are Charcounts but LEN is a Bytecount. */
 
 static void
-doprnt_1 (Lisp_Object stream, const Intbyte *string, Bytecount len,
+doprnt_2 (Lisp_Object stream, const Intbyte *string, Bytecount len,
 	  Charcount minlen, Charcount maxlen, int minus_flag, int zero_flag)
 {
   Lstream *lstr = XLSTREAM (stream);
@@ -391,26 +392,27 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
   return args;
 }
 
-/* Generate output from a format-spec FORMAT, of length FORMAT_LENGTH.
-   Output goes in BUFFER, which has room for BUFSIZE bytes.
-   If the output does not fit, truncate it to fit.
-   Returns the number of bytes stored into BUFFER.
-   LARGS or VARGS points to the arguments, and NARGS says how many.
-   if LARGS is non-zero, it should be a pointer to NARGS worth of
-   Lisp arguments.  Otherwise, VARGS should be a va_list referring
-   to the arguments. */
+/* Most basic entry point into string formatting.
+
+   Generate output from a format-spec (either a Lisp string
+   FORMAT_RELOC, or a C string FORMAT_NONRELOC of length FORMAT_LENGTH
+   -- which *MUST NOT* come from Lisp string data, unless GC is
+   inhibited).  Output goes to STREAM.  Returns the number of bytes
+   stored into STREAM.  Arguments are either C-type arguments in
+   va_list VARGS, or an array of Lisp objects in LARGS of size
+   NARGS. (Behavior is different in the two cases -- you either get
+   standard sprintf() behavior or `format' behavior.) */
 
 static Bytecount
 emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
-		Lisp_Object format_reloc, Bytecount format_length,
-		int nargs,
-		/* #### Gag me, gag me, gag me */
-		const Lisp_Object *largs, va_list vargs)
+		Bytecount format_length, Lisp_Object format_reloc,
+		int nargs, const Lisp_Object *largs, va_list vargs)
 {
   printf_spec_dynarr *specs = 0;
   printf_arg_dynarr *args = 0;
   REGISTER int i;
   int init_byte_count = Lstream_byte_count (XLSTREAM (stream));
+  int count;
 
   if (!NILP (format_reloc))
     {
@@ -421,6 +423,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
     format_length = (Bytecount) strlen ((const char *) format_nonreloc);
 
   specs = parse_doprnt_spec (format_nonreloc, format_length);
+  count = record_unwind_protect_freeing_dynarr (specs);
+
   if (largs)
     {
       /* allow too many args for string, but not too few */
@@ -434,6 +438,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
   else
     {
       args = get_doprnt_args (specs, vargs);
+      record_unwind_protect_freeing_dynarr (args);
     }
 
   for (i = 0; i < Dynarr_length (specs); i++)
@@ -445,7 +450,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
       if (!NILP (format_reloc)) /* refetch in case of GC below */
 	format_nonreloc = XSTRING_DATA (format_reloc);
 
-      doprnt_1 (stream, format_nonreloc + spec->text_before,
+      doprnt_2 (stream, format_nonreloc + spec->text_before,
 		spec->text_before_len, 0, -1, 0, 0);
 
       ch = spec->converter;
@@ -455,7 +460,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
       if (ch == '%')
 	{
-	  doprnt_1 (stream, (Intbyte *) &ch, 1, 0, -1, 0, 0);
+	  doprnt_2 (stream, (Intbyte *) &ch, 1, 0, -1, 0, 0);
 	  continue;
 	}
 
@@ -493,7 +498,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	}
 
       if (largs && (spec->argnum < 1 || spec->argnum > nargs))
- syntax_error ("Invalid repositioning argument", make_int (spec->argnum));
+	syntax_error ("Invalid repositioning argument",
+		      make_int (spec->argnum));
 
       else if (ch == 'S' || ch == 's')
 	{
@@ -503,15 +509,20 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	  if (!largs)
 	    {
 	      string = Dynarr_at (args, spec->argnum - 1).bp;
-	      /* error() can be called with null string arguments.
+#if 0
+	      /* [[ error() can be called with null string arguments.
 		 E.g., in fileio.c, the return value of strerror()
 		 is never checked.  We'll print (null), like some
 		 printf implementations do.  Would it be better (and safe)
 		 to signal an error instead?  Or should we just use the
-                 empty string?  -dkindred@cs.cmu.edu 8/1997
+                 empty string?  -dkindred@cs.cmu.edu 8/1997 ]]
+		 Do not hide bugs. --ben
 	      */
 	      if (!string)
 		string = (Intbyte *) "(null)";
+#else
+	      assert (string);
+#endif
 	      string_len = strlen ((char *) string);
 	    }
 	  else
@@ -538,7 +549,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	      string_len = string_length (ls);
 	    }
 
-	  doprnt_1 (stream, string, string_len, spec->minwidth,
+	  doprnt_2 (stream, string, string_len, spec->minwidth,
 		    spec->precision, spec->minus_flag, spec->zero_flag);
 	}
 
@@ -588,7 +599,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 	 syntax_error ("invalid character value %d to %%c spec", make_char (a));
 
 	      charlen = set_charptr_emchar (charbuf, a);
-	      doprnt_1 (stream, charbuf, charlen, spec->minwidth,
+	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,
 			-1, spec->minus_flag, spec->zero_flag);
 	    }
 	  else
@@ -644,210 +655,274 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 		    sprintf (text_to_print, constructed_spec, arg.l);
 		}
 
-	      doprnt_1 (stream, (Intbyte *) text_to_print,
+	      doprnt_2 (stream, (Intbyte *) text_to_print,
 			strlen (text_to_print), 0, -1, 0, 0);
 	    }
 	}
     }
 
-  /* #### will not get freed if error */
-  if (specs)
-    Dynarr_free (specs);
-  if (args)
-    Dynarr_free (args);
+  unbind_to (count);
   return Lstream_byte_count (XLSTREAM (stream)) - init_byte_count;
 }
 
-/* You really don't want to know why this is necessary... */
-static Bytecount
-emacs_doprnt_2 (Lisp_Object stream, const Intbyte *format_nonreloc,
-		Lisp_Object format_reloc, Bytecount format_length, int nargs,
-		const Lisp_Object *largs, ...)
+/* Basic external entry point into string formatting.  See
+ emacs_doprnt_1().
+ */
+
+Bytecount
+emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
+		 Bytecount format_length, Lisp_Object format_reloc,
+		 va_list vargs)
+{
+  return emacs_doprnt_1 (stream, format_nonreloc, format_length,
+			 format_reloc, 0, 0, vargs);
+}
+
+/* Basic external entry point into string formatting.  See
+ emacs_doprnt_1().
+ */
+
+Bytecount
+emacs_doprnt (Lisp_Object stream, const Intbyte *format_nonreloc,
+	      Bytecount format_length, Lisp_Object format_reloc,
+	      int nargs, const Lisp_Object *largs, ...)
 {
   va_list vargs;
   Bytecount val;
   va_start (vargs, largs);
-  val = emacs_doprnt_1 (stream, format_nonreloc, format_reloc,
-			format_length, nargs, largs, vargs);
+  val = emacs_doprnt_1 (stream, format_nonreloc, format_length,
+			 format_reloc, nargs, largs, vargs);
   va_end (vargs);
   return val;
 }
 
-/*********************** external entry points ***********************/
+/* Similar to `format' in that its arguments are Lisp objects rather than C
+   objects. (For the versions that take C objects, see the
+   emacs_[v]sprintf... functions below.) Accepts the format string as
+   either a C string (FORMAT_NONRELOC, which *MUST NOT* come from Lisp
+   string data, unless GC is inhibited) or a Lisp string (FORMAT_RELOC).
+   Return resulting formatted string as a Lisp string.
 
-#ifdef I18N3
-  /* A note about I18N3 translating: the format string should get
-     translated, but not under all circumstances.  When the format
-     string is a Lisp string, what should happen is that Fformat()
-     should format the untranslated args[0] and return that, and also
-     call Fgettext() on args[0] and, if that is different, format it
-     and store it in the `string-translatable' property of
-     the returned string.  See Fgettext(). */
-#endif
+   All arguments are GCPRO'd, including FORMAT_RELOC; this makes it OK to
+   pass newly created objects into this function (as often happens).
 
-/* Send formatted output to STREAM.  The format string comes from
-   either FORMAT_NONRELOC (of length FORMAT_LENGTH; -1 means use
-   strlen() to determine the length) or from FORMAT_RELOC, which
-   should be a Lisp string.  Return the number of bytes written
-   to the stream.
+   #### It shouldn't be necessary to specify the number of arguments.
+   This would require some rewriting of the doprnt() functions, though.
+   */
 
-   DO NOT pass the data from a Lisp string as the FORMAT_NONRELOC
-   parameter, because this function can cause GC. */
-
-Bytecount
-emacs_doprnt_c (Lisp_Object stream, const Intbyte *format_nonreloc,
-		Lisp_Object format_reloc, Bytecount format_length,
-		...)
+Lisp_Object
+emacs_vsprintf_string_lisp (const CIntbyte *format_nonreloc,
+			    Lisp_Object format_reloc, int nargs,
+			    const Lisp_Object *largs)
 {
-  int val;
-  va_list vargs;
+  Lisp_Object stream;
+  Lisp_Object obj;
+  struct gcpro gcpro1, gcpro2;
+  GCPRO2 (largs[0], format_reloc);
+  gcpro1.nvars = nargs;
 
-  va_start (vargs, format_length);
-  val = emacs_doprnt_1 (stream, format_nonreloc, format_reloc,
-			format_length, 0, 0, vargs);
-  va_end (vargs);
-  return val;
+  stream = make_resizing_buffer_output_stream ();
+  emacs_doprnt (stream, (Intbyte *) format_nonreloc, format_nonreloc ?
+		strlen (format_nonreloc) : 0,
+		format_reloc, nargs, largs);
+  Lstream_flush (XLSTREAM (stream));
+  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
+		     Lstream_byte_count (XLSTREAM (stream)));
+  Lstream_delete (XLSTREAM (stream));
+  UNGCPRO;
+  return obj;
 }
 
-/* Like emacs_doprnt_c but the args come in va_list format. */
+/* Like emacs_vsprintf_string_lisp() but accepts its extra args directly
+   (using variable arguments), rather than as an array. */
 
-Bytecount
-emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
-		 Lisp_Object format_reloc, Bytecount format_length,
-		 va_list vargs)
+Lisp_Object
+emacs_sprintf_string_lisp (const CIntbyte *format_nonreloc,
+			   Lisp_Object format_reloc, int nargs, ...)
 {
-  return emacs_doprnt_1 (stream, format_nonreloc, format_reloc,
-			 format_length, 0, 0, vargs);
-}
-
-/* Like emacs_doprnt_c but the args are Lisp objects instead of
-   C arguments.  This causes somewhat different behavior from
-   the above two functions (which should act like printf).
-   See `format' for a description of this behavior. */
-
-Bytecount
-emacs_doprnt_lisp (Lisp_Object stream, const Intbyte *format_nonreloc,
-		   Lisp_Object format_reloc, Bytecount format_length,
-		   int nargs, const Lisp_Object *largs)
-{
-  return emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
-			 format_length, nargs, largs);
-}
-
-/* Like the previous function but takes a variable number of arguments. */
-
-Bytecount
-emacs_doprnt_lisp_2 (Lisp_Object stream, const Intbyte *format_nonreloc,
-		     Lisp_Object format_reloc, Bytecount format_length,
-		     int nargs, ...)
-{
-  va_list vargs;
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
   int i;
-  Lisp_Object *foo = alloca_array (Lisp_Object, nargs);
+  Lisp_Object obj;
 
-  va_start (vargs, nargs);
+  va_start (va, nargs);
   for (i = 0; i < nargs; i++)
-    foo[i] = va_arg (vargs, Lisp_Object);
-  va_end (vargs);
-
-  return emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
-			 format_length, nargs, foo);
-}
-
-/* The following four functions work like the above three but
-   return their output as a Lisp string instead of sending it
-   to a stream. */
-
-Lisp_Object
-emacs_doprnt_string_c (const Intbyte *format_nonreloc,
-		       Lisp_Object format_reloc, Bytecount format_length,
-		       ...)
-{
-  va_list vargs;
-  Lisp_Object obj;
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  struct gcpro gcpro1;
-
-  GCPRO1 (stream);
-  va_start (vargs, format_length);
-  emacs_doprnt_1 (stream, format_nonreloc, format_reloc,
-		  format_length, 0, 0, vargs);
-  va_end (vargs);
-  Lstream_flush (XLSTREAM (stream));
-  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		     Lstream_byte_count (XLSTREAM (stream)));
-  UNGCPRO;
-  Lstream_delete (XLSTREAM (stream));
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  obj = emacs_vsprintf_string_lisp (format_nonreloc, format_reloc, nargs,
+				    args);
   return obj;
 }
 
-Lisp_Object
-emacs_doprnt_string_va (const Intbyte *format_nonreloc,
-			Lisp_Object format_reloc, Bytecount format_length,
-			va_list vargs)
-{
-  /* I'm fairly sure that this function cannot actually GC.
-     That can only happen when the arguments to emacs_doprnt_1() are
-     Lisp objects rather than C args. */
-  Lisp_Object obj;
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  struct gcpro gcpro1;
+/* Like emacs_vsprintf_string_lisp() but returns a malloc()ed memory block.
+   Return length out through LEN_OUT, if not null. */
 
-  GCPRO1 (stream);
-  emacs_doprnt_1 (stream, format_nonreloc, format_reloc,
-		  format_length, 0, 0, vargs);
+Intbyte *
+emacs_vsprintf_malloc_lisp (const CIntbyte *format_nonreloc,
+			    Lisp_Object format_reloc, int nargs,
+			    const Lisp_Object *largs, Bytecount *len_out)
+{
+  Lisp_Object stream;
+  Intbyte *retval;
+  Bytecount len;
+  struct gcpro gcpro1, gcpro2;
+
+  GCPRO2 (largs[0], format_reloc);
+  gcpro1.nvars = nargs;
+
+  stream = make_resizing_buffer_output_stream ();
+  emacs_doprnt (stream, (Intbyte *) format_nonreloc, format_nonreloc ?
+		strlen (format_nonreloc) : 0,
+		format_reloc, nargs, largs);
   Lstream_flush (XLSTREAM (stream));
-  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		     Lstream_byte_count (XLSTREAM (stream)));
-  UNGCPRO;
+  len = Lstream_byte_count (XLSTREAM (stream));
+  retval = (Intbyte *) xmalloc (len + 1);
+  memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
+  retval[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
-  return obj;
+
+  if (len_out)
+    *len_out = len;
+  UNGCPRO;
+  return retval;
 }
 
-Lisp_Object
-emacs_doprnt_string_lisp (const Intbyte *format_nonreloc,
-			  Lisp_Object format_reloc, Bytecount format_length,
-			  int nargs, const Lisp_Object *largs)
-{
-  Lisp_Object obj;
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  struct gcpro gcpro1;
+/* Like emacs_sprintf_string_lisp() but returns a malloc()ed memory block.
+   Return length out through LEN_OUT, if not null. */
 
-  GCPRO1 (stream);
-  emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
-		  format_length, nargs, largs);
-  Lstream_flush (XLSTREAM (stream));
-  obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		     Lstream_byte_count (XLSTREAM (stream)));
-  UNGCPRO;
-  Lstream_delete (XLSTREAM (stream));
-  return obj;
-}
-
-Lisp_Object
-emacs_doprnt_string_lisp_2 (const Intbyte *format_nonreloc,
-			    Lisp_Object format_reloc, Bytecount format_length,
-			    int nargs, ...)
+Intbyte *
+emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIntbyte *format_nonreloc,
+			   Lisp_Object format_reloc, int nargs, ...)
 {
-  Lisp_Object obj;
-  Lisp_Object stream = make_resizing_buffer_output_stream ();
-  struct gcpro gcpro1;
-  va_list vargs;
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
   int i;
-  Lisp_Object *foo = alloca_array (Lisp_Object, nargs);
+  Intbyte *retval;
 
-  va_start (vargs, nargs);
+  va_start (va, nargs);
   for (i = 0; i < nargs; i++)
-    foo[i] = va_arg (vargs, Lisp_Object);
-  va_end (vargs);
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  retval = emacs_vsprintf_malloc_lisp (format_nonreloc, format_reloc, nargs,
+				       args, len_out);
+  return retval;
+}
 
-  GCPRO1 (stream);
-  emacs_doprnt_2 (stream, format_nonreloc, format_reloc,
-		  format_length, nargs, foo);
+/* vsprintf()-like replacement.  Returns a Lisp string.  Data
+   from Lisp strings is OK because we explicitly inhibit GC. */
+
+Lisp_Object
+emacs_vsprintf_string (const CIntbyte *format, va_list vargs)
+{
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  Lisp_Object obj;
+  int count = begin_gc_forbidden ();
+
+  emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+		   vargs);
   Lstream_flush (XLSTREAM (stream));
   obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
 		     Lstream_byte_count (XLSTREAM (stream)));
-  UNGCPRO;
   Lstream_delete (XLSTREAM (stream));
+  end_gc_forbidden (count);
   return obj;
+}
+
+/* sprintf()-like replacement.  Returns a Lisp string.  Data
+   from Lisp strings is OK because we explicitly inhibit GC. */
+
+Lisp_Object
+emacs_sprintf_string (const CIntbyte *format, ...)
+{
+  va_list vargs;
+  Lisp_Object retval;
+
+  va_start (vargs, format);
+  retval = emacs_vsprintf_string (format, vargs);
+  va_end (vargs);
+  return retval;
+}
+
+/* vsprintf()-like replacement.  Returns a malloc()ed memory block.  Data
+   from Lisp strings is OK because we explicitly inhibit GC.  Return
+   length out through LEN_OUT, if not null. */
+
+Intbyte *
+emacs_vsprintf_malloc (const CIntbyte *format, va_list vargs,
+		       Bytecount *len_out)
+{
+  int count = begin_gc_forbidden ();
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  Intbyte *retval;
+  Bytecount len;
+
+  emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+		   vargs);
+  Lstream_flush (XLSTREAM (stream));
+  len = Lstream_byte_count (XLSTREAM (stream));
+  retval = (Intbyte *) xmalloc (len + 1);
+  memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
+  retval[len] = '\0';
+  end_gc_forbidden (count);
+  Lstream_delete (XLSTREAM (stream));
+
+  if (len_out)
+    *len_out = len;
+  return retval;
+}
+
+/* sprintf()-like replacement.  Returns a malloc()ed memory block.  Data
+   from Lisp strings is OK because we explicitly inhibit GC.  Return length
+   out through LEN_OUT, if not null. */
+
+Intbyte *
+emacs_sprintf_malloc (Bytecount *len_out, const CIntbyte *format, ...)
+{
+  va_list vargs;
+  Intbyte *retval;
+
+  va_start (vargs, format);
+  retval = emacs_vsprintf_malloc (format, vargs, len_out);
+  va_end (vargs);
+  return retval;
+}
+
+/* vsprintf() replacement.  Writes output into OUTPUT, which better
+   have enough space for the output.  Data from Lisp strings is OK
+   because we explicitly inhibit GC.  */
+
+Bytecount
+emacs_vsprintf (Intbyte *output, const CIntbyte *format, va_list vargs)
+{
+  Bytecount retval;
+  int count = begin_gc_forbidden ();
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+  Bytecount len;
+
+  retval = emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+			    vargs);
+  Lstream_flush (XLSTREAM (stream));
+  len = Lstream_byte_count (XLSTREAM (stream));
+  memcpy (output, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
+  output[len] = '\0';
+  end_gc_forbidden (count);
+  Lstream_delete (XLSTREAM (stream));
+  
+  return retval;
+}
+
+/* sprintf() replacement.  Writes output into OUTPUT, which better
+   have enough space for the output.  Data from Lisp strings is OK
+   because we explicitly inhibit GC.  */
+
+Bytecount
+emacs_sprintf (Intbyte *output, const CIntbyte *format, ...)
+{
+  va_list vargs;
+  Bytecount retval;
+
+  va_start (vargs, format);
+  retval = emacs_vsprintf (output, format, vargs);
+  va_end (vargs);
+  return retval;
 }

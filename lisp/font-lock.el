@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
-;; Copyright (C) 1996, 2000, 2001 Ben Wing.
+;; Copyright (C) 1996, 2000, 2001, 2002 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>, for the LISPM Preservation Society.
 ;; Minimally merged with FSF 19.34 by Barry Warsaw <bwarsaw@python.org>
@@ -1939,14 +1939,26 @@ START should be at the beginning of a line."
 
 (defconst lisp-font-lock-keywords-1
   (list
-   ;; Anything not a variable or type declaration is fontified as a function.
-   ;; It would be cleaner to allow preceding whitespace, but it would also be
-   ;; about five times slower.
+   ;; Anything not a function or type declaration is fontified as a
+   ;; variable.  It would be cleaner to allow preceding whitespace, but it
+   ;; would also be about five times slower.  We used to fontify unknown
+   ;; stuff as functions, rather than variables, but random things are
+   ;; generally more like variables (no parameters), and the function and
+   ;; keyword colors are currently the same, while the variable color is
+   ;; different, which looks better.
    (list (concat "^(\\(def\\("
-		  ;; Variable declarations.
-		  "\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|var\\|custom\\)\\|"
+		  ;; Function declarations.
+		 "\\(un\\|advice\\|alias\\|macro\\|macro\\*\\|setf\\|subst\\|"
+		 "subst\\*\\|-edebug-spec\\|"
+		 "ine-\\(ccl-program\\|compatible-function-alias\\|"
+		 "compiler-macro\\|device-method\\|device-method\\*\\|"
+		 "function\\|function-when-void\\|modify-macro\\|"
+		 "obsolete-function-alias\\|prefix-command\\|setf-method\\|"
+		 "skeleton\\)\\)\\|"
 		  ;; Structure declarations.
 		  "\\(class\\|struct\\|type\\)\\|"
+		  ;; Former variable declarations, but woefully inadequate.
+		  ;"\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|var\\|custom\\)\\|"
 		  ;; Everything else is a function declaration.
 		  "\\([^ \t\n\(\)]+\\)"
 		  "\\)\\)\\>"
@@ -1954,9 +1966,9 @@ START should be at the beginning of a line."
 		  "[ \t'\(]*"
 		  "\\([^ \t\n\)]+\\)?")
 	  '(1 font-lock-keyword-face)
-	  '(8 (cond ((match-beginning 3) 'font-lock-variable-name-face)
-		    ((match-beginning 6) 'font-lock-type-face)
-		    (t 'font-lock-function-name-face))
+	  '(7 (cond ((match-beginning 3) 'font-lock-function-name-face)
+		    ((match-beginning 5) 'font-lock-type-face)
+		    (t 'font-lock-variable-name-face))
 	      nil t))
    )
  "Subdued level highlighting Lisp modes.")

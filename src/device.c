@@ -597,7 +597,7 @@ have no effect.
   setup_device_initial_specifier_tags (d);
 
   UNGCPRO;
-  unbind_to(speccount, Qnil);
+  unbind_to (speccount);
   return device;
 }
 
@@ -1206,19 +1206,28 @@ handle_asynch_device_change (void)
 #endif
 }
 
+static Lisp_Object
+unlock_device (Lisp_Object d)
+{
+  UNLOCK_DEVICE (XDEVICE (d));
+  return Qnil;
+}
+
 void
 call_critical_lisp_code (struct device *d, Lisp_Object function,
 			 Lisp_Object object)
 {
-  int old_gc_currently_forbidden = gc_currently_forbidden;
-  Lisp_Object old_inhibit_quit = Vinhibit_quit;
+  int count = begin_gc_forbidden ();
+  specbind (Qinhibit_quit, Qt);
+  record_unwind_protect (unlock_device, wrap_device (d));
 
-  /* There's no reason to bother doing specbinds here, because if
+  /* [[There's no real reason to bother doing unwind-protects, because if
      initialize-*-faces signals an error, emacs is going to crash
-     immediately.
+     immediately.]] But this sucks!  This code is called not only during
+     the initial device, but for other devices as well!  #### When dealing
+     with non-initial devices, we should signal an error but NOT kill
+     ourselves! --ben
      */
-  gc_currently_forbidden = 1;
-  Vinhibit_quit = Qt;
   LOCK_DEVICE (d);
 
   /* But it's useful to have an error handler; otherwise an infinite
@@ -1228,9 +1237,7 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
   else
     call0_with_handler (Qreally_early_error_handler, function);
 
-  UNLOCK_DEVICE (d);
-  Vinhibit_quit = old_inhibit_quit;
-  gc_currently_forbidden = old_gc_currently_forbidden;
+  unbind_to (count);
 }
 
 

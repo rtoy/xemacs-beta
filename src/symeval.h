@@ -1,6 +1,6 @@
 /* Definitions of symbol-value forwarding for XEmacs Lisp interpreter.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -347,48 +347,57 @@ void deferror_massage_name_and_message (Lisp_Object *symbol, const char *name,
 /* Macros we use to define forwarded Lisp variables.
    These are used in the syms_of_FILENAME functions.  */
 
-void defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic);
+void defvar_magic (const char *symbol_name,
+		   const struct symbol_value_forward *magic);
 
-#define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun) do {	\
-  static const struct symbol_value_forward I_hate_C =				\
-  { /* struct symbol_value_forward */						\
-    { /* struct symbol_value_magic */						\
-      { /* struct lcrecord_header */						\
-	{ /* struct lrecord_header */						\
-	  lrecord_type_symbol_value_forward, /* lrecord_type_index */		\
-	  1, /* mark bit */							\
-	  1, /* c_readonly bit */						\
-	  1  /* lisp_readonly bit */						\
-	},									\
-	0, /* next */								\
-	0, /* uid  */								\
-	0  /* free */								\
-      },									\
-      c_location,								\
-      forward_type								\
-    },										\
-    magicfun									\
-  };										\
-  defvar_magic ((lname), &I_hate_C);						\
+#define DEFVAR_SYMVAL_FWD(lname, c_location, forward_type, magicfun)	\
+do									\
+{									\
+  static const struct symbol_value_forward I_hate_C =			\
+  { /* struct symbol_value_forward */					\
+    { /* struct symbol_value_magic */					\
+      { /* struct lcrecord_header */					\
+	{ /* struct lrecord_header */					\
+	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	\
+	  1, /* mark bit */						\
+	  1, /* c_readonly bit */					\
+	  1  /* lisp_readonly bit */					\
+	},								\
+	0, /* next */							\
+	0, /* uid  */							\
+	0  /* free */							\
+      },								\
+      c_location,							\
+      forward_type							\
+    },									\
+    magicfun								\
+  };									\
+  defvar_magic ((lname), &I_hate_C);					\
 } while (0)
 
-#define DEFVAR_SYMVAL_FWD_INT(lname, c_location, forward_type, magicfun) do{	\
-  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);		\
-  dump_add_opaque_int (c_location);						\
+#define DEFVAR_SYMVAL_FWD_INT(lname, c_location, forward_type, magicfun) \
+do									 \
+{									 \
+  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);	 \
+  dump_add_opaque_int (c_location);					 \
 } while (0)
 
-#define DEFVAR_SYMVAL_FWD_FIXNUM(lname, c_location, forward_type, magicfun) do{	\
-  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);		\
-  dump_add_opaque_fixnum (c_location);						\
+#define DEFVAR_SYMVAL_FWD_FIXNUM(lname, c_location, forward_type, magicfun) \
+do									    \
+{									    \
+  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);	    \
+  dump_add_opaque_fixnum (c_location);					    \
 } while (0)
 
-#define DEFVAR_SYMVAL_FWD_OBJECT(lname, c_location, forward_type, magicfun) do{	\
-  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);		\
-  {										\
-    Lisp_Object *DSF_location = c_location; /* Type check */			\
-    staticpro (DSF_location);							\
-    if (EQ (*DSF_location, Qnull_pointer)) *DSF_location = Qnil;		\
-  }										\
+#define DEFVAR_SYMVAL_FWD_OBJECT(lname, c_location, forward_type, magicfun) \
+do									    \
+{									    \
+  DEFVAR_SYMVAL_FWD (lname, c_location, forward_type, magicfun);	    \
+  {									    \
+    Lisp_Object *DSF_location = c_location; /* Type check */		    \
+    staticpro (DSF_location);						    \
+    if (EQ (*DSF_location, Qnull_pointer)) *DSF_location = Qnil;	    \
+  }									    \
 } while (0)
 
 #define DEFVAR_LISP(lname, c_location) \

@@ -1,5 +1,6 @@
 /* GTK selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -64,16 +65,14 @@ atom_to_symbol (struct device *d, GdkAtom atom)
   if (atom == GDK_SELECTION_SECONDARY) return (QSECONDARY);
 
   {
-    CIntbyte *intstr;
+    Intbyte *intstr;
     Extbyte *str = gdk_atom_name (atom);
 
     if (! str) return Qnil;
 
-    TO_INTERNAL_FORMAT (C_STRING, str,
-			C_STRING_ALLOCA, intstr,
-			Qctext);
+    EXTERNAL_TO_C_STRING (str, intstr, Qctext);
     g_free (str);
-    return intern (intstr);
+    return intern_int (intstr);
   }
 }
 
@@ -211,7 +210,7 @@ emacs_gtk_selection_handle (GtkWidget *widget,
     xfree (data);
   }
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
 
  DONE_LABEL:
 
@@ -351,7 +350,7 @@ gtk_get_foreign_selection (Lisp_Object selection_symbol,
   if (selection_reply_timed_out)
     signal_error (Qselection_conversion_error, "timed out waiting for reply from selection owner", Qunbound);
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   /* otherwise, the selection is waiting for us on the requested property. */
   return select_convert_in (selection_symbol,

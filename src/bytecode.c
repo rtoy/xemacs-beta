@@ -871,7 +871,7 @@ execute_optimized_program (const Opbyte *program,
 	case Bunbind_all:
 	  /* To unbind back to the beginning of this frame.  Not used yet,
 	     but will be needed for tail-recursion elimination. */
-	  unbind_to (speccount, Qnil);
+	  unbind_to (speccount);
 	  break;
 
 	case Bnth:
@@ -1235,7 +1235,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	record_unwind_protect (save_window_excursion_unwind,
 			       Fcurrent_window_configuration (Qnil));
 	TOP = Fprogn (TOP);
-	unbind_to (count, Qnil);
+	unbind_to (count);
 	break;
       }
 
@@ -1432,7 +1432,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 	TOP = arg;
 	/* GAG ME!! */
 	/* pop binding of standard-output */
-	unbind_to (specpdl_depth() - 1, Qnil);
+	unbind_to (specpdl_depth() - 1);
 	break;
       }
 

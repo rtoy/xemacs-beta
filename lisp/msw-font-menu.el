@@ -63,12 +63,8 @@ If you don't like the lazy invocation of this function, you can add it to
 when they are selected for the first time.  If you add fonts to your system, 
 or if you change your font path, you can call this to re-initialize the menus."
   (unless mswindows-font-regexp-ascii
-    (setq mswindows-font-regexp-ascii (if (featurep 'mule)
-					  (declare-fboundp
-					   (charset-registry 'ascii))
-					"Western")))
-  (setq mswindows-font-menu-registry-encoding (if (featurep 'mule) ""
-						"Western"))
+    (setq mswindows-font-regexp-ascii "Western"))
+  (setq mswindows-font-menu-registry-encoding "Western")
   (let ((case-fold-search t)
 	family size weight entry
 	dev-cache cache families sizes weights)

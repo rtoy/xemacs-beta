@@ -1,6 +1,7 @@
 ;;; bytecomp-runtime.el --- byte-compiler support for inlining
 
 ;; Copyright (C) 1992, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>
 ;; Author: Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -203,64 +204,79 @@ If (featurep 'FEATURE), evals now; otherwise adds an elt to
 ;; one.
 
 (put 'with-boundp 'lisp-indent-function 1)
-(defmacro with-boundp (symbols &rest body)
-  "Evaluate BODY, but do not issue bytecomp warnings about SYMBOLS undefined.
-SYMBOLS can be a symbol or a list of symbols and must be quoted.  When
-compiling this file, the warning `reference to free variable SYMBOL'
-will not occur.  This is a clean way to avoid such warnings.  See also
-`declare-boundp' and `if-boundp'."
-  (setq symbols (eval symbols))
-  (unless (consp symbols)
-      (setq symbols (list symbols)))
+(defmacro with-boundp (variables &rest body)
+  "Evaluate BODY, but do not issue bytecomp warnings about VARIABLES undefined.
+VARIABLES can be a symbol or a list of symbols and must be quoted.  When
+compiling this file, the warnings `reference to free variable VARIABLE' and
+`assignment to free variable VARIABLE' will not occur anywhere in BODY, for
+any of the listed variables.  This is a clean way to avoid such warnings.
+See also `declare-boundp', `if-boundp', `when-boundp', and
+`globally-declare-boundp'."
+  (setq variables (eval variables))
+  (unless (consp variables)
+      (setq variables (list variables)))
   `(progn
-     (declare (special ,@symbols))
+     (declare (special ,@variables))
      ,@body))
 
 (put 'if-boundp 'lisp-indent-function 2)
-(defmacro if-boundp (symbol then &rest else)
-  "Equivalent to (if (boundp SYMBOL) THEN ELSE) but handles bytecomp warnings.
-When compiling this file, the warning `reference to free variable SYMBOL'
-will not occur.  This is a clean way to avoid such warnings.  See also
-`with-boundp' and `declare-boundp'."
-  `(with-boundp ,symbol
-     (if (boundp ,symbol) ,then ,@else)))
+(defmacro if-boundp (variable then &rest else)
+  "Equivalent to (if (boundp VARIABLE) THEN ELSE) but handles bytecomp warnings.
+VARIABLE should be a quoted symbol.  When compiling this file, the warnings
+`reference to free variable VARIABLE' and `assignment to free variable
+VARIABLE' will not occur anywhere in the if-statement.  This is a clean way
+to avoid such warnings.  See also `when-boundp', `declare-boundp',
+`with-boundp' and `globally-declare-boundp'."
+  `(with-boundp ,variable
+     (if (boundp ,variable) ,then ,@else)))
 
-(defmacro declare-boundp (symbol)
-  "Evaluate SYMBOL without bytecomp warnings about the symbol.
+(put 'when-boundp 'lisp-indent-function 1)
+(defmacro when-boundp (variable &rest body)
+  "Equivalent to (when (boundp VARIABLE) BODY) but handles bytecomp warnings.
+VARIABLE should be a quoted symbol.  When compiling this file, the warnings
+`reference to free variable VARIABLE' and `assignment to free variable
+VARIABLE' will not occur anywhere in the when-statement.  This is a clean
+way to avoid such warnings.  See also `if-boundp', `declare-boundp',
+`with-boundp' and `globally-declare-boundp'."
+  `(with-boundp ,variable
+     (when (boundp ,variable) ,@body)))
+
+(defmacro declare-boundp (variable)
+  "Evaluate VARIABLE without bytecomp warnings about the symbol.
+
 Sample usage is
 
   (declare-boundp gpm-minor-mode)
 
 which is equivalent to
 
-  (with-fboundp 'gpm-minor-mode
+  (with-boundp 'gpm-minor-mode
     gpm-minor-mode)"
-  `(with-boundp ',symbol ,symbol))
+  `(with-boundp ',variable ,variable))
 
-(defmacro globally-declare-boundp (symbol)
-  "Declare that all free uses of SYMBOL in this file are valid.
-SYMBOL can also be a list of symbols.  SYMBOL must be quoted.
+(defmacro globally-declare-boundp (variables)
+  "Declare that all free uses of VARIABLES in this file are valid.
+VARIABLES can be a symbol or a list of symbols and must be quoted.
 
-When compiling this file, the warning `reference to free variable
-SYMBOL' will not occur regardless of where calls to SYMBOL occur in
-the file.
+When compiling this file, the warnings `reference to free variable
+VARIABLE' and `assignment to free variable VARIABLE' will not occur
+regardless of where references to VARIABLE occur in the file.
 
-In general, you should *NOT* use this; use `declare-boundp',
-`if-boundp', or `with-boundp' to wrap individual uses, as necessary.
-That way, you're more likely to remember to put in the explicit checks
-for the variable's existence that are usually necessary.  However,
-`globally-declare-boundp' is better in some circumstances, such as
-when writing an ELisp package that makes integral use of
-optionally-compiled-in functionality (typically, an interface onto a
-system library) and checks for the existence of the functionality at
-some entry point to the package.  See `globally-declare-fboundp' for
-more information."
-  (setq symbol (eval symbol))
-  (if (not (consp symbol))
-      (setq symbol (list symbol)))
+In general, you should *NOT* use this; use `declare-boundp', `if-boundp',
+`when-boundp', or `with-boundp' to wrap individual uses, as necessary.
+That way, you're more likely to remember to put in the explicit checks for
+the variable's existence that are usually necessary.  However,
+`globally-declare-boundp' is better in some circumstances, such as when
+writing an ELisp package that makes integral use of optionally-compiled-in
+functionality (typically, an interface onto a system library) and checks
+for the existence of the functionality at some entry point to the package.
+See `globally-declare-fboundp' for more information."
+  (setq variables (eval variables))
+  (if (not (consp variables))
+      (setq variables (list variables)))
   `(progn
      ;; (defvar FOO) has no side effects.
-     ,@(mapcar #'(lambda (sym) `(defvar ,sym)) symbol)))
+     ,@(mapcar #'(lambda (sym) `(defvar ,sym)) variables)))
 
 (defun byte-compile-with-fboundp (form)
   (byte-compile-form (cons 'progn (cdr (cdr form))))
@@ -307,23 +323,36 @@ more information."
 (defalias 'with-fboundp-1 'progn)
 
 (put 'with-fboundp 'lisp-indent-function 1)
-(defmacro with-fboundp (symbol &rest body)
-  "Evaluate BODY, but do not issue bytecomp warnings about SYMBOL.
-SYMBOL must be quoted.  When compiling this file, the warning `the
-function SYMBOL is not known to be defined' will not occur.  This is a
-clean way to avoid such warnings.  See also `declare-fboundp',
-`if-fboundp', and `globally-declare-fboundp'."
-  `(with-fboundp-1 ,symbol ,@body))
+(defmacro with-fboundp (functions &rest body)
+  "Evaluate BODY, but do not issue bytecomp warnings about FUNCTIONS undefined.
+FUNCTIONS can be a symbol or a list of symbols and must be quoted.  When
+compiling this file, the warning `the function FUNCTION is not known to be
+defined' will not occur anywhere in BODY, for any of the listed functions.
+This is a clean way to avoid such warnings.  See also `declare-fboundp',
+`if-fboundp', `when-fboundp', and `globally-declare-fboundp'."
+  `(with-fboundp-1 ,functions ,@body))
 
 (put 'if-fboundp 'lisp-indent-function 2)
-(defmacro if-fboundp (symbol then &rest else)
-  "Equivalent to (if (fboundp SYMBOL) THEN ELSE) but handles bytecomp warnings.
-When compiling this file, the warning `the function SYMBOL is not
-known to be defined' will not occur.  This is a clean way to avoid
-such warnings.  See also `declare-fboundp', `with-fboundp', and
+(defmacro if-fboundp (function then &rest else)
+  "Equivalent to (if (fboundp FUNCTION) THEN ELSE) but handles bytecomp warnings.
+FUNCTION should be a quoted symbol.  When compiling this file, the warning
+`the function FUNCTION is not known to be defined' will not occur anywhere
+in the if-statement.  This is a clean way to avoid such warnings.  See also
+`when-fboundp', `declare-fboundp', `with-fboundp', and
 `globally-declare-fboundp'."
-  `(with-fboundp ,symbol
-     (if (fboundp ,symbol) ,then ,@else)))
+  `(with-fboundp ,function
+     (if (fboundp ,function) ,then ,@else)))
+
+(put 'when-fboundp 'lisp-indent-function 1)
+(defmacro when-fboundp (function &rest body)
+  "Equivalent to (when (fboundp FUNCTION) BODY) but handles bytecomp warnings.
+FUNCTION should be a quoted symbol.  When compiling this file, the warning
+`the function FUNCTION is not known to be defined' will not occur anywhere
+in the when-statement.  This is a clean way to avoid such warnings.  See
+also `if-fboundp', `declare-fboundp', `with-fboundp', and
+`globally-declare-fboundp'."
+  `(with-fboundp ,function
+     (when (fboundp ,function) ,@body)))
 
 (defmacro declare-fboundp (form)
   "Execute FORM (a function call) without bytecomp warnings about the call.
@@ -337,39 +366,38 @@ which is equivalent to
     (x-keysym-on-keyboard-sans-modifiers-p 'backspace))"
   `(with-fboundp ',(car form) ,form))
 
-(defmacro globally-declare-fboundp (symbol)
-  "Declare that all calls to function SYMBOL in this file are valid.
-SYMBOL can also be a list of symbols.  SYMBOL must be quoted.
+(defmacro globally-declare-fboundp (functions)
+  "Declare that all calls to function FUNCTIONS in this file are valid.
+FUNCTIONS can be a symbol or a list of symbols and must be quoted.
 
-When compiling this file, the warning `the function SYMBOL is not
-known to be defined' will not occur regardless of where calls to
-SYMBOL occur in the file.
+When compiling this file, the warning `the function FUNCTION is not known
+to be defined' will not occur regardless of where calls to FUNCTION occur
+in the file.
 
-In general, you should *NOT* use this; use `declare-fboundp',
-`if-fboundp', or `with-fboundp' to wrap individual uses, as necessary.
-That way, you're more likely to remember to put in the explicit checks
-for the function's existence that are usually necessary.  However,
-`globally-declare-fboundp' is better in some circumstances, such as
-when writing an ELisp package that makes integral use of
-optionally-compiled-in functionality (typically, an interface onto a
-system library) and checks for the existence of the functionality at
-some entry point to the package.  The file `ldap.el' is a good
-example: It provides a layer on top of the optional LDAP ELisp
-primitives, makes calls to them throughout its code, and verifies the
-presence of LDAP support at load time.  Putting calls to
+In general, you should *NOT* use this; use `declare-fboundp', `if-fboundp',
+`when-fboundp', or `with-fboundp' to wrap individual uses, as necessary.
+That way, you're more likely to remember to put in the explicit checks for
+the function's existence that are usually necessary.  However,
+`globally-declare-fboundp' is better in some circumstances, such as when
+writing an ELisp package that makes integral use of optionally-compiled-in
+functionality (typically, an interface onto a system library) and checks
+for the existence of the functionality at some entry point to the package.
+The file `ldap.el' is a good example: It provides a layer on top of the
+optional LDAP ELisp primitives, makes calls to them throughout its code,
+and verifies the presence of LDAP support at load time.  Putting calls to
 `declare-fboundp' throughout the code would be a major annoyance."
   (when (cl-compiling-file)
-    (setq symbol (eval symbol))
-    (if (not (consp symbol))
-	(setq symbol (list symbol)))
+    (setq functions (eval functions))
+    (if (not (consp functions))
+	(setq functions (list functions)))
     ;; Another hack.  This works because the autoload environment is
     ;; currently used ONLY to suppress warnings, and the actual
     ;; autoload definition is not used. (NOTE: With this definition,
     ;; we will get spurious "multiple autoloads for %s" warnings if we
-    ;; have an autoload later in the file for any functions in SYMBOL.
+    ;; have an autoload later in the file for any functions in FUNCTIONS.
     ;; This is not something that code should ever do, though.)
     (setq byte-compile-autoload-environment
-	  (append (mapcar #'(lambda (sym) (cons sym nil)) symbol)
+	  (append (mapcar #'(lambda (sym) (cons sym nil)) functions)
 		  byte-compile-autoload-environment)))
   nil)
 
@@ -401,12 +429,12 @@ There are better ways of avoiding most of these warnings.  In particular:
 
 -- use (declare (special ...)) if you are making use of
    dynamically-scoped variables.
--- use `with-fboundp', `declare-fboundp', `if-fboundp', or
-   `globally-declare-fboundp' to avoid warnings about undefined
-   functions when you know the function actually exists.
--- use `with-boundp', `declare-boundp', or `if-boundp' to avoid
-   warnings about undefined variables when you know the variable
-   actually exists.
+-- use `if-fboundp', `when-fboundp', `declare-fboundp', `with-fboundp', or
+   `globally-declare-fboundp' to avoid warnings about undefined functions
+   when you know the function actually exists.
+-- use `if-boundp', `when-boundp', `declare-boundp', `with-boundp', or
+   `globally-declare-boundp' to avoid warnings about undefined variables
+   when you know the variable actually exists.
 -- use `with-obsolete-variable' or `with-obsolete-function' if you
    are purposely using such a variable or function."
   `(with-byte-compiler-warnings-suppressed-1 ,type ,@body))

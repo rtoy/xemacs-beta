@@ -1,9 +1,11 @@
-;;; buff-menu.el --- buffer menu main function and support functions.
+;;; buff-menu.el --- buffer menu/tab main function and support functions.
 
 ;; Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
+;; Copyright (C) 1999, 2000 Andy Piper.
+;; Copyright (C) 2000 Ben Wing.
 
-;; Maintainer: FSF
-;; Keywords: extensions, dumped
+;; Maintainer: XEmacs Development Team
+;; Keywords: frames, extensions, internal, dumped
 
 ;; This file is part of XEmacs.
 
@@ -33,6 +35,9 @@
 ;; any special or scratch buffers you have loaded, since you can't find
 ;; them by filename.  The single entry point is `Buffer-menu-mode',
 ;; normally bound to C-x C-b.
+
+;; Also contains buffers-tab code, because it's used by
+;; switch-to-next-buffer and friends.
 
 ;;; Change Log:
 
@@ -640,6 +645,242 @@ The R column contains a % for buffers that are read-only."
   "For use as a value of `buffers-menu-omit-function'.
 Omits normally invisible buffers (those whose name begins with a space)."
   (not (null (string-match "\\` " (buffer-name buf)))))
+
+;;; The Buffers tab
+
+;; Some of this is taken from the buffer-menu stuff in menubar-items.el
+
+(defgroup buffers-tab nil
+  "Customization of `Buffers' tab."
+  :group 'gutter)
+
+(defcustom buffers-tab-max-size 6
+  "*Maximum number of entries which may appear on the \"Buffers\" tab.
+If this is 10, then only the ten most-recently-selected buffers will be
+shown.  If this is nil, then all buffers will be shown.  Setting this to
+a large number or nil will slow down tab responsiveness."
+  :type '(choice (const :tag "Show all" nil)
+		 (integer 6))
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-switch-to-buffer-function 'buffers-tab-switch-to-buffer
+  "*The function to call to select a buffer from the buffers tab.
+`switch-to-buffer' is a good choice, as is `pop-to-buffer'."
+  :type '(radio (function-item switch-to-buffer)
+		(function-item pop-to-buffer)
+		(function :tag "Other"))
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-omit-function 'buffers-menu-omit-invisible-buffers
+  "*If non-nil, a function specifying the buffers to omit from the buffers tab.
+This is passed a buffer and should return non-nil if the buffer should be
+omitted.  The default value `buffers-menu-omit-invisible-buffers' omits
+buffers that are normally considered \"invisible\" (those whose name
+begins with a space)."
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-selection-function 'select-buffers-tab-buffers-by-mode
+  "*If non-nil, a function specifying the buffers to select from the
+buffers tab.  This is passed two buffers and should return non-nil if
+the second buffer should be selected.  The default value
+`select-buffers-tab-buffers-by-mode' groups buffers by major mode and
+by `buffers-tab-grouping-regexp'."
+
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-filter-functions (list buffers-tab-selection-function)
+  "*If non-nil, a list of functions specifying the buffers to select 
+from the buffers tab.
+Each function in the list is passed two buffers, the buffer to
+potentially select and the context buffer, and should return non-nil
+if the first buffer should be selected.  The default value groups
+buffers by major mode and by `buffers-tab-grouping-regexp'."
+
+  :type '(choice (const :tag "None" nil)
+		 sexp)
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-sort-function nil
+  "*If non-nil, a function specifying the buffers to select from the
+buffers tab.  This is passed the buffer list and returns the list in the
+order desired for the tab widget.  The default value `nil' leaves the
+list in `buffer-list' order (usual most-recently-selected-first)."
+
+  :type '(choice (const :tag "None" nil)
+		 function)
+  :group 'buffers-tab)
+
+(make-face 'buffers-tab "Face for displaying the buffers tab.")
+(set-face-parent 'buffers-tab 'default)
+
+(defcustom buffers-tab-face 'buffers-tab
+  "*Face to use for displaying the buffers tab."
+  :type 'face
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-grouping-regexp 
+  '("^\\(gnus-\\|message-mode\\|mime/viewer-mode\\)"
+    "^\\(emacs-lisp-\\|lisp-\\)")
+  "*If non-nil, a list of regular expressions for buffer grouping.
+Each regular expression is applied to the current major-mode symbol
+name and mode-name, if it matches then any other buffers that match
+the same regular expression be added to the current group."
+  :type '(choice (const :tag "None" nil)
+		 sexp)
+  :group 'buffers-tab)
+
+(defcustom buffers-tab-format-buffer-line-function 'format-buffers-tab-line
+  "*The function to call to return a string to represent a buffer in the
+buffers tab.  The function is passed a buffer and should return a
+string.  The default value `format-buffers-tab-line' just returns the
+name of the buffer, optionally truncated to
+`buffers-tab-max-buffer-line-length'.  Also check out
+`slow-format-buffers-menu-line' which returns a whole bunch of info
+about a buffer."
+  :type 'function
+  :group 'buffers-tab)
+
+(defvar buffers-tab-default-buffer-line-length
+  (make-specifier-and-init 'generic '((global ((default) . 25))) t)
+  "*Maximum length of text which may appear in a \"Buffers\" tab.
+This is a specifier, use set-specifier to modify it.")
+
+(defcustom buffers-tab-max-buffer-line-length 
+  (specifier-instance buffers-tab-default-buffer-line-length)
+  "*Maximum length of text which may appear in a \"Buffers\" tab.
+Buffer names over this length will be truncated with elipses.
+If this is 0, then the full buffer name will be shown."
+  :type '(choice (const :tag "Show all" 0)
+		 (integer 25))
+  :group 'buffers-tab
+  :set #'(lambda (var val)
+	   (set-specifier buffers-tab-default-buffer-line-length val)
+	   (setq buffers-tab-max-buffer-line-length val)))
+
+(defun buffers-tab-switch-to-buffer (buffer)
+  "For use as a value for `buffers-tab-switch-to-buffer-function'."
+  (unless (eq (window-buffer) buffer)
+    ;; this used to add the norecord flag to both calls below.
+    ;; this is bogus because it is a pervasive assumption in XEmacs
+    ;; that the current buffer is at the front of the buffers list.
+    ;; for example, select an item and then do M-C-l
+    ;; (switch-to-other-buffer).  Things get way confused.
+    (if (> (length (windows-of-buffer buffer)) 0)
+	(select-window (car (windows-of-buffer buffer)))
+      (switch-to-buffer buffer))))
+
+(defun select-buffers-tab-buffers-by-mode (buffer-to-select buf1)
+  "For use as a value of `buffers-tab-selection-function'.
+This selects buffers by major mode `buffers-tab-grouping-regexp'."
+  (let ((mode1 (symbol-name (symbol-value-in-buffer 'major-mode buf1)))
+	(mode2 (symbol-name (symbol-value-in-buffer 'major-mode 
+						    buffer-to-select)))
+	(modenm1 (symbol-value-in-buffer 'mode-name buf1))
+	(modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select)))
+    (cond ((or (eq mode1 mode2)
+	       (eq modenm1 modenm2)
+	       (and (string-match "^[^-]+-" mode1)
+		    (string-match
+		     (concat "^" (regexp-quote 
+				  (substring mode1 0 (match-end 0))))
+		     mode2))
+	       (and buffers-tab-grouping-regexp
+		    (find-if #'(lambda (x)
+				 (or
+				  (and (string-match x mode1)
+				       (string-match x mode2))
+				  (and (string-match x modenm1)
+				       (string-match x modenm2))))
+			     buffers-tab-grouping-regexp)))
+	   t)
+	  (t nil))))
+
+(defun format-buffers-tab-line (buffer)
+  "For use as a value of `buffers-tab-format-buffer-line-function'.
+This just returns the buffer's name, optionally truncated."
+  (let ((len (specifier-instance buffers-tab-default-buffer-line-length)))
+    (if (and (> len 0)
+	     (> (length (buffer-name buffer)) len))
+	(if (string-match ".*<.>$" (buffer-name buffer))
+	    (concat (substring (buffer-name buffer) 
+			       0 (- len 6)) "..."
+			       (substring (buffer-name buffer) -3))
+	  (concat (substring (buffer-name buffer)
+			     0 (- len 3)) "..."))
+      (buffer-name buffer))))
+
+(defsubst build-buffers-tab-internal (buffers)
+  (let ((selected t))
+    (mapcar
+     #'(lambda (buffer)
+	 (prog1
+	     (vector 
+	      (funcall buffers-tab-format-buffer-line-function
+		       buffer)
+	      (list buffers-tab-switch-to-buffer-function
+		    (buffer-name buffer))
+	      :selected selected)
+	   (when selected (setq selected nil))))
+     buffers)))
+
+;;; #### SJT would like this function to have a sort function list. I
+;;; don't see how this could work given that sorting is not
+;;; cumulative --andyp.
+(defun buffers-tab-items (&optional in-deletion frame force-selection)
+  "Return a list of tab instantiators based on the current buffers list.
+This function is used as the tab filter for the top-level buffers
+\"Buffers\" tab.  It dynamically creates a list of tab instantiators
+to use as the contents of the tab.  The contents and order of the list
+is controlled by `buffers-tab-filter-functions' which by default
+groups buffers according to major mode and removes invisible buffers.
+You can control how many buffers will be shown by setting
+`buffers-tab-max-size'.  You can control the text of the tab items by
+redefining the function `format-buffers-menu-line'."
+  (save-match-data
+    ;; NB it is too late if we run the omit function as part of the
+    ;; filter functions because we need to know which buffer is the
+    ;; context buffer before they get run.
+    (let* ((buffers (delete-if 
+		     buffers-tab-omit-function (buffer-list frame)))
+	   (first-buf (car buffers)))
+      ;; maybe force the selected window
+      (when (and force-selection
+		 (not in-deletion)
+		 (not (eq first-buf (window-buffer (selected-window frame)))))
+	(setq buffers (cons (window-buffer (selected-window frame))
+			    (delq first-buf buffers))))
+      ;; if we're in deletion ignore the current buffer
+      (when in-deletion 
+	(setq buffers (delq (current-buffer) buffers))
+	(setq first-buf (car buffers)))
+      ;; filter buffers
+      (when buffers-tab-filter-functions
+	(setq buffers
+	      (delete-if 
+	       #'null 
+	       (mapcar #'(lambda (buf)
+			   (let ((tmp-buf buf))
+			     (mapc #'(lambda (fun)
+				       (unless (funcall fun buf first-buf)
+					 (setq tmp-buf nil)))
+				   buffers-tab-filter-functions)
+			     tmp-buf))
+		       buffers))))
+      ;; maybe shorten list of buffers
+      (and (integerp buffers-tab-max-size)
+	   (> buffers-tab-max-size 1)
+	   (> (length buffers) buffers-tab-max-size)
+	   (setcdr (nthcdr (1- buffers-tab-max-size) buffers) nil))
+      ;; sort buffers in group (default is most-recently-selected)
+      (when buffers-tab-sort-function
+	(setq buffers (funcall buffers-tab-sort-function buffers)))
+      ;; convert list of buffers to list of structures used by tab widget
+      (setq buffers (build-buffers-tab-internal buffers))
+      buffers)))
 
 (provide 'buff-menu)
 

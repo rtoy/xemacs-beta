@@ -158,7 +158,13 @@ Windows the sound file must be in WAV format.
     {
       Extbyte *fileext;
 
+#ifdef WIN32_NATIVE
+      /* #### more garbage.  we should be passing the internal file name
+	 to play_sound_file. */
+      LISP_STRING_TO_EXTERNAL (file, fileext, Qmswindows_tstr);
+#else
       LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+#endif
       /* The sound code doesn't like getting SIGIO interrupts.
 	 Unix sucks! */
       stop_interrupts ();

@@ -1,5 +1,6 @@
 /* Simple 'n' stupid dynamic-array module.
    Copyright (C) 1993 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,15 +66,32 @@ Use the following functions/macros:
 
    Dynarr_add_many(d, base, len)
       [MACRO] Add LEN elements to the end of the dynamic array.  The elements
-      should be contiguous in memory, starting at BASE.
+      should be contiguous in memory, starting at BASE.  If BASE if NULL,
+      just make space for the elements; don't actually add them.
 
    Dynarr_insert_many_at_start(d, base, len)
       [MACRO] Append LEN elements to the beginning of the dynamic array.
       The elements should be contiguous in memory, starting at BASE.
+      If BASE if NULL, just make space for the elements; don't actually
+      add them.
 
    Dynarr_insert_many(d, base, len, start)
       Insert LEN elements to the dynamic array starting at position
       START.  The elements should be contiguous in memory, starting at BASE.
+      If BASE if NULL, just make space for the elements; don't actually
+      add them.
+
+   Dynarr_delete(d, i)
+      [MACRO] Delete an element from the dynamic array at position I.
+
+   Dynarr_delete_many(d, start, len)
+      Delete LEN elements from the dynamic array starting at position
+      START.
+
+   Dynarr_delete_by_pointer(d, p)
+      [MACRO] Delete an element from the dynamic array at pointer P,
+      which must point within the block of memory that stores the data.
+      P should be obtained using Dynarr_atp().
 
    int Dynarr_length(d)
       [MACRO] Return the number of elements currently in a dynamic array.
@@ -116,7 +134,7 @@ Dynarr_realloc (Dynarr *dy, int new_size)
   if (DUMPEDP (dy->base))
     {
       void *new_base = malloc (new_size);
-      memcpy (new_base, dy->base, dy->max > new_size ? new_size : dy->max);
+      memcpy (new_base, dy->base, dy->max > new_size ? dy->max : new_size);
       dy->base = new_base;
     }
   else
@@ -174,7 +192,8 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
 	       (char *) dy->base + start*dy->elsize,
 	       (dy->cur - start)*dy->elsize);
     }
-  memcpy ((char *) dy->base + start*dy->elsize, el, len*dy->elsize);
+  if (el)
+    memcpy ((char *) dy->base + start*dy->elsize, el, len*dy->elsize);
   dy->cur += len;
 
   if (dy->cur > dy->largest)

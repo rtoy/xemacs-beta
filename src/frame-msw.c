@@ -1,6 +1,6 @@
 /* Functions for the mswindows window system.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,6 +20,8 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not synched with FSF. */
+
+/* This file Mule-ized, 8-14-2000. */
 
 /* Authorship:
 
@@ -97,7 +99,8 @@ mswindows_get_selected_frame_hwnd (void)
 }
 
 static void
-mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
+mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
+			int frame_name_is_defaulted)
 {
   Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
@@ -142,9 +145,9 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
     abs (XINT (height));
 
   /* Misc frame stuff */
-  FRAME_MSWINDOWS_MENU_HASH_TABLE(f) = Qnil;
+  FRAME_MSWINDOWS_MENU_HASH_TABLE (f) = Qnil;
 #ifdef HAVE_TOOLBARS
-  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f) =
+  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f) = 
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 #endif
   /* hashtable of instantiated glyphs on the frame. */
@@ -191,21 +194,28 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
       FRAME_MSWINDOWS_POPUP (f) = 1;
     }
 
-  AdjustWindowRectEx(&rect, style, ADJR_MENUFLAG, exstyle);
+  AdjustWindowRectEx (&rect, style, ADJR_MENUFLAG, exstyle);
 
   XSETFRAME (frame_obj, f);
 
   Vmswindows_frame_being_created = frame_obj;
+  {
+    const Extbyte *nameext = 0;
 
-  hwnd = CreateWindowEx (exstyle,
-			 XEMACS_CLASS,
-			 STRINGP (f->name) ? (LPCTSTR) XSTRING_DATA (f->name) :
-			 (STRINGP (name) ? (LPCTSTR) XSTRING_DATA (name) :
-			  XEMACS_CLASS),
-			 style,
-			 rect_default.left, rect_default.top,
-			 rect_default.width, rect_default.height,
-			 hwnd_parent, NULL, NULL, NULL);
+    if (STRINGP (f->name))
+      LISP_STRING_TO_TSTR (f->name, nameext);
+    else if (STRINGP (name))
+      LISP_STRING_TO_TSTR (name, nameext);
+    else
+      nameext = XETEXT (XEMACS_CLASS);
+    hwnd = qxeCreateWindowEx (exstyle,
+			      XETEXT (XEMACS_CLASS),
+			      nameext,
+			      style,
+			      rect_default.left, rect_default.top,
+			      rect_default.width, rect_default.height,
+			      hwnd_parent, NULL, NULL, NULL);
+  }
 
   Vmswindows_frame_being_created = Qnil;
 
@@ -214,15 +224,17 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 		       STRINGP (f->name) ? f->name :
 		       STRINGP (name) ? name :
 		       Qunbound);
+			   
+  FRAME_MSWINDOWS_HANDLE (f) = hwnd;
 
-  FRAME_MSWINDOWS_HANDLE(f) = hwnd;
+  qxeSetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID (frame_obj));
+  FRAME_MSWINDOWS_DC (f) = GetDC (hwnd);
+  SetTextAlign (FRAME_MSWINDOWS_DC (f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
 
-  SetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID(frame_obj));
-  FRAME_MSWINDOWS_DC(f) = GetDC (hwnd);
-  SetTextAlign (FRAME_MSWINDOWS_DC(f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
-
+#ifdef HAVE_DIALOGS
   if (FRAME_MSWINDOWS_POPUP (f))
     mswindows_register_popup_frame (frame_obj);
+#endif /* HAVE_DIALOGS */
 }
 
 static void
@@ -249,10 +261,10 @@ mswindows_init_frame_3 (struct frame *f)
    * ignored, and the parameter specified in the caller's STARTUPINFO is
    * substituted instead. That parameter is SW_HIDE if we were started by
    * runemacs, so call this twice. #### runemacs is evil */
-  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
-  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
-  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
-  DragAcceptFiles (FRAME_MSWINDOWS_HANDLE(f), TRUE);
+  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOWNORMAL);
+  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOWNORMAL);
+  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE (f));
+  DragAcceptFiles (FRAME_MSWINDOWS_HANDLE (f), TRUE);
 }
 
 static void
@@ -285,7 +297,7 @@ mswindows_mark_frame (struct frame *f)
 static void
 mswindows_focus_on_frame (struct frame *f)
 {
-  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE (f));
 }
 
 static void
@@ -293,11 +305,11 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
-      Lisp_Object frame;
-      XSETFRAME (frame, f);
-      mswindows_unregister_popup_frame (frame);
-      ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
-      DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
+#ifdef HAVE_DIALOGS
+      mswindows_unregister_popup_frame (wrap_frame (f));
+#endif
+      ReleaseDC (FRAME_MSWINDOWS_HANDLE (f), FRAME_MSWINDOWS_DC (f));
+      DestroyWindow (FRAME_MSWINDOWS_HANDLE (f));
       xfree (f->frame_data);
     }
   f->frame_data = 0;
@@ -312,14 +324,14 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
   rect.bottom = height;
 
   AdjustWindowRectEx (&rect,
-		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
-		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
-		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_STYLE),
+		      GetMenu (FRAME_MSWINDOWS_HANDLE (f)) != NULL,
+		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_EXSTYLE));
 
-  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
-    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE (f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE (f)))
+    ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_RESTORE);
 
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE (f), NULL, 
 		0, 0, rect.right-rect.left, rect.bottom-rect.top,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOMOVE);
 }
@@ -327,7 +339,7 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
 static void
 mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 {
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE (f), NULL, 
 		xoff, yoff, 0, 0,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOSIZE);
 }
@@ -335,11 +347,11 @@ mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 static void
 mswindows_make_frame_visible (struct frame *f)
 {
-  if (!FRAME_VISIBLE_P(f))
-    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+  if (!FRAME_VISIBLE_P (f))
+    ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_RESTORE);
   else
-    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOW);
-  SetActiveWindow (FRAME_MSWINDOWS_HANDLE(f));
+    ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOW);
+  SetActiveWindow (FRAME_MSWINDOWS_HANDLE (f));
   f->visible = 1;
   f->iconified = 0;
 }
@@ -347,10 +359,10 @@ mswindows_make_frame_visible (struct frame *f)
 static void
 mswindows_make_frame_invisible (struct frame *f)
 {
-  if (!FRAME_VISIBLE_P(f))
+  if (!FRAME_VISIBLE_P (f))
     return;
 
-  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_HIDE);
+  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_HIDE);
   f->visible = 0;
 }
 
@@ -358,7 +370,7 @@ static int
 mswindows_frame_totally_visible_p (struct frame *f)
 {
   RECT rc_me, rc_other, rc_temp;
-  HWND hwnd = FRAME_MSWINDOWS_HANDLE(f);
+  HWND hwnd = FRAME_MSWINDOWS_HANDLE (f);
 
   /* We test against not a whole window rectangle, only against its
      client part. So, if non-client are is covered and client area is
@@ -367,8 +379,8 @@ mswindows_frame_totally_visible_p (struct frame *f)
   MapWindowPoints (hwnd, HWND_DESKTOP, (LPPOINT)&rc_me, 2);
 
   /* First see if we're off the desktop */
-  GetWindowRect (GetDesktopWindow(), &rc_other);
-  UnionRect(&rc_temp, &rc_me, &rc_other);
+  GetWindowRect (GetDesktopWindow (), &rc_other);
+  UnionRect (&rc_temp, &rc_me, &rc_other);
   if (!EqualRect (&rc_temp, &rc_other))
     return 0;
 
@@ -377,7 +389,7 @@ mswindows_frame_totally_visible_p (struct frame *f)
     if (IsWindowVisible (hwnd))
       {
 	GetWindowRect (hwnd, &rc_other);
-	if (IntersectRect(&rc_temp, &rc_me, &rc_other))
+	if (IntersectRect (&rc_temp, &rc_me, &rc_other))
 	  return 0;
       }
 
@@ -387,15 +399,15 @@ mswindows_frame_totally_visible_p (struct frame *f)
 static int
 mswindows_frame_visible_p (struct frame *f)
 {
-  return IsWindowVisible (FRAME_MSWINDOWS_HANDLE(f))
-    && !IsIconic (FRAME_MSWINDOWS_HANDLE(f));
+  return IsWindowVisible (FRAME_MSWINDOWS_HANDLE (f))
+    && !IsIconic (FRAME_MSWINDOWS_HANDLE (f));
 }
 
 
 static void
 mswindows_iconify_frame (struct frame *f)
 {
-  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_MINIMIZE);
+  ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_MINIMIZE);
   f->visible = 0;
   f->iconified = 1;
 }
@@ -403,7 +415,7 @@ mswindows_iconify_frame (struct frame *f)
 static int
 mswindows_frame_iconified_p (struct frame *f)
 {
-  return IsIconic (FRAME_MSWINDOWS_HANDLE(f));
+  return IsIconic (FRAME_MSWINDOWS_HANDLE (f));
 }
 
 static void
@@ -418,8 +430,8 @@ mswindows_set_frame_icon (struct frame *f)
 						    FALSE);
 	}
 
-      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON,
-		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon));
+      qxeSetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON,
+		       (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon));
     }
 }
 
@@ -429,8 +441,8 @@ mswindows_set_frame_pointer (struct frame *f)
   if (IMAGE_INSTANCEP (f->pointer)
       && IMAGE_INSTANCE_TYPE (XIMAGE_INSTANCE (f->pointer)) == IMAGE_POINTER)
     {
-      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HCURSOR,
-		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
+      qxeSetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HCURSOR,
+		       (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
       /* we only have to do this because GC doesn't cause a mouse
          event and doesn't give time to event processing even if it
          did. */
@@ -446,7 +458,7 @@ mswindows_set_mouse_position (struct window *w, int x, int y)
 
   pt.x = w->pixel_left + x;
   pt.y = w->pixel_top  + y;
-  ClientToScreen (FRAME_MSWINDOWS_HANDLE(f), &pt);
+  ClientToScreen (FRAME_MSWINDOWS_HANDLE (f), &pt);
   SetCursorPos (pt.x, pt.y);
 }
 
@@ -475,16 +487,12 @@ mswindows_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int 
     return 0;
 
   /* And that the window is an XEmacs frame */
-  {
-    char class_name [sizeof(XEMACS_CLASS) + 1];
-    if (!GetClassName (hwnd, class_name, sizeof(XEMACS_CLASS))
-	|| strcmp (class_name, XEMACS_CLASS) != 0)
-      return 0;
-  }
+  if (!mswindows_window_is_xemacs (hwnd))
+    return 0;
 
   /* Yippie! */
   ScreenToClient (hwnd, &pt);
-  VOID_TO_LISP (*frame, GetWindowLong (hwnd, XWL_FRAMEOBJ));
+  VOID_TO_LISP (*frame, qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
   *x = pt.x;
   *y = pt.y;
   return 1;
@@ -493,13 +501,13 @@ mswindows_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int 
 static void
 mswindows_raise_frame (struct frame *f)
 {
-  BringWindowToTop (FRAME_MSWINDOWS_HANDLE(f));
+  BringWindowToTop (FRAME_MSWINDOWS_HANDLE (f));
 }
 
 static void
 mswindows_lower_frame (struct frame *f)
 {
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), HWND_BOTTOM, 0, 0, 0, 0,
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE (f), HWND_BOTTOM, 0, 0, 0, 0,
 		SWP_NOSIZE | SWP_NOMOVE | SWP_NOSENDCHANGING);
 }
 
@@ -518,14 +526,14 @@ mswindows_disable_frame (struct frame *f)
 static void
 mswindows_set_title_from_intbyte (struct frame *f, Intbyte *title)
 {
-  unsigned int new_checksum = hash_string (title, strlen ((char *) title));
+  unsigned int new_checksum = hash_string (title, qxestrlen (title));
   if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM (f))
     {
       Extbyte *title_ext;
 
       FRAME_MSWINDOWS_TITLE_CHECKSUM (f) = new_checksum;
-      C_STRING_TO_EXTERNAL (title, title_ext, Qmswindows_tstr);
-      SetWindowText (FRAME_MSWINDOWS_HANDLE (f), title_ext);
+      C_STRING_TO_TSTR (title, title_ext);
+      qxeSetWindowText (FRAME_MSWINDOWS_HANDLE (f), title_ext);
     }
 }
 
@@ -535,7 +543,7 @@ mswindows_frame_property (struct frame *f, Lisp_Object property)
   if (EQ (Qleft, property) || EQ (Qtop, property))
     {
       RECT rc;
-      GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rc);
+      GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
       return make_int (EQ (Qtop,  property) ? rc.top : rc.left);
     }
   return Qunbound;
@@ -556,7 +564,7 @@ mswindows_frame_properties (struct frame *f)
 {
   Lisp_Object props = Qnil;
   RECT rc;
-  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rc);
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rc);
 
   props = cons3 (Qtop,  make_int (rc.top), props);
   props = cons3 (Qleft, make_int (rc.left), props);
@@ -647,7 +655,7 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 }
 
 void
-mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
+mswindows_size_frame_internal (struct frame *f, XEMACS_RECT_WH *dest)
 {
   RECT rect, ws_rect;
   int pixel_width, pixel_height;
@@ -661,7 +669,7 @@ mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
   if (dest->height < 0)
     pixel_height = FRAME_PIXHEIGHT (f);
 
-  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE (f), &rect);
   if (dest->left < 0)
     dest->left = rect.left;
   if (dest->top < 0)
@@ -672,9 +680,9 @@ mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
   rect.bottom = pixel_height;
 
   AdjustWindowRectEx (&rect,
-		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
-		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
-		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_STYLE),
+		      GetMenu (FRAME_MSWINDOWS_HANDLE (f)) != NULL,
+		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_EXSTYLE));
 
   /* resize and move the window so that it fits in the workspace. This is
   not restrictive since this will happen later anyway in WM_SIZE.  We
@@ -717,11 +725,11 @@ mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
       move_p=1;
     }
 
-  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f))
-      || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
-    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE (f)) 
+      || IsZoomed (FRAME_MSWINDOWS_HANDLE (f)))
+    ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_RESTORE);
 
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE (f), NULL, 
 		dest->left, dest->top, pixel_width, pixel_height,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
 		| (size_p ? 0 : SWP_NOSIZE)
@@ -731,12 +739,12 @@ mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 static Lisp_Object
 mswindows_get_frame_parent (struct frame *f)
 {
-  HWND hwnd = FRAME_MSWINDOWS_HANDLE(f);
+  HWND hwnd = FRAME_MSWINDOWS_HANDLE (f);
   hwnd = GetParent (hwnd);
   if (hwnd)
     {
       Lisp_Object parent;
-      VOID_TO_LISP (parent, GetWindowLong (hwnd, XWL_FRAMEOBJ));
+      VOID_TO_LISP (parent, qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
       assert (FRAME_MSWINDOWS_P (XFRAME (parent)));
       return parent;
     }
@@ -745,7 +753,7 @@ mswindows_get_frame_parent (struct frame *f)
 }
 
 static void
-mswindows_update_frame_external_traits (struct frame* frm, Lisp_Object name)
+mswindows_update_frame_external_traits (struct frame *frm, Lisp_Object name)
 {
 }
 
@@ -802,7 +810,8 @@ maybe_error_if_job_active (struct frame *f)
 }
 
 static void
-msprinter_init_frame_1 (struct frame *f, Lisp_Object props)
+msprinter_init_frame_1 (struct frame *f, Lisp_Object props,
+			int frame_name_is_defaulted)
 {
   /* Make sure this is the only frame on device. Windows printer can
      handle only one job at a time. */
@@ -829,7 +838,7 @@ msprinter_init_frame_1 (struct frame *f, Lisp_Object props)
 static void
 msprinter_init_frame_3 (struct frame *f)
 {
-  DOCINFO di;
+  DOCINFOW di;
   struct device *device = XDEVICE (FRAME_DEVICE (f));
   HDC hdc;
   int frame_left, frame_top, frame_width, frame_height;
@@ -840,14 +849,14 @@ msprinter_init_frame_3 (struct frame *f)
 
   /* Compute geometry properties */
   frame_left = (MulDiv (GetDeviceCaps (hdc, LOGPIXELSX),
-			FRAME_MSPRINTER_LEFT_MARGIN(f), 1440)
+			FRAME_MSPRINTER_LEFT_MARGIN (f), 1440)
 		- GetDeviceCaps (hdc, PHYSICALOFFSETX));
-
-  if (FRAME_MSPRINTER_CHARWIDTH(f) > 0)
+  
+  if (FRAME_MSPRINTER_CHARWIDTH (f) > 0)
     {
-      char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH(f), 0,
+      char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH (f), 0,
 			       &frame_width, NULL);
-      FRAME_MSPRINTER_RIGHT_MARGIN(f) =
+      FRAME_MSPRINTER_RIGHT_MARGIN (f) = 
 	MulDiv (GetDeviceCaps (hdc, PHYSICALWIDTH)
 		- (frame_left + frame_width), 1440,
 		GetDeviceCaps (hdc, LOGPIXELSX));
@@ -856,18 +865,18 @@ msprinter_init_frame_3 (struct frame *f)
     frame_width = (GetDeviceCaps (hdc, PHYSICALWIDTH)
 		   - frame_left
 		   - MulDiv (GetDeviceCaps (hdc, LOGPIXELSX),
-			     FRAME_MSPRINTER_RIGHT_MARGIN(f), 1440));
+			     FRAME_MSPRINTER_RIGHT_MARGIN (f), 1440));
 
   frame_top = (MulDiv (GetDeviceCaps (hdc, LOGPIXELSY),
-		       FRAME_MSPRINTER_TOP_MARGIN(f), 1440)
+		       FRAME_MSPRINTER_TOP_MARGIN (f), 1440)
 	       - GetDeviceCaps (hdc, PHYSICALOFFSETY));
 
-  if (FRAME_MSPRINTER_CHARHEIGHT(f) > 0)
+  if (FRAME_MSPRINTER_CHARHEIGHT (f) > 0)
     {
-      char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT(f),
+      char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT (f),
 			       NULL, &frame_height);
 
-      FRAME_MSPRINTER_BOTTOM_MARGIN(f) =
+      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = 
 	MulDiv (GetDeviceCaps (hdc, PHYSICALHEIGHT)
 		- (frame_top + frame_height), 1440,
 		GetDeviceCaps (hdc, LOGPIXELSY));
@@ -876,7 +885,7 @@ msprinter_init_frame_3 (struct frame *f)
     frame_height = (GetDeviceCaps (hdc, PHYSICALHEIGHT)
 		    - frame_top
 		    - MulDiv (GetDeviceCaps (hdc, LOGPIXELSY),
-			      FRAME_MSPRINTER_BOTTOM_MARGIN(f), 1440));
+			      FRAME_MSPRINTER_BOTTOM_MARGIN (f), 1440));
 
   /* Geometry sanity checks */
   if (!frame_pixsize_valid_p (f, frame_width, frame_height))
@@ -894,8 +903,8 @@ msprinter_init_frame_3 (struct frame *f)
   /* Apply XEmacs frame geometry and layout windows */
   {
     int rows, columns;
-    FRAME_PIXWIDTH(f) = frame_width;
-    FRAME_PIXHEIGHT(f) = frame_height;
+    FRAME_PIXWIDTH (f) = frame_width;
+    FRAME_PIXHEIGHT (f) = frame_height;
     pixel_to_char_size (f, frame_width, frame_height, &columns, &rows);
     change_frame_size (f, rows, columns, 0);
   }
@@ -905,14 +914,20 @@ msprinter_init_frame_3 (struct frame *f)
 
   /* Start print job */
   di.cbSize = sizeof (di);
-  di.lpszDocName = (STRINGP(f->name)
-		    ? (char*) XSTRING_DATA(f->name)
-		    : "XEmacs print document");
+  {
+    const Extbyte *nameext;
+
+    if (STRINGP (f->name))
+      LISP_STRING_TO_TSTR (f->name, nameext);
+    else
+      nameext = XETEXT ("XEmacs print document");
+    di.lpszDocName = (XELPTSTR) nameext;
+  }
   di.lpszOutput = NULL;
   di.lpszDatatype = NULL;
   di.fwType = 0;
 
-  if (StartDoc (hdc, &di) <= 0)
+  if (qxeStartDoc (hdc, &di) <= 0)
     invalid_operation ("Cannot start print job",
 		       STRINGP (f->name) ? f->name : Qunbound);
 
@@ -920,7 +935,7 @@ msprinter_init_frame_3 (struct frame *f)
 
   /* Finish frame setup */
   FRAME_MSPRINTER_JOB_STARTED (f) = 1;
-  FRAME_VISIBLE_P(f) = 0;
+  FRAME_VISIBLE_P (f) = 0;
 }
 
 static void
@@ -948,13 +963,13 @@ static Lisp_Object
 msprinter_frame_property (struct frame *f, Lisp_Object property)
 {
   if (EQ (Qleft_margin, property))
-    return make_int (FRAME_MSPRINTER_LEFT_MARGIN(f));
+    return make_int (FRAME_MSPRINTER_LEFT_MARGIN (f));
   else if (EQ (Qtop_margin, property))
-    return make_int (FRAME_MSPRINTER_TOP_MARGIN(f));
+    return make_int (FRAME_MSPRINTER_TOP_MARGIN (f));
   if (EQ (Qright_margin, property))
-    return make_int (FRAME_MSPRINTER_RIGHT_MARGIN(f));
+    return make_int (FRAME_MSPRINTER_RIGHT_MARGIN (f));
   else if (EQ (Qbottom_margin, property))
-    return make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f));
+    return make_int (FRAME_MSPRINTER_BOTTOM_MARGIN (f));
   else
     return Qunbound;
 }
@@ -971,13 +986,13 @@ msprinter_frame_properties (struct frame *f)
 {
   Lisp_Object props = Qnil;
   props = cons3 (Qbottom_margin,
-		 make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f)), props);
+		 make_int (FRAME_MSPRINTER_BOTTOM_MARGIN (f)), props);
   props = cons3 (Qright_margin,
-		 make_int (FRAME_MSPRINTER_RIGHT_MARGIN(f)), props);
+		 make_int (FRAME_MSPRINTER_RIGHT_MARGIN (f)), props);
   props = cons3 (Qtop_margin,
-		 make_int (FRAME_MSPRINTER_TOP_MARGIN(f)), props);
+		 make_int (FRAME_MSPRINTER_TOP_MARGIN (f)), props);
   props = cons3 (Qleft_margin,
-		 make_int (FRAME_MSPRINTER_LEFT_MARGIN(f)), props);
+		 make_int (FRAME_MSPRINTER_LEFT_MARGIN (f)), props);
   return props;
 }
 
@@ -1000,7 +1015,7 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      if (!NILP (val))
 		{
 		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARWIDTH(f) = XINT (val);
+		  FRAME_MSPRINTER_CHARWIDTH (f) = XINT (val);
 		}
 	    }
 	  if (EQ (prop, Qheight))
@@ -1009,32 +1024,32 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      if (!NILP (val))
 		{
 		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARHEIGHT(f) = XINT (val);
+		  FRAME_MSPRINTER_CHARHEIGHT (f) = XINT (val);
 		}
 	    }
 	  else if (EQ (prop, Qleft_margin))
 	    {
 	      maybe_error_if_job_active (f);
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_LEFT_MARGIN(f) = XINT (val);
+	      FRAME_MSPRINTER_LEFT_MARGIN (f) = XINT (val);
 	    }
 	  else if (EQ (prop, Qtop_margin))
 	    {
 	      maybe_error_if_job_active (f);
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_TOP_MARGIN(f) = XINT (val);
+	      FRAME_MSPRINTER_TOP_MARGIN (f) = XINT (val);
 	    }
 	  else if (EQ (prop, Qright_margin))
 	    {
 	      maybe_error_if_job_active (f);
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_RIGHT_MARGIN(f) = XINT (val);
+	      FRAME_MSPRINTER_RIGHT_MARGIN (f) = XINT (val);
 	    }
 	  else if (EQ (prop, Qbottom_margin))
 	    {
 	      maybe_error_if_job_active (f);
 	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_BOTTOM_MARGIN(f) = XINT (val);
+	      FRAME_MSPRINTER_BOTTOM_MARGIN (f) = XINT (val);
 	    }
 	}
     }

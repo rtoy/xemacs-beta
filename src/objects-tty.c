@@ -1,6 +1,6 @@
 /* TTY-specific Lisp objects.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -27,10 +27,8 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "insdel.h"
 #include "objects-tty.h"
-#ifdef MULE
 #include "device.h"
-#include "mule-charset.h"
-#endif
+#include "charset.h"
 
 /* An alist mapping from color names to a cons of (FG-STRING, BG-STRING). */
 Lisp_Object Vtty_color_alist;
@@ -220,7 +218,7 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   Intbyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;
 
-  if (strncmp ((const char *) str, "normal", 6))
+  if (qxestrncmp_c (str, "normal", 6))
     return 0;
   str += 6;
   if (*str)
@@ -229,7 +227,7 @@ tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       if (*str != '/')
 	return 0;
       str++;
-      charset = Ffind_charset (intern ((const char *) str));
+      charset = Ffind_charset (intern_int (str));
       if (NILP (charset))
 	return 0;
 #else

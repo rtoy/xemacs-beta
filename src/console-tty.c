@@ -1,7 +1,7 @@
 /* TTY console functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -35,9 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "sysdep.h"
 #include "sysfile.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 DEFINE_CONSOLE_TYPE (tty);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
@@ -79,14 +77,14 @@ tty_init_console (struct console *con, Lisp_Object props)
     CHECK_STRING (terminal_type);
   else
     {
-      char *temp_type = getenv ("TERM");
+      Intbyte *temp_type = egetenv ("TERM");
 
       if (!temp_type)
 	{
 	  invalid_state ("Cannot determine terminal type", Qunbound);
 	}
       else
-	terminal_type = build_string (temp_type);
+	terminal_type = build_intstring (temp_type);
     }
 
   /* Determine the controlling process */
@@ -107,23 +105,25 @@ tty_init_console (struct console *con, Lisp_Object props)
   else
     {
       tty_con->infd = tty_con->outfd =
-	open ((char *) XSTRING_DATA (tty), O_RDWR);
+	qxe_open (XSTRING_DATA (tty), O_RDWR);
       if (tty_con->infd < 0)
 	signal_error (Qio_error, "Unable to open tty", tty);
       tty_con->is_stdio = 0;
     }
 
   tty_con->instream  = make_filedesc_input_stream  (tty_con->infd,  0, -1, 0);
-  tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0);
-#ifdef FILE_CODING
+  Lstream_set_buffering (XLSTREAM (tty_con->instream), LSTREAM_UNBUFFERED, 0);
   tty_con->instream =
-    make_decoding_input_stream (XLSTREAM (tty_con->instream),
-				Fget_coding_system (Qkeyboard));
+    make_coding_input_stream (XLSTREAM (tty_con->instream),
+			      get_coding_system_for_text_file (Qkeyboard, 0),
+			      CODING_DECODE);
+  Lstream_set_buffering (XLSTREAM (tty_con->instream), LSTREAM_UNBUFFERED, 0);
   Lstream_set_character_mode (XLSTREAM (tty_con->instream));
+  tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0);
   tty_con->outstream =
-    make_encoding_output_stream (XLSTREAM (tty_con->outstream),
-				 Fget_coding_system (Qterminal));
-#endif /* FILE_CODING */
+    make_coding_output_stream (XLSTREAM (tty_con->outstream),
+			       get_coding_system_for_text_file (Qterminal, 0),
+			       CODING_ENCODE);
   tty_con->terminal_type = terminal_type;
   tty_con->controlling_process = controlling_process;
 
@@ -142,9 +142,9 @@ tty_init_console (struct console *con, Lisp_Object props)
        would have two controlling TTY's, which is not allowed). */
 
     EMACS_GET_TTY_PROCESS_GROUP (tty_con->infd, &tty_pg);
-    cfd = open ("/dev/tty", O_RDWR, 0);
+    cfd = qxe_open ((Intbyte *) "/dev/tty", O_RDWR, 0);
     EMACS_GET_TTY_PROCESS_GROUP (cfd, &controlling_tty_pg);
-    close (cfd);
+    retry_close (cfd);
     if (tty_pg == controlling_tty_pg)
       {
 	tty_con->controlling_terminal = 1;
@@ -195,7 +195,7 @@ tty_delete_console (struct console *con)
   Lstream_close (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
   Lstream_close (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream));
   if (!CONSOLE_TTY_DATA (con)->is_stdio)
-    close (CONSOLE_TTY_DATA (con)->infd);
+    retry_close (CONSOLE_TTY_DATA (con)->infd);
   if (CONSOLE_TTY_DATA (con)->controlling_terminal)
     {
       Vcontrolling_terminal = Qnil;
@@ -231,7 +231,6 @@ Return the controlling process of tty console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->controlling_process;
 }
 
-#ifdef FILE_CODING
 
 DEFUN ("console-tty-input-coding-system", Fconsole_tty_input_coding_system,
        0, 1, 0, /*
@@ -239,7 +238,7 @@ Return the input coding system of tty console CONSOLE.
 */
        (console))
 {
-  return decoding_stream_coding_system
+  return coding_stream_detected_coding_system
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->instream));
 }
 
@@ -251,9 +250,10 @@ CODESYS defaults to the value of `keyboard-coding-system'.
 */
 	(console, codesys))
 {
-  set_decoding_stream_coding_system
+  set_coding_stream_coding_system
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->instream),
-     Fget_coding_system (NILP (codesys) ? Qkeyboard : codesys));
+     get_coding_system_for_text_file (NILP (codesys) ? Qkeyboard : codesys,
+				      0));
   return Qnil;
 }
 
@@ -263,7 +263,7 @@ Return TTY CONSOLE's output coding system.
 */
        (console))
 {
-  return encoding_stream_coding_system
+  return coding_stream_coding_system
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream));
 }
 
@@ -275,9 +275,10 @@ CODESYS defaults to the value of `terminal-coding-system'.
 */
 	(console, codesys))
 {
-  set_encoding_stream_coding_system
+  set_coding_stream_coding_system
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream),
-     Fget_coding_system (NILP (codesys) ? Qterminal : codesys));
+     get_coding_system_for_text_file (NILP (codesys) ? Qterminal : codesys,
+				      0));
   /* Redraw tty */
   face_property_was_changed (Vdefault_face, Qfont, Qtty);
   return Qnil;
@@ -298,7 +299,6 @@ output coding systems of CONSOLE.
   Fset_console_tty_output_coding_system (console, codesys);
   return Qnil;
 }
-#endif /* FILE_CODING */
 
 
 Lisp_Object
@@ -341,13 +341,11 @@ syms_of_console_tty (void)
   DEFSUBR (Fconsole_tty_controlling_process);
   DEFSYMBOL (Qterminal_type);
   DEFSYMBOL (Qcontrolling_process);
-#ifdef FILE_CODING
   DEFSUBR (Fconsole_tty_output_coding_system);
   DEFSUBR (Fset_console_tty_output_coding_system);
   DEFSUBR (Fconsole_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_coding_system);
-#endif /* FILE_CODING */
 }
 
 void

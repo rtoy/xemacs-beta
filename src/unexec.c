@@ -1,4 +1,5 @@
 /* Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994
+/* Copyright (C) 2001 Ben Wing.
    Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -167,14 +168,6 @@ pointer looks like an int) but not on all machines.
 #define PERROR(arg) perror (arg); return -1
 #else
 #define IN_UNEXEC
-#define DONT_ENCAPSULATE /* we include lisp.h so we want to make sure we
-			    don't get filename conversion.  The caller
-			    of unexec() is assumed to have done this
-			    already (it's easier to do it this way than
-			    to modify all the unexec modules to ensure
-			    that all weirdo functions, such as
-			    elf_write_modified_data(), have proper
-			    filename conversion applied). */
 #include <config.h>
 #define PERROR(file) report_error (file, new)
 #endif

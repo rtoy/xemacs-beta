@@ -20,6 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file essentially Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
+
 /* Authorship:
 
    Ben Wing: January 1996, for 19.14.
@@ -29,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
 #include "console-msw.h"
 #include "events.h"
 #include "opaque.h"
@@ -97,34 +99,34 @@ GetConsoleHwnd (void)
 
   /* fetch current window title */
 
-  GetConsoleTitle(pszOldWindowTitle, KLUDGE_BUFSIZE);
+  GetConsoleTitle (pszOldWindowTitle, KLUDGE_BUFSIZE);
 
   /* format a "unique" NewWindowTitle */
 
-  wsprintf(pszNewWindowTitle,"%d/%d",
-	   GetTickCount(),
-	   GetCurrentProcessId());
+  sprintf (pszNewWindowTitle, "%ld/%ld",
+	   GetTickCount (),
+	   GetCurrentProcessId ());
 
   /* change current window title */
 
-  SetConsoleTitle(pszNewWindowTitle);
+  SetConsoleTitle (pszNewWindowTitle);
 
   /* ensure window title has been updated */
 
-  Sleep(40);
+  Sleep (40);
 
   /* look for NewWindowTitle */
 
-  hwndFound=FindWindow(NULL, pszNewWindowTitle);
+  hwndFound=FindWindow (NULL, pszNewWindowTitle);
 
   /* restore original window title */
 
-  SetConsoleTitle(pszOldWindowTitle);
+  SetConsoleTitle (pszOldWindowTitle);
 
-  return(hwndFound);
+  return (hwndFound);
 } 
 
-HWND
+static HWND
 mswindows_get_console_hwnd (void)
 {
   if (!mswindows_console_hwnd)
@@ -179,7 +181,7 @@ mswindows_hide_console (void)
   ShowWindow (mswindows_get_console_hwnd (), SW_HIDE);
 }
 
-void
+static void
 mswindows_show_console (void)
 {
   /* What I really want is for the console window to appear on top of other
@@ -188,9 +190,13 @@ mswindows_show_console (void)
      with keeping the console window on top when xemacs --help is used. */
   HWND hwnd = mswindows_get_console_hwnd ();
   HWND hwndf = GetFocus ();
-  ShowWindow (hwnd, SW_SHOW);
-  BringWindowToTop (hwnd);
-  SetFocus (hwndf);
+  if (!IsWindowVisible (hwnd))
+    ShowWindow (hwnd, SW_SHOWNA);
+  if (noninteractive)
+    BringWindowToTop (hwnd);
+  else
+    SetWindowPos (hwnd, hwndf, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
+                  | SWP_NOACTIVATE);
 }
 
 static int mswindows_console_buffered = 0;
@@ -218,21 +224,27 @@ mswindows_ensure_console_buffered (void)
 int mswindows_message_outputted;
 
 int
-mswindows_output_console_string (CONST Extbyte *str, Bytecount len)
+mswindows_output_console_string (const Intbyte *ptr, Bytecount len)
 {
   DWORD num_written;
 
   mswindows_message_outputted = 1;
   mswindows_ensure_console_buffered ();
   mswindows_show_console ();
-  return WriteConsole (mswindows_console_buffer, str, len, &num_written, NULL);
-}
 
-/* Determine if running on Windows 9x and not NT */
-int
-mswindows_windows9x_p (void)
-{
-  return GetVersion () & 0x80000000;
+  if (initialized && !inhibit_non_essential_printing_operations)
+    {
+      const Extbyte *extptr;
+      Bytecount extlen;
+      TO_EXTERNAL_FORMAT (DATA, (ptr, len),
+			  ALLOCA, (extptr, extlen),
+			  Qmswindows_tstr);
+      return qxeWriteConsole (mswindows_console_buffer, extptr,
+			      extlen / XETCHAR_SIZE, &num_written, NULL);
+    }
+  else
+    return WriteConsoleA (mswindows_console_buffer, (char *) ptr, len,
+			  &num_written, NULL);
 }
 
 DEFUN ("mswindows-debugging-output", Fmswindows_debugging_output, 1, 1, 0, /*
@@ -241,30 +253,37 @@ This function can be used as the STREAM argument of Fprint() or the like.
 */
        (char_or_string))
 {
-  Extbyte *extstr;
-
   if (STRINGP (char_or_string))
-    {
-      TO_EXTERNAL_FORMAT (LISP_STRING, char_or_string,
-			  C_STRING_ALLOCA, extstr,
-			  Qmswindows_tstr);
-      OutputDebugString (extstr);
-    }
+    /* It's safe to pass in string data because TO_EXTERNAL_FORMAT
+       inhibits GC. */
+    write_string_to_mswindows_debugging_output
+      (XSTRING_DATA (char_or_string), XSTRING_LENGTH (char_or_string));
   else
     {
-      Intbyte str[MAX_EMCHAR_LEN + 1];
+      Intbyte str[MAX_EMCHAR_LEN];
       Bytecount len;
 
       CHECK_CHAR_COERCE_INT (char_or_string);
       len = set_charptr_emchar (str, XCHAR (char_or_string));
-      str[len] = '\0';
-      TO_EXTERNAL_FORMAT (C_STRING, str,
-			  C_STRING_ALLOCA, extstr,
-			  Qmswindows_tstr);
-      OutputDebugString (extstr);
+      write_string_to_mswindows_debugging_output (str, len);
     }
 
   return char_or_string;
+}
+
+void
+write_string_to_mswindows_debugging_output (Intbyte *str, Bytecount len)
+{
+  const Extbyte *extptr;
+  if (initialized && !inhibit_non_essential_printing_operations)
+    {
+      TO_EXTERNAL_FORMAT (DATA, (str, len),
+			  C_STRING_ALLOCA, extptr,
+			  Qmswindows_tstr);
+      qxeOutputDebugString (extptr);
+    }
+  else
+    OutputDebugStringA ((char *) str);
 }
 
 #ifdef DEBUG_XEMACS
@@ -482,16 +501,12 @@ no effect.  */
     }
 
   CHECK_STRING (message_);
-  TO_EXTERNAL_FORMAT (LISP_STRING, message_,
-		      C_STRING_ALLOCA, msgout,
-		      Qmswindows_tstr);
+  LISP_STRING_TO_TSTR (message_, msgout);
   
   if (!NILP (title))
     {
       CHECK_STRING (title);
-      TO_EXTERNAL_FORMAT (LISP_STRING, title,
-			  C_STRING_ALLOCA, titleout,
-			  Qmswindows_tstr);
+      LISP_STRING_TO_TSTR (title, titleout);
     }
 
   EXTERNAL_LIST_LOOP (tail, flags)
@@ -534,7 +549,7 @@ no effect.  */
     }
 
   {
-    int retval = MessageBox (NULL, msgout, titleout, sty);
+    int retval = qxeMessageBox (NULL, msgout, titleout, sty);
 
     if (retval == 0)
       out_of_memory ("When calling `mswindows-message-box'", Qunbound);
@@ -554,46 +569,6 @@ no effect.  */
   }
 
   return Qnil;
-}
-
-Lisp_Object
-mswindows_lisp_error (int errnum)
-{
-  LPTSTR lpMsgBuf;
-  Lisp_Object result;
-  Intbyte *inres;
-  Bytecount len;
-  
-  FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
-		 | FORMAT_MESSAGE_FROM_SYSTEM,
-		 NULL, errnum,
-		 /* !!#### not Mule-correct */
-		 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-		 /* yeah, i'm casting a char ** to a char *.  ya gotta
-		    problem widdat? */
-		 (LPTSTR) &lpMsgBuf,
-		 0,
-		 NULL);
-
-  TO_INTERNAL_FORMAT (C_STRING, lpMsgBuf, ALLOCA, (inres, len),
-		      Qmswindows_tstr);
-  /* Messages tend to end with a period and newline */
-  if (len >= 3 && !intbyte_strcmp (inres + len - 3, ".\r\n"))
-    len -= 3;
-  result = make_string (inres, len);
-  
-  LocalFree (lpMsgBuf);
-  return result;
-}
-
-void
-mswindows_output_last_error (char *frob)
-{
-  int errval = GetLastError ();
-  Lisp_Object errmess = mswindows_lisp_error (errval);
-  
-  stderr_out ("last error during %s is %d: %s\n",
-	      frob, errval, XSTRING_DATA (errmess));
 }
 
 static Lisp_Object

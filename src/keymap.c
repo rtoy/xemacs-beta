@@ -2,6 +2,7 @@
    Copyright (C) 1985, 1991-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2001 Ben Wing.
    Totally redesigned by jwz in 1991.
 
 This file is part of XEmacs.
@@ -172,6 +173,8 @@ struct Lisp_Keymap
 /* Actually allocate storage for these variables */
 
 Lisp_Object Vcurrent_global_map; /* Always a keymap */
+
+static Lisp_Object Vglobal_tty_map, Vglobal_window_system_map;
 
 static Lisp_Object Vmouse_grabbed_buffer;
 
@@ -443,7 +446,7 @@ make_key_description (const struct key_data *key, int prettify)
       Intbyte str [1 + MAX_EMCHAR_LEN];
       Bytecount count = set_charptr_emchar (str, XCHAR (keysym));
       str[count] = 0;
-      keysym = intern ((char *) str);
+      keysym = intern_int (str);
     }
   return control_meta_superify (keysym, modifiers);
 }
@@ -1755,7 +1758,7 @@ DEF is anything that can be a key's definition:
  or a cons (KEYMAP . CHAR), meaning use definition of CHAR in map KEYMAP.
 
 Contrary to popular belief, the world is not ASCII.  When running under a
-window manager, XEmacs can tell the difference between, for example, the
+window system, XEmacs can tell the difference between, for example, the
 keystrokes control-h, control-shift-h, and backspace.  You can, in fact,
 bind different commands to each of these.
 
@@ -1838,6 +1841,18 @@ it is possible to redefine only one of those sequences like so:
 Of course, all of this applies only when running under a window system.  If
 you're talking to XEmacs through a TTY connection, you don't get any of
 these features.
+
+To find out programmatically what a key is bound to, use `key-binding' to
+check all applicable keymaps, or `lookup-key' to check a specific keymap.
+The documentation for `key-binding' also contains a description of which
+keymaps are applicable in various situations.  `where-is-internal' does
+the opposite of `key-binding', i.e. searches keymaps for the keys that
+map to a particular binding.
+
+If you are confused about why a particular key sequence is generating a
+particular binding, and looking through the keymaps doesn't help, setting
+the variable `debug-emacs-events' may help.  If not, try checking
+what's in `function-key-map' and `key-translation-map'.
 */
        (keymap, keys, def))
 {
@@ -2322,6 +2337,7 @@ get_relevant_keymaps (Lisp_Object keys,
 	 o  keymap of any/all extents under the mouse
 	 o  minor-mode maps
 	 o  local-map of current-buffer
+	 o  global-tty-map or global-window-system-map
 	 o  global-map
 	 */
       /* The terminal element of the lookup may be nil or a keysym.
@@ -2350,6 +2366,7 @@ get_relevant_keymaps (Lisp_Object keys,
 	 o  else, local-map of buffer under the mouse
 	 o  minor-mode maps
 	 o  local-map of current-buffer
+	 o  global-tty-map or global-window-system-map
 	 o  global-map
 	 */
       Lisp_Object window = Fevent_window (terminal);
@@ -2415,6 +2432,11 @@ get_relevant_keymaps (Lisp_Object keys,
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
+  if (CONSOLE_TTY_P (con))
+    relevant_map_push (Vglobal_tty_map, &closure);
+  else
+    relevant_map_push (Vglobal_window_system_map, &closure);
+  
   {
     int nmaps = closure.nmaps;
     /* Silently truncate at 100 keymaps to prevent infinite lossage */
@@ -2515,6 +2537,8 @@ EVENT-OR-KEYS controls which keymaps will be listed.
 If EVENT-OR-KEYS is a mouse event (or a vector whose last element is a
  mouse event), the keymaps for that mouse event will be listed (see
  `key-binding').  Otherwise, the keymaps for key presses will be listed.
+See `key-binding' for a description of which keymaps are searched in
+various situations.
 */
        (event_or_keys))
 {
@@ -2547,6 +2571,8 @@ For key-presses, the order of keymaps searched is:
   - the `keymap' property of any extent(s) at point;
   - any applicable minor-mode maps;
   - the current local map of the current-buffer;
+  - either `global-tty-map' or `global-window-system-map', depending on
+    whether the current console is a TTY or non-TTY console;
   - the current global map.
 
 For mouse-clicks, the order of keymaps searched is:
@@ -2561,10 +2587,37 @@ For mouse-clicks, the order of keymaps searched is:
   - the current local map of the buffer under the mouse (does not
     apply to toolbar clicks);
   - any applicable minor-mode maps;
+  - either `global-tty-map' or `global-window-system-map', depending on
+    whether the current console is a TTY or non-TTY console;
   - the current global map.
 
 Note that if `overriding-local-map' or `overriding-terminal-local-map'
 is non-nil, *only* those two maps and the current global map are searched.
+
+Note also that key sequences actually received from the keyboard driver
+may be processed in various ways to generate the key sequence that is
+actually looked up in the keymaps.  In particular:
+
+-- Keysyms are individually passed through `keyboard-translate-table' before
+   any other processing.
+-- After this, key sequences as a whole are passed through
+   `key-translation-map'.
+-- The resulting key sequence is actually looked up in the keymaps.
+-- If there's no binding found, the key sequence is passed through
+   `function-key-map' and looked up again.
+-- If no binding is found and `retry-undefined-key-binding-unshifted' is
+   set (it usually is) and the final keysym is an uppercase character,
+   we lowercase it and start over from the `key-translation-map' stage.
+-- If no binding is found and we're on MS Windows and have international
+   support, we successively remap the key sequence using the keyboard layouts
+   of various default locales (current language environment, user default,
+   system default, US ASCII) and try again.  This makes (e.g.) sequences
+   such as `C-x b' work in a Russian locale, where the alphabetic keys are
+   actually generating Russian characters and not the Roman letters written
+   on the keycaps. (Not yet implemented)
+-- Finally, if the last keystroke matches `help-char', we automatically
+   generate and display a list of possible key sequences and bindings
+   given the prefix so far generated.
 */
        (keys, accept_default))
 {
@@ -2877,11 +2930,7 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   {
     char *s1 = (char *) string_data (XSYMBOL (obj1)->name);
     char *s2 = (char *) string_data (XSYMBOL (obj2)->name);
-#ifdef I18N2
-    return 0 > strcoll (s1, s2) ? 1 : -1;
-#else
     return 0 > strcmp  (s1, s2) ? 1 : -1;
-#endif
   }
 }
 
@@ -4350,6 +4399,22 @@ and applies even for keys that have ordinary bindings.
 */ );
   Vkey_translation_map = Qnil;
 
+  DEFVAR_LISP ("global-tty-map", &Vglobal_tty_map /*
+Global keymap that applies only to TTY's.
+Key bindings are looked up in this map just before looking in the global map,
+but only when the current console is a TTY console.  See also
+`global-window-system-map'.
+*/ );
+  Vglobal_tty_map = Qnil;
+
+  DEFVAR_LISP ("global-window-system-map", &Vglobal_window_system_map /*
+Global keymap that applies only to window systems.
+Key bindings are looked up in this map just before looking in the global map,
+but only when the current console is not a TTY console.  See also
+`global-tty-map'.
+*/ );
+  Vglobal_window_system_map = Qnil;
+
   DEFVAR_LISP ("vertical-divider-map", &Vvertical_divider_map /*
 Keymap which handles mouse clicks over vertical dividers.
 */ );
@@ -4374,6 +4439,9 @@ complex_vars_of_keymap (void)
   Lisp_Object meta_disgustitute;
 
   Vcurrent_global_map = Fmake_keymap (Qnil);
+  Vglobal_tty_map = Fmake_keymap (intern ("global-tty-map"));
+  Vglobal_window_system_map =
+    Fmake_keymap (intern ("global-window-system-map"));
 
   meta_disgustitute = Fmake_keymap (Qnil);
   Ffset (ESC_prefix, meta_disgustitute);

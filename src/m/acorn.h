@@ -101,7 +101,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef NOT_C_CODE
 #define TEXT_START	0x8000
-#define DATA_END	&_edata
 extern int _edata;
 #define etext _etext
 #endif

@@ -1,0 +1,42 @@
+This directory contains Unicode translation tables for most of the
+charsets in XEmacs.
+
+The tables in unicode-consortium/ come from:
+
+http://www.unicode.org/Public/MAPPINGS/
+
+The tables in ibm/ come from:
+
+http://oss.software.ibm.com/icu/charset/
+
+Someone needs to write a simple program to parse these tables.  You
+should use the tables in unicode-consortium/; the ones in ibm/ can be
+used to supplement or check the accuracy of the others.
+
+Perhaps the best way is to put some C code in XEmacs, probably in the
+form of a Lisp primitive, to parse a table in a specified file and add
+the appropriate Unicode mappings using set_unicode_conversion.  Then
+it will be easy to read the tables at dump time.  Doing it this way
+avoids the need to create large Elisp files solely to initialize the
+tables, or embed a bunch of initializing data in the C code.
+
+I'd suggest this:
+
+DEFUN ("parse-unicode-translation-table", ..., 2, 5, 0 /*
+Parse Unicode translation data in FILENAME for CHARSET.
+Data is text, in the form of one translation per line -- charset codepoint
+followed by Unicode codepoint.  Numbers are decimal or hex (preceded by 0x).
+Comments are marked with a #.
+
+If START and END are given, only charset codepoints within the given range
+will be processed.  If OFFSET is given, that value will be added to all
+charset codepoints in the file to obtain the internal charset codepoint.
+
+(#### This still doesn't handle Big5 tables.  Either we need to special-case
+this or allow a CCL program or Lisp routine to do the conversion.)
+*/
+     (filename, charset, start, end, offset))
+{
+
+}
+

@@ -5,10 +5,9 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; This file is part of XEmacs.
-
-;; This file is very similar to mule-coding.el
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
@@ -36,15 +35,6 @@
    coding-system-seven coding-system-charset charset-dimension))
 
 (defalias 'check-coding-system 'get-coding-system)
-
-(defconst modeline-multibyte-status '("%C")
-  "Modeline control for showing multibyte extension status.")
-
-;; override the default value defined in loaddefs.el.
-(setq-default modeline-format
-	      (cons ""
-		    (cons 'modeline-multibyte-status
-			  (cdr modeline-format))))
 
 (defun modify-coding-system-alist (target-type regexp coding-system)
   "Modify one of look up tables for finding a coding system on I/O operation.
@@ -128,12 +118,6 @@ or a function symbol which, when called, returns such a cons cell."
 			(device-console) terminal-coding-system)))
   (redraw-modeline t))
 
-(defun set-pathname-coding-system (coding-system)
-  "Set the coding system used for file system path names."
-  (interactive "zPathname-coding-system: ")
-  (get-coding-system coding-system) ; correctness check
-  (setq file-name-coding-system coding-system))
-
 (defun what-coding-system (start end &optional arg)
   "Show the encoding of text in the region.
 This function is meant to be called interactively;
@@ -160,7 +144,12 @@ Does not modify STR.  Returns the encoded string on successful conversion."
   "Return the 'mnemonic property of CODING-SYSTEM."
   (coding-system-property coding-system 'mnemonic))
 
-(defalias 'coding-system-docstring 'coding-system-doc-string)
+(defun coding-system-documentation (coding-system)
+  "Return the 'documentation property of CODING-SYSTEM."
+  (coding-system-property coding-system 'documentation))
+
+(define-obsolete-function-alias 'coding-system-doc-string
+  'coding-system-description)
 
 (defun coding-system-eol-type (coding-system)
   "Return the 'eol-type property of CODING-SYSTEM."
@@ -186,19 +175,6 @@ Does not modify STR.  Returns the encoded string on successful conversion."
   "Return the 'pre-write-conversion property of CODING-SYSTEM."
   (coding-system-property coding-system 'pre-write-conversion))
 
-(defun coding-system-base (coding-system)
-  "Return the base coding system of CODING-SYSTEM."
-  (if (not (coding-system-eol-type coding-system))
-      coding-system
-    (find-coding-system
-     (intern
-      (substring
-       (symbol-name (coding-system-name coding-system))
-       0
-       (string-match "-unix$\\|-dos$\\|-mac$"
-		     (symbol-name (coding-system-name coding-system))))))))
-
-
 ;;; #### bleagh!!!!!!!
 
 (defun coding-system-get (coding-system prop)
@@ -221,46 +197,44 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (defun coding-system-category (coding-system)
   "Return the coding category of CODING-SYSTEM."
   (or (coding-system-get coding-system 'category)
-      (let ((type (coding-system-type coding-system)))
-	(cond ((eq type 'no-conversion)
-	       'no-conversion)
-	      ((eq type 'shift-jis)
-	       'shift-jis)
-	      ((eq type 'ucs-4)
-	       'ucs-4)
-	      ((eq type 'utf-8)
-	       'utf-8)
-	      ((eq type 'big5)
-	       'big5)
-	      ((eq type 'iso2022)
-	       (cond ((coding-system-lock-shift coding-system)
-		      'iso-lock-shift)
-		     ((coding-system-seven coding-system)
-		      'iso-7)
-		     (t
-		      (let ((dim 0)
-			    ccs
-			    (i 0))
-			(while (< i 4)
-			  (setq ccs (coding-system-charset coding-system i))
-			  (if (and ccs
-				   (> (charset-dimension ccs) dim))
-			      (setq dim (charset-dimension ccs))
-			    )
-			  (setq i (1+ i)))
-			(cond ((= dim 1) 'iso-8-1)
-			      ((= dim 2) 'iso-8-2)
-			      (t 'iso-8-designate))
-			))))))))
+      (case (coding-system-type coding-system)
+	(no-conversion 'no-conversion)
+	(shift-jis 'shift-jis)
+	(unicode (case (coding-system-property coding-system 'type)
+		   (utf-8 'utf-8)
+		   (ucs-4 'ucs-4)
+		   (utf-16 (let ((bom (coding-system-property coding-system
+							      'need-bom))
+				 (le (coding-system-property coding-system
+							     'little-endian)))
+			     (cond ((and bom le) 'utf-16-little-endian-bom)
+				   ((and bom (not le) 'utf-16-bom))
+				   ((and (not bom) le) 'utf-16-little-endian)
+				   ((and (not bom) (not le) 'utf-16)))))))
+	(big5 'big5)
+	(iso2022 (cond ((coding-system-lock-shift coding-system)
+			'iso-lock-shift)
+		       ((coding-system-seven coding-system)
+			'iso-7)
+		       (t
+			(let ((dim 0)
+			      ccs
+			      (i 0))
+			  (while (< i 4)
+			    (setq ccs (declare-fboundp
+				       (coding-system-iso2022-charset
+					coding-system i)))
+			    (if (and ccs
+				     (> (charset-dimension ccs) dim))
+				(setq dim (charset-dimension ccs))
+			      )
+			    (setq i (1+ i)))
+			  (cond ((= dim 1) 'iso-8-1)
+				((= dim 2) 'iso-8-2)
+				(t 'iso-8-designate))))))
+	)))
 
 
-;;;; Definitions of predefined coding systems
-
-(make-coding-system
- 'undecided 'undecided
- "Automatic conversion."
- '(mnemonic "Auto"))
-
 ;;; Make certain variables equivalent to coding-system aliases
 (defun dontusethis-set-value-file-name-coding-system-handler (sym args fun harg handlers)
   (define-coding-system-alias 'file-name (or (car args) 'binary)))
@@ -286,23 +260,17 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  'set-value
  'dontusethis-set-value-keyboard-coding-system-handler)
 
-(unless (boundp 'file-name-coding-system)
-  (setq file-name-coding-system nil))
-
 (when (not (featurep 'mule))
+  (define-coding-system-alias 'escape-quoted 'binary)
   ;; these are so that gnus and friends work when not mule
-  (copy-coding-system 'undecided 'iso-8859-1)
-  (copy-coding-system 'undecided 'iso-8859-2)
-
+  (define-coding-system-alias 'iso-8859-1 'undecided)
+  (define-coding-system-alias 'iso-8859-2 'undecided)
   (define-coding-system-alias 'ctext 'binary))
 
 
 ;; compatibility for old XEmacsen (don't use it)
-(copy-coding-system 'undecided 'automatic-conversion)
+(define-coding-system-alias 'automatic-conversion 'undecided)
 
 (make-compatible-variable 'enable-multibyte-characters "Unimplemented")
-
-(define-obsolete-variable-alias
-  'pathname-coding-system 'file-name-coding-system)
 
 ;;; coding.el ends here

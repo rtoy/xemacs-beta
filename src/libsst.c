@@ -37,7 +37,7 @@ sst_open(play_level, record_level)
     struct audio_ioctl ai;
     Extbyte *ep;
 
-    fd = open( "/dev/audio", O_RDWR );
+    fd = open ("/dev/audio", O_RDWR);
     if ( fd < 0 )
 	{
 	sound_perror( "sst_open: open /dev/audio" );
@@ -59,7 +59,7 @@ sst_open(play_level, record_level)
     if (!play_level) 
     {
 	play_level = 75;
-	if ( (ep = getenv( "SST_PLAY" )) != NULL )
+	if ( (ep = egetenv( "SST_PLAY" )) != NULL )
 	{
 	    play_level = atoi( ep );
 	    if ( play_level < 0 || play_level > 99 )
@@ -72,7 +72,7 @@ sst_open(play_level, record_level)
     if (!record_level) 
     {
 	record_level = 75;
-	if ( (ep = getenv( "SST_RECORD" )) != NULL )
+	if ( (ep = egetenv( "SST_RECORD" )) != NULL )
 	{
 	    record_level = atoi( ep );
 	    if ( record_level < 0 || record_level > 99 )
@@ -110,7 +110,7 @@ sst_open(play_level, record_level)
 	sound_perror( "sst_open: GETREG MMR2" );
 	return( -1 );
 	}
-    if ( (ep = getenv( "SST_EARPHONES" )) != NULL )
+    if ( (ep = egetenv( "SST_EARPHONES" )) != NULL )
 	ai.data[0] &= ~AUDIO_MMR2_BITS_LS;
     else
 	ai.data[0] |= AUDIO_MMR2_BITS_LS;

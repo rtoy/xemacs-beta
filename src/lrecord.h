@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -75,6 +75,8 @@ struct lrecord_header
 
   /* 1 if the object is readonly from lisp */
   unsigned int lisp_readonly :1;
+
+  unsigned int unused :21;
 };
 
 struct lrecord_implementation;
@@ -302,12 +304,46 @@ extern int gc_in_progress;
 
 /* External description stuff
 
-   A lrecord external description  is an array  of values.  The  first
-   value of each line is a type, the second  the offset in the lrecord
-   structure.  Following values  are parameters, their  presence, type
-   and number is type-dependent.
+   PLEASE NOTE: Both lrecord_description and struct_description are
+   badly misnamed.  In reality, an lrecord_description is nothing more
+   than a list of the elements in a block of memory that need
+   relocating or other special handling, and a struct_description is
+   no more than an lrecord_description plus the size of the block of
+   memory. (In fact, a struct_description can now have its size given
+   as zero, i.e. unspecified, meaning that the last element in the
+   structure is noted in the list and the size of the block can
+   therefore be computed from it.) The names stem from the fact
+   lrecord_descriptions are used to describe lrecords (the size of the
+   lrecord is elsewhere in its description, attached to its methods,
+   so it does not need to be given here), while struct_descriptions
+   are used to describe C structs; but both are used in various
+   additional ways.  Much better terms would be memory_description and
+   sized_memory_description.
 
-   The description ends with a "XD_END" or "XD_SPECIFIER_END" record.
+   An lrecord_description is an array of values. (This is actually
+   misnamed, in that it does not just describe lrecords, but any
+   blocks of memory.) The first value of each line is a type, the
+   second the offset in the lrecord structure.  The third and
+   following elements are parameters; their presence, type and number
+   is type-dependent.
+
+   The description ends with a "XD_END", "XD_SPECIFIER_END" or
+   "XD_CODING_SYSTEM_END" record.
+
+   The top-level description of an lrecord or lcrecord does not need
+   to describe every element, just the ones that need to be relocated,
+   since the size of the lrecord is known. (The same goes for nested
+   structures, whenever the structure size is given, rather than being
+   defaulted by specifying 0 for the size.)
+
+   A struct_description is used for describing nested "structures".
+   (Again a misnomer, since it can be used for any blocks of memory,
+   not just structures.) It just contains a size for the memory block,
+   a pointer to an lrecord_description, and (for unions only) a union
+   constant, described below.  The size can be 0 (#### not yet
+   implemented!), in which case the size will be determined from the
+   largest offset logically referenced (i.e. last offset mentioned +
+   size of that object).  This is useful for stretchy arrays.
 
    Some example descriptions :
 
@@ -333,22 +369,63 @@ extern int gc_in_progress;
   A Lisp object.  This is also the type to use for pointers to other lrecords.
 
     XD_LISP_OBJECT_ARRAY
-  An array of Lisp objects or pointers to lrecords.
-  The third element is the count.
+  An array of Lisp objects or (equivalently) pointers to lrecords.
+  The parameter (i.e. third element) is the count.  This would be declared
+  as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
+  use XD_STRUCT_PTR, whose description parameter is a struct_description
+  consisting of only XD_LISP_OBJECT and XD_END.
 
     XD_LO_LINK
-  Link in a linked list of objects of the same type.
+  Weak link in a linked list of objects of the same type.  This is a
+  link that does NOT generate a GC reference.  Thus the pdumper will
+  not automatically add the referenced object to the table of all
+  objects to be dumped, and when storing and loading the dumped data
+  will automatically prune unreferenced objects in the chain and link
+  each referenced object to the next referenced object, even if it's
+  many links away.  We also need to special handling of a similar
+  nature for the root of the chain, which will be a staticpro()ed
+  object.
 
     XD_OPAQUE_PTR
   Pointer to undumpable data.  Must be NULL when dumping.
 
     XD_STRUCT_PTR
-  Pointer to described struct.  Parameters are number of structures and
-  struct_description.
+  Pointer to block of described memory. (This is misnamed: It is NOT
+  necessarily a pointer to a struct foo.) Parameters are number of
+  contiguous blocks and struct_description.
+
+    XD_STRUCT_ARRAY
+  Array of blocks of described memory.  Parameters are number of
+  structures and struct_description.  This differs from XD_STRUCT_PTR
+  in that the parameter is declared as struct foo[666] instead of
+  struct *foo.  In other words, the block of memory holding the
+  structures is within the containing structure, rather than being
+  elsewhere, with a pointer in the containing structure.
 
     XD_OPAQUE_DATA_PTR
   Pointer to dumpable opaque data.  Parameter is the size of the data.
   Pointed data must be relocatable without changes.
+
+    XD_UNION
+  Union of two or more different types of data.  Parameters are a
+  constant which determines which type the data is (this is usually an
+  XD_INDIRECT, referring to one of the fields in the structure), and
+  an array of struct_descriptions, whose values are used as follows,
+  which is *DIFFERENT* from their usage in XD_STRUCT_PTR: the first
+  field is a constant, which is compared to the first parameter of the
+  XD_UNION descriptor to determine if this description applies to the
+  data at the given offset, and the second is a pointer to a *SINGLE*
+  lrecord_description structure, describing the data being pointed at
+  when the associated constant matches.  You can go ahead and create
+  an array of lrecord_description structures and put an XD_END on it,
+  but only the first one is used.  If the data being pointed at is a
+  structure, you *MAY NOT* substitute an array of lrecord_description
+  structures describing the structure; instead, use a single
+  lrecord_description structure with an XD_STRUCT_PTR in it, and point
+  it in turn to the description of the structure.  See charset.h for a
+  description of how to use XD_UNION. (In other words, if the constant
+  matches, the lrecord_description pointed at will in essence be
+  substituted for the XD_UNION declaration.)
 
     XD_C_STRING
   Pointer to a C string.
@@ -359,10 +436,7 @@ extern int gc_in_progress;
     XD_INT_RESET
   An integer which will be reset to a given value in the dump file.
 
-  
-    XD_CHARCOUNT
-  Charcount value.  Used for counts.
-  
+
     XD_ELEMCOUNT
   Elemcount value.  Used for counts.
 
@@ -378,12 +452,28 @@ extern int gc_in_progress;
     XD_LONG
   long value.  Used for counts.
 
+    XD_BYTECOUNT
+  bytecount value.  Used for counts.
+
     XD_END
   Special type indicating the end of the array.
 
     XD_SPECIFIER_END
   Special type indicating the end of the array for a specifier.  Extra
-  description is going to be fetched from the specifier methods.
+  description, describing the specifier-type-specific data at the end
+  of the specifier object, is going to be fetched from the specifier
+  methods.  This should occur exactly once, in the description of the
+  specifier object, and the dump code knows how to special-case this
+  by fetching the specifier_methods pointer from the appropriate place
+  in the memory block (which will, of course, be a struct
+  Lisp_Specifier), fetching the description of the
+  specifier-type-specific data from this, and continuing processing
+  the memory block.
+
+    XD_CODING_SYSTEM_END
+  Special type indicating the end of the array for a coding system.
+  Extra description is going to be fetched from the coding system
+  methods.  Works just like XD_SPECIFIER_END.
 
 
   Special macros:
@@ -400,18 +490,20 @@ enum lrecord_description_type
   XD_LO_LINK,
   XD_OPAQUE_PTR,
   XD_STRUCT_PTR,
+  XD_STRUCT_ARRAY,
   XD_OPAQUE_DATA_PTR,
+  XD_UNION,
   XD_C_STRING,
   XD_DOC_STRING,
   XD_INT_RESET,
-  XD_CHARCOUNT,
   XD_BYTECOUNT,
   XD_ELEMCOUNT,
   XD_HASHCODE,
   XD_INT,
   XD_LONG,
   XD_END,
-  XD_SPECIFIER_END
+  XD_SPECIFIER_END,
+  XD_CODING_SYSTEM_END
 };
 
 struct lrecord_description
@@ -468,7 +560,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuk
 MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
@@ -781,19 +873,32 @@ extern Lisp_Object Q##c_name##p
 void *alloc_lcrecord (Bytecount size,
 		      const struct lrecord_implementation *);
 
-#define alloc_lcrecord_type(type, lrecord_implementation) \
+void *alloc_automanaged_lcrecord (Bytecount size,
+				  const struct lrecord_implementation *);
+
+#define alloc_unmanaged_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))
+
+#define alloc_lcrecord_type(type, lrecord_implementation) \
+  ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
+
+void free_lcrecord (Lisp_Object rec);
+
 
 /* Copy the data from one lcrecord structure into another, but don't
    overwrite the header information. */
 
-#define copy_lcrecord(dst, src)					\
+#define copy_sized_lcrecord(dst, src, size)			\
   memcpy ((char *) (dst) + sizeof (struct lcrecord_header),	\
 	  (char *) (src) + sizeof (struct lcrecord_header),	\
-	  sizeof (*(dst)) - sizeof (struct lcrecord_header))
+	  (size) - sizeof (struct lcrecord_header))
 
-#define zero_lcrecord(lcr)					\
+#define copy_lcrecord(dst, src) copy_sized_lcrecord (dst, src, sizeof (*(dst)))
+
+#define zero_sized_lcrecord(lcr, size)				\
    memset ((char *) (lcr) + sizeof (struct lcrecord_header), 0,	\
-	   sizeof (*(lcr)) - sizeof (struct lcrecord_header))
+	   (size) - sizeof (struct lcrecord_header))
+
+#define zero_lcrecord(lcr) zero_sized_lcrecord(lcr, sizeof (*(lcr)))
 
 #endif /* INCLUDED_lrecord_h_ */

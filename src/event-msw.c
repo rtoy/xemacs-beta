@@ -1,7 +1,7 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -23,6 +23,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file essentially Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
+
 /* Authorship:
 
    Ultimately based on FSF.
@@ -30,6 +33,8 @@ Boston, MA 02111-1307, USA.  */
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
    Subprocess and modal loop support by Kirill M. Katsnelson.
  */
+
+#define NEED_MSWINDOWS_SHLOBJ /* for IShellLink */
 
 #include <config.h>
 #include "lisp.h"
@@ -58,7 +63,6 @@ Boston, MA 02111-1307, USA.  */
 #include "objects-msw.h"
 #include "process.h"
 #include "redisplay.h"
-#include "select.h"
 #include "sysdep.h"
 #include "window.h"
 
@@ -69,12 +73,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_MSG_SELECT
 #include "console-tty.h"
-#elif defined(CYGWIN)
+#elif defined (CYGWIN)
 typedef unsigned int SOCKET;
-#endif
-
-#if !(defined(CYGWIN) || defined(MINGW))
-# include <shlobj.h>	/* For IShellLink */
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -94,7 +94,7 @@ typedef unsigned int SOCKET;
 static Lisp_Object mswindows_find_console (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 						  int extendedp);
-static int mswindows_modifier_state (BYTE* keymap, DWORD fwKeys,
+static int mswindows_modifier_state (BYTE *keymap, DWORD fwKeys,
 				     int has_AltGr);
 static void mswindows_set_chord_timer (HWND hwnd);
 static int mswindows_button2_near_enough (POINTS p1, POINTS p2);
@@ -212,16 +212,15 @@ shared_data_block[MAX_SLURP_STREAMS]={{0}};
 struct ntpipe_slurp_stream
 {
   LPARAM user_data;	/* Any user data stored in the stream object	 */
-  struct ntpipe_slurp_stream_shared_data* thread_data;
+  struct ntpipe_slurp_stream_shared_data *thread_data;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-input", lstream_ntpipe_slurp,
-			       sizeof (struct ntpipe_slurp_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-input", ntpipe_slurp);
 
 /* This function is thread-safe, and is called from either thread
    context. It serializes freeing shared data structure */
 static void
-slurper_free_shared_data_maybe (struct ntpipe_slurp_stream_shared_data* s)
+slurper_free_shared_data_maybe (struct ntpipe_slurp_stream_shared_data *s)
 {
   if (InterlockedDecrement (&s->lock_count) == 0)
     {
@@ -234,26 +233,26 @@ slurper_free_shared_data_maybe (struct ntpipe_slurp_stream_shared_data* s)
     }
 }
 
-static struct ntpipe_slurp_stream_shared_data*
+static struct ntpipe_slurp_stream_shared_data *
 slurper_allocate_shared_data (void)
 {
   int i=0;
-  for (i=0; i<MAX_SLURP_STREAMS; i++)
+  for (i = 0; i < MAX_SLURP_STREAMS; i++)
     {
       if (!shared_data_block[i].inuse_p)
 	{
-	  shared_data_block[i].inuse_p=1;
+	  shared_data_block[i].inuse_p = 1;
 	  return &shared_data_block[i];
 	}
     }
-  return (struct ntpipe_slurp_stream_shared_data*)0;
+  return (struct ntpipe_slurp_stream_shared_data *)0;
 }
 
 static DWORD WINAPI
 slurp_thread (LPVOID vparam)
 {
   struct ntpipe_slurp_stream_shared_data *s =
-    (struct ntpipe_slurp_stream_shared_data*)vparam;
+    (struct ntpipe_slurp_stream_shared_data *)vparam;
 
   for (;;)
     {
@@ -309,7 +308,7 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
 {
   Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_ntpipe_slurp, "r");
-  struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA (lstr);
+  struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA (lstr);
   DWORD thread_id_unused;
   HANDLE hthread;
 
@@ -339,11 +338,11 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
   s->user_data = param;
 
   /* hev_thread is a manual-reset event, initially signaled */
-  s->thread_data->hev_thread = CreateEvent (NULL, TRUE, TRUE, NULL);
+  s->thread_data->hev_thread = qxeCreateEvent (NULL, TRUE, TRUE, NULL);
   /* hev_caller is a manual-reset event, initially nonsignaled */
-  s->thread_data->hev_caller = CreateEvent (NULL, TRUE, FALSE, NULL);
+  s->thread_data->hev_caller = qxeCreateEvent (NULL, TRUE, FALSE, NULL);
   /* hev_unsleep is a manual-reset event, initially nonsignaled */
-  s->thread_data->hev_unsleep = CreateEvent (NULL, TRUE, FALSE, NULL);
+  s->thread_data->hev_unsleep = qxeCreateEvent (NULL, TRUE, FALSE, NULL);
 
   /* Now let it go */
   ResumeThread (hthread);
@@ -357,14 +356,14 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
 static LPARAM
 get_ntpipe_input_stream_param (Lstream *stream)
 {
-  struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA(stream);
+  struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA(stream);
   return s->user_data;
 }
 
 static HANDLE
 get_ntpipe_input_stream_waitable (Lstream *stream)
 {
-  struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA(stream);
+  struct ntpipe_slurp_stream *s = NTPIPE_SLURP_STREAM_DATA(stream);
   return s->thread_data->hev_caller;
 }
 
@@ -373,7 +372,7 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
 		     Bytecount size)
 {
   /* This function must be called from the main thread only */
-  struct ntpipe_slurp_stream_shared_data* s =
+  struct ntpipe_slurp_stream_shared_data *s =
     NTPIPE_SLURP_STREAM_DATA(stream)->thread_data;
 
   if (!s->die_p)
@@ -384,7 +383,7 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
       SetEvent (s->hev_unsleep);
 
       /* Check if we have a character ready. Give it a short delay,
-	 for the thread to awake from pipe delay, just ion case*/
+	 for the thread to awake from pipe delay, just ion case */
       wait_result = WaitForSingleObject (s->hev_caller, 2);
 
       /* Revert to the normal sleep behavior. */
@@ -446,7 +445,7 @@ static int
 ntpipe_slurp_closer (Lstream *stream)
 {
   /* This function must be called from the main thread only */
-  struct ntpipe_slurp_stream_shared_data* s =
+  struct ntpipe_slurp_stream_shared_data *s =
     NTPIPE_SLURP_STREAM_DATA(stream)->thread_data;
 
   /* Force thread to stop */
@@ -494,14 +493,13 @@ struct ntpipe_shove_stream
   BOOL   blocking_p : 1;/* Last write attempt would cause blocking	 */
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-output", lstream_ntpipe_shove,
-			       sizeof (struct ntpipe_shove_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-output", ntpipe_shove);
 
 #ifndef HAVE_MSG_SELECT
 static DWORD WINAPI
 shove_thread (LPVOID vparam)
 {
-  struct ntpipe_shove_stream *s = (struct ntpipe_shove_stream*) vparam;
+  struct ntpipe_shove_stream *s = (struct ntpipe_shove_stream *) vparam;
 
   for (;;)
     {
@@ -510,6 +508,9 @@ shove_thread (LPVOID vparam)
       /* Block on event and wait for a job */
       InterlockedIncrement (&s->idle_p);
       WaitForSingleObject (s->hev_thread, INFINITE);
+
+      if (s->die_p)
+	break;
 
       /* Write passed buffer if any */
       if (s->size > 0)
@@ -537,7 +538,7 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 {
   Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_ntpipe_shove, "w");
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA (lstr);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA (lstr);
   DWORD thread_id_unused;
 
   s->die_p = 0;
@@ -565,7 +566,7 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
     }
 
   /* hev_thread is an auto-reset event, initially nonsignaled */
-  s->hev_thread = CreateEvent (NULL, FALSE, FALSE, NULL);
+  s->hev_thread = qxeCreateEvent (NULL, FALSE, FALSE, NULL);
 
   /* Now let it go */
   ResumeThread (s->hthread);
@@ -578,7 +579,7 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 static LPARAM
 get_ntpipe_output_stream_param (Lstream *stream)
 {
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
   return s->user_data;
 }
 #endif
@@ -587,7 +588,7 @@ static Bytecount
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
 		     Bytecount size)
 {
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
 
   if (s->error_p)
     return -1;
@@ -607,7 +608,7 @@ ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
   SetEvent (s->hev_thread);
   /* Give it a chance to run -- this dramatically improves performance
      of things like crypt. */
-  if (xSwitchToThread) /* not in Win9x or NT 3.51 */
+  if (xSwitchToThread) /* not in Win9x */
     (void) xSwitchToThread ();
   return size;
 }
@@ -615,17 +616,20 @@ ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
 static int
 ntpipe_shove_was_blocked_p (Lstream *stream)
 {
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
   return s->blocking_p;
 }
 
 static int
 ntpipe_shove_closer (Lstream *stream)
 {
-  struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
+  struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
 
   /* Force thread stop */
   InterlockedIncrement (&s->die_p);
+
+  /* Close pipe handle, possibly breaking it */
+  CloseHandle (s->hpipe);
 
   /* Thread will end upon unblocking.  If it's already unblocked this will
      do nothing, but the thread won't look at die_p until it's written any
@@ -634,9 +638,6 @@ ntpipe_shove_closer (Lstream *stream)
 
   /* Wait while thread terminates */
   WaitForSingleObject (s->hthread, INFINITE);
-
-  /* Close pipe handle, possibly breaking it */
-  CloseHandle (s->hpipe);
 
   /* Close the thread handle */
   CloseHandle (s->hthread);
@@ -678,8 +679,7 @@ struct winsock_stream
 
 #define WINSOCK_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, winsock)
 
-DEFINE_LSTREAM_IMPLEMENTATION ("winsock", lstream_winsock,
-			       sizeof (struct winsock_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("winsock", winsock);
 
 static void
 winsock_initiate_read (struct winsock_stream *str)
@@ -737,7 +737,7 @@ winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
 
   /* Return as much of buffer as we have */
   size = min (size, (Bytecount) (str->bufsize - str->charbpos));
-  memcpy (data, (void*)((BYTE*)str->buffer + str->charbpos), size);
+  memcpy (data, (void *) ((BYTE *) str->buffer + str->charbpos), size);
   str->charbpos += size;
 
   /* Read more if buffer is exhausted */
@@ -841,7 +841,7 @@ make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
   str->s = s;
   str->user_data = param;
 
-  str->ov.hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
+  str->ov.hEvent = qxeCreateEvent (NULL, TRUE, FALSE, NULL);
 
   if (lstr->flags & LSTREAM_FL_READ)
     {
@@ -895,7 +895,7 @@ init_winsock_stream (void)
 /************************************************************************/
 
 static int
-mswindows_user_event_p (Lisp_Event* sevt)
+mswindows_user_event_p (Lisp_Event *sevt)
 {
   return (sevt->event_type == key_press_event
 	  || sevt->event_type == button_press_event
@@ -917,7 +917,7 @@ mswindows_enqueue_dispatch_event (Lisp_Object event)
 		 &mswindows_s_dispatch_event_queue_tail);
 
   /* Avoid blocking on WaitMessage */
-  PostMessage (NULL, XM_BUMPQUEUE, 0, 0);
+  qxePostMessage (NULL, XM_BUMPQUEUE, 0, 0);
 }
 
 /*
@@ -931,7 +931,7 @@ mswindows_enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 				   Lisp_Object object)
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
-  Lisp_Event* e = XEVENT (event);
+  Lisp_Event *e = XEVENT (event);
 
   e->event_type = misc_user_event;
   e->channel = channel;
@@ -946,7 +946,7 @@ void
 mswindows_enqueue_magic_event (HWND hwnd, UINT msg)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-  Lisp_Event* event = XEVENT (emacs_event);
+  Lisp_Event *event = XEVENT (emacs_event);
 
   event->channel = hwnd ? mswindows_find_frame (hwnd) : Qnil;
   event->timestamp = GetMessageTime();
@@ -957,10 +957,10 @@ mswindows_enqueue_magic_event (HWND hwnd, UINT msg)
 }
 
 static void
-mswindows_enqueue_process_event (Lisp_Process* p)
+mswindows_enqueue_process_event (Lisp_Process *p)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-  Lisp_Event* event = XEVENT (emacs_event);
+  Lisp_Event *event = XEVENT (emacs_event);
   Lisp_Object process;
   XSETPROCESS (process, p);
 
@@ -983,7 +983,7 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT msg, POINTS where,
      recognition will fail */
 
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-  Lisp_Event* event = XEVENT (emacs_event);
+  Lisp_Event *event = XEVENT (emacs_event);
 
   mswindows_handle_sticky_modifiers (0, 0, downp, 0);
   event->channel = mswindows_find_frame (hwnd);
@@ -1016,11 +1016,11 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT msg, POINTS where,
   mswindows_enqueue_dispatch_event (emacs_event);
 }
 
-static void
+static Lisp_Object
 mswindows_enqueue_keypress_event (HWND hwnd, Lisp_Object keysym, int mods)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-  Lisp_Event* event = XEVENT(emacs_event);
+  Lisp_Event *event = XEVENT(emacs_event);
 
   event->channel = mswindows_find_console(hwnd);
   event->timestamp = GetMessageTime();
@@ -1028,6 +1028,7 @@ mswindows_enqueue_keypress_event (HWND hwnd, Lisp_Object keysym, int mods)
   event->event.key.keysym = keysym;
   event->event.key.modifiers = mods;
   mswindows_enqueue_dispatch_event (emacs_event);
+  return emacs_event;
 }
 
 /*
@@ -1038,7 +1039,7 @@ static Lisp_Object
 mswindows_dequeue_dispatch_event (void)
 {
   Lisp_Object event;
-  Lisp_Event* sevt;
+  Lisp_Event *sevt;
 
   assert (!NILP(mswindows_u_dispatch_event_queue) ||
 	  !NILP(mswindows_s_dispatch_event_queue));
@@ -1075,9 +1076,9 @@ mswindows_cancel_dispatch_event (Lisp_Event *match)
   Lisp_Object event;
   Lisp_Object previous_event = Qnil;
   int user_p = mswindows_user_event_p (match);
-  Lisp_Object* head = user_p ? &mswindows_u_dispatch_event_queue :
+  Lisp_Object *head = user_p ? &mswindows_u_dispatch_event_queue :
     &mswindows_s_dispatch_event_queue;
-  Lisp_Object* tail = user_p ? &mswindows_u_dispatch_event_queue_tail :
+  Lisp_Object *tail = user_p ? &mswindows_u_dispatch_event_queue_tail :
     &mswindows_s_dispatch_event_queue_tail;
 
   assert (match->event_type == timeout_event
@@ -1150,6 +1151,21 @@ remove_waitable_handle (HANDLE h)
 /************************************************************************/
 /*                             Event pump                               */
 /************************************************************************/
+
+int
+mswindows_window_is_xemacs (HWND hwnd)
+{
+  /* GetClassName will truncate a longer class name. By adding one
+     extra character, we are forcing textual comparison to fail
+     if the name is longer than XEMACS_CLASS */
+  Extbyte class_name_buf[sizeof (XEMACS_CLASS) + 2];
+
+  /* Use GetClassNameA because XEMACS_CLASS is not in Unicode format. */
+  if (!GetClassNameA (hwnd, class_name_buf, sizeof (class_name_buf) - 1))
+    return 0;
+
+  return !ascii_strcasecmp (class_name_buf, XEMACS_CLASS);
+}
 
 static Lisp_Object
 mswindows_modal_loop_error_handler (Lisp_Object cons_sig_data,
@@ -1280,10 +1296,9 @@ mswindows_drain_windows_queue (void)
   /* should call mswindows_need_event_in_modal_loop() if in modal loop */
   assert (!mswindows_in_modal_loop);
 
-  while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+  while (qxePeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
     {
-      char class_name_buf [sizeof (XEMACS_CLASS) + 2] = "";
-
+#ifdef HAVE_DIALOGS
       /* Don't translate messages destined for a dialog box, this
 	 makes keyboard traversal work. I think?? */
       if (mswindows_is_dialog_msg (&msg))
@@ -1291,6 +1306,7 @@ mswindows_drain_windows_queue (void)
 	  mswindows_unmodalize_signal_maybe ();
 	  continue;
 	}
+#endif /* HAVE_DIALOGS */
 
       /* We have to translate messages that are not sent to an XEmacs
          frame. This is so that key presses work ok in things like
@@ -1298,20 +1314,13 @@ mswindows_drain_windows_queue (void)
          frames as this is handled in the wnd proc.
          We also have to avoid generating paint magic events for windows
 	 that aren't XEmacs frames */
-      /* GetClassName will truncate a longer class name. By adding one
-	 extra character, we are forcing textual comparison to fail
-	 if the name is longer than XEMACS_CLASS */
 
-      GetClassName (msg.hwnd, class_name_buf, sizeof (class_name_buf) - 1);
-      if (stricmp (class_name_buf, XEMACS_CLASS) != 0)
-	{
-	  /* Not an XEmacs frame */
-	  TranslateMessage (&msg);
-	}
+      if (!mswindows_window_is_xemacs (msg.hwnd))
+	TranslateMessage (&msg);
       else if (msg.message == WM_PAINT)
 	{
-	  struct mswindows_frame* msframe;
-
+	  struct mswindows_frame *msframe;
+	  
 	  /* hdc will be NULL unless this is a subwindow - in which case we
 	     shouldn't have received a paint message for it here. */
 	  assert (msg.wParam == 0);
@@ -1328,7 +1337,7 @@ mswindows_drain_windows_queue (void)
 	     queue so it's OK to just return. */
 	  return;
 	}
-      DispatchMessage (&msg);
+      qxeDispatchMessage (&msg);
       mswindows_unmodalize_signal_maybe ();
     }
 }
@@ -1372,8 +1381,8 @@ mswindows_need_event_in_modal_loop (int badly_p)
  invalid_operation ("Deadlock due to an attempt to call next-event in a wrong context", Qunbound);
 
       /* Fetch and dispatch any pending timers */
-      if (GetMessage (&msg, NULL, WM_TIMER, WM_TIMER) > 0)
-	DispatchMessage (&msg);
+      if (qxeGetMessage (&msg, NULL, WM_TIMER, WM_TIMER) > 0)
+	qxeDispatchMessage (&msg);
     }
 }
 
@@ -1439,10 +1448,10 @@ mswindows_need_event (int badly_p)
 		    {
 		      struct console *c = tty_find_console_from_fd (i);
 		      Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-		      Lisp_Event* event = XEVENT (emacs_event);
-
+		      Lisp_Event *event = XEVENT (emacs_event);
+		      
 		      assert (c);
-		      if (read_event_from_tty_or_stream_desc (event, c, i))
+		      if (read_event_from_tty_or_stream_desc (event, c))
 			{
 			  mswindows_enqueue_dispatch_event (emacs_event);
 			  return;
@@ -1475,7 +1484,7 @@ mswindows_need_event (int badly_p)
 		}
 	    }
 	}
-      else if (active==-1)
+      else if (active == -1)
 	{
 	  if (errno != EINTR)
 	    {
@@ -1504,10 +1513,87 @@ mswindows_need_event (int badly_p)
 	/* Look for any event */
 	what_events = QS_ALLINPUT;
 
+      /*
+	 #### YUCK YUCK YUCK!!!!
+
+	 When running under a debugger, every time I hit F12 (which for me
+	 is mapped to right-brace) I hit a breakpoint inside of Windows!
+
+	 NTDLL! DbgBreakPoint@0 address 0x77f9eea9
+	 KERNEL32! BaseAttachComplete@4 + 41 bytes
+	 KERNEL32! BaseAttachCompleteThunk@0 + 19 bytes
+	 USER32! MsgWaitForMultipleObjectsEx@20 + 224 bytes
+	 USER32! MsgWaitForMultipleObjects@20 + 30 bytes
+
+	 Microsoft says:
+
+	 (Knowledge Base Q130667, PRB: F12 Causes Hard-Coded Breakpoint
+	 Exception When Debugging)
+
+	 CAUSE
+
+	 When the F12 key is pressed and the application in focus is being
+	 debugged, Windows NT calls a function similar to DebugBreak(),
+	 which executes a hard coded breakpoint instruction. The integrated
+	 debugger then traps the exception generated by this instruction.
+
+	 This behavior is intentional and occurs with other debuggers such
+	 as WinDbg from the Windows 32-bit SDK.
+
+	 RESOLUTION
+	 
+	 While there is no way to disable this functionality, it doesn't
+	 affect the application that's being debugged other than to pause
+	 debugging and change focus. You can continue debugging by pressing
+	 the F5 key.
+
+	 This can be annoying if you have an application that heavily uses
+	 the F12 key, so you may want to temporarily assign another key to
+	 handle the F12 key functionality in your program when debugging.
+
+	 STATUS
+
+	 This behavior is by design. 
+
+
+	 However, elsewhere I found this:
+
+	 UserDebuggerHotKey 
+	 HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug 
+
+	 Data type Range Default value 
+	 REG_DWORD  0x0 - 0xFF  0x0  
+
+	 Description
+
+	 Specifies the key that, when pressed, establishes a breakpoint in
+	 code being debugged.
+
+	 The debugger interrupts code processing at the breakpoint so the
+	 programmer can examine a suspected problem.
+
+	 The key specified in this value only sets a breakpoint. It does
+	 not invoke the debugger (the debugger must be running before the
+	 key is pressed) and it does not switch the debugger to single-step
+	 mode.
+
+	 The value of this entry is a keyboard scan code. The default
+	 value, 0x0, represents the F12 key on a 101-key keyboard or the -
+	 (hyphen, VK_SUBTRACT) key on an 82-key keyboard.
+	 */
+
+  __try
+    {
       active = MsgWaitForMultipleObjects (mswindows_waitable_count,
 					  mswindows_waitable_handles,
 					  FALSE, badly_p ? INFINITE : 0,
 					  what_events);
+    }
+  __except (GetExceptionCode () == EXCEPTION_BREAKPOINT ?
+	    EXCEPTION_CONTINUE_EXECUTION :
+	    EXCEPTION_CONTINUE_SEARCH)
+    {
+    }
 
       /* This will assert if handle being waited for becomes abandoned.
 	 Not the case currently tho */
@@ -1625,11 +1711,14 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
     case XTYP_WILDCONNECT:
       {
 	/* We only support one {service,topic} pair */
-	HSZPAIR pairs[2] = {
+	HSZPAIR pairs[2] =
+	{
 	  { mswindows_dde_service, mswindows_dde_topic_system }, { 0, 0 } };
 
-	if (!(hszItem  || DdeCmpStringHandles (hszItem, mswindows_dde_service)) &&
-	    !(hszTopic || DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)))
+	if (!(hszItem 
+	      || DdeCmpStringHandles (hszItem, mswindows_dde_service)) &&
+	    !(hszTopic
+	      || DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)))
 	  return (DdeCreateDataHandle (mswindows_dde_mlid, (LPBYTE)pairs,
 				       sizeof (pairs), 0L, 0, uFmt, 0));
       }
@@ -1642,57 +1731,63 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
       if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
-	  LPBYTE cmd = (LPBYTE) alloca (len+1);
-	  char *end;
-	  char *filename;
+	  LPBYTE extcmd = (LPBYTE) alloca (len+1);
+	  Intbyte *cmd;
+	  Intbyte *end;
 	  struct gcpro gcpro1, gcpro2;
 	  Lisp_Object l_dndlist = Qnil;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	  Lisp_Object frmcons, devcons, concons;
 	  Lisp_Event *event = XEVENT (emacs_event);
 
-	  DdeGetData (hdata, cmd, len, 0);
-	  cmd[len] = '\0';
+	  DdeGetData (hdata, extcmd, len, 0);
 	  DdeFreeDataHandle (hdata);
+
+	  TO_INTERNAL_FORMAT (DATA, (extcmd, len),
+			      C_STRING_ALLOCA, cmd,
+			      Qmswindows_tstr);
 
 	  /* Check syntax & that it's an [Open("foo")] command, which we
 	   * treat like a file drop */
 	  /* #### Ought to be generalised and accept some other commands */
 	  if (*cmd == '[')
 	    cmd++;
-	  if (strnicmp (cmd, MSWINDOWS_DDE_ITEM_OPEN,
-			strlen (MSWINDOWS_DDE_ITEM_OPEN)))
+	  if (qxestrncasecmp_c (cmd, MSWINDOWS_DDE_ITEM_OPEN,
+				strlen (MSWINDOWS_DDE_ITEM_OPEN)))
 	    return DDE_FNOTPROCESSED;
 	  cmd += strlen (MSWINDOWS_DDE_ITEM_OPEN);
-	  while (*cmd==' ')
+	  while (*cmd == ' ')
 	    cmd++;
-	  if (*cmd!='(' || *(cmd+1)!='\"')
+	  if (*cmd != '(' || *(cmd + 1) != '\"')
 	    return DDE_FNOTPROCESSED;
-	  end = (cmd+=2);
-	  while (*end && *end!='\"')
+	  end = (cmd += 2);
+	  while (*end && *end != '\"')
 	    end++;
 	  if (!*end)
 	    return DDE_FNOTPROCESSED;
 	  *end = '\0';
-	  if (*(++end)!=')')
+	  if (*++end != ')')
 	    return DDE_FNOTPROCESSED;
-	  if (*(++end)==']')
+	  if (*++end == ']')
 	    end++;
 	  if (*end)
 	    return DDE_FNOTPROCESSED;
 
-#ifdef CYGWIN
-	  filename = alloca (cygwin_win32_to_posix_path_list_buf_size (cmd) + 5);
-	  strcpy (filename, "file:");
-	  cygwin_win32_to_posix_path_list (cmd, filename+5);
-#else
-	  dostounix_filename (cmd);
-	  filename = alloca (strlen (cmd)+6);
-	  strcpy (filename, "file:");
-	  strcat (filename, cmd);
-#endif
+	  {
+	    /* The drag-n-drop code in dragdrop.el expects pseudo-URL's,
+	       consisting of just file: followed by the filename.  This
+	       should maybe work, but both Netscape and IE complain
+	       whenever they're not given the full file spec, like
+
+	       file:///C|/foo/bar/  or equivalently
+	       file:///C:/foo/bar/  (less portably)
+
+	       they don't allow relative paths at all!  this is way bogus. */
+	    cmd = urlify_filename (cmd);
+	    l_dndlist = build_intstring (cmd);
+	    xfree (cmd);
+	  }
 	  GCPRO2 (emacs_event, l_dndlist);
-	  l_dndlist = make_string (filename, strlen (filename));
 
 	  /* Find a mswindows frame */
 	  event->channel = Qnil;
@@ -2076,22 +2171,16 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
     debug_output_mswin_message (hwnd, message_, wParam, lParam);
 #endif /* DEBUG_XEMACS */
 
-  assert (!GetWindowLong (hwnd, GWL_USERDATA));
+  assert (!qxeGetWindowLong (hwnd, GWL_USERDATA));
   switch (message_)
     {
     case WM_DESTROYCLIPBOARD:
-      /* We own the clipboard and someone else wants it.  Delete our
-	 cached copy of the clipboard contents so we'll ask for it from
-	 Windows again when someone does a paste, and destroy any memory
-         objects we hold on the clipboard that are not in the list of types
-         that Windows will delete itself. */
-      mswindows_destroy_selection (QCLIPBOARD);
-      handle_selection_clear (QCLIPBOARD);
+      mswindows_handle_destroyclipboard ();
       break;
 
     case WM_ERASEBKGND:
       /* Erase background only during non-dynamic sizing */
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
       if (msframe->sizing && !mswindows_dynamic_frame_resize)
 	goto defproc;
       return 1;
@@ -2155,6 +2244,42 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	BYTE keymap_trans[256];
 	BYTE keymap_orig[256];
 	BYTE keymap_sticky[256];
+	/* WARNING: XEmacs code paths are far more subtle than you
+	   think.  In particular, QUIT checking will query and remove
+	   events, including keyboard events, from the queue. (QUIT is
+	   definitely invoked from TO_INTERNAL_FORMAT().) If we do
+	   this recursively anywhere in the following code, it will
+	   mess certain things up -- in particular, the OS-provided
+	   sticky modifier code available as part of the accessibility
+	   package.
+
+	   (Academic question: If QUIT checking is supposed to be
+	   triggered only every 1/4 second, why is it getting
+	   consistently triggered here?  I saw the problem
+	   consistently.  Answer: It appears that, currently,
+	   sometimes the code to pump messages is wrapped with
+	   begin_dont_check_for_quit() and sometimes it isn't. (####
+	   FIX THIS SHIT!) cmdloop.c, for example, has it, but not
+	   everywhere.  The current games with avoiding QUIT mean that
+	   the 1/4-second timer consistently fires while
+	   dont_check_for_quit is set [which causes the quit check to
+	   get deferred but the flag is still on], and so the next
+	   time it's unset and we call QUIT is *right here*.
+
+	   In my stderr-proc ws I majorly cleaned up the whole shit by
+	   just wrapping all the entry points in dont_check_for_quit.
+	   This fixed the remaining bugs with C-g getting interpreted
+	   wrong.)
+
+	   #### We should probably wrap this whole function in
+	   begin_dont_check_for_quit(); but then we should set this
+	   back to 0 when handling a menu callback, which gets invoked
+	   from within this function, specifically from
+	   DefWindowProc(). (We already do the latter in my new
+	   stderr-proc ws, because in that ws next_event_internal()
+	   calls begin_dont_check_for_quit(). */
+
+	int count = begin_dont_check_for_quit ();
 	int has_AltGr = mswindows_current_layout_has_AltGr ();
 	int mods = 0, mods_with_shift = 0;
 	int extendedp = lParam & 0x1000000;
@@ -2204,6 +2329,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    MSG msg, tranmsg;
 	    int potential_accelerator = 0;
 	    int got_accelerator = 0;
+	    /* No need to gcpro because the event is already on a
+               queue when we retrieve it. */
+	    Lisp_Object lastev = Qnil;
 
 	    msg.hwnd = hwnd;
 	    msg.message = message_;
@@ -2251,12 +2379,37 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    /* Maybe generate some WM_[SYS]CHARs in the queue */
 	    TranslateMessage (&msg);
 
-	    while (PeekMessage (&tranmsg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
-		   || PeekMessage (&tranmsg, hwnd, WM_SYSCHAR, WM_SYSCHAR,
-				   PM_REMOVE))
+	    while (qxePeekMessage (&tranmsg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
+		   || qxePeekMessage (&tranmsg, hwnd, WM_SYSCHAR, WM_SYSCHAR,
+				      PM_REMOVE))
 	      {
 		int mods_with_quit = mods;
-		Emchar ch = (Emchar) tranmsg.wParam;
+		int length;
+		Extbyte extchar[4];
+		Intbyte *intchar;
+		Emchar ch;
+
+		if (XEUNICODE_P)
+		  {
+		    length = unicode_char_to_text (tranmsg.wParam, extchar);
+		    TO_INTERNAL_FORMAT (DATA, (extchar, length),
+					C_STRING_ALLOCA, (intchar),
+					Qmswindows_unicode);
+		    ch = charptr_emchar (intchar);
+		  }
+		else
+		  {
+		    length = ansi_char_to_text (tranmsg.wParam, extchar);
+		    intchar = (convert_multibyte_to_internal_malloc
+			       (extchar, length,
+				mswindows_locale_to_code_page
+				/* See intl-win32.c for an explanation of
+				   the following */
+				((LCID) GetKeyboardLayout (0) & 0xFFFF),
+				NULL));
+		    ch = charptr_emchar (intchar);
+		    xfree (intchar);
+		  }
 
 #ifdef DEBUG_XEMACS
 		if (debug_mswindows_events)
@@ -2271,14 +2424,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		/* If a quit char with no modifiers other than control and
 		   shift, then mark it with a fake modifier, which is removed
 		   upon dequeueing the event */
-		/* !!#### Fix this in my mule ws -- replace current_buffer
-		   with 0 */
 		if (((quit_ch < ' ' && (mods & XEMACS_MOD_CONTROL)
-		      && DOWNCASE (current_buffer, quit_ch + 'a' - 1) ==
-		      DOWNCASE (current_buffer, ch))
+		      && DOWNCASE (0, quit_ch + 'a' - 1) ==
+		      DOWNCASE (0, ch))
 		     || (quit_ch >= ' ' && !(mods & XEMACS_MOD_CONTROL)
-			 && DOWNCASE (current_buffer, quit_ch) ==
-			 DOWNCASE (current_buffer, ch)))
+			 && DOWNCASE (0, quit_ch) ==
+			 DOWNCASE (0, ch)))
 		    && ((mods_with_shift &
 			 ~(XEMACS_MOD_CONTROL | XEMACS_MOD_SHIFT))
 			== 0))
@@ -2294,9 +2445,150 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    got_accelerator = 1;
 		    break;
 		  }
-		mswindows_enqueue_keypress_event (hwnd, make_char (ch),
-						  mods_with_quit);
+		lastev = mswindows_enqueue_keypress_event (hwnd,
+							   make_char (ch),
+							   mods_with_quit);
 	      } /* while */
+
+#ifdef MULE
+	    /* Also figure out what the character would be in other
+	       possible keyboard layouts, in this order:
+
+	       -- current language environment
+	       -- user default language environment
+	       -- system default language environment
+	       -- same three, but checking the underlying virtual key,
+   	          and only paying attention if it's alphabetic
+	       -- US ASCII
+
+	       See events.h, struct key_data, for why we do this.
+	       */
+
+	    if (!NILP (lastev))
+	      {
+		int i;
+		int scan = (lParam >> 16) && 0xFF;
+
+		for (i = 0; i < KEYCHAR_LAST; i++)
+		  {
+		    int vk_only = 0;
+		    LCID lcid;
+		    int virtual_key;
+
+		    switch (i)
+		      {
+		      case KEYCHAR_UNDERLYING_VIRTUAL_KEY_CURRENT_LANGENV:
+			vk_only = 1;
+		      case KEYCHAR_CURRENT_LANGENV:
+			lcid = mswindows_current_locale ();
+			break;
+
+		      case KEYCHAR_UNDERLYING_VIRTUAL_KEY_DEFAULT_USER:
+			vk_only = 1;
+		      case KEYCHAR_DEFAULT_USER:
+			lcid = GetUserDefaultLCID ();
+			break;
+
+		      case KEYCHAR_UNDERLYING_VIRTUAL_KEY_DEFAULT_SYSTEM:
+			vk_only = 1;
+		      case KEYCHAR_DEFAULT_SYSTEM:
+			lcid = GetSystemDefaultLCID ();
+			break;
+
+		      case KEYCHAR_QWERTY:
+			lcid = MAKELANGID (LANG_ENGLISH, SUBLANG_ENGLISH_US);
+			break;
+
+		      default: abort (); lcid = 0;
+		      }
+
+		    /* VERY CONFUSING!  See intl-win32.c. */
+		    lcid = lcid & 0xFFFF;
+
+		    virtual_key = MapVirtualKeyEx (scan, 1, (HKL) lcid);
+		    if (!vk_only)
+		      {
+			if (XEUNICODE_P)
+			  {
+			    Extbyte received_keys[32];
+			    int tounret =
+			      ToUnicodeEx
+				(virtual_key, scan, keymap_trans,
+				 (LPWSTR) received_keys,
+				 sizeof (received_keys) / XETCHAR_SIZE,
+				 0, /* #### what about this flag? "if
+				       bit 0 is set, a menu is
+				       active???" */
+				 (HKL) lcid);
+			    if (tounret > 0)
+			      {
+				Intbyte *intchar;
+
+				TO_INTERNAL_FORMAT
+				  (DATA,
+				   (received_keys + (tounret - 1) * 2, 2),
+				   C_STRING_ALLOCA, intchar,
+				   Qmswindows_unicode);
+				XEVENT (lastev)->event.key.alt_keychars[i] =
+				  charptr_emchar (intchar);
+			      }
+			  }
+			else
+			  {
+			    WORD received_keys[32];
+			    int tounret =
+			      ToAsciiEx (virtual_key, scan, keymap_trans,
+					 received_keys,
+					 0, /* #### what about this
+					       flag? "if bit 0 is set, a
+					       menu is active???" */
+					 (HKL) lcid);
+			    if (tounret > 0)
+			      {
+				/* #### I cannot find proper
+				   documentation on what format the
+				   return value is in.  I'm assuming
+				   it's like WM_IME_CHAR: DBCS chars
+				   have the lead byte in bits 8-15 of
+				   the short. */
+				Intbyte *intchar;
+				Extbyte mbstuff[2];
+				Bytecount mblength = 0;
+				WORD thechar = received_keys[tounret - 1];
+
+				mbstuff[mblength++] =
+				  (Extbyte) (thechar & 0xFF);
+				if (thechar > 0xFF)
+				  mbstuff[mblength++] =
+				    (Extbyte) ((thechar >> 8) & 0xFF);
+
+				intchar = convert_multibyte_to_internal_malloc
+				  (mbstuff, mblength,
+				   mswindows_locale_to_code_page (lcid),
+				   NULL);
+
+				XEVENT (lastev)->event.key.alt_keychars[i] =
+				  charptr_emchar (intchar);
+				xfree (intchar);
+			      }
+			  }
+		      }
+		    else
+		      {
+			Emchar altch;
+
+			if (virtual_key >= 'A' && virtual_key <= 'Z')
+			  altch =
+			    virtual_key + (mods_with_shift & XEMACS_MOD_SHIFT ?
+					   'a' - 'A' : 0);
+			else
+			  altch = 0;
+
+			XEVENT (lastev)->event.key.alt_keychars[i] = altch;
+		      }
+		  }
+	      }
+#endif /* MULE */
 
 	    /* This generates WM_SYSCHAR messages, which are interpreted
 	       by DefWindowProc as the menu selections. */
@@ -2305,17 +2597,24 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		SetKeyboardState (keymap_sticky);
 		TranslateMessage (&msg);
 		SetKeyboardState (keymap_orig);
+		unbind_to (count);
 		goto defproc;
 	      }
 
 	    SetKeyboardState (keymap_orig);
 	  } /* else */
-      }
 
-      if (key_needs_default_processing_p (wParam))
-	goto defproc;
-      else
-	break;
+	if (key_needs_default_processing_p (wParam))
+	  {
+	    unbind_to (count);
+	    goto defproc;
+	  }
+	else
+	  {
+	    unbind_to (count);
+	    break;
+	  }
+      }
 
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
@@ -2329,8 +2628,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       break;
 
     case WM_LBUTTONUP:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
-      msframe->last_click_time =  GetMessageTime();
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe->last_click_time = GetMessageTime();
 
       KillTimer (hwnd, BUTTON_2_TIMER_ID);
       msframe->button2_need_lbutton = 0;
@@ -2367,8 +2666,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       break;
 
     case WM_RBUTTONUP:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
-      msframe->last_click_time =  GetMessageTime();
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe->last_click_time = GetMessageTime();
 
       KillTimer (hwnd, BUTTON_2_TIMER_ID);
       msframe->button2_need_rbutton = 0;
@@ -2405,7 +2704,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       break;
 
     case WM_LBUTTONDOWN:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
 
       if (msframe->button2_need_lbutton)
 	{
@@ -2443,11 +2742,11 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->last_click_point = MAKEPOINTS (lParam);
 	  msframe->last_click_mods = wParam;
 	}
-      msframe->last_click_time =  GetMessageTime();
+      msframe->last_click_time = GetMessageTime();
       break;
 
     case WM_RBUTTONDOWN:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
 
       if (msframe->button2_need_rbutton)
 	{
@@ -2485,13 +2784,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  msframe->last_click_point = MAKEPOINTS (lParam);
 	  msframe->last_click_mods = wParam;
 	}
-      msframe->last_click_time =  GetMessageTime();
+      msframe->last_click_time = GetMessageTime();
       break;
 
     case WM_TIMER:
       if (wParam == BUTTON_2_TIMER_ID)
 	{
-	  msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+	  msframe =
+	    FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
 	  KillTimer (hwnd, BUTTON_2_TIMER_ID);
 
 	  if (msframe->button2_need_lbutton)
@@ -2519,7 +2819,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
       /* Optimization: don't report mouse movement while size is changing */
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
       if (!msframe->sizing)
 	{
 	  /* When waiting for the second mouse button to finish
@@ -2530,17 +2830,17 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 						 MAKEPOINTS (lParam)))
 	    {
 	      KillTimer (hwnd, BUTTON_2_TIMER_ID);
-	      SendMessage (hwnd, WM_TIMER, BUTTON_2_TIMER_ID, 0);
+	      qxeSendMessage (hwnd, WM_TIMER, BUTTON_2_TIMER_ID, 0);
 	    }
 
 	  emacs_event = Fmake_event (Qnil, Qnil);
 	  event = XEVENT(emacs_event);
 
-	  event->channel = mswindows_find_frame(hwnd);
-	  event->timestamp = GetMessageTime();
+	  event->channel = mswindows_find_frame (hwnd);
+	  event->timestamp = GetMessageTime ();
 	  event->event_type = pointer_motion_event;
-	  event->event.motion.x = MAKEPOINTS(lParam).x;
-	  event->event.motion.y = MAKEPOINTS(lParam).y;
+	  event->event.motion.x = MAKEPOINTS (lParam).x;
+	  event->event.motion.y = MAKEPOINTS (lParam).y;
 	  event->event.motion.modifiers =
 	    mswindows_modifier_state (NULL, wParam, 0);
 
@@ -2563,22 +2863,30 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	if ((int) nmhdr->code == TTN_NEEDTEXT)
 	  {
 #ifdef HAVE_TOOLBARS
-	    LPTOOLTIPTEXT tttext = (LPTOOLTIPTEXT) lParam;
+	    LPTOOLTIPTEXTW tttextw = (LPTOOLTIPTEXTW) lParam;
 	    Lisp_Object btext;
+	    Extbyte *btextext = 0;
 
 	    /* find out which toolbar */
 	    frame = XFRAME (mswindows_find_frame (hwnd));
 	    btext = mswindows_get_toolbar_button_text (frame, nmhdr->idFrom);
 
-	    tttext->lpszText = NULL;
-	    tttext->hinst = NULL;
+	    tttextw->hinst = NULL;
 
-	    if (!NILP(btext))
+	    if (!NILP (btext))
+	      LISP_STRING_TO_TSTR (btext, btextext);
+
+	    if (btextext)
 	      {
-		/* I think this is safe since the text will only go away
-		   when the toolbar does...*/
-		LISP_STRING_TO_EXTERNAL (btext, tttext->lpszText, Qnative);
+		/* WARNING: We can't just write a '\0' into the 79th
+                   "character" because tttextw->szText is in WCHAR's but we
+                   may be copying an ANSI string into it.  Easiest to just
+                   zero the whole thing. */
+		xzero (*tttextw->szText);
+		xetcsncpy ((Extbyte *) tttextw->szText, btextext, 79);
 	      }
+	    else
+	      tttextw->lpszText = NULL;
 #endif
 	  }
 	/* handle tree view callbacks */
@@ -2592,12 +2900,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	else if ((int) nmhdr->code == TCN_SELCHANGE)
 	  {
 	    TC_ITEM item;
-	    int idx = SendMessage (nmhdr->hwndFrom, TCM_GETCURSEL, 0, 0);
+	    int idx = qxeSendMessage (nmhdr->hwndFrom, TCM_GETCURSEL, 0, 0);
 	    frame = XFRAME (mswindows_find_frame (hwnd));
 
 	    item.mask = TCIF_PARAM;
-	    SendMessage (nmhdr->hwndFrom, TCM_GETITEM, (WPARAM)idx,
-			 (LPARAM)&item);
+	    qxeSendMessage (nmhdr->hwndFrom, TCM_GETITEM, (WPARAM) idx,
+			    (LPARAM) &item);
 
 	    mswindows_handle_gui_wm_command (frame, 0, item.lParam);
 	  }
@@ -2643,7 +2951,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	    FRAME_ICONIFIED_P (frame) = 0;
 	  }	    
 
-	return DefWindowProc (hwnd, message_, wParam, lParam);
+	goto defproc;
       }
 
     case WM_SHOWWINDOW:
@@ -2672,20 +2980,21 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
     case WM_SIZE:
       /* We only care about this message if our size has really changed */
-      if (wParam==SIZE_RESTORED || wParam==SIZE_MAXIMIZED || wParam==SIZE_MINIMIZED)
+      if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED ||
+	  wParam == SIZE_MINIMIZED)
 	{
 	  RECT rect;
 	  int columns, rows;
 
 	  fobj = mswindows_find_frame (hwnd);
 	  frame = XFRAME (fobj);
-	  msframe  = FRAME_MSWINDOWS_DATA (frame);
+	  msframe = FRAME_MSWINDOWS_DATA (frame);
 
 	  /* We cannot handle frame map and unmap hooks right in
 	     this routine, because these may throw. We queue
 	     magic events to run these hooks instead - kkm */
 
-	  if (wParam==SIZE_MINIMIZED)
+	  if (wParam == SIZE_MINIMIZED)
 	    {
 	      /* Iconified */
 	      mswindows_enqueue_magic_event (hwnd, XM_UNMAPFRAME);
@@ -2700,7 +3009,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				       &FRAME_MSWINDOWS_CHARWIDTH (frame),
 				       &FRAME_MSWINDOWS_CHARHEIGHT (frame));
 
-	      pixel_to_char_size (frame, rect.right, rect.bottom, &columns, &rows);
+	      pixel_to_char_size (frame, rect.right, rect.bottom, &columns,
+				  &rows);
 	      change_frame_size (frame, rows, columns, 1);
 
 	      /* If we are inside frame creation, we have to apply geometric
@@ -2708,11 +3018,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	      if (FRAME_MSWINDOWS_TARGET_RECT (frame))
 		{
 		  /* Yes, we have to size again */
-		  mswindows_size_frame_internal ( frame,
-						  FRAME_MSWINDOWS_TARGET_RECT
-						  (frame));
-		  /* Reset so we do not get here again. The SetWindowPos call in
-		   * mswindows_size_frame_internal can cause recursion here. */
+		  mswindows_size_frame_internal (frame,
+						 FRAME_MSWINDOWS_TARGET_RECT
+						 (frame));
+		  /* Reset so we do not get here again. The SetWindowPos
+		   * call in mswindows_size_frame_internal can cause
+		   * recursion here. */
 		  if (FRAME_MSWINDOWS_TARGET_RECT (frame))
 		    {
 		      xfree (FRAME_MSWINDOWS_TARGET_RECT (frame));
@@ -2778,9 +3089,9 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  {
 	    RECT ncsize = { 0, 0, 0, 0 };
 	    int pixwidth, pixheight;
-	    AdjustWindowRectEx (&ncsize, GetWindowLong (hwnd, GWL_STYLE),
+	    AdjustWindowRectEx (&ncsize, qxeGetWindowLong (hwnd, GWL_STYLE),
 				GetMenu(hwnd) != NULL,
-				GetWindowLong (hwnd, GWL_EXSTYLE));
+				qxeGetWindowLong (hwnd, GWL_EXSTYLE));
 
 	    round_size_to_real_char (XFRAME (mswindows_find_frame (hwnd)),
 				     wp->cx - (ncsize.right - ncsize.left),
@@ -2813,12 +3124,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       goto defproc;
 
     case WM_ENTERSIZEMOVE:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
       msframe->sizing = 1;
       return 0;
 
     case WM_EXITSIZEMOVE:
-      msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+      msframe = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
       msframe->sizing = 0;
       /* Queue noop event */
       mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
@@ -2836,10 +3147,10 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	mswindows_handle_scrollbar_event (hwndScrollBar, code,  pos);
 	GCPRO2 (emacs_event, fobj);
-	if (UNBOUNDP(mswindows_pump_outstanding_events()))	/* Can GC */
+	if (UNBOUNDP (mswindows_pump_outstanding_events()))	/* Can GC */
 	  {
 	    /* Error during event pumping - cancel scroll */
-	    SendMessage (hwndScrollBar, WM_CANCELMODE, 0, 0);
+	    qxeSendMessage (hwndScrollBar, WM_CANCELMODE, 0, 0);
 	  }
 	UNGCPRO;
 	break;
@@ -2862,19 +3173,19 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 #ifdef HAVE_MENUBARS
     case WM_INITMENU:
-      if (UNBOUNDP (mswindows_handle_wm_initmenu (
-						  (HMENU) wParam,
-						  XFRAME (mswindows_find_frame (hwnd)))))
-	SendMessage (hwnd, WM_CANCELMODE, 0, 0);
+      if (UNBOUNDP (mswindows_handle_wm_initmenu
+		    ((HMENU) wParam,
+		     XFRAME (mswindows_find_frame (hwnd)))))
+	qxeSendMessage (hwnd, WM_CANCELMODE, 0, 0);
       break;
 
     case WM_INITMENUPOPUP:
       if (!HIWORD(lParam))
 	{
-	  if (UNBOUNDP (mswindows_handle_wm_initmenupopup (
-							   (HMENU) wParam,
-							   XFRAME (mswindows_find_frame (hwnd)))))
-	    SendMessage (hwnd, WM_CANCELMODE, 0, 0);
+	  if (UNBOUNDP (mswindows_handle_wm_initmenupopup
+			((HMENU) wParam,
+			 XFRAME (mswindows_find_frame (hwnd)))))
+	    qxeSendMessage (hwnd, WM_CANCELMODE, 0, 0);
 	}
       break;
 
@@ -2891,7 +3202,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	if (!NILP (mswindows_handle_toolbar_wm_command (frame, cid, id)))
 	  break;
 #endif
-	/* widgets in a buffer only eval a callback for suitable events.*/
+	/* widgets in a buffer only eval a callback for suitable events. */
 	switch (nid)
 	  {
 	  case BN_CLICKED:
@@ -2902,16 +3213,17 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	      return 0;
 	  }
 	/* menubars always must come last since the hashtables do not
-	   always exist*/
+	   always exist */
 #ifdef HAVE_MENUBARS
 	if (!NILP (mswindows_handle_wm_command (frame, id)))
 	  break;
 #endif
 
-	return DefWindowProc (hwnd, message_, wParam, lParam);
-	/* Bite me - a spurious command. This used to not be able to
-	   happen but with the introduction of widgets its now
-	   possible. */
+	goto defproc;
+	/* Bite me - a spurious command.  This used to not be able to
+	   happen but with the introduction of widgets it's now
+	   possible. #### Andy, fix the god-damn widget code!  It has
+	   more bugs than a termite's nest! */
       }
       break;
 
@@ -2923,8 +3235,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       {
 	/* if we get an opportunity to paint a widget then do so if
 	   there is an appropriate face */
-	HWND crtlwnd = (HWND)lParam;
-	LONG ii = GetWindowLong (crtlwnd, GWL_USERDATA);
+	HWND crtlwnd = (HWND) lParam;
+	LONG ii = qxeGetWindowLong (crtlwnd, GWL_USERDATA);
 	if (ii)
 	  {
 	    Lisp_Object image_instance;
@@ -2934,7 +3246,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		IMAGE_INSTANCE_TYPE_P (image_instance, IMAGE_WIDGET))
 	      {
 		/* set colors for the buttons */
-		HDC hdc = (HDC)wParam;
+		HDC hdc = (HDC) wParam;
 		if (last_widget_brushed != ii)
 		  {
 		    if (widget_brush)
@@ -2971,16 +3283,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 #ifdef HAVE_DRAGNDROP
     case WM_DROPFILES:	/* implementation ripped-off from event-Xt.c */
       {
-	UINT filecount, i, len;
+	UINT filecount, i;
 	POINT point;
-	char* filename;
-	char* fname;
 
 	Lisp_Object l_dndlist = Qnil, l_item = Qnil;
 	struct gcpro gcpro1, gcpro2, gcpro3;
 
 	emacs_event = Fmake_event (Qnil, Qnil);
-	event = XEVENT(emacs_event);
+	event = XEVENT (emacs_event);
 
 	GCPRO3 (emacs_event, l_dndlist, l_item);
 
@@ -2988,7 +3298,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  point.x = point.y = -1;		/* outside client area */
 
 	event->event_type = misc_user_event;
-	event->channel = mswindows_find_frame(hwnd);
+	event->channel = mswindows_find_frame (hwnd);
 	event->timestamp = GetMessageTime();
 	event->event.misc.button = 1;		/* #### Should try harder */
 	event->event.misc.modifiers = mswindows_modifier_state (NULL,
@@ -2997,69 +3307,178 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	event->event.misc.y = point.y;
 	event->event.misc.function = Qdragdrop_drop_dispatch;
 
-	filecount = DragQueryFile ((HDROP) wParam, 0xffffffff, NULL, 0);
-	for (i=0; i<filecount; i++)
+	filecount = qxeDragQueryFile ((HDROP) wParam, 0xffffffff, NULL, 0);
+	for (i = 0; i < filecount; i++)
 	  {
-	    len = DragQueryFile ((HDROP) wParam, i, NULL, 0);
+	    Intbyte *fname;
+	    Extbyte *fname_ext;
+	    Bytecount fnamelen;
+	    Charcount len = qxeDragQueryFile ((HDROP) wParam, i, NULL, 0);
 	    /* The URLs that we make here aren't correct according to section
 	     * 3.10 of rfc1738 because they're missing the //<host>/ part and
 	     * because they may contain reserved characters. But that's OK -
 	     * they just need to be good enough to keep dragdrop.el happy. */
-	    fname = (char *)xmalloc (len+1);
-	    DragQueryFile ((HANDLE) wParam, i, fname, len+1);
+	    fname_ext = (Extbyte *) alloca ((len + 1) * XETCHAR_SIZE);
+	    qxeDragQueryFile ((HDROP) wParam, i, fname_ext, len + 1);
+
+	    TO_INTERNAL_FORMAT (DATA, (fname_ext, len * XETCHAR_SIZE),
+				ALLOCA, (fname, fnamelen),
+				Qmswindows_tstr);
 
 	    /* May be a shell link aka "shortcut" - replace fname if so */
-#if !(defined(CYGWIN) || defined(MINGW))
-	    /* cygwin doesn't define this COM stuff */
-	    if (!stricmp (fname + strlen (fname) - 4, ".LNK"))
+#if !defined (NO_CYGWIN_COM_SUPPORT)
+	    if (!qxestrcasecmp_c (fname + fnamelen - 4, ".LNK"))
 	      {
-		IShellLink* psl;
+		/* ####
+		   
+		   Note the following in the docs:
+		   
+		   Note: The IShellLink interface has an ANSI version
+		   (IShellLinkA) and a Unicode version (IShellLinkW). The
+		   version that will be used depends on whether you compile
+		   for ANSI or Unicode. However, Microsoft® Windows 95 and
+		   Microsoft® Windows 98 only support IShellLinkA.
+		   
+		   We haven't yet implemented COM support in the
+		   Unicode-splitting library.  I don't quite understand how
+		   COM works yet, but it looks like what's happening is
+		   that the ShellLink class implements both the IShellLinkA
+		   and IShellLinkW interfaces.  To make this work at
+		   run-time, we have to do something like this:
+		   
+		   -- define a new interface qxeIShellLink that uses
+		   Extbyte * instead of LPSTR or LPWSTR. (not totally
+		   necessary since Extbyte * == LPSTR).
+		   
+		   -- define a new class qxeShellLink that implements
+		   qxeIShellLink.  the methods on this class need to create
+		   a shadow ShellLink object to do all the real work, and
+		   call the corresponding function from either the
+		   IShellLinkA or IShellLinkW interfaces on this object,
+		   depending on whether XEUNICODE_P is defined.
+		   
+		   -- with appropriate preprocessor magic, of course, we
+		   could make things appear transparent; but we've decided
+		   not to do preprocessor magic for the moment.
+		   */
 
-		if (CoCreateInstance (&CLSID_ShellLink, NULL,
-				      CLSCTX_INPROC_SERVER, &IID_IShellLink, &psl) == S_OK)
+		/* #### Not Unicode-split for the moment; we have to do it
+                   ourselves. */
+		if (XEUNICODE_P)
 		  {
-		    IPersistFile* ppf;
+		    IShellLinkW *psl;
 
-		    if (psl->lpVtbl->QueryInterface (psl, &IID_IPersistFile,
-						     &ppf) == S_OK)
+		    if (CoCreateInstance (
+					  XECOMID (CLSID_ShellLink),
+					  NULL,
+					  CLSCTX_INPROC_SERVER,
+					  XECOMID (IID_IShellLinkW),
+					  (void **) &psl) == S_OK)
 		      {
-			OLECHAR wsz[PATH_MAX];
-			WIN32_FIND_DATA wfd;
-			LPSTR resolved = (char *) xmalloc (PATH_MAX+1);
+			IPersistFile *ppf;
 
-			MultiByteToWideChar (CP_ACP,0, fname, -1, wsz, PATH_MAX);
-
-			if ((ppf->lpVtbl->Load (ppf, wsz, STGM_READ) == S_OK) &&
-			    (psl->lpVtbl->GetPath (psl, resolved, PATH_MAX,
-						   &wfd, 0)==S_OK))
+			if (XECOMCALL2 (psl, QueryInterface,
+					XECOMID (IID_IPersistFile),
+					(void **) &ppf) ==
+			    S_OK)
 			  {
-			    xfree (fname);
-			    fname = resolved;
-			    len = strlen (fname);
+			    Extbyte *fname_unicode;
+			    WIN32_FIND_DATAW wfd;
+			    LPWSTR resolved =
+			      alloca_array (WCHAR, PATH_MAX + 1);
+
+			    TO_EXTERNAL_FORMAT (DATA, (fname, fnamelen),
+						C_STRING_ALLOCA,
+						fname_unicode,
+						Qmswindows_unicode);
+
+			    if (XECOMCALL2 (ppf, Load,
+					    (LPWSTR) fname_unicode,
+					    STGM_READ) == S_OK &&
+				/* #### YUCK!  Docs read
+
+   cchMaxPath 
+
+        Maximum number of bytes to copy to the buffer pointed to by the
+	pszFile parameter.
+
+   But "cch" means "count of characters", not bytes.  I'll assume the doc
+   writers messed up and the programmer was correct.  Also, this approach
+   is safe even if it's actually the other way around. */
+#ifdef CYGWIN_HEADERS /* Another Cygwin prototype error */
+				XECOMCALL4 (psl, GetPath, (LPSTR) resolved,
+					    PATH_MAX, &wfd, 0)
+#else
+				XECOMCALL4 (psl, GetPath, resolved,
+					    PATH_MAX, &wfd, 0)
+#endif
+				== S_OK)
+			      TO_INTERNAL_FORMAT (C_STRING, resolved,
+						  ALLOCA, (fname, fnamelen),
+						  Qmswindows_tstr);
+
+			    XECOMCALL0 (ppf, Release);
 			  }
 
-			ppf->lpVtbl->Release (ppf);
+			XECOMCALL0 (psl, Release);
 		      }
+		  }
+		else
+		  {
+		    IShellLinkA *psl;
 
-		    psl->lpVtbl->Release (psl);
+		    if (CoCreateInstance (
+					  XECOMID (CLSID_ShellLink),
+					  NULL,
+					  CLSCTX_INPROC_SERVER,
+					  XECOMID (IID_IShellLinkA),
+					  (void **) &psl) == S_OK)
+		      {
+			IPersistFile *ppf;
+
+			if (XECOMCALL2 (psl, QueryInterface,
+					XECOMID (IID_IPersistFile),
+					(void **) &ppf) ==
+			    S_OK)
+			  {
+			    Extbyte *fname_unicode;
+			    WIN32_FIND_DATAA wfd;
+			    LPSTR resolved =
+			      alloca_array (CHAR, PATH_MAX + 1);
+
+			    /* Always Unicode.  Not obvious from the
+                               IPersistFile documentation, but look under
+                               "Shell Link" for example code. */
+			    TO_EXTERNAL_FORMAT (DATA, (fname, fnamelen),
+						C_STRING_ALLOCA,
+						fname_unicode,
+						Qmswindows_unicode);
+
+			    if (XECOMCALL2 (ppf, Load,
+					    (LPWSTR) fname_unicode,
+					    STGM_READ) == S_OK
+				&& XECOMCALL4 (psl, GetPath, resolved,
+					       PATH_MAX, &wfd, 0) == S_OK)
+			      TO_INTERNAL_FORMAT (C_STRING, resolved,
+						  ALLOCA, (fname, fnamelen),
+						  Qmswindows_tstr);
+
+			    XECOMCALL0 (ppf, Release);
+			  }
+
+			XECOMCALL0 (psl, Release);
+		      }
 		  }
 	      }
-#endif
-
-#ifdef CYGWIN
-	    filename = xmalloc (cygwin_win32_to_posix_path_list_buf_size (fname) + 5);
-	    strcpy (filename, "file:");
-	    cygwin_win32_to_posix_path_list (fname, filename+5);
-#else
-	    filename = (char *)xmalloc (len+6);
-	    strcat (strcpy (filename, "file:"), fname);
-	    dostounix_filename (filename+5);
-#endif
-	    xfree (fname);
-	    l_item = make_string (filename, strlen (filename));
-	    l_dndlist = Fcons (l_item, l_dndlist);
-	    xfree (filename);
+#endif /* !defined (NO_CYGWIN_COM_SUPPORT) */
+	    {
+	      fname = urlify_filename (fname);
+	      l_item = build_intstring (fname);
+	      xfree (fname);
+	      l_dndlist = Fcons (l_item, l_dndlist);
+	    }
 	  }
+
 	DragFinish ((HDROP) wParam);
 
 	event->event.misc.object = Fcons (Qdragdrop_URL, l_dndlist);
@@ -3067,11 +3486,63 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	UNGCPRO;
       }
       break;
-#endif
+#endif /* HAVE_DRAGNDROP */
+
+#ifdef MULE
+    case WM_IME_CHAR:
+
+    case WM_IME_STARTCOMPOSITION:
+      mswindows_start_ime_composition (XFRAME (mswindows_find_frame (hwnd)));
+      goto defproc;
+
+    case WM_IME_COMPOSITION:
+      if (lParam & GCS_RESULTSTR)
+       {
+         HIMC imc = ImmGetContext (hwnd);
+	 Extbyte *result;
+         Bytecount len;
+	 Intbyte *resultint, *endptr;
+	 Bytecount lenint;
+	 int speccount;
+
+         if (!imc)
+           break;
+
+	 /* See WM_KEYDOWN above. */
+	 speccount = begin_dont_check_for_quit ();
+
+	 /* Sizes always in bytes, even for unicode.
+            ImmGetCompositionStringW is supported even on Windows 9x, and
+            allows us to handle multiple languages. */
+         len = ImmGetCompositionStringW (imc, GCS_RESULTSTR, NULL, 0);
+	 result = alloca_array (Extbyte, len);
+         ImmGetCompositionStringW (imc, GCS_RESULTSTR, (WCHAR *) result, len);
+         ImmReleaseContext (hwnd, imc);
+
+	 TO_INTERNAL_FORMAT (DATA, (result, len),
+			     ALLOCA, (resultint, lenint),
+			     Qmswindows_tstr);
+
+	 endptr = resultint + lenint;
+
+	 while (resultint < endptr)
+	   {
+	     Emchar ch = charptr_emchar (resultint);
+	      if (ch == ' ')
+		mswindows_enqueue_keypress_event (hwnd, QKspace, 0);
+	      else
+		mswindows_enqueue_keypress_event (hwnd, make_char (ch), 0);
+	     INC_CHARPTR (resultint);
+	   }
+
+	 unbind_to (speccount);
+       }
+      goto defproc;
+#endif /* MULE */
 
     defproc:
     default:
-      return DefWindowProc (hwnd, message_, wParam, lParam);
+      return qxeDefWindowProc (hwnd, message_, wParam, lParam);
     }
   return (0);
 }
@@ -3118,10 +3589,8 @@ mswindows_current_layout_has_AltGr (void)
      time when a key typed at autorepeat rate of 30 cps! */
   static HKL last_hkl = 0;
   static int last_hkl_has_AltGr;
-  HKL current_hkl = (HKL) -1;
+  HKL current_hkl = GetKeyboardLayout (0);
 
-  if (xGetKeyboardLayout) /* not in NT 3.5 */
-    current_hkl = xGetKeyboardLayout (0);
   if (current_hkl != last_hkl)
     {
       int c;
@@ -3145,7 +3614,7 @@ mswindows_current_layout_has_AltGr (void)
 /* Returns the state of the modifier keys in the format expected by the
  * Lisp_Event key_data, button_data and motion_data modifiers member */
 static int
-mswindows_modifier_state (BYTE* keymap, DWORD fwKeys, int has_AltGr)
+mswindows_modifier_state (BYTE *keymap, DWORD fwKeys, int has_AltGr)
 {
   int mods = 0;
   int keys_is_real = 0;
@@ -3223,13 +3692,51 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
     {
       switch (mswindows_key)
 	{
+
+#if 0
+	VK_LBUTTON:
+	VK_RBUTTON:
+	VK_CANCEL:
+	VK_MBUTTON:
+	VK_XBUTTON1:
+	VK_XBUTTON2:
+#endif /* 0 */
+
 	case VK_BACK:		return QKbackspace;
 	case VK_TAB:		return QKtab;
+	  /* #### Officially 0A (and 0B too) are "reserved". */
 	case '\n':		return QKlinefeed;
 	case VK_CLEAR:		return KEYSYM ("clear");
 	case VK_RETURN:		return QKreturn;
+
+#if 0
+	VK_SHIFT: "shift"
+	VK_CONTROL: "control"
+	VK_MENU: "alt"
+#endif /* 0 */
+
 	case VK_PAUSE:		return KEYSYM ("pause");
+
+#if 0
+	VK_CAPITAL: "caps-lock"
+	VK_KANA: IME Kana mode 
+	VK_HANGUEL: IME Hanguel mode (maintained for compatibility; use VK_HANGUL) 
+	VK_HANGUL: IME Hangul mode 
+	VK_JUNJA: IME Junja mode 
+	VK_FINAL: IME final mode 
+	VK_HANJA: IME Hanja mode 
+	VK_KANJI: IME Kanji mode 
+#endif /* 0 */
+
 	case VK_ESCAPE:		return QKescape;
+
+#if 0
+	VK_CONVERT: IME convert 
+	VK_NONCONVERT: IME nonconvert 
+	VK_ACCEPT: IME accept 
+	VK_MODECHANGE: IME mode change request 
+#endif /* 0 */
+
 	case VK_SPACE:		return QKspace;
 	case VK_PRIOR:		return KEYSYM ("kp-prior");
 	case VK_NEXT:		return KEYSYM ("kp-next");
@@ -3246,6 +3753,14 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 	case VK_INSERT:		return KEYSYM ("kp-insert");
 	case VK_DELETE:		return KEYSYM ("kp-delete");
 	case VK_HELP:		return KEYSYM ("help");
+#if 0
+	  '0' through '9': numeric keys
+	  'A' through 'Z': alphabetic keys
+	  VK_LWIN: "lwin"
+	  VK_RWIN: "rwin"
+	  VK_APPS: "apps"
+	  VK_SLEEP: "sleep"
+#endif /* 0 */
 	case VK_NUMPAD0:	return KEYSYM ("kp-0");
 	case VK_NUMPAD1:	return KEYSYM ("kp-1");
 	case VK_NUMPAD2:	return KEYSYM ("kp-2");
@@ -3286,6 +3801,73 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 	case VK_F22:		return KEYSYM ("f22");
 	case VK_F23:		return KEYSYM ("f23");
 	case VK_F24:		return KEYSYM ("f24");
+
+#if 0
+	VK_NUMLOCK: 90 NUM LOCK key  
+	VK_SCROLL: 91 SCROLL LOCK key  
+	  92~96 OEM specific;
+	VK_LSHIFT:
+	VK_RSHIFT:
+	VK_LCONTROL:
+	VK_RCONTROL:
+	VK_LMENU:
+	VK_RMENU:
+
+#ifdef VK_BROWSER_BACK /* Windows 2000 only */
+	VK_BROWSER_BACK: Browser Back key 
+	VK_BROWSER_FORWARD: Browser Forward key 
+	VK_BROWSER_REFRESH: Browser Refresh key 
+	VK_BROWSER_STOP: Browser Stop key 
+	VK_BROWSER_SEARCH: Browser Search key 
+	VK_BROWSER_FAVORITES: Browser Favorites key 
+	VK_BROWSER_HOME: Browser Start and Home key 
+	VK_VOLUME_MUTE: Volume Mute key 
+	VK_VOLUME_DOWN: Volume Down key 
+	VK_VOLUME_UP: Volume Up key 
+	VK_MEDIA_NEXT_TRACK: Next Track key 
+	VK_MEDIA_PREV_TRACK: Previous Track key 
+	VK_MEDIA_STOP: Stop Media key 
+	VK_MEDIA_PLAY_PAUSE: Play/Pause Media key 
+	VK_LAUNCH_MAIL: Start Mail key 
+	VK_LAUNCH_MEDIA_SELECT: Select Media key 
+	VK_LAUNCH_APP1: Start Application 1 key 
+	VK_LAUNCH_APP2: Start Application 2 key 
+	  B8-B9 Reserved;
+	VK_OEM_1: For the US standard keyboard, the ';:' key
+	VK_OEM_PLUS: For any country/region, the '+' key 
+	VK_OEM_COMMA: For any country/region, the ',' key 
+	VK_OEM_MINUS: For any country/region, the '-' key 
+	VK_OEM_PERIOD: For any country/region, the '.' key 
+	VK_OEM_2: For the US standard keyboard, the '/?' key 
+	VK_OEM_3: For the US standard keyboard, the '`~' key 
+	  C1~D7 Reserved;
+	  D8~DA Unassigned;
+	VK_OEM_4: For the US standard keyboard, the '[{' key 
+	VK_OEM_5: For the US standard keyboard, the '\|' key 
+	VK_OEM_6: For the US standard keyboard, the ']}' key 
+	VK_OEM_7: For the US standard keyboard, the 'single-quote/double-quote' key 
+	VK_OEM_8:
+	  E0 Reserved;
+	  E1 OEM specific;
+	VK_OEM_102: Either the angle bracket key or the backslash key on the RT 102-key keyboard 
+	  E3~E4 OEM specific;
+#endif /* VK_BROWSER_BACK */
+	VK_PROCESSKEY: E5 Windows 95/98, Windows NT 4.0, Windows 2000: IME PROCESS key 
+	  E6 OEM specific;
+	VK_PACKET: Used to pass Unicode characters as if they were keystrokes. The VK_PACKET key is the low word of a 32-bit Virtual Key value used for non-keyboard input methods. For more information, see Remark in KEYBDINPUT, SendInput, WM_KEYDOWN, and WM_KEYUP 
+	  E8 Unassigned;
+	  E9~F5 OEM specific;
+	VK_ATTN: Attn key 
+	VK_CRSEL: CrSel key 
+	VK_EXSEL: ExSel key 
+	VK_EREOF: Erase EOF key 
+	VK_PLAY: Play key 
+	VK_ZOOM: Zoom key 
+	VK_NONAME: Reserved for future use  
+	VK_PA1: PA1 key
+	VK_OEM_CLEAR: Clear key
+#endif /* 0 */
+
 	}
     }
   return Qnil;
@@ -3307,7 +3889,7 @@ mswindows_find_console (HWND hwnd)
 Lisp_Object
 mswindows_find_frame (HWND hwnd)
 {
-  LONG l = GetWindowLong (hwnd, XWL_FRAMEOBJ);
+  LONG l = qxeGetWindowLong (hwnd, XWL_FRAMEOBJ);
   Lisp_Object f;
   if (l == 0)
     {
@@ -3399,7 +3981,7 @@ emacs_mswindows_next_event (Lisp_Event *emacs_event)
 static void
 emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
 {
-  switch (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event))
+  switch (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event))
     {
     case XM_BUMPQUEUE:
       break;
@@ -3417,7 +3999,7 @@ emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
       {
 	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
 	struct frame *f = XFRAME (frame);
-	int in_p = (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event) == WM_SETFOCUS);
+	int in_p = (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event) == WM_SETFOCUS);
 	Lisp_Object conser;
 	struct gcpro gcpro1;
 
@@ -3440,7 +4022,7 @@ emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
     case XM_UNMAPFRAME:
       {
 	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
-	va_run_hook_with_args (EVENT_MSWINDOWS_MAGIC_TYPE(emacs_event)
+	va_run_hook_with_args (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event)
 			       == XM_MAPFRAME ?
 			       Qmap_frame_hook : Qunmap_frame_hook,
 			       1, frame);
@@ -3573,9 +4155,9 @@ emacs_mswindows_quit_p (void)
 }
 
 USID
-emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
-				    Lisp_Object* instream,
-				    Lisp_Object* outstream,
+emacs_mswindows_create_stream_pair (void *inhandle, void *outhandle,
+				    Lisp_Object *instream,
+				    Lisp_Object *outstream,
 				    int flags)
 {
   /* Handles for streams */
@@ -3661,9 +4243,9 @@ emacs_mswindows_delete_stream_pair (Lisp_Object instream,
 	     : filedesc_stream_fd (XLSTREAM (outstream)));
 
   if (in >= 0)
-    close (in);
+    retry_close (in);
   if (out != in && out >= 0)
-    close (out);
+    retry_close (out);
 #endif
 
   return (NILP (instream)
@@ -3693,8 +4275,8 @@ debug_process_finalization (Lisp_Process *p)
 
   get_process_streams (p, &instr, &outstr);
   /* if it still has fds, then it hasn't been killed yet. */
-  assert (NILP(instr));
-  assert (NILP(outstr));
+  assert (NILP (instr));
+  assert (NILP (outstr));
 
   /* #### More checks here */
 #endif
@@ -4041,9 +4623,9 @@ reinit_vars_of_event_mswindows (void)
   mswindows_event_stream->unselect_console_cb	= emacs_mswindows_unselect_console;
 #ifdef HAVE_MSG_SELECT
   mswindows_event_stream->select_process_cb 	=
-    (void (*)(Lisp_Process*))event_stream_unixoid_select_process;
+    (void (*)(Lisp_Process *)) event_stream_unixoid_select_process;
   mswindows_event_stream->unselect_process_cb	=
-    (void (*)(Lisp_Process*))event_stream_unixoid_unselect_process;
+    (void (*)(Lisp_Process *)) event_stream_unixoid_unselect_process;
   mswindows_event_stream->create_stream_pair_cb = event_stream_unixoid_create_stream_pair;
   mswindows_event_stream->delete_stream_pair_cb = event_stream_unixoid_delete_stream_pair;
 #else
@@ -4163,7 +4745,7 @@ void
 init_event_mswindows_late (void)
 {
 #ifdef HAVE_MSG_SELECT
-  windows_fd = open("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
+  windows_fd = retry_open ("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
   assert (windows_fd>=0);
   FD_SET (windows_fd, &input_wait_mask);
   FD_ZERO(&zero_mask);

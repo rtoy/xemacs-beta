@@ -392,7 +392,7 @@ call_debugger (Lisp_Object arg)
   entering_debugger = 1;
   val = internal_catch (Qdebugger, call_debugger_259, arg, &threw);
 
-  return unbind_to (speccount, ((threw)
+  return unbind_to_1 (speccount, ((threw)
 				? Qunbound /* Not returning a value */
 				: val));
 }
@@ -569,7 +569,7 @@ signal_call_debugger (Lisp_Object conditions,
 					     Qnil);
       else /* in batch mode, we want this going to stderr. */
 	backtrace_259 (Qnil);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       *stack_trace_displayed = 1;
     }
 
@@ -604,7 +604,7 @@ signal_call_debugger (Lisp_Object conditions,
 					     Qnil);
       else /* in batch mode, we want this going to stderr. */
 	backtrace_259 (Qnil);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       *stack_trace_displayed = 1;
     }
 
@@ -625,7 +625,7 @@ signal_call_debugger (Lisp_Object conditions,
 
   UNGCPRO;
   Vcondition_handlers = all_handlers;
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, val);
 }
 
 
@@ -872,7 +872,7 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 	}
       specbind (symbol, value);
     }
-  return unbind_to (speccount, Fprogn (body));
+  return unbind_to_1 (speccount, Fprogn (body));
 }
 
 DEFUN ("let", Flet, 1, UNEVALLED, 0, /*
@@ -941,7 +941,7 @@ All the VALUEFORMs are evalled before any symbols are bound.
 
   UNGCPRO;
 
-  return unbind_to (speccount, Fprogn (body));
+  return unbind_to_1 (speccount, Fprogn (body));
 }
 
 DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
@@ -1369,7 +1369,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
 
       /* Unwind the specpdl stack, and then restore the proper set of
          handlers.  */
-      unbind_to (catchlist->pdlcount, Qnil);
+      unbind_to (catchlist->pdlcount);
       catchlist = catchlist->next;
 #ifdef ERROR_CHECK_TYPECHECK
       check_error_state_sanity ();
@@ -1398,7 +1398,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
      --ben
    */
   /* Unwind the specpdl stack */
-  unbind_to (c->pdlcount, Qnil);
+  unbind_to (c->pdlcount);
   catchlist = c->next;
 #ifdef ERROR_CHECK_TYPECHECK
   check_error_state_sanity ();
@@ -1508,7 +1508,7 @@ If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
   int speccount = specpdl_depth();
 
   record_unwind_protect (Fprogn, XCDR (args));
-  return unbind_to (speccount, Feval (XCAR (args)));
+  return unbind_to_1 (speccount, Feval (XCAR (args)));
 }
 
 
@@ -1702,7 +1702,7 @@ condition_case_1 (Lisp_Object handlers,
   /* Note: The unbind also resets Vcondition_handlers.  Maybe we should
      delete this here. */
   Vcondition_handlers = XCDR (c.tag);
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   UNGCPRO;
   /* free the conses *after* the unbind, because the unbind will run
@@ -1724,7 +1724,7 @@ run_condition_case_handlers (Lisp_Object val, Lisp_Object var)
   /* Note that this just undoes the binding of h.var; whoever
      longjmp()ed to us unwound the stack to c.pdlcount before
      throwing. */
-  unbind_to (c.pdlcount, Qnil);
+  unbind_to (c.pdlcount);
   return val;
 #else
   int speccount;
@@ -1736,7 +1736,7 @@ run_condition_case_handlers (Lisp_Object val, Lisp_Object var)
   speccount = specpdl_depth();
   specbind (var, Fcar (val));
   val = Fprogn (Fcdr (val));
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, val);
 #endif
 }
 
@@ -1785,6 +1785,19 @@ Usage looks like (condition-case VAR BODYFORM HANDLERS...).
 Executes BODYFORM and returns its value if no error happens.
 Each element of HANDLERS looks like (CONDITION-NAME BODY...)
 where the BODY is made of Lisp expressions.
+
+A typical usage of `condition-case' looks like this:
+
+(condition-case nil
+    ;; you need a progn here if you want more than one statement ...
+    (progn
+      (do-something)
+      (do-something-else))
+  (error
+   (issue-warning-or)
+   ;; but strangely, you don't need one here.
+   (return-a-value-etc)
+   ))
 
 A handler is applicable to an error if CONDITION-NAME is one of the
 error's condition names.  If an error happens, the first applicable
@@ -1853,7 +1866,7 @@ and invokes the standard error-handler if none is found.)
   Vcondition_handlers = tem;
 
   /* Caller should have GC-protected args */
-  return unbind_to (speccount, Ffuncall (nargs - 1, args + 1));
+  return unbind_to_1 (speccount, Ffuncall (nargs - 1, args + 1));
 }
 
 static int
@@ -1922,9 +1935,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
     {
       /* who knows how much has been initialized?  Safest bet is
          just to bomb out immediately. */
-      /* let's not use stderr_out() here, because that does a bunch of
-	 things that might not be safe yet. */
-      fprintf (stderr, "Error before initialization is complete!\n");
+      stderr_out ("Error before initialization is complete!\n");
       abort ();
     }
 
@@ -2159,7 +2170,7 @@ call_with_suspended_errors_1 (Lisp_Object opaque_arg)
     }
   PRIMITIVE_FUNCALL (val, get_opaque_ptr (kludgy_args[0]),
 		     kludgy_args + 3, XINT (kludgy_args[1]));
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, val);
 }
 
 /* Many functions would like to do one of three things if an error
@@ -2259,7 +2270,7 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
     /* Use the returned value except in non-local exit, when
        RETVAL applies. */
     /* Some perverse compilers require the perverse cast below.  */
-    return unbind_to (speccount,
+    return unbind_to_1 (speccount,
 		      threw ? *((Lisp_Object*) &(retval)) : the_retval);
   }
 }
@@ -2328,7 +2339,7 @@ build_error_data (const CIntbyte *reason, Lisp_Object frob)
   if (!reason)
     return frob;
   else
-    return Fcons (build_translated_string (reason), frob);
+    return Fcons (build_msg_string (reason), frob);
 }
 
 DOESNT_RETURN
@@ -2381,7 +2392,7 @@ DOESNT_RETURN
 signal_error_2 (Lisp_Object type, const CIntbyte *reason,
 		Lisp_Object frob0, Lisp_Object frob1)
 {
-  signal_error_1 (type, list3 (build_translated_string (reason), frob0,
+  signal_error_1 (type, list3 (build_msg_string (reason), frob0,
 			       frob1));
 }
 
@@ -2393,7 +2404,7 @@ maybe_signal_error_2 (Lisp_Object type, const CIntbyte *reason,
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
-  maybe_signal_error_1 (type, list3 (build_translated_string (reason), frob0,
+  maybe_signal_error_1 (type, list3 (build_msg_string (reason), frob0,
 				     frob1), class, errb);
 }
 
@@ -2401,7 +2412,7 @@ Lisp_Object
 signal_continuable_error_2 (Lisp_Object type, const CIntbyte *reason,
 			    Lisp_Object frob0, Lisp_Object frob1)
 {
-  return Fsignal (type, list3 (build_translated_string (reason), frob0,
+  return Fsignal (type, list3 (build_msg_string (reason), frob0,
 			       frob1));
 }
 
@@ -2414,7 +2425,7 @@ maybe_signal_continuable_error_2 (Lisp_Object type, const CIntbyte *reason,
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
   return maybe_signal_continuable_error_1
-    (type, list3 (build_translated_string (reason), frob0, frob1),
+    (type, list3 (build_msg_string (reason), frob0, frob1),
      class, errb);
 }
 
@@ -2432,8 +2443,7 @@ signal_ferror (Lisp_Object type, const CIntbyte *fmt, ...)
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2452,8 +2462,7 @@ maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
     return;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2467,8 +2476,7 @@ signal_continuable_ferror (Lisp_Object type, const CIntbyte *fmt, ...)
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2487,8 +2495,7 @@ maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
     return Qnil;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2518,8 +2525,7 @@ signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const CIntbyte *fmt
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2539,8 +2545,7 @@ maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
     return;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2556,8 +2561,7 @@ signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2578,8 +2582,7 @@ maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
     return Qnil;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -2810,8 +2813,7 @@ printing_unreadable_object (const CIntbyte *fmt, ...)
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt), Qnil, -1,
-				args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   /* Fsignal GC-protects its args */
@@ -3114,7 +3116,7 @@ do_autoload (Lisp_Object fundef,
 
   /* Once loading finishes, don't undo it.  */
   Vautoload_queue = Qt;
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   fun = indirect_function (fun, 0);
 
@@ -3184,7 +3186,7 @@ Evaluate FORM and return its value.
 	messij = Fprin1_to_string (messij, Qnil);
       call3 (Qdisplay_warning, class, messij, level);
       UNGCPRO;
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
     }
 
   if (!CONSP (form))
@@ -3802,7 +3804,7 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object args[])
   if (i < nargs)
     goto wrong_number_of_arguments;
 
-  return unbind_to (speccount, Fprogn (body));
+  return unbind_to_1 (speccount, Fprogn (body));
 
  wrong_number_of_arguments:
   return signal_wrong_number_of_arguments_error (fun, nargs);
@@ -3912,7 +3914,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
   assert (!gc_in_progress);
 
   sym = args[0];
-  val = symbol_value_in_buffer (sym, make_buffer (buf));
+  val = symbol_value_in_buffer (sym, wrap_buffer (buf));
   ret = (cond == RUN_HOOKS_UNTIL_FAILURE ? Qt : Qnil);
 
   if (UNBOUNDP (val) || NILP (val))
@@ -4281,7 +4283,7 @@ call0_in_buffer (struct buffer *buf, Lisp_Object fn)
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = call0 (fn);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4299,7 +4301,7 @@ call1_in_buffer (struct buffer *buf, Lisp_Object fn,
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = call1 (fn, arg0);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4317,7 +4319,7 @@ call2_in_buffer (struct buffer *buf, Lisp_Object fn,
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = call2 (fn, arg0, arg1);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4335,7 +4337,7 @@ call3_in_buffer (struct buffer *buf, Lisp_Object fn,
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = call3 (fn, arg0, arg1, arg2);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4354,7 +4356,7 @@ call4_in_buffer (struct buffer *buf, Lisp_Object fn,
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = call4 (fn, arg0, arg1, arg2, arg3);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4371,7 +4373,7 @@ eval_in_buffer (struct buffer *buf, Lisp_Object form)
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
       val = Feval (form);
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return val;
     }
 }
@@ -4429,25 +4431,26 @@ call1_with_handler (Lisp_Object handler, Lisp_Object fn,
 static Lisp_Object
 caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
 {
+  /* #### should be rewritten to work with emacs_sprintf_string_lisp(); but this
+     whole stuff is getting junked and replaced from my stderr-proc ws */
   if (!NILP (errordata))
     {
       Lisp_Object args[2];
 
       if (!NILP (arg))
         {
-          CIntbyte *str = (CIntbyte *) get_opaque_ptr (arg);
-          args[0] = build_string (str);
+          Intbyte *str = (Intbyte *) get_opaque_ptr (arg);
+          args[0] = build_intstring (str);
         }
       else
-        args[0] = build_string ("error");
+        args[0] = build_msg_string ("error");
       /* #### This should call
 	 (with-output-to-string (display-error errordata))
 	 but that stuff is all in Lisp currently. */
       args[1] = errordata;
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
-	 emacs_doprnt_string_lisp ((const Intbyte *) "%s: %s",
-				   Qnil, -1, 2, args));
+	 emacs_vsprintf_string_lisp ("%s: %s", Qnil, 2, args));
     }
   return Qunbound;
 }
@@ -4502,7 +4505,7 @@ eval_in_buffer_trapping_errors (const CIntbyte *warning_string,
   XSETBUFFER (buffer, buf);
 
   specbind (Qinhibit_quit, Qt);
-  /* gc_currently_forbidden = 1; Currently no reason to do this; */
+  /* begin_gc_forbidden(); Currently no reason to do this; */
 
   cons = noseeum_cons (buffer, form);
   opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
@@ -4516,8 +4519,7 @@ eval_in_buffer_trapping_errors (const CIntbyte *warning_string,
     free_opaque_ptr (opaque);
   UNGCPRO;
 
-  /* gc_currently_forbidden = 0; */
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 static Lisp_Object
@@ -4556,7 +4558,7 @@ run_hook_trapping_errors (const CIntbyte *warning_string,
     free_opaque_ptr (opaque);
   UNGCPRO;
 
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 /* Same as run_hook_trapping_errors() but also set the hook to nil
@@ -4598,7 +4600,7 @@ safe_run_hook_trapping_errors (const CIntbyte *warning_string,
   free_cons (XCONS (cons));
   UNGCPRO;
 
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 static Lisp_Object
@@ -4626,7 +4628,7 @@ call0_trapping_errors (const CIntbyte *warning_string, Lisp_Object function)
   GCPRO2 (opaque, function);
   speccount = specpdl_depth();
   specbind (Qinhibit_quit, Qt);
-  /* gc_currently_forbidden = 1; Currently no reason to do this; */
+  /* begin_gc_forbidden(); Currently no reason to do this; */
 
   opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
   /* Qerror not Qt, so you can get a backtrace */
@@ -4637,8 +4639,7 @@ call0_trapping_errors (const CIntbyte *warning_string, Lisp_Object function)
     free_opaque_ptr (opaque);
   UNGCPRO;
 
-  /* gc_currently_forbidden = 0; */
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 static Lisp_Object
@@ -4675,7 +4676,7 @@ call1_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
   GCPRO4 (cons, opaque, function, object);
 
   specbind (Qinhibit_quit, Qt);
-  /* gc_currently_forbidden = 1; Currently no reason to do this; */
+  /* begin_gc_forbidden(); Currently no reason to do this; */
 
   cons = noseeum_cons (function, object);
   opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
@@ -4688,8 +4689,7 @@ call1_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
   free_cons (XCONS (cons));
   UNGCPRO;
 
-  /* gc_currently_forbidden = 0; */
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 Lisp_Object
@@ -4711,7 +4711,7 @@ call2_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
 
   GCPRO5 (cons, opaque, function, object1, object2);
   specbind (Qinhibit_quit, Qt);
-  /* gc_currently_forbidden = 1; Currently no reason to do this; */
+  /* begin_gc_forbidden(); Currently no reason to do this; */
 
   cons = list3 (function, object1, object2);
   opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
@@ -4724,14 +4724,13 @@ call2_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
   free_list (cons);
   UNGCPRO;
 
-  /* gc_currently_forbidden = 0; */
-  return unbind_to (speccount, tem);
+  return unbind_to_1 (speccount, tem);
 }
 
 
 /************************************************************************/
 /*		       The special binding stack			*/
-/* Most C code should simply use specbind() and unbind_to().		*/
+/* Most C code should simply use specbind() and unbind_to_1().		*/
 /* When performance is critical, use the macros in backtrace.h.		*/
 /************************************************************************/
 
@@ -4854,7 +4853,7 @@ specbind_magic (Lisp_Object symbol, Lisp_Object value)
   if (buffer_local == 0)
     {
       specpdl_ptr->old_value = find_symbol_value (symbol);
-      specpdl_ptr->func = 0;      /* Handled specially by unbind_to */
+      specpdl_ptr->func = 0;      /* Handled specially by unbind_to_1 */
     }
   else if (buffer_local > 0)
     {
@@ -4877,10 +4876,14 @@ specbind_magic (Lisp_Object symbol, Lisp_Object value)
   Fset (symbol, value);
 }
 
-/* Note: As long as the unwind-protect exists, its arg is automatically
-   GCPRO'd. */
+/* Record an unwind-protect -- FUNCTION will be called with ARG no matter
+   whether a normal or non-local exit occurs. (You need to call unbind_to_1()
+   before your function returns normally, passing in the integer returned
+   by this function.) Note: As long as the unwind-protect exists, ARG is
+   automatically GCPRO'd.  The return value from FUNCTION is completely
+   ignored. #### We should eliminate it entirely. */
 
-void
+int
 record_unwind_protect (Lisp_Object (*function) (Lisp_Object arg),
                        Lisp_Object arg)
 {
@@ -4890,15 +4893,46 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object arg),
   specpdl_ptr->old_value = arg;
   specpdl_ptr++;
   specpdl_depth_counter++;
+  return specpdl_depth_counter - 1;
 }
 
-extern int check_sigio (void);
+static Lisp_Object
+free_pointer (Lisp_Object opaque)
+{
+  xfree (get_opaque_ptr (opaque));
+  free_opaque_ptr (opaque);
+  return Qnil;
+}
+
+/* Establish an unwind-protect which will free the specified block.
+ */
+int
+record_unwind_protect_freeing (void *ptr)
+{
+  Lisp_Object opaque = make_opaque_ptr (ptr);
+  return record_unwind_protect (free_pointer, opaque);
+}
+
+static Lisp_Object
+free_dynarr (Lisp_Object opaque)
+{
+  Dynarr_free (get_opaque_ptr (opaque));
+  free_opaque_ptr (opaque);
+  return Qnil;
+}
+
+int
+record_unwind_protect_freeing_dynarr (void *ptr)
+{
+  Lisp_Object opaque = make_opaque_ptr (ptr);
+  return record_unwind_protect (free_dynarr, opaque);
+}
 
 /* Unwind the stack till specpdl_depth() == COUNT.
    VALUE is not used, except that, purely as a convenience to the
-   caller, it is protected from garbage-protection. */
+   caller, it is protected from garbage-protection and returned. */
 Lisp_Object
-unbind_to (int count, Lisp_Object value)
+unbind_to_1 (int count, Lisp_Object value)
 {
   UNBIND_TO_GCPRO (count, value);
   return value;
@@ -4909,13 +4943,15 @@ unbind_to (int count, Lisp_Object value)
 void
 unbind_to_hairy (int count)
 {
-  int quitf;
+  Lisp_Object oquit;
 
   ++specpdl_ptr;
   ++specpdl_depth_counter;
 
+  /* Allow QUIT within unwind-protect routines, but defer any existing QUIT
+     until afterwards. */
   check_quit (); /* make Vquit_flag accurate */
-  quitf = !NILP (Vquit_flag);
+  oquit = Vquit_flag;
   Vquit_flag = Qnil;
 
   while (specpdl_depth_counter != count)
@@ -4957,8 +4993,7 @@ unbind_to_hairy (int count)
 #endif
 #endif
     }
-  if (quitf)
-    Vquit_flag = Qt;
+  Vquit_flag = oquit;
 }
 
 
@@ -5256,8 +5291,7 @@ warn_when_safe (Lisp_Object class, Lisp_Object level, const CIntbyte *fmt, ...)
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Intbyte *) GETTEXT (fmt),
-				Qnil, -1, args);
+  obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
   warn_when_safe_lispobj (class, level, obj);
@@ -5344,7 +5378,7 @@ syms_of_eval (void)
 }
 
 void
-reinit_eval (void)
+init_eval_early (void)
 {
   specpdl_ptr = specpdl;
   specpdl_depth_counter = 0;
@@ -5446,6 +5480,15 @@ If the value is a list, an error only means to enter the debugger
 if one of its condition symbols appears in the list.
 This variable is overridden by `debug-ignored-errors'.
 See also variables `debug-on-quit' and `debug-on-signal'.
+If this variable is set while XEmacs is running noninteractively,
+an unhandled error will cause a backtrace to be output and the C
+debugger entered using `force-debugging-signal'.  This can be very
+useful when debugging noninteractive errors in tricky situations,
+e.g. makefiles, since you can set this variable using an environment
+variable, like this:
+
+\(using csh)      setenv XEMACSDEBUG '(setq debug-on-error t)'
+\(using bash)     export XEMACSDEBUG='(setq debug-on-error t)'
 */ );
   Vdebug_on_error = Qnil;
 
@@ -5496,6 +5539,4 @@ If due to `eval' entry, one arg, t.
 
   staticpro (&Vcurrent_error_state);
   Vcurrent_error_state = Qnil; /* errors as normal */
-
-  reinit_eval ();
 }

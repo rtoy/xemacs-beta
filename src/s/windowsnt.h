@@ -1,5 +1,6 @@
 /* System description file for Windows 9x and NT.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,13 +24,32 @@ Boston, MA 02111-1307, USA.  */
 /* Capsule summary of different preprocessor flags:
 
 1. Keep in mind that there are two possible OS environments we are dealing
-   with -- Cygwin and Native Windows.  Cygwin provides a POSIX emulation
-   layer on top of MS Windows -- in particular, providing the file-system,
-   process, tty, and signal semantics that are part of a modern, standard
-   Unix operating system.  MS Windows also provides these services, but
-   through their own API, called Win32.  When compiling in a Cygwin
-   environment, the Win32 API's are also available, and in fact are used
-   to do native GUI programming.
+   with -- Cygwin and Native Windows.  MS Windows natively provides
+   file-system, process, and window-system services through the Win32 API,
+   implemented by various DLL's. (The most important and KERNEL32, USER32,
+   and GDI32.  KERNEL32 implements the basic file-system and process
+   services.  USER32 implements the fundamental window-system services
+   such as creating windows and handling messages.  GDI32 implements
+   higher-level drawing capabilities -- fonts, colors, lines, etc.) The C
+   library is implemented on top of Win32 using either MSVCRT (dynamically
+   linked) or LIBC.LIB (statically linked).  Cygwin provides a POSIX
+   emulation layer on top of MS Windows -- in particular, providing the
+   file-system, process, tty, and signal semantics that are part of a
+   modern, standard Unix operating system.  Cygwin does this using its own
+   DLL, cygwin1.dll, which makes calls to the Win32 API services in
+   kernel32.dll.  Cygwin also provides its own implementation of the C
+   library, called `newlib' (libcygwin.a; libc.a and libm.a are symlinked
+   to it), which is implemented on top of the Unix system calls provided
+   in cygwin1.dll.  In addition, Cygwin provides static import libraries
+   that give you direct access to the Win32 API -- XEmacs uses this to
+   provide GUI support under Cygwin.  The two environments also use
+   different compilers -- Native Windows uses Visual C++, and Cygwin uses
+   GCC.  (MINGW, however, is a way of using GCC to target the Native
+   Windows environment.  This works similarly to building with Cygwin, but
+   the resulting executable does not use the Cygwin DLL.  Instead, MINGW
+   provides import libraries for the standard C library DLL's
+   (specifically CRTDLL -- #### how does this differ from MSVCRT and
+   LIBC.LIB?).)
 
 2. There are two windowing environments we can target XEmacs for when
    running under MS Windows -- Windows native, and X. (It may seem strange
@@ -49,10 +69,13 @@ Windows + X Windows for windowing.
 The build flags used for these divisions are:
 
 CYGWIN -- for Cygwin-only stuff.
-WIN32_NATIVE -- Win32 native OS-level stuff (files, process, etc.).
+WIN32_NATIVE -- Win32 native OS-level stuff (files, process, etc.).  Applies
+                whenever linking against the native C libraries -- i.e.
+                all compilations with VC++ and with MINGW, but never Cygwin.
 HAVE_X_WINDOWS -- for X Windows (regardless of whether under MS Win)
 HAVE_MS_WINDOWS -- MS Windows native windowing system (anything related to
-                   the appearance of the graphical screen).
+                   the appearance of the graphical screen).  May or may not
+                   apply to any of VC++, MINGW, Cygwin.
 
 Finally, there's also the MINGW build environment, which uses GCC
 \(similar to Cygwin), but native MS Windows libraries rather than a
@@ -84,37 +107,88 @@ __MINGW32__ -> MINGW
 
 */
 
-/* Identify ourselves */
-#ifndef WIN32_NATIVE
-#define WIN32_NATIVE
-#endif
+#include "win32-native.h"
 
 /* In case non-Microsoft compiler is used, we fake _MSC_VER */
 #ifndef _MSC_VER
 #define _MSC_VER  1
 #endif
 
-typedef unsigned short mode_t;
-/* typedef long ptrdiff_t; -kkm */
-typedef int pid_t;
+/* Stuff from old nt/config.h: */
 
-#include <stddef.h>
+#define NTHEAP_PROBE_BASE 1
 
-/* If you are compiling with a non-C calling convention but need to
-   declare vararg routines differently, put it here */
-#define _VARARGS_ __cdecl
+#define LISP_FLOAT_TYPE
 
-/* If you are providing a function to something that will call the
-   function back (like a signal handler and signal, or main) its calling
-   convention must be whatever standard the libraries expect */
-#define _CALLBACK_ __cdecl
+#ifdef HAVE_X_WINDOWS
 
-/* SYSTEM_TYPE should indicate the kind of system you are using.
- It sets the Lisp variable system-type.  */
+#define HAVE_XREGISTERIMINSTANTIATECALLBACK
 
-#define SYSTEM_TYPE "windows-nt"
+#define THIS_IS_X11R6
+#define HAVE_XMU
+#define HAVE_XLOCALE_H
+#define HAVE_X11_LOCALE_H
+#define GETTIMEOFDAY_ONE_ARGUMENT
 
-#define NO_MATHERR
+#define LWLIB_USES_ATHENA
+#define LWLIB_MENUBARS_LUCID
+#define LWLIB_SCROLLBARS_LUCID
+#define LWLIB_DIALOGS_ATHENA
+#define LWLIB_TABS_LUCID
+#define LWLIB_WIDGETS_ATHENA
+
+/* These are what gets defined under Cygwin */
+#define _BSD_SOURCE 1
+#define _SVID_SOURCE 1
+#define X_LOCALE 1
+#define NARROWPROTO 1
+
+#endif /* HAVE_X_WINDOWS */
+
+#define HAVE_LOCALE_H
+#define STDC_HEADERS
+
+#define HAVE_LONG_FILE_NAMES
+
+#define HAVE_TIMEVAL
+#define HAVE_TZNAME
+#define HAVE_H_ERRNO
+
+#define HAVE_CLOSEDIR
+#define HAVE_DUP2
+#define HAVE_EXECVPE
+#define HAVE_FMOD
+#define HAVE_FREXP
+#define HAVE_FTIME
+#define HAVE_GETCWD
+#define HAVE_GETHOSTNAME
+#define HAVE_GETPAGESIZE
+#define getpagesize() 4096
+#define HAVE_GETTIMEOFDAY
+#define HAVE_LINK
+#define HAVE_LOGB
+#define HAVE_MKDIR
+#define HAVE_MKTIME
+#define HAVE_RENAME
+#define HAVE_RMDIR
+#define HAVE_SELECT
+#define HAVE_STRERROR
+
+#define HAVE_SOCKETS
+
+#ifdef DEBUG_XEMACS
+#define USE_ASSERTIONS
+#define MEMORY_USAGE_STATS
+#define ERROR_CHECK_EXTENTS
+#define ERROR_CHECK_TYPECHECK
+#define ERROR_CHECK_CHARBPOS
+#define ERROR_CHECK_GC
+#define ERROR_CHECK_MALLOC
+#define ERROR_CHECK_BYTE_CODE
+#define ERROR_CHECK_GLYPHS
+#endif /* DEBUG_XEMACS */
+
+#define HAVE_DRAGNDROP
 
 #define SIZEOF_SHORT 2
 #define SIZEOF_INT 4
@@ -122,38 +196,17 @@ typedef int pid_t;
 #define SIZEOF_LONG_LONG 0
 #define SIZEOF_VOID_P 4
 
-/* NOMULTIPLEJOBS should be defined if your system's shell
- does not have "job control" (the ability to stop a program,
- run some other program, then continue the first one).  */
-
-/* #define NOMULTIPLEJOBS */
-
-/* Letter to use in finding device name of first pty,
-  if system supports pty's.  'a' means it is /dev/ptya0  */
-
-#define FIRST_PTY_LETTER 'a'
-
-/*
- *      Define HAVE_TIMEVAL if the system supports the BSD style clock values.
- *      Look in <sys/time.h> for a timeval structure.
- */
-
-#define HAVE_TIMEVAL
-
-/*
- *      Define HAVE_SELECT if the system supports the `select' system call.
- */
-
-/* #define HAVE_SELECT */
+typedef int mode_t;
+typedef int pid_t;
+typedef int uid_t;
+typedef int gid_t;
+typedef int pid_t;
+typedef int ssize_t;
 
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 
 #define COFF
-
-/* NT supports Winsock which is close enough (with some hacks) */
-
-#define HAVE_SOCKETS
 
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
@@ -163,160 +216,6 @@ typedef int pid_t;
 #define MAIL_USE_POP
 #define HAVE_LOCKING
 #define MAIL_USE_LOCKING
-
-/* If the character used to separate elements of the executable path
-   is not ':', #define this to be the appropriate character constant.  */
-#define SEPCHAR ';'
-
-/* ============================================================ */
-
-/* Here, add any special hacks needed
-   to make Emacs work on this system.  For example,
-   you might define certain system call names that don't
-   exist on your system, or that do different things on
-   your system and must be used only through an encapsulation
-   (Which you should place, by convention, in sysdep.c).  */
-
-/* XEmacs file I/O for DOS text files requires FILE_CODING */
-#define FILE_CODING
-
-#define DIRECTORY_SEP ((char)XCHAR(Vdirectory_sep_char))
-
-/* Define this to be the separator between devices and paths */
-#define DEVICE_SEP ':'
-
-/* We'll support either convention on NT.  */
-#define IS_DIRECTORY_SEP(_c_) ((_c_) == '/' || (_c_) == '\\')
-#define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_) || IS_DEVICE_SEP (_c_))
-
-/* The null device on Windows NT. */
-#define NULL_DEVICE     "NUL:"
-#define EXEC_SUFFIXES   ".exe:.com:.bat:.cmd:"
-
-#ifndef MAXPATHLEN
-#define MAXPATHLEN      _MAX_PATH
-#endif
-
-#define LISP_FLOAT_TYPE
-
-#define HAVE_GETTIMEOFDAY
-#define HAVE_GETHOSTNAME
-#define HAVE_DUP2
-#define HAVE_RENAME
-#define HAVE_CLOSEDIR
-
-#define HAVE_TZNAME
-
-#define HAVE_LONG_FILE_NAMES
-
-#define HAVE_MKDIR
-#define HAVE_RMDIR
-#define HAVE_RANDOM
-#define HAVE_LOGB
-#define HAVE_FREXP
-#define HAVE_FMOD
-#define HAVE_FTIME
-#define HAVE_MKTIME
-
-#define HAVE_MOUSE
-#define HAVE_H_ERRNO
-
-/* Compatibility macros. Some used to be routines in nt.c */
-#define strcasecmp(x,y) _stricmp(x,y)
-#define random() (rand() << 15 | rand())
-#define srandom(seed) (srand(seed))
-#define setpgrp(pid,gid)
-
-#define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
-
-
-#include <stdio.h>
-
-/* subprocess calls that are emulated */
-#ifndef DONT_ENCAPSULATE
-#define spawnve sys_spawnve
-int spawnve (int mode, const char *cmdname, 
-	     const char * const *argv, const char *const *envp);
-#endif
-
-/* IO calls that are emulated or shadowed */
-#define pipe    sys_pipe
-int sys_pipe (int * phandles);
-
-#ifndef HAVE_X_WINDOWS
-#define sleep   sys_sleep
-void sleep (int seconds);
-#endif
-
-#define wait    sys_wait
-int wait (int *status);
-
-#define kill    sys_kill
-int kill (int pid, int sig);
-
-/* map to MSVC names */
-#define popen     _popen
-#define pclose    _pclose
-
-typedef int uid_t;
-typedef int gid_t;
-typedef int pid_t;
-typedef int ssize_t;
-
-/* Encapsulation of system calls */
-#ifndef DONT_ENCAPSULATE
-#define getpid sys_getpid
-pid_t getpid (void);
-#endif
-
-/* Random global functions called everywhere. Implemented in nt.c */
-/* #### Most of these are FSFisms and must be avoided */
-/* #### All of these are FSFisms and must be avoided */
-void dostounix_filename (char *p);
-void unixtodos_filename (char *p);
-int crlf_to_lf (int n, unsigned char *buf, unsigned int *lf_count);
-
-char *getwd (char *dir);
-
-void *sbrk (unsigned long increment);
-
-struct passwd;
-struct passwd *getpwuid (uid_t uid);
-struct passwd *getpwnam (const char *name);
-uid_t getuid (void);
-uid_t geteuid (void);
-gid_t getgid (void);
-gid_t getegid (void);
-
-/* Setitimer is emulated */
-#define HAVE_SETITIMER
-
-/* Defines size_t and alloca ().  */
-#include <malloc.h>
-
-#include <sys/stat.h>
-
-/* Define for those source files that do not include enough NT 
-   system files.  */
-#ifndef NULL
-#ifdef __cplusplus
-#define NULL	0
-#else
-#define NULL	((void *)0)
-#endif
-#endif
-
-/* For proper declaration of environ.  */
-#include <stdlib.h>
-#include <string.h>
-
-/* Define process implementation */
-#define HAVE_WIN32_PROCESSES
-
-/* We need a little extra space, see ../../lisp/loadup.el */
-#define SYSTEM_PURESIZE_EXTRA 15000
-
-/* ============================================================ */
 
 /* See unexnt.c */
 #if (_MSC_VER >= 1100)
@@ -329,9 +228,9 @@ gid_t getegid (void);
 
 #ifdef HAVE_SCROLLBARS
 /* Ensure the NT 4 mouse definitions in winuser.h are available */
- #ifndef _WIN32_WINNT
-  #define _WIN32_WINNT 0x0400
- #endif
+# ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0400
+# endif
 #endif
 
 /* Force the various NT 4 structures and constants to be included; we're
@@ -352,7 +251,28 @@ gid_t getegid (void);
           __declspec(noreturn) extern void decl PRINTF_ARGS(str,idx)
 #endif /* MSVC 6.0 */
 
-#define CORRECT_DIR_SEPS(s) \
-  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
-       else unixtodos_filename (s); \
-  } while (0)
+/* MSVC warnings no-no crap. When adding one to this section,
+   1. Think twice
+   2. Insert textual description of the warning.
+   3. Think twice. Undo still works  */
+#if (_MSC_VER >= 800)
+
+/* 'expression' : signed/unsigned mismatch */
+/* #pragma warning ( disable : 4018 ) */
+/* unnamed type definition in parentheses
+  (Martin added a pedantically correct definition of ALIGNOF, which
+  generates temporary anonymous structures, and MSVC complains) */
+#pragma warning ( disable : 4116 )
+
+#endif /* compiler understands #pragma warning*/
+
+/* MSVC version >= 2.x without /Za supports __inline */
+#if (_MSC_VER < 900) || defined (__STDC__)
+# define inline
+#else
+# define inline __inline
+#endif
+
+/* lisp.h defines abort() as a macro.  therefore, we must include all
+   files that contain prototypes for abort() before then. */
+#include <../include/process.h>

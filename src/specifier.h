@@ -194,7 +194,22 @@ struct specifier_methods
   void (*after_change_method) (Lisp_Object specifier,
 			       Lisp_Object locale);
 
+  /* Specifier extra data: Specifier objects can have extra data,
+     specific to the type of specifier, stored at the end of the
+     object.  To have this, a specifier declares a structure of type
+     `struct TYPE_specifier' containing the data and uses
+     INITIALIZE_SPECIFIER_TYPE_WITH_DATA instead of
+     INITIALIZE_SPECIFIER_TYPE.  Then, a pointer to the `struct
+     TYPE_specifier' can be obtained from a specifier object using
+     SPECIFIER_TYPE_DATA. */
+
+  /* Pdump description of the extra data; required, and must be named
+     TYPE_specifier_description.  Initialized when
+     INITIALIZE_SPECIFIER_TYPE_WITH_DATA is called. */
   const struct lrecord_description *extra_description;
+
+  /* Size of extra data structure; initialized when
+     INITIALIZE_SPECIFIER_TYPE_WITH_DATA is called. */
   int extra_data_size;
 };
 
@@ -301,15 +316,15 @@ extern struct specifier_methods * type##_specifier_methods
 #define DEFINE_SPECIFIER_TYPE(type)					\
 struct specifier_methods * type##_specifier_methods
 
-#define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {		\
-  type##_specifier_methods = xnew_and_zero (struct specifier_methods);		\
-  type##_specifier_methods->name = obj_name;					\
-  type##_specifier_methods->extra_description =					\
-    specifier_empty_extra_description;						\
-  defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym);	\
-  add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);		\
-  dump_add_root_struct_ptr (&type##_specifier_methods,				\
-			    &specifier_methods_description);			\
+#define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {	    \
+  type##_specifier_methods = xnew_and_zero (struct specifier_methods);	    \
+  type##_specifier_methods->name = obj_name;				    \
+  type##_specifier_methods->extra_description =				    \
+    specifier_empty_extra_description;					    \
+  defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym); \
+  add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	    \
+  dump_add_root_struct_ptr (&type##_specifier_methods,			    \
+			    &specifier_methods_description);		    \
 } while (0)
 
 #define REINITIALIZE_SPECIFIER_TYPE(type) do {				\

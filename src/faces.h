@@ -1,6 +1,6 @@
 /* Face data structures.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995 Ben Wing
+   Copyright (C) 1995, 2002 Ben Wing
 
 This file is part of XEmacs.
 
@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_faces_h_
 #define INCLUDED_faces_h_
 
-#include "buffer.h" /* for NUM_LEADING_BYTES */
+#include "charset.h" /* for NUM_LEADING_BYTES */
 
 /* a Lisp_Face is the C object corresponding to a face.  There is one
    of these per face.  It basically contains all of the specifiers for
@@ -156,7 +156,7 @@ struct face_cachel
 
   Lisp_Object foreground;
   Lisp_Object background;
-  /* There are currently 128 possible charsets under Mule.  For the
+  /* There are currently 128 or 129 possible charsets under Mule.  For the
      moment we just take the easy way out and allocate space for each
      of them.  This avoids messing with Dynarrs.
 
@@ -280,7 +280,7 @@ void default_face_height_and_width_1 (Lisp_Object domain,
 				      int *height, int *width);
 
 #define FACE_CACHEL_FONT(cachel, charset) \
-  (cachel->font[XCHARSET_LEADING_BYTE (charset) - 128])
+  (cachel->font[XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE])
 
 #define WINDOW_FACE_CACHEL(window, index) \
   Dynarr_atp ((window)->face_cachels, index)

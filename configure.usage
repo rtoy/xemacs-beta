@@ -199,11 +199,13 @@ Additional features:
 --moduledir=DIR         Directory to install dynamic modules in.
 --pdump                 New, experimental, don't-sue-me-if-your-house-
                         collapses-and-your-wife-leaves-you, portable dumper.
---with-file-coding      Allows transparent use of "foreign" line break
-                        conventions in text files (such as LF-delimited text
-                        imported from a Unix system to a Windows environment),
-                        optionally including autodetection.  Defaults to ON
-                        on Windows, OFF on Unix.
+			(Actually, not as experimental or non-working as
+			Olivier claims.  Works quite well, in fact.)
+--with-default-eol-detection
+                        Turns on by default auto-detection of end-of-line type
+			when reading a file.  Applies to those platforms where
+			auto-detection is off by default (non-Mule Unix).  Has
+			no effect otherwise.
 
 
 Internationalization options:
@@ -245,10 +247,13 @@ Debugging options:
                         determine what XEmacs's memory is being used
                         for.  Causes a small code increase but no loss
                         of speed.  Normally enabled when --debug is given.
---no-doc-file           Don't rebuild the DOC file unless it's explicitly
-                        deleted.  Only use during development. (It speeds
-                        up the compile-run-test cycle.)
---quick-build           Don't GC when dumping.  Implies --no-doc-file.
+--quick-build           Speed up the build cycle by leaving out steps where
+                        XEmacs will still work (more or less) without them.
+                        Potentially dangerous if you don't know what you're
+                        doing. This (1) doesn't garbage-collect after loading
+                        each file during dumping, and (2) doesn't
+                        automatically rebuild the DOC file. (Remove it by hand
+                        to get it rebuilt.)
 --use-union-type        Enable or disable use of a union, instead of an
                         int, for the fundamental Lisp_Object type; this
                         provides stricter type-checking.  Only works with

@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 
 #include "blocktype.h"
-#include "buffer.h"
+#include "charset.h"
 #include "console.h"
 #include "console-tty.h"
 #include "events.h"
@@ -1054,10 +1054,10 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 
 	fb_instream = make_fixed_buffer_input_stream (bufptr, len);
 
-        /* #### Use Fget_coding_system (Vcomposed_input_coding_system) */
+        /* #### Use get_coding_system_for_text_file (Vcomposed_input_coding_system, 0) */
 	instream =
-	  make_decoding_input_stream (XLSTREAM (fb_instream),
-				      Fget_coding_system (Qundecided));
+	  make_coding_input_stream
+	    (XLSTREAM (fb_instream), Qundecided, CODING_DECODE);
 
 	istr = XLSTREAM (instream);
 
@@ -2416,8 +2416,8 @@ Xt_tty_to_emacs_event (Lisp_Event *emacs_event)
 	  assert (tty_events_occurred > 0);
 	  tty_events_occurred--;
 	  filedesc_with_input[i] = Qnil;
-	  if (read_event_from_tty_or_stream_desc
-	      (emacs_event, XCONSOLE (console), i))
+	  if (read_event_from_tty_or_stream_desc (emacs_event,
+						  XCONSOLE (console)))
 	    return 1;
 	}
     }
@@ -2445,12 +2445,7 @@ describe_event_window (Window window, Display *display)
     stderr_out (" %s", w->core.widget_class->core_class.class_name);
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f)
-    {
-      char *buf = alloca_array (char, XSTRING_LENGTH (f->name) + 4);
-      sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
-      write_string_to_stdio_stream (stderr, 0, (Intbyte *) buf, 0,
-				    strlen (buf), Qterminal, 1);
-    }
+    stderr_out_lisp (" \"%s\"", 1, f->name);
   stderr_out ("\n");
 }
 
@@ -2888,7 +2883,7 @@ check_for_tty_quit_char (struct device *d)
 	return;
 
       event = Fmake_event (Qnil, Qnil);
-      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con, infd))
+      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con))
 	/* EOF, or something ... */
 	return;
       /* #### bogus.  quit-char should be allowed to be any sort
@@ -3369,10 +3364,6 @@ init_event_Xt_late (void) /* called when already initialized */
   completed_timeouts = 0;
 
   event_stream = Xt_event_stream;
-
-#if defined(HAVE_XIM) || defined(USE_XFONTSET)
-  Initialize_Locale();
-#endif /* HAVE_XIM || USE_XFONTSET */
 
   XtToolkitInitialize ();
   Xt_app_con = XtCreateApplicationContext ();

@@ -506,6 +506,22 @@ The original current buffer is restored afterwards."
 (define-function 'char-int 'char-to-int)
 (define-function 'int-char 'int-to-char)
 
+(defun string-width (string)
+  "Return number of columns STRING occupies when displayed.
+With international (Mule) support, uses the charset-columns attribute of
+the characters in STRING, which may not accurately represent the actual
+display width when using a window system.  With no international support,
+simply returns the length of the string."
+  (if (featurep 'mule)
+      (let ((col 0)
+	    (len (length string))
+	    (i 0))
+	(while (< i len)
+	  (setq col (+ col (charset-width (char-charset (aref string i)))))
+	  (setq i (1+ i)))
+	col)
+    (length string)))
+
 
 ;; alist/plist functions
 (defun plist-to-alist (plist)

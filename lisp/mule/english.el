@@ -1,6 +1,7 @@
 ;;; english.el --- English support -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997,1999 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 2001, 2002 Ben Wing.
 ;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multibyte character, character set, syntax, category
@@ -30,14 +31,9 @@
 
 ;;; Code
 
-(defun setup-english-environment ()
-  "Reset multilingual environment of Emacs to the default status.
-See the function `reset-language-environment' for more detail."
-  (interactive)
-  (reset-language-environment))
-
 (set-language-info-alist
  "English" '((tutorial . "TUTORIAL")
+	     (locale "en" "C")
 	     (charset ascii)
 	     (sample-text . "Hello!, Hi!, How are you?")
 	     (documentation . "\

@@ -83,7 +83,7 @@ signal_ldap_error (LDAP *ld, LDAPMessage *res, int ldap_err)
 #endif
     }
   invalid_operation ("LDAP error",
-                       build_string (ldap_err2string (ldap_err)));
+		     build_string (ldap_err2string (ldap_err)));
 }
 
 
@@ -333,7 +333,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
       Intbyte *interrmess;
       EXTERNAL_TO_C_STRING (ldap_err2string (err), interrmess, Qnative);
       signal_error (Qprocess_error, "Failed binding to the server",
-		    build_string (interrmess));
+		    build_intstring (interrmess));
     }
 
   ldap = allocate_ldap ();
@@ -582,7 +582,7 @@ entry according to the value of WITHDN.
   if (! NILP (verbose))
     message ("Parsing ldap results... done");
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   UNGCPRO;
   return Fnreverse (result);
 }

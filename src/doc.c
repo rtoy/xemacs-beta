@@ -1,6 +1,7 @@
 /* Record indices of function doc strings stored in a file.
    Copyright (C) 1985, 1986, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -44,20 +45,20 @@ Lisp_Object QSsubstitute;
 
 Lisp_Object
 unparesseuxify_doc_string (int fd, EMACS_INT position,
-                           char *name_nonreloc, Lisp_Object name_reloc)
+                           Intbyte *name_nonreloc, Lisp_Object name_reloc)
 {
-  char buf[512 * 32 + 1];
-  char *buffer = buf;
+  Intbyte buf[512 * 32 + 1];
+  Intbyte *buffer = buf;
   int buffer_size = sizeof (buf);
-  char *from, *to;
-  REGISTER char *p = buffer;
+  Intbyte *from, *to;
+  REGISTER Intbyte *p = buffer;
   Lisp_Object return_me;
 
   if (0 > lseek (fd, position, 0))
     {
       if (name_nonreloc)
-	name_reloc = build_string (name_nonreloc);
-      return_me = list3 (build_string
+	name_reloc = build_intstring (name_nonreloc);
+      return_me = list3 (build_msg_string
 			 ("Position out of range in doc string file"),
 			  name_reloc, make_int (position));
       goto done;
@@ -75,13 +76,14 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       /* Switch to a bigger buffer if we need one.  */
       if (space_left == 0)
 	{
-          char * old_buffer = buffer;
-	  if (buffer == buf) {
-            buffer = (char *) xmalloc (buffer_size *= 2);
-            memcpy (buffer, old_buffer, p - old_buffer);
-          } else {
-            buffer = (char *) xrealloc (buffer, buffer_size *= 2);
-          }
+          Intbyte *old_buffer = buffer;
+	  if (buffer == buf)
+	    {
+	      buffer = (Intbyte *) xmalloc (buffer_size *= 2);
+	      memcpy (buffer, old_buffer, p - old_buffer);
+	    }
+	  else
+            buffer = (Intbyte *) xrealloc (buffer, buffer_size *= 2);
           p += buffer - old_buffer;
 	  space_left = buffer_size - (p - buffer);
 	}
@@ -89,10 +91,10 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       /* Don't read too much at one go.  */
       if (space_left > 1024 * 8)
 	space_left = 1024 * 8;
-      nread = read (fd, p, space_left);
+      nread = retry_read (fd, p, space_left);
       if (nread < 0)
 	{
-	  return_me = list1 (build_string
+	  return_me = list1 (build_msg_string
 			     ("Read error on documentation file"));
 	  goto done;
 	}
@@ -100,7 +102,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       if (!nread)
 	break;
       {
-        char *p1 = strchr (p, '\037'); /* End of doc string marker */
+        Intbyte *p1 = qxestrchr (p, '\037'); /* End of doc string marker */
         if (p1)
           {
             *p1 = 0;
@@ -129,7 +131,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
             case '0': *to++ = '\0';   break;
             case '_': *to++ = '\037'; break;
             default:
-              return_me = list2 (build_string
+              return_me = list2 (build_msg_string
 	("Invalid data in documentation file -- ^A followed by weird code"),
                                  make_int (c));
               goto done;
@@ -137,8 +139,8 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 	}
     }
 
-  /* #### mrb: following STILL completely broken */
-  return_me = make_ext_string (buffer, to - buffer, Qbinary);
+  /* !!#### mrb: following STILL completely broken */
+  return_me = make_ext_string ((Extbyte *) buffer, to - buffer, Qbinary);
 
  done:
   if (buffer != buf) /* We must have allocated buffer above */
@@ -146,10 +148,10 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
   return return_me;
 }
 
-#define string_join(dest, s1, s2) \
-  memcpy ((void *) dest, (void *) XSTRING_DATA (s1), XSTRING_LENGTH (s1)); \
-  memcpy ((void *) ((Intbyte *) dest + XSTRING_LENGTH (s1)), \
-          (void *) XSTRING_DATA (s2), XSTRING_LENGTH (s2));  \
+#define string_join(dest, s1, s2)					\
+  memcpy (dest, XSTRING_DATA (s1), XSTRING_LENGTH (s1));		\
+  memcpy (dest + XSTRING_LENGTH (s1), XSTRING_DATA (s2),		\
+          XSTRING_LENGTH (s2));						\
           dest[XSTRING_LENGTH (s1) + XSTRING_LENGTH (s2)] = '\0'
 
 /* Extract a doc string from a file.  FILEPOS says where to get it.
@@ -165,9 +167,8 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 static Lisp_Object
 get_doc_string (Lisp_Object filepos)
 {
-  /* !!#### This function has not been Mule-ized */
   REGISTER int fd;
-  REGISTER char *name_nonreloc = 0;
+  REGISTER Intbyte *name_nonreloc = 0;
   EMACS_INT position;
   Lisp_Object file, tem;
   Lisp_Object name_reloc = Qnil;
@@ -206,39 +207,38 @@ get_doc_string (Lisp_Object filepos)
       /* sizeof ("../lib-src/") == 12 */
       if (minsize < 12)
 	minsize = 12;
-      name_nonreloc =
-	(char *) alloca (minsize + XSTRING_LENGTH (file) + 8);
+      name_nonreloc = alloca_intbytes (minsize + XSTRING_LENGTH (file) + 8);
       string_join (name_nonreloc, Vdoc_directory, file);
     }
   else
     name_reloc = file;
 
-  fd = open (name_nonreloc ? name_nonreloc :
-	     (char *) XSTRING_DATA (name_reloc), O_RDONLY | OPEN_BINARY, 0);
+  fd = qxe_open (name_nonreloc ? name_nonreloc :
+		 XSTRING_DATA (name_reloc), O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
     {
 #ifndef CANNOT_DUMP
       if (purify_flag)
 	{
 	    /* sizeof ("../lib-src/") == 12 */
-	  name_nonreloc = (char *) alloca (12 + XSTRING_LENGTH (file) + 8);
+	  name_nonreloc = (Intbyte *) alloca (12 + XSTRING_LENGTH (file) + 8);
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../lib-src. */
-	  strcpy (name_nonreloc, "../lib-src/");
-	  strcat (name_nonreloc, (char *) XSTRING_DATA (file));
+	  qxestrcpy (name_nonreloc, (Intbyte *) "../lib-src/");
+	  qxestrcat (name_nonreloc, XSTRING_DATA (file));
 
-	  fd = open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
+	  fd = qxe_open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
 	}
 #endif /* CANNOT_DUMP */
 
       if (fd < 0)
 	signal_error (Qfile_error, "Cannot open doc string file",
-		      name_nonreloc ? build_string (name_nonreloc) :
+		      name_nonreloc ? build_intstring (name_nonreloc) :
 		      name_reloc);
     }
 
   tem = unparesseuxify_doc_string (fd, position, name_nonreloc, name_reloc);
-  close (fd);
+  retry_close (fd);
 
   if (!STRINGP (tem))
     signal_error_1 (Qinvalid_byte_code, tem);
@@ -297,9 +297,9 @@ string is passed through `substitute-command-keys'.
         return Qnil;
     }
   else if (KEYMAPP (fun))
-    return build_translated_string ("Prefix command (definition is a keymap of subcommands).");
+    return build_msg_string ("Prefix command (definition is a keymap of subcommands).");
   else if (STRINGP (fun) || VECTORP (fun))
-    return build_translated_string ("Keyboard macro.");
+    return build_msg_string ("Keyboard macro.");
   else if (CONSP (fun))
     {
       Lisp_Object funcar = Fcar (fun);
@@ -393,7 +393,8 @@ translation.
 }
 
 static void
-weird_doc (Lisp_Object sym, const char *weirdness, const char *type, int pos)
+weird_doc (Lisp_Object sym, const CIntbyte *weirdness, const CIntbyte *type,
+	   int pos)
 {
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
   message ("Note: Strange doc (%s) for %s %s @ %d",
@@ -411,14 +412,13 @@ when doc strings are referred to in the dumped Emacs.
 */
        (filename))
 {
-  /* !!#### This function has not been Mule-ized */
   int fd;
-  char buf[1024 + 1];
+  Intbyte buf[1024 + 1];
   REGISTER int filled;
   REGISTER int pos;
-  REGISTER char *p, *end;
+  REGISTER Intbyte *p, *end;
   Lisp_Object sym, fun, tem;
-  char *name;
+  Intbyte *name;
 
 #ifndef CANNOT_DUMP
   if (!purify_flag)
@@ -428,33 +428,33 @@ when doc strings are referred to in the dumped Emacs.
   CHECK_STRING (filename);
 
 #ifdef CANNOT_DUMP
-  if (!NILP(Vdoc_directory))
+  if (!NILP (Vdoc_directory))
     {
       CHECK_STRING (Vdoc_directory);
-      name = (char *) alloca (XSTRING_LENGTH (filename)
+      name = alloca_intbytes (XSTRING_LENGTH (filename)
 			      + XSTRING_LENGTH (Vdoc_directory)
 			      + 1);
-      strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
+      qxestrcpy (name, XSTRING_DATA (Vdoc_directory));
     }
   else
 #endif /* CANNOT_DUMP */
     {
-      name = (char *) alloca (XSTRING_LENGTH (filename) + 14);
-      strcpy (name, "../lib-src/");
+      name = alloca_intbytes (XSTRING_LENGTH (filename) + 14);
+      qxestrcpy (name, (Intbyte *) "../lib-src/");
     }
 
-  strcat (name, (char *) XSTRING_DATA (filename));
+  qxestrcat (name, XSTRING_DATA (filename));
 
-  fd = open (name, O_RDONLY | OPEN_BINARY, 0);
+  fd = qxe_open (name, O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
-    report_file_error ("Opening doc string file", build_string (name));
+    report_file_error ("Opening doc string file", build_intstring (name));
   Vinternal_doc_file_name = filename;
   filled = 0;
   pos = 0;
   while (1)
     {
       if (filled < 512)
-	filled += read (fd, &buf[filled], sizeof (buf) - 1 - filled);
+	filled += retry_read (fd, &buf[filled], sizeof (buf) - 1 - filled);
       if (!filled)
 	break;
 
@@ -465,8 +465,8 @@ when doc strings are referred to in the dumped Emacs.
       /* p points to ^_Ffunctionname\n or ^_Vvarname\n.  */
       if (p != end)
 	{
-	  end = strchr (p, '\n');
-	  sym = oblookup (Vobarray, (Intbyte *) p + 2, end - p - 2);
+	  end = qxestrchr (p, '\n');
+	  sym = oblookup (Vobarray, p + 2, end - p - 2);
 	  if (SYMBOLP (sym))
 	    {
               Lisp_Object offset = make_int (pos + end + 1 - buf);
@@ -503,9 +503,26 @@ when doc strings are referred to in the dumped Emacs.
 
                   if (UNBOUNDP (fun))
 		    {
+#if 0 /* There are lots of legitimate cases where this message will appear
+	 (e.g. any function that's only defined when MULE is defined,
+	 provided that the function is used somewhere in a dumped Lisp
+	 file, so that the symbol is interned in the dumped XEmacs), and
+	 there's not a lot that can be done to eliminate the warning other
+	 than kludges like moving the function to a Mule-only source file,
+	 which often results in ugly code.  Furthermore, the only point of
+	 this warning is to warn you when you have a DEFUN that you forget
+	 to DEFSUBR, but the compiler will also warn you, because the DEFUN
+	 declares a static object, and the object will be unused -- you'll
+	 get something like
+
+/src/xemacs/mule/src/abbrev.c:269: warning: `SFexpand_abbrev' defined but not used
+
+	 So I'm disabling this. --ben */
+
 		      /* May have been #if'ed out or something */
 		      weird_doc (sym, GETTEXT ("not fboundp"),
 				 GETTEXT ("function"), pos);
+#endif
 		      goto weird;
 		    }
 		  else if (SUBRP (fun))
@@ -617,7 +634,8 @@ when doc strings are referred to in the dumped Emacs.
 	      else
                 {
                 /* lose: */
-                  signal_error (Qfile_error, "DOC file invalid at position", make_int (pos));
+                  signal_error (Qfile_error, "DOC file invalid at position",
+				make_int (pos));
                 weird:
                   /* goto lose */;
                 }
@@ -628,7 +646,7 @@ when doc strings are referred to in the dumped Emacs.
       filled -= end - buf;
       memmove (buf, end, filled);
     }
-  close (fd);
+  retry_close (fd);
   return Qnil;
 }
 

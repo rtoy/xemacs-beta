@@ -21,14 +21,15 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    Geoff Voelker (voelker@cs.washington.edu) 7-29-94 */
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
-/* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
+/* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
+   (Note: Sync messages from Marc Paquette may indicate
+   incomplete synching, so beware.)
+ */
 
 #include <config.h>
-#include "lisp.h"  /* for VALMASK */
+#include "lisp.h"
 
-#include <stdlib.h>
-
-#include "ntheap.h"
+#include "syswindows.h"
 
 /* This gives us the page size and the size of the allocation unit on NT.  */
 SYSTEM_INFO sysinfo_cache;
@@ -242,13 +243,13 @@ recreate_heap (char *executable_path)
 	{
 	  /* Oops, something has already reserved or commited it, nothing we can do but exit */
 	  char buf[256];
-	  wsprintf(buf,
+	  sprintf (buf,
 			   "XEmacs cannot start because the memory region required by the heap is not available.\n"
 			   "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, Size = 0x%lx, State = %s, Type = %s)",
 			   info.BaseAddress, info.AllocationBase, info.RegionSize,
 			   info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
 			   info.Type == MEM_IMAGE ? "IMAGE" : info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+	  MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
 	  exit(1);
 	}
 
@@ -259,10 +260,10 @@ recreate_heap (char *executable_path)
 	{
 	  /* Can't reserve it, nothing we can do but exit */
 	  char buf[256];
-	  wsprintf(buf,
+	  sprintf (buf,
 			   "XEmacs cannot start because it couldn't reserve space required for the heap.\n"
 			   "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))", base, size, GetLastError());
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
+	  MessageBoxA (NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
 	  exit (1);
 	}
 

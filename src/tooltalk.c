@@ -503,7 +503,7 @@ tt_state_symbol (Tt_state n)
 }
 
 static Lisp_Object
-tt_build_string (char *s)
+tt_build_c_string (char *s)
 {
   return build_string (s ? s : "");
 }
@@ -600,7 +600,7 @@ value returned by 'arg_bval like a string is fine.
     return tt_mode_symbol (tt_message_arg_mode (m, n));
 
   else if (EQ (attribute, Qtt_arg_type))
-    return tt_build_string (tt_message_arg_type (m, n));
+    return tt_build_c_string (tt_message_arg_type (m, n));
 
   else if (EQ (attribute, Qtt_arg_val))
     return tt_message_arg_bval_vector (m, n);
@@ -618,40 +618,40 @@ value returned by 'arg_bval like a string is fine.
     return make_int (tt_message_disposition (m));
 
   else if (EQ (attribute, Qtt_file))
-    return tt_build_string (tt_message_file (m));
+    return tt_build_c_string (tt_message_file (m));
 
   else if (EQ (attribute, Qtt_gid))
     return make_int (tt_message_gid (m));
 
   else if (EQ (attribute, Qtt_handler))
-    return tt_build_string (tt_message_handler (m));
+    return tt_build_c_string (tt_message_handler (m));
 
   else if (EQ (attribute, Qtt_handler_ptype))
-    return tt_build_string (tt_message_handler_ptype (m));
+    return tt_build_c_string (tt_message_handler_ptype (m));
 
   else if (EQ (attribute, Qtt_object))
-    return tt_build_string (tt_message_object (m));
+    return tt_build_c_string (tt_message_object (m));
 
   else if (EQ (attribute, Qtt_op))
-    return tt_build_string (tt_message_op (m));
+    return tt_build_c_string (tt_message_op (m));
 
   else if (EQ (attribute, Qtt_opnum))
     return tt_opnum_string (tt_message_opnum (m));
 
   else if (EQ (attribute, Qtt_otype))
-    return tt_build_string (tt_message_otype (m));
+    return tt_build_c_string (tt_message_otype (m));
 
   else if (EQ (attribute, Qtt_scope))
     return tt_scope_symbol (tt_message_scope (m));
 
   else if (EQ (attribute, Qtt_sender))
-    return tt_build_string (tt_message_sender (m));
+    return tt_build_c_string (tt_message_sender (m));
 
   else if (EQ (attribute, Qtt_sender_ptype))
-    return tt_build_string (tt_message_sender_ptype (m));
+    return tt_build_c_string (tt_message_sender_ptype (m));
 
   else if (EQ (attribute, Qtt_session))
-    return tt_build_string (tt_message_session (m));
+    return tt_build_c_string (tt_message_session (m));
 
   else if (EQ (attribute, Qtt_state))
     return tt_state_symbol (tt_message_state (m));
@@ -660,7 +660,7 @@ value returned by 'arg_bval like a string is fine.
     return make_int (tt_message_status (m));
 
   else if (EQ (attribute, Qtt_status_string))
-    return tt_build_string (tt_message_status_string (m));
+    return tt_build_c_string (tt_message_status_string (m));
 
   else if (EQ (attribute, Qtt_uid))
     return make_int (tt_message_uid (m));
@@ -1412,8 +1412,8 @@ Unprocessed messages are messages that didn't match any patterns.
 */ );
   Vtooltalk_unprocessed_message_hook = Qnil;
 
-  Tooltalk_Message_plist_str = build_string ("Tooltalk Message plist");
-  Tooltalk_Pattern_plist_str = build_string ("Tooltalk Pattern p plist");
+  Tooltalk_Message_plist_str = build_msg_string ("Tooltalk Message plist");
+  Tooltalk_Pattern_plist_str = build_msg_string ("Tooltalk Pattern plist");
 
   staticpro(&Tooltalk_Message_plist_str);
   staticpro(&Tooltalk_Pattern_plist_str);

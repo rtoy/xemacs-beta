@@ -59,6 +59,8 @@ DECLARE_LRECORD (process, Lisp_Process);
 EXFUN (Fprocess_kill_without_query, 2);
 EXFUN (Fprocess_id, 1);
 
+extern Lisp_Object Qprocess_live_p;
+
 Lisp_Object connect_to_file_descriptor (Lisp_Object name,
 					Lisp_Object buffer,
 					Lisp_Object infd,
@@ -116,7 +118,7 @@ int
 void
 #endif
 child_setup (int in, int out, int err,
-		  char **new_argv, const char *current_dir);
+	     Intbyte **new_argv, Lisp_Object current_dir);
 
 Charcount read_process_output (Lisp_Object proc);
 

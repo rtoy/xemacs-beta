@@ -8,8 +8,8 @@ PACKAGE_PREFIX=c:\Program Files\XEmacs
 
 ############################################################################
 
-# Multilingual support (not currently working).
-HAVE_MULE=0
+# Multilingual support.
+MULE=0
 
 # Native MS Windows support.
 HAVE_MS_WINDOWS=1

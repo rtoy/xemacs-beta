@@ -288,7 +288,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (" fallback=", printcharfun);
       print_internal (sp->fallback, printcharfun, escapeflag);
     }
-  unbind_to (count, Qnil);
+  unbind_to (count);
   sprintf (buf, " 0x%x>", sp->header.uid);
   write_c_string (buf, printcharfun);
 }
@@ -2043,7 +2043,7 @@ add_spec_to_ghost_specifier (Lisp_Object specifier, Lisp_Object instantiator,
   int depth = unlock_ghost_specifiers_protected ();
   Fadd_spec_to_specifier (XSPECIFIER(specifier)->fallback,
 			  instantiator, locale, tag_set, how_to_add);
-  unbind_to (depth, Qnil);
+  unbind_to (depth);
 }
 
 struct specifier_spec_list_closure
@@ -2241,7 +2241,7 @@ remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
   int depth = unlock_ghost_specifiers_protected ();
   Fremove_specifier (XSPECIFIER(specifier)->fallback,
 		     locale, tag_set, exact_p);
-  unbind_to (depth, Qnil);
+  unbind_to (depth);
 }
 
 struct copy_specifier_closure
@@ -2506,14 +2506,14 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 
 	  if (!UNBOUNDP (val))
 	    {
-	      unbind_to (count, Qnil);
+	      unbind_to (count);
 	      UNGCPRO;
 	      return val;
 	    }
 	}
     }
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
   UNGCPRO;
   return Qunbound;
 }

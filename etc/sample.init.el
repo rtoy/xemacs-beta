@@ -414,136 +414,6 @@ a number counts as a prefix arg."
 ;; you're working with.
 
 (global-set-key 'f6 'switch-to-other-buffer) ;; M-C-l
-(global-set-key '(meta n) 'switch-to-next-buffer-in-group)
-(global-set-key '(meta p) 'switch-to-previous-buffer-in-group)
-(global-set-key '(meta N) 'switch-to-next-buffer)
-(global-set-key '(meta P) 'switch-to-previous-buffer)
-
-;; Define our own function to deal with the possibility that the newer
-;; stuff in the gutter code may not be present -- i.e. we're running
-;; an older XEmacs.  Note that we avoid trying to "helpfully" define a
-;; function that is present in new versions of XEmacs, but not in
-;; older ones.  That can very easily screw up code trying to determine
-;; what functionality is present using `fboundp' checks.  See above,
-;; near `emacs-version>=', for a full discussion of this.
-
-(defun Init-buffers-tab-omit (buf)
-  ;; a function specifying the buffers to omit from the buffers tab.
-  ;; This is passed a buffer and should return non-nil if the buffer
-  ;; should be omitted.  If the standard buffers-tab functionality is
-  ;; there, we just call it to do things "right".  Otherwise we just
-  ;; omit invisible buffers, snarfing the code from
-  ;; `buffers-menu-omit-invisible-buffers'.
-  (if (boundp 'buffers-tab-omit-function)
-      (funcall buffers-tab-omit-function buf)
-    (not (null (string-match "\\` " (buffer-name buf))))))
-
-(defun switch-to-next-buffer (&optional n)
-  "Switch to the next-most-recent buffer.
-This essentially rotates the buffer list forward.
-N (interactively, the prefix arg) specifies how many times to rotate
-forward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  ;; Here is a different interactive spec.  Look up the function
-  ;; `interactive' (i.e. `C-h f interactive') to understand how this
-  ;; all works.
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (loop
-      do (bury-buffer (car (buffer-list)))
-      while (Init-buffers-tab-omit (car (buffer-list))))
-    (switch-to-buffer (car (buffer-list)))))
-
-(defun buffers-menu-omit-invisible-buffers (buf)
-  "For use as a value of `buffers-menu-omit-function'.
-Omits normally invisible buffers (those whose name begins with a space)."
-  (not (null (string-match "\\` " (buffer-name buf)))))
-
-(defvar Init-buffers-tab-grouping-regexp 
-  '("^\\(gnus-\\|message-mode\\|mime/viewer-mode\\)"
-    "^\\(emacs-lisp-\\|lisp-\\)")
-;; If non-nil, a list of regular expressions for buffer grouping.
-;; Each regular expression is applied to the current major-mode symbol
-;; name and mode-name, if it matches then any other buffers that match
-;; the same regular expression be added to the current group.  This is
-;; a copy of `buffers-tab-grouping-regexp'.
-  )
-
-(defun Init-select-buffers-tab-buffers (buffer-to-select buf1)
-  ;; Specifies the buffers to select from the buffers tab.  This is
-  ;; passed two buffers and should return non-nil if the second buffer
-  ;; should be selected.  If the standard buffers-tab functionality is
-  ;; there, we just call it to do things "right".  Otherwise, we group
-  ;; buffers by major mode and by `Init-buffers-tab-grouping-regexp'.
-  ;; [We've copied `select-buffers-tab-buffers-by-mode' and
-  ;; `buffers-tab-grouping-regexp'.]
-  (if (boundp 'buffers-tab-selection-function)
-      (funcall buffers-tab-selection-function buffer-to-select buf1)
-    (let ((mode1 (symbol-name (symbol-value-in-buffer 'major-mode buf1)))
-	  (mode2 (symbol-name (symbol-value-in-buffer 'major-mode 
-						      buffer-to-select)))
-	  (modenm1 (symbol-value-in-buffer 'mode-name buf1))
-	  (modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select)))
-      (cond ((or (eq mode1 mode2)
-		 (eq modenm1 modenm2)
-		 (and (string-match "^[^-]+-" mode1)
-		      (string-match
-		       (concat "^" (regexp-quote 
-				    (substring mode1 0 (match-end 0))))
-		       mode2))
-		 (and Init-buffers-tab-grouping-regexp
-		      (find-if #'(lambda (x)
-				   (or
-				    (and (string-match x mode1)
-					 (string-match x mode2))
-				    (and (string-match x modenm1)
-					 (string-match x modenm2))))
-			       Init-buffers-tab-grouping-regexp)))
-	     t)
-	    (t nil)))))
-
-(defun switch-to-previous-buffer (&optional n)
-  "Switch to the previously most-recent buffer.
-This essentially rotates the buffer list backward.
-N (interactively, the prefix arg) specifies how many times to rotate
-backward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (loop
-      do (switch-to-buffer (car (last (buffer-list))))
-      while (Init-buffers-tab-omit (car (buffer-list))))))
-
-(defun switch-to-next-buffer-in-group (&optional n)
-  "Switch to the next-most-recent buffer in the current group.
-This essentially rotates the buffer list forward.
-N (interactively, the prefix arg) specifies how many times to rotate
-forward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (let ((curbuf (car (buffer-list))))
-      (loop
-	do (bury-buffer (car (buffer-list)))
-	while (or (Init-buffers-tab-omit (car (buffer-list)))
-		  (not (Init-select-buffers-tab-buffers
-			curbuf (car (buffer-list)))))))
-    (switch-to-buffer (car (buffer-list)))))
-
-(defun switch-to-previous-buffer-in-group (&optional n)
-  "Switch to the previously most-recent buffer in the current group.
-This essentially rotates the buffer list backward.
-N (interactively, the prefix arg) specifies how many times to rotate
-backward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (let ((curbuf (car (buffer-list))))
-      (loop
-	do (switch-to-buffer (car (last (buffer-list))))
-	while (or (Init-buffers-tab-omit (car (buffer-list)))
-		  (not (Init-select-buffers-tab-buffers
-			curbuf (car (buffer-list)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -605,7 +475,10 @@ backward, and defaults to 1.  Buffers whose name begins with a space
 ;; File menu.
 
 (when (console-on-window-system-p)
-    (global-set-key "\C-x\C-c" nil))
+    (global-set-key "\C-x\C-c"
+      #'(lambda () (interactive)
+	  (beep)
+	  (message "Use the \"File/Exit XEmacs\" menu item to exit XEmacs"))))
 
 ;; Make C-k always delete the whole line, which is what most people want,
 ;; anyway.

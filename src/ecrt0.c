@@ -21,10 +21,11 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.30. */
 
 
-/* The standard Vax 4.2 Unix crt0.c cannot be used for Emacs
+/* [[The standard Vax 4.2 Unix crt0.c cannot be used for Emacs
    because it makes `environ' an initialized variable.
    It is easiest to have a special crt0.c on all machines
-   though I don't know whether other machines actually need it.  */
+   though I don't know whether other machines actually need it.]]
+   This is insane!  We DO NOT want to be doing this crap. */
 
 /* On the vax and 68000, in BSD4.2 and USG5.2,
    this is the data format on startup:

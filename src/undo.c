@@ -536,7 +536,7 @@ Return what remains of the list.
     }
 
   UNGCPRO;
-  return unbind_to (speccount, list);
+  return unbind_to_1 (speccount, list);
 }
 
 void

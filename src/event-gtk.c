@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with gtk, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
    Copyright (C) 2000 William Perry.
 
 This file is part of XEmacs.
@@ -47,10 +47,8 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 #include "sysproc.h" /* for MAXDESC */
 
-#ifdef FILE_CODING
 #include "lstream.h"
 #include "file-coding.h"
-#endif
 
 #include <gdk/gdkkeysyms.h>
 
@@ -417,8 +415,7 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
   if (event->length != 1)
-  {
-#ifdef FILE_CODING
+    {
       /* Generate multiple emacs events */
       Emchar ch;
       Lisp_Object instream, fb_instream;
@@ -426,18 +423,19 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
       struct gcpro gcpro1, gcpro2;
 
       fb_instream =
-          make_fixed_buffer_input_stream ((unsigned char *) event->string, event->length);
+	make_fixed_buffer_input_stream ((unsigned char *) event->string, event->length);
 
-      /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
+      /* #### Use get_coding_system_for_text_file
+         (Vcomposed_input_coding_system, 0) */
       instream =
-	  make_decoding_input_stream (XLSTREAM (fb_instream),
-				      Fget_coding_system (Qundecided));
+	make_coding_input_stream (XLSTREAM (fb_instream),
+				  Qundecided, CODING_DECODE);
       
       istr = XLSTREAM (instream);
 
       GCPRO2 (instream, fb_instream);
       while ((ch = Lstream_get_emchar (istr)) != EOF)
-      {
+	{
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	  struct Lisp_Event *ev = XEVENT (emacs_event);
 	  ev->channel       = DEVICE_CONSOLE (d);
@@ -446,35 +444,21 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
 	  ev->event.key.modifiers = 0;
 	  ev->event.key.keysym    = make_char (ch);
 	  enqueue_gtk_dispatch_event (emacs_event);
-      }
+	}
       Lstream_close (istr);
       UNGCPRO;
       Lstream_delete (istr);
       Lstream_delete (XLSTREAM (fb_instream));
-#else
-      int i;
-      for (i = 0; i < event->length; i++)
-      {
-	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-	  struct Lisp_Event *ev = XEVENT (emacs_event);
-	  ev->channel       = DEVICE_CONSOLE (d);
-	  ev->event_type    = key_press_event;
-	  ev->timestamp	    = event->time;
-	  ev->event.key.modifiers = 0;
-	  ev->event.key.keysym    = make_char (event->string[i]);
-	  enqueue_gtk_dispatch_event (emacs_event);
-      }
-#endif
       if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
-	  return (Qnil);
+	return (Qnil);
       return (gtk_keysym_to_emacs_keysym (event->keyval, simple_p));
-  }
+    }
   else
-  {
+    {
       if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
-	  return (Qnil);
+	return (Qnil);
       return (gtk_keysym_to_emacs_keysym (event->keyval, simple_p));
-  }
+    }
 }
 
 
@@ -894,8 +878,8 @@ gtk_tty_to_emacs_event (struct Lisp_Event *emacs_event)
 	  assert (tty_events_occurred > 0);
 	  tty_events_occurred--;
 	  filedesc_with_input[i] = Qnil;
-	  if (read_event_from_tty_or_stream_desc
-	      (emacs_event, XCONSOLE (console), i))
+	  if (read_event_from_tty_or_stream_desc (emacs_event,
+						  XCONSOLE (console)))
 	    return 1;
 	}
     }
@@ -1535,7 +1519,7 @@ check_for_tty_quit_char (struct device *d)
 	return;
 
       event = Fmake_event (Qnil, Qnil);
-      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con, infd))
+      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con))
 	/* EOF, or something ... */
 	return;
       /* #### bogus.  quit-char should be allowed to be any sort
@@ -1884,11 +1868,12 @@ gtk_reset_key_mapping (struct device *d)
 	continue;
 
       {
-	char *name = XKeysymToString (keysym[0]);
+	Extbyte *name = XKeysymToString (keysym[0]);
 	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0], 0);
 	if (name)
 	  {
-	    Fputhash (build_string (name), Qsans_modifiers, hashtable);
+	    Fputhash (build_ext_string (name, Qnative), Qsans_modifiers,
+		      hashtable);
 	    Fputhash (sym, Qsans_modifiers, hashtable);
 	  }
       }
@@ -1898,11 +1883,11 @@ gtk_reset_key_mapping (struct device *d)
 	  if (keysym[j] != keysym[0] &&
 	      keysym[j] != NoSymbol)
 	    {
-	      char *name = XKeysymToString (keysym[j]);
+	      Extbyte *name = XKeysymToString (keysym[j]);
 	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j], 0);
 	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
 		{
-		  Fputhash (build_string (name), Qt, hashtable);
+		  Fputhash (build_ext_string (name, Qnative), Qt, hashtable);
 		  Fputhash (sym, Qt, hashtable);
 		}
 	    }

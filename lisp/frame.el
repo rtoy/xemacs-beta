@@ -166,12 +166,6 @@ The format of this can also be an alist for backward compatibility."
 ;;; 3) Once the init file is done, we apply any newly set properties
 ;;; in initial-frame-plist to the frame.
 
-;; These are now called explicitly at the proper times,
-;; since that is easier to understand.
-;; Actually using hooks within Emacs is bad for future maintenance. --rms.
-;; (add-hook 'before-init-hook 'frame-initialize)
-;; (add-hook 'window-setup-hook 'frame-notice-user-settings)
-
 ;;; If we create the initial frame, this is it.
 (defvar frame-initial-frame nil)
 

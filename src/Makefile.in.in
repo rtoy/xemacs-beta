@@ -3,6 +3,7 @@
 ##   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
 ##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 ##   Copyright (C) 1998, 1999 J. Kean Johnston.
+##   Copyright (C) 2001, 2002 Ben Wing.
 
 ## This file is part of XEmacs.
 
@@ -123,26 +124,149 @@ lwlib_deps = $(lwlib_libs)
 $(lwlib_libs) :
 	cd ../lwlib && $(RECURSIVE_MAKE)
 
-x_objs=console-x.o device-x.o event-Xt.o frame-x.o\
- glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o
-
-#ifdef AIX4
+#  ifdef AIX4
 LIBI18N = -li18n
-#endif /* AIX4 */
+#  endif
 
 X11_libs = $(LIBI18N)
 #endif /* HAVE_X_WINDOWS */
+
+#########################################################################
+
+# Object files needed for compilation.
+
+# NOTE: Some of the object files are specified in this file, and
+# others in configure.in.  The general rule is that they be specified
+# here whenever they have clear dependencies on configure defines.
+# They should be in configure.in when there is no configure define or
+# when there is extremely hairy code to determine which files are
+# needed (e.g. native sound support) and it would be pointless to
+# duplicate that code.
+
+gui_objs=
+#ifdef HAVE_MENUBARS
+gui_objs += menubar.o
+#endif
+#ifdef HAVE_SCROLLBARS
+gui_objs += scrollbar.o
+#endif
+#ifdef HAVE_DIALOGS
+gui_objs += dialog.o
+#endif
+#ifdef HAVE_TOOLBARS
+gui_objs += toolbar.o
+#endif
+#ifdef HAVE_GUI_OBJECTS
+gui_objs += gui.o
+#endif
+
+#ifdef HAVE_X_WINDOWS
+x_objs=console-x.o device-x.o event-Xt.o frame-x.o \
+ glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o intl-x.o
+x_gui_objs=$(gui_objs:.o=-x.o)
+#ifdef HAVE_TOOLBARS
+x_gui_objs += toolbar-common.o
+#endif
+#endif
+
+#ifdef HAVE_MS_WINDOWS
+mswindows_objs=console-msw.o device-msw.o event-msw.o frame-msw.o \
+  objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o
+mswindows_gui_objs=$(gui_objs:.o=-msw.o)
+#endif
+
+#ifdef HAVE_TTY
+tty_objs=console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o \
+ redisplay-tty.o cm.o
+#endif
+
+#ifdef HAVE_GTK
+gtk_objs=console-gtk.o device-gtk.o event-gtk.o frame-gtk.o \
+ objects-gtk.o redisplay-gtk.o glyphs-gtk.o select-gtk.o gccache-gtk.o \
+ gtk-xemacs.o ui-gtk.o
+gtk_gui_objs=$(gui_objs:.o=-gtk.o)
+#ifdef HAVE_TOOLBARS
+gtk_gui_objs += toolbar-common.o
+#endif
+#endif
+
+#ifdef HAVE_BALLOON_HELP
+balloon_help_objs=balloon_help.o balloon-x.o
+#endif
+
+#ifdef CLASH_DETECTION
+clash_detection_objs=filelock.o
+#endif
+
+#ifdef HAVE_DATABASE
+database_objs=database.o
+#endif
+
+#ifdef DEBUG_XEMACS
+debug_objs=debug.o tests.o
+#endif
+
+#ifdef HAVE_UNIXOID_EVENT_LOOP
+event_unixoid_objs=event-unixoid.o
+#endif
+
+#ifdef HAVE_GIF
+gif_objs=dgif_lib.o gif_io.o
+#endif
+
+#ifdef HAVE_GPM
+gpm_objs=gpmevent.o
+#endif
+
+#ifdef HAVE_LDAP
+ldap_objs=eldap.o
+#endif
+
+#ifdef MULE
+mule_objs=mule-ccl.o mule-charset.o mule-coding.o
+#endif
+
+#ifdef HAVE_CANNA
+mule_canna_objs=mule-canna.o
+#endif
+
+#ifdef HAVE_WNN
+mule_wnn_objs=mule-wnnfns.o
+#endif
+
+#ifdef HAVE_POSTGRESQL
+postgresql_objs=postgresql.o
+#endif
+
+#ifdef HAVE_WIN32_PROCESSES
+process_objs=process-nt.o
+#elif defined (HAVE_UNIX_PROCESSES)
+process_objs=process-unix.o
+#endif
+
+#ifdef HAVE_SETITIMER
+profile_objs=profile.o
+#endif
 
 #if defined (HEAP_IN_DATA) && !defined (PDUMP)
 sheap_objs=sheap.o
 #endif
 
-#if defined (WIN32_NATIVE) || defined (CYGWIN)
-win32_objs=win32.o xemacs_res.o
+#ifdef HAVE_SHLIB
+shlib_objs=sysdll.o emodules.o
 #endif
 
-#ifdef HAVE_SETITIMER
-profile_objs=profile.o
+#ifdef SUNPRO
+sunpro_objs=sunpro.o
+#endif
+
+#ifdef TOOLTALK
+tooltalk_objs=tooltalk.o
+#endif
+
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+win32_objs=win32.o intl-win32.o intl-auto-encap-win32.o intl-encap-win32.o \
+ xemacs_res.o
 #endif
 
 ## -Demacs is needed to make some files produce the correct version
@@ -186,23 +310,27 @@ ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
 ## if they all come out null.
 
 objs=\
- abbrev.o alloc.o blocktype.o buffer.o bytecode.o\
- callint.o callproc.o casefiddle.o casetab.o chartab.o\
- cmdloop.o cmds.o console.o console-stream.o\
- data.o device.o dired.o doc.o doprnt.o dynarr.o\
- editfns.o elhash.o emacs.o\
- eval.o events.o $(extra_objs)\
- event-stream.o extents.o faces.o\
- fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
- frame.o general.o glyphs.o glyphs-eimage.o glyphs-shared.o glyphs-widget.o\
- gui.o gutter.o $(gui_objs) hash.o imgproc.o indent.o insdel.o intl.o\
- keymap.o $(RTC_patch_objs) line-number.o lread.o lstream.o\
- macros.o marker.o md5.o minibuf.o objects.o opaque.o\
- print.o process.o $(profile_objs)\
- rangetab.o redisplay.o redisplay-output.o regex.o\
- search.o select.o $(sheap_objs) signal.o sound.o\
- specifier.o strftime.o symbols.o syntax.o sysdep.o\
- undo.o $(x_objs) widget.o window.o $(win32_objs)
+ abbrev.o alloc.o $(balloon_help_objs) blocktype.o buffer.o bytecode.o\
+ callint.o callproc.o casefiddle.o casetab.o chartab.o $(clash_detection_objs)\
+ cmdloop.o cmds.o $(coding_system_objs) console.o console-stream.o\
+ data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\
+ dynarr.o\
+ editfns.o elhash.o emacs.o eval.o events.o\
+ event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
+ faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
+ font-lock.o frame.o\
+ general.o $(gif_objs) glyphs.o glyphs-eimage.o glyphs-shared.o\
+ glyphs-widget.o $(gpm_objs) $(gtk_objs) $(gtk_gui_objs) $(gui_objs) gutter.o\
+ hash.o imgproc.o indent.o insdel.o intl.o\
+ keymap.o $(RTC_patch_objs) line-number.o $(ldap_objs) lread.o lstream.o\
+ macros.o marker.o md5.o minibuf.o $(mswindows_objs) $(mswindows_gui_objs)\
+ $(mule_objs) $(mule_canna_objs) $(mule_wnn_objs) objects.o opaque.o\
+ $(postgresql_objs) print.o process.o $(process_objs) $(profile_objs)\
+ rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
+ search.o select.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
+ specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\
+ text.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o $(x_objs) $(x_gui_objs)\
+ widget.o window.o $(win32_objs)
 
 obj_rtl = $(objs:.o=.c.rtl)
 

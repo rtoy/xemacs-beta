@@ -16,6 +16,7 @@ temacs
 temacs.bsc
 temacs.map
 temacs.pdb
+temacs.opt
 update-elc.stamp
 xemacs
 xemacs.dmp

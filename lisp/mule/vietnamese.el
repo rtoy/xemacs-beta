@@ -207,7 +207,7 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 (make-coding-system
  'viscii 'ccl
- "Coding-system used for VISCII 1.1."
+ "VISCII 1.1 (Vietnamese)"
  `(mnemonic "VISCII"
    decode ccl-decode-viscii
    encode ccl-encode-viscii))
@@ -227,7 +227,7 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 (make-coding-system
  'vscii 'ccl
- "Coding-system used for VSCII 1.1."
+ "VSCII 1.1 (Vietnamese)"
  `(mnemonic "VSCII"
    decode ccl-decode-vscii
    encode ccl-encode-vscii))
@@ -243,7 +243,7 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 (make-coding-system
  'viqr 'no-conversion
- "Coding-system used for VIQR."
+ "VIQR (Vietnamese)"
  '(mnemonic "VIQR"
    eol-type lf
    post-read-conversion viqr-post-read-conversion
@@ -285,6 +285,7 @@ Both tables are indexed by the position code of Vietnamese characters.")
  "Vietnamese" '((charset vietnamese-viscii-lower vietnamese-viscii-upper)
 		(coding-system viscii vscii viqr)
 		(coding-priority viscii)
+		(locale "vietnamese" "vi")
 		(input-method . "vietnamese-viqr")
 		(features viet-util)
 		(sample-text . "Vietnamese (Ti,1*(Bng Vi,1.(Bt)	Ch,1`(Bo b,1U(Bn")

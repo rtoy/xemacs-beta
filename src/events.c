@@ -1,6 +1,7 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -55,8 +56,10 @@ Lisp_Object Qprocess_event_p;
 Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
 Lisp_Object Qascii_character;
 
-EXFUN (Fevent_x_pixel, 1);
-EXFUN (Fevent_y_pixel, 1);
+
+/************************************************************************/
+/*                       definition of event object                     */
+/************************************************************************/
 
 /* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
 void
@@ -379,7 +382,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
 				     mark_event, print_event, 0, event_equal,
 				     event_hash, 0, Lisp_Event);
 
-
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
 
@@ -809,6 +811,9 @@ function `deallocate-event'.
 }
 
 
+/************************************************************************/
+/*                          event chain functions                       */
+/************************************************************************/
 
 /* Given a chain of events (or possibly nil), deallocate them all. */
 
@@ -945,6 +950,8 @@ event_chain_nth (Lisp_Object event_chain, int n)
   return Qnil;
 }
 
+/* Return a freshly allocated copy of all events in the given chain. */
+
 Lisp_Object
 copy_event_chain (Lisp_Object event_chain)
 {
@@ -961,7 +968,30 @@ copy_event_chain (Lisp_Object event_chain)
   return new_chain;
 }
 
+/* Given a pointer (maybe nil) into an old chain (also maybe nil, if
+   pointer is nil) and a new chain which is a copy of the old, return
+   the corresponding new pointer. */
+Lisp_Object
+transfer_event_chain_pointer (Lisp_Object pointer, Lisp_Object old_chain,
+			      Lisp_Object new_chain)
+{
+  if (NILP (pointer))
+    return Qnil;
+  assert (!NILP (old_chain));
+#ifdef ERROR_CHECK_TYPECHECK
+  /* make sure we're actually in the chain */
+  event_chain_find_previous (old_chain, pointer);
+  assert (event_chain_count (old_chain) == event_chain_count (new_chain));
+#endif /* ERROR_CHECK_TYPECHECK */
+  return event_chain_nth (new_chain,
+			  event_chain_count (old_chain) -
+			  event_chain_count (pointer));
+}
+
 
+/************************************************************************/
+/*                         higher level functions                       */
+/************************************************************************/
 
 Lisp_Object QKbackspace, QKtab, QKlinefeed, QKreturn, QKescape,
  QKspace, QKdelete;
@@ -1047,7 +1077,7 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
 
   event->event_type	     = key_press_event;
   event->timestamp	     = 0; /* #### */
-  event->channel	     = make_console (con);
+  event->channel	     = wrap_console (con);
   event->event.key.keysym    = (!NILP (k) ? k : make_char (c));
   event->event.key.modifiers = m;
 }

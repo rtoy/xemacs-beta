@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995, 1996, 2001 Ben Wing
    Copyright (C) 1995 Sun Microsystems
 
 This file is part of XEmacs.
@@ -70,9 +70,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #if INTBITS == 32
 # define FOUR_BYTE_TYPE unsigned int
@@ -158,8 +156,6 @@ Lisp_Object Qgtk_resource;
 Lisp_Object Qgtk_widget_instantiate_internal, Qgtk_widget_property_internal;
 Lisp_Object Qgtk_widget_redisplay_internal, Qgtk_widget_set_style;
 #endif
-
-#define CONST const
 
 
 /************************************************************************/
@@ -886,7 +882,7 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 static GdkPixmap *
 pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
 			/* Note that data is in ext-format! */
-			CONST Extbyte *bits)
+			const Extbyte *bits)
 {
     return (gdk_bitmap_create_from_data (GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device))),
 					 (char *) bits, width, height));
@@ -899,7 +895,7 @@ static void
 init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 				     int width, int height,
 				     /* Note that data is in ext-format! */
-				     CONST char *bits,
+				     const char *bits,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
@@ -1031,13 +1027,13 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		   int dest_mask, int width, int height,
 		   /* Note that data is in ext-format! */
-		   CONST char *bits)
+		   const char *bits)
 {
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkPixmap *mask = 0;
-  CONST char *gcc_may_you_rot_in_hell;
+  const char *gcc_may_you_rot_in_hell;
 
   if (!NILP (mask_data))
     {
@@ -1048,7 +1044,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 	pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				XINT (XCAR (mask_data)),
 				XINT (XCAR (XCDR (mask_data))),
-				(CONST unsigned char *)
+				(const unsigned char *)
 				gcc_may_you_rot_in_hell);
     }
 
@@ -1065,7 +1061,7 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  CONST char *gcc_go_home;
+  const char *gcc_go_home;
 
   assert (!NILP (data));
 
@@ -1083,22 +1079,21 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /**********************************************************************
  *                             XPM                                    *
  **********************************************************************/
-static void
-write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
+static Lisp_Object
+write_lisp_string_to_temp_file (Lisp_Object string)
 {
   Lisp_Object instream, outstream;
   Lstream *istr, *ostr;
-  char tempbuf[1024]; /* some random amount */
+  Char_Binary tempbuf[1024]; /* some random amount */
   int fubar = 0;
   FILE *tmpfil;
   static Extbyte_dynarr *conversion_out_dynarr;
   Bytecount bstart, bend;
-  struct gcpro gcpro1, gcpro2;
-#ifdef FILE_CODING
+  Lisp_Object tempfile;
+  struct gcpro gcpro1, gcpro2, grpro3;
   Lisp_Object conv_out_stream;
   Lstream *costr;
-  struct gcpro gcpro3;
-#endif
+  struct gcpro gcpro4;
 
   /* This function can GC */
   if (!conversion_out_dynarr)
@@ -1107,19 +1102,18 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
     Dynarr_reset (conversion_out_dynarr);
 
   /* Create the temporary file ... */
-  sprintf (filename_out, "/tmp/emacs%d.XXXXXX", (int) getpid ());
-  mktemp (filename_out);
-  tmpfil = fopen (filename_out, "w");
+  tempfile = Fmake_temp_name (build_string ("/tmp/emacs"));
+  tmpfil = qxe_fopen (XSTRING_DATA (tempfile), "w");
   if (!tmpfil)
     {
       if (tmpfil)
 	{
 	  int old_errno = errno;
-	  fclose (tmpfil);
-	  unlink (filename_out);
+	  retry_fclose (tmpfil);
+	  qxe_unlink (XSTRING_DATA (tempfile));
 	  errno = old_errno;
 	}
-      report_file_error ("Creating temp file", build_string (filename_out));
+      report_file_error ("Creating temp file", tempfile);
     }
 
   CHECK_STRING (string);
@@ -1128,16 +1122,14 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   instream = make_lisp_string_input_stream (string, bstart, bend);
   istr = XLSTREAM (instream);
   /* setup the out stream */
-  outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
+  outstream =
+    make_dynarr_output_stream ((unsigned_char_dynarr *) conversion_out_dynarr);
   ostr = XLSTREAM (outstream);
-#ifdef FILE_CODING
   /* setup the conversion stream */
-  conv_out_stream = make_encoding_output_stream (ostr, Fget_coding_system(Qbinary));
+  conv_out_stream =
+    make_coding_output_stream (ostr, Qbinary, CODING_ENCODE);
   costr = XLSTREAM (conv_out_stream);
-  GCPRO3 (instream, outstream, conv_out_stream);
-#else
-  GCPRO2 (instream, outstream);
-#endif
+  GCPRO4 (tempfile, instream, outstream, conv_out_stream);
 
   /* Get the data while doing the conversion */
   while (1)
@@ -1146,14 +1138,10 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
       if (!size_in_bytes)
 	break;
       /* It does seem the flushes are necessary... */
-#ifdef FILE_CODING
       Lstream_write (costr, tempbuf, size_in_bytes);
       Lstream_flush (costr);
-#else
-      Lstream_write (ostr, tempbuf, size_in_bytes);
-#endif
       Lstream_flush (ostr);
-      if (fwrite ((unsigned char *)Dynarr_atp(conversion_out_dynarr, 0),
+      if (retry_fwrite ((unsigned char *)Dynarr_atp(conversion_out_dynarr, 0),
 		  Dynarr_length(conversion_out_dynarr), 1, tmpfil) != 1)
 	{
 	  fubar = 1;
@@ -1163,23 +1151,21 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
       Lstream_rewind(ostr);
     }
   
-  if (fclose (tmpfil) != 0)
+  if (retry_fclose (tmpfil) != 0)
     fubar = 1;
   Lstream_close (istr);
-#ifdef FILE_CODING
   Lstream_close (costr);
-#endif
   Lstream_close (ostr);
 
-  UNGCPRO;
   Lstream_delete (istr);
   Lstream_delete (ostr);
-#ifdef FILE_CODING
   Lstream_delete (costr);
-#endif
 
   if (fubar)
-    report_file_error ("Writing temp file", build_string (filename_out));
+    report_file_error ("Writing temp file", tempfile);
+
+  UNGCPRO;
+  return tempfile;
 }
 
 struct color_symbol
@@ -1257,7 +1243,6 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     int dest_mask, Lisp_Object domain)
 {
   /* This function can GC */
-  char temp_file_name[1024];
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -1275,6 +1260,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   enum image_instance_type type;
   int force_mono;
   unsigned int w, h;
+  Lisp_Object tempfile = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1291,6 +1278,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			      | IMAGE_POINTER_MASK);
   force_mono = (type != IMAGE_COLOR_PIXMAP);
 
+  GCPRO4 (device, data, color_symbol_alist, tempfile);
+
   window = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
   cmap = DEVICE_GTK_COLORMAP (XDEVICE (device));
   depth = DEVICE_GTK_DEPTH (XDEVICE (device));
@@ -1301,26 +1290,31 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   assert (!NILP (data));
 
   /* Need to get the transparent color here */
-  color_symbols = extract_xpm_color_names (device, domain, color_symbol_alist, &nsymbols);
+  color_symbols = extract_xpm_color_names (device, domain, color_symbol_alist,
+					   &nsymbols);
   for (i = 0; i < nsymbols; i++)
     {
-      if (!strcasecmp ("BgColor", color_symbols[i].name) ||
-	  !strcasecmp ("None", color_symbols[i].name))
+      if (!qxestrcasecmp ("BgColor", color_symbols[i].name) ||
+	  !qxestrcasecmp ("None", color_symbols[i].name))
 	{
 	  transparent_color = &color_symbols[i].color;
 	}
     }
 
-  write_lisp_string_to_temp_file (data, temp_file_name);
-  pixmap = gdk_pixmap_create_from_xpm (window, &mask, transparent_color, temp_file_name);
-  unlink (temp_file_name);
+  tempfile = write_lisp_string_to_temp_file (data);
+  {
+    Extbyte *tempfileout;
+
+    LISP_STRING_TO_EXTERNAL (tempfile, tempfileout, Qfile_name);
+    pixmap = gdk_pixmap_create_from_xpm (window, &mask, transparent_color,
+					 tempfileout);
+  }
+  qxe_unlink (XSTRING_DATA (tempfile));
 
   if (color_symbols) xfree (color_symbols);
 
   if (!pixmap)
-  {
     signal_image_error ("Error reading pixmap", data);
-  }
 
   gdk_window_get_geometry (pixmap, NULL, NULL, &w, &h, &depth);
 
@@ -1340,9 +1334,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       break;
 
     case IMAGE_COLOR_PIXMAP:
-      {
-	IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
-      }
+      IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = depth;
       break;
 
     case IMAGE_POINTER:
@@ -1373,7 +1365,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 				   &fg, &bg);
 	    IMAGE_INSTANCE_PIXMAP_FG (ii) = pointer_fg;
 	    IMAGE_INSTANCE_PIXMAP_BG (ii) = pointer_bg;
-	    IMAGE_INSTANCE_GTK_CURSOR (ii) = gdk_cursor_new_from_pixmap (pixmap, mask, &fg, &bg, xhot, yhot);
+	    IMAGE_INSTANCE_GTK_CURSOR (ii) =
+	      gdk_cursor_new_from_pixmap (pixmap, mask, &fg, &bg, xhot, yhot);
 	  }
       }
 
@@ -1382,6 +1375,8 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     default:
       abort ();
     }
+
+  UNGCPRO;
 }
 #endif /* HAVE_XPM */
 
@@ -1419,8 +1414,8 @@ gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
   char *p, *bits, *bp;
-  CONST char * volatile emsg = 0;
-  CONST char * volatile dstring;
+  const char * volatile emsg = 0;
+  const char * volatile dstring;
 
   assert (!NILP (data));
 
@@ -1721,7 +1716,7 @@ autodetect_instantiate (Lisp_Object image_instance,
   alist = tagged_vector_to_alist (instantiator);
   if (dest_mask & IMAGE_POINTER_MASK)
     {
-      CONST char *name_ext;
+      const char *name_ext;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, data,
 			  C_STRING_ALLOCA, name_ext,
@@ -1776,7 +1771,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   GdkColor fg, bg;
   GdkFont *source, *mask;
-  char source_name[MAXPATHLEN], mask_name[MAXPATHLEN], dummy;
+  char source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
   int source_char, mask_char;
   int count;
   Lisp_Object foreground, background;
@@ -1825,7 +1820,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       mask = gdk_font_load (mask_name);
       if (!mask)
 	/* continuable */
-	Fsignal (Qgui_error, list3 (build_string ("couldn't load font"),
+	Fsignal (Qgui_error, list3 (build_msg_string ("couldn't load font"),
 				    build_string (mask_name), data));
     }
   if (!mask)
@@ -1960,7 +1955,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   int i;
-  CONST char *name_ext;
+  const char *name_ext;
   Lisp_Object foreground, background;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))

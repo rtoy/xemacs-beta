@@ -33,9 +33,9 @@
 (loop for c from 54 to 126
       do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
 (modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
-(modify-syntax-entry ?.FN7 ".")
-(modify-syntax-entry ?N; ".")
-(modify-syntax-entry ?N= ".")
+(modify-syntax-entry ?,F7(B ".")
+(modify-syntax-entry ?,F;(B ".")
+(modify-syntax-entry ?,F=(B ".")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,7 +54,7 @@
 ;; (define-coding-system-alias 'iso-8859-7 'greek-iso-8bit)
 
 (make-coding-system
- 'iso-8859-7 'iso2022 "MIME ISO-8859-7"
+ 'iso-8859-7 'iso2022 "ISO-8859-7 (Greek)"
  '(charset-g0 ascii
    charset-g1 greek-iso8859-7
    charset-g2 t
@@ -62,17 +62,13 @@
    mnemonic "Grk"
    ))
 
-(defun setup-greek-environment ()
-  "Setup multilingual environment (MULE) for Greek."
-  (interactive)
-  (set-language-environment "Greek"))
-
 (set-language-info-alist
  "Greek" '((charset greek-iso8859-7)
 	   (coding-system iso-8859-7)
 	   (coding-priority iso-8859-7)
+	   (locale "el_GR.iso88597" "el_GR.greek8" "el_GR" "greek" "el")
 	   (input-method . "greek")
-	   (sample-text . "Greek (NGNkNkN]NmNiNjNa)	NCNeNiN\ NsNaNr")
+	   (sample-text . "Greek (,FGkk]mija(B)	,FCei\(B ,Fsar(B")
 	   (documentation . t)))
 
 ;;; greek.el ends here

@@ -1,6 +1,6 @@
 /* Stream device functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -71,7 +71,7 @@ stream_init_console (struct console *con, Lisp_Object params)
       stream_con->in = stream_con->out = stream_con->err =
 	/* #### We don't currently do coding-system translation on
 	   this descriptor. */
-	fopen ((char *) XSTRING_DATA (tty), READ_PLUS_TEXT);
+	qxe_fopen (XSTRING_DATA (tty), READ_PLUS_TEXT);
       if (!stream_con->in)
 	signal_error (Qio_error, "Unable to open tty", tty);
     }
@@ -109,7 +109,7 @@ stream_delete_console (struct console *con)
 	  fflush (stream_con->out);
 	}
       if (stream_con->in != stdin)
-	fclose (stream_con->in);
+	retry_fclose (stream_con->in);
 
       xfree (stream_con);
       CONSOLE_STREAM_DATA (con) = NULL;
@@ -157,14 +157,16 @@ stream_canonicalize_device_connection (Lisp_Object connection,
 
 
 static void
-stream_init_frame_1 (struct frame *f, Lisp_Object props)
+stream_init_frame_1 (struct frame *f, Lisp_Object props,
+		     int frame_name_is_defaulted)
 {
 #if 0
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   if (!NILP (DEVICE_FRAME_LIST (d)))
     invalid_operation ("Only one frame allowed on stream devices", Qunbound);
 #endif
-  f->name = build_string ("stream");
+  if (frame_name_is_defaulted)
+    f->name = build_string ("stream");
   f->height = 80;
   f->width = 24;
   f->visible = 0; /* so redisplay doesn't try to do anything */

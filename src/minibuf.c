@@ -187,7 +187,7 @@ Lowest-level interface to minibuffers.  Don't call this.
 
   val = call_command_loop (Qt);
 
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, val);
 }
 
 
@@ -214,8 +214,8 @@ scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
     {
       while (l)
         {
-          Emchar c1 = DOWNCASE (current_buffer, charptr_emchar (s1));
-          Emchar c2 = DOWNCASE (current_buffer, charptr_emchar (s2));
+          Emchar c1 = DOWNCASE (0, charptr_emchar (s1));
+          Emchar c2 = DOWNCASE (0, charptr_emchar (s2));
 
           if (c1 == c2)
             {
@@ -688,8 +688,7 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
     }
   else
     {
-      write_string_to_stdio_stream (stderr, 0, (const Intbyte *) "\n", 0, 1,
-				    Qterminal, 0);
+      stderr_out ("\n");
       return Qnil;
     }
 }
@@ -757,8 +756,7 @@ echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
     {
       if (STRINGP (reloc))
 	nonreloc = XSTRING_DATA (reloc);
-      write_string_to_stdio_stream (stderr, 0, nonreloc, offset, length,
-				    Qterminal, 0);
+      write_string_1 (nonreloc + offset, length, Qexternal_debugging_output);
     }
 }
 
@@ -832,7 +830,7 @@ message_append_internal (const Intbyte *nonreloc, Lisp_Object reloc,
    on the format string; message_no_translate() does not. */
 
 static void
-message_1 (const char *fmt, va_list args)
+message_1 (const CIntbyte *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)
@@ -840,8 +838,7 @@ message_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Intbyte *) fmt, Qnil,
-						-1, args);
+      Lisp_Object obj = emacs_vsprintf_string (fmt, args);
       GCPRO1 (obj);
       message_internal (0, obj, 0, -1);
       UNGCPRO;
@@ -851,7 +848,7 @@ message_1 (const char *fmt, va_list args)
 }
 
 static void
-message_append_1 (const char *fmt, va_list args)
+message_append_1 (const CIntbyte *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)
@@ -859,8 +856,7 @@ message_append_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Intbyte *) fmt, Qnil,
-						-1, args);
+      Lisp_Object obj = emacs_vsprintf_string (fmt, args);
       GCPRO1 (obj);
       message_append_internal (0, obj, 0, -1);
       UNGCPRO;

@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,8 +21,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file has been Mule-ized except for `start-process-internal',
-   `open-network-stream-internal' and `open-multicast-group-internal'. */
+/* Mule-ized as of 6-14-00 */
 
 /* This file has been split into process.c and process-unix.c by
    Kirill M. Katsnelson <kkm@kis.ru>, so please bash him and not
@@ -49,9 +48,7 @@ Boston, MA 02111-1307, USA.  */
 #include "procimpl.h"
 #include "sysdep.h"
 #include "window.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include <setjmp.h>
 #include "sysfile.h"
@@ -110,7 +107,7 @@ close_safely (int fd)
   stop_interrupts ();
   set_timeout_signal (SIGALRM, close_safely_handler);
   alarm (1);
-  close (fd);
+  retry_close (fd);
   alarm (0);
   start_interrupts ();
 }
@@ -119,9 +116,9 @@ static void
 close_descriptor_pair (int in, int out)
 {
   if (in >= 0)
-    close (in);
+    retry_close (in);
   if (out != in && out >= 0)
-    close (out);
+    retry_close (out);
 }
 
 /* Close all descriptors currently in use for communication
@@ -204,7 +201,7 @@ static int allocate_pty_the_old_fashioned_way (void);
 #ifndef MAX_PTYNAME_LEN
 #define MAX_PTYNAME_LEN 64
 #endif
-static char pty_name[MAX_PTYNAME_LEN];
+static Intbyte pty_name[MAX_PTYNAME_LEN];
 
 /* Open an available pty, returning a file descriptor.
    Return -1 on failure.
@@ -225,9 +222,10 @@ allocate_pty (void)
      a pty.  In case of failure, we resort to the old BSD-style pty
      grovelling code in allocate_pty_the_old_fashioned_way(). */
   int master_fd = -1;
-  const char *slave_name = NULL;
-  const char *clone = NULL;
-  static const char * const clones[] = /* Different pty master clone devices */
+  const Extbyte *slave_name = NULL;
+  const CIntbyte *clone = NULL;
+  static const CIntbyte * const clones[] =
+    /* Different pty master clone devices */
     {
       "/dev/ptmx",      /* Various systems */
       "/dev/ptm/clone", /* HPUX */
@@ -252,15 +250,15 @@ allocate_pty (void)
     if (rc == 0)
       {
 	slave_name = ttyname (slave_fd);
-	close (slave_fd);
+	retry_close (slave_fd);
 	goto have_slave_name;
       }
     else
       {
 	if (master_fd >= 0)
-	  close (master_fd);
+	  retry_close (master_fd);
 	if (slave_fd >= 0)
-	  close (slave_fd);
+	  retry_close (slave_fd);
       }
   }
 #endif /* HAVE_OPENPTY */
@@ -280,7 +278,8 @@ allocate_pty (void)
     for (i = 0; i < countof (clones); i++)
       {
 	clone = clones[i];
-	master_fd = open (clone, O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
+	master_fd = qxe_open ((Intbyte *) clone,
+			      O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
 	if (master_fd >= 0)
 	  goto have_master;
       }
@@ -306,7 +305,13 @@ allocate_pty (void)
   goto lose;
 
  have_slave_name:
-  strncpy (pty_name, slave_name, sizeof (pty_name));
+  {
+    Intbyte *slaveint;
+
+    EXTERNAL_TO_C_STRING (slave_name, slaveint, Qfile_name);
+    qxestrncpy (pty_name, slaveint, sizeof (pty_name));
+  }
+
   pty_name[sizeof (pty_name) - 1] = '\0';
   setup_pty (master_fd);
 
@@ -329,7 +334,12 @@ allocate_pty (void)
   {
     struct group *tty_group = getgrnam ("tty");
     if (tty_group != NULL)
-      chown (pty_name, (uid_t) -1, tty_group->gr_gid);
+      {
+	Extbyte *ptyout;
+
+	C_STRING_TO_EXTERNAL (pty_name, ptyout, Qfile_name);
+	chown (ptyout, (uid_t) -1, tty_group->gr_gid);
+      }
   }
 #endif /* HPUX has broken grantpt() */
 #endif /* HAVE_GRANTPT */
@@ -345,7 +355,7 @@ allocate_pty (void)
 
  lose:
   if (master_fd >= 0)
-    close (master_fd);
+    retry_close (master_fd);
   return allocate_pty_the_old_fashioned_way ();
 }
 
@@ -380,31 +390,31 @@ allocate_pty_the_old_fashioned_way (void)
 #ifdef PTY_NAME_SPRINTF
 	PTY_NAME_SPRINTF
 #else
-	sprintf (pty_name, "/dev/pty%c%x", c, i);
+	qxesprintf (pty_name, "/dev/pty%c%x", c, i);
 #endif /* no PTY_NAME_SPRINTF */
 
-	if (xemacs_stat (pty_name, &stb) < 0)
+	if (qxe_stat (pty_name, &stb) < 0)
 	  {
 	    if (++failed_count >= 3)
 	      return -1;
 	  }
 	else
 	  failed_count = 0;
-	fd = open (pty_name, O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
+	fd = qxe_open (pty_name, O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
 
 	if (fd >= 0)
 	  {
 #ifdef PTY_TTY_NAME_SPRINTF
 	    PTY_TTY_NAME_SPRINTF
 #else
-            sprintf (pty_name, "/dev/tty%c%x", c, i);
+	    qxesprintf (pty_name, "/dev/tty%c%x", c, i);
 #endif /* no PTY_TTY_NAME_SPRINTF */
-	    if (access (pty_name, R_OK | W_OK) == 0)
+	    if (qxe_access (pty_name, R_OK | W_OK) == 0)
 	      {
 		setup_pty (fd);
 		return fd;
 	      }
-	    close (fd);
+	    retry_close (fd);
 	  }
       } /* iteration */
   return -1;
@@ -452,13 +462,19 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 
   while (1)
     {
+      Extbyte *hostext;
+
 #ifdef TRY_AGAIN
       if (count++ > 10) break;
       h_errno = 0;
 #endif
+
+      TO_EXTERNAL_FORMAT (LISP_STRING, host, C_STRING_ALLOCA, hostext,
+			  Qnative);
+
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();
-      host_info_ptr = gethostbyname ((char *) XSTRING_DATA (host));
+      host_info_ptr = gethostbyname (hostext);
       speed_up_interrupts ();
 #ifdef TRY_AGAIN
       if (! (host_info_ptr == 0 && h_errno == TRY_AGAIN))
@@ -508,8 +524,13 @@ set_socket_nonblocking_maybe (int fd, int port, const char* proto)
       if (STRINGP (tail_port))
 	{
 	  struct servent *svc_info;
+	  Extbyte *tailportext;
+
 	  CHECK_STRING (tail_port);
-	  svc_info = getservbyname ((char *) XSTRING_DATA (tail_port), proto);
+	  TO_EXTERNAL_FORMAT (LISP_STRING, tail_port, C_STRING_ALLOCA,
+			      tailportext, Qnative);
+
+	  svc_info = getservbyname (tailportext, proto);
 	  if ((svc_info != 0) && (svc_info->s_port == port))
 	    break;
 	  else
@@ -869,9 +890,10 @@ unix_create_process (Lisp_Process *p,
 #ifdef O_NOCTTY
       /* Don't let this terminal become our controlling terminal
 	 (in case we don't have one).  */
-      forkout = forkin = open (pty_name, O_RDWR | O_NOCTTY | OPEN_BINARY, 0);
+      forkout = forkin = qxe_open (pty_name,
+				   O_RDWR | O_NOCTTY | OPEN_BINARY, 0);
 #else
-      forkout = forkin = open (pty_name, O_RDWR | OPEN_BINARY, 0);
+      forkout = forkin = qxe_open (pty_name, O_RDWR | OPEN_BINARY, 0);
 #endif
       if (forkin < 0)
 	goto io_failure;
@@ -899,12 +921,6 @@ unix_create_process (Lisp_Process *p,
   UNIX_DATA(p)->subtty = forkin;
 
   {
-#if !defined(CYGWIN)
-    /* child_setup must clobber environ on systems with true vfork.
-       Protect it from permanent change.  */
-    char **save_environ = environ;
-#endif
-
     pid = fork ();
     if (pid == 0)
       {
@@ -955,15 +971,15 @@ unix_create_process (Lisp_Process *p,
 	    /* Now close the pty (if we had it open) and reopen it.
 	       This makes the pty the controlling terminal of the
 	       subprocess.  */
-	    /* I wonder if close (open (pty_name, ...)) would work?  */
+	    /* I wonder if retry_close (qxe_open (pty_name, ...)) would work?  */
 	    if (xforkin >= 0)
-	      close (xforkin);
-	    xforkout = xforkin = open (pty_name, O_RDWR | OPEN_BINARY, 0);
+	      retry_close (xforkin);
+	    xforkout = xforkin = qxe_open (pty_name, O_RDWR | OPEN_BINARY, 0);
 	    if (xforkin < 0)
 	      {
-		write (1, "Couldn't open the pty terminal ", 31);
-		write (1, pty_name, strlen (pty_name));
-		write (1, "\n", 1);
+		retry_write (1, "Couldn't open the pty terminal ", 31);
+		retry_write (1, pty_name, qxestrlen (pty_name));
+		retry_write (1, "\n", 1);
 		_exit (1);
 	      }
 #  endif /* USG or not TIOCSCTTY */
@@ -1043,30 +1059,24 @@ unix_create_process (Lisp_Process *p,
 	EMACS_SIGNAL (SIGQUIT, SIG_DFL);
 
 	{
-	  char *current_dir;
-	  char **new_argv = alloca_array (char *, nargv + 2);
+	  Intbyte **new_argv = alloca_array (Intbyte *, nargv + 2);
 	  int i;
 
 	  /* Nothing below here GCs so our string pointers shouldn't move. */
-	  new_argv[0] = (char *) XSTRING_DATA (program);
+	  new_argv[0] = XSTRING_DATA (program);
 	  for (i = 0; i < nargv; i++)
 	    {
 	      CHECK_STRING (argv[i]);
-	      new_argv[i + 1] = (char *) XSTRING_DATA (argv[i]);
+	      new_argv[i + 1] = XSTRING_DATA (argv[i]);
 	    }
 	  new_argv[i + 1] = 0;
 
-	  LISP_STRING_TO_EXTERNAL (cur_dir, current_dir, Qfile_name);
-
-	  child_setup (xforkin, xforkout, xforkout, new_argv, current_dir);
+	  child_setup (xforkin, xforkout, xforkout, new_argv, cur_dir);
 	}
 
       } /**** End of child code ****/
 
     /**** Back in parent process ****/
-#if !defined(CYGWIN)
-    environ = save_environ;
-#endif
   }
 
   if (pid < 0)
@@ -1087,9 +1097,9 @@ unix_create_process (Lisp_Process *p,
   if (forkin >= 0)
     close_safely (forkin);
   if (forkin != forkout && forkout >= 0)
-    close (forkout);
+    retry_close (forkout);
 
-  UNIX_DATA (p)->tty_name = pty_flag ? build_string (pty_name) : Qnil;
+  UNIX_DATA (p)->tty_name = pty_flag ? build_intstring (pty_name) : Qnil;
 
   /* Notice that SIGCHLD was not blocked. (This is not possible on
      some systems.) No biggie if SIGCHLD occurs right around the
@@ -1280,7 +1290,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 
       while (1)
 	{
-	  Bytecount writeret;
+	  int writeret;
 
 	  chunklen = Lstream_read (lstream, chunkbuf, 512);
 	  if (chunklen <= 0)
@@ -1405,7 +1415,7 @@ try_to_initialize_subtty (struct unix_process_data *upd)
   if (upd->pty_flag
       && (upd->subtty == -1 || ! isatty (upd->subtty))
       && STRINGP (upd->tty_name))
-    upd->subtty = open ((char *) XSTRING_DATA (upd->tty_name), O_RDWR, 0);
+    upd->subtty = qxe_open (XSTRING_DATA (upd->tty_name), O_RDWR, 0);
 }
 
 /* Send signal number SIGNO to PROCESS.
@@ -1597,7 +1607,8 @@ unix_canonicalize_host_name (Lisp_Object host)
     {
       CIntbyte *gai_error;
 
-      EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
+      EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error,
+			    Qstrerror_encoding);
       maybe_signal_error (Qio_error, gai_error, host,
 			  Qprocess, ERROR_ME_NOT);
       canonname = host;
@@ -1657,15 +1668,15 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 
     struct addrinfo hints, *res;
     struct addrinfo * volatile lres;
-    char *portstring;
-    char *ext_host;
+    Extbyte *portstring;
+    Extbyte *ext_host;
+    Extbyte portbuf[128];
     /*
      * Caution: service can either be a string or int.
      * Convert to a C string for later use by getaddrinfo.
      */
     if (INTP (service))
       {
-	char portbuf[128];
 	snprintf (portbuf, sizeof (portbuf), "%ld", (long) XINT (service));
 	portstring = portbuf;
 	port = htons ((unsigned short) XINT (service));
@@ -1673,7 +1684,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else
       {
 	CHECK_STRING (service);
-	LISP_STRING_TO_EXTERNAL (service, portstring, Qnative);
+	LISP_STRING_TO_EXTERNAL (service, portstring,
+				 Qunix_service_name_encoding);
 	port = 0;
       }
 
@@ -1685,13 +1697,14 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else /* EQ (protocol, Qudp) */
       hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = 0;
-    LISP_STRING_TO_EXTERNAL (host, ext_host, Qnative);
+    LISP_STRING_TO_EXTERNAL (host, ext_host, Qunix_host_name_encoding);
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
 	CIntbyte *gai_error;
 
-	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
+	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error,
+			      Qstrerror_encoding);
 	signal_error (Qio_error, gai_error, list2 (host, service));
       }
 
@@ -1708,12 +1721,16 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     else
       {
 	struct servent *svc_info;
+	Extbyte *servext;
+
 	CHECK_STRING (service);
+	LISP_STRING_TO_EXTERNAL (service, servext,
+				 Qunix_service_name_encoding);
 
 	if (EQ (protocol, Qtcp))
-	  svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
+	  svc_info = getservbyname (servext, "tcp");
 	else /* EQ (protocol, Qudp) */
-	  svc_info = getservbyname ((char *) XSTRING_DATA (service), "udp");
+	  svc_info = getservbyname (servext, "udp");
 
 	if (svc_info == 0)
 	  invalid_argument ("Unknown service", service);
@@ -1811,7 +1828,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 	      }
 
 	    failed_connect = 1;
-	    close (s);
+	    retry_close (s);
             s = -1;
 
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
@@ -1869,7 +1886,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
   if (outch < 0)
     {
       int save_errno = errno;
-      close (s); /* this used to be leaked; from Kyle Jones */
+      retry_close (s); /* this used to be leaked; from Kyle Jones */
       errno = save_errno;
       report_network_error ("error duplicating socket", name);
     }
@@ -1933,7 +1950,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   if ((ws = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
     {
       int save_errno = errno;
-      close (rs);
+      retry_close (rs);
       errno = save_errno;
       report_network_error ("error creating socket", name);
     }
@@ -1957,8 +1974,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   if (bind (rs, (struct sockaddr *)&sa, sizeof(sa)))
     {
       int save_errno = errno;
-      close (rs);
-      close (ws);
+      retry_close (rs);
+      retry_close (ws);
       errno = save_errno;
       report_network_error ("error binding socket", list3 (Qunbound, name,
 							   port));
@@ -1971,8 +1988,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 		  &imr, sizeof (struct ip_mreq)) < 0)
     {
       int save_errno = errno;
-      close (ws);
-      close (rs);
+      retry_close (ws);
+      retry_close (rs);
       errno = save_errno;
       report_network_error ("error adding membership", list3 (Qunbound, name,
 							      dest));
@@ -2031,8 +2048,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 	  goto loop;
 	}
 
-      close (rs);
-      close (ws);
+      retry_close (rs);
+      retry_close (ws);
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       speed_up_interrupts ();
 #endif
@@ -2051,8 +2068,8 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 		  &thettl, sizeof (thettl)) < 0)
     {
       int save_errno = errno;
-      close (rs);
-      close (ws);
+      retry_close (rs);
+      retry_close (ws);
       errno = save_errno;
       report_network_error ("error setting ttl", list3 (Qunbound, name, ttl));
     }

@@ -865,16 +865,12 @@ static GtkWidget *menu_descriptor_to_widget_1 (Lisp_Object descr)
 
 static GtkWidget *menu_descriptor_to_widget (Lisp_Object descr)
 {
-  int count = specpdl_depth ();
   GtkWidget *rval = NULL;
-
-  record_unwind_protect (restore_gc_inhibit, make_int (gc_currently_forbidden));
-
-  gc_currently_forbidden = 1;
+  int count = begin_gc_forbidden ();
 
   /* Cannot GC from here on out... */
   rval = menu_descriptor_to_widget_1 (descr);
-  unbind_to (count, Qnil);
+  unbind_to (count);
   return (rval);
   
 }
@@ -1108,7 +1104,7 @@ set_frame_menubar (struct frame *f, int first_time_p)
     menu_create_menubar (f, menubar);
 
     Fset_buffer (old_buffer);
-    unbind_to (count, Qnil);
+    unbind_to (count);
   }
 
   FRAME_MENUBAR_DATA (f) = Fcons (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer, Qt);

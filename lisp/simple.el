@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1985-7, 1993-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: lisp, extensions, internal, dumped
@@ -902,7 +902,8 @@ to get different commands to edit and resubmit."
 	(re-search-forward "[\n\C-m]" nil 'end (1- line))
       (forward-line (1- line)))))
 
-;Put this on C-x u, so we can force that rather than C-_ into startup msg
+;[Put this on C-x u, so we can force that rather than C-_ into startup msg]
+;No more, stop pandering to TTY users.
 (define-function 'advertised-undo 'undo)
 
 (defun undo (&optional count)
@@ -3046,9 +3047,6 @@ This function is only called during auto-filling of a comment section.
 The function should take a single optional argument which is a flag
 indicating whether soft newlines should be inserted.")
 
-;; defined in mule-base/mule-category.el
-(defvar word-across-newline)
-
 ;; This function is the auto-fill-function of a buffer
 ;; when Auto-Fill mode is enabled.
 ;; It returns t if it really did any work.
@@ -3066,8 +3064,9 @@ indicating whether soft newlines should be inserted.")
 		       bounce
 		       (re-break-point ;; Kinsoku processing
 			(if (featurep 'mule)
-			    (concat "[ \t\n]\\|" word-across-newline
-				    ".\\|." word-across-newline)
+			    (with-boundp 'word-across-newline
+			      (concat "[ \t\n]\\|" word-across-newline
+				      ".\\|." word-across-newline))
 			  "[ \t\n]"))
 		       (first t))
 		   (save-excursion
@@ -3476,7 +3475,7 @@ specialization of overwrite-mode, entered by setting the
 	    'overwrite-mode-binary))
   (redraw-modeline))
 
-(defcustom line-number-mode nil
+(defcustom line-number-mode t
   "*Non-nil means display line number in modeline."
   :type 'boolean
   :group 'editing-basics)
@@ -3492,7 +3491,7 @@ in the mode line."
 	  (> (prefix-numeric-value arg) 0)))
   (redraw-modeline))
 
-(defcustom column-number-mode nil
+(defcustom column-number-mode t
   "*Non-nil means display column number in mode line."
   :type 'boolean
   :group 'editing-basics)

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Keywords: mule, multilingual
 
@@ -28,8 +29,6 @@
 ;;; Code:
 
 ;;; MULE related key bindings and menus.
-
-(require 'code-cmds)
 
 ;; Preserve the old name
 (defvaralias 'mule-keymap 'coding-keymap)
@@ -58,58 +57,14 @@
 ;; but it won't be used that frequently.
 (define-key global-map "\C-\\" 'toggle-input-method)
 
+;; Original mapping will be altered by set-keyboard-coding-system.
+(define-key global-map [(meta \#)] 'ispell-word)	;originally "$"
+;; (define-key global-map [(meta {)] 'insert-parentheses) ;originally "("
+
 ;;; This is no good because people often type Shift-SPC
 ;;; meaning to type SPC.  -- rms.
 ;;; ;; Here's an alternative key binding for X users (Shift-SPACE).
-;;; (define-key global-map [?\S- ] 'toggle-input-method)
-
-(defun coding-system-change-eol-conversion (coding-system eol-type)
-  "Return a coding system which differs from CODING-SYSTEM in eol conversion.
-The returned coding system converts end-of-line by EOL-TYPE
-but text as the same way as CODING-SYSTEM.
-EOL-TYPE should be `lf', `crlf', `cr' or nil.
-If EOL-TYPE is nil, the returned coding system detects
-how end-of-line is formatted automatically while decoding.
-
-EOL-TYPE can be specified by an symbol `unix', `dos' or `mac'.
-They means `lf', `crlf', and `cr' respectively."
-  (if (symbolp eol-type)
-      (setq eol-type (cond ((or (eq eol-type 'unix)
-				(eq eol-type 'lf))
-			    'eol-lf)
-                           ((or (eq eol-type 'dos)
-				(eq eol-type 'crlf))
-			    'eol-crlf)
-                           ((or (eq eol-type 'mac)
-				(eq eol-type 'cr))
-			    'eol-cr)
-                           (t eol-type))))
-  (let ((orig-eol-type (coding-system-eol-type coding-system)))
-    (if (null orig-eol-type)
-        (if (not eol-type)
-            coding-system
-          (coding-system-property coding-system eol-type))
-      (let ((base (coding-system-base coding-system)))
-        (if (not eol-type)
-            base
-          (if (eq eol-type orig-eol-type)
-              coding-system
-            (setq orig-eol-type (coding-system-eol-type base))
-            (if (null orig-eol-type)
-                (coding-system-property base eol-type))))))))
-
-;; (defun coding-system-change-text-conversion (coding-system coding)
-;;   "Return a coding system which differs from CODING-SYSTEM in text conversion.
-;; The returned coding system converts text by CODING
-;; but end-of-line as the same way as CODING-SYSTEM.
-;; If CODING is nil, the returned coding system detects
-;; how text is formatted automatically while decoding."
-;;   (if (not coding)
-;;       (coding-system-base coding-system)
-;;     (let ((eol-type (coding-system-eol-type coding-system)))
-;;       (coding-system-change-eol-conversion
-;;        coding
-;;        (if (numberp eol-type) (aref [unix dos mac] eol-type))))))
+;;; (define-key global-map '(shift space) 'toggle-input-method)
 
 (defun view-hello-file ()
   "Display the HELLO file which list up many languages and characters."
@@ -119,142 +74,175 @@ They means `lf', `crlf', and `cr' respectively."
     (find-file-read-only (expand-file-name "HELLO" data-directory))))
 
 
-;;; Language support stuff.
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;                       Language Support Functions                    ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar language-info-alist nil
   "Alist of language environment definitions.
 Each element looks like:
-	(LANGUAGE-NAME . ((KEY . INFO) ...))
+	(LANGUAGE-NAME . ((PROP . VALUE) ...))
 where LANGUAGE-NAME is a string, the name of the language environment,
-KEY is a symbol denoting the kind of information, and
-INFO is the data associated with KEY.
-Meaningful values for KEY include
+PROP is a symbol denoting a property, and VALUE is the data associated
+with PROP.
+See `set-language-info' for documentation on PROP and VALUE.")
 
-  documentation      value is documentation of what this language environment
-			is meant for, and how to use it.
-  charset	     value is a list of the character sets used by this
-			language environment.
-  sample-text	     value is one line of text,
-			written using those character sets,
-			appropriate for this language environment.
-  setup-function     value is a function to call to switch to this
-			language environment.
-  exit-function      value is a function to call to leave this
-		        language environment.
-  coding-system      value is a list of coding systems that are good
-			for saving text written in this language environment.
-			This list serves as suggestions to the user;
-			in effect, as a kind of documentation.
-  coding-priority    value is a list of coding systems for this language
-			environment, in order of decreasing priority.
-			This is used to set up the coding system priority
-			list when you switch to this language environment.
-  input-method       value is a default input method for this language
-			environment.
-  features           value is a list of features requested in this
-			language environment.
-  tutorial           value is a tutorial file name written in the language.")
-
-(defun get-language-info (lang-env key)
-  "Return information listed under KEY for language environment LANG-ENV.
-KEY is a symbol denoting the kind of information.
-For a list of useful values for KEY and their meanings,
-see `language-info-alist'."
+(defun get-language-info (lang-env prop)
+  "Return information listed under PROP for language environment LANG-ENV.
+PROP is a symbol denoting a property.
+For a list of useful values for PROP and their meanings,
+see `set-language-info'."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
   (let ((lang-slot (assoc-ignore-case lang-env language-info-alist)))
     (if lang-slot
-	(cdr (assq key (cdr lang-slot))))))
+	(cdr (assq prop (cdr lang-slot))))))
 
-(defun set-language-info (lang-env key info)
+(defun set-language-info (lang-env prop value)
   "Modify part of the definition of language environment LANG-ENV.
-Specifically, this stores the information INFO under KEY
+Specifically, this stores the information VALUE under PROP
 in the definition of this language environment.
-KEY is a symbol denoting the kind of information.
-INFO is the value for that information.
+PROP is a symbol denoting a property, and VALUE is the value of that property.
 
-For a list of useful values for KEY and their meanings,
-see `language-info-alist'."
+Meaningful values for PROP include
+
+  documentation      VALUE is documentation of what this language environment
+                     is meant for, and how to use it.
+
+  charset            VALUE is a list of the character sets used by this
+                     language environment.
+
+  sample-text        VALUE is one line of text,
+                     written using those character sets,
+                     appropriate for this language environment.
+
+  setup-function     VALUE is a function to call to switch to this
+                     language environment.
+
+  exit-function      VALUE is a function to call to leave this
+                     language environment.
+
+  coding-system      VALUE is a list of coding systems that are good
+                     for saving text written in this language environment.
+                     This list serves as suggestions to the user;
+                     in effect, as a kind of documentation.
+
+  coding-priority    VALUE is a list of coding systems for this language
+                     environment, in order of decreasing priority.
+                     This is used to set up the coding system priority
+                     list when you switch to this language environment.
+
+  input-method       VALUE is a default input method for this language
+                     environment.
+
+  features           VALUE is a list of features requested in this
+                     language environment.
+
+  tutorial           VALUE is a tutorial file name written in the language.
+
+  locale             VALUE is a list of locale expressions, which serve
+                     two purposes: (1) Determining the language
+                     environment from the current system locale at
+                     startup, and (2) determining how to set the system
+                     locale when the language environment is changed.
+                     Each expression will be tried in turn, and should
+                     be a string (for case (1), the string is matched
+                     against the current locale using the regular
+                     expression \"^STRING[^A-Za-z0-9]\"; for case (2),
+                     the string is passed directly to
+                     `set-current-locale' until a non-nil result is
+                     returned), or a function of one argument.  For
+                     case (1), this argument will be a locale, and the
+                     function should return t or nil to indicate
+                     whether this locale matches the language
+                     environment; for case (2), the argument will be
+                     nil, and the function should call
+                     `set-current-locale' itself and return the set
+                     locale string if the locale was successfully set,
+                     and nil otherwise.
+
+                     NOTE: This property is *NOT* used under MS Windows;
+                     instead, the `mswindows-locale' property is used.
+
+  cygwin-locale      VALUE specifies a general Unix-style C library
+                     locale that will be used to initialize the LANG
+                     environment variable under MS Windows native, when the
+                     system cannot test out the locales specified in the
+                     `locale' property.  This is so that Cygwin programs
+                     can be run from an MS Windows native XEmacs.  If not
+                     specified, the last entry in `locale' will be used.
+
+  native-coding-system   VALUE is a single coding-system expression, or a
+                     list of such expressions.  These expressions are
+                     used to compute the operating system's native
+                     coding system, i.e. the coding system to be used
+                     as the alias for `native' and `file-name'.  This
+                     specifies the coding system used for text
+                     exchanged with the operating system, such as file
+                     names, environment variables, subprocess
+                     arguments, etc.  Each expression should be either
+                     a symbol naming a coding system or a function
+                     (anything that is `functionp') of one argument,
+                     which is passed the current locale corresponding
+                     to this language environment and should return a
+                     coding system or nil.  Each expression is tried in
+                     turn until a coding system is obtained.  If there
+                     is no non-nil result, or no value is specified for
+                     this property, the first coding system listed
+                     under the `coding-system' property is used.
+
+                     NOTE: This is *NOT* used under MS Windows.
+                     Instead, `mswindows-multibyte-system-default'
+                     is always used, since the system default code
+                     page is what the Win32 API routines make use
+                     of, and this cannot be changed. (We get around
+                     this by using the Unicode versions whenever
+                     possible -- i.e. on Windows NT/2000, and on
+                     Windows 9x with the few API's that support
+                     Unicode.)
+
+  mswindows-locale   VALUE is an element of the form MSWINDOWS-LOCALE, or
+                     a list of such elements.  Each element is an MS
+                     Windows locale, of the form that can be passed to
+                     `mswindows-set-current-locale'.  This property is used
+                     both to determine the current language environment at
+                     startup (by matching MSWINDOWS-LOCALE against the
+                     value returned by `mswindows-user-default-locale') and
+                     to set the values of `set-current-locale' and
+                     `mswindows-set-current-locale' when the current
+                     language environment is changed. (The correct CLIB
+                     locale can always be generated by passing in the
+                     SUBLANG, with dashes in place of underscores, or the
+                     LANG if there's no SUBLANG.  The return value will be
+                     the canonicalized locale, in proper CLIB form.)
+
+                     If there is no value for this property, the MS Windows
+                     locale is assumed to have the same name as the
+                     language environment."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
-  (let (lang-slot key-slot)
+  (let (lang-slot prop-slot)
     (setq lang-slot (assoc lang-env language-info-alist))
     (if (null lang-slot)		; If no slot for the language, add it.
 	(setq lang-slot (list lang-env)
 	      language-info-alist (cons lang-slot language-info-alist)))
-    (setq key-slot (assq key lang-slot))
-    (if (null key-slot)			; If no slot for the key, add it.
+    (setq prop-slot (assq prop lang-slot))
+    (if (null prop-slot)		; If no slot for the prop, add it.
 	(progn
-	  (setq key-slot (list key))
-	  (setcdr lang-slot (cons key-slot (cdr lang-slot)))))
-    (setcdr key-slot info)))
+	  (setq prop-slot (list prop))
+	  (setcdr lang-slot (cons prop-slot (cdr lang-slot)))))
+    (setcdr prop-slot value)))
 
 (defun set-language-info-alist (lang-env alist &optional parents)
   "Store ALIST as the definition of language environment LANG-ENV.
-ALIST is an alist of KEY and INFO values.  See the documentation of
-`set-language-info' for the meanings of KEY and INFO."
+ALIST is an alist of properties and values.  See the documentation of
+`set-language-info' for the allowed properties."
   (if (symbolp lang-env)
       (setq lang-env (symbol-name lang-env)))
-  (let (; (describe-map describe-language-environment-map)
-	; (setup-map setup-language-environment-map)
-	)
-    ;; (if parents
-    ;;     (let ((l parents)
-    ;;           map parent-symbol parent)
-    ;;       (while l
-    ;;         (if (symbolp (setq parent-symbol (car l)))
-    ;;             (setq parent (symbol-name parent))
-    ;;           (setq parent parent-symbol parent-symbol (intern parent)))
-    ;;         (setq map (lookup-key describe-map (vector parent-symbol)))
-    ;;         (if (not map)
-    ;;             (progn
-    ;;               (setq map (intern (format "describe-%s-environment-map"
-    ;;                                         (downcase parent))))
-    ;;               (define-prefix-command map)
-    ;;               (define-key-after describe-map (vector parent-symbol)
-    ;;                 (cons parent map) t)))
-    ;;         (setq describe-map (symbol-value map))
-    ;;         (setq map (lookup-key setup-map (vector parent-symbol)))
-    ;;         (if (not map)
-    ;;             (progn
-    ;;               (setq map (intern (format "setup-%s-environment-map"
-    ;;                                         (downcase parent))))
-    ;;               (define-prefix-command map)
-    ;;               (define-key-after setup-map (vector parent-symbol)
-    ;;                 (cons parent map) t)))
-    ;;         (setq setup-map (symbol-value map))
-    ;;         (setq l (cdr l)))))
-
-    ;; Set up menu items for this language env.
-    (let ((doc (assq 'documentation alist)))
-      (when doc
-        ;; (define-key-after describe-map (vector (intern lang-env))
-        ;;   (cons lang-env 'describe-specified-language-support) t)
-	(when (featurep 'menubar)
-	  (eval-after-load
-	      "menubar-items.elc"
-	    `(add-menu-button
-	      '("%_Edit" "%_Multilingual (\"Mule\")"
-		"%_Describe Language Support")
-	      (vector ,lang-env
-		      '(describe-language-environment ,lang-env)
-		      t))))
-	))
-    ;; (define-key-after setup-map (vector (intern lang-env))
-    ;;   (cons lang-env 'setup-specified-language-environment) t)
-    (when (featurep 'menubar)
-      (eval-after-load
-	  "menubar-items.elc"
-	`(add-menu-button
-	  '("%_Edit" "%_Multilingual (\"Mule\")"
-	    "%_Set Language Environment")
-	  (vector ,lang-env
-		  '(set-language-environment ,lang-env)
-		  t))))
-    
-    (while alist
-      (set-language-info lang-env (car (car alist)) (cdr (car alist)))
-      (setq alist (cdr alist)))))
+  ;; FSF has 30 lines of unbelievably ugly code to set up the menus
+  ;; appropriately.  We just use a filter.
+  (while alist
+    (set-language-info lang-env (car (car alist)) (cdr (car alist)))
+    (setq alist (cdr alist))))
 
 (defun read-language-name (key prompt &optional default)
   "Read a language environment name which has information for KEY.
@@ -642,18 +630,7 @@ is still bound to the language environment being exited.
 This hook is mainly used for canceling the effect of
 `set-language-environment-hook' (which-see).")
 
-(put 'setup-specified-language-environment 'apropos-inhibit t)
-
-(defun setup-specified-language-environment ()
-  "Switch to a specified language environment."
-  (interactive)
-  (let (language-name)
-    (if (and (symbolp last-command-event)
-	     (or (not (eq last-command-event 'Default))
-		 (setq last-command-event 'English))
-	     (setq language-name (symbol-name last-command-event)))
-	(set-language-environment language-name)
-      (error "Bogus calling sequence"))))
+;; bogus FSF function setup-specified-language-support.
 
 (defcustom current-language-environment "English"
   "The last language environment specified with `set-language-environment'.
@@ -675,105 +652,13 @@ to using the function `set-language-environment'."
   :group 'mule
   :type 'string)
 
-(defun reset-language-environment ()
-  "Reset multilingual environment of Emacs to the default status.
-
-The default status is as follows:
-
-  The default value of `buffer-file-coding-system' is nil.
-  The default coding system for process I/O is nil.
-  The default value for the command `set-terminal-coding-system' is nil.
-  The default value for the command `set-keyboard-coding-system' is nil.
-
-  The order of priorities of coding categories and the coding system
-  bound to each category are as follows
-	coding category		coding system
-	--------------------------------------------------
-	iso-7			iso-2022-7bit
-	no-conversion		raw-text
-	utf-8			utf-8
-	iso-8-1			iso-8859-1
-	iso-8-2			ctext (iso-8859-1 alias)
-	iso-8-designate		ctext (iso-8859-1 alias)
-	iso-lock-shift		iso-2022-lock
-	shift-jis		shift_jis
-	big5			big5
-	ucs-4			iso-10646-ucs-4
-"
-;; The old table (from FSF synch?) was not what we use (cf mule-coding.el),
-;; and as documented iso-8-designate is inconsistent with iso-2022-8bit-ss2.
-;;  The order of priorities of coding categories and the coding system
-;;  bound to each category are as follows
-;;	coding category		coding system
-;;	--------------------------------------------------
-;;	iso-8-2			iso-8859-1
-;;	iso-8-1			iso-8859-1
-;;	iso-7			iso-2022-7bit
-;;	iso-lock-shift		iso-2022-lock
-;;	iso-8-designate		iso-2022-8bit-ss2
-;;	no-conversion		raw-text
-;;	shift-jis		shift_jis
-;;	big5			big5
-;;	ucs-4			----
-;;	utf-8			----
-  (interactive)
-
-  (set-coding-category-system 'iso-7		'iso-2022-7)
-  (set-coding-category-system 'iso-8-1		'iso-8859-1)
-  (set-coding-category-system 'iso-8-2		'ctext)
-  (set-coding-category-system 'iso-lock-shift	'iso-2022-lock)
-  (set-coding-category-system 'iso-8-designate	'ctext)
-  (set-coding-category-system 'no-conversion	'raw-text)
-  (set-coding-category-system 'shift-jis	'shift_jis)
-  (set-coding-category-system 'big5		'big5)
-  ;; #### Can we now assume the existence of the 10646 coding systems?
-  ;; #### These lists need to be synched with the ones in mule-coding.el.
-  (cond ((eq (coding-system-type (coding-category-system 'utf-8)) 'utf-8)
-	 (set-coding-category-system 'ucs-4 'iso-10646-ucs-4)
-	 (set-coding-category-system 'utf-8 'utf-8)
-	 (set-coding-priority-list
-	  '(iso-7
-	    no-conversion
-	    utf-8
-	    iso-8-1
-	    iso-8-2
-	    iso-8-designate
-	    iso-lock-shift
-	    shift-jis
-	    big5
-	    ucs-4))
-	 )
-	(t
-	 (set-coding-priority-list
-	  '(iso-7
-	    no-conversion
-	    iso-8-1
-	    iso-8-2
-	    iso-8-designate
-	    iso-lock-shift
-	    shift-jis
-	    big5))
-	 ))
-
-  ;; (update-coding-systems-internal)
-
-  (set-default-coding-systems nil)
-  ;; Don't alter the terminal and keyboard coding systems here.
-  ;; The terminal still supports the same coding system
-  ;; that it supported a minute ago.
-;;;  (set-terminal-coding-system-internal nil)
-;;;  (set-keyboard-coding-system-internal nil)
-
-  ;; (setq nonascii-translation-table nil
-  ;;       nonascii-insert-offset 0)
-  )
-
 (defun set-language-environment (language-name)
   "Set up multi-lingual environment for using LANGUAGE-NAME.
-This sets the coding system priority and the default input method
-and sometimes other things.  LANGUAGE-NAME should be a string
-which is the name of a language environment.  For example, \"Latin-1\"
-specifies the character set for the major languages of Western Europe."
+This sets the coding system autodetection priority, the default buffer
+coding system, the default input method, the system locale, and other
+relevant language properties.  LANGUAGE-NAME should be a string, the
+name of a language environment.  For example, \"Latin-1\" specifies
+the language environment for the major languages of Western Europe."
   (interactive (list (read-language-name
 		      nil
 		      "Set language environment (default, English): ")))
@@ -782,18 +667,27 @@ specifies the character set for the major languages of Western Europe."
 	  (setq language-name (symbol-name language-name)))
     (setq language-name "English"))
   (or (assoc-ignore-case language-name language-info-alist)
-      (error "Language environment not defined: %S" language-name))
+      (error 'invalid-argument "Language environment not defined"
+	     language-name))
   (if current-language-environment
       (let ((func (get-language-info current-language-environment
 				     'exit-function)))
 	(run-hooks 'exit-language-environment-hook)
 	(if (fboundp func) (funcall func))))
+  (setq current-language-environment language-name)
   (let ((default-eol-type (coding-system-eol-type
 			   default-buffer-file-coding-system)))
-    (reset-language-environment)
-
-    (setq current-language-environment language-name)
+    (reset-coding-categories-to-default)
+    (set-locale-for-language-environment language-name)
     (set-language-environment-coding-systems language-name default-eol-type))
+
+  (finish-set-language-environment language-name))
+
+(defun finish-set-language-environment (language-name)
+  ;; Internal function.  Only what's here is called at startup, once the
+  ;; first language environment is determined.  The above stuff was already
+  ;; taken care of very early in the startup sequence, in a special
+  ;; fashion.
   (let ((input-method (get-language-info language-name 'input-method)))
     (when input-method
       (setq default-input-method input-method)
@@ -878,62 +772,7 @@ specifies the character set for the major languages of Western Europe."
 ;;         ;; apostrophe.
 ;;         (aset standard-display-table 146 [39]))))
 
-(defun set-language-environment-coding-systems (language-name
-						&optional eol-type)
-  "Do various coding system setups for language environment LANGUAGE-NAME.
-
-The optional arg EOL-TYPE specifies the eol-type of the default value
-of buffer-file-coding-system set by this function.
-
-Note that `coding-priority-list' is not reset first; thus changing language
-environment allows recognition of coding systems from previously set language
-environments.  (This will not work if the desired coding systems are from the
-same category.  E.g., starting with a Hebrew language environment, ISO 8859-8
-will be recognized.  If you shift to Russian, ISO 8859-8 will be shadowed by
-ISO 8859-5, and cannot be automatically recognized without resetting the
-language environment to Hebrew.  However, if you shift from Japanese to
-Russian, ISO-2022-JP will continue to be automatically recognized, since
-ISO-8859-5 and ISO-2022-JP are different coding categories.)"
-  (let* ((priority (get-language-info language-name 'coding-priority))
-	 (default-coding (car priority)))
-    (if priority
-	(let ((categories (mapcar 'coding-system-category priority))
-	      category checked-categories)
-	  (set-default-coding-systems
-	   (if (memq eol-type '(lf crlf cr unix dos mac))
-	       (coding-system-change-eol-conversion default-coding eol-type)
-	     default-coding))
-          ;; (setq default-sendmail-coding-system default-coding)
-	  (while priority
-	    (unless (memq (setq category (car categories)) checked-categories)
-	      (set-coding-category-system category (car priority))
-	      (setq checked-categories (cons category checked-categories)))
-	    (setq priority (cdr priority)
-		  categories (cdr categories)))
-	  (set-coding-priority-list (nreverse checked-categories))
-          ;; (update-coding-systems-internal)
-	  ))))
-
-;; Print all arguments with `princ', then print "\n".
-(defsubst princ-list (&rest args)
-  (while args (princ (car args)) (setq args (cdr args)))
-  (princ "\n"))
-
-(put 'describe-specified-language-support 'apropos-inhibit t)
-
-;; Print a language specific information such as input methods,
-;; charsets, and coding systems.  This function is intended to be
-;; called from the menu:
-;;   [menu-bar mule describe-language-environment LANGUAGE]
-;; and should not run it by `M-x describe-current-input-method-function'.
-(defun describe-specified-language-support ()
-  "Describe how Emacs supports the specified language environment."
-  (interactive)
-  (let (language-name)
-    (if (not (and (symbolp last-command-event)
-		  (setq language-name (symbol-name last-command-event))))
-	(error "Bogus calling sequence"))
-    (describe-language-environment language-name)))
+;; bogus FSF function describe-specified-language-support.
 
 (defun describe-language-environment (language-name)
   "Describe how Emacs supports language environment LANGUAGE-NAME."
@@ -949,58 +788,63 @@ ISO-8859-5 and ISO-2022-JP are different coding categories.)"
   (if (symbolp language-name)
       (setq language-name (symbol-name language-name)))
   (let ((doc (get-language-info language-name 'documentation)))
-    (with-output-to-temp-buffer "*Help*"
-      (princ-list language-name " language environment" "\n")
-      (if (stringp doc)
-	  (progn
-	    (princ-list doc)
-	    (terpri)))
-      (let ((str (get-language-info language-name 'sample-text)))
-	(if (stringp str)
+    (flet ((princ-list (&rest args)
+		       (while args (princ (car args)) (setq args (cdr args)))
+		       (princ "\n")))
+      (with-output-to-temp-buffer "*Help*"
+	(princ-list language-name " language environment" "\n")
+	(if (stringp doc)
 	    (progn
-	      (princ "Sample text:\n")
-	      (princ-list "  " str)
-	      (terpri))))
-      (let ((input-method (get-language-info language-name 'input-method))
-	    (l (copy-sequence input-method-alist)))
-	(princ "Input methods")
-	(when input-method
-	  (princ (format " (default, %s)" input-method))
-	  (setq input-method (assoc input-method input-method-alist))
-	  (setq l (cons input-method (delete input-method l))))
-	(princ ":\n")
-	(while l
-	  (if (string= language-name (nth 1 (car l)))
-	      (princ-list "  " (car (car l))
-			  (format " (`%s' in mode line)" (nth 3 (car l)))))
-	  (setq l (cdr l))))
-      (terpri)
-      (princ "Character sets:\n")
-      (let ((l (get-language-info language-name 'charset)))
-	(if (null l)
-	    (princ-list "  nothing specific to " language-name)
+	      (princ-list doc)
+	      (terpri)))
+	(let ((str (get-language-info language-name 'sample-text)))
+	  (if (stringp str)
+	      (progn
+		(princ "Sample text:\n")
+		(princ-list "  " str)
+		(terpri))))
+	(let ((input-method (get-language-info language-name 'input-method))
+	      (l (copy-sequence input-method-alist)))
+	  (princ "Input methods")
+	  (when input-method
+	    (princ (format " (default, %s)" input-method))
+	    (setq input-method (assoc input-method input-method-alist))
+	    (setq l (cons input-method (delete input-method l))))
+	  (princ ":\n")
 	  (while l
-	    (princ-list "  " (car l) ": "
-			(charset-description (car l)))
-	    (setq l (cdr l)))))
-      (terpri)
-      (princ "Coding systems:\n")
-      (let ((l (get-language-info language-name 'coding-system)))
-	(if (null l)
-	    (princ-list "  nothing specific to " language-name)
-	  (while l
-	    (princ ; (format "  %s (`%c' in mode line):\n\t%s\n"
-	     ;; In XEmacs, `coding-system-mnemonic' returns string.
-	     (format "  %s (`%s' in mode line):\n\t%s\n"
-			   (car l)
-			   (coding-system-mnemonic (car l))
-			   (coding-system-doc-string (car l))))
-            ;; (let ((aliases (coding-system-get (car l) 'alias-coding-systems)))
-            ;;   (when aliases
-            ;;     (princ "\t")
-            ;;     (princ (cons 'alias: (cdr aliases)))
-            ;;     (terpri)))
-	    (setq l (cdr l))))))))
+	    (if (string= language-name (nth 1 (car l)))
+		(princ-list "  " (car (car l))
+			    (format " (`%s' in mode line)" (nth 3 (car l)))))
+	    (setq l (cdr l))))
+	(terpri)
+	(princ "Character sets:\n")
+	(let ((l (get-language-info language-name 'charset)))
+	  (if (null l)
+	      (princ-list "  nothing specific to " language-name)
+	    (while l
+	      (princ-list "  " (car l) ": "
+			  (charset-description (car l)))
+	      (setq l (cdr l)))))
+	(terpri)
+	(princ "Coding systems:\n")
+	(let ((l (get-language-info language-name 'coding-system)))
+	  (if (null l)
+	      (princ-list "  nothing specific to " language-name)
+	    (while l
+	      (princ			; (format "  %s (`%c' in mode line):\n\t%s\n"
+	       ;; In XEmacs, `coding-system-mnemonic' returns string.
+	       (format "  %s (`%s' in English, `%s' in mode line):\n\t%s\n"
+		       (car l)
+		       (coding-system-description (car l))
+		       (coding-system-mnemonic (car l))
+		       (or (coding-system-documentation (car l))
+			   "Not documented."))			)
+	      ;; (let ((aliases (coding-system-get (car l) 'alias-coding-systems)))
+	      ;;   (when aliases
+	      ;;     (princ "\t")
+	      ;;     (princ (cons 'alias: (cdr aliases)))
+	      ;;     (terpri)))
+	      (setq l (cdr l)))))))))
 
 ;;; Charset property
 
@@ -1105,5 +949,448 @@ It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
 ;;       ;; exclude.
 ;;       (substring enc2 0 i2))))
 
+
+;; #### The following section is utter junk from mule-misc.el.
+;; I've deleted everything that's not referenced in mule-packages and
+;; not in FSF 20.6; there's no point in keeping old namespace-polluting
+;; Mule 2.3 crap around. --ben
+
+(defvar self-insert-after-hook nil
+  "Hook to run when extended self insertion command exits.  Should take
+two arguments START and END corresponding to character position.")
+
+(make-variable-buffer-local 'self-insert-after-hook)
+
+(defun delete-text-in-column (from to)
+  "Delete the text between column FROM and TO (exclusive) of the current line.
+Nil of FORM or TO means the current column.
+
+If there's a character across the borders, the character is replaced
+with the same width of spaces before deleting."
+  (save-excursion
+    (let (p1 p2)
+      (if from
+	  (progn
+	    (setq p1 (move-to-column from))
+	    (if (> p1 from)
+		(progn
+		  (delete-char -1)
+		  (insert-char ?  (- p1 (current-column)))
+		  (forward-char (- from p1))))))
+      (setq p1 (point))
+      (if to
+	  (progn
+	    (setq p2 (move-to-column to))
+	    (if (> p2 to)
+		(progn
+		  (delete-char -1)
+		  (insert-char ?  (- p2 (current-column)))
+		  (forward-char (- to p2))))))
+      (setq p2 (point))
+      (delete-region p1 p2))))
+
+(defun cancel-undo-boundary ()
+  "Cancel undo boundary."
+  (if (and (consp buffer-undo-list)
+	   (null (car buffer-undo-list)))
+      (setq buffer-undo-list (cdr buffer-undo-list))))
+
+(defun define-egg-environment (env-sym doc-string enable-function)
+  "Define a new language environment for egg, named by ENV-SYM.
+DOC-STRING should be a string describing the environment.
+ENABLE-FUNCTION should be a function of no arguments that will be called
+when the language environment is made current."
+  (put env-sym 'egg-environ-doc-string doc-string)
+  (put env-sym 'set-egg-environ enable-function))
+
+
+;; Init code.
+
+;; auto-language-alist deleted.  We have a more sophisticated system,
+;; with the locales stored in the language data.
+
+(defun get-language-environment-from-locale (locale)
+  "Convert LOCALE into a language environment.
+LOCALE is a C library locale string, as returned by `current-locale'.
+Uses the `locale' property of the language environment."
+  (block langenv
+    (dolist (langcons language-info-alist)
+      (let* ((lang (car langcons))
+	     (locs (get-language-info lang 'locale))
+	     (case-fold-search t))
+	(dolist (loc (if (listp locs) locs (list locs)))
+	  (if (cond ((functionp loc)
+		     (funcall loc locale))
+		    ((stringp loc)
+		     (string-match (concat "^" loc "\\([^A-Za-z0-9]\\|$\\)")
+				   locale)))
+	      (return-from langenv lang)))))))
+
+(defun mswindows-get-language-environment-from-locale (ms-locale)
+  "Convert MS-LOCALE (an MS Windows locale) into a language environment.
+MS-LOCALE is in the format recognized by `set-mswindows-current-locale' --
+i.e. a language string or a cons (LANG . SUBLANG).  Note: This is NOT the
+same as the C library locale format (see `set-current-locale')!
+
+This looks up the `mswindows-locale' property of all language environments;
+if nothing matching is found, it looks for a language environment with the
+same name (modulo case differences) as the LANG part of the locale."
+  (or (consp ms-locale) (setq ms-locale (cons ms-locale "DEFAULT")))
+  (or (block langenv
+	(dolist (langcons language-info-alist)
+	  (let* ((lang (car langcons))
+		 (mswlocs (get-language-info lang 'mswindows-locale))
+		 (mswlocs (if (and (consp mswlocs)
+				   (listp (cdr mswlocs)))
+			      mswlocs (list mswlocs))))
+	    (dolist (loc mswlocs)
+	      (or (consp loc) (setq loc (cons loc "DEFAULT")))
+	      (if (equalp loc ms-locale)
+		  (return-from langenv lang))))))
+      (dolist (langcons language-info-alist)
+	(let* ((lang (car langcons)))
+	  (if (equalp lang (car ms-locale))
+	      (return-from nil lang))))))
+
+(defun get-native-coding-system-from-language-environment (langenv locale)
+  "Return the native coding system appropriate for LANGENV.
+LANGENV is a string naming a language environment.  May use the LOCALE
+\(which should be the C library LOCALE corresponding to LANGENV) to
+determine the correct coding system. (For example, in the Japanese language
+environment, there are multiple encodings in use: euc-jp, shift-jis, jis7,
+jis8, iso-2022-jp, etc.  The LOCALE may tell which one is correct.)
+
+Specifically: Under X, the returned value is determined from these two.
+Under MS Windows, the native coding system must be set from the default
+system locale and is not influenced by LOCALE. (In other words, a program
+can't set the text encoding used to communicate with the OS.  To get around
+this, we use Unicode whenever available, i.e. on Windows NT always and on
+Windows 9x for a few system calls.)"
+  (if (eq system-type 'windows-nt)
+      ;; should not apply to Cygwin, I don't think
+      'mswindows-multibyte-system-default
+    (let ((ncod (get-language-info langenv 'native-coding-system)))
+      (if (or (functionp ncod) (not (listp ncod)))
+	  (setq ncod (list ncod)))
+      (let ((native
+	     (dolist (try-native ncod)
+	       (let ((result
+		      (if (functionp try-native)
+			  (funcall try-native locale)
+			try-native)))
+		 (if result (return result))))))
+	(or native (car (get-language-info langenv 'coding-system))
+	    'raw-text)))))
+
+(defun get-coding-system-from-locale (locale)
+  "Return the coding system corresponding to a locale string."
+  (get-native-coding-system-from-language-environment
+   (get-language-environment-from-locale locale) locale))
+
+(defvar mswindows-langenv-to-locale-table (make-hash-table)
+  "Table mapping language environments to associated MS Windows locales.
+There may be more than one MS Windows locale that maps to a given language
+environment, so once we've made the mapping, we record it here when we need
+to make the reverse mapping.  For example, all MS Windows locales with
+language ENGLISH will map to language environment English, and when the
+user starts up in such a locale, switches to another language environment
+and then back to English, we want the same locale again.")
+
+(defun set-locale-for-language-environment (langenv)
+  "Sets the current system locale as appropriate for LANGENV.
+LANGENV is a language environment.  The locale is determined by looking at
+the 'locale (or maybe 'mswindows-locale) property of LANGENV, and then
+setting it using `set-current-locale' and maybe also
+`mswindows-set-current-locale'.  Also sets the LANG environment variable.
+Returns non-nil if successfully set the locale(s)."
+  (flet ((mswindows-get-and-set-locale-from-langenv (langenv)
+	   ;; find the mswindows locale for the langenv, make it current,
+	   ;; and return it.  first we check the langenv-to-locale table
+	   ;; ...
+	   (let ((ms-locale
+		  (gethash langenv mswindows-langenv-to-locale-table)))
+	     (if ms-locale (progn
+			  (mswindows-set-current-locale ms-locale)
+			  ms-locale)
+	       ;; ... if not, see if the langenv specifies any locale(s).
+	       ;; if not, construct one from the langenv name.
+	       (let* ((mslocs (get-language-info langenv 'mswindows-locale))
+		      (mslocs (or mslocs (cons (upcase langenv) "DEFAULT")))
+		      (mslocs (if (and (consp mslocs)
+					(listp (cdr mslocs)))
+				   mslocs (list mslocs))))
+		 (dolist (msloc mslocs)
+		   ;; Sometimes a language with DEFAULT is different from
+		   ;; with SYS_DEFAULT, and on my system
+		   ;; (set-current-locale "chinese") is NOT the same as
+		   ;; (set-current-locale "chinese-default")!  The latter
+		   ;; gives Taiwan (DEFAULT), the former PRC (SYS_DEFAULT).
+		   ;; In the interests of consistency, we always use DEFAULT.
+		   (or (consp msloc) (setq msloc (cons msloc "DEFAULT")))
+		   (when (condition-case nil
+			     (progn
+			       (mswindows-set-current-locale msloc)
+			       t)
+			   (error nil))
+		     (return msloc))))))))
+    (if (eq system-type 'windows-nt)
+	(let ((ms-locale (mswindows-get-and-set-locale-from-langenv langenv)))
+	  (when ms-locale
+	    ;; also need to set the clib locale.
+	    (or (set-current-locale
+		 ;; if the locale is '("DUTCH" . "DUTCH_BELGIAN"),
+		 ;; try "DUTCH-BELGIAN". (Case is insignificant;
+		 ;; "dutch-belgian" works just as well.)  This type
+		 ;; of transformation should always work, and you
+		 ;; get back the canonicalized version -- in this
+		 ;; case "Dutch_Belgium.1252".  Note the futility of
+		 ;; trying to construct "Belgium" directly from
+		 ;; "BELGIAN".
+		 ;;
+		 ;; BUT ...  We actually have to be trickier.
+		 ;; ("SPANISH" . "SPANISH_DOMINICAN_REPUBLIC") needs
+		 ;; to end up as "SPANISH-DOMINICAN REPUBLIC"; any
+		 ;; other punctuation makes it fail (you either get
+		 ;; Spain for the country, or nil).
+		 ;;
+		 ;; assume it's DEFAULT or NEUTRAL (or something else
+		 ;; without the language in it?) and prepend the
+		 ;; language.
+		 (if (string-match "_" (cdr ms-locale))
+		     (replace-in-string
+		      (replace-match "-" nil nil (cdr ms-locale)) "_" " ")
+		   (format "%s-%s" (car ms-locale) (cdr ms-locale))))
+		;; ???? huh ???? if failure, just try the language
+		;; name.
+		(set-current-locale (car ms-locale))))
+	  ;; also set LANG, for the benefit of Cygwin subprocesses.
+	  (let* ((cygloc (or (get-language-info langenv 'cygwin-locale)
+			     (get-language-info langenv 'locale)))
+		 (cygloc (if (listp cygloc) (car (last cygloc)) cygloc)))
+	    (if (and cygloc (stringp cygloc)) (setenv "LANG" cygloc)))
+	  (not (null ms-locale)))
+
+      ;; not MS Windows native.
+
+      ;; Cygwin is as usual an unholy mixture -- C library locales
+      ;; that follow Unix conventions, but also MS Windows locales.
+      ;; So set the MS Windows locale, and then try to find a Unix
+      ;; locale.
+      (when (eq system-type 'cygwin32)
+	(mswindows-get-and-set-locale-from-langenv langenv))
+      (let ((locs (get-language-info langenv 'locale)))
+	(dolist (loc (if (listp locs) locs (list locs)))
+	  (let ((retval
+		 (cond ((functionp loc) (funcall loc nil))
+		       ((stringp loc) (set-current-locale loc))
+		       (t nil))))
+	    (when retval
+	      (setenv "LANG" retval)
+	      (return t))))))))
+
+(defun set-language-environment-coding-systems (language-name
+						&optional eol-type)
+  "Do various coding system setups for language environment LANGUAGE-NAME.
+This function assumes that the locale for LANGUAGE-NAME has been set using
+`set-current-locale'.
+
+The optional arg EOL-TYPE specifies the eol-type of the default value
+of buffer-file-coding-system set by this function."
+
+;; The following appeared as the third paragraph of the doc string for this
+;; function, but it's not in FSF 21.0.103, and it's not true, since we call
+;; reset-coding-categories-to-default before calling this function.  ####
+;; Should we rethink this?
+
+; Note that `coding-priority-list' is not reset first; thus changing language
+; environment allows recognition of coding systems from previously set language
+; environments.  (This will not work if the desired coding systems are from the
+; same category.  E.g., starting with a Hebrew language environment, ISO 8859-8
+; will be recognized.  If you shift to Russian, ISO 8859-8 will be shadowed by
+; ISO 8859-5, and cannot be automatically recognized without resetting the
+; language environment to Hebrew.  However, if you shift from Japanese to
+; Russian, ISO-2022-JP will continue to be automatically recognized, since
+; ISO-8859-5 and ISO-2022-JP are different coding categories.)"
+
+  (flet ((maybe-change-coding-system-with-eol (codesys eol-type)
+	   ;; if the EOL type specifies a specific type of ending,
+	   ;; then add that ending onto the given CODESYS; otherwise,
+	   ;; return CODESYS unchanged.
+	   (if (memq eol-type '(lf crlf cr unix dos mac))
+	       (coding-system-change-eol-conversion codesys eol-type)
+	     codesys)))
+
+    ;; initialize category mappings and priority list.
+    (let* ((priority (get-language-info language-name 'coding-priority))
+	   (default-coding (car priority)))
+      (if priority
+	(let ((categories (mapcar 'coding-system-category priority))
+	      category checked-categories)
+	  (while priority
+	    (unless (memq (setq category (car categories)) checked-categories)
+	      (set-coding-category-system category (car priority))
+	      (setq checked-categories (cons category checked-categories)))
+	    (setq priority (cdr priority)
+		  categories (cdr categories)))
+	  (set-coding-priority-list (nreverse checked-categories))
+	  ))
+
+      ;; set the default buffer coding system from the first element of the
+      ;; list in the `coding-priority' property, under Unix.  Under Windows, it
+      ;; should stay at `mswindows-multibyte', which will reference the current
+      ;; code page. (#### Does it really make sense the set the Unix default
+      ;; that way?  NOTE also that it's not the same as the native coding
+      ;; system for the locale, which is correct -- the form we choose for text
+      ;; files should not necessarily have any relevant to whether we're in a
+      ;; Shift-JIS, EUC-JP, JIS, or other Japanese locale.)
+      (unless (memq system-type '(windows-nt cygwin32))
+	(set-default-buffer-file-coding-system
+	 (maybe-change-coding-system-with-eol default-coding eol-type))))
+    ;; (setq default-sendmail-coding-system default-coding)
+
+    ;; set the native and file-name aliases (currently always the same),
+    ;; and the terminal-write system.
+    (let ((native (get-native-coding-system-from-language-environment
+		   language-name (current-locale))))
+      (condition-case nil
+	(define-coding-system-alias 'file-name native)
+	(error
+	 (warn "Invalid native-coding-system %s in language environment %s"
+	       native language-name)))
+      (define-coding-system-alias 'native 'file-name)
+      (setq default-process-coding-system
+	(cons (car default-process-coding-system)
+	      (maybe-change-coding-system-with-eol native eol-type))))))
+
+(defun init-locale-at-early-startup ()
+  "Don't call this."
+  ;; Called directly from the C code in intl.c, very early in the startup
+  ;; sequence.  Don't call this!!!  The main purpose is to set things up
+  ;; so that non-ASCII strings of all sorts (e.g. file names, command-line
+  ;; arguments, environment variables) can be correctly processed during
+  ;; the rest of the startup sequence.  As a result, this will almost
+  ;; certainly be the FIRST Lisp code called when a dumped XEmacs is run,
+  ;; and it's called before ANY of the external environment is initialized.
+  ;; Thus, it cannot interact at all with the outside world, make any
+  ;; system calls, etc! (Except for `set-current-locale'.)
+  ;;
+  ;; NOTE: The following are the basic settings we have to deal with when
+  ;; changing the language environment;
+  ;;
+  ;; -- current C library locale
+  ;; -- under MS Windows, current MS Windows locale
+  ;; -- LANG environment variable
+  ;; -- native/file-name coding systems
+  ;; -- subprocess write coding system (cdr of default-process-coding-system)
+  ;; -- coding categories (for detection)
+
+  (let (langenv)
+    ;; under ms windows (any):
+    (if (memq system-type '(windows-nt cygwin32))
+      (let ((userdef (mswindows-user-default-locale))
+	    (sysdef (mswindows-system-default-locale)))
+	;; (1) current langenv comes from user-default locale.
+	(setq langenv (mswindows-get-language-environment-from-locale
+		       userdef))
+	;; (2) init the langenv-to-locale table.
+	(puthash (mswindows-get-language-environment-from-locale sysdef)
+		 sysdef mswindows-langenv-to-locale-table)
+	;; user-default second in langenv-to-locale table so it will
+	;; override the system-default if the two are different but both
+	;; map to the same language environment
+	(puthash langenv userdef mswindows-langenv-to-locale-table)
+	;; (3) setup C lib locale, MS Windows locale, LANG environment
+	;;     variable.  Note that under Cygwin we are ignoring the
+	;;     passed-in LANG environment variable for the moment -- it's
+	;;     usually wrong anyway and just says "C". #### Perhaps we
+	;;     should reconsider.
+	(and langenv (set-locale-for-language-environment langenv))
+	;; (4) override current MS Windows locale with the user-default
+	;;     locale.  Always init the MS Windows locale from the
+	;;     user-default locale even if the langenv doesn't correspond;
+	;;     we might not be able to find a langenv for the user-default
+	;;     locale but we should still use the right code page, etc.
+	(mswindows-set-current-locale userdef))
+      ;; Unix:
+      (let ((locstring (set-current-locale "")))
+	;; assume C lib locale and LANG env var are set correctly.  use
+	;; them to find the langenv.
+	(setq langenv
+	      (and locstring (get-language-environment-from-locale
+			      locstring)))))
+    ;; All systems:
+    (unless langenv (setq langenv "English"))
+    (setq current-language-environment langenv)
+    ;; Setup various coding systems and categories.
+    (let ((default-eol-type (coding-system-eol-type
+			     default-buffer-file-coding-system)))
+      (reset-language-environment)
+      (set-language-environment-coding-systems langenv default-eol-type))))
+
+(defun init-mule-at-startup ()
+  "Initialize MULE environment at startup.  Don't call this."
+
+  ;; Fill up the Unicode translation tables for the standard charsets.
+  ;; Currently this needs to happen after data-directory gets
+  ;; initialized, which is not long in the startup process before we
+  ;; are called.  However, in reality this is WAY TOO LATE for this to
+  ;; be happening.  All manner of stuff involving paths happens
+  ;; beforehand, and eventually we want to be able to invoke XEmacs
+  ;; from a path with Japanese in it without problem.  Everything else
+  ;; is carefully set up to get the coding systems ready before we
+  ;; have to consult any paths or similarly interact with the system
+  ;; (except possibly finding the dump file).  We need to find a way
+  ;; of dumping the data that we use to build the tables along with
+  ;; the rest of the dump data, i.e. in the same file as it or ideally
+  ;; as a resource attached to the executable itself, so we have
+  ;; access to it extremely early; then, we call
+  ;; init-unicode-at-startup from init_intl(), which should (perhaps)
+  ;; be soon enough.
+
+  ;; An alternative is to resurrect my attempts to actually dump the
+  ;; created tables, which would completely solve things, although
+  ;; they're somewhat big (HOW BIG? INVESTIGATE) and this would
+  ;; preclude demand-loading the data.  Another possibility would be
+  ;; to load the tables into memory at dump time (after writing them
+  ;; out in some super-compressed binary form).  Yet another is to
+  ;; spit out the table data out in C code, which is then compiled in.
+
+  ;; We need to go through these, compile a list of what sorts of
+  ;; multilingual things we want to do early at startup (start XEmacs
+  ;; from a Japanese or other multilingual directory?  Can we then
+  ;; find the dump file?  If the dump file is elsewhere in a Japanese
+  ;; directory?  etc.) and see what we get with the different
+  ;; possibilities, and what are their strengths and weaknesses.
+
+  (init-unicode-at-startup)
+
+  ;; This is called (currently; might be moved earlier) from startup.el, after
+  ;; the basic GUI systems have been initialized, and just before the
+  ;; init file gets read in.  It needs to finish up initializing the current
+  ;; language environment.  Very early in the startup procedure we determined
+  ;; the default language environment from the locale, and bootstrapped the
+  ;; native, file-name and process I/O coding systems.  Now we need to do it
+  ;; over `the right away'.
+  (finish-set-language-environment current-language-environment)
+
+  ;; Load a (localizable) locale-specific init file, if it exists.
+  ;; We now use the language environment name, NOT the locale,
+  ;; whose name varies from system to system.
+  (load (format "%s%s/locale-start"
+		(locate-data-directory "start-files")
+		current-language-environment)
+	t t)
+
+  ;; #### the rest is junk that should be deleted.
+  
+  (when current-language-environment
+    ;; rman seems to be incompatible with encoded text
+    (setq Manual-use-rosetta-man nil))
+  
+  ;; Register available input methods by loading LEIM list file.
+  (load "leim-list.el" 'noerror 'nomessage 'nosuffix)
+  )
+
+;; Code deleted: init-mule-tm (Enable the tm package by default)
 
 ;;; mule-cmds.el ends here

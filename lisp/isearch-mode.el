@@ -261,9 +261,7 @@ Set this to nil if you don't want a modeline indicator."
     (define-key map "\C-r" 'isearch-repeat-backward)
     (define-key map "\C-g" 'isearch-abort)
 
-    ;; I wish this worked...
-    ;(define-key map  [escape escape escape] 'isearch-cancel)
-    (define-key map [(meta escape) escape] 'isearch-cancel)
+    (define-key map [(meta escape)] 'isearch-cancel)
 
     (define-key map "\C-q" 'isearch-quote-char)
 

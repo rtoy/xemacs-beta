@@ -1,6 +1,7 @@
 /* String search routines for XEmacs.
    Copyright (C) 1985, 1986, 1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -122,6 +123,47 @@ static Charbpos search_buffer (struct buffer *buf, Lisp_Object str,
 			     Charbpos charbpos, Charbpos buflim, EMACS_INT n, int RE,
 			     Lisp_Object trt, Lisp_Object inverse_trt,
 			     int posix);
+
+struct regex_reentrancy
+{
+  struct syntax_cache cache;
+  struct buffer *regex_emacs_buffer;
+  Lisp_Object regex_match_object;
+};
+
+typedef struct
+{
+  Dynarr_declare (struct regex_reentrancy);
+} regex_reentrancy_dynarr;
+
+static regex_reentrancy_dynarr *the_regex_reentrancy_dynarr;
+
+static Lisp_Object
+restore_regex_reentrancy (Lisp_Object dummy)
+{
+  struct regex_reentrancy rr = Dynarr_pop (the_regex_reentrancy_dynarr);
+  syntax_cache = rr.cache;
+  regex_emacs_buffer = rr.regex_emacs_buffer;
+  regex_match_object = rr.regex_match_object;
+  return Qnil;
+}
+
+static int
+begin_regex_reentrancy (void)
+{
+  /* #### there is still a potential problem with the regex cache --
+     the compiled regex could be overwritten.  we'd need 20-fold
+     reentrancy, though. */
+  struct regex_reentrancy rr;
+  rr.cache = syntax_cache;
+  rr.regex_emacs_buffer = regex_emacs_buffer;
+  rr.regex_match_object = regex_match_object;
+  if (!the_regex_reentrancy_dynarr)
+    the_regex_reentrancy_dynarr = Dynarr_new2 (regex_reentrancy_dynarr,
+					       struct regex_reentrancy);
+  Dynarr_add (the_regex_reentrancy_dynarr, rr);
+  return record_unwind_protect (restore_regex_reentrancy, Qnil);
+}
 
 static void
 matcher_overflow (void)
@@ -272,14 +314,12 @@ fixup_search_regs_for_string (Lisp_Object string)
       if (search_regs.start[i] > 0)
 	{
 	  search_regs.start[i] =
-	    bytecount_to_charcount (XSTRING_DATA (string),
-				    search_regs.start[i]);
+	    XSTRING_INDEX_BYTE_TO_CHAR (string, search_regs.start[i]);
 	}
       if (search_regs.end[i] > 0)
 	{
 	  search_regs.end[i] =
-	    bytecount_to_charcount (XSTRING_DATA (string),
-				    search_regs.end[i]);
+	    XSTRING_INDEX_BYTE_TO_CHAR (string, search_regs.end[i]);
 	}
     }
 }
@@ -294,6 +334,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   Bytecount s1, s2;
   REGISTER int i;
   struct re_pattern_buffer *bufp;
+  int count = begin_regex_reentrancy ();
 
   if (running_asynch_code)
     save_search_regs ();
@@ -326,7 +367,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 
   val = (0 <= i ? Qt : Qnil);
   if (NILP (val))
-    return Qnil;
+    return unbind_to (count);
   {
     int num_regs = search_regs.num_regs;
     for (i = 0; i < num_regs; i++)
@@ -338,7 +379,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   }
   XSETBUFFER (last_thing_searched, buf);
   fixup_search_regs_for_buffer (buf);
-  return val;
+  return unbind_to_1 (count, val);
 }
 
 DEFUN ("looking-at", Flooking_at, 1, 2, 0, /*
@@ -376,6 +417,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   Bytecount val;
   Charcount s;
   struct re_pattern_buffer *bufp;
+  int count = begin_regex_reentrancy ();
 
   if (running_asynch_code)
     save_search_regs ();
@@ -404,7 +446,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 			  0, ERROR_ME);
   QUIT;
   {
-    Bytecount bis = charcount_to_bytecount (XSTRING_DATA (string), s);
+    Bytecount bis = XSTRING_INDEX_CHAR_TO_BYTE (string, s);
     regex_match_object = string;
     regex_emacs_buffer = buf;
     val = re_search (bufp, (char *) XSTRING_DATA (string),
@@ -414,10 +456,12 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   }
   if (val == -2)
     matcher_overflow ();
-  if (val < 0) return Qnil;
+  if (val < 0) return unbind_to (count);
   last_thing_searched = Qt;
   fixup_search_regs_for_string (string);
-  return make_int (bytecount_to_charcount (XSTRING_DATA (string), val));
+  return
+    unbind_to_1 (count,
+	       make_int (XSTRING_INDEX_BYTE_TO_CHAR (string, val)));
 }
 
 DEFUN ("string-match", Fstring_match, 2, 4, 0, /*
@@ -467,10 +511,11 @@ fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
   Bytecount val;
   Intbyte *newnonreloc = (Intbyte *) nonreloc;
   struct re_pattern_buffer *bufp;
+  int count;
 
   bufp = compile_pattern (regexp, 0,
 			  (case_fold_search
-			   ? XCASE_TABLE_DOWNCASE (current_buffer->case_table)
+			   ? XCASE_TABLE_DOWNCASE (Vstandard_case_table)
 			   : Qnil),
 			  0, errb);
   if (!bufp)
@@ -482,20 +527,12 @@ fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
 
   fixup_internal_substring (nonreloc, reloc, offset, &length);
 
+  /* Don't need to protect against GC inside of re_search() due to QUIT;
+     QUIT is GC-inhibited. */
   if (!NILP (reloc))
-    {
-      if (no_quit)
-	newnonreloc = XSTRING_DATA (reloc);
-      else
-	{
-	  /* QUIT could relocate RELOC.  Therefore we must alloca()
-	     and copy.  No way around this except some serious
-	     rewriting of re_search(). */
-	  newnonreloc = (Intbyte *) alloca (length);
-	  memcpy (newnonreloc, XSTRING_DATA (reloc), length);
-	}
-    }
+    newnonreloc = XSTRING_DATA (reloc);
 
+  count = begin_regex_reentrancy ();
   /* #### evil current-buffer dependency */
   regex_match_object = reloc;
   regex_emacs_buffer = current_buffer;
@@ -503,6 +540,7 @@ fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
 		   length, 0);
 
   no_quit_in_re_search = 0;
+  unbind_to (count);
   return val;
 }
 
@@ -1141,6 +1179,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   Bytebpos p1, p2;
   Bytecount s1, s2;
   Bytebpos pos, lim;
+  int count;
 
   if (running_asynch_code)
     save_search_regs ();
@@ -1161,6 +1200,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   if (RE && !trivial_regexp_p (string))
     {
       struct re_pattern_buffer *bufp;
+      count = begin_regex_reentrancy ();
 
       bufp = compile_pattern (string, &search_regs, trt, posix,
 			      ERROR_ME);
@@ -1208,6 +1248,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	    }
 	  else
 	    {
+	      unbind_to (count);
 	      return n;
 	    }
 	  n++;
@@ -1245,10 +1286,12 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	    }
 	  else
 	    {
+	      unbind_to (count);
 	      return 0 - n;
 	    }
 	  n--;
 	}
+      unbind_to (count);
       return charbpos;
     }
   else				/* non-RE case */
@@ -1633,7 +1676,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		  /* For all the characters that map into CH,
 		     set up simple_translate to map the last byte
 		     into STARTING_J.  */
-		  simple_translate[j] = starting_j;
+		  simple_translate[j] = (Intbyte) starting_j;
 		  if (ch == starting_ch)
 		    break;
 		  BM_tab[j] = dirlen - i;
@@ -2558,7 +2601,7 @@ match since only regular expressions have distinguished subexpressions.
 	}
 
       /* frees the Dynarrs if necessary. */
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
       return concat3 (before, replacement, after);
     }
 
@@ -2691,7 +2734,7 @@ match since only regular expressions have distinguished subexpressions.
     }
 
   /* frees the Dynarrs if necessary. */
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   end_multiple_change (buf, mc_count);
 
   return Qnil;

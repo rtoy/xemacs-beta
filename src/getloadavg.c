@@ -574,11 +574,11 @@ getloadavg (double loadavg[], int nelem)
   double load_ave[3];
   int fd, count;
 
-  fd = open (LINUX_LDAV_FILE, O_RDONLY);
+  fd = retry_open (LINUX_LDAV_FILE, O_RDONLY);
   if (fd == -1)
     return -1;
-  count = read (fd, ldavgbuf, 40);
-  (void) close (fd);
+  count = retry_read (fd, ldavgbuf, 40);
+  (void) retry_close (fd);
   if (count <= 0)
     return -1;
 
@@ -603,13 +603,13 @@ getloadavg (double loadavg[], int nelem)
   int count;
   FILE *fp;
 
-  fp = fopen (NETBSD_LDAV_FILE, "r");
+  fp = retry_fopen (NETBSD_LDAV_FILE, "r");
   if (fp == NULL)
     return -1;
   count = fscanf (fp, "%lu %lu %lu %lu\n",
 		  &load_ave[0], &load_ave[1], &load_ave[2],
 		  &scale);
-  (void) fclose (fp);
+  (void) retry_fclose (fp);
   if (count != 4)
     return -1;
 
@@ -826,7 +826,7 @@ getloadavg (double loadavg[], int nelem)
   if (!getloadavg_initialized)
     {
 #ifndef SUNOS_5
-      channel = open ("/dev/kmem", 0);
+      channel = retry_open ("/dev/kmem", 0);
       if (channel >= 0)
 	{
 	  /* Set the channel to close on exec, so it does not
@@ -859,10 +859,10 @@ getloadavg (double loadavg[], int nelem)
       /* Try to read the load.  */
 #ifndef SUNOS_5
       if (lseek (channel, offset, 0) == -1L
-	  || read (channel, (char *) load_ave, sizeof (load_ave))
+	  || retry_read (channel, (char *) load_ave, sizeof (load_ave))
 	  != sizeof (load_ave))
 	{
-	  close (channel);
+	  retry_close (channel);
 	  getloadavg_initialized = 0;
 	}
 #else  /* SUNOS_5 */

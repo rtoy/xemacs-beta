@@ -99,9 +99,7 @@ Boston, MA 02111-1307, USA.  */
 #include "ui-gtk.h"
 #endif
 
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #ifdef TOOLTALK
 #include "tooltalk.h"

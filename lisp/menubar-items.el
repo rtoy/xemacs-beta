@@ -3,7 +3,7 @@
 ;; Copyright (C) 1991-1995, 1997-1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 1995, 1996, 2000 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
 ;; Copyright (C) 1997 MORIOKA Tomohiko.
 
 ;; Maintainer: XEmacs Development Team
@@ -128,6 +128,107 @@ which will not be used as accelerators."
 	     "")))
 	(t "")))
 
+(defcustom menu-max-items 25
+  "*Maximum number of items in generated menus.
+If number of entries in such a menu is larger than this value, split menu
+into submenus of nearly equal length (see `menu-submenu-max-items').  If
+nil, never split menu into submenus."
+  :group 'menu
+  :type '(choice (const :tag "no submenus" nil)
+		 (integer)))
+
+(defcustom menu-submenu-max-items 20
+  "*Maximum number of items in submenus when splitting menus.
+We split large menus into submenus of this many items, and then balance
+them out as much as possible (otherwise the last submenu may have very few
+items)."
+  :group 'menu
+  :type 'integer)
+
+(defcustom menu-submenu-name-format "%-12.12s ... %.12s"
+  "*Format specification of the submenu name when splitting menus.
+Used by `menu-split-long-menu' if the number of entries in a menu is
+larger than `menu-menu-max-items'.
+This string should contain one %s for the name of the first entry and
+one %s for the name of the last entry in the submenu.
+If the value is a function, it should return the submenu name.  The
+function is be called with two arguments, the names of the first and
+the last entry in the menu."
+  :group 'menu
+  :type '(choice (string :tag "Format string")
+		 (function)))
+
+(defun menu-split-long-menu (menu)
+  "Split MENU according to `menu-max-items' and add accelerator specs."
+  (let ((len (length menu)))
+    (if (or (null menu-max-items)
+	    (<= len menu-max-items))
+	(submenu-generate-accelerator-spec menu)
+      (let* ((outer (/ (+ len (1- menu-submenu-max-items))
+		       menu-submenu-max-items))
+	     (inner (/ (+ len (1- outer)) outer))
+	     (result nil))
+	(while menu
+	  (let ((sub nil)
+		(from (car menu)))
+	    (dotimes (foo (min inner len))
+	      (setq sub  (cons (car menu) sub)
+		    menu (cdr menu)))
+	    (setq len (- len inner))
+	    (let ((to (car sub)))
+	      (setq sub (nreverse sub))
+	      (setq result
+		    (cons (cons (if (stringp menu-submenu-name-format)
+				    (format menu-submenu-name-format
+					    (menu-item-strip-accelerator-spec
+					     (aref from 0))
+					    (menu-item-strip-accelerator-spec
+					     (aref to 0)))
+				  (funcall menu-submenu-name-format
+					   (menu-item-strip-accelerator-spec
+					    (aref from 0))
+					   (menu-item-strip-accelerator-spec
+					    (aref to 0))))
+				(submenu-generate-accelerator-spec sub))
+			  result)))))
+	(submenu-generate-accelerator-spec (nreverse result))))))
+
+(defun menu-sort-menu (menu)
+  "Sort MENU alphabetically."
+  (sort menu
+	#'(lambda (a b) (string-lessp (aref a 0) (aref b 0)))))
+
+(defun coding-system-menu-filter (fun active &optional dots)
+  "Filter for menu entries with a submenu listing all coding systems.
+This is for operations that take a coding system as an argument.  FUN
+should be a function of one argument, which will be a coding system symbol.
+ACTIVE should be a function one argument (again, a coding system symbol),
+indicating whether the entry is active.  If DOTS is given, the menu entries
+will have three dots appended.
+
+Write your filter like this:
+
+:filter
+  (lambda (menu)
+    (lambda (entry) ...)
+    (lambda (entry) ...))
+"
+  (menu-split-long-menu
+   (menu-sort-menu
+    (mapcar
+     #'(lambda (_csmf_entry)
+	 `[ ,(concat (coding-system-description _csmf_entry)
+		     (if dots "..." ""))
+	    (funcall ,fun ',_csmf_entry)
+	    :active (funcall ,active ',_csmf_entry)
+	    ])
+     (delete-if
+      #'(lambda (name)
+	  (or (coding-system-alias-p name)
+	      (not (eq name (coding-system-name
+			     (coding-system-base name))))))
+      (coding-system-list))))))
+
 (defconst default-menubar
 ; (purecopy-menubar ;purespace is dead
    ;; note backquote.
@@ -136,6 +237,16 @@ which will not be used as accelerators."
       ["%_Open..." find-file]
       ["Open in Other %_Window..." find-file-other-window]
       ["Open in New %_Frame..." find-file-other-frame]
+      ("Open with Specified %_Encoding"
+       :filter
+       (lambda (menu)
+	 (coding-system-menu-filter
+	  (lambda (entry)
+	    (let ((coding-system-for-read entry))
+	      (call-interactively 'find-file)))
+	  (lambda (entry) t)
+	  t))
+       )
       ["%_Hex Edit File..." hexl-find-file
        :active (fboundp 'hexl-find-file)]
       ["%_Insert File..." insert-file]
@@ -164,19 +275,27 @@ which will not be used as accelerators."
       ["%_Revert Buffer" revert-buffer
        :active (or buffer-file-name revert-buffer-function)
        :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
+      ("Rever%_t Buffer with Specified Encoding"
+       :filter
+       (lambda (menu)
+	 (coding-system-menu-filter
+	  (lambda (entry)
+	    (let ((coding-system-for-read entry))
+	      (revert-buffer)))
+	  (lambda (entry) (or buffer-file-name revert-buffer-function))
+	  t))
+       )
       ["Re%_cover File..." recover-file]
-      ["Recover S%_ession..." recover-session]
+      ["Recover Sessio%_n..." recover-session]
       "-----"
       ["E%_xit XEmacs" save-buffers-kill-emacs]
       )
 
      ("%_Edit"
-      ["%_Undo" advertised-undo
+      ["%_Undo" undo
        :active (and (not (eq buffer-undo-list t))
 		    (or buffer-undo-list pending-undo-list))
-       :suffix (if (or (eq last-command 'undo)
-		       (eq last-command 'advertised-undo))
-		   "More" "")]
+       :suffix (if (eq last-command 'undo) "More" "")]
       ["%_Redo" redo
        :included (fboundp 'redo)
        :active (not (or (eq buffer-undo-list t)
@@ -206,36 +325,7 @@ which will not be used as accelerators."
       ["%_Find..." make-search-dialog]
       ["R%_eplace..." query-replace]
       ["Replace (Rege%_xp)..." query-replace-regexp]
-      ["%_List Matching Lines..." list-matching-lines]
-      ,@(when (featurep 'mule)
-	 '("----"
-	   ("%_Multilingual (\"Mule\")"
-	    ("%_Describe Language Support")
-	    ("%_Set Language Environment")
-	    "--"
-	    ["T%_oggle Input Method" toggle-input-method]
-	    ["Select %_Input Method" set-input-method]
-	    ["D%_escribe Input Method" describe-input-method]
-	    "--"
-	    ["Describe Current %_Coding Systems"
-	     describe-current-coding-system]
-	    ["Set Coding System of %_Buffer File..."
-	     set-buffer-file-coding-system]
-	    ;; not implemented yet
-	    ["Set Coding System of %_Terminal..."
-	     set-terminal-coding-system :active nil]
-	    ;; not implemented yet
-	    ["Set Coding System of %_Keyboard..."
-	     set-keyboard-coding-system :active nil]
-	    ["Set Coding System of %_Process..."
-	     set-buffer-process-coding-system
-	     :active (get-buffer-process (current-buffer))]
-	    "--"
-	    ["Show Cha%_racter Table" view-charset-by-menu]
-	    ;; not implemented yet
-	    ["Show Dia%_gnosis for MULE" mule-diag :active nil]
-	    ["Show \"%_hello\" in Many Languages" view-hello-file]))
-	 )
+      ["List %_Matching Lines..." list-matching-lines]
       )
 
      ("%_View"
@@ -469,13 +559,12 @@ which will not be used as accelerators."
 		       (and buffer (get-buffer-process buffer))))]
        "---"
        ["Grep %_All Files in Current Directory..."
-	(progn
-	  (require 'compile)
-	  (let ((grep-command
-		 (cons (concat grep-command " *")
-		       (length grep-command))))
-	    (call-interactively 'grep)))
-	:active (fboundp 'grep)]
+	grep-all-files-in-current-directory
+	:active (fboundp 'grep-all-files-in-current-directory)]
+       ["G%_rep All Files in Current Directory and Below..."
+	grep-all-files-in-current-directory-and-below
+	:active (fboundp 'grep-all-files-in-current-directory-and-below)]
+       "---"
        ["Grep %_C and C Header Files in Current Directory..."
 	(progn
 	  (require 'compile)
@@ -900,24 +989,87 @@ which will not be used as accelerators."
 	:active (and (boundp 'send-mail-function)
 		     (eq send-mail-function 'smtpmail-send-it))])
       ("%_Troubleshooting"
-       ["%_Debug on Error"
-	(customize-set-variable 'debug-on-error (not debug-on-error))
+       ["%_Debug on Error [not saved]"
+	(setq debug-on-error (not debug-on-error))
 	:style toggle :selected debug-on-error]
-       ["Debug on %_Quit"
-	(customize-set-variable 'debug-on-quit (not debug-on-quit))
+       ["Debug on %_Quit [not saved]"
+	(setq debug-on-quit (not debug-on-quit))
 	:style toggle :selected debug-on-quit]
-       ["Debug on S%_ignal"
-	(customize-set-variable 'debug-on-signal (not debug-on-signal))
+       ["Debug on S%_ignal [not saved]"
+	(setq debug-on-signal (not debug-on-signal))
 	:style toggle :selected debug-on-signal]
-       ["%_Stack Trace on Error"
-	(customize-set-variable 'stack-trace-on-error
-				(not stack-trace-on-error))
+       ["%_Stack Trace on Error [not saved]"
+	(setq stack-trace-on-error (not stack-trace-on-error))
 	:style toggle :selected stack-trace-on-error]
-       ["Stack Trace on Si%_gnal"
-	(customize-set-variable 'stack-trace-on-signal
-				(not stack-trace-on-signal))
+       ["Stack Trace on Si%_gnal [not saved]"
+	(setq stack-trace-on-signal (not stack-trace-on-signal))
 	:style toggle :selected stack-trace-on-signal]
        )
+      ("Encodin%_g"
+       ["Automatic %_EOL Detection"
+	(customize-set-variable 'eol-detection-enabled-p
+				(not eol-detection-enabled-p))
+	:style toggle
+	:selected eol-detection-enabled-p
+	:included (not (memq system-type '(windows-nt cygwin32)))]
+       ("Set Coding System of %_Buffer File"
+	:filter
+	(lambda (menu)
+	  (coding-system-menu-filter
+	   (lambda (entry)
+	     (set-buffer-file-coding-system entry))
+	   (lambda (entry) t)
+	   ))
+	)
+       ;; not implemented yet
+       ("Set Coding System of %_Terminal"
+	:filter
+	(lambda (menu)
+	  (coding-system-menu-filter
+	   (lambda (entry)
+	     (set-terminal-coding-system entry))
+	   (lambda (entry) nil)
+	   ))
+	)
+       ;; not implemented yet
+       ("Set Coding System of %_Keyboard"
+	:filter
+	(lambda (menu)
+	  (coding-system-menu-filter
+	   (lambda (entry)
+	     (set-keyboard-coding-system entry))
+	   (lambda (entry) nil)
+	   ))
+	)
+       ("Set Coding System of %_Process"
+	:filter
+	(lambda (menu)
+	  (coding-system-menu-filter
+	   (lambda (entry)
+	     (set-buffer-process-coding-system entry))
+	   (lambda (entry) (get-buffer-process (current-buffer)))
+	   ))
+	)
+       )
+      ,@(when (featurep 'mule)
+	  '(("Internationa%_l"
+	     ("Set %_Language Environment"
+	      :filter
+	      (lambda (menu)
+		(menu-split-long-menu
+		 (menu-sort-menu
+		  (mapcar #'(lambda (entry)
+			      `[ ,(car entry)
+				 (set-language-environment ',(car entry))
+				 :style radio
+				 :selected
+				 ,(equal (car entry)
+					 current-language-environment)])
+			  language-info-alist)
+		  ))))
+	     ["%_Toggle Input Method" toggle-input-method]
+	     ["Select %_Input Method" set-input-method]
+	     )))
       "-----"
       ("%_Display"
        ,@(if (featurep 'scrollbar)
@@ -1439,6 +1591,31 @@ which will not be used as accelerators."
        ["Describe %_Function..." describe-function]
        ["Describe %_Variable..." describe-variable]
        ["%_Locate Command in Keymap..." where-is])
+      ,@(when (featurep 'mule)
+	  '(("Internationa%_l"
+	     ("Describe %_Language Support"
+	      :filter
+	      (lambda (menu)
+		(menu-split-long-menu
+		 (menu-sort-menu
+		  (mapcar #'(lambda (entry)
+			      `[ ,(car entry)
+				 (describe-language-environment
+				  ',(car entry))
+				:style radio
+				:selected
+				,(equal (car entry)
+					current-language-environment)])
+			  language-info-alist)
+		  ))))
+	     ["Describe %_Input Method" describe-input-method]
+	     ["Describe Current %_Coding Systems"
+	      describe-current-coding-system]
+	     ["Show Character %_Table" view-charset-by-menu]
+	     ;; not implemented yet
+	     ["Show %_Diagnosis for MULE" mule-diag :active nil]
+	     ["Show \"%_hello\" in Many Languages" view-hello-file]
+	     )))
       ("%_Misc"
        ["%_Current Installation Info" describe-installation
 	:active (boundp 'Installation-string)]
@@ -1453,7 +1630,7 @@ which will not be used as accelerators."
        :active (fboundp 'report-xemacs-bug)])))
 
 
-(defun maybe-add-init-button ()
+(defun init-menubar-at-startup ()
   "Don't call this.
 Adds `Load .emacs' button to menubar when starting up with -q."
   (when (and (not load-user-init-file-p)
@@ -1469,8 +1646,6 @@ Adds `Load .emacs' button to menubar when starting up with -q."
 	(load-user-init-file))
       ]
      "Help")))
-
-(add-hook 'before-init-hook 'maybe-add-init-button)
 
 
 ;;; The File menu
@@ -1811,17 +1986,6 @@ items by redefining the function `format-buffers-menu-line'."
     (append menu buffers)
     ))
 
-(defun language-environment-menu-filter (menu)
-  "This is the menu filter for the \"Language Environment\" submenu."
-  (declare (special language-environment-list))
-  (let ((n 0))
-    (mapcar (lambda (env-sym)
-	      (setq n (1+ n))
-	      `[ ,(concat (menu-item-generate-accelerator-spec n)
-			  (capitalize (symbol-name env-sym)))
-		 (set-language-environment ',env-sym)])
-	    language-environment-list)))
-
 
 ;;; The Options menu
 
@@ -1877,13 +2041,12 @@ If this is a relative filename, it is put into the same directory as your
 			   (not (string= (car lang)
 					 current-language-environment))
 			   `([,(car lang)
-			      (help-with-tutorial nil ,(cdr tut))]))))
+			      (help-with-tutorial nil ,(car lang))]))))
 		language-info-alist)
       ;; Non mule tutorials.
       (mapcar #'(lambda (lang)
 		  `[,(car lang)
-		    (help-with-tutorial ,(format "TUTORIAL.%s"
-						 (cadr lang)))])
+		    (help-with-tutorial nil ,(car lang))])
 	      tutorial-supported-languages)))))
 
 (set-menubar default-menubar)

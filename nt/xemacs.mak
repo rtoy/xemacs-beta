@@ -1,6 +1,6 @@
 #   Makefile for Microsoft NMAKE
 #   Copyright (C) 1995 Board of Trustees, University of Illinois.
-#   Copyright (C) 1995, 1996, 2000 Ben Wing.
+#   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
 #   Copyright (C) 1995 Sun Microsystems, Inc.
 #   Copyright (C) 1998 Free Software Foundation, Inc.
 #
@@ -57,8 +57,8 @@ DEL=del
 # Define the 'copy' command to use
 # Suppress confirmation for overwriting files
 # Use /r (instead of /y), which exists on Windows NT 4 and 5.
-COPY=xcopy /q /r
-COPYDIR=xcopy /q /r /e
+COPY=xcopy /q /y
+COPYDIR=xcopy /q /y /e
 
 # Program name and version
 
@@ -106,14 +106,14 @@ INSTALL_DIR=c:\Program Files\Infodock\Infodock-$(INFODOCK_VERSION_STRING)
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 ! endif
 !endif
-!if !defined(HAVE_MULE)
-HAVE_MULE=0
+!if !defined(MULE)
+MULE=0
 !endif
 !if !defined(PACKAGE_PATH)
 ! if !defined(PACKAGE_PREFIX)
 PACKAGE_PREFIX=c:\Program Files\XEmacs
 ! endif
-! if $(HAVE_MULE)
+! if $(MULE)
 PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\mule-packages;$(PACKAGE_PREFIX)\xemacs-packages
 ! else
 PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\xemacs-packages
@@ -325,13 +325,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if !defined(DEPEND)
 DEPEND=0
 !endif
-!if $(DEPEND)
+!if $(DEPEND) && exist("$(SRC)\depend")
 ! if [if not exist $(OUTDIR)\nul mkdir "$(OUTDIR)"]
 ! endif
-# generate an nmake-readable version of depend
-# #### here, it doesn't seem to matter if we double ^'s!
-# results are the same with all single ^ and all double ^^!
-# see comment below.
 # #### Yuuuuuuuuuuck!!!  Cygwin is too smart for its own good.  If we are
 # being run from within Cygwin, a Cygwin Perl seems to require twice as
 # much backslash quoting.  This does not happen, of course, with a non-
@@ -401,7 +397,6 @@ MSW_INCLUDES=
 MSW_LIBS=
 !if $(HAVE_MSW_C_DIRED)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_MSW_C_DIRED
-MSW_C_DIRED_SRC=$(SRC)\dired-msw.c
 MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
 !endif
 !if $(HAVE_XPM)
@@ -411,7 +406,6 @@ MSW_LIBS=$(MSW_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
 !if $(HAVE_GIF)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_GIF
-MSW_GIF_SRC=$(SRC)\dgif_lib.c $(SRC)\gif_io.c
 MSW_GIF_OBJ=$(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
 !endif
 !if $(HAVE_PNG)
@@ -434,9 +428,13 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XFACE
 MSW_INCLUDES=$(MSW_INCLUDES) -I"$(COMPFACE_DIR)"
 MSW_LIBS=$(MSW_LIBS) "$(COMPFACE_DIR)\libcompface.lib"
 !endif
+!if $(HAVE_ZLIB)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_ZLIB
+MSW_INCLUDES=$(MSW_INCLUDES) -I"$(ZLIB_DIR)"
+MSW_LIBS=$(MSW_LIBS) "$(ZLIB_DIR)\zlib.lib"
+!endif
 !if $(HAVE_TOOLBARS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
-MSW_TOOLBAR_SRC=$(SRC)\toolbar.c $(SRC)\toolbar-msw.c
 MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
 !endif
 !if $(HAVE_WIDGETS)
@@ -447,7 +445,6 @@ MSW_LIBS=$(MSW_LIBS) comctl32.lib
 !endif
 !if $(HAVE_DIALOGS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
-MSW_DIALOG_SRC=$(SRC)\dialog.c $(SRC)\dialog-msw.c
 MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
 !endif
 !if $(HAVE_NATIVE_SOUND)
@@ -455,7 +452,7 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_NATIVE_SOUND
 !endif
 !endif
 
-!if $(HAVE_MULE)
+!if $(MULE)
 MULE_DEFINES=-DMULE
 !endif
 
@@ -519,8 +516,12 @@ XEMACS_INCLUDES=\
  $(SRC)\paths.h
 
 # #### Copying is cheap, we should just force these
-$(SRC)\config.h:	config.h
-	@$(COPY) config.h $(SRC)
+$(SRC)\config.h:	$(SRC)\config.h.in
+# #### ms must have hired monkeys to design their shell commands.  if
+# #### you use xcopy to copy a file from one name to another, it
+# #### PROMPTS you to see if you meant the second as a directory!  and
+# #### no switch to mean "no of course, you idiots, it's a file!"
+	@copy $(SRC)\config.h.in $(SRC)\config.h
 
 $(SRC)\Emacs.ad.h:	Emacs.ad.h
 	@$(COPY) Emacs.ad.h $(SRC)
@@ -668,178 +669,6 @@ $(OUTDIR)\xlwscrollbar.obj:	$(LWLIB_SRCDIR)\xlwscrollbar.c
 	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 !endif
-#------------------------------------------------------------------------------
-
-DOC=$(LIB_SRC)\DOC
-DOC_SRC1=\
- $(SRC)\abbrev.c \
- $(SRC)\alloc.c \
- $(SRC)\blocktype.c \
- $(SRC)\buffer.c \
- $(SRC)\bytecode.c \
- $(SRC)\callint.c \
- $(SRC)\callproc.c \
- $(SRC)\casefiddle.c \
- $(SRC)\casetab.c \
- $(SRC)\chartab.c \
- $(SRC)\cmdloop.c \
- $(SRC)\cmds.c \
- $(SRC)\console-stream.c \
- $(SRC)\console.c \
- $(SRC)\data.c \
- $(SRC)\device.c
-DOC_SRC2=\
- $(SRC)\dired.c \
- $(SRC)\doc.c \
- $(SRC)\doprnt.c \
- $(SRC)\dragdrop.c \
- $(SRC)\dynarr.c \
- $(SRC)\editfns.c \
- $(SRC)\elhash.c \
- $(SRC)\emacs.c \
- $(SRC)\eval.c \
- $(SRC)\event-stream.c \
- $(SRC)\events.c \
- $(SRC)\extents.c \
- $(SRC)\faces.c \
- $(SRC)\file-coding.c \
- $(SRC)\fileio.c \
- $(SRC)\filemode.c \
- $(SRC)\floatfns.c \
- $(SRC)\fns.c 
-DOC_SRC3=\
- $(SRC)\font-lock.c \
- $(SRC)\frame.c \
- $(SRC)\general.c \
- $(SRC)\getloadavg.c \
- $(SRC)\glyphs.c \
- $(SRC)\glyphs-eimage.c \
- $(SRC)\glyphs-shared.c \
- $(SRC)\glyphs-widget.c \
- $(SRC)\gui.c  \
- $(SRC)\gutter.c \
- $(SRC)\hash.c \
- $(SRC)\imgproc.c \
- $(SRC)\indent.c \
- $(SRC)\insdel.c \
- $(SRC)\intl.c \
- $(SRC)\keymap.c \
- $(SRC)\line-number.c \
- $(SRC)\lread.c \
- $(SRC)\lstream.c \
- $(SRC)\macros.c \
- $(SRC)\marker.c
-DOC_SRC4=\
- $(SRC)\md5.c \
- $(SRC)\menubar.c \
- $(SRC)\minibuf.c \
- $(SRC)\nt.c \
- $(SRC)\ntplay.c \
- $(SRC)\ntproc.c \
- $(SRC)\objects.c \
- $(SRC)\opaque.c \
- $(SRC)\print.c \
- $(SRC)\process.c \
- $(SRC)\process-nt.c \
- $(SRC)\profile.c \
- $(SRC)\rangetab.c \
- $(SRC)\realpath.c \
- $(SRC)\redisplay-output.c \
- $(SRC)\redisplay.c \
- $(SRC)\regex.c \
- $(SRC)\scrollbar.c \
- $(SRC)\search.c \
- $(SRC)\select.c \
- $(SRC)\signal.c \
- $(SRC)\sound.c 
-DOC_SRC5=\
- $(SRC)\specifier.c \
- $(SRC)\strftime.c \
- $(SRC)\symbols.c \
- $(SRC)\syntax.c \
- $(SRC)\sysdep.c \
- $(SRC)\termcap.c  \
- $(SRC)\tparam.c \
- $(SRC)\undo.c \
- $(SRC)\window.c \
- $(SRC)\win32.c \
- $(SRC)\widget.c
-
-!if $(HAVE_X_WINDOWS)
-DOC_SRC6=\
- $(SRC)\balloon_help.c \
- $(SRC)\console-x.c \
- $(SRC)\device-x.c  \
- $(SRC)\dialog-x.c \
- $(SRC)\EmacsFrame.c \
- $(SRC)\EmacsManager.c \
- $(SRC)\EmacsShell-sub.c\
- $(SRC)\EmacsShell.c \
- $(SRC)\event-Xt.c  \
- $(SRC)\frame-x.c \
- $(SRC)\glyphs-x.c \
- $(SRC)\gui-x.c \
- $(SRC)\menubar.c \
- $(SRC)\menubar-x.c \
- $(SRC)\objects-x.c \
- $(SRC)\redisplay-x.c \
- $(SRC)\scrollbar-x.c \
- $(SRC)\balloon-x.c \
- $(SRC)\xgccache.c \
- $(SRC)\xmu.c \
- $(SRC)\select-x.c 
-!endif
-
-!if $(HAVE_MS_WINDOWS)
-DOC_SRC7=\
- $(SRC)\console-msw.c \
- $(SRC)\device-msw.c  \
- $(SRC)\event-msw.c  \
- $(SRC)\frame-msw.c \
- $(SRC)\glyphs-msw.c \
- $(SRC)\gui-msw.c \
- $(SRC)\menubar-msw.c \
- $(SRC)\objects-msw.c \
- $(SRC)\redisplay-msw.c \
- $(SRC)\scrollbar-msw.c \
- $(SRC)\select-msw.c \
- $(MSW_C_DIRED_SRC) \
- $(MSW_TOOLBAR_SRC) \
- $(MSW_DIALOG_SRC) \
- $(MSW_GIF_SRC)
-!endif
-
-!if $(HAVE_MULE)
-DOC_SRC8=\
- $(SRC)\mule.c \
- $(SRC)\mule-charset.c \
- $(SRC)\mule-ccl.c
-! if $(HAVE_X_WINDOWS)
- DOC_SRC8=$(DOC_SRC8) $(SRC)\input-method-xlib.c
-! endif
-!endif
-
-!if $(DEBUG_XEMACS)
-DOC_SRC9=\
- $(SRC)\debug.c \
- $(SRC)\tests.c
-!endif
-
-!if !$(USE_SYSTEM_MALLOC)
-DOC_SRC10=\
- $(SRC)\free-hook.c \
- $(SRC)\gmalloc.c \
- $(SRC)\ntheap.c \
- $(SRC)\vm-limit.c
-!endif
-
-!if !$(USE_PORTABLE_DUMPER)
-DOC_SRC11=\
- $(SRC)\unexnt.c
-!else
-DOC_SRC11=\
- $(SRC)\dumper.c
-!endif
 
 #------------------------------------------------------------------------------
 
@@ -867,7 +696,7 @@ TEMACS_SRC=$(SRC)
 TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) $(MSW_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
- uuid.lib $(LIBC_LIB)
+ mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
 TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
  -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
@@ -926,11 +755,12 @@ TEMACS_MSW_OBJS=\
 	$(MSW_GIF_OBJ)
 !endif
 
-!if $(HAVE_MULE)
+!if $(MULE)
 TEMACS_MULE_OBJS=\
-	$(OUTDIR)\mule.obj \
+	$(OUTDIR)\mule-ccl.obj \
 	$(OUTDIR)\mule-charset.obj \
-	$(OUTDIR)\mule-ccl.obj
+	$(OUTDIR)\mule-coding.obj
+
 ! if $(HAVE_X_WINDOWS)
 TEMACS_MULE_OBJS=\
 	$(TEMACS_MULE_OBJS) $(OUTDIR)\input-method-xlib.obj
@@ -1016,6 +846,9 @@ TEMACS_OBJS= \
 	$(OUTDIR)\imgproc.obj \
 	$(OUTDIR)\insdel.obj \
 	$(OUTDIR)\intl.obj \
+	$(OUTDIR)\intl-win32.obj \
+	$(OUTDIR)\intl-encap-win32.obj \
+	$(OUTDIR)\intl-auto-encap-win32.obj \
 	$(OUTDIR)\keymap.obj \
 	$(OUTDIR)\line-number.obj \
 	$(OUTDIR)\lread.obj \
@@ -1049,8 +882,10 @@ TEMACS_OBJS= \
 	$(OUTDIR)\symbols.obj \
 	$(OUTDIR)\syntax.obj \
 	$(OUTDIR)\sysdep.obj \
+	$(OUTDIR)\text.obj \
 	$(OUTDIR)\tparam.obj \
 	$(OUTDIR)\undo.obj \
+	$(OUTDIR)\unicode.obj \
 	$(OUTDIR)\widget.obj \
 	$(OUTDIR)\window.obj \
 	$(OUTDIR)\win32.obj
@@ -1076,8 +911,6 @@ $(OUTDIR)\TopLevelEmacsShell.obj:	$(TEMACS_SRC)\EmacsShell-sub.c
 
 $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
 	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $(TEMACS_SRC)\$(@B).c -Fo$@
-
-$(OUTDIR)\alloc.obj: $(TEMACS_SRC)\alloc.c
 
 #$(TEMACS_SRC)\Emacs.ad.h: $(XEMACS)\etc\Emacs.ad
 #	!"sed -f ad2c.sed < $(XEMACS)\etc\Emacs.ad > $(TEMACS_SRC)\Emacs.ad.h"
@@ -1149,12 +982,12 @@ tags:
 	cd $(XEMACS)
 	-$(DEL) TAGS
 	set PATH=lib-src;%PATH%
-# we need to double ^, but only before backslash!  Doubling it elsewhere
-# causes problems.  I don't understand this -- CMD.EXE uses ^ as a quoting
-# convention of sorts, but appears to leave it alone inside of double quotes,
-# even before \.  Could this be nmake interference?
+# we need to double ^, but only in one place, because (according to the
+# nmake manual), a ^ is used to quote certain special characters such as
+# backslash, but is treated literally within double quotes -- and notice
+# carefully the occurrences of double quotes in the first line below!
 	etags -a -r "/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*\"\([^^\"]+\)\"/\2/" src\*.c src\*.h lwlib\*.c lwlib\*.h lib-src\*.c lib-src\*.h
-	etags -a -l none -r "/^(def\(var\|un\|alias\|const\|macro\|subst\|struct\|face\|group\|custom\|ine-\(function\|compiler-macro\|[a-z-]+alias\)\)[ 	]+'?\([^ 	]+\)/\3/" $(tagslisp)\*.el
+	etags -a -l none -r "/^(def\(var\|un\|alias\|const\|macro\|subst\|struct\|face\|group\|custom\|ine-\(function\|compiler-macro\|[a-z-]+alias\)\)[ 	]+'?\([^ 	]+\)/\3/" $(tagslisp)\*.el $(tagslisp)\mule\*.el
 
 # Section handling tags ends here
 
@@ -1362,26 +1195,28 @@ if exist "$(MAKEINFO)" goto test_done
 LOADPATH=$(LISP)
 
 # Rebuild docfile target
+
+DOC=$(LIB_SRC)\DOC
+
 docfile ::
 	if exist $(DOC) $(DEL) $(DOC)
 docfile :: $(DOC)
 
-$(DOC): $(LIB_SRC)\make-docfile.exe $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(DOC_SRC10) $(DOC_SRC11)
+# This takes 5 seconds on my Pentium 233.  If you are running on a
+# much slower machine and are bothered by the time, modify make-docfile.c
+# to contain special code to frob $(OUTDIR)\foo.obj into the right file.
+make-docargs: $(TEMACS_OBJS)
+	@echo Creating make-docfile argument file ...
+	-$(DEL) make-docfile.out
+	@!echo $(SRC)\$(**B).c >> make-docfile.out
+	@echo Done.
+
+$(DOC): $(LIB_SRC)\make-docfile.exe make-docargs
 	if exist $(DOC) $(DEL) $(DOC)
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
 	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC3)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC4)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC5)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC6)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC10)
-	$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC11)
+	$(LIB_SRC)\make-docfile.exe -a $(DOC) @make-docfile.out
 
 update-elc:
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
@@ -1523,6 +1358,10 @@ depend:
 	perl ./make-src-depend > depend.tmp
 	perl -MFile::Compare -e "compare('depend.tmp', 'depend') && rename('depend.tmp', 'depend') or unlink('depend.tmp')"
 
+unicode-encapsulate:
+	cd $(SRC)
+	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
+
 $(XEMACS)\Installation::	installation
 
 installation::
@@ -1550,8 +1389,8 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 !if $(HAVE_X_WINDOWS)
   Compiling in support for X-Windows.
 !endif
-!if $(HAVE_MULE)
-  Compiling in MULE.
+!if $(MULE)
+  Compiling in international (MULE) support.
 !endif
 !if $(HAVE_GTK)
   --------------------------------------------------------------------
@@ -1592,6 +1431,9 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 !endif
 !if $(HAVE_XFACE)
   Compiling in support for X-Face message headers.
+!endif
+!if $(HAVE_ZLIB)
+  Compiling in support for GZIP compression/decompression.
 !endif
 !if $(HAVE_TOOLBARS)
   Compiling in support for toolbars.

@@ -1,6 +1,6 @@
 /* Generic stream implementation -- header file.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,7 +43,7 @@ DECLARE_LRECORD (lstream, struct lstream);
 #define EOF (-1)
 #endif
 
-/* The have been some arguments over the what the type should be that
+/* There have been some arguments over the what the type should be that
    specifies a count of bytes in a data block to be written out or read in,
    using Lstream_read(), Lstream_write(), and related functions.
    Originally it was long, which worked fine; Martin "corrected" these to
@@ -73,10 +73,9 @@ DECLARE_LRECORD (lstream, struct lstream);
    unrepresentable as an ssize_t, so code that checks to see how many
    bytes are actually written (which is mandatory if you are dealing
    with certain types of devices) will get completely screwed up.
-
+   
    --ben
 */
-
 typedef enum lstream_buffering
 {
   /* No buffering. */
@@ -92,6 +91,30 @@ typedef enum lstream_buffering
      and that is when the stream is closed. */
   LSTREAM_UNLIMITED
 } Lstream_buffering;
+
+#if 0
+
+/* #### not currently implemented; correct EOF handling is quite tricky
+   in the presence of various levels of filtering streams, and simply
+   interpreting 0 as EOF works fairly well as long as the amount of
+   data you're attempting to read is large and you know whether the
+   source stream at the end of the chain is a pipe (or other blocking
+   source) or not.  we really should fix this, though.  */
+
+/* Return values from Lstream_read().  We do NOT use the C lib trick
+   of returning 0 to maybe indicate EOF because that is simply too
+   random and error-prone.  It is quite legitimate for there to be no
+   data available but no EOF, even when not in the presence of
+   non-blocking I/O.  For example, decoding/encoding streams (and in
+   general, any type of filtering stream) may only be able to return
+   data after a certain amount of data on the other end is
+   available. */
+
+#define LSTREAM_EOF -2
+
+#endif /* 0 */
+
+#define LSTREAM_ERROR -1
 
 /* Methods defining how this stream works.  Some may be undefined. */
 
@@ -159,20 +182,30 @@ typedef struct lstream_implementation
   /* Perform any additional operations necessary to flush the
      data in this stream. */
   int (*flusher) (Lstream *stream);
-  /* Perform any additional operations necessary to close this
-     stream down.  May be NULL.  This function is called when
-     Lstream_close() is called or when the stream is garbage-
-     collected.  When this function is called, all pending data
-     in the stream will already have been written out. */
+  /* Perform any additional operations necessary to close this stream down.
+     May be NULL.  This function is called when Lstream_close() is called
+     (which will be called automatically on any open streams when they are
+     garbage-collected or deleted with Lstream_delete()).  When this
+     function is called, all pending data in the stream will already have
+     been written out; however, the closer write more data, e.g. an "end"
+     section at the end of a file. */
   int (*closer) (Lstream *stream);
+  /* Clean up any remaining data at the time that a stream is
+     garbage-collected or deleted with Lstream_delete().  If the stream was
+     open at this point, the finalizer is called after calling
+     Lstream_close().  Called only once (NOT called at disksave time). */
+  void (*finalizer) (Lstream *stream);
   /* Mark this object for garbage collection.  Same semantics as
      a standard Lisp_Object marker.  This function can be NULL. */
   Lisp_Object (*marker) (Lisp_Object lstream);
 } Lstream_implementation;
 
-#define DEFINE_LSTREAM_IMPLEMENTATION(name,c_name,size)	\
- Lstream_implementation c_name[1] =			\
-   { { (name), (size) } }
+#define DEFINE_LSTREAM_IMPLEMENTATION(name, c_name)	\
+  Lstream_implementation lstream_##c_name[1] =		\
+    { { (name), sizeof (struct c_name##_stream) } }
+
+#define DECLARE_LSTREAM(c_name) \
+  extern Lstream_implementation lstream_##c_name[]
 
 #define LSTREAM_FL_IS_OPEN		1
 #define LSTREAM_FL_READ			2
@@ -226,16 +259,16 @@ error_check_lstream_type (struct lstream *stream,
   assert (stream->imp == imp);
   return stream;
 }
-# define LSTREAM_TYPE_DATA(lstr, type) \
-  ((struct type##_stream *) \
-    Lstream_data (error_check_lstream_type(lstr, lstream_##type)))
+# define LSTREAM_TYPE_DATA(lstr, type)					\
+  ((struct type##_stream *)						\
+    Lstream_data (error_check_lstream_type (lstr, lstream_##type)))
 #else
-# define LSTREAM_TYPE_DATA(lstr, type)		\
+# define LSTREAM_TYPE_DATA(lstr, type)			\
   ((struct type##_stream *) Lstream_data (lstr))
 #endif
 
-/* Declare that lstream-type TYPE has method M; used in
-   initialization routines */
+/* Declare that lstream-type TYPE has method M; used in initialization
+   routines */
 #define LSTREAM_HAS_METHOD(type, m) \
   (lstream_##type->m = type##_##m)
 
@@ -252,34 +285,45 @@ int Lstream_fgetc (Lstream *lstr);
 void Lstream_fungetc (Lstream *lstr, int c);
 Bytecount Lstream_read (Lstream *lstr, void *data,
 				 Bytecount size);
-Bytecount Lstream_write (Lstream *lstr, const void *data,
-				  Bytecount size);
+int Lstream_write (Lstream *lstr, const void *data,
+		   Bytecount size);
 int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
 int Lstream_rewind (Lstream *lstr);
 int Lstream_seekable_p (Lstream *lstr);
 int Lstream_close (Lstream *lstr);
+
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
+void Lstream_unset_character_mode (Lstream *lstr);
 
-/* Call the function equivalent if the out buffer is full.  Otherwise,
-   add to the end of the out buffer and, if line buffering is called for
-   and the character marks the end of a line, write out the buffer. */
+/* Lstream_putc: Write out one byte to the stream.  This is a macro
+   and so it is very efficient.  The C argument is only evaluated once
+   but the STREAM argument is evaluated more than once.  Returns 0 on
+   success, -1 on error. */
 
-#define Lstream_putc(stream, c) 					\
-  ((stream)->out_buffer_ind >= (stream)->out_buffer_size ?		\
-   Lstream_fputc (stream, c) :						\
-   ((stream)->out_buffer[(stream)->out_buffer_ind++] =			\
-    (unsigned char) (c),						\
-    (stream)->byte_count++,						\
-    (stream)->buffering == LSTREAM_LINE_BUFFERED &&			\
-    (stream)->out_buffer[(stream)->out_buffer_ind - 1] == '\n' ?	\
+#define Lstream_putc(stream, c)						 \
+/* Call the function equivalent if the out buffer is full.  Otherwise,	 \
+   add to the end of the out buffer and, if line buffering is called for \
+   and the character marks the end of a line, write out the buffer. */	 \
+  ((stream)->out_buffer_ind >= (stream)->out_buffer_size ?		 \
+   Lstream_fputc (stream, c) :						 \
+   ((stream)->out_buffer[(stream)->out_buffer_ind++] =			 \
+    (unsigned char) (c),						 \
+    (stream)->byte_count++,						 \
+    (stream)->buffering == LSTREAM_LINE_BUFFERED &&			 \
+    (stream)->out_buffer[(stream)->out_buffer_ind - 1] == '\n' ?	 \
     Lstream_flush_out (stream) : 0))
 
-/* Retrieve from unget buffer if there are any characters there;
-   else retrieve from in buffer if there's anything there;
-   else call the function equivalent */
-#define Lstream_getc(stream) 						\
+/* Lstream_getc: Read one byte from the stream and returns it as an
+   unsigned char cast to an int, or EOF on end of file or error.  This
+   is a macro and so it is very efficient.  The STREAM argument is
+   evaluated more than once. */
+
+#define Lstream_getc(stream)						\
+/* Retrieve from unget buffer if there are any characters there;	\
+   else retrieve from in buffer if there's anything there;		\
+   else call the function equivalent */					\
   ((stream)->unget_buffer_ind > 0 ?					\
    ((stream)->byte_count++,						\
     (stream)->unget_buffer[--(stream)->unget_buffer_ind]) :		\
@@ -288,9 +332,20 @@ void Lstream_set_character_mode (Lstream *str);
      (stream)->in_buffer[(stream)->in_buffer_ind++]) :			\
     Lstream_fgetc (stream))
 
-/* Add to the end if it won't overflow buffer; otherwise call the
-   function equivalent */
+/* Lstream_ungetc: Push one byte back onto the input queue, cast to
+   unsigned char.  This will be the next byte read from the stream.
+   Any number of bytes can be pushed back and will be read in the
+   reverse order they were pushed back -- most recent first. (This is
+   necessary for consistency -- if there are a number of bytes that
+   have been unread and I read and unread a byte, it needs to be the
+   first to be read again.) This is a macro and so it is very
+   efficient.  The C argument is only evaluated once but the STREAM
+   argument is evaluated more than once.
+ */
+
 #define Lstream_ungetc(stream, c)					\
+/* Add to the end if it won't overflow buffer; otherwise call the	\
+   function equivalent */						\
   ((stream)->unget_buffer_ind >= (stream)->unget_buffer_size ?		\
    Lstream_fungetc (stream, c) :					\
    (void) ((stream)->byte_count--,					\
@@ -307,10 +362,6 @@ void Lstream_set_character_mode (Lstream *str);
 
 #ifdef MULE
 
-#ifndef BYTE_ASCII_P
-#include "mule-charset.h"
-#endif
-
 INLINE_HEADER Emchar Lstream_get_emchar (Lstream *stream);
 INLINE_HEADER Emchar
 Lstream_get_emchar (Lstream *stream)
@@ -320,6 +371,9 @@ Lstream_get_emchar (Lstream *stream)
 	  ? (Emchar) c
 	  : Lstream_get_emchar_1 (stream, c));
 }
+
+/* Write an Emchar to a stream.  Return value is 0 for success, -1 for
+   failure. */
 
 INLINE_HEADER int Lstream_put_emchar (Lstream *stream, Emchar ch);
 INLINE_HEADER int

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2001 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -35,8 +36,18 @@
 
 ;;; Code:
 
-(setq-default buffer-file-coding-system 'raw-text)
 (put 'buffer-file-coding-system 'permanent-local t)
+
+(defvar buffer-file-coding-system-when-loaded nil
+  "Coding system used when current buffer's file was read in.
+
+Automatically buffer-local when set in any fashion.  This is set
+automatically when a file is loaded and is used when the file needs to be
+reloaded (e.g. `revert-buffer').  Normally this will have the same value as
+`buffer-file-coding-system', but the latter may be changed because it's
+also used to specify the encoding when the file is written out.")
+(make-variable-buffer-local 'buffer-file-coding-system-when-loaded)
+(put 'buffer-file-coding-system-when-loaded 'permanent-local t)
 
 (define-obsolete-variable-alias
   'file-coding-system
@@ -46,14 +57,18 @@
   'overriding-file-coding-system
   'coding-system-for-read)
 
-(defvar buffer-file-coding-system-for-read 'undecided
-  "Coding system used when reading a file.
+;; NOTE: The real default value is set in code-init.el.
+(defvar buffer-file-coding-system-for-read nil
+  "Default coding system used when reading a file.
 This provides coarse-grained control; for finer-grained control, use
 `file-coding-system-alist'.  From a Lisp program, if you wish to
 unilaterally specify the coding system used for one particular
 operation, you should bind the variable `coding-system-for-read'
 rather than setting this variable, which is intended to be used for
-global environment specification.")
+global environment specification.
+
+See `insert-file-contents' for a full description of how a file's
+coding system is determined when it is read in.")
 
 (define-obsolete-variable-alias
   'file-coding-system-for-read
@@ -324,16 +339,32 @@ and (2) it puts less data in the undo list.
 
 The coding system used for decoding the file is determined as follows:
 
-1. `coding-system-for-read', if non-nil.
-2. The result of `insert-file-contents-pre-hook', if non-nil.
-3. The matching value for this filename from
-   `file-coding-system-alist', if any.
-4. `buffer-file-coding-system-for-read', if non-nil.
+1. `coding-system-for-read', if non-nil. (Intended as a temporary overriding
+      mechanism for use by Lisp code.)
+2. The result of `insert-file-contents-pre-hook', if non-nil. (Intended for
+      handling tricky cases where the coding system of the file cannot be
+      determined just by looking at the filename's extension and the standard
+      auto-detection mechanism isn't suitable, so more clever code is required.
+      In general, this hook should rarely be used.)
+3. The matching value for this filename from `file-coding-system-alist',
+      if any. (Intended as the standard way of determining encoding from
+      the name, or esp. the extension, of the file.  Akin to the way
+      file-name extensions are used under MS Windows to determine how to
+      handle the file, but more flexible.)
+4. `buffer-file-coding-system-for-read', if non-nil. (Intended to be where
+      the global default coding system is set.  Usually, you want to use
+      the value `undecided', to let the system auto-detect according to the
+      priorities set up by `set-coding-priority-list'.  This is usually
+      initialized from the `coding-system' property of the current language
+      environment.)
 5. The coding system 'raw-text.
 
 If a local value for `buffer-file-coding-system' in the current buffer
 does not exist, it is set to the coding system which was actually used
 for reading.
+
+#### This should explain in more detail the exact workings of the
+coding-system determination procedure.
 
 See also `insert-file-contents-access-hook',
 `insert-file-contents-pre-hook', `insert-file-contents-error-hook',
@@ -388,13 +419,18 @@ and `insert-file-contents-post-hook'."
 	  (unwind-protect
 	      (save-excursion
 		(let (buffer-read-only)
-		  (funcall func (point) (marker-position endmark))))
+		  (if (>= (function-max-args func) 2)
+		      ;; #### fuckme!  Someone at FSF changed the calling
+		      ;; convention of post-read-conversion.  We try to
+		      ;; support the old way.  #### Should we kill this?
+		      (funcall func (point) (marker-position endmark))
+		    (funcall func (- (marker-position endmark) (point))))))
 	    (if visit
 		(progn
 		  (set-buffer-auto-saved)
 		  (set-buffer-modified-p nil)))))
       (setcar (cdr return-val) (- (marker-position endmark) (point))))
-    ;; now finally set the buffer's `buffer-file-coding-system'.
+    ;; now finally set the buffer's `buffer-file-coding-system' ...
     (if (run-hook-with-args-until-success 'insert-file-contents-post-hook
 					  filename visit return-val)
 	nil
@@ -407,6 +443,11 @@ and `insert-file-contents-post-hook'."
 				     (coding-system-eol-type coding-system)))
 	;; otherwise actually set buffer-file-coding-system.
 	(set-buffer-file-coding-system coding-system)))
+    ;; ... and `buffer-file-coding-system-when-loaded'.  the machinations
+    ;; of set-buffer-file-coding-system cause the actual coding system
+    ;; object to be stored, so do that here, too.
+    (setq buffer-file-coding-system-when-loaded 
+	  (get-coding-system coding-system))
     return-val))
 
 (defvar write-region-pre-hook nil

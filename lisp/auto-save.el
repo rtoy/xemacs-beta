@@ -590,7 +590,10 @@ Hashed files (see `auto-save-hash-p') are not understood, use
 				 (generate-new-buffer "*recovered*")))
 		   (setq buffer-read-only nil)
 		   (erase-buffer)
-		   (insert-file-contents afile nil)
+		   ;; see comment in `revert-buffer' in files.el about
+		   ;; why it's safe to always use `escape-quoted'.
+		   (let ((coding-system-for-read 'escape-quoted))
+		     (insert-file-contents afile nil))
 		   (ignore-errors
 		     (after-find-file nil))
 		   (setq buffer-auto-save-file-name nil)

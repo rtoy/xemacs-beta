@@ -1,7 +1,7 @@
 /* Lisp functions pertaining to editing.
    Copyright (C) 1985-1987, 1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
-/* This file has been Mule-ized. */
+/* This file has been Mule-ized, June 2001. */
 
 /* Hacked on for Mule by Ben Wing, December 1994. */
 
@@ -43,7 +43,9 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 #include "sysdep.h"
 #include "syspwd.h"
-#include "sysfile.h"			/* for getcwd */
+#include "sysproc.h" /* for qxe_getpid() */
+#include "sysfile.h"
+#include "sysdir.h"
 
 /* Some static data, and a function to initialize it for each run */
 
@@ -73,13 +75,13 @@ Lisp_Object Quser_files_and_directories;
 /* This holds the value of `environ' produced by the previous
    call to Fset_time_zone_rule, or 0 if Fset_time_zone_rule
    has never been called.  */
-static char **environbuf;
+static Extbyte **environbuf;
 
 void
 init_editfns (void)
 {
 /* Only used in removed code below. */
-  char *p;
+  Intbyte *p;
 
   environbuf = 0;
 
@@ -91,10 +93,10 @@ init_editfns (void)
     return;
 #endif
 
-  if ((p = getenv ("NAME")))
+  if ((p = egetenv ("NAME")))
     /* I don't think it's the right thing to do the ampersand
        modification on NAME.  Not that it matters anymore...  -hniksic */
-    Vuser_full_name = build_ext_string (p, Qnative);
+    Vuser_full_name = build_intstring (p);
   else
     Vuser_full_name = Fuser_full_name (Qnil);
 }
@@ -397,7 +399,7 @@ even in case of abnormal exit (throw or error).
 
   record_unwind_protect (save_excursion_restore, save_excursion_save ());
 
-  return unbind_to (speccount, Fprogn (args));
+  return unbind_to_1 (speccount, Fprogn (args));
 }
 
 Lisp_Object
@@ -422,7 +424,7 @@ Executes BODY just like `progn'.
 
   record_unwind_protect (save_current_buffer_restore, Fcurrent_buffer ());
 
-  return unbind_to (speccount, Fprogn (args));
+  return unbind_to_1 (speccount, Fprogn (args));
 }
 
 DEFUN ("buffer-size", Fbuffer_size, 0, 1, 0, /*
@@ -456,7 +458,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return buildmark (BUF_BEGV (b), make_buffer (b));
+  return buildmark (BUF_BEGV (b), wrap_buffer (b));
 }
 
 DEFUN ("point-max", Fpoint_max, 0, 1, 0, /*
@@ -480,7 +482,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return buildmark (BUF_ZV (b), make_buffer (b));
+  return buildmark (BUF_ZV (b), wrap_buffer (b));
 }
 
 DEFUN ("following-char", Ffollowing_char, 0, 1, 0, /*
@@ -600,76 +602,71 @@ If BUFFER is nil, the current buffer is assumed.
   return make_char (BUF_FETCH_CHAR (b, n));
 }
 
-#if !defined(WINDOWSNT) && !defined(MSDOS)
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <limits.h>
-#endif
 
 DEFUN ("temp-directory", Ftemp_directory, 0, 0, 0, /*
 Return the pathname to the directory to use for temporary files.
 On MS Windows, this is obtained from the TEMP or TMP environment variables,
-defaulting to / if they are both undefined.
+defaulting to c:\\ if they are both undefined.
 On Unix it is obtained from TMPDIR, with /tmp as the default.
 */
        ())
 {
-  char *tmpdir;
+  Intbyte *tmpdir;
 #if defined(WIN32_NATIVE)
-  tmpdir = getenv ("TEMP");
+  tmpdir = egetenv ("TEMP");
   if (!tmpdir)
-    tmpdir = getenv ("TMP");
+    tmpdir = egetenv ("TMP");
   if (!tmpdir)
-    tmpdir = "/";
+    tmpdir = (Intbyte *) "c:\\";
 #else /* WIN32_NATIVE */
- tmpdir = getenv ("TMPDIR");
+ tmpdir = egetenv ("TMPDIR");
  if (!tmpdir)
     {
       struct stat st;
-      int myuid = getuid();
-      static char path[5 /* strlen ("/tmp/") */ + 1 + _POSIX_PATH_MAX];
+      int myuid = getuid ();
+      Intbyte *login_name = user_login_name (NULL);
+      DECLARE_EISTRING (eipath);
+      Intbyte *path;
 
-      strcpy (path, "/tmp/");
-      strncat (path, user_login_name (NULL), _POSIX_PATH_MAX);
-      if (lstat(path, &st) < 0 && errno == ENOENT)
-	{
-	  mkdir(path, 0700);	/* ignore retval -- checked next anyway. */
-	}
-      if (lstat(path, &st) == 0 && st.st_uid == (uid_t) myuid &&
-	  S_ISDIR(st.st_mode))
-	{
-	  tmpdir = path;
-	}
+      eicpy_c (eipath, "/tmp/");
+      eicat_rawz (eipath, login_name);
+      path = eidata (eipath);
+      if (qxe_lstat (path, &st) < 0 && errno == ENOENT)
+	qxe_mkdir (path, 0700);	/* ignore retval -- checked next anyway. */
+      if (qxe_lstat (path, &st) == 0 && (int) st.st_uid == myuid
+	  && S_ISDIR (st.st_mode))
+	tmpdir = path;
       else
 	{
-	  strcpy(path, getenv("HOME")); strncat(path, "/tmp/", _POSIX_PATH_MAX);
-	  if (stat(path, &st) < 0 && errno == ENOENT)
+	  eicpy_rawz (eipath, egetenv ("HOME"));
+	  eicat_c (eipath, "/tmp/");
+	  path = eidata (eipath);
+	  if (qxe_stat (path, &st) < 0 && errno == ENOENT)
 	    {
 	      int fd;
-	      char warnpath[1+_POSIX_PATH_MAX];
-	      mkdir(path, 0700);	/* ignore retvals */
-	      strcpy(warnpath, path);
-	      strncat(warnpath, ".created_by_xemacs", _POSIX_PATH_MAX);
-	      if ((fd = open(warnpath, O_WRONLY|O_CREAT, 0644)) > 0)
+	      DECLARE_EISTRING (eiwarnpath);
+
+	      qxe_mkdir (path, 0700);	/* ignore retvals */
+	      eicpy_ei (eiwarnpath, eipath);
+	      eicat_c (eiwarnpath, ".created_by_xemacs");
+	      if ((fd = qxe_open (eidata (eiwarnpath),
+				  O_WRONLY | O_CREAT, 0644)) > 0)
 		{
-		  write(fd, "XEmacs created this directory because /tmp/<yourname> was unavailable -- \nPlease check !\n", 89);
-		  close(fd);
+		  retry_write (fd, "XEmacs created this directory because "
+			 "/tmp/<yourname> was unavailable -- \n"
+			 "Please check !\n", 89);
+		  retry_close (fd);
 		}
 	    }
-	  if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
-	    {
-	      tmpdir = path;
-	    }
+	  if (qxe_stat (path, &st) == 0 && S_ISDIR (st.st_mode))
+	    tmpdir = path;
 	  else
-	    {
-   tmpdir = "/tmp";
-	    }
+	    tmpdir = (Intbyte *) "/tmp";
 	}
     }
 #endif
 
-  return build_ext_string (tmpdir, Qfile_name);
+  return build_intstring (tmpdir);
 }
 
 DEFUN ("user-login-name", Fuser_login_name, 0, 1, 0, /*
@@ -682,7 +679,7 @@ ignored and this function returns the login name for that UID, or nil.
 */
        (uid))
 {
-  char *returned_name;
+  Intbyte *returned_name;
   uid_t local_uid;
 
   if (!NILP (uid))
@@ -698,7 +695,7 @@ ignored and this function returns the login name for that UID, or nil.
   /* #### - I believe this should return nil instead of "unknown" when pw==0
      pw=0 is indicated by a null return from user_login_name
   */
-  return returned_name ? build_string (returned_name) : Qnil;
+  return returned_name ? build_intstring (returned_name) : Qnil;
 }
 
 /* This function may be called from other C routines when a
@@ -707,24 +704,27 @@ ignored and this function returns the login name for that UID, or nil.
    reference.  If UID == NULL, then the USER name
    for the user running XEmacs will be returned.  This
    corresponds to a nil argument to Fuser_login_name.
+
+   WARNING: The string returned comes from the data of a Lisp_String and
+   therefore will become garbage after the next GC.
 */
-char*
+Intbyte *
 user_login_name (uid_t *uid)
 {
   /* uid == NULL to return name of this user */
   if (uid != NULL)
     {
-      struct passwd *pw = getpwuid (*uid);
-      return pw ? pw->pw_name : NULL;
+      struct passwd *pw = qxe_getpwuid (*uid);
+      return pw ? (Intbyte *) pw->pw_name : NULL;
     }
   else
     {
       /* #### - when euid != uid, then LOGNAME and USER are leftovers from the
 	 old environment (I site observed behavior on sunos and linux), so the
 	 environment variables should be disregarded in that case.  --Stig */
-      char *user_name = getenv ("LOGNAME");
+      Intbyte *user_name = egetenv ("LOGNAME");
       if (!user_name)
-	user_name = getenv (
+	user_name = egetenv (
 #ifdef WIN32_NATIVE
 			    "USERNAME" /* it's USERNAME on NT */
 #else
@@ -732,17 +732,17 @@ user_login_name (uid_t *uid)
 #endif
 			    );
       if (user_name)
-	return (user_name);
+	return user_name;
       else
 	{
-	  struct passwd *pw = getpwuid (geteuid ());
+	  struct passwd *pw = qxe_getpwuid (geteuid ());
 #ifdef CYGWIN
 	  /* Since the Cygwin environment may not have an /etc/passwd,
 	     return "unknown" instead of the null if the username
 	     cannot be determined.
 	  */
 	  /* !!#### fix up in my mule ws */
-	  return pw ? pw->pw_name : (char *) "unknown";
+	  return (Intbyte *) (pw ? pw->pw_name : "unknown");
 #else
 	  /* For all but Cygwin return NULL (nil) */
 	  return pw ? pw->pw_name : NULL;
@@ -758,10 +758,10 @@ This ignores the environment variables LOGNAME and USER, so it differs from
 */
        ())
 {
-  struct passwd *pw = getpwuid (getuid ());
+  struct passwd *pw = qxe_getpwuid (getuid ());
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
 
-  Lisp_Object tem = build_string (pw ? pw->pw_name : "unknown");/* no gettext */
+  Lisp_Object tem = build_string (pw ? pw->pw_name : "unknown");
   return tem;
 }
 
@@ -794,7 +794,7 @@ value of `user-full-name' is returned.
   Lisp_Object user_name;
   struct passwd *pw = NULL;
   Lisp_Object tem;
-  const char *p, *q;
+  const Intbyte *p, *q;
 
   if (NILP (user) && STRINGP (Vuser_full_name))
     return Vuser_full_name;
@@ -802,48 +802,40 @@ value of `user-full-name' is returned.
   user_name = (STRINGP (user) ? user : Fuser_login_name (user));
   if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
-      const char *user_name_ext;
-
       /* Fuck me.  getpwnam() can call select() and (under IRIX at least)
 	 things get wedged if a SIGIO arrives during this time. */
-      TO_EXTERNAL_FORMAT (LISP_STRING, user_name,
-			  C_STRING_ALLOCA, user_name_ext,
-			  Qnative);
       slow_down_interrupts ();
-      pw = (struct passwd *) getpwnam (user_name_ext);
+      pw = qxe_getpwnam (XSTRING_DATA (user_name));
       speed_up_interrupts ();
     }
 
   /* #### - Stig sez: this should return nil instead of "unknown" when pw==0 */
   /* Ben sez: bad idea because it's likely to break something */
 #ifndef AMPERSAND_FULL_NAME
-  p = pw ? USER_FULL_NAME : "unknown"; /* don't gettext */
-  q = strchr (p, ',');
+  p = (Intbyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  q = qxestrchr (p, ',');
 #else
-  p = pw ? USER_FULL_NAME : "unknown"; /* don't gettext */
-  q = strchr (p, ',');
+  p = (Intbyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  q = qxestrchr (p, ',');
 #endif
   tem = ((!NILP (user) && !pw)
 	 ? Qnil
-	 : make_ext_string ((Extbyte *) p, (q ? q - p : (int) strlen (p)),
-			    Qnative));
+	 : make_string (p, (q ? q - p : qxestrlen (p))));
 
 #ifdef AMPERSAND_FULL_NAME
   if (!NILP (tem))
     {
-      p = (char *) XSTRING_DATA (tem);
-      q = strchr (p, '&');
+      p = XSTRING_DATA (tem);
+      q = qxestrchr (p, '&');
       /* Substitute the login name for the &, upcasing the first character.  */
       if (q)
 	{
-	  char *r = (char *) alloca (strlen (p) + XSTRING_LENGTH (user_name) + 1);
-	  memcpy (r, p, q - p);
-	  r[q - p] = 0;
-	  strcat (r, (char *) XSTRING_DATA (user_name));
-	  /* #### current_buffer dependency! */
-	  r[q - p] = UPCASE (current_buffer, r[q - p]);
-	  strcat (r, q + 1);
-	  tem = build_string (r);
+	  DECLARE_EISTRING (r);
+	  eicpy_raw (r, p, q - p);
+	  eicat_lstr (r, user_name);
+	  eisetch (r, q - p, UPCASE (0, eigetch (r, q - p)));
+	  eicat_rawz (r, q + 1);
+	  tem = eimake_string (r);
 	}
     }
 #endif /* AMPERSAND_FULL_NAME */
@@ -851,72 +843,46 @@ value of `user-full-name' is returned.
   return tem;
 }
 
-static Extbyte *cached_home_directory;
+static Intbyte *cached_home_directory;
 
 void
 uncache_home_directory (void)
 {
-  cached_home_directory = NULL;	/* in some cases, this may cause the leaking
-				   of a few bytes */
+  if (cached_home_directory)
+    xfree (cached_home_directory);
+  cached_home_directory = NULL;
 }
 
-/* !!#### not Mule correct. */
-
-/* Returns the home directory, in external format */
-Extbyte *
+/* Returns the home directory */
+Intbyte *
 get_home_directory (void)
 {
-  /* !!#### this is hopelessly bogus.  Rule #1: Do not make any assumptions
-     about what format an external string is in.  Could be Unicode, for all
-     we know, and then all the operations below are totally bogus.
-     Instead, convert all data to internal format *right* at the juncture
-     between XEmacs and the outside world, the very moment we first get
-     the data.  --ben */
   int output_home_warning = 0;
 
   if (cached_home_directory == NULL)
     {
-      if ((cached_home_directory = (Extbyte *) getenv("HOME")) == NULL)
+      cached_home_directory = egetenv ("HOME");
+      if (cached_home_directory)
+	cached_home_directory = qxestrdup (cached_home_directory);
+      else
 	{
-#if defined(WIN32_NATIVE)
-	  char *homedrive, *homepath;
+#if defined (WIN32_NATIVE)
+	  Intbyte *homedrive, *homepath;
 
-	  if ((homedrive = getenv("HOMEDRIVE")) != NULL &&
-	      (homepath = getenv("HOMEPATH")) != NULL)
+	  if ((homedrive = egetenv ("HOMEDRIVE")) != NULL &&
+	      (homepath = egetenv ("HOMEPATH")) != NULL)
 	    {
 	      cached_home_directory =
-		(Extbyte *) xmalloc (strlen (homedrive) +
-				     strlen (homepath) + 1);
-	      sprintf((char *) cached_home_directory, "%s%s",
-		      homedrive,
-		      homepath);
+		(Intbyte *) xmalloc (qxestrlen (homedrive) +
+				     qxestrlen (homepath) + 1);
+	      qxesprintf (cached_home_directory, "%s%s",
+			  homedrive,
+			  homepath);
 	    }
 	  else
 	    {
-# if 0 /* changed by ben.  This behavior absolutely stinks, and the
-	  possibility being addressed here occurs quite commonly.
-	  Using the current directory makes absolutely no sense. */
-	      /*
-	       * Use the current directory.
-	       * This preserves the existing XEmacs behavior, but is different
-	       * from NT Emacs.
-	       */
-	      if (initial_directory[0] != '\0')
-		{
-		  cached_home_directory = (Extbyte*) initial_directory;
-		}
-	      else
-		{
-		  /* This will probably give the wrong value */
-		  cached_home_directory = (Extbyte*) getcwd (NULL, 0);
-		}
-# else
-	      /*
-	       * This is NT Emacs behavior
-	       */
-	      cached_home_directory = (Extbyte *) "C:\\";
+	      cached_home_directory = qxestrdup ((Intbyte *) "C:\\");
 	      output_home_warning = 1;
-# endif
 	    }
 #else	/* !WIN32_NATIVE */
 	  /*
@@ -925,7 +891,7 @@ get_home_directory (void)
 	   * We probably should try to extract pw_dir from /etc/passwd,
 	   * before falling back to this.
 	   */
-	  cached_home_directory = (Extbyte *) "/";
+	  cached_home_directory = qxestrdup ((Intbyte *) "/");
 	  output_home_warning = 1;
 #endif	/* !WIN32_NATIVE */
 	}
@@ -948,11 +914,10 @@ Return the user's home directory, as a string.
 */
        ())
 {
-  Extbyte *path = get_home_directory ();
+  Intbyte *path = get_home_directory ();
 
-  return path == NULL ? Qnil :
-    Fexpand_file_name (Fsubstitute_in_file_name
-		       (build_ext_string ((char *) path, Qfile_name)),
+  return !path ? Qnil :
+    Fexpand_file_name (Fsubstitute_in_file_name (build_intstring (path)),
 		       Qnil);
 }
 
@@ -961,7 +926,7 @@ Return the name of the machine you are running on, as a string.
 */
        ())
 {
-    return Fcopy_sequence (Vsystem_name);
+  return Fcopy_sequence (Vsystem_name);
 }
 
 DEFUN ("emacs-pid", Femacs_pid, 0, 0, 0, /*
@@ -969,7 +934,7 @@ Return the process ID of Emacs, as an integer.
 */
        ())
 {
-  return make_int (getpid ());
+  return make_int (qxe_getpid ());
 }
 
 DEFUN ("current-time", Fcurrent_time, 0, 0, 0, /*
@@ -1052,7 +1017,7 @@ time_to_lisp (time_t the_time)
   return Fcons (make_int (item >> 16), make_int (item & 0xffff));
 }
 
-size_t emacs_strftime (char *string, size_t max, const char *format,
+size_t emacs_strftime (Extbyte *string, size_t max, const Extbyte *format,
 		       const struct tm *tm);
 static long difftm (const struct tm *a, const struct tm *b);
 
@@ -1118,13 +1083,17 @@ characters appearing in the day and month names may be incorrect.
 
   while (1)
     {
-      char *buf = (char *) alloca (size);
+      Extbyte *buf = (Extbyte *) alloca (size);
+      Extbyte *formext;
       *buf = 1;
-      if (emacs_strftime (buf, size,
-			  (const char *) XSTRING_DATA (format_string),
+
+      /* !!#### this use of external here is not totally safe, and
+	 potentially data lossy. */
+      LISP_STRING_TO_EXTERNAL (format_string, formext, Qnative);
+      if (emacs_strftime (buf, size, formext,
 			  localtime (&value))
 	  || !*buf)
-	return build_ext_string (buf, Qbinary);
+	return build_ext_string (buf, Qnative);
       /* If buffer was too small, make it bigger.  */
       size *= 2;
     }
@@ -1174,15 +1143,15 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
   return Flist (9, list_args);
 }
 
-static void set_time_zone_rule (char *tzstring);
+static void set_time_zone_rule (Extbyte *tzstring);
 
 /* from GNU Emacs 21, per Simon Josefsson, modified by stephen
    The slight inefficiency is justified since negative times are weird. */
 Lisp_Object
-make_time (time_t time)
+make_time (time_t tiempo)
 {
-  return list2 (make_int (time < 0 ? time / 0x10000 : time >> 16),
-		make_int (time & 0xFFFF));
+  return list2 (make_int (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
+		make_int (tiempo & 0xFFFF));
 }
 
 DEFUN ("encode-time", Fencode_time, 6, MANY, 0, /*
@@ -1224,12 +1193,15 @@ If you want them to stand for years in this century, you must do that yourself.
     the_time = mktime (&tm);
   else
     {
-      char tzbuf[100];
-      char *tzstring;
-      char **oldenv = environ, **newenv;
+      /* #### This business of modifying environ is horrendous!
+	 Why don't we just putenv()?  Why don't we implement our own
+	 funs that don't require this futzing? */
+      Extbyte tzbuf[100];
+      Extbyte *tzstring;
+      Extbyte **oldenv = environ, **newenv;
 
       if (STRINGP (zone))
-	tzstring = (char *) XSTRING_DATA (zone);
+	LISP_STRING_TO_EXTERNAL (zone, tzstring, Qnative);
       else if (INTP (zone))
 	{
 	  int abszone = abs (XINT (zone));
@@ -1238,7 +1210,7 @@ If you want them to stand for years in this century, you must do that yourself.
 	  tzstring = tzbuf;
 	}
       else
- invalid_argument ("Invalid time zone specification", Qunbound);
+	invalid_argument ("Invalid time zone specification", Qunbound);
 
       /* Set TZ before calling mktime; merely adjusting mktime's returned
 	 value doesn't suffice, since that would mishandle leap seconds.  */
@@ -1277,20 +1249,20 @@ and from `file-attributes'.
        (specified_time))
 {
   time_t value;
-  char *the_ctime;
+  Intbyte *the_ctime;
   EMACS_INT len; /* this is what make_ext_string() accepts; ####
 		    should it be an Bytecount? */
 
   if (! lisp_to_time (specified_time, &value))
     value = -1;
-  the_ctime = ctime (&value);
+  the_ctime = qxe_ctime (&value);
 
   /* ctime is documented as always returning a "\n\0"-terminated
      26-byte American time string, but let's be careful anyways. */
   for (len = 0; the_ctime[len] != '\n' && the_ctime[len] != '\0'; len++)
     ;
 
-  return make_ext_string ((Extbyte *) the_ctime, len, Qbinary);
+  return make_string (the_ctime, len);
 }
 
 #define TM_YEAR_ORIGIN 1900
@@ -1345,28 +1317,34 @@ the data it can't find.
     {
       struct tm gmt = *t;	/* Make a copy, in case localtime modifies *t.  */
       long offset;
-      char *s, buf[6];
+      Extbyte *s;
+      Lisp_Object tem;
 
       t = localtime (&value);
       offset = difftm (t, &gmt);
       s = 0;
 #ifdef HAVE_TM_ZONE
       if (t->tm_zone)
-	s = (char *)t->tm_zone;
+	s = (Extbyte *) t->tm_zone;
 #else /* not HAVE_TM_ZONE */
 #ifdef HAVE_TZNAME
       if (t->tm_isdst == 0 || t->tm_isdst == 1)
 	s = tzname[t->tm_isdst];
 #endif
 #endif /* not HAVE_TM_ZONE */
-      if (!s)
+      if (s)
+	tem = build_ext_string (s, Qnative);
+      else
 	{
+	  Intbyte buf[6];
+
 	  /* No local time zone name is available; use "+-NNNN" instead.  */
 	  int am = (offset < 0 ? -offset : offset) / 60;
-	  sprintf (buf, "%c%02d%02d", (offset < 0 ? '-' : '+'), am/60, am%60);
-	  s = buf;
+	  qxesprintf (buf, "%c%02d%02d", (offset < 0 ? '-' : '+'), am/60,
+		      am%60);
+	  tem = build_intstring (buf);
 	}
-      return list2 (make_int (offset), build_string (s));
+      return list2 (make_int (offset), tem);
     }
   else
     return list2 (Qnil, Qnil);
@@ -1383,8 +1361,8 @@ the data it can't find.
    See Sun bugs 1113095 and 1114114, ``Timezone routines
    improperly modify environment''.  */
 
-static char set_time_zone_rule_tz1[] = "TZ=GMT+0";
-static char set_time_zone_rule_tz2[] = "TZ=GMT+1";
+static Char_ASCII set_time_zone_rule_tz1[] = "TZ=GMT+0";
+static Char_ASCII set_time_zone_rule_tz2[] = "TZ=GMT+1";
 
 #endif
 
@@ -1392,19 +1370,19 @@ static char set_time_zone_rule_tz2[] = "TZ=GMT+1";
    This allocates memory into `environ', which it is the caller's
    responsibility to free.  */
 static void
-set_time_zone_rule (char *tzstring)
+set_time_zone_rule (Extbyte *tzstring)
 {
   int envptrs;
-  char **from, **to, **newenv;
+  Extbyte **from, **to, **newenv;
 
   for (from = environ; *from; from++)
     continue;
   envptrs = from - environ + 2;
-  newenv = to = (char **) xmalloc (envptrs * sizeof (char *)
+  newenv = to = (Extbyte **) xmalloc (envptrs * sizeof (Extbyte *)
 				   + (tzstring ? strlen (tzstring) + 4 : 0));
   if (tzstring)
     {
-      char *t = (char *) (to + envptrs);
+      Extbyte *t = (Extbyte *) (to + envptrs);
       strcpy (t, "TZ=");
       strcat (t, tzstring);
       *to++ = t;
@@ -1431,7 +1409,7 @@ set_time_zone_rule (char *tzstring)
       {
 	/* Temporarily set TZ to a value that loads a tz file
 	   and that differs from tzstring.  */
-	char *tz = *newenv;
+	Extbyte *tz = *newenv;
 	*newenv = (strcmp (tzstring, set_time_zone_rule_tz1 + 3) == 0
 		   ? set_time_zone_rule_tz2 : set_time_zone_rule_tz1);
 	tzset ();
@@ -1462,14 +1440,14 @@ If TZ is nil, use implementation-defined default time zone information.
 */
        (tz))
 {
-  char *tzstring;
+  Extbyte *tzstring;
 
   if (NILP (tz))
     tzstring = 0;
   else
     {
       CHECK_STRING (tz);
-      tzstring = (char *) XSTRING_DATA (tz);
+      LISP_STRING_TO_EXTERNAL (tz, tzstring, Qnative);
     }
 
   set_time_zone_rule (tzstring);
@@ -1845,7 +1823,7 @@ and don't mark the buffer as really changed.
     }
   end_multiple_change (buf, mc_count);
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
   return Qnil;
 }
 
@@ -2187,7 +2165,7 @@ use `save-excursion' outermost:
 
   record_unwind_protect (save_restriction_restore, save_restriction_save ());
 
-  return unbind_to (speccount, Fprogn (body));
+  return unbind_to_1 (speccount, Fprogn (body));
 }
 
 
@@ -2266,7 +2244,7 @@ Use %% to put a single % into the output.
      the caller in the interpreter should take care of that.  */
 
   CHECK_STRING (args[0]);
-  return emacs_doprnt_string_lisp (0, args[0], 0, nargs - 1, args + 1);
+  return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
 }
 
 
@@ -2580,7 +2558,7 @@ is not available by any other means.
 */ );
   atomic_extent_goto_char_p = 0;
 #ifdef AMPERSAND_FULL_NAME
-  Fprovide(intern("ampersand-full-name"));
+  Fprovide (intern ("ampersand-full-name"));
 #endif
 
   DEFVAR_LISP ("user-full-name", &Vuser_full_name /*

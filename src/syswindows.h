@@ -1,5 +1,5 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,40 +22,53 @@ Boston, MA 02111-1307, USA.  */
 
 /* Authorship:
 
+   Current primary author: Ben Wing <ben@xemacs.org>
+   
    Created May 2000 by Andy Piper.
-   Windows-Mule stuff added by Ben Wing.
+   Windows-Mule stuff added by Ben Wing, 2000-2001.
+   September 2001 Ben Wing reorganized and included nt.h and ntheap.h into
+   this file; comments in those files say:
+      * Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au>
+      * Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
+        (Note: Sync messages from Marc Paquette may indicate
+        incomplete synching, so beware.)
+      (in ntheap.h only) Geoff Voelker (voelker@cs.washington.edu) 7-29-94
+
 */
 
 #ifndef INCLUDED_syswindows_h_
 #define INCLUDED_syswindows_h_
 
-/* Note that there are currently FOUR different general
-   Windows-related include files in src!
+/* There are two different general Windows-related include files in src.
 
    Uses are approximately:
 
-   syswindows.h: Mostly a wrapper around <windows.h>, including missing
-   defines as necessary.  Also includes stuff needed on both Cygwin and
-   native Windows, regardless of window system chosen.
+   syswindows.h: Wrapper around <windows.h>, including missing defines as
+   necessary.  Includes stuff needed on both Cygwin and native Windows,
+   regardless of window system chosen.  Includes definitions needed for
+   Unicode conversion/encapsulation, and other Mule-related stuff, plus
+   various other prototypes and Windows-specific, but not GUI-specific,
+   stuff.
 
    console-msw.h: Used on both Cygwin and native Windows, but only when
-   native window system (as opposed to X) chosen.
-
-   nt.h: [will be renamed to win32.h] Used only on native Windows, and
-   regardless of window system chosen -- but used on both purely native
-   Windows (s/windowsnt.h) and MinGW (s/mingw32.h).
-
-   ntheap.h: Used only on native Windows and only when standard dumping
-   mechanism (unexnt.c) used.
-
-   All of the last three files include the first.
+   native window system (as opposed to X) chosen.  Includes syswindows.h.
 */
+
+/* See s/windowsnt.h for a description of what exactly the various
+   constants such as WIN32_NATIVE, HAVE_MS_WINDOWS, CYGWIN, and MINGW
+   mean, and how they relate to each other. */
+
+/* ------------------------- Basic includes ------------------------- */
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
 #if defined (CYGWIN) || defined (MINGW)
+# define CYGWIN_HEADERS
+# ifndef _WIN32_IE
+#  define _WIN32_IE 0x0400
+# endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +85,28 @@ extern __inline void *GetFiberData (void);
 
 #endif
 
+/* Defines for COM so it's usable in both C and C++.  XECOMCALLn() calls a
+   method with the specified number of parameters.  XECOMID() surrounds a
+   class or interface name when passed to CoCreateInstance, a
+   QueryInterface method, or the like. */
+#ifdef __cplusplus
+#define XECOMCALL0(cl, meth) ((cl)->meth ())
+#define XECOMCALL1(cl, meth, a1) ((cl)->meth (a1))
+#define XECOMCALL2(cl, meth, a1, a2) ((cl)->meth (a1, a2))
+#define XECOMCALL3(cl, meth, a1, a2, a3) ((cl)->meth (a1, a2, a3))
+#define XECOMCALL4(cl, meth, a1, a2, a3, a4) ((cl)->meth (a1, a2, a3, a4))
+#define XECOMID(id) (id)
+#else
+#define XECOMCALL0(cl, meth) ((cl)->lpVtbl->meth (cl))
+#define XECOMCALL1(cl, meth, a1) ((cl)->lpVtbl->meth (cl, a1))
+#define XECOMCALL2(cl, meth, a1, a2) ((cl)->lpVtbl->meth (cl, a1, a2))
+#define XECOMCALL3(cl, meth, a1, a2, a3) ((cl)->lpVtbl->meth (cl, a1, a2, a3))
+#define XECOMCALL4(cl, meth, a1, a2, a3, a4) \
+		((cl)->lpVtbl->meth (cl, a1, a2, a3, a4))
+#define XECOMID(id) (&(id))
+#endif		
+
+#define OEMRESOURCE /* Define OCR_ and friend constants */
 #include <windows.h>
 
 #if defined (WIN32_LEAN_AND_MEAN)
@@ -95,139 +130,439 @@ extern __inline void *GetFiberData (void);
 #include <lmerr.h>
 #include <lmcons.h> /* for UNLEN and possibly other constants */
 
-/* mmsystem.h defines. */
-#ifndef SND_ASYNC
-#define SND_ASYNC		1
+#include <cderr.h>
+#include <commdlg.h>
+
+#ifdef NEED_MSWINDOWS_COMMCTRL
+#include <commctrl.h>
 #endif
-#ifndef SND_NODEFAULT
-#define SND_NODEFAULT		2
+#ifdef NEED_MSWINDOWS_OBJBASE
+#include <objbase.h>
 #endif
-#ifndef SND_MEMORY
-#define SND_MEMORY		4
-#endif
-#ifndef SND_FILENAME
-#define SND_FILENAME		0x2000L
+#ifdef NEED_MSWINDOWS_SHLOBJ
+#include <shlobj.h>
 #endif
 
-/* winspool.h defines. */
-#ifndef PHYSICALWIDTH
-#define PHYSICALWIDTH 110
-#endif
-#ifndef PHYSICALHEIGHT
-#define PHYSICALHEIGHT 111
-#endif
-#ifndef PHYSICALOFFSETX
-#define PHYSICALOFFSETX 112
-#endif
-#ifndef PHYSICALOFFSETY
-#define PHYSICALOFFSETY 113
-#endif
+#include <zmouse.h> /* WHEEL_PAGESCROLL under Cygwin */
 
-/* shlobj.h defines. */
-#ifndef BIF_EDITBOX
-#define BIF_EDITBOX 0x10
-#endif
-#ifndef BIF_VALIDATE
-#define BIF_VALIDATE 0x20
-#endif
-#ifndef BFFM_VALIDATEFAILED
-#define BFFM_VALIDATEFAILED 3
-#endif
+#include <wchar.h>
+
+/* ------------------------- Cygwin header brokenness ---------------------- */
+
+#ifdef CYGWIN_HEADERS
+
+/* Various brokennesses in various versions of Cygwin */
 
 /* windows.h defines. */
-#if defined (CYGWIN) && (CYGWIN_VERSION_DLL_MAJOR < 20)
-typedef NMHDR *LPNMHDR;
-#endif
-
 #ifndef SPI_GETWHEELSCROLLLINES
 #define SPI_GETWHEELSCROLLLINES 104
 #endif
-#ifndef WHEEL_PAGESCROLL
-#define WHEEL_PAGESCROLL (UINT_MAX)
+
+/* commctrl.h defines. */
+#ifndef TB_SETIMAGELIST
+#define TB_SETIMAGELIST (WM_USER + 48)
 #endif
-#ifndef WHEEL_DELTA
-#define WHEEL_DELTA 120
+#ifndef TB_GETIMAGELIST
+#define TB_GETIMAGELIST (WM_USER + 49)
 #endif
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x20A
+#ifndef TB_SETDISABLEDIMAGELIST
+#define TB_SETDISABLEDIMAGELIST (WM_USER + 54)
 #endif
-#ifndef VK_APPS
-#define VK_APPS			0x5D
+#ifndef TB_GETDISABLEDIMAGELIST
+#define TB_GETDISABLEDIMAGELIST (WM_USER + 55)
 #endif
-#ifndef SIF_TRACKPOS
-#define SIF_TRACKPOS		0x0010
+#ifndef TB_SETPADDING
+#define TB_SETPADDING   (WM_USER + 87)
 #endif
-#ifndef FW_BLACK
-#define FW_BLACK	FW_HEAVY
+#ifndef TB_GETBUTTONINFOA
+#define TB_GETBUTTONINFOA  (WM_USER + 65)
 #endif
-#ifndef FW_ULTRABOLD
-#define FW_ULTRABOLD	FW_EXTRABOLD
+#ifndef TB_GETBUTTONINFOW
+#define TB_GETBUTTONINFOW  (WM_USER + 63)
 #endif
-#ifndef FW_DEMIBOLD
-#define FW_DEMIBOLD	FW_SEMIBOLD
+#ifndef TB_SETBUTTONINFOA
+#define TB_SETBUTTONINFOA  (WM_USER + 66)
 #endif
-#ifndef FW_ULTRALIGHT
-#define FW_ULTRALIGHT	FW_EXTRALIGHT
+#ifndef TB_SETBUTTONINFOW
+#define TB_SETBUTTONINFOW  (WM_USER + 64)
 #endif
-#ifndef APPCMD_FILTERINITS
-#define APPCMD_FILTERINITS	0x20L
+#ifndef TB_INSERTBUTTONA
+#define TB_INSERTBUTTONA  (WM_USER + 21)
 #endif
-#ifndef CBF_FAIL_SELFCONNECTIONS
-#define CBF_FAIL_SELFCONNECTIONS 0x1000
+#ifndef TB_INSERTBUTTONW
+#define TB_INSERTBUTTONW  (WM_USER + 67)
 #endif
-#ifndef CBF_SKIP_ALLNOTIFICATIONS
-#define CBF_SKIP_ALLNOTIFICATIONS	0x3C0000
+#ifndef TB_ADDBUTTONSA
+#define TB_ADDBUTTONSA  (WM_USER + 20)
 #endif
-#ifndef CBF_FAIL_ADVISES
-#define CBF_FAIL_ADVISES	0x4000
+#ifndef TB_ADDBUTTONSW
+#define TB_ADDBUTTONSW  (WM_USER + 68)
 #endif
-#ifndef CBF_FAIL_POKES
-#define CBF_FAIL_POKES		0x10000
+#ifndef LVM_SETBKIMAGEA
+#define LVM_SETBKIMAGEA  (LVM_FIRST + 68)
 #endif
-#ifndef CBF_FAIL_REQUESTS
-#define CBF_FAIL_REQUESTS	0x20000
+#ifndef LVM_SETBKIMAGEW
+#define LVM_SETBKIMAGEW  (LVM_FIRST + 138)
 #endif
-#ifndef SZDDESYS_TOPIC
-#define SZDDESYS_TOPIC		"System"
+#ifndef LVM_GETBKIMAGEA
+#define LVM_GETBKIMAGEA  (LVM_FIRST + 69)
 #endif
-#ifndef JOHAB_CHARSET
-#define JOHAB_CHARSET 		130
+#ifndef LVM_GETBKIMAGEW
+#define LVM_GETBKIMAGEW  (LVM_FIRST + 139)
 #endif
-#ifndef MAC_CHARSET
-#define MAC_CHARSET 		77
+#ifndef WC_COMBOBOXEXW
+#define WC_COMBOBOXEXW L"ComboBoxEx32"
+#endif
+#ifndef CBEM_INSERTITEMA
+#define CBEM_INSERTITEMA  (WM_USER + 1)
+#endif
+#ifndef CBEM_INSERTITEMW
+#define CBEM_INSERTITEMW  (WM_USER + 11)
+#endif
+#ifndef CBEM_SETITEMA
+#define CBEM_SETITEMA  (WM_USER + 5)
+#endif
+#ifndef CBEM_SETITEMW
+#define CBEM_SETITEMW  (WM_USER + 12)
+#endif
+#ifndef CBEM_GETITEMA
+#define CBEM_GETITEMA  (WM_USER + 4)
+#endif
+#ifndef CBEM_GETITEMW
+#define CBEM_GETITEMW  (WM_USER + 13)
+#endif
+#ifndef HDN_GETDISPINFOA
+#define HDN_GETDISPINFOA        (HDN_FIRST - 9)
+#endif
+#ifndef HDN_GETDISPINFOW
+#define HDN_GETDISPINFOW        (HDN_FIRST - 29)
+#endif
+#ifndef TBN_GETDISPINFOA
+#define TBN_GETDISPINFOA        (TBN_FIRST - 16)
+#endif
+#ifndef TBN_GETDISPINFOW
+#define TBN_GETDISPINFOW        (TBN_FIRST - 17)
+#endif
+#ifndef TBN_GETINFOTIPA
+#define TBN_GETINFOTIPA         (TBN_FIRST - 18)
+#endif
+#ifndef TBN_GETINFOTIPW
+#define TBN_GETINFOTIPW         (TBN_FIRST - 19)
+#endif
+#ifndef TTN_GETDISPINFOA
+#define TTN_GETDISPINFOA        (TTN_FIRST - 0)
+#endif
+#ifndef TTN_GETDISPINFOW
+#define TTN_GETDISPINFOW        (TTN_FIRST - 10)
 #endif
 
-/***************************************************************/
+#if (_WIN32_IE >= 0x0400)
 
-/* Definitions for Mule under MS Windows */
+#ifndef LVN_GETINFOTIPA
+#define LVN_GETINFOTIPA         (LVN_FIRST - 57)
+#endif
+#ifndef LVN_GETINFOTIPW
+#define LVN_GETINFOTIPW         (LVN_FIRST - 58)
+#endif
+#ifndef TVN_GETINFOTIPA
+#define TVN_GETINFOTIPA         (TVN_FIRST - 13)
+#endif
+#ifndef TVN_GETINFOTIPW
+#define TVN_GETINFOTIPW         (TVN_FIRST - 14)
+#endif
+#ifndef CBEN_GETDISPINFOA
+#define CBEN_GETDISPINFOA       (CBEN_FIRST - 0)
+#endif
+#ifndef CBEN_GETDISPINFOW
+#define CBEN_GETDISPINFOW       (CBEN_FIRST - 7)
+#endif
+#ifndef CBEN_DRAGBEGINA
+#define CBEN_DRAGBEGINA			 (CBEN_FIRST - 8)
+#endif
+#ifndef CBEN_DRAGBEGINW
+#define CBEN_DRAGBEGINW			 (CBEN_FIRST - 9)
+#endif
 
-#include <wchar.h>
+#endif /* (_WIN32_IE >= 0x0400) */
+
+#ifndef CBEN_ENDEDITA
+#define CBEN_ENDEDITA            (CBEN_FIRST - 5)
+#endif
+#ifndef CBEN_ENDEDITW
+#define CBEN_ENDEDITW            (CBEN_FIRST - 6)
+#endif
+
+#ifndef CBEMAXSTRLEN
+#define CBEMAXSTRLEN 260
+#endif
+
+typedef struct {
+        NMHDR hdr;
+        BOOL fChanged;
+        int iNewSelection;
+        WCHAR szText[CBEMAXSTRLEN];
+        int iWhy;
+} NMCBEENDEDITW, *LPNMCBEENDEDITW, *PNMCBEENDEDITW;
+
+typedef struct {
+        NMHDR hdr;
+        BOOL fChanged;
+        int iNewSelection;
+        char szText[CBEMAXSTRLEN];
+        int iWhy;
+} NMCBEENDEDITA, *LPNMCBEENDEDITA,*PNMCBEENDEDITA;
+
+#if (_WIN32_IE >= 0x0400)
+
+typedef struct {
+    NMHDR hdr;
+    int   iItemid;
+    WCHAR szText[CBEMAXSTRLEN];
+}NMCBEDRAGBEGINW, *LPNMCBEDRAGBEGINW, *PNMCBEDRAGBEGINW;
+
+typedef struct {
+    NMHDR hdr;
+    int   iItemid;
+    char szText[CBEMAXSTRLEN];
+}NMCBEDRAGBEGINA, *LPNMCBEDRAGBEGINA, *PNMCBEDRAGBEGINA;
+typedef struct tagNMDATETIMEFORMATA
+{
+    NMHDR nmhdr;
+    LPCSTR  pszFormat;
+    SYSTEMTIME st;
+    LPCSTR pszDisplay;
+    CHAR szDisplay[64];
+} NMDATETIMEFORMATA, FAR * LPNMDATETIMEFORMATA;
+
+typedef struct tagNMDATETIMEFORMATW
+{
+    NMHDR nmhdr;
+    LPCWSTR pszFormat;
+    SYSTEMTIME st;
+    LPCWSTR pszDisplay;
+    WCHAR szDisplay[64];
+} NMDATETIMEFORMATW, FAR * LPNMDATETIMEFORMATW;
+
+typedef struct tagNMTTDISPIFNOA {
+    NMHDR hdr;
+    LPSTR lpszText;
+    char szText[80];
+    HINSTANCE hinst;
+    UINT uFlags;
+#if (_WIN32_IE >= 0x0300)
+    LPARAM lParam;
+#endif
+} NMTTDISPINFOA, FAR *LPNMTTDISPINFOA;
+
+typedef struct tagNMTTDISPINFOW {
+    NMHDR hdr;
+    LPWSTR lpszText;
+    WCHAR szText[80];
+    HINSTANCE hinst;
+    UINT uFlags;
+#if (_WIN32_IE >= 0x0300)
+    LPARAM lParam;
+#endif
+} NMTTDISPINFOW, FAR *LPNMTTDISPINFOW;
+
+#endif /* (_WIN32_IE >= 0x0400) */
+
+/* shlobj.h defines */
+#ifndef BFFM_VALIDATEFAILEDA
+#define BFFM_VALIDATEFAILEDA    3
+#endif
+#ifndef BFFM_VALIDATEFAILEDW
+#define BFFM_VALIDATEFAILEDW    4
+#endif
+#ifndef BFFM_SETSELECTIONA
+#define BFFM_SETSELECTIONA      (WM_USER + 102)
+#endif
+#ifndef BFFM_SETSELECTIONW
+#define BFFM_SETSELECTIONW      (WM_USER + 103)
+#endif
+#ifndef BFFM_SETSTATUSTEXTA
+#define BFFM_SETSTATUSTEXTA     (WM_USER + 100)
+#endif
+#ifndef BFFM_SETSTATUSTEXTW
+#define BFFM_SETSTATUSTEXTW     (WM_USER + 104)
+#endif
+#ifndef SHARD_PATHA
+#define SHARD_PATHA     2
+#endif
+#ifndef SHARD_PATHW
+#define SHARD_PATHW     3
+#endif
+#ifndef SHCNF_PATHA
+#define SHCNF_PATHA     1
+#endif
+#ifndef SHCNF_PATHW
+#define SHCNF_PATHW     5
+#endif
+#ifndef SHCNF_PRINTERA
+#define SHCNF_PRINTERA     2
+#endif
+#ifndef SHCNF_PRINTERW
+#define SHCNF_PRINTERW     6
+#endif
+#ifndef BFFM_VALIDATEFAILED
+#ifdef UNICODE
+#define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDW
+#else
+#define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDA
+#endif
+#endif /* not BFFM_VALIDATEFAILED */
+
+/* OEM resources */
+#ifndef OCR_ICOCUR
+#define OCR_ICOCUR          32647
+#define OIC_SAMPLE          32512
+#define OIC_HAND            32513
+#define OIC_QUES            32514
+#define OIC_BANG            32515
+#define OIC_NOTE            32516
+#define OIC_WINLOGO         32517
+#endif
+
+/* More Cygwin stupidity: Current w32api's winuser.h has IME message
+   constants and they conflict with imm.h. (NOTE: Currently fixed, but
+   I'm sure the problems were present post 1.0.) */
+#undef WM_IME_STARTCOMPOSITION
+#undef WM_IME_ENDCOMPOSITION
+#undef WM_IME_COMPOSITION
+#undef WM_IME_KEYLAST
+#undef WM_IME_SETCONTEXT
+#undef WM_IME_NOTIFY
+#undef WM_IME_CONTROL
+#undef WM_IME_COMPOSITIONFULL
+#undef WM_IME_SELECT
+#undef WM_IME_CHAR
+#undef WM_IME_KEYDOWN
+#undef WM_IME_KEYUP
+
+#include <imm.h>
+
+typedef struct _SHQUERYRBINFO
+{
+  DWORD cbSize;
+  __int64 i64Size;
+  __int64 i64NumItems;
+} SHQUERYRBINFO, *LPSHQUERYRBINFO;
+
+typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
+typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
+
+#endif /* CYGWIN_HEADERS */
+
+/* Not in VC 6 */
+#ifndef BIF_NEWDIALOGSTYLE
+#define BIF_NEWDIALOGSTYLE 64
+#endif
 
 #ifdef CYGWIN
 
 /* All but wcscmp and wcslen left out of Cygwin headers -- but present
-   in /usr/include/mingw32/string.h! */
+   in /usr/include/mingw/string.h! */
 wchar_t* wcscat (wchar_t*, const wchar_t*);
 wchar_t* wcschr (const wchar_t*, wchar_t);
 int	wcscoll (const wchar_t*, const wchar_t*);
 wchar_t* wcscpy (wchar_t*, const wchar_t*);
+wchar_t* wcsdup (const wchar_t*);
 size_t	wcscspn (const wchar_t*, const wchar_t*);
 /* Note: No wcserror in CRTDLL. */
 wchar_t* wcsncat (wchar_t*, const wchar_t*, size_t);
-int	wcsncmp(const wchar_t*, const wchar_t*, size_t);
-wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
-wchar_t* wcspbrk(const wchar_t*, const wchar_t*);
-wchar_t* wcsrchr(const wchar_t*, wchar_t);
-size_t	wcsspn(const wchar_t*, const wchar_t*);
-wchar_t* wcsstr(const wchar_t*, const wchar_t*);
-wchar_t* wcstok(wchar_t*, const wchar_t*);
-size_t	wcsxfrm(wchar_t*, const wchar_t*, size_t);
+int	wcsncmp (const wchar_t*, const wchar_t*, size_t);
+wchar_t* wcsncpy (wchar_t*, const wchar_t*, size_t);
+wchar_t* wcspbrk (const wchar_t*, const wchar_t*);
+wchar_t* wcsrchr (const wchar_t*, wchar_t);
+size_t	wcsspn (const wchar_t*, const wchar_t*);
+wchar_t* wcsstr (const wchar_t*, const wchar_t*);
+wchar_t* wcstok (wchar_t*, const wchar_t*);
+size_t	wcsxfrm (wchar_t*, const wchar_t*, size_t);
 
 #endif /* CYGWIN */
 
-// extern int mswindows_windows9x_p;
-/* #define XEUNICODE_P (!mswindows_windows9x_p) */
-#define XEUNICODE_P 0
+/* ------------------------- Unicode encapsulation ------------------------- */
+
+/* See intl-encap-win32.c for more information about Unicode-encapsulation */
+
+#include "intl-auto-encap-win32.h"
+
+/* would be encapsulatable but for parsing problems */
+LRESULT qxeDefWindowProc (HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT qxeCallWindowProc (WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg,
+			   WPARAM wParam, LPARAM lParam);
+LRESULT qxeDefDlgProc (HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+HHOOK qxeSetWindowsHook (int nFilterType, HOOKPROC pfnFilterProc);
+LRESULT qxeDefMDIChildProc (HWND hWnd, UINT uMsg, WPARAM wParam,
+			    LPARAM lParam);
+
+/* would be encapsulatable but for Cygwin problems */
+LONG qxeRegConnectRegistry (const Extbyte * lpMachineName, HKEY hKey, PHKEY phkResult);
+UINT qxeExtractIconEx (const Extbyte * lpszFile, int nIconIndex, HICON FAR * phiconLarge, HICON FAR * phiconSmall, UINT nIcons);
+BOOL qxeGetICMProfile (HDC arg1, LPDWORD arg2, Extbyte * arg3);
+BOOL qxeUpdateICMRegKey (DWORD arg1, Extbyte * arg2, Extbyte * arg3, UINT arg4);
+
+/* files */
+HANDLE qxeFindFirstFile (const Extbyte *lpFileName,
+			 WIN32_FIND_DATAW *lpFindFileData);
+BOOL qxeFindNextFile (HANDLE hFindFile, WIN32_FIND_DATAW *lpFindFileData);
+
+/* shell */
+DWORD qxeSHGetFileInfo (const Extbyte *pszPath, DWORD dwFileAttributes,
+			SHFILEINFOW *psfi, UINT cbFileInfo, UINT uFlags);
+LPITEMIDLIST qxeSHBrowseForFolder (LPBROWSEINFOW lpbi);
+VOID qxeSHAddToRecentDocs (UINT uFlags, LPCVOID pv);
+VOID qxeSHChangeNotify (LONG wEventId, UINT uFlags, LPCVOID dwItem1,
+			LPCVOID dwItem2);
+HRESULT qxeSHGetDataFromIDList (IShellFolder *psf, LPCITEMIDLIST pidl,
+				int nFormat, PVOID pv, int cb);
+
+/* devmode */
+HDC qxeCreateDC (const Extbyte *lpszDriver, const Extbyte *lpszDevice,
+		 const Extbyte *lpszOutput, CONST DEVMODEW *lpInitData);
+HDC qxeResetDC (HDC hdc, CONST DEVMODEW *lpInitData);
+DWORD qxeOpenPrinter (Extbyte *pPrinterName, LPHANDLE phPrinter,
+		      LPPRINTER_DEFAULTSW pDefaultconst);
+LONG qxeDocumentProperties (HWND hWnd, HANDLE hPrinter, Extbyte *pDeviceName,
+			    DEVMODEW *pDevModeOutput, DEVMODEW *pDevModeInput,
+			    DWORD fMode);
+BOOL qxePrintDlg (PRINTDLGW *lppd);
+BOOL qxePageSetupDlg (PAGESETUPDLGW *lppd);
+
+/* fonts */
+int qxeEnumFontFamiliesEx (HDC hdc, LOGFONTW *lpLogfont,
+			   FONTENUMPROCW lpEnumFontFamProc, LPARAM lParam,
+			   DWORD dwFlags);
+HFONT qxeCreateFontIndirect (CONST LOGFONTW *lplf);
+BOOL qxeImmSetCompositionFont (HIMC imc, LOGFONTW *lplf);
+BOOL qxeImmGetCompositionFont (HIMC imc, LOGFONTW *lplf);
+int qxeGetObject (HGDIOBJ hgdiobj, int cbBuffer, LPVOID lpvObject);
+BOOL qxeGetTextMetrics (HDC hdc, LPTEXTMETRICW lptm);
+
+/* COMMCTRL.H */
+LRESULT qxeSendMessage (HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+/* windows */
+ATOM qxeRegisterClass (CONST WNDCLASSW * lpWndClass);
+BOOL qxeUnregisterClass (const Extbyte * lpClassName, HINSTANCE hInstance);
+ATOM qxeRegisterClassEx (CONST WNDCLASSEXW * arg1);
+#define qxeCreateWindow(lpClassName, lpWindowName, dwStyle, x, y,	     \
+                        nWidth, nHeight, hWndParent, hMenu, hInstance,	     \
+			lpParam)					     \
+  qxeCreateWindowEx (0L, lpClassName, lpWindowName, dwStyle, x, y,	     \
+                     nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+
+/* ------------------------- Unicode conversion ------------------------- */
+
+/* Set early in command-line processing, when -nuni or
+   --no-unicode-lib-calls is seen. */
+extern int no_mswin_unicode_lib_calls;
+/* Set early, in init_win32_very_early(). */
+extern int mswindows_windows9x_p;
+#define XEUNICODE_P (!mswindows_windows9x_p && !no_mswin_unicode_lib_calls)
+
+#define XELPTSTR LPWSTR
+#define XELPCTSTR LPCWSTR
 
 #define XETCHAR_SIZE (XEUNICODE_P ? sizeof (WCHAR) : sizeof (CHAR))
 #define MAX_XETCHAR_SIZE sizeof (WCHAR)
@@ -237,56 +572,123 @@ size_t	wcsxfrm(wchar_t*, const wchar_t*, size_t);
 #define XETEXT(arg) XETEXT1(arg)
 #define XECOPY_TCHAR(ptr, ch) \
   (XEUNICODE_P ? (* (LPWSTR) (ptr) = L##ch) : (* (LPSTR) (ptr) = (ch)))
-#define xetcslen(arg) (XEUNICODE_P ? wcslen ((wchar_t *) arg) : strlen (arg))
+#define xetcslen(arg) \
+  (XEUNICODE_P ? wcslen ((wchar_t *) arg) : strlen (arg))
+#define xetcsbytelen(arg) \
+  (XEUNICODE_P ? wcslen ((wchar_t *) arg) * XETCHAR_SIZE : strlen (arg))
 #define xetcscmp(s1, s2) \
   (XEUNICODE_P ? wcscmp ((wchar_t *) s1, (wchar_t *) s2) \
    : strcmp (s1, s2))
 #define xetcscpy(s1, s2) \
   (XEUNICODE_P ? (char *) wcscpy ((wchar_t *) s1, (wchar_t *) s2) \
    : strcpy (s1, s2))
+#define xetcsncpy(s1, s2, n) \
+  (XEUNICODE_P ? (char *) wcsncpy ((wchar_t *) s1, (wchar_t *) s2, n) \
+   : strncpy (s1, s2, n))
 #define xetcschr(s, ch) \
   (XEUNICODE_P ? (char *) wcschr ((wchar_t *) s, (WCHAR) ch) \
    : strchr (s, ch))
 #define xetcsrchr(s, ch) \
   (XEUNICODE_P ? (char *) wcsrchr ((wchar_t *) s, (WCHAR) ch) \
    : strrchr (s, ch))
+#define xetcsdup(s) \
+  (XEUNICODE_P ? (char *) wcsdup ((wchar_t *) s) \
+   : xstrdup (s))
 
+#define C_STRING_TO_TSTR(in, out) \
+  C_STRING_TO_EXTERNAL (in, out, Qmswindows_tstr)
+#define LISP_STRING_TO_TSTR(in, out) \
+  LISP_STRING_TO_EXTERNAL (in, out, Qmswindows_tstr)
+#define TSTR_TO_C_STRING(in, out) \
+  EXTERNAL_TO_C_STRING (in, out, Qmswindows_tstr)
+#define TSTR_TO_C_STRING_MALLOC(in, out) \
+  EXTERNAL_TO_C_STRING_MALLOC (in, out, Qmswindows_tstr)
 
-#define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
-do {							\
-  Intbyte *lttff;					\
-							\
-  LOCAL_TO_WIN32_FILE_FORMAT (path, lttff);		\
-  C_STRING_TO_EXTERNAL (lttff, out, Qmswindows_tstr);	\
+#define build_tstr_string(in) \
+  make_ext_string (in, xetcsbytelen ((Extbyte *) in), Qmswindows_tstr)
+
+#define MAX_ANSI_CHAR_LEN 1
+#define MAX_UNICODE_CHAR_LEN 2
+
+DECLARE_INLINE_HEADER (int ansi_char_to_text (int ch, Extbyte *t))
+{
+  ch &= 0xFF;
+  t[0] = ch;
+  return 1;
+}
+
+DECLARE_INLINE_HEADER (int unicode_char_to_text (int ch, Extbyte *t))
+{
+  t[0] = ch & 0xFF;
+  t[1] = (ch >> 8) & 0xFF;
+  return 2;
+}
+
+Extbyte *convert_multibyte_to_unicode_malloc (const Extbyte *src,
+					      Bytecount n,
+					      int cp, Bytecount *size_out);
+Intbyte *convert_multibyte_to_internal_malloc (const Extbyte *src,
+					       Bytecount n,
+					       int cp, Bytecount *size_out);
+void convert_multibyte_to_unicode_dynarr (const Extbyte *src, Bytecount n,
+					  int cp, unsigned_char_dynarr *dst);
+
+/* ------------------------- Other Mule stuff ------------------------- */
+
+LCID mswindows_current_locale (void);
+int mswindows_locale_to_code_page (LCID lcid);
+int mswindows_locale_to_oem_code_page (LCID lcid);
+
+/* ------------------------- Filename conversion ------------------------- */
+
+#ifdef CYGWIN
+#ifdef __cplusplus
+extern "C" {
+#endif
+void cygwin_win32_to_posix_path_list (const char *, char *);
+int cygwin_win32_to_posix_path_list_buf_size (const char *);
+void cygwin_posix_to_win32_path_list (const char *, char *);
+int cygwin_posix_to_win32_path_list_buf_size (const char *);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+#define LOCAL_FILE_FORMAT_TO_TSTR(path, out)			\
+do {								\
+  Intbyte *lttff;						\
+								\
+  LOCAL_TO_WIN32_FILE_FORMAT (XSTRING_DATA (path), lttff);	\
+  C_STRING_TO_TSTR (lttff, out);				\
 } while (0)
 
 Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
 
 #ifdef CYGWIN
-#define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)			\
-do {									\
-  /* NOTE: It is a bit evil that here and below we are passing		\
-     internal-format data to a function that (nominally) should work	\
-     with external-format data.  But in point of fact, the Cygwin	\
-     conversion functions are *NOT* localized, and will fail if they	\
-     get 7-bit ISO2022-encoded data.  We know that our internal format	\
-     is ASCII-compatible, and so these functions will work fine with	\
-     this data. */							\
-  Lisp_Object ltwff1 = (path);						\
-  Intbyte* ltwffp = XSTRING_DATA (ltwff1);				\
-  if (isalpha (ltwffp[0]) && (IS_DEVICE_SEP (ltwffp[1])))			\
-    pathout = ltwffp;							\
-  else {									\
-    int ltwff2 =								\
-      cygwin_posix_to_win32_path_list_buf_size ((char*)ltwffp);	\
-    pathout = (Intbyte *) alloca (ltwff2);				\
-    cygwin_posix_to_win32_path_list ((char*) ltwffp, (char*) pathout);	\
-  }									\
+#define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)			   \
+do {									   \
+  /* NOTE: It is a bit evil that here and below we are passing		   \
+     internal-format data to a function that (nominally) should work	   \
+     with external-format data.  But in point of fact, the Cygwin	   \
+     conversion functions are *NOT* localized, and will fail if they	   \
+     get 7-bit ISO2022-encoded data.  We know that our internal format	   \
+     is ASCII-compatible, and so these functions will work fine with	   \
+     this data. */							   \
+  Intbyte *ltwffp = (path);						   \
+  if (isalpha (ltwffp[0]) && (IS_DEVICE_SEP (ltwffp[1])))		   \
+    pathout = ltwffp;							   \
+  else									   \
+    {									   \
+      int ltwff2 =							   \
+        cygwin_posix_to_win32_path_list_buf_size ((char *) ltwffp);	   \
+      pathout = (Intbyte *) alloca (ltwff2);				   \
+      cygwin_posix_to_win32_path_list ((char *) ltwffp, (char *) pathout); \
+    }									   \
 } while (0)
 #else
 #define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)	\
 do {							\
-  (pathout) = XSTRING_DATA (path);			\
+  (pathout) = (path);					\
 } while (0)
 #endif
 
@@ -298,51 +700,165 @@ do {									\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
   Intbyte *wtlff3 = (Intbyte *) alloca (wtlff2);			\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
-  (pathout) = build_string ((CIntbyte *) wtlff3);			\
+  (pathout) = wtlff3;							\
 } while (0)
 #else
 #define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)	\
 do {							\
-  (pathout) = build_string ((CIntbyte *) path);		\
+  (pathout) = (path);					\
 } while (0)
 #endif
 
-extern BOOL (WINAPI *xSwitchToThread) (VOID);
+Intbyte *urlify_filename (Intbyte *filename);
+Intbyte *mswindows_canonicalize_filename (Intbyte *name);
+#define MSWINDOWS_NORMALIZE_FILENAME(name) \
+  INTBYTE_STRING_TO_ALLOCA (mswindows_canonicalize_filename (name), name)
 
-extern HKL (WINAPI *xGetKeyboardLayout) (DWORD);
-extern BOOL (WINAPI *xSetMenuDefaultItem) (HMENU, UINT, UINT);
-extern BOOL (WINAPI *xInsertMenuItemA) (HMENU, UINT, BOOL, LPCMENUITEMINFOA);
-extern BOOL (WINAPI *xInsertMenuItemW) (HMENU, UINT, BOOL, LPCMENUITEMINFOW);
-extern HANDLE (WINAPI *xLoadImageA) (HINSTANCE, LPCSTR, UINT, int, int, UINT);
-extern HANDLE (WINAPI *xLoadImageW) (HINSTANCE, LPCWSTR, UINT, int, int, UINT);
-extern ATOM (WINAPI *xRegisterClassExA) (CONST WNDCLASSEXA *);
-extern ATOM (WINAPI *xRegisterClassExW) (CONST WNDCLASSEXW *);
+/* ------------------- Functions needed dynamic binding ------------------- */
 
-extern int (WINAPI *xEnumFontFamiliesExA) (HDC, LPLOGFONTA, FONTENUMPROCA,
-					   LPARAM, DWORD);
-extern int (WINAPI *xEnumFontFamiliesExW) (HDC, LPLOGFONTW, FONTENUMPROCW,
-					   LPARAM, DWORD);
+typedef BOOL (WINAPI *pfSwitchToThread_t) (VOID);
 
-extern DWORD (WINAPI *xSHGetFileInfoA) (LPCSTR, DWORD, SHFILEINFOA FAR *, UINT,
-					UINT);
-extern DWORD (WINAPI *xSHGetFileInfoW) (LPCWSTR, DWORD, SHFILEINFOW FAR *,
-					UINT, UINT);
+typedef NET_API_STATUS (NET_API_FUNCTION *pfNetUserEnum_t)
+     (LPCWSTR, DWORD, DWORD, LPBYTE *, DWORD, LPDWORD, LPDWORD, LPDWORD);
+typedef NET_API_STATUS (NET_API_FUNCTION *pfNetApiBufferFree_t) (LPVOID);
 
-extern NET_API_STATUS (NET_API_FUNCTION *xNetUserEnum)
-     (
-      IN  LPCWSTR     servername OPTIONAL,
-      IN  DWORD      level,
-      IN  DWORD      filter,
-      OUT LPBYTE     *bufptr,
-      IN  DWORD      prefmaxlen,
-      OUT LPDWORD    entriesread,
-      OUT LPDWORD    totalentries,
-      IN OUT LPDWORD resume_handle OPTIONAL
-      );
+extern pfSwitchToThread_t xSwitchToThread;
 
-extern NET_API_STATUS (NET_API_FUNCTION *xNetApiBufferFree)
-     (
-      IN LPVOID Buffer
-      );
+extern pfNetUserEnum_t xNetUserEnum;
+extern pfNetApiBufferFree_t xNetApiBufferFree;
+
+/* --------- Useful routines for manipulating memory-mapped files -------- */
+
+typedef struct file_data
+{
+  const Intbyte  *name;
+  unsigned long  size;
+  HANDLE         file;
+  HANDLE         file_mapping;
+  void           *file_base;
+} file_data;
+
+#define OFFSET_TO_RVA(var,section)			\
+	  (section->VirtualAddress +			\
+	   ((DWORD)(var) - section->PointerToRawData))
+
+#define RVA_TO_OFFSET(var,section)			\
+	  (section->PointerToRawData +			\
+	   ((DWORD)(var) - section->VirtualAddress))
+
+#define RVA_TO_PTR(var,section,filedata)		\
+	  ((void *)(RVA_TO_OFFSET(var,section) +	\
+		    (char *)(filedata).file_base))
+
+int open_input_file (file_data *p_file, const Intbyte *name);
+int open_output_file (file_data *p_file, const Intbyte *name,
+		      unsigned long size);
+void close_file_data (file_data *p_file);
+
+/* ------------------------- Heap related stuff ------------------------- */
+
+#ifdef WIN32_NATIVE
+
+#define get_reserved_heap_size()	reserved_heap_size
+#define get_committed_heap_size()	(get_data_end () - get_data_start ())
+#define get_heap_start()		get_data_start ()
+#define get_heap_end()			get_data_end ()
+#define get_page_size()			sysinfo_cache.dwPageSize
+#define get_allocation_unit()		sysinfo_cache.dwAllocationGranularity
+#define get_processor_type()		sysinfo_cache.dwProcessorType
+#define get_nt_major_version()  	nt_major_version
+#define get_nt_minor_version()  	nt_minor_version
+
+extern unsigned char *get_data_start();
+extern unsigned char *get_data_end();
+extern unsigned long  data_region_size;
+extern unsigned long  reserved_heap_size;
+extern SYSTEM_INFO    sysinfo_cache;
+extern int    	      nt_major_version;
+extern int    	      nt_minor_version;
+
+/* To prevent zero-initialized variables from being placed into the bss
+   section, use non-zero values to represent an uninitialized state.  */
+#define UNINIT_PTR ((unsigned char*) 0xF0A0F0A0)
+#define UNINIT_LONG (0xF0A0F0A0L)
+
+/* Emulation of Unix sbrk().  */
+extern void *sbrk (unsigned long size);
+
+/* Recreate the heap created during dumping.  */
+extern void recreate_heap (char *executable_path);
+
+/* Round the heap to this size.  */
+extern void round_heap (unsigned long size);
+
+/* Load in the dumped .bss section.  */
+extern void read_in_bss (char *name);
+
+/* Map in the dumped heap.  */
+extern void map_in_heap (char *name);
+
+/* Cache system info, e.g., the NT page size.  */
+extern void cache_system_info (void);
+
+/* Round ADDRESS up to be aligned with ALIGN.  */
+extern unsigned char *round_to_next (unsigned char *address, 
+				     unsigned long align);
+#endif /* WIN32_NATIVE */
+
+/* ------------------------- Misc prototypes ------------------------- */
+
+#ifdef WIN32_NATIVE
+DECLARE_INLINE_HEADER (int strcasecmp (const char *a, const char *b))
+{
+  return qxestrcasecmp ((const Intbyte *) a, (const Intbyte *) b);
+}
+#endif /* WIN32_NATIVE */
+
+/* in nt.c */
+int mswindows_access (const Intbyte *path, int mode);
+int mswindows_link (const Intbyte *old, const Intbyte *new);
+int mswindows_rename (const Intbyte *oldname, const Intbyte *newname);
+int mswindows_unlink (const Intbyte *path);
+int mswindows_stat (const Intbyte *path, struct stat *buf);
+int mswindows_fstat (int desc, struct stat *buf);
+time_t mswindows_convert_time (FILETIME ft);
+void mswindows_executable_type (const Intbyte * filename, int * is_dos_app,
+				int * is_cygnus_app);
+Intbyte *mswindows_getdcwd (int drivelet);
+
+/* In process-nt.c */
+extern int mswindows_compare_env (const void *strp1, const void *strp2);
+
+/* in sysdep.c */
+#ifdef WIN32_NATIVE
+void wait_for_termination (HANDLE pid);
+#endif
+
+/* in win32.c */
+void mswindows_output_last_error (char *frob);
+DECLARE_DOESNT_RETURN (mswindows_report_process_error (const char *string,
+						       Lisp_Object data,
+						       int errnum));
+Lisp_Object mswindows_lisp_error (int errnum);
+
+
+/*--------------------------------------------------------------------*/
+/*                        stuff in ntproc.c                           */
+/*                           DIE DIE DIE                              */
+/*--------------------------------------------------------------------*/
+
+/* Prepare our standard handles for proper inheritance by child processes.  */
+extern void prepare_standard_handles (int in, int out, 
+				      int err, HANDLE handles[4]);
+/* Reset our standard handles to their original state.  */
+extern void reset_standard_handles (int in, int out, 
+				    int err, HANDLE handles[4]);
+void set_process_dir (const char * dir);
+extern void init_ntproc (void);
+/* Will die as soon as callproc.c dies */
+int spawnve_will_die_soon (int mode, const Intbyte *cmdname,
+			   const Intbyte * const *argv,
+			   const Intbyte *const *envp);
+int pipe_will_die_soon (int *phandles);
 
 #endif /* INCLUDED_syswindows_h_ */

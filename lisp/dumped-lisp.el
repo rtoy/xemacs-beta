@@ -55,10 +55,8 @@
 				;  `emacs-user-extension-dir'
 	"misc"
 	;; (pureload "profile")
-	(unless-feature mule "help-nomule")
 	"help"
 	;; (pureload "hyper-apropos")  Soon...
-	(unless-feature file-coding "files-nomule")
 	"files"
 	"lib-complete"
 	"format"
@@ -114,24 +112,26 @@
 	(when-feature (and (not infodock) dialog) "dialog-items")
 
 	;;;;;;;;;;;;;;;;;; Coding-system support
-	(when-feature file-coding "coding")
-	(when-feature file-coding "code-files")
+	"coding"
+	"code-files"
 	;; Handle process with encoding/decoding coding-system.
-	(when-feature file-coding "code-process")
+	"code-process"
 	;; Provide basic commands to set coding systems to user
-	(when-feature file-coding "code-cmds")
+	"code-cmds"
+	"unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
 	(when-feature mule "mule-charset")
+	(when-feature mule "mule-cmds") ; to sync with Emacs 20.1
 	(when-feature mule "mule-coding")
-	;; All files after this can have extended characters in them.
-	(when-feature mule "mule-help")
-	(when-feature mule "mule-category")
-	(when-feature mule "mule-ccl")
-	(when-feature mule "mule-misc")
-	(when-feature mule "kinsoku")
+	;; may initialize coding systems
 	(when-feature (and mule x) "mule-x-init")
 	(when-feature (and mule tty) "mule-tty-init")
-	(when-feature mule "mule-cmds") ; to sync with Emacs 20.1
+	(when-feature (and mule mswindows) "mule-msw-init")
+	"code-init" ; set up defaults
+	;; All files after this can have extended characters in them.
+	(when-feature mule "mule-category")
+	(when-feature mule "mule-ccl")
+	(when-feature mule "kinsoku")
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site
@@ -176,9 +176,6 @@
 ;; SKK is now a package
 ;	(when-feature mule "skk-leim")
 
-;; Set up the XEmacs environment for Mule.
-;; Assumes the existence of various stuff above.
-	(when-feature mule "mule-init")
 
 ;; Enable Mule capability for Gnus, mail, etc...
 ;; Moved to sunpro-load.el - the default only for Sun.
@@ -231,6 +228,7 @@
 	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"
 	"auto-show"
+	"resize-minibuffer"
 	(when-feature ldap "ldap")
 
 ;; (when-feature energize "energize/energize-load.el")

@@ -158,10 +158,3 @@ NOTE-END */
    It may also exist on non-Intel architectures. */
 #define BROKEN_ALLOCA_IN_FUNCTION_CALLS
 #endif
-
-/* XEmacs change: John Hughes <john@AtlanTech.COM> says using vfork
-   under i386-unknown-sysv4.2 makes C-g sometimes cause a SIGSEGV
-   in TTY mode; the problem goes away if you use fork */
-#ifdef USG5_4_2
-#define vfork fork
-#endif

@@ -1838,27 +1838,25 @@ With argument, insert value in current buffer after the form."
   ;; extended characters are output properly and distinguished properly.
   ;; Otherwise, use `raw-text' for maximum portability with non-Mule
   ;; Emacsen.
-  (when (featurep '(or mule file-coding))
-    (defvar buffer-file-coding-system)
-    (if (or (featurep '(not mule)) ;; Don't scan buffer if we are not muleized
-	    (save-excursion
-	      (set-buffer byte-compile-inbuffer)
-	      (goto-char (point-min))
-	      ;; mrb- There must be a better way than skip-chars-forward
-	      (skip-chars-forward (concat (char-to-string 0) "-"
-					  (char-to-string 255)))
-	      (eq (point) (point-max))))
-	(setq buffer-file-coding-system 'raw-text-unix)
-      (insert "(require 'mule)\n;;;###coding system: escape-quoted\n")
-      (setq buffer-file-coding-system 'escape-quoted)
-      ;; #### Lazy loading not yet implemented for MULE files
-      ;; mrb - Fix this someday.
-      (save-excursion
-	(set-buffer byte-compile-inbuffer)
-	(setq byte-compile-dynamic nil
-	      byte-compile-dynamic-docstrings nil))
-      ;;(external-debugging-output (prin1-to-string (buffer-local-variables))))
-      ))
+  (if (or (featurep '(not mule)) ;; Don't scan buffer if we are not muleized
+	  (save-excursion
+	    (set-buffer byte-compile-inbuffer)
+	    (goto-char (point-min))
+	    ;; mrb- There must be a better way than skip-chars-forward
+	    (skip-chars-forward (concat (char-to-string 0) "-"
+					(char-to-string 255)))
+	    (eq (point) (point-max))))
+      (setq buffer-file-coding-system 'raw-text-unix)
+    (insert "(require 'mule)\n;;;###coding system: escape-quoted\n")
+    (setq buffer-file-coding-system 'escape-quoted)
+    ;; #### Lazy loading not yet implemented for MULE files
+    ;; mrb - Fix this someday.
+    (save-excursion
+      (set-buffer byte-compile-inbuffer)
+      (setq byte-compile-dynamic nil
+	    byte-compile-dynamic-docstrings nil))
+    ;;(external-debugging-output (prin1-to-string (buffer-local-variables))))
+    )
   )
 
 

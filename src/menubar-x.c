@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -335,7 +335,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
       set_opaque_ptr (wv_closure, 0);
     }
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
   return wv;
 }
 
@@ -348,14 +348,11 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
 							should run now */
 {
   widget_value *wv;
-  int count = specpdl_depth ();
-  record_unwind_protect (restore_gc_inhibit,
-			 make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  int count = begin_gc_forbidden ();
   /* Can't GC! */
   wv = menu_item_descriptor_to_widget_value_1 (desc, menu_type, deep_p,
 					       filter_p, 0);
-  unbind_to (count, Qnil);
+  unbind_to (count);
   return wv;
 }
 
@@ -464,7 +461,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       in_menu_callback = 1;
       wv = menu_item_descriptor_to_widget_value (submenu_desc, SUBMENU_TYPE,
 						 1, 0);
-      unbind_to (count, Qnil);
+      unbind_to (count);
 
       if (!wv)
 	{
@@ -528,7 +525,7 @@ compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
       Fset_buffer (XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
-      unbind_to (count, Qnil);
+      unbind_to (count);
 
       return data;
     }
@@ -1155,17 +1152,15 @@ menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
   Vmenu_accelerator_enabled   = Qnil;
   if (!NILP (errordata))
     {
-      Lisp_Object args[2];
-
-      args[0] = build_string ("Error in menu accelerators (setting to nil)");
       /* #### This should call
 	 (with-output-to-string (display-error errordata))
 	 but that stuff is all in Lisp currently. */
-      args[1] = errordata;
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
-	 emacs_doprnt_string_lisp ((const Intbyte *) "%s: %s",
-				   Qnil, -1, 2, args));
+	 emacs_sprintf_string_lisp
+	 ("%s: %s", Qnil, 2,
+	  build_msg_string ("Error in menu accelerators (setting to nil)"),
+	  errordata));
     }
 
   return Qnil;

@@ -41,9 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "frame.h"
 #include "lstream.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 /* Module loading technology version number */
 extern Lisp_Object Vmodule_version;

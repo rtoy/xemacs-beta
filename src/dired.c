@@ -1,5 +1,6 @@
  /* Lisp functions for making directory listings.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -49,7 +50,7 @@ static Lisp_Object
 close_directory_unwind (Lisp_Object unwind_obj)
 {
   DIR *d = (DIR *)get_opaque_ptr (unwind_obj);
-  closedir (d);
+  qxe_closedir (d);
   free_opaque_ptr (unwind_obj);
   return Qnil;
 }
@@ -76,7 +77,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   Lisp_Object handler;
   struct re_pattern_buffer *bufp = NULL;
   int speccount = specpdl_depth ();
-  char *statbuf, *statbuf_tail;
+  Intbyte *statbuf, *statbuf_tail;
 
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (directory, list);
@@ -101,7 +102,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   directory = Ffile_name_as_directory (directory);
   directorylen = XSTRING_LENGTH (directory);
 
-  statbuf = (char *)alloca (directorylen + MAXNAMLEN + 1);
+  statbuf = (Intbyte *) alloca (directorylen + MAXNAMLEN + 1);
   memcpy (statbuf, XSTRING_DATA (directory), directorylen);
   statbuf_tail = statbuf + directorylen;
 
@@ -124,7 +125,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   /* Do this opendir after anything which might signal an error.
      NOTE: the above comment is old; previously, there was no
      unwind-protection in case of error, but now there is.  */
-  d = opendir ((char *) XSTRING_DATA (directory));
+  d = qxe_opendir (XSTRING_DATA (directory));
   if (!d)
     report_file_error ("Opening directory", directory);
 
@@ -136,7 +137,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   /* Loop reading blocks */
   while (1)
     {
-      DIRENTRY *dp = readdir (d);
+      DIRENTRY *dp = qxe_readdir (d);
       int len;
 
       if (!dp)
@@ -154,7 +155,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 	      memcpy (statbuf_tail, dp->d_name, len);
 	      statbuf_tail[len] = 0;
 
-	      if (xemacs_stat (statbuf, &st) == 0
+	      if (qxe_stat (statbuf, &st) == 0
 		  && (st.st_mode & S_IFMT) == S_IFDIR)
 		dir_p = 1;
 
@@ -174,7 +175,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 	  }
 	}
     }
-  unbind_to (speccount, Qnil);	/* This will close the dir */
+  unbind_to (speccount);	/* This will close the dir */
 
   if (NILP (nosort))
     list = Fsort (Fnreverse (list), Qstring_lessp);
@@ -248,7 +249,7 @@ file_name_completion_stat (Lisp_Object directory, DIRENTRY *dp,
   Bytecount len = NAMLEN (dp);
   Bytecount pos = XSTRING_LENGTH (directory);
   int value;
-  char *fullname = (char *) alloca (len + pos + 2);
+  Intbyte *fullname = (Intbyte *) alloca (len + pos + 2);
 
   memcpy (fullname, XSTRING_DATA (directory), pos);
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))
@@ -261,11 +262,11 @@ file_name_completion_stat (Lisp_Object directory, DIRENTRY *dp,
   /* We want to return success if a link points to a nonexistent file,
      but we want to return the status for what the link points to,
      in case it is a directory.  */
-  value = lstat (fullname, st_addr);
+  value = qxe_lstat (fullname, st_addr);
   if (S_ISLNK (st_addr->st_mode))
-    xemacs_stat (fullname, st_addr);
+    qxe_stat (fullname, st_addr);
 #else
-  value = xemacs_stat (fullname, st_addr);
+  value = qxe_stat (fullname, st_addr);
 #endif
   return value;
 }
@@ -279,7 +280,7 @@ file_name_completion_unwind (Lisp_Object locative)
   if (!NILP (obj))
     {
       d = (DIR *)get_opaque_ptr (obj);
-      closedir (d);
+      qxe_closedir (d);
       free_opaque_ptr (obj);
     }
   free_cons (XCONS (locative));
@@ -336,7 +337,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
     {
-      d = opendir ((char *) XSTRING_DATA (Fdirectory_file_name (directory)));
+      d = qxe_opendir (XSTRING_DATA (Fdirectory_file_name (directory)));
       if (!d)
 	report_file_error ("Opening directory", directory);
       XCAR (locative) = make_opaque_ptr ((void *)d);
@@ -353,10 +354,10 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
           int ignored_extension_p = 0;
 	  Intbyte *d_name;
 
-	  dp = readdir (d);
+	  dp = qxe_readdir (d);
 	  if (!dp) break;
 
-	  /* Cast to Intbyte* is OK, as readdir() Mule-encapsulates.  */
+	  /* Cast to Intbyte* is OK, as qxe_readdir() Mule-encapsulates.  */
 	  d_name = (Intbyte *) dp->d_name;
 	  len = NAMLEN (dp);
 	  cclen = bytecount_to_charcount (d_name, len);
@@ -492,12 +493,12 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
               bestmatchsize = matchsize;
             }
         }
-      closedir (d);
+      qxe_closedir (d);
       free_opaque_ptr (XCAR (locative));
       XCAR (locative) = Qnil;
     }
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   UNGCPRO;
 
@@ -641,16 +642,14 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 #ifndef WIN32_NATIVE
       slow_down_interrupts ();
       setpwent ();
-      while ((pwd = getpwent ()))
+      while ((pwd = qxe_getpwent ()))
         {
           QUIT;
 	  DO_REALLOC (user_cache.user_names, user_cache.size,
 		      user_cache.length + 1, struct user_name);
-	  TO_INTERNAL_FORMAT (C_STRING, pwd->pw_name,
-			      MALLOC,
-			      (user_cache.user_names[user_cache.length].ptr,
-			       user_cache.user_names[user_cache.length].len),
-			      Qnative);
+	  user_cache.user_names[user_cache.length].ptr =
+	    (Intbyte *) xstrdup (pwd->pw_name);
+	  user_cache.user_names[user_cache.length].len = strlen (pwd->pw_name);
 	  user_cache.length++;
         }
 #else
@@ -672,23 +671,16 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 				   make_int (GetLastError ()));
 	      for (i = 0; i < (int) entriesread; i++)
 		{
-		  int nout =
-		    WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
-					 bufptr[i].usri0_name,
-					 -1, 0, 0, "~", 0);
-		  void *outp = alloca (nout);
-		  WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,
-				       bufptr[i].usri0_name, -1,
-				       (LPSTR) outp, nout, "~", 0);
 		  DO_REALLOC (user_cache.user_names, user_cache.size,
 			      user_cache.length + 1, struct user_name);
-		  TO_INTERNAL_FORMAT (C_STRING, outp,
+		  TO_INTERNAL_FORMAT (C_STRING,
+				      bufptr[i].usri0_name,
 				      MALLOC,
 				      (user_cache.
 				       user_names[user_cache.length].ptr,
 				       user_cache.
 				       user_names[user_cache.length].len),
-				      Qmswindows_tstr);
+				      Qmswindows_unicode);
 		  user_cache.length++;
 		}
 	      xNetApiBufferFree (bufptr);
@@ -700,7 +692,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 	  Extbyte name[2 * (UNLEN + 1)];
 	  DWORD length = sizeof (name);
 	  
-	  if (GetUserName (name, &length))
+	  if (qxeGetUserName (name, &length))
 	    {
 	      DO_REALLOC (user_cache.user_names, user_cache.size,
 			  user_cache.length + 1, struct user_name);
@@ -717,7 +709,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 #endif
 
       XCAR (cache_incomplete_p) = Qnil;
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
 
       EMACS_GET_TIME (user_cache.last_rebuild_time);
     }
@@ -783,23 +775,23 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
 
 Lisp_Object
-make_directory_hash_table (const char *path)
+make_directory_hash_table (const Intbyte *path)
 {
   DIR *d;
-  if ((d = opendir (path)))
+  if ((d = qxe_opendir (path)))
     {
       DIRENTRY *dp;
       Lisp_Object hash =
 	make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 
-      while ((dp = readdir (d)))
+      while ((dp = qxe_readdir (d)))
 	{
 	  Bytecount len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
-	    /* Cast to Intbyte* is OK, as readdir() Mule-encapsulates.  */
+	    /* Cast to Intbyte* is OK, as qxe_readdir() Mule-encapsulates.  */
 	    Fputhash (make_string ((Intbyte *) dp->d_name, len), Qt, hash);
 	}
-      closedir (d);
+      qxe_closedir (d);
       return hash;
     }
   else
@@ -862,7 +854,7 @@ If file does not exist, returns nil.
       return call2 (handler, Qfile_attributes, filename);
     }
 
-  if (lstat ((char *) XSTRING_DATA (filename), &s) < 0)
+  if (qxe_lstat (XSTRING_DATA (filename), &s) < 0)
     {
       UNGCPRO;
       return Qnil;
@@ -874,14 +866,14 @@ If file does not exist, returns nil.
 
 #if 0 /* #### shouldn't this apply to WIN32_NATIVE and maybe CYGWIN? */
   {
-    char *tmpnam = (char *) XSTRING_DATA (Ffile_name_nondirectory (filename));
-    int l = strlen (tmpnam);
+    Intbyte *tmpnam = XSTRING_DATA (Ffile_name_nondirectory (filename));
+    Bytecount l = qxestrlen (tmpnam);
 
     if (l >= 5
 	&& S_ISREG (s.st_mode)
-	&& (stricmp (&tmpnam[l - 4], ".com") == 0 ||
-	    stricmp (&tmpnam[l - 4], ".exe") == 0 ||
-	    stricmp (&tmpnam[l - 4], ".bat") == 0))
+	&& (qxestrcasecmp (&tmpnam[l - 4], ".com") == 0 ||
+	    qxestrcasecmp (&tmpnam[l - 4], ".exe") == 0 ||
+	    qxestrcasecmp (&tmpnam[l - 4], ".bat") == 0))
       {
 	s.st_mode |= S_IEXEC;
       }
@@ -919,7 +911,7 @@ If file does not exist, returns nil.
   {
     struct stat sdir;
 
-    if (!NILP (directory) && xemacs_stat ((char *) XSTRING_DATA (directory), &sdir) == 0)
+    if (!NILP (directory) && qxe_stat (XSTRING_DATA (directory), &sdir) == 0)
       values[9] = (sdir.st_gid != s.st_gid) ? Qt : Qnil;
     else                        /* if we can't tell, assume worst */
       values[9] = Qt;

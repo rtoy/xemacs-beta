@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,17 +23,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Kirill M. Katsnelson <kkm@kis.ru>, April 1998 */
 
+/* Mule-ized as of 8-6-00 */
+
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
 #include "console-msw.h"
 #include "hash.h"
 #include "lstream.h"
-#include "nt.h"
 #include "process.h"
 #include "procimpl.h"
-#include "sysdep.h"
 
 #include "syssignal.h"
 #include "sysfile.h"
@@ -64,7 +63,7 @@ Lisp_Object Vmswindows_start_process_share_console;
    subprocesses blocking when accessing unmounted drives.  */
 Lisp_Object Vmswindows_start_process_inherit_error_mode;
 
-#define NT_DATA(p) ((struct nt_process_data*)((p)->process_data))
+#define NT_DATA(p) ((struct nt_process_data *)((p)->process_data))
 
 /*-----------------------------------------------------------------------*/
 /* Process helpers							 */
@@ -118,19 +117,19 @@ typedef struct
 
 static int 
 alloc_process_memory (HANDLE h_process, Bytecount size,
-		      process_memory* pmc)
+		      process_memory *pmc)
 {
   LPTHREAD_START_ROUTINE adr_ExitThread =
     (LPTHREAD_START_ROUTINE)
-    GetProcAddress (GetModuleHandle ("kernel32"), "ExitThread");
+    GetProcAddress (qxeGetModuleHandle (XETEXT ("kernel32")), "ExitThread");
   DWORD dw_unused;
   CONTEXT context;
   MEMORY_BASIC_INFORMATION mbi;
 
   pmc->h_process = h_process;
   pmc->h_thread = CreateRemoteThread (h_process, NULL, size,
-				     adr_ExitThread, NULL,
-				     CREATE_SUSPENDED, &dw_unused);
+				      adr_ExitThread, NULL,
+				      CREATE_SUSPENDED, &dw_unused);
   if (pmc->h_thread == NULL)
     return 0;
 
@@ -167,7 +166,7 @@ alloc_process_memory (HANDLE h_process, Bytecount size,
 }
 
 static void
-free_process_memory (process_memory* pmc)
+free_process_memory (process_memory *pmc)
 {
   ResumeThread (pmc->h_thread);
 }
@@ -272,7 +271,7 @@ typedef struct
 } sigkill_data;
 
 static DWORD WINAPI
-sigkill_proc (sigkill_data* data)
+sigkill_proc (sigkill_data *data)
 {
   (*data->adr_ExitProcess)(255);
   return 1;
@@ -288,7 +287,7 @@ typedef struct
 } sigint_data;
 
 static DWORD WINAPI
-sigint_proc (sigint_data* data)
+sigint_proc (sigint_data *data)
 {
   return (*data->adr_GenerateConsoleCtrlEvent) (data->event, 0);
 }
@@ -302,7 +301,7 @@ typedef struct
 } sig_enable_data;
 
 static DWORD WINAPI
-sig_enable_proc (sig_enable_data* data)
+sig_enable_proc (sig_enable_data *data)
 {
   (*data->adr_SetConsoleCtrlHandler) (NULL, FALSE);
   return 1;
@@ -317,7 +316,7 @@ static int
 send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 {
   HANDLE h_process;
-  HMODULE h_kernel = GetModuleHandle ("kernel32");
+  HMODULE h_kernel = qxeGetModuleHandle (XETEXT ("kernel32"));
   int close_process = 0;
   DWORD retval;
   
@@ -354,7 +353,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 	  (void (WINAPI *) (UINT)) GetProcAddress (h_kernel, "ExitProcess");
 	assert (d.adr_ExitProcess);
 	retval = run_in_other_process (h_process, 
-				       (LPTHREAD_START_ROUTINE)sigkill_proc,
+				       (LPTHREAD_START_ROUTINE) sigkill_proc,
 				       &d, sizeof (d));
 	break;
       }
@@ -367,7 +366,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 	assert (d.adr_GenerateConsoleCtrlEvent);
 	d.event = CTRL_C_EVENT;
 	retval = run_in_other_process (h_process, 
-				       (LPTHREAD_START_ROUTINE)sigint_proc,
+				       (LPTHREAD_START_ROUTINE) sigint_proc,
 				       &d, sizeof (d));
 	break;
       }
@@ -386,7 +385,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
 static void
 enable_child_signals (HANDLE h_process)
 {
-  HMODULE h_kernel = GetModuleHandle ("kernel32");
+  HMODULE h_kernel = qxeGetModuleHandle (XETEXT ("kernel32"));
   sig_enable_data d;
   
   assert (h_kernel != NULL);
@@ -412,11 +411,12 @@ find_child_console (HWND hwnd, long putada)
   thread_id = GetWindowThreadProcessId (hwnd, &process_id);
   if (process_id == cp->dwProcessId)
     {
-      char window_class[32];
+      Extbyte window_class[32];
 
-      GetClassName (hwnd, window_class, sizeof (window_class));
+      /* GetClassNameA to avoid problems with Unicode return values */
+      GetClassNameA (hwnd, window_class, sizeof (window_class));
       if (strcmp (window_class,
-		  mswindows_windows9x_p ()
+		  mswindows_windows9x_p
 		  ? "tty"
 		  : "ConsoleWindowClass") == 0)
 	{
@@ -456,16 +456,16 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
     {
       if (NILP (Vmswindows_start_process_share_console) && cp && cp->hwnd)
 	{
-	  BYTE control_scan_code = (BYTE) MapVirtualKey (VK_CONTROL, 0);
+	  BYTE control_scan_code = (BYTE) MapVirtualKeyA (VK_CONTROL, 0);
 	  BYTE vk_break_code = VK_CANCEL;
-	  BYTE break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
+	  BYTE break_scan_code = (BYTE) MapVirtualKeyA (vk_break_code, 0);
 	  HWND foreground_window;
 
 	  if (break_scan_code == 0)
 	    {
 	      /* Fake Ctrl-C if we can't manage Ctrl-Break. */
 	      vk_break_code = 'C';
-	      break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
+	      break_scan_code = (BYTE) MapVirtualKeyA (vk_break_code, 0);
 	    }
 
 	  foreground_window = GetForegroundWindow ();
@@ -537,7 +537,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
       if (NILP (Vmswindows_start_process_share_console) && cp && cp->hwnd)
 	{
 #if 1
-	  if (mswindows_windows9x_p ())
+	  if (mswindows_windows9x_p)
 	    {
 /*
    Another possibility is to try terminating the VDM out-right by
@@ -605,7 +605,7 @@ send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
 static int
 send_signal (struct nt_process_data *cp, int pid, int signo)
 {
-  return (!mswindows_windows9x_p () && send_signal_the_nt_way (cp, pid, signo))
+  return (!mswindows_windows9x_p && send_signal_the_nt_way (cp, pid, signo))
     || send_signal_the_95_way (cp, pid, signo);
 }
 
@@ -655,14 +655,6 @@ nt_init_process (void)
   WSAStartup (MAKEWORD (1,1), &wsa_data);
 }
 
-DOESNT_RETURN
-mswindows_report_process_error (const char *string, Lisp_Object data,
-				int errnum)
-{
-  report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
-			  string, data);
-}
-
 static DOESNT_RETURN
 mswindows_report_winsock_error (const char *string, Lisp_Object data,
 				int errnum)
@@ -674,14 +666,15 @@ mswindows_report_winsock_error (const char *string, Lisp_Object data,
 static void
 ensure_console_window_exists (void)
 {
-  if (mswindows_windows9x_p ())
+  if (mswindows_windows9x_p)
     mswindows_hide_console ();
 }
 
 int
-compare_env (const void *strp1, const void *strp2)
+mswindows_compare_env (const void *strp1, const void *strp2)
 {
-  const char *str1 = *(const char**)strp1, *str2 = *(const char**)strp2;
+  const Intbyte *str1 = *(const Intbyte **)strp1,
+    *str2 = *(const Intbyte **)strp2;
 
   while (*str1 && *str2 && *str1 != '=' && *str2 != '=')
     {
@@ -720,43 +713,45 @@ nt_create_process (Lisp_Process *p,
   HANDLE hmyshove, hmyslurp, hprocin, hprocout, hprocerr;
   Extbyte *command_line;
   BOOL do_io, windowed;
-  char *proc_env;
+  Extbyte *proc_env;
 
   /* No need to DOS-ize the filename; expand-file-name (called prior)
      already does this. */
 
   /* Find out whether the application is windowed or not */
-  if (xSHGetFileInfoA)
-    {
-      /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
-	 errors. This leads to bogus error message. */
-      DWORD image_type;
-      char *p = strrchr ((char *)XSTRING_DATA (program), '.');
-      if (p != NULL &&
-	  (stricmp (p, ".exe") == 0 ||
-	   stricmp (p, ".com") == 0 ||
-	   stricmp (p, ".bat") == 0 ||
-	   stricmp (p, ".cmd") == 0))
-	{
-	  image_type = xSHGetFileInfoA ((char *)XSTRING_DATA (program), 0,NULL,
-					0, SHGFI_EXETYPE);
-	}
-      else
-	{
-	  char progname[PATH_MAX];
-	  sprintf (progname, "%s.exe", (char *)XSTRING_DATA (program));
-	  image_type = xSHGetFileInfoA (progname, 0, NULL, 0, SHGFI_EXETYPE);
-	}
-      if (image_type == 0)
-	mswindows_report_process_error
-	  ("Error starting",
-	   program,
-	   GetLastError () == ERROR_FILE_NOT_FOUND
-	   ? ERROR_BAD_FORMAT : GetLastError ());
-      windowed = HIWORD (image_type) != 0;
-    }
-  else /* NT 3.5; we have no idea so just guess. */
-    windowed = 0;
+  {
+    /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
+       errors. This leads to bogus error message. */
+    DWORD image_type;
+    Intbyte *p = qxestrrchr (XSTRING_DATA (program), '.');
+    if (p != NULL &&
+	(qxestrcasecmp (p, ".exe") == 0 ||
+	 qxestrcasecmp (p, ".com") == 0 ||
+	 qxestrcasecmp (p, ".bat") == 0 ||
+	 qxestrcasecmp (p, ".cmd") == 0))
+      {
+	Extbyte *progext;
+	LISP_STRING_TO_TSTR (program, progext);
+	image_type = qxeSHGetFileInfo (progext, 0, NULL, 0, SHGFI_EXETYPE);
+      }
+    else
+      {
+	DECLARE_EISTRING (progext);
+	eicpy_lstr (progext, program);
+	eicat_c (progext, ".exe");
+	eito_external (progext, Qmswindows_tstr);
+	image_type = qxeSHGetFileInfo (eiextdata (progext), 0, NULL, 0,
+				       SHGFI_EXETYPE);
+      }
+    if (image_type == 0)
+      mswindows_report_process_error
+	("Determining executable file type",
+	 program,
+	 GetLastError () == ERROR_FILE_NOT_FOUND
+	 ? ERROR_BAD_FORMAT : GetLastError ());
+    windowed = HIWORD (image_type) != 0;
+  }
+
 
   /* Decide whether to do I/O on process handles, or just mark the
      process exited immediately upon successful launching. We do I/O if the
@@ -818,20 +813,19 @@ nt_create_process (Lisp_Process *p,
 	("Bogus return value from `mswindows-construct-process-command-line'",
 	 args_or_ret);
 
-    LISP_STRING_TO_EXTERNAL (args_or_ret, command_line, Qmswindows_tstr);
+    LISP_STRING_TO_TSTR (args_or_ret, command_line);
 
     UNGCPRO; /* args_or_ret */
   }
 
   /* Set `proc_env' to a nul-separated array of the strings in
      Vprocess_environment terminated by 2 nuls.  */
- 
+
   {
-    char **env;
+    Intbyte **env;
     REGISTER Lisp_Object tem;
-    REGISTER char **new_env;
-    REGISTER int new_length = 0, i, new_space;
-    char *penv;
+    REGISTER Intbyte **new_env;
+    REGISTER int new_length = 0, i;
     
     for (tem = Vprocess_environment;
  	 (CONSP (tem)
@@ -841,7 +835,7 @@ nt_create_process (Lisp_Process *p,
 
     /* FSF adds an extra env var to hold the current process ID of the
        Emacs process.  Apparently this is used only by emacsserver.c,
-       which we have superseded to gnuserv.c. (#### Does it work under
+       which we have superseded by gnuserv.c. (#### Does it work under
        MS Windows?)
 
        sprintf (ppid_env_var_buffer, "EM_PARENT_PROCESS_ID=%d", 
@@ -851,7 +845,7 @@ nt_create_process (Lisp_Process *p,
     */
     
     /* new_length + 1 to include terminating 0.  */
-    env = new_env = alloca_array (char *, new_length + 1);
+    env = new_env = alloca_array (Intbyte *, new_length + 1);
  
     /* Copy the Vprocess_environment strings into new_env.  */
     for (tem = Vprocess_environment;
@@ -859,15 +853,15 @@ nt_create_process (Lisp_Process *p,
  	  && STRINGP (XCAR (tem)));
  	 tem = XCDR (tem))
       {
-	char **ep = env;
-	char *string = (char *) XSTRING_DATA (XCAR (tem));
+	Intbyte **ep = env;
+	Intbyte *string = XSTRING_DATA (XCAR (tem));
 	/* See if this string duplicates any string already in the env.
 	   If so, don't put it in.
 	   When an env var has multiple definitions,
 	   we keep the definition that comes first in process-environment.  */
 	for (; ep != new_env; ep++)
 	  {
-	    char *p = *ep, *q = string;
+	    Intbyte *p = *ep, *q = string;
 	    while (1)
 	      {
 		if (*q == 0)
@@ -887,24 +881,21 @@ nt_create_process (Lisp_Process *p,
     
     /* Sort the environment variables */
     new_length = new_env - env;
-    qsort (env, new_length, sizeof (char *), compare_env);
-    
-    /* Work out how much space to allocate */
-    new_space = 0;
-    for (i = 0; i < new_length; i++)
-      {
- 	new_space += strlen(env[i]) + 1;
-      }
-    new_space++;
-    
-    /* Allocate space and copy variables into it */
-    penv = proc_env = (char*) alloca(new_space);
-    for (i = 0; i < new_length; i++)
-      {
- 	strcpy(penv, env[i]);
- 	penv += strlen(env[i]) + 1;
-      }
-    *penv = 0;
+    qsort (env, new_length, sizeof (Intbyte *), mswindows_compare_env);
+
+    {
+      DECLARE_EISTRING (envout);
+
+      for (i = 0; i < new_length; i++)
+	{
+	  eicat_raw (envout, env[i], strlen (env[i]));
+	  eicat_raw (envout, "\0", 1);
+	}
+
+      eicat_raw (envout, "\0", 1);
+      eito_external (envout, Qmswindows_tstr);
+      proc_env = eiextdata (envout);
+    }
   }
 
 #if 0
@@ -914,20 +905,20 @@ nt_create_process (Lisp_Process *p,
        while leaving the real app name as argv[0].  */
     if (is_dos_app)
       {
-	cmdname = (char*) alloca (MAXPATHLEN);
+	cmdname = (Intbyte *) alloca (PATH_MAX);
 	if (egetenv ("CMDPROXY"))
-	  strcpy ((char*)cmdname, egetenv ("CMDPROXY"));
+	  qxestrcpy (cmdname, egetenv ("CMDPROXY"));
 	else
 	  {
-	    strcpy ((char*)cmdname, XSTRING_DATA (Vinvocation_directory));
-	    strcat ((char*)cmdname, "cmdproxy.exe");
+	    qxestrcpy (cmdname, XSTRING_DATA (Vinvocation_directory));
+	    qxestrcat (cmdname, (Intbyte *) "cmdproxy.exe");
 	  }
       }
 #endif
   
   /* Create process */
   {
-    STARTUPINFO si;
+    STARTUPINFOW si;
     PROCESS_INFORMATION pi;
     DWORD err;
     DWORD flags;
@@ -944,7 +935,7 @@ nt_create_process (Lisp_Process *p,
       }
 
     flags = CREATE_SUSPENDED;
-    if (mswindows_windows9x_p ())
+    if (mswindows_windows9x_p)
       flags |= (!NILP (Vmswindows_start_process_share_console)
 		? CREATE_NEW_PROCESS_GROUP
 		: CREATE_NEW_CONSOLE);
@@ -955,9 +946,18 @@ nt_create_process (Lisp_Process *p,
 
     ensure_console_window_exists ();
 
-    err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE, flags,
-			  proc_env, (char *) XSTRING_DATA (cur_dir), &si, &pi)
-	   ? 0 : GetLastError ());
+    {
+      Extbyte *curdirext;
+
+      LISP_STRING_TO_TSTR (cur_dir, curdirext);
+
+      err = (qxeCreateProcess (NULL, command_line, NULL, NULL, TRUE,
+			       (XEUNICODE_P ?
+				flags | CREATE_UNICODE_ENVIRONMENT :
+				flags), proc_env,
+			       curdirext, &si, &pi)
+	     ? 0 : GetLastError ());
+    }
 
     if (do_io)
       {
@@ -985,7 +985,7 @@ nt_create_process (Lisp_Process *p,
       {
 	NT_DATA(p)->h_process = pi.hProcess;
 	NT_DATA(p)->dwProcessId = pi.dwProcessId;
-	init_process_io_handles (p, (void*)hmyslurp, (void*)hmyshove, 0);
+	init_process_io_handles (p, (void *)hmyslurp, (void *)hmyshove, 0);
       }
     else
       {
@@ -1013,7 +1013,7 @@ nt_create_process (Lisp_Process *p,
  */
 
 static void
-nt_update_status_if_terminated (Lisp_Process* p)
+nt_update_status_if_terminated (Lisp_Process *p)
 {
   DWORD exit_code;
   if (GetExitCodeProcess (NT_DATA(p)->h_process, &exit_code)
@@ -1045,7 +1045,7 @@ nt_update_status_if_terminated (Lisp_Process* p)
    unix_send_process... */
 
 static void
-nt_send_process (Lisp_Object proc, struct lstream* lstream)
+nt_send_process (Lisp_Object proc, struct lstream *lstream)
 {
   volatile Lisp_Object vol_proc = proc;
   Lisp_Process *volatile p = XPROCESS (proc);
@@ -1058,7 +1058,7 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 
   while (1)
     {
-      Bytecount writeret;
+      int writeret;
 
       chunklen = Lstream_read (lstream, chunkbuf, 512);
       if (chunklen <= 0)
@@ -1068,9 +1068,9 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
       /* Lstream_write() will never successfully write less than the
 	 amount sent in.  In the worst case, it just buffers the
 	 unwritten data. */
-      writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM(p)), chunkbuf,
+      writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM (p)), chunkbuf,
 				chunklen);
-      Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
+      Lstream_flush (XLSTREAM (DATA_OUTSTREAM (p)));
       if (writeret < 0)
 	{
 	  p->status_symbol = Qexit;
@@ -1159,7 +1159,7 @@ nt_kill_process_by_pid (int pid, int signo)
 static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 {
-  char buf [MAXGETHOSTSTRUCT];
+  Char_Binary buf[MAXGETHOSTSTRUCT];
   HWND hwnd;
   HANDLE hasync;
   int errcode = 0;
@@ -1177,18 +1177,24 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
   }
 
   /* Create a window which will receive completion messages */
-  hwnd = CreateWindow ("STATIC", NULL, WS_OVERLAPPED, 0, 0, 1, 1,
-		       NULL, NULL, NULL, NULL);
+  hwnd = qxeCreateWindow (XETEXT ("STATIC"), NULL, WS_OVERLAPPED, 0, 0, 1, 1,
+			  NULL, NULL, NULL, NULL);
   assert (hwnd);
 
   /* Post name resolution request */
-  hasync = WSAAsyncGetHostByName (hwnd, XM_SOCKREPLY, XSTRING_DATA (host),
-				  buf, sizeof (buf));
-  if (hasync == NULL)
-    {
-      errcode = WSAGetLastError ();
-      goto done;
-    }
+  {
+    Extbyte *hostext;
+
+    LISP_STRING_TO_EXTERNAL (host, hostext, Qmswindows_host_name_encoding);
+
+    hasync = WSAAsyncGetHostByName (hwnd, XM_SOCKREPLY, hostext,
+				    buf, sizeof (buf));
+    if (hasync == NULL)
+      {
+	errcode = WSAGetLastError ();
+	goto done;
+      }
+  }
 
   /* Set a timer to poll for quit every 250 ms */
   SetTimer (hwnd, SOCK_TIMER_ID, 250, NULL);
@@ -1222,8 +1228,8 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
   if (!errcode)
     {
       /* BUF starts with struct hostent */
-      struct hostent* he = (struct hostent*) buf;
-      address->sin_addr.s_addr = *(unsigned long*)he->h_addr_list[0];
+      struct hostent *he = (struct hostent *) buf;
+      address->sin_addr.s_addr = * (unsigned long *) he->h_addr_list[0];
     }
   return errcode;
 }
@@ -1251,9 +1257,8 @@ nt_canonicalize_host_name (Lisp_Object host)
 static void
 nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 			Lisp_Object service,
-			Lisp_Object protocol, void** vinfd, void** voutfd)
+			Lisp_Object protocol, void **vinfd, void **voutfd)
 {
-  /* !!#### not Mule-ized */
   struct sockaddr_in address;
   SOCKET s;
   int port;
@@ -1270,8 +1275,13 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
   else
     {
       struct servent *svc_info;
+      Extbyte *servext;
+
       CHECK_STRING (service);
-      svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
+      LISP_STRING_TO_EXTERNAL (service, servext,
+			       Qmswindows_service_name_encoding);
+
+      svc_info = getservbyname (servext, "tcp");
       if (svc_info == 0)
 	invalid_argument ("Unknown service", service);
       port = svc_info->s_port;
@@ -1309,8 +1319,8 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
     HWND hwnd;
 
   /* Create a window which will receive completion messages */
-    hwnd = CreateWindow ("STATIC", NULL, WS_OVERLAPPED, 0, 0, 1, 1,
-			 NULL, NULL, NULL, NULL);
+    hwnd = qxeCreateWindow (XETEXT ("STATIC"), NULL, WS_OVERLAPPED, 0, 0, 1, 1,
+			    NULL, NULL, NULL, NULL);
     assert (hwnd);
 
     /* Post request */
@@ -1412,7 +1422,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 #endif
 
   /* We are connected at this point */
-  *vinfd = (void*)s;
+  *vinfd = (void *)s;
   DuplicateHandle (GetCurrentProcess(), (HANDLE)s,
 		   GetCurrentProcess(), (LPHANDLE)voutfd,
 		   0, FALSE, DUPLICATE_SAME_ACCESS);
@@ -1428,6 +1438,71 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 }
 
 #endif
+
+
+DEFUN ("mswindows-set-process-priority", Fmswindows_set_process_priority, 2, 2, "", /*
+  Set the priority of PROCESS to PRIORITY.
+If PROCESS is nil, the priority of Emacs is changed, otherwise the
+priority of the process whose pid is PROCESS is changed.
+PRIORITY should be one of the symbols high, normal, or low;
+any other symbol will be interpreted as normal.
+
+If successful, the return value is t, otherwise nil.
+*/
+       (process, priority))
+{
+  HANDLE proc_handle = GetCurrentProcess ();
+  DWORD  priority_class = NORMAL_PRIORITY_CLASS;
+  Lisp_Object result = Qnil;
+
+  CHECK_SYMBOL (priority);
+
+  if (!NILP (process))
+    {
+      DWORD pid;
+      struct Lisp_Process *p = 0;
+
+      if (PROCESSP (process))
+	{
+	  CHECK_LIVE_PROCESS (process);
+	  p = XPROCESS (process);
+	  pid = NT_DATA (p)->dwProcessId;
+	}
+      else
+	{
+	  CHECK_INT (process);
+
+	  /* Allow pid to be an internally generated one, or one obtained
+	     externally.  This is necessary because real pids on Win95 are
+	     negative.  */
+
+	  pid = XINT (process);
+	  p = find_process_from_pid (pid);
+	  if (p != NULL)
+	    pid = NT_DATA (p)->dwProcessId;
+	}
+
+      /* #### Should we be using the existing process handle from NT_DATA(p)?
+	 Will we fail if we open it a second time? */
+      proc_handle = OpenProcess (PROCESS_SET_INFORMATION, FALSE, pid);
+    }
+
+  if (EQ (priority, Qhigh))
+    priority_class = HIGH_PRIORITY_CLASS;
+  else if (EQ (priority, Qlow))
+    priority_class = IDLE_PRIORITY_CLASS;
+
+  if (proc_handle != NULL)
+    {
+      if (SetPriorityClass (proc_handle, priority_class))
+	result = Qt;
+      if (!NILP (process))
+	CloseHandle (proc_handle);
+    }
+
+  return result;
+}
+
 
 /*-----------------------------------------------------------------------*/
 /* Initialization							 */
@@ -1457,6 +1532,7 @@ process_type_create_nt (void)
 void
 syms_of_process_nt (void)
 {
+  DEFSUBR (Fmswindows_set_process_priority);
   DEFSYMBOL (Qmswindows_construct_process_command_line);
 }
 

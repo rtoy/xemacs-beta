@@ -106,7 +106,7 @@ TODO (in rough order of priority):
 #define TO_EXTERNAL_FORMAT(a,from,b,to,c) GET_C_STRING_EXT_DATA_ALLOCA(from,FORMAT_FILENAME,to)
 #else
 #ifdef MULE
-#define PG_OS_CODING Fget_coding_system(Vpg_coding_system)
+#define PG_OS_CODING get_coding_system_for_text_file (Vpg_coding_system, 1)
 #else
 #define PG_OS_CODING Qnative
 #endif
@@ -1796,140 +1796,46 @@ The initial value is set from the PGDATESTYLE environment variable.
 
 /* These initializations should not be done at dump-time. */
 void
-init_postgresql_from_environment(void)
+init_postgresql_from_environment (void)
 {
-  char *p;
+  Intbyte *p;
 
-  if ((p = getenv ("PGHOST")))
-    {
-      VXPGHOST = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGHOST = Qnil;
-    }
+#define FROB(envvar, var)			\
+  if ((p = egetenv (envvar)))			\
+    var = build_intstring (p);	\
+  else						\
+    var = Qnil
 
-  if ((p = getenv ("PGUSER")))
+  if (initialized)
     {
-      VXPGUSER = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGUSER = Qnil;
-    }
+      FROB ("PGHOST", VXPGHOST);
+      FROB ("PGUSER", VXPGUSER);
+      FROB ("PGOPTIONS", VXPGOPTIONS);
 
-  if ((p = getenv ("PGOPTIONS")))
-    {
-      VXPGOPTIONS = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGOPTIONS = Qnil;
-    }
+      if ((p = egetenv ("PGPORT")))
+	VXPGPORT = make_int (atoi ((char *) p));
+      else
+	VXPGPORT = Qnil;
 
-  if ((p = getenv ("PGPORT")))
-    {
-      VXPGPORT = make_int (atoi (p));
-    }
-  else
-    {
-      VXPGPORT = Qnil;
-    }
-
-  if ((p = getenv ("PGTTY")))
-    {
-      VXPGTTY = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGTTY = Qnil;
-    }
-
-  if ((p = getenv ("PGDATABASE")))
-    {
-      VXPGDATABASE = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGDATABASE = Qnil;
-    }
-
-  if ((p = getenv ("PGREALM")))
-    {
-      VXPGREALM = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGREALM = Qnil;
-    }
-
+      FROB ("PGTTY", VXPGTTY);
+      FROB ("PGDATABASE", VXPGDATABASE);
+      FROB ("PGREALM", VXPGREALM);
 #ifdef MULE
-  /* It's not clear whether this is any use.  My intent is to
-     autodetect the coding system from the database. */
-  if ((p = getenv ("PGCLIENTENCODING")))
-    {
-      VXPGCLIENTENCODING = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGCLIENTENCODING = Qnil;
-    }
+      /* It's not clear whether this is any use.  My intent is to
+	 autodetect the coding system from the database. */
+      FROB ("PGCLIENTENCODING", VXPGCLIENTENCODING);
 #endif
 
 #if !defined(HAVE_POSTGRESQLV7)
-  if ((p = getenv ("PGAUTHTYPE")))
-    {
-      VXPGAUTHTYPE = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGAUTHTYPE = Qnil;
-    }
+      FROB ("PGAUTHTYPE", VXPGAUTHTYPE);
 #endif
 
-  if ((p = getenv ("PGGEQO")))
-    {
-      VXPGGEQO = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGGEQO = Qnil;
-    }
-
-  if ((p = getenv ("PGCOSTINDEX")))
-    {
-      VXPGCOSTINDEX = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGCOSTINDEX = Qnil;
-    }
-
-  if ((p = getenv ("PGCOSTHEAP")))
-    {
-      VXPGCOSTHEAP = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGCOSTHEAP = Qnil;
-    }
-
-  if ((p = getenv ("PGTZ")))
-    {
-      VXPGTZ = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGTZ = Qnil;
-    }
-
-  if ((p = getenv ("PGDATESTYLE")))
-    {
-      VXPGDATESTYLE = build_ext_string (p, PG_OS_CODING);
-    }
-  else
-    {
-      VXPGDATESTYLE = Qnil;
+      FROB ("PGGEQO", VXPGGEQO);
+      FROB ("PGCOSTINDEX", VXPGCOSTINDEX);
+      FROB ("PGCOSTHEAP", VXPGCOSTHEAP);
+      FROB ("PGTZ", VXPGTZ);
+      FROB ("PGDATESTYLE", VXPGDATESTYLE);
+#undef FROB
     }
 }
 

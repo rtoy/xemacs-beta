@@ -262,7 +262,7 @@ Return the profiling info as an alist.
       record_unwind_protect (profile_lock_unwind, Qnil);
       inside_profiling = 1;
       maphash (get_profiling_info_maphash, big_profile_table, &closure);
-      unbind_to (count, Qnil);
+      unbind_to (count);
     }
   return closure.accum;
 }
@@ -346,13 +346,13 @@ values are their call counts (integers).
 
   inside_profiling = 0;
 
-  QSin_redisplay = build_string ("(in redisplay)");
+  QSin_redisplay = build_msg_string ("(in redisplay)");
   staticpro (&QSin_redisplay);
-  QSin_garbage_collection = build_string ("(in garbage collection)");
+  QSin_garbage_collection = build_msg_string ("(in garbage collection)");
   staticpro (&QSin_garbage_collection);
-  QSunknown = build_string ("(unknown)");
+  QSunknown = build_msg_string ("(unknown)");
   staticpro (&QSunknown);
   QSprocessing_events_at_top_level =
-    build_string ("(processing events at top level)");
+    build_msg_string ("(processing events at top level)");
   staticpro (&QSprocessing_events_at_top_level);
 }

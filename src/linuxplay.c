@@ -55,8 +55,6 @@
 			       driver, so undefine this symbol at your
 			       discretion */
 
-#define DONT_ENCAPSULATE
-
 #include <config.h>
 #include "lisp.h"
 

@@ -1198,7 +1198,7 @@ uninit_buffer_extents (struct buffer *b)
 
   /* Don't destroy the extents here -- there may still be children
      extents pointing to the extents. */
-  detach_all_extents (make_buffer (b));
+  detach_all_extents (wrap_buffer (b));
   finalize_extent_info (data, 0);
 }
 
@@ -1214,6 +1214,8 @@ uninit_buffer_extents (struct buffer *b)
 /* ------------------------------- */
 
 #ifdef ERROR_CHECK_EXTENTS
+
+/* See unicode.c for more about sledgehammer checks */
 
 void
 sledgehammer_extent_check (Lisp_Object object)
@@ -2268,7 +2270,7 @@ map_extents_bytebpos (Bytebpos from, Bytebpos to, map_extents_fun fn, void *arg,
 
   if (flags & ME_MIGHT_THROW)
     /* This deletes the range extent and frees the marker. */
-    unbind_to (count, Qnil);
+    unbind_to (count);
   else
     {
       /* Delete them ourselves */
@@ -4726,9 +4728,9 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
      once.
 
      One confusing thing here is that our caller never actually calls
-     unbind_to (closure.speccount, Qnil).  This is because
+     unbind_to (closure.speccount).  This is because
      map_extents_bytebpos() unbinds before, and with a smaller
-     speccount.  The additional unbind_to() in
+     speccount.  The additional unbind_to_1() in
      report_extent_modification() would cause XEmacs to abort.  */
   if (closure->speccount == -1)
     {
@@ -5859,7 +5861,7 @@ add_string_extents (Lisp_Object string, struct buffer *buf, Bytebpos opoint,
   closure.from = opoint;
   closure.length = length;
   closure.string = string;
-  buffer = make_buffer (buf);
+  buffer = wrap_buffer (buf);
   GCPRO2 (buffer, string);
   map_extents_bytebpos (opoint, opoint + length, add_string_extents_mapper,
 		      (void *) &closure, buffer, 0,
@@ -5928,7 +5930,7 @@ splice_in_string_extents (Lisp_Object string, struct buffer *buf,
   struct gcpro gcpro1, gcpro2;
   Lisp_Object buffer;
 
-  buffer = make_buffer (buf);
+  buffer = wrap_buffer (buf);
   closure.opoint = opoint;
   closure.pos = pos;
   closure.length = length;
@@ -6918,11 +6920,7 @@ functions `get-text-property' or `get-char-property' are called.
 
   Vextent_face_reusable_list = Fcons (Qnil, Qnil);
   staticpro (&Vextent_face_reusable_list);
-}
 
-void
-complex_vars_of_extents (void)
-{
   staticpro (&Vextent_face_memoize_hash_table);
   /* The memoize hash table maps from lists of symbols to lists of
      faces.  It needs to be `equal' to implement the memoization.

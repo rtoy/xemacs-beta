@@ -271,7 +271,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 
 #include "wnn/commonhd.h"
-#include "mule-charset.h"
+#include "charset.h"
 #include "wnn/jllib.h"
 #include "wnn/cplib.h"
 
@@ -1915,7 +1915,7 @@ Leading character for Sisheng.
 
   Vwnn_uniq_level = Qwnn_uniq;
 
-  Fprovide(intern("wnn"));
+  Fprovide (intern ("wnn"));
 }
 
 void

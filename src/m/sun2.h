@@ -81,5 +81,4 @@ NOTE-END  */
 #define LIBS_MACHINE "-lsuntool -lsunwindow -lpixrect"
 #define OBJECTS_MACHINE "sunfns.o"
 #define SYMS_MACHINE syms_of_sunfns ()
-#define SYSTEM_PURESIZE_EXTRA 12000
 #endif

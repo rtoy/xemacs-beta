@@ -25,15 +25,36 @@ Boston, MA 02111-1307, USA.  */
 
 #else /* WIN32_NATIVE */
 
-struct passwd {
-    char *pw_name;
-    char *pw_passwd;
-    int   pw_uid;
-    int   pw_gid;
-    int   pw_quota;
-    char *pw_gecos;
-    char *pw_dir;
-    char *pw_shell;
+struct passwd
+{
+  char *pw_name;
+  char *pw_passwd;
+  int   pw_uid;
+  int   pw_gid;
+  int   pw_quota;
+  char *pw_gecos;
+  char *pw_dir;
+  char *pw_shell;
 };
 
+#ifdef emacs
+
+struct passwd *getpwuid (uid_t uid);
+struct passwd *getpwnam (const Intbyte *name);
+uid_t getuid (void);
+uid_t geteuid (void);
+gid_t getgid (void);
+gid_t getegid (void);
+
+#endif /* emacs */
+
 #endif /* WIN32_NATIVE */
+
+#ifdef emacs
+
+struct passwd *qxe_getpwnam (const Intbyte *name);
+struct passwd *qxe_getpwuid (uid_t uid);
+struct passwd *qxe_getpwent (void);
+
+#endif /* emacs */
+

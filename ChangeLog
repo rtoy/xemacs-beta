@@ -141,13 +141,13 @@
 
 2001-09-19  Ben Wing  <ben@xemacs.org>
 
-	* configure.in (USAGE_ERROR):
-	* configure.in (CANONICALIZE_PATH):
-	* configure.in (XE_COMPUTE_RUNPATH):
+	* etc\TUTORIAL.de: Translate TERMINOLOGY section for TUTORIAL.de,
+	change menu entry separator from / to ->.  Change SPC to <Space>.
 
-	The great integral types renaming.
+2001-10-07  Adrian Aichner  <adrian@xemacs.org>
 
-	Please see the 2001-09-19 entry in src/ChangeLog for the full details.
+	* etc\TUTORIAL.de: Update of TUTORIAL.de according to Ben's
+	Updates and Syncing with Emacs 21.0.106.
 
 2001-09-17  Ben Wing  <ben@xemacs.org>
 

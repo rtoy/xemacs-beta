@@ -235,7 +235,7 @@ merge_scrollbar_values (widget_value *old, widget_value *new)
 
 #endif /* NEED_SCROLLBARS */
 
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 /*
  * Return true if old->args was not equivalent
  * to new->args.
@@ -271,7 +271,7 @@ merge_widget_value_args (widget_value *old, widget_value *new)
 
   return changed;
 }
-#endif /* HAVE_WIDGETS */
+#endif /* HAVE_X_WIDGETS */
 
 /* Make a complete copy of a widget_value tree.  Store CHANGE into
    the widget_value tree's `change' field. */
@@ -621,7 +621,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
       change = max (change, INVISIBLE_CHANGE);
       val1->call_data = val2->call_data;
     }
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   if (merge_widget_value_args (val1, val2))
     {
       EXPLAIN (val1->name, change, VISIBLE_CHANGE, "widget change", 0, 0);

@@ -9,7 +9,6 @@
 
 /* Synched up with: FSF 19.28. */
 
-#define DONT_ENCAPSULATE
 #include <config.h>
 
 #include <stdio.h>

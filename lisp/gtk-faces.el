@@ -40,7 +40,7 @@
    gtk-font-selection-dialog-get-font-name gtk-widget-destroy
    font-menu-set-font font-family font-size
    gtk-font-selection-dialog-cancel-button gtk-widget-show-all
-   gtk-main))
+   gtk-main gtk-style-info))
 
 (eval-when-compile
   (defmacro gtk-style-munge-face (face attribute value)

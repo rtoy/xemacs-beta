@@ -1,5 +1,6 @@
 /* Old synchronous subprocess invocation for XEmacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,7 +23,8 @@ Boston, MA 02111-1307, USA.  */
 /* Partly sync'ed with 19.36.4 */
 
 
-/* #### This ENTIRE file is only used in batch mode.
+/* #### This ENTIRE file is only used in batch mode. (Well, almost;
+   certainly the main call-process stuff is only used in batch mode.)
 
    We only need two things to get rid of both this and ntproc.c:
 
@@ -41,19 +43,21 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include "systime.h"
 #include "sysproc.h"
-#include "sysfile.h" /* Always include after sysproc.h */
-#include "syssignal.h" /* Always include before systty.h */
+#include "sysfile.h" /* Always include after sysproc.h #### Why?  This
+			rule is not followed elsewhere in XEmacs, without
+			apparent problems */
+#include "syssignal.h" /* Always include before systty.h #### Why? This
+			rule is not followed elsewhere in XEmacs, without
+			apparent problems */
 #include "systty.h"
+#include "sysdir.h"
 
 #ifdef WIN32_NATIVE
-#define _P_NOWAIT 1	/* from process.h */
-#include "nt.h"
+#include "syswindows.h"
 #endif
 
 #ifdef WIN32_NATIVE
@@ -90,6 +94,9 @@ int synch_process_retcode;
 /* Nonzero if this is termination due to exit.  */
 static int call_process_exited;
 
+/* Make sure egetenv() not called too soon */
+int env_initted;
+
 Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 static Lisp_Object
@@ -99,7 +106,7 @@ call_process_kill (Lisp_Object fdpid)
   Lisp_Object pid = Fcdr (fdpid);
 
   if (!NILP (fd))
-    close (XINT (fd));
+    retry_close (XINT (fd));
 
   if (!NILP (pid))
     EMACS_KILLPG (XINT (pid), SIGKILL);
@@ -139,12 +146,12 @@ call_process_cleanup (Lisp_Object fdpid)
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
     XCDR (fdpid) = Qnil;
-    unbind_to (speccount, Qnil);
+    unbind_to (speccount);
 
     message ("Waiting for process to die... done");
   }
   synch_process_alive = 0;
-  close (fd);
+  retry_close (fd);
   return Qnil;
 }
 
@@ -185,7 +192,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   int bufsize = 16384;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
-  char **new_argv = alloca_array (char *, max (2, nargs - 2));
+  Intbyte **new_argv = alloca_array (Intbyte *, max (2, nargs - 2));
 
   /* File to use for stderr in the child.
      t means use same as standard output.  */
@@ -298,27 +305,32 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     for (i = 4; i < nargs; i++)
       {
 	CHECK_STRING (args[i]);
-	new_argv[i - 3] = (char *) XSTRING_DATA (args[i]);
+	new_argv[i - 3] = XSTRING_DATA (args[i]);
       }
   }
   new_argv[max(nargs - 3,1)] = 0;
 
   if (NILP (path))
-    signal_error (Qprocess_error, "Searching for program", args[0]);
-  new_argv[0] = (char *) XSTRING_DATA (path);
+    signal_error (Qprocess_error, "Searching for program",
+		  Fcons (args[0], Qnil));
+  new_argv[0] = XSTRING_DATA (path);
 
-  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY | OPEN_BINARY, 0);
+  filefd = qxe_open (XSTRING_DATA (infile), O_RDONLY | OPEN_BINARY, 0);
   if (filefd < 0)
     report_process_error ("Opening process input file", infile);
 
   if (INTP (buffer))
     {
-      fd[1] = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY, 0);
+      fd[1] = qxe_open ((Intbyte *) NULL_DEVICE, O_WRONLY | OPEN_BINARY, 0);
       fd[0] = -1;
     }
   else
     {
+#ifdef WIN32_NATIVE
+      pipe_will_die_soon (fd);
+#else
       pipe (fd);
+#endif
 #if 0
       /* Replaced by close_process_descs */
       set_exclusive_use (fd[0]);
@@ -326,9 +338,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     }
 
   {
-    /* child_setup must clobber environ in systems with true vfork.
-       Protect it from permanent change.  */
-    REGISTER char **save_environ = environ;
     REGISTER int fd1 = fd[1];
     int fd_error = fd1;
 
@@ -342,43 +351,42 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     synch_process_retcode = 0;
 
     if (NILP (error_file))
-      fd_error = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY);
+      fd_error = qxe_open ((Intbyte *) NULL_DEVICE, O_WRONLY | OPEN_BINARY);
     else if (STRINGP (error_file))
       {
-	fd_error = open ((const char *) XSTRING_DATA (error_file),
+	fd_error = qxe_open (XSTRING_DATA (error_file),
 #ifdef WIN32_NATIVE
-			 O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
-			 S_IREAD | S_IWRITE
+			     O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
+			     S_IREAD | S_IWRITE
 #else  /* not WIN32_NATIVE */
-			 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
-			 CREAT_MODE
+			     O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+			     CREAT_MODE
 #endif /* not WIN32_NATIVE */
-			 );
+			     );
       }
 
     if (fd_error < 0)
       {
 	int save_errno = errno;
-	close (filefd);
-	close (fd[0]);
+	retry_close (filefd);
+	retry_close (fd[0]);
 	if (fd1 >= 0)
-	  close (fd1);
+	  retry_close (fd1);
 	errno = save_errno;
-	report_process_error ("Cannot open", error_file);
+	report_process_error ("Cannot open", Fcons (error_file, Qnil));
       }
 
 #ifdef WIN32_NATIVE
-    pid = child_setup (filefd, fd1, fd_error, new_argv,
-                       (char *) XSTRING_DATA (current_dir));
+    pid = child_setup (filefd, fd1, fd_error, new_argv, current_dir);
     if (!INTP (buffer))
       {
 	/* OpenProcess() as soon after child_setup as possible.  It's too
 	   late once the process terminated. */
-	pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+	pHandle = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
 #if 0
 	if (pHandle == NULL)
 	  {
-	    /* #### seems to cause crash in unbind_to(...) below. APA */
+	    /* #### seems to cause crash in unbind_to_1(...) below. APA */
 	    warn_when_safe (Qprocess, Qwarning,
 			    "cannot open process to wait for");
 	  }
@@ -386,14 +394,14 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       }
     /* Close STDERR into the parent process.  We no longer need it. */
     if (fd_error >= 0)
-      close (fd_error);
+      retry_close (fd_error);
 #else  /* not WIN32_NATIVE */
     pid = fork ();
 
     if (pid == 0)
       {
 	if (fd[0] >= 0)
-	  close (fd[0]);
+	  retry_close (fd[0]);
 	/* This is necessary because some shells may attempt to
 	   access the current controlling terminal and will hang
 	   if they are run in the background, as will be the case
@@ -402,21 +410,18 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	   that used zsh to call gzip to uncompress an info
 	   file. */
 	disconnect_controlling_terminal ();
-	child_setup (filefd, fd1, fd_error, new_argv,
-		     (char *) XSTRING_DATA (current_dir));
+	child_setup (filefd, fd1, fd_error, new_argv, current_dir);
       }
     if (fd_error >= 0)
-      close (fd_error);
+      retry_close (fd_error);
 
 #endif /* not WIN32_NATIVE */
 
-    environ = save_environ;
-
     /* Close most of our fd's, but not fd[0]
        since we will use that to read input from.  */
-    close (filefd);
+    retry_close (filefd);
     if (fd1 >= 0)
-      close (fd1);
+      retry_close (fd1);
   }
 
 #ifndef WIN32_NATIVE
@@ -424,7 +429,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     {
       int save_errno = errno;
       if (fd[0] >= 0)
-	close (fd[0]);
+	retry_close (fd[0]);
       errno = save_errno;
       report_process_error ("Doing fork", Qunbound);
     }
@@ -433,7 +438,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (INTP (buffer))
     {
       if (fd[0] >= 0)
-	close (fd[0]);
+	retry_close (fd[0]);
 #if defined (NO_SUBPROCESSES)
       /* If Emacs has been built with asynchronous subprocess support,
 	 we don't need to do this, I think because it will then have
@@ -460,13 +465,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     if (EQ (buffer, Qt))
       XSETBUFFER (buffer, current_buffer);
     instream = make_filedesc_input_stream (fd[0], 0, -1, LSTR_ALLOW_QUIT);
-#ifdef FILE_CODING
     instream =
-      make_decoding_input_stream
+      make_coding_input_stream
 	(XLSTREAM (instream),
-	 Fget_coding_system (Vcoding_system_for_read));
+	 get_coding_system_for_text_file (Vcoding_system_for_read, 1),
+	 CODING_DECODE);
     Lstream_set_character_mode (XLSTREAM (instream));
-#endif
     NGCPRO1 (instream);
     while (1)
       {
@@ -498,18 +502,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	  break;
 
 #if 0
-#ifdef WIN32_NATIVE
-       /* Until we pull out of MULE things like
-	  make_decoding_input_stream(), we do the following which is
-	  less elegant. --marcpa */
-	/* We did. -- kkm */
-       {
-	 int lf_count = 0;
-	 if (NILP (Vbinary_process_output)) {
-	   nread = crlf_to_lf(nread, bufptr, &lf_count);
-         }
-       }
-#endif
+	/* [[check Vbinary_process_output]] */
 #endif
 
 	total_read += nread;
@@ -546,10 +539,10 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */
     call_process_exited = 1;
-    unbind_to (speccount, Qnil);
+    unbind_to (speccount);
 
     if (synch_process_death)
-      return build_string (synch_process_death);
+      return build_msg_string (synch_process_death);
     return make_int (synch_process_retcode);
   }
 }
@@ -568,8 +561,9 @@ relocate_fd (int fd, int min)
       int newfd = dup (fd);
       if (newfd == -1)
 	{
-	  stderr_out ("Error while setting up child: %s\n",
-		      strerror (errno));
+	  Intbyte *errmess;
+	  GET_STRERROR (errmess, errno);
+	  stderr_out ("Error while setting up child: %s\n", errmess);
 	  _exit (1);
 	}
       return relocate_fd (newfd, min);
@@ -583,30 +577,25 @@ relocate_fd (int fd, int min)
    Initialize inferior's priority, pgrp, connected dir and environment.
    then exec another program based on new_argv.
 
-   This function may change environ for the superior process.
-   Therefore, the superior process must save and restore the value
-   of environ around the fork and the call to this function.
-
-   ENV is the environment for the subprocess.
-
    XEmacs: We've removed the SET_PGRP argument because it's already
    done by the callers of child_setup.
 
    CURRENT_DIR is an elisp string giving the path of the current
    directory the subprocess should have.  Since we can't really signal
-   a decent error from within the child, this should be verified as an
-   executable directory by the parent.  */
+   a decent error from within the child (not quite correct in
+   XEmacs?), this should be verified as an executable directory by the
+   parent.  */
 
 #ifdef WIN32_NATIVE
 int
 #else
 void
 #endif
-child_setup (int in, int out, int err, char **new_argv,
-	     const char *current_dir)
+child_setup (int in, int out, int err, Intbyte **new_argv,
+	     Lisp_Object current_dir)
 {
-  char **env;
-  char *pwd;
+  Intbyte **env;
+  Intbyte *pwd;
 #ifdef WIN32_NATIVE
   int cpid;
   HANDLE handles[4];
@@ -640,29 +629,30 @@ child_setup (int in, int out, int err, char **new_argv,
   close_load_descs ();
 #endif
 
-  /* Note that use of alloca is always safe here.  It's obvious for systems
+  /* [[Note that use of alloca is always safe here.  It's obvious for systems
      that do not have true vfork or that have true (stack) alloca.
      If using vfork and C_ALLOCA it is safe because that changes
      the superior's static variables as if the superior had done alloca
-     and will be cleaned up in the usual way.  */
+     and will be cleaned up in the usual way.]] -- irrelevant because
+     XEmacs does not use vfork. */
   {
-    REGISTER int i;
+    REGISTER Bytecount i;
 
-    i = strlen (current_dir);
-    pwd = alloca_array (char, i + 6);
+    i = XSTRING_LENGTH (current_dir);
+    pwd = alloca_array (Intbyte, i + 6);
     memcpy (pwd, "PWD=", 4);
-    memcpy (pwd + 4, current_dir, i);
+    memcpy (pwd + 4, XSTRING_DATA (current_dir), i);
     i += 4;
     if (!IS_DIRECTORY_SEP (pwd[i - 1]))
       pwd[i++] = DIRECTORY_SEP;
     pwd[i] = 0;
 
-    /* We can't signal an Elisp error here; we're in a vfork.  Since
+    /* [[We can't signal an Elisp error here; we're in a vfork.  Since
        the callers check the current directory before forking, this
        should only return an error if the directory's permissions
        are changed between the check and this chdir, but we should
-       at least check.  */
-    if (chdir (pwd + 4) < 0)
+       at least check.]] -- irrelevant because XEmacs does not use vfork. */
+    if (qxe_chdir (pwd + 4) < 0)
       {
 	/* Don't report the chdir error, or ange-ftp.el doesn't work. */
 	/* (FSFmacs does _exit (errno) here.) */
@@ -679,35 +669,31 @@ child_setup (int in, int out, int err, char **new_argv,
 
   /* Set `env' to a vector of the strings in Vprocess_environment.  */
   /* + 2 to include PWD and terminating 0.  */
-  env = alloca_array (char *, XINT (Flength (Vprocess_environment)) + 2);
+  env = alloca_array (Intbyte *, XINT (Flength (Vprocess_environment)) + 2);
   {
     REGISTER Lisp_Object tail;
-    char **new_env = env;
+    Intbyte **new_env = env;
 
     /* If we have a PWD envvar and we know the real current directory,
        pass one down, but with corrected value.  */
-    if (pwd && getenv ("PWD"))
+    if (pwd && egetenv ("PWD"))
       *new_env++ = pwd;
 
     /* Copy the Vprocess_environment strings into new_env.  */
     for (tail = Vprocess_environment;
 	 CONSP (tail) && STRINGP (XCAR (tail));
 	 tail = XCDR (tail))
-    {
-      char **ep = env;
-      char *envvar_external;
+      {
+      Intbyte **ep = env;
+      Intbyte *envvar = XSTRING_DATA (XCAR (tail));
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (tail),
-			  C_STRING_ALLOCA, envvar_external,
-			  Qfile_name);
-
-      /* See if envvar_external duplicates any string already in the env.
+      /* See if envvar duplicates any string already in the env.
 	 If so, don't put it in.
 	 When an env var has multiple definitions,
 	 we keep the definition that comes first in process-environment.  */
       for (; ep != new_env; ep++)
 	{
-	  char *p = *ep, *q = envvar_external;
+	  Intbyte *p = *ep, *q = envvar;
 	  while (1)
 	    {
 	      if (*q == 0)
@@ -720,22 +706,24 @@ child_setup (int in, int out, int err, char **new_argv,
 	      p++, q++;
 	    }
 	}
-      if (pwd && !strncmp ("PWD=", envvar_external, 4))
+      if (pwd && !qxestrncmp ((Intbyte *) "PWD=", envvar, 4))
 	{
 	  *new_env++ = pwd;
 	  pwd = 0;
 	}
       else
-        *new_env++ = envvar_external;
+        *new_env++ = envvar;
 
     duplicate: ;
     }
+
     *new_env = 0;
   }
 
 #ifdef WIN32_NATIVE
   prepare_standard_handles (in, out, err, handles);
-  set_process_dir (current_dir);
+  /* #### junk!  But all this win32 code will die soon. */
+  set_process_dir ((char *) XSTRING_DATA (current_dir));
 #else  /* not WIN32_NATIVE */
   /* Make sure that in, out, and err are not actually already in
      descriptors zero, one, or two; this could happen if Emacs is
@@ -746,17 +734,17 @@ child_setup (int in, int out, int err, char **new_argv,
   err = relocate_fd (err, 3);
 
   /* Set the standard input/output channels of the new process.  */
-  close (STDIN_FILENO);
-  close (STDOUT_FILENO);
-  close (STDERR_FILENO);
+  retry_close (STDIN_FILENO);
+  retry_close (STDOUT_FILENO);
+  retry_close (STDERR_FILENO);
 
   dup2 (in,  STDIN_FILENO);
   dup2 (out, STDOUT_FILENO);
   dup2 (err, STDERR_FILENO);
 
-  close (in);
-  close (out);
-  close (err);
+  retry_close (in);
+  retry_close (out);
+  retry_close (err);
 
   /* I can't think of any reason why child processes need any more
      than the standard 3 file descriptors.  It would be cleaner to
@@ -765,7 +753,7 @@ child_setup (int in, int out, int err, char **new_argv,
   {
     int fd;
     for (fd=3; fd<=64; fd++)
-      close (fd);
+      retry_close (fd);
   }
 #endif /* not WIN32_NATIVE */
 
@@ -775,19 +763,19 @@ child_setup (int in, int out, int err, char **new_argv,
 
 #ifdef WIN32_NATIVE
   /* Spawn the child.  (See ntproc.c:Spawnve).  */
-  cpid = spawnve (_P_NOWAIT, new_argv[0], (const char* const*)new_argv,
-		  (const char* const*)env);
+  /* #### junk!  arguments not converted.  But all this win32 code
+     will die soon. */
+  cpid = spawnve_will_die_soon (_P_NOWAIT, new_argv[0],
+				(const char* const*)new_argv,
+				(const char* const*)env);
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
     report_process_error ("Spawning child process", Qunbound);
   reset_standard_handles (in, out, err, handles);
   return cpid;
 #else /* not WIN32_NATIVE */
-  /* execvp does not accept an environment arg so the only way
-     to pass this environment is to set environ.  Our caller
-     is responsible for restoring the ambient value of environ.  */
-  environ = env;
-  execvp (new_argv[0], new_argv);
+  /* we've wrapped execve; it translates its arguments */
+  qxe_execve (new_argv[0], new_argv, env);
 
   stdout_out ("Can't exec program %s\n", new_argv[0]);
   _exit (1);
@@ -801,6 +789,8 @@ getenv_internal (const Intbyte *var,
 		 Bytecount *valuelen)
 {
   Lisp_Object scan;
+
+  assert (env_initted);
 
   for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
     {
@@ -825,6 +815,65 @@ getenv_internal (const Intbyte *var,
 
   return 0;
 }
+
+static void
+putenv_internal (const Intbyte *var,
+		 Bytecount varlen,
+		 const Intbyte *value,
+		 Bytecount valuelen)
+{
+  Lisp_Object scan;
+
+  assert (env_initted);
+
+  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
+    {
+      Lisp_Object entry = XCAR (scan);
+
+      if (STRINGP (entry)
+	  && XSTRING_LENGTH (entry) > varlen
+	  && XSTRING_BYTE (entry, varlen) == '='
+#ifdef WIN32_NATIVE
+	  /* NT environment variables are case insensitive.  */
+	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
+#else  /* not WIN32_NATIVE */
+	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
+#endif /* not WIN32_NATIVE */
+	  )
+	{
+	  XCAR (scan) = concat3 (make_string (var, varlen),
+				 build_string ("="),
+				 make_string (value, valuelen));
+	  return;
+	}
+    }
+
+  Vprocess_environment = Fcons (concat3 (make_string (var, varlen),
+					 build_string ("="),
+					 make_string (value, valuelen)),
+				Vprocess_environment);
+}
+
+/* NOTE:
+
+   FSF has this as a Lisp function, as follows.  Generally moving things
+   out of C and into Lisp is a good idea, but in this case the Lisp
+   function is used so early in the startup sequence that it would be ugly
+   to rearrange the early dumped code to accommodate this.
+   
+(defun getenv (variable)
+  "Get the value of environment variable VARIABLE.
+VARIABLE should be a string.  Value is nil if VARIABLE is undefined in
+the environment.  Otherwise, value is a string.
+
+This function consults the variable `process-environment'
+for its value."
+  (interactive (list (read-envvar-name "Get environment variable: " t)))
+  (let ((value (getenv-internal variable)))
+    (when (interactive-p)
+      (message "%s" (if value value "Not set")))
+    value))
+*/
 
 DEFUN ("getenv", Fgetenv, 1, 2, "sEnvironment variable: \np", /*
 Return the value of environment variable VAR, as a string.
@@ -855,19 +904,43 @@ When invoked interactively, prints the value in the echo area.
   RETURN_UNGCPRO (v);
 }
 
-/* A version of getenv that consults process_environment, easily
-   callable from C.  */
-char *
-egetenv (const char *var)
+/* A version of getenv that consults Vprocess_environment, easily
+   callable from C.
+
+   (At init time, Vprocess_environment is initialized from the
+   environment, stored in the global variable environ. [Note that
+   at startup time, `environ' should be the same as the envp parameter
+   passed to main(); however, later calls to putenv() may change
+   `environ', making the envp parameter inaccurate.] Calls to getenv()
+   and putenv() consult and modify `environ'.  However, once
+   Vprocess_environment is initted, XEmacs C code should *NEVER* call
+   getenv() or putenv() directly, because (1) Lisp code that modifies
+   the environment only modifies Vprocess_environment, not `environ';
+   and (2) Vprocess_environment is in internal format but `environ'
+   is in some external format, and getenv()/putenv() are not Mule-
+   encapsulated.
+
+   WARNING: This value points into Lisp string data and thus will become
+   invalid after a GC. */
+
+Intbyte *
+egetenv (const CIntbyte *var)
 {
   /* This cannot GC -- 7-28-00 ben */
   Intbyte *value;
   Bytecount valuelen;
 
   if (getenv_internal ((const Intbyte *) var, strlen (var), &value, &valuelen))
-    return (char *) value;
+    return value;
   else
     return 0;
+}
+
+void
+eputenv (const CIntbyte *var, const CIntbyte *value)
+{
+  putenv_internal ((Intbyte *) var, strlen (var), (Intbyte *) value,
+		   strlen (value));
 }
 
 
@@ -883,19 +956,22 @@ init_callproc (void)
     Vprocess_environment = Qnil;
     for (envp = environ; envp && *envp; envp++)
       Vprocess_environment =
-	Fcons (build_ext_string (*envp, Qfile_name), Vprocess_environment);
+	Fcons (build_ext_string (*envp, Qnative), Vprocess_environment);
+    /* This gets set back to 0 in disksave_object_finalization() */
+    env_initted = 1;
   }
 
   {
     /* Initialize shell-file-name from environment variables or best guess. */
 #ifdef WIN32_NATIVE
-    const char *shell = egetenv ("SHELL");
+    const Intbyte *shell = egetenv ("SHELL");
     if (!shell) shell = egetenv ("COMSPEC");
     /* Should never happen! */
-    if (!shell) shell = (GetVersion () & 0x80000000 ? "command" : "cmd");
+    if (!shell) shell =
+      (Intbyte *) (GetVersion () & 0x80000000 ? "command" : "cmd");
 #else /* not WIN32_NATIVE */
-    const char *shell = egetenv ("SHELL");
-    if (!shell) shell = "/bin/sh";
+    const Intbyte *shell = egetenv ("SHELL");
+    if (!shell) shell = (Intbyte *) "/bin/sh";
 #endif
 
 #if 0 /* defined (WIN32_NATIVE) */
@@ -916,32 +992,16 @@ init_callproc (void)
     
     if (!egetenv ("SHELL"))
       {
-	CIntbyte *faux_var = alloca_array (CIntbyte, 7 + strlen (shell));
-	sprintf (faux_var, "SHELL=%s", shell);
-	Vprocess_environment = Fcons (build_string (faux_var),
+	Intbyte *faux_var = alloca_array (Intbyte, 7 + qxestrlen (shell));
+	qxesprintf (faux_var, "SHELL=%s", shell);
+	Vprocess_environment = Fcons (build_intstring (faux_var),
 				      Vprocess_environment);
       }
 #endif /* 0 */
 
-    Vshell_file_name = build_string (shell);
+    Vshell_file_name = build_intstring (shell);
   }
 }
-
-#if 0
-void
-set_process_environment (void)
-{
-  REGISTER char **envp;
-
-  Vprocess_environment = Qnil;
-#ifndef CANNOT_DUMP
-  if (initialized)
-#endif
-    for (envp = environ; *envp; envp++)
-      Vprocess_environment = Fcons (build_string (*envp),
-				    Vprocess_environment);
-}
-#endif /* unused */
 
 void
 syms_of_callproc (void)
@@ -955,6 +1015,7 @@ vars_of_callproc (void)
 {
   /* This function can GC */
 #ifdef WIN32_NATIVE
+  /* Will die as soon as callproc.c dies */
   DEFVAR_LISP ("binary-process-input", &Vbinary_process_input /*
 *If non-nil then new subprocesses are assumed to take binary input.
 */ );

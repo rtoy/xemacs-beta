@@ -1,6 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,6 +23,14 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef INCLUDED_sysfile_h_
 #define INCLUDED_sysfile_h_
+
+/* The anonymous voice of the past says:
+   Must come before sysfile.h
+
+   So instead we just put it here. --ben */
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 
 #include <errno.h>
 
@@ -166,19 +174,28 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
+#ifndef APPEND_TEXT
+#ifdef O_TEXT
+#define APPEND_TEXT "at"
+#else
+#define APPEND_TEXT "a"
+#endif
+#endif
+
+#ifndef APPEND_BINARY
+#ifdef O_BINARY
+#define APPEND_BINARY "ab"
+#else
+#define APPEND_BINARY "a"
+#endif
+#endif
+
 #ifndef O_NONBLOCK
 #ifdef O_NDELAY
 #define O_NONBLOCK O_NDELAY
 #else
 #define O_NONBLOCK 04000
 #endif
-#endif
-
-/* if system does not have symbolic links, it does not have lstat.
-   In that case, use ordinary stat instead.  */
-
-#ifndef S_IFLNK
-#define lstat xemacs_stat
 #endif
 
 #if !S_IRUSR
@@ -261,11 +278,6 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif
 
-/* MAXPATHLEN is deprecated, but, as of this writing, still used. */
-#ifndef MAXPATHLEN
-# define MAXPATHLEN 1024
-#endif
-
 /* The following definitions are needed under Windows, at least */
 #ifndef X_OK
 # define X_OK 1
@@ -273,6 +285,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef R_OK
 # define R_OK 4
+#endif
+
+#ifndef D_OK
+# define D_OK 8
 #endif
 
 #ifndef W_OK
@@ -287,256 +303,180 @@ Boston, MA 02111-1307, USA.  */
 # define FD_CLOEXEC 1
 #endif
 
+#ifdef emacs
+
 /* Emacs needs to use its own definitions of certain system calls on
    some systems (like SunOS 4.1 and USG systems, where the read system
    call is interruptible but Emacs expects it not to be; and under
    MULE, where all filenames need to be converted to external format).
-   To do this, we #define read to be sys_read, which is defined in
-   sysdep.c.  We first #undef read, in case some system file defines
-   read as a macro.  sysdep.c doesn't encapsulate read, so the call to
-   read inside of sys_read will do the right thing.
 
-   DONT_ENCAPSULATE is used in files such as sysdep.c that want to
-   call the actual system calls rather than the encapsulated versions.
-   Those files can call sys_read to get the (possibly) encapsulated
-   versions.
+   We used to play preprocessor games, but in the long run that just leads
+   you to ruin.  So we explicitly put in the new calls, even if the source
+   gets marginally less pretty.
 
-   IMPORTANT: the redefinition of the system call must occur *after* the
-   inclusion of any header files that declare or define the system call;
-   otherwise lots of unfriendly things can happen.  This goes for all
-   encapsulated system calls.
+   Current files where we don't use retry_ or qxe_ versions:
 
-   We encapsulate the most common system calls here; we assume their
-   declarations are in one of the standard header files included above.
-   Other encapsulations are declared in the appropriate sys*.h file. */
+   -- all sound files except ntplay.c (includes esd.c libsst.[ch] libst.h
+                                       linuxplay.c sgiplay.c sunplay.c
+				       hpplay.c nas.c)
+   -- all unex* files
+   -- hftctl.c
+   -- lib-src files
+   */
 
-#ifdef ENCAPSULATE_READ
-ssize_t sys_read (int, void *, size_t);
-#endif
-#if defined (ENCAPSULATE_READ) && !defined (DONT_ENCAPSULATE)
-# undef read
-# define read sys_read
-#endif
-#if !defined (ENCAPSULATE_READ) && defined (DONT_ENCAPSULATE)
-# define sys_read read
-#endif
-
-#ifdef ENCAPSULATE_WRITE
-ssize_t sys_write (int, const void *, size_t);
-#endif
-#if defined (ENCAPSULATE_WRITE) && !defined (DONT_ENCAPSULATE)
-# undef write
-# define write sys_write
-#endif
-#if !defined (ENCAPSULATE_WRITE) && defined (DONT_ENCAPSULATE)
-# define sys_write write
-#endif
-
-#ifdef ENCAPSULATE_OPEN
-int sys_open (const char *, int, ...);
-#endif
-#if defined (ENCAPSULATE_OPEN) && !defined (DONT_ENCAPSULATE)
-# undef open
-# define open sys_open
-#endif
-#if !defined (ENCAPSULATE_OPEN) && defined (DONT_ENCAPSULATE)
-# define sys_open open
-#endif
-
-#ifdef ENCAPSULATE_CLOSE
-int sys_close (int);
-#endif
-#if defined (ENCAPSULATE_CLOSE) && !defined (DONT_ENCAPSULATE)
-# undef close
-# define close sys_close
-#endif
-#if !defined (ENCAPSULATE_CLOSE) && defined (DONT_ENCAPSULATE)
-# define sys_close close
-#endif
+ssize_t retry_read (int, void *, size_t);
+ssize_t retry_write (int, const void *, size_t);
+int retry_open (const Extbyte *path, int oflag, ...);
+int qxe_open (const Intbyte *path, int oflag, ...);
+int qxe_interruptible_open (const Intbyte *path, int oflag, int mode);
+int retry_close (int);
+Bytecount read_allowing_quit (int fildes, void *buf, Bytecount size);
+Bytecount write_allowing_quit (int fildes, const void *buf,
+				  Bytecount size);
 
 /* Now the stdio versions ... */
 
-#ifdef ENCAPSULATE_FREAD
-size_t sys_fread (void *, size_t, size_t, FILE *);
-#endif
-#if defined (ENCAPSULATE_FREAD) && !defined (DONT_ENCAPSULATE)
-# undef fread
-# define fread sys_fread
-#endif
-#if !defined (ENCAPSULATE_FREAD) && defined (DONT_ENCAPSULATE)
-# define sys_fread fread
-#endif
-
-#ifdef ENCAPSULATE_FWRITE
-size_t sys_fwrite (const void *, size_t, size_t, FILE *);
-#endif
-#if defined (ENCAPSULATE_FWRITE) && !defined (DONT_ENCAPSULATE)
-# undef fwrite
-# define fwrite sys_fwrite
-#endif
-#if !defined (ENCAPSULATE_FWRITE) && defined (DONT_ENCAPSULATE)
-# define sys_fwrite fwrite
-#endif
-
-#ifdef ENCAPSULATE_FOPEN
-FILE *sys_fopen (const char *, const char *);
-#endif
-#if defined (ENCAPSULATE_FOPEN) && !defined (DONT_ENCAPSULATE)
-# undef fopen
-# define fopen sys_fopen
-#endif
-#if !defined (ENCAPSULATE_FOPEN) && defined (DONT_ENCAPSULATE)
-# define sys_fopen fopen
-#endif
-
-#ifdef ENCAPSULATE_FCLOSE
-int sys_fclose (FILE *);
-#endif
-#if defined (ENCAPSULATE_FCLOSE) && !defined (DONT_ENCAPSULATE)
-# undef fclose
-# define fclose sys_fclose
-#endif
-#if !defined (ENCAPSULATE_FCLOSE) && defined (DONT_ENCAPSULATE)
-# define sys_fclose fclose
-#endif
-
+size_t retry_fread (void *, size_t, size_t, FILE *);
+size_t retry_fwrite (const void *, size_t, size_t, FILE *);
+FILE *retry_fopen (const Extbyte *path, const Char_ASCII *mode);
+FILE *qxe_fopen (const Intbyte *path, const Char_ASCII *mode);
+int retry_fclose (FILE *);
 
 /* encapsulations: file-information calls */
 
-#ifdef ENCAPSULATE_ACCESS
-int sys_access (const char *path, int mode);
-#endif
-#if defined (ENCAPSULATE_ACCESS) && !defined (DONT_ENCAPSULATE)
-# undef access
-# define access sys_access
-#endif
-#if !defined (ENCAPSULATE_ACCESS) && defined (DONT_ENCAPSULATE)
-# define sys_access access
-#endif
-
-#ifdef ENCAPSULATE_EACCESS
-int sys_eaccess (const char *path, int mode);
-#endif
-#if defined (ENCAPSULATE_EACCESS) && !defined (DONT_ENCAPSULATE)
-# undef eaccess
-# define eaccess sys_eaccess
-#endif
-#if !defined (ENCAPSULATE_EACCESS) && defined (DONT_ENCAPSULATE)
-# define sys_eaccess eaccess
-#endif
-
-#ifdef ENCAPSULATE_LSTAT
-int sys_lstat (const char *path, struct stat *buf);
-#endif
-#if defined (ENCAPSULATE_LSTAT) && !defined (DONT_ENCAPSULATE)
-# undef lstat
-# define lstat sys_lstat
-#endif
-#if !defined (ENCAPSULATE_LSTAT) && defined (DONT_ENCAPSULATE)
-# define sys_lstat lstat
-#endif
-
-#ifdef ENCAPSULATE_READLINK
-int sys_readlink (const char *path, char *buf, size_t bufsiz);
-#endif
-#if defined (ENCAPSULATE_READLINK) && !defined (DONT_ENCAPSULATE)
-# undef readlink
-# define readlink sys_readlink
-#endif
-#if !defined (ENCAPSULATE_READLINK) && defined (DONT_ENCAPSULATE)
-# define sys_readlink readlink
-#endif
-
-#ifdef ENCAPSULATE_FSTAT
-int sys_fstat (int fd, struct stat *buf);
-#endif
-#if defined (ENCAPSULATE_FSTAT) && !defined (DONT_ENCAPSULATE)
-# undef fstat
-# define fstat sys_fstat
-#endif
-#if !defined (ENCAPSULATE_FSTAT) && defined (DONT_ENCAPSULATE)
-# define sys_fstat fstat
-#endif
-
-int xemacs_stat (const char *path, struct stat *buf);
+int qxe_access (const Intbyte *path, int mode);
+int qxe_eaccess (const Intbyte *path, int mode);
+int qxe_lstat (const Intbyte *path, struct stat *buf);
+int qxe_readlink (const Intbyte *path, Intbyte *buf, size_t bufsiz);
+int qxe_fstat (int fd, struct stat *buf);
+int qxe_stat (const Intbyte *path, struct stat *buf);
+Intbyte *qxe_realpath (const Intbyte *path, Intbyte resolved_path []);
 
 /* encapsulations: file-manipulation calls */
 
-#ifdef ENCAPSULATE_CHMOD
-int sys_chmod (const char *path, mode_t mode);
-#endif
-#if defined (ENCAPSULATE_CHMOD) && !defined (DONT_ENCAPSULATE)
-# undef chmod
-# define chmod sys_chmod
-#endif
-#if !defined (ENCAPSULATE_CHMOD) && defined (DONT_ENCAPSULATE)
-# define sys_chmod chmod
+int qxe_chmod (const Intbyte *path, mode_t mode);
+
+#if defined (HAVE_LINK)
+int qxe_link (const Intbyte *existing, const Intbyte *new);
+#endif /* defined (HAVE_LINK) */
+
+int qxe_rename (const Intbyte *old, const Intbyte *new);
+
+#if defined (HAVE_SYMLINK)
+int qxe_symlink (const Intbyte *name1, const Intbyte *name2);
+#endif /* defined (HAVE_SYMLINK) */
+
+int qxe_unlink (const Intbyte *path);
+
+#endif /* emacs */
+
+
+#ifndef HAVE_H_ERRNO
+extern int h_errno;
 #endif
 
-#ifdef ENCAPSULATE_CREAT
-int sys_creat (const char *path, mode_t mode);
-#endif
-#if defined (ENCAPSULATE_CREAT) && !defined (DONT_ENCAPSULATE)
-# undef creat
-# define creat sys_creat
-#endif
-#if !defined (ENCAPSULATE_CREAT) && defined (DONT_ENCAPSULATE)
-# define sys_creat creat
+#ifndef HAVE_DUP2
+int dup2 (int oldd, int newd);
 #endif
 
-#ifdef ENCAPSULATE_LINK
-int sys_link (const char *existing, const char *new);
-#endif
-#if defined (ENCAPSULATE_LINK) && !defined (DONT_ENCAPSULATE)
-# undef link
-# define link sys_link
-#endif
-#if !defined (ENCAPSULATE_LINK) && defined (DONT_ENCAPSULATE)
-# define sys_link link
+#ifndef HAVE_STRERROR
+/* X11R6 defines strerror as a macro */
+# ifdef strerror
+# undef strerror
+# endif
+const char *strerror (int);
 #endif
 
-#ifdef ENCAPSULATE_RENAME
-int sys_rename (const char *old, const char *new);
-#endif
-#if defined (ENCAPSULATE_RENAME) && !defined (DONT_ENCAPSULATE)
-# undef rename
-# define rename sys_rename
-#endif
-#if !defined (ENCAPSULATE_RENAME) && defined (DONT_ENCAPSULATE)
-# define sys_rename rename
-#endif
+
 
-#ifdef ENCAPSULATE_SYMLINK
-int sys_symlink (const char *name1, const char *name2);
-#endif
-#if defined (ENCAPSULATE_SYMLINK) && !defined (DONT_ENCAPSULATE)
-# undef symlink
-# define symlink sys_symlink
-#endif
-#if !defined (ENCAPSULATE_SYMLINK) && defined (DONT_ENCAPSULATE)
-# define sys_symlink symlink
-#endif
+/* 
+   DEFAULT_DIRECTORY_SEP is the default value of Vdirectory_sep_char.
+   DIRECTORY_SEP is the currently preferred separator between elements
+     of a path, when paths are canonicalized.
+   DEVICE_SEP is the separator between devices and paths (might not
+     be defined).
+   SEPCHAR is the separator between paths in a path search string
+     (e.g. the PATH environment variable).
+   IS_DIRECTORY_SEP() returns true if the character is any directory
+     separator (there might be more than one allowed on a system.).
+   IS_DEVICE_SEP() returns true if the character is a device separator.
+   IS_ANY_SEP() returns true if the character is a directory or device
+     separator.
+*/
 
-#ifdef ENCAPSULATE_UNLINK
-int sys_unlink (const char *path);
-#endif
-#if defined (ENCAPSULATE_UNLINK) && !defined (DONT_ENCAPSULATE)
-# undef unlink
-# define unlink sys_unlink
-#endif
-#if !defined (ENCAPSULATE_UNLINK) && defined (DONT_ENCAPSULATE)
-# define sys_unlink unlink
-#endif
+#ifdef emacs
 
-#ifdef ENCAPSULATE_EXECVP
-int sys_execvp (const char *, char * const *);
-#endif
-#if defined (ENCAPSULATE_EXECVP) && !defined (DONT_ENCAPSULATE)
-# undef execvp
-# define execvp sys_execvp
-#endif
-#if !defined (ENCAPSULATE_EXECVP) && defined (DONT_ENCAPSULATE)
-# define sys_execvp execvp
-#endif
+/* We used to put some of this stuff in the s+m files for the various
+   types of MS Windows, but that's disingenuous.  The various definitions
+   above were specifically created for MS Windows, and the "if not, then
+   let's define the defaults" stuff (formerly in lisp.h) specifically knows
+   about what is going to get redefined and how, and code all over the
+   place that works with filenames has to conditionalize on WIN32_NATIVE
+   anyway.  It's much clearer if we put all related definitions in one
+   place. (In fact, I discovered a number of bugs in the process.)
+
+   S+M files should be used for simple on-off or multiple-choice settings,
+   or possibly string settings.  Anything that gets to the level of
+   programming should be elsewhere, and anything that ends up having
+   lots of complicated interactions scattered around in many files should
+   be consolidated. */
+
+#ifdef WIN32_NATIVE
+
+#define SEPCHAR ';'
+#define DEFAULT_DIRECTORY_SEP '\\'
+
+DECLARE_INLINE_HEADER (Intbyte sysfile_get_directory_sep (void))
+{
+  if (!CHARP (Vdirectory_sep_char)
+      || (XCHAR (Vdirectory_sep_char) != '/'
+	  && XCHAR (Vdirectory_sep_char) != '\\'))
+    {
+      warn_when_safe
+	(Qfile_name, Qerror,
+	 "`directory-sep-char' set to invalid %s: resetting to %c.",
+	 DEFAULT_DIRECTORY_SEP);
+      Vdirectory_sep_char = make_char (DEFAULT_DIRECTORY_SEP);
+    }
+
+  return XCHAR (Vdirectory_sep_char);
+}
+#define DIRECTORY_SEP sysfile_get_directory_sep()
+
+#else /* not WIN32_NATIVE */
+
+#define SEPCHAR ':'
+#define DEFAULT_DIRECTORY_SEP '/'
+#define DIRECTORY_SEP '/'
+
+#endif /* WIN32_NATIVE */
+
+
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+
+#define DEVICE_SEP ':'
+
+#define IS_DEVICE_SEP(c) ((c) == DEVICE_SEP)
+
+DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (Emchar c))
+{
+  return (c == '/' || c == '\\');
+}
+
+DECLARE_INLINE_HEADER (int IS_ANY_SEP (Emchar c))
+{
+  return (c == '/' || c == '\\' || c == ':');
+}
+
+#else /* not (defined (WIN32_NATIVE) || defined (CYGWIN)) */
+
+#define IS_DEVICE_SEP(c) 0
+#define IS_DIRECTORY_SEP(c) ((c) == DIRECTORY_SEP)
+#define IS_ANY_SEP(c) IS_DIRECTORY_SEP (c)
+
+#endif /* defined (WIN32_NATIVE) || defined (CYGWIN) */
+
+#endif /* emacs */
+
 
 #endif /* INCLUDED_sysfile_h_ */

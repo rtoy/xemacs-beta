@@ -294,7 +294,7 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
 	     VECTORP (Vexecuting_macro)));
 
   UNGCPRO;
-  return unbind_to (speccount, Qnil);
+  return unbind_to (speccount);
 }
 
 

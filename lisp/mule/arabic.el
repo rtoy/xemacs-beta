@@ -55,6 +55,16 @@
 		direction r2l
 		))
 
+(make-coding-system 'iso-8859-6 'iso2022
+		    "ISO-8859-6 (Arabic)"
+		    '(charset-g0 ascii
+				 charset-g1 arabic-iso8859-6
+				 charset-g2 t
+				 charset-g3 t
+				 no-iso6429 t
+				 mnemonic "MIME/Arbc"
+				 ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ARABIC
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

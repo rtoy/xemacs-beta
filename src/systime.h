@@ -1,5 +1,6 @@
 /* systime.h - System-dependent definitions for time manipulations.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,6 +33,12 @@ Boston, MA 02111-1307, USA.  */
 # else
 #  include <time.h>
 # endif
+#endif
+
+#if defined (CYGWIN) || defined (LINUX)
+/* #### why don't other systems have problems with this?  need this
+   for struct tms */
+# include <sys/times.h>
 #endif
 
 /* select() is supposed to be (Unix98) defined in sys/time.h,
@@ -71,6 +78,9 @@ void gettimeofday (struct timeval *, struct timezone *);
 
 #ifdef WIN32_NATIVE
 # include <sys/utime.h>
+#ifdef emacs
+int mswindows_utime (Lisp_Object path, struct utimbuf *thymes);
+#endif
 #endif
 
 #if defined(HAVE_TZNAME) && !defined(WIN32_NATIVE) && !defined(CYGWIN)
@@ -236,10 +246,11 @@ do {								\
 
 #ifdef emacs
 int set_file_times (Lisp_Object path, EMACS_TIME atime, EMACS_TIME mtime);
-#endif
-
 void get_process_times (double *user_time, double *system_time,
 			double *real_time);
+Intbyte *qxe_ctime (const time_t *value);
+
+#endif
 
 #ifdef WIN32_NATIVE
 

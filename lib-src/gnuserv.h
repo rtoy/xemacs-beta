@@ -42,7 +42,6 @@
 #define NO_SHORTNAMES
 /* gnuserv should not be compiled using SOCKS */
 #define DO_NOT_SOCKSIFY
-#define DONT_ENCAPSULATE
 #include <config.h>
 #undef signal
 

@@ -26,7 +26,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <config.h>
 #include "lisp.h"
 
-#define DONT_ENCAPSULATE /* filenames are external in unex*.c */
 #include "sysfile.h"
 
 #define PERROR(arg)				\

@@ -20,6 +20,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 20.2. */
 
+/* This file has been ... uhhhhh ... Mule-ized.  Yeah.
+
+   (Everything here is external format.  That's potentially dangerous,
+   but in practice it'll be OK.) --ben */
+
 /* Originally based on the COFF unexec.c by Spencer W. Thomas.
  *
  * Subsequently hacked on by

@@ -1,45 +1,71 @@
-Copyright (c) 1997-2000, Adrian Aichner <adrian@xemacs.org>.
-
-Copyright (c) 1985, 1996 Free Software Foundation, Inc. See end for conditions.
-
-Du betrachtest das Emacs Tutorial.
-Dies sind die einführenden Übungen für Emacs.
+Du betrachtest das XEmacs Tutorial.  Copyrights siehe Ende des Dokuments.
 
 Emacs-Befehle verwenden generell entweder die CONTROL- (manchmal mit
 CTRL oder CTL beschriftet, auf deutschen Tastaturen auch oft mit STRG)
-oder die META-Taste.  Auf manchen Tastaturen ist die META-Taste mit
-ALT, EDIT oder sonstwie (z.B. ist auf einer Sun Tastatur die
-Raute-Taste links vom SPACE Balken die META-Taste) beschriftet.  Statt
-jedesmal META oder CONTROL auszuschreiben, wenn wir wollen daß Du die
-Taste drückst, verwenden wir folgende Abkürzungen:
+oder die META-Taste.  "META" ist ein traditioneller Emacs-Begriff; auf
+den meisten Tastaturen ist die Taste mit "Alt" beschriftet.  (Auf
+einer Sun Tastatur ist die META-Taste mit einer Raute gekennzeichnet
+und hat nichts mit der Alt-Taste zu tun, die es auch gibt.)  Auf
+manchen TTY's gibt es keine META-Taste; verwende in diesem Fall die
+ESC-Taste.  Statt jedesmal META oder CONTROL auszuschreiben, wenn wir
+wollen daß Du die Taste drückst, verwenden wir folgende Abkürzungen:
 
 C-<chr>	bedeutet: Halte die CONTROL-Taste während der Betätigung der
 	<chr>-Taste gedrückt.  Also bedeutet C-f: Halte die CONTROL
 	Taste, während Du den Buchstaben f drückst.
-M-<chr>	bedeutet: Halte die META-Taste während der Betätigung der
-	<chr>-Taste gedrückt.  Falls es keine META-Taste gibt, tippe
-	zuerst ESC (die ESCAPE-Taste) und danach die <chr>-Taste.
+M-<chr>	bedeutet: Halte die META-Taste (d.h. Alt) während der Betätigung der
+	<chr>-Taste gedrückt.  (Für Sun Tastaturen und TTY's siehe oben.)
 
 Wichtig: Tippe C-x C-c, um die Emacs-Sitzung zu beenden (zwei
-Zeichen). Die ">>" am linken Seitenrand deuten auf Anweisungen, die
-Du probieren solltest.  so z.B:
-<<Seitenmitte aus didaktischen Gründen leer. Text wird unten fortgesetzt.>>
->> Tippe nun C-v (Betrachte nächste Seite) um die nächste Seite zu
-	betrachten.  (Also, halte die CONTROL-Taste gedrückt während
-	Du v tippst.)
-	Von jetzt an tu das bitte jeweils nachdem Du eine Seite
-	vollständig gelesen hast.
+Zeichen).
+
+Um auf die nächste Seite zu gelangen, tippe <Next> (oft auch PgDn).
+Verwende C-v auf TTY's welche diese Taste nicht aufweisen.  (Halte die
+CONTROL-Taste während der Betätigung der v-Taste gedrückt.)
+
+Um auf die vorhergehende Seite zu gelangen, tippe <Prior> (oft auch
+PgUp).  Verwende M-v auf TTY's welche diese Taste nicht aufweisen.
+(Erinnere Dich: dies bedeutet META + v; gibt es keine funktionierende
+META- oder Alt-Taste, tippe zuerst ESC, und danach v.)
+
+Die ">>" am linken Seitenrand deuten auf Anweisungen, die
+Du probieren solltest.  Zum Beispiel:
+
+>>  Probiere nun einige male <Next> und dann <Prior>. (Auf TTY's
+    versuche C-v und M-v.)
 
 Bitte beachte die Überlappung von zwei Zeilen wenn Du vorwärts
 blätterst; dies erlaubt es, den Text fließend weiter zu lesen.
 
-Zuerst solltest Du wissen, wie man sich im Text von Stelle zu Stelle
-bewegt. Du weißt bereits, wie man sich mit C-v eine Seite
-weiterbewegt.  Um eine Seite zurück zu gehen, tippe M-v (halte die
-META-Taste gedrückt und tippe v oder tippe <ESC>v wenn Deine Tastatur
-keine META-, EDIT- oder ALT-Taste besitzt).
+Im Allgemeinen hat jeder "cursor key" (Mit Pfeilen und Ähnlichem
+beschriftete Tasten, rechts unten auf der Tastatur) eine entsprechende
+Zuordnung einer Kombination von alphanumerischen Tasten mit CONTROL
+und/oder META, um TTY-Benutzern die Verwendung von XEmacs zu
+ermöglichen.
 
->>  Versuche ein paarmal M-v und C-v zu tippen.
+(Tatsächlich war früher diese ältere Methode die einzig verfügbare,
+und man findet auch heute noch häufig Empfehlungen dieser
+Tastern-Sequenzen.  Wir empfehlen diese alten Tasten-Zuordnungen
+nicht, weil die Cursor-Tasten einfacher zu behalten und üblicherweise
+angenehmer zu verwenden sind.  Es ist jedoch nützlich diese älteren
+Tasten-Zuordnungen zu kennen, entweder wenn man jemals ein TTY
+benutzt, oder einfach um zu verstehen, wenn auf diese Bezug genommen
+wird.  Von nun an werden wir diese TTY Tasten-Zuordnungen in Klammern
+gesetzt erwähnen, und erwarten von TTY Benutzern, daß sie diese
+verwenden, wann immer wir Cursor-Tasten erwähnen.)
+
+Du magst Dich fragen: "Was ist ein TTY?"  Ein TTY (oder TeleTYpe) ist
+eine reine Text-Verbindung wie man sie z.B. beim Einloggen in ein
+System über telnet erhält.  Bis vor etwa 20 Jahren waren solche reinen
+Text-Verbindungen alles was zum kommunizieren mit einem Computer,
+üblicherweise über ein Terminal (eine Kombination aus Tastatur und
+Schwarz-Weiß Bildschirm) welches direkt am Computer angeschlossen war,
+zur Verfügung stand.  Heutzutage werden solche speziellen TTY's
+zunehmend seltener und viele treffen sie nur bei der Verwendung von
+telnet an.  Emacs geht auf diese Zeiten zurück und trägt noch an
+dieser Last, aber die Dinge haben sich seither stark verbessert.  Du
+verwendest XEmacs jetzt vermutlich unter MS Windows oder X Windows,
+die zusammenfassend als "window system" bezeichnet werden.
 
 
 * ZUSAMMENFASSUNG
@@ -47,11 +73,11 @@ keine META-, EDIT- oder ALT-Taste besitzt).
 
 Die folgenden Befehle sind nützlich um Text seitenweise zu betrachten:
 
-	C-v	Eine Seite vorwärts blättern
-	M-v	Eine Seite zurück blättern
-	C-l	Bewegt den Bildschirminhalt um den Textzeiger in die
-		Bildmitte und baut den Bildschirm neu auf.
-		(Dies ist CONTROL-<klein L>, nicht CONTROL-1.)
+	<Next>	 Eine Seite vorwärts blättern (C-v auf TTYs)
+	<Prior>	 Eine Seite zurück blättern (M-v auf TTYs)
+	 C-l	 Bewege den Fensterinhalt um den Textzeiger in die
+		 Mitte des Fensters und baue den Rahmen neu auf.
+		 (Dies ist CONTROL-<klein L>, nicht CONTROL-1.)
 
 >> Finde den Textzeiger und merke Dir den Text der ihm nahe ist.
    Nun tippe C-l.
@@ -59,18 +85,183 @@ Die folgenden Befehle sind nützlich um Text seitenweise zu betrachten:
    relativ zum Text, nicht bewegt hat.
 
 
+* BEGRIFFSERKLÄRUNG
+-------------------
+
+Alle Aspekte von Computern haben ihre entsprechende Begriffe und bis
+man diese meistert können die Dinge überwältigend erscheinen.  Noch
+dazu hat XEmacs seine eigenen Begriffe, einige davon sind natürlich
+Begriffe für spezielle Konzepte von XEmacs.  Einige XEmacs-Begriffe
+sind aber einfach abweichende Bezeichnungen für übliche Objekte und
+Konzepte.  (Dies rührt daher, daß XEmacs vor langer Zeit entstand, als
+viele Dinge die sich standardmäßig in heutigen Computern finden noch
+nicht existierten, solche die existierten hatten andere Namen.)
+
+Um die Dinge für Dich einfacher zu machen sind die allgemeinsten
+XEmacs-Bezeichnungen, die in diesem Tutorial verwenden werden, hier
+definiert, obwohl einige bereits weiter oben erklärt und andere weiter
+unten ausführlich besprochen werden.  So weißt Du, wenn Du auf einen
+unbekannten Begriff stößt, genau wo Du die Erklärung finden kannst.
+Mache Dir keine Sorgen wenn Du nicht alle Ausdrücke verstehst; wenn Du
+dieses Tutorial weiterliest werden früher oder später alle
+Bezeichnungen im Einzelnen erklärt.
+
+Begriff		Erklärung
+--------------------------
+C-		Eine Tastenkombination welche die CONTROL Taste
+		einschließt.  C-k wird manchmal mit CONTROL + k oder
+		(nicht in XEmacs) ^K angezeigt, und bedeutet die
+		CONTROL Taste zu halten während man die k anschlägt.
+Info    	Der Name der XEmacs Online-Dokumentation, erreichbar
+		mit C-h i.
+M-		Eine Tastenkombination mit der META Taste.  See META.
+META            Ein abstrakter Name für eine bestimmte Zusatz-Taste,
+                die je nach Tastatur verschiedenen Tasten entspricht.
+                Auf den meisten Tastaturen META die Alt Taste, aber
+                auf Sun Tastaturen ist's eine mit einer Raute
+                beschriftete Taste, und *NICHT* die Alt Taste, die
+                dort auch existiert.  META kann auch mit dem Drücken
+                von ESC vor der anderen Taste ersetzt werden, das sind
+                in der Realität aber einfach zwei verschiedene Tasten,
+                nicht eine Taste mit Zusatz-Taste: Willst Du M-f M-f
+                tippen kannst Du normalerweise (z.B.) Alt gedrückt
+                halten, f zweimal drücken, dann Alt wieder loslassen.
+                Verwendest Du aber ESC als META mußt Du ESC f ESC f
+                tippen.
+TTY             Eine reine Textverbindung zu einem Computer, wie etwa
+                mit telnet.  Siehe das vorhergehende Kapitel für mehr
+                Erklärung.
+Bindung         Der Befehl welcher zu einer bestimmten Tastensequenz
+                gebunden ist; Du kannst die Bindung ("binding") mit
+                C-h k herausfinden und wie der Befehl funktioniert; es
+                ist auch möglich die Bindung von Tastensequenzen zu
+                ändern, wird aber in diesem Tutorial nicht besprochen.
+Buffer          Ein Speicherblock der Text enthält, etwa den Text
+                einer Datei, E-mail Nachricht, Liste der Dateien in
+                einem Verzeichnis, u.s.w..  Alle sichtbaren Fenster
+                zeigen immer Text irgendeines Buffers ("buffer") und
+                mehr als ein Fenster kann den selben Buffer anzeigen.
+                In diesem Fall hat jeder Buffer sinen eigenen Wert für
+                Punkt ("point") (siehe Erklärung).
+Textzeiger	Ein Block oder Balken ("cursor") der die derzeitige
+		Einfügstelle im Text anzeigt.
+Textzeiger-Tasten
+                Jede der Tasten, die den Textzeiger bewegen ("cursor
+                key"), wie etwa die Pfeil-Tasten, <Next> und <Prior>
+                (oft auch mit PgUp und PgDn beschriftet), <Home> und
+                <End>, u.s.w..  Üblicherweise abgesetzt auf der
+                rechten Seite der Tastatur, oft grau gefärbt.
+Echobereich     Ein einzeiliger Bereich ("echo area") am unteren Ende
+                des Rahmens wo Meldungen ausgegeben werden.  Er teilt
+                sich den Platz mit dem Minibuffer, was funktioniert
+                weil der Minibuffer meist nicht, und wenn nur für
+                kurze Zeit, aktiv ist.  (Sogar dann, wenn eine Meldung
+                angezeigt werden muß verschwindet der Minibuffer kurz,
+                die Meldung wird angezeigt, dann kehr nach einigen
+                Sekunden der Minibuffer zurück.)
+Rahmen          Was auf einem Window-System standardmäßig "Fenster"
+                genannt wird.  TTYs haben nur einen sichtbaren Rahmen
+                ("frame"), aber es ist möglich andere zu öffnen und
+                zwischen diesen umzuschalten (wie wenn man auf einem
+                Window-System alle Fenster maximiert übereinander legt
+                sodaß man jeweils nur eines sehen kann).
+Inkrementelle Suche
+		Schrittweise oder Inkrementelle Suche ("isearch").
+		Eine Emacs Erfindung und besonders effiziente Art des
+		Suchens.  Nach jedem getippten Buchstaben springt
+		XEmacs sofort zur nächsten Übereinstimmung.  So
+		verhindert man, mehr zu tippen als nötig, um das
+		Gesuchte zu finden.
+Tasten-Sequenz  Die Sequenz von einer oder mehr Tasten, die zusammen
+        	einen Befehl ergeben.  C-x C-f, C-x 5 0, C-l, und
+        	<Next> sind alles Tasten-Sequenzen ("key sequence").
+        	Siehe auch Bindung ("binding").
+Tastenkombination
+        	Eine Kombination ("keystroke") von Tasten und
+        	Modifikation-Tasten (z.B. CONTROL, SHIFT,
+		META).
+Entfernen	Standardmäßig bekannt als Ausschneiden ("cut").
+		Entferne ("kill") Text und merke ihn, so daß er später
+		zurückgeholt ("yanked") (standardmäßig, eingefügt,
+		"pasted") werden kann.  Mehrfaches Entfernen "kills"
+		werden gemerkt, nicht nur das latzte, und kann mit M-y
+		erreicht werden.  Entfernen wird manchmal auch
+		allgemein für das beseitigen von anderen Dingen als
+		Text verwendet, z.B. Buffer, Werkzeugbalkeneinträge
+		("toolbar items"), Lokale Variablen, Unterprozesse,
+		Abkürzungen, oder für den XEmacs Prozess selbst.
+Minibuffer      Ein kleiner Buffer (gewöhnlich eine Zeile, kann aber
+                bei Bedarf vergrößert werden) am Fuß des Rahmens, wird
+                verwendet wenn Befehle Eingaben wie etwa Dateinamen
+                benötigen.
+Moduszeile     	Eine Zustandsanzeigezeile ("modeline"), nahe dem Fuße
+        	eines Fensters, die den Dateinamen der bearbeiteten
+        	Datei, den derzeitigen Modus, die Zeilennummer,
+        	u.s.w. anzeigt. (Wenn Du den Rahmen in zwei Fenster
+        	teilst, bekommst Du zu Zustandsanzeigezeilen.)
+Punkt		Die Stelle ("point") an der sich der Textzeiger
+		befindet.  (Fachlich richtig befindet sich der
+		Textzeiger *ZWISCHEN* zwei Buchstaben, nicht auf einem
+		Buchstaben.)
+Präfix Argument Zusatzinformation die vor einem Befehl getippt wird,
+                die das Verhalten des Befehls ändert.  Präfix
+                Argumente ("prefix argument") kommen in zwei Varianten
+                vor: Numerische Argumente, die eine Wiederholungszahl,
+                eine Zielzeile u.s.w. angeben, werden mittels META in
+                Verbindung mit einer Zahl vor dem Befehl eingegeben;
+                Kennzeichnungs-Argumente, die einfache Ja/Nein Angaben
+                sind (z.B. setze den Punkt and den Anfang des
+                Eingefügten Textes, statt and sein Ende) werden mit
+                C-u vor dem Befehl eingegeben.
+Rekursives Bearbeiten
+                Dies wird während der Ausführung eines langwierigen
+                Befehls (z.B. Suchen und Ersetzen) verwendet, wenn man
+                verübergehend irgendwelchen Text bearbeiten will
+                ("recursive edit").  Angezeigt durch eckige Klammern
+                um den Modus-Namen.  Es ist unwahrscheinlich, daß Du
+                dies viel verwenden wirst, wenn überhaupt, aber es ist
+                gut zu wissen wie man aussteigt, falls man
+                versehentlich in diesen Zustand gerät: tippe ESC ESC.
+Bildschirm      Die Gesamtheit von Allem was Du auf dem Display
+                ("screen") siehst.  Wird auch in Ausdrücken wie:
+                sichtbar/nicht sichtbar ("on/off the screen")
+                verwendet. Ein Bildschirminhalt ("screenful") ist die
+                Menge Text, die gleichzeigt in einem bestimmten
+                Fenster sichtbar ist.
+Fenster         Nicht-überlappende Teilung eines Rahmens ("window"),
+                standardmäßig "pane" genannt.  Zumeist gibt es nur ein
+                Fenster in einem Rahmen sodaß die Begriffe
+                austauschbar werden. (Fachlich richtig umfaßt ein
+                Fenster zwar die darunterliegende Moduszeile, nicht
+                aber den Minibuffer.)
+Zurückholen     Standardmäßig als Einfügen ("paste") bekannt.  Füge
+		Text, der zuvor weggenommen und gemerkt, auch
+		Entfernen oder standardmäßig Ausschneiden ("cutting")
+		genannt, wieder ein ("yank").
+
+
 * EINFACHE TEXTZEIGER-STEUERUNG
 -------------------------------
 
-Das Bewegen von Bildschirminhalt zum nächsten ist nützlich, aber wie
-bewegt man sich an eine bestimmte Stelle im Text?
+Zuerst solltest Du wissen, wie man sich im Text von Stelle zu Stelle
+bewegt. Du weißt bereits, wie man sich eine Seite weiter- oder
+zurückbewegt, aber wie bewegt man sich an eine bestimmte Stelle im
+Text?
 
-Dazu gibt es mehrere Möglichkeiten.  Die einfachste ist die Befehle
-C-p, C-b, C-f und C-n zu verwenden.  Jeder dieser Befehle bewegt den
-Textzeiger um eine Zeile bzw. Spalte in eine bestimmte Richtung.
-Hier ist eine Tabelle welche die Bewegungsrichtung der vier Befehle
+Dazu gibt es mehrere Möglichkeiten.  Die einfachste ist es, die
+Pfeil-Tasten, die wir <Left>, <Right>, <Up>, und <Down> nennen, zu
+benutzen.  Jeder dieser Befehle bewegt den Textzeiger auf dem
+Bildschirm um eine Zeile bzw. Spalte in eine bestimmte Richtung.
+
+Auf einem TTY sollten sich die Cursor-Tasten hoffentlich gleich
+verhalten.  TTYs sind allerdings leicht falls zu konfigurieren.  Wie
+oben erwähnt gibt es für alle Cursor-Tasten gleichwertige
+alphanumerische Tasten-Kombinationen.  In diesem Fall sind diese
+unglücklicherweise nicht sehr naheliegend, da sie nicht nach
+visuellen, sondern nach mnemonischen Richtlinien gewählt wurden.  Hier
+ist eine Tabelle welche die Bewegungsrichtung der vier TTY-Befehle
 zeigt:
- 
+
 			  Vorherige Zeile, C-p
 				  :
 				  :
@@ -78,334 +269,473 @@ zeigt:
 				  :
 				  :
 			    Nächste Zeile, C-n
- 
->> Bewege den Textzeiger mittels C-n oder C-p auf die mittlere Zeile
+
+>> Bewege den Textzeiger mittels <Down> oder <Up> auf die mittlere Zeile
    der obigen Tabelle. Dann zentriere das Diagramm mittels C-l im
-   Bildschirmfenster.
+   Bildschirmfenster.  (Bitte erinnere Dich, daß TTY Benutzer,wenn
+   nötig, die entsprechenden TTY-Befehle benutzen sollten.  In diesem
+   Fall sind dies C-n und C-p.)
+
+Bitte beachte die mnemonische Bedeutung der TTY-Befehle (im
+Englischen): P für previous, N für next, B für backward und F für
+forward.
+
+Auf einem TTY solltest Du nun einige Zeit damit verbringen, Dir diese
+Zuordnungen einzuprägen.  Diese grundsätzlichen
+Textzeiger-Positionierungs-Befehle wirst Du ständig verwenden und ohne
+sie bist du verloren.
+
+Selbst auf einem window system solltest Du Dir zumindest diese vier
+Befehle und ihre Bedeutung einprägen, weil sie in Variationen in
+vielen Befehlen wiederkehren werden.  Das Wissen wofür sie stehen kann
+eine sehr große Hilfe sein.
 
 Auf Englisch kann man sich diese Befehle leicht einprägen: P für
 previous, N für next, B für backward und F für forward.  Dies sind die
 einfachen Befehle zur Bewegung des Textzeigers. Da Du sie ständig
 benutzen wirst, solltest Du sie jetzt erlernen.
 
->> Verwende einige C-n's um den Textzeiger auf diese Zeile zu
+>> Verwende einige <Down>'s um den Textzeiger auf diese Zeile zu
    bringen.
 
->> Bewege Dich mit C-f's in die Zeile und dann hinauf mit C-p's.
-   Beobachte das Verhalten von C-p, wenn Du Dich mitten in einer Zeile
+>> Bewege Dich mit <Right>'s in die Zeile und dann hinauf mit <Up>'s.
+   Beobachte das Verhalten von <Up>, wenn Du Dich mitten in einer Zeile
    befindest.
+
+Die Stelle des Textzeigers im Text wird auch "point" (oder Punkt)
+genannt.  Du wirst diesen Begriff in der Dokumentation häufig
+wiederfinden, merke ihn Dir bitte.
 
 Jede Textzeile endet mit einem Newline-Zeichen, welches sie von der
 nächsten trennt.  Auch die letzte Zeile in Deiner Datei sollte ein
-Newline am Ende besitzen (obschon Emacs dieses nicht benötigt).
+Newline am Ende besitzen.  XEmacs braucht dieses normalerweise nicht,
+das kannst Du aber ändern -- Siehe den Menü-Eintrag
+"Options->Editing->Newline at End of File...". (Mehr zu Menü-Einträgen
+später.)
 
->> Versuche C-b am  Beginn einer Zeile.  Es  sollte Dich zum  Ende der
-   vorigen Zeile bringen.  Dies deshalb, weil es Dich über das 
+>> Versuche <Left> am Beginn einer Zeile.  Es sollte Dich zum Ende der
+   vorigen Zeile bringen.  Dies deshalb, weil es Dich über das
    Newline-Zeichen zurückbewegt.
 
-C-f kann sich, wie C-b, über ein Newline hinwegbewegen.
+<Right> kann sich, wie <Left>, über ein Newline hinwegbewegen.
 
->> Tippe einige C-b's um ein Gefühl für die Position des Textzeigers
-   zu bekommen.  Dann verwende C-f um ans Ende der Zeile zu gelangen.
-   Nun versuche ein weiteres C-f um in die nächste Zeile zu gelangen.
+>> Tippe einige <Left>'s um ein Gefühl für die Position des
+   Textzeigers zu bekommen.  Dann verwende <Right> um ans Ende der
+   Zeile zu gelangen.  Nun versuche ein weiteres <Right> um in die
+   nächste Zeile zu gelangen.
 
-Wenn Du Dich am Anfang oder Ende aus dem Bildschirm bewegst, schiebt
+Wenn Du Dich am Anfang oder Ende aus dem Fenster bewegst, schiebt
 sich der Text ins Blickfeld.  Diesen Vorgang nennt man Rollen oder
-"scrolling".  Er erlaubt Emacs den Textzeiger an die gewünschte
+"scrolling".  Er erlaubt XEmacs den Textzeiger an die gewünschte
 Stelle zu bringen, ohne ihn aus dem Bildschirmfenster zu bewegen.
 
->> Versuche den Textzeiger mittels C-n aus dem Blickfeld zu bewegen
-   und beobachte was geschieht.
+>> Versuche den Textzeiger mittels <Down> unten aus dem Fenster zu
+   bewegen und beobachte was geschieht.
 
-Wenn Dir die zeichenweise Fortbewegung zu langsam ist, kannst Du
-Dich Wort für Wort bewegen.  M-f (META-f) geht ein Wort weiter und M-b
-geht eins zurück.
+Wenn Dir die zeichenweise Fortbewegung zu langsam ist, kannst Du Dich
+Wort für Wort bewegen.  C-<Right> (CONTROL + Rechts-Pfeil-Taste) geht
+ein Wort weiter und C-<Left> geht eins zurück.  Auf TTYs verwende M-f
+anstelle von C-<Right> und M-p anstelle von C-<Left>.
 
->> Tippe ein paar M-f's und M-b's.
+>> Tippe ein paar C-<Right>'s und C-<Left>'s.
 
-Wenn Du mitten in einem Wort bist, bringt Dich M-f an sein Ende.
-Wenn Du auf Leerzeichen zwischen Worten stehst, bewegt Dich M-f zum
-Ende des folgenden Wortes.  M-b bewegt sich sinngemäß zurück.
+Wenn Du mitten in einem Wort bist, bringt Dich C-<Right> an sein Ende.
+Wenn Du auf Leerzeichen zwischen Worten stehst, bewegt Dich C-<Right>
+ans Ende des folgenden Wortes.  C-<Left> bewegt sich sinngemäß zurück.
 
->> Versuche M-f und M-b einige Male, abgewechselt  von C-f's und C-b's
-   so daß Du das Verhalten von M-f und M-b an verschiedenen Stellen
-   innerhalb und zwischen Wörtern beobachten kannst.
+>> Versuche C-<Right> und C-<Left> einige Male, abgewechselt von
+   <Right>'s und <Left>'s so daß Du das Verhalten von C-<Right> und
+   C-<Left> an verschiedenen Stellen innerhalb von und zwischen
+   Wörtern beobachten kannst.
 
-Achte auf die Verwandtschaft von C-f und C-b auf der einen Seite und
-M-f und M-b auf der anderen.  Sehr oft werden META-Befehle für
-Operationen mit Einheiten einer Sprache verwendet (Worte, Sätze,
-Absätze), während CONTROL-Befehle unverändert mit den einfachen
-Einheiten (Buchstaben, Zeilen, etc.) arbeiten.
+Achte auf die Verwandtschaft von <Right> und <Left> auf der einen und
+C-<Right> und C-<Left> auf der anderen Seite.  Beachte auch die
+Parallele zwischen C-f und C-p auf der einen Seite, als auch M-f und
+M-p auf der anderen.  XEmacs bemüht sich Parallelität zwischen
+Tastatur-Befehlen einzuhalten, damit man sie leichter merken kann.  Im
+Allgemeinen bewirkt das Hinzufügen von CONTROL oder META eine
+Steigerung eines Konzepts.  META geht über CONTROL hinaus, steigert
+die Einheiten für Bewegungs-Befehle -- Wörter gegenüber Buchstaben,
+Klammer-Ausdrücke gegenüber Wörtern, oder Sätze gegenüber Zeilen.
 
-Diese Parallele ist auf Zeilen und Sätze anwendbar: C-a und C-e gehen
-zum Anfang und Ende einer Zeile, M-a und M-e zum Anfang bzw. Ende
-eines Satzes.
+Andere wichtige Bewegungs-Befehle sind <Home> und <End> (Beginn und
+Ende der Zeile), sowie C-<Home> und C-<End> (Beginn und Ende des
+Textes).  Beachte wieder die eben erwähnte Parallelität.
 
->> Versuche ein paar C-a's und dann ein paar C-e's.
-   Versuche ein paar M-a's und dann ein paar M-e's.
+Auf TTYs, verwende C-a und C-e für Beginn und Ende der Zeile, sowie
+M-< und M-> für Beginn und Ende des Textes. (Falls es hilft, denke an
+A als den Beginn des Alphabets, E steht für "Ende".) Beachte daß < und
+> (Kleiner- und Größerzeichen) auf den meisten Tastaturen über Komma
+und Punkt liegen, sodaß Du SHIFT in Verbindung mit META benutzten
+mußt.  Gibt es keine META Taste, ist die Reihenfolge sehr wichtig:
+Tippe erst ESC, dann tippe < oder >.
 
-Schau wie mehrere C-a's nichts bewirken, mehrere M-a's sich aber Satz
-für Satz weiterbewegen.  Obwohl sich ihr Verhalten unterscheidet,
-erscheint es natürlich.
+>> Bewege den Textzeiger auf diese Zeile, dann probiere ein paar mal
+   <Home> und <End>.
 
-Die Stelle des Textzeigers im Text wird auch Punkt oder "point"
-genannt. Der Textzeiger auf dem Bildschirm zeigt an welchem Punkt im
-Text sich dieser befindet.
+>> (Lese diese Anweisung zuende bevor Du eine Taste drückst!) Versuche
+   C-<Home>, um an den Anfang diese Tutorials zu gelangen.  Dann
+   verwende wiederholt <Next> um hierher zurück zu gelangen.
 
-Hier ist eine Zusammenfassung der einfachen Befehle zur Bewegung des
-Textzeigers, inklusive der Befehle zur wort- und satzweisen Bewegung:
+>> Probiere nun all diese Befehle einige Male zur Übung.
+   Dies sind die am Häufigsten benutzten Befehle.
 
-	C-f	Gehe ein Zeichen weiter
-	C-b	Gehe ein Zeichen zurück
+Hier ist ein Übersicht von einfachen Befehlen zur Bewegung des
+Textzeigers.  Keine Sorge wenn Du sie nicht alle merken kannst; Du
+kannst ja immer hierher zurück.
 
-	M-f	Gehe ein Wort weiter
-	M-b	Gehe ein Wort zurück
+        TASTENKOMBINATION:      SEQUENZ                         TTY:
 
-	C-n	Gehe zur nächsten Zeile
-	C-p	Gehe zur vorherigen Zeile
+        <Prior> (PgUp)  Eine Seite hinauf gehen			M-v
+        <Next> (PgDn)   Eine Seite hinunter gehen		C-v
 
-	C-a	Gehe an den Anfang der Zeile
-	C-e	Gehe an das Ende der Zeile
+	<Left>		Ein Zeichen zurück gehen     		C-b
+	<Right>		Ein Zeichen weiter gehen		C-f
 
-	M-a	Gehe zurück zum Anfang des Satzes
-	M-e	Gehe weiter zum Ende des Satzes
+	C-<Left>	Ein Wort zurück gehen			M-b
+	C-<Right>	Ein Wort weiter gehen			M-f
 
->> Übe jetzt alle diese Befehle einige Male.
-   Es sind die am häufigsten benutzten.
+	<Up>		Eine Zeile hinauf gehen			C-p
+	<Down>		Eine Zeile hinunter gehen		C-n
 
-Zwei weitere wichtige Befehle zur Bewegung im Text sind M-< (META
-kleiner), welcher an den Anfang des gesamten Texts springt, und M->
-(META größer), welcher an das Textende hüpft.
+	C-<Up>		6 Zeilen hinauf gehen
+	C-<Down>	6 Zeilen hinunter gehen
 
-Auf einigen deutschen Tastaturen ist ">" über "<", Du mußt also
-möglicherweise die Shift-Taste drücken, um ein > zu tippen. Auf
-solchen Tastaturen mußt Du auch für M-> die Shift-Taste drücken; ohne
-Shift-Taste würdest Du sonst M-< tippen.
+	<Home>		An den Anfang der Zeile gehen		C-a
+	<End>		Ans Ende der Zeile gehen		C-e
 
->> Versuche jetzt M-< um  an den Beginn dieser einführenden Übungen zu
-   gelangen.
-   Dann verwende C-v wiederholt um hierher zurück zu kommen.
-
->> Versuche jetzt M-> um ans Ende der Übungen zu springen.
-   Benutzte M-v wiederholt um hierher zurück zu gelangen.
-
-Du kannst den Textzeiger auch mit den Pfeil-Tasten bewegen, falls
-Deine Tastatur solche besitzt.  Wir empfehlen das Erlernen von C-b,
-C-f, C-n und C-p aus drei Gründen. Erstens funktionieren sie auf allen
-Tastaturen. Zweitens wirst Du herausfinden, wenn Du einige Übung mit
-Emacs bekommst, daß es schneller ist die CTRL-Tasten zu drücken als
-die Pfeil-Tasten (weil Du Deine Hände nicht aus dem normalen
-Fingersatz bringen mußt). Drittens: Hast Du die Verwendung der CTRL
-Befehle erst zu Deiner Gewohnheit gemacht, wird es ein Leichtes
-weitere Bewegungs-Befehle zu erlernen.
-
-Die meisten Emacs-Befehle akzeptieren ein numerisches Argument;
-meistens dient dieses als Wiederholzähler. Dieses Argument übergibt
-man mit C-u, gefolgt von einer Zahl, bevor man den jeweiligen Befehl
-eingibt.  Steht Dir eine META- (oder EDIT- oder ALT)-Taste zur
-Verfügung, so kannst Du dieses Argument auch wie folgt eingeben: Tippe
-die Ziffern während Du die META-Taste gedrückt hältst.  Wir empfehlen
-das Erlernen der C-u Methode, da sie überall funktioniert.
+	C-<Home>	An den Anfang des Texts gehen		M-<
+	C-<End>		Ans Ende des Texts gehen		M->
 
 
-z.B., C-u 8 C-f bewegt den Textzeiger um acht Zeichen weiter.
-
->> Versuche C-n und C-p mit  numerischem  Argument um den  Textzeiger
-   mit nur einem Befehl nahe an diese Zeile heranzubringen.
-
-Die meisten Befehle verwenden ein Argument als Wiederholzähler. Einige
-ausgenommene Befehle verwenden es anders.  C-v und M-v sind unter den
-Ausnahmen. Mit Argument rollen sie den Text um eben soviele Zeilen,
-anstelle von Bildschirmseiten.  z.B. C-u 4 C-v rollt den
-Bildschirminhalt um 4 Zeilen.
-
->> Versuche C-u 8 C-v nun aus.
-
-Dies sollte den Bildschirminhalt um acht Zeilen nach oben gerollt
-haben.  Wenn Du ihn wieder zurückrollen willst, kannst Du M-v ein
-entsprechendes Argument geben.
-
-Verwendest Du das X Window System, so befindet sich wahrscheinlich ein
-rechteckiger Balken, Rollbalken oder "scrollbar" genannt, rechts neben
-dem Emacs-Fenster. Du kannst den Text auch durch Manipulieren dieses
-Rollbalkens mit der Maus rollen.
-
->> Versuche die mittlere Maustaste in der hervorgehobenen Fläche
-   innerhalb des Rollbalkens zu drücken.  Dies sollte den Text mehr
-   oder weniger rollen, je nachdem wie hoch oder tief der Mauszeiger
-   auf dem Rollbalken positioniert ist.
-
->> Bewege den Mauszeiger im Rollbalken etwa drei Zeilen unter das
-   obere Ende und drücke die linke Maus-Taste einige Male.
-
-* TEXTZEIGER STEUERUNG MIT EINEM X-TERMINAL 
--------------------------------------------
-
-An einem X-Terminal wirst Du es wahrscheinlich einfacher finden die
-Tasten des Tastenfeldes zur Textzeiger-Steuerung zu gebrauchen.  Die
-Links, Rechts, Auf und Ab Pfeil-Tasten steuern in die erwartete
-Richtung; sie funktionieren exakt wie C-b, C-f, C-p und C-n, sind aber
-leichter zu tippen und zu merken.  Du kannst auch C-Links und C-Rechts
-verwenden um wortweise zu springen.  C-Auf und C-Ab bewegen den
-Textzeiger blockweise (z.B.  Absätze, wenn Du Text bearbeitest).
-Die Tasten HOME (oder BEGIN, POS1) und END (oder ENDE) bringen Dich
-zum Anfang oder Ende einer Zeile und C-HOME bzw. C-END bringen Dich
-zum Anfang oder Ende der Datei.  Hat Deine Tastatur PgUp (oder BILD
-AUF) und PgDn (oder BILD AB) kannst Du diese wie M-v und C-v zum
-seitenweisen Rollen verwenden.
-
-All diese Befehle nehmen numerische Argumente wie weiter oben
-beschrieben.  Du kannst diese Argumente mittels einer Abkürzung
-eingeben: Drücke einfache die CONTROL- oder META-Taste während Du die
-Ziffern tippst. z.B. um 12 Worte nach rechts zu gehen, tippe C-1 C-2
-C-Rechts.  Beachte, daß dies ganz einfach, ohne Loslassen der 
-CONTROL-Taste, getippt werden kann.
-
-* WENN EMACS HÄNGT
+* PRÄFIX ARGUMENTE
 ------------------
 
-Wenn Emacs auf Deine Befehle nicht mehr reagiert, kannst Du den Befehl
+Die meisten XEmacs Befehle akzeptieren ein numerisches Argument; für
+die meisten Befehle dient dies als Wiederholungszahl.  Zur Eingabe der
+Wiederholungszahl hält man die META Taste während der Zifferneingabe
+gedrückt.  Eigentlich muß META nur für die erste Ziffer gedrückt sein;
+deshalb kann man alternativ auch einfach ESC tippen, und danach die
+Ziffern.  (Letztere Methode funktioniert auch auf TTYs.) Der
+numerische Argument wird auch "prefix argument" genannt, weil man es
+vor dem betreffenden Befehl tippt.
+
+Zum Beispiel geht M-8 <Right> um acht Zeichen vorwärts.
+
+>> Versuche <Down> und <Up> mit einem numerischen Argument um den
+   Textzeiger mit nur einem Befehl nahe an diese Zeile heranzubringen.
+
+Manche Befehle verwenden den Begriff "prefix argument" nicht als
+numerisches Argument, sondern um das Verhalten des Befehls selbst zu
+verändern. (Noch haben wir keinen solchen kennengelernt.)  Für solche
+Befehle wird das Argument normalerweise durch Tippen von C-u
+übergeben, die Verwendung eines beliebigen numerischen Arguments macht
+aber keinen Unterschied.
+
+
+* ROLLBALKEN
+------------
+
+Außer auf einem TTY, gibt es zur Rechten des XEmacs Fensters
+wahrscheinlich einen rechteckigen Bereich, der Rollbalken
+("scrollbar") genannt wird.  Du kannst den Text rollen, indem Du
+diesen Rollbalken mit der Maus betätigst.
+
+Der Rollbalken hat einen Knopf in der Mitte, Daumen genannt.  Die
+relative Position dieses "Daumens" innerhalb des Rechtecks zeigt an,
+wo in der Datei man sich befindet.  So wie man mit den Pfeil-Tasten
+den Text rollt, bewegt sich der "Daumen" mit.
+
+>> Versuche die linke Maustaste auf dem "Daumen" zu drücken und bewege
+   die Maus auf und ab.  Der Text wird hinauf- und hinabrollen, so wie
+   Du die Maus bewegst.  (Achtung: Einige Rollbalken, so wie Athena
+   Rollbalken unter X Windows, arbeiten anders.  Bei diesen mußt Du
+   die mittlere, nicht die linke, Maustaste benutzten.)
+
+>> Versuche die linke Maustaste im Bereich oberhalb des "Daumen" zu
+   klicken.  Dies sollte den Text um eine Fensterhöhe hinauf rollen.
+   Dementsprechend wird das Klicken unterhalb des "Daumens" den Text
+   hinunter rollen.  (Achtung: Unter Athena funktioniert es anders.)
+   Das Drücken der Maustaste bewirkt ein wiederholtes Rollen um
+   jeweils eine Fensterhöhe.
+
+>> Die meisten Rollbalken besitzen Pfeile am oberen und unteren Ende.
+   Das Klicken derselben rollt den Text zeilenweise hinauf oder
+   hinunter, das gedrückt halten verursacht wiederholtes zeilenweises
+   Rollen.
+
+
+* VERWENDUNG DER MENÜS
+----------------------
+
+Außer auf TTYs wirst Du am oberen Ende des XEmacs Rahmens einen
+Menübalken bemerken.  Du kannst diesen Menübalken verwenden um häufig
+benutzte Befehle, wie "Datei öffnen" oder "open a file", zu erreichen.
+Du wirst diese anfangs einfacher finden, weil Du Dir so die
+zugeordneten Tastenkombinationen nicht merken mußt.  Bist Du erst mit
+XEmacs vertraut wird es Dir leicht fallen anzufangen die
+Tastenkombinationen zu verwenden, da jeder Menüeintrag die zugeordnete
+Tastenkombinationen anführt.
+
+Beachte bitte, daß viele Menüeinträge keinen entsprechenden
+Tastatur-Befehl haben.  Beispielsweise listet das Buffer-Menü alle
+verfügbaren Buffer in zuletzt benutzter Reihenfolge.  Du kannst jeden
+Buffer erreichen, indem Du ihn einfach im Menü findest und auswählst.
+
+Du kannst XEmacs so konfigurieren, daß Du Menüeinträge mit der
+META-Taste erreichen kannst -- die "accelerator" Funktionalität, die
+unter MS Windows üblich ist.  Ein einfacher Wege dies zu tun ist der
+Menüeintrag "Options->Menubars->Alt/Meta Selects Menu Items".
+
+Wenn diese Funktionalität eingeschaltet ist, kannst Du ein Menü oder
+einen Menüeintrag über eine Kombination von META (d.h. Alt) und dem
+unterstrichenen Buchstaben um Menü erreichen.
+
+Zum Beispiel um XEmacs zu beendet verwendest Du dann M-f M-x.  Wir
+schalten diese Funktionalität derzeit nicht standardmäßig ein, weil
+sie sich mit der traditionellen Verwendung von META in XEmacs nicht
+verträgt.  Wir könnten dies aber in Zukunft tun: Nur Befehle für die
+es Tastatur-Bindungen von Menüs auf oberster Ebene gibt, werden
+überlagert, und für all diese Befehle gibt es Ersatz durch
+Pfeil-Tasten oder Menüeinträge.
+
+Wenn wir eine Menüselektion erwähnen, so wird sie wie gerade gezeigt
+angegeben -- d.h. ein Text mit durch einen Pfeil ("->") getrennten
+Untermenüs oder Menüeinträgen.  Im vorliegenden Fall bedeutet dies:
+"Klicke das Options Menü auf dem Menübalken, dann das "Menubars"
+Untermenü, und drunter den Eintrag namens "Alt/Meta Selects Menu
+Items".  Im Allgemeinen kann XEmacs umfassend personalisiert werden
+und eine der einfachsten Möglichkeiten bietet das "Options" Menü.
+
+WICHTIG: Willst Du die Änderungen im "Options" Menü über die
+Beendigung der XEmacs Sitzung hinaus beibehalten, so verwende
+"Options->Save Options to Init File".  So werden die Änderungen
+permanent.  Anderenfalls gehen die Änderungen verloren.
+
+
+* WENN EMACS HÄNGT ODER SICH UNGEWOHNT VERHÄLT
+----------------------------------------------
+
+Wenn XEmacs auf Deine Befehle nicht mehr reagiert, kannst Du den Befehl
 risikolos mit C-g unterbrechen.  Mit C-g kann man Befehle abbrechen,
 die zu lange dauern.
 
 Du kannst mit C-g auch ein numerisches Argument oder einen teilweise
 eingegebenen Befehl, den Du nicht mehr ausführen willst, verwerfen.
 
->> Tippe C-u 100 für ein numerisches Argument von 100, dann tippe
-   C-g. Nun tippe C-f.  Es wird nur eine Bewegung um ein Zeichen
-   ausgeführt, da Du das Argument mit C-g verworfen hast.
+>> Tippe M-100 für ein numerisches Argument von 100 (Merke: dies
+   bedeutet die META-Taste während der Eingabe der Nummer 100 gedrückt
+   zu halten, oder ESC 1 0 0 einzutippen), dann tippe C-g. Nun tippe
+   <Right>.  Es sollte eine Bewegung um nur ein Zeichen ausführen, da
+   Du das Argument mit C-g verworfen hast.
 
-Hast Du fälschlich ein <ESC> getippt, kannst Du es mit C-g loswerden.
+Ist XEmacs in einem ungewohnten Zustand bei dem auch C-g nicht hilft,
+kannst Du den Ausstiegsmechanismus für alle Fälle verwenden: ESC ESC.
+(Auf TTYs muß man ESC ESC ESC verwenden.  Die Gründe dafür sind etwas
+kompliziert.)
+
+ESC ESC bringt Dich fast aus jedem ungewohnten Zustand, inklusive
+selektierter Text, geteilte Fenster, dem Minibuffer, rekursives
+Editieren, "Gestrandete Minibuffer Anforderungen" und Ähnliches.  Wenn
+Du mehrere Probleme auf einmal hast, beseitigt jede ESC ESC Sequenz
+eines davon.  Mache also weiter bis alle behoben sind.  Zur Erinnerung:
+ESC ESC ESC hilft nicht, wenn XEmacs eine langwierige Operation oder
+"broken code" ausführt.  In solchen Fällen verwende C-g.
 
 
 * GESPERRTE BEFEHLE
 -------------------
 
-Einige Emacs-Befehle sind "gesperrt", damit sie von Anfängern nicht
+Einige XEmacs-Befehle sind "gesperrt", damit sie von Anfängern nicht
 versehentlich benutzt werden können.
 
-Wenn Du einen der gesperrten Befehle tippst, zeigt Emacs die
+Wenn Du einen der gesperrten Befehle tippst, zeigt XEmacs die
 Befehlsdokumentation und fragt um Bestätigung, daß der Befehl
 tatsächlich ausgeführt werden soll.
 
-Wenn Du den Befehl wirklich probieren willst, tippe Space als Antwort
-auf die Frage.  Normalerweise, wenn Du den gesperrten Befehl nicht
-ausführen willst, beantwortest Du die Frage mit "n".
+Wenn Du den Befehl wirklich probieren willst, tippe <Space> (<Space> ist der
+Leerbalken.) als Antwort auf die Frage.  Normalerweise, wenn Du den
+gesperrten Befehl nicht ausführen willst, beantwortest Du die Frage
+mit "n".
 
 >> Tippe `C-x n p' (ein gesperrter Befehl), dann beantworte die Frage
    mit n.
 
 
-* FENSTER
----------
+* "FENSTER", D.S. PANES
+-----------------------
 
-Emacs unterstützt mehrere Fenster, jedes mit unterschiedlichem Text.
-Beachte, daß sich der Begriff "Fenster" in Emacs nicht auf
-verschiedene, überlappende Fenster im Fenstersystem bezieht, sondern
-auf verschiedene Teil-Fenster innerhalb eines X Fensters.  (Emacs
-unterstützt auch mehrere X-Fenster, oder "Rahmen" ("frames") in 
-Emacs-Terminologie.  Dies wird später beschrieben.)
+XEmacs unterstützt mehrere Fenster oder "panes"
+(d.s. nicht-überlappende Teilungen eines Fensters oder TTY
+Bildschirms), jedes mit unterschiedlichem Text.  Aus historischen
+Gründen werden diese "panes" Fenster oder "windows" genannt, und was
+man sich normalerweise unter Fenster vorstellt nennen wir Rahmen oder
+"frame".  XEmacs kann auch mehrere Rahmen haben; dies wird später
+beschrieben.  Von nun an lassen wir die Gänsefüßchen um die XEmacs
+Begriffe weg, und wenn wir Fenster in der allgemeinen Bedeutung
+meinen, sagen wir "Window-System Fenster".
 
-	C-x 1	Ein Fenster (d.h., Beende alle anderen Fenster).
+Zu diesem Zeitpunkt gehen wir besser nicht näher auf die Handhabung
+von mehreren Fenstern ein.  Du mußt aber wissen wie man zusätzliche
+Fenster los wird, die erscheinen könnten um Hilfstexte oder
+Ausgabetext von bestimmten Befehlen anzuzeigen.  Zumeist wird der
+Textzeiger im neuen Fenster sein; in diesem Fall tippe einfach q.
+Alternativ dazu tippst Du
 
-Dies ist CONTROL-x gefolgt von der Ziffer 1.  C-x 1 erweitert das
-Fenster mit dem Textzeiger, so daß es das ganze Emacs-Fenster
-einnimmt. Alle anderen Fenster werden beendet.
+	C-x 0	Lösche das Fenster.
 
->> Bewege den Textzeiger auf diese Zeile und tippe C-u 0 C-l.
+Dies ist CONTROL-x gefolgt von der Ziffer 0.  Dieser Befehl besteht im
+Gegensatz zu den bisherigen aus zwei Buchstaben.  Er beginnt mit dem
+Buchstaben CONTROL-x.  Es gibt viele Befehle die mit CONTROL-x
+beginnen; viele von diesen haben mit Fenstern, Dateien, Buffern, und
+Ähnlichem zu tun.  Diese Befehle sind zwei, drei, oder vier Buchstaben
+lang.
 
-(Denke daran, daß C-l den Bildschirminhalt neu aufbaut.  Das
-numerische Argument bedeutet: "Baue den Bildschirminhalt neu auf und
-bewege die aktuelle Zeile ebensoviele Zeilen vom oberen
-Bildschirmrand." C-u 0 C-l bedeutet also "Bau den Bildschirm, mit der
-aktuellen Zeile ganz oben, neu auf.")
+>> Bewege den Textzeiger auf diese Zeile und tippe M-0 C-l.
+   (Das ist eine Null, kein Oh.)
+>> Tippe CONTROL-h k CONTROL-f.
+   Schau wie das Fenster niedriger wird, während eine neues erscheint
+   um die Dokumentation des CONTROL-f Befehls darzustellen.
 
->> Tippe Control-x 2
-   Beachte wie das Fenster schrumpft, während ein neues mit Teilen
-   derselben Datei erscheint.
+>> Tippe q und beachte wie das Fenster mit der Dokumentation
+   verschwindet.
 
->> Tippe C-x 1 und sieh das neue Fenster verschwinden.
+(Merke: C-l baut den Rahmen neu auf.  Gibst Du dem Befehl ein
+numerisches Argument, bedeutet das: "Baue den Rahmnen, mit der
+aktuellen Zeile um das Argument vom oberen Fensterrand entfernt, neu
+auf."  M-0 C-l bedeutet also: "Baue das Rahmnen, mit der aktuellen
+Zeile um 0 Zeilen vom oberen Fensterrand entfernt, neu auf.")
 
 
 * EINFÜGEN UND LÖSCHEN
 ----------------------
 
-Willst Du Text einfügen, so tippe ihn.  Sichtbare Zeichen, wie A,
-7, *, etc., werden von Emacs als Text betrachtet und unmittelbar
+Willst Du Text einfügen, so tippe ihn.  Sichtbare Zeichen, wie A, 7,
+*, etc., werden von XEmacs als Text betrachtet und unmittelbar
 eingefügt. Tippe <Return> (die Rücklauf-Taste) um ein Newline
 einzufügen.
 
-Mit <Delete> kannst Du das zuletzt getippte Zeichen löschen.
-<Delete> ist eine Taste die möglicherweise mit "Del" oder "Entf"
-beschriftet ist.  In einigen Fällen dient die Backspace (Rückschritt)
-Taste als <Delete>, jedoch nicht immer!
+Mit <Backspace> kannst Du das zuletzt getippte Zeichen löschen.
+<Backspace> ist auf der Tastatur möglicherweise mit "Del", "Entf",
+oder einfach einem Pfeil nach links beschriftet.
 
-Allgemeiner ausgedrückt löscht <Delete> das Zeichen unmittelbar vor
+(Achtung: Auf einigen falsch konfigurierten TTYs startet das tippen
+von <Backspace> die Hilfe oder "help system"; das Indiz dafür ist eine
+Zeile wie "C-h (Type ? for further options)" am Fuß des Rahmens.  Ist
+dies der Fall, tippe zum Abbruch C-g und versuche in Zukunft <Delete>
+anstelle von <Backspace> zu verwenden.)
+
+Allgemeiner ausgedrückt löscht <Backspace> das Zeichen unmittelbar vor
 dem Textzeiger.
 
 >> Tu dies nun -- tippe einige Buchstaben, lösche sie dann durch
-   mehrmaliges Tippen von <Delete>.  Kein Grund zur Sorge diese Datei
-   zu verändern. Es ist Deine persönliche Kopie der "Einführenden
-   Übungen für Emacs".
+   mehrmaliges Tippen von <Backspace>.  Kein Grund zur Sorge diese
+   Datei zu verändern. Es ist Deine persönliche Kopie der
+   "Einführenden Übungen für Emacs".
 
-Wird eine Zeile zu lang für eine Bildschirm-Zeile, so wird die Zeile
-auf der nächsten Bildschirm-Zeile fortgesetzt. Ein umgekehrter
-Schrägstrich ("\") am rechten Rand zeigt an, daß die Zeile fortgesetzt
-wird.
+Wird eine Zeile zu lang für eine Fenster-Zeile, so wird die Zeile
+auf der nächsten Fenster-Zeile fortgesetzt. Ein nach unten
+gerichteter Pfeil am rechten Rand, der sich nach links krümmt (ein
+umgekehrter Schrägstrich ("\") auf TTYs) zeigt eine Zeile an, die
+fortgesetzt wird.
 
 >> Füge Text ein bis Du den rechten Rand erreichst und tippe weiter.
    Du wirst bemerken, wie die Fortsetzungszeile erscheint.
 
->> Verwende <Delete>s bis die Zeile wieder auf eine Bildschirmzeile
+>> Verwende <Backspace>s bis die Zeile wieder auf eine Fensterzeile
    paßt.  Die Fortsetzungszeile verschwindet.
 
-Ein Newline-Zeichen kann wie jedes andere gelöscht werden. Das
-Löschen des Newline-Zeichens fügt die umgebenden Zeilen zusammen.
-Ist die entstehende Zeile zu lang für den Bildschirm, erscheint 
-wieder eine Fortsetzungszeile.
+Ein Newline-Zeichen kann wie jedes andere gelöscht werden. Das Löschen
+des Newline-Zeichens fügt die umgebenden Zeilen zusammen.  Ist die
+entstehende Zeile zu lang für das Fenster, erscheint wieder eine
+Fortsetzungszeile.
 
->> Geh an den Anfang einer Zeile und tippe <Delete>.  Dies fügt die
+>> Geh an den Anfang einer Zeile und tippe <Backspace>.  Dies fügt die
    Zeile an die vorhergehende an.
 
 >> Tippe <Return> um das Newline-Zeichen wieder einzufügen.
 
-Denke daran, daß die meisten Emacs-Befehle mittels eines Arguments
+Denke daran, daß die meisten XEmacs-Befehle mittels eines Arguments
 wiederholt werden können; Ein Textzeichen wird mittels Argument
 mehrfach eingefügt.
 
->> Versuch's einfach -- Tippe C-u 8 * um ******** einzufügen.
+>> Versuch's einfach -- Tippe M-8 * um ******** einzufügen.
 
 Du hast jetzt die einfachsten Befehle zum Einfügen und Korrigieren von
-Text gelernt.  Du kannst auch ganze Worte oder Zeilen löschen.  Hier
-ist eine Zusammenfassung der Lösch-Befehle:
+Text in XEmacs gelernt.  Du kannst auch ganze Worte oder Zeilen
+löschen.  Hier ist eine Zusammenfassung der Lösch-Befehle:
 
-	<Delete>     Lösche das Zeichen vor dem Textzeiger
-	C-d   	     Lösche das Zeichen nach dem Textzeiger
+	<Backspace>   Lösche das Zeichen vor dem Textzeiger
+	<Delete>      Lösche das Zeichen nach dem Textzeiger
+	C-d   	      Wie <Delete>, funktioniert aber auch auf TTY
+	M-<Backspace> Lösche das Wort unmittelbar vor dem Textzeiger
+	M-<Delete>    Lösche das nächste Wort nach dem Textzeiger
+	M-d	      Wie M-<Delete> aber funktioniert auch auf TTY
 
-	M-<Delete>   Lösche das Wort vor dem Textzeiger
-	M-d	     Lösche das Wort nach dem Textzeiger
+	C-k	      Entfernen vom Textzeiger bis ans Zeilenende
+	M-k	      Entfernen vom Textzeiger bis ans Satzende
 
-	C-k	     Lösche vom Textzeiger bis ans Zeilenende
-	M-k	     Lösche vom Textzeiger bis ans Satzende
+Beachte wieder die Parallelität der Befehle ohne Zusatztaste, mit
+CONTROL, oder mit META, die vorhin erwähnt wurde -- obwohl die
+Parallelität nicht perfekt ist.
 
-Beachte daß <Delete> und C-d gegenüber M-<Delete> und M-d die
-Verwandtschaft von C-f und M-f fortsetzen (<Delete> ist zwar keine
-CONTROL-Taste, aber das kümmert uns nicht).  C-k und M-k verhalten
-sich zueinander wie C-e und M-e zu Zeilen und Sätzen.
+(In den gewalttätigen alten Tagen auf die Emacs zurückgeht wurde das
+Wegnehmen von Text der später wieder eingefügt werden konnte "töten"
+("killing") genannt und das Wiedereinfügen nannte man "zurückholen"
+("yanking") -- offenbar müssen die Entwickler von Emacs dabei an
+Rollenspiele gedacht haben, bei denen eine getötete Person
+("character") einfach durch den Wink [yank?] mit dem Zauberstab
+auferstehen konnte.  In den wohlgesitteten [und realistischen] Zeiten,
+in denen wir leben sind Ausschneiden "cut" und Einfügen "paste" die
+bevorzugten Begriffe.)
 
-Wenn Du mehr als ein Zeichen auf einmal löschst, speichert sie Emacs,
-damit Du sie wieder abrufen kannst.  Den gelöschten Text zurückzuholen
-nennt man "yanking".  Du kannst den gelöschten Text an der selben oder
-an einer anderen Textstelle zurückholen.  Der Text kann mehrere Male
-zurückgeholt werden um Mehrfachkopien anzulegen.  Der Zurückhol-Befehl
-ist C-y.
+Du kannst auch beliebige Teile eines Buffers mit einer einheitlichen
+Methode entfernen.  Auf Window-Systemen ist die bevorzugte Methode ans
+eine Ende des Textteils zu gehen, die SHIFT Taste zu halten, und dabei
+den Textzeiger ans andere Ende zu bewegen.  Danach läßt man die SHIFT
+Taste los und tippt C-w.  Das entfernt den Text zwischen den beiden
+Stellen.
 
-Beachte daß der Unterschied zwischen Entfernen ("Killing") und Löschen
-("Deleting") darin besteht, daß gelöschte Teile zurückgeholt werden
-können, während dies für entfernte Teile nicht möglich ist. Allgemein
-speichern Befehle die viel Text löschen diesen auch, während Befehle,
-die nur einzelne Zeichen oder Leerzeilen entfernen, diese nicht
-speichern.
+Ein Alternative die auch auf TTYs funktioniert ist es an einem Ende
+C-@ oder C-<Space> (eines von beiden) zu tippen.  (<Space> ist der
+Leerbalken.)  Gehe ans andere Ende und tippe C-w.
+
+>> Bewege den Textzeiger zum E am Anfang des letzten Absatzes.
+>> Halte die SHIFT Taste.
+>> Bewege den Textzeiger zum n in "Ende" in der dritten Zeile des
+   Absatzes.
+>> Lasse die SHIFT Taste los und tippe C-w.  Dies entfernt den Text
+   beginnend mit dem E bis vor das n.
+
+Nun probiere es auf die andere Art.
+
+>> Tippe C-/ um den Text zurückzuholen, C-_ oder C-x u auf TTYs.
+>> Gehe wieder zum E.
+>> Tippe C-<Space>.  XEmacs sollte am unteren Ende des Rahmens "Mark set"
+>> anzeigen.
+>> Bewege den Textzeiger zum n in "Ende" in der dritten Zeile des
+   Absatzes.
+>> Tippe C-w.  Das Resultat ist das gleiche wie vorher.
+
+Der Unterschied zwischen Entfernen ("killing") und Löschen
+("deleting") ist, daß entfernter Text wieder eingefügt werden kann,
+während dies für gelöschte ("deleted") Dinge nicht möglich ist.  Das
+Wiedereinfügen von entferntem Text wird zurückholen ("yanking")
+genannt.  Allgemein speichern Befehle die viel Text wegnehmen können,
+entfernen ("kill") diesen (sie bereiten das Zurückholen des Texts
+vor), während Befehle, die nur einzelne Zeichen, Leerzeilen oder
+Leerzeichen wegnehmen, diesen löschen (diesen Text kannst Du nicht
+zurückholen).
+
+Normalerweise speichert das Entfernen ("killing") von Text auf
+Window-Systemen diesen intern, gibt ihn aber auch in eine
+Zwischenablage ("clipboard"), so wie ausschneiden ("cut") in einem
+Wordprozessor und das Zurückholen ("yank") nimmt den Text von der
+Zwischenablage, wenn möglich, so wie einfügen ("paste").  (Diese
+Verbindung zur Zwischenablage kann über das Options Menü abgeschaltet
+werden.)  Es gibt auch die Menüeinträge "Edit->Cut" und "Edit->Paste",
+die immer mit der Zwischenablage verbunden sind und die entsprechenden
+Cut und Paste Tasten auf Sun Tastaturen.
 
 >> Gehe zum Beginn einer nicht leeren Zeile.
    Dann lösche den gesamten Text der Zeile mit C-k.
@@ -416,17 +746,23 @@ Beachte, daß ein einzelnes C-k den Inhalt einer Zeile löscht, ein
 zweites die Zeile selbst, so daß sich nachfolgende Zeilen nach oben
 bewegen.  Ein numerisches Argument wird von C-k besonders behandelt:
 Es löscht ebensoviele Zeilen mitsamt Inhalt.  Dies ist keine einfache
-Wiederholung.  C-u 2 C-k löscht zwei Zeilen und deren Inhalt; zwei
+Wiederholung.  M-2 C-k löscht zwei Zeilen und deren Inhalt; zwei
 aufeinanderfolgende C-k würden dies nicht tun.
 
-Um den zuletzt gelöschten Text beim Textzeiger zurückzuholen, tippe
-C-y.
+Den zuletzt entfernten Text wieder einzufügen, nennt man zurückholen
+oder "yanking".  (Denke daran daß Du einen Text zurückholst, der
+weggenommen wurde.)  Du kannst entfernten Text an Ort und Stelle
+zurückzuholen, woanders im Buffer, oder sogar in einer anderen Datei.
+Du kannst den Text mehrmals zurückzuholen, was mehrere Kopien einfügt.
+
+Der Befehl für's herausziehen oder "yanking" ist C-y.  er fügt den
+zuletzt gelöschten Text nach der Textzeiger Position ein.
 
 >> Versuch's; Tippe C-y um den Text zurückzuholen.
 
-Denke so über C-y als ob Du etwas zurückholst, das man Dir genommen
-hat.  Beachte, daß bei aufeinanderfolgenden C-k's der gelöschte Text in
-einem Stück gespeichert wird, so daß ein C-y alle Zeilen zurück bringt.
+Bei mehreren aufeinanderfolgenden C-k's wird der gelöschte Text in
+einem Stück gespeichert, so daß ein C-y alle Zeilen auf einmal zurück
+bringt.
 
 >> Tu's jetzt, tippe C-k mehrere Male.
 
@@ -461,29 +797,95 @@ letzte Löschvorgang).
 * RÜCKGÄNGIG MACHEN
 -------------------
 
-Veränderst Du Text und entscheidest Du dann, daß dies ein Fehler war,
-kannst Du die Änderungen mit C-x u rückgängig machen.
+Veränderst Du Text und erkennst dann, daß dies ein Fehler war, kannst
+Du die Änderungen mit C-/ rückgängig machen.  (Auf TTYs verwende C-_,
+d.h. CONTROL + underscore, welches Du normalerweise über dem
+Minuszeichen findest; d.h. Du mußt die SHIFT Taste gedrückt halten,
+also CONTROL + SHIFT + Minuszeichen.  Funktioniert das nicht, kannst
+Du auf C-x u zurückgreifen; das hat aber den Nachteil, daß sich diese
+Sequenz nur schwer wiederholen läßt.
 
-Üblicherweise macht C-x u die Änderungen des letzten Befehls
-rückgängig; wenn Du C-x u mehrmals wiederholst, wird jeweils ein
+Üblicherweise macht C-/ die Änderungen des letzten Befehls
+rückgängig; wenn Du C-/ mehrmals wiederholst, wird jeweils ein
 weiterer Befehl rückgängig gemacht.
 
 Aber es gibt zwei Ausnahmen: Befehle, die keinen Text verändern,
 zählen nicht (dies schließt Befehle zum Bewegen und Rollen des
 Textzeigers ein) und selbsteinfügende Befehle werden üblicherweise in
-Zwanziger-Gruppen behandelt.  (Dies dient dazu, die Anzahl der C-x u's
+Zwanziger-Gruppen behandelt.  (Dies dient dazu, die Anzahl der C-/'s
 zu reduzieren die Du tippen mußt um eingetippten Text rückgängig zu
 machen.)
 
->> Lösche diese Zeile mit C-k, dann tippe C-x u und sie sollte
+>> Lösche diese Zeile mit C-k, dann tippe C-/ und sie sollte
    wiedererscheinen.
 
-C-_ ist ein alternativer rückgängig (undo) Befehl; er funktioniert wie
-C-x u, ist aber einfacher zu Wiederholen. Der Nachteil ist, daß C-_
-auf einigen Tastaturen nicht direkt getippt werden kann. Deshalb gibt
-es C-x u.  Auf einigen Tastaturen kann man C-_ als C-\ tippen.
+Ein numerisches Argument für C-/ dient als Wiederholwert.
 
-Ein numerisches Argument für C-_ oder C-x u dient als Wiederholwert.
+Änderst Du Deine Meinung und willst rückgängig gemachte Änderungen
+doch vornehmen ("redo"), verwende einen anderen Befehl als "rückgängig
+machen" oder "undo" (üblicherweise bewegt man den Textzeiger), und
+beginne wieder mit "rückgängig machen".  Dies macht die rückgängig
+gemachten Änderungen rückgängig; machst Du damit weiter, wirst Du
+irgendwann Deine ursprünglichen Änderungen rückgängig machen.  Im
+Wesentlichen behandelt XEmacs jedes "rückgängig machen" als weitere
+Änderung und registriert sie für späteres "rückgängig machen", wie
+jeden anderen Befehl; aber solange man unmittelbar nacheinander
+rückgängig macht merkt sich XEmacs wo in der "Undo history" man sich
+befindet um weiter rückgängig machen zu können.  Sobald ein anderer
+Befehl abgesetzt wird, "vergißt" XEmacs und setzt sich ans Ende der
+"Undo history".  Das mag verwirrend erscheinen, probiere es aus:
+
+>> Tippe ein Zeile Text oberhalb von dieser.
+>> Gehe ans Ende der getippten Zeile, und tippe <Backspace> bis Du
+   alle Buchstaben gelöscht hast.
+>> Tippe mehrmals C-/ um einige Änderungen rückgängig zu machen.
+>> Bewege den Textzeiger nach links.
+>> Beginne wieder C-/ zu tippen, und es werden wieder Buchstaben
+   gelöscht bis kein Text übrig bleibt, danach werden die
+   ursprünglichen Löschungen wieder rückgängig gemacht.  Ist der
+   gesamte Text wieder vorhanden machen weitere rückgängig-Befehle den
+   ursprünglichen Text in Gruppen von bis zu 20 Buchstaben rückgängig
+   (siehe oben).
+
+Wie Du soeben gesehen hast kann man Löschungen ebenso wie das
+Entfernen von Text rückgängig machen.  Der Unterschied zwischen
+entfernen und löschen besteht darin, daß man ersteres mit C-y
+zurückholen ("yank") kann; für das rückgängig machen gibt es keinen
+Unterschied.
+
+
+* VERWENDUNG DER MAUS
+---------------------
+
+Unter einem Window-System hat XEmacs volle Maus-Unterstützung. Der
+Textzeiger kann durch Drücken der linken Maustaste an der gewünschten
+Stelle des Mauszeigers dorthin gesetzt werden. Text kann durch Ziehen
+des Mauszeigers bei gedrückter linker Maustaste selektiert werden.
+(Oder man klickt die linke Maustaste an der einen Stelle im Text und
+verwendet SHIFT-Klick an der anderen um den dazwischenliegenden Text
+zu selektieren.)
+
+Die mittlere Maustaste wird häufig verwendet um sichtbare Objekte auf
+dem Bildschirm auszuwählen.  Wenn Du z.B. "Info" (die XEmacs Online
+Dokumentation) mit C-h i oder über das Help-Menü aufrufst, kannst Du
+einer hervorgehobenen Verknüpfung durch Klicken der mittleren
+Maustaste folgen. Ganz ähnlich, wenn Du einen Dateinamen eingibst
+(z.B. wenn von "Find File" gefragt) und <Tab> tippst um die möglichen
+Vervollständigungen zu erhalten, kannst Du mit der mittleren Maus die
+gewünschte Vervollständigung wählen.  Hast Du eine Zwei-Tasten Maus,
+wie auf manchen MS Windows Systemen, kannst Du durch gleichzeitiges
+Klicken beider Tasten einen Klick der mittleren Maustaste simulieren.
+
+Die rechte Maustaste zeigt ein Popup-Menü, Kontext-Menü genannt, weil
+der Inhalt des Menüs abhängig vom gewählten Modus des Fensters in dem
+man klickt, oder vom Text unter dem Mauszeiger, variiert.  Das Menü
+zeigt für gewöhnlich die zutreffendsten Befehle für die Stelle an der
+man geklickt hat, damit diese einfacher benutzt werden können.
+
+>> Drücke jetzt die rechte Maustaste.
+
+Unter X Windows mußt Du die Taste gedrückt halten, damit das Menü
+nicht gleich wieder verschwindet.
 
 
 * DATEIEN
@@ -491,46 +893,39 @@ Ein numerisches Argument für C-_ oder C-x u dient als Wiederholwert.
 
 Um an einem Text bleibende Änderungen vorzunehmen, mußt Du ihn in
 einer Datei speichern.  Sonst gehen Deine Änderungen mit dem Beenden
-von Emacs verloren.  Du legst Deine Arbeit in einer Datei ab, indem Du
-eine Datei "findest".  (Man nennt dies auch das "Besuchen"
-("visiting") einer Datei.)
+von XEmacs verloren.  Um Deine Arbeit in einer Datei abzulegen mußt Du
+die Datei "finden", bevor Du den Text eingibst.  (Man nennt dies auch
+das "Besuchen" ("visiting") einer Datei.)
 
-Das Finden einer Datei bedeutet, daß Du ihren Inhalt mit Emacs
+Das Finden einer Datei bedeutet, daß Du ihren Inhalt mit XEmacs
 betrachtest.  In vielfacher Hinsicht ist es, als würdest Du die Datei
 selbst bearbeiten.  Jedoch sind Deine Änderungen nicht permanent bis
 Du die Datei sicherst.  Damit kannst Du verhindern halb-fertige
 Dateien auf dem System abzulegen, wenn Du dies nicht willst.  Sogar
-beim Abspeichern hinterläßt Emacs die Originaldatei unter verändertem
+beim Abspeichern hinterläßt XEmacs die Originaldatei unter verändertem
 Namen falls Du später entscheiden solltest, daß die Änderungen ein
 Fehler waren.
 
-Nahe dem unteren Ende des Bildschirms siehst Du eine Zeile die mit
+Nahe dem unteren Ende des Rahmens siehst Du eine Zeile die mit
 Bindestrichen beginnt und endet und den Text "XEmacs: TUTORIAL.de"
-enthält.  Dieser Teil des Bildschirms zeigt immer den Namen der
+enthält.  Dieser Teil des Rahmens zeigt normalerweise den Namen der
 besuchten Datei. Zur Zeit besuchst Du eine Datei namens "TUTORIAL.de",
-welche Deine persönliche Kopie des Emacs Tutorials ist.  Was immer für
-eine Datei Du findest, ihr Name wird immer an dieser Stelle
+welche Deine persönliche Kopie des XEmacs Tutorials ist.  Wenn Du eine
+Datei mit XEmacs findest, wird ihr Name immer an dieser Stelle
 erscheinen.
 
-Die Befehle zum Finden und Sichern von Dateien sind anders als die
-bisher erlernten, da sie jeweils aus zwei Zeichen bestehen.  Beide
-beginnen mit dem Zeichen CONTROL-x. Es gibt eine ganze Reihe von
-Befehlen, die mit CONTROL-x beginnen; viele haben mit Dateien, Buffern
-und verwandten Dingen zu tun.  Diese Befehle sind zwei, drei oder vier
-Zeichen lang.
-
-Bei Befehlen zum Finden einer Datei mußt Du außerdem den Dateinamen
-angeben.  Wir sagen: "Der Befehl liest ein Argument vom Terminal." (In
-diesem Fall ist das Argument der Dateiname).  Nachdem Du folgenden
-Befehl tippst
+Eine Besonderheit der Befehle zum Finden einer Datei ist es, daß Du
+außerdem den Dateinamen angeben mußt.  Wir sagen: "Der Befehl liest
+ein Argument vom Terminal." (In diesem Fall ist das Argument der
+Dateiname).  Nachdem Du folgenden Befehl tippst
 
 	C-x C-f   Finde eine Datei
 
-bittet Dich Emacs, einen Dateinamen einzugeben.  Der Dateiname den Du
-tippst erscheint am unteren Ende des Emacs-Fensters.  Diese unterste
-Zeile wird Minibuffer genannt, wenn sie für diese Art Eingabe
-verwendet wird.  Du kannst die üblichen Emacs-Befehle zum
-Bearbeiten des Dateinamens verwenden.
+bittet Dich XEmacs, einen Dateinamen einzugeben.  Der Dateiname den Du
+tippst erscheint am unteren Ende des Rahmens.  Diese unterste Zeile
+wird Minibuffer genannt, wenn sie für diese Art Eingabe verwendet
+wird.  Du kannst die üblichen XEmacs-Befehle zum Bearbeiten des
+Dateinamens verwenden.
 
 Während Du den Dateinamen eingibst (oder bei jeder anderen
 Minibuffer-Eingabe) kannst Du den Befehl mit C-g abbrechen.
@@ -550,32 +945,32 @@ tippe den Befehl
 
 	C-x C-s   Sichere die Datei
 
-Das kopiert den Text von Emacs in die Datei.  Geschieht dies das erste
-Mal so benennt Emacs die Originaldatei um, so daß sie nicht verloren
+Das kopiert den Text von XEmacs in die Datei.  Geschieht dies das erste
+Mal so benennt XEmacs die Originaldatei um, so daß sie nicht verloren
 geht.  Der neue Name entsteht durch Anhängen von "~" am Ende des
 Originalnamens.
 
-Ist der Sicherungsvorgang beendet, gibt Emacs den Namen der Datei an.
+Ist der Sicherungsvorgang beendet, gibt XEmacs den Namen der Datei an.
 Du solltest recht oft sichern, damit Du nicht viel Arbeit verlierst,
 sollte das System abstürzen.
 
->> Tippe C-x C-s um Deine Kopie des tutorials zu sichern.
-   Dies sollte "Wrote ...TUTORIAL.de" am Fuß des Bildschirms ausgeben.
+>> Tippe C-x C-s um Deine Kopie des Tutorials zu sichern.
+   Dies sollte "Wrote ...TUTORIAL.de" am Fuß des Rahmens anzeigen.
 
-ACHTUNG: Auf manchen Systemen wird C-x C-s den Bildschirm anhalten und
-Du wirst keine weitere Ausgabe von Emacs sehen.  Dies bedeutet, daß
+ACHTUNG: Auf manchen älteren TTY Verbindungen hält C-s den Bildschirm
+an und Du siehst keine weitere Ausgabe von XEmacs.  Dies bedeutet, daß
 auf Deinem System eine Betriebssystemeigenschaft ("feature") namens
-Flußsteuerung ("flow control") das C-s abfängt und nicht an Emacs
-weitergibt.  Tippe C-q, um den Effekt aufzuheben, so daß der Bildschirm
-wieder reagiert.  Schau dann unter "Spontaneous Entry to Incremental
-Search" im Emacs Manual nach, um Hilfe im Umgang mit diesem "Vorzug"
-("feature") zu bekommen.
+Flußsteuerung ("flow control") das C-s abfängt und nicht an XEmacs
+weitergibt.  Tippe C-q, um den Effekt aufzuheben, so daß der
+Bildschirm wieder reagiert.  Schau dann unter "Spontaneous Entry to
+Incremental Search" im XEmacs Manual nach, um Hilfe im Umgang mit
+diesem "Vorzug" ("feature") zu bekommen.
 
 Du kannst eine existierende Datei finden, um sie zu betrachten.  Du
 kannst aber auch eine Datei "finden", die es noch nicht gibt.  So
-erstellt man eine neue Datei mit Emacs: finde die Datei, welche
+erstellt man eine neue Datei mit XEmacs: finde die Datei, welche
 anfänglich leer ist, dann tippe den Text für die Datei ein.  Wenn Du
-danach sicherst, wird Emacs die Datei tatsächlich anlegen und Deinen
+danach sicherst, wird XEmacs die Datei tatsächlich anlegen und Deinen
 eingetippten Text darin ablegen.  Von da an arbeitest Du an einer
 existierenden Datei.
 
@@ -583,9 +978,9 @@ existierenden Datei.
 * BUFFER
 --------
 
-Findest Du eine weitere Datei mit C-x C-f, bleibt die erste in Emacs
+Findest Du eine weitere Datei mit C-x C-f, bleibt die erste in XEmacs
 erhalten.  Du kannst zu dieser mit C-x C-f zurückschalten.  Auf diese
-Art kannst Du eine erhebliche Anzahl von Dateien in Emacs verfügbar
+Art kannst Du eine erhebliche Anzahl von Dateien in XEmacs verfügbar
 haben.
 
 >> Erstelle eine Datei namens "foo" durch Eintippen von C-x C-f foo
@@ -595,26 +990,28 @@ haben.
    Schließlich tippe C-x C-f TUTORIAL.de <Return> um zum Tutorial zurück
    zu gelangen.
 
-Emacs hält den Text jeder Datei in einem Objekt namens "buffer".  Das
-Finden einer Datei legt in Emacs einen neuen Buffer an.  Um eine Liste
-aller Buffer in Deiner Emacs-Sitzung zu erhalten tippst Du
+XEmacs hält den Text jeder Datei in einem Objekt namens "buffer".  Das
+Finden einer Datei legt in XEmacs einen neuen Buffer an.  Um eine
+Liste aller derzeit existierenden Buffer in Deiner XEmacs-Sitzung zu
+erhalten tippst Du
 
 	C-x C-b   Liste alle Buffer
 
 >> Probiere C-x C-b jetzt aus.
 
-Beachte, daß jeder Buffer einen Namen hat.  Wenn der Buffer einer Datei
-zugeordnet ist, wird auch der Dateiname angezeigt.  Einige Buffer haben
-keine Entsprechung im Dateisystem.  So hat z.B. der Buffer namens
-"*Buffer List*" keine zugeordnete Datei.  Dieser Buffer enthält die
-Liste der Buffer, die mit C-x C-b erstellt wurde.  JEDER Text in Emacs
-ist Teil irgendeines Buffers.
+Beachte, daß jeder Buffer einen Namen hat.  Wenn der Buffer einer
+Datei zugeordnet ist, wird auch der Dateiname angezeigt.  Einige
+Buffer haben keine Entsprechung im Dateisystem.  So hat z.B. der
+Buffer namens "*Buffer List*" keine zugeordnete Datei.  Dieser Buffer
+enthält die Liste der Buffer, die mit C-x C-b erstellt wurde.  JEDER
+Text in XEmacs ist Teil irgendeines Buffers.
 
->> Tippe C-x 1 um die Bufferliste loszuwerden.
+>> Tippe ESC ESC um die Bufferliste loszuwerden.  (Merke: drei ESC's
+   auf TTYs.)
 
 Wenn Du Änderungen in einer Datei vornimmst, dann eine andere findest,
 so wird der Inhalt der ersten nicht gesichert.  Die Änderungen bleiben
-innerhalb von Emacs im zugeordneten Buffer erhalten.  Das Bearbeiten
+innerhalb von XEmacs im zugeordneten Buffer erhalten.  Das Bearbeiten
 einer weiteren Datei hat keinen Einfluß auf den Buffer der ersten.
 Dies ist sehr nützlich, man braucht aber auch eine angenehme
 Möglichkeit, den Buffer der ersten Datei zu sichern.  Es wäre lästig,
@@ -631,66 +1028,11 @@ willst.
    Du wirst gefragt, ob Du den Buffer namens TUTORIAL.de speichern
    willst.
 
-* VERWENDUNG DES MENÜS
-----------------------
-
-An einem X-Terminal wirst Du eine Menüleiste am oberen Ende des Emacs-
-Fensters bemerken.  Mit der Menüleiste kannst Du die allgemeinsten
-Emacs-Befehle, wie "Finde Datei" ("find file"), erreichen.  Du wirst
-dies anfänglich einfacher finden, da Du Dir die notwendigen Tasten-
-kombinationen der Befehle nicht merken mußt.  Bist Du einmal mit Emacs
-vertraut, wird es ein Leichtes sein die Kommandos zu benutzen, da
-jeder Menüeintrag, der einer Tastenkombination entspricht, diese auch
-anzeigt.
-
-Beachte, daß es viele Menüeinträge ohne entsprechende Tastensequenz
-gibt.  So listet z.B. das Buffers-Menü die verfügbaren Buffer in
-letzt-benutzter Reihenfolge.  Du kannst zu jedem Buffer über den
-Eintrag im Buffers-Menü gelangen.
-
-* VERWENDUNG DER MAUS
----------------------
-
-Unter X Windows hat Emacs volle Maus-Unterstützung. Der Textzeiger
-kann durch Drücken der linken Maustaste an der gewünschten Stelle des
-Mauszeigers dorthin gesetzt werden. Text kann durch Ziehen des
-Mauszeigers bei gedrückter linker Maustaste selektiert werden.
-(Oder man klickt die linke Maustaste an der einen Stelle im Text und
-verwendet SHIFT-Klick an der anderen um den dazwischenliegenden Text
-zu selektieren.)
-
-Um selektierten Text zu löschen kannst Du C-w benutzen, oder den
-Menüeintrag "Cut" im Edit-Menü verwenden.  Beachte, daß diese
-Methoden nicht gleichbedeutend sind: C-w sichert den Text nur
-innerhalb von Emacs (ähnlich wie oben unter C-k beschrieben), während
-Cut den Text auch im X Clipboard ablegt, von wo ihn andere Programme
-abholen können.
-
-Verwende "Paste" im Edit-Menü um Text vom X Clipboard zurückzuholen.
-
-Die mittlere Maustaste wird häufig verwendet um sichtbare Objekte auf
-dem Bildschirm auszuwählen.  Wenn Du z.B. "Info" (die Emacs Online
-Dokumentation) mit C-h i oder über das Help-Menü aufrufst, kannst Du
-einer hervorgehobenen Verknüpfung durch Klicken der mittleren
-Maustaste folgen. Ganz ähnlich, wenn Du einen Dateinamen eingibst
-(z.B. wenn von "Find File" gefragt) und TAB tippst um die möglichen
-Vervollständigungen zu erhalten, kannst Du mit der mittleren Maus die
-gewünschte Vervollständigung wählen.
-
-Die rechte Maustaste zeigt ein Popup-Menü.  Der Inhalt des Menüs
-variiert abhängig vom gewählten Modus und zeigt für gewöhnlich einige
-häufig benutzte Befehle, die so einfacher benutzt werden können.
-
->> Drücke jetzt die rechte Maustaste.
-
-Du mußt die Taste gedrückt halten, damit das Menü nicht gleich wieder
-verschwindet.
-
 * ERWEITERUNG DES BEFEHLSSATZES
 -------------------------------
 
-Es gibt viel mehr Emacs-Befehle als man auf allen CONTROL- und 
-META-Zeichen unterbringen könnte. Emacs löst dieses Problem mit dem X
+Es gibt viel mehr XEmacs-Befehle als man auf allen CONTROL- und
+META-Zeichen unterbringen könnte. XEmacs löst dieses Problem mit dem X
 (eXtend) Befehl. Davon gibt es zwei Ausführungen:
 
 	C-x	Zeichenerweiterung eXtend.  Gefolgt von einer
@@ -698,50 +1040,50 @@ META-Zeichen unterbringen könnte. Emacs löst dieses Problem mit dem X
 	M-x 	Namenserweiterung eXtend.  Gefolgt von einer
 		ausgeschriebenen Befehlsbezeichnung.
 
-Diese Befehle sind zwar im Allgemeinen nützlich, werden aber seltener 
-verwendet als die bereits erlernten Befehle. Zwei von ihnen hast Du 
-bereits kennengelernt: Die Befehle C-x C-f zum Finden und C-x C-s 
-zum Sichern von Dateien. Ein anderes Beispiel ist der Befehl zum Beenden 
-einer Emacs-Sitzung -- dieser Befehl ist C-x C-c. (Habe keine Angst, 
-ungesicherte Änderungen zu verlieren; C-x C-c bietet die Möglichkeit zum 
-Sichern einer jeden geänderten Datei bevor Emacs beendet wird.)
+Diese Befehle sind zwar im Allgemeinen nützlich, werden aber seltener
+verwendet als die bereits erlernten Befehle. Zwei von ihnen hast Du
+bereits kennengelernt: Die Befehle C-x C-f zum Finden und C-x C-s zum
+Sichern von Dateien. Ein anderes Beispiel ist der Befehl zum Beenden
+einer XEmacs-Sitzung -- dieser Befehl ist C-x C-c. (Habe keine Angst,
+ungesicherte Änderungen zu verlieren; C-x C-c bietet die Möglichkeit
+zum Sichern einer jeden geänderten Datei bevor XEmacs beendet wird.)
 
-Mit C-z kann man Emacs vorübergehend verlassen -- so daß Du später zur
-gleichen Sitzung zurückkehren kannst.
+Hast Du das mitgelieferte Muster der init.el Datei installiert (wir
+empfehlen dies sehr, nachdem Du Dich etwas mit XEmacs vertraut gemacht
+hast; siehe Help->Samples->View Sample init.el), wirst Du feststellen,
+daß C-x C-c XEmacs nicht beendet und stattdessen eine Meldung ausgibt.
+Dies ist so beabsichtigt, da man C-x C-c leicht versehentlich tippt.
+Verwende ersatzweise den Menüeintrag "File->Exit XEmacs" zum Beenden.
 
-Auf Systemen, die dies unterstützen, sendet C-z Emacs "in den
-Hintergrund"; man kehrt zur Shell zurück, ohne daß der Emacs-Prozeß
-beendet wird.  In den gebräuchlichsten Shells kann man zu Emacs mit
-`fg' oder `%emacs' zurückkehren.
-
-Auf Systemen, die dieses Aussetzen von Emacs nicht unterstützen,
-startet C-z eine s.g. Sub-Shell von der aus Du Programme starten und
-danach zu Emacs zurückkehren kannst; Emacs wird in diesem Fall nicht
-wirklich verlassen.  Der Shell-Befehl `exit' ist in diesem Fall der
-üblichste um zu Emacs zurückzukehren.
-
-C-x C-c verwendet man unmittelbar bevor man das System verlassen will.
-Es ist auch die richtige Methode um einen Emacs zu verlassen der für
-E-mail-Programme, oder andere Erweiterungen, die das Aussetzen von
-Emacs nicht korrekt handhaben können, benutzt wird.  Normalerweise 
-ist es besser Emacs mit C-z auszusetzen statt ihn zu beenden, wenn 
-man das System nicht verlassen will.
+Willst Du auf einem TTY, vorübergehend aussteigen um einen
+shell-Befehl auszuführen solltest Du C-z statt C-x C-c verwenden.
+Under TTY's, sendet C-z Emacs "in den Hintergrund"; man kehrt zur
+Shell zurück, ohne daß der Emacs-Prozeß beendet wird.  In den
+gebräuchlichsten Shells kann man zu Emacs mit `fg' oder `%xemacs'
+zurückkehren.  (Auf Systemen, die dieses Aussetzen von Emacs nicht
+unterstützen, startet C-z eine s.g. Sub-Shell von der aus Du Programme
+starten und danach zu Emacs zurückkehren kannst; Emacs wird in diesem
+Fall nicht wirklich verlassen.  Der Shell-Befehl `exit' ist in diesem
+Fall der üblichste um zu Emacs zurückzukehren.
 
 Es gibt viele C-x-Befehle.  Hier ist eine Liste der bereits erlernten:
 
 	C-x C-f		Finde Datei.
 	C-x C-s		Sichere Datei.
 	C-x C-b		Liste alle Buffer.
-	C-x C-c		Beende Emacs.
-	C-x u		Rückgängig machen (Undo).
+	C-x C-c		Beende XEmacs.
+	C-x 0		Beende das aktuelle Fenster.
+	C-x u		Rückgängig machen (Undo, TTY Version).
 
 Namenserweiterte Befehle (eXtended commands) sind solche, die weniger
 häufig oder nur in einem bestimmten Modus verwendet werden.  Ein
 Beispiel ist der Befehl replace-string, der einen Text durch einen
-anderen ersetzt.  Wenn Du M-x tippst, zeigt dies Emacs am unteren Ende
-des Emacs-Fensters mit M-x an und Du solltest den Namen des Befehls
+anderen ersetzt.  Wenn Du M-x tippst, zeigt dies XEmacs am unteren
+Ende des Rahmens mit M-x an und Du solltest den Namen des Befehls
 eintippen; in diesem Fall "replace-string".  Tippe einfach
-"repl s<TAB>" und Emacs wird den Namen vervollständigen. Beende den
+"repl s<Tab>" und XEmacs wird den Namen vervollständigen. (<Tab> ist
+die Tabulator-Taste, üblicherweise oberhalb der CapsLock oder der
+Shift-Taste nahe dem linken Rand der Tastatur zu finden.)  Beende den
 Befehlsnamen mit <Return>.
 
 Der replace-string Befehl braucht zwei Argumente -- den zu ersetzenden
@@ -761,26 +1103,26 @@ werden.
 
 Wenn Du Änderungen in einer Datei vornimmst, diese aber noch nicht
 gesichert hast, so können diese bei einem Computerabsturz verloren
-gehen.  Um Dich davor zu schützen, schreibt Emacs regelmäßig eine 
+gehen.  Um Dich davor zu schützen, schreibt XEmacs regelmäßig eine
 Autosave-Datei für jede Datei, die Du bearbeitest.  Autosave-Dateien
 beginnen und enden mit "#"; wenn Deine Datei z.B. "hello.c" heißt, so
-heißt ihre auto-save Datei "#hello.c#".  Sicherst Du die Datei, so
-löscht Emacs die entsprechende auto-save Datei.
+heißt ihre auto-save Datei für gewöhnlich "#hello.c#".  Sicherst Du
+die Datei, so löscht XEmacs die entsprechende auto-save Datei.
 
 Nach einem Computerabsturz kannst Du die automatisch
 gesicherten Änderungen nach dem normalen Finden der Datei (Deiner
 Datei, nicht der Autosave-Datei) durch Eintippen von M-x
-recover-file<Return> zurückholen.  Wenn Du nach der Bestätigung 
-gefragt wirst, tippst Du yes<Return> um die Änderungen in der 
+recover-file<Return> zurückholen.  Wenn Du nach der Bestätigung
+gefragt wirst, tippst Du yes<Return> um die Änderungen in der
 Autosave-Datei wiederherzustellen.
 
 
 * ECHO BEREICH
 --------------
 
-Wenn Emacs bemerkt, daß Du Befehle langsam tippst, werden Dir diese am
-Fuß des Emacs-Fensters in der s.g. "echo area" angezeigt.  Die echo
-area nimmt die unterste Zeile im Emacs-Fenster ein.
+Wenn XEmacs bemerkt, daß Du zeichenerweiterte Befehle langsam tippst,
+werden Dir diese am Fuß des Rahmens in der s.g. "echo area" angezeigt.
+Die echo area nimmt die unterste Zeile im Rahmen ein.
 
 
 * MODUSZEILE
@@ -791,30 +1133,32 @@ zeigt etwa folgendes:
 
 --**-XEmacs: TUTORIAL.de       (Fundamental)--L791--67%----------------
 
-Diese Zeile gibt nützliche Information über den Zustand von Emacs und
+Diese Zeile gibt nützliche Information über den Zustand von XEmacs und
 dem Text, den Du bearbeitest.
 
 Du kennst bereits die Bedeutung des Dateinamens -- es ist die Datei,
 die Du gefunden hast.  -NN%-- zeigt Deine Position im Text; dies
-bedeutet daß NN Prozent des Texts oberhalb des sichtbaren Bereiches
-liegen.  Bist Du am Beginn, so erscheint --Top-- anstelle von --00%--.
-Bist Du am Ende des Texts, so erscheint --Bot--.  Ist der gesamte Text
-sichtbar, so erscheint --All--.
+bedeutet daß NN Prozent des Texts oberhalb des Fensters liegen.  Bist
+Du am Beginn, so erscheint --Top-- anstelle von --00%--.  Bist Du am
+Ende des Texts, so erscheint --Bot--.  Ist der gesamte Text sichtbar,
+so erscheint --All--.
 
-Die Sterne nahe dem Beginn der Moduszeile bedeuten, daß der Text
-verändert wurde.  Unmittelbar nach dem Besuchen oder Sichern einer
-Datei, zeigt dieser Bereich keine Sterne, sondern Bindestriche.
+Das L, gefolgt von Ziffern, zeigen die Position auf andere Weise an:
+Sie zeigen die aktuelle Zeilennummer des Textzeigers.  Die Sterne nahe
+dem Beginn der Moduszeile bedeuten, daß der Text verändert wurde.
+Unmittelbar nach dem Besuchen oder Sichern einer Datei, zeigt dieser
+Bereich keine Sterne, sondern Bindestriche.
 
 Der Teil der Moduszeile innerhalb der Klammern gibt Auskunft über die
 Bearbeitungs-Modi, die Du derzeit verwendest.  Der Ausgangsmodus ist
 Fundamental --  der, den Du jetzt gerade benutzt. Er ist ein Beispiel
 für einen Hauptmodus ("major mode").
 
-Emacs besitzt viele verschiedene Hauptmodi.  Einige von ihnen sind zum
-Bearbeiten von verschiedenen Computersprachen und/oder Textformaten,
-wie z.B. Lisp-Modus, Text-Modus, etc., gedacht.  Es ist immer nur ein
-Hauptmodus aktiv und sein Name kann dort gefunden werden, wo jetzt
-"Fundamental" steht.
+XEmacs besitzt viele verschiedene Hauptmodi.  Einige von ihnen sind
+zum Bearbeiten von verschiedenen Computersprachen und/oder
+Textformaten, wie z.B. Lisp-Modus, Text-Modus, etc., gedacht.  Es ist
+immer nur ein Hauptmodus aktiv und sein Name kann dort gefunden
+werden, wo jetzt "Fundamental" steht.
 
 Jeder Hauptmodus ändert das Verhalten einiger Befehle. So gibt es
 z.B. Befehle zum Erstellen von Kommentaren in Programmen. Da diese
@@ -829,10 +1173,11 @@ wahrscheinlich den Text-Modus verwenden.
 
 >> Tippe M-x text-mode<Return>.
 
-Keine Sorge, keiner der bis jetzt erlernten Befehle ändert Emacs
-grundlegend.  Du kannst aber beobachten, daß M-f und M-b Gänsefüßchen
-jetzt als Teil von Worten betrachten.  Zuvor, im Fundamental-Modus,
-haben M-f und M-b diese als Wort-Separatoren betrachtet.
+Keine Sorge, keiner der bis jetzt erlernten Befehle ändert XEmacs
+grundlegend.  Du kannst aber beobachten, daß C-<Right> und C-<Left>
+Gänsefüßchen jetzt als Teil von Worten betrachten.  Zuvor, im
+Fundamental-Modus, haben C-<Right> und C-<Left> diese als
+Wort-Separatoren betrachtet.
 
 Hauptmodi machen im Allgemeinen kleine Änderungen wie diese: die
 meisten Befehle erfüllen den selben Zweck, aber sie funktionieren
@@ -841,8 +1186,8 @@ etwas anders.
 Um Dokumentation über den aktuellen Hauptmodus zu bekommen, kannst Du
 immer C-h m verwenden.
 
->> Verwende C-u C-v ein- oder mehrmals um diese Zeile ans obere Ende
-   des Emacs-Fensters zu bekommen.
+>> Verwende M-4 C-l um diese Zeile ans obere Ende des Fensters
+   zu bringen.
 >> Tippe C-h m um den Unterschied zwischen Text- und Fundamental-Modus
    zu sehen.
 >> Tippe q um die Dokumentation wieder verschwinden zu lassen.
@@ -855,7 +1200,7 @@ also jederzeit keinen, einen, oder beliebig viele Untermodi verwenden.
 
 Ein sehr nützlicher Untermodus, speziell für deutschen Text, ist der
 Automatische-Zeilenumbruch-Modus (auto fill).  Ist dieser Modus aktiv,
-bricht Emacs überlange Zeilen automatisch zwischen zwei Worten um.
+bricht XEmacs überlange Zeilen automatisch zwischen zwei Worten um.
 
 Du kannst den Modus mit M-x auto-fill-mode<Return> einschalten.  Ist
 der Modus aktiv, kannst Du ihn mit M-x auto-fill-mode<Return> wieder
@@ -865,13 +1210,13 @@ ausschalten.  Wir sagen der Befehl "toggelt" den Modus.
    wiederholt ein, bis die Zeile, zu lang geworden, umgebrochen
    wird. Du mußt die Leerzeichen einfügen, weil Auto Fill Zeilen nur an
    diesen Zeichen umbricht.
-   
+
 Die Umbruchspalte steht üblicherweise bei 70 Zeichen, aber Du kannst
 dies mit dem C-x f Befehl ändern.  Die gewünschte Umbruchspalte wird
 als numerisches Argument übergeben.
 
->> Tippe C-x f mit einem Argument von 20.  (C-u 2 0 C-x f).
-   Danach tippe etwas Text, um zu sehen wie Emacs die Zeilen jetzt bis
+>> Tippe C-x f mit einem Argument von 20.  (M-20 C-x f).
+   Danach tippe etwas Text, um zu sehen wie XEmacs die Zeilen jetzt bis
    Spalte 20 füllt.  Dann setze den Zeilenumbruch zurück auf 70.
 
 Machst Du Änderungen mitten im Absatz, so wird der automatische Umbruch
@@ -884,21 +1229,21 @@ diesen nicht für Dich auffüllen.  Um den Absatz aufzufüllen, tippe M-q
 * SUCHEN
 --------
 
-Emacs kann nach Zeichenketten ("Strings", dies sind Gruppen von 
-zusammenhängenden Buchstaben oder Worten) entweder vorwärts oder 
-rückwärts durch den Text suchen.  Suchen nach einem String ist ein 
-Befehl, der den Textzeiger bewegt; er bewegt den Textzeiger zur 
+XEmacs kann nach Zeichenketten ("Strings", dies sind Gruppen von
+zusammenhängenden Buchstaben oder Worten) entweder vorwärts oder
+rückwärts durch den Text suchen.  Suchen nach einem String ist ein
+Befehl, der den Textzeiger bewegt; er bewegt den Textzeiger zur
 nächsten Stelle an der ein bestimmter String vorkommt.
 
-Der Emacs Suchbefehl unterscheidet sich von denen der meisten anderen
-Editoren, da er "inkrementell" ist. Dies bedeutet, daß das Suchen 
+Der XEmacs Suchbefehl unterscheidet sich von denen der meisten anderen
+Editoren, da er "inkrementell" ist. Dies bedeutet, daß das Suchen
 während der Eingabe des Such-Strings passiert.
 
 Der Befehl um eine Suche auszulösen ist C-s für vorwärtiges und C-r
 für rückwärtiges Suchen. ABER WARTE! Versuche die Befehle noch nicht.
 
 Wenn Du C-s tippt, wirst Du den String "I-search" in der echo area
-bemerken.  Dies bedeutet, daß Emacs im inkrementellen Suchmodus auf
+bemerken.  Dies bedeutet, daß XEmacs im inkrementellen Suchmodus auf
 Deine Eingabe wartet.  <Return> bricht die Suche ab.
 
 >> Nun tippe C-s um die Suche einzuleiten. LANGSAM, Buchstabe für
@@ -907,33 +1252,34 @@ Deine Eingabe wartet.  <Return> bricht die Suche ab.
    Du hast jetzt einmal nach "Textzeiger" gesucht.
 >> Tippe erneut C-s, um nach dem nächsten Vorkommen von "Textzeiger"
    zu suchen.
->> Nun tippe <Delete> viermal und schau wie sich der Textzeiger
+>> Nun tippe <Backspace> viermal und schaue wie sich der Textzeiger
    bewegt.
 >> Tippe <Return> zum Abbrechen der Suche.
 
-Hast Du gesehen was passiert?  Emacs, in der inkrementellen Suche,
+Hast Du gesehen was passiert?  XEmacs, in der inkrementellen Suche,
 versucht zu dem String zu springen, den Du bisher getippt hast und
 hebt ihn für Dich hervor.  Um zum nächsten Auftreten von "Textzeiger"
 zu gelangen, tippst Du einfach wieder C-s.  Gibt es kein weiteres
-Vorkommen, so piepst Emacs und zeigt die Suche als fehlgeschlagen
+Vorkommen, so piepst XEmacs und zeigt die Suche als fehlgeschlagen
 an. C-g bricht die Suche auch ab.
 
-ACHTUNG: Auf manchen Systemen wird C-s den Bildschirm anhalten und Du
-wirst keine weitere Ausgabe von Emacs sehen.  Dies bedeutet, daß auf
-Deinem System eine Betriebssystemeigenschaft ("feature") namens
-Flußsteuerung ("flow control") das C-s abfängt und nicht an Emacs
-weitergibt.  Tippe C-q, um den Effekt aufzuheben, so daß der Bildschirm
-wieder reagiert.  Schau dann unter "Spontaneous Entry to Incremental
-Search" im Emacs Manual nach, um Hilfe im Umgang mit diesem "Vorzug"
-("feature") zu bekommen.
+ACHTUNG: Auf manchen älteren TTY-Verbindungen wird C-s den Bildschirm
+anhalten und Du wirst keine weitere Ausgabe von XEmacs sehen.  Dies
+bedeutet, daß auf Deinem System eine Betriebssystemeigenschaft
+("feature") namens Flußsteuerung ("flow control") das C-s abfängt und
+nicht an XEmacs weitergibt.  Tippe C-q, um den Effekt aufzuheben, so
+daß der Bildschirm wieder reagiert.  Schau dann unter "Spontaneous
+Entry to Incremental Search" im XEmacs Manual nach, um Hilfe im Umgang
+mit diesem "Vorzug" ("feature") zu bekommen.
 
-Wenn Du in der Mitte einer inkrementellen Suche <Delete> tippst, wirst
-Du bemerken, wie der letzte Such-Buchstabe entfernt wird und die Suche
-an die letzte Stelle der Suche zurück springt.  Nehmen wir z.B. an, Du
-hast "T" getippt, um nach dem ersten Auftreten von "T" zu suchen. Wenn
-Du jetzt "e" tippst, springt der Textzeiger zum ersten Auftreten von
-"Te". Tippe nun <Delete>. Dies entfernt das "e" von Such-String und
-der Textzeiger springt zurück zum ersten Vorkommen von "T".
+Wenn Du in der Mitte einer inkrementellen Suche <Backspace> tippst,
+wirst Du bemerken, wie der letzte Such-Buchstabe entfernt wird und die
+Suche an die letzte Stelle der Suche zurück springt.  Nehmen wir
+z.B. an, Du hast "T" getippt, um nach dem ersten Auftreten von "T" zu
+suchen. Wenn Du jetzt "e" tippst, springt der Textzeiger zum ersten
+Auftreten von "Te". Tippe nun <Backspace>. Dies entfernt das "e" von
+Such-String und der Textzeiger springt zurück zum ersten Vorkommen von
+"T".
 
 Wenn Du mitten in einer Suche ein CONTROL- oder META-Zeichen tippst
 (mit wenigen Ausnahmen -- Buchstaben mit Sonderbedeutung bei der
@@ -945,49 +1291,56 @@ wir über C-s gesagt haben gilt auch für C-r, nur daß die Suchrichtung
 umgedreht wird.
 
 
-* MEHRERE FENSTER
------------------
+* MEHRFACHE "FENSTER" (D.H. PANELE)
+-----------------------------------
 
-Einer der netten Vorzüge von Emacs ist es, daß Du mehr als jeweils ein
-Fenster am Bildschirm darstellen kannst.
+Einer der netten Vorzüge von XEmacs ist es, daß Du den aktuellen
+Rahmen (d.h. Window-System Fenster) in mehrere Panele ("panels"),
+Fenster in XEmacs-Terminologie, teilen kannst.
 
->> Bewege den Textzeiger auf diese Zeile und tippe C-u 0 C-l.
+>> Bewege den Textzeiger auf diese Zeile und tippe M-0 C-l (das ist
+   Null, nicht O und CONTROL-<klein L>, nicht CONTROL-1).
 
->> Nun tippe C-x 2, was das Emacs-Fenster zweiteilen wird.
+>> Nun tippe C-x 2, was den Rahmen in zwei Fenster teilen wird.
    Beide Fenster zeigen dieses Tutorial. Der Textzeiger bleibt im
    oberen Fenster.
 
->> Tippe C-M-v um beide Fenster zu rollen.
-   (Hast Du keine echte META-Taste, tippe Esc C-v.)
+>> Tippe M-<Next> um das untere Fenster zu rollen.
+   (C-M-v auf TTYs.  Hast Du keine echte META-Taste, tippe Esc C-v.)
 
->> Tippe C-x o ("o" für "other" oder anderes) um den Textzeiger ins
-   andere (untere) Fenster zu bewegen.
->> Verwende C-v und M-v im unteren Fenster um dieses zu rollen.
+>> Tippe C-<Tab> um den Textzeiger ins untere Fenster zu bewegen.
+   (Nimm C-x o -- "o" für "other" -- auf TTYs.)
+
+>> Tippe <Next> und <Prior> im unteren Fenster, um dieses zu rollen.
    Lies diese Anweisungen im oberen Fenster weiter.
 
->> Tippe C-x o um wieder zurück ins obere Fenster zu gelangen.
+>> Tippe C-<Tab> um wieder zurück ins obere Fenster zu gelangen.
    Der Textzeiger im oberen Fenster ist noch immer wo er vorher war.
 
-Du kannst weiterhin mit C-x o zwischen den Fenstern umschalten.  Jedes
-Fenster hat seine eigene Textzeiger-Position, aber nur ein Fenster
-zeigt diese auch an.  Alle üblichen Bearbeitungs-Befehle beziehen sich
-auf das Fenster mit dem Textzeiger.  Wir nennen es das "selektierte
-Fenster".
+Du kannst weiterhin mit C-<Tab> zwischen den Fenstern umschalten.
+Jedes Fenster hat seine eigene Textzeiger-Position, aber nur ein
+Fenster zeigt diese auch an.  Alle üblichen Bearbeitungs-Befehle
+beziehen sich auf das Fenster mit dem Textzeiger.  Wir nennen es das
+"selektierte Fenster".
 
-Der Befehl C-M-v ist sehr hilfreich wenn Du in einem Fenster Text
-bearbeitest und das andere als Referenz verwendest.  Du kannst den
-Textzeiger immer im oberen Fenster lassen, und Dich mit C-M-v durch
-das andere Fenster bewegen.
+Bei mehr als zwei Fenstern kannst Du sie mit C-<Tab> vorwärts und mit
+C-Sh-<Tab> (i.e. CONTROL-SHIFT-TAB) in der anderen Richtung
+durchlaufen. (Auf TTY gibt es keinen Ersatz für C-Sh-<Tab>.)
 
-C-M-v ist ein Beispiel für einen CONTROL-META-Zeichen.  Wenn Du eine
-echte META-Taste hast, kannst Du sowohl CTRL als auch META gedrückt
-halten, während Du v tippst.  Es kommt nicht darauf an ob CTRL oder
-META zuerst gedrückt wird, weil beide dazu dienen um den gedrückten
-Buchstaben zu verändern.
+Die Befehle M-<Prior> und M-<Next> sind sehr hilfreich wenn Du in
+einem Fenster Text bearbeitest und das andere als Referenz verwendest.
+Du kannst den Textzeiger immer im oberen Fenster lassen, und das
+andere Fenster mit diesen Befehlen hinauf und hinab rollen.
 
-Hast Du keine echte META-Taste und Du verwendest stattdessen ESC, ist
-die Reihenfolge nicht egal: zuerst tippst Du ESC, gefolgt von CTRL-v;
-CTRL-ESC v wird nicht funktionieren.  Dies ist so weil ESC ein
+Auf TTYs, verwende C-M-v anstelle von M-<Next>, für M-<Prior> gibt es
+keine Entsprechung.  C-M-v ist ein Beispiel für einen
+CONTROL-META-Zeichen.  Wenn Du eine echte META-Taste hast, kannst Du
+sowohl CONTROL als auch META gedrückt halten, während Du v tippst.  Es
+kommt nicht darauf an ob CONTROL oder META zuerst gedrückt wird, weil
+beide dazu dienen um den gedrückten Buchstaben zu verändern.  Hast Du
+keine echte META-Taste und Du verwendest stattdessen ESC, ist die
+Reihenfolge nicht egal: zuerst tippst Du ESC, gefolgt von CONTROL-v,
+denn CONTROL-ESC v wird nicht funktionieren.  Dies ist so weil ESC ein
 eigenständiges Zeichen ist und keine Modifikations-Taste.
 
 >> Tippe C-x 1 (im oberen Fenster) um das untere Fenster loszuwerden.
@@ -1004,12 +1357,52 @@ eine Datei finden.
 Hier ist eine andere Möglichkeit zwei Fenster zum Anzeigen
 verschiedener Dinge zu nutzen:
 
->> Tippe C-x 4 C-f gefolgt vom Namen einer Deiner Dateien.
+>> Tippe C-x 4 f gefolgt vom Namen einer Deiner Dateien.
    Beende mit <Return>.  Schau wie die angegebene Datei im unteren
    Fenster erscheint.  Auch der Textzeiger folgt dorthin.
 
->> Tippe C-x o um ins obere Fenster zurückzukehren und beende das
+>> Tippe C-<Tab> um ins obere Fenster zurückzukehren und beende das
    untere Fenster mit C-x 1.
+
+
+* MEHRERE "RAHMEN" (D.S. WINDOW-SYSTEM FENSTER)
+------------------------------------------------
+
+Auf Window Systemen kannst Du mehrere Rahmen oder "frames" oder
+Window-System Fenster öffnen.  Sie bestehen unabhängig voneinander, so
+wie unabhängige Programme. (Es gibt keine Unterstützung für MS Windows
+MDI, or Multiple Document Interface, bei dem mehrere überlappende
+Unterfenster innerhalb eines einzelnen Window-System Fensters
+existieren.)
+
+Die Befehle für Rahmen sind ähnlich zu denen für Fenster, nur daß sie
+mit "C-x 5" beginnen.
+
+>> Tippe C-x 5 2 um einen neuen Rahmen zu öffnen.
+
+>> Bewege die Maus hinein, und klicke. (Auf X Windows ist das Klicken
+   eventuell nicht notwendig; dies hängt vom "window manager" ab.)
+
+>> Rolle auf und ab.  Beachte, daß wie auch für XEmacs Fenster, zwei
+   Rahmen denselben Buffer an verschiedenen Positionen zeigen können.
+
+>> Tippe C-x 2.  Beachte, daß jeder Rahmen Fenster unabhängig von
+   jedem anderen Rahmen besitzen kann.
+
+>> Tippe C-x 5 o (oder Alt-Tab unter MS Windows) um zum ersten Rahmen
+   zurückzukehren.
+
+>> Tippe C-x 5 0 um den alten Rahmen zu beenden.
+
+>> Beachte daß wir noch da sind!  XEmacs ist nicht beendet bis der
+   letzte Rahmen beendet ist, unabhängig von der Reihenfolge in
+   welcher sie geöffnet wurden.
+
+>> Tippe C-x 1 um zu einem einzigen Fenster zurückzukehren.
+
+Du kannst auch eine Datei mit C-x 5 f in einem neuen Rahmen öffnen,
+genau so wie C-x 4 eine Datei in einem neuen Fenster innerhalb des
+selben Rahmens öffnet.
 
 
 * REKURSIVE BEARBEITUNGSEBENEN
@@ -1020,12 +1413,13 @@ gelangen.  Dies wird durch eckige Klammern in der Moduszeile angezeigt,
 welche den Namen des Hauptmodus umgeben.  Du könntest
 z.B. [(Fundamental)] anstelle von (Fundamental) sehen.
 
-Um aus der rekursiven Bearbeitungsebene zu gelangen, tippst Du ESC
-ESC ESC.  Dies ist ein allgemeiner Ausstiegs- oder "get out"-Befehl.
-Du kannst ihn auch verwenden, um unnötige Fenster loszuwerden und um
-aus dem Minibuffer zu gelangen.
+Um aus der rekursiven Bearbeitungsebene zu gelangen, tippst Du bereits
+erwähnten allgemeinen Ausstiegs- oder "get out"-Befehl ESC ESC.
+(Merke: dies ist ESC ESC ESC auf TTYs.)  Du kannst ihn auch verwenden,
+um unnötige Fenster oder Selektionen loszuwerden und um aus dem
+Minibuffer zu gelangen.
 
->> Tippe M-x um in den Minibuffer zu gelangen; dann ESC ESC ESC um
+>> Tippe M-x um in den Minibuffer zu gelangen; dann ESC ESC um
    auszusteigen.
 
 Du kannst nicht mit C-g aus einer rekursiven Bearbeitungs-Ebene
@@ -1037,51 +1431,53 @@ Argumenten INNERHALB von rekursiven Bearbeitungs-Ebenen dient.
 ----------------------
 
 In diesen einführenden Übungen haben wir versucht, gerade genug
-Information zu liefern, damit Du beginnen kannst mit Emacs zu
-arbeiten.  Emacs ist so umfangreich, daß es unmöglich wäre, alles
-hier zu erklären.  Allerdings solltest Du versuchen, mehr über Emacs zu
-lernen, da er so viele nützliche Vorzüge besitzt.  Emacs bietet
-Befehle zum Lesen der Emacs-Befehlsdokumentation.  Diese Hilfe- oder
-"help" Befehle beginnen alle mit dem Buchstaben CONTROL-h, den wir auch
-das "Hilfe-Zeichen" nennen.
+Information zu liefern, damit Du beginnen kannst mit XEmacs zu
+arbeiten.  XEmacs ist so umfangreich, daß es unmöglich wäre, alles hier
+zu erklären.  Allerdings solltest Du versuchen, mehr über XEmacs zu
+lernen, da er so viele nützliche Vorzüge besitzt.  XEmacs bietet
+Befehle zum Lesen der XEmacs-Befehlsdokumentation.  Diese Hilfe- oder
+"help" Befehle beginnen alle mit dem Buchstaben CONTROL-h, den wir
+auch das "Hilfe-Zeichen" nennen.
 
 Um die Hilfeeinrichtungen zu verwenden, tippe C-h, gefolgt von einem
 Buchstaben der angibt, welche Art von Hilfe Du willst.  Wenn Du Dich
-WIRKLICH "verirrst", tippe C-h ? und Emacs wird Dir mitteilen, welche
-Art von Hilfe zur Verfügung steht.  Hast Du C-h getippt, willst aber
-keine Hilfe mehr, dann tippe einfach C-g zum Abbrechen des Befehls.
+WIRKLICH "verirrst", tippe C-h ? ? und XEmacs wird Dir mitteilen,
+welche Art von Hilfe zur Verfügung steht.  Hast Du C-h getippt, willst
+aber keine Hilfe mehr, dann tippe einfach C-g zum Abbrechen des
+Befehls.
 
-(Einige Administratoren verändern die Bedeutung von C-h.  Sie sollten
-dies wirklich nicht tun, beschwere Dich also beim System
-Administrator.  In der Zwischenzeit, wenn C-h keine Mitteilung
-bezüglich Hilfe am Fuß des Emacs-Fensters anzeigt, versuche M-x help
-<Return> zu tippen.)
+(Achtung für TTY Benutzer: Einige Administratoren verändern die
+Bedeutung von C-h.  Sie sollten dies wirklich nicht generell für alle
+Anwender tun, beschwere Dich also bei Deinem System Administrator.  In
+der Zwischenzeit, wenn C-h keine Mitteilung bezüglich Hilfe am Fuß des
+Rahmens anzeigt, versuche stattdessen die F1 Taste oder M-? zu
+tippen.)
 
-Die einfachste Hilfe-Einrichtung ist C-h c.  Tippe C-h, ein c und
-einen Befehls-Buchstaben oder eine Sequenz davon und Emacs gibt Dir
-eine ganz kurze Beschreibung des Befehls.
+Die einfachste Hilfe-Einrichtung ist C-h c.  Tippe C-h, den Buchstaben
+c und einen Befehls-Buchstaben oder eine Sequenz davon und XEmacs gibt
+Dir eine ganz kurze Beschreibung des Befehls.
 
->> Tippe C-h c C-p.
+>> Tippe C-h c <Up>.
    Die Mitteilung sollte etwa wie folgt aussehen
 
-	C-p runs the command previous-line
+	up runs the command previous-line
 
 Dies teilt Dir den "Namen der Funktion" mit. Funktions-Namen werden
-hauptsächlich zum Spezialisieren und Erweitern von Emacs verwendet.
+hauptsächlich zum Spezialisieren und Erweitern von XEmacs verwendet.
 Aber da die Funktions-Namen etwas darüber aussagen was der Befehl tut,
 können Sie auch als sehr kurze Dokumentation dienen -- genug um Dich
 an Befehle zu erinnern die Du bereits gelernt hast.
 
-Zeichenerweiterte Befehle so wie C-x C-s und (wenn Du keine META- oder
-EDIT- oder ALT-Taste hast) <ESC>v sind nach C-h c auch erlaubt.
+Zeichenerweiterte Befehle so wie C-x C-s und <ESC>v sind nach C-h c
+auch erlaubt.
 
 Um mehr Hilfe zu einem Befehl zu bekommen verwende C-h k anstelle von
 C-h c.
 
->> Tippe C-h k C-p.
+>> Tippe C-h k <Up>.
 
 Dies zeigt sowohl die Dokumentation der Funktion, als auch ihren
-Namen, in einem eigenen Emacs-Fenster.  Wenn Du mit dem Lesen fertig
+Namen, in einem eigenen XEmacs-Fenster.  Wenn Du mit dem Lesen fertig
 bist, tippe q um den Hilfetext loszuwerden.
 
 Hier sind einige andere nützliche C-h Möglichkeiten:
@@ -1090,12 +1486,16 @@ Hier sind einige andere nützliche C-h Möglichkeiten:
                 Funktion
 
 >> Versuche C-h f previous-line<Return>.
-   Dies gibt Dir all die Information die Emacs zu der Funktion hat, welche
-   C-p implementiert.
+   Dies gibt Dir all die Information die XEmacs zu der Funktion hat,
+   welche den <Up> Befehl implementiert.
 
-   C-h a        Hyper-Apropos.  Tippe ein Schlüsselwort und Emacs listet
-                alle Funktionen und Variablen die es enthalten.
-                Für Befehle die mit M-x aufgerufen werden können wird
+Ein verwandter Befehl, C-h v, zeigt die Dokumentation von Variablen
+deren Wert Du zur Personalisierung von XEmacs anpassen kannst.  Du
+mußt den Namen der Variablen eintippen, wenn XEmacs danach fragt.
+
+   C-h a        Hyper-Apropos.  Tippe ein Schlüsselwort und XEmacs listet
+                alle Funktionen und Variablen die es enthalten.  Für
+                Befehle die mit META-x aufgerufen werden können wird
                 links ein Stern angezeigt.
 
 >> Tippe C-h a newline<Return>.
@@ -1106,34 +1506,49 @@ um mehr über eine Funktion oder Variable zu erfahren.  Tippe q um
 Hyper-Apropos zu verlassen.
 
 
+   C-h i	On-line Dokumentation lesen (auch Info genannt).
+                Dieser Befehl bringt Dich in einen speziellen *info*
+                Buffer, wo Du On-line Dokumentation für die auf Deinem
+                System verfügbaren XEmacs Pakete lesen kannst.  Tippe
+                m xemacs <Return> um die XEmacs Dokumentation zu
+                lesen.  Hast Du nie zuvor "Info" benutzt, so tippe ?
+                und XEmacs wird Dir eine Einführung über die
+                Möglichkeiten von Info geben.  Bist Du mit diesem
+                Tutorial fertig, solltest Du auf Info als
+                weiterführende Dokumentation zurückgreifen.
+
+
 * ZUM SCHLUß
 ------------
 
-Merke Dir, daß Du Emacs mit C-x C-c endgültig beendest.  Um vorübergehend
+Merke: Um XEmacs endgültig zu beenden verwende den Menü-Eintrag
+"File->Exit XEmacs", oder tippe C-x C-c.  Um auf TTYs vorübergehend
 in eine Shell auszusteigen, so daß Du später zurückkehren kannst,
-verwende C-z.  (Unter X ikonifiziert dies den aktuellen Emacs-Rahmen.)
+verwende C-z.
 
 Dieses Tutorial sollte für Anfänger verständlich sein, hast Du etwas
 Unklares gefunden, schiebe die Schuld nicht auf Dich -- beschwere Dich!
 
 
-ANFERTIGEN VON KOPIEN
----------------------
+RECHTE, ANFERTIGEN VON KOPIEN, URSPRUNG
+---------------------------------------
+
+Copyright (c) 1985, 1996 Free Software Foundation.
+Copyright (c) 2001 Ben Wing.
+Copyright (c) 1997-2001, Adrian Aichner.
+This tutorial is synched with FSF 21.0.106.
 
 Dieses Tutorial stammt, über eine lange Linie von Emacs Tutorials, von
 dem von Stuart Cracraft für den ursprünglichen Emacs geschriebenen ab.
 Ben Wing hat das Tutorial für X Windows erweitert.  Martin Buchholz
 und Hrvoje Niksic haben weitere Korrekturen für XEmacs beigetragen.
-Ins Deutsche übertragen wurde es von Adrian Aichner
-<adrian@xemacs.org>.
+Ben Wing hat es später mit FSF 21.0.105 abgestimmt und viele Sektionen
+an die heutigen XEmacs-Normen angepasst.  Die deutsche Version wurde
+es von Adrian Aichner erstellt und laufend gepflegt.
 
-Diese Version des Tutorials ist, wie GNU Emacs selbst,
-urheberrechtlich geschützt und erlaubt die Verteilung von Kopien unter
-bestimmten Voraussetzungen:
-
-Copyright (c) 1997-2000, Adrian Aichner <adrian@xemacs.org>.
-
-Copyright (c) 1985, 1996 Free Software Foundation
+Diese Version des Tutorials ist, wie XEmacs selbst, urheberrechtlich
+geschützt und erlaubt die Verteilung von Kopien unter bestimmten
+Voraussetzungen:
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the
@@ -1146,8 +1561,8 @@ Copyright (c) 1985, 1996 Free Software Foundation
    under the above conditions, provided also that they
    carry prominent notices stating who last altered them.
 
-Die Bedingungen zum Kopieren von Emacs sind komplexer, entsprechen
+Die Bedingungen zum Kopieren von XEmacs sind komplexer, entsprechen
 aber dem selben Geist.  Bitte lies die Datei COPYING und gib doch
-Kopien von GNU Emacs an Freunde weiter.  Hilf mit bei der Beseitigung
-von Software-Verhinderungspolitik ("Besitz") durch das Verwenden,
-Schreiben and Weitergeben von kostenloser Software!
+Kopien von XEmacs an Freunde weiter.  Hilf mit bei der Beseitigung von
+Software-Verhinderungspolitik ("Besitz") durch das Verwenden,
+Schreiben und Weitergeben von kostenloser Software!

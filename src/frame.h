@@ -540,6 +540,7 @@ extern int frame_changed;
 #define FRAME_ROOT_WINDOW(f) ((f)->root_window)
 /* Catch people attempting to set this. */
 #define FRAME_SELECTED_WINDOW(f) NON_LVALUE ((f)->selected_window)
+#define FRAME_SELECTED_XWINDOW(f) XWINDOW (FRAME_SELECTED_WINDOW (f))
 #define FRAME_LAST_NONMINIBUF_WINDOW(f) \
   NON_LVALUE ((f)->last_nonminibuf_window)
 #define FRAME_SB_VCACHE(f) ((f)->sb_vcache)

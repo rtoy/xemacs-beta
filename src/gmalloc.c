@@ -4,6 +4,9 @@
 /* Get the configuration files if we're being compiled for Emacs.  */
 #ifdef emacs
 # include <config.h>
+# include "lisp.h"
+
+# include "sysdep.h"
 # include "getpagesize.h"
 # ifndef HAVE_CONFIG_H
 # define HAVE_CONFIG_H
@@ -273,6 +276,10 @@ struct mstats
 /* Pick up the current statistics. */
 extern struct mstats mstats __P ((void));
 
+#ifdef	__cplusplus
+}
+#endif
+
 /* Call WARNFUN with a warning message when memory usage is high.  */
 extern void memory_warnings __P ((__ptr_t __start,
 				  void (*__warnfun) __P ((const char *))));
@@ -290,10 +297,6 @@ extern void r_alloc_free __P ((__ptr_t *__handleptr));
 /* Adjust the block at HANDLEPTR to be SIZE bytes long.  */
 extern __ptr_t r_re_alloc __P ((__ptr_t *__handleptr, size_t __size));
 #endif /* 0 */
-
-#ifdef	__cplusplus
-}
-#endif
 
 #endif /* malloc.h  */
 /* Allocate memory on a page boundary.

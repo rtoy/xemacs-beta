@@ -1,6 +1,6 @@
 ;;; behavior-defs.el --- definitions of specific behaviors
 
-;; Copyright (C) 2000, 2001 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Author: Ben Wing
 ;; Maintainer: XEmacs Development Team
@@ -275,6 +275,8 @@ counterparts."
   :disable #'(lambda ()
 	       (resize-minibuffer-mode -1)))
 
+(eval-when-compile (require 'func-menu))
+
 (define-behavior 'func-menu
   "Suppose you have a file with a lot of functions in it. Well, this
 package makes it easy to jump to any of those functions. The names of
@@ -472,6 +474,7 @@ KNOWN BUG:
   :short-doc "`Recent Files' menu"
   :enable 'recent-files-initialize)
 
+(eval-when-compile (require 'filladapt))
 (define-behavior 'filladapt
   "These functions enhance the default behavior of Emacs' Auto Fill
 mode and the commands `fill-paragraph', `lisp-fill-paragraph',

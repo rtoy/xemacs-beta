@@ -894,8 +894,8 @@ Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
 #ifdef HAVE_WINDOW_SYSTEM
 Lisp_Object bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 				 int ok_if_data_invalid);
-int read_bitmap_data_from_file (const char *filename, int *width,
-				int *height, unsigned char **datap,
+int read_bitmap_data_from_file (Lisp_Object filename, int *width,
+				int *height, UChar_Binary **datap,
 				int *x_hot, int *y_hot);
 Lisp_Object xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 				   Lisp_Object mask_file,

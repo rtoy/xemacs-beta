@@ -162,9 +162,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
      the same as in menu_item_descriptor_to_widget_value(); see
      the large comment above that function. */
 
-  record_unwind_protect (restore_gc_inhibit,
-			 make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  begin_gc_forbidden ();
 
   kids = prev = xmalloc_widget_value ();
 
@@ -245,7 +243,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 
     /* No more need to free the half-filled-in structures. */
     set_opaque_ptr (wv_closure, 0);
-    unbind_to (count, Qnil);
+    unbind_to (count);
     return dbox;
   }
 }

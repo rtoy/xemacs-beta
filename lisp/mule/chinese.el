@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2000, 2001 Ben Wing.
 
 ;; Keywords: multilingual, Chinese
 
@@ -147,12 +148,20 @@
 
 (make-coding-system
  'cn-gb-2312 'iso2022
- "Coding-system of Chinese EUC (Extended Unix Code)."
+ "Chinese EUC"
  '(charset-g0 ascii
    charset-g1 chinese-gb2312
    charset-g2 sisheng
    charset-g3 t
    mnemonic "Zh-GB/EUC"
+   documentation
+   "Chinese EUC (Extended Unix Code), the standard Chinese encoding on Unix.
+This follows the same overall EUC principles as Japanese EUC (see the
+description under Japanese EUC), but specifies different character sets:
+
+G0: ASCII
+G1: Chinese-GB2312
+G2: Sisheng (PinYin - ZhuYin)"
    ))
 
 ;; (define-coding-system-alias 'cn-gb-2312 'chinese-iso-8bit)
@@ -175,11 +184,13 @@
 
 (make-coding-system
  'hz-gb-2312 'no-conversion
- "Coding-system of Hz/ZW used for Chinese."
+ "Hz/ZW (Chinese)"
  '(mnemonic "Zh-GB/Hz"
    eol-type lf
    post-read-conversion post-read-decode-hz
-   pre-write-conversion pre-write-encode-hz))
+   pre-write-conversion pre-write-encode-hz
+   documentation "Hz/ZW 7-bit encoding for Chinese GB2312 (MIME:HZ-GB-2312)"
+))
 
 ;; (define-coding-system-alias 'hz-gb-2312 'chinese-hz)
 ;; (define-coding-system-alias 'hz 'chinese-hz)
@@ -203,16 +214,26 @@
     (let (last-coding-system-used)
       (encode-hz-region 1 (point-max)))
     nil))
-	   
+
 (set-language-info-alist
  "Chinese-GB" '((setup-function . setup-chinese-gb-environment-internal)
 		(charset chinese-gb2312 sisheng)
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
+		(cygwin-locale "zh")
+		(locale "zh_CN.eucCN" "zh_CN.EUC" "zh_CN"
+			"chinese-s" "zh"
+			  #'(lambda (arg)
+			      (and arg (let ((case-fold-search t))
+					 (string-match "^zh_.*.GB.*" arg)))))
+		(mswindows-locale ("CHINESE" . "CHINESE_SIMPLIFIED"))
+		(native-coding-system cn-gb-2312)
 		(input-method . "chinese-py-punct")
 		(features china-util)
 		(sample-text . "Chinese ($AVPND(B,$AFUM(;0(B,$A::So(B)	$ADc:C(B")
-		(documentation . "Support for Chinese GB2312 character set."))
+		(documentation .
+"Supports Simplified Chinese, used in mainland China.
+Uses the GB2312 character set."))
  '("Chinese"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -229,8 +250,18 @@
 
 (make-coding-system
  'big5 'big5
- "Coding-system of BIG5."
- '(mnemonic "Zh/Big5"))
+ "Big5"
+ '(mnemonic "Zh/Big5"
+   documentation
+   "A non-modal encoding formed by five large Taiwanese companies
+\(hence \"Big5\") to produce a character set and encoding for
+traditional Chinese writing.  Big5 encodes some 13,000+ characters.
+ASCII is encoded as normal, and Chinese characters as two bytes, but
+Chinese characters do not exclusively use the high half.  The first
+byte is in the high half standard position A1-FE, but the second byte
+is in either low 40-7E or high A1-FE.  Thus Big5 suffers from the
+classic \"it might look like a slash, but it's really the second byte
+of a Chinese character\"."))
 
 ;; (define-coding-system-alias 'big5 'chinese-big5)
 ;; (define-coding-system-alias 'cn-big5 'chinese-big5)
@@ -262,10 +293,21 @@
  "Chinese-BIG5" '((charset chinese-big5-1 chinese-big5-2)
 		  (coding-system big5 iso-2022-7bit)
 		  (coding-priority big5 cn-gb-2312 iso-2022-7bit)
+		  (cygwin-locale "zh_TW")
+		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
+			  "chinese-t"
+			  #'(lambda (arg)
+			      (and arg (let ((case-fold-search t))
+					 (string-match "^zh_.*.BIG5.*" arg)))))
+		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
+		  (native-coding-system big5)
 		  (input-method . "chinese-py-punct-b5")
 		  (features china-util)
 		  (sample-text . "Cantonese ($(0GnM$(B,$(0N]0*Hd(B)	$(0*/=((B, $(0+$)p(B")
-		  (documentation . "Support for Chinese Big5 character set."))
+		  (documentation .
+"Supports Traditional Chinese, used in Taiwan, Hong Kong, and Singapore.
+Uses the Chinese Big5 character set."
+))
  '("Chinese"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

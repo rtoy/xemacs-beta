@@ -290,12 +290,13 @@ e.g. `make-color-specifier', `make-font-specifier',
 common specifier for that type (`default-toolbar', `default-gutter',
 `current-display-table').
 
-NOTE: It does *not* work to give a VALUE of nil as a way of
-removing the specifications for a locale.  Use `remove-specifier'
-instead. (And keep in mind that, if you omit the LOCALE argument
-to `remove-specifier', it removes *all* specifications!  If you
-want to remove just the `global' specification, make sure to
-specify a LOCALE of `global'.)
+NOTE: It does *not* work to give a VALUE of nil as a way of removing the
+specifications for a locale -- for many specifier types, such as `boolean',
+nil is a perfectly legitimate value to set.  Use `remove-specifier'
+instead. (And keep in mind that, if you omit the LOCALE argument to
+`remove-specifier', it removes *all* specifications!  If you want to remove
+just the `global' specification, make sure to specify a LOCALE of
+`global'.)
 
 VALUE can also be a list of instantiators.  This means basically,
 \"try each one in turn until you get one that works\".  This allows
@@ -329,7 +330,7 @@ the default behavior of `remove-tag-set-prepend' is usually fine.
 See `copy-specifier' and `add-spec-to-specifier' for a full
 description of what each of these means.
 
-VALUE can actually be anything acceptable to `canonicalize-spec-list';
+\[VALUE can actually be anything acceptable to `canonicalize-spec-list';
 this includes, among other things:
 
 -- a cons of a locale and an instantiator (or list of instantiators)
@@ -338,9 +339,10 @@ this includes, among other things:
 -- a cons of a locale and the previous type of item
 -- a list of one or more of any of the previous types of items
 
-However, in these cases, you cannot give a LOCALE or TAG-SET,
-because they do not make sense. (You will probably get an error if
-you try this.)
+However, this usage is deprecated.  Either iterate and call `set-specifier'
+multiple times, or use the lower-level `add-spec-list-to-specifier'.  Also,
+in these cases, you cannot give a LOCALE or TAG-SET, because they do not
+make sense. (You will probably get an error if you try this.)]
 
 Finally, VALUE can itself be a specifier (of the same type as
 SPECIFIER), if you want to copy specifications from one specifier

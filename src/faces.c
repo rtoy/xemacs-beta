@@ -1,7 +1,7 @@
 /* "Face" primitives
    Copyright (C) 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -558,9 +558,10 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				 Error_Behavior errb, int no_fallback,
 				 Lisp_Object depth)
 {
-  Lisp_Object retval =
-    specifier_instance_no_quit (Fget (face, property, Qnil), charset,
-				domain, errb, no_fallback, depth);
+  Lisp_Object retval;
+
+  retval = specifier_instance_no_quit (Fget (face, property, Qnil), charset,
+				       domain, errb, no_fallback, depth);
 
   if (UNBOUNDP (retval) && !no_fallback)
     {
@@ -1874,9 +1875,11 @@ void
 vars_of_faces (void)
 {
   staticpro (&Vpermanent_faces_cache);
-  Vpermanent_faces_cache = Qnil;
+  Vpermanent_faces_cache =
+    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
   staticpro (&Vtemporary_faces_cache);
-  Vtemporary_faces_cache = Qnil;
+  Vtemporary_faces_cache =
+    make_lisp_hash_table (0, HASH_TABLE_WEAK, HASH_TABLE_EQ);
 
   staticpro (&Vdefault_face);
   Vdefault_face = Qnil;
@@ -1924,16 +1927,11 @@ vars_of_faces (void)
 void
 complex_vars_of_faces (void)
 {
-  Vpermanent_faces_cache =
-    make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
-  Vtemporary_faces_cache =
-    make_lisp_hash_table (0, HASH_TABLE_WEAK, HASH_TABLE_EQ);
-
   /* Create the default face now so we know what it is immediately. */
 
   Vdefault_face = Qnil; /* so that Fmake_face() doesn't set up a bogus
 			   default value */
-  Vdefault_face = Fmake_face (Qdefault, build_string ("default face"),
+  Vdefault_face = Fmake_face (Qdefault, build_msg_string ("default face"),
 			      Qnil);
 
   /* Provide some last-resort fallbacks to avoid utter fuckage if
@@ -1981,7 +1979,7 @@ complex_vars_of_faces (void)
        (#### Perhaps we should remove the stuff from x-faces.el
        and only depend on this stuff here?  That should work.)
      */
-    const char *fonts[] =
+    const Char_ASCII *fonts[] =
     {
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
       "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*",
@@ -1999,7 +1997,7 @@ complex_vars_of_faces (void)
       "-*-*-*-*-*-*-*-120-*-*-*-*-*-*",
       "*"
     };
-    const char **fontptr;
+    const Char_ASCII **fontptr;
 
 #ifdef HAVE_X_WINDOWS
     for (fontptr = fonts + countof(fonts) - 1; fontptr >= fonts; fontptr--)
@@ -2014,25 +2012,38 @@ complex_vars_of_faces (void)
 #endif /* HAVE_GTK */
 #endif /* HAVE_X_WINDOWS || HAVE_GTK */
 
-
 #ifdef HAVE_TTY
     inst_list = Fcons (Fcons (list1 (Qtty), build_string ("normal")),
 		       inst_list);
 #endif /* HAVE_TTY */
-#ifdef HAVE_MS_WINDOWS
-    /* Fixedsys does not exist for printers */
-    inst_list = Fcons (Fcons (list1 (Qmsprinter),
-			      build_string ("Courier:Regular:10::Western")), inst_list);
-    inst_list = Fcons (Fcons (list1 (Qmsprinter),
-			      build_string ("Courier New:Regular:10::Western")), inst_list);
 
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-			      build_string ("Fixedsys:Regular:9::Western")), inst_list);
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-			      build_string ("Courier:Regular:10::Western")), inst_list);
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-			      build_string ("Courier New:Regular:10::Western")), inst_list);
+#ifdef HAVE_MS_WINDOWS
+    {
+       const Char_ASCII *mswfonts[] =
+ 	    {
+ 	      "Courier New:Regular:10::Western",
+ 	      "Courier:Regular:10::Western",
+ 	      "Courier New:Regular:10::",
+ 	      "Courier:Regular:10::",
+ 	      ":Regular:10::"
+ 	    };
+       const Char_ASCII **mswfontptr;
+ 
+       for (mswfontptr = mswfonts + countof (mswfonts) - 1;
+	    mswfontptr >= mswfonts; mswfontptr--)
+ 	{
+ 	  /* display device */
+ 	  inst_list = Fcons (Fcons (list1 (Qmswindows), 
+ 				    build_string (*mswfontptr)),
+ 			     inst_list);
+ 	  /* printer device */
+ 	  inst_list = Fcons (Fcons (list1 (Qmsprinter), 
+ 				    build_string (*mswfontptr)),
+ 			     inst_list);
+ 	}
+    }
 #endif /* HAVE_MS_WINDOWS */
+
     set_specifier_fallback (Fget (Vdefault_face, Qfont, Qnil), inst_list);
   }
 
@@ -2052,7 +2063,7 @@ complex_vars_of_faces (void)
   /* gui-element is the parent face of all gui elements such as
      modeline, vertical divider and toolbar. */
   Vgui_element_face = Fmake_face (Qgui_element,
-				  build_string ("gui element face"),
+				  build_msg_string ("gui element face"),
 				  Qnil);
 
   /* Provide some last-resort fallbacks for gui-element face which
@@ -2090,7 +2101,7 @@ complex_vars_of_faces (void)
      way since we need to get them anyway. */
 
   /* modeline is gui element. */
-  Vmodeline_face = Fmake_face (Qmodeline, build_string ("modeline face"),
+  Vmodeline_face = Fmake_face (Qmodeline, build_msg_string ("modeline face"),
 			       Qnil);
 
   set_specifier_fallback (Fget (Vmodeline_face, Qforeground, Qunbound),
@@ -2103,7 +2114,7 @@ complex_vars_of_faces (void)
 
   /* toolbar is another gui element */
   Vtoolbar_face = Fmake_face (Qtoolbar,
-			      build_string ("toolbar face"),
+			      build_msg_string ("toolbar face"),
 			      Qnil);
   set_specifier_fallback (Fget (Vtoolbar_face, Qforeground, Qunbound),
 			  Fget (Vgui_element_face, Qforeground, Qunbound));
@@ -2115,7 +2126,7 @@ complex_vars_of_faces (void)
 
   /* vertical divider is another gui element */
   Vvertical_divider_face = Fmake_face (Qvertical_divider,
-				       build_string ("vertical divider face"),
+				       build_msg_string ("vertical divider face"),
 				       Qnil);
 
   set_specifier_fallback (Fget (Vvertical_divider_face, Qforeground, Qunbound),
@@ -2129,7 +2140,7 @@ complex_vars_of_faces (void)
 
   /* widget is another gui element */
   Vwidget_face = Fmake_face (Qwidget,
-			     build_string ("widget face"),
+			     build_msg_string ("widget face"),
 			     Qnil);
   set_specifier_fallback (Fget (Vwidget_face, Qfont, Qunbound),
 			  Fget (Vgui_element_face, Qfont, Qunbound));
@@ -2140,17 +2151,17 @@ complex_vars_of_faces (void)
   /* We don't want widgets to have a default background pixmap. */
 
   Vleft_margin_face = Fmake_face (Qleft_margin,
-				  build_string ("left margin face"),
+				  build_msg_string ("left margin face"),
 				  Qnil);
   Vright_margin_face = Fmake_face (Qright_margin,
-				   build_string ("right margin face"),
+				   build_msg_string ("right margin face"),
 				   Qnil);
   Vtext_cursor_face = Fmake_face (Qtext_cursor,
-				  build_string ("face for text cursor"),
+				  build_msg_string ("face for text cursor"),
 				  Qnil);
   Vpointer_face =
     Fmake_face (Qpointer,
-		build_string
+		build_msg_string
 		("face for foreground/background colors of mouse pointer"),
 		Qnil);
 }

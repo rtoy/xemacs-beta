@@ -1,6 +1,6 @@
 /* Editor command loop.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -97,7 +97,7 @@ default_error_handler (Lisp_Object data)
   Fdisplay_error (data, Qt);
   check_quit (); /* make Vquit_flag accurate */
   Vquit_flag = Qnil;
-  return (unbind_to (speccount, Qt));
+  return (unbind_to_1 (speccount, Qt));
 }
 
 DEFUN ("really-early-error-handler", Freally_early_error_handler, 1, 1, 0, /*
@@ -124,7 +124,7 @@ You should almost certainly not be using this.
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("*** Killing XEmacs\n");
 #ifdef HAVE_MS_WINDOWS
-  Fmswindows_message_box (build_string ("Initialization error"),
+  Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);
 #endif
   return Fkill_emacs (make_int (-1));
@@ -373,7 +373,7 @@ Alternately, `(throw 'exit t)' makes this function signal an error.
     /* Turn abort-recursive-edit into a quit. */
     Fsignal (Qquit, Qnil);
 
-  return unbind_to (speccount, Qnil);
+  return unbind_to (speccount);
 }
 
 #endif /* !LISP_COMMAND_LOOP */
@@ -566,11 +566,10 @@ Don't call this unless you know what you're doing.
 	{
 	  /* Bind dont_check_for_quit to 1 so that C-g gets read in
 	     rather than quitting back to the minibuffer.  */
-	  int count = specpdl_depth ();
-	  begin_dont_check_for_quit ();
+	  int count = begin_dont_check_for_quit ();
 	  Fsit_for (make_int (2), Qnil);
 	  clear_echo_area (selected_frame (), Qnil, 0);
-	  unbind_to (count, Qnil);
+	  unbind_to (count);
 	}
 
       Fnext_event (event, Qnil);

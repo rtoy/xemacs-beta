@@ -1,5 +1,6 @@
 /* Database access routines
    Copyright (C) 1996, William M. Perry
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,9 +24,11 @@ Boston, MA 02111-1307, USA.  */
 /* Written by Bill Perry */
 /* Substantially rewritten by Martin Buchholz */
 /* db 2.x support added by Andreas Jaeger */
+/* Mule-ized 6-22-00 Ben Wing */
 
 #include <config.h>
 #include "lisp.h"
+
 #include "sysfile.h"
 #include "buffer.h"
 
@@ -68,12 +71,7 @@ Lisp_Object Qqueue;
 Lisp_Object Qdbm;
 #endif /* HAVE_DBM */
 
-#ifdef MULE
-/* #### The following should be settable on a per-database level.
-   But the whole coding-system infrastructure should be rewritten someday.
-   We really need coding-system aliases. -- martin */
 Lisp_Object Vdatabase_coding_system;
-#endif
 
 Lisp_Object Qdatabasep;
 
@@ -104,9 +102,7 @@ struct Lisp_Database
   DB *db_handle;
 #endif
   DB_FUNCS *funcs;
-#ifdef MULE
   Lisp_Object coding_system;
-#endif
 };
 
 #define XDATABASE(x) XRECORD (x, database, Lisp_Database)
@@ -140,9 +136,7 @@ allocate_database (void)
   db->access_ = 0;
   db->mode = 0;
   db->dberrno = 0;
-#ifdef MULE
-  db->coding_system = Fget_coding_system (Qbinary);
-#endif
+  db->coding_system = Qnil;
   return db;
 }
 
@@ -267,8 +261,10 @@ dbm_map (Lisp_Database *db, Lisp_Object func)
        keydatum = dbm_nextkey (db->dbm_handle))
     {
       valdatum = dbm_fetch (db->dbm_handle, keydatum);
-      key = make_string ((unsigned char *) keydatum.dptr, keydatum.dsize);
-      val = make_string ((unsigned char *) valdatum.dptr, valdatum.dsize);
+      key = make_ext_string (keydatum.dptr, keydatum.dsize,
+			     db->coding_system);
+      val = make_ext_string (valdatum.dptr, valdatum.dsize,
+			     db->coding_system);
       call2 (func, key, val);
     }
 }
@@ -278,12 +274,14 @@ dbm_get (Lisp_Database *db, Lisp_Object key)
 {
   datum keydatum, valdatum;
 
-  keydatum.dptr = (char *) XSTRING_DATA (key);
-  keydatum.dsize = XSTRING_LENGTH (key);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.dptr, keydatum.dsize),
+		      db->coding_system);
   valdatum = dbm_fetch (db->dbm_handle, keydatum);
 
   return (valdatum.dptr
-	  ? make_string ((unsigned char *) valdatum.dptr, valdatum.dsize)
+	  ? make_ext_string (valdatum.dptr, valdatum.dsize,
+			     db->coding_system)
 	  : Qnil);
 }
 
@@ -293,10 +291,12 @@ dbm_put (Lisp_Database *db,
 {
   datum keydatum, valdatum;
 
-  valdatum.dptr = (char *) XSTRING_DATA (val);
-  valdatum.dsize = XSTRING_LENGTH (val);
-  keydatum.dptr = (char *) XSTRING_DATA (key);
-  keydatum.dsize = XSTRING_LENGTH (key);
+  TO_EXTERNAL_FORMAT (LISP_STRING, val,
+		      ALLOCA, (valdatum.dptr, valdatum.dsize),
+		      db->coding_system);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.dptr, keydatum.dsize),
+		      db->coding_system);
 
   return !dbm_store (db->dbm_handle, keydatum, valdatum,
 		     NILP (replace) ? DBM_INSERT : DBM_REPLACE);
@@ -307,8 +307,9 @@ dbm_remove (Lisp_Database *db, Lisp_Object key)
 {
   datum keydatum;
 
-  keydatum.dptr = (char *) XSTRING_DATA (key);
-  keydatum.dsize = XSTRING_LENGTH (key);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.dptr, keydatum.dsize),
+		      db->coding_system);
 
   return dbm_delete (db->dbm_handle, keydatum);
 }
@@ -395,8 +396,9 @@ berkdb_get (Lisp_Database *db, Lisp_Object key)
   xzero (keydatum);
   xzero (valdatum);
 
-  keydatum.data = XSTRING_DATA (key);
-  keydatum.size = XSTRING_LENGTH (key);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.data, keydatum.size),
+		      db->coding_system);
 
 #if DB_VERSION_MAJOR == 1
   status = db->db_handle->get (db->db_handle, &keydatum, &valdatum, 0);
@@ -405,8 +407,8 @@ berkdb_get (Lisp_Database *db, Lisp_Object key)
 #endif /* DB_VERSION_MAJOR */
 
   if (!status)
-    /* #### Not mule-ized! will crash! */
-    return make_string ((Intbyte *) valdatum.data, valdatum.size);
+    return make_ext_string (valdatum.data, valdatum.size,
+			    db->coding_system);
 
 #if DB_VERSION_MAJOR == 1
   db->dberrno = (status == 1) ? -1 : errno;
@@ -430,10 +432,12 @@ berkdb_put (Lisp_Database *db,
   xzero (keydatum);
   xzero (valdatum);
 
-  keydatum.data = XSTRING_DATA   (key);
-  keydatum.size = XSTRING_LENGTH (key);
-  valdatum.data = XSTRING_DATA   (val);
-  valdatum.size = XSTRING_LENGTH (val);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.data, keydatum.size),
+		      db->coding_system);
+  TO_EXTERNAL_FORMAT (LISP_STRING, val,
+		      ALLOCA, (valdatum.data, valdatum.size),
+		      db->coding_system);
 #if DB_VERSION_MAJOR == 1
   status = db->db_handle->put (db->db_handle, &keydatum, &valdatum,
  			       NILP (replace) ? R_NOOVERWRITE : 0);
@@ -456,8 +460,9 @@ berkdb_remove (Lisp_Database *db, Lisp_Object key)
   /* DB Version 2 requires DBT's to be zeroed before use. */
   xzero (keydatum);
 
-  keydatum.data = XSTRING_DATA   (key);
-  keydatum.size = XSTRING_LENGTH (key);
+  TO_EXTERNAL_FORMAT (LISP_STRING, key,
+		      ALLOCA, (keydatum.data, keydatum.size),
+		      db->coding_system);
 
 #if DB_VERSION_MAJOR == 1
   status = db->db_handle->del (db->db_handle, &keydatum, 0);
@@ -493,9 +498,10 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
        status == 0;
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
     {
-      /* #### Needs mule-izing */
-      key = make_string ((Intbyte *) keydatum.data, keydatum.size);
-      val = make_string ((Intbyte *) valdatum.data, valdatum.size);
+      key = make_ext_string (keydatum.data, keydatum.size,
+			     db->coding_system);
+      val = make_ext_string (valdatum.data, valdatum.size,
+			     db->coding_system);
       call2 (func, key, val);
     }
 #else
@@ -511,9 +517,10 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
 	 status == 0;
 	 status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
       {
-	/* #### Needs mule-izing */
-	key = make_string ((Intbyte *) keydatum.data, keydatum.size);
-	val = make_string ((Intbyte *) valdatum.data, valdatum.size);
+	key = make_ext_string (keydatum.data, keydatum.size,
+			       db->coding_system);
+	val = make_ext_string (valdatum.data, valdatum.size,
+			       db->coding_system);
 	call2 (func, key, val);
       }
     dbcp->c_close (dbcp);
@@ -563,15 +570,18 @@ Return the last error associated with DATABASE.
   return XDATABASE (database)->funcs->last_error (XDATABASE (database));
 }
 
-DEFUN ("open-database", Fopen_database, 1, 5, 0, /*
+DEFUN ("open-database", Fopen_database, 1, 6, 0, /*
 Return a new database object opened on FILE.
 Optional arguments TYPE and SUBTYPE specify the database type.
 Optional argument ACCESS specifies the access rights, which may be any
 combination of 'r' 'w' and '+', for read, write, and creation flags.
 Optional argument MODE gives the permissions to use when opening FILE,
 and defaults to 0755.
+Optional argument CODESYS specifies the coding system used to encode/decode
+data passed to/from the database, and defaults to the value of the
+variable `database-coding-system'.
 */
-       (file, type, subtype, access_, mode))
+       (file, type, subtype, access_, mode, codesys))
 {
   /* This function can GC */
   int modemask;
@@ -621,6 +631,11 @@ and defaults to 0755.
       modemask = XINT (mode);
     }
 
+  if (NILP (codesys))
+    codesys = Vdatabase_coding_system;
+
+  codesys = get_coding_system_for_text_file (Vdatabase_coding_system, 1);
+
 #ifdef HAVE_DBM
   if (NILP (type) || EQ (type, Qdbm))
     {
@@ -631,6 +646,7 @@ and defaults to 0755.
       db = allocate_database ();
       db->dbm_handle = dbase;
       db->funcs = &ndbm_func_block;
+      db->coding_system = codesys;
       goto db_done;
     }
 #endif /* HAVE_DBM */
@@ -703,6 +719,7 @@ and defaults to 0755.
       db = allocate_database ();
       db->db_handle = dbase;
       db->funcs = &berk_func_block;
+      db->coding_system = codesys;
       goto db_done;
     }
 #endif /* HAVE_BERKELEY_DB */
@@ -826,12 +843,8 @@ vars_of_database (void)
   Fprovide (Qberkeley_db);
 #endif
 
-#if 0 /* #### implement me! */
-#ifdef MULE
   DEFVAR_LISP ("database-coding-system", &Vdatabase_coding_system /*
-Coding system used to convert data in database files.
+Default coding system used to convert data in database files.
 */ );
-  Vdatabase_coding_system = Qnil;
-#endif
-#endif /* 0 */
+  Vdatabase_coding_system = Qnative;
 }

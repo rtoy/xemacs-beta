@@ -1,5 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2000 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -65,70 +66,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* encapsulation: directory calls */
 
-#ifdef ENCAPSULATE_CHDIR
-int sys_chdir (const char *path);
-#endif
-#if defined (ENCAPSULATE_CHDIR) && !defined (DONT_ENCAPSULATE)
-# undef chdir
-# define chdir sys_chdir
-#endif
-#if !defined (ENCAPSULATE_CHDIR) && defined (DONT_ENCAPSULATE)
-# define sys_chdir chdir
-#endif
+int qxe_chdir (const Intbyte *path);
+int qxe_mkdir (const Intbyte *path, mode_t mode);
+DIR *qxe_opendir (const Intbyte *filename);
+DIRENTRY *qxe_readdir (DIR *dirp);
+int qxe_closedir (DIR *dirp);
+int qxe_rmdir (const Intbyte *path);
 
-#ifdef ENCAPSULATE_MKDIR
-int sys_mkdir (const char *path, mode_t mode);
-#endif
-#if defined (ENCAPSULATE_MKDIR) && !defined (DONT_ENCAPSULATE)
-# undef mkdir
-# define mkdir sys_mkdir
-#endif
-#if !defined (ENCAPSULATE_MKDIR) && defined (DONT_ENCAPSULATE)
-# define sys_mkdir mkdir
-#endif
-
-#ifdef ENCAPSULATE_OPENDIR
-DIR *sys_opendir (const char *filename);
-#endif
-#if defined (ENCAPSULATE_OPENDIR) && !defined (DONT_ENCAPSULATE)
-# undef opendir
-# define opendir sys_opendir
-#endif
-#if !defined (ENCAPSULATE_OPENDIR) && defined (DONT_ENCAPSULATE)
-# define sys_opendir opendir
-#endif
-
-#ifdef ENCAPSULATE_READDIR
-DIRENTRY *sys_readdir (DIR *dirp);
-#endif
-#if defined (ENCAPSULATE_READDIR) && !defined (DONT_ENCAPSULATE)
-# undef readdir
-# define readdir sys_readdir
-#endif
-#if !defined (ENCAPSULATE_READDIR) && defined (DONT_ENCAPSULATE)
-# define sys_readdir readdir
-#endif
-
-#ifdef ENCAPSULATE_CLOSEDIR
-int sys_closedir (DIR *dirp);
-#endif
-#if defined (ENCAPSULATE_CLOSEDIR) && !defined (DONT_ENCAPSULATE)
-# undef closedir
-# define closedir sys_closedir
-#endif
-#if !defined (ENCAPSULATE_CLOSEDIR) && defined (DONT_ENCAPSULATE)
-# define sys_closedir closedir
-#endif
-
-#ifdef ENCAPSULATE_RMDIR
-int sys_rmdir (const char *path);
-#endif
-#if defined (ENCAPSULATE_RMDIR) && !defined (DONT_ENCAPSULATE)
-# undef rmdir
-# define rmdir sys_rmdir
-#endif
-#if !defined (ENCAPSULATE_RMDIR) && defined (DONT_ENCAPSULATE)
-# define sys_rmdir rmdir
-#endif
+Intbyte *qxe_allocating_getcwd (void);
 
 #endif /* INCLUDED_sysdir_h_ */

@@ -50,7 +50,7 @@ function has no effect and always returns `nil'.  See function
 {
 #ifdef USAGE_TRACKING
   Lisp_Object xs;
-  unsigned char *s; /* #### Does not support I18N4. */
+  unsigned char *s;
 
   if (!NILP (Vusage_tracking))
     {

@@ -349,10 +349,7 @@ calculate_gutter_size (struct window *w, enum gutter_pos pos)
 
   /* Redisplay code that we use relies on GC not happening. Make it
      so. */
-  count = specpdl_depth ();
-  record_unwind_protect (restore_gc_inhibit,
-			 make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  count = begin_gc_forbidden ();
 
   ddla = Dynarr_new (display_line);
   /* generate some display lines */
@@ -366,7 +363,7 @@ calculate_gutter_size (struct window *w, enum gutter_pos pos)
 			     ddla, 0, 0);
 
   /* Let GC happen again. */
-  unbind_to (count, Qnil);
+  unbind_to (count);
 
   ret = make_int (calculate_gutter_size_from_display_lines (pos, ddla));
   free_display_lines (ddla);

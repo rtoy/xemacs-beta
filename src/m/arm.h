@@ -78,9 +78,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* USG */
 
 #ifdef WIN32_NATIVE
-#define DATA_END 	get_data_end ()
 #define DATA_START 	get_data_start ()
-#define HAVE_ALLOCA
 #endif
 
 #ifdef linux
@@ -89,11 +87,4 @@ Boston, MA 02111-1307, USA.  */
 #define ULIMIT_BREAK_VALUE (32*1024*1024)
 
 #define SEGMENT_MASK ((SEGMENT_SIZE)-1)
-#endif
-
-/* XEmacs change: John Hughes <john@AtlanTech.COM> says using vfork
-   under i386-unknown-sysv4.2 makes C-g sometimes cause a SIGSEGV
-   in TTY mode; the problem goes away if you use fork */
-#ifdef USG5_4_2
-#define vfork fork
 #endif

@@ -1,4 +1,6 @@
-/* This file is part of XEmacs.
+/* definitions for 4.2BSD-compatible directory access
+
+This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -17,18 +19,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-/*
-	<dir.h> -- definitions for 4.2BSD-compatible directory access
-
-	last edit:	09-Jul-1983	D A Gwyn
-*/
-
 #ifndef INCLUDED_ndir_h_
 #define INCLUDED_ndir_h_
 
 #define DIRBLKSIZ	512		/* size of directory block */
 #ifdef WIN32_NATIVE
-#define MAXNAMLEN	255
+#define MAXNAMLEN	4095
 #else  /* not WIN32_NATIVE */
 #define MAXNAMLEN	15		/* maximum filename length */
 #endif /* not WIN32_NATIVE */
@@ -50,7 +46,15 @@ typedef struct
   char	dd_buf[DIRBLKSIZ];	/* directory block */
 }	DIR;			/* stream data from opendir() */
 
-DIR *opendir (const char *filename);
+#ifdef WIN32_NATIVE
+
+DIR *mswindows_opendir (const Intbyte *filename);
+int mswindows_closedir (DIR *dirp);
+struct direct *mswindows_readdir (DIR *dirp);
+
+#else /* not WIN32_NATIVE */
+
+DIR *opendir (const Extbyte *filename);
 int closedir (DIR *dirp);
 struct direct *readdir (DIR *dirp);
 struct direct *readdirver (DIR *dirp);
@@ -58,5 +62,7 @@ long telldir (DIR *dirp);
 void seekdir (DIR *dirp, long loc);
 
 #define rewinddir( dirp )	seekdir( dirp, 0L )
+
+#endif /* WIN32_NATIVE */
 
 #endif /* INCLUDED_ndir_h_ */

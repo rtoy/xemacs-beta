@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995, 1996, 2001 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1998, 1999, 2000 Andy Piper.
 
@@ -312,21 +312,23 @@ read_bitmap_data (FILE *fstream, int *width, int *height, UChar_Binary **datap,
 
 
 int
-read_bitmap_data_from_file (const char *filename,
+read_bitmap_data_from_file (Lisp_Object filename,
 			    /* Remaining args are RETURNED */
 			    int *width,
 			    int *height,
 			    UChar_Binary **datap,
 			    int *x_hot, int *y_hot)
 {
-    FILE *fstream;
-    int status;
+  FILE *fstream;
+  int status;
+  Extbyte *fileext;
 
-    if ((fstream = fopen (filename, "r")) == NULL)
-      return BitmapOpenFailed;
-    status = read_bitmap_data (fstream, width, height, datap, x_hot, y_hot);
-    fclose (fstream);
-    return status;
+  LISP_STRING_TO_EXTERNAL (filename, fileext, Qnative);
+  if ((fstream = fopen (fileext, "r")) == NULL)
+    return BitmapOpenFailed;
+  status = read_bitmap_data (fstream, width, height, datap, x_hot, y_hot);
+  retry_fclose (fstream);
+  return status;
 }
 
 void

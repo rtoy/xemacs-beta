@@ -1324,7 +1324,7 @@ may remhash or puthash the entry currently being processed by FUNCTION.
       Ffuncall (countof (args), args);
     }
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   UNGCPRO;
 
   return Qnil;
@@ -1368,7 +1368,7 @@ elisp_maphash (maphash_function_t function,
     if (function (pobj[0], pobj[1], extra_arg))
       break;
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   UNGCPRO;
 }
 
@@ -1392,7 +1392,7 @@ elisp_map_remhash (maphash_function_t predicate,
     if (predicate (pobj[0], pobj[1], extra_arg))
       Fremhash (pobj[0], hash_table);
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   UNGCPRO;
 }
 
@@ -1642,8 +1642,6 @@ The value is returned as (HIGH . LOW).
 void
 syms_of_elhash (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (hash_table);
-
   DEFSUBR (Fhash_table_p);
   DEFSUBR (Fmake_hash_table);
   DEFSUBR (Fcopy_hash_table);
@@ -1689,8 +1687,10 @@ syms_of_elhash (void)
 }
 
 void
-vars_of_elhash (void)
+init_elhash_once_early (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (hash_table);
+
   /* This must NOT be staticpro'd */
   Vall_weak_hash_tables = Qnil;
   dump_add_weak_object_chain (&Vall_weak_hash_tables);

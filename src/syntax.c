@@ -1,6 +1,7 @@
 /* XEmacs routines to deal with syntax tables; also word and list parsing.
    Copyright (C) 1985-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -279,10 +280,10 @@ update_syntax_cache (int pos, int count, int init)
 	  int get_change_before = pos + 1;
 
 	  tmp_table = Fget_char_property (make_int(pos), Qsyntax_table,
-					  make_buffer (syntax_cache.buffer), Qnil);
+					  wrap_buffer (syntax_cache.buffer), Qnil);
 	  syntax_cache.next_change =
 	    XINT (Fnext_extent_change (make_int (pos > 0 ? pos : 1),
-				       make_buffer (syntax_cache.buffer)));
+				       wrap_buffer (syntax_cache.buffer)));
 
 	  if (get_change_before < 1)
 	    get_change_before = 1;
@@ -291,7 +292,7 @@ update_syntax_cache (int pos, int count, int init)
 
 	  syntax_cache.prev_change =
 	    XINT (Fprevious_extent_change (make_int (get_change_before),
-					   make_buffer (syntax_cache.buffer)));
+					   wrap_buffer (syntax_cache.buffer)));
 	}
       else
 	{

@@ -21,25 +21,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with : FSF Emacs 21.0.90 except TranslateCharacter */
 
-#ifdef emacs
 #include <config.h>
-#endif
-
-#include <stdio.h>
-
-#ifdef emacs
-
 #include "lisp.h"
+
 #include "buffer.h"
-#include "mule-charset.h"
+#include "charset.h"
 #include "mule-ccl.h"
 #include "file-coding.h"
-
-#else  /* not emacs */
-
-#include "mulelib.h"
-
-#endif /* not emacs */
 
 Lisp_Object Qccl_error;
 
@@ -701,12 +689,14 @@ static int stack_idx_of_map_multiple;
 
 /* Terminate CCL program because of invalid command.  Should not occur
    in the normal case.  */
-#define CCL_INVALID_CMD		     	\
-  do {				     	\
-    ccl->status = CCL_STAT_INVALID_CMD;	\
-  /* The "if (1)" inhibits the warning	\
-     "end-of loop code not reached" */	\
-  if (1) goto ccl_error_handler;	\
+#define CCL_INVALID_CMD					\
+  do {							\
+    ccl->status = CCL_STAT_INVALID_CMD;			\
+    /* enable this to debug invalid cmd errors */	\
+    /* debug_break (); */				\
+    /* The "if (1)" inhibits the warning		\
+       "end-of loop code not reached" */		\
+    if (1) goto ccl_error_handler;			\
   } while (0)
 
 /* Encode one character CH to multibyte form and write to the current
@@ -1260,16 +1250,16 @@ ccl_driver (struct ccl_program *ccl,
 	    case CCL_GE: reg[rrr] = i >= j; break;
 	    case CCL_NE: reg[rrr] = i != j; break;
 	    case CCL_DECODE_SJIS:
-	      /* DECODE_SJIS set MSB for internal format
+	      /* DECODE_SHIFT_JIS set MSB for internal format
 		 as opposed to Emacs.  */
-	      DECODE_SJIS (i, j, reg[rrr], reg[7]);
+	      DECODE_SHIFT_JIS (i, j, reg[rrr], reg[7]);
 	      reg[rrr] &= 0x7F;
 	      reg[7] &= 0x7F;
 	      break;
 	    case CCL_ENCODE_SJIS:
-	      /* ENCODE_SJIS assumes MSB of SJIS-char is set
+	      /* ENCODE_SHIFT_JIS assumes MSB of SHIFT-JIS-char is set
 		 as opposed to Emacs.  */
-	      ENCODE_SJIS (i | 0x80, j | 0x80, reg[rrr], reg[7]);
+	      ENCODE_SHIFT_JIS (i | 0x80, j | 0x80, reg[rrr], reg[7]);
 	      break;
 	    default: CCL_INVALID_CMD;
 	    }
@@ -1389,8 +1379,8 @@ ccl_driver (struct ccl_program *ccl,
 
 	    case CCL_TranslateCharacterConstTbl:
 #if 0
-	      /* XEmacs does not have translate_char, and its
-		 equivalent nor.  We do nothing on this operation. */
+	      /* XEmacs does not have translate_char or an equivalent.  We
+                 do nothing on this operation. */
 	      op = XINT (ccl_prog[ic]); /* table */
 	      ic++;
 	      CCL_MAKE_CHAR (reg[RRR], reg[rrr], i);
@@ -1942,8 +1932,7 @@ ccl_get_compiled_code (Lisp_Object ccl_prog)
 int
 setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
 {
-  int i;
-
+  xzero (*ccl); /* XEmacs change */
   if (! NILP (ccl_prog))
     {
       ccl_prog = ccl_get_compiled_code (ccl_prog);
@@ -1955,12 +1944,6 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
       ccl->buf_magnification = XINT (XVECTOR_DATA (ccl_prog)[CCL_HEADER_BUF_MAG]);
     }
   ccl->ic = CCL_HEADER_MAIN;
-  for (i = 0; i < 8; i++)
-    ccl->reg[i] = 0;
-  ccl->last_block = 0;
-  ccl->private_state = 0;
-  ccl->status = 0;
-  ccl->stack_idx = 0;
   ccl->eol_type = CCL_CODING_EOL_LF;
   return 0;
 }

@@ -422,36 +422,39 @@ BUFFER defaults to the current buffer.  This command can be
 used interactively, for example from a mail or news buffer."
   (interactive)
   (setq buf (or buf (current-buffer)))
-  (let (content-beg content-end beg end)
+  (let (content-beg content-end ;beg end
+		    )
     (save-excursion
       (set-buffer buf)
       (goto-char (point-min))
       (setq content-beg (point))
       (setq content-end (save-excursion (goto-char (point-max)) (point)))
       (when (re-search-forward package-get-pgp-signed-begin-line nil t)
-        (setq beg (match-beginning 0))
+        ;(setq beg (match-beginning 0))
         (setq content-beg (match-end 0)))
       (when (re-search-forward package-get-pgp-signature-begin-line nil t)
         (setq content-end (match-beginning 0))
 	(setq package-entries-are-signed t))
       (when (re-search-forward package-get-pgp-signature-end-line nil t)
-        (setq end (point)))
+        ;(setq end (point))
+	)
       (setq package-get-continue-update-base t)
       (if package-get-require-signed-base-updates 
 	  (if package-entries-are-signed
 	      (progn
 		(setq package-get-continue-update-base nil)
 		(autoload 'mc-setversion "mc-setversion")
-		(or
-		 (cond ((locate-file "gpg" exec-path exec-suffix-list)
-			(mc-setversion "gpg"))
-		       ((locate-file "pgpe" exec-path exec-suffix-list)
-			(mc-setversion "5.0"))
-		       ((locate-file "pgp" exec-path exec-suffix-list)
-			(mc-setversion "2.6")))
-		 (error "Can't find a suitable pgp executable"))
+		(with-fboundp 'mc-setversion
+		  (or
+		   (cond ((locate-file "gpg" exec-path exec-suffix-list)
+			  (mc-setversion "gpg"))
+			 ((locate-file "pgpe" exec-path exec-suffix-list)
+			  (mc-setversion "5.0"))
+			 ((locate-file "pgp" exec-path exec-suffix-list)
+			  (mc-setversion "2.6")))
+		   (error "Can't find a suitable pgp executable")))
 		(autoload 'mc-verify "mc-toplev")
-		(mc-verify)
+		(declare-fboundp (mc-verify))
 		(setq package-get-continue-update-base t))
 	    (if (yes-or-no-p
 		 "Package Index is not PGP signed.  Continue anyway? ")

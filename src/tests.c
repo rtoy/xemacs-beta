@@ -1,5 +1,6 @@
 /* C support for testing XEmacs - see tests/automated/c-tests.el
    Copyright (C) 2000 Martin Buchholz
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -52,8 +53,8 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   Lisp_Object string_foo = make_string (int_foo, sizeof (int_foo) - 1);
 
   Extbyte ext_latin[]  = "f\372b\343\340";
-  Intbyte int_latin1[] = "f\201\372b\201\343\201\340";
-  Intbyte int_latin2[] = "f\202\372b\202\343\202\340";
+  Intbyte int_latin1[] = "f\200\372b\200\343\200\340";
+  Intbyte int_latin2[] = "f\201\372b\201\343\201\340";
 #ifdef MULE
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
   Extbyte ext_tilde[]  = "f~b~~";
@@ -64,8 +65,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   Lisp_Object string_latin1 = make_string (int_latin1, sizeof (int_latin1) - 1);
 
   /* Check for expected strings before and after conversion.
-     Conversions depend on whether MULE is defined,
-     and on whether FILE_CODING is defined. */
+     Conversions depend on whether MULE is defined. */
 #ifdef MULE
 #define DFC_CHECK_DATA_COND_MULE(ptr,len,			\
 				 constant_string_mule,		\
@@ -86,7 +86,6 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
     DFC_CHECK_DATA_NUL (ptr, len, constant_string_non_mule)
 #endif
 
-#ifdef FILE_CODING
 #define DFC_CHECK_DATA_COND_EOL(ptr,len,			\
 				 constant_string_eol,		\
 				 constant_string_non_eol)	\
@@ -95,16 +94,6 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 				     constant_string_eol,	\
 				     constant_string_non_eol)	\
     DFC_CHECK_DATA_NUL (ptr, len, constant_string_eol)
-#else
-#define DFC_CHECK_DATA_COND_EOL(ptr,len,			\
-				 constant_string_eol,		\
-				 constant_string_non_eol)	\
-    DFC_CHECK_DATA (ptr, len, constant_string_non_eol)
-#define DFC_CHECK_DATA_COND_EOL_NUL(ptr,len,			\
-				     constant_string_eol,	\
-				     constant_string_non_eol)	\
-    DFC_CHECK_DATA_NUL (ptr, len, constant_string_non_eol)
-#endif
 
   /* Check for expected strings before and after conversion. */
 #define DFC_CHECK_DATA(ptr,len, constant_string) do {	\
@@ -122,31 +111,31 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (intern ("iso-8859-2")));
+		      intern ("iso-8859-2"));
   DFC_CHECK_DATA_NUL (ptr, len, ext_latin);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_latin2,
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (intern ("iso-8859-2")));
+		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (ptr, len, ext_latin);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_latin1,
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (intern ("iso-8859-2")));
+		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (ptr, len, ext_latin12);
 
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      MALLOC, (ptr, len),
-		      Fget_coding_system (intern ("iso-8859-2")));
+		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (ptr, len, ext_latin);
   xfree (ptr);
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      LISP_OPAQUE, opaque,
-		      Fget_coding_system (intern ("iso-8859-2")));
+		      intern ("iso-8859-2"));
   DFC_CHECK_DATA (XOPAQUE_DATA (opaque), XOPAQUE_SIZE (opaque), ext_latin);
 
   ptr = NULL, len = rand();
@@ -211,7 +200,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (Qbinary));
+		      Qbinary);
   DFC_CHECK_DATA_COND_MULE (ptr, len, ext_tilde, int_latin2);
 
   ptr = NULL, len = rand();
@@ -230,7 +219,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (LISP_STRING, string_latin1,
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (Qbinary));
+		      Qbinary);
   DFC_CHECK_DATA_COND_MULE (ptr, len, ext_latin, int_latin1);
 
   ptr = NULL, len = rand();
@@ -249,7 +238,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      MALLOC, (ptr, len),
-		      Fget_coding_system (Qbinary));
+		      Qbinary);
   DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_tilde, int_latin2);
   xfree (ptr);
 
@@ -268,7 +257,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      LISP_OPAQUE, opaque,
-		      Fget_coding_system (Qbinary));
+		      Qbinary);
   DFC_CHECK_DATA_COND_MULE_NUL (XOPAQUE_DATA (opaque),
 				XOPAQUE_SIZE (opaque), ext_tilde, int_latin2);
 
@@ -326,7 +315,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo)),
 		      MALLOC, (ptr, len),
-		      Fget_coding_system (Qbinary));
+		      Qbinary);
   DFC_CHECK_DATA_COND_EOL_NUL (ptr, len, ext_unix, int_foo);
   xfree (ptr);
 
@@ -359,7 +348,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   ptr = NULL, len = rand();
   TO_EXTERNAL_FORMAT (DATA, (int_foo, sizeof (int_foo) - 1),
 		      ALLOCA, (ptr, len),
-		      Fget_coding_system (intern ("no-conversion-dos")));
+		      intern ("no-conversion-dos"));
   DFC_CHECK_DATA_COND_EOL (ptr, len, ext_dos, int_foo);
 
   ptr = NULL, len = rand();
@@ -368,14 +357,11 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 		      intern ("no-conversion-unix"));
   DFC_CHECK_DATA_COND_EOL_NUL (ptr, len, ext_unix, int_foo);
 
-#ifdef FILE_CODING
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_dos,
 		      LISP_BUFFER, Fcurrent_buffer(),
 		      intern ("undecided"));
   DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
 		  sizeof (int_foo) - 1, int_foo);
-
-#endif /* FILE_CODING */
 
   TO_INTERNAL_FORMAT (DATA, (ext_mac, sizeof (ext_mac) - 1),
 		      LISP_STRING, string,

@@ -2,7 +2,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -92,9 +92,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"		/* to set Vlast_input_time */
 
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include <errno.h>
 
@@ -216,10 +214,10 @@ Lisp_Object Vkeyboard_translate_table;
 Lisp_Object Vretry_undefined_key_binding_unshifted;
 Lisp_Object Qretry_undefined_key_binding_unshifted;
 
-#ifdef HAVE_XIM
+#ifdef MULE
 /* If composed input is undefined, use self-insert-char */
 Lisp_Object Vcomposed_character_default_binding;
-#endif /* HAVE_XIM */
+#endif
 
 /* Console that corresponds to our controlling terminal */
 Lisp_Object Vcontrolling_terminal;
@@ -314,14 +312,17 @@ static Lisp_Object recursive_sit_for;
 #define XCOMMAND_BUILDER(x) \
   XRECORD (x, command_builder, struct command_builder)
 #define XSETCOMMAND_BUILDER(x, p) XSETRECORD (x, p, command_builder)
+#define wrap_command_builder(p) wrap_record (p, command_builder)
 #define COMMAND_BUILDERP(x) RECORDP (x, command_builder)
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
+#define CONCHECK_COMMAND_BUILDER(x) CONCHECK_RECORD (x, command_builder)
+
+static Lisp_Object Vcommand_builder_free_list;
 
 static Lisp_Object
 mark_command_builder (Lisp_Object obj)
 {
   struct command_builder *builder = XCOMMAND_BUILDER (obj);
-  mark_object (builder->prefix_events);
   mark_object (builder->current_events);
   mark_object (builder->most_current_event);
   mark_object (builder->last_non_munged_event);
@@ -335,8 +336,12 @@ finalize_command_builder (void *header, int for_disksave)
 {
   if (!for_disksave)
     {
-      xfree (((struct command_builder *) header)->echo_buf);
-      ((struct command_builder *) header)->echo_buf = 0;
+      struct command_builder *b = (struct command_builder *) header;
+      if (b->echo_buf)
+	{
+	  xfree (b->echo_buf);
+	  b->echo_buf = 0;
+	}
     }
 }
 
@@ -344,11 +349,10 @@ DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
                                mark_command_builder, internal_object_printer,
 			       finalize_command_builder, 0, 0, 0,
 			       struct command_builder);
-
+
 static void
 reset_command_builder_event_chain (struct command_builder *builder)
 {
-  builder->prefix_events = Qnil;
   builder->current_events = Qnil;
   builder->most_current_event = Qnil;
   builder->last_non_munged_event = Qnil;
@@ -357,23 +361,82 @@ reset_command_builder_event_chain (struct command_builder *builder)
 }
 
 Lisp_Object
-allocate_command_builder (Lisp_Object console)
+allocate_command_builder (Lisp_Object console, int with_echo_buf)
 {
-  Lisp_Object builder_obj;
-  struct command_builder *builder =
-    alloc_lcrecord_type (struct command_builder, &lrecord_command_builder);
+  Lisp_Object builder_obj =
+    allocate_managed_lcrecord (Vcommand_builder_free_list);
+  struct command_builder *builder = XCOMMAND_BUILDER (builder_obj);
 
   builder->console = console;
   reset_command_builder_event_chain (builder);
-  builder->echo_buf_length = 300; /* #### Kludge */
-  builder->echo_buf = xnew_array (Intbyte, builder->echo_buf_length);
-  builder->echo_buf[0] = 0;
-  builder->echo_buf_index = -1;
+  if (with_echo_buf)
+    {
+      /* #### This badly needs to be turned into a Dynarr */
+      builder->echo_buf_length = 300; /* #### Kludge */
+      builder->echo_buf = xnew_array (Intbyte, builder->echo_buf_length);
+      builder->echo_buf[0] = 0;
+    }
+  else
+    {
+      builder->echo_buf_length = 0;
+      builder->echo_buf = NULL;
+    }
   builder->echo_buf_index = -1;
   builder->self_insert_countdown = 0;
 
-  XSETCOMMAND_BUILDER (builder_obj, builder);
   return builder_obj;
+}
+
+/* Copy or clone COLLAPSING (copy to NEW_BUILDINGS if non-zero,
+   otherwise clone); but don't copy the echo-buf stuff. (The calling
+   routines don't need it and will reset it, and we would rather avoid
+   malloc.) */
+
+static Lisp_Object
+copy_command_builder (struct command_builder *collapsing,
+		      struct command_builder *new_buildings)
+{
+  if (!new_buildings)
+    new_buildings = XCOMMAND_BUILDER (allocate_command_builder (Qnil, 0));
+
+  new_buildings->self_insert_countdown = collapsing->self_insert_countdown;
+
+  deallocate_event_chain (new_buildings->current_events);
+  new_buildings->current_events =
+    copy_event_chain (collapsing->current_events);
+
+  new_buildings->most_current_event =
+    transfer_event_chain_pointer (collapsing->most_current_event,
+				  collapsing->current_events,
+				  new_buildings->current_events);
+  new_buildings->last_non_munged_event =
+    transfer_event_chain_pointer (collapsing->last_non_munged_event,
+				  collapsing->current_events,
+				  new_buildings->current_events);
+  new_buildings->munge_me[0].first_mungeable_event =
+    transfer_event_chain_pointer (collapsing->munge_me[0].
+				  first_mungeable_event,
+				  collapsing->current_events,
+				  new_buildings->current_events);
+  new_buildings->munge_me[1].first_mungeable_event =
+    transfer_event_chain_pointer (collapsing->munge_me[1].
+				  first_mungeable_event,
+				  collapsing->current_events,
+				  new_buildings->current_events);
+
+  return wrap_command_builder (new_buildings);
+}
+
+static void
+free_command_builder (struct command_builder *builder)
+{
+  if (builder->echo_buf)
+    {
+      xfree (builder->echo_buf);
+      builder->echo_buf = NULL;
+    }
+  free_managed_lcrecord (Vcommand_builder_free_list,
+			 wrap_command_builder (builder));
 }
 
 static void
@@ -382,6 +445,7 @@ command_builder_append_event (struct command_builder *builder,
 {
   assert (EVENTP (event));
 
+  event = Fcopy_event (event, Qnil);
   if (EVENTP (builder->most_current_event))
     XSET_EVENT_NEXT (builder->most_current_event, event);
   else
@@ -442,7 +506,7 @@ event_stream_event_pending_p (int user)
 }
 
 static void
-event_stream_force_event_pending (struct frame* f)
+event_stream_force_event_pending (struct frame *f)
 {
   if (event_stream->force_event_pending)
     event_stream->force_event_pending (f);
@@ -469,7 +533,7 @@ maybe_read_quit_event (Lisp_Event *event)
       sigint_happened = 0;
       Vquit_flag = Qnil;
       character_to_event (ch, event, con, 1, 1);
-      event->channel = make_console (con);
+      event->channel = wrap_console (con);
       return 1;
     }
   return 0;
@@ -577,8 +641,8 @@ event_stream_unselect_process (Lisp_Process *proc)
 }
 
 USID
-event_stream_create_stream_pair (void* inhandle, void* outhandle,
-		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+event_stream_create_stream_pair (void *inhandle, void *outhandle,
+		Lisp_Object *instream, Lisp_Object *outstream, int flags)
 {
   check_event_stream_ok (EVENT_STREAM_PROCESS);
   return event_stream->create_stream_pair_cb
@@ -851,7 +915,7 @@ execute_help_form (struct command_builder *command_builder,
 					 print_help, help, Qnil);
   Fnext_command_event (event, Qnil);
   /* Remove the help from the frame */
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
   /* Hmmmm.  Tricky.  The unbind restores an old window configuration,
      apparently bypassing any setting of windows_structure_changed.
      So we need to set it so that things get redrawn properly. */
@@ -1858,7 +1922,7 @@ emacs_handle_focus_change_final (Lisp_Object frame_inp_and_dev)
 	  count = specpdl_depth ();
 	  record_unwind_protect (cleanup_after_missed_defocusing, frame);
 	  run_deselect_frame_hook ();
-	  unbind_to (count, Qnil);
+	  unbind_to (count);
 	  /* the cleanup method changed the focus frame to nil, so
 	     we need to reflect this */
 	  focus_frame = Qnil;
@@ -2634,7 +2698,7 @@ Return non-nil iff we received any output before the timeout expired.
 	}
     }
 
-  unbind_to (count, timeout_enabled ? make_int (timeout_id) : Qnil);
+  unbind_to_1 (count, timeout_enabled ? make_int (timeout_id) : Qnil);
 
   Fdeallocate_event (event);
   UNGCPRO;
@@ -2703,7 +2767,7 @@ filter function or timer event (either synchronous or asynchronous).
 	}
     }
  DONE_LABEL:
-  unbind_to (count, make_int (id));
+  unbind_to_1 (count, make_int (id));
   Fdeallocate_event (event);
   UNGCPRO;
   return Qnil;
@@ -2840,7 +2904,7 @@ If sit-for is called from within a process filter function or timer
     }
 
  DONE_LABEL:
-  unbind_to (count, make_int (id));
+  unbind_to_1 (count, make_int (id));
 
   /* Put back the event (if any) that made Fsit_for() exit before the
      timeout.  Note that it is being added to the back of the queue, which
@@ -3075,12 +3139,16 @@ command_builder_find_leaf_1 (struct command_builder *builder)
 
 /* See if we can do function-key-map or key-translation-map translation
    on the current events in the command builder.  If so, do this, and
-   return the resulting binding, if any. */
+   return the resulting binding, if any.
+
+   DID_MUNGE must be initialized before calling this function.  If munging
+   happened, DID_MUNGE will be non-zero; otherwise, it will be left alone.
+ */
 
 static Lisp_Object
 munge_keymap_translate (struct command_builder *builder,
 			enum munge_me_out_the_door munge,
-			int has_normal_binding_p)
+			int has_normal_binding_p, int *did_munge)
 {
   Lisp_Object suffix;
 
@@ -3119,7 +3187,7 @@ munge_keymap_translate (struct command_builder *builder,
 	{
 	  Lisp_Object new_chain = key_sequence_to_event_chain (result);
 	  Lisp_Object tempev;
-	  int n, tckn;
+	  int n;
 
 	  /* If the first_mungeable_event of the other munger is
 	     within the events we're munging, then it will point to
@@ -3136,24 +3204,12 @@ munge_keymap_translate (struct command_builder *builder,
 		}
 	    }
 
+	  /* Now munge the current event chain in the command builder. */
 	  n = event_chain_count (suffix);
 	  command_builder_replace_suffix (builder, suffix, new_chain);
 	  builder->munge_me[munge].first_mungeable_event = Qnil;
-	  /* Now hork this-command-keys as well. */
 
-	  /* We just assume that the events we just replaced are
-	     sitting in copied form at the end of this-command-keys.
-	     If the user did weird things with `dispatch-event' this
-	     may not be the case, but at least we make sure we won't
-	     crash. */
-	  new_chain = copy_event_chain (new_chain);
-	  tckn = event_chain_count (Vthis_command_keys);
-	  if (tckn >= n)
-	    {
-	      this_command_keys_replace_suffix
-		(event_chain_nth (Vthis_command_keys, tckn - n),
-		 new_chain);
-	    }
+	  *did_munge = 1;
 
 	  result = command_builder_find_leaf_1 (builder);
 	  return result;
@@ -3169,18 +3225,14 @@ munge_keymap_translate (struct command_builder *builder,
   return Qnil;
 }
 
-/* Compare the current state of the command builder against the local and
-   global keymaps, and return the binding.  If there is no match, try again,
-   case-insensitively.  The return value will be one of:
-      -- nil (there is no binding)
-      -- a keymap (part of a command has been specified)
-      -- a command (anything that satisfies `commandp'; this includes
-                    some symbols, lists, subrs, strings, vectors, and
-		    compiled-function objects)
+/* Same as command_builder_find_leaf() below but no Russian C-x
+   processing and no defaulting to self-insert-command.
  */
+
 static Lisp_Object
-command_builder_find_leaf (struct command_builder *builder,
-                           int allow_misc_user_events_p)
+command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
+					      int allow_misc_user_events_p,
+					      int *did_munge)
 {
   /* This function can GC */
   Lisp_Object result;
@@ -3198,6 +3250,9 @@ command_builder_find_leaf (struct command_builder *builder,
   /* if we're currently in a menu accelerator, check there for further
      events */
   /* #### fuck me!  who wrote this crap?  think "abstraction", baby. */
+  /* #### this horribly-written crap can mess with global state, which
+     this function should not do.  i'm not fixing it now.  someone
+     needs to go and rewrite that shit correctly. --ben */
 #if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
   if (x_kludge_lw_menu_active ())
     {
@@ -3220,20 +3275,16 @@ command_builder_find_leaf (struct command_builder *builder,
 
   /* Check to see if we have a potential function-key-map match. */
   if (NILP (result))
-    {
-      result = munge_keymap_translate (builder, MUNGE_ME_FUNCTION_KEY, 0);
-      regenerate_echo_keys_from_this_command_keys (builder);
-    }
+    result = munge_keymap_translate (builder, MUNGE_ME_FUNCTION_KEY, 0,
+				     did_munge);
+
   /* Check to see if we have a potential key-translation-map match. */
   {
     Lisp_Object key_translate_result =
       munge_keymap_translate (builder, MUNGE_ME_KEY_TRANSLATION,
-			      !NILP (result));
+			      !NILP (result), did_munge);
     if (!NILP (key_translate_result))
-      {
-	result = key_translate_result;
-	regenerate_echo_keys_from_this_command_keys (builder);
-      }
+      result = key_translate_result;
   }
 
   if (!NILP (result))
@@ -3248,28 +3299,39 @@ command_builder_find_leaf (struct command_builder *builder,
       && !NILP (Vretry_undefined_key_binding_unshifted))
     {
       Lisp_Object terminal = builder->most_current_event;
-      struct key_data* key = & XEVENT (terminal)->event.key;
+      struct key_data *key = &XEVENT (terminal)->event.key;
       Emchar c = 0;
       if ((key->modifiers & XEMACS_MOD_SHIFT)
           || (CHAR_OR_CHAR_INTP (key->keysym)
-              && ((c = XCHAR_OR_CHAR_INT (key->keysym)), c >= 'A' && c <= 'Z')))
+              && ((c = XCHAR_OR_CHAR_INT (key->keysym)),
+		  c >= 'A' && c <= 'Z')))
         {
-          Lisp_Event terminal_copy = *XEVENT (terminal);
+	  Lisp_Object neubauten = copy_command_builder (builder, 0);
+	  struct command_builder *neub = XCOMMAND_BUILDER (neubauten);
+	  struct gcpro gcpro1;
+
+	  GCPRO1 (neubauten);
+          terminal = event_chain_tail (neub->current_events);
+	  key = &XEVENT (terminal)->event.key;
 
           if (key->modifiers & XEMACS_MOD_SHIFT)
             key->modifiers &= (~ XEMACS_MOD_SHIFT);
           else
             key->keysym = make_char (c + 'a' - 'A');
 
-          result = command_builder_find_leaf (builder, allow_misc_user_events_p);
+          result =
+	    command_builder_find_leaf_no_mule_processing
+	      (neub, allow_misc_user_events_p, did_munge);
+
           if (!NILP (result))
+	    {
+	      copy_command_builder (neub, builder);
+	      *did_munge = 1;
+	    }
+	  free_command_builder (neub);
+	  UNGCPRO;
+	  if (!NILP (result))
             return result;
-          /* If there was no match with the lower-case version either,
-             then put back the upper-case event for the error
-             message.  But make sure that function-key-map didn't
-             change things out from under us. */
-          if (EQ (terminal, builder->most_current_event))
-            *XEVENT (terminal) = terminal_copy;
         }
     }
 
@@ -3279,39 +3341,123 @@ command_builder_find_leaf (struct command_builder *builder,
 				     Vhelp_char))
     return Vprefix_help_command;
 
-#ifdef HAVE_XIM
+  return Qnil;
+}
+
+/* Compare the current state of the command builder against the local and
+   global keymaps, and return the binding.  If there is no match, try again,
+   case-insensitively.  The return value will be one of:
+      -- nil (there is no binding)
+      -- a keymap (part of a command has been specified)
+      -- a command (anything that satisfies `commandp'; this includes
+                    some symbols, lists, subrs, strings, vectors, and
+		    compiled-function objects)
+
+   This may "munge" the current event chain in the command builder;
+   i.e.  the sequence might be mutated into a different sequence,
+   which we then pretend is what the user actually typed instead of
+   the passed-in sequence.  This happens as a result of:
+
+   -- key-translation-map changes
+   -- function-key-map changes
+   -- retry-undefined-key-binding-unshifted (q.v.)
+   -- "Russian C-x problem" changes (see definition of struct key_data,
+                                     events.h)
+
+   DID_MUNGE must be initialized before calling this function.  If munging
+   happened, DID_MUNGE will be non-zero; otherwise, it will be left alone.
+ */
+
+static Lisp_Object
+command_builder_find_leaf (struct command_builder *builder,
+			   int allow_misc_user_events_p,
+			   int *did_munge)
+{
+  Lisp_Object result =
+    command_builder_find_leaf_no_mule_processing
+      (builder, allow_misc_user_events_p, did_munge);
+
+  if (!NILP (result))
+    return result;
+
+#ifdef MULE
+  /* #### Do Russian C-x processing here */
+
   /* If keysym is a non-ASCII char, bind it to self-insert-char by default. */
   if (XEVENT_TYPE (builder->most_current_event) == key_press_event
       && !NILP (Vcomposed_character_default_binding))
     {
-      Lisp_Object keysym = XEVENT (builder->most_current_event)->event.key.keysym;
+      Lisp_Object keysym =
+	XEVENT (builder->most_current_event)->event.key.keysym;
       if (CHARP (keysym) && !CHAR_ASCII_P (XCHAR (keysym)))
         return Vcomposed_character_default_binding;
     }
-#endif /* HAVE_XIM */
-
-  /* If we read extra events attempting to match a function key but end
-     up failing, then we release those events back to the command loop
-     and fail on the original lookup.  The released events will then be
-     reprocessed in the context of the first part having failed. */
-  if (!NILP (builder->last_non_munged_event))
-    {
-      Lisp_Object event0 = builder->last_non_munged_event;
-
-      /* Put the commands back on the event queue. */
-      enqueue_event_chain (XEVENT_NEXT (event0),
-			   &command_event_queue,
-			   &command_event_queue_tail);
-
-      /* Then remove them from the command builder. */
-      XSET_EVENT_NEXT (event0, Qnil);
-      builder->most_current_event = event0;
-      builder->last_non_munged_event = Qnil;
-    }
+#endif
 
   return Qnil;
 }
 
+/* Like command_builder_find_leaf but update this-command-keys and the
+   echo area as necessary when the current event chain was munged. */
+
+static Lisp_Object
+command_builder_find_leaf_and_update_global_state (struct command_builder *
+						   builder,
+						   int
+						   allow_misc_user_events_p)
+{
+  int did_munge = 0;
+  int orig_length = event_chain_count (builder->current_events);
+  Lisp_Object result = command_builder_find_leaf (builder,
+						  allow_misc_user_events_p,
+						  &did_munge);
+
+  if (did_munge)
+    {
+      int tck_length = event_chain_count (Vthis_command_keys);
+
+      /* We just assume that the events we just replaced are
+	 sitting in copied form at the end of this-command-keys.
+	 If the user did weird things with `dispatch-event' this
+	 may not be the case, but at least we make sure we won't
+	 crash. */
+
+      if (tck_length >= orig_length)
+	{
+	  Lisp_Object new_chain =
+	    copy_event_chain (builder->current_events);
+	  this_command_keys_replace_suffix
+	    (event_chain_nth (Vthis_command_keys, tck_length - orig_length),
+	     new_chain);
+
+	  regenerate_echo_keys_from_this_command_keys (builder);
+	}
+    }
+
+  if (NILP (result))
+    {
+      /* If we read extra events attempting to match a function key but end
+	 up failing, then we release those events back to the command loop
+	 and fail on the original lookup.  The released events will then be
+	 reprocessed in the context of the first part having failed. */
+      if (!NILP (builder->last_non_munged_event))
+	{
+	  Lisp_Object event0 = builder->last_non_munged_event;
+
+	  /* Put the commands back on the event queue. */
+	  enqueue_event_chain (XEVENT_NEXT (event0),
+			       &command_event_queue,
+			       &command_event_queue_tail);
+
+	  /* Then remove them from the command builder. */
+	  XSET_EVENT_NEXT (event0, Qnil);
+	  builder->most_current_event = event0;
+	  builder->last_non_munged_event = Qnil;
+	}
+    }
+
+  return result;
+}
 
 /* Every time a command-event (a key, button, or menu selection) is read by
    Fnext_event(), it is stored in the recent_keys_ring, in Vlast_input_event,
@@ -3685,16 +3831,14 @@ lookup_command_event (struct command_builder *command_builder,
 	regenerate_echo_keys_from_this_command_keys (command_builder);
       }
     else
-      {
-	event = Fcopy_event (event, Fmake_event (Qnil, Qnil));
-
-	command_builder_append_event (command_builder, event);
-      }
+      command_builder_append_event (command_builder, event);
   }
 
   {
-    Lisp_Object leaf = command_builder_find_leaf (command_builder,
-                                                  allow_misc_user_events_p);
+    Lisp_Object leaf =
+      command_builder_find_leaf_and_update_global_state
+	(command_builder,
+	 allow_misc_user_events_p);
     struct gcpro gcpro1;
     GCPRO1 (leaf);
 
@@ -3733,7 +3877,7 @@ lookup_command_event (struct command_builder *command_builder,
 	    int ch = CONSOLE_QUIT_CHAR (con);
 
 	    character_to_event (ch, e, con, 1, 1);
-	    e->channel = make_console (con);
+	    e->channel = wrap_console (con);
 
 	    enqueue_command_event (quit_event);
 	    Vquit_flag = Qnil;
@@ -3922,7 +4066,7 @@ execute_command_event (struct command_builder *command_builder,
 	int speccount = specpdl_depth ();
 	specbind (Qinhibit_quit, Qt);
 	maybe_echo_keys (command_builder, 0);
-	unbind_to (speccount, Qnil);
+	unbind_to (speccount);
 
 	/* If we're recording a keyboard macro, and the last command
 	   executed set a prefix argument, then decrement the pointer to
@@ -3943,7 +4087,7 @@ execute_command_event (struct command_builder *command_builder,
 	   so we don't either */
 
 	if (!is_scrollbar_event (event))
-	  reset_this_command_keys (CONSOLE_LIVE_P (con) ? make_console (con)
+	  reset_this_command_keys (CONSOLE_LIVE_P (con) ? wrap_console (con)
 				   : Qnil, 0);
       }
   }
@@ -4102,7 +4246,8 @@ Magic events are handled as necessary.
 		XEVENT_TYPE (terminal) = button_release_event;
 		/* If the "up" version is bound, don't complain. */
 		no_bitching
-		  = !NILP (command_builder_find_leaf (command_builder, 0));
+		  = !NILP (command_builder_find_leaf_and_update_global_state
+			   (command_builder, 0));
 		/* Undo the temporary changes we just made. */
 		XEVENT_TYPE (terminal) = button_press_event;
 		if (no_bitching)
@@ -4308,7 +4453,7 @@ See `function-key-map' for more details.
   QUIT;
 
   if (NILP (continue_echo))
-    reset_this_command_keys (make_console (con), 1);
+    reset_this_command_keys (wrap_console (con), 1);
 
   specbind (Qinhibit_quit, Qt);
 
@@ -4340,7 +4485,7 @@ See `function-key-map' for more details.
 
   Vquit_flag = Qnil;  /* In case we read a ^G; do not call check_quit() here */
   Fdeallocate_event (event);
-  RETURN_UNGCPRO (unbind_to (speccount, result));
+  RETURN_UNGCPRO (unbind_to_1 (speccount, result));
 }
 
 DEFUN ("this-command-keys", Fthis_command_keys, 0, 0, 0, /*
@@ -4439,16 +4584,17 @@ If FILENAME is nil, close any open dribble file.
       int fd;
 
       filename = Fexpand_file_name (filename, Qnil);
-      fd = open ((char*) XSTRING_DATA (filename),
-		 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
-		 CREAT_MODE);
+      fd = qxe_open (XSTRING_DATA (filename),
+		     O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+		     CREAT_MODE);
       if (fd < 0)
 	report_file_error ("Unable to create dribble file", filename);
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);
 #ifdef MULE
       Vdribble_file =
-	make_encoding_output_stream (XLSTREAM (Vdribble_file),
-				     Fget_coding_system (Qescape_quoted));
+	make_coding_output_stream
+	  (XLSTREAM (Vdribble_file),
+	   Qescape_quoted, CODING_ENCODE);
 #endif
     }
   return Qnil;
@@ -4534,6 +4680,10 @@ reinit_vars_of_event_stream (void)
   Vtimeout_free_list = make_lcrecord_list (sizeof (Lisp_Timeout),
 					   &lrecord_timeout);
   staticpro_nodump (&Vtimeout_free_list);
+  Vcommand_builder_free_list =
+    make_lcrecord_list (sizeof (struct command_builder),
+			&lrecord_command_builder);
+  staticpro_nodump (&Vcommand_builder_free_list);
   the_low_level_timeout_blocktype =
     Blocktype_new (struct low_level_timeout_blocktype);
   something_happened = 0;
@@ -4808,7 +4958,7 @@ Currently only implemented under X Window System.
 */ );
   Vmodifier_keys_sticky_time = make_int (500);
 
-#ifdef HAVE_XIM
+#ifdef MULE
   DEFVAR_LISP ("composed-character-default-binding",
                &Vcomposed_character_default_binding /*
 The default keybinding to use for key events from composed input.
@@ -4817,7 +4967,7 @@ single characters in a language using multiple keystrokes.
 XEmacs sees these as single character keypress events.
 */ );
   Vcomposed_character_default_binding = Qself_insert_command;
-#endif /* HAVE_XIM */
+#endif
 
   Vcontrolling_terminal = Qnil;
   staticpro (&Vcontrolling_terminal);
@@ -4868,11 +5018,7 @@ and is one of the following:
 Non-nil inhibits recording of input-events to recent-keys ring.
 */ );
   inhibit_input_event_recording = 0;
-}
 
-void
-complex_vars_of_event_stream (void)
-{
   Vkeyboard_translate_table =
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
 }

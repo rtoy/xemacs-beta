@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console-x.h"
 #include "objects-x.h"
 
-#include "buffer.h"
+#include "charset.h"
 #include "device.h"
 #include "insdel.h"
 
@@ -825,7 +825,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 			    ALLOCA, (name_str, name_len),
 			    Qx_atom_name_encoding);
 
-      name = (name_str ? intern ((char *) name_str) : Qnil);
+      name = (name_str ? intern_int (name_str) : Qnil);
       if (name_str &&
 	  (atom == XA_FONT ||
 	   atom == DEVICE_XATOM_FOUNDRY (d) ||

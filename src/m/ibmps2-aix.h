@@ -67,9 +67,7 @@ so disable it for them.  */
 #define TEXT_START 0x00000000
 #else
 #define TEXT_START 0x00400000
-#define TEXT_END 0
 #define DATA_START 0x00800000
-#define DATA_END 0
 
 #endif
 

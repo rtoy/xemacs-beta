@@ -1,6 +1,7 @@
 ;;; toolbar.el --- Toolbar support for XEmacs
 
 ;; Copyright (C) 1995, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, internal, dumped
@@ -33,7 +34,8 @@
 (defcustom toolbar-visible-p ;; added for the options menu - dverna apr. 98
   (specifier-instance default-toolbar-visible-p)
   "*Whether the default toolbar is globally visible.
-This option can be customized through the options menu."
+This option only has an effect when set using `customize-set-variable',
+or through the Options menu."
   :group 'display
   :type 'boolean
   :set #'(lambda (var val)
@@ -44,7 +46,8 @@ This option can be customized through the options menu."
 (defcustom toolbar-captioned-p ;; added for the options menu - dverna apr. 98
   (specifier-instance toolbar-buttons-captioned-p)
   "*Whether the toolbars buttons are globally captioned.
-This option can be customized through the options menu."
+This option only has an effect when set using `customize-set-variable',
+or through the Options menu."
   :group 'display
   :type 'boolean
   :set #'(lambda (var val)
@@ -54,8 +57,9 @@ This option can be customized through the options menu."
 
 (defcustom default-toolbar-position ;; added for the options menu - dverna
   (default-toolbar-position)
-  "*The location of the default toolbar: 'top, 'bottom, 'left, or 'right.
-This option can be customized through the options menu."
+  "*The location of the default toolbar: 'top, 'bottom, 'left or 'right.
+This option only has an effect when set using `customize-set-variable',
+or through the Options menu."
   :group 'display
   :type '(choice (const :tag "top" top)
 		 (const :tag "bottom" bottom)

@@ -1,7 +1,7 @@
 ;;; help.el --- help commands for XEmacs.
 
 ;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: help, internal, dumped
@@ -212,19 +212,114 @@ otherwise it is killed."
   (interactive)
   nil)
 
-;; This is a grody hack of the same genotype as `advertised-undo'; if the
-;; bindings of Backspace and C-h are the same, we want the menubar to claim
-;; that `info' is invoked with `C-h i', not `BS i'.
-
-(defun deprecated-help-command ()
-  (interactive)
-  (if (eq 'help-command (key-binding "\C-h"))
-      (setq unread-command-event (character-to-event ?\C-h))
-    (help-for-help)))
+(define-obsolete-function-alias 'deprecated-help-command 'help-for-help)
 
 ;;(define-key global-map 'backspace 'deprecated-help-command)
 
-;; help-with-tutorial moved to help-nomule.el and mule-help.el.
+(defconst tutorial-supported-languages
+  '(
+    ("Croatian" hr iso-8859-2)
+    ("Czech" cs iso-8859-2)
+    ("Dutch" nl iso-8859-1)
+    ("English" nil raw-text)
+    ("French" fr iso-8859-1)
+    ("German" de iso-8859-1)
+    ("Norwegian" no iso-8859-1)
+    ("Polish" pl iso-8859-2)
+    ("Romanian" ro iso-8859-2)
+    ("Slovak" sk iso-8859-2)
+    ("Slovenian" sl iso-8859-2)
+    ("Spanish" es iso-8859-1)
+    ("Swedish" se iso-8859-1)
+    )
+  "Alist of supported languages in TUTORIAL files.
+Add languages here, as more are translated.")
+
+;; TUTORIAL arg is XEmacs addition
+(defun help-with-tutorial (&optional tutorial language)
+  "Select the XEmacs learn-by-doing tutorial.
+Optional arg TUTORIAL specifies the tutorial file; if not specified or
+if this command is invoked interactively, the tutorial appropriate to
+the current language environment is used.  If there is no tutorial
+written in that language, or if this version of XEmacs has no
+international (Mule) support, the English-language tutorial is used.
+With a prefix argument, you are asked to select which language."
+  (interactive "i\nP")
+  (when (and language (consp language))
+    (setq language
+	  (if (featurep 'mule)
+	      (or (declare-fboundp (read-language-name 'tutorial "Language: "))
+		  (error "No tutorial file of the specified language"))
+	    (let ((completion-ignore-case t))
+	      (completing-read "Language: "
+	       tutorial-supported-languages nil t)))))
+  (or language
+      (setq language
+	    (if (featurep 'mule) (declare-boundp current-language-environment)
+	      "English")))
+  (or tutorial
+      (setq tutorial
+	    (cond ((featurep 'mule)
+		   (or (declare-fboundp (get-language-info language 'tutorial))
+		       "TUTORIAL"))
+		  ((equal language "English") "TUTORIAL")
+		  (t (format "TUTORIAL.%s"
+			     (cadr (assoc language
+					  tutorial-supported-languages)))))))
+  (let ((file (expand-file-name tutorial "~")))
+    (delete-other-windows)
+    (let ((buffer (or (get-file-buffer file)
+		      (create-file-buffer file)))
+	  (window-configuration (current-window-configuration)))
+      (condition-case error-data
+	  (progn
+	    (switch-to-buffer buffer)
+	    (setq buffer-file-name file)
+	    (setq default-directory (expand-file-name "~/"))
+	    (setq buffer-auto-save-file-name nil)
+	    ;; Because of non-Mule users, TUTORIALs are not coded
+	    ;; independently, so we must guess the coding according to
+	    ;; the language.
+	    (let ((coding-system-for-read
+		   (if (featurep 'mule)
+		       (with-fboundp 'get-language-info
+			 (or (get-language-info language
+						'tutorial-coding-system)
+			     (car (get-language-info language
+						     'coding-system))))
+		     (nth 2 (assoc language tutorial-supported-languages)))))
+	      (insert-file-contents (locate-data-file tutorial)))
+	    (goto-char (point-min))
+	    ;; [The 'didactic' blank lines: possibly insert blank lines
+	    ;; around <<nya nya nya>> and replace << >> with [ ].] No more
+	    ;; didactic blank lines.  It was just a bad idea, anyway.  I
+	    ;; rewrote the TUTORIAL so it doesn't need them.  However, some
+	    ;; tutorials in other languages haven't yet been updated. ####
+	    ;; Delete this code when they're all updated.
+	    (if (re-search-forward "^<<.+>>" nil t)
+		(let ((n (- (window-height (selected-window))
+			    (count-lines (point-min) (point-at-bol))
+			    6)))
+		  (if (< n 12)
+		      (progn (beginning-of-line) (kill-line))
+		    ;; Some people get confused by the large gap
+		    (delete-backward-char 2)
+		    (insert "]")
+		    (beginning-of-line)
+		    (save-excursion
+		      (delete-char 2)
+		      (insert "["))
+		    (newline (/ n 2))
+		    (next-line 1)
+		    (newline (- n (/ n 2))))))
+	    (goto-char (point-min))
+	    (set-buffer-modified-p nil))
+	;; TUTORIAL was not found: kill the buffer and restore the
+	;; window configuration.
+	(file-error (kill-buffer buffer)
+		    (set-window-configuration window-configuration)
+		    ;; Now, signal the error
+		    (signal (car error-data) (cdr error-data)))))))
 
 ;; used by describe-key, describe-key-briefly, insert-key-binding, etc.
 (defun key-or-menu-binding (key &optional menu-flag)
@@ -642,7 +737,17 @@ is non-nil then only the mouse bindings are displayed."
           (describe-bindings-internal local nil shadow prefix mouse-only-p)
           (insert "\n")
           (setq shadow (cons local shadow))))
-    (insert "Global Bindings:\n" heading)
+    (if (console-on-window-system-p)
+	(progn
+	  (insert "Global Window-System-Only Bindings:\n" heading)
+	  (describe-bindings-internal global-window-system-map nil
+				      shadow prefix mouse-only-p)
+	  (push global-window-system-map shadow))
+      (insert "Global TTY-Only Bindings:\n" heading)
+      (describe-bindings-internal global-tty-map nil
+				  shadow prefix mouse-only-p)
+      (push global-tty-map shadow))
+    (insert "\nGlobal Bindings:\n" heading)
     (describe-bindings-internal (current-global-map)
                                 nil shadow prefix mouse-only-p)
     (when (and prefix function-key-map (not mouse-only-p))

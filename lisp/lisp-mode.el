@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1985, 1996, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages, dumped

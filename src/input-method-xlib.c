@@ -84,12 +84,8 @@ Boston, MA 02111-1307, USA.  */
 #error  neither XIM_XLIB nor USE_XFONTSET is defined??
 #endif
 
-Lisp_Object Qxim_xlib;
-#define xim_warn(str) warn_when_safe (Qxim_xlib, Qwarning, str);
-#define xim_warn1(fmt, str) warn_when_safe (Qxim_xlib, Qwarning, fmt, str);
-#define xim_info(str) warn_when_safe (Qxim_xlib, Qinfo, str);
-
 #ifdef XIM_XLIB /* XIM_XLIB specific */
+
 /* Get/Set IC values for just one attribute */
 #ifdef DEBUG_XEMACS
 #define XIC_Value(Get_Set, xic, name, attr, value)			\
@@ -121,61 +117,11 @@ static char DefaultXIMStyles[] =
 "XIMPreeditNone|XIMStatusNone";
 
 static XIMStyle best_style (XIMStyles *user, XIMStyles *xim);
+
 #endif /* XIM_XLIB only */
 
 /* This function is documented, but no prototype in the header files */
 EXTERN_C char * XSetIMValues(XIM, ...);
-
-void
-Initialize_Locale (void)
-{
-  char *locale;
-
-  /* dverna - Nov. 98: #### DON'T DO THIS !!! The default XtLanguageProc
-     routine calls setlocale(LC_ALL, lang) which fucks up our lower-level
-     locale management, and especially the value of LC_NUMERIC. Anyway, since
-     at this point, we don't know yet whether we're gonna need an X11 frame,
-     we should really do it manually and not use Xlib's dumb default routine */
-  /*XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);*/
-  if ((locale = setlocale (LC_ALL, "")) == NULL)
-    {
-      xim_warn ("Can't set locale.\n"
-		"Using C locale instead.\n");
-      putenv ("LANG=C");
-      putenv ("LC_ALL=C");
-      if ((locale = setlocale (LC_ALL, "C")) == NULL)
-	{
-	  xim_warn ("Can't even set locale to `C'!\n");
-	  return;
-	}
-    }
-
-  if (!XSupportsLocale ())
-    {
-      xim_warn1 ("X Windows does not support locale `%s'\n"
-		 "Using C Locale instead\n", locale);
-      putenv ("LANG=C");
-      putenv ("LC_ALL=C");
-      if ((locale = setlocale (LC_ALL, "C")) == NULL)
-	{
-	  xim_warn ("Can't even set locale to `C'!\n");
-	  return;
-	}
-      if (!XSupportsLocale ())
-        {
-          xim_warn ("X Windows does not even support locale `C'!\n");
-          return;
-        }
-    }
-
-  setlocale(LC_NUMERIC, "C");
-
-  if (XSetLocaleModifiers ("") == NULL)
-    {
-      xim_warn ("XSetLocaleModifiers(\"\") failed\n"
-		"Check the value of the XMODIFIERS environment variable.\n");
-    }
-}
 
 #ifdef XIM_XLIB /* starting XIM specific codes */
 
@@ -273,7 +219,7 @@ XIM_init_device (struct device *d)
   DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
   if (xim == NULL)
     {
-      xim_warn ("XOpenIM() failed...no input server available\n");
+      xintl_warn ("XOpenIM() failed...no input server available\n");
       return;
     }
   else
@@ -363,7 +309,7 @@ XIM_init_frame (struct frame *f)
 			     NULL, 0);
   if (!xic_vars.fontset)
     {
-      xim_warn ("Can't get fontset resource for Input Method\n");
+      xintl_warn ("Can't get fontset resource for Input Method\n");
       FRAME_X_XIC (f) = NULL;
       return;
     }
@@ -401,7 +347,7 @@ XIM_init_frame (struct frame *f)
 
   if (!xic)
     {
-      xim_warn ("Warning: XCreateIC failed.\n");
+      xintl_warn ("Warning: XCreateIC failed.\n");
       return;
     }
 
@@ -850,7 +796,6 @@ Otherwise, it destroys the XIC if it exists, then returns t anyway.
 void
 syms_of_input_method_xlib (void)
 {
-  DEFSYMBOL (Qxim_xlib);
 #if 0 /* see above */
   DEFSUBR (Fx_open_xim);
   DEFSUBR (Fx_close_xim);

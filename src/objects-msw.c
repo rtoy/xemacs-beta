@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1997 Jonathan Harris.
 
@@ -31,6 +31,8 @@ Boston, MA 02111-1307, USA.  */
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
+/* This function mostly Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
 
 /* TODO: palette handling */
 
@@ -40,23 +42,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw.h"
 #include "objects-msw.h"
-
-#ifdef MULE
-#include "mule-charset.h"
-#endif
-
 #include "buffer.h"
+#include "charset.h"
 #include "device.h"
 #include "insdel.h"
 
 typedef struct colormap_t
 {
-  const char *name;
+  const Char_ASCII *name;
   COLORREF colorref;
 } colormap_t;
 
 /* Colors from X11R6 "XConsortium: rgb.txt,v 10.41 94/02/20 18:39:36 rws Exp" */
-/* MSWindows tends to round up the numbers in it's palette, ie where X uses
+/* MSWindows tends to round up the numbers in its palette, ie where X uses
  * 127, MSWindows uses 128. Colors commented as "Adjusted" are tweaked to
  * match the Windows standard palette to increase the likelihood of
  * mswindows_color_to_string() finding a named match.
@@ -729,7 +727,7 @@ static const colormap_t mswindows_X_color_map[] =
 
 typedef struct fontmap_t
 {
-  const char *name;
+  const Char_ASCII *name;
   int value;
 } fontmap_t;
 
@@ -756,25 +754,24 @@ static const fontmap_t fontweight_map[] =
  * matched against the names reported by win32 by match_font() */
 static const fontmap_t charset_map[] =
 {
-  {"Western"		, ANSI_CHARSET},
-  {"Symbol"		, SYMBOL_CHARSET},
-  {"Shift JIS"		, SHIFTJIS_CHARSET},	/* #### Name to be verified */
-  {"GB2312"		, GB2312_CHARSET},	/* #### Name to be verified */
-  {"Hanguel"		, HANGEUL_CHARSET},
-  {"Chinese Big 5"	, CHINESEBIG5_CHARSET},	/* #### Name to be verified */
-#if (WINVER >= 0x0400)
-  {"Johab"		, JOHAB_CHARSET},	/* #### Name to be verified */
-  {"Hebrew"		, HEBREW_CHARSET},	/* #### Name to be verified */
-  {"Arabic"		, ARABIC_CHARSET},	/* #### Name to be verified */
-  {"Greek"		, GREEK_CHARSET},
-  {"Turkish"		, TURKISH_CHARSET},
-  {"Vietnamese"		, VIETNAMESE_CHARSET},	/* #### Name to be verified */
-  {"Thai"		, THAI_CHARSET},	/* #### Name to be verified */
+  {"Western"		, ANSI_CHARSET}, /* Latin 1 */
   {"Central European"	, EASTEUROPE_CHARSET},
   {"Cyrillic"		, RUSSIAN_CHARSET},
-  {"Mac"		, MAC_CHARSET},
+  {"Greek"		, GREEK_CHARSET},
+  {"Turkish"		, TURKISH_CHARSET},
+  {"Hebrew"		, HEBREW_CHARSET},
+  {"Arabic"		, ARABIC_CHARSET},
   {"Baltic"		, BALTIC_CHARSET},
-#endif
+  {"Viet Nam"		, VIETNAMESE_CHARSET},
+  {"Thai"		, THAI_CHARSET},
+  {"Japanese"		, SHIFTJIS_CHARSET},
+  {"Korean"		, HANGEUL_CHARSET},
+  {"Simplified Chinese"	, GB2312_CHARSET},
+  {"Traditional Chinese", CHINESEBIG5_CHARSET},
+
+  {"Symbol"		, SYMBOL_CHARSET},
+  {"Mac"		, MAC_CHARSET},
+  {"Korean Johab"	, JOHAB_CHARSET},
   {"OEM/DOS"		, OEM_CHARSET}
 };
 
@@ -784,19 +781,19 @@ static const fontmap_t charset_map[] =
 /************************************************************************/
 
 static int
-hexval (char c)
+hexval (Intbyte c)
 {
-  /* assumes ASCII and isxdigit(c) */
+  /* assumes ASCII and isxdigit (c) */
   if (c >= 'a')
-    return c-'a' + 10;
+    return c - 'a' + 10;
   else if (c >= 'A')
-    return c-'A' + 10;
+    return c - 'A' + 10;
   else
-    return c-'0';
+    return c - '0';
 }
 
 COLORREF
-mswindows_string_to_color(const char *name)
+mswindows_string_to_color (const Intbyte *name)
 {
   int i;
 
@@ -806,26 +803,26 @@ mswindows_string_to_color(const char *name)
 	 or "rgb:rrrr/gggg/bbbb" */
       unsigned int r, g, b;
 
-      for (i=1; i< (int) strlen(name); i++)
+      for (i = 1; i < qxestrlen (name); i++)
 	{
-	  if (!isxdigit ((int)name[i]))
+	  if (!BYTE_ASCII_P (name[i]) || !isxdigit ((int) name[i]))
 	    return (COLORREF) -1;
 	}
-      if (strlen(name)==7)
+      if (qxestrlen (name) == 7)
 	{
 	  r = hexval (name[1]) * 16 + hexval (name[2]);
 	  g = hexval (name[3]) * 16 + hexval (name[4]);
 	  b = hexval (name[5]) * 16 + hexval (name[6]);
 	  return (PALETTERGB (r, g, b));
 	}
-      else if (strlen(name)==10)
+      else if (qxestrlen (name) == 10)
 	{
 	  r = hexval (name[1]) * 16 + hexval (name[2]);
 	  g = hexval (name[4]) * 16 + hexval (name[5]);
 	  b = hexval (name[7]) * 16 + hexval (name[8]);
 	  return (PALETTERGB (r, g, b));
 	}
-      else if (strlen(name)==13)
+      else if (qxestrlen (name) == 13)
 	{
 	  r = hexval (name[1]) * 16 + hexval (name[2]);
 	  g = hexval (name[5]) * 16 + hexval (name[6]);
@@ -833,13 +830,13 @@ mswindows_string_to_color(const char *name)
 	  return (PALETTERGB (r, g, b));
 	}
     }
-  else if (!strncmp(name, "rgb:", 4))
+  else if (!qxestrncmp_c (name, "rgb:", 4))
     {
-      unsigned int r,g,b;
+      unsigned int r, g, b;
 
-      if (sscanf(name, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3)
+      if (sscanf ((CIntbyte *) name, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3)
 	{
-	  int len = strlen (name);
+	  int len = qxestrlen (name);
 	  if (len == 18)
 	    {
 	      r /= 257;
@@ -859,8 +856,8 @@ mswindows_string_to_color(const char *name)
     }
   else if (*name)	/* Can't be an empty string */
     {
-      char *nospaces = (char*) alloca (strlen (name)+1);
-      char *c = nospaces;
+      Intbyte *nospaces = (Intbyte *) alloca (qxestrlen (name) + 1);
+      Intbyte *c = nospaces;
       while (*name)
 	if (*name != ' ')
 	  *c++ = *name++;
@@ -869,7 +866,7 @@ mswindows_string_to_color(const char *name)
       *c = '\0';
 
       for (i = 0; i < countof (mswindows_X_color_map); i++)
-	if (!stricmp (nospaces, mswindows_X_color_map[i].name))
+	if (!qxestrcasecmp_c (nospaces, mswindows_X_color_map[i].name))
 	  return (mswindows_X_color_map[i].colorref);
     }
   return (COLORREF) -1;
@@ -879,11 +876,11 @@ Lisp_Object
 mswindows_color_to_string (COLORREF color)
 {
   int i;
-  char buf[8];
+  Char_ASCII buf[8];
   COLORREF pcolor = PALETTERGB (GetRValue (color), GetGValue (color),
 				GetBValue (color));
 
-  for (i=0; i < countof (mswindows_X_color_map); i++)
+  for (i = 0; i < countof (mswindows_X_color_map); i++)
     if (pcolor == (mswindows_X_color_map[i].colorref))
       return  build_string (mswindows_X_color_map[i].name);
 
@@ -901,53 +898,51 @@ mswindows_color_to_string (COLORREF color)
  * the corresponding field in the other pattern is either identical or blank.
  */
 static int
-match_font (char *pattern1, char *pattern2, char *fontname)
+match_font (Intbyte *pattern1, Intbyte *pattern2,
+	    Intbyte *fontname)
 {
-  char *c1=pattern1, *c2=pattern2, *e1=0, *e2=0;
+  Intbyte *c1 = pattern1, *c2 = pattern2, *e1 = 0, *e2 = 0;
   int i;
 
   if (fontname)
     fontname[0] = '\0';
 
-  for (i=0; i<5; i++)
+  for (i = 0; i < 5; i++)
     {
-      if (c1 && (e1 = strchr (c1, ':')))
+      if (c1 && (e1 = qxestrchr (c1, ':')))
         *(e1) = '\0';
-      if (c2 && (e2 = strchr (c2, ':')))
+      if (c2 && (e2 = qxestrchr (c2, ':')))
         *(e2) = '\0';
 
-      if (c1 && c1[0]!='\0')
+      if (c1 && c1[0] != '\0')
         {
-	  if (c2 && c2[0]!='\0' && stricmp(c1, c2))
+	  if (c2 && c2[0] != '\0' && qxestrcasecmp (c1, c2))
 	    {
 	      if (e1) *e1 = ':';
 	      if (e2) *e2 = ':';
 	      return 0;
 	    }
 	  else if (fontname)
-	    strcat (strcat (fontname, c1), ":");
+	    qxestrcat_c (qxestrcat (fontname, c1), ":");
 	}
       else if (fontname)
         {
-	  if (c2 && c2[0]!='\0')
-	    strcat (strcat (fontname, c2), ":");
+	  if (c2 && c2[0] != '\0')
+	    qxestrcat_c (qxestrcat (fontname, c2), ":");
 	  else
-	    strcat (fontname, ":");
+	    qxestrcat_c (fontname, ":");
 	}
 
       if (e1) *(e1++) = ':';
       if (e2) *(e2++) = ':';
-      c1=e1;
-      c2=e2;
+      c1 = e1;
+      c2 = e2;
     }
 
   if (fontname)
-    fontname[strlen (fontname) - 1] = '\0';	/* Trim trailing ':' */
+    fontname[qxestrlen (fontname) - 1] = '\0';	/* Trim trailing ':' */
   return 1;
 }
-
-
-
 
 
 /************************************************************************/
@@ -961,12 +956,13 @@ struct font_enum_t
 };
 
 static int CALLBACK
-old_font_enum_callback_2 (ENUMLOGFONT FAR *lpelfe, NEWTEXTMETRIC FAR *lpntme,
-			  int FontType, struct font_enum_t *font_enum)
+font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
+		      int FontType, struct font_enum_t *font_enum)
 {
-  char fontname[MSW_FONTSIZE];
+  Intbyte fontname[MSW_FONTSIZE * 2 * MAX_EMCHAR_LEN]; /* should be enough :)*/
   Lisp_Object fontname_lispstr;
   int i;
+  Intbyte *facename;
 
   /*
    * The enumerated font weights are not to be trusted because:
@@ -979,14 +975,20 @@ old_font_enum_callback_2 (ENUMLOGFONT FAR *lpelfe, NEWTEXTMETRIC FAR *lpntme,
    * weights unspecified. This means that we have to weed out duplicates of
    * those fonts that do get enumerated with different weights.
    */
-  if (FontType == 0 /*vector*/ || FontType == TRUETYPE_FONTTYPE)
+  TSTR_TO_C_STRING (lpelfe->elfLogFont.lfFaceName, facename);
+  if (charptr_emchar (facename) == '@')
+    /* This is a font for writing vertically. We ignore it. */
+    return 1;
+
+  if (FontType == 0 /*vector*/ || FontType & TRUETYPE_FONTTYPE)
     /* Scalable, so leave pointsize blank */
-    sprintf (fontname, "%s::::", lpelfe->elfLogFont.lfFaceName);
+    qxesprintf (fontname, "%s::::", facename);
   else
     /* Formula for pointsize->height from LOGFONT docs in Platform SDK */
-    sprintf (fontname, "%s::%d::", lpelfe->elfLogFont.lfFaceName,
-	     MulDiv (lpntme->tmHeight - lpntme->tmInternalLeading,
-	             72, GetDeviceCaps (font_enum->hdc, LOGPIXELSY)));
+    qxesprintf (fontname, "%s::%d::", facename,
+		MulDiv (lpntme->ntmTm.tmHeight -
+			lpntme->ntmTm.tmInternalLeading,
+			72, GetDeviceCaps (font_enum->hdc, LOGPIXELSY)));
 
   /*
    * The enumerated font character set strings are not to be trusted because
@@ -995,95 +997,32 @@ old_font_enum_callback_2 (ENUMLOGFONT FAR *lpelfe, NEWTEXTMETRIC FAR *lpntme,
    * etc into the host language, so we must use English. The same argument
    * applies to the font weight string when matching fonts.
    */
-  for (i=0; i<countof (charset_map); i++)
+  for (i = 0; i < countof (charset_map); i++)
     if (lpelfe->elfLogFont.lfCharSet == charset_map[i].value)
       {
-	strcat (fontname, charset_map[i].name);
+	qxestrcat_c (fontname, charset_map[i].name);
 	break;
       }
-  if (i==countof (charset_map))
-    strcpy (fontname, charset_map[0].name);
+  if (i == countof (charset_map))
+    return 1;
 
   /* Add the font name to the list if not already there */
-  fontname_lispstr = build_string (fontname);
-  if (NILP (memq_no_quit (fontname_lispstr, font_enum->list)))
+  fontname_lispstr = build_intstring (fontname);
+  if (NILP (Fmember (fontname_lispstr, font_enum->list)))
     font_enum->list = Fcons (fontname_lispstr, font_enum->list);
 
   return 1;
 }
 
 static int CALLBACK
-old_font_enum_callback_1 (ENUMLOGFONT FAR *lpelfe, NEWTEXTMETRIC FAR *lpntme,
-			  int FontType, struct font_enum_t *font_enum)
-{
-  /* This function gets called once per facename per character set.
-   * We call a second callback to enumerate the fonts in each facename */
-  return EnumFontFamilies (font_enum->hdc, lpelfe->elfLogFont.lfFaceName,
-			   (FONTENUMPROC) old_font_enum_callback_2,
-			   (LPARAM) font_enum);
-}
-
-static int CALLBACK
-font_enum_callback_2 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
-		      int FontType, struct font_enum_t *font_enum)
-{
-  char fontname[MSW_FONTSIZE];
-  Lisp_Object fontname_lispstr;
-  int i;
-
-  /*
-   * The enumerated font weights are not to be trusted because:
-   *  a) lpelfe->elfStyle is only filled in for TrueType fonts.
-   *  b) Not all Bold and Italic styles of all fonts (including some Vector,
-   *     Truetype and Raster fonts) are enumerated.
-   * I guess that fonts for which Bold and Italic styles are generated
-   * 'on-the-fly' are not enumerated. It would be overly restrictive to
-   * disallow Bold And Italic weights for these fonts, so we just leave
-   * weights unspecified. This means that we have to weed out duplicates of
-   * those fonts that do get enumerated with different weights.
-   */
-  if (FontType == 0 /*vector*/ || FontType == TRUETYPE_FONTTYPE)
-    /* Scalable, so leave pointsize blank */
-    sprintf (fontname, "%s::::", lpelfe->elfLogFont.lfFaceName);
-  else
-    /* Formula for pointsize->height from LOGFONT docs in Platform SDK */
-    sprintf (fontname, "%s::%d::", lpelfe->elfLogFont.lfFaceName,
-	     MulDiv (lpntme->ntmTm.tmHeight - lpntme->ntmTm.tmInternalLeading,
-	             72, GetDeviceCaps (font_enum->hdc, LOGPIXELSY)));
-
-  /*
-   * The enumerated font character set strings are not to be trusted because
-   * lpelfe->elfScript is returned in the host language and not in English.
-   * We can't know a priori the translations of "Western", "Central European"
-   * etc into the host language, so we must use English. The same argument
-   * applies to the font weight string when matching fonts.
-   */
-  for (i=0; i<countof (charset_map); i++)
-    if (lpelfe->elfLogFont.lfCharSet == charset_map[i].value)
-      {
-	strcat (fontname, charset_map[i].name);
-	break;
-      }
-  if (i==countof (charset_map))
-    strcpy (fontname, charset_map[0].name);
-
-  /* Add the font name to the list if not already there */
-  fontname_lispstr = build_string (fontname);
-  if (NILP (memq_no_quit (fontname_lispstr, font_enum->list)))
-    font_enum->list = Fcons (fontname_lispstr, font_enum->list);
-
-  return 1;
-}
-
-static int CALLBACK
-font_enum_callback_1 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
+font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
 		      int FontType, struct font_enum_t *font_enum)
 {
   /* This function gets called once per facename per character set.
    * We call a second callback to enumerate the fonts in each facename */
-  return xEnumFontFamiliesExA (font_enum->hdc, &lpelfe->elfLogFont,
-			       (FONTENUMPROC) font_enum_callback_2,
-			       (LPARAM) font_enum, 0);
+  return qxeEnumFontFamiliesEx (font_enum->hdc, &lpelfe->elfLogFont,
+				(FONTENUMPROCW) font_enum_callback_2,
+				(LPARAM) font_enum, 0);
 }
 
 /*
@@ -1093,39 +1032,37 @@ font_enum_callback_1 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
 Lisp_Object
 mswindows_enumerate_fonts (HDC hdc)
 {
-  /* This cannot CG */
-  LOGFONT logfont;
+  /* This cannot GC */
+  LOGFONTW logfont;
   struct font_enum_t font_enum;
 
-  assert (hdc!=NULL);
+  assert (hdc != NULL);
   logfont.lfCharSet = DEFAULT_CHARSET;
   logfont.lfFaceName[0] = '\0';
   logfont.lfPitchAndFamily = DEFAULT_PITCH;
   font_enum.hdc = hdc;
   font_enum.list = Qnil;
-  if (xEnumFontFamiliesExA)
-    xEnumFontFamiliesExA (hdc, &logfont, (FONTENUMPROC) font_enum_callback_1,
-			  (LPARAM) (&font_enum), 0);
-  else /* NT 3.5x */
-    EnumFontFamilies (hdc, 0, (FONTENUMPROC) old_font_enum_callback_1,
-		      (LPARAM) (&font_enum));
+  /* EnumFontFamilies seems to enumerate only one charset per font, which
+     is not what we want.  We aren't supporting NT 3.5x, so no need to
+     worry about this not existing. */
+  qxeEnumFontFamiliesEx (hdc, &logfont, (FONTENUMPROCW) font_enum_callback_1,
+			 (LPARAM) (&font_enum), 0);
 
   return font_enum.list;
 }
 
 static HFONT
-mswindows_create_font_variant (Lisp_Font_Instance* f,
+mswindows_create_font_variant (Lisp_Font_Instance *f,
 			       int under, int strike)
 {
   /* Cannot GC */
-
-  LOGFONT lf;
+  LOGFONTW lf;
   HFONT hfont;
 
   assert (FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, under, strike) == NULL);
 
-  if (GetObject (FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0),
-		 sizeof (lf), (void*) &lf) == 0)
+  if (qxeGetObject (FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0),
+		    sizeof (lf), (void *) &lf) == 0)
     {
       hfont = MSWINDOWS_BAD_HFONT;
     }
@@ -1134,7 +1071,7 @@ mswindows_create_font_variant (Lisp_Font_Instance* f,
       lf.lfUnderline = under;
       lf.lfStrikeOut = strike;
 
-      hfont = CreateFontIndirect (&lf);
+      hfont = qxeCreateFontIndirect (&lf);
       if (hfont == NULL)
 	hfont = MSWINDOWS_BAD_HFONT;
     }
@@ -1144,7 +1081,7 @@ mswindows_create_font_variant (Lisp_Font_Instance* f,
 }
 
 HFONT
-mswindows_get_hfont (Lisp_Font_Instance* f,
+mswindows_get_hfont (Lisp_Font_Instance *f,
 		     int under, int strike)
 {
   /* Cannot GC */
@@ -1171,13 +1108,9 @@ static int
 mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
 				     Lisp_Object device, Error_Behavior errb)
 {
-  const char *extname;
   COLORREF color;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, name,
-		      C_STRING_ALLOCA, extname,
-		      Qctext);
-  color = mswindows_string_to_color (extname);
+  color = mswindows_string_to_color (XSTRING_DATA (name));
   if (color != (COLORREF) -1)
     {
       c->data = xnew (struct mswindows_color_instance_data);
@@ -1185,7 +1118,7 @@ mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
       return 1;
     }
   maybe_signal_error (Qinvalid_constant,
-			   "Unrecognized color", name, Qcolor, errb);
+		      "Unrecognized color", name, Qcolor, errb);
   return(0);
 }
 
@@ -1201,10 +1134,11 @@ mswindows_print_color_instance (Lisp_Color_Instance *c,
 				Lisp_Object printcharfun,
 				int escapeflag)
 {
-  char buf[32];
+  Char_ASCII buf[32];
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
   sprintf (buf, " %06ld=(%04X,%04X,%04X)", color & 0xffffff,
-	   GetRValue(color)*257, GetGValue(color)*257, GetBValue(color)*257);
+	   GetRValue (color) * 257, GetGValue (color) * 257,
+	   GetBValue (color) * 257);
   write_c_string (buf, printcharfun);
 }
 
@@ -1223,7 +1157,8 @@ mswindows_color_instance_equal (Lisp_Color_Instance *c1,
 				Lisp_Color_Instance *c2,
 				int depth)
 {
-  return (COLOR_INSTANCE_MSWINDOWS_COLOR(c1) == COLOR_INSTANCE_MSWINDOWS_COLOR(c2));
+  return (COLOR_INSTANCE_MSWINDOWS_COLOR(c1) ==
+	  COLOR_INSTANCE_MSWINDOWS_COLOR(c2));
 }
 
 static unsigned long
@@ -1244,12 +1179,7 @@ mswindows_color_instance_rgb_components (Lisp_Color_Instance *c)
 static int
 mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
 {
-  const char *extname;
-
-  TO_EXTERNAL_FORMAT (LISP_STRING, color,
-		      C_STRING_ALLOCA, extname,
-		      Qctext);
-  return (mswindows_string_to_color (extname) != (COLORREF) -1);
+  return (mswindows_string_to_color (XSTRING_DATA (color)) != (COLORREF) -1);
 }
 
 
@@ -1266,18 +1196,15 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 			  Lisp_Object device_font_list, HDC hdc,
 			  Error_Behavior errb)
 {
-  const char *extname;
-  LOGFONT logfont;
+  LOGFONTW logfont;
   int fields, i;
   int pt;
-  char fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
-  char effects[LF_FACESIZE], charset[LF_FACESIZE];
-  char *c;
+  Intbyte fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
+  Intbyte effects[LF_FACESIZE], charset[LF_FACESIZE];
+  Intbyte *c;
   HFONT hfont, hfont2;
-  TEXTMETRIC metrics;
-
-  /* !!#### more mule bogosity */
-  extname = (const char *) XSTRING_DATA (name);
+  TEXTMETRICW metrics;
+  Intbyte *namestr = XSTRING_DATA (name);
 
   /*
    * mswindows fonts look like:
@@ -1292,7 +1219,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
    *	Courier New:Bold Italic:10:underline strikeout:western
    */
 
-  fields = sscanf (extname, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
+  fields = sscanf ((CIntbyte *) namestr, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
 		   fontname, weight, points, effects, charset);
 
   /* This function is implemented in a fairly ad-hoc manner.
@@ -1302,37 +1229,42 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
    * availability of the requested font */
 
   if (fields < 0)
-  {
-    maybe_signal_error (Qinvalid_argument, "Invalid font", name, Qfont, errb);
-    return (0);
-  }
+    {
+      maybe_signal_error (Qinvalid_argument, "Invalid font", name,
+			  Qfont, errb);
+      return (0);
+    }
 
-  if (fields>0 && strlen(fontname))
-  {
-    strncpy (logfont.lfFaceName, fontname, LF_FACESIZE);
-    logfont.lfFaceName[LF_FACESIZE-1] = 0;
-  }
+  if (fields > 0 && qxestrlen (fontname))
+    {
+      Extbyte *extfontname;
+
+      C_STRING_TO_TSTR (fontname, extfontname);
+      xetcsncpy ((Extbyte *) logfont.lfFaceName, extfontname, LF_FACESIZE - 1);
+      logfont.lfFaceName[LF_FACESIZE - 1] = 0;
+    }
   else
-  {
-    maybe_signal_error (Qinvalid_argument, "Must specify a font name", name, Qfont, errb);
-    return (0);
-  }
+    {
+      maybe_signal_error (Qinvalid_argument, "Must specify a font name",
+			  name, Qfont, errb);
+      return (0);
+    }
 
   /* weight */
   if (fields < 2)
-    strcpy (weight, fontweight_map[0].name);
+    qxestrcpy_c (weight, fontweight_map[0].name);
 
   /* Maybe split weight into weight and style */
-  if ((c=strchr(weight, ' ')))
+  if ((c = qxestrchr (weight, ' ')))
   {
     *c = '\0';
-    style = c+1;
+    style = c + 1;
   }
   else
     style = NULL;
 
-  for (i=0; i<countof (fontweight_map); i++)
-    if (!stricmp (weight, fontweight_map[i].name))
+  for (i = 0; i < countof (fontweight_map); i++)
+    if (!qxestrcasecmp_c (weight, fontweight_map[i].name))
       {
 	logfont.lfWeight = fontweight_map[i].value;
 	break;
@@ -1346,7 +1278,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	}
       else
 	{
-	  maybe_signal_error (Qinvalid_constant, "Invalid font weight", name, Qfont, errb);
+	  maybe_signal_error (Qinvalid_constant, "Invalid font weight", name,
+			      Qfont, errb);
 	  return (0);
 	}
     }
@@ -1354,11 +1287,12 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   if (style)
     {
       /* #### what about oblique? */
-      if (stricmp (style,"italic") == 0)
+      if (qxestrcasecmp_c (style, "italic") == 0)
 	logfont.lfItalic = TRUE;
       else
       {
-        maybe_signal_error (Qinvalid_constant, "Invalid font weight or style", name, Qfont, errb);
+        maybe_signal_error (Qinvalid_constant, "Invalid font weight or style",
+			    name, Qfont, errb);
 	return (0);
       }
 
@@ -1371,14 +1305,15 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (fields < 3)
     pt = 10;	/* #### Should we reject strings that don't specify a size? */
-  else if ((pt=atoi(points)) == 0)
+  else if ((pt = qxeatoi (points)) == 0)
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid font pointsize", name, Qfont, errb);
+      maybe_signal_error (Qinvalid_argument, "Invalid font pointsize", name,
+			  Qfont, errb);
       return (0);
     }
 
   /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform SDK */
-  logfont.lfHeight = -MulDiv(pt, GetDeviceCaps (hdc, LOGPIXELSY), 72);
+  logfont.lfHeight = -MulDiv (pt, GetDeviceCaps (hdc, LOGPIXELSY), 72);
   logfont.lfWidth = 0;
 
   /* Effects */
@@ -1386,37 +1321,38 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   logfont.lfStrikeOut = FALSE;
   if (fields >= 4 && effects[0] != '\0')
     {
-      char *effects2;
+      Intbyte *effects2;
 
       /* Maybe split effects into effects and effects2 */
-      if ((c=strchr (effects, ' ')))
+      if ((c = qxestrchr (effects, ' ')))
         {
           *c = '\0';
-          effects2 = c+1;
+          effects2 = c + 1;
         }
       else
         effects2 = NULL;
 
-      if (stricmp (effects, "underline") == 0)
+      if (qxestrcasecmp_c (effects, "underline") == 0)
 	logfont.lfUnderline = TRUE;
-      else if (stricmp (effects, "strikeout") == 0)
+      else if (qxestrcasecmp_c (effects, "strikeout") == 0)
 	logfont.lfStrikeOut = TRUE;
       else
         {
-          maybe_signal_error (Qinvalid_constant, "Invalid font effect", name, Qfont, errb);
+          maybe_signal_error (Qinvalid_constant, "Invalid font effect", name,
+			      Qfont, errb);
 	  return (0);
 	}
 
       if (effects2 && effects2[0] != '\0')
 	{
-	  if (stricmp (effects2, "underline") == 0)
+	  if (qxestrcasecmp_c (effects2, "underline") == 0)
 	    logfont.lfUnderline = TRUE;
-	  else if (stricmp (effects2, "strikeout") == 0)
+	  else if (qxestrcasecmp_c (effects2, "strikeout") == 0)
 	    logfont.lfStrikeOut = TRUE;
 	  else
 	    {
-	      maybe_signal_error (Qinvalid_constant, "Invalid font effect", name,
-					 Qfont, errb);
+	      maybe_signal_error (Qinvalid_constant, "Invalid font effect",
+				  name, Qfont, errb);
 	      return (0);
 	    }
         }
@@ -1425,12 +1361,12 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       if (logfont.lfUnderline)
 	{
 	  if (logfont.lfStrikeOut)
-	    strcpy (effects, "underline strikeout");
+	    qxestrcpy_c (effects, "underline strikeout");
 	  else
-	    strcpy (effects, "underline");
+	    qxestrcpy_c (effects, "underline");
 	}
       else if (logfont.lfStrikeOut)
-	strcpy (effects, "strikeout");
+	qxestrcpy_c (effects, "strikeout");
     }
   else
     effects[0] = '\0';
@@ -1439,18 +1375,18 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   /* charset can be specified even if earlier fields haven't been */
   if (fields < 5)
     {
-      if ((c=strchr (extname, ':')) && (c=strchr (c+1, ':')) &&
-	  (c=strchr (c+1, ':')) && (c=strchr (c+1, ':')))
+      if ((c = qxestrchr (namestr, ':')) && (c = qxestrchr (c + 1, ':')) &&
+	  (c = qxestrchr (c + 1, ':')) && (c = qxestrchr (c + 1, ':')))
 	{
-	  strncpy (charset, c+1, LF_FACESIZE);
-	  charset[LF_FACESIZE-1] = '\0';
+	  qxestrncpy (charset, c + 1, LF_FACESIZE);
+	  charset[LF_FACESIZE - 1] = '\0';
 	}
       else
-	strcpy (charset, charset_map[0].name);
+	qxestrcpy_c (charset, charset_map[0].name);
     }
 
-  for (i=0; i<countof (charset_map); i++)
-    if (!stricmp (charset, charset_map[i].name))
+  for (i = 0; i < countof (charset_map); i++)
+    if (!qxestrcasecmp_c (charset, charset_map[i].name))
       {
 	logfont.lfCharSet = charset_map[i].value;
 	break;
@@ -1458,7 +1394,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (i == countof (charset_map))	/* No matching charset */
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid charset", name, Qfont, errb);
+      maybe_signal_error (Qinvalid_argument, "Invalid charset", name, Qfont,
+			  errb);
       return 0;
     }
 
@@ -1485,23 +1422,25 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   if (!NILP (device_font_list))
     {
       Lisp_Object fonttail;
-      char truename[MSW_FONTSIZE];
+      Intbyte truename[MSW_FONTSIZE];
 
-      sprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects, charset);
+      qxesprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects,
+		  charset);
       LIST_LOOP (fonttail, device_font_list)
 	{
-	  /* !!#### more mule bogosity */
-	  if (match_font ((char *) XSTRING_DATA (XCAR (fonttail)), truename, NULL))
+	  if (match_font (XSTRING_DATA (XCAR (fonttail)), truename,
+			  NULL))
 	    break;
 	}
       if (NILP (fonttail))
 	{
-	  maybe_signal_error (Qinvalid_argument, "No matching font", name, Qfont, errb);
+	  maybe_signal_error (Qinvalid_argument, "No matching font", name,
+			      Qfont, errb);
 	  return 0;
 	}
     }
 
-  if ((hfont = CreateFontIndirect(&logfont)) == NULL)
+  if ((hfont = qxeCreateFontIndirect (&logfont)) == NULL)
   {
     maybe_signal_error (Qgui_error, "Couldn't create font", name, Qfont, errb);
     return 0;
@@ -1525,8 +1464,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       maybe_signal_error (Qgui_error, "Couldn't map font", name, Qfont, errb);
       return 0;
     }
-  GetTextMetrics (hdc, &metrics);
-  SelectObject(hdc, hfont2);
+  qxeGetTextMetrics (hdc, &metrics);
+  SelectObject (hdc, hfont2);
 
   f->width = (unsigned short) metrics.tmAveCharWidth;
   f->height = (unsigned short) metrics.tmHeight;
@@ -1588,27 +1527,32 @@ mswindows_print_font_instance (Lisp_Font_Instance *f,
 			       Lisp_Object printcharfun,
 			       int escapeflag)
 {
-  char buf[10];
-  sprintf (buf, " 0x%lx",
-	   (unsigned long)FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0));
-  write_c_string (buf, printcharfun);
+  Intbyte buf[10];
+  qxesprintf (buf, " 0x%lx",
+	      (unsigned long)FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0));
+  write_string (buf, printcharfun);
 }
 
 static Lisp_Object
 mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 {
-  Lisp_Object fonttail, result = Qnil;
-  char *extpattern;
+  struct device *d = XDEVICE (device);
+  Lisp_Object font_list = Qnil, fonttail, result = Qnil;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, pattern,
-		      C_STRING_ALLOCA, extpattern,
-		      Qctext);
+  if (DEVICE_MSWINDOWS_P (d))
+    font_list = DEVICE_MSWINDOWS_FONTLIST (d);
+  else if (DEVICE_MSPRINTER_P (d))
+    font_list = DEVICE_MSPRINTER_FONTLIST (d);
+  else
+    abort ();
 
-  LIST_LOOP (fonttail, DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device)))
+  LIST_LOOP (fonttail, font_list)
     {
-      /* !!#### more mule bogosity */
-      if (match_font ((char *) XSTRING_DATA (XCAR (fonttail)), extpattern, NULL))
-	result = Fcons (XCAR (fonttail), result);
+      Intbyte fontname[MSW_FONTSIZE];
+
+      if (match_font (XSTRING_DATA (XCAR (fonttail)), XSTRING_DATA (pattern),
+		      fontname))
+	result = Fcons (build_intstring (fontname), result);
     }
 
   return Fnreverse (result);
@@ -1627,11 +1571,17 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 static Lisp_Object
 mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 {
-  int nsep=0;
-  char *name = (char *) XSTRING_DATA (f->name);
-  char* ptr = name;
-  char* extname = (char*) alloca (strlen (name) + 19);
-  strcpy (extname, name);
+  /* #### does not handle charset at end!!!  charset can be given even
+     when previous fields are not.
+
+     #### does not canonicalize given fields!  needs to be merged
+     with initialize_font_instance(). */
+
+  int nsep = 0;
+  CIntbyte *ptr = (CIntbyte *) XSTRING_DATA (f->name);
+  CIntbyte *name = (CIntbyte *) alloca (XSTRING_LENGTH (f->name) + 19);
+
+  strcpy (name, ptr);
 
   while ((ptr = strchr (ptr, ':')) != 0)
     {
@@ -1642,45 +1592,105 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   switch (nsep)
     {
     case 0:
-      strcat (extname, ":Regular:10::Western");
+      strcat (name, ":Regular:10::Western");
       break;
     case 1:
-      strcat (extname, ":10::Western");
+      strcat (name, ":10::Western");
       break;
     case 2:
-      strcat (extname, "::Western");
+      strcat (name, "::Western");
       break;
     case 3:
-      strcat (extname, ":Western");
+      strcat (name, ":Western");
       break;
     default:;
     }
 
-  return build_ext_string (extname, Qnative);
+  return build_string (name);
 }
 
 #ifdef MULE
 
 static int
 mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			     const Intbyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount length)
+				     const Intbyte *nonreloc,
+				     Lisp_Object reloc,
+				     Bytecount offset, Bytecount length)
 {
-  /* #### Implement me */
+  const Intbyte *the_nonreloc = nonreloc;
+  int i, ms_charset = 0;
+  const Intbyte *c;
+  Bytecount the_length = length;
+  CHARSETINFO info;
+  int font_code_page;
+  Lisp_Object charset_code_page;
+
   if (UNBOUNDP (charset))
     return 1;
 
-  return 1;
+  if (!the_nonreloc)
+    the_nonreloc = XSTRING_DATA (reloc);
+  fixup_internal_substring (nonreloc, reloc, offset, &the_length);
+  the_nonreloc += offset;
+
+  /* Get code page from the font spec */
+  
+  c = the_nonreloc;
+  for (i = 0; i < 4; i++)
+    {
+      Intbyte *newc = (Intbyte *) memchr (c, ':', the_length);
+      if (!newc)
+	break;
+      newc++;
+      the_length -= (newc - c);
+      c = newc;
+    }
+
+  if (i < 4)
+    return 0;
+
+  for (i = 0; i < countof (charset_map); i++)
+    if (qxestrcasecmp_c (c, charset_map[i].name) == 0)
+      {
+	ms_charset = charset_map[i].value;
+	break;
+      }
+  if (i == countof (charset_map))
+    return 0;
+
+  /* For border-glyph use */
+  if (ms_charset == SYMBOL_CHARSET)
+    ms_charset = ANSI_CHARSET;
+
+  if (!TranslateCharsetInfo ((DWORD *) ms_charset, &info, TCI_SRCCHARSET))
+    return 0;
+
+  font_code_page = info.ciACP;
+
+  /* Get code page for the charset */
+  charset_code_page = Fmswindows_charset_code_page (charset);
+  if (!INTP (charset_code_page))
+    return 0;
+
+  return font_code_page == XINT (charset_code_page);
 }
 
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
 mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
-		     Lisp_Object charset)
+			     Lisp_Object charset)
 {
-  /* #### Implement me */
-  return build_string ("Courier New:Regular:10");
+  Lisp_Object fontlist, fonttail;
+
+  fontlist = mswindows_list_fonts (font, device);
+  LIST_LOOP (fonttail, fontlist)
+    {
+      if (mswindows_font_spec_matches_charset
+	  (XDEVICE (device), charset, 0, XCAR (fonttail), 0, -1))
+	return XCAR (fonttail);
+    }
+  return Qnil;
 }
 
 #endif /* MULE */
@@ -1698,7 +1708,7 @@ Return a list of the colors available on mswindows devices.
   Lisp_Object result = Qnil;
   int i;
 
-  for (i=0; i<countof (mswindows_X_color_map); i++)
+  for (i = 0; i < countof (mswindows_X_color_map); i++)
     result = Fcons (build_string (mswindows_X_color_map[i].name), result);
 
   return Fnreverse (result);

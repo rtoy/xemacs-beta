@@ -1,5 +1,6 @@
-/* Various functions for internationalizing XEmacs
+/* Various functions for internationalizing XEmacs.
    Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,13 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* This stuff is far, far from working. */
-
 #include <config.h>
 #include "lisp.h"
-
-#include "bytecode.h"
-#include "device.h"
 
 #if defined (HAVE_X_WINDOWS) && defined (HAVE_X11_XLOCALE_H)
 #include <X11/Xlocale.h>
@@ -36,138 +32,76 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
-#ifdef I18N4
-#include <X11/Xlib.h>
+#ifdef HAVE_X_WINDOWS
+int init_x_locale (Lisp_Object locale);
+#endif
 
-unsigned long input_method_event_mask;
-Atom wc_atom;
-
-/* init_input -- Set things up for i18n level 4 input.
+DEFUN ("current-locale", Fcurrent_locale, 0, 0, 0, /*
+Return the current locale.
+This is of the form LANG_COUNTRY.ENCODING, or LANG_COUNTRY, or LANG,
+or .ENCODING.  Unfortunately, the meanings of these three values are
+system-dependent, and there is no universal agreement.
 */
-void
-init_input (const char *res_name, const char *res_class, Display *display)
+       ())
 {
-  XIMStyles *styles;
-  unsigned short i;
+  Extbyte *loc;
 
-  input_method = 0;
-  input_method_style = 0;
-  initial_input_context = 0;
-  input_method_event_mask = 0;
-
-  input_method = XOpenIM (display, NULL,
-			  (char *) res_name, (char *) res_class);
-
-  if (!input_method)
-    {
-      stderr_out ("WARNING: XOpenIM() failed...no input server\n");
-      return;
-    }
-
-  /* Query input method for supported input styles and pick one.
-     Right now, we choose a style which supports root-window preediting. */
-  XGetIMValues (input_method, XNQueryInputStyle, &styles, NULL);
-  for (i = 0; i < styles->count_styles; i++)
-    {
-      if (styles->supported_styles[i] == (XIMPreeditNothing|XIMStatusNothing))
-	{
-	  input_method_style= styles->supported_styles[i];
-	  break;
-	}
-    }
-
-  if (!input_method_style)
-    {
-      stderr_out ("WARNING: Could not find suitable input style.\n");
-      return;
-    }
-
-  initial_input_context = XCreateIC (input_method,
-				     XNInputStyle, input_method_style,
-				     NULL);
-  if (!initial_input_context)
-    {
-      stderr_out ("WARNING: Could not create input context.\n");
-      return;
-    }
-
-  XGetICValues (initial_input_context,
-		XNFilterEvents, &input_method_event_mask,
-		NULL);
-
-  /* Get a new atom for wide character client messages. */
-  wc_atom = XInternAtom (display, "Wide Character Event", False);
+  loc = setlocale (LC_CTYPE, NULL);
+  if (!loc)
+    return Qnil;
+  return build_ext_string (loc, Qctext);
 }
 
+DEFUN ("set-current-locale", Fset_current_locale, 1, 1, 0, /*
+Set the user's current locale.
+Takes a string, the value passed to setlocale().
+This is of the form LANG_COUNTRY.ENCODING, or LANG_COUNTRY, or LANG,
+or .ENCODING.  Unfortunately, the meanings of these three values are
+system-dependent, and there is no universal agreement.  This function
+is meant to be called only from `set-language-environment', which
+keeps tables to figure out the values to use for particular systems.
 
-/*static widechar_string composed_input_buf = EMPTY_WIDECHAR_STRING;*/
+If the empty string is passed in, the locale is initialized from
+environment variables.
 
-#define XIM_Composed_Text_BUFSIZE 64
-typedef struct XIM_Composed_Text {
-  int size;
-  wchar_t data [XIM_Composed_Text_BUFSIZE];
-} XIM_Composed_Text;
-static XIM_Composed_Text composed_input_buf = {XIM_Composed_Text_BUFSIZE, {0}};
-/*static wcidechar composed_input_buf [64] = {0};*/
-Window main_window;  /* Convenient way to refer to main Era window. */
-
-/* x_get_composed_input -- Process results of input method composition.
-
-   This function copies the results of the input method composition to
-   composed_input_buf.  Then for each character, a custom event of type
-   wc_atom is sent with the character as its data.
-
-   It is probably more efficient to copy the composition results to some
-   allocated memory and send a single event pointing to that memory.
-   That would cut down on the event processing as well as allow quick
-   insertion into the buffer of the whole string.  It might require some
-   care, though, to avoid fragmenting memory through the allocation and
-   freeing of many small chunks.  Maybe the existing system for
-   (single-byte) string allocation can be used, multiplying the length by
-   sizeof (wchar_t) to get the right size.
+Returns nil if the call failed (typically, an invalid locale was given).
+Otherwise, returns the locale, or possibly a more-specified version.
 */
-void
-x_get_composed_input (XKeyPressedEvent *x_key_event, XIC context,
-		      Display *display)
+       (locale))
 {
-  KeySym keysym;
-  Status status;
-  int len;
-  int i;
-  XClientMessageEvent new_event;
+  Extbyte *loc;
 
- retry:
-  len = XwcLookupString (context, x_key_event, composed_input_buf.data,
-			 composed_input_buf.size, &keysym, &status);
-  switch (status)
+  CHECK_STRING (locale);
+  /* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
+     encoded in ISO2022! */
+  LISP_STRING_TO_EXTERNAL (locale, loc, Qctext);
+  loc = setlocale (LC_ALL, loc);
+  setlocale (LC_NUMERIC, "C");
+  if (!loc)
+    return Qnil;
+#ifdef HAVE_X_WINDOWS
+  if (!init_x_locale (locale))
     {
-    case XBufferOverflow:
-      /* GROW_WC_STRING (&composed_input_buf, 32); mrb */
-      goto retry;
-    case XLookupChars:
-      break;
-    default:
-      abort ();
+      /* Locale not supported under X.  Put it back. */
+      setlocale (LC_ALL, loc);
+      setlocale (LC_NUMERIC, "C");
+      return Qnil;
     }
+#endif
 
-  new_event.type = ClientMessage;
-  new_event.display = x_key_event->display;
-  new_event.window = x_key_event->window;
-  new_event.message_type = wc_atom;
-  new_event.format = 32;  /* 32-bit wide data */
-  new_event.data.l[2] = new_event.data.l[3] = new_event.data.l[4] = 0L;
-  new_event.data.l[0] = x_key_event->time;
-  for (i = 0; i < len; i++) {
-    new_event.data.l[1] = ((wchar_t *) composed_input_buf.data)[i];
-    XSendEvent (display, main_window, False, 0L, (XEvent *) &new_event);
-  }
+  return build_ext_string (loc, Qctext);
 }
-#endif /* I18N4 */
 
+#if 0
+
+/* #### some old code that I really want to nuke, but I'm not completely
+   sure what it did, so I'll leave it until we get around to implementing
+   message-translation and decide whether the functionality that this
+   is trying to support makes any sense. --ben */
 
 Lisp_Object Qdefer_gettext;
 
-DEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
+xxDEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
 If OBJECT is of the form (defer-gettext "string"), return the string.
 The purpose of the defer-gettext symbol is to identify strings which
 are translated when they are referenced instead of when they are defined.
@@ -181,6 +115,8 @@ are translated when they are referenced instead of when they are defined.
   else
     return object;
 }
+
+#endif /* 0 */
 
 DEFUN ("gettext", Fgettext, 1, 1, 0, /*
 Look up STRING in the default message domain and return its translation.
@@ -204,17 +140,8 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
      3) If gettext() returns the same string, then Fgettext() should return
         the same object, minus the 'string-translatable' property. */
 
-  if (STRINGP (string)) {
-#ifdef DEBUG_XEMACS
-    stderr_out ("\nFgettext (%s) called.\n", XSTRING_DATA (string));
 #endif
-    return build_string (gettext ((char *) XSTRING_DATA (string)));
-  } else {
-    return string;
-  }
-#else
   return string;
-#endif
 }
 
 #ifdef I18N3
@@ -226,59 +153,6 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 
 #endif
 
-DEFUN ("dgettext", Fdgettext, 2, 2, 0, /*
-Look up STRING in the specified message domain and return its translation.
-This function does nothing if I18N3 was not enabled when Emacs was compiled.
-*/
-       (domain, string))
-{
-  CHECK_STRING (domain);
-  CHECK_STRING (string);
-#ifdef I18N3
-  return build_string (dgettext ((char *) XSTRING_DATA (domain),
-				 (char *) XSTRING_DATA (string)));
-#else
-  return string;
-#endif
-}
-
-DEFUN ("bind-text-domain", Fbind_text_domain, 2, 2, 0, /*
-Associate a pathname with a message domain.
-Here's how the path to message files is constructed under SunOS 5.0:
-  {pathname}/{LANG}/LC_MESSAGES/{domain}.mo
-This function does nothing if I18N3 was not enabled when Emacs was compiled.
-*/
-       (domain, pathname))
-{
-  CHECK_STRING (domain);
-  CHECK_STRING (pathname);
-#ifdef I18N3
-  return build_string (bindtextdomain ((char *) XSTRING_DATA (domain),
-				       (char *) XSTRING_DATA (pathname)));
-#else
-  return Qnil;
-#endif
-}
-
-extern int load_in_progress;
-
-DEFUN ("set-domain", Fset_domain, 1, 1, 0, /*
-Specify the domain used for translating messages in this source file.
-The domain declaration may only appear at top-level, and should precede
-all function and variable definitions.
-
-The presence of this declaration in a compiled file effectively sets the
-domain of all functions and variables which are defined in that file.
-Bug: it has no effect on source (.el) files, only compiled (.elc) files.
-*/
-       (domain_name))
-{
-  CHECK_STRING (domain_name);
-  if (load_in_progress)
-    return (domain_name);
-  else
-    return Qnil;
-}
 
 
 /************************************************************************/
@@ -286,40 +160,42 @@ Bug: it has no effect on source (.el) files, only compiled (.elc) files.
 /************************************************************************/
 
 void
-init_intl_very_early (void)
+init_intl (void)
 {
-#if defined (I18N2) || defined (I18N3) || defined (I18N4)
-  setlocale (LC_ALL, "");
-  setlocale(LC_NUMERIC, "C");
-#endif
+  if (initialized)
+    {
+      /* #### port to new error-trapping system when i sync up the code */
+      int count = begin_gc_forbidden ();
+      specbind (Qinhibit_quit, Qt);
+      call0_with_handler (Qreally_early_error_handler,
+			  intern ("init-locale-at-early-startup"));
+      /* Should be calling this here, but problems with
+         `data-directory' and locating the files.  See comment in
+         mule-cmds.el:`init-mule-at-startup'.
 
-#ifdef I18N3
-  textdomain ("emacs");
-#endif
+      call0_with_handler (Qreally_early_error_handler,
+                          intern ("init-unicode-at-early-startup"));
+       */
+      unbind_to (count);
+    }
 }
 
 void
 syms_of_intl (void)
 {
-  /* defer-gettext is defined as a symbol because when it is used in menu
-     specification strings, it is not evaluated as a function by
-     menu_item_descriptor_to_widget_value(). */
-  DEFSYMBOL (Qdefer_gettext);
-
-  DEFSUBR (Fignore_defer_gettext);
   DEFSUBR (Fgettext);
-  DEFSUBR (Fdgettext);
-  DEFSUBR (Fbind_text_domain);
-  DEFSUBR (Fset_domain);
+  DEFSUBR (Fset_current_locale);
+  DEFSUBR (Fcurrent_locale);
 }
 
 void
 vars_of_intl (void)
 {
-#ifdef I18N2
-  Fprovide (intern ("i18n2"));
-#endif
 #ifdef I18N3
   Fprovide (intern ("i18n3"));
 #endif
+
+#ifdef MULE
+  Fprovide (intern ("mule"));
+#endif /* MULE */
 }

@@ -36,7 +36,7 @@
 
 (make-coding-system
  'iso-8859-8 'iso2022
- "ISO-8859-8 (ISO 2022 based 8-bit encoding for Hebrew)"
+ "ISO-8859-8 (Hebrew)"
  '(charset-g0 ascii
    charset-g1 hebrew-iso8859-8
    charset-g2 t
@@ -47,19 +47,13 @@
 
 (make-coding-system
  'ctext-hebrew 'iso2022
- "Coding-system for Hebrew."
+ "ISO-8859-8-E (Hebrew, explicit directional coding)"
  '(charset-g0 ascii
    charset-g1 hebrew-iso8859-8
    charset-g2 t
    charset-g3 t
    mnemonic "CText/Hbrw"
    ))
-
-(defun setup-hebrew-environment ()
-  "Setup multilingual environment (MULE) for Hebrew.
-Note: right-to-left writing is not yet supported."
-  (interactive)
-  (set-language-environment "Hebrew"))
 
 (set-language-info-alist
  "Hebrew" '((charset hebrew-iso8859-8)

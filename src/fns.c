@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
    Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "sysfile.h"
+#include "sysproc.h" /* for qxe_getpid() */
 
 #include "buffer.h"
 #include "bytecode.h"
@@ -56,6 +57,8 @@ Lisp_Object Qstring_lessp;
 Lisp_Object Qidentity;
 
 Lisp_Object Qbase64_conversion_error;
+
+Lisp_Object Vpath_separator;
 
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
@@ -139,9 +142,6 @@ Return the argument unchanged.
   return arg;
 }
 
-extern long get_random (void);
-extern void seed_random (long arg);
-
 DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
 All integers representable in Lisp are equally likely.
@@ -155,7 +155,7 @@ With argument t, set the random number seed from the current time and pid.
   unsigned long denominator;
 
   if (EQ (limit, Qt))
-    seed_random (getpid () + time (NULL));
+    seed_random (qxe_getpid () + time (NULL));
   if (NATNUMP (limit) && !ZEROP (limit))
     {
       /* Try to take our random number from the higher bits of VAL,
@@ -298,28 +298,18 @@ Symbols are also allowed; their print names are used instead.
 	  !memcmp (string_data (p1), string_data (p2), len)) ? Qt : Qnil;
 }
 
-
 DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
 Return t if first arg string is less than second in lexicographic order.
-If I18N2 support (but not Mule support) was compiled in, ordering is
-determined by the locale. (Case is significant for the default C locale.)
-In all other cases, comparison is simply done on a character-by-
-character basis using the numeric value of a character. (Note that
-this may not produce particularly meaningful results under Mule if
-characters from different charsets are being compared.)
+Comparison is simply done on a character-by-character basis using the
+numeric value of a character. (Note that this may not produce
+particularly meaningful results under Mule if characters from
+different charsets are being compared.)
 
 Symbols are also allowed; their print names are used instead.
 
-The reason that the I18N2 locale-specific collation is not used under
-Mule is that the locale model of internationalization does not handle
-multiple charsets and thus has no hope of working properly under Mule.
-What we really should do is create a collation table over all built-in
-charsets.  This is extremely difficult to do from scratch, however.
-
-Unicode is a good first step towards solving this problem.  In fact,
-it is quite likely that a collation table exists (or will exist) for
-Unicode.  When Unicode support is added to XEmacs/Mule, this problem
-may be solved.
+Currently we don't do proper language-specific collation or handle
+multiple character sets.  This may be changed when Unicode support
+is implemented.
 */
        (string1, string2))
 {
@@ -348,28 +338,6 @@ may be solved.
   if (end > len2)
     end = len2;
 
-#if defined (I18N2) && !defined (MULE)
-  /* There is no hope of this working under Mule.  Even if we converted
-     the data into an external format so that strcoll() processed it
-     properly, it would still not work because strcoll() does not
-     handle multiple locales.  This is the fundamental flaw in the
-     locale model. */
-  {
-    Bytecount bcend = charcount_to_bytecount (string_data (p1), end);
-    /* Compare strings using collation order of locale. */
-    /* Need to be tricky to handle embedded nulls. */
-
-    for (i = 0; i < bcend; i += strlen((char *) string_data (p1) + i) + 1)
-      {
-	int val = strcoll ((char *) string_data (p1) + i,
-			   (char *) string_data (p2) + i);
-	if (val < 0)
-	  return Qt;
-	if (val > 0)
-	  return Qnil;
-      }
-  }
-#else /* not I18N2, or MULE */
   {
     Intbyte *ptr1 = string_data (p1);
     Intbyte *ptr2 = string_data (p2);
@@ -389,7 +357,6 @@ may be solved.
 	INC_CHARPTR (ptr2);
       }
   }
-#endif /* not I18N2, or MULE */
   /* Can't do i < len2 because then comparison between "foo" and "foo^@"
      won't work right in I18N2 case */
   return end < len2 ? Qt : Qnil;
@@ -922,8 +889,8 @@ Relevant parts of the string-extent-data are copied to the new string.
   CHECK_INT (start);
   get_string_range_char (string, start, end, &ccstart, &ccend,
 			 GB_HISTORICAL_STRING_BEHAVIOR);
-  bstart = charcount_to_bytecount (XSTRING_DATA (string), ccstart);
-  blen = charcount_to_bytecount (XSTRING_DATA (string) + bstart, ccend - ccstart);
+  bstart = XSTRING_INDEX_CHAR_TO_BYTE (string, ccstart);
+  blen = XSTRING_OFFSET_CHAR_TO_BYTE_LEN (string, bstart, ccend - ccstart);
   val = make_string (XSTRING_DATA (string) + bstart, blen);
   /* Copy any applicable extent information into the new string. */
   copy_string_extents (val, string, 0, bstart, blen);
@@ -1007,6 +974,111 @@ are copied to the new string.
                    an error */
       return Qnil;
     }
+}
+
+/* Split STRING into a list of substrings.  The substrings are the
+   parts of original STRING separated by SEPCHAR.  */
+static Lisp_Object
+split_string_by_emchar_1 (const Intbyte *string, Bytecount size,
+			  Emchar sepchar)
+{
+  Lisp_Object result = Qnil;
+  const Intbyte *end = string + size;
+
+  while (1)
+    {
+      const Intbyte *p = string;
+      while (p < end)
+	{
+	  if (charptr_emchar (p) == sepchar)
+	    break;
+	  INC_CHARPTR (p);
+	}
+      result = Fcons (make_string (string, p - string), result);
+      if (p < end)
+	{
+	  string = p;
+	  INC_CHARPTR (string);	/* skip sepchar */
+	}
+      else
+	break;
+    }
+  return Fnreverse (result);
+}
+
+/* The same as the above, except PATH is an external C string (it is
+   converted using Qfile_name), and sepchar is hardcoded to SEPCHAR
+   (':' or whatever).  */
+Lisp_Object
+split_external_path (const Extbyte *path)
+{
+  Bytecount newlen;
+  Intbyte *newpath;
+  if (!path)
+    return Qnil;
+
+  TO_INTERNAL_FORMAT (C_STRING, path, ALLOCA, (newpath, newlen), Qfile_name);
+
+  /* #### Does this make sense?  It certainly does for
+     split_env_path(), but it looks dubious here.  Does any code
+     depend on split_external_path("") returning nil instead of an empty
+     string?  */
+  if (!newlen)
+    return Qnil;
+
+  return split_string_by_emchar_1 (newpath, newlen, SEPCHAR);
+}
+
+Lisp_Object
+split_env_path (const CIntbyte *evarname, const Intbyte *default_)
+{
+  const Intbyte *path = 0;
+  if (evarname)
+    path = egetenv (evarname);
+  if (!path)
+    path = default_;
+  if (!path)
+    return Qnil;
+  return split_string_by_emchar_1 (path, qxestrlen (path), SEPCHAR);
+}
+
+/* Ben thinks this function should not exist or be exported to Lisp.
+   We use it to define split-path-string in subr.el (not!).  */
+
+DEFUN ("split-string-by-char", Fsplit_string_by_char, 1, 2, 0, /*
+Split STRING into a list of substrings originally separated by SEPCHAR.
+*/
+       (string, sepchar))
+{
+  CHECK_STRING (string);
+  CHECK_CHAR (sepchar);
+  return split_string_by_emchar_1 (XSTRING_DATA (string),
+				   XSTRING_LENGTH (string),
+				   XCHAR (sepchar));
+}
+
+/* #### This was supposed to be in subr.el, but is used VERY early in
+   the bootstrap process, so it goes here.  Damn.  */
+
+DEFUN ("split-path", Fsplit_path, 1, 1, 0, /*
+Explode a search path into a list of strings.
+The path components are separated with the characters specified
+with `path-separator'.
+*/
+       (path))
+{
+  CHECK_STRING (path);
+
+  while (!STRINGP (Vpath_separator)
+	 || (XSTRING_CHAR_LENGTH (Vpath_separator) != 1))
+    Vpath_separator = signal_continuable_error
+      (Qinvalid_state,
+       "`path-separator' should be set to a single-character string",
+       Vpath_separator);
+
+  return (split_string_by_emchar_1
+	  (XSTRING_DATA (path), XSTRING_LENGTH (path),
+	   charptr_emchar (XSTRING_DATA (Vpath_separator))));
 }
 
 
@@ -1332,7 +1404,7 @@ assoc_no_quit (Lisp_Object key, Lisp_Object alist)
 {
   int speccount = specpdl_depth ();
   specbind (Qinhibit_quit, Qt);
-  return unbind_to (speccount, Fassoc (key, alist));
+  return unbind_to_1 (speccount, Fassoc (key, alist));
 }
 
 DEFUN ("assq", Fassq, 2, 2, 0, /*
@@ -1577,7 +1649,7 @@ remassoc_no_quit (Lisp_Object key, Lisp_Object alist)
 {
   int speccount = specpdl_depth ();
   specbind (Qinhibit_quit, Qt);
-  return unbind_to (speccount, Fremassoc (key, alist));
+  return unbind_to_1 (speccount, Fremassoc (key, alist));
 }
 
 DEFUN ("remassq", Fremassq, 2, 2, 0, /*
@@ -1725,14 +1797,11 @@ merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
   Lisp_Object tmp;
 
   /* prevents the GC from happening in call2 */
-  int speccount = specpdl_depth ();
 /* Emacs' GC doesn't actually relocate pointers, so this probably
    isn't strictly necessary */
-  record_unwind_protect (restore_gc_inhibit,
-                         make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  int speccount = begin_gc_forbidden ();
   tmp = call2 (pred, obj1, obj2);
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   if (NILP (tmp))
     return -1;
@@ -2059,7 +2128,7 @@ bad_bad_bunny (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 	{
 	  warn_when_safe_lispobj
 	    (Qlist, Qwarning,
-	     list2 (build_string
+	     list2 (build_msg_string
 		    ("Malformed property list -- list has been truncated"),
 		    *plist));
 	  *badplace = Qnil;
@@ -2086,7 +2155,7 @@ bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_Behavior errb)
 	{
 	  warn_when_safe_lispobj
 	    (Qlist, Qwarning,
-	     list2 (build_string
+	     list2 (build_msg_string
 		    ("Circular property list -- list has been truncated"),
 		    *plist));
 	  *badplace = Qnil;
@@ -2735,6 +2804,7 @@ ARRAY is a vector, bit vector, or string.
       CHECK_CHAR_COERCE_INT (item);
       CHECK_LISP_WRITEABLE (array);
 
+      sledgehammer_check_ascii_begin (array);
       item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
       new_bytecount = item_bytecount * string_char_length (s);
 
@@ -2746,7 +2816,12 @@ ARRAY is a vector, bit vector, or string.
 	memcpy (p, item_buf, item_bytecount);
       *p = '\0';
 
+      set_string_ascii_begin (s,
+			      item_bytecount == 1 ?
+			      min (new_bytecount, MAX_STRING_ASCII_BEGIN) :
+			      0);
       bump_string_modiff (array);
+      sledgehammer_check_ascii_begin (array);
     }
   else if (VECTORP (array))
     {
@@ -3108,7 +3183,7 @@ the spiffy Common Lisp arguments.  You should normally use `mapc'.
 }
 
 
-
+/* Extra random functions */
 
 DEFUN ("replace-list", Freplace_list, 2, 2, 0, /*
 Destructively replace the list OLD with NEW.
@@ -3148,6 +3223,22 @@ length, no consing will take place.
     old = Qnil;
 
   return old;
+}
+
+Lisp_Object
+add_suffix_to_symbol (Lisp_Object symbol, const Char_ASCII *ascii_string)
+{
+  return Fintern (concat2 (Fsymbol_name (symbol),
+			   build_string (ascii_string)),
+		  Qnil);
+}
+
+Lisp_Object
+add_prefix_to_symbol (const Char_ASCII *ascii_string, Lisp_Object symbol)
+{
+  return Fintern (concat2 (build_string (ascii_string),
+			   Fsymbol_name (symbol)),
+		  Qnil);
 }
 
 
@@ -3358,7 +3449,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
-      return unbind_to (speccount, feature);
+      return unbind_to_1 (speccount, feature);
     }
 }
 
@@ -3614,7 +3705,7 @@ free_malloced_ptr (Lisp_Object unwind_obj)
 
 #define XMALLOC_UNBIND(ptr, len, speccount) do {		\
   if ((len) > MAX_ALLOCA)					\
-    unbind_to (speccount, Qnil);				\
+    unbind_to (speccount);				\
 } while (0)
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, 2, 3, "r", /*
@@ -3871,6 +3962,21 @@ syms_of_fns (void)
   DEFSUBR (Fbase64_encode_string);
   DEFSUBR (Fbase64_decode_region);
   DEFSUBR (Fbase64_decode_string);
+
+  DEFSUBR (Fsplit_string_by_char);
+  DEFSUBR (Fsplit_path);	/* #### */
+}
+
+void
+vars_of_fns (void)
+{
+  DEFVAR_LISP ("path-separator", &Vpath_separator /*
+The directory separator in search paths, as a string.
+*/ );
+  {
+    char c = SEPCHAR;
+    Vpath_separator = make_string ((Intbyte *)&c, 1);
+  }
 }
 
 void

@@ -1,6 +1,6 @@
 /* Call a Lisp function interactively.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -74,10 +74,8 @@ Lisp_Object Qread_number;
 Lisp_Object Qread_string;
 Lisp_Object Qevents_to_keys;
 
-#if defined(MULE) || defined(FILE_CODING)
 Lisp_Object Qread_coding_system;
 Lisp_Object Qread_non_nil_coding_system;
-#endif
 
 /* ARGSUSED */
 DEFUN ("interactive", Finteractive, 0, UNEVALLED, 0, /*
@@ -275,7 +273,7 @@ callint_prompt (const Intbyte *prompt_start, Bytecount prompt_length,
   if (!strchr ((char *) XSTRING_DATA (s), '%'))
     return s;
   GCPRO1 (s);
-  RETURN_UNGCPRO (emacs_doprnt_string_lisp (0, s, 0, nargs, args));
+  RETURN_UNGCPRO (emacs_vsprintf_string_lisp (0, s, nargs, args));
 }
 
 /* `lambda' for RECORD-FLAG is an XEmacs addition. */
@@ -598,7 +596,7 @@ when reading the arguments.
       }
       if (set_zmacs_region_stays)
 	zmacs_region_stays = 1;
-      return unbind_to (speccount, fun);
+      return unbind_to_1 (speccount, fun);
     }
 
   /* Read interactive arguments */
@@ -693,7 +691,7 @@ when reading the arguments.
               /* visargs[argnum] = Fsingle_key_description (tem); */
 	      /* FSF has visargs[argnum] = Fchar_to_string (tem); */
 
-	      unbind_to (shadowing_speccount, Qnil);
+	      unbind_to (shadowing_speccount);
 
 	      /* #### `C-x / a' should not leave the prompt in the minibuffer.
 		 This isn't the right fix, because (message ...) (read-char)
@@ -926,7 +924,6 @@ when reading the arguments.
 	    }
 	  case 'Z':		/* Coding-system symbol or nil if no prefix */
 	    {
-#if defined(MULE) || defined(FILE_CODING)
 	      if (NILP (prefix))
 		{
 		  args[argnum] = Qnil;
@@ -937,19 +934,12 @@ when reading the arguments.
 		    call1 (Qread_non_nil_coding_system, PROMPT ());
 		  arg_from_tty = 1;
 		}
-#else
-	      args[argnum] = Qnil;
-#endif
 	      break;
 	    }
 	  case 'z':		/* Coding-system symbol */
 	    {
-#if defined(MULE) || defined(FILE_CODING)
 	      args[argnum] = call1 (Qread_coding_system, PROMPT ());
 	      arg_from_tty = 1;
-#else
-	      args[argnum] = Qnil;
-#endif
 	      break;
 	    }
 
@@ -974,7 +964,7 @@ when reading the arguments.
 	  prompt_data = (const char *) XSTRING_DATA (specs);
 	prompt_index += prompt_length + 1 + 1; /* +1 to skip spec, +1 for \n */
       }
-    unbind_to (speccount, Qnil);
+    unbind_to (speccount);
 
     QUIT;
 
@@ -1009,7 +999,7 @@ when reading the arguments.
     UNGCPRO;
     if (set_zmacs_region_stays)
       zmacs_region_stays = 1;
-    return unbind_to (speccount, fun);
+    return unbind_to_1 (speccount, fun);
   }
 }
 
@@ -1047,10 +1037,8 @@ syms_of_callint (void)
   DEFSYMBOL (Qread_command);
   DEFSYMBOL (Qread_number);
   DEFSYMBOL (Qread_expression);
-#if defined(MULE) || defined(FILE_CODING)
   DEFSYMBOL (Qread_coding_system);
   DEFSYMBOL (Qread_non_nil_coding_system);
-#endif
   DEFSYMBOL (Qevents_to_keys);
   DEFSYMBOL (Qcommand_debug_status);
   DEFSYMBOL (Qenable_recursive_minibuffers);

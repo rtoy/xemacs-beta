@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -382,16 +382,16 @@ add_accel_and_to_external (Lisp_Object string)
   return retval;
 }
 
-/* This does the dirty work.  gc_currently_forbidden is 1 when this is called.
- */
+/* This does the dirty work.  begin_gc_forbidden() is active when this is
+ called. */
 int
 button_item_to_widget_value (Lisp_Object gui_object_instance,
 			     Lisp_Object gui_item, widget_value *wv,
 			     int allow_text_field_p, int no_keys_p,
 			     int menu_entry_p, int accel_p)
 {
-  /* This function cannot GC because gc_currently_forbidden is set when
-     it's called */
+  /* This function cannot GC because begin_gc_forbidden() is active when
+     it's called. */
   Lisp_Gui_Item* pgui = 0;
 
   /* degenerate case */
@@ -627,7 +627,7 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
 {
   /* This function can GC */
   widget_value *control = 0, *tmp = 0;
-  int count = specpdl_depth ();
+  int count;
   Lisp_Object wv_closure;
 
   if (NILP (items))
@@ -636,9 +636,7 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
   /* Inhibit GC during this conversion.  The reasons for this are
      the same as in menu_item_descriptor_to_widget_value(); see
      the large comment above that function. */
-  record_unwind_protect (restore_gc_inhibit,
-			 make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  count = begin_gc_forbidden ();
 
   /* Also make sure that we free the partially-created widget_value
      tree on Lisp error. */
@@ -658,7 +656,7 @@ gui_items_to_widget_values (Lisp_Object gui_object_instance, Lisp_Object items,
 
   /* No more need to free the half-filled-in structures. */
   set_opaque_ptr (wv_closure, 0);
-  unbind_to (count, Qnil);
+  unbind_to (count);
 
   return control;
 }

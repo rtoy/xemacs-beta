@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 1985-1987, 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -597,13 +598,90 @@ bottom of the buffer stack."
     (make-frame-visible frame)
     buffer))
 
+(defun switch-to-next-buffer (&optional n)
+  "Switch to the next-most-recent buffer.
+This essentially rotates the buffer list forward.
+N (interactively, the prefix arg) specifies how many times to rotate
+forward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  ;; Here is a different interactive spec.  Look up the function
+  ;; `interactive' (i.e. `C-h f interactive') to understand how this
+  ;; all works.
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (loop
+      do (bury-buffer (car (buffer-list)))
+      while (funcall buffers-tab-omit-function (car (buffer-list))))
+    (switch-to-buffer (car (buffer-list)))))
+
+(defun switch-to-previous-buffer (&optional n)
+  "Switch to the previously most-recent buffer.
+This essentially rotates the buffer list backward.
+N (interactively, the prefix arg) specifies how many times to rotate
+backward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (loop
+      do (switch-to-buffer (car (last (buffer-list))))
+      while (funcall buffers-tab-omit-function (car (buffer-list))))))
+
+(defun switch-to-next-buffer-in-group (&optional n)
+  "Switch to the next-most-recent buffer in the current group.
+This essentially rotates the buffer list forward.
+N (interactively, the prefix arg) specifies how many times to rotate
+forward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (let ((curbuf (car (buffer-list))))
+      (loop
+	do (bury-buffer (car (buffer-list)))
+	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
+		  (not (funcall buffers-tab-selection-function
+			curbuf (car (buffer-list)))))))
+    (switch-to-buffer (car (buffer-list)))))
+
+(defun switch-to-previous-buffer-in-group (&optional n)
+  "Switch to the previously most-recent buffer in the current group.
+This essentially rotates the buffer list backward.
+N (interactively, the prefix arg) specifies how many times to rotate
+backward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (let ((curbuf (car (buffer-list))))
+      (loop
+	do (switch-to-buffer (car (last (buffer-list))))
+	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
+		  (not (funcall buffers-tab-selection-function
+			curbuf (car (buffer-list)))))))))
+
 (defun find-file (filename &optional codesys)
   "Edit file FILENAME.
-Switch to a buffer visiting file FILENAME,
-creating one if none already exists.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Switch to a buffer visiting file FILENAME, creating one if none already
+exists.  Optional second argument specifies the coding system to use when
+decoding the file.  Interactively, with a prefix argument, you will be
+prompted for the coding system.
+
+If you do not explicitly specify a coding system, the coding system
+is determined as follows:
+
+1. `coding-system-for-read', if non-nil. (This is used by Lisp programs to
+      temporarily set an overriding coding system and should almost never
+      apply here in `find-file'.)
+2. The result of `insert-file-contents-pre-hook', if non-nil. (This is a
+      complex interface for handling special cases.)
+3. The matching value for this filename from `file-coding-system-alist',
+      if any. (This lets you specify the coding system to be used for
+      files with particular extensions, names, etc.)
+4. `buffer-file-coding-system-for-read', if non-nil. (This is the global
+      default -- normally `undecided', so the built-in auto-detection
+      mechanism can do its thing.)
+5. The coding system 'raw-text.
+
+See `insert-file-contents' for more details about how the process of
+determining the coding system works."
   (interactive "FFind file: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -613,11 +691,10 @@ with a prefix argument, you will be prompted for the coding system."
 
 (defun find-file-other-window (filename &optional codesys)
   "Edit file FILENAME, in another window.
-May create a new window, or reuse an existing one.
-See the function `display-buffer'.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+May create a new window, or reuse an existing one.  See the function
+`display-buffer'.  Optional second argument specifies the coding system to
+use when decoding the file.  Interactively, with a prefix argument, you
+will be prompted for the coding system."
   (interactive "FFind file in other window: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -627,9 +704,9 @@ with a prefix argument, you will be prompted for the coding system."
 
 (defun find-file-other-frame (filename &optional codesys)
   "Edit file FILENAME, in a newly-created frame.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Optional second argument specifies the coding system to use when decoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
   (interactive "FFind file in other frame: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -641,9 +718,9 @@ with a prefix argument, you will be prompted for the coding system."
   "Edit file FILENAME but don't allow changes.
 Like \\[find-file] but marks buffer as read-only.
 Use \\[toggle-read-only] to permit editing.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Optional second argument specifies the coding system to use when decoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
   (interactive "fFind file read-only: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -657,9 +734,9 @@ with a prefix argument, you will be prompted for the coding system."
   "Edit file FILENAME in another window but don't allow changes.
 Like \\[find-file-other-window] but marks buffer as read-only.
 Use \\[toggle-read-only] to permit editing.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Optional second argument specifies the coding system to use when decoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
   (interactive "fFind file read-only other window: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -673,9 +750,9 @@ with a prefix argument, you will be prompted for the coding system."
   "Edit file FILENAME in another frame but don't allow changes.
 Like \\[find-file-other-frame] but marks buffer as read-only.
 Use \\[toggle-read-only] to permit editing.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Optional second argument specifies the coding system to use when decoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
   (interactive "fFind file read-only other frame: \nZCoding system: ")
   (if codesys
       (let ((coding-system-for-read
@@ -687,9 +764,8 @@ with a prefix argument, you will be prompted for the coding system."
 
 (defun find-alternate-file-other-window (filename &optional codesys)
   "Find file FILENAME as a replacement for the file in the next window.
-This command does not select that window.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
+This command does not select that window.  Optional second argument
+specifies the coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive
    (save-selected-window
@@ -702,8 +778,7 @@ with a prefix argument, you will be prompted for the coding system."
 		  file-dir (file-name-directory file)))
        (list (read-file-name
 	      "Find alternate file: " file-dir nil nil file-name)
-	     (if (and current-prefix-arg (featurep 'mule))
-		 (read-coding-system "Coding-system: "))))))
+	     (if current-prefix-arg (read-coding-system "Coding-system: "))))))
   (if (one-window-p)
       (find-file-other-window filename)
     (save-selected-window
@@ -713,10 +788,10 @@ with a prefix argument, you will be prompted for the coding system."
 (defun find-alternate-file (filename &optional codesys)
   "Find file FILENAME, select its buffer, kill previous buffer.
 If the current buffer now contains an empty file that you just visited
-\(presumably by mistake), use this command to visit the file you really want.
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+\(presumably by mistake), use this command to visit the file you really
+want.  Optional second argument specifies the coding system to use when
+decoding the file.  Interactively, with a prefix argument, you will be
+prompted for the coding system."
   (interactive
    (let ((file buffer-file-name)
 	 (file-name nil)
@@ -726,8 +801,7 @@ with a prefix argument, you will be prompted for the coding system."
 		file-dir (file-name-directory file)))
      (list (read-file-name
 	    "Find alternate file: " file-dir nil nil file-name)
-	   (if (and current-prefix-arg (featurep 'mule))
-	       (read-coding-system "Coding-system: ")))))
+	   (if current-prefix-arg (read-coding-system "Coding-system: ")))))
   (and (buffer-modified-p) (buffer-file-name)
        ;; (not buffer-read-only)
        (not (yes-or-no-p (format
@@ -1882,15 +1956,16 @@ the old visited file has been renamed to the new name FILENAME."
 
 (defun write-file (filename &optional confirm codesys)
   "Write current buffer into file FILENAME.
-Makes buffer visit that file, and marks it not modified.
-If the buffer is already visiting a file, you can specify
-a directory name as FILENAME, to write a file of the same
-old name in that directory.
-If optional second arg CONFIRM is non-nil,
-ask for confirmation for overwriting an existing file.
-Under XEmacs/Mule, optional third argument specifies the
-coding system to use when encoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+Makes buffer visit that file, and marks it not modified.  If the buffer is
+already visiting a file, you can specify a directory name as FILENAME, to
+write a file of the same old name in that directory.
+
+If optional second arg CONFIRM is non-nil, ask for confirmation for
+overwriting an existing file.
+
+Optional third argument specifies the coding system to use when encoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
 ;;  (interactive "FWrite file: ")
   (interactive
    (list (if buffer-file-name
@@ -1901,8 +1976,7 @@ with a prefix argument, you will be prompted for the coding system."
 					  (buffer-local-variables)))
 			       nil nil (buffer-name)))
 	 t
-	 (if (and current-prefix-arg (featurep 'file-coding))
-	     (read-coding-system "Coding system: "))))
+	 (if current-prefix-arg (read-coding-system "Coding system: "))))
   (and (eq (current-buffer) mouse-grabbed-buffer)
        (error "Can't write minibuffer window"))
   (or (null filename) (string-equal filename "")
@@ -2580,13 +2654,13 @@ With arg, set read-only iff arg is positive."
   "Insert contents of file FILENAME into buffer after point.
 Set mark after the inserted text.
 
-Under XEmacs/Mule, optional second argument specifies the
-coding system to use when decoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system.
+Optional second argument specifies the coding system to use when decoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system.
 
-This function is meant for the user to run interactively.
-Don't call it from programs!  Use `insert-file-contents' instead.
-\(Its calling sequence is different; see its documentation)."
+This function is meant for the user to run interactively.  Don't call it
+from programs!  Use `insert-file-contents' instead.  \(Its calling sequence
+is different; see its documentation)."
   (interactive "*fInsert file: \nZCoding system: ")
   (if (file-directory-p filename)
       (signal 'file-error (list "Opening input file" "file is a directory"
@@ -2601,12 +2675,11 @@ Don't call it from programs!  Use `insert-file-contents' instead.
 
 (defun append-to-file (start end filename &optional codesys)
   "Append the contents of the region to the end of file FILENAME.
-When called from a function, expects three arguments,
-START, END and FILENAME.  START and END are buffer positions
-saying what text to write.
-Under XEmacs/Mule, optional fourth argument specifies the
-coding system to use when encoding the file.  Interactively,
-with a prefix argument, you will be prompted for the coding system."
+When called from a function, expects three arguments, START, END and
+FILENAME.  START and END are buffer positions saying what text to write.
+Optional fourth argument specifies the coding system to use when encoding
+the file.  Interactively, with a prefix argument, you will be prompted for
+the coding system."
   (interactive "r\nFAppend to file: \nZCoding system: ")
   (if codesys
       (let ((buffer-file-coding-system (get-coding-system codesys)))
@@ -2798,8 +2871,54 @@ non-nil, it is called instead of rereading visited file contents."
 		     (or auto-save-p
 			 (unlock-buffer)))
 		   (widen)
-		   (insert-file-contents file-name (not auto-save-p)
-					 nil nil t)))
+		   ;; When reading in an autosave, it's encoded using
+		   ;; `escape-quoted', so we need to use it. (It is always
+		   ;; safe to specify `escape-quoted':
+		   ;;
+		   ;; 1. If file-coding but no Mule, `escape-quoted' is
+                   ;;    aliased to `binary'.
+                   ;; 2. If no file-coding, all coding systems devolve into
+                   ;;    `binary'.
+                   ;; 3. ASCII and ISO8859-1 are encoded the same in both
+                   ;;    `binary' and `escape-quoted', so they will be
+                   ;;     compatible for the most part.)
+		   ;;
+		   ;; Otherwise, use coding-system-for-read if explicitly
+		   ;; given (e.g. the "Revert Buffer with Specified
+		   ;; Encoding" menu entries), or use the coding system
+		   ;; that the file was loaded as.
+		   (let* ((coding-system-for-read
+			   (if auto-save-p 'escape-quoted
+			     (or coding-system-for-read
+				 buffer-file-coding-system-when-loaded)))
+			  ;; If the bfcs wasn't changed from its original
+			  ;; value (other than possible EOL change), then we
+			  ;; should update it for the new coding system.
+			  (should-update-bfcs
+			   (eq (coding-system-base
+				 buffer-file-coding-system-when-loaded)
+			       (coding-system-base
+				buffer-file-coding-system)))
+			  (old-bfcs buffer-file-coding-system)
+			  ;; But if the EOL was changed, match it in the new
+			  ;; value of bfcs.
+			  (adjust-eol
+			   (and should-update-bfcs
+				(not
+				 (eq (get-coding-system
+				      buffer-file-coding-system-when-loaded)
+				     (get-coding-system
+				      buffer-file-coding-system))))))
+		     (insert-file-contents file-name (not auto-save-p)
+					   nil nil t)
+		     (when should-update-bfcs
+		       (setq buffer-file-coding-system old-bfcs)
+		       (set-buffer-file-coding-system
+			(if adjust-eol
+			    (coding-system-base
+			     buffer-file-coding-system-when-loaded)
+			  buffer-file-coding-system-when-loaded)
+			(not adjust-eol))))))
 	       (goto-char (min opoint (point-max)))
 	       ;; Recompute the truename in case changes in symlinks
 	       ;; have changed the truename.
@@ -2855,7 +2974,8 @@ non-nil, it is called instead of rereading visited file contents."
 	       (switch-to-buffer (find-file-noselect file t))
 	       (let ((buffer-read-only nil))
 		 (erase-buffer)
-		 (insert-file-contents file-name nil))
+		 (let ((coding-system-for-read 'escape-quoted))
+		   (insert-file-contents file-name nil)))
 	       (after-find-file nil nil t))
 	      (t (error "Recover-file cancelled.")))))))
 
@@ -2903,7 +3023,8 @@ This command is used in the special Dired buffer created by
 	  ;; Read in the auto-save-list file.
 	  (set-buffer buffer)
 	  (erase-buffer)
-	  (insert-file-contents file)
+	  (let ((coding-system-for-read 'escape-quoted))
+	    (insert-file-contents file))
 	  ;; Loop thru the text of that file
 	  ;; and get out the names of the files to recover.
 	  (while (not (eobp))

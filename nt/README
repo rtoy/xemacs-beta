@@ -161,12 +161,8 @@ If you want support for X you will also need:
     -- If you want international (aka "Mule") support, modify the appropriate
        line in config.inc as follows:
 
-       HAVE_MULE=1
+       MULE=1
 
-       NOTE: This support is still quite raw under the Win32 native GUI,
-       but works well if you compile the Cygwin version with X support
-       and disable native Win32 support (--with-msw=no).
-    
     -- If you're building with XPM support, modify the appropriate lines in
        config.inc as follows:
 

@@ -1,5 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2000 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,10 +24,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_sysproc_h_
 #define INCLUDED_sysproc_h_
 
-#ifdef HAVE_VFORK_H
-# include <vfork.h>
-#endif
-
 #include "systime.h" /* necessary for sys/resource.h; also gets the
 			FD_* defines on some systems. */
 #ifndef WIN32_NATIVE
@@ -34,6 +31,23 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #if !defined (NO_SUBPROCESSES)
+
+#ifdef MINGW
+#include <../mingw/process.h>
+#elif defined (CYGWIN)
+#include <../include/process.h>
+#elif defined (WIN32_NATIVE)
+/* <process.h> should not conflict with "process.h", as per ANSI definition.
+   This is not true with visual c though. The trick below works with
+   VC4.2b, 5.0 and 6.0. It assumes that VC is installed in a kind of
+   standard way, so include path ends with /include.
+   NOTE: We also include this same file in s/windowsnt.h, to avoid problems
+   because this file prototypes abort() and then lisp.h defines it as a
+   macro, which must happen after the prototype.  DO NOT remove the include
+   here just because you "know" it's somewhere else as well.
+*/
+#include <../include/process.h>
+#endif
 
 #ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
 # include <sys/types.h>  /* AJK */
@@ -164,5 +178,8 @@ Boston, MA 02111-1307, USA.  */
 #endif /* no FD_SET */
 
 int poll_fds_for_input (SELECT_TYPE mask);
+int qxe_execve (const Intbyte *filename, Intbyte * const argv[],
+		Intbyte * const envp[]);
+pid_t qxe_getpid (void);
 
 #endif /* INCLUDED_sysproc_h_ */

@@ -1,6 +1,6 @@
 /* "intern" and friends -- moved here from lread.c and data.c
    Copyright (C) 1985-1989, 1992-1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 2000 Ben Wing.
+   Copyright (C) 1995, 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -177,22 +177,27 @@ check_obarray (Lisp_Object obarray)
 }
 
 Lisp_Object
-intern (const char *str)
+intern_int (const Intbyte *str)
 {
-  Bytecount len = strlen (str);
-  const Intbyte *buf = (const Intbyte *) str;
+  Bytecount len = qxestrlen (str);
   Lisp_Object obarray = Vobarray;
 
   if (!VECTORP (obarray) || XVECTOR_LENGTH (obarray) == 0)
     obarray = check_obarray (obarray);
 
   {
-    Lisp_Object tem = oblookup (obarray, buf, len);
+    Lisp_Object tem = oblookup (obarray, str, len);
     if (SYMBOLP (tem))
       return tem;
   }
 
-  return Fintern (make_string (buf, len), obarray);
+  return Fintern (make_string (str, len), obarray);
+}
+
+Lisp_Object
+intern (const CIntbyte *str)
+{
+  return intern_int ((Intbyte *) str);
 }
 
 DEFUN ("intern", Fintern, 1, 2, 0, /*
@@ -1135,7 +1140,7 @@ set_default_buffer_slot_variable (Lisp_Object sym,
 	  if (!(b->local_var_flags & mask))
 	    {
 	      if (magicfun)
-		magicfun (sym, &value, make_buffer (b), 0);
+		magicfun (sym, &value, wrap_buffer (b), 0);
 	      *((Lisp_Object *) (offset + (char *) b)) = value;
 	    }
 	}
@@ -1252,7 +1257,7 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
 
 	case SYMVAL_CURRENT_BUFFER_FORWARD:
 	  if (magicfun)
-	    magicfun (sym, &newval, make_buffer (current_buffer), 0);
+	    magicfun (sym, &newval, wrap_buffer (current_buffer), 0);
 	  *((Lisp_Object *) ((char *) current_buffer
 			     + ((char *) symbol_value_forward_forward (fwd)
 				- (char *) &buffer_local_flags)))
@@ -2379,7 +2384,7 @@ From now on the default value will apply in this buffer.
 	    Lisp_Object oldval = * (Lisp_Object *)
 	      (offset + (char *) XBUFFER (Vbuffer_defaults));
 	    if (magicfun)
-	      (magicfun) (variable, &oldval, make_buffer (current_buffer), 0);
+	      (magicfun) (variable, &oldval, wrap_buffer (current_buffer), 0);
 	    *(Lisp_Object *) (offset + (char *) current_buffer)
 	      = oldval;
 	    current_buffer->local_var_flags &= ~mask;
@@ -3254,15 +3259,6 @@ init_symbols_once_early (void)
 void
 reinit_symbols_once_early (void)
 {
-#ifndef Qzero
-  Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
-#endif
-
-#ifndef Qnull_pointer
-  /* C guarantees that Qnull_pointer will be initialized to all 0 bits,
-     so the following is actually a no-op.  */
-  XSETOBJ (Qnull_pointer, 0);
-#endif
 }
 
 static void
@@ -3457,10 +3453,10 @@ deferror_1 (Lisp_Object *symbol, const char *name, const char *messuhhj,
   assert (SYMBOLP (inherits_from));
   conds = Fget (inherits_from, Qerror_conditions, Qnil);
   Fput (*symbol, Qerror_conditions, Fcons (*symbol, conds));
-  /* NOT build_translated_string ().  This function is called at load time
+  /* NOT build_msg_string ().  This function is called at load time
      and the string needs to get translated at run time.  (This happens
      in the function (display-error) in cmdloop.el.) */
-  Fput (*symbol, Qerror_message, build_string (messuhhj));
+  Fput (*symbol, Qerror_message, build_msg_string (messuhhj));
 }
 
 void

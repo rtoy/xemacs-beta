@@ -870,11 +870,20 @@ main (int argc, char *argv[])
   for(chan=3; chan < _NFILE; close(chan++)) /* close unwanted channels */
     ;
 
+
+#ifdef WIN32_NATIVE
+  tmpdir = getenv ("TEMP");
+  if (!tmpdir)
+    tmpdir = getenv ("TMP");
+  if (!tmpdir)
+    tmpdir = "c:\\";
+#else
 #ifdef USE_TMPDIR
-  tmpdir = getenv("TMPDIR");
+  tmpdir = getenv ("TMPDIR");
 #endif
   if (!tmpdir)
     tmpdir = "/tmp";
+#endif /* WIN32_NATIVE */
 #ifdef USE_LITOUT
   {
     /* this is to allow ^D to pass to emacs */

@@ -23,8 +23,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file Mule-ized by Ben Wing, 5-15-01. */
 
-#define DONT_ENCAPSULATE
-
 #include <config.h>
 #include "lisp.h"
 
@@ -236,7 +234,7 @@ play_sound_file (Extbyte *sound_file, int volume)
       play_internal (buffer, bytes_read, ac);
     }
   drain_audio_port (ac);
-  unbind_to (count, Qnil);
+  unbind_to (count);
 }
 
 static long
@@ -269,7 +267,7 @@ play_sound_data (UChar_Binary *data, int length, int volume)
     return 0;
   result = play_internal (data, length, ac);
   drain_audio_port (ac);
-  unbind_to (count, Qnil);
+  unbind_to (count);
   return result;
 }
 

@@ -1,5 +1,6 @@
 /* Old process support under MS Windows, soon to die.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,7 +23,15 @@ Boston, MA 02111-1307, USA.
      Adapted from alarm.c by Tim Fleehart */
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
-/* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
+/* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
+   (Note: Sync messages from Marc Paquette may indicate
+   incomplete synching, so beware.)
+ */
+
+/* !!#### This piece of crap is not getting Mule-ized.  It will go away
+   as soon as my process-stderr patches go in and there are a few stream
+   device fixes, so my new call-process-written-using-start-process can
+   always work. */
 
 /* #### This ENTIRE file is only around because of callproc.c, which
    in turn is only used in batch mode.
@@ -33,35 +42,25 @@ Boston, MA 02111-1307, USA.
       in asynch. subprocesses. (it's a feature in `old-call-process-internal'.)
    -- a noninteractive event loop that supports processes.
 */
-
 #include <config.h>
-#undef signal
-#undef wait
-#undef spawnve
-#undef select
-#undef kill
+#include "lisp.h"
 
-#include <windows.h>
+#include "buffer.h"
+#include "console-msw.h"
+#include "process.h"
+
 #ifdef HAVE_A_OUT_H
 #include <a.out.h>
 #endif
-#include "lisp.h"
-#include "sysproc.h"
-#include "nt.h"
-#include "ntheap.h" /* From 19.34.6 */
-#include "systime.h"
-#include "syssignal.h"
 #include "sysfile.h"
+#include "sysproc.h"
+#include "syssignal.h"
+#include "systime.h"
 #include "syswait.h"
-#include "buffer.h"
-#include "process.h"
 
-#include "console-msw.h"
-
-/*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
 
 /* #### I'm not going to play with shit. */
-#pragma warning (disable:4013 4024 4090)
+// #pragma warning (disable:4013 4024 4090)
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
@@ -85,15 +84,72 @@ Lisp_Object Vwin32_start_process_share_console;
    but is useful for Win32 processes on both Win95 and NT as well.  */
 Lisp_Object Vwin32_pipe_read_delay;
 
-/* Control whether xemacs_stat() attempts to generate fake but hopefully
-   "accurate" inode values, by hashing the absolute truenames of files.
-   This should detect aliasing between long and short names, but still
-   allows the possibility of hash collisions.  */
-Lisp_Object Vwin32_generate_fake_inodes;
-
-Lisp_Object Qhigh, Qlow;
-
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
+
+/* child_process.status values */
+enum {
+  STATUS_READ_ERROR = -1,
+  STATUS_READ_READY,
+  STATUS_READ_IN_PROGRESS,
+  STATUS_READ_FAILED,
+  STATUS_READ_SUCCEEDED,
+  STATUS_READ_ACKNOWLEDGED
+};
+
+/* This structure is used for both pipes and sockets; for
+   a socket, the process handle in pi is NULL. */
+typedef struct _child_process
+{
+  int                   fd;
+  int                   pid;
+  HANDLE                char_avail;
+  HANDLE                char_consumed;
+  HANDLE                thrd;
+  HWND                  hwnd;
+  PROCESS_INFORMATION   procinfo;
+  volatile int          status;
+  char                  chr;
+} child_process;
+
+#define MAX_CHILDREN  MAXDESC/2
+#define CHILD_ACTIVE(cp) ((cp)->char_avail != NULL)
+
+extern child_process * new_child (void);
+extern void delete_child (child_process *cp);
+
+/* parallel array of private info on file handles */
+typedef struct
+{
+  unsigned         flags;
+  HANDLE           hnd;
+  child_process *  cp;
+} filedesc;
+
+extern filedesc fd_info [];
+
+/* fd_info flag definitions */
+#define FILE_READ    0x0001
+#define FILE_WRITE   0x0002
+#define FILE_BINARY  0x0010
+#define FILE_LAST_CR            0x0020
+#define FILE_AT_EOF             0x0040
+#define FILE_SEND_SIGCHLD       0x0080
+#define FILE_PIPE    0x0100
+#define FILE_SOCKET  0x0200
+
+/* #### This is an evil dirty hack. We must get rid of it.
+   Word "munging" is not in XEmacs lexicon. - kkm */
+
+/* parallel array of private info on file handles */
+filedesc fd_info [ MAXDESC ];
+
+#ifdef DEBUG_XEMACS
+#define DebPrint(stuff) _DebPrint stuff
+#else
+#define DebPrint(stuff)
+#endif
+
+/* ------------------------------------------------------------------------- */
 
 #ifndef DEBUG_XEMACS
 __inline
@@ -112,9 +168,6 @@ void _DebPrint (const char *fmt, ...)
 }
 
 /* sys_signal moved to nt.c. It's now called mswindows_signal... */
-
-/* Defined in <process.h> which conflicts with the local copy */
-#define _P_NOWAIT 1
 
 /* Child process management list.  */
 int child_proc_count = 0;
@@ -390,6 +443,18 @@ reader_thread (void *arg)
   return 0;
 }
 
+/* This must die. */
+static void
+unixtodos_filename (char *p)
+{
+  while (*p)
+    {
+      if (*p == '/')
+	*p = '\\';
+      p++;
+    }
+}
+
 /* To avoid Emacs changing directory, we just record here the directory
    the new process should start in.  This is set just before calling
    sys_spawnve, and is not generally valid at any other time.  */
@@ -402,7 +467,7 @@ create_child (const char *exe, char *cmdline, char *env,
   STARTUPINFO start;
   SECURITY_ATTRIBUTES sec_attrs;
   SECURITY_DESCRIPTOR sec_desc;
-  char dir[ MAXPATHLEN ];
+  char dir[ PATH_MAX ];
   
   if (cp == NULL) abort ();
   
@@ -477,7 +542,7 @@ merge_and_sort_env (char **envp1, char **envp2, char **new_envp)
     *nptr++ = *optr++;
   num += optr - envp2;
 
-  qsort (new_envp, num, sizeof (char*), compare_env);
+  qsort (new_envp, num, sizeof (char*), mswindows_compare_env);
 
   *nptr = NULL;
 }
@@ -485,8 +550,8 @@ merge_and_sort_env (char **envp1, char **envp2, char **new_envp)
 /* When a new child process is created we need to register it in our list,
    so intercept spawn requests.  */
 int 
-sys_spawnve (int mode, const char *cmdname,
-	     const char * const *argv, const char *const *envp)
+spawnve_will_die_soon (int mode, const Intbyte *cmdname,
+		       const Intbyte * const *argv, const Intbyte *const *envp)
 {
   Lisp_Object program, full;
   char *cmdline, *env, *parg, **targ;
@@ -550,7 +615,7 @@ sys_spawnve (int mode, const char *cmdname,
      while leaving the real app name as argv[0].  */
   if (is_dos_app)
     {
-      cmdname = (char*) alloca (MAXPATHLEN);
+      cmdname = (char*) alloca (PATH_MAX);
       if (egetenv ("CMDPROXY"))
 	strcpy ((char*)cmdname, egetenv ("CMDPROXY"));
       else
@@ -793,7 +858,7 @@ find_child_console (HWND hwnd, child_process * cp)
 
       GetClassName (hwnd, window_class, sizeof (window_class));
       if (strcmp (window_class,
-		  mswindows_windows9x_p()
+		  mswindows_windows9x_p
 		  ? "tty"
 		  : "ConsoleWindowClass") == 0)
 	{
@@ -806,7 +871,7 @@ find_child_console (HWND hwnd, child_process * cp)
 }
 
 int 
-sys_kill (int pid, int sig)
+kill_will_disappear_soon (int pid, int sig)
 {
   child_process *cp;
   HANDLE proc_hand;
@@ -886,7 +951,7 @@ sys_kill (int pid, int sig)
       if (NILP (Vwin32_start_process_share_console) && cp && cp->hwnd)
 	{
 #if 1
-	  if (mswindows_windows9x_p())
+	  if (mswindows_windows9x_p)
 	    {
 /*
    Another possibility is to try terminating the VDM out-right by
@@ -941,6 +1006,40 @@ sys_kill (int pid, int sig)
 
   if (need_to_free)
     CloseHandle (proc_hand);
+
+  return rc;
+}
+
+/* From callproc.c  */
+extern Lisp_Object Vbinary_process_input;
+extern Lisp_Object Vbinary_process_output;
+
+/* Unix pipe() has only one arg */
+/* Will die as soon as callproc.c dies */
+int
+pipe_will_die_soon (int *phandles)
+{
+  int rc;
+  unsigned flags;
+
+  /* make pipe handles non-inheritable; when we spawn a child, we
+     replace the relevant handle with an inheritable one.  Also put
+     pipes into binary mode; we will do text mode translation ourselves
+     if required.  */
+  rc = _pipe (phandles, 0, _O_NOINHERIT | _O_BINARY);
+
+  if (rc == 0)
+    {
+      flags = FILE_PIPE | FILE_READ;
+      if (!NILP (Vbinary_process_output))
+	  flags |= FILE_BINARY;
+      fd_info[phandles[0]].flags = flags;
+
+      flags = FILE_PIPE | FILE_WRITE;
+      if (!NILP (Vbinary_process_input))
+	  flags |= FILE_BINARY;
+      fd_info[phandles[1]].flags = flags;
+    }
 
   return rc;
 }
@@ -1038,272 +1137,16 @@ set_process_dir (const char * dir)
 {
   process_dir = dir;
 }
-
-/* Some miscellaneous functions that are Windows specific, but not GUI
-   specific (ie. are applicable in terminal or batch mode as well).  */
-
-DEFUN ("win32-short-file-name", Fwin32_short_file_name, 1, 1, "", /*
-  Return the short file name version (8.3) of the full path of FILENAME.
-If FILENAME does not exist, return nil.
-All path elements in FILENAME are converted to their short names.
-*/
-       (filename))
-{
-  char shortname[PATH_MAX];
-
-  CHECK_STRING (filename);
-
-  /* first expand it.  */
-  filename = Fexpand_file_name (filename, Qnil);
-
-  /* luckily, this returns the short version of each element in the path.  */
-  if (GetShortPathName (XSTRING_DATA (filename), shortname, PATH_MAX) == 0)
-    return Qnil;
-
-  CORRECT_DIR_SEPS (shortname);
-
-  return build_string (shortname);
-}
-
-
-DEFUN ("win32-long-file-name", Fwin32_long_file_name, 1, 1, "", /*
-  Return the long file name version of the full path of FILENAME.
-If FILENAME does not exist, return nil.
-All path elements in FILENAME are converted to their long names.
-*/
-       (filename))
-{
-  char longname[ PATH_MAX ];
-
-  CHECK_STRING (filename);
-
-  /* first expand it.  */
-  filename = Fexpand_file_name (filename, Qnil);
-
-  if (!win32_get_long_filename (XSTRING_DATA (filename), longname, PATH_MAX))
-    return Qnil;
-
-  CORRECT_DIR_SEPS (longname);
-
-  return build_string (longname);
-}
-
-DEFUN ("win32-set-process-priority", Fwin32_set_process_priority, 2, 2, "", /*
-  Set the priority of PROCESS to PRIORITY.
-If PROCESS is nil, the priority of Emacs is changed, otherwise the
-priority of the process whose pid is PROCESS is changed.
-PRIORITY should be one of the symbols high, normal, or low;
-any other symbol will be interpreted as normal.
-
-If successful, the return value is t, otherwise nil.
-*/
-       (process, priority))
-{
-  HANDLE proc_handle = GetCurrentProcess ();
-  DWORD  priority_class = NORMAL_PRIORITY_CLASS;
-  Lisp_Object result = Qnil;
-
-  CHECK_SYMBOL (priority);
-
-  if (!NILP (process))
-    {
-      DWORD pid;
-      child_process *cp;
-
-      CHECK_INT (process);
-
-      /* Allow pid to be an internally generated one, or one obtained
-	 externally.  This is necessary because real pids on Win95 are
-	 negative.  */
-
-      pid = XINT (process);
-      cp = find_child_pid (pid);
-      if (cp != NULL)
-	pid = cp->procinfo.dwProcessId;
-
-      proc_handle = OpenProcess (PROCESS_SET_INFORMATION, FALSE, pid);
-    }
-
-  if (EQ (priority, Qhigh))
-    priority_class = HIGH_PRIORITY_CLASS;
-  else if (EQ (priority, Qlow))
-    priority_class = IDLE_PRIORITY_CLASS;
-
-  if (proc_handle != NULL)
-    {
-      if (SetPriorityClass (proc_handle, priority_class))
-	result = Qt;
-      if (!NILP (process))
-	CloseHandle (proc_handle);
-    }
-
-  return result;
-}
-
-
-DEFUN ("win32-get-locale-info", Fwin32_get_locale_info, 1, 2, "", /*
-  "Return information about the Windows locale LCID.
-By default, return a three letter locale code which encodes the default
-language as the first two characters, and the country or regional variant
-as the third letter.  For example, ENU refers to `English (United States)',
-while ENC means `English (Canadian)'.
-
-If the optional argument LONGFORM is non-nil, the long form of the locale
-name is returned, e.g. `English (United States)' instead.
-
-If LCID (a 16-bit number) is not a valid locale, the result is nil.
-*/
-     (lcid, longform))
-{
-  int got_abbrev;
-  int got_full;
-  char abbrev_name[32] = { 0 };
-  char full_name[256] = { 0 };
-
-  CHECK_INT (lcid);
-
-  if (!IsValidLocale (XINT (lcid), LCID_SUPPORTED))
-    return Qnil;
-
-  if (NILP (longform))
-    {
-      got_abbrev = GetLocaleInfo (XINT (lcid),
-				  LOCALE_SABBREVLANGNAME | LOCALE_USE_CP_ACP,
-				  abbrev_name, sizeof (abbrev_name));
-      if (got_abbrev)
-	return build_string (abbrev_name);
-    }
-  else
-    {
-      got_full = GetLocaleInfo (XINT (lcid),
-				LOCALE_SLANGUAGE | LOCALE_USE_CP_ACP,
-				full_name, sizeof (full_name));
-      if (got_full)
-	return build_string (full_name);
-    }
-
-  return Qnil;
-}
-
-
-DEFUN ("win32-get-current-locale-id", Fwin32_get_current_locale_id, 0, 0, "", /*
-  "Return Windows locale id for current locale setting.
-This is a numerical value; use `win32-get-locale-info' to convert to a
-human-readable form.
-*/
-       ())
-{
-  return make_int (GetThreadLocale ());
-}
-
-
-DEFUN ("win32-get-default-locale-id", Fwin32_get_default_locale_id, 0, 1, "", /*
-  "Return Windows locale id for default locale setting.
-By default, the system default locale setting is returned; if the optional
-parameter USERP is non-nil, the user default locale setting is returned.
-This is a numerical value; use `win32-get-locale-info' to convert to a
-human-readable form.
-*/
-       (userp))
-{
-  if (NILP (userp))
-    return make_int (GetSystemDefaultLCID ());
-  return make_int (GetUserDefaultLCID ());
-}
-
-DWORD int_from_hex (char * s)
-{
-  DWORD val = 0;
-  static char hex[] = "0123456789abcdefABCDEF";
-  char * p;
-
-  while (*s && (p = strchr(hex, *s)) != NULL)
-    {
-      unsigned digit = p - hex;
-      if (digit > 15)
-	digit -= 6;
-      val = val * 16 + digit;
-      s++;
-    }
-  return val;
-}
-
-/* We need to build a global list, since the EnumSystemLocale callback
-   function isn't given a context pointer.  */
-Lisp_Object Vwin32_valid_locale_ids;
-
-BOOL CALLBACK enum_locale_fn (LPTSTR localeNum)
-{
-  DWORD id = int_from_hex (localeNum);
-  Vwin32_valid_locale_ids = Fcons (make_int (id), Vwin32_valid_locale_ids);
-  return TRUE;
-}
-
-DEFUN ("win32-get-valid-locale-ids", Fwin32_get_valid_locale_ids, 0, 0, "", /*
-  Return list of all valid Windows locale ids.
-Each id is a numerical value; use `win32-get-locale-info' to convert to a
-human-readable form.
-*/
-       ())
-{
-  Vwin32_valid_locale_ids = Qnil;
-
-  EnumSystemLocales (enum_locale_fn, LCID_SUPPORTED);
-
-  Vwin32_valid_locale_ids = Fnreverse (Vwin32_valid_locale_ids);
-  return Vwin32_valid_locale_ids;
-}
-
-
-DEFUN ("win32-set-current-locale", Fwin32_set_current_locale, 1, 1, "", /*
-  Make Windows locale LCID be the current locale setting for Emacs.
-If successful, the new locale id is returned, otherwise nil.
-*/
-     (lcid))
-{
-  CHECK_INT (lcid);
-
-  if (!IsValidLocale (XINT (lcid), LCID_SUPPORTED))
-    return Qnil;
-
-  /* #### not supported under win98, but will go away */
-  if (!SetThreadLocale (XINT (lcid)))
-    return Qnil;
-
-/* Sync with FSF Emacs 19.34.6 note: dwWinThreadId declared in
-   w32term.h and defined in w32fns.c, both of which are not in current
-   XEmacs.  #### Check what we lose by ifdef'ing out these. --marcpa */
-#if 0
-  /* Need to set input thread locale if present.  */
-  if (dwWinThreadId)
-    /* Reply is not needed.  */
-    PostThreadMessage (dwWinThreadId, WM_EMACS_SETLOCALE, XINT (lcid), 0);
-#endif
-
-  return make_int (GetThreadLocale ());
-}
 
 
 void
 syms_of_ntproc (void)
 {
-  DEFSUBR (Fwin32_short_file_name);
-  DEFSUBR (Fwin32_long_file_name);
-  DEFSUBR (Fwin32_set_process_priority);
-  DEFSUBR (Fwin32_get_locale_info);
-  DEFSUBR (Fwin32_get_current_locale_id);
-  DEFSUBR (Fwin32_get_default_locale_id);
-  DEFSUBR (Fwin32_get_valid_locale_ids);
-  DEFSUBR (Fwin32_set_current_locale);
 }
-
 
 void
 vars_of_ntproc (void)
 {
-  DEFSYMBOL (Qhigh);
-  DEFSYMBOL (Qlow);
-
   DEFVAR_LISP ("win32-quote-process-args", &Vwin32_quote_process_args /*
     Non-nil enables quoting of process arguments to ensure correct parsing.
 Because Windows does not directly pass argv arrays to child processes,
@@ -1346,17 +1189,6 @@ of time slices to wait (effectively boosting the priority of the child
 process temporarily).  A value of zero disables waiting entirely.
 */ );
   Vwin32_pipe_read_delay = make_int (50);
-
-#if 0
-  DEFVAR_LISP ("win32-generate-fake-inodes", &Vwin32_generate_fake_inodes /*
-    "Non-nil means attempt to fake realistic inode values.
-This works by hashing the truename of files, and should detect 
-aliasing between long and short (8.3 DOS) names, but can have
-false positives because of hash collisions.  Note that determining
-the truename of a file can be slow.
-*/ );
-  Vwin32_generate_fake_inodes = Qnil;
-#endif
 }
 
 /* end of ntproc.c */

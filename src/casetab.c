@@ -19,21 +19,22 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
- /* Synched up with: FSF 19.28.  Between FSF 19.28 and 19.30, casetab.c
+/* Synched up with: FSF 19.28.  Between FSF 19.28 and 19.30, casetab.c
    was rewritten to use junky FSF char tables.  Meanwhile I rewrote it
-   to use more logical char tables.  RMS also discards the "list of four
-   tables" format and instead stuffs the other tables as "extra slots"
-   in the downcase table.  I've kept the four-lists format for now. */
+   to use more logical char tables. --ben */
 
 /* Written by Howard Gayle.  See some mythical and not-in-the-Emacs-
    distribution file chartab.c for details. */
 
 /* Modified for Mule by Ben Wing. */
 
-/* Case table consists of four char-table.  Those are for downcase,
+/* #### Someone (Yoshiki?) wrote the following comment, which I don't
+   understand.
+
+   Case tables consist of four char-tables.  These are for downcase,
    upcase, canonical and equivalent respectively.
 
-   It's entry is like this:
+   The entries are like this:
 
    downcase:	a -> a, A -> a.
    upcase:	a -> A, A -> a.  (The latter is for NOCASEP.)

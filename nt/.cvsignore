@@ -3,3 +3,5 @@ xemacs.ncb
 xemacs.opt
 xemacs.plg
 obj
+make-docfile.out
+

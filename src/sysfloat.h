@@ -23,20 +23,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_sysfloat_h_
 #define INCLUDED_sysfloat_h_
 
-/* Work around a problem that happens because math.h on hpux 7
-   defines two static variables--which, in Emacs, are not really static,
-   because `static' is defined as nothing.  The problem is that they are
-   defined both in data.c and in floatfns.c.
-   These macros prevent the name conflict.
-
-   (Is it still necessary to define static to nothing on hpux7?
-   Removing that would be the best fix. -jwz)
-  */
-# if defined (HPUX) && !defined (HPUX8)
-#  define _MAXLDBL THIS_FILENAME ## _maxldbl
-#  define _NMAXLDBL THIS_FILENAME ## _nmaxldbl
-# endif
-
 #if defined(LINUX) && !(defined (__GLIBC__) && (__GLIBC__ >= 2))
 /* These are redefined (correctly, but differently) in values.h.  */
 #undef INTBITS

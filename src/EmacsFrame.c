@@ -156,13 +156,8 @@ static XtResource resources[] = {
     XtRInt, sizeof (int),
     offset (interline), XtRImmediate, (XtPointer)0 },
   {
-#ifdef I18N4
-    XtNfontSet, XtCFontSet,
-    XtRFontSet, sizeof (XFontSet),
-#else
     XtNfont, XtCFont,
     XtRFontStruct, sizeof (XFontStruct *),
-#endif
     offset(font), XtRImmediate, (XtPointer)0
   },
   { XtNforeground, XtCForeground,
@@ -330,11 +325,6 @@ EmacsFrameRealize (Widget widget, XtValueMask *mask,
     LeaveWindowMask        |
     EnterWindowMask;
 
-
-#ifdef I18N4
-  /* Make sure that events wanted by the input method are selected. */
-  attrs->event_mask |= input_method_event_mask;
-#endif
 
   *mask |= CWEventMask;
 
@@ -640,7 +630,7 @@ EmacsFrameRecomputeCellSize (Widget w)
   if (! XtIsSubclass (w, emacsFrameClass))
     abort ();
 
-  default_face_height_and_width (make_frame (f), &ch, &cw);
+  default_face_height_and_width (wrap_frame (f), &ch, &cw);
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_set_cell_size (FRAME_X_SHELL_WIDGET (f), cw, ch);
 }

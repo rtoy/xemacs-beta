@@ -1,7 +1,7 @@
 ;;; code-process.el --- Process coding functions for XEmacs.
 
 ;; Copyright (C) 1985-1987, 1993, 1994, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Ben Wing
+;; Copyright (C) 1995, 2000 Ben Wing
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Author: Ben Wing
@@ -172,9 +172,11 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 	     (setq cs-r ret
 		   cs-w ret))))
     (let ((coding-system-for-read
-	   (or coding-system-for-read cs-r 'undecided))
+	   (or coding-system-for-read cs-r
+	       (car default-process-coding-system)))
 	  (coding-system-for-write
-	   (or coding-system-for-write cs-w)))
+	   (or coding-system-for-write cs-w
+	       (cdr default-process-coding-system))))
       (apply 'start-process-internal name buffer program program-args)
       )))
 
@@ -251,5 +253,21 @@ lost packets."
 	  (coding-system-for-write
 	   (or coding-system-for-write cs-w)))
       (open-network-stream-internal name buffer host service protocol))))
+
+(defun set-buffer-process-coding-system (decoding encoding)
+  "Set coding systems for the process associated with the current buffer.
+DECODING is the coding system to be used to decode input from the process,
+ENCODING is the coding system to be used to encode output to the process.
+
+For a list of possible values of CODING-SYSTEM, use \\[list-coding-systems]."
+  (interactive
+   "zCoding-system for process input: \nzCoding-system for process output: ")
+  (let ((proc (get-buffer-process (current-buffer))))
+    (if (null proc)
+	(error "no process")
+      (get-coding-system decoding)
+      (get-coding-system encoding)
+      (set-process-coding-system proc decoding encoding)))
+  (force-mode-line-update))
 
 ;;; code-process.el ends here

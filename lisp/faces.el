@@ -46,6 +46,11 @@
 
 ;;; Code:
 
+;; To elude the warnings for font functions. (Normally autoloaded when
+;; font-create-object is called)
+(eval-when-compile
+  (require 'font))
+
 (defgroup faces nil
   "Support for multiple text attributes (fonts, colors, ...)
 Such a collection of attributes is called a \"face\"."

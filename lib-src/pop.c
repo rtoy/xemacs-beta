@@ -1,5 +1,6 @@
 /* pop.c: client routines for talking to a POP3-protocol post-office server
    Copyright (c) 1991, 1993, 1996 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
    Written by Jonathan Kamens, jik@security.ov.com.
 
 This file is part of XEmacs.
@@ -21,7 +22,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
 #define NO_SHORTNAMES	/* Tell config not to load remap.h */
-#define DONT_ENCAPSULATE
 #include <config.h>
 #else
 #define MAIL_USE_POP

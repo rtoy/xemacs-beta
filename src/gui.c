@@ -1,6 +1,6 @@
 /* Generic GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -103,7 +103,7 @@ get_gui_callback (Lisp_Object data, Lisp_Object *fn, Lisp_Object *arg)
       *fn = Qeval;
       *arg = list3 (Qsignal,
 		    list2 (Qquote, Qerror),
-		    list2 (Qquote, list2 (build_translated_string
+		    list2 (Qquote, list2 (build_msg_string
 					  ("illegal callback"),
 					  data)));
     }
@@ -424,14 +424,12 @@ gui_name_accelerator (Lisp_Object nm)
 	  if (*name == '_' && *(name + 1))
 	    {
 	      Emchar accelerator = charptr_emchar (name + 1);
-	      /* #### bogus current_buffer dependency */
-	      return make_char (DOWNCASE (current_buffer, accelerator));
+	      return make_char (DOWNCASE (0, accelerator));
 	    }
 	}
 	INC_CHARPTR (name);
     }
-  return make_char (DOWNCASE (current_buffer,
-			      charptr_emchar (XSTRING_DATA (nm))));
+  return make_char (DOWNCASE (0, charptr_emchar (XSTRING_DATA (nm))));
 }
 
 /*
@@ -485,41 +483,19 @@ gui_item_included_p (Lisp_Object gui_item, Lisp_Object conflist)
   return 1;
 }
 
-static DOESNT_RETURN
-signal_too_long_error (Lisp_Object name)
-{
-  invalid_argument ("GUI item produces too long displayable string", name);
-}
-
-#ifdef HAVE_WINDOW_SYSTEM
 /*
- * Format "left flush" display portion of an item into BUF, guarded by
- * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating
- * null character, so actual maximum size of buffer consumed is
- * BUF_LEN + 1 bytes. If buffer is not big enough, then error is
- * signaled.
- * Return value is the offset to the terminating null character into the
- * buffer.
+ * Format "left flush" display portion of an item.
  */
-Bytecount
-gui_item_display_flush_left (Lisp_Object gui_item,
-			     char *buf, Bytecount buf_len)
+Lisp_Object
+gui_item_display_flush_left (Lisp_Object gui_item)
 {
   /* This function can call lisp */
-  char *p = buf;
-  Bytecount len;
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
+  Lisp_Object retval;
 
-  /* Copy item name first */
   CHECK_STRING (pgui_item->name);
-  len = XSTRING_LENGTH (pgui_item->name);
-  if (len > buf_len)
-    signal_too_long_error (pgui_item->name);
-  memcpy (p, XSTRING_DATA (pgui_item->name), len);
-  p += len;
+  retval = pgui_item->name;
 
-  /* Add space and suffix, if there is a suffix.
-   * If suffix is not string evaluate it */
   if (!NILP (pgui_item->suffix))
     {
       Lisp_Object suffix = pgui_item->suffix;
@@ -530,68 +506,45 @@ gui_item_display_flush_left (Lisp_Object gui_item,
 	  CHECK_STRING (suffix);
 	}
 
-      len = XSTRING_LENGTH (suffix);
-      if (p + len + 1 > buf + buf_len)
-	signal_too_long_error (pgui_item->name);
-      *(p++) = ' ';
-      memcpy (p, XSTRING_DATA (suffix), len);
-      p += len;
+      retval = concat3 (pgui_item->name, build_string (" "), suffix);
     }
-  *p = '\0';
-  return p - buf;
+
+  return retval;
 }
 
 /*
- * Format "right flush" display portion of an item into BUF, guarded by
- * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating
- * null character, so actual maximum size of buffer consumed is
- * BUF_LEN + 1 bytes. If buffer is not big enough, then error is
- * signaled.
- * Return value is the offset to the terminating null character into the
- * buffer.
+ * Format "right flush" display portion of an item into BUF.
  */
-Bytecount
-gui_item_display_flush_right (Lisp_Object gui_item,
-			      char *buf, Bytecount buf_len)
+Lisp_Object
+gui_item_display_flush_right (Lisp_Object gui_item)
 {
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
-  *buf = 0;
 
 #ifdef HAVE_MENUBARS
   /* Have keys? */
   if (!menubar_show_keybindings)
-    return 0;
+    return Qnil;
 #endif
 
   /* Try :keys first */
   if (!NILP (pgui_item->keys))
     {
       CHECK_STRING (pgui_item->keys);
-      if (XSTRING_LENGTH (pgui_item->keys) + 1 > buf_len)
-	signal_too_long_error (pgui_item->name);
-      memcpy (buf, XSTRING_DATA (pgui_item->keys),
-	      XSTRING_LENGTH (pgui_item->keys) + 1);
-      return XSTRING_LENGTH (pgui_item->keys);
+      return pgui_item->keys;
     }
 
   /* See if we can derive keys out of callback symbol */
   if (SYMBOLP (pgui_item->callback))
     {
       char buf2[1024]; /* #### */
-      Bytecount len;
 
       where_is_to_char (pgui_item->callback, buf2);
-      len = strlen (buf2);
-      if (len > buf_len)
-	signal_too_long_error (pgui_item->name);
-      strcpy (buf, buf2);
-      return len;
+      return build_string (buf2);
     }
 
   /* No keys - no right flush display */
-  return 0;
+  return Qnil;
 }
-#endif /* HAVE_WINDOW_SYSTEM */
 
 static Lisp_Object
 mark_gui_item (Lisp_Object obj)

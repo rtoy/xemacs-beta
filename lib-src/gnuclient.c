@@ -58,20 +58,7 @@ char gnuserv_version[] = "gnuclient version " GNUSERV_VERSION;
 
 #include "getopt.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
 #include <sysfile.h>
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif /* HAVE_STRING_H */
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-
-#include <signal.h>
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)
@@ -86,7 +73,7 @@ main (int argc, char *argv[])
 } /* main */
 #else /* SYSV_IPC || UNIX_DOMAIN_SOCKETS || INTERNET_DOMAIN_SOCKETS */
 
-static char cwd[MAXPATHLEN+2];	/* current working directory when calculated */
+static char cwd[PATH_MAX+2];	/* current working directory when calculated */
 static char *cp = NULL;		/* ptr into valid bit of cwd above */
 
 static pid_t emacs_pid;			/* Process id for emacs process */
@@ -161,7 +148,7 @@ get_current_working_directory (void)
   if (cp == NULL)
     {				/* haven't calculated it yet */
 #ifdef HAVE_GETCWD
-      if (getcwd (cwd,MAXPATHLEN) == NULL)
+      if (getcwd (cwd,PATH_MAX) == NULL)
 #else
       if (getwd (cwd) == 0)
 #endif /* HAVE_GETCWD */
@@ -194,7 +181,7 @@ filename_expand (char *fullpath, char *filename)
   /* filename - filename to expand */
 {
 #ifdef  CYGWIN
-  char cygwinFilename[MAXPATHLEN+1];
+  char cygwinFilename[PATH_MAX+1];
   extern void cygwin_conv_to_posix_path(const char *, char *);
 #endif
 
@@ -309,8 +296,8 @@ int
 main (int argc, char *argv[])
 {
   int starting_line = 1;	/* line to start editing at */
-  char command[MAXPATHLEN+50];	/* emacs command buffer */
-  char fullpath[MAXPATHLEN+1];	/* full pathname to file */
+  char command[PATH_MAX+50];	/* emacs command buffer */
+  char fullpath[PATH_MAX+1];	/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
   char *eval_function = NULL;	/* function to evaluate with `-f' */
   char *load_library = NULL;	/* library to load */
@@ -329,7 +316,7 @@ main (int argc, char *argv[])
   char *hostarg = NULL;		/* remote hostname */
   char *remotearg;
   char thishost[HOSTNAMSZ];	/* this hostname */
-  char remotepath[MAXPATHLEN+1]; /* remote pathname */
+  char remotepath[PATH_MAX+1]; /* remote pathname */
   char *path;
   int rflg = 0;			/* pathname given on cmdline */
   char *portarg;
@@ -353,12 +340,19 @@ main (int argc, char *argv[])
   else
     progname = argv[0];
 
+#ifdef WIN32_NATIVE
+  tmpdir = getenv ("TEMP");
+  if (!tmpdir)
+    tmpdir = getenv ("TMP");
+  if (!tmpdir)
+    tmpdir = "c:\\";
+#else
 #ifdef USE_TMPDIR
   tmpdir = getenv ("TMPDIR");
 #endif
   if (!tmpdir)
     tmpdir = "/tmp";
-
+#endif /* WIN32_NATIVE */
   display = getenv ("DISPLAY");
   if (display)
     display = my_strdup (display);

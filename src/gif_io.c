@@ -101,22 +101,22 @@ void GifStdIOInit(GifFileType *GifFile, FILE *file, int filehandle)
 Bytecount GifStdRead(GifByteType *buf, Bytecount size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
-  return (fread(buf, 1, size, IOtype->File));
+  return (retry_fread(buf, 1, size, IOtype->File));
 }
 
 Bytecount GifStdWrite(GifByteType *buf, Bytecount size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
-  return (fwrite(buf, 1, size, IOtype->File));  
+  return (retry_fwrite(buf, 1, size, IOtype->File));  
 }
 
 int GifStdFileClose(VoidPtr method_data)
 {
   int ret;
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
-  ret = fclose(IOtype->File);
+  ret = retry_fclose(IOtype->File);
   if (ret == 0 && IOtype->FileHandle != -1)
-    ret = close(IOtype->FileHandle);
+    ret = retry_close(IOtype->FileHandle);
   return ret;
 }
 
@@ -157,16 +157,16 @@ static char *GifErrorString[14] = {
   "Undefined error!",
 };
 
-const char *GetGifError(int error);
+const char *GetGifError(int errore);
 
 /*****************************************************************************
 * Get the last GIF error in human-readable form.			     *
 *****************************************************************************/
-const char *GetGifError(int error)
+const char *GetGifError(int errore)
 {
     char *Err;
 
-    switch(error) {
+    switch(errore) {
 	case D_GIF_ERR_OPEN_FAILED:
 	    Err = GifErrorString[0];
 	    break;

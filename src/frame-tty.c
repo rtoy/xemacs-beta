@@ -1,7 +1,6 @@
 /* TTY frame functions.
-   Copyright (C) 1995  Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
-   Copyright (C) 1997  Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997  Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -37,11 +36,14 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_tty_frame_plist;
 
+Lisp_Object Qframe_number;
+
 static void tty_raise_frame (struct frame *);
 
 
 static void
-tty_init_frame_1 (struct frame *f, Lisp_Object props)
+tty_init_frame_1 (struct frame *f, Lisp_Object props,
+		  int frame_name_is_defaulted)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
@@ -50,6 +52,8 @@ tty_init_frame_1 (struct frame *f, Lisp_Object props)
   f->order_count = CONSOLE_TTY_DATA (c)->frame_count;
   f->height = CONSOLE_TTY_DATA (c)->height;
   f->width = CONSOLE_TTY_DATA (c)->width;
+  if (frame_name_is_defaulted)
+    f->name = emacs_sprintf_string ("F%d", f->order_count);
 }
 
 static void
@@ -86,7 +90,7 @@ tty_after_init_frame (struct frame *f, int first_on_device,
 static void
 tty_make_frame_visible (struct frame *f)
 {
-  if (!FRAME_VISIBLE_P(f))
+  if (!FRAME_VISIBLE_P (f))
     {
       f->visible = -1;
     }
@@ -108,9 +112,9 @@ tty_make_frame_hidden (struct frame *f)
 static void
 tty_make_frame_unhidden (struct frame *f)
 {
-  if (!FRAME_REPAINT_P(f))
+  if (!FRAME_REPAINT_P (f))
     {
-      SET_FRAME_CLEAR(f);
+      SET_FRAME_CLEAR (f);
       f->visible = 1;
     }
 }
@@ -160,7 +164,7 @@ tty_lower_frame (struct frame *f)
 
   /* To lower this frame, another frame has to be raised.  Return if
      there is no other frame. */
-  if (NILP (tail) && EQ(frame_list, tail))
+  if (NILP (tail) && EQ (frame_list, tail))
     return;
 
   tty_make_frame_hidden (f);
@@ -180,6 +184,31 @@ tty_delete_frame (struct frame *f)
   if (!NILP (DEVICE_SELECTED_FRAME (d)))
     tty_raise_frame (XFRAME (DEVICE_SELECTED_FRAME (d)));
 }
+
+static Lisp_Object
+tty_frame_property (struct frame *f, Lisp_Object property)
+{
+  if (EQ (Qframe_number, property))
+    return make_int (f->order_count);
+
+  return Qunbound;
+}
+
+static int
+tty_internal_frame_property_p (struct frame *f, Lisp_Object property)
+{
+  return EQ (property, Qframe_number);
+}
+
+static Lisp_Object
+tty_frame_properties (struct frame *f)
+{
+  Lisp_Object props = Qnil;
+
+  props = cons3 (Qframe_number, make_int (f->order_count), props);
+
+  return props;
+}
 
 /************************************************************************/
 /*			      initialization				*/
@@ -197,6 +226,15 @@ console_type_create_frame_tty (void)
   CONSOLE_HAS_METHOD (tty, raise_frame);
   CONSOLE_HAS_METHOD (tty, lower_frame);
   CONSOLE_HAS_METHOD (tty, delete_frame);
+  CONSOLE_HAS_METHOD (tty, frame_property);
+  CONSOLE_HAS_METHOD (tty, internal_frame_property_p);
+  CONSOLE_HAS_METHOD (tty, frame_properties);
+}
+
+void
+syms_of_frame_tty (void)
+{
+  DEFSYMBOL (Qframe_number);
 }
 
 void

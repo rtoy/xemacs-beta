@@ -1,5 +1,6 @@
 /* Sound in windows nt XEmacs.
    Copyright (C) 1998 Andy Piper.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,13 +23,11 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /* This file Mule-ized by Ben Wing, 5-15-01. */
 
-#define DONT_ENCAPSULATE
-
 #include <config.h>
 #include "lisp.h"
 
 #include "sound.h"
-#include "nt.h"
+#include "syswindows.h"
 
 #include "sysfile.h"
 
@@ -39,20 +38,19 @@ void
 play_sound_file (Extbyte *sound_file, int volume)
 {
   DWORD flags = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
-  OFSTRUCT ofs;
   Lisp_Object fname =
-    Ffile_name_nondirectory (build_ext_string (sound_file, Qmswindows_tstr));
+    Ffile_name_nondirectory (build_tstr_string (sound_file));
   Extbyte *fnameext;
 
   CHECK_STRING (fname);
-  LISP_STRING_TO_EXTERNAL (fname, fnameext, Qmswindows_tstr);
+  LISP_STRING_TO_TSTR (fname, fnameext);
 
-  if (OpenFile (fnameext, &ofs, OF_EXIST) < 0)
+  if (qxeSearchPath (NULL, fnameext, NULL, 0, NULL, NULL) == 0)
     {
       /* file isn't in the path so read it as data */
       int size;
       UChar_Binary *data;
-      int ofd = open (sound_file, O_RDONLY | OPEN_BINARY, 0);
+      int ofd = qxe_open (XSTRING_DATA (fname), O_RDONLY | OPEN_BINARY, 0);
       
       if (ofd <0)
 	return;
@@ -63,22 +61,22 @@ play_sound_file (Extbyte *sound_file, int volume)
       
       if (!data)
 	{
-	  close (ofd);
+	  retry_close (ofd);
 	  return;
 	}
 
-      if (read (ofd, data, size) != size)
+      if (retry_read (ofd, data, size) != size)
 	{
-	  close (ofd);
+	  retry_close (ofd);
 	  xfree (data);
 	  return;
 	}
-      close (ofd);
+      retry_close (ofd);
       
       play_sound_data_1 (data, size, 100, FALSE);
     }
   else 
-    PlaySound (fnameext, NULL, flags);
+    qxePlaySound (fnameext, NULL, flags);
 }
 
 /* mswindows can't cope with playing a sound from alloca space so we
@@ -91,7 +89,7 @@ play_sound_data_1 (UChar_Binary *data, int length, int volume,
   static UChar_Binary *sound_data = 0;
   if (sound_data)
     {
-      PlaySound (NULL, NULL, flags);
+      qxePlaySound (NULL, NULL, flags);
       xfree (sound_data);
       sound_data = 0;
     }
@@ -104,7 +102,7 @@ play_sound_data_1 (UChar_Binary *data, int length, int volume,
   else
     sound_data = data;
 
-  PlaySound ((Extbyte *) sound_data, NULL, flags);
+  qxePlaySound ((Extbyte *) sound_data, NULL, flags);
 
   /* #### Error handling? */ 
   return 1;

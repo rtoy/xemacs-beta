@@ -5,6 +5,7 @@
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2001 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -61,16 +62,6 @@
   "Return the 'lock-shift property of CODING-SYSTEM."
   (coding-system-property coding-system 'lock-shift))
 
-(defun coding-system-charset (coding-system register)
-"Return the charset initially designated to REGISTER in CODING-SYSTEM.
-The allowable range of REGISTER is 0 through 3."
-  (if (or (< register 0) (> register 3))
-      (error 'args-out-of-range "coding-system-charset REGISTER" register 0 3))
-  (coding-system-property coding-system (nth register '(charset-g0
-							charset-g1
-							charset-g2
-							charset-g3))))
-
 ;;(defun coding-system-use-japanese-jisx0201-roman (coding-system)
 ;;  "Return the 'use-japanese-jisx0201-roman property of CODING-SYSTEM."
 ;;  (coding-system-property coding-system 'use-japanese-jisx0201-roman))
@@ -91,49 +82,58 @@ The allowable range of REGISTER is 0 through 3."
   "Return the CCL 'decode property of CODING-SYSTEM."
   (coding-system-property coding-system 'decode))
 
+(defun coding-system-iso2022-charset (coding-system register)
+"Return the charset initially designated to REGISTER in CODING-SYSTEM.
+The allowable range of REGISTER is 0 through 3."
+  (if (or (< register 0) (> register 3))
+      (error 'args-out-of-range "coding-system-charset REGISTER" register 0 3))
+  (coding-system-property coding-system (nth register '(charset-g0
+							charset-g1
+							charset-g2
+							charset-g3))))
+
 
 ;;;; Definitions of predefined coding systems
 
 (make-coding-system
  'ctext 'iso2022
- "Coding-system used in X as Compound Text Encoding."
+ "Compound Text"
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    eol-type nil
    mnemonic "CText"))
 
-;;; iso-8859-1 and ctext are aliases.
-
-;; (copy-coding-system 'ctext 'iso-8859-1)
 (make-coding-system
  'iso-8859-1 'no-conversion
- "Coding-system used in X as Compound Text Encoding."
+ "ISO-8859-1 (Latin-1)"
  '(eol-type nil mnemonic "Noconv"))
 
 (make-coding-system
  'iso-2022-8bit-ss2 'iso2022
- "ISO-2022 coding system using SS2 for 96-charset in 8-bit code."
+ "ISO-2022 8-bit w/SS2"
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    charset-g2 t ;; unspecified but can be used later.
    short t
    mnemonic "ISO8/SS"
+   documentation "ISO 2022 based 8-bit encoding using SS2 for 96-charset"
    ))
 
 (make-coding-system
  'iso-2022-7bit-ss2 'iso2022
- "ISO-2022 coding system using SS2 for 96-charset in 7-bit code."
+ "ISO-2022 7-bit w/SS2"
  '(charset-g0 ascii
    charset-g2 t ;; unspecified but can be used later.
    seven t
    short t
    mnemonic "ISO7/SS"
+   documentation "ISO 2022 based 7-bit encoding using SS2 for 96-charset"
    eol-type nil))
 
 ;; (copy-coding-system 'iso-2022-7bit-ss2 'iso-2022-jp-2)
 (make-coding-system
  'iso-2022-jp-2 'iso2022
- "ISO-2022 coding system using SS2 for 96-charset in 7-bit code."
+ "ISO-2022-JP-2"
  '(charset-g0 ascii
    charset-g2 t ;; unspecified but can be used later.
    seven t
@@ -143,67 +143,47 @@ The allowable range of REGISTER is 0 through 3."
 
 (make-coding-system
  'iso-2022-7bit 'iso2022
- "ISO 2022 based 7-bit encoding using only G0"
+ "ISO 2022 7-bit"
  '(charset-g0 ascii
    seven t
    short t
-   mnemonic "ISO7"))
+   mnemonic "ISO7"
+   documentation "ISO-2022-based 7-bit encoding using only G0"
+   ))
 
 ;; compatibility for old XEmacsen
-(copy-coding-system 'iso-2022-7bit 'iso-2022-7)
+(define-coding-system-alias 'iso-2022-7 'iso-2022-7bit)
 
 (make-coding-system
  'iso-2022-8 'iso2022
- "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
+ "ISO-2022 8-bit"
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    short t
    mnemonic "ISO8"
+   documentation "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
    ))
 
 (make-coding-system
  'escape-quoted 'iso2022
- "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
+ "Escape-Quoted (for .ELC files)"
  '(charset-g0 ascii
    charset-g1 latin-iso8859-1
    eol-type lf
    escape-quoted t
    mnemonic "ESC/Quot"
+   documentation "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
    ))
 
 (make-coding-system
  'iso-2022-lock 'iso2022
- "ISO-2022 coding system using Locking-Shift for 96-charset."
+ "ISO-2022 w/locking-shift"
  '(charset-g0 ascii
    charset-g1 t ;; unspecified but can be used later.
    seven t
    lock-shift t
    mnemonic "ISO7/Lock"
+   documentation "ISO-2022 coding system using Locking-Shift for 96-charset."
    ))
-
-;; initialize the coding categories to something semi-reasonable
-;; so that the remaining Lisp files can contain extended characters.
-;; (They will be in ISO-7 format)
-;; #### This list needs to be synched with the ones in mule-cmds.el.
-
-(set-coding-priority-list '(iso-7
-	    no-conversion
-	    ;; utf-8
-	    iso-8-1
-	    iso-8-2
-	    iso-8-designate
-	    iso-lock-shift
-	    shift-jis
-	    big5
-	    ;; ucs-4
-	    ))
-
-(set-coding-category-system 'iso-7 'iso-2022-7)
-(set-coding-category-system 'iso-8-designate 'ctext)
-(set-coding-category-system 'iso-8-1 'ctext)
-(set-coding-category-system 'iso-lock-shift 'iso-2022-lock)
-(set-coding-category-system 'no-conversion 'no-conversion)
-
-(setq-default buffer-file-coding-system 'iso-2022-8)
 
 ;;; mule-coding.el ends here

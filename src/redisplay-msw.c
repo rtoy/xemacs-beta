@@ -2,6 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,6 +22,9 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
+
+/* I think this file is essentially Mule-ized, but I'm not sure!
+   Could stand a good once-over.  Unicode support is trash, of course. */
 
 /* Authorship:
 
@@ -46,11 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
-
-#ifdef MULE
-#include "mule-ccl.h"
-#include "mule-charset.h"
-#endif
+#include "charset.h"
 
 #define MSWINDOWS_EOL_CURSOR_WIDTH	5
 
@@ -66,116 +66,78 @@ static void mswindows_redraw_exposed_windows (Lisp_Object window, int x,
 					int y, int width, int height);
 static void mswindows_output_dibitmap (struct frame *f, 
 				       Lisp_Image_Instance *p,
-				       struct display_box* db,
-				       struct display_glyph_area* dga);
+				       struct display_box *db,
+				       struct display_glyph_area *dga);
 
 typedef struct textual_run
 {
-  Lisp_Object charset;
-  unsigned char *ptr;
-  int len;
-  int dimension;
+  Lisp_Object charset; /* charset of this run */
+  WCHAR *ptr; /* pointer to Unicode chars in this run */
+  int nchars; /* number of internal characters in this run */
+  int nwchars; /* number of Unicode chars in this run */
 } textual_run;
 
-/* Separate out the text in DYN into a series of textual runs of a
-   particular charset.  Also convert the characters as necessary into
-   the format needed by XDrawImageString(), XDrawImageString16(), et
-   al.  (This means converting to one or two byte format, possibly
-   tweaking the high bits, and possibly running a CCL program.) You
-   must pre-allocate the space used and pass it in. (This is done so
-   you can alloca() the space.)  You need to allocate (2 * len) bytes
-   of TEXT_STORAGE and (len * sizeof (textual_run)) bytes of
-   RUN_STORAGE, where LEN is the length of the dynarr.
-
-   Returns the number of runs actually used. */
+/* Separate out the text in STR into a series of textual runs of a
+   particular charset.  Returns the number of runs actually used.
+   Returns the textual runs (STATICALLY ALLOCATED!) in RUN_STORAGE_PTR. */
 
 static int
-separate_textual_runs (unsigned char *text_storage,
-		       textual_run *run_storage,
+separate_textual_runs (textual_run **run_storage_ptr,
 		       const Emchar *str, Charcount len)
 {
-  Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
-					  possible valid charset when
-					  MULE is not defined */
+  static WCHAR *ext_storage;
+  static int ext_storage_size; /* in WCHARS! */
+  static textual_run *run_storage;
+  static int run_storage_size;
   int runs_so_far = 0;
+  int runbegin = 0;
+  int total_nchars = 0;
   int i;
-#ifdef MULE
-  struct ccl_program char_converter;
-  int need_ccl_conversion = 0;
-#endif
+  Lisp_Object prev_charset;
 
-  for (i = 0; i < len; i++)
+  if (len == 0)
+    return 0;
+
+  prev_charset = CHAR_CHARSET (str[0]);
+
+  for (i = 1; i <= len; i++)
     {
-      Emchar ch = str[i];
-      Lisp_Object charset;
-      int byte1, byte2;
-      int dimension;
-      int graphic;
-
-      BREAKUP_CHAR (ch, charset, byte1, byte2);
-      dimension = XCHARSET_DIMENSION (charset);
-      graphic   = XCHARSET_GRAPHIC   (charset);
-
-      if (!EQ (charset, prev_charset))
+      if (i == len || !EQ (CHAR_CHARSET (str[i]), prev_charset))
 	{
-	  run_storage[runs_so_far].ptr       = text_storage;
-	  run_storage[runs_so_far].charset   = charset;
-	  run_storage[runs_so_far].dimension = dimension;
+	  int j;
+	  Intbyte *int_storage =
+	    alloca_intbytes (MAX_EMCHAR_LEN * (i - runbegin));
+	  int int_storage_ptr = 0;
+	  Extbyte *alloca_ext_storage;
+	  int nchars;
 
-	  if (runs_so_far)
-	    {
-	      run_storage[runs_so_far - 1].len =
-		text_storage - run_storage[runs_so_far - 1].ptr;
-	      if (run_storage[runs_so_far - 1].dimension == 2)
-		run_storage[runs_so_far - 1].len >>= 1;
-	    }
+	  int_storage_ptr = 0;
+	  for (j = runbegin; j < i; j++)
+	    int_storage_ptr +=
+	      set_charptr_emchar (int_storage + int_storage_ptr, str[j]);
+	  TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr),
+			      ALLOCA, (alloca_ext_storage, nchars),
+			      Qmswindows_unicode);
+	  nchars /= sizeof (WCHAR); /* Tricky ... */
+	  DO_REALLOC (ext_storage, ext_storage_size, total_nchars + nchars,
+		      WCHAR);
+	  memcpy (ext_storage + total_nchars, alloca_ext_storage,
+		  nchars * sizeof (WCHAR));
+	  DO_REALLOC (run_storage, run_storage_size, runs_so_far + 1,
+		      textual_run);
+	  run_storage[runs_so_far].ptr = ext_storage + total_nchars;
+	  run_storage[runs_so_far].charset = prev_charset;
+	  run_storage[runs_so_far].nwchars = nchars;
+	  run_storage[runs_so_far].nchars = i - runbegin;
+	  total_nchars += nchars;
 	  runs_so_far++;
-	  prev_charset = charset;
-#ifdef MULE
-	  {
-	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
-	    if ((!NILP (ccl_prog))
-		  && (setup_ccl_program (&char_converter, ccl_prog) >= 0))
-	      need_ccl_conversion = 1;
-	  }
-#endif
+	  runbegin = i;
+	  if (i < len)
+	    prev_charset = CHAR_CHARSET (str[i]);
 	}
-
-      if (graphic == 0)
-	{
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else if (graphic == 1)
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
-	}
-#ifdef MULE
-      if (need_ccl_conversion)
-	{
-	  char_converter.reg[0] = XCHARSET_ID (charset);
-	  char_converter.reg[1] = byte1;
-	  char_converter.reg[2] = byte2;
-	  char_converter.ic = 0; /* start at beginning each time */
-	  ccl_driver (&char_converter, 0, 0, 0, 0, CCL_MODE_ENCODING);
-	  byte1 = char_converter.reg[1];
-	  byte2 = char_converter.reg[2];
-	}
-#endif
-      *text_storage++ = (unsigned char) byte1;
-      if (dimension == 2)
-	*text_storage++ = (unsigned char) byte2;
     }
 
-  if (runs_so_far)
-    {
-      run_storage[runs_so_far - 1].len =
-	text_storage - run_storage[runs_so_far - 1].ptr;
-      if (run_storage[runs_so_far - 1].dimension == 2)
-	run_storage[runs_so_far - 1].len >>= 1;
-    }
-
+  *run_storage_ptr = run_storage;
   return runs_so_far;
 }
 
@@ -185,20 +147,29 @@ mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
 				 textual_run *run)
 {
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
-  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
   SIZE size;
 
+#if 0 /* @@#### not the way of ikeyama's ws */
   if (!fi->proportional_p || !hdc)
-    return (fi->width * run->len);
+    {
+      if (XCHARSET_DIMENSION (run->charset) == 2)
+	/* Don't trust FONT_INSTANCE_WIDTH. Asian fonts have both of
+	   one and two column characters. */
+	goto the_hard_way;
+      else
+	return fi->width * run->nchars;
+    }
   else
     {
-      assert(run->dimension == 1);	/* #### FIXME! */
+    the_hard_way:
+#endif
       mswindows_set_dc_font (hdc, font_inst,
 			     cachel->underline, cachel->strikethru);
-      /* !!#### more mule bogosity */
-      GetTextExtentPoint32 (hdc, (char *) run->ptr, run->len, &size);
-      return(size.cx);
+      GetTextExtentPoint32W (hdc, run->ptr, run->nwchars, &size);
+      return size.cx;
+#if 0 /* @@#### not the way of ikeyama's ws */
     }
+#endif
 }
 
 /*
@@ -259,11 +230,11 @@ mswindows_update_dc (HDC hdc, Lisp_Object fg, Lisp_Object bg,
     }
 }
 
-static void mswindows_set_dc_font (HDC hdc, Lisp_Object font,
-				   int under, int strike)
+static void
+mswindows_set_dc_font (HDC hdc, Lisp_Object font, int under, int strike)
 {
-  SelectObject(hdc, mswindows_get_hfont (XFONT_INSTANCE (font),
-					 under, strike));
+  SelectObject (hdc, mswindows_get_hfont (XFONT_INSTANCE (font),
+					  under, strike));
 }
 
 /*****************************************************************************
@@ -273,7 +244,7 @@ static void mswindows_set_dc_font (HDC hdc, Lisp_Object font,
  ****************************************************************************/
 static void
 mswindows_output_hline (struct window *w, struct display_line *dl, struct rune *rb)
-{ /* XXX Implement me */
+{ /* #### Implement me */
 }
 
 
@@ -321,7 +292,7 @@ mswindows_output_blank (struct window *w, struct display_line *dl,
   else 
     {
       mswindows_update_dc (hdc, Qnil, cachel->background, Qnil);
-      ExtTextOut (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+      ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
 }
 
@@ -338,13 +309,12 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  struct face_cachel *cachel=0;
   Lisp_Object font = Qnil;
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HDC hdc = get_frame_dc (f, 1);
   int local_face_index = 0;
-  char *p_char = NULL;
-  int n_char = 0;
+  textual_run *run;
+  int nruns = 0;
   RECT rect = { xpos,
 		DISPLAY_LINE_YPOS (dl),
 		xpos + width,
@@ -362,16 +332,11 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   if (real_char_p)
     {
       /* Use the font from the underlying character */
-      cachel = WINDOW_FACE_CACHEL (w, findex);
-
-      /* #### MULE: Need to know the charset! */
-      font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
-    }
-
-  if ((focus || bar_p) && real_char_p)
-    {
-      p_char = (char*) &ch;
-      n_char = 1;
+      struct face_cachel *font_cachel = WINDOW_FACE_CACHEL (w, findex);
+      nruns = separate_textual_runs (&run, &ch, 1);
+      font = FACE_CACHEL_FONT (font_cachel, run->charset);
+      mswindows_set_dc_font (hdc, font,
+			     font_cachel->underline, font_cachel->strikethru);
     }
 
   if (!image_p)
@@ -386,11 +351,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 					     findex : local_face_index));
       mswindows_update_dc (hdc, color_cachel->foreground,
 			   color_cachel->background, Qnil);
-      if (real_char_p)
-        mswindows_set_dc_font (hdc, font,
-			       cachel->underline, cachel->strikethru);
-
-      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
+      ExtTextOutW (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect,
+	           nruns ? run->ptr : NULL, nruns ? run->nwchars : 0, NULL);
     }
 
   if (!cursor_p)
@@ -398,32 +360,53 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
   if (focus && bar_p)
     {
+      struct face_cachel *cursor_cachel;
       rect.right = rect.left + (EQ (bar, Qt) ? 1 : min (2, width));
       local_face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
-      cachel = WINDOW_FACE_CACHEL (w, local_face_index);
-      mswindows_update_dc (hdc, Qnil, cachel->background, Qnil);
-      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE, &rect, NULL, 0, NULL);
+      cursor_cachel = WINDOW_FACE_CACHEL (w, local_face_index);
+      mswindows_update_dc (hdc, Qnil, cursor_cachel->background, Qnil);
+      ExtTextOutW (hdc, xpos, dl->ypos, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
   else if (!focus)
     {
+      struct face_cachel *cursor_cachel;
+
       /* Now have real character drawn in its own color. We deflate
 	 the rectangle so character cell will be bounded by the
 	 previously drawn cursor shape */
       InflateRect (&rect, -1, -1);
-
-      if (real_char_p)
-	{
-	  p_char = (char*) &ch;
-	  n_char = 1;
-	}
-
       local_face_index = get_builtin_face_cache_index (w, Vdefault_face);
-      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? findex : local_face_index));
+      cursor_cachel = 
+	WINDOW_FACE_CACHEL (w, (real_char_p ? findex : local_face_index));
       mswindows_update_dc (hdc, 
-			   cachel->foreground, cachel->background, Qnil);
-      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
-		  &rect, p_char, n_char, NULL);
+			   cursor_cachel->foreground, 
+			   cursor_cachel->background, Qnil);
+      ExtTextOutW (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
+		   &rect, nruns ? run->ptr : NULL, nruns ? run->nwchars : 0,
+		   NULL);
     }
+
+#ifdef MULE
+  if (DEVICE_MSWINDOWS_P (d) &&
+      (FRAME_MSWINDOWS_CURSOR_X (f) != xpos
+       || FRAME_MSWINDOWS_CURSOR_Y (f) != DISPLAY_LINE_YPOS (dl)
+       || FRAME_MSWINDOWS_CURSOR_FINDEX (f) != findex))
+    {
+      HWND hwnd = FRAME_MSWINDOWS_HANDLE(f);
+      HIMC himc = ImmGetContext (hwnd);
+
+      FRAME_MSWINDOWS_CURSOR_X (f) = xpos;
+      FRAME_MSWINDOWS_CURSOR_Y (f) = DISPLAY_LINE_YPOS (dl);
+      FRAME_MSWINDOWS_CURSOR_FINDEX (f) = findex;
+
+    /* If the composition window is active, reset position of the
+       composition window. */
+      if (qxeImmGetCompositionString (himc, GCS_COMPSTR, NULL, 0))
+	mswindows_start_ime_composition (f);
+
+      ImmReleaseContext (hwnd, himc);
+    }
+#endif /* MULE */
 }
 
 
@@ -464,9 +447,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   HDC hdc = get_frame_dc (f, 1);
   int clip_end;
   Lisp_Object bg_pmap;
-  int len = Dynarr_length (buf);
-  unsigned char *text_storage = (unsigned char *) alloca (2 * len);
-  textual_run *runs = alloca_array (textual_run, len);
+  textual_run *runs;
   int nruns;
   int i, height;
   RECT rect;
@@ -525,7 +506,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_atp (buf, 0),
+  nruns = separate_textual_runs (&runs, Dynarr_atp (buf, 0),
 				 Dynarr_length (buf));
 
   for (i = 0; i < nruns; i++)
@@ -560,10 +541,9 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 	  }
 	}
 
-      assert (runs[i].dimension == 1);	/* #### FIXME: Broken when Mule? */
-      ExtTextOut (hdc, xpos, dl->ypos,
-		  NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
-		  &rect, (char *) runs[i].ptr, runs[i].len, NULL); 
+      ExtTextOutW (hdc, xpos, dl->ypos,
+		   NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
+		   &rect, runs[i].ptr, runs[i].nwchars, NULL);
 
       xpos += this_width;
     }
@@ -571,8 +551,8 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 
 static void
 mswindows_output_dibitmap (struct frame *f, Lisp_Image_Instance *p,
-			   struct display_box* db,
-			   struct display_glyph_area* dga)
+			   struct display_box *db,
+			   struct display_glyph_area *dga)
 {
   HDC hdc = get_frame_dc (f, 1);
   HDC hcompdc = get_frame_compdc (f);
@@ -735,7 +715,7 @@ mswindows_output_pixmap (struct window *w, Lisp_Object image_instance,
  * to by PRC, and paints only the intersection
  */
 static void
-mswindows_redisplay_deadbox_maybe (struct window *w, const RECT* prc)
+mswindows_redisplay_deadbox_maybe (struct window *w, const RECT *prc)
 {
   int sbh = window_scrollbar_height (w);
   int sbw = window_scrollbar_width (w);
@@ -1039,9 +1019,10 @@ mswindows_ring_bell (struct device *d, int volume, int pitch, int duration)
  Ripped off with minimal thought from the corresponding X routine.
  ****************************************************************************/
 static void
-mswindows_output_display_block (struct window *w, struct display_line *dl, int block,
-			  int start, int end, int start_pixpos, int cursor_start,
-			  int cursor_width, int cursor_height)
+mswindows_output_display_block (struct window *w, struct display_line *dl,
+				int block, int start, int end,
+				int start_pixpos, int cursor_start,
+				int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
   Emchar_dynarr *buf = Dynarr_new (Emchar);
@@ -1089,8 +1070,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 	{
 	  if (Dynarr_length (buf))
 	    {
-	      mswindows_output_string (w, dl, buf, xpos, 0, start_pixpos, width,
-				 findex, 0, 0, 0, 0);
+	      mswindows_output_string (w, dl, buf, xpos, 0, start_pixpos,
+				       width, findex, 0, 0, 0, 0);
 	      xpos = rb->xpos;
 	      width = 0;
 	    }
@@ -1272,12 +1253,10 @@ mswindows_output_vertical_divider (struct window *w, int clear_unused)
 		   WINDOW_FACE_CACHEL_BACKGROUND (w, DEFAULT_INDEX), Qnil);
       rect.right = WINDOW_RIGHT (w);
       rect.left = rect.right - spacing;
-      ExtTextOut (hdc, 0, 0, ETO_OPAQUE, 
-		  &rect, NULL, 0, NULL);
+      ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
       rect.left = div_left;
       rect.right = div_left + spacing;
-      ExtTextOut (hdc, 0, 0, ETO_OPAQUE, 
-		  &rect, NULL, 0, NULL);
+      ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
   
   /* Clear divider face */
@@ -1291,7 +1270,7 @@ mswindows_output_vertical_divider (struct window *w, int clear_unused)
 	= get_builtin_face_cache_index (w, Vvertical_divider_face);
       mswindows_update_dc (hdc, Qnil,
 		   WINDOW_FACE_CACHEL_BACKGROUND (w, div_face), Qnil);
-      ExtTextOut (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+      ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
 
   /* Draw a shadow around the divider */
@@ -1316,16 +1295,14 @@ mswindows_text_width (struct frame *f, struct face_cachel *cachel,
 {
   HDC hdc = get_frame_dc (f, 0);
   int width_so_far = 0;
-  unsigned char *text_storage = (unsigned char *) alloca (2 * len);
-  textual_run *runs = alloca_array (textual_run, len);
+  textual_run *runs;
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len);
+  nruns = separate_textual_runs (&runs, str, len);
 
   for (i = 0; i < nruns; i++)
-    width_so_far += mswindows_text_width_single_run (hdc,
-						     cachel, runs + i);
+    width_so_far += mswindows_text_width_single_run (hdc, cachel, runs + i);
 
   return width_so_far;
 }
@@ -1338,7 +1315,7 @@ mswindows_text_width (struct frame *f, struct face_cachel *cachel,
  given face.
  ****************************************************************************/
 static void
-mswindows_clear_region (Lisp_Object locale, struct device* d, struct frame* f, 
+mswindows_clear_region (Lisp_Object locale, struct device *d, struct frame *f, 
 			face_index findex, int x, int y,
 			int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
 			Lisp_Object background_pixmap)
@@ -1357,8 +1334,7 @@ mswindows_clear_region (Lisp_Object locale, struct device* d, struct frame* f,
   else
     {
       mswindows_update_dc (hdc, Qnil, fcolor, Qnil);
-      ExtTextOut (hdc, 0, 0, ETO_OPAQUE, 
-		  &rect, NULL, 0, NULL);
+      ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
 
 #ifdef HAVE_SCROLLBARS
@@ -1373,7 +1349,6 @@ mswindows_clear_frame (struct frame *f)
 {
   GdiFlush();
 }
-
 
 
 /************************************************************************/

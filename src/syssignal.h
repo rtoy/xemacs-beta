@@ -245,7 +245,9 @@ signal_handler_t qxe_reliable_signal (int signal_number,
 #define EMACS_KILLPG(pid, signo) killpg (pid, signo)
 #else
 #ifdef WIN32_NATIVE
-#define EMACS_KILLPG(pid, signo) kill (pid, signo)
+/* Only needed in callproc.c, slated to go */
+int kill_will_disappear_soon (int pid, int sig);
+#define EMACS_KILLPG(pid, signo) kill_will_disappear_soon (pid, signo)
 #else
 #define EMACS_KILLPG(pid, signo) kill (-(pid), signo)
 #endif

@@ -154,7 +154,7 @@ allocate_console (void)
   GCPRO1 (console);
 
   con->quit_char = 7; /* C-g */
-  con->command_builder = allocate_command_builder (console);
+  con->command_builder = allocate_command_builder (console, 1);
   con->function_key_map = Fmake_sparse_keymap (Qnil);
 
   UNGCPRO;
@@ -345,14 +345,6 @@ CONSOLE defaults to the selected console if omitted.
        (console))
 {
   return CONSOLE_CONNECTION (decode_console (console));
-}
-
-Lisp_Object
-make_console (struct console *con)
-{
-  Lisp_Object console;
-  XSETCONSOLE (console, con);
-  return console;
 }
 
 static Lisp_Object
@@ -874,7 +866,7 @@ On such systems, Emacs will start a subshell and wait for it to exit.
   stuff_buffered_input (stuffstring);
   sys_suspend ();
   /* the console is un-reset inside of the unwind-protect. */
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
 #ifdef SIGWINCH
   /* It is possible that a size change occurred while we were
@@ -1342,7 +1334,7 @@ common_init_complex_vars_of_console (void)
 #define CONSOLE_SLOTS_COUNT (CONSOLE_SLOTS_SIZE / sizeof (Lisp_Object))
 
 void
-reinit_complex_vars_of_console (void)
+reinit_complex_vars_of_console_runtime_only (void)
 {
   struct console *defs, *syms;
 

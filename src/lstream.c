@@ -1,7 +1,7 @@
 /* Generic stream implementation.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,9 +32,8 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 
 #include "sysfile.h"
-#include <errno.h>
 
-/* This function provides a generic buffering stream implementation.
+/* This module provides a generic buffering stream implementation.
    Conceptually, you send data to the stream or read data from the
    stream, not caring what's on the other end of the stream.  The
    other end could be another stream, a file descriptor, a stdio
@@ -43,94 +42,10 @@ Boston, MA 02111-1307, USA.  */
    interface and to do buffering.  Macros are defined to read
    or write characters, so the calling functions do not have to
    worry about blocking data together in order to achieve efficiency.
-   */
 
-/* Note that this object is called "stream" in Lisp but "lstream"
+   Note that this object is called "stream" in Lisp but "lstream"
    in C.  The reason for this is that "stream" is too generic a name
    for C; too much likelihood of conflict/confusion with C++, etc. */
-
-/* Functions are as follows:
-
-Lstream *Lstream_new (Lstream_implementation *imp, const char *mode)
-	Allocate and return a new Lstream.  This function is not
-	really meant to be called directly; rather, each stream type
-	should provide its own stream creation function, which
-	creates the stream and does any other necessary creation
-	stuff (e.g. opening a file).
-
-void Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
-			    int buffering_size)
-	Change the buffering of a stream.  See lstream.h.  By default
-	the buffering is STREAM_BLOCK_BUFFERED.
-
-int Lstream_flush (Lstream *lstr)
-	Flush out any pending unwritten data in the stream.  Clear
-	any buffered input data.  Returns 0 on success, -1 on error.
-
-int Lstream_putc (Lstream *stream, int c)
-	Write out one byte to the stream.  This is a macro and so
-	it is very efficient.  The C argument is only evaluated once
-	but the STREAM argument is evaluated more than once.  Returns
-	0 on success, -1 on error.
-
-int Lstream_getc (Lstream *stream)
-	Read one byte from the stream and returns it as an unsigned
-	char cast to an int, or EOF on end of file or error.
-	This is a macro and so it is very efficient.  The STREAM
-	argument is evaluated more than once.
-
-void Lstream_ungetc (Lstream *stream, int c)
-	Push one byte back onto the input queue, cast to unsigned char.
-	This will be the next byte read from the stream.  Any number
-	of bytes can be pushed back and will be read in the reverse
-	order they were pushed back -- most recent first. (This is
-	necessary for consistency -- if there are a number of bytes
-	that have been unread and I read and unread a byte, it needs
-	to be the first to be read again.) This is a macro and so it
-	is very efficient.  The C argument is only evaluated once but
-	the STREAM argument is evaluated more than once.
-
-int Lstream_fputc (Lstream *stream, int c)
-int Lstream_fgetc (Lstream *stream)
-void Lstream_fungetc (Lstream *stream, int c)
-	Function equivalents of the above macros.
-
-Bytecount Lstream_read (Lstream *stream, void *data,
-                                 Bytecount size)
-	Read SIZE bytes of DATA from the stream.  Return the number of
-	bytes read.  0 means EOF. -1 means an error occurred and no
-	bytes were read.
-
-Bytecount Lstream_write (Lstream *stream, void *data,
-                                  Bytecount size)
-	Write SIZE bytes of DATA to the stream.  Return the number of
-	bytes written.  -1 means an error occurred and no bytes were
-	written.
-
-void Lstream_unread (Lstream *stream, void *data, Bytecount size)
-	Push back SIZE bytes of DATA onto the input queue.  The
-	next call to Lstream_read() with the same size will read the
-	same bytes back.  Note that this will be the case even if
-	there is other pending unread data.
-
-int Lstream_delete (Lstream *stream)
-	Frees all memory associated with the stream is freed.  Calling
-	this is not strictly necessary, but it is much more efficient
-	than having the Lstream be garbage-collected.
-
-int Lstream_close (Lstream *stream)
-	Close the stream.  All data will be flushed out.
-
-void Lstream_reopen (Lstream *stream)
-	Reopen a closed stream.  This enables I/O on it again.
-	This is not meant to be called except from a wrapper routine
-	that reinitializes variables and such -- the close routine
-	may well have freed some necessary storage structures, for
-	example.
-
-void Lstream_rewind (Lstream *stream)
-	Rewind the stream to the beginning.
-*/
 
 #define DEFAULT_BLOCK_BUFFERING_SIZE 512
 #define MAX_READ_SIZE 512
@@ -179,6 +94,12 @@ finalize_lstream (void *header, int for_disksave)
 	/* Just close. */
 	Lstream_close (lstr);
     }
+
+  if (!for_disksave)
+    {
+      if (lstr->imp->finalizer)
+	(lstr->imp->finalizer) (lstr);
+    }
 }
 
 inline static Bytecount
@@ -199,6 +120,10 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
 					finalize_lstream, 0, 0, 0,
 					sizeof_lstream, Lstream);
 
+
+/* Change the buffering of a stream.  See lstream.h.  By default the
+   buffering is STREAM_BLOCK_BUFFERED. */
+
 void
 Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
 		       int buffering_size)
@@ -221,6 +146,12 @@ Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
 static const Lstream_implementation *lstream_types[32];
 static Lisp_Object Vlstream_free_list[32];
 static int lstream_type_count;
+
+/* Allocate and return a new Lstream.  This function is not really
+   meant to be called directly; rather, each stream type should
+   provide its own stream creation function, which creates the stream
+   and does any other necessary creation stuff (e.g. opening a
+   file). */
 
 Lstream *
 Lstream_new (const Lstream_implementation *imp, const char *mode)
@@ -262,11 +193,55 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
   return p;
 }
 
+/* Set or unset "character mode" on the stream.  The basic idea is that,
+   assuming valid internal-format data is passing through the stream and
+   we're processing the data character by character, we don't want partial
+   characters at the end of the data. (No partial characters at the
+   beginning happens naturally if we eliminate partial characters at the
+   end and the stream is implemented correctly.)
+
+   Character mode actually has two somewhat different meanings, depending
+   on whether this is a read stream or write stream.  If a read stream,
+   character mode means that data returned from calling Lstream_read() on
+   the stream will contain only full characters.  If a write stream,
+   character mode means that data passed to the write method in the stream
+   implementation will contain only full characters.  It's important to
+   note the non-parallelism in who should set this mode on the stream: The
+   *CALLER* sets character mode on read streams it creates; the *STREAM
+   ITSELF* sets character mode on write streams, typically at creation
+   time. */
+
 void
 Lstream_set_character_mode (Lstream *lstr)
 {
   lstr->flags |= LSTREAM_FL_NO_PARTIAL_CHARS;
 }
+
+/* Unset character mode.  See Lstream_set_character_mode(). */
+
+void
+Lstream_unset_character_mode (Lstream *lstr)
+{
+  lstr->flags &= ~LSTREAM_FL_NO_PARTIAL_CHARS;
+}
+
+/* Close the stream (if it's open), and free all memory associated with the
+   stream.  Put the stream on a free list; later calls to create a new
+   stream of this type may reuse this stream.  Calling this is not strictly
+   necessary, but it is much more efficient than having the Lstream be
+   garbage-collected.  Be VERY VERY SURE there are no pointers to this
+   object hanging around anywhere where they might be used!  When streams
+   are chained together, be VERY CAREFUL of the order in which you delete
+   them! (e.g. if the streams are in a singly-linked list, delete the head
+   first; this will close, and may send data down to the rest.  Then
+   proceed to the rest, one by one.  If the chains are in a doubly-linked
+   list, close all the streams first (again, from the head to the tail),
+   disconnect the back links, then delete starting from the head.  In
+   general, it's a good idea to close everything before deleting
+   anything.
+
+   NOTE: DO NOT CALL DURING GARBAGE COLLECTION (e.g. in a finalizer).  You
+   will be aborted.  See free_managed_lcrecord(). */
 
 void
 Lstream_delete (Lstream *lstr)
@@ -290,6 +265,11 @@ Lstream_delete (Lstream *lstr)
 #define Lstream_internal_error(reason, lstr) \
   signal_error (Qinternal_error, reason, wrap_lstream (lstr))
 
+/* Reopen a closed stream.  This enables I/O on it again.  This is not
+   meant to be called except from a wrapper routine that reinitializes
+   variables and such -- the close routine may well have freed some
+   necessary storage structures, for example. */
+
 void
 Lstream_reopen (Lstream *lstr)
 {
@@ -298,16 +278,18 @@ Lstream_reopen (Lstream *lstr)
   lstr->flags |= LSTREAM_FL_IS_OPEN;
 }
 
-/* Attempt to flush out all of the buffered data for writing. */
+/* Try to write as much of DATA as possible to the stream.  Return the
+   number of bytes written. */
 
-int
-Lstream_flush_out (Lstream *lstr)
+static int
+Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 {
   Bytecount num_written;
+  const unsigned char *orig_data = data;
+  int error_occurred = 0;
 
-  while (lstr->out_buffer_ind > 0)
+  while (size > 0)
     {
-      Bytecount size = lstr->out_buffer_ind;
       if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
 	Lstream_internal_error ("lstream not open", lstr);
       if (! (lstr->flags & LSTREAM_FL_WRITE))
@@ -320,7 +302,6 @@ Lstream_flush_out (Lstream *lstr)
 	   character at the end.  We need to spit back that
 	   incomplete character. */
 	{
-	  const unsigned char *data = lstr->out_buffer;
 	  const unsigned char *dataend = data + size - 1;
 	  assert (size > 0); /* safety check ... */
 	  /* Optimize the most common case. */
@@ -341,31 +322,65 @@ Lstream_flush_out (Lstream *lstr)
 	    }
 	}
 
-      num_written = (lstr->imp->writer) (lstr, lstr->out_buffer, size);
+      num_written = (lstr->imp->writer) (lstr, data, size);
       if (num_written == 0)
 	/* If nothing got written, then just hold the data.  This may
 	   occur, for example, if this stream does non-blocking I/O;
 	   the attempt to write the data might have resulted in an
 	   EWOULDBLOCK error. */
-	return 0;
-      else if (num_written >= lstr->out_buffer_ind)
-	lstr->out_buffer_ind = 0;
+	break;
+      else if (num_written > size)
+	abort ();
       else if (num_written > 0)
 	{
-	  memmove (lstr->out_buffer, lstr->out_buffer + num_written,
-		   lstr->out_buffer_ind - num_written);
-	  lstr->out_buffer_ind -= num_written;
+	  data += num_written;
+	  size -= num_written;
 	}
       else
-	/* If error, just hold the data, for similar reasons as above. */
-	return -1;
+	{
+	  /* If error, just hold the data, for similar reasons as above. */
+	  error_occurred = 1;
+	  break;
+	}
     }
 
   if (lstr->imp->flusher)
-    return (lstr->imp->flusher) (lstr);
+    error_occurred = (lstr->imp->flusher) (lstr) < 0;
 
-  return 0;
+  if (data == orig_data && error_occurred)
+    return -1;
+
+  return data - orig_data;
 }
+
+/* Attempt to flush out all of the buffered data for writing.  Leaves
+   whatever wasn't flushed sitting in the stream's buffers.  Return -1 if
+   nothing written and error occurred, 0 otherwise. */
+
+int
+Lstream_flush_out (Lstream *lstr)
+{
+  Bytecount num_written =
+    Lstream_really_write (lstr, lstr->out_buffer, lstr->out_buffer_ind);
+  if (num_written == lstr->out_buffer_ind)
+    {
+      lstr->out_buffer_ind = 0;
+      return 0;
+    }
+  else if (num_written > 0)
+    {
+      memmove (lstr->out_buffer, lstr->out_buffer + num_written,
+	       lstr->out_buffer_ind - num_written);
+      lstr->out_buffer_ind -= num_written;
+      return 0;
+    }
+  else return num_written;
+}
+
+/* Flush out any pending unwritten data in the stream.  Clear any buffered
+   input data.  This differs from Lstream_flush_out() in that it also
+   clears any unflushable buffered data.  Returns 0 on success, -1 on
+   error. */
 
 int
 Lstream_flush (Lstream *lstr)
@@ -388,7 +403,7 @@ Lstream_flush (Lstream *lstr)
    the buffering size. (This is used to deal with the possibility
    that the stream writer might refuse to write any bytes now, e.g.
    if it's getting EWOULDBLOCK errors.   We have to keep stocking them
-   up until they can be written, so as to avoid losing data. */
+   up until they can be written, so as to avoid losing data.) */
 
 static Bytecount
 Lstream_adding (Lstream *lstr, Bytecount num, int force)
@@ -415,7 +430,7 @@ Lstream_adding (Lstream *lstr, Bytecount num, int force)
 
 /* Like Lstream_write(), but does not handle line-buffering correctly. */
 
-static Bytecount
+static int
 Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size)
 {
   const unsigned char *p = (const unsigned char *) data;
@@ -424,65 +439,110 @@ Lstream_write_1 (Lstream *lstr, const void *data, Bytecount size)
     Lstream_internal_error ("lstream not open", lstr);
   if (! (lstr->flags & LSTREAM_FL_WRITE))
     Lstream_internal_error ("lstream not open for writing", lstr);
-  {
-    int couldnt_write_last_time = 0;
 
-    while (1)
-      {
-	/* Figure out how much we can add to the buffer */
-	Bytecount chunk = Lstream_adding (lstr, size, 0);
-	if (chunk == 0)
-	  {
-	    if (couldnt_write_last_time)
-	      /* Ung, we ran out of space and tried to flush
-		 the buffer, but it didn't work because the stream
-		 writer is refusing to accept any data.  So we
-		 just have to squirrel away all the rest of the
-		 stuff. */
-	      chunk = Lstream_adding (lstr, size, 1);
-	    else
-	      couldnt_write_last_time = 1;
-	  }
-	/* Do it. */
-	if (chunk > 0)
-          {
-            memcpy (lstr->out_buffer + lstr->out_buffer_ind, p + off, chunk);
-            lstr->out_buffer_ind += chunk;
-            lstr->byte_count     += chunk;
-            size -= chunk;
-            off  += chunk;
-          }
-	/* If the buffer is full and we have more to add, flush it out. */
-	if (size > 0)
-	  {
-	    if (Lstream_flush_out (lstr) < 0)
-	      {
-		if (off == 0)
-		  return -1;
-		else
-		  return off;
-	      }
-	  }
-	else
-	  break;
-      }
-  }
-  return off;
+  if (lstr->buffering == LSTREAM_UNBUFFERED)
+    {
+      /* If there is buffered data, it means we ran into blocking
+	 errors the previous time and had to buffer our remaining
+	 data.  Try to write it now. */
+      if (lstr->out_buffer_ind > 0)
+	{
+	  if (Lstream_flush_out (lstr) < 0)
+	    return -1;
+	}
+
+      /* If not still blocked, try to write the new data */
+      if (lstr->out_buffer_ind == 0)
+	{
+	  /* we don't need to loop because Lstream_really_write does that
+	     for us. */
+	  Bytecount num_written = Lstream_really_write (lstr, p, size);
+	  if (num_written < 0)
+	    return -1;
+	  off += num_written;
+	}
+
+      /* squirrel away the rest of the data */
+      if (off < size)
+	{
+	  Lstream_adding (lstr, size - off, 1);
+	  memcpy (lstr->out_buffer + lstr->out_buffer_ind, p + off,
+		  size - off);
+	  lstr->out_buffer_ind += size - off;
+	}
+
+      lstr->byte_count += size;
+      return 0;
+    }
+  else
+    {
+      int couldnt_write_last_time = 0;
+
+      while (1)
+	{
+	  /* Figure out how much we can add to the buffer */
+	  Bytecount chunk = Lstream_adding (lstr, size, 0);
+	  if (chunk == 0)
+	    {
+	      if (couldnt_write_last_time)
+		/* Ung, we ran out of space and tried to flush
+		   the buffer, but it didn't work because the stream
+		   writer is refusing to accept any data.  So we
+		   just have to squirrel away all the rest of the
+		   stuff. */
+		chunk = Lstream_adding (lstr, size, 1);
+	      else
+		couldnt_write_last_time = 1;
+	    }
+	  /* Do it. */
+	  if (chunk > 0)
+	    {
+	      memcpy (lstr->out_buffer + lstr->out_buffer_ind, p + off, chunk);
+	      lstr->out_buffer_ind += chunk;
+	      lstr->byte_count     += chunk;
+	      size -= chunk;
+	      off  += chunk;
+	    }
+	  /* If the buffer is full and we have more to add, flush it out. */
+	  if (size > 0)
+	    {
+	      if (Lstream_flush_out (lstr) < 0)
+		{
+		  if (off == 0)
+		    return -1;
+		  else
+		    return 0;
+		}
+	    }
+	  else
+	    break;
+	}
+    }
+  return 0;
 }
 
-/* If the stream is not line-buffered, then we can just call
-   Lstream_write_1(), which writes in chunks.  Otherwise, we
-   repeatedly call Lstream_putc(), which knows how to handle
-   line buffering.  Returns number of bytes written. */
+/* Write SIZE bytes of DATA to the stream.  Return value is 0 on success,
+   -1 on error.  -1 is only returned when no bytes could be written; if any
+   bytes could be written, then 0 is returned and any unwritten bytes are
+   buffered and the next call to Lstream_write() will try to write them
+   again. (This buffering happens even when the stream's buffering type is
+   LSTREAM_UNBUFFERED, and regardless of how much data is passed in or what
+   the stream's buffering size was set to. #### There should perhaps be a
+   way to control whether this happens.) */
 
-Bytecount
+int
 Lstream_write (Lstream *lstr, const void *data, Bytecount size)
 {
   Bytecount i;
   const unsigned char *p = (const unsigned char *) data;
 
+  /* If the stream is not line-buffered, then we can just call
+     Lstream_write_1(), which writes in chunks.  Otherwise, we repeatedly
+     call Lstream_putc(), which knows how to handle line buffering.
+     Returns 0 on success, -1 on failure. */
+
   if (size == 0)
-    return size;
+    return 0;
   if (lstr->buffering != LSTREAM_LINE_BUFFERED)
     return Lstream_write_1 (lstr, data, size);
   for (i = 0; i < size; i++)
@@ -490,7 +550,7 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
       if (Lstream_putc (lstr, p[i]) < 0)
 	break;
     }
-  return i == 0 ? -1 : i;
+  return i == 0 ? -1 : 0;
 }
 
 int
@@ -536,6 +596,11 @@ Lstream_read_more (Lstream *lstr)
   return size_gotten < 0 ? -1 : size_gotten;
 }
 
+/* Read SIZE bytes of DATA from the stream.  Return the number of bytes
+   read.  0 means EOF (#### sometimes; it may simply indicate we can't read
+   any data at other times, particularly if SIZE is too small.  this needs
+   to be fixed!). -1 means an error occurred and no bytes were read. */
+
 Bytecount
 Lstream_read (Lstream *lstr, void *data, Bytecount size)
 {
@@ -560,55 +625,65 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
 
   while (size > 0)
     {
-      /* Take whatever we can from the in buffer */
-      chunk = min (size, lstr->in_buffer_current - lstr->in_buffer_ind);
-      if (chunk > 0)
-        {
-          memcpy (p + off, lstr->in_buffer + lstr->in_buffer_ind, chunk);
-          lstr->in_buffer_ind += chunk;
-          lstr->byte_count    += chunk;
-          size -= chunk;
-          off  += chunk;
-        }
-
-      /* If we need some more, try to get some more from the stream's end */
-      if (size > 0)
+      /* If unbuffered, then simply read directly into output buffer.
+	 No need to copy. */
+      if (lstr->buffering == LSTREAM_UNBUFFERED)
 	{
-	  Bytecount retval = Lstream_read_more (lstr);
-	  if (retval < 0)
+	  chunk = Lstream_raw_read (lstr, p + off, size);
+	  if (chunk < 0)
 	    error_occurred = 1;
-	  if (retval <= 0)
+	  if (chunk <= 0)
 	    break;
+          lstr->byte_count += chunk;
+          size -= chunk;
+          off += chunk;
+	}
+      else
+	{
+	  /* Take whatever we can from the in buffer */
+	  chunk = min (size, lstr->in_buffer_current - lstr->in_buffer_ind);
+	  if (chunk > 0)
+	    {
+	      memcpy (p + off, lstr->in_buffer + lstr->in_buffer_ind, chunk);
+	      lstr->in_buffer_ind += chunk;
+	      lstr->byte_count += chunk;
+	      size -= chunk;
+	      off += chunk;
+	    }
+
+	  /* If we need some more, try to get some more from the
+             stream's end */
+	  if (size > 0)
+	    {
+	      Bytecount retval = Lstream_read_more (lstr);
+	      if (retval < 0)
+		error_occurred = 1;
+	      if (retval <= 0)
+		break;
+	    }
 	}
     }
 
-  /* #### Beware of OFF ending up 0. */
-  if ((lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS) && off > 0)
+  if (lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
     {
       /* It's quite possible for us to get passed an incomplete
 	 character at the end.  We need to spit back that
 	 incomplete character. */
-      const unsigned char *dataend = p + off - 1;
-      /* Optimize the most common case. */
-      if (!BYTE_ASCII_P (*dataend))
+      Bytecount newoff = validate_intbyte_string_backward (p, off);
+      if (newoff < off)
 	{
-	  /* Go back to the beginning of the last (and possibly partial)
-	     character, and bump forward to see if the character is
-	     complete. */
-	  VALIDATE_CHARPTR_BACKWARD (dataend);
-	  if (dataend + REP_BYTES_BY_FIRST_BYTE (*dataend) != p + off)
-	    {
-	      Bytecount newoff = dataend - p;
-	      /* If not, chop the size down to ignore the last char
-		 and stash it away for next time. */
-	      Lstream_unread (lstr, dataend, off - newoff);
-	      off = newoff;
-	    }
+	  Lstream_unread (lstr, p + newoff, off - newoff);
+	  off = newoff;
 	}
     }
 
   return off == 0 && error_occurred ? -1 : off;
 }
+
+/* Push back SIZE bytes of DATA onto the input queue.  The next call
+   to Lstream_read() with the same size will read the same bytes back.
+   Note that this will be the case even if there is other pending
+   unread data. */
 
 void
 Lstream_unread (Lstream *lstr, const void *data, Bytecount size)
@@ -626,6 +701,8 @@ Lstream_unread (Lstream *lstr, const void *data, Bytecount size)
   while (size--)
     lstr->unget_buffer[lstr->unget_buffer_ind++] = p[size];
 }
+
+/* Rewind the stream to the beginning. */
 
 int
 Lstream_rewind (Lstream *lstr)
@@ -657,6 +734,13 @@ Lstream_pseudo_close (Lstream *lstr)
   /* don't check errors here -- best not to risk file descriptor loss */
   return Lstream_flush (lstr);
 }
+
+/* Close the stream.  All data will be flushed out.  If the stream is
+   already closed, nothing happens.  Note that, even if all data has
+   already been flushed out, the act of closing a stream may generate more
+   data -- for example, if the stream implements some sort of conversion,
+   such as gzip, there may be special "end-data" that need to be written
+   out when the file is closed. */
 
 int
 Lstream_close (Lstream *lstr)
@@ -726,15 +810,20 @@ Lstream_close (Lstream *lstr)
   return rc;
 }
 
+
+/* Function equivalent of Lstream_putc(). */
+
 int
 Lstream_fputc (Lstream *lstr, int c)
 {
   unsigned char ch = (unsigned char) c;
-  Bytecount retval = Lstream_write_1 (lstr, &ch, 1);
-  if (retval >= 0 && lstr->buffering == LSTREAM_LINE_BUFFERED && ch == '\n')
+  int retval = Lstream_write_1 (lstr, &ch, 1);
+  if (retval == 0 && lstr->buffering == LSTREAM_LINE_BUFFERED && ch == '\n')
     return Lstream_flush_out (lstr);
-  return retval < 0 ? -1 : 0;
+  return retval;
 }
+
+/* Function equivalent of Lstream_getc(). */
 
 int
 Lstream_fgetc (Lstream *lstr)
@@ -744,6 +833,8 @@ Lstream_fgetc (Lstream *lstr)
     return -1;
   return ch;
 }
+
+/* Function equivalent of Lstream_ungetc(). */
 
 void
 Lstream_fungetc (Lstream *lstr, int c)
@@ -765,8 +856,7 @@ struct stdio_stream
 
 #define STDIO_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, stdio)
 
-DEFINE_LSTREAM_IMPLEMENTATION ("stdio", lstream_stdio,
-			       sizeof (struct stdio_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("stdio", stdio);
 
 static Lisp_Object
 make_stdio_stream_1 (FILE *stream, int flags, const char *mode)
@@ -799,9 +889,9 @@ make_stdio_output_stream (FILE *stream, int flags)
    If an error has occurred, but val is non-zero, we should go ahead
    and act as if the read was successful, but remember in some fashion
    or other, that an error has occurred, and report that on the next
-   call to stdio_reader instead of calling fread() again.
+   call to stdio_reader instead of calling retry_fread() again.
 
-   Currently, in such a case, we end up calling fread() twice and we
+   Currently, in such a case, we end up calling retry_fread() twice and we
    assume that
 
    1) this is not harmful, and
@@ -809,15 +899,20 @@ make_stdio_output_stream (FILE *stream, int flags)
 
    This is probably reasonable, so I don't think we should change this
    code (it could even be argued that the error might have fixed
-   itself, so we should do the fread() again.  */
+   itself, so we should do the retry_fread() again.  */
 
 static Bytecount
 stdio_reader (Lstream *stream, unsigned char *data, Bytecount size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  Bytecount val = fread (data, 1, size, str->file);
-  if (!val && ferror (str->file))
-    return -1;
+  Bytecount val = retry_fread (data, 1, size, str->file);
+  if (!val)
+    {
+      if (ferror (str->file))
+	return LSTREAM_ERROR;
+      if (feof (str->file))
+	return 0; /* LSTREAM_EOF; */
+    }
   return val;
 }
 
@@ -826,9 +921,9 @@ stdio_writer (Lstream *stream, const unsigned char *data,
 	      Bytecount size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  Bytecount val = fwrite (data, 1, size, str->file);
+  Bytecount val = retry_fwrite (data, 1, size, str->file);
   if (!val && ferror (str->file))
-    return -1;
+    return LSTREAM_ERROR;
   return val;
 }
 
@@ -845,7 +940,7 @@ stdio_seekable_p (Lstream *stream)
   struct stat lestat;
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
 
-  if (fstat (fileno (str->file), &lestat) < 0)
+  if (qxe_fstat (fileno (str->file), &lestat) < 0)
     return 0;
   return S_ISREG (lestat.st_mode);
 }
@@ -865,7 +960,7 @@ stdio_closer (Lstream *stream)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
   if (str->closing)
-    return fclose (str->file);
+    return retry_fclose (str->file);
   else
   if (stream->flags & LSTREAM_FL_WRITE)
     return fflush (str->file);
@@ -893,8 +988,7 @@ struct filedesc_stream
 
 #define FILEDESC_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, filedesc)
 
-DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", lstream_filedesc,
-			       sizeof (struct filedesc_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", filedesc);
 
 /* Make a stream that reads from or writes to a file descriptor FILEDESC.
    OFFSET is the offset from the *current* file pointer that the reading
@@ -946,9 +1040,13 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
     size = min (size, (Bytecount) (str->end_pos - str->current_pos));
   nread = str->allow_quit ?
     read_allowing_quit (str->fd, data, size) :
-    read (str->fd, data, size);
+    retry_read (str->fd, data, size);
   if (nread > 0)
     str->current_pos += nread;
+  if (nread == 0)
+    return 0; /* LSTREAM_EOF; */
+  if (nread < 0)
+    return LSTREAM_ERROR;
   return nread;
 }
 
@@ -1002,7 +1100,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
   if (size > 0)
     retval = str->allow_quit ?
       write_allowing_quit (str->fd, data, size) :
-      write (str->fd, data, size);
+      retry_write (str->fd, data, size);
   else
     retval = 0;
   if (retval < 0 && errno_would_block_p (errno) && str->blocked_ok)
@@ -1012,7 +1110,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
     }
   str->blocking_error_p = 0;
   if (retval < 0)
-    return retval;
+    return LSTREAM_ERROR;
   /**** end non-PTY-crap ****/
 
   if (str->pty_flushing)
@@ -1027,7 +1125,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 	{
 	  Bytecount retval2 = str->allow_quit ?
 	    write_allowing_quit (str->fd, &str->eof_char, 1) :
-	    write (str->fd, &str->eof_char, 1);
+	    retry_write (str->fd, &str->eof_char, 1);
 
 	  if (retval2 > 0)
 	    str->chars_sans_newline = 0;
@@ -1044,7 +1142,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		      return 0;
 		    }
 		  else
-		    return retval2;
+		    return LSTREAM_ERROR;
 		}
 	      else
 		return retval;
@@ -1060,7 +1158,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
       Intbyte nl = '\n';
       Bytecount retval2 = str->allow_quit ?
 	write_allowing_quit (str->fd, &nl, 1) :
-	write (str->fd, &nl, 1);
+	retry_write (str->fd, &nl, 1);
 
       if (retval2 > 0)
         {
@@ -1080,7 +1178,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		  return 0;
 		}
 	      else
-		return retval2;
+		return LSTREAM_ERROR;
 	    }
 	  else
 	    return retval;
@@ -1115,7 +1213,7 @@ filedesc_seekable_p (Lstream *stream)
     {
       struct stat lestat;
 
-      if (fstat (str->fd, &lestat) < 0)
+      if (qxe_fstat (str->fd, &lestat) < 0)
         return 0;
       return S_ISREG (lestat.st_mode);
     }
@@ -1126,7 +1224,7 @@ filedesc_closer (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   if (str->closing)
-    return close (str->fd);
+    return retry_close (str->fd);
   else
     return 0;
 }
@@ -1166,8 +1264,7 @@ struct lisp_string_stream
   Bytecount offset, end;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("lisp-string", lstream_lisp_string,
-			       sizeof (struct lisp_string_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("lisp-string", lisp_string);
 
 Lisp_Object
 make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
@@ -1258,8 +1355,7 @@ struct fixed_buffer_stream
   Bytecount offset;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", lstream_fixed_buffer,
-			       sizeof (struct fixed_buffer_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", fixed_buffer);
 
 Lisp_Object
 make_fixed_buffer_input_stream (const void *buf, Bytecount size)
@@ -1348,8 +1444,7 @@ struct resizing_buffer_stream
   int stored;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", lstream_resizing_buffer,
-			       sizeof (struct resizing_buffer_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", resizing_buffer);
 
 Lisp_Object
 make_resizing_buffer_output_stream (void)
@@ -1410,8 +1505,7 @@ struct dynarr_stream
   unsigned_char_dynarr *dyn;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("dynarr", lstream_dynarr,
-			       sizeof (struct dynarr_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("dynarr", dynarr);
 
 Lisp_Object
 make_dynarr_output_stream (unsigned_char_dynarr *dyn)
@@ -1462,8 +1556,7 @@ struct lisp_buffer_stream
   int flags;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("lisp-buffer", lstream_lisp_buffer,
-			       sizeof (struct lisp_buffer_stream));
+DEFINE_LSTREAM_IMPLEMENTATION ("lisp-buffer", lisp_buffer);
 
 static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,

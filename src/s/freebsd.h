@@ -100,6 +100,6 @@
 /* #define NO_TERMIO */ /* detected in configure */
 #define DECLARE_GETPWUID_WITH_UID_T
 
-/* Needed to avoid hanging when child process writes an error message
-   and exits -- enami tsugutomo <enami@ba2.so-net.or.jp>.  */
-#define vfork fork
+/* freebsd uses OXTABS instead of the expected TAB3. */
+#define TABDLY OXTABS
+#define TAB3 OXTABS

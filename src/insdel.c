@@ -2,6 +2,7 @@
    Copyright (C) 1985, 1986, 1991, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,178 +27,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Overhauled by Ben Wing, December 1994, for Mule implementation. */
 
-/*
-   There are three possible ways to specify positions in a buffer.  All
-   of these are one-based: the beginning of the buffer is position or
-   index 1, and 0 is not a valid position.
-
-   As a "buffer position" (typedef Charbpos):
-
-      This is an index specifying an offset in characters from the
-      beginning of the buffer.  Note that buffer positions are
-      logically *between* characters, not on a character.  The
-      difference between two buffer positions specifies the number of
-      characters between those positions.  Buffer positions are the
-      only kind of position externally visible to the user.
-
-   As a "byte index" (typedef Bytebpos):
-
-      This is an index over the bytes used to represent the characters
-      in the buffer.  If there is no Mule support, this is identical
-      to a buffer position, because each character is represented
-      using one byte.  However, with Mule support, many characters
-      require two or more bytes for their representation, and so a
-      byte index may be greater than the corresponding buffer
-      position.
-
-   As a "memory index" (typedef Membpos):
-
-      This is the byte index adjusted for the gap.  For positions
-      before the gap, this is identical to the byte index.  For
-      positions after the gap, this is the byte index plus the gap
-      size.  There are two possible memory indices for the gap
-      position; the memory index at the beginning of the gap should
-      always be used, except in code that deals with manipulating the
-      gap, where both indices may be seen.  The address of the
-      character "at" (i.e. following) a particular position can be
-      obtained from the formula
-
-        buffer_start_address + memory_index(position) - 1
-
-      except in the case of characters at the gap position.
-
-   Other typedefs:
-   ===============
-
-      Emchar:
-      -------
-        This typedef represents a single Emacs character, which can be
-	ASCII, ISO-8859, or some extended character, as would typically
-	be used for Kanji.  Note that the representation of a character
-	as an Emchar is *not* the same as the representation of that
-	same character in a string; thus, you cannot do the standard
-	C trick of passing a pointer to a character to a function that
-	expects a string.
-
-	An Emchar takes up 19 bits of representation and (for code
-	compatibility and such) is compatible with an int.  This
-	representation is visible on the Lisp level.  The important
-	characteristics	of the Emchar representation are
-
-	  -- values 0x00 - 0x7f represent ASCII.
-	  -- values 0x80 - 0xff represent the right half of ISO-8859-1.
-	  -- values 0x100 and up represent all other characters.
-
-	This means that Emchar values are upwardly compatible with
-	the standard 8-bit representation of ASCII/ISO-8859-1.
-
-      Intbyte:
-      --------
-        The data in a buffer or string is logically made up of Intbyte
-	objects, where a Intbyte takes up the same amount of space as a
-	char. (It is declared differently, though, to catch invalid
-	usages.) Strings stored using Intbytes are said to be in
-	"internal format".  The important characteristics of internal
-	format are
-
-	  -- ASCII characters are represented as a single Intbyte,
-	     in the range 0 - 0x7f.
-	  -- All other characters are represented as a Intbyte in
-	     the range 0x80 - 0x9f followed by one or more Intbytes
-	     in the range 0xa0 to 0xff.
-
-	This leads to a number of desirable properties:
-
-	  -- Given the position of the beginning of a character,
-	     you can find the beginning of the next or previous
-	     character in constant time.
-	  -- When searching for a substring or an ASCII character
-	     within the string, you need merely use standard
-	     searching routines.
-
-      array of char:
-      --------------
-        Strings that go in or out of Emacs are in "external format",
-	typedef'ed as an array of char or a char *.  There is more
-	than one external format (JIS, EUC, etc.) but they all
-	have similar properties.  They are modal encodings,
-	which is to say that the meaning of particular bytes is
-	not fixed but depends on what "mode" the string is currently
-	in (e.g. bytes in the range 0 - 0x7f might be
-	interpreted as ASCII, or as Hiragana, or as 2-byte Kanji,
-	depending on the current mode).  The mode starts out in
-	ASCII/ISO-8859-1 and is switched using escape sequences --
-	for example, in the JIS encoding, 'ESC $ B' switches to a
-	mode where pairs of bytes in the range 0 - 0x7f
-	are interpreted as Kanji characters.
-
-	External-formatted data is generally desirable for passing
-	data between programs because it is upwardly compatible
-	with standard ASCII/ISO-8859-1 strings and may require
-	less space than internal encodings such as the one
-	described above.  In addition, some encodings (e.g. JIS)
-	keep all characters (except the ESC used to switch modes)
-	in the printing ASCII range 0x20 - 0x7e, which results in
-	a much higher probability that the data will avoid being
-	garbled in transmission.  Externally-formatted data is
-	generally not very convenient to work with, however, and
-	for this reason is usually converted to internal format
-	before any work is done on the string.
-
-	NOTE: filenames need to be in external format so that
-	ISO-8859-1 characters come out correctly.
-
-      Charcount:
-      ----------
-        This typedef represents a count of characters, such as
-	a character offset into a string or the number of
-	characters between two positions in a buffer.  The
-	difference between two Charbpos's is a Charcount, and
-	character positions in a string are represented using
-	a Charcount.
-
-      Bytecount:
-      ----------
-        Similar to a Charcount but represents a count of bytes.
-	The difference between two Bytebpos's is a Bytecount.
-
-
-   Usage of the various representations:
-   =====================================
-
-   Memory indices are used in low-level functions in insdel.c and for
-   extent endpoints and marker positions.  The reason for this is that
-   this way, the extents and markers don't need to be updated for most
-   insertions, which merely shrink the gap and don't move any
-   characters around in memory.
-
-   (The beginning-of-gap memory index simplifies insertions w.r.t.
-   markers, because text usually gets inserted after markers.  For
-   extents, it is merely for consistency, because text can get
-   inserted either before or after an extent's endpoint depending on
-   the open/closedness of the endpoint.)
-
-   Byte indices are used in other code that needs to be fast,
-   such as the searching, redisplay, and extent-manipulation code.
-
-   Buffer positions are used in all other code.  This is because this
-   representation is easiest to work with (especially since Lisp
-   code always uses buffer positions), necessitates the fewest
-   changes to existing code, and is the safest (e.g. if the text gets
-   shifted underneath a buffer position, it will still point to a
-   character; if text is shifted under a byte index, it might point
-   to the middle of a character, which would be bad).
-
-   Similarly, Charcounts are used in all code that deals with strings
-   except for code that needs to be fast, which used Bytecounts.
-
-   Strings are always passed around internally using internal format.
-   Conversions between external format are performed at the time
-   that the data goes in or out of Emacs.
-
-   Working with the various representations:
-   ========================================= */
-
 #include <config.h>
 #include "lisp.h"
 
@@ -209,16 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "redisplay.h"
 #include "line-number.h"
-
-/* We write things this way because it's very important the
-   MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
-   65535 is a multiple of 3, but this may not always be the
-   case.) */
-
-#define MAX_CHARBPOS_GAP_SIZE_3 (65535/3)
-#define MAX_BYTEBPOS_GAP_SIZE_3 (3 * MAX_CHARBPOS_GAP_SIZE_3)
-
-short three_to_one_table[1 + MAX_BYTEBPOS_GAP_SIZE_3];
 
 /* Various macros modelled along the lines of those in buffer.h.
    Purposefully omitted from buffer.h because files other than this
@@ -283,1214 +102,6 @@ do						\
 # define BUF_END_SENTINEL_SIZE 0
 # define SET_END_SENTINEL(buf)
 #endif
-
-
-/************************************************************************/
-/*                    Charcount/Bytecount conversion                    */
-/************************************************************************/
-
-/* Optimization.  Do it.  Live it.  Love it.  */
-
-#ifdef MULE
-
-/* We include the basic functions here that require no specific
-   knowledge of how data is Mule-encoded into a buffer other
-   than the basic (00 - 7F), (80 - 9F), (A0 - FF) scheme.
-   Anything that requires more specific knowledge goes into
-   mule-charset.c. */
-
-/* Given a pointer to a text string and a length in bytes, return
-   the equivalent length in characters. */
-
-Charcount
-bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
-{
-  Charcount count = 0;
-  const Intbyte *end = ptr + len;
-
-#if SIZEOF_LONG == 8
-# define STRIDE_TYPE long
-# define HIGH_BIT_MASK 0x8080808080808080UL
-#elif SIZEOF_LONG_LONG == 8 && !(defined (i386) || defined (__i386__))
-# define STRIDE_TYPE long long
-# define HIGH_BIT_MASK 0x8080808080808080ULL
-#elif SIZEOF_LONG == 4
-# define STRIDE_TYPE long
-# define HIGH_BIT_MASK 0x80808080UL
-#else
-# error Add support for 128-bit systems here
-#endif
-
-#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
-#define ALIGN_MASK (~ ALIGN_BITS)
-#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
-#define STRIDE sizeof (STRIDE_TYPE)
-
-  while (ptr < end)
-    {
-      if (BYTE_ASCII_P (*ptr))
-	{
-	  /* optimize for long stretches of ASCII */
-	  if (! ALIGNED (ptr))
-	    ptr++, count++;
-	  else
-	    {
-	      const unsigned STRIDE_TYPE *ascii_end =
-		(const unsigned STRIDE_TYPE *) ptr;
-	      /* This loop screams, because we can typically
-		 detect ASCII characters 8 at a time. */
-	      while ((const Intbyte *) ascii_end + STRIDE <= end
-		     && !(*ascii_end & HIGH_BIT_MASK))
-		ascii_end++;
-	      if ((Intbyte *) ascii_end == ptr)
-		ptr++, count++;
-	      else
-		{
-		  count += (Intbyte *) ascii_end - ptr;
-		  ptr = (Intbyte *) ascii_end;
-		}
-	    }
-	}
-      else
-	{
-	  /* optimize for successive characters from the same charset */
-	  Intbyte leading_byte = *ptr;
-	  Bytecount bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
-	  while ((ptr < end) && (*ptr == leading_byte))
-	    ptr += bytes, count++;
-	}
-    }
-
-#ifdef ERROR_CHECK_CHARBPOS
-  /* Bomb out if the specified substring ends in the middle
-     of a character.  Note that we might have already gotten
-     a core dump above from an invalid reference, but at least
-     we will get no farther than here. */
-  assert (ptr == end);
-#endif
-
-  return count;
-}
-
-/* Given a pointer to a text string and a length in characters, return
-   the equivalent length in bytes. */
-
-Bytecount
-charcount_to_bytecount (const Intbyte *ptr, Charcount len)
-{
-  const Intbyte *newptr = ptr;
-
-  while (len > 0)
-    {
-      INC_CHARPTR (newptr);
-      len--;
-    }
-  return newptr - ptr;
-}
-
-/* The next two functions are the actual meat behind the
-   charbpos-to-bytebpos and bytebpos-to-charbpos conversions.  Currently
-   the method they use is fairly unsophisticated; see buffer.h.
-
-   Note that charbpos_to_bytebpos_func() is probably the most-called
-   function in all of XEmacs.  Therefore, it must be FAST FAST FAST.
-   This is the reason why so much of the code is duplicated.
-
-   Similar considerations apply to bytebpos_to_charbpos_func(), although
-   less so because the function is not called so often.
-
-   #### At some point this should use a more sophisticated method;
-   see buffer.h. */
-
-static int not_very_random_number;
-
-Bytebpos
-charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
-{
-  Charbpos bufmin;
-  Charbpos bufmax;
-  Bytebpos bytmin;
-  Bytebpos bytmax;
-  int size;
-  int forward_p;
-  Bytebpos retval;
-  int diff_so_far;
-  int add_to_cache = 0;
-
-  /* Check for some cached positions, for speed. */
-  if (x == BUF_PT (buf))
-    return BI_BUF_PT (buf);
-  if (x == BUF_ZV (buf))
-    return BI_BUF_ZV (buf);
-  if (x == BUF_BEGV (buf))
-    return BI_BUF_BEGV (buf);
-
-  bufmin = buf->text->mule_bufmin;
-  bufmax = buf->text->mule_bufmax;
-  bytmin = buf->text->mule_bytmin;
-  bytmax = buf->text->mule_bytmax;
-  size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
-
-  /* The basic idea here is that we shift the "known region" up or down
-     until it overlaps the specified position.  We do this by moving
-     the upper bound of the known region up one character at a time,
-     and moving the lower bound of the known region up as necessary
-     when the size of the character just seen changes.
-
-     We optimize this, however, by first shifting the known region to
-     one of the cached points if it's close by. (We don't check BEG or
-     Z, even though they're cached; most of the time these will be the
-     same as BEGV and ZV, and when they're not, they're not likely
-     to be used.) */
-
-  if (x > bufmax)
-    {
-      Charbpos diffmax = x - bufmax;
-      Charbpos diffpt = x - BUF_PT (buf);
-      Charbpos diffzv = BUF_ZV (buf) - x;
-      /* #### This value could stand some more exploration. */
-      Charcount heuristic_hack = (bufmax - bufmin) >> 2;
-
-      /* Check if the position is closer to PT or ZV than to the
-	 end of the known region. */
-
-      if (diffpt < 0)
-	diffpt = -diffpt;
-      if (diffzv < 0)
-	diffzv = -diffzv;
-
-      /* But also implement a heuristic that favors the known region
-	 over PT or ZV.  The reason for this is that switching to
-	 PT or ZV will wipe out the knowledge in the known region,
-	 which might be annoying if the known region is large and
-	 PT or ZV is not that much closer than the end of the known
-	 region. */
-
-      diffzv += heuristic_hack;
-      diffpt += heuristic_hack;
-      if (diffpt < diffmax && diffpt <= diffzv)
-	{
-	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
-	  /* We set the size to 1 even though it doesn't really
-	     matter because the new known region contains no
-	     characters.  We do this because this is the most
-	     likely size of the characters around the new known
-	     region, and we avoid potential yuckiness that is
-	     done when size == 3. */
-	  size = 1;
-	}
-      if (diffzv < diffmax)
-	{
-	  bufmax = bufmin = BUF_ZV (buf);
-	  bytmax = bytmin = BI_BUF_ZV (buf);
-	  size = 1;
-	}
-    }
-#ifdef ERROR_CHECK_CHARBPOS
-  else if (x >= bufmin)
-    abort ();
-#endif
-  else
-    {
-      Charbpos diffmin = bufmin - x;
-      Charbpos diffpt = BUF_PT (buf) - x;
-      Charbpos diffbegv = x - BUF_BEGV (buf);
-      /* #### This value could stand some more exploration. */
-      Charcount heuristic_hack = (bufmax - bufmin) >> 2;
-
-      if (diffpt < 0)
-	diffpt = -diffpt;
-      if (diffbegv < 0)
-	diffbegv = -diffbegv;
-
-      /* But also implement a heuristic that favors the known region --
-	 see above. */
-
-      diffbegv += heuristic_hack;
-      diffpt += heuristic_hack;
-
-      if (diffpt < diffmin && diffpt <= diffbegv)
-	{
-	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
-	  /* We set the size to 1 even though it doesn't really
-	     matter because the new known region contains no
-	     characters.  We do this because this is the most
-	     likely size of the characters around the new known
-	     region, and we avoid potential yuckiness that is
-	     done when size == 3. */
-	  size = 1;
-	}
-      if (diffbegv < diffmin)
-	{
-	  bufmax = bufmin = BUF_BEGV (buf);
-	  bytmax = bytmin = BI_BUF_BEGV (buf);
-	  size = 1;
-	}
-    }
-
-  diff_so_far = x > bufmax ? x - bufmax : bufmin - x;
-  if (diff_so_far > 50)
-    {
-      /* If we have to move more than a certain amount, then look
-	 into our cache. */
-      int minval = INT_MAX;
-      int found = 0;
-      int i;
-
-      add_to_cache = 1;
-      /* I considered keeping the positions ordered.  This would speed
-	 up this loop, but updating the cache would take longer, so
-	 it doesn't seem like it would really matter. */
-      for (i = 0; i < 16; i++)
-	{
-	  int diff = buf->text->mule_charbpos_cache[i] - x;
-
-	  if (diff < 0)
-	    diff = -diff;
-	  if (diff < minval)
-	    {
-	      minval = diff;
-	      found = i;
-	    }
-	}
-
-      if (minval < diff_so_far)
-	{
-	  bufmax = bufmin = buf->text->mule_charbpos_cache[found];
-	  bytmax = bytmin = buf->text->mule_bytebpos_cache[found];
-	  size = 1;
-	}
-    }
-
-  /* It's conceivable that the caching above could lead to X being
-     the same as one of the range edges. */
-  if (x >= bufmax)
-    {
-      Bytebpos newmax;
-      Bytecount newsize;
-
-      forward_p = 1;
-      while (x > bufmax)
-	{
-	  newmax = bytmax;
-
-	  INC_BYTEBPOS (buf, newmax);
-	  newsize = newmax - bytmax;
-	  if (newsize != size)
-	    {
-	      bufmin = bufmax;
-	      bytmin = bytmax;
-	      size = newsize;
-	    }
-	  bytmax = newmax;
-	  bufmax++;
-	}
-      retval = bytmax;
-
-      /* #### Should go past the found location to reduce the number
-	 of times that this function is called */
-    }
-  else /* x < bufmin */
-    {
-      Bytebpos newmin;
-      Bytecount newsize;
-
-      forward_p = 0;
-      while (x < bufmin)
-	{
-	  newmin = bytmin;
-
-	  DEC_BYTEBPOS (buf, newmin);
-	  newsize = bytmin - newmin;
-	  if (newsize != size)
-	    {
-	      bufmax = bufmin;
-	      bytmax = bytmin;
-	      size = newsize;
-	    }
-	  bytmin = newmin;
-	  bufmin--;
-	}
-      retval = bytmin;
-
-      /* #### Should go past the found location to reduce the number
-	 of times that this function is called
-         */
-    }
-
-  /* If size is three, than we have to max sure that the range we
-     discovered isn't too large, because we use a fixed-length
-     table to divide by 3. */
-
-  if (size == 3)
-    {
-      int gap = bytmax - bytmin;
-      buf->text->mule_three_p = 1;
-      buf->text->mule_shifter = 1;
-
-      if (gap > MAX_BYTEBPOS_GAP_SIZE_3)
-	{
-	  if (forward_p)
-	    {
-	      bytmin = bytmax - MAX_BYTEBPOS_GAP_SIZE_3;
-	      bufmin = bufmax - MAX_CHARBPOS_GAP_SIZE_3;
-	    }
-	  else
-	    {
-	      bytmax = bytmin + MAX_BYTEBPOS_GAP_SIZE_3;
-	      bufmax = bufmin + MAX_CHARBPOS_GAP_SIZE_3;
-	    }
-	}
-    }
-  else
-    {
-      buf->text->mule_three_p = 0;
-      if (size == 4)
-	buf->text->mule_shifter = 2;
-      else
-	buf->text->mule_shifter = size - 1;
-    }
-
-  buf->text->mule_bufmin = bufmin;
-  buf->text->mule_bufmax = bufmax;
-  buf->text->mule_bytmin = bytmin;
-  buf->text->mule_bytmax = bytmax;
-
-  if (add_to_cache)
-    {
-      int replace_loc;
-
-      /* We throw away a "random" cached value and replace it with
-	 the new value.  It doesn't actually have to be very random
-	 at all, just evenly distributed.
-
-	 #### It would be better to use a least-recently-used algorithm
-	 or something that tries to space things out, but I'm not sure
-	 it's worth it to go to the trouble of maintaining that. */
-      not_very_random_number += 621;
-      replace_loc = not_very_random_number & 15;
-      buf->text->mule_charbpos_cache[replace_loc] = x;
-      buf->text->mule_bytebpos_cache[replace_loc] = retval;
-    }
-
-  return retval;
-}
-
-/* The logic in this function is almost identical to the logic in
-   the previous function. */
-
-Charbpos
-bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
-{
-  Charbpos bufmin;
-  Charbpos bufmax;
-  Bytebpos bytmin;
-  Bytebpos bytmax;
-  int size;
-  int forward_p;
-  Charbpos retval;
-  int diff_so_far;
-  int add_to_cache = 0;
-
-  /* Check for some cached positions, for speed. */
-  if (x == BI_BUF_PT (buf))
-    return BUF_PT (buf);
-  if (x == BI_BUF_ZV (buf))
-    return BUF_ZV (buf);
-  if (x == BI_BUF_BEGV (buf))
-    return BUF_BEGV (buf);
-
-  bufmin = buf->text->mule_bufmin;
-  bufmax = buf->text->mule_bufmax;
-  bytmin = buf->text->mule_bytmin;
-  bytmax = buf->text->mule_bytmax;
-  size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
-
-  /* The basic idea here is that we shift the "known region" up or down
-     until it overlaps the specified position.  We do this by moving
-     the upper bound of the known region up one character at a time,
-     and moving the lower bound of the known region up as necessary
-     when the size of the character just seen changes.
-
-     We optimize this, however, by first shifting the known region to
-     one of the cached points if it's close by. (We don't check BI_BEG or
-     BI_Z, even though they're cached; most of the time these will be the
-     same as BI_BEGV and BI_ZV, and when they're not, they're not likely
-     to be used.) */
-
-  if (x > bytmax)
-    {
-      Bytebpos diffmax = x - bytmax;
-      Bytebpos diffpt = x - BI_BUF_PT (buf);
-      Bytebpos diffzv = BI_BUF_ZV (buf) - x;
-      /* #### This value could stand some more exploration. */
-      Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
-
-      /* Check if the position is closer to PT or ZV than to the
-	 end of the known region. */
-
-      if (diffpt < 0)
-	diffpt = -diffpt;
-      if (diffzv < 0)
-	diffzv = -diffzv;
-
-      /* But also implement a heuristic that favors the known region
-	 over BI_PT or BI_ZV.  The reason for this is that switching to
-	 BI_PT or BI_ZV will wipe out the knowledge in the known region,
-	 which might be annoying if the known region is large and
-	 BI_PT or BI_ZV is not that much closer than the end of the known
-	 region. */
-
-      diffzv += heuristic_hack;
-      diffpt += heuristic_hack;
-      if (diffpt < diffmax && diffpt <= diffzv)
-	{
-	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
-	  /* We set the size to 1 even though it doesn't really
-	     matter because the new known region contains no
-	     characters.  We do this because this is the most
-	     likely size of the characters around the new known
-	     region, and we avoid potential yuckiness that is
-	     done when size == 3. */
-	  size = 1;
-	}
-      if (diffzv < diffmax)
-	{
-	  bufmax = bufmin = BUF_ZV (buf);
-	  bytmax = bytmin = BI_BUF_ZV (buf);
-	  size = 1;
-	}
-    }
-#ifdef ERROR_CHECK_CHARBPOS
-  else if (x >= bytmin)
-    abort ();
-#endif
-  else
-    {
-      Bytebpos diffmin = bytmin - x;
-      Bytebpos diffpt = BI_BUF_PT (buf) - x;
-      Bytebpos diffbegv = x - BI_BUF_BEGV (buf);
-      /* #### This value could stand some more exploration. */
-      Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
-
-      if (diffpt < 0)
-	diffpt = -diffpt;
-      if (diffbegv < 0)
-	diffbegv = -diffbegv;
-
-      /* But also implement a heuristic that favors the known region --
-	 see above. */
-
-      diffbegv += heuristic_hack;
-      diffpt += heuristic_hack;
-
-      if (diffpt < diffmin && diffpt <= diffbegv)
-	{
-	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
-	  /* We set the size to 1 even though it doesn't really
-	     matter because the new known region contains no
-	     characters.  We do this because this is the most
-	     likely size of the characters around the new known
-	     region, and we avoid potential yuckiness that is
-	     done when size == 3. */
-	  size = 1;
-	}
-      if (diffbegv < diffmin)
-	{
-	  bufmax = bufmin = BUF_BEGV (buf);
-	  bytmax = bytmin = BI_BUF_BEGV (buf);
-	  size = 1;
-	}
-    }
-
-  diff_so_far = x > bytmax ? x - bytmax : bytmin - x;
-  if (diff_so_far > 50)
-    {
-      /* If we have to move more than a certain amount, then look
-	 into our cache. */
-      int minval = INT_MAX;
-      int found = 0;
-      int i;
-
-      add_to_cache = 1;
-      /* I considered keeping the positions ordered.  This would speed
-	 up this loop, but updating the cache would take longer, so
-	 it doesn't seem like it would really matter. */
-      for (i = 0; i < 16; i++)
-	{
-	  int diff = buf->text->mule_bytebpos_cache[i] - x;
-
-	  if (diff < 0)
-	    diff = -diff;
-	  if (diff < minval)
-	    {
-	      minval = diff;
-	      found = i;
-	    }
-	}
-
-      if (minval < diff_so_far)
-	{
-	  bufmax = bufmin = buf->text->mule_charbpos_cache[found];
-	  bytmax = bytmin = buf->text->mule_bytebpos_cache[found];
-	  size = 1;
-	}
-    }
-
-  /* It's conceivable that the caching above could lead to X being
-     the same as one of the range edges. */
-  if (x >= bytmax)
-    {
-      Bytebpos newmax;
-      Bytecount newsize;
-
-      forward_p = 1;
-      while (x > bytmax)
-	{
-	  newmax = bytmax;
-
-	  INC_BYTEBPOS (buf, newmax);
-	  newsize = newmax - bytmax;
-	  if (newsize != size)
-	    {
-	      bufmin = bufmax;
-	      bytmin = bytmax;
-	      size = newsize;
-	    }
-	  bytmax = newmax;
-	  bufmax++;
-	}
-      retval = bufmax;
-
-      /* #### Should go past the found location to reduce the number
-	 of times that this function is called */
-    }
-  else /* x <= bytmin */
-    {
-      Bytebpos newmin;
-      Bytecount newsize;
-
-      forward_p = 0;
-      while (x < bytmin)
-	{
-	  newmin = bytmin;
-
-	  DEC_BYTEBPOS (buf, newmin);
-	  newsize = bytmin - newmin;
-	  if (newsize != size)
-	    {
-	      bufmax = bufmin;
-	      bytmax = bytmin;
-	      size = newsize;
-	    }
-	  bytmin = newmin;
-	  bufmin--;
-	}
-      retval = bufmin;
-
-      /* #### Should go past the found location to reduce the number
-	 of times that this function is called
-         */
-    }
-
-  /* If size is three, than we have to max sure that the range we
-     discovered isn't too large, because we use a fixed-length
-     table to divide by 3. */
-
-  if (size == 3)
-    {
-      int gap = bytmax - bytmin;
-      buf->text->mule_three_p = 1;
-      buf->text->mule_shifter = 1;
-
-      if (gap > MAX_BYTEBPOS_GAP_SIZE_3)
-	{
-	  if (forward_p)
-	    {
-	      bytmin = bytmax - MAX_BYTEBPOS_GAP_SIZE_3;
-	      bufmin = bufmax - MAX_CHARBPOS_GAP_SIZE_3;
-	    }
-	  else
-	    {
-	      bytmax = bytmin + MAX_BYTEBPOS_GAP_SIZE_3;
-	      bufmax = bufmin + MAX_CHARBPOS_GAP_SIZE_3;
-	    }
-	}
-    }
-  else
-    {
-      buf->text->mule_three_p = 0;
-      if (size == 4)
-	buf->text->mule_shifter = 2;
-      else
-	buf->text->mule_shifter = size - 1;
-    }
-
-  buf->text->mule_bufmin = bufmin;
-  buf->text->mule_bufmax = bufmax;
-  buf->text->mule_bytmin = bytmin;
-  buf->text->mule_bytmax = bytmax;
-
-  if (add_to_cache)
-    {
-      int replace_loc;
-
-      /* We throw away a "random" cached value and replace it with
-	 the new value.  It doesn't actually have to be very random
-	 at all, just evenly distributed.
-
-	 #### It would be better to use a least-recently-used algorithm
-	 or something that tries to space things out, but I'm not sure
-	 it's worth it to go to the trouble of maintaining that. */
-      not_very_random_number += 621;
-      replace_loc = not_very_random_number & 15;
-      buf->text->mule_charbpos_cache[replace_loc] = retval;
-      buf->text->mule_bytebpos_cache[replace_loc] = x;
-    }
-
-  return retval;
-}
-
-/* Text of length BYTELENGTH and CHARLENGTH (in different units)
-   was inserted at charbpos START. */
-
-static void
-buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
-				    Bytecount bytelength,
-				    Charcount charlength)
-{
-  int size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
-  int i;
-
-  /* Adjust the cache of known positions. */
-  for (i = 0; i < 16; i++)
-    {
-
-      if (buf->text->mule_charbpos_cache[i] > start)
-	{
-	  buf->text->mule_charbpos_cache[i] += charlength;
-	  buf->text->mule_bytebpos_cache[i] += bytelength;
-	}
-    }
-
-  if (start >= buf->text->mule_bufmax)
-    return;
-
-  /* The insertion is either before the known region, in which case
-     it shoves it forward; or within the known region, in which case
-     it shoves the end forward. (But it may make the known region
-     inconsistent, so we may have to shorten it.) */
-
-  if (start <= buf->text->mule_bufmin)
-    {
-      buf->text->mule_bufmin += charlength;
-      buf->text->mule_bufmax += charlength;
-      buf->text->mule_bytmin += bytelength;
-      buf->text->mule_bytmax += bytelength;
-    }
-  else
-    {
-      Charbpos end = start + charlength;
-      /* the insertion point divides the known region in two.
-	 Keep the longer half, at least, and expand into the
-	 inserted chunk as much as possible. */
-
-      if (start - buf->text->mule_bufmin > buf->text->mule_bufmax - start)
-	{
-	  Bytebpos bytestart = (buf->text->mule_bytmin
-			      + size * (start - buf->text->mule_bufmin));
-	  Bytebpos bytenew;
-
-	  while (start < end)
-	    {
-	      bytenew = bytestart;
-	      INC_BYTEBPOS (buf, bytenew);
-	      if (bytenew - bytestart != size)
-		break;
-	      start++;
-              bytestart = bytenew;
-	    }
-	  if (start != end)
-	    {
-	      buf->text->mule_bufmax = start;
-	      buf->text->mule_bytmax = bytestart;
-	    }
-	  else
-	    {
-	      buf->text->mule_bufmax += charlength;
-	      buf->text->mule_bytmax += bytelength;
-	    }
-	}
-      else
-	{
-	  Bytebpos byteend = (buf->text->mule_bytmin
-			    + size * (start - buf->text->mule_bufmin)
-			    + bytelength);
-	  Bytebpos bytenew;
-
-	  buf->text->mule_bufmax += charlength;
-	  buf->text->mule_bytmax += bytelength;
-
-	  while (end > start)
-	    {
-	      bytenew = byteend;
-	      DEC_BYTEBPOS (buf, bytenew);
-	      if (byteend - bytenew != size)
-		break;
-	      end--;
-              byteend = bytenew;
-	    }
-	  if (start != end)
-	    {
-	      buf->text->mule_bufmin = end;
-	      buf->text->mule_bytmin = byteend;
-	    }
-	}
-    }
-}
-
-/* Text from START to END (equivalent in Bytebposs: from BI_START to
-   BI_END) was deleted. */
-
-static void
-buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
-				   Charbpos end, Bytebpos bi_start,
-				   Bytebpos bi_end)
-{
-  int i;
-
-  /* Adjust the cache of known positions. */
-  for (i = 0; i < 16; i++)
-    {
-      /* After the end; gets shoved backward */
-      if (buf->text->mule_charbpos_cache[i] > end)
-	{
-	  buf->text->mule_charbpos_cache[i] -= end - start;
-	  buf->text->mule_bytebpos_cache[i] -= bi_end - bi_start;
-	}
-      /* In the range; moves to start of range */
-      else if (buf->text->mule_charbpos_cache[i] > start)
-	{
-	  buf->text->mule_charbpos_cache[i] = start;
-	  buf->text->mule_bytebpos_cache[i] = bi_start;
-	}
-    }
-
-  /* We don't care about any text after the end of the known region. */
-
-  end = min (end, buf->text->mule_bufmax);
-  bi_end = min (bi_end, buf->text->mule_bytmax);
-  if (start >= end)
-    return;
-
-  /* The end of the known region offsets by the total amount of deletion,
-     since it's all before it. */
-
-  buf->text->mule_bufmax -= end - start;
-  buf->text->mule_bytmax -= bi_end - bi_start;
-
-  /* Now we don't care about any text after the start of the known region. */
-
-  end = min (end, buf->text->mule_bufmin);
-  bi_end = min (bi_end, buf->text->mule_bytmin);
-  if (start >= end)
-    return;
-
-  buf->text->mule_bufmin -= end - start;
-  buf->text->mule_bytmin -= bi_end - bi_start;
-}
-
-#endif /* MULE */
-
-#ifdef ERROR_CHECK_CHARBPOS
-
-Bytebpos
-charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
-{
-  Bytebpos retval = real_charbpos_to_bytebpos (buf, x);
-  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, retval);
-  return retval;
-}
-
-Charbpos
-bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
-{
-  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, x);
-  return real_bytebpos_to_charbpos (buf, x);
-}
-
-#endif /* ERROR_CHECK_CHARBPOS */
-
-
-/************************************************************************/
-/*                verifying buffer and string positions                 */
-/************************************************************************/
-
-/* Functions below are tagged with either _byte or _char indicating
-   whether they return byte or character positions.  For a buffer,
-   a character position is a "Charbpos" and a byte position is a "Bytebpos".
-   For strings, these are sometimes typed using "Charcount" and
-   "Bytecount". */
-
-/* Flags for the functions below are:
-
-   GB_ALLOW_PAST_ACCESSIBLE
-
-     Allow positions to range over the entire buffer (BUF_BEG to BUF_Z),
-     rather than just the accessible portion (BUF_BEGV to BUF_ZV).
-     For strings, this flag has no effect.
-
-   GB_COERCE_RANGE
-
-     If the position is outside the allowable range, return the lower
-     or upper bound of the range, whichever is closer to the specified
-     position.
-
-   GB_NO_ERROR_IF_BAD
-
-     If the position is outside the allowable range, return -1.
-
-   GB_NEGATIVE_FROM_END
-
-     If a value is negative, treat it as an offset from the end.
-     Only applies to strings.
-
-   The following additional flags apply only to the functions
-   that return ranges:
-
-   GB_ALLOW_NIL
-
-     Either or both positions can be nil.  If FROM is nil,
-     FROM_OUT will contain the lower bound of the allowed range.
-     If TO is nil, TO_OUT will contain the upper bound of the
-     allowed range.
-
-   GB_CHECK_ORDER
-
-     FROM must contain the lower bound and TO the upper bound
-     of the range.  If the positions are reversed, an error is
-     signalled.
-
-   The following is a combination flag:
-
-   GB_HISTORICAL_STRING_BEHAVIOR
-
-     Equivalent to (GB_NEGATIVE_FROM_END | GB_ALLOW_NIL).
- */
-
-/* Return a buffer position stored in a Lisp_Object.  Full
-   error-checking is done on the position.  Flags can be specified to
-   control the behavior of out-of-range values.  The default behavior
-   is to require that the position is within the accessible part of
-   the buffer (BEGV and ZV), and to signal an error if the position is
-   out of range.
-
-*/
-
-Charbpos
-get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
-{
-  /* Does not GC */
-  Charbpos ind;
-  Charbpos min_allowed, max_allowed;
-
-  CHECK_INT_COERCE_MARKER (pos);
-  ind = XINT (pos);
-  min_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_BEG (b) : BUF_BEGV (b);
-  max_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_Z   (b) : BUF_ZV   (b);
-
-  if (ind < min_allowed || ind > max_allowed)
-    {
-      if (flags & GB_COERCE_RANGE)
-	ind = ind < min_allowed ? min_allowed : max_allowed;
-      else if (flags & GB_NO_ERROR_IF_BAD)
-	ind = -1;
-      else
-	{
-	  Lisp_Object buffer;
-	  XSETBUFFER (buffer, b);
-	  args_out_of_range (buffer, pos);
-	}
-    }
-
-  return ind;
-}
-
-Bytebpos
-get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
-{
-  Charbpos bpos = get_buffer_pos_char (b, pos, flags);
-  if (bpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
-    return -1;
-  return charbpos_to_bytebpos (b, bpos);
-}
-
-/* Return a pair of buffer positions representing a range of text,
-   taken from a pair of Lisp_Objects.  Full error-checking is
-   done on the positions.  Flags can be specified to control the
-   behavior of out-of-range values.  The default behavior is to
-   allow the range bounds to be specified in either order
-   (however, FROM_OUT will always be the lower bound of the range
-   and TO_OUT the upper bound),to require that the positions
-   are within the accessible part of the buffer (BEGV and ZV),
-   and to signal an error if the positions are out of range.
-*/
-
-void
-get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Charbpos *from_out, Charbpos *to_out, unsigned int flags)
-{
-  /* Does not GC */
-  Charbpos min_allowed, max_allowed;
-
-  min_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
-    BUF_BEG (b) : BUF_BEGV (b);
-  max_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
-    BUF_Z (b) : BUF_ZV (b);
-
-  if (NILP (from) && (flags & GB_ALLOW_NIL))
-    *from_out = min_allowed;
-  else
-    *from_out = get_buffer_pos_char (b, from, flags | GB_NO_ERROR_IF_BAD);
-
-  if (NILP (to) && (flags & GB_ALLOW_NIL))
-    *to_out = max_allowed;
-  else
-    *to_out = get_buffer_pos_char (b, to, flags | GB_NO_ERROR_IF_BAD);
-
-  if ((*from_out < 0 || *to_out < 0) && !(flags & GB_NO_ERROR_IF_BAD))
-    {
-      Lisp_Object buffer;
-      XSETBUFFER (buffer, b);
-      args_out_of_range_3 (buffer, from, to);
-    }
-
-  if (*from_out >= 0 && *to_out >= 0 && *from_out > *to_out)
-    {
-      if (flags & GB_CHECK_ORDER)
-	invalid_argument_2 ("start greater than end", from, to);
-      else
-	{
-	  Charbpos temp = *from_out;
-	  *from_out = *to_out;
-	  *to_out = temp;
-	}
-    }
-}
-
-void
-get_buffer_range_byte (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Bytebpos *from_out, Bytebpos *to_out, unsigned int flags)
-{
-  Charbpos s, e;
-
-  get_buffer_range_char (b, from, to, &s, &e, flags);
-  if (s >= 0)
-    *from_out = charbpos_to_bytebpos (b, s);
-  else /* could happen with GB_NO_ERROR_IF_BAD */
-    *from_out = -1;
-  if (e >= 0)
-    *to_out = charbpos_to_bytebpos (b, e);
-  else
-    *to_out = -1;
-}
-
-static Charcount
-get_string_pos_char_1 (Lisp_Object string, Lisp_Object pos, unsigned int flags,
-		       Charcount known_length)
-{
-  Charcount ccpos;
-  Charcount min_allowed = 0;
-  Charcount max_allowed = known_length;
-
-  /* Computation of KNOWN_LENGTH is potentially expensive so we pass
-     it in. */
-  CHECK_INT (pos);
-  ccpos = XINT (pos);
-  if (ccpos < 0 && flags & GB_NEGATIVE_FROM_END)
-    ccpos += max_allowed;
-
-  if (ccpos < min_allowed || ccpos > max_allowed)
-    {
-      if (flags & GB_COERCE_RANGE)
-	ccpos = ccpos < min_allowed ? min_allowed : max_allowed;
-      else if (flags & GB_NO_ERROR_IF_BAD)
-	ccpos = -1;
-      else
-	args_out_of_range (string, pos);
-    }
-
-  return ccpos;
-}
-
-Charcount
-get_string_pos_char (Lisp_Object string, Lisp_Object pos, unsigned int flags)
-{
-  return get_string_pos_char_1 (string, pos, flags,
-				XSTRING_CHAR_LENGTH (string));
-}
-
-Bytecount
-get_string_pos_byte (Lisp_Object string, Lisp_Object pos, unsigned int flags)
-{
-  Charcount ccpos = get_string_pos_char (string, pos, flags);
-  if (ccpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
-    return -1;
-  return charcount_to_bytecount (XSTRING_DATA (string), ccpos);
-}
-
-void
-get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
-		       Charcount *from_out, Charcount *to_out,
-		       unsigned int flags)
-{
-  Charcount min_allowed = 0;
-  Charcount max_allowed = XSTRING_CHAR_LENGTH (string);
-
-  if (NILP (from) && (flags & GB_ALLOW_NIL))
-    *from_out = min_allowed;
-  else
-    *from_out = get_string_pos_char_1 (string, from,
-				       flags | GB_NO_ERROR_IF_BAD,
-				       max_allowed);
-
-  if (NILP (to) && (flags & GB_ALLOW_NIL))
-    *to_out = max_allowed;
-  else
-    *to_out = get_string_pos_char_1 (string, to,
-				     flags | GB_NO_ERROR_IF_BAD,
-				     max_allowed);
-
-  if ((*from_out < 0 || *to_out < 0) && !(flags & GB_NO_ERROR_IF_BAD))
-    args_out_of_range_3 (string, from, to);
-
-  if (*from_out >= 0 && *to_out >= 0 && *from_out > *to_out)
-    {
-      if (flags & GB_CHECK_ORDER)
-	invalid_argument_2 ("start greater than end", from, to);
-      else
-	{
-	  Charbpos temp = *from_out;
-	  *from_out = *to_out;
-	  *to_out = temp;
-	}
-    }
-}
-
-void
-get_string_range_byte (Lisp_Object string, Lisp_Object from, Lisp_Object to,
-		       Bytecount *from_out, Bytecount *to_out,
-		       unsigned int flags)
-{
-  Charcount s, e;
-
-  get_string_range_char (string, from, to, &s, &e, flags);
-  if (s >= 0)
-    *from_out = charcount_to_bytecount (XSTRING_DATA (string), s);
-  else /* could happen with GB_NO_ERROR_IF_BAD */
-    *from_out = -1;
-  if (e >= 0)
-    *to_out = charcount_to_bytecount (XSTRING_DATA (string), e);
-  else
-    *to_out = -1;
-
-}
-
-Charbpos
-get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
-			       unsigned int flags)
-{
-  return STRINGP (object) ?
-    get_string_pos_char (object, pos, flags) :
-    get_buffer_pos_char (XBUFFER (object), pos, flags);
-}
-
-Bytebpos
-get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
-			       unsigned int flags)
-{
-  return STRINGP (object) ?
-    get_string_pos_byte (object, pos, flags) :
-    get_buffer_pos_byte (XBUFFER (object), pos, flags);
-}
-
-void
-get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Charbpos *from_out,
-				 Charbpos *to_out, unsigned int flags)
-{
-  if (STRINGP (object))
-    get_string_range_char (object, from, to, from_out, to_out, flags);
-  else
-    get_buffer_range_char (XBUFFER (object), from, to, from_out, to_out, flags);
-}
-
-void
-get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Bytebpos *from_out,
-				 Bytebpos *to_out, unsigned int flags)
-{
-  if (STRINGP (object))
-    get_string_range_byte (object, from, to, from_out, to_out, flags);
-  else
-    get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out, flags);
-}
-
-Charbpos
-buffer_or_string_accessible_begin_char (Lisp_Object object)
-{
-  return STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object));
-}
-
-Charbpos
-buffer_or_string_accessible_end_char (Lisp_Object object)
-{
-  return STRINGP (object) ?
-    XSTRING_CHAR_LENGTH (object) : BUF_ZV (XBUFFER (object));
-}
-
-Bytebpos
-buffer_or_string_accessible_begin_byte (Lisp_Object object)
-{
-  return STRINGP (object) ? 0 : BI_BUF_BEGV (XBUFFER (object));
-}
-
-Bytebpos
-buffer_or_string_accessible_end_byte (Lisp_Object object)
-{
-  return STRINGP (object) ?
-    XSTRING_LENGTH (object) : BI_BUF_ZV (XBUFFER (object));
-}
-
-Charbpos
-buffer_or_string_absolute_begin_char (Lisp_Object object)
-{
-  return STRINGP (object) ? 0 : BUF_BEG (XBUFFER (object));
-}
-
-Charbpos
-buffer_or_string_absolute_end_char (Lisp_Object object)
-{
-  return STRINGP (object) ?
-    XSTRING_CHAR_LENGTH (object) : BUF_Z (XBUFFER (object));
-}
-
-Bytebpos
-buffer_or_string_absolute_begin_byte (Lisp_Object object)
-{
-  return STRINGP (object) ? 0 : BI_BUF_BEG (XBUFFER (object));
-}
-
-Bytebpos
-buffer_or_string_absolute_end_byte (Lisp_Object object)
-{
-  return STRINGP (object) ?
-    XSTRING_LENGTH (object) : BI_BUF_Z (XBUFFER (object));
-}
 
 
 /************************************************************************/
@@ -1696,7 +307,7 @@ gap_left (struct buffer *buf, Bytebpos pos)
     }
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      adjust_extents (make_buffer (mbuf), pos, BI_BUF_GPT (mbuf),
+      adjust_extents (wrap_buffer (mbuf), pos, BI_BUF_GPT (mbuf),
 		      BUF_GAP_SIZE (mbuf));
     }
   SET_BI_BUF_GPT (buf, pos);
@@ -1704,7 +315,7 @@ gap_left (struct buffer *buf, Bytebpos pos)
 #ifdef ERROR_CHECK_EXTENTS
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      sledgehammer_extent_check (make_buffer (mbuf));
+      sledgehammer_extent_check (wrap_buffer (mbuf));
     }
 #endif
   QUIT;
@@ -1766,7 +377,7 @@ gap_right (struct buffer *buf, Bytebpos pos)
       }
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
-	adjust_extents (make_buffer (mbuf), BI_BUF_GPT (mbuf) + gsize,
+	adjust_extents (wrap_buffer (mbuf), BI_BUF_GPT (mbuf) + gsize,
 			pos + gsize, - gsize);
       }
     SET_BI_BUF_GPT (buf, pos);
@@ -1774,7 +385,7 @@ gap_right (struct buffer *buf, Bytebpos pos)
 #ifdef ERROR_CHECK_EXTENTS
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
-	sledgehammer_extent_check (make_buffer (mbuf));
+	sledgehammer_extent_check (wrap_buffer (mbuf));
       }
 #endif
   }
@@ -2071,7 +682,7 @@ end_multiple_change (struct buffer *buf, int count)
   assert (buf->text->changes->in_multiple_change > 0);
   buf->text->changes->in_multiple_change--;
   if (!buf->text->changes->in_multiple_change)
-    unbind_to (count, Qnil);
+    unbind_to (count);
 }
 
 static int inside_change_hook;
@@ -2115,7 +726,7 @@ signal_first_change (struct buffer *buf)
 	  set_buffer_internal (buf);
 	  in_first_change = 1;
 	  run_hook (Qfirst_change_hook);
-	  unbind_to (speccount, Qnil);
+	  unbind_to (speccount);
 	}
     }
 }
@@ -2203,7 +814,7 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 	  XSETBUFFER (buffer, mbuf);
 	  report_extent_modification (buffer, start, end, 0);
 	}
-      unbind_to (speccount, Qnil);
+      unbind_to (speccount);
 
       /* Only now do we indicate that the before-change-functions have
 	 been called, in case some function throws out. */
@@ -2291,7 +902,7 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
 	  XSETBUFFER (buffer, mbuf);
 	  report_extent_modification (buffer, start, new_end, 1);
 	}
-      unbind_to (speccount, Qnil); /* sets inside_change_hook back to 0 */
+      unbind_to (speccount); /* sets inside_change_hook back to 0 */
     }
 }
 
@@ -2469,12 +1080,16 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
   if (pos > BUF_ZV (buf))
     pos = BUF_ZV (buf);
 
+  ind = charbpos_to_bytebpos (buf, pos);
+
   /* string may have been relocated up to this point */
   if (STRINGP (reloc))
-    nonreloc = XSTRING_DATA (reloc);
-
-  ind = charbpos_to_bytebpos (buf, pos);
-  cclen = bytecount_to_charcount (nonreloc + offset, length);
+    {
+      cclen = XSTRING_OFFSET_BYTE_TO_CHAR_LEN (reloc, offset, length);
+      nonreloc = XSTRING_DATA (reloc);
+    }
+  else
+    cclen = bytecount_to_charcount (nonreloc + offset, length);
 
   if (ind != BI_BUF_GPT (buf))
     /* #### if debug-on-quit is invoked and the user changes the
@@ -2513,14 +1128,15 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     }
   SET_BOTH_BUF_Z (buf, BUF_Z (buf) + cclen, BI_BUF_Z (buf) + length);
   SET_GAP_SENTINEL (buf);
-
+  
+  
 #ifdef MULE
   buffer_mule_signal_inserted_region (buf, pos, length, cclen);
 #endif
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      process_extents_for_insertion (make_buffer (mbuf), ind, length);
+      process_extents_for_insertion (wrap_buffer (mbuf), ind, length);
     }
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -2738,7 +1354,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 	 where the extents end. */
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  process_extents_for_deletion (make_buffer (mbuf), bi_from, bi_to, 0);
+	  process_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to, 0);
 	}
 
       /* Relocate all markers pointing into the new, larger gap to
@@ -2754,7 +1370,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
 	  /* Relocate any extent endpoints just like markers. */
-	  adjust_extents_for_deletion (make_buffer (mbuf), bi_from, bi_to,
+	  adjust_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to,
 				       BUF_GAP_SIZE (mbuf), bc_numdel, 0);
 	}
 
@@ -2812,7 +1428,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 	 as otherwise we will be confused about where the extents end. */
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  process_extents_for_deletion (make_buffer (mbuf), bi_from, bi_to, 0);
+	  process_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to, 0);
 	}
 
       /* Relocate all markers pointing into the new, larger gap to
@@ -2828,7 +1444,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
       /* Relocate any extent endpoints just like markers. */
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  adjust_extents_for_deletion (make_buffer (mbuf), bi_from, bi_to,
+	  adjust_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to,
 				       BUF_GAP_SIZE (mbuf),
 				       bc_numdel, BUF_GAP_SIZE (mbuf));
 	}
@@ -2864,7 +1480,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 #ifdef ERROR_CHECK_EXTENTS
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      sledgehammer_extent_check (make_buffer (mbuf));
+      sledgehammer_extent_check (wrap_buffer (mbuf));
     }
 #endif
 
@@ -3027,6 +1643,9 @@ make_string_from_buffer_1 (struct buffer *buf, Charbpos pos, Charcount length,
       }
   }
 
+  init_string_ascii_begin (val);
+  sledgehammer_check_ascii_begin (val);
+
   UNGCPRO;
   return val;
 }
@@ -3072,171 +1691,6 @@ barf_if_buffer_read_only (struct buffer *buf, Charbpos from, Charbpos to)
     }
 }
 
-void
-find_charsets_in_intbyte_string (unsigned char *charsets, const Intbyte *str,
-				 Bytecount len)
-{
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
-  const Intbyte *strend = str + len;
-  memset (charsets, 0, NUM_LEADING_BYTES);
-
-  /* #### SJT doesn't like this. */
-  if (len == 0)
-    {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - 128] = 1;
-      return;
-    }
-
-  while (str < strend)
-    {
-      charsets[CHAR_LEADING_BYTE (charptr_emchar (str)) - 128] = 1;
-      INC_CHARPTR (str);
-    }
-#endif
-}
-
-void
-find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
-				Charcount len)
-{
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
-  int i;
-
-  memset (charsets, 0, NUM_LEADING_BYTES);
-
-  /* #### SJT doesn't like this. */
-  if (len == 0)
-    {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - 128] = 1;
-      return;
-    }
-
-  for (i = 0; i < len; i++)
-    {
-      charsets[CHAR_LEADING_BYTE (str[i]) - 128] = 1;
-    }
-#endif
-}
-
-int
-intbyte_string_displayed_columns (const Intbyte *str, Bytecount len)
-{
-  int cols = 0;
-  const Intbyte *end = str + len;
-
-  while (str < end)
-    {
-#ifdef MULE
-      Emchar ch = charptr_emchar (str);
-      cols += XCHARSET_COLUMNS (CHAR_CHARSET (ch));
-#else
-      cols++;
-#endif
-      INC_CHARPTR (str);
-    }
-
-  return cols;
-}
-
-int
-emchar_string_displayed_columns (const Emchar *str, Charcount len)
-{
-#ifdef MULE
-  int cols = 0;
-  int i;
-
-  for (i = 0; i < len; i++)
-    cols += XCHARSET_COLUMNS (CHAR_CHARSET (str[i]));
-
-  return cols;
-#else  /* not MULE */
-  return len;
-#endif
-}
-
-/* NOTE: Does not reset the Dynarr. */
-
-void
-convert_intbyte_string_into_emchar_dynarr (const Intbyte *str, Bytecount len,
-					   Emchar_dynarr *dyn)
-{
-  const Intbyte *strend = str + len;
-
-  while (str < strend)
-    {
-      Emchar ch = charptr_emchar (str);
-      Dynarr_add (dyn, ch);
-      INC_CHARPTR (str);
-    }
-}
-
-Charcount
-convert_intbyte_string_into_emchar_string (const Intbyte *str, Bytecount len,
-					   Emchar *arr)
-{
-  const Intbyte *strend = str + len;
-  Charcount newlen = 0;
-  while (str < strend)
-    {
-      Emchar ch = charptr_emchar (str);
-      arr[newlen++] = ch;
-      INC_CHARPTR (str);
-    }
-  return newlen;
-}
-
-/* Convert an array of Emchars into the equivalent string representation.
-   Store into the given Intbyte dynarr.  Does not reset the dynarr.
-   Does not add a terminating zero. */
-
-void
-convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
-					  Intbyte_dynarr *dyn)
-{
-  Intbyte str[MAX_EMCHAR_LEN];
-  int i;
-
-  for (i = 0; i < nels; i++)
-    {
-      Bytecount len = set_charptr_emchar (str, arr[i]);
-      Dynarr_add_many (dyn, str, len);
-    }
-}
-
-/* Convert an array of Emchars into the equivalent string representation.
-   Malloc the space needed for this and return it.  If LEN_OUT is not a
-   NULL pointer, store into LEN_OUT the number of Intbytes in the
-   malloc()ed string.  Note that the actual number of Intbytes allocated
-   is one more than this: the returned string is zero-terminated. */
-
-Intbyte *
-convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
-					   Bytecount *len_out)
-{
-  /* Damn zero-termination. */
-  Intbyte *str = (Intbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
-  Intbyte *strorig = str;
-  Bytecount len;
-
-  int i;
-
-  for (i = 0; i < nels; i++)
-    str += set_charptr_emchar (str, arr[i]);
-  *str = '\0';
-  len = str - strorig;
-  str = (Intbyte *) xmalloc (1 + len);
-  memcpy (str, strorig, 1 + len);
-  if (len_out)
-    *len_out = len;
-  return str;
-}
-
 
 /************************************************************************/
 /*                            initialization                            */
@@ -3245,13 +1699,8 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 void
 reinit_vars_of_insdel (void)
 {
-  int i;
-
   inside_change_hook = 0;
   in_first_change = 0;
-
-  for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
-    three_to_one_table[i] = i / 3;
 }
 
 void
@@ -3283,6 +1732,7 @@ init_buffer_text (struct buffer *b)
 	b->text->mule_bytmin = b->text->mule_bytmax = 1;
 	b->text->mule_shifter = 0;
 	b->text->mule_three_p = 0;
+	b->text->entirely_ascii_p = 1;
 
 	for (i = 0; i < 16; i++)
 	  {

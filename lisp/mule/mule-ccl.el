@@ -470,8 +470,7 @@
   (let ((condition (nth 1 cmd))
 	(true-cmds (nth 2 cmd))
 	(false-cmds (nth 3 cmd))
-	jump-cond-address
-	false-ic)
+	jump-cond-address)
     (if (and (listp condition)
 	     (listp (car condition)))
 	;; If CONDITION is a nested expression, the inner expression
@@ -668,8 +667,7 @@
 	   (ccl-embed-data arg))
 	  ((stringp arg)
 	   (setq arg (encode-coding-string arg 'binary))
-	   (let ((len (length arg))
-		 (i 0))
+	   (let ((len (length arg)))
 	     (ccl-embed-code 'write-string-jump 0 ccl-loop-head)
 	     (ccl-embed-data len)
 	     (ccl-embed-string len arg)))
@@ -867,8 +865,7 @@
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((RRR (nth 1 cmd))
 	(rrr (nth 2 cmd))
-	(map (nth 3 cmd))
-	id)
+	(map (nth 3 cmd)))
     (ccl-check-register rrr cmd)
     (ccl-check-register RRR cmd)
     (ccl-embed-extended-command 'map-single rrr RRR 0)
@@ -1174,7 +1171,7 @@
 (defun ccl-dump-ex-cmd (rrr cc)
   (let* ((RRR (logand cc ?\x7))
 	 (Rrr (logand (ash cc -3) ?\x7))
-	 (ex-op (aref ccl-extended-code-table (logand (ash cc -6) ?\x3fff))))
+	 (ex-op (aref ccl-extended-code-table (logand (ash cc -6) #x3fff))))
     (insert (format "<%s> " ex-op))
     (funcall (get ex-op 'ccl-dump-function) rrr RRR Rrr)))
 

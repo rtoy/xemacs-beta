@@ -326,21 +326,21 @@ void update_syntax_cache (int pos, int count, int init);
    The value is meant for use in the UPDATE_SYNTAX_TABLE... macros.
    These macros do nothing when parse_sexp_lookup_properties is 0,
    so we return 0 in that case, for speed.  */
-#define SYNTAX_CACHE_BYTE_TO_CHAR(bytepos)					\
-  (! lookup_syntax_properties							\
-   ? 0										\
-   : STRINGP (syntax_cache.object)						\
-   ? bytecount_to_charcount (XSTRING_DATA (syntax_cache.object), bytepos)	\
-   : (BUFFERP (syntax_cache.object) || NILP (syntax_cache.object))		\
-   ? bytebpos_to_charbpos (syntax_cache.buffer,					\
-		       bytepos + BI_BUF_BEGV (syntax_cache.buffer))		\
+#define SYNTAX_CACHE_BYTE_TO_CHAR(bytepos)				\
+  (! lookup_syntax_properties						\
+   ? 0									\
+   : STRINGP (syntax_cache.object)					\
+   ? XSTRING_INDEX_BYTE_TO_CHAR (syntax_cache.object, bytepos)		\
+   : (BUFFERP (syntax_cache.object) || NILP (syntax_cache.object))	\
+   ? bytebpos_to_charbpos (syntax_cache.buffer,				\
+		       bytepos + BI_BUF_BEGV (syntax_cache.buffer))	\
    : (bytepos))
 
 #define SYNTAX_CACHE_OBJECT_BYTE_TO_CHAR(obj, buf, bytepos)	\
   (! lookup_syntax_properties					\
    ? 0								\
    : STRINGP (obj)						\
-   ? bytecount_to_charcount (XSTRING_DATA (obj), bytepos)	\
+   ? XSTRING_INDEX_BYTE_TO_CHAR (obj, bytepos)			\
    : (BUFFERP (obj) || NILP (obj))				\
    ? bytebpos_to_charbpos (buf, bytepos + BI_BUF_BEGV (buf))	\
    : (bytepos))

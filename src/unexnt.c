@@ -61,9 +61,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "sysfile.h"
 #include "syswindows.h"
 
-#include "nt.h"
-#include "ntheap.h"
-
 /* From IMAGEHLP.H which is not installed by default by MSVC < 5 */
 /* The IMAGEHLP.DLL library is not distributed by default with Windows95 */
 typedef PIMAGE_NT_HEADERS
@@ -450,7 +447,7 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("Dumping data section...\n"));
   DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", 
-	     (char*)data_file - p_outfile->file_base));
+	     (char*) data_file - (char *) p_outfile->file_base));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (data_file, data_va, size);
 

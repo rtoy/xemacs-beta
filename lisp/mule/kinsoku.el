@@ -170,14 +170,14 @@
 (define-category ?e "Kinsoku forbidden end of line characters")
 
 ;; kinsoku ascii
-(loop for char in (string-to-char-list kinsoku-ascii-bol)
+(loop for char in (string-to-list kinsoku-ascii-bol)
       do (modify-category-entry char ?s))
 (loop for char in kinsoku-ascii-eol
       do (modify-category-entry char ?e))
 ;; kinsoku-jis
-(loop for char in (string-to-char-list kinsoku-jis-bol)
+(loop for char in (string-to-list kinsoku-jis-bol)
       do (modify-category-entry char ?s))
-(loop for char in (string-to-char-list kinsoku-jis-eol)
+(loop for char in (string-to-list kinsoku-jis-eol)
       do (modify-category-entry char ?e))
 ;; kinsoku-gb
 (loop for char in kinsoku-gb-bol

@@ -1,5 +1,6 @@
 /* Definitions of marked slots in buffers
    Copyright (C) 1990, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -108,10 +109,8 @@ Boston, MA 02111-1307, USA.  */
     /* This buffer's category table. */
     MARKED_SLOT (category_table);
 #endif /* MULE */
-#ifdef FILE_CODING
     /* This buffer's coding system. */
     MARKED_SLOT (buffer_file_coding_system);
-#endif
     /* Values of several buffer-local variables.
 
        tab-width is buffer-local so that redisplay can find it
@@ -204,7 +203,7 @@ Boston, MA 02111-1307, USA.  */
        Explicitly setting point sets this to nil.  */
     MARKED_SLOT (point_before_scroll);
 
-    /* Truename of the visited file (via the realpath() system call),
+    /* Truename of the visited file (via qxe_realpath()),
        or nil.  */
     MARKED_SLOT (file_truename);
 

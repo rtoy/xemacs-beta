@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2001 Ben Wing.
 
 ;; Keywords: multilingual, character set, coding system
 
@@ -36,11 +37,6 @@
 		final ?0
 		graphic 1
 		))		; for XEmacs
-
-(defun setup-ipa-environment ()
-  "Setup multilingual environment (MULE) for IPA."
-  (interactive)
-  (set-language-environment "IPA"))
 
 (set-language-info-alist
  "IPA" '((charset . (ipa))

@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,16 +32,13 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "lstream.h"
 #include "opaque.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include "sysfile.h"
-
-#ifdef LISP_FLOAT_TYPE
-#define THIS_FILENAME lread
 #include "sysfloat.h"
-#endif /* LISP_FLOAT_TYPE */
+#ifdef WIN32_NATIVE
+#include "syswindows.h"
+#endif
 
 Lisp_Object Qread_char, Qstandard_input;
 Lisp_Object Qvariable_documentation;
@@ -213,7 +210,7 @@ EXFUN (Fread_from_string, 3);
    as an argument if it is an lstream, so that lstreams don't escape
    to the Lisp level.  */
 #define READCHARFUN_MAYBE(x) (LSTREAMP (x)					\
-			      ? (build_string ("internal input stream"))	\
+			      ? (build_msg_string ("internal input stream"))	\
 			      : (x))
 
 
@@ -507,7 +504,7 @@ close_load_descs (void)
 {
   Lisp_Object tail;
   LIST_LOOP (tail, Vload_descriptor_list)
-    close (XINT (XCAR (tail)));
+    retry_close (XINT (XCAR (tail)));
 }
 
 #ifdef I18N3
@@ -573,17 +570,15 @@ encoding detection or end-of-line detection.
      the need to gcpro noerror, nomessage and nosuffix.
      (Below here, we care only whether they are nil or not.)  */
   file = Fsubstitute_in_file_name (file);
-#ifdef FILE_CODING
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
-#endif
 
   /* Avoid weird lossage with null string as arg,
      since it would try to load a directory as a Lisp file.
      Unix truly sucks. */
   if (XSTRING_LENGTH (file) > 0)
     {
-      char *foundstr;
+      Intbyte *foundstr;
       int foundlen;
 
       fd = locate_file (Vload_path, file,
@@ -604,9 +599,9 @@ encoding detection or end-of-line detection.
 	    }
 	}
 
-      foundstr = (char *) alloca (XSTRING_LENGTH (found) + 1);
-      strcpy (foundstr, (char *) XSTRING_DATA (found));
-      foundlen = strlen (foundstr);
+      foundstr = (Intbyte *) alloca (XSTRING_LENGTH (found) + 1);
+      qxestrcpy (foundstr, XSTRING_DATA (found));
+      foundlen = qxestrlen (foundstr);
 
       /* The omniscient JWZ thinks this is worthless, but I beg to
 	 differ. --ben */
@@ -617,16 +612,16 @@ encoding detection or end-of-line detection.
       else if (load_warn_when_source_newer &&
 	       !memcmp (".elc", foundstr + foundlen - 4, 4))
 	{
-	  if (! fstat (fd, &s1))	/* can't fail, right? */
+	  if (! qxe_fstat (fd, &s1))	/* can't fail, right? */
 	    {
 	      int result;
 	      /* temporarily hack the 'c' off the end of the filename */
 	      foundstr[foundlen - 1] = '\0';
-	      result = xemacs_stat (foundstr, &s2);
+	      result = qxe_stat (foundstr, &s2);
 	      if (result >= 0 &&
 		  (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
               {
-		Lisp_Object newer_name = make_string ((Intbyte *) foundstr,
+		Lisp_Object newer_name = make_string (foundstr,
 						      foundlen - 1);
                 struct gcpro nngcpro1;
                 NNGCPRO1 (newer_name);
@@ -684,12 +679,11 @@ encoding detection or end-of-line detection.
        files aren't really all that big. */
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
-#ifdef FILE_CODING
-    lispstream = make_decoding_input_stream
-      (XLSTREAM (lispstream), Fget_coding_system (codesys));
+    lispstream = make_coding_input_stream
+      (XLSTREAM (lispstream), get_coding_system_for_text_file (codesys, 1),
+       CODING_DECODE);
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
-#endif
     /* NOTE: Order of these is very important.  Don't rearrange them. */
     record_unwind_protect (load_unwind, lispstream);
     record_unwind_protect (load_descriptor_unwind, Vload_descriptor_list);
@@ -733,13 +727,11 @@ encoding detection or end-of-line detection.
       load_byte_code_version = 100; /* no Ebolification needed */
 
     readevalloop (lispstream, file, Feval, 0);
-#ifdef FILE_CODING
     if (!NILP (used_codesys))
       Fset (used_codesys,
 	    XCODING_SYSTEM_NAME
-	    (decoding_stream_coding_system (XLSTREAM (lispstream))));
-#endif
-    unbind_to (speccount, Qnil);
+	    (coding_stream_detected_coding_system (XLSTREAM (lispstream))));
+    unbind_to (speccount);
 
     NUNGCPRO;
   }
@@ -879,7 +871,7 @@ static Lisp_Object
 locate_file_refresh_hashing (Lisp_Object directory)
 {
   Lisp_Object hash =
-    make_directory_hash_table ((char *) XSTRING_DATA (directory));
+    make_directory_hash_table (XSTRING_DATA (directory));
 
   if (!NILP (hash))
     Fputhash (directory, hash, Vlocate_file_hash_table);
@@ -920,11 +912,11 @@ locate_file_find_directory_hash_table (Lisp_Object directory)
    FUN returns non-zero. */
 static void
 locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
-			  int (*fun) (char *, void *),
+			  int (*fun) (Intbyte *, void *),
 			  void *arg)
 {
   /* This function can GC */
-  char *fn;
+  Intbyte *fn;
   int fn_len, max;
 
   /* Calculate maximum size of any filename made from
@@ -947,8 +939,8 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
     max = XSTRING_LENGTH (suffixes);
 
   fn_len = XSTRING_LENGTH (filename);
-  fn = (char *) alloca (max + fn_len + 1);
-  memcpy (fn, (char *) XSTRING_DATA (filename), fn_len);
+  fn = (Intbyte *) alloca (max + fn_len + 1);
+  memcpy (fn, XSTRING_DATA (filename), fn_len);
 
   /* Loop over suffixes.  */
   if (!STRINGP (suffixes))
@@ -977,15 +969,16 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
   else
     {
       /* Case c) */
-      const char *nsuffix = (const char *) XSTRING_DATA (suffixes);
+      const Intbyte *nsuffix = XSTRING_DATA (suffixes);
 
       while (1)
 	{
-	  char *esuffix = (char *) strchr (nsuffix, ':');
-	  int lsuffix = esuffix ? esuffix - nsuffix : (int) strlen (nsuffix);
+	  Intbyte *esuffix = qxestrchr (nsuffix, ':');
+	  Bytecount lsuffix = esuffix ? esuffix - nsuffix :
+	    qxestrlen (nsuffix);
 
 	  /* Concatenate path element/specified name with the suffix.  */
-	  strncpy (fn + fn_len, nsuffix, lsuffix);
+	  qxestrncpy (fn + fn_len, nsuffix, lsuffix);
 	  fn[fn_len + lsuffix] = 0;
 
 	  if ((*fun) (fn, arg))
@@ -999,34 +992,35 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
     }
 }
 
-struct locate_file_in_directory_mapper_closure {
+struct locate_file_in_directory_mapper_closure
+{
   int fd;
   Lisp_Object *storeptr;
   int mode;
 };
 
 static int
-locate_file_in_directory_mapper (char *fn, void *arg)
+locate_file_in_directory_mapper (Intbyte *fn, void *arg)
 {
   struct locate_file_in_directory_mapper_closure *closure =
-    (struct locate_file_in_directory_mapper_closure *)arg;
+    (struct locate_file_in_directory_mapper_closure *) arg;
   struct stat st;
 
   /* Ignore file if it's a directory.  */
-  if (xemacs_stat (fn, &st) >= 0
+  if (qxe_stat (fn, &st) >= 0
       && (st.st_mode & S_IFMT) != S_IFDIR)
     {
       /* Check that we can access or open it.  */
       if (closure->mode >= 0)
-	closure->fd = access (fn, closure->mode);
+	closure->fd = qxe_access (fn, closure->mode);
       else
-	closure->fd = open (fn, O_RDONLY | OPEN_BINARY, 0);
+	closure->fd = qxe_open (fn, O_RDONLY | OPEN_BINARY, 0);
 
       if (closure->fd >= 0)
 	{
 	  /* We succeeded; return this descriptor and filename.  */
 	  if (closure->storeptr)
-	    *closure->storeptr = build_string (fn);
+	    *closure->storeptr = build_intstring (fn);
 
 #ifndef WIN32_NATIVE
 	  /* If we actually opened the file, set close-on-exec flag
@@ -1083,7 +1077,8 @@ locate_file_in_directory (Lisp_Object directory, Lisp_Object str,
   closure.storeptr = storeptr;
   closure.mode = mode;
 
-  locate_file_map_suffixes (filename, suffixes, locate_file_in_directory_mapper,
+  locate_file_map_suffixes (filename, suffixes,
+			    locate_file_in_directory_mapper,
 			    &closure);
 
   UNGCPRO;
@@ -1113,10 +1108,10 @@ locate_file_without_hash (Lisp_Object path, Lisp_Object str,
 }
 
 static int
-locate_file_construct_suffixed_files_mapper (char *fn, void *arg)
+locate_file_construct_suffixed_files_mapper (Intbyte *fn, void *arg)
 {
-  Lisp_Object *tail = (Lisp_Object *)arg;
-  *tail = Fcons (build_string (fn), *tail);
+  Lisp_Object *tail = (Lisp_Object *) arg;
+  *tail = Fcons (build_intstring (fn), *tail);
   return 0;
 }
 
@@ -1431,7 +1426,7 @@ readevalloop (Lisp_Object readcharfun,
 	  int count1 = specpdl_depth ();
 	  record_unwind_protect (unreadpure, Qnil);
 	  val = read_list (readcharfun, ')', -1, 1);
-	  unbind_to (count1, Qnil);
+	  unbind_to (count1);
 	}
       else
 #else /* No "defun hack" -- Emacs 19 uses read-time syntax for bytecodes */
@@ -1461,7 +1456,7 @@ readevalloop (Lisp_Object readcharfun,
                       sourcename);
   UNGCPRO;
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 }
 
 DEFUN ("eval-buffer", Feval_buffer, 0, 2, "bBuffer: ", /*
@@ -1497,7 +1492,7 @@ point remains at the end of the last character read from the buffer.
   readevalloop (buf, XBUFFER (buf)->filename, Feval,
 		!NILP (printflag));
 
-  return unbind_to (speccount, Qnil);
+  return unbind_to (speccount);
 }
 
 #if 0
@@ -1553,7 +1548,7 @@ see some text temporarily disappear because of this.
   readevalloop (cbuf, XBUFFER (cbuf)->filename, Feval,
 		!NILP (stream));
 
-  return unbind_to (speccount, Qnil);
+  return unbind_to (speccount);
 }
 
 DEFUN ("read", Fread, 0, 1, 0, /*
@@ -1582,7 +1577,7 @@ STREAM or the value of `standard-input' may be:
   if (EQ (stream, Qread_char))
     {
       Lisp_Object val = call1 (Qread_from_minibuffer,
-			       build_translated_string ("Lisp expression: "));
+			       build_msg_string ("Lisp expression: "));
       return Fcar (Fread_from_string (val, Qnil, Qnil));
     }
 
@@ -1622,8 +1617,8 @@ START and END optionally delimit a substring of STRING from which to read;
      At least our reader is reentrant ... */
   tem =
     (Fcons (tem, make_int
-	    (bytecount_to_charcount
-	     (XSTRING_DATA (string),
+	    (XSTRING_INDEX_BYTE_TO_CHAR
+	     (string,
 	      startval + Lstream_byte_count (XLSTREAM (lispstream))))));
   Lstream_delete (XLSTREAM (lispstream));
   UNGCPRO;
@@ -2002,13 +1997,13 @@ parse_integer (const Intbyte *buf, Bytecount len, int base)
   }
  overflow:
   return Fsignal (Qinvalid_read_syntax,
-                  list3 (build_translated_string
+                  list3 (build_msg_string
 			 ("Integer constant overflow in reader"),
                          make_string (buf, len),
                          make_int (base)));
  loser:
   return Fsignal (Qinvalid_read_syntax,
-                  list3 (build_translated_string
+                  list3 (build_msg_string
 			 ("Invalid integer constant in reader"),
                          make_string (buf, len),
                          make_int (base)));
@@ -2139,7 +2134,7 @@ read_structure (Lisp_Object readcharfun)
   st = recognized_structure_type (XCAR (list));
   if (!st)
     RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-			     list2 (build_translated_string
+			     list2 (build_msg_string
 				    ("unrecognized structure type"),
 				    XCAR (list))));
 
@@ -2158,7 +2153,7 @@ read_structure (Lisp_Object readcharfun)
 
       if (!NILP (memq_no_quit (keyword, already_seen)))
 	RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-				 list2 (build_translated_string
+				 list2 (build_msg_string
 					("structure keyword already seen"),
 					keyword)));
 
@@ -2171,14 +2166,14 @@ read_structure (Lisp_Object readcharfun)
 
       if (i == keyword_count)
 	RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-				   list2 (build_translated_string
+				   list2 (build_msg_string
 					  ("unrecognized structure keyword"),
 					  keyword)));
 
       if (en->validate && ! (en->validate) (keyword, value, ERROR_ME))
 	RETURN_UNGCPRO
 	  (Fsignal (Qinvalid_read_syntax,
-		    list3 (build_translated_string
+		    list3 (build_msg_string
 			   ("invalid value for structure keyword"),
 			   keyword, value)));
 
@@ -2187,7 +2182,7 @@ read_structure (Lisp_Object readcharfun)
 
   if (st->validate && ! (st->validate) (orig_list, ERROR_ME))
     RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-			     list2 (build_translated_string
+			     list2 (build_msg_string
 				    ("invalid structure initializer"),
 				    orig_list)));
 
@@ -2272,13 +2267,13 @@ retry:
 	      record_unwind_protect (backquote_unwind,
 				     make_opaque_ptr (&old_backquote_flag));
 	      tem = read0 (readcharfun);
-	      unbind_to (speccount, Qnil);
+	      unbind_to (speccount);
 	      ch = reader_nextchar (readcharfun);
 	      if (ch != ')')
 		{
 		  unreadchar (readcharfun, ch);
 		  return Fsignal (Qinvalid_read_syntax,
-				  list1 (build_string
+				  list1 (build_msg_string
 					 ("Weird old-backquote syntax")));
 		}
 	      return list2 (Qbacktick, tem);
@@ -2303,7 +2298,7 @@ retry:
 		    {
 		      unreadchar (readcharfun, ch);
 		      return Fsignal (Qinvalid_read_syntax,
-				      list1 (build_string
+				      list1 (build_msg_string
 					     ("Weird old-backquote syntax")));
 		    }
 		  return list2 (comma_type, tem);
@@ -2313,7 +2308,7 @@ retry:
 		  unreadchar (readcharfun, ch);
 #if 0
 		  return Fsignal (Qinvalid_read_syntax,
-		       list1 (build_string ("Comma outside of backquote")));
+		       list1 (build_msg_string ("Comma outside of backquote")));
 #else
 		  /* #### - yuck....but this is reverse compatible. */
 		  /* mostly this is required by edebug, which does its own
@@ -2446,7 +2441,7 @@ retry:
 		    RETURN_UNGCPRO
 		      (Fsignal (Qinvalid_read_syntax,
 				list2
-				(build_string ("invalid string property list"),
+				(build_msg_string ("invalid string property list"),
 				 XCDR (plist))));
 		  Fset_text_properties (beg, end, plist, tmp);
 		}
@@ -2493,7 +2488,7 @@ retry:
 	    {
 	      unreadchar (readcharfun, c);
 	      return Fsignal (Qinvalid_read_syntax,
-		    list1 (build_string ("Cannot read unreadable object")));
+		    list1 (build_msg_string ("Cannot read unreadable object")));
 	    }
 #ifdef FEATUREP_SYNTAX
 	  case '+':
@@ -2540,7 +2535,7 @@ retry:
 		  Lisp_Object obj;
 		  if (CONSP (found))
 		    return Fsignal (Qinvalid_read_syntax,
-				    list2 (build_translated_string
+				    list2 (build_msg_string
 					   ("Multiply defined symbol label"),
 					   make_int (n)));
 		  obj = read0 (readcharfun);
@@ -2555,7 +2550,7 @@ retry:
 		    return XCDR (found);
 		  else
 		    return Fsignal (Qinvalid_read_syntax,
-				    list2 (build_translated_string
+				    list2 (build_msg_string
 					   ("Undefined symbol label"),
 					   make_int (n)));
 		}
@@ -2583,7 +2578,7 @@ retry:
 	record_unwind_protect (backquote_unwind,
 			       make_opaque_ptr (&new_backquote_flag));
 	tem = read0 (readcharfun);
-	unbind_to (speccount, Qnil);
+	unbind_to (speccount);
 	return list2 (Qbackquote, tem);
       }
 
@@ -3291,9 +3286,9 @@ character escape syntaxes or just read them incorrectly.
 
 #ifdef FEATUREP_SYNTAX
   DEFSYMBOL (Qfeaturep);
-  Fprovide(intern("xemacs"));
+  Fprovide (intern ("xemacs"));
 #ifdef INFODOCK
-  Fprovide(intern("infodock"));
+  Fprovide (intern ("infodock"));
 #endif /* INFODOCK */
 #endif /* FEATUREP_SYNTAX */
 

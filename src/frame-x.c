@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -492,13 +492,13 @@ init_x_prop_symbols (void)
 static Lisp_Object
 color_to_string (Widget w, unsigned long pixel)
 {
-  char buf[255];
+  Intbyte buf[255];
 
   XColor color;
   color.pixel = pixel;
   XQueryColor (XtDisplay (w), w->core.colormap, &color);
-  sprintf (buf, "#%04x%04x%04x", color.red, color.green, color.blue);
-  return build_string (buf);
+  qxesprintf (buf, "#%04x%04x%04x", color.red, color.green, color.blue);
+  return build_intstring (buf);
 }
 
 static void
@@ -578,7 +578,7 @@ x_frame_property (struct frame *f, Lisp_Object property)
   if (EQ (Qinter_line_space, property))
     return make_int (w->emacs_frame.interline);
   if (EQ (Qwindow_id, property))
-    return Fx_window_id (make_frame (f));
+    return Fx_window_id (wrap_frame (f));
 
   return Qunbound;
 }
@@ -611,7 +611,7 @@ x_frame_properties (struct frame *f)
   Widget gw = (Widget) w;
   Position x, y;
 
-  props = cons3 (Qwindow_id, Fx_window_id (make_frame (f)), props);
+  props = cons3 (Qwindow_id, Fx_window_id (wrap_frame (f)), props);
   props = cons3 (Qinter_line_space, make_int (w->emacs_frame.interline), props);
 
 #ifdef HAVE_TOOLBARS
@@ -1253,7 +1253,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 
   GCPRO3 (frame, l_type, l_data);
 
-  frame = make_frame ((struct frame *) clientData);
+  frame = wrap_frame ((struct frame *) clientData);
 
   if (transferInfo->dropData->protocol == DtDND_FILENAME_TRANSFER)
     {
@@ -1295,7 +1295,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			   l_data );
  	}
       drag_not_done = 0;
-      unbind_to(speccount, Qnil);
+      unbind_to (speccount);
     }
   else /* the other cases: NOOP_TRANSFER */
     enqueue=0;
@@ -2155,7 +2155,8 @@ allocate_x_frame_struct (struct frame *f)
 /************************************************************************/
 
 static void
-x_init_frame_1 (struct frame *f, Lisp_Object props)
+x_init_frame_1 (struct frame *f, Lisp_Object props,
+		int frame_name_is_defaulted)
 {
   /* This function can GC */
   Lisp_Object device = FRAME_DEVICE (f);
@@ -2286,11 +2287,11 @@ a string.
 */
        (frame))
 {
-  char str[255];
+  Intbyte str[255];
   struct frame *f = decode_x_frame (frame);
 
-  sprintf (str, "%lu", XtWindow (FRAME_X_TEXT_WIDGET (f)));
-  return build_string (str);
+  qxesprintf (str, "%lu", XtWindow (FRAME_X_TEXT_WIDGET (f)));
+  return build_intstring (str);
 }
 
 

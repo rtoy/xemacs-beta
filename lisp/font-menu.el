@@ -136,27 +136,8 @@ affect one frame instead of all frames."
   :type 'boolean
   :group 'font-menu)
 
-(defcustom font-menu-max-items 25
-  "*Maximum number of items in the font menu
-If number of entries in a menu is larger than this value, split menu
-into submenus of nearly equal length.  If nil, never split menu into
-submenus."
-  :group 'font-menu
-  :type '(choice (const :tag "no submenus" nil)
-		 (integer)))
-
-(defcustom font-menu-submenu-name-format "%-12.12s ... %.12s"
-  "*Format specification of the submenu name.
-Used by `font-menu-split-long-menu' if the number of entries in a menu is
-larger than `font-menu-menu-max-items'.
-This string should contain one %s for the name of the first entry and
-one %s for the name of the last entry in the submenu.
-If the value is a function, it should return the submenu name.  The
-function is be called with two arguments, the names of the first and
-the last entry in the menu."
-  :group 'font-menu
-  :type '(choice (string :tag "Format string")
-		 (function)))
+(defvaralias 'font-menu-max-items 'menu-max-items)
+(defvaralias 'font-menu-submenu-name-format 'menu-submenu-name-format)
 
 (defvar font-menu-preferred-resolution
   (make-specifier-and-init 'generic '((global ((mswindows) . ":")
@@ -196,46 +177,6 @@ or if you change your font path, you can call this to re-initialize the menus."
     (call-device-method 'reset-device-font-menus device device debug)
     (message "Getting list of fonts from server... done.")))
 
-(defun font-menu-split-long-menu (menu)
-  "Split MENU according to `font-menu-max-items' and add accelerator specs."
-  (let ((len (length menu)))
-    (if (or (null font-menu-max-items)
-	    (null (featurep 'lisp-float-type))
-	    (<= len font-menu-max-items))
-	(submenu-generate-accelerator-spec menu)
-      ;; Submenu is max 2 entries longer than menu, never shorter, number of
-      ;; entries in submenus differ by at most one (with longer submenus first)
-      (let* ((outer (floor (sqrt len)))
-	     (inner (/ len outer))
-	     (rest (% len outer))
-	     (result nil))
-	(setq menu (reverse menu))
-	(while menu
-	  (let ((in inner)
-		(sub nil)
-		(to (car menu)))
-	    (while (> in 0)
-	      (setq in   (1- in)
-		    sub  (cons (car menu) sub)
-		    menu (cdr menu)))
-	    (setq result
-		  (cons (cons (if (stringp font-menu-submenu-name-format)
-				  (format font-menu-submenu-name-format
-					  (menu-item-strip-accelerator-spec
-					   (aref (car sub) 0))
-					  (menu-item-strip-accelerator-spec
-					   (aref to 0)))
-				(funcall font-menu-submenu-name-format
-					 (menu-item-strip-accelerator-spec
-					  (aref (car sub) 0))
-					 (menu-item-strip-accelerator-spec
-					  (aref to 0))))
-			      (submenu-generate-accelerator-spec sub))
-			result)
-		  rest  (1+ rest))
-	    (if (= rest outer) (setq inner (1+ inner)))))
-	(submenu-generate-accelerator-spec result)))))
-
 ;;;###autoload
 (defun font-menu-family-constructor (ignored)
   (catch 'menu
@@ -254,7 +195,7 @@ or if you change your font path, you can call this to re-initialize the menus."
       ;; the same size and weight as the current font (scalable fonts
       ;; exist in every size).  Only the current font is marked as
       ;; selected.
-      (font-menu-split-long-menu
+      (menu-split-long-menu
        (mapcar
 	(lambda (item)
 	  (setq f (menu-item-strip-accelerator-spec (aref item 0))

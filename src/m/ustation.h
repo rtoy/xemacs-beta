@@ -94,7 +94,6 @@ Boston, MA 02111-1307, USA.  */
 #define LIBS_TERMCAP "-ltermcap"
 
 #define EXEC_PAGESIZE 1024
-#define SYSTEM_PURESIZE_EXTRA 10000
 
 
 #undef SIGTSTP

@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
    Copyright (C) 1985, 1986, 1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,7 +23,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file has been Mule-ized. */
 
-/* Seriously hacked on by Ben Wing for Mule. */
+/* Seriously divergent from FSF by this point.
+
+   Seriously hacked on by Ben Wing for Mule.  All stdio code also by Ben,
+   as well as the debugging code (initial version of debug_print(), though,
+   by Jamie Zawinski) and the _fmt interfaces.  Also a fair amount of work
+   by Hrvoje, e.g. floating-point code and rewriting to avoid O(N^2)
+   consing when outputting to the echo area.  Print-circularity code by
+   Martin? */
 
 #include <config.h>
 #include "lisp.h"
@@ -37,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "opaque.h"
 #include "sysfile.h"
 #ifdef WIN32_NATIVE
 #include "console-msw.h"
@@ -105,18 +113,39 @@ int print_unbuffered;
 
 FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
+static void write_string_to_alternate_debugging_output (Intbyte *str,
+							Bytecount len);
+
 
 
 int stdout_needs_newline;
 
+/* Basic function to actually write to a stdio stream or TTY console. */
+
 static void
-std_handle_out_external (FILE *stream, Lisp_Object lstream,
-			 const Extbyte *extptr, Bytecount extlen,
-			 /* is this really stdout/stderr?
-			    (controls termscript writing) */
-			 int output_is_std_handle,
-			 int must_flush)
+write_string_to_stdio_stream (FILE *stream, struct console *con,
+			      const Intbyte *ptr, Bytecount len,
+			      int must_flush)
 {
+  Extbyte *extptr = 0;
+  Bytecount extlen = 0;
+  int output_is_std_handle =
+    stream ? stream == stdout || stream == stderr :
+      CONSOLE_TTY_DATA (con)->is_stdio;
+
+  if (stream || output_is_std_handle)
+    {
+      if (initialized && !inhibit_non_essential_printing_operations)
+	TO_EXTERNAL_FORMAT (DATA, (ptr, len),
+			    ALLOCA, (extptr, extlen),
+			    Qterminal);
+      else
+	{
+	  extptr = (Extbyte *) ptr;
+	  extlen = (Bytecount) len;
+	}
+    }
+
   if (stream)
     {
 #ifdef WIN32_NATIVE
@@ -128,11 +157,11 @@ std_handle_out_external (FILE *stream, Lisp_Object lstream,
       /* we typically have no useful stdout/stderr under windows if we're
 	 being invoked graphically. */
       if (no_useful_stderr)
-	mswindows_output_console_string (extptr, extlen);
+	mswindows_output_console_string (ptr, len);
       else
 #endif
 	{
-	  fwrite (extptr, 1, extlen, stream);
+	  retry_fwrite (extptr, 1, extlen, stream);
 #ifdef WIN32_NATIVE
 	  /* Q122442 says that pipes are "treated as files, not as
 	     devices", and that this is a feature. Before I found that
@@ -145,21 +174,22 @@ std_handle_out_external (FILE *stream, Lisp_Object lstream,
 	}
     }
   else
-    Lstream_write (XLSTREAM (lstream), extptr, extlen);
+    /* The stream itself does conversion to external format */
+    Lstream_write (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream), ptr, len);
 
   if (output_is_std_handle)
     {
       if (termscript)
 	{
-	  fwrite (extptr, 1, extlen, termscript);
+	  retry_fwrite (extptr, 1, extlen, termscript);
 	  fflush (termscript);
 	}
-      stdout_needs_newline = (extptr[extlen - 1] != '\n');
+      stdout_needs_newline = (ptr[extlen - 1] != '\n');
     }
 }
 
 /* #### The following function should be replaced a call to the
-   emacs_doprnt_*() functions.  This is the only way to ensure that
+   emacs_vsprintf_*() functions.  This is the only way to ensure that
    I18N3 works properly (many implementations of the *printf()
    functions, including the ones included in glibc, do not implement
    the %###$ argument-positioning syntax).
@@ -173,114 +203,100 @@ std_handle_out_external (FILE *stream, Lisp_Object lstream,
    2) (to be really correct) make a new lstream that outputs using
    mswindows_output_console_string().  */
 
-static int
-std_handle_out_va (FILE *stream, const char *fmt, va_list args)
+static void
+std_handle_out_va (FILE *stream, const CIntbyte *fmt, va_list args,
+		   int debug_output_as_well)
 {
   Intbyte kludge[8192];
-  Extbyte *extptr;
-  Bytecount extlen;
-  int retval;
+  Bytecount kludgelen;
 
-  retval = vsprintf ((char *) kludge, fmt, args);
-  if (initialized && !fatal_error_in_progress)
-    TO_EXTERNAL_FORMAT (DATA, (kludge, strlen ((char *) kludge)),
-			ALLOCA, (extptr, extlen),
-			Qnative);
-  else
+  if (initialized && !inhibit_non_essential_printing_operations)
+    fmt = GETTEXT (fmt);
+  vsprintf ((CIntbyte *) kludge, fmt, args);
+  kludgelen = qxestrlen (kludge);
+
+  write_string_to_stdio_stream (stream, 0, kludge, kludgelen, 1);
+  if (debug_output_as_well)
     {
-      extptr = (Extbyte *) kludge;
-      extlen = (Bytecount) strlen ((char *) kludge);
+      write_string_to_alternate_debugging_output (kludge, kludgelen);
+#ifdef WIN32_NATIVE
+      write_string_to_mswindows_debugging_output (kludge, kludgelen);
+#endif
     }
-
-  std_handle_out_external (stream, Qnil, extptr, extlen, 1, 1);
-  return retval;
 }
 
-/* Output portably to stderr or its equivalent; call GETTEXT on the
-   format string.  Automatically flush when done. */
+/* Output portably to stderr or its equivalent (i.e. may be a console
+   window under MS Windows); do external-format conversion and call GETTEXT
+   on the format string.  Automatically flush when done.
 
-int
-stderr_out (const char *fmt, ...)
+   This is safe even when not initialized or when dying -- we don't do
+   conversion in such cases. */
+
+void
+stderr_out (const CIntbyte *fmt, ...)
 {
-  int retval;
   va_list args;
   va_start (args, fmt);
-  retval =
-    std_handle_out_va
-    (stderr, initialized && !fatal_error_in_progress ? GETTEXT (fmt) : fmt,
-     args);
+  std_handle_out_va (stderr, fmt, args, 0);
   va_end (args);
-  return retval;
 }
 
-/* Output portably to stdout or its equivalent; call GETTEXT on the
-   format string.  Automatically flush when done. */
+/* Output portably to stdout or its equivalent (i.e. may be a console
+   window under MS Windows).  Works like stderr_out(). */
 
-int
-stdout_out (const char *fmt, ...)
+void
+stdout_out (const CIntbyte *fmt, ...)
 {
-  int retval;
   va_list args;
   va_start (args, fmt);
-  retval =
-    std_handle_out_va
-    (stdout, initialized && !fatal_error_in_progress ? GETTEXT (fmt) : fmt,
-     args);
+  std_handle_out_va (stdout, fmt, args, 0);
   va_end (args);
-  return retval;
+}
+
+/* Output portably to stderr or its equivalent (i.e. may be a console
+   window under MS Windows), as well as alternate-debugging-output and
+   (under MS Windows) the C debugging output, i.e. OutputDebugString().
+   Works like stderr_out(). */
+
+void
+debug_out (const CIntbyte *fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  std_handle_out_va (stderr, fmt, args, 1);
+  va_end (args);
 }
 
 DOESNT_RETURN
-fatal (const char *fmt, ...)
+fatal (const CIntbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
 
-  stderr_out ("\nXEmacs: ");
-  std_handle_out_va (stderr, GETTEXT (fmt), args);
+  stderr_out ("\nXEmacs: fatal error: ");
+  std_handle_out_va (stderr, fmt, args, 0);
   stderr_out ("\n");
 
   va_end (args);
   exit (1);
 }
 
-/* Write a string (in internal format) to stdio stream STREAM. */
-
-void
-write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      const Intbyte *str,
-			      Bytecount offset, Bytecount len,
-			      Lisp_Object coding_system,
-			      int must_flush)
-{
-  Bytecount extlen;
-  const Extbyte *extptr;
-
-  /* #### yuck! sometimes this function is called with string data,
-     and the following call may gc. */
-  {
-    Intbyte *puta = (Intbyte *) alloca (len);
-    memcpy (puta, str + offset, len);
-    TO_EXTERNAL_FORMAT (DATA, (puta, len),
-			ALLOCA, (extptr, extlen),
-			coding_system);
-  }
-
-  if (stream)
-    std_handle_out_external (stream, Qnil, extptr, extlen,
-			     stream == stdout || stream == stderr, must_flush);
-  else
-    {
-      assert (CONSOLE_TTY_P (con));
-      std_handle_out_external (0, CONSOLE_TTY_DATA (con)->outstream,
-			       extptr, extlen,
-			       CONSOLE_TTY_DATA (con)->is_stdio, must_flush);
-    }
-}
-
 /* Write a string to the output location specified in FUNCTION.
    Arguments NONRELOC, RELOC, OFFSET, and LEN are as in
-   buffer_insert_string_1() in insdel.c. */
+   buffer_insert_string_1() in insdel.c.
+
+   FUNCTION is one of
+
+   -- an lstream
+   -- a buffer (insert at point and advance point)
+   -- a marker (insert at marker and advance marker)
+   -- a frame (append to echo area; clear echo area first if
+               `print-message-label' has changed since the last time)
+   -- t or nil (send to stdout)
+   -- a Lisp function of one argument (call to get data output)
+
+   Use Qexternal_debugging_output to get output to stderr.
+*/
 
 static void
 output_string (Lisp_Object function, const Intbyte *nonreloc,
@@ -297,7 +313,9 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
+#ifdef NO_PRINT_DURING_GC
   if (gc_in_progress) return;
+#endif
 
   /* Perhaps not necessary but probably safer. */
   GCPRO2 (function, reloc);
@@ -305,9 +323,12 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
   fixup_internal_substring (newnonreloc, reloc, offset, &len);
 
   if (STRINGP (reloc))
-    newnonreloc = XSTRING_DATA (reloc);
-
-  cclen = bytecount_to_charcount (newnonreloc + offset, len);
+    {
+      cclen = XSTRING_OFFSET_BYTE_TO_CHAR_LEN (reloc, offset, len);
+      newnonreloc = XSTRING_DATA (reloc);
+    }
+  else
+    cclen = bytecount_to_charcount (newnonreloc + offset, len);
 
   if (LSTREAMP (function))
     {
@@ -325,12 +346,9 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
 	    }
 	  else
 	    {
-	      int speccount = specpdl_depth ();
-	      record_unwind_protect (restore_gc_inhibit,
-				     make_int (gc_currently_forbidden));
-	      gc_currently_forbidden = 1;
+	      int speccount = begin_gc_forbidden ();
 	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
-	      unbind_to (speccount, Qnil);
+	      unbind_to (speccount);
 	    }
 	}
       else
@@ -368,20 +386,45 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
     }
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
-      write_string_to_stdio_stream (stdout, 0, newnonreloc, offset, len,
-				    Qterminal, print_unbuffered);
+      write_string_to_stdio_stream (stdout, 0, newnonreloc + offset, len,
+				    print_unbuffered);
+    }
+  else if (EQ (function, Qexternal_debugging_output))
+    {
+      /* This is not strictly necessary, and somewhat of a hack, but it
+	 avoids having each character passed separately to
+	 `external-debugging-output'. #### Why do we pass each character
+	 separately, anyway?
+	 */
+      write_string_to_stdio_stream (stderr, 0, newnonreloc + offset, len,
+				    print_unbuffered);
     }
   else
     {
-      Charcount ccoff = bytecount_to_charcount (newnonreloc, offset);
+      Charcount ccoff;
       Charcount iii;
 
-      for (iii = ccoff; iii < cclen + ccoff; iii++)
+      if (STRINGP (reloc))
+	ccoff = XSTRING_INDEX_BYTE_TO_CHAR (reloc, offset);
+      else
+	ccoff = bytecount_to_charcount (newnonreloc, offset);
+
+      if (STRINGP (reloc))
 	{
-	  call1 (function,
-		 make_char (charptr_emchar_n (newnonreloc, iii)));
-	  if (STRINGP (reloc))
-	    newnonreloc = XSTRING_DATA (reloc);
+	  for (iii = ccoff; iii < cclen + ccoff; iii++)
+	    {
+	      call1 (function, make_char (XSTRING_CHAR (reloc, iii)));
+	      if (STRINGP (reloc))
+		newnonreloc = XSTRING_DATA (reloc);
+	    }
+	}
+      else
+	{
+	  for (iii = ccoff; iii < cclen + ccoff; iii++)
+	    {
+	      call1 (function,
+		     make_char (charptr_emchar_n (newnonreloc, iii)));
+	    }
 	}
     }
 
@@ -409,9 +452,11 @@ static Lisp_Object
 print_prepare (Lisp_Object printcharfun, Lisp_Object *frame_kludge)
 {
   /* Emacs won't print while GCing, but an external debugger might */
+#ifdef NO_PRINT_DURING_GC
   if (gc_in_progress)
     return Qnil;
-
+#endif
+  
   RESET_PRINT_GENSYM;
 
   printcharfun = canonicalize_printcharfun (printcharfun);
@@ -454,9 +499,11 @@ static void
 print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 {
   /* Emacs won't print while GCing, but an external debugger might */
+#ifdef NO_PRINT_DURING_GC
   if (gc_in_progress)
     return;
-
+#endif
+  
   RESET_PRINT_GENSYM;
 
   /* See the comment in print_prepare().  */
@@ -481,7 +528,10 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
   output_string (stream, (const Intbyte *) (string_of_length_1),	\
 		 Qnil, 0, 1)
 
-/* NOTE: Do not call this with the data of a Lisp_String, as
+/* Write internal-format data to STREAM.  See output_string() for
+   interpretation of STREAM.
+
+   NOTE: Do not call this with the data of a Lisp_String, as
    printcharfun might cause a GC, which might cause the string's data
    to be relocated.  To princ a Lisp string, use:
 
@@ -501,10 +551,81 @@ write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream)
 }
 
 void
-write_c_string (const char *str, Lisp_Object stream)
+write_string (const Intbyte *str, Lisp_Object stream)
+{
+  /* This function can GC */
+  write_string_1 (str, qxestrlen (str), stream);
+}
+
+void
+write_c_string (const CIntbyte *str, Lisp_Object stream)
 {
   /* This function can GC */
   write_string_1 ((const Intbyte *) str, strlen (str), stream);
+}
+
+/* Write a printf-style string to STREAM; see output_string(). */
+
+void
+write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...)
+{
+  va_list va;
+  Intbyte *str;
+  Bytecount len;
+  int count;
+
+  va_start (va, fmt);
+  str = emacs_vsprintf_malloc (fmt, va, &len);
+  va_end (va);
+  count = record_unwind_protect_freeing (str);
+  write_string_1 (str, len, stream);
+  unbind_to (count);
+}
+
+/* Write a printf-style string to STREAM, where the arguments are
+   Lisp objects and not C strings or integers; see output_string().
+
+   #### It shouldn't be necessary to specify the number of arguments.
+   This would require some rewriting of the doprnt() functions, though. */
+
+void
+write_fmt_string_lisp (Lisp_Object stream, const CIntbyte *fmt, int nargs, ...)
+{
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
+  int i;
+  Intbyte *str;
+  Bytecount len;
+  int count;
+
+  va_start (va, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
+  count = record_unwind_protect_freeing (str);
+  write_string_1 (str, len, stream);
+  unbind_to (count);
+}
+
+void
+stderr_out_lisp (const CIntbyte *fmt, int nargs, ...)
+{
+  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  va_list va;
+  int i;
+  Intbyte *str;
+  Bytecount len;
+  int count;
+
+  va_start (va, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (va, Lisp_Object);
+  va_end (va);
+  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
+  count = record_unwind_protect_freeing (str);
+  write_string_1 (str, len, Qexternal_debugging_output);
+  unbind_to (count);
 }
 
 
@@ -567,7 +688,7 @@ internal_with_output_to_temp_buffer (Lisp_Object bufname,
   temp_output_buffer_show (buf, same_frame);
   UNGCPRO;
 
-  return unbind_to (speccount, arg);
+  return unbind_to_1 (speccount, arg);
 }
 
 DEFUN ("with-output-to-temp-buffer", Fwith_output_to_temp_buffer, 1, UNEVALLED, 0, /*
@@ -605,7 +726,7 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
 
   temp_output_buffer_show (Vstandard_output, Qnil);
 
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, val);
 }
 
 DEFUN ("terpri", Fterpri, 0, 1, 0, /*
@@ -795,7 +916,7 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
       }
     print_finish (stream, frame);
     UNGCPRO;
-    unbind_to (speccount, Qnil);
+    unbind_to (speccount);
     return;
     /* not reached */
   }
@@ -1170,7 +1291,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       XINT (Vprint_string_length) < max)
     {
       max = XINT (Vprint_string_length);
-      bcmax = charcount_to_bytecount (string_data (s), max);
+      bcmax = string_index_char_to_byte (s, max);
     }
   if (max < 0)
     {
@@ -1265,8 +1386,73 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   QUIT;
 
+#ifdef NO_PRINT_DURING_GC
   /* Emacs won't print while GCing, but an external debugger might */
   if (gc_in_progress) return;
+#endif
+
+  /* Try to check for a bogus pointer if we're in a situation where it may
+     be likely.  In such cases, crashing is counterproductive. */
+  if (inhibit_non_essential_printing_operations || print_unbuffered)
+    {
+      if (XTYPE (obj) == Lisp_Type_Record)
+	{
+	  struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+      
+	  if (!debug_can_access_memory (lheader, sizeof (*lheader)))
+	    {
+	      char buf[128];
+
+	      sprintf (buf, "#<EMACS BUG: BAD MEMORY %p>", lheader);
+	      write_c_string (buf, printcharfun);
+	      return;
+	    }
+	  else
+	    {
+	      const struct lrecord_implementation *impl;
+
+	      if ((int) lheader->type >= lrecord_type_count)
+		{
+		  char buf[128];
+		  
+		  sprintf (buf, "#<EMACS BUG: bad type %d BAD MEMORY %p>",
+			   lheader->type, lheader);
+		  write_c_string (buf, printcharfun);
+		  return;
+		}
+
+	      impl = LHEADER_IMPLEMENTATION (lheader);
+	      if (!debug_can_access_memory
+		  (lheader,
+		   (impl->size_in_bytes_method ?
+		    impl->size_in_bytes_method (lheader) :
+		    impl->static_size)))
+		{
+		  char buf[128];
+		  
+		  sprintf (buf, "#<EMACS BUG: type %s BAD MEMORY %p>",
+			   impl->name, lheader);
+		  write_c_string (buf, printcharfun);
+		  return;
+		}
+
+	      if (STRINGP (obj))
+		{
+		  Lisp_String *l = (Lisp_String *) lheader;
+		  if (!debug_can_access_memory
+		      (l->data, l->size))
+		    {
+		      char buf[128];
+		  
+		      sprintf (buf, "#<EMACS BUG: %p (BAD STRING DATA %p)>",
+			       lheader, l->data);
+		      write_c_string (buf, printcharfun);
+		      return;
+		    }
+		}
+	    }
+	}
+    }
 
 #ifdef I18N3
   /* #### Both input and output streams should have a flag associated
@@ -1593,18 +1779,33 @@ to 0.
 {
   Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
-  int extlen;
-  const Extbyte *extptr;
 
   CHECK_CHAR_COERCE_INT (character);
   len = set_charptr_emchar (str, XCHAR (character));
-  TO_EXTERNAL_FORMAT (DATA, (str, len),
-		      ALLOCA, (extptr, extlen),
-		      Qterminal);
+  write_string_to_alternate_debugging_output (str, len);
+  
+  return character;
+}
+
+static void
+write_string_to_alternate_debugging_output (Intbyte *str, Bytecount len)
+{
+  int extlen;
+  const Extbyte *extptr;
+#if 0 /* We want to see the internal representation, don't we? */
+  if (initialized && !inhibit_non_essential_printing_operations)
+    TO_EXTERNAL_FORMAT (DATA, (str, len),
+			ALLOCA, (extptr, extlen),
+			Qterminal);
+  else
+#endif /* 0 */
+    {
+      extlen = len;
+      extptr = (Extbyte *) str;
+    }
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
-  return character;
 }
 
 DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
@@ -1650,8 +1851,8 @@ the output also will be logged to this file.
   if (STRINGP (char_or_string))
     write_string_to_stdio_stream (file, con,
 				  XSTRING_DATA (char_or_string),
-				  0, XSTRING_LENGTH (char_or_string),
-				  Qterminal, 1);
+				  XSTRING_LENGTH (char_or_string),
+				  print_unbuffered);
   else
     {
       Intbyte str[MAX_EMCHAR_LEN];
@@ -1659,7 +1860,7 @@ the output also will be logged to this file.
 
       CHECK_CHAR_COERCE_INT (char_or_string);
       len = set_charptr_emchar (str, XCHAR (char_or_string));
-      write_string_to_stdio_stream (file, con, str, 0, len, Qterminal, 1);
+      write_string_to_stdio_stream (file, con, str, len, print_unbuffered);
     }
 
   return char_or_string;
@@ -1674,26 +1875,25 @@ FILENAME = nil means just close any termscript file currently open.
   /* This function can GC */
   if (termscript != 0)
     {
-      fclose (termscript);
+      retry_fclose (termscript);
       termscript = 0;
     }
 
   if (! NILP (filename))
     {
       filename = Fexpand_file_name (filename, Qnil);
-      termscript = fopen ((char *) XSTRING_DATA (filename), "w");
+      termscript = qxe_fopen (XSTRING_DATA (filename), "w");
       if (termscript == NULL)
 	report_file_error ("Opening termscript", filename);
     }
   return Qnil;
 }
 
-#if 1
-/* Debugging kludge -- unbuffered */
 static int debug_print_length   = 50;
 static int debug_print_level    = 15;
 static int debug_print_readably = -1;
 
+/* Debugging kludge -- unbuffered */
 static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
@@ -1705,9 +1905,6 @@ debug_print_no_newline (Lisp_Object debug_print_obj)
   Lisp_Object save_Vinhibit_quit = Vinhibit_quit;
   struct gcpro gcpro1, gcpro2, gcpro3;
   GCPRO3 (save_Vprint_level, save_Vprint_length, save_Vinhibit_quit);
-
-  if (gc_in_progress)
-    stderr_out ("** gc-in-progress!  Bad idea to print anything! **\n");
 
   print_depth = 0;
   print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
@@ -1739,12 +1936,11 @@ void
 debug_print (Lisp_Object debug_print_obj)
 {
   debug_print_no_newline (debug_print_obj);
-  stderr_out ("\n");
+  debug_out ("\n");
 }
 
 /* Debugging kludge -- unbuffered */
 /* This function provided for the benefit of the debugger.  */
-void debug_backtrace (void);
 void
 debug_backtrace (void)
 {
@@ -1757,9 +1953,6 @@ debug_backtrace (void)
 
   struct gcpro gcpro1, gcpro2, gcpro3;
   GCPRO3 (old_print_level, old_print_length, old_inhibit_quit);
-
-  if (gc_in_progress)
-    stderr_out ("** gc-in-progress!  Bad idea to print anything! **\n");
 
   print_depth = 0;
   print_readably = 0;
@@ -1788,12 +1981,12 @@ debug_short_backtrace (int length)
 {
   int first = 1;
   struct backtrace *bt = backtrace_list;
-  stderr_out ("   [");
+  debug_out ("   [");
   while (length > 0 && bt)
     {
       if (!first)
 	{
-	  stderr_out (", ");
+	  debug_out (", ");
 	}
       if (COMPILED_FUNCTIONP (*bt->function))
 	{
@@ -1805,13 +1998,13 @@ debug_short_backtrace (int length)
 #endif
 	  if (!NILP (ann))
 	    {
-	      stderr_out ("<compiled-function from ");
+	      debug_out ("<compiled-function from ");
 	      debug_print_no_newline (ann);
-	      stderr_out (">");
+	      debug_out (">");
 	    }
 	  else
 	    {
-	      stderr_out ("<compiled-function of unknown origin>");
+	      debug_out ("<compiled-function of unknown origin>");
 	    }
 	}
       else
@@ -1820,10 +2013,8 @@ debug_short_backtrace (int length)
       length--;
       bt = bt->next;
     }
-  stderr_out ("]\n");
+  debug_out ("]\n");
 }
-
-#endif /* debugging kludge */
 
 
 void

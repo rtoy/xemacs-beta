@@ -1346,7 +1346,8 @@ map_char_table (Lisp_Char_Table *ct,
 
 	  for (i = start, retval = 0; i < stop && retval == 0; i++)
 	    {
-	      retval = map_over_other_charset (ct, i, fn, arg);
+	      if (i != LEADING_BYTE_ASCII && i != LEADING_BYTE_CONTROL_1)
+		retval = map_over_other_charset (ct, i, fn, arg);
 	    }
 	}
 #endif /* MULE */
@@ -1361,7 +1362,8 @@ map_char_table (Lisp_Char_Table *ct,
 
     case CHARTAB_RANGE_ROW:
       {
-	Lisp_Object val = ct->level1[XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE];
+	Lisp_Object val = ct->level1[XCHARSET_LEADING_BYTE (range->charset) -
+				     MIN_LEADING_BYTE];
 	if (!CHAR_TABLE_ENTRYP (val))
 	  {
 	    struct chartab_range rainj;

@@ -5,7 +5,7 @@
 
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2001, 2002 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -71,6 +71,11 @@
 # define gettext(msgid) (msgid)
 #endif
 
+/* XEmacs addition */
+#ifdef REL_ALLOC
+#define REGEX_REL_ALLOC /* may be undefined below */
+#endif
+
 /* XEmacs: define this to add in a speedup for patterns anchored at
    the beginning of a line.  Keep the ifdefs so that it's easier to
    tell where/why this code has diverged from v19. */
@@ -79,8 +84,8 @@
 /* XEmacs: the current mmap-based ralloc handles small blocks very
    poorly, so we disable it here. */
 
-#if (defined (REL_ALLOC) && defined (HAVE_MMAP)) || defined(DOUG_LEA_MALLOC)
-# undef REL_ALLOC
+#if defined (HAVE_MMAP) || defined (DOUG_LEA_MALLOC)
+# undef REGEX_REL_ALLOC
 #endif
 
 /* The `emacs' switch turns on certain matching commands
@@ -123,7 +128,7 @@ complex_vars_of_regex (void)
 /* If we are not linking with Emacs proper,
    we can't use the relocating allocator
    even if config.h says that we can.  */
-#undef REL_ALLOC
+#undef REGEX_REL_ALLOC
 
 /* defined in lisp.h */
 #ifdef REGEX_MALLOC
@@ -300,6 +305,9 @@ init_syntax_once (void)
 /* Make alloca work the best possible way.  */
 #ifdef __GNUC__
 #define alloca __builtin_alloca
+#elif defined (__DECC) /* XEmacs: added next 3 lines, similar to config.h.in */
+#include <alloca.h>
+#pragma intrinsic(alloca)
 #else /* not __GNUC__ */
 #if HAVE_ALLOCA_H
 #include <alloca.h>
@@ -327,7 +335,7 @@ void *alloca ();
 
 /* Define how to allocate the failure stack.  */
 
-#ifdef REL_ALLOC
+#ifdef REGEX_REL_ALLOC
 #define REGEX_ALLOCATE_STACK(size)				\
   r_alloc ((char **) &failure_stack_ptr, (size))
 #define REGEX_REALLOCATE_STACK(source, osize, nsize)		\
@@ -335,7 +343,7 @@ void *alloca ();
 #define REGEX_FREE_STACK(ptr)					\
   r_alloc_free ((void **) &failure_stack_ptr)
 
-#else /* not REL_ALLOC */
+#else /* not REGEX_REL_ALLOC */
 
 #ifdef REGEX_MALLOC
 
@@ -353,7 +361,7 @@ void *alloca ();
 #define REGEX_FREE_STACK(arg)
 
 #endif /* REGEX_MALLOC */
-#endif /* REL_ALLOC */
+#endif /* REGEX_REL_ALLOC */
 
 
 /* True if `size1' is non-NULL and PTR is pointing anywhere inside
@@ -1024,8 +1032,10 @@ print_double_string (re_char *where, re_char *string1, int size1,
 
 #else /* not DEBUG */
 
+#ifndef emacs
 #undef assert
-#define assert(e)
+#define assert(e) ((void) (1))
+#endif
 
 #define DEBUG_STATEMENT(e)
 #define DEBUG_PRINT1(x)
@@ -1102,16 +1112,47 @@ static const char *re_error_msgid[] =
    using the relocating allocator routines, then malloc could cause a
    relocation, which might (if the strings being searched are in the
    ralloc heap) shift the data out from underneath the regexp
-   routines.
+   routines. [To clarify: The purpose of rel-alloc is to allow data to
+   be moved in memory from one place to another so that all data
+   blocks can be consolidated together and excess memory released back
+   to the operating system.  This requires that all the blocks that
+   are managed by rel-alloc go at the very end of the program's heap,
+   after all regularly malloc()ed data.  malloc(), however, is used to
+   owning the end of the heap, so that when more memory is needed, it
+   just expands the heap using sbrk().  This is reconciled by using a
+   malloc() (such as malloc.c, gmalloc.c, or recent versions of
+   malloc() in libc) where the sbrk() call can be replaced with a
+   user-specified call -- in this case, to rel-alloc's r_alloc_sbrk()
+   routine.  This routine calls the real sbrk(), but then shifts all
+   the rel-alloc-managed blocks forward to the end of the heap again,
+   so that malloc() gets the memory it needs in the location it needs
+   it at.  The regex routines may well have pointers to buffer data as
+   their arguments, and buffers are managed by rel-alloc if rel-alloc
+   has been enabled, so calling malloc() may potentially screw things
+   up badly if it runs out of space and asks for more from the OS.]
 
-   Here's another reason to avoid allocation: Emacs
-   processes input from X in a signal handler; processing X input may
-   call malloc; if input arrives while a matching routine is calling
-   malloc, then we're scrod.  But Emacs can't just block input while
-   calling matching routines; then we don't notice interrupts when
-   they come in.  So, Emacs blocks input around all regexp calls
-   except the matching calls, which it leaves unprotected, in the
-   faith that they will not malloc.  */
+   [[Here's another reason to avoid allocation: Emacs processes input
+   from X in a signal handler; processing X input may call malloc; if
+   input arrives while a matching routine is calling malloc, then
+   we're scrod.  But Emacs can't just block input while calling
+   matching routines; then we don't notice interrupts when they come
+   in.  So, Emacs blocks input around all regexp calls except the
+   matching calls, which it leaves unprotected, in the faith that they
+   will not malloc.]] This previous paragraph is irrelevant.
+
+   XEmacs: We *do not* do anything so stupid as process input from
+   within a signal handler.  However, the regexp routines may get
+   called reentrantly as a result of QUIT processing (e.g. under
+   Windows: re_match -> QUIT -> quit_p -> drain events -> process
+   WM_INITMENU -> call filter -> re_match), so we cannot have any
+   global variables (unless we do lots of trickiness including some
+   unwind-protects, which isn't worth it at this point).  The first
+   paragraph appears utterly garbled to me -- shouldn't *ANY* use of
+   rel-alloc to different potentially cause buffer data to be
+   relocated?  I must be missing something, though -- perhaps the
+   writer above is assuming that the failure stack(s) will always be
+   allocated after the buffer data, and thus reallocating them with
+   rel-alloc won't move buffer data. --ben */
 
 /* Normally, this is fine.  */
 #define MATCH_MAY_ALLOCATE
@@ -1127,8 +1168,16 @@ static const char *re_error_msgid[] =
    Note that if REL_ALLOC is defined, matching would not use malloc for the
    failure stack, but we would still use it for the register vectors;
    so REL_ALLOC should not affect this.  */
-#if (defined (C_ALLOCA) || defined (REGEX_MALLOC)) && defined (emacs)
+
+/* XEmacs change emacs -> REL_ALLOC */
+#if (defined (C_ALLOCA) || defined (REGEX_MALLOC)) && defined (REL_ALLOC)
 #undef MATCH_MAY_ALLOCATE
+#endif
+
+/* #### need better check */
+
+#if !defined (MATCH_MAY_ALLOCATE) && defined (emacs) && defined (HAVE_MS_WINDOWS)
+#error regex must be handle reentrancy; MATCH_MAY_ALLOCATE must be defined
 #endif
 
 
@@ -1277,7 +1326,7 @@ typedef struct
 
    Does `return FAILURE_CODE' if runs out of memory.  */
 
-#if !defined (REGEX_MALLOC) && !defined (REL_ALLOC)
+#if !defined (REGEX_MALLOC) && !defined (REGEX_REL_ALLOC)
 #define DECLARE_DESTINATION char *destination
 #else
 #define DECLARE_DESTINATION DECLARE_NOTHING
@@ -3527,7 +3576,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   unsigned char *p = pattern;
   REGISTER unsigned char *pend = pattern + size;
 
-#ifdef REL_ALLOC
+#ifdef REGEX_REL_ALLOC
   /* This holds the pointer to the failure stack, when
      it is allocated relocatably.  */
   fail_stack_elt_t *failure_stack_ptr;
@@ -3766,7 +3815,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	      fastmap[j] = 1;
 	  for (j = 0x80; j < 0xA0; j++)
 	    {
-	      if (LEADING_BYTE_PREFIX_P(j))
+	      if (LEADING_BYTE_PREFIX_P((unsigned char) j))
 		/* too complicated to calculate this right */
 		fastmap[j] = 1;
 	      else
@@ -3809,7 +3858,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	      fastmap[j] = 1;
 	  for (j = 0x80; j < 0xA0; j++)
 	    {
-	      if (LEADING_BYTE_PREFIX_P(j))
+	      if (LEADING_BYTE_PREFIX_P((unsigned char) j))
 		/* too complicated to calculate this right */
 		fastmap[j] = 1;
 	      else
@@ -4433,6 +4482,28 @@ re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
   return result;
 }
 
+#if defined (ERROR_CHECK_CHARBPOS) && defined (emacs)
+int in_re_match_2_internal;
+
+/* #### I am seeing an error (once) where regex_match_object gets set
+   to a string while matching on a buffer.  The only way this seems
+   possible is recursive invocation of re_match_2_internal(). */
+static Lisp_Object
+restore_in_re_match_2_internal (Lisp_Object val)
+{
+  in_re_match_2_internal = 0;
+  return Qnil;
+}
+
+#define RESTORE_IN_MATCH_FLAG unbind_to (speccount)
+
+#else
+
+#define RESTORE_IN_MATCH_FLAG do {} while (0)
+
+#endif /* defined (ERROR_CHECK_CHARBPOS) && defined (emacs) */
+
+
 /* This is a separate function so that we can force an alloca cleanup
    afterwards.  */
 static int
@@ -4483,7 +4554,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   int nfailure_points_pushed = 0, nfailure_points_popped = 0;
 #endif
 
-#ifdef REL_ALLOC
+#ifdef REGEX_REL_ALLOC
   /* This holds the pointer to the failure stack, when
      it is allocated relocatably.  */
   fail_stack_elt_t *failure_stack_ptr;
@@ -4568,6 +4639,17 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   /* 1 if this match is the best seen so far.  */
   re_bool best_match_p;
 
+#if defined (ERROR_CHECK_CHARBPOS) && defined (emacs)
+  int speccount = specpdl_depth ();
+
+#if 0
+  /* we've hopefully fixed the reentrancy problem. */
+  assert (!in_re_match_2_internal);
+#endif
+  in_re_match_2_internal = 1;
+  record_unwind_protect (restore_in_re_match_2_internal, Qnil);
+#endif /* defined (ERROR_CHECK_CHARBPOS) && defined (emacs) */
+
   DEBUG_PRINT1 ("\n\nEntering re_match_2.\n");
 
   INIT_FAIL_STACK ();
@@ -4594,6 +4676,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             && best_regstart && best_regend && reg_dummy && reg_info_dummy))
         {
           FREE_VARIABLES ();
+	  RESTORE_IN_MATCH_FLAG;
           return -2;
         }
     }
@@ -4611,6 +4694,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   if (pos < 0 || pos > size1 + size2)
     {
       FREE_VARIABLES ();
+      RESTORE_IN_MATCH_FLAG;
       return -1;
     }
 
@@ -4768,6 +4852,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
                   if (regs->start == NULL || regs->end == NULL)
 		    {
 		      FREE_VARIABLES ();
+		      RESTORE_IN_MATCH_FLAG;
 		      return -2;
 		    }
                   bufp->regs_allocated = REGS_REALLOCATE;
@@ -4784,6 +4869,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
                       if (regs->start == NULL || regs->end == NULL)
 			{
 			  FREE_VARIABLES ();
+			  RESTORE_IN_MATCH_FLAG;
 			  return -2;
 			}
                     }
@@ -4845,6 +4931,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           DEBUG_PRINT2 ("Returning %d from re_match_2.\n", mcnt);
 
           FREE_VARIABLES ();
+	  RESTORE_IN_MATCH_FLAG;
           return mcnt;
         }
 
@@ -5947,6 +6034,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
   FREE_VARIABLES ();
 
+  RESTORE_IN_MATCH_FLAG;
   return -1;         			/* Failure to match.  */
 } /* re_match_2 */
 

@@ -329,6 +329,7 @@ if this is nil (the default), then `load-path' is searched."
 		   nil
 		(locate-file library (or find-library-source-path load-path)
 			     ;; decompression doesn't work with Mule -slb
+			     ;; !!#### fix this
 			     (if (featurep 'mule)
 				 ":.el:.elc"
 			       ":.el:.el.gz:.el.Z:.elc")))))

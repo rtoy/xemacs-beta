@@ -45,7 +45,6 @@ Boston, MA 02111-1307, USA.  */
 #define TERMCAP
 
 #define LIBS_TERMCAP "-ltermlib"
-#define SYSTEM_PURESIZE_EXTRA 100000
 #define ALTOS
 
 #ifdef __GNUC__

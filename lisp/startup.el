@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985-1986, 1990, 1992-1997 Free Software Foundation, Inc.
 ;; Copyright (c) 1993, 1994 Sun Microsystems, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -214,9 +215,9 @@ after, and will not be true at any time before.")
 
 (defvar command-switch-alist
   '(("-help"	. command-line-do-help)
-    ("-version". command-line-do-version)
+    ("-version" . command-line-do-version)
     ("-V"	. command-line-do-version)
-    ("-funcall". command-line-do-funcall)
+    ("-funcall" . command-line-do-funcall)
     ("-f"	. command-line-do-funcall)
     ("-e"	. command-line-do-funcall-1)
     ("-eval"	. command-line-do-eval)
@@ -225,6 +226,7 @@ after, and will not be true at any time before.")
     ("-insert"	. command-line-do-insert)
     ("-i"	. command-line-do-insert)
     ("-kill"	. command-line-do-kill)
+    ("-eol"     . command-line-do-enable-eol-detection)
     ;; Options like +35 are handled specially.
     ;; Window-system, site, or package-specific code might add to this.
     ;; X11 handles its options by letting Xt remove args from this list.
@@ -254,31 +256,85 @@ command line options plus the following:
 
 In addition, the")
        "The"))
-    (princ " following options are accepted:
+    (let ((l command-switch-alist)
+	  (options " following options are accepted:
+
+Display options:
+
+  -nw                   Open the initial frame on the current TTY, instead of
+                        a window system.
+  -t <device>           Use TTY <device> instead of the current TTY for input
+                        and output.  This implies the -nw option.
+  -display <display>    Standard X option, to specify the display connection.
+                        If this option is given, or if the environment
+                        variable DISPLAY is set, an initial X frame will be
+                        created.  Otherwise, an initial Windows frame will be
+                        created if Windows support exists and neither -nw nor
+                        -t is given.  Otherwise, a TTY frame is created.
+  -unmapped             Do not display the initial frame.  Useful to create
+                        a \"server\" that can accept `gnuclient' connections.
+
+Noninteractive options:
+
+  {-help}
+  {-version}
+  {-V}
+  -batch                Execute noninteractively (messages go to stderr, no
+                        initial frame created).
+  {-funcall}
+                        (The function may parse the rest of the command line
+                        for its arguments.)
+  {-f}
+  {-eval}
+  {-load}
+  {-l}
+  {-insert}
+  {-i}
+  {-kill}
   -sd                   Show dump ID.  Ignored when configured without --pdump.
   -nd                   Don't load the dump file.  Roughly like old temacs.
                         Ignored when configured without --pdump.
-  -t <device>           Use TTY <device> instead of the terminal for input
-                        and output.  This implies the -nw option.
-  -nw                   Inhibit the use of any window-system-specific
-                        display code: use the current tty.
-  -batch                Execute noninteractively (messages go to stderr).
-  -debug-init           Enter the debugger if an error in the init file occurs.
-  -unmapped             Do not map the initial frame.
-  -no-site-file         Do not load the site-specific init file (site-start.el).
+
+Initialization files:
+
   -no-init-file         Do not load the user-specific init file.
+  -q                    Same as -no-init-file.
+  -debug-init           Enter the debugger if an error in the init file occurs.
+  -user-init-file <file>
+                        Use <file> as init file.
+  -user-init-directory <directory>
+                        Use <directory> as init directory.
+  -user <user>          Load user's init file instead of your own.
+  -u <user>             Same as -user.
+  -no-site-file         Do not load the site-specific init file
+                        (site-start.el).
+
+Package/module options:
+
   -no-early-packages	Do not process early packages.
+  -vanilla		Equivalent to -q -no-site-file -no-early-packages.
   -no-autoloads		Do not load global symbol files (auto-autoloads) at
 			startup.  Also implies `-vanilla'.
-  -vanilla		Equivalent to -q -no-site-file -no-early-packages.
-  -q                    Same as -no-init-file.
-  -user-init-file <file> Use <file> as init file.
-  -user-init-directory <directory> Use <directory> as init directory.
-  -user <user>          Load user's init file instead of your own.
-  -u <user>             Same as -user.\n")
-   (let ((l command-switch-alist)
+  -debug-paths          Display info about the runtime values of various
+                        directory variables (e.g. for loading packages).
+  -no-site-modules      Do not search site-modules directories for modules
+                        at startup.  Only applies when modules support is
+                        compiled into XEmacs.
+
+Encoding options:
+
+  -eol                  Turn on EOL detection (only applies to Unix, no
+                        international support; otherwise EOL detection is
+                        already on).
+  -nuni                 Under MS Windows, disable use of the Unicode versions
+                        of API calls.  Not for Windows 95/98/ME.  This is
+                        mostly only useful for debugging purposes.
+
+Misc:
+
+  +N <file>             Start displaying <file> at line N.
+")
 	  (insert (lambda (&rest x)
-		    (princ "  ")
 		    (let ((len 2))
 		      (while x
 			(princ (car x))
@@ -289,41 +345,48 @@ In addition, the")
 		      (while (< len 24)
 			(princ " ")
 			(incf len))))))
-      (while l
-        (let ((name (car (car l)))
-              (fn (cdr (car l)))
-	      doc arg cons)
-	  (cond
-	   ((and (symbolp fn) (get fn 'undocumented)) nil)
-	   (t
-	    (setq doc (documentation fn))
-	    (if (member doc '(nil "")) (setq doc "(undocumented)"))
-	    (cond ((string-match "\n\\(<.*>\\)\n?\\'" doc)
-		   ;; Doc of the form "The frobber switch\n<arg1> <arg2>"
-		   (setq arg (substring doc (match-beginning 1) (match-end 1))
-			 doc (substring doc 0 (match-beginning 0))))
-		  ((string-match "\n+\\'" doc)
-		   (setq doc (substring doc 0 (match-beginning 0)))))
-	    (if (and (setq cons (rassq fn command-switch-alist))
-		     (not (eq cons (car l))))
-		(setq doc (format "Same as %s." (car cons))))
-	    (if arg
-		(funcall insert name " " arg)
-	      (funcall insert name))
-	    (princ doc)
-	    (terpri))))
-        (setq l (cdr l))))
+      (princ
+       (with-temp-buffer
+	 (insert options)
+	 (while l
+	   (let ((name (car (car l)))
+		 (fn (cdr (car l)))
+		 doc arg cons)
+	     (cond
+	      ((and (symbolp fn) (get fn 'undocumented)) nil)
+	      (t
+	       (setq doc (documentation fn))
+	       (if (member doc '(nil "")) (setq doc "(undocumented)"))
+	       (cond ((string-match "\n\\(<.*>\\)\n?\\'" doc)
+		      ;; Doc of the form "The frobber switch\n<arg1> <arg2>"
+		      (setq arg (substring doc (match-beginning 1) (match-end 1))
+			    doc (substring doc 0 (match-beginning 0))))
+		     ((string-match "\n+\\'" doc)
+		      (setq doc (substring doc 0 (match-beginning 0)))))
+	       (if (and (setq cons (rassq fn command-switch-alist))
+			(not (eq cons (car l))))
+		   (setq doc (format "Same as %s." (car cons))))
+	       (goto-char (point-min))
+	       (when (search-forward (format "{%s}" name) nil t)
+		 (delete-region (match-beginning 0) (match-end 0))
+		 (let ((standard-output (current-buffer)))
+		   (if arg
+		       (funcall insert name " " arg)
+		     (funcall insert name))
+		   (princ doc))))))
+	   (setq l (cdr l)))
+	 (buffer-string))))
     (princ (concat "\
-  +N <file>             Start displaying <file> at line N.
 
 Anything else is considered a file name, and is placed into a buffer for
 editing.
 
 " (emacs-name) " has an online tutorial and manuals.  Type ^Ht (Control-h t) after
 starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.
-Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
+Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 
-    (kill-emacs 0))))
+    (kill-emacs 0)
+    ))
 
 (defun command-line-do-funcall (arg)
   "Invoke the named lisp function with no arguments.
@@ -360,6 +423,10 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
   "Print version info and exit."
   (princ (concat (emacs-version) "\n"))
   (kill-emacs 0))
+
+(defun command-line-do-enable-eol-detection (arg)
+  "Turn on EOL detection (only applies to Unix)."
+  (set-eol-detection t))
 
 
 ;;; Processing the command line and loading various init files
@@ -417,6 +484,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
   (if command-line-processed
       (message "Back to top level.")
     (setq command-line-processed t)
+    ;; Do this first for maximum likelihood of catching errors.  The main
+    ;; purpose of this is so that debug-on-error can be set to catch errors
+    ;; during normal noninteractive running.
+    (when (getenv "XEMACSDEBUG")
+      (eval (read (getenv "XEMACSDEBUG"))))
     ;; Canonicalize HOME (PWD is canonicalized by init_buffer in buffer.c)
     (let ((value (user-home-directory)))
       (if (and value
@@ -628,6 +700,20 @@ If this is nil, no message will be displayed.")
     ;; it is created during auto-autoloads loading.  Otherwise, it
     ;; does nothing.
     (startup-initialize-custom-faces)
+
+    ;; A couple of other things need to be initted.
+    ;; (RMS writes about internally using hooks for this, in reference
+    ;; to frame-initialize and frame-notice-user-settings:
+    ;;
+    ;; These are now called explicitly at the proper times,
+    ;; since that is easier to understand.
+    ;; Actually using hooks within Emacs is bad for future maintenance. --rms.
+    ;;
+    ;; In this case, I completely agree. --ben
+    (init-menubar-at-startup)
+    ;; perhaps this should go earlier in the proecess?
+    (if (featurep 'mule)
+	(declare-fboundp (init-mule-at-startup)))
 
     ;;
     ;; We have normality, I repeat, we have normality.  Anything you still
@@ -1170,7 +1256,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
      "Things that you should know rather quickly...\n\n"
      ((key find-file) ": visit a file\n")
      ((key save-buffer) ": save changes\n")
-     ((key advertised-undo) ": undo changes\n")
+     ((key undo) ": undo changes\n")
      ((key save-buffers-kill-emacs) ": exit XEmacs\n"))
     ])
 

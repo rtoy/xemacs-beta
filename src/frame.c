@@ -1,6 +1,6 @@
 /* Generic frame functions.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -377,6 +377,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   int first_frame_on_device = 0;
   int first_frame_on_console = 0;
   Lisp_Object besmirched_cons = Qnil;
+  int frame_name_is_defaulted = 1;
 
   d = decode_device (device);
   XSETDEVICE (device, d);
@@ -396,7 +397,10 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   name = Flax_plist_get (props, Qname, Qnil);
   if (!NILP (name))
-    CHECK_STRING (name);
+    {
+      CHECK_STRING (name);
+      frame_name_is_defaulted = 0;
+    }
   else if (STRINGP (Vdefault_frame_name))
     name = Vdefault_frame_name;
   else
@@ -412,7 +416,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   specbind (Qframe_being_created, name);
   f->name = name;
 
-  FRAMEMETH (f, init_frame_1, (f, props));
+  FRAMEMETH (f, init_frame_1, (f, props, frame_name_is_defaulted));
 
   minibuf = Flax_plist_get (props, Qminibuffer, Qunbound);
   if (UNBOUNDP (minibuf))
@@ -509,7 +513,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   XCDR (besmirched_cons) = Qunbound;
 
-  unbind_to (speccount2, Qnil);
+  unbind_to (speccount2);
 
   /* If this is the first frame on the device, make it the selected one. */
   if (first_frame_on_device && NILP (DEVICE_SELECTED_FRAME (d)))
@@ -557,7 +561,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (!UNBOUNDP (symbol_function (XSYMBOL (Qcustom_initialize_frame))))
     call1 (Qcustom_initialize_frame, frame);
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   UNGCPRO;
   return frame;
@@ -594,14 +598,6 @@ decode_frame_or_selected (Lisp_Object cdf)
   if (DEVICEP (cdf))
     cdf = DEVICE_SELECTED_FRAME (decode_device (cdf));
   return decode_frame (cdf);
-}
-
-Lisp_Object
-make_frame (struct frame *f)
-{
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
-  return frame;
 }
 
 

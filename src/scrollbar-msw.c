@@ -3,7 +3,7 @@
    Copyright (C) 1994 Amdahl Corporation.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -23,6 +23,9 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* This file essentially Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
 
 #include <config.h>
 #include "lisp.h"
@@ -66,11 +69,11 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
     orientation = SBS_HORZ;
 
   SCROLLBAR_MSW_HANDLE (sb) =
-    CreateWindowEx (0, "SCROLLBAR", 0, orientation|WS_CHILD,
-		    CW_USEDEFAULT, CW_USEDEFAULT,
-		    CW_USEDEFAULT, CW_USEDEFAULT,
-		    FRAME_MSWINDOWS_HANDLE (f),
-		    NULL, NULL, NULL);
+    qxeCreateWindowEx (0, XETEXT ("SCROLLBAR"), 0, orientation|WS_CHILD,
+		       CW_USEDEFAULT, CW_USEDEFAULT,
+		       CW_USEDEFAULT, CW_USEDEFAULT,
+		       FRAME_MSWINDOWS_HANDLE (f),
+		       NULL, NULL, NULL);
   SCROLLBAR_MSW_INFO (sb).cbSize = sizeof (SCROLLINFO);
   SCROLLBAR_MSW_INFO (sb).fMask = SIF_ALL;
   GetScrollInfo (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
@@ -78,7 +81,7 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
   ptr = make_opaque_ptr (SCROLLBAR_MSW_HANDLE (sb));
   Fputhash (ptr, wrap_scrollbar_instance (sb),
 	    Vmswindows_scrollbar_instance_table);
-  SetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA,
+  qxeSetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA,
 		 (LONG) LISP_TO_VOID (ptr));
 }
 
@@ -86,7 +89,7 @@ static void
 mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
 {
   void *opaque =
-    (void *) GetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
+    (void *) qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
   Lisp_Object ptr;
 
   VOID_TO_LISP (ptr, opaque);
@@ -137,7 +140,7 @@ mswindows_update_scrollbar_instance_values (struct window *w,
 					    int new_scrollbar_y)
 {
   int pos_changed = 0;
-  int vert = GetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_STYLE) & SBS_VERT;
+  int vert = qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_STYLE) & SBS_VERT;
 
 #if 0
   stderr_out ("[%d, %d], page = %d, pos = %d, inhibit = %d\n", new_minimum, new_maximum,
@@ -201,10 +204,10 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
   struct scrollbar_instance *sb = 0;
   void *v;
   SCROLLINFO scrollinfo;
-  int vert = GetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
+  int vert = qxeGetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
   int value;
 
-  v = (void *) GetWindowLong (hwnd, GWL_USERDATA);
+  v = (void *) qxeGetWindowLong (hwnd, GWL_USERDATA);
   if (!v)
     {
       /* apparently this can happen, as it was definitely necessary
@@ -317,7 +320,7 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
 }
 
 static int
-can_scroll (struct scrollbar_instance* scrollbar)
+can_scroll (struct scrollbar_instance *scrollbar)
 {
   return scrollbar != NULL
 	&& IsWindowVisible (SCROLLBAR_MSW_HANDLE (scrollbar))
@@ -347,22 +350,19 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
      frame. */
   if (ScreenToClient (FRAME_MSWINDOWS_HANDLE (XFRAME (frame)), 
 		      &donde_esta) != 0)
+    /* stderr_out ("donde_esta: %d %d\n", donde_esta.x, donde_esta.y); */
+    pixel_to_glyph_translation (XFRAME (frame), donde_esta.x, donde_esta.y,
+				&mene, &_mene, &tekel, &upharsin,
+				&needle_in_haystack,
+				&mens, &sana, &in, &corpore, &sano);
+
+  if (needle_in_haystack)
     {
-      /* stderr_out ("donde_esta: %d %d\n", donde_esta.x, donde_esta.y); */
-      pixel_to_glyph_translation (XFRAME (frame), donde_esta.x, donde_esta.y,
-				  &mene, &_mene, &tekel, &upharsin,
-				  &needle_in_haystack,
-				  &mens, &sana, &in, &corpore, &sano);
-      
-      if (needle_in_haystack)
-	{
-	  XSETWINDOW (win, needle_in_haystack);
-	  /* stderr_out ("found needle\n");
-	     debug_print (win); */
-	}
+      XSETWINDOW (win, needle_in_haystack);
+      /* stderr_out ("found needle\n");
+	 debug_print (win); */
     }
-  
-  if (!needle_in_haystack)
+  else
     {
       win = FRAME_SELECTED_WINDOW (XFRAME (frame));
       needle_in_haystack = XWINDOW (win);
@@ -381,7 +381,7 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
     return FALSE;
 
   /* Get the number of lines per wheel delta */
-  SystemParametersInfo (SPI_GETWHEELSCROLLLINES, 0, &wheelScrollLines, 0);
+  qxeSystemParametersInfo (SPI_GETWHEELSCROLLLINES, 0, &wheelScrollLines, 0);
 
   /* Calculate the amount to scroll */
   if (wheelScrollLines == WHEEL_PAGESCROLL)

@@ -103,7 +103,7 @@ the variable `load-modules-quietly' is non-NIL.
   dlhandle = 0;
   record_unwind_protect (module_load_unwind, make_int(modnum));
   emodules_load (mod, mname, mver);
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   return Qt;
 }
@@ -351,11 +351,11 @@ emodules_load(const char *module, const char *modname, const char *modver)
   dlhandle = dll_open (soname);
   if (dlhandle == (dll_handle)0)
     {
-      CIntbyte *dllerrint;
+      Intbyte *dllerrint;
 
       EXTERNAL_TO_C_STRING (dll_error (dlhandle), dllerrint, Qnative);
       signal_error (Qdll_error, "Opening dynamic module",
-		    build_string (dllerrint));
+		    build_intstring (dllerrint));
     }
 
   ellcc_rev = (const long *)dll_variable (dlhandle, "emodule_compiler");

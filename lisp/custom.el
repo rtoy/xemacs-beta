@@ -37,8 +37,15 @@
 
 ;;; Code:
 
+;; it is now safe to put the `provide' anywhere.  if an error occurs while
+;; loading, all provides (and fsets) will be undone.  put it first to
+;; prevent require/provide loop with custom and cus-face.
+(provide 'custom)
+
 (eval-when-compile
-  (load "cl-macs" nil t))
+  (load "cl-macs" nil t)
+  ;; To elude warnings.
+  (require 'cus-face))
 
 (autoload 'custom-declare-face "cus-face")
 (autoload 'defun* "cl-macs")
@@ -636,7 +643,5 @@ The ARGS are as in `custom-theme-reset-variables'."
 
 
 ;;; The End.
-
-(provide 'custom)
 
 ;; custom.el ends here

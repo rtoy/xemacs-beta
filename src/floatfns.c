@@ -51,8 +51,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef LISP_FLOAT_TYPE
 
-/* Need to define a differentiating symbol -- see sysfloat.h */
-#define THIS_FILENAME floatfns
 #include "sysfloat.h"
 
 /* The code uses emacs_rint, so that it works to undefine HAVE_RINT
@@ -112,15 +110,15 @@ static const char *float_error_fn_name;
 
 
 #define arith_error(op,arg) \
-  Fsignal (Qarith_error, list2 (build_string (op), arg))
+  Fsignal (Qarith_error, list2 (build_msg_string (op), arg))
 #define range_error(op,arg) \
-  Fsignal (Qrange_error, list2 (build_string (op), arg))
+  Fsignal (Qrange_error, list2 (build_msg_string (op), arg))
 #define range_error2(op,a1,a2) \
-  Fsignal (Qrange_error, list3 (build_string (op), a1, a2))
+  Fsignal (Qrange_error, list3 (build_msg_string (op), a1, a2))
 #define domain_error(op,arg) \
-  Fsignal (Qdomain_error, list2 (build_string (op), arg))
+  Fsignal (Qdomain_error, list2 (build_msg_string (op), arg))
 #define domain_error2(op,a1,a2) \
-  Fsignal (Qdomain_error, list3 (build_string (op), a1, a2))
+  Fsignal (Qdomain_error, list3 (build_msg_string (op), a1, a2))
 
 
 /* Convert float to Lisp Integer if it fits, else signal a range

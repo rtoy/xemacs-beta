@@ -1,5 +1,6 @@
 /* X Selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -25,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
+#include "charset.h"
 #include "console-x.h"
 #include "objects-x.h"
 
@@ -176,8 +177,8 @@ x_atom_to_symbol (struct device *d, Atom atom)
 #endif
 
   {
-    char *intstr;
-    char *str = XGetAtomName (display, atom);
+    Intbyte *intstr;
+    Extbyte *str = XGetAtomName (display, atom);
 
     if (! str) return Qnil;
 
@@ -185,7 +186,7 @@ x_atom_to_symbol (struct device *d, Atom atom)
 			C_STRING_ALLOCA, intstr,
 			Qctext);
     XFree (str);
-    return intern (intstr);
+    return intern_int (intstr);
   }
 }
 
@@ -638,7 +639,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
     xfree (data);
   }
 
-  unbind_to (count, Qnil);
+  unbind_to (count);
 
  DONE_LABEL:
 
@@ -930,7 +931,7 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   if (selection_reply_timed_out)
     signal_error (Qselection_conversion_error, "timed out waiting for reply from selection owner", Qunbound);
 
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   /* otherwise, the selection is waiting for us on the requested property. */
 

@@ -279,7 +279,7 @@ static void unexec_doit(int infd,int outfd)
 
 void unexec(char *outfile,char *infile)
    {
-   char tmpfile[MAXPATHLEN];
+   char tmpfile[PATH_MAX];
    int infd,outfd;
    
    if ((infd=open(infile, O_RDONLY, 0))<0)

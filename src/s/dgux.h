@@ -113,12 +113,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define XICCC
 
-/* Here, on a separate page, add any special hacks needed
-   to make Emacs work on this system.  For example,
-   you might define certain system call names that don't
-   exist on your system, or that do different things on
-   your system and must be used only through an encapsulation
-   (Which you should place, by convention, in sysdep.c).  */
 
 /* DG/UX SPECIFIC ADDITIONS TO TEMPLATE FOLLOW: */
 

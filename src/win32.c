@@ -1,5 +1,5 @@
 /* Utility routines for XEmacs on Windows 9x, NT and Cygwin.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,130 +22,126 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "lisp.h"
 
 #include "buffer.h"
+#include "console-msw.h"
 
+#include "sysfile.h"
+#include "sysproc.h"
 #include "syssignal.h"
 #include "systime.h"
-#include "syswindows.h"
 
-typedef BOOL (WINAPI *pfSwitchToThread_t) (VOID);
+/* Control conversion of upper case file names to lower case.
+   nil means no, t means yes. */
+Lisp_Object Vmswindows_downcase_file_names;
+
+int mswindows_windows9x_p;
+
 pfSwitchToThread_t xSwitchToThread;
 
-typedef HKL (WINAPI *pfGetKeyboardLayout_t) (DWORD);
-pfGetKeyboardLayout_t xGetKeyboardLayout;
-typedef BOOL (WINAPI *pfSetMenuDefaultItem_t) (HMENU, UINT, UINT);
-pfSetMenuDefaultItem_t xSetMenuDefaultItem;
-typedef BOOL (WINAPI *pfInsertMenuItemA_t) 
-     (HMENU, UINT, BOOL, LPCMENUITEMINFOA);
-pfInsertMenuItemA_t xInsertMenuItemA;
-typedef BOOL (WINAPI *pfInsertMenuItemW_t) 
-     (HMENU, UINT, BOOL, LPCMENUITEMINFOW);
-pfInsertMenuItemW_t xInsertMenuItemW;
-typedef HANDLE (WINAPI *pfLoadImageA_t) 
-     (HINSTANCE, LPCSTR, UINT, int, int, UINT);
-pfLoadImageA_t xLoadImageA;
-typedef HANDLE (WINAPI *pfLoadImageW_t)
-     (HINSTANCE, LPCWSTR, UINT, int, int, UINT);
-pfLoadImageW_t xLoadImageW;
-typedef ATOM (WINAPI *pfRegisterClassExA_t) (CONST WNDCLASSEXA *);
-pfRegisterClassExA_t xRegisterClassExA;
-typedef ATOM (WINAPI *pfRegisterClassExW_t) (CONST WNDCLASSEXW *);
-pfRegisterClassExW_t xRegisterClassExW;
-
-typedef int (WINAPI *pfEnumFontFamiliesExA_t) 
-     (HDC, LPLOGFONTA, FONTENUMPROCA, LPARAM, DWORD);
-pfEnumFontFamiliesExA_t xEnumFontFamiliesExA;
-typedef int (WINAPI *pfEnumFontFamiliesExW_t) 
-     (HDC, LPLOGFONTW, FONTENUMPROCW, LPARAM, DWORD);
-pfEnumFontFamiliesExW_t xEnumFontFamiliesExW;
-
-typedef DWORD (WINAPI *pfSHGetFileInfoA_t) 
-     (LPCSTR, DWORD, SHFILEINFOA FAR *, UINT, UINT);
-pfSHGetFileInfoA_t xSHGetFileInfoA;
-typedef DWORD (WINAPI *pfSHGetFileInfoW_t) 
-     (LPCWSTR, DWORD, SHFILEINFOW FAR *, UINT, UINT);
-pfSHGetFileInfoW_t xSHGetFileInfoW;
-
-typedef NET_API_STATUS (NET_API_FUNCTION *pfNetUserEnum_t)
-     (
-      IN  LPCWSTR     servername OPTIONAL,
-      IN  DWORD      level,
-      IN  DWORD      filter,
-      OUT LPBYTE     *bufptr,
-      IN  DWORD      prefmaxlen,
-      OUT LPDWORD    entriesread,
-      OUT LPDWORD    totalentries,
-      IN OUT LPDWORD resume_handle OPTIONAL
-      );
 pfNetUserEnum_t xNetUserEnum;
-
-typedef NET_API_STATUS (NET_API_FUNCTION *pfNetApiBufferFree_t)
-     (
-      IN LPVOID Buffer
-      );
 pfNetApiBufferFree_t xNetApiBufferFree;
+
+/* Convert a filename in standard Win32 format into our internal format
+   (which may be significantly different if we're running on Cygwin), and
+   turn it into a file: URL.  Return a newly malloc()ed string.
+
+   #### This comes from code that just prepended `file:', which is not
+   good.  See comment in mswindows_dde_callback(), case XTYP_EXECUTE.
+  */
+Intbyte *
+urlify_filename (Intbyte *filename)
+{
+  Intbyte *pseudo_url;
+  
+  WIN32_TO_LOCAL_FILE_FORMAT (filename, filename);
+  pseudo_url = xnew_array (Intbyte, 5 + qxestrlen (filename) + 1);
+  qxestrcpy_c (pseudo_url, "file:");
+  qxestrcat (pseudo_url, filename);
+  /* URL's only have /, no backslash */
+  for (filename = pseudo_url; *filename; filename++)
+    {
+      if (*filename == '\\')
+	*filename = '/';
+    }
+
+  return pseudo_url;
+}
 
 Lisp_Object
 tstr_to_local_file_format (Extbyte *pathout)
 {
   Intbyte *ttlff;
-  Lisp_Object in;
 
-  EXTERNAL_TO_C_STRING (pathout, ttlff, Qmswindows_tstr);
-  WIN32_TO_LOCAL_FILE_FORMAT (ttlff, in);
+  TSTR_TO_C_STRING (pathout, ttlff);
+  WIN32_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
 
-  return in;
+  return build_intstring (ttlff);
+}
+
+/* Normalize filename by converting all path separators to the specified
+   separator.  Also conditionally convert all-upper-case path name
+   components to lower case.  Return a newly malloc()ed string.
+*/
+
+Intbyte *
+mswindows_canonicalize_filename (Intbyte *name)
+{
+  Intbyte *fp = name;
+  DECLARE_EISTRING (newname);
+  DECLARE_EISTRING (component);
+  int do_casefrob = 1;
+
+  /* Always lower-case drive letters a-z, even if the filesystem
+     preserves case in filenames.
+     This is so filenames can be compared by string comparison
+     functions that are case-sensitive.  Even case-preserving filesystems
+     do not distinguish case in drive letters.  */
+  if (name[0] >= 'A' && name[0] <= 'Z' && name[1] == ':')
+    {
+      eicat_ch (newname, name[0] + 'a' - 'A');
+      eicat_ch (newname, ':');
+      fp += 2;
+    }
+
+  while (1)
+    {
+      Emchar ch = charptr_emchar (fp);
+      if (LOWERCASEP (0, ch))
+	do_casefrob = 0;	/* don't convert this element */
+
+      if (ch == 0 || IS_ANY_SEP (ch))
+	{
+	  if (do_casefrob && !NILP (Vmswindows_downcase_file_names))
+	    eilwr (component);
+	  do_casefrob = 1;
+	  eicat_ei (newname, component);
+	  eireset (component);
+	  if (IS_DIRECTORY_SEP (ch))
+	    eicat_ch (newname, DIRECTORY_SEP);
+	  else if (ch)
+	    eicat_ch (newname, ch);
+	  else
+	    break;
+	}
+      else
+	eicat_ch (component, ch);
+
+      INC_CHARPTR (fp);
+    }
+
+  return eicpyout_malloc (newname, 0);
 }
 
 static void
 init_potentially_nonexistent_functions (void)
 {
-  HMODULE h_kernel = GetModuleHandle ("kernel32");
-  HMODULE h_user = GetModuleHandle ("user32");
-  HMODULE h_gdi = GetModuleHandle ("gdi32");
-  HMODULE h_shell = GetModuleHandle ("shell32");
+  HMODULE h_kernel = qxeGetModuleHandle (XETEXT ("kernel32"));
   /* the following does not seem to get mapped in automatically */
-  HMODULE h_netapi = LoadLibrary ("netapi32.dll");
+  HMODULE h_netapi = qxeLoadLibrary (XETEXT ("netapi32.dll"));
 
   if (h_kernel)
     {
       xSwitchToThread =
 	(pfSwitchToThread_t) GetProcAddress (h_kernel, "SwitchToThread");
-    }
-
-  if (h_user)
-    {
-      xGetKeyboardLayout =
-	(pfGetKeyboardLayout_t) GetProcAddress (h_user, "GetKeyboardLayout");
-      xSetMenuDefaultItem =
-	(pfSetMenuDefaultItem_t) GetProcAddress (h_user, "SetMenuDefaultItem");
-      xInsertMenuItemA =
-	(pfInsertMenuItemA_t) GetProcAddress (h_user, "InsertMenuItemA");
-      xInsertMenuItemW =
-	(pfInsertMenuItemW_t) GetProcAddress (h_user, "InsertMenuItemW");
-      xLoadImageA =
-	(pfLoadImageA_t) GetProcAddress (h_user, "LoadImageA");
-      xLoadImageW =
-	(pfLoadImageW_t) GetProcAddress (h_user, "LoadImageW");
-      xRegisterClassExA =
-	(pfRegisterClassExA_t) GetProcAddress (h_user, "RegisterClassExA");
-      xRegisterClassExW =
-	(pfRegisterClassExW_t) GetProcAddress (h_user, "RegisterClassExW");
-    }
-
-  if (h_gdi)
-    {
-      xEnumFontFamiliesExA =
-	(pfEnumFontFamiliesExA_t) GetProcAddress (h_gdi, "EnumFontFamiliesExA");
-      xEnumFontFamiliesExW =
-	(pfEnumFontFamiliesExW_t) GetProcAddress (h_gdi, "EnumFontFamiliesExW");
-    }
-
-  if (h_shell)
-    {
-      xSHGetFileInfoA =
-	(pfSHGetFileInfoA_t) GetProcAddress (h_shell, "SHGetFileInfoA");
-      xSHGetFileInfoW =
-	(pfSHGetFileInfoW_t) GetProcAddress (h_shell, "SHGetFileInfoW");
     }
 
   if (h_netapi)
@@ -155,6 +151,117 @@ init_potentially_nonexistent_functions (void)
       xNetApiBufferFree =
 	(pfNetApiBufferFree_t) GetProcAddress (h_netapi, "NetApiBufferFree");
     }
+}
+
+static Lisp_Object
+mswindows_lisp_error_1 (int errnum, int no_recurse)
+{
+  LPTSTR lpMsgBuf;
+  Lisp_Object result;
+  Intbyte *inres;
+  Bytecount len;
+  int i;
+
+  /* The docs for FormatMessage say:
+
+     If you pass a specific LANGID in this parameter, FormatMessage
+     will return a message for that LANGID only. If the function
+     cannot find a message for that LANGID, it returns
+     ERROR_RESOURCE_LANG_NOT_FOUND. If you pass in zero, FormatMessage
+     looks for a message for LANGIDs in the following order:
+
+     Language neutral 
+     Thread LANGID, based on the thread's locale value 
+     User default LANGID, based on the user's default locale value 
+     System default LANGID, based on the system default locale value 
+     US English
+
+     If FormatMessage doesn't find a message for any of the preceding
+     LANGIDs, it returns any language message string that is present. If
+     that fails, it returns ERROR_RESOURCE_LANG_NOT_FOUND. (Note, this is
+     returned through GetLastError(), not the return value.)
+
+     #### what the hell is "language neutral"?  i can find no info on this.
+     so let's do our own language first.
+     */
+
+  for (i = 0; ; i++)
+    {
+      int lang = 0;
+      int retval;
+
+      switch (i)
+	{
+#ifdef MULE
+	  /* Urk!  Windows 95 doesn't let you set the thread locale!
+	     so we have to maintain our own. */
+	case 0: lang = LANGIDFROMLCID (mswindows_current_locale ()); break;
+	case 1: lang = 0; break;
+#else
+	case 0: lang = 0; break;
+#endif
+	default: abort ();
+	}
+
+      retval = qxeFormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
+				 | FORMAT_MESSAGE_FROM_SYSTEM,
+				 NULL, errnum, lang,
+				 /* yeah, i'm casting a char ** to a char *.
+				    ya gotta problem widdat? */
+				 (Extbyte *) &lpMsgBuf, 0, NULL);
+
+      if (!retval)
+	{
+	  if (lang != 0)
+	    continue;
+
+	  if (no_recurse)
+	    return emacs_sprintf_string
+	      ("Unknown error code %d (error return %ld from FormatMessage())",
+	       errnum, GetLastError ());
+	  else
+	    return emacs_sprintf_string
+	      ("Unknown error code %d (error return %s from FormatMessage())",
+	       /* It's OK, emacs_sprintf_string disables GC explicitly */
+	       errnum, XSTRING_DATA (mswindows_lisp_error_1 (errnum, 1)));
+	}
+      else
+	break;
+    }
+
+  TSTR_TO_C_STRING (lpMsgBuf, inres);
+  len = qxestrlen (inres);
+  /* Messages tend to end with a period and newline */
+  if (len >= 3 && !intbyte_strcmp (inres + len - 3, ".\r\n"))
+    len -= 3;
+  result = make_string (inres, len);
+  
+  LocalFree (lpMsgBuf);
+  return result;
+}
+
+Lisp_Object
+mswindows_lisp_error (int errnum)
+{
+  return mswindows_lisp_error_1 (errnum, 0);
+}
+
+void
+mswindows_output_last_error (char *frob)
+{
+  int errval = GetLastError ();
+  Lisp_Object errmess = mswindows_lisp_error (errval);
+  
+  stderr_out ("last error during %s is %d: %s\n",
+	      frob, errval, XSTRING_DATA (errmess));
+}
+
+DOESNT_RETURN
+mswindows_report_process_error (const char *string, Lisp_Object data,
+				int errnum)
+{
+  report_file_type_error (Qprocess_error, mswindows_lisp_error (errnum),
+			  string, data);
 }
 
 DEFUN ("mswindows-shell-execute", Fmswindows_shell_execute, 2, 4, 0, /*
@@ -182,86 +289,79 @@ otherwise it is an integer representing a ShowWindow flag:
 {
   /* Encode filename and current directory.  */
   Lisp_Object current_dir = Ffile_name_directory (document);
-  char* path = NULL;
-#ifdef CYGWIN
-  char* fname1, *fname2;
-  int pos, sz;
-#endif
-  char* doc = NULL;
   int ret;
-  struct gcpro gcpro1, gcpro2;
 
   CHECK_STRING (document);
 
   if (NILP (current_dir))
     current_dir = current_buffer->directory;
 
-  GCPRO2 (current_dir, document);
+  {
+    Extbyte *opext = NULL;
+    Extbyte *parmext = NULL;
+    Extbyte *path = NULL;
+    Extbyte *doc = NULL;
 
-  /* Use mule and cygwin-safe APIs top get at file data. */
-  if (STRINGP (current_dir))
-    {
-      LOCAL_TO_WIN32_FILE_FORMAT (current_dir, path);
-    }
-
+    if (STRINGP (operation))
+      LISP_STRING_TO_TSTR (operation, opext);
+    if (STRINGP (parameters))
+      LISP_STRING_TO_TSTR (parameters, parmext);
+    if (STRINGP (current_dir))
+      LOCAL_FILE_FORMAT_TO_TSTR (current_dir, path);
   if (STRINGP (document))
     {
-      doc = XSTRING_DATA (document);
 #ifdef CYGWIN
-      if ((fname1 = strchr (doc, ':')) != NULL 
-	  && *++fname1 == '/' && *++fname1 == '/')
+      Intbyte *docint = XSTRING_DATA (document);
+      /* If URL style file, the innards may have Cygwin mount points and
+         the like.  so separate out the innards, process them, and put back
+         together. */
+      if (qxestrncasecmp_c (docint, "file://", 7) == 0)
 	{
-	  // URL-style if we get here, but we must only convert file
-	  // arguments, since win32 paths are illegal in http etc.
-	  if (strncmp (doc, "file://", 7) == 0)
-	    {
-	      fname1++;
-	      pos = fname1 - doc;
-	      if (!(isalpha (fname1[0]) && (IS_DEVICE_SEP (fname1[1]))))
-		{
-		  sz = cygwin_posix_to_win32_path_list_buf_size (fname1);
-		  fname2 = alloca (sz + pos);
-		  strncpy (fname2, doc, pos);
-		  doc = fname2;
-		  fname2 += pos;
-		  cygwin_posix_to_win32_path_list (fname1, fname2);
-		}
-	    }
+	  Intbyte *fname_windows;
+	  Intbyte *docint_windows;
+
+	  LOCAL_TO_WIN32_FILE_FORMAT (docint + 7, fname_windows);
+	  docint_windows = alloca_intbytes (7 + qxestrlen (fname_windows) + 1);
+	  qxestrcpy_c (docint_windows, "file://");
+	  qxestrcat (docint_windows, fname_windows);
+	  C_STRING_TO_TSTR (docint, doc);
 	}
-      else {
-	// Not URL-style, must be a straight filename.
-	LOCAL_TO_WIN32_FILE_FORMAT (document, doc);
-      }
+      else
 #endif
+	LOCAL_FILE_FORMAT_TO_TSTR (document, doc);
     }
 
-  UNGCPRO;
+    ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,
+				 (INTP (show_flag) ?
+				  XINT (show_flag) : SW_SHOWDEFAULT));
+  }
 
-  ret = (int) ShellExecute (NULL,
-			    (STRINGP (operation) ?
-			     /* !!#### more mule bogosity */
-			     (char *) XSTRING_DATA (operation) : NULL),
-			    doc, 
-			    (STRINGP (parameters) ?
-			     /* !!#### more mule bogosity */
-			     (char *) XSTRING_DATA (parameters) : NULL),
-			    path,
-			    (INTP (show_flag) ?
-			     XINT (show_flag) : SW_SHOWDEFAULT));
+  if (ret <= 32)
+    {
+      /* Convert to more standard errors */
+#define FROB(a, b) if (ret == a) ret = b
+      FROB (SE_ERR_ACCESSDENIED, ERROR_ACCESS_DENIED);
+      FROB (SE_ERR_ASSOCINCOMPLETE, ERROR_NO_ASSOCIATION);
+      FROB (SE_ERR_DDEBUSY, ERROR_DDE_FAIL);
+      FROB (SE_ERR_DDEFAIL, ERROR_DDE_FAIL);
+      FROB (SE_ERR_DDETIMEOUT, ERROR_DDE_FAIL);
+      FROB (SE_ERR_DLLNOTFOUND, ERROR_DLL_NOT_FOUND);
+      FROB (SE_ERR_FNF, ERROR_FILE_NOT_FOUND);
+      FROB (SE_ERR_NOASSOC, ERROR_NO_ASSOCIATION);
+      FROB (SE_ERR_OOM, ERROR_NOT_ENOUGH_MEMORY);
+      FROB (SE_ERR_PNF, ERROR_PATH_NOT_FOUND);
+      FROB (SE_ERR_SHARE, ERROR_SHARING_VIOLATION);
+#undef FROB
+      
+      mswindows_report_process_error ("Running ShellExecute",
+				      ret == ERROR_PATH_NOT_FOUND ?
+				      list4 (Qunbound, operation, document,
+					     current_dir) :
+				      list3 (Qunbound, operation, document),
+				      ret);
+    }
 
-  if (ret > 32)
-    return Qt;
-  
-  if (ret == ERROR_FILE_NOT_FOUND)
-    signal_error (Qfile_error, "file not found", document);
-  else if (ret == ERROR_PATH_NOT_FOUND)
-    signal_error (Qfile_error, "path not found", current_dir);
-  else if (ret == ERROR_BAD_FORMAT)
-    signal_error (Qfile_error, "bad executable format", document);
-  else
-    signal_error (Qinternal_error, "internal error", Qunbound);
-
-  return Qnil;
+  return Qt;
 }
 
 #ifdef CYGWIN
@@ -271,8 +371,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 */
        (path))
 {
-  Extbyte* f;
-  Intbyte* p;
+  Intbyte *p;
   CHECK_STRING (path);
 
   /* There appears to be a bug in the cygwin conversion routines in
@@ -282,8 +381,8 @@ No expansion is performed, all conversion is done by the cygwin runtime.
     return path;
 
   /* Use mule and cygwin-safe APIs top get at file data. */
-  LOCAL_TO_WIN32_FILE_FORMAT (path, f);
-  return build_ext_string (f, Qnative);
+  LOCAL_TO_WIN32_FILE_FORMAT (p, p);
+  return build_intstring (p);
 }
 #endif
 
@@ -546,7 +645,23 @@ syms_of_win32 (void)
 }
 
 void
+vars_of_win32 (void)
+{
+  DEFVAR_LISP ("mswindows-downcase-file-names", &Vmswindows_downcase_file_names /*
+Non-nil means convert all-upper case file names to lower case.
+This applies when performing completions and file name expansion.
+*/ );
+  Vmswindows_downcase_file_names = Qnil;
+}
+
+void
 init_win32 (void)
 {
   init_potentially_nonexistent_functions ();
+}
+
+void
+init_win32_very_early (void)
+{
+  mswindows_windows9x_p = GetVersion () & 0x80000000;
 }

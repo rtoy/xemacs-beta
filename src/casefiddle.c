@@ -53,9 +53,10 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 	alloca_array (Intbyte, XSTRING_LENGTH (string_or_char) * MAX_EMCHAR_LEN);
       Intbyte *newp = storage;
       Intbyte *oldp = XSTRING_DATA (string_or_char);
+      Intbyte *endp = oldp + XSTRING_LENGTH (string_or_char);
       int wordp = 0, wordp_prev;
 
-      while (*oldp)
+      while (oldp < endp)
 	{
 	  Emchar c = charptr_emchar (oldp);
 	  switch (flag)

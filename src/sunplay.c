@@ -17,8 +17,6 @@
 
 /* This file Mule-ized by Ben Wing, 5-15-01. */
 
-#define DONT_ENCAPSULATE
-
 #include <config.h>
 #include "lisp.h"
 #include "sound.h"

@@ -1,5 +1,6 @@
 /* mswindows selection processing for XEmacs
    Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,25 +21,60 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not synched with FSF. */
 
+/* This file Mule-ized 7-00??  Needs some Unicode review. --ben */
+
 /* Authorship:
 
    Written by Kevin Gallo for FSF Emacs.
    Rewritten for mswindows by Jonathan Harris, December 1997 for 21.0.
+   Rewritten April 2000 by Ben Wing -- support device methods, Mule-ize.
    Hacked by Alastair Houghton, July 2000 for enhanced clipboard support.
 */
 
 #include <config.h>
 #include "lisp.h"
+#include "buffer.h"
 #include "frame.h"
 #include "select.h"
 #include "opaque.h"
 #include "file-coding.h"
-#include "buffer.h"
 
 #include "console-msw.h"
 
+static int in_own_selection;
+
 /* A list of handles that we must release. Not accessible from Lisp. */
 static Lisp_Object Vhandle_alist;
+
+void
+mswindows_handle_destroyclipboard (void)
+{
+  /* We also receive a destroy message when we call EmptyClipboard() and
+     we already own it.  In this case we don't want to call
+     handle_selection_clear() because it will remove what we're trying
+     to add! */
+  if (!in_own_selection)
+    {
+      /* We own the clipboard and someone else wants it.  Delete our
+	 cached copy of the clipboard contents so we'll ask for it from
+	 Windows again when someone does a paste, and destroy any memory
+         objects we hold on the clipboard that are not in the list of types
+         that Windows will delete itself. */
+      mswindows_destroy_selection (QCLIPBOARD);
+      handle_selection_clear (QCLIPBOARD);
+    }
+}
+
+static int
+mswindows_empty_clipboard (void)
+{
+  int retval;
+
+  in_own_selection = 1;
+  retval = EmptyClipboard ();
+  in_own_selection = 0;
+  return retval;
+}
 
 /* Test if this is an X symbol that we understand */
 static int
@@ -71,8 +107,11 @@ symbol_to_ms_cf (Lisp_Object value)
 
   /* If it's a string, register the format(!) */
   if (STRINGP (value))
-    /* !!#### more mule bogosity */
-    return RegisterClipboardFormat ((Extbyte *) XSTRING_DATA (value));
+    {
+      Extbyte *valext;
+      LISP_STRING_TO_TSTR (value, valext);
+      return qxeRegisterClipboardFormat (valext);
+    }
 
   /* Check for Windows clipboard format symbols */
   if (EQ (value, QCF_TEXT))		return CF_TEXT;
@@ -209,8 +248,16 @@ mswindows_own_selection (Lisp_Object selection_name,
   if (NILP (selection_type) || x_sym_p (selection_type))
     {
       /* Should COMPOUND_TEXT map to CF_UNICODETEXT? */
-      cfType = CF_TEXT;
-      cfObject = QCF_TEXT;
+      if (XEUNICODE_P)
+	{
+	  cfType = CF_UNICODETEXT;
+	  cfObject = QCF_UNICODETEXT;
+	}
+      else
+	{
+	  cfType = CF_TEXT;
+	  cfObject = QCF_TEXT;
+	}
       is_X_type = TRUE;
     }
   else
@@ -244,16 +291,12 @@ mswindows_own_selection (Lisp_Object selection_name,
     }
 
   /* We support opaque or string values, but we only mention string
-     values for now... */
+     values for now...
+     #### where do the opaque objects come from?  currently they're not
+     allowed to be exported to the lisp level! */
   if (!OPAQUEP (data)
       && !STRINGP (data))
     return Qnil;
-
-  /* Compute the data length */
-  if (OPAQUEP (data))
-    size = XOPAQUE_SIZE (data);
-  else
-    size = XSTRING_LENGTH (data) + 1;
 
   /* Find the frame */
   f = selected_frame ();
@@ -261,6 +304,18 @@ mswindows_own_selection (Lisp_Object selection_name,
   /* Open the clipboard */
   if (!OpenClipboard (FRAME_MSWINDOWS_HANDLE (f)))
     return Qnil;
+
+  /* Obtain the data */
+  if (OPAQUEP (data))
+    {
+      src = XOPAQUE_DATA (data);
+      size = XOPAQUE_SIZE (data);
+    }
+  else
+    /* we do NOT append a zero byte.  we don't know whether we're dealing
+       with regular text, unicode text, binary data, etc. */
+    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (src, size),
+			Qbinary);
 
   /* Allocate memory */
   hValue = GlobalAlloc (GMEM_DDESHARE | GMEM_MOVEABLE, size);
@@ -271,12 +326,6 @@ mswindows_own_selection (Lisp_Object selection_name,
 
       return Qnil;
     }
-
-  /* Copy the data */
-  if (OPAQUEP (data))
-    src = XOPAQUE_DATA (data);
-  else
-    src = XSTRING_DATA (data);
 
   dst = GlobalLock (hValue);
 
@@ -295,7 +344,7 @@ mswindows_own_selection (Lisp_Object selection_name,
   /* Empty the clipboard if we're replacing everything */
   if (NILP (how_to_add) || EQ (how_to_add, Qreplace_all))
     {
-      if (!EmptyClipboard ())
+      if (!mswindows_empty_clipboard ())
 	{
 	  CloseClipboard ();
 	  GlobalFree (hValue);
@@ -327,8 +376,9 @@ mswindows_own_selection (Lisp_Object selection_name,
 	  /* Free the original handle */
 	  GlobalFree ((HGLOBAL) get_opaque_ptr (XCDR (alist_elt)));
 
-	  /* Remove the original one (adding first makes life easier, because
-	     we don't have to special case this being the first element)      */
+	  /* Remove the original one (adding first makes life easier,
+	     because we don't have to special case this being the
+	     first element)  */
 	  for (rest = Vhandle_alist; !NILP (rest); rest = Fcdr (rest))
 	    if (EQ (cfType_int, Fcar (XCDR (rest))))
 	      {
@@ -362,9 +412,12 @@ mswindows_available_selection_types (Lisp_Object selection_name)
   if (!OpenClipboard (FRAME_MSWINDOWS_HANDLE (f)))
     return Qnil;
 
-  /* #### ajh - Should there be an unwind-protect handler around this?
-                It could (well it probably won't, but it's always better to
-		be safe) run out of memory and leave the clipboard open... */
+  /* [[ ajh - Should there be an unwind-protect handler around this?
+     It could (well it probably won't, but it's always better to
+     be safe) run out of memory and leave the clipboard open... ]]
+     -- xemacs in general makes no provisions for out-of-memory errors;
+     we will probably just crash.  fixing this is a huge amount of work,
+     so don't bother protecting in this case. --ben */
 
   while ((format = EnumClipboardFormats (format)))
     types = Fcons (ms_cf_to_symbol (format), types);
@@ -379,11 +432,11 @@ static Lisp_Object
 mswindows_register_selection_data_type (Lisp_Object type_name)
 {
   /* Type already checked in select.c */
-  /* !!#### more mule bogosity */
-  const char *name = (char *) XSTRING_DATA (type_name);
-  UINT	      format;
+  Extbyte *nameext;
+  UINT format;
 
-  format = RegisterClipboardFormat (name);
+  LISP_STRING_TO_TSTR (type_name, nameext);
+  format = qxeRegisterClipboardFormat (nameext);
 
   if (format)
     return make_int ((int) format);
@@ -394,9 +447,9 @@ mswindows_register_selection_data_type (Lisp_Object type_name)
 static Lisp_Object
 mswindows_selection_data_type_name (Lisp_Object type_id)
 {
-  UINT		format;
-  int		numchars;
-  char		name_buf[128];
+  UINT format;
+  Extbyte *namebuf;
+  int numchars;
 
   /* If it's an integer, convert to a symbol if appropriate */
   if (INTP (type_id))
@@ -413,19 +466,20 @@ mswindows_selection_data_type_name (Lisp_Object type_id)
     return Qnil;
 
   /* Microsoft, stupid Microsoft */
-  numchars = GetClipboardFormatName (format, name_buf, 128);
+  {
+    int size, new_size = 128;
+    do
+      {
+	size = new_size;
+	new_size *= 2;
+	namebuf = alloca_extbytes (size * XETCHAR_SIZE);
+	numchars = qxeGetClipboardFormatName (format, namebuf, size);
+      }
+    while (numchars >= size - 1);
+  }
 
   if (numchars)
-    {
-      Lisp_Object name;
-
-      /* Do this properly - though we could support UNICODE (UCS-2) if
-         MULE could hack it. */
-      name = make_ext_string (name_buf, numchars,
-			      Fget_coding_system (Qraw_text));
-
-      return name;
-    }
+    return build_tstr_string (namebuf);
 
   return Qnil;
 }
@@ -453,8 +507,16 @@ mswindows_get_foreign_selection (Lisp_Object selection_symbol,
   if (NILP (target_type) || x_sym_p (target_type))
     {
       /* Should COMPOUND_TEXT map to CF_UNICODETEXT? */
-      cfType = CF_TEXT;
-      cfObject = QCF_TEXT;
+      if (XEUNICODE_P)
+	{
+	  cfType = CF_UNICODETEXT;
+	  cfObject = QCF_UNICODETEXT;
+	}
+      else
+	{
+	  cfType = CF_TEXT;
+	  cfObject = QCF_TEXT;
+	}
       is_X_type = TRUE;
     }
   else
@@ -497,9 +559,7 @@ mswindows_get_foreign_selection (Lisp_Object selection_symbol,
     }
 
   /* Place it in a Lisp string */
-  TO_INTERNAL_FORMAT (DATA, (data, size),
-		      LISP_STRING, ret,
-		      Qbinary);
+  ret = make_ext_string ((Extbyte *) data, size, Qbinary);
 
   GlobalUnlock (data);
   CloseClipboard ();
@@ -529,7 +589,8 @@ mswindows_disown_selection (Lisp_Object selection, Lisp_Object timeval)
       BOOL success = OpenClipboard (NULL);
       if (success)
 	{
-	  success = EmptyClipboard ();
+	  /* the caller calls handle_selection_clear(). */
+	  success = mswindows_empty_clipboard ();
 	  /* Close it regardless of whether empty worked. */
 	  if (!CloseClipboard ())
 	    success = FALSE;
@@ -600,4 +661,12 @@ vars_of_select_mswindows (void)
   /* Initialise Vhandle_alist */
   Vhandle_alist = Qnil;
   staticpro (&Vhandle_alist);
+}
+
+void
+init_select_mswindows (void)
+{
+  /* Reinitialise Vhandle_alist */
+  /* #### Why do we need to do this?  Somehow I added this. --ben */
+  Vhandle_alist = Qnil;
 }

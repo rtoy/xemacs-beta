@@ -1,6 +1,7 @@
 /* Implements an elisp-programmable menubar.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -414,7 +415,7 @@ vars_of_menubar (void)
    * and this works fine.
    */
 
-  Vblank_menubar = list1 (list2 (build_string ("No active menubar"),
+  Vblank_menubar = list1 (list2 (build_msg_string ("No active menubar"),
 				 vector3 (build_string (""), Qnil, Qnil)));
   staticpro (&Vblank_menubar);
 

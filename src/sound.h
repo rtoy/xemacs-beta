@@ -33,8 +33,7 @@ int play_sound_data (UChar_Binary *data, int length, int volume);
 do {									 \
   Intbyte *errmess;							 \
   Intbyte *string_int;							 \
-  /* #### fix this to GET_STRERROR in my mule ws */			 \
-  EXTERNAL_TO_C_STRING (strerror (errno), errmess, Qnative);		 \
+  GET_STRERROR (errmess, errno);					 \
   EXTERNAL_TO_C_STRING (string, string_int, Qnative);			 \
   warn_when_safe (Qsound, Qerror, "audio: %s, %s", string_int, errmess); \
 } while (0)

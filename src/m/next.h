@@ -65,10 +65,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* start_of_text isn't actually used, so make it compile without error.  */
 #define TEXT_START 0
-/* This seems to be right for end_of_text, but it may not be used anyway.  */
-#define TEXT_END get_etext ()
-/* This seems to be right for end_of_data, but it may not be used anyway.  */
-#define DATA_END get_edata ()
 
 /* Defining KERNEL_FILE causes lossage because sys/file.h
    stupidly gets confused by it.  */

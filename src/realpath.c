@@ -1,6 +1,7 @@
 /*
  * realpath.c -- canonicalize pathname by removing symlinks
  * Copyright (C) 1993 Rick Sladkey <jrs@world.std.com>
+ * Copyright (C) 2001 Ben Wing.
  *
 
 This file is part of XEmacs.
@@ -22,61 +23,66 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#define DONT_ENCAPSULATE
+/* This file has been Mule-ized, June 2001 by Ben Wing.
+
+   Everything in this file now works in terms of internal, not external,
+   data.  This is the only way to be safe, and it makes the code cleaner. */
+
 #include <config.h>
 #include "lisp.h"
 
 #include "sysfile.h"
+
+#define MAX_READLINKS 32
 
 /* First char after start of absolute filename. */
 #define ABS_START(name) (name + ABS_LENGTH (name))
 
 #if defined (WIN32_NATIVE)
 /* Length of start of absolute filename. */
-# define ABS_LENGTH(name) (win32_abs_start (name))
-static int win32_abs_start (const char * name);
-/* System dependent version of readlink. */
-# define system_readlink win32_readlink
+# define ABS_LENGTH(name) (mswindows_abs_start (name))
+static int mswindows_abs_start (const Intbyte *name);
+# define readlink_and_correct_case mswindows_readlink_and_correct_case
 #else
 # ifdef CYGWIN
 #  define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? \
                             (IS_DIRECTORY_SEP (name[1]) ? 2 : 1) : 0)
-#  define system_readlink cygwin_readlink
+#  define readlink_and_correct_case cygwin_readlink_and_correct_case
 # else
 #  define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? 1 : 0)
-#  define system_readlink readlink
+#  define readlink_and_correct_case qxe_readlink
 # endif /* CYGWIN */
 #endif /* WIN32_NATIVE */
 
 #if defined (WIN32_NATIVE) || defined (CYGWIN)
 #include "syswindows.h"
-/* Emulate readlink on win32 - finds real name (i.e. correct case) of
-   a file. UNC servers and shares are lower-cased. Directories must be
-   given without trailing '/'. One day, this could read Win2K's
-   reparse points. */
+/* "Emulate" readlink on mswindows - finds real name (i.e. correct
+   case) of a file. (#### "readlink" is used extremely misleadingly
+   here.  This is much more like "truename"!) UNC servers and shares
+   are lower-cased. Directories must be given without trailing
+   '/'. One day, this could read Win2K's reparse points. */
 static int
-win32_readlink (const char * name, char * buf, int size)
+mswindows_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
+				     int size)
 {
-  WIN32_FIND_DATA find_data;
-  HANDLE dir_handle = NULL;
   int len = 0;
   int err = 0;
-  const char* lastname;
+  const Intbyte *lastname;
   int count = 0;
-  const char* tmp;
-  char* res = NULL;
+  const Intbyte *tmp;
+  DECLARE_EISTRING (result);
   
   assert (*name);
   
   /* Sort of check we have a valid filename. */
-  if (strpbrk (name, "*?|<>\"") || strlen (name) >= PATH_MAX)
+  if (qxestrpbrk (name, "*?|<>\"") || qxestrlen (name) >= PATH_MAX)
     {
       errno = EIO;
       return -1;
     }
   
   /* Find start of filename */
-  lastname = name + strlen (name);
+  lastname = name + qxestrlen (name);
   while (lastname > name && !IS_DIRECTORY_SEP (lastname[-1]))
     --lastname;
 
@@ -88,31 +94,39 @@ win32_readlink (const char * name, char * buf, int size)
 
   if (count >= 2 && count < 4)
     {
-      /* UNC server or share name: just copy lowercased name. */
-      res = find_data.cFileName;
-      for (tmp = lastname; *tmp; tmp++)
-	*res++ = tolower (*tmp);
-      *res = '\0';
+      eicpy_rawz (result, lastname);
+      eilwr (result);
     }
   else
-    dir_handle = FindFirstFile (name, &find_data);
-
-  if (res || dir_handle != INVALID_HANDLE_VALUE)
     {
-      if ((len = strlen (find_data.cFileName)) < size)
+      WIN32_FIND_DATAW find_data;
+      Extbyte *nameext;
+      HANDLE dir_handle;
+
+      C_STRING_TO_TSTR (name, nameext);
+      dir_handle = qxeFindFirstFile (nameext, &find_data);
+      if (dir_handle == INVALID_HANDLE_VALUE)
 	{
-	  if (strcmp (lastname, find_data.cFileName) == 0)
-	    /* Signal that the name is already OK. */
-	    err = EINVAL;
-	  else
-	    memcpy (buf, find_data.cFileName, len + 1);
+	  errno = ENOENT;
+	  return -1;
 	}
+      eicpy_ext (result, (Extbyte *) find_data.cFileName, Qmswindows_tstr);
+      FindClose (dir_handle);
+    }
+
+  if ((len = eilen (result)) < size)
+    {
+      DECLARE_EISTRING (eilastname);
+
+      eicpy_rawz (eilastname, lastname);
+      if (eicmp_ei (eilastname, result) == 0)
+	/* Signal that the name is already OK. */
+	err = EINVAL;
       else
-	err = ENAMETOOLONG;
-      if (!res) FindClose (dir_handle);
+	memcpy (buf, eidata (result), len + 1);
     }
   else
-    err = ENOENT;
+    err = ENAMETOOLONG;
 
   errno = err;
   return err ? -1 : len;
@@ -122,17 +136,19 @@ win32_readlink (const char * name, char * buf, int size)
 #ifdef CYGWIN
 /* Call readlink and try to find out the correct case for the file. */
 static int
-cygwin_readlink (const char * name, char * buf, int size)
+cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
+				  int size)
 {
-  int n = readlink (name, buf, size);
+  int n = qxe_readlink (name, buf, size);
   if (n < 0 && errno == EINVAL)
     {
       /* The file may exist, but isn't a symlink. Try to find the
          right name. */
-      /* !!#### mule-bogosity */
-      char* tmp = (char *) alloca (cygwin_posix_to_win32_path_list_buf_size (name));
-      cygwin_posix_to_win32_path_list (name, tmp);
-      n = win32_readlink (tmp, buf, size);
+      Intbyte *tmp =
+	(Intbyte *) alloca (cygwin_posix_to_win32_path_list_buf_size
+			    ((char *) name));
+      cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
+      n = mswindows_readlink_and_correct_case (tmp, buf, size);
     }
   return n;
 }
@@ -144,7 +160,7 @@ cygwin_readlink (const char * name, char * buf, int size)
 #endif
 /* Length of start of absolute filename. */
 static int 
-win32_abs_start (const char * name)
+mswindows_abs_start (const Intbyte *name)
 {
   if (isalpha (*name) && IS_DEVICE_SEP (name[1])
       && IS_DIRECTORY_SEP (name[2]))
@@ -156,39 +172,24 @@ win32_abs_start (const char * name)
 }
 #endif /* WIN32_NATIVE */
 
-#if !defined (HAVE_GETCWD) && defined (HAVE_GETWD)
-#undef getcwd
-#define getcwd(buffer, len) getwd (buffer)
-#endif
+/* Mule Note: This function works with and returns
+   internally-formatted strings. */
 
-#ifndef PATH_MAX
-# if defined (_POSIX_PATH_MAX)
-#  define PATH_MAX _POSIX_PATH_MAX
-# elif defined (MAXPATHLEN)
-#  define PATH_MAX MAXPATHLEN
-# else
-#  define PATH_MAX 1024
-# endif
-#endif
-
-#define MAX_READLINKS 32
-
-char * xrealpath (const char *path, char resolved_path []);
-char *
-xrealpath (const char *path, char resolved_path [])
+Intbyte *
+qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
 {
-  char copy_path[PATH_MAX];
-  char *new_path = resolved_path;
-  char *max_path;
-#if defined (S_IFLNK) || defined (WIN32_NATIVE)
+  Intbyte copy_path[PATH_MAX];
+  Intbyte *new_path = resolved_path;
+  Intbyte *max_path;
+#if defined (HAVE_READLINK) || defined (WIN32_NATIVE)
   int readlinks = 0;
-  char link_path[PATH_MAX];
+  Intbyte link_path[PATH_MAX];
   int n;
   int abslen = ABS_LENGTH (path);
 #endif
 
   /* Make a copy of the source path since we may need to modify it. */
-  strcpy (copy_path, path);
+  qxestrcpy (copy_path, path);
   path = copy_path;
   max_path = copy_path + PATH_MAX - 2;
 
@@ -196,7 +197,7 @@ xrealpath (const char *path, char resolved_path [])
   /* Check for c:/... or //server/... */
   if (abslen == 2 || abslen == 3)
     {
-      strncpy (new_path, path, abslen);
+      qxestrncpy (new_path, path, abslen);
       /* Make sure drive letter is lowercased. */
       if (abslen == 3)
 	*new_path = tolower (*new_path);
@@ -206,31 +207,31 @@ xrealpath (const char *path, char resolved_path [])
   /* No drive letter, but a beginning slash? Prepend drive letter. */
   else if (abslen == 1)
     {
-      getcwd (new_path, PATH_MAX - 1);
+      get_initial_directory (new_path, PATH_MAX - 1);
       new_path += 3;
       path++;
     }
   /* Just a path name, prepend the current directory */
   else
     {
-      getcwd (new_path, PATH_MAX - 1);
-      new_path += strlen (new_path);
+      get_initial_directory (new_path, PATH_MAX - 1);
+      new_path += qxestrlen (new_path);
       if (!IS_DIRECTORY_SEP (new_path[-1]))
 	*new_path++ = DIRECTORY_SEP;
     }
 #else
-  /* If it's a relative pathname use getcwd for starters. */
+  /* If it's a relative pathname use get_initial_directory for starters. */
   if (abslen == 0)
     {
-      getcwd (new_path, PATH_MAX - 1);
-      new_path += strlen (new_path);
+      get_initial_directory (new_path, PATH_MAX - 1);
+      new_path += qxestrlen (new_path);
       if (!IS_DIRECTORY_SEP (new_path[-1]))
 	*new_path++ = DIRECTORY_SEP;
     }
   else
     {
       /* Copy first directory sep. May have two on cygwin. */
-      strncpy (new_path, path, abslen);
+      qxestrncpy (new_path, path, abslen);
       new_path += abslen;
       path += abslen;
     }
@@ -283,14 +284,16 @@ xrealpath (const char *path, char resolved_path [])
 	  *new_path++ = *path++;
 	}
 
-#if defined (S_IFLNK) || defined (WIN32_NATIVE)
-      /* See if latest pathname component is a symlink. */
+#if defined (HAVE_READLINK) || defined (WIN32_NATIVE)
+      /* See if latest pathname component is a symlink or needs case
+	 correction. */
       *new_path = '\0';
-      n = system_readlink (resolved_path, link_path, PATH_MAX - 1);
+      n = readlink_and_correct_case (resolved_path, link_path, PATH_MAX - 1);
 
       if (n < 0)
 	{
-	  /* EINVAL means the file exists but isn't a symlink. */
+	  /* EINVAL means the file exists but isn't a symlink or doesn't
+	     need case correction. */
 #ifdef CYGWIN
 	  if (errno != EINVAL && errno != ENOENT)
 #else
@@ -319,23 +322,24 @@ xrealpath (const char *path, char resolved_path [])
 	      assert (new_path > resolved_path);
 
 	  /* Safe sex check. */
-	  if (strlen(path) + n >= PATH_MAX)
+	  if (qxestrlen (path) + n >= PATH_MAX)
 	    {
 	      errno = ENAMETOOLONG;
 	      return NULL;
 	    }
 
 	  /* Insert symlink contents into path. */
-	  strcat(link_path, path);
-	  strcpy(copy_path, link_path);
+	  qxestrcat (link_path, path);
+	  qxestrcpy (copy_path, link_path);
 	  path = copy_path;
 	}
-#endif /* S_IFLNK || WIN32_NATIVE */
+#endif /* HAVE_READLINK || WIN32_NATIVE */
       *new_path++ = DIRECTORY_SEP;
     }
 
   /* Delete trailing slash but don't whomp a lone slash. */
-  if (new_path != ABS_START (resolved_path) && IS_DIRECTORY_SEP (new_path[-1]))
+  if (new_path != ABS_START (resolved_path) &&
+      IS_DIRECTORY_SEP (new_path[-1]))
     new_path--;
 
   /* Make sure it's null terminated. */

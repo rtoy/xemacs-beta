@@ -1,5 +1,6 @@
 /* Work-alike for termcap, plus extra features.
    Copyright (C) 1985, 1986, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -60,7 +61,7 @@ int bufsize = 128;
 static void
 memory_out ()
 {
-  write (2, "virtual memory exhausted\n", 25);
+  retry_write (2, "virtual memory exhausted\n", 25);
   exit (1);
 }
 
@@ -344,7 +345,7 @@ tgetent (bp, name)
   char *tcenv;			/* TERMCAP value, if it contains :tc=.  */
   const char *indirect = 0;	/* Terminal type in :tc= in TERMCAP value.  */
 
-  tem = getenv ("TERMCAP");
+  tem = egetenv ("TERMCAP");
   if (tem && *tem == 0) tem = 0;
 
 
@@ -354,7 +355,7 @@ tgetent (bp, name)
      it is the entry itself, but only if
      the name the caller requested matches the TERM variable.  */
 
-  if (tem && !IS_DIRECTORY_SEP (*tem) && !strcmp (name, getenv ("TERM")))
+  if (tem && !IS_DIRECTORY_SEP (*tem) && !strcmp (name, egetenv ("TERM")))
     {
       indirect = tgetst1 (find_capability (tem, "tc"), 0);
       if (!indirect)
@@ -379,7 +380,7 @@ tgetent (bp, name)
 
   /* Here we know we must search a file and tem has its name.  */
 
-  fd = open (tem, 0, 0);
+  fd = qxe_open ((Intbyte *) tem, 0, 0);
   if (fd < 0)
     return -1;
 
@@ -439,7 +440,7 @@ tgetent (bp, name)
       term = tgetst1 (find_capability (bp2, "tc"), 0);
     }
 
-  close (fd);
+  retry_close (fd);
   xfree (buf.beg);
 
   if (malloc_size)
@@ -598,7 +599,7 @@ gobble_line (fd, bufp, append_end)
 	  memcpy (buf, bufp->ptr, bufp->full -= bufp->ptr - buf);
 	  bufp->ptr = buf;
 	}
-      if (!(nread = read (fd, buf + bufp->full, bufp->size - bufp->full)))
+      if (!(nread = retry_read (fd, buf + bufp->full, bufp->size - bufp->full)))
 	bufp->ateof = 1;
       bufp->full += nread;
       buf[bufp->full] = 0;

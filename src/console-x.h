@@ -1,6 +1,7 @@
 /* Define X specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 1996 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -479,27 +480,15 @@ void describe_Status	 (Status status);
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
+extern Lisp_Object Qxintl;
+#define xintl_warn(str) warn_when_safe (Qxintl, Qwarning, str)
+#define xintl_warn1(fmt, str) warn_when_safe (Qxintl, Qwarning, fmt, str)
+#define xintl_info(str) warn_when_safe (Qxintl, Qinfo, str)
+
 extern int in_resource_setting;
 extern int in_specifier_change_function;
 
 extern Lisp_Object Vx_initial_argv_list; /* #### ugh! */
-
-/* Standins for various X encodings, until we know them better */
-
-/* !!#### Need to verify the encoding used in lwlib -- Qnative or Qctext?
-   Almost certainly the former.  Use a standin for now. */
-#define Qlwlib_encoding Qnative
-
-#define Qx_atom_name_encoding Qctext
-/* font names are often stored in atoms, so it gets sticky if we set this
-   to something different from atom-name encoding */
-#define Qx_font_name_encoding Qctext
-
-#define Qx_color_name_encoding Qctext
-
-/* the following probably must agree with Qcommand_argument_encoding and
-   Qenvironment_variable_encoding */
-#define Qx_display_name_encoding Qnative
 
 #endif /* HAVE_X_WINDOWS */
 

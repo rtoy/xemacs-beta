@@ -1,4 +1,4 @@
-/* toolbar implementation -- Generic redisplay interface.
+/* toolbar implementation -- "Generic" (X or GTK) redisplay interface.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
@@ -30,6 +30,9 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "toolbar.h"
 #include "window.h"
+
+/* This is used when we need to draw the toolbars ourselves -- on X or GTK.
+   On MS Windows, we use the built-in toolbar controls. */
 
 /* Only a very few things need to differ based on the toolkit used.
 **

@@ -578,7 +578,7 @@ init_frame_scrollbars (struct frame *f)
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_scrollbar_from_resources,
 			       frame);
-      unbind_to (depth, Qnil);
+      unbind_to (depth);
     }
 }
 
@@ -593,7 +593,7 @@ init_device_scrollbars (struct device *d)
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       device);
-      unbind_to (depth, Qnil);
+      unbind_to (depth);
     }
 }
 
@@ -606,7 +606,7 @@ init_global_scrollbars (struct device *d)
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       Qglobal);
-      unbind_to (depth, Qnil);
+      unbind_to (depth);
     }
 }
 

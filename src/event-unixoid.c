@@ -3,7 +3,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -71,17 +71,26 @@ int signal_event_pipe_initialized;
 int fake_event_occurred;
 
 int
-read_event_from_tty_or_stream_desc (Lisp_Event *event,
-				    struct console *con, int fd)
+read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
 {
-  unsigned char ch;
-  int nread;
+  Emchar ch;
   Lisp_Object console;
 
   XSETCONSOLE (console, con);
 
-  nread = read (fd, &ch, 1);
-  if (nread <= 0)
+  if (CONSOLE_TTY_P (con))
+    ch = Lstream_get_emchar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
+  else
+    {
+      /* #### Definitely something strange here.  We should be setting
+	 the stdio handle unbuffered and reading from it instead of mixing
+	 stdio and raw io calls. */
+      int nread = retry_read (fileno (CONSOLE_STREAM_DATA (con)->in), &ch, 1);
+      if (nread <= 0)
+	ch = -1;
+    }
+
+  if (ch < 0)
     {
       /* deleting the console might not be safe right now ... */
       enqueue_magic_eval_event (io_error_delete_console, console);
@@ -110,14 +119,14 @@ signal_fake_event (void)
      an iteration of the command loop, e.g. in status_notify()),
      but before we set the blocking flag.
 
-     This should be OK as long as write() is reentrant, which
-     I'm fairly sure it is since it's a system call. */
+     This should be OK as long as write() is reentrant, which I'm fairly
+     sure it is since it's a system call. */
 
   if (signal_event_pipe_initialized)
     /* In case a signal comes through while we're dumping */
     {
       int old_errno = errno;
-      write (signal_event_pipe[1], &byte, 1);
+      retry_write (signal_event_pipe[1], &byte, 1);
       errno = old_errno;
     }
 }
@@ -127,7 +136,7 @@ drain_signal_event_pipe (void)
 {
   char chars[128];
   /* The input end of the pipe has been set to non-blocking. */
-  while (read (signal_event_pipe[0], chars, sizeof (chars)) > 0)
+  while (retry_read (signal_event_pipe[0], chars, sizeof (chars)) > 0)
     ;
 }
 
@@ -264,7 +273,7 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
       if (outfd < 0)
 	{
 	  if (infd >= 0)
-	    close (infd);
+	    retry_close (infd);
 	  return USID_ERROR;
 	}
     }
@@ -311,9 +320,9 @@ event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
 	     : filedesc_stream_fd (XLSTREAM (outstream)));
 
   if (in >= 0)
-    close (in);
+    retry_close (in);
   if (out != in && out >= 0)
-    close (out);
+    retry_close (out);
 
   return FD_TO_USID (in);
 }

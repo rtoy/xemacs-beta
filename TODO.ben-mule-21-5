@@ -1,0 +1,81 @@
+
+
+last update: August 29, 2001.
+
+This is the most current list of priorities in `ben-mule-21-5'.
+Updated often.
+
+high-priority:
+
+[input]
+
+-- support for WM_IME_CHAR.  IME input can work under -nuni if we use
+   WM_IME_CHAR.  probably we should always be using this, instead of
+   snarfing input using WM_COMPOSITION.  i'll check this out.
+-- Russian C-x problem.  see above.
+
+[clean-up]
+
+-- make sure it compiles and runs under non-mule.  remember that some
+   code needs the unicode support, or at least a simple version of it.
+-- make sure it compiles and runs under pdump.  see below.
+-- make sure it compiles and runs under cygwin.  see below.
+-- clean up mswindows-multibyte, TSTR_TO_C_STRING.  expand dfc
+   optimizations to work across chain.
+-- eliminate last vestiges of codepage<->charset conversion and similar stuff.
+
+[other]
+
+-- test the "file-coding is binary only on Unix, no-Mule" stuff.
+-- test that things work correctly in -nuni if the system environment
+   is set to e.g. japanese -- i should get japanese menus, japanese
+   file names, etc.  same for russian, hebrew ...
+-- cut and paste.  see below.
+-- misc issues with handling lang environments.  see also August 25,
+   "finally: working on the C-x in ...".
+   -- when switching lang env, needs to set keyboard layout.
+   -- user var to control whether, when moving into text of a
+      particular language, we set the appropriate keyboard layout.  we
+      would need to have a lisp api for retrieving and setting the
+      keyboard layout, set text properties to indicate the layout of
+      text, and have a way of dealing with text with no property on
+      it. (e.g. saved text has no text properties on it.) basically,
+      we need to get a keyboard layout from a charset; getting a
+      language would do.  Perhaps we need a table that maps charsets
+      to language environments.
+   -- test that the lang env is properly set at startup.  test that
+      switching the lang env properly sets the C locale (call
+      setlocale(), set LANG, etc.) -- a spawned subprogram should have
+      the new locale in its environment.
+-- look through everything below and see if anything is missed in this
+   priority list, and if so add it.  create a separate file for the
+   priority list, so it can be updated as appropriate.
+
+
+mid-priority:
+
+-- clean up the chain coding system.  its list should specify decode
+   order, not encode; i now think this way is more logical.  it should
+   check the endpoints to make sure they make sense.  it should also
+   allow for the specification of "reverse-direction coding systems":
+   use the specified coding system, but invert the sense of decode and
+   encode.
+
+-- along with that, places that take an arbitrary coding system and
+   expect the ends to be anything specific need to check this, and add
+   the appropriate conversions from byte->char or char->byte.
+
+-- get some support for arabic, thai, vietnamese, japanese jisx 0212:
+   at least get the unicode information in place and make sure we have
+   things tied together so that we can display them.  worry about r2l
+   some other time.
+
+-- check the handling of C-c.  can XEmacs itself be interrupted with C-c?
+   is that impossible now that we are a window, not a console, app?  at
+   least we should work something out with `i', so that if it receives a
+   C-c or C-break, it interrupts XEmacs, too.  check out how process groups
+   work and if they apply only to console apps.  also redo the way that
+   XEmacs sends C-c to other apps.  the business of injecting code should
+   be last resort.  we should try C-c first, and if that doesn't work, then
+   the next time we try to interrupt the same process, use the injection
+   method.

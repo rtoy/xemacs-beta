@@ -2,6 +2,7 @@
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1998, 1999 J. Kean Johnston.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -24,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* The arguments given to this program are all the C and Lisp source files
  of XEmacs.  .elc and .el and .c files are allowed.
- A .o file can also be specified; the .c file it was made from is used.
+ A .o or .obj file can also be specified; the .c file it was made from is used.
  This helps the makefile pass the correct list of files.
 
  The results, which go to standard output or to a file
@@ -39,45 +40,27 @@ Boston, MA 02111-1307, USA.  */
  without modifying Makefiles, etc.
  */
 
-#define NO_SHORTNAMES   /* Tell config not to load remap.h */
 #include <config.h>
 
 #include <stdio.h>
-#include <errno.h>
-#if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #include <string.h>
 #include <ctype.h>
-#endif
 
-#ifdef CYGWIN
-#include <fcntl.h>
-#endif
-#ifdef WIN32_NATIVE
-#include <direct.h>
-#include <fcntl.h>
-#include <io.h>
-#include <stdlib.h>
-#endif /* WIN32_NATIVE */
+#include "../src/sysfile.h"
 
-#ifndef WIN32_NATIVE
-#include <sys/param.h>
-#endif /* not WIN32_NATIVE */
-
-#if defined(WIN32_NATIVE) || defined(CYGWIN)
-#define READ_TEXT "rt"
-#define READ_BINARY "rb"
-#define WRITE_BINARY "wb"
-#define APPEND_BINARY "ab"
-#else  /* not WIN32_NATIVE */
-#define READ_TEXT "r"
-#define READ_BINARY "r"
-#define WRITE_BINARY "w"
-#define APPEND_BINARY "a"
-#endif /* not WIN32_NATIVE */
+/* From src/lisp.h */
+#define DO_REALLOC(basevar, sizevar, needed_size, type)	do {	\
+  size_t do_realloc_needed_size = (needed_size);		\
+  if ((sizevar) < do_realloc_needed_size)			\
+    {								\
+      if ((sizevar) < 32)					\
+	(sizevar) = 32;						\
+      while ((sizevar) < do_realloc_needed_size)		\
+	(sizevar) *= 2;						\
+      XREALLOC_ARRAY (basevar, type, (sizevar));		\
+    }								\
+} while (0)
 
 /* Stdio stream for output to the DOC file.  */
 static FILE *outfile;
@@ -230,16 +213,37 @@ main (int argc, char **argv)
     fprintf (outfile, "{\n");
 
   first_infile = i;
+
   for (; i < argc; i++)
     {
-      int j;
-      /* Don't process one file twice.  */
-      for (j = first_infile; j < i; j++)
-	if (! strcmp (argv[i], argv[j]))
-	  break;
-      if (j == i)
-	/* err_count seems to be {mis,un}used */
-	err_count += scan_file (argv[i]);
+      if (argv[i][0] == '@')
+	{
+	  /* Allow a file containing files to process, for use w/MS Windows
+	     (where command-line length limits are more problematic) */
+	  FILE *argfile = fopen (argv[i] + 1, READ_TEXT);
+	  char arg[PATH_MAX];
+
+	  if (!argfile)
+	    fatal ("Unable to open argument file %s", argv[i] + 1);
+	  while (fgets (arg, PATH_MAX, argfile))
+	    {
+	      if (arg[strlen (arg) - 1] == '\n')
+		arg[strlen (arg) - 1] = '\0'; /* chop \n */
+	      err_count += scan_file (arg);
+	    }
+	}
+      else
+	{
+	  int j;
+
+	  /* Don't process one file twice.  */
+	  for (j = first_infile; j < i; j++)
+	    if (! strcmp (argv[i], argv[j]))
+	      break;
+	  if (j == i)
+	    /* err_count seems to be {mis,un}used */
+	    err_count += scan_file (argv[i]);
+	}
     }
 
   if (extra_elcs) {
@@ -494,7 +498,7 @@ write_c_args (FILE *out, const char *func, char *buff, int minargs,
     putc ('\n', out); /* XEmacs addition */
 }
 
-/* Read through a c file.  If a .o file is named,
+/* Read through a c file.  If a .o or .obj file is named,
    the corresponding .c file is read instead.
    Looks for DEFUN constructs such as are defined in ../src/lisp.h.
    Accepts any word starting DEF... so it finds DEFSIMPLE and DEFPRED.  */
@@ -510,7 +514,7 @@ scan_c_file (const char *filename, const char *mode)
   register int defvarflag;
   int minargs, maxargs;
   int l = strlen (filename);
-  char f[MAXPATHLEN];
+  char f[PATH_MAX];
 
   if (l > (int) sizeof (f))
     {
@@ -523,6 +527,8 @@ scan_c_file (const char *filename, const char *mode)
     }
 
   strcpy (f, filename);
+  if (l > 4 && !strcmp (f + l - 4, ".obj")) /* MS Windows */
+    strcpy (f + l - 4, ".c");
   if (f[l - 1] == 'o')
     f[l - 1] = 'c';
   infile = fopen (f, mode);

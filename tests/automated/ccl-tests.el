@@ -125,14 +125,15 @@
     '(1 (read r0)
 	(loop
 	  (write-read-repeat r0))))
-  (make-coding-system 
-   'ccl-test-coding-system
-   'ccl
-   "CCL TEST temprary coding-system."
-   '(mnemonic "CCL-TEST"
-     eol-type lf
-     decode ccl-test-decoder
-     encode ccl-test-encoder)))
+  (or (find-coding-system 'ccl-test-coding-system)
+      (make-coding-system 
+       'ccl-test-coding-system
+       'ccl
+       "CCL TEST temprary coding-system."
+       '(mnemonic "CCL-TEST"
+		  eol-type lf
+		  decode ccl-test-decoder
+		  encode ccl-test-encoder))))
 
 ;;; Section 1. arithmetic operations.
 

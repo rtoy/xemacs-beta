@@ -586,8 +586,8 @@ You can manipulate rectangles with these commands:
   C-c C-y Overlay (or insert) currently saved rectangle at point.
   C-c C-x Like C-c C-y except rectangle is taken from named register.
   \\[copy-rectangle-to-register]   Copies a rectangle to a register.
-  \\[advertised-undo]   Can undo effects of rectangle overlay commands
-	    commands if invoked soon enough.
+  \\[undo]   Can undo effects of rectangle overlay commands
+	    if invoked soon enough.
 You can return to the previous mode with:
   C-c C-c Which also strips trailing whitespace from every line.
 	    Stripping is suppressed by supplying an argument.

@@ -1,5 +1,6 @@
 /* XEmacs site configuration template file.  -*- C -*-
    Copyright (C) 1986, 1991-1994, 1998, 1999 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,9 +27,51 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _SRC_CONFIG_H_
 #define _SRC_CONFIG_H_
 
+/*
+This file now serves both as config.h.in and simply as config.h under
+Windows NT.  Under Windows NT, there is no configure script that
+operates, so it is necessary for the relevant constants to be set
+manually, either by the user (for user options) or in s/windowsnt.h.
+
+Formerly, under NT there were three different places where constants
+were defined -- nt/config.h, nt/xemacs.mak and s/windowsnt.h; now only
+the latter two are used. (This separate config.h was a hassle because
+it required constant synchronization between it and src/config.h.in.)
+Since the options that are substituted by configure are written in
+config.h.in with #undef, it is easy to make this file serve as
+config.h under Windows NT.  Options that are set by the user are
+specified in the file config.inc.samp, which is included by xemacs.mak
+(the makefile) and used to set command-line options to the
+compiler.  The sorts of options that relate to the system and not to
+the user and which are normally auto-determined by configure are set
+in windowsnt.h.
+
+What this means is that a little more care has to be taken in the way
+things are arranged in config.h.in.  In particular:
+
+-- Everything that is written with a #undef should be bracketed by
+   #ifdef WIN32_NO_CONFIGURE, and these #ifdefs should in general be
+   grouped together as much as possible.
+
+-- Things that are not #undefs should not go inside this bracketed
+   #ifdef, because these things typically set constants based on other
+   constants and those latter constants may be set elsewhere under
+   Windows NT.
+
+-- Any #ifdefs that depend on constants that may be set in windowsnt.h
+   need to be moved after the point at which this file is
+   included. This applies for example to the error checking macros.
+*/
+
+#if defined (WIN32_NATIVE) && !defined (MINGW)
+# define WIN32_NO_CONFIGURE
+#endif
+
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
 #define XEMACS 1
+
+#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
 
 /* Program name */
 #undef EMACS_PROGNAME
@@ -136,6 +179,11 @@ Boston, MA 02111-1307, USA.  */
 #undef _SVID_SOURCE
 #undef X_LOCALE
 #undef NARROWPROTO
+#endif /* HAVE_X_WINDOWS */
+
+#endif /* WIN32_NO_CONFIGURE */
+
+#ifdef HAVE_X_WINDOWS
 /* The following should always be defined, no matter what xmkmf thinks. */
 #ifndef NeedFunctionPrototypes
 #define NeedFunctionPrototypes 1
@@ -163,6 +211,8 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
+#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
+
 /* XFree86 has a different prototype for this function */
 #undef HAVE_XREGISTERIMINSTANTIATECALLBACK
 #undef XREGISTERIMINSTANTIATECALLBACK_NONSTANDARD_PROTOTYPE
@@ -177,16 +227,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Where do we find bitmaps? */
 #undef BITMAPDIR
-
-/* USER_FULL_NAME returns a string that is the user's full name.
-   It can assume that the variable `pw' points to the password file
-   entry for this user.
-
-   At some sites, the pw_gecos field contains the user's full name.
-   If neither this nor any other field contains the right thing, use
-   pw_name, giving the user's login name, since that is better than
-   nothing. */
-#define USER_FULL_NAME pw->pw_gecos
 
 /* Define AMPERSAND_FULL_NAME if you use the convention
    that & in the full name stands for the login id. */
@@ -217,8 +257,6 @@ Boston, MA 02111-1307, USA.  */
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
-#undef HAVE_VFORK_H
-#undef vfork
 
 #undef HAVE_LONG_FILE_NAMES
 
@@ -286,6 +324,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_GETWD
 #undef HAVE_GETCWD
+#undef HAVE_LINK
 #undef HAVE_LOGB
 #undef HAVE_LRAND48
 #undef HAVE_MATHERR
@@ -294,6 +333,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_PERROR
 #undef HAVE_POLL
 #undef HAVE_RANDOM
+#undef HAVE_READLINK
 #undef HAVE_REALPATH
 #undef HAVE_RENAME
 #undef HAVE_RES_INIT
@@ -310,6 +350,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_SNPRINTF
 #undef HAVE_STPCPY
 #undef HAVE_STRERROR
+#undef HAVE_SYMLINK
 #undef HAVE_TZSET
 #undef HAVE_ULIMIT
 #undef HAVE_USLEEP
@@ -382,6 +423,9 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for PNG images */
 #undef HAVE_PNG
 
+/* Compile in support for GZIP compression */
+#undef HAVE_ZLIB
+
 /* Do you have the Xmu library?
    This should always be the case except on losing HP-UX systems. */
 #undef HAVE_XMU
@@ -446,27 +490,12 @@ Boston, MA 02111-1307, USA.  */
    correct type of structure.  Highly recommended for all
    development work. */
 #undef ERROR_CHECK_TYPECHECK
-#ifdef ERROR_CHECK_TYPECHECK
-#define type_checking_assert(assertion) assert (assertion)
-#else
-#define type_checking_assert(assertion)
-#endif
 
 /* Make sure valid buffer positions are passed to BUF_* macros. */
 #undef ERROR_CHECK_CHARBPOS
-#ifdef ERROR_CHECK_CHARBPOS
-#define charbpos_checking_assert(assertion) assert (assertion)
-#else
-#define charbpos_checking_assert(assertion)
-#endif
 
 /* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
 #undef ERROR_CHECK_GC
-#ifdef ERROR_CHECK_GC
-#define gc_checking_assert(assertion) assert (assertion)
-#else
-#define gc_checking_assert(assertion)
-#endif
 
 /* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
 #undef ERROR_CHECK_MALLOC
@@ -496,10 +525,6 @@ Boston, MA 02111-1307, USA.  */
    It is only intended for use by the developers. */
 #undef PURIFY
 
-#if (defined (QUANTIFY) || defined (PURIFY)) && !defined (XLIB_ILLEGAL_ACCESS)
-#define XLIB_ILLEGAL_ACCESS 1
-#endif
-
 /* Define EXTERNAL_WIDGET to compile support for using the editor as a
    widget within another program. */
 #undef EXTERNAL_WIDGET
@@ -507,20 +532,6 @@ Boston, MA 02111-1307, USA.  */
 /* There are some special-case defines for gcc and lcc. */
 #undef USE_GCC
 #undef USE_LCC
-
-/* Define this if you want level 2 internationalization compliance
-   (localized collation and formatting).  Generally this should be
-   defined, unless your system doesn't have the strcoll() and
-   setlocale() library routines.  This really should be (NOT! -mrb)
-   defined in the appropriate s/ or m/ file. */
-#undef I18N2
-
-/* Define this if you want level 3 internationalization compliance
-   (localized messaging).  This will cause a small runtime performance
-   penalty, as the strings are read from the message catalog(s).
-   For this you need the gettext() and dgetext() library routines.
-   WARNING, this code is under construction. */
-#undef I18N3
 
 /* Compile in support for CDE (Common Desktop Environment) drag and drop?
    Requires libDtSvc, which typically must be present at runtime.  */
@@ -540,23 +551,21 @@ Boston, MA 02111-1307, USA.  */
    if you're working with ASCII files. */
 #undef MULE
 
-/* Define this if you want file coding support */
-#undef FILE_CODING
+/* Define this if you want EOL detection of files to be on by default
+   in a non-Mule Unix; otherwise, defaults will be set so that all
+   files are read in as binary.  Doesn't apply to Cygwin or MinGW. */
+#undef HAVE_DEFAULT_EOL_DETECTION
 
 /* Do we want to use X window input methods for use with Mule? (requires X11R5)
    If so, use raw Xlib or higher level Motif interface? */
 #undef HAVE_XIM
 #undef XIM_XLIB
 #undef XIM_MOTIF
-#undef USE_XFONTSET
 
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA
 #undef HAVE_WNN
 #undef WNN6
-
-/* Enable special GNU Make features in the Makefiles. */
-#undef USE_GNU_MAKE
 
 /* Debugging development option: Remove inessential but time consuming
    actions from happening during build.  This saves a lot of time when
@@ -566,6 +575,14 @@ Boston, MA 02111-1307, USA.  */
    get it rebuilt.)
  */
 #undef QUICK_BUILD
+
+/* If defined, use unions instead of ints.  A few systems (DEC Alpha)
+   seem to require this, probably because something with the int
+   definitions isn't right with 64-bit systems.  */
+#undef USE_UNION_TYPE
+
+/* Enable special GNU Make features in the Makefiles. */
+#undef USE_GNU_MAKE
 
 /* Defined by AC_C_CONST in configure.in */
 #undef const
@@ -581,24 +598,45 @@ Boston, MA 02111-1307, USA.  */
 #undef gid_t
 #undef socklen_t
 
-/* If defined, use unions instead of ints.  A few systems (DEC Alpha)
-   seem to require this, probably because something with the int
-   definitions isn't right with 64-bit systems.  */
-#undef USE_UNION_TYPE
+#endif /* WIN32_NO_CONFIGURE */
+
+
+/* USER_FULL_NAME returns a string that is the user's full name.
+   It can assume that the variable `pw' points to the password file
+   entry for this user.
+
+   At some sites, the pw_gecos field contains the user's full name.
+   If neither this nor any other field contains the right thing, use
+   pw_name, giving the user's login name, since that is better than
+   nothing. */
+#define USER_FULL_NAME pw->pw_gecos
+
+#if (defined (QUANTIFY) || defined (PURIFY)) && !defined (XLIB_ILLEGAL_ACCESS)
+#define XLIB_ILLEGAL_ACCESS 1
+#endif
 
 /* alloca twiddling.
    Because we might be #including alloca.h here, feature test macros
    such as _XOPEN_SOURCE must be defined above. */
+
 #undef HAVE_ALLOCA_H
 #ifndef NOT_C_CODE
-#ifdef __GNUC__
+#if defined (__CYGWIN__)
+/* We get complaints about redefinitions if we just use the __GNUC__
+   definition: stdlib.h also includes alloca.h, which defines it slightly
+   differently */
+#include <alloca.h>
+#elif defined (__GNUC__)
 #define alloca __builtin_alloca
-#elif defined __DECC
+#elif defined (WIN32_NO_CONFIGURE)
+/* Defines size_t and alloca ().  */
+#include <malloc.h>
+#elif defined (__DECC)
 #include <alloca.h>
 #pragma intrinsic(alloca)
-#elif defined HAVE_ALLOCA_H
+#elif defined (HAVE_ALLOCA_H)
 #include <alloca.h>
-#elif defined(_AIX)
+#elif defined (_AIX)
 /* AIX requires this before any "real" code in the translation unit.  */
 #pragma alloca
 #elif ! defined (alloca)
@@ -615,7 +653,9 @@ extern "C" {
 #endif
 
 #undef config_opsysfile
-#ifdef config_opsysfile
+#ifdef WIN32_NO_CONFIGURE
+#include "s/windowsnt.h"
+#elif defined (config_opsysfile)
 #include config_opsysfile
 #endif
 
@@ -624,7 +664,9 @@ extern "C" {
    The file name is chosen based on the configuration name. */
 
 #undef config_machfile
-#ifdef config_machfile
+#ifdef WIN32_NO_CONFIGURE
+#include "m/windowsnt.h"
+#elif defined (config_machfile)
 #include config_machfile
 #endif
 
@@ -656,6 +698,8 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
+#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
+
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */
 #undef DYNODUMP
@@ -668,6 +712,7 @@ extern "C" {
    usually found in /usr/demo/SOUND - you may need to install the
    "SUNWaudmo" package.) */
 #undef HAVE_NATIVE_SOUND
+
 /* Native sound may be provided via soundcard.h, in various directories */
 #undef SOUNDCARD_H_FILE
 
@@ -689,6 +734,7 @@ extern "C" {
 #undef TT_C_H_FILE
 
 /* Toolkits used by lwlib for various widgets... */
+
 #undef LWLIB_USES_MOTIF
 #undef LWLIB_USES_ATHENA
 #undef LWLIB_MENUBARS_LUCID
@@ -712,6 +758,23 @@ extern "C" {
 #undef HAVE_TOOLBARS
 #undef HAVE_WIDGETS
 
+#endif /* WIN32_NO_CONFIGURE */
+
+#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS) || defined (HAVE_WIDGETS)
+#define HAVE_GUI_OBJECTS
+#endif
+
+/* For the moment, Athena widgets and dialogs may be very unstable and not
+   working well, but things under Windows work much better.  configure by
+   default tries to turn Windows widgets and dialogs on, but the Athena
+   ones off, so let's separate the defines. */
+#if defined (HAVE_WIDGETS) && (defined (LWLIB_WIDGETS_MOTIF) || defined (LWLIB_WIDGETS_ATHENA))
+#define HAVE_X_WIDGETS
+#endif
+
+#if defined (HAVE_DIALOGS) && (defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_DIALOGS_ATHENA) || defined (LWLIB_DIALOGS_ATHENA3D))
+#define HAVE_X_DIALOGS
+#endif
 
 #if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
 #define HAVE_POPUPS
@@ -734,68 +797,6 @@ extern "C" {
 #define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
 #endif
 
-/* If you turn this flag on, it forces encapsulation in all
-circumstances; this can be used to make sure things compile OK
-on various systems. */
-#undef DEBUG_ENCAPSULATION
-
-/* basic system calls */
-
-#if defined (INTERRUPTIBLE_IO) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_READ
-# define ENCAPSULATE_WRITE
-#endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (MULE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_OPEN
-#endif
-#if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_CLOSE
-#endif
-
-/* stdio calls */
-
-#if defined (INTERRUPTIBLE_IO) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FREAD
-# define ENCAPSULATE_FWRITE
-#endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (MULE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FOPEN
-#endif
-#if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_FCLOSE
-#endif
-
-/* directory calls */
-
-#if defined (MULE) || defined (DEBUG_ENCAPSULATION)
-# define ENCAPSULATE_CHDIR
-# define ENCAPSULATE_MKDIR
-# define ENCAPSULATE_OPENDIR
-# define ENCAPSULATE_CLOSEDIR
-# define ENCAPSULATE_READDIR
-# define ENCAPSULATE_RMDIR
-
-/* file-information calls */
-
-#ifdef HAVE_EACCESS
-# define ENCAPSULATE_EACCESS
-#endif
-# define ENCAPSULATE_ACCESS
-# define ENCAPSULATE_LSTAT
-# define ENCAPSULATE_READLINK
-# define ENCAPSULATE_STAT
-
-/* file-manipulation calls */
-
-# define ENCAPSULATE_CHMOD
-# define ENCAPSULATE_CREAT
-# define ENCAPSULATE_LINK
-# define ENCAPSULATE_RENAME
-# define ENCAPSULATE_SYMLINK
-# define ENCAPSULATE_UNLINK
-# define ENCAPSULATE_EXECVP
-#endif /* defined (MULE) || defined (DEBUG_ENCAPSULATION) */
-
 #ifdef HAVE_CANNA
 #  define CANNA2
 #  define CANNA_MULE
@@ -812,11 +813,18 @@ on various systems. */
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
 
+#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
+
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
 #undef SIZEOF_LONG_LONG
 #undef SIZEOF_VOID_P
+
+/* Does the keyword `inline' exist?  */
+#undef inline
+
+#endif /* WIN32_NO_CONFIGURE */
 
 #ifndef BITS_PER_CHAR
 #define BITS_PER_CHAR 8
@@ -831,9 +839,6 @@ on various systems. */
    Use `inline static' to define inline functions in .c files.
    See the Internals manual for examples and more information. */
 
-/* Does the keyword `inline' exist?  */
-#undef inline
-
 #if defined (__cplusplus) || ! defined (__GNUC__)
 # define INLINE_HEADER inline static
 #elif defined (DONT_EXTERN_INLINE_HEADER_FUNCTIONS)
@@ -841,6 +846,20 @@ on various systems. */
 #else
 # define INLINE_HEADER inline extern
 #endif
+
+/* Use DECLARE_INLINE_HEADER() to declare an inline function in a header
+   file, like this: (This avoids the need to write a prototype directly
+   followed by the function header itself.)
+
+  DECLARE_INLINE_HEADER (int foo (int x))
+  {
+    return x * x;
+  }
+
+*/
+
+#define DECLARE_INLINE_HEADER(header) \
+  INLINE_HEADER header ; INLINE_HEADER header
 
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
@@ -878,6 +897,8 @@ on various systems. */
 # define JMP_BUF jmp_buf
 #endif
 
+#ifndef WIN32_NO_CONFIGURE /* Defined in xemacs.mak or s/windowsnt.h: */
+
 /* movemail options */
 /* Should movemail use POP3 for mail access? */
 #undef MAIL_USE_POP
@@ -908,5 +929,29 @@ on various systems. */
 #undef INFOPATH_USER_DEFINED
 
 #undef PDUMP
+
+#endif /* WIN32_NO_CONFIGURE */
+
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+# define HAVE_WIN32_CODING_SYSTEMS
+#endif
+
+/* Move these down here so that the s/m files (esp. windowsnt.h) can
+   set them. */
+#ifdef ERROR_CHECK_TYPECHECK
+#define type_checking_assert(assertion) assert (assertion)
+#else
+#define type_checking_assert(assertion)
+#endif
+#ifdef ERROR_CHECK_CHARBPOS
+#define charbpos_checking_assert(assertion) assert (assertion)
+#else
+#define charbpos_checking_assert(assertion)
+#endif
+#ifdef ERROR_CHECK_GC
+#define gc_checking_assert(assertion) assert (assertion)
+#else
+#define gc_checking_assert(assertion)
+#endif
 
 #endif /* _SRC_CONFIG_H_ */

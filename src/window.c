@@ -3649,7 +3649,7 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
 
 		  Fselect_window (window, Qnil);
 		  run_hook (Qtemp_buffer_show_hook);
-		  unbind_to (count, Qnil);
+		  unbind_to (count);
 		}
 	    }
 	}
@@ -5798,7 +5798,7 @@ by `current-window-configuration' (which see).
 
   /* Now restore things, when everything else if OK. */
 
-  unbind_to (specpdl_count, Qnil);
+  unbind_to (specpdl_count);
 
   UNGCPRO;
 
@@ -6009,13 +6009,11 @@ Does not restore the value of point in current buffer.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val;
   int speccount = specpdl_depth ();
 
   record_unwind_protect (save_window_excursion_unwind,
 			 Fcurrent_window_configuration (Qnil));
-  val = Fprogn (args);
-  return unbind_to (speccount, val);
+  return unbind_to_1 (speccount, Fprogn (args));
 }
 
 DEFUN ("current-pixel-column", Fcurrent_pixel_column, 0, 2, 0, /*

@@ -1,7 +1,7 @@
 /* Storage allocation and gc for XEmacs Lisp interpreter.
    Copyright (C) 1985-1998 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -155,7 +155,7 @@ Lisp_Object Vpost_gc_hook, Qpost_gc_hook;
 /* "Garbage collecting" */
 Lisp_Object Vgc_message;
 Lisp_Object Vgc_pointer_glyph;
-static const char gc_default_message[] = "Garbage collecting";
+static const Char_ASCII gc_default_message[] = "Garbage collecting";
 Lisp_Object Qgarbage_collecting;
 
 /* Non-zero means we're in the process of doing the dump */
@@ -329,8 +329,8 @@ char *
 xstrdup (const char *str)
 {
   int len = strlen (str) + 1;   /* for stupid terminating 0 */
-
   void *val = xmalloc (len);
+
   if (val == 0) return 0;
   return (char *) memcpy (val, str, len);
 }
@@ -357,7 +357,8 @@ allocate_lisp_storage (Bytecount size)
 static struct lcrecord_header *all_lcrecords;
 
 void *
-alloc_lcrecord (Bytecount size, const struct lrecord_implementation *implementation)
+alloc_lcrecord (Bytecount size,
+		const struct lrecord_implementation *implementation)
 {
   struct lcrecord_header *lcheader;
 
@@ -392,7 +393,7 @@ alloc_lcrecord (Bytecount size, const struct lrecord_implementation *implementat
  * Otherwise, just let the GC do its job -- that's what it's there for
  */
 void
-free_lcrecord (struct lcrecord_header *lcrecord)
+very_old_free_lcrecord (struct lcrecord_header *lcrecord)
 {
   if (all_lcrecords == lcrecord)
     {
@@ -763,14 +764,14 @@ typedef struct Lisp_Free
 } Lisp_Free;
 
 #define LRECORD_FREE_P(ptr) \
-((ptr)->lheader.type == lrecord_type_free)
+(((struct lrecord_header *) ptr)->type == lrecord_type_free)
 
 #define MARK_LRECORD_AS_FREE(ptr) \
-((void) ((ptr)->lheader.type = lrecord_type_free))
+((void) (((struct lrecord_header *) ptr)->type = lrecord_type_free))
 
 #ifdef ERROR_CHECK_GC
 #define MARK_LRECORD_AS_NOT_FREE(ptr) \
-((void) ((ptr)->lheader.type = lrecord_type_undefined))
+((void) (((struct lrecord_header *) ptr)->type = lrecord_type_undefined))
 #else
 #define MARK_LRECORD_AS_NOT_FREE(ptr) DO_NOTHING
 #endif
@@ -1828,6 +1829,29 @@ allocate_string_chars_struct (Lisp_String *string_it_goes_with,
   return s_chars;
 }
 
+#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+void
+sledgehammer_check_ascii_begin (Lisp_Object str)
+{
+  Bytecount i;
+
+  for (i = 0; i < XSTRING_LENGTH (str); i++)
+    {
+      if (!BYTE_ASCII_P (XSTRING_BYTE (str, i)))
+	break;
+    }
+
+  assert (i == (Bytecount) XSTRING_ASCII_BEGIN (str) ||
+	  (i > MAX_STRING_ASCII_BEGIN &&
+	   (Bytecount) XSTRING_ASCII_BEGIN (str) ==
+	   (Bytecount) MAX_STRING_ASCII_BEGIN));
+}
+#endif
+
+/* You do NOT want to be calling this! (And if you do, you must call
+   set_string_ascii_begin() after modifying the string.) Use alloca()
+   instead and then call make_string() like the rest of the world. */
+
 Lisp_Object
 make_uninit_string (Bytecount length)
 {
@@ -1839,7 +1863,7 @@ make_uninit_string (Bytecount length)
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
-  set_lheader_implementation (&s->lheader, &lrecord_string);
+  set_lheader_implementation (&s->u.lheader, &lrecord_string);
 
   set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
 		   ? xnew_array (Intbyte, length + 1)
@@ -1847,6 +1871,7 @@ make_uninit_string (Bytecount length)
 
   set_string_length (s, length);
   s->plist = Qnil;
+  set_string_ascii_begin (s, 0);
 
   set_string_byte (s, length, 0);
 
@@ -2008,18 +2033,40 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 
 #ifdef MULE
 
+/* WARNING: If you modify an existing string, you must call
+   CHECK_LISP_WRITEABLE() before and bump_string_modiff() afterwards. */
 void
 set_string_char (Lisp_String *s, Charcount i, Emchar c)
 {
   Intbyte newstr[MAX_EMCHAR_LEN];
-  Bytecount bytoff = charcount_to_bytecount (string_data (s), i);
+  Bytecount bytoff = string_index_char_to_byte (s, i);
   Bytecount oldlen = charcount_to_bytecount (string_data (s) + bytoff, 1);
   Bytecount newlen = set_charptr_emchar (newstr, c);
 
+  sledgehammer_check_ascii_begin (wrap_string (s));
   if (oldlen != newlen)
     resize_string (s, bytoff, newlen - oldlen);
   /* Remember, string_data (s) might have changed so we can't cache it. */
   memcpy (string_data (s) + bytoff, newstr, newlen);
+  if (oldlen != newlen) 
+    {
+      if (newlen > 1 && i <= (Charcount) string_ascii_begin (s))
+      /* Everything starting with the new char is no longer part of
+	 ascii_begin */
+	set_string_ascii_begin (s, i);
+      else if (newlen == 1 && i == (Charcount) string_ascii_begin (s))
+	/* We've extended ascii_begin, and we have to figure out how much by */
+	{
+	  Bytecount j;
+	  for (j = i + 1; j < string_length (s); j++)
+	    {
+	      if (!BYTE_ASCII_P (string_data (s)[j]))
+		break;
+	    }
+	  set_string_ascii_begin (s, min (j, MAX_STRING_ASCII_BEGIN));
+	}
+    }
+  sledgehammer_check_ascii_begin (wrap_string (s));
 }
 
 #endif /* MULE */
@@ -2038,8 +2085,12 @@ LENGTH must be a non-negative integer.
     Lisp_Object val = make_uninit_string (len * XINT (length));
 
     if (len == 1)
-      /* Optimize the single-byte case */
-      memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
+      {
+	/* Optimize the single-byte case */
+	memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
+	set_string_ascii_begin (XSTRING (val), min (MAX_STRING_ASCII_BEGIN,
+						    len * XINT (length)));
+      }
     else
       {
 	EMACS_INT i;
@@ -2057,6 +2108,7 @@ LENGTH must be a non-negative integer.
 	      }
 	  }
       }
+    sledgehammer_check_ascii_begin (val);
     return val;
   }
 }
@@ -2078,6 +2130,28 @@ Concatenate all the argument characters and make the result a string.
   return make_string (storage, p - storage);
 }
 
+/* Initialize the ascii_begin member of a string to the correct value. */
+
+void
+init_string_ascii_begin (Lisp_Object string)
+{
+#ifdef MULE
+  int i;
+  Bytecount length = XSTRING_LENGTH (string);
+  Intbyte *contents = XSTRING_DATA (string);
+
+  for (i = 0; i < length; i++)
+    {
+      if (!BYTE_ASCII_P (contents[i]))
+	break;
+    }
+  set_string_ascii_begin (XSTRING (string), min (i, MAX_STRING_ASCII_BEGIN));
+#else
+  set_string_ascii_begin (XSTRING (string), min (XSTRING_LENGTH (string),
+						 MAX_STRING_ASCII_BEGIN));
+#endif
+  sledgehammer_check_ascii_begin (string);
+}
 
 /* Take some raw memory, which MUST already be in internal format,
    and package it up into a Lisp string. */
@@ -2093,6 +2167,8 @@ make_string (const Intbyte *contents, Bytecount length)
 
   val = make_uninit_string (length);
   memcpy (XSTRING_DATA (val), contents, length);
+  init_string_ascii_begin (val);
+  sledgehammer_check_ascii_begin (val);  
   return val;
 }
 
@@ -2110,10 +2186,17 @@ make_ext_string (const Extbyte *contents, EMACS_INT length,
 }
 
 Lisp_Object
+build_intstring (const Intbyte *str)
+{
+  /* Some strlen's crash and burn if passed null. */
+  return make_string (str, (str ? qxestrlen (str) : 0));
+}
+
+Lisp_Object
 build_string (const CIntbyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_string ((const Intbyte *) str, (str ? strlen(str) : 0));
+  return make_string ((const Intbyte *) str, (str ? strlen (str) : 0));
 }
 
 Lisp_Object
@@ -2125,9 +2208,15 @@ build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 }
 
 Lisp_Object
-build_translated_string (const CIntbyte *str)
+build_msg_intstring (const Intbyte *str)
 {
-  return build_string (GETTEXT (str));
+  return build_intstring (GETTEXT (str));
+}
+
+Lisp_Object
+build_msg_string (const CIntbyte *str)
+{
+  return build_string (CGETTEXT (str));
 }
 
 Lisp_Object
@@ -2143,13 +2232,15 @@ make_string_nocopy (const Intbyte *contents, Bytecount length)
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, Lisp_String, s);
-  set_lheader_implementation (&s->lheader, &lrecord_string);
-  SET_C_READONLY_RECORD_HEADER (&s->lheader);
+  set_lheader_implementation (&s->u.lheader, &lrecord_string);
+  SET_C_READONLY_RECORD_HEADER (&s->u.lheader);
   s->plist = Qnil;
-  set_string_data (s, (Intbyte *)contents);
+  set_string_data (s, (Intbyte *) contents);
   set_string_length (s, length);
-
   XSETSTRING (val, s);
+  init_string_ascii_begin (val);
+  sledgehammer_check_ascii_begin (val);
+
   return val;
 }
 
@@ -2230,8 +2321,10 @@ Lisp_Object
 make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
 {
-  struct lcrecord_list *p = alloc_lcrecord_type (struct lcrecord_list,
-						 &lrecord_lcrecord_list);
+  struct lcrecord_list *p =
+    /* Avoid infinite recursion allocating this */
+    alloc_unmanaged_lcrecord_type (struct lcrecord_list,
+				   &lrecord_lcrecord_list);
   Lisp_Object val;
 
   p->implementation = implementation;
@@ -2280,6 +2373,16 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
     }
 }
 
+/* "Free" a Lisp object LCRECORD by placing it on its associated free list
+   LCRECORD_LIST; next time allocate_managed_lcrecord() is called with the
+   same LCRECORD_LIST as its parameter, it will return an object from the
+   free list, which may be this one.  Be VERY VERY SURE there are no
+   pointers to this object hanging around anywhere where they might be
+   used!
+
+   The first thing this does before making any global state change is to
+   call the finalize method of the object, if it exists. */
+
 void
 free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
 {
@@ -2290,13 +2393,26 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   const struct lrecord_implementation *implementation
     = LHEADER_IMPLEMENTATION (lheader);
 
+  /* Finalizer methods may try to free objects within them, which typically
+     won't be marked and thus are scheduled for demolition.  Putting them
+     on the free list would be very bad, as we'd have xfree()d memory in
+     the list.  Even if for some reason the objects are still live
+     (generally a logic error!), we still will have problems putting such
+     an object on the free list right now (e.g. we'd have to avoid calling
+     the finalizer twice, etc.).  So basically, those finalizers should not
+     be freeing any objects if during GC.  Abort now to catch those
+     problems. */
+  gc_checking_assert (!gc_in_progress);
+  
   /* Make sure the size is correct.  This will catch, for example,
      putting a window configuration on the wrong free list. */
   gc_checking_assert ((implementation->size_in_bytes_method ?
 		       implementation->size_in_bytes_method (lheader) :
 		       implementation->static_size)
 		      == list->size);
-
+  /* Make sure the object isn't already freed. */
+  gc_checking_assert (!free_header->lcheader.free);
+  
   if (implementation->finalizer)
     implementation->finalizer (lheader, 0);
   free_header->chain = list->free;
@@ -2304,7 +2420,29 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   list->free = lcrecord;
 }
 
-
+static Lisp_Object all_lcrecord_lists[countof (lrecord_implementations_table)];
+
+void *
+alloc_automanaged_lcrecord (Bytecount size,
+			    const struct lrecord_implementation *imp)
+{
+  if (EQ (all_lcrecord_lists[imp->lrecord_type_index], Qzero))
+    all_lcrecord_lists[imp->lrecord_type_index] =
+      make_lcrecord_list (size, imp);
+
+  return XPNTR (allocate_managed_lcrecord
+		(all_lcrecord_lists[imp->lrecord_type_index]));
+}
+
+void
+free_lcrecord (Lisp_Object rec)
+{
+  int type = XRECORD_LHEADER (rec)->type;
+
+  assert (!EQ (all_lcrecord_lists[type], Qzero));
+
+  free_managed_lcrecord (all_lcrecord_lists[type], rec);
+}
 
 
 DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
@@ -2336,8 +2474,13 @@ Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Ob
 
 struct gcpro *gcprolist;
 
-/* We want the staticpros relocated, but not the pointers found therein.
-   Hence we use a trivial description, as for pointerless objects. */
+/* We want the staticpro list relocated, but not the pointers found
+   therein, because they refer to locations in the global data segment, not
+   in the heap; we only dump heap objects.  Hence we use a trivial
+   description, as for pointerless objects. (Note that the data segment
+   objects, which are global variables like Qfoo or Vbar, themselves are
+   pointers to heap objects.  Each needs to be described to pdump as a
+   "root pointer"; this happens in the call to staticpro(). */
 static const struct lrecord_description staticpro_description_1[] = {
   { XD_END }
 };
@@ -2357,6 +2500,58 @@ static const struct struct_description staticpros_description = {
   staticpros_description_1
 };
 
+#ifdef DEBUG_XEMACS
+
+static const struct lrecord_description staticpro_one_name_description_1[] = {
+  { XD_C_STRING, 0 },
+  { XD_END }
+};
+
+static const struct struct_description staticpro_one_name_description = {
+  sizeof (char *),
+  staticpro_one_name_description_1
+};
+
+static const struct lrecord_description staticpro_names_description_1[] = {
+  XD_DYNARR_DESC (char_ptr_dynarr, &staticpro_one_name_description),
+  { XD_END }
+};
+
+static const struct struct_description staticpro_names_description = {
+  sizeof (char_ptr_dynarr),
+  staticpro_names_description_1
+};
+
+/* Help debug crashes gc-marking a staticpro'ed object. */
+
+Lisp_Object_ptr_dynarr *staticpros;
+char_ptr_dynarr *staticpro_names;
+
+/* Mark the Lisp_Object at non-heap VARADDRESS as a root object for
+   garbage collection, and for dumping. */
+void
+staticpro_1 (Lisp_Object *varaddress, char *varname)
+{
+  Dynarr_add (staticpros, varaddress);
+  Dynarr_add (staticpro_names, varname);
+  dump_add_root_object (varaddress);
+}
+
+
+Lisp_Object_ptr_dynarr *staticpros_nodump;
+char_ptr_dynarr *staticpro_nodump_names;
+
+/* Mark the Lisp_Object at heap VARADDRESS as a root object for
+   garbage collection, but not for dumping. (See below.) */
+void
+staticpro_nodump_1 (Lisp_Object *varaddress, char *varname)
+{
+  Dynarr_add (staticpros_nodump, varaddress);
+  Dynarr_add (staticpro_nodump_names, varname);
+}
+
+#else /* not DEBUG_XEMACS */
+
 Lisp_Object_ptr_dynarr *staticpros;
 
 /* Mark the Lisp_Object at non-heap VARADDRESS as a root object for
@@ -2371,13 +2566,30 @@ staticpro (Lisp_Object *varaddress)
 
 Lisp_Object_ptr_dynarr *staticpros_nodump;
 
-/* Mark the Lisp_Object at non-heap VARADDRESS as a root object for
-   garbage collection, but not for dumping. */
+/* Mark the Lisp_Object at heap VARADDRESS as a root object for garbage
+   collection, but not for dumping.  This is used for objects where the
+   only sure pointer is in the heap (rather than in the global data
+   segment, as must be the case for pdump root pointers), but not inside of
+   another Lisp object (where it will be marked as a result of that Lisp
+   object's mark method).  The call to staticpro_nodump() must occur *BOTH*
+   at initialization time and at "reinitialization" time (startup, after
+   pdump load.) (For example, this is the case with the predicate symbols
+   for specifier and coding system types.  The pointer to this symbol is
+   inside of a methods structure, which is allocated on the heap.  The
+   methods structure will be written out to the pdump data file, and may be
+   reloaded at a different address.)
+
+   #### The necessity for reinitialization is a bug in pdump.  Pdump should
+   automatically regenerate the staticpro()s for these symbols when it
+   loads the data in. */
+
 void
 staticpro_nodump (Lisp_Object *varaddress)
 {
   Dynarr_add (staticpros_nodump, varaddress);
 }
+
+#endif /* not DEBUG_XEMACS */
 
 #ifdef ERROR_CHECK_GC
 #define GC_CHECK_LHEADER_INVARIANTS(lheader) do {		\
@@ -2616,7 +2828,7 @@ sweep_bit_vectors_1 (Lisp_Object *prev,
 
 #ifdef ERROR_CHECK_GC
 
-#define SWEEP_FIXED_TYPE_BLOCK(typename, obj_type)			\
+#define SWEEP_FIXED_TYPE_BLOCK_1(typename, obj_type, lheader)		\
 do {									\
   struct typename##_block *SFTB_current;				\
   int SFTB_limit;							\
@@ -2662,85 +2874,88 @@ do {									\
 
 #else /* !ERROR_CHECK_GC */
 
-#define SWEEP_FIXED_TYPE_BLOCK(typename, obj_type)				\
-do {										\
-  struct typename##_block *SFTB_current;					\
-  struct typename##_block **SFTB_prev;						\
-  int SFTB_limit;								\
-  int num_free = 0, num_used = 0;						\
-										\
-  typename##_free_list = 0;							\
-										\
-  for (SFTB_prev = &current_##typename##_block,					\
-       SFTB_current = current_##typename##_block,				\
-       SFTB_limit = current_##typename##_block_index;				\
-       SFTB_current;								\
-       )									\
-    {										\
-      int SFTB_iii;								\
-      int SFTB_empty = 1;							\
-      Lisp_Free *SFTB_old_free_list = typename##_free_list;			\
-										\
-      for (SFTB_iii = 0; SFTB_iii < SFTB_limit; SFTB_iii++)			\
-	{									\
-	  obj_type *SFTB_victim = &(SFTB_current->block[SFTB_iii]);		\
-										\
-	  if (LRECORD_FREE_P (SFTB_victim))					\
-	    {									\
-	      num_free++;							\
-	      PUT_FIXED_TYPE_ON_FREE_LIST (typename, obj_type, SFTB_victim);	\
-	    }									\
-	  else if (C_READONLY_RECORD_HEADER_P (&SFTB_victim->lheader))		\
-	    {									\
-	      SFTB_empty = 0;							\
-	      num_used++;							\
-	    }									\
-	  else if (! MARKED_RECORD_HEADER_P (&SFTB_victim->lheader))		\
-	    {									\
-	      num_free++;							\
-	      FREE_FIXED_TYPE (typename, obj_type, SFTB_victim);		\
-	    }									\
-	  else									\
-	    {									\
-	      SFTB_empty = 0;							\
-	      num_used++;							\
-	      UNMARK_##typename (SFTB_victim);					\
-	    }									\
-	}									\
-      if (!SFTB_empty)								\
-	{									\
-	  SFTB_prev = &(SFTB_current->prev);					\
-	  SFTB_current = SFTB_current->prev;					\
-	}									\
-      else if (SFTB_current == current_##typename##_block			\
-	       && !SFTB_current->prev)						\
-	{									\
-	  /* No real point in freeing sole allocation block */			\
-	  break;								\
-	}									\
-      else									\
-	{									\
-	  struct typename##_block *SFTB_victim_block = SFTB_current;		\
-	  if (SFTB_victim_block == current_##typename##_block)			\
-	    current_##typename##_block_index					\
-	      = countof (current_##typename##_block->block);			\
-	  SFTB_current = SFTB_current->prev;					\
-	  {									\
-	    *SFTB_prev = SFTB_current;						\
-	    xfree (SFTB_victim_block);						\
-	    /* Restore free list to what it was before victim was swept */	\
-	    typename##_free_list = SFTB_old_free_list;				\
-	    num_free -= SFTB_limit;						\
-	  }									\
-	}									\
-      SFTB_limit = countof (current_##typename##_block->block);			\
-    }										\
-										\
-  gc_count_num_##typename##_in_use = num_used;					\
-  gc_count_num_##typename##_freelist = num_free;				\
+#define SWEEP_FIXED_TYPE_BLOCK_1(typename, obj_type, lheader)		     \
+do {									     \
+  struct typename##_block *SFTB_current;				     \
+  struct typename##_block **SFTB_prev;					     \
+  int SFTB_limit;							     \
+  int num_free = 0, num_used = 0;					     \
+									     \
+  typename##_free_list = 0;						     \
+									     \
+  for (SFTB_prev = &current_##typename##_block,				     \
+       SFTB_current = current_##typename##_block,			     \
+       SFTB_limit = current_##typename##_block_index;			     \
+       SFTB_current;							     \
+       )								     \
+    {									     \
+      int SFTB_iii;							     \
+      int SFTB_empty = 1;						     \
+      Lisp_Free *SFTB_old_free_list = typename##_free_list;		     \
+									     \
+      for (SFTB_iii = 0; SFTB_iii < SFTB_limit; SFTB_iii++)		     \
+	{								     \
+	  obj_type *SFTB_victim = &(SFTB_current->block[SFTB_iii]);	     \
+									     \
+	  if (LRECORD_FREE_P (SFTB_victim))				     \
+	    {								     \
+	      num_free++;						     \
+	      PUT_FIXED_TYPE_ON_FREE_LIST (typename, obj_type, SFTB_victim); \
+	    }								     \
+	  else if (C_READONLY_RECORD_HEADER_P (&SFTB_victim->lheader))	     \
+	    {								     \
+	      SFTB_empty = 0;						     \
+	      num_used++;						     \
+	    }								     \
+	  else if (! MARKED_RECORD_HEADER_P (&SFTB_victim->lheader))	     \
+	    {								     \
+	      num_free++;						     \
+	      FREE_FIXED_TYPE (typename, obj_type, SFTB_victim);	     \
+	    }								     \
+	  else								     \
+	    {								     \
+	      SFTB_empty = 0;						     \
+	      num_used++;						     \
+	      UNMARK_##typename (SFTB_victim);				     \
+	    }								     \
+	}								     \
+      if (!SFTB_empty)							     \
+	{								     \
+	  SFTB_prev = &(SFTB_current->prev);				     \
+	  SFTB_current = SFTB_current->prev;				     \
+	}								     \
+      else if (SFTB_current == current_##typename##_block		     \
+	       && !SFTB_current->prev)					     \
+	{								     \
+	  /* No real point in freeing sole allocation block */		     \
+	  break;							     \
+	}								     \
+      else								     \
+	{								     \
+	  struct typename##_block *SFTB_victim_block = SFTB_current;	     \
+	  if (SFTB_victim_block == current_##typename##_block)		     \
+	    current_##typename##_block_index				     \
+	      = countof (current_##typename##_block->block);		     \
+	  SFTB_current = SFTB_current->prev;				     \
+	  {								     \
+	    *SFTB_prev = SFTB_current;					     \
+	    xfree (SFTB_victim_block);					     \
+	    /* Restore free list to what it was before victim was swept */   \
+	    typename##_free_list = SFTB_old_free_list;			     \
+	    num_free -= SFTB_limit;					     \
+	  }								     \
+	}								     \
+      SFTB_limit = countof (current_##typename##_block->block);		     \
+    }									     \
+									     \
+  gc_count_num_##typename##_in_use = num_used;				     \
+  gc_count_num_##typename##_freelist = num_free;			     \
 } while (0)
 
 #endif /* !ERROR_CHECK_GC */
+
+#define SWEEP_FIXED_TYPE_BLOCK(typename, obj_type) \
+  SWEEP_FIXED_TYPE_BLOCK_1 (typename, obj_type, lheader)
 
 
 
@@ -2979,7 +3194,7 @@ compact_string_chars (void)
           gc_checking_assert (! BIG_STRING_FULLSIZE_P (fullsize));
 
           /* Just skip it if it isn't marked.  */
-	  if (! MARKED_RECORD_HEADER_P (&(string->lheader)))
+	  if (! MARKED_RECORD_HEADER_P (&(string->u.lheader)))
             {
               from_pos += fullsize;
               continue;
@@ -3064,7 +3279,7 @@ sweep_strings (void)
 #define UNMARK_string(ptr) do {			\
     Lisp_String *p = (ptr);			\
     Bytecount size = string_length (p);		\
-    UNMARK_RECORD_HEADER (&(p->lheader));	\
+    UNMARK_RECORD_HEADER (&(p->u.lheader));	\
     num_bytes += size;				\
     if (!BIG_STRING_SIZE_P (size))		\
       {						\
@@ -3080,7 +3295,7 @@ sweep_strings (void)
       xfree (ptr->data);			\
   } while (0)
 
-  SWEEP_FIXED_TYPE_BLOCK (string, Lisp_String);
+  SWEEP_FIXED_TYPE_BLOCK_1 (string, Lisp_String, u.lheader);
 
   gc_count_num_short_string_in_use = num_small_used;
   gc_count_string_total_size = num_bytes;
@@ -3188,6 +3403,7 @@ disksave_object_finalization (void)
 
   /* Yeah, this list is pretty ad-hoc... */
   Vprocess_environment = Qnil;
+  env_initted = 0;
   Vexec_directory = Qnil;
   Vdata_directory = Qnil;
   Vsite_directory = Qnil;
@@ -3198,7 +3414,7 @@ disksave_object_finalization (void)
   /* Vdump_load_path = Qnil; */
   /* Release hash tables for locate_file */
   Flocate_file_clear_hashing (Qt);
-  uncache_home_directory();
+  uncache_home_directory ();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
 			   defined(LOADHIST_BUILTIN))
@@ -3233,11 +3449,26 @@ disksave_object_finalization (void)
 }
 
 
-Lisp_Object
+static Lisp_Object
 restore_gc_inhibit (Lisp_Object val)
 {
   gc_currently_forbidden = XINT (val);
   return val;
+}
+
+int
+begin_gc_forbidden (void)
+{
+  int speccount = record_unwind_protect (restore_gc_inhibit,
+					 make_int (gc_currently_forbidden));
+  gc_currently_forbidden = 1;
+  return speccount;
+}
+
+void
+end_gc_forbidden (int count)
+{
+  unbind_to (count);
 }
 
 /* Maybe we want to use this when doing a "panic" gc after memory_full()? */
@@ -3341,10 +3572,7 @@ garbage_collect_1 (void)
   /* Very important to prevent GC during any of the following
      stuff that might run Lisp code; otherwise, we'll likely
      have infinite GC recursion. */
-  speccount = specpdl_depth ();
-  record_unwind_protect (restore_gc_inhibit,
-                         make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
+  speccount = begin_gc_forbidden ();
 
   if (!gc_hooks_inhibited)
     run_hook_trapping_errors ("Error in pre-gc-hook", Qpre_gc_hook);
@@ -3354,7 +3582,7 @@ garbage_collect_1 (void)
     {
       if (FRAME_WIN_P (f))
 	{
-	  Lisp_Object frame = make_frame (f);
+	  Lisp_Object frame = wrap_frame (f);
 	  Lisp_Object cursor = glyph_image_instance (Vgc_pointer_glyph,
 						     FRAME_SELECTED_WINDOW (f),
 						     ERROR_ME_NOT, 1);
@@ -3371,12 +3599,9 @@ garbage_collect_1 (void)
       /* Don't print messages to the stream device. */
       if (!cursor_changed && !FRAME_STREAM_P (f))
 	{
-	  char *msg = (STRINGP (Vgc_message)
-		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
-		       : 0);
 	  Lisp_Object args[2], whole_msg;
-	  args[0] = build_string (msg ? msg :
-				  GETTEXT ((const char *) gc_default_message));
+	  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
+		     build_msg_string (gc_default_message));
 	  args[1] = build_string ("...");
 	  whole_msg = Fconcat (2, args);
 	  echo_area_message (f, (Intbyte *) 0, whole_msg, 0, -1,
@@ -3387,6 +3612,7 @@ garbage_collect_1 (void)
   /***** Now we actually start the garbage collection. */
 
   gc_in_progress = 1;
+  inhibit_non_essential_printing_operations = 1;
 
   gc_generation_number[0]++;
 
@@ -3510,6 +3736,7 @@ garbage_collect_1 (void)
     gc_cons_threshold = 10000;
 #endif
 
+  inhibit_non_essential_printing_operations = 0;
   gc_in_progress = 0;
 
   run_post_gc_actions ();
@@ -3522,22 +3749,17 @@ garbage_collect_1 (void)
   if (!noninteractive)
     {
       if (cursor_changed)
-	Fset_frame_pointer (make_frame (f), pre_gc_cursor);
+	Fset_frame_pointer (wrap_frame (f), pre_gc_cursor);
       else if (!FRAME_STREAM_P (f))
 	{
-	  char *msg = (STRINGP (Vgc_message)
-		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
-		       : 0);
-
 	  /* Show "...done" only if the echo area would otherwise be empty. */
 	  if (NILP (clear_echo_area (selected_frame (),
 				     Qgarbage_collecting, 0)))
 	    {
 	      Lisp_Object args[2], whole_msg;
-	      args[0] = build_string (msg ? msg :
-				      GETTEXT ((const char *)
-					       gc_default_message));
-	      args[1] = build_string ("... done");
+	      args[0] = (STRINGP (Vgc_message) ? Vgc_message :
+			 build_msg_string (gc_default_message));
+	      args[1] = build_msg_string ("... done");
 	      whole_msg = Fconcat (2, args);
 	      echo_area_message (selected_frame (), (Intbyte *) 0,
 				 whole_msg, 0, -1,
@@ -3547,7 +3769,7 @@ garbage_collect_1 (void)
     }
 
   /* now stop inhibiting GC */
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 
   if (!breathing_space)
     {
@@ -3561,7 +3783,7 @@ garbage_collect_1 (void)
 /* Debugging aids.  */
 
 static Lisp_Object
-gc_plist_hack (const char *name, int value, Lisp_Object tail)
+gc_plist_hack (const Char_ASCII *name, int value, Lisp_Object tail)
 {
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
@@ -3868,13 +4090,23 @@ fixed_type_block_overhead (Bytecount size)
 
 
 /* Initialization */
-void
-reinit_alloc_once_early (void)
+static void
+common_init_alloc_once_early (void)
 {
+#ifndef Qzero
+  Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
+#endif
+
+#ifndef Qnull_pointer
+  /* C guarantees that Qnull_pointer will be initialized to all 0 bits,
+     so the following is actually a no-op.  */
+  XSETOBJ (Qnull_pointer, 0);
+#endif
+
   gc_generation_number[0] = 0;
   breathing_space = 0;
-  XSETINT (all_bit_vectors, 0); /* Qzero may not be set yet. */
-  XSETINT (Vgc_message, 0);
+  all_bit_vectors = Qzero;
+  Vgc_message = Qzero;
   all_lcrecords = 0;
   ignore_malloc_warnings = 1;
 #ifdef DOUG_LEA_MALLOC
@@ -3902,6 +4134,12 @@ reinit_alloc_once_early (void)
     Dynarr_free (staticpros_nodump);
   staticpros_nodump = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros_nodump, 100); /* merely a small optimization */
+#ifdef DEBUG_XEMACS
+  if (staticpro_nodump_names)
+    Dynarr_free (staticpro_nodump_names);
+  staticpro_nodump_names = Dynarr_new2 (char_ptr_dynarr, char *);
+  Dynarr_resize (staticpro_nodump_names, 100); /* ditto */
+#endif
 
   consing_since_gc = 0;
 #if 1
@@ -3927,10 +4165,29 @@ reinit_alloc_once_early (void)
 #endif /* ERROR_CHECK_TYPECHECK */
 }
 
+static void
+init_lcrecord_lists (void)
+{
+  int i;
+
+  for (i = 0; i < countof (lrecord_implementations_table); i++)
+    {
+      all_lcrecord_lists[i] = Qzero; /* Qnil not yet set */
+      staticpro_nodump (&all_lcrecord_lists[i]);
+    }
+}
+
+void
+reinit_alloc_once_early (void)
+{
+  common_init_alloc_once_early ();
+  init_lcrecord_lists ();
+}
+
 void
 init_alloc_once_early (void)
 {
-  reinit_alloc_once_early ();
+  common_init_alloc_once_early ();
 
   {
     int i;
@@ -3946,10 +4203,17 @@ init_alloc_once_early (void)
   staticpros = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros, 1410); /* merely a small optimization */
   dump_add_root_struct_ptr (&staticpros, &staticpros_description);
+#ifdef DEBUG_XEMACS
+  staticpro_names = Dynarr_new2 (char_ptr_dynarr, char *);
+  Dynarr_resize (staticpro_names, 1410); /* merely a small optimization */
+  dump_add_root_struct_ptr (&staticpro_names, &staticpro_names_description);
+#endif
+
+  init_lcrecord_lists ();
 }
 
 void
-reinit_alloc (void)
+init_alloc_early (void)
 {
   gcprolist = 0;
 }

@@ -1,6 +1,7 @@
 /* fast dired replacement routines for mswindows.
    Copyright (C) 1998 Darryl Okahata
    Portions Copyright (C) 1992, 1994 by Sebastian Kremer <sk@thp.uni-koeln.de>
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -20,6 +21,7 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
 
 /*
  * Parts of this code (& comments) were taken from ls-lisp.el
@@ -64,30 +66,32 @@ Boston, MA 02111-1307, USA.  */
  * Set INDENT_LISTING to non-zero if the inserted text should be shifted
  * over by two spaces.
  */
-#define INDENT_LISTING			0
+#define INDENT_LISTING 0
 
-#define ROUND_FILE_SIZES		4096
+#define ROUND_FILE_SIZES 4096
 
 
 #include <config.h>
 #include "lisp.h"
 
 #include "buffer.h"
-#include "nt.h"
 #include "regex.h"
 
 #include "sysdir.h"
-#include "sysproc.h"
 #include "sysfile.h"
 #include "sysfloat.h"
-
+#include "sysproc.h"
+#include "syspwd.h"
+#include "systime.h"
+#include "syswindows.h"
 
 static int mswindows_ls_sort_case_insensitive;
 static Fixnum mswindows_ls_round_file_size;
 
-Lisp_Object		Qmswindows_insert_directory;
+Lisp_Object Qmswindows_insert_directory;
+Lisp_Object Qwildcard_to_regexp;
 
-extern Lisp_Object	Vmswindows_downcase_file_names;	/* in device-msw.c */
+extern Lisp_Object Vmswindows_downcase_file_names; /* in device-msw.c */
 
 enum mswindows_sortby
 {
@@ -98,8 +102,29 @@ enum mswindows_sortby
 };
 
 
-static enum mswindows_sortby	mswindows_sort_method;
-static int			mswindows_reverse_sort;
+static enum mswindows_sortby mswindows_sort_method;
+static int mswindows_reverse_sort;
+
+/* We create our own structure because the cFileName field in
+   WIN32_FIND_DATA is in external format and of fixed size, which we
+   may exceed when translating.  */
+
+typedef struct
+{
+  DWORD dwFileAttributes;
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+  DWORD nFileSizeHigh;
+  DWORD nFileSizeLow;
+  Intbyte *cFileName;
+} Win32_file;
+  
+typedef struct
+{
+  Dynarr_declare (Win32_file);
+} Win32_file_dynarr;
+
 
 
 #define CMPDWORDS(t1a, t1b, t2a, t2b) \
@@ -110,28 +135,29 @@ static int			mswindows_reverse_sort;
 static int
 mswindows_ls_sort_fcn (const void *elem1, const void *elem2)
 {
-  WIN32_FIND_DATA		*e1, *e2;
-  int				status;
+  Win32_file *e1, *e2;
+  int status;
 
-  e1 = *(WIN32_FIND_DATA **)elem1;
-  e2 = *(WIN32_FIND_DATA **)elem2;
+  e1 = (Win32_file *) elem1;
+  e2 = (Win32_file *) elem2;
+
   switch (mswindows_sort_method)
     {
     case MSWINDOWS_SORT_BY_NAME:
-      status = strcmp(e1->cFileName, e2->cFileName);
+      status = strcmp (e1->cFileName, e2->cFileName);
       break;
     case MSWINDOWS_SORT_BY_NAME_NOCASE:
-      status = _stricmp(e1->cFileName, e2->cFileName);
+      status = qxestrcasecmp (e1->cFileName, e2->cFileName);
       break;
     case MSWINDOWS_SORT_BY_MOD_DATE:
-      status = CMPDWORDS(e1->ftLastWriteTime.dwHighDateTime,
-			 e1->ftLastWriteTime.dwLowDateTime,
-			 e2->ftLastWriteTime.dwHighDateTime,
-			 e2->ftLastWriteTime.dwLowDateTime);
+      status = CMPDWORDS (e1->ftLastWriteTime.dwHighDateTime,
+			  e1->ftLastWriteTime.dwLowDateTime,
+			  e2->ftLastWriteTime.dwHighDateTime,
+			  e2->ftLastWriteTime.dwLowDateTime);
       break;
     case MSWINDOWS_SORT_BY_SIZE:
-      status = CMPDWORDS(e1->nFileSizeHigh, e1->nFileSizeLow,
-			 e2->nFileSizeHigh, e2->nFileSizeLow);
+      status = CMPDWORDS (e1->nFileSizeHigh, e1->nFileSizeLow,
+			  e2->nFileSizeHigh, e2->nFileSizeLow);
       break;
     default:
       status = 0;
@@ -144,37 +170,29 @@ mswindows_ls_sort_fcn (const void *elem1, const void *elem2)
   return (status);
 }
 
-
 static void
-mswindows_sort_files (WIN32_FIND_DATA **files, int nfiles,
+mswindows_sort_files (Win32_file_dynarr *files,
 		      enum mswindows_sortby sort_by, int reverse)
 {
   mswindows_sort_method = sort_by;
   mswindows_reverse_sort = reverse;
-  qsort(files, nfiles, sizeof(WIN32_FIND_DATA *), mswindows_ls_sort_fcn);
+  qsort (Dynarr_atp (files, 0), Dynarr_length (files),
+	 sizeof (Win32_file), mswindows_ls_sort_fcn);
 }
 
-
-static WIN32_FIND_DATA *
-mswindows_get_files (char *dirfile, int nowild, Lisp_Object pattern,
-		     int hide_dot, int hide_system, int *nfiles)
+static Win32_file_dynarr *
+mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
+		     int hide_dot, int hide_system)
 {
-  WIN32_FIND_DATA		*files;
-  int				array_size;
-  struct re_pattern_buffer	*bufp = NULL;
-  int				findex, len;
-  char				win32pattern[MAXNAMLEN+3];
-  HANDLE			fh;
+  Win32_file_dynarr *files = Dynarr_new (Win32_file);
+  struct re_pattern_buffer *bufp = NULL;
+  int findex;
+  DECLARE_EISTRING (win32pattern);
+  HANDLE fh;
 
-  /*
-   * Much of the following code and comments were taken from dired.c.
-   * Yes, this is something of a waste, but we want speed, speed, SPEED.
-   */
-  files = NULL;
-  array_size = *nfiles = 0;
   while (1)
     {
-      if (!NILP(pattern))
+      if (!NILP (pattern))
 	{
 	  /* PATTERN might be a flawed regular expression.  Rather than
 	     catching and signalling our own errors, we just call
@@ -184,23 +202,20 @@ mswindows_get_files (char *dirfile, int nowild, Lisp_Object pattern,
       /* Now *bufp is the compiled form of PATTERN; don't call anything
 	 which might compile a new regexp until we're done with the loop! */
 
-      /* Initialize file info array */
-      array_size = 100;		/* initial size */
-      files = xmalloc(array_size * sizeof (WIN32_FIND_DATA));
-
       /* for Win32, we need to insure that the pathname ends with "\*". */
-      strcpy (win32pattern, dirfile);
+      eicpy_lstr (win32pattern, dirfile);
       if (!nowild)
 	{
-	  len = strlen (win32pattern) - 1;
-	  if (!IS_DIRECTORY_SEP (win32pattern[len]))
-	    strcat (win32pattern, "\\");
-	  strcat (win32pattern, "*");
+	  Charcount len = eicharlen (win32pattern) - 1;
+	  if (!IS_DIRECTORY_SEP (eigetch_char (win32pattern, len)))
+	    eicat_c (win32pattern, "\\");
+	  eicat_c (win32pattern, "*");
 	}
+      eito_external (win32pattern, Qmswindows_tstr);
 
       /*
        * Here, we use FindFirstFile()/FindNextFile() instead of opendir(),
-       * xemacs_stat(), & friends, because xemacs_stat() is VERY expensive in
+       * qxe_stat(), & friends, because qxe_stat() is VERY expensive in
        * terms of time.  Hence, we take the time to write complicated
        * Win32-specific code, instead of simple Unix-style stuff.
        */
@@ -209,203 +224,200 @@ mswindows_get_files (char *dirfile, int nowild, Lisp_Object pattern,
 
       while (1)
 	{
-	  int		len;
-	  char	*filename;
-	  int		result;
+	  Bytecount len;
+	  DECLARE_EISTRING (filename);
+	  int result;
+	  WIN32_FIND_DATAW finddat;
+	  Win32_file file;
 
 	  if (fh == INVALID_HANDLE_VALUE)
 	    {
-	      fh = FindFirstFile(win32pattern, &files[findex]);
+	      fh = qxeFindFirstFile (eiextdata (win32pattern), &finddat);
 	      if (fh == INVALID_HANDLE_VALUE)
-		{
-		  report_file_error ("Opening directory",
-				     build_string (dirfile));
-		}
+		report_file_error ("Opening directory", dirfile);
 	    }
 	  else
 	    {
-	      if (!FindNextFile(fh, &files[findex]))
+	      if (! qxeFindNextFile (fh, &finddat))
 		{
-		  if (GetLastError() == ERROR_NO_MORE_FILES)
-		    {
-		      break;
-		    }
-		  FindClose(fh);
-		  report_file_error ("Reading directory",
-				     build_string (dirfile));
+		  if (GetLastError () == ERROR_NO_MORE_FILES)
+		    break;
+		  FindClose (fh);
+		  report_file_error ("Reading directory", dirfile);
 		}
 	    }
 
-	  filename = files[findex].cFileName;
-	  if (!NILP(Vmswindows_downcase_file_names))
-	  {
-	      strlwr(filename);
-	  }
-	  len = strlen(filename);
-	  result = (NILP(pattern)
-		    || (0 <= re_search (bufp, filename, 
+	  file.dwFileAttributes = finddat.dwFileAttributes;
+	  file.ftCreationTime = finddat.ftCreationTime;
+	  file.ftLastAccessTime = finddat.ftLastAccessTime;
+	  file.ftLastWriteTime = finddat.ftLastWriteTime;
+	  file.nFileSizeHigh = finddat.nFileSizeHigh;
+	  file.nFileSizeLow = finddat.nFileSizeLow;
+	  eicpy_ext (filename, (Extbyte *) finddat.cFileName,
+	             Qmswindows_tstr);
+
+	  if (!NILP (Vmswindows_downcase_file_names))
+	    eilwr (filename);
+	  len = eilen (filename);
+	  result = (NILP (pattern)
+		    || (0 <= re_search (bufp, eidata (filename), 
 					len, 0, len, 0)));
 	  if (result)
 	    {
-	      if ( ! (filename[0] == '.' &&
-		      ((hide_system && (filename[1] == '\0' ||
-					(filename[1] == '.' &&
-					 filename[2] == '\0'))) ||
+	      if ( ! (eigetch_char (filename, 0) == '.' &&
+		      ((hide_system &&
+			(eigetch_char (filename, 1) == '\0' ||
+			 (eigetch_char (filename, 1) == '.' &&
+			  eigetch_char (filename, 2) == '\0'))) ||
 		       hide_dot)))
 		{
-		  if (++findex >= array_size)
-		    {
-		      array_size = findex * 2;
-		      files = xrealloc(files,
-				       array_size * sizeof(WIN32_FIND_DATA));
-		    }
+		  file.cFileName =
+		    (Intbyte *) xmalloc (sizeof (Intbyte) * (1 + len));
+		  memcpy (file.cFileName, eidata (filename), len);
+		  file.cFileName[len] = '\0';
+		  Dynarr_add (files, file);
 		}
 	    }
 	}
       if (fh != INVALID_HANDLE_VALUE)
-	{
-	  FindClose (fh);
-	}
-      *nfiles = findex;
+	FindClose (fh);
       break;
     }
   return (files);
 }
 
-
-static void
-mswindows_format_file (WIN32_FIND_DATA *file, char *buf, int display_size,
-		       int add_newline)
+static Lisp_Object
+mswindows_format_file (Win32_file *file, int display_size, int add_newline)
 {
-  char			*cptr;
-  int			len;
-  Lisp_Object		luser;
-  double		file_size;
+  Lisp_Object luser;
+  double file_size;
+  DECLARE_EISTRING (puta);
+  CIntbyte buf[666];
 
-  len = strlen(file->cFileName);
   file_size =
     file->nFileSizeHigh * (double)UINT_MAX + file->nFileSizeLow;
-  cptr = buf;
 #if INDENT_LISTING
-  *cptr++ = ' ';
-  *cptr++ = ' ';
+  eicat_c (puta, "  ");
 #endif
   if (display_size)
     {
-      sprintf(cptr, "%6d ", (int)((file_size + 1023.) / 1024.));
-      cptr += 7;
+      sprintf (buf, "%6d ", (int)((file_size + 1023.) / 1024.));
+      eicat_c (puta, buf);
     }
   if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    {
-      *cptr++ = 'd';
-    } else {
-      *cptr++ = '-';
-    }
-  cptr[0] = cptr[3] = cptr[6] = 'r';
+    eicat_c (puta, "d");
+  else
+    eicat_c (puta, "-");
+  buf[0] = buf[3] = buf[6] = 'r';
   if (file->dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-    {
-      cptr[1] = cptr[4] = cptr[7] = '-';
-    } else {
-      cptr[1] = cptr[4] = cptr[7] = 'w';
-    }
-  if ((file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-      (len > 4 &&
-       (_stricmp(&file->cFileName[len - 4], ".exe") == 0
-	|| _stricmp(&file->cFileName[len - 4], ".com") == 0
-	|| _stricmp(&file->cFileName[len - 4], ".bat") == 0
-#if 0
-	|| _stricmp(&file->cFileName[len - 4], ".pif") == 0
-#endif
-	)))
-    {
-      cptr[2] = cptr[5] = cptr[8] = 'x';
-    } else {
-      cptr[2] = cptr[5] = cptr[8] = '-';
-    }
-  cptr += 9;
-  if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    {
-      strcpy(cptr, "   2 ");
-    } else {
-      strcpy(cptr, "   1 ");
-    }
-  cptr += 5;
-  luser = Fuser_login_name(Qnil);
-  if (!STRINGP(luser))
-    {
-      sprintf(cptr, "%-9d", 0);
-    } else {
-      char		*str;
-
-      str = XSTRING_DATA(luser);
-      sprintf(cptr, "%-8s ", str);
-    }
-  while (*cptr)
-    {
-      ++cptr;
-    }
-  sprintf(cptr, "%-8d ", getgid());
-  cptr += 9;
-  if (file_size > 99999999.0)
-    {
-      file_size = (file_size + 1023.0) / 1024.;
-      if (file_size > 999999.0)
-	{
-	  sprintf(cptr, "%6.0fMB ", (file_size + 1023.0) / 1024.);
-	} else {
-	  sprintf(cptr, "%6.0fKB ", file_size);
-	}
-    } else {
-      sprintf(cptr, "%8.0f ", file_size);
-    }
-  while (*cptr)
-    {
-      ++cptr;
-    }
+    buf[1] = buf[4] = buf[7] = '-';
+  else
+    buf[1] = buf[4] = buf[7] = 'w';
   {
-    time_t		t, now;
-    char		*ctimebuf;
-    extern char		*sys_ctime(const time_t *t);	/* in nt.c */
+    int is_executable = 0;
 
-    if (
-#if 0
-	/*
-	 * This doesn't work.
-	 * This code should be correct ...
-	 */
-	FileTimeToLocalFileTime(&file->ftLastWriteTime, &localtime) &&
-	((t = convert_time(localtime)) != 0) &&
-#else
-	/*
-	 * But this code "works" ...
-	 */
-	((t = convert_time(file->ftLastWriteTime)) != 0) &&
-#endif
-	((ctimebuf = sys_ctime(&t)) != NULL))
+    if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      is_executable = 1;
+    else if (qxestrcharlen (file->cFileName) > 4)
       {
-	memcpy(cptr, &ctimebuf[4], 7);
-	now = time(NULL);
-	if (now - t > (365. / 2.0) * 86400.)
-	  {
-	    /* more than 6 months */
-	    cptr[7] = ' ';
-	    memcpy(&cptr[8], &ctimebuf[20], 4);
-	  } else {
-	    /* less than 6 months */
-	    memcpy(&cptr[7], &ctimebuf[11], 5);
-	  }
-	cptr += 12;
-	*cptr++ = ' ';
+	Intbyte *end = file->cFileName + qxestrlen (file->cFileName);
+	DEC_CHARPTR (end);
+	DEC_CHARPTR (end);
+	DEC_CHARPTR (end);
+	DEC_CHARPTR (end);
+	if (qxestrcasecmp (end, ".exe") == 0
+	    || qxestrcasecmp (end, ".com") == 0
+	    || qxestrcasecmp (end, ".bat") == 0
+#if 0
+	    || qxestrcasecmp (end, ".pif") == 0
+#endif
+	    )
+	  is_executable = 1;
       }
+    if (is_executable)
+      buf[2] = buf[5] = buf[8] = 'x';
+    else
+      buf[2] = buf[5] = buf[8] = '-';
   }
-  if (add_newline)
-    {
-      sprintf(cptr, "%s\n", file->cFileName);
-    }
+  buf[9] = '\0';
+  eicat_c (puta, buf);
+  if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      eicat_c (puta, "   2 ");
+  else
+      eicat_c (puta, "   1 ");
+  luser = Fuser_login_name (Qnil);
+  if (!STRINGP (luser))
+    sprintf (buf, "%-9d", 0);
   else
     {
-      strcpy(cptr, file->cFileName);
+      Intbyte *str;
+
+      str = XSTRING_DATA (luser);
+      sprintf (buf, "%-8s ", str);
     }
+  eicat_raw (puta, (Intbyte *) buf, strlen (buf));
+  {
+    CIntbyte *cptr = buf;
+    sprintf (buf, "%-8d ", getgid ());
+    cptr += 9;
+    if (file_size > 99999999.0)
+      {
+	file_size = (file_size + 1023.0) / 1024.;
+	if (file_size > 999999.0)
+	  sprintf (cptr, "%6.0fMB ", (file_size + 1023.0) / 1024.);
+	else
+	  sprintf (cptr, "%6.0fKB ", file_size);
+      }
+    else
+      sprintf (cptr, "%8.0f ", file_size);
+    while (*cptr)
+      ++cptr;
+    {
+      time_t t, now;
+      Intbyte *ctimebuf;
+
+      if (
+#if 0
+	  /*
+	   * This doesn't work.
+	   * This code should be correct ...
+	   */
+	  FileTimeToLocalFileTime (&file->ftLastWriteTime, &localtime) &&
+	  ((t = mswindows_convert_time (localtime)) != 0) &&
+#else
+	  /*
+	   * But this code "works" ...
+	   */
+	  ((t = mswindows_convert_time (file->ftLastWriteTime)) != 0) &&
+#endif
+	  ((ctimebuf = qxe_ctime (&t)) != NULL))
+	{
+	  memcpy (cptr, &ctimebuf[4], 7);
+	  now = time (NULL);
+	  if (now - t > (365. / 2.0) * 86400.)
+	    {
+	      /* more than 6 months */
+	      cptr[7] = ' ';
+	      memcpy (&cptr[8], &ctimebuf[20], 4);
+	    }
+	  else
+	    {
+	      /* less than 6 months */
+	      memcpy (&cptr[7], &ctimebuf[11], 5);
+	    }
+	  cptr += 12;
+	  *cptr++ = ' ';
+	  *cptr++ = '\0';
+	}
+    }
+  }
+
+  eicat_c (puta, buf);
+  eicat_raw (puta, file->cFileName, qxestrlen (file->cFileName));
+  if (add_newline)
+    eicat_c (puta, "\n");
+
+  return eimake_string (puta);
 }
 
 
@@ -419,178 +431,150 @@ switches do not contain `d', so that a full listing is expected.
 */
        (file, switches, wildcard, full_directory_p))
 {
-  Lisp_Object		result, handler, wildpat, fns, basename;
-  char			*switchstr;
-  int			nfiles, i;
-  int			hide_system, hide_dot, reverse, display_size;
-  WIN32_FIND_DATA	*files, **sorted_files;
-  enum mswindows_sortby	sort_by;
-  char			fmtbuf[MAXNAMLEN+100];	/* larger than necessary */
-  struct gcpro		gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  Lisp_Object handler, wildpat = Qnil, basename = Qnil;
+  int nfiles = 0, i;
+  int hide_system = 1, hide_dot = 1, reverse = 0, display_size = 0;
+  Win32_file_dynarr *files;
+  enum mswindows_sortby sort_by =
+    (mswindows_ls_sort_case_insensitive ? MSWINDOWS_SORT_BY_NAME_NOCASE
+     : MSWINDOWS_SORT_BY_NAME);
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
-  result = Qnil;
-  wildpat = Qnil;
-  fns = Qnil;
-  basename = Qnil;
-  GCPRO5(result, file, wildpat, fns, basename);
-  sorted_files = NULL;
-  switchstr = NULL;
-  hide_system = 1;
-  hide_dot = 1;
-  display_size = 0;
-  reverse = 0;
-  sort_by = (mswindows_ls_sort_case_insensitive
-	     ? MSWINDOWS_SORT_BY_NAME_NOCASE
-	     : MSWINDOWS_SORT_BY_NAME);
-  nfiles = 0;
-  while (1)
+  GCPRO3 (file, wildpat, basename);
+
+  CHECK_STRING (file);
+  if (!NILP (wildpat))
+    CHECK_STRING (wildpat);
+
+  handler = Ffind_file_name_handler (file, Qmswindows_insert_directory);
+  if (!NILP (handler))
     {
-      handler = Ffind_file_name_handler (file, Qmswindows_insert_directory);
-      if (!NILP(handler))
-	{
-	  result = call5(handler, Qmswindows_insert_directory, file, switches,
-			 wildcard, full_directory_p);
-	  break;
-	}
-      CHECK_STRING (file);
-      if (!NILP(switches))
-	{
-	  char	*cptr;
+      UNGCPRO;
+      return call5 (handler, Qmswindows_insert_directory, file, switches,
+		    wildcard, full_directory_p);
+    }
 
-	  CHECK_STRING (switches);
-	  switchstr = XSTRING_DATA(switches);
-	  for (cptr = switchstr; *cptr; ++cptr)
-	    {
-	      switch (*cptr)
-		{
-		case 'A':
-		  hide_dot = 0;
-		  break;
-		case 'a':
-		  hide_system = 0;
-		  hide_dot = 0;
-		  break;
-		case 'r':
-		  reverse = 1;
-		  break;
-		case 's':
-		  display_size = 1;
-		  break;
-		case 'S':
-		  sort_by = MSWINDOWS_SORT_BY_SIZE;
-		  break;
-		case 't':
-		  sort_by = MSWINDOWS_SORT_BY_MOD_DATE;
-		  break;
-		}
-	    }
-	}
+  if (!NILP (switches))
+    {
+      Intbyte *cptr, *cptr_end;
 
-      if (!NILP(wildcard))
+      CHECK_STRING (switches);
+      cptr = XSTRING_DATA (switches);
+      cptr_end = cptr + XSTRING_LENGTH (switches);
+      while (cptr < cptr_end)
 	{
-	  Lisp_Object	newfile;
-
-	  file = Fdirectory_file_name (file);
-	  basename = Ffile_name_nondirectory(file);
-	  fns = intern("wildcard-to-regexp");
-	  wildpat = call1(fns, basename);
-	  newfile = Ffile_name_directory(file);
-	  if (NILP(newfile))
+	  Emchar ch = charptr_emchar (cptr);
+	  switch (ch)
 	    {
-	      /* Ffile_name_directory() can GC */
-	      newfile = Ffile_name_directory(Fexpand_file_name(file, Qnil));
-	    }
-	  file = newfile;
-	}
-      if (!NILP(wildcard) || !NILP(full_directory_p))
-	{
-	  CHECK_STRING(file);
-	  if (!NILP(wildpat))
-	    {
-	      CHECK_STRING(wildpat);
-	    }
-
-	  files = mswindows_get_files(XSTRING_DATA(file), FALSE, wildpat,
-				      hide_dot, hide_system, &nfiles);
-	  if (files == NULL || nfiles == 0)
-	    {
+	    case 'A':
+	      hide_dot = 0;
+	      break;
+	    case 'a':
+	      hide_system = 0;
+	      hide_dot = 0;
+	      break;
+	    case 'r':
+	      reverse = 1;
+	      break;
+	    case 's':
+	      display_size = 1;
+	      break;
+	    case 'S':
+	      sort_by = MSWINDOWS_SORT_BY_SIZE;
+	      break;
+	    case 't':
+	      sort_by = MSWINDOWS_SORT_BY_MOD_DATE;
 	      break;
 	    }
+	  INC_CHARPTR (cptr);
 	}
-      else
-	{
-	  files = mswindows_get_files(XSTRING_DATA(file), TRUE, wildpat,
-				      hide_dot, hide_system, &nfiles);
-	}
-      if ((sorted_files = xmalloc(nfiles * sizeof(WIN32_FIND_DATA *)))
-	  == NULL)
-	{
-	  break;
-	}
-      for (i = 0; i < nfiles; ++i)
-	{
-	  sorted_files[i] = &files[i];
-	}
-      if (nfiles > 1)
-	{
-	  mswindows_sort_files(sorted_files, nfiles, sort_by, reverse);
-	}
-      if (!NILP(wildcard) || !NILP(full_directory_p))
-	{
-	  /*
-	   * By using doubles, we can handle files up to 2^53 bytes in
-	   * size (IEEE doubles have 53 bits of resolution).  However,
-	   * as we divide by 1024 (or 2^10), the total size is
-	   * accurate up to 2^(53+10) --> 2^63 bytes.
-	   *
-	   * Hopefully, we won't have to handle these file sizes anytime
-	   * soon.
-	   */
-	  double		total_size, file_size, block_size;
+    }
 
-	  if ((block_size = mswindows_ls_round_file_size) <= 0)
-	  {
-	      block_size = 0;
-	  }
-	  total_size = 0;
-	  for (i = 0; i < nfiles; ++i)
-	    {
-	      file_size =
-		sorted_files[i]->nFileSizeHigh * (double)UINT_MAX +
-		sorted_files[i]->nFileSizeLow;
-	      if (block_size > 0)
-	      {
-		  /*
-		   * Round file_size up to the next nearest block size.
-		   */
-		  file_size =
-		      floor((file_size + block_size - 1) / block_size)
-		      * block_size;
-	      }
-	      /* Here, we round to the nearest 1K */
-	      total_size += floor((file_size + 512.) / 1024.);
-	    }
-	  sprintf(fmtbuf,
-#if INDENT_LISTING
-		  /* ANSI C compilers auto-concatenate adjacent strings */
-		  "  "
-#endif
-		  "total %.0f\n", total_size);
-	  buffer_insert1(current_buffer, build_string(fmtbuf));
-	}
-      for (i = 0; i < nfiles; ++i)
-	{
-	  mswindows_format_file(sorted_files[i], fmtbuf, display_size, TRUE);
-	  buffer_insert1(current_buffer, build_string(fmtbuf));
-	}
-      break;
-    }
-  if (sorted_files)
+  if (!NILP (wildcard))
     {
-      xfree(sorted_files);
+      Lisp_Object newfile;
+
+      file = Fdirectory_file_name (file);
+      basename = Ffile_name_nondirectory (file);
+      wildpat = call1 (Qwildcard_to_regexp, basename);
+      newfile = Ffile_name_directory (file);
+      if (NILP (newfile))
+	newfile = Ffile_name_directory (Fexpand_file_name (file, Qnil));
+      file = newfile;
     }
+  
+  files = mswindows_get_files (file,
+			       NILP (wildcard) && NILP (full_directory_p),
+			       wildpat, hide_dot, hide_system);
+
+  if (Dynarr_length (files) > 1)
+    mswindows_sort_files (files, sort_by, reverse);
+  if (!NILP (wildcard) || !NILP (full_directory_p))
+    {
+      /*
+       * By using doubles, we can handle files up to 2^53 bytes in
+       * size (IEEE doubles have 53 bits of resolution).  However,
+       * as we divide by 1024 (or 2^10), the total size is
+       * accurate up to 2^(53+10) --> 2^63 bytes.
+       *
+       * Hopefully, we won't have to handle these file sizes anytime
+       * soon.
+       */
+      double total_size, file_size, block_size;
+
+      if ((block_size = mswindows_ls_round_file_size) <= 0)
+	{
+	  block_size = 0;
+	}
+      total_size = 0;
+      for (i = 0; i < Dynarr_length (files); ++i)
+	{
+	  Win32_file *file = Dynarr_atp (files, i);
+	  file_size =
+	    file->nFileSizeHigh * (double)UINT_MAX +
+	      file->nFileSizeLow;
+	  if (block_size > 0)
+	    {
+	      /*
+	       * Round file_size up to the next nearest block size.
+	       */
+	      file_size =
+		floor ((file_size + block_size - 1) / block_size)
+		  * block_size;
+	    }
+	  /* Here, we round to the nearest 1K */
+	  total_size += floor ((file_size + 512.) / 1024.);
+	}
+      {
+	Intbyte tempbuf[666];
+
+	qxesprintf (tempbuf,
+#if INDENT_LISTING
+		    /* ANSI C compilers auto-concatenate adjacent strings */
+		    "  "
+#endif
+		    "total %.0f\n", total_size);
+	buffer_insert1 (current_buffer, build_intstring (tempbuf));
+      }
+    }
+  for (i = 0; i < Dynarr_length (files); ++i)
+    {
+      struct gcpro ngcpro1;
+      Lisp_Object fmtfile =
+	mswindows_format_file (Dynarr_atp (files, i), display_size, TRUE);
+      NGCPRO1 (fmtfile);
+      buffer_insert1 (current_buffer, fmtfile);
+      NUNGCPRO;
+    }
+  for (i = 0; i < Dynarr_length (files); ++i)
+    {
+      Win32_file *file = Dynarr_atp (files, i);
+      xfree (file->cFileName);
+    }
+  Dynarr_free (files);
+
   UNGCPRO;
-  return (result);
+  return Qnil;
 }
 
 
@@ -603,6 +587,7 @@ void
 syms_of_dired_mswindows (void)
 {
   DEFSYMBOL (Qmswindows_insert_directory);
+  DEFSYMBOL (Qwildcard_to_regexp);
 
   DEFSUBR (Fmswindows_insert_directory);
 }
@@ -611,7 +596,8 @@ syms_of_dired_mswindows (void)
 void
 vars_of_dired_mswindows (void)
 {
-  DEFVAR_BOOL ("mswindows-ls-sort-case-insensitive", &mswindows_ls_sort_case_insensitive /*
+  DEFVAR_BOOL ("mswindows-ls-sort-case-insensitive",
+	       &mswindows_ls_sort_case_insensitive /*
 *Non-nil means filenames are sorted in a case-insensitive fashion.
 Nil means filenames are sorted in a case-sensitive fashion, just like Unix.
 */ );

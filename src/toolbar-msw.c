@@ -27,6 +27,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file essentially Mule-ized (except perhaps some Unicode splitting).
+   5-2000. (??? Needs a once-over.) */
+
+#define NEED_MSWINDOWS_COMMCTRL
+
 #include <config.h>
 #include "lisp.h"
 
@@ -76,7 +81,7 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos);
   } while (0)
 
 static int
-allocate_toolbar_item_id (struct frame* f, struct toolbar_button* button,
+allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
 			  enum toolbar_pos pos)
 {
   /* hmm what do we generate an id based on */
@@ -100,25 +105,25 @@ mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
     {
       TBBUTTON info;
       
-      /* Delete the buttons and remove the command from the hash table*/
-      i = SendMessage (toolbarwnd, TB_BUTTONCOUNT, 0, 0);
+      /* Delete the buttons and remove the command from the hash table */
+      i = qxeSendMessage (toolbarwnd, TB_BUTTONCOUNT, 0, 0);
       for (i--; i >= 0; i--)
 	{
-	  SendMessage (toolbarwnd, TB_GETBUTTON, (WPARAM)i, 
+	  qxeSendMessage (toolbarwnd, TB_GETBUTTON, (WPARAM)i, 
 		       (LPARAM)&info);
 	  Fremhash(make_int(info.idCommand), 
 		   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f));
-	  SendMessage (toolbarwnd, TB_DELETEBUTTON, (WPARAM)i, 0);
+	  qxeSendMessage (toolbarwnd, TB_DELETEBUTTON, (WPARAM)i, 0);
 	}
 	  
       /* finally get rid of the image list assuming it clears up its
          bitmaps */
-      SendMessage (toolbarwnd, TB_GETIMAGELIST, 0, (LONG) &ilist);
+      qxeSendMessage (toolbarwnd, TB_GETIMAGELIST, 0, (LONG) &ilist);
       if (ilist)
 	{
 	  ImageList_Destroy(ilist);
 	}
-      SendMessage (toolbarwnd, TB_SETIMAGELIST, 0, (LPARAM)NULL);
+      qxeSendMessage (toolbarwnd, TB_SETIMAGELIST, 0, (LPARAM)NULL);
 
       ShowWindow(toolbarwnd, SW_HIDE);
     }
@@ -143,7 +148,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
   int padding = (border_width + shadow_thickness) * 2;
   unsigned int checksum=0;
   struct window *w = XWINDOW (window);
-  TBBUTTON* button_tbl, *tbbutton;
+  TBBUTTON *button_tbl, *tbbutton;
   HIMAGELIST ilist=NULL;
   HWND toolbarwnd=NULL;
 
@@ -254,7 +259,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	      
 	      if (IMAGE_INSTANCEP (instance))
 		{
-		  Lisp_Image_Instance* p = XIMAGE_INSTANCE (instance);
+		  Lisp_Image_Instance *p = XIMAGE_INSTANCE (instance);
 		  
 		  if (IMAGE_INSTANCE_PIXMAP_TYPE_P (p))
 		    {
@@ -263,7 +268,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			 too big.  If they are too small we leave them
 			 and pad the difference - unless a different size
 			 crops up in the middle, at which point we *have*
-			 to resize since the ImageList won't cope.*/
+			 to resize since the ImageList won't cope. */
 		      
 		      if ((bmwidth 
 			   && 
@@ -326,7 +331,8 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 			    : IMAGE_INSTANCE_MSWINDOWS_MASK (p))) < 0)
 			{
 			  xfree (button_tbl);
-			  if (ilist) ImageList_Destroy (ilist);
+			  if (ilist)
+			    ImageList_Destroy (ilist);
 			  gui_error 
 			    ("couldn't add image to image list", instance);
 			}
@@ -371,20 +377,20 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       if (!toolbarwnd 
 	  &&
 	  (toolbarwnd = 
-	   CreateWindowEx ( WS_EX_WINDOWEDGE,
-			    TOOLBARCLASSNAME,
-			    NULL,
-			    WS_CHILD 
-			    | (style_3d ? WS_DLGFRAME : 0)
-			    | TBSTYLE_TOOLTIPS 
-			    | CCS_NORESIZE 
-			    | CCS_NOPARENTALIGN | CCS_NODIVIDER
-			    | CCS_ADJUSTABLE,
-			    x, y, bar_width, bar_height,
-			    FRAME_MSWINDOWS_HANDLE (f),
-			    (HMENU)(TOOLBAR_ID_BIAS + pos),
-			    NULL, 
-			    NULL))==NULL)
+	   qxeCreateWindowEx (WS_EX_WINDOWEDGE,
+			      XETEXT (TOOLBARCLASSNAME),
+			      NULL,
+			      WS_CHILD 
+			      | (style_3d ? WS_DLGFRAME : 0)
+			      | TBSTYLE_TOOLTIPS 
+			      | CCS_NORESIZE 
+			      | CCS_NOPARENTALIGN | CCS_NODIVIDER
+			      | CCS_ADJUSTABLE,
+			      x, y, bar_width, bar_height,
+			      FRAME_MSWINDOWS_HANDLE (f),
+			      (HMENU)(TOOLBAR_ID_BIAS + pos),
+			      NULL, 
+			      NULL))==NULL)
 	{
 	  xfree (button_tbl);
 	  ImageList_Destroy (ilist);
@@ -392,8 +398,8 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	}
 
       /* finally populate with images */
-      if (SendMessage (toolbarwnd, TB_BUTTONSTRUCTSIZE,
-		       (WPARAM)sizeof(TBBUTTON), (LPARAM)0) == -1) 
+      if (qxeSendMessage (toolbarwnd, TB_BUTTONSTRUCTSIZE,
+			  (WPARAM)sizeof(TBBUTTON), (LPARAM)0) == -1) 
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
 	  gui_error ("couldn't set button structure size", Qunbound);
@@ -405,23 +411,23 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	width = min (bmwidth + padding, width);
 	
       /* pad the buttons */
-      SendMessage (toolbarwnd, TB_SETPADDING,
-		   0, MAKELPARAM(width - bmwidth, height - bmheight));
+      qxeSendMessage (toolbarwnd, TB_SETPADDING,
+		      0, MAKELPARAM (width - bmwidth, height - bmheight));
 
       /* set the size of buttons */
-      SendMessage (toolbarwnd, TB_SETBUTTONSIZE, 0, 
-		   (LPARAM)MAKELONG (width, height));
+      qxeSendMessage (toolbarwnd, TB_SETBUTTONSIZE, 0, 
+		      (LPARAM) MAKELONG (width, height));
 
       /* set the size of bitmaps */
-      SendMessage (toolbarwnd, TB_SETBITMAPSIZE, 0, 
-		   (LPARAM)MAKELONG (bmwidth, bmheight));
+      qxeSendMessage (toolbarwnd, TB_SETBITMAPSIZE, 0, 
+		      (LPARAM) MAKELONG (bmwidth, bmheight));
 
       /* tell it we've done it */
-      SendMessage (toolbarwnd, TB_AUTOSIZE, 0, 0);
+      qxeSendMessage (toolbarwnd, TB_AUTOSIZE, 0, 0);
 		   
       /* finally populate with images */
-      if (!SendMessage (toolbarwnd, TB_ADDBUTTONS,
-			(WPARAM)nbuttons, (LPARAM)button_tbl))
+      if (!qxeSendMessage (toolbarwnd, TB_ADDBUTTONS,
+			   (WPARAM) nbuttons, (LPARAM) button_tbl))
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
 	  gui_error ("couldn't add button list to toolbar", Qunbound);
@@ -431,23 +437,23 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
       if (vert)
 	{
 	  RECT tmp;
-	  SendMessage (toolbarwnd, TB_SETROWS, 
-		       MAKEWPARAM(nbuttons, FALSE), (LPARAM)&tmp);
+	  qxeSendMessage (toolbarwnd, TB_SETROWS, 
+			  MAKEWPARAM (nbuttons, FALSE), (LPARAM) &tmp);
 	}
 
       else
 	{
 	  RECT tmp;
-	  SendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM(1, FALSE), 
-		       (LPARAM)&tmp);
+	  qxeSendMessage (toolbarwnd, TB_SETROWS, MAKEWPARAM(1, FALSE), 
+			  (LPARAM)&tmp);
 	}
 
       /* finally populate with images */
-      if (SendMessage (toolbarwnd, TB_SETIMAGELIST, 0,
-		       (LPARAM)ilist) < 0
+      if (qxeSendMessage (toolbarwnd, TB_SETIMAGELIST, 0,
+			  (LPARAM)ilist) < 0
 	  ||
-	  SendMessage (toolbarwnd, TB_SETDISABLEDIMAGELIST, 0,
-		       (LPARAM)ilist) < 0)
+	  qxeSendMessage (toolbarwnd, TB_SETDISABLEDIMAGELIST, 0,
+			  (LPARAM)ilist) < 0)
 	{
 	  mswindows_clear_toolbar (f, pos, 0);
 	  gui_error ("couldn't add image list to toolbar", Qunbound);
@@ -578,15 +584,16 @@ mswindows_free_frame_toolbars (struct frame *f)
 #undef DELETE_TOOLBAR
 }
 
-/* map toolbar hwnd to pos*/
-static int mswindows_find_toolbar_pos(struct frame* f, HWND ctrl)
+/* map toolbar hwnd to pos */
+static int
+mswindows_find_toolbar_pos (struct frame *f, HWND ctrl)
 {
-  int id = GetDlgCtrlID(ctrl);
+  int id = GetDlgCtrlID (ctrl);
   return id ? id - TOOLBAR_ID_BIAS : -1;
 }
 
 Lisp_Object 
-mswindows_get_toolbar_button_text ( struct frame* f, int command_id )
+mswindows_get_toolbar_button_text (struct frame *f, int command_id)
 {
   Lisp_Object button = Fgethash (make_int (command_id),
 				 FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f), Qnil);
@@ -606,7 +613,7 @@ mswindows_get_toolbar_button_text ( struct frame* f, int command_id )
  * command if we return nil
  */
 Lisp_Object
-mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id)
+mswindows_handle_toolbar_wm_command (struct frame *f, HWND ctrl, WORD id)
 {
   /* Try to map the command id through the proper hash table */
   Lisp_Object button, data, fn, arg, frame;

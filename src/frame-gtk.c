@@ -226,7 +226,7 @@ gtk_frame_property (struct frame *f, Lisp_Object property)
     }
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
   if (EQ (Qwindow_id, property))
-    return Fgtk_window_id (make_frame (f));
+    return Fgtk_window_id (wrap_frame (f));
 #endif
 
   return Qunbound;
@@ -256,7 +256,7 @@ gtk_frame_properties (struct frame *f)
   props = cons3 (Qtext_widget, FRAME_GTK_LISP_WIDGETS (f)[2], props);
 
 #ifdef STUPID_X_SPECIFIC_GTK_STUFF
-  props = cons3 (Qwindow_id, Fgtk_window_id (make_frame (f)), props);
+  props = cons3 (Qwindow_id, Fgtk_window_id (wrap_frame (f)), props);
 #endif
 
   if (!GET_GTK_WIDGET_WINDOW (shell))
@@ -334,7 +334,7 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
   if (GTK_IS_WINDOW (shell))
     {
       /* Deal with the cell size */
-      default_face_height_and_width (make_frame (f), &geometry.height_inc, &geometry.width_inc);
+      default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
       geometry_mask |= GDK_HINT_RESIZE_INC;
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
@@ -943,7 +943,8 @@ allocate_gtk_frame_struct (struct frame *f)
 /************************************************************************/
 
 static void
-gtk_init_frame_1 (struct frame *f, Lisp_Object props)
+gtk_init_frame_1 (struct frame *f, Lisp_Object props,
+		  int frame_name_is_defaulted)
 {
   /* This function can GC */
   Lisp_Object initially_unmapped;
@@ -1121,7 +1122,7 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
   if (GTK_IS_WINDOW (shell))
     {
       /* Update the cell size */
-      default_face_height_and_width (make_frame (f), &geometry.height_inc, &geometry.width_inc);
+      default_face_height_and_width (wrap_frame (f), &geometry.height_inc, &geometry.width_inc);
       geometry_mask |= GDK_HINT_RESIZE_INC;
 
       gtk_window_set_geometry_hints (GTK_WINDOW (shell),
@@ -1299,7 +1300,7 @@ gtk_recompute_cell_sizes (struct frame *frm)
       gint width_inc = 10;
       gint height_inc = 10;
 
-      default_face_height_and_width (make_frame (frm), &height_inc, &width_inc);
+      default_face_height_and_width (wrap_frame (frm), &height_inc, &width_inc);
       geometry_mask = GDK_HINT_RESIZE_INC;
       geometry.width_inc = width_inc;
       geometry.height_inc = height_inc;

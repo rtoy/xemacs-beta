@@ -1,5 +1,6 @@
-/* Utility and Unix shadow routines for XEmacs on MS Windows.
+/* Utility and Unix shadow routines under MS Windows (WIN32_NATIVE defined).
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -18,16 +19,24 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.
 
+*/
 
-   Geoff Voelker (voelker@cs.washington.edu) 7-29-94 */
+/* Authorship:
 
-/* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
-/* Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
+   Geoff Voelker (voelker@cs.washington.edu) 7-29-94
+   Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au>
+   Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org>
+   (Note: Sync messages from Marc Paquette may indicate
+   incomplete synching, so beware.)
+   Synched (completely!) with Emacs 20.6 by Ben Wing, 6-23-00.
+   Largely rewritten by Ben Wing for XEmacs Mule support.
+   Synched (completely!) with Emacs 21.1.103 by Ben Wing, 6-13-01.
+*/
+
+/* This file Mule-ized by Ben Wing, 6-23-00. */
 
 #include <config.h>
-#define getwd _getwd
 #include "lisp.h"
-#undef getwd
 
 #include "buffer.h"
 
@@ -40,69 +49,43 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #include "syswindows.h"
 
-#include "nt.h"
-#include "ntheap.h"
+/* Control whether stat() attempts to determine file type and link count
+   exactly, at the expense of slower operation.  Since true hard links
+   are supported on NTFS volumes, this is only relevant on NT.  */
+Lisp_Object Vmswindows_get_true_file_attributes;
 
+/*  Vmswindows_generate_fake_inodes; deleted */
 
-extern Lisp_Object Vmswindows_downcase_file_names;
-#if 0
-extern Lisp_Object Vwin32_generate_fake_inodes;
-#endif
-extern Lisp_Object Vmswindows_get_true_file_attributes;
-
-Fixnum nt_fake_unix_uid;
-
-static char startup_dir[ MAXPATHLEN ];
-
-/* Get the current working directory.  */
-char *
-getwd (char *dir)
-{
-#if 0
-  if (GetCurrentDirectory (MAXPATHLEN, dir) > 0)
-    return dir;
-  return NULL;
-#else
-  /* Emacs doesn't actually change directory itself, and we want to
-     force our real wd to be where emacs.exe is to avoid unnecessary
-     conflicts when trying to rename or delete directories.  */
-  strcpy (dir, startup_dir);
-  return dir;
-#endif
-}
+Fixnum mswindows_fake_unix_uid;
 
 /* Emulate getpwuid, getpwnam and others.  */
 
-#define PASSWD_FIELD_SIZE 256
-
-static char the_passwd_name[PASSWD_FIELD_SIZE];
-static char the_passwd_passwd[PASSWD_FIELD_SIZE];
-static char the_passwd_gecos[PASSWD_FIELD_SIZE];
-static char the_passwd_dir[PASSWD_FIELD_SIZE];
-static char the_passwd_shell[PASSWD_FIELD_SIZE];
-
-static struct passwd the_passwd = 
+static struct passwd the_passwd =
 {
-  the_passwd_name,
-  the_passwd_passwd,
+  "",
+  "",
   0,
   0,
   0,
-  the_passwd_gecos,
-  the_passwd_dir,
-  the_passwd_shell,
+  "",
+  "",
+  "",
 };
 
 uid_t
 getuid (void) 
 {
-  return nt_fake_unix_uid;
+  return mswindows_fake_unix_uid;
 }
 
 uid_t 
 geteuid (void) 
 { 
-  return nt_fake_unix_uid;
+  /* Emacs 20.6 says: [[I could imagine arguing for checking to see
+     whether the user is in the Administrators group and returning a
+     UID of 0 for that case, but I don't know how wise that would be
+     in the long run.]]  */
+  return mswindows_fake_unix_uid;
 }
 
 gid_t
@@ -120,7 +103,7 @@ getegid (void)
 struct passwd *
 getpwuid (uid_t uid)
 {
-  if (uid == nt_fake_unix_uid)
+  if (uid == mswindows_fake_unix_uid)
     {
       the_passwd.pw_gid = the_passwd.pw_uid = uid;
       return &the_passwd;
@@ -130,7 +113,7 @@ getpwuid (uid_t uid)
 }
 
 struct passwd *
-getpwnam (const char *name)
+getpwnam (const Intbyte *name)
 {
   struct passwd *pw;
   
@@ -138,13 +121,13 @@ getpwnam (const char *name)
   if (!pw)
     return pw;
 
-  if (stricmp (name, pw->pw_name))
+  if (qxestrcasecmp_i18n (name, pw->pw_name))
     return NULL;
 
   return pw;
 }
 
-void
+static void
 init_user_info (void)
 {
   /* This code is pretty much of ad hoc nature. There is no unix-like
@@ -160,20 +143,23 @@ init_user_info (void)
      the user-sid as the user id value (same for group id using the
      primary group sid from the process token). */
 
-  char            user_sid[256], name[256], domain[256];
-  DWORD           length = sizeof (name), dlength = sizeof (domain), trash;
-  HANDLE          token = NULL;
-  SID_NAME_USE    user_type;
+  TOKEN_USER sidinfo;
+  Extbyte name[256], domain[256];
+  Charcount length = sizeof (name) / XETCHAR_SIZE;
+  Charcount dlength = sizeof (domain) / XETCHAR_SIZE;
+  DWORD trash;
+  HANDLE token = NULL;
+  SID_NAME_USE user_type;
 
   if (OpenProcessToken (GetCurrentProcess (), TOKEN_QUERY, &token)
-      && GetTokenInformation (token, TokenUser,
-			      (PVOID) user_sid, sizeof (user_sid), &trash)
-      && LookupAccountSid (NULL, *((PSID *) user_sid), name, &length,
-			   domain, &dlength, &user_type))
+      && GetTokenInformation (token, TokenUser, &sidinfo, sizeof (sidinfo),
+			      &trash)
+      && qxeLookupAccountSid (NULL, sidinfo.User.Sid, name, &length,
+			      domain, &dlength, &user_type))
     {
-      strcpy (the_passwd.pw_name, name);
+      TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
       /* Determine a reasonable uid value. */
-      if (stricmp ("administrator", name) == 0)
+      if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
 	{
 	  the_passwd.pw_uid = 0;
 	  the_passwd.pw_gid = 0;
@@ -181,8 +167,9 @@ init_user_info (void)
       else
 	{
 	  SID_IDENTIFIER_AUTHORITY * pSIA;
+	  TOKEN_PRIMARY_GROUP group;
 
-	  pSIA = GetSidIdentifierAuthority (*((PSID *) user_sid));
+	  pSIA = GetSidIdentifierAuthority (sidinfo.User.Sid);
 	  /* I believe the relative portion is the last 4 bytes (of 6)
 	     with msb first. */
 	  the_passwd.pw_uid = ((pSIA->Value[2] << 24) +
@@ -194,11 +181,11 @@ init_user_info (void)
 
 	  /* Get group id */
 	  if (GetTokenInformation (token, TokenPrimaryGroup,
-				   (PVOID) user_sid, sizeof (user_sid), &trash))
+				   &group, sizeof (group), &trash))
 	    {
 	      SID_IDENTIFIER_AUTHORITY * pSIA;
 
-	      pSIA = GetSidIdentifierAuthority (*((PSID *) user_sid));
+	      pSIA = GetSidIdentifierAuthority (group.PrimaryGroup);
 	      the_passwd.pw_gid = ((pSIA->Value[2] << 24) +
 				   (pSIA->Value[3] << 16) +
 				   (pSIA->Value[4] << 8)  +
@@ -212,10 +199,10 @@ init_user_info (void)
     }
   /* If security calls are not supported (presumably because we
        are running under Windows 95), fallback to this. */
-  else if (GetUserName (name, &length))
+  else if (qxeGetUserName (name, &length))
     {
-      strcpy (the_passwd.pw_name, name);
-      if (stricmp ("administrator", name) == 0)
+      TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
+      if (qxestrcasecmp ("administrator", the_passwd.pw_name) == 0)
 	the_passwd.pw_uid = 0;
       else
 	the_passwd.pw_uid = 123;
@@ -223,7 +210,7 @@ init_user_info (void)
     }
   else
     {
-      strcpy (the_passwd.pw_name, "unknown");
+      the_passwd.pw_name = "unknown";
       the_passwd.pw_uid = 123;
       the_passwd.pw_gid = 123;
     }
@@ -232,142 +219,36 @@ init_user_info (void)
     CloseHandle (token);
 #else
   /* Obtain only logon id here, uid part is moved to getuid */
-  char name[256];
-  DWORD length = sizeof (name);
-  if (GetUserName (name, &length))
-    strcpy (the_passwd.pw_name, name);
+  DWORD length = UNLEN + 1;
+  Extbyte name[MAX_XETCHAR_SIZE * (UNLEN + 1)];
+  if (qxeGetUserName (name, &length))
+    TSTR_TO_C_STRING_MALLOC (name, the_passwd.pw_name);
   else
-    strcpy (the_passwd.pw_name, "unknown");
+    the_passwd.pw_name = "unknown";
 #endif
 
-  /* Ensure HOME and SHELL are defined. */
 #if 0
+  /* Ensure HOME and SHELL are defined. */
   /*
    * With XEmacs, setting $HOME is deprecated.
    */
-  if (getenv ("HOME") == NULL)
-    putenv ("HOME=c:/");
+  if (egetenv ("HOME") == NULL)
+    eputenv ("HOME=c:/");
 #endif
 
   /* Set dir from environment variables. */
-  strcpy (the_passwd.pw_dir, (char *)get_home_directory());
+  the_passwd.pw_dir = (char *) qxestrdup (get_home_directory ());
   /* We used to set pw_shell here, but the order is wrong (SHELL gets
-     init in callproc.c, called later in the init process) and pw_shell
+     initted in callproc.c, called later in the init process) and pw_shell
      is not used anywhere. */
 }
 
-/* Normalize filename by converting all path separators to
-   the specified separator.  Also conditionally convert upper
-   case path name components to lower case.  */
-
-static void
-normalize_filename (char *fp, char path_sep)
-{
-  char sep;
-  char *elem;
-
-  /* Always lower-case drive letters a-z, even if the filesystem
-     preserves case in filenames.
-     This is so filenames can be compared by string comparison
-     functions that are case-sensitive.  Even case-preserving filesystems
-     do not distinguish case in drive letters.  */
-  if (fp[1] == ':' && *fp >= 'A' && *fp <= 'Z')
-    {
-      *fp += 'a' - 'A';
-      fp += 2;
-    }
-
-  if (NILP (Vmswindows_downcase_file_names))
-    {
-      while (*fp)
-	{
-	  if (*fp == '/' || *fp == '\\')
-	    *fp = path_sep;
-	  fp++;
-	}
-      return;
-    }
-
-  sep = path_sep;		/* convert to this path separator */
-  elem = fp;			/* start of current path element */
-
-  do {
-    if (*fp >= 'a' && *fp <= 'z')
-      elem = 0;			/* don't convert this element */
-
-    if (*fp == 0 || *fp == ':')
-      {
-	sep = *fp;		/* restore current separator (or 0) */
-	*fp = '/';		/* after conversion of this element */
-      }
-
-    if (*fp == '/' || *fp == '\\')
-      {
-	if (elem && elem != fp)
-	  {
-	    *fp = 0;		/* temporary end of string */
-	    _strlwr (elem);	/* while we convert to lower case */
-	  }
-	*fp = sep;		/* convert (or restore) path separator */
-	elem = fp + 1;		/* next element starts after separator */
-	sep = path_sep;
-      }
-  } while (*fp++);
-}
-
-/* Destructively turn backslashes into slashes.  */
-void
-dostounix_filename (char *p)
-{
-  normalize_filename (p, '/');
-}
-
-/* Destructively turn slashes into backslashes.  */
-void
-unixtodos_filename (char *p)
-{
-  normalize_filename (p, '\\');
-}
-
-/* Remove all CR's that are followed by a LF.
-   (From msdos.c...probably should figure out a way to share it,
-   although this code isn't going to ever change.)  */
-int
-crlf_to_lf (int n, unsigned char *buf, unsigned *lf_count)
-{
-  unsigned char *np = buf;
-  unsigned char *startp = buf;
-  unsigned char *endp = buf + n;
-
-  if (n == 0)
-    return n;
-  while (buf < endp - 1)
-    {
-      if (*buf == 0x0a)
-	(*lf_count)++;
-      if (*buf == 0x0d)
-	{
-	  if (*(++buf) != 0x0a)
-	    *np++ = 0x0d;
-	}
-      else
-	*np++ = *buf++;
-    }
-  if (buf < endp)
-    {
-      if (*buf == 0x0a)
-	(*lf_count)++;
-    *np++ = *buf++;
-    }
-  return np - startp;
-}
-
 /* Parse the root part of file name, if present.  Return length and
-    optionally store pointer to char after root.  */
-static int
-parse_root (char * name, char ** pPath)
+   optionally store pointer to Intbyte after root.  */
+static Bytecount
+parse_root (Intbyte *name, Intbyte **pPath)
 {
-  char * start = name;
+  Intbyte *start = name;
 
   if (name == NULL)
     return 0;
@@ -390,7 +271,7 @@ parse_root (char * name, char ** pPath)
 	    break;
 	  name++;
 	}
-      while ( *name );
+      while (*name);
       if (IS_DIRECTORY_SEP (name[0]))
 	name++;
     }
@@ -402,149 +283,132 @@ parse_root (char * name, char ** pPath)
 }
 
 /* Get long base name for name; name is assumed to be absolute.  */
-static int
-get_long_basename (char * name, char * buf, int size)
+static Intbyte *
+get_long_basename (Intbyte *name)
 {
-  WIN32_FIND_DATA find_data;
+  WIN32_FIND_DATAW find_data;
   HANDLE dir_handle;
-  int len = 0;
-#ifdef PIGSFLY
-  char *p;
+  Extbyte *nameext;
 
-  /* If the last component of NAME has a wildcard character, 
-     return it as the basename.  */
-  p = name + strlen (name);
-  while (*p != '\\' && *p != ':' && p > name) p--;
-  if (p > name) p++;
-  if (strchr (p, '*') || strchr (p, '?'))
-    {
-      if ((len = strlen (p)) < size)
-	memcpy (buf, p, len + 1);
-      else
-	len = 0;
-      return len;
-    }
-#endif
+  /* must be valid filename, no wild cards or other invalid characters */
+  if (qxestrpbrk (name, "*?|<>\""))
+    return 0;
 
-  dir_handle = FindFirstFile (name, &find_data);
+  C_STRING_TO_TSTR (name, nameext);
+  dir_handle = qxeFindFirstFile (nameext, &find_data);
   if (dir_handle != INVALID_HANDLE_VALUE)
     {
-      if ((len = strlen (find_data.cFileName)) < size)
-	memcpy (buf, find_data.cFileName, len + 1);
-      else
-	len = 0;
+      Intbyte *fileint;
+
+      TSTR_TO_C_STRING_MALLOC (find_data.cFileName, fileint);
       FindClose (dir_handle);
+      return fileint;
     }
-  return len;
+  return 0;
 }
 
 /* Get long name for file, if possible (assumed to be absolute).  */
-BOOL
-win32_get_long_filename (char * name, char * buf, int size)
+Intbyte *
+mswindows_get_long_filename (Intbyte *name)
 {
-  char * o = buf;
-  char * p;
-  char * q;
-  char full[ PATH_MAX ];
-  int len;
-
-  len = strlen (name);
-  if (len >= PATH_MAX)
-    return FALSE;
-
-  /* Use local copy for destructive modification.  */
-  memcpy (full, name, len+1);
-  unixtodos_filename (full);
+  Intbyte *full = mswindows_canonicalize_filename (name);
+  Intbyte *p;
+  Intbyte *q;
+  DECLARE_EISTRING (o);
+  Bytecount len;
 
   /* Copy root part verbatim.  */
   len = parse_root (full, &p);
-  memcpy (o, full, len);
-  o += len;
-  size -= len;
+  eicpy_raw (o, full, len);
 
-  do
+  while (p != NULL && *p)
     {
+      Intbyte *component;
+
       q = p;
-      p = strchr (q, '\\');
+      p = qxestrchr (q, '\\');
       if (p) *p = '\0';
-      len = get_long_basename (full, o, size);
-      if (len > 0)
+      component = get_long_basename (full);
+      if (component)
 	{
-	  o += len;
-	  size -= len;
+	  eicat_rawz (o, component);
 	  if (p != NULL)
 	    {
 	      *p++ = '\\';
-	      if (size < 2)
-		return FALSE;
-	      *o++ = '\\';
-	      size--;
-	      *o = '\0';
+	      eicat_ch (o, '\\');
 	    }
+	  xfree (component);
 	}
       else
-	return FALSE;
+	{
+	  xfree (full);
+	  return 0;
+	}
     }
-  while (p != NULL && *p);
 
-  return TRUE;
+  xfree (full);
+  return eicpyout_malloc (o, 0);
 }
 
+static int
+is_unc_volume (const Intbyte *filename)
+{
+  const Intbyte *ptr = filename;
 
-/* Routines that are no-ops on NT but are defined to get Emacs to compile.  */
+  if (!IS_DIRECTORY_SEP (ptr[0]) || !IS_DIRECTORY_SEP (ptr[1]) || !ptr[2])
+    return 0;
 
-#if 0 /* #### We do not need those, do we? -kkm */
-int 
-unrequest_sigio (void) 
-{ 
-  return 0;
+  if (qxestrpbrk (ptr + 2, "*?|<>\"\\/"))
+    return 0;
+
+  return 1;
 }
 
-int 
-request_sigio (void) 
-{ 
-  return 0;
-}
-#endif /* 0 */
-
+/* NOTE: Value returned is still in external format.  Callers need to
+   convert. */
 #define REG_ROOT "SOFTWARE\\XEmacs\\XEmacs"
 
-LPBYTE 
-nt_get_resource (char *key, LPDWORD lpdwtype)
+static LPBYTE 
+nt_get_resource (Intbyte *key, LPDWORD lpdwtype)
 {
   LPBYTE lpvalue;
   HKEY hrootkey = NULL;
   DWORD cbData;
+  Extbyte *keyext;
+
+  C_STRING_TO_TSTR (key, keyext);
   
   /* Check both the current user and the local machine to see if 
      we have any resources.  */
   
-  if (RegOpenKeyEx (HKEY_CURRENT_USER, REG_ROOT, 0, KEY_READ, &hrootkey) == ERROR_SUCCESS)
+  if (qxeRegOpenKeyEx (HKEY_CURRENT_USER, XETEXT (REG_ROOT), 0, KEY_READ,
+		       &hrootkey) == ERROR_SUCCESS)
     {
       lpvalue = NULL;
 
-      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData) == ERROR_SUCCESS 
+      if (qxeRegQueryValueEx (hrootkey, keyext, NULL, NULL, NULL,
+			      &cbData) == ERROR_SUCCESS 
 	  && (lpvalue = (LPBYTE) xmalloc (cbData)) != NULL 
-	  && RegQueryValueEx (hrootkey, key, NULL, lpdwtype, lpvalue, &cbData) == ERROR_SUCCESS)
-	{
-	  return (lpvalue);
-	}
+	  && qxeRegQueryValueEx (hrootkey, keyext, NULL, lpdwtype, lpvalue,
+			      &cbData) == ERROR_SUCCESS)
+	return (lpvalue);
 
       if (lpvalue) xfree (lpvalue);
 	
       RegCloseKey (hrootkey);
     } 
   
-  if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, REG_ROOT, 0, KEY_READ, &hrootkey) == ERROR_SUCCESS)
+  if (qxeRegOpenKeyEx (HKEY_LOCAL_MACHINE, XETEXT (REG_ROOT), 0, KEY_READ,
+		       &hrootkey) == ERROR_SUCCESS)
     {
       lpvalue = NULL;
 	
-      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData) == ERROR_SUCCESS &&
+      if (qxeRegQueryValueEx (hrootkey, keyext, NULL, NULL, NULL,
+			      &cbData) == ERROR_SUCCESS &&
 	  (lpvalue = (LPBYTE) xmalloc (cbData)) != NULL &&
-	  RegQueryValueEx (hrootkey, key, NULL, lpdwtype, lpvalue, &cbData) == ERROR_SUCCESS)
-	{
-	  return (lpvalue);
-	}
+	  qxeRegQueryValueEx (hrootkey, keyext, NULL, lpdwtype, lpvalue,
+			      &cbData) == ERROR_SUCCESS)
+	return (lpvalue);
 	
       if (lpvalue) xfree (lpvalue);
 	
@@ -558,15 +422,17 @@ void
 init_environment (void)
 {
   /* Check for environment variables and use registry if they don't exist */
+  /* Emacs 20.6 sets default values for these; not necessary here because
+     we already supply them. (except SHELL, which is set in init_user_info().)
+     Emacs 20.6 messes with TMPDIR; not necessary here. */
   {
     int i;
     LPBYTE lpval;
     DWORD dwType;
 
-    static char * env_vars[] = 
+    static Char_ASCII *env_vars[] = 
     {
       "HOME",
-      "emacs_dir",
       "EMACSLOADPATH",
       "EMACSDEBUGPATHS",
       "SHELL",
@@ -574,31 +440,57 @@ init_environment (void)
       "EMACSDATA",
       "EMACSPATH",
       "EMACSPACKAGEPATH",
-      "EMACSLOCKDIR",
+      "EMACSLOCKMETHOD",
       "INFOPATH"
     };
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#if defined (HEAP_IN_DATA) && !defined (PDUMP)
     cache_system_info ();
 #endif
+
+#if 0 /* FSF 21.1 */
+    /* !!#### i think i already do the equivalent elsewhere.
+       delete when i'm sure i do.
+       (but maybe i should be playing with LANG when the user changes
+       the locale, so that subprocesses get it right.) */
+       /* Get default locale info and use it for LANG.  */
+      if (GetLocaleInfo (LOCALE_USER_DEFAULT,
+			 LOCALE_SABBREVLANGNAME | LOCALE_USE_CP_ACP,
+			 locale_name, sizeof (locale_name)))
+	{
+	  for (i = 0; i < (sizeof (env_vars) / sizeof (env_vars[0])); i++)
+	    {
+	      if (strcmp (env_vars[i].name, "LANG") == 0)
+		{
+		  env_vars[i].def_value = locale_name;
+		  break;
+		}
+	    }
+	}
+#endif /* 0 */
+
     for (i = 0; i < countof (env_vars); i++) 
       {
-	if (!getenv (env_vars[i]) &&
+	if (!egetenv (env_vars[i]) &&
 	    (lpval = nt_get_resource (env_vars[i], &dwType)) != NULL)
 	  {
 	    if (dwType == REG_EXPAND_SZ)
 	      {
-		char buf1[500], buf2[500];
+		Extbyte *buf = NULL;
+		Intbyte *envval;
+		Charcount cch;
 
-		ExpandEnvironmentStrings ((LPSTR) lpval, buf1, 500);
-		_snprintf (buf2, 499, "%s=%s", env_vars[i], buf1);
-		putenv (strdup (buf2));
+		cch = qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, 0);
+		buf = (Extbyte *) alloca (cch * XETCHAR_SIZE);
+		qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, cch);
+		TSTR_TO_C_STRING (buf, envval);
+		eputenv (env_vars[i], envval);
 	      }
 	    else if (dwType == REG_SZ)
 	      {
-		char buf[500];
-		  
-		_snprintf (buf, 499, "%s=%s", env_vars[i], lpval);
-		putenv (strdup (buf));
+		Intbyte *envval;
+
+		TSTR_TO_C_STRING (lpval, envval);
+		eputenv (env_vars[i], envval);
 	      }
 
 	    xfree (lpval);
@@ -611,43 +503,31 @@ init_environment (void)
      environment variable lookup and setting to be case insensitive.
      However, Emacs assumes a fully case sensitive environment, so we
      need to change "Path" to "PATH" to match the expectations of
-     various elisp packages.  We do this by the sneaky method of
-     modifying the string in the C runtime environ entry.
+     various elisp packages.
 
      The same applies to COMSPEC.  */
   {
-    char ** envp;
+    Lisp_Object tail;
 
-    for (envp = environ; *envp; envp++)
-      if (_strnicmp (*envp, "PATH=", 5) == 0)
-	memcpy (*envp, "PATH=", 5);
-      else if (_strnicmp (*envp, "COMSPEC=", 8) == 0)
-	memcpy (*envp, "COMSPEC=", 8);
-  }
-
-  /* Remember the initial working directory for getwd, then make the
-     real wd be the location of emacs.exe to avoid conflicts when
-     renaming or deleting directories.  (We also don't call chdir when
-     running subprocesses for the same reason.)  */
-  if (!GetCurrentDirectory (MAXPATHLEN, startup_dir))
-    abort ();
-
-  {
-    char *p;
-    char modname[PATH_MAX];
-
-    if (!GetModuleFileName (NULL, modname, PATH_MAX))
-      abort ();
-    if ((p = strrchr (modname, '\\')) == NULL)
-      abort ();
-    *p = 0;
-
-    SetCurrentDirectory (modname);
+    EXTERNAL_LIST_LOOP (tail, Vprocess_environment)
+      {
+	Lisp_Object str = XCAR (tail);
+	if (STRINGP (str))
+	  {
+	    Intbyte *dat = XSTRING_DATA (str);
+	    if (qxestrncasecmp (dat, "PATH=", 5) == 0)
+	      memcpy (dat, "PATH=", 5);
+	    else if (qxestrncasecmp (dat, "COMSPEC=", 8) == 0)
+	      memcpy (dat, "COMSPEC=", 8);
+	  }
+      }
   }
 
   init_user_info ();
 }
 
+/* Emacs 20.6 contains a routine get_emacs_configuration() here to set
+   EMACS_CONFIGURATION. */ 
 #ifndef HAVE_X_WINDOWS
 /* X11R6 on NT provides the single parameter version of this command. */
 
@@ -671,58 +551,25 @@ gettimeofday (struct timeval *tv, struct timezone *tz)
 
 #endif /* HAVE_X_WINDOWS */
 
+
 /* ------------------------------------------------------------------------- */
-/* IO support and wrapper functions for Win32 API. */
+/*               IO support and wrapper functions for Win32 API.             */
 /* ------------------------------------------------------------------------- */
 
-/* Place a wrapper around the MSVC version of ctime.  It returns NULL
-   on network directories, so we handle that case here.  
-   (Ulrich Leodolter, 1/11/95).  */
-char *
-sys_ctime (const time_t *t)
+typedef struct volume_info_data
 {
-  char *str = (char *) ctime (t);
-  return (str ? str : "Sun Jan 01 00:00:00 1970");
-}
-
-/* Emulate sleep...we could have done this with a define, but that
-   would necessitate including windows.h in the files that used it.
-   This is much easier.  */
-
-#ifndef HAVE_X_WINDOWS
-void
-sys_sleep (int seconds)
-{
-  Sleep (seconds * 1000);
-}
-#endif
-
-/* #### This is an evil dirty hack. We must get rid of it.
-   Word "munging" is not in XEmacs lexicon. - kkm */
-
-/* Internal MSVC data and functions for low-level descriptor munging */
-#if (_MSC_VER == 900)
-extern char _osfile[];
-#endif
-extern int __cdecl _set_osfhnd (int fd, long h);
-extern int __cdecl _free_osfhnd (int fd);
-
-/* parallel array of private info on file handles */
-filedesc fd_info [ MAXDESC ];
-
-typedef struct volume_info_data {
-  struct volume_info_data * next;
+  struct volume_info_data *next;
 
   /* time when info was obtained */
-  DWORD     timestamp;
+  DWORD timestamp;
 
   /* actual volume info */
-  char *    root_dir;
-  DWORD     serialnum;
-  DWORD     maxcomp;
-  DWORD     flags;
-  char *    name;
-  char *    type;
+  Intbyte *root_dir;
+  DWORD serialnum;
+  DWORD maxcomp;
+  DWORD flags;
+  Intbyte *name;
+  Intbyte *type;
 } volume_info_data;
 
 /* Global referenced by various functions.  */
@@ -746,20 +593,20 @@ static BOOL fixed_drives[26];
 static volume_info_data *volume_cache = NULL;
 
 static volume_info_data *
-lookup_volume_info (char * root_dir)
+lookup_volume_info (Intbyte *root_dir)
 {
-  volume_info_data * info;
+  volume_info_data *info;
 
   for (info = volume_cache; info; info = info->next)
-    if (stricmp (info->root_dir, root_dir) == 0)
+    if (qxestrcasecmp_i18n (info->root_dir, root_dir) == 0)
       break;
   return info;
 }
 
 static void
-add_volume_info (char * root_dir, volume_info_data * info)
+add_volume_info (Intbyte *root_dir, volume_info_data *info)
 {
-  info->root_dir = xstrdup (root_dir);
+  info->root_dir = qxestrdup (root_dir);
   info->next = volume_cache;
   volume_cache = info;
 }
@@ -768,17 +615,24 @@ add_volume_info (char * root_dir, volume_info_data * info)
 /* Wrapper for GetVolumeInformation, which uses caching to avoid
    performance penalty (~2ms on 486 for local drives, 7.5ms for local
    cdrom drive, ~5-10ms or more for remote drives on LAN).  */
-volume_info_data *
-GetCachedVolumeInformation (char * root_dir)
+static volume_info_data *
+get_cached_volume_information (Intbyte *root_dir)
 {
-  volume_info_data * info;
-  char default_root[ PATH_MAX ];
+  volume_info_data *info;
+  Intbyte *default_root;
 
   /* NULL for root_dir means use root from current directory.  */
   if (root_dir == NULL)
     {
-      if (GetCurrentDirectory (PATH_MAX, default_root) == 0)
+      Charcount nchars = qxeGetCurrentDirectory (0, NULL);
+      Extbyte *rootext;
+
+      if (!nchars)
 	return NULL;
+      rootext = alloca_extbytes (nchars * XETCHAR_SIZE);
+      if (!qxeGetCurrentDirectory (nchars, rootext))
+	return NULL;
+      TSTR_TO_C_STRING (rootext, default_root);
       parse_root (default_root, &root_dir);
       *root_dir = 0;
       root_dir = default_root;
@@ -803,12 +657,15 @@ GetCachedVolumeInformation (char * root_dir)
      involve network access, and so is extremely quick).  */
 
   /* Map drive letter to UNC if remote. */
-  if ( isalpha( root_dir[0] ) && !fixed[ DRIVE_INDEX( root_dir[0] ) ] )
+  if (isalpha (root_dir[0]) && !fixed [DRIVE_INDEX (root_dir[0])])
     {
-      char remote_name[ 256 ];
-      char drive[3] = { root_dir[0], ':' };
+      Extbyte remote_name[256 * XETCHAR_SIZE];
+      Intbyte drive[3] = { root_dir[0], ':' };
+      Extbyte *driveext;
 
-      if (WNetGetConnection (drive, remote_name, sizeof (remote_name))
+      C_STRING_TO_TSTR (drive, driveext);
+      if (qxeWNetGetConnection (driveext, remote_name,
+				sizeof (remote_name) / XETCHAR_SIZE)
 	  == NO_ERROR)
 	/* do something */ ;
     }
@@ -817,54 +674,56 @@ GetCachedVolumeInformation (char * root_dir)
   info = lookup_volume_info (root_dir);
 
   if (info == NULL || ! VOLINFO_STILL_VALID (root_dir, info))
-  {
-    char  name[ 256 ];
-  DWORD     serialnum;
-  DWORD     maxcomp;
-  DWORD     flags;
-    char  type[ 256 ];
+    {
+      Extbyte name[256 * MAX_XETCHAR_SIZE];
+      DWORD serialnum;
+      DWORD maxcomp;
+      DWORD flags;
+      Extbyte type[256 * MAX_XETCHAR_SIZE];
 
-    /* Info is not cached, or is stale. */
-    if (!GetVolumeInformation (root_dir,
-			       name, sizeof (name),
-			       &serialnum,
-			       &maxcomp,
-			       &flags,
-			       type, sizeof (type)))
-      return NULL;
+      /* Info is not cached, or is stale. */
+      if (!qxeGetVolumeInformation (root_dir,
+				    name, sizeof (name) / XETCHAR_SIZE,
+				    &serialnum,
+				    &maxcomp,
+				    &flags,
+				    type, sizeof (type) / XETCHAR_SIZE))
+	return NULL;
 
-    /* Cache the volume information for future use, overwriting existing
-       entry if present.  */
-    if (info == NULL)
-      {
-	info = (volume_info_data *) xmalloc (sizeof (volume_info_data));
-	add_volume_info (root_dir, info);
-      }
-    else
-      {
-	free (info->name);
-	free (info->type);
-      }
+      /* Cache the volume information for future use, overwriting existing
+	 entry if present.  */
+      if (info == NULL)
+	{
+	  info = (volume_info_data *) xmalloc (sizeof (volume_info_data));
+	  add_volume_info (root_dir, info);
+	}
+      else
+	{
+	  xfree (info->name);
+	  xfree (info->type);
+	}
 
-    info->name = xstrdup (name);
-    info->serialnum = serialnum;
-    info->maxcomp = maxcomp;
-    info->flags = flags;
-    info->type = xstrdup (type);
-    info->timestamp = GetTickCount ();
-  }
+      TSTR_TO_C_STRING_MALLOC (name, info->name);
+      info->serialnum = serialnum;
+      info->maxcomp = maxcomp;
+      info->flags = flags;
+      TSTR_TO_C_STRING_MALLOC (type, info->type);
+      info->timestamp = GetTickCount ();
+    }
 
   return info;
 }
 
 /* Get information on the volume where name is held; set path pointer to
    start of pathname in name (past UNC header\volume header if present).  */
-int
-get_volume_info (const char * name, const char ** pPath)
+static int
+get_volume_info (const Intbyte *name, const Intbyte **pPath)
 {
-  char temp[PATH_MAX];
-  char *rootname = NULL;  /* default to current volume */
-  volume_info_data * info;
+  /* We probably only need a couple of bytes, but let's be generous in
+     case this function gets changed */
+  Intbyte *temp = alloca_array (Intbyte, qxestrlen (name) + 10);
+  Intbyte *rootname = NULL;  /* default to current volume */
+  volume_info_data *info;
 
   if (name == NULL)
     return FALSE;
@@ -880,7 +739,7 @@ get_volume_info (const char * name, const char ** pPath)
     }
   else if (IS_DIRECTORY_SEP (name[0]) && IS_DIRECTORY_SEP (name[1]))
     {
-      char *str = temp;
+      Intbyte *str = temp;
       int slashes = 4;
       rootname = temp;
       do
@@ -889,7 +748,7 @@ get_volume_info (const char * name, const char ** pPath)
 	    break;
 	  *str++ = *name++;
 	}
-      while ( *name );
+      while (*name);
 
       *str++ = '\\';
       *str = 0;
@@ -898,7 +757,7 @@ get_volume_info (const char * name, const char ** pPath)
   if (pPath)
     *pPath = name;
     
-  info = GetCachedVolumeInformation (rootname);
+  info = get_cached_volume_information (rootname);
   if (info != NULL)
     {
       /* Set global referenced by other functions.  */
@@ -908,114 +767,19 @@ get_volume_info (const char * name, const char ** pPath)
   return FALSE;
 }
 
-/* Determine if volume is FAT format (ie. only supports short 8.3
-   names); also set path pointer to start of pathname in name.  */
-int
-is_fat_volume (const char * name, const char ** pPath)
+/* XEmacs: Everything referring to map_win32_filename() aka map_w32_filename()
+   removed; it was only for NT 3.1, which we hereby do not support. (NT 3.5
+   predates Windows 95!) */
+
+static int
+is_exec (const Intbyte *name)
 {
-  if (get_volume_info (name, pPath))
-    return (volume_info.maxcomp == 12);
-  return FALSE;
+  Intbyte *p = qxestrrchr (name, '.');
+  return (p != NULL && (qxestrcasecmp (p, ".exe") == 0 ||
+			qxestrcasecmp (p, ".com") == 0 ||
+			qxestrcasecmp (p, ".bat") == 0 ||
+			qxestrcasecmp (p, ".cmd") == 0));
 }
-
-/* Map filename to a legal 8.3 name if necessary. */
-const char *
-map_win32_filename (const char * name, const char ** pPath)
-{
-  static char shortname[PATH_MAX];
-  char * str = shortname;
-  char c;
-  const char * path;
-  const char * save_name = name;
-
-  if (is_fat_volume (name, &path)) /* truncate to 8.3 */
-    {
-      REGISTER int left = 8;	/* maximum number of chars in part */
-      REGISTER int extn = 0;	/* extension added? */
-      REGISTER int dots = 2;	/* maximum number of dots allowed */
-
-      while (name < path)
-	*str++ = *name++;	/* skip past UNC header */
-
-      while ((c = *name++))
-        {
-	  switch ( c )
-	    {
-	    case '\\':
-	    case '/':
-	      *str++ = '\\';
-	      extn = 0;		/* reset extension flags */
-	      dots = 2;		/* max 2 dots */
-	      left = 8;		/* max length 8 for main part */
-	      break;
-	    case ':':
-	      *str++ = ':';
-	      extn = 0;		/* reset extension flags */
-	      dots = 2;		/* max 2 dots */
-	      left = 8;		/* max length 8 for main part */
-	      break;
-	    case '.':
-	      if ( dots )
-	        {
-		  /* Convert path components of the form .xxx to _xxx,
-		     but leave . and .. as they are.  This allows .emacs
-		     to be read as _emacs, for example.  */
-
-		  if (! *name ||
-		      *name == '.' ||
-		      IS_DIRECTORY_SEP (*name))
-		    {
-		      *str++ = '.';
-		      dots--;
-		    }
-		  else
-		    {
-		      *str++ = '_';
-		      left--;
-		      dots = 0;
-		    }
-		}
-	      else if ( !extn )
-	        {
-		  *str++ = '.';
-		  extn = 1;		/* we've got an extension */
-		  left = 3;		/* 3 chars in extension */
-		}
-	      else
-	        {
-		  /* any embedded dots after the first are converted to _ */
-		  *str++ = '_';
-		}
-	      break;
-	    case '~':
-	    case '#':			/* don't lose these, they're important */
-	      if ( ! left )
-		str[-1] = c;		/* replace last character of part */
-	      /* FALLTHRU */
-	    default:
-	      if ( left )
-	        {
-		  *str++ = tolower (c);	/* map to lower case (looks nicer) */
-		  left--;
-		  dots = 0;		/* started a path component */
-		}
-	      break;
-	    }
-	}
-      *str = '\0';
-    }
-  else
-    {
-      strcpy (shortname, name);
-      unixtodos_filename (shortname);
-    }
-
-  if (pPath)
-    *pPath = shortname + (path - save_name);
-
-  return shortname;
-}
-
 
 /* Emulate the Unix directory procedures opendir, closedir, 
    and readdir.  We can't use the procedures supplied in sysdep.c,
@@ -1023,206 +787,448 @@ map_win32_filename (const char * name, const char ** pPath)
 
 struct direct dir_static;       /* simulated directory contents */
 static HANDLE dir_find_handle = INVALID_HANDLE_VALUE;
-static int    dir_is_fat;
-static char   dir_pathname[MAXPATHLEN+1];
-static WIN32_FIND_DATA dir_find_data;
+/*  dir_is_fat deleted */
+static Intbyte *dir_pathname;
+static WIN32_FIND_DATAW dir_find_data;
+
+/* Support shares on a network resource as subdirectories of a read-only
+   root directory. */
+static HANDLE wnet_enum_handle = INVALID_HANDLE_VALUE;
+static HANDLE open_unc_volume (const Intbyte *);
+static Intbyte *read_unc_volume (HANDLE);
+static int close_unc_volume (HANDLE);
 
 DIR *
-opendir (const char *filename)
+mswindows_opendir (const Intbyte *filename)
 {
   DIR *dirp;
 
   /* Opening is done by FindFirstFile.  However, a read is inherent to
      this operation, so we defer the open until read time.  */
 
-  if (!(dirp = xnew_and_zero(DIR)))
-    return NULL;
   if (dir_find_handle != INVALID_HANDLE_VALUE)
     return NULL;
+  if (wnet_enum_handle != INVALID_HANDLE_VALUE)
+    return NULL;
 
-  dirp->dd_fd = 0;
-  dirp->dd_loc = 0;
-  dirp->dd_size = 0;
+  if (is_unc_volume (filename))
+    {
+      wnet_enum_handle = open_unc_volume (filename);
+      if (wnet_enum_handle == INVALID_HANDLE_VALUE)
+	return NULL;
+    }
 
-  strncpy (dir_pathname, map_win32_filename (filename, NULL), MAXPATHLEN);
-  dir_pathname[MAXPATHLEN] = '\0';
-  dir_is_fat = is_fat_volume (filename, NULL);
+  if (!(dirp = xnew_and_zero (DIR)))
+    return NULL;
+
+  if (dir_pathname)
+    xfree (dir_pathname);
+  dir_pathname = qxestrdup (filename);
 
   return dirp;
 }
 
 int
-closedir (DIR *dirp)
+mswindows_closedir (DIR *dirp)
 {
-  BOOL retval;
+  int retval;
 
   /* If we have a find-handle open, close it.  */
   if (dir_find_handle != INVALID_HANDLE_VALUE)
     {
-      retval = FindClose (dir_find_handle);
+      retval = FindClose (dir_find_handle) ? 0 : -1;
       dir_find_handle = INVALID_HANDLE_VALUE;
     }
+  else if (wnet_enum_handle != INVALID_HANDLE_VALUE)
+    {
+      retval = close_unc_volume (wnet_enum_handle);
+      wnet_enum_handle = INVALID_HANDLE_VALUE;
+    }
   xfree (dirp);
-  if (retval)
-    return 0;
-  else
-    return -1;
+
+  return retval;
 }
 
 struct direct *
-readdir (DIR *dirp)
+mswindows_readdir (DIR *dirp)
 {
-  /* If we aren't dir_finding, do a find-first, otherwise do a find-next. */
-  if (dir_find_handle == INVALID_HANDLE_VALUE)
+  Intbyte *val;
+  int need_to_free = 0;
+
+  if (wnet_enum_handle != INVALID_HANDLE_VALUE)
     {
-      char filename[MAXNAMLEN + 3];
-      int ln;
+      if (!(val = read_unc_volume (wnet_enum_handle)))
+	return NULL;
+      need_to_free = 1;
+    }
+  /* If we aren't dir_finding, do a find-first, otherwise do a find-next. */
+  else if (dir_find_handle == INVALID_HANDLE_VALUE)
+    {
+      DECLARE_EISTRING (filename);
+      Emchar lastch;
 
-      strcpy (filename, dir_pathname);
-      ln = strlen (filename) - 1;
-      if (!IS_DIRECTORY_SEP (filename[ln]))
-	strcat (filename, "\\");
-      strcat (filename, "*");
+      eicpy_rawz (filename, dir_pathname);
+      lastch = eigetch_char (filename, eicharlen (filename) - 1);
+      if (!IS_DIRECTORY_SEP (lastch))
+	eicat_ch (filename, '\\');
+      eicat_ch (filename, '*');
+      eito_external (filename, Qmswindows_tstr);
 
-      dir_find_handle = FindFirstFile (filename, &dir_find_data);
+      dir_find_handle = qxeFindFirstFile (eiextdata (filename),
+					  &dir_find_data);
 
       if (dir_find_handle == INVALID_HANDLE_VALUE)
 	return NULL;
+      TSTR_TO_C_STRING (dir_find_data.cFileName, val);
     }
   else
     {
-      if (!FindNextFile (dir_find_handle, &dir_find_data))
+      if (!qxeFindNextFile (dir_find_handle, &dir_find_data))
 	return NULL;
+      TSTR_TO_C_STRING (dir_find_data.cFileName, val);
     }
   
-  /* Emacs never uses this value, so don't bother making it match
-     value returned by xemacs_stat().  */
+  /* XEmacs never uses this value, so don't bother making it match
+     value returned by qxe_stat().  */
   dir_static.d_ino = 1;
   
   dir_static.d_reclen = sizeof (struct direct) - MAXNAMLEN + 3 +
     dir_static.d_namlen - dir_static.d_namlen % 4;
-  
-  dir_static.d_namlen = strlen (dir_find_data.cFileName);
-  strcpy (dir_static.d_name, dir_find_data.cFileName);
-  if (dir_is_fat)
-    _strlwr (dir_static.d_name);
-  else if (!NILP (Vmswindows_downcase_file_names))
-    {
-      REGISTER char *p;
-      for (p = dir_static.d_name; *p; p++)
-	if (*p >= 'a' && *p <= 'z')
-	  break;
-      if (!*p)
-	_strlwr (dir_static.d_name);
-    }
-  
+
+  {
+    DECLARE_EISTRING (found);
+    Bytecount namlen;
+
+    eicpy_rawz (found, val);
+    if (need_to_free)
+      xfree (val);
+
+    if (!NILP (Vmswindows_downcase_file_names))
+      eilwr (found);
+
+    namlen = min (eilen (found), sizeof (dir_static.d_name) - 1);
+    strncpy (dir_static.d_name, (char *) eidata (found), namlen);
+    dir_static.d_name[namlen] = '\0';
+    dir_static.d_namlen = (unsigned short) namlen;
+  }
+
   return &dir_static;
 }
 
-#if 0
-/* #### Have to check if all that sad story about '95 is true - kkm */
-int
-sys_rename (const char * oldname, const char * newname)
+static HANDLE
+open_unc_volume (const Intbyte *path)
 {
-  char temp[PATH_MAX];
-  DWORD attr;
+  NETRESOURCEW nr; 
+  HANDLE henum;
+  int result;
 
-  /* MoveFile on Win95 doesn't correctly change the short file name
+  nr.dwScope = RESOURCE_GLOBALNET; 
+  nr.dwType = RESOURCETYPE_DISK; 
+  nr.dwDisplayType = RESOURCEDISPLAYTYPE_SERVER; 
+  nr.dwUsage = RESOURCEUSAGE_CONTAINER; 
+  nr.lpLocalName = NULL;
+  C_STRING_TO_TSTR (path, nr.lpRemoteName);
+  nr.lpComment = NULL; 
+  nr.lpProvider = NULL;   
+
+  result = qxeWNetOpenEnum (RESOURCE_GLOBALNET, RESOURCETYPE_DISK,  
+			    RESOURCEUSAGE_CONNECTABLE, &nr, &henum);
+
+  if (result == NO_ERROR)
+    return henum;
+  else
+    return INVALID_HANDLE_VALUE;
+}
+
+static Intbyte *
+read_unc_volume (HANDLE henum)
+{
+  int count;
+  int result;
+  Extbyte buf[16384];
+  Intbyte *ptr;
+  Bytecount bufsize = sizeof (buf);
+
+  count = 1;
+  /* #### we should just be querying the size and then allocating the
+     right amount, like for all similar API's.  but the docs say this ?!
+
+     An application cannot set the lpBuffer parameter to NULL and
+     retrieve the required buffer size from the lpBufferSize
+     parameter. Instead, the application should allocate a buffer of a
+     reasonable size --  16 kilobytes (K) is typical -- and use the value
+     of lpBufferSize for error detection.
+     */
+
+  result = qxeWNetEnumResource (wnet_enum_handle, &count, buf, &bufsize);
+  if (result != NO_ERROR)
+    return NULL;
+
+  /* WNetEnumResource returns \\resource\share...skip forward to "share". */
+  TSTR_TO_C_STRING (((LPNETRESOURCEW) buf)->lpRemoteName, ptr);
+  INC_CHARPTR (ptr);
+  INC_CHARPTR (ptr);
+  while (*ptr && !IS_DIRECTORY_SEP (charptr_emchar (ptr)))
+    INC_CHARPTR (ptr);
+  INC_CHARPTR (ptr);
+
+  return qxestrdup (ptr);
+}
+
+static int
+close_unc_volume (HANDLE henum)
+{
+  if (henum != INVALID_HANDLE_VALUE)
+    return WNetCloseEnum (henum) == NO_ERROR ? 0 : -1;
+  else
+    return -1;
+}
+
+static DWORD
+unc_volume_file_attributes (const Intbyte *path)
+{
+  HANDLE henum;
+  DWORD attrs;
+
+  henum = open_unc_volume (path);
+  if (henum == INVALID_HANDLE_VALUE)
+    return -1;
+
+  attrs = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_DIRECTORY;
+
+  close_unc_volume (henum);
+
+  return attrs;
+}
+
+int
+mswindows_access (const Intbyte *path, int mode)
+{
+  DWORD attributes;
+
+  /* MSVC implementation doesn't recognize D_OK.  */
+  if (is_unc_volume (path))
+    {
+      attributes = unc_volume_file_attributes (path);
+      if (attributes == -1)
+	{
+	  errno = EACCES;
+	  return -1;
+	}
+    }
+  else
+    {
+      Extbyte *pathext;
+
+      C_STRING_TO_TSTR (path, pathext);
+      if ((attributes = qxeGetFileAttributes (pathext)) == -1)
+	{
+	  /* Should try mapping GetLastError to errno; for now just indicate
+	     that path doesn't exist.  */
+	  errno = EACCES;
+	  return -1;
+	}
+    }
+  if ((mode & X_OK) != 0 && !is_exec (path))
+    {
+      errno = EACCES;
+      return -1;
+    }
+  if ((mode & W_OK) != 0 && (attributes & FILE_ATTRIBUTE_READONLY) != 0)
+    {
+      errno = EACCES;
+      return -1;
+    }
+  if ((mode & D_OK) != 0 && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+    {
+      errno = EACCES;
+      return -1;
+    }
+  return 0;
+}
+
+/* This only works on NTFS volumes, but is useful to have.  */
+/* #### NT 5.0 has a function CreateHardLink to do this directly,
+   and it may do more things. */
+int
+mswindows_link (const Intbyte *old, const Intbyte *new)
+{
+  HANDLE fileh;
+  int result = -1;
+
+  if (old == NULL || new == NULL)
+    {
+      errno = ENOENT;
+      return -1;
+    }
+
+  C_STRING_TO_TSTR (old, old);
+  fileh = qxeCreateFile (old, 0, 0, NULL, OPEN_EXISTING,
+			 FILE_FLAG_BACKUP_SEMANTICS, NULL);
+  if (fileh != INVALID_HANDLE_VALUE)
+    {
+      int wlen;
+      WCHAR *newuni;
+
+      /* Confusingly, the "alternate" stream name field does not apply
+         when restoring a hard link, and instead contains the actual
+         stream data for the link (ie. the name of the link to create).
+         The WIN32_STREAM_ID structure before the cStreamName field is
+         the stream header, which is then immediately followed by the
+         stream data.  */
+
+      struct
+	{
+	  WIN32_STREAM_ID wid;
+	  WCHAR wbuffer[MAX_PATH];	/* extra space for link name */
+	} data;
+
+      TO_EXTERNAL_FORMAT (C_STRING, new,
+			  ALLOCA, (newuni, wlen), Qmswindows_unicode);
+      if (wlen / sizeof (WCHAR) < MAX_PATH)
+	{
+	  LPVOID context = NULL;
+	  DWORD wbytes = 0;
+
+	  wcscpy (data.wid.cStreamName, newuni);
+	  data.wid.dwStreamId = BACKUP_LINK;
+	  data.wid.dwStreamAttributes = 0;
+	  data.wid.Size.LowPart = wlen; /* in bytes, not chars! */
+	  data.wid.Size.HighPart = 0;
+	  data.wid.dwStreamNameSize = 0;
+
+	  if (BackupWrite (fileh, (LPBYTE)&data,
+			   offsetof (WIN32_STREAM_ID, cStreamName)
+			   + data.wid.Size.LowPart,
+			   &wbytes, FALSE, FALSE, &context)
+	      && BackupWrite (fileh, NULL, 0, &wbytes, TRUE, FALSE, &context))
+	    {
+	      /* succeeded */
+	      result = 0;
+	    }
+	  else
+	    {
+	      /* Should try mapping GetLastError to errno; for now just
+		 indicate a general error (eg. links not supported).  */
+	      errno = EINVAL;  // perhaps EMLINK?
+	    }
+	}
+
+      CloseHandle (fileh);
+    }
+  else
+    errno = ENOENT;
+
+  return result;
+}
+
+/* sys_open() merged into sysdep.c sys_open() */
+
+int
+mswindows_rename (const Intbyte *oldname, const Intbyte *newname)
+{
+  int result;
+  Intbyte *temp;
+
+  /* MoveFile on Windows 95 doesn't correctly change the short file name
      alias in a number of circumstances (it is not easy to predict when
      just by looking at oldname and newname, unfortunately).  In these
      cases, renaming through a temporary name avoids the problem.
 
-     A second problem on Win95 is that renaming through a temp name when
+     A second problem on Windows 95 is that renaming through a temp name when
      newname is uppercase fails (the final long name ends up in
      lowercase, although the short alias might be uppercase) UNLESS the
      long temp name is not 8.3.
 
-     So, on Win95 we always rename through a temp name, and we make sure
+     So, on Windows 95 we always rename through a temp name, and we make sure
      the temp name has a long extension to ensure correct renaming.  */
 
-  strcpy (temp, map_win32_filename (oldname, NULL));
+  /* XEmacs: We sprintf() part of OLDNAME into part of OLDNAME + a number,
+     so the following calculation should certainly be enough. */
 
-  if (GetVersion () & 0x80000000)
+  temp = qxestrcpy (alloca_intbytes (2 * qxestrlen (oldname) + 100), oldname);
+
+  if (mswindows_windows9x_p)
     {
-      char * p;
+      Intbyte *o;
+      Intbyte *p;
+      int i = 0;
 
-      if (p = strrchr (temp, '\\'))
+      if (o = qxestrrchr (oldname, '\\'))
+	o++;
+      else
+	o = (Intbyte *) oldname;
+
+      if (p = qxestrrchr (temp, '\\'))
 	p++;
       else
 	p = temp;
-      /* Force temp name to require a manufactured 8.3 alias - this
-	 seems to make the second rename work properly. */
-      strcpy (p, "_rename_temp.XXXXXX");
-      sys_mktemp (temp);
-      if (rename (map_win32_filename (oldname, NULL), temp) < 0)
+
+      do
+	{
+	  Extbyte *oldext, *tempext;
+	  /* Force temp name to require a manufactured 8.3 alias - this
+	     seems to make the second rename work properly.  */
+	  qxesprintf (p, "_.%s.%u", o, i);
+	  i++;
+	  C_STRING_TO_EXTERNAL (oldname, oldext, Qfile_name);
+	  C_STRING_TO_EXTERNAL (temp, tempext, Qfile_name);
+	  result = rename (oldext, tempext);
+	}
+      /* This loop must surely terminate!  */
+      while (result < 0 && errno == EEXIST);
+      if (result < 0)
 	return -1;
     }
 
-  /* Emulate Unix behavior - newname is deleted if it already exists
+  /* Emulate Unix behaviour - newname is deleted if it already exists
      (at least if it is a file; don't do this for directories).
-     However, don't do this if we are just changing the case of the file
-     name - we will end up deleting the file we are trying to rename!  */
-  newname = map_win32_filename (newname, NULL);
 
-  /* TODO: Use GetInformationByHandle (on NT) to ensure newname and temp
-     do not refer to the same file, eg. through share aliases.  */
-  if (stricmp (newname, temp) != 0
-      && (attr = GetFileAttributes (newname)) != -1
-      && (attr & FILE_ATTRIBUTE_DIRECTORY) == 0)
-    {
-      _chmod (newname, 0666);
-      _unlink (newname);
-    }
+     Since we mustn't do this if we are just changing the case of the
+     file name (we would end up deleting the file we are trying to
+     rename!), we let rename detect if the destination file already
+     exists - that way we avoid the possible pitfalls of trying to
+     determine ourselves whether two names really refer to the same
+     file, which is not always possible in the general case.  (Consider
+     all the permutations of shared or subst'd drives, etc.)  */
+  {
+    Extbyte *newext, *tempext;
+    
+    C_STRING_TO_EXTERNAL (newname, newext, Qfile_name);
+    C_STRING_TO_EXTERNAL (temp, tempext, Qfile_name);
+    result = rename (tempext, newext);
 
-  return rename (temp, newname);
+    if (result < 0
+	&& errno == EEXIST
+	&& _chmod (newext, 0666) == 0
+	&& _unlink (newext) == 0)
+      result = rename (tempext, newext);
+  }
+
+  return result;
 }
-#endif /* 0 */
+
+int
+mswindows_unlink (const Intbyte *path)
+{
+  Extbyte *pathout;
+
+  C_STRING_TO_EXTERNAL (path, pathout, Qfile_name);
+  /* On Unix, unlink works without write permission. */
+  _chmod (pathout, 0666);
+  return _unlink (pathout);
+}
 
 static FILETIME utc_base_ft;
 static long double utc_base;
 static int init = 0;
-
-#if 0
-
-static long double utc_base;
-
-time_t
-convert_time (FILETIME ft)
-{
-  long double ret;
-
-  if (!init)
-    {
-      /* Determine the delta between 1-Jan-1601 and 1-Jan-1970. */
-      SYSTEMTIME st;
-
-      st.wYear = 1970;
-      st.wMonth = 1;
-      st.wDay = 1;
-      st.wHour = 0;
-      st.wMinute = 0;
-      st.wSecond = 0;
-      st.wMilliseconds = 0;
-
-      SystemTimeToFileTime (&st, &utc_base_ft);
-      utc_base = (long double) utc_base_ft.dwHighDateTime
-	* 4096 * 1024 * 1024 + utc_base_ft.dwLowDateTime;
-      init = 1;
-    }
-
-  if (CompareFileTime (&ft, &utc_base_ft) < 0)
-    return 0;
-
-  ret = (long double) ft.dwHighDateTime * 4096 * 1024 * 1024 + ft.dwLowDateTime;
-  ret -= utc_base;
-  return (time_t) (ret * 1e-7);
-}
-#else
-
 static LARGE_INTEGER utc_base_li;
 
+/* XEmacs: We seem to have a new definition of
+   mswindows_convert_time(), although I'm not sure why. --ben */
+
 time_t
-convert_time (FILETIME uft)
+mswindows_convert_time (FILETIME uft)
 {
   time_t ret;
 #ifndef MAXLONGLONG
@@ -1287,15 +1293,8 @@ convert_time (FILETIME uft)
 
   return ret;
 }
-#endif
-#if defined(MINGW) && CYGWIN_VERSION_DLL_MAJOR <= 21
-#undef LowPart
-#undef HighPart
-#endif
 
-#if 0
-/* in case we ever have need of this */
-void
+static void
 convert_from_time_t (time_t time, FILETIME * pft)
 {
   long double tmp;
@@ -1322,51 +1321,21 @@ convert_from_time_t (time_t time, FILETIME * pft)
   /* time in 100ns units since 1-Jan-1601 */
   tmp = (long double) time * 1e7 + utc_base;
   pft->dwHighDateTime = (DWORD) (tmp / (4096.0 * 1024 * 1024));
-  pft->dwLowDateTime = (DWORD) (tmp - pft->dwHighDateTime);
+  pft->dwLowDateTime = (DWORD) (tmp - (4096.0 * 1024 * 1024) *
+                                pft->dwHighDateTime);
 }
-#endif
 
 #if 0
-/* No reason to keep this; faking inode values either by hashing or even
+/* A comment from Emacs 20.6:
+
+   No reason to keep this; faking inode values either by hashing or even
    using the file index from GetInformationByHandle, is not perfect and
    so by default Emacs doesn't use the inode values on Windows.
    Instead, we now determine file-truename correctly (except for
    possible drive aliasing etc).  */
 
-/*  Modified version of "PJW" algorithm (see the "Dragon" compiler book). */
-static unsigned
-hashval (const unsigned char * str)
-{
-  unsigned h = 0;
-  while (*str)
-    {
-      h = (h << 4) + *str++;
-      h ^= (h >> 28);
-    }
-  return h;
-}
-
-/* Return the hash value of the canonical pathname, excluding the
-   drive/UNC header, to get a hopefully unique inode number. */
-static DWORD
-generate_inode_val (const char * name)
-{
-  char fullname[ PATH_MAX ];
-  char * p;
-  unsigned hash;
-
-  /* Get the truly canonical filename, if it exists.  (Note: this
-     doesn't resolve aliasing due to subst commands, or recognize hard
-     links.  */
-  if (!win32_get_long_filename ((char *)name, fullname, PATH_MAX))
-    abort ();
-
-  parse_root (fullname, &p);
-  /* Normal Win32 filesystems are still case insensitive. */
-  _strlwr (p);
-  return hashval (p);
-}
-
+/* XEmacs: Removed the fake-inodes code here, which was if 0'd out.
+   If you want it, look in w32.c in Emacs 20.6. */
 #endif
 
 /* #### aichner@ecf.teradyne.com reported that with the library
@@ -1375,11 +1344,10 @@ generate_inode_val (const char * name)
    we opt to use non-encapsulated stat(), this should serve as
    a compatibility test. --kkm */
 
-/* Since stat is encapsulated on Windows NT, we need to encapsulate
-   the equally broken fstat as well. FSFmacs also provides its own
-   utime. Is that necessary here too? */
+/* Provide fstat and utime as well as stat for consistent handling of
+   file timestamps. */
 int
-mswindows_fstat (int desc, struct stat * buf)
+mswindows_fstat (int desc, struct stat *buf)
 {
   HANDLE fh = (HANDLE) _get_osfhandle (desc);
   BY_HANDLE_FILE_INFORMATION info;
@@ -1444,10 +1412,10 @@ mswindows_fstat (int desc, struct stat * buf)
   buf->st_size = info.nFileSizeLow;
 
   /* Convert timestamps to Unix format. */
-  buf->st_mtime = convert_time (info.ftLastWriteTime);
-  buf->st_atime = convert_time (info.ftLastAccessTime);
+  buf->st_mtime = mswindows_convert_time (info.ftLastWriteTime);
+  buf->st_atime = mswindows_convert_time (info.ftLastAccessTime);
   if (buf->st_atime == 0) buf->st_atime = buf->st_mtime;
-  buf->st_ctime = convert_time (info.ftCreationTime);
+  buf->st_ctime = mswindows_convert_time (info.ftCreationTime);
   if (buf->st_ctime == 0) buf->st_ctime = buf->st_mtime;
 
   /* determine rwx permissions */
@@ -1458,6 +1426,18 @@ mswindows_fstat (int desc, struct stat * buf)
   
   if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     permission |= _S_IEXEC;
+  else
+    {
+#if 0 /* no way of knowing the filename */
+      Intbyte *p = qxestrrchr (name, '.');
+      if (p != NULL &&
+	  (qxestrcasecmp (p, ".exe") == 0 ||
+	   qxestrcasecmp (p, ".com") == 0 ||
+	   qxestrcasecmp (p, ".bat") == 0 ||
+	   qxestrcasecmp (p, ".cmd") == 0))
+	permission |= _S_IEXEC;
+#endif
+    }
 
   buf->st_mode |= permission | (permission >> 3) | (permission >> 6);
 
@@ -1468,15 +1448,16 @@ mswindows_fstat (int desc, struct stat * buf)
    replace it with our own.  This also allows us to calculate consistent
    inode values without hacks in the main Emacs code. */
 int
-mswindows_stat (const char * path, struct stat * buf)
+mswindows_stat (const Intbyte *path, struct stat *buf)
 {
-  char * name;
-  WIN32_FIND_DATA wfd;
+  Intbyte *name, *r;
+  WIN32_FIND_DATAW wfd;
   HANDLE fh;
   DWORD fake_inode;
   int permission;
-  int len;
+  Bytecount len;
   int rootdir = FALSE;
+  Extbyte *nameext;
 
   if (path == NULL || buf == NULL)
     {
@@ -1484,27 +1465,51 @@ mswindows_stat (const char * path, struct stat * buf)
       return -1;
     }
 
-  name = (char *) map_win32_filename (path, &path);
-  /* must be valid filename, no wild cards */
-  if (strchr (name, '*') || strchr (name, '?'))
+  name = qxestrcpy (alloca_intbytes (qxestrlen (path) + 10), path);
+
+  get_volume_info (name, &path);
+  /* must be valid filename, no wild cards or other invalid characters */
+  if (qxestrpbrk (name, "*?|<>\""))
     {
       errno = ENOENT;
       return -1;
     }
 
+  /* If name is "c:/.." or "/.." then stat "c:/" or "/".  */
+  r = IS_DEVICE_SEP (name[1]) ? &name[2] : name;
+  if (IS_DIRECTORY_SEP (r[0]) && r[1] == '.' && r[2] == '.' && r[3] == '\0')
+    {
+      r[1] = r[2] = '\0';
+    }
+
   /* Remove trailing directory separator, unless name is the root
      directory of a drive or UNC volume in which case ensure there
      is a trailing separator. */
-  len = strlen (name);
+  len = qxestrlen (name);
   rootdir = (path >= name + len - 1
 	     && (IS_DIRECTORY_SEP (*path) || *path == 0));
-  name = strcpy ((char *)alloca (len + 2), name);
 
-  if (rootdir)
+  if (is_unc_volume (name))
+    {
+      DWORD attrs = unc_volume_file_attributes (name);
+
+      if (attrs == -1)
+	return -1;
+
+      memset (&wfd, 0, sizeof (wfd));
+      wfd.dwFileAttributes = attrs;
+      wfd.ftCreationTime = utc_base_ft;
+      wfd.ftLastAccessTime = utc_base_ft;
+      wfd.ftLastWriteTime = utc_base_ft;
+      /* XEmacs deleted: strcpy (wfd.cFileName, name);
+	 Not used later on. */
+    }
+  else if (rootdir)
     {
       if (!IS_DIRECTORY_SEP (name[len-1]))
-	strcat (name, "\\");
-      if (GetDriveType (name) < 2)
+	qxestrcat (name, (Intbyte *) "\\");
+      C_STRING_TO_TSTR (name, nameext);
+      if (qxeGetDriveType (nameext) < 2)
 	{
 	  errno = ENOENT;
 	  return -1;
@@ -1514,7 +1519,8 @@ mswindows_stat (const char * path, struct stat * buf)
       wfd.ftCreationTime = utc_base_ft;
       wfd.ftLastAccessTime = utc_base_ft;
       wfd.ftLastWriteTime = utc_base_ft;
-      strcpy (wfd.cFileName, name);
+      /* XEmacs deleted: strcpy (wfd.cFileName, name);
+	 Not used later on. */
     }
   else
     {
@@ -1524,25 +1530,35 @@ mswindows_stat (const char * path, struct stat * buf)
       /* (This is hacky, but helps when doing file completions on
 	 network drives.)  Optimize by using information available from
 	 active readdir if possible.  */
-      if (dir_find_handle != INVALID_HANDLE_VALUE &&
-	  (len = strlen (dir_pathname)),
-	  strnicmp (name, dir_pathname, len) == 0 &&
-	  IS_DIRECTORY_SEP (name[len]) &&
-	  stricmp (name + len + 1, dir_static.d_name) == 0)
+      if (dir_pathname)
+	{
+	  len = qxestrlen (dir_pathname);
+	  if (len && IS_DIRECTORY_SEP (dir_pathname[len-1]))
+	    len--;
+	}
+      if (dir_find_handle != INVALID_HANDLE_VALUE
+	  && dir_pathname
+	  && qxestrncasecmp_i18n (name, dir_pathname, len) == 0
+	  && IS_DIRECTORY_SEP (name[len])
+	  && qxestrcasecmp_i18n (name + len + 1,
+				 (Intbyte *) dir_static.d_name) == 0)
 	{
 	  /* This was the last entry returned by readdir.  */
 	  wfd = dir_find_data;
 	}
       else
 	{
-      fh = FindFirstFile (name, &wfd);
-      if (fh == INVALID_HANDLE_VALUE)
-	{
-	  errno = ENOENT;
-	  return -1;
+	  C_STRING_TO_TSTR (name, nameext);
+	  fh = qxeFindFirstFile (nameext, &wfd);
+	  if (fh == INVALID_HANDLE_VALUE)
+	    {
+	      errno = ENOENT;
+	      return -1;
+	    }
+	  FindClose (fh);
+	  /* XEmacs: Don't need to convert wfd.cFileName because
+	     not used later on. */
 	}
-      FindClose (fh);
-    }
     }
 
   if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -1551,19 +1567,36 @@ mswindows_stat (const char * path, struct stat * buf)
       buf->st_nlink = 2;	/* doesn't really matter */
       fake_inode = 0;		/* this doesn't either I think */
     }
-  else if (!NILP (Vmswindows_get_true_file_attributes))
+  else 
     {
-      /* This is more accurate in terms of getting the correct number
-	 of links, but is quite slow (it is noticeable when Emacs is
-	 making a list of file name completions). */
-      BY_HANDLE_FILE_INFORMATION info;
-
-      /* No access rights required to get info.  */
-      fh = CreateFile (name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-		       OPEN_EXISTING, 0, NULL);
-
-      if (GetFileInformationByHandle (fh, &info))
+      if (!NILP (Vmswindows_get_true_file_attributes))
+	C_STRING_TO_TSTR (name, nameext);
+      if (!NILP (Vmswindows_get_true_file_attributes)
+	  /* No access rights required to get info.  */
+	  && (fh = qxeCreateFile (nameext, 0, 0, NULL, OPEN_EXISTING, 0, NULL))
+	  != INVALID_HANDLE_VALUE)
 	{
+	  /* This is more accurate in terms of gettting the correct number
+	     of links, but is quite slow (it is noticable when Emacs is
+	     making a list of file name completions). */
+	  BY_HANDLE_FILE_INFORMATION info;
+
+	  if (GetFileInformationByHandle (fh, &info))
+	    {
+	      buf->st_nlink = (short) info.nNumberOfLinks;
+	      /* Might as well use file index to fake inode values, but this
+		 is not guaranteed to be unique unless we keep a handle open
+		 all the time (even then there are situations where it is
+		 not unique).  Reputedly, there are at most 48 bits of info
+		 (on NTFS, presumably less on FAT). */
+	      fake_inode = info.nFileIndexLow ^ info.nFileIndexHigh;
+	    }
+	  else
+	    {
+	      buf->st_nlink = 1;
+	      fake_inode = 0;
+	    }
+
 	  switch (GetFileType (fh))
 	    {
 	    case FILE_TYPE_DISK:
@@ -1577,58 +1610,44 @@ mswindows_stat (const char * path, struct stat * buf)
 	    default:
 	      buf->st_mode = _S_IFCHR;
 	    }
-	  buf->st_nlink = (short) info.nNumberOfLinks;
-	  /* Might as well use file index to fake inode values, but this
-	     is not guaranteed to be unique unless we keep a handle open
-	     all the time (even then there are situations where it is
-	     not unique).  Reputedly, there are at most 48 bits of info
-	     (on NTFS, presumably less on FAT). */
-	  fake_inode = info.nFileIndexLow ^ info.nFileIndexHigh;
 	  CloseHandle (fh);
 	}
       else
 	{
-	  errno = EACCES;
-	  return -1;
+	  /* Don't bother to make this information more accurate.  */
+	  buf->st_mode = _S_IFREG;
+	  buf->st_nlink = 1;
+	  fake_inode = 0;
 	}
-    }
-  else
-    {
-      /* Don't bother to make this information more accurate.  */
-      buf->st_mode = _S_IFREG;
-      buf->st_nlink = 1;
-      fake_inode = 0;
     }
 
 #if 0
-  /* Not sure if there is any point in this.  */
-  if (!NILP (Vwin32_generate_fake_inodes))
-    fake_inode = generate_inode_val (name);
-  else if (fake_inode == 0)
-    {
-      /* For want of something better, try to make everything unique.  */
-      static DWORD gen_num = 0;
-      fake_inode = ++gen_num;
-    }
+  /* XEmacs: Removed the fake-inodes code here, which was if 0'd out.
+     If you want it, look in w32.c in Emacs 20.6. */
 #endif
 
-  /* #### MSVC defines _ino_t to be short; other libc's might not.  */
-  buf->st_ino = (unsigned short) (fake_inode ^ (fake_inode >> 16));
+  /* MSVC defines _ino_t to be short; other libc's might not.  */
+  if (sizeof (buf->st_ino) == 2)
+    buf->st_ino = (unsigned short) (fake_inode ^ (fake_inode >> 16));
+  else
+    buf->st_ino = (unsigned short) fake_inode;
 
   /* consider files to belong to current user */
-  buf->st_uid = buf->st_gid = (short) nt_fake_unix_uid;
+  buf->st_uid = the_passwd.pw_uid;
+  buf->st_gid = the_passwd.pw_gid;
 
-  /* volume_info is set indirectly by map_win32_filename */
+  /* volume_info is set by get_volume_info */
   buf->st_dev = volume_info.serialnum;
   buf->st_rdev = volume_info.serialnum;
+
 
   buf->st_size = wfd.nFileSizeLow;
 
   /* Convert timestamps to Unix format. */
-  buf->st_mtime = convert_time (wfd.ftLastWriteTime);
-  buf->st_atime = convert_time (wfd.ftLastAccessTime);
+  buf->st_mtime = mswindows_convert_time (wfd.ftLastWriteTime);
+  buf->st_atime = mswindows_convert_time (wfd.ftLastAccessTime);
   if (buf->st_atime == 0) buf->st_atime = buf->st_mtime;
-  buf->st_ctime = convert_time (wfd.ftCreationTime);
+  buf->st_ctime = mswindows_convert_time (wfd.ftCreationTime);
   if (buf->st_ctime == 0) buf->st_ctime = buf->st_mtime;
 
   /* determine rwx permissions */
@@ -1639,53 +1658,93 @@ mswindows_stat (const char * path, struct stat * buf)
   
   if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     permission |= _S_IEXEC;
-  else
-    {
-      char * p = strrchr (name, '.');
-      if (p != NULL &&
-	  (stricmp (p, ".exe") == 0 ||
-	   stricmp (p, ".com") == 0 ||
-	   stricmp (p, ".bat") == 0 ||
-	   stricmp (p, ".cmd") == 0))
-	permission |= _S_IEXEC;
-    }
+  else if (is_exec (name))
+    permission |= _S_IEXEC;
 
   buf->st_mode |= permission | (permission >> 3) | (permission >> 6);
 
   return 0;
 }
 
-/* From callproc.c  */
-extern Lisp_Object Vbinary_process_input;
-extern Lisp_Object Vbinary_process_output;
-
-/* Unix pipe() has only one arg */
 int
-sys_pipe (int * phandles)
+mswindows_utime (Lisp_Object path, struct utimbuf *times)
 {
-  int rc;
-  unsigned flags;
+  /* #### Supposedly we're providing this because standard utime()
+     might not work; or at the very least to get consistent results
+     since we replace other time-handling routines in stat.  But out
+     replacement doesn't seem to work, probably due to some subtle bug
+     in this routine, which should be investigated eventually.  So for
+     the moment, we just use utime(), which conceivably might be
+     slightly off in comparison with our own routines?  Seems strange,
+     and so far no problems seen. --ben */
 
-  /* make pipe handles non-inheritable; when we spawn a child, we
-     replace the relevant handle with an inheritable one.  Also put
-     pipes into binary mode; we will do text mode translation ourselves
-     if required.  */
-  rc = _pipe (phandles, 0, _O_NOINHERIT | _O_BINARY);
+  struct utimbuf deftime;
+#if 0
+  HANDLE fh;
+#endif
+  static FILETIME mtime;
+  static FILETIME atime;
+  Extbyte *filename;
 
-  if (rc == 0)
+  if (times == NULL)
     {
-      flags = FILE_PIPE | FILE_READ;
-      if (!NILP (Vbinary_process_output))
-	  flags |= FILE_BINARY;
-      fd_info[phandles[0]].flags = flags;
-
-      flags = FILE_PIPE | FILE_WRITE;
-      if (!NILP (Vbinary_process_input))
-	  flags |= FILE_BINARY;
-      fd_info[phandles[1]].flags = flags;
+      deftime.modtime = deftime.actime = time (NULL);
+      times = &deftime;
     }
 
-  return rc;
+  LISP_STRING_TO_TSTR (path, filename);
+  /* APA: SetFileTime fails to set mtime correctly (always 1-Jan-1970) */
+#if 0
+  /* Need write access to set times.  */
+  fh = qxeCreateFile (filename, GENERIC_WRITE,
+		      FILE_SHARE_READ | FILE_SHARE_WRITE,
+		      0, OPEN_EXISTING, 0, NULL);
+  if (fh)
+    {
+      convert_from_time_t (times->actime, &atime);
+      convert_from_time_t (times->modtime, &mtime);
+      if (!SetFileTime (fh, NULL, &atime, &mtime))
+	{
+	  CloseHandle (fh);
+	  errno = EACCES;
+	  return -1;
+	}
+      CloseHandle (fh);
+    }
+  else
+    {
+      errno = EINVAL;
+      return -1;
+    }
+  return 0;
+#else
+  {
+    struct _utimbuf newtimes;
+
+    newtimes.actime = times->actime;
+    newtimes.modtime = times->modtime;
+
+  if (XEUNICODE_P)
+    return _wutime ((const wchar_t *) filename, &newtimes);
+  else
+    return _utime (filename, &newtimes);
+  }
+#endif
+}
+
+Intbyte *
+mswindows_getdcwd (int drivelet)
+{
+  Extbyte *cwdext;
+  Intbyte *cwd;
+
+  if (XEUNICODE_P)
+    cwdext = (Extbyte *) _wgetdcwd (drivelet, NULL, 0);
+  else
+    cwdext = _getdcwd (drivelet, NULL, 0);
+  TSTR_TO_C_STRING_MALLOC (cwdext, cwd);
+  xfree (cwdext);
+  return cwd;
 }
 
 void
@@ -1727,9 +1786,9 @@ init_ntproc (void)
 		     FALSE,
 		     DUPLICATE_SAME_ACCESS);
     
-    fclose (stdin);
-    fclose (stdout);
-    fclose (stderr);
+    retry_fclose (stdin);
+    retry_fclose (stdout);
+    retry_fclose (stderr);
 
     if (stdin_save != INVALID_HANDLE_VALUE)
       _open_osfhandle ((long) stdin_save, O_TEXT);
@@ -1750,51 +1809,29 @@ init_ntproc (void)
     _fdopen (2, "w");
   }
 
-  /* determine which drives are fixed, for GetCachedVolumeInformation */
+  /* determine which drives are fixed, for get_cached_volume_information */
   {
     /* GetDriveType must have trailing backslash. */
-    char drive[] = "A:\\";
+    Intbyte drive[] = "A:\\";
 
     /* Loop over all possible drive letters */
-    while ( *drive <= 'Z' )
+    while (*drive <= 'Z')
     {
+      Extbyte *driveext;
+
+      C_STRING_TO_TSTR (drive, driveext);
+
       /* Record if this drive letter refers to a fixed drive. */
-      fixed_drives[ DRIVE_INDEX (*drive) ] =
-	(GetDriveType (drive) == DRIVE_FIXED);
+      fixed_drives[DRIVE_INDEX (*drive)] =
+	(qxeGetDriveType (driveext) == DRIVE_FIXED);
 
       (*drive)++;
     }
+
+    /* Reset the volume info cache.  */
+    volume_cache = NULL;
   }
 }
-#ifndef HAVE_TTY
-Lisp_Object
-tty_semi_canonicalize_console_connection (Lisp_Object connection,
-					  Error_Behavior errb)
-{
-  return Vstdio_str;
-}
-
-Lisp_Object
-tty_canonicalize_console_connection (Lisp_Object connection,
-				     Error_Behavior errb)
-{
-  return Vstdio_str;
-}
-
-Lisp_Object
-tty_semi_canonicalize_device_connection (Lisp_Object connection,
-					 Error_Behavior errb)
-{
-  return Vstdio_str;
-}
-
-Lisp_Object
-tty_canonicalize_device_connection (Lisp_Object connection,
-				    Error_Behavior errb)
-{
-  return Vstdio_str;
-}
-#endif
 
 
 /*--------------------------------------------------------------------*/
@@ -1802,22 +1839,25 @@ tty_canonicalize_device_connection (Lisp_Object connection,
 /*--------------------------------------------------------------------*/
 
 int
-open_input_file (file_data *p_file, const char *filename)
+open_input_file (file_data *p_file, const Intbyte *filename)
 {
   /* Synched with FSF 20.6.  We fixed some warnings. */
   HANDLE file;
   HANDLE file_mapping;
-  void  *file_base;
+  void *file_base;
   DWORD size, upper_size;
+  Extbyte *fileext;
 
-  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  C_STRING_TO_TSTR (filename, fileext);
+
+  file = qxeCreateFile (fileext, GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
     return FALSE;
 
   size = GetFileSize (file, &upper_size);
-  file_mapping = CreateFileMapping (file, NULL, PAGE_READONLY, 
-				    0, size, NULL);
+  file_mapping = qxeCreateFileMapping (file, NULL, PAGE_READONLY, 
+				       0, size, NULL);
   if (!file_mapping) 
     return FALSE;
 
@@ -1825,30 +1865,34 @@ open_input_file (file_data *p_file, const char *filename)
   if (file_base == 0) 
     return FALSE;
 
-  p_file->name = (char *)filename;
+  p_file->name = filename;
   p_file->size = size;
   p_file->file = file;
   p_file->file_mapping = file_mapping;
-  p_file->file_base = (char *)file_base;
+  p_file->file_base = file_base;
 
   return TRUE;
 }
 
 int
-open_output_file (file_data *p_file, const char *filename, unsigned long size)
+open_output_file (file_data *p_file, const Intbyte *filename,
+		  unsigned long size)
 {
   /* Synched with FSF 20.6.  We fixed some warnings. */
   HANDLE file;
   HANDLE file_mapping;
-  void  *file_base;
+  void *file_base;
+  Extbyte *fileext;
 
-  file = CreateFile (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+  C_STRING_TO_TSTR (filename, fileext);
+
+  file = qxeCreateFile (fileext, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
     return FALSE;
 
-  file_mapping = CreateFileMapping (file, NULL, PAGE_READWRITE, 
-				    0, size, NULL);
+  file_mapping = qxeCreateFileMapping (file, NULL, PAGE_READWRITE, 
+				       0, size, NULL);
   if (!file_mapping) 
     return FALSE;
   
@@ -1860,7 +1904,7 @@ open_output_file (file_data *p_file, const char *filename, unsigned long size)
   p_file->size = size;
   p_file->file = file;
   p_file->file_mapping = file_mapping;
-  p_file->file_base = (char*) file_base;
+  p_file->file_base = file_base;
 
   return TRUE;
 }
@@ -1869,7 +1913,7 @@ open_output_file (file_data *p_file, const char *filename, unsigned long size)
 /* Return pointer to section header for section containing the given
    relative virtual address. */
 static IMAGE_SECTION_HEADER *
-rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
+rva_to_section (DWORD rva, IMAGE_NT_HEADERS *nt_header)
 {
   /* Synched with FSF 20.6.  We added MINGW stuff. */
   PIMAGE_SECTION_HEADER section;
@@ -1897,12 +1941,12 @@ rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
 #endif
 
 void
-mswindows_executable_type (const char * filename, int * is_dos_app,
-			   int * is_cygnus_app)
+mswindows_executable_type (const Intbyte *filename, int *is_dos_app,
+			   int *is_cygnus_app)
 {
   /* Synched with FSF 20.6.  We added MINGW stuff and casts. */
   file_data executable;
-  char * p;
+  Intbyte *p;
 
   /* Default values in case we can't tell for sure.  */
   *is_dos_app = FALSE;
@@ -1911,13 +1955,13 @@ mswindows_executable_type (const char * filename, int * is_dos_app,
   if (!open_input_file (&executable, filename))
     return;
 
-  p = strrchr (filename, '.');
+  p = qxestrrchr (filename, '.');
 
   /* We can only identify DOS .com programs from the extension. */
-  if (p && stricmp (p, ".com") == 0)
+  if (p && qxestrcasecmp (p, ".com") == 0)
     *is_dos_app = TRUE;
-  else if (p && (stricmp (p, ".bat") == 0 ||
-		 stricmp (p, ".cmd") == 0))
+  else if (p && (qxestrcasecmp (p, ".bat") == 0 ||
+		 qxestrcasecmp (p, ".cmd") == 0))
     {
       /* A DOS shell script - it appears that CreateProcess is happy to
 	 accept this (somewhat surprisingly); presumably it looks at
@@ -1937,15 +1981,15 @@ mswindows_executable_type (const char * filename, int * is_dos_app,
 	 executables use the OS/2 1.x format. */
 
 #if 0 /* defined( MINGW ) */
-      /* mingw32 doesn't have enough headers to detect cygwin
+      /* mingw doesn't have enough headers to detect cygwin
 	 apps, just do what we can. */
-      FILHDR * exe_header;
+      FILHDR *exe_header;
 
-      exe_header = (FILHDR*) executable.file_base;
+      exe_header = (FILHDR *) executable.file_base;
       if (exe_header->e_magic != DOSMAGIC)
 	goto unwind;
 
-      if ((char*) exe_header->e_lfanew > (char*) executable.size)
+      if ((char *) exe_header->e_lfanew > (char *) executable.size)
 	{
 	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
 	  *is_dos_app = TRUE;
@@ -1955,16 +1999,17 @@ mswindows_executable_type (const char * filename, int * is_dos_app,
 	  *is_dos_app = TRUE;
 	}
 #else
-      IMAGE_DOS_HEADER * dos_header;
-      IMAGE_NT_HEADERS * nt_header;
+      IMAGE_DOS_HEADER *dos_header;
+      IMAGE_NT_HEADERS *nt_header;
 
       dos_header = (PIMAGE_DOS_HEADER) executable.file_base;
       if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
 	goto unwind;
 	  
-      nt_header = (PIMAGE_NT_HEADERS) ((char*) dos_header + dos_header->e_lfanew);
+      nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header +
+				       dos_header->e_lfanew);
 	  
-      if ((char*) nt_header > (char*) dos_header + executable.size) 
+      if ((char *) nt_header > (char *) dos_header + executable.size) 
 	{
 	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
 	  *is_dos_app = TRUE;
@@ -1978,22 +2023,28 @@ mswindows_executable_type (const char * filename, int * is_dos_app,
 	{
 	  /* Look for cygwin.dll in DLL import list. */
 	  IMAGE_DATA_DIRECTORY import_dir =
-	    nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	  IMAGE_IMPORT_DESCRIPTOR * imports;
-	  IMAGE_SECTION_HEADER * section;
+	    nt_header->OptionalHeader.
+	      DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	  IMAGE_IMPORT_DESCRIPTOR *imports;
+	  IMAGE_SECTION_HEADER *section;
 
 	  section = rva_to_section (import_dir.VirtualAddress, nt_header);
-	  imports = (IMAGE_IMPORT_DESCRIPTOR *) RVA_TO_PTR (import_dir.VirtualAddress,
-							    section, executable);
-	      
+	  imports =
+	    (IMAGE_IMPORT_DESCRIPTOR *) RVA_TO_PTR (import_dir.VirtualAddress,
+						    section, executable);
+
 	  for ( ; imports->Name; imports++)
 	    {
-	      char *dllname = (char*) RVA_TO_PTR (imports->Name, section, executable);
+	      Extbyte *dllname_ext =
+		(Extbyte *) RVA_TO_PTR (imports->Name, section, executable);
+	      Intbyte *dllname;
+
+	      EXTERNAL_TO_C_STRING (dllname_ext, dllname, Qbinary);
 
 	      /* The exact name of the cygwin dll has changed with
 		 various releases, but hopefully this will be reasonably
 		 future proof.  */
-	      if (strncmp (dllname, "cygwin", 6) == 0)
+	      if (qxestrncasecmp (dllname, (Intbyte *) "cygwin", 6) == 0)
 		{
 		  *is_cygnus_app = TRUE;
 		  break;
@@ -2007,83 +2058,6 @@ mswindows_executable_type (const char * filename, int * is_dos_app,
   close_file_data (&executable);
 }
 
-static void
-convert_from_time_t (time_t time, FILETIME * pft)
-{
-  long double tmp;
-
-  if (!init)
-    {
-      /* Determine the delta between 1-Jan-1601 and 1-Jan-1970. */
-      SYSTEMTIME st;
-
-      st.wYear = 1970;
-      st.wMonth = 1;
-      st.wDay = 1;
-      st.wHour = 0;
-      st.wMinute = 0;
-      st.wSecond = 0;
-      st.wMilliseconds = 0;
-
-      SystemTimeToFileTime (&st, &utc_base_ft);
-      utc_base = (long double) utc_base_ft.dwHighDateTime
-	* 4096 * 1024 * 1024 + utc_base_ft.dwLowDateTime;
-      init = 1;
-    }
-
-  /* time in 100ns units since 1-Jan-1601 */
-  tmp = (long double) time * 1e7 + utc_base;
-  pft->dwHighDateTime = (DWORD) (tmp / (4096.0 * 1024 * 1024));
-  pft->dwLowDateTime = (DWORD) (tmp - (4096.0 * 1024 * 1024) *
-                                pft->dwHighDateTime);
-}
-
-int
-mswindows_utime (Lisp_Object path, struct utimbuf *times)
-{
-  struct utimbuf deftime;
-#if 0
-  HANDLE fh;
-#endif
-  static FILETIME mtime;
-  static FILETIME atime;
-  Extbyte *filename;
-
-  if (times == NULL)
-    {
-      deftime.modtime = deftime.actime = time (NULL);
-      times = &deftime;
-    }
-
-  LISP_STRING_TO_EXTERNAL (path, filename, Qmswindows_tstr);
-  /* APA: SetFileTime fails to set mtime correctly (always 1-Jan-1970) */
-#if 0
-  /* Need write access to set times.  */
-  fh = CreateFile (filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-		   0, OPEN_EXISTING, 0, NULL);
-  if (fh)
-    {
-      convert_from_time_t (times->actime, &atime);
-      convert_from_time_t (times->modtime, &mtime);
-      if (!SetFileTime (fh, NULL, &atime, &mtime))
-	{
-	  CloseHandle (fh);
-	  errno = EACCES;
-	  return -1;
-	}
-      CloseHandle (fh);
-    }
-  else
-    {
-      errno = EINVAL;
-      return -1;
-    }
-  return 0;
-#else
-  return utime (filename, times);
-#endif
-}
-
 /* Close the system structures associated with the given file.  */
 void
 close_file_data (file_data *p_file)
@@ -2093,16 +2067,89 @@ close_file_data (file_data *p_file)
   CloseHandle (p_file->file);
 }
 
+
+/* Some miscellaneous functions that are Windows specific, but not GUI
+   specific (ie. are applicable in terminal or batch mode as well).  */
+
+DEFUN ("mswindows-short-file-name", Fmswindows_short_file_name, 1, 1, "", /*
+  Return the short file name version (8.3) of the full path of FILENAME.
+If FILENAME does not exist, return nil.
+All path elements in FILENAME are converted to their short names.
+*/
+       (filename))
+{
+  Extbyte shortname[MAX_PATH * MAX_XETCHAR_SIZE];
+  Extbyte *fileext;
+  Intbyte *shortint;
+
+  CHECK_STRING (filename);
+
+  /* first expand it.  */
+  filename = Fexpand_file_name (filename, Qnil);
+
+  LISP_STRING_TO_TSTR (filename, fileext);
+  /* luckily, this returns the short version of each element in the path.  */
+  if (qxeGetShortPathName (fileext, shortname,
+			   sizeof (shortname) / XETCHAR_SIZE) == 0)
+    return Qnil;
+
+  TSTR_TO_C_STRING (shortname, shortint);
+  MSWINDOWS_NORMALIZE_FILENAME (shortint);
+
+  return build_string (shortint);
+}
+
+
+DEFUN ("mswindows-long-file-name", Fmswindows_long_file_name, 1, 1, "", /*
+  Return the long file name version of the full path of FILENAME.
+If FILENAME does not exist, return nil.
+All path elements in FILENAME are converted to their long names.
+*/
+       (filename))
+{
+  Intbyte *longname, *canon;
+  Lisp_Object ret;
+
+  CHECK_STRING (filename);
+
+  /* first expand it.  */
+  filename = Fexpand_file_name (filename, Qnil);
+
+  if (!(longname = mswindows_get_long_filename (XSTRING_DATA (filename))))
+    return Qnil;
+
+  canon = mswindows_canonicalize_filename (longname);
+  ret = build_string (canon);
+  xfree (canon);
+  xfree (longname);
+  return ret;
+}
+
+void
+syms_of_nt (void)
+{
+  DEFSUBR (Fmswindows_short_file_name);
+  DEFSUBR (Fmswindows_long_file_name);
+}
+
 void
 vars_of_nt (void)
 {
-  DEFVAR_INT ("nt-fake-unix-uid", &nt_fake_unix_uid /*
+  DEFVAR_INT ("mswindows-fake-unix-uid", &mswindows_fake_unix_uid /*
 *Set uid returned by `user-uid' and `user-real-uid'.
-Under NT and 9x, there is no uids, and even no almighty user called root.
-By setting this variable, you can have any uid of choice. Default is 0.
+Under NT and 9x, there are no uids, and even no almighty user called root.
+By setting this variable, you can have any uid of choice.  Default is 0.
 Changes to this variable take effect immediately.
 */ );
-  nt_fake_unix_uid = 0;
+  mswindows_fake_unix_uid = 0;
+
+  DEFVAR_LISP ("mswindows-get-true-file-attributes", &Vmswindows_get_true_file_attributes /*
+Non-nil means determine accurate link count in file-attributes.
+This option slows down file-attributes noticeably, so is disabled by
+default.  Note that it is only useful for files on NTFS volumes,
+where hard links are supported.
+*/ );
+  Vmswindows_get_true_file_attributes = Qnil;
 }
 
 /* end of nt.c */

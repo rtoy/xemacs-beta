@@ -1,7 +1,7 @@
 ;;; keydefs.el --- Define standard keybindings.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2001 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, dumped
@@ -182,7 +182,9 @@ Keymap for characters following C-c.")
 
 ;; FSFmacs keyboard.c
 
-(define-key global-map "\C-z" 'suspend-emacs-or-iconify-frame)
+(define-key global-tty-map "\C-z" 'suspend-emacs)
+(define-key global-window-system-map "\C-z" 'zap-up-to-char)
+(define-key global-window-system-map '(control Z) 'iconify-frame)
 (define-key global-map "\C-x\C-z" 'suspend-or-iconify-emacs)
 
 ;; FSFmacs loaddefs.el
@@ -214,17 +216,19 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x=" 'what-cursor-position)
 (define-key global-map "\M-:" 'eval-expression)
 ;; Define ESC ESC : like ESC : for people who type ESC ESC out of habit.
-(define-key global-map "\M-\e:" 'eval-expression)
+;(define-key global-map "\M-\e:" 'eval-expression)
 ;(define-key global-map "\M-\e" 'eval-expression)
 ;; Do we really need to disable this now that it is harder to type
 ;; by accident?
 ;; (put 'eval-expression 'disabled t)
 ;; Changed from C-x ESC so that function keys work following C-x.
+;; FMH! I tried putting back C-x ESC using global-window-system-map and
+;; removing the other bindings, but it doesn't work!  I don't understand why
+;; M-ESC ESC (i.e. ESC ESC ESC) does work.
 (define-key global-map "\C-x\e\e" 'repeat-complex-command)
-;(define-key global-map "\C-x\e" 'repeat-complex-command)
 ;; From Emacs 20.
 (define-key global-map "\C-x\M-:" 'repeat-complex-command)
-(define-key global-map "\C-xu" 'advertised-undo)
+(define-key global-map "\C-xu" 'undo)
 ;; Many people are used to typing C-/ on X terminals and getting C-_.
 (define-key global-map '(control /) 'undo)
 (define-key global-map "\C-_" 'undo)
@@ -459,9 +463,8 @@ Keymap for characters following C-c.")
   (if (or (characterp ch) (integerp ch))
       (setq ch (char-to-string ch)))
   (define-key global-map ch 'keyboard-quit))
-(define-key global-map "\e\e\e" 'keyboard-escape-quit)
-
-
+(define-key global-tty-map "\e\e\e" 'keyboard-escape-quit)
+(define-key global-window-system-map "\e\e" 'keyboard-escape-quit)
 
 (define-key global-map "\M-%" 'query-replace)
 
@@ -596,12 +599,18 @@ Keymap for characters following C-c.")
 ;; movement in other windows
 (define-key global-map '(meta next)	'scroll-other-window)
 (define-key global-map '(meta prior)	'scroll-other-window-down)
-(define-key global-map '(meta home)	'beginning-of-buffer-other-window)
-(define-key global-map '(meta end)	'end-of-buffer-other-window)
 (define-key global-map '(meta kp-next)	'scroll-other-window)
 (define-key global-map '(meta kp-prior)	'scroll-other-window-down)
-(define-key global-map '(meta kp-home)	'beginning-of-buffer-other-window)
-(define-key global-map '(meta kp-end)	'end-of-buffer-other-window)
+
+;; movement between buffers
+(global-set-key '(meta shift home) 'switch-to-previous-buffer-in-group)
+(global-set-key '(meta shift end) 'switch-to-next-buffer-in-group)
+(global-set-key '(meta home) 'switch-to-previous-buffer)
+(global-set-key '(meta end) 'switch-to-next-buffer)
+(global-set-key '(meta shift kp-home) 'switch-to-previous-buffer-in-group)
+(global-set-key '(meta shift kp-end) 'switch-to-next-buffer-in-group)
+(global-set-key '(meta kp-home) 'switch-to-previous-buffer)
+(global-set-key '(meta kp-end) 'switch-to-next-buffer)
 
 ;; the infamous delete key
 (define-key global-map 'delete	        'backward-or-forward-delete-char)

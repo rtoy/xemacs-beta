@@ -133,7 +133,8 @@ struct console_methods
 
   /* frame methods */
   Lisp_Object *device_specific_frame_props;
-  void (*init_frame_1_method) (struct frame *, Lisp_Object properties);
+  void (*init_frame_1_method) (struct frame *, Lisp_Object properties,
+			       int frame_name_is_defaulted);
   void (*init_frame_2_method) (struct frame *, Lisp_Object properties);
   void (*init_frame_3_method) (struct frame *);
   void (*after_init_frame_method) (struct frame *, int first_on_device,
@@ -206,6 +207,7 @@ struct console_methods
 				int start_pixpos, int width, face_index findex,
 				int cursor, int cursor_start, int cursor_width,
 				int cursor_height);
+
   /* color methods */
   int (*initialize_color_instance_method) (Lisp_Color_Instance *,
 					   Lisp_Object name,
@@ -276,6 +278,10 @@ struct console_methods
   Lisp_Object (*locate_pixmap_file_method) (Lisp_Object file_method);
   int (*colorize_image_instance_method) (Lisp_Object image_instance,
 					 Lisp_Object fg, Lisp_Object bg);
+  void (*widget_query_string_geometry_method) (Lisp_Object string, 
+					       Lisp_Object face,
+					       int* width, int* height, 
+					       Lisp_Object domain);
   Lisp_Object image_conversion_list;
 
 #ifdef HAVE_TOOLBARS
@@ -620,7 +626,6 @@ Lisp_Object create_console (Lisp_Object name, Lisp_Object type,
 			    Lisp_Object connection, Lisp_Object props);
 void select_console_1 (Lisp_Object);
 struct console *decode_console (Lisp_Object);
-Lisp_Object make_console (struct console *c);
 void add_entry_to_console_type_list (Lisp_Object symbol,
 				     struct console_methods *type);
 struct console_methods *decode_console_type (Lisp_Object type,

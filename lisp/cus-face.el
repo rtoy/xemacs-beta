@@ -17,6 +17,10 @@
 
 ;;; Code:
 
+;; it is now safe to put the `provide' anywhere.  if an error occurs while
+;; loading, all provides (and fsets) will be undone.  put it first to
+;; prevent require/provide loop with custom and cus-face.
+(provide 'cus-face)
 (require 'custom)
 
 ;; To elude the warnings for font functions.
@@ -348,7 +352,5 @@ ARGS is defined as for `custom-theme-reset-faces'."
 
 
 ;;; The End.
-
-(provide 'cus-face)
 
 ;; cus-face.el ends here

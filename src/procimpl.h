@@ -134,24 +134,17 @@ struct Lisp_Process
   /* Low level streams used in input and output, connected to child */
   Lisp_Object pipe_instream;
   Lisp_Object pipe_outstream;
-#ifdef FILE_CODING
   /* Data end streams, decoding and encoding pipe_* streams */
   Lisp_Object coding_instream;
   Lisp_Object coding_outstream;
-#endif
 
   /* Implementation dependent data */
   void *process_data;
 };
 
 /* Macros to refer to data connection streams */
-#ifdef FILE_CODING
 #define DATA_INSTREAM(p) (p)->coding_instream
 #define DATA_OUTSTREAM(p) (p)->coding_outstream
-#else
-#define DATA_INSTREAM(p) (p)->pipe_instream
-#define DATA_OUTSTREAM(p) (p)->pipe_outstream
-#endif
 
 /* Random externs from process.c */
 extern Lisp_Object Qrun, Qstop, Qopen, Qclosed;

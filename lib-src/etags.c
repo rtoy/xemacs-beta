@@ -4833,7 +4833,7 @@ prolog_pr (s, last)
        || (s[pos] == '(' && (pos += 1))
        || (s[pos] == ':' && s[pos + 1] == '-' && (pos += 2)))
       && (last == NULL		/* save only the first clause */
-	  || len != strlen (last)
+	  || len != (int) strlen (last)
 	  || !strneq (s, last, len)))
 	{
 	  pfnote (savenstr (s, len), TRUE, s, pos, lineno, linecharno);

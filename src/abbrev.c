@@ -370,13 +370,13 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
 	  && scan_words (buf, point, -1) > scan_words (buf, abbrev_start, 1))
 	{
 	  Fupcase_initials_region (make_int (abbrev_start), make_int (point),
-				   make_buffer (buf));
+				   wrap_buffer (buf));
 	}
       else
 	{
 	  /* If expansion is one word, or if user says so, upcase it all. */
 	  Fupcase_region (make_int (abbrev_start), make_int (point),
-			  make_buffer (buf));
+			  wrap_buffer (buf));
 	}
     }
   else if (uccount)
@@ -390,7 +390,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
 	pos++;
       /* Change just that.  */
       Fupcase_initials_region (make_int (pos), make_int (pos + 1),
-			       make_buffer (buf));
+			       wrap_buffer (buf));
     }
 
   hook = symbol_function (abbrev_symbol);

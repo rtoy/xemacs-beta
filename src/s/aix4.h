@@ -8,6 +8,8 @@
 #ifndef NOT_C_CODE
 #define _XFUNCS_H_ 1
 
+/* #### we don't use either any more.  some AIX user should delete the include
+   and see if anything breaks. --ben */
 /* AIX is happier when bzero and strcasecmp are declared */
 #include "strings.h"
 

@@ -71,7 +71,7 @@ struct mswindows_font_instance_data
    Redisplay uses the "main" font when encounters this value */
 #define MSWINDOWS_BAD_HFONT ((HFONT)INVALID_HANDLE_VALUE)
 
-HFONT mswindows_get_hfont (Lisp_Font_Instance* f, int under, int strike);
+HFONT mswindows_get_hfont (Lisp_Font_Instance *f, int under, int strike);
 
 Lisp_Object mswindows_color_to_string (COLORREF color);
 

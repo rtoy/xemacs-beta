@@ -31,12 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "bytecode.h"
 #include "syssignal.h"
-
-#ifdef LISP_FLOAT_TYPE
-/* Need to define a differentiating symbol -- see sysfloat.h */
-# define THIS_FILENAME data_c
-# include "sysfloat.h"
-#endif /* LISP_FLOAT_TYPE */
+#include "sysfloat.h"
 
 Lisp_Object Qnil, Qt, Qquote, Qlambda, Qunbound;
 Lisp_Object Qerror_conditions, Qerror_message;
@@ -368,10 +363,10 @@ If non-nil, the return value will be a list whose first element is
 */
        (subr))
 {
-  const char *prompt;
+  const CIntbyte *prompt;
   CHECK_SUBR (subr);
   prompt = XSUBR (subr)->prompt;
-  return prompt ? list2 (Qinteractive, build_string (prompt)) : Qnil;
+  return prompt ? list2 (Qinteractive, build_msg_string (prompt)) : Qnil;
 }
 
 
@@ -768,6 +763,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
   if (idx < 0) goto range_error;
 
+  CHECK_LISP_WRITEABLE (array);
   if (VECTORP (array))
     {
       if (idx >= XVECTOR_LENGTH (array)) goto range_error;

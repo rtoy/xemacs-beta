@@ -44,7 +44,7 @@
 
 (make-coding-system
  'iso-2022-int-1 'iso2022
- "ISO-2022-INT-1"
+ "ISO-2022-INT-1 (Korean)"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    short t
@@ -56,14 +56,17 @@
 (define-egg-environment 'korean
   "Korean settings for egg"
   (lambda ()
-    (when (not (featurep 'egg-kor))
-      (load "its-hangul")
-      (setq its:*standard-modes*
-	    (cons (its:get-mode-map "hangul") its:*standard-modes*))
-      (provide 'egg-kor))
-    (setq wnn-server-type 'kserver)
-    (setq egg-default-startup-file "eggrc-wnn")
-    (setq-default its:*current-map* (its:get-mode-map "hangul"))))
+    (with-boundp '(its:*standard-modes* its:*current-map* wnn-server-type
+					egg-default-startup-file)
+      (with-fboundp 'its:get-mode-map
+	(when (not (featurep 'egg-kor))
+	  (load "its-hangul")
+	  (setq its:*standard-modes*
+		(cons (its:get-mode-map "hangul") its:*standard-modes*))
+	  (provide 'egg-kor))
+	(setq wnn-server-type 'kserver)
+	(setq egg-default-startup-file "eggrc-wnn")
+	(setq-default its:*current-map* (its:get-mode-map "hangul"))))))
 
 ;; (make-coding-system
 ;;  'korean-iso-8bit 2 ?K
@@ -75,10 +78,17 @@
 
 (make-coding-system
  'euc-kr 'iso2022
- "Coding-system of Korean EUC (Extended Unix Code)."
+ "Korean EUC"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    mnemonic "ko/EUC"
+   documentation
+   "Korean EUC (Extended Unix Code), the standard Korean encoding on Unix.
+This follows the same overall EUC principles (see the description under
+Japanese EUC), but specifies different character sets:
+
+G0: ASCII
+G1: Korean-KSC5601"
    eol-type nil))
 
 ;;(define-coding-system-alias 'euc-kr 'euc-korea)
@@ -96,13 +106,14 @@
 
 (make-coding-system
  'iso-2022-kr 'iso2022
- "Coding-System used for communication with mail in Korea."
+ "ISO-2022-KR (Korean mail)"
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
    force-g1-on-output t
    seven t
    lock-shift t
    mnemonic "Ko/7bit"
+   documentation "Coding-System used for communication with mail in Korea."
    eol-type lf))
 
 ;; (define-coding-system-alias 'korean-iso-7bit-lock 'iso-2022-kr)
@@ -114,6 +125,8 @@
 	    (charset korean-ksc5601)
 	    (coding-system euc-kr iso-2022-kr)
 	    (coding-priority euc-kr iso-2022-kr)
+	    (locale "ko_KR.eucKR" "ko_KR.EUC" "ko_KR.euc" "ko_KR" "ko")
+	    (native-coding-system euc-kr)
 	    (input-method . "korean-hangul")
 	    (features korea-util)
 	    (sample-text . "Hangul (한글)	안녕하세요, 안녕하십니까")

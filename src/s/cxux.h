@@ -25,15 +25,8 @@ Boston, MA 02111-1307, USA.  */
  *	Define all the symbols that apply correctly.
  */
 
-/* #define UNIPLUS */
 #define USG5
 #define USG
-/* #define HPUX */
-/* #define UMAX */
-/* #define BSD4_1 */
-/* #define BSD4_2 */
-/* #define BSD4_3 */
-/* #define BSD */
 
 #ifndef	_CX_UX
 #define	_CX_UX 1
@@ -82,16 +75,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define MAIL_USE_FLOCK
 
-/* If the character used to separate elements of the executable path
-   is not ':', #define this to be the appropriate character constant.  */
-/* #define SEPCHAR ':' */
-
-/* Here, on a separate page, add any special hacks needed
-   to make Emacs work on this system.  For example,
-   you might define certain system call names that don't
-   exist on your system, or that do different things on
-   your system and must be used only through an encapsulation
-   (Which you should place, by convention, in sysdep.c).  */
 
 /* The symbol in the kernel where the load average is found
    is named _avenrun.  */

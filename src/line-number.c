@@ -247,7 +247,7 @@ add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
 
   /* ...and update it. */
   ring[0] = Fcons (Fset_marker (Fmake_marker (), make_int (pos),
-				make_buffer (b)),
+				wrap_buffer (b)),
 		   make_int (line));
 }
 

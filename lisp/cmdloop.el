@@ -1,6 +1,7 @@
 ;;; cmdloop.el --- support functions for the top-level command loop.
 
 ;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2001 Ben Wing.
  
 ;; Author: Richard Mlynarik
 ;; Date: 8-Jul-92
@@ -129,9 +130,23 @@ or go back to just one window (by deleting all but the selected window)."
   :type 'boolean
   :group 'editing-basics)
 
+(defvar breakpoint-on-error nil
+  "Break into the C debugger when an unhandled error occurs noninteractively.
+This happens by calling `force-debugging-signal'.  This can be very
+useful when debugging noninteractive errors in tricky situations,
+e.g. makefiles, since you can set this variable using an environment
+variable, like this:
+
+\(using csh)      setenv XEMACSDEBUG '(setq breakpoint-on-error t)'
+\(using bash)     export XEMACSDEBUG='(setq breakpoint-on-error t)'
+
+XEMACSDEBUG is also useful for setting `stack-trace-on-error'. which will
+display a Lisp backtrace when exiting noninteractively due to an unhandled
+error.")
+
 (defun command-error (error-object)
-  (let* ((old-debug-on-error debug-on-error)
-	 (inhibit-quit t)
+  ;; if you want a backtrace before exiting, set stack-trace-on-error.
+  (let* ((inhibit-quit t)
 	 (debug-on-error nil)
 	 (etype (car-safe error-object)))
     (setq quit-flag nil)
@@ -162,11 +177,8 @@ or go back to just one window (by deleting all but the selected window)."
 
     (if (noninteractive)
         (progn
-	  (if old-debug-on-error
-	      (progn
-		(message "Backtrace:\n\n")
-		(backtrace)
-		(message "\n")))
+	  (when breakpoint-on-error
+	    (force-debugging-signal))
           (message "%s exiting\n." emacs-program-name)
           (kill-emacs -1)))
     t))

@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -47,9 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "procimpl.h"
 #include "window.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include "sysfile.h"
 #include "sysproc.h"
@@ -109,8 +107,14 @@ Lisp_Object Vprocess_list;
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 Lisp_Object Vnull_device;
 
+/* Cons of coding systems used to initialize process I/O on a newly-
+   created process. */
+Lisp_Object Vdefault_process_coding_system;
+
 Lisp_Object Qprocess_error;
 Lisp_Object Qnetwork_error;
+
+Fixnum debug_process_io;
 
 
 
@@ -128,10 +132,8 @@ mark_process (Lisp_Object object)
   mark_object (process->pid);
   mark_object (process->pipe_instream);
   mark_object (process->pipe_outstream);
-#ifdef FILE_CODING
   mark_object (process->coding_instream);
   mark_object (process->coding_outstream);
-#endif
   return process->status_symbol;
 }
 
@@ -195,9 +197,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("process", process,
 /*                       basic process accessors                        */
 /************************************************************************/
 
-/* Under FILE_CODING, this function returns low-level streams, connected
-   directly to the child process, rather than en/decoding FILE_CODING
-   streams */
+/* This function returns low-level streams, connected directly to the child
+   process, rather than en/decoding streams */
 void
 get_process_streams (Lisp_Process *p, Lisp_Object *instr, Lisp_Object *outstr)
 {
@@ -365,7 +366,7 @@ get_process (Lisp_Object name)
     }
   else
     return get_process (Fsignal (Qwrong_type_argument,
-				 (list2 (build_string ("process or buffer or nil"),
+				 (list2 (build_msg_string ("process or buffer or nil"),
 				 name))));
 }
 
@@ -464,10 +465,8 @@ make_process_internal (Lisp_Object name)
   p->update_tick = 0;
   p->pipe_instream  = Qnil;
   p->pipe_outstream = Qnil;
-#ifdef FILE_CODING
   p->coding_instream  = Qnil;
   p->coding_outstream = Qnil;
-#endif
 
   p->process_data = 0;
   MAYBE_PROCMETH (alloc_process_data, (p));
@@ -481,10 +480,22 @@ make_process_internal (Lisp_Object name)
 void
 init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
 {
-  USID usid = event_stream_create_stream_pair (in, out,
-					       &p->pipe_instream,
-					       &p->pipe_outstream,
-					       flags);
+  USID usid;
+  Lisp_Object incode, outcode;
+
+  if (!CONSP (Vdefault_process_coding_system) ||
+      NILP (incode = (find_coding_system_for_text_file
+		      (Fcar (Vdefault_process_coding_system), 1))) ||
+      NILP (outcode = (find_coding_system_for_text_file
+		       (Fcdr (Vdefault_process_coding_system), 0))))
+    signal_error (Qinvalid_state,
+		  "Bogus value for `default-process-coding-system'",
+		  Vdefault_process_coding_system);
+
+  usid = event_stream_create_stream_pair (in, out,
+					  &p->pipe_instream,
+					  &p->pipe_outstream,
+					  flags);
 
   if (usid == USID_ERROR)
     signal_error (Qprocess_error, "Setting up communication with subprocess",
@@ -494,22 +505,16 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
     {
       Lisp_Object process = Qnil;
       XSETPROCESS (process, p);
-      puthash ((const void*)usid, LISP_TO_VOID (process), usid_to_process);
+      puthash ((const void *) usid, LISP_TO_VOID (process), usid_to_process);
     }
 
   MAYBE_PROCMETH (init_process_io_handles, (p, in, out, flags));
 
-#ifdef FILE_CODING
-  p->coding_instream = make_decoding_input_stream
-    (XLSTREAM (p->pipe_instream),
-     Fget_coding_system (Vcoding_system_for_read));
+  p->coding_instream =
+    make_coding_input_stream (XLSTREAM (p->pipe_instream), incode, CODING_DECODE);
   Lstream_set_character_mode (XLSTREAM (p->coding_instream));
-  p->coding_outstream = make_encoding_output_stream
-    (XLSTREAM (p->pipe_outstream),
-     Fget_coding_system (Vcoding_system_for_write));
-  /* CODE_CNTL (&out_state[outchannel]) |= CC_END; !!####
-     What's going on here? */
-#endif /* FILE_CODING */
+  p->coding_outstream =
+    make_coding_output_stream (XLSTREAM (p->pipe_outstream), outcode, CODING_ENCODE);
 }
 
 static void
@@ -661,7 +666,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   create_process (process, args + 3, nargs - 3, program, current_dir);
 
   UNGCPRO;
-  return unbind_to (speccount, process);
+  return unbind_to_1 (speccount, process);
 }
 
 
@@ -722,7 +727,6 @@ against lost packets.
 */
        (name, buffer, host, service, protocol))
 {
-  /* !!#### This function has not been Mule-ized */
   /* This function can GC */
   Lisp_Object process = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5, ngcpro1;
@@ -731,7 +735,7 @@ against lost packets.
   GCPRO5 (name, buffer, host, service, protocol);
   CHECK_STRING (name);
 
-  if (NILP(protocol))
+  if (NILP (protocol))
     protocol = Qtcp;
   else
     CHECK_SYMBOL (protocol);
@@ -748,7 +752,7 @@ against lost packets.
 
   XPROCESS (process)->pid = Fcons (service, host);
   XPROCESS (process)->buffer = buffer;
-  init_process_io_handles (XPROCESS (process), (void*)inch, (void*)outch,
+  init_process_io_handles (XPROCESS (process), (void *) inch, (void *) outch,
 			   STREAM_NETWORK_CONNECTION);
 
   event_stream_select_process (XPROCESS (process));
@@ -778,7 +782,6 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
 */
        (name, buffer, dest, port, ttl))
 {
-  /* !!#### This function has not been Mule-ized */
   /* This function can GC */
   Lisp_Object process = Qnil;
   struct gcpro gcpro1;
@@ -787,7 +790,7 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
   CHECK_STRING (name);
 
   /* Since this code is inside HAVE_MULTICAST, existence of
-     open_network_stream is mandatory */
+     open_multicast_group is mandatory */
   PROCMETH (open_multicast_group, (name, dest, port, ttl,
 				   &inch, &outch));
 
@@ -850,7 +853,7 @@ read_process_output (Lisp_Object process)
 {
   /* This function can GC */
   Bytecount nbytes, nchars;
-  Intbyte chars[1024];
+  Intbyte chars[1025];
   Lisp_Object outstream;
   Lisp_Process *p = XPROCESS (process);
 
@@ -880,9 +883,18 @@ read_process_output (Lisp_Object process)
       return XINT (filter_result);
     }
 
-  nbytes = Lstream_read (XLSTREAM (DATA_INSTREAM(p)), chars, sizeof (chars));
+  nbytes = Lstream_read (XLSTREAM (DATA_INSTREAM (p)), chars,
+			 sizeof (chars) - 1);
   if (nbytes <= 0) return nbytes;
 
+  if (debug_process_io)
+    {
+      chars[nbytes] = '\0';
+      stderr_out ("Read: %s\n", chars);
+    }
+
+  /* !!#### if the coding system changed as a result of reading, we
+     need to change the output coding system accordingly. */
   nchars = bytecount_to_charcount (chars, nbytes);
   outstream = p->filter;
   if (!NILP (outstream))
@@ -1014,6 +1026,17 @@ send_process (Lisp_Object process,
 					     start, start + len, 0);
   else
     lstream = make_lisp_string_input_stream (relocatable, start, len);
+
+  if (debug_process_io)
+    {
+      if (nonrelocatable)
+	stderr_out ("Writing: %s\n", nonrelocatable);
+      else
+	{
+	  stderr_out ("Writing: ");
+	  print_internal (relocatable, Qexternal_debugging_output, 0);
+	}
+    }
 
   PROCMETH (send_process, (process, XLSTREAM (lstream)));
 
@@ -1151,7 +1174,6 @@ from processes can arrive in between chunks.
   return Qnil;
 }
 
-#ifdef FILE_CODING
 
 DEFUN ("process-input-coding-system", Fprocess_input_coding_system, 1, 1, 0, /*
 Return PROCESS's input coding system.
@@ -1160,7 +1182,8 @@ Return PROCESS's input coding system.
 {
   process = get_process (process);
   CHECK_LIVE_PROCESS (process);
-  return decoding_stream_coding_system (XLSTREAM (XPROCESS (process)->coding_instream) );
+  return (coding_stream_detected_coding_system
+	  (XLSTREAM (XPROCESS (process)->coding_instream)));
 }
 
 DEFUN ("process-output-coding-system", Fprocess_output_coding_system, 1, 1, 0, /*
@@ -1170,7 +1193,8 @@ Return PROCESS's output coding system.
 {
   process = get_process (process);
   CHECK_LIVE_PROCESS (process);
-  return encoding_stream_coding_system (XLSTREAM (XPROCESS (process)->coding_outstream));
+  return (coding_stream_coding_system
+	  (XLSTREAM (XPROCESS (process)->coding_outstream)));
 }
 
 DEFUN ("process-coding-system", Fprocess_coding_system, 1, 1, 0, /*
@@ -1180,23 +1204,24 @@ Return a pair of coding-system for decoding and encoding of PROCESS.
 {
   process = get_process (process);
   CHECK_LIVE_PROCESS (process);
-  return Fcons (decoding_stream_coding_system
+  return Fcons (coding_stream_detected_coding_system
 		(XLSTREAM (XPROCESS (process)->coding_instream)),
-		encoding_stream_coding_system
+		coding_stream_coding_system
 		(XLSTREAM (XPROCESS (process)->coding_outstream)));
 }
 
 DEFUN ("set-process-input-coding-system", Fset_process_input_coding_system,
        2, 2, 0, /*
 Set PROCESS's input coding system to CODESYS.
+This is used for reading data from PROCESS.
 */
        (process, codesys))
 {
-  codesys = Fget_coding_system (codesys);
+  codesys = get_coding_system_for_text_file (codesys, 1);
   process = get_process (process);
   CHECK_LIVE_PROCESS (process);
 
-  set_decoding_stream_coding_system
+  set_coding_stream_coding_system
     (XLSTREAM (XPROCESS (process)->coding_instream), codesys);
   return Qnil;
 }
@@ -1204,14 +1229,15 @@ Set PROCESS's input coding system to CODESYS.
 DEFUN ("set-process-output-coding-system", Fset_process_output_coding_system,
        2, 2, 0, /*
 Set PROCESS's output coding system to CODESYS.
+This is used for writing data to PROCESS.
 */
        (process, codesys))
 {
-  codesys = Fget_coding_system (codesys);
+  codesys = get_coding_system_for_text_file (codesys, 0);
   process = get_process (process);
   CHECK_LIVE_PROCESS (process);
 
-  set_encoding_stream_coding_system
+  set_coding_stream_coding_system
     (XLSTREAM (XPROCESS (process)->coding_outstream), codesys);
   return Qnil;
 }
@@ -1233,7 +1259,6 @@ encode subprocess input.
   return Qnil;
 }
 
-#endif /* FILE_CODING */
 
 /************************************************************************/
 /*                             process status                           */
@@ -1272,7 +1297,7 @@ exec_sentinel (Lisp_Object process, Lisp_Object reason)
   call2_trapping_errors ("Error in process sentinel", sentinel, process, reason);
   running_asynch_code = 0;
   restore_match_data ();
-  unbind_to (speccount, Qnil);
+  unbind_to (speccount);
 }
 
 DEFUN ("set-process-sentinel", Fset_process_sentinel, 2, 2, 0, /*
@@ -1334,24 +1359,23 @@ status_message (Lisp_Process *p)
     {
       string = build_string (signal_name (code));
       if (coredump)
-	string2 = build_translated_string (" (core dumped)\n");
+	string2 = build_msg_string (" (core dumped)\n");
       else
 	string2 = build_string ("\n");
       set_string_char (XSTRING (string), 0,
-		       DOWNCASE (current_buffer,
-				 string_char (XSTRING (string), 0)));
+		       DOWNCASE (0, string_char (XSTRING (string), 0)));
       return concat2 (string, string2);
     }
   else if (EQ (symbol, Qexit))
     {
       if (code == 0)
-	return build_translated_string ("finished\n");
+	return build_msg_string ("finished\n");
       string = Fnumber_to_string (make_int (code));
       if (coredump)
-	string2 = build_translated_string (" (core dumped)\n");
+	string2 = build_msg_string (" (core dumped)\n");
       else
 	string2 = build_string ("\n");
-      return concat2 (build_translated_string ("exited abnormally with code "),
+      return concat2 (build_msg_string ("exited abnormally with code "),
 		      concat2 (string, string2));
     }
   else
@@ -1875,9 +1899,7 @@ text to PROCESS after you call this function.
 	  Lstream_close (XLSTREAM (DATA_OUTSTREAM (XPROCESS (process))));
 	  event_stream_delete_stream_pair (Qnil, XPROCESS (process)->pipe_outstream);
 	  XPROCESS (process)->pipe_outstream = Qnil;
-#ifdef FILE_CODING
 	  XPROCESS (process)->coding_outstream = Qnil;
-#endif
 	}
     }
 
@@ -1923,10 +1945,8 @@ deactivate_process (Lisp_Object process)
 
   p->pipe_instream = Qnil;
   p->pipe_outstream = Qnil;
-#ifdef FILE_CODING
   p->coding_instream = Qnil;
   p->coding_outstream = Qnil;
-#endif
 }
 
 static void
@@ -2102,14 +2122,12 @@ syms_of_process (void)
   DEFSUBR (Fprocess_send_eof);
   DEFSUBR (Fsignal_process);
 /*  DEFSUBR (Fprocess_connection); */
-#ifdef FILE_CODING
   DEFSUBR (Fprocess_input_coding_system);
   DEFSUBR (Fprocess_output_coding_system);
   DEFSUBR (Fset_process_input_coding_system);
   DEFSUBR (Fset_process_output_coding_system);
   DEFSUBR (Fprocess_coding_system);
   DEFSUBR (Fset_process_coding_system);
-#endif /* FILE_CODING */
 }
 
 void
@@ -2175,6 +2193,20 @@ Only Windows processes can be "windowed" or "console". This variable has no
 effect on UNIX processes, because all UNIX processes are "console".
 */ );
   windowed_process_io = 0;
+
+  DEFVAR_INT ("debug-process-io", &debug_process_io /*
+If non-zero, display data sent to or received from a process.
+*/ );
+  debug_process_io = 0;
+
+  DEFVAR_LISP ("default-process-coding-system",
+	       &Vdefault_process_coding_system /*
+Cons of coding systems used for process I/O by default.
+The car part is used for reading (decoding) data from a process, and
+the cdr part is used for writing (encoding) data to a process.
+*/ );
+  /* This below will get its default set correctly in code-init.el. */
+    Vdefault_process_coding_system = Fcons (Qundecided, Qnil);
 
 #ifdef PROCESS_IO_BLOCKING
   DEFVAR_LISP ("network-stream-blocking-port-list", &network_stream_blocking_port_list /*

@@ -1,5 +1,6 @@
 /* System-dependent prototypes
    Copyright (C) 1985, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -81,11 +82,6 @@ void init_poll_for_quit (void);
 extern JMP_BUF break_system_call_jump;
 extern volatile int can_break_system_calls;
 
-ssize_t sys_write_1 (int fildes, const void *buf, size_t nbyte,
-		     int allow_quit);
-ssize_t sys_read_1 (int fildes, void *buf, size_t nbyte,
-		    int allow_quit);
-
 /* Call these functions if you want to change some terminal parameter --
    reset the console, change the parameter, and init it again. */
 void init_one_console (struct console *c);
@@ -136,44 +132,12 @@ void setup_pty (int fd);
 char *start_of_text (void);
 /* Return the address of the start of the data segment prior to unexec. */
 void *start_of_data (void);
-/* Return the address of the end of the text segment prior to unexec. */
-char *end_of_text (void);
-/* Return the address of the end of the data segment prior to unexec. */
-char *end_of_data (void);
 
 /* Get_system_name returns as its value a string for system-name to return. */
 void init_system_name (void);
 
-#ifndef HAVE_GETCWD
-char *getcwd (char *pathname, size_t size);
-#endif
-
-#ifndef HAVE_RENAME
-int rename (const char *from, const char *to);
-#endif
-
-#ifndef HAVE_DUP2
-int dup2 (int oldd, int newd);
-#endif
-
-#ifndef HAVE_STRERROR
-/* X11R6 defines strerror as a macro */
-# ifdef strerror
-# undef strerror
-# endif
-const char *strerror (int);
-#endif
-
-int interruptible_open (const char *path, int oflag, int mode);
-
-#ifndef HAVE_H_ERRNO
-extern int h_errno;
-#endif
-
-#ifdef HAVE_REALPATH
-#define xrealpath realpath
-#else
-char *xrealpath(const char *path, char resolved_path []);
+#ifdef WIN32_NATIVE
+void *sbrk (unsigned long increment);
 #endif
 
 #endif /* INCLUDED_sysdep_h_ */

@@ -1,6 +1,7 @@
 /* Define mswindows-specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,6 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* This file essentially Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
 
 /* Authorship:
 
@@ -34,15 +37,15 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console.h"
 #include "syswindows.h"
-#include "syscommctrl.h"
 
 #ifdef HAVE_XPM
 #include <X11/xpm.h>
 #endif
 
 /* The name of the main window class */
-#define XEMACS_CLASS "XEmacs"
+#define XEMACS_CLASS "XEmacs"  /* WARNING: uses of this need XETEXT */
 
+/* WARNING: uses of this need XETEXT */
 #define XEMACS_CONTROL_CLASS "XEmacsControl"
 
 /*
@@ -67,11 +70,11 @@ typedef struct Lisp_Devmode
   struct lcrecord_header header;
 
   /* Pointer to the DEVMODE structure */
-  DEVMODE* devmode;
+  DEVMODEW *devmode;
 
   /* Full printer name. It can be longer than devmode->dmDeviceName
      can accommodate, so need to keep it separately */
-  char* printer_name;
+  Lisp_Object printer_name;
 
   /* Printer device this object is currently selected in, or Qnil
      if not selected */
@@ -95,7 +98,7 @@ DECLARE_LRECORD (devmode, Lisp_Devmode);
  * Devices
  */
 
-#define MSW_FONTSIZE (LF_FACESIZE*4+12)
+#define MSW_FONTSIZE (LF_FACESIZE * 4 + 12)
 
 struct mswindows_device
 {
@@ -115,7 +118,7 @@ struct msprinter_device
 {
   HDC hdc, hcdc;		/* Printer and the comp. DCs */
   HANDLE hprinter;
-  char* name;
+  Lisp_Object name;
   Lisp_Object devmode;
   Lisp_Object fontlist;
 };
@@ -206,6 +209,12 @@ struct mswindows_frame
      FRAME_{HEIGHT,WIDTH} do not work for pixel geometry! */
   int charheight, charwidth;
 
+#ifdef MULE
+  int cursor_x;
+  int cursor_y;
+  face_index cursor_findex;
+#endif
+
   /* Misc flags */
   int button2_need_lbutton : 1;
   int button2_need_rbutton : 1;
@@ -218,7 +227,7 @@ struct mswindows_frame
 
   /* Geometry, in characters, as specified by proplist during frame
      creation. Members are set to -1 for unspecified */
-  XEMACS_RECT_WH* target_rect;
+  XEMACS_RECT_WH *target_rect;
 };
 
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
@@ -241,7 +250,14 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
 #define FRAME_MSWINDOWS_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
 #define FRAME_MSWINDOWS_TARGET_RECT(f)	  (FRAME_MSWINDOWS_DATA (f)->target_rect)
+
 #define FRAME_MSWINDOWS_POPUP(f)	  (FRAME_MSWINDOWS_DATA (f)->popup)
+
+#ifdef MULE
+# define FRAME_MSWINDOWS_CURSOR_X(f) (FRAME_MSWINDOWS_DATA (f)->cursor_x)
+# define FRAME_MSWINDOWS_CURSOR_Y(f) (FRAME_MSWINDOWS_DATA (f)->cursor_y)
+# define FRAME_MSWINDOWS_CURSOR_FINDEX(f) (FRAME_MSWINDOWS_DATA (f)->cursor_findex)
+#endif
 
 /* Frame check and validation macros */
 #define FRAME_MSWINDOWS_P(frm) CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm))
@@ -251,7 +267,7 @@ struct mswindows_frame
 /* win32 window LONG indices */
 #define XWL_FRAMEOBJ	0
 #define XWL_COUNT	1	/* Number of LONGs that we use */
-#define MSWINDOWS_WINDOW_EXTRA_BYTES	(XWL_COUNT*4)
+#define MSWINDOWS_WINDOW_EXTRA_BYTES	(XWL_COUNT * 4)
 
 /*
  * Printer frame, aka printer job
@@ -304,13 +320,13 @@ LRESULT WINAPI mswindows_control_wnd_proc (HWND hwnd,
 
 void mswindows_redraw_exposed_area (struct frame *f, int x, int y,
 				    int width, int height);
-void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest);
+void mswindows_size_frame_internal (struct frame *f, XEMACS_RECT_WH *dest);
 HWND mswindows_get_selected_frame_hwnd (void);
 void mswindows_enqueue_magic_event (HWND hwnd, UINT msg);
 int mswindows_is_dialog_msg (MSG *msg);
 
 /* win32 DDE management library */
-#define MSWINDOWS_DDE_ITEM_OPEN "Open"
+#define MSWINDOWS_DDE_ITEM_OPEN "Open" /* WARNING: uses of this need XETEXT */
 extern DWORD mswindows_dde_mlid;
 extern HSZ mswindows_dde_service;
 extern HSZ mswindows_dde_topic_system;
@@ -324,17 +340,17 @@ void mswindows_enqueue_dispatch_event (Lisp_Object event);
 void mswindows_enqueue_misc_user_event (Lisp_Object channel,
 					Lisp_Object function,
 					Lisp_Object object);
-Lisp_Object mswindows_cancel_dispatch_event (Lisp_Event* event);
+Lisp_Object mswindows_cancel_dispatch_event (Lisp_Event *event);
 Lisp_Object mswindows_pump_outstanding_events (void);
 Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun)
 					  (Lisp_Object barg),
 					  Lisp_Object barg);
 void mswindows_unmodalize_signal_maybe (void);
 
-COLORREF mswindows_string_to_color (const char *name);
-USID emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
-					 Lisp_Object* instream,
-					 Lisp_Object* outstream,
+COLORREF mswindows_string_to_color (const Intbyte *name);
+USID emacs_mswindows_create_stream_pair (void *inhandle, void *outhandle,
+					 Lisp_Object *instream,
+					 Lisp_Object *outstream,
 					 int flags);
 USID emacs_mswindows_delete_stream_pair (Lisp_Object instream,
 					 Lisp_Object outstream);
@@ -348,34 +364,22 @@ extern Lisp_Object mswindows_frame_being_created;
 
 void mswindows_get_workspace_coords (RECT *rc);
 
-HWND mswindows_get_console_hwnd (void);
-void mswindows_hide_console (void);
-void mswindows_show_console (void);
-int mswindows_output_console_string (CONST Extbyte *str, Bytecount len);
-
 Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
 int mswindows_char_is_accelerator (struct frame *f, Emchar ch);
-Bytecount mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
-					     Bytecount maxlen, Emchar *accel,
-					     Lisp_Object error_name);
+Lisp_Object mswindows_translate_menu_or_dialog_item (Lisp_Object item,
+						     Emchar *accel);
 
 #ifdef HAVE_TOOLBARS
-Lisp_Object mswindows_get_toolbar_button_text (struct frame* f,
+Lisp_Object mswindows_get_toolbar_button_text (struct frame *f,
 					       int command_id);
-Lisp_Object mswindows_handle_toolbar_wm_command (struct frame* f,
+Lisp_Object mswindows_handle_toolbar_wm_command (struct frame *f,
 						 HWND ctrl, WORD id);
 #endif
-Lisp_Object mswindows_handle_gui_wm_command (struct frame* f,
+Lisp_Object mswindows_handle_gui_wm_command (struct frame *f,
 					     HWND ctrl, LPARAM id);
 
-int mswindows_windows9x_p (void);
-
-void mswindows_output_last_error (char *frob);
-DOESNT_RETURN mswindows_report_process_error (const char *string,
-					      Lisp_Object data,
-					      int errnum);
-Lisp_Object mswindows_lisp_error (int errnum);
+void mswindows_handle_destroyclipboard (void);
 
 Lisp_Object mswindows_handle_print_dialog_box (struct frame *f,
 					       Lisp_Object keys);
@@ -388,9 +392,16 @@ void mswindows_unregister_popup_frame (Lisp_Object frame);
 
 void mswindows_destroy_selection (Lisp_Object selection);
 
+int mswindows_window_is_xemacs (HWND hwnd);
+
 Lisp_Object msprinter_default_printer (void);
 
 Lisp_Object mswindows_find_frame (HWND hwnd);
+
+#ifdef MULE
+Lisp_Object mswindows_get_code_page_charset (int code_page);
+void mswindows_start_ime_composition (struct frame *f);
+#endif /* MULE */
 
 struct mswindows_dialog_id
 {

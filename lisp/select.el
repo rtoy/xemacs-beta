@@ -666,14 +666,30 @@ nil if this is impossible, or a suitable representation otherwise."
 
 ;;; CF_xxx conversions
 (defun select-convert-from-cf-text (selection type value)
-  (replace-in-string (if (string-match "\0" value)
-			 (substring value 0 (match-beginning 0))
-		       value)
-		     "\\(\r\n\\|\n\r\\)" "\n" t))
+  (let ((value (decode-coding-string value 'mswindows-multibyte)))
+    (replace-in-string (if (string-match "\0" value)
+			   (substring value 0 (match-beginning 0))
+			 value)
+		       "\\(\r\n\\|\n\r\\)" "\n" t)))
+
+(defun select-convert-from-cf-unicodetext (selection type value)
+  (let ((value (decode-coding-string value 'mswindows-unicode)))
+    (replace-in-string (if (string-match "\0" value)
+			   (substring value 0 (match-beginning 0))
+			 value)
+		       "\\(\r\n\\|\n\r\\)" "\n" t)))
 
 (defun select-convert-to-cf-text (selection type value)
   (let ((text (select-convert-to-text selection type value)))
-    (concat (replace-in-string text "\n" "\r\n" t) "\0")))
+    (encode-coding-string
+     (concat (replace-in-string text "\n" "\r\n" t) "\0")
+     'mswindows-multibyte)))
+
+(defun select-convert-to-cf-unicodetext (selection type value)
+  (let ((text (select-convert-to-text selection type value)))
+    (encode-coding-string
+     (concat (replace-in-string text "\n" "\r\n" t) "\0")
+     'mswindows-unicode)))
 
 ;;; Appenders
 (defun select-append-to-text (selection type value1 value2)
@@ -694,6 +710,15 @@ nil if this is impossible, or a suitable representation otherwise."
 	(text2 (select-convert-from-cf-text selection 'CF_TEXT value2)))
     (if (and text1 text2)
 	(select-convert-to-cf-text selection type (concat text1 text2))
+      nil)))
+
+(defun select-append-to-cf-unicodetext (selection type value1 value2)
+  (let ((text1 (select-convert-from-cf-unicodetext selection
+						    'CF_UNICODETEXT value1))
+	(text2 (select-convert-from-cf-unicodetext selection
+						    'CF_UNICODETEXT value2)))
+    (if (and text1 text2)
+	(select-convert-to-cf-unicodetext selection type (concat text1 text2))
       nil)))
 
 (defun select-append-default (selection type value1 value2)
@@ -761,6 +786,7 @@ nil if this is impossible, or a suitable representation otherwise."
 	(ATOM . select-convert-to-atom)
 	(INTEGER . select-convert-to-integer)
 	(CF_TEXT . select-convert-to-cf-text)
+	(CF_UNICODETEXT . select-convert-to-cf-unicodetext)
 	))
 
 ;; Types listed here can be selections foreign to XEmacs
@@ -780,6 +806,7 @@ nil if this is impossible, or a suitable representation otherwise."
 	(LENGTH . select-convert-from-length)
 	(FILE_NAME . select-convert-from-filename)
 	(CF_TEXT . select-convert-from-cf-text)
+	(CF_UNICODETEXT . select-convert-from-cf-unicodetext)
 	))
 
 ;; Types listed here have special coercion functions that can munge
@@ -796,7 +823,9 @@ nil if this is impossible, or a suitable representation otherwise."
       '((TEXT . select-coerce-to-text)
 	(STRING . select-coerce-to-text)
 	(COMPOUND_TEXT . select-coerce-to-text)
-	(CF_TEXT . select-coerce-to-text)))
+	(CF_TEXT . select-coerce-to-text)
+	(CF_UNICODETEXT . select-coerce-to-text)
+	))
 
 ;; Types listed here can be appended by own-selection
 (setq selection-appender-alist
@@ -805,6 +834,7 @@ nil if this is impossible, or a suitable representation otherwise."
 	(STRING . select-append-to-string)
 	(COMPOUND_TEXT . select-append-to-compound-text)
 	(CF_TEXT . select-append-to-cf-text)
+	(CF_UNICODETEXT . select-append-to-cf-unicodetext)
 	))
 
 ;; Types listed here have buffer-kill handlers
@@ -813,9 +843,11 @@ nil if this is impossible, or a suitable representation otherwise."
 	(TEXT . select-buffer-killed-text)
 	(STRING . select-buffer-killed-text)
 	(COMPOUND_TEXT . select-buffer-killed-text)
-	(CF_TEXT . select-buffer-killed-text)))
+	(CF_TEXT . select-buffer-killed-text)
+	(CF_UNICODETEXT . select-buffer-killed-text)
+	))
 
 ;; Lists of types that are coercible (can be converted to other types)
-(setq selection-coercible-types '(TEXT STRING COMPOUND_TEXT))
+(setq selection-coercible-types '(TEXT STRING COMPOUND_TEXT CF_TEXT CF_UNICODETEXT))
 
 ;;; select.el ends here

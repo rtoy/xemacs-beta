@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_MS_WINDOWS
 
-#include <windows.h>
+#include "syswindows.h"
 #include "glyphs.h"
 
 /****************************************************************************
@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct mswindows_image_instance_data
 {
-  HBITMAP* bitmaps;
+  HBITMAP *bitmaps;
   HICON icon;
   int real_width, real_height;
 };
@@ -49,7 +49,7 @@ struct mswindows_image_instance_data
 #define IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES(i) \
      (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->bitmaps)
 #define IMAGE_INSTANCE_MSWINDOWS_MASK(i) \
-     (*(HBITMAP*)&(IMAGE_INSTANCE_PIXMAP_MASK (i)))		/* Make it lvalue */
+     (* (HBITMAP *) &(IMAGE_INSTANCE_PIXMAP_MASK (i)))		/* Make it lvalue */
 #define IMAGE_INSTANCE_MSWINDOWS_ICON(i) \
      (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->icon)
 #define IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_WIDTH(i) \
@@ -59,8 +59,8 @@ struct mswindows_image_instance_data
 
 #define XIMAGE_INSTANCE_MSWINDOWS_BITMAP(i) \
   IMAGE_INSTANCE_MSWINDOWS_BITMAP (XIMAGE_INSTANCE (i))
-#define XIMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE(i,slice) \
-  IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE (XIMAGE_INSTANCE (i,slice))
+#define XIMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE(i, slice) \
+  IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICE (XIMAGE_INSTANCE (i, slice))
 #define XIMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES(i) \
   IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_MSWINDOWS_MASK(i) \
@@ -69,19 +69,19 @@ struct mswindows_image_instance_data
   IMAGE_INSTANCE_MSWINDOWS_ICON (XIMAGE_INSTANCE (i))
 
 int
-mswindows_resize_dibitmap_instance (Lisp_Image_Instance* ii,
-				    struct frame* f,
+mswindows_resize_dibitmap_instance (Lisp_Image_Instance *ii,
+				    struct frame *f,
 				    int newx, int newy);
 HBITMAP
-mswindows_create_resized_bitmap (Lisp_Image_Instance* ii,
-				 struct frame* f,
+mswindows_create_resized_bitmap (Lisp_Image_Instance *ii,
+				 struct frame *f,
 				 int newx, int newy);
 HBITMAP
-mswindows_create_resized_mask (Lisp_Image_Instance* ii,
-			       struct frame* f,
+mswindows_create_resized_mask (Lisp_Image_Instance *ii,
+			       struct frame *f,
 			       int newx, int newy);
 void
-mswindows_initialize_image_instance_icon (Lisp_Image_Instance* image,
+mswindows_initialize_image_instance_icon (Lisp_Image_Instance *image,
 					  int cursor);
 
 #define WIDGET_INSTANCE_MSWINDOWS_HANDLE(i) \

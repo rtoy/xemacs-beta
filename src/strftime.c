@@ -18,6 +18,11 @@
 
 /* Synched up with: FSF 19.30. */
 
+/* This file has been ... uhhhhh ... Mule-ized.  Yeah.
+
+   (Everything here is external format.  This is DANGEROUS and
+   data-lossy, but fixing it is too much of a bother now.) --ben */
+
 /* Note: this version of strftime lacks locale support,
    but it is standalone.
 

@@ -1,0 +1,479 @@
+List of changes in new Mule workspace:
+--------------------------------------
+
+Deleted files:
+
+src/iso-wide.h
+src/mule-charset.h
+src/mule.c
+src/ntheap.h
+src/syscommctrl.h
+lisp/files-nomule.el
+lisp/help-nomule.el
+lisp/mule/mule-help.el
+lisp/mule/mule-init.el
+lisp/mule/mule-misc.el
+nt/config.h
+
+
+Other deleted files, all zero-width and accidentally present:
+
+src/events-mod.h
+tests/Dnd/README.OffiX
+tests/Dnd/dragtest.el
+netinstall/README.xemacs
+lib-src/srcdir-symlink.stamp
+
+New files:
+
+CHANGES-ben-mule
+README.ben-mule-21-5
+README.ben-separate-stderr
+TODO.ben-mule-21-5
+etc/TUTORIAL.{cs,es,nl,sk,sl}
+etc/unicode/*
+lib-src/make-mswin-unicode.pl
+lisp/code-init.el
+lisp/resize-minibuffer.el
+lisp/unicode.el
+lisp/mule/china-util.el
+lisp/mule/cyril-util.el
+lisp/mule/devan-util.el
+lisp/mule/devanagari.el
+lisp/mule/ethio-util.el
+lisp/mule/indian.el
+lisp/mule/japan-util.el
+lisp/mule/korea-util.el
+lisp/mule/lao-util.el
+lisp/mule/lao.el
+lisp/mule/mule-locale.txt
+lisp/mule/mule-msw-init.el
+lisp/mule/thai-util.el
+lisp/mule/thai.el
+lisp/mule/tibet-util.el
+lisp/mule/tibetan.el
+lisp/mule/viet-util.el
+src/charset.h
+src/intl-auto-encap-win32.c
+src/intl-auto-encap-win32.h
+src/intl-encap-win32.c
+src/intl-win32.c
+src/intl-x.c
+src/mule-coding.c
+src/text.c
+src/text.h
+src/unicode.c
+src/s/win32-common.h
+src/s/win32-native.h
+
+
+
+gzip support:
+
+-- new coding system `gzip' (bytes -> bytes); unfortunately, not quite
+   working yet because it handles only the raw zlib format and not the
+   higher-level gzip format (the zlib library is brain-damaged in that it
+   provides low-level, stream-oriented API's only for raw zlib, and for
+   gzip you have only high-level API's, which aren't useful for xemacs).
+-- configure support (with-zlib).
+
+configure changes:
+
+- file-coding always compiled in.  eol detection is off by default on unix,
+  non-mule, but can be enabled with configure option
+  --with-default-eol-detection or command-line flag -eol.
+- code that selects which files are compiled is mostly moved to
+   Makefile.in.in.  see comment in Makefile.in.in.
+- vestigial i18n3 code deleted.
+- new cygwin mswin libs imm32 (input methods), mpr (user name enumeration).
+- check for link, symlink.
+- vfork-related code deleted.
+- fix configure.usage. (delete --with-file-coding, --no-doc-file, add
+  --with-default-eol-detection, --quick-build).
+- nt/config.h has been eliminated and everything in it merged into
+  config.h.in and s/windowsnt.h.  see config.h.in for more info.
+- massive rewrite of s/windowsnt.h, m/windowsnt.h, s/cygwin32.h,
+  s/mingw32.h.  common code moved into s/win32-common.h, s/win32-native.h.
+- in nt/xemacs.mak,config.inc.samp, variable is called MULE, not HAVE_MULE,
+  for consistency with sources.
+- define TABDLY, TAB3 in freebsd.h (#### from where?)
+
+Tutorial:
+
+- massive rewrite; sync to FSF 21.0.106, switch focus to window systems,
+  new sections on terminology and multiple frames, lots of fixes for
+  current xemacs idioms.
+- german version from Adrian mostly matching my changes.
+- copy new tutorials from FSF (Spanish, Dutch, Slovak, Slovenian, Czech);
+  not updated yet though.
+- eliminate help-nomule.el and mule-help.el; merge into one single tutorial
+  function, fix lots of problems, put back in help.el where it belongs.
+  (there was some random junk in help-nomule -- string-width and make-char.
+  string-width is now in subr.el with a single definition, and make-char in
+  text.c.)
+
+Sample init file:
+
+- remove forward/backward buffer code, since it's now standard.
+- when disabling C-x C-c, make it display a message saying how to exit, not
+  just beep and complain "undefined".
+
+Key bindings: (keymap.c, keydefs.el, help.el, etc.)
+
+- M-home, M-end now move forward and backward in buffers; with Shift, stay
+  within current group (e.g. all C files; same grouping as the gutter
+  tabs). (bindings switch-to-{next/previous}-buffer[-in-group] in files.el)
+  - needed to move code from gutter-items.el to buff-menu.el that's used by
+    these bindings, since gutter-items.el is loaded only when the gutter is
+    active and these bindings (and hence the code) is not (any more) gutter
+    specific.
+- new global vars global-tty-map and global-window-system-map specify key
+  bindings for use only on TTY's or window systems, respectively.  this is
+  used to make ESC ESC be keyboard-quit on window systems, but ESC ESC ESC
+  on TTY's, where Meta + arrow keys may appear as ESC ESC O A or whatever.
+  C-z on window systems is now zap-up-to-char, and iconify-frame is moved
+  to C-Z.  ESC ESC is isearch-quit. (isearch-mode.el)
+- document global-{tty,window-system}-map in various places; display them
+  when you do C-h b.
+- fix up function documentation in general for keyboard primitives.
+  e.g. key-bindings now contains a detailed section on the steps prior to
+  looking up in keymaps, i.e. function-key-map,
+  keyboard-translate-table. etc.  define-key and other obvious starting
+  points indicate where to look for more info.
+- eliminate use and mention of grody advertised-undo and
+  deprecated-help. (simple.el, startup.el, picture.el, menubar-items.el)
+
+gnuclient, gnuserv:
+
+- clean up headers a bit.
+- use proper ms win idiom for checking for temp directory (TEMP or TMP, not
+  TMPDIR).
+
+throughout XEmacs sources:
+
+- all #ifdef FILE_CODING statements removed from code.
+
+I/O:
+
+- use PATH_MAX consistently instead of MAXPATHLEN, MAX_PATH, etc.
+- all code that does preprocessor games with C lib I/O functions (open,
+  read) has been removed.  The code has been changed to call the correct
+  function directly.  Functions that accept Intbyte * arguments for
+  filenames and such and do automatic conversion to or from external format
+  will be prefixed qxe...().  Functions that are retrying in case of EINTR
+  are prefixed retry_...().  DONT_ENCAPSULATE is long-gone.
+- never call getcwd() any more.  use our shadowed value always.
+
+Strings:
+
+- new qxe() string functions that accept Intbyte * as arguments.  These
+  work exactly like the standard strcmp(), strcpy(), sprintf(), etc. except
+  for the argument declaration differences.  We use these whenever we have
+  Intbyte * strings, which is quite often.
+- new fun build_intstring() takes an Intbyte *.  also new funs
+  build_msg_intstring (like build_intstring()) and build_msg_string (like
+  build_string()) to do a GETTEXT() before building the
+  string. (elimination of old build_translated_string(), replaced by
+  build_msg_string()).
+- the doprnt.c external entry points have been completely rewritten to be
+  more useful and have more sensible names.  We now have, for example,
+  versions that work exactly like sprintf() but return a malloc()ed string.
+- function intern_int() for Intbyte * arguments, like intern().
+- numerous places throughout code where char * replaced with something
+  else, e.g. Char_ASCII *, Intbyte *, Char_Binary *, etc.  same with
+  unsigned char *, going to UChar_Binary *, etc.
+- code in print.c that handles stdout, stderr rewritten.
+- places that print to stderr directly replaced with stderr_out().
+- new convenience functions write_fmt_string(), write_fmt_string_lisp(), stderr_out_lisp(), write_string().
+
+Allocation, Objects, Lisp Interpreter:
+
+- automatically use "managed lcrecord" code when allocating.  any lcrecord
+  can be put on a free list with free_lcrecord().
+- record_unwind_protect() returns the old spec depth.
+- unbind_to() now takes only one arg.  use unbind_to_1() if you want the
+  2-arg version, with GC protection of second arg.
+- new funs to easily inhibit GC. ({begin,end}_gc_forbidden()) use them in
+  places where gc is currently being inhibited in a more ugly fashion.
+  also, we disable GC in certain strategic places where string data is
+  often passed in, e.g. dfc functions, print functions.
+- major improvements to eistring code, fleshing out of missing funs.
+- make_buffer() -> wrap_buffer() for consistency with other objects; same
+  for make_frame() -> wrap_frame() and make_console() -> wrap_console().
+- better documentation in condition-case.
+- new convenience funs record_unwind_protect_freeing() and
+  record_unwind_protect_freeing_dynarr() for conveniently setting up an
+  unwind-protect to xfree() or Dynarr_free() a pointer.
+
+Init code:
+
+- lots of init code rewritten to be mule-correct.
+
+Processes:
+
+- always call egetenv(), never getenv(), for mule correctness.
+
+s/m files:
+
+- removal of unused DATA_END, TEXT_END, SYSTEM_PURESIZE_EXTRA, HAVE_ALLOCA
+  (automatically determined)
+- removal of vfork references (we no longer use vfork)
+
+
+make-docfile:
+
+- clean up headers a bit.
+- allow .obj to mean equivalent .c, just like for .o.
+- allow specification of a "response file" (a command-line argument
+  beginning with @, specifying a file containing further command-line
+  arguments) -- a standard mswin idiom to avoid potential command-line
+  limits and to simplify makefiles.  use this in xemacs.mak.
+
+debug support:
+
+- (cmdloop.el) new var breakpoint-on-error, which breaks into the C
+  debugger when an unhandled error occurs noninteractively.  useful when
+  debugging errors coming out of complicated make scripts, e.g. package
+  compilation, since you can set this through an env var.
+- (startup.el) new env var XEMACSDEBUG, specifying a Lisp form executed
+  early in the startup process; meant to be used for turning on debug flags
+  such as breakpoint-on-error or stack-trace-on-error, to track down
+  noninteractive errors.
+- (cmdloop.el) removed non-working code in command-error to display a
+  backtrace on debug-on-error.  use stack-trace-on-error instead to get
+  this.
+- (process.c) new var debug-process-io displays data sent to and received
+  from a process.
+- (alloc.c) staticpros have name stored with them for easier debugging.
+- (emacs.c) code that handles fatal errors consolidated and rewritten.
+  much more robust and correctly handles all fatal exits on mswin
+  (e.g. aborts, not previously handled right).
+
+command line (startup.el, emacs.c):
+
+- new option -eol to enable auto EOL detection under non-mule unix.
+- new option -nuni (--no-unicode-lib-calls) to force use of non-Unicode
+  API's under Windows NT, mostly for debugging purposes.
+- help message fixed up (divided into sections), existing problem causing
+  incomplete output fixed, undocumented options documented.
+
+startup.el:
+
+- move init routines from before-init-hook or after-init-hook; just call
+  them directly (init-menubar-at-startup, init-mule-at-startup).
+
+frame.el:
+
+- delete old commented-out code.
+
+Mule changes:
+
+Major:
+
+- the code that handles the details of processing multilingual text has
+  been consolidated to make it easier to extend it.  it has been yanked out
+  of various files (buffer.h, mule-charset.h, lisp.h, insdel.c, fns.c,
+  file-coding.c, etc.) and put into text.c and text.h.  mule-charset.h has
+  also been renamed charset.h.  all long comments concerning the
+  representations and their processing have been consolidated into text.c.
+- major rewriting of file-coding.  it's mostly abstracted into coding
+  systems that are defined by methods (similar to devices and
+  specifiers), with the ultimate aim being to allow non-i18n coding
+  systems such as gzip.  there is a "chain" coding system that allows
+  multiple coding systems to be chained together. (it doesn't yet
+  have the concept that either end of a coding system can be bytes or
+  chars; this needs to be added.)
+- large amounts of code throughout the code base have been Mule-ized,
+  not just Windows code.
+- total rewriting of OS locale code.  it notices your locale at startup and
+  sets the language environment accordingly, and calls setlocale() and sets
+  LANG when you change the language environment.  new language environment
+  properties locale, mswindows-locale, cygwin-locale, native-coding-system,
+  to determine langenv from locale and vice-versa; fix all language
+  environments (lots of language files).  langenv startup code rewritten.
+  many new functions to convert between locales, language environments,
+  etc.
+- major overhaul of the way default values for the various coding system
+  variables are handled.  all default values are collected into one
+  location, a new file code-init.el, which provides a unified mechanism for
+  setting and querying what i call "basic coding system variables" (which
+  may be aliases, parts of conses, etc.) and a mechanism of different
+  configurations (Windows w/Mule, Windows w/o Mule, Unix w/Mule, Unix w/o
+  Mule, unix w/o Mule but w/auto EOL), each of which specifies a set of
+  default values.  we determine the configuration at startup and set all
+  the values in one place. (code-init.el, code-files.el, coding.el, ...)
+- i copied the remaining language-specific files from fsf.  i made
+  some minor changes in certain cases but for the most part the stuff
+  was just copied and may not work.
+- ms windows mule support, with full unicode support.  required font,
+  redisplay, event, other changes.  ime support from ikeyama.
+
+User-Visible Changes:
+
+Lisp-Visible Changes:
+
+- ensure that `escape-quoted' works correctly even without Mule support and
+  use it for all auto-saves. (auto-save.el, fileio.c, coding.el, files.el)
+- new var buffer-file-coding-system-when-loaded specifies the actual coding
+  system used when the file was loaded (buffer-file-coding-system is
+  usually the same, but may be changed because it controls how the file is
+  written out).  use it in revert-buffer (files.el, code-files.el) and in
+  new submenu File->Revert Buffer with Specified Encoding
+  (menubar-items.el).
+- improve docs on how the coding system is determined when a file is read
+  in; improved docs are in both find-file and insert-file-contents and a
+  reference to where to find them is in
+  buffer-file-coding-system-for-read. (files.el, code-files.el)
+- new (brain-damaged) FSF way of calling post-read-conversion (only one
+  arg, not two) is supported, along with our two-argument way, as best we
+  can. (code-files.el)
+- add inexplicably missing var default-process-coding-system.  use it.  get
+  rid of former hacked-up way of setting these defaults using
+  comint-exec-hook.  also fun
+  set-buffer-process-coding-system. (code-process.el, code-cmds.el, process.c)
+- remove function set-default-coding-systems; replace with
+  set-default-output-coding-systems, which affects only the output defaults
+  (buffer-file-coding-system, output half of
+  default-process-coding-system).  the input defaults should not be set by
+  this because they should always remain `undecided' in normal
+  circumstances.  fix prefer-coding-system to use the new function and
+  correct its docs.
+- fix bug in coding-system-change-eol-conversion (code-cmds.el)
+- recognize all eol types in prefer-coding-system (code-cmds.el)
+- rewrite coding-system-category to be correct (coding.el)
+
+Internal Changes:
+
+- Separate encoding and decoding lstreams have been combined into a single
+  coding lstream.  Functions make_encoding_*_stream and
+  make_decoding_*_stream have been combined into make_coding_*_stream,
+  which takes an argument specifying whether encode or decode is wanted.
+- remove last vestiges of I18N3, I18N4 code.
+- ascii optimization for strings: we keep track of the number of ascii
+  chars at the beginning and use this to optimize byte<->char conversion on
+  strings.
+- mule-misc.el, mule-init.el deleted; code in there either deleted,
+  rewritten, or moved to another file.
+- mule.c deleted.
+- move non-Mule-specific code out of mule-cmds.el into code-cmds.el. (coding-system-change-text-conversion; remove duplicate coding-system-change-eol-conversion)
+- remove duplicate set-buffer-process-coding-system (code-cmds.el)
+- add some commented-out code from FSF mule-cmds.el
+  (find-coding-systems-region-subset-p, find-coding-systems-region,
+  find-coding-systems-string, find-coding-systems-for-charsets,
+  find-multibyte-characters, last-coding-system-specified,
+  select-safe-coding-system, select-message-coding-system) (code-cmds.el)
+- remove obsolete alias pathname-coding-system, function set-pathname-coding-system (coding.el)
+- remove coding-system property doc-string; split into `description'
+  (short, for menu items) and `documentation' (long); correct coding system
+  defns (coding.el, file-coding.c, lots of language files)
+- move coding-system-base into C and make use of internal info (coding.el, file-coding.c)
+- move undecided defn into C (coding.el, file-coding.c)
+- use define-coding-system-alias, not copy-coding-system (coding.el)
+- new coding system iso-8859-6 for arabic
+- delete windows-1251 support from cyrillic.el; we do it automatically
+- remove setup-*-environment as per FSF 21
+- rewrite european.el with lang envs for each language, so we can specify the locale
+- fix corruption in greek.el
+- sync japanese.el with FSF 20.6
+- fix warnings in mule-ccl.el
+- move FSF compat Mule fns from obsolete.el to mule-charset.el
+- eliminate unused truncate-string{-to-width}
+- make-coding-system accepts (but ignores) the additional properties
+  present in the fsf version, for compatibility.
+- i fixed the iso2022 handling so it will correctly read in files
+  containing unknown charsets, creating a "temporary" charset which
+  can later be overwritten by the real charset when it's defined.
+  this allows iso2022 elisp files with literals in strange languages
+  to compile correctly under mule.  i also added a hack that will
+  correctly read in and write out the emacs-specific "composition"
+  escape sequences, i.e. ESC 0 through ESC 4.  this means that my
+  workspace correctly compiles the new file devanagari.el that i added.
+- elimination of string-to-char-list (use string-to-list)
+- elimination of junky define-charset
+
+Search:
+
+- make regex routines reentrant, since they're sometimes called
+  reentrantly. (see regex.c for a description of how.) all global variables
+  used by the regex routines get pushed onto a stack by the callers before
+  being set, and are restored when finished.  redo the preprocessor flags
+  controlling REL_ALLOC in conjunction with this.
+
+Selection:
+
+- fix msw selection code for Mule.  proper encoding for
+  RegisterClipboardFormat.  store selection as CF_UNICODETEXT, which will
+  get converted to the other formats.  don't respond to destroy messages
+  from EmptyClipboard().
+
+Menubar:
+
+- move menu-splitting code (menu-split-long-menu, etc.) from font-menu.el
+  to menubar-items.el and redo its algorithm; use in various items with
+  long generated menus; rename to remove `font-' from beginning of
+  functions but keep old names as aliases
+- new fn menu-sort-menu
+- new items Open With Specified Encoding, Revert Buffer with Specified Encoding
+- split Mule menu into Encoding (non-Mule-specific; includes new item to
+  control EOL auto-detection) and International submenus on Options,
+  International on Help
+- redo items Grep All Files in Current Directory {and Below} using stuff
+  from sample init.el
+- Debug on Error and friends now affect current session only; not saved
+- maybe-add-init-button -> init-menubar-at-startup and call explicitly from startup.el
+- don't use charset-registry in msw-font-menu.el; it's only for X
+
+Process:
+
+- Move setenv from packages; synch setenv/getenv with 21.0.105
+
+Unicode support:
+
+- translation tables added in etc/unicode
+- new files unicode.c, unicode.el containing unicode coding systems and
+  support; old code ripped out of file-coding.c
+- translation tables read in at startup (NEEDS WORK TO MAKE IT MORE EFFICIENT)
+- support CF_TEXT, CF_UNICODETEXT in select.el
+- encapsulation code added so that we can support both Windows 9x and NT in
+  a single executable, determining at runtime whether to call the Unicode
+  or non-Unicode API.  encapsulated routines in intl-encap-win32.c
+  (non-auto-generated) and intl-auto-encap-win32.[ch] (auto-generated).
+  code generator in lib-src/make-mswin-unicode.pl.  changes throughout the
+  code to use the wide structures (W suffix) and call the encapsulated
+  Win32 API routines (qxe prefix).  calling code needs to do proper
+  conversion of text using new coding systems Qmswindows_tstr,
+  Qmswindows_unicode, or Qmswindows_multibyte. (the first points to one of
+  the other two.)
+
+
+File-coding rewrite:
+
+The coding system code has been majorly rewritten.  It's abstracted into
+coding systems that are defined by methods (similar to devices and
+specifiers).  The types of conversions have also been
+generalized. Formerly, decoding always converted bytes to characters and
+encoding the reverse (these are now called "text file converters"), but
+conversion can now happen either to or from bytes or characters.  This
+allows coding systems such as `gzip' and `base64' to be written.  When
+specifying such a coding system to an operation that expects a text file
+converter (such as reading in or writing out a file), the appropriate
+coding systems to convert between bytes and characters are automatically
+inserted into the conversion chain as necessary.  To facilitate creating
+such chains, a special coding system called "chain" has been created, which
+chains together two or more coding systems.
+
+Encoding detection has also been abstracted.  Detectors are logically
+separate from coding systems, and each detector defines one or more
+categories. (For example, the detector for Unicode defines categories such
+as UTF-8, UTF-16, UCS-4, and UTF-7.) When a particular detector is given a
+piece of text to detect, it determines likeliness values (seven of them,
+from 3 [most likely] to -3 [least likely]; specific criteria are defined
+for each possible value).  All detectors are run in parallel on a
+particular piece of text, and the results tabulated together to determine
+the actual encoding of the text.
+
+Encoding and decoding are now completely parallel operations, and the
+former "encoding" and "decoding" lstreams have been combined into a single
+"coding" lstream.  Coding system methods that were formerly split in such a
+fashion have also been combined.
+

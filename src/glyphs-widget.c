@@ -435,6 +435,20 @@ redisplay_widget (Lisp_Object widget)
     }
 }
 
+static void
+widget_query_string_geometry (Lisp_Object string, Lisp_Object face,
+			      int *width, int *height, Lisp_Object domain)
+{
+  struct device *d = DOMAIN_XDEVICE (domain);
+
+  if (HAS_DEVMETH_P (d, widget_query_string_geometry))
+    DEVMETH (d, widget_query_string_geometry,
+	     (string, face, width, height, domain));
+  else
+    query_string_geometry (string, face, width, height, 0, domain);
+    
+}
+
 /* Query for a widgets desired geometry. If no type specific method is
    provided then use the widget text to calculate sizes. */
 static void
@@ -478,9 +492,9 @@ widget_query_geometry (Lisp_Object image_instance,
 
 	      /* Then if we are allowed to resize the widget, make the
 		 size the same as the text dimensions. */
-	      query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-				     IMAGE_INSTANCE_WIDGET_FACE (ii),
-				     &w, &h, 0, domain);
+	      widget_query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+					    IMAGE_INSTANCE_WIDGET_FACE (ii),
+					    &w, &h, domain);
 	      /* Adjust the size for borders. */
 	      if (IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii))
 		*width = w + 2 * WIDGET_BORDER_WIDTH;
@@ -773,9 +787,9 @@ button_query_geometry (Lisp_Object image_instance,
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int w, h;
-  query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-			 IMAGE_INSTANCE_WIDGET_FACE (ii),
-			 &w, &h, 0, domain);
+  widget_query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+				IMAGE_INSTANCE_WIDGET_FACE (ii),
+				&w, &h, domain);
   /* Adjust the size for borders. */
   if (IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii))
     {
@@ -804,9 +818,9 @@ tree_view_query_geometry (Lisp_Object image_instance,
   if (*width)
     {
       /* #### what should this be. reconsider when X has tree views. */
-      query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-			     IMAGE_INSTANCE_WIDGET_FACE (ii),
-			     width, 0, 0, domain);
+      widget_query_string_geometry (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+				    IMAGE_INSTANCE_WIDGET_FACE (ii),
+				    width, 0, domain);
     }
   if (*height)
     {
@@ -833,9 +847,9 @@ tab_control_query_geometry (Lisp_Object image_instance,
     {
       int h, w;
 
-      query_string_geometry (XGUI_ITEM (XCAR (rest))->name,
-			     IMAGE_INSTANCE_WIDGET_FACE (ii),
-			     &w, &h, 0, domain);
+      widget_query_string_geometry (XGUI_ITEM (XCAR (rest))->name,
+				    IMAGE_INSTANCE_WIDGET_FACE (ii),
+				    &w, &h, domain);
       tw += 5 * WIDGET_BORDER_WIDTH; /* some bias */
       tw += w;
       th = max (th, h + 2 * WIDGET_BORDER_HEIGHT);

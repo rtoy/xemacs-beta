@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/ObjectP.h>
 #include <X11/CompositeP.h>
 #include <X11/Shell.h>
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 #include "../src/EmacsManager.h"
 #endif
 #ifdef LWLIB_MENUBARS_LUCID
@@ -456,7 +456,7 @@ xlw_update_tab_control (widget_instance* instance, Widget widget, widget_value* 
 }
 #endif /* LWLIB_TABS_LUCID */
 
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
 static Widget
 xlw_create_clip_window (widget_instance *instance)
 {
@@ -496,7 +496,7 @@ xlw_creation_table [] =
 #ifdef LWLIB_TABS_LUCID
   {"tab-control",	xlw_create_tab_control},
 #endif
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   {"clip-window", xlw_create_clip_window},
 #endif
   {NULL, NULL}
@@ -524,7 +524,7 @@ lw_lucid_widget_p (Widget widget)
       XtClass (((CompositeWidget)widget)->composite.children [0])
 	== xlwMenuWidgetClass;
 #endif
-#ifdef HAVE_WIDGETS
+#ifdef HAVE_X_WIDGETS
   if (the_class == emacsManagerWidgetClass)
     return True;
 #endif

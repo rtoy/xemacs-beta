@@ -2,6 +2,7 @@
 ;; Keywords: help
 
 ;; Copyright (C) 1985, 1986, 1993, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;	   Richard Stallman <rms@gnu.ai.mit.edu>
@@ -617,9 +618,11 @@ to read a file name from the minibuffer."
 (defun Info-find-node (filename &optional nodename no-going-back tryfile line)
   "Go to an info node specified as separate FILENAME and NODENAME.
 Look for a plausible filename, or if not found then look for URL's and
-dispatch to the appropriate fn.  NO-GOING-BACK is non-nil if
-recovering from an error in this function; it says do not attempt
-further (recursive) error recovery.  TRYFILE is ??"
+dispatch to the appropriate fn.  NO-GOING-BACK is non-nil if recovering
+from an error in this function; it says do not attempt further (recursive)
+error recovery.  TRYFILE indicates that NODENAME might actually be a
+filename, so if we can't find a node of this name, try going to the `Top'
+node of a file of this name."
 
   (Info-setup-initial)
 
@@ -700,7 +703,9 @@ further (recursive) error recovery.  TRYFILE is ??"
 	      (setq Info-current-file nil
 		    Info-current-subfile nil
 		    Info-current-file-completions nil
-		    Info-index-alternatives nil
+		    ;; Nooooooooooo!  Info-index can extend across more
+		    ;; than one file (e.g. XEmacs, Lispref)
+		    ;; Info-index-alternatives nil
 		    buffer-file-name nil)
 	      (erase-buffer)
 	      (if (string= "dir" (file-name-nondirectory filename))
@@ -1580,6 +1585,7 @@ versions of NAME. Only the suffixes are tried."
 		       "")
 		     ")"
 		     (or Info-current-node ""))))))
+
 
 ;; Go to an info node specified with a filename-and-nodename string
 ;; of the sort that is found in pointers in nodes.
@@ -2294,8 +2300,10 @@ A positive or negative prefix argument moves by multiple screenfuls."
 		  (setq matches
 			(cons (list (buffer-substring (match-beginning 1)
 						      (match-end 1))
-				    (buffer-substring (match-beginning 2)
-						      (match-end 2))
+				    (format "(%s)%s" Info-current-file
+					    (buffer-substring
+					     (match-beginning 2)
+					     (match-end 2)))
 				    Info-current-node
 				    (string-to-int (concat "0"
 							   (buffer-substring

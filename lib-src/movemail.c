@@ -61,7 +61,6 @@ Boston, MA 02111-1307, USA.
  */
 
 #define NO_SHORTNAMES   /* Tell config not to load remap.h */
-#define DONT_ENCAPSULATE
 #include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>

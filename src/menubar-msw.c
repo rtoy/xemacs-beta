@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
    Copyright (C) 1997 Kirill M. Katsnelson <kkm@kis.ru>.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,6 +22,9 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* This function mostly Mule-ized (except perhaps some Unicode splitting).
+   5-2000. */
 
 /* Author:
    Initially written by kkm 12/24/97,
@@ -96,7 +99,7 @@ Boston, MA 02111-1307, USA.  */
 #define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH 0
 
 #define EMPTY_ITEM_ID ((UINT)LISP_TO_VOID (Qunbound))
-#define EMPTY_ITEM_NAME "(empty)"
+#define EMPTY_ITEM_NAME "(empty)" /* WARNING: uses of this need XETEXT */
 
 /* Current menu (bar or popup) descriptor. gcpro'ed */
 static Lisp_Object current_menudesc;
@@ -117,10 +120,7 @@ static Lisp_Object current_hash_table;
 static HMENU top_level_menu;
 
 /*
- * Translate (in place) X accelerator syntax to win32 accelerator syntax.
- * Return new length.
- * len = number of bytes (not including zero terminator).
- * maxlen = size of buffer.
+ * Translate X accelerator syntax to win32 accelerator syntax.
  * accel = (Emchar*) to receive the accelerator character
  *         or NULL to suppress accelerators in the menu or dialog item.
  *
@@ -132,35 +132,31 @@ static HMENU top_level_menu;
  *   The accelerator character is passed back in *accel.
  *   (If there is no accelerator, it will be added on the first character.)
  *
- * We assume and maintain zero-termination.  To be absolutely sure
- * of not hitting an error, maxlen should be >= 2*len + 3.
  */
-Bytecount
-mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
-					 Bytecount maxlen, Emchar *accel,
-					 Lisp_Object error_name)
-{
-  Intbyte *ptr;
 
+Lisp_Object
+mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
+{
+  Bytecount len = XSTRING_LENGTH (item);
+  Intbyte *it = (Intbyte *) alloca (2 * len + 42), *ptr = it;
+
+  memcpy (ptr, XSTRING_DATA (item), len + 1);
   if (accel)
     *accel = '\0';
 
   /* Escape '&' as '&&' */
-  ptr = item;
-  while ((ptr = (Intbyte *) memchr (ptr, '&', len - (ptr - item))) != NULL)
+  
+  while ((ptr = (Intbyte *) memchr (ptr, '&', len - (ptr - it))) != NULL)
     {
-      if (len + 2 > maxlen)
-	invalid_argument ("Menu item produces too long displayable string",
-		      error_name);
-      memmove (ptr + 1, ptr, (len - (ptr - item)) + 1);
+      memmove (ptr + 1, ptr, (len - (ptr - it)) + 1);
       len++;
       ptr += 2;
     }
 
   /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
      and `%%' with `%'. */
-  ptr = item;
-  while ((ptr = (Intbyte *) memchr (ptr, '%', len - (ptr - item))) != NULL)
+  ptr = it;
+  while ((ptr = (Intbyte *) memchr (ptr, '%', len - (ptr - it))) != NULL)
     {
       if (*(ptr + 1) == '_')
 	{
@@ -168,21 +164,19 @@ mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
 	    {
 	      *ptr = '&';
 	      if (!*accel)
-		/* #### urk !  We need a reference translation table for
-		   case changes that aren't buffer-specific. */
-		*accel = DOWNCASE (current_buffer, charptr_emchar (ptr + 2));
-	      memmove (ptr + 1, ptr + 2, len - (ptr - item + 2) + 1);
+		*accel = DOWNCASE (0, charptr_emchar (ptr + 2));
+	      memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
 	      len--;
 	    }
 	  else	/* Skip accelerator */
 	    {
-	      memmove (ptr, ptr + 2, len - (ptr - item + 2) + 1);
-	      len-=2;
+	      memmove (ptr, ptr + 2, len - (ptr - it + 2) + 1);
+	      len -= 2;
 	    }
 	}
       else if (*(ptr + 1) == '%')
 	{
-	  memmove (ptr + 1, ptr + 2, len - (ptr - item + 2) + 1);
+	  memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
 	  len--;
 	  ptr++;
 	}
@@ -193,20 +187,15 @@ mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
   if (accel && !*accel)
     {
       /* Force a default accelerator */
-      if (len + 2 > maxlen)
-	invalid_argument ("Menu item produces too long displayable string",
-		      error_name);
-      ptr = item;
+      ptr = it;
       memmove (ptr + 1, ptr, len + 1);
-      /* #### urk !  We need a reference translation table for
-	 case changes that aren't buffer-specific. */
-      *accel = DOWNCASE (current_buffer, charptr_emchar (ptr + 1));
+      *accel = DOWNCASE (0, charptr_emchar (ptr + 1));
       *ptr = '&';
 
       len++;
     }
 
-  return len;
+  return make_string (it, len);
 }
 
 /*
@@ -214,39 +203,24 @@ mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
  * "Left Flush\tRight Flush"
  */
 
-/* #### This is junk.  Need correct handling of sizes.  Use a Intbyte_dynarr,
-   not a static buffer. */
-static char*
+static Lisp_Object
 displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
 {
-  Bytecount ll;
-
-  /* We construct the name in a static buffer. That's fine, because
-     menu items longer than 128 chars are probably programming errors,
-     and better be caught than displayed! */
-
-  static char buf[MAX_MENUITEM_LENGTH+2];
+  Lisp_Object left, right = Qnil;
 
   /* Left flush part of the string */
-  ll = gui_item_display_flush_left (gui_item, buf, MAX_MENUITEM_LENGTH);
+  left = gui_item_display_flush_left (gui_item);
 
-  ll = mswindows_translate_menu_or_dialog_item ((Intbyte *) buf, ll,
-					  MAX_MENUITEM_LENGTH, accel,
-					  XGUI_ITEM (gui_item)->name);
+  left = mswindows_translate_menu_or_dialog_item (left, accel);
 
   /* Right flush part, unless we're at the top-level where it's not allowed */
   if (!bar_p)
-    {
-      Bytecount lr;
+    right = gui_item_display_flush_right (gui_item);
 
-      assert (MAX_MENUITEM_LENGTH > ll + 1);
-      lr = gui_item_display_flush_right (gui_item, buf + ll + 1,
-					 MAX_MENUITEM_LENGTH - ll - 1);
-      if (lr)
-	buf [ll] = '\t';
-     }
-
-  return buf;
+  if (!NILP (right))
+    return concat3 (left, build_string ("\t"), right);
+  else
+    return left;
 }
 
 /*
@@ -286,7 +260,8 @@ empty_menu (HMENU menu, int add_empty_p)
 {
   while (DeleteMenu (menu, 0, MF_BYPOSITION));
   if (add_empty_p)
-    AppendMenu (menu, MF_STRING | MF_GRAYED, EMPTY_ITEM_ID, EMPTY_ITEM_NAME);
+    qxeAppendMenu (menu, MF_STRING | MF_GRAYED, EMPTY_ITEM_ID,
+		   XETEXT (EMPTY_ITEM_NAME));
 }
 
 /*
@@ -312,7 +287,7 @@ checksum_menu_item (Lisp_Object item)
   else if (CONSP (item))
     {
       /* Submenu - hash by its string name + 0 */
-      return internal_hash (XCAR(item), 0);
+      return internal_hash (XCAR (item), 0);
     }
   else if (VECTORP (item))
     {
@@ -331,10 +306,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 			Lisp_Object *accel_list,
 			int flush_right, int bar_p)
 {
-  MENUITEMINFO item_info;
-  UINT oldflags = MF_BYPOSITION;
-  UINT olduidnewitem = 0;
-  LPCTSTR oldlpnewitem = 0;
+  MENUITEMINFOW item_info;
 
   item_info.cbSize = sizeof (item_info);
   item_info.fMask = MIIM_TYPE | MIIM_STATE | MIIM_ID;
@@ -346,18 +318,15 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
     {
       /* Separator or unselectable text */
       if (separator_string_p (XSTRING_DATA (item)))
-	{
-	  item_info.fType = MFT_SEPARATOR;
-	  oldflags |= MF_SEPARATOR;
-	}
+	item_info.fType = MFT_SEPARATOR;
       else
 	{
+	  Extbyte *itemext;
+
 	  item_info.fType = MFT_STRING;
 	  item_info.fState = MFS_DISABLED;
-	  /* !!#### mule-bogosity, fixed in my mule ws */
-	  item_info.dwTypeData = (Extbyte *) XSTRING_DATA (item);
-	  oldflags |= MF_STRING | MF_DISABLED;
-	  oldlpnewitem = item_info.dwTypeData;
+	  LISP_STRING_TO_TSTR (item, itemext);
+	  item_info.dwTypeData = (XELPTSTR) itemext;
 	}
     }
   else if (CONSP (item))
@@ -368,6 +337,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2, gcpro3;
       Emchar accel;
+      Extbyte *itemext;
 
       GCPRO3 (gui_item, path, *accel_list);
 
@@ -384,21 +354,17 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	}
 
       if (!gui_item_active_p (gui_item))
-	{
-	  item_info.fState = MFS_GRAYED;
-	  oldflags |= MF_GRAYED;
-	}
+	item_info.fState = MFS_GRAYED;
       /* Temptation is to put 'else' right here. Although, the
 	 displayed item won't have an arrow indicating that it is a
 	 popup.  So we go ahead a little bit more and create a popup */
       submenu = create_empty_popup_menu ();
 
       item_info.fMask |= MIIM_SUBMENU;
-      item_info.dwTypeData = displayable_menu_item (gui_item, bar_p, &accel);
+      LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel),
+			   itemext);
+      item_info.dwTypeData = (XELPTSTR) itemext;
       item_info.hSubMenu = submenu;
-      olduidnewitem = (UINT) submenu;
-      oldlpnewitem = item_info.dwTypeData;
-      oldflags |= MF_POPUP;
 
       if (accel && bar_p)
 	*accel_list = Fcons (make_char (accel), *accel_list);
@@ -429,6 +395,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2;
       Emchar accel;
+      Extbyte *itemext;
 
       GCPRO2 (gui_item, *accel_list);
 
@@ -442,10 +409,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	pgui_item->name = Feval (pgui_item->name);
 
       if (!gui_item_active_p (gui_item))
-	{
-	  item_info.fState = MFS_GRAYED;
-	  oldflags = MF_GRAYED;
-	}
+	item_info.fState = MFS_GRAYED;
 
       style = (NILP (pgui_item->selected) || NILP (Feval (pgui_item->selected))
 	       ? Qnil : pgui_item->style);
@@ -454,14 +418,9 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	{
 	  item_info.fType |= MFT_RADIOCHECK;
 	  item_info.fState |= MFS_CHECKED;
-	  oldflags |= MF_CHECKED; /* Can't support radio-button checkmarks
-				     under 3.51 */
 	}
       else if (EQ (style, Qtoggle))
-	{
-	  item_info.fState |= MFS_CHECKED;
-	  oldflags |= MF_CHECKED;
-	}
+	item_info.fState |= MFS_CHECKED;
 
       id = allocate_menu_item_id (path, pgui_item->name,
 				  pgui_item->suffix);
@@ -469,10 +428,9 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 
       item_info.wID = (UINT) XINT (id);
       item_info.fType |= MFT_STRING;
-      item_info.dwTypeData = displayable_menu_item (gui_item, bar_p, &accel);
-      olduidnewitem = item_info.wID;
-      oldflags |= MF_STRING;
-      oldlpnewitem = item_info.dwTypeData;
+      LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, &accel),
+			   itemext);
+      item_info.dwTypeData = (XELPTSTR) itemext;
 
       if (accel && bar_p)
 	*accel_list = Fcons (make_char (accel), *accel_list);
@@ -483,12 +441,9 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
     sferror ("Malformed menu item descriptor", item);
 
   if (flush_right)
-    item_info.fType |= MFT_RIGHTJUSTIFY; /* can't support in 3.51 */
+    item_info.fType |= MFT_RIGHTJUSTIFY;
 
-  if (xInsertMenuItemA)
-    xInsertMenuItemA (menu, UINT_MAX, TRUE, &item_info);
-  else
-    InsertMenu (menu, UINT_MAX, oldflags, olduidnewitem, oldlpnewitem);
+  qxeInsertMenuItem (menu, UINT_MAX, TRUE, &item_info);
 
 done:;
 }
@@ -573,12 +528,14 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 	 two separators in X... In Windows this looks ugly, anyways.) */
       if (!bar_p && !deep_p && popup_menu_titles && !NILP (pgui_item->name))
 	{
-	  CHECK_STRING (pgui_item->name);
-	  InsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
-		      0, displayable_menu_item (gui_item, bar_p, NULL));
-	  InsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-	  if (xSetMenuDefaultItem) /* not in NT 3.5x */
-	    xSetMenuDefaultItem (menu, 0, MF_BYPOSITION);
+	  Extbyte *nameext;
+
+	  LISP_STRING_TO_TSTR (displayable_menu_item (gui_item, bar_p, NULL),
+			       nameext);
+	  qxeInsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
+			 0, nameext);
+	  qxeInsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	  SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
 	}
     }
 
@@ -721,9 +678,10 @@ mswindows_char_is_accelerator (struct frame *f, Emchar ch)
 
   if (NILP (hash))
     return 0;
-  /* !!#### not Mule-ized */
-  return !NILP (memq_no_quit (make_char (tolower (ch)),
-			      Fgethash (Qt, hash, Qnil)));
+  return !NILP (memq_no_quit
+		(make_char
+		 (DOWNCASE (WINDOW_XBUFFER (FRAME_SELECTED_XWINDOW (f)), ch)),
+		 Fgethash (Qt, hash, Qnil)));
 }
 
 
@@ -821,7 +779,7 @@ mswindows_handle_wm_command (struct frame *f, WORD id)
   /* this used to call mswindows_enqueue_misc_user_event but that
      breaks customize because the misc_event gets eval'ed in some
      circumstances. Don't change it back unless you can fix the
-     customize problem also.*/
+     customize problem also. */
   mswindows_enqueue_misc_user_event (frame, fn, arg);
 
   UNGCPRO; /* data */
@@ -972,8 +930,6 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 			 menu_desc);
     }
   UNGCPRO;
-
-  return Qnil;
 }
 
 

@@ -1,7 +1,7 @@
 /* Display generation from window structure and buffer text.
    Copyright (C) 1994, 1995, 1996 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996 Chuck Thompson.
 
@@ -59,9 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 #include "line-number.h"
-#ifdef FILE_CODING
 #include "file-coding.h"
-#endif
 
 #include "sysfile.h"
 
@@ -863,9 +861,14 @@ add_emchar_rune (pos_data *data)
 	    data->font_is_bogus = 0;
 
 	  fi = XFONT_INSTANCE (font_instance);
-	  if (!fi->proportional_p)
-	    /* sweetness and light. */
-	    data->last_char_width = fi->width;
+	  if (!fi->proportional_p || data->font_is_bogus)
+	    {
+	      Emchar ch = data->font_is_bogus ? '~' : data->ch;
+
+	      data->last_char_width =
+		redisplay_text_width_emchar_string (XWINDOW (data->window), 
+						    data->findex, &ch, 1);
+	    }
 	  else
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
@@ -875,13 +878,10 @@ add_emchar_rune (pos_data *data)
 	}
 
       width = data->last_char_width;
-      if (width < 0)
-	{
-	  /* bummer.  Proportional fonts. */
-	  width = redisplay_text_width_emchar_string (XWINDOW (data->window),
-						      data->findex,
-						      &data->ch, 1);
-	}
+      if (width < 0) /* proportional fonts */
+	width = redisplay_text_width_emchar_string (XWINDOW (data->window),
+						    data->findex,
+						    &data->ch, 1);
     }
 
   if (data->max_pixpos != -1 && (data->pixpos + width > data->max_pixpos))
@@ -911,7 +911,7 @@ add_emchar_rune (pos_data *data)
 			    data->bi_charbpos);
       else
 	crb->charbpos =
-	  bytecount_to_charcount (XSTRING_DATA (data->string), data->bi_charbpos);
+	  XSTRING_INDEX_BYTE_TO_CHAR (data->string, data->bi_charbpos);
     }
   else if (data->is_modeline)
     crb->charbpos = data->modeline_charpos;
@@ -3544,6 +3544,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 
       in_modeline_generation = 1;
 
+      sledgehammer_check_ascii_begin (result_str);
       detach_all_extents (result_str);
       resize_string (XSTRING (result_str), -1,
                      data.bytepos - XSTRING_LENGTH (result_str));
@@ -3559,6 +3560,10 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
                                                   elt)->object.chr.ch));
             }
         }
+
+      init_string_ascii_begin (result_str);
+      bump_string_modiff (result_str);
+      sledgehammer_check_ascii_begin (result_str);
 
       for (elt = 0; elt < Dynarr_length (formatted_string_extent_dynarr);
            elt++)
@@ -3682,7 +3687,8 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
 
 static Charcount
 add_string_to_fstring_db_runes (pos_data *data, const Intbyte *str,
-                                Charcount pos, Charcount min_pos, Charcount max_pos)
+                                Charcount pos, Charcount min_pos,
+				Charcount max_pos)
 {
   /* This function has been Mule-ized. */
   Charcount end;
@@ -3972,9 +3978,12 @@ tail_recurse:
        * - If first element is a negative number, truncate displaying cdr to
        *   at most that many characters.  If positive, pad (with spaces)
        *   to at least that many characters.
-       * - If first element is another symbol, process the cadr or caddr
-       *   recursively according to whether the symbol's value is non-nil or
-       *   nil.
+       * - If first element is another symbol or a boolean specifier, process
+       *   the cadr or caddr recursively according to whether the symbol's
+       *   value or specifier's instance is non-nil or nil.
+       * - If first element is , process the cadr or caddr
+       *   recursively according to whether the instance of the specifier in
+       *   the modeline's window is non-nil or nil.
        * - If first element is an extent, process the cdr recursively
        *   and handle the extent's face.
        */
@@ -3982,24 +3991,25 @@ tail_recurse:
       Lisp_Object car, tem;
 
       car = XCAR (elt);
-      if (SYMBOLP (car))
+      if (SYMBOLP (car) || BOOLEAN_SPECIFIERP (car))
 	{
 	  elt = XCDR (elt);
 	  if (!CONSP (elt))
 	    goto invalid;
 
-	  tem = symbol_value_in_buffer (car, w->buffer);
+	  if (SYMBOLP (car))
+	    tem = symbol_value_in_buffer (car, w->buffer);
+	  else
+	    tem = specifier_instance_no_quit (car, Qunbound, wrap_window (w),
+					      ERROR_ME_NOT, 0, Qzero);
 	  /* elt is now the cdr, and we know it is a cons cell.
 	     Use its car if CAR has a non-nil value.  */
-	  if (!UNBOUNDP (tem))
+	  if (!UNBOUNDP (tem) && !NILP (tem))
 	    {
-	      if (!NILP (tem))
-		{
-		  elt = XCAR (elt);
-		  goto tail_recurse;
-		}
+	      elt = XCAR (elt);
+	      goto tail_recurse;
 	    }
-	  /* Symbol's value is nil (or symbol is unbound)
+	  /* Symbol's value or specifier's instance is nil or unbound
 	   * Get the cddr of the original list
 	   * and if possible find the caddr and use that.
 	   */
@@ -4282,7 +4292,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   /* we're working with these a lot so precalculate them */
   Bytecount slen = XSTRING_LENGTH (disp_string);
   Bytecount bi_string_zv = slen;
-  Bytebpos bi_start_pos = charcount_to_bytecount (string_data (s), start_pos);
+  Bytebpos bi_start_pos = string_index_char_to_byte (s, start_pos);
 
   pos_data data;
 
@@ -4908,9 +4918,9 @@ done:
      this function if we are already at EOB. */
 
   if (data.bi_charbpos == bi_string_zv && bi_start_pos == bi_string_zv)
-    return bytecount_to_charcount (string_data (s), data.bi_charbpos) + 1; /* Yuck! */
+    return string_index_byte_to_char (s, data.bi_charbpos) + 1; /* Yuck! */
   else
-    return bytecount_to_charcount (string_data (s), data.bi_charbpos);
+    return string_index_byte_to_char (s, data.bi_charbpos);
 }
 
 /* Given a display line and a starting position, ensure that the
@@ -6592,7 +6602,7 @@ redisplay_without_hooks (void)
   reset_buffer_changes ();
 
  done:
-  unbind_to (count, Qnil);
+  unbind_to (count);
 }
 
 void
@@ -6711,18 +6721,16 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       }
       /* print the file coding system */
     case 'C':
-#ifdef FILE_CODING
       {
         Lisp_Object codesys = b->buffer_file_coding_system;
         /* Be very careful here not to get an error. */
 	if (NILP (codesys) || SYMBOLP (codesys) || CODING_SYSTEMP (codesys))
           {
-            codesys = Ffind_coding_system (codesys);
+            codesys = find_coding_system_for_text_file (codesys, 0);
 	    if (CODING_SYSTEMP (codesys))
               obj = XCODING_SYSTEM_MNEMONIC (codesys);
           }
       }
-#endif /* FILE_CODING */
       break;
 
       /* print the current line number */
@@ -8846,7 +8854,7 @@ input and is guaranteed to proceed to completion.
   /* See the comment in Fredisplay_frame. */
   RESET_CHANGED_SET_FLAGS;
 
-  return unbind_to (count, Qnil);
+  return unbind_to (count);
 }
 
 DEFUN ("redisplay-frame", Fredisplay_frame, 0, 2, 0, /*
@@ -8882,7 +8890,7 @@ input and is guaranteed to proceed to completion.
      stupid. */
   RESET_CHANGED_SET_FLAGS;
 
-  return unbind_to (count, Qnil);
+  return unbind_to (count);
 }
 
 DEFUN ("redraw-device", Fredraw_device, 0, 2, 0, /*
@@ -8914,7 +8922,7 @@ input and is guaranteed to proceed to completion.
   /* See the comment in Fredisplay_frame. */
   RESET_CHANGED_SET_FLAGS;
 
-  return unbind_to (count, Qnil);
+  return unbind_to (count);
 }
 
 DEFUN ("redisplay-device", Fredisplay_device, 0, 2, 0, /*
@@ -8944,7 +8952,7 @@ input and is guaranteed to proceed to completion.
   /* See the comment in Fredisplay_frame. */
   RESET_CHANGED_SET_FLAGS;
 
-  return unbind_to (count, Qnil);
+  return unbind_to (count);
 }
 
 /* Big lie.  Big lie.  This will force all modelines to be updated
@@ -9186,7 +9194,7 @@ init_redisplay (void)
     }
 
   /* Look at the TERM variable */
-  if (!getenv ("TERM"))
+  if (!egetenv ("TERM"))
     {
       stderr_out ("Please set the environment variable TERM; see tset(1).\n");
       exit (1);
