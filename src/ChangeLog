@@ -1,3 +1,8 @@
+2003-09-30  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (distclean): xemacs.def.in.in should not be
+	removed.
+
 2003-09-25  Jerry James  <james@xemacs.org>
 
 	* alloc.c (xfree_1): Use this name even when not error checking.

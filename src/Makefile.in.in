@@ -976,7 +976,8 @@ clean: mostlyclean versionclean
 ## Do not use it on development directories!
 distclean: clean
 	$(RM) config.h paths.h Emacs.ad.h $(LISP)/finder-inf.el* \
-	  GNUmakefile Makefile Makefile.in TAGS $(PROGNAME).*
+	GNUmakefile Makefile Makefile.in TAGS $(DUMP_TARGET) $(RAW_EXE) \
+	xemacs.def xemacs.def.in
 realclean: distclean
 extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
