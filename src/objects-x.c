@@ -60,7 +60,7 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 {
   int status;
 
-  if (visual->class == DirectColor || visual->class == TrueColor)
+  if (visual->X_CLASSFIELD == DirectColor || visual->X_CLASSFIELD == TrueColor)
     {
       if (XAllocColor (display, colormap, color_def) != 0)
 	{

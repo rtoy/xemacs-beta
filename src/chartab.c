@@ -133,12 +133,11 @@ char_table_entry_hash (Lisp_Object obj, int depth)
   return internal_array_hash (cte->level2, 96, depth + 1);
 }
 
-static const struct lrecord_description char_table_entry_description[] = {
+static const struct memory_description char_table_entry_description[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table_Entry, level2), 96 },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
 			       1, /* dumpable flag */
                                mark_char_table_entry, internal_object_printer,
@@ -146,14 +145,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
 			       char_table_entry_hash,
 			       char_table_entry_description,
 			       Lisp_Char_Table_Entry);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
-                               mark_char_table_entry, internal_object_printer,
-			       0, char_table_entry_equal,
-			       char_table_entry_hash,
-			       char_table_entry_description,
-			       Lisp_Char_Table_Entry);
-#endif /* not USE_KKCC */
 
 #endif /* MULE */
 
@@ -229,7 +220,7 @@ symbol_to_char_table_type (Lisp_Object symbol)
 #endif
 
   invalid_constant ("Unrecognized char table type", symbol);
-  RETURN_NOT_REACHED (CHAR_TABLE_TYPE_GENERIC)
+  RETURN_NOT_REACHED (CHAR_TABLE_TYPE_GENERIC);
 }
 
 static void
@@ -388,7 +379,7 @@ char_table_hash (Lisp_Object obj, int depth)
   return HASH2 (hashval, internal_hash (ct->default_, depth + 1));
 }
 
-static const struct lrecord_description char_table_description[] = {
+static const struct memory_description char_table_description[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, ascii), NUM_ASCII_CHARS },
 #ifdef MULE
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, level1), NUM_LEADING_BYTES },
@@ -400,20 +391,12 @@ static const struct lrecord_description char_table_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
 			       1, /*dumpable-flag*/
                                mark_char_table, print_char_table, 0,
 			       char_table_equal, char_table_hash,
 			       char_table_description,
 			       Lisp_Char_Table);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
-                               mark_char_table, print_char_table, 0,
-			       char_table_equal, char_table_hash,
-			       char_table_description,
-			       Lisp_Char_Table);
-#endif /* not USE_KKCC */
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.

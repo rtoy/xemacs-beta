@@ -1,6 +1,7 @@
 /* Define stream specific console, device, and frame object for XEmacs.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -37,6 +38,7 @@ struct stream_console
   FILE *out;
   FILE *err;
   int needs_newline;
+  Lisp_Object instream;
 };
 
 #define CONSOLE_STREAM_DATA(con) CONSOLE_TYPE_DATA (con, stream)

@@ -72,7 +72,7 @@ Lisp_Object
 make_opaque (const void *data, Bytecount size)
 {
   Lisp_Opaque *p = (Lisp_Opaque *)
-    alloc_lcrecord (aligned_sizeof_opaque (size), &lrecord_opaque);
+    basic_alloc_lcrecord (aligned_sizeof_opaque (size), &lrecord_opaque);
   p->size = size;
 
   if (data == OPAQUE_CLEAR)
@@ -108,24 +108,16 @@ hash_opaque (Lisp_Object obj, int depth)
     return memory_hash (XOPAQUE_DATA (obj), XOPAQUE_SIZE (obj));
 }
 
-static const struct lrecord_description opaque_description[] = {
+static const struct memory_description opaque_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
 					1, /*dumpable-flag*/
 					0, print_opaque, 0,
 					equal_opaque, hash_opaque,
 					opaque_description,
 					sizeof_opaque, Lisp_Opaque);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
-					0, print_opaque, 0,
-					equal_opaque, hash_opaque,
-					opaque_description,
-					sizeof_opaque, Lisp_Opaque);
-#endif /* not USE_KKCC */
 
 /* stuff to handle opaque pointers */
 
@@ -153,23 +145,16 @@ hash_opaque_ptr (Lisp_Object obj, int depth)
   return (unsigned long) XOPAQUE_PTR (obj)->ptr;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
 			       0, /*dumpable-flag*/
 			       0, print_opaque_ptr, 0,
-			       equal_opaque_ptr, hash_opaque_ptr, 0,
-			       Lisp_Opaque_Ptr);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
-			       0, print_opaque_ptr, 0,
-			       equal_opaque_ptr, hash_opaque_ptr, 0,
-			       Lisp_Opaque_Ptr);
-#endif /* not USE_KKCC */
+			       equal_opaque_ptr, hash_opaque_ptr,
+			       0, Lisp_Opaque_Ptr);
 
 Lisp_Object
 make_opaque_ptr (void *val)
 {
-  Lisp_Object res = allocate_managed_lcrecord (Vopaque_ptr_free_list);
+  Lisp_Object res = alloc_managed_lcrecord (Vopaque_ptr_free_list);
   set_opaque_ptr (res, val);
   return res;
 }
@@ -184,7 +169,7 @@ free_opaque_ptr (Lisp_Object ptr)
 }
 
 void
-reinit_opaque_once_early (void)
+reinit_opaque_early (void)
 {
   Vopaque_ptr_free_list = make_lcrecord_list (sizeof (Lisp_Opaque_Ptr),
 					      &lrecord_opaque_ptr);
@@ -197,5 +182,5 @@ init_opaque_once_early (void)
   INIT_LRECORD_IMPLEMENTATION (opaque);
   INIT_LRECORD_IMPLEMENTATION (opaque_ptr);
 
-  reinit_opaque_once_early ();
+  reinit_opaque_early ();
 }

@@ -88,8 +88,6 @@ static int last_quit_check_signal_tick_count;
 Lisp_Object Qkey_mapping;
 Lisp_Object Qsans_modifiers;
 
-static void enqueue_gtk_dispatch_event (Lisp_Object event);
-
 #define IS_MODIFIER_KEY(keysym)  \
   ((((keysym) >= GDK_Shift_L) && ((keysym) <= GDK_Hyper_R)) \
    || ((keysym) == GDK_Mode_switch) \
@@ -213,7 +211,7 @@ emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
   if (CONSOLE_GTK_P (XCONSOLE (console)))
     write_c_string
       (pstream,
-       gtk_event_name (emacs_event->event.magic.underlying_gdk_event.type));
+       gtk_event_name (EVENT_MAGIC_GDK_EVENT (emacs_event).type));
 }
 
 static int
@@ -221,8 +219,8 @@ emacs_gtk_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
 {
   if (CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) &&
       CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
-    return (!memcmp (&e1->event.magic.underlying_gdk_event,
-		     &e2->event.magic.underlying_gdk_event,
+    return (!memcmp (&EVENT_MAGIC_GDK_EVENT (e1),
+		     &EVENT_MAGIC_GDK_EVENT (e2),
 		     sizeof (GdkEvent)));
   if (CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) ||
       CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
@@ -235,7 +233,7 @@ emacs_gtk_hash_magic_event (Lisp_Event *e)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (e));
   if (CONSOLE_GTK_P (XCONSOLE (console)))
-    return memory_hash (&e->event.magic.underlying_gdk_event,
+    return memory_hash (&EVENT_MAGIC_GDK_EVENT (e),
 			sizeof (GdkEvent));
   return 0;
 }
@@ -244,7 +242,7 @@ static void
 emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
 {
   /* This function can GC */
-  GdkEvent *event = &emacs_event->event.magic.underlying_gdk_event;
+  GdkEvent *event = &EVENT_MAGIC_GDK_EVENT (emacs_event);
   struct frame *f = XFRAME (EVENT_CHANNEL (emacs_event));
 
   if (!FRAME_LIVE_P (f))
@@ -467,13 +465,13 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
       while ((ch = Lstream_get_ichar (istr)) != EOF)
 	{
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
-	  struct Lisp_Event *ev = XEVENT (emacs_event);
-	  ev->channel       = DEVICE_CONSOLE (d);
-	  ev->event_type    = key_press_event;
+	  Lisp_Event *ev          = XEVENT (emacs_event);
+	  ev->channel	            = DEVICE_CONSOLE (d);
 	  ev->timestamp	    = event->time;
-	  ev->event.key.modifiers = 0;
-	  ev->event.key.keysym    = make_char (ch);
-	  enqueue_gtk_dispatch_event (emacs_event);
+	  XSET_EVENT_TYPE (emacs_event, key_press_event);
+	  XSET_EVENT_KEY_MODIFIERS (emacs_event, 0);
+	  XSET_EVENT_KEY_KEYSYM (emacs_event, make_char (ch));
+	  enqueue_dispatch_event (emacs_event);
 	}
       Lstream_close (istr);
       UNGCPRO;
@@ -619,10 +617,12 @@ gtk_timeout_to_emacs_event (struct Lisp_Event *emacs_event)
   struct GTK_timeout *timeout = completed_timeouts;
   assert (timeout);
   completed_timeouts = completed_timeouts->next;
-  emacs_event->event_type = timeout_event;
   /* timeout events have nil as channel */
-  emacs_event->timestamp  = 0; /* #### wrong!! */
-  emacs_event->event.timeout.interval_id = timeout->id;
+  set_event_type (emacs_event, timeout_event);
+  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### wrong!! */
+  SET_EVENT_TIMEOUT_INTERVAL_ID (emacs_event, timeout->id);
+  SET_EVENT_TIMEOUT_FUNCTION (emacs_event, Qnil);
+  SET_EVENT_TIMEOUT_OBJECT (emacs_event, Qnil);
   Blocktype_free (the_GTK_timeout_blocktype, timeout);
 }
 
@@ -862,22 +862,24 @@ static void
 gtk_process_to_emacs_event (struct Lisp_Event *emacs_event)
 {
   int i;
-  Lisp_Object process;
 
   assert (process_events_occurred > 0);
+
   for (i = 0; i < MAXDESC; i++)
     {
-      process = filedesc_with_input[i];
+      Lisp_Object process = filedesc_with_input[i];
       if (PROCESSP (process))
-	break;
+	{
+	  filedesc_with_input[i] = Qnil;
+	  process_events_occurred--;
+	  /* process events have nil as channel */
+	  set_event_type (emacs_event, process_event);
+	  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
+	  SET_EVENT_PROCESS_PROCESS (emacs_event, process);
+	  return;
+	}
     }
-  assert (i < MAXDESC);
-  filedesc_with_input[i] = Qnil;
-  process_events_occurred--;
-  /* process events have nil as channel */
-  emacs_event->event_type = process_event;
-  emacs_event->timestamp  = 0; /* #### */
-  emacs_event->event.process.process = process;
+  abort ();
 }
 
 static void
@@ -968,13 +970,11 @@ dragndrop_data_received (GtkWidget          *widget,
 
   GCPRO4 (l_type, l_data, l_dndlist, l_item);
 
-  ev->event_type = misc_user_event;
-  ev->timestamp = time;
-
-  ev->channel = wrap_frame (f);
-
-  ev->event.misc.x = x;
-  ev->event.misc.y = y;
+  set_event_type (ev, misc_user_event);
+  SET_EVENT_CHANNEL (ev, wrap_frame (f));
+  SET_EVENT_TIMESTAMP (ev, time);
+  SET_EVENT_MISC_USER_X (ev, x);
+  SET_EVENT_MISC_USER_Y (ev, y);
 
   if (data->type == preferred_targets[TARGET_URI_LIST])
     {
@@ -1034,13 +1034,14 @@ dragndrop_data_received (GtkWidget          *widget,
 						 data->length, Qbinary)));
     }
 
-  ev->event.misc.function = Qdragdrop_drop_dispatch;
-  ev->event.misc.object = Fcons (l_type, l_dndlist);
+
+  SET_EVENT_MISC_USER_FUNCTION (ev, Qdragdrop_drop_dispatch);
+  SET_EVENT_MISC_USER_OBJECT (ev, Fcons (l_type, l_dndlist));
 
   UNGCPRO;
 
   gtk_drag_finish (context, TRUE, FALSE, time);
-  enqueue_gtk_dispatch_event (event);
+  enqueue_dispatch_event (event);
 }
 
 gboolean
@@ -1122,20 +1123,6 @@ dragndrop_dropped (GtkWidget *widget,
 /*			get the next event from gtk			*/
 /************************************************************************/
 
-static Lisp_Object dispatch_event_queue, dispatch_event_queue_tail;
-
-static void
-enqueue_gtk_dispatch_event (Lisp_Object event)
-{
-  enqueue_event (event, &dispatch_event_queue, &dispatch_event_queue_tail);
-}
-
-static Lisp_Object
-dequeue_gtk_dispatch_event (void)
-{
-  return dequeue_event (&dispatch_event_queue, &dispatch_event_queue_tail);
-}
-
 /* This business exists because menu events "happen" when
    menubar_selection_callback() is called from somewhere deep
    within XtAppProcessEvent in emacs_Xt_next_event().  The
@@ -1151,12 +1138,11 @@ signal_special_gtk_user_event (Lisp_Object channel, Lisp_Object function,
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
 
-  XEVENT (event)->event_type = misc_user_event;
-  XEVENT (event)->channel = channel;
-  XEVENT (event)->event.eval.function = function;
-  XEVENT (event)->event.eval.object = object;
-
-  enqueue_gtk_dispatch_event (event);
+  XSET_EVENT_TYPE (event, misc_user_event);
+  XSET_EVENT_CHANNEL (event, channel);
+  XSET_EVENT_MISC_USER_FUNCTION (event, function);
+  XSET_EVENT_MISC_USER_OBJECT (event, object);
+  enqueue_dispatch_event (event);
 }
 
 static void
@@ -1177,7 +1163,7 @@ emacs_gtk_next_event (struct Lisp_Event *emacs_event)
     {
       Lisp_Object event, event2;
       event2 = wrap_event (emacs_event);
-      event = dequeue_gtk_dispatch_event ();
+      event = dequeue_dispatch_event ();
       Fcopy_event (event, event2);
       Fdeallocate_event (event);
     }
@@ -1193,9 +1179,9 @@ emacs_gtk_next_event (struct Lisp_Event *emacs_event)
       /* A dummy event, so that a cycle of the command loop will occur. */
       fake_event_occurred = 0;
       /* eval events have nil as channel */
-      emacs_event->event_type = eval_event;
-      emacs_event->event.eval.function = Qidentity;
-      emacs_event->event.eval.object = Qnil;
+      set_event_type (emacs_event, eval_event);
+      SET_EVENT_EVAL_FUNCTION (emacs_event, Qidentity);
+      SET_EVENT_EVAL_OBJECT (emacs_event, Qnil);
     }
   else /* if (process_events_occurred) */
     gtk_process_to_emacs_event (emacs_event);
@@ -1376,24 +1362,25 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 		  }
 	      }
 		
-	    emacs_event->event_type	     = key_press_event;
-	    emacs_event->timestamp	     = key_event->time;
-	    emacs_event->event.key.modifiers = modifiers;
-	    emacs_event->event.key.keysym    = keysym;
+	    set_event_type (emacs_event, key_press_event);
+	    SET_EVENT_TIMESTAMP (emacs_event, key_event->time);
+	    SET_EVENT_KEY_MODIFIERS (emacs_event, modifiers);
+	    SET_EVENT_KEY_KEYSYM (emacs_event, keysym);
 	  }
 	else                    /* Mouse press/release event */
 	  {
 	    GdkEventButton *button_event = &gdk_event->button;
-	    emacs_event->channel = wrap_frame (frame);
 
-	    emacs_event->event_type = (button_event->type == GDK_BUTTON_RELEASE) ?
-	      button_release_event : button_press_event;
+	    set_event_type (emacs_event,
+			    button_event->type == GDK_BUTTON_RELEASE ?
+			    button_release_event : button_press_event);
+            SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
 
-	    emacs_event->event.button.modifiers = modifiers;
-	    emacs_event->timestamp		= button_event->time;
-	    emacs_event->event.button.button	= button_event->button;
-	    emacs_event->event.button.x		= button_event->x;
-	    emacs_event->event.button.y		= button_event->y;
+	    SET_EVENT_BUTTON_MODIFIERS (emacs_event, modifiers);
+	    SET_EVENT_TIMESTAMP (emacs_event, button_event->time);
+	    SET_EVENT_BUTTON_BUTTON (emacs_event, button_event->button);
+	    SET_EVENT_BUTTON_X (emacs_event, button_event->x);
+	    SET_EVENT_BUTTON_Y (emacs_event, button_event->y);
 	  }
       }
       break;
@@ -1419,11 +1406,12 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
         DEVICE_GTK_MOUSE_TIMESTAMP (d) = ev->time;
 
-        emacs_event->channel = wrap_frame (frame);
-        emacs_event->event_type	    = pointer_motion_event;
-        emacs_event->timestamp      = ev->time;
-        emacs_event->event.motion.x = x;
-        emacs_event->event.motion.y = y;
+        SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
+        set_event_type (emacs_event, pointer_motion_event);
+        SET_EVENT_TIMESTAMP (emacs_event, ev->time);
+        SET_EVENT_MOTION_X (emacs_event, x);
+        SET_EVENT_MOTION_Y (emacs_event, y);
+
         if (mask & GDK_SHIFT_MASK)	modifiers |= XEMACS_MOD_SHIFT;
         if (mask & GDK_CONTROL_MASK)	modifiers |= XEMACS_MOD_CONTROL;
         if (mask & gd->MetaMask)	modifiers |= XEMACS_MOD_META;
@@ -1438,7 +1426,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
         /* Currently ignores Shift_Lock but probably shouldn't
            (but it definitely should ignore Caps_Lock). */
-        emacs_event->event.motion.modifiers = modifiers;
+        SET_EVENT_MOTION_MODIFIERS (emacs_event, modifiers);
       }
     break;
 
@@ -1465,7 +1453,7 @@ generic_event_handler (GtkWidget *widget, GdkEvent *event)
 
     if (gtk_event_to_emacs_event (GTK_XEMACS_FRAME (widget), event, XEVENT (emacs_event)))
     {
-	enqueue_gtk_dispatch_event (emacs_event);
+	enqueue_dispatch_event (emacs_event);
 	return (TRUE);
     }
     else
@@ -1498,7 +1486,7 @@ emacs_shell_event_handler (GtkWidget *wid /* unused */,
     struct frame *frame = (struct frame *) closure;
     Lisp_Object lisp_event = Fmake_event (Qnil, Qnil);
     struct Lisp_Event *emacs_event = XEVENT (lisp_event);
-    GdkEvent *gdk_event_copy = &emacs_event->event.magic.underlying_gdk_event;
+    GdkEvent *gdk_event_copy = &EVENT_MAGIC_GDK_EVENT (emacs_event);
     struct device *d = XDEVICE (FRAME_DEVICE (frame));
     gboolean ignore_p = FALSE;
 
@@ -1539,7 +1527,7 @@ emacs_shell_event_handler (GtkWidget *wid /* unused */,
       }
     else
       {
-	enqueue_gtk_dispatch_event (lisp_event);
+	enqueue_dispatch_event (lisp_event);
 	return (TRUE);
       }
 }
@@ -1548,83 +1536,18 @@ emacs_shell_event_handler (GtkWidget *wid /* unused */,
 /************************************************************************/
 /*                      input pending / C-g checking                    */
 /************************************************************************/
-static void
-gtk_check_for_quit_char (struct device *d);
-
-static void
-check_for_tty_quit_char (struct device *d)
-{
-  SELECT_TYPE temp_mask;
-  int infd = DEVICE_INFD (d);
-  struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  Ichar quit_char = CONSOLE_QUIT_CHAR (con);
-
-  FD_ZERO (&temp_mask);
-  FD_SET (infd, &temp_mask);
-
-  while (1)
-    {
-      Lisp_Object event;
-      Ichar the_char;
-
-      if (!poll_fds_for_input (temp_mask))
-	return;
-
-      event = Fmake_event (Qnil, Qnil);
-      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con))
-	/* EOF, or something ... */
-	return;
-      /* #### bogus.  quit-char should be allowed to be any sort
-	 of event. */
-      the_char = event_to_character (XEVENT (event), 1, 0, 0);
-      if (the_char >= 0 && the_char == quit_char)
-	{
-	  Vquit_flag = Qt;
-	  /* do not queue the C-g.  See above. */
-	  return;
-	}
-
-      /* queue the read event to be read for real later. */
-      enqueue_gtk_dispatch_event (event);
-    }
-}
-
-static void
-emacs_gtk_quit_p (void)
-{
-  Lisp_Object devcons, concons;
-
-  CONSOLE_LOOP (concons)
-    {
-      struct console *con = XCONSOLE (XCAR (concons));
-      if (!con->input_enabled)
-	continue;
-
-      CONSOLE_DEVICE_LOOP (devcons, con)
-	{
-	  struct device *d;
-	  d = XDEVICE (XCAR (devcons));
-
-	  if (DEVICE_GTK_P (d))
-	    /* emacs may be exiting */
-	    gtk_check_for_quit_char (d);
-	  else if (DEVICE_TTY_P (d))
-	    check_for_tty_quit_char (d);
-	}
-    }
-}
 
 #include <gdk/gdkx.h>
 
 static void
-drain_gtk_queue (void)
+emacs_gtk_drain_queue (void)
 
 {
   /* We can't just spin through here and wait for GTKs idea of the
      event queue to get empty, or the queue never gets drained.  The
      situation is as follows.  A process event gets signalled, we put
      it on the queue, then we go into Fnext_event(), which calls
-     drain_gtk_queue().  But gtk_events_pending() will always return
+     emacs_gtk_drain_queue().  But gtk_events_pending() will always return
      TRUE if there are file-descriptor (aka our process) events
      pending.  Using GDK_events_pending() only shows us windowing
      system events.
@@ -1632,6 +1555,8 @@ drain_gtk_queue (void)
   if (GDK_DISPLAY ())
     while (gdk_events_pending ())
       gtk_main_iteration ();
+
+  drain_tty_devices ();
 }
 
 static int
@@ -1737,7 +1662,7 @@ emacs_gtk_event_pending_p (int user_p)
          actually pending but detect_input_pending() returning
          false because there wasn't another SIGIO. */
 
-      drain_gtk_queue ();
+      emacs_gtk_drain_queue ();
 
       EVENT_CHAIN_LOOP (event, dispatch_event_queue)
         if (!user_p || command_event_p (event))
@@ -1769,7 +1694,7 @@ syms_of_event_gtk (void)
 
 void reinit_vars_of_event_gtk (void)
 {
-  gtk_event_stream = xnew (struct event_stream);
+  gtk_event_stream = xnew_and_zero (struct event_stream);
   gtk_event_stream->event_pending_p 	= emacs_gtk_event_pending_p;
   gtk_event_stream->next_event_cb	= emacs_gtk_next_event;
   gtk_event_stream->handle_magic_event_cb= emacs_gtk_handle_magic_event;
@@ -1782,10 +1707,10 @@ void reinit_vars_of_event_gtk (void)
   gtk_event_stream->unselect_console_cb = emacs_gtk_unselect_console;
   gtk_event_stream->select_process_cb 	= emacs_gtk_select_process;
   gtk_event_stream->unselect_process_cb = emacs_gtk_unselect_process;
-  gtk_event_stream->quit_p_cb		= emacs_gtk_quit_p;
+  gtk_event_stream->drain_queue_cb	= emacs_gtk_drain_queue;
   gtk_event_stream->create_io_streams_cb= emacs_gtk_create_io_streams;
   gtk_event_stream->delete_io_streams_cb= emacs_gtk_delete_io_streams;
-  gtk_event_stream->force_event_pending	 = emacs_gtk_force_event_pending;
+  gtk_event_stream->force_event_pending_cb= emacs_gtk_force_event_pending;
 
   the_GTK_timeout_blocktype = Blocktype_new (struct GTK_timeout_blocktype);
 
@@ -1797,11 +1722,6 @@ void
 vars_of_event_gtk (void)
 {
   reinit_vars_of_event_gtk ();
-
-  dispatch_event_queue = Qnil;
-  staticpro (&dispatch_event_queue);
-  dispatch_event_queue_tail = Qnil;
-  staticpro (&dispatch_event_queue_tail);
 
   DEFVAR_BOOL ("gtk-allow-sendevents", &gtk_allow_sendevents /*
 *Non-nil means to allow synthetic events.  Nil means they are ignored.
@@ -2138,104 +2058,3 @@ gtk_key_is_modifier_p (KeyCode keycode, struct device *d)
   return 0;
 }
 #endif
-
-struct _quit_predicate_closure {
-  struct device *device;
-  Bool *critical;
-};
-
-static Bool
-quit_char_predicate (Display *display, XEvent *event, XPointer data)
-{
-  struct _quit_predicate_closure *cl = (struct _quit_predicate_closure *) data;
-  struct device *d = cl->device;
-  struct frame *f = NULL;
-  struct gtk_device *gd = DEVICE_GTK_DATA (d);
-  char c, quit_char;
-  Bool *critical = cl->critical;
-  Lisp_Object keysym;
-  GdkWindow *window = gdk_window_lookup (event->xany.window);
-  guint32 keycode = 0;
-  GdkEventKey gdk_event;
-
-  if (window)
-    f = gtk_any_window_to_frame (d, window);
-
-  if (critical)
-    *critical = False;
-
-  if ((event->type != KeyPress) ||
-      (! window) ||
-      (! f) ||
-      (event->xkey.state
-       & (gd->MetaMask | gd->HyperMask | gd->SuperMask | gd->AltMask)))
-    {
-      return 0;
-    }
-
-  {
-    char dummy[256];
-    XLookupString (&(event->xkey), dummy, 200, (KeySym *)&keycode, 0);
-  }
-
-  memset (&gdk_event, 0, sizeof (gdk_event));
-  gdk_event.type = GDK_KEY_PRESS;
-  gdk_event.window = window;
-  gdk_event.keyval = keycode;
-  gdk_event.state = event->xkey.state;
-
-  /* This duplicates some code that exists elsewhere, but it's relatively
-     fast and doesn't cons. */
-  keysym = gtk_to_emacs_keysym (d, &gdk_event, 1);
-  if (NILP (keysym)) return 0;
-  if (CHAR_OR_CHAR_INTP (keysym))
-    c = XCHAR_OR_CHAR_INT (keysym);
-  /* Highly doubtful that these are the quit character, but... */
-  else if (EQ (keysym, QKbackspace))	c = '\b';
-  else if (EQ (keysym, QKtab))		c = '\t';
-  else if (EQ (keysym, QKlinefeed))	c = '\n';
-  else if (EQ (keysym, QKreturn))	c = '\r';
-  else if (EQ (keysym, QKescape))	c = 27;
-  else if (EQ (keysym, QKspace))	c = ' ';
-  else if (EQ (keysym, QKdelete))	c = 127;
-  else return 0;
-
-  if (event->xkey.state & gd->MetaMask)     c |= 0x80;
-  if ((event->xkey.state & ControlMask) && !(c >= 'A' && c <= 'Z'))
-    c &= 0x1F;			/* unshifted control characters */
-  quit_char = CONSOLE_QUIT_CHAR (XCONSOLE (DEVICE_CONSOLE (d)));
-
-  if (c == quit_char)
-    return True;
-  /* If we've got Control-Shift-G instead of Control-G, that means
-     we have a critical_quit.  Caps_Lock is its own modifier, so it
-     won't cause ^G to act differently than before. */
-  if (event->xkey.state & ControlMask)  c &= 0x1F;
-  if (c == quit_char)
-    {
-      if (critical) *critical = True;
-      return True;
-    }
-  return False;
-}
-
-static void
-gtk_check_for_quit_char (struct device *d)
-{
-  XEvent event;
-  int queued;
-  Bool critical_quit = False;
-  struct _quit_predicate_closure closure;
-
-  XEventsQueued (GDK_DISPLAY (), QueuedAfterReading);
-
-  closure.device = d;
-  closure.critical = &critical_quit;
-
-  queued = XCheckIfEvent (GDK_DISPLAY (), &event, quit_char_predicate, (char *) &closure);
-
-  if (queued)
-    {
-      Vquit_flag = (critical_quit ? Qcritical : Qt);
-    }
-}

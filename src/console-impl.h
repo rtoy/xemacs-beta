@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console.h"
 
-extern const struct struct_description cted_description;
-extern const struct struct_description console_methods_description;
+extern const struct sized_memory_description cted_description;
+extern const struct sized_memory_description console_methods_description;
 
 
 /*
@@ -407,26 +407,24 @@ struct console
   /* Description of this console's methods.  */
   struct console_methods *conmeths;
 
-#ifdef USE_KKCC
+  /* Enumerated constant listing which type of console this is (TTY, X,
+     MS-Windows, etc.).  This duplicates the symbol in conmeths->symbol,
+     which formerly was the only way to determine the console type.
+     We need this constant now for KKCC, so that it can be used in
+     an XD_UNION clause to determine the Lisp objects in console_data. */
   enum console_variant contype;
-#endif /* USE_KKCC */  
 
   /* A structure of auxiliary data specific to the console type.
      struct x_console is used for X window frames; defined in console-x.h
      struct tty_console is used to TTY's; defined in console-tty.h */
   void *console_data;
 
-  /* Character that causes a quit.  Normally C-g.
-     #### Should be possible for this not to be ASCII. (Currently works
-     under Windows.) */
-  Ichar quit_char;
-
   /* ----- begin partially-completed console localization of
            event loop ---- */
 
   int local_var_flags;
 
-#define MARKED_SLOT(x) Lisp_Object x
+#define MARKED_SLOT(x) Lisp_Object x;
 #include "conslots.h"
 
   /* Where to store the next keystroke of the macro.
@@ -561,6 +559,8 @@ extern struct console console_local_flags;
   DEVICE_SELECTED_FRAME (XDEVICE ((con)->selected_device))
 #define CONSOLE_LAST_NONMINIBUF_FRAME(con) NON_LVALUE ((con)->last_nonminibuf_frame)
 #define CONSOLE_QUIT_CHAR(con) ((con)->quit_char)
+#define CONSOLE_QUIT_EVENT(con) ((con)->quit_event)
+#define CONSOLE_CRITICAL_QUIT_EVENT(con) ((con)->critical_quit_event)
 
 DECLARE_CONSOLE_TYPE (dead);
 

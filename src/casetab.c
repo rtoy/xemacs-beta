@@ -97,7 +97,7 @@ print_case_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, "0x%x>", ct->header.uid);
 }
 
-static const struct lrecord_description case_table_description [] = {
+static const struct memory_description case_table_description [] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Case_Table, downcase_table) },
   { XD_LISP_OBJECT, offsetof (Lisp_Case_Table, upcase_table) },
   { XD_LISP_OBJECT, offsetof (Lisp_Case_Table, case_canon_table) },
@@ -106,16 +106,10 @@ static const struct lrecord_description case_table_description [] = {
 };
 
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION("case-table", case_table,
 			      1, /*dumpable-flag*/
 			      mark_case_table, print_case_table, 0,
 			      0, 0, case_table_description, Lisp_Case_Table);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("case-table", case_table,
-			      mark_case_table, print_case_table, 0,
-			      0, 0, case_table_description, Lisp_Case_Table);
-#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_case_table (int init_tables)

@@ -596,7 +596,7 @@ sys_subshell (void)
   if (sh == 0)
     sh = egetenv ("SHELL");
   if (sh == 0)
-    sh = "sh";
+    sh = (Ibyte *) "sh";
 
   C_STRING_TO_EXTERNAL (sh, shext, Qfile_name);
 
@@ -1539,12 +1539,12 @@ tty_init_sys_modes_on_device (struct device *d)
 #endif
   if (CONSOLE_TTY_DATA (con)->controlling_terminal)
     {
-      tty.main.c_cc[VINTR] =
-	CONSOLE_QUIT_CHAR (con); /* C-g (usually) gives SIGINT */
+      tty.main.c_cc[VINTR] = /* C-g (usually) gives SIGINT */
+	event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1, 0);
       /* Set up C-g for both SIGQUIT and SIGINT.
 	 We don't know which we will get, but we handle both alike
 	 so which one it really gives us does not matter.  */
-      tty.main.c_cc[VQUIT] = CONSOLE_QUIT_CHAR (con);
+      tty.main.c_cc[VQUIT] = tty.main.c_cc[VINTR];
     }
   else
     {
@@ -1634,7 +1634,7 @@ tty_init_sys_modes_on_device (struct device *d)
   /* Note: if not using CBREAK mode, it makes no difference how we
      set this */
   tty.tchars = new_tchars;
-  tty.tchars.t_intrc = CONSOLE_QUIT_CHAR (con);
+  tty.tchars.t_intrc = event_to_character (CONSOLE_QUIT_EVENT (con), 0, 1, 0);
   if (TTY_FLAGS (con).flow_control)
     {
       tty.tchars.t_startc = '\021';
@@ -3329,6 +3329,7 @@ qxe_ctime (const time_t *t)
   return ctime_static;
 }
 
+
 /************************************************************************/
 /*                  Emulation of missing functions from wchar.h         */
 /************************************************************************/
@@ -3343,6 +3344,34 @@ wcslen(const wchar_t *s)
     ;
   
   return p - s;
+}
+#endif
+
+/************************************************************************/
+/*                  Emulation of missing functions from string.h        */
+/************************************************************************/
+
+#ifndef HAVE_STRLWR
+char *
+strlwr (char *s)
+{
+  while (*s)
+    {
+      *s = tolower (*s);
+      ++s;
+    }
+}
+#endif
+
+#ifndef HAVE_STRLWR
+char *
+strupr (char *s)
+{
+  while (*s)
+    {
+      *s = toupper (*s);
+      ++s;
+    }
 }
 #endif
 

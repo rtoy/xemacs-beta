@@ -1376,11 +1376,58 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 		    (unsigned long) XPNTR (obj));
 }
 
+enum printing_badness
+{
+  BADNESS_INTEGER_OBJECT,
+  BADNESS_POINTER_OBJECT,
+  BADNESS_NO_TYPE
+};
+
+static void
+printing_major_badness (Lisp_Object printcharfun,
+			Char_ASCII *badness_string, int type, void *val,
+			enum printing_badness badness)
+{
+  Ibyte buf[666];
+
+  switch (badness)
+    {
+    case BADNESS_INTEGER_OBJECT:
+      qxesprintf (buf, "%s %d object %ld", badness_string, type,
+		  (EMACS_INT) val);
+      break;
+
+    case BADNESS_POINTER_OBJECT:
+      qxesprintf (buf, "%s %d object %p", badness_string, type, val);
+      break;
+
+    case BADNESS_NO_TYPE:
+      qxesprintf (buf, "%s object %p", badness_string, val);
+      break;
+    }
+
+  /* Don't abort or signal if called from debug_print() or already
+     crashing */
+  if (!inhibit_non_essential_printing_operations)
+    {
+#ifdef ERROR_CHECK_TYPES
+      abort ();
+#else  /* not ERROR_CHECK_TYPES */
+      if (print_readably)
+	signal_ferror (Qinternal_error, "printing %s", buf);
+#endif /* not ERROR_CHECK_TYPES */
+    }
+  write_fmt_string (printcharfun,
+		    "#<EMACS BUG: %s Save your buffers immediately and "
+		    "please report this bug>", buf);
+}
+
 void
 print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
   int specdepth;
+  struct gcpro gcpro1, gcpro2;
 
   QUIT;
 
@@ -1389,61 +1436,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (gc_in_progress) return;
 #endif
 
-  /* Try to check for a bogus pointer if we're in a situation where it may
-     be likely.  In such cases, crashing is counterproductive. */
-  if (inhibit_non_essential_printing_operations || print_unbuffered)
-    {
-      if (XTYPE (obj) == Lisp_Type_Record)
-	{
-	  struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-      
-	  if (!debug_can_access_memory (lheader, sizeof (*lheader)))
-	    {
-	      write_fmt_string (printcharfun, "#<EMACS BUG: BAD MEMORY %p>",
-				lheader);
-	      return;
-	    }
-	  else
-	    {
-	      const struct lrecord_implementation *impl;
-
-	      if ((int) lheader->type >= lrecord_type_count)
-		{
-		  write_fmt_string (printcharfun,
-				    "#<EMACS BUG: bad type %d BAD MEMORY %p>",
-				    lheader->type, lheader);
-		  return;
-		}
-
-	      impl = LHEADER_IMPLEMENTATION (lheader);
-	      if (!debug_can_access_memory
-		  (lheader,
-		   (impl->size_in_bytes_method ?
-		    impl->size_in_bytes_method (lheader) :
-		    impl->static_size)))
-		{
-		  write_fmt_string (printcharfun,
-				    "#<EMACS BUG: type %s BAD MEMORY %p>",
-				    impl->name, lheader);
-		  return;
-		}
-
-	      if (STRINGP (obj))
-		{
-		  Lisp_String *l = (Lisp_String *) lheader;
-		  if (!debug_can_access_memory
-		      (l->data_, l->size_))
-		    {
-		      write_fmt_string
-			(printcharfun,
-			 "#<EMACS BUG: %p (BAD STRING DATA %p)>",
-			 lheader, l->data_);
-		      return;
-		    }
-		}
-	    }
-	}
-    }
+  /* Just to be safe ... */
+  GCPRO2 (obj, printcharfun);
 
 #ifdef I18N3
   /* #### Both input and output streams should have a flag associated
@@ -1469,6 +1463,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    *buf = '#';
 	    long_to_string (buf + 1, i);
 	    write_c_string (printcharfun, buf);
+	    UNGCPRO;
 	    return;
 	  }
     }
@@ -1558,51 +1553,101 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Record:
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-	struct gcpro gcpro1, gcpro2;
 
-	if (CONSP (obj) || VECTORP(obj))
+	/* Try to check for various sorts of bogus pointers if we're in a
+	   situation where it may be likely -- i.e. called from
+	   debug_print() or we're already crashing.  In such cases,
+	   (further) crashing is counterproductive. */
+
+	if (inhibit_non_essential_printing_operations &&
+	    !debug_can_access_memory (lheader, sizeof (*lheader)))
+	    {
+	      write_fmt_string (printcharfun, "#<EMACS BUG: BAD MEMORY %p>",
+				lheader);
+	      break;
+	    }
+
+	if (CONSP (obj) || VECTORP (obj))
 	  {
 	    /* If deeper than spec'd depth, print placeholder.  */
 	    if (INTP (Vprint_level)
 		&& print_depth > XINT (Vprint_level))
 	      {
-		GCPRO2 (obj, printcharfun);
 		write_c_string (printcharfun, "...");
-		UNGCPRO;
 		break;
 	      }
 	  }
 
-	GCPRO2 (obj, printcharfun);
+	if (lheader->type == lrecord_type_free)
+	  {
+	    printing_major_badness (printcharfun, "freed lrecord", 0,
+				    lheader, BADNESS_NO_TYPE);
+	    break;
+	  }
+	else if (lheader->type == lrecord_type_undefined)
+	  {
+	    printing_major_badness (printcharfun, "lrecord_type_undefined", 0,
+				    lheader, BADNESS_NO_TYPE);
+	    break;
+	  }
+	else if ((int) (lheader->type) >= lrecord_type_count)
+	  {
+	    printing_major_badness (printcharfun, "illegal lrecord type",
+				    (int) (lheader->type),
+				    lheader, BADNESS_POINTER_OBJECT);
+	    break;
+	  }
+
+	/* Further checks for bad memory in critical situations.  We don't
+	   normally do these because they may be expensive or weird
+	   (e.g. under Unix we typically have to set a SIGSEGV handler and
+	   try to trigger a seg fault). */
+
+	if (inhibit_non_essential_printing_operations)
+	  {
+	    if (!debug_can_access_memory
+		(lheader, detagged_lisp_object_size (lheader)))
+	      {
+		write_fmt_string (printcharfun,
+				  "#<EMACS BUG: type %s BAD MEMORY %p>",
+				  LHEADER_IMPLEMENTATION (lheader)->name,
+				  lheader);
+		break;
+	      }
+
+	    if (STRINGP (obj))
+	      {
+		Lisp_String *l = (Lisp_String *) lheader;
+		if (!debug_can_access_memory (l->data_, l->size_))
+		  {
+		    write_fmt_string
+		      (printcharfun,
+		       "#<EMACS BUG: %p (BAD STRING DATA %p)>",
+		       lheader, l->data_);
+		    break;
+		  }
+	      }
+	  }
+
 	if (LHEADER_IMPLEMENTATION (lheader)->printer)
 	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
 	   (obj, printcharfun, escapeflag));
 	else
 	  default_object_printer (obj, printcharfun, escapeflag);
-	UNGCPRO;
 	break;
       }
 
     default:
       {
-#ifdef ERROR_CHECK_TYPES
-	abort ();
-#else  /* not ERROR_CHECK_TYPES */
 	/* We're in trouble if this happens! */
-	if (print_readably)
-	  signal_error (Qinternal_error, "printing illegal data type #o%03o",
-			make_int (XTYPE (obj)));
-	write_c_string (printcharfun, "#<EMACS BUG: ILLEGAL DATATYPE ");
-	write_fmt_string (printcharfun, "(#o%3o)", (int) XTYPE (obj));
-	write_c_string
-	  (printcharfun,
-	   " Save your buffers immediately and please report this bug>");
-#endif /* not ERROR_CHECK_TYPES */
+	printing_major_badness (printcharfun, "illegal data type", XTYPE (obj),
+				LISP_TO_VOID (obj), BADNESS_INTEGER_OBJECT);
 	break;
       }
     }
 
   unbind_to (specdepth);
+  UNGCPRO;
 }
 
 void
@@ -1906,10 +1951,100 @@ debug_print_no_newline (Lisp_Object debug_print_obj)
 }
 
 void
+debug_p4 (Lisp_Object obj)
+{
+  inhibit_non_essential_printing_operations = 1;
+  if (STRINGP (obj))
+    debug_out ("\"%s\"", XSTRING_DATA (obj));
+  else if (CONSP (obj))
+    {
+      int first = 1;
+      do {
+	debug_out (first ? "(" : " ");
+	first = 0;
+	debug_p4 (XCAR (obj));
+	obj = XCDR (obj);
+      } while (CONSP (obj));
+      if (NILP (obj))
+	debug_out (")");
+      else
+	{
+	  debug_out (" . ");
+	  debug_p4 (obj);
+	  debug_out (")");
+	}
+    }
+  else if (VECTORP (obj))
+    {
+      int size = XVECTOR_LENGTH (obj);
+      int i;
+      int first = 1;
+
+      for (i = 0; i < size; i++)
+	{
+	  debug_out (first ? "[" : " ");
+	  first = 0;
+	  debug_p4 (XVECTOR_DATA (obj)[i]);
+	  debug_out ("]");
+	}
+    }
+  else if (SYMBOLP (obj))
+    {
+      Lisp_Object name = XSYMBOL_NAME (obj);
+      if (!STRINGP (name))
+	debug_out ("<<bad symbol>>");
+      else
+	debug_out ("%s", XSTRING_DATA (name));
+    }
+  else if (INTP (obj))
+    {
+      debug_out ("%ld", XINT (obj));
+    }
+  else if (FLOATP (obj))
+    {
+      debug_out ("%g", XFLOAT_DATA (obj));
+    }
+  else
+    {
+      struct lrecord_header *header =
+	(struct lrecord_header *) XPNTR (obj);
+
+      if (header->type >= lrecord_type_last_built_in_type)
+	debug_out ("<< bad object type=%d 0x%lx>>", header->type,
+		   (EMACS_INT) header);
+      else
+	debug_out ("#<%s 0x%lx>",
+		   LHEADER_IMPLEMENTATION (header)->name,
+		   LHEADER_IMPLEMENTATION (header)->basic_p ?
+		   (EMACS_INT) header :
+		   ((struct lcrecord_header *) header)->uid);
+    }
+
+  inhibit_non_essential_printing_operations = 0;
+}
+
+void
+debug_p3 (Lisp_Object obj)
+{
+  debug_p4 (obj);
+  inhibit_non_essential_printing_operations = 1;
+  debug_out ("\n");
+  inhibit_non_essential_printing_operations = 0;
+}
+
+void
 debug_print (Lisp_Object debug_print_obj)
 {
   debug_print_no_newline (debug_print_obj);
   debug_out ("\n");
+}
+
+/* Getting tired of typing debug_print() ... */
+void dp (Lisp_Object debug_print_obj);
+void
+dp (Lisp_Object debug_print_obj)
+{
+  debug_print (debug_print_obj);
 }
 
 /* Debugging kludge -- unbuffered */
@@ -1938,6 +2073,14 @@ debug_backtrace (void)
   stderr_out ("\n");
 
   unbind_to (specdepth);
+}
+
+/* Getting tired of typing debug_backtrace() ... */
+void db (void);
+void
+db (void)
+{
+  debug_backtrace ();
 }
 
 void

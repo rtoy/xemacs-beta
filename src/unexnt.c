@@ -1,5 +1,6 @@
 /* unexec for XEmacs on Windows NT.
    Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -108,16 +109,18 @@ DWORD  bss_size = UNINIT_LONG;
    code supplied by NT (primarily because that code relies upon malloc ()).  */
 
 /* **********************
-   Hackers please remember, this _start() thingy is *not* called neither
-   when dumping portably, nor when running from temacs! Do not put
+   Hackers please remember, this _start() thingy is *not* called either
+   when dumping portably, or when running from temacs! Do not put
    significant XEmacs initialization here!
    ********************** */
 
-void
+EXTERN_C void mainCRTStartup (void);
+
+EXTERN_C int _start (void);
+
+int
 _start (void)
 {
-  extern void mainCRTStartup (void);
-
   /* Cache system info, e.g., the NT page size.  */
   cache_system_info ();
   /* Set OS type, so that tchar stuff below works */
@@ -172,6 +175,7 @@ _start (void)
 #endif
 
   mainCRTStartup ();
+  return 0; /* not reached? */
 }
 
 /* Dump out .data and .bss sections into a new executable.  */
@@ -190,13 +194,13 @@ unexec (Ibyte *new_name, Ibyte *old_name, unsigned int start_data,
      ".exe" extension...patch them up if they don't.  */
   qxestrcpy (in_filename, old_name);
   ptr = in_filename + qxestrlen (in_filename) - 4;
-  if (qxestrcmp (ptr, ".exe"))
-    qxestrcat (in_filename, ".exe");
+  if (qxestrcmp_c (ptr, ".exe"))
+    qxestrcat_c (in_filename, ".exe");
 
   qxestrcpy (out_filename, new_name);
   ptr = out_filename + qxestrlen (out_filename) - 4;
-  if (qxestrcmp (ptr, ".exe"))
-    qxestrcat (out_filename, ".exe");
+  if (qxestrcmp_c (ptr, ".exe"))
+    qxestrcat_c (out_filename, ".exe");
 
   stdout_out ("Dumping from %s\n", in_filename);
   stdout_out ("          to %s\n", out_filename);
@@ -359,7 +363,7 @@ get_section_info (file_data *p_infile)
   for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++) 
     {
 #ifndef DUMP_SEPARATE_SECTION
-      if (!strcmp (section->Name, ".bss")) 
+      if (!qxestrcmp_c (section->Name, ".bss")) 
 	{
 	  extern int my_ebss;		/* From lastfile.c  */
 
@@ -369,9 +373,9 @@ get_section_info (file_data *p_infile)
 	  bss_size = (UChar_Binary*) &my_ebss - (UChar_Binary*) bss_start;
 	}
 
-      if (!strcmp (section->Name, ".data")) 
+      if (!qxestrcmp_c (section->Name, ".data")) 
 #else
-      if (!strcmp (section->Name, "xdata"))
+      if (!qxestrcmp_c (section->Name, "xdata"))
 #endif
 	{
 	  extern Char_Binary my_edata[];	/* From lastfile.c  */

@@ -67,6 +67,18 @@ Lisp_Object Vgtk_initial_geometry;
 
 static void gtk_device_init_x_specific_cruft (struct device *d);
 
+static const struct memory_description gtk_device_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct gtk_device, x_keysym_map_hashtable) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_device, WM_COMMAND_frame) },
+  { XD_END }
+};
+
+extern const struct sized_memory_description gtk_device_data_description;
+
+const struct sized_memory_description gtk_device_data_description = {
+  sizeof (struct gtk_device), gtk_device_data_description_1
+};
+
 
 /************************************************************************/
 /*                          helper functions                            */

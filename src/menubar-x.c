@@ -577,6 +577,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
 
       mdata->id = new_lwlib_id ();
       mdata->last_menubar_buffer = Qnil;
+      mdata->protect_me = Qnil;
       mdata->menubar_contents_up_to_date = 0;
       FRAME_MENUBAR_DATA (f) = wrap_popup_data (mdata);
     }
@@ -672,21 +673,12 @@ make_dummy_xbutton_event (XEvent *dummy, Widget daddy, Lisp_Event *eev)
     {
       Position shellx, shelly, framex, framey;
       Arg al [2];
-#ifdef USE_KKCC
       btn->time = EVENT_TIMESTAMP (eev);
-      btn->button = XBUTTON_DATA_BUTTON (EVENT_DATA (eev));
+      btn->button = EVENT_BUTTON_BUTTON (eev);
       btn->root = RootWindowOfScreen (XtScreen (daddy));
       btn->subwindow = (Window) NULL;
-      btn->x = XBUTTON_DATA_X (EVENT_DATA (eev));
-      btn->y = XBUTTON_DATA_Y (EVENT_DATA (eev));
-#else /* not USE_KKCC */
-      btn->time = eev->timestamp;
-      btn->button = eev->event.button.button;
-      btn->root = RootWindowOfScreen (XtScreen (daddy));
-      btn->subwindow = (Window) NULL;
-      btn->x = eev->event.button.x;
-      btn->y = eev->event.button.y;
-#endif /* not USE_KKCC */
+      btn->x = EVENT_BUTTON_X (eev);
+      btn->y = EVENT_BUTTON_Y (eev);
       shellx = shelly = 0;
 #ifndef HAVE_WMCOMMAND
       {
@@ -1036,7 +1028,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
       accel = VOID_TO_LISP (entries->accel);
       if (entries->name && !NILP (accel))
 	{
-	  if (event_matches_key_specifier_p (XEVENT (evee), accel))
+	  if (event_matches_key_specifier_p (evee, accel))
 	    {
 	      /* a match! */
 
@@ -1180,7 +1172,7 @@ menu_accelerator_safe_compare (Lisp_Object event0)
       t=Vmenu_accelerator_prefix;
       while (!NILP (t)
 	     && !NILP (event0)
-	     && event_matches_key_specifier_p (XEVENT (event0), Fcar (t)))
+	     && event_matches_key_specifier_p (event0, Fcar (t)))
 	{
 	  t = Fcdr (t);
 	  event0 = XEVENT_NEXT (event0);
@@ -1190,7 +1182,7 @@ menu_accelerator_safe_compare (Lisp_Object event0)
     }
   else if (NILP (event0))
     return Qnil;
-  else if (event_matches_key_specifier_p (XEVENT (event0), Vmenu_accelerator_prefix))
+  else if (event_matches_key_specifier_p (event0, Vmenu_accelerator_prefix))
     event0 = XEVENT_NEXT (event0);
   else
     return Qnil;
@@ -1200,8 +1192,7 @@ menu_accelerator_safe_compare (Lisp_Object event0)
 static Lisp_Object
 menu_accelerator_safe_mod_compare (Lisp_Object cons)
 {
-  return (event_matches_key_specifier_p (XEVENT (XCAR (cons)), XCDR (cons))
-	  ? Qt
+  return (event_matches_key_specifier_p (XCAR (cons), XCDR (cons)) ? Qt
 	  : Qnil);
 }
 

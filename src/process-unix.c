@@ -72,7 +72,6 @@ Boston, MA 02111-1307, USA.  */
  * Implementation-specific data. Pointed to by Lisp_Process->process_data
  */
 
-#ifndef USE_KKCC
 struct unix_process_data
 {
   /* Non-0 if this is really a ToolTalk channel. */
@@ -85,12 +84,9 @@ struct unix_process_data
   /* Descriptor for the tty which this process is using.
      -1 if we didn't record it (on some systems, there's no need).  */
   int subtty;
-  /* Name of subprocess terminal. */
-  Lisp_Object tty_name;
   /* Non-false if communicating through a pty.  */
   char pty_flag;
 };
-#endif /* not USE_KKCC */
 #define UNIX_DATA(p) ((struct unix_process_data*) ((p)->process_data))
 
 
@@ -475,8 +471,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
       h_errno = 0;
 #endif
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, host, C_STRING_ALLOCA, hostext,
-			  Qnative);
+      LISP_STRING_TO_EXTERNAL (host, hostext, Qunix_host_name_encoding);
 
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();
@@ -497,12 +492,15 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   else
     {
       IN_ADDR numeric_addr;
+      Extbyte *hostext;
+
       /* Attempt to interpret host as numeric inet address */
-      numeric_addr = inet_addr ((char *) XSTRING_DATA (host));
+      LISP_STRING_TO_EXTERNAL (host, hostext, Qunix_host_name_encoding);
+      numeric_addr = inet_addr (hostext);
       if (NUMERIC_ADDR_ERROR)
 	{
 	  maybe_signal_error (Qio_error, "Unknown host", host,
-				   Qprocess, errb);
+			      Qprocess, errb);
 	  return 0;
 	}
 
@@ -810,22 +808,11 @@ unix_alloc_process_data (Lisp_Process *p)
 {
   p->process_data = xnew (struct unix_process_data);
 
-  UNIX_DATA(p)->connected_via_filedesc_p = 0;
-  UNIX_DATA(p)->infd   = -1;
-  UNIX_DATA(p)->errfd  = -1;
-  UNIX_DATA(p)->subtty = -1;
-  UNIX_DATA(p)->tty_name = Qnil;
-  UNIX_DATA(p)->pty_flag = 0;
-}
-
-/*
- * Mark any Lisp objects in Lisp_Process->process_data
- */
-
-static void
-unix_mark_process_data (Lisp_Process *proc)
-{
-  mark_object (UNIX_DATA(proc)->tty_name);
+  UNIX_DATA (p)->connected_via_filedesc_p = 0;
+  UNIX_DATA (p)->infd   = -1;
+  UNIX_DATA (p)->errfd  = -1;
+  UNIX_DATA (p)->subtty = -1;
+  UNIX_DATA (p)->pty_flag = 0;
 }
 
 /*
@@ -1324,7 +1311,7 @@ unix_create_process (Lisp_Process *p,
   if (separate_err)
     retry_close (forkerr);
 
-  UNIX_DATA (p)->tty_name = pty_flag ? build_intstring (pty_name) : Qnil;
+  p->tty_name = pty_flag ? build_intstring (pty_name) : Qnil;
 
   /* Notice that SIGCHLD was not blocked. (This is not possible on
      some systems.) No biggie if SIGCHLD occurs right around the
@@ -1341,7 +1328,7 @@ unix_create_process (Lisp_Process *p,
     close_descriptor_pair (forkerr, errchannel);
     errno = save_errno;
     report_process_error ("Opening pty or pipe", Qunbound);
-    RETURN_NOT_REACHED (0)
+    RETURN_NOT_REACHED (0);
   }
 }
 
@@ -1642,12 +1629,13 @@ unix_deactivate_process (Lisp_Process *p,
 
 /* If the subtty field of the process data is not filled in, do so now. */
 static void
-try_to_initialize_subtty (struct unix_process_data *upd)
+try_to_initialize_subtty (Lisp_Process *p)
 {
+  struct unix_process_data *upd = UNIX_DATA (p);
   if (upd->pty_flag
       && (upd->subtty == -1 || ! isatty (upd->subtty))
-      && STRINGP (upd->tty_name))
-    upd->subtty = qxe_open (XSTRING_DATA (upd->tty_name), O_RDWR, 0);
+      && STRINGP (p->tty_name))
+    upd->subtty = qxe_open (XSTRING_DATA (p->tty_name), O_RDWR, 0);
 }
 
 /* Send signal number SIGNO to PROCESS.
@@ -1731,7 +1719,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
   */
   if (current_group)
     {
-      try_to_initialize_subtty (d);
+      try_to_initialize_subtty (p);
 
 #ifdef SIGNALS_VIA_CHARACTERS
       /* If possible, send signals to the entire pgrp
@@ -1801,14 +1789,6 @@ static int
 unix_kill_process_by_pid (int pid, int sigcode)
 {
   return kill (pid, sigcode);
-}
-
-/* Return TTY name used to communicate with subprocess. */
-
-static Lisp_Object
-unix_get_tty_name (Lisp_Process *p)
-{
-  return UNIX_DATA (p)->tty_name;
 }
 
 /* Canonicalize host name HOST, and return its canonical form.
@@ -2329,7 +2309,6 @@ void
 process_type_create_unix (void)
 {
   PROCESS_HAS_METHOD (unix, alloc_process_data);
-  PROCESS_HAS_METHOD (unix, mark_process_data);
 #ifdef SIGCHLD
   PROCESS_HAS_METHOD (unix, init_process);
   PROCESS_HAS_METHOD (unix, reap_exited_processes);
@@ -2346,7 +2325,6 @@ process_type_create_unix (void)
   PROCESS_HAS_METHOD (unix, deactivate_process);
   PROCESS_HAS_METHOD (unix, kill_child_process);
   PROCESS_HAS_METHOD (unix, kill_process_by_pid);
-  PROCESS_HAS_METHOD (unix, get_tty_name);
 #ifdef HAVE_SOCKETS
   PROCESS_HAS_METHOD (unix, canonicalize_host_name);
   PROCESS_HAS_METHOD (unix, open_network_stream);

@@ -43,15 +43,15 @@ void init_mswindows_dde_very_early (void);
    stuff, call the reinit() routine, and do some more stuff.) */
 
 void init_alloc_once_early (void);
-void reinit_alloc_once_early (void);
+void reinit_alloc_early (void);
 void init_symbols_once_early (void);
-void reinit_symbols_once_early (void);
+void reinit_symbols_early (void);
 void init_errors_once_early (void);
-void reinit_opaque_once_early (void);
+void reinit_opaque_early (void);
 void init_opaque_once_early (void);
 void init_elhash_once_early (void);
 void init_eistring_once_early (void);
-void reinit_eistring_once_early (void);
+void reinit_eistring_early (void);
 
 /* Reset the Lisp engine.  Called both at dump-time, run-time and
    run-temacs-time; at dump-time, it's called early, before any of the

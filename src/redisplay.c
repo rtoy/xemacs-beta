@@ -308,7 +308,9 @@ static void calculate_yoffset (struct display_line *dl,
                                struct display_block *fixup);
 static void calculate_baseline (pos_data *data);
 
+#ifdef ERROR_CHECK_DISPLAY
 static void sledgehammer_check_redisplay_structs (void);
+#endif /* ERROR_CHECK_DISPLAY */
 
 /* This used to be 10 but 30 seems to give much better performance. */
 #define INIT_MAX_PREEMPTS	30
@@ -514,6 +516,114 @@ int column_number_start_at_one;
 Lisp_Object Qtop_bottom;
 
 #define WINDOW_SCROLLED(w) ((w)->hscroll > 0 || (w)->left_xoffset)
+
+static const struct memory_description rune_dglyph_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (struct rune_dglyph, glyph) },
+  { XD_LISP_OBJECT, offsetof (struct rune_dglyph, extent) },
+  { XD_END }
+};
+
+static const struct sized_memory_description rune_dglyph_description = {
+  sizeof (struct rune_dglyph), rune_dglyph_description_1
+};
+
+static const struct memory_description rune_object_description_1[] = {
+  { XD_STRUCT_ARRAY, RUNE_DGLYPH, 1, &rune_dglyph_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description rune_object_description = {
+  0, rune_object_description_1
+};
+
+static const struct memory_description rune_description_1[] = {
+  { XD_INT, offsetof (rune, type) },
+  { XD_UNION, offsetof (rune, object),
+    XD_INDIRECT (0, 0), &rune_object_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description rune_description = {
+  sizeof (rune),
+  rune_description_1
+};
+
+static const struct memory_description rune_dynarr_description_1[] = {
+  XD_DYNARR_DESC (rune_dynarr, &rune_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description rune_dynarr_description = {
+  sizeof (rune_dynarr),
+  rune_dynarr_description_1
+};
+
+static const struct memory_description display_block_description_1[] = {
+  { XD_STRUCT_PTR, offsetof (display_block, runes),
+    1, &rune_dynarr_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description display_block_description = {
+  sizeof (display_block),
+  display_block_description_1
+};
+
+static const struct memory_description display_block_dynarr_description_1[] = {
+  XD_DYNARR_DESC (display_block_dynarr, &display_block_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description display_block_dynarr_description = {
+  sizeof (display_block_dynarr),
+  display_block_dynarr_description_1
+};
+
+static const struct memory_description glyph_block_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (glyph_block, glyph) },
+  { XD_LISP_OBJECT, offsetof (glyph_block, extent) },
+  { XD_END }
+};
+
+static const struct sized_memory_description glyph_block_description = {
+  sizeof (glyph_block),
+  glyph_block_description_1
+};
+
+static const struct memory_description glyph_block_dynarr_description_1[] = {
+  XD_DYNARR_DESC (glyph_block_dynarr, &glyph_block_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description glyph_block_dynarr_description = {
+  sizeof (glyph_block_dynarr),
+  glyph_block_dynarr_description_1
+};
+
+static const struct memory_description display_line_description_1[] = {
+  { XD_STRUCT_PTR, offsetof (display_line, display_blocks),
+    1, &display_block_dynarr_description },
+  { XD_STRUCT_PTR, offsetof (display_line, left_glyphs),
+    1, &glyph_block_dynarr_description },
+  { XD_STRUCT_PTR, offsetof (display_line, right_glyphs),
+    1, &glyph_block_dynarr_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description display_line_description = {
+  sizeof (display_line),
+  display_line_description_1
+};
+
+static const struct memory_description display_line_dynarr_description_1[] = {
+  XD_DYNARR_DESC (display_line_dynarr, &display_line_description),
+  { XD_END }
+};
+
+const struct sized_memory_description display_line_dynarr_description = {
+  sizeof (display_line_dynarr),
+  display_line_dynarr_description_1
+};
 
 
 /***************************************************************************/
@@ -9451,6 +9561,8 @@ compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
 
 #endif /* MEMORY_USAGE_STATS */
 
+#ifdef ERROR_CHECK_DISPLAY
+
 static int
 sledgehammer_check_redisplay_structs_1 (struct window *w, void *closure)
 {
@@ -9479,6 +9591,8 @@ sledgehammer_check_redisplay_structs (void)
 {
   map_windows (0, sledgehammer_check_redisplay_structs_1, NULL);
 }
+
+#endif /* ERROR_CHECK_DISPLAY */
 
 
 /***************************************************************************/

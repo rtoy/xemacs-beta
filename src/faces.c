@@ -257,7 +257,7 @@ face_plist (Lisp_Object obj)
   return result;
 }
 
-static const struct lrecord_description face_description[] = {
+static const struct memory_description face_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Face, name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, doc_string) },
   { XD_LISP_OBJECT, offsetof (Lisp_Face, foreground) },
@@ -276,20 +276,13 @@ static const struct lrecord_description face_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
 					  1, /*dumpable-flag*/
 					  mark_face, print_face, 0, face_equal,
-					  face_hash, face_description, face_getprop,
+					  face_hash, face_description,
+					  face_getprop,
 					  face_putprop, face_remprop,
 					  face_plist, Lisp_Face);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
-					  mark_face, print_face, 0, face_equal,
-					  face_hash, face_description, face_getprop,
-					  face_putprop, face_remprop,
-					  face_plist, Lisp_Face);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                             face read syntax                         */

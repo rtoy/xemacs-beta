@@ -70,6 +70,18 @@ Lisp_Object Vdefault_x_frame_plist;
 Lisp_Object Qwindow_id;
 Lisp_Object Qx_resource_name;
 
+static const struct memory_description x_frame_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct x_frame, icon_pixmap) },
+  { XD_LISP_OBJECT, offsetof (struct x_frame, icon_pixmap_mask) },
+  { XD_END }
+};
+
+extern const struct sized_memory_description x_frame_data_description;
+
+const struct sized_memory_description x_frame_data_description = {
+  sizeof (struct x_frame), x_frame_data_description_1
+};
+
 EXFUN (Fx_window_id, 1);
 
 
@@ -1096,31 +1108,31 @@ WARNING: can only handle plain/text and file: transfers!
       x_event.xbutton.root = XRootWindow(x_event.xbutton.display, 0);
       x_event.xbutton.subwindow = 0;
       x_event.xbutton.time = lisp_event->timestamp;
-      x_event.xbutton.x = lisp_event->event.button.x;
-      x_event.xbutton.y = lisp_event->event.button.y;
+      x_event.xbutton.x = EVENT_BUTTON_X (lisp_event);
+      x_event.xbutton.y = EVENT_BUTTON_Y (lisp_event);
       if (Success == XGetWindowAttributes (x_event.xbutton.display,
 					   x_event.xbutton.window,
 					   &win_attrib))
 	{
-	  x_event.xbutton.x_root = win_attrib.x + lisp_event->event.button.x;
-	  x_event.xbutton.y_root = win_attrib.y + lisp_event->event.button.y;
+	  x_event.xbutton.x_root = win_attrib.x + EVENT_BUTTON_X (lisp_event);
+	  x_event.xbutton.y_root = win_attrib.y + EVENT_BUTTON_Y (lisp_event);
 	}
       else
 	{
-	  x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
-	  x_event.xbutton.y_root = lisp_event->event.button.y;
+	  x_event.xbutton.x_root = EVENT_BUTTON_X (lisp_event); /* this is wrong */
+	  x_event.xbutton.y_root = EVENT_BUTTON_Y (lisp_event);
 	}
-      modifier = lisp_event->event.button.modifiers;
+      modifier = EVENT_BUTTON_MODIFIERS (lisp_event);
       if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
       if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
       if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
       if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
       if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
       if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
-      state |= Button1Mask << (lisp_event->event.button.button-1);
+      state |= Button1Mask << (EVENT_BUTTON_BUTTON (lisp_event)-1);
 
       x_event.xbutton.state = state;
-      x_event.xbutton.button = lisp_event->event.button.button;
+      x_event.xbutton.button = EVENT_BUTTON_BUTTON (lisp_event);
       x_event.xkey.same_screen = True;
 
       /* convert data strings into a big string */
@@ -1361,32 +1373,32 @@ The type defaults to DndText (4).
       x_event.xbutton.root = XRootWindow(x_event.xkey.display, 0);
       x_event.xbutton.subwindow = 0;
       x_event.xbutton.time = lisp_event->timestamp;
-      x_event.xbutton.x = lisp_event->event.button.x;
-      x_event.xbutton.y = lisp_event->event.button.y;
+      x_event.xbutton.x = EVENT_BUTTON_X (lisp_event);
+      x_event.xbutton.y = EVENT_BUTTON_Y (lisp_event);
       if (Success == XGetWindowAttributes (x_event.xbutton.display,
 					   x_event.xbutton.window,
 					   &win_attrib))
 	{
-	  x_event.xbutton.x_root = win_attrib.x + lisp_event->event.button.x;
-	  x_event.xbutton.y_root = win_attrib.y + lisp_event->event.button.y;
+	  x_event.xbutton.x_root = win_attrib.x + EVENT_BUTTON_X (lisp_event);
+	  x_event.xbutton.y_root = win_attrib.y + EVENT_BUTTON_Y (lisp_event);
 	}
       else
 	{
-	  x_event.xbutton.x_root = lisp_event->event.button.x; /* this is wrong */
-	  x_event.xbutton.y_root = lisp_event->event.button.y;
+	  x_event.xbutton.x_root = EVENT_BUTTON_X (lisp_event); /* this is wrong */
+	  x_event.xbutton.y_root = EVENT_BUTTON_Y (lisp_event);
 	}
 
-      modifier = lisp_event->event.button.modifiers;
+      modifier = EVENT_BUTTON_MODIFIERS (lisp_event);
       if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
       if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
       if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
       if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
       if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
       if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
-      state |= Button1Mask << (lisp_event->event.button.button-1);
+      state |= Button1Mask << (EVENT_BUTTON_BUTTON (lisp_event)-1);
 
       x_event.xbutton.state = state;
-      x_event.xbutton.button = lisp_event->event.button.button;
+      x_event.xbutton.button = EVENT_BUTTON_BUTTON (lisp_event);
       x_event.xkey.same_screen = True;
 
       DndSetData(dnd_typ, (unsigned char *)dnd_data, dnd_len);

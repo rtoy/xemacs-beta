@@ -46,7 +46,6 @@ Boston, MA 02111-1307, USA.  */
 /* GCC does not like forward enum declaration. This needs to be
    defined here. What a disgust! */
 
-#ifdef USE_KKCC
 enum console_variant
 {
   dead_console,
@@ -56,8 +55,6 @@ enum console_variant
   mswindows_console,
   stream_console
 };
-
-#endif /* USE_KKCC */
 
 enum device_metrics
 {
@@ -105,10 +102,10 @@ Lisp_Object console_device_list (struct console *c);
 } while (0)
 
 #define CDFW_CONSOLE(obj)				\
-   (WINDOWP  (obj) ? WINDOW_CONSOLE (XWINDOW (obj))	\
- : (FRAMEP   (obj) ?  FRAME_CONSOLE (XFRAME  (obj))	\
- : (DEVICEP  (obj) ? DEVICE_CONSOLE (XDEVICE (obj))    	\
- : (CONSOLEP (obj) ? obj				\
+   ((WINDOWP  (obj) && WINDOW_LIVE_P (XWINDOW(obj))) ? WINDOW_CONSOLE (XWINDOW (obj))	\
+ : ((FRAMEP   (obj) && FRAME_LIVE_P (XFRAME (obj)))  ?  FRAME_CONSOLE (XFRAME  (obj))	\
+ : ((DEVICEP  (obj) && DEVICE_LIVE_P (XDEVICE (obj))) ? DEVICE_CONSOLE (XDEVICE (obj))	\
+ : ((CONSOLEP (obj) && CONSOLE_LIVE_P (XCONSOLE (obj))) ? obj				\
  : Qnil))))
 
 #define CONSOLE_LOOP(concons) LIST_LOOP (concons, Vconsole_list)
@@ -134,9 +131,7 @@ void add_entry_to_console_type_list (Lisp_Object symbol,
 struct console_methods *decode_console_type (Lisp_Object type,
 					     Error_Behavior errb);
 
-#ifdef USE_KKCC
 enum console_variant get_console_variant (Lisp_Object type);
-#endif /* USE_KKCC */
 
 void delete_console_internal (struct console *con, int force,
 			      int from_kill_emacs, int from_io_error);

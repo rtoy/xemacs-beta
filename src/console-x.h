@@ -65,6 +65,12 @@ Boston, MA 02111-1307, USA.  */
   XtGetValues (widget, &al, 1);				\
 } while (0)
 
+#ifdef __cplusplus
+#define X_CLASSFIELD c_class
+#else
+#define X_CLASSFIELD class
+#endif
+
 /* Variables associated with the X display frame this emacs is using. */
 extern XtAppContext Xt_app_con;
 
@@ -98,6 +104,7 @@ void x_wm_set_cell_size (Widget wmshell, int cw, int ch);
 void x_wm_set_variable_size (Widget wmshell, int width, int height);
 
 const char *x_event_name (int event_type);
+int check_if_pending_expose_event (struct device *d);
 int x_error_handler (Display *disp, XErrorEvent *event);
 void expect_x_error (Display *dpy);
 int x_error_occurred_p (Display *dpy);
@@ -130,7 +137,6 @@ int x_initialize_frame_menubar (struct frame *f);
 void x_init_modifier_mapping (struct device *d);
 
 int x_frame_window_state (struct frame *f);
-
 
 #define X_ERROR_OCCURRED(dpy, body)	\
      (expect_x_error (dpy), body, x_error_occurred_p (dpy))

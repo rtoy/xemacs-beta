@@ -53,10 +53,10 @@ struct debug_classes
 
 extern struct debug_classes active_debug_classes;
 
-#define DASSERT(class, desired_type, action, assertion) do		\
+#define DASSERT(class_, desired_type, action, assertion) do		\
 {									\
-  if (active_debug_classes.##class					\
-      && (active_debug_classes.types_of_##class & desired_type))	\
+  if (active_debug_classes.##class_					\
+      && (active_debug_classes.types_of_##class_ & desired_type))	\
     {									\
       if (! (assertion))						\
 	{								\
@@ -70,7 +70,7 @@ extern struct debug_classes active_debug_classes;
 } while (0)
 #else /* !DEBUG_XEMACS */
 
-#define DASSERT(class, desired_type, action, assertion)	((void) 0)
+#define DASSERT(class_, desired_type, action, assertion)	((void) 0)
 
 #endif /* !DEBUG_XEMACS */
 

@@ -42,34 +42,45 @@ Boston, MA 02111-1307, USA.  */
      either EQ or EQUAL_WRAPPED (i.e. Feq() or Fequal()).
    WINDOW_SAVED_SLOT_ARRAY is the same for an array of Lisp_Objects.
 
-   Callers should define WINDOW_SLOT (with a terminating semicolon if
-   not blank), and WINDOW_SAVED_SLOT if different; otherwise the
-   latter will be defined using WINDOW_SLOT.  Callers do not define
-   the _ARRAY versions.  Instead, they either do or do not define
-   WINDOW_SLOT_DECLARATION.  It should be defined in the definition of
-   a struct and not elsewhere.
+   Callers should define WINDOW_SLOT (with a terminating semicolon if not
+   blank), and WINDOW_SAVED_SLOT if different; otherwise the latter will be
+   defined using WINDOW_SLOT.  Callers should also either (a) do nothing
+   else (which defines WINDOW_SLOT_ARRAY using a for() loop, appropriate
+   for normal code), define WINDOW_SLOT_DECLARATION (which defines
+   WINDOW_SLOT_ARRAY using WINDOW_SLOT (slot[size]), appropriate for a
+   struct definition), or define WINDOW_SLOT_ARRAY themselves.  In the
+   first two cases, WINDOW_SAVED_SLOT_ARRAY will be defined in the same
+   fashion, using WINDOW_SAVED_SLOT.  In the last case, if
+   WINDOW_SAVED_SLOT is defined, the caller must provide an appropriate
+   definition of WINDOW_SAVED_SLOT_ARRAY; otherwise, it will be defined
+   using WINDOW_SLOT_ARRAY.
 
    Callers do not need to undefine these definitions; it is done
    automatically.
 */
 
-#ifndef WINDOW_SAVED_SLOT
-#define WINDOW_SAVED_SLOT(slot, compare) WINDOW_SLOT (slot)
-#endif
-
-#ifdef WINDOW_SLOT_DECLARATION
-#define WINDOW_SLOT_ARRAY(slot, size) WINDOW_SLOT (slot[size])
-#define WINDOW_SAVED_SLOT_ARRAY(slot, size, compare) \
+#ifdef WINDOW_SLOT_ARRAY
+# ifndef WINDOW_SAVED_SLOT_ARRAY
+#  ifdef WINDOW_SAVED_SLOT
+#   error must define WINDOW_SAVED_SLOT_ARRAY if WINDOW_SAVED_SLOT and WINDOW_SLOT_ARRAY are defined
+#  else
+#   define WINDOW_SAVED_SLOT_ARRAY(slot, size, compare) \
+     WINDOW_SLOT_ARRAY (slot, size)
+#  endif /* WINDOW_SAVED_SLOT */
+# endif /* not WINDOW_SAVED_SLOT_ARRAY */
+#elif defined (WINDOW_SLOT_DECLARATION) /* not WINDOW_SLOT_ARRAY */
+# define WINDOW_SLOT_ARRAY(slot, size) WINDOW_SLOT (slot[size])
+# define WINDOW_SAVED_SLOT_ARRAY(slot, size, compare) \
   WINDOW_SAVED_SLOT (slot[size], compare)
-#else
-#define WINDOW_SLOT_ARRAY(slot, size) do {	\
+#else /* not WINDOW_SLOT_DECLARATION, not WINDOW_SLOT_ARRAY */
+# define WINDOW_SLOT_ARRAY(slot, size) do {	\
   int wsaidx;					\
   for (wsaidx = 0; wsaidx < size; wsaidx++)	\
     {						\
       WINDOW_SLOT (slot[wsaidx]);		\
     }						\
 } while (0);
-#define WINDOW_SAVED_SLOT_ARRAY(slot, size, compare) do {	\
+# define WINDOW_SAVED_SLOT_ARRAY(slot, size, compare) do {	\
   int wsaidx;							\
   for (wsaidx = 0; wsaidx < size; wsaidx++)			\
     {								\
@@ -77,6 +88,10 @@ Boston, MA 02111-1307, USA.  */
     }								\
 } while (0);
 #endif /* WINDOW_SLOT_DECLARATION */
+
+#ifndef WINDOW_SAVED_SLOT
+#define WINDOW_SAVED_SLOT(slot, compare) WINDOW_SLOT (slot)
+#endif
 
 #define EQUAL_WRAPPED(x,y) internal_equal ((x), (y), 0)
 

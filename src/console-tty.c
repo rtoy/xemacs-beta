@@ -49,6 +49,17 @@ DECLARE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 Lisp_Object Qterminal_type;
 Lisp_Object Qcontrolling_process;
 
+static const struct memory_description tty_console_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_console, terminal_type) },
+  { XD_LISP_OBJECT, offsetof (struct tty_console, instream) },
+  { XD_LISP_OBJECT, offsetof (struct tty_console, outstream) },
+  { XD_END }
+};
+
+const struct sized_memory_description tty_console_data_description = {
+  sizeof (struct tty_console), tty_console_data_description_1
+};
+
 
 static void
 allocate_tty_console_struct (struct console *con)

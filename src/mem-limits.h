@@ -81,14 +81,7 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #endif /* BSD4_2 */
 
 #ifdef emacs
-/* The important properties of this type are that 1) it's a pointer, and
-   2) arithmetic on it should work as if the size of the object pointed
-   to has a size of 1.  */
-#ifdef __STDC__
 typedef void *POINTER;
-#else
-typedef char *POINTER;
-#endif
 
 #ifndef CYGWIN
 typedef unsigned long SIZE;

@@ -199,7 +199,6 @@ allocate_gui_item (void)
   Lisp_Gui_Item *lp = alloc_lcrecord_type (Lisp_Gui_Item, &lrecord_gui_item);
   Lisp_Object val;
 
-  zero_lcrecord (lp);
   val = wrap_gui_item (lp);
 
   gui_item_init (val);
@@ -549,8 +548,7 @@ gui_item_display_flush_right (Lisp_Object gui_item)
   return Qnil;
 }
 
-#ifdef USE_KKCC
-static const struct lrecord_description gui_item_description [] = {
+static const struct memory_description gui_item_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Gui_Item, name) },
   { XD_LISP_OBJECT, offsetof (struct Lisp_Gui_Item, callback) },
   { XD_LISP_OBJECT, offsetof (struct Lisp_Gui_Item, callback_ex) },
@@ -566,7 +564,6 @@ static const struct lrecord_description gui_item_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Gui_Item, value) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_gui_item (Lisp_Object obj)
@@ -789,7 +786,6 @@ finalize_gui_item (void *header, int for_disksave)
 {
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 			       0, /*dumpable-flag*/
 			       mark_gui_item, print_gui_item,
@@ -797,14 +793,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
 			       gui_item_hash,
 			       gui_item_description,
 			       Lisp_Gui_Item);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("gui-item", gui_item,
-			       mark_gui_item, print_gui_item,
-			       finalize_gui_item, gui_item_equal,
-			       gui_item_hash,
-			       0,
-			       Lisp_Gui_Item);
-#endif /* not USE_KKCC */
 
 DOESNT_RETURN
 gui_error (const Char_ASCII *reason, Lisp_Object frob)

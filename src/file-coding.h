@@ -162,7 +162,7 @@ Boston, MA 02111-1307, USA.  */
 struct coding_stream;
 struct detection_state;
 
-extern const struct struct_description coding_system_methods_description;
+extern const struct sized_memory_description coding_system_methods_description;
 
 struct coding_system_methods;
 
@@ -187,73 +187,18 @@ struct Lisp_Coding_System
   struct lcrecord_header header;
   struct coding_system_methods *methods;
 
-  /* Name and description of this coding system.  The description
-     should be suitable for a menu entry. */
-  Lisp_Object name;
-  Lisp_Object description;
-
-  /* Mnemonic string displayed in the modeline when this coding
-     system is active for a particular buffer. */
-  Lisp_Object mnemonic;
-
-  /* Long documentation on the coding system. */
-  Lisp_Object documentation;
-  /* Functions to handle additional conversion after reading or before
-     writing. #### This mechanism should be replaced by the ability to
-     simply create new coding system types. */
-  Lisp_Object post_read_conversion;
-  Lisp_Object pre_write_conversion;
-
-  /* If this coding system is not of the correct type for text file
-     conversion (i.e. decodes byte->char), we wrap it with appropriate
-     char<->byte converters.  This is created dynamically, when it's
-     needed, and cached here. */
-  Lisp_Object text_file_wrapper;
-
   /* If true, this is an internal coding system, which will not show up in
      coding-system-list unless a special parameter is given to it. */
   int internal_p;
 
-  /* ------------------------ junk to handle EOL -------------------------
-     I had hoped that we could handle this without lots of special-case
-     code, but it appears not to be the case if we want to maintain
-     compatibility with the existing way.  However, at least with the way
-     we do things now, we avoid EOL junk in most of the coding system
-     methods themselves, or in the decode/encode functions.  The EOL
-     special-case code is limited to coding-system creation and to the
-     convert-eol and undecided coding system types. */
+#define CODING_SYSTEM_SLOT_DECLARATION
+#define MARKED_SLOT(x) Lisp_Object x;
+#include "coding-system-slots.h"
 
-  /* If this coding system wants autodetection of the EOL type, then at the
-     appropriate time we wrap this coding system with
-     convert-eol-autodetect. (We do NOT do this at creation time because
-     then we end up with multiple convert-eols wrapped into the final
-     result -- esp. with autodetection using `undecided' -- leading to a
-     big mess.) We cache the wrapped coding system here. */
-  Lisp_Object auto_eol_wrapper;
-  
-  /* Eol type requested by user. */
+  /* Eol type requested by user.  See comment about EOL junk in
+     coding-system-slots.h. */
   enum eol_type eol_type;
 
-  /* Subsidiary coding systems that specify a particular type of EOL
-     marking, rather than autodetecting it.  These will only be non-nil
-     if (eol_type == EOL_AUTODETECT).  These are chains. */
-  Lisp_Object eol[3];
-  /* If this coding system is a subsidiary, this element points back to its
-     parent. */
-  Lisp_Object subsidiary_parent;
-
-  /* At decoding or encoding time, we use the following coding system, if
-     it exists, in place of the coding system object.  This is how we
-     handle coding systems with EOL types of CRLF or CR.  Formerly, we did
-     the canonicalization at creation time, returning a chain in place of
-     the original coding system; but that interferes with
-     `coding-system-property' and causes other complications.  CANONICAL is
-     used when determining the end types of a coding system.
-     canonicalize-after-coding also consults CANONICAL (it has to, because
-     the data in the lstream is based on CANONICAL, not on the original
-     coding system). */
-  Lisp_Object canonical;
-  
   /* type-specific extra data attached to a coding_system */
   char data[1];
 };
@@ -266,10 +211,33 @@ DECLARE_LRECORD (coding_system, Lisp_Coding_System);
 #define CHECK_CODING_SYSTEM(x) CHECK_RECORD (x, coding_system)
 #define CONCHECK_CODING_SYSTEM(x) CONCHECK_RECORD (x, coding_system)
 
+enum coding_system_variant
+{
+  no_conversion_coding_system,
+  convert_eol_coding_system,
+  undecided_coding_system,
+  chain_coding_system,
+  text_file_wrapper_coding_system,
+  internal_coding_system,
+  gzip_coding_system,
+  mswindows_multibyte_to_unicode_coding_system,
+  mswindows_multibyte_coding_system,
+  iso2022_coding_system,
+  ccl_coding_system,
+  shift_jis_coding_system,
+  big5_coding_system,
+  unicode_coding_system,
+};
+
 struct coding_system_methods
 {
   Lisp_Object type;
   Lisp_Object predicate_symbol;
+
+  /* Type expressed as an enum, needed for KKCC marking of the
+     type-specific lstream data; copied into the struct coding_stream. */
+
+  enum coding_system_variant enumtype;
 
   /* Implementation specific methods: */
 
@@ -401,9 +369,8 @@ struct coding_system_methods
      INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
 
   /* Description of the extra data (struct foo_coding_system) attached to a
-     coding system, for pdump purposes.  NOTE: All offsets must have
-     coding_system_data_offset added to them! */
-  const struct lrecord_description *extra_description;
+     coding system, for pdump purposes. */
+  const struct sized_memory_description *extra_description;
   /* size of struct foo_coding_system -- extra data associated with
      the coding system */
   int extra_data_size;
@@ -445,8 +412,7 @@ struct coding_system_methods
 
 /***** Defining new coding-system types *****/
 
-#define coding_system_data_offset (offsetof (Lisp_Coding_System, data))
-extern const struct lrecord_description coding_system_empty_extra_description[];
+extern const struct sized_memory_description coding_system_empty_extra_description;
 
 #ifdef ERROR_CHECK_TYPES
 #define DECLARE_CODING_SYSTEM_TYPE(type)				\
@@ -492,12 +458,21 @@ extern struct coding_system_methods * type##_coding_system_methods
 #define DEFINE_CODING_SYSTEM_TYPE(type)					\
 struct coding_system_methods * type##_coding_system_methods
 
+#define DEFINE_CODING_SYSTEM_TYPE_WITH_DATA(type)		\
+struct coding_system_methods * type##_coding_system_methods;	\
+static const struct sized_memory_description			\
+  type##_coding_system_description_0 = {			\
+  sizeof (struct type##_coding_system),				\
+  type##_coding_system_description				\
+}
+
 #define INITIALIZE_CODING_SYSTEM_TYPE(ty, pred_sym) do {		\
   ty##_coding_system_methods =						\
     xnew_and_zero (struct coding_system_methods);			\
   ty##_coding_system_methods->type = Q##ty;				\
   ty##_coding_system_methods->extra_description =			\
-    coding_system_empty_extra_description;				\
+    &coding_system_empty_extra_description;				\
+  ty##_coding_system_methods->enumtype = ty##_coding_system;		\
   defsymbol_nodump (&ty##_coding_system_methods->predicate_symbol,	\
                     pred_sym);						\
   add_entry_to_coding_system_type_list (ty##_coding_system_methods);	\
@@ -514,11 +489,10 @@ struct coding_system_methods * type##_coding_system_methods
    struct foo_coding_system (attached to the coding system)
    struct foo_coding_stream (per coding process, attached to the
                              struct coding_stream)
-   const struct foo_coding_system_description[] (pdump description of
-                                                 struct foo_coding_system)
+   const struct memory_description foo_coding_system_description[]
+   (data description of struct foo_coding_system)
 
-   NOTE: The description must have coding_system_data_offset added to
-   all offsets in it!  For an example of how to do things, see
+   For an example of how to do the description, see
    chain_coding_system_description.
 */
 #define INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA(type, pred_sym)	\
@@ -527,7 +501,7 @@ do {								\
   type##_coding_system_methods->extra_data_size =		\
     sizeof (struct type##_coding_system);			\
   type##_coding_system_methods->extra_description =		\
-    type##_coding_system_description;				\
+    &type##_coding_system_description_0;			\
   type##_coding_system_methods->coding_data_size =		\
     sizeof (struct type##_coding_stream);			\
 } while (0)
@@ -868,6 +842,14 @@ enum encode_decode
 
 struct coding_stream
 {
+  /* Enumerated constant listing which type of console this is (TTY, X,
+     MS-Windows, etc.).  This duplicates the method structure in
+     XCODING_SYSTEM (str->codesys)->methods->type, which formerly was the
+     only way to determine the coding system type.  We need this constant
+     now for KKCC, so that it can be used in an XD_UNION clause to
+     determine the Lisp objects in the type-specific data. */
+  enum coding_system_variant type;
+
   /* Coding system that governs the conversion. */
   Lisp_Object codesys;
   /* Original coding system, pre-canonicalization. */

@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* 7-8-00 This file is more or less Mule-ized in my Mule workspace. */
+/* 7-8-00 This file is more or less Mule-ized. */
 
 /* Original author: Jamie Zawinski for 19.8
    font-truename stuff added by Jamie Zawinski for 19.10
@@ -187,14 +187,14 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   vis = DEVICE_X_VISUAL (XDEVICE(device));
   depth = DEVICE_X_DEPTH(XDEVICE(device));
 
-  if (vis->class == GrayScale || vis->class == StaticColor ||
-      vis->class == StaticGray)
+  if (vis->X_CLASSFIELD == GrayScale || vis->X_CLASSFIELD == StaticColor ||
+      vis->X_CLASSFIELD == StaticGray)
     {
       /* #### Implement me!!! */
       return NULL;
     }
 
-  if (vis->class == PseudoColor)
+  if (vis->X_CLASSFIELD == PseudoColor)
     {
       /* Quantize the image and get a histogram while we're at it.
 	 Do this first to save memory */
@@ -222,7 +222,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
     }
   outimg->data = (char *) data;
 
-  if (vis->class == PseudoColor)
+  if (vis->X_CLASSFIELD == PseudoColor)
     {
       unsigned long pixarray[256];
       int pixcount, n;

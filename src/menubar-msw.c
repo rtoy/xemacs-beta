@@ -120,85 +120,6 @@ static Lisp_Object current_hash_table;
 static HMENU top_level_menu;
 
 /*
- * Translate X accelerator syntax to win32 accelerator syntax.
- * accel = (Ichar*) to receive the accelerator character
- *         or NULL to suppress accelerators in the menu or dialog item.
- *
- * %% is replaced with %
- * if accel is NULL:
- *   %_ is removed.
- * if accel is non-NULL:
- *   %_ is replaced with &.
- *   The accelerator character is passed back in *accel.
- *   (If there is no accelerator, it will be added on the first character.)
- *
- */
-
-Lisp_Object
-mswindows_translate_menu_or_dialog_item (Lisp_Object item, Ichar *accel)
-{
-  Bytecount len = XSTRING_LENGTH (item);
-  Ibyte *it = (Ibyte *) ALLOCA (2 * len + 42), *ptr = it;
-
-  memcpy (ptr, XSTRING_DATA (item), len + 1);
-  if (accel)
-    *accel = '\0';
-
-  /* Escape '&' as '&&' */
-  
-  while ((ptr = (Ibyte *) memchr (ptr, '&', len - (ptr - it))) != NULL)
-    {
-      memmove (ptr + 1, ptr, (len - (ptr - it)) + 1);
-      len++;
-      ptr += 2;
-    }
-
-  /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
-     and `%%' with `%'. */
-  ptr = it;
-  while ((ptr = (Ibyte *) memchr (ptr, '%', len - (ptr - it))) != NULL)
-    {
-      if (*(ptr + 1) == '_')
-	{
-	  if (accel)
-	    {
-	      *ptr = '&';
-	      if (!*accel)
-		*accel = DOWNCASE (0, itext_ichar (ptr + 2));
-	      memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
-	      len--;
-	    }
-	  else	/* Skip accelerator */
-	    {
-	      memmove (ptr, ptr + 2, len - (ptr - it + 2) + 1);
-	      len -= 2;
-	    }
-	}
-      else if (*(ptr + 1) == '%')
-	{
-	  memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
-	  len--;
-	  ptr++;
-	}
-      else	/* % on its own - shouldn't happen */
-	ptr++;
-    }
-
-  if (accel && !*accel)
-    {
-      /* Force a default accelerator */
-      ptr = it;
-      memmove (ptr + 1, ptr, len + 1);
-      *accel = DOWNCASE (0, itext_ichar (ptr + 1));
-      *ptr = '&';
-
-      len++;
-    }
-
-  return make_string (it, len);
-}
-
-/*
  * This returns Windows-style menu item string:
  * "Left Flush\tRight Flush"
  */
@@ -888,13 +809,8 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   /* Default is to put the menu at the point (10, 10) in frame */
   if (eev)
     {
-#ifdef USE_KKCC
-      pt.x = XBUTTON_DATA_X (EVENT_DATA (eev));
-      pt.y = XBUTTON_DATA_Y (EVENT_DATA (eev));
-#else /* not USE_KKCC */
-      pt.x = eev->event.button.x;
-      pt.y = eev->event.button.y;
-#endif /* not USE_KKCC */
+      pt.x = EVENT_BUTTON_X (eev);
+      pt.y = EVENT_BUTTON_Y (eev);
       ClientToScreen (FRAME_MSWINDOWS_HANDLE (f), &pt);
     }
   else

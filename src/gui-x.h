@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific header file.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2000 Ben Wing.
+   Copyright (C) 1996, 2000, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -42,10 +42,15 @@ struct popup_data
 {
   struct lcrecord_header header;
 
-  /* lwlib ID of the tree of widgets corresponding to this popup.
-     We pass this to lw_map_widget_values() to retrieve all of our
-     Lispy call-data values that need to be GCPRO'd. */
+  /* lwlib ID of the tree of widgets corresponding to this popup.  We pass
+     this to lw_map_widget_values() to retrieve all of our Lispy call-data
+     and accel values that need to be GCPRO'd, and store them in the
+     following list. (We used to call lw_map_widget_values() during GC
+     mark, but that isn't compatible with KKCC.) */
   LWLIB_ID id;
+
+  /* List of GC-protected objects. */
+  Lisp_Object protect_me;
 
   /* For the frame popup data, this is the last buffer for which the
      menubar was displayed.  If the buffer has changed, we may have to

@@ -1,6 +1,7 @@
 /* Define stream specific console, device, and frame object for XEmacs.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -27,6 +28,8 @@ Boston, MA 02111-1307, USA.  */
 #define INCLUDED_console_stream_h_
 
 #include "console.h"
+
+extern const struct sized_memory_description stream_console_data_description;
 
 extern Lisp_Object Vterminal_console, Vterminal_frame, Vterminal_device;
 

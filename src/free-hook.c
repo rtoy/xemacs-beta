@@ -26,9 +26,9 @@ Boston, MA 02111-1307, USA.  */
    * Trying to free a pointer not returned by malloc.
    * Trying to realloc a pointer not returned by malloc.
 
-   In addition, every word of every block freed is set to
-   0xdeadbeef.  This causes many uses of freed storage to be
-   trapped or recognized.
+   In addition, every word of every block freed is set to 0xdeadbeef
+   (-559038737).  This causes many uses of freed storage to be trapped or
+   recognized.
 
    When you use this, the storage used by the last FREE_QUEUE_LIMIT
    calls to free() is not recycled.  When you call free for the Nth

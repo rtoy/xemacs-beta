@@ -40,14 +40,14 @@ Boston, MA 02111-1307, USA.  */
    of memory called `frob blocks').  These objects have a `struct
    lrecord_header' at the top, containing only the bits needed to find
    the lrecord_implementation for the object.  There are special
-   routines in alloc.c to deal with each such object type.
+   routines in alloc.c to create an object of each such type.
 
    Lcrecords are used for less common sorts of objects that don't do
    their own allocation.  Each such object is malloc()ed individually,
    and the objects are chained together through a `next' pointer.
    Lcrecords have a `struct lcrecord_header' at the top, which
    contains a `struct lrecord_header' and a `next' pointer, and are
-   allocated using alloc_lcrecord().
+   allocated using alloc_lcrecord_type() or its variants.
 
    Creating a new lcrecord type is fairly easy; just follow the
    lead of some existing type (e.g. hash tables).  Note that you
@@ -55,11 +55,14 @@ Boston, MA 02111-1307, USA.  */
    defaults are provided for many of them.  Alternatively, if you're
    just looking for a way of encapsulating data (which possibly
    could contain Lisp_Objects in it), you may well be able to use
-   the opaque type. */
+   the opaque type. --ben
+*/
 
 struct lrecord_header
 {
-  /* index into lrecord_implementations_table[] */
+  /* Index into lrecord_implementations_table[].  Objects that have been
+     explicitly freed using e.g. free_cons() have lrecord_type_free in this
+     field. */
   unsigned int type :8;
 
   /* If `mark' is 0 after the GC mark phase, the object will be freed
@@ -97,7 +100,7 @@ struct lcrecord_header
 
   /* The `next' field is normally used to chain all lcrecords together
      so that the GC can find (and free) all of them.
-     `alloc_lcrecord' threads lcrecords together.
+     `basic_alloc_lcrecord' threads lcrecords together.
 
      The `next' field may be used for other purposes as long as some
      other mechanism is provided for letting the GC do its work.
@@ -134,15 +137,15 @@ enum lrecord_type
   /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
      #### This should be replaced by a symbol_value_magic_p flag
      in the Lisp_Symbol lrecord_header. */
-  lrecord_type_symbol_value_forward,
-  lrecord_type_symbol_value_varalias,
-  lrecord_type_symbol_value_lisp_magic,
-  lrecord_type_symbol_value_buffer_local,
+  lrecord_type_symbol_value_forward, /* 0 */
+  lrecord_type_symbol_value_varalias, /* 1 */
+  lrecord_type_symbol_value_lisp_magic, /* 2 */
+  lrecord_type_symbol_value_buffer_local, /* 3 */
   lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
 
-  lrecord_type_symbol,
-  lrecord_type_subr,
-  lrecord_type_cons,
+  lrecord_type_symbol, /* 4 */
+  lrecord_type_subr, /* 5 */
+  lrecord_type_cons, /* 6 */
   lrecord_type_vector,
   lrecord_type_string,
   lrecord_type_lcrecord_list,
@@ -166,7 +169,7 @@ enum lrecord_type
   lrecord_type_extent_auxiliary,
   lrecord_type_marker,
   lrecord_type_event,
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   lrecord_type_key_data,
   lrecord_type_button_data,
   lrecord_type_motion_data,
@@ -176,7 +179,7 @@ enum lrecord_type
   lrecord_type_misc_user_data,
   lrecord_type_magic_eval_data,
   lrecord_type_magic_data,
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   lrecord_type_keymap,
   lrecord_type_command_builder,
   lrecord_type_timeout,
@@ -233,7 +236,12 @@ struct lrecord_implementation
      because the GC routines will do this).  Doing it this way reduces
      recursion, so the object returned should preferably be the one
      with the deepest level of Lisp_Object pointers.  This function
-     can be NULL, meaning no GC marking is necessary. */
+     can be NULL, meaning no GC marking is necessary.
+
+     NOTE NOTE NOTE: This is not used by KKCC (which uses the data
+     description below instead), unless the data description is missing.
+     Yes, this currently means there is logic duplication.  Eventually the
+     mark methods will be removed. */
   Lisp_Object (*marker) (Lisp_Object);
 
   /* `printer' converts the object to a printed representation.
@@ -263,8 +271,8 @@ struct lrecord_implementation
      also NULL. */
   unsigned long (*hash) (Lisp_Object, int);
 
-  /* External data layout description */
-  const struct lrecord_description *description;
+  /* Data layout description for your object.  See long comment below. */
+  const struct memory_description *description;
 
   /* These functions allow any object type to have builtin property
      lists that can be manipulated from the lisp level with
@@ -275,7 +283,7 @@ struct lrecord_implementation
   Lisp_Object (*plist) (Lisp_Object obj);
 
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
-     If both are 0, this type is not instantiable by alloc_lcrecord(). */
+     If both are 0, this type is not instantiable by basic_alloc_lcrecord(). */
   Bytecount static_size;
   Bytecount (*size_in_bytes_method) (const void *header);
 
@@ -284,9 +292,7 @@ struct lrecord_implementation
 
   /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
      one that does not have an lcrecord_header at the front and which
-     is (usually) allocated in frob blocks.  We only use this flag for
-     some consistency checking, and that only when error-checking is
-     enabled. */
+     is (usually) allocated in frob blocks. */
   unsigned int basic_p :1;
 };
 
@@ -320,37 +326,97 @@ extern int gc_in_progress;
   ((void) ((lheader)->lisp_readonly = 1))
 #define RECORD_MARKER(lheader) lrecord_markers[(lheader)->type]
 
-#ifdef USE_KKCC
 #define RECORD_DUMPABLE(lheader) (lrecord_implementations_table[(lheader)->type])->dumpable
-#endif /* USE_KKCC */
 
-/* External description stuff
+/* Data description stuff
 
-   PLEASE NOTE: Both lrecord_description and struct_description are
-   badly misnamed.  In reality, an lrecord_description is nothing more
-   than a list of the elements in a block of memory that need
-   relocating or other special handling, and a struct_description is
-   no more than an lrecord_description plus the size of the block of
-   memory. (In fact, a struct_description can now have its size given
-   as zero, i.e. unspecified, meaning that the last element in the
-   structure is noted in the list and the size of the block can
-   therefore be computed from it.) The names stem from the fact
-   lrecord_descriptions are used to describe lrecords (the size of the
-   lrecord is elsewhere in its description, attached to its methods,
-   so it does not need to be given here), while struct_descriptions
-   are used to describe C structs; but both are used in various
-   additional ways.  Much better terms would be memory_description and
-   sized_memory_description.
+   Data layout descriptions describe blocks of memory (in particular, Lisp
+   objects and other objects on the heap, and global objects with pointers
+   to such heap objects), including their size and a list of the elements
+   that need relocating, marking or other special handling.  They are
+   currently used in two places: by pdump [the new, portable dumper] and
+   KKCC [the new garbage collector].  The two subsystems use the
+   descriptions in different ways, and as a result some of the descriptions
+   are appropriate only for one or the other, when it is known that only
+   that subsystem will use the description. (This is particularly the case
+   with objects that can't be dumped, because pdump needs more info than
+   KKCC.) However, properly written descriptions are appropriate for both,
+   and you should strive to write your descriptions that way, since the
+   dumpable status of an object may change and new uses for the
+   descriptions may be created. (An example that comes to mind is a
+   facility for determining the memory usage of XEmacs data structures --
+   like `buffer-memory-usage', `window-memory-usage', etc. but more
+   general.)
 
-   An lrecord_description is an array of values. (This is actually
+   More specifically:
+
+   Pdump (the portable dumper) needs to write out all objects in heap
+   space, and later on (in another invocation of XEmacs) load them back
+   into the heap, relocating all pointers to the heap objects in the global
+   data space. ("Heap" means anything malloc()ed, including all Lisp
+   objects, and "global data" means anything declared globally or
+   `static'.) Pdump, then, needs to be told about the location of all
+   global pointers to heap objects, all the description of all such
+   objects, including their size and any pointers to other heap (aka
+   "relocatable") objects. (Pdump assumes that the heap may occur in
+   different places in different invocations -- therefore, it is not enough
+   simply to write out the entire heap and later reload it at the same
+   location -- but that global data is always in the same place, and hence
+   pointers to it do not need to be relocated.  This assumption holds true
+   in general for modern operating systems, but would be broken, for
+   example, in a system without virtual memory, or when dealing with shared
+   libraries.  Also, unlike unexec, pdump does not usually write out or
+   restore objects in the global data space, and thus they need to be
+   initialized every time XEmacs is loaded.  This is the purpose of the
+   reinit_*() functions throughout XEmacs. [It's possible, however, to make
+   pdump restore global data.  This must be done, of course, for heap
+   pointers, but is also done for other values that are not easy to
+   recompute -- in particular, values established by the Lisp code loaded
+   at dump time.]) Note that the data type `Lisp_Object' is basically just
+   a relocatable pointer disguised as a long, and in general pdump treats
+   the Lisp_Object values and pointers to Lisp objects (e.g. Lisp_Object
+   vs. `struct frame *') identically. (NOTE: This equivalence depends
+   crucially on the current "minimal tagbits" implementation of Lisp_Object
+   pointers.)
+
+   Descriptions are used by pdump in three places: (a) descriptions of Lisp
+   objects, referenced in the DEFINE_*LRECORD_*IMPLEMENTATION*() call; (b)
+   descriptions of global objects to be dumped, registered by
+   dump_add_root_block(); (c) descriptions of global pointers to
+   non-Lisp_Object heap objects, registered by dump_add_root_struct_ptr().
+   The descriptions need to tell pdump which elements of your structure are
+   Lisp_Objects or structure pointers, plus the descriptions in turn of the
+   non-Lisp_Object structures pointed to.  If these structures are you own
+   private ones, you will have to write these recursive descriptions
+   yourself; otherwise, you are reusing a structure already in existence
+   elsewhere and there is probably already a description for it.
+
+   Pdump does not care about Lisp objects that cannot be dumped (the
+   dumpable flag to DEFINE_*LRECORD_*IMPLEMENTATION*() is 0).
+
+   KKCC also uses data layout descriptions, but differently.  It cares
+   about all objects, dumpable or not, but specifically only wants to know
+   about Lisp_Objects in your object and in structures pointed to.  Thus,
+   it doesn't care about things like pointers to structures ot other blocks
+   of memory with no Lisp Objects in them, which pdump would care a lot
+   about.
+
+   Technically, then, you could write your description differently
+   depending on whether your object is dumpable -- the full pdump
+   description if so, the abbreviated KKCC description if not.  In fact,
+   some descriptions are written this way.  This is dangerous, though,
+   because another use might come along for the data descriptions, that
+   doesn't care about the dumper flag and makes use of some of the stuff
+   normally omitted from the "abbreviated" description -- see above.
+
+   A memory_description is an array of values. (This is actually
    misnamed, in that it does not just describe lrecords, but any
    blocks of memory.) The first value of each line is a type, the
    second the offset in the lrecord structure.  The third and
    following elements are parameters; their presence, type and number
    is type-dependent.
 
-   The description ends with a "XD_END", "XD_SPECIFIER_END" or
-   "XD_CODING_SYSTEM_END" record.
+   The description ends with an "XD_END" record.
 
    The top-level description of an lrecord or lcrecord does not need
    to describe every element, just the ones that need to be relocated,
@@ -358,14 +424,28 @@ extern int gc_in_progress;
    structures, whenever the structure size is given, rather than being
    defaulted by specifying 0 for the size.)
 
-   A struct_description is used for describing nested "structures".  (Again
-   a misnomer, since it can be used for any blocks of memory, not just
-   structures.) It just contains a size for the memory block, a pointer to
-   an lrecord_description, and (for unions only) a union constant,
-   described below.  The size can be 0, in which case the size will be
-   determined from the largest offset logically referenced (i.e. last
-   offset mentioned + size of that object).  This is useful for stretchy
-   arrays.
+   A sized_memory_description is a memory_description plus the size of the
+   block of memory.  The size field in a sized_memory_description can be
+   given as zero, i.e. unspecified, meaning that the last element in the
+   structure is described in the description and the size of the block can
+   therefore be computed from it. (This is useful for stretchy arrays.)
+
+   memory_descriptions are used to describe lrecords (the size of the
+   lrecord is elsewhere in its description, attached to its methods, so it
+   does not need to be given here) and global objects, where the size is an
+   argument to the call to dump_add_root_block().
+   sized_memory_descriptions are used for pointers and arrays in
+   memory_descriptions and for calls to dump_add_root_struct_ptr(). (####
+   It is not obvious why this is so in the latter case.  Probably, calls to
+   dump_add_root_struct_ptr() should use plain memory_descriptions and have
+   the size be an argument to the call.)
+
+   NOTE: Anywhere that a sized_memory_description occurs inside of a plain
+   memory_description, a "description map" can be substituted.  Rather than
+   being an actual description, this describes how to find the description
+   by looking inside of the object being described.  This is a convenient
+   way to describe Lisp objects with subtypes and corresponding
+   type-specific data.
 
    Some example descriptions :
 
@@ -377,7 +457,7 @@ extern int gc_in_progress;
      Lisp_Object plist;
    };
 
-   static const struct lrecord_description cons_description[] = {
+   static const struct memory_description cons_description[] = {
      { XD_LISP_OBJECT, offsetof (Lisp_Cons, car) },
      { XD_LISP_OBJECT, offsetof (Lisp_Cons, cdr) },
      { XD_END }
@@ -385,9 +465,9 @@ extern int gc_in_progress;
 
    Which means "two lisp objects starting at the 'car' and 'cdr' elements"
 
-   static const struct lrecord_description string_description[] = {
+   static const struct memory_description string_description[] = {
      { XD_BYTECOUNT,       offsetof (Lisp_String, size) },
-     { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data), XD_INDIRECT(0, 1) },
+     { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data), XD_INDIRECT (0, 1) },
      { XD_LISP_OBJECT,     offsetof (Lisp_String, plist) },
      { XD_END }
    };
@@ -408,32 +488,33 @@ extern int gc_in_progress;
 
    You'd use XD_STRUCT_PTR, something like:
 
-   static const struct lrecord_description lo_description_1[] = {
+   static const struct memory_description foo_description[] = {
+     ...
+     { XD_INT,		offsetof (Lisp_Foo, count) },
+     { XD_STRUCT_PTR,	offsetof (Lisp_Foo, objects),
+       XD_INDIRECT (0, 0), &lisp_object_description },
+     ...
+   };
+
+   lisp_object_description is declared in alloc.c, like this:
+
+   static const struct memory_description lisp_object_description_1[] = {
      { XD_LISP_OBJECT, 0 },
      { XD_END }
    };
 
-   static const struct struct_description lo_description = {
+   const struct sized_memory_description lisp_object_description = {
      sizeof (Lisp_Object),
-     lo_description_1
+     lisp_object_description_1
    };
-
-   static const struct lrecord_description foo_description[] = {
-     ...
-     { XD_INT,		offsetof (Lisp_Foo, count) },
-     { XD_STRUCT_PTR,	offsetof (Lisp_Foo, objects),
-       XD_INDIRECT (0, 0), &lo_description },
-     ...
-   };
-
 
    Another example of XD_STRUCT_PTR:
 
-   typedef struct hentry
+   typedef struct htentry
    {
      Lisp_Object key;
      Lisp_Object value;
-   } hentry;
+   } htentry;
    
    struct Lisp_Hash_Table
    {
@@ -446,27 +527,27 @@ extern int gc_in_progress;
      Elemcount golden_ratio;
      hash_table_hash_function_t hash_function;
      hash_table_test_function_t test_function;
-     hentry *hentries;
+     htentry *hentries;
      enum hash_table_weakness weakness;
      Lisp_Object next_weak;     // Used to chain together all of the weak
    			        // hash tables.  Don't mark through this.
    };
 
-   static const struct lrecord_description hentry_description_1[] = {
-     { XD_LISP_OBJECT, offsetof (hentry, key) },
-     { XD_LISP_OBJECT, offsetof (hentry, value) },
+   static const struct memory_description htentry_description_1[] = {
+     { XD_LISP_OBJECT, offsetof (htentry, key) },
+     { XD_LISP_OBJECT, offsetof (htentry, value) },
      { XD_END }
    };
    
-   static const struct struct_description hentry_description = {
-     sizeof (hentry),
-     hentry_description_1
+   static const struct sized_memory_description htentry_description = {
+     sizeof (htentry),
+     htentry_description_1
    };
    
-   const struct lrecord_description hash_table_description[] = {
+   const struct memory_description hash_table_description[] = {
      { XD_ELEMCOUNT,     offsetof (Lisp_Hash_Table, size) },
-     { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT(0, 1),
-	 &hentry_description },
+     { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (0, 1),
+	 &htentry_description },
      { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
      { XD_END }
    };
@@ -475,21 +556,71 @@ extern int gc_in_progress;
    the ones that need to be relocated (Lisp_Objects and structures) or that
    need to be referenced as counts for relocated objects.
 
+   A description map looks like this:
+
+   static const struct sized_memory_description specifier_extra_description_map [] = {
+   { offsetof (Lisp_Specifier, methods) },
+   { offsetof (struct specifier_methods, extra_description) },
+   { -1 }
+   };
+ 
+   const struct memory_description specifier_description[] = {
+     ...
+     { XD_STRUCT_ARRAY, offset (Lisp_Specifier, data), 1,
+       specifier_extra_description_map },
+     ...
+     { XD_END }
+   };
+
+   This would be appropriate for an object that looks like this:
+ 
+   struct specifier_methods
+   {
+     ...
+     const struct sized_memory_description *extra_description;
+     ...
+   };
+
+   struct Lisp_Specifier
+   {
+     struct lcrecord_header header;
+     struct specifier_methods *methods;
+   
+     ...
+     // type-specific extra data attached to a specifier
+     max_align_t data[1];
+   };
+
+   The description map means "retrieve a pointer into the object at offset
+   `offsetof (Lisp_Specifier, methods)' , then in turn retrieve a pointer
+   into that object at offset `offsetof (struct specifier_methods,
+   extra_description)', and that is the sized_memory_description to use." 
+   There can be any number of indirections, which can be either into
+   straight pointers or Lisp_Objects.  The way that description maps are
+   distinguished from normal sized_memory_descriptions is that in the
+   former, the memory_description pointer is NULL.
+
+   --ben
+
 
    The existing types :
 
 
     XD_LISP_OBJECT
-  A Lisp object.  This is also the type to use for pointers to other lrecords.
+
+  A Lisp object.  This is also the type to use for pointers to other lrecords
+  (e.g. struct frame *).
 
     XD_LISP_OBJECT_ARRAY
+
   An array of Lisp objects or (equivalently) pointers to lrecords.
   The parameter (i.e. third element) is the count.  This would be declared
   as Lisp_Object foo[666].  For something declared as Lisp_Object *foo,
-  use XD_STRUCT_PTR, whose description parameter is a struct_description
+  use XD_STRUCT_PTR, whose description parameter is a sized_memory_description
   consisting of only XD_LISP_OBJECT and XD_END.
 
     XD_LO_LINK
+
   Weak link in a linked list of objects of the same type.  This is a
   link that does NOT generate a GC reference.  Thus the pdumper will
   not automatically add the referenced object to the table of all
@@ -501,103 +632,137 @@ extern int gc_in_progress;
   object.
 
     XD_OPAQUE_PTR
+
   Pointer to undumpable data.  Must be NULL when dumping.
 
     XD_STRUCT_PTR
+
   Pointer to block of described memory. (This is misnamed: It is NOT
   necessarily a pointer to a struct foo.) Parameters are number of
-  contiguous blocks and struct_description.
+  contiguous blocks and sized_memory_description.
 
     XD_STRUCT_ARRAY
+
   Array of blocks of described memory.  Parameters are number of
-  structures and struct_description.  This differs from XD_STRUCT_PTR
+  structures and sized_memory_description.  This differs from XD_STRUCT_PTR
   in that the parameter is declared as struct foo[666] instead of
   struct *foo.  In other words, the block of memory holding the
   structures is within the containing structure, rather than being
   elsewhere, with a pointer in the containing structure.
 
+  NOTE NOTE NOTE: Be sure that you understand the difference between
+  XD_STRUCT_PTR and XD_STRUCT_ARRAY:
+    - struct foo bar[666], i.e. 666 inline struct foos
+        --> XD_STRUCT_ARRAY, argument 666, pointing to a description of
+            struct foo
+    - struct foo *bar, i.e. pointer to a block of 666 struct foos
+        --> XD_STRUCT_PTR, argument 666, pointing to a description of
+            struct foo
+    - struct foo *bar[666], i.e. 666 pointers to separate blocks of struct foos
+        --> XD_STRUCT_ARRAY, argument 666, pointing to a description of
+	    a single pointer to struct foo; the description is a single
+	    XD_STRUCT_PTR, argument 1, which in turn points to a description
+	    of struct foo.
+
     XD_OPAQUE_DATA_PTR
+
   Pointer to dumpable opaque data.  Parameter is the size of the data.
   Pointed data must be relocatable without changes.
 
     XD_UNION
-  Union of two or more different types of data.  Parameters are a
-  constant which determines which type the data is (this is usually an
-  XD_INDIRECT, referring to one of the fields in the structure), and
-  an array of struct_descriptions, whose values are used as follows,
-  which is *DIFFERENT* from their usage in XD_STRUCT_PTR: the first
-  field is a constant, which is compared to the first parameter of the
-  XD_UNION descriptor to determine if this description applies to the
-  data at the given offset, and the second is a pointer to a *SINGLE*
-  lrecord_description structure, describing the data being pointed at
-  when the associated constant matches.  You can go ahead and create
-  an array of lrecord_description structures and put an XD_END on it,
-  but only the first one is used.  If the data being pointed at is a
-  structure, you *MAY NOT* substitute an array of lrecord_description
-  structures describing the structure; instead, use a single
-  lrecord_description structure with an XD_STRUCT_PTR in it, and point
-  it in turn to the description of the structure.  See charset.h for a
-  description of how to use XD_UNION. (In other words, if the constant
-  matches, the lrecord_description pointed at will in essence be
-  substituted for the XD_UNION declaration.)
+
+  Union of two or more different types of data.  Parameters are a constant
+  which determines which type the data is (this is usually an XD_INDIRECT,
+  referring to one of the fields in the structure), and a "sizing lobby" (a
+  sized_memory_description, which points to a memory_description and
+  indicates its size).  The size field in the sizing lobby describes the
+  size of the union field in the object, and the memory_description in it
+  is referred to as a "union map" and has a special interpretation: The
+  offset field is replaced by a constant, which is compared to the first
+  parameter of the XD_UNION descriptor to determine if this description
+  applies to the union data, and XD_INDIRECT references refer to the
+  containing object and description.  Note that the description applies
+  "inline" to the union data, like XD_STRUCT_ARRAY and not XD_STRUCT_PTR.
+  If the union data is a pointer to different types of structures, each
+  element in the memory_description should be an XD_STRUCT_PTR.  See
+  unicode.c, redisplay.c and objects.c for examples of XD_UNION.
+
+    XD_UNION_DYNAMIC_SIZE
+
+  Same as XD_UNION except that this is used for objects where the size of
+  the object containing the union varies depending on the particular value
+  of the union constant.  That is, an object with plain XD_UNION typically
+  has the union declared as `union foo' or as `void *', where an object
+  with XD_UNION_DYNAMIC_SIZE typically has the union as the last element,
+  and declared as something like char foo[1].  With plain XD_UNION, the
+  object is (usually) of fixed size and always contains enough space for
+  the data associated with all possible union constants, and thus the union
+  constant can potentially change during the lifetime of the object.  With
+  XD_UNION_DYNAMIC_SIZE, however, the union constant is fixed at the time
+  of creation of the object, and the size of the object is computed
+  dynamically at creation time based on the size of the data associated
+  with the union constant.  Currently, the only difference between XD_UNION
+  and XD_UNION_DYNAMIC_SIZE is how the size of the union data is
+  calculated, when (a) the structure containing the union has no size
+  given; (b) the union occurs as the last element in the structure; and (c)
+  the union has no size given (in the first-level sized_memory_description
+  pointed to).  In this circumstance, the size of XD_UNION comes from the
+  max size of the data associated with all possible union constants,
+  whereas the size of XD_UNION_DYNAMIC_SIZE comes from the size of the data
+  associated with the currently specified (and unchangeable) union
+  constant.
 
     XD_C_STRING
+
   Pointer to a C string.
 
     XD_DOC_STRING
+
   Pointer to a doc string (C string if positive, opaque value if negative)
 
     XD_INT_RESET
+
   An integer which will be reset to a given value in the dump file.
 
-
     XD_ELEMCOUNT
+
   Elemcount value.  Used for counts.
 
     XD_BYTECOUNT
+
   Bytecount value.  Used for counts.
 
     XD_HASHCODE
+
   Hashcode value.  Used for the results of hashing functions.
 
     XD_INT
+
   int value.  Used for counts.
 
     XD_LONG
+
   long value.  Used for counts.
 
     XD_BYTECOUNT
+
   bytecount value.  Used for counts.
 
     XD_END
+
   Special type indicating the end of the array.
-
-    XD_SPECIFIER_END
-  Special type indicating the end of the array for a specifier.  Extra
-  description, describing the specifier-type-specific data at the end
-  of the specifier object, is going to be fetched from the specifier
-  methods.  This should occur exactly once, in the description of the
-  specifier object, and the dump code knows how to special-case this
-  by fetching the specifier_methods pointer from the appropriate place
-  in the memory block (which will, of course, be a struct
-  Lisp_Specifier), fetching the description of the
-  specifier-type-specific data from this, and continuing processing
-  the memory block.
-
-    XD_CODING_SYSTEM_END
-  Special type indicating the end of the array for a coding system.
-  Extra description is going to be fetched from the coding system
-  methods.  Works just like XD_SPECIFIER_END.
 
 
   Special macros:
-    XD_INDIRECT(line, delta)
-  Usable where  a "count" or "size"  is requested.  Gives the value of
-  the element which is at line number 'line' in the description (count
-  starts at zero) and adds delta to it.
+
+    XD_INDIRECT (line, delta)
+  Usable where a count, size, offset or union constant is requested.  Gives
+  the value of the element which is at line number 'line' in the
+  description (count starts at zero) and adds delta to it, which must
+  (currently) be positive.
 */
 
-enum lrecord_description_type
+enum memory_description_type
 {
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
@@ -607,6 +772,7 @@ enum lrecord_description_type
   XD_STRUCT_ARRAY,
   XD_OPAQUE_DATA_PTR,
   XD_UNION,
+  XD_UNION_DYNAMIC_SIZE,
   XD_C_STRING,
   XD_DOC_STRING,
   XD_INT_RESET,
@@ -615,35 +781,83 @@ enum lrecord_description_type
   XD_HASHCODE,
   XD_INT,
   XD_LONG,
-  XD_END,
-  XD_SPECIFIER_END,
-  XD_CODING_SYSTEM_END
+  XD_END
 };
 
-struct lrecord_description
+enum data_description_entry_flags
 {
-  enum lrecord_description_type type;
-  int offset;
-  EMACS_INT data1;
-  const struct struct_description *data2;
+  /* If set, KKCC does not process this entry.
+
+  (1) One obvious use is with things that pdump saves but which do not get
+  marked normally -- for example the next and prev fields in a marker.  The
+  marker chain is weak, with its entries removed when they are finalized.
+
+  (2) This can be set on structures not containing any Lisp objects, or (more
+  usefully) on structures that contain Lisp objects but where the objects
+  always occur in another structure as well.  For example, the extent lists
+  kept by a buffer keep the extents in two lists, one sorted by the start
+  of the extent and the other by the end.  There's no point in marking
+  both, since each contains the same objects as the other; but when dumping
+  (if we were to dump such a structure), when computing memory size, etc.,
+  it's crucial to tag both sides.
+  */
+  XD_FLAG_NO_KKCC = 1,
+  /* If set, pdump does not process this entry. */
+  XD_FLAG_NO_PDUMP = 2,
+  /* Indicates that this is a "default" entry in a union map. */
+  XD_FLAG_UNION_DEFAULT_ENTRY = 4,
+  /* Indicates that this is a free Lisp object we're marking.
+     Only relevant for ERROR_CHECK_GC.  This occurs when we're marking
+     lcrecord-lists, where the objects have had their type changed to
+     lrecord_type_free and also have had their free bit set, but we mark
+     them as normal. */
+  XD_FLAG_FREE_LISP_OBJECT = 8,
+#if 0
+  /* Suggestions for other possible flags: */
+
+  /* Eliminate XD_UNION_DYNAMIC_SIZE and replace it with a flag, like this. */
+  XD_FLAG_UNION_DYNAMIC_SIZE = 16,
+  /* Require that everyone who uses a description map has to flag it, so
+     that it's easy to tell, when looking through the code, where the
+     description maps are and who's using them.  This might also become
+     necessary if for some reason the format of the description map is
+     expanded and we need to stick a pointer in the second slot (although
+     we could still ensure that the second slot in the first entry was NULL
+     or <0). */
+  XD_FLAG_DESCRIPTION_MAP = 32,
+#endif
 };
 
-struct struct_description
+struct memory_description
+{
+  enum memory_description_type type;
+  Bytecount offset;
+  EMACS_INT data1;
+  const struct sized_memory_description *data2;
+  /* Indicates which subsystems process this entry, plus (potentially) other
+     flags that apply to this entry. */
+  int flags;
+};
+
+struct sized_memory_description
 {
   Bytecount size;
-  const struct lrecord_description *description;
+  const struct memory_description *description;
 };
 
-#define XD_INDIRECT(val, delta) (-1-((val)|(delta<<8)))
+extern const struct sized_memory_description lisp_object_description;
 
-#define XD_IS_INDIRECT(code) (code<0)
-#define XD_INDIRECT_VAL(code) ((-1-code) & 255)
-#define XD_INDIRECT_DELTA(code) (((-1-code)>>8) & 255)
+#define XD_INDIRECT(val, delta) (-1 - (Bytecount) ((val) | ((delta) << 8)))
 
-#define XD_DYNARR_DESC(base_type, sub_desc) \
+#define XD_IS_INDIRECT(code) ((code) < 0)
+#define XD_INDIRECT_VAL(code) ((-1 - (code)) & 255)
+#define XD_INDIRECT_DELTA(code) ((-1 - (code)) >> 8)
+
+#define XD_DYNARR_DESC(base_type, sub_desc)				      \
   { XD_STRUCT_PTR, offsetof (base_type, base), XD_INDIRECT(1, 0), sub_desc }, \
-  { XD_INT,        offsetof (base_type, cur) }, \
-  { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
+  { XD_INT,        offsetof (base_type, cur) },				      \
+  { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }	      \
+
 
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
@@ -656,7 +870,6 @@ struct struct_description
 #endif
 
 
-#ifdef USE_KKCC
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
@@ -679,7 +892,7 @@ MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash
 MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 const struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
@@ -698,63 +911,12 @@ DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,
 MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)				\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
   { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
-
-#else /* not USE_KKCC */
-
-#define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
-
-#define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
-
-#define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
-
-#define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
-
-#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
-
-#define DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
-
-#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
-
-#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
-const struct lrecord_implementation lrecord_##c_name =			\
-  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
-    lrecord_type_##c_name, basic_p }
-
-#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
-DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
-
-#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
-
-#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
-
-#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
-
-#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
-DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
-int lrecord_type_##c_name;						\
-struct lrecord_implementation lrecord_##c_name =			\
-  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
-    getprop, putprop, remprop, plist, size, sizer,			\
-    lrecord_type_last_built_in_type, basic_p }
-#endif /* not USE_KKCC */
 
 extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
@@ -809,16 +971,23 @@ extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
    4. Create the methods for your object.  Note that technically you don't
    need any, but you will almost always want at least a mark method.
 
-   5. Define your object with DEFINE_LRECORD_IMPLEMENTATION() or some
+   4. Create the data layout description for your object.  See
+   toolbar_button_description below; the comment above in `struct lrecord',
+   describing the purpose of the descriptions; and comments elsewhere in
+   this file describing the exact syntax of the description structures.
+
+   6. Define your object with DEFINE_LRECORD_IMPLEMENTATION() or some
    variant.
 
-   6. Include the header file in the .c file where you defined the object.
+   7. Include the header file in the .c file where you defined the object.
 
-   7. Put a call to INIT_LRECORD_IMPLEMENTATION() for the object in the
+   8. Put a call to INIT_LRECORD_IMPLEMENTATION() for the object in the
    .c file's syms_of_foo() function.
 
-   8. Add a type enum for the object to enum lrecord_type, earlier in this
+   9. Add a type enum for the object to enum lrecord_type, earlier in this
    file.
+
+   --ben
 
 An example:
 
@@ -870,9 +1039,24 @@ DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 
 ...
 
+static const struct memory_description toolbar_button_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, next) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, frame) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, up_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, down_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, disabled_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_up_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_down_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, cap_disabled_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, callback) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, enabled_p) },
+  { XD_LISP_OBJECT, offsetof (struct toolbar_button, help_string) },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_toolbar_button (Lisp_Object obj)
-{
+\{
   struct toolbar_button *data = XTOOLBAR_BUTTON (obj);
   mark_object (data->next);
   mark_object (data->frame);
@@ -891,8 +1075,9 @@ mark_toolbar_button (Lisp_Object obj)
    as internal_object_printer instead of 0. ]]
 
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
-			       mark_toolbar_button, 0,
-			       0, 0, 0, 0, struct toolbar_button);
+ 			       0, mark_toolbar_button, 0, 0, 0, 0,
+                               toolbar_button_description,
+ 			       struct toolbar_button);
 
 ...
 
@@ -918,6 +1103,9 @@ enum lrecord_type
   lrecord_type_toolbar_button,
   ...
 };
+
+
+--ben
 
 */
 
@@ -1051,21 +1239,117 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
+/*-------------------------- lcrecord-list -----------------------------*/
+
+struct lcrecord_list
+{
+  struct lcrecord_header header;
+  Lisp_Object free;
+  Elemcount size;
+  const struct lrecord_implementation *implementation;
+};
+
+DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
+#define XLCRECORD_LIST(x) XRECORD (x, lcrecord_list, struct lcrecord_list)
+#define wrap_lcrecord_list(p) wrap_record (p, lcrecord_list)
+#define LCRECORD_LISTP(x) RECORDP (x, lcrecord_list)
+/* #define CHECK_LCRECORD_LIST(x) CHECK_RECORD (x, lcrecord_list)
+   Lcrecord lists should never escape to the Lisp level, so
+   functions should not be doing this. */
+
 /* Various ways of allocating lcrecords.  All bytes (except lcrecord
-   header) are zeroed in returned structure. */
+   header) are zeroed in returned structure.
 
-void *alloc_lcrecord (Bytecount size,
-		      const struct lrecord_implementation *);
+   See above for a discussion of the difference between plain lrecords and
+   lrecords.  lcrecords themselves are divided into three types: (1)
+   auto-managed, (2) hand-managed, and (3) unmanaged.  "Managed" refers to
+   using a special object called an lcrecord-list to keep track of freed
+   lcrecords, which can freed with free_lcrecord() or the like and later be
+   recycled when a new lcrecord is required, rather than requiring new
+   malloc().  Thus, allocation of lcrecords can be very
+   cheap. (Technically, the lcrecord-list manager could divide up large
+   chunks of memory and allocate out of that, mimicking what happens with
+   lrecords.  At that point, however, we'd want to rethink the whole
+   division between lrecords and lcrecords.) 
 
+   NOTE: There is a fundamental limitation of lcrecord-lists, which is that
+   they only handle blocks of a particular, fixed size.  Thus, objects that
+   can be of varying sizes need to do various tricks.  These considerations
+   in particular dictate the various types of management:
+
+   -- "Auto-managed" means that you just go ahead and allocate the lcrecord
+   whenever you want, using alloc_lcrecord_type(), and the appropriate
+   lcrecord-list manager is automatically created.  To free, you just call
+   "free_lcrecord()" and the appropriate lcrecord-list manager is
+   automatically located and called.  The limitation here of course is that
+   all your objects are of the same size. (#### Eventually we should have a
+   more sophisticated system that tracks the sizes seen and creates one
+   lcrecord list per size, indexed in a hash table.  Usually there are only
+   a limited number of sizes, so this works well.)
+
+   -- "Hand-managed" exists because we haven't yet written the more
+   sophisticated scheme for auto-handling different-sized lcrecords, as
+   described in the end of the last paragraph.  In this model, you go ahead
+   and create the lcrecord-list objects yourself for the sizes you will
+   need, using make_lcrecord_list().  Then, create lcrecords using
+   alloc_managed_lcrecord(), passing in the lcrecord-list you created, and
+   free them with free_managed_lcrecord().
+
+   -- "Unmanaged" means you simply allocate lcrecords, period.  No
+   lcrecord-lists, no way to free them.  This may be suitable when the
+   lcrecords are variable-sized and (a) you're too lazy to write the code
+   to hand-manage them, or (b) the objects you create are always or almost
+   always Lisp-visible, and thus there's no point in freeing them (and it
+   wouldn't be safe to do so).  You just create them with
+   basic_alloc_lcrecord(), and that's it.
+
+   --ben
+
+   Here is an in-depth look at the steps required to create a allocate an
+   lcrecord using the hand-managed style.  Since this is the most
+   complicated, you will learn a lot about the other styles as well.  In
+   addition, there is useful general information about what freeing an
+   lcrecord really entails, and what are the precautions:
+
+   1) Create an lcrecord-list object using make_lcrecord_list().  This is
+      often done at initialization.  Remember to staticpro_nodump() this
+      object!  The arguments to make_lcrecord_list() are the same as would be
+      passed to basic_alloc_lcrecord().
+
+   2) Instead of calling basic_alloc_lcrecord(), call alloc_managed_lcrecord()
+      and pass the lcrecord-list earlier created.
+
+   3) When done with the lcrecord, call free_managed_lcrecord().  The
+      standard freeing caveats apply: ** make sure there are no pointers to
+      the object anywhere! **
+
+   4) Calling free_managed_lcrecord() is just like kissing the
+      lcrecord goodbye as if it were garbage-collected.  This means:
+      -- the contents of the freed lcrecord are undefined, and the
+         contents of something produced by alloc_managed_lcrecord()
+	 are undefined, just like for basic_alloc_lcrecord().
+      -- the mark method for the lcrecord's type will *NEVER* be called
+         on freed lcrecords.
+      -- the finalize method for the lcrecord's type will be called
+         at the time that free_managed_lcrecord() is called.
+ */
+
+/* UNMANAGED MODEL: */
+void *basic_alloc_lcrecord (Bytecount size,
+			    const struct lrecord_implementation *);
+
+/* HAND-MANAGED MODEL: */
+Lisp_Object make_lcrecord_list (Elemcount size,
+				const struct lrecord_implementation
+				*implementation);
+Lisp_Object alloc_managed_lcrecord (Lisp_Object lcrecord_list);
+void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
+
+/* AUTO-MANAGED MODEL: */
 void *alloc_automanaged_lcrecord (Bytecount size,
 				  const struct lrecord_implementation *);
-
-#define alloc_unmanaged_lcrecord_type(type, lrecord_implementation) \
-  ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))
-
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_automanaged_lcrecord (sizeof (type), lrecord_implementation))
-
 void free_lcrecord (Lisp_Object rec);
 
 
@@ -1083,6 +1367,192 @@ void free_lcrecord (Lisp_Object rec);
    memset ((char *) (lcr) + sizeof (struct lcrecord_header), 0,	\
 	   (size) - sizeof (struct lcrecord_header))
 
-#define zero_lcrecord(lcr) zero_sized_lcrecord(lcr, sizeof (*(lcr)))
+#define zero_lcrecord(lcr) zero_sized_lcrecord (lcr, sizeof (*(lcr)))
+
+DECLARE_INLINE_HEADER (
+Bytecount
+detagged_lisp_object_size (const struct lrecord_header *h)
+)
+{
+  const struct lrecord_implementation *imp = LHEADER_IMPLEMENTATION (h);
+
+  return (imp->size_in_bytes_method ?
+	  imp->size_in_bytes_method (h) :
+	  imp->static_size);
+}
+
+DECLARE_INLINE_HEADER (
+Bytecount
+lisp_object_size (Lisp_Object o)
+)
+{
+  return detagged_lisp_object_size (XRECORD_LHEADER (o));
+}
+
+
+/************************************************************************/
+/*		                 Dumping                		*/
+/************************************************************************/
+
+/* dump_add_root_struct_ptr (&var, &desc) dumps the structure pointed to by
+   `var'.  This is for a single relocatable pointer located in the data
+   segment (i.e. the block pointed to is in the heap). */
+#ifdef PDUMP
+void dump_add_root_struct_ptr (void *, const struct sized_memory_description *);
+#else
+#define dump_add_root_struct_ptr(varaddr,descaddr) DO_NOTHING
+#endif
+
+/* dump_add_opaque (&var, size) dumps the opaque static structure `var'.
+   This is for a static block of memory (in the data segment, not the
+   heap), with no relocatable pointers in it. */
+#ifdef PDUMP
+#define dump_add_opaque(varaddr,size) dump_add_root_block (varaddr, size, NULL)
+#else
+#define dump_add_opaque(varaddr,size) DO_NOTHING
+#endif
+
+/* dump_add_root_block (ptr, size, desc) dumps the static structure
+   located at `var' of size SIZE and described by DESC.  This is for a
+   static block of memory (in the data segment, not the heap), with
+   relocatable pointers in it. */
+#ifdef PDUMP
+void dump_add_root_block (const void *ptraddress, Bytecount size,
+			  const struct memory_description *desc);
+#else
+#define dump_add_root_block(ptraddress,desc) DO_NOTHING
+#endif
+
+/* Call dump_add_opaque_int (&int_var) to dump `int_var', of type `int'. */
+#ifdef PDUMP
+#define dump_add_opaque_int(int_varaddr) do {	\
+  int *dao_ = (int_varaddr); /* type check */	\
+  dump_add_opaque (dao_, sizeof (*dao_));	\
+} while (0)
+#else
+#define dump_add_opaque_int(int_varaddr) DO_NOTHING
+#endif
+
+/* Call dump_add_opaque_fixnum (&fixnum_var) to dump `fixnum_var', of type
+   `Fixnum'. */
+#ifdef PDUMP
+#define dump_add_opaque_fixnum(fixnum_varaddr) do {	\
+  Fixnum *dao_ = (fixnum_varaddr); /* type check */	\
+  dump_add_opaque (dao_, sizeof (*dao_));		\
+} while (0)
+#else
+#define dump_add_opaque_fixnum(fixnum_varaddr) DO_NOTHING
+#endif
+
+/* Call dump_add_root_lisp_object (&var) to ensure that var is properly
+   updated after pdump. */
+#ifdef PDUMP
+void dump_add_root_lisp_object (Lisp_Object *);
+#else
+#define dump_add_root_lisp_object(varaddr) DO_NOTHING
+#endif
+
+/* Call dump_add_weak_lisp_object (&var) to ensure that var is properly
+   updated after pdump.  var must point to a linked list of objects out of
+   which some may not be dumped */
+#ifdef PDUMP
+void dump_add_weak_object_chain (Lisp_Object *);
+#else
+#define dump_add_weak_object_chain(varaddr) DO_NOTHING
+#endif
+
+/* Nonzero means Emacs has already been initialized.
+   Used during startup to detect startup of dumped Emacs.  */
+extern int initialized;
+
+#ifdef PDUMP
+
+void pdump_objects_unmark (void);
+void pdump (void);
+int pdump_load (const char *argv0);
+void pdump_backtrace (void);
+extern unsigned int dump_id;
+extern char *pdump_start, *pdump_end;
+
+#define DUMPEDP(adr) ((((char *)(adr)) < pdump_end) && (((char *)(adr)) >= pdump_start))
+
+#else
+#define DUMPEDP(adr) 0
+#endif
+
+/***********************************************************************/
+/*                           data descriptions                         */
+/***********************************************************************/
+
+
+#if defined (USE_KKCC) || defined (PDUMP)
+
+extern int in_pdump;
+
+EMACS_INT lispdesc_indirect_count_1 (EMACS_INT code,
+				     const struct memory_description *idesc,
+				     const void *idata);
+const struct sized_memory_description *lispdesc_indirect_description_1
+ (const void *obj, const struct sized_memory_description *sdesc);
+Bytecount lispdesc_structure_size (const void *obj,
+				   const struct sized_memory_description *
+				   sdesc);
+
+DECLARE_INLINE_HEADER (
+EMACS_INT
+lispdesc_indirect_count (EMACS_INT code,
+			 const struct memory_description *idesc,
+			 const void *idata)
+)
+{
+  if (XD_IS_INDIRECT (code))
+    code = lispdesc_indirect_count_1 (code, idesc, idata);
+  return code;
+}
+
+DECLARE_INLINE_HEADER (
+const struct sized_memory_description *
+lispdesc_indirect_description (const void *obj,
+			       const struct sized_memory_description *sdesc)
+)
+{
+  if (sdesc->description)
+    return sdesc;
+  else
+    return lispdesc_indirect_description_1 (obj, sdesc);
+}
+
+
+/* Do standard XD_UNION processing.  DESC1 is an entry in DESC, which
+   describes the entire data structure.  Returns NULL (do nothing, nothing
+   matched), or a new value for DESC1.  In the latter case, assign to DESC1
+   in your function and goto union_switcheroo. */
+
+DECLARE_INLINE_HEADER (
+const struct memory_description *
+lispdesc_process_xd_union (const struct memory_description *desc1,
+			   const struct memory_description *desc,
+			   const void *data)
+)
+{
+  int count = 0;
+  EMACS_INT variant = lispdesc_indirect_count (desc1->data1, desc,
+					       data);
+  desc1 =
+    lispdesc_indirect_description (data, desc1->data2)->description;
+  
+  for (count = 0; desc1[count].type != XD_END; count++)
+    {
+      if ((desc1[count].flags & XD_FLAG_UNION_DEFAULT_ENTRY) ||
+	  desc1[count].offset == variant)
+	{
+	  return &desc1[count];
+	}
+    }
+
+  return NULL;
+}
+
+#endif /* defined (USE_KKCC) || defined (PDUMP) */
 
 #endif /* INCLUDED_lrecord_h_ */

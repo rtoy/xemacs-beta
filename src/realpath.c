@@ -94,7 +94,7 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
     int err = 0;
     const Ibyte *lastname;
     int count = 0;
-    const Ibyte *tmp;
+    const Ibyte *nn;
     DECLARE_EISTRING (result);
   
     assert (*name);
@@ -118,8 +118,8 @@ readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 
     /* Count slashes in unc path */
     if (abs_start (name) == 2)
-      for (tmp = name; *tmp; tmp++)
-	if (IS_DIRECTORY_SEP (*tmp))
+      for (nn = name; *nn; nn++)
+	if (IS_DIRECTORY_SEP (*nn))
 	  count++;
 
     if (count >= 2 && count < 4)

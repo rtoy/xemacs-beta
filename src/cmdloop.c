@@ -583,17 +583,14 @@ Don't call this unless you know what you're doing.
 
       if (!was_locked)
 	any_console_state ();
-#if (defined (_MSC_VER) 			\
-     || defined (__SUNPRO_C)			\
-     || defined (__SUNPRO_CC)			\
-     || (defined (DEC_ALPHA)			\
-	 && defined (OSF1)))
-      if (0) return Qnil; /* Shut up compiler */
-#endif
+
+      DO_NOTHING_DISABLING_NO_RETURN_WARNINGS;
     }
 #ifdef LISP_COMMAND_LOOP
   UNGCPRO;
   return Qnil;
+#else
+  RETURN_NOT_REACHED (Qnil);
 #endif
 }
 

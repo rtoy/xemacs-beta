@@ -98,6 +98,23 @@ typedef struct
    #### This should really be made smaller.
 */
 
+struct rune_dglyph
+{
+  Lisp_Object glyph;
+  Lisp_Object extent;	/* extent rune is attached to, if any.
+			   If this is a rune in the modeline
+			   then this might be nil. */
+
+  int ascent;           /* Ascent of this glyph, in pixels. */
+  int descent;          /* Descent of this glyph, in pixels. */
+  int yoffset;          /* Offset from line top to reach glyph top */
+  int xoffset;		/* Number of pixels that need to be
+			   chopped off the left of the glyph.
+			   This has the effect of shifting the
+			   glyph to the left while still clipping
+			   at XPOS. */
+};
+
 typedef struct rune rune;
 struct rune
 {
@@ -139,22 +156,7 @@ struct rune
     /* #### Glyphs are rare. Is it really necessary to waste 8 bytes on every
        rune for that?! */
     /* DGLYPH */
-    struct
-    {
-      Lisp_Object glyph;
-      Lisp_Object extent;	/* extent rune is attached to, if any.
-                                   If this is a rune in the modeline
-                                   then this might be nil. */
-
-      int ascent;               /* Ascent of this glyph, in pixels. */
-      int descent;              /* Descent of this glyph, in pixels. */
-      int yoffset;              /* Offset from line top to reach glyph top */
-      int xoffset;		/* Number of pixels that need to be
-				   chopped off the left of the glyph.
-				   This has the effect of shifting the
-				   glyph to the left while still clipping
-				   at XPOS. */
-    } dglyph;
+    struct rune_dglyph dglyph;
 
     /* CHAR */
     struct
@@ -648,6 +650,8 @@ void mark_subwindows_state_changed (void);
 /*************************************************************************/
 /*                       redisplay global variables                      */
 /*************************************************************************/
+
+extern const struct sized_memory_description display_line_dynarr_description;
 
 /* redisplay structure used by various utility routines. */
 extern display_line_dynarr *cmotion_display_lines;

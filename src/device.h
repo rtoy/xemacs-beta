@@ -98,7 +98,7 @@ extern Lisp_Object Qcreate_device_hook, Qdelete_device_hook, Qgrayscale;
 extern Lisp_Object Qinit_post_tty_win, Qmono;
 extern Lisp_Object Vdevice_class_list;
 
-int valid_device_class_p (Lisp_Object class);
+int valid_device_class_p (Lisp_Object class_);
 
 void select_device_1 (Lisp_Object);
 struct device *decode_device (Lisp_Object);

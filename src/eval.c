@@ -438,23 +438,16 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (printcharfun, trailer);
 }
 
-static const struct lrecord_description subr_description[] = {
+static const struct memory_description subr_description[] = {
   { XD_DOC_STRING, offsetof (Lisp_Subr, doc) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
 				     1, /*dumpable-flag*/
 				     0, print_subr, 0, 0, 0,
 				     subr_description,
 				     Lisp_Subr);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
-				     0, print_subr, 0, 0, 0,
-				     subr_description,
-				     Lisp_Subr);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*			 Entering the debugger				*/
@@ -1601,7 +1594,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   check_catchlist_sanity ();
 #endif /* Former code */
 
-  gcprolist = c->gcpro;
+  UNWIND_GCPRO_TO (c->gcpro);
   backtrace_list = c->backlist;
   lisp_eval_depth = c->lisp_eval_depth;
 
@@ -2163,6 +2156,8 @@ signal_1 (void)
 {
 }
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+
 static void
 check_proper_critical_section_gc_protection (void)
 {
@@ -2170,6 +2165,8 @@ check_proper_critical_section_gc_protection (void)
     (!in_display || gc_currently_forbidden,
      "Potential GC from within redisplay without being properly wrapped");
 }
+
+#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
 
 static void
 check_proper_critical_section_nonlocal_exit_protection (void)
@@ -2446,15 +2443,15 @@ check_specbind_stack_sanity (void)
    Qresource, etc.). */
 
 void
-maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
+maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class_,
 		      Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
   else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
-    warn_when_safe_lispobj (class, Qdebug, Fcons (sig, data));
+    warn_when_safe_lispobj (class_, Qdebug, Fcons (sig, data));
   else if (ERRB_EQ (errb, ERROR_ME_WARN))
-    warn_when_safe_lispobj (class, Qwarning, Fcons (sig, data));
+    warn_when_safe_lispobj (class_, Qwarning, Fcons (sig, data));
   else
     for (;;)
       Fsignal (sig, data);
@@ -2465,18 +2462,18 @@ maybe_signal_error_1 (Lisp_Object sig, Lisp_Object data, Lisp_Object class,
 
 Lisp_Object
 maybe_signal_continuable_error_1 (Lisp_Object sig, Lisp_Object data,
-				  Lisp_Object class, Error_Behavior errb)
+				  Lisp_Object class_, Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
   else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
     {
-      warn_when_safe_lispobj (class, Qdebug, Fcons (sig, data));
+      warn_when_safe_lispobj (class_, Qdebug, Fcons (sig, data));
       return Qnil;
     }
   else if (ERRB_EQ (errb, ERROR_ME_WARN))
     {
-      warn_when_safe_lispobj (class, Qwarning, Fcons (sig, data));
+      warn_when_safe_lispobj (class_, Qwarning, Fcons (sig, data));
       return Qnil;
     }
   else
@@ -2522,13 +2519,13 @@ signal_error (Lisp_Object type, const CIbyte *reason, Lisp_Object frob)
 
 void
 maybe_signal_error (Lisp_Object type, const CIbyte *reason,
-		    Lisp_Object frob, Lisp_Object class,
+		    Lisp_Object frob, Lisp_Object class_,
 		    Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
-  maybe_signal_error_1 (type, build_error_data (reason, frob), class, errb);
+  maybe_signal_error_1 (type, build_error_data (reason, frob), class_, errb);
 }
 
 Lisp_Object
@@ -2540,7 +2537,7 @@ signal_continuable_error (Lisp_Object type, const CIbyte *reason,
 
 Lisp_Object
 maybe_signal_continuable_error (Lisp_Object type, const CIbyte *reason,
-				Lisp_Object frob, Lisp_Object class,
+				Lisp_Object frob, Lisp_Object class_,
 				Error_Behavior errb)
 {
   /* Optimization: */
@@ -2548,7 +2545,7 @@ maybe_signal_continuable_error (Lisp_Object type, const CIbyte *reason,
     return Qnil;
   return maybe_signal_continuable_error_1 (type,
 					   build_error_data (reason, frob),
-					   class, errb);
+					   class_, errb);
 }
 
 
@@ -2571,13 +2568,13 @@ signal_error_2 (Lisp_Object type, const CIbyte *reason,
 void
 maybe_signal_error_2 (Lisp_Object type, const CIbyte *reason,
 		      Lisp_Object frob0, Lisp_Object frob1,
-		      Lisp_Object class, Error_Behavior errb)
+		      Lisp_Object class_, Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return;
   maybe_signal_error_1 (type, list3 (build_msg_string (reason), frob0,
-				     frob1), class, errb);
+				     frob1), class_, errb);
 }
 
 Lisp_Object
@@ -2591,14 +2588,14 @@ signal_continuable_error_2 (Lisp_Object type, const CIbyte *reason,
 Lisp_Object
 maybe_signal_continuable_error_2 (Lisp_Object type, const CIbyte *reason,
 				  Lisp_Object frob0, Lisp_Object frob1,
-				  Lisp_Object class, Error_Behavior errb)
+				  Lisp_Object class_, Error_Behavior errb)
 {
   /* Optimization: */
   if (ERRB_EQ (errb, ERROR_ME_NOT))
     return Qnil;
   return maybe_signal_continuable_error_1
     (type, list3 (build_msg_string (reason), frob0, frob1),
-     class, errb);
+     class_, errb);
 }
 
 
@@ -2623,7 +2620,7 @@ signal_ferror (Lisp_Object type, const CIbyte *fmt, ...)
 }
 
 void
-maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
+maybe_signal_ferror (Lisp_Object type, Lisp_Object class_, Error_Behavior errb,
 		     const CIbyte *fmt, ...)
 {
   Lisp_Object obj;
@@ -2638,7 +2635,7 @@ maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  maybe_signal_error (type, 0, obj, class, errb);
+  maybe_signal_error (type, 0, obj, class_, errb);
 }
 
 Lisp_Object
@@ -2656,7 +2653,7 @@ signal_continuable_ferror (Lisp_Object type, const CIbyte *fmt, ...)
 }
 
 Lisp_Object
-maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
+maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class_,
 				 Error_Behavior errb, const CIbyte *fmt, ...)
 {
   Lisp_Object obj;
@@ -2671,7 +2668,7 @@ maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  return maybe_signal_continuable_error (type, 0, obj, class, errb);
+  return maybe_signal_continuable_error (type, 0, obj, class_, errb);
 }
 
 
@@ -2706,7 +2703,7 @@ signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const CIbyte *fmt,
 
 void
 maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
-			       Lisp_Object class, Error_Behavior errb,
+			       Lisp_Object class_, Error_Behavior errb,
 			       const CIbyte *fmt, ...)
 {
   Lisp_Object obj;
@@ -2721,7 +2718,7 @@ maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
   va_end (args);
 
   /* Fsignal GC-protects its args */
-  maybe_signal_error_1 (type, Fcons (obj, build_error_data (0, frob)), class,
+  maybe_signal_error_1 (type, Fcons (obj, build_error_data (0, frob)), class_,
 			errb);
 }
 
@@ -2742,7 +2739,7 @@ signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 
 Lisp_Object
 maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
-					   Lisp_Object class,
+					   Lisp_Object class_,
 					   Error_Behavior errb,
 					   const CIbyte *fmt, ...)
 {
@@ -2761,7 +2758,7 @@ maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
   return maybe_signal_continuable_error_1 (type,
 					   Fcons (obj,
 						  build_error_data (0, frob)),
-					   class, errb);
+					   class_, errb);
 }
 
 
@@ -2845,9 +2842,9 @@ syntax_error_2 (const CIbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_syntax_error (const CIbyte *reason, Lisp_Object frob,
-		    Lisp_Object class, Error_Behavior errb)
+		    Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qsyntax_error, reason, frob, class, errb);
+  maybe_signal_error (Qsyntax_error, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2864,9 +2861,9 @@ sferror_2 (const CIbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_sferror (const CIbyte *reason, Lisp_Object frob,
-	       Lisp_Object class, Error_Behavior errb)
+	       Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qstructure_formation_error, reason, frob, class, errb);
+  maybe_signal_error (Qstructure_formation_error, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2884,9 +2881,9 @@ invalid_argument_2 (const CIbyte *reason, Lisp_Object frob1,
 
 void
 maybe_invalid_argument (const CIbyte *reason, Lisp_Object frob,
-			Lisp_Object class, Error_Behavior errb)
+			Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qinvalid_argument, reason, frob, class, errb);
+  maybe_signal_error (Qinvalid_argument, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2904,9 +2901,9 @@ invalid_constant_2 (const CIbyte *reason, Lisp_Object frob1,
 
 void
 maybe_invalid_constant (const CIbyte *reason, Lisp_Object frob,
-			Lisp_Object class, Error_Behavior errb)
+			Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qinvalid_constant, reason, frob, class, errb);
+  maybe_signal_error (Qinvalid_constant, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2924,9 +2921,9 @@ invalid_operation_2 (const CIbyte *reason, Lisp_Object frob1,
 
 void
 maybe_invalid_operation (const CIbyte *reason, Lisp_Object frob,
-			 Lisp_Object class, Error_Behavior errb)
+			 Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qinvalid_operation, reason, frob, class, errb);
+  maybe_signal_error (Qinvalid_operation, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2943,9 +2940,9 @@ invalid_change_2 (const CIbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_change (const CIbyte *reason, Lisp_Object frob,
-		      Lisp_Object class, Error_Behavior errb)
+		      Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qinvalid_change, reason, frob, class, errb);
+  maybe_signal_error (Qinvalid_change, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -2962,9 +2959,9 @@ invalid_state_2 (const CIbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 
 void
 maybe_invalid_state (const CIbyte *reason, Lisp_Object frob,
-		     Lisp_Object class, Error_Behavior errb)
+		     Lisp_Object class_, Error_Behavior errb)
 {
-  maybe_signal_error (Qinvalid_state, reason, frob, class, errb);
+  maybe_signal_error (Qinvalid_state, reason, frob, class_, errb);
 }
 
 DOESNT_RETURN
@@ -3471,7 +3468,7 @@ Evaluate FORM and return its value.
 	 && !(inhibit_flags & INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY))
     {
       struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-      Lisp_Object this_warning_cons, this_warning, class, level, messij;
+      Lisp_Object this_warning_cons, this_warning, class_, level, messij;
       int speccount = internal_bind_int (&in_warnings, 1);
 
       this_warning_cons = Vpending_warnings;
@@ -3480,7 +3477,7 @@ Evaluate FORM and return its value.
 	 it won't happen infinitely */
       Vpending_warnings = XCDR (Vpending_warnings);
       free_cons (this_warning_cons);
-      class = XCAR (this_warning);
+      class_ = XCAR (this_warning);
       level = XCAR (XCDR (this_warning));
       messij = XCAR (XCDR (XCDR (this_warning)));
       free_list (this_warning);
@@ -3489,10 +3486,10 @@ Evaluate FORM and return its value.
 	Vpending_warnings_tail = Qnil; /* perhaps not strictly necessary,
 					  but safer */
 
-      GCPRO4 (form, class, level, messij);
+      GCPRO4 (form, class_, level, messij);
       if (!STRINGP (messij))
 	messij = Fprin1_to_string (messij, Qnil);
-      call3 (Qdisplay_warning, class, messij, level);
+      call3 (Qdisplay_warning, class_, messij, level);
       UNGCPRO;
       unbind_to (speccount);
     }
@@ -5071,7 +5068,7 @@ call_trapping_problems (Lisp_Object warning_class,
     tem = (fun) (arg);
 
   if (thrown && !EQ (thrown_tag, package.catchtag)
-      && (!flags & INHIBIT_WARNING_ISSUE)
+      && !(flags & INHIBIT_WARNING_ISSUE)
       && !warning_will_be_discarded (current_warning_level ()))
     {
       Lisp_Object errstr;
@@ -5195,7 +5192,7 @@ va_call_trapping_problems (Lisp_Object warning_class,
 
 Lisp_Object
 call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
-			    Lisp_Object class, Error_Behavior errb,
+			    Lisp_Object class_, Error_Behavior errb,
 			    int nargs, ...)
 {
   va_list vargs;
@@ -5205,8 +5202,8 @@ call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
   int flags;
   struct gcpro gcpro1;
 
-  assert (SYMBOLP (class)); /* sanity-check */
-  assert (!NILP (class));
+  assert (SYMBOLP (class_)); /* sanity-check */
+  assert (!NILP (class_));
   assert (nargs >= 0 && nargs < 20);
 
   va_start (vargs, nargs);
@@ -5243,7 +5240,7 @@ call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
   {
     Lisp_Object its_way_too_goddamn_late =
       call_trapping_problems
-       (class, 0, flags, 0, va_call_trapping_problems_1,
+       (class_, 0, flags, 0, va_call_trapping_problems_1,
 	&fazer_invocacao_atrapalhando_problemas);
     UNGCPRO;
     if (UNBOUNDP (its_way_too_goddamn_late))
@@ -6246,13 +6243,13 @@ warning_will_be_discarded (Lisp_Object level)
 }
 
 void
-warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
+warn_when_safe_lispobj (Lisp_Object class_, Lisp_Object level,
 			Lisp_Object obj)
 {
   if (warning_will_be_discarded (level))
     return;
 
-  obj = list1 (list3 (class, level, obj));
+  obj = list1 (list3 (class_, level, obj));
   if (NILP (Vpending_warnings))
     Vpending_warnings = Vpending_warnings_tail = obj;
   else
@@ -6270,7 +6267,7 @@ warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
    automatically be called when it is safe to do so. */
 
 void
-warn_when_safe (Lisp_Object class, Lisp_Object level, const CIbyte *fmt, ...)
+warn_when_safe (Lisp_Object class_, Lisp_Object level, const CIbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -6282,7 +6279,7 @@ warn_when_safe (Lisp_Object class, Lisp_Object level, const CIbyte *fmt, ...)
   obj = emacs_vsprintf_string (CGETTEXT (fmt), args);
   va_end (args);
 
-  warn_when_safe_lispobj (class, level, obj);
+  warn_when_safe_lispobj (class_, level, obj);
 }
 
 
@@ -6535,7 +6532,7 @@ If due to `eval' entry, one arg, t.
 
   staticpro (&Vpending_warnings);
   Vpending_warnings = Qnil;
-  dump_add_root_object (&Vpending_warnings_tail);
+  dump_add_root_lisp_object (&Vpending_warnings_tail);
   Vpending_warnings_tail = Qnil;
 
   DEFVAR_LISP ("log-warning-minimum-level", &Vlog_warning_minimum_level);

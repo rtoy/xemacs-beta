@@ -135,6 +135,11 @@ typedef struct lstream_implementation
   Bytecount size; /* Number of additional bytes to be
 		     allocated with this stream.  Access this
 		     data using Lstream_data(). */
+
+  /* Description of the extra data (struct foo_lstream) attached to a
+     coding system. */
+  const struct sized_memory_description *extra_description;
+
   /* Read some data from the stream's end and store it into DATA, which
      can hold SIZE bytes.  Return the number of bytes read.  A return
      value of 0 means no bytes can be read at this time.  This may
@@ -201,7 +206,18 @@ typedef struct lstream_implementation
 
 #define DEFINE_LSTREAM_IMPLEMENTATION(name, c_name)	\
   Lstream_implementation lstream_##c_name[1] =		\
-    { { (name), sizeof (struct c_name##_stream) } }
+    { { (name), sizeof (struct c_name##_stream),	\
+      &lstream_empty_extra_description } }
+
+#define DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA(name, c_name)		      \
+  static const struct sized_memory_description c_name##_lstream_description_0 \
+  = {									      \
+    sizeof (struct c_name##_stream),					      \
+    c_name##_lstream_description					      \
+  };									      \
+  Lstream_implementation lstream_##c_name[1] =				      \
+    { { (name), sizeof (struct c_name##_stream),			      \
+      &c_name##_lstream_description_0 } }
 
 #define DECLARE_LSTREAM(c_name) \
   extern Lstream_implementation lstream_##c_name[]
@@ -243,6 +259,8 @@ struct lstream
   int flags;
   max_align_t data[1];
 };
+
+extern const struct sized_memory_description lstream_empty_extra_description;
 
 #define LSTREAM_TYPE_P(lstr, type) \
   ((lstr)->imp == lstream_##type)

@@ -734,7 +734,7 @@ decode_gutter_position (Lisp_Object position)
   if (EQ (position, Qright))  return RIGHT_GUTTER;
   invalid_constant ("Invalid gutter position", position);
 
-  RETURN_NOT_REACHED (TOP_GUTTER)
+  RETURN_NOT_REACHED (TOP_GUTTER);
 }
 
 DEFUN ("set-default-gutter-position", Fset_default_gutter_position, 1, 1, 0, /*

@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "hash.h"
 
-#define NULL_ENTRY ((void *) 0xdeadbeef)
+#define NULL_ENTRY ((void *) 0xdeadbeef) /* -559038737 base 10 */
 
 #define COMFORTABLE_SIZE(size) (21 * (size) / 16)
 

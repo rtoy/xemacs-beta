@@ -47,6 +47,9 @@ struct frame
      through frame->device->console, but it's faster this way. */
   struct console_methods *framemeths;
 
+  /* Duplicates framemeths->symbol.  See comment in struct console. */
+  enum console_variant frametype;
+
   /* Size of text only area of this frame, excluding scrollbars,
      toolbars and end of line glyphs. The size can be in characters
      or pixels, depending on units in which window system resizes
@@ -109,12 +112,13 @@ struct frame
   display_line_dynarr *current_display_lines[4];
   display_line_dynarr *desired_display_lines[4];
 
-  /* A structure of auxiliary data specific to the device type.
-     struct x_frame is for X window frames; defined in console-x-impl.h */
+  /* A structure of auxiliary data specific to the device type.  For
+     example, struct x_frame is for X window frames; defined in
+     console-x-impl.h. */
   void *frame_data;
 
 #define FRAME_SLOT_DECLARATION
-#define MARKED_SLOT(x) Lisp_Object x
+#define MARKED_SLOT(x) Lisp_Object x;
 #include "frameslots.h"
 
     /* Nonzero if frame is currently displayed.

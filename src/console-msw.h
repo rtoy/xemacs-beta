@@ -148,8 +148,6 @@ Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
 #ifdef HAVE_MENUBARS
 int mswindows_char_is_accelerator (struct frame *f, Ichar ch);
-Lisp_Object mswindows_translate_menu_or_dialog_item (Lisp_Object item,
-						     Ichar *accel);
 #endif
 
 #ifdef HAVE_TOOLBARS
@@ -160,7 +158,8 @@ Lisp_Object mswindows_handle_toolbar_wm_command (struct frame *f,
 #endif
 Lisp_Object mswindows_handle_gui_wm_command (struct frame *f,
 					     HWND ctrl, LPARAM id);
-
+Lisp_Object mswindows_translate_menu_or_dialog_item (Lisp_Object item,
+						     Ichar *accel);
 void mswindows_handle_destroyclipboard (void);
 
 Lisp_Object mswindows_handle_print_dialog_box (struct frame *f,

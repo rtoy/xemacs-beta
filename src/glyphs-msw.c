@@ -2215,7 +2215,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			      int dest_mask, Lisp_Object domain,
-			      const CIbyte *class, int flags, int exflags)
+			      const CIbyte *class_, int flags, int exflags)
 {
   /* this function can call lisp */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2263,7 +2263,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
     gui_error ("window creation failed with code",
 	       make_int (GetLastError()));
 
-  C_STRING_TO_TSTR (class, classext);
+  C_STRING_TO_TSTR (class_, classext);
 
   if ((wnd = qxeCreateWindowEx (exflags /* | WS_EX_NOPARENTNOTIFY*/,
 				classext,

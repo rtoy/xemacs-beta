@@ -307,7 +307,8 @@ x_window_output_begin (struct window *w)
 static void
 x_window_output_end (struct window *w)
 {
-  XFlush (DEVICE_X_DISPLAY (WINDOW_XDEVICE (w)));
+  if (!(check_if_pending_expose_event (WINDOW_XDEVICE (w))))
+    XFlush (DEVICE_X_DISPLAY (WINDOW_XDEVICE (w)));
 }
 
 /*****************************************************************************
@@ -1799,7 +1800,8 @@ x_redraw_exposed_area (struct frame *f, int x, int y, int width, int height)
     {
       x_redraw_exposed_windows (f->root_window, x, y, width, height);
 
-      XFlush (DEVICE_X_DISPLAY (XDEVICE (f->device)));
+      if (!(check_if_pending_expose_event (FRAME_XDEVICE (f))))
+	XFlush (DEVICE_X_DISPLAY (FRAME_XDEVICE (f)));
     }
   else
     MARK_FRAME_CHANGED (f);
@@ -1970,7 +1972,8 @@ x_clear_frame (struct frame *f)
       x_clear_frame_windows (f->root_window);
     }
 
-  XFlush (DEVICE_X_DISPLAY (d));
+  if (!(check_if_pending_expose_event (d)))
+    XFlush (DEVICE_X_DISPLAY (d));
 }
 
 /* briefly swap the foreground and background colors.

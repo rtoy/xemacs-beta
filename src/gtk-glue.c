@@ -230,36 +230,38 @@ face_to_style (Lisp_Object face)
 static Lisp_Object
 gdk_event_to_emacs_event(GdkEvent *ev)
 {
-  Lisp_Object emacs_event = Qnil;
+  Lisp_Object event = Qnil;
 
   if (ev)
     {
-      emacs_event = Fmake_event (Qnil, Qnil);  
-      if (!gtk_event_to_emacs_event (NULL, ev, XEVENT (emacs_event)))
+      Lisp_Event *emacs_event;
+
+      event = Fmake_event (Qnil, Qnil);
+      emacs_event = XEVENT (event);
+
+      if (!gtk_event_to_emacs_event (NULL, ev, emacs_event))
 	{
 	  /* We need to handle a few more cases than the normal event
 	  ** loop does.  Mainly the double/triple click events.
 	  */
 	  if ((ev->type == GDK_2BUTTON_PRESS) || (ev->type == GDK_3BUTTON_PRESS))
 	    {
-	      struct Lisp_Event *le = XEVENT (emacs_event);
-
-	      le->event_type = misc_user_event;
-	      le->event.misc.button = ev->button.button;
-	      le->event.misc.modifiers = 0;
-	      le->event.misc.x = ev->button.x;
-	      le->event.misc.y = ev->button.y;
+	      set_event_type (emacs_event, misc_user_event);
+	      SET_EVENT_MISC_USER_BUTTON (emacs_event, ev->button.button);
+	      SET_EVENT_MISC_USER_MODIFIERS (emacs_event, 0);
+	      SET_EVENT_MISC_USER_X (emacs_event, ev->button.x);
+	      SET_EVENT_MISC_USER_Y (emacs_event, ev->button.y);
 	      if (ev->type == GDK_2BUTTON_PRESS)
-		le->event.misc.function = intern ("double-click");
+		SET_EVENT_MISC_USER_FUNCTION (emacs_event, intern ("double-click"));
 	      else
-		le->event.misc.function = intern ("triple-click");
+		SET_EVENT_MISC_USER_FUNCTION (emacs_event, intern ("triple-click"));
 	    }
 	  else
 	    {
-	      Fdeallocate_event (emacs_event);
-	      emacs_event = Qnil;
+	      Fdeallocate_event (event);
+	      event = Qnil;
 	    }
 	}
     }
-  return (emacs_event);
+  return (event);
 }

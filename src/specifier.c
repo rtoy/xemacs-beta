@@ -63,24 +63,24 @@ typedef struct
 
 static specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 
-static const struct lrecord_description ste_description_1[] = {
+static const struct memory_description ste_description_1[] = {
   { XD_LISP_OBJECT, offsetof (specifier_type_entry, symbol) },
   { XD_STRUCT_PTR,  offsetof (specifier_type_entry, meths), 1,
     &specifier_methods_description },
   { XD_END }
 };
 
-static const struct struct_description ste_description = {
+static const struct sized_memory_description ste_description = {
   sizeof (specifier_type_entry),
   ste_description_1
 };
 
-static const struct lrecord_description sted_description_1[] = {
+static const struct memory_description sted_description_1[] = {
   XD_DYNARR_DESC (specifier_type_entry_dynarr, &ste_description),
   { XD_END }
 };
 
-static const struct struct_description sted_description = {
+static const struct sized_memory_description sted_description = {
   sizeof (specifier_type_entry_dynarr),
   sted_description_1
 };
@@ -368,26 +368,33 @@ sizeof_specifier (const void *header)
 				   : p->methods->extra_data_size);
 }
 
-static const struct lrecord_description specifier_methods_description_1[] = {
+static const struct memory_description specifier_methods_description_1[] = {
   { XD_LISP_OBJECT, offsetof (struct specifier_methods, predicate_symbol) },
   { XD_END }
 };
 
-const struct struct_description specifier_methods_description = {
+const struct sized_memory_description specifier_methods_description = {
   sizeof (struct specifier_methods),
   specifier_methods_description_1
 };
 
-static const struct lrecord_description specifier_caching_description_1[] = {
+static const struct memory_description specifier_caching_description_1[] = {
   { XD_END }
 };
 
-static const struct struct_description specifier_caching_description = {
+static const struct sized_memory_description specifier_caching_description = {
   sizeof (struct specifier_caching),
   specifier_caching_description_1
 };
 
-static const struct lrecord_description specifier_description[] = {
+static const struct sized_memory_description specifier_extra_description_map[]
+= {
+  { offsetof (Lisp_Specifier, methods) },
+  { offsetof (struct specifier_methods, extra_description) },
+  { -1 },
+};
+
+const struct memory_description specifier_description[] = {
   { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, methods), 1,
     &specifier_methods_description },
   { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
@@ -400,14 +407,20 @@ static const struct lrecord_description specifier_description[] = {
     &specifier_caching_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
-  { XD_SPECIFIER_END }
-};
-
-const struct lrecord_description specifier_empty_extra_description[] = {
+  { XD_STRUCT_ARRAY, offsetof (Lisp_Specifier, data), 1,
+    specifier_extra_description_map },
   { XD_END }
 };
 
-#ifdef USE_KKCC
+static const struct memory_description specifier_empty_extra_description_1[] =
+{
+  { XD_END }
+};
+
+const struct sized_memory_description specifier_empty_extra_description = {
+  0, specifier_empty_extra_description_1
+};
+
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					1, /*dumpable-flag*/
 					mark_specifier, print_specifier,
@@ -416,15 +429,6 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					specifier_description,
 					sizeof_specifier,
 					Lisp_Specifier);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
-					mark_specifier, print_specifier,
-					finalize_specifier,
-					specifier_equal, specifier_hash,
-					specifier_description,
-					sizeof_specifier,
-					Lisp_Specifier);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       Creating specifiers                            */
@@ -489,7 +493,8 @@ make_specifier_internal (struct specifier_methods *spec_meths,
 {
   Lisp_Object specifier;
   Lisp_Specifier *sp = (Lisp_Specifier *)
-    alloc_lcrecord (aligned_sizeof_specifier (data_size), &lrecord_specifier);
+    basic_alloc_lcrecord (aligned_sizeof_specifier (data_size),
+			  &lrecord_specifier);
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;
@@ -734,7 +739,7 @@ decode_locale_type (Lisp_Object locale_type)
 
   invalid_argument ("Invalid specifier locale type",
 		     locale_type);
-  RETURN_NOT_REACHED (LOCALE_GLOBAL)
+  RETURN_NOT_REACHED (LOCALE_GLOBAL);
 }
 
 Lisp_Object
@@ -1354,7 +1359,7 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
 
   invalid_constant ("Invalid `how-to-add' flag", how_to_add);
 
-  RETURN_NOT_REACHED (SPEC_PREPEND)
+  RETURN_NOT_REACHED (SPEC_PREPEND);
 }
 
 /* Given a specifier object SPEC, return bodily specifier if SPEC is a

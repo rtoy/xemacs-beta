@@ -144,7 +144,7 @@ struct gtk_frame
   int num_top_widgets;
 
   /* Our container widget as a Lisp_Object */
-  Lisp_Object lisp_visible_widgets[10];
+  Lisp_Object lisp_visible_widgets[3];
 
   /*************************** Miscellaneous **************************/
 

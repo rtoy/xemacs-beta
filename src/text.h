@@ -38,6 +38,12 @@ Boston, MA 02111-1307, USA.  */
 #else
 size_t wcslen(const wchar_t *);
 #endif
+#ifndef HAVE_STRLWR
+char *strlwr(char *);
+#endif
+#ifndef HAVE_STRUPR
+char *strupr(char *);
+#endif
 
 /* ---------------------------------------------------------------------- */
 /*                     Super-basic character properties                   */
@@ -453,27 +459,27 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
   (ptr) += rep_bytes_by_first_byte (* (ptr));	\
 } while (0)
 
-#define INC_IBYTEPTR_FMT(ptr, fmt)					\
-do {									\
-  Internal_Format __icf_fmt = (fmt);					\
-  switch (__icf_fmt)							\
-    {									\
-    case FORMAT_DEFAULT:						\
-      INC_IBYTEPTR (ptr);						\
-      break;								\
-    case FORMAT_16_BIT_FIXED:						\
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));	\
-      (ptr) += 2;							\
-      break;								\
-    case FORMAT_32_BIT_FIXED:						\
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));	\
-      (ptr) += 4;							\
-      break;								\
-    default:								\
-      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			\
-      (ptr)++;								\
-      break;								\
-    }									\
+#define INC_IBYTEPTR_FMT(ptr, fmt)					   \
+do {									   \
+  Internal_Format __icf_fmt = (fmt);					   \
+  switch (__icf_fmt)							   \
+    {									   \
+    case FORMAT_DEFAULT:						   \
+      INC_IBYTEPTR (ptr);						   \
+      break;								   \
+    case FORMAT_16_BIT_FIXED:						   \
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT)); \
+      (ptr) += 2;							   \
+      break;								   \
+    case FORMAT_32_BIT_FIXED:						   \
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT)); \
+      (ptr) += 4;							   \
+      break;								   \
+    default:								   \
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			   \
+      (ptr)++;								   \
+      break;								   \
+    }									   \
 } while (0)
 
 /* Given a itext (assumed to point at the beginning of a character or at
@@ -498,27 +504,27 @@ do {									\
 } while (0)
 #endif /* ERROR_CHECK_TEXT */
 
-#define DEC_IBYTEPTR_FMT(ptr, fmt)					\
-do {									\
-  Internal_Format __icf_fmt = (fmt);					\
-  switch (__icf_fmt)							\
-    {									\
-    case FORMAT_DEFAULT:						\
-      DEC_IBYTEPTR (ptr);						\
-      break;								\
-    case FORMAT_16_BIT_FIXED:						\
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));	\
-      (ptr) -= 2;							\
-      break;								\
-    case FORMAT_32_BIT_FIXED:						\
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));	\
-      (ptr) -= 4;							\
-      break;								\
-    default:								\
-      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			\
-      (ptr)--;								\
-      break;								\
-    }									\
+#define DEC_IBYTEPTR_FMT(ptr, fmt)					   \
+do {									   \
+  Internal_Format __icf_fmt = (fmt);					   \
+  switch (__icf_fmt)							   \
+    {									   \
+    case FORMAT_DEFAULT:						   \
+      DEC_IBYTEPTR (ptr);						   \
+      break;								   \
+    case FORMAT_16_BIT_FIXED:						   \
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT)); \
+      (ptr) -= 2;							   \
+      break;								   \
+    case FORMAT_32_BIT_FIXED:						   \
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT)); \
+      (ptr) -= 4;							   \
+      break;								   \
+    default:								   \
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			   \
+      (ptr)--;								   \
+      break;								   \
+    }									   \
 } while (0)
 
 #ifdef MULE
@@ -675,10 +681,10 @@ bytecount_to_charcount_fmt (const Ibyte *ptr, Bytecount len,
     case FORMAT_DEFAULT:
       return bytecount_to_charcount (ptr, len);
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       return (Charcount) (len << 1);
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return (Charcount) (len << 2);
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -701,12 +707,12 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
     case FORMAT_DEFAULT:
       return charcount_to_bytecount (ptr, len);
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       text_checking_assert (!(len & 1));
       return (Bytecount) (len >> 1);
     case FORMAT_32_BIT_FIXED:
       text_checking_assert (!(len & 3));
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return (Bytecount) (len >> 2);
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -749,10 +755,10 @@ itext_ichar_len_fmt (const Ibyte *ptr, Internal_Format fmt)
     case FORMAT_DEFAULT:
       return itext_ichar_len (ptr);
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       return 2;
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return 4;
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -831,10 +837,10 @@ itext_ichar_fmt (const Ibyte *ptr, Internal_Format fmt,
     case FORMAT_DEFAULT:
       return itext_ichar (ptr);
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       return raw_16_bit_fixed_to_ichar (* (UINT_16_BIT *) ptr, object);
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return raw_32_bit_fixed_to_ichar (* (UINT_32_BIT *) ptr, object);
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -861,10 +867,10 @@ itext_ichar_ascii_fmt (const Ibyte *ptr, Internal_Format fmt,
     case FORMAT_DEFAULT:
       return (Ichar) *ptr;
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       return raw_16_bit_fixed_to_ichar (* (UINT_16_BIT *) ptr, object);
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return raw_32_bit_fixed_to_ichar (* (UINT_32_BIT *) ptr, object);
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -886,10 +892,10 @@ itext_ichar_raw_fmt (const Ibyte *ptr, Internal_Format fmt)
     case FORMAT_DEFAULT:
       return (Raw_Ichar) itext_ichar (ptr);
     case FORMAT_16_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       return (Raw_Ichar) (* (UINT_16_BIT *) ptr);
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       return (Raw_Ichar) (* (UINT_32_BIT *) ptr);
     default:
       text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
@@ -928,11 +934,11 @@ set_itext_ichar_fmt (Ibyte *ptr, Ichar x, Internal_Format fmt,
       return set_itext_ichar (ptr, x);
     case FORMAT_16_BIT_FIXED:
       text_checking_assert (ichar_16_bit_fixed_p (x, object));
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_16_BIT));
       * (UINT_16_BIT *) ptr = ichar_to_raw_16_bit_fixed (x, object);
       return 2;
     case FORMAT_32_BIT_FIXED:
-      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      text_checking_assert ((void *) ptr == ALIGN_PTR (ptr, UINT_32_BIT));
       * (UINT_32_BIT *) ptr = ichar_to_raw_32_bit_fixed (x, object);
       return 4;
     default:

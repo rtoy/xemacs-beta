@@ -19,6 +19,8 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+/* Synched up with: ????.  Split out of process.h. */
+
 /* This file must be only included by the process implementation files:
    process-unix.c, process-msw.c etc. The Lisp_Process structure and other
    contents of this file is not exported to the rest of the world */
@@ -36,7 +38,6 @@ Boston, MA 02111-1307, USA.  */
 
 struct process_methods
 {
-  void (*mark_process_data) (Lisp_Process *proc);
   void (*print_process_data) (Lisp_Process *proc, Lisp_Object printcharfun);
   void (*finalize_process_data) (Lisp_Process *proc, int for_disksave);
   void (*alloc_process_data) (Lisp_Process *p);
@@ -66,7 +67,6 @@ struct process_methods
 			      int current_group, int nomsg);
   int  (*kill_process_by_pid) (int pid, int sigcode);
   int  (*process_send_eof) (Lisp_Object proc);
-  Lisp_Object (*get_tty_name) (Lisp_Process *p);
   void (*deactivate_process) (Lisp_Process *p,
 			      USID* in_usid,
 			      USID* err_usid);
@@ -95,29 +95,6 @@ extern struct process_methods the_process_methods;
 struct Lisp_Process
 {
   struct lcrecord_header header;
-  /* Name of this process */
-  Lisp_Object name;
-  /* List of command arguments that this process was run with */
-  Lisp_Object command;
-  /* (funcall FILTER PROC STRING)  (if FILTER is non-nil)
-     to dispose of a bunch of chars from the process all at once */
-  Lisp_Object filter;
-  /* (funcall FILTER PROC STRING)  (if FILTER is non-nil)
-     to dispose of a bunch of chars from the stderr of process all at once */
-  Lisp_Object stderr_filter;
-  /* (funcall SENTINEL PROCESS) when process state changes */
-  Lisp_Object sentinel;
-  /* Buffer that output or stderr output is going to */
-  Lisp_Object buffer, stderr_buffer;
-  /* Marker set to end of last buffer-inserted output from this process */
-  Lisp_Object mark, stderr_mark;
-  /* Lisp_Int of subprocess' PID, or a cons of
-     service/host if this is really a network connection */
-  Lisp_Object pid;
-
-  /* Symbol indicating status of process.
-     This may be a symbol: run, stop, exit, signal */
-  Lisp_Object status_symbol;
 
   /* Exit code if process has terminated,
      signal which stopped/interrupted process
@@ -140,18 +117,9 @@ struct Lisp_Process
   int update_tick;
   /* Non-zero if stderr and stdout are separated. */
   char separate_stderr;
-  /* Low level streams used in input and output, connected to child */
-  Lisp_Object pipe_instream;
-  Lisp_Object pipe_outstream;
-  Lisp_Object pipe_errstream;
-  /* Data end streams, decoding and encoding pipe_* streams */
-  Lisp_Object coding_instream;
-  Lisp_Object coding_outstream;
-  Lisp_Object coding_errstream;
 
-#ifdef USE_KKCC
-  enum process_variant process_type;
-#endif /* USE_KKCC */
+#define MARKED_SLOT(x) Lisp_Object x;
+#include "process-slots.h"
 
   /* Implementation dependent data */
   void *process_data;
@@ -185,25 +153,5 @@ void send_process (Lisp_Object proc,
 		   Lisp_Object relocatable,
 		   const Ibyte *nonrelocatable,
 		   int start, int len);
-
-#ifdef USE_KKCC
-struct unix_process_data
-{
-  /* Non-0 if this is really a ToolTalk channel. */
-  int connected_via_filedesc_p;
-  /* Descriptor by which we read from this process.  -1 for dead process */
-  int infd;
-  /* Descriptor by which we read stderr from this process.  -1 for
-     dead process */
-  int errfd;
-  /* Descriptor for the tty which this process is using.
-     -1 if we didn't record it (on some systems, there's no need).  */
-  int subtty;
-  /* Name of subprocess terminal. */
-  Lisp_Object tty_name;
-  /* Non-false if communicating through a pty.  */
-  char pty_flag;
-};
-#endif /* USE_KKCC */
 
 #endif /* INCLUDED_procimpl_h_ */

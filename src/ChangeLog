@@ -1,3 +1,846 @@
+2003-01-08  Mike Sperber <mike@xemacs.org>
+
+	* console.h (CDFW_CONSOLE): Don't lead to a crash if we're dealing
+	with a dead window/frame/device/console.
+
+2002-12-20  Mike Sperber <mike@xemacs.org>
+
+	* ui-gtk.c: Fix typo from Ben's patch: emacs_ffi_data is a
+	typedef, not a struct.  emacs_gtk_object_data is a typedef, not a
+	struct.
+	
+
+	* gtk-glue.c (gdk_event_to_emacs_event): Fix typos from Ben's
+	patch: le -> emacs_event + rearrange the code.
+
+	* event-gtk.c (gtk_event_to_emacs_event): Fix typos from Ben's
+	patch: ..._UNDERLYING_GDK_EVENT -> ..._GDK_EVENT, ev -> key_event.
+
+	* device-gtk.c: Fix typo from Ben's patch: x_keysym_map_hash_table
+	-> x_keysym_map_hashtable.
+
+2002-12-19  Mike Sperber <mike@xemacs.org>
+
+	* menubar-x.c (set_frame_menubar): Initialize protect_me field of
+	popup_data.
+
+2002-12-16  Ben Wing  <ben@xemacs.org>
+	Major cleanup of KKCC, etc.
+
+	KKCC, pdump-related:
+	
+	-- descriptions are written for all objects.  this required some
+	   changes in the format of some objects, e.g. extents, popup-data,
+	   coding system, lstream, lcrecord-list.
+	-- KKCC now handles weakness in markers, hash tables, elsewhere
+	   correctly (formerly, you'd eventually get a stack overflow due
+	   to endlessly expanding markers).
+	-- textual changes: lrecord_description -> memory_description,
+	   struct_description -> sized_memory_description.
+	-- extensive comment describing descriptions and pdump.
+	-- redo XD_UNION so it works inline and change its format to provide
+	   sufficient info for pdump.  implement XD_UNION in pdump.  also add
+	   XD_UNION_DYNAMIC_SIZE, which works like XD_UNION except for when
+	   auto-computing structure sizes.
+	-- add support for XD_INDIRECT in description offsets (used by
+	   extents).
+	-- add support for "description maps", allowing for indirect
+	   descriptions that are retrieved from an object at run-time.  this
+	   generalizes XD_CODING_SYSTEM_END, XD_SPECIFIER_END, etc., which
+	   have now been eliminated.
+	-- add a fifth field "flags" to memory_description, to support flags
+	   that can be specified for this particular line.  Currently defined
+	   flags are XD_FLAG_NO_KKCC (KKCC should ignore this entry; useful
+	   for the weakness above in markers, etc.), XD_FLAG_NO_PDUMP (pdump
+	   should ignore this entry), XD_FLAG_UNION_DEFAULT_ENTRY (in
+	   union maps, this specifies a "default" entry for all remaining
+	   values), and XD_FLAG_FREE_LISP_OBJECT (for use with lcrecord-lists).
+	-- clean up the kkcc-itis in events, so that the differences
+	   between event data as separate objects and as a union are now
+	   minimized to a small number of places.  with the new XD_UNION, we
+	   no longer need event data as separate objects, so this code is no
+	   longer ifdef USE_KKCC, but instead ifdef EVENT_DATA_AS_OBJECTS,
+	   not used by default.  make sure that we explicitly free the
+	   separate event data objects when no longer in use, to maintain the
+	   invariant the event processing causes no consing.
+	-- also remove other USE_KKCC ifdefs when not necessary.
+	-- allow for KKCC compilation under MS Windows.
+	-- fix README.kkcc.
+	-- dump_add_root_object -> dump_add_root_lisp_object.
+	-- implement dump_add_root_block and use this to handle
+	   dump_add_opaque.
+	-- factor out some code duplicated in kkcc and pdump.
+
+	Other allocation/object-related:
+	
+	-- change various *slots.h so MARKED_SLOT() call no longer
+	   includes semicolon.
+	-- free_marker() takes a Lisp_Object not a direct pointer.
+	-- make bit vectors lcrecords, like vectors, and eliminate code
+	   that essentially duplicated the lcrecord handling.
+	-- additional asserts in FREE_FIXED_TYPE, formerly duplicated in
+	   the various callers of this.
+	-- all lcrecord allocation functions now zero out the returned
+	   lcrecords.  unnecessary calls to zero_lcrecord removed.  add long
+	   comment describing these functions.
+	-- extract out process and coding system slots, like for buffers,
+	   frames, etc.
+	-- lcrecords now set the type of items sitting on the free list to
+	   lcrecord_type_free.
+	-- changes to the way that gap arrays are allocated, for kkcc's
+	   benefit -- now, one single memory block with a stretchy array on
+	   the end, instead of a separate block holding the array.
+
+	Error-checking-related:
+	
+	-- now can compile with C++ under MS Windows.  clean up compile errors
+	   discovered that way. (a few were real problems)
+	-- add C++ error-checking code to verify problems with mismatched
+	   GCPRO/UNGCPRO. (there were a few in the kkcc code.) add long
+	   comment about how to catch insufficient GCPRO (yes, it's possible
+	   using C++).
+	-- add debug_p4(), a simple object printer, when debug_print()
+	   doesn't work.
+	-- add dp() and db() as short synonyms of debug_print(),
+	   debug_backtrace().
+	-- `print' tries EXTREMELY hard to avoid core dumping when printing
+	   when crashing or from debug_print(), and tries as hard as it
+	   reasonably can in other situations.
+	-- Correct the message output upon crashing to be more up-to-date.
+	
+	Event-related:
+	
+	-- document event-matches-key-specifier-p better.
+	-- generalize the dispatch queues formerly duplicated in the
+	   various event implementations.  add event methods to drain pending
+	   events.  generalize and clean up QUIT handling, removing
+	   event-specific quit processing.  allow arbitrary keystrokes, not
+	   just ASCII, to be the QUIT char.  among other things, this should
+	   fix some longstanding bugs in X quit handling.  long comment
+	   describing the various event queues.
+	-- implement delaying of XFlush() if there are pending expose events.
+	   SOMEONE PLEASE TRY THIS OUT.
+	-- Fix `xemacs -batch -l dunnet' under Cygwin.  Try to fix under
+	   MS Windows but not quite there yet.
+
+	Other:
+	
+	-- class -> class_ and no more C++ games with this item.
+	   new -> new_ in the lwlib code, so far not elsewhere.
+	-- use `struct htentry' not `struct hentry' in elhash.c to avoid
+	   debugger confusion with hash.c.
+	-- new macros ALIST_LOOP_3, ALIST_LOOP_4.
+
+	* README.kkcc:
+	* alloc.c:
+	* alloc.c (deadbeef_memory):
+	* alloc.c (allocate_lisp_storage):
+	* alloc.c (copy_lisp_object):
+	* alloc.c (ALLOCATE_FIXED_TYPE_1):
+	* alloc.c (FREE_FIXED_TYPE):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (make_key_data):
+	* alloc.c (make_button_data):
+	* alloc.c (make_motion_data):
+	* alloc.c (make_process_data):
+	* alloc.c (make_timeout_data):
+	* alloc.c (make_magic_data):
+	* alloc.c (make_magic_eval_data):
+	* alloc.c (make_eval_data):
+	* alloc.c (make_misc_user_data):
+	* alloc.c (struct string_chars_block):
+	* alloc.c (mark_lcrecord_list):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (alloc_managed_lcrecord):
+	* alloc.c (free_managed_lcrecord):
+	* alloc.c (alloc_automanaged_lcrecord):
+	* alloc.c (staticpro_1):
+	* alloc.c (staticpro):
+	* alloc.c (lispdesc_indirect_count_1):
+	* alloc.c (lispdesc_indirect_description_1):
+	* alloc.c (lispdesc_one_description_line_size):
+	* alloc.c (lispdesc_structure_size):
+	* alloc.c (mark_object_maybe_checking_free):
+	* alloc.c (mark_with_description):
+	* alloc.c (mark_struct_contents):
+	* alloc.c (mark_object):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (free_cons):
+	* alloc.c (free_key_data):
+	* alloc.c (free_button_data):
+	* alloc.c (free_motion_data):
+	* alloc.c (free_process_data):
+	* alloc.c (free_timeout_data):
+	* alloc.c (free_magic_data):
+	* alloc.c (free_magic_eval_data):
+	* alloc.c (free_eval_data):
+	* alloc.c (free_misc_user_data):
+	* alloc.c (free_marker):
+	* alloc.c (compact_string_chars):
+	* alloc.c (gc_sweep):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (Fgarbage_collect):
+	* alloc.c (common_init_alloc_early):
+	* alloc.c (init_alloc_early):
+	* alloc.c (init_alloc_once_early):
+	* buffer.c:
+	* buffer.c (mark_buffer):
+	* buffer.c (MARKED_SLOT):
+	* buffer.c (cleanup_buffer_undo_lists):
+	* buffer.c (Fget_file_buffer):
+	* buffer.h (MARKED_SLOT):
+	* bufslots.h:
+	* bytecode.c:
+	* callint.c:
+	* casetab.c:
+	* chartab.c:
+	* chartab.c (symbol_to_char_table_type):
+	* cmdloop.c:
+	* cmdloop.c (Fcommand_loop_1):
+	* config.h.in (new):
+	* conslots.h:
+	* console-gtk-impl.h (struct gtk_frame):
+	* console-impl.h:
+	* console-impl.h (struct console):
+	* console-impl.h (MARKED_SLOT):
+	* console-impl.h (CONSOLE_QUIT_EVENT):
+	* console-msw-impl.h (XM_BUMPQUEUE):
+	* console-msw.c (write_string_to_mswindows_debugging_output):
+	* console-msw.h:
+	* console-stream-impl.h:
+	* console-stream-impl.h (struct stream_console):
+	* console-stream.c:
+	* console-stream.c (stream_init_console):
+	* console-stream.h:
+	* console-tty.c:
+	* console-tty.h:
+	* console-x.h:
+	* console.c:
+	* console.c (mark_console):
+	* console.c (MARKED_SLOT):
+	* console.c (allocate_console):
+	* console.c (get_console_variant):
+	* console.c (create_console):
+	* console.c (delete_console_internal):
+	* console.c (Fset_input_mode):
+	* console.c (Fcurrent_input_mode):
+	* console.c (common_init_complex_vars_of_console):
+	* console.h:
+	* console.h (console_variant):
+	* console.h (device_metrics):
+	* data.c:
+	* data.c (Faref):
+	* data.c (Faset):
+	* data.c (decode_weak_list_type):
+	* database.c:
+	* debug.c (xemacs_debug_loop):
+	* debug.c (FROB):
+	* debug.c (Fadd_debug_class_to_check):
+	* debug.c (Fdelete_debug_class_to_check):
+	* debug.c (Fset_debug_classes_to_check):
+	* debug.c (Fset_debug_class_types_to_check):
+	* debug.c (Fdebug_types_being_checked):
+	* debug.h (DASSERT):
+	* device-gtk.c:
+	* device-impl.h (struct device):
+	* device-impl.h (MARKED_SLOT):
+	* device-msw.c:
+	* device-x.c:
+	* device-x.c (x_init_device_class):
+	* device-x.c (x_comp_visual_info):
+	* device-x.c (x_try_best_visual_class):
+	* device-x.c (x_init_device):
+	* device-x.c (construct_name_list):
+	* device-x.c (x_get_resource_prefix):
+	* device-x.c (Fx_get_resource):
+	* device-x.c (Fx_display_visual_class):
+	* device.c:
+	* device.c (MARKED_SLOT):
+	* device.c (allocate_device):
+	* device.c (Fmake_device):
+	* device.c (delete_device_internal):
+	* device.c (Fset_device_class):
+	* device.h:
+	* devslots.h:
+	* devslots.h (MARKED_SLOT):
+	* dialog-msw.c:
+	* dired-msw.c (mswindows_ls_sort_fcn):
+	* dired-msw.c (mswindows_get_files):
+	* dired-msw.c (mswindows_format_file):
+	* doprnt.c (parse_doprnt_spec):
+	* dumper.c:
+	* dumper.c (struct):
+	* dumper.c (dump_add_root_block):
+	* dumper.c (dump_add_root_struct_ptr):
+	* dumper.c (dump_add_root_lisp_object):
+	* dumper.c (pdump_struct_list_elt):
+	* dumper.c (pdump_get_entry_list):
+	* dumper.c (pdump_backtrace):
+	* dumper.c (pdump_bump_depth):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_register_object):
+	* dumper.c (pdump_register_struct_contents):
+	* dumper.c (pdump_register_struct):
+	* dumper.c (pdump_store_new_pointer_offsets):
+	* dumper.c (pdump_dump_data):
+	* dumper.c (pdump_reloc_one):
+	* dumper.c (pdump_allocate_offset):
+	* dumper.c (pdump_scan_by_alignment):
+	* dumper.c (pdump_dump_root_blocks):
+	* dumper.c (pdump_dump_rtables):
+	* dumper.c (pdump_dump_root_lisp_objects):
+	* dumper.c (pdump):
+	* dumper.c (pdump_load_finish):
+	* dumper.c (pdump_file_get):
+	* dumper.c (pdump_resource_get):
+	* dumper.c (pdump_load):
+	* editfns.c (save_excursion_restore):
+	* editfns.c (user_login_name):
+	* editfns.c (save_restriction_restore):
+	* elhash.c:
+	* elhash.c (htentry):
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (HTENTRY_CLEAR_P):
+	* elhash.c (LINEAR_PROBING_LOOP):
+	* elhash.c (check_hash_table_invariants):
+	* elhash.c (mark_hash_table):
+	* elhash.c (hash_table_equal):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (free_hentries):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (decode_hash_table_weakness):
+	* elhash.c (decode_hash_table_test):
+	* elhash.c (Fcopy_hash_table):
+	* elhash.c (resize_hash_table):
+	* elhash.c (pdump_reorganize_hash_table):
+	* elhash.c (find_htentry):
+	* elhash.c (Fgethash):
+	* elhash.c (Fputhash):
+	* elhash.c (remhash_1):
+	* elhash.c (Fremhash):
+	* elhash.c (Fclrhash):
+	* elhash.c (copy_compress_hentries):
+	* elhash.c (elisp_maphash_unsafe):
+	* elhash.c (finish_marking_weak_hash_tables):
+	* elhash.c (prune_weak_hash_tables):
+	* elhash.h:
+	* emacs.c:
+	* emacs.c (main_1):
+	* emacs.c (main):
+	* emacs.c (shut_down_emacs):
+	* emodules.h (dump_add_root_lisp_object):
+	* eval.c:
+	* eval.c (unwind_to_catch):
+	* eval.c (maybe_signal_error_1):
+	* eval.c (maybe_signal_continuable_error_1):
+	* eval.c (maybe_signal_error):
+	* eval.c (maybe_signal_continuable_error):
+	* eval.c (maybe_signal_error_2):
+	* eval.c (maybe_signal_continuable_error_2):
+	* eval.c (maybe_signal_ferror):
+	* eval.c (maybe_signal_continuable_ferror):
+	* eval.c (maybe_signal_ferror_with_frob):
+	* eval.c (maybe_signal_continuable_ferror_with_frob):
+	* eval.c (maybe_syntax_error):
+	* eval.c (maybe_sferror):
+	* eval.c (maybe_invalid_argument):
+	* eval.c (maybe_invalid_constant):
+	* eval.c (maybe_invalid_operation):
+	* eval.c (maybe_invalid_change):
+	* eval.c (maybe_invalid_state):
+	* eval.c (Feval):
+	* eval.c (call_trapping_problems):
+	* eval.c (call_with_suspended_errors):
+	* eval.c (warn_when_safe_lispobj):
+	* eval.c (warn_when_safe):
+	* eval.c (vars_of_eval):
+	* event-Xt.c:
+	* event-Xt.c (maybe_define_x_key_as_self_inserting_character):
+	* event-Xt.c (x_to_emacs_keysym):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-Xt.c (emacs_Xt_enqueue_focus_event):
+	* event-Xt.c (emacs_Xt_format_magic_event):
+	* event-Xt.c (emacs_Xt_compare_magic_event):
+	* event-Xt.c (emacs_Xt_hash_magic_event):
+	* event-Xt.c (emacs_Xt_handle_magic_event):
+	* event-Xt.c (Xt_timeout_to_emacs_event):
+	* event-Xt.c (Xt_process_to_emacs_event):
+	* event-Xt.c (signal_special_Xt_user_event):
+	* event-Xt.c (emacs_Xt_next_event):
+	* event-Xt.c (emacs_Xt_event_handler):
+	* event-Xt.c (emacs_Xt_drain_queue):
+	* event-Xt.c (emacs_Xt_event_pending_p):
+	* event-Xt.c (check_if_pending_expose_event):
+	* event-Xt.c (reinit_vars_of_event_Xt):
+	* event-Xt.c (vars_of_event_Xt):
+	* event-gtk.c:
+	* event-gtk.c (IS_MODIFIER_KEY):
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	* event-gtk.c (emacs_gtk_compare_magic_event):
+	* event-gtk.c (emacs_gtk_hash_magic_event):
+	* event-gtk.c (emacs_gtk_handle_magic_event):
+	* event-gtk.c (gtk_to_emacs_keysym):
+	* event-gtk.c (gtk_timeout_to_emacs_event):
+	* event-gtk.c (gtk_process_to_emacs_event):
+	* event-gtk.c (dragndrop_data_received):
+	* event-gtk.c (signal_special_gtk_user_event):
+	* event-gtk.c (emacs_gtk_next_event):
+	* event-gtk.c (gtk_event_to_emacs_event):
+	* event-gtk.c (generic_event_handler):
+	* event-gtk.c (emacs_shell_event_handler):
+	* event-gtk.c (emacs_gtk_drain_queue):
+	* event-gtk.c (emacs_gtk_event_pending_p):
+	* event-gtk.c (reinit_vars_of_event_gtk):
+	* event-gtk.c (vars_of_event_gtk):
+	* event-msw.c:
+	* event-msw.c (struct winsock_stream):
+	* event-msw.c (winsock_reader):
+	* event-msw.c (winsock_writer):
+	* event-msw.c (mswindows_enqueue_dispatch_event):
+	* event-msw.c (mswindows_enqueue_misc_user_event):
+	* event-msw.c (mswindows_enqueue_magic_event):
+	* event-msw.c (mswindows_enqueue_process_event):
+	* event-msw.c (mswindows_enqueue_mouse_button_event):
+	* event-msw.c (mswindows_enqueue_keypress_event):
+	* event-msw.c (mswindows_dequeue_dispatch_event):
+	* event-msw.c (emacs_mswindows_drain_queue):
+	* event-msw.c (mswindows_need_event_in_modal_loop):
+	* event-msw.c (mswindows_need_event):
+	* event-msw.c (mswindows_wm_timer_callback):
+	* event-msw.c (dde_eval_string):
+	* event-msw.c (Fdde_alloc_advise_item):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-msw.c (remove_timeout_mapper):
+	* event-msw.c (emacs_mswindows_remove_timeout):
+	* event-msw.c (emacs_mswindows_event_pending_p):
+	* event-msw.c (emacs_mswindows_format_magic_event):
+	* event-msw.c (emacs_mswindows_compare_magic_event):
+	* event-msw.c (emacs_mswindows_hash_magic_event):
+	* event-msw.c (emacs_mswindows_handle_magic_event):
+	* event-msw.c (emacs_mswindows_select_console):
+	* event-msw.c (emacs_mswindows_unselect_console):
+	* event-msw.c (reinit_vars_of_event_mswindows):
+	* event-msw.c (vars_of_event_mswindows):
+	* event-stream.c:
+	* event-stream.c (mark_command_builder):
+	* event-stream.c (reset_command_builder_event_chain):
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (copy_command_builder):
+	* event-stream.c (command_builder_append_event):
+	* event-stream.c (event_stream_event_pending_p):
+	* event-stream.c (event_stream_force_event_pending):
+	* event-stream.c (maybe_read_quit_event):
+	* event-stream.c (event_stream_drain_queue):
+	* event-stream.c (remove_quit_p_event):
+	* event-stream.c (event_stream_quit_p):
+	* event-stream.c (echo_key_event):
+	* event-stream.c (maybe_kbd_translate):
+	* event-stream.c (execute_help_form):
+	* event-stream.c (event_stream_generate_wakeup):
+	* event-stream.c (enqueue_dispatch_event):
+	* event-stream.c (enqueue_magic_eval_event):
+	* event-stream.c (Fenqueue_eval_event):
+	* event-stream.c (enqueue_misc_user_event):
+	* event-stream.c (enqueue_misc_user_event_pos):
+	* event-stream.c (next_event_internal):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (execute_internal_event):
+	* event-stream.c (munge_keymap_translate):
+	* event-stream.c (command_builder_find_leaf_no_mule_processing):
+	* event-stream.c (command_builder_find_leaf):
+	* event-stream.c (lookup_command_event):
+	* event-stream.c (is_scrollbar_event):
+	* event-stream.c (execute_command_event):
+	* event-stream.c (Fdispatch_event):
+	* event-stream.c (Fread_key_sequence):
+	* event-stream.c (dribble_out_event):
+	* event-stream.c (vars_of_event_stream):
+	* event-tty.c (tty_timeout_to_emacs_event):
+	* event-tty.c (emacs_tty_next_event):
+	* event-tty.c (emacs_tty_drain_queue):
+	* event-tty.c (reinit_vars_of_event_tty):
+	* event-unixoid.c:
+	* event-unixoid.c (find_tty_or_stream_console_from_fd):
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	* event-unixoid.c (drain_tty_devices):
+	* event-unixoid.c (poll_fds_for_input):
+	* events.c:
+	* events.c (deinitialize_event):
+	* events.c (zero_event):
+	* events.c (mark_event):
+	* events.c (print_event_1):
+	* events.c (print_event):
+	* events.c (event_equal):
+	* events.c (event_hash):
+	* events.c (Fmake_event):
+	* events.c (Fdeallocate_event):
+	* events.c (Fcopy_event):
+	* events.c (map_event_chain_remove):
+	* events.c (character_to_event):
+	* events.c (event_to_character):
+	* events.c (Fevent_to_character):
+	* events.c (format_event_object):
+	* events.c (upshift_event):
+	* events.c (downshift_event):
+	* events.c (event_upshifted_p):
+	* events.c (Fevent_live_p):
+	* events.c (Fevent_type):
+	* events.c (Fevent_timestamp):
+	* events.c (CHECK_EVENT_TYPE):
+	* events.c (CHECK_EVENT_TYPE2):
+	* events.c (CHECK_EVENT_TYPE3):
+	* events.c (Fevent_key):
+	* events.c (Fevent_button):
+	* events.c (Fevent_modifier_bits):
+	* events.c (event_x_y_pixel_internal):
+	* events.c (event_pixel_translation):
+	* events.c (Fevent_process):
+	* events.c (Fevent_function):
+	* events.c (Fevent_object):
+	* events.c (Fevent_properties):
+	* events.c (syms_of_events):
+	* events.c (vars_of_events):
+	* events.h:
+	* events.h (struct event_stream):
+	* events.h (struct Lisp_Key_Data):
+	* events.h (KEY_DATA_KEYSYM):
+	* events.h (EVENT_KEY_KEYSYM):
+	* events.h (struct Lisp_Button_Data):
+	* events.h (EVENT_BUTTON_BUTTON):
+	* events.h (struct Lisp_Motion_Data):
+	* events.h (EVENT_MOTION_X):
+	* events.h (struct Lisp_Process_Data):
+	* events.h (EVENT_PROCESS_PROCESS):
+	* events.h (struct Lisp_Timeout_Data):
+	* events.h (EVENT_TIMEOUT_INTERVAL_ID):
+	* events.h (struct Lisp_Eval_Data):
+	* events.h (EVENT_EVAL_FUNCTION):
+	* events.h (struct Lisp_Misc_User_Data):
+	* events.h (EVENT_MISC_USER_FUNCTION):
+	* events.h (struct Lisp_Magic_Eval_Data):
+	* events.h (EVENT_MAGIC_EVAL_INTERNAL_FUNCTION):
+	* events.h (struct Lisp_Magic_Data):
+	* events.h (EVENT_MAGIC_UNDERLYING):
+	* events.h (EVENT_MAGIC_GDK_EVENT):
+	* events.h (struct Lisp_Event):
+	* events.h (XEVENT_CHANNEL):
+	* events.h (SET_EVENT_TIMESTAMP_ZERO):
+	* events.h (SET_EVENT_CHANNEL):
+	* events.h (SET_EVENT_NEXT):
+	* events.h (XSET_EVENT_TYPE):
+	* events.h (struct command_builder):
+	* extents.c:
+	* extents.c (gap_array_adjust_markers):
+	* extents.c (gap_array_recompute_derived_values):
+	* extents.c (gap_array_move_gap):
+	* extents.c (gap_array_make_gap):
+	* extents.c (gap_array_insert_els):
+	* extents.c (gap_array_delete_els):
+	* extents.c (gap_array_make_marker):
+	* extents.c (gap_array_delete_marker):
+	* extents.c (gap_array_move_marker):
+	* extents.c (make_gap_array):
+	* extents.c (free_gap_array):
+	* extents.c (extent_list_num_els):
+	* extents.c (extent_list_insert):
+	* extents.c (mark_extent_auxiliary):
+	* extents.c (allocate_extent_auxiliary):
+	* extents.c (decode_extent_at_flag):
+	* extents.c (verify_extent_mapper):
+	* extents.c (symbol_to_glyph_layout):
+	* extents.c (syms_of_extents):
+	* faces.c:
+	* file-coding.c:
+	* file-coding.c (struct_detector_category_description =):
+	* file-coding.c (detector_category_dynarr_description_1):
+	* file-coding.c (struct_detector_description =):
+	* file-coding.c (detector_dynarr_description_1):
+	* file-coding.c (MARKED_SLOT):
+	* file-coding.c (mark_coding_system):
+	* file-coding.c (coding_system_extra_description_map):
+	* file-coding.c (coding_system_description):
+	* file-coding.c (allocate_coding_system):
+	* file-coding.c (symbol_to_eol_type):
+	* file-coding.c (Fcoding_system_aliasee):
+	* file-coding.c (set_coding_stream_coding_system):
+	* file-coding.c (struct convert_eol_coding_system):
+	* file-coding.c (struct undecided_coding_system):
+	* file-coding.c (undecided_mark_coding_stream):
+	* file-coding.c (coding_category_symbol_to_id):
+	* file-coding.c (struct gzip_coding_system):
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h:
+	* file-coding.h (struct Lisp_Coding_System):
+	* file-coding.h (CODING_SYSTEM_SLOT_DECLARATION):
+	* file-coding.h (coding_system_variant):
+	* file-coding.h (struct coding_system_methods):
+	* file-coding.h (DEFINE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA):
+	* file-coding.h (struct coding_stream):
+	* fileio.c (Fsubstitute_in_file_name):
+	* floatfns.c:
+	* fns.c:
+	* fns.c (base64_encode_1):
+	* frame-gtk.c:
+	* frame-gtk.c (Fgtk_start_drag_internal):
+	* frame-impl.h (struct frame):
+	* frame-impl.h (MARKED_SLOT):
+	* frame-msw.c:
+	* frame-x.c:
+	* frame-x.c (Fcde_start_drag_internal):
+	* frame-x.c (Foffix_start_drag_internal):
+	* frame.c:
+	* frame.c (MARKED_SLOT):
+	* frame.c (allocate_frame_core):
+	* frame.c (delete_frame_internal):
+	* frame.c (Fmouse_position_as_motion_event):
+	* frameslots.h:
+	* frameslots.h (MARKED_SLOT_ARRAY):
+	* free-hook.c:
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-x.c:
+	* glyphs-x.c (convert_EImage_to_XImage):
+	* glyphs.c:
+	* glyphs.c (process_image_string_instantiator):
+	* glyphs.c (mark_image_instance):
+	* glyphs.c (allocate_image_instance):
+	* glyphs.c (unmap_subwindow):
+	* glyphs.c (map_subwindow):
+	* glyphs.c (syms_of_glyphs):
+	* glyphs.c (specifier_type_create_image):
+	* glyphs.h:
+	* glyphs.h (struct text_image_instance):
+	* glyphs.h (struct Lisp_Image_Instance):
+	* gmalloc.c:
+	* gmalloc.c ("C"):
+	* gpmevent.c (Freceive_gpm_event):
+	* gpmevent.c (gpm_next_event_cb):
+	* gpmevent.c (vars_of_gpmevent):
+	* gtk-glue.c (gdk_event_to_emacs_event):
+	* gtk-xemacs.c (gtk_xemacs_class_init):
+	* gui-msw.c:
+	* gui-msw.c (mswindows_handle_gui_wm_command):
+	* gui-msw.c (mswindows_translate_menu_or_dialog_item):
+	* gui-x.c:
+	* gui-x.c (mark_popup_data):
+	* gui-x.c (snarf_widget_value_mapper):
+	* gui-x.c (gcpro_popup_callbacks):
+	* gui-x.c (ungcpro_popup_callbacks):
+	* gui-x.c (free_popup_widget_value_tree):
+	* gui-x.c (popup_selection_callback):
+	* gui-x.h:
+	* gui-x.h (struct popup_data):
+	* gui.c:
+	* gui.c (allocate_gui_item):
+	* gutter.c (decode_gutter_position):
+	* hash.c (NULL_ENTRY):
+	* indent.c (vmotion_1):
+	* indent.c (vmotion_pixels):
+	* input-method-motif.c (res):
+	* input-method-xlib.c (IMInstantiateCallback):
+	* input-method-xlib.c (XIM_init_device):
+	* input-method-xlib.c (res):
+	* intl-encap-win32.c:
+	* intl-encap-win32.c (qxeSHGetDataFromIDList):
+	* intl-win32.c:
+	* intl-win32.c (mswindows_multibyte_cp_type):
+	* intl-win32.c (struct mswindows_multibyte_coding_system):
+	* keymap.c:
+	* keymap.c (make_key_description):
+	* keymap.c (keymap_store):
+	* keymap.c (get_keyelt):
+	* keymap.c (keymap_lookup_1):
+	* keymap.c (define_key_parser):
+	* keymap.c (key_desc_list_to_event):
+	* keymap.c (event_matches_key_specifier_p):
+	* keymap.c (meta_prefix_char_p):
+	* keymap.c (ensure_meta_prefix_char_keymapp):
+	* keymap.c (Fdefine_key):
+	* keymap.c (struct raw_lookup_key_mapper_closure):
+	* keymap.c (raw_lookup_key):
+	* keymap.c (raw_lookup_key_mapper):
+	* keymap.c (lookup_keys):
+	* keymap.c (lookup_events):
+	* keymap.c (Flookup_key):
+	* keymap.c (struct map_keymap_unsorted_closure):
+	* keymap.c (map_keymap_unsorted_mapper):
+	* keymap.c (map_keymap_sorted):
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (map_keymap):
+	* keymap.c (accessible_keymaps_mapper_1):
+	* keymap.c (Faccessible_keymaps):
+	* keymap.c (Fsingle_key_description):
+	* keymap.c (raw_keys_to_keys):
+	* keymap.c (format_raw_keys):
+	* keymap.c (where_is_recursive_mapper):
+	* keymap.c (where_is_internal):
+	* keymap.c (describe_map_mapper_shadow_search):
+	* keymap.c (keymap_lookup_inherited_mapper):
+	* keymap.c (describe_map_mapper):
+	* keymap.h (event_matches_key_specifier_p):
+	* lisp.h:
+	* lisp.h (this):
+	* lisp.h (RETURN_NOT_REACHED):
+	* lisp.h (struct Lisp_Vector):
+	* lisp.h (struct Lisp_Bit_Vector):
+	* lisp.h (UNGCPRO_1):
+	* lisp.h (NUNGCPRO):
+	* lisp.h (NNUNGCPRO):
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_header):
+	* lrecord.h (struct lcrecord_header):
+	* lrecord.h (lrecord_type):
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (RECORD_DUMPABLE):
+	* lrecord.h (memory_description_type):
+	* lrecord.h (data_description_entry_flags):
+	* lrecord.h (struct memory_description):
+	* lrecord.h (struct sized_memory_description):
+	* lrecord.h (XD_INDIRECT):
+	* lrecord.h (XD_IS_INDIRECT):
+	* lrecord.h (XD_DYNARR_DESC):
+	* lrecord.h (DEFINE_BASIC_LRECORD_IMPLEMENTATION):
+	* lrecord.h (MAKE_LRECORD_IMPLEMENTATION):
+	* lrecord.h (MAKE_EXTERNAL_LRECORD_IMPLEMENTATION):
+	* lrecord.h (alloc_lcrecord_type):
+	* lstream.c:
+	* lstream.c (Lstream_new):
+	* lstream.c (lisp_buffer_marker):
+	* lstream.h:
+	* lstream.h (lstream_implementation):
+	* lstream.h (DEFINE_LSTREAM_IMPLEMENTATION):
+	* lstream.h (DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA):
+	* marker.c:
+	* marker.c (copy_marker_1):
+	* mem-limits.h:
+	* menubar-gtk.c:
+	* menubar-gtk.c (gtk_popup_menu):
+	* menubar-msw.c:
+	* menubar-msw.c (mswindows_popup_menu):
+	* menubar-x.c (make_dummy_xbutton_event):
+	* menubar-x.c (command_builder_operate_menu_accelerator):
+	* menubar-x.c (menu_accelerator_safe_compare):
+	* menubar-x.c (menu_accelerator_safe_mod_compare):
+	* mule-charset.c:
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fcharset_property):
+	* mule-coding.c:
+	* mule-coding.c (ccs_description_1):
+	* mule-coding.c (ccs_description =):
+	* mule-coding.c (ccsd_description_1):
+	* mule-coding.c (ccsd_description =):
+	* nt.c (getpwnam):
+	* nt.c (init_mswindows_environment):
+	* nt.c (get_cached_volume_information):
+	* nt.c (mswindows_is_executable):
+	* nt.c (read_unc_volume):
+	* nt.c (mswindows_access):
+	* nt.c (mswindows_link):
+	* nt.c (mswindows_fstat):
+	* nt.c (mswindows_stat):
+	* nt.c (mswindows_executable_type):
+	* nt.c (Fmswindows_short_file_name):
+	* nt.c (Fmswindows_long_file_name):
+	* objects-impl.h (struct Lisp_Color_Instance):
+	* objects-impl.h (struct Lisp_Font_Instance):
+	* objects-tty.c:
+	* objects-x.c (allocate_nearest_color):
+	* objects.c:
+	* objects.c (Fmake_color_instance):
+	* objects.c (Fmake_font_instance):
+	* objects.c (font_instantiate):
+	* opaque.c:
+	* opaque.c (make_opaque):
+	* opaque.c (make_opaque_ptr):
+	* opaque.c (reinit_opaque_early):
+	* opaque.c (init_opaque_once_early):
+	* print.c:
+	* print.c (printing_badness):
+	* print.c (printing_major_badness):
+	* print.c (print_internal):
+	* print.c (debug_p4):
+	* print.c (dp):
+	* print.c (debug_backtrace):
+	* process-nt.c (nt_create_process):
+	* process-nt.c (get_internet_address):
+	* process-unix.c:
+	* process-unix.c (struct unix_process_data):
+	* process-unix.c (get_internet_address):
+	* process-unix.c (unix_alloc_process_data):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (try_to_initialize_subtty):
+	* process-unix.c (unix_kill_child_process):
+	* process-unix.c (process_type_create_unix):
+	* process.c:
+	* process.c (mark_process):
+	* process.c (MARKED_SLOT):
+	* process.c (make_process_internal):
+	* process.c (Fprocess_tty_name):
+	* process.c (decode_signal):
+	* process.h:
+	* procimpl.h:
+	* procimpl.h (struct process_methods):
+	* procimpl.h (struct Lisp_Process):
+	* rangetab.c:
+	* realpath.c (readlink_and_correct_case):
+	* redisplay-x.c (x_window_output_end):
+	* redisplay-x.c (x_redraw_exposed_area):
+	* redisplay-x.c (x_clear_frame):
+	* redisplay.c:
+	* redisplay.h:
+	* redisplay.h (struct rune_dglyph):
+	* redisplay.h (struct rune):
+	* scrollbar.c:
+	* scrollbar.c (create_scrollbar_instance):
+	* specifier.c:
+	* specifier.c (specifier_empty_extra_description_1):
+	* specifier.c (make_specifier_internal):
+	* specifier.c (decode_locale_type):
+	* specifier.c (decode_how_to_add_specification):
+	* specifier.h:
+	* specifier.h (struct specifier_methods):
+	* specifier.h (DEFINE_SPECIFIER_TYPE_WITH_DATA):
+	* specifier.h (INITIALIZE_SPECIFIER_TYPE_WITH_DATA):
+	* symbols.c:
+	* symbols.c (Fsetplist):
+	* symbols.c (default_value):
+	* symbols.c (decode_magic_handler_type):
+	* symbols.c (handler_type_from_function_symbol):
+	* symbols.c (Fdefvaralias):
+	* symbols.c (init_symbols_once_early):
+	* symbols.c (reinit_symbols_early):
+	* symsinit.h:
+	* sysdep.c (sys_subshell):
+	* sysdep.c (tty_init_sys_modes_on_device):
+	* syswindows.h:
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* text.c (reinit_eistring_early):
+	* text.c (init_eistring_once_early):
+	* text.c (reinit_vars_of_text):
+	* text.h:
+	* text.h (INC_IBYTEPTR_FMT):
+	* text.h (DEC_IBYTEPTR_FMT):
+	* toolbar.c:
+	* toolbar.c (decode_toolbar_position):
+	* tooltalk.c:
+	* ui-gtk.c:
+	* unexnt.c:
+	* unexnt.c (_start):
+	* unexnt.c (unexec):
+	* unexnt.c (get_section_info):
+	* unicode.c:
+	* unicode.c (vars_of_unicode):
+	* window.c:
+	* window.c (allocate_window):
+	* window.c (new_window_mirror):
+	* window.c (update_mirror_internal):
+	* winslots.h:
+
 2003-01-08  Andy Piper  <andy@xemacs.org>
 
 	* unexcw.c (copy_executable_and_dump_data_section): Set the stack

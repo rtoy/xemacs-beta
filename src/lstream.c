@@ -114,18 +114,47 @@ sizeof_lstream (const void *header)
   return aligned_sizeof_lstream (((const Lstream *) header)->imp->size);
 }
 
-#ifdef USE_KKCC
+static const struct memory_description lstream_implementation_description_1[]
+= {
+  { XD_END }
+};
+
+const struct sized_memory_description lstream_implementation_description = {
+  sizeof (struct lstream_implementation),
+  lstream_implementation_description_1
+};
+
+static const struct sized_memory_description lstream_extra_description_map[] =
+{
+  { offsetof (Lstream, imp) },
+  { offsetof (struct lstream_implementation, extra_description) },
+  { -1 },
+};
+
+static const struct memory_description lstream_description[] =
+{
+  { XD_STRUCT_PTR, offsetof (Lstream, imp), 1,
+    &lstream_implementation_description },
+  { XD_STRUCT_ARRAY, offsetof (Lstream, data), 1,
+    lstream_extra_description_map },
+  { XD_END }
+};
+
+static const struct memory_description lstream_empty_extra_description_1[] =
+{
+  { XD_END }
+};
+
+const struct sized_memory_description lstream_empty_extra_description = {
+  0, lstream_empty_extra_description_1
+};
+
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
 					0, /*dumpable-flag*/
 					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0, 0,
+					finalize_lstream, 0, 0,
+					lstream_description,
 					sizeof_lstream, Lstream);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
-					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0, 0,
-					sizeof_lstream, Lstream);
-#endif /* not USE_KKCC */
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the
@@ -182,7 +211,7 @@ Lstream_new (const Lstream_implementation *imp, const char *mode)
       lstream_type_count++;
     }
 
-  p = XLSTREAM (allocate_managed_lcrecord (Vlstream_free_list[i]));
+  p = XLSTREAM (alloc_managed_lcrecord (Vlstream_free_list[i]));
   /* Zero it out, except the header. */
   memset ((char *) p + sizeof (p->header), '\0',
 	  aligned_sizeof_lstream (imp->size) - sizeof (p->header));
@@ -1299,7 +1328,12 @@ struct lisp_string_stream
   Bytecount offset, end;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("lisp-string", lisp_string);
+static const struct memory_description lisp_string_lstream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct lisp_string_stream, obj) },
+  { XD_END }
+};
+
+DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("lisp-string", lisp_string);
 
 Lisp_Object
 make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
@@ -1590,7 +1624,15 @@ struct lisp_buffer_stream
   int flags;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("lisp-buffer", lisp_buffer);
+static const struct memory_description lisp_buffer_lstream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct lisp_buffer_stream, buffer) },
+  { XD_LISP_OBJECT, offsetof (struct lisp_buffer_stream, orig_start) },
+  { XD_LISP_OBJECT, offsetof (struct lisp_buffer_stream, start) },
+  { XD_LISP_OBJECT, offsetof (struct lisp_buffer_stream, end) },
+  { XD_END }
+};
+
+DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("lisp-buffer", lisp_buffer);
 
 static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
@@ -1752,6 +1794,7 @@ lisp_buffer_marker (Lisp_Object stream)
   struct lisp_buffer_stream *str =
     LISP_BUFFER_STREAM_DATA (XLSTREAM (stream));
 
+  mark_object (str->orig_start);
   mark_object (str->start);
   mark_object (str->end);
   return str->buffer;

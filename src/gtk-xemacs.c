@@ -65,11 +65,11 @@ gtk_xemacs_get_type (void)
 static GtkWidgetClass *parent_class;
 
 static void
-gtk_xemacs_class_init (GtkXEmacsClass *class)
+gtk_xemacs_class_init (GtkXEmacsClass *class_)
 {
   GtkWidgetClass *widget_class;
 
-  widget_class = (GtkWidgetClass*) class;
+  widget_class = (GtkWidgetClass*) class_;
   parent_class = (GtkWidgetClass *) gtk_type_class (gtk_fixed_get_type ());
 
   widget_class->size_allocate = gtk_xemacs_size_allocate;

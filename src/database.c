@@ -142,12 +142,10 @@ allocate_database (void)
   return db;
 }
 
-#ifdef USE_KKCC
-static const struct lrecord_description database_description[] = {
+static const struct memory_description database_description[] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Database, fname) },
   { XD_END}
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_database (Lisp_Object object)
@@ -189,19 +187,12 @@ finalize_database (void *header, int for_disksave)
   db->funcs->close (db);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("database", database,
 			       0, /*dumpable-flag*/
                                mark_database, print_database,
 			       finalize_database, 0, 0, 
 			       database_description,
 			       Lisp_Database);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("database", database,
-                               mark_database, print_database,
-			       finalize_database, 0, 0, 0,
-			       Lisp_Database);
-#endif /* not USE_KKCC */
 
 DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
 Close database DATABASE.

@@ -361,22 +361,22 @@ typedef struct
 
 static coding_system_type_entry_dynarr *the_coding_system_type_entry_dynarr;
 
-static const struct lrecord_description cste_description_1[] = {
+static const struct memory_description cste_description_1[] = {
   { XD_STRUCT_PTR,  offsetof (coding_system_type_entry, meths), 1, &coding_system_methods_description },
   { XD_END }
 };
 
-static const struct struct_description cste_description = {
+static const struct sized_memory_description cste_description = {
   sizeof (coding_system_type_entry),
   cste_description_1
 };
 
-static const struct lrecord_description csted_description_1[] = {
+static const struct memory_description csted_description_1[] = {
   XD_DYNARR_DESC (coding_system_type_entry_dynarr, &cste_description),
   { XD_END }
 };
 
-static const struct struct_description csted_description = {
+static const struct sized_memory_description csted_description = {
   sizeof (coding_system_type_entry_dynarr),
   csted_description_1
 };
@@ -398,32 +398,32 @@ int coding_detector_category_count;
 
 detector_dynarr *all_coding_detectors;
 
-static const struct lrecord_description struct_detector_category_description_1[]
+static const struct memory_description struct_detector_category_description_1[]
 =
 {
   { XD_LISP_OBJECT, offsetof (struct detector_category, sym) },
   { XD_END }
 };
 
-static const struct struct_description struct_detector_category_description =
+static const struct sized_memory_description struct_detector_category_description =
 {
   sizeof (struct detector_category),
   struct_detector_category_description_1
 };
 
-static const struct lrecord_description detector_category_dynarr_description_1[] =
+static const struct memory_description detector_category_dynarr_description_1[] =
 {
   XD_DYNARR_DESC (detector_category_dynarr,
 		  &struct_detector_category_description),
   { XD_END }
 };
 
-static const struct struct_description detector_category_dynarr_description = {
+static const struct sized_memory_description detector_category_dynarr_description = {
   sizeof (detector_category_dynarr),
   detector_category_dynarr_description_1
 };
 
-static const struct lrecord_description struct_detector_description_1[]
+static const struct memory_description struct_detector_description_1[]
 =
 {
   { XD_STRUCT_PTR, offsetof (struct detector, cats), 1,
@@ -431,19 +431,19 @@ static const struct lrecord_description struct_detector_description_1[]
   { XD_END }
 };
 
-static const struct struct_description struct_detector_description =
+static const struct sized_memory_description struct_detector_description =
 {
   sizeof (struct detector),
   struct_detector_description_1
 };
 
-static const struct lrecord_description detector_dynarr_description_1[] =
+static const struct memory_description detector_dynarr_description_1[] =
 {
   XD_DYNARR_DESC (detector_dynarr, &struct_detector_description),
   { XD_END }
 };
 
-static const struct struct_description detector_dynarr_description = {
+static const struct sized_memory_description detector_dynarr_description = {
   sizeof (detector_dynarr),
   detector_dynarr_description_1
 };
@@ -512,20 +512,12 @@ mark_coding_system (Lisp_Object obj)
 {
   Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
 
-  mark_object (CODING_SYSTEM_NAME (codesys));
-  mark_object (CODING_SYSTEM_DESCRIPTION (codesys));
-  mark_object (CODING_SYSTEM_MNEMONIC (codesys));
-  mark_object (CODING_SYSTEM_DOCUMENTATION (codesys));
-  mark_object (CODING_SYSTEM_EOL_LF (codesys));
-  mark_object (CODING_SYSTEM_EOL_CRLF (codesys));
-  mark_object (CODING_SYSTEM_EOL_CR (codesys));
-  mark_object (CODING_SYSTEM_SUBSIDIARY_PARENT (codesys));
-  mark_object (CODING_SYSTEM_CANONICAL (codesys));
+#define MARKED_SLOT(x) mark_object (codesys->x);
+#include "coding-system-slots.h"
 
   MAYBE_CODESYSMETH (codesys, mark, (obj));
 
-  mark_object (CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys));
-  return CODING_SYSTEM_POST_READ_CONVERSION (codesys);
+  return Qnil;
 }
 
 static void
@@ -583,7 +575,7 @@ sizeof_coding_system (const void *header)
   return offsetof (Lisp_Coding_System, data) + p->methods->extra_data_size;
 }
 
-static const struct lrecord_description coding_system_methods_description_1[]
+static const struct memory_description coding_system_methods_description_1[]
 = {
   { XD_LISP_OBJECT,
     offsetof (struct coding_system_methods, type) },
@@ -592,36 +584,40 @@ static const struct lrecord_description coding_system_methods_description_1[]
   { XD_END }
 };
 
-const struct struct_description coding_system_methods_description = {
+const struct sized_memory_description coding_system_methods_description = {
   sizeof (struct coding_system_methods),
   coding_system_methods_description_1
 };
 
-const struct lrecord_description coding_system_empty_extra_description[] = {
-  { XD_END }
+static const struct sized_memory_description coding_system_extra_description_map[] =
+{
+  { offsetof (Lisp_Coding_System, methods) },
+  { offsetof (struct coding_system_methods, extra_description) },
+  { -1 },
 };
 
-static const struct lrecord_description coding_system_description[] =
+static const struct memory_description coding_system_description[] =
 {
   { XD_STRUCT_PTR,  offsetof (Lisp_Coding_System, methods), 1,
     &coding_system_methods_description },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, name) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, description) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, mnemonic) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, documentation) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, post_read_conversion) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, pre_write_conversion) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, text_file_wrapper) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, auto_eol_wrapper) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, eol[0]) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, eol[1]) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, eol[2]) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, subsidiary_parent) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, canonical) },
-  { XD_CODING_SYSTEM_END }
+#define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (Lisp_Coding_System, x) },
+#define MARKED_SLOT_ARRAY(slot, size) \
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Coding_System, slot), size },
+#include "coding-system-slots.h"
+  { XD_STRUCT_ARRAY, offsetof (Lisp_Coding_System, data), 1,
+    coding_system_extra_description_map },
+  { XD_END }
 };
 
-#ifdef USE_KKCC
+static const struct memory_description coding_system_empty_extra_description_1[] =
+{
+  { XD_END }
+};
+
+const struct sized_memory_description coding_system_empty_extra_description = {
+  0, coding_system_empty_extra_description_1
+};
+
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					1, /*dumpable-flag*/
 					mark_coding_system,
@@ -630,15 +626,6 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					0, 0, coding_system_description,
 					sizeof_coding_system,
 					Lisp_Coding_System);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
-					mark_coding_system,
-					print_coding_system,
-					finalize_coding_system,
-					0, 0, coding_system_description,
-					sizeof_coding_system,
-					Lisp_Coding_System);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       Creating coding systems                        */
@@ -962,22 +949,14 @@ allocate_coding_system (struct coding_system_methods *codesys_meths,
 {
   Bytecount total_size = offsetof (Lisp_Coding_System, data) + data_size;
   Lisp_Coding_System *codesys =
-    (Lisp_Coding_System *) alloc_lcrecord (total_size, &lrecord_coding_system);
+    (Lisp_Coding_System *) basic_alloc_lcrecord (total_size,
+						 &lrecord_coding_system);
 
-  zero_sized_lcrecord (codesys, total_size);
   codesys->methods = codesys_meths;
-  CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys) = Qnil;
-  CODING_SYSTEM_POST_READ_CONVERSION (codesys) = Qnil;
+#define MARKED_SLOT(x) codesys->x = Qnil;
+#include "coding-system-slots.h"
+
   CODING_SYSTEM_EOL_TYPE (codesys) = EOL_LF;
-  CODING_SYSTEM_EOL_CRLF (codesys) = Qnil;
-  CODING_SYSTEM_EOL_CR   (codesys) = Qnil;
-  CODING_SYSTEM_EOL_LF   (codesys) = Qnil;
-  CODING_SYSTEM_SUBSIDIARY_PARENT (codesys) = Qnil;
-  CODING_SYSTEM_CANONICAL (codesys) = Qnil;
-  CODING_SYSTEM_MNEMONIC (codesys) = Qnil;
-  CODING_SYSTEM_DOCUMENTATION (codesys) = Qnil;
-  CODING_SYSTEM_TEXT_FILE_WRAPPER (codesys) = Qnil;
-  CODING_SYSTEM_AUTO_EOL_WRAPPER (codesys) = Qnil;
   CODING_SYSTEM_NAME     (codesys) = name;
 
   MAYBE_CODESYSMETH (codesys, init, (wrap_coding_system (codesys)));
@@ -995,7 +974,7 @@ symbol_to_eol_type (Lisp_Object symbol)
   if (EQ (symbol, Qcr))   return EOL_CR;
 
   invalid_constant ("Unrecognized eol type", symbol);
-  RETURN_NOT_REACHED (EOL_AUTODETECT)
+  RETURN_NOT_REACHED (EOL_AUTODETECT);
 }
 
 static Lisp_Object
@@ -1708,7 +1687,7 @@ Return the coding-system symbol for which symbol ALIAS is an alias.
     return aliasee;
   else
     invalid_argument ("Symbol is not a coding system alias", alias);
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /* A maphash function, for removing dangling coding system aliases. */
@@ -1989,7 +1968,30 @@ Return the PROP property of CODING-SYSTEM.
    that is at the other end, and data that needs to be persistent across
    the lifetime of the stream. */
 
-DEFINE_LSTREAM_IMPLEMENTATION ("coding", coding);
+extern const struct sized_memory_description chain_coding_stream_description;
+extern const struct sized_memory_description undecided_coding_stream_description;
+
+static const struct memory_description coding_stream_data_description_1 []= {
+  { XD_STRUCT_PTR, chain_coding_system, 1, &chain_coding_stream_description},
+  { XD_STRUCT_PTR, undecided_coding_system, 1, &undecided_coding_stream_description},
+  { XD_END }
+};
+
+static const struct sized_memory_description coding_stream_data_description = {
+  sizeof (void *), coding_stream_data_description_1
+};
+
+static const struct memory_description coding_lstream_description[] = {
+  { XD_INT, offsetof (struct coding_stream, type) },
+  { XD_LISP_OBJECT, offsetof (struct coding_stream, orig_codesys) },
+  { XD_LISP_OBJECT, offsetof (struct coding_stream, codesys) },
+  { XD_LISP_OBJECT, offsetof (struct coding_stream, other_end) },
+  { XD_UNION, offsetof (struct coding_stream, data), 
+    XD_INDIRECT (0, 0), &coding_stream_data_description },
+  { XD_END }
+};
+
+DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("coding", coding);
 
 /* Encoding and decoding are parallel operations, so we create just one
    stream for both. "Decoding" may involve the extra step of autodetection
@@ -2309,9 +2311,12 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
       str->data = 0;
     }
   if (XCODING_SYSTEM_METHODS (str->codesys)->coding_data_size)
-    str->data =
-      xmalloc_and_zero (XCODING_SYSTEM_METHODS (str->codesys)->
-			coding_data_size);
+    {
+      str->data =
+	xmalloc_and_zero (XCODING_SYSTEM_METHODS (str->codesys)->
+			  coding_data_size);
+      str->type = XCODING_SYSTEM_METHODS (str->codesys)->enumtype;
+    }
   MAYBE_XCODESYSMETH (str->codesys, init_coding_stream, (str));
   /* The new coding system may have different ideas regarding whether its
      ends are characters or bytes. */
@@ -2538,7 +2543,6 @@ text.  BUFFER defaults to the current buffer if unspecified.
 
 /* Chain two or more coding systems together to make a combination coding
    system. */
-DEFINE_CODING_SYSTEM_TYPE (chain);
 
 struct chain_coding_system
 {
@@ -2558,29 +2562,27 @@ struct chain_coding_stream
   int lstream_count;
 };
 
-static const struct lrecord_description lo_description_1[] = {
-  { XD_LISP_OBJECT, 0 },
+static const struct memory_description chain_coding_system_description[] = {
+  { XD_INT, offsetof (struct chain_coding_system, count) },
+  { XD_STRUCT_PTR, offsetof (struct chain_coding_system, chain),
+    XD_INDIRECT (0, 0), &lisp_object_description },
+  { XD_LISP_OBJECT, offsetof (struct chain_coding_system,
+			      canonicalize_after_coding) },
   { XD_END }
 };
 
-static const struct struct_description lo_description = {
-  sizeof (Lisp_Object),
-  lo_description_1
-};
-
-static const struct lrecord_description chain_coding_system_description[] = {
-  { XD_INT,
-      coding_system_data_offset + offsetof (struct chain_coding_system, 
-					    count) },
-  { XD_STRUCT_PTR,
-      coding_system_data_offset + offsetof (struct chain_coding_system,
-					    chain),
-    XD_INDIRECT (0, 0), &lo_description },
-  { XD_LISP_OBJECT,
-      coding_system_data_offset + offsetof (struct chain_coding_system,
-					    canonicalize_after_coding) },
+static const struct memory_description chain_coding_stream_description_1 [] = {
+  { XD_INT, offsetof (struct chain_coding_stream, lstream_count) },
+  { XD_STRUCT_PTR, offsetof (struct chain_coding_stream, lstreams),
+    XD_INDIRECT (0, 0), &lisp_object_description },
   { XD_END }
 };
+
+const struct sized_memory_description chain_coding_stream_description = {
+  sizeof (struct chain_coding_stream), chain_coding_stream_description_1
+};
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (chain);
 
 static Lisp_Object
 chain_canonicalize (Lisp_Object codesys)
@@ -3024,8 +3026,6 @@ for example).
 There is one parameter: `subtype', either `cr', `lf', `crlf', or nil.
 */
 
-DEFINE_CODING_SYSTEM_TYPE (convert_eol);
-
 struct convert_eol_coding_system
 {
   enum eol_type subtype;
@@ -3041,10 +3041,12 @@ struct convert_eol_coding_stream
   enum eol_type actual;
 };
 
-static const struct lrecord_description
+static const struct memory_description
   convert_eol_coding_system_description[] = {
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (convert_eol);
 
 static void
 convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
@@ -3283,8 +3285,6 @@ convert_eol_canonicalize_after_coding (struct coding_stream *str)
    EOL-processed twice.
    */
 
-DEFINE_CODING_SYSTEM_TYPE (undecided);
-
 struct undecided_coding_system
 {
   int do_eol, do_coding;
@@ -3300,13 +3300,23 @@ struct undecided_coding_stream
   struct detection_state *st;
 };
 
-static const struct lrecord_description
-  undecided_coding_system_description[] = {
-  { XD_LISP_OBJECT,
-    coding_system_data_offset + offsetof (struct undecided_coding_system,
-					  cs) },
+static const struct memory_description undecided_coding_system_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct undecided_coding_system, cs) },
   { XD_END }
 };
+
+static const struct memory_description undecided_coding_stream_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct undecided_coding_stream, actual) },
+  { XD_STRUCT_ARRAY, offsetof (struct undecided_coding_stream, c),
+    1, &chain_coding_stream_description },
+  { XD_END }
+};
+
+const struct sized_memory_description undecided_coding_stream_description = {
+  sizeof (struct undecided_coding_stream), undecided_coding_stream_description_1
+};
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (undecided);
 
 static void
 undecided_init (Lisp_Object codesys)
@@ -3359,6 +3369,7 @@ undecided_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 static void
 undecided_mark_coding_stream (struct coding_stream *str)
 {
+  mark_object (CODING_STREAM_TYPE_DATA (str, undecided)->actual);
   chain_mark_coding_stream_1 (&CODING_STREAM_TYPE_DATA (str, undecided)->c);
 }
 
@@ -3449,7 +3460,7 @@ coding_category_symbol_to_id (Lisp_Object symbol)
     }
   
   invalid_constant ("Unrecognized coding category", symbol);
-  RETURN_NOT_REACHED (0)
+  RETURN_NOT_REACHED (0);
 }
 
 static Lisp_Object
@@ -4271,8 +4282,6 @@ internal_convert (struct coding_stream *str, const UExtbyte *src,
 /*                             Gzip methods                             */
 /************************************************************************/
 
-DEFINE_CODING_SYSTEM_TYPE (gzip);
-
 struct gzip_coding_system
 {
   int level; /* 0 through 9, or -1 for default */
@@ -4291,10 +4300,12 @@ struct gzip_coding_stream
 		      return LSTREAM_EOF */
 };
 
-static const struct lrecord_description
+static const struct memory_description
   gzip_coding_system_description[] = {
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (gzip);
 
 enum source_sink_type
 gzip_conversion_end_type (Lisp_Object codesys)
@@ -4640,7 +4651,7 @@ coding_system_type_create (void)
   for (i = 0; i < MAX_DETECTOR_CATEGORIES; i++)
     {
       coding_category_system[i] = Qnil;
-      dump_add_root_object (&coding_category_system[i]);
+      dump_add_root_lisp_object (&coding_category_system[i]);
       coding_category_by_priority[i] = i;
     }
 

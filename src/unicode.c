@@ -173,108 +173,92 @@ static short **from_unicode_blank_2;
 static short ***from_unicode_blank_3;
 static short ****from_unicode_blank_4;
 
-#if 0
-
-static const struct lrecord_description to_unicode_level_0_desc[] = {
+static const struct memory_description to_unicode_level_0_desc_1[] = {
   { XD_END }
 };
 
-static const struct struct_description to_unicode_level_0_ptr_desc = {
-  sizeof (int), to_unicode_level_0_desc
+static const struct sized_memory_description to_unicode_level_0_desc = {
+  sizeof (int), to_unicode_level_0_desc_1
 };
 
-static const struct lrecord_description to_unicode_level_1_desc[] = {
-  { XD_STRUCT_PTR, 0, 96, &to_unicode_level_0_ptr_desc },
+static const struct memory_description to_unicode_level_1_desc_1[] = {
+  { XD_STRUCT_PTR, 0, 96, &to_unicode_level_0_desc },
   { XD_END }
 };
 
-static const struct struct_description to_unicode_level_1_ptr_desc = {
-  0, to_unicode_level_1_desc
+static const struct sized_memory_description to_unicode_level_1_desc = {
+  sizeof (void *), to_unicode_level_1_desc_1
 };
 
-static const struct lrecord_description to_unicode_level_2_desc[] = {
-  { XD_STRUCT_PTR, 0, 96, &to_unicode_level_1_ptr_desc },
-  { XD_END }
-};
-
-/* Not static because each charset has a set of to and from tables and
-   needs to describe them to pdump. */
-const struct struct_description to_unicode_description[] = {
-  { 1, to_unicode_level_1_desc },
-  { 2, to_unicode_level_2_desc },
-  { XD_END }
-};
-
-static const struct lrecord_description from_unicode_level_0_desc[] = {
-  { XD_END }
-};
-
-static const struct struct_description from_unicode_level_0_ptr_desc = {
-   sizeof (short), from_unicode_level_0_desc
-};
-
-static const struct lrecord_description from_unicode_level_1_desc[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_0_ptr_desc },
-  { XD_END }
-};
-
-static const struct struct_description from_unicode_level_1_ptr_desc = {
-  0, from_unicode_level_1_desc
-};
-
-static const struct lrecord_description from_unicode_level_2_desc[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_1_ptr_desc },
-  { XD_END }
-};
-
-static const struct struct_description from_unicode_level_2_ptr_desc = {
-  0, from_unicode_level_2_desc
-};
-
-static const struct lrecord_description from_unicode_level_3_desc[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_2_ptr_desc },
-  { XD_END }
-};
-
-static const struct struct_description from_unicode_level_3_ptr_desc = {
-  0, from_unicode_level_3_desc
-};
-
-static const struct lrecord_description from_unicode_level_4_desc[] = {
-  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_3_ptr_desc },
+static const struct memory_description to_unicode_description_1[] = {
+  { XD_STRUCT_PTR, 1, 96, &to_unicode_level_0_desc },
+  { XD_STRUCT_PTR, 2, 96, &to_unicode_level_1_desc },
   { XD_END }
 };
 
 /* Not static because each charset has a set of to and from tables and
    needs to describe them to pdump. */
-const struct struct_description from_unicode_description[] = {
-  { 1, from_unicode_level_1_desc },
-  { 2, from_unicode_level_2_desc },
-  { 3, from_unicode_level_3_desc },
-  { 4, from_unicode_level_4_desc },
+const struct sized_memory_description to_unicode_description = {
+  sizeof (void *), to_unicode_description_1
+};
+
+static const struct memory_description from_unicode_level_0_desc_1[] = {
   { XD_END }
 };
 
-#endif /* 0 */
+static const struct sized_memory_description from_unicode_level_0_desc = {
+   sizeof (short), from_unicode_level_0_desc_1
+};
+
+static const struct memory_description from_unicode_level_1_desc_1[] = {
+  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_0_desc },
+  { XD_END }
+};
+
+static const struct sized_memory_description from_unicode_level_1_desc = {
+  sizeof (void *), from_unicode_level_1_desc_1
+};
+
+static const struct memory_description from_unicode_level_2_desc_1[] = {
+  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_1_desc },
+  { XD_END }
+};
+
+static const struct sized_memory_description from_unicode_level_2_desc = {
+  sizeof (void *), from_unicode_level_2_desc_1
+};
+
+static const struct memory_description from_unicode_level_3_desc_1[] = {
+  { XD_STRUCT_PTR, 0, 256, &from_unicode_level_2_desc },
+  { XD_END }
+};
+
+static const struct sized_memory_description from_unicode_level_3_desc = {
+  sizeof (void *), from_unicode_level_3_desc_1
+};
+
+static const struct memory_description from_unicode_description_1[] = {
+  { XD_STRUCT_PTR, 1, 256, &from_unicode_level_0_desc },
+  { XD_STRUCT_PTR, 2, 256, &from_unicode_level_1_desc },
+  { XD_STRUCT_PTR, 3, 256, &from_unicode_level_2_desc },
+  { XD_STRUCT_PTR, 4, 256, &from_unicode_level_3_desc },
+  { XD_END }
+};
+
+/* Not static because each charset has a set of to and from tables and
+   needs to describe them to pdump. */
+const struct sized_memory_description from_unicode_description = {
+  sizeof (void *), from_unicode_description_1
+};
 
 static Lisp_Object_dynarr *unicode_precedence_dynarr;
 
-static const struct lrecord_description lo_description_1[] = {
-  { XD_LISP_OBJECT, 0 },
+static const struct memory_description lod_description_1[] = {
+  XD_DYNARR_DESC (Lisp_Object_dynarr, &lisp_object_description),
   { XD_END }
 };
 
-static const struct struct_description lo_description = {
-  sizeof (Lisp_Object),
-  lo_description_1
-};
-
-static const struct lrecord_description lod_description_1[] = {
-  XD_DYNARR_DESC (Lisp_Object_dynarr, &lo_description),
-  { XD_END }
-};
-
-static const struct struct_description lisp_object_dynarr_description = {
+static const struct sized_memory_description lisp_object_dynarr_description = {
   sizeof (Lisp_Object_dynarr),
   lod_description_1
 };
@@ -1463,7 +1447,6 @@ Unicode tables or in the charset:
 /************************************************************************/
 
 /* ISO 10646 UTF-16, UCS-4, UTF-8, UTF-7, etc. */
-DEFINE_CODING_SYSTEM_TYPE (unicode);
 
 enum unicode_type
 {
@@ -1504,9 +1487,11 @@ struct unicode_coding_stream
   int wrote_bom;
 };
 
-static const struct lrecord_description unicode_coding_system_description[] = {
+static const struct memory_description unicode_coding_system_description[] = {
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (unicode);
 
 /* Decode a UCS-2 or UCS-4 character into a buffer.  If the lookup fails, use
    <GETA MARK> (U+3013) of JIS X 0208, which means correct character
@@ -2351,15 +2336,5 @@ vars_of_unicode (void)
   unicode_precedence_dynarr = Dynarr_new (Lisp_Object);
   dump_add_root_struct_ptr (&unicode_precedence_dynarr,
 			    &lisp_object_dynarr_description);
-#if 0
-  dump_add_root_thing (&to_unicode_blank_1, to_unicode_level_1_desc);
-  dump_add_root_thing (&to_unicode_blank_2, to_unicode_level_2_desc);
-
-  dump_add_root_thing (&from_unicode_blank_1, from_unicode_level_1_desc);
-  dump_add_root_thing (&from_unicode_blank_2, from_unicode_level_2_desc);
-  dump_add_root_thing (&from_unicode_blank_3, from_unicode_level_3_desc);
-  dump_add_root_thing (&from_unicode_blank_4, from_unicode_level_4_desc);
-#endif
-
 #endif /* MULE */
 }

@@ -102,6 +102,18 @@ static XrmOptionDescRec emacs_options[] =
   {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
 };
 
+static const struct memory_description x_device_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct x_device, x_keysym_map_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct x_device, WM_COMMAND_frame) },
+  { XD_END }
+};
+
+extern const struct sized_memory_description x_device_data_description;
+
+const struct sized_memory_description x_device_data_description = {
+  sizeof (struct x_device), x_device_data_description_1
+};
+
 /* Functions to synchronize mirroring resources and specifiers */
 int in_resource_setting;
 
@@ -244,7 +256,7 @@ x_init_device_class (struct device *d)
 {
   if (DEVICE_X_DEPTH(d) > 2)
     {
-      switch (DEVICE_X_VISUAL(d)->class)
+      switch (DEVICE_X_VISUAL(d)->X_CLASSFIELD)
 	{
 	case StaticGray:
 	case GrayScale:
@@ -372,9 +384,9 @@ x_comp_visual_info (const void *elem1, const void *elem2)
     {
       if ( left->colormap_size > right->colormap_size )
 	return 1;
-      if ( left->class > right->class )
+      if ( left->X_CLASSFIELD > right->X_CLASSFIELD )
 	return 1;
-      else if ( left->class < right->class )
+      else if ( left->X_CLASSFIELD < right->X_CLASSFIELD )
 	return -1;
       else
 	return 0;
@@ -393,7 +405,7 @@ x_try_best_visual_class (Screen *screen, int scrnum, int visual_class)
   XVisualInfo *vi_out = NULL;
   int out_count;
 
-  vi_in.class = visual_class;
+  vi_in.X_CLASSFIELD = visual_class;
   vi_in.screen = scrnum;
   vi_out = XGetVisualInfo (dpy, (VisualClassMask | VisualScreenMask),
 			   &vi_in, &out_count);
@@ -744,7 +756,7 @@ x_init_device (struct device *d, Lisp_Object props)
       {
 	sprintf (buf1, "%s.privateColormap", app_name);
 	sprintf (buf2, "%s.PrivateColormap", app_class);
-	if ((visual->class == PseudoColor) &&
+	if ((visual->X_CLASSFIELD == PseudoColor) &&
 	    (XrmGetResource (XtDatabase (dpy), buf1, buf2, &type, &value)
 	     == True))
 	  cmap = XCopyColormapAndFree (dpy, DefaultColormap (dpy, screen));
@@ -1223,7 +1235,7 @@ or starting the program with the `-sync' command line argument.
 
 static void
 construct_name_list (Display *display, Widget widget, char *fake_name,
-		     char *fake_class, char *name, char *class)
+		     char *fake_class, char *name, char *class_)
 {
   char *stack [100][2];
   Widget this;
@@ -1260,10 +1272,10 @@ construct_name_list (Display *display, Widget widget, char *fake_name,
 				&stack [count][1]);
 
   name [0] = 0;
-  class [0] = 0;
+  class_ [0] = 0;
 
   name_tail  = name;
-  class_tail = class;
+  class_tail = class_;
   for (; count >= 0; count--)
     {
       strcat (name_tail,  stack [count][0]);
@@ -1292,7 +1304,7 @@ fetch the resource on. */
 static void
 x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
 		       Display **display_out, Extbyte_dynarr *name,
-		       Extbyte_dynarr *class)
+		       Extbyte_dynarr *class_)
 {
   if (NILP (locale))
     locale = Qglobal;
@@ -1333,9 +1345,9 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
     name_len  = strlen (appname);
     class_len = strlen (appclass);
     Dynarr_add_many (name,  appname,  name_len);
-    Dynarr_add_many (class, appclass, class_len);
+    Dynarr_add_many (class_, appclass, class_len);
     validify_resource_component (Dynarr_atp (name,  0), name_len);
-    validify_resource_component (Dynarr_atp (class, 0), class_len);
+    validify_resource_component (Dynarr_atp (class_, 0), class_len);
   }
 
   if (EQ (locale, Qglobal))
@@ -1345,14 +1357,14 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
       Dynarr_add_literal_string (name, ".buffer.");
       /* we know buffer is live; otherwise we got an error above. */
       Dynarr_add_validified_lisp_string (name, Fbuffer_name (locale));
-      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsBuffer");
+      Dynarr_add_literal_string (class_, ".EmacsLocaleType.EmacsBuffer");
     }
   else if (FRAMEP (locale))
     {
       Dynarr_add_literal_string (name, ".frame.");
       /* we know frame is live; otherwise we got an error above. */
       Dynarr_add_validified_lisp_string (name, Fframe_name (locale));
-      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsFrame");
+      Dynarr_add_literal_string (class_, ".EmacsLocaleType.EmacsFrame");
     }
   else
     {
@@ -1360,7 +1372,7 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
       Dynarr_add_literal_string (name, ".device.");
       /* we know device is live; otherwise we got an error above. */
       Dynarr_add_validified_lisp_string (name, Fdevice_name (locale));
-      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsDevice");
+      Dynarr_add_literal_string (class_, ".EmacsLocaleType.EmacsDevice");
     }
   return;
 }
@@ -1447,7 +1459,7 @@ found.  If the third arg is `string', a string is returned, and if it is
 returned value is the list (t) for true, (nil) for false, and is nil to
 mean ``unspecified''.
 */
-       (name, class, type, locale, device, noerror))
+       (name, class_, type, locale, device, noerror))
 {
   Extbyte *name_string, *class_string;
   Extbyte *raw_result;
@@ -1457,7 +1469,7 @@ mean ``unspecified''.
   Lisp_Object codesys;
 
   CHECK_STRING (name);
-  CHECK_STRING (class);
+  CHECK_STRING (class_);
   CHECK_SYMBOL (type);
 
   Dynarr_reset (name_Extbyte_dynarr);
@@ -1473,7 +1485,7 @@ mean ``unspecified''.
   Dynarr_add (name_Extbyte_dynarr, '.');
   Dynarr_add_lisp_string (name_Extbyte_dynarr, name, Qbinary);
   Dynarr_add (class_Extbyte_dynarr, '.');
-  Dynarr_add_lisp_string (class_Extbyte_dynarr, class, Qbinary);
+  Dynarr_add_lisp_string (class_Extbyte_dynarr, class_, Qbinary);
   Dynarr_add (name_Extbyte_dynarr,  '\0');
   Dynarr_add (class_Extbyte_dynarr, '\0');
 
@@ -1500,7 +1512,7 @@ mean ``unspecified''.
       {
 	maybe_signal_error_2
 	  (Qstructure_formation_error,
-	   "class list and name list must be the same length", name, class,
+	   "class list and name list must be the same length", name, class_,
 	   Qresource, errb);
 	return Qnil;
       }
@@ -1641,7 +1653,7 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
        (device))
 {
   Visual *vis = DEVICE_X_VISUAL (decode_x_device (device));
-  switch (vis->class)
+  switch (vis->X_CLASSFIELD)
     {
     case StaticGray:  return intern ("static-gray");
     case GrayScale:   return intern ("gray-scale");

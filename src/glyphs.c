@@ -406,7 +406,7 @@ process_image_string_instantiator (Lisp_Object data,
   invalid_argument ("Unable to interpret glyph instantiator",
 		       data);
 
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 Lisp_Object
@@ -834,6 +834,77 @@ instantiate_image_instantiator (Lisp_Object governing_domain,
 
 Lisp_Object Qimage_instancep;
 
+/* %%#### KKCC: Don't yet handle the equivalent of setting the device field
+   of image instances w/dead devices to nil. */
+
+static const struct memory_description text_image_instance_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct text_image_instance, string) },
+  { XD_END }
+};
+
+static const struct sized_memory_description text_image_instance_description = {
+  sizeof (struct text_image_instance), text_image_instance_description_1
+};
+
+static const struct memory_description pixmap_image_instance_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, hotspot_x) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, hotspot_x) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, filename) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, mask_filename) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, fg) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, bg) },
+  { XD_LISP_OBJECT, offsetof (struct pixmap_image_instance, auxdata) },
+  { XD_END }
+};
+
+static const struct sized_memory_description pixmap_image_instance_description = {
+  sizeof (struct pixmap_image_instance), pixmap_image_instance_description_1
+};
+
+static const struct memory_description subwindow_image_instance_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, face) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, type) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, props) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, items) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, pending_items) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, children) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, width) },
+  { XD_LISP_OBJECT, offsetof (struct subwindow_image_instance, height) },
+  { XD_END }
+};
+
+static const struct sized_memory_description subwindow_image_instance_description = {
+  sizeof (struct subwindow_image_instance), subwindow_image_instance_description_1
+};
+
+static const struct memory_description image_instance_data_description_1 [] = {
+  { XD_STRUCT_ARRAY, IMAGE_TEXT,
+    1, &text_image_instance_description },
+  { XD_STRUCT_ARRAY, IMAGE_MONO_PIXMAP,
+    1, &pixmap_image_instance_description },
+  { XD_STRUCT_ARRAY, IMAGE_COLOR_PIXMAP,
+    1, &pixmap_image_instance_description },
+  { XD_STRUCT_ARRAY, IMAGE_WIDGET,
+    1, &subwindow_image_instance_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description image_instance_data_description = {
+  0, image_instance_data_description_1
+};
+
+static const struct memory_description image_instance_description[] = {
+  { XD_INT, offsetof (struct Lisp_Image_Instance, type) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, domain) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, device) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, name) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, parent) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Image_Instance, instantiator) },
+  { XD_UNION, offsetof (struct Lisp_Image_Instance, u), 
+    XD_INDIRECT (0, 0), &image_instance_data_description },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_image_instance (Lisp_Object obj)
 {
@@ -849,7 +920,7 @@ mark_image_instance (Lisp_Object obj)
 
   mark_object (i->name);
   mark_object (i->instantiator);
-  /* Is this legal in marking? We may get in the situation where the
+  /* #### Is this legal in marking? We may get in the situation where the
      domain has been deleted - making the instance unusable. It seems
      better to remove the domain so that it can be finalized. */
   if (!DOMAIN_LIVE_P (i->domain))
@@ -1229,20 +1300,13 @@ image_instance_hash (Lisp_Object obj, int depth)
 		 0));
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
 			       0, /*dumpable-flag*/
 			       mark_image_instance, print_image_instance,
 			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash, 0,
+			       image_instance_hash,
+			       image_instance_description,
 			       Lisp_Image_Instance);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
-			       mark_image_instance, print_image_instance,
-			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash, 0,
-			       Lisp_Image_Instance);
-#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
@@ -1252,7 +1316,6 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
     alloc_lcrecord_type (Lisp_Image_Instance, &lrecord_image_instance);
   Lisp_Object val;
 
-  zero_lcrecord (lp);
   /* It's not possible to simply keep a record of the domain in which
      the instance was instantiated. This is because caching may mean
      that the domain becomes invalid but the instance remains
@@ -1267,16 +1330,12 @@ allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
   lp->device = DOMAIN_DEVICE (governing_domain);
   lp->type = IMAGE_NOTHING;
   lp->name = Qnil;
-  lp->x_offset = 0;
-  lp->y_offset = 0;
   lp->width = IMAGE_UNSPECIFIED_GEOMETRY;
-  lp->margin_width = 0;
   lp->height = IMAGE_UNSPECIFIED_GEOMETRY;
   lp->parent = parent;
   lp->instantiator = instantiator;
   /* So that layouts get done. */
   lp->layout_changed = 1;
-  lp->initialized = 0;
 
   val = wrap_image_instance (lp);
   MARK_GLYPHS_CHANGED;
@@ -3056,7 +3115,13 @@ xpm_possible_dest_types (void)
  *                         Image Specifier Object                           *
  ****************************************************************************/
 
-DEFINE_SPECIFIER_TYPE (image);
+static const struct memory_description image_specifier_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct image_specifier, attachee) },
+  { XD_LISP_OBJECT, offsetof (struct image_specifier, attachee_property) },
+  { XD_END }
+};
+
+DEFINE_SPECIFIER_TYPE_WITH_DATA (image);
 
 static void
 image_create (Lisp_Object obj)
@@ -3683,7 +3748,7 @@ glyph_plist (Lisp_Object obj)
   return result;
 }
 
-static const struct lrecord_description glyph_description[] = {
+static const struct memory_description glyph_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Glyph, image) },
   { XD_LISP_OBJECT, offsetof (Lisp_Glyph, contrib_p) },
   { XD_LISP_OBJECT, offsetof (Lisp_Glyph, baseline) },
@@ -3692,22 +3757,14 @@ static const struct lrecord_description glyph_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC 
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
 					  1, /*dumpable-flag*/
 					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash, glyph_description,
+					  glyph_equal, glyph_hash,
+					  glyph_description,
 					  glyph_getprop, glyph_putprop,
 					  glyph_remprop, glyph_plist,
 					  Lisp_Glyph);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
-					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash, glyph_description,
-					  glyph_getprop, glyph_putprop,
-					  glyph_remprop, glyph_plist,
-					  Lisp_Glyph);
-#endif /* not USE_KKCC */
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -4674,10 +4731,9 @@ unmap_subwindow (Lisp_Object subwindow)
 
   ERROR_CHECK_IMAGE_INSTANCE (subwindow);
 
-  if (!image_instance_type_to_mask (IMAGE_INSTANCE_TYPE (ii))
-      & (IMAGE_WIDGET_MASK | IMAGE_SUBWINDOW_MASK)
-      ||
-      !IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (ii))
+  if (!(image_instance_type_to_mask (IMAGE_INSTANCE_TYPE (ii))
+	& (IMAGE_WIDGET_MASK | IMAGE_SUBWINDOW_MASK))
+      || !IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (ii))
     return;
 
 #ifdef DEBUG_WIDGETS
@@ -4706,8 +4762,8 @@ map_subwindow (Lisp_Object subwindow, int x, int y,
 
   ERROR_CHECK_IMAGE_INSTANCE (subwindow);
 
-  if (!image_instance_type_to_mask (IMAGE_INSTANCE_TYPE (ii))
-      & (IMAGE_WIDGET_MASK | IMAGE_SUBWINDOW_MASK))
+  if (!(image_instance_type_to_mask (IMAGE_INSTANCE_TYPE (ii))
+	& (IMAGE_WIDGET_MASK | IMAGE_SUBWINDOW_MASK)))
     return;
 
 #ifdef DEBUG_WIDGETS
@@ -5119,7 +5175,7 @@ syms_of_glyphs (void)
   /* Qbuffer defined in general.c. */
   /* Qpointer defined above */
 
-  /* Unfortunately, timeout handlers must be lisp functions. This is
+  /* Unfortunately, timeout handlers must be lisp functions.  This is
      for animated glyphs. */
   DEFSYMBOL (Qglyph_animated_timeout_handler);
   DEFSUBR (Fglyph_animated_timeout_handler);
@@ -5127,12 +5183,6 @@ syms_of_glyphs (void)
   /* Errors */
   DEFERROR_STANDARD (Qimage_conversion_error, Qconversion_error);
 }
-
-static const struct lrecord_description image_specifier_description[] = {
-  { XD_LISP_OBJECT, specifier_data_offset + offsetof (struct image_specifier, attachee) },
-  { XD_LISP_OBJECT, specifier_data_offset + offsetof (struct image_specifier, attachee_property) },
-  { XD_END }
-};
 
 void
 specifier_type_create_image (void)
@@ -5157,49 +5207,49 @@ reinit_specifier_type_create_image (void)
 }
 
 
-static const struct lrecord_description iike_description_1[] = {
+static const struct memory_description iike_description_1[] = {
   { XD_LISP_OBJECT, offsetof (ii_keyword_entry, keyword) },
   { XD_END }
 };
 
-static const struct struct_description iike_description = {
+static const struct sized_memory_description iike_description = {
   sizeof (ii_keyword_entry),
   iike_description_1
 };
 
-static const struct lrecord_description iiked_description_1[] = {
+static const struct memory_description iiked_description_1[] = {
   XD_DYNARR_DESC (ii_keyword_entry_dynarr, &iike_description),
   { XD_END }
 };
 
-static const struct struct_description iiked_description = {
+static const struct sized_memory_description iiked_description = {
   sizeof (ii_keyword_entry_dynarr),
   iiked_description_1
 };
 
-static const struct lrecord_description iife_description_1[] = {
+static const struct memory_description iife_description_1[] = {
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, symbol) },
   { XD_LISP_OBJECT, offsetof (image_instantiator_format_entry, device) },
   { XD_STRUCT_PTR,  offsetof (image_instantiator_format_entry, meths),  1, &iim_description },
   { XD_END }
 };
 
-static const struct struct_description iife_description = {
+static const struct sized_memory_description iife_description = {
   sizeof (image_instantiator_format_entry),
   iife_description_1
 };
 
-static const struct lrecord_description iifed_description_1[] = {
+static const struct memory_description iifed_description_1[] = {
   XD_DYNARR_DESC (image_instantiator_format_entry_dynarr, &iife_description),
   { XD_END }
 };
 
-static const struct struct_description iifed_description = {
+static const struct sized_memory_description iifed_description = {
   sizeof (image_instantiator_format_entry_dynarr),
   iifed_description_1
 };
 
-static const struct lrecord_description iim_description_1[] = {
+static const struct memory_description iim_description_1[] = {
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, symbol) },
   { XD_LISP_OBJECT, offsetof (struct image_instantiator_methods, device) },
   { XD_STRUCT_PTR,  offsetof (struct image_instantiator_methods, keywords), 1, &iiked_description },
@@ -5207,7 +5257,7 @@ static const struct lrecord_description iim_description_1[] = {
   { XD_END }
 };
 
-const struct struct_description iim_description = {
+const struct sized_memory_description iim_description = {
   sizeof (struct image_instantiator_methods),
   iim_description_1
 };

@@ -152,13 +152,11 @@ struct Lisp_Tooltalk_Message
   Tt_message m;
 };
 
-#ifdef USE_KKCC
-static const struct lrecord_description tooltalk_message_description [] = {
+static const struct memory_description tooltalk_message_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Tooltalk_Message, callback) },
   { XD_LISP_OBJECT, offsetof (struct Lisp_Tooltalk_Message, plist_sym) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_tooltalk_message (Lisp_Object obj)
@@ -181,19 +179,12 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 		    (long) (p->m), p->header.uid);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
 			       0, /*dumpable-flag*/
                                mark_tooltalk_message, print_tooltalk_message,
                                0, 0, 0, 
 			       tooltalk_message_description,
 			       Lisp_Tooltalk_Message);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
-                               mark_tooltalk_message, print_tooltalk_message,
-                               0, 0, 0, 0,
-			       Lisp_Tooltalk_Message);
-#endif /* not USE_KKCC */
 
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
@@ -239,13 +230,11 @@ struct Lisp_Tooltalk_Pattern
   Tt_pattern p;
 };
 
-#ifdef USE_KKCC
-static const struct lrecord_description tooltalk_pattern_description [] = {
+static const struct memory_description tooltalk_pattern_description [] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Tooltalk_Pattern, callback) },
   { XD_LISP_OBJECT, offsetof (struct Lisp_Tooltalk_Pattern, plist_sym) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_tooltalk_pattern (Lisp_Object obj)
@@ -268,19 +257,12 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 		    (long) (p->p), p->header.uid);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
 			       0, /*dumpable-flag*/
                                mark_tooltalk_pattern, print_tooltalk_pattern,
                                0, 0, 0, 
 			       tooltalk_pattern_description,
 			       Lisp_Tooltalk_Pattern);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
-                               mark_tooltalk_pattern, print_tooltalk_pattern,
-                               0, 0, 0, 0,
-			       Lisp_Tooltalk_Pattern);
-#endif /* not USE_KKCC */
 
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)

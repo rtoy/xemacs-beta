@@ -1,5 +1,6 @@
 /* mswindows GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1998 Andy Piper.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -64,21 +65,12 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
     {
       event = Fmake_event (Qnil, Qnil);
 
-#ifdef USE_KKCC
       XSET_EVENT_TYPE (event, misc_user_event);
       XSET_EVENT_CHANNEL (event, frame);
       XSET_EVENT_TIMESTAMP (event, GetTickCount());
-      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qeval);
-      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event),
+      XSET_EVENT_MISC_USER_FUNCTION (event, Qeval);
+      XSET_EVENT_MISC_USER_OBJECT (event,
 			     list4 (Qfuncall, callback_ex, image_instance, event));
-#else /* not USE_KKCC */
-      XEVENT (event)->event_type = misc_user_event;
-      XEVENT (event)->channel = frame;
-      XEVENT (event)->timestamp = GetTickCount ();
-      XEVENT (event)->event.eval.function = Qeval;
-      XEVENT (event)->event.eval.object =
-	list4 (Qfuncall, callback_ex, image_instance, event);
-#endif /* not USE_KKCC */
     }
   else if (NILP (callback) || UNBOUNDP (callback))
     return Qnil;
@@ -89,19 +81,11 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
       event = Fmake_event (Qnil, Qnil);
 
       get_gui_callback (callback, &fn, &arg);
-#ifdef USE_KKCC
       XSET_EVENT_TYPE (event, misc_user_event);
       XSET_EVENT_CHANNEL (event, frame);
       XSET_EVENT_TIMESTAMP (event, GetTickCount());
-      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), fn);
-      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), arg);
-#else /* not USE_KKCC */
-      XEVENT (event)->event_type = misc_user_event;
-      XEVENT (event)->channel = frame;
-      XEVENT (event)->timestamp = GetTickCount ();
-      XEVENT (event)->event.eval.function = fn;
-      XEVENT (event)->event.eval.object = arg;
-#endif /* not USE_KKCC */
+      XSET_EVENT_MISC_USER_FUNCTION (event, fn);
+      XSET_EVENT_MISC_USER_OBJECT (event, arg);
     }
 
   mswindows_enqueue_dispatch_event (event);
@@ -109,6 +93,85 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
      enqueue an update callback to check this. */
   enqueue_magic_eval_event (update_widget_instances, frame);
   return Qt;
+}
+
+/*
+ * Translate X accelerator syntax to win32 accelerator syntax.
+ * accel = (Ichar*) to receive the accelerator character
+ *         or NULL to suppress accelerators in the menu or dialog item.
+ *
+ * %% is replaced with %
+ * if accel is NULL:
+ *   %_ is removed.
+ * if accel is non-NULL:
+ *   %_ is replaced with &.
+ *   The accelerator character is passed back in *accel.
+ *   (If there is no accelerator, it will be added on the first character.)
+ *
+ */
+
+Lisp_Object
+mswindows_translate_menu_or_dialog_item (Lisp_Object item, Ichar *accel)
+{
+  Bytecount len = XSTRING_LENGTH (item);
+  Ibyte *it = (Ibyte *) ALLOCA (2 * len + 42), *ptr = it;
+
+  memcpy (ptr, XSTRING_DATA (item), len + 1);
+  if (accel)
+    *accel = '\0';
+
+  /* Escape '&' as '&&' */
+  
+  while ((ptr = (Ibyte *) memchr (ptr, '&', len - (ptr - it))) != NULL)
+    {
+      memmove (ptr + 1, ptr, (len - (ptr - it)) + 1);
+      len++;
+      ptr += 2;
+    }
+
+  /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
+     and `%%' with `%'. */
+  ptr = it;
+  while ((ptr = (Ibyte *) memchr (ptr, '%', len - (ptr - it))) != NULL)
+    {
+      if (*(ptr + 1) == '_')
+	{
+	  if (accel)
+	    {
+	      *ptr = '&';
+	      if (!*accel)
+		*accel = DOWNCASE (0, itext_ichar (ptr + 2));
+	      memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
+	      len--;
+	    }
+	  else	/* Skip accelerator */
+	    {
+	      memmove (ptr, ptr + 2, len - (ptr - it + 2) + 1);
+	      len -= 2;
+	    }
+	}
+      else if (*(ptr + 1) == '%')
+	{
+	  memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
+	  len--;
+	  ptr++;
+	}
+      else	/* % on its own - shouldn't happen */
+	ptr++;
+    }
+
+  if (accel && !*accel)
+    {
+      /* Force a default accelerator */
+      ptr = it;
+      memmove (ptr + 1, ptr, len + 1);
+      *accel = DOWNCASE (0, itext_ichar (ptr + 1));
+      *ptr = '&';
+
+      len++;
+    }
+
+  return make_string (it, len);
 }
 
 void

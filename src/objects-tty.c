@@ -37,6 +37,24 @@ Lisp_Object Vtty_dynamic_color_fg;
 Lisp_Object Vtty_dynamic_color_bg;
 #endif
 
+static const struct memory_description tty_color_instance_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_color_instance_data, symbol) },
+  { XD_END }
+};
+
+const struct sized_memory_description tty_color_instance_data_description = {
+  sizeof (struct tty_color_instance_data), tty_color_instance_data_description_1
+};
+
+static const struct memory_description tty_font_instance_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_font_instance_data, charset) },
+  { XD_END }
+};
+
+const struct sized_memory_description tty_font_instance_data_description = {
+  sizeof (struct tty_font_instance_data), tty_font_instance_data_description_1
+};
+
 DEFUN ("register-tty-color", Fregister_tty_color, 3, 3, 0, /*
 Register COLOR as a recognized TTY color.
 COLOR should be a string.

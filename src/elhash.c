@@ -73,11 +73,11 @@ static Lisp_Object Q_size, Q_test, Q_weakness, Q_rehash_size, Q_rehash_threshold
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
 static Lisp_Object Qnon_weak, Q_type;
 
-typedef struct hentry
+typedef struct htentry
 {
   Lisp_Object key;
   Lisp_Object value;
-} hentry;
+} htentry;
 
 struct Lisp_Hash_Table
 {
@@ -90,16 +90,16 @@ struct Lisp_Hash_Table
   Elemcount golden_ratio;
   hash_table_hash_function_t hash_function;
   hash_table_test_function_t test_function;
-  hentry *hentries;
+  htentry *hentries;
   enum hash_table_weakness weakness;
   Lisp_Object next_weak;     /* Used to chain together all of the weak
 			        hash tables.  Don't mark through this. */
 };
 
-#define HENTRY_CLEAR_P(hentry) ((*(EMACS_UINT*)(&((hentry)->key))) == 0)
-#define CLEAR_HENTRY(hentry)   \
-  ((*(EMACS_UINT*)(&((hentry)->key)))   = 0, \
-   (*(EMACS_UINT*)(&((hentry)->value))) = 0)
+#define HTENTRY_CLEAR_P(htentry) ((*(EMACS_UINT*)(&((htentry)->key))) == 0)
+#define CLEAR_HTENTRY(htentry)   \
+  ((*(EMACS_UINT*)(&((htentry)->key)))   = 0, \
+   (*(EMACS_UINT*)(&((htentry)->value))) = 0)
 
 #define HASH_TABLE_DEFAULT_SIZE 16
 #define HASH_TABLE_DEFAULT_REHASH_SIZE 1.3
@@ -115,9 +115,9 @@ struct Lisp_Hash_Table
 
 #define LINEAR_PROBING_LOOP(probe, entries, size)		\
   for (;							\
-       !HENTRY_CLEAR_P (probe) ||				\
+       !HTENTRY_CLEAR_P (probe) ||				\
 	 (probe == entries + size ?				\
-	  (probe = entries, !HENTRY_CLEAR_P (probe)) : 0);	\
+	  (probe = entries, !HTENTRY_CLEAR_P (probe)) : 0);	\
        probe++)
 
 #ifdef ERROR_CHECK_STRUCTURES
@@ -128,7 +128,7 @@ check_hash_table_invariants (Lisp_Hash_Table *ht)
   assert (ht->count <= ht->rehash_count);
   assert (ht->rehash_count < ht->size);
   assert ((double) ht->count * ht->rehash_threshold - 1 <= (double) ht->rehash_count);
-  assert (HENTRY_CLEAR_P (ht->hentries + ht->size));
+  assert (HTENTRY_CLEAR_P (ht->hentries + ht->size));
 }
 #else
 #define check_hash_table_invariants(ht)
@@ -223,10 +223,10 @@ mark_hash_table (Lisp_Object obj)
      and mark or remove them as necessary).  */
   if (ht->weakness == HASH_TABLE_NON_WEAK)
     {
-      hentry *e, *sentinel;
+      htentry *e, *sentinel;
 
       for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-	if (!HENTRY_CLEAR_P (e))
+	if (!HTENTRY_CLEAR_P (e))
 	  {
 	    mark_object (e->key);
 	    mark_object (e->value);
@@ -250,7 +250,7 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
 {
   Lisp_Hash_Table *ht1 = XHASH_TABLE (hash_table1);
   Lisp_Hash_Table *ht2 = XHASH_TABLE (hash_table2);
-  hentry *e, *sentinel;
+  htentry *e, *sentinel;
 
   if ((ht1->test_function != ht2->test_function) ||
       (ht1->weakness      != ht2->weakness)      ||
@@ -260,7 +260,7 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
   depth++;
 
   for (e = ht1->hentries, sentinel = e + ht1->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       /* Look up the key in the other hash table, and compare the values. */
       {
 	Lisp_Object value_in_other = Fgethash (e->key, hash_table2, Qunbound);
@@ -312,12 +312,12 @@ static void
 print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 {
   int count = 0;
-  hentry *e, *sentinel;
+  htentry *e, *sentinel;
 
   write_c_string (printcharfun, " data (");
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       {
 	if (count > 0)
 	  write_c_string (printcharfun, " ");
@@ -386,14 +386,14 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
-free_hentries (hentry *hentries, size_t size)
+free_hentries (htentry *hentries, size_t size)
 {
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */
-  hentry *e, *sentinel;
+  htentry *e, *sentinel;
 
   for (e = hentries, sentinel = e + size; e < sentinel; e++)
-    * (unsigned long *) e = 0xdeadbeef;
+    * (unsigned long *) e = 0xdeadbeef; /* -559038737 base 10 */
 #endif
 
   if (!DUMPEDP (hentries))
@@ -411,25 +411,41 @@ finalize_hash_table (void *header, int for_disksave)
     }
 }
 
-static const struct lrecord_description hentry_description_1[] = {
-  { XD_LISP_OBJECT, offsetof (hentry, key) },
-  { XD_LISP_OBJECT, offsetof (hentry, value) },
+static const struct memory_description htentry_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (htentry, key) },
+  { XD_LISP_OBJECT, offsetof (htentry, value) },
   { XD_END }
 };
 
-static const struct struct_description hentry_description = {
-  sizeof (hentry),
-  hentry_description_1
+static const struct sized_memory_description htentry_description = {
+  sizeof (htentry),
+  htentry_description_1
 };
 
-const struct lrecord_description hash_table_description[] = {
-  { XD_ELEMCOUNT,     offsetof (Lisp_Hash_Table, size) },
-  { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT(0, 1), &hentry_description },
+static const struct memory_description htentry_union_description_1[] = {
+  /* Note: XD_INDIRECT in this table refers to the surrounding table,
+     and so this will work. */
+  { XD_STRUCT_PTR, HASH_TABLE_NON_WEAK, XD_INDIRECT (0, 1),
+    &htentry_description },
+  { XD_STRUCT_PTR, 0, XD_INDIRECT (0, 1), &htentry_description,
+    XD_FLAG_UNION_DEFAULT_ENTRY | XD_FLAG_NO_KKCC },
+  { XD_END }
+};
+
+static const struct sized_memory_description htentry_union_description = {
+  sizeof (htentry *),
+  htentry_union_description_1
+};
+
+const struct memory_description hash_table_description[] = {
+  { XD_ELEMCOUNT,  offsetof (Lisp_Hash_Table, size) },
+  { XD_INT,	   offsetof (Lisp_Hash_Table, weakness) },
+  { XD_UNION,	   offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (1, 0),
+    &htentry_union_description },
   { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
 			       1, /*dumpable-flag*/
                                mark_hash_table, print_hash_table,
@@ -437,14 +453,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
 			       hash_table_equal, hash_table_hash,
 			       hash_table_description,
 			       Lisp_Hash_Table);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
-                               mark_hash_table, print_hash_table,
-			       finalize_hash_table,
-			       hash_table_equal, hash_table_hash,
-			       hash_table_description,
-			       Lisp_Hash_Table);
-#endif /* not USE_KKCC */
 
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)
@@ -537,8 +545,8 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 
   compute_hash_table_derived_values (ht);
 
-  /* We leave room for one never-occupied sentinel hentry at the end.  */
-  ht->hentries = xnew_array_and_zero (hentry, ht->size + 1);
+  /* We leave room for one never-occupied sentinel htentry at the end.  */
+  ht->hentries = xnew_array_and_zero (htentry, ht->size + 1);
 
   hash_table = wrap_hash_table (ht);
 
@@ -628,7 +636,7 @@ decode_hash_table_weakness (Lisp_Object obj)
   if (EQ (obj, Qvalue_weak))		return HASH_TABLE_VALUE_WEAK;
 
   invalid_constant ("Invalid hash table weakness", obj);
-  RETURN_NOT_REACHED (HASH_TABLE_NON_WEAK)
+  RETURN_NOT_REACHED (HASH_TABLE_NON_WEAK);
 }
 
 static int
@@ -654,7 +662,7 @@ decode_hash_table_test (Lisp_Object obj)
   if (EQ (obj, Qeql))	return HASH_TABLE_EQL;
 
   invalid_constant ("Invalid hash table test", obj);
-  RETURN_NOT_REACHED (HASH_TABLE_EQ)
+  RETURN_NOT_REACHED (HASH_TABLE_EQ);
 }
 
 static int
@@ -941,8 +949,8 @@ The keys and values will not themselves be copied.
 
   copy_lcrecord (ht, ht_old);
 
-  ht->hentries = xnew_array (hentry, ht_old->size + 1);
-  memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (hentry));
+  ht->hentries = xnew_array (htentry, ht_old->size + 1);
+  memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (htentry));
 
   hash_table = wrap_hash_table (ht);
 
@@ -958,7 +966,7 @@ The keys and values will not themselves be copied.
 static void
 resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
 {
-  hentry *old_entries, *new_entries, *sentinel, *e;
+  htentry *old_entries, *new_entries, *sentinel, *e;
   Elemcount old_size;
 
   old_size = ht->size;
@@ -966,15 +974,15 @@ resize_hash_table (Lisp_Hash_Table *ht, Elemcount new_size)
 
   old_entries = ht->hentries;
 
-  ht->hentries = xnew_array_and_zero (hentry, new_size + 1);
+  ht->hentries = xnew_array_and_zero (htentry, new_size + 1);
   new_entries = ht->hentries;
 
   compute_hash_table_derived_values (ht);
 
   for (e = old_entries, sentinel = e + old_size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       {
-	hentry *probe = new_entries + HASHCODE (e->key, ht);
+	htentry *probe = new_entries + HASHCODE (e->key, ht);
 	LINEAR_PROBING_LOOP (probe, new_entries, new_size)
 	  ;
 	*probe = *e;
@@ -990,19 +998,19 @@ void
 pdump_reorganize_hash_table (Lisp_Object hash_table)
 {
   const Lisp_Hash_Table *ht = xhash_table (hash_table);
-  hentry *new_entries = xnew_array_and_zero (hentry, ht->size + 1);
-  hentry *e, *sentinel;
+  htentry *new_entries = xnew_array_and_zero (htentry, ht->size + 1);
+  htentry *e, *sentinel;
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       {
-	hentry *probe = new_entries + HASHCODE (e->key, ht);
+	htentry *probe = new_entries + HASHCODE (e->key, ht);
 	LINEAR_PROBING_LOOP (probe, new_entries, ht->size)
 	  ;
 	*probe = *e;
       }
 
-  memcpy (ht->hentries, new_entries, ht->size * sizeof (hentry));
+  memcpy (ht->hentries, new_entries, ht->size * sizeof (htentry));
 
   xfree (new_entries);
 }
@@ -1015,12 +1023,12 @@ enlarge_hash_table (Lisp_Hash_Table *ht)
   resize_hash_table (ht, new_size);
 }
 
-static hentry *
-find_hentry (Lisp_Object key, const Lisp_Hash_Table *ht)
+static htentry *
+find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
 {
   hash_table_test_function_t test_function = ht->test_function;
-  hentry *entries = ht->hentries;
-  hentry *probe = entries + HASHCODE (key, ht);
+  htentry *entries = ht->hentries;
+  htentry *probe = entries + HASHCODE (key, ht);
 
   LINEAR_PROBING_LOOP (probe, entries, ht->size)
     if (KEYS_EQUAL_P (probe->key, key, test_function))
@@ -1036,9 +1044,9 @@ If there is no corresponding value, return DEFAULT (which defaults to nil).
        (key, hash_table, default_))
 {
   const Lisp_Hash_Table *ht = xhash_table (hash_table);
-  hentry *e = find_hentry (key, ht);
+  htentry *e = find_htentry (key, ht);
 
-  return HENTRY_CLEAR_P (e) ? default_ : e->value;
+  return HTENTRY_CLEAR_P (e) ? default_ : e->value;
 }
 
 DEFUN ("puthash", Fputhash, 3, 3, 0, /*
@@ -1047,9 +1055,9 @@ Hash KEY to VALUE in HASH-TABLE.
        (key, value, hash_table))
 {
   Lisp_Hash_Table *ht = xhash_table (hash_table);
-  hentry *e = find_hentry (key, ht);
+  htentry *e = find_htentry (key, ht);
 
-  if (!HENTRY_CLEAR_P (e))
+  if (!HTENTRY_CLEAR_P (e))
     return e->value = value;
 
   e->key   = key;
@@ -1061,28 +1069,28 @@ Hash KEY to VALUE in HASH-TABLE.
   return value;
 }
 
-/* Remove hentry pointed at by PROBE.
+/* Remove htentry pointed at by PROBE.
    Subsequent entries are removed and reinserted.
    We don't use tombstones - too wasteful.  */
 static void
-remhash_1 (Lisp_Hash_Table *ht, hentry *entries, hentry *probe)
+remhash_1 (Lisp_Hash_Table *ht, htentry *entries, htentry *probe)
 {
   Elemcount size = ht->size;
-  CLEAR_HENTRY (probe);
+  CLEAR_HTENTRY (probe);
   probe++;
   ht->count--;
 
   LINEAR_PROBING_LOOP (probe, entries, size)
     {
       Lisp_Object key = probe->key;
-      hentry *probe2 = entries + HASHCODE (key, ht);
+      htentry *probe2 = entries + HASHCODE (key, ht);
       LINEAR_PROBING_LOOP (probe2, entries, size)
 	if (EQ (probe2->key, key))
-	  /* hentry at probe doesn't need to move. */
+	  /* htentry at probe doesn't need to move. */
 	  goto continue_outer_loop;
-      /* Move hentry from probe to new home at probe2. */
+      /* Move htentry from probe to new home at probe2. */
       *probe2 = *probe;
-      CLEAR_HENTRY (probe);
+      CLEAR_HTENTRY (probe);
     continue_outer_loop: continue;
     }
 }
@@ -1095,9 +1103,9 @@ Return non-nil if an entry was removed.
        (key, hash_table))
 {
   Lisp_Hash_Table *ht = xhash_table (hash_table);
-  hentry *e = find_hentry (key, ht);
+  htentry *e = find_htentry (key, ht);
 
-  if (HENTRY_CLEAR_P (e))
+  if (HTENTRY_CLEAR_P (e))
     return Qnil;
 
   remhash_1 (ht, ht->hentries, e);
@@ -1110,10 +1118,10 @@ Remove all entries from HASH-TABLE, leaving it empty.
        (hash_table))
 {
   Lisp_Hash_Table *ht = xhash_table (hash_table);
-  hentry *e, *sentinel;
+  htentry *e, *sentinel;
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    CLEAR_HENTRY (e);
+    CLEAR_HTENTRY (e);
   ht->count = 0;
 
   return hash_table;
@@ -1280,11 +1288,11 @@ copy_compress_hentries (const Lisp_Hash_Table *ht)
   Lisp_Object * const objs =
     /* If the hash table is empty, ht->count could be 0. */
     xnew_array (Lisp_Object, 2 * (ht->count > 0 ? ht->count : 1));
-  const hentry *e, *sentinel;
+  const htentry *e, *sentinel;
   Lisp_Object *pobj;
 
   for (e = ht->hentries, sentinel = e + ht->size, pobj = objs; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       {
 	*(pobj++) = e->key;
 	*(pobj++) = e->value;
@@ -1339,10 +1347,10 @@ elisp_maphash_unsafe (maphash_function_t function,
 	       Lisp_Object hash_table, void *extra_arg)
 {
   const Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
-  const hentry *e, *sentinel;
+  const htentry *e, *sentinel;
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
-    if (!HENTRY_CLEAR_P (e))
+    if (!HTENTRY_CLEAR_P (e))
       if (function (e->key, e->value, extra_arg))
 	return;
 }
@@ -1422,8 +1430,8 @@ finish_marking_weak_hash_tables (void)
        hash_table = XHASH_TABLE (hash_table)->next_weak)
     {
       const Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
-      const hentry *e = ht->hentries;
-      const hentry *sentinel = e + ht->size;
+      const htentry *e = ht->hentries;
+      const htentry *sentinel = e + ht->size;
 
       if (! marked_p (hash_table))
 	/* The hash table is probably garbage.  Ignore it. */
@@ -1436,21 +1444,21 @@ finish_marking_weak_hash_tables (void)
 	{
 	case HASH_TABLE_KEY_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      if (marked_p (e->key))
 		MARK_OBJ (e->value);
 	  break;
 
 	case HASH_TABLE_VALUE_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      if (marked_p (e->value))
 		MARK_OBJ (e->key);
 	  break;
 
 	case HASH_TABLE_KEY_VALUE_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      {
 		if (marked_p (e->value))
 		  MARK_OBJ (e->key);
@@ -1461,7 +1469,7 @@ finish_marking_weak_hash_tables (void)
 
 	case HASH_TABLE_KEY_CAR_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      if (!CONSP (e->key) || marked_p (XCAR (e->key)))
 		{
 		  MARK_OBJ (e->key);
@@ -1475,7 +1483,7 @@ finish_marking_weak_hash_tables (void)
 	     glyph code. */
 	case HASH_TABLE_KEY_CAR_VALUE_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      {
 		if (!CONSP (e->key) || marked_p (XCAR (e->key)))
 		  {
@@ -1489,7 +1497,7 @@ finish_marking_weak_hash_tables (void)
 
 	case HASH_TABLE_VALUE_CAR_WEAK:
 	  for (; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      if (!CONSP (e->value) || marked_p (XCAR (e->value)))
 		{
 		  MARK_OBJ (e->key);
@@ -1527,18 +1535,18 @@ prune_weak_hash_tables (void)
 	     in which the key or value, or both, is unmarked
 	     (depending on the weakness of the hash table). */
 	  Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
-	  hentry *entries = ht->hentries;
-	  hentry *sentinel = entries + ht->size;
-	  hentry *e;
+	  htentry *entries = ht->hentries;
+	  htentry *sentinel = entries + ht->size;
+	  htentry *e;
 
 	  for (e = entries; e < sentinel; e++)
-	    if (!HENTRY_CLEAR_P (e))
+	    if (!HTENTRY_CLEAR_P (e))
 	      {
 	      again:
 		if (!marked_p (e->key) || !marked_p (e->value))
 		  {
 		    remhash_1 (ht, entries, e);
-		    if (!HENTRY_CLEAR_P (e))
+		    if (!HTENTRY_CLEAR_P (e))
 		      goto again;
 		  }
 	      }

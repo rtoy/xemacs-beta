@@ -63,53 +63,47 @@ xmalloc_widget_value (void)
 }
 
 
-static int
-mark_widget_value_mapper (widget_value *val, void *closure)
-{
-  Lisp_Object markee;
-  if (val->call_data)
-    {
-      markee = VOID_TO_LISP (val->call_data);
-      mark_object (markee);
-    }
-
-  if (val->accel)
-    {
-      markee = VOID_TO_LISP (val->accel);
-      mark_object (markee);
-    }
-  return 0;
-}
-
 static Lisp_Object
 mark_popup_data (Lisp_Object obj)
 {
   struct popup_data *data = (struct popup_data *) XPOPUP_DATA (obj);
 
-  /* Now mark the callbacks and such that are hidden in the lwlib
-     call-data */
-
-  if (data->id)
-    lw_map_widget_values (data->id, mark_widget_value_mapper, 0);
-
-  return data->last_menubar_buffer;
+  mark_object (data->last_menubar_buffer);
+  return data->protect_me;
 }
 
-#ifdef USE_KKCC
+static const struct memory_description popup_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct popup_data, last_menubar_buffer) },
+  { XD_LISP_OBJECT, offsetof (struct popup_data, protect_me) },
+  { XD_END }
+};
+
 DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
 			       0, /*dumpable-flag*/
                                mark_popup_data, internal_object_printer,
-			       0, 0, 0, 0, struct popup_data);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
-                               mark_popup_data, internal_object_printer,
-			       0, 0, 0, 0, struct popup_data);
-#endif /* not USE_KKCC */
+			       0, 0, 0,
+			       popup_data_description,
+			       struct popup_data);
 
 /* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
    (id . popup-data) for GCPRO'ing the callbacks of the popup menus
    and dialog boxes. */
 static Lisp_Object Vpopup_callbacks;
+
+static int
+snarf_widget_value_mapper (widget_value *val, void *closure)
+{
+  struct popup_data *pdata = (struct popup_data *) closure;
+
+  if (val->call_data)
+    pdata->protect_me = Fcons (VOID_TO_LISP (val->call_data),
+			      pdata->protect_me);
+  if (val->accel)
+    pdata->protect_me = Fcons (VOID_TO_LISP (val->accel),
+			      pdata->protect_me);
+
+  return 0;
+}
 
 void
 gcpro_popup_callbacks (LWLIB_ID id)
@@ -122,17 +116,30 @@ gcpro_popup_callbacks (LWLIB_ID id)
   pdata = alloc_lcrecord_type (struct popup_data, &lrecord_popup_data);
   pdata->id = id;
   pdata->last_menubar_buffer = Qnil;
+  pdata->protect_me = Qnil;
   pdata->menubar_contents_up_to_date = 0;
   lpdata = wrap_popup_data (pdata);
+
+  /* Now snarf the callbacks and such that are hidden in the lwlib
+     call-data and accel and stick them into the list for proper
+     marking. */
+
+  if (pdata->id)
+    lw_map_widget_values (pdata->id, snarf_widget_value_mapper, pdata);
+
   Vpopup_callbacks = Fcons (Fcons (lid, lpdata), Vpopup_callbacks);
 }
 
 void
 ungcpro_popup_callbacks (LWLIB_ID id)
 {
+  struct popup_data *pdata;
   Lisp_Object lid = make_int (id);
   Lisp_Object this = assq_no_quit (lid, Vpopup_callbacks);
   assert (!NILP (this));
+  pdata = XPOPUP_DATA (XCDR (this));
+  free_list (pdata->protect_me);
+  pdata->protect_me = Qnil;
   Vpopup_callbacks = delq_no_quit (this, Vpopup_callbacks);
 }
 
@@ -201,7 +208,7 @@ free_popup_widget_value_tree (widget_value *wv)
   if (wv->value) xfree (wv->value);
   if (wv->name) xfree (wv->name);
 
-  wv->name = wv->value = wv->key = (char *) 0xDEADBEEF;
+  wv->name = wv->value = wv->key = (char *) 0xDEADBEEF; /* -559038737 base 10*/
 
   if (wv->contents && (wv->contents != (widget_value*)1))
     {
@@ -257,17 +264,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
     {
       event = Fmake_event (Qnil, Qnil);
 
-#ifdef USE_KKCC
       XSET_EVENT_TYPE (event, misc_user_event);
       XSET_EVENT_CHANNEL (event, frame);
-      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qrun_hooks);
-      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), Qmenu_no_selection_hook);
-#else /* not USE_KKCC */
-      XEVENT (event)->event_type = misc_user_event;
-      XEVENT (event)->channel = frame;
-      XEVENT (event)->event.eval.function = Qrun_hooks;
-      XEVENT (event)->event.eval.object = Qmenu_no_selection_hook;
-#endif /* not USE_KKCC */
+      XSET_EVENT_MISC_USER_FUNCTION (event, Qrun_hooks);
+      XSET_EVENT_MISC_USER_OBJECT (event, Qmenu_no_selection_hook);
     }
   else
     {
@@ -285,18 +285,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 	{
 	  event = Fmake_event (Qnil, Qnil);
 
-#ifdef USE_KKCC
 	  XSET_EVENT_TYPE (event, misc_user_event);
 	  XSET_EVENT_CHANNEL (event, frame);
-	  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qeval);
-	  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), list4 (Qfuncall, callback_ex, image_instance, event));
-#else /* not USE_KKCC */
-	  XEVENT (event)->event_type = misc_user_event;
-	  XEVENT (event)->channel = frame;
-	  XEVENT (event)->event.eval.function = Qeval;
-	  XEVENT (event)->event.eval.object =
-	    list4 (Qfuncall, callback_ex, image_instance, event);
-#endif /* not USE_KKCC */
+	  XSET_EVENT_MISC_USER_FUNCTION (event, Qeval);
+	  XSET_EVENT_MISC_USER_OBJECT (event, list4 (Qfuncall, callback_ex, image_instance, event));
 	}
       else if (NILP (callback) || UNBOUNDP (callback))
 	event = Qnil;
@@ -307,17 +299,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 	  event = Fmake_event (Qnil, Qnil);
 
 	  get_gui_callback (callback, &fn, &arg);
-#ifdef USE_KKCC
 	  XSET_EVENT_TYPE (event, misc_user_event);
 	  XSET_EVENT_CHANNEL (event, frame);
-	  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), fn);
-	  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), arg);
-#else /* not USE_KKCC */
-	  XEVENT (event)->event_type = misc_user_event;
-	  XEVENT (event)->channel = frame;
-	  XEVENT (event)->event.eval.function = fn;
-	  XEVENT (event)->event.eval.object = arg;
-#endif /* not USE_KKCC */
+	  XSET_EVENT_MISC_USER_FUNCTION (event, fn);
+	  XSET_EVENT_MISC_USER_OBJECT (event, arg);
 	}
     }
 
@@ -330,7 +315,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   DEVICE_X_MOUSE_TIMESTAMP (d) = DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d);
 #endif
   if (!NILP (event))
-    enqueue_Xt_dispatch_event (event);
+    enqueue_dispatch_event (event);
   /* The result of this evaluation could cause other instances to change so
      enqueue an update callback to check this. */
   if (update_subwindows_p && !NILP (event))

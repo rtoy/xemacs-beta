@@ -1695,8 +1695,6 @@ wcsdup (const wchar_t *str)
 /*                 MS Windows multibyte-to-unicode methods              */
 /************************************************************************/
 
-DEFINE_CODING_SYSTEM_TYPE (mswindows_multibyte_to_unicode);
-
 enum mswindows_multibyte_cp_type
 {
   MULTIBYTE_ANSI,
@@ -1729,10 +1727,12 @@ struct mswindows_multibyte_to_unicode_coding_stream
   int cp;
 };
 
-static const struct lrecord_description
+static const struct memory_description
   mswindows_multibyte_to_unicode_coding_system_description[] = {
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte_to_unicode);
 
 static void
 mswindows_multibyte_to_unicode_init (Lisp_Object codesys)
@@ -2083,8 +2083,6 @@ mswindows_multibyte_to_unicode_conversion_end_type (Lisp_Object codesys)
 /*                       MS Windows Multibyte methods                   */
 /************************************************************************/
 
-DEFINE_CODING_SYSTEM_TYPE (mswindows_multibyte);
-
 struct mswindows_multibyte_coding_system
 {
   Lisp_Object code_page;
@@ -2096,16 +2094,16 @@ struct mswindows_multibyte_coding_stream
   int dummy;
 };
 
-static const struct lrecord_description
+static const struct memory_description
   mswindows_multibyte_coding_system_description[] = {
   { XD_LISP_OBJECT,
-      coding_system_data_offset +
-	offsetof (struct mswindows_multibyte_coding_system, code_page) },
+    offsetof (struct mswindows_multibyte_coding_system, code_page) },
   { XD_LISP_OBJECT,
-      coding_system_data_offset +
-	offsetof (struct mswindows_multibyte_coding_system, locale) },
+    offsetof (struct mswindows_multibyte_coding_system, locale) },
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte);
 
 static Bytecount
 mswindows_multibyte_convert (struct coding_stream *str,

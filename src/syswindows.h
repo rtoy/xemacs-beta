@@ -1070,8 +1070,9 @@ int mswindows_unlink (const Ibyte *path);
 int mswindows_stat (const Ibyte *path, struct stat *buf);
 int mswindows_fstat (int desc, struct stat *buf);
 time_t mswindows_convert_time (FILETIME ft);
-void mswindows_executable_type (const Ibyte * filename, int * is_dos_app,
-				int * is_cygnus_app);
+int mswindows_is_executable (const Ibyte *filename);
+void mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
+				int *is_cygnus_app);
 Ibyte *mswindows_getdcwd (int drivelet);
 
 /* in process-nt.c */

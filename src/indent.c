@@ -684,7 +684,7 @@ vmotion_1 (struct window *w, Charbpos orig, int vtarget,
       return Dynarr_atp (w->line_start_cache, elt)->start;
     }
 
-  RETURN_NOT_REACHED(0)	/* shut up compiler */
+  RETURN_NOT_REACHED(0);	/* shut up compiler */
 }
 
 /*****************************************************************************
@@ -865,7 +865,7 @@ vmotion_pixels (Lisp_Object window, Charbpos start, int pixels, int how,
       needed += (remain*lines + abspix-1)/abspix + 3;
     }
 
-  RETURN_NOT_REACHED(0)	/* shut up compiler */
+  RETURN_NOT_REACHED(0);	/* shut up compiler */
 }
 
 DEFUN ("vertical-motion-pixels", Fvertical_motion_pixels, 1, 3, 0, /*

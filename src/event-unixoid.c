@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-stream-impl.h"
 #include "console-tty-impl.h"
-#include "device.h"
+#include "device-impl.h"
 #include "events.h"
 #include "lstream.h"
 #include "process.h"
@@ -70,6 +70,24 @@ int signal_event_pipe_initialized;
 
 int fake_event_occurred;
 
+struct console *
+find_tty_or_stream_console_from_fd (int fd)
+{
+  Lisp_Object concons;
+
+  CONSOLE_LOOP (concons)
+    {
+      struct console *c;
+
+      c = XCONSOLE (XCAR (concons));
+      if ((CONSOLE_TTY_P (c) && CONSOLE_TTY_DATA (c)->infd == fd) ||
+	  (CONSOLE_STREAM_P (c) && fileno (CONSOLE_STREAM_DATA (c)->in) == fd))
+	return c;
+    }
+
+  return 0;
+}
+
 int
 read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
 {
@@ -98,6 +116,8 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
     }
   else
     {
+      /* Here we really do want to set the use_console_meta_flag because
+         the char is from the TTY. */
       character_to_event (ch, event, con, 1, 1);
       event->channel = console;
       return 1;
@@ -136,6 +156,48 @@ drain_signal_event_pipe (void)
   /* The input end of the pipe has been set to non-blocking. */
   while (retry_read (signal_event_pipe[0], chars, sizeof (chars)) > 0)
     ;
+}
+
+void
+drain_tty_devices (void)
+{
+  Lisp_Object devcons, concons;
+  CONSOLE_LOOP (concons)
+    {
+      struct console *con = XCONSOLE (XCAR (concons));
+      if (!con->input_enabled)
+	continue;
+
+      CONSOLE_DEVICE_LOOP (devcons, con)
+	{
+	  struct device *d = XDEVICE (XCAR (devcons));
+	  if (DEVICE_TTY_P (d))
+	    {
+	      SELECT_TYPE temp_mask;
+	      int infd = DEVICE_INFD (d);
+
+	      FD_ZERO (&temp_mask);
+	      FD_SET (infd, &temp_mask);
+
+	      while (1)
+		{
+		  Lisp_Object event;
+
+		  if (!poll_fds_for_input (temp_mask))
+		    break;
+
+		  event = Fmake_event (Qnil, Qnil);
+		  if (!read_event_from_tty_or_stream_desc (XEVENT (event),
+							   con))
+		    /* EOF, or something ... */
+		    break;
+
+		  /* queue the read event to be read for real later. */
+		  enqueue_dispatch_event (event);
+		}
+	    }
+	}
+    }
 }
 
 int
@@ -277,7 +339,7 @@ poll_fds_for_input (SELECT_TYPE mask)
       /* else, we got interrupted by a signal, so try again. */
     }
 
-  RETURN_NOT_REACHED (0)
+  RETURN_NOT_REACHED (0);
 }
 
 /****************************************************************************/

@@ -1,6 +1,6 @@
 /* Stream device functions.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -48,6 +48,15 @@ Lisp_Object Vterminal_frame;
 
 Lisp_Object Vstdio_str;
 
+static const struct memory_description stream_console_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct stream_console, instream) },
+  { XD_END }
+};
+
+const struct sized_memory_description stream_console_data_description = {
+  sizeof (struct stream_console), stream_console_data_description_1
+};
+
 static void
 stream_init_console (struct console *con, Lisp_Object params)
 {
@@ -55,11 +64,11 @@ stream_init_console (struct console *con, Lisp_Object params)
   struct stream_console *stream_con;
 
   if (CONSOLE_STREAM_DATA (con) == NULL)
-    CONSOLE_STREAM_DATA (con) = xnew (struct stream_console);
+    CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);
 
   stream_con = CONSOLE_STREAM_DATA (con);
 
-  stream_con->needs_newline = 0;
+  stream_con->instream  = Qnil;
 
   /* Open the specified console */
   if (NILP (tty) || internal_equal (tty, Vstdio_str, 0))

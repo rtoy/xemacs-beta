@@ -66,12 +66,12 @@ Lisp_Object Vcharset_composite;
 
 struct charset_lookup *chlook;
 
-static const struct lrecord_description charset_lookup_description_1[] = {
+static const struct memory_description charset_lookup_description_1[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct charset_lookup, charset_by_leading_byte), NUM_LEADING_BYTES+4*128*2 },
   { XD_END }
 };
 
-static const struct struct_description charset_lookup_description = {
+static const struct sized_memory_description charset_lookup_description = {
   sizeof (struct charset_lookup),
   charset_lookup_description_1
 };
@@ -175,7 +175,9 @@ finalize_charset (void *header, int for_disksave)
     }
 }
 
-static const struct lrecord_description charset_description[] = {
+static const struct memory_description charset_description[] = {
+  { XD_INT, offsetof (Lisp_Charset, dimension) },
+  { XD_INT, offsetof (Lisp_Charset, from_unicode_levels) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, doc_string) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, registry) },
@@ -183,29 +185,17 @@ static const struct lrecord_description charset_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, long_name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, reverse_direction_charset) },
   { XD_LISP_OBJECT, offsetof (Lisp_Charset, ccl_program) },
-#if 0
-  /* #### XD_UNION not yet implemented!  pdump version of XEmacs will
-     not work! */
   { XD_UNION, offsetof (Lisp_Charset, to_unicode_table),
-      XD_INDIRECT (offsetof (Lisp_Charset, dimension), 0),
-      to_unicode_description },
+    XD_INDIRECT (0, 0), &to_unicode_description },
   { XD_UNION, offsetof (Lisp_Charset, from_unicode_table),
-      XD_INDIRECT (offsetof (Lisp_Charset, from_unicode_levels), 0),
-      from_unicode_description },
-#endif
+    XD_INDIRECT (1, 0), &from_unicode_description },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
 			       1, /* dumpable flag */
                                mark_charset, print_charset, finalize_charset,
 			       0, 0, charset_description, Lisp_Charset);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-                               mark_charset, print_charset, finalize_charset,
-			       0, 0, charset_description, Lisp_Charset);
-#endif /* not USE_KKCC */
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object
@@ -221,7 +211,6 @@ make_charset (int id, Lisp_Object name, int rep_bytes,
   if (!overwrite)
     {
       cs = alloc_lcrecord_type (Lisp_Charset, &lrecord_charset);
-      zero_lcrecord (cs);
       obj = wrap_charset (cs);
 
       if (final)
@@ -836,7 +825,7 @@ Recognized properties are those listed in `make-charset', as well as
       return CHARSETP (obj) ? XCHARSET_NAME (obj) : obj;
     }
   invalid_constant ("Unrecognized charset property name", prop);
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 DEFUN ("charset-id", Fcharset_id, 1, 1, 0, /*

@@ -306,7 +306,7 @@ parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
       Dynarr_add (specs, spec);
     }
 
-  RETURN_NOT_REACHED(specs) /* suppress compiler warning */
+  RETURN_NOT_REACHED(specs); /* suppress compiler warning */
 }
 
 static int

@@ -83,7 +83,7 @@ Boston, MA 02111-1307, USA.  */
      same time.
 */
 
-extern const struct struct_description specifier_methods_description;
+extern const struct sized_memory_description specifier_methods_description;
 
 struct specifier_methods
 {
@@ -194,19 +194,20 @@ struct specifier_methods
   void (*after_change_method) (Lisp_Object specifier,
 			       Lisp_Object locale);
 
-  /* Specifier extra data: Specifier objects can have extra data,
-     specific to the type of specifier, stored at the end of the
-     object.  To have this, a specifier declares a structure of type
-     `struct TYPE_specifier' containing the data and uses
-     INITIALIZE_SPECIFIER_TYPE_WITH_DATA instead of
-     INITIALIZE_SPECIFIER_TYPE.  Then, a pointer to the `struct
-     TYPE_specifier' can be obtained from a specifier object using
-     SPECIFIER_TYPE_DATA. */
+  /* Specifier extra data: Specifier objects can have extra data, specific
+     to the type of specifier, stored at the end of the object.  To have
+     this, a specifier declares a structure of type `struct TYPE_specifier'
+     containing the data and uses DEFINE_SPECIFIER_TYPE_WITH_DATA and
+     INITIALIZE_SPECIFIER_TYPE_WITH_DATA instead of the plain versions.
+     Then, a pointer to the `struct TYPE_specifier' can be obtained from a
+     specifier object using SPECIFIER_TYPE_DATA.
 
-  /* Pdump description of the extra data; required, and must be named
-     TYPE_specifier_description.  Initialized when
+     A data description of the extra data must also be provided, in the
+     form of a memory_description named TYPE_specifier_description. */
+
+  /* Description of extra data structure; initialized when
      INITIALIZE_SPECIFIER_TYPE_WITH_DATA is called. */
-  const struct lrecord_description *extra_description;
+  const struct sized_memory_description *extra_description;
 
   /* Size of extra data structure; initialized when
      INITIALIZE_SPECIFIER_TYPE_WITH_DATA is called. */
@@ -276,8 +277,7 @@ DECLARE_LRECORD (specifier, Lisp_Specifier);
 
 /***** Defining new specifier types *****/
 
-#define specifier_data_offset offsetof (Lisp_Specifier, data)
-extern const struct lrecord_description specifier_empty_extra_description[];
+extern const struct sized_memory_description specifier_empty_extra_description;
 
 #ifdef ERROR_CHECK_TYPES
 #define DECLARE_SPECIFIER_TYPE(type)					\
@@ -315,11 +315,19 @@ extern struct specifier_methods * type##_specifier_methods
 #define DEFINE_SPECIFIER_TYPE(type)					\
 struct specifier_methods * type##_specifier_methods
 
+#define DEFINE_SPECIFIER_TYPE_WITH_DATA(type)				    \
+struct specifier_methods * type##_specifier_methods;			    \
+static const struct sized_memory_description type##_specifier_description_0 \
+  = {									    \
+  sizeof (struct type##_specifier),					    \
+  type##_specifier_description						    \
+}
+
 #define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {	    \
   type##_specifier_methods = xnew_and_zero (struct specifier_methods);	    \
   type##_specifier_methods->name = obj_name;				    \
   type##_specifier_methods->extra_description =				    \
-    specifier_empty_extra_description;					    \
+    &specifier_empty_extra_description;					    \
   defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym); \
   add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	    \
   dump_add_root_struct_ptr (&type##_specifier_methods,			    \
@@ -336,7 +344,7 @@ do {									\
   type##_specifier_methods->extra_data_size =				\
     sizeof (struct type##_specifier);					\
   type##_specifier_methods->extra_description = 			\
-    type##_specifier_description;					\
+    &type##_specifier_description_0;					\
 } while (0)
 
 /* Declare that specifier-type TYPE has method METH; used in

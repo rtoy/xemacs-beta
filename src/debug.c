@@ -56,13 +56,13 @@ enum debug_loop
 };
 
 static Lisp_Object
-xemacs_debug_loop (enum debug_loop op, Lisp_Object class, Lisp_Object type)
+xemacs_debug_loop (enum debug_loop op, Lisp_Object class_, Lisp_Object type)
 {
   int flag = (op == X_ADD) ? 1 : 0;
   Lisp_Object retval = Qnil;
 
 #define FROB(item)							\
-  if (op == X_LIST || op == X_ACTIVE || op == X_INIT || EQ (class, Q##item))	\
+  if (op == X_LIST || op == X_ACTIVE || op == X_INIT || EQ (class_, Q##item))	\
     {									\
       if (op == X_ADD || op == X_DELETE || op == X_INIT)			\
 	active_debug_classes.item = flag;				\
@@ -94,12 +94,12 @@ xemacs_debug_loop (enum debug_loop op, Lisp_Object class, Lisp_Object type)
 DEFUN ("add-debug-class-to-check", Fadd_debug_class_to_check, 1, 1, 0, /*
 Add a debug class to the list of active classes.
 */
-       (class))
+       (class_))
 {
-  if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
+  if (NILP (xemacs_debug_loop (X_VALIDATE, class_, Qnil)))
     invalid_argument ("No such debug class exists", Qunbound);
   else
-    xemacs_debug_loop (X_ADD, class, Qnil);
+    xemacs_debug_loop (X_ADD, class_, Qnil);
 
   return (xemacs_debug_loop (X_ACTIVE, Qnil, Qnil));
 }
@@ -107,12 +107,12 @@ Add a debug class to the list of active classes.
 DEFUN ("delete-debug-class-to-check", Fdelete_debug_class_to_check, 1, 1, 0, /*
 Delete a debug class from the list of active classes.
 */
-       (class))
+       (class_))
 {
-  if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
+  if (NILP (xemacs_debug_loop (X_VALIDATE, class_, Qnil)))
     invalid_argument ("No such debug class exists", Qunbound);
   else
-    xemacs_debug_loop (X_DELETE, class, Qnil);
+    xemacs_debug_loop (X_DELETE, class_, Qnil);
 
   return (xemacs_debug_loop (X_ACTIVE, Qnil, Qnil));
 }
@@ -145,7 +145,7 @@ CLASSES should be a list of debug classes.
 
   /* Make sure all objects in the list are valid.  If anyone is not
      valid, reject the entire list without doing anything. */
-  LIST_LOOP (rest, classes )
+  LIST_LOOP (rest, classes)
     {
       if (NILP (xemacs_debug_loop (X_VALIDATE, XCAR (rest), Qnil)))
 	sferror ("Invalid object in class list", Qunbound);
@@ -162,26 +162,26 @@ For the given debug CLASS, set which TYPES are actually interesting.
 TYPES should be an integer representing the or'd value of all desired types.
 Lists of defined types and their values are located in the source code.
 */
-       (class, type))
+       (class_, type))
 {
   CHECK_INT (type);
-  if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
+  if (NILP (xemacs_debug_loop (X_VALIDATE, class_, Qnil)))
     invalid_argument ("Invalid debug class", Qunbound);
 
-  xemacs_debug_loop (X_SETTYPE, class, type);
+  xemacs_debug_loop (X_SETTYPE, class_, type);
 
-  return (xemacs_debug_loop (X_TYPE, class, Qnil));
+  return (xemacs_debug_loop (X_TYPE, class_, Qnil));
 }
 
 DEFUN ("debug-types-being-checked", Fdebug_types_being_checked, 1, 1, 0, /*
 For the given CLASS, return the associated type value.
 */
-       (class))
+       (class_))
 {
-  if (NILP (xemacs_debug_loop (X_VALIDATE, class, Qnil)))
+  if (NILP (xemacs_debug_loop (X_VALIDATE, class_, Qnil)))
     invalid_argument ("Invalid debug class", Qunbound);
 
-  return (xemacs_debug_loop (X_TYPE, class, Qnil));
+  return (xemacs_debug_loop (X_TYPE, class_, Qnil));
 }
 
 void

@@ -228,17 +228,52 @@ int find_file_use_truenames;
 static void reset_buffer_local_variables (struct buffer *, int first_time);
 static void nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap);
 
+static const struct memory_description buffer_text_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct buffer_text, line_number_cache) },
+  { XD_END }
+};
+
+static const struct sized_memory_description buffer_text_description = {
+  sizeof (struct buffer_text),
+  buffer_text_description_1
+};
+
+static const struct memory_description syntax_cache_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, object) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, buffer) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, current_syntax_table) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, start) },
+  { XD_LISP_OBJECT, offsetof (struct syntax_cache, end) },
+  { XD_END }
+};
+
+static const struct sized_memory_description syntax_cache_description = {
+  sizeof (struct syntax_cache),
+  syntax_cache_description_1
+};
+
+static const struct memory_description buffer_description [] = {
+#define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct buffer, x) },
+#include "bufslots.h"
+
+  { XD_LISP_OBJECT, offsetof (struct buffer, extent_info) },
+
+  { XD_STRUCT_PTR, offsetof (struct buffer, text),
+    1, &buffer_text_description },
+  { XD_STRUCT_PTR, offsetof (struct buffer, syntax_cache),
+    1, &syntax_cache_description },
+
+  { XD_LISP_OBJECT, offsetof (struct buffer, indirect_children) },
+  { XD_LISP_OBJECT, offsetof (struct buffer, base_buffer) },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_buffer (Lisp_Object obj)
 {
   struct buffer *buf = XBUFFER (obj);
 
-  /* Truncate undo information. */
-  buf->undo_list = truncate_undo_list (buf->undo_list,
-                                       undo_threshold,
-                                       undo_high_threshold);
-
-#define MARKED_SLOT(x) mark_object (buf->x)
+#define MARKED_SLOT(x) mark_object (buf->x);
 #include "bufslots.h"
 
   mark_object (buf->extent_info);
@@ -246,10 +281,17 @@ mark_buffer (Lisp_Object obj)
     mark_object (buf->text->line_number_cache);
   mark_buffer_syntax_cache (buf);
 
-  /* Don't mark normally through the children slot.
-     (Actually, in this case, it doesn't matter.)  */
+  /* [[ Don't mark normally through the children slot.  Actually, in this
+     case, it doesn't matter. ]]
+
+     Indirect buffers, like all buffers, are permanent objects and stay
+     around by themselves, so it doesn't matter whether we mark their
+     children.  This used to contain a call to mark_conses_in_list(), to
+     mark only the conses.  I deleted that function, since it's not used
+     any more and causes problems with KKCC.  If we really needed such a
+     weak list, just use a weak list object, like extents do. --ben */
   if (! EQ (buf->indirect_children, Qnull_pointer))
-    mark_conses_in_list (buf->indirect_children);
+    mark_object (buf->indirect_children);
 
   return buf->base_buffer ? wrap_buffer (buf->base_buffer) : Qnil;
 }
@@ -274,19 +316,28 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     print_internal (b->name, printcharfun, 0);
 }
 
+void
+cleanup_buffer_undo_lists (void)
+{
+  /* Truncate undo information at GC time.  Used to be in mark_object() but
+     moved here for KKCC purposes. */
+
+  ALIST_LOOP_3 (name, buf, Vbuffer_alist)
+    {
+      XBUFFER (buf)->undo_list = truncate_undo_list (XBUFFER (buf)->undo_list,
+						     undo_threshold,
+						     undo_high_threshold);
+    }
+}
+
 /* We do not need a finalize method to handle a buffer's children list
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
 			       0, /*dumpable-flag*/
-                               mark_buffer, print_buffer, 0, 0, 0, 0,
+                               mark_buffer, print_buffer, 0, 0, 0,
+			       buffer_description,
 			       struct buffer);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
-                               mark_buffer, print_buffer, 0, 0, 0, 0,
-			       struct buffer);
-#endif /* not USE_KKCC */
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 Return t if OBJECT is an editor buffer.
@@ -441,7 +492,6 @@ the search will still be done on `buffer-file-name'.
        (filename))
 {
   /* This function can GC.  GC checked and fixed 7-11-2000 ben. */
-  REGISTER Lisp_Object buf;
   struct gcpro gcpro1;
 
 #ifdef I18N3
@@ -486,10 +536,8 @@ the search will still be done on `buffer-file-name'.
     }
 
   {
-    LIST_LOOP_2 (elt, Vbuffer_alist)
+    ALIST_LOOP_3 (name, buf, Vbuffer_alist)
       {
-	buf = Fcdr (elt);
-	if (!BUFFERP (buf)) continue;
 	if (!STRINGP (XBUFFER (buf)->filename)) continue;
 	if (!NILP (Fstring_equal (filename,
 				  (find_file_compare_truenames
@@ -2106,7 +2154,7 @@ nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
   b->indirect_children = Qnil;
   b->own_text.line_number_cache = Qnil;
 
-#define MARKED_SLOT(x)	b->x = zap
+#define MARKED_SLOT(x)	b->x = zap;
 #include "bufslots.h"
 }
 
@@ -2252,12 +2300,12 @@ reinit_complex_vars_of_buffer_runtime_only (void)
 }
 
 
-static const struct lrecord_description buffer_slots_description_1[] = {
+static const struct memory_description buffer_slots_description_1[] = {
   { XD_LISP_OBJECT_ARRAY, 0, BUFFER_SLOTS_COUNT },
   { XD_END }
 };
 
-static const struct struct_description buffer_slots_description = {
+static const struct sized_memory_description buffer_slots_description = {
   BUFFER_SLOTS_SIZE,
   buffer_slots_description_1
 };
@@ -2754,7 +2802,7 @@ handled:
   if ((XINT (buffer_local_flags.slot) != -2 &&			\
        XINT (buffer_local_flags.slot) != -3)			\
       != !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)))	\
-  abort ()
+  abort ();
 #include "bufslots.h"
 
   {

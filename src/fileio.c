@@ -1568,7 +1568,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
-	strupr (target); /* $home == $HOME etc.  */
+	qxestrupr (target); /* $home == $HOME etc.  */
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
@@ -1619,7 +1619,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
-	strupr (target); /* $home == $HOME etc.  */
+	qxestrupr (target); /* $home == $HOME etc.  */
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
@@ -1663,7 +1663,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   syntax_error_2 ("Substituting nonexistent environment variable",
 		  filename, build_intstring (target));
 
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /* A slightly faster and more convenient way to get

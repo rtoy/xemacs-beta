@@ -96,25 +96,18 @@ marker_hash (Lisp_Object obj, int depth)
   return hash;
 }
 
-static const struct lrecord_description marker_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, next) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, prev) },
+static const struct memory_description marker_description[] = {
+  { XD_LISP_OBJECT, offsetof (Lisp_Marker, next), 0, 0, XD_FLAG_NO_KKCC },
+  { XD_LISP_OBJECT, offsetof (Lisp_Marker, prev), 0, 0, XD_FLAG_NO_KKCC },
   { XD_LISP_OBJECT, offsetof (Lisp_Marker, buffer) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
 				     1, /*dumpable-flag*/
 				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash, marker_description,
-				     Lisp_Marker);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash, marker_description,
-				     Lisp_Marker);
-#endif /* not USE_KKCC */
+				     marker_equal, marker_hash,
+				     marker_description, Lisp_Marker);
 
 /* Operations on markers. */
 
@@ -403,7 +396,7 @@ copy_marker_1 (Lisp_Object marker, Lisp_Object type, int noseeum)
 	marker = wrong_type_argument (Qinteger_or_marker_p, marker);
     }
 
-  RETURN_NOT_REACHED (Qnil) /* not reached */
+  RETURN_NOT_REACHED (Qnil); /* not reached */
 }
 
 DEFUN ("copy-marker", Fcopy_marker, 1, 2, 0, /*

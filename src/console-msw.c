@@ -293,7 +293,13 @@ write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len)
       qxeOutputDebugString (extptr);
     }
   else
-    OutputDebugStringA ((char *) str);
+    {
+      /* STR may not be null-terminated so make it that way. */
+      Extbyte *ext = alloca_extbytes (len + 1);
+      memcpy (ext, str, len);
+      ext[len] = '\0';
+      OutputDebugStringA (ext);
+    }
 }
 
 #ifdef DEBUG_XEMACS

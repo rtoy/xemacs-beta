@@ -30,9 +30,9 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "file-coding.h"
 #include "elhash.h"
+#include "lstream.h"
 #include "sysfile.h"
 #include "console-stream.h"
-#include "dumper.h"
 
 #ifdef WIN32_NATIVE
 #include "syswindows.h"
@@ -46,17 +46,18 @@ typedef struct
 {
   const void *varaddress;
   Bytecount size;
-} pdump_opaque;
+  const struct memory_description *desc;
+} pdump_root_block;
 
 typedef struct
 {
-  Dynarr_declare (pdump_opaque);
-} pdump_opaque_dynarr;
+  Dynarr_declare (pdump_root_block);
+} pdump_root_block_dynarr;
 
 typedef struct
 {
   void **ptraddress;
-  const struct struct_description *desc;
+  const struct sized_memory_description *desc;
 } pdump_root_struct_ptr;
 
 typedef struct
@@ -76,22 +77,24 @@ typedef struct
   char * value;
 } pdump_static_pointer;
 
-static pdump_opaque_dynarr *pdump_opaques;
+static pdump_root_block_dynarr *pdump_root_blocks;
 static pdump_root_struct_ptr_dynarr *pdump_root_struct_ptrs;
-static Lisp_Object_ptr_dynarr *pdump_root_objects;
+static Lisp_Object_ptr_dynarr *pdump_root_lisp_objects;
 static Lisp_Object_ptr_dynarr *pdump_weak_object_chains;
 
-/* Mark SIZE bytes at non-heap address VARADDRESS for dumping as is,
-   without any bit-twiddling. */
+/* Mark SIZE bytes at non-heap address VARADDRESS for dumping, described
+   by DESC. */
 void
-dump_add_opaque (const void *varaddress, Bytecount size)
+dump_add_root_block (const void *varaddress, Bytecount size,
+		     const struct memory_description *desc)
 {
-  pdump_opaque info;
+  pdump_root_block info;
   info.varaddress = varaddress;
   info.size = size;
-  if (pdump_opaques == NULL)
-    pdump_opaques = Dynarr_new (pdump_opaque);
-  Dynarr_add (pdump_opaques, info);
+  info.desc = desc;
+  if (pdump_root_blocks == NULL)
+    pdump_root_blocks = Dynarr_new (pdump_root_block);
+  Dynarr_add (pdump_root_blocks, info);
 }
 
 /* Mark the struct described by DESC and pointed to by the pointer at
@@ -99,7 +102,7 @@ dump_add_opaque (const void *varaddress, Bytecount size)
    All the objects reachable from this pointer will also be dumped. */
 void
 dump_add_root_struct_ptr (void *ptraddress,
-			  const struct struct_description *desc)
+			  const struct sized_memory_description *desc)
 {
   pdump_root_struct_ptr info;
   info.ptraddress = (void **) ptraddress;
@@ -112,11 +115,11 @@ dump_add_root_struct_ptr (void *ptraddress,
 /* Mark the Lisp_Object at non-heap address VARADDRESS for dumping.
    All the objects reachable from this var will also be dumped. */
 void
-dump_add_root_object (Lisp_Object *varaddress)
+dump_add_root_lisp_object (Lisp_Object *varaddress)
 {
-  if (pdump_root_objects == NULL)
-    pdump_root_objects = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
-  Dynarr_add (pdump_root_objects, varaddress);
+  if (pdump_root_lisp_objects == NULL)
+    pdump_root_lisp_objects = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
+  Dynarr_add (pdump_root_lisp_objects, varaddress);
 }
 
 /* Mark the list pointed to by the Lisp_Object at VARADDRESS for dumping. */
@@ -158,7 +161,7 @@ retry_fwrite (&object, sizeof (object), 1, pdump_out);
 
 typedef struct
 {
-  const struct lrecord_description *desc;
+  const struct memory_description *desc;
   int count;
 } pdump_reloc_table;
 
@@ -189,12 +192,13 @@ pdump_objects_unmark (void)
 }
 
 
-/* The structure of the file
+/* The structure of the dump file looks like this:
  0		- header
 		- dumped objects
- stab_offset	- nb_root_struct_ptrs*pair(void *, adr)
-		  for pointers to structures
-		- nb_opaques*pair(void *, size) for raw bits to restore
+ stab_offset	- nb_root_struct_ptrs*struct(void *, adr)
+		  for global pointers to structures
+		- nb_root_blocks*struct(void *, size, info) for global
+		  objects to restore
 		- relocation table
 		- root lisp object address/value couples with the count
 		  preceding the list
@@ -211,7 +215,7 @@ typedef struct
   EMACS_UINT stab_offset;
   EMACS_UINT reloc_address;
   int nb_root_struct_ptrs;
-  int nb_opaques;
+  int nb_root_blocks;
 } pdump_header;
 
 char *pdump_start;
@@ -260,7 +264,7 @@ typedef struct
 typedef struct pdump_struct_list_elt
 {
   pdump_entry_list list;
-  const struct struct_description *sdesc;
+  const struct memory_description *desc;
 } pdump_struct_list_elt;
 
 typedef struct
@@ -350,11 +354,11 @@ pdump_add_entry (pdump_entry_list *list, const void *obj, Bytecount size,
 }
 
 static pdump_entry_list *
-pdump_get_entry_list (const struct struct_description *sdesc)
+pdump_get_entry_list (const struct memory_description *desc)
 {
   int i;
   for (i=0; i<pdump_struct_table.count; i++)
-    if (pdump_struct_table.list[i].sdesc == sdesc)
+    if (pdump_struct_table.list[i].desc == desc)
       return &pdump_struct_table.list[i].list;
 
   if (pdump_struct_table.size <= pdump_struct_table.count)
@@ -370,7 +374,7 @@ pdump_get_entry_list (const struct struct_description *sdesc)
   pdump_struct_table.list[pdump_struct_table.count].list.first = 0;
   pdump_struct_table.list[pdump_struct_table.count].list.align = ALIGNOF (max_align_t);
   pdump_struct_table.list[pdump_struct_table.count].list.count = 0;
-  pdump_struct_table.list[pdump_struct_table.count].sdesc = sdesc;
+  pdump_struct_table.list[pdump_struct_table.count].desc = desc;
 
   return &pdump_struct_table.list[pdump_struct_table.count++].list;
 }
@@ -382,14 +386,14 @@ static struct
   int offset;
 } backtrace[65536];
 
-static int depth;
+static int pdump_depth;
 
-static void
+void
 pdump_backtrace (void)
 {
   int i;
   stderr_out ("pdump backtrace :\n");
-  for (i = 0; i < depth; i++)
+  for (i = 0; i < pdump_depth; i++)
     {
       if (!backtrace[i].obj)
 	stderr_out ("  - ind. (%d, %d)\n",
@@ -398,86 +402,60 @@ pdump_backtrace (void)
       else
 	{
 	  stderr_out ("  - %s (%d, %d)\n",
-		   LHEADER_IMPLEMENTATION (backtrace[i].obj)->name,
-		   backtrace[i].position,
-		   backtrace[i].offset);
+		      LHEADER_IMPLEMENTATION (backtrace[i].obj)->name,
+		      backtrace[i].position,
+		      backtrace[i].offset);
 	}
     }
 }
 
+static void
+pdump_bump_depth (void)
+{
+  int me = pdump_depth++;
+  if (me > 65536)
+    {
+      stderr_out ("Backtrace overflow, loop ?\n");
+      abort ();
+    }
+  backtrace[me].obj = 0;
+  backtrace[me].position = 0;
+  backtrace[me].offset = 0;
+}
+
 static void pdump_register_object (Lisp_Object obj);
 static void pdump_register_struct_contents (const void *data,
-					    const struct struct_description *
+					    const struct sized_memory_description *
 					    sdesc,
 					    int count);
 static void pdump_register_struct (const void *data,
-				   const struct struct_description *sdesc,
+				   const struct sized_memory_description *sdesc,
 				   int count);
 
-static EMACS_INT
-pdump_get_indirect_count (EMACS_INT code,
-			  const struct lrecord_description *idesc,
-			  const void *idata)
-{
-  EMACS_INT count;
-  const void *irdata;
-
-  int line = XD_INDIRECT_VAL (code);
-  int delta = XD_INDIRECT_DELTA (code);
-
-  irdata = ((char *)idata) + idesc[line].offset;
-  switch (idesc[line].type)
-    {
-    case XD_BYTECOUNT:
-      count = *(Bytecount *)irdata;
-      break;
-    case XD_ELEMCOUNT:
-      count = *(Elemcount *)irdata;
-      break;
-    case XD_HASHCODE:
-      count = *(Hashcode *)irdata;
-      break;
-    case XD_INT:
-      count = *(int *)irdata;
-      break;
-    case XD_LONG:
-      count = *(long *)irdata;
-      break;
-    default:
-      stderr_out ("Unsupported count type : %d (line = %d, code=%ld)\n",
-		  idesc[line].type, line, (long)code);
-      pdump_backtrace ();
-      count = 0; /* warning suppression */
-      abort ();
-    }
-  count += delta;
-  return count;
-}
-
 static void
-pdump_register_sub (const void *data, const struct lrecord_description *desc, int me)
+pdump_register_sub (const void *data, const struct memory_description *desc)
 {
   int pos;
+  int me = pdump_depth - 1;
 
- restart:
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
-      const void *rdata = (const char *)data + desc[pos].offset;
+      const struct memory_description *desc1 = &desc[pos];
+      EMACS_INT offset = lispdesc_indirect_count (desc1->offset, desc,
+						  data);
+      const void *rdata = (const char *) data + offset;
 
       backtrace[me].position = pos;
-      backtrace[me].offset = desc[pos].offset;
+      backtrace[me].offset = offset;
 
-      switch (desc[pos].type)
+    union_switcheroo:
+
+      /* If the flag says don't dump, then don't dump. */
+      if ((desc1->flags) & XD_FLAG_NO_PDUMP)
+	continue;
+
+      switch (desc1->type)
 	{
-	case XD_SPECIFIER_END:
-	  pos = 0;
-	  desc = ((const Lisp_Specifier *)data)->methods->extra_description;
-	  goto restart;
-	case XD_CODING_SYSTEM_END:
-	  pos = 0;
-	  desc =
-	    ((const Lisp_Coding_System *)data)->methods->extra_description;
-	  goto restart;
 	case XD_BYTECOUNT:
 	case XD_ELEMCOUNT:
 	case XD_HASHCODE:
@@ -488,9 +466,8 @@ pdump_register_sub (const void *data, const struct lrecord_description *desc, in
 	  break;
 	case XD_OPAQUE_DATA_PTR:
 	  {
-	    EMACS_INT count = desc[pos].data1;
-	    if (XD_IS_INDIRECT (count))
-	      count = pdump_get_indirect_count (count, desc, data);
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
 
 	    pdump_add_entry (&pdump_opaque_data_list,
 			     *(void **)rdata, count, 1);
@@ -498,78 +475,80 @@ pdump_register_sub (const void *data, const struct lrecord_description *desc, in
 	  }
 	case XD_C_STRING:
 	  {
-	    const char *str = *(const char **)rdata;
+	    const char *str = * (const char **) rdata;
 	    if (str)
-	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str)+1, 1);
+	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str) + 1,
+			       1);
 	    break;
 	  }
 	case XD_DOC_STRING:
 	  {
-	    const char *str = *(const char **)rdata;
-	    if ((EMACS_INT)str > 0)
-	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str)+1, 1);
+	    const char *str = * (const char **) rdata;
+	    if ((EMACS_INT) str > 0)
+	      pdump_add_entry (&pdump_opaque_data_list, str, strlen (str) + 1,
+			       1);
 	    break;
 	  }
 	case XD_LISP_OBJECT:
 	  {
-	    const Lisp_Object *pobj = (const Lisp_Object *)rdata;
+	    const Lisp_Object *pobj = (const Lisp_Object *) rdata;
 
-	    assert (desc[pos].data1 == 0);
+	    assert (desc1->data1 == 0);
 
-	    backtrace[me].offset = (const char *)pobj - (const char *)data;
+	    backtrace[me].offset = (const char *) pobj - (const char *) data;
 	    pdump_register_object (*pobj);
 	    break;
 	  }
 	case XD_LISP_OBJECT_ARRAY:
 	  {
 	    int i;
-	    EMACS_INT count = desc[pos].data1;
-	    if (XD_IS_INDIRECT (count))
-	      count = pdump_get_indirect_count (count, desc, data);
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
 
 	    for (i = 0; i < count; i++)
 	      {
-		const Lisp_Object *pobj = ((const Lisp_Object *)rdata) + i;
+		const Lisp_Object *pobj = ((const Lisp_Object *) rdata) + i;
 		Lisp_Object dobj = *pobj;
 
-		backtrace[me].offset = (const char *)pobj - (const char *)data;
+		backtrace[me].offset =
+		  (const char *) pobj - (const char *) data;
 		pdump_register_object (dobj);
 	      }
 	    break;
 	  }
 	case XD_STRUCT_PTR:
 	  {
-	    EMACS_INT count = desc[pos].data1;
-	    const struct struct_description *sdesc = desc[pos].data2;
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2);
 	    const char *dobj = *(const char **)rdata;
 	    if (dobj)
-	      {
-		if (XD_IS_INDIRECT (count))
-		  count = pdump_get_indirect_count (count, desc, data);
-
-		pdump_register_struct (dobj, sdesc, count);
-	      }
+	      pdump_register_struct (dobj, sdesc, count);
 	    break;
 	  }
 	case XD_STRUCT_ARRAY:
 	  {
-	    EMACS_INT count = desc[pos].data1;
-	    const struct struct_description *sdesc = desc[pos].data2;
-
-	    if (XD_IS_INDIRECT (count))
-	      count = pdump_get_indirect_count (count, desc, data);
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2);
 
 	    pdump_register_struct_contents (rdata, sdesc, count);
 	    break;
 	  }
 	case XD_UNION:
-	  abort (); /* #### IMPLEMENT ME!  NEEDED FOR UNICODE SUPPORT */
+	case XD_UNION_DYNAMIC_SIZE:
+	  desc1 = lispdesc_process_xd_union (desc1, desc, data);
+	  if (desc1)
+	    goto union_switcheroo;
+	  break;
 
 	default:
-	  stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
+	  stderr_out ("Unsupported dump type : %d\n", desc1->type);
 	  pdump_backtrace ();
 	  abort ();
-	};
+	}
     }
 }
 
@@ -591,31 +570,15 @@ pdump_register_object (Lisp_Object obj)
 
   imp = LHEADER_IMPLEMENTATION (objh);
 
-#ifdef USE_KKCC
   if (imp->description
-      && RECORD_DUMPABLE(objh))
-#else /* not USE_KKCC */
-  if (imp->description)
-#endif /* not USE_KKCC */    
+      && RECORD_DUMPABLE (objh))
     {
-      int me = depth++;
-      if (me > 65536)
-	{
-	  stderr_out ("Backtrace overflow, loop ?\n");
-	  abort ();
-	}
-      backtrace[me].obj = objh;
-      backtrace[me].position = 0;
-      backtrace[me].offset = 0;
-
+      pdump_bump_depth ();
+      backtrace[pdump_depth - 1].obj = objh;
       pdump_add_entry (pdump_object_table + objh->type,
-		       objh,
-		       imp->static_size ?
-		       imp->static_size :
-		       imp->size_in_bytes_method (objh),
-		       1);
-      pdump_register_sub (objh, imp->description, me);
-      --depth;
+		       objh, detagged_lisp_object_size (objh), 1);
+      pdump_register_sub (objh, imp->description);
+      --pdump_depth;
     }
   else
     {
@@ -623,144 +586,6 @@ pdump_register_object (Lisp_Object obj)
       stderr_out ("Undumpable object type : %s\n", imp->name);
       pdump_backtrace ();
     }
-}
-
-/* Return the size of the memory block (NOT necessarily a structure!) 
-   described by SDESC and pointed to by OBJ.  If SDESC records an
-   explicit size (i.e. non-zero), it is simply returned; otherwise,
-   the size is calculated by the maximum offset and the size of the
-   object at that offset, rounded up to the maximum alignment.  In
-   this case, we may need the object, for example when retrieving an
-   "indirect count" of an inlined array (the count is not constant,
-   but is specified by one of the elements of the memory block). (It
-   is generally not a problem if we return an overly large size -- we
-   will simply end up reserving more space than necessary; but if the
-   size is too small we could be in serious trouble, in particular
-   with nested inlined structures, where there may be alignment
-   padding in the middle of a block. #### In fact there is an (at
-   least theoretical) problem with an overly large size -- we may
-   trigger a protection fault when reading from invalid memory.  We
-   need to handle this -- perhaps in a stupid but dependable way,
-   i.e. by trapping SIGSEGV and SIGBUS.) */
-
-static Bytecount
-pdump_structure_size (const void *obj, const struct struct_description *sdesc)
-{
-  int max_offset = -1;
-  int max_offset_pos = -1;
-  int size_at_max = 0;
-  int pos;
-  const struct lrecord_description *desc;
-  void *rdata;
-
-  if (sdesc->size)
-    return sdesc->size;
-
-  desc = sdesc->description;
-
-  for (pos = 0; desc[pos].type != XD_END; pos++)
-    {
-      if (desc[pos].offset == max_offset)
-	{
-	  stderr_out ("Two relocatable elements at same offset?\n");
-	  abort ();
-	}
-      else if (desc[pos].offset > max_offset)
-	{
-	  max_offset = desc[pos].offset;
-	  max_offset_pos = pos;
-	}
-    }
-
-  if (max_offset_pos < 0)
-    return 0;
-
-  pos = max_offset_pos;
-  rdata = (char *) obj + desc[pos].offset;
-
-  switch (desc[pos].type)
-    {
-    case XD_LISP_OBJECT_ARRAY:
-      {
-	EMACS_INT val = desc[pos].data1;
-	if (XD_IS_INDIRECT (val))
-	  val = pdump_get_indirect_count (val, desc, obj);
-	size_at_max = val * sizeof (Lisp_Object);
-	break;
-      }
-    case XD_LISP_OBJECT:
-    case XD_LO_LINK:
-      size_at_max = sizeof (Lisp_Object);
-      break;
-    case XD_OPAQUE_PTR:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_STRUCT_PTR:
-      {
-	EMACS_INT val = desc[pos].data1;
-	if (XD_IS_INDIRECT (val))
-	  val = pdump_get_indirect_count (val, desc, obj);
-	size_at_max = val * sizeof (void *);
-	break;
-      }
-      break;
-    case XD_STRUCT_ARRAY:
-      {
-	EMACS_INT val = desc[pos].data1;
-
-	if (XD_IS_INDIRECT (val))
-	  val = pdump_get_indirect_count (val, desc, obj);
-	    
-	size_at_max = val * pdump_structure_size (rdata, desc[pos].data2);
-	break;
-      }
-      break;
-    case XD_OPAQUE_DATA_PTR:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_UNION:
-      abort ();			/* #### IMPLEMENT ME!  NEEDED FOR UNICODE
-				   SUPPORT */
-      break;
-    case XD_C_STRING:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_DOC_STRING:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_INT_RESET:
-      size_at_max = sizeof (int);
-      break;
-    case XD_BYTECOUNT:
-      size_at_max = sizeof (Bytecount);
-      break;
-    case XD_ELEMCOUNT:
-      size_at_max = sizeof (Elemcount);
-      break;
-    case XD_HASHCODE:
-      size_at_max = sizeof (Hashcode);
-      break;
-    case XD_INT:
-      size_at_max = sizeof (int);
-      break;
-    case XD_LONG:
-      size_at_max = sizeof (long);
-      break;
-    case XD_SPECIFIER_END:
-    case XD_CODING_SYSTEM_END:
-      stderr_out
-	("Should not be seeing XD_SPECIFIER_END or\n"
-	 "XD_CODING_SYSTEM_END outside of struct Lisp_Specifier\n"
-	 "and struct Lisp_Coding_System.\n");
-      abort ();
-    default:
-      stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
-      abort ();
-    }
-
-  /* We have no way of knowing the required alignment for this structure,
-     so just max it maximally aligned. */
-  return MAX_ALIGN_SIZE (max_offset + size_at_max);
 }
 
 /* Register the referenced objects in the array of COUNT objects of
@@ -776,32 +601,20 @@ pdump_structure_size (const void *obj, const struct struct_description *sdesc)
 
 static void
 pdump_register_struct_contents (const void *data,
-				const struct struct_description *sdesc,
+				const struct sized_memory_description *sdesc,
 				int count)
 
 {
-  int me = depth++;
   int i;
   Bytecount elsize;
 
-  if (me>65536)
-    {
-      stderr_out ("Backtrace overflow, loop ?\n");
-      abort ();
-    }
-  backtrace[me].obj = 0;
-  backtrace[me].position = 0;
-  backtrace[me].offset = 0;
-
-  elsize = pdump_structure_size (data, sdesc);
-
+  pdump_bump_depth ();
+  elsize = lispdesc_structure_size (data, sdesc);
   for (i = 0; i < count; i++)
     {
-      pdump_register_sub (((char *) data) + elsize * i,
-			  sdesc->description,
-			  me);
+      pdump_register_sub (((char *) data) + elsize * i, sdesc->description);
     }
-  --depth;
+  --pdump_depth;
 }
 
 /* Register the array of COUNT objects of located at DATA; each object is
@@ -814,47 +627,47 @@ pdump_register_struct_contents (const void *data,
 
 static void
 pdump_register_struct (const void *data,
-		       const struct struct_description *sdesc,
+		       const struct sized_memory_description *sdesc,
 		       int count)
 {
   if (data && !pdump_get_entry (data))
     {
-      pdump_add_entry (pdump_get_entry_list (sdesc), data,
-		       pdump_structure_size (data, sdesc), count);
+      pdump_add_entry (pdump_get_entry_list (sdesc->description), data,
+		       lispdesc_structure_size (data, sdesc), count);
 
       pdump_register_struct_contents (data, sdesc, count);
     }
 }
 
-/* Store the already-calculated new pointer offsets for all pointers
-   in the COUNT contiguous blocks of memory, each described by DESC
-   and of size SIZE, whose original is located at ORIG_DATA and the
-   modifiable copy at DATA.
+/* Store the already-calculated new pointer offsets for all pointers in the
+   COUNT contiguous blocks of memory, each described by DESC and of size
+   SIZE, whose original is located at ORIG_DATA and the modifiable copy at
+   DATA.  We examine the description to figure out where the pointers are,
+   and then look up the replacement values using pdump_get_entry().
 
-   This is done just before writing the modified block of memory to
-   the dump file.  The new pointer offsets have been carefully
-   calculated so that the data being pointed gets written at that
-   offset in the dump file.  That way, the dump file is a correct
-   memory image except perhaps for a constant that needs to be added
-   to all pointers. (#### In fact, we SHOULD be starting up a dumped
-   XEmacs, seeing where the dumped file gets loaded into memory, and
-   then rewriting the dumped file after relocating all the pointers
-   relative to this memory location.  That way, if the file gets
-   loaded again at the same location, which will be common, we don't
-   have to do any relocating, which is both faster at startup and
+   This is done just before writing the modified block of memory to the
+   dump file.  The new pointer offsets have been carefully calculated so
+   that the data being pointed gets written at that offset in the dump
+   file.  That way, the dump file is a correct memory image except perhaps
+   for a constant that needs to be added to all pointers. (#### In fact, we
+   SHOULD be starting up a dumped XEmacs, seeing where the dumped file gets
+   loaded into memory, and then rewriting the dumped file after relocating
+   all the pointers relative to this memory location.  That way, if the
+   file gets loaded again at the same location, which will be common, we
+   don't have to do any relocating, which is both faster at startup and
    allows the read-only part of the dumped data to be shared read-only
    between different invocations of XEmacs.)
 
    #### Do we distinguish between read-only and writable dumped data?
    Should we?  It's tricky because the dumped data, once loaded again,
-   cannot really be free()d or garbage collected since it's all stored
-   in one contiguous block of data with no malloc() headers, and we
-   don't keep track of the pointers used internally in malloc() and
-   the Lisp allocator to track allocated blocks of memory. */
+   cannot really be free()d or garbage collected since it's all stored in
+   one contiguous block of data with no malloc() headers, and we don't keep
+   track of the pointers used internally in malloc() and the Lisp allocator
+   to track allocated blocks of memory. */
 
 static void
 pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
-				 const struct lrecord_description *desc,
+				 const struct memory_description *desc,
 				 int size)
 {
   int pos, i;
@@ -863,22 +676,22 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
     {
       /* CUR points to the beginning of each block in the new data. */
       char *cur = ((char *)data) + i*size;
-    restart:
       /* Scan each line of the description for relocatable pointers */
       for (pos = 0; desc[pos].type != XD_END; pos++)
 	{
 	  /* RDATA points to the beginning of each element in the new data. */
-	  void *rdata = cur + desc[pos].offset;
-	  switch (desc[pos].type)
+	  const struct memory_description *desc1 = &desc[pos];
+	  /* #### Change ORIG_DATA to DATA.  See below. */
+	  void *rdata = cur + lispdesc_indirect_count (desc1->offset, desc,
+						       orig_data);
+	union_switcheroo:
+
+	  /* If the flag says don't dump, then don't dump. */
+	  if ((desc1->flags) & XD_FLAG_NO_PDUMP)
+	    continue;
+
+	  switch (desc1->type)
 	    {
-	    case XD_SPECIFIER_END:
-	      desc = ((const Lisp_Specifier *)(orig_data))->
-		methods->extra_description;
-	      goto restart;
-	    case XD_CODING_SYSTEM_END:
-	      desc = ((const Lisp_Coding_System *)(orig_data))->
-		methods->extra_description;
-	      goto restart;
 	    case XD_BYTECOUNT:
 	    case XD_ELEMCOUNT:
 	    case XD_HASHCODE:
@@ -887,9 +700,8 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      break;
 	    case XD_INT_RESET:
 	      {
-		EMACS_INT val = desc[pos].data1;
-		if (XD_IS_INDIRECT (val))
-		  val = pdump_get_indirect_count (val, desc, orig_data);
+		EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc,
+							 orig_data);
 		* (int *) rdata = val;
 		break;
 	      }
@@ -914,12 +726,23 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
                    chain will always be a referenced object.) */
 		Lisp_Object obj = * (Lisp_Object *) rdata;
 		pdump_entry_list_elt *elt1;
+		/* #### Figure out how to handle indirect offsets here.
+		   #### In general, when computing indirect counts, do we
+		   really need to use the orig_data pointer?  Why not just
+		   use the new stuff?
+
+		   No, we don't usually need orig_data.  We only need it
+		   when fetching pointers out of the data, not integers.
+		   This currently occurs only with description maps.  We
+		   should change the other places to DATA to emphasize
+		   this. */
+		assert (!XD_IS_INDIRECT (desc1->offset));
 		for (;;)
 		  {
 		    elt1 = pdump_get_entry (XRECORD_LHEADER (obj));
 		    if (elt1)
 		      break;
-		    obj = * (Lisp_Object *) (desc[pos].offset +
+		    obj = * (Lisp_Object *) (desc1->offset +
 					     (char *)(XRECORD_LHEADER (obj)));
 		  }
 		* (EMACS_INT *) rdata = elt1->save_offset;
@@ -929,7 +752,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      {
 		Lisp_Object *pobj = (Lisp_Object *) rdata;
 
-		assert (desc[pos].data1 == 0);
+		assert (desc1->data1 == 0);
 
 		if (POINTER_TYPE_P (XTYPE (*pobj)) && XRECORD_LHEADER (*pobj))
 		  * (EMACS_INT *) pobj =
@@ -938,10 +761,9 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      }
 	    case XD_LISP_OBJECT_ARRAY:
 	      {
-		EMACS_INT num = desc[pos].data1;
+		EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+							 orig_data);
 		int j;
-		if (XD_IS_INDIRECT (num))
-		  num = pdump_get_indirect_count (num, desc, orig_data);
 
 		for (j = 0; j < num; j++)
 		  {
@@ -963,25 +785,29 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 	      }
 	    case XD_STRUCT_ARRAY:
 	      {
-		EMACS_INT num = desc[pos].data1;
-		if (XD_IS_INDIRECT (num))
-		  num = pdump_get_indirect_count (num, desc, orig_data);
+		EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+							 orig_data);
+		const struct sized_memory_description *sdesc =
+		  lispdesc_indirect_description (orig_data, desc1->data2);
 
 		pdump_store_new_pointer_offsets
 		  (num, rdata,
 		   ((char *) rdata - (char *) data) + (char *) orig_data,
-		   desc[pos].data2->description,
-		   pdump_structure_size
+		   sdesc->description,
+		   lispdesc_structure_size
 		   (((char *) rdata - (char *) data) + (char *) orig_data,
-		    desc[pos].data2));
+		    sdesc));
 		break;
 	      }
 	    case XD_UNION:
-	      abort ();		/* #### IMPLEMENT ME!  NEEDED FOR UNICODE
-				   SUPPORT */
+	    case XD_UNION_DYNAMIC_SIZE:
+	      desc1 = lispdesc_process_xd_union (desc1, desc, orig_data);
+	      if (desc1)
+		goto union_switcheroo;
+	      break;
 
 	    default:
-	      stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
+	      stderr_out ("Unsupported dump type : %d\n", desc1->type);
 	      abort ();
 	    }
 	}
@@ -997,7 +823,7 @@ pdump_store_new_pointer_offsets (int count, void *data, const void *orig_data,
 
 static void
 pdump_dump_data (pdump_entry_list_elt *elt,
-		 const struct lrecord_description *desc)
+		 const struct memory_description *desc)
 {
   Bytecount size = elt->size;
   int count = elt->count;
@@ -1013,32 +839,33 @@ pdump_dump_data (pdump_entry_list_elt *elt,
 }
 
 /* Relocate a single memory block at DATA, described by DESC, from its
-   assumed load location to its actual one by adding DELTA to all
-   pointers in the block.  Does not recursively relocate any other
-   memory blocks pointed to. (We already have a list of all memory
-   blocks in the dump file.) */
+   assumed load location to its actual one by adding DELTA to all pointers
+   in the block.  Does not recursively relocate any other memory blocks
+   pointed to. (We already have a list of all memory blocks in the dump
+   file.)  This is used once the dump data has been loaded back in, both
+   for blocks sitting in the dumped data and in global data objects whose
+   contents have been restored from the dumped data. */
 
 static void
 pdump_reloc_one (void *data, EMACS_INT delta,
-		 const struct lrecord_description *desc)
+		 const struct memory_description *desc)
 {
   int pos;
 
- restart:
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
-      void *rdata = (char *)data + desc[pos].offset;
-      switch (desc[pos].type)
+      const struct memory_description *desc1 = &desc[pos];
+      void *rdata = (char *) data + lispdesc_indirect_count (desc1->offset,
+							     desc, data);
+
+    union_switcheroo:
+
+      /* If the flag says don't dump, then don't dump. */
+      if ((desc1->flags) & XD_FLAG_NO_PDUMP)
+	continue;
+
+      switch (desc1->type)
 	{
-	case XD_SPECIFIER_END:
-	  pos = 0;
-	  desc = ((const Lisp_Specifier *)data)->methods->extra_description;
-	  goto restart;
-	case XD_CODING_SYSTEM_END:
-	  pos = 0;
-	  desc =
-	    ((const Lisp_Coding_System *)data)->methods->extra_description;
-	  goto restart;
 	case XD_BYTECOUNT:
 	case XD_ELEMCOUNT:
 	case XD_HASHCODE:
@@ -1060,7 +887,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	  {
 	    Lisp_Object *pobj = (Lisp_Object *) rdata;
 
-	    assert (desc[pos].data1 == 0);
+	    assert (desc1->data1 == 0);
 
 	    if (POINTER_TYPE_P (XTYPE (*pobj))
 		&& ! EQ (*pobj, Qnull_pointer))
@@ -1070,10 +897,9 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	  }
 	case XD_LISP_OBJECT_ARRAY:
 	  {
-	    EMACS_INT num = desc[pos].data1;
+	    EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+						     data);
 	    int j;
-	    if (XD_IS_INDIRECT (num))
-	      num = pdump_get_indirect_count (num, desc, data);
 
 	    for (j=0; j<num; j++)
 	      {
@@ -1094,13 +920,13 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	  }
 	case XD_STRUCT_ARRAY:
 	  {
-	    EMACS_INT num = desc[pos].data1;
+	    EMACS_INT num = lispdesc_indirect_count (desc1->data1, desc,
+						     data);
 	    int j;
-	    const struct struct_description *sdesc = desc[pos].data2;
-	    Bytecount size = pdump_structure_size (rdata, sdesc);
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2);
+	    Bytecount size = lispdesc_structure_size (rdata, sdesc);
 
-	    if (XD_IS_INDIRECT (num))
-	      num = pdump_get_indirect_count (num, desc, data);
 	    /* Note: We are recursing over data in the block itself */
 	    for (j = 0; j < num; j++)
 	      pdump_reloc_one ((char *) rdata + j * size, delta,
@@ -1108,19 +934,23 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 	    break;
 	  }
-
 	case XD_UNION:
-	  abort (); /* #### IMPLEMENT ME!  NEEDED FOR UNICODE SUPPORT */
+	case XD_UNION_DYNAMIC_SIZE:
+	  desc1 = lispdesc_process_xd_union (desc1, desc, data);
+	  if (desc1)
+	    goto union_switcheroo;
+	  break;
+
 	default:
-	  stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
+	  stderr_out ("Unsupported dump type : %d\n", desc1->type);
 	  abort ();
-	};
+	}
     }
 }
 
 static void
 pdump_allocate_offset (pdump_entry_list_elt *elt,
-		       const struct lrecord_description *desc)
+		       const struct memory_description *desc)
 {
   Bytecount size = elt->count * elt->size;
   elt->save_offset = cur_offset;
@@ -1131,7 +961,7 @@ pdump_allocate_offset (pdump_entry_list_elt *elt,
 
 static void
 pdump_scan_by_alignment (void (*f)(pdump_entry_list_elt *,
-				   const struct lrecord_description *))
+				   const struct memory_description *))
 {
   int align;
 
@@ -1150,7 +980,7 @@ pdump_scan_by_alignment (void (*f)(pdump_entry_list_elt *,
 	  pdump_struct_list_elt list = pdump_struct_table.list[i];
 	  if (list.list.align == align)
 	    for (elt = list.list.first; elt; elt = elt->next)
-	      f (elt, list.sdesc->description);
+	      f (elt, list.desc);
 	}
 
       for (elt = pdump_opaque_data_list.first; elt; elt = elt->next)
@@ -1175,13 +1005,13 @@ pdump_dump_root_struct_ptrs (void)
 }
 
 static void
-pdump_dump_opaques (void)
+pdump_dump_root_blocks (void)
 {
   int i;
-  for (i = 0; i < Dynarr_length (pdump_opaques); i++)
+  for (i = 0; i < Dynarr_length (pdump_root_blocks); i++)
     {
-      pdump_opaque *info = Dynarr_atp (pdump_opaques, i);
-      PDUMP_WRITE_ALIGNED (pdump_opaque, *info);
+      pdump_root_block *info = Dynarr_atp (pdump_root_blocks, i);
+      PDUMP_WRITE_ALIGNED (pdump_root_block, *info);
       retry_fwrite (info->varaddress, info->size, 1, pdump_out);
     }
 }
@@ -1216,7 +1046,7 @@ pdump_dump_rtables (void)
   for (i=0; i<pdump_struct_table.count; i++)
     {
       elt = pdump_struct_table.list[i].list.first;
-      rt.desc = pdump_struct_table.list[i].sdesc->description;
+      rt.desc = pdump_struct_table.list[i].desc;
       rt.count = pdump_struct_table.list[i].list.count;
       PDUMP_WRITE_ALIGNED (pdump_reloc_table, rt);
       while (elt)
@@ -1237,19 +1067,19 @@ pdump_dump_rtables (void)
 }
 
 static void
-pdump_dump_root_objects (void)
+pdump_dump_root_lisp_objects (void)
 {
-  Elemcount count = (Dynarr_length (pdump_root_objects) +
+  Elemcount count = (Dynarr_length (pdump_root_lisp_objects) +
 			 Dynarr_length (pdump_weak_object_chains));
   Elemcount i;
 
   PDUMP_WRITE_ALIGNED (Elemcount, count);
   PDUMP_ALIGN_OUTPUT (pdump_static_Lisp_Object);
 
-  for (i = 0; i < Dynarr_length (pdump_root_objects); i++)
+  for (i = 0; i < Dynarr_length (pdump_root_lisp_objects); i++)
     {
       pdump_static_Lisp_Object obj;
-      obj.address = Dynarr_at (pdump_root_objects, i);
+      obj.address = Dynarr_at (pdump_root_lisp_objects, i);
       obj.value   = * obj.address;
 
       if (POINTER_TYPE_P (XTYPE (obj.value)))
@@ -1270,7 +1100,7 @@ pdump_dump_root_objects (void)
 
       for (;;)
 	{
-	  const struct lrecord_description *desc;
+	  const struct memory_description *desc;
 	  int pos;
 	  elt = pdump_get_entry (XRECORD_LHEADER (obj.value));
 	  if (elt)
@@ -1279,7 +1109,11 @@ pdump_dump_root_objects (void)
 	  for (pos = 0; desc[pos].type != XD_LO_LINK; pos++)
 	    assert (desc[pos].type != XD_END);
 
-	  obj.value = *(Lisp_Object *)(desc[pos].offset + (char *)(XRECORD_LHEADER (obj.value)));
+	  /* #### Figure out how to handle indirect offsets here. */
+	  assert (!XD_IS_INDIRECT (desc[pos].offset));
+	  obj.value =
+	    * (Lisp_Object *) (desc[pos].offset +
+			       (char *) (XRECORD_LHEADER (obj.value)));
 	}
       obj.value = wrap_pointer_1 ((void *) elt->save_offset);
 
@@ -1294,6 +1128,8 @@ pdump (void)
   Lisp_Object t_console, t_device, t_frame;
   int none;
   pdump_header header;
+
+  in_pdump = 1;
 
   pdump_object_table = xnew_array (pdump_entry_list, lrecord_type_count);
   pdump_alert_undump_object = xnew_array (int, lrecord_type_count);
@@ -1312,7 +1148,8 @@ pdump (void)
   t_device  = Vterminal_device;  Vterminal_device  = Qnil;
 
   dump_add_opaque (&lrecord_implementations_table,
-		   lrecord_type_count * sizeof (lrecord_implementations_table[0]));
+		   lrecord_type_count *
+		   sizeof (lrecord_implementations_table[0]));
   dump_add_opaque (&lrecord_markers,
 		   lrecord_type_count * sizeof (lrecord_markers[0]));
 
@@ -1331,10 +1168,10 @@ pdump (void)
   pdump_opaque_data_list.first = 0;
   pdump_opaque_data_list.align = ALIGNOF (max_align_t);
   pdump_opaque_data_list.count = 0;
-  depth = 0;
+  pdump_depth = 0;
 
-  for (i=0; i<Dynarr_length (pdump_root_objects); i++)
-    pdump_register_object (* Dynarr_at (pdump_root_objects, i));
+  for (i = 0; i < Dynarr_length (pdump_root_lisp_objects); i++)
+    pdump_register_object (* Dynarr_at (pdump_root_lisp_objects, i));
 
   none = 1;
   for (i=0; i<lrecord_type_count; i++)
@@ -1343,10 +1180,14 @@ pdump (void)
 	if (none)
 	  printf ("Undumpable types list :\n");
 	none = 0;
-	printf ("  - %s (%d)\n", lrecord_implementations_table[i]->name, pdump_alert_undump_object[i]);
+	printf ("  - %s (%d)\n", lrecord_implementations_table[i]->name,
+		pdump_alert_undump_object[i]);
       }
   if (!none)
-    return;
+    {
+      in_pdump = 0;
+      return;
+    }
 
   for (i=0; i<Dynarr_length (pdump_root_struct_ptrs); i++)
     {
@@ -1358,7 +1199,7 @@ pdump (void)
   header.id = dump_id;
   header.reloc_address = 0;
   header.nb_root_struct_ptrs = Dynarr_length (pdump_root_struct_ptrs);
-  header.nb_opaques = Dynarr_length (pdump_opaques);
+  header.nb_root_blocks = Dynarr_length (pdump_root_blocks);
 
   cur_offset = MAX_ALIGN_SIZE (sizeof (header));
   max_size = 0;
@@ -1386,9 +1227,9 @@ pdump (void)
   fseek (pdump_out, header.stab_offset, SEEK_SET);
 
   pdump_dump_root_struct_ptrs ();
-  pdump_dump_opaques ();
+  pdump_dump_root_blocks ();
   pdump_dump_rtables ();
-  pdump_dump_root_objects ();
+  pdump_dump_root_lisp_objects ();
 
   retry_fclose (pdump_out);
   retry_close (pdump_fd);
@@ -1400,6 +1241,7 @@ pdump (void)
   Vterminal_console = t_console;
   Vterminal_frame   = t_frame;
   Vterminal_device  = t_device;
+  in_pdump = 0;
 }
 
 static int
@@ -1420,30 +1262,32 @@ pdump_load_finish (void)
   char *p;
   EMACS_INT delta;
   EMACS_INT count;
-  pdump_header *header = (pdump_header *)pdump_start;
+  pdump_header *header = (pdump_header *) pdump_start;
 
   pdump_end = pdump_start + pdump_length;
 
-  delta = ((EMACS_INT)pdump_start) - header->reloc_address;
+  delta = ((EMACS_INT) pdump_start) - header->reloc_address;
   p = pdump_start + header->stab_offset;
 
   /* Put back the pdump_root_struct_ptrs */
   p = (char *) ALIGN_PTR (p, pdump_static_pointer);
-  for (i=0; i<header->nb_root_struct_ptrs; i++)
+  for (i = 0; i < header->nb_root_struct_ptrs; i++)
     {
       pdump_static_pointer ptr = PDUMP_READ (p, pdump_static_pointer);
       (* ptr.address) = ptr.value + delta;
     }
 
-  /* Put back the pdump_opaques */
-  for (i=0; i<header->nb_opaques; i++)
+  /* Put back the pdump_root_blocks and relocate */
+  for (i = 0; i < header->nb_root_blocks; i++)
     {
-      pdump_opaque info = PDUMP_READ_ALIGNED (p, pdump_opaque);
-      memcpy ((void*)info.varaddress, p, info.size);
+      pdump_root_block info = PDUMP_READ_ALIGNED (p, pdump_root_block);
+      memcpy ((void *) info.varaddress, p, info.size);
+      if (info.desc)
+	pdump_reloc_one ((void *) info.varaddress, delta, info.desc);
       p += info.size;
     }
 
-  /* Do the relocations */
+  /* Relocate the heap objects */
   pdump_rt_list = p;
   count = 2;
   for (;;)
@@ -1452,19 +1296,19 @@ pdump_load_finish (void)
       p = (char *) ALIGN_PTR (p, char *);
       if (rt.desc)
 	{
-	  char **reloc = (char **)p;
-	  for (i=0; i < rt.count; i++)
+	  char **reloc = (char **) p;
+	  for (i = 0; i < rt.count; i++)
 	    {
 	      reloc[i] += delta;
 	      pdump_reloc_one (reloc[i], delta, rt.desc);
 	    }
 	  p += rt.count * sizeof (char *);
-	} else
-	  if (!(--count))
-	    break;
+	}
+      else if (!(--count))
+	  break;
     }
 
-  /* Put the pdump_root_objects variables in place */
+  /* Put the pdump_root_lisp_objects variables in place */
   i = PDUMP_READ_ALIGNED (p, Elemcount);
   p = (char *) ALIGN_PTR (p, pdump_static_Lisp_Object);
   while (i--)
@@ -1488,11 +1332,12 @@ pdump_load_finish (void)
 	break;
       if (rt.desc == hash_table_description)
 	{
-	  for (i=0; i < rt.count; i++)
+	  for (i = 0; i < rt.count; i++)
 	    pdump_reorganize_hash_table (PDUMP_READ (p, Lisp_Object));
 	  break;
-	} else
-	  p += sizeof (Lisp_Object) * rt.count;
+	}
+      else
+	p += sizeof (Lisp_Object) * rt.count;
     }
 
   return 1;
@@ -1532,11 +1377,11 @@ pdump_file_get (const char *path)
   if (pdump_hMap == INVALID_HANDLE_VALUE)
     return 0;
 
-  pdump_start = MapViewOfFile (pdump_hMap,
-			       FILE_MAP_COPY, /* Copy on write */
-			       0,	      /* Start at zero */
-			       0,
-			       0);	      /* Map all of it */
+  pdump_start = (char *) MapViewOfFile (pdump_hMap,
+					FILE_MAP_COPY, /* Copy on write */
+					0,	      /* Start at zero */
+					0,
+					0);	      /* Map all of it */
   pdump_free = pdump_file_unmap;
   return 1;
 }
@@ -1571,11 +1416,11 @@ pdump_resource_get (void)
     return 0;
 
   /* Found it, use the data in the resource */
-  hResLoad = LoadResource (NULL, hRes);
+  hResLoad = (HRSRC) LoadResource (NULL, hRes);
   if (hResLoad == NULL)
     return 0;
 
-  pdump_start = LockResource (hResLoad);
+  pdump_start = (char *) LockResource (hResLoad);
   if (pdump_start == NULL)
     return 0;
 
@@ -1696,6 +1541,7 @@ pdump_load (const Extbyte *argv0)
   Extbyte *w;
   const Extbyte *dir, *p;
 
+  in_pdump = 1;
   dir = argv0;
   if (dir[0] == '-')
     {
@@ -1753,6 +1599,7 @@ pdump_load (const Extbyte *argv0)
   if (pdump_file_try (exe_path))
     {
       pdump_load_finish ();
+      in_pdump = 0;
       return 1;
     }
 
@@ -1762,11 +1609,13 @@ pdump_load (const Extbyte *argv0)
       if (pdump_load_check ())
 	{
 	  pdump_load_finish ();
+	  in_pdump = 0;
 	  return 1;
 	}
       pdump_free ();
     }
 #endif
 
+  in_pdump = 0;
   return 0;
 }

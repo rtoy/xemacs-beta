@@ -52,7 +52,7 @@ enum hash_table_test
   HASH_TABLE_EQUAL
 };
 
-extern const struct lrecord_description hash_table_description[];
+extern const struct memory_description hash_table_description[];
 
 EXFUN (Fcopy_hash_table, 1);
 EXFUN (Fhash_table_count, 1);

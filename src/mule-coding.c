@@ -660,7 +660,6 @@ big5_detect (struct detection_state *st, const UExtbyte *src,
 /* Any ISO-2022-compliant coding system.  Includes JIS, EUC, CTEXT
    (Compound Text, the encoding of selections in X Windows).  See below for
    a complete description of ISO-2022. */
-DEFINE_CODING_SYSTEM_TYPE (iso2022);
 
 /* Flags indicating what we've seen so far when parsing an
    ISO2022 escape sequence. */
@@ -925,45 +924,42 @@ struct iso2022_coding_stream
   int current_char_boundary;
 };
 
-static const struct lrecord_description ccs_description_1[] =
+static const struct memory_description ccs_description_1[] =
 {
   { XD_LISP_OBJECT, offsetof (charset_conversion_spec, from_charset) },
   { XD_LISP_OBJECT, offsetof (charset_conversion_spec, to_charset) },
   { XD_END }
 };
 
-static const struct struct_description ccs_description =
+static const struct sized_memory_description ccs_description =
 {
   sizeof (charset_conversion_spec),
   ccs_description_1
 };
 
-static const struct lrecord_description ccsd_description_1[] =
+static const struct memory_description ccsd_description_1[] =
 {
   XD_DYNARR_DESC (charset_conversion_spec_dynarr, &ccs_description),
   { XD_END }
 };
 
-static const struct struct_description ccsd_description =
+static const struct sized_memory_description ccsd_description =
 {
   sizeof (charset_conversion_spec_dynarr),
   ccsd_description_1
 };
 
-static const struct lrecord_description iso2022_coding_system_description[] = {
-  { XD_LISP_OBJECT_ARRAY,
-    coding_system_data_offset + offsetof (struct iso2022_coding_system, 
-					  initial_charset), 4 },
-  { XD_STRUCT_PTR,
-    coding_system_data_offset + offsetof (struct iso2022_coding_system,
-					  input_conv),
+static const struct memory_description iso2022_coding_system_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct iso2022_coding_system, 
+				    initial_charset), 4 },
+  { XD_STRUCT_PTR, offsetof (struct iso2022_coding_system, input_conv),
     1, &ccsd_description },
-  { XD_STRUCT_PTR,
-    coding_system_data_offset + offsetof (struct iso2022_coding_system,
-					  output_conv),
+  { XD_STRUCT_PTR, offsetof (struct iso2022_coding_system, output_conv),
     1, &ccsd_description },
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (iso2022);
 
 /* The following note taken directly from FSF 21.0.103. */
 
@@ -2985,7 +2981,6 @@ iso2022_finalize_detection_state (struct detection_state *st)
 /************************************************************************/
 
 /* Converter written in CCL. */
-DEFINE_CODING_SYSTEM_TYPE (ccl);
 
 struct ccl_coding_system
 {
@@ -3010,15 +3005,13 @@ struct ccl_coding_stream
   struct ccl_program ccl;
 };
 
-static const struct lrecord_description ccl_coding_system_description[] = {
-  { XD_LISP_OBJECT,
-    coding_system_data_offset + offsetof (struct ccl_coding_system, 
-					  decode) },
-  { XD_LISP_OBJECT,
-    coding_system_data_offset + offsetof (struct ccl_coding_system, 
-					  encode) },
+static const struct memory_description ccl_coding_system_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct ccl_coding_system, decode) },
+  { XD_LISP_OBJECT, offsetof (struct ccl_coding_system, encode) },
   { XD_END }
 };
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (ccl);
 
 static void
 ccl_mark (Lisp_Object codesys)

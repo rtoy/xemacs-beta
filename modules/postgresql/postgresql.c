@@ -178,11 +178,9 @@ make_pgconn (Lisp_PGconn *pgconn)
   return wrap_pgconn (pgconn);
 }
 
-#ifdef USE_KKCC
-static const struct lrecord_description pgconn_description [] = {
+static const struct memory_description pgconn_description [] = {
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 #ifdef RUNNING_XEMACS_21_1
@@ -267,20 +265,12 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       NULL, NULL,
 			       Lisp_PGconn);
 #else
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 			       0, /*dumpable-flag*/
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       pgconn_description,
 			       Lisp_PGconn);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
-			       mark_pgconn, print_pgconn, finalize_pgconn,
-			       NULL, NULL,
-			       0,
-			       Lisp_PGconn);
-#endif /* not USE_KKCC */
 #endif
 /****/
 
@@ -295,11 +285,9 @@ make_pgresult (Lisp_PGresult *pgresult)
   return wrap_pgresult (pgresult);
 }
 
-#ifdef USE_KKCC
-static const struct lrecord_description pgresult_description [] = {
+static const struct memory_description pgresult_description [] = {
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 
 static Lisp_Object
@@ -400,20 +388,12 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       NULL, NULL,
 			       Lisp_PGresult);
 #else
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 			       0, /*dumpable-flag*/
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       pgresult_description,
 			       Lisp_PGresult);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
-			       mark_pgresult, print_pgresult, finalize_pgresult,
-			       NULL, NULL,
-			       0,
-			       Lisp_PGresult);
-#endif /* not USE_KKCC */
 #endif
 
 /***********************/

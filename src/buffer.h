@@ -235,7 +235,7 @@ struct buffer
 
   /* Everything from here down must be a Lisp_Object */
 
-#define MARKED_SLOT(x) Lisp_Object x
+#define MARKED_SLOT(x) Lisp_Object x;
 #include "bufslots.h"
 #undef MARKED_SLOT
 };

@@ -67,20 +67,11 @@ static void
 tty_timeout_to_emacs_event (Lisp_Event *emacs_event)
 {
   /* timeout events have nil as channel */
-#ifdef USE_KKCC
   SET_EVENT_TYPE (emacs_event, timeout_event);
   SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
-  XSET_TIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (emacs_event), pop_low_level_timeout (&tty_timer_queue, 0));
-  XSET_TIMEOUT_DATA_FUNCTION (EVENT_DATA (emacs_event), Qnil);
-  XSET_TIMEOUT_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
-#else /* not USE_KKCC */
-  emacs_event->event_type = timeout_event;
-  emacs_event->timestamp  = 0; /* #### */
-  emacs_event->event.timeout.interval_id =
-    pop_low_level_timeout (&tty_timer_queue, 0);
-  emacs_event->event.timeout.function = Qnil;
-  emacs_event->event.timeout.object = Qnil;
-#endif /* not USE_KKCC */
+  SET_EVENT_TIMEOUT_INTERVAL_ID (emacs_event, pop_low_level_timeout (&tty_timer_queue, 0));
+  SET_EVENT_TIMEOUT_FUNCTION (emacs_event, Qnil);
+  SET_EVENT_TIMEOUT_OBJECT (emacs_event, Qnil);
 }
 
 
@@ -100,23 +91,6 @@ emacs_tty_event_pending_p (int user_p)
 
   return poll_fds_for_input (user_p ? tty_only_mask :
 			     non_fake_input_wait_mask);
-}
-
-struct console *
-tty_find_console_from_fd (int fd)
-{
-  Lisp_Object concons;
-
-  CONSOLE_LOOP (concons)
-    {
-      struct console *c;
-
-      c = XCONSOLE (XCAR (concons));
-      if (CONSOLE_TTY_P (c) && CONSOLE_TTY_DATA (c)->infd == fd)
-	return c;
-    }
-
-  return 0;
 }
 
 static void
@@ -150,7 +124,7 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 		 user events ahead of process events. */
 	      if (FD_ISSET (i, &temp_mask) && FD_ISSET (i, &tty_only_mask))
 		{
-		  struct console *c = tty_find_console_from_fd (i);
+		  struct console *c = find_tty_or_stream_console_from_fd (i);
 
 		  assert (c);
 		  if (read_event_from_tty_or_stream_desc (emacs_event, c))
@@ -168,17 +142,10 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 
 		  assert (p);
 		  process = wrap_process (p);
-#ifdef USE_KKCC
 		  set_event_type (emacs_event, process_event);
 		  /* process events have nil as channel */
 		  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
-		  XSET_PROCESS_DATA_PROCESS (EVENT_DATA (emacs_event), process);
-#else /* not USE_KKCC */
-		  emacs_event->event_type = process_event;
-		  /* process events have nil as channel */
-		  emacs_event->timestamp  = 0; /* #### */
-		  emacs_event->event.process.process = process;
-#endif /* not USE_KKCC */
+		  SET_EVENT_PROCESS_PROCESS (emacs_event, process);
 		  return;
 		}
 	    }
@@ -187,17 +154,10 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 	  /* Return a dummy event, so that a cycle of the command loop will
 	     occur. */
 	  drain_signal_event_pipe ();
-#ifdef USE_KKCC
 	  set_event_type (emacs_event, eval_event);
 	  /* eval events have nil as channel */
-	  XSET_EVAL_DATA_FUNCTION (EVENT_DATA (emacs_event), Qidentity);
-	  XSET_EVAL_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
-#else /* not USE_KKCC */
-	  emacs_event->event_type = eval_event;
-	  /* eval events have nil as channel */
-	  emacs_event->event.eval.function = Qidentity;
-	  emacs_event->event.eval.object = Qnil;
-#endif /* not USE_KKCC */
+	  SET_EVENT_EVAL_FUNCTION (emacs_event, Qidentity);
+	  SET_EVENT_EVAL_OBJECT (emacs_event, Qnil);
 	  return;
 	}
       else if (ndesc == 0) /* timeout fired */
@@ -262,10 +222,9 @@ emacs_tty_unselect_console (struct console *con)
 }
 
 static void
-emacs_tty_quit_p (void)
+emacs_tty_drain_queue (void)
 {
-  /* Nothing to do currently because QUIT is handled through SIGINT.
-     This could change. */
+  drain_tty_devices ();
 }
 
 static void
@@ -301,10 +260,9 @@ emacs_tty_delete_io_streams (Lisp_Object instream,
 void
 reinit_vars_of_event_tty (void)
 {
-  tty_event_stream = xnew (struct event_stream);
+  tty_event_stream = xnew_and_zero (struct event_stream);
 
   tty_event_stream->event_pending_p 	= emacs_tty_event_pending_p;
-  tty_event_stream->force_event_pending = 0;
   tty_event_stream->next_event_cb	= emacs_tty_next_event;
   tty_event_stream->handle_magic_event_cb = emacs_tty_handle_magic_event;
   tty_event_stream->format_magic_event_cb = emacs_tty_format_magic_event;
@@ -316,7 +274,7 @@ reinit_vars_of_event_tty (void)
   tty_event_stream->unselect_console_cb = emacs_tty_unselect_console;
   tty_event_stream->select_process_cb 	= emacs_tty_select_process;
   tty_event_stream->unselect_process_cb = emacs_tty_unselect_process;
-  tty_event_stream->quit_p_cb		= emacs_tty_quit_p;
+  tty_event_stream->drain_queue_cb	= emacs_tty_drain_queue;
   tty_event_stream->create_io_streams_cb = emacs_tty_create_io_streams;
   tty_event_stream->delete_io_streams_cb = emacs_tty_delete_io_streams;
 }

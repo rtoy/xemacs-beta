@@ -147,7 +147,7 @@ mswindows_ls_sort_fcn (const void *elem1, const void *elem2)
   switch (mswindows_sort_method)
     {
     case MSWINDOWS_SORT_BY_NAME:
-      status = strcmp (e1->cFileName, e2->cFileName);
+      status = qxestrcmp (e1->cFileName, e2->cFileName);
       break;
     case MSWINDOWS_SORT_BY_NAME_NOCASE:
       status = qxestrcasecmp (e1->cFileName, e2->cFileName);
@@ -274,7 +274,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	    eilwr (filename);
 	  len = eilen (filename);
 	  result = (NILP (pattern)
-		    || (0 <= re_search (bufp, eidata (filename), 
+		    || (0 <= re_search (bufp, (char *) eidata (filename), 
 					len, 0, len, 0, Qnil, 0, scache)));
 	  if (result)
 	    {
@@ -341,11 +341,11 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
 	DEC_IBYTEPTR (end);
 	DEC_IBYTEPTR (end);
 	DEC_IBYTEPTR (end);
-	if (qxestrcasecmp (end, ".exe") == 0
-	    || qxestrcasecmp (end, ".com") == 0
-	    || qxestrcasecmp (end, ".bat") == 0
+	if (qxestrcasecmp_c (end, ".exe") == 0
+	    || qxestrcasecmp_c (end, ".com") == 0
+	    || qxestrcasecmp_c (end, ".bat") == 0
 #if 0
-	    || qxestrcasecmp (end, ".pif") == 0
+	    || qxestrcasecmp_c (end, ".pif") == 0
 #endif
 	    )
 	  is_executable = 1;

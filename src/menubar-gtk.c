@@ -1,6 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1275,7 +1276,7 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 		      GTK_SIGNAL_FUNC (popdown_menu_cb), NULL);
 		      
   gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL,
-		  eev ? eev->event.button.button : 0,
+		  eev ? EVENT_BUTTON_BUTTON (eev) : 0,
 		  eev ? eev->timestamp : GDK_CURRENT_TIME);
 }
 

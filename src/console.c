@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "window.h"
 
+#include "console-stream-impl.h"
 #ifdef HAVE_TTY
 #include "console-tty-impl.h"
 #endif
@@ -106,75 +107,35 @@ console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 
 
-#ifdef USE_KKCC
-
-static const struct lrecord_description empty_condata_description [] = {
-  { XD_END }
-};
-
-static const struct lrecord_description tty_condata_description [] = {
-  { XD_LISP_OBJECT, offsetof (struct tty_console, terminal_type) },
-  { XD_LISP_OBJECT, offsetof (struct tty_console, instream) },
-  { XD_LISP_OBJECT, offsetof (struct tty_console, outstream) },
-  { XD_END }
-};
-
-static const struct struct_description condata_description []= {
-  { dead_console, empty_condata_description },
-  { tty_console, tty_condata_description },
-  { gtk_console, empty_condata_description },
-  { x_console, empty_condata_description },
-  { mswindows_console, empty_condata_description },
-  { stream_console, empty_condata_description },
-  { XD_END }
-};
-
-static const struct lrecord_description conmeths_description_1 [] = {
-  { XD_LISP_OBJECT, offsetof (struct console_methods, symbol) },
-  /*{ XD_LISP_OBJECT, offsetof (struct console_methods, predicate_symbol) },
-    { XD_LISP_OBJECT, offsetof (struct console_methods, image_conversion_list) },*/
-  { XD_END }
-};
-
-static const struct struct_description conmeths_description = {
-  sizeof (struct console_methods),
-  conmeths_description_1
-};
-
-static const struct lrecord_description console_description [] = {
-  { XD_INT, offsetof (struct console, contype) },
-  { XD_LISP_OBJECT, offsetof (struct console, name) },
-  { XD_LISP_OBJECT, offsetof (struct console, connection) },
-  { XD_LISP_OBJECT, offsetof (struct console, canon_connection) },
-  { XD_LISP_OBJECT, offsetof (struct console, device_list) },
-  { XD_LISP_OBJECT, offsetof (struct console, selected_device) },
-  { XD_LISP_OBJECT, offsetof (struct console, last_nonminibuf_frame) },
-  { XD_LISP_OBJECT, offsetof (struct console, overriding_terminal_local_map) },
-  { XD_LISP_OBJECT, offsetof (struct console, last_command) },
-  { XD_LISP_OBJECT, offsetof (struct console, prefix_arg) },
-  { XD_LISP_OBJECT, offsetof (struct console, command_builder) },
-  { XD_LISP_OBJECT, offsetof (struct console, defining_kbd_macro) },
-  { XD_LISP_OBJECT, offsetof (struct console, kbd_macro_builder) },
-  { XD_LISP_OBJECT, offsetof (struct console, last_kbd_macro) },
+static const struct memory_description console_data_description_1 []= {
 #ifdef HAVE_TTY
-  { XD_LISP_OBJECT, offsetof (struct console, tty_erase_char) },
+  { XD_STRUCT_PTR, tty_console, 1, &tty_console_data_description},
 #endif
-  { XD_LISP_OBJECT, offsetof (struct console, default_minibuffer_frame) },
-  { XD_LISP_OBJECT, offsetof (struct console, function_key_map) },
-  { XD_STRUCT_PTR, offsetof (struct console, conmeths), 1, &conmeths_description },
-  { XD_UNION, offsetof (struct console, console_data), 
-    XD_INDIRECT (0, 0), condata_description },
+  { XD_STRUCT_PTR, stream_console, 1, &stream_console_data_description},
   { XD_END }
 };
 
-#endif /* USE_KKCC */
+static const struct sized_memory_description console_data_description = {
+  sizeof (void *), console_data_description_1
+};
+
+static const struct memory_description console_description [] = {
+  { XD_INT, offsetof (struct console, contype) },
+#define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct console, x) },
+#include "conslots.h"
+  { XD_STRUCT_PTR, offsetof (struct console, conmeths), 1,
+    &console_methods_description },
+  { XD_UNION, offsetof (struct console, console_data), 
+    XD_INDIRECT (0, 0), &console_data_description },
+  { XD_END }
+};
 
 static Lisp_Object
 mark_console (Lisp_Object obj)
 {
   struct console *con = XCONSOLE (obj);
 
-#define MARKED_SLOT(x) mark_object (con->x)
+#define MARKED_SLOT(x) mark_object (con->x);
 #include "conslots.h"
 
   /* Can be zero for Vconsole_defaults, Vconsole_local_symbols */
@@ -204,20 +165,26 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " 0x%x>", con->header.uid);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("console", console,
 			       0, /*dumpable-flag*/
 			       mark_console, print_console, 0, 0, 0, 
 			       console_description,
 			       struct console);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("console", console,
-			       mark_console, print_console, 0, 0, 0, 0,
-			       struct console);
-#endif /* not USE_KKCC */
 
+
+static void
+set_quit_events (struct console *con, Lisp_Object key)
+{
+  /* Make sure to run Fcharacter_to_event() *BEFORE* setting QUIT_CHAR,
+     so that nothing is changed when invalid values trigger an error! */
+  con->quit_event = Fcharacter_to_event (key, Qnil, wrap_console (con), Qnil);
+  con->quit_char = key;
+  con->critical_quit_event = Fcopy_event (con->quit_event, Qnil);
+  upshift_event (con->critical_quit_event);
+}
+
 static struct console *
-allocate_console (void)
+allocate_console (Lisp_Object type)
 {
   Lisp_Object console;
   struct console *con = alloc_lcrecord_type (struct console, &lrecord_console);
@@ -228,9 +195,11 @@ allocate_console (void)
   console = wrap_console (con);
   GCPRO1 (console);
 
-  con->quit_char = 7; /* C-g */
+  con->conmeths = decode_console_type (type, ERROR_ME);
+  con->contype = get_console_variant (type);
   con->command_builder = allocate_command_builder (console, 1);
   con->function_key_map = Fmake_sparse_keymap (Qnil);
+  set_quit_events (con, make_char (7)); /* C-g */
 
   UNGCPRO;
   return con;
@@ -263,39 +232,27 @@ decode_console_type (Lisp_Object type, Error_Behavior errb)
   return 0;
 }
 
-#ifdef USE_KKCC
 enum console_variant
 get_console_variant (Lisp_Object type)
 {
   if (EQ (type, Qtty)) 
-    {
-      return tty_console;
-    }
+    return tty_console;
 
   if (EQ (type, Qgtk)) 
-    {
-      return gtk_console;
-    }
+    return gtk_console;
 
   if (EQ (type, Qx)) 
-    {
-      return x_console;
-    }
+    return x_console;
 
   if (EQ (type, Qmswindows)) 
-    {
-      return mswindows_console;
-    }
+    return mswindows_console;
 
   if (EQ (type, Qstream)) 
-    {
-      return stream_console;
-    }
+    return stream_console;
 
   abort (); /* should never happen */
   return dead_console; 
 }
-#endif /* USE_KKCC */
 
 int
 valid_console_type_p (Lisp_Object type)
@@ -593,15 +550,10 @@ create_console (Lisp_Object name, Lisp_Object type, Lisp_Object connection,
   if (!NILP (console))
     return console;
 
-  con = allocate_console ();
+  con = allocate_console (type);
   console = wrap_console (con);
 
   GCPRO1 (console);
-
-  con->conmeths = decode_console_type (type, ERROR_ME);
-#ifdef USE_KKCC
-  con->contype = get_console_variant (type);
-#endif /* USE_KKCC */
 
   CONSOLE_NAME (con) = name;
   CONSOLE_CONNECTION (con) =
@@ -701,7 +653,7 @@ nuke_all_console_slots (struct console *con, Lisp_Object zap)
 {
   zero_lcrecord (con);
 
-#define MARKED_SLOT(x)	con->x = zap
+#define MARKED_SLOT(x)	con->x = zap;
 #include "conslots.h"
 }
 
@@ -858,6 +810,7 @@ delete_console_internal (struct console *con, int force,
      them. */
   nuke_all_console_slots (con, Qnil);
   con->conmeths = dead_console_methods;
+  con->contype = dead_console;
   note_object_deleted (console);
 
   UNGCPRO;
@@ -1133,7 +1086,7 @@ For tty consoles, do stuff to the tty to make it sane again.
 
 DEFUN ("set-input-mode", Fset_input_mode, 3, 5, 0, /*
 Set mode of reading keyboard input.
-First arg is ignored, for backward compatibility.
+First arg (formerly INTERRUPT-INPUT) is ignored, for backward compatibility.
 Second arg FLOW non-nil means use ^S/^Q flow control for output to terminal
  (no effect except in CBREAK mode).
 Third arg META t means accept 8-bit input (for a Meta key).
@@ -1155,9 +1108,10 @@ See also `current-input-mode'.
 
   if (!NILP (quit))
     {
-      CHECK_CHAR_COERCE_INT (quit);
-      CONSOLE_QUIT_CHAR (con) =
-	((unsigned int) XCHAR (quit)) & (meta_key ? 0377 : 0177);
+      if (CHAR_OR_CHAR_INTP (quit) && !meta_key)
+	set_quit_events (con, make_char (XCHAR_OR_CHAR_INT (quit) & 0177));
+      else
+	set_quit_events (con, quit);
     }
 
 #ifdef HAVE_TTY
@@ -1193,7 +1147,7 @@ The elements of this list correspond to the arguments of
        (console))
 {
   struct console *con = decode_console (console);
-  Lisp_Object flow, meta, quit;
+  Lisp_Object flow, meta;
 
 #ifdef HAVE_TTY
   flow = CONSOLE_TTY_P (con) && TTY_FLAGS (con).flow_control ? Qt : Qnil;
@@ -1205,9 +1159,8 @@ The elements of this list correspond to the arguments of
   flow = Qnil;
   meta = Qt;
 #endif
-  quit = make_char (CONSOLE_QUIT_CHAR (con));
 
-  return list4 (Qnil, flow, meta, quit);
+  return list4 (Qnil, flow, meta, CONSOLE_QUIT_CHAR (con));
 }
 
 
@@ -1255,35 +1208,35 @@ syms_of_console (void)
   DEFSYMBOL (Qsuspend_resume_hook);
 }
 
-static const struct lrecord_description cte_description_1[] = {
+static const struct memory_description cte_description_1[] = {
   { XD_LISP_OBJECT, offsetof (console_type_entry, symbol) },
   { XD_STRUCT_PTR,  offsetof (console_type_entry, meths), 1, &console_methods_description },
   { XD_END }
 };
 
-static const struct struct_description cte_description = {
+static const struct sized_memory_description cte_description = {
   sizeof (console_type_entry),
   cte_description_1
 };
 
-static const struct lrecord_description cted_description_1[] = {
+static const struct memory_description cted_description_1[] = {
   XD_DYNARR_DESC (console_type_entry_dynarr, &cte_description),
   { XD_END }
 };
 
-const struct struct_description cted_description = {
+const struct sized_memory_description cted_description = {
   sizeof (console_type_entry_dynarr),
   cted_description_1
 };
 
-static const struct lrecord_description console_methods_description_1[] = {
+static const struct memory_description console_methods_description_1[] = {
   { XD_LISP_OBJECT, offsetof (struct console_methods, symbol) },
   { XD_LISP_OBJECT, offsetof (struct console_methods, predicate_symbol) },
   { XD_LISP_OBJECT, offsetof (struct console_methods, image_conversion_list) },
   { XD_END }
 };
 
-const struct struct_description console_methods_description = {
+const struct sized_memory_description console_methods_description = {
   sizeof (struct console_methods),
   console_methods_description_1
 };
@@ -1412,7 +1365,9 @@ common_init_complex_vars_of_console (void)
   /* Set up the non-nil default values of various console slots.
      Must do these before making the first console.
      */
-  /* #### Anything needed here? */
+
+  /* ... Nothing here for the moment.
+   #### Console-local variables should probably be eliminated.*/
 
   {
     /*  0 means var is always local.  Default used only at creation.
@@ -1481,12 +1436,12 @@ reinit_complex_vars_of_console_runtime_only (void)
 }
 
 
-static const struct lrecord_description console_slots_description_1[] = {
+static const struct memory_description console_slots_description_1[] = {
   { XD_LISP_OBJECT_ARRAY, 0, CONSOLE_SLOTS_COUNT },
   { XD_END }
 };
 
-static const struct struct_description console_slots_description = {
+static const struct sized_memory_description console_slots_description = {
   CONSOLE_SLOTS_SIZE,
   console_slots_description_1
 };
@@ -1594,6 +1549,6 @@ buffer's local map, and the minor mode keymaps and text property keymaps.
   if ((XINT (console_local_flags.slot) != -2 &&			\
          XINT (console_local_flags.slot) != -3)			\
       != !(NILP (XCONSOLE (Vconsole_local_symbols)->slot)))	\
-  abort ()
+  abort ();
 #include "conslots.h"
 }

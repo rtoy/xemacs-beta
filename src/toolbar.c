@@ -56,8 +56,7 @@ Lisp_Object Q_size;
 
 Lisp_Object Qinit_toolbar_from_resources;
 
-#ifdef USE_KKCC
-static const struct lrecord_description toolbar_button_description [] = {
+static const struct memory_description toolbar_button_description [] = {
   { XD_LISP_OBJECT, offsetof (struct toolbar_button, next) },
   { XD_LISP_OBJECT, offsetof (struct toolbar_button, frame) },
   { XD_LISP_OBJECT, offsetof (struct toolbar_button, up_glyph) },
@@ -71,7 +70,6 @@ static const struct lrecord_description toolbar_button_description [] = {
   { XD_LISP_OBJECT, offsetof (struct toolbar_button, help_string) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_toolbar_button (Lisp_Object obj)
@@ -90,17 +88,11 @@ mark_toolbar_button (Lisp_Object obj)
   return data->help_string;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
 			       0, /*dumpable-flag*/
 			       mark_toolbar_button, 0, 0, 0, 0, 
 			       toolbar_button_description,
 			       struct toolbar_button);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
-			       mark_toolbar_button, 0, 0, 0, 0, 0,
-			       struct toolbar_button);
-#endif /* not USE_KKCC */
 
 DEFUN ("toolbar-button-p", Ftoolbar_button_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar button.
@@ -247,7 +239,7 @@ decode_toolbar_position (Lisp_Object position)
   if (EQ (position, Qright))  return RIGHT_TOOLBAR;
   invalid_constant ("Invalid toolbar position", position);
 
-  RETURN_NOT_REACHED (TOP_TOOLBAR)
+  RETURN_NOT_REACHED (TOP_TOOLBAR);
 }
 
 DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position, 1, 1, 0, /*

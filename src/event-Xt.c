@@ -295,14 +295,7 @@ x_keysym_to_character (KeySym keysym)
 #endif
 }
 
-/* #### The way that keysym correspondence to characters should work:
-   - a Lisp_Event should contain a keysym AND a character slot.
-   - keybindings are tried with the keysym.  If no binding can be found,
-   and there is a corresponding character, call self-insert-command.
-
-   #### Nuke x-iso8859-1.el.
-   #### Nuke the Qascii_character property.
-   #### Nuke Vcharacter_set_property.
+/* See comment near character_to_event().
 */
 static void
 maybe_define_x_key_as_self_inserting_character (KeySym keysym, Lisp_Object symbol)
@@ -1075,16 +1068,10 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	    Lisp_Event *ev          = XEVENT (emacs_event);
             ev->channel	            = DEVICE_CONSOLE (d);
             ev->timestamp	    = event->time;
-            ev->event_type	    = key_press_event;
-#ifdef USE_KKCC
 	    XSET_EVENT_TYPE (emacs_event, key_press_event);
-	    XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (emacs_event), 0);
-	    XSET_KEY_DATA_KEYSYM (XEVENT_DATA (emacs_event), make_char (ch));
-#else
-            ev->event.key.modifiers = 0;
-            ev->event.key.keysym    = make_char (ch);
-#endif
-            enqueue_Xt_dispatch_event (emacs_event);
+	    XSET_EVENT_KEY_MODIFIERS (emacs_event, 0);
+	    XSET_EVENT_KEY_KEYSYM (emacs_event, make_char (ch));
+            enqueue_dispatch_event (emacs_event);
           }
 	Lstream_close (istr);
 	UNGCPRO;
@@ -1219,11 +1206,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    XKeyEvent *ev = &x_event->xkey;
 	    /* This used to compute the frame from the given X window and
 	       store it here, but we really don't care about the frame. */
-#ifdef USE_KKCC
 	    SET_EVENT_CHANNEL (emacs_event, DEVICE_CONSOLE (d));
-#else /* not USE_KKCC */
-	    emacs_event->channel = DEVICE_CONSOLE (d);
-#endif /* not USE_KKCC */
 	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
 
 	    /* If the emacs keysym is nil, then that means that the X
@@ -1267,17 +1250,10 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		if (top && bot && top != bot)
 		  modifiers &= ~XEMACS_MOD_SHIFT;
 	      }
-#ifdef USE_KKCC
 	    set_event_type (emacs_event, key_press_event);
 	    SET_EVENT_TIMESTAMP (emacs_event, ev->time);
-	    XSET_KEY_DATA_MODIFIERS (EVENT_DATA (emacs_event), modifiers);
-	    XSET_KEY_DATA_KEYSYM (EVENT_DATA (emacs_event), keysym);
-#else /* not USE_KKCC */
-	    emacs_event->event_type	     = key_press_event;
-	    emacs_event->timestamp	     = ev->time;
-	    emacs_event->event.key.modifiers = modifiers;
-	    emacs_event->event.key.keysym    = keysym;
-#endif /* not USE_KKCC */
+	    SET_EVENT_KEY_MODIFIERS (emacs_event, modifiers);
+	    SET_EVENT_KEY_KEYSYM (emacs_event, keysym);
 	  }
 	else                    /* Mouse press/release event */
 	  {
@@ -1286,27 +1262,15 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 
 	    if (! frame)
 	      return 0;	/* not for us */
-#ifdef USE_KKCC
 	    set_event_type (emacs_event, (x_event->type == ButtonPress) ?
                         button_press_event : button_release_event);
-            SET_EVENT_CHANNEL (emacs_event, wrap_frame(frame));
+            SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
 
-	    XSET_BUTTON_DATA_MODIFIERS (EVENT_DATA (emacs_event), modifiers);
+	    SET_EVENT_BUTTON_MODIFIERS (emacs_event, modifiers);
 	    SET_EVENT_TIMESTAMP (emacs_event, ev->time);
-	    XSET_BUTTON_DATA_BUTTON (EVENT_DATA (emacs_event), ev->button);
-	    XSET_BUTTON_DATA_X (EVENT_DATA (emacs_event), ev->x);
-	    XSET_BUTTON_DATA_Y (EVENT_DATA (emacs_event), ev->y);
-#else /* not USE_KKCC */
-	    emacs_event->channel = wrap_frame (frame);
-	    emacs_event->event_type = (x_event->type == ButtonPress) ?
-	      button_press_event : button_release_event;
-
-	    emacs_event->event.button.modifiers = modifiers;
-	    emacs_event->timestamp		= ev->time;
-	    emacs_event->event.button.button	= ev->button;
-	    emacs_event->event.button.x		= ev->x;
-	    emacs_event->event.button.y		= ev->y;
-#endif /* not USE_KKCC */
+	    SET_EVENT_BUTTON_BUTTON (emacs_event, ev->button);
+	    SET_EVENT_BUTTON_X (emacs_event, ev->x);
+	    SET_EVENT_BUTTON_Y (emacs_event, ev->y);
 	    /* because we don't seem to get a FocusIn event for button clicks
 	       when a widget-glyph is selected we will assume that we want the
 	       focus if a button gets pressed. */
@@ -1343,19 +1307,11 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
           ev = &event2; /* only one structure copy */
 
         DEVICE_X_MOUSE_TIMESTAMP (d) = ev->time;
-#ifdef USE_KKCC
-        SET_EVENT_CHANNEL (emacs_event, wrap_frame(frame));
+        SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
         set_event_type (emacs_event, pointer_motion_event);
         SET_EVENT_TIMESTAMP (emacs_event, ev->time);
-        XSET_MOTION_DATA_X (EVENT_DATA (emacs_event), ev->x);
-        XSET_MOTION_DATA_Y (EVENT_DATA (emacs_event), ev->y);
-#else /* not USE_KKCC */
-        emacs_event->channel = wrap_frame (frame);
-        emacs_event->event_type	    = pointer_motion_event;
-        emacs_event->timestamp      = ev->time;
-        emacs_event->event.motion.x = ev->x;
-        emacs_event->event.motion.y = ev->y;
-#endif /* not USE_KKCC */
+        SET_EVENT_MOTION_X (emacs_event, ev->x);
+        SET_EVENT_MOTION_Y (emacs_event, ev->y);
         if (ev->state & ShiftMask)	modifiers |= XEMACS_MOD_SHIFT;
         if (ev->state & ControlMask)	modifiers |= XEMACS_MOD_CONTROL;
         if (ev->state & xd->MetaMask)	modifiers |= XEMACS_MOD_META;
@@ -1369,11 +1325,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
         if (ev->state & Button5Mask)	modifiers |= XEMACS_MOD_BUTTON5;
         /* Currently ignores Shift_Lock but probably shouldn't
            (but it definitely should ignore Caps_Lock). */
-#ifdef USE_KKCC
-        XSET_MOTION_DATA_MODIFIERS (EVENT_DATA (emacs_event), modifiers);
-#else /* not USE_KKCC */
-        emacs_event->event.motion.modifiers = modifiers;
-#endif /* not USE_KKCC */
+        SET_EVENT_MOTION_MODIFIERS (emacs_event, modifiers);
       }
     break;
 
@@ -1400,16 +1352,10 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	      return 0;	/* not for us */
 
 	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
-#ifdef USE_KKCC
 	    set_event_type (emacs_event, misc_user_event);
-	    SET_EVENT_CHANNEL (emacs_event, wrap_frame(frame));
+	    SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
 	    SET_EVENT_TIMESTAMP (emacs_event, DEVICE_X_LAST_SERVER_TIMESTAMP (d));
-#else /* not USE_KKCC */
-	    emacs_event->channel = wrap_frame (frame);
-	    emacs_event->event_type = misc_user_event;
-	    emacs_event->timestamp  = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
-#endif /* not USE_KKCC */
-	    state=DndDragButtons(x_event);
+	    state=DndDragButtons (x_event);
 
 	    if (state & ShiftMask)	modifiers |= XEMACS_MOD_SHIFT;
 	    if (state & ControlMask)	modifiers |= XEMACS_MOD_CONTROL;
@@ -1429,24 +1375,15 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    if (state & Button2Mask)    button = Button2;
 	    if (state & Button1Mask)    button = Button1;
 
-#ifdef USE_KKCC
-	    XSET_MISC_USER_DATA_MODIFIERS (EVENT_DATA (emacs_event), modifiers);
-	    XSET_MISC_USER_DATA_BUTTON (EVENT_DATA (emacs_event), button);
+	    SET_EVENT_MISC_USER_MODIFIERS (emacs_event, modifiers);
+	    SET_EVENT_MISC_USER_BUTTON (emacs_event, button);
 
-	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event,
-			       &(XMISC_USER_DATA_X (EVENT_DATA (emacs_event))),
-			       &(XMISC_USER_DATA_Y (EVENT_DATA (emacs_event))) );
-#else /* not USE_KKCC */
-	    emacs_event->event.misc.modifiers = modifiers;
-	    emacs_event->event.misc.button    = button;
+	    DndDropCoordinates (FRAME_X_TEXT_WIDGET (frame), x_event,
+				&(EVENT_MISC_USER_X (emacs_event)),
+				&(EVENT_MISC_USER_Y (emacs_event)));
+	    DndGetData (x_event,&data,&size);
 
-	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event,
-			       &(emacs_event->event.misc.x),
-			       &(emacs_event->event.misc.y) );
-#endif /* not USE_KKCC */
-	    DndGetData(x_event,&data,&size);
-
-	    dtype=DndDataType(x_event);
+	    dtype=DndDataType (x_event);
 	    switch (dtype)
 	      {
 	      case DndFiles: /* null terminated strings, end null */
@@ -1519,13 +1456,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		break;
 	      }
 
-#ifdef USE_KKCC
-	    XSET_MISC_USER_DATA_FUNCTION (EVENT_DATA (emacs_event), Qdragdrop_drop_dispatch);
-	    XSET_MISC_USER_DATA_OBJECT (EVENT_DATA (emacs_event), Fcons (l_type, l_dndlist));
-#else /* not USE_KKCC */
-	    emacs_event->event.misc.function = Qdragdrop_drop_dispatch;
-	    emacs_event->event.misc.object = Fcons (l_type, l_dndlist);
-#endif /* not USE_KKCC */
+	    SET_EVENT_MISC_USER_FUNCTION (emacs_event, Qdragdrop_drop_dispatch);
+	    SET_EVENT_MISC_USER_OBJECT (emacs_event, Fcons (l_type, l_dndlist));
 
 	    UNGCPRO;
 
@@ -1545,13 +1477,9 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
       {
         struct frame *frame;
         Window w;
-#ifdef USE_KKCC
 	XEvent *x_event_copy;
 	SET_EVENT_TYPE (emacs_event, magic_event);
-        x_event_copy = &XMAGIC_DATA_X_EVENT (EVENT_DATA (emacs_event));
-#else /* not USE_KKCC */
-	XEvent *x_event_copy = &emacs_event->event.magic.underlying_x_event;
-#endif /* not USE_KKCC */
+        x_event_copy = &EVENT_MAGIC_X_EVENT (emacs_event);
 
 #define FROB(event_member, window_member) \
 	x_event_copy->event_member = x_event->event_member; \
@@ -1586,14 +1514,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
         if (!frame)
           return 0;
 
-#ifdef USE_KKCC
-	SET_EVENT_TYPE (emacs_event, magic_event);
-	SET_EVENT_CHANNEL (emacs_event, wrap_frame(frame));
-	XSET_MAGIC_DATA_X_EVENT (EVENT_DATA(emacs_event), *x_event_copy);
-#else /* not USE_KKCC */
-        emacs_event->event_type = magic_event;
-        emacs_event->channel = wrap_frame (frame);
-#endif /* not USE_KKCC */
+	SET_EVENT_CHANNEL (emacs_event, wrap_frame (frame));
+	SET_EVENT_MAGIC_X_EVENT (emacs_event, *x_event_copy);
         break;
       }
     }
@@ -1693,25 +1615,15 @@ emacs_Xt_enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p)
   Lisp_Event *ev          = XEVENT (emacs_event);
   XEvent *x_event;
 
-  ev->event_type = magic_event;
-
-#ifdef USE_KKCC
   XSET_EVENT_TYPE (emacs_event, magic_event);
-  x_event = &XMAGIC_DATA_X_EVENT (EVENT_DATA (ev));
-#else /* not USE_KKCC */
-  x_event = &ev->event.magic.underlying_x_event;
-#endif /* not USE_KKCC */
+  x_event = &EVENT_MAGIC_X_EVENT (ev);
 
   x_event->type = in_p ? FocusIn : FocusOut;
   x_event->xfocus.window = XtWindow (wants_it);
 
-#ifdef USE_KKCC
   SET_EVENT_CHANNEL (ev, frame);
-#else /* not USE_KKCC */
-  ev->channel = frame;
-#endif /* not USE_KKCC */
 
-  enqueue_Xt_dispatch_event (emacs_event);
+  enqueue_dispatch_event (emacs_event);
 }
 
 /* The idea here is that when a widget glyph gets unmapped we don't
@@ -1948,9 +1860,9 @@ handle_client_message (struct frame *f, XEvent *event)
      cannot rely on it to do the right thing at the right time for
      widget display.
 
-     drain_X_queue () - this happens when SIGIO gets tripped,
-     processing the event queue allows C-g to be checked for. It gets
-     called from emacs_Xt_event_pending_p ().
+     emacs_Xt_drain_queue () - this happens when SIGIO gets tripped,
+     processing the event queue allows C-g to be checked for.  It gets
+     called from emacs_Xt_event_pending_p (). #### Update this comment.
 
    In order to solve this I have tried introducing a list primitive -
    dispatch-non-command-events - which forces processing of X events
@@ -1990,11 +1902,7 @@ emacs_Xt_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
   if (CONSOLE_X_P (XCONSOLE (console)))
     write_c_string
-#ifdef USE_KKCC
-      (pstream, x_event_name ((XMAGIC_DATA_X_EVENT (EVENT_DATA(event))).type));
-#else /* not USE_KKCC */
-      (pstream, x_event_name (event->event.magic.underlying_x_event.type));
-#endif /* not USE_KKCC */
+      (pstream, x_event_name ((EVENT_MAGIC_X_EVENT (event)).type));
 }
 
 static int
@@ -2002,13 +1910,8 @@ emacs_Xt_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
 {
   if (CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) &&
       CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
-#ifdef USE_KKCC
-    return ((XMAGIC_DATA_X_EVENT (EVENT_DATA(e1))).xany.serial ==
-	    (XMAGIC_DATA_X_EVENT (EVENT_DATA(e2))).xany.serial);
-#else /* not USE_KKCC */
-    return (e1->event.magic.underlying_x_event.xany.serial ==
-	    e2->event.magic.underlying_x_event.xany.serial);
-#endif /* not USE_KKCC */
+    return ((EVENT_MAGIC_X_EVENT (e1)).xany.serial ==
+	    (EVENT_MAGIC_X_EVENT (e2)).xany.serial);
   if (CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) ||
       CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
     return 0;
@@ -2020,11 +1923,7 @@ emacs_Xt_hash_magic_event (Lisp_Event *e)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (e));
   if (CONSOLE_X_P (XCONSOLE (console)))
-#ifdef USE_KKCC
-    return (XMAGIC_DATA_X_EVENT (EVENT_DATA(e))).xany.serial;
-#else /* not USE_KKCC */
-    return e->event.magic.underlying_x_event.xany.serial;
-#endif /* not USE_KKCC */
+    return (EVENT_MAGIC_X_EVENT (e)).xany.serial;
   return 0;
 }
 
@@ -2032,11 +1931,7 @@ static void
 emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
 {
   /* This function can GC */
-#ifdef USE_KKCC
-  XEvent *event = &XMAGIC_DATA_X_EVENT (EVENT_DATA(emacs_event));
-#else /* not USE_KKCC */
-  XEvent *event = &emacs_event->event.magic.underlying_x_event;
-#endif /* not USE_KKCC */
+  XEvent *event = &EVENT_MAGIC_X_EVENT (emacs_event);
   struct frame *f = XFRAME (EVENT_CHANNEL (emacs_event));
 
   if (!FRAME_LIVE_P (f) || DEVICE_X_BEING_DELETED (XDEVICE (FRAME_DEVICE (f))))
@@ -2286,19 +2181,11 @@ Xt_timeout_to_emacs_event (Lisp_Event *emacs_event)
   assert (timeout);
   completed_timeouts = completed_timeouts->next;
   /* timeout events have nil as channel */
-#ifdef USE_KKCC
-  set_event_type(emacs_event, timeout_event);
+  set_event_type (emacs_event, timeout_event);
   SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### wrong!! */
-  XSET_TIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (emacs_event), timeout->id);
-  XSET_TIMEOUT_DATA_FUNCTION (EVENT_DATA (emacs_event), Qnil);
-  XSET_TIMEOUT_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
-#else /* not USE_KKCC */
-  emacs_event->event_type = timeout_event;
-  emacs_event->timestamp  = 0; /* #### wrong!! */
-  emacs_event->event.timeout.interval_id = timeout->id;
-  emacs_event->event.timeout.function = Qnil;
-  emacs_event->event.timeout.object = Qnil;
-#endif /* not USE_KKCC */
+  SET_EVENT_TIMEOUT_INTERVAL_ID (emacs_event, timeout->id);
+  SET_EVENT_TIMEOUT_FUNCTION (emacs_event, Qnil);
+  SET_EVENT_TIMEOUT_OBJECT (emacs_event, Qnil);
   Blocktype_free (the_Xt_timeout_blocktype, timeout);
 }
 
@@ -2552,15 +2439,9 @@ Xt_process_to_emacs_event (Lisp_Event *emacs_event)
 	  filedesc_with_input[i] = Qnil;
 	  process_events_occurred--;
 	  /* process events have nil as channel */
-#ifdef USE_KKCC
 	  set_event_type (emacs_event, process_event);
 	  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
-	  XSET_PROCESS_DATA_PROCESS (EVENT_DATA (emacs_event), process);
-#else /* not USE_KKCC */
-	  emacs_event->event_type = process_event;
-	  emacs_event->timestamp  = 0; /* #### */
-	  emacs_event->event.process.process = process;
-#endif /* not USE_KKCC */
+	  SET_EVENT_PROCESS_PROCESS (emacs_event, process);
 	  return;
 	}
     }
@@ -2857,20 +2738,6 @@ describe_event (XEvent *event, Lisp_Object pstream)
 /*			get the next event from Xt			*/
 /************************************************************************/
 
-static Lisp_Object dispatch_event_queue, dispatch_event_queue_tail;
-
-void
-enqueue_Xt_dispatch_event (Lisp_Object event)
-{
-  enqueue_event (event, &dispatch_event_queue, &dispatch_event_queue_tail);
-}
-
-static Lisp_Object
-dequeue_Xt_dispatch_event (void)
-{
-  return dequeue_event (&dispatch_event_queue, &dispatch_event_queue_tail);
-}
-
 /* This business exists because menu events "happen" when
    menubar_selection_callback() is called from somewhere deep
    within XtAppProcessEvent in emacs_Xt_next_event().  The
@@ -2886,18 +2753,11 @@ signal_special_Xt_user_event (Lisp_Object channel, Lisp_Object function,
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
 
-#ifdef USE_KKCC
   XSET_EVENT_TYPE (event, misc_user_event);
   XSET_EVENT_CHANNEL (event, channel);
-  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), function);
-  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), object);
-#else /* not USE_KKCC */
-  XEVENT (event)->event_type = misc_user_event;
-  XEVENT (event)->channel = channel;
-  XEVENT (event)->event.eval.function = function;
-  XEVENT (event)->event.eval.object = object;
-#endif /* not USE_KKCC */
-  enqueue_Xt_dispatch_event (event);
+  XSET_EVENT_MISC_USER_FUNCTION (event, function);
+  XSET_EVENT_MISC_USER_OBJECT (event, object);
+  enqueue_dispatch_event (event);
 }
 
 static void
@@ -2951,7 +2811,7 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
     {
       Lisp_Object event, event2;
       event2 = wrap_event (emacs_event);
-      event = dequeue_Xt_dispatch_event ();
+      event = dequeue_dispatch_event ();
       Fcopy_event (event, event2);
       Fdeallocate_event (event);
     }
@@ -2967,15 +2827,9 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
       /* A dummy event, so that a cycle of the command loop will occur. */
       fake_event_occurred = 0;
       /* eval events have nil as channel */
-#ifdef USE_KKCC
       set_event_type (emacs_event, eval_event);
-      XSET_EVAL_DATA_FUNCTION (EVENT_DATA (emacs_event), Qidentity);
-      XSET_EVAL_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
-#else /* not USE_KKCC */
-      emacs_event->event_type = eval_event;
-      emacs_event->event.eval.function = Qidentity;
-      emacs_event->event.eval.object = Qnil;
-#endif /* not USE_KKCC */
+      SET_EVENT_EVAL_FUNCTION (emacs_event, Qidentity);
+      SET_EVENT_EVAL_OBJECT (emacs_event, Qnil);
     }
   else /* if (process_events_occurred) */
     Xt_process_to_emacs_event (emacs_event);
@@ -2996,135 +2850,18 @@ emacs_Xt_event_handler (Widget wid /* unused */,
     describe_event (event, Qexternal_debugging_output);
 #endif /* DEBUG_XEMACS */
   if (x_event_to_emacs_event (event, XEVENT (emacs_event)))
-    enqueue_Xt_dispatch_event (emacs_event);
+    enqueue_dispatch_event (emacs_event);
   else
     Fdeallocate_event (emacs_event);
 }
 
 
 /************************************************************************/
-/*                      input pending / C-g checking                    */
+/*                            input pending                             */
 /************************************************************************/
 
-static Bool
-quit_char_predicate (Display *display, XEvent *event, XPointer data)
-{
-  struct device *d = get_device_from_display (display);
-  struct x_device *xd = DEVICE_X_DATA (d);
-  char c, quit_char;
-  Bool *critical = (Bool *) data;
-  Lisp_Object keysym;
-
-  if (critical)
-    *critical = False;
-  if ((event->type != KeyPress) ||
-      (! x_any_window_to_frame (d, event->xany.window)) ||
-      (event->xkey.state
-       & (xd->MetaMask | xd->HyperMask | xd->SuperMask | xd->AltMask)))
-    return 0;
-
-  /* This duplicates some code that exists elsewhere, but it's relatively
-     fast and doesn't cons. */
-  keysym = x_to_emacs_keysym (&event->xkey, 1);
-  if (NILP (keysym)) return 0;
-  if (CHAR_OR_CHAR_INTP (keysym))
-    c = XCHAR_OR_CHAR_INT (keysym);
-  /* Highly doubtful that these are the quit character, but... */
-  else if (EQ (keysym, QKbackspace))	c = '\b';
-  else if (EQ (keysym, QKtab))		c = '\t';
-  else if (EQ (keysym, QKlinefeed))	c = '\n';
-  else if (EQ (keysym, QKreturn))	c = '\r';
-  else if (EQ (keysym, QKescape))	c = 27;
-  else if (EQ (keysym, QKspace))	c = ' ';
-  else if (EQ (keysym, QKdelete))	c = 127;
-  else return 0;
-
-  if (event->xkey.state & xd->MetaMask)     c |= 0x80;
-  if ((event->xkey.state & ControlMask) && !(c >= 'A' && c <= 'Z'))
-    c &= 0x1F;			/* unshifted control characters */
-  quit_char = CONSOLE_QUIT_CHAR (XCONSOLE (DEVICE_CONSOLE (d)));
-  if (c == quit_char)
-    return True;
-  /* If we've got Control-Shift-G instead of Control-G, that means
-     we have a critical_quit.  Caps_Lock is its own modifier, so it
-     won't cause ^G to act differently than before. */
-  if (event->xkey.state & ControlMask)  c &= 0x1F;
-  if (c == quit_char)
-    {
-      if (critical) *critical = True;
-      return True;
-    }
-  return False;
-}
-
-/* This scans the X input queue for a KeyPress event that matches the
-   quit character, and sets Vquit_flag.  This is called from the
-   QUIT macro to determine whether we should quit.
-
-   In a SIGIO world, this won't be called unless a SIGIO has happened
-   since the last time we checked.
-
-   In a non-SIGIO world, this is called from emacs_Xt_event_pending_p
-   (which is called from input_pending_p).
- */
 static void
-x_check_for_quit_char (Display *display)
-{
-  XEvent event;
-  int queued;
-  Bool critical_quit = False;
-  XEventsQueued (display, QueuedAfterReading);
-  queued = XCheckIfEvent (display, &event,
-			  quit_char_predicate,
-			  (char *) &critical_quit);
-  if (queued)
-    {
-      Vquit_flag = (critical_quit ? Qcritical : Qt);
-      /* don't put the event back onto the queue.  Those functions that
-	 wanted to read a ^G directly have arranged to do this. */
-    }
-}
-
-static void
-check_for_tty_quit_char (struct device *d)
-{
-  SELECT_TYPE temp_mask;
-  int infd = DEVICE_INFD (d);
-  struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  Ichar quit_char = CONSOLE_QUIT_CHAR (con);
-
-  FD_ZERO (&temp_mask);
-  FD_SET (infd, &temp_mask);
-
-  while (1)
-    {
-      Lisp_Object event;
-      Ichar the_char;
-
-      if (!poll_fds_for_input (temp_mask))
-	return;
-
-      event = Fmake_event (Qnil, Qnil);
-      if (!read_event_from_tty_or_stream_desc (XEVENT (event), con))
-	/* EOF, or something ... */
-	return;
-      /* #### bogus.  quit-char should be allowed to be any sort
-	 of event. */
-      the_char = event_to_character (XEVENT (event), 1, 0, 0);
-      if (the_char >= 0 && the_char == quit_char)
-	{
-	  Vquit_flag = Qt;
-	  /* do not queue the C-g.  See above. */
-	  return;
-	}
-
-      /* queue the read event to be read for real later. */
-      enqueue_Xt_dispatch_event (event);
-    }
-}
-
-static void
-emacs_Xt_quit_p (void)
+emacs_Xt_drain_queue (void)
 {
   Lisp_Object devcons, concons;
   CONSOLE_LOOP (concons)
@@ -3136,43 +2873,22 @@ emacs_Xt_quit_p (void)
       CONSOLE_DEVICE_LOOP (devcons, con)
 	{
 	  struct device *d;
+	  Display *display;
 	  d = XDEVICE (XCAR (devcons));
-
 	  if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d))
-	    /* emacs may be exiting */
-	    x_check_for_quit_char (DEVICE_X_DISPLAY (d));
-	  else if (DEVICE_TTY_P (d))
-	    check_for_tty_quit_char (d);
+	    {
+	      display = DEVICE_X_DISPLAY (d);
+	      while (XEventsQueued (display, QueuedAfterReading))
+		XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+	    }
 	}
     }
-}
-
-static void
-drain_X_queue (void)
-{
-  Lisp_Object devcons, concons;
-  CONSOLE_LOOP (concons)
-  {
-    struct console *con = XCONSOLE (XCAR (concons));
-    if (!con->input_enabled)
-      continue;
-
-    CONSOLE_DEVICE_LOOP (devcons, con)
-    {
-      struct device* d;
-      Display* display;
-      d = XDEVICE (XCAR (devcons));
-      if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d)) {
-        display = DEVICE_X_DISPLAY (d);
-        while (XEventsQueued (display, QueuedAfterReading))
-          XtAppProcessEvent (Xt_app_con, XtIMXEvent);
-      }
-    }
-  }
   /*
-  while (XtAppPending (Xt_app_con) & XtIMXEvent)
+    while (XtAppPending (Xt_app_con) & XtIMXEvent)
     XtAppProcessEvent (Xt_app_con, XtIMXEvent);
   */
+
+  drain_tty_devices ();
 }
 
 static int
@@ -3203,7 +2919,7 @@ emacs_Xt_event_pending_p (int user_p)
      even without this. */
 #ifndef SIGIO
   /* First check for C-g if necessary */
-  emacs_Xt_quit_p ();
+  event_stream_quit_p ();
 #endif
 #endif
 
@@ -3288,12 +3004,32 @@ emacs_Xt_event_pending_p (int user_p)
          drain part of it, we may later on end up with events
          actually pending but detect_input_pending() returning
          false because there wasn't another SIGIO. */
-      drain_X_queue ();
+      emacs_Xt_drain_queue ();
 
       EVENT_CHAIN_LOOP (event, dispatch_event_queue)
         if (!user_p || command_event_p (event))
           return 1;
     }
+
+  return 0;
+}
+
+int
+check_if_pending_expose_event (struct device *dev)
+{
+  Display *d = DEVICE_X_DISPLAY (dev);
+  Lisp_Object event;
+
+  emacs_Xt_drain_queue ();
+
+  EVENT_CHAIN_LOOP (event, dispatch_event_queue)
+    if (XEVENT_TYPE (event) == magic_event)
+      {
+	XEvent *xev = &XEVENT_MAGIC_X_EVENT (event);
+	if (xev->type == Expose &&
+	    xev->xexpose.display == d)
+	  return 1;
+      }
 
   return 0;
 }
@@ -3524,9 +3260,9 @@ syms_of_event_Xt (void)
 void
 reinit_vars_of_event_Xt (void)
 {
-  Xt_event_stream = xnew (struct event_stream);
+  Xt_event_stream = xnew_and_zero (struct event_stream);
   Xt_event_stream->event_pending_p 	 = emacs_Xt_event_pending_p;
-  Xt_event_stream->force_event_pending 	 = emacs_Xt_force_event_pending;
+  Xt_event_stream->force_event_pending_cb= emacs_Xt_force_event_pending;
   Xt_event_stream->next_event_cb	 = emacs_Xt_next_event;
   Xt_event_stream->handle_magic_event_cb = emacs_Xt_handle_magic_event;
   Xt_event_stream->format_magic_event_cb = emacs_Xt_format_magic_event;
@@ -3538,7 +3274,7 @@ reinit_vars_of_event_Xt (void)
   Xt_event_stream->unselect_console_cb 	 = emacs_Xt_unselect_console;
   Xt_event_stream->select_process_cb 	 = emacs_Xt_select_process;
   Xt_event_stream->unselect_process_cb 	 = emacs_Xt_unselect_process;
-  Xt_event_stream->quit_p_cb		 = emacs_Xt_quit_p;
+  Xt_event_stream->drain_queue_cb	 = emacs_Xt_drain_queue;
   Xt_event_stream->create_io_streams_cb  = emacs_Xt_create_io_streams;
   Xt_event_stream->delete_io_streams_cb  = emacs_Xt_delete_io_streams;
   Xt_event_stream->current_event_timestamp_cb =
@@ -3556,11 +3292,6 @@ void
 vars_of_event_Xt (void)
 {
   reinit_vars_of_event_Xt ();
-
-  dispatch_event_queue = Qnil;
-  staticpro (&dispatch_event_queue);
-  dispatch_event_queue_tail = Qnil;
-  dump_add_root_object (&dispatch_event_queue_tail);
 
   DEFVAR_BOOL ("x-allow-sendevents", &x_allow_sendevents /*
 *Non-nil means to allow synthetic events.  Nil means they are ignored.

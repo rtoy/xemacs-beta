@@ -122,7 +122,7 @@ getpwnam (const Ibyte *name)
   if (!pw)
     return pw;
 
-  if (qxestrcasecmp_i18n (name, pw->pw_name))
+  if (qxestrcasecmp_i18n (name, (Ibyte *) pw->pw_name))
     return NULL;
 
   return pw;
@@ -472,7 +472,7 @@ init_mswindows_environment (void)
     for (i = 0; i < countof (env_vars); i++) 
       {
 	if (!egetenv (env_vars[i]) &&
-	    (lpval = nt_get_resource (env_vars[i], &dwType)) != NULL)
+	    (lpval = nt_get_resource ((Ibyte *) env_vars[i], &dwType)) != NULL)
 	  {
 	    if (dwType == REG_EXPAND_SZ)
 	      {
@@ -484,14 +484,14 @@ init_mswindows_environment (void)
 		buf = (Extbyte *) ALLOCA (cch * XETCHAR_SIZE);
 		qxeExpandEnvironmentStrings ((Extbyte *) lpval, buf, cch);
 		TSTR_TO_C_STRING (buf, envval);
-		eputenv (env_vars[i], envval);
+		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 	    else if (dwType == REG_SZ)
 	      {
 		Ibyte *envval;
 
 		TSTR_TO_C_STRING (lpval, envval);
-		eputenv (env_vars[i], envval);
+		eputenv (env_vars[i], (CIbyte *) envval);
 	      }
 
 	    xfree (lpval);
@@ -516,9 +516,9 @@ init_mswindows_environment (void)
 	if (STRINGP (str))
 	  {
 	    Ibyte *dat = XSTRING_DATA (str);
-	    if (qxestrncasecmp (dat, "PATH=", 5) == 0)
+	    if (qxestrncasecmp_c (dat, "PATH=", 5) == 0)
 	      memcpy (dat, "PATH=", 5);
-	    else if (qxestrncasecmp (dat, "COMSPEC=", 8) == 0)
+	    else if (qxestrncasecmp_c (dat, "COMSPEC=", 8) == 0)
 	      memcpy (dat, "COMSPEC=", 8);
 	  }
       }
@@ -681,9 +681,12 @@ get_cached_volume_information (Ibyte *root_dir)
       DWORD maxcomp;
       DWORD flags;
       Extbyte type[256 * MAX_XETCHAR_SIZE];
+      Extbyte *rootdirext;
+
+      C_STRING_TO_TSTR (root_dir, rootdirext);
 
       /* Info is not cached, or is stale. */
-      if (!qxeGetVolumeInformation (root_dir,
+      if (!qxeGetVolumeInformation (rootdirext,
 				    name, sizeof (name) / XETCHAR_SIZE,
 				    &serialnum,
 				    &maxcomp,
@@ -772,14 +775,14 @@ get_volume_info (const Ibyte *name, const Ibyte **pPath)
    removed; it was only for NT 3.1, which we hereby do not support. (NT 3.5
    predates Windows 95!) */
 
-static int
-is_exec (const Ibyte *name)
+int
+mswindows_is_executable (const Ibyte *name)
 {
   Ibyte *p = qxestrrchr (name, '.');
-  return (p != NULL && (qxestrcasecmp (p, ".exe") == 0 ||
-			qxestrcasecmp (p, ".com") == 0 ||
-			qxestrcasecmp (p, ".bat") == 0 ||
-			qxestrcasecmp (p, ".cmd") == 0));
+  return (p != NULL && (qxestrcasecmp_c (p, ".exe") == 0 ||
+			qxestrcasecmp_c (p, ".com") == 0 ||
+			qxestrcasecmp_c (p, ".bat") == 0 ||
+			qxestrcasecmp_c (p, ".cmd") == 0));
 }
 
 /* Emulate the Unix directory procedures opendir, closedir, 
@@ -944,11 +947,11 @@ open_unc_volume (const Ibyte *path)
 static Ibyte *
 read_unc_volume (HANDLE henum)
 {
-  int count;
+  DWORD count;
   int result;
   Extbyte buf[16384];
   Ibyte *ptr;
-  Bytecount bufsize = sizeof (buf);
+  DWORD bufsize = sizeof (buf);
 
   count = 1;
   /* #### we should just be querying the size and then allocating the
@@ -1030,7 +1033,7 @@ mswindows_access (const Ibyte *path, int mode)
 	  return -1;
 	}
     }
-  if ((mode & X_OK) != 0 && !is_exec (path))
+  if ((mode & X_OK) != 0 && !mswindows_is_executable (path))
     {
       errno = EACCES;
       return -1;
@@ -1056,6 +1059,7 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
 {
   HANDLE fileh;
   int result = -1;
+  Extbyte *oldext;
 
   if (old == NULL || new == NULL)
     {
@@ -1063,8 +1067,8 @@ mswindows_link (const Ibyte *old, const Ibyte *new)
       return -1;
     }
 
-  C_STRING_TO_TSTR (old, old);
-  fileh = qxeCreateFile (old, 0, 0, NULL, OPEN_EXISTING,
+  C_STRING_TO_TSTR (old, oldext);
+  fileh = qxeCreateFile (oldext, 0, 0, NULL, OPEN_EXISTING,
 			 FILE_FLAG_BACKUP_SEMANTICS, NULL);
   if (fileh != INVALID_HANDLE_VALUE)
     {
@@ -1430,12 +1434,7 @@ mswindows_fstat (int desc, struct stat *buf)
   else
     {
 #if 0 /* no way of knowing the filename */
-      Ibyte *p = qxestrrchr (name, '.');
-      if (p != NULL &&
-	  (qxestrcasecmp (p, ".exe") == 0 ||
-	   qxestrcasecmp (p, ".com") == 0 ||
-	   qxestrcasecmp (p, ".bat") == 0 ||
-	   qxestrcasecmp (p, ".cmd") == 0))
+      if (mswindows_is_executable (name))
 	permission |= _S_IEXEC;
 #endif
     }
@@ -1666,7 +1665,7 @@ mswindows_stat (const Ibyte *path, struct stat *buf)
   
   if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
     permission |= _S_IEXEC;
-  else if (is_exec (name))
+  else if (mswindows_is_executable (name))
     permission |= _S_IEXEC;
 
   buf->st_mode |= permission | (permission >> 3) | (permission >> 6);
@@ -1880,10 +1879,10 @@ mswindows_executable_type (const Ibyte *filename, int *is_dos_app,
   p = qxestrrchr (filename, '.');
 
   /* We can only identify DOS .com programs from the extension. */
-  if (p && qxestrcasecmp (p, ".com") == 0)
+  if (p && qxestrcasecmp_c (p, ".com") == 0)
     *is_dos_app = TRUE;
-  else if (p && (qxestrcasecmp (p, ".bat") == 0 ||
-		 qxestrcasecmp (p, ".cmd") == 0))
+  else if (p && (qxestrcasecmp_c (p, ".bat") == 0 ||
+		 qxestrcasecmp_c (p, ".cmd") == 0))
     {
       /* A DOS shell script - it appears that CreateProcess is happy to
 	 accept this (somewhat surprisingly); presumably it looks at
@@ -2018,7 +2017,7 @@ All path elements in FILENAME are converted to their short names.
   TSTR_TO_C_STRING (shortname, shortint);
   MSWINDOWS_NORMALIZE_FILENAME (shortint);
 
-  return build_string (shortint);
+  return build_intstring (shortint);
 }
 
 
@@ -2041,7 +2040,7 @@ All path elements in FILENAME are converted to their long names.
     return Qnil;
 
   canon = mswindows_canonicalize_filename (longname);
-  ret = build_string (canon);
+  ret = build_intstring (canon);
   xfree (canon);
   xfree (longname);
   return ret;

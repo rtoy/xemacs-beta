@@ -256,10 +256,6 @@ version 18.59 released October 31, 1992.
 #include "systime.h"
 #include "sysproc.h" /* for qxe_getpid() */
 
-#ifdef PDUMP
-#include "dumper.h"
-#endif
-
 #ifdef QUANTIFY
 #include <quantify.h>
 #endif
@@ -699,15 +695,6 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
    invoking a bare (without dumped data) XEmacs (i.e. `temacs' with
    the conventional dumper or `xemacs -nd' with the pdumper).  See
    Frun_emacs_from_temacs().
-
-   restart interacts with initialized as follows (per Olivier Galibert):
-
-     It's perverted.
-
-     initialized==0 => temacs
-     initialized!=0 && restart!=0 => run-temacs
-     initialized!=0 && restart==0 => either xemacs after conventional dump,
-                                     or xemacs post pdump_load()
 */
 DECLARE_DOESNT_RETURN (main_1 (int, Extbyte **, Extbyte **, int));
 DOESNT_RETURN
@@ -1042,6 +1029,35 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
   /****** Now initialize everything *******/
 
+  /* NOTE NOTE NOTE:
+
+     In the code below, there are three different states we are concerned
+     about:
+
+     "raw-temacs" == No dumped Lisp data present.  `temacs', or (with pdump)
+                     `xemacs -nd'.
+
+     "run-temacs" == We are restarting.  run-emacs-from-temacs is called,
+                     aka `run-temacs' on the command line.
+
+     "post-dump"  == We are running an unexec()ed XEmacs, or we have loaded
+                     dump data using pdump_load().
+
+     initialized==0 => raw-temacs
+     initialized!=0 && restart!=0 => run-temacs
+     initialized!=0 && restart==0 => post-dump
+
+     When post-pdump_load(), we need to reinitialize various structures.
+     This case is noted in the code below by
+
+       initialized +
+       !restart +
+       ifdef PDUMP.
+
+     In the comments below, "dump time" or "dumping" == raw-temacs.
+     "run time" == run-temacs or post-dump.
+*/
+
   /* First, do really basic environment initialization -- catching signals
      and the like.  These functions have no dependence on any part of
      the Lisp engine and need to be done both at dump time and at run time. */
@@ -1075,6 +1091,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
   purify_flag = 0;
 #ifdef PDUMP
+  in_pdump = 0;
   if (restart)
     initialized = 1;
   else if (nodumpfile)
@@ -1129,6 +1146,8 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
     purify_flag = 1;
 #endif
 
+  init_alloc_early ();
+
   if (!initialized)
     {
       /* Initialize things so that new Lisp objects
@@ -1155,16 +1174,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
-    }
 
-  /* The following will get called in raw-temacs, post-dump/pdump-load XEmacs,
-     and run-temacs. */
-
-  /* Initialize some vars that will also be reset post-dumping */
-  init_alloc_early ();
-
-  if (!initialized)
-    {
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
@@ -1591,7 +1601,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif /* HAVE_X_WINDOWS */
 #ifdef HAVE_MS_WINDOWS
       image_instantiator_format_create_glyphs_mswindows ();
-#endif /* HAVE_MSWINDOWS_WINDOWS */
+#endif /* HAVE_MS_WINDOWS */
 #ifdef HAVE_GTK
       image_instantiator_format_create_glyphs_gtk ();
 #endif
@@ -1654,7 +1664,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 	    - make_int()
 	    - make_char()
 	    - make_extent()
-	    - alloc_lcrecord()
+	    - basic_alloc_lcrecord()
 	    - Fcons()
 	    - listN()
             - make_lcrecord_list()
@@ -2041,15 +2051,16 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 	  garbage_collect_1 ();
       }
 #endif
-#ifdef PDUMP
     }
-  else if (!restart)		      /* after successful pdump_load()
+
+#ifdef PDUMP
+  if (initialized && !restart)	      /* after successful pdump_load()
 					 (note, we are inside ifdef PDUMP) */
     {
-      reinit_alloc_once_early ();
-      reinit_symbols_once_early ();
-      reinit_opaque_once_early ();
-      reinit_eistring_once_early ();
+      reinit_alloc_early ();
+      reinit_symbols_early ();
+      reinit_opaque_early ();
+      reinit_eistring_early ();
 
       reinit_console_type_create_stream ();
 #ifdef HAVE_TTY
@@ -2173,8 +2184,8 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       reinit_complex_vars_of_buffer_runtime_only ();
       reinit_complex_vars_of_console_runtime_only ();
       reinit_complex_vars_of_minibuf ();
-#endif /* PDUMP */
     }
+#endif /* PDUMP */
 
   /* CONGRATULATIONS!!!  We have successfully initialized the Lisp
      engine. */
@@ -2644,7 +2655,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   report_sheap_usage (0);
 #endif
   LONGJMP (run_temacs_catch, 1);
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /* ARGSUSED */
@@ -2787,7 +2798,7 @@ main (int argc, char **argv, char **envp)
   __except (mswindows_handle_hardware_exceptions (GetExceptionCode ())) {}
 #endif
 
-  RETURN_NOT_REACHED (0)
+  RETURN_NOT_REACHED (0);
 }
 
 
@@ -2797,8 +2808,8 @@ main (int argc, char **argv, char **envp)
 
 #ifndef CANNOT_DUMP
 
-#if !defined(PDUMP) || !defined(SYSTEM_MALLOC)
-extern char my_edata[];
+#if !defined (PDUMP) || !defined (SYSTEM_MALLOC)
+extern Char_Binary my_edata[];
 #endif
 
 extern void disable_free_hook (void);
@@ -3161,30 +3172,38 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 	stderr_out ("\nFatal error (%d).\n\n", sig);
       stderr_out
 	("Your files have been auto-saved.\n"
-	 "Use `M-x recover-session' to recover them.\n"
-	 "\n"
-         "Your version of XEmacs was distributed with a PROBLEMS file that  may describe\n"
-	 "your crash, and with luck a workaround.  Please check it first, but do report\n"
-	 "the crash anyway.  "
+"Use `M-x recover-session' to recover them.\n"
+"\n"
+"Your version of XEmacs was distributed with a PROBLEMS file that may describe\n"
+"your crash, and with luck a workaround.  Please check it first, but do report\n"
+"the crash anyway.\n\n"
 #ifdef INFODOCK
-	 "\n\nPlease report this bug by selecting `Report-Bug' in the InfoDock menu.\n"
-	 "*BE SURE* to include the XEmacs configuration from M-x describe-installation,\n"
-	 "or the file Installation in the top directory of the build tree.\n"
+"Please report this bug by selecting `Report-Bug' in the InfoDock menu, or\n"
+"(last resort) by emailing `crashes@xemacs.org' -- note that this is for XEmacs\n"
+"in general, not just Infodock."
 #else
-	 "Please report this bug by invoking M-x report-emacs-bug,\n"
-	 "or by selecting `Send Bug Report' from the Help menu.  If necessary, send\n"
-	 "ordinary email to `crashes@xemacs.org'.  *MAKE SURE* to include the XEmacs\n"
-	 "configuration from M-x describe-installation, or equivalently the file\n"
-	 "Installation in the top of the build tree.\n"
+"Please report this bug by invoking M-x report-emacs-bug, or by selecting\n"
+"`Send Bug Report' from the Help menu.  If that won't work, send ordinary\n"
+"email to `crashes@xemacs.org'."
 #endif
-#ifndef _MSC_VER
-	 "\n"
-	 "*Please* try *hard* to obtain a C stack backtrace; without it, we are unlikely\n"
-	 "to be able to analyze the problem.  Locate the core file produced as a result\n"
-	 "of this crash (often called `core' or `core.<process-id>', and located in\n"
-	 "the directory in which you started XEmacs or your home directory), and type\n"
-	 "\n"
-	 "  gdb "
+"  *MAKE SURE* to include this entire output\n"
+"from this crash, especially including the Lisp backtrace, as well as the\n"
+"XEmacs configuration from M-x describe-installation (or equivalently, the\n"
+"file `Installation' in the top of the build tree).\n"
+#ifdef _MSC_VER
+"\n"
+"If you are fortunate enough to have some sort of debugging aid installed\n"
+"on your system, for example Visual C++, and you can get a C stack backtrace,\n"
+"*please* include it, as it will make our life far easier.\n"
+"\n"
+#else
+"\n"
+"*Please* try *hard* to obtain a C stack backtrace; without it, we are unlikely\n"
+"to be able to analyze the problem.  Locate the core file produced as a result\n"
+"of this crash (often called `core' or `core.<process-id>', and located in\n"
+"the directory in which you started XEmacs or your home directory), and type\n"
+"\n"
+"  gdb "
 #endif
 	 );
 #ifndef _MSC_VER
@@ -3211,10 +3230,10 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
       stderr_out
 	(" core\n"
 	 "\n"
-	 "then type `where' at the debugger prompt.  No GDB on your system?  You may\n"
-	 "have DBX, or XDB, or SDB.  (Ask your system administrator if you need help.)\n"
-	 "If no core file was produced, enable them (often with `ulimit -c unlimited'\n"
-	 "in case of future recurrance of the crash.\n");
+"then type `where' at the debugger prompt.  No GDB on your system?  You may\n"
+"have DBX, or XDB, or SDB.  (Ask your system administrator if you need help.)\n"
+"If no core file was produced, enable them (often with `ulimit -c unlimited')\n"
+"in case of future recurrance of the crash.\n");
 #endif /* _MSC_VER */
     }
 

@@ -164,7 +164,7 @@ IMInstantiateCallback (Display *dpy, XPointer client_data, XPointer call_data)
 {
   struct device *d = (struct device *)client_data;
   XIM xim;
-  char *name, *class;
+  char *name, *class_;
   XIMCallback ximcallback;
   Lisp_Object tail;
 
@@ -172,8 +172,8 @@ IMInstantiateCallback (Display *dpy, XPointer client_data, XPointer call_data)
   if ( xim_initted == False )
     {
       xim_initted = True;
-      XtGetApplicationNameAndClass (dpy, &name, &class);
-      DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
+      XtGetApplicationNameAndClass (dpy, &name, &class_);
+      DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class_);
 
       /* destroy callback for im */
       ximcallback.callback = (XIMProc) IMDestroyCallback;
@@ -216,11 +216,11 @@ XIM_init_device (struct device *d)
   return;
 #else /* pre-X11R6 */
   Display *dpy = DEVICE_X_DISPLAY (d);
-  char *name, *class;
+  char *name, *class_;
   XIM xim;
 
-  XtGetApplicationNameAndClass (dpy, &name, &class);
-  DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
+  XtGetApplicationNameAndClass (dpy, &name, &class_);
+  DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class_);
   if (xim == NULL)
     {
       warn_when_safe
@@ -283,8 +283,8 @@ XIM_init_frame (struct frame *f)
   xic_vars_t xic_vars;
   XIC xic;
 
-#define res(name, class, representation, field, default_value) \
-  { name, class, representation, sizeof(xic_vars.field), \
+#define res(name, class_, representation, field, default_value) \
+  { name, class_, representation, sizeof(xic_vars.field), \
      XtOffsetOf(xic_vars_t, field), XtRString, default_value }
 
   static XtResource resources[] =

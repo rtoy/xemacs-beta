@@ -137,12 +137,85 @@ static struct display_line title_string_display_line;
 static Ichar_dynarr *title_string_ichar_dynarr;
 
 
+
+extern const struct sized_memory_description gtk_frame_data_description;
+extern const struct sized_memory_description mswindows_frame_data_description;
+extern const struct sized_memory_description x_frame_data_description;
+
+static const struct memory_description frame_data_description_1 []= {
+#ifdef HAVE_GTK
+  { XD_STRUCT_PTR, gtk_console, 1, &gtk_frame_data_description},
+#endif
+#ifdef HAVE_MS_WINDOWS
+  { XD_STRUCT_PTR, mswindows_console, 1, &mswindows_frame_data_description},
+#endif
+#ifdef HAVE_X_WINDOWS
+  { XD_STRUCT_PTR, x_console, 1, &x_frame_data_description},
+#endif
+  { XD_END }
+};
+
+static const struct sized_memory_description frame_data_description = {
+  sizeof (void *), frame_data_description_1
+};
+
+extern const struct sized_memory_description expose_ignore_description;
+
+static const struct memory_description expose_ignore_description_1 [] = {
+  { XD_STRUCT_PTR, offsetof (struct expose_ignore, next),
+    1, &expose_ignore_description },
+  { XD_END }
+};
+
+const struct sized_memory_description expose_ignore_description = {
+  sizeof (struct expose_ignore),
+  expose_ignore_description_1
+};
+
+static const struct memory_description display_line_dynarr_pointer_description_1 []= {
+  { XD_STRUCT_PTR, 0, 1, &display_line_dynarr_description},
+  { XD_END }
+};
+
+static const struct sized_memory_description display_line_dynarr_pointer_description = {
+  sizeof (display_line_dynarr *), display_line_dynarr_pointer_description_1
+};
+
+static const struct memory_description frame_description [] = {
+  { XD_INT, offsetof (struct frame, frametype) },
+#define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (struct frame, x) },
+#define MARKED_SLOT_ARRAY(slot, size) \
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct frame, slot), size },
+#include "frameslots.h"
+
+  { XD_STRUCT_PTR, offsetof (struct frame, subwindow_exposures),
+    1, &expose_ignore_description },
+  { XD_STRUCT_PTR, offsetof (struct frame, subwindow_exposures_tail),
+    1, &expose_ignore_description },
+
+#ifdef HAVE_SCROLLBARS
+  { XD_LISP_OBJECT, offsetof (struct frame, sb_vcache) },
+  { XD_LISP_OBJECT, offsetof (struct frame, sb_hcache) },
+#endif /* HAVE_SCROLLBARS */
+
+  { XD_STRUCT_ARRAY, offsetof (struct frame, current_display_lines),
+    4, &display_line_dynarr_pointer_description },
+  { XD_STRUCT_ARRAY, offsetof (struct frame, desired_display_lines),
+    4, &display_line_dynarr_pointer_description },
+
+  { XD_STRUCT_PTR, offsetof (struct frame, framemeths), 1,
+    &console_methods_description },
+  { XD_UNION, offsetof (struct frame, frame_data), 
+    XD_INDIRECT (0, 0), &frame_data_description },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_frame (Lisp_Object obj)
 {
   struct frame *f = XFRAME (obj);
 
-#define MARKED_SLOT(x) mark_object (f->x)
+#define MARKED_SLOT(x) mark_object (f->x);
 #include "frameslots.h"
 
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
@@ -175,23 +248,18 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
 			       0, /*dumpable-flag*/
-                               mark_frame, print_frame, 0, 0, 0, 0,
+                               mark_frame, print_frame, 0, 0, 0,
+			       frame_description,
 			       struct frame);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
-                               mark_frame, print_frame, 0, 0, 0, 0,
-			       struct frame);
-#endif /* not USE_KKCC */
 
 static void
 nuke_all_frame_slots (struct frame *f)
 {
   zero_lcrecord (f);
 
-#define MARKED_SLOT(x)	f->x = Qnil
+#define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
 }
 
@@ -212,6 +280,7 @@ allocate_frame_core (Lisp_Object device)
 
   f->device = device;
   f->framemeths = XDEVICE (device)->devmeths;
+  f->frametype = get_console_variant (XDEVICE_TYPE (device));
   f->buffer_alist = Fcopy_sequence (Vbuffer_alist);
 
   root_window = allocate_window ();
@@ -584,9 +653,9 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (!UNBOUNDP (symbol_function (XSYMBOL (Qcustom_initialize_frame))))
     call1 (Qcustom_initialize_frame, frame);
 
+  UNGCPRO;
   unbind_to (speccount);
 
-  UNGCPRO;
   return frame;
 }
 
@@ -1749,6 +1818,7 @@ delete_frame_internal (struct frame *f, int force,
 
   nuke_all_frame_slots (f);
   f->framemeths = dead_console_methods;
+  f->frametype = dead_console;
 
   note_object_deleted (frame);
 
@@ -1919,17 +1989,10 @@ defaults to the selected device.  If the mouse position can't be determined
   if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
     {
       Lisp_Object event = Fmake_event (Qnil, Qnil);
-#ifdef USE_KKCC
       XSET_EVENT_TYPE (event, pointer_motion_event);
       XSET_EVENT_CHANNEL (event, frame);
-      XSET_MOTION_DATA_X (XEVENT_DATA (event), intx);
-      XSET_MOTION_DATA_Y (XEVENT_DATA (event), inty);
-#else /* not USE_KKCC */
-      XEVENT (event)->event_type = pointer_motion_event;
-      XEVENT (event)->channel = frame;
-      XEVENT (event)->event.motion.x = intx;
-      XEVENT (event)->event.motion.y = inty;
-#endif /* not USE_KKCC */
+      XSET_EVENT_MOTION_X (event, intx);
+      XSET_EVENT_MOTION_Y (event, inty);
       return event;
     }
   else

@@ -169,13 +169,11 @@ mswindows_is_dialog_msg (MSG *msg)
   return 0;
 }
 
-#ifdef USE_KKCC
-static const struct lrecord_description mswindows_dialog_id_description [] = {
+static const struct memory_description mswindows_dialog_id_description [] = {
   { XD_LISP_OBJECT, offsetof (struct mswindows_dialog_id, frame) },
   { XD_LISP_OBJECT, offsetof (struct mswindows_dialog_id, callbacks) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_mswindows_dialog_id (Lisp_Object obj)
@@ -185,19 +183,12 @@ mark_mswindows_dialog_id (Lisp_Object obj)
   return data->callbacks;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("mswindows-dialog-id", mswindows_dialog_id,
 			       0, /* dump-able flag */
 			       mark_mswindows_dialog_id,
 			       internal_object_printer, 0, 0, 0, 
 			       mswindows_dialog_id_description,
 			       struct mswindows_dialog_id);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("mswindows-dialog-id", mswindows_dialog_id,
-			       mark_mswindows_dialog_id,
-			       internal_object_printer, 0, 0, 0, 0,
-			       struct mswindows_dialog_id);
-#endif /* not USE_KKCC */
 
 /* Dialog procedure */
 static BOOL CALLBACK 

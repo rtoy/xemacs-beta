@@ -81,6 +81,23 @@ Lisp_Object Vmswindows_use_system_frame_size_defaults;
    frame Lisp_Object already protected by Fmake_frame */
 Lisp_Object Vmswindows_frame_being_created;
 
+static const struct memory_description mswindows_frame_data_description_1 [] = {
+#ifdef HAVE_TOOLBARS
+  { XD_LISP_OBJECT, offsetof (struct mswindows_frame, toolbar_hash_table) },
+#endif
+  { XD_LISP_OBJECT, offsetof (struct mswindows_frame, menu_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct mswindows_frame, widget_hash_table1) },
+  { XD_LISP_OBJECT, offsetof (struct mswindows_frame, widget_hash_table2) },
+  { XD_LISP_OBJECT, offsetof (struct mswindows_frame, widget_hash_table3) },
+  { XD_END }
+};
+
+extern const struct sized_memory_description mswindows_frame_data_description;
+
+const struct sized_memory_description mswindows_frame_data_description = {
+  sizeof (struct mswindows_frame), mswindows_frame_data_description_1
+};
+
 /*---------------------------------------------------------------------*/
 /*-----                    DISPLAY FRAME                          -----*/
 /*---------------------------------------------------------------------*/

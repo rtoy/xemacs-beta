@@ -1495,6 +1495,8 @@ CALLBACK intercepted_SHBrowseForFolder_proc (HWND hwnd, UINT msg,
     return 0;
 }
 
+#ifdef HAVE_MS_WINDOWS
+
 static int
 is_SHBrowseForFolder (HWND hwnd)
 {
@@ -1505,6 +1507,8 @@ is_SHBrowseForFolder (HWND hwnd)
       return 1;
   return 0;
 }
+
+#endif /* HAVE_MS_WINDOWS */
 
 LPITEMIDLIST
 qxeSHBrowseForFolder (LPBROWSEINFOW lpbi)
@@ -1619,7 +1623,8 @@ qxeSHGetDataFromIDList (IShellFolder *psf, LPCITEMIDLIST pidl, int nFormat,
 
       retval = SHGetDataFromIDListA (psf, pidl, nFormat, &ansidat, cb);
       if (retval == NOERROR)
-	copy_win32_find_dataa_to_win32_find_dataw (&ansidat, pv);
+	copy_win32_find_dataa_to_win32_find_dataw (&ansidat,
+						   (WIN32_FIND_DATAW *) pv);
       return retval;
     }
   else

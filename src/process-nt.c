@@ -751,12 +751,7 @@ nt_create_process (Lisp_Process *p,
     /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
        errors. This leads to bogus error message. */
     DWORD image_type;
-    Ibyte *p = qxestrrchr (XSTRING_DATA (program), '.');
-    if (p != NULL &&
-	(qxestrcasecmp (p, ".exe") == 0 ||
-	 qxestrcasecmp (p, ".com") == 0 ||
-	 qxestrcasecmp (p, ".bat") == 0 ||
-	 qxestrcasecmp (p, ".cmd") == 0))
+    if (mswindows_is_executable (XSTRING_DATA (program)))
       {
 	Extbyte *progext;
 	LISP_STRING_TO_TSTR (program, progext);
@@ -926,11 +921,11 @@ nt_create_process (Lisp_Process *p,
 
       for (i = 0; i < new_length; i++)
 	{
-	  eicat_raw (envout, env[i], strlen (env[i]));
-	  eicat_raw (envout, "\0", 1);
+	  eicat_raw (envout, env[i], qxestrlen (env[i]));
+	  eicat_raw (envout, (Ibyte *) "\0", 1);
 	}
 
-      eicat_raw (envout, "\0", 1);
+      eicat_raw (envout, (Ibyte *) "\0", 1);
       eito_external (envout, Qmswindows_tstr);
       proc_env = eiextdata (envout);
     }
@@ -1210,7 +1205,11 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 
   /* First check if HOST is already a numeric address */
   {
-    unsigned long inaddr = inet_addr (XSTRING_DATA (host));
+    Extbyte *hostext;
+    unsigned long inaddr;
+
+    LISP_STRING_TO_EXTERNAL (host, hostext, Qmswindows_host_name_encoding);
+    inaddr = inet_addr (hostext);
     if (inaddr != INADDR_NONE)
       {
 	address->sin_addr.s_addr = inaddr;

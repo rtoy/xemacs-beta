@@ -50,9 +50,11 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "events.h"
 #include "extents-impl.h"
+#include "file-coding.h"
 #include "frame-impl.h"
 #include "glyphs.h"
 #include "opaque.h"
+#include "lstream.h"
 #include "process.h"
 #include "redisplay.h"
 #include "specifier.h"
@@ -61,16 +63,8 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 #include "console-stream.h"
 
-#ifdef USE_KKCC
-#include "file-coding.h"
-#endif /* USE_KKCC */
-
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
-#endif
-
-#ifdef PDUMP
-#include "dumper.h"
 #endif
 
 EXFUN (Fgarbage_collect, 0);
@@ -198,6 +192,11 @@ Lisp_Object Qgarbage_collecting;
 
 /* Non-zero means we're in the process of doing the dump */
 int purify_flag;
+
+/* Non-zero means we're pdumping out or in */
+#ifdef PDUMP
+int in_pdump;
+#endif
 
 #ifdef ERROR_CHECK_TYPES
 
@@ -368,7 +367,7 @@ deadbeef_memory (void *ptr, Bytecount size)
 
   /* In practice, size will always be a multiple of four.  */
   while (beefs--)
-    (*ptr4++) = 0xDEADBEEF;
+    (*ptr4++) = 0xDEADBEEF; /* -559038737 base 10 */
 }
 
 #else /* !ERROR_CHECK_GC */
@@ -412,9 +411,9 @@ allocate_lisp_storage (Bytecount size)
 
   /* But we do now (as of 3-27-02) go and zero out the memory.  This is a
      good thing, as it will guarantee we won't get any intermittent bugs
-     coming from an uninitiated field.  The speed loss if unnoticeable,
-     esp. as the object are not large -- large stuff like buffer text and
-     redisplay structures and allocated separately. */
+     coming from an uninitiated field.  The speed loss is unnoticeable,
+     esp. as the objects are not large -- large stuff like buffer text and
+     redisplay structures are allocated separately. */
   memset (val, 0, size);
 
   if (need_to_check_c_alloca)
@@ -429,9 +428,13 @@ allocate_lisp_storage (Bytecount size)
    and free any lcrecord which hasn't been marked. */
 static struct lcrecord_header *all_lcrecords;
 
+/* The most basic of the lcrecord allocation functions.  Not usually called
+   directly.  Allocates an lrecord not managed by any lcrecord-list, of a
+   specified size.  See lrecord.h. */
+
 void *
-alloc_lcrecord (Bytecount size,
-		const struct lrecord_implementation *implementation)
+basic_alloc_lcrecord (Bytecount size,
+		      const struct lrecord_implementation *implementation)
 {
   struct lcrecord_header *lcheader;
 
@@ -508,6 +511,28 @@ disksave_object_finalization_1 (void)
 	  !header->free)
 	LHEADER_IMPLEMENTATION (&header->lheader)->finalizer (header, 1);
     }
+}
+
+/* Bitwise copy all parts of a Lisp object other than the header */
+
+void
+copy_lisp_object (Lisp_Object dst, Lisp_Object src)
+{
+  const struct lrecord_implementation *imp =
+    XRECORD_LHEADER_IMPLEMENTATION (src);
+  Bytecount size = lisp_object_size (src);
+
+  assert (imp == XRECORD_LHEADER_IMPLEMENTATION (dst));
+  assert (size == lisp_object_size (dst));
+
+  if (imp->basic_p)
+    memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lrecord_header),
+	    (char *) XRECORD_LHEADER (src) + sizeof (struct lrecord_header),
+	    size - sizeof (struct lrecord_header));
+  else
+    memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lcrecord_header),
+	    (char *) XRECORD_LHEADER (src) + sizeof (struct lcrecord_header),
+	    size - sizeof (struct lcrecord_header));
 }
 
 
@@ -597,7 +622,7 @@ dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
    string_chars_blocks.  Furthermore, no one string stretches across
    two string_chars_blocks.
 
-   Vectors are each malloc()ed separately, similar to lcrecords.
+   Vectors are each malloc()ed separately as lcrecords.
 
    In the following discussion, we use conses, but it applies equally
    well to the other fixed-size types.
@@ -786,8 +811,9 @@ static int gc_count_num_##type##_freelist
       MINIMUM_ALLOWED_FIXED_TYPE_CELLS_##type)			\
     {								\
       result = (structtype *) type##_free_list;			\
-      /* Before actually using the chain pointer,		\
-	 we complement all its bits; see FREE_FIXED_TYPE(). */	\
+      assert (LRECORD_FREE_P (result));				\
+      /* Before actually using the chain pointer, we complement	\
+	 all its bits; see PUT_FIXED_TYPE_ON_FREE_LIST(). */	\
       type##_free_list = (Lisp_Free *)				\
 	(~ (EMACS_UINT) (type##_free_list->chain));		\
       gc_count_num_##type##_freelist--;				\
@@ -882,6 +908,7 @@ typedef struct Lisp_Free
 
 #define FREE_FIXED_TYPE(type, structtype, ptr) do {		\
   structtype *FFT_ptr = (ptr);					\
+  gc_checking_assert (!LRECORD_FREE_P (FFT_ptr));		\
   ADDITIONAL_FREE_##type (FFT_ptr);				\
   deadbeef_memory (FFT_ptr, sizeof (structtype));		\
   PUT_FIXED_TYPE_ON_FREE_LIST (type, structtype, FFT_ptr);	\
@@ -896,13 +923,20 @@ typedef struct Lisp_Free
    completely necessary but helps keep things saner: e.g. this way,
    repeatedly allocating and freeing a cons will not result in
    the consing-since-gc counter advancing, which would cause a GC
-   and somewhat defeat the purpose of explicitly freeing. */
+   and somewhat defeat the purpose of explicitly freeing.
 
+   We also disable this mechanism entirely when ALLOC_NO_POOLS is
+   set, which is used for Purify and the like. */
+
+#ifndef ALLOC_NO_POOLS
 #define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(type, structtype, ptr)	\
 do { FREE_FIXED_TYPE (type, structtype, ptr);			\
      DECREMENT_CONS_COUNTER (sizeof (structtype));		\
      gc_count_num_##type##_freelist++;				\
    } while (0)
+#else
+#define FREE_FIXED_TYPE_WHEN_NOT_IN_GC(type, structtype, ptr)
+#endif
 
 
 
@@ -939,13 +973,12 @@ cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth)
   return 0;
 }
 
-static const struct lrecord_description cons_description[] = {
+static const struct memory_description cons_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Cons, car_) },
   { XD_LISP_OBJECT, offsetof (Lisp_Cons, cdr_) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     1, /*dumpable-flag*/
 				     mark_cons, print_cons, 0,
@@ -958,19 +991,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     0,
 				     cons_description,
 				     Lisp_Cons);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
-				     mark_cons, print_cons, 0,
-				     cons_equal,
-				     /*
-				      * No `hash' method needed.
-				      * internal_hash knows how to
-				      * handle conses.
-				      */
-				     0,
-				     cons_description,
-				     Lisp_Cons);
-#endif /* not USE_KKCC */
 
 DEFUN ("cons", Fcons, 2, 2, 0, /*
 Create a new cons, give it CAR and CDR as components, and return it.
@@ -1168,36 +1188,28 @@ vector_hash (Lisp_Object obj, int depth)
 				     depth + 1));
 }
 
-static const struct lrecord_description vector_description[] = {
+static const struct memory_description vector_description[] = {
   { XD_LONG,              offsetof (Lisp_Vector, size) },
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Vector, contents), XD_INDIRECT(0, 0) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
-				       1, /*dumpable-flag*/
-				       mark_vector, print_vector, 0,
-				       vector_equal,
-				       vector_hash,
-				       vector_description,
-				       size_vector, Lisp_Vector);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
-				       mark_vector, print_vector, 0,
-				       vector_equal,
-				       vector_hash,
-				       vector_description,
-				       size_vector, Lisp_Vector);
-#endif /* not USE_KKCC */
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("vector", vector,
+					1, /*dumpable-flag*/
+					mark_vector, print_vector, 0,
+					vector_equal,
+					vector_hash,
+					vector_description,
+					size_vector, Lisp_Vector);
 /* #### should allocate `small' vectors from a frob-block */
 static Lisp_Vector *
 make_vector_internal (Elemcount sizei)
 {
-  /* no vector_next */
+  /* no `next' field; we use lcrecords */
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
-					       contents, sizei);
-  Lisp_Vector *p = (Lisp_Vector *) alloc_lcrecord (sizem, &lrecord_vector);
+						  contents, sizei);
+  Lisp_Vector *p =
+    (Lisp_Vector *) basic_alloc_lcrecord (sizem, &lrecord_vector);
 
   p->size = sizei;
   return p;
@@ -1344,27 +1356,19 @@ vector8 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2,
 /*			 Bit Vector allocation				*/
 /************************************************************************/
 
-static Lisp_Object all_bit_vectors;
-
 /* #### should allocate `small' bit vectors from a frob-block */
 static Lisp_Bit_Vector *
 make_bit_vector_internal (Elemcount sizei)
 {
+  /* no `next' field; we use lcrecords */
   Elemcount num_longs = BIT_VECTOR_LONG_STORAGE (sizei);
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector,
-						     unsigned long,
-						     bits, num_longs);
-  Lisp_Bit_Vector *p = (Lisp_Bit_Vector *) allocate_lisp_storage (sizem);
-  set_lheader_implementation (&p->lheader, &lrecord_bit_vector);
-
-  INCREMENT_CONS_COUNTER (sizem, "bit-vector");
+						  unsigned long,
+						  bits, num_longs);
+  Lisp_Bit_Vector *p = (Lisp_Bit_Vector *)
+    basic_alloc_lcrecord (sizem, &lrecord_bit_vector);
 
   bit_vector_length (p) = sizei;
-  bit_vector_next   (p) = all_bit_vectors;
-  /* make sure the extra bits in the last long are 0; the calling
-     functions might not set them. */
-  p->bits[num_longs - 1] = 0;
-  all_bit_vectors = wrap_bit_vector (p);
   return p;
 }
 
@@ -1690,133 +1694,152 @@ allocate_event (void)
   return wrap_event (e);
 }
 
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_FIXED_TYPE_ALLOC (key_data, Lisp_Key_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_key_data 1000
 
 Lisp_Object
-allocate_key_data (void)
+make_key_data (void)
 {
   Lisp_Key_Data *d;
 
   ALLOCATE_FIXED_TYPE (key_data, Lisp_Key_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_key_data);
+  d->keysym = Qnil;
 
-  return wrap_key_data(d);
+  return wrap_key_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (button_data, Lisp_Button_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_button_data 1000
 
 Lisp_Object
-allocate_button_data (void)
+make_button_data (void)
 {
   Lisp_Button_Data *d;
 
   ALLOCATE_FIXED_TYPE (button_data, Lisp_Button_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_button_data);
 
-  return wrap_button_data(d);
+  return wrap_button_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (motion_data, Lisp_Motion_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_motion_data 1000
 
 Lisp_Object
-allocate_motion_data (void)
+make_motion_data (void)
 {
   Lisp_Motion_Data *d;
 
   ALLOCATE_FIXED_TYPE (motion_data, Lisp_Motion_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_motion_data);
 
-  return wrap_motion_data(d);
+  return wrap_motion_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (process_data, Lisp_Process_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_process_data 1000
 
 Lisp_Object
-allocate_process_data (void)
+make_process_data (void)
 {
   Lisp_Process_Data *d;
 
   ALLOCATE_FIXED_TYPE (process_data, Lisp_Process_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_process_data);
+  d->process = Qnil;
 
-  return wrap_process_data(d);
+  return wrap_process_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (timeout_data, Lisp_Timeout_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_timeout_data 1000
 
 Lisp_Object
-allocate_timeout_data (void)
+make_timeout_data (void)
 {
   Lisp_Timeout_Data *d;
 
   ALLOCATE_FIXED_TYPE (timeout_data, Lisp_Timeout_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_timeout_data);
+  d->function = Qnil;
+  d->object = Qnil;
 
-  return wrap_timeout_data(d);
+  return wrap_timeout_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (magic_data, Lisp_Magic_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_data 1000
 
 Lisp_Object
-allocate_magic_data (void)
+make_magic_data (void)
 {
   Lisp_Magic_Data *d;
 
   ALLOCATE_FIXED_TYPE (magic_data, Lisp_Magic_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_magic_data);
 
-  return wrap_magic_data(d);
+  return wrap_magic_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (magic_eval_data, Lisp_Magic_Eval_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_eval_data 1000
 
 Lisp_Object
-allocate_magic_eval_data (void)
+make_magic_eval_data (void)
 {
   Lisp_Magic_Eval_Data *d;
 
   ALLOCATE_FIXED_TYPE (magic_eval_data, Lisp_Magic_Eval_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_magic_eval_data);
+  d->object = Qnil;
 
-  return wrap_magic_eval_data(d);
+  return wrap_magic_eval_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (eval_data, Lisp_Eval_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_eval_data 1000
 
 Lisp_Object
-allocate_eval_data (void)
+make_eval_data (void)
 {
   Lisp_Eval_Data *d;
 
   ALLOCATE_FIXED_TYPE (eval_data, Lisp_Eval_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_eval_data);
+  d->function = Qnil;
+  d->object = Qnil;
 
-  return wrap_eval_data(d);
+  return wrap_eval_data (d);
 }
 
 DECLARE_FIXED_TYPE_ALLOC (misc_user_data, Lisp_Misc_User_Data);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_misc_user_data 1000
 
 Lisp_Object
-allocate_misc_user_data (void)
+make_misc_user_data (void)
 {
   Lisp_Misc_User_Data *d;
 
   ALLOCATE_FIXED_TYPE (misc_user_data, Lisp_Misc_User_Data, d);
+  xzero (*d);
   set_lheader_implementation (&d->lheader, &lrecord_misc_user_data);
+  d->function = Qnil;
+  d->object = Qnil;
 
-  return wrap_misc_user_data(d);
+  return wrap_misc_user_data (d);
 }
-#endif /* USE_KKCC */
+
+#endif /* EVENT_DATA_AS_OBJECTS */
 
 /************************************************************************/
 /*			 Marker allocation				*/
@@ -1864,9 +1887,9 @@ noseeum_make_marker (void)
 
 /* The data for "short" strings generally resides inside of structs of type
    string_chars_block. The Lisp_String structure is allocated just like any
-   other Lisp object (except for vectors), and these are freelisted when
-   they get garbage collected. The data for short strings get compacted,
-   but the data for large strings do not.
+   other basic lrecord, and these are freelisted when they get garbage
+   collected. The data for short strings get compacted, but the data for
+   large strings do not.
 
    Previously Lisp_String structures were relocated, but this caused a lot
    of bus-errors because the C code didn't include enough GCPRO's for
@@ -1896,7 +1919,7 @@ string_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  !memcmp (XSTRING_DATA (obj1), XSTRING_DATA (obj2), len));
 }
 
-static const struct lrecord_description string_description[] = {
+static const struct memory_description string_description[] = {
   { XD_BYTECOUNT,       offsetof (Lisp_String, size_) },
   { XD_OPAQUE_DATA_PTR, offsetof (Lisp_String, data_), XD_INDIRECT(0, 1) },
   { XD_LISP_OBJECT,     offsetof (Lisp_String, plist) },
@@ -1955,7 +1978,6 @@ string_plist (Lisp_Object string)
    is done with the ADDITIONAL_FREE_string macro, which is the
    standard way to do finalization when using
    SWEEP_FIXED_TYPE_BLOCK(). */
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						1, /*dumpable-flag*/
 						mark_string, print_string,
@@ -1966,17 +1988,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						string_remprop,
 						string_plist,
 						Lisp_String);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
-						mark_string, print_string,
-						0, string_equal, 0,
-						string_description,
-						string_getprop,
-						string_putprop,
-						string_remprop,
-						string_plist,
-						Lisp_String);
-#endif /* not USE_KKCC */
 /* String blocks contain this many useful bytes. */
 #define STRING_CHARS_BLOCK_SIZE					\
   ((Bytecount) (8192 - MALLOC_OVERHEAD -			\
@@ -2484,32 +2495,30 @@ make_string_nocopy (const Ibyte *contents, Bytecount length)
 /************************************************************************/
 
 /* Lcrecord lists are used to manage the allocation of particular
-   sorts of lcrecords, to avoid calling alloc_lcrecord() (and thus
+   sorts of lcrecords, to avoid calling basic_alloc_lcrecord() (and thus
    malloc() and garbage-collection junk) as much as possible.
    It is similar to the Blocktype class.
 
-   It works like this:
+   See detailed comment in lcrecord.h.
+*/
 
-   1) Create an lcrecord-list object using make_lcrecord_list().
-      This is often done at initialization.  Remember to staticpro_nodump
-      this object!  The arguments to make_lcrecord_list() are the
-      same as would be passed to alloc_lcrecord().
-   2) Instead of calling alloc_lcrecord(), call allocate_managed_lcrecord()
-      and pass the lcrecord-list earlier created.
-   3) When done with the lcrecord, call free_managed_lcrecord().
-      The standard freeing caveats apply: ** make sure there are no
-      pointers to the object anywhere! **
-   4) Calling free_managed_lcrecord() is just like kissing the
-      lcrecord goodbye as if it were garbage-collected.  This means:
-      -- the contents of the freed lcrecord are undefined, and the
-         contents of something produced by allocate_managed_lcrecord()
-	 are undefined, just like for alloc_lcrecord().
-      -- the mark method for the lcrecord's type will *NEVER* be called
-         on freed lcrecords.
-      -- the finalize method for the lcrecord's type will be called
-         at the time that free_managed_lcrecord() is called.
+const struct memory_description free_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct free_lcrecord_header, chain), 0, 0,
+    XD_FLAG_FREE_LISP_OBJECT },
+  { XD_END }
+};
 
-   */
+DEFINE_LRECORD_IMPLEMENTATION ("free", free,
+			       0, /*dumpable-flag*/
+			       0, internal_object_printer,
+			       0, 0, 0, free_description,
+			       struct free_lcrecord_header);
+
+const struct memory_description lcrecord_list_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct lcrecord_list, free), 0, 0,
+    XD_FLAG_FREE_LISP_OBJECT },
+  { XD_END }
+};
 
 static Lisp_Object
 mark_lcrecord_list (Lisp_Object obj)
@@ -2528,17 +2537,17 @@ mark_lcrecord_list (Lisp_Object obj)
 	 ! MARKED_RECORD_HEADER_P (lheader)
 	 &&
 	 /* Only lcrecords should be here. */
-	 ! LHEADER_IMPLEMENTATION (lheader)->basic_p
+	 ! list->implementation->basic_p
 	 &&
 	 /* Only free lcrecords should be here. */
 	 free_header->lcheader.free
 	 &&
 	 /* The type of the lcrecord must be right. */
-	 LHEADER_IMPLEMENTATION (lheader) == list->implementation
+	 lheader->type == lrecord_type_free
 	 &&
 	 /* So must the size. */
-	 (LHEADER_IMPLEMENTATION (lheader)->static_size == 0 ||
-	  LHEADER_IMPLEMENTATION (lheader)->static_size == list->size)
+	 (list->implementation->static_size == 0 ||
+	  list->implementation->static_size == list->size)
 	 );
 
       MARK_RECORD_HEADER (lheader);
@@ -2548,25 +2557,21 @@ mark_lcrecord_list (Lisp_Object obj)
   return Qnil;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
 			       0, /*dumpable-flag*/
 			       mark_lcrecord_list, internal_object_printer,
-			       0, 0, 0, 0, struct lcrecord_list);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
-			       mark_lcrecord_list, internal_object_printer,
-			       0, 0, 0, 0, struct lcrecord_list);
-#endif /* not USE_KKCC */
+			       0, 0, 0, lcrecord_list_description,
+			       struct lcrecord_list);
 
 Lisp_Object
 make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
 {
-  struct lcrecord_list *p =
-    /* Avoid infinite recursion allocating this */
-    alloc_unmanaged_lcrecord_type (struct lcrecord_list,
-				   &lrecord_lcrecord_list);
+  /* Don't use alloc_lcrecord_type() avoid infinite recursion
+     allocating this, */
+  struct lcrecord_list *p = (struct lcrecord_list *)
+    basic_alloc_lcrecord (sizeof (struct lcrecord_list),
+			  &lrecord_lcrecord_list);
 
   p->implementation = implementation;
   p->size = size;
@@ -2575,7 +2580,7 @@ make_lcrecord_list (Elemcount size,
 }
 
 Lisp_Object
-allocate_managed_lcrecord (Lisp_Object lcrecord_list)
+alloc_managed_lcrecord (Lisp_Object lcrecord_list)
 {
   struct lcrecord_list *list = XLCRECORD_LIST (lcrecord_list);
   if (!NILP (list->free))
@@ -2583,33 +2588,41 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
       Lisp_Object val = list->free;
       struct free_lcrecord_header *free_header =
 	(struct free_lcrecord_header *) XPNTR (val);
-
-#ifdef ERROR_CHECK_GC
       struct lrecord_header *lheader = &free_header->lcheader.lheader;
 
+#ifdef ERROR_CHECK_GC
+      /* Major overkill here. */
       /* There should be no other pointers to the free list. */
       assert (! MARKED_RECORD_HEADER_P (lheader));
-      /* Only lcrecords should be here. */
-      assert (! LHEADER_IMPLEMENTATION (lheader)->basic_p);
       /* Only free lcrecords should be here. */
       assert (free_header->lcheader.free);
+      assert (lheader->type == lrecord_type_free);
+      /* Only lcrecords should be here. */
+      assert (! (list->implementation->basic_p));
+#if 0 /* Not used anymore, now that we set the type of the header to
+	 lrecord_type_free. */
       /* The type of the lcrecord must be right. */
       assert (LHEADER_IMPLEMENTATION (lheader) == list->implementation);
+#endif /* 0 */
       /* So must the size. */
-      assert (LHEADER_IMPLEMENTATION (lheader)->static_size == 0 ||
-	      LHEADER_IMPLEMENTATION (lheader)->static_size == list->size);
+      assert (list->implementation->static_size == 0 ||
+	      list->implementation->static_size == list->size);
 #endif /* ERROR_CHECK_GC */
 
       list->free = free_header->chain;
       free_header->lcheader.free = 0;
+      /* Put back the correct type, as we set it to lrecord_type_free. */
+      lheader->type = list->implementation->lrecord_type_index;
+      zero_sized_lcrecord (free_header, list->size);
       return val;
     }
   else
-    return wrap_pointer_1 (alloc_lcrecord (list->size, list->implementation));
+    return wrap_pointer_1 (basic_alloc_lcrecord (list->size,
+						 list->implementation));
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list
-   LCRECORD_LIST; next time allocate_managed_lcrecord() is called with the
+   LCRECORD_LIST; next time alloc_managed_lcrecord() is called with the
    same LCRECORD_LIST as its parameter, it will return an object from the
    free list, which may be this one.  Be VERY VERY SURE there are no
    pointers to this object hanging around anywhere where they might be
@@ -2641,15 +2654,18 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   
   /* Make sure the size is correct.  This will catch, for example,
      putting a window configuration on the wrong free list. */
-  gc_checking_assert ((implementation->size_in_bytes_method ?
-		       implementation->size_in_bytes_method (lheader) :
-		       implementation->static_size)
-		      == list->size);
+  gc_checking_assert (detagged_lisp_object_size (lheader) == list->size);
   /* Make sure the object isn't already freed. */
   gc_checking_assert (!free_header->lcheader.free);
   
   if (implementation->finalizer)
     implementation->finalizer (lheader, 0);
+  /* Yes, there are two ways to indicate freeness -- the type is
+     lrecord_type_free or the ->free flag is set.  We used to do only the
+     latter; now we do the former as well for KKCC purposes.  Probably
+     safer in any case, as we will lose quicker this way than keeping
+     around an lrecord of apparently correct type but bogus junk in it. */
+  MARK_LRECORD_AS_FREE (lheader);
   free_header->chain = list->free;
   free_header->lcheader.free = 1;
   list->free = lcrecord;
@@ -2665,7 +2681,7 @@ alloc_automanaged_lcrecord (Bytecount size,
     all_lcrecord_lists[imp->lrecord_type_index] =
       make_lcrecord_list (size, imp);
 
-  return XPNTR (allocate_managed_lcrecord
+  return XPNTR (alloc_managed_lcrecord
 		(all_lcrecord_lists[imp->lrecord_type_index]));
 }
 
@@ -2716,43 +2732,46 @@ struct gcpro *gcprolist;
    objects, which are global variables like Qfoo or Vbar, themselves are
    pointers to heap objects.  Each needs to be described to pdump as a
    "root pointer"; this happens in the call to staticpro(). */
-static const struct lrecord_description staticpro_description_1[] = {
+static const struct memory_description staticpro_description_1[] = {
   { XD_END }
 };
 
-static const struct struct_description staticpro_description = {
+static const struct sized_memory_description staticpro_description = {
   sizeof (Lisp_Object *),
   staticpro_description_1
 };
 
-static const struct lrecord_description staticpros_description_1[] = {
+static const struct memory_description staticpros_description_1[] = {
   XD_DYNARR_DESC (Lisp_Object_ptr_dynarr, &staticpro_description),
   { XD_END }
 };
 
-static const struct struct_description staticpros_description = {
+static const struct sized_memory_description staticpros_description = {
   sizeof (Lisp_Object_ptr_dynarr),
   staticpros_description_1
 };
 
 #ifdef DEBUG_XEMACS
 
-static const struct lrecord_description staticpro_one_name_description_1[] = {
+static const struct memory_description staticpro_one_name_description_1[] = {
   { XD_C_STRING, 0 },
   { XD_END }
 };
 
-static const struct struct_description staticpro_one_name_description = {
+static const struct sized_memory_description staticpro_one_name_description = {
   sizeof (char *),
   staticpro_one_name_description_1
 };
 
-static const struct lrecord_description staticpro_names_description_1[] = {
+static const struct memory_description staticpro_names_description_1[] = {
   XD_DYNARR_DESC (char_ptr_dynarr, &staticpro_one_name_description),
   { XD_END }
 };
 
-static const struct struct_description staticpro_names_description = {
+
+extern const struct sized_memory_description staticpro_names_description;
+
+const struct sized_memory_description staticpro_names_description = {
   sizeof (char_ptr_dynarr),
   staticpro_names_description_1
 };
@@ -2769,7 +2788,7 @@ staticpro_1 (Lisp_Object *varaddress, char *varname)
 {
   Dynarr_add (staticpros, varaddress);
   Dynarr_add (staticpro_names, varname);
-  dump_add_root_object (varaddress);
+  dump_add_root_lisp_object (varaddress);
 }
 
 
@@ -2806,7 +2825,7 @@ void
 staticpro (Lisp_Object *varaddress)
 {
   Dynarr_add (staticpros, varaddress);
-  dump_add_root_object (varaddress);
+  dump_add_root_lisp_object (varaddress);
 }
 
 
@@ -2861,23 +2880,24 @@ unstaticpro_nodump (Lisp_Object *varaddress)
 #endif
 
 
+static const struct memory_description lisp_object_description_1[] = {
+  { XD_LISP_OBJECT, 0 },
+  { XD_END }
+};
 
-#ifdef USE_KKCC
-/* The following functions implement the new mark algorithm. 
-   They mark objects according to their descriptions. They 
-   are modeled on the corresponding pdumper procedures. */
+const struct sized_memory_description lisp_object_description = {
+  sizeof (Lisp_Object),
+  lisp_object_description_1
+};
 
-static void mark_struct_contents (const void *data,
-						   const struct struct_description *
-						   sdesc,
-						   int count);
+#if defined (USE_KKCC) || defined (PDUMP)
 
 /* This function extracts the value of a count variable described somewhere 
    else in the description. It is converted corresponding to the type */ 
-static EMACS_INT
-get_indirect_count (EMACS_INT code,
-			  const struct lrecord_description *idesc,
-			  const void *idata)
+EMACS_INT
+lispdesc_indirect_count_1 (EMACS_INT code,
+			   const struct memory_description *idesc,
+			   const void *idata)
 {
   EMACS_INT count;
   const void *irdata;
@@ -2885,27 +2905,32 @@ get_indirect_count (EMACS_INT code,
   int line = XD_INDIRECT_VAL (code);
   int delta = XD_INDIRECT_DELTA (code);
 
-  irdata = ((char *)idata) + idesc[line].offset;
+  irdata = ((char *) idata) +
+    lispdesc_indirect_count (idesc[line].offset, idesc, idata);
   switch (idesc[line].type)
     {
     case XD_BYTECOUNT:
-      count = *(Bytecount *)irdata;
+      count = * (Bytecount *) irdata;
       break;
     case XD_ELEMCOUNT:
-      count = *(Elemcount *)irdata;
+      count = * (Elemcount *) irdata;
       break;
     case XD_HASHCODE:
-      count = *(Hashcode *)irdata;
+      count = * (Hashcode *) irdata;
       break;
     case XD_INT:
-      count = *(int *)irdata;
+      count = * (int *) irdata;
       break;
     case XD_LONG:
-      count = *(long *)irdata;
+      count = * (long *) irdata;
       break;
     default:
       stderr_out ("Unsupported count type : %d (line = %d, code = %ld)\n",
-		  idesc[line].type, line, (long)code);
+		  idesc[line].type, line, (long) code);
+#ifdef PDUMP
+      if (in_pdump)
+	pdump_backtrace ();
+#endif
       count = 0; /* warning suppression */
       abort ();
     }
@@ -2913,159 +2938,155 @@ get_indirect_count (EMACS_INT code,
   return count;
 }
 
-/* This function is called to mark the elements of an object. It processes
-   the description of the object and calls mark object with every described
-   object. */
-static void
-mark_with_description (const void *lheader, const struct lrecord_description *desc)
+/* SDESC is a "description map" (basically, a list of offsets used for
+   successive indirections) and OBJ is the first object to indirect off of.
+   Return the description ultimately found. */
+
+const struct sized_memory_description *
+lispdesc_indirect_description_1 (const void *obj,
+				 const struct sized_memory_description *sdesc)
 {
   int pos;
 
-  static const Lisp_Object *last_occured_object = (Lisp_Object *) 0;
-  static int mark_last_occured_object = 0;
+  for (pos = 0; sdesc[pos].size >= 0; pos++)
+    obj = * (const void **) ((const char *) obj + sdesc[pos].size);
 
- reprocess_desc:
-  for (pos=0; desc[pos].type != XD_END; pos++)
+  return (const struct sized_memory_description *) obj;
+}
+
+/* Compute the size of the data at RDATA, described by a single entry
+   DESC1 in a description array.  OBJ and DESC are used for
+   XD_INDIRECT references. */
+
+static Bytecount
+lispdesc_one_description_line_size (void *rdata,
+				    const struct memory_description *desc1,
+				    const void *obj,
+				    const struct memory_description *desc)
+{
+ union_switcheroo:
+  switch (desc1->type)
     {
-      const void *rdata = (const char *)lheader + desc[pos].offset;
-      switch (desc[pos].type) {
-      case XD_LISP_OBJECT: 
-	{
-	  const Lisp_Object *stored_obj = (const Lisp_Object *)rdata;
-
-	  if (EQ (*stored_obj, Qnull_pointer))
-	    break;
-
-	  if (desc[pos+1].type == XD_END)
-	    {
-	      mark_last_occured_object = 1;
-	      last_occured_object = stored_obj;
-	      break;
-	    }
-	  else
-	    {
-	      mark_object (*stored_obj);
-	    }
-	  
-	  
-	  break;
-	}
-      case XD_LISP_OBJECT_ARRAY:
-	{
-	  int i;
-	  EMACS_INT count = desc[pos].data1;
-	  if (XD_IS_INDIRECT (count))
-	    count = get_indirect_count (count, desc, lheader);
-	
-	  for (i = 0; i < count; i++)
-	    {
-	      const Lisp_Object *stored_obj = ((const Lisp_Object *)rdata) + i;
-
-	      if (EQ (*stored_obj, Qnull_pointer))
-		break;
-
-	      mark_object (*stored_obj);
-	    }
-	  break;
-	}
-      case XD_SPECIFIER_END:
-	desc = ((const Lisp_Specifier *)lheader)->methods->extra_description;
-	goto reprocess_desc;
-	break;
-      case XD_CODING_SYSTEM_END:
-	desc = ((const Lisp_Coding_System *)lheader)->methods->extra_description;
-	goto reprocess_desc;
-	break;
-      case XD_BYTECOUNT:
-	break;
-      case XD_ELEMCOUNT:
-	break;
-      case XD_HASHCODE:
-	break;
-      case XD_INT:
-	break;
-      case XD_LONG:
-	break;
-      case XD_INT_RESET:
-	break;
-      case XD_LO_LINK:
-	break;
-      case XD_OPAQUE_PTR:
-	break;
-      case XD_OPAQUE_DATA_PTR:
-	break;
-      case XD_C_STRING:
-	break;
-      case XD_DOC_STRING:
-	break;
-      case XD_STRUCT_PTR:
-	{
-	  EMACS_INT count = desc[pos].data1;
-	  const struct struct_description *sdesc = desc[pos].data2;
-	  const char *dobj = *(const char **)rdata;
-	  if (dobj)
-	    {
-	      if (XD_IS_INDIRECT (count))
-		count = get_indirect_count (count, desc, lheader);
-	      mark_struct_contents (dobj, sdesc, count);
-	    }
-	  break;
-	}
-      case XD_STRUCT_ARRAY:
-	{
-	  EMACS_INT count = desc[pos].data1;
-	  const struct struct_description *sdesc = desc[pos].data2;
-		      
-	  if (XD_IS_INDIRECT (count))
-	    count = get_indirect_count (count, desc, lheader);
-		      
-	  mark_struct_contents (rdata, sdesc, count);
-	  break;
-	}
-      case XD_UNION:
-	{
-	  int count = 0;
-	  int variant = desc[pos].data1;
-	  const struct struct_description *sdesc = desc[pos].data2;
-	  const char *dobj = *(const char **)rdata;
-	  if (XD_IS_INDIRECT (variant))
-	    variant = get_indirect_count (variant, desc, lheader);
-	  
-	  for (count=0; sdesc[count].size != XD_END; count++)
-	    {
-	      if (sdesc[count].size == variant)
-		{
-		  mark_with_description(dobj, sdesc[count].description);
-		  break;
-		}
-	    }
-	  break;
-	}
-		    
-      default:
-	stderr_out ("Unsupported description type : %d\n", desc[pos].type);
-	abort ();
+    case XD_LISP_OBJECT_ARRAY:
+      {
+	EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc, obj);
+	return (val * sizeof (Lisp_Object));
       }
+    case XD_LISP_OBJECT:
+    case XD_LO_LINK:
+      return sizeof (Lisp_Object);
+    case XD_OPAQUE_PTR:
+      return sizeof (void *);
+    case XD_STRUCT_PTR:
+      {
+	EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc, obj);
+	return val * sizeof (void *);
+      }
+    case XD_STRUCT_ARRAY:
+      {
+	EMACS_INT val = lispdesc_indirect_count (desc1->data1, desc, obj);
+	    
+	return (val *
+		lispdesc_structure_size
+		(rdata, lispdesc_indirect_description (obj, desc1->data2)));
+      }
+    case XD_OPAQUE_DATA_PTR:
+      return sizeof (void *);
+    case XD_UNION_DYNAMIC_SIZE:
+      {
+	/* If an explicit size was given in the first-level structure
+	   description, use it; else compute size based on current union
+	   constant. */
+	const struct sized_memory_description *sdesc =
+	  lispdesc_indirect_description (obj, desc1->data2);
+	if (sdesc->size)
+	  return sdesc->size;
+	else
+	  {
+	    desc1 = lispdesc_process_xd_union (desc1, desc, obj);
+	    if (desc1)
+	      goto union_switcheroo;
+	    break;
+	  }
+      }
+    case XD_UNION:
+      {
+	/* If an explicit size was given in the first-level structure
+	   description, use it; else compute size based on maximum of all
+	   possible structures. */
+	const struct sized_memory_description *sdesc =
+	  lispdesc_indirect_description (obj, desc1->data2);
+	if (sdesc->size)
+	  return sdesc->size;
+	else
+	  {
+	    int count;
+	    Bytecount max_size = -1, size;
+
+	    desc1 = sdesc->description;
+
+	    for (count = 0; desc1[count].type != XD_END; count++)
+	      {
+		size = lispdesc_one_description_line_size (rdata,
+							   &desc1[count],
+							   obj, desc);
+		if (size > max_size)
+		  max_size = size;
+	      }
+	    return max_size;
+	  }
+      }
+    case XD_C_STRING:
+      return sizeof (void *);
+    case XD_DOC_STRING:
+      return sizeof (void *);
+    case XD_INT_RESET:
+      return sizeof (int);
+    case XD_BYTECOUNT:
+      return sizeof (Bytecount);
+    case XD_ELEMCOUNT:
+      return sizeof (Elemcount);
+    case XD_HASHCODE:
+      return sizeof (Hashcode);
+    case XD_INT:
+      return sizeof (int);
+    case XD_LONG:
+      return sizeof (long);
+    default:
+      stderr_out ("Unsupported dump type : %d\n", desc1->type);
+      abort ();
     }
 
-  if (mark_last_occured_object)
-    {
-      mark_object(*last_occured_object);
-      mark_last_occured_object = 0;
-    }
+  return 0;
 }
 
 
-/* This function calculates the size of a described struct. */
-static Bytecount
-structure_size (const void *obj, const struct struct_description *sdesc)
+/* Return the size of the memory block (NOT necessarily a structure!) 
+   described by SDESC and pointed to by OBJ.  If SDESC records an
+   explicit size (i.e. non-zero), it is simply returned; otherwise,
+   the size is calculated by the maximum offset and the size of the
+   object at that offset, rounded up to the maximum alignment.  In
+   this case, we may need the object, for example when retrieving an
+   "indirect count" of an inlined array (the count is not constant,
+   but is specified by one of the elements of the memory block). (It
+   is generally not a problem if we return an overly large size -- we
+   will simply end up reserving more space than necessary; but if the
+   size is too small we could be in serious trouble, in particular
+   with nested inlined structures, where there may be alignment
+   padding in the middle of a block. #### In fact there is an (at
+   least theoretical) problem with an overly large size -- we may
+   trigger a protection fault when reading from invalid memory.  We
+   need to handle this -- perhaps in a stupid but dependable way,
+   i.e. by trapping SIGSEGV and SIGBUS.) */
+
+Bytecount
+lispdesc_structure_size (const void *obj,
+			 const struct sized_memory_description *sdesc)
 {
-  int max_offset = -1;
+  EMACS_INT max_offset = -1;
   int max_offset_pos = -1;
-  int size_at_max = 0;
   int pos;
-  const struct lrecord_description *desc;
-  void *rdata;
+  const struct memory_description *desc;
 
   if (sdesc->size)
     return sdesc->size;
@@ -3074,14 +3095,15 @@ structure_size (const void *obj, const struct struct_description *sdesc)
 
   for (pos = 0; desc[pos].type != XD_END; pos++)
     {
-      if (desc[pos].offset == max_offset)
+      EMACS_INT offset = lispdesc_indirect_count (desc[pos].offset, desc, obj);
+      if (offset == max_offset)
 	{
 	  stderr_out ("Two relocatable elements at same offset?\n");
 	  abort ();
 	}
-      else if (desc[pos].offset > max_offset)
+      else if (offset > max_offset)
 	{
-	  max_offset = desc[pos].offset;
+	  max_offset = offset;
 	  max_offset_pos = pos;
 	}
     }
@@ -3089,102 +3111,188 @@ structure_size (const void *obj, const struct struct_description *sdesc)
   if (max_offset_pos < 0)
     return 0;
 
-  pos = max_offset_pos;
-  rdata = (char *) obj + desc[pos].offset;
+  {
+    Bytecount size_at_max;
+    size_at_max =
+      lispdesc_one_description_line_size ((char *) obj + max_offset,
+					  &desc[max_offset_pos], obj, desc);
 
-  switch (desc[pos].type)
-    {
-    case XD_LISP_OBJECT_ARRAY:
-      {
-	EMACS_INT val = desc[pos].data1;
-	if (XD_IS_INDIRECT (val))
-	  val = get_indirect_count (val, desc, obj);
-	size_at_max = val * sizeof (Lisp_Object);
-	break;
-      }
-    case XD_LISP_OBJECT:
-    case XD_LO_LINK:
-      size_at_max = sizeof (Lisp_Object);
-      break;
-    case XD_OPAQUE_PTR:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_STRUCT_PTR:
-      {
-	EMACS_INT val = desc[pos].data1;
-	if (XD_IS_INDIRECT (val))
-	  val = get_indirect_count (val, desc, obj);
-	size_at_max = val * sizeof (void *);
-	break;
-      }
-      break;
-    case XD_STRUCT_ARRAY:
-      {
-	EMACS_INT val = desc[pos].data1;
-
-	if (XD_IS_INDIRECT (val))
-	  val = get_indirect_count (val, desc, obj);
-	    
-	size_at_max = val * structure_size (rdata, desc[pos].data2);
-	break;
-      }
-      break;
-    case XD_OPAQUE_DATA_PTR:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_UNION:
-      abort ();
-      break;
-    case XD_C_STRING:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_DOC_STRING:
-      size_at_max = sizeof (void *);
-      break;
-    case XD_INT_RESET:
-      size_at_max = sizeof (int);
-      break;
-    case XD_BYTECOUNT:
-      size_at_max = sizeof (Bytecount);
-      break;
-    case XD_ELEMCOUNT:
-      size_at_max = sizeof (Elemcount);
-      break;
-    case XD_HASHCODE:
-      size_at_max = sizeof (Hashcode);
-      break;
-    case XD_INT:
-      size_at_max = sizeof (int);
-      break;
-    case XD_LONG:
-      size_at_max = sizeof (long);
-      break;
-    case XD_SPECIFIER_END:
-    case XD_CODING_SYSTEM_END:
-      stderr_out
-	("Should not be seeing XD_SPECIFIER_END or\n"
-	 "XD_CODING_SYSTEM_END outside of struct Lisp_Specifier\n"
-	 "and struct Lisp_Coding_System.\n");
-      abort ();
-    default:
-      stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
-      abort ();
-    }
-
-  return ALIGN_SIZE (max_offset + size_at_max, ALIGNOF (max_align_t));
+    /* We have no way of knowing the required alignment for this structure,
+       so just make it maximally aligned. */
+    return MAX_ALIGN_SIZE (max_offset + size_at_max);
+  }
 }
 
+#endif /* defined (USE_KKCC) || defined (PDUMP) */
+
+#ifdef USE_KKCC
+/* The following functions implement the new mark algorithm. 
+   They mark objects according to their descriptions.  They 
+   are modeled on the corresponding pdumper procedures. */
+
+static void mark_struct_contents (const void *data,
+				  const struct sized_memory_description *sdesc,
+				  int count);
+
+
+#ifdef ERROR_CHECK_GC
+void
+mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
+{
+
+  if (!allow_free && XTYPE (obj) == Lisp_Type_Record)
+    {
+      struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+      gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||
+			  ! ((struct lcrecord_header *) lheader)->free);
+    }
+  mark_object (obj);
+}
+#else
+#define mark_object_maybe_checking_free (obj, allow_free) mark_object (obj)
+#endif /* ERROR_CHECK_GC */
+
+/* This function is called to mark the elements of an object. It processes
+   the description of the object and calls mark object with every described
+   object. */
+static void
+mark_with_description (const void *data,
+		       const struct memory_description *desc)
+{
+  int pos;
+  static const Lisp_Object *last_occurred_object = (Lisp_Object *) 0;
+  static int mark_last_occurred_object = 0;
+#ifdef ERROR_CHECK_GC
+  static int last_occurred_flags;
+#endif
+
+  for (pos = 0; desc[pos].type != XD_END; pos++)
+    {
+      const struct memory_description *desc1 = &desc[pos];
+      const void *rdata =
+	(const char *) data + lispdesc_indirect_count (desc1->offset,
+						       desc, data);
+    union_switcheroo:
+
+      /* If the flag says don't mark, then don't mark. */
+      if ((desc1->flags) & XD_FLAG_NO_KKCC)
+	continue;
+
+      switch (desc1->type)
+	{
+	case XD_BYTECOUNT:
+	case XD_ELEMCOUNT:
+	case XD_HASHCODE:
+	case XD_INT:
+	case XD_LONG:
+	case XD_INT_RESET:
+	case XD_LO_LINK:
+	case XD_OPAQUE_PTR:
+	case XD_OPAQUE_DATA_PTR:
+	case XD_C_STRING:
+	case XD_DOC_STRING:
+	  break;
+	case XD_LISP_OBJECT: 
+	  {
+	    const Lisp_Object *stored_obj = (const Lisp_Object *) rdata;
+
+	    /* Because of the way that tagged objects work (pointers and
+	       Lisp_Objects have the same representation), XD_LISP_OBJECT
+	       can be used for untagged pointers.  They might be NULL,
+	       though. */
+	    if (EQ (*stored_obj, Qnull_pointer))
+	      break;
+
+	    if (desc[pos+1].type == XD_END)
+	      {
+		mark_last_occurred_object = 1;
+		last_occurred_object = stored_obj;
+#ifdef ERROR_CHECK_GC
+		last_occurred_flags = desc1->flags;
+#endif
+		break;
+	      }
+	    else
+	      mark_object_maybe_checking_free
+		(*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
+
+	    break;
+	  }
+	case XD_LISP_OBJECT_ARRAY:
+	  {
+	    int i;
+	    EMACS_INT count =
+	      lispdesc_indirect_count (desc1->data1, desc, data);
+	
+	    for (i = 0; i < count; i++)
+	      {
+		const Lisp_Object *stored_obj =
+		  (const Lisp_Object *) rdata + i;
+
+		if (EQ (*stored_obj, Qnull_pointer))
+		  break;
+
+		mark_object_maybe_checking_free
+		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
+	      }
+	    break;
+	  }
+	case XD_STRUCT_PTR:
+	  {
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2);
+	    const char *dobj = * (const char **) rdata;
+	    if (dobj)
+	      mark_struct_contents (dobj, sdesc, count);
+	    break;
+	  }
+	case XD_STRUCT_ARRAY:
+	  {
+	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+						       data);
+	    const struct sized_memory_description *sdesc =
+	      lispdesc_indirect_description (data, desc1->data2);
+		      
+	    mark_struct_contents (rdata, sdesc, count);
+	    break;
+	  }
+	case XD_UNION:
+	case XD_UNION_DYNAMIC_SIZE:
+	  desc1 = lispdesc_process_xd_union (desc1, desc, data);
+	  if (desc1)
+	    goto union_switcheroo;
+	  break;
+		    
+	default:
+	  stderr_out ("Unsupported description type : %d\n", desc1->type);
+	  abort ();
+	}
+    }
+
+  if (mark_last_occurred_object)
+    {
+      /* NOTE: The second parameter isn't even evaluated
+	 non-ERROR_CHECK_GC, so it's OK for the variable not to exist.
+       */
+      mark_object_maybe_checking_free (*last_occurred_object,
+				       last_occurred_flags &
+				       XD_FLAG_FREE_LISP_OBJECT);
+      mark_last_occurred_object = 0;
+    }
+}
 
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
 static void
 mark_struct_contents (const void *data,
-				const struct struct_description *sdesc,
-				int count)
+		      const struct sized_memory_description *sdesc,
+		      int count)
 {
   int i;
   Bytecount elsize;
-  elsize = structure_size (data, sdesc);
+  elsize = lispdesc_structure_size (data, sdesc);
 
   for (i = 0; i < count; i++)
     {
@@ -3211,15 +3319,15 @@ mark_object (Lisp_Object obj)
   if (XTYPE (obj) == Lisp_Type_Record)
     {
       struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-#ifdef USE_KKCC
-      const struct lrecord_implementation *imp;
-      const struct lrecord_description *desc;
-#endif /* USE_KKCC */      
 
       GC_CHECK_LHEADER_INVARIANTS (lheader);
 
+#ifndef USE_KKCC
+      /* We handle this separately, above, so we can mark free objects */
       gc_checking_assert (LHEADER_IMPLEMENTATION (lheader)->basic_p ||
 			  ! ((struct lcrecord_header *) lheader)->free);
+#endif /* not USE_KKCC */
+
 
       /* All c_readonly objects have their mark bit set,
 	 so that we only need to check the mark bit here. */
@@ -3227,60 +3335,35 @@ mark_object (Lisp_Object obj)
 	{
 	  MARK_RECORD_HEADER (lheader);
 
+	  {
 #ifdef USE_KKCC
-	  imp = LHEADER_IMPLEMENTATION (lheader);
-	  desc = imp->description;
+	    const struct lrecord_implementation *imp;
+	    const struct memory_description *desc;
+
+	    imp = LHEADER_IMPLEMENTATION (lheader);
+	    desc = imp->description;
 	  
-	  if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
-	    {
-	      mark_with_description (lheader, desc);
-	    }
-	  
-	  else 
-	    {
-
+	    if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
+	      {
+		mark_with_description (lheader, desc);
+	      }
+	    else 
 #endif /* USE_KKCC */
-
-
-	      if (RECORD_MARKER (lheader))
-		{
-		  obj = RECORD_MARKER (lheader) (obj);
-		  if (!NILP (obj)) goto tail_recurse;
-		}
-
-#ifdef USE_KKCC
-	    }
-#endif /* USE_KKCC */
+	      {
+		if (RECORD_MARKER (lheader))
+		  {
+		    obj = RECORD_MARKER (lheader) (obj);
+		    if (!NILP (obj)) goto tail_recurse;
+		  }
+	      }
+	  }
 	}
     }
-}
-
-/* mark all of the conses in a list and mark the final cdr; but
-   DO NOT mark the cars.
-
-   Use only for internal lists!  There should never be other pointers
-   to the cons cells, because if so, the cars will remain unmarked
-   even when they maybe should be marked. */
-void
-mark_conses_in_list (Lisp_Object obj)
-{
-  Lisp_Object rest;
-
-  for (rest = obj; CONSP (rest); rest = XCDR (rest))
-    {
-      if (CONS_MARKED_P (XCONS (rest)))
-	return;
-      MARK_CONS (XCONS (rest));
-    }
-
-  mark_object (rest);
 }
 
 
 /* Find all structures not marked, and free them. */
 
-static int gc_count_num_bit_vector_used, gc_count_bit_vector_total_size;
-static int gc_count_bit_vector_storage;
 static int gc_count_num_short_string_in_use;
 static Bytecount gc_count_string_total_size;
 static Bytecount gc_count_short_string_total_size;
@@ -3312,12 +3395,8 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
     }
   else
     {
-      const struct lrecord_implementation *implementation =
-	LHEADER_IMPLEMENTATION (h);
+      Bytecount sz = detagged_lisp_object_size (h);
 
-      Bytecount sz = (implementation->size_in_bytes_method ?
-		   implementation->size_in_bytes_method (h) :
-		   implementation->static_size);
       if (free_p)
 	{
 	  lcrecord_stats[type_index].instances_freed++;
@@ -3391,49 +3470,6 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
     }
   *used = num_used;
   /* *total = total_size; */
-}
-
-
-static void
-sweep_bit_vectors_1 (Lisp_Object *prev,
-		     int *used, int *total, int *storage)
-{
-  Lisp_Object bit_vector;
-  int num_used = 0;
-  int total_size = 0;
-  int total_storage = 0;
-
-  /* BIT_VECTORP fails because the objects are marked, which changes
-     their implementation */
-  for (bit_vector = *prev; !EQ (bit_vector, Qzero); )
-    {
-      Lisp_Bit_Vector *v = XBIT_VECTOR (bit_vector);
-      int len = v->size;
-      if (MARKED_RECORD_P (bit_vector))
-	{
-	  if (! C_READONLY_RECORD_HEADER_P(&(v->lheader)))
-	    UNMARK_RECORD_HEADER (&(v->lheader));
-	  total_size += len;
-          total_storage +=
-	    MALLOC_OVERHEAD +
-	    FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, unsigned long,
-					  bits, BIT_VECTOR_LONG_STORAGE (len));
-	  num_used++;
-	  /* #### May modify next on a C_READONLY bitvector */
-	  prev = &(bit_vector_next (v));
-	  bit_vector = *prev;
-	}
-      else
-	{
-          Lisp_Object next = bit_vector_next (v);
-          *prev = next;
-	  xfree (v);
-	  bit_vector = next;
-	}
-    }
-  *used = num_used;
-  *total = total_size;
-  *storage = total_storage;
 }
 
 /* And the Lord said: Thou shalt use the `c-backslash-region' command
@@ -3594,14 +3630,16 @@ free_cons (Lisp_Object cons)
      placed on the free list, however, its car will probably contain
      a chain pointer to the next cons on the list, which has cleverly
      had all its 0's and 1's inverted.  This allows for a quick
-     check to make sure we're not freeing something already freed. */
+     check to make sure we're not freeing something already freed.
+
+     NOTE: This check may not be necessary.  Freeing an object sets its
+     type to lrecord_type_free, which will trip up the XCONS() above -- as
+     well as a check in FREE_FIXED_TYPE(). */
   if (POINTER_TYPE_P (XTYPE (cons_car (ptr))))
     ASSERT_VALID_POINTER (XPNTR (cons_car (ptr)));
 #endif /* ERROR_CHECK_GC */
 
-#ifndef ALLOC_NO_POOLS
   FREE_FIXED_TYPE_WHEN_NOT_IN_GC (cons, Lisp_Cons, ptr);
-#endif /* ALLOC_NO_POOLS */
 }
 
 /* explicitly free a list.  You **must make sure** that you have
@@ -3685,7 +3723,7 @@ sweep_events (void)
   SWEEP_FIXED_TYPE_BLOCK (event, Lisp_Event);
 }
 
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
 
 static void
 sweep_key_data (void)
@@ -3694,6 +3732,12 @@ sweep_key_data (void)
 #define ADDITIONAL_FREE_key_data(ptr)
 
   SWEEP_FIXED_TYPE_BLOCK (key_data, Lisp_Key_Data);
+}
+
+void
+free_key_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (key_data, Lisp_Key_Data, XKEY_DATA (ptr));
 }
 
 static void
@@ -3705,6 +3749,12 @@ sweep_button_data (void)
   SWEEP_FIXED_TYPE_BLOCK (button_data, Lisp_Button_Data);
 }
 
+void
+free_button_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (button_data, Lisp_Button_Data, XBUTTON_DATA (ptr));
+}
+
 static void
 sweep_motion_data (void)
 {
@@ -3712,6 +3762,12 @@ sweep_motion_data (void)
 #define ADDITIONAL_FREE_motion_data(ptr)
 
   SWEEP_FIXED_TYPE_BLOCK (motion_data, Lisp_Motion_Data);
+}
+
+void
+free_motion_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (motion_data, Lisp_Motion_Data, XMOTION_DATA (ptr));
 }
 
 static void
@@ -3723,6 +3779,12 @@ sweep_process_data (void)
   SWEEP_FIXED_TYPE_BLOCK (process_data, Lisp_Process_Data);
 }
 
+void
+free_process_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (process_data, Lisp_Process_Data, XPROCESS_DATA (ptr));
+}
+
 static void
 sweep_timeout_data (void)
 {
@@ -3730,6 +3792,12 @@ sweep_timeout_data (void)
 #define ADDITIONAL_FREE_timeout_data(ptr)
 
   SWEEP_FIXED_TYPE_BLOCK (timeout_data, Lisp_Timeout_Data);
+}
+
+void
+free_timeout_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (timeout_data, Lisp_Timeout_Data, XTIMEOUT_DATA (ptr));
 }
 
 static void
@@ -3741,6 +3809,12 @@ sweep_magic_data (void)
   SWEEP_FIXED_TYPE_BLOCK (magic_data, Lisp_Magic_Data);
 }
 
+void
+free_magic_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_data, Lisp_Magic_Data, XMAGIC_DATA (ptr));
+}
+
 static void
 sweep_magic_eval_data (void)
 {
@@ -3748,6 +3822,12 @@ sweep_magic_eval_data (void)
 #define ADDITIONAL_FREE_magic_eval_data(ptr)
 
   SWEEP_FIXED_TYPE_BLOCK (magic_eval_data, Lisp_Magic_Eval_Data);
+}
+
+void
+free_magic_eval_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (magic_eval_data, Lisp_Magic_Eval_Data, XMAGIC_EVAL_DATA (ptr));
 }
 
 static void
@@ -3759,6 +3839,12 @@ sweep_eval_data (void)
   SWEEP_FIXED_TYPE_BLOCK (eval_data, Lisp_Eval_Data);
 }
 
+void
+free_eval_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (eval_data, Lisp_Eval_Data, XEVAL_DATA (ptr));
+}
+
 static void
 sweep_misc_user_data (void)
 {
@@ -3768,7 +3854,13 @@ sweep_misc_user_data (void)
   SWEEP_FIXED_TYPE_BLOCK (misc_user_data, Lisp_Misc_User_Data);
 }
 
-#endif /* USE_KKCC */
+void
+free_misc_user_data (Lisp_Object ptr)
+{
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (misc_user_data, Lisp_Misc_User_Data, XMISC_USER_DATA (ptr));
+}
+
+#endif /* EVENT_DATA_AS_OBJECTS */
 
 static void
 sweep_markers (void)
@@ -3785,14 +3877,9 @@ sweep_markers (void)
 
 /* Explicitly free a marker.  */
 void
-free_marker (Lisp_Marker *ptr)
+free_marker (Lisp_Object ptr)
 {
-  /* Perhaps this will catch freeing an already-freed marker. */
-  gc_checking_assert (ptr->lheader.type == lrecord_type_marker);
-
-#ifndef ALLOC_NO_POOLS
-  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, Lisp_Marker, ptr);
-#endif /* ALLOC_NO_POOLS */
+  FREE_FIXED_TYPE_WHEN_NOT_IN_GC (marker, Lisp_Marker, XMARKER (ptr));
 }
 
 
@@ -3842,7 +3929,7 @@ verify_string_chars_integrity (void)
     }
 }
 
-#endif /* MULE && ERROR_CHECK_GC */
+#endif /* defined (MULE) && defined (VERIFY_STRING_CHARS_INTEGRITY) */
 
 /* Compactify string chars, relocating the reference to each --
    free any empty string_chars_block we see. */
@@ -3884,7 +3971,7 @@ compact_string_chars (void)
             }
 
           string = from_s_chars->string;
-	  assert (!(LRECORD_FREE_P (string)));
+	  gc_checking_assert (!(LRECORD_FREE_P (string)));
 
           size = string->size_;
           fullsize = STRING_FULLSIZE (size);
@@ -4054,12 +4141,6 @@ gc_sweep (void)
   /* Put all unmarked conses on free list */
   sweep_conses ();
 
-  /* Free all unmarked bit vectors */
-  sweep_bit_vectors_1 (&all_bit_vectors,
-		       &gc_count_num_bit_vector_used,
-		       &gc_count_bit_vector_total_size,
-		       &gc_count_bit_vector_storage);
-
   /* Free all unmarked compiled-function objects */
   sweep_compiled_functions ();
 
@@ -4078,7 +4159,7 @@ gc_sweep (void)
 
   sweep_events ();
 
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   sweep_key_data ();
   sweep_button_data ();
   sweep_motion_data ();
@@ -4088,7 +4169,7 @@ gc_sweep (void)
   sweep_magic_eval_data ();
   sweep_eval_data ();
   sweep_misc_user_data ();
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
 
 #ifdef PDUMP
   pdump_objects_unmark ();
@@ -4356,6 +4437,7 @@ garbage_collect_1 (void)
   /* #### generalize this? */
   clear_event_resource ();
   cleanup_specifiers ();
+  cleanup_buffer_undo_lists ();
 
   /* Mark all the special slots that serve as the roots of accessibility. */
 
@@ -4607,11 +4689,6 @@ Garbage collection happens automatically if you cons more than
   pl = gc_plist_hack ("compiled-functions-used",
 		      gc_count_num_compiled_function_in_use, pl);
 
-  pl = gc_plist_hack ("bit-vector-storage", gc_count_bit_vector_storage, pl);
-  pl = gc_plist_hack ("bit-vectors-total-length",
-                      gc_count_bit_vector_total_size, pl);
-  pl = gc_plist_hack ("bit-vectors-used", gc_count_num_bit_vector_used, pl);
-
   HACK_O_MATIC (symbol, "symbol-storage", pl);
   pl = gc_plist_hack ("symbols-free", gc_count_num_symbol_freelist, pl);
   pl = gc_plist_hack ("symbols-used", gc_count_num_symbol_in_use, pl);
@@ -4845,7 +4922,7 @@ fixed_type_block_overhead (Bytecount size)
 
 /* Initialization */
 static void
-common_init_alloc_once_early (void)
+common_init_alloc_early (void)
 {
 #ifndef Qzero
   Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
@@ -4859,7 +4936,6 @@ common_init_alloc_once_early (void)
 
   gc_generation_number[0] = 0;
   breathing_space = 0;
-  all_bit_vectors = Qzero;
   Vgc_message = Qzero;
   all_lcrecords = 0;
   ignore_malloc_warnings = 1;
@@ -4879,7 +4955,7 @@ common_init_alloc_once_early (void)
   init_marker_alloc ();
   init_extent_alloc ();
   init_event_alloc ();
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   init_key_data_alloc ();
   init_button_data_alloc ();
   init_motion_data_alloc ();
@@ -4889,7 +4965,7 @@ common_init_alloc_once_early (void)
   init_magic_eval_data_alloc ();
   init_eval_data_alloc ();
   init_misc_user_data_alloc ();
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
 
   ignore_malloc_warnings = 0;
 
@@ -4920,7 +4996,6 @@ common_init_alloc_once_early (void)
 			     systems */
   lrecord_uid_counter = 259;
   debug_string_purity = 0;
-  gcprolist = 0;
 
   gc_currently_forbidden = 0;
   gc_hooks_inhibited = 0;
@@ -4952,16 +5027,31 @@ init_lcrecord_lists (void)
 }
 
 void
-reinit_alloc_once_early (void)
+init_alloc_early (void)
 {
-  common_init_alloc_once_early ();
+#if defined (__cplusplus) && defined (ERROR_CHECK_GC)
+  static struct gcpro initial_gcpro;
+
+  initial_gcpro.next = 0;
+  initial_gcpro.var = &Qnil;
+  initial_gcpro.nvars = 1;
+  gcprolist = &initial_gcpro;
+#else
+  gcprolist = 0;
+#endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
+}
+
+void
+reinit_alloc_early (void)
+{
+  common_init_alloc_early ();
   init_lcrecord_lists ();
 }
 
 void
 init_alloc_once_early (void)
 {
-  common_init_alloc_once_early ();
+  common_init_alloc_early ();
 
   {
     int i;
@@ -4973,6 +5063,7 @@ init_alloc_once_early (void)
   INIT_LRECORD_IMPLEMENTATION (vector);
   INIT_LRECORD_IMPLEMENTATION (string);
   INIT_LRECORD_IMPLEMENTATION (lcrecord_list);
+  INIT_LRECORD_IMPLEMENTATION (free);
 
   staticpros = Dynarr_new2 (Lisp_Object_ptr_dynarr, Lisp_Object *);
   Dynarr_resize (staticpros, 1410); /* merely a small optimization */
@@ -4984,12 +5075,6 @@ init_alloc_once_early (void)
 #endif
 
   init_lcrecord_lists ();
-}
-
-void
-init_alloc_early (void)
-{
-  gcprolist = 0;
 }
 
 void

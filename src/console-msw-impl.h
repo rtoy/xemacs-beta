@@ -269,8 +269,6 @@ struct msprinter_frame
  */
 
 /* win32 messages / magic event types */
-#define EVENT_MSWINDOWS_MAGIC_TYPE(e)	\
-	((e)->event.magic.underlying_mswindows_event)
 #define XM_BUMPQUEUE	(WM_USER + 101)
 #define XM_MAPFRAME	(WM_USER + 102)
 #define XM_UNMAPFRAME	(WM_USER + 103)

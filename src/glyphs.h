@@ -84,7 +84,7 @@ typedef struct
   Dynarr_declare (ii_keyword_entry);
 } ii_keyword_entry_dynarr;
 
-extern const struct struct_description iim_description;
+extern const struct sized_memory_description iim_description;
 
 enum image_instance_geometry
 {
@@ -537,6 +537,61 @@ enum image_instance_type
     x = wrong_type_argument (Qwidget_image_instance_p, (x));	\
 } while (0)
 
+struct text_image_instance
+{
+  int descent;
+  Lisp_Object string;
+};
+
+struct pixmap_image_instance
+{ /* used for pointers as well */
+  int depth;
+  int slice, maxslice, timeout;
+  Lisp_Object hotspot_x, hotspot_y; /* integer or Qnil */
+  Lisp_Object filename;	 /* string or Qnil */
+  Lisp_Object mask_filename; /* string or Qnil */
+  Lisp_Object fg, bg; /* foreground and background colors,
+			 if this is a colorized mono-pixmap
+			 or a pointer */
+  Lisp_Object auxdata;    /* list or Qnil: any additional data
+			     to be seen from lisp */
+  void* mask;		/* mask that can be seen from all windowing systems */
+};
+
+struct subwindow_image_instance
+{
+  void* subwindow;	/* specific devices can use this as necessary */
+  struct
+  {				/* We need these so we can do without
+				   subwindow_cachel */
+    int x, y;
+    int width, height;
+  } display_data;
+  unsigned int being_displayed : 1; /* used to detect when needs
+				       to be unmapped */
+  unsigned int v_resize : 1;	/* Whether the vsize is allowed to change. */
+  unsigned int h_resize : 1;	/* Whether the hsize is allowed to change. */
+  unsigned int orientation : 1; /* Vertical or horizontal. */
+  unsigned int h_justification : 2; /* left, right or center. */
+  unsigned int v_justification : 2; /* top, bottom or center. */
+  /* Face for colors and font. We specify this here because we
+     want people to be able to put :face in the instantiator
+     spec. Using glyph-face is more inconvenient, although more
+     general. */
+  Lisp_Object face;
+  Lisp_Object type;
+  Lisp_Object props;	/* properties or border*/
+  Lisp_Object items;	/* a list of displayed gui_items */
+  Lisp_Object pending_items; /* gui_items that should be displayed */
+  Lisp_Object children;	/* a list of children */
+  Lisp_Object width;	/* dynamic width spec. */
+  Lisp_Object height;	/* dynamic height spec. */
+  /* Change flags to augment dirty. */
+  unsigned int face_changed : 1;
+  unsigned int items_changed : 1;
+  unsigned int action_occurred : 1;
+};
+
 struct Lisp_Image_Instance
 {
   struct lcrecord_header header;
@@ -566,58 +621,9 @@ struct Lisp_Image_Instance
 
   union
   {
-    struct
-    {
-      int descent;
-      Lisp_Object string;
-    } text;
-    struct
-    {
-      int depth;
-      int slice, maxslice, timeout;
-      Lisp_Object hotspot_x, hotspot_y; /* integer or Qnil */
-      Lisp_Object filename;	 /* string or Qnil */
-      Lisp_Object mask_filename; /* string or Qnil */
-      Lisp_Object fg, bg; /* foreground and background colors,
-			     if this is a colorized mono-pixmap
-			     or a pointer */
-      Lisp_Object auxdata;    /* list or Qnil: any additional data
-				 to be seen from lisp */
-      void* mask;		/* mask that can be seen from all windowing systems */
-    } pixmap; /* used for pointers as well */
-    struct
-    {
-      void* subwindow;		/* specific devices can use this as necessary */
-      struct
-      {				/* We need these so we can do without
-				   subwindow_cachel */
-	int x, y;
-	int width, height;
-      } display_data;
-      unsigned int being_displayed : 1; /* used to detect when needs
-					   to be unmapped */
-      unsigned int v_resize : 1;	/* Whether the vsize is allowed to change. */
-      unsigned int h_resize : 1;	/* Whether the hsize is allowed to change. */
-      unsigned int orientation : 1; /* Vertical or horizontal. */
-      unsigned int h_justification : 2; /* left, right or center. */
-      unsigned int v_justification : 2; /* top, bottom or center. */
-      /* Face for colors and font. We specify this here because we
-	 want people to be able to put :face in the instantiator
-	 spec. Using glyph-face is more inconvenient, although more
-	 general. */
-      Lisp_Object face;
-      Lisp_Object type;
-      Lisp_Object props;	/* properties or border*/
-      Lisp_Object items;	/* a list of displayed gui_items */
-      Lisp_Object pending_items; /* gui_items that should be displayed */
-      Lisp_Object children;	/* a list of children */
-      Lisp_Object width;	/* dynamic width spec. */
-      Lisp_Object height;	/* dynamic height spec. */
-      /* Change flags to augment dirty. */
-      unsigned int face_changed : 1;
-      unsigned int items_changed : 1;
-      unsigned int action_occurred : 1;
-    } subwindow;
+    struct text_image_instance text;
+    struct pixmap_image_instance pixmap; /* used for pointers as well */
+    struct subwindow_image_instance subwindow;
   } u;
 
   /* console-type- and image-type-specific data */

@@ -377,6 +377,8 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SNPRINTF
 #undef HAVE_STPCPY
 #undef HAVE_STRERROR
+#undef HAVE_STRLWR
+#undef HAVE_STRUPR
 #undef HAVE_SYMLINK
 #undef HAVE_TZSET
 #undef HAVE_ULIMIT
@@ -920,7 +922,6 @@ extern "C" {
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
 /* Avoid C++ keywords used as ordinary C identifiers */
-#  define class c_class
 #  define new   c_new
 #  define this  c_this
 #  define catch c_catch

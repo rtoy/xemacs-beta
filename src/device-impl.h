@@ -77,9 +77,8 @@ struct device
      through device->console, but it's faster this way. */
   struct console_methods *devmeths;
 
-#ifdef USE_KKCC
+  /* Duplicates devmeths->symbol.  See comment in struct console. */
   enum console_variant devtype;
-#endif /* USE_KKCC */  
 
   /* A structure of auxiliary data specific to the device type.
      struct x_device is used for X window frames; defined in console-x.h
@@ -123,7 +122,7 @@ struct device
   unsigned int on_console_p :1;
   unsigned int connected_to_nas_p :1;
 
-#define MARKED_SLOT(x) Lisp_Object x
+#define MARKED_SLOT(x) Lisp_Object x;
 #include "devslots.h"
 
   /* File descriptors for input and output.  Much of the time

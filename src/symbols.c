@@ -105,7 +105,7 @@ mark_symbol (Lisp_Object obj)
   }
 }
 
-static const struct lrecord_description symbol_description[] = {
+static const struct memory_description symbol_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, next) },
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, value) },
@@ -136,7 +136,6 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
 						1, /*dumpable-flag*/
 						mark_symbol, print_symbol,
@@ -146,16 +145,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
 						symbol_remprop,
 						Fsymbol_plist,
 						Lisp_Symbol);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
-						mark_symbol, print_symbol,
-						0, 0, 0, symbol_description,
-						symbol_getprop,
-						symbol_putprop,
-						symbol_remprop,
-						Fsymbol_plist,
-						Lisp_Symbol);
-#endif /* not USE_KKCC */
 
 /**********************************************************************/
 /*                              Intern				      */
@@ -737,11 +726,6 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
        (symbol, newplist))
 {
   CHECK_SYMBOL (symbol);
-#if 0 /* Inserted for debugging 6/28/1997 -slb */
-  /* Somebody is setting a property list of integer 0, who? */
-  /* Not this way apparently. */
-  if (EQ(newplist, Qzero)) abort();
-#endif
 
   XSYMBOL (symbol)->plist = newplist;
   return newplist;
@@ -941,6 +925,14 @@ Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
    to call follow_varalias_pointers to get the actual
    symbol to operate on.  */
 
+static const struct memory_description symbol_value_buffer_local_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, default_value) },
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_value) },
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_buffer) },
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_alist_element) },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_symbol_value_buffer_local (Lisp_Object obj)
 {
@@ -958,6 +950,14 @@ mark_symbol_value_buffer_local (Lisp_Object obj)
   return bfwd->current_alist_element;
 }
 
+
+static const struct memory_description symbol_value_lisp_magic_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct symbol_value_lisp_magic, handler), MAGIC_HANDLER_MAX },
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct symbol_value_lisp_magic, harg), MAGIC_HANDLER_MAX },
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_lisp_magic, shadowed) },
+  { XD_END }
+};
+
 static Lisp_Object
 mark_symbol_value_lisp_magic (Lisp_Object obj)
 {
@@ -974,6 +974,12 @@ mark_symbol_value_lisp_magic (Lisp_Object obj)
     }
   return bfwd->shadowed;
 }
+
+static const struct memory_description symbol_value_varalias_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_varalias, aliasee) },
+  { XD_LISP_OBJECT, offsetof (struct symbol_value_varalias, shadowed) },
+  { XD_END }
+};
 
 static Lisp_Object
 mark_symbol_value_varalias (Lisp_Object obj)
@@ -999,30 +1005,10 @@ print_symbol_value_magic (Lisp_Object obj,
 		    (long) XPNTR (obj));
 }
 
-static const struct lrecord_description symbol_value_forward_description[] = {
+static const struct memory_description symbol_value_forward_description[] = {
   { XD_END }
 };
 
-static const struct lrecord_description symbol_value_buffer_local_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, default_value) },
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_value) },
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_buffer) },
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_buffer_local, current_alist_element) },
-  { XD_END }
-};
-
-static const struct lrecord_description symbol_value_lisp_magic_description[] = {
-  { XD_LISP_OBJECT_ARRAY, offsetof (struct symbol_value_lisp_magic, handler), 2*MAGIC_HANDLER_MAX+1 },
-  { XD_END }
-};
-
-static const struct lrecord_description symbol_value_varalias_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_varalias, aliasee) },
-  { XD_LISP_OBJECT, offsetof (struct symbol_value_varalias, shadowed) },
-  { XD_END }
-};
-
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
 			       symbol_value_forward,
 			       1, /*dumpable-flag*/
@@ -1055,36 +1041,6 @@ DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
 			       symbol_value_varalias_description,
 			       struct symbol_value_varalias);
 
-#else /* not USE_KKCC */
-
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
-			       symbol_value_forward,
-			       0,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_forward_description,
-			       struct symbol_value_forward);
-
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-buffer-local",
-			       symbol_value_buffer_local,
-			       mark_symbol_value_buffer_local,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_buffer_local_description,
-			       struct symbol_value_buffer_local);
-
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-lisp-magic",
-			       symbol_value_lisp_magic,
-			       mark_symbol_value_lisp_magic,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_lisp_magic_description,
-			       struct symbol_value_lisp_magic);
-
-DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
-			       symbol_value_varalias,
-			       mark_symbol_value_varalias,
-			       print_symbol_value_magic, 0, 0, 0,
-			       symbol_value_varalias_description,
-			       struct symbol_value_varalias);
-#endif /* not USE_KKCC */
 
 /* Getting and setting values of symbols */
 
@@ -2042,7 +1998,7 @@ default_value (Lisp_Object sym)
 				   XCONSOLE (Vselected_console));
     }
 
-  RETURN_NOT_REACHED (Qnil)	/* suppress compiler warning */
+  RETURN_NOT_REACHED (Qnil);	/* suppress compiler warning */
 }
 
 DEFUN ("default-boundp", Fdefault_boundp, 1, 1, 0, /*
@@ -2236,7 +2192,6 @@ sets it.
       = alloc_lcrecord_type (struct symbol_value_buffer_local,
 			     &lrecord_symbol_value_buffer_local);
     Lisp_Object foo;
-    zero_lcrecord (&bfwd->magic);
     bfwd->magic.type = SYMVAL_BUFFER_LOCAL;
 
     bfwd->default_value = find_symbol_value (variable);
@@ -2344,7 +2299,6 @@ Use `make-local-hook' instead.
   /* Make sure variable is set up to hold per-buffer values */
   bfwd = alloc_lcrecord_type (struct symbol_value_buffer_local,
 			      &lrecord_symbol_value_buffer_local);
-  zero_lcrecord (&bfwd->magic);
   bfwd->magic.type = SYMVAL_SOME_BUFFER_LOCAL;
 
   bfwd->current_buffer = Qnil;
@@ -2508,7 +2462,7 @@ From now on the default value will apply in this buffer.
     default:
       return variable;
     }
-  RETURN_NOT_REACHED(Qnil)	/* suppress compiler warning */
+  RETURN_NOT_REACHED(Qnil);	/* suppress compiler warning */
 }
 
 
@@ -2928,7 +2882,7 @@ decode_magic_handler_type (Lisp_Object symbol)
   if (EQ (symbol, Qmake_local))      return MAGIC_HANDLER_MAKE_LOCAL;
 
   invalid_constant ("Unrecognized symbol value handler type", symbol);
-  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX)
+  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX);
 }
 
 static enum lisp_magic_handler
@@ -2962,7 +2916,7 @@ handler_type_from_function_symbol (Lisp_Object funsym, int abort_if_not_found)
   if (abort_if_not_found)
     abort ();
   invalid_argument ("Unrecognized symbol-value function", funsym);
-  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX)
+  RETURN_NOT_REACHED (MAGIC_HANDLER_MAX);
 }
 
 static int
@@ -3064,7 +3018,6 @@ pity, thereby invalidating your code.
     {
       bfwd = alloc_lcrecord_type (struct symbol_value_lisp_magic,
 				  &lrecord_symbol_value_lisp_magic);
-      zero_lcrecord (&bfwd->magic);
       bfwd->magic.type = SYMVAL_LISP_MAGIC;
       for (i = 0; i < MAGIC_HANDLER_MAX; i++)
 	{
@@ -3201,7 +3154,6 @@ has a buffer-local value in any buffer, or the symbols nil or t.
 
   bfwd = alloc_lcrecord_type (struct symbol_value_varalias,
 			      &lrecord_symbol_value_varalias);
-  zero_lcrecord (&bfwd->magic);
   bfwd->magic.type = SYMVAL_VARALIAS;
   bfwd->aliasee = alias;
   bfwd->shadowed = valcontents;
@@ -3303,7 +3255,7 @@ init_symbols_once_early (void)
   INIT_LRECORD_IMPLEMENTATION (symbol_value_lisp_magic);
   INIT_LRECORD_IMPLEMENTATION (symbol_value_varalias);
 
-  reinit_symbols_once_early ();
+  reinit_symbols_early ();
 
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
@@ -3335,13 +3287,13 @@ init_symbols_once_early (void)
   XSYMBOL (Qt)->value = Qt;	/* Veritas aeterna */
   Vquit_flag = Qnil;
 
-  dump_add_root_object (&Qnil);
-  dump_add_root_object (&Qunbound);
-  dump_add_root_object (&Vquit_flag);
+  dump_add_root_lisp_object (&Qnil);
+  dump_add_root_lisp_object (&Qunbound);
+  dump_add_root_lisp_object (&Vquit_flag);
 }
 
 void
-reinit_symbols_once_early (void)
+reinit_symbols_early (void)
 {
 }
 

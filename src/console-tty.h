@@ -1,6 +1,6 @@
 /* Define TTY specific console, device, and frame object for XEmacs.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -50,6 +50,16 @@ extern struct console *cmputc_console;
 void send_string_to_tty_console (struct console *c, unsigned char *str,
 				 int len);
 
+/***************     Prototypes from console-tty.c     ****************/
+
+extern const struct sized_memory_description tty_console_data_description;
+
+
+/***************     Prototypes from objects-tty.c     ****************/
+
+extern const struct sized_memory_description tty_color_instance_data_description;
+extern const struct sized_memory_description tty_font_instance_data_description;
+
 
 /***************     Prototypes from redisplay-tty.c     ****************/
 
@@ -79,6 +89,5 @@ Lisp_Object tty_semi_canonicalize_device_connection (Lisp_Object connection,
 						     Error_Behavior errb);
 Lisp_Object tty_canonicalize_device_connection (Lisp_Object connection,
 						Error_Behavior errb);
-struct console * tty_find_console_from_fd (int fd);
 
 #endif /* INCLUDED_console_tty_h_ */

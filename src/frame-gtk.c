@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -93,6 +93,20 @@ static GtkTargetEntry dnd_target_table[] = {
 static guint dnd_n_targets = sizeof(dnd_target_table) / sizeof(dnd_target_table[0]);
 
 #endif
+
+static const struct memory_description gtk_frame_data_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_frame, icon_pixmap_mask) },
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct gtk_frame, lisp_visible_widgets),
+    3 },
+  { XD_END }
+};
+
+extern const struct sized_memory_description gtk_frame_data_description;
+
+const struct sized_memory_description gtk_frame_data_description = {
+  sizeof (struct gtk_frame), gtk_frame_data_description_1
+};
 
 
 /************************************************************************/
@@ -743,7 +757,8 @@ The type defaults to text/plain.
       if (!NILP (dtyp) && STRINGP (dtyp))
 	dnd_typ = gdk_atom_intern (XSTRING_DATA (dtyp), FALSE);
 
-      gtk_drag_begin (wid, tl, GDK_ACTION_COPY, lisp_event->event.button.button, NULL);
+      gtk_drag_begin (wid, tl, GDK_ACTION_COPY,
+		      EVENT_BUTTON_BUTTON (lisp_event), NULL);
 
       Vcurrent_drag_object = data;
 

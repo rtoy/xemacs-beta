@@ -315,7 +315,6 @@ typedef EMACS_INT Memxpos;
    we don't want by creating overloaded versions of them and declaring them
    private. */
    
-#undef class
 #undef this
 
 class Bytecount;
@@ -742,7 +741,6 @@ inline Bytecount operator - (const Ibyte *x, const Ibyte *y)	\
   { return Bytecount (x - y); }
 #endif
 
-#define class c_class
 #define this c_this
 
 #endif /* __cplusplus */
@@ -815,7 +813,7 @@ typedef unsigned long uintptr_t;
 #ifndef DOESNT_RETURN
 # if defined __GNUC__
 #  if ((__GNUC__ > 2) || (__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
-#   define RETURN_NOT_REACHED(value)
+#   define RETURN_NOT_REACHED(value) DO_NOTHING
 #   define DOESNT_RETURN void
 #   define DECLARE_DOESNT_RETURN(decl) \
            extern void decl __attribute__ ((noreturn))
@@ -843,11 +841,21 @@ typedef unsigned long uintptr_t;
 /* "statement not reached */
 #if defined __SUNPRO_C || defined __USLC__
 #define RETURN_SANS_WARNINGS if (1) return
-#define RETURN_NOT_REACHED(value)
+#define RETURN_NOT_REACHED(value) DO_NOTHING
+#endif
+
+/* More ways to shut up compiler.  This works in Fcommand_loop_1(),
+   where there's an infinite loop in a function returning a Lisp object.
+*/
+#if defined (_MSC_VER) || defined (__SUNPRO_C) || defined (__SUNPRO_CC) || \
+  (defined (DEC_ALPHA) && defined (OSF1))
+#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
+#else
+#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING
 #endif
 
 #ifndef RETURN_NOT_REACHED
-#define RETURN_NOT_REACHED(value) return value;
+#define RETURN_NOT_REACHED(value) return (value)
 #endif
 
 #ifndef RETURN_SANS_WARNINGS
@@ -1873,6 +1881,36 @@ do {									\
 } while (0)
 
 
+/* Macros for looping over internal alists.
+
+   *** ALL OF THESE MACROS MUST BE DECLARED INSIDE BRACES -- SEE ABOVE. ***
+
+   ALIST_LOOP_3 loops over an alist, at each iteration setting CAR and CDR
+   to the car and cdr of the acons.  CAR and CDR are automatically
+   declared.
+
+   ALIST_LOOP_4 is similar to ALIST_LOOP_3 but contains an additional
+   variable ACONS at the beginning for access to the acons itself.All of
+   the variables ACONS, CAR and CDR are automatically declared.
+*/
+
+#define ALIST_LOOP_3(car, cdr, alist)				\
+Lisp_Object _al3_acons_##car, car, cdr, _al3_tail_##car;	\
+  for (_al3_tail_##car = alist;					\
+       NILP (_al3_tail_##car) ?					\
+	 0 : (_al3_acons_##car = XCAR (_al3_tail_##car),	\
+	      car = XCAR (_al3_acons_##car),			\
+	      cdr = XCDR (_al3_acons_##car), 1);		\
+       _al3_tail_##car = XCDR (_al3_tail_##car))
+
+#define ALIST_LOOP_4(acons, car, cdr, list)			\
+Lisp_Object acons, car, cdr, _al4_tail_##car;			\
+  for (_al4_tail_##car = list;					\
+       NILP (_al4_tail_##car) ?					\
+	 0 : (elt = XCAR (_al4_tail_##car), car = XCAR (elt),	\
+	      cdr = XCDR (elt), 1);				\
+       _al4_tail_##car = XCDR (tail))
+
 /* Macros for looping over external alists.
 
    *** ALL OF THESE MACROS MUST BE DECLARED INSIDE BRACES -- SEE ABOVE. ***
@@ -2171,9 +2209,6 @@ struct Lisp_Vector
 {
   struct lcrecord_header header;
   long size;
-  /* next is now chained through v->contents[size], terminated by Qzero.
-     This means that pure vectors don't need a "next" */
-  /* struct Lisp_Vector *next; */
   Lisp_Object contents[1];
 };
 typedef struct Lisp_Vector Lisp_Vector;
@@ -2209,8 +2244,7 @@ DECLARE_LRECORD (vector, Lisp_Vector);
 
 struct Lisp_Bit_Vector
 {
-  struct lrecord_header lheader;
-  Lisp_Object next;
+  struct lcrecord_header lheader;
   Elemcount size;
   unsigned long bits[1];
 };
@@ -2236,7 +2270,6 @@ DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
 } while (0)
 
 #define bit_vector_length(v) ((v)->size)
-#define bit_vector_next(v) ((v)->next)
 
 DECLARE_INLINE_HEADER (
 int
@@ -2669,30 +2702,6 @@ Lisp_Object make_weak_list (enum weak_list_type type);
 int finish_marking_weak_lists (void);
 void prune_weak_lists (void);
 
-/*-------------------------- lcrecord-list -----------------------------*/
-
-struct lcrecord_list
-{
-  struct lcrecord_header header;
-  Lisp_Object free;
-  Elemcount size;
-  const struct lrecord_implementation *implementation;
-};
-
-DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
-#define XLCRECORD_LIST(x) XRECORD (x, lcrecord_list, struct lcrecord_list)
-#define wrap_lcrecord_list(p) wrap_record (p, lcrecord_list)
-#define LCRECORD_LISTP(x) RECORDP (x, lcrecord_list)
-/* #define CHECK_LCRECORD_LIST(x) CHECK_RECORD (x, lcrecord_list)
-   Lcrecord lists should never escape to the Lisp level, so
-   functions should not be doing this. */
-
-Lisp_Object make_lcrecord_list (Elemcount size,
-				const struct lrecord_implementation
-				*implementation);
-Lisp_Object allocate_managed_lcrecord (Lisp_Object lcrecord_list);
-void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
-
 
 /************************************************************************/
 /*      Definitions related to the format of text and of characters     */
@@ -3004,11 +3013,53 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 
 extern struct gcpro *gcprolist;
 
+/* #### Catching insufficient gcpro:
+
+   The C++ code below catches GCPRO without UNGCPRO or vice-versa.
+   Catching cases where there's no GCPRO or UNGCPRO but should be, however,
+   is much harder, but could be done:
+
+   1. Lisp_Object becomes a real object.  Its creator and destructor need to
+      figure out whether the object is on the stack (by looking at the range
+      that `this' is within), and if so, add the pointer to a list of all
+      stack-based Lisp_Objects.
+
+   2. The assignment method needs to do reference-counting on actual Lisp
+      objects -- in particular, we need to know if there are any references
+      to a Lisp object that are *NOT* from stack-based Lisp_Objects.
+
+   3. When we get to a point in the code where we might garbage collect --
+      i.e. Ffuncall(), Feval(), or Fgarbage_collect() is called -- we look
+      at our list of stack-based Lisp_Objects, and if there are any that
+      point to Lisp objects with no non-stack references, see if there are
+      any gcpros pointing to the object, and if not, set a flag indicating
+      that the object is "destroyed". (Don't abort yet because the function
+      might not use the object any more.)
+
+   4. When we detag a pointer using XFOO(), abort if its "destroyed" flag
+      is set.
+
+   --ben
+*/
+
 struct gcpro
 {
   struct gcpro *next;
   const Lisp_Object *var;	/* Address of first protected variable */
   int nvars;			/* Number of consecutive protected variables */
+#if defined (__cplusplus) && defined (ERROR_CHECK_GC)
+  /* Try to catch GCPRO without UNGCPRO, or vice-versa.  G++ complains (at
+     least with sufficient numbers of warnings enabled, i.e. -Weffc++) if a
+     copy constructor or assignment operator is not defined. */
+  gcpro () : next (0), var (0), nvars (0) { }
+  gcpro (const gcpro& g) : next (g.next), var (g.var), nvars (g.nvars) { }
+  gcpro& operator= (const gcpro& g) { next = g.next; var = g.var;
+				      nvars = g.nvars;
+#undef this
+				      return *this;}
+#define this c_this
+  ~gcpro () { assert (!next); }
+#endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
 };
 
 /* Normally, you declare variables gcpro1, gcpro2, ... and use the
@@ -3135,7 +3186,31 @@ void debug_ungcpro(char *, int, struct gcpro *);
   gcpro3.next = &gcpro2,   gcpro3.var = array3, gcpro3.nvars = n3,	\
   gcprolist = &gcpro3 ))
 
-#define UNGCPRO ((void) (gcprolist = gcpro1.next))
+#if defined (__cplusplus) && defined (ERROR_CHECK_GC)
+/* We need to reset each gcpro to avoid triggering the assert() in
+   ~gcpro().  This happens in UNGCPRO and longjmp(). */
+#define UNWIND_GCPRO_TO(val)						   \
+do									   \
+{									   \
+  struct gcpro *__gcpro_stop = (val);					   \
+  /* Try to catch UNGCPRO without GCPRO.  We arrange for there to be a	   \
+     sentinel at the end of the gcprolist, so it should never be NULL. */  \
+  assert (__gcpro_stop);						   \
+  while (gcprolist != __gcpro_stop)					   \
+    {									   \
+      struct gcpro *__gcpro_next = gcprolist->next;			   \
+      gcprolist->next = 0;						   \
+      gcprolist = __gcpro_next;						   \
+      assert (gcprolist);						   \
+    }									   \
+} while (0)
+#else
+#define UNWIND_GCPRO_TO(val) (gcprolist = (val))
+#endif /* defined (__cplusplus) && defined (ERROR_CHECK_GC) */
+
+#define UNGCPRO_1(gcpro1) UNWIND_GCPRO_TO (gcpro1.next)
+
+#define UNGCPRO UNGCPRO_1 (gcpro1)
 
 #define NGCPRO1(var1) ((void) (						\
   ngcpro1.next = gcprolist, ngcpro1.var = &var1, ngcpro1.nvars = 1,	\
@@ -3182,7 +3257,7 @@ void debug_ungcpro(char *, int, struct gcpro *);
   ngcpro3.next = &ngcpro2,  ngcpro3.var = array3, ngcpro3.nvars = n3,	\
   gcprolist = &ngcpro3 ))
 
-#define NUNGCPRO ((void) (gcprolist = ngcpro1.next))
+#define NUNGCPRO UNGCPRO_1 (ngcpro1)
 
 #define NNGCPRO1(var1) ((void) (					\
   nngcpro1.next = gcprolist, nngcpro1.var = &var1, nngcpro1.nvars = 1,	\
@@ -3229,7 +3304,7 @@ void debug_ungcpro(char *, int, struct gcpro *);
   nngcpro3.next = &nngcpro2,  nngcpro3.var = array3, nngcpro3.nvars = n3, \
   gcprolist = &nngcpro3 ))
 
-#define NNUNGCPRO ((void) (gcprolist = nngcpro1.next))
+#define NNUNGCPRO UNGCPRO_1 (nngcpro1)
 
 #endif /* ! DEBUG_GCPRO */
 
@@ -3299,81 +3374,6 @@ void end_gc_forbidden (int count);
 
 
 /************************************************************************/
-/*		                 Dumping                		*/
-/************************************************************************/
-
-/* dump_add_root_struct_ptr (&var, &desc) dumps the structure pointed to by
-   `var'.  This is for a single relocatable pointer located in the data
-   segment (i.e. the block pointed to is in the heap). */
-#ifdef PDUMP
-void dump_add_root_struct_ptr (void *, const struct struct_description *);
-#else
-#define dump_add_root_struct_ptr(varaddr,descaddr) DO_NOTHING
-#endif
-
-/* dump_add_opaque (&var, size) dumps the opaque static structure `var'.
-   This is for a static block of memory (in the data segment, not the
-   heap), with no relocatable pointers in it. */
-#ifdef PDUMP
-void dump_add_opaque (const void *, Bytecount);
-#else
-#define dump_add_opaque(varaddr,size) DO_NOTHING
-#endif
-
-/* dump_add_root_block (&var, &desc) dumps the static structure located at
-   `var' and described by DESC.  This is for a static block of memory (in
-   the data segment, not the heap), with relocatable pointers in it, as
-   described by DESC. (#### Not yet implemented) */
-#ifdef PDUMP
-void dump_add_root_block (void *ptraddress,
-			  const struct lrecord_description *desc);
-#else
-#define dump_add_root_block(ptraddress,desc) DO_NOTHING
-#endif
-
-/* Call dump_add_opaque_int (&int_var) to dump `int_var', of type `int'. */
-#ifdef PDUMP
-#define dump_add_opaque_int(int_varaddr) do {	\
-  int *dao_ = (int_varaddr); /* type check */	\
-  dump_add_opaque (dao_, sizeof (*dao_));	\
-} while (0)
-#else
-#define dump_add_opaque_int(int_varaddr) DO_NOTHING
-#endif
-
-/* Call dump_add_opaque_fixnum (&fixnum_var) to dump `fixnum_var', of type `Fixnum'. */
-#ifdef PDUMP
-#define dump_add_opaque_fixnum(fixnum_varaddr) do {	\
-  Fixnum *dao_ = (fixnum_varaddr); /* type check */	\
-  dump_add_opaque (dao_, sizeof (*dao_));		\
-} while (0)
-#else
-#define dump_add_opaque_fixnum(fixnum_varaddr) DO_NOTHING
-#endif
-
-/* Call dump_add_root_object (&var) to ensure that var is properly updated after pdump. */
-#ifdef PDUMP
-void dump_add_root_object (Lisp_Object *);
-#else
-#define dump_add_root_object(varaddr) DO_NOTHING
-#endif
-
-/* Call dump_add_root_object (&var) to ensure that var is properly updated after
-   pdump.  var must point to a linked list of objects out of which
-   some may not be dumped */
-#ifdef PDUMP
-void dump_add_weak_object_chain (Lisp_Object *);
-#else
-#define dump_add_weak_object_chain(varaddr) DO_NOTHING
-#endif
-
-/* Nonzero means Emacs has already been initialized.
-   Used during startup to detect startup of dumped Emacs.  */
-extern int initialized;
-
-
-
-/************************************************************************/
 /*		              Misc definitions        	                */
 /************************************************************************/
 
@@ -3435,6 +3435,7 @@ extern int purify_flag;
 extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
+void copy_lisp_object (Lisp_Object dst, Lisp_Object src);
 Lisp_Object build_intstring (const Ibyte *);
 Lisp_Object build_string (const CIbyte *);
 Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
@@ -3449,8 +3450,7 @@ Lisp_Object make_string_nocopy (const Ibyte *, Bytecount);
 void free_cons (Lisp_Object);
 void free_list (Lisp_Object);
 void free_alist (Lisp_Object);
-void mark_conses_in_list (Lisp_Object);
-void free_marker (Lisp_Marker *);
+void free_marker (Lisp_Object);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
@@ -3465,29 +3465,27 @@ void recompute_funcall_allocation_flag (void);
 Bytecount malloced_storage_size (void *, Bytecount, struct overhead_stats *);
 Bytecount fixed_type_block_overhead (Bytecount);
 #endif
-#ifdef PDUMP
-void pdump (void);
-int pdump_load (const char *);
 
-extern char *pdump_start, *pdump_end;
-#define DUMPEDP(adr) ((((char *)(adr)) < pdump_end) && (((char *)(adr)) >= pdump_start))
-#else
-#define DUMPEDP(adr) 0
-#endif
-
-
-#ifdef USE_KKCC
-Lisp_Object allocate_event (void);
-Lisp_Object allocate_key_data (void);
-Lisp_Object allocate_button_data (void);
-Lisp_Object allocate_motion_data (void);
-Lisp_Object allocate_process_data (void);
-Lisp_Object allocate_timeout_data (void);
-Lisp_Object allocate_magic_data (void);
-Lisp_Object allocate_magic_eval_data (void);
-Lisp_Object allocate_eval_data (void);
-Lisp_Object allocate_misc_user_data (void);
-#endif /* USE_KKCC */
+#ifdef EVENT_DATA_AS_OBJECTS
+Lisp_Object make_key_data (void);
+Lisp_Object make_button_data (void);
+Lisp_Object make_motion_data (void);
+Lisp_Object make_process_data (void);
+Lisp_Object make_timeout_data (void);
+Lisp_Object make_magic_data (void);
+Lisp_Object make_magic_eval_data (void);
+Lisp_Object make_eval_data (void);
+Lisp_Object make_misc_user_data (void);
+void free_key_data (Lisp_Object);
+void free_button_data (Lisp_Object);
+void free_motion_data (Lisp_Object);
+void free_process_data (Lisp_Object);
+void free_timeout_data (Lisp_Object);
+void free_magic_data (Lisp_Object);
+void free_magic_eval_data (Lisp_Object);
+void free_eval_data (Lisp_Object);
+void free_misc_user_data (Lisp_Object);
+#endif /* EVENT_DATA_AS_OBJECTS */
 
 /* Defined in buffer.c */
 Lisp_Object get_truename_buffer (Lisp_Object);
@@ -3505,6 +3503,7 @@ int map_over_sharing_buffers (struct buffer *buf,
 			      int (*mapfun) (struct buffer *buf,
 					     void *closure),
 			      void *closure);
+void cleanup_buffer_undo_lists (void);
 
 extern struct buffer *current_buffer;
 
@@ -4060,7 +4059,6 @@ Lisp_Object enqueue_misc_user_event_pos (Lisp_Object, Lisp_Object,
 extern int modifier_keys_are_sticky;
 
 /* Defined in event-Xt.c */
-void enqueue_Xt_dispatch_event (Lisp_Object event);
 void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
 
 
@@ -4408,6 +4406,10 @@ EXFUN (Fprint, 2);
 /* Lower-level ways to output data: */
 void print_internal (Lisp_Object, Lisp_Object, int);
 void debug_print (Lisp_Object);
+void debug_p4 (Lisp_Object obj);
+void debug_p3 (Lisp_Object obj);
+void debug_short_backtrace (int);
+void debug_backtrace (void);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
@@ -4455,8 +4457,6 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
 void internal_object_printer (Lisp_Object, Lisp_Object, int);
-void debug_short_backtrace (int);
-void debug_backtrace (void);
 
 /* Defined in profile.c */
 void mark_profiling_info (void);
@@ -4879,6 +4879,16 @@ DECLARE_INLINE_HEADER (int qxeatoi (const Ibyte *string))
   return atoi ((const char *) string);
 }
 
+DECLARE_INLINE_HEADER (Ibyte *qxestrupr (Ibyte *s))
+{
+  return (Ibyte *) strupr ((char *) s);
+}
+
+DECLARE_INLINE_HEADER (Ibyte *qxestrlwr (Ibyte *s))
+{
+  return (Ibyte *) strlwr ((char *) s);
+}
+
 int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
@@ -4922,8 +4932,8 @@ void buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
 					Bytebpos byte_end);
 
 /* Defined in unicode.c */
-extern const struct struct_description to_unicode_description[];
-extern const struct struct_description from_unicode_description[];
+extern const struct sized_memory_description to_unicode_description;
+extern const struct sized_memory_description from_unicode_description;
 void init_charset_unicode_tables (Lisp_Object charset);
 void free_charset_unicode_tables (Lisp_Object charset);
 void recalculate_unicode_precedence (void);

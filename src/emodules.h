@@ -89,7 +89,7 @@ extern void emodules_doc_sym (const char *objname, const char *docstr);
 #define dump_add_opaque_int(int_varaddr) DO_NOTHING
 #undef dump_add_opaque_fixnum
 #define dump_add_opaque_fixnum(fixnum_varaddr) DO_NOTHING
-#define dump_add_root_object(varaddr) DO_NOTHING
+#define dump_add_root_lisp_object(varaddr) DO_NOTHING
 #define dump_add_weak_object_chain(varaddr) DO_NOTHING
 #undef staticpro
 #define staticpro(DSF_location) staticpro_nodump(DSF_location)

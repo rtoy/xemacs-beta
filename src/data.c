@@ -739,7 +739,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  range_error:
   args_out_of_range (array, index_);
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 DEFUN ("aset", Faset, 3, 3, 0, /*
@@ -792,7 +792,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 
  range_error:
   args_out_of_range (array, index_);
-  RETURN_NOT_REACHED (Qnil)
+  RETURN_NOT_REACHED (Qnil);
 }
 
 
@@ -1612,26 +1612,18 @@ make_weak_list (enum weak_list_type type)
   return result;
 }
 
-static const struct lrecord_description weak_list_description[] = {
+static const struct memory_description weak_list_description[] = {
   { XD_LISP_OBJECT, offsetof (struct weak_list, list) },
   { XD_LO_LINK,     offsetof (struct weak_list, next_weak) },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("weak-list", weak_list,
 			       1, /*dumpable-flag*/
 			       mark_weak_list, print_weak_list,
 			       0, weak_list_equal, weak_list_hash,
 			       weak_list_description,
 			       struct weak_list);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("weak-list", weak_list,
-			       mark_weak_list, print_weak_list,
-			       0, weak_list_equal, weak_list_hash,
-			       weak_list_description,
-			       struct weak_list);
-#endif /* not USE_KKCC */
 /*
    -- we do not mark the list elements (either the elements themselves
       or the cons cells that hold them) in the normal marking phase.
@@ -1906,7 +1898,7 @@ decode_weak_list_type (Lisp_Object symbol)
   if (EQ (symbol, Qfull_assoc))  return WEAK_LIST_FULL_ASSOC;
 
   invalid_constant ("Invalid weak list type", symbol);
-  RETURN_NOT_REACHED (WEAK_LIST_SIMPLE)
+  RETURN_NOT_REACHED (WEAK_LIST_SIMPLE);
 }
 
 static Lisp_Object
@@ -2083,25 +2075,17 @@ make_weak_box (Lisp_Object value)
   return result;
 }
 
-static const struct lrecord_description weak_box_description[] = {
+static const struct memory_description weak_box_description[] = {
   { XD_LO_LINK, offsetof (struct weak_box, value) },
   { XD_END}
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("weak_box", weak_box,
 			       0, /*dumpable-flag*/
 			       mark_weak_box, print_weak_box,
 			       0, weak_box_equal, weak_box_hash,
 			       weak_box_description,
 			       struct weak_box);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("weak_box", weak_box,
-			       mark_weak_box, print_weak_box,
-			       0, weak_box_equal, weak_box_hash,
-			       weak_box_description,
-			       struct weak_box);
-#endif /* not USE_KKCC */
 
 DEFUN ("make-weak-box", Fmake_weak_box, 1, 1, 0, /*
 Return a new weak box from value CONTENTS.
@@ -2280,27 +2264,22 @@ make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
   return result;
 }
 
-static const struct lrecord_description ephemeron_description[] = {
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, key)},
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, cons_chain)},
-  { XD_LISP_OBJECT, offsetof(struct ephemeron, value)},
+static const struct memory_description ephemeron_description[] = {
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, key),
+    0, 0, XD_FLAG_NO_KKCC },
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, cons_chain),
+    0, 0, XD_FLAG_NO_KKCC },
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, value),
+    0, 0, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("ephemeron", ephemeron,
 			       0, /*dumpable-flag*/
 			       mark_ephemeron, print_ephemeron,
 			       0, ephemeron_equal, ephemeron_hash,
 			       ephemeron_description,
 			       struct ephemeron);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("ephemeron", ephemeron,
-			       mark_ephemeron, print_ephemeron,
-			       0, ephemeron_equal, ephemeron_hash,
-			       ephemeron_description,
-			       struct ephemeron);
-#endif /* not USE_KKCC */
 
 DEFUN ("make-ephemeron", Fmake_ephemeron, 2, 3, 0, /*
 Return a new ephemeron with key KEY, value CONTENTS, and finalizer FINALIZER.

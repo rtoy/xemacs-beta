@@ -1869,20 +1869,10 @@ compiled_function_hash (Lisp_Object obj, int depth)
 		internal_hash (f->constants,    depth + 1));
 }
 
-static const struct lrecord_description lo_description_1[] = {
-  { XD_LISP_OBJECT, 0 },
-  { XD_END }
-};
-
-static const struct struct_description lo_description = {
-  sizeof (Lisp_Object),
-  lo_description_1
-};
-
-static const struct lrecord_description compiled_function_description[] = {
+static const struct memory_description compiled_function_description[] = {
   { XD_INT,         offsetof (Lisp_Compiled_Function, args_in_array) },
   { XD_STRUCT_PTR,  offsetof (Lisp_Compiled_Function, args),
-      XD_INDIRECT (0, 0), &lo_description },
+      XD_INDIRECT (0, 0), &lisp_object_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
   { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },
@@ -1893,7 +1883,6 @@ static const struct lrecord_description compiled_function_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     1, /*dumpable_flag*/
 				     mark_compiled_function,
@@ -1902,15 +1891,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     compiled_function_description,
-				     Lisp_Compiled_Function);
-#endif /* not USE_KKCC */
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 Return t if OBJECT is a byte-compiled function object.

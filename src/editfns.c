@@ -361,8 +361,8 @@ save_excursion_restore (Lisp_Object info)
 
   /* Free all the junk we allocated, so that a `save-excursion' comes
      for free in terms of GC junk. */
-  free_marker (XMARKER (XCAR (info)));
-  free_marker (XMARKER (XCDR (info)));
+  free_marker (XCAR (info));
+  free_marker (XCDR (info));
   free_cons (info);
   return Qnil;
 }
@@ -726,7 +726,7 @@ user_login_name (uid_t *uid)
 	  return (Ibyte *) (pw ? pw->pw_name : "unknown");
 #else
 	  /* For all but Cygwin return NULL (nil) */
-	  return pw ? pw->pw_name : NULL;
+          return pw ? (Ibyte *) pw->pw_name : NULL;
 #endif
 	}
     }
@@ -2104,8 +2104,8 @@ save_restriction_restore (Lisp_Object data)
 
   /* Free all the junk we allocated, so that a `save-restriction' comes
      for free in terms of GC junk. */
-  free_marker (XMARKER (XCAR (markers)));
-  free_marker (XMARKER (XCDR (markers)));
+  free_marker (XCAR (markers));
+  free_marker (XCDR (markers));
   free_cons (markers);
   free_cons (data);
 

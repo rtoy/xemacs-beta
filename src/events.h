@@ -27,10 +27,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "systime.h"
 
-#ifdef USE_KKCC
-#include "opaque.h"
-#endif /* USE_KKCC */
-
 /* There is one object called an event_stream.  This object contains
    callback functions for doing the window-system-dependent operations
    that XEmacs requires.
@@ -147,17 +143,17 @@ Boston, MA 02111-1307, USA.  */
   Stream pairs description
   ------------------------
 
-  Since there are many possible processes/event loop combinations, the event code
-  is responsible for creating an appropriate lstream type. The process
-  implementation does not care about that implementation.
+  Since there are many possible processes/event loop combinations, the
+  event code is responsible for creating an appropriate lstream type. The
+  process implementation does not care about that implementation.
 
-  The Create stream pair function is passed two void* values, which identify
-  process-dependent 'handles'. The process implementation uses these handles
-  to communicate with child processes. The function must be prepared to receive
-  handle types of any process implementation. Since only one process
-  implementation exists in a particular XEmacs configuration, preprocessing
-  is a means of compiling in the support for the code which deals with particular
-  handle types.
+  The Create stream pair function is passed two void* values, which
+  identify process-dependent 'handles'. The process implementation uses
+  these handles to communicate with child processes. The function must be
+  prepared to receive handle types of any process implementation. Since
+  only one process implementation exists in a particular XEmacs
+  configuration, preprocessing is a means of compiling in the support for
+  the code which deals with particular handle types.
 
   For example, a unixoid type loop, which relies on file descriptors, may be
   asked to create a pair of streams by a unix-style process implementation.
@@ -209,8 +205,9 @@ struct event_stream
   void (*unselect_console_cb)	(struct console *);
   void (*select_process_cb)	(Lisp_Process *, int doin, int doerr);
   void (*unselect_process_cb)	(Lisp_Process *, int doin, int doerr);
-  void (*quit_p_cb)		(void);
-  void (*force_event_pending)	(struct frame* f);
+  int (*quit_check_disallowed_p_cb)(void);
+  void (*drain_queue_cb)	(void);
+  void (*force_event_pending_cb)(struct frame* f);
   void (*create_io_streams_cb)  (void* /* inhandle*/, void* /*outhandle*/ ,
 				 void * /* errhandle*/,
 				 Lisp_Object* /* instream */,
@@ -231,17 +228,17 @@ struct event_stream
 
 extern struct event_stream *event_stream;
 
-#ifdef USE_KKCC
-Lisp_Object make_key_data (void);
-Lisp_Object make_button_data (void);
-Lisp_Object make_motion_data (void);
-Lisp_Object make_process_data (void);
-Lisp_Object make_timeout_data (void);
-Lisp_Object make_magic_data (void);
-Lisp_Object make_magic_eval_data (void);
-Lisp_Object make_eval_data (void);
-Lisp_Object make_misc_user_data (void);
-#endif /* USE_KKCC */
+#ifdef EVENT_DATA_AS_OBJECTS
+#define EVENT_FOO_BAR_1(extractor, field)  ((extractor)->field)
+#define EVENT_FOO_BAR(e, uptype, downtype, field) EVENT_FOO_BAR_1 (X##uptype##_DATA (EVENT_DATA (e)), field)
+#define SET_EVENT_FOO_BAR_1(extractor, field, val)  \
+do { (extractor)->field = (val); } while (0)
+#define SET_EVENT_FOO_BAR(e, uptype, downtype, field, val) SET_EVENT_FOO_BAR_1 (X##uptype##_DATA (EVENT_DATA (e)), field, val)
+#else
+#define EVENT_FOO_BAR(e, uptype, downtype, field) ((e)->event.downtype.field)
+#define SET_EVENT_FOO_BAR(e, uptype, downtype, field, val) \
+do { (e)->event.downtype.field = (val); } while (0)
+#endif
 
 typedef enum emacs_event_type
 {
@@ -278,15 +275,11 @@ enum alternative_key_chars
 
 #endif /* MULE */
 
-#ifdef USE_KKCC
 struct Lisp_Key_Data
-#else /* not USE_KKCC */
-struct key_data
-#endif /* not USE_KKCC */
 {
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   /* What keysym this is; a character or a symbol. */
   Lisp_Object keysym;
   /* Modifiers held down when key was pressed: control, meta, etc.
@@ -315,36 +308,49 @@ struct key_data
 #endif /* MULE */
 };
 
-#ifdef USE_KKCC
 typedef struct Lisp_Key_Data Lisp_Key_Data;
 
+#define KEY_DATA_KEYSYM(d) ((d)->keysym)
+#define KEY_DATA_MODIFIERS(d) ((d)->modifiers)
+#define SET_KEY_DATA_KEYSYM(d, k) ((d)->keysym = k)
+#define SET_KEY_DATA_MODIFIERS(d, m) ((d)->modifiers = m)
+
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (key_data, Lisp_Key_Data);
 #define XKEY_DATA(x) XRECORD (x, key_data, Lisp_Key_Data)
 #define wrap_key_data(p) wrap_record (p, key_data)
 #define KEY_DATAP(x) RECORDP (x, key_data)
 #define CHECK_KEY_DATA(x) CHECK_RECORD (x, key_data)
 #define CONCHECK_KEY_DATA(x) CONCHECK_RECORD (x, key_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XKEY_DATA_KEYSYM(d) (XKEY_DATA (d)->keysym)
-#define KEY_DATA_KEYSYM(d) ((d)->keysym)
-#define XKEY_DATA_MODIFIERS(d) (XKEY_DATA (d)->modifiers)
-#define KEY_DATA_MODIFIERS(d) ((d)->modifiers)
+#define EVENT_KEY_KEYSYM(e) EVENT_FOO_BAR (e, KEY, key, keysym)
+#define XEVENT_KEY_KEYSYM(e) EVENT_KEY_KEYSYM (XEVENT (e))
+#define SET_EVENT_KEY_KEYSYM(e, val) \
+  SET_EVENT_FOO_BAR (e, KEY, key, keysym, val)
+#define XSET_EVENT_KEY_KEYSYM(e, val) \
+  SET_EVENT_KEY_KEYSYM (XEVENT (e), val)
 
-#define XSET_KEY_DATA_KEYSYM(d, k) (XKEY_DATA (d)->keysym = (k))
-#define SET_KEY_DATA_KEYSYM(d, k) ((d)->keysym = k)
-#define XSET_KEY_DATA_MODIFIERS(d, m) (XKEY_DATA (d)->modifiers = m)
-#define SET_KEY_DATA_MODIFIERS(d, m) ((d)->modifiers = m)
-#endif /* USE_KKCC */
+#define EVENT_KEY_MODIFIERS(e) EVENT_FOO_BAR (e, KEY, key, modifiers)
+#define XEVENT_KEY_MODIFIERS(e) EVENT_KEY_MODIFIERS (XEVENT (e))
+#define SET_EVENT_KEY_MODIFIERS(e, val) \
+  SET_EVENT_FOO_BAR (e, KEY, key, modifiers, val)
+#define XSET_EVENT_KEY_MODIFIERS(e, val) \
+  SET_EVENT_KEY_MODIFIERS (XEVENT (e), val)
 
-#ifdef USE_KKCC
+#define EVENT_KEY_ALT_KEYCHARS(e, n) \
+  EVENT_FOO_BAR (e, KEY, key, alt_keychars[n])
+#define XEVENT_KEY_ALT_KEYCHARS(e, n) EVENT_KEY_ALT_KEYCHARS (XEVENT (e), n)
+#define SET_EVENT_KEY_ALT_KEYCHARS(e, n, val) \
+  SET_EVENT_FOO_BAR (e, KEY, key, alt_keychars[n], val)
+#define XSET_EVENT_KEY_ALT_KEYCHARS(e, n, val) \
+  SET_EVENT_KEY_ALT_KEYCHARS (XEVENT (e), n, val)
+
 struct Lisp_Button_Data
-#else /* not USE_KKCC */
-struct button_data
-#endif /* not USE_KKCC */
 {
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   /* What button went down or up. */
   int button;
   /* Bucky-bits on that button: shift, control, meta, etc.  Also
@@ -353,91 +359,114 @@ struct button_data
   /*  Where it was at the button-state-change (in pixels). */
   int x, y;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Button_Data Lisp_Button_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (button_data, Lisp_Button_Data);
 #define XBUTTON_DATA(x) XRECORD (x, button_data, Lisp_Button_Data)
 #define wrap_button_data(p) wrap_record (p, button_data)
 #define BUTTON_DATAP(x) RECORDP (x, button_data)
 #define CHECK_BUTTON_DATA(x) CHECK_RECORD (x, button_data)
 #define CONCHECK_BUTTON_DATA(x) CONCHECK_RECORD (x, button_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XBUTTON_DATA_BUTTON(d) (XBUTTON_DATA (d)->button)
-#define XBUTTON_DATA_MODIFIERS(d) (XBUTTON_DATA (d)->modifiers)
-#define XBUTTON_DATA_X(d) (XBUTTON_DATA (d)->x)
-#define XBUTTON_DATA_Y(d) (XBUTTON_DATA (d)->y)
+#define EVENT_BUTTON_BUTTON(e) EVENT_FOO_BAR (e, BUTTON, button, button)
+#define XEVENT_BUTTON_BUTTON(e) EVENT_BUTTON_BUTTON (XEVENT (e))
+#define SET_EVENT_BUTTON_BUTTON(e, val) \
+  SET_EVENT_FOO_BAR (e, BUTTON, button, button, val)
+#define XSET_EVENT_BUTTON_BUTTON(e, val) \
+  SET_EVENT_BUTTON_BUTTON (XEVENT (e), val)
 
-#define XSET_BUTTON_DATA_BUTTON(d, b) (XBUTTON_DATA (d)->button = (b))
-#define XSET_BUTTON_DATA_MODIFIERS(d, m) (XBUTTON_DATA (d)->modifiers = (m))
-#define XSET_BUTTON_DATA_X(d, new_x) (XBUTTON_DATA (d)->x = (new_x))
-#define XSET_BUTTON_DATA_Y(d, new_y) (XBUTTON_DATA (d)->y = (new_y))
-#endif /* USE_KKCC */
+#define EVENT_BUTTON_MODIFIERS(e) EVENT_FOO_BAR (e, BUTTON, button, modifiers)
+#define XEVENT_BUTTON_MODIFIERS(e) EVENT_BUTTON_MODIFIERS (XEVENT (e))
+#define SET_EVENT_BUTTON_MODIFIERS(e, val) \
+  SET_EVENT_FOO_BAR (e, BUTTON, button, modifiers, val)
+#define XSET_EVENT_BUTTON_MODIFIERS(e, val) \
+  SET_EVENT_BUTTON_MODIFIERS (XEVENT (e), val)
 
-#ifdef USE_KKCC
+#define EVENT_BUTTON_X(e) EVENT_FOO_BAR (e, BUTTON, button, x)
+#define XEVENT_BUTTON_X(e) EVENT_BUTTON_X (XEVENT (e))
+#define SET_EVENT_BUTTON_X(e, val) \
+  SET_EVENT_FOO_BAR (e, BUTTON, button, x, val)
+#define XSET_EVENT_BUTTON_X(e, val) \
+  SET_EVENT_BUTTON_X (XEVENT (e), val)
+
+#define EVENT_BUTTON_Y(e) EVENT_FOO_BAR (e, BUTTON, button, y)
+#define XEVENT_BUTTON_Y(e) EVENT_BUTTON_Y (XEVENT (e))
+#define SET_EVENT_BUTTON_Y(e, val) \
+  SET_EVENT_FOO_BAR (e, BUTTON, button, y, val)
+#define XSET_EVENT_BUTTON_Y(e, val) \
+  SET_EVENT_BUTTON_Y (XEVENT (e), val)
+
 struct Lisp_Motion_Data
-#else /* not USE_KKCC */
-struct motion_data
-#endif /* not USE_KKCC */
 {
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   /* Where it was after it moved (in pixels). */
   int x, y;
   /* Bucky-bits down when the motion was detected. */
   int modifiers;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Motion_Data Lisp_Motion_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (motion_data, Lisp_Motion_Data);
 #define XMOTION_DATA(x) XRECORD (x, motion_data, Lisp_Motion_Data)
 #define wrap_motion_data(p) wrap_record (p, motion_data)
 #define MOTION_DATAP(x) RECORDP (x, motion_data)
 #define CHECK_MOTION_DATA(x) CHECK_RECORD (x, motion_data)
 #define CONCHECK_MOTION_DATA(x) CONCHECK_RECORD (x, motion_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XMOTION_DATA_X(d) (XMOTION_DATA (d)->x)
-#define XMOTION_DATA_Y(d) (XMOTION_DATA (d)->y)
-#define XMOTION_DATA_MODIFIERS(d) (XMOTION_DATA (d)->modifiers)
+#define EVENT_MOTION_X(e) EVENT_FOO_BAR (e, MOTION, motion, x)
+#define XEVENT_MOTION_X(e) EVENT_MOTION_X (XEVENT (e))
+#define SET_EVENT_MOTION_X(e, val) \
+  SET_EVENT_FOO_BAR (e, MOTION, motion, x, val)
+#define XSET_EVENT_MOTION_X(e, val) \
+  SET_EVENT_MOTION_X (XEVENT (e), val)
 
-#define XSET_MOTION_DATA_X(d, new_x) (XMOTION_DATA (d)->x = (new_x))
-#define XSET_MOTION_DATA_Y(d, new_y) (XMOTION_DATA (d)->y = (new_y))
-#define XSET_MOTION_DATA_MODIFIERS(d, m) (XMOTION_DATA (d)->modifiers = (m))
-#endif /* USE_KKCC */
+#define EVENT_MOTION_Y(e) EVENT_FOO_BAR (e, MOTION, motion, y)
+#define XEVENT_MOTION_Y(e) EVENT_MOTION_Y (XEVENT (e))
+#define SET_EVENT_MOTION_Y(e, val) \
+  SET_EVENT_FOO_BAR (e, MOTION, motion, y, val)
+#define XSET_EVENT_MOTION_Y(e, val) \
+  SET_EVENT_MOTION_Y (XEVENT (e), val)
 
-#ifdef USE_KKCC
+#define EVENT_MOTION_MODIFIERS(e) EVENT_FOO_BAR (e, MOTION, motion, modifiers)
+#define XEVENT_MOTION_MODIFIERS(e) EVENT_MOTION_MODIFIERS (XEVENT (e))
+#define SET_EVENT_MOTION_MODIFIERS(e, val) \
+  SET_EVENT_FOO_BAR (e, MOTION, motion, modifiers, val)
+#define XSET_EVENT_MOTION_MODIFIERS(e, val) \
+  SET_EVENT_MOTION_MODIFIERS (XEVENT (e), val)
+
 struct Lisp_Process_Data
-#else /* not USE_KKCC */
-struct process_data
-#endif /* not USE_KKCC */
 {
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   /* the XEmacs "process" object in question */
   Lisp_Object process;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Process_Data Lisp_Process_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (process_data, Lisp_Process_Data);
 #define XPROCESS_DATA(x) XRECORD (x, process_data, Lisp_Process_Data)
 #define wrap_process_data(p) wrap_record (p, process_data)
 #define PROCESS_DATAP(x) RECORDP (x, process_data)
 #define CHECK_PROCESS_DATA(x) CHECK_RECORD (x, process_data)
 #define CONCHECK_PROCESS_DATA(x) CONCHECK_RECORD (x, process_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XPROCESS_DATA_PROCESS(d) (XPROCESS_DATA (d)->process)
-#define XSET_PROCESS_DATA_PROCESS(d, p) (XPROCESS_DATA (d)->process = (p))
-#endif /* USE_KKCC */
+#define EVENT_PROCESS_PROCESS(e) EVENT_FOO_BAR (e, PROCESS, process, process)
+#define XEVENT_PROCESS_PROCESS(e) EVENT_PROCESS_PROCESS (XEVENT (e))
+#define SET_EVENT_PROCESS_PROCESS(e, val) \
+  SET_EVENT_FOO_BAR (e, PROCESS, process, process, val)
+#define XSET_EVENT_PROCESS_PROCESS(e, val) \
+  SET_EVENT_PROCESS_PROCESS (XEVENT (e), val)
 
-#ifdef USE_KKCC
 struct Lisp_Timeout_Data
-#else /* not USE_KKCC */
-struct timeout_data
-#endif /* not USE_KKCC */
 {
 /*
     interval_id		The ID returned when the associated call to
@@ -452,40 +481,54 @@ struct timeout_data
 			processed.
     object		The object passed to that function.
 */
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   int interval_id;
   int id_number;
   Lisp_Object function;
   Lisp_Object object;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Timeout_Data Lisp_Timeout_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (timeout_data, Lisp_Timeout_Data);
 #define XTIMEOUT_DATA(x) XRECORD (x, timeout_data, Lisp_Timeout_Data)
 #define wrap_timeout_data(p) wrap_record(p, timeout_data)
 #define TIMEOUT_DATAP(x) RECORDP (x, timeout_data)
 #define CHECK_TIMEOUT_DATA(x) CHECK_RECORD (x, timeout_data)
 #define CONCHECK_TIMEOUT_DATA(x) CONCHECK_RECORD (x, timeout_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XTIMEOUT_DATA_INTERVAL_ID(d) XTIMEOUT_DATA (d)->interval_id
-#define XTIMEOUT_DATA_ID_NUMBER(d) XTIMEOUT_DATA (d)->id_number
-#define XTIMEOUT_DATA_FUNCTION(d) XTIMEOUT_DATA (d)->function
-#define XTIMEOUT_DATA_OBJECT(d) XTIMEOUT_DATA (d)->object
+#define EVENT_TIMEOUT_INTERVAL_ID(e) EVENT_FOO_BAR (e, TIMEOUT, timeout, interval_id)
+#define XEVENT_TIMEOUT_INTERVAL_ID(e) EVENT_TIMEOUT_INTERVAL_ID (XEVENT (e))
+#define SET_EVENT_TIMEOUT_INTERVAL_ID(e, val) \
+  SET_EVENT_FOO_BAR (e, TIMEOUT, timeout, interval_id, val)
+#define XSET_EVENT_TIMEOUT_INTERVAL_ID(e, val) \
+  SET_EVENT_TIMEOUT_INTERVAL_ID (XEVENT (e), val)
 
-#define XSET_TIMEOUT_DATA_INTERVAL_ID(d, i) XTIMEOUT_DATA (d)->interval_id = (i)
-#define XSET_TIMEOUT_DATA_ID_NUMBER(d, n) XTIMEOUT_DATA (d)->id_number = (n)
-#define XSET_TIMEOUT_DATA_FUNCTION(d, f) XTIMEOUT_DATA (d)->function = f
-#define XSET_TIMEOUT_DATA_OBJECT(d, o) XTIMEOUT_DATA (d)->object = o
-#endif /* USE_KKCC */
+#define EVENT_TIMEOUT_ID_NUMBER(e) EVENT_FOO_BAR (e, TIMEOUT, timeout, id_number)
+#define XEVENT_TIMEOUT_ID_NUMBER(e) EVENT_TIMEOUT_ID_NUMBER (XEVENT (e))
+#define SET_EVENT_TIMEOUT_ID_NUMBER(e, val) \
+  SET_EVENT_FOO_BAR (e, TIMEOUT, timeout, id_number, val)
+#define XSET_EVENT_TIMEOUT_ID_NUMBER(e, val) \
+  SET_EVENT_TIMEOUT_ID_NUMBER (XEVENT (e), val)
 
-#ifdef USE_KKCC
+#define EVENT_TIMEOUT_FUNCTION(e) EVENT_FOO_BAR (e, TIMEOUT, timeout, function)
+#define XEVENT_TIMEOUT_FUNCTION(e) EVENT_TIMEOUT_FUNCTION (XEVENT (e))
+#define SET_EVENT_TIMEOUT_FUNCTION(e, val) \
+  SET_EVENT_FOO_BAR (e, TIMEOUT, timeout, function, val)
+#define XSET_EVENT_TIMEOUT_FUNCTION(e, val) \
+  SET_EVENT_TIMEOUT_FUNCTION (XEVENT (e), val)
+
+#define EVENT_TIMEOUT_OBJECT(e) EVENT_FOO_BAR (e, TIMEOUT, timeout, object)
+#define XEVENT_TIMEOUT_OBJECT(e) EVENT_TIMEOUT_OBJECT (XEVENT (e))
+#define SET_EVENT_TIMEOUT_OBJECT(e, val) \
+  SET_EVENT_FOO_BAR (e, TIMEOUT, timeout, object, val)
+#define XSET_EVENT_TIMEOUT_OBJECT(e, val) \
+  SET_EVENT_TIMEOUT_OBJECT (XEVENT (e), val)
+
 struct Lisp_Eval_Data
-#else /* not USE_KKCC */
-struct eval_data
-#endif /* not USE_KKCC */
 {
 /* This kind of event is used internally; sometimes the window system
    interface would like to inform XEmacs of some user action (such as
@@ -497,34 +540,38 @@ struct eval_data
     function		An elisp function to call with this event object.
     object		Argument of function.
 */
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Eval_Data Lisp_Eval_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (eval_data, Lisp_Eval_Data);
 #define XEVAL_DATA(x) XRECORD (x, eval_data, Lisp_Eval_Data)
 #define wrap_eval_data(p) wrap_record(p, eval_data)
 #define EVAL_DATAP(x) RECORDP (x, eval_data)
 #define CHECK_EVAL_DATA(x) CHECK_RECORD (x, eval_data)
 #define CONCHECK_EVAL_DATA(x) CONCHECK_RECORD (x, eval_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XEVAL_DATA_FUNCTION(d) (XEVAL_DATA (d)->function)
-#define XEVAL_DATA_OBJECT(d) (XEVAL_DATA (d)->object)
+#define EVENT_EVAL_FUNCTION(e) EVENT_FOO_BAR (e, EVAL, eval, function)
+#define XEVENT_EVAL_FUNCTION(e) EVENT_EVAL_FUNCTION (XEVENT (e))
+#define SET_EVENT_EVAL_FUNCTION(e, val) \
+  SET_EVENT_FOO_BAR (e, EVAL, eval, function, val)
+#define XSET_EVENT_EVAL_FUNCTION(e, val) \
+  SET_EVENT_EVAL_FUNCTION (XEVENT (e), val)
 
-#define XSET_EVAL_DATA_FUNCTION(d, f) (XEVAL_DATA (d)->function = f)
-#define XSET_EVAL_DATA_OBJECT(d, o) (XEVAL_DATA (d)->object = o)
-#endif /* USE_KKCC */
+#define EVENT_EVAL_OBJECT(e) EVENT_FOO_BAR (e, EVAL, eval, object)
+#define XEVENT_EVAL_OBJECT(e) EVENT_EVAL_OBJECT (XEVENT (e))
+#define SET_EVENT_EVAL_OBJECT(e, val) \
+  SET_EVENT_FOO_BAR (e, EVAL, eval, object, val)
+#define XSET_EVENT_EVAL_OBJECT(e, val) \
+  SET_EVENT_EVAL_OBJECT (XEVENT (e), val)
 
-#ifdef USE_KKCC
 struct Lisp_Misc_User_Data
-#else /* not USE_KKCC */
-struct misc_user_data
-#endif /* not USE_KKCC */
 {
 /* #### The misc-user type is serious junk.  It should be separated
    out into different events.  There's no reason to create
@@ -546,48 +593,69 @@ struct misc_user_data
 			by the XEmacs Drag'n'Drop system. Don't depend on their
 			values for other types of misc_user_events.
 */
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   Lisp_Object function;
   Lisp_Object object;
   int button;
   int modifiers;
   int x, y;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Misc_User_Data Lisp_Misc_User_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (misc_user_data, Lisp_Misc_User_Data);
 #define XMISC_USER_DATA(x) XRECORD (x, misc_user_data, Lisp_Misc_User_Data)
 #define wrap_misc_user_data(p) wrap_record(p, misc_user_data)
 #define MISC_USER_DATAP(x) RECORDP (x, misc_user_data)
 #define CHECK_MISC_USER_DATA(x) CHECK_RECORD (x, misc_user_data)
 #define CONCHECK_MISC_USER_DATA(x) CONCHECK_RECORD (x, misc_user_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XMISC_USER_DATA_FUNCTION(d) (XMISC_USER_DATA (d)->function)
-#define XMISC_USER_DATA_OBJECT(d) (XMISC_USER_DATA (d)->object)
-#define XMISC_USER_DATA_BUTTON(d) (XMISC_USER_DATA (d)->button)
-#define XMISC_USER_DATA_MODIFIERS(d) (XMISC_USER_DATA (d)->modifiers)
-#define XMISC_USER_DATA_X(d) (XMISC_USER_DATA (d)->x)
-#define XMISC_USER_DATA_Y(d) (XMISC_USER_DATA (d)->y)
+#define EVENT_MISC_USER_FUNCTION(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, function)
+#define XEVENT_MISC_USER_FUNCTION(e) EVENT_MISC_USER_FUNCTION (XEVENT (e))
+#define SET_EVENT_MISC_USER_FUNCTION(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, function, val)
+#define XSET_EVENT_MISC_USER_FUNCTION(e, val) \
+  SET_EVENT_MISC_USER_FUNCTION (XEVENT (e), val)
 
-#define XSET_MISC_USER_DATA_FUNCTION(d, f) (XMISC_USER_DATA (d)->function = (f))
-#define XSET_MISC_USER_DATA_OBJECT(d, o) (XMISC_USER_DATA (d)->object = (o))
-#define XSET_MISC_USER_DATA_BUTTON(d, b) (XMISC_USER_DATA (d)->button = (b))
-#define XSET_MISC_USER_DATA_MODIFIERS(d, m) (XMISC_USER_DATA (d)->modifiers = (m))
-#define XSET_MISC_USER_DATA_X(d, new_x) (XMISC_USER_DATA (d)->x = (new_x))
-#define XSET_MISC_USER_DATA_Y(d, new_y) (XMISC_USER_DATA (d)->y = (new_y))
-#endif /* USE_KKCC */
+#define EVENT_MISC_USER_OBJECT(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, object)
+#define XEVENT_MISC_USER_OBJECT(e) EVENT_MISC_USER_OBJECT (XEVENT (e))
+#define SET_EVENT_MISC_USER_OBJECT(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, object, val)
+#define XSET_EVENT_MISC_USER_OBJECT(e, val) \
+  SET_EVENT_MISC_USER_OBJECT (XEVENT (e), val)
 
-#ifdef USE_KKCC
-typedef void (*lisp_obj_arg_fun) (Lisp_Object);
+#define EVENT_MISC_USER_BUTTON(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, button)
+#define XEVENT_MISC_USER_BUTTON(e) EVENT_MISC_USER_BUTTON (XEVENT (e))
+#define SET_EVENT_MISC_USER_BUTTON(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, button, val)
+#define XSET_EVENT_MISC_USER_BUTTON(e, val) \
+  SET_EVENT_MISC_USER_BUTTON (XEVENT (e), val)
 
+#define EVENT_MISC_USER_MODIFIERS(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, modifiers)
+#define XEVENT_MISC_USER_MODIFIERS(e) EVENT_MISC_USER_MODIFIERS (XEVENT (e))
+#define SET_EVENT_MISC_USER_MODIFIERS(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, modifiers, val)
+#define XSET_EVENT_MISC_USER_MODIFIERS(e, val) \
+  SET_EVENT_MISC_USER_MODIFIERS (XEVENT (e), val)
+
+#define EVENT_MISC_USER_X(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, x)
+#define XEVENT_MISC_USER_X(e) EVENT_MISC_USER_X (XEVENT (e))
+#define SET_EVENT_MISC_USER_X(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, x, val)
+#define XSET_EVENT_MISC_USER_X(e, val) \
+  SET_EVENT_MISC_USER_X (XEVENT (e), val)
+
+#define EVENT_MISC_USER_Y(e) EVENT_FOO_BAR (e, MISC_USER, misc_user, y)
+#define XEVENT_MISC_USER_Y(e) EVENT_MISC_USER_Y (XEVENT (e))
+#define SET_EVENT_MISC_USER_Y(e, val) \
+  SET_EVENT_FOO_BAR (e, MISC_USER, misc_user, y, val)
+#define XSET_EVENT_MISC_USER_Y(e, val) \
+  SET_EVENT_MISC_USER_Y (XEVENT (e), val)
 
 struct Lisp_Magic_Eval_Data
-#else /* not USE_KKCC */
-struct magic_eval_data
-#endif /* not USE_KKCC */
 {
 /* This is like an eval event but its contents are not
    Lisp-accessible.  This allows for "internal eval events" that call
@@ -602,32 +670,36 @@ struct magic_eval_data
     object		Argument of function.
 
 */
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
-#endif /* USE_KKCC */
+#endif /* EVENT_DATA_AS_OBJECTS */
   void (*internal_function) (Lisp_Object);
   Lisp_Object object;
 };
-#ifdef USE_KKCC
 typedef struct Lisp_Magic_Eval_Data Lisp_Magic_Eval_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (magic_eval_data, Lisp_Magic_Eval_Data);
 #define XMAGIC_EVAL_DATA(x) XRECORD (x, magic_eval_data, Lisp_Magic_Eval_Data)
 #define wrap_magic_eval_data(p) wrap_record(p, magic_eval_data)
 #define MAGIC_EVAL_DATAP(x) RECORDP (x, magic_eval_data)
 #define CHECK_MAGIC_EVAL_DATA(x) CHECK_RECORD (x, magic_eval_data)
 #define CONCHECK_MAGIC_EVAL_DATA(x) CONCHECK_RECORD (x, magic_eval_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XMAGIC_EVAL_DATA_INTERNAL_FUNCTION(d) \
-  XMAGIC_EVAL_DATA (d)->internal_function
-#define XMAGIC_EVAL_DATA_INTERNAL_FUNOBJ(d) (XMAGIC_EVAL_DATA (d)->internal_function)
-#define XMAGIC_EVAL_DATA_OBJECT(d) (XMAGIC_EVAL_DATA (d)->object)
+#define EVENT_MAGIC_EVAL_INTERNAL_FUNCTION(e) EVENT_FOO_BAR (e, MAGIC_EVAL, magic_eval, internal_function)
+#define XEVENT_MAGIC_EVAL_INTERNAL_FUNCTION(e) EVENT_MAGIC_EVAL_INTERNAL_FUNCTION (XEVENT (e))
+#define SET_EVENT_MAGIC_EVAL_INTERNAL_FUNCTION(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC_EVAL, magic_eval, internal_function, val)
+#define XSET_EVENT_MAGIC_EVAL_INTERNAL_FUNCTION(e, val) \
+  SET_EVENT_MAGIC_EVAL_INTERNAL_FUNCTION (XEVENT (e), val)
 
-#define XSET_MAGIC_EVAL_DATA_INTERNAL_FUNCTION(d, f) \
-  (XMAGIC_EVAL_DATA (d)->internal_function = f)
-#define XSET_MAGIC_EVAL_DATA_INTERNAL_FUNOBJ(d, f) (XMAGIC_EVAL_DATA (d)->internal_function = (f))
-#define XSET_MAGIC_EVAL_DATA_OBJECT(d, o) (XMAGIC_EVAL_DATA (d)->object = (o))
-#endif /* USE_KKCC */
+#define EVENT_MAGIC_EVAL_OBJECT(e) EVENT_FOO_BAR (e, MAGIC_EVAL, magic_eval, object)
+#define XEVENT_MAGIC_EVAL_OBJECT(e) EVENT_MAGIC_EVAL_OBJECT (XEVENT (e))
+#define SET_EVENT_MAGIC_EVAL_OBJECT(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC_EVAL, magic_eval, object, val)
+#define XSET_EVENT_MAGIC_EVAL_OBJECT(e, val) \
+  SET_EVENT_MAGIC_EVAL_OBJECT (XEVENT (e), val)
 
 #if defined (HAVE_X_WINDOWS) && defined(emacs)
 # include <X11/Xlib.h>
@@ -638,10 +710,25 @@ DECLARE_LRECORD (magic_eval_data, Lisp_Magic_Eval_Data);
 #endif
 
 
-#ifdef USE_KKCC
 struct Lisp_Magic_Data
 {
+/* No user-serviceable parts within.  This is for things like
+   KeymapNotify and ExposeRegion events and so on that XEmacs itself
+   doesn't care about, but which it must do something with for proper
+   interaction with the window system.
+
+   Magic_events are handled somewhat asynchronously, just like
+   subprocess filters.  However, occasionally a magic_event needs to
+   be handled synchronously; in that case, the asynchronous handling
+   of the magic_event will push an eval_event back onto the queue,
+   which will be handled synchronously later.  This is one of the
+   reasons why eval_events exist; I'm not entirely happy with this
+   aspect of this event model.
+*/
+
+#ifdef EVENT_DATA_AS_OBJECTS
   struct lrecord_header lheader;
+#endif /* EVENT_DATA_AS_OBJECTS */
 
   union {
 #ifdef HAVE_GTK
@@ -658,60 +745,48 @@ struct Lisp_Magic_Data
 
 typedef struct Lisp_Magic_Data Lisp_Magic_Data;
 
+#ifdef EVENT_DATA_AS_OBJECTS
 DECLARE_LRECORD (magic_data, Lisp_Magic_Data);
 #define XMAGIC_DATA(x) XRECORD (x, magic_data, Lisp_Magic_Data)
 #define wrap_magic_data(p) wrap_record(p, magic_data)
 #define MAGIC_DATAP(x) RECORDP (x, magic_data)
 #define CHECK_MAGIC_DATA(x) CHECK_RECORD (x, magic_data)
 #define CONCHECK_MAGIC_DATA(x) CONCHECK_RECORD (x, magic_data)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
-#define XMAGIC_DATA_UNDERLYING(d) (XMAGIC_DATA (d)->underlying)
-#define XSET_MAGIC_DATA_UNDERLYING(d, u) (XMAGIC_DATA (d)->underlying = (u))
+#define EVENT_MAGIC_UNDERLYING(e) EVENT_FOO_BAR (e, MAGIC, magic, underlying)
+#define XEVENT_MAGIC_UNDERLYING(e) EVENT_MAGIC_UNDERLYING (XEVENT (e))
+#define SET_EVENT_MAGIC_UNDERLYING(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC, magic, underlying, val)
+#define XSET_EVENT_MAGIC_UNDERLYING(e, val) \
+  SET_EVENT_MAGIC_UNDERLYING (XEVENT (e), val)
 
 #ifdef HAVE_GTK
-#define XMAGIC_DATA_GDK_EVENT(d) (XMAGIC_DATA (d)->underlying.gdk_event)
-#define XSET_MAGIC_DATA_GDK_EVENT(d, e) (XMAGIC_DATA (d)->underlying.gdk_event = (e))
-#endif /*HAVE_GTK*/
+#define EVENT_MAGIC_GDK_EVENT(e) EVENT_FOO_BAR (e, MAGIC, magic, underlying.gdk_event)
+#define XEVENT_MAGIC_GDK_EVENT(e) EVENT_MAGIC_GDK_EVENT (XEVENT (e))
+#define SET_EVENT_MAGIC_GDK_EVENT(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC, magic, underlying.gdk_event, val)
+#define XSET_EVENT_MAGIC_GDK_EVENT(e, val) \
+  SET_EVENT_MAGIC_GDK_EVENT (XEVENT (e), val)
+#endif
 
 #ifdef HAVE_X_WINDOWS
-#define XMAGIC_DATA_X_EVENT(d) (XMAGIC_DATA (d)->underlying.x_event)
-#define XSET_MAGIC_DATA_X_EVENT(d, e) (XMAGIC_DATA (d)->underlying.x_event = (e))
+#define EVENT_MAGIC_X_EVENT(e) EVENT_FOO_BAR (e, MAGIC, magic, underlying.x_event)
+#define XEVENT_MAGIC_X_EVENT(e) EVENT_MAGIC_X_EVENT (XEVENT (e))
+#define SET_EVENT_MAGIC_X_EVENT(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC, magic, underlying.x_event, val)
+#define XSET_EVENT_MAGIC_X_EVENT(e, val) \
+  SET_EVENT_MAGIC_X_EVENT (XEVENT (e), val)
 #endif
 
 #ifdef HAVE_MS_WINDOWS
-#define XMAGIC_DATA_MSWINDOWS_EVENT(d) (XMAGIC_DATA (d)->underlying.mswindows_event)
-#define XSET_MAGIC_DATA_MSWINDOWS_EVENT(d, e) (XMAGIC_DATA (d)->underlying.mswindows_event = (e))
+#define EVENT_MAGIC_MSWINDOWS_EVENT(e) EVENT_FOO_BAR (e, MAGIC, magic, underlying.mswindows_event)
+#define XEVENT_MAGIC_MSWINDOWS_EVENT(e) EVENT_MAGIC_MSWINDOWS_EVENT (XEVENT (e))
+#define SET_EVENT_MAGIC_MSWINDOWS_EVENT(e, val) \
+  SET_EVENT_FOO_BAR (e, MAGIC, magic, underlying.mswindows_event, val)
+#define XSET_EVENT_MAGIC_MSWINDOWS_EVENT(e, val) \
+  SET_EVENT_MAGIC_MSWINDOWS_EVENT (XEVENT (e), val)
 #endif
-
-#else /* not USE_KKCC */
-union magic_data
-{
-/* No user-serviceable parts within.  This is for things like
-   KeymapNotify and ExposeRegion events and so on that XEmacs itself
-   doesn't care about, but which it must do something with for proper
-   interaction with the window system.
-
-   Magic_events are handled somewhat asynchronously, just like
-   subprocess filters.  However, occasionally a magic_event needs to
-   be handled synchronously; in that case, the asynchronous handling
-   of the magic_event will push an eval_event back onto the queue,
-   which will be handled synchronously later.  This is one of the
-   reasons why eval_events exist; I'm not entirely happy with this
-   aspect of this event model.
-*/
-
-#ifdef HAVE_GTK
-  GdkEvent          underlying_gdk_event;
-#endif
-#ifdef HAVE_X_WINDOWS
-  XEvent            underlying_x_event;
-#endif
-#ifdef HAVE_MS_WINDOWS
-  int               underlying_mswindows_event;
-#endif
-};
-#endif /* not USE_KKCC */
-
 
 struct Lisp_Timeout
 {
@@ -784,22 +859,22 @@ struct Lisp_Event
      server time and real process time; yuck.) */
   unsigned int          timestamp;
 
-#ifdef USE_KKCC
+#ifdef EVENT_DATA_AS_OBJECTS
   Lisp_Object event_data;
-#else /* not USE_KKCC */
+#else /* not EVENT_DATA_AS_OBJECTS */
   union
     {
-      struct key_data           key;
-      struct button_data        button;
-      struct motion_data        motion;
-      struct process_data       process;
-      struct timeout_data       timeout;
-      struct eval_data          eval;   /* misc_user_event no longer uses this */
-      struct misc_user_data     misc;   /* because it needs position information */
-      union magic_data          magic;
-      struct magic_eval_data    magic_eval;
+      Lisp_Key_Data           key;
+      Lisp_Button_Data        button;
+      Lisp_Motion_Data        motion;
+      Lisp_Process_Data       process;
+      Lisp_Timeout_Data       timeout;
+      Lisp_Eval_Data          eval;   /* misc_user_event no longer uses this */
+      Lisp_Misc_User_Data     misc_user;/* because it needs position information */
+      Lisp_Magic_Data         magic;
+      Lisp_Magic_Eval_Data    magic_eval;
     } event;
-#endif /* not USE_KKCC */
+#endif /* not EVENT_DATA_AS_OBJECTS */
 };
 
 DECLARE_LRECORD (event, Lisp_Event);
@@ -812,25 +887,28 @@ DECLARE_LRECORD (event, Lisp_Event);
 DECLARE_LRECORD (command_builder, struct command_builder);
 
 #define EVENT_CHANNEL(a) ((a)->channel)
+#define XEVENT_CHANNEL(ev) (XEVENT (ev)->channel)
 #define EVENT_TYPE(a) ((a)->event_type)
 #define XEVENT_TYPE(a) (XEVENT (a)->event_type)
 #define EVENT_NEXT(a) ((a)->next)
 #define XEVENT_NEXT(e) (XEVENT (e)->next)
-
-#ifdef USE_KKCC
-#define XEVENT_DATA(ev) (XEVENT (ev)->event_data)
-#define EVENT_DATA(ev) ((ev)->event_data)
-#define XEVENT_CHANNEL(ev) (XEVENT (ev)->channel)
-#define EVENT_TIMESTAMP(ev)                                     \
-  ((ev)->timestamp)
+#define EVENT_TIMESTAMP(ev) ((ev)->timestamp)
 #define XEVENT_TIMESTAMP(ev) EVENT_TIMESTAMP (XEVENT (ev))
 
-#define SET_EVENT_TIMESTAMP_ZERO(ev) \
-  ((ev)->timestamp = 0)
-#define SET_EVENT_TIMESTAMP(ev, t)                      \
-  (ev)->timestamp = (t)
-#define XSET_EVENT_TIMESTAMP(ev, t) SET_EVENT_TIMESTAMP (XEVENT (ev), t)
+#ifdef EVENT_DATA_AS_OBJECTS
+#define XEVENT_DATA(ev) (XEVENT (ev)->event_data)
+#define EVENT_DATA(ev) ((ev)->event_data)
+#define SET_EVENT_DATA(ev, d)                           \
+do {                                                    \
+  Lisp_Event *mac_event = (ev);                         \
+  mac_event->event_data = (d);                          \
+} while (0)
+#define XSET_EVENT_DATA(ev, d) SET_EVENT_DATA (XEVENT (ev), d)
+#endif /* EVENT_DATA_AS_OBJECTS */
 
+#define SET_EVENT_TIMESTAMP_ZERO(ev) ((ev)->timestamp = 0)
+#define SET_EVENT_TIMESTAMP(ev, t) ((ev)->timestamp = (t))
+#define XSET_EVENT_TIMESTAMP(ev, t) SET_EVENT_TIMESTAMP (XEVENT (ev), t)
 
 #define SET_EVENT_CHANNEL(ev, c)                        \
 do {                                                    \
@@ -839,66 +917,92 @@ do {                                                    \
 } while (0)
 #define XSET_EVENT_CHANNEL(ev, c) SET_EVENT_CHANNEL (XEVENT (ev), c) 
 
-#define SET_EVENT_DATA(ev, d)                           \
-do {                                                    \
-  Lisp_Event *mac_event = (ev);                         \
-  mac_event->event_data = (d);                          \
-} while (0)
-#define XSET_EVENT_DATA(ev, d) SET_EVENT_DATA (XEVENT (ev), d)
-
-INLINE_HEADER  void set_event_type(struct Lisp_Event *event, emacs_event_type t);
-INLINE_HEADER  void
-set_event_type(struct Lisp_Event *event, emacs_event_type t) 
+DECLARE_INLINE_HEADER (
+void
+set_event_type (struct Lisp_Event *event, emacs_event_type t) 
+)
 {
+#ifdef EVENT_DATA_AS_OBJECTS
+  switch (EVENT_TYPE (event))
+    {
+    case key_press_event:
+      free_key_data (event->event_data);
+      break;
+    case button_press_event:
+    case button_release_event:
+      free_button_data (event->event_data);
+      break;
+    case pointer_motion_event:
+      free_motion_data (event->event_data);
+      break;
+    case process_event:
+      free_process_data (event->event_data);
+      break;
+    case timeout_event:
+      free_timeout_data (event->event_data);
+      break;
+    case magic_event:
+      free_magic_data (event->event_data);
+      break;
+    case magic_eval_event:
+      free_magic_eval_data (event->event_data);
+      break;
+    case eval_event:
+      free_eval_data (event->event_data);
+      break;
+    case misc_user_event:
+      free_misc_user_data (event->event_data);
+      break;
+    default:
+      break;
+    }
+#endif /* EVENT_DATA_AS_OBJECTS */
+
   event->event_type = t;
 
-  switch (t) {
-  case key_press_event:
-    event->event_data = make_key_data ();
-    break;
-  case button_press_event:
-  case button_release_event:
-    event->event_data = make_button_data ();
-    break;
-  case pointer_motion_event:
-    event->event_data = make_motion_data ();
-    break;
-  case process_event:
-    event->event_data = make_process_data ();
-    break;
-  case timeout_event:
-    event->event_data = make_timeout_data ();
-    break;
-  case magic_event:
-    event->event_data = make_magic_data ();
-    break;
-  case magic_eval_event:
-    event->event_data = make_magic_eval_data ();
-    break;
-  case eval_event:
-    event->event_data = make_eval_data ();
-    break;
-  case misc_user_event:
-    event->event_data = make_misc_user_data ();
-    break;
-  default:
-    break;
-  }
+#ifdef EVENT_DATA_AS_OBJECTS
+  switch (t)
+    {
+    case key_press_event:
+      event->event_data = make_key_data ();
+      break;
+    case button_press_event:
+    case button_release_event:
+      event->event_data = make_button_data ();
+      break;
+    case pointer_motion_event:
+      event->event_data = make_motion_data ();
+      break;
+    case process_event:
+      event->event_data = make_process_data ();
+      break;
+    case timeout_event:
+      event->event_data = make_timeout_data ();
+      break;
+    case magic_event:
+      event->event_data = make_magic_data ();
+      break;
+    case magic_eval_event:
+      event->event_data = make_magic_eval_data ();
+      break;
+    case eval_event:
+      event->event_data = make_eval_data ();
+      break;
+    case misc_user_event:
+      event->event_data = make_misc_user_data ();
+      break;
+    default:
+      event->event_data = Qnil;
+      break;
+    }
+#endif /* EVENT_DATA_AS_OBJECTS */
 }
-#define XSET_EVENT_TYPE(ev, t) set_event_type (XEVENT (ev), t)
-#define SET_EVENT_TYPE(ev, t) set_event_type (ev, t)
 
-
-#define SET_EVENT_NEXT(ev, n)                           \
-do {                                                    \
-  Lisp_Event *mac_event = (ev);                         \
-  mac_event->next = (n);                                \
-} while (0)
+#define SET_EVENT_NEXT(ev, n) do { (ev)->next = (n); } while (0)
 #define XSET_EVENT_NEXT(ev, n) SET_EVENT_NEXT (XEVENT (ev), n)
 
-#else /* NOT USE_KKCC */
-#define XSET_EVENT_NEXT(e, n) do { (XEVENT (e)->next = (n)); } while (0)
-#endif
+#define XSET_EVENT_TYPE(ev, t) set_event_type (XEVENT (ev), t)
+#define SET_EVENT_TYPE(ev, t) set_event_type (ev, t)
 
 #define EVENT_CHAIN_LOOP(event, chain) \
   for (event = chain; !NILP (event); event = XEVENT_NEXT (event))
@@ -956,45 +1060,52 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 #define KEYSYM(x) (intern (x))
 
 /* from events.c */
-#ifdef USE_KKCC
 void format_event_object (Eistring *buf, Lisp_Object event, int brief);
-#else /* not USE_KKCC */
-void format_event_object (Eistring *buf, Lisp_Event *event, int brief);
-#endif /* not USE_KKCC */
-#ifdef USE_KKCC
 //void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);
-void copy_event_data (Lisp_Object dest, Lisp_Object src);
-#endif /* USE_KKCC */
 void character_to_event (Ichar c, Lisp_Event *event,
                          struct console *con,
                          int use_console_meta_flag,
                          int do_backspace_mapping);
 void zero_event (Lisp_Event *e);
+
+#define MECR_DEALLOCATE_EVENT 1
+
 void deallocate_event_chain (Lisp_Object event);
 Lisp_Object event_chain_tail (Lisp_Object event);
 void enqueue_event (Lisp_Object event, Lisp_Object *head, Lisp_Object *tail);
 Lisp_Object dequeue_event (Lisp_Object *head, Lisp_Object *tail);
 void enqueue_event_chain (Lisp_Object event_chain, Lisp_Object *head,
                           Lisp_Object *tail);
+int map_event_chain_remove (int (*fn) (Lisp_Object ev, void *user_data),
+			    Lisp_Object *head, Lisp_Object *tail,
+			    void *user_data, int flags);
 int event_chain_count (Lisp_Object event_chain);
-Lisp_Object transfer_event_chain_pointer (Lisp_Object pointer,
-					  Lisp_Object old_chain,
-					  Lisp_Object new_chain);
-void nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event);
-Lisp_Object key_sequence_to_event_chain (Lisp_Object seq);
 Lisp_Object event_chain_find_previous (Lisp_Object event_chain,
                                        Lisp_Object event);
 Lisp_Object event_chain_nth (Lisp_Object event_chain, int n);
 Lisp_Object copy_event_chain (Lisp_Object event_chain);
+Lisp_Object transfer_event_chain_pointer (Lisp_Object pointer,
+					  Lisp_Object old_chain,
+					  Lisp_Object new_chain);
+
+
+void nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event);
+Lisp_Object key_sequence_to_event_chain (Lisp_Object seq);
 /* True if this is a non-internal event
    (keyboard press, menu, scrollbar, mouse button) */
 int command_event_p (Lisp_Object event);
 void define_self_inserting_symbol (Lisp_Object, Lisp_Object);
-Ichar event_to_character (Lisp_Event *, int, int, int);
+Ichar event_to_character (Lisp_Object, int, int, int);
 struct console *event_console_or_selected (Lisp_Object event);
+void upshift_event (Lisp_Object event);
+void downshift_event (Lisp_Object event);
+int event_upshifted_p (Lisp_Object event);
 
 /* from event-stream.c */
+extern Lisp_Object dispatch_event_queue;
 Lisp_Object allocate_command_builder (Lisp_Object console, int with_echo_buf);
+void enqueue_dispatch_event (Lisp_Object event);
+Lisp_Object dequeue_dispatch_event (void);
 void enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object);
 void event_stream_handle_magic_event (Lisp_Event *event);
 void event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream);
@@ -1073,6 +1184,7 @@ extern int signal_event_pipe[];
 
 void signal_fake_event (void);
 void drain_signal_event_pipe (void);
+void drain_tty_devices (void);
 
 extern int fake_event_occurred;
 
@@ -1082,6 +1194,7 @@ void event_stream_unixoid_select_process (Lisp_Process *proc, int doin,
 					  int doerr, int *infd, int *errfd);
 void event_stream_unixoid_unselect_process (Lisp_Process *proc, int doin,
 					    int doerr, int *infd, int *errfd);
+struct console *find_tty_or_stream_console_from_fd (int fd);
 int read_event_from_tty_or_stream_desc (Lisp_Event *event,
 					struct console *con);
 void event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
@@ -1098,10 +1211,14 @@ void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
 					     USID* in_usid,
 					     USID* err_usid);
 
+#endif /* HAVE_UNIXOID_EVENT_LOOP */
+
+/* The following is not inside of HAVE_UNIXOID_EVENT_LOOP because of the
+   possibility of combiling XEmacs with no-MSW, no-X, no-TTY --
+   process-unix.c is still compiled.  #### Should we still compile
+   subprocesses with no event loops? */
 /* Beware: this evil macro evaluates its arg many times */
 #define FD_TO_USID(fd) ((fd)==0 ? (USID)999999 : ((fd)<0 ? USID_DONTHASH : (USID)(fd)))
-
-#endif /* HAVE_UNIXOID_EVENT_LOOP */
 
 /* Define this if you want the tty event stream to be used when the
    first console is tty, even if HAVE_X_WINDOWS is defined */
@@ -1139,20 +1256,17 @@ struct command_builder
      something that's not part of a possible function key, we have to
      unread all of those events. */
   Lisp_Object last_non_munged_event;
-  /* One set of values for function-key-map, one for key-translation-map */
-  struct munging_key_translation
-  {
-    /* First event that can begin a possible function key sequence
-       (to be translated according to function-key-map).  Normally
-       this is the first event in the chain.  However, once we've
-       translated a sequence through function-key-map, this will point
-       to the first event after the translated sequence: we don't ever
-       want to translate any events twice through function-key-map, or
-       things could get really screwed up (e.g. if the user created a
-       translation loop).  If this is nil, then the next-read event is
-       the first that can begin a function key sequence. */
-    Lisp_Object first_mungeable_event;
-  } munge_me[2];
+  /* One value for function-key-map, one for key-translation-map:
+     First event that can begin a possible function key sequence
+     (to be translated according to function-key-map).  Normally
+     this is the first event in the chain.  However, once we've
+     translated a sequence through function-key-map, this will point
+     to the first event after the translated sequence: we don't ever
+     want to translate any events twice through function-key-map, or
+     things could get really screwed up (e.g. if the user created a
+     translation loop).  If this is nil, then the next-read event is
+     the first that can begin a function key sequence. */
+  Lisp_Object first_mungeable_event[2];
   Ibyte *echo_buf;
 
   Bytecount echo_buf_length;          /* size of echo_buf */

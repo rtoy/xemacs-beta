@@ -1,5 +1,6 @@
 /* Definitions of marked slots in consoles
    Copyright (C) 1990, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -35,25 +36,25 @@ Boston, MA 02111-1307, USA.  */
     /* Name of this console, for resourcing and printing purposes.
        If not explicitly given, it's initialized in a console-specific
        manner. */
-    MARKED_SLOT (name);
+    MARKED_SLOT (name)
 
     /* What this console is connected to */
-    MARKED_SLOT (connection);
+    MARKED_SLOT (connection)
 
     /* A canonical name for the connection that is used to determine
        whether create_console() is being called on an existing console. */
-    MARKED_SLOT (canon_connection);
+    MARKED_SLOT (canon_connection)
 
     /* List of devices on this console.  */
-    MARKED_SLOT (device_list);
+    MARKED_SLOT (device_list)
 
     /* Currently selected device.  */
-    MARKED_SLOT (selected_device);
+    MARKED_SLOT (selected_device)
 
     /* Most-recently-selected non-minibuffer-only frame.  Always
        the same as the selected frame, unless that's a minibuffer-only
        frame. */
-    MARKED_SLOT (last_nonminibuf_frame);
+    MARKED_SLOT (last_nonminibuf_frame)
 
     /* If non-nil, a keymap that overrides all others but applies only to
        this console.  Lisp code that uses this instead of calling next-event
@@ -64,41 +65,50 @@ Boston, MA 02111-1307, USA.  */
        #### This comes from FSF Emacs; but there's probably a better
        solution that involves making next-event itself work over all
        consoles. */
-    MARKED_SLOT (overriding_terminal_local_map);
+    MARKED_SLOT (overriding_terminal_local_map)
 
     /* Last command executed by the editor command loop, not counting
        commands that set the prefix argument.  */
-    MARKED_SLOT (last_command);
+    MARKED_SLOT (last_command)
 
     /* The prefix argument for the next command, in raw form.  */
-    MARKED_SLOT (prefix_arg);
+    MARKED_SLOT (prefix_arg)
 
     /* Where information about a partially completed key sequence
        is kept.  */
-    MARKED_SLOT (command_builder);
+    MARKED_SLOT (command_builder)
 
     /* Non-nil while a kbd macro is being defined.  */
-    MARKED_SLOT (defining_kbd_macro);
+    MARKED_SLOT (defining_kbd_macro)
 
     /* This is a lisp vector, which contains the events of the keyboard macro
        currently being read.  It is reallocated when the macro gets too large.
        */
-    MARKED_SLOT (kbd_macro_builder);
+    MARKED_SLOT (kbd_macro_builder)
 
     /* Last anonymous kbd macro defined.  */
-    MARKED_SLOT (last_kbd_macro);
+    MARKED_SLOT (last_kbd_macro)
 
 #ifdef HAVE_TTY
     /* ERASE character from stty settings.  */
-    MARKED_SLOT (tty_erase_char);
+    MARKED_SLOT (tty_erase_char)
 #endif
 
+    /* Key that invokes QUIT.  */
+    MARKED_SLOT (quit_char)
+
+    /* Event version of quit-char.  */
+    MARKED_SLOT (quit_event)
+
+    /* Event version of critical QUIT (upshifted quit-char).  */
+    MARKED_SLOT (critical_quit_event)
+
     /* Minibufferless frames on this console use this frame's minibuffer.  */
-    MARKED_SLOT (default_minibuffer_frame);
+    MARKED_SLOT (default_minibuffer_frame)
 
     /* Keymap mapping ASCII function key sequences onto their preferred forms.
        Initialized by the terminal-specific lisp files.  */
-    MARKED_SLOT (function_key_map);
+    MARKED_SLOT (function_key_map)
 
 #ifndef CONSOLE_SLOTS_LAST_NAME
 #define CONSOLE_SLOTS_LAST_NAME function_key_map

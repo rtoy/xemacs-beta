@@ -78,7 +78,7 @@ Boston, MA 02111-1307, USA.
 #endif	/* _MALLOC_INTERNAL.  */
 
 
-#ifdef	__cplusplus
+#if defined (__cplusplus) && !defined (emacs)
 extern "C"
 {
 #endif
@@ -276,7 +276,7 @@ struct mstats
 /* Pick up the current statistics. */
 extern struct mstats mstats __P ((void));
 
-#ifdef	__cplusplus
+#if defined (__cplusplus) && !defined (emacs)
 }
 #endif
 

@@ -125,26 +125,20 @@ size_bit_vector (const void *lheader)
 				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
 }
 
-static const struct lrecord_description bit_vector_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Bit_Vector, next) },
+static const struct memory_description bit_vector_description[] = {
   { XD_END }
 };
 
 
-#ifdef USE_KKCC
-DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
-					      1, /*dumpable-flag*/
-					      mark_bit_vector, print_bit_vector, 0,
-					      bit_vector_equal, bit_vector_hash,
-					      bit_vector_description, size_bit_vector,
-					      Lisp_Bit_Vector);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
-					      mark_bit_vector, print_bit_vector, 0,
-					      bit_vector_equal, bit_vector_hash,
-					      bit_vector_description, size_bit_vector,
-					      Lisp_Bit_Vector);
-#endif /* not USE_KKCC */
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
+					1, /*dumpable-flag*/
+					mark_bit_vector,
+					print_bit_vector, 0,
+					bit_vector_equal,
+					bit_vector_hash,
+					bit_vector_description,
+					size_bit_vector,
+					Lisp_Bit_Vector);
 
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
@@ -3670,7 +3664,7 @@ base64_encode_1 (Lstream *istream, Ibyte *to, int line_break)
 
   while (1)
     {
-      Ibyte c;
+      Ibyte c = 0;
       if (!ADVANCE_INPUT (c, istream))
 	break;
 

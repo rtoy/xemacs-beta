@@ -39,15 +39,6 @@ Boston, MA 02111-1307, USA.  */
 /* struct Lisp_Process is defined in procimpl.h; only process-*.c need
    to know about the guts of it. */
 
-#ifdef USE_KKCC
-enum process_variant
-{
-  unix_process,
-  nt_process
-};
-
-#endif /* USE_KKCC */
-
 DECLARE_LRECORD (process, Lisp_Process);
 #define XPROCESS(x) XRECORD (x, process, Lisp_Process)
 #define wrap_process(p) wrap_record (p, process)

@@ -178,22 +178,15 @@ float_hash (Lisp_Object obj, int depth)
   return (unsigned long) fmod (extract_float (obj), 4e9);
 }
 
-static const struct lrecord_description float_description[] = {
+static const struct memory_description float_description[] = {
   { XD_END }
 };
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
 				     1, /*dumpable-flag*/
 				     mark_float, print_float, 0, float_equal,
 				     float_hash, float_description,
 				     Lisp_Float);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
-				     mark_float, print_float, 0, float_equal,
-				     float_hash, float_description,
-				     Lisp_Float);
-#endif /* not USE_KKCC */
 
 /* Extract a Lisp number as a `double', or signal an error.  */
 

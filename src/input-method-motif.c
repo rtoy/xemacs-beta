@@ -73,8 +73,8 @@ XIM_init_frame (struct frame *f)
      default face, rather than foreground and background resources, or
      that the user can use set-frame-parameters to set xic attributes */
 
-#define res(name, class, representation, field, default_value)	\
-  { name, class, representation, sizeof(xim_resources.field),	\
+#define res(name, class_, representation, field, default_value)	\
+  { name, class_, representation, sizeof(xim_resources.field),	\
     XtOffsetOf(xim_resources_t, field),				\
     XtRString, (XtPointer) (default_value) }
 

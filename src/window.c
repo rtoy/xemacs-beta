@@ -147,10 +147,106 @@ do {						\
 } while (0)
 
 
-#define MARK_DISP_VARIABLE(field)		\
-  mark_object (window->field[CURRENT_DISP]);	\
-  mark_object (window->field[DESIRED_DISP]);	\
-  mark_object (window->field[CMOTION_DISP]);
+
+static const struct memory_description int_description_1[] = {
+  { XD_END }
+};
+
+static const struct sized_memory_description int_description = {
+  sizeof (int),
+  int_description_1
+};
+
+static const struct memory_description int_dynarr_description_1[] = {
+  XD_DYNARR_DESC (int_dynarr, &int_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description int_dynarr_description = {
+  sizeof (int_dynarr),
+  int_dynarr_description_1
+};
+
+static const struct memory_description face_cachel_description_1[] = {
+  { XD_STRUCT_PTR, offsetof (face_cachel, merged_faces),
+    1, &int_dynarr_description },
+  { XD_LISP_OBJECT, offsetof (face_cachel, face) },
+  { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
+  { XD_LISP_OBJECT, offsetof (face_cachel, background) },
+  { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font), NUM_LEADING_BYTES },
+  { XD_LISP_OBJECT, offsetof (face_cachel, display_table) },
+  { XD_LISP_OBJECT, offsetof (face_cachel, background_pixmap) },
+  { XD_END }
+};
+
+static const struct sized_memory_description face_cachel_description = {
+  sizeof (face_cachel),
+  face_cachel_description_1
+};
+
+static const struct memory_description face_cachel_dynarr_description_1[] = {
+  XD_DYNARR_DESC (face_cachel_dynarr, &face_cachel_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description face_cachel_dynarr_description = {
+  sizeof (face_cachel_dynarr),
+  face_cachel_dynarr_description_1
+};
+
+static const struct memory_description glyph_cachel_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (glyph_cachel, glyph) },
+  { XD_END }
+};
+
+static const struct sized_memory_description glyph_cachel_description = {
+  sizeof (glyph_cachel),
+  glyph_cachel_description_1
+};
+
+static const struct memory_description glyph_cachel_dynarr_description_1[] = {
+  XD_DYNARR_DESC (glyph_cachel_dynarr, &glyph_cachel_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description glyph_cachel_dynarr_description = {
+  sizeof (glyph_cachel_dynarr),
+  glyph_cachel_dynarr_description_1
+};
+
+static const struct memory_description line_start_cache_description_1[] = {
+  { XD_END }
+};
+
+static const struct sized_memory_description line_start_cache_description = {
+  sizeof (line_start_cache),
+  line_start_cache_description_1
+};
+
+static const struct memory_description line_start_cache_dynarr_description_1[] = {
+  XD_DYNARR_DESC (line_start_cache_dynarr, &line_start_cache_description),
+  { XD_END }
+};
+
+static const struct sized_memory_description line_start_cache_dynarr_description = {
+  sizeof (line_start_cache_dynarr),
+  line_start_cache_dynarr_description_1
+};
+
+static const struct memory_description window_description [] = {
+#define WINDOW_SLOT(slot) { XD_LISP_OBJECT, offsetof (struct window, slot) },
+#define WINDOW_SLOT_ARRAY(slot, size) \
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct window, slot), size },
+#include "winslots.h"
+
+  { XD_STRUCT_PTR, offsetof (struct window, face_cachels),
+    1, &face_cachel_dynarr_description },
+  { XD_STRUCT_PTR, offsetof (struct window, glyph_cachels),
+    1, &glyph_cachel_dynarr_description },
+  { XD_STRUCT_PTR, offsetof (struct window, line_start_cache),
+    1, &line_start_cache_dynarr_description },
+  { XD_END }
+};
 
 static Lisp_Object
 mark_window (Lisp_Object obj)
@@ -225,16 +321,10 @@ make_saved_buffer_point_cache (void)
   return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 			       0, /*dumpable-flag*/
                                mark_window, print_window, finalize_window,
-			       0, 0, 0, struct window);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("window", window,
-                               mark_window, print_window, finalize_window,
-			       0, 0, 0, struct window);
-#endif /* not USE_KKCC */
+			       0, 0, window_description, struct window);
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -253,13 +343,8 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
 Lisp_Object
 allocate_window (void)
 {
-  Lisp_Object val;
   struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
-
-  zero_lcrecord (p);
-  val = wrap_window (p);
-
-  p->dead = 0;
+  Lisp_Object val = wrap_window (p);
 
 #define WINDOW_SLOT(slot) p->slot = Qnil;
 #include "winslots.h"
@@ -280,14 +365,6 @@ allocate_window (void)
   p->subwindow_instance_cache = make_image_instance_cache_hash_table ();
 
   p->line_cache_last_updated = Qzero;
-  INIT_DISP_VARIABLE (last_point_x, 0);
-  INIT_DISP_VARIABLE (last_point_y, 0);
-  INIT_DISP_VARIABLE (window_end_pos, 0);
-
-  p->gutter_extent_modiff[0] = 0;
-  p->gutter_extent_modiff[1] = 0;
-  p->gutter_extent_modiff[2] = 0;
-  p->gutter_extent_modiff[3] = 0;
 
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
@@ -336,11 +413,28 @@ allocate_window (void)
    because neither structure is created very often (only when windows are
    created or deleted). --ben */
 
-#ifdef USE_KKCC
-static const struct lrecord_description window_mirror_description [] = {
+static const struct memory_description window_mirror_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct window_mirror, frame) },
+  { XD_LISP_OBJECT, offsetof (struct window_mirror, next) },
+  { XD_LISP_OBJECT, offsetof (struct window_mirror, hchild) },
+  { XD_LISP_OBJECT, offsetof (struct window_mirror, vchild) },
+
+  { XD_STRUCT_PTR, offsetof (struct window_mirror, current_display_lines),
+    1, &display_line_dynarr_description },
+  { XD_STRUCT_PTR, offsetof (struct window_mirror, desired_display_lines),
+    1, &display_line_dynarr_description },
+
+  { XD_LISP_OBJECT, offsetof (struct window_mirror, buffer) },
+
+#ifdef HAVE_SCROLLBARS
+  { XD_LISP_OBJECT, offsetof (struct window_mirror,
+			      scrollbar_vertical_instance) },
+  { XD_LISP_OBJECT, offsetof (struct window_mirror,
+			      scrollbar_horizontal_instance) },
+#endif /* HAVE_SCROLLBARS */
+
   { XD_END }
 };
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_window_mirror (Lisp_Object obj)
@@ -374,16 +468,11 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
 			       0, /*dumpable-flag*/
                                mark_window_mirror, internal_object_printer,
-			       0, 0, 0, 0/*window_mirror_description*/, struct window_mirror);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
-                               mark_window_mirror, internal_object_printer,
-			       0, 0, 0, 0, struct window_mirror);
-#endif /* not USE_KKCC */
+			       0, 0, 0, window_mirror_description,
+			       struct window_mirror);
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
@@ -392,7 +481,6 @@ new_window_mirror (struct frame *f)
 {
   struct window_mirror *t =
     alloc_lcrecord_type (struct window_mirror, &lrecord_window_mirror);
-  zero_lcrecord (t);
 
   t->frame = f;
   t->current_display_lines = Dynarr_new (display_line);
@@ -420,7 +508,7 @@ update_mirror_internal (Lisp_Object win, struct window_mirror *mir)
     if (!mir)
       mir = new_window_mirror (XFRAME (XWINDOW (win)->frame));
 
-  mir->next   = update_mirror_internal (XWINDOW (win)->next,   mir->next);
+  mir->next   = update_mirror_internal (XWINDOW (win)->next, mir->next);
   mir->hchild = update_mirror_internal (XWINDOW (win)->hchild, mir->hchild);
   mir->vchild = update_mirror_internal (XWINDOW (win)->vchild, mir->vchild);
 
@@ -1540,7 +1628,7 @@ is non-nil, do not include space occupied by clipped lines.
     needed += ((hlimit - height)*(nelt - elt) + height-1)/height + 3;
   }
 
-  RETURN_NOT_REACHED(make_int (0))        /* shut up compiler */
+  RETURN_NOT_REACHED(make_int (0));        /* shut up compiler */
 }
 
 DEFUN ("window-width", Fwindow_width, 0, 1, 0, /*

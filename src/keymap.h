@@ -58,7 +58,7 @@ void describe_map_tree (Lisp_Object startmap, int partial,
 void key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 			     int allow_menu_events);
 
-int event_matches_key_specifier_p (Lisp_Event *event,
+int event_matches_key_specifier_p (Lisp_Object event,
 				   Lisp_Object key_specifier);
 
 #endif /* INCLUDED_keymap_h_ */

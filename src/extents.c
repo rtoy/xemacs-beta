@@ -245,20 +245,47 @@ typedef struct gap_array_marker
   struct gap_array_marker *next;
 } Gap_Array_Marker;
 
+
 /* Holds a "gap array", which is an array of elements with a gap located
    in it.  Insertions and deletions with a high degree of locality
    are very fast, essentially in constant time.  Array positions as
    used and returned in the gap array functions are independent of
    the gap. */
 
+/* Layout of gap array:
+
+   <------ gap ------><---- gapsize ----><----- numels - gap ---->
+   <---------------------- numels + gapsize --------------------->
+
+   For marking purposes, we use two extra variables computed from
+   the others -- the offset to the data past the gap, plus the number
+   of elements in that data:
+
+   offset_past_gap = elsize * (gap + gapsize)
+   els_past_gap = numels - gap
+
+   #### The current layout will not cut it for dumping purposes.  If we
+   need to dump one of these structures, we will have to rearrange things
+   so that the gap array data and other fields are in one single memory
+   block.  Either this is a pointer off of struct gap_array, or it is
+   struct gap_array itself; in the latter case, the interface below has to
+   be modified so that functions that change the array pass in a ** rather
+   than a *, since the pointer may move.
+*/
+
+
 typedef struct gap_array
 {
-  char *array;
-  int gap;
-  int gapsize;
-  int numels;
-  int elsize;
+  Elemcount gap;
+  Elemcount gapsize;
+  Elemcount numels;
+  Bytecount elsize;
+  /* Redundant numbers computed from the others, for marking purposes */
+  Bytecount offset_past_gap;
+  Elemcount els_past_gap;
   Gap_Array_Marker *markers;
+  /* this is a stretchy array */
+  char array[1];
 } Gap_Array;
 
 static Gap_Array_Marker *gap_array_marker_freelist;
@@ -487,7 +514,7 @@ int in_modeline_generation;
 
 static void
 gap_array_adjust_markers (Gap_Array *ga, Memxpos from,
-			  Memxpos to, int amount)
+			  Memxpos to, Elemcount amount)
 {
   Gap_Array_Marker *m;
 
@@ -495,16 +522,22 @@ gap_array_adjust_markers (Gap_Array *ga, Memxpos from,
     m->pos = do_marker_adjustment (m->pos, from, to, amount);
 }
 
+static void
+gap_array_recompute_derived_values (Gap_Array *ga)
+{
+  ga->offset_past_gap = ga->elsize * (ga->gap + ga->gapsize);
+  ga->els_past_gap = ga->numels - ga->gap;
+}
+
 /* Move the gap to array position POS.  Parallel to move_gap() in
    insdel.c but somewhat simplified. */
 
 static void
-gap_array_move_gap (Gap_Array *ga, int pos)
+gap_array_move_gap (Gap_Array *ga, Elemcount pos)
 {
-  int gap = ga->gap;
-  int gapsize = ga->gapsize;
+  Elemcount gap = ga->gap;
+  Elemcount gapsize = ga->gapsize;
 
-  assert (ga->array);
   if (pos < gap)
     {
       memmove (GAP_ARRAY_MEMEL_ADDR (ga, pos + gapsize),
@@ -522,27 +555,30 @@ gap_array_move_gap (Gap_Array *ga, int pos)
 				(Memxpos) (pos + gapsize), - gapsize);
     }
   ga->gap = pos;
+
+  gap_array_recompute_derived_values (ga);
 }
 
 /* Make the gap INCREMENT characters longer.  Parallel to make_gap() in
-   insdel.c. */
+   insdel.c.  The gap array may be moved, so assign the return value back
+   to the array pointer. */
 
-static void
-gap_array_make_gap (Gap_Array *ga, int increment)
+static Gap_Array *
+gap_array_make_gap (Gap_Array *ga, Elemcount increment)
 {
-  char *ptr = ga->array;
-  int real_gap_loc;
-  int old_gap_size;
+  Elemcount real_gap_loc;
+  Elemcount old_gap_size;
 
   /* If we have to get more space, get enough to last a while.  We use
      a geometric progression that saves on realloc space. */
   increment += 100 + ga->numels / 8;
 
-  ptr = (char *) xrealloc (ptr,
-			   (ga->numels + ga->gapsize + increment)*ga->elsize);
-  if (ptr == 0)
+  ga = (Gap_Array *) xrealloc (ga,
+			       offsetof (Gap_Array, array) +
+			       (ga->numels + ga->gapsize + increment) *
+			       ga->elsize);
+  if (ga == 0)
     memory_full ();
-  ga->array = ptr;
 
   real_gap_loc = ga->gap;
   old_gap_size = ga->gapsize;
@@ -558,6 +594,10 @@ gap_array_make_gap (Gap_Array *ga, int increment)
   /* Now combine the two into one large gap.  */
   ga->gapsize += old_gap_size;
   ga->gap = real_gap_loc;
+
+  gap_array_recompute_derived_values (ga);
+
+  return ga;
 }
 
 /* ------------------------------- */
@@ -565,14 +605,16 @@ gap_array_make_gap (Gap_Array *ga, int increment)
 /* ------------------------------- */
 
 /* Insert NUMELS elements (pointed to by ELPTR) into the specified
-   gap array at POS. */
+   gap array at POS.  The gap array may be moved, so assign the
+   return value back to the array pointer. */
 
-static void
-gap_array_insert_els (Gap_Array *ga, int pos, void *elptr, int numels)
+static Gap_Array *
+gap_array_insert_els (Gap_Array *ga, Elemcount pos, void *elptr,
+		      Elemcount numels)
 {
   assert (pos >= 0 && pos <= ga->numels);
   if (ga->gapsize < numels)
-    gap_array_make_gap (ga, numels - ga->gapsize);
+    ga = gap_array_make_gap (ga, numels - ga->gapsize);
   if (pos != ga->gap)
     gap_array_move_gap (ga, pos);
 
@@ -581,21 +623,23 @@ gap_array_insert_els (Gap_Array *ga, int pos, void *elptr, int numels)
   ga->gapsize -= numels;
   ga->gap += numels;
   ga->numels += numels;
+  gap_array_recompute_derived_values (ga);
   /* This is the equivalent of insert-before-markers.
 
      #### Should only happen if marker is "moves forward at insert" type.
      */
 
   gap_array_adjust_markers (ga, pos - 1, pos, numels);
+  return ga;
 }
 
 /* Delete NUMELS elements from the specified gap array, starting at FROM. */
 
 static void
-gap_array_delete_els (Gap_Array *ga, int from, int numdel)
+gap_array_delete_els (Gap_Array *ga, Elemcount from, Elemcount numdel)
 {
-  int to = from + numdel;
-  int gapsize = ga->gapsize;
+  Elemcount to = from + numdel;
+  Elemcount gapsize = ga->gapsize;
 
   assert (from >= 0);
   assert (numdel >= 0);
@@ -615,10 +659,11 @@ gap_array_delete_els (Gap_Array *ga, int from, int numdel)
   ga->gapsize += numdel;
   ga->numels -= numdel;
   ga->gap = from;
+  gap_array_recompute_derived_values (ga);
 }
 
 static Gap_Array_Marker *
-gap_array_make_marker (Gap_Array *ga, int pos)
+gap_array_make_marker (Gap_Array *ga, Elemcount pos)
 {
   Gap_Array_Marker *m;
 
@@ -650,7 +695,7 @@ gap_array_delete_marker (Gap_Array *ga, Gap_Array_Marker *m)
   else
     ga->markers = p->next;
   m->next = gap_array_marker_freelist;
-  m->pos = 0xDEADBEEF; /* -559038737 as an int */
+  m->pos = 0xDEADBEEF; /* -559038737 base 10 */
   gap_array_marker_freelist = m;
 }
 
@@ -669,7 +714,7 @@ gap_array_delete_all_markers (Gap_Array *ga)
 }
 
 static void
-gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, int pos)
+gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, Elemcount pos)
 {
   assert (pos >= 0 && pos <= ga->numels);
   m->pos = GAP_ARRAY_ARRAY_TO_MEMORY_POS (ga, pos);
@@ -679,7 +724,7 @@ gap_array_move_marker (Gap_Array *ga, Gap_Array_Marker *m, int pos)
   GAP_ARRAY_MEMORY_TO_ARRAY_POS (ga, (m)->pos)
 
 static Gap_Array *
-make_gap_array (int elsize)
+make_gap_array (Elemcount elsize)
 {
   Gap_Array *ga = xnew_and_zero (Gap_Array);
   ga->elsize = elsize;
@@ -689,8 +734,6 @@ make_gap_array (int elsize)
 static void
 free_gap_array (Gap_Array *ga)
 {
-  if (ga->array)
-    xfree (ga->array);
   gap_array_delete_all_markers (ga);
   xfree (ga);
 }
@@ -713,7 +756,7 @@ free_gap_array (Gap_Array *ga)
 */
 
 /* Number of elements in an extent list */
-#define extent_list_num_els(el) GAP_ARRAY_NUM_ELS(el->start)
+#define extent_list_num_els(el) GAP_ARRAY_NUM_ELS (el->start)
 
 /* Return the position at which EXTENT is located in the specified extent
    list (in the display order if ENDP is 0, in the e-order otherwise).
@@ -815,10 +858,10 @@ extent_list_insert (Extent_List *el, EXTENT extent)
 
   pos = extent_list_locate (el, extent, 0, &foundp);
   assert (!foundp);
-  gap_array_insert_els (el->start, pos, &extent, 1);
+  el->start = gap_array_insert_els (el->start, pos, &extent, 1);
   pos = extent_list_locate (el, extent, 1, &foundp);
   assert (!foundp);
-  gap_array_insert_els (el->end, pos, &extent, 1);
+  el->end = gap_array_insert_els (el->end, pos, &extent, 1);
 }
 
 /* Delete an extent from an extent list. */
@@ -909,8 +952,7 @@ free_extent_list (Extent_List *el)
 /*                       Auxiliary extent structure                     */
 /************************************************************************/
 
-#ifdef USE_KKCC
-static const struct lrecord_description extent_auxiliary_description[] ={
+static const struct memory_description extent_auxiliary_description[] ={
   { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, begin_glyph) },
   { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, end_glyph) },
   { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, parent) },
@@ -923,7 +965,6 @@ static const struct lrecord_description extent_auxiliary_description[] ={
   { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, after_change_functions) },
   { XD_END }
 };
-#endif /* USE_KKCC */
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj)
 {
@@ -940,16 +981,11 @@ mark_extent_auxiliary (Lisp_Object obj)
   return data->parent;
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
 			       0, /*dumpable-flag*/
                                mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, extent_auxiliary_description, struct extent_auxiliary);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
-                               mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, 0, struct extent_auxiliary);
-#endif /* not USE_KKCC */
+			       0, 0, 0, extent_auxiliary_description,
+			       struct extent_auxiliary);
 void
 allocate_extent_auxiliary (EXTENT ext)
 {
@@ -993,16 +1029,81 @@ static struct stack_of_extents *allocate_soe (void);
 static void free_soe (struct stack_of_extents *soe);
 static void soe_invalidate (Lisp_Object obj);
 
-#ifdef USE_KKCC
-static const struct struct_description extent_list_description = {
-};
+extern const struct sized_memory_description gap_array_marker_description;
 
-static const struct lrecord_description extent_info_description [] = {
-  { XD_STRUCT_PTR, offsetof (struct extent_info, extents), 
-    XD_INDIRECT (0, 0), &extent_list_description },
+static const struct memory_description gap_array_marker_description_1[] = { 
+  { XD_STRUCT_PTR, offsetof (Gap_Array_Marker, next), 1,
+    &gap_array_marker_description },
   { XD_END }
 };
-#endif /* USE_KKCC */
+
+const struct sized_memory_description gap_array_marker_description = {
+  sizeof (Gap_Array_Marker),
+  gap_array_marker_description_1
+};
+
+static const struct memory_description lispobj_gap_array_description_1[] = { 
+  { XD_INT, offsetof (Gap_Array, gap) },
+  { XD_INT, offsetof (Gap_Array, offset_past_gap) },
+  { XD_INT, offsetof (Gap_Array, els_past_gap) },
+  { XD_STRUCT_PTR, offsetof (Gap_Array, markers), 1,
+    &gap_array_marker_description, XD_FLAG_NO_KKCC },
+  { XD_STRUCT_ARRAY, offsetof (Gap_Array, array), XD_INDIRECT (0, 0),
+    &lisp_object_description },
+  { XD_STRUCT_ARRAY, XD_INDIRECT (1, offsetof (Gap_Array, array)),
+    XD_INDIRECT (2, 0), &lisp_object_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description lispobj_gap_array_description = {
+  sizeof (Gap_Array),
+  lispobj_gap_array_description_1
+};
+
+extern const struct sized_memory_description extent_list_marker_description;
+
+static const struct memory_description extent_list_marker_description_1[] = { 
+  { XD_STRUCT_PTR, offsetof (Extent_List_Marker, m), 1,
+    &gap_array_marker_description },
+  { XD_STRUCT_PTR, offsetof (Extent_List_Marker, next), 1,
+    &extent_list_marker_description },
+  { XD_END }
+};
+
+const struct sized_memory_description extent_list_marker_description = {
+  sizeof (Extent_List_Marker),
+  extent_list_marker_description_1
+};
+
+static const struct memory_description extent_list_description_1[] = { 
+  { XD_STRUCT_PTR, offsetof (Extent_List, start), 1, &lispobj_gap_array_description },
+  { XD_STRUCT_PTR, offsetof (Extent_List, end), 1, &lispobj_gap_array_description, XD_FLAG_NO_KKCC },
+  { XD_STRUCT_PTR, offsetof (Extent_List, markers), 1, &extent_list_marker_description, XD_FLAG_NO_KKCC },
+  { XD_END }
+};
+
+static const struct sized_memory_description extent_list_description = {
+  sizeof (Extent_List),
+  extent_list_description_1
+};
+
+static const struct memory_description stack_of_extents_description_1[] = { 
+  { XD_STRUCT_PTR, offsetof (Stack_Of_Extents, extents), 1, &extent_list_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description stack_of_extents_description = {
+  sizeof (Stack_Of_Extents),
+  stack_of_extents_description_1
+};
+
+static const struct memory_description extent_info_description [] = {
+  { XD_STRUCT_PTR, offsetof (struct extent_info, extents), 1,
+    &extent_list_description },
+  { XD_STRUCT_PTR, offsetof (struct extent_info, soe), 1,
+    &stack_of_extents_description, XD_FLAG_NO_KKCC },
+  { XD_END }
+};
 
 static Lisp_Object
 mark_extent_info (Lisp_Object obj)
@@ -1054,19 +1155,12 @@ finalize_extent_info (void *header, int for_disksave)
     }
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
 			       0, /*dumpable-flag*/
                                mark_extent_info, internal_object_printer,
 			       finalize_extent_info, 0, 0, 
-			       0 /*extent_info_description*/,
+			       extent_info_description,
 			       struct extent_info);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
-                               mark_extent_info, internal_object_printer,
-			       finalize_extent_info, 0, 0, 0,
-			       struct extent_info);
-#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_extent_info (void)
@@ -3180,7 +3274,7 @@ extent_hash (Lisp_Object obj, int depth)
 		internal_hash (extent_object (e), depth + 1));
 }
 
-static const struct lrecord_description extent_description[] = {
+static const struct memory_description extent_description[] = {
   { XD_LISP_OBJECT, offsetof (struct extent, object) },
   { XD_LISP_OBJECT, offsetof (struct extent, flags.face) },
   { XD_LISP_OBJECT, offsetof (struct extent, plist) },
@@ -3218,7 +3312,6 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
-#ifdef USE_KKCC
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
 						1, /*dumpable-flag*/
 						mark_extent,
@@ -3233,21 +3326,6 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
 						extent_getprop, extent_putprop,
 						extent_remprop, extent_plist,
 						struct extent);
-#else /* not USE_KKCC */
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
-						mark_extent,
-						print_extent,
-						/* NOTE: If you declare a
-						   finalization method here,
-						   it will NOT be called.
-						   Shaft city. */
-						0,
-						extent_equal, extent_hash,
-						extent_description,
-						extent_getprop, extent_putprop,
-						extent_remprop, extent_plist,
-						struct extent);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*			basic extent accessors				*/
@@ -4398,7 +4476,7 @@ decode_extent_at_flag (Lisp_Object at_flag)
   if (EQ (at_flag, Qat))     return EXTENT_AT_AT;
 
   invalid_constant ("Invalid AT-FLAG in `extent-at'", at_flag);
-  RETURN_NOT_REACHED (EXTENT_AT_AFTER)
+  RETURN_NOT_REACHED (EXTENT_AT_AFTER);
 }
 
 static int
@@ -4640,7 +4718,7 @@ verify_extent_mapper (EXTENT extent, void *arg)
   while (1)
     Fsignal (Qbuffer_read_only, (list1 (closure->object)));
 
-  RETURN_NOT_REACHED(0)
+  RETURN_NOT_REACHED(0);
 }
 
 /* Value of Vinhibit_read_only is precomputed and passed in for
@@ -5219,7 +5297,7 @@ symbol_to_glyph_layout (Lisp_Object layout_obj)
   if (EQ (layout_obj, Qtext))		return GL_TEXT;
 
   invalid_constant ("Unknown glyph layout type", layout_obj);
-  RETURN_NOT_REACHED (GL_TEXT)
+  RETURN_NOT_REACHED (GL_TEXT);
 }
 
 static Lisp_Object
@@ -7230,7 +7308,7 @@ syms_of_extents (void)
   DEFSUBR (Fset_extent_endpoints);
   DEFSUBR (Fnext_extent);
   DEFSUBR (Fprevious_extent);
-#if DEBUG_XEMACS
+#ifdef DEBUG_XEMACS
   DEFSUBR (Fnext_e_extent);
   DEFSUBR (Fprevious_e_extent);
 #endif

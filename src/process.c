@@ -138,69 +138,19 @@ Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
 
-#ifdef USE_KKCC
-static const struct lrecord_description empty_process_data_description [] = {
+static const struct memory_description process_description [] = {
+#define MARKED_SLOT(x) { XD_LISP_OBJECT, offsetof (Lisp_Process, x) },
+#include "process-slots.h"
   { XD_END }
 };
-
-static const struct lrecord_description unix_process_data_description [] = {
-  { XD_LISP_OBJECT, offsetof (struct unix_process_data, tty_name) },
-  { XD_END }
-};
-
-static const struct struct_description process_data_description []= {
-  { unix_process, unix_process_data_description},
-  { nt_process, empty_process_data_description},
-  { XD_END }
-};
-
-static const struct lrecord_description process_description [] = {
-  { XD_INT, offsetof (Lisp_Process, process_type) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, name) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, command) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, filter) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_filter) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, sentinel) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, buffer) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, mark) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_buffer) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_mark) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, pid) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_instream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_outstream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_errstream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_instream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_outstream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_errstream) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Process, status_symbol) },
-  { XD_UNION, offsetof (Lisp_Process, process_data), 
-    XD_INDIRECT (0, 0), process_data_description },
-  { XD_END }
-};
-#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_process (Lisp_Object object)
 {
   Lisp_Process *process = XPROCESS (object);
-  MAYBE_PROCMETH (mark_process_data, (process));
-  mark_object (process->name);
-  mark_object (process->command);
-  mark_object (process->filter);
-  mark_object (process->stderr_filter);
-  mark_object (process->sentinel);
-  mark_object (process->buffer);
-  mark_object (process->mark);
-  mark_object (process->stderr_buffer);
-  mark_object (process->stderr_mark);
-  mark_object (process->pid);
-  mark_object (process->pipe_instream);
-  mark_object (process->pipe_outstream);
-  mark_object (process->pipe_errstream);
-  mark_object (process->coding_instream);
-  mark_object (process->coding_outstream);
-  mark_object (process->coding_errstream);
-  return process->status_symbol;
+#define MARKED_SLOT(x) mark_object (process->x);
+#include "process-slots.h"
+  return Qnil;
 }
 
 static void
@@ -255,16 +205,10 @@ finalize_process (void *header, int for_disksave)
     }
 }
 
-#ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("process", process,
 			       0, /*dumpable-flag*/
                                mark_process, print_process, finalize_process,
                                0, 0, process_description, Lisp_Process);
-#else /* not USE_KKCC */
-DEFINE_LRECORD_IMPLEMENTATION ("process", process,
-                               mark_process, print_process, finalize_process,
-                               0, 0, 0, Lisp_Process);
-#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       basic process accessors                        */
@@ -537,6 +481,9 @@ make_process_internal (Lisp_Object name)
   int i;
   Lisp_Process *p = alloc_lcrecord_type (Lisp_Process, &lrecord_process);
 
+#define MARKED_SLOT(x)	p->x = Qnil;
+#include "process-slots.h"
+
   /* If name is already in use, modify it until it is unused.  */
   name1 = name;
   for (i = 1; ; i++)
@@ -551,42 +498,11 @@ make_process_internal (Lisp_Object name)
   name = name1;
   p->name = name;
 
-  p->command  = Qnil;
-  p->filter   = Qnil;
-  p->stderr_filter   = Qnil;
-  p->sentinel = Qnil;
-  p->buffer   = Qnil;
   p->mark = Fmake_marker ();
-  p->stderr_buffer   = Qnil;
   p->stderr_mark = Fmake_marker ();
-  p->pid = Qnil;
   p->status_symbol = Qrun;
-  p->exit_code = 0;
-  p->core_dumped = 0;
-  p->filter_does_read = 0;
-  p->kill_without_query = 0;
-  p->separate_stderr = 0;
-  p->in_selected = 0;
-  p->err_selected = 0;
-  p->tick = 0;
-  p->update_tick = 0;
-  p->pipe_instream  = Qnil;
-  p->pipe_outstream = Qnil;
-  p->pipe_errstream = Qnil;
-  p->coding_instream  = Qnil;
-  p->coding_outstream = Qnil;
-  p->coding_errstream = Qnil;
 
-  p->process_data = 0;
   MAYBE_PROCMETH (alloc_process_data, (p));
-
-#ifdef USE_KKCC
-#ifdef HAVE_MS_WINDOWS
-  p->process_type = nt_process;
-#else /*HAVE_MS_WINDOWS*/
-  p->process_type = unix_process;
-#endif /*HAVE_MS_WINDOWS*/
-#endif /* USE_KKCC */
 
   val = wrap_process (p);
 
@@ -966,8 +882,8 @@ against lost packets.
 
   event_stream_select_process (XPROCESS (process), 1, 1);
 
-  UNGCPRO;
   NUNGCPRO;
+  UNGCPRO;
   return process;
 }
 
@@ -1276,7 +1192,7 @@ not the name of the pty that Emacs uses to talk with that terminal.
        (process))
 {
   CHECK_PROCESS (process);
-  return MAYBE_LISP_PROCMETH (get_tty_name, (XPROCESS (process)));
+  return XPROCESS (process)->tty_name;
 }
 
 DEFUN ("set-process-buffer", Fset_process_buffer, 2, 2, 0, /*
@@ -2010,7 +1926,7 @@ decode_signal (Lisp_Object signal_)
 #undef handle_signal
 
       invalid_constant ("Undefined signal name", signal_);
-      RETURN_NOT_REACHED (0)
+      RETURN_NOT_REACHED (0);
     }
 }
 

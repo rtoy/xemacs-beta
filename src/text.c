@@ -2867,7 +2867,6 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       int delete_count;
       Lisp_Object instream, outstream;
       Lstream *reader, *writer;
-      struct gcpro gcpro1, gcpro2;
 
 #ifdef HAVE_WIN32_CODING_SYSTEMS
     the_hard_way:
@@ -2903,30 +2902,33 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       reader = XLSTREAM (instream);
       writer = XLSTREAM (outstream);
       /* decoding_stream will gc-protect outstream */
-      GCPRO2 (instream, outstream);
+      {
+	struct gcpro gcpro1, gcpro2;
+	GCPRO2 (instream, outstream);
 
-      while (1)
-        {
-          Bytecount size_in_bytes;
-	  char tempbuf[1024]; /* some random amount */
+	while (1)
+	  {
+	    Bytecount size_in_bytes;
+	    char tempbuf[1024]; /* some random amount */
 
-	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
+	    size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
 
-          if (size_in_bytes == 0)
-            break;
-	  else if (size_in_bytes < 0)
-	    signal_error (Qtext_conversion_error,
-			  "Error converting to external format", Qunbound);
+	    if (size_in_bytes == 0)
+	      break;
+	    else if (size_in_bytes < 0)
+	      signal_error (Qtext_conversion_error,
+			    "Error converting to external format", Qunbound);
 
-	  if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	    signal_error (Qtext_conversion_error,
-			  "Error converting to external format", Qunbound);
-        }
+	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
+	      signal_error (Qtext_conversion_error,
+			    "Error converting to external format", Qunbound);
+	  }
 
-      /* Closing writer will close any stream at the other end of writer. */
-      Lstream_close (writer);
-      Lstream_close (reader);
-      UNGCPRO;
+	/* Closing writer will close any stream at the other end of writer. */
+	Lstream_close (writer);
+	Lstream_close (reader);
+	UNGCPRO;
+      }
 
       /* The idea is that this function will create no garbage. */
       while (delete_count)
@@ -3056,7 +3058,6 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       int delete_count;
       Lisp_Object instream, outstream;
       Lstream *reader, *writer;
-      struct gcpro gcpro1, gcpro2;
 
 #ifdef HAVE_WIN32_CODING_SYSTEMS
     the_hard_way:
@@ -3087,31 +3088,34 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
       reader = XLSTREAM (instream);
       writer = XLSTREAM (outstream);
-      /* outstream will gc-protect its sink stream, if necessary */
-      GCPRO2 (instream, outstream);
+      {
+	struct gcpro gcpro1, gcpro2;
+	/* outstream will gc-protect its sink stream, if necessary */
+	GCPRO2 (instream, outstream);
 
-      while (1)
-        {
-          Bytecount size_in_bytes;
-	  char tempbuf[1024]; /* some random amount */
+	while (1)
+	  {
+	    Bytecount size_in_bytes;
+	    char tempbuf[1024]; /* some random amount */
 
-	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
+	    size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
 
-          if (size_in_bytes == 0)
-            break;
-	  else if (size_in_bytes < 0)
-	    signal_error (Qtext_conversion_error,
-			  "Error converting to internal format", Qunbound);
+	    if (size_in_bytes == 0)
+	      break;
+	    else if (size_in_bytes < 0)
+	      signal_error (Qtext_conversion_error,
+			    "Error converting to internal format", Qunbound);
 
-	  if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
-	    signal_error (Qtext_conversion_error,
-			  "Error converting to internal format", Qunbound);
-        }
+	    if (Lstream_write (writer, tempbuf, size_in_bytes) < 0)
+	      signal_error (Qtext_conversion_error,
+			    "Error converting to internal format", Qunbound);
+	  }
 
-      /* Closing writer will close any stream at the other end of writer. */
-      Lstream_close (writer);
-      Lstream_close (reader);
-      UNGCPRO;
+	/* Closing writer will close any stream at the other end of writer. */
+	Lstream_close (writer);
+	Lstream_close (reader);
+	UNGCPRO;
+      }
 
       /* The idea is that this function will create no garbage. */
       while (delete_count)
@@ -3616,7 +3620,7 @@ Return a string of the characters comprising a composite character.
 /************************************************************************/
 
 void
-reinit_eistring_once_early (void)
+reinit_eistring_early (void)
 {
   the_eistring_malloc_zero_init = the_eistring_zero_init;
   the_eistring_malloc_zero_init.mallocp_ = 1;
@@ -3625,7 +3629,7 @@ reinit_eistring_once_early (void)
 void
 init_eistring_once_early (void)
 {
-  reinit_eistring_once_early ();
+  reinit_eistring_early ();
 }
 
 void
@@ -3655,7 +3659,6 @@ reinit_vars_of_text (void)
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
 
-  /* #### Olivier, why does this need to be reinitted? */
   for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
     three_to_one_table[i] = i / 3;
 }
