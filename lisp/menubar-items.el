@@ -3,7 +3,7 @@
 ;; Copyright (C) 1991-1995, 1997-1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 ;; Copyright (C) 1997 MORIOKA Tomohiko.
 
 ;; Maintainer: XEmacs Development Team
@@ -1608,13 +1608,13 @@ Write your filter like this:
       ["What's %_New in XEmacs" view-emacs-news]
       "-----"
       ("%_Info (Online Docs)"
-       ["Info Con%_tents" (Info-goto-node "(dir)")]
+       ["%_Info Contents" (Info-goto-node "(dir)")]
        "-----"
        ["XEmacs %_User's Manual" (Info-goto-node "(XEmacs)")]
        ["XEmacs %_Lisp Reference Manual" (Info-goto-node "(Lispref)")]
        ["All About %_Packages" (Info-goto-node "(xemacs)Packages")]
        ["%_Getting Started with XEmacs" (Info-goto-node "(New-Users-Guide)")]
-       ["XEmacs In%_ternals Manual" (Info-goto-node "(Internals)")]
+       ["%_XEmacs Internals Manual" (Info-goto-node "(Internals)")]
        ["%_How to Use Info" (Info-goto-node "(Info)")]
        "-----"
        ["Lookup %_Key Sequence in User's Manual..."
@@ -1622,7 +1622,7 @@ Write your filter like this:
        ["Lookup %_Command in User's Manual..." Info-goto-emacs-command-node]
        ["Lookup %_Function in Lisp Reference..." Info-elisp-ref]
        "-----"
-       ["Search %_Index in User's Manual/Lispref..."
+       ["Find %_Topic in User's Manual/Lispref..."
 	Info-search-index-in-xemacs-and-lispref]
        ["%_Search Text in User's Manual..." Info-search-text-in-xemacs]
        ["S%_earch Text in Lisp Reference..."

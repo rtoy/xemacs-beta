@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
-;; Copyright (C) 1996 Ben Wing.
+;; Copyright (C) 1996, 2003 Ben Wing.
 
 ;; Author: Jonathan Stigelman <stig@xemacs.org>
 ;; Maintainer: XEmacs Development Team
@@ -296,10 +296,15 @@ a Hyper-Apropos buffer."
 a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 		   'hyper-apropos-documentation)
       (insert-face "Functions and Macros:\n\n" 'hyper-apropos-major-heading)
-      (hyper-apropos-grok-functions flist)
+      (hyper-apropos-grok-functions flist nil)
+      (insert-face "\n\nObsolete Functions and Macros:\n\n" 'hyper-apropos-major-heading)
+      (hyper-apropos-grok-functions flist t)
       (insert-face "\n\nVariables and Constants:\n\n"
 		   'hyper-apropos-major-heading)
-      (hyper-apropos-grok-variables vlist)
+      (hyper-apropos-grok-variables vlist nil)
+      (insert-face "\n\nObsolete Variables and Constants:\n\n"
+		   'hyper-apropos-major-heading)
+      (hyper-apropos-grok-variables vlist t)
       (goto-char (point-min))))
   (switch-to-buffer hyper-apropos-apropos-buf)
   (hyper-apropos-mode regexp))
@@ -312,57 +317,76 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
   (message "Re-running apropos...")
   (hyper-apropos hyper-apropos-last-regexp nil))
 
-(defun hyper-apropos-grok-functions (fns)
-  (let (bind doc type)
-    (dolist (fn fns)
-      (setq bind (symbol-function fn)
-	    type (cond ((subrp bind) ?i)
+(defun hyper-apropos-grok-functions (fns obsolete-p)
+  (loop for fn in fns
+    if (eq (function-obsolete-p fn) obsolete-p) do
+    (let* ((bind (symbol-function fn))
+	   (type (cond ((subrp bind) ?i)
 		       ((compiled-function-p bind) ?b)
 		       ((consp bind) (or (cdr
 					  (assq (car bind) '((autoload . ?a)
 							     (lambda . ?l)
 							     (macro . ?m))))
 					 ??))
-		       (t ?\ )))
+		       (t ?\ ))))
       (insert type (if (commandp fn) "* " "  "))
       (let ((e (insert-face (format "%S" fn) 'hyper-apropos-hyperlink)))
 	(set-extent-property e 'mouse-face 'highlight))
       (insert-char ?\  (let ((l (- 30 (length (format "%S" fn)))))
 			 (if (natnump l) l 0)))
       (and hyper-apropos-show-brief-docs
-	   (setq doc
-	   ;; A symbol's function slot can point to an unbound symbol.
-	   ;; In that case, `documentation' will fail.
-		 (ignore-errors
-		   (documentation fn)))
-	   (if  (string-match
-		 "^([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
-		 doc)
-	       (setq doc (substring doc (match-end 0) (string-match "\n" doc)))
-	     t)
-	   (insert-face (if doc
-			    (concat " - "
-				    (substring doc 0 (string-match "\n" doc)))
-			  " Not documented.")
-			'hyper-apropos-documentation))
+	   (let ((doc
+		  (if (and obsolete-p
+			   (symbolp fn)
+			   (symbolp (symbol-function fn)))
+		      (function-obsoleteness-doc fn)
+		    ;; A symbol's function slot can point to an unbound symbol.
+		    ;; In that case, `documentation' will fail.
+		    (ignore-errors
+		      (documentation fn)))))
+	     (if (and
+		  doc
+		  (string-match
+		   "\\`([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
+		   doc))
+		 (setq doc (substring doc (match-end 0)
+				      (string-match "\n" doc))))
+	     ;; Skip errant newlines at beginning of doc
+	     (if (and doc
+		      (string-match "\\`\n+" doc))
+		 (setq doc (substring doc (match-end 0))))
+	     (insert-face (if doc
+			      (concat " - "
+				      (substring doc 0
+						 (string-match "\n" doc)))
+			    " - Not documented.")
+			  'hyper-apropos-documentation)))
       (insert ?\n))))
 
-(defun hyper-apropos-grok-variables (vars)
-  (let (doc userp)
-    (dolist (var vars)
-      (setq userp (user-variable-p var))
+(defun hyper-apropos-grok-variables (vars obsolete-p)
+  (loop for var in vars
+    if (eq (variable-obsolete-p var) obsolete-p) do
+    (let ((userp (user-variable-p var)))
       (insert (if userp " * " "   "))
       (let ((e (insert-face (format "%S" var) 'hyper-apropos-hyperlink)))
 	(set-extent-property e 'mouse-face 'highlight))
       (insert-char ?\  (let ((l (- 30 (length (format "%S" var)))))
 			 (if (natnump l) l 0)))
       (and hyper-apropos-show-brief-docs
-	   (setq doc (documentation-property var 'variable-documentation))
-	   (insert-face (if doc
-			    (concat " - " (substring doc (if userp 1 0)
-						     (string-match "\n" doc)))
-			  " - Not documented.")
-			'hyper-apropos-documentation))
+	   (let ((doc
+		  (if (and obsolete-p (variable-alias var))
+		      (variable-obsoleteness-doc var)
+		    (documentation-property var 'variable-documentation))))
+	     ;; Skip errant newlines at beginning of doc
+	     (if (and doc
+		      (string-match "\\`\n+" doc))
+		 (setq doc (substring doc (match-end 0))))
+	     (insert-face (if doc
+			      (concat " - " (substring
+					     doc (if userp 1 0)
+					     (string-match "\n" doc)))
+			    " - Not documented.")
+			  'hyper-apropos-documentation)))
       (insert ?\n))))
 
 ;; ---------------------------------------------------------------------- ;;

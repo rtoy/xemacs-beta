@@ -107,6 +107,7 @@
   '("paths.el"
     "dumped-lisp.el"
     "dumped-pkg-lisp.el"
+    "raw-process.el"
     "version.el"
     "very-early-lisp.el")
   "Lisp files that should not be byte compiled.")

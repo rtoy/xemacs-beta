@@ -501,16 +501,12 @@ encoding detection or end-of-line detection.
   int reading_elc = 0;
   int from_require = EQ (nomessage, Qrequire);
   int message_p = NILP (nomessage) || load_always_display_messages;
-  static Lisp_Object last_file_loaded;
   struct stat s1, s2;
   Ibyte *spaces = alloca_ibytes (load_in_progress * 2 + 10);
   int i;
 
   GCPRO4 (file, newer, older, found);
   CHECK_STRING (file);
-
-  if (noninteractive)
-    last_file_loaded = file;
 
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
@@ -751,14 +747,6 @@ do {								\
 	NUNGCPRO;
       }
   }
-
-  if (message_p && noninteractive && !EQ (last_file_loaded, file))
-    {
-      if (from_require)
-	message ("%sRequiring %s ...done", spaces, XSTRING_DATA (file));
-      else
-	message ("%sLoading %s ...done", spaces, XSTRING_DATA (file));
-    }
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
