@@ -988,14 +988,6 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
     }
 }
 
-int read_bitmap_data_from_file (const char *filename, unsigned int *width,
-				unsigned int *height, unsigned char **datap,
-				int *x_hot, int *y_hot)
-{
-  return XmuReadBitmapDataFromFile (filename, width, height,
-				    datap, x_hot, y_hot);
-}
-
 /* Given inline data for a mono pixmap, create and return the
    corresponding X object. */
 

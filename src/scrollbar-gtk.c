@@ -115,7 +115,6 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)), SCROLLBAR_GTK_WIDGET (instance), 0, 0);
 
-#if GTK_CHECK_VERSION(1,2,9)
   /*
   ** With gtk version > 1.2.8 the scrollbars in gtk-xemacs and xemacs
   ** from CVS are invisible. In fact they are not invisible but very
@@ -128,7 +127,6 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
   ** gtk_widget_show() call is done on the scrolbar.
   */
   gtk_widget_size_request(GTK_WIDGET(sb), &(GTK_WIDGET(sb)->requisition));
-#endif
 
   gtk_widget_hide (SCROLLBAR_GTK_WIDGET (instance));
 }

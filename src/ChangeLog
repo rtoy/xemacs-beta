@@ -1,3 +1,33 @@
+2001-06-04  William M. Perry  <wmperry@gnu.org>
+
+	* gpmevent.c (KG_CTRL): Just define these unconditionally.  The
+	linux headers are so lame that they do not expose these to
+	userland programs and you cannot gracefully include the kernel
+	headers.
+
+2001-06-03  William M. Perry  <wmperry@gnu.org>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Make calling of
+	gtk_size_request unconditional.
+
+2001-06-02  William M. Perry  <wmperry@gnu.org>
+
+	* emacs-marshals.c: Regenerated.
+
+2001-06-01  William M. Perry  <wmperry@gnu.org>
+
+	* glyphs-shared.c (read_bitmap_data): Common definition of
+	read_bitmap_data_from_file added.  This does not attempt to use
+	the Xmu based code at all - lets us be consistent across
+	platforms.
+
+	* glyphs-gtk.c: Removed definition of read_bitmap_data_from_file -
+	this is now in glyphs-shared.c
+
+	* glyphs-msw.c: Ditto.
+
+	* glyphs-x.c: Ditto.
+
 2001-06-01  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (ldflags):
@@ -178,6 +208,7 @@
 	path, instead of char*.
 	* systime.h: Include <sys/utime.h> on WIN32_NATIVE.
 
+>>>>>>> 1.354
 2001-05-30  William M. Perry  <wmperry@gnu.org>
 
 	* emacs-marshals.c: Regenerated from lisp.

@@ -1456,13 +1456,43 @@ emacs_gtk_marshal_STRING__NONE (ffi_actual_function func, GtkArg *args)
 
 
 #include "hash.h"
-static c_hashtable marshaller_hashtable;
+static int
+our_string_eq (const void *st1, const void *st2)
+{
+  if (!st1)
+    return st2 ? 0 : 1;
+  else if (!st2)
+    return 0;
+  else
+    return !strcmp ( (const char *) st1, (const char *) st2);
+}
+
+unsigned long
+our_string_hash (const void *xv)
+{
+  unsigned int h = 0;
+  unsigned const char *x = (unsigned const char *) xv;
+
+  if (!x) return 0;
+
+  while (*x)
+    {
+      unsigned int g;
+      h = (h << 4) + *x++;
+      if ((g = h & 0xf0000000) != 0)
+	h = (h ^ (g >> 24)) ^ g;
+    }
+
+  return h;
+}
+
+static struct hash_table *marshaller_hashtable;
 
 static void initialize_marshaller_storage (void)
 {
 	if (!marshaller_hashtable)
 	{
-		marshaller_hashtable = make_strings_hashtable (100);
+		marshaller_hashtable = make_general_hash_table (100, our_string_hash, our_string_eq);
 		puthash ("emacs_gtk_marshal_BOOL__OBJECT_INT", (void *) emacs_gtk_marshal_BOOL__OBJECT_INT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_BOOL__OBJECT_OBJECT_OBJECT", (void *) emacs_gtk_marshal_BOOL__OBJECT_OBJECT_OBJECT, marshaller_hashtable);
 		puthash ("emacs_gtk_marshal_BOOL__OBJECT_OBJECT", (void *) emacs_gtk_marshal_BOOL__OBJECT_OBJECT, marshaller_hashtable);

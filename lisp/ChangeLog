@@ -1,3 +1,16 @@
+2001-06-03  William M. Perry  <wmperry@gnu.org>
+
+	* dialog-gtk.el (popup-builtin-open-dialog): Yikes - don't forget
+	to return the filename!
+
+	* font.el (font-window-system-mappings): Add gtk entry - just an
+	alias to the X code)
+
+2001-06-02  William M. Perry  <wmperry@gnu.org>
+
+	* gtk-marshal.el: Fix for removing of the string_hash utility
+	functions in hash.c
+
 2001-05-13  Karl M. Hegbloom  <karlheg@hegbloom.net>
 
 	* packages.el (locate-data-file): Use suffixes list to allow

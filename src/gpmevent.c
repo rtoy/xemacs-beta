@@ -39,13 +39,9 @@ Boston, MA 02111-1307, USA.  */
 #include "gpmevent.h"
 #include <gpm.h>
 
-#if (!defined(__linux__))	/* possible under xterm */
 #define KG_SHIFT	0
 #define KG_CTRL		2
 #define KG_ALT		3
-#else
-#include <linux/keyboard.h>
-#endif
 
 extern int gpm_tried;
 extern void *gpm_stack;
