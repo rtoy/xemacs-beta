@@ -80,13 +80,13 @@
 #undef LITTLE_ENDIAN
 #undef BIG_ENDIAN
 
-EXTERN_C_BLOCK_BEGIN
+BEGIN_C_DECLS
 #include <audio/audiolib.h>
 #include <audio/soundlib.h>
 #include <audio/snd.h>
 #include <audio/wave.h>
 #include <audio/fileutil.h>
-EXTERN_C_BLOCK_END
+END_C_DECLS
 
 
 /* NAS <= 1.2p5 <audio/fileutil.h> doesn't define the NAS_ versions */

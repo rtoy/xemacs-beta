@@ -1,3 +1,9 @@
+2004-06-08  Didier Verna  <didier@xemacs.org>
+
+	* config.h.in (EXTERN_C_BLOCK_BEGIN): Remove.
+	(EXTERN_C_BLOCK_END): Ditto.
+	* nas.c: Use BEGIN_C_DECLS and END_C_DECLS instead.
+
 2004-06-07  Adrian Aichner  <adrian@xemacs.org>
 
 	* device-x.c (x_IO_error_handler): Phrase duplication typo fixes

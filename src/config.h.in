@@ -957,12 +957,8 @@ extern "C" {
 #  define catch c_catch
 
 #  define EXTERN_C extern "C"
-#  define EXTERN_C_BLOCK_BEGIN extern "C" {
-#  define EXTERN_C_BLOCK_END }
 # else /* C code */
 #  define EXTERN_C extern
-#  define EXTERN_C_BLOCK_BEGIN
-#  define EXTERN_C_BLOCK_END
 # endif
 #endif /* C or C++ */
 
