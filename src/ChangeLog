@@ -1,3 +1,8 @@
+2002-07-05  David Bush  <David.Bush@intel.com>
+
+	* console-msw-impl.h (struct Lisp_Devmode): Lisp_Devmode is typedef'ed
+	in console-msw.h, don't do it again with the structure definition
+
 2002-06-26  Jerry James  <james@xemacs.org>
 
 	* symbols.c (check_sane_subr): Let the symbol be bound if it is an
