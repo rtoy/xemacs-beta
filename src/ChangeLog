@@ -1,5 +1,10 @@
 2004-08-26  Jerry James  <james@xemacs.org>
 
+	* device-x.c (x_init_device): Remove unused variable device.
+	* device-x.c (x_delete_device): Ditto.
+
+2004-08-26  Jerry James  <james@xemacs.org>
+
 	* eval.c (Ffuncall): Remove unused variable orig_fun.
 
 2004-08-26  Jerry James  <james@xemacs.org>

@@ -495,7 +495,6 @@ static void
 x_init_device (struct device *d, Lisp_Object props)
 {
   Lisp_Object display;
-  Lisp_Object device;
   Display *dpy;
   Widget app_shell;
   int argc;
@@ -581,8 +580,6 @@ x_init_device (struct device *d, Lisp_Object props)
   }
 #endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
 
-
-  device = wrap_device (d);
   display = DEVICE_CONNECTION (d);
 
   allocate_x_device_struct (d);
@@ -886,14 +883,12 @@ free_x_device_struct (struct device *d)
 static void
 x_delete_device (struct device *d)
 {
-  Lisp_Object device;
   Display *display;
 #ifdef FREE_CHECKING
   extern void (*__free_hook) (void *);
   int checking_free;
 #endif
 
-  device = wrap_device (d);
   display = DEVICE_X_DISPLAY (d);
 
   if (display)
