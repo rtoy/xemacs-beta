@@ -270,6 +270,7 @@ Buffers and Textual Representation
 * Markers and Extents::         Tagging locations within a buffer.
 * Ibytes and Ichars::           Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
+* Searching and Matching::      Higher-level algorithms.
 
 MULE Character Sets and Encodings
 
@@ -8183,6 +8184,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 * Markers and Extents::         Tagging locations within a buffer.
 * Ibytes and Ichars::           Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
+* Searching and Matching::      Higher-level algorithms.
 @end menu
 
 @node Introduction to Buffers
@@ -8565,6 +8567,225 @@ Reference Manual}.
 This field holds the buffer's base buffer (if it is an indirect buffer),
 or @code{nil}.
 @end table
+
+@node Searching and Matching
+@section Searching and Matching
+@cindex searching
+@cindex matching
+
+Very incomplete, limited to a brief introduction.
+
+People find the searching and matching code difficult to understand.
+And indeed, the details are hard.  However, the basic structures are not
+so complex.  First, there's a hard question with a simple answer.  What
+about Mule?  The answer here is that it turns out that Mule characters
+can be matched byte by byte, so neither the search code nor the regular
+expression code need take much notice of it at all!  Of course, we add
+some special features (such as regular expressions that match only
+certain charsets), but these do not require new concepts.  The main
+exception is that wild-card matches in Mule have to be careful to
+swallow whole characters.  This is handled using the same basic macros
+that are used for buffer and string movements.
+
+The complex algorithms for searching are for simple string searches.  In
+particular, the algorithm used for fast string searching is Boyer-Moore.
+This algorithm is based on the idea that if you have a mismatch at a
+given position, you can precompute where to restart the search.  This
+typically means that you can often make many fewer than N character
+comparisons, where N is the position at which the match is found, or the
+size of the text if it contains no match.  That's fast!  But it's not
+easy.  You must ``compile'' the search string into a jump table.  See
+the source, @file{search.c}, for more information.
+
+Emacs changes the basic algorithms somewhat in order to handle
+case-insensitive searches without a full-blown regular expression.
+
+Regular expressions, on the other hand, have a trivial search
+implementation: try a match at each position.  (Under POSIX rules, it's
+a bit more complex, because POSIX requires that you find the
+@emph{longest} match in the text.  This means you keep a record of the
+best match so far, and find all the matches.)
+
+The matching code for regular expressions is quite complex.  First, the
+regular expression itself is compiled.  There are two basic approaches
+that could be taken.  The first is to compile the expression into tables
+to drive a generic finite automaton emulator.  This is the approach
+given in many textbooks (Sedgewick's @emph{Algorithms} and Aho, Sethi,
+and Ullmann's @emph{Compilers: Principles, Techniques, and Tools}, aka
+``The Dragon Book'') as well as being used by the @file{lex} family of
+lexical analysis engines.
+
+Emacs uses a somewhat different technique.  The expression is compiled
+into a form of bytecode, which is interpreted by a special interpreter.
+The interpreter itself basically amounts to an inline implementation of
+the finite automaton emulator.  The advantage of this technique is that
+it's easier to add special features, such as control of case-sensitivity
+via a global variable.
+
+The compiler is not treated here.  See the source, @file{regex.c}.  The
+interpreter, although it is divided into several functions, and looks
+fearsomely complex, is actually quite simple in concept.  However,
+basically what you're doing there is a strcmp on steroids, right?
+
+@example
+int
+strcmp (char *p,            /* pattern pointer */
+        char *b)            /* buffer pointer  */
+@{
+  while (*p++ == *b++)
+    ;
+  return *(--p) - *(--b);   /* oops, we overshot */
+@}
+@end example
+
+Really, it's no harder than that.  (A bit of a white lie, OK?)
+
+How does the regexp code generalize this?
+
+@enumerate
+@item
+Depending on the pattern, @code{*b} may have a general relationship to
+@code{*p}.  @emph{I.e.}, direct comparison against @code{*p} is
+generalized to include checks for set membership, and context dependent
+properties.  This depends on @code{&*b}.  Of course that's meaningless
+in C, so we use @code{b} directly, instead.
+
+@item
+Although to ensure the algorithm terminates, @code{b} must advance step
+by step, @code{p} can branch and jump.
+
+@item
+The information returned is much greater, including information about
+subexpressions.
+@end enumerate
+
+We'll ignore (3).  (2) is mostly interesting when compiling the regular
+expression.  Now we have
+
+@example
+@group
+enum operator_t @{
+  accept = 0,
+  exact,
+  any,
+  range,
+  group,       /* actually, these are probably */
+  repeat,      /* turned into conditional code */
+  /* etc */
+@};
+@end group
+
+@group
+enum status_t @{
+  working = 0,
+  matched,
+  mismatch,
+  end_of_buffer,
+  error
+  @};
+@end group
+
+@group
+struct pattern @{
+  enum operator_t operator;
+  char char_value;
+  boolean range_table[256];
+  /* etc, etc */
+  @};
+@end group
+
+@group
+char *p,  /* pattern pointer */
+     *b;  /* buffer pointer */
+
+enum status_t
+match (struct pattern *p, char *b)
+@{
+  enum status_t done = working;
+
+  while (!(done = match_1_operator (p, b)))
+    @{
+      struct pattern *p1 = p;
+      p = next_p (p, b);
+      b = next_b (p1, b);
+    @}
+  return done;
+@}
+@end group
+@end example
+
+This format exposes the underlying finite automaton.
+
+All of them have the following structure, except that the @samp{next_*}
+functions decide where to jump (for @samp{p}) and whether or not to
+increment (for @samp{b}), rather than checking for satisfaction of a
+matching condition.
+
+@example
+enum status_t
+match_1_operator (pattern *p, char *b)
+@{
+  if (! *b) return end_of_buffer;
+  switch (p->operator)
+    @{
+    case accept:
+      return matched;
+    case exact:
+      if (*b != p->char_value) return mismatch; else break;
+    case any:
+      break;
+    case range:
+      /* range_table is computed in the regexp_compile function */
+      if (! p->range_table[*b]) return mismatch;
+    /* etc, etc */
+    @}
+  return working;
+@}
+@end example
+
+Grouping, repetition, and alternation are handled by compiling the
+subexpression and calling @code{match (p->subpattern, b)} recursively.
+
+In terms of reading the actual code, there are five optimizations
+(obfuscations, if you like) that have been done.
+
+@enumerate
+@item
+An explicit "failure stack" has been substituted for recursion.
+
+@item
+The @code{match_1_operator}, @code{next_p}, and @code{next_b} functions
+are actually inlined into the @code{match} function for efficiency.
+Then the pointer movement is interspersed with the matching operations.
+
+@item
+If the operator uses buffer context, the buffer pointer movement is
+sometimes implicit in the operations retrieving the context.
+
+@item
+Some cases are combined into short preparation for individual cases, and
+a "fall-through" into combined code for several cases.
+
+@item
+The @code{pattern} type is not an explicit @samp{struct}.  Instead, the
+data (including, @emph{e.g.}, @samp{range_table}) is inlined into the
+compiled bytecode.  This leads to bizarre code in the interpreter like
+
+@example
+case range:
+  p += *(p + 1); break;
+@end example
+
+in @code{next_p}, because the compiled pattern is laid out
+
+@example
+..., 'range', count, first_8_flags, second_8_flags, ..., next_op, ...
+@end example
+@end enumerate
+
+But if you keep your eye on the "switch in a loop" structure, you
+should be able to understand the parts you need.
+
 
 @node MULE Character Sets and Encodings, The Lisp Reader and Compiler, Buffers and Textual Representation, Top
 @chapter MULE Character Sets and Encodings

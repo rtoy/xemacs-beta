@@ -1,3 +1,7 @@
+2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Searching and Matching): New node.
+
 2003-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (detail menu): Reformat "Current Events" caption.
