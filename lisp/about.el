@@ -1304,7 +1304,7 @@ Assistant Professor of Biostatistics at the University of Washington
 and the Fred Hutchinson Cancer Research Center.
 
 See ")
-     (about-url-link 'rossini nil "Visit Anothony's home page")
+     (about-url-link 'rossini nil "Visit Anthony's home page")
      (widget-insert ".\n"))
     (scop
      (widget-insert
