@@ -71,6 +71,8 @@ Boston, MA 02111-1307, USA.  */
 extern int mswindows_is_blocking;
 #endif
 
+EXFUN (Funicode_to_char, 2);  /* In unicode.c.  */
+
 /* used in glyphs-x.c */
 void enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p);
 static void handle_focus_event_1 (struct frame *f, int in_p);
@@ -200,6 +202,15 @@ x_keysym_to_character (KeySym keysym)
 
   if ((keysym & 0xff) < 0xa0)
     return Qnil;
+
+  /* The spec says keysyms in the range #x01000100 to #x0110FFFF and
+     only those should correspond directly to Unicode code points, in
+     the range #x100-#x10FFFF; actual implementations can have the Latin
+     1 code points do the same thing with keysyms
+     #x010000A0-#x01000100. Oops. */
+
+  if (keysym >= 0x010000A0 && keysym <= 0x0110FFFF) 
+    return Funicode_to_char (make_int(keysym & 0xffffff), Qnil);
 
   switch (keysym >> 8)
     {

@@ -1,3 +1,9 @@
+2005-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c: Declare Funicode_to_char. 
+	* event-Xt.c (x_keysym_to_character): Use it, if we're handed a
+	keysym for which it's appropriate. 
+
 2005-03-26  Jerry James  <james@xemacs.org>
 
 	* dumper.c (BACKTRACE_MAX): New constant defining length of static

@@ -1,3 +1,9 @@
+2005-03-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (command-line): Move Mule initialisation before
+	window-system initialisation, because the latter depends on
+	Unicode support with X11 and Unicode keysyms. 
+
 2005-03-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* register.el (insert-register): Revert part of Ben's incomplete

@@ -703,6 +703,11 @@ If this is nil, no message will be displayed.")
       (when (featurep 'toolbar)
 	(init-toolbar-location))
 
+      ;; Setup coding systems and Unicode support--needs to be before X11
+      ;; initialisation in case of keysyms of the form UABCD.
+      (when (featurep 'mule)
+	(declare-fboundp (init-mule-at-startup)))
+
       (if (featurep 'toolbar)
 	  (if (featurep 'infodock)
 	      (require 'id-x-toolbar)
@@ -736,10 +741,6 @@ If this is nil, no message will be displayed.")
     ;; In this case, I completely agree. --ben
     (if (featurep 'menubar)
 	(init-menubar-at-startup))
-    ;; perhaps this should go earlier in the process?
-    (if (featurep 'mule)
-	(declare-fboundp (init-mule-at-startup)))
-
     ;;
     ;; We have normality, I repeat, we have normality.  Anything you still
     ;; can't cope with is therefore your own problem.  (And we don't need
