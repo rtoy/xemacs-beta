@@ -147,7 +147,6 @@
     (pez      "Peter Pezaris"     "pez@xemacs.org")
     (piper    "Andy Piper"        "andy@xemacs.org")
     (pittman  "Daniel Pittman"    "pittman@xemacs.org")
-    (rendhalver "Peter Brown"     "rendhalver@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@xemacs.org")
     (rose     "John Rose"         "rose@xemacs.org")
     (rossini  "Anthony Rossini"   "rossini@xemacs.org")
@@ -170,7 +169,7 @@
 
 (defvar about-current-release-maintainers
   ;; this list should not necessarily be in sorted order.
-  '(youngs adrian ben hniksic james piper rendhalver scop sperber turnbull))
+  '(youngs adrian ben hniksic james piper scop sperber turnbull))
 
 (defvar about-other-current-hackers
   ;; to sort this list or the one below, use:
@@ -1283,10 +1282,6 @@ maintains the MS Windows netinstaller.\n"))
      (widget-insert
       "\
 Sorry, no personal information available about me yet.\n"))
-    (rendhalver
-     (widget-insert
-      "\
-Sorry, no personal information available about me yet.\n"))
     (rickc
      (widget-insert "\
 The hacker formerly known as Rick Busdiecker is a developer and
@@ -1739,10 +1734,6 @@ support.\n"))
      (widget-insert
       "\
 Sorry, no information about my XEmacs contributions yet.\n"))
-    (rendhalver
-     (widget-insert
-      "\
-Co Maintainer & Release Manager \(with Ville\) of the Packages.\n"))
     (rickc
      (widget-insert "\
 Maintainer of ILISP.\n"))
@@ -1758,7 +1749,7 @@ Assisted Jareth Hein with setting up the JitterBug tracking system.\n"))
     (scop
      (widget-insert
       "\
-Co Maintainer & Release Manager \(with Rendhalver\) of the Packages.\n"))
+Co Maintainer & Release Manager of the Packages.\n"))
     (slb
      (widget-insert
       "\
