@@ -1,3 +1,9 @@
+2001-07-11  Matt Tucker  <tuck@whistlingfish.net>
+
+	* syntax.c (find_start_of_comment):
+	Fix `unbalanced parentheses' bug when dealing with mixed comment
+	styles in c++/java/etc. mode
+
 2001-06-21  Ben Wing  <ben@xemacs.org>
 
 	* dired-msw.c (Fmswindows_insert_directory):
