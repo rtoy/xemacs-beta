@@ -1,3 +1,11 @@
+2002-10-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS (MacOS/X): Describe stack limitation.
+	(Digital Unix): Generalize to all regexp-using applications.
+	* INSTALL (PREQUISITES): Mention MacOS/X stack limitation.
+	(PROBLEMS): Point to PROBLEMS file for build notes.
+	Thanks to Skip Montanaro for the report.
+
 2002-07-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* etc/BETA (Large contributions): New section.  Reorganize file.

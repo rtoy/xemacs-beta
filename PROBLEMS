@@ -1186,6 +1186,20 @@ Use the following instead
 	Emacs*EmacsFrame.geometry:		81x56--9--1
 
 
+** MacOS/X, Darwin
+*** XEmacs crashes on MacOS within font-lock, or when dealing
+with large compilation buffers, or in other regex applications.
+
+The default stack size under MacOS/X is rather small (512k as opposed
+to Solaris 8M), hosing the regexp code, which uses alloca()
+extensively, overflowing the stack when complex regexps are used.
+Workarounds:
+
+1) Increase your stack size, using `ulimit -s 8192' or a (t)csh
+   equivalent;
+
+2) Recompile regex.c with REGEX_MALLOC defined.
+
 ** AIX
 *** Your Delete key sends a Backspace to the terminal, using an AIXterm.
 
@@ -1595,7 +1609,7 @@ systems is a C++ lib, which apparently XEmacs cannot cope with.
 
 ** Digital UNIX/OSF/VMS/Ultrix
 *** XEmacs crashes on Digital Unix within font-lock, or when dealing
-with large compilation buffers.
+with large compilation buffers, or in other regex applications.
 
 The default stack size under Digital Unix is rather small (2M as
 opposed to Solaris 8M), hosing the regexp code, which uses alloca()

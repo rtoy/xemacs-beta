@@ -32,8 +32,8 @@ error in the command `temacs -batch -l loadup dump', found in
 XEmacs.
 
 Verify that your users have a high enough stack limit. On some systems
-such as OpenBSD and OSF/Tru64 the default is 2MB which is too low. See
-'PROBLEMS' for details.
+such as OpenBSD and OSF/Tru64 the default is 2MB which is too low.  On
+MacOS/X (Darwin), it's 512kB.  See 'PROBLEMS' for details.
 
 Building XEmacs requires about 100 Mb of disk space (including the
 XEmacs sources).  Once installed, XEmacs occupies between 20 and 100 Mb
@@ -697,5 +697,6 @@ The most likely problem is that you forgot to read and follow the
 directions in README.packages.  You can not have a working XEmacs
 without downloading some additional packages.
 
-See the file PROBLEMS in this directory for a list of various
-problems sometimes encountered, and what to do about them.
+See the file PROBLEMS in this directory for a list of various problems
+sometimes encountered, and what to do about them.  PROBLEMS is also
+the place where platform-specific build notes can be found.
