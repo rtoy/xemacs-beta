@@ -1,3 +1,15 @@
+2003-07-31  Mike Sperber  <mike@xemacs.org>
+
+	* isearch-mode.el (isearch-mode-help): 
+	(isearch-update):
+	(isearch-done):
+	(isearch-edit-string): Change the way window configurations are
+	handled: Formerly, the code would do `set-window-configuration'
+	off `pre-command-hook' which isn't really allowed.  (The old
+	window-configuration code would quietly ignore this restriction.)
+	Instead, save the window configuration only when someone asks for
+	help, and restore afterwards, and otherwise leave it alone.
+
 2003-07-24  Mike Sperber  <mike@xemacs.org>
 
 	* post-gc.el (simple-finalizer-ephemerons): 

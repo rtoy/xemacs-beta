@@ -490,10 +490,12 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 ;; it, though.  -hniksic
 (defun isearch-mode-help ()
   (interactive "_")
-  (let ((w (selected-window)))
-    (describe-function 'isearch-forward)
-    (select-window w))
-  (isearch-update))
+  (let ((config (current-window-configuration)))
+    (let ((w (selected-window)))
+      (describe-function 'isearch-forward)
+      (select-window w))
+    (isearch-update)
+    (setq isearch-window-configuration config)))
 
 
 ;;;==================================================================
@@ -539,7 +541,6 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 	  search-ring-yank-pointer nil
 	  regexp-search-ring-yank-pointer nil
 	  isearch-unhidden-extents nil
-	  isearch-window-configuration (current-window-configuration)
 
 	  ;; #### What we really need is a buffer-local
 	  ;; overriding-local-map.  See isearch-pre-command-hook for
@@ -584,6 +585,10 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 
 (defun isearch-update ()
   ;; Called after each command to update the display.
+  (if isearch-window-configuration
+      (progn
+	(set-window-configuration isearch-window-configuration)
+	(setq isearch-window-configuration nil)))
   (if (null unread-command-events)
       (progn
 	(if (not (input-pending-p))
@@ -622,6 +627,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 
 (defun isearch-done (&optional nopush edit)
   ;; Called by all commands that terminate isearch-mode.
+  (setq isearch-window-configuration nil)
   (let ((inhibit-quit t)) ; danger danger!
     (if (and isearch-buffer (buffer-live-p isearch-buffer))
 	;; Some loser process filter might have switched the window's
@@ -648,8 +654,6 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
     (let ((found-start (window-start (selected-window)))
 	  (found-point (point)))
       (cond ((eq (selected-frame) isearch-selected-frame)
-	     (set-window-configuration isearch-window-configuration)
-
 	     (if isearch-small-window
 		 (goto-char found-point)
 	       ;; Exiting the save-window-excursion clobbers
@@ -768,7 +772,6 @@ If first char entered is \\[isearch-yank-word], then do word search instead."
 	      (isearch-slow-terminal-mode isearch-slow-terminal-mode)
 	      (isearch-small-window isearch-small-window)
 	      (isearch-recursive-edit isearch-recursive-edit)
-	      (isearch-window-configuration (current-window-configuration))
 	      (isearch-selected-frame (selected-frame))
 	      )
 	  ;; Actually terminate isearching until editing is done.
