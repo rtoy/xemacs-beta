@@ -3091,7 +3091,7 @@ lispdesc_indirect_count_1 (EMACS_INT code,
     default:
       stderr_out ("Unsupported count type : %d (line = %d, code = %ld)\n",
 		  idesc[line].type, line, (long) code);
-#ifdef USE_KKCC
+#if defined(USE_KKCC) && defined(DEBUG_XEMACS)
       if (gc_in_progress)
 	kkcc_backtrace ();
 #endif
@@ -3300,41 +3300,35 @@ lispdesc_block_size_1 (const void *obj, Bytecount size,
    They mark objects according to their descriptions.  They 
    are modeled on the corresponding pdumper procedures. */
 
-/* Object memory descriptions are in the lrecord_implementation structure.
-   But copying them to a parallel array is much more cache-friendly. */
-const struct memory_description *lrecord_memory_descriptions[countof (lrecord_implementations_table)];
-
-/* the initial stack size in kkcc_gc_stack_entries */
-#define KKCC_INIT_GC_STACK_SIZE 16384
+#ifdef DEBUG_XEMACS
+/* The backtrace for the KKCC mark functions. */
+#define KKCC_INIT_BT_STACK_SIZE 4096
 
 typedef struct
-{
-  void *data;
-  const struct memory_description *desc;
-#ifdef DEBUG_XEMACS
-  int level;
-  int pos;
-#endif
-} kkcc_gc_stack_entry;
-
-static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
-static kkcc_gc_stack_entry *kkcc_gc_stack_top;
-static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
-static int kkcc_gc_stack_size;
-
-#ifdef DEBUG_XEMACS
-#define KKCC_BT_STACK_SIZE 524288
-
-static struct
 {
   void *obj;
   const struct memory_description *desc;
   int pos;
-} kkcc_bt[KKCC_BT_STACK_SIZE];
+} kkcc_bt_stack_entry;
 
+static kkcc_bt_stack_entry *kkcc_bt;
+static int kkcc_bt_stack_size;
 static int kkcc_bt_depth = 0;
 
-#define KKCC_BT_INIT() kkcc_bt_depth = 0;
+static void
+kkcc_bt_init (void)
+{
+  kkcc_bt_depth = 0;
+  kkcc_bt_stack_size = KKCC_INIT_BT_STACK_SIZE;
+  kkcc_bt = (kkcc_bt_stack_entry *)
+    malloc (kkcc_bt_stack_size * sizeof (kkcc_bt_stack_entry));
+  if (!kkcc_bt)
+    {
+      stderr_out ("KKCC backtrace stack init failed for size %d\n",
+		  kkcc_bt_stack_size);
+      ABORT ();
+    }
+}
 
 void
 kkcc_backtrace (void)
@@ -3367,6 +3361,28 @@ kkcc_backtrace (void)
 }
 
 static void
+kkcc_bt_stack_realloc (void)
+{
+  kkcc_bt_stack_size *= 2;
+  kkcc_bt = (kkcc_bt_stack_entry *)
+    realloc (kkcc_bt, kkcc_bt_stack_size * sizeof (kkcc_bt_stack_entry));
+  if (!kkcc_bt)
+    {
+      stderr_out ("KKCC backtrace stack realloc failed for size %d\n", 
+		  kkcc_bt_stack_size);
+      ABORT ();
+    }
+}
+
+static void
+kkcc_bt_free (void)
+{
+  free (kkcc_bt);
+  kkcc_bt = 0;
+  kkcc_bt_stack_size = 0;
+}
+
+static void
 kkcc_bt_push (void *obj, const struct memory_description *desc, 
 	      int level, int pos)
 {
@@ -3375,18 +3391,36 @@ kkcc_bt_push (void *obj, const struct memory_description *desc,
   kkcc_bt[kkcc_bt_depth].desc = desc;
   kkcc_bt[kkcc_bt_depth].pos = pos;
   kkcc_bt_depth++;
-  if (kkcc_bt_depth > KKCC_BT_STACK_SIZE)
-    {
-      stderr_out ("KKCC backtrace overflow, adjust KKCC_BT_STACK_SIZE.\n");
-      stderr_out ("Maybe it is a loop?\n");
-      ABORT ();
-    }
+  if (kkcc_bt_depth >= kkcc_bt_stack_size)
+    kkcc_bt_stack_realloc ();
 }
 
 #else /* not DEBUG_XEMACS */
-#define KKCC_BT_INIT()
+#define kkcc_bt_init()
 #define kkcc_bt_push(obj, desc, level, pos)
 #endif /* not DEBUG_XEMACS */
+
+/* Object memory descriptions are in the lrecord_implementation structure.
+   But copying them to a parallel array is much more cache-friendly. */
+const struct memory_description *lrecord_memory_descriptions[countof (lrecord_implementations_table)];
+
+/* the initial stack size in kkcc_gc_stack_entries */
+#define KKCC_INIT_GC_STACK_SIZE 16384
+
+typedef struct
+{
+  void *data;
+  const struct memory_description *desc;
+#ifdef DEBUG_XEMACS
+  int level;
+  int pos;
+#endif
+} kkcc_gc_stack_entry;
+
+static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
+static kkcc_gc_stack_entry *kkcc_gc_stack_top;
+static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
+static int kkcc_gc_stack_size;
 
 static void
 kkcc_gc_stack_init (void)
@@ -3397,7 +3431,7 @@ kkcc_gc_stack_init (void)
   if (!kkcc_gc_stack_ptr) 
     {
       stderr_out ("stack init failed for size %d\n", kkcc_gc_stack_size);
-      exit(23);
+      ABORT ();
     }
   kkcc_gc_stack_top = kkcc_gc_stack_ptr - 1;
   kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
@@ -3423,7 +3457,7 @@ kkcc_gc_stack_realloc (void)
   if (!kkcc_gc_stack_ptr) 
     {
       stderr_out ("stack realloc failed for size %d\n", kkcc_gc_stack_size);
-      exit(23);
+      ABORT ();
     }
   kkcc_gc_stack_top = kkcc_gc_stack_ptr + current_offset;
   kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
@@ -3484,7 +3518,7 @@ kkcc_gc_stack_push_lisp_object_1 (Lisp_Object obj)
       if (! MARKED_RECORD_HEADER_P (lheader)) 
 	{
 	  MARK_RECORD_HEADER (lheader);
-	  kkcc_gc_stack_push((void*) lheader, desc, level, pos);
+	  kkcc_gc_stack_push ((void*) lheader, desc, level, pos);
 	}
     }
 }
@@ -3583,7 +3617,7 @@ kkcc_marking (void)
   int pos;
 #ifdef DEBUG_XEMACS
   int level = 0;
-  KKCC_BT_INIT ();
+  kkcc_bt_init ();
 #endif
   
   while ((stack_entry = kkcc_gc_stack_pop ()) != 0)
@@ -3691,6 +3725,9 @@ kkcc_marking (void)
 	    }
 	}
     }
+#ifdef DEBUG_XEMACS
+  kkcc_bt_free ();
+#endif
 }
 #endif /* USE_KKCC */  
 

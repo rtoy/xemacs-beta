@@ -1,3 +1,16 @@
+2005-03-15  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* alloc.c: Dynamically allocate KKCC backtrace stack and some
+	minor typo-fixes for KKCC functions.
+	* alloc.c (lispdesc_indirect_count_1): Condition kkcc_backtrace on
+	DEBUG_XEMACS.
+	* alloc.c (kkcc_bt_init): New.
+	* alloc.c (kkcc_bt_stack_realloc): New.
+	* alloc.c (kkcc_bt_free): New.
+	* alloc.c (kkcc_bt_push): If stack size is exhausted, realloc the
+	stack.
+	* alloc.c (kkcc_marking): Init and free backtrace stack.
+
 2005-03-13  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* alloc.c (KKCC_BT_STACK_SIZE): Temporary fix for KKCC
