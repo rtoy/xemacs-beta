@@ -1105,7 +1105,7 @@ characters appearing in the day and month names may be incorrect.
        (format_string, time_))
 {
   time_t value;
-  size_t size;
+  Memory_Count size;
 
   CHECK_STRING (format_string);
 
@@ -1268,7 +1268,8 @@ and from `file-attributes'.
 {
   time_t value;
   char *the_ctime;
-  size_t len;
+  EMACS_INT len; /* this is what make_ext_string() accepts; ####
+		    should it be an Extcount? */
 
   if (! lisp_to_time (specified_time, &value))
     value = -1;

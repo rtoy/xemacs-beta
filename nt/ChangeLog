@@ -1,3 +1,8 @@
+2001-06-24  Ben Wing  <ben@xemacs.org>
+
+	* config.h:
+	Turn sign-compare warnings back on.
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

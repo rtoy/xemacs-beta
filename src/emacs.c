@@ -335,7 +335,8 @@ char *stack_bottom;
 uintptr_t bss_end = 0;
 #endif
 
-/* Number of bytes of writable memory we can expect to be able to get */
+/* Number of bytes of writable memory we can expect to be able to get:
+   Leave this as an unsigned int because it could potentially be 4G */
 unsigned int lim_data;
 
 /* WARNING!
@@ -463,8 +464,8 @@ static JMP_BUF run_temacs_catch;
 static int run_temacs_argc;
 static Extbyte **run_temacs_argv;
 static Extbyte *run_temacs_args;
-static size_t run_temacs_argv_size;
-static size_t run_temacs_args_size;
+static int run_temacs_argv_size;
+static int run_temacs_args_size;
 
 static void shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save);
 

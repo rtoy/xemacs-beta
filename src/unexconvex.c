@@ -493,7 +493,7 @@ struct scnhdr *sptr;
     if( lseek( new, (long) sptr->s_scnptr, 0 ) == -1 )
 	PERROR( "unexecing" );
 
-    memset (zeros, 0, sizeof zeros);
+    memset (zeros, 0, sizeof (zeros));
 
     ptr = (char *) sptr->s_vaddr;
     end = ptr + sptr->s_size;
@@ -543,7 +543,7 @@ copy_sym (new, a_out, a_name, new_name)
     lseek (a_out, SYMS_START, 0);	/* Position a.out to symtab. */
     lseek( new, (long)f_ohdr.o_symptr, 0 );
 
-    while ((n = read (a_out, page, sizeof page)) > 0) {
+    while ((n = read (a_out, page, sizeof (page))) > 0) {
 	if (write (new, page, n) != n) {
 	    PERROR (new_name);
 	}

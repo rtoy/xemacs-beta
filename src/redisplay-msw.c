@@ -342,7 +342,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   Lisp_Object font = Qnil;
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HDC hdc = get_frame_dc (f, 1);
-  unsigned int local_face_index=0;
+  int local_face_index = 0;
   char *p_char = NULL;
   int n_char = 0;
   RECT rect = { xpos,

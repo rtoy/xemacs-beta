@@ -307,8 +307,9 @@ have_xemacs_resources_in_xrdb (Display *dpy)
 
 static char valid_resource_char_p[256];
 
+/* #### not just char * here; may be fixed in my Mule ws */
 static void
-validify_resource_component (char *str, size_t len)
+validify_resource_component (char *str, Memory_Count len)
 {
   for (; len; len--, str++)
     if (!valid_resource_char_p[(unsigned char) (*str)])
@@ -1582,11 +1583,11 @@ standard resource specification.
   if (!(colon_pos = strchr (str, ':')) || strchr (str, '\n'))
   invalid:
     syntax_error ("Invalid resource line", resource_line);
-  if (strspn (str,
-	      /* Only the following chars are allowed before the colon */
-	      " \t.*?abcdefghijklmnopqrstuvwxyz"
-	      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
-      != (size_t) (colon_pos - str))
+  if ((int) strspn (str,
+		    /* Only the following chars are allowed before the colon */
+		    " \t.*?abcdefghijklmnopqrstuvwxyz"
+		    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+      != colon_pos - str)
     goto invalid;
 
   if (DEVICE_X_P (d))

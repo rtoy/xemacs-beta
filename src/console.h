@@ -219,8 +219,8 @@ struct console_methods
   int (*color_instance_equal_method) (Lisp_Color_Instance *,
 				      Lisp_Color_Instance *,
 				      int depth);
-  unsigned long (*color_instance_hash_method) (Lisp_Color_Instance *,
-					       int depth);
+  Hash_Code (*color_instance_hash_method) (Lisp_Color_Instance *,
+					   int depth);
   Lisp_Object (*color_instance_rgb_components_method) (Lisp_Color_Instance *);
   int (*valid_color_name_p_method) (struct device *, Lisp_Object color);
 
@@ -264,8 +264,8 @@ struct console_methods
   int (*image_instance_equal_method) (Lisp_Image_Instance *,
 				      Lisp_Image_Instance *,
 				      int depth);
-  unsigned long (*image_instance_hash_method) (Lisp_Image_Instance *,
-					       int depth);
+  Hash_Code (*image_instance_hash_method) (Lisp_Image_Instance *,
+					   int depth);
   void (*init_image_instance_from_eimage_method) (Lisp_Image_Instance *ii,
 						  int width, int height,
 						  int slices,

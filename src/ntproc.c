@@ -227,7 +227,7 @@ find_child_pid (DWORD pid)
   child_process *cp;
 
   for (cp = child_procs+(child_proc_count-1); cp >= child_procs; cp--)
-    if (CHILD_ACTIVE (cp) && pid == cp->pid)
+    if (CHILD_ACTIVE (cp) && pid == (DWORD) cp->pid)
       return cp;
   return NULL;
 }

@@ -119,16 +119,17 @@ XtApplyUntilToWidgets (Widget w, XtApplyUntilToWidgetsProc proc, XtPointer arg)
     {
       CompositeWidget cw = (CompositeWidget)w;
       int i;
-      for (i = 0; i < cw->composite.num_children; i++)
-	if (XtIsWidget (cw->composite.children [i])){
-	  result = proc (cw->composite.children [i], arg);
-	  if (result)
-	    return result;
-	  result = XtApplyUntilToWidgets (cw->composite.children [i], proc,
-					  arg);
-	  if (result)
-	    return result;
-	}
+      for (i = 0; i < (int) cw->composite.num_children; i++)
+	if (XtIsWidget (cw->composite.children[i]))
+	  {
+	    result = proc (cw->composite.children[i], arg);
+	    if (result)
+	      return result;
+	    result = XtApplyUntilToWidgets (cw->composite.children[i], proc,
+					    arg);
+	    if (result)
+	      return result;
+	  }
     }
   return NULL;
 }

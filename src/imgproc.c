@@ -45,12 +45,12 @@ Boston, MA 02111-1307, USA.  */
 #include "imgproc.h"
 
 static void
-get_histogram(quant_table *qt, unsigned char *pic,
+get_histogram(quant_table *qt, UChar_Binary *pic,
 	      int width, int height, Colorbox* box)
 {
-  register unsigned char *inptr;
+  register UChar_Binary *inptr;
   register int red, green, blue;
-  register unsigned int j, i;
+  register int j, i;
 
   box->rmin = box->gmin = box->bmin = 999;
   box->rmax = box->gmax = box->bmax = -1;
@@ -472,7 +472,7 @@ map_colortable(quant_table *qt, int num_colors)
 }
 
 quant_table *
-build_EImage_quantable(unsigned char *eimage, int width, int height, int num_colors)
+build_EImage_quantable(UChar_Binary *eimage, int width, int height, int num_colors)
 {
   quant_table *qt;
   Colorbox *box_list, *ptr;

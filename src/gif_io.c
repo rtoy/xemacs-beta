@@ -1,13 +1,9 @@
 #include <config.h>
+#include "lisp.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include "gifrlib.h"
 #include "sysfile.h"
+
+#include "gifrlib.h"
 
 /******************************************************************************
 * Set up the GifFileType structure for use.  This must be called first in any *
@@ -102,13 +98,13 @@ void GifStdIOInit(GifFileType *GifFile, FILE *file, int filehandle)
     GifSetCloseFunc(GifFile, GifStdFileClose, IOData);
 }
 
-size_t GifStdRead(GifByteType *buf, size_t size, VoidPtr method_data)
+Memory_Count GifStdRead(GifByteType *buf, Memory_Count size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
   return (fread(buf, 1, size, IOtype->File));
 }
 
-size_t GifStdWrite(GifByteType *buf, size_t size, VoidPtr method_data)
+Memory_Count GifStdWrite(GifByteType *buf, Memory_Count size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
   return (fwrite(buf, 1, size, IOtype->File));  
@@ -124,14 +120,14 @@ int GifStdFileClose(VoidPtr method_data)
   return ret;
 }
 
-void GifRead(GifByteType *buf, size_t size, GifFileType *GifFile)
+void GifRead(GifByteType *buf, Memory_Count size, GifFileType *GifFile)
 {
   GifIODataType *GifIO = (GifIODataType*)GifFile->GifIO;
   if ((*(GifIO->ReadFunc))(buf, size, GifIO->ReadFunc_data) != size)
     GifError(GifFile, "Read error!");
 }
 
-void GifWrite(GifByteType *buf, size_t size, GifFileType *GifFile)
+void GifWrite(GifByteType *buf, Memory_Count size, GifFileType *GifFile)
 {
   GifIODataType *GifIO = (GifIODataType*)GifFile->GifIO;
   if ((*(GifIO->WriteFunc))(buf, size, GifIO->WriteFunc_data) != size)

@@ -83,8 +83,8 @@ struct buffer_text
   Bytind gpt;		/* Index of gap in buffer. */
   Bytind z;		/* Index of end of buffer. */
   Bufpos bufz;		/* Equivalent as a Bufpos. */
-  int gap_size;		/* Size of buffer's gap */
-  int end_gap_size;	/* Size of buffer's end gap */
+  Memory_Count gap_size;/* Size of buffer's gap */
+  Memory_Count end_gap_size;/* Size of buffer's end gap */
   long modiff;		/* This counts buffer-modification events
 			   for this buffer.  It is incremented for
 			   each such event, and never otherwise
@@ -250,15 +250,15 @@ DECLARE_LRECORD (buffer, struct buffer);
    variable that gets the buffer values (beginning with the base
    buffer, then the children), and MPS_BUFCONS should be a temporary
    Lisp_Object variable.  */
-#define MAP_INDIRECT_BUFFERS(mps_buf, mps_bufvar, mps_bufcons)			\
-for (mps_bufcons = Qunbound,							\
-     mps_bufvar = BUFFER_BASE_BUFFER (mps_buf);					\
-     UNBOUNDP (mps_bufcons) ?							\
-	(mps_bufcons = mps_bufvar->indirect_children,				\
-	1)									\
-       : (!NILP (mps_bufcons)							\
-	  && (mps_bufvar = XBUFFER (XCAR (mps_bufcons)), 1)			\
-	  && (mps_bufcons = XCDR (mps_bufcons), 1));				\
+#define MAP_INDIRECT_BUFFERS(mps_buf, mps_bufvar, mps_bufcons)	\
+for (mps_bufcons = Qunbound,					\
+     mps_bufvar = BUFFER_BASE_BUFFER (mps_buf);			\
+     UNBOUNDP (mps_bufcons) ?					\
+	(mps_bufcons = mps_bufvar->indirect_children,		\
+	1)							\
+       : (!NILP (mps_bufcons)					\
+	  && (mps_bufvar = XBUFFER (XCAR (mps_bufcons)), 1)	\
+	  && (mps_bufcons = XCDR (mps_bufcons), 1));		\
      )
 
 
@@ -553,7 +553,7 @@ INLINE_HEADER int valid_char_p (Emchar ch);
 INLINE_HEADER int
 valid_char_p (Emchar ch)
 {
-  return ((unsigned int) (ch) <= 0xff) || non_ascii_valid_char_p (ch);
+  return ch <= 0xFF || non_ascii_valid_char_p (ch);
 }
 
 #else /* not MULE */
@@ -1169,7 +1169,7 @@ do {										\
 
 typedef union
 {
-  struct { const void *ptr; size_t len; } data;
+  struct { const void *ptr; Memory_Count len; } data;
   Lisp_Object lisp_object;
 } dfc_conversion_data;
 
@@ -1802,9 +1802,9 @@ bufbyte_strcmp (const Bufbyte *bp, const char *ascii_string)
 /* Like memcmp, except first arg points at internally formatted data,
    while the second points at a string of only ASCII chars. */
 INLINE_HEADER int
-bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, size_t len);
+bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, Memory_Count len);
 INLINE_HEADER int
-bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, size_t len)
+bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, Memory_Count len)
 {
 #ifdef MULE
   while (len--)

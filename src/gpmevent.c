@@ -267,8 +267,8 @@ tty_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type
 	while (1)
 	{
 		Bufbyte tempbuf[1024]; /* some random amount */
-		Lstream_data_count i;
-		Lstream_data_count size_in_bytes =
+		Lstream_Data_Count i;
+		Lstream_Data_Count size_in_bytes =
 		  Lstream_read (XLSTREAM (terminal_stream),
 				tempbuf, sizeof (tempbuf));
 

@@ -3274,9 +3274,9 @@ defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
   int i;
 
   if (multiword_predicate_p)
-    assert (len + 1 < sizeof (temp));
+    assert (len + 1 < (int) sizeof (temp));
   else
-    assert (len < sizeof (temp));
+    assert (len < (int) sizeof (temp));
   strcpy (temp, name + 1); /* Remove initial Q */
   if (multiword_predicate_p)
     {
@@ -3349,7 +3349,7 @@ defkeyword_massage_name (Lisp_Object *location, const char *name)
   char temp[500];
   int len = strlen (name);
 
-  assert (len < sizeof (temp));
+  assert (len < (int) sizeof (temp));
   strcpy (temp, name);
   temp[1] = ':'; /* it's an underscore in the C variable */
 
@@ -3485,7 +3485,7 @@ deferror_massage_name_and_message (Lisp_Object *symbol, const char *name,
   int i;
   int len = strlen (name) - 1;
 
-  assert (len < sizeof (temp));
+  assert (len < (int) sizeof (temp));
   strcpy (temp, name + 1); /* Remove initial Q */
   temp[0] = toupper (temp[0]);
   for (i = 0; i < len; i++)

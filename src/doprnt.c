@@ -129,8 +129,8 @@ parse_off_posnum (const Bufbyte *start, const Bufbyte *end, int *returned_num)
   *returned_num = -1;
   while (start != end && isdigit (*start))
     {
-      if ((size_t) (arg_ptr - arg_convert) >= sizeof (arg_convert) - 1)
- syntax_error ("Format converter number too large", Qunbound);
+      if (arg_ptr - arg_convert >= (int) sizeof (arg_convert) - 1)
+	syntax_error ("Format converter number too large", Qunbound);
       *arg_ptr++ = *start++;
     }
   *arg_ptr = '\0';
@@ -598,7 +598,8 @@ emacs_doprnt_1 (Lisp_Object stream, const Bufbyte *format_nonreloc,
 	      char *text_to_print =
 		alloca_array (char, 32 +
 			      max (spec->minwidth,
-				   max (sizeof (double), sizeof (long)) * 3 +
+				   (int) max (sizeof (double),
+				              sizeof (long)) * 3 +
 				   max (spec->precision, 0)));
 	      char constructed_spec[100];
 	      char *p = constructed_spec;

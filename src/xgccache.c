@@ -104,7 +104,7 @@ gc_cache_hash (const void *arg)
      every slot of the gcv when calling gc_cache_lookup.  But we need
      the hash function to be as fast as possible; some timings should
      be done. */
-  for (i = 0; i < (sizeof (XGCValues) / sizeof (unsigned long)); i++)
+  for (i = 0; i < (int) (sizeof (XGCValues) / sizeof (unsigned long)); i++)
     hash = (hash<<1) ^ *longs++;
   return hash;
 }

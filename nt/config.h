@@ -609,7 +609,7 @@ on various systems. */
 #if (_MSC_VER >= 800)
 
 /* 'expression' : signed/unsigned mismatch */
-#pragma warning ( disable : 4018 )
+/* #pragma warning ( disable : 4018 ) */
 /* unnamed type definition in parentheses
   (Martin added a pedantically correct definition of ALIGNOF, which
   generates temporary anonymous structures, and MSVC complains) */

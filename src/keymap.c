@@ -751,7 +751,7 @@ keymap_submaps (Lisp_Object keymap)
 /************************************************************************/
 
 static Lisp_Object
-make_keymap (size_t size)
+make_keymap (Element_Count size)
 {
   Lisp_Object result;
   Lisp_Keymap *keymap = alloc_lcrecord_type (Lisp_Keymap, &lrecord_keymap);
@@ -773,7 +773,8 @@ make_keymap (size_t size)
       /* Inverse table is often less dense because of duplicate key-bindings.
          If not, it will grow anyway. */
       keymap->inverse_table =
-	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+	make_lisp_hash_table (size * 3 / 4, HASH_TABLE_NON_WEAK,
+			      HASH_TABLE_EQ);
     }
   return result;
 }
@@ -2242,7 +2243,7 @@ reach a non-prefix command.
 struct relevant_maps
   {
     int nmaps;
-    unsigned int max_maps;
+    int max_maps;
     Lisp_Object *maps;
     struct gcpro *gcpro;
   };
@@ -2257,7 +2258,7 @@ static void get_relevant_minor_maps (Lisp_Object buffer,
 static void
 relevant_map_push (Lisp_Object map, struct relevant_maps *closure)
 {
-  unsigned int nmaps = closure->nmaps;
+  int nmaps = closure->nmaps;
 
   if (!KEYMAPP (map))
     return;

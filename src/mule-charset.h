@@ -470,26 +470,26 @@ struct Lisp_Charset
   /* Number of bytes (1 - 4) required in the internal representation
      for characters in this character set.  This is *not* the
      same as the dimension of the character set). */
-  unsigned int rep_bytes;
+  int rep_bytes;
 
   /* Number of columns a character in this charset takes up, on TTY
      devices.  Not used for X devices. */
-  unsigned int columns;
+  int columns;
 
   /* Direction of this character set */
-  unsigned int direction;
+  int direction;
 
   /* Type of this character set (94, 96, 94x94, 96x96) */
-  unsigned int type;
+  int type;
 
   /* Number of bytes used in encoding of this character set (1 or 2) */
-  unsigned int dimension;
+  int dimension;
 
   /* Number of chars in each dimension (usually 94 or 96) */
-  unsigned int chars;
+  int chars;
 
   /* Which half of font to be used to display this character set */
-  unsigned int graphic;
+  int graphic;
 };
 typedef struct Lisp_Charset Lisp_Charset;
 
@@ -577,9 +577,9 @@ CHARSET_BY_LEADING_BYTE (Bufbyte lb)
 }
 
 INLINE_HEADER Lisp_Object
-CHARSET_BY_ATTRIBUTES (unsigned int type, unsigned char final, int dir);
+CHARSET_BY_ATTRIBUTES (int type, unsigned char final, int dir);
 INLINE_HEADER Lisp_Object
-CHARSET_BY_ATTRIBUTES (unsigned int type, unsigned char final, int dir)
+CHARSET_BY_ATTRIBUTES (int type, unsigned char final, int dir)
 {
   extern struct charset_lookup *chlook;
 

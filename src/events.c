@@ -300,11 +300,11 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     }
 }
 
-static unsigned long
+static Hash_Code
 event_hash (Lisp_Object obj, int depth)
 {
   Lisp_Event *e = XEVENT (obj);
-  unsigned long hash;
+  Hash_Code hash;
 
   hash = HASH2 (e->event_type, LISP_HASH (e->channel));
   switch (e->event_type)
@@ -338,7 +338,7 @@ event_hash (Lisp_Object obj, int depth)
 
     case magic_eval_event:
       return HASH3 (hash,
-		    (unsigned long) e->event.magic_eval.internal_function,
+		    (Hash_Code) e->event.magic_eval.internal_function,
 		    internal_hash (e->event.magic_eval.object, depth + 1));
 
     case magic_event:

@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct Lisp_Opaque
 {
   struct lcrecord_header header;
-  size_t size;
+  Memory_Count size;
   max_align_t data[1];
 } Lisp_Opaque;
 
@@ -53,7 +53,7 @@ DECLARE_LRECORD (opaque, Lisp_Opaque);
 #define XOPAQUE_DATA(op) OPAQUE_DATA (XOPAQUE (op))
 #define XOPAQUE_MARKFUN(op) OPAQUE_MARKFUN (XOPAQUE (op))
 
-Lisp_Object make_opaque (const void *data, size_t size);
+Lisp_Object make_opaque (const void *data, Memory_Count size);
 
 typedef struct Lisp_Opaque_Ptr
 {

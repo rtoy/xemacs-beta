@@ -720,7 +720,8 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (BIT_VECTORP (array))
     {
-      if (idx >= bit_vector_length (XBIT_VECTOR (array))) goto range_error;
+      if (idx >= (EMACS_INT) bit_vector_length (XBIT_VECTOR (array)))
+	goto range_error;
       return make_int (bit_vector_bit (XBIT_VECTOR (array), idx));
     }
   else if (STRINGP (array))
@@ -774,7 +775,8 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (BIT_VECTORP (array))
     {
-      if (idx >= bit_vector_length (XBIT_VECTOR (array))) goto range_error;
+      if (idx >= (EMACS_INT) bit_vector_length (XBIT_VECTOR (array)))
+	goto range_error;
       CHECK_BIT (newval);
       set_bit_vector_bit (XBIT_VECTOR (array), idx, !ZEROP (newval));
     }
@@ -1609,12 +1611,12 @@ weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  internal_equal (w1->list, w2->list, depth + 1));
 }
 
-static unsigned long
+static Hash_Code
 weak_list_hash (Lisp_Object obj, int depth)
 {
   struct weak_list *w = XWEAK_LIST (obj);
 
-  return HASH2 ((unsigned long) w->type,
+  return HASH2 ((Hash_Code) w->type,
 		internal_hash (w->list, depth + 1));
 }
 

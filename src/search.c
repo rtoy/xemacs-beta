@@ -876,7 +876,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
      in the comparisons below. */
 
   if (negate)
-    for (i = 0; i < (int) (sizeof fastmap); i++)
+    for (i = 0; i < (int) (sizeof (fastmap)); i++)
       fastmap[i] ^= 1;
 
   {

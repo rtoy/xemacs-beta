@@ -121,7 +121,7 @@ char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static unsigned long
+static Hash_Code
 char_table_entry_hash (Lisp_Object obj, int depth)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
@@ -413,12 +413,12 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static unsigned long
+static Hash_Code
 char_table_hash (Lisp_Object obj, int depth)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  unsigned long hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
-					       depth);
+  Hash_Code hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
+					   depth);
 #ifdef MULE
   hashval = HASH2 (hashval,
 		   internal_array_hash (ct->level1, NUM_LEADING_BYTES, depth));
@@ -1612,7 +1612,7 @@ check_category_table (Lisp_Object object, Lisp_Object default_)
 
 int
 check_category_char (Emchar ch, Lisp_Object table,
-		     unsigned int designator, unsigned int not_p)
+		     int designator, int not_p)
 {
   REGISTER Lisp_Object temp;
   Lisp_Char_Table *ctbl;
@@ -1640,7 +1640,7 @@ use, and defaults to BUFFER's category table.
 {
   Lisp_Object ctbl;
   Emchar ch;
-  unsigned int des;
+  int des;
   struct buffer *buf = decode_buffer (buffer, 0);
 
   CHECK_INT (position);
@@ -1660,7 +1660,7 @@ and defaults to the standard category table.
 {
   Lisp_Object ctbl;
   Emchar ch;
-  unsigned int des;
+  int des;
 
   CHECK_CATEGORY_DESIGNATOR (designator);
   des = XCHAR (designator);

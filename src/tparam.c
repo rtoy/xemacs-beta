@@ -21,11 +21,8 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not synched with FSF. */
 
 /* config.h may rename various library functions such as malloc.  */
-#ifdef emacs
-
 #include <config.h>
-
-#include <string.h>
+#include "lisp.h"
 
 #undef realloc
 #undef malloc
@@ -33,15 +30,8 @@ Boston, MA 02111-1307, USA.  */
 #define realloc xrealloc
 #define malloc xmalloc
 #define free xfree
-extern void *xmalloc (size_t size);
-extern void *xrealloc (void *, size_t size);
-
-#else /* !emacs */
-
-#include <stdlib.h>
-#include <string.h>
-
-#endif /* !emacs */
+extern void *xmalloc (Memory_Count size);
+extern void *xrealloc (void *, Memory_Count size);
 
 /* Assuming STRING is the value of a termcap string entry
    containing `%' constructs to expand parameters,
@@ -271,21 +261,3 @@ tparam1 (const char *string, char *outstring, int len, const char *up,
     strcat (op, left);
   return outstring;
 }
-
-#ifdef DEBUG
-
-main (argc, argv)
-     int argc;
-     char **argv;
-{
-  char buf[50];
-  int args[3];
-  args[0] = atoi (argv[2]);
-  args[1] = atoi (argv[3]);
-  args[2] = atoi (argv[4]);
-  tparam1 (argv[1], buf, "LEFT", "UP", args);
-  printf ("%s\n", buf);
-  return 0;
-}
-
-#endif /* DEBUG */

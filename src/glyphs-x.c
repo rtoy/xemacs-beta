@@ -506,7 +506,7 @@ x_image_instance_equal (Lisp_Image_Instance *p1,
   return 1;
 }
 
-static unsigned long
+static Hash_Code
 x_image_instance_hash (Lisp_Image_Instance *p, int depth)
 {
   switch (IMAGE_INSTANCE_TYPE (p))
@@ -704,7 +704,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   /* Get the data while doing the conversion */
   while (1)
     {
-      Lstream_data_count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+      Lstream_Data_Count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
       if (!size_in_bytes)
 	break;
       /* It does seem the flushes are necessary... */
@@ -756,7 +756,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
    message. */
 
 static void
-check_pointer_sizes (Screen *xs, unsigned int width, unsigned int height,
+check_pointer_sizes (Screen *xs, int width, int height,
 		     Lisp_Object instantiator)
 {
   unsigned int best_width, best_height;
@@ -766,7 +766,7 @@ check_pointer_sizes (Screen *xs, unsigned int width, unsigned int height,
        these so they're not fatal). */
     gui_error ("XQueryBestCursor() failed?", instantiator);
 
-  if (width > best_width || height > best_height)
+  if (width > (int) best_width || height > (int) best_height)
     signal_ferror_with_frob (Qgui_error, instantiator,
 			     "pointer too large (%dx%d): "
 			     "server requires %dx%d or smaller",
@@ -1313,7 +1313,7 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 							   Q_color_symbols);
   enum image_instance_type type;
   int force_mono;
-  unsigned int w, h;
+  int w, h;
 
   if (!DEVICE_X_P (XDEVICE (device)))
     gui_error ("Not an X device", device);
@@ -2293,8 +2293,7 @@ x_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Window pw, win;
   XSetWindowAttributes xswa;
   Mask valueMask = 0;
-  unsigned int w = IMAGE_INSTANCE_WIDTH (ii),
-    h = IMAGE_INSTANCE_HEIGHT (ii);
+  int w = IMAGE_INSTANCE_WIDTH (ii), h = IMAGE_INSTANCE_HEIGHT (ii);
 
   if (!DEVICE_X_P (XDEVICE (device)))
     gui_error ("Not an X device", device);

@@ -1341,7 +1341,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	  {
 	    unsigned int state;
 	    int modifiers = 0;
-	    unsigned int button=0;
+	    int button = 0;
 	    struct frame *frame = x_any_window_to_frame (d, ev->window);
 	    Extbyte *data;
 	    unsigned long size, dtype;

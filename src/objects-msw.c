@@ -806,7 +806,7 @@ mswindows_string_to_color(const char *name)
 	 or "rgb:rrrr/gggg/bbbb" */
       unsigned int r, g, b;
 
-      for (i=1; i<strlen(name); i++)
+      for (i=1; i< (int) strlen(name); i++)
 	{
 	  if (!isxdigit ((int)name[i]))
 	    return (COLORREF) -1;
@@ -1169,7 +1169,7 @@ mswindows_get_hfont (Lisp_Font_Instance* f,
 
 static int
 mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-			       Lisp_Object device, Error_Behavior errb)
+				     Lisp_Object device, Error_Behavior errb)
 {
   const char *extname;
   COLORREF color;
@@ -1177,8 +1177,8 @@ mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
   TO_EXTERNAL_FORMAT (LISP_STRING, name,
 		      C_STRING_ALLOCA, extname,
 		      Qctext);
-  color = mswindows_string_to_color(extname);
-  if (color != -1)
+  color = mswindows_string_to_color (extname);
+  if (color != (COLORREF) -1)
     {
       c->data = xnew (struct mswindows_color_instance_data);
       COLOR_INSTANCE_MSWINDOWS_COLOR (c) = color;
@@ -1249,7 +1249,7 @@ mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
   TO_EXTERNAL_FORMAT (LISP_STRING, color,
 		      C_STRING_ALLOCA, extname,
 		      Qctext);
-  return (mswindows_string_to_color(extname)!=-1);
+  return (mswindows_string_to_color (extname) != (COLORREF) -1);
 }
 
 

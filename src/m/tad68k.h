@@ -72,5 +72,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* omit next three lines if no TCP installed */
 
+#if 0 /* XEmacs */
 #define select gnu_select		/* avoid select() name clash */
+#endif
 #define LIBS_SYSTEM "-lsocket"		/* get TCP networking functions */

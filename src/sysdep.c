@@ -818,7 +818,7 @@ get_eof_char (int fd)
     tcgetattr (fd, &t);
 #if 0
     /* What is the following line designed to do??? -mrb */
-    if (strlen ((const char *) t.c_cc) < (unsigned int) (VEOF + 1))
+    if ((int) strlen ((const char *) t.c_cc) < (VEOF + 1))
       return ctrl_d;
     else
       return (Bufbyte) t.c_cc[VEOF];
@@ -841,7 +841,7 @@ get_eof_char (int fd)
   {
     struct termio t;
     ioctl (fd, TCGETA, &t);
-    if (strlen ((const char *) t.c_cc) < (unsigned int) (VINTR + 1))
+    if ((int) strlen ((const char *) t.c_cc) < (VINTR + 1))
       return ctrl_d;
     else
       return (Bufbyte) t.c_cc[VINTR];
@@ -933,7 +933,6 @@ setup_pty (int fd)
 void
 init_baud_rate (struct device *d)
 {
-  struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   if (DEVICE_WIN_P (d) || DEVICE_STREAM_P (d))
     {
       DEVICE_BAUD_RATE (d) = 38400;
@@ -943,6 +942,7 @@ init_baud_rate (struct device *d)
 #ifdef HAVE_TTY
   assert (DEVICE_TTY_P (d));
   {
+    struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
     int input_fd = CONSOLE_TTY_DATA (con)->infd;
 #if defined (WIN32_NATIVE)
     DEVICE_TTY_DATA (d)->ospeed = 15;
@@ -1767,7 +1767,8 @@ tty_init_sys_modes_on_device (struct device *d)
   /* This symbol is defined on recent USG systems.
      Someone says without this call USG won't really buffer the file
      even with a call to setbuf. */
-  setvbuf (CONSOLE_TTY_DATA (con)->outfd, (char *) _sobuf, _IOFBF, sizeof _sobuf);
+  setvbuf (CONSOLE_TTY_DATA (con)->outfd, (char *) _sobuf, _IOFBF,
+	   sizeof (_sobuf));
 #else
   setbuf (CONSOLE_TTY_DATA (con)->outfd, (char *) _sobuf);
 #endif
@@ -2296,7 +2297,7 @@ init_system_name (void)
 {
 #if defined (WIN32_NATIVE)
   char hostname [MAX_COMPUTERNAME_LENGTH + 1];
-  size_t size = sizeof (hostname);
+  DWORD size = sizeof (hostname);
   GetComputerName (hostname, &size);
   Vsystem_name = build_string (hostname);
 #elif !defined (HAVE_GETHOSTNAME)
@@ -2304,7 +2305,7 @@ init_system_name (void)
   uname (&uts);
   Vsystem_name = build_string (uts.nodename);
 #else /* HAVE_GETHOSTNAME */
-  unsigned int hostname_size = 256;
+  int hostname_size = 256;
   char *hostname = (char *) alloca (hostname_size);
 
   /* Try to get the host name; if the buffer is too short, try
@@ -2317,7 +2318,7 @@ init_system_name (void)
       hostname[hostname_size - 1] = '\0';
 
       /* Was the buffer large enough for the '\0'?  */
-      if (strlen (hostname) < (size_t) (hostname_size - 1))
+      if ((int) strlen (hostname) < (hostname_size - 1))
 	break;
 
       hostname_size <<= 1;

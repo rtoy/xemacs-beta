@@ -5083,7 +5083,7 @@ struct window_config
   /* Record the values of window-min-width and window-min-height
      so that window sizes remain consistent with them.  */
   int min_width, min_height;
-  unsigned int saved_windows_count;
+  int saved_windows_count;
   /* Zero-sized arrays aren't ANSI C */
   struct saved_window saved_windows[1];
 };
@@ -5099,7 +5099,7 @@ static Lisp_Object
 mark_window_config (Lisp_Object obj)
 {
   struct window_config *config = XWINDOW_CONFIGURATION (obj);
-  unsigned int i;
+  int i;
   mark_object (config->current_window);
   mark_object (config->current_buffer);
   mark_object (config->minibuffer_scroll_window);
@@ -5129,14 +5129,14 @@ mark_window_config (Lisp_Object obj)
   return Qnil;
 }
 
-inline static size_t
-sizeof_window_config_for_n_windows (unsigned int n)
+inline static Memory_Count
+sizeof_window_config_for_n_windows (int n)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (struct window_config,
 				       struct saved_window, saved_windows, n);
 }
 
-static size_t
+static Memory_Count
 sizeof_window_config (const void *h)
 {
   const struct window_config *c = (const struct window_config *) h;
@@ -5199,7 +5199,7 @@ static int
 window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
 {
   struct window_config *fig1, *fig2;
-  unsigned int i;
+  int i;
 
   /* First check if they are truly the same. */
   if (EQ (conf1, conf2))
@@ -5254,7 +5254,7 @@ mark_windows_in_use (struct frame *f, int mark)
 static Lisp_Object
 free_window_configuration (Lisp_Object window_config)
 {
-  unsigned int i;
+  int i;
   struct window_config *config = XWINDOW_CONFIGURATION (window_config);
 
   /* Free all the markers.  It's not completely necessary that
@@ -5306,7 +5306,7 @@ by `current-window-configuration' (which see).
   struct window_config *config;
   struct saved_window *p;
   Lisp_Object new_current_buffer;
-  unsigned int k;
+  int k;
   Lisp_Object frame;
   struct frame *f;
   struct gcpro gcpro1;
@@ -5805,7 +5805,7 @@ delete_all_subwindows (struct window *w)
 }
 
 
-static unsigned int
+static int
 count_windows (struct window *window)
 {
   return 1 +
@@ -5921,7 +5921,7 @@ its value is -not- saved.
   Lisp_Object result;
   struct frame *f = decode_frame (frame);
   struct window_config *config;
-  unsigned int n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
+  int n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
   int minibuf_height;
   int real_font_height;
 
@@ -6234,7 +6234,7 @@ syms_of_window (void)
 void
 reinit_vars_of_window (void)
 {
-  unsigned int i;
+  int i;
   /* Make sure all windows get marked */
   minibuf_window = Qnil;
   staticpro_nodump (&minibuf_window);

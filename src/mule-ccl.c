@@ -971,7 +971,10 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_SetArray:	/* CCCCCCCCCCCCCCCCCCCCRRRrrrXXXXX */
 	  i = reg[RRR];
 	  j = field1 >> 3;
-	  if ((unsigned int) i < j)
+	  /* #### it's non-obvious to me that we need these casts,
+	     but the left one was already there so clearly the intention
+	     was an unsigned comparison. --ben */
+	  if ((unsigned int) i < (unsigned int) j)
 	    reg[rrr] = XINT (ccl_prog[ic + i]);
 	  ic += j;
 	  break;
@@ -1023,7 +1026,8 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_WriteArrayReadJump: /* A--D--D--R--E--S--S-rrrXXXXX */
 	  i = reg[rrr];
 	  j = XINT (ccl_prog[ic]);
-	  if ((unsigned int) i < j)
+	  /* #### see comment at CCL_SetArray */
+	  if ((unsigned int) i < (unsigned int) j)
 	    {
 	      i = XINT (ccl_prog[ic + 1 + i]);
 	      CCL_WRITE_CHAR (i);
@@ -1042,7 +1046,8 @@ ccl_driver (struct ccl_program *ccl,
 	  CCL_READ_CHAR (reg[rrr]);
 	  /* fall through ... */
 	case CCL_Branch:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
-	  if ((unsigned int) reg[rrr] < field1)
+	  /* #### see comment at CCL_SetArray */
+	  if ((unsigned int) reg[rrr] < (unsigned int) field1)
 	    ic += XINT (ccl_prog[ic + reg[rrr]]);
 	  else
 	    ic += XINT (ccl_prog[ic + field1]);
@@ -1137,7 +1142,8 @@ ccl_driver (struct ccl_program *ccl,
 
 	case CCL_WriteArray:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
 	  i = reg[rrr];
-	  if ((unsigned int) i < field1)
+	  /* #### see comment at CCL_SetArray */
+	  if ((unsigned int) i < (unsigned int) field1)
 	    {
 	      j = XINT (ccl_prog[ic + i]);
 	      CCL_WRITE_CHAR (j);
@@ -1448,8 +1454,13 @@ ccl_driver (struct ccl_program *ccl,
 		    else if (EQ (content, Qt))
 		      {
 			if (size != 4) continue;
-			if ((op >= XUINT (XVECTOR (map)->contents[2]))
-			    && (op < XUINT (XVECTOR (map)->contents[3])))
+			/* #### see comment at CCL_SetArray; in this
+			   case the casts are added but the XUINT was
+			   already present */
+			if (((unsigned int) op >=
+			     XUINT (XVECTOR (map)->contents[2]))
+			    && ((unsigned int) op <
+				XUINT (XVECTOR (map)->contents[3])))
 			  content = XVECTOR (map)->contents[1];
 			else
 			  continue;
@@ -1622,8 +1633,13 @@ ccl_driver (struct ccl_program *ccl,
 		      else if (EQ (content, Qt))
 			{
 			  if (size != 4) continue;
-			  if ((op >= XUINT (XVECTOR (map)->contents[2])) &&
-			      (op < XUINT (XVECTOR (map)->contents[3])))
+			/* #### see comment at CCL_SetArray; in this
+			   case the casts are added but the XUINT was
+			   already present */
+			  if (((unsigned int) op >=
+			       XUINT (XVECTOR (map)->contents[2])) &&
+			      ((unsigned int) op <
+			       XUINT (XVECTOR (map)->contents[3])))
 			    content = XVECTOR (map)->contents[1];
 			  else
 			    continue;

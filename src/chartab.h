@@ -203,7 +203,7 @@ extern Lisp_Object Vall_syntax_tables;
 
 #ifdef MULE
 int check_category_char(Emchar ch, Lisp_Object ctbl,
-		        unsigned int designator, unsigned int not_p);
+		        int designator, int not_p);
 
 extern Lisp_Object Vstandard_category_table;
 

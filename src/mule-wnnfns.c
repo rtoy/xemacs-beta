@@ -1978,7 +1978,7 @@ w2m (w_char *wp, unsigned char *mp, unsigned char lb)
 void
 m2w (unsigned char *mp, w_char *wp)
 {
-  unsigned int ch;
+  int ch;
 
   while ((ch = *mp++) != 0)
     {

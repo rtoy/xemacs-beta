@@ -28,7 +28,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef SYSV_SYSTEM_DIR
+# define select select_ /* Shadowing yuck */
 # include <dirent.h>
+# undef select
 #elif defined (WIN32_NATIVE)
 # include <direct.h>
 # include "ndir.h"

@@ -69,10 +69,10 @@ mark_bit_vector (Lisp_Object obj)
 static void
 print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  size_t i;
+  Element_Count i;
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
-  size_t len = bit_vector_length (v);
-  size_t last = len;
+  Element_Count len = bit_vector_length (v);
+  Element_Count last = len;
 
   if (INTP (Vprint_length))
     last = min (len, XINT (Vprint_length));
@@ -101,7 +101,7 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 		   sizeof (long)));
 }
 
-static unsigned long
+static Hash_Code
 bit_vector_hash (Lisp_Object obj, int depth)
 {
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
@@ -111,7 +111,7 @@ bit_vector_hash (Lisp_Object obj, int depth)
 			     sizeof (long)));
 }
 
-static size_t
+static Memory_Count
 size_bit_vector (const void *lheader)
 {
   Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
@@ -223,7 +223,7 @@ Return the length of vector, bit vector, list or string SEQUENCE.
     return make_int (XSTRING_CHAR_LENGTH (sequence));
   else if (CONSP (sequence))
     {
-      size_t len;
+      Element_Count len;
       GET_EXTERNAL_LIST_LENGTH (sequence, len);
       return make_int (len);
     }
@@ -250,7 +250,7 @@ which is at least the number of distinct elements.
        (list))
 {
   Lisp_Object hare, tortoise;
-  size_t len;
+  Element_Count len;
 
   for (hare = tortoise = list, len = 0;
        CONSP (hare) && (! EQ (hare, tortoise) || len == 0);
@@ -530,7 +530,7 @@ copy_list (Lisp_Object list)
   Lisp_Object list_copy = Fcons (XCAR (list), XCDR (list));
   Lisp_Object last = list_copy;
   Lisp_Object hare, tortoise;
-  size_t len;
+  Element_Count len;
 
   for (tortoise = hare = XCDR (list), len = 1;
        CONSP (hare);
@@ -1015,7 +1015,7 @@ Take cdr N times on LIST, and return the result.
 */
        (n, list))
 {
-  REGISTER size_t i;
+  REGISTER EMACS_INT i;
   REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
   for (i = XINT (n); i; i--)
@@ -2751,7 +2751,7 @@ ARRAY is a vector, bit vector, or string.
   else if (VECTORP (array))
     {
       Lisp_Object *p = XVECTOR_DATA (array);
-      size_t len = XVECTOR_LENGTH (array);
+      Element_Count len = XVECTOR_LENGTH (array);
       CHECK_LISP_WRITEABLE (array);
       while (len--)
 	*p++ = item;
@@ -2759,7 +2759,7 @@ ARRAY is a vector, bit vector, or string.
   else if (BIT_VECTORP (array))
     {
       Lisp_Bit_Vector *v = XBIT_VECTOR (array);
-      size_t len = bit_vector_length (v);
+      Element_Count len = bit_vector_length (v);
       int bit;
       CHECK_BIT (item);
       bit = XINT (item);
@@ -2798,7 +2798,7 @@ bytecode_nconc2 (Lisp_Object *args)
     {
       /* (setcdr (last args[0]) args[1]) */
       Lisp_Object tortoise, hare;
-      size_t count;
+      Element_Count count;
 
       for (hare = tortoise = args[0], count = 0;
 	   CONSP (XCDR (hare));
@@ -2867,7 +2867,7 @@ changing the value of `foo'.
 	      if (CONSP (next) || argnum == nargs -1)
 		{
 		  /* (setcdr (last val) next) */
-		  size_t count;
+		  Element_Count count;
 
 		  for (count = 0;
 		       CONSP (XCDR (last_cons));
@@ -2916,7 +2916,7 @@ changing the value of `foo'.
    If VALS is a null pointer, do not accumulate the results. */
 
 static void
-mapcar1 (size_t leni, Lisp_Object *vals,
+mapcar1 (Element_Count leni, Lisp_Object *vals,
 	 Lisp_Object function, Lisp_Object sequence)
 {
   Lisp_Object result;
@@ -2950,7 +2950,7 @@ mapcar1 (size_t leni, Lisp_Object *vals,
       if (vals)
 	{
 	  Lisp_Object *val = vals;
-	  size_t i;
+	  Element_Count i;
 
 	  LIST_LOOP_2 (elt, sequence)
 	      *val++ = elt;
@@ -2985,7 +2985,7 @@ mapcar1 (size_t leni, Lisp_Object *vals,
   else if (VECTORP (sequence))
     {
       Lisp_Object *objs = XVECTOR_DATA (sequence);
-      size_t i;
+      Element_Count i;
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = *objs++;
@@ -3013,7 +3013,7 @@ mapcar1 (size_t leni, Lisp_Object *vals,
   else if (BIT_VECTORP (sequence))
     {
       Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
-      size_t i;
+      Element_Count i;
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = make_int (bit_vector_bit (v, i));
@@ -3063,12 +3063,12 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
 */
        (function, sequence))
 {
-  size_t len = XINT (Flength (sequence));
+  Element_Count len = XINT (Flength (sequence));
   Lisp_Object *args = alloca_array (Lisp_Object, len);
 
   mapcar1 (len, args, function, sequence);
 
-  return Flist (len, args);
+  return Flist ((int) len, args);
 }
 
 DEFUN ("mapvector", Fmapvector, 2, 2, 0, /*
@@ -3078,7 +3078,7 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
 */
        (function, sequence))
 {
-  size_t len = XINT (Flength (sequence));
+  Element_Count len = XINT (Flength (sequence));
   Lisp_Object result = make_vector (len, Qnil);
   struct gcpro gcpro1;
 
@@ -3599,7 +3599,7 @@ free_malloced_ptr (Lisp_Object unwind_obj)
    ways these functions can blow up, and we don't want to have memory
    leaks in those cases.  */
 #define XMALLOC_OR_ALLOCA(ptr, len, type) do {			\
-  size_t XOA_len = (len);					\
+  Element_Count XOA_len = (len);				\
   if (XOA_len > MAX_ALLOCA)					\
     {								\
       ptr = xnew_array (type, XOA_len);				\

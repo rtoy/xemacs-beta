@@ -329,8 +329,8 @@ non_ascii_valid_char_p (Emchar ch)
 Bytecount
 non_ascii_charptr_copy_char (const Bufbyte *src, Bufbyte *dst)
 {
-  unsigned int bytes = REP_BYTES_BY_FIRST_BYTE (*src);
-  unsigned int i;
+  Bytecount bytes = REP_BYTES_BY_FIRST_BYTE (*src);
+  Bytecount i;
   for (i = bytes; i; i--, dst++, src++)
     *dst = *src;
   return bytes;
@@ -350,7 +350,7 @@ Lstream_get_emchar_1 (Lstream *stream, int ch)
 {
   Bufbyte str[MAX_EMCHAR_LEN];
   Bufbyte *strptr = str;
-  unsigned int bytes;
+  Bytecount bytes;
 
   str[0] = (Bufbyte) ch;
 

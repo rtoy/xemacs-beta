@@ -601,7 +601,7 @@ containing attribute/value string pairs.
   struct berval *bervals;
   int rc;
   int i, j;
-  size_t len;
+  Element_Count len;
 
   Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
@@ -622,7 +622,7 @@ containing attribute/value string pairs.
     invalid_operation ("Cannot add void entry", entry);
 
   /* Build the ldap_mods array */
-  len = XINT (Flength (entry));
+  len = (Element_Count) XINT (Flength (entry));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -637,7 +637,7 @@ containing attribute/value string pairs.
       values = XCDR (current);
       if (CONSP (values))
         {
-	  len = XINT (Flength (values));
+	  len = (Element_Count) XINT (Flength (values));
           bervals = alloca_array (struct berval, len);
           ldap_mods[i].mod_vals.modv_bvals =
             alloca_array (struct berval *, 1 + len);
@@ -695,7 +695,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   struct berval *bervals;
   int i, j, rc;
   Lisp_Object mod_op;
-  size_t len;
+  Element_Count len;
 
   Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
@@ -714,7 +714,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
     return Qnil;
 
   /* Build the ldap_mods array */
-  len = XINT (Flength (mods));
+  len = (Element_Count) XINT (Flength (mods));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -740,7 +740,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
       CHECK_STRING (XCAR (current));
       LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type, Qnative);
       values = XCDR (current);
-      len = XINT (Flength (values));
+      len = (Element_Count) XINT (Flength (values));
       bervals = alloca_array (struct berval, len);
       ldap_mods[i].mod_vals.modv_bvals =
         alloca_array (struct berval *, 1 + len);

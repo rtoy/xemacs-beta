@@ -199,7 +199,7 @@ enum lrecord_type
   lrecord_type_last_built_in_type /* must be last */
 };
 
-extern unsigned int lrecord_type_count;
+extern int lrecord_type_count;
 
 struct lrecord_implementation
 {
@@ -256,8 +256,8 @@ struct lrecord_implementation
 
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
      If both are 0, this type is not instantiable by alloc_lcrecord(). */
-  size_t static_size;
-  size_t (*size_in_bytes_method) (const void *header);
+  Memory_Count static_size;
+  Memory_Count (*size_in_bytes_method) (const void *header);
 
   /* The (constant) index into lrecord_implementations_table */
   enum lrecord_type lrecord_type_index;
@@ -275,7 +275,7 @@ struct lrecord_implementation
    room in `lrecord_implementations_table' for such new lisp object types. */
 #define MODULE_DEFINABLE_TYPE_COUNT 32
 
-extern const struct lrecord_implementation *lrecord_implementations_table[(unsigned int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
+extern const struct lrecord_implementation *lrecord_implementations_table[lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 
 #define XRECORD_LHEADER_IMPLEMENTATION(obj) \
    LHEADER_IMPLEMENTATION (XRECORD_LHEADER (obj))
@@ -360,8 +360,14 @@ extern int gc_in_progress;
   An integer which will be reset to a given value in the dump file.
 
 
-    XD_SIZE_T
-  size_t value.  Used for counts.
+    XD_ELEMENT_COUNT
+  Element_Count value.  Used for counts.
+
+    XD_MEMORY_COUNT
+  Memory_Count value.  Used for counts.
+
+    XD_HASH_CODE
+  Hash_Code value.  Used for the results of hashing functions.
 
     XD_INT
   int value.  Used for counts.
@@ -387,7 +393,8 @@ extern int gc_in_progress;
   starts at zero) and adds delta to it.
 */
 
-enum lrecord_description_type {
+enum lrecord_description_type
+{
   XD_LISP_OBJECT_ARRAY,
   XD_LISP_OBJECT,
   XD_LO_LINK,
@@ -397,7 +404,9 @@ enum lrecord_description_type {
   XD_C_STRING,
   XD_DOC_STRING,
   XD_INT_RESET,
-  XD_SIZE_T,
+  XD_MEMORY_COUNT,
+  XD_ELEMENT_COUNT,
+  XD_HASH_CODE,
   XD_INT,
   XD_LONG,
   XD_BYTECOUNT,
@@ -405,15 +414,17 @@ enum lrecord_description_type {
   XD_SPECIFIER_END
 };
 
-struct lrecord_description {
+struct lrecord_description
+{
   enum lrecord_description_type type;
   int offset;
   EMACS_INT data1;
   const struct struct_description *data2;
 };
 
-struct struct_description {
-  size_t size;
+struct struct_description
+{
+  Memory_Count size;
   const struct lrecord_description *description;
 };
 
@@ -480,7 +491,7 @@ MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash
 
 #define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-unsigned int lrecord_type_##c_name;					\
+int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
   { name, marker, printer, nuker, equal, hash, desc,			\
     getprop, putprop, remprop, plist, size, sizer,			\
@@ -505,7 +516,7 @@ extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
 
 #define RECORD_TYPEP(x, ty) \
-  (LRECORDP (x) && (((unsigned int)(XRECORD_LHEADER (x)->type)) == ((unsigned int)(ty))))
+  (LRECORDP (x) && (XRECORD_LHEADER (x)->type == (unsigned int) (ty)))
 
 /* Steps to create a new object:
 
@@ -660,7 +671,7 @@ error_check_##c_name (Lisp_Object obj)				\
 extern Lisp_Object Q##c_name##p
 
 # define DECLARE_EXTERNAL_LRECORD(c_name, structtype)	       	\
-extern unsigned int lrecord_type_##c_name;                      \
+extern int lrecord_type_##c_name;				\
 extern struct lrecord_implementation lrecord_##c_name;		\
 INLINE_HEADER structtype *					\
 error_check_##c_name (Lisp_Object obj);				\
@@ -711,7 +722,7 @@ extern Lisp_Object Q##c_name##p;				\
 extern const struct lrecord_implementation lrecord_##c_name
 # define DECLARE_EXTERNAL_LRECORD(c_name, structtype)		\
 extern Lisp_Object Q##c_name##p;				\
-extern unsigned int lrecord_type_##c_name;			\
+extern int lrecord_type_##c_name;				\
 extern struct lrecord_implementation lrecord_##c_name
 # define DECLARE_NONRECORD(c_name, type_enum, structtype)	\
 extern Lisp_Object Q##c_name##p
@@ -767,7 +778,8 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-void *alloc_lcrecord (size_t size, const struct lrecord_implementation *);
+void *alloc_lcrecord (Memory_Count size,
+		      const struct lrecord_implementation *);
 
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))

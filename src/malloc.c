@@ -220,8 +220,8 @@ extern char etext;
 
 /* These two are for user programs to look at, when they are interested.  */
 
-unsigned int malloc_sbrk_used;       /* amount of data space used now */
-unsigned int malloc_sbrk_unused;     /* amount more we can have */
+Memory_Count malloc_sbrk_used;       /* amount of data space used now */
+Memory_Count malloc_sbrk_unused;     /* amount more we can have */
 
 /* start of data space; can be changed by calling init_malloc */
 static char *data_space_start;
@@ -489,7 +489,7 @@ malloc (n)		/* get a block */
      multiple of 8, then figure out which nestf[] area to use.
      Both the beginning of the header and the beginning of the
      block should be on an eight byte boundary.  */
-  nbytes = (n + ((sizeof *p + 7) & ~7) + EXTRA + 7) & ~7;
+  nbytes = (n + ((sizeof (*p) + 7) & ~7) + EXTRA + 7) & ~7;
   {
     unsigned int   shiftr = (nbytes - 1) >> 2;
 
@@ -535,7 +535,7 @@ malloc (n)		/* get a block */
   p -> mh_magic4 = MAGIC4;
   {
     /* Get the location n after the beginning of the user's space.  */
-    char *m = (char *) p + ((sizeof *p + 7) & ~7) + n;
+    char *m = (char *) p + ((sizeof (*p) + 7) & ~7) + n;
 
     *m++ = MAGIC1, *m++ = MAGIC1, *m++ = MAGIC1, *m = MAGIC1;
   }
@@ -546,7 +546,7 @@ malloc (n)		/* get a block */
   nmalloc[nunits]++;
   nmal++;
 #endif /* MSTATS */
-  return (char *) p + ((sizeof *p + 7) & ~7);
+  return (char *) p + ((sizeof (*p) + 7) & ~7);
 }
 
 void
@@ -560,11 +560,11 @@ free (mem)
     if (ap == 0)
       return;
 
-    p = (struct mhead *) (ap - ((sizeof *p + 7) & ~7));
+    p = (struct mhead *) (ap - ((sizeof (*p) + 7) & ~7));
     if (p -> mh_alloc == ISMEMALIGN)
       {
 	ap -= p->mh_size;
-	p = (struct mhead *) (ap - ((sizeof *p + 7) & ~7));
+	p = (struct mhead *) (ap - ((sizeof (*p) + 7) & ~7));
       }
 
 #ifndef rcheck
@@ -618,7 +618,7 @@ realloc (mem, n)
 
   if (mem == 0)
     return malloc (n);
-  p = (struct mhead *) (mem - ((sizeof *p + 7) & ~7));
+  p = (struct mhead *) (mem - ((sizeof (*p) + 7) & ~7));
   nunits = p -> mh_index;
   ASSERT (p -> mh_alloc == ISALLOC);
 #ifdef rcheck
@@ -630,13 +630,13 @@ realloc (mem, n)
   }
 #else /* not rcheck */
   if (p -> mh_index >= 13)
-    tocopy = (1 << (p -> mh_index + 3)) - ((sizeof *p + 7) & ~7);
+    tocopy = (1 << (p -> mh_index + 3)) - ((sizeof (*p) + 7) & ~7);
   else
     tocopy = p -> mh_size;
 #endif /* not rcheck */
 
   /* See if desired size rounds to same power of 2 as actual size. */
-  nbytes = (n + ((sizeof *p + 7) & ~7) + EXTRA + 7) & ~7;
+  nbytes = (n + ((sizeof (*p) + 7) & ~7) + EXTRA + 7) & ~7;
 
   /* If ok, use the same block, just marking its size as changed.  */
   if (nbytes > (4 << nunits) && nbytes <= (8 << nunits))

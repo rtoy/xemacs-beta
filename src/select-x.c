@@ -81,17 +81,6 @@ int x_selection_strict_motif_ownership;
 
 /* Utility functions */
 
-static void lisp_data_to_selection_data (struct device *,
-					 Lisp_Object obj,
-					 unsigned char **data_ret,
-					 Atom *type_ret,
-					 unsigned int *size_ret,
-					 int *format_ret);
-static Lisp_Object selection_data_to_lisp_data (struct device *,
-						Extbyte *data,
-						size_t size,
-						Atom type,
-						int format);
 static Lisp_Object x_get_window_property_as_lisp_data (Display *,
 						       Window,
 						       Atom property,
@@ -142,7 +131,7 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 #endif /* CUT_BUFFER_SUPPORT */
 
   {
-    const char *nameext;
+    const Extbyte *nameext;
     LISP_STRING_TO_EXTERNAL (Fsymbol_name (sym), nameext, Qctext);
     return XInternAtom (display, nameext, only_if_exists ? True : False);
   }
@@ -200,6 +189,9 @@ x_atom_to_symbol (struct device *d, Atom atom)
   }
 }
 
+#define PROCESSING_X_CODE
+#include "select-common.h"
+#undef PROCESSING_X_CODE
 
 /* Do protocol to assert ourself as a selection owner.
  */
@@ -469,16 +461,16 @@ x_selection_request_lisp_error (Lisp_Object closure)
  */
 static void
 x_reply_selection_request (XSelectionRequestEvent *event, int format,
-			   unsigned char *data, int size, Atom type)
+			   UChar_Binary *data, Memory_Count size, Atom type)
 {
   /* This function can GC */
   XSelectionEvent reply;
   Display *display = event->display;
   struct device *d = get_device_from_display (display);
   Window window = event->requestor;
-  int bytes_remaining;
+  Memory_Count bytes_remaining;
   int format_bytes = format/8;
-  int max_bytes = SELECTION_QUANTUM (display);
+  Memory_Count max_bytes = SELECTION_QUANTUM (display);
   if (max_bytes > MAX_SELECTION_QUANTUM) max_bytes = MAX_SELECTION_QUANTUM;
 
   reply.type      = SelectionNotify;
@@ -521,7 +513,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 					PropertyDelete);
 
       XChangeProperty (display, window, reply.property, DEVICE_XATOM_INCR (d),
-		       32, PropModeReplace, (unsigned char *)
+		       32, PropModeReplace, (UChar_Binary *)
 		       &bytes_remaining, 1);
       XSelectInput (display, window, PropertyChangeMask);
       /* Tell 'em the INCR data is there... */
@@ -535,7 +527,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 
       while (bytes_remaining)
 	{
-	  int i = ((bytes_remaining < max_bytes)
+	  Memory_Count i = ((bytes_remaining < max_bytes)
 		   ? bytes_remaining
 		   : max_bytes);
 	  prop_id = expect_property_change (display, window, reply.property,
@@ -632,8 +624,8 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 			 make_opaque_ptr (event));
 
   {
-    unsigned char *data;
-    unsigned int size;
+    UChar_Binary *data;
+    Memory_Count size;
     int format;
     Atom type;
     lisp_data_to_selection_data (d, converted_selection,
@@ -848,8 +840,8 @@ static Lisp_Object
 copy_multiple_data (Lisp_Object obj)
 {
   Lisp_Object vec;
-  int i;
-  int len;
+  Element_Count i;
+  Element_Count len;
   if (CONSP (obj))
     return Fcons (XCAR (obj), copy_multiple_data (XCDR (obj)));
 
@@ -954,16 +946,16 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 
 static void
 x_get_window_property (Display *display, Window window, Atom property,
-		       Extbyte **data_ret, int *bytes_ret,
+		       UChar_Binary **data_ret, Memory_Count *bytes_ret,
 		       Atom *actual_type_ret, int *actual_format_ret,
 		       unsigned long *actual_size_ret, int delete_p)
 {
-  size_t total_size;
+  Memory_Count total_size;
   unsigned long bytes_remaining;
-  int offset = 0;
-  unsigned char *tmp_data = 0;
+  Memory_Count offset = 0;
+  UChar_Binary *tmp_data = 0;
   int result;
-  int buffer_size = SELECTION_QUANTUM (display);
+  Memory_Count buffer_size = SELECTION_QUANTUM (display);
   if (buffer_size > MAX_SELECTION_QUANTUM) buffer_size = MAX_SELECTION_QUANTUM;
 
   /* First probe the thing to find out how big it is. */
@@ -989,13 +981,13 @@ x_get_window_property (Display *display, Window window, Atom property,
     }
 
   total_size = bytes_remaining + 1;
-  *data_ret = (Extbyte *) xmalloc (total_size);
+  *data_ret = (UChar_Binary *) xmalloc (total_size);
 
   /* Now read, until we've gotten it all. */
   while (bytes_remaining)
     {
 #if 0
-      int last = bytes_remaining;
+      Memory_Count last = bytes_remaining;
 #endif
       result =
 	XGetWindowProperty (display, window, property,
@@ -1025,16 +1017,17 @@ static void
 receive_incremental_selection (Display *display, Window window, Atom property,
 			       /* this one is for error messages only */
 			       Lisp_Object target_type,
-			       unsigned int min_size_bytes,
-			       Extbyte **data_ret, int *size_bytes_ret,
+			       Memory_Count min_size_bytes,
+			       UChar_Binary **data_ret,
+			       Memory_Count *size_bytes_ret,
 			       Atom *type_ret, int *format_ret,
 			       unsigned long *size_ret)
 {
   /* This function can GC */
-  int offset = 0;
+  Memory_Count offset = 0;
   int prop_id;
   *size_bytes_ret = min_size_bytes;
-  *data_ret = (Extbyte *) xmalloc (*size_bytes_ret);
+  *data_ret = (UChar_Binary *) xmalloc (*size_bytes_ret);
 #if 0
   stderr_out ("\nread INCR %d\n", min_size_bytes);
 #endif
@@ -1050,8 +1043,8 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 				    PropertyNewValue);
   while (1)
     {
-      Extbyte *tmp_data;
-      int tmp_size_bytes;
+      UChar_Binary *tmp_data;
+      Memory_Count tmp_size_bytes;
       wait_for_property_change (prop_id);
       /* expect it again immediately, because x_get_window_property may
 	 .. no it won't, I don't get it.
@@ -1082,7 +1075,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
 		   *size_bytes_ret, offset + tmp_size_bytes);
 #endif
 	  *size_bytes_ret = offset + tmp_size_bytes;
-	  *data_ret = (Extbyte *) xrealloc (*data_ret, *size_bytes_ret);
+	  *data_ret = (UChar_Binary *) xrealloc (*data_ret, *size_bytes_ret);
 	}
       memcpy ((*data_ret) + offset, tmp_data, tmp_size_bytes);
       offset += tmp_size_bytes;
@@ -1103,8 +1096,8 @@ x_get_window_property_as_lisp_data (Display *display,
   Atom actual_type;
   int actual_format;
   unsigned long actual_size;
-  Extbyte *data = NULL;
-  int bytes = 0;
+  UChar_Binary *data = NULL;
+  Memory_Count bytes = 0;
   Lisp_Object val;
   struct device *d = get_device_from_display (display);
 
@@ -1132,7 +1125,9 @@ x_get_window_property_as_lisp_data (Display *display,
     {
       /* Ok, that data wasn't *the* data, it was just the beginning. */
 
-      unsigned int min_size_bytes = * ((unsigned int *) data);
+      Memory_Count min_size_bytes =
+	/* careful here. */
+	(Memory_Count) (* ((unsigned int *) data));
       xfree (data);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
@@ -1148,298 +1143,6 @@ x_get_window_property_as_lisp_data (Display *display,
   xfree (data);
   return val;
 }
-
-/* #### These are going to move into Lisp code(!) with the aid of
-        some new functions I'm working on - ajh */
-
-/* These functions convert from the selection data read from the server into
-   something that we can use from elisp, and vice versa.
-
-	Type:	Format:	Size:		Elisp Type:
-	-----	-------	-----		-----------
-	*	8	*		String
-	ATOM	32	1		Symbol
-	ATOM	32	> 1		Vector of Symbols
-	*	16	1		Integer
-	*	16	> 1		Vector of Integers
-	*	32	1		if <=16 bits: Integer
-					if > 16 bits: Cons of top16, bot16
-	*	32	> 1		Vector of the above
-
-   When converting a Lisp number to C, it is assumed to be of format 16 if
-   it is an integer, and of format 32 if it is a cons of two integers.
-
-   When converting a vector of numbers from Elisp to C, it is assumed to be
-   of format 16 if every element in the vector is an integer, and is assumed
-   to be of format 32 if any element is a cons of two integers.
-
-   When converting an object to C, it may be of the form (SYMBOL . <data>)
-   where SYMBOL is what we should claim that the type is.  Format and
-   representation are as above.
-
-   NOTE: Under Mule, when someone shoves us a string without a type, we
-   set the type to 'COMPOUND_TEXT and automatically convert to Compound
-   Text.  If the string has a type, we assume that the user wants the
-   data sent as-is so we just do "binary" conversion.
- */
-
-
-static Lisp_Object
-selection_data_to_lisp_data (struct device *d,
-			     Extbyte *data,
-			     size_t size,
-			     Atom type,
-			     int format)
-{
-  if (type == DEVICE_XATOM_NULL (d))
-    return QNULL;
-
-  /* Convert any 8-bit data to a string, for compactness. */
-  else if (format == 8)
-    return make_ext_string (data, size,
-			    type == DEVICE_XATOM_TEXT (d) ||
-			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
-			    ? Qctext : Qbinary);
-
-  /* Convert a single atom to a Lisp Symbol.
-     Convert a set of atoms to a vector of symbols. */
-  else if (type == XA_ATOM)
-    {
-      if (size == sizeof (Atom))
-	return x_atom_to_symbol (d, *((Atom *) data));
-      else
-	{
-	  int i;
-	  int len = size / sizeof (Atom);
-	  Lisp_Object v = Fmake_vector (make_int (len), Qzero);
-	  for (i = 0; i < len; i++)
-	    Faset (v, make_int (i), x_atom_to_symbol (d, ((Atom *) data) [i]));
-	  return v;
-	}
-    }
-
-  /* Convert a single 16 or small 32 bit number to a Lisp Int.
-     If the number is > 16 bits, convert it to a cons of integers,
-     16 bits in each half.
-   */
-  else if (format == 32 && size == sizeof (long))
-    return word_to_lisp (((unsigned long *) data) [0]);
-  else if (format == 16 && size == sizeof (short))
-    return make_int ((int) (((unsigned short *) data) [0]));
-
-  /* Convert any other kind of data to a vector of numbers, represented
-     as above (as an integer, or a cons of two 16 bit integers).
-
-     #### Perhaps we should return the actual type to lisp as well.
-
-	(x-get-selection-internal 'PRIMARY 'LINE_NUMBER)
-	==> [4 4]
-
-     and perhaps it should be
-
-	(x-get-selection-internal 'PRIMARY 'LINE_NUMBER)
-	==> (SPAN . [4 4])
-
-     Right now the fact that the return type was SPAN is discarded before
-     lisp code gets to see it.
-   */
-  else if (format == 16)
-    {
-      int i;
-      Lisp_Object v = make_vector (size / 4, Qzero);
-      for (i = 0; i < (int) size / 4; i++)
-	{
-	  int j = (int) ((unsigned short *) data) [i];
-	  Faset (v, make_int (i), make_int (j));
-	}
-      return v;
-    }
-  else
-    {
-      int i;
-      Lisp_Object v = make_vector (size / 4, Qzero);
-      for (i = 0; i < (int) size / 4; i++)
-	{
-	  unsigned long j = ((unsigned long *) data) [i];
-	  Faset (v, make_int (i), word_to_lisp (j));
-	}
-      return v;
-    }
-}
-
-
-static void
-lisp_data_to_selection_data (struct device *d,
-			     Lisp_Object obj,
-			     unsigned char **data_ret,
-			     Atom *type_ret,
-			     unsigned int *size_ret,
-			     int *format_ret)
-{
-  Lisp_Object type = Qnil;
-
-  if (CONSP (obj) && SYMBOLP (XCAR (obj)))
-    {
-      type = XCAR (obj);
-      obj = XCDR (obj);
-      if (CONSP (obj) && NILP (XCDR (obj)))
-	obj = XCAR (obj);
-    }
-
-  if (EQ (obj, QNULL) || (EQ (type, QNULL)))
-    {				/* This is not the same as declining */
-      *format_ret = 32;
-      *size_ret = 0;
-      *data_ret = 0;
-      type = QNULL;
-    }
-  else if (STRINGP (obj))
-    {
-      const Extbyte *extval;
-      Extcount extvallen;
-
-      TO_EXTERNAL_FORMAT (LISP_STRING, obj,
-			  ALLOCA, (extval, extvallen),
-			  (NILP (type) ? Qctext : Qbinary));
-      *format_ret = 8;
-      *size_ret = extvallen;
-      *data_ret = (unsigned char *) xmalloc (*size_ret);
-      memcpy (*data_ret, extval, *size_ret);
-#ifdef MULE
-      if (NILP (type)) type = QCOMPOUND_TEXT;
-#else
-      if (NILP (type)) type = QSTRING;
-#endif
-    }
-  else if (CHARP (obj))
-    {
-      Bufbyte buf[MAX_EMCHAR_LEN];
-      Bytecount len;
-      const Extbyte *extval;
-      Extcount extvallen;
-
-      *format_ret = 8;
-      len = set_charptr_emchar (buf, XCHAR (obj));
-      TO_EXTERNAL_FORMAT (DATA, (buf, len),
-			  ALLOCA, (extval, extvallen),
-			  Qctext);
-      *size_ret = extvallen;
-      *data_ret = (unsigned char *) xmalloc (*size_ret);
-      memcpy (*data_ret, extval, *size_ret);
-#ifdef MULE
-      if (NILP (type)) type = QCOMPOUND_TEXT;
-#else
-      if (NILP (type)) type = QSTRING;
-#endif
-    }
-  else if (SYMBOLP (obj))
-    {
-      *format_ret = 32;
-      *size_ret = 1;
-      *data_ret = (unsigned char *) xmalloc (sizeof (Atom) + 1);
-      (*data_ret) [sizeof (Atom)] = 0;
-      (*(Atom **) data_ret) [0] = symbol_to_x_atom (d, obj, 0);
-      if (NILP (type)) type = QATOM;
-    }
-  else if (INTP (obj) &&
-	   XINT (obj) <= 0x7FFF &&
-	   XINT (obj) >= -0x8000)
-    {
-      *format_ret = 16;
-      *size_ret = 1;
-      *data_ret = (unsigned char *) xmalloc (sizeof (short) + 1);
-      (*data_ret) [sizeof (short)] = 0;
-      (*(short **) data_ret) [0] = (short) XINT (obj);
-      if (NILP (type)) type = QINTEGER;
-    }
-  else if (INTP (obj) || CONSP (obj))
-    {
-      *format_ret = 32;
-      *size_ret = 1;
-      *data_ret = (unsigned char *) xmalloc (sizeof (long) + 1);
-      (*data_ret) [sizeof (long)] = 0;
-      (*(unsigned long **) data_ret) [0] = lisp_to_word (obj);
-      if (NILP (type)) type = QINTEGER;
-    }
-  else if (VECTORP (obj))
-    {
-      /* Lisp Vectors may represent a set of ATOMs;
-	 a set of 16 or 32 bit INTEGERs;
-	 or a set of ATOM_PAIRs (represented as [[A1 A2] [A3 A4] ...]
-       */
-      int i;
-
-      if (SYMBOLP (XVECTOR_DATA (obj) [0]))
-	/* This vector is an ATOM set */
-	{
-	  if (NILP (type)) type = QATOM;
-	  *size_ret = XVECTOR_LENGTH (obj);
-	  *format_ret = 32;
-	  *data_ret = (unsigned char *) xmalloc ((*size_ret) * sizeof (Atom));
-	  for (i = 0; i < (int) (*size_ret); i++)
-	    if (SYMBOLP (XVECTOR_DATA (obj) [i]))
-	      (*(Atom **) data_ret) [i] =
-		symbol_to_x_atom (d, XVECTOR_DATA (obj) [i], 0);
-	    else
-              syntax_error
-		("all elements of the vector must be of the same type", obj);
-	}
-#if 0 /* #### MULTIPLE doesn't work yet */
-      else if (VECTORP (XVECTOR_DATA (obj) [0]))
-	/* This vector is an ATOM_PAIR set */
-	{
-	  if (NILP (type)) type = QATOM_PAIR;
-	  *size_ret = XVECTOR_LENGTH (obj);
-	  *format_ret = 32;
-	  *data_ret = (unsigned char *)
-	    xmalloc ((*size_ret) * sizeof (Atom) * 2);
-	  for (i = 0; i < *size_ret; i++)
-	    if (VECTORP (XVECTOR_DATA (obj) [i]))
-	      {
-		Lisp_Object pair = XVECTOR_DATA (obj) [i];
-		if (XVECTOR_LENGTH (pair) != 2)
-		  syntax_error
-		    ("elements of the vector must be vectors of exactly two elements", pair);
-
-		(*(Atom **) data_ret) [i * 2] =
-		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [0], 0);
-		(*(Atom **) data_ret) [(i * 2) + 1] =
-		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [1], 0);
-	      }
-	    else
-	      syntax_error
-		("all elements of the vector must be of the same type", obj);
-	}
-#endif
-      else
-	/* This vector is an INTEGER set, or something like it */
-	{
-	  *size_ret = XVECTOR_LENGTH (obj);
-	  if (NILP (type)) type = QINTEGER;
-	  *format_ret = 16;
-	  for (i = 0; i < (int) (*size_ret); i++)
-	    if (CONSP (XVECTOR_DATA (obj) [i]))
-	      *format_ret = 32;
-	    else if (!INTP (XVECTOR_DATA (obj) [i]))
-	      syntax_error
-		("all elements of the vector must be integers or conses of integers", obj);
-
-	  *data_ret = (unsigned char *) xmalloc (*size_ret * (*format_ret/8));
-	  for (i = 0; i < (int) (*size_ret); i++)
-	    if (*format_ret == 32)
-	      (*((unsigned long **) data_ret)) [i] =
-		lisp_to_word (XVECTOR_DATA (obj) [i]);
-	    else
-	      (*((unsigned short **) data_ret)) [i] =
-		(unsigned short) lisp_to_word (XVECTOR_DATA (obj) [i]);
-	}
-    }
-  else
-    invalid_argument ("unrecognized selection data", obj);
-
-  *type_ret = symbol_to_x_atom (d, type, 0);
-}
-
 
 
 /* Called from the event loop to handle SelectionNotify events.
@@ -1541,8 +1244,8 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  Extbyte *data;
-  int bytes;
+  UChar_Binary *data;
+  Memory_Count bytes;
   Atom type;
   int format;
   unsigned long size;
@@ -1565,7 +1268,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
      COMPOUND_TEXT that we stored there ourselves earlier,
      in x-store-cutbuffer-internal  */
   ret = (bytes ?
-	 make_ext_string (data, bytes,
+	 make_ext_string ((Extbyte *) data, bytes,
 			  memchr (data, 0x1b, bytes) ?
 			  Qctext : Qbinary)
 	 : Qnil);
@@ -1586,7 +1289,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   const Bufbyte *data  = XSTRING_DATA (string);
   Bytecount bytes = XSTRING_LENGTH (string);
   Bytecount bytes_remaining;
-  int max_bytes = SELECTION_QUANTUM (display);
+  Memory_Count max_bytes = SELECTION_QUANTUM (display);
 #ifdef MULE
   const Bufbyte *ptr, *end;
   enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
@@ -1643,7 +1346,8 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 
   while (bytes_remaining)
     {
-      int chunk = bytes_remaining < max_bytes ? bytes_remaining : max_bytes;
+      Memory_Count chunk =
+	bytes_remaining < max_bytes ? bytes_remaining : max_bytes;
       XChangeProperty (display, window, cut_buffer_atom, XA_STRING, 8,
 		       (bytes_remaining == bytes
 			? PropModeReplace : PropModeAppend),

@@ -62,26 +62,25 @@ EXFUN (Fputhash, 3);
 EXFUN (Fremhash, 2);
 EXFUN (Fclrhash, 1);
 
-typedef unsigned long hashcode_t;
 typedef int (*hash_table_test_function_t) (Lisp_Object obj1, Lisp_Object obj2);
 typedef unsigned long (*hash_table_hash_function_t) (Lisp_Object obj);
 typedef int (*maphash_function_t) (Lisp_Object key, Lisp_Object value,
 				   void* extra_arg);
 
 Lisp_Object make_standard_lisp_hash_table (enum hash_table_test test,
-					   size_t size,
+					   Element_Count size,
 					   double rehash_size,
 					   double rehash_threshold,
 					   enum hash_table_weakness weakness);
 
 Lisp_Object make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 					  hash_table_test_function_t test_function,
-					  size_t size,
+					  Element_Count size,
 					  double rehash_size,
 					  double rehash_threshold,
 					  enum hash_table_weakness weakness);
 
-Lisp_Object make_lisp_hash_table (size_t size,
+Lisp_Object make_lisp_hash_table (Element_Count size,
 				  enum hash_table_weakness weakness,
 				  enum hash_table_test test);
 

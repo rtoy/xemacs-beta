@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct
 {
   const void *varaddress;
-  size_t size;
+  Memory_Count size;
 } pdump_opaque;
 
 typedef struct
@@ -84,7 +84,7 @@ static Lisp_Object_ptr_dynarr *pdump_weak_object_chains;
 /* Mark SIZE bytes at non-heap address VARADDRESS for dumping as is,
    without any bit-twiddling. */
 void
-dump_add_opaque (const void *varaddress, size_t size)
+dump_add_opaque (const void *varaddress, Memory_Count size)
 {
   pdump_opaque info;
   info.varaddress = varaddress;
@@ -129,7 +129,7 @@ dump_add_weak_object_chain (Lisp_Object *varaddress)
 
 
 inline static void
-pdump_align_stream (FILE *stream, size_t alignment)
+pdump_align_stream (FILE *stream, Memory_Count alignment)
 {
   long offset = ftell (stream);
   long adjustment = ALIGN_SIZE (offset, alignment) - offset;
@@ -215,7 +215,7 @@ typedef struct
 
 char *pdump_start;
 char *pdump_end;
-static size_t pdump_length;
+static Memory_Count pdump_length;
 
 #ifdef WIN32_NATIVE
 /* Handle for the dump file */
@@ -234,8 +234,8 @@ static unsigned char pdump_align_table[] =
   16, 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1
 };
 
-static inline unsigned int
-pdump_size_to_align (size_t size)
+static inline int
+pdump_size_to_align (Memory_Count size)
 {
   return pdump_align_table[size % countof (pdump_align_table)];
 }
@@ -244,7 +244,7 @@ typedef struct pdump_entry_list_elt
 {
   struct pdump_entry_list_elt *next;
   const void *obj;
-  size_t size;
+  Memory_Count size;
   int count;
   EMACS_INT save_offset;
 } pdump_entry_list_elt;
@@ -276,7 +276,7 @@ static pdump_struct_list pdump_struct_table;
 static int *pdump_alert_undump_object;
 
 static unsigned long cur_offset;
-static size_t max_size;
+static Memory_Count max_size;
 static int pdump_fd;
 static void *pdump_buf;
 static FILE *pdump_out;
@@ -313,7 +313,7 @@ pdump_get_entry (const void *obj)
 }
 
 static void
-pdump_add_entry (pdump_entry_list *list, const void *obj, size_t size,
+pdump_add_entry (pdump_entry_list *list, const void *obj, Memory_Count size,
 		 int count)
 {
   pdump_entry_list_elt *e;
@@ -423,8 +423,14 @@ pdump_get_indirect_count (EMACS_INT code,
   irdata = ((char *)idata) + idesc[line].offset;
   switch (idesc[line].type)
     {
-    case XD_SIZE_T:
-      count = *(size_t *)irdata;
+    case XD_MEMORY_COUNT:
+      count = *(Memory_Count *)irdata;
+      break;
+    case XD_ELEMENT_COUNT:
+      count = *(Element_Count *)irdata;
+      break;
+    case XD_HASH_CODE:
+      count = *(Hash_Code *)irdata;
       break;
     case XD_INT:
       count = *(int *)irdata;
@@ -439,6 +445,7 @@ pdump_get_indirect_count (EMACS_INT code,
       stderr_out ("Unsupported count type : %d (line = %d, code=%ld)\n",
 		  idesc[line].type, line, (long)code);
       pdump_backtrace ();
+      count = 0; /* warning suppression */
       abort ();
     }
   count += delta;
@@ -464,7 +471,9 @@ pdump_register_sub (const void *data, const struct lrecord_description *desc, in
 	  pos = 0;
 	  desc = ((const Lisp_Specifier *)data)->methods->extra_description;
 	  goto restart;
-	case XD_SIZE_T:
+	case XD_MEMORY_COUNT:
+	case XD_ELEMENT_COUNT:
+	case XD_HASH_CODE:
 	case XD_INT:
 	case XD_LONG:
 	case XD_BYTECOUNT:
@@ -625,7 +634,7 @@ static void
 pdump_dump_data (pdump_entry_list_elt *elt,
 		 const struct lrecord_description *desc)
 {
-  size_t size = elt->size;
+  Memory_Count size = elt->size;
   int count = elt->count;
   if (desc)
     {
@@ -644,7 +653,9 @@ pdump_dump_data (pdump_entry_list_elt *elt,
 		case XD_SPECIFIER_END:
 		  desc = ((const Lisp_Specifier *)(elt->obj))->methods->extra_description;
 		  goto restart;
-		case XD_SIZE_T:
+		case XD_MEMORY_COUNT:
+		case XD_ELEMENT_COUNT:
+		case XD_HASH_CODE:
 		case XD_INT:
 		case XD_LONG:
 		case XD_BYTECOUNT:
@@ -740,7 +751,9 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 	  pos = 0;
 	  desc = ((const Lisp_Specifier *)data)->methods->extra_description;
 	  goto restart;
-	case XD_SIZE_T:
+	case XD_MEMORY_COUNT:
+	case XD_ELEMENT_COUNT:
+	case XD_HASH_CODE:
 	case XD_INT:
 	case XD_LONG:
 	case XD_BYTECOUNT:
@@ -803,7 +816,7 @@ static void
 pdump_allocate_offset (pdump_entry_list_elt *elt,
 		       const struct lrecord_description *desc)
 {
-  size_t size = elt->count * elt->size;
+  Memory_Count size = elt->count * elt->size;
   elt->save_offset = cur_offset;
   if (size>max_size)
     max_size = size;
@@ -844,7 +857,7 @@ static void
 pdump_dump_root_struct_ptrs (void)
 {
   int i;
-  size_t count = Dynarr_length (pdump_root_struct_ptrs);
+  Element_Count count = Dynarr_length (pdump_root_struct_ptrs);
   pdump_static_pointer *data = alloca_array (pdump_static_pointer, count);
   for (i = 0; i < count; i++)
     {
@@ -920,14 +933,14 @@ pdump_dump_rtables (void)
 static void
 pdump_dump_root_objects (void)
 {
-  size_t count = (Dynarr_length (pdump_root_objects) +
-		  Dynarr_length (pdump_weak_object_chains));
-  size_t i;
+  Element_Count count = (Dynarr_length (pdump_root_objects) +
+			 Dynarr_length (pdump_weak_object_chains));
+  Element_Count i;
 
-  PDUMP_WRITE_ALIGNED (size_t, count);
+  PDUMP_WRITE_ALIGNED (Element_Count, count);
   PDUMP_ALIGN_OUTPUT (pdump_static_Lisp_Object);
 
-  for (i=0; i<Dynarr_length (pdump_root_objects); i++)
+  for (i = 0; i < Dynarr_length (pdump_root_objects); i++)
     {
       pdump_static_Lisp_Object obj;
       obj.address = Dynarr_at (pdump_root_objects, i);
@@ -1142,7 +1155,7 @@ pdump_load_finish (void)
     }
 
   /* Put the pdump_root_objects variables in place */
-  i = PDUMP_READ_ALIGNED (p, size_t);
+  i = PDUMP_READ_ALIGNED (p, Element_Count);
   p = (char *) ALIGN_PTR (p, ALIGNOF (pdump_static_Lisp_Object));
   while (i--)
     {
@@ -1258,7 +1271,7 @@ pdump_resource_get (void)
 
   pdump_free = pdump_resource_free;
   pdump_length = SizeofResource (NULL, hRes);
-  if (pdump_length <= sizeof (pdump_header))
+  if (pdump_length <= (Memory_Count) sizeof (pdump_header))
     {
       pdump_start = 0;
       return 0;
@@ -1291,7 +1304,7 @@ pdump_file_get (const char *path)
     return 0;
 
   pdump_length = lseek (fd, 0, SEEK_END);
-  if (pdump_length < sizeof (pdump_header))
+  if (pdump_length < (Memory_Count) sizeof (pdump_header))
     {
       close (fd);
       return 0;

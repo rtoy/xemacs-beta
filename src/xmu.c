@@ -141,7 +141,7 @@ int XmuCursorNameToIndex (const char *name)
     int i;
     char tmp[40];
 
-    if (strlen (name) >= sizeof tmp) return -1;
+    if (strlen (name) >= sizeof (tmp)) return -1;
     for (i=0; i<strlen(name); i++)
         if (isupper((unsigned char) name[i]))
             tmp[i] = tolower((unsigned char) name[i]);

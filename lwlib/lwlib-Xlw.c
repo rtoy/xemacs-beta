@@ -432,7 +432,7 @@ xlw_update_tab_control (widget_instance* instance, Widget widget, widget_value* 
   children = XtCompositeChildren (widget, &num_children);
   if (children)
     {
-      for (i = 0, cur = val->contents; i < num_children; i++)
+      for (i = 0, cur = val->contents; i < (int) num_children; i++)
 	{
 	  if (!cur)
 	    abort ();

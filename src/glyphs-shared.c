@@ -188,21 +188,20 @@ static int NextInt (FILE *fstream)
  * like the Xlib routine XReadBitmapfile as possible.
  */
 static int
-read_bitmap_data (FILE *fstream, unsigned int *width,
-		  unsigned int *height, UChar_Binary **datap,
+read_bitmap_data (FILE *fstream, int *width, int *height, UChar_Binary **datap,
 		  int *x_hot, int *y_hot)
 {
     UChar_Binary *data = NULL;		/* working variable */
-    char line[MAX_SIZE];		/* input line from file */
+    Char_ASCII line[MAX_SIZE];		/* input line from file */
     int size;				/* number of bytes of data */
-    char name_and_type[MAX_SIZE];	/* an input line */
-    char *type;				/* for parsing */
+    Char_ASCII name_and_type[MAX_SIZE];	/* an input line */
+    Char_ASCII *type;			/* for parsing */
     int value;				/* from an input line */
     int version10p;			/* boolean, old format */
     int padding;			/* to handle alignment */
     int bytes_per_line;			/* per scanline of data */
-    unsigned int ww = 0;		/* width */
-    unsigned int hh = 0;		/* height */
+    int ww = 0;				/* width */
+    int hh = 0;				/* height */
     int hx = -1;			/* x hotspot */
     int hy = -1;			/* y hotspot */
 
@@ -227,9 +226,9 @@ read_bitmap_data (FILE *fstream, unsigned int *width,
 	      type++;
 
 	    if (!strcmp("width", type))
-	      ww = (unsigned int) value;
+	      ww = value;
 	    if (!strcmp("height", type))
-	      hh = (unsigned int) value;
+	      hh = value;
 	    if (!strcmp("hot", type)) {
 		if (type-- == name_and_type || type-- == name_and_type)
 		  continue;
@@ -315,17 +314,16 @@ read_bitmap_data (FILE *fstream, unsigned int *width,
 int
 read_bitmap_data_from_file (const char *filename,
 			    /* Remaining args are RETURNED */
-			    unsigned int *width,
-			    unsigned int *height,
+			    int *width,
+			    int *height,
 			    UChar_Binary **datap,
 			    int *x_hot, int *y_hot)
 {
     FILE *fstream;
     int status;
 
-    if ((fstream = fopen (filename, "r")) == NULL) {
-	return BitmapOpenFailed;
-    }
+    if ((fstream = fopen (filename, "r")) == NULL)
+      return BitmapOpenFailed;
     status = read_bitmap_data (fstream, width, height, datap, x_hot, y_hot);
     fclose (fstream);
     return status;

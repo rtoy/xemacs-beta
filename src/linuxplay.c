@@ -285,7 +285,7 @@ linux_play_data_or_file(int fd, UChar_Binary *data,
   if (!data || length < HEADERSZ) {
     if (fd < 0) return 0;
     else {
-      length = read(fd,sndbuf,SNDBUFSZ);
+      length = read (fd,sndbuf,SNDBUFSZ);
       if (length < HEADERSZ)
 	return 0;
       data   = sndbuf;

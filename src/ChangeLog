@@ -1,3 +1,559 @@
+2001-06-24  Ben Wing  <ben@xemacs.org>
+
+	* EmacsFrame.c (EmacsFrameSetValues):
+	* alloc.c:
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xmalloc_and_zero):
+	* alloc.c (xrealloc):
+	* alloc.c (deadbeef_memory):
+	* alloc.c (allocate_lisp_storage):
+	* alloc.c (alloc_lcrecord):
+	* alloc.c (Fmake_list):
+	* alloc.c (size_vector):
+	* alloc.c (vector_hash):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_vector):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (make_bit_vector):
+	* alloc.c (make_bit_vector_from_byte_vector):
+	* alloc.c (Fmake_string):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (GC_CHECK_LHEADER_INVARIANTS):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (sweep_strings):
+	* alloc.c (UNMARK_string):
+	* alloc.c (ADDITIONAL_FREE_string):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (Fgarbage_collect):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* backtrace.h:
+	* backtrace.h (SPECPDL_RESERVE):
+	* blocktype.c (Blocktype_newf):
+	* blocktype.h:
+	* blocktype.h (Blocktype_declare):
+	* buffer.c:
+	* buffer.c (compute_buffer_text_usage):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* buffer.h (struct buffer_text):
+	* buffer.h (MAP_INDIRECT_BUFFERS):
+	* buffer.h (valid_char_p):
+	* buffer.h (union):
+	* buffer.h (bufbyte_memcmp):
+	* bytecode.c (optimize_byte_code):
+	* bytecode.c (compiled_function_hash):
+	* callproc.c (Fold_call_process_internal):
+	* chartab.c (char_table_entry_hash):
+	* chartab.c (char_table_hash):
+	* chartab.c (check_category_char):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	* chartab.h:
+	* console-x.c (x_semi_canonicalize_console_connection):
+	* console.h (struct console_methods):
+	* data.c (Faref):
+	* data.c (Faset):
+	* data.c (weak_list_hash):
+	* device-msw.c (msprinter_init_device):
+	* device-msw.c (Fmsprinter_select_settings):
+	* device-msw.c (hash_devmode):
+	* device-msw.c (Fmswindows_printer_list):
+	* device-x.c (validify_resource_component):
+	* device-x.c (Fx_put_resource):
+	* dialog-msw.c:
+	* dialog-msw.c (dialog_proc):
+	* dialog-msw.c (button_width):
+	* dialog-msw.c (ALIGN_TEMPLATE):
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired.c (struct user_name):
+	* dired.c (user_name_completion):
+	* doc.c (get_doc_string):
+	* doc.c (Fsnarf_documentation):
+	* doprnt.c (parse_off_posnum):
+	* doprnt.c (emacs_doprnt_1):
+	* dumper.c:
+	* dumper.c (struct):
+	* dumper.c (dump_add_opaque):
+	* dumper.c (pdump_align_stream):
+	* dumper.c (pdump_size_to_align):
+	* dumper.c (pdump_entry_list_elt):
+	* dumper.c (pdump_add_entry):
+	* dumper.c (pdump_get_indirect_count):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_dump_data):
+	* dumper.c (pdump_reloc_one):
+	* dumper.c (pdump_allocate_offset):
+	* dumper.c (pdump_dump_root_struct_ptrs):
+	* dumper.c (pdump_dump_root_objects):
+	* dumper.c (pdump_load_finish):
+	* dumper.c (pdump_resource_get):
+	* dumper.c (pdump_file_get):
+	* dynarr.c (Dynarr_memory_usage):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fcurrent_time_string):
+	* eldap.c (Fldap_add):
+	* eldap.c (Fldap_modify):
+	* elhash.c:
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (lisp_string_hash):
+	* elhash.c (lisp_object_eql_hash):
+	* elhash.c (lisp_object_equal_hash):
+	* elhash.c (hash_table_hash):
+	* elhash.c (print_hash_table):
+	* elhash.c (compute_hash_table_derived_values):
+	* elhash.c (make_standard_lisp_hash_table):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (make_lisp_hash_table):
+	* elhash.c (decode_hash_table_size):
+	* elhash.c (resize_hash_table):
+	* elhash.c (enlarge_hash_table):
+	* elhash.c (remhash_1):
+	* elhash.c (internal_array_hash):
+	* elhash.c (internal_hash):
+	* elhash.h:
+	* emacs.c:
+	* eval.c (grow_specpdl):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-msw.c:
+	* event-msw.c (ntpipe_slurp_reader):
+	* event-msw.c (ntpipe_shove_writer):
+	* event-msw.c (struct winsock_stream):
+	* event-msw.c (winsock_reader):
+	* event-msw.c (winsock_writer):
+	* event-msw.c (mswindows_need_event):
+	* event-msw.c (assert):
+	* event-msw.c (mswindows_current_layout_has_AltGr):
+	* event-msw.c (debug_output_mswin_message):
+	* events.c (event_hash):
+	* extents.c (extent_list_locate):
+	* faces.c (face_hash):
+	* file-coding.c:
+	* file-coding.c (detect_eol_type):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (determine_real_coding_system):
+	* file-coding.c (Fdetect_coding_region):
+	* file-coding.c (decoding_reader):
+	* file-coding.c (decoding_writer):
+	* file-coding.c (mule_decode):
+	* file-coding.c (Fdecode_coding_region):
+	* file-coding.c (encoding_reader):
+	* file-coding.c (encoding_writer):
+	* file-coding.c (mule_encode):
+	* file-coding.c (Fencode_coding_region):
+	* file-coding.c (detect_coding_sjis):
+	* file-coding.c (decode_coding_sjis):
+	* file-coding.c (encode_coding_sjis):
+	* file-coding.c (DECODE_BIG5):
+	* file-coding.c (ENCODE_BIG5):
+	* file-coding.c (detect_coding_big5):
+	* file-coding.c (decode_coding_big5):
+	* file-coding.c (encode_coding_big5):
+	* file-coding.c (Fset_ucs_char):
+	* file-coding.c (detect_coding_ucs4):
+	* file-coding.c (decode_coding_ucs4):
+	* file-coding.c (encode_coding_ucs4):
+	* file-coding.c (detect_coding_utf8):
+	* file-coding.c (decode_coding_utf8):
+	* file-coding.c (encode_coding_utf8):
+	* file-coding.c (detect_coding_iso2022):
+	* file-coding.c (decode_coding_iso2022):
+	* file-coding.c (iso2022_designate):
+	* file-coding.c (encode_coding_iso2022):
+	* file-coding.c (decode_coding_no_conversion):
+	* file-coding.c (encode_coding_no_conversion):
+	* fileio.c (read_allowing_quit):
+	* fileio.c (write_allowing_quit):
+	* filelock.c (struct):
+	* filelock.c (LOCK_PID_MAX):
+	* filelock.c (fill_in_lock_file_name):
+	* filelock.c (lock_file_1):
+	* filelock.c (lock_file):
+	* floatfns.c (float_hash):
+	* fns.c (print_bit_vector):
+	* fns.c (bit_vector_hash):
+	* fns.c (size_bit_vector):
+	* fns.c (Flength):
+	* fns.c (Fsafe_length):
+	* fns.c (copy_list):
+	* fns.c (Fnthcdr):
+	* fns.c (Ffillarray):
+	* fns.c (bytecode_nconc2):
+	* fns.c (Fnconc):
+	* fns.c (mapcar1):
+	* fns.c (Fmapcar):
+	* fns.c (Fmapvector):
+	* fns.c (XMALLOC_OR_ALLOCA):
+	* font-lock.c:
+	* font-lock.c (SYNTAX_END_STYLE):
+	* font-lock.c (SINGLE_SYNTAX_STYLE):
+	* font-lock.c (find_context):
+	* frame-x.c (x_set_initial_frame_size):
+	* frame-x.c (Fcde_start_drag_internal):
+	* frame-x.c (Foffix_start_drag_internal):
+	* frame.h (struct frame):
+	* getloadavg.c:
+	* getloadavg.c (getloadavg):
+	* gif_io.c (GifStdRead):
+	* gif_io.c (GifStdWrite):
+	* gif_io.c (GifRead):
+	* gif_io.c (GifWrite):
+	* gifrlib.h:
+	* glyphs-eimage.c (message):
+	* glyphs-eimage.c (our_skip_input_data):
+	* glyphs-eimage.c (jpeg_memory_src):
+	* glyphs-eimage.c (gif_instantiate_unwind):
+	* glyphs-eimage.c (gif_read_from_memory):
+	* glyphs-eimage.c (gif_memory_close):
+	* glyphs-eimage.c (gif_error_func):
+	* glyphs-eimage.c (png_read_from_memory):
+	* glyphs-eimage.c (tiff_memory_read):
+	* glyphs-eimage.c (tiff_memory_write):
+	* glyphs-eimage.c (tiff_memory_seek):
+	* glyphs-eimage.c (tiff_memory_close):
+	* glyphs-eimage.c (tiff_map_noop):
+	* glyphs-eimage.c (tiff_unmap_noop):
+	* glyphs-eimage.c (tiff_memory_size):
+	* glyphs-eimage.c (tiff_error_func):
+	* glyphs-eimage.c (tiff_warning_func):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (mswindows_resource_instantiate):
+	* glyphs-msw.c (xbm_create_bitmap_from_data):
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* glyphs-shared.c (read_bitmap_data):
+	* glyphs-shared.c (read_bitmap_data_from_file):
+	* glyphs-x.c (x_image_instance_hash):
+	* glyphs-x.c (write_lisp_string_to_temp_file):
+	* glyphs-x.c (check_pointer_sizes):
+	* glyphs-x.c (x_xpm_instantiate):
+	* glyphs-x.c (x_subwindow_instantiate):
+	* glyphs.c (image_instance_hash):
+	* glyphs.c (bitmap_to_lisp_data):
+	* glyphs.c (instantiator_eq_hash):
+	* glyphs.c (glyph_hash):
+	* glyphs.h:
+	* glyphs.h (INITIALIZE_DEVICE_IIFORMAT):
+	* glyphs.h (struct Lisp_Image_Instance):
+	* glyphs.h (struct expose_ignore):
+	* gmalloc.c (_free_internal):
+	* gpmevent.c (tty_get_foreign_selection):
+	* gui-x.c (add_accel_and_to_external):
+	* gui.c (gui_item_display_flush_left):
+	* gui.c (gui_item_display_flush_right):
+	* gui.c (gui_item_hash):
+	* gui.h:
+	* hash.c:
+	* hash.c (memory_hash):
+	* hash.c (string_hash):
+	* hash.c (hash_table_size):
+	* hash.c (gethash):
+	* hash.c (make_hash_table):
+	* hash.c (make_general_hash_table):
+	* hash.c (grow_hash_table):
+	* hash.c (puthash):
+	* hash.c (rehash):
+	* hash.c (remhash):
+	* hash.h:
+	* hash.h (struct hash_table):
+	* hftctl.c (RD_BUF):
+	* imgproc.c (build_EImage_quantable):
+	* insdel.c (bytecount_to_charcount):
+	* keymap.c:
+	* keymap.c (make_keymap):
+	* keymap.c (relevant_map_push):
+	* line-number.c (insert_invalidate_line_number_cache):
+	* linuxplay.c (linux_play_data_or_file):
+	* lisp.h:
+	* lisp.h (DO_REALLOC):
+	* lisp.h (struct Lisp_Bit_Vector):
+	* lisp.h (bit_vector_bit):
+	* lisp.h (set_bit_vector_bit):
+	* lisp.h (struct lcrecord_list):
+	* lisp.h (struct overhead_stats):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (lrecord_description_type):
+	* lrecord.h (struct lrecord_description):
+	* lrecord.h (struct struct_description):
+	* lrecord.h (MAKE_EXTERNAL_LRECORD_IMPLEMENTATION):
+	* lrecord.h (RECORD_TYPEP):
+	* lrecord.h (DECLARE_EXTERNAL_LRECORD):
+	* lstream.c:
+	* lstream.c (aligned_sizeof_lstream):
+	* lstream.c (sizeof_lstream):
+	* lstream.c (Lstream_flush_out):
+	* lstream.c (Lstream_adding):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_read_more):
+	* lstream.c (Lstream_read):
+	* lstream.c (Lstream_unread):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (stdio_reader):
+	* lstream.c (stdio_writer):
+	* lstream.c (filedesc_reader):
+	* lstream.c (filedesc_writer):
+	* lstream.c (lisp_string_reader):
+	* lstream.c (struct fixed_buffer_stream):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (fixed_buffer_reader):
+	* lstream.c (fixed_buffer_writer):
+	* lstream.c (struct resizing_buffer_stream):
+	* lstream.c (resizing_buffer_writer):
+	* lstream.c (dynarr_writer):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_writer):
+	* lstream.h:
+	* lstream.h (lstream_implementation):
+	* lstream.h (struct lstream):
+	* malloc.c:
+	* malloc.c (malloc):
+	* malloc.c (free):
+	* malloc.c (realloc):
+	* md5.c (Fmd5):
+	* menubar-msw.c (displayable_menu_item):
+	* mule-ccl.c (ccl_driver):
+	* mule-charset.c (non_ascii_charptr_copy_char):
+	* mule-charset.c (Lstream_get_emchar_1):
+	* mule-charset.h (struct Lisp_Charset):
+	* mule-charset.h (CHARSET_BY_ATTRIBUTES):
+	* mule-wnnfns.c (m2w):
+	* ntheap.c (recreate_heap):
+	* ntproc.c (find_child_pid):
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-msw.c (mswindows_initialize_color_instance):
+	* objects-msw.c (mswindows_valid_color_name_p):
+	* objects-x.c (x_initialize_font_instance):
+	* objects-x.c (truename_via_FONT_prop):
+	* objects-x.c (x_font_instance_properties):
+	* offix.c (DndDragButtons):
+	* offix.h:
+	* opaque.c (aligned_sizeof_opaque):
+	* opaque.c (sizeof_opaque):
+	* opaque.c (make_opaque):
+	* opaque.c (equal_opaque):
+	* opaque.c (reinit_opaque_once_early):
+	* opaque.h:
+	* opaque.h (Lisp_Opaque):
+	* postgresql.h (message):
+	* process-nt.c (alloc_process_memory):
+	* process-nt.c (run_in_other_process):
+	* process-nt.c (nt_send_process):
+	* process-unix.c (unix_send_process):
+	* rangetab.c (get_range_table):
+	* redisplay-msw.c (mswindows_output_cursor):
+	* redisplay-x.c (x_output_string):
+	* redisplay-x.c (x_output_vertical_divider):
+	* redisplay.c (add_hscroll_rune):
+	* redisplay.c (add_octal_runes):
+	* redisplay.c (add_control_char_runes):
+	* redisplay.c (add_propagation_runes):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (point_in_line_start_cache):
+	* redisplay.c (glyph_to_pixel_translation):
+	* regex.c:
+	* regex.c (init_syntax_once):
+	* regex.c (print_fastmap):
+	* regex.c (print_double_string):
+	* regex.c (struct):
+	* regex.c (PUSH_FAILURE_POINT):
+	* regex.c (POP_FAILURE_POINT):
+	* regex.c (union):
+	* regex.c (SET_REGS_MATCHED):
+	* regex.c (GET_BUFFER_SPACE):
+	* regex.c (regex_compile):
+	* regex.c (compile_range):
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_set_registers):
+	* regex.c (re_search_2):
+	* regex.c (re_match_2_internal):
+	* regex.c (regcomp):
+	* regex.c (regexec):
+	* regex.c (regerror):
+	* regex.h:
+	* regex.h (Element_Count):
+	* regex.h (struct re_pattern_buffer):
+	* regex.h (struct re_registers):
+	* search.c (skip_chars):
+	* select-gtk.c:
+	* select-gtk.c (symbol_to_gtk_atom):
+	* select-gtk.c (atom_to_symbol):
+	* select-gtk.c (PROCESSING_GTK_CODE):
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-gtk.c (gtk_get_window_property):
+	* select-gtk.c (receive_incremental_selection):
+	* select-gtk.c (gtk_get_window_property_as_lisp_data):
+	* select-x.c:
+	* select-x.c (symbol_to_x_atom):
+	* select-x.c (PROCESSING_X_CODE):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (copy_multiple_data):
+	* select-x.c (x_get_window_property):
+	* select-x.c (receive_incremental_selection):
+	* select-x.c (x_get_window_property_as_lisp_data):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	* sheap.c (report_sheap_usage):
+	* specifier.c (aligned_sizeof_specifier):
+	* specifier.c (sizeof_specifier):
+	* specifier.c (make_specifier_internal):
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defkeyword_massage_name):
+	* symbols.c (deferror_massage_name_and_message):
+	* sysdep.c (get_eof_char):
+	* sysdep.c (tty_init_sys_modes_on_device):
+	* sysdep.c (init_system_name):
+	* sysdir.h (select):
+	* tests.c (Ftest_data_format_conversion):
+	* tparam.c:
+	* unexaix.c (copy_sym):
+	* unexconvex.c (sptr;):
+	* unexconvex.c (copy_sym):
+	* unexcw.c:
+	* unexcw.c (unexec):
+	* unexcw.c (ALLOC_MASK):
+	* unexcw.c (CHECK_AOUT_POS):
+	* unexcw.c (get_section_info):
+	* unexcw.c (copy_executable_and_dump_data_section):
+	* unexcw.c (dup_file_area):
+	* unexcw.c (write_int_to_bss):
+	* unexec.c (make_hdr):
+	* unexec.c (copy_sym):
+	* window.c (struct window_config):
+	* window.c (mark_window_config):
+	* window.c (sizeof_window_config_for_n_windows):
+	* window.c (sizeof_window_config):
+	* window.c (window_config_equal):
+	* window.c (free_window_configuration):
+	* window.c (Fset_window_configuration):
+	* window.c (count_windows):
+	* window.c (Fcurrent_window_configuration):
+	* window.c (reinit_vars_of_window):
+	* xgccache.c (gc_cache_hash):
+	* xmu.c (XmuCursorNameToIndex):
+	Create types Memory_Count, Element_Count, Hash_Code.  The first
+	two are EMACS_INT, the last EMACS_UINT.  Use them to replace
+	size_t, and to replace int/unsigned int where appropriate
+	(there are probably more such places).
+
+	Eliminate size_t and hashcode_t everywhere except in ancillary
+	code that is borrowed from elsewhere. (Use Memory_Count,
+	Element_Count, Hash_Code, Bytecount, Extcount, or EMACS_INT.)
+	Eliminate use of unsigned everywhere except in the same code, when
+	(a) it holds a simple count (rather than a bit flag and such); (b)
+	it refers to an int or long, not something smaller; (c) it's not
+	necessary specifically to call an external API with such a
+	parameter (we treat such parameters like Extbyte, and convert at
+	the point of entry/exit); and (d) there's no reasonable
+	possibility it will refer to a value greater than 2G, or if it
+	could, other things in XEmacs would break.
+	
+	Put parens around all sizeof args in case we decide to macro-ize
+	this. (I don't think it's necessary.  Now that we've turned
+	sign-compare warnings back on, we will get warnings wherever the
+	unsigned return value of sizeof might cause problems.  That's
+	what the warnings are for, after all.)
+
+	Eliminate dumper type XD_SIZE_T and replace with XD_MEMORY_COUNT,
+	XD_ELEMENT_COUNT, XD_HASH_CODE.
+
+	Rename Lstream_data_count to Lstream_Data_Count, following the
+	capitalization conventions used in other types.
+
+	* elhash.c (hash_table_size):
+	Hash table sizes are signed now, so comment out the two highest
+	(post-2G) numbers in the primes list.
+
+	* event-msw.c (mswindows_current_layout_has_AltGr):
+	Rewrite to be a bit more correct and fix unsigned problems.
+
+	* extents.c (extent_hash):
+	* extents.c (set_extent_glyph):
+	* extents.c (Fset_extent_begin_glyph_layout):
+	* extents.c (Fset_extent_end_glyph_layout):
+	* extents.h:
+	* extents.h (set_extent_normal_field):
+	* extents.h (extent_begin_glyph_layout):
+	To eliminate warnings, create set functions for the enum fields
+	in struct extent.
+
+	* filelock.c: Use pid_t instead of unsigned long to represent a pid.
+	(#### Perhaps a bad idea.  Generally using unknown types of this
+	sort is bad.)
+
+	* gif_io.c:
+	Include lisp.h.
+
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (gif_memory_storage):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (struct png_memory_storage):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_memory_storage):
+	* glyphs-eimage.c (tiff_instantiate):
+	Replace Extbyte with more correct UChar_Binary, Extcount with
+	Memory_Count.
+
+	* glyphs-shared.c (read_bitmap_data):
+	Replace char with Char_ASCII.
+
+	* gui-x.c:
+	Replace unsigned int with more correct LWLIB_ID for lwlib_id_tick.
+
+	* hftctl.c:
+	This was trying to include "lisp.h" to encapsulated file functions
+	(where they once were encapsulated, but no more); so include
+	sysfile.h.  This only affects read().
+
+	* imgproc.c (get_histogram):
+	replace unsigned char with UChar_Binary.
+
+	* lisp.h:
+	Move basic types to top of file since we need them in some
+	macros just below.
+
+	* redisplay-x.c:
+	Convert various variables that were declared as unsigned due to
+	return values from X functions to be signed, and create "external"
+	versions of the variables to retrieve the unsigned value, which is
+	then immediately converted to signed.
+
+	* tparam.c:
+	Eliminate useless non-#ifdef emacs code.
+
+	* select-common.h:
+	* select-gtk.c:
+	* select-x.c:
+	Abstract out hairy and duplicated code from select-x/gtk.c and
+	put into select-common.h.  Use ifdefs to handle the (small
+	number of) differences.
+
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (copy_multiple_data):
+	* select-x.c (x_get_window_property):
+	* select-x.c (receive_incremental_selection):
+	* select-x.c (x_get_window_property_as_lisp_data):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	Replace uses of `unsigned char' and `Extbyte' with UChar_Binary.
+
+	* sysdep.c (init_baud_rate):
+	Fix warning when HAVE_TTY not defined.
+
+	* glyphs-eimage.c:
+	* postgresql.h:
+	* sysdir.h:
+	Do some hackery to avoid shadowing warnings.
+
+	* s\esix.h: 
+	* m\tad68k.h:
+	Comment out redefinition of select (we don't have our own version
+	anyway, and we play preprocessor games with select in sysdir.h).
+
 2001-08-04  Adrian Aichner  <adrian@xemacs.org>
 
 	* console.c: Fix of compile error on darwin, as suggested by Toby

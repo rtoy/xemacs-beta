@@ -428,7 +428,7 @@ msprinter_init_device (struct device *d, Lisp_Object props)
 {
   char* printer_name;
   DEVMODE *pdm;
-  size_t dm_size;
+  LONG dm_size;
 
   d->device_data = xnew_and_zero (struct msprinter_device);
 
@@ -932,7 +932,7 @@ Return value is the previously selected settings object.
      printer name at all. */
   if (ldm->printer_name == NULL)
     {
-      size_t dm_size =
+      LONG dm_size =
 	DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
 			    DEVICE_MSPRINTER_NAME(d), NULL, NULL, 0);
       if (dm_size <= 0)
@@ -1089,7 +1089,7 @@ equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return stricmp (dm1->printer_name, dm2->printer_name) == 0;
 }
 
-static unsigned long
+static Hash_Code
 hash_devmode (Lisp_Object obj, int depth)
 {
   Lisp_Devmode *dm = XDEVMODE (obj);
@@ -1201,7 +1201,7 @@ values.  Return value is nil if there are no printers installed.
 {
   int have_nt, ok;
   BYTE *data_buf, dummy_byte;
-  size_t enum_entry_size;
+  Memory_Count enum_entry_size;
   DWORD enum_flags, enum_level, bytes_needed, num_printers;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object result = Qnil, def_printer = Qnil;

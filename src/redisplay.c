@@ -775,7 +775,7 @@ add_hscroll_rune (pos_data *data)
   struct glyph_block gb;
   prop_block_dynarr *retval;
   Bytind bi_old_cursor_bufpos = data->bi_cursor_bufpos;
-  unsigned int old_cursor_type = data->cursor_type;
+  int old_cursor_type = data->cursor_type;
   Bytind bi_old_bufpos = data->bi_bufpos;
 
   if (data->cursor_type == CURSOR_ON
@@ -1113,7 +1113,7 @@ add_octal_runes (pos_data *data)
 {
   prop_block_dynarr *prop, *add_failed;
   Emchar orig_char = data->ch;
-  unsigned int orig_cursor_type = data->cursor_type;
+  int orig_cursor_type = data->cursor_type;
 
   /* Initialize */
   prop = NULL;
@@ -1190,7 +1190,7 @@ add_control_char_runes (pos_data *data, struct buffer *b)
     {
       prop_block_dynarr *prop;
       Emchar orig_char = data->ch;
-      unsigned int old_cursor_type = data->cursor_type;
+      int old_cursor_type = data->cursor_type;
 
       /* Initialize */
       prop = NULL;
@@ -1382,7 +1382,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
   int elt;
   prop_block_dynarr *add_failed;
   Bytind bi_old_cursor_bufpos = data->bi_cursor_bufpos;
-  unsigned int old_cursor_type = data->cursor_type;
+  int old_cursor_type = data->cursor_type;
 
   for (elt = 0; elt < Dynarr_length (*prop); elt++)
     {
@@ -5953,7 +5953,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   Fset_marker (w->start[DESIRED_DISP], make_int (startp), the_buffer);
 
   truncation_changed = (find_window_mirror (w)->truncate_win !=
-			window_truncation_on (w));
+			(unsigned int) window_truncation_on (w));
 
   /* If w->force_start is set, then some function set w->start and we
      should display from there and change point, if necessary, to
@@ -7246,7 +7246,7 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
 {
   struct buffer *b = XBUFFER (w->buffer);
   line_start_cache_dynarr *cache = w->line_start_cache;
-  unsigned int top, bottom, pos;
+  int top, bottom, pos;
 
   validate_line_start_cache (w);
   w->line_cache_validation_override++;
@@ -7374,7 +7374,7 @@ find_point_loop:
 
   while (1)
     {
-      unsigned int new_pos;
+      int new_pos;
       Bufpos start, end;
 
       pos = (bottom + top + 1) >> 1;
@@ -8100,7 +8100,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
       struct display_block *db = get_display_block_from_line (dl, TEXT);
 
       *pix_y = (dl->ypos - dl->ascent +
-		((unsigned int) (dl->ascent + dl->descent - dl->clip) >> 1));
+		((dl->ascent + dl->descent - dl->clip) >> 1));
 
       if (char_x < Dynarr_length (db->runes))
 	{

@@ -4738,9 +4738,9 @@ call2_trapping_errors (const CBufbyte *warning_string, Lisp_Object function,
 #define min_max_specpdl_size 400
 
 void
-grow_specpdl (size_t reserved)
+grow_specpdl (EMACS_INT reserved)
 {
-  size_t size_needed = specpdl_depth() + reserved;
+  EMACS_INT size_needed = specpdl_depth() + reserved;
   if (size_needed >= max_specpdl_size)
     {
       if (max_specpdl_size < min_max_specpdl_size)

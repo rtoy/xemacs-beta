@@ -84,10 +84,10 @@ int  gui_item_included_p (Lisp_Object, Lisp_Object into);
 Lisp_Object gui_item_accelerator (Lisp_Object gui_item);
 Lisp_Object gui_name_accelerator (Lisp_Object name);
 int  gui_item_id_hash (Lisp_Object, Lisp_Object gui_item, int);
-unsigned int gui_item_display_flush_left  (Lisp_Object pgui_item,
-					   char* buf, Bytecount buf_len);
-unsigned int gui_item_display_flush_right (Lisp_Object gui_item,
-					   char* buf, Bytecount buf_len);
+Bytecount gui_item_display_flush_left  (Lisp_Object pgui_item,
+					char* buf, Bytecount buf_len);
+Bytecount gui_item_display_flush_right (Lisp_Object gui_item,
+					char* buf, Bytecount buf_len);
 
 Lisp_Object allocate_gui_item (void);
 void gui_item_init (Lisp_Object gui_item);

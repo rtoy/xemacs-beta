@@ -200,9 +200,9 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
       /* connection =~ s/^unix:/localhost:/; */
       const Bufbyte *p   = XSTRING_DATA (connection);
       const Bufbyte *end = XSTRING_DATA (connection) + XSTRING_LENGTH (connection);
-      size_t i;
+      int i;
 
-      for (i = 0; i < sizeof ("unix:") - 1; i++)
+      for (i = 0; i < (int) sizeof ("unix:") - 1; i++)
 	{
 	  if (p == end || charptr_emchar (p) != "unix:"[i])
 	    goto ok;

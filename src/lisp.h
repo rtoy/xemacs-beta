@@ -45,6 +45,124 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #include <limits.h>
 
+/* ------------------------ definition of EMACS_INT ------------------- */
+
+/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
+   In particular, it must be large enough to contain a pointer.
+   config.h can override this, e.g. to use `long long' for bigger lisp ints.
+
+   #### In point of fact, it would NOT be a good idea for config.h to mess
+   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
+   is the size of a pointer. */
+
+#ifndef SIZEOF_EMACS_INT
+# define SIZEOF_EMACS_INT SIZEOF_VOID_P
+#endif
+
+#ifndef EMACS_INT
+# if   SIZEOF_EMACS_INT == SIZEOF_LONG
+#  define EMACS_INT long
+# elif SIZEOF_EMACS_INT == SIZEOF_INT
+#  define EMACS_INT int
+# elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
+#  define EMACS_INT long long
+# else
+#  error Unable to determine suitable type for EMACS_INT
+# endif
+#endif
+
+#ifndef EMACS_UINT
+# define EMACS_UINT unsigned EMACS_INT
+#endif
+
+#define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
+
+/* ------------------------ basic char/int typedefs ------------------- */
+
+/* The definitions we put here use typedefs to attribute specific meaning
+   to types that by themselves are pretty general.  Stuff pointed to by a
+   char * or unsigned char * will nearly always be one of four types:
+   a) pointer to internally-formatted text; b) pointer to text in some
+   external format, which can be defined as all formats other than the
+   internal one; c) pure ASCII text; d) binary data that is not meant to
+   be interpreted as text. [A fifth possible type "e) a general pointer
+   to memory" should be replaced with void *.]  Using these more specific
+   types rather than the general ones helps avoid the confusions that
+   occur when the semantics of a char * argument being studied are unclear.
+
+   Note that these typedefs are purely for documentation purposes; from
+   the C code's perspective, they are exactly equivalent to `char *',
+   `unsigned char *', etc., so you can freely use them with library
+   functions declared as such. */
+
+/* The data representing the text in a buffer is logically a set
+   of Bufbytes, declared as follows. */
+
+typedef unsigned char Bufbyte;
+
+/* The following should be used when you are working with internal data
+   but for whatever reason need to have it declared a "char *".  Examples
+   are function arguments whose values are most commonly literal strings,
+   or where you have to apply a stdlib string function to internal data.
+
+   In general, you should avoid this where possible and use Bufbyte instead,
+   for consistency.  For example, the new Mule workspace contains
+   Bufbyte versions of the stdlib string functions. */
+
+typedef char CBufbyte;
+
+/* The data representing a string in "external" format (binary or any
+   external encoding) is logically a set of Extbytes, declared as
+   follows.  Extbyte is guaranteed to be just a char, so for example
+   strlen (Extbyte *) is OK.  Extbyte is only a documentation device
+   for referring to external text. */
+
+typedef char Extbyte;
+
+/* A byte in a string in binary format: */
+typedef char Char_Binary;
+typedef signed char SChar_Binary;
+typedef unsigned char UChar_Binary;
+
+/* A byte in a string in entirely US-ASCII format: (Nothing outside
+ the range 00 - 7F) */
+
+typedef char Char_ASCII;
+typedef unsigned char UChar_ASCII;
+
+
+/* To the user, a buffer is made up of characters, declared as follows.
+   In the non-Mule world, characters and Bufbytes are equivalent.
+   In the Mule world, a character requires (typically) 1 to 4
+   Bufbytes for its representation in a buffer. */
+
+typedef int Emchar;
+
+/* Different ways of referring to a position in a buffer.  We use
+   the typedefs in preference to 'EMACS_INT' to make it clearer what
+   sort of position is being used.  See extents.c for a description
+   of the different positions.  We put them here instead of in
+   buffer.h (where they rightfully belong) to avoid syntax errors
+   in function prototypes. */
+
+typedef EMACS_INT Bufpos;
+typedef EMACS_INT Bytind;
+typedef EMACS_INT Memind;
+
+/* Counts of bytes or chars */
+
+typedef EMACS_INT Bytecount;
+typedef EMACS_INT Charcount;
+
+/* Length in bytes of a string in external format */
+typedef EMACS_INT Extcount;
+
+/* General counts of bytes or elements */
+typedef EMACS_INT Memory_Count;
+typedef EMACS_INT Element_Count;
+
+typedef unsigned long Hash_Code;
+
 /* ------------------------ dynamic arrays ------------------- */
 
 #define Dynarr_declare(type)	\
@@ -98,7 +216,7 @@ void Dynarr_free (void *d);
 
 #ifdef MEMORY_USAGE_STATS
 struct overhead_stats;
-size_t Dynarr_memory_usage (void *d, struct overhead_stats *stats);
+Memory_Count Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 #endif
 
 /* Also define min() and max(). (Some compilers put them in strange
@@ -114,9 +232,9 @@ size_t Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 
 /* Memory allocation */
 void malloc_warning (const char *);
-void *xmalloc (size_t size);
-void *xmalloc_and_zero (size_t size);
-void *xrealloc (void *, size_t size);
+void *xmalloc (Memory_Count size);
+void *xmalloc_and_zero (Memory_Count size);
+void *xrealloc (void *, Memory_Count size);
 char *xstrdup (const char *);
 /* generally useful */
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
@@ -136,7 +254,7 @@ char *xstrdup (const char *);
    least NEEDED_SIZE objects.  The reallocing is done by doubling,
    which ensures constant amortized time per element. */
 #define DO_REALLOC(basevar, sizevar, needed_size, type)	do {	\
-  size_t do_realloc_needed_size = (needed_size);		\
+  Memory_Count do_realloc_needed_size = (needed_size);		\
   if ((sizevar) < do_realloc_needed_size)			\
     {								\
       if ((sizevar) < 32)					\
@@ -265,142 +383,28 @@ void assert_failed (const char *, int, const char *);
 /*#endif*/
 
 
-/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
-   In particular, it must be large enough to contain a pointer.
-   config.h can override this, e.g. to use `long long' for bigger lisp ints.
-
-   #### In point of fact, it would NOT be a good idea for config.h to mess
-   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
-   is the size of a pointer. */
-
-#ifndef SIZEOF_EMACS_INT
-# define SIZEOF_EMACS_INT SIZEOF_VOID_P
-#endif
-
-#ifndef EMACS_INT
-# if   SIZEOF_EMACS_INT == SIZEOF_LONG
-#  define EMACS_INT long
-# elif SIZEOF_EMACS_INT == SIZEOF_INT
-#  define EMACS_INT int
-# elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
-#  define EMACS_INT long long
-# else
-#  error Unable to determine suitable type for EMACS_INT
-# endif
-#endif
-
-#ifndef EMACS_UINT
-# define EMACS_UINT unsigned EMACS_INT
-#endif
-
-#define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
-
 
 /************************************************************************/
 /*				  typedefs				*/
 /************************************************************************/
+
+/* Note that the simplest typedefs are near the top of this file. */
 
 /* We put typedefs here so that prototype declarations don't choke.
    Note that we don't actually declare the structures here (except
    maybe for simple structures like Dynarrs); that keeps them private
    to the routines that actually use them. */
 
-/* ------------------------------- */
-/*     basic char/int typedefs     */
-/* ------------------------------- */
-
-/* The definitions we put here use typedefs to attribute specific meaning
-   to types that by themselves are pretty general.  Stuff pointed to by a
-   char * or unsigned char * will nearly always be one of four types:
-   a) pointer to internally-formatted text; b) pointer to text in some
-   external format, which can be defined as all formats other than the
-   internal one; c) pure ASCII text; d) binary data that is not meant to
-   be interpreted as text. [A fifth possible type "e) a general pointer
-   to memory" should be replaced with void *.]  Using these more specific
-   types rather than the general ones helps avoid the confusions that
-   occur when the semantics of a char * argument being studied are unclear.
-
-   Note that these typedefs are purely for documentation purposes; from
-   the C code's perspective, they are exactly equivalent to `char *',
-   `unsigned char *', etc., so you can freely use them with library
-   functions declared as such. */
-
-/* The data representing the text in a buffer is logically a set
-   of Bufbytes, declared as follows. */
-
-typedef unsigned char Bufbyte;
-
-/* The following should be used when you are working with internal data
-   but for whatever reason need to have it declared a "char *".  Examples
-   are function arguments whose values are most commonly literal strings,
-   or where you have to apply a stdlib string function to internal data.
-
-   In general, you should avoid this where possible and use Bufbyte instead,
-   for consistency.  For example, the new Mule workspace contains
-   Bufbyte versions of the stdlib string functions. */
-
-typedef char CBufbyte;
-
-/* The data representing a string in "external" format (binary or any
-   external encoding) is logically a set of Extbytes, declared as
-   follows.  Extbyte is guaranteed to be just a char, so for example
-   strlen (Extbyte *) is OK.  Extbyte is only a documentation device
-   for referring to external text. */
-
-typedef char Extbyte;
-
-/* A byte in a string in binary format: */
-typedef char Char_Binary;
-typedef signed char SChar_Binary;
-typedef unsigned char UChar_Binary;
-
-/* A byte in a string in entirely US-ASCII format: (Nothing outside
- the range 00 - 7F) */
-
-typedef char Char_ASCII;
-typedef unsigned char UChar_ASCII;
-
-
-/* To the user, a buffer is made up of characters, declared as follows.
-   In the non-Mule world, characters and Bufbytes are equivalent.
-   In the Mule world, a character requires (typically) 1 to 4
-   Bufbytes for its representation in a buffer. */
-
-typedef int Emchar;
-
-/* Different ways of referring to a position in a buffer.  We use
-   the typedefs in preference to 'EMACS_INT' to make it clearer what
-   sort of position is being used.  See extents.c for a description
-   of the different positions.  We put them here instead of in
-   buffer.h (where they rightfully belong) to avoid syntax errors
-   in function prototypes. */
-
-typedef EMACS_INT Bufpos;
-typedef EMACS_INT Bytind;
-typedef EMACS_INT Memind;
-
-/* Counts of bytes or chars */
-
-typedef EMACS_INT Bytecount;
-typedef EMACS_INT Charcount;
-
-/* Length in bytes of a string in external format */
-typedef EMACS_INT Extcount;
-
-/* ------------------------------- */
-/*     structure/other typedefs    */
-/* ------------------------------- */
-
 typedef struct lstream Lstream;
 
-typedef unsigned int face_index;
+typedef int face_index;
 
 typedef struct
 {
   Dynarr_declare (struct face_cachel);
 } face_cachel_dynarr;
 
-typedef unsigned int glyph_index;
+typedef int glyph_index;
 
 /* This is shared by process.h, events.h and others in future.
    See events.h for description */
@@ -1287,7 +1291,7 @@ struct Lisp_Bit_Vector
 {
   struct lrecord_header lheader;
   Lisp_Object next;
-  size_t size;
+  Element_Count size;
   unsigned long bits[1];
 };
 typedef struct Lisp_Bit_Vector Lisp_Bit_Vector;
@@ -1315,17 +1319,17 @@ DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
 #define bit_vector_length(v) ((v)->size)
 #define bit_vector_next(v) ((v)->next)
 
-INLINE_HEADER int bit_vector_bit (Lisp_Bit_Vector *v, size_t n);
+INLINE_HEADER int bit_vector_bit (Lisp_Bit_Vector *v, Element_Count n);
 INLINE_HEADER int
-bit_vector_bit (Lisp_Bit_Vector *v, size_t n)
+bit_vector_bit (Lisp_Bit_Vector *v, Element_Count n)
 {
   return ((v->bits[n >> LONGBITS_LOG2] >> (n & (LONGBITS_POWER_OF_2 - 1)))
 	  & 1);
 }
 
-INLINE_HEADER void set_bit_vector_bit (Lisp_Bit_Vector *v, size_t n, int value);
+INLINE_HEADER void set_bit_vector_bit (Lisp_Bit_Vector *v, Element_Count n, int value);
 INLINE_HEADER void
-set_bit_vector_bit (Lisp_Bit_Vector *v, size_t n, int value)
+set_bit_vector_bit (Lisp_Bit_Vector *v, Element_Count n, int value)
 {
   if (value)
     v->bits[n >> LONGBITS_LOG2] |= (1UL << (n & (LONGBITS_POWER_OF_2 - 1)));
@@ -1691,7 +1695,7 @@ struct lcrecord_list
 {
   struct lcrecord_header header;
   Lisp_Object free;
-  size_t size;
+  Element_Count size;
   const struct lrecord_implementation *implementation;
 };
 
@@ -1704,7 +1708,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    Lcrecord lists should never escape to the Lisp level, so
    functions should not be doing this. */
 
-Lisp_Object make_lcrecord_list (size_t size,
+Lisp_Object make_lcrecord_list (Element_Count size,
 				const struct lrecord_implementation
 				*implementation);
 Lisp_Object allocate_managed_lcrecord (Lisp_Object lcrecord_list);
@@ -1885,7 +1889,7 @@ void signal_quit (void);
 
 #define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
 unsigned long string_hash (const char *xv);
-unsigned long memory_hash (const void *xv, size_t size);
+unsigned long memory_hash (const void *xv, Memory_Count size);
 unsigned long internal_hash (Lisp_Object obj, int depth);
 unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 
@@ -2186,7 +2190,7 @@ void dump_add_root_struct_ptr (void *, const struct struct_description *);
 
 /* dump_add_opaque (&var, size) dumps the opaque static structure `var'. */
 #ifdef PDUMP
-void dump_add_opaque (const void *, size_t);
+void dump_add_opaque (const void *, Memory_Count);
 #else
 #define dump_add_opaque(varaddr,size) DO_NOTHING
 #endif
@@ -2254,10 +2258,10 @@ extern int initialized;
 
 struct overhead_stats
 {
-  int was_requested;
-  int malloc_overhead;
-  int dynarr_overhead;
-  int gap_overhead;
+  Memory_Count was_requested;
+  Memory_Count malloc_overhead;
+  Memory_Count dynarr_overhead;
+  Memory_Count gap_overhead;
 };
 
 #endif /* MEMORY_USAGE_STATS */
@@ -2319,12 +2323,12 @@ typedef unsigned long uintptr_t;
 /* Defined in alloc.c */
 void release_breathing_space (void);
 Lisp_Object noseeum_cons (Lisp_Object, Lisp_Object);
-Lisp_Object make_vector (size_t, Lisp_Object);
+Lisp_Object make_vector (Element_Count, Lisp_Object);
 Lisp_Object vector1 (Lisp_Object);
 Lisp_Object vector2 (Lisp_Object, Lisp_Object);
 Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object make_bit_vector (size_t, Lisp_Object);
-Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, size_t);
+Lisp_Object make_bit_vector (Element_Count, Lisp_Object);
+Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Element_Count);
 Lisp_Object noseeum_make_marker (void);
 void garbage_collect_1 (void);
 Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -2363,8 +2367,8 @@ void mark_object (Lisp_Object obj);
 int marked_p (Lisp_Object obj);
 
 #ifdef MEMORY_USAGE_STATS
-size_t malloced_storage_size (void *, size_t, struct overhead_stats *);
-size_t fixed_type_block_overhead (size_t);
+Memory_Count malloced_storage_size (void *, Memory_Count, struct overhead_stats *);
+Memory_Count fixed_type_block_overhead (Memory_Count);
 #endif
 #ifdef PDUMP
 void pdump (void);
@@ -2702,8 +2706,9 @@ DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
 DECLARE_DOESNT_RETURN (report_file_error (const CBufbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
-ssize_t read_allowing_quit (int, void *, size_t);
-ssize_t write_allowing_quit (int, const void *, size_t);
+Memory_Count read_allowing_quit (int fildes, void *buf, Memory_Count size);
+Memory_Count write_allowing_quit (int fildes, const void *buf,
+				  Memory_Count size);
 int internal_delete_file (Lisp_Object);
 
 /* Defined in filelock.c */

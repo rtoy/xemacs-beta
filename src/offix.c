@@ -356,11 +356,11 @@ DndDataType(XEvent *event)
   return Type;
 }
 
-unsigned int
+int
 DndDragButtons(XEvent *event)
 {
   if(!DndIsDropMessage(event)) return 0;
-  return (unsigned int)(event->xclient.data.l[1]);
+  return (int)(event->xclient.data.l[1]);
 }
 
 Window

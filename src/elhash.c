@@ -82,12 +82,12 @@ typedef struct hentry
 struct Lisp_Hash_Table
 {
   struct lcrecord_header header;
-  size_t size;
-  size_t count;
-  size_t rehash_count;
+  Element_Count size;
+  Element_Count count;
+  Element_Count rehash_count;
   double rehash_size;
   double rehash_threshold;
-  size_t golden_ratio;
+  Element_Count golden_ratio;
   hash_table_hash_function_t hash_function;
   hash_table_test_function_t test_function;
   hentry *hentries;
@@ -143,13 +143,13 @@ check_hash_table_invariants (Lisp_Hash_Table *ht)
 #endif
 
 /* Return a suitable size for a hash table, with at least SIZE slots. */
-static size_t
-hash_table_size (size_t requested_size)
+static Element_Count
+hash_table_size (Element_Count requested_size)
 {
   /* Return some prime near, but greater than or equal to, SIZE.
      Decades from the time of writing, someone will have a system large
      enough that the list below will be too short... */
-  static const size_t primes [] =
+  static const Element_Count primes [] =
   {
     19, 29, 41, 59, 79, 107, 149, 197, 263, 347, 457, 599, 787, 1031,
     1361, 1777, 2333, 3037, 3967, 5167, 6719, 8737, 11369, 14783,
@@ -159,7 +159,7 @@ hash_table_size (size_t requested_size)
     10445899, 13579681, 17653589, 22949669, 29834603, 38784989,
     50420551, 65546729, 85210757, 110774011, 144006217, 187208107,
     243370577, 316381771, 411296309, 534685237, 695090819, 903618083,
-    1174703521, 1527114613, 1985248999, 2580823717UL, 3355070839UL
+    1174703521, 1527114613, 1985248999 /* , 2580823717UL, 3355070839UL */
   };
   /* We've heard of binary search. */
   int low, high;
@@ -188,7 +188,7 @@ lisp_string_equal (Lisp_Object str1, Lisp_Object str2)
   return !strcmp ((char *) XSTRING_DATA (str1), (char *) XSTRING_DATA (str2));
 }
 
-static hashcode_t
+static Hash_Code
 lisp_string_hash (Lisp_Object obj)
 {
   return hash_string (XSTRING_DATA (str), XSTRING_LENGTH (str));
@@ -202,7 +202,7 @@ lisp_object_eql_equal (Lisp_Object obj1, Lisp_Object obj2)
   return EQ (obj1, obj2) || (FLOATP (obj1) && internal_equal (obj1, obj2, 0));
 }
 
-static hashcode_t
+static Hash_Code
 lisp_object_eql_hash (Lisp_Object obj)
 {
   return FLOATP (obj) ? internal_hash (obj, 0) : LISP_HASH (obj);
@@ -214,7 +214,7 @@ lisp_object_equal_equal (Lisp_Object obj1, Lisp_Object obj2)
   return internal_equal (obj1, obj2, 0);
 }
 
-static hashcode_t
+static Hash_Code
 lisp_object_equal_hash (Lisp_Object obj)
 {
   return internal_hash (obj, 0);
@@ -283,7 +283,7 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
 /* This is not a great hash function, but it _is_ correct and fast.
    Examining all entries is too expensive, and examining a random
    subset does not yield a correct hash function. */
-static hashcode_t
+static Hash_Code
 hash_table_hash (Lisp_Object hash_table, int depth)
 {
   return XHASH_TABLE (hash_table)->count;
@@ -367,11 +367,9 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (ht->count || !print_readably)
     {
       if (print_readably)
-	sprintf (buf, " size %lu", (unsigned long) ht->count);
+	sprintf (buf, " size %ld", (long) ht->count);
       else
-	sprintf (buf, " size %lu/%lu",
-		 (unsigned long) ht->count,
-		 (unsigned long) ht->size);
+	sprintf (buf, " size %ld/%ld", (long) ht->count, (long) ht->size);
       write_c_string (buf, printcharfun);
     }
 
@@ -436,7 +434,7 @@ static const struct struct_description hentry_description = {
 };
 
 const struct lrecord_description hash_table_description[] = {
-  { XD_SIZE_T,     offsetof (Lisp_Hash_Table, size) },
+  { XD_ELEMENT_COUNT,     offsetof (Lisp_Hash_Table, size) },
   { XD_STRUCT_PTR, offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT(0, 1), &hentry_description },
   { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
   { XD_END }
@@ -467,15 +465,15 @@ xhash_table (Lisp_Object hash_table)
 static void
 compute_hash_table_derived_values (Lisp_Hash_Table *ht)
 {
-  ht->rehash_count = (size_t)
+  ht->rehash_count = (Element_Count)
     ((double) ht->size * ht->rehash_threshold);
-  ht->golden_ratio = (size_t)
+  ht->golden_ratio = (Element_Count)
     ((double) ht->size * (.6180339887 / (double) sizeof (Lisp_Object)));
 }
 
 Lisp_Object
 make_standard_lisp_hash_table (enum hash_table_test test,
-			       size_t size,
+			       Element_Count size,
 			       double rehash_size,
 			       double rehash_threshold,
 			       enum hash_table_weakness weakness)
@@ -512,7 +510,7 @@ make_standard_lisp_hash_table (enum hash_table_test test,
 Lisp_Object
 make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 			      hash_table_test_function_t test_function,
-			      size_t size,
+			      Element_Count size,
 			      double rehash_size,
 			      double rehash_threshold,
 			      enum hash_table_weakness weakness)
@@ -533,7 +531,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 
   if (size < HASH_TABLE_MIN_SIZE)
     size = HASH_TABLE_MIN_SIZE;
-  ht->size = hash_table_size ((size_t) (((double) size / ht->rehash_threshold)
+  ht->size = hash_table_size ((Element_Count) (((double) size / ht->rehash_threshold)
 					+ 1.0));
   ht->count = 0;
 
@@ -553,7 +551,7 @@ make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 }
 
 Lisp_Object
-make_lisp_hash_table (size_t size,
+make_lisp_hash_table (Element_Count size,
 		      enum hash_table_weakness weakness,
 		      enum hash_table_test test)
 {
@@ -583,7 +581,7 @@ hash_table_size_validate (Lisp_Object keyword, Lisp_Object value,
   return 0;
 }
 
-static size_t
+static Element_Count
 decode_hash_table_size (Lisp_Object obj)
 {
   return NILP (obj) ? HASH_TABLE_DEFAULT_SIZE : XINT (obj);
@@ -958,10 +956,10 @@ The keys and values will not themselves be copied.
 }
 
 static void
-resize_hash_table (Lisp_Hash_Table *ht, size_t new_size)
+resize_hash_table (Lisp_Hash_Table *ht, Element_Count new_size)
 {
   hentry *old_entries, *new_entries, *sentinel, *e;
-  size_t old_size;
+  Element_Count old_size;
 
   old_size = ht->size;
   ht->size = new_size;
@@ -1012,8 +1010,8 @@ pdump_reorganize_hash_table (Lisp_Object hash_table)
 static void
 enlarge_hash_table (Lisp_Hash_Table *ht)
 {
-  size_t new_size =
-    hash_table_size ((size_t) ((double) ht->size * ht->rehash_size));
+  Element_Count new_size =
+    hash_table_size ((Element_Count) ((double) ht->size * ht->rehash_size));
   resize_hash_table (ht, new_size);
 }
 
@@ -1069,7 +1067,7 @@ Hash KEY to VALUE in HASH-TABLE.
 static void
 remhash_1 (Lisp_Hash_Table *ht, hentry *entries, hentry *probe)
 {
-  size_t size = ht->size;
+  Element_Count size = ht->size;
   CLEAR_HENTRY (probe);
   probe++;
   ht->count--;
@@ -1552,11 +1550,11 @@ prune_weak_hash_tables (void)
 
 /* Return a hash value for an array of Lisp_Objects of size SIZE. */
 
-hashcode_t
+Hash_Code
 internal_array_hash (Lisp_Object *arr, int size, int depth)
 {
   int i;
-  hashcode_t hash = 0;
+  Hash_Code hash = 0;
   depth++;
 
   if (size <= 5)
@@ -1587,7 +1585,7 @@ internal_array_hash (Lisp_Object *arr, int size, int depth)
    we could still take 5^5 time (a big big number) to compute a
    hash, but practically this won't ever happen. */
 
-hashcode_t
+Hash_Code
 internal_hash (Lisp_Object obj, int depth)
 {
   if (depth > 5)
@@ -1631,7 +1629,7 @@ The value is returned as (HIGH . LOW).
        (object))
 {
   /* This function is pretty 32bit-centric. */
-  hashcode_t hash = internal_hash (object, 0);
+  Hash_Code hash = internal_hash (object, 0);
   return Fcons (hash >> 16, hash & 0xffff);
 }
 #endif

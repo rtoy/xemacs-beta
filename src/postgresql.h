@@ -13,7 +13,9 @@ xemacs-patches.
 #ifndef INCLUDED_postgresql_h_
 #define INCLUDED_postgresql_h_ 1
 
+#define message message_ /* Yuck */
 #include LIBPQ_FE_H_FILE /* main PostgreSQL header file */
+#undef message
 
 #define BLCKSZ 8192 /* size of a default Postgres disk block */
 /*

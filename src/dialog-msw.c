@@ -207,7 +207,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 	if (w_param != IDCANCEL) /* user pressed escape */
 	  {
 	    assert (w_param >= ID_ITEM_BIAS 
-		    && w_param
+		    && (EMACS_INT) w_param
 		    < XVECTOR_LENGTH (did->callbacks) + ID_ITEM_BIAS);
 	    
 	    get_gui_callback (XVECTOR_DATA (did->callbacks)
@@ -270,10 +270,10 @@ push_bufbyte_string_as_unicode (unsigned_char_dynarr* dynarr, Bufbyte *string,
 }
 
 /* Given button TEXT, return button width in DLU */
-static unsigned int
+static int
 button_width (Lisp_Object text)
 {
-  unsigned int width = X_DLU_PER_CHAR * XSTRING_CHAR_LENGTH (text);
+  int width = X_DLU_PER_CHAR * XSTRING_CHAR_LENGTH (text);
   return max (X_MIN_BUTTON, width);
 }
 
@@ -286,16 +286,16 @@ free_dynarr_opaque_ptr (Lisp_Object arg)
 }
 
 
-#define ALIGN_TEMPLATE						\
-{								\
-  unsigned int slippage = Dynarr_length (template_) & 3;	\
-  if (slippage)							\
-    Dynarr_add_many (template_, &zeroes, slippage);		\
+#define ALIGN_TEMPLATE					\
+{							\
+  int slippage = Dynarr_length (template_) & 3;		\
+  if (slippage)						\
+    Dynarr_add_many (template_, &zeroes, slippage);	\
 }
 
 static struct
 {
-  int errmess;
+  DWORD errmess;
   char *errname;
 } common_dialog_errors[] =
 {
@@ -414,8 +414,8 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 {
   Lisp_Object_dynarr *dialog_items = Dynarr_new (Lisp_Object);
   unsigned_char_dynarr *template_ = Dynarr_new (unsigned_char);
-  unsigned int button_row_width = 0;
-  unsigned int text_width, text_height;
+  int button_row_width = 0;
+  int text_width, text_height;
   Lisp_Object question = Qnil, title = Qnil;
 
   int unbind_count = specpdl_depth ();

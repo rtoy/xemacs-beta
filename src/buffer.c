@@ -1672,12 +1672,12 @@ struct buffer_stats
   int other;
 };
 
-static size_t
+static Memory_Count
 compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
 {
   int was_requested = b->text->z - 1;
-  size_t gap = b->text->gap_size + b->text->end_gap_size;
-  size_t malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+  Memory_Count gap = b->text->gap_size + b->text->end_gap_size;
+  Memory_Count malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
 
   ovstats->gap_overhead    += gap;
   ovstats->was_requested   += was_requested;
@@ -1913,7 +1913,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 
       while (1)
         {
-          Lstream_data_count size_in_bytes;
+          Lstream_Data_Count size_in_bytes;
 	  char tempbuf[1024]; /* some random amount */
 
 	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
@@ -2051,7 +2051,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
       while (1)
         {
-          Lstream_data_count size_in_bytes;
+          Lstream_Data_Count size_in_bytes;
 	  char tempbuf[1024]; /* some random amount */
 
 	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
@@ -2321,35 +2321,35 @@ List of functions called with no args to query before killing a buffer.
 
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
    a bogus extra arg, which confuses an otherwise identical make-docfile.c */
-#define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) do {	\
-  static const struct symbol_value_forward I_hate_C =				\
-  { /* struct symbol_value_forward */						\
-    { /* struct symbol_value_magic */						\
-      { /* struct lcrecord_header */						\
-	{ /* struct lrecord_header */						\
-	  lrecord_type_symbol_value_forward, /* lrecord_type_index */		\
-	  1, /* mark bit */							\
-	  1, /* c_readonly bit */						\
-	  1  /* lisp_readonly bit */						\
-	},									\
-	0, /* next */								\
-	0, /* uid  */								\
-	0  /* free */								\
-      },									\
-      &(buffer_local_flags.field_name),						\
-      forward_type								\
-    },										\
-    magicfun									\
-  };										\
-										\
-  {										\
-    int offset = ((char *)symbol_value_forward_forward (&I_hate_C) -		\
-		  (char *)&buffer_local_flags);					\
-    defvar_magic (lname, &I_hate_C);						\
-										\
-    *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))	\
-      = intern (lname);								\
-  }										\
+#define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) do { \
+  static const struct symbol_value_forward I_hate_C =			      \
+  { /* struct symbol_value_forward */					      \
+    { /* struct symbol_value_magic */					      \
+      { /* struct lcrecord_header */					      \
+	{ /* struct lrecord_header */					      \
+	  lrecord_type_symbol_value_forward, /* lrecord_type_index */	      \
+	  1, /* mark bit */						      \
+	  1, /* c_readonly bit */					      \
+	  1  /* lisp_readonly bit */					      \
+	},								      \
+	0, /* next */							      \
+	0, /* uid  */							      \
+	0  /* free */							      \
+      },								      \
+      &(buffer_local_flags.field_name),					      \
+      forward_type							      \
+    },									      \
+    magicfun								      \
+  };									      \
+									      \
+  {									      \
+    int offset = ((char *)symbol_value_forward_forward (&I_hate_C) -	      \
+		  (char *)&buffer_local_flags);				      \
+    defvar_magic (lname, &I_hate_C);					      \
+									      \
+    *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))      \
+      = intern (lname);							      \
+  }									      \
 } while (0)
 
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\

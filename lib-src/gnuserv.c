@@ -485,17 +485,18 @@ permitted (unsigned long host_addr, int fd)
 	   * doing magic cookie auth
 	   */
 
-	  if (timed_read(fd, buf, 10, AUTH_TIMEOUT, 1) <= 0)
+	  if (timed_read (fd, buf, 10, AUTH_TIMEOUT, 1) <= 0)
 	    return FALSE;
 
-	  auth_data_len = atoi(buf);
+	  auth_data_len = atoi (buf);
 
-	  if (auth_data_len <= 0 || auth_data_len > sizeof(buf))
+	  if (auth_data_len <= 0 || auth_data_len > (int) sizeof (buf))
 	      {
 		return FALSE;
 	      }
 
-	  if (timed_read(fd, buf, auth_data_len, AUTH_TIMEOUT, 0) != auth_data_len)
+	  if (timed_read (fd, buf, auth_data_len, AUTH_TIMEOUT, 0) !=
+	      auth_data_len)
 	    return FALSE;
 
 #ifdef AUTH_MAGIC_COOKIE
@@ -508,10 +509,12 @@ permitted (unsigned long host_addr, int fd)
 	      ( auth_data_len ^
 		server_xauth->data_length );
 
-	    for(auth_data_pos=0; auth_data_pos < auth_data_len; ++auth_data_pos)
+	    for(auth_data_pos = 0; auth_data_pos < auth_data_len;
+		++auth_data_pos)
 	      auth_mismatches |=
 		( buf[auth_data_pos] ^
-		  server_xauth->data[auth_data_pos % server_xauth->data_length]);
+		  server_xauth->data[auth_data_pos %
+				     server_xauth->data_length]);
 
 	    if (auth_mismatches == 0)
 	      return TRUE;
@@ -604,7 +607,7 @@ setup_table (void)
 
   gethostname(hostname,HOSTNAMSZ);
 
-  if ((host_addr = internet_addr(hostname)) == -1)
+  if ((host_addr = internet_addr (hostname)) == (unsigned int) -1)
     {
       fprintf(stderr,"%s: unable to find %s in /etc/hosts or from YP",
 	      progname,hostname);
@@ -630,9 +633,10 @@ setup_table (void)
        (host_file = fopen(file_name,"r")) != NULL))	/* opened ok */
     {
       while ((fscanf(host_file,"%s",hostname) != EOF))	/* find a host */
-	if ((host_addr = internet_addr(hostname)) != -1)/* get its addr */
+	if ((host_addr = internet_addr(hostname)) != (unsigned int) -1)
+	  /* get its addr */
 	  {
-	    add_host(host_addr);				/* add the addr */
+	    add_host(host_addr);			/* add the addr */
 	    hosts++;
 	  }
       fclose(host_file);

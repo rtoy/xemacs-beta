@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 
 /* we need a unique id for each popup menu, dialog box, and scrollbar */
-static unsigned int lwlib_id_tick;
+static LWLIB_ID lwlib_id_tick;
 
 LWLIB_ID
 new_lwlib_id (void)
@@ -371,7 +371,7 @@ add_accel_and_to_external (Lisp_Object string)
     LISP_STRING_TO_EXTERNAL_MALLOC (string, retval, Qlwlib_encoding);
   else
     {
-      size_t namelen = XSTRING_LENGTH (string);
+      Bytecount namelen = XSTRING_LENGTH (string);
       Bufbyte *chars = (Bufbyte *) alloca (namelen + 3);
       chars[0] = '%';
       chars[1] = '_';

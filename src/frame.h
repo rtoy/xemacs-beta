@@ -105,13 +105,13 @@ struct frame
   /* Size of toolbars as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  unsigned int current_toolbar_size[4];
+  int current_toolbar_size[4];
 #endif
 
   /* Size of gutters as seen by redisplay. This is used to determine
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
-  unsigned int current_gutter_bounds[4];
+  int current_gutter_bounds[4];
 
   /* Dynamic arrays of display lines for gutters */
   display_line_dynarr *current_display_lines[4];

@@ -300,19 +300,19 @@ IIFORMAT_VALID_GENERIC_KEYWORD(format, keyw, validate_fun, 0, 0)
 DECLARE_IMAGE_INSTANTIATOR_FORMAT(format);	\
 struct image_instantiator_methods *type##_##format##_image_instantiator_methods
 
-#define INITIALIZE_DEVICE_IIFORMAT(type, format)				\
-do {										\
-  type##_##format##_image_instantiator_methods =				\
-    xnew_and_zero (struct image_instantiator_methods);				\
-  type##_##format##_image_instantiator_methods->symbol = Q##format;		\
-  type##_##format##_image_instantiator_methods->device = Q##type;		\
-  type##_##format##_image_instantiator_methods->keywords =			\
-    Dynarr_new (ii_keyword_entry);						\
-  add_entry_to_device_ii_format_list						\
-    (Q##type, Q##format, type##_##format##_image_instantiator_methods);		\
-  IIFORMAT_VALID_CONSOLE(type,format);						\
-  dump_add_root_struct_ptr (&type##_##format##_image_instantiator_methods,	\
-			    &iim_description);					\
+#define INITIALIZE_DEVICE_IIFORMAT(type, format)			   \
+do {									   \
+  type##_##format##_image_instantiator_methods =			   \
+    xnew_and_zero (struct image_instantiator_methods);			   \
+  type##_##format##_image_instantiator_methods->symbol = Q##format;	   \
+  type##_##format##_image_instantiator_methods->device = Q##type;	   \
+  type##_##format##_image_instantiator_methods->keywords =		   \
+    Dynarr_new (ii_keyword_entry);					   \
+  add_entry_to_device_ii_format_list					   \
+    (Q##type, Q##format, type##_##format##_image_instantiator_methods);	   \
+  IIFORMAT_VALID_CONSOLE(type,format);					   \
+  dump_add_root_struct_ptr (&type##_##format##_image_instantiator_methods, \
+			    &iim_description);				   \
 } while (0)
 
 /* Declare that image-instantiator format FORMAT has method M; used in
@@ -548,11 +548,11 @@ struct Lisp_Image_Instance
   /* The instantiator from which we were instantiated. */
   Lisp_Object instantiator;
   enum image_instance_type type;
-  unsigned int x_offset, y_offset;	/* for layout purposes */
+  int x_offset, y_offset;	/* for layout purposes */
   int width, height, margin_width;
-  unsigned long display_hash; /* Hash value representing the structure
-				 of the image_instance when it was
-				 last displayed. */
+  Hash_Code display_hash; /* Hash value representing the structure
+			     of the image_instance when it was
+			     last displayed. */
   unsigned int dirty : 1;
   unsigned int size_changed : 1;
   unsigned int text_changed : 1;
@@ -565,13 +565,13 @@ struct Lisp_Image_Instance
   {
     struct
     {
-      unsigned int descent;
+      int descent;
       Lisp_Object string;
     } text;
     struct
     {
-      unsigned int depth;
-      unsigned int slice, maxslice, timeout;
+      int depth;
+      int slice, maxslice, timeout;
       Lisp_Object hotspot_x, hotspot_y; /* integer or Qnil */
       Lisp_Object filename;	 /* string or Qnil */
       Lisp_Object mask_filename; /* string or Qnil */
@@ -588,8 +588,8 @@ struct Lisp_Image_Instance
       struct
       {				/* We need these so we can do without
 				   subwindow_cachel */
-	unsigned int x, y;
-	unsigned int width, height;
+	int x, y;
+	int width, height;
       } display_data;
       unsigned int being_displayed : 1; /* used to detect when needs
 					   to be unmapped */
@@ -894,8 +894,8 @@ Lisp_Object pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid);
 #ifdef HAVE_WINDOW_SYSTEM
 Lisp_Object bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 				 int ok_if_data_invalid);
-int read_bitmap_data_from_file (const char *filename, unsigned int *width,
-				unsigned int *height, unsigned char **datap,
+int read_bitmap_data_from_file (const char *filename, int *width,
+				int *height, unsigned char **datap,
 				int *x_hot, int *y_hot);
 Lisp_Object xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 				   Lisp_Object mask_file,
@@ -1137,9 +1137,8 @@ void get_display_tables (struct window *, face_index,
 void unmap_subwindow (Lisp_Object subwindow);
 void map_subwindow (Lisp_Object subwindow, int x, int y,
 		    struct display_glyph_area *dga);
-int find_matching_subwindow (struct frame* f, 
-			     unsigned int x, unsigned int y, 
-			     unsigned int width, unsigned int height);
+int find_matching_subwindow (struct frame* f, int x, int y, int width,
+			     int height);
 void redisplay_widget (Lisp_Object widget);
 void update_widget_instances (Lisp_Object frame);
 void redisplay_subwindow (Lisp_Object subwindow);
@@ -1152,14 +1151,13 @@ int unmap_subwindow_instance_cache_mapper (Lisp_Object key,
 
 struct expose_ignore
 {
-  unsigned int	x, y;
-  unsigned int	width, height;
+  int x, y;
+  int width, height;
   struct expose_ignore *next;
 };
 
-int check_for_ignored_expose (struct frame* f, unsigned int x, 
-			      unsigned int y, unsigned int width, 
-			      unsigned int height);
+int check_for_ignored_expose (struct frame* f, int x, int y, int width,
+			      int height);
 extern int hold_ignored_expose_registration;
 
 #endif /* INCLUDED_glyphs_h_ */

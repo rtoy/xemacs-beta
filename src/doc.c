@@ -196,7 +196,7 @@ get_doc_string (Lisp_Object filepos)
   tem = Ffile_name_absolute_p (file);
   if (NILP (tem))
     {
-      size_t minsize;
+      Bytecount minsize;
       /* XEmacs: Move this check here.  OK if called during loadup to
 	 load byte code instructions. */
       if (!STRINGP (Vdoc_directory))
@@ -206,7 +206,8 @@ get_doc_string (Lisp_Object filepos)
       /* sizeof ("../lib-src/") == 12 */
       if (minsize < 12)
 	minsize = 12;
-      name_nonreloc = (char *) alloca (minsize + XSTRING_LENGTH (file) + 8);
+      name_nonreloc =
+	(char *) alloca (minsize + XSTRING_LENGTH (file) + 8);
       string_join (name_nonreloc, Vdoc_directory, file);
     }
   else
@@ -453,7 +454,7 @@ when doc strings are referred to in the dumped Emacs.
   while (1)
     {
       if (filled < 512)
-	filled += read (fd, &buf[filled], sizeof buf - 1 - filled);
+	filled += read (fd, &buf[filled], sizeof (buf) - 1 - filled);
       if (!filled)
 	break;
 

@@ -204,7 +204,7 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
     {
       /* RIGHT might not point to a valid entry (i.e. it's at the end
 	 of the list), so NEWPOS must round down. */
-      unsigned int newpos = (left + right) >> 1;
+      int newpos = (left + right) >> 1;
       struct range_table_entry *entry = tab + newpos;
       if (pos > entry->last)
 	left = newpos+1;

@@ -512,15 +512,15 @@ scan_c_file (const char *filename, const char *mode)
   int l = strlen (filename);
   char f[MAXPATHLEN];
 
-  if (l > sizeof (f))
-  {
+  if (l > (int) sizeof (f))
+    {
 #ifdef ENAMETOOLONG
-    errno = ENAMETOOLONG;
+      errno = ENAMETOOLONG;
 #else
-    errno = EINVAL;
+      errno = EINVAL;
 #endif
-    return (0);
-  }
+      return (0);
+    }
 
   strcpy (f, filename);
   if (f[l - 1] == 'o')

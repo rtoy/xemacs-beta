@@ -705,7 +705,7 @@ x_set_icon_name_from_bufbyte (struct frame *f, Bufbyte *name)
 
 static void
 x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
-			  unsigned int w, unsigned int h)
+			  int w, int h)
 {
   char shell_geom [255];
   int xval, yval;
@@ -1108,7 +1108,7 @@ WARNING: can only handle plain/text and file: transfers!
       struct device *d    = get_device_from_display (display);
       struct x_device *xd = DEVICE_X_DATA (d);
       XWindowAttributes win_attrib;
-      unsigned int modifier = 0, state = 0;
+      int modifier = 0, state = 0;
       char *Ctext;
       int numItems = 0, textlen = 0, pos = 0;
       Lisp_Event *lisp_event = XEVENT (event);
@@ -1334,9 +1334,9 @@ The type defaults to DndText (4).
       struct device *d    = get_device_from_display (display);
       struct x_device *xd = DEVICE_X_DATA (d);
       XWindowAttributes win_attrib;
-      unsigned int modifier = 0, state = 0;
+      int modifier = 0, state = 0;
       char *dnd_data = NULL;
-      unsigned long dnd_len = 0;
+      long dnd_len = 0;
       int dnd_typ = DndText, dnd_dealloc = 0;
       Lisp_Event *lisp_event = XEVENT (event);
 

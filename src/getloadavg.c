@@ -674,7 +674,7 @@ getloadavg (double loadavg[], int nelem)
       desc.sd_subsys = SUBSYS_CPU;
       desc.sd_type = CPUTYPE_CONFIG;
       desc.sd_addr = (char *) &conf;
-      desc.sd_size = sizeof conf;
+      desc.sd_size = sizeof (conf);
 
       if (inq_stats (1, &desc))
 	return -1;
@@ -683,12 +683,12 @@ getloadavg (double loadavg[], int nelem)
       for (i = 0; i < conf.config_maxclass; ++i)
 	{
 	  struct class_stats stats;
-	  memset ((char *) &stats, 0, sizeof stats);
+	  memset ((char *) &stats, 0, sizeof (stats));
 
 	  desc.sd_type = CPUTYPE_CLASS;
 	  desc.sd_objid = i;
 	  desc.sd_addr = (char *) &stats;
-	  desc.sd_size = sizeof stats;
+	  desc.sd_size = sizeof (stats);
 
 	  if (inq_stats (1, &desc))
 	    return -1;

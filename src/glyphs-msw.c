@@ -853,7 +853,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
       return 0;
     }
 
-  for (i=0; i<xpmimage.ncolors; i++)
+  for (i=0; i<(int)xpmimage.ncolors; i++)
     {
       /* goto alert!!!! */
       /* pick up symbolic colors in preference */
@@ -1217,7 +1217,7 @@ mswindows_resource_instantiate (Lisp_Object image_instance,
 				int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
-  unsigned int type = 0;
+  int type = 0;
   HANDLE himage = NULL;
   LPCTSTR resid=0;
   HINSTANCE hinst = NULL;
@@ -1378,7 +1378,7 @@ static int flip_table[] =
    black, 1 = white.  */
 static HBITMAP
 xbm_create_bitmap_from_data (HDC hdc, const UChar_Binary *data,
-			     unsigned int width, unsigned int height,
+			     int width, int height,
 			     int mask, COLORREF fg, COLORREF bg)
 {
   int old_width = (width + 7)/8;
@@ -2151,7 +2151,7 @@ mswindows_image_instance_equal (Lisp_Image_Instance *p1,
   return 1;
 }
 
-static unsigned long
+static Hash_Code
 mswindows_image_instance_hash (Lisp_Image_Instance *p, int depth)
 {
   switch (IMAGE_INSTANCE_TYPE (p))
@@ -2159,7 +2159,7 @@ mswindows_image_instance_hash (Lisp_Image_Instance *p, int depth)
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return (unsigned long) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p);
+      return (Hash_Code) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p);
 
     default:
       return 0;

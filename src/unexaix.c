@@ -492,7 +492,7 @@ copy_sym (int new, int a_out, char *a_name, char *new_name)
   else
     lseek (a_out, orig_load_scnptr, SEEK_SET); /* Position a.out to symtab. */
 
-  while ((n = read (a_out, page, sizeof page)) > 0)
+  while ((n = read (a_out, page, sizeof (page))) > 0)
     {
       if (write (new, page, n) != n)
 	{

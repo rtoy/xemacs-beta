@@ -837,8 +837,8 @@ XawGaugeSetValue (Widget   w,
 	}
 
 	/* need to rescale? */
-	if(( gw->gauge.autoScaleUp && value > gw->gauge.v1) ||
-	   (gw->gauge.autoScaleDown && value < gw->gauge.v1/3 ))
+	if(( gw->gauge.autoScaleUp && (int) value > gw->gauge.v1) ||
+	   (gw->gauge.autoScaleDown && (int) value < gw->gauge.v1/3 ))
 	{
 	  XtVaSetValues(w, XtNvalue, value, 0) ;
 	  return ;
@@ -895,10 +895,10 @@ GaugeMercury (Display     *dpy,
 
 	if( vd <= 0 ) vd = 1 ;
 
-	if( val0 < v0 ) val0 = v0 ;
-	else if( val0 > v1 ) val0 = v1 ;
-	if( val1 < v0 ) val1 = v0 ;
-	else if( val1 > v1 ) val1 = v1 ;
+	if( (int) val0 < v0 ) val0 = v0 ;
+	else if( (int) val0 > v1 ) val0 = v1 ;
+	if( (int) val1 < v0 ) val1 = v0 ;
+	else if( (int) val1 > v1 ) val1 = v1 ;
 
 	p0 = (val0-v0)*(e1-e0-1)/vd ;
 	p1 = (val1-v0)*(e1-e0-1)/vd ;

@@ -81,12 +81,12 @@ typedef struct
 {
   char *user;
   char *host;
-  unsigned long pid;
+  pid_t pid;
 } lock_info_type;
 
 /* When we read the info back, we might need this much more,
    enough for decimal representation plus null.  */
-#define LOCK_PID_MAX (4 * sizeof (unsigned long))
+#define LOCK_PID_MAX (4 * sizeof (pid_t))
 
 /* Free the two dynamically-allocated pieces in PTR.  */
 #define FREE_LOCK_INFO(i) do { xfree ((i).user); xfree ((i).host); } while (0)
@@ -102,7 +102,7 @@ fill_in_lock_file_name (Bufbyte *lockfile, Lisp_Object fn)
 {
   Bufbyte *file_name = XSTRING_DATA (fn);
   Bufbyte *p;
-  size_t dirlen;
+  Bytecount dirlen;
 
   for (p = file_name + XSTRING_LENGTH (fn) - 1;
        p > file_name && !IS_ANY_SEP (p[-1]);
@@ -141,8 +141,7 @@ lock_file_1 (char *lfname, int force)
   lock_info_str = (char *)alloca (strlen (user_name) + strlen (host_name)
 			  + LOCK_PID_MAX + 5);
 
-  sprintf (lock_info_str, "%s@%s.%lu", user_name, host_name,
-           (unsigned long) getpid ());
+  sprintf (lock_info_str, "%s@%s.%d", user_name, host_name, getpid ());
 
   err = symlink (lock_info_str, lfname);
   if (err != 0 && errno == EEXIST && force)
@@ -349,7 +348,7 @@ lock_file (Lisp_Object fn)
   /* Else consider breaking the lock */
   locker = (char *) alloca (strlen (lock_info.user) + strlen (lock_info.host)
 			    + LOCK_PID_MAX + 9);
-  sprintf (locker, "%s@%s (pid %lu)", lock_info.user, lock_info.host,
+  sprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,
            lock_info.pid);
   FREE_LOCK_INFO (lock_info);
 

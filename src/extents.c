@@ -736,11 +736,11 @@ extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
     {
       /* RIGHT might not point to a valid extent (i.e. it's at the end
 	 of the list), so NEWPOS must round down. */
-      unsigned int newpos = (left + right) >> 1;
+      int newpos = (left + right) >> 1;
       EXTENT e = EXTENT_GAP_ARRAY_AT (ga, (int) newpos);
 
       if (endp ? EXTENT_E_LESS (e, extent) : EXTENT_LESS (e, extent))
-	left = newpos+1;
+	left = newpos + 1;
       else
 	right = newpos;
     }
@@ -3104,7 +3104,7 @@ extent_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 		       depth));
 }
 
-static unsigned long
+static Hash_Code
 extent_hash (Lisp_Object obj, int depth)
 {
   struct extent *e = XEXTENT (obj);
@@ -5034,12 +5034,12 @@ set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
   if (!endp)
     {
       set_extent_begin_glyph (extent, glyph);
-      extent_begin_glyph_layout (extent) = layout;
+      set_extent_begin_glyph_layout (extent, layout);
     }
   else
     {
       set_extent_end_glyph (extent, glyph);
-      extent_end_glyph_layout (extent) = layout;
+      set_extent_end_glyph_layout (extent, layout);
     }
 
   extent_changed_for_redisplay (extent, 1, 0);
@@ -5136,7 +5136,7 @@ Access this using the `extent-begin-glyph-layout' function.
 {
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
-  extent_begin_glyph_layout (e) = symbol_to_glyph_layout (layout);
+  set_extent_begin_glyph_layout (e, symbol_to_glyph_layout (layout));
   extent_maybe_changed_for_redisplay (e, 1, 0);
   return layout;
 }
@@ -5149,7 +5149,7 @@ Access this using the `extent-end-glyph-layout' function.
 {
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
-  extent_end_glyph_layout (e) = symbol_to_glyph_layout (layout);
+  set_extent_end_glyph_layout (e, symbol_to_glyph_layout (layout));
   extent_maybe_changed_for_redisplay (e, 1, 0);
   return layout;
 }

@@ -1,3 +1,15 @@
+2001-06-24  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-Xlw.c (xlw_update_tab_control):
+	* lwlib-utils.c (XtApplyUntilToWidgets):
+	* xlwgauge.c (XawGaugeSetValue):
+	* xlwgauge.c (GaugeMercury):
+	* xlwmenu.c (close_to_reference_time):
+	* xlwtabs.c (TabsSetValues):
+	* xlwtabs.c (TabsSelect):
+	* xlwtabs.c (DrawTabs):
+	Fix unsigned warnings.  See src/ChangeLog for details.
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

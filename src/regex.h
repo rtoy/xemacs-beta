@@ -27,6 +27,8 @@
 #define RE_TRANSLATE_TYPE Lisp_Object
 #else
 #define RE_TRANSLATE_TYPE char *
+#define Element_Count ssize_t
+#define Memory_Count ssize_t
 #endif /* emacs */
 
 /* POSIX says that <sys/types.h> must be included (by the caller) before
@@ -325,10 +327,10 @@ struct re_pattern_buffer
   unsigned char *buffer;
 
 	/* Number of bytes to which `buffer' points.  */
-  unsigned long allocated;
+  long allocated;
 
 	/* Number of bytes actually used in `buffer'.  */
-  unsigned long used;
+  long used;
 
         /* Syntax setting with which the pattern was compiled.  */
   reg_syntax_t syntax;
@@ -346,7 +348,7 @@ struct re_pattern_buffer
 
 	/* Number of returnable groups found by the compiler. (This does
            not count shy groups.) */
-  size_t re_nsub;
+  int re_nsub;
 
 	/* Total number of groups found by the compiler. (Including
 	   shy ones.) */
@@ -357,7 +359,7 @@ struct re_pattern_buffer
            whether or not we should use the fastmap, so we don't set
            this absolutely perfectly; see `re_compile_fastmap' (the
            `duplicate' case).  */
-  unsigned can_be_null : 1;
+  unsigned int can_be_null : 1;
 
         /* If REGS_UNALLOCATED, allocate space in the `regs' structure
              for `max (RE_NREGS, re_nsub + 1)' groups.
@@ -366,27 +368,27 @@ struct re_pattern_buffer
 #define REGS_UNALLOCATED 0
 #define REGS_REALLOCATE 1
 #define REGS_FIXED 2
-  unsigned regs_allocated : 2;
+  unsigned int regs_allocated : 2;
 
         /* Set to zero when `regex_compile' compiles a pattern; set to one
            by `re_compile_fastmap' if it updates the fastmap.  */
-  unsigned fastmap_accurate : 1;
+  unsigned int fastmap_accurate : 1;
 
         /* If set, `re_match_2' does not return information about
            subexpressions.  */
-  unsigned no_sub : 1;
+  unsigned int no_sub : 1;
 
         /* If set, a beginning-of-line anchor doesn't match at the
            beginning of the string.  */
-  unsigned not_bol : 1;
+  unsigned int not_bol : 1;
 
         /* Similarly for an end-of-line anchor.  */
-  unsigned not_eol : 1;
+  unsigned int not_eol : 1;
 
         /* If true, an anchor at a newline matches.  */
-  unsigned newline_anchor : 1;
+  unsigned int newline_anchor : 1;
 
-  unsigned warned_about_incompatible_back_references : 1;
+  unsigned int warned_about_incompatible_back_references : 1;
 
 	/* Mapping between back references and groups (may not be
 	   equivalent with shy groups). */
@@ -407,7 +409,7 @@ typedef int regoff_t;
    regex.texinfo for a full description of what registers match.  */
 struct re_registers
 {
-  unsigned num_regs;
+  int num_regs;
   regoff_t *start;
   regoff_t *end;
 };
@@ -491,7 +493,7 @@ int re_match_2 (struct re_pattern_buffer *buffer, const char *string1,
    PATTERN_BUFFER will allocate its own register data, without
    freeing the old data.  */
 void re_set_registers (struct re_pattern_buffer *buffer,
-		       struct re_registers *regs, unsigned num_regs,
+		       struct re_registers *regs, int num_regs,
 		       regoff_t *starts, regoff_t *ends);
 
 #ifdef _REGEX_RE_COMP

@@ -64,7 +64,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define message message_ /* Yuck */
 #include <png.h>
+#undef message
 #ifdef __cplusplus
 }
 #endif
@@ -232,13 +234,12 @@ our_skip_input_data (j_decompress_ptr cinfo, long num_bytes)
   src = (struct jpeg_source_mgr *) cinfo->src;
 
   if (!src)
+    return;
+  else if (num_bytes > (long) src->bytes_in_buffer)
     {
-      return;
-    } else if (num_bytes > src->bytes_in_buffer)
-      {
-	ERREXIT(cinfo, JERR_INPUT_EOF);
-	/*NOTREACHED*/
-      }
+      ERREXIT (cinfo, JERR_INPUT_EOF);
+      /*NOTREACHED*/
+    }
 
   src->bytes_in_buffer -= num_bytes;
   src->next_input_byte += num_bytes;
@@ -259,7 +260,7 @@ typedef struct
 } our_jpeg_source_mgr;
 
 static void
-jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
+jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, Memory_Count len)
 {
   struct jpeg_source_mgr *src;
 
@@ -374,8 +375,8 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const Extbyte *bytes;
-    Extcount len;
+    const UChar_Binary *bytes;
+    Memory_Count len;
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
@@ -452,16 +453,16 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	   */
 	  (void) jpeg_read_scanlines (&cinfo, row_buffer, 1);
 	  jp = row_buffer[0];
-	  for (i = 0; i < cinfo.output_width; i++)
+	  for (i = 0; i < (int) cinfo.output_width; i++)
 	    {
 	      int clr;
 	      if (jpeg_gray)
 		{
 		  unsigned char val;
 #if (BITS_IN_JSAMPLE == 8)
-		  val = (unsigned char)*jp++;
+		  val = (unsigned char) *jp++;
 #else /* other option is 12 */
-		  val = (unsigned char)(*jp++ >> 4);
+		  val = (unsigned char) (*jp++ >> 4);
 #endif
 		  for (clr = 0; clr < 3; clr++) /* copy the same value into RGB */
 		      *op++ = val;
@@ -551,32 +552,33 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
       DGifCloseFile (data->giffile);
       GifFree(data->giffile);
     }
-  if (data->eimage) xfree(data->eimage);
+  if (data->eimage)
+    xfree (data->eimage);
 
   return Qnil;
 }
 
 typedef struct gif_memory_storage
 {
-  Extbyte *bytes;		/* The data       */
-  Extcount len;			/* How big is it? */
-  int index;			/* Where are we?  */
+  UChar_Binary *bytes;		/* The data       */
+  Memory_Count len;		/* How big is it? */
+  Memory_Count index;		/* Where are we?  */
 } gif_memory_storage;
 
-static size_t
-gif_read_from_memory(GifByteType *buf, size_t size, VoidPtr data)
+static Memory_Count
+gif_read_from_memory (GifByteType *buf, Memory_Count size, VoidPtr data)
 {
-  gif_memory_storage *mem = (gif_memory_storage*)data;
+  gif_memory_storage *mem = (gif_memory_storage *) data;
 
   if (size > (mem->len - mem->index))
-    return (size_t) -1;
-  memcpy(buf, mem->bytes + mem->index, size);
+    return -1;
+  memcpy (buf, mem->bytes + mem->index, size);
   mem->index = mem->index + size;
   return size;
 }
 
 static int
-gif_memory_close(VoidPtr data)
+gif_memory_close (VoidPtr data)
 {
   return 0;
 }
@@ -588,9 +590,9 @@ struct gif_error_struct
 };
 
 static void
-gif_error_func(const char *err_str, VoidPtr error_ptr)
+gif_error_func (const char *err_str, VoidPtr error_ptr)
 {
-  struct gif_error_struct *error_data = (struct gif_error_struct*)error_ptr;
+  struct gif_error_struct *error_data = (struct gif_error_struct *) error_ptr;
 
   /* return to setjmp point */
   error_data->err_str = err_str;
@@ -610,8 +612,8 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   int speccount = specpdl_depth ();
   gif_memory_storage mem_struct;
   struct gif_error_struct gif_err;
-  Extbyte *bytes;
-  Extcount len;
+  UChar_Binary *bytes;
+  Memory_Count len;
   int height = 0;
   int width = 0;
 
@@ -773,21 +775,21 @@ png_possible_dest_types (void)
 
 struct png_memory_storage
 {
-  const Extbyte *bytes;		/* The data       */
-  Extcount len;			/* How big is it? */
-  int index;			/* Where are we?  */
+  const UChar_Binary *bytes;	/* The data       */
+  Memory_Count len;		/* How big is it? */
+  Memory_Count index;		/* Where are we?  */
 };
 
 static void
-png_read_from_memory(png_structp png_ptr, png_bytep data,
-		     png_size_t length)
+png_read_from_memory (png_structp png_ptr, png_bytep data,
+		      png_size_t length)
 {
    struct png_memory_storage *tbr =
      (struct png_memory_storage *) png_get_io_ptr (png_ptr);
 
-   if (length > (tbr->len - tbr->index))
+   if ((Memory_Count) length > (tbr->len - tbr->index))
      png_error (png_ptr, (png_const_charp) "Read Error");
-   memcpy (data,tbr->bytes + tbr->index,length);
+   memcpy (data, tbr->bytes + tbr->index,length);
    tbr->index = tbr->index + length;
 }
 
@@ -897,8 +899,8 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Initialize the IO layer and read in header information */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const Extbyte *bytes;
-    Extcount len;
+    const UChar_Binary *bytes;
+    Memory_Count len;
 
     assert (!NILP (data));
 
@@ -1084,47 +1086,50 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
 
 typedef struct tiff_memory_storage
 {
-  Extbyte *bytes;		/* The data       */
-  Extcount len;			/* How big is it? */
-  int index;			/* Where are we?  */
+  UChar_Binary *bytes;		/* The data       */
+  Memory_Count len;		/* How big is it? */
+  Memory_Count index;		/* Where are we?  */
 } tiff_memory_storage;
 
 static size_t
-tiff_memory_read(thandle_t data, tdata_t buf, tsize_t size)
+tiff_memory_read (thandle_t data, tdata_t buf, tsize_t size)
 {
-  tiff_memory_storage *mem = (tiff_memory_storage*)data;
+  tiff_memory_storage *mem = (tiff_memory_storage *) data;
 
-  if (size > (mem->len - mem->index))
+  if ((Memory_Count) size > (mem->len - mem->index))
     return (size_t) -1;
-  memcpy(buf, mem->bytes + mem->index, size);
+  memcpy (buf, mem->bytes + mem->index, size);
   mem->index = mem->index + size;
   return size;
 }
 
-static size_t tiff_memory_write(thandle_t data, tdata_t buf, tsize_t size)
+static size_t
+tiff_memory_write (thandle_t data, tdata_t buf, tsize_t size)
 {
   abort();
   return 0;			/* Shut up warnings. */
 }
 
-static toff_t tiff_memory_seek(thandle_t data, toff_t off, int whence)
+static toff_t
+tiff_memory_seek (thandle_t data, toff_t off, int whence)
 {
-  tiff_memory_storage *mem = (tiff_memory_storage*)data;
+  tiff_memory_storage *mem = (tiff_memory_storage *) data;
   int newidx;
-  switch(whence) {
-  case SEEK_SET:
-    newidx = off;
-    break;
-  case SEEK_END:
-    newidx = mem->len + off;
-    break;
-  case SEEK_CUR:
-    newidx = mem->index + off;
-    break;
-  default:
-    fprintf(stderr,"Eh? invalid seek mode in tiff_memory_seek\n");
-    return (toff_t) -1;
-  }
+  switch(whence)
+    {
+    case SEEK_SET:
+      newidx = off;
+      break;
+    case SEEK_END:
+      newidx = mem->len + off;
+      break;
+    case SEEK_CUR:
+      newidx = mem->index + off;
+      break;
+    default:
+      fprintf (stderr, "Eh? invalid seek mode in tiff_memory_seek\n");
+      return (toff_t) -1;
+    }
 
   if ((newidx > mem->len) || (newidx < 0))
     return (toff_t) -1;
@@ -1134,25 +1139,25 @@ static toff_t tiff_memory_seek(thandle_t data, toff_t off, int whence)
 }
 
 static int
-tiff_memory_close(thandle_t data)
+tiff_memory_close (thandle_t data)
 {
   return 0;
 }
 
 static int
-tiff_map_noop(thandle_t data, tdata_t* pbase, toff_t* psize)
+tiff_map_noop (thandle_t data, tdata_t* pbase, toff_t* psize)
 {
   return 0;
 }
 
 static void
-tiff_unmap_noop(thandle_t data, tdata_t pbase, toff_t psize)
+tiff_unmap_noop (thandle_t data, tdata_t pbase, toff_t psize)
 {
   return;
 }
 
 static toff_t
-tiff_memory_size(thandle_t data)
+tiff_memory_size (thandle_t data)
 {
   tiff_memory_storage *mem = (tiff_memory_storage*)data;
   return mem->len;
@@ -1175,7 +1180,7 @@ struct tiff_error_struct
 static struct tiff_error_struct tiff_err_data;
 
 static void
-tiff_error_func(const char *module, const char *fmt, ...)
+tiff_error_func (const char *module, const char *fmt, ...)
 {
   va_list vargs;
 
@@ -1192,7 +1197,7 @@ tiff_error_func(const char *module, const char *fmt, ...)
 }
 
 static void
-tiff_warning_func(const char *module, const char *fmt, ...)
+tiff_warning_func (const char *module, const char *fmt, ...)
 {
   va_list vargs;
 #ifdef HAVE_VSNPRINTF
@@ -1242,8 +1247,8 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   TIFFSetWarningHandler ((TIFFErrorHandler)tiff_warning_func);
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    Extbyte *bytes;
-    Extcount len;
+    UChar_Binary *bytes;
+    Memory_Count len;
 
     uint32 *raster;
     unsigned char *ep;
@@ -1277,7 +1282,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     raster = (uint32*) _TIFFmalloc (width * height * sizeof (uint32));
     if (raster != NULL)
       {
-	int i,j;
+	int i, j;
 	uint32 *rp;
 	ep = unwind.eimage;
 	rp = raster;
@@ -1288,7 +1293,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		/* This is to get around weirdness in the libtiff library where properly
 		   made TIFFs will come out upside down.  libtiff bug or jhod-brainlock? */
 		rp = raster + (i * width);
-		for (j = 0; j < width; j++)
+		for (j = 0; j < (int) width; j++)
 		  {
 		    *ep++ = (unsigned char)TIFFGetR(*rp);
 		    *ep++ = (unsigned char)TIFFGetG(*rp);

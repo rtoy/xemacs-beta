@@ -27,28 +27,27 @@ typedef struct
 } hentry;
 
 typedef int           (*hash_table_test_function) (const void *, const void *);
-typedef unsigned long (*hash_table_hash_function) (const void *);
-typedef size_t hash_size_t;
+typedef Hash_Code     (*hash_table_hash_function) (const void *);
 
 struct hash_table
 {
   hentry	*harray;
   long		zero_set;
   void		*zero_entry;
-  hash_size_t	size;		/* size of the hasharray */
-  hash_size_t	fullness;	/* number of entries in the hash table */
+  Element_Count	size;		/* size of the hasharray */
+  Element_Count	fullness;	/* number of entries in the hash table */
   hash_table_hash_function hash_function;
   hash_table_test_function test_function;
 };
 
 /* SIZE is the number of initial entries. The hash table will be grown
    automatically if the number of entries approaches the size */
-struct hash_table *make_hash_table (hash_size_t size);
+struct hash_table *make_hash_table (Element_Count size);
 
 struct hash_table *
-make_general_hash_table (hash_size_t size,
-			hash_table_hash_function hash_function,
-			hash_table_test_function test_function);
+make_general_hash_table (Element_Count size,
+			 hash_table_hash_function hash_function,
+			 hash_table_test_function test_function);
 
 /* Clear HASH-TABLE. A freshly created hash table is already cleared up. */
 void clrhash (struct hash_table *hash_table);

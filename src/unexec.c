@@ -710,7 +710,7 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
   if (a_out >= 0)
     {
 #ifdef COFF_ENCAPSULATE
-      if (read (a_out, &coffheader, sizeof coffheader) != sizeof coffheader)
+      if (read (a_out, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
 	{
 	  PERROR(a_name);
 	}
@@ -719,7 +719,7 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
 	  ERROR1("%s doesn't have legal coff magic number\n", a_name);
 	}
 #endif
-      if (read (a_out, (char *) &ohdr, sizeof hdr) != sizeof hdr)
+      if (read (a_out, (char *) &ohdr, sizeof (hdr)) != sizeof (hdr))
 	{
 	  PERROR (a_name);
 	}
@@ -738,7 +738,7 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
        */
       ERROR0 ("can't build a COFF file from scratch yet");
 #else
-      memset ((void *)&hdr, 0, sizeof hdr);
+      memset ((void *)&hdr, 0, sizeof (hdr));
 #endif
     }
 
@@ -788,13 +788,13 @@ make_hdr (int new, int a_out, unsigned data_start, unsigned bss_start,
     coffheader.text_start = tp->s_vaddr;
     coffheader.data_start = dp->s_vaddr;
   }
-  if (write (new, &coffheader, sizeof coffheader) != sizeof coffheader)
+  if (write (new, &coffheader, sizeof (coffheader)) != sizeof (coffheader))
     {
       PERROR(new_name);
     }
 #endif /* COFF_ENCAPSULATE */
 
-  if (write (new, (char *) &hdr, sizeof hdr) != sizeof hdr)
+  if (write (new, (char *) &hdr, sizeof (hdr)) != sizeof (hdr))
     {
       PERROR (new_name);
     }
@@ -1099,7 +1099,7 @@ copy_sym (int new, int a_out, char *a_name, char *new_name)
 #endif /* COFF */
     lseek (a_out, SYMS_START, 0);	/* Position a.out to symtab. */
 
-  while ((n = read (a_out, page, sizeof page)) > 0)
+  while ((n = read (a_out, page, sizeof (page))) > 0)
     {
       if (write (new, page, n) != n)
 	{

@@ -39,7 +39,7 @@ void DndGetData(XEvent *event, unsigned char **Data, unsigned long *Size);
 
 int		DndIsIcon(Widget widget);
 int		DndDataType(XEvent *event);
-unsigned int	DndDragButtons(XEvent *event);
+int		DndDragButtons(XEvent *event);
 Window          DndSourceWindow(XEvent *event);
 
 void

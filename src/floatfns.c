@@ -175,7 +175,7 @@ float_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return (extract_float (obj1) == extract_float (obj2));
 }
 
-static unsigned long
+static Hash_Code
 float_hash (Lisp_Object obj, int depth)
 {
   /* mod the value down to 32-bit range */

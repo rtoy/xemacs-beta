@@ -563,7 +563,7 @@ These are all the user names which begin with PARTIAL-USERNAME.
 struct user_name
 {
   Bufbyte *ptr;
-  size_t len;
+  Bytecount len;
 };
 
 struct user_cache
@@ -675,7 +675,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 		  status_status_statui_statum_statu != ERROR_MORE_DATA)
 		invalid_operation ("Error enumerating users",
 				   make_int (GetLastError ()));
-	      for (i = 0; i < entriesread; i++)
+	      for (i = 0; i < (int) entriesread; i++)
 		{
 		  int nout =
 		    WideCharToMultiByte (CP_ACP, WC_COMPOSITECHECK,

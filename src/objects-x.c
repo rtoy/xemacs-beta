@@ -399,8 +399,8 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   f->height = xf->ascent + xf->descent;
   {
     /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
-    unsigned int def_char = 'n'; /*xf->default_char;*/
-    unsigned int byte1, byte2;
+    int def_char = 'n'; /*xf->default_char;*/
+    int byte1, byte2;
 
   once_more:
     byte1 = def_char >> 8;
@@ -410,10 +410,10 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       {
 	/* Old versions of the R5 font server have garbage (>63k) as
 	   def_char. 'n' might not be a valid character. */
-	if (byte1 < xf->min_byte1         ||
-	    byte1 > xf->max_byte1         ||
-	    byte2 < xf->min_char_or_byte2 ||
-	    byte2 > xf->max_char_or_byte2)
+	if (byte1 < (int) xf->min_byte1         ||
+	    byte1 > (int) xf->max_byte1         ||
+	    byte2 < (int) xf->min_char_or_byte2 ||
+	    byte2 > (int) xf->max_char_or_byte2)
 	  f->width = 0;
 	else
 	  f->width = xf->per_char[(byte1 - xf->min_byte1) *
@@ -429,7 +429,7 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
        0 width too (unlikely) then just use the max width. */
     if (f->width == 0)
       {
-	if (def_char == xf->default_char)
+	if (def_char == (int) xf->default_char)
 	  f->width = xf->max_bounds.width;
 	else
 	  {
@@ -598,7 +598,7 @@ truename_via_FONT_prop (Display *dpy, XFontStruct *font)
   if (result)
     {
       /* Verify that result is an XLFD name (roughly...) */
-      if (result [0] != '-' || strlen (result) < (unsigned int) 30)
+      if (result [0] != '-' || strlen (result) < 30)
 	{
 	  XFree (result);
 	  result = 0;
@@ -817,7 +817,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
       Lisp_Object name, value;
       Atom atom = props [i].name;
       Bufbyte *name_str = 0;
-      size_t name_len;
+      Bytecount name_len;
       Extbyte *namestrext = XGetAtomName (dpy, atom);
 
       if (namestrext)

@@ -95,19 +95,19 @@ int Lstream_fgetc (Lstream *stream)
 void Lstream_fungetc (Lstream *stream, int c)
 	Function equivalents of the above macros.
 
-Lstream_data_count Lstream_read (Lstream *stream, void *data,
-                                 Lstream_data_count size)
+Lstream_Data_Count Lstream_read (Lstream *stream, void *data,
+                                 Lstream_Data_Count size)
 	Read SIZE bytes of DATA from the stream.  Return the number of
 	bytes read.  0 means EOF. -1 means an error occurred and no
 	bytes were read.
 
-Lstream_data_count Lstream_write (Lstream *stream, void *data,
-                                  Lstream_data_count size)
+Lstream_Data_Count Lstream_write (Lstream *stream, void *data,
+                                  Lstream_Data_Count size)
 	Write SIZE bytes of DATA to the stream.  Return the number of
 	bytes written.  -1 means an error occurred and no bytes were
 	written.
 
-void Lstream_unread (Lstream *stream, void *data, Lstream_data_count size)
+void Lstream_unread (Lstream *stream, void *data, Lstream_Data_Count size)
 	Push back SIZE bytes of DATA onto the input queue.  The
 	next call to Lstream_read() with the same size will read the
 	same bytes back.  Note that this will be the case even if
@@ -181,14 +181,14 @@ finalize_lstream (void *header, int for_disksave)
     }
 }
 
-inline static size_t
-aligned_sizeof_lstream (size_t lstream_type_specific_size)
+inline static Memory_Count
+aligned_sizeof_lstream (Memory_Count lstream_type_specific_size)
 {
   return ALIGN_SIZE (offsetof (Lstream, data) + lstream_type_specific_size,
 		     ALIGNOF (max_align_t));
 }
 
-static size_t
+static Memory_Count
 sizeof_lstream (const void *header)
 {
   return aligned_sizeof_lstream (((const Lstream *) header)->imp->size);
@@ -303,11 +303,11 @@ Lstream_reopen (Lstream *lstr)
 int
 Lstream_flush_out (Lstream *lstr)
 {
-  Lstream_data_count num_written;
+  Lstream_Data_Count num_written;
 
   while (lstr->out_buffer_ind > 0)
     {
-      Lstream_data_count size = lstr->out_buffer_ind;
+      Lstream_Data_Count size = lstr->out_buffer_ind;
       if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
 	Lstream_internal_error ("lstream not open", lstr);
       if (! (lstr->flags & LSTREAM_FL_WRITE))
@@ -390,10 +390,10 @@ Lstream_flush (Lstream *lstr)
    if it's getting EWOULDBLOCK errors.   We have to keep stocking them
    up until they can be written, so as to avoid losing data. */
 
-static Lstream_data_count
-Lstream_adding (Lstream *lstr, Lstream_data_count num, int force)
+static Lstream_Data_Count
+Lstream_adding (Lstream *lstr, Lstream_Data_Count num, int force)
 {
-  Lstream_data_count size = num + lstr->out_buffer_ind;
+  Lstream_Data_Count size = num + lstr->out_buffer_ind;
 
   if (size <= lstr->out_buffer_size)
     return num;
@@ -415,11 +415,11 @@ Lstream_adding (Lstream *lstr, Lstream_data_count num, int force)
 
 /* Like Lstream_write(), but does not handle line-buffering correctly. */
 
-static Lstream_data_count
-Lstream_write_1 (Lstream *lstr, const void *data, Lstream_data_count size)
+static Lstream_Data_Count
+Lstream_write_1 (Lstream *lstr, const void *data, Lstream_Data_Count size)
 {
   const unsigned char *p = (const unsigned char *) data;
-  Lstream_data_count off = 0;
+  Lstream_Data_Count off = 0;
   if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
     Lstream_internal_error ("lstream not open", lstr);
   if (! (lstr->flags & LSTREAM_FL_WRITE))
@@ -430,7 +430,7 @@ Lstream_write_1 (Lstream *lstr, const void *data, Lstream_data_count size)
     while (1)
       {
 	/* Figure out how much we can add to the buffer */
-	Lstream_data_count chunk = Lstream_adding (lstr, size, 0);
+	Lstream_Data_Count chunk = Lstream_adding (lstr, size, 0);
 	if (chunk == 0)
 	  {
 	    if (couldnt_write_last_time)
@@ -475,10 +475,10 @@ Lstream_write_1 (Lstream *lstr, const void *data, Lstream_data_count size)
    repeatedly call Lstream_putc(), which knows how to handle
    line buffering.  Returns number of bytes written. */
 
-Lstream_data_count
-Lstream_write (Lstream *lstr, const void *data, Lstream_data_count size)
+Lstream_Data_Count
+Lstream_write (Lstream *lstr, const void *data, Lstream_Data_Count size)
 {
-  Lstream_data_count i;
+  Lstream_Data_Count i;
   const unsigned char *p = (const unsigned char *) data;
 
   if (size == 0)
@@ -499,9 +499,9 @@ Lstream_was_blocked_p (Lstream *lstr)
   return lstr->imp->was_blocked_p ? lstr->imp->was_blocked_p (lstr) : 0;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 Lstream_raw_read (Lstream *lstr, unsigned char *buffer,
-		  Lstream_data_count size)
+		  Lstream_Data_Count size)
 {
   if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
     Lstream_internal_error ("lstream not open", lstr);
@@ -515,18 +515,18 @@ Lstream_raw_read (Lstream *lstr, unsigned char *buffer,
 
 /* Assuming the buffer is empty, fill it up again. */
 
-static Lstream_data_count
+static Lstream_Data_Count
 Lstream_read_more (Lstream *lstr)
 {
 #if 0
-  Lstream_data_count size_needed 
+  Lstream_Data_Count size_needed 
     = max (1, min (MAX_READ_SIZE, lstr->buffering_size));
 #else
   /* If someone requested a larger buffer size, so be it! */
-  Lstream_data_count size_needed =
+  Lstream_Data_Count size_needed =
     max (1, lstr->buffering_size);
 #endif
-  Lstream_data_count size_gotten;
+  Lstream_Data_Count size_gotten;
 
   DO_REALLOC (lstr->in_buffer, lstr->in_buffer_size,
 	      size_needed, unsigned char);
@@ -536,12 +536,12 @@ Lstream_read_more (Lstream *lstr)
   return size_gotten < 0 ? -1 : size_gotten;
 }
 
-Lstream_data_count
-Lstream_read (Lstream *lstr, void *data, Lstream_data_count size)
+Lstream_Data_Count
+Lstream_read (Lstream *lstr, void *data, Lstream_Data_Count size)
 {
   unsigned char *p = (unsigned char *) data;
-  Lstream_data_count off = 0;
-  Lstream_data_count chunk;
+  Lstream_Data_Count off = 0;
+  Lstream_Data_Count chunk;
   int error_occurred = 0;
 
   if (size == 0)
@@ -574,7 +574,7 @@ Lstream_read (Lstream *lstr, void *data, Lstream_data_count size)
       /* If we need some more, try to get some more from the stream's end */
       if (size > 0)
 	{
-	  Lstream_data_count retval = Lstream_read_more (lstr);
+	  Lstream_Data_Count retval = Lstream_read_more (lstr);
 	  if (retval < 0)
 	    error_occurred = 1;
 	  if (retval <= 0)
@@ -598,7 +598,7 @@ Lstream_read (Lstream *lstr, void *data, Lstream_data_count size)
 	  VALIDATE_CHARPTR_BACKWARD (dataend);
 	  if (dataend + REP_BYTES_BY_FIRST_BYTE (*dataend) != p + off)
 	    {
-	      Lstream_data_count newoff = dataend - p;
+	      Lstream_Data_Count newoff = dataend - p;
 	      /* If not, chop the size down to ignore the last char
 		 and stash it away for next time. */
 	      Lstream_unread (lstr, dataend, off - newoff);
@@ -611,7 +611,7 @@ Lstream_read (Lstream *lstr, void *data, Lstream_data_count size)
 }
 
 void
-Lstream_unread (Lstream *lstr, const void *data, Lstream_data_count size)
+Lstream_unread (Lstream *lstr, const void *data, Lstream_Data_Count size)
 {
   const unsigned char *p = (const unsigned char *) data;
 
@@ -730,7 +730,7 @@ int
 Lstream_fputc (Lstream *lstr, int c)
 {
   unsigned char ch = (unsigned char) c;
-  Lstream_data_count retval = Lstream_write_1 (lstr, &ch, 1);
+  Lstream_Data_Count retval = Lstream_write_1 (lstr, &ch, 1);
   if (retval >= 0 && lstr->buffering == LSTREAM_LINE_BUFFERED && ch == '\n')
     return Lstream_flush_out (lstr);
   return retval < 0 ? -1 : 0;
@@ -811,22 +811,22 @@ make_stdio_output_stream (FILE *stream, int flags)
    code (it could even be argued that the error might have fixed
    itself, so we should do the fread() again.  */
 
-static Lstream_data_count
-stdio_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+stdio_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  Lstream_data_count val = fread (data, 1, size, str->file);
+  Lstream_Data_Count val = fread (data, 1, size, str->file);
   if (!val && ferror (str->file))
     return -1;
   return val;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 stdio_writer (Lstream *stream, const unsigned char *data,
-	      Lstream_data_count size)
+	      Lstream_Data_Count size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  Lstream_data_count val = fwrite (data, 1, size, str->file);
+  Lstream_Data_Count val = fwrite (data, 1, size, str->file);
   if (!val && ferror (str->file))
     return -1;
   return val;
@@ -937,13 +937,13 @@ make_filedesc_output_stream (int filedesc, int offset, int count, int flags)
   return make_filedesc_stream_1 (filedesc, offset, count, flags, "w");
 }
 
-static Lstream_data_count
-filedesc_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+filedesc_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
 {
-  Lstream_data_count nread;
+  Lstream_Data_Count nread;
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   if (str->end_pos >= 0)
-    size = min (size, (Lstream_data_count) (str->end_pos - str->current_pos));
+    size = min (size, (Lstream_Data_Count) (str->end_pos - str->current_pos));
   nread = str->allow_quit ?
     read_allowing_quit (str->fd, data, size) :
     read (str->fd, data, size);
@@ -966,12 +966,12 @@ errno_would_block_p (int val)
   return 0;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 filedesc_writer (Lstream *stream, const unsigned char *data,
-		 Lstream_data_count size)
+		 Lstream_Data_Count size)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
-  Lstream_data_count retval;
+  Lstream_Data_Count retval;
   int need_newline = 0;
 
   /* This function would be simple if it were not for the blasted
@@ -1025,7 +1025,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 	 out for EWOULDBLOCK. */
       if (str->chars_sans_newline >= str->pty_max_bytes)
 	{
-	  Lstream_data_count retval2 = str->allow_quit ?
+	  Lstream_Data_Count retval2 = str->allow_quit ?
 	    write_allowing_quit (str->fd, &str->eof_char, 1) :
 	    write (str->fd, &str->eof_char, 1);
 
@@ -1058,7 +1058,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
   if (need_newline)
     {
       Bufbyte nl = '\n';
-      Lstream_data_count retval2 = str->allow_quit ?
+      Lstream_Data_Count retval2 = str->allow_quit ?
 	write_allowing_quit (str->fd, &nl, 1) :
 	write (str->fd, &nl, 1);
 
@@ -1194,9 +1194,9 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
   return obj;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 lisp_string_reader (Lstream *stream, unsigned char *data,
-		    Lstream_data_count size)
+		    Lstream_Data_Count size)
 {
   struct lisp_string_stream *str = LISP_STRING_STREAM_DATA (stream);
   /* Don't lose if the string shrank past us ... */
@@ -1211,7 +1211,7 @@ lisp_string_reader (Lstream *stream, unsigned char *data,
   if (stream->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
     VALIDATE_CHARPTR_BACKWARD (start);
   offset = start - strstart;
-  size = min (size, (Lstream_data_count) (str->end - offset));
+  size = min (size, (Lstream_Data_Count) (str->end - offset));
   memcpy (data, start, size);
   str->offset = offset + size;
   return size;
@@ -1254,15 +1254,15 @@ struct fixed_buffer_stream
 {
   const unsigned char *inbuf;
   unsigned char *outbuf;
-  Lstream_data_count size;
-  Lstream_data_count offset;
+  Lstream_Data_Count size;
+  Lstream_Data_Count offset;
 };
 
 DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", lstream_fixed_buffer,
 			       sizeof (struct fixed_buffer_stream));
 
 Lisp_Object
-make_fixed_buffer_input_stream (const void *buf, Lstream_data_count size)
+make_fixed_buffer_input_stream (const void *buf, Lstream_Data_Count size)
 {
   Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
@@ -1274,7 +1274,7 @@ make_fixed_buffer_input_stream (const void *buf, Lstream_data_count size)
 }
 
 Lisp_Object
-make_fixed_buffer_output_stream (void *buf, Lstream_data_count size)
+make_fixed_buffer_output_stream (void *buf, Lstream_Data_Count size)
 {
   Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
@@ -1285,9 +1285,9 @@ make_fixed_buffer_output_stream (void *buf, Lstream_data_count size)
   return obj;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 fixed_buffer_reader (Lstream *stream, unsigned char *data,
-		     Lstream_data_count size)
+		     Lstream_Data_Count size)
 {
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (stream);
   size = min (size, str->size - str->offset);
@@ -1296,9 +1296,9 @@ fixed_buffer_reader (Lstream *stream, unsigned char *data,
   return size;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 fixed_buffer_writer (Lstream *stream, const unsigned char *data,
-		     Lstream_data_count size)
+		     Lstream_Data_Count size)
 {
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (stream);
   if (str->offset == str->size)
@@ -1343,7 +1343,7 @@ fixed_buffer_output_stream_ptr (Lstream *stream)
 struct resizing_buffer_stream
 {
   unsigned char *buf;
-  Lstream_data_count allocked;
+  Lstream_Data_Count allocked;
   int max_stored;
   int stored;
 };
@@ -1359,9 +1359,9 @@ make_resizing_buffer_output_stream (void)
   return obj;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 resizing_buffer_writer (Lstream *stream, const unsigned char *data,
-			Lstream_data_count size)
+			Lstream_Data_Count size)
 {
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
   DO_REALLOC (str->buf, str->allocked, str->stored + size, unsigned char);
@@ -1422,9 +1422,9 @@ make_dynarr_output_stream (unsigned_char_dynarr *dyn)
   return obj;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 dynarr_writer (Lstream *stream, const unsigned char *data,
-	       Lstream_data_count size)
+	       Lstream_Data_Count size)
 {
   struct dynarr_stream *str = DYNARR_STREAM_DATA (stream);
   Dynarr_add_many (str->dyn, data, size);
@@ -1547,9 +1547,9 @@ make_lisp_buffer_output_stream (struct buffer *buf, Bufpos pos, int flags)
   return lstr;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 lisp_buffer_reader (Lstream *stream, unsigned char *data,
-		    Lstream_data_count size)
+		    Lstream_Data_Count size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
   unsigned char *orig_data = data;
@@ -1573,7 +1573,7 @@ lisp_buffer_reader (Lstream *stream, unsigned char *data,
 				   BI_BUF_ZV (buf));
     }
 
-  size = min (size, (Lstream_data_count) (end - start));
+  size = min (size, (Lstream_Data_Count) (end - start));
   end = start + size;
   /* We cannot return a partial character. */
   VALIDATE_BYTIND_BACKWARD (buf, end);
@@ -1606,9 +1606,9 @@ lisp_buffer_reader (Lstream *stream, unsigned char *data,
   return data - orig_data;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 lisp_buffer_writer (Lstream *stream, const unsigned char *data,
-		    Lstream_data_count size)
+		    Lstream_Data_Count size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
   Bufpos pos;

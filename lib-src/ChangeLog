@@ -1,3 +1,18 @@
+2001-06-24  Ben Wing  <ben@xemacs.org>
+
+	* gnuserv.c (permitted):
+	* gnuserv.c (setup_table):
+	* gnuslib.c (connect_to_internet_server):
+	* make-docfile.c (scan_c_file):
+	* mmencode.c (fromqp):
+	* movemail.c:
+	* movemail.c (main):
+	* movemail.c (xmalloc):
+	* ootags.c (prolog_pred):
+	* ootags.c (erlang_func):
+	* yow.c (yow):
+	Fix unsigned warnings.  See src/ChangeLog for details.
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

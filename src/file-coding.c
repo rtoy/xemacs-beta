@@ -174,47 +174,47 @@ EXFUN (Fcopy_coding_system, 2);
 #ifdef MULE
 struct detection_state;
 static int detect_coding_sjis (struct detection_state *st,
-			       const Extbyte *src, Lstream_data_count n);
+			       const Extbyte *src, Lstream_Data_Count n);
 static void decode_coding_sjis (Lstream *decoding, const Extbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_sjis (Lstream *encoding, const Bufbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static int detect_coding_big5 (struct detection_state *st,
-			       const Extbyte *src, Lstream_data_count n);
+			       const Extbyte *src, Lstream_Data_Count n);
 static void decode_coding_big5 (Lstream *decoding, const Extbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_big5 (Lstream *encoding, const Bufbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static int detect_coding_ucs4 (struct detection_state *st,
-			       const Extbyte *src, Lstream_data_count n);
+			       const Extbyte *src, Lstream_Data_Count n);
 static void decode_coding_ucs4 (Lstream *decoding, const Extbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_ucs4 (Lstream *encoding, const Bufbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static int detect_coding_utf8 (struct detection_state *st,
-			       const Extbyte *src, Lstream_data_count n);
+			       const Extbyte *src, Lstream_Data_Count n);
 static void decode_coding_utf8 (Lstream *decoding, const Extbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_utf8 (Lstream *encoding, const Bufbyte *src,
-				unsigned_char_dynarr *dst, Lstream_data_count n);
+				unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static int postprocess_iso2022_mask (int mask);
 static void reset_iso2022 (Lisp_Object coding_system,
 			   struct iso2022_decoder *iso);
 static int detect_coding_iso2022 (struct detection_state *st,
-				  const Extbyte *src, Lstream_data_count n);
+				  const Extbyte *src, Lstream_Data_Count n);
 static void decode_coding_iso2022 (Lstream *decoding, const Extbyte *src,
-				   unsigned_char_dynarr *dst, Lstream_data_count n);
+				   unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_iso2022 (Lstream *encoding, const Bufbyte *src,
-				   unsigned_char_dynarr *dst, Lstream_data_count n);
+				   unsigned_char_dynarr *dst, Lstream_Data_Count n);
 #endif /* MULE */
 static void decode_coding_no_conversion (Lstream *decoding, const Extbyte *src,
-					 unsigned_char_dynarr *dst, Lstream_data_count n);
+					 unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void encode_coding_no_conversion (Lstream *encoding, const Bufbyte *src,
-					 unsigned_char_dynarr *dst, Lstream_data_count n);
+					 unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void mule_decode (Lstream *decoding, const Extbyte *src,
-			 unsigned_char_dynarr *dst, Lstream_data_count n);
+			 unsigned_char_dynarr *dst, Lstream_Data_Count n);
 static void mule_encode (Lstream *encoding, const Bufbyte *src,
-			 unsigned_char_dynarr *dst, Lstream_data_count n);
+			 unsigned_char_dynarr *dst, Lstream_Data_Count n);
 
 typedef struct codesys_prop codesys_prop;
 struct codesys_prop
@@ -1617,7 +1617,7 @@ mask_has_at_most_one_bit_p (int mask)
 
 static eol_type_t
 detect_eol_type (struct detection_state *st, const Extbyte *src,
-		 Lstream_data_count n)
+		 Lstream_Data_Count n)
 {
   while (n--)
     {
@@ -1660,7 +1660,7 @@ detect_eol_type (struct detection_state *st, const Extbyte *src,
 
 static int
 detect_coding_type (struct detection_state *st, const Extbyte *src,
-		    Lstream_data_count n, int just_do_eol)
+		    Lstream_Data_Count n, int just_do_eol)
 {
   if (st->eol_type == EOL_AUTODETECT)
     st->eol_type = detect_eol_type (st, src, n);
@@ -1791,7 +1791,7 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
       Extbyte buf[4096];
       Lisp_Object coding_system = Qnil;
       Extbyte *p;
-      Lstream_data_count nread = Lstream_read (stream, buf, sizeof (buf));
+      Lstream_Data_Count nread = Lstream_read (stream, buf, sizeof (buf));
       Extbyte *scan_end;
 
       /* Look for initial "-*-"; mode line prefix */
@@ -1925,7 +1925,7 @@ type.  Optional arg BUFFER defaults to the current buffer.
   while (1)
     {
       Extbyte random_buffer[4096];
-      Lstream_data_count nread = Lstream_read (istr, random_buffer, sizeof (random_buffer));
+      Lstream_Data_Count nread = Lstream_read (istr, random_buffer, sizeof (random_buffer));
 
       if (!nread)
 	break;
@@ -2092,10 +2092,10 @@ struct decoding_stream
   struct detection_state decst;
 };
 
-static Lstream_data_count decoding_reader (Lstream *stream,
-				unsigned char *data, Lstream_data_count size);
-static Lstream_data_count decoding_writer (Lstream *stream,
-				const unsigned char *data, Lstream_data_count size);
+static Lstream_Data_Count decoding_reader (Lstream *stream,
+				unsigned char *data, Lstream_Data_Count size);
+static Lstream_Data_Count decoding_writer (Lstream *stream,
+				const unsigned char *data, Lstream_Data_Count size);
 static int decoding_rewinder   (Lstream *stream);
 static int decoding_seekable_p (Lstream *stream);
 static int decoding_flusher    (Lstream *stream);
@@ -2127,12 +2127,12 @@ decoding_marker (Lisp_Object stream)
 /* Read SIZE bytes of data and store it into DATA.  We are a decoding stream
    so we read data from the other end, decode it, and store it into DATA. */
 
-static Lstream_data_count
-decoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+decoding_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
   unsigned char *orig_data = data;
-  Lstream_data_count read_size;
+  Lstream_Data_Count read_size;
   int error_occurred = 0;
 
   /* We need to interface to mule_decode(), which expects to take some
@@ -2148,7 +2148,7 @@ decoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
 	 most SIZE bytes, and delete the data from the runoff. */
       if (Dynarr_length (str->runoff) > 0)
 	{
-	  Lstream_data_count chunk = min (size, (Lstream_data_count) Dynarr_length (str->runoff));
+	  Lstream_Data_Count chunk = min (size, (Lstream_Data_Count) Dynarr_length (str->runoff));
 	  memcpy (data, Dynarr_atp (str->runoff, 0), chunk);
 	  Dynarr_delete_many (str->runoff, 0, chunk);
 	  data += chunk;
@@ -2189,11 +2189,11 @@ decoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
     return data - orig_data;
 }
 
-static Lstream_data_count
-decoding_writer (Lstream *stream, const unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+decoding_writer (Lstream *stream, const unsigned char *data, Lstream_Data_Count size)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
-  Lstream_data_count retval;
+  Lstream_Data_Count retval;
 
   /* Decode all our data into the runoff, and then attempt to write
      it all out to the other end.  Remove whatever chunk we succeeded
@@ -2351,7 +2351,7 @@ make_decoding_output_stream (Lstream *stream, Lisp_Object codesys)
 
 static void
 mule_decode (Lstream *decoding, const Extbyte *src,
-	     unsigned_char_dynarr *dst, Lstream_data_count n)
+	     unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
 
@@ -2473,7 +2473,7 @@ BUFFER defaults to the current buffer if unspecified.
       char tempbuf[1024]; /* some random amount */
       Bufpos newpos, even_newer_pos;
       Bufpos oldpos = lisp_buffer_stream_startpos (istr);
-      Lstream_data_count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+      Lstream_Data_Count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
       if (!size_in_bytes)
 	break;
@@ -2558,9 +2558,9 @@ struct encoding_stream
 #endif /* MULE */
 };
 
-static Lstream_data_count encoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size);
-static Lstream_data_count encoding_writer (Lstream *stream, const unsigned char *data,
-				Lstream_data_count size);
+static Lstream_Data_Count encoding_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size);
+static Lstream_Data_Count encoding_writer (Lstream *stream, const unsigned char *data,
+				Lstream_Data_Count size);
 static int encoding_rewinder   (Lstream *stream);
 static int encoding_seekable_p (Lstream *stream);
 static int encoding_flusher    (Lstream *stream);
@@ -2592,12 +2592,12 @@ encoding_marker (Lisp_Object stream)
 /* Read SIZE bytes of data and store it into DATA.  We are a encoding stream
    so we read data from the other end, encode it, and store it into DATA. */
 
-static Lstream_data_count
-encoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+encoding_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
   unsigned char *orig_data = data;
-  Lstream_data_count read_size;
+  Lstream_Data_Count read_size;
   int error_occurred = 0;
 
   /* We need to interface to mule_encode(), which expects to take some
@@ -2654,11 +2654,11 @@ encoding_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
     return data - orig_data;
 }
 
-static Lstream_data_count
-encoding_writer (Lstream *stream, const unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+encoding_writer (Lstream *stream, const unsigned char *data, Lstream_Data_Count size)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
-  Lstream_data_count retval;
+  Lstream_Data_Count retval;
 
   /* Encode all our data into the runoff, and then attempt to write
      it all out to the other end.  Remove whatever chunk we succeeded
@@ -2798,7 +2798,7 @@ make_encoding_output_stream (Lstream *stream, Lisp_Object codesys)
 
 static void
 mule_encode (Lstream *encoding, const Bufbyte *src,
-	     unsigned_char_dynarr *dst, Lstream_data_count n)
+	     unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
 
@@ -2884,7 +2884,7 @@ text.  BUFFER defaults to the current buffer if unspecified.
       char tempbuf[1024]; /* some random amount */
       Bufpos newpos, even_newer_pos;
       Bufpos oldpos = lisp_buffer_stream_startpos (istr);
-      Lstream_data_count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+      Lstream_Data_Count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
       if (!size_in_bytes)
 	break;
@@ -2947,7 +2947,7 @@ text.  BUFFER defaults to the current buffer if unspecified.
   ((c) >= 0xA1 && (c) <= 0xDF)
 
 static int
-detect_coding_sjis (struct detection_state *st, const Extbyte *src, Lstream_data_count n)
+detect_coding_sjis (struct detection_state *st, const Extbyte *src, Lstream_Data_Count n)
 {
   while (n--)
     {
@@ -2970,7 +2970,7 @@ detect_coding_sjis (struct detection_state *st, const Extbyte *src, Lstream_data
 
 static void
 decode_coding_sjis (Lstream *decoding, const Extbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags  = str->flags;
@@ -3026,7 +3026,7 @@ decode_coding_sjis (Lstream *decoding, const Extbyte *src,
 
 static void
 encode_coding_sjis (Lstream *encoding, const Bufbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
   unsigned int flags  = str->flags;
@@ -3195,7 +3195,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 #define DECODE_BIG5(b1, b2, lb, c1, c2) do				\
 {									\
   int B1 = b1, B2 = b2;							\
-  unsigned int I							\
+  int I									\
     = (B1 - 0xA1) * BIG5_SAME_ROW + B2 - (B2 < 0x7F ? 0x40 : 0x62);	\
 									\
   if (B1 < 0xC9)							\
@@ -3216,7 +3216,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 
 #define ENCODE_BIG5(lb, c1, c2, b1, b2) do				\
 {									\
-  unsigned int I = ((c1) - 0xA1) * (0xFF - 0xA1) + ((c2) - 0xA1);	\
+  int I = ((c1) - 0xA1) * (0xFF - 0xA1) + ((c2) - 0xA1);		\
 									\
   if (lb == LEADING_BYTE_CHINESE_BIG5_2)				\
     {									\
@@ -3228,7 +3228,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 } while (0)
 
 static int
-detect_coding_big5 (struct detection_state *st, const Extbyte *src, Lstream_data_count n)
+detect_coding_big5 (struct detection_state *st, const Extbyte *src, Lstream_Data_Count n)
 {
   while (n--)
     {
@@ -3252,7 +3252,7 @@ detect_coding_big5 (struct detection_state *st, const Extbyte *src, Lstream_data
 
 static void
 decode_coding_big5 (Lstream *decoding, const Extbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags  = str->flags;
@@ -3301,7 +3301,7 @@ decode_coding_big5 (Lstream *decoding, const Extbyte *src,
 
 static void
 encode_coding_big5 (Lstream *encoding, const Bufbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -3425,7 +3425,7 @@ Return T on success, NIL on failure.
 */
        (code, character))
 {
-  size_t c;
+  EMACS_INT c;
 
   CHECK_CHAR (character);
   CHECK_NATNUM (code);
@@ -3567,7 +3567,7 @@ encode_ucs4 (Lisp_Object charset,
 }
 
 static int
-detect_coding_ucs4 (struct detection_state *st, const Extbyte *src, Lstream_data_count n)
+detect_coding_ucs4 (struct detection_state *st, const Extbyte *src, Lstream_Data_Count n)
 {
   while (n--)
     {
@@ -3592,7 +3592,7 @@ detect_coding_ucs4 (struct detection_state *st, const Extbyte *src, Lstream_data
 
 static void
 decode_coding_ucs4 (Lstream *decoding, const Extbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags = str->flags;
@@ -3628,7 +3628,7 @@ decode_coding_ucs4 (Lstream *decoding, const Extbyte *src,
 
 static void
 encode_coding_ucs4 (Lstream *encoding, const Bufbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
   unsigned int flags = str->flags;
@@ -3639,7 +3639,7 @@ encode_coding_ucs4 (Lstream *encoding, const Bufbyte *src,
 #ifdef ENABLE_COMPOSITE_CHARS
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
-  unsigned int saved_n = 0;
+  Lstream_Data_Count saved_n = 0;
   const unsigned char *saved_src = NULL;
   int in_composite = 0;
 
@@ -3766,7 +3766,7 @@ encode_coding_ucs4 (Lstream *encoding, const Bufbyte *src,
 /************************************************************************/
 
 static int
-detect_coding_utf8 (struct detection_state *st, const Extbyte *src, Lstream_data_count n)
+detect_coding_utf8 (struct detection_state *st, const Extbyte *src, Lstream_Data_Count n)
 {
   while (n--)
     {
@@ -3801,7 +3801,7 @@ detect_coding_utf8 (struct detection_state *st, const Extbyte *src, Lstream_data
 
 static void
 decode_coding_utf8 (Lstream *decoding, const Extbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags  = str->flags;
@@ -3915,7 +3915,7 @@ encode_utf8 (Lisp_Object charset,
 
 static void
 encode_coding_utf8 (Lstream *encoding, const Bufbyte *src,
-		    unsigned_char_dynarr *dst, Lstream_data_count n)
+		    unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
   unsigned int flags  = str->flags;
@@ -3927,7 +3927,7 @@ encode_coding_utf8 (Lstream *encoding, const Bufbyte *src,
 #ifdef ENABLE_COMPOSITE_CHARS
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
-  unsigned int saved_n = 0;
+  Lstream_Data_Count saved_n = 0;
   const unsigned char *saved_src = NULL;
   int in_composite = 0;
 
@@ -4674,7 +4674,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 }
 
 static int
-detect_coding_iso2022 (struct detection_state *st, const Extbyte *src, Lstream_data_count n)
+detect_coding_iso2022 (struct detection_state *st, const Extbyte *src, Lstream_Data_Count n)
 {
   int mask;
 
@@ -4865,7 +4865,7 @@ ensure_correct_direction (int direction, Lisp_Coding_System *codesys,
 
 static void
 decode_coding_iso2022 (Lstream *decoding, const Extbyte *src,
-		       unsigned_char_dynarr *dst, Lstream_data_count n)
+		       unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags  = str->flags;
@@ -5107,7 +5107,7 @@ iso2022_designate (Lisp_Object charset, unsigned char reg,
 {
   static const char inter94[] = "()*+";
   static const char inter96[] = ",-./";
-  unsigned int type;
+  int type;
   unsigned char final;
   Lisp_Object old_charset = str->iso2022.charset[reg];
 
@@ -5191,7 +5191,7 @@ ensure_shift_out (struct encoding_stream *str, unsigned_char_dynarr *dst)
 
 static void
 encode_coding_iso2022 (Lstream *encoding, const Bufbyte *src,
-		       unsigned_char_dynarr *dst, Lstream_data_count n)
+		       unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   unsigned char charmask, c;
   unsigned char char_boundary;
@@ -5207,7 +5207,7 @@ encode_coding_iso2022 (Lstream *encoding, const Bufbyte *src,
 #ifdef ENABLE_COMPOSITE_CHARS
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
-  unsigned int saved_n = 0;
+  Lstream_Data_Count saved_n = 0;
   const unsigned char *saved_src = NULL;
   int in_composite = 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
@@ -5500,7 +5500,7 @@ encode_coding_iso2022 (Lstream *encoding, const Bufbyte *src,
    interpreted as being in any particular decoding. */
 static void
 decode_coding_no_conversion (Lstream *decoding, const Extbyte *src,
-			     unsigned_char_dynarr *dst, Lstream_data_count n)
+			     unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   unsigned int flags  = str->flags;
@@ -5524,7 +5524,7 @@ decode_coding_no_conversion (Lstream *decoding, const Extbyte *src,
 
 static void
 encode_coding_no_conversion (Lstream *encoding, const Bufbyte *src,
-			     unsigned_char_dynarr *dst, Lstream_data_count n)
+			     unsigned_char_dynarr *dst, Lstream_Data_Count n)
 {
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -5849,12 +5849,12 @@ complex_vars_of_file_coding (void)
 
 #ifdef MULE
   {
-    size_t i;
+    int i;
 
     for (i = 0; i < countof (fcd->ucs_to_mule_table); i++)
       fcd->ucs_to_mule_table[i] = Qnil;
   }
   staticpro (&mule_to_ucs_table);
-  mule_to_ucs_table = Fmake_char_table(Qgeneric);
+  mule_to_ucs_table = Fmake_char_table (Qgeneric);
 #endif /* MULE */
 }

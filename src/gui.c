@@ -501,7 +501,7 @@ signal_too_long_error (Lisp_Object name)
  * Return value is the offset to the terminating null character into the
  * buffer.
  */
-unsigned int
+Bytecount
 gui_item_display_flush_left (Lisp_Object gui_item,
 			     char *buf, Bytecount buf_len)
 {
@@ -550,7 +550,7 @@ gui_item_display_flush_left (Lisp_Object gui_item,
  * Return value is the offset to the terminating null character into the
  * buffer.
  */
-unsigned int
+Bytecount
 gui_item_display_flush_right (Lisp_Object gui_item,
 			      char *buf, Bytecount buf_len)
 {
@@ -616,7 +616,7 @@ mark_gui_item (Lisp_Object obj)
   return Qnil;
 }
 
-static unsigned long
+static Hash_Code
 gui_item_hash (Lisp_Object obj, int depth)
 {
   Lisp_Gui_Item *p = XGUI_ITEM (obj);

@@ -237,7 +237,7 @@ recreate_heap (char *executable_path)
   DWORD size;
   unsigned char* base = get_heap_end ();
   unsigned char* end  = base + get_reserved_heap_size () - get_committed_heap_size ();
-  VirtualQuery (base, &info, sizeof info);
+  VirtualQuery (base, &info, sizeof (info));
   if (info.State != MEM_FREE)
 	{
 	  /* Oops, something has already reserved or commited it, nothing we can do but exit */
@@ -253,7 +253,7 @@ recreate_heap (char *executable_path)
 	}
 
   /* Now try and reserve as much as possible */
-  size = min (info.RegionSize, end - base);
+  size = min (info.RegionSize, (DWORD) (end - base));
   tmp = VirtualAlloc (base, size, MEM_RESERVE, PAGE_NOACCESS);
   if (!tmp)
 	{

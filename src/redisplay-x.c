@@ -971,14 +971,19 @@ x_output_string (struct window *w, struct display_line *dl,
       /* We draw underlines in the same color as the text. */
       if (cachel->underline)
 	{
-	  unsigned long upos, uthick;
+	  int upos, uthick;
+	  unsigned long upos_ext, uthick_ext;
 	  XFontStruct *xfont;
 
 	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
-	  if (!XGetFontProperty (xfont, XA_UNDERLINE_POSITION, &upos))
+	  if (!XGetFontProperty (xfont, XA_UNDERLINE_POSITION, &upos_ext))
 	    upos = dl->descent / 2;
-	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick))
+	  else
+	    upos = (int) upos_ext;
+	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick_ext))
 	    uthick = 1;
+	  else
+	    uthick = (int) uthick_ext;
 
 	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
 	    {
@@ -998,39 +1003,44 @@ x_output_string (struct window *w, struct display_line *dl,
 	    }
 	}
 
-      if (cachel->strikethru) {
-	unsigned long ascent,descent,upos, uthick;
-	XFontStruct *xfont;
+      if (cachel->strikethru)
+	{
+	  int ascent, descent, upos, uthick;
+	  unsigned long ascent_ext, descent_ext, uthick_ext;
+	  XFontStruct *xfont;
 
-	xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
+	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
+	  
+	  if (!XGetFontProperty (xfont, XA_STRIKEOUT_ASCENT, &ascent_ext))
+	    ascent = xfont->ascent;
+	  else
+	    ascent = (int) ascent_ext;
+	  if (!XGetFontProperty (xfont, XA_STRIKEOUT_DESCENT, &descent_ext))
+	    descent = xfont->descent;
+	  else
+	    descent = (int) descent_ext;
+	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick_ext))
+	    uthick = 1;
+	  else
+	    uthick = (int) uthick_ext;
 
-	if (!XGetFontProperty (xfont, XA_STRIKEOUT_ASCENT, &ascent))
-	  ascent = xfont->ascent;
-	if (!XGetFontProperty (xfont, XA_STRIKEOUT_DESCENT, &descent))
-	  descent = xfont->descent;
-	if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick))
-	  uthick = 1;
+	  upos = ascent - ((ascent + descent) / 2) + 1;
 
-	upos = ascent - ((ascent + descent) / 2) + 1;
+	  /* Generally, upos will be positive (above the baseline),so
+             subtract */
+	  if (dl->ypos - upos < dl->ypos + dl->descent - dl->clip)
+	    {
+	      if (dl->ypos - upos + uthick > dl->ypos + dl->descent - dl->clip)
+		uthick = dl->descent - dl->clip + upos;
 
-	/* Generally, upos will be positive (above the baseline),so subtract */
-	if (dl->ypos - upos < dl->ypos + dl->descent - dl->clip)
-	  {
-	    if (dl->ypos - upos + uthick > dl->ypos + dl->descent - dl->clip)
-	      uthick = dl->descent - dl->clip + upos;
-
-	    if (uthick == 1)
-	      {
+	      if (uthick == 1)
 		XDrawLine (dpy, x_win, gc, xpos, dl->ypos - upos,
 			   xpos + this_width, dl->ypos - upos);
-	      }
-	    else if (uthick > 1)
-	      {
+	      else if (uthick > 1)
 		XFillRectangle (dpy, x_win, gc, xpos, dl->ypos + upos,
 				this_width, uthick);
-	      }
-	  }
-      }
+	    }
+	}
 
       /* Restore the GC */
       if (need_clipping)
@@ -1301,7 +1311,8 @@ x_output_vertical_divider (struct window *w, int clear)
 
   unsigned long mask;
   int x, y1, y2, width, shadow_thickness, spacing, line_width;
-  face_index div_face = get_builtin_face_cache_index (w, Vvertical_divider_face);
+  face_index div_face =
+    get_builtin_face_cache_index (w, Vvertical_divider_face);
 
   width = window_divider_width (w);
   shadow_thickness = XINT (w->vertical_divider_shadow_thickness);

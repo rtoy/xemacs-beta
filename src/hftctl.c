@@ -44,7 +44,8 @@
 /***************************************************************/
 
 #include <config.h>
-#include "lisp.h" /* encapsulated open, close, read, write */
+#include "lisp.h"
+#include "sysfile.h"
 
 #include <sys/signal.h>
 #include <errno.h>
@@ -104,7 +105,7 @@ static struct hfctlack  ACK =
 					/* read a buffer        */
 #define RD_BUF(f,p,l) \
         while ((l)) \
-          if ((j = read((f),(p),(l))) < 0) \
+          if ((j = read ((f),(p),(l))) < 0) \
              if (errno != EINTR) return (-1); \
              else continue; \
           else { (l) -= j; (p) += j; }

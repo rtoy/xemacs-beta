@@ -211,7 +211,7 @@ extent_aux_or_default (EXTENT e)
   set_extent_no_chase_aux_field (extent_ancestor (e), field, value)
 
 #define set_extent_normal_field(e, field, value)		\
-  set_extent_ancestor_normal_field (extent_no_chase (e), field, value)
+  set_extent_no_chase_normal_field (extent_ancestor (e), field, value)
 
 /* The `parent' and `children' fields are not affected by any
    parent links.  We don't provide any settors for these fields
@@ -252,8 +252,8 @@ extent_aux_or_default (EXTENT e)
   set_extent_aux_field (e, after_change_functions, value)
 
 #define extent_face(e)		     extent_normal_field (e, face)
-#define extent_begin_glyph_layout(e) extent_normal_field (e, begin_glyph_layout)
-#define extent_end_glyph_layout(e)   extent_normal_field (e, end_glyph_layout)
+#define extent_begin_glyph_layout(e) ((enum glyph_layout) extent_normal_field (e, begin_glyph_layout))
+#define extent_end_glyph_layout(e)   ((enum glyph_layout) extent_normal_field (e, end_glyph_layout))
 #define extent_start_open_p(e)	     extent_normal_field (e, start_open)
 #define extent_end_open_p(e)	     extent_normal_field (e, end_open)
 #define extent_unique_p(e)	     extent_normal_field (e, unique)
@@ -261,6 +261,27 @@ extent_aux_or_default (EXTENT e)
 #define extent_detachable_p(e)	     extent_normal_field (e, detachable)
 #define extent_internal_p(e)	     extent_normal_field (e, internal)
 #define extent_in_red_event_p(e)     extent_normal_field (e, in_red_event)
+
+#define set_extent_face(e, val) \
+  set_extent_normal_field (e, face, val)
+#define set_extent_begin_glyph_layout(e, val) \
+  set_extent_normal_field (e, begin_glyph_layout, val)
+#define set_extent_end_glyph_layout(e, val) \
+  set_extent_normal_field (e, end_glyph_layout, val)
+#define set_extent_start_open_p(e, val) \
+  set_extent_normal_field (e, start_open, val)
+#define set_extent_end_open_p(e, val) \
+  set_extent_normal_field (e, end_open, val)
+#define set_extent_unique_p(e, val) \
+  set_extent_normal_field (e, unique, val)
+#define set_extent_duplicable_p(e, val) \
+  set_extent_normal_field (e, duplicable, val)
+#define set_extent_detachable_p(e, val) \
+  set_extent_normal_field (e, detachable, val)
+#define set_extent_internal_p(e, val) \
+  set_extent_normal_field (e, internal, val)
+#define set_extent_in_red_event_p(e, val) \
+  set_extent_normal_field (e, in_red_event, val)
 
 INLINE_HEADER Lisp_Object * extent_no_chase_plist_addr (EXTENT e);
 INLINE_HEADER Lisp_Object *

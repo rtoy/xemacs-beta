@@ -327,11 +327,13 @@ connect_to_internet_server (char *serverhost, unsigned short port)
   peeraddr_in.sin_family = AF_INET;
 
   /* look up the server host's internet address */
-  if ((peeraddr_in.sin_addr.s_addr = internet_addr(serverhost)) == -1) {
-    fprintf(stderr,"%s: unable to find %s in /etc/hosts or from YP\n",
-	    progname,serverhost);
-    exit(1);
-  }; /* if */
+  if ((peeraddr_in.sin_addr.s_addr = internet_addr (serverhost)) ==
+      (unsigned int) -1)
+    {
+      fprintf (stderr, "%s: unable to find %s in /etc/hosts or from YP\n",
+	       progname, serverhost);
+      exit(1);
+    }
   
   if (port == 0) {
     if ((sp = getservbyname ("gnuserv","tcp")) == NULL)

@@ -355,7 +355,7 @@ bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
 	{
 	  /* optimize for successive characters from the same charset */
 	  Bufbyte leading_byte = *ptr;
-	  size_t bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
+	  Memory_Count bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
 	  while ((ptr < end) && (*ptr == leading_byte))
 	    ptr += bytes, count++;
 	}

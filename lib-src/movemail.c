@@ -142,7 +142,7 @@ static void usage(int);
 static void pfatal_with_name (char *);
 static void pfatal_and_delete (char *);
 static char *concat (char *, char *, char *);
-static long *xmalloc (unsigned int);
+static long *xmalloc (int);
 #ifdef MAIL_USE_POP
 static int popmail (char *, char *, char *);
 static int pop_retr (popserver server, int msgno,
@@ -440,7 +440,7 @@ main (int argc, char *argv[])
 		errno = saved_errno;
 		pfatal_with_name (outname);
 	      }
-	    if (nread < sizeof buf)
+	    if (nread < (int) sizeof (buf))
 	      break;
 	  }
       }
@@ -699,7 +699,7 @@ concat (char *s1, char *s2, char *s3)
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static long *
-xmalloc (unsigned int size)
+xmalloc (int size)
 {
   long *result = (long *) malloc (size);
   if (!result)

@@ -208,15 +208,15 @@ restore_point_unwind (Lisp_Object point_marker)
    (#### Actually, longjmp()ing out of the signal handler may not be
    as losing as I thought.  See qxe_reliable_signal() in sysdep.c.) */
 
-ssize_t
-read_allowing_quit (int fildes, void *buf, size_t size)
+Memory_Count
+read_allowing_quit (int fildes, void *buf, Memory_Count size)
 {
   QUIT;
   return sys_read_1 (fildes, buf, size, 1);
 }
 
-ssize_t
-write_allowing_quit (int fildes, const void *buf, size_t size)
+Memory_Count
+write_allowing_quit (int fildes, const void *buf, Memory_Count size)
 {
   QUIT;
   return sys_write_1 (fildes, buf, size, 1);
@@ -2768,7 +2768,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	{
 	  int nread;
 	  Bufpos bufpos;
-	  nread = read_allowing_quit (fd, buffer, sizeof buffer);
+	  nread = read_allowing_quit (fd, buffer, sizeof (buffer));
 	  if (nread < 0)
 	    report_file_error ("Reading", filename);
 	  else if (nread == 0)
@@ -2904,7 +2904,7 @@ positions), even in Mule. (Fixing this is very difficult.)
        occurs inside of the filedesc stream. */
     while (1)
       {
-	Lstream_data_count this_len;
+	Lstream_Data_Count this_len;
 	Charcount cc_inserted;
 
 	QUIT;

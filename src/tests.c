@@ -40,7 +40,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 */
        ())
 {
-  void *ptr; size_t len;
+  void *ptr; Memory_Count len;
   Lisp_Object string, opaque;
 
   Bufbyte int_foo[] = "\n\nfoo\nbar";

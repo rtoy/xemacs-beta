@@ -219,7 +219,7 @@ mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
 static char*
 displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
 {
-  unsigned int ll;
+  Bytecount ll;
 
   /* We construct the name in a static buffer. That's fine, because
      menu items longer than 128 chars are probably programming errors,
@@ -237,7 +237,7 @@ displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
   /* Right flush part, unless we're at the top-level where it's not allowed */
   if (!bar_p)
     {
-      unsigned int lr;
+      Bytecount lr;
 
       assert (MAX_MENUITEM_LENGTH > ll + 1);
       lr = gui_item_display_flush_right (gui_item, buf + ll + 1,

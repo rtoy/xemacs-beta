@@ -869,7 +869,8 @@ _free_internal (__ptr_t ptr)
       prev = (struct list *) ((char *) ADDRESS (block) +
 			   (_heapinfo[block].busy.info.frag.first << type));
 
-      if (_heapinfo[block].busy.info.frag.nfree == (BLOCKSIZE >> type) - 1)
+      if (_heapinfo[block].busy.info.frag.nfree ==
+	   (__malloc_size_t) ((BLOCKSIZE >> type) - 1))
 	{
 	  /* If all fragments of this block are free, remove them
 	     from the fragment list and free the whole block.  */

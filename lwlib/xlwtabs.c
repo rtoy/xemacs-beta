@@ -626,7 +626,7 @@ TabsSetValues(Widget current, Widget request, Widget new,
 
 	  /* Tab size has changed.  Resize all tabs and request a new size */
 	  for(i=0, childP=tw->composite.children;
-		i < tw->composite.num_children;
+		i < (int) tw->composite.num_children;
 		++i, ++childP)
 	    if( XtIsManaged(*childP) )
 	      TabWidth(*childP) ;
@@ -667,7 +667,7 @@ TabsSetValues(Widget current, Widget request, Widget new,
 	    XtVaSetValues(w, XmNtraversalOn, True, 0) ;
 #endif
 
-	    if( tab->tabs.row != tw->tabs.numRows-1 )
+	    if( tab->tabs.row != (int) tw->tabs.numRows-1 )
 	      TabsShuffleRows(tw) ;
 
 	    needRedraw = True ;
@@ -1066,7 +1066,7 @@ TabsSelect(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	 * widget to be top of stacking order with XawTabsSetTop().
 	 */
 	for(i=0, childP=tw->composite.children;
-	      i < TabsNumChildren (tw);
+	      i < (int) TabsNumChildren (tw);
 	      ++i, ++childP)
 	  if( TabVisible(*childP) )
 	  {
@@ -1392,7 +1392,7 @@ DrawTabs(TabsWidget tw, Bool labels)
 	 */
 
 	y = tw->tabs.numRows == 1 ? TABDELTA : 0 ;
-	for(i=0; i<tw->tabs.numRows; ++i, y += th)
+	for(i=0; i < (int) tw->tabs.numRows; ++i, y += th)
 	{
  	  for( j=TabsNumChildren (tw), childP=tw->composite.children;
   	      --j >= 0; ++childP )
@@ -1402,7 +1402,7 @@ DrawTabs(TabsWidget tw, Bool labels)
 	      if( tab->tabs.row == i && *childP != tw->tabs.topWidget )
 		DrawTab(tw, *childP, labels) ;
 	    }
-	  if( i != tw->tabs.numRows -1 )
+	  if( i != (int) tw->tabs.numRows -1 )
 	    DrawTrim(tw, 0,y+th, tw->core.width, th+s, False,False) ;
 	}
 

@@ -168,7 +168,7 @@ insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
       /* We could also count how many newlines there are in the string
          and update the cache accordingly, but it would be too much
          work for too little gain. */
-      memchr ((void *)nonreloc, '\n', (size_t) length))
+      memchr ((void *)nonreloc, '\n', length))
     invalidate_line_number_cache (b, pos);
 }
 

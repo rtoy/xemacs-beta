@@ -1,3 +1,25 @@
+2001-06-19  Ben Wing  <ben@xemacs.org>
+
+	* term\AT386.el:
+	* term\AT386.el (AT386-keypad-map):
+	* term\AT386.el (AT386-keypad-map)): New.
+	Fix warnings.
+	
+	* term\linux.el:
+	* term\lk201.el:
+	* term\news.el:
+	* term\news.el (news-fkey-prefix)): New.
+	* term\vt100.el:
+	* term\vt100.el (vt100-wide-mode):
+	Sync with FSF 21.0.103.
+	Fix warnings.
+
+2001-06-19  Ben Wing  <ben@xemacs.org>
+
+	* dialog-gtk.el (popup-builtin-open-dialog): Fix warning.
+	* hyper-apropos.el: Fix problem with undefined face.
+	* update-elc.el (update-elc-files-to-compile): Compile in proper order.
+
 2001-08-08  Didier Verna  <didier@xemacs.org>
 
 	* autoload.el (make-autoload): handle the case of

@@ -367,9 +367,9 @@ get_ntpipe_input_stream_waitable (Lstream *stream)
   return s->thread_data->hev_caller;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
-		     Lstream_data_count size)
+		     Lstream_Data_Count size)
 {
   /* This function must be called from the main thread only */
   struct ntpipe_slurp_stream_shared_data* s =
@@ -429,7 +429,7 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
 	       so do not check for errors. ReadFile in the thread will
 	       fail if the next call fails. */
 	    if (bytes_available)
-	      ReadFile (s->hpipe, data, min (bytes_available, size),
+	      ReadFile (s->hpipe, data, min (bytes_available, (DWORD) size),
 			&bytes_read, NULL);
 	  }
 
@@ -582,9 +582,9 @@ get_ntpipe_output_stream_param (Lstream *stream)
 }
 #endif
 
-static Lstream_data_count
+static Lstream_Data_Count
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
-		     Lstream_data_count size)
+		     Lstream_Data_Count size)
 {
   struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
 
@@ -666,9 +666,9 @@ struct winsock_stream
   LPARAM user_data;		/* Any user data stored in the stream object */
   SOCKET s;			/* Socket handle (which is a Win32 handle)   */
   OVERLAPPED ov;		/* Overlapped I/O structure		     */
-  void* buffer;			/* Buffer.                                   */
-  unsigned long bufsize;	/* Number of bytes last read		     */
-  unsigned long bufpos;		/* Position in buffer for next fetch	     */
+  void *buffer;			/* Buffer.                                   */
+  DWORD bufsize;		/* Number of bytes last read		     */
+  DWORD bufpos;			/* Position in buffer for next fetch	     */
   unsigned int error_p :1;	/* I/O Error seen			     */
   unsigned int eof_p :1;	/* EOF Error seen			     */
   unsigned int pending_p :1;	/* There is a pending I/O operation	     */
@@ -700,8 +700,8 @@ winsock_initiate_read (struct winsock_stream *str)
     str->eof_p = 1;
 }
 
-static Lstream_data_count
-winsock_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
+static Lstream_Data_Count
+winsock_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
 
@@ -735,7 +735,7 @@ winsock_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
     return -1;
 
   /* Return as much of buffer as we have */
-  size = min (size, (Lstream_data_count) (str->bufsize - str->bufpos));
+  size = min (size, (Lstream_Data_Count) (str->bufsize - str->bufpos));
   memcpy (data, (void*)((BYTE*)str->buffer + str->bufpos), size);
   str->bufpos += size;
 
@@ -746,9 +746,9 @@ winsock_reader (Lstream *stream, unsigned char *data, Lstream_data_count size)
   return size;
 }
 
-static Lstream_data_count
+static Lstream_Data_Count
 winsock_writer (Lstream *stream, const unsigned char *data,
-		Lstream_data_count size)
+		Lstream_Data_Count size)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
 
@@ -1386,13 +1386,12 @@ mswindows_need_event_in_modal_loop (int badly_p)
 static void
 mswindows_need_event (int badly_p)
 {
-  int active;
-
   while (NILP (mswindows_u_dispatch_event_queue)
 	 && NILP (mswindows_s_dispatch_event_queue))
     {
 #ifdef HAVE_MSG_SELECT
       int i;
+      int active;
       SELECT_TYPE temp_mask = input_wait_mask;
       EMACS_TIME sometime;
       EMACS_SELECT_TIME select_time_to_block, *pointer_to_this;
@@ -1487,8 +1486,9 @@ mswindows_need_event (int badly_p)
 	{
 	  assert(0);
 	}
-#else
+#else /* not HAVE_MSG_SELECT */
       /* Now try getting a message or process event */
+      DWORD active;
       DWORD what_events;
       if (mswindows_in_modal_loop)
 	/* In a modal loop, only look for timer events, and only if
@@ -1570,7 +1570,7 @@ mswindows_need_event (int badly_p)
 		mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 	    }
 	}
-#endif
+#endif /* not HAVE_MSG_SELECT */
     } /* while */
 }
 
@@ -2059,7 +2059,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
   Lisp_Event *event;
   struct frame *frame;
-  struct mswindows_frame* msframe;
+  struct mswindows_frame *msframe;
 
   /* If you hit this, rewrite the offending API call to occur after GC,
      using register_post_gc_action(). */
@@ -2250,7 +2250,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				   PM_REMOVE))
 	      {
 		int mods_with_quit = mods;
-		WPARAM ch = tranmsg.wParam;
+		Emchar ch = (Emchar) tranmsg.wParam;
 
 #ifdef DEBUG_XEMACS
 		if (debug_mswindows_events)
@@ -2552,18 +2552,17 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
     case WM_NOTIFY:
       {
-	LPNMHDR nmhdr = (LPNMHDR)lParam;
+	LPNMHDR nmhdr = (LPNMHDR) lParam;
 
-	if (nmhdr->code ==  TTN_NEEDTEXT)
+	if ((int) nmhdr->code == TTN_NEEDTEXT)
 	  {
 #ifdef HAVE_TOOLBARS
-	    LPTOOLTIPTEXT tttext = (LPTOOLTIPTEXT)lParam;
+	    LPTOOLTIPTEXT tttext = (LPTOOLTIPTEXT) lParam;
 	    Lisp_Object btext;
 
 	    /* find out which toolbar */
 	    frame = XFRAME (mswindows_find_frame (hwnd));
-	    btext = mswindows_get_toolbar_button_text ( frame,
-							nmhdr->idFrom );
+	    btext = mswindows_get_toolbar_button_text (frame, nmhdr->idFrom);
 
 	    tttext->lpszText = NULL;
 	    tttext->hinst = NULL;
@@ -2577,14 +2576,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 #endif
 	  }
 	/* handle tree view callbacks */
-	else if (nmhdr->code == TVN_SELCHANGED)
+	else if ((int) nmhdr->code == TVN_SELCHANGED)
 	  {
-	    NM_TREEVIEW* ptree = (NM_TREEVIEW*)lParam;
+	    NM_TREEVIEW *ptree = (NM_TREEVIEW *) lParam;
 	    frame = XFRAME (mswindows_find_frame (hwnd));
 	    mswindows_handle_gui_wm_command (frame, 0, ptree->itemNew.lParam);
 	  }
 	/* handle tab control callbacks */
-	else if (nmhdr->code == TCN_SELCHANGE)
+	else if ((int) nmhdr->code == TCN_SELCHANGE)
 	  {
 	    TC_ITEM item;
 	    int idx = SendMessage (nmhdr->hwndFrom, TCM_GETCURSEL, 0, 0);
@@ -3092,13 +3091,17 @@ mswindows_current_layout_has_AltGr (void)
     current_hkl = xGetKeyboardLayout (0);
   if (current_hkl != last_hkl)
     {
-      TCHAR c;
+      int c;
       last_hkl_has_AltGr = 0;
       /* In this loop, we query whether a character requires
 	 AltGr to be down to generate it. If at least such one
 	 found, this means that the layout does regard AltGr */
-      for (c = ' '; c <= 0xFFU && c != 0 && !last_hkl_has_AltGr; ++c)
-	if (HIBYTE (VkKeyScan (c)) == 6)
+      for (c = ' '; c <= 255 && !last_hkl_has_AltGr; ++c)
+	/* #### This is not really such a good check.  What about under
+	   CJK locales?  It may not matter there, though.  We always
+	   call VkKeyScanA so that we check the locale-specific characters
+	   in non-Latin-1 locales, instead of just the Latin-1 characters. */
+	if (HIBYTE (VkKeyScanA ((char) c)) == 6)
 	  last_hkl_has_AltGr = 1;
       last_hkl = current_hkl;
     }
@@ -3958,7 +3961,7 @@ debug_output_mswin_message (HWND hwnd, UINT message_, WPARAM wParam,
 
   for (i = 0; i < countof (debug_mswin_messages); i++)
     {
-      if (debug_mswin_messages[i].mess == message_)
+      if (debug_mswin_messages[i].mess == (int) message_)
 	{
 	  str = debug_mswin_messages[i].string;
 	  break;

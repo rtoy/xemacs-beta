@@ -1189,16 +1189,16 @@ image_instance_live_p (Lisp_Object instance)
   return DOMAIN_LIVE_P (XIMAGE_INSTANCE_DOMAIN (instance));
 }
 
-static unsigned long
+static Hash_Code
 image_instance_hash (Lisp_Object obj, int depth)
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
-  unsigned long hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
-			      IMAGE_INSTANCE_WIDTH (i),
-			      IMAGE_INSTANCE_MARGIN_WIDTH (i),
-			      IMAGE_INSTANCE_HEIGHT (i),
-			      internal_hash (IMAGE_INSTANCE_INSTANTIATOR (i),
-					     depth + 1));
+  Hash_Code hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
+			  IMAGE_INSTANCE_WIDTH (i),
+			  IMAGE_INSTANCE_MARGIN_WIDTH (i),
+			  IMAGE_INSTANCE_HEIGHT (i),
+			  internal_hash (IMAGE_INSTANCE_INSTANTIATOR (i),
+					 depth + 1));
 
   ERROR_CHECK_IMAGE_INSTANCE (obj);
 
@@ -2586,7 +2586,7 @@ Lisp_Object
 bitmap_to_lisp_data (Lisp_Object name, int *xhot, int *yhot,
 		     int ok_if_data_invalid)
 {
-  unsigned int w, h;
+  int w, h;
   Extbyte *data;
   int result;
   const char *filename_ext;
@@ -3088,7 +3088,7 @@ instantiator_eq_equal (Lisp_Object obj1, Lisp_Object obj2)
   return 0;
 }
 
-static hashcode_t
+static Hash_Code
 instantiator_eq_hash (Lisp_Object obj)
 {
   if (CONSP (obj))
@@ -3610,7 +3610,7 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  !plists_differ (g1->plist,     g2->plist, 0, 0, depth + 1));
 }
 
-static unsigned long
+static Hash_Code
 glyph_hash (Lisp_Object obj, int depth)
 {
   depth++;
@@ -4427,8 +4427,7 @@ struct expose_ignore_blocktype
 } *the_expose_ignore_blocktype;
 
 int
-check_for_ignored_expose (struct frame* f, unsigned int x, unsigned int y,
-			  unsigned int width, unsigned int height)
+check_for_ignored_expose (struct frame* f, int x, int y, int width, int height)
 {
   struct expose_ignore *ei, *prev;
   /* the ignore list is FIFO so we should generally get a match with
@@ -4500,9 +4499,8 @@ register_ignored_expose (struct frame* f, int x, int y, int width, int height)
  See if there is a subwindow that completely encloses the requested
  area.
  ****************************************************************************/
-int find_matching_subwindow (struct frame* f, unsigned int x, 
-			     unsigned int y, unsigned int width, 
-			     unsigned int height)
+int
+find_matching_subwindow (struct frame* f, int x, int y, int width, int height)
 {
   Lisp_Object rest;
 

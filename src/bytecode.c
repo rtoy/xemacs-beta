@@ -1599,8 +1599,8 @@ optimize_byte_code (/* in */
 		    int * const program_length,
 		    int * const varbind_count)
 {
-  size_t instructions_length = XSTRING_LENGTH (instructions);
-  size_t comfy_size = 2 * instructions_length;
+  Bytecount instructions_length = XSTRING_LENGTH (instructions);
+  Element_Count comfy_size = (Element_Count) (2 * instructions_length);
 
   int * const icounts = alloca_array (int, comfy_size);
   int * icounts_ptr = icounts;
@@ -1996,7 +1996,7 @@ compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 		     f2->doc_and_interactive, depth + 1));
 }
 
-static unsigned long
+static Hash_Code
 compiled_function_hash (Lisp_Object obj, int depth)
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
