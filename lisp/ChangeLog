@@ -1,3 +1,12 @@
+2002-06-04  John H Palmieri  <palmieri@math.washington.edu>
+
+	* gutter-items.el (buffers-tab-omit-function): Default value is
+	now `buffers-tab-omit-some-buffers'.
+	* gutter-items.el (buffers-tab-omit-list): New customizable
+	variable, specifying which buffers to omit from buffers tab.
+	* gutter-items.el (buffers-tab-omit-some-buffers): New function
+	which uses buffers-tab-omit-list.
+
 2002-07-21  John Paul Wallington  <jpw@xemacs.org>
 
 	* process.el (substitute-env-vars): New function; sync with 

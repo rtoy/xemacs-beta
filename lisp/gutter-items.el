@@ -66,14 +66,37 @@ a large number or nil will slow down tab responsiveness."
 		(function :tag "Other"))
   :group 'buffers-tab)
 
-(defcustom buffers-tab-omit-function 'buffers-menu-omit-invisible-buffers
+(defcustom buffers-tab-omit-function 'buffers-tab-omit-some-buffers
   "*If non-nil, a function specifying the buffers to omit from the buffers tab.
 This is passed a buffer and should return non-nil if the buffer should be
-omitted.  The default value `buffers-menu-omit-invisible-buffers' omits
-buffers that are normally considered \"invisible\" (those whose name
-begins with a space)."
+omitted.  The default value `buffers-tab-omit-some-buffers' omits
+buffers based on the value of `buffers-tab-omit-list'."
   :type '(choice (const :tag "None" nil)
-		 function)
+  		 function)
+  :group 'buffers-tab)
+  
+(defcustom buffers-tab-omit-list '("\\` ")
+  "*A list of types of buffers to omit from the buffers tab.
+This is only used if `buffers-tab-omit-function' is set to
+`buffers-tab-omit-some-buffers', its default value."
+  :type '(checklist
+	  :greedy t
+	  :format "%{Omit List%}: \n%v"
+	  (const
+	   :tag "Invisible buffers (those whose names start with a space) "
+	   "\\` ")
+	  (const
+	   :tag "Help buffers "
+	   "\\`\\*Help")
+	  (const
+	   :tag "Customize buffers "
+	   "\\`\\*Customize")
+	  (const
+	   :tag "`special' buffers (those whose names start with *) "
+	   "\\`\\*")
+	  (const
+	   :tag "`special' buffers other than *scratch*"
+	   "\\`\\*\\([^s]\\|s[^c]\\|sc[^r]\\|scr[^a]\\|scra[^t]\\|scrat[^c]\\|scratc[^h]\\|scratch[^*]\\|scratch\\*.+\\)"))
   :group 'buffers-tab)
 
 (defvar buffers-tab-selection-function 'select-buffers-tab-buffers-by-mode
@@ -663,6 +686,13 @@ arguments are the same as to `format'."
       (let ((str (apply 'format fmt args)))
 	(display-progress-feedback label str value)
 	str))))
+
+(defun buffers-tab-omit-some-buffers (buf)
+  "For use as a value of `buffers-tab-omit-function'.
+Omit buffers based on the value of `buffers-tab-omit-list', which
+see."
+  (let ((regexp (mapconcat 'concat buffers-tab-omit-list "\\|")))
+    (not (null (string-match regexp (buffer-name buf))))))
 
 (provide 'gutter-items)
 ;;; gutter-items.el ends here.
