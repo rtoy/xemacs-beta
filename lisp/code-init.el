@@ -62,14 +62,11 @@ detection on Windows!  Your files will have lots of annoying ^M's in them
 if you do this."
   (dolist (x '(buffer-file-coding-system-for-read
 	       keyboard
-	       default-process-coding-system-read))
+	       default-process-coding-system-read
+	       no-conversion-coding-system-mapping))
     (set-coding-system-variable
      x (coding-system-change-eol-conversion (get-coding-system-variable x)
-					    (if flag nil 'lf))))
-  (set-coding-category-system
-   'no-conversion
-   (coding-system-change-eol-conversion (coding-category-system 'no-conversion)
-					(if flag nil 'lf))))
+					    (if flag nil 'lf)))))
 
 (defun coding-system-current-system-configuration ()
   (cond ((memq system-type '(windows-nt cygwin32))
@@ -117,7 +114,8 @@ if you do this."
     keyboard
     terminal
     default-process-coding-system-read
-    default-process-coding-system-write))
+    default-process-coding-system-write
+    no-conversion-coding-system-mapping))
 
 (defun get-coding-system-variable (var)
   "Return the value of a basic coding system variable.
@@ -134,6 +132,8 @@ VAR."
     (terminal (coding-system-aliasee 'terminal))
     (default-process-coding-system-read (car default-process-coding-system))
     (default-process-coding-system-write (cdr default-process-coding-system))
+    (no-conversion-coding-system-mapping
+     (coding-category-system 'no-conversion))
     (t (error 'invalid-constant "Invalid coding system variable" var))))
 
 (defun set-coding-system-variable (var value)
@@ -156,6 +156,8 @@ VAR."
     (default-process-coding-system-write
       (setq default-process-coding-system
 	    (cons (car default-process-coding-system) value)))
+    (no-conversion-coding-system-mapping
+     (set-coding-category-system 'no-conversion value))
     (t (error 'invalid-constant "Invalid coding system variable" var))))
 
 (defun coding-system-variable-default-value (var &optional config)

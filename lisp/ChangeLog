@@ -1,3 +1,66 @@
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el (set-eol-detection):
+	* code-init.el (coding-system-default-variable-list):
+	* code-init.el (get-coding-system-variable):
+	* code-init.el (set-coding-system-variable):
+	Undo Stephen's change of 2004-05-11.
+	Implement no-conversion-coding-system-mapping as a coding
+	system variable.
+
+2004-11-17  Ben Wing  <ben@xemacs.org>
+
+	* cl.el (cl-random-time):
+	Conditionalize on coerce-number as Jerry says it's OK.
+	
+	* font-lock.el (c-font-lock-keywords-2): Removed.
+	* font-lock.el (xemacs-c-font-lock-keywords-2): New.
+	* font-lock.el (c-font-lock-keywords-3): Removed.
+	* font-lock.el (xemacs-c-font-lock-keywords-3): New.
+	Fix naming problem.
+	
+	* frame.el (display-mouse-p):
+	Fix warning.
+	
+	* fill.el:
+	* fill.el (canonically-space-region):
+	* fill.el (fill-region-as-paragraph):
+	* fill.el (justify-current-line):
+	* fill.el (fill-individual-paragraphs):
+	Sync for real to FSF 19.34.
+	
+	* newcomment.el:
+	* newcomment.el (comment):
+	* newcomment.el (comment-fill-column): New.
+	* newcomment.el (comment-style):
+	* newcomment.el (comment-padding):
+	* newcomment.el (comment-multi-line):
+	* newcomment.el (comment-normalize-vars):
+	* newcomment.el (comment-indent):
+	* newcomment.el (uncomment-region):
+	* newcomment.el (comment-make-extra-lines):
+	* newcomment.el (comment-with-narrowing):
+	* newcomment.el (comment-region-internal):
+	* newcomment.el (comment-region):
+	* newcomment.el (comment-box):
+	* newcomment.el (comment-or-uncomment-region): New.
+	* newcomment.el (comment-dwim):
+	* newcomment.el (comment-auto-fill-only-comments):
+	* newcomment.el (comment-valid-prefix): New.
+	* newcomment.el (comment-indent-new-line):
+	* page.el:
+	* page.el (narrow-to-page):
+	* register.el:
+	* register.el (set-register):
+	* register.el (point-to-register):
+	* register.el (register-swap-out):
+	* register.el (number-to-register):
+	* register.el (view-register):
+	* register.el (list-registers): New.
+	* register.el (describe-register-1): New.
+	* register.el (insert-register):
+	Sync to FSF 21.3.
+
 2005-01-25  Ben Wing  <ben@xemacs.org>
 
 	* startup.el:
