@@ -1,3 +1,18 @@
+2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* file-coding.c: DEFSYMBOL Qslightly_unlikely.
+	(detection_result_number_to_symbol):
+	(detection_result_symbol_to_number):
+	Decode/encode corresponding result numbers.
+	(detection_result_number_to_symbol):
+	Use switch to get warnings about unhandled enumerators.
+	(detect_coding_type): Add debug check for 0 detector categories.
+	(undecided_init_coding_stream): Add debug output.
+
+2003-05-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* event-Xt.c (x_to_emacs_keysym): Fix typo in comment.
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.

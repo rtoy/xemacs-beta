@@ -1010,7 +1010,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 #else /* XIM_XLIB */
   if (xic)
     len = XmbLookupString (xic, event, bufptr, bufsiz, &keysym, &status);
-#endif /* HAVE_XIM */
+#endif /* XIM_MOTIF */
 
 #ifdef DEBUG_XEMACS
   if (debug_x_events > 0)

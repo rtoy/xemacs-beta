@@ -474,6 +474,7 @@ Lisp_Object Qconvert_eol_lf, Qconvert_eol_cr, Qconvert_eol_crlf;
 Lisp_Object Qconvert_eol_autodetect;
 
 Lisp_Object Qnear_certainty, Qquite_probable, Qsomewhat_likely;
+Lisp_Object Qslightly_likely;
 Lisp_Object Qas_likely_as_unlikely, Qsomewhat_unlikely, Qquite_improbable;
 Lisp_Object Qnearly_impossible;
 
@@ -3488,15 +3489,19 @@ coding_category_id_to_symbol (int id)
 static Lisp_Object
 detection_result_number_to_symbol (enum detection_result result)
 {
-#define FROB(sym, num) if (result == num) return (sym)
+  /* let compiler warn if not all enumerators are handled */
+  switch (result) {
+#define FROB(sym, num) case num: return (sym)
   FROB (Qnear_certainty, DET_NEAR_CERTAINTY);
   FROB (Qquite_probable, DET_QUITE_PROBABLE);
   FROB (Qsomewhat_likely, DET_SOMEWHAT_LIKELY);
+  FROB (Qslightly_likely, DET_SLIGHTLY_LIKELY);
   FROB (Qas_likely_as_unlikely, DET_AS_LIKELY_AS_UNLIKELY);
   FROB (Qsomewhat_unlikely, DET_SOMEWHAT_UNLIKELY);
   FROB (Qquite_improbable, DET_QUITE_IMPROBABLE);
   FROB (Qnearly_impossible, DET_NEARLY_IMPOSSIBLE);
 #undef FROB
+  }
 
   abort ();
   return Qnil; /* (usually) not reached */
@@ -3506,10 +3511,12 @@ detection_result_number_to_symbol (enum detection_result result)
 static enum detection_result
 detection_result_symbol_to_number (Lisp_Object symbol)
 {
+  /* using switch here would be bad style, and doesn't help */
 #define FROB(sym, num) if (EQ (symbol, sym)) return (num)
   FROB (Qnear_certainty, DET_NEAR_CERTAINTY);
   FROB (Qquite_probable, DET_QUITE_PROBABLE);
   FROB (Qsomewhat_likely, DET_SOMEWHAT_LIKELY);
+  FROB (Qslightly_likely, DET_SLIGHTLY_LIKELY);
   FROB (Qas_likely_as_unlikely, DET_AS_LIKELY_AS_UNLIKELY);
   FROB (Qsomewhat_unlikely, DET_SOMEWHAT_UNLIKELY);
   FROB (Qquite_improbable, DET_QUITE_IMPROBABLE);
@@ -3642,6 +3649,9 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
   if (!NILP (Vdebug_coding_detection))
     {
       stderr_out ("seen_non_ascii: %d\n", st->seen_non_ascii);
+      if (coding_detector_category_count <= 0)
+	stderr_out ("found %d detector categories\n",
+		    coding_detector_category_count);
       for (i = 0; i < coding_detector_category_count; i++)
 	stderr_out_lisp
 	  ("%s: %s\n",
@@ -3923,6 +3933,11 @@ undecided_init_coding_stream (struct coding_stream *str)
 	/* We can determine the coding system now. */
 	data->actual = determine_real_coding_system (lst);
     }
+
+#ifdef DEBUG_XEMACS
+  if (!NILP (Vdebug_coding_detection))
+    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+#endif /* DEBUG_XEMACS */
 }
 
 static void
@@ -4621,6 +4636,7 @@ syms_of_file_coding (void)
   DEFSYMBOL (Qnear_certainty);
   DEFSYMBOL (Qquite_probable);
   DEFSYMBOL (Qsomewhat_likely);
+  DEFSYMBOL (Qslightly_likely);
   DEFSYMBOL (Qas_likely_as_unlikely);
   DEFSYMBOL (Qsomewhat_unlikely);
   DEFSYMBOL (Qquite_improbable);
