@@ -41,10 +41,6 @@ Boston, MA 02111-1307, USA.  */
    This is not true with visual c though. The trick below works with
    VC4.2b, 5.0 and 6.0. It assumes that VC is installed in a kind of
    standard way, so include path ends with /include.
-   NOTE: We also include this same file in s/windowsnt.h, to avoid problems
-   because this file prototypes ABORT() and then lisp.h defines it as a
-   macro, which must happen after the prototype.  DO NOT remove the include
-   here just because you "know" it's somewhere else as well.
 */
 #include <../include/process.h>
 #endif

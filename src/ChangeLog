@@ -1,3 +1,17 @@
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
+	* dumper.c:
+	* dumper.c (pdump_file_try):
+	* dumper.c (DUMP_SLACK):
+	* dumper.c (pdump_load):
+	Include extra DUMP_SLACK when allocating space for exe path.
+	
+	* glyphs-eimage.c:
+	Reformat comment.
+
+	* sysproc.h:
+	Delete out-of-date comment about abort.
+
 2005-02-03  Jerry James  <james@xemacs.org>
 
 	* dumper.c (pdump_load_finish): Cast to Rawbyte * instead of char *.

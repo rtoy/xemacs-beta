@@ -1,7 +1,7 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000,2004 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2084,6 +2084,10 @@ pdump_file_try (Wexttext *exe_path)
 {
   Wexttext *w = exe_path + wext_strlen (exe_path);
 
+  /* We look for various names, including those with the version and dump ID,
+     those with just the dump ID, and those without either.  We first try
+     adding directly to the executable name, then lopping off any extension
+     (e.g. .exe) or version name in the executable (xemacs-21.5.18). */
   do
     {
       wext_sprintf (w, WEXTSTRING ("-%s-%08x.dmp"), WEXTSTRING (EMACS_VERSION),
@@ -2128,6 +2132,7 @@ pdump_load (const Wexttext *argv0)
   Wexttext *exe_path = NULL;
   int bufsize = 4096;
   int cchpathsize;
+#define DUMP_SLACK 100 /* Enough to include dump ID, version name, .DMP */
 
   /* Copied from mswindows_get_module_file_name ().  Not clear if it's
      kosher to malloc() yet. */
@@ -2138,7 +2143,7 @@ pdump_load (const Wexttext *argv0)
 					  bufsize);
       if (!cchpathsize)
 	goto fail;
-      if (cchpathsize + 1 <= bufsize)
+      if (cchpathsize + DUMP_SLACK <= bufsize)
 	break;
       bufsize *= 2;
     }

@@ -105,11 +105,12 @@ Lisp_Object Qpng;
 BEGIN_C_DECLS
 
 #ifdef WIN32_NATIVE
-/* #### Yuck!  More horrifitude.  tiffio.h, below, includes <windows.h>, which
-   defines INT32 and INT16, the former differently and incompatibly from jmorecfg.h,
-   included by jpeglib.h.  We can disable the stuff in jmorecfg.h by defining XMD_H
-   (clever, huh?); then we define these typedefs the way that <windows.h> wants them
-   (which is more correct, anyway; jmorecfg.h defines INT32 as `long'). */
+/* #### Yuck!  More horrifitude.  tiffio.h, below, includes <windows.h>,
+   which defines INT32 and INT16, the former differently and incompatibly
+   from jmorecfg.h, included by jpeglib.h.  We can disable the stuff in
+   jmorecfg.h by defining XMD_H (clever, huh?); then we define these
+   typedefs the way that <windows.h> wants them (which is more correct,
+   anyway; jmorecfg.h defines INT32 as `long'). */
 #define XMD_H
 typedef signed int INT32;
 typedef signed short INT16;
