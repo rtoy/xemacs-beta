@@ -1,3 +1,7 @@
+2003-01-28  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in (_ALL_SOURCE): Guard against multiple definition.
+
 2003-02-09  Ben Wing  <ben@xemacs.org>
 
 	* console-stream.c:
