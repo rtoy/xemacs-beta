@@ -51,15 +51,6 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   xfree (bstr, CIbyte *);
 }
 
-static void
-bignum_finalize (void *header, int for_disksave)
-{
-  if (for_disksave)
-    invalid_operation ("Can't dump an XEmacs containing bignum objects",
-		       VOID_TO_LISP (header));
-  bignum_fini (((Lisp_Bignum *)header)->data);
-}
-
 static int
 bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
@@ -77,9 +68,9 @@ static const struct memory_description bignum_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("bignum", bignum, 0, 0,
-			       bignum_print, bignum_finalize, bignum_equal,
-			       bignum_hash, bignum_description, Lisp_Bignum);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 0, 0, bignum_print,
+				     0, bignum_equal, bignum_hash,
+				     bignum_description, Lisp_Bignum);
 
 #else /* !HAVE_BIGNUM */
 
@@ -138,15 +129,6 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   xfree (rstr, CIbyte *);
 }
 
-static void
-ratio_finalize (void *header, int for_disksave)
-{
-  if (for_disksave)
-    invalid_operation ("Can't dump an XEmacs containing ratio objects",
-		       VOID_TO_LISP (header));
-  ratio_fini (((Lisp_Ratio *)header)->data);
-}
-
 static int
 ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
@@ -164,9 +146,9 @@ static const struct memory_description ratio_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0,
-			       ratio_print, ratio_finalize, ratio_equal,
-			       ratio_hash, ratio_description, Lisp_Ratio);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
+				     0, ratio_equal, ratio_hash,
+				     ratio_description, Lisp_Ratio);
 
 #else /* !HAVE_RATIO */
 
@@ -235,15 +217,6 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   xfree (fstr, CIbyte *);
 }
 
-static void
-bigfloat_finalize (void *header, int for_disksave)
-{
-  if (for_disksave)
-    invalid_operation ("Can't dump an XEmacs containing bigfloat objects",
-		       VOID_TO_LISP (header));
-  bigfloat_fini (((Lisp_Bigfloat *)header)->bf);
-}
-
 static int
 bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
@@ -261,10 +234,10 @@ static const struct memory_description bigfloat_description[] = {
   { XD_END }
 };
 
-DEFINE_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
-			       bigfloat_print, bigfloat_finalize,
-			       bigfloat_equal, bigfloat_hash,
-			       bigfloat_description, Lisp_Bigfloat);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
+				     bigfloat_print, 0,
+				     bigfloat_equal, bigfloat_hash,
+				     bigfloat_description, Lisp_Bigfloat);
 
 #else /* !HAVE_BIGFLOAT */
 
@@ -743,9 +716,18 @@ The maximum number of bits of precision a bigfloat can have.
 This is currently the value of ULONG_MAX on the target machine.
 */);
 
-  /* See init_number for the other half of Vbigfloat_max_prec initialization */
-#if defined(HAVE_BIGFLOAT) && !defined(HAVE_BIGNUM)
+#ifdef HAVE_BIGFLOAT
+#ifdef HAVE_BIGNUM
+  /* Uncomment the next two lines and remove the line below them when dumping
+     bignums becomes possible. */
+  /*
+  Vbigfloat_max_prec = make_bignum (0L);
+  bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
+  */
   Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
+#else
+  Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
+#endif
 #else
   Vbigfloat_max_prec = make_int (0);
 #endif /* HAVE_BIGFLOAT */
@@ -800,13 +782,4 @@ init_number (void)
       bigfloat_init (scratch_bigfloat2);
 #endif
     }
-
-#if defined(HAVE_BIGFLOAT) && defined(HAVE_BIGNUM)
-  /* Avoid dumping a bignum */
-  if (initialized)
-    {
-      Vbigfloat_max_prec = make_bignum (0L);
-      bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
-    }
-#endif
 }

@@ -1,3 +1,17 @@
+2004-05-05  Jerry James  <james@xemacs.org>
+
+	* number.c: Use DEFINE_BASIC_LRECORD_IMPLEMENTATION instead of
+	DEFINE_LRECORD_IMPLEMENTATION for bignum, ratio, and bigfloat.
+	* number.c (bignum_finalize): Remove; we already do this with an
+	ADDITIONAL_FREE macro in alloc.c.
+	* number.c (ratio_finalize): Ditto.
+	* number.c (bigfloat_finalize): Ditto.
+	* number.c (vars_of_number): Put all initialization of
+	Vbigfloat_max_prec here, but leave some commented until we can
+	dump bignums.
+	* number.c (init_number): Remove Vbigfloat_max_prec
+	initialization.
+
 2004-05-03  Jerry James  <james@xemacs.org>
 
 	* floatfns.c (Fexpt): Don't shadow the global symbol exp.
