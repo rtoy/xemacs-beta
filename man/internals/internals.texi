@@ -13476,7 +13476,7 @@ coverage of that library to device types that aren't supported by it yet
 Create a lighter-weight interface, perhaps an extension of the device
 interface, that allows widgets to access face information from the
 device it is implemented on.
-@end enumerate.
+@end enumerate
 
 
 

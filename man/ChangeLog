@@ -1,3 +1,8 @@
+2004-12-15  Robert Delius Royar  <xemacs@frinabulax.org>
+
+	* internals/internals.texi (Modules for the Basic Displayable Lisp
+	Objects): Remove Mote in Make's eye, fix build.
+
 2004-12-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (Modules for the Basic Displayable Lisp
