@@ -4916,15 +4916,23 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 			(regoff_t) POINTER_TO_OFFSET (regend[internal_reg]);
                     }
 		}
-
-              /* If the regs structure we return has more elements than
-                 were in the pattern, set the extra elements to -1.  If
-                 we (re)allocated the registers, this is the case,
-                 because we always allocate enough to have at least one
-                 -1 at the end.  */
-              for (mcnt = num_nonshy_regs; mcnt < regs->num_regs; mcnt++)
-                regs->start[mcnt] = regs->end[mcnt] = -1;
 	    } /* regs && !bufp->no_sub */
+
+	  /* If we have regs and the regs structure has more elements than
+             were in the pattern, set the extra elements to -1.  If we
+	     (re)allocated the registers, this is the case, because we
+	     always allocate enough to have at least one -1 at the end.
+
+	     We do this even when no_sub is set because some applications
+             (XEmacs) reuse register structures which may contain stale
+	     information, and permit attempts to access those registers.
+
+	     It would be possible to require the caller to do this, but we'd
+	     have to change the API for this function to reflect that, and
+	     audit all callers. */
+	  if (regs && regs->num_regs > 0)
+	    for (mcnt = num_nonshy_regs; mcnt < regs->num_regs; mcnt++)
+	      regs->start[mcnt] = regs->end[mcnt] = -1;
 
           DEBUG_PRINT4 ("%u failure points pushed, %u popped (%u remain).\n",
                         nfailure_points_pushed, nfailure_points_popped,

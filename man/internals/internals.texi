@@ -3243,7 +3243,14 @@ commands: @code{quantify-start-recording-data},
 
 If you want to make XEmacs faster, target your favorite slow benchmark,
 run a profiler like Quantify, @code{gprof}, or @code{tcov}, and figure
-out where the cycles are going.  Specific projects:
+out where the cycles are going.  In many cases you can localize the
+problem (because a particular new feature or even a single patch
+elicited it).  Don't hesitate to use brute force techniques like a
+global counter incremented at strategic places, especially in
+combination with other performance indications (@emph{e.g.}, degree of
+buffer fragmentation into extents).
+
+Specific projects:
 
 @itemize @bullet
 @item
@@ -3256,8 +3263,16 @@ developed module system.
 @item
 Speed up redisplay.
 @item
-Speed up syntax highlighting.  Maybe moving some of the syntax
-highlighting capabilities into C would make a difference.
+Speed up syntax highlighting.  It was suggested that ``maybe moving some
+of the syntax highlighting capabilities into C would make a
+difference.''  Wrong idea, I think.  When processing one large file a
+particular low-level routine was being called 40 @emph{million} times
+simply for @emph{one} call to @code{newline-and-indent}.  Syntax
+highlighting needs to be rewritten to use a reliable, fast parser, then
+to trust the pre-parsed structure, and only do re-highlighting locally
+to a text change.  Modern machines are fast enough to implement such
+parsers in Lisp; but no machine will ever be fast enough to deal with
+quadratic (or worse) algorithms!
 @item
 Implement tail recursion in Emacs Lisp (hard!).
 @end itemize
@@ -4772,6 +4787,27 @@ for example, to find the matching parenthesis in a command such as
 @code{forward-sexp}, and by @file{font-lock.c} to locate quoted strings,
 comments, etc.
 
+@c #### Break this out into a separate node somewhere!
+Syntax codes are implemented as bitfields in an int.  Bits 0-6 contain
+the syntax code itself, bit 7 is a special prefix flag used for Lisp,
+and bits 16-23 contain comment syntax flags.  From the Lisp programmer's
+point of view, there are 11 flags: 2 styles X 2 characters X @{start,
+end@} flags for two-character comment delimiters, 2 style flags for
+one-character comment delimiters, and the prefix flag.
+
+Internally, however, the characters used in multi-character delimiters
+will have non-comment-character syntax classes (@emph{e.g.}, the
+@samp{/} in C's @samp{/*} comment-start delimiter has ``punctuation''
+(here meaning ``operator-like'') class in C modes).  Thus in a mixed
+comment style, such as C++'s @samp{//} to end of line, is represented by
+giving @samp{/} the ``punctuation'' class and the ``style b first
+character of start sequence'' and ``style b second character of start
+sequence'' flags.  The fact that class is @emph{not} punctuation allows
+the syntax scanner to recognize that this is a multi-character
+delimiter.  The @samp{newline} character is given (single-character)
+``comment-end'' @emph{class} and the ``style b first character of end
+sequence'' @emph{flag}.  The ``comment-end'' class allows the scanner to
+determine that no second character is needed to terminate the comment.
 
 
 @example

@@ -111,6 +111,7 @@ Fixnum warn_about_possibly_incompatible_back_references;
 Lisp_Object Vskip_chars_range_table;
 
 static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
+static void clear_unused_search_regs (struct re_registers *regp, int no_sub);
 static Charbpos simple_search (struct buffer *buf, Ibyte *base_pat,
 			       Bytecount len, Bytebpos pos, Bytebpos lim,
 			       EMACS_INT n, Lisp_Object trt);
@@ -1222,10 +1223,11 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   if (len == 0)
     {
       set_search_regs (buf, charbpos, 0);
+      clear_unused_search_regs (&search_regs, 0);
       return charbpos;
     }
 
-  /* Searching 0 times means don't move.  */
+  /* Searching 0 times means noop---don't move, don't touch registers.  */
   if (n == 0)
     return charbpos;
 
@@ -1481,6 +1483,7 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	  end = bytebpos_to_charbpos (buf, pos + buf_len);
 	}
       set_search_regs (buf, beg, end - beg);
+      clear_unused_search_regs (&search_regs, 0);
 
       return retval;
     }
@@ -1844,6 +1847,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
+		    clear_unused_search_regs (&search_regs, 0);
 		  }
 
 		  if ((n -= direction) != 0)
@@ -1934,6 +1938,7 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
+		    clear_unused_search_regs (&search_regs, 0);
 		  }
 
 		  if ((n -= direction) != 0)
@@ -1953,8 +1958,8 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
   return bytebpos_to_charbpos (buf, pos);
 }
 
-/* Record beginning BEG and end BEG + LEN
-   for a match just found in the current buffer.  */
+/* Record the whole-match data (beginning BEG and end BEG + LEN) and the
+   buffer for a match just found.  */
 
 static void
 set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
@@ -1971,6 +1976,24 @@ set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
   search_regs.start[0] = beg;
   search_regs.end[0] = beg + len;
   last_thing_searched = wrap_buffer (buf);
+}
+
+/* Clear unused search registers so match data will be null.
+   REGP is a pointer to the register structure to clear, usually the global
+   search_regs.
+   NO_SUB is the number of subexpressions to allow for.  (Does not count
+   the whole match, ie, for a string search NO_SUB == 0.)
+   It is an error if NO_SUB > REGP.num_regs - 1. */
+
+static void
+clear_unused_search_regs (struct re_registers *regp, int no_sub)
+{
+  /* This function has been Mule-ized. */
+  int i;
+
+  assert (no_sub >= 0 && no_sub < regp->num_regs);
+  for (i = no_sub + 1; i < regp->num_regs; i++)
+    regp->start[i] = regp->end[i] = -1;
 }
 
 

@@ -1,3 +1,19 @@
+2002-09-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* search.c (clear_unused_search_regs): New static function.
+	(search_buffer): 
+	(simple_search): 
+	(boyer_moore):
+	Use it.  Fixes "stale match data" bug reported by Martin Stjernholm.
+	Minor clarifications in comments.
+
+	* regex.c (re_match_2_internal): Ensure no stale submatches.
+
+2002-09-26  Golubev I. N.  <gin@mo.msk.ru>
+
+	* frame-x.c (x_delete_frame): do not call XtDisplay on a destroyed
+	widget.
+
 2002-09-22  Mike Sperber <mike@xemacs.org>
 
 	* specifier.c (specifier_add_spec): Don't do anything if NILP

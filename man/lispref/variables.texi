@@ -725,11 +725,14 @@ always affects the most local existing binding.
   One other function for setting a variable is designed to add
 an element to a list if it is not already present in the list.
 
-@defun add-to-list symbol element
+@defun add-to-list symbol element &optional append
 This function sets the variable @var{symbol} by consing @var{element}
 onto the old value, if @var{element} is not already a member of that
 value.  It returns the resulting list, whether updated or not.  The
 value of @var{symbol} had better be a list already before the call.
+
+If the optional argument @var{append} is non-@code{nil}, @var{element}
+is added at the end of the list.
 
 The argument @var{symbol} is not implicitly quoted; @code{add-to-list}
 is an ordinary function, like @code{set} and unlike @code{setq}.  Quote
