@@ -35,9 +35,13 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #define DONT_ENCAPSULATE /* filenames are external in unex*.c */
 #include "sysfile.h"
 
-#define PERROR(arg) perror(arg);exit(-1) 
+#define PERROR(arg)				\
+do {						\
+  perror (arg);					\
+  exit (-1);					\
+} while (0)
 
-#ifndef HAVE_A_OUT_H
+#if !defined (HAVE_A_OUT_H) && !defined (WIN32_NATIVE)
 unexec (char *, char *, void *, void *,	void *)
 {
   PERROR("cannot unexec() a.out.h not installed");
@@ -47,7 +51,12 @@ unexec (char *, char *, void *, void *,	void *)
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
+
+#ifdef MINGW
+#include <../../include/a.out.h>
+#else
 #include <a.out.h>
+#endif
 
 #define ALLOC_UNIT 0xFFFF
 #define ALLOC_MASK ~((unsigned long)(ALLOC_UNIT))

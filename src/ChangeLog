@@ -1,3 +1,52 @@
+2001-05-12  Craig Lanning  <CraigL@Knology.net>
+
+        * s\mingw32.h:
+        Properly find MinGW's <process.h> inside Cygwin's restructured
+        include directories.  Don't try to include <cygwin/version.h>
+        since we are dropping support for MinGW in versions of Cygwin
+        earlier than b21.
+
+2001-05-12  Craig Lanning  <CraigL@Knology.net>
+
+        * nt.c:
+        Drop support for MinGW in versions of Cygwin before b21.
+        * sysdep.c:
+        Properly find MinGW's <process.h> inside Cygwin's restructured
+        include directories.
+        * syswindows.h:
+        Drop support for MinGW in versions of Cygwin before b21.
+        * unexcw.c:
+        Even though a.out.h is no longer detected by configure, allow
+        MinGW to use it until we figure out how to do the job with Win32.
+
+
+2001-05-19  Ben Wing  <ben@xemacs.org>
+
+	* console-msw.h:
+	* scrollbar-msw.c (mswindows_create_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	* event-msw.c:
+	* event-msw.c (mswindows_find_frame):
+	we might receive scrollbar events on windows without scrollbars
+	(e.g. holding down and moving the wheel button).
+	
+	* dired.c (user_name_completion): win9x support.
+
+	* eval.c: doc comment about gcpro'ing in record_unwind_protect.
+
+	* frame-msw.c (msprinter_init_frame_3): typo.
+	
+	* frame.c:
+	* frame.c (restore_frame_list_to_its_unbesmirched_state):
+	* frame.c (Fmake_frame):
+	avoid problems with errors during init_frame_3.
+
+	* process-nt.c:
+	* process-nt.c (vars_of_process_nt):
+	remove unused mswindows-quote-process-args.  rec for 21.4.
+	
+	* unexcw.c (PERROR): use do/while.
+
 2001-05-03  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
 
 	* lisp.h: (dump_add_opaque): make varaddress parameter const.

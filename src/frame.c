@@ -336,6 +336,15 @@ make_sure_its_a_fresh_plist (Lisp_Object foolist)
   return foolist;
 }
 
+Lisp_Object
+restore_frame_list_to_its_unbesmirched_state (Lisp_Object kawnz)
+{
+  Lisp_Object lissed = XCDR (kawnz);
+  if (!EQ (lissed, Qunbound))
+    DEVICE_FRAME_LIST (XDEVICE (XCAR (kawnz))) = lissed;
+  return Qnil;
+}    
+
 DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
 Create and return a new frame, displaying the current buffer.
 Runs the functions listed in `create-frame-hook' after frame creation.
@@ -354,9 +363,10 @@ See `set-frame-properties', `default-x-frame-plist', and
   struct device *d;
   Lisp_Object frame = Qnil, name = Qnil, minibuf;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  int speccount = specpdl_depth ();
+  int speccount = specpdl_depth (), speccount2;
   int first_frame_on_device = 0;
   int first_frame_on_console = 0;
+  Lisp_Object besmirched_cons = Qnil;
 
   d = decode_device (device);
   XSETDEVICE (device, d);
@@ -432,6 +442,14 @@ See `set-frame-properties', `default-x-frame-plist', and
   if (NILP (DEVICE_FRAME_LIST (d)))
     first_frame_on_device = 1;
 
+  /* It's possible for one of the init methods below to signal an error;
+     in that case, let's make sure the device isn't besmirched by
+     having a half-initialized frame attached to it */
+  speccount2 = specpdl_depth ();
+  record_unwind_protect (restore_frame_list_to_its_unbesmirched_state,
+			 besmirched_cons =
+			 Fcons (device, DEVICE_FRAME_LIST (d)));
+
   /* This *must* go before the init_*() methods.  Those functions
      call Lisp code, and if any of them causes a warning to be displayed
      and the *Warnings* buffer to be created, it won't get added to
@@ -478,6 +496,10 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   /* Hallelujah, praise the lord. */
   f->init_finished = 1;
+
+  XCDR (besmirched_cons) = Qunbound;
+
+  unbind_to (speccount2, Qnil);
 
   /* If this is the first frame on the device, make it the selected one. */
   if (first_frame_on_device && NILP (DEVICE_SELECTED_FRAME (d)))

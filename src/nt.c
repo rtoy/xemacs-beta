@@ -1216,11 +1216,6 @@ convert_time (FILETIME ft)
 }
 #else
 
-#if defined(MINGW) && CYGWIN_VERSION_DLL_MAJOR <= 21
-#define LowPart u.LowPart
-#define HighPart u.HighPart
-#endif
-
 static LARGE_INTEGER utc_base_li;
 
 time_t

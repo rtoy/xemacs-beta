@@ -616,7 +616,7 @@ unchanged."
     (error "batch-update-directory is to be used only with -batch"))
   (let ((arg (car command-line-args-left)))
     (setq command-line-args-left (cdr command-line-args-left))
-    (update-autoload-files (list arg) t)))
+    (update-autoload-files (list arg) nil t)))
 
 (provide 'autoload)
 

@@ -57,8 +57,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <windows.h>
 
-#if (defined (CYGWIN) || defined(MINGW)) && \
-	CYGWIN_VERSION_DLL_MAJOR < 21
+#if defined (CYGWIN) && CYGWIN_VERSION_DLL_MAJOR < 21
 extern BOOL WINAPI DdeFreeStringHandle(DWORD,HSZ);
 extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
 #define stricmp strcasecmp
@@ -79,9 +78,10 @@ extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
 #include <ddeml.h>
 #endif
 
-#include <lmaccess.h>
+#include <lmaccess.h> /* next three for NetUserEnum and friends */
 #include <lmapibuf.h>
 #include <lmerr.h>
+#include <lmcons.h> /* for UNLEN and possibly other constants */
 
 /* mmsystem.h defines. */
 #ifndef SND_ASYNC

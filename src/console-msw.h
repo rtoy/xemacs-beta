@@ -385,6 +385,8 @@ void mswindows_destroy_selection (Lisp_Object selection);
 
 Lisp_Object msprinter_default_printer (void);
 
+Lisp_Object mswindows_find_frame (HWND hwnd);
+
 struct mswindows_dialog_id
 {
   struct lcrecord_header header;

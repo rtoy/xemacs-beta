@@ -56,25 +56,26 @@ mswindows_create_scrollbar_instance (struct frame *f, int vertical,
     orientation = SBS_HORZ;
 
   SCROLLBAR_MSW_HANDLE (sb) =
-    CreateWindowEx(0, "SCROLLBAR", 0, orientation|WS_CHILD,
-		 CW_USEDEFAULT, CW_USEDEFAULT,
-		 CW_USEDEFAULT, CW_USEDEFAULT,
-		 FRAME_MSWINDOWS_HANDLE (f),
-		 NULL, NULL, NULL);
-  SCROLLBAR_MSW_INFO (sb).cbSize = sizeof(SCROLLINFO);
+    CreateWindowEx (0, "SCROLLBAR", 0, orientation|WS_CHILD,
+		    CW_USEDEFAULT, CW_USEDEFAULT,
+		    CW_USEDEFAULT, CW_USEDEFAULT,
+		    FRAME_MSWINDOWS_HANDLE (f),
+		    NULL, NULL, NULL);
+  SCROLLBAR_MSW_INFO (sb).cbSize = sizeof (SCROLLINFO);
   SCROLLBAR_MSW_INFO (sb).fMask = SIF_ALL;
   GetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
 		&SCROLLBAR_MSW_INFO (sb));
-  SetWindowLong (SCROLLBAR_MSW_HANDLE(sb), GWL_USERDATA, (LONG)sb);
+  SetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA, (LONG) sb);
 
 #if 0
   {
-	  HWND h = SCROLLBAR_MSW_HANDLE (sb);
-	  int x = SetWindowLong (SCROLLBAR_MSW_HANDLE(sb), GWL_USERDATA, (LONG)sb);
-	  int y = GetLastError();
-	  struct scrollbar_instance *z = (struct scrollbar_instance *)GetWindowLong (SCROLLBAR_MSW_HANDLE(sb),
-		  GWL_USERDATA);
-	  *z = *z;
+    HWND h = SCROLLBAR_MSW_HANDLE (sb);
+    int x = SetWindowLong (SCROLLBAR_MSW_HANDLE(sb), GWL_USERDATA, (LONG)sb);
+    int y = GetLastError();
+    struct scrollbar_instance *z =
+      (struct scrollbar_instance *)GetWindowLong (SCROLLBAR_MSW_HANDLE(sb),
+						  GWL_USERDATA);
+    *z = *z;
   }
 #endif
 }
@@ -180,10 +181,19 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
   int vert = GetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
   int value;
 
-  sb = (struct scrollbar_instance *)GetWindowLong (hwnd, GWL_USERDATA);
-  win = real_window (sb->mirror, 1);
-  frame = XWINDOW (win)->frame;
-  f = XFRAME (frame);
+  sb = (struct scrollbar_instance *) GetWindowLong (hwnd, GWL_USERDATA);
+  if (!sb)
+    {
+      frame = mswindows_find_frame (hwnd);
+      f = XFRAME (frame);
+      win = FRAME_SELECTED_WINDOW (f);
+    }
+  else
+    {
+      win = real_window (sb->mirror, 0);
+      frame = XWINDOW (win)->frame;
+      f = XFRAME (frame);
+    }
 
   /* SB_LINEDOWN == SB_CHARLEFT etc. This is the way they will
      always be - any Windows is binary compatible backward with
@@ -255,7 +265,7 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
 
     case SB_ENDSCROLL:
 #ifdef VERTICAL_SCROLLBAR_DRAG_HACK
-      if (vertical_drag_in_progress)
+      if (vertical_drag_in_progress && sb)
 	/* User has just dropped the thumb - finally update it */
 	SetScrollInfo (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
 		       &SCROLLBAR_MSW_INFO (sb), TRUE);

@@ -884,7 +884,7 @@ msprinter_init_frame_3 (struct frame *f)
       || frame_top < 0
       || frame_left + frame_width > GetDeviceCaps (hdc, HORZRES)
       || frame_top + frame_height > GetDeviceCaps (hdc, VERTRES))
-    invalid_operation ("Print area is ouside of the printer's "
+    invalid_operation ("Print area is outside of the printer's "
 		       "hardware printable area",
 		       STRINGP (f->name) ? f->name : Qunbound);
 

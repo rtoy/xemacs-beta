@@ -700,6 +700,25 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 	    }
 	  while (entriesread != totalentries);
 	}
+      else /* Win 9x */
+	{
+	  Extbyte name[2 * (UNLEN + 1)];
+	  DWORD length = sizeof (name);
+	  
+	  if (GetUserName (name, &length))
+	    {
+	      DO_REALLOC (user_cache.user_names, user_cache.size,
+			  user_cache.length + 1, struct user_name);
+	      TO_INTERNAL_FORMAT (C_STRING, name,
+				  MALLOC,
+				  (user_cache.
+				   user_names[user_cache.length].ptr,
+				   user_cache.
+				   user_names[user_cache.length].len),
+				  Qmswindows_tstr);
+	      user_cache.length++;
+	    }
+	}
 #endif
 
       XCAR (cache_incomplete_p) = Qnil;

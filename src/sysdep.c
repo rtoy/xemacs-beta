@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WIN32_NATIVE
 #ifdef MINGW
-#include <mingw/process.h>
+#include <../mingw/process.h>
 #else
 /* <process.h> should not conflict with "process.h", as per ANSI definition.
    This is not true with visual c though. The trick below works with

@@ -1,3 +1,25 @@
+2001-05-19  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el (batch-force-update-one-directory):
+	Oops, off by one argument.
+	
+	* mouse.el:
+	* mouse.el (Mouse-track-gensym): New.
+	* mouse.el (mouse-track-run-hook):
+	* mouse.el (mouse-track):
+	* mouse.el (mouse-track-default):
+	* mouse.el (mouse-track-insert):
+	* mouse.el (mouse-track-insert-selected-region): Removed.
+	* mouse.el (mouse-track-insert-drag-up-hook): Removed.
+	* mouse.el (mouse-track-insert-click-hook): Removed.
+	Add an argument to mouse-track so that hooks can be overridden.
+	(let-binding doesn't work when the hooks have been made local.)
+	modify mouse-track-run-hook accordingly, and fix mouse-track-default
+	and mouse-track-insert to use the new functionality.
+	
+	* printer.el (generic-print-region):
+	Oops, off by one paren.
+
 2001-05-13  Adrian Aichner  <adrian@xemacs.org>
 
 	* buff-menu.el (Buffer-menu-mode): `mouse-track-click-hook' was

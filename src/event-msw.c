@@ -92,7 +92,6 @@ typedef unsigned int SOCKET;
 /* Timer ID used for button2 emulation */
 #define BUTTON_2_TIMER_ID 1
 
-static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_find_console (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
 						  int extendedp);
@@ -3236,7 +3235,7 @@ mswindows_find_console (HWND hwnd)
 /*
  * Find the frame that matches the supplied mswindows window handle
  */
-static Lisp_Object
+Lisp_Object
 mswindows_find_frame (HWND hwnd)
 {
   LONG l = GetWindowLong (hwnd, XWL_FRAMEOBJ);
