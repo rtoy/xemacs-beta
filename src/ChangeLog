@@ -1,3 +1,8 @@
+2003-05-04  Robert Pluim  <rpluim@bigfoot.com>
+
+	* database.c: Don't use the u_int8_t etc typedefs on FreeBSD,
+	  they conflict with <sys/types.h>.
+
 2003-05-02  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
 	* lrecord.h: Added casts from int to enum lrecord_type to support
