@@ -1,3 +1,19 @@
+2001-08-04  Adrian Aichner  <adrian@xemacs.org>
+
+	* console.c: Fix of compile error on darwin, as suggested by Toby
+	Smith.
+
+2001-07-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* event-msw.c: Typo fix.
+	* event-msw.c (mswindows_wnd_proc): Set FRAME_VISIBLE_P after
+	magic XM_MAPFRAME event has been sent.
+	
+2001-07-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* event-msw.c:
+	* event-msw.c (assert):
+
 2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.2 "artichoke" is released.

@@ -1219,7 +1219,7 @@ One argument, the to-be-deleted console.
 #endif
 }
 
-/* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */ \
+/* The docstrings for DEFVAR_* are recorded externally by make-docfile.  */
 #define DEFVAR_CONSOLE_LOCAL_1(lname, field_name, forward_type, magicfun)   \
 do {									    \
   static const struct symbol_value_forward I_hate_C =			    \
