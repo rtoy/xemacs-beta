@@ -104,7 +104,7 @@ from the search."
    ;; installed
    (paths-file-readable-directory-p (paths-construct-path (list directory
 								"lib"
-								emacs-program-name)))
+								(construct-emacs-version-name))))
    ;; in-place or windows-nt
    (and
     (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))

@@ -96,6 +96,10 @@ show up in.
 The third component is a thunk which, if it returns NIL, causes
 the directory to be ignored."
   (list
+   (list (paths-construct-path (list user-init-directory "site-packages"))
+	 'early #'(lambda () t))
+   (list (paths-construct-path (list user-init-directory "infodock-packages"))
+	 'early #'(lambda () (featurep 'infodock)))
    (list (paths-construct-path (list user-init-directory "mule-packages"))
 	 'early #'(lambda () (featurep 'mule)))
    (list (paths-construct-path (list user-init-directory "xemacs-packages"))
