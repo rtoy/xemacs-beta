@@ -1,3 +1,10 @@
+2003-04-24  Steve Youngs  <youngs@xemacs.org>
+
+	* configure.in: Fix for building on openbsd.
+	From Gregory Steuck <greg@nest.cx>
+
+	* configure: Regenerate
+
 2003-03-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: Global substitution of .Xresources for .Xdefaults.
