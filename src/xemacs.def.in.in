@@ -108,9 +108,15 @@ printing_unreadable_object
 record_unwind_protect
 record_unwind_protect_freeing
 report_process_error
+signal_circular_list_error	/* EXTERNAL_LIST_LOOP* */
+signal_circular_property_list_error	/* EXTERNAL_PROPERTY_LIST_LOOP* */
 signal_error
 signal_ferror
+signal_malformed_list_error	/* EXTERNAL_LIST_LOOP* */
+signal_malformed_property_list_error	/* EXTERNAL_PROPERTY_LIST_LOOP* */
 signal_quit			/* QUIT */
+slow_down_interrupts
+speed_up_interrupts
 #ifndef DEBUG_XEMACS
 staticpro
 staticpro_nodump
@@ -203,6 +209,8 @@ rep_bytes_by_first_byte		/* itext_ichar_len, INC_IBYTEPTR, ... */
 something_happened		/* QUIT */
 specpdl_depth_counter		/* specpdl_depth */
 Qconsp				/* CHECK_CONS */
+Qcritical			/* QUIT, QUITP */
+Qdelete
 Qfile_name			/* Qdll_filename_encoding */
 Qintegerp			/* CHECK_INT, CONCHECK_INT */
 Qinvalid_argument
@@ -213,6 +221,8 @@ Qnotice
 Qnull_pointer			/* DEFVAR_xxx */
 #endif
 Qprocess_error
+Qsearch
+Qsimple
 Qstringp			/* CHECK_STRING */
 Qsymbolp			/* CHECK_SYMBOL */
 Qsyntax_error
@@ -220,4 +230,6 @@ Qt
 Qunbound
 #ifdef USE_UNION_TYPE
 Qzero				/* ZEROP */
+Vinhibit_quit			/* QUIT, QUITP */
+Vquit_flag			/* QUIT, QUITP */
 #endif

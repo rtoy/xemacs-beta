@@ -1,3 +1,13 @@
+2004-02-25  Jerry James  <james@xemacs.org>
+
+	* general-slots.h: Make Qcritical, Qdelete, Qsearch, and Qsimple
+	visible to modules (all are used by the LDAP module).
+	* lisp.h: Make stuff in QUIT and QUITP visible to modules.
+	* sysdep.h: Make speed_up_interrupts and slow_down_interrupts
+	visible to modules (both are used by the LDAP module).
+	* xemacs.def.in.in: Reflect all of the above additions to the
+	module API.
+
 2004-02-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* bytecode.c (execute_optimized_program):

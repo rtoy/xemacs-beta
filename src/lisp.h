@@ -3807,10 +3807,12 @@ Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const CIbyte *,
 					      Error_Behavior);
 
 
-DECLARE_DOESNT_RETURN (signal_malformed_list_error (Lisp_Object));
-DECLARE_DOESNT_RETURN (signal_malformed_property_list_error (Lisp_Object));
-DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
-DECLARE_DOESNT_RETURN (signal_circular_property_list_error (Lisp_Object));
+MODULE_API DECLARE_DOESNT_RETURN (signal_malformed_list_error (Lisp_Object));
+MODULE_API DECLARE_DOESNT_RETURN (signal_malformed_property_list_error
+				  (Lisp_Object));
+MODULE_API DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
+MODULE_API DECLARE_DOESNT_RETURN (signal_circular_property_list_error
+				  (Lisp_Object));
 
 DECLARE_DOESNT_RETURN (syntax_error (const CIbyte *reason,
 				     Lisp_Object frob));
@@ -5116,7 +5118,7 @@ extern Lisp_Object Vdoc_directory, Vinternal_doc_file_name;
 extern Lisp_Object Vecho_area_buffer, Vemacs_major_version;
 extern Lisp_Object Vemacs_minor_version, Vexec_directory, Vexec_path;
 extern Lisp_Object Vexecuting_macro, Vfeatures, Vfile_domain;
-extern Lisp_Object Vinhibit_quit, Vinvocation_directory, Vinvocation_name;
+extern Lisp_Object Vinvocation_directory, Vinvocation_name;
 extern Lisp_Object Vlast_command, Vlast_command_char;
 extern Lisp_Object Vlast_command_event, Vlast_input_event;
 extern Lisp_Object Vload_file_name_internal;
@@ -5126,13 +5128,14 @@ extern Lisp_Object Vminibuf_preprompt, Vminibuf_prompt, Vminibuffer_zero;
 extern Lisp_Object Vmodule_directory, Vmswindows_downcase_file_names;
 extern Lisp_Object Vmswindows_get_true_file_attributes, Vobarray;
 extern Lisp_Object Vprint_length, Vprint_level, Vprocess_environment;
-extern Lisp_Object Vquit_flag;
 extern Lisp_Object Vrecent_keys_ring, Vshell_file_name, Vsite_directory;
 extern Lisp_Object Vsite_module_directory;
 extern Lisp_Object Vstandard_input, Vstandard_output, Vstdio_str;
 extern Lisp_Object Vsynchronous_sounds, Vsystem_name;
 extern Lisp_Object Vthis_command_keys, Vunread_command_event;
 extern Lisp_Object Vx_initial_argv_list;
+
+extern MODULE_API Lisp_Object Vinhibit_quit, Vquit_flag;
 
 END_C_DECLS
 

@@ -68,8 +68,8 @@ void unrequest_sigio (void);
 
 void stop_interrupts (void);
 void start_interrupts (void);
-void slow_down_interrupts (void);
-void speed_up_interrupts (void);
+MODULE_API void slow_down_interrupts (void);
+MODULE_API void speed_up_interrupts (void);
 void init_poll_for_quit (void);
 
 /* Used so that signals can break out of system calls that aren't
