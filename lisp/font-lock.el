@@ -2174,10 +2174,10 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 (defconst c-font-lock-keywords-3 nil
   "Gaudy level highlighting for C modes.")
 
-(defconst c-font-lock-keywords-2 nil
+(defconst xemacs-c-font-lock-keywords-2 nil
   "Medium level highlighting for XEmacs C source code.")
 
-(defconst c-font-lock-keywords-3 nil
+(defconst xemacs-c-font-lock-keywords-3 nil
   "Gaudy level highlighting for XEmacs C source code.")
 
 (defconst c++-font-lock-keywords-1 nil
