@@ -1,3 +1,8 @@
+2003-06-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* data.c (eq_with_ebola_notice): Fix typo in comment.
+	(Ftrue_list_p): Improve docstring.
+
 2003-05-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* alloc.c (allocate_big_string_chars): New.
