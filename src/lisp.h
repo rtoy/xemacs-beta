@@ -3127,10 +3127,9 @@ int begin_do_check_for_quit (void);
 #define HASH9(a,b,c,d,e,f,g,h,i) (GOOD_HASH * HASH8 (a,b,c,d,e,f,g,h) + (i))
 
 #define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
-unsigned long string_hash (const char *xv);
-unsigned long memory_hash (const void *xv, Bytecount size);
-unsigned long internal_hash (Lisp_Object obj, int depth);
-unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
+Hashcode memory_hash (const void *xv, Bytecount size);
+Hashcode internal_hash (Lisp_Object obj, int depth);
+Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth);
 
 
 /************************************************************************/

@@ -1,5 +1,11 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* lisp.h:
+	Clean up and generalize creation of string hash tables.
+	Use Hashcode rather than unsigned long.
+
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* emacs-marshals.c:
 	* emacs-marshals.c (initialize_marshaller_storage):
 	* hash.c:
