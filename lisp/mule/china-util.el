@@ -22,7 +22,9 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/china-util.el).
+;;; Synched up with: Emacs 21.1 (language/china-util.el).
+
+;;; Commentary:
 
 ;;; Code:
 

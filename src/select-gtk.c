@@ -43,6 +43,9 @@ static Lisp_Object Vretrieved_selection;
 static gboolean waiting_for_selection;
 Lisp_Object Vgtk_sent_selection_hooks;
 
+extern int lisp_to_time (Lisp_Object, time_t *);
+extern Lisp_Object time_to_lisp (time_t);
+
 static GdkAtom
 symbol_to_gtk_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 {

@@ -22,9 +22,11 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/ethio-util.el).
+;;; Synched up with: Emacs 21.1 (language/ethio-util.el).
 
 ;; Author: TAKAHASHI Naoto <ntakahas@m17n.org>
+
+;;; Commentary:
 
 ;;; Code:
 
@@ -1298,7 +1300,7 @@ The markers \"<sera>\" and \"</sera>\" themselves are not deleted."
 	    composite t))
      ;; neither gemination nor fidel
      ((not (eq (char-charset ch) 'ethiopic))
-      (error "Not a valid character.")))
+      (error "Not a valid character")))
 
     ;; set frequently referred character features
     (setq ch     (ethio-char-to-ethiocode ch)
@@ -1308,7 +1310,7 @@ The markers \"<sera>\" and \"</sera>\" themselves are not deleted."
     (if (or (and (>= ch 344) (<= ch 380)) ;; mYa - `10000
 	    (and (>= ch 448) (<= ch 452)) ;; \~X - \~A
 	    (>= ch 458))		  ;; private punctuations
-	(error "Not a valid character."))
+	(error "Not a valid character"))
 
     (setq
      newch

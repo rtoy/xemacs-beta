@@ -28,13 +28,18 @@
 
 ;;; Code:
 
-;; Ethiopic
-(make-charset 'ethiopic "Ethiopic"
-	      '(registry "Ethio"
-		dimension 2
+;; Ethiopic characters (Amahric and Tigrigna).
+(make-charset 'ethiopic "Ethiopic characters"
+	      '(dimension
+		2
+		registry "Ethiopic-Unicode"
 		chars 94
+		columns 2
+		direction l2r
 		final ?3
 		graphic 0
+		short-name "Ethiopic"
+		long-name "Ethiopic characters"
 		))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

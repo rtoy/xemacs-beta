@@ -1,4 +1,4 @@
-;;; indian.el --- Support for Indian Languages -*- coding: iso-2022-7bit; -*-
+;;; indian.el --- support for Indian Languages -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1995 Free Software Foundation, Inc.
 
@@ -23,7 +23,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/indian.el).
+;;; Synched up with: Emacs 21.1 (language/indian.el).
 
 ;;; Commentary:
 
@@ -90,6 +90,54 @@
 ;; ITRANS is one of the most popular method to exchange indian scripts
 ;; electronically.  Here is the table to convert between ITRANS code and
 ;; IS 13194 code.
+
+;; Indian scripts.  Symbolic charset for data exchange.  Glyphs are
+;; not assigned.  They are automatically converted to each Indian
+;; script which IS-13194 supports.
+
+(make-charset 'indian-is13194 
+	      "Generic Indian charset for data exchange with IS 13194"
+	      '(dimension
+		1
+		registry "IS13194-Devanagari"
+		chars 94
+		columns 2
+		direction l2r
+		final ?5
+		graphic 1
+		short-name "IS 13194"
+		long-name "Indian IS 13194"
+		))
+
+;; Actual Glyph for 1-column width.
+(make-charset 'indian-1-column 
+	      "Indian charset for 2-column width glyphs"
+	      '(dimension
+		2
+		registry "MuleIndian-1"
+		chars 94
+		columns 1
+		direction l2r
+		final ?6
+		graphic 0
+		short-name "Indian 1-col"
+		long-name "Indian 1 Column"
+		))
+
+;; Actual Glyph for 2-column width.
+(make-charset 'indian-2-column 
+	      "Indian charset for 2-column width glyphs"
+	      '(dimension
+		2
+		registry "MuleIndian-2"
+		chars 94
+		columns 2
+		direction l2r
+		final ?5
+		graphic 0
+		short-name "Indian 2-col"
+		long-name "Indian 2 Column"
+		))
 
 (defvar indian-itrans-consonant-alist
   '(

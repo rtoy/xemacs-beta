@@ -15,6 +15,7 @@
 #include "gtk-xemacs.h"
 #include "window.h"
 #include "faces.h"
+#include "event-gtk.h"
 
 extern Lisp_Object Vmodeline_face;
 extern Lisp_Object Vscrollbar_on_left_p;
@@ -57,10 +58,6 @@ gtk_xemacs_get_type (void)
 }
 
 static GtkWidgetClass *parent_class;
-
-extern gint emacs_gtk_button_event_handler(GtkWidget *widget, GdkEventButton *event);
-extern gint emacs_gtk_key_event_handler(GtkWidget *widget, GdkEventKey *event);
-extern gint emacs_gtk_motion_event_handler(GtkWidget *widget, GdkEventMotion *event);
 
 static void
 gtk_xemacs_class_init (GtkXEmacsClass *class)
@@ -135,6 +132,7 @@ extern Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 
 #define convert_font(f) __get_gtk_font_truename (f, 0)
 
+#ifdef SMASH_FACE_FALLBACKS
 static void
 smash_face_fallbacks (struct frame *f, GtkStyle *style)
 {
@@ -176,6 +174,7 @@ do {											\
 #undef FROB
 #undef FROB_FACE
 }
+#endif /* SMASH_FACE_FALLBACKS */
 
 #ifdef HAVE_SCROLLBARS
 static void
@@ -235,7 +234,7 @@ gtk_xemacs_style_set (GtkWidget *widget, GtkStyle *previous_style)
   if (x->f)
     {
       __nuke_background_items (widget);
-#if 0
+#ifdef SMASH_FACE_FALLBACKS
       smash_face_fallbacks (x->f, new_style);
 #endif
 #ifdef HAVE_SCROLLBARS

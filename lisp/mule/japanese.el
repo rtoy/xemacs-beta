@@ -33,6 +33,103 @@
 
 ;;; Code:
 
+; (make-charset 'katakana-jisx0201 
+; 	      "Katakana Part of JISX0201.1976"
+; 	      '(dimension
+; 		1
+; 		registry "JISX0201"
+; 		chars 94
+; 		columns 1
+; 		direction l2r
+; 		final ?I
+; 		graphic 1
+; 		short-name "JISX0201 Katakana"
+; 		long-name "Japanese Katakana (JISX0201.1976)"
+; 		))
+
+; (make-charset 'latin-jisx0201 
+; 	      "Roman Part of JISX0201.1976"
+; 	      '(dimension
+; 		1
+; 		registry "JISX0201"
+; 		chars 94
+; 		columns 1
+; 		direction l2r
+; 		final ?J
+; 		graphic 0
+; 		short-name "JISX0201 Roman"
+; 		long-name "Japanese Roman (JISX0201.1976)"
+; 		))
+
+; (make-charset 'japanese-jisx0208-1978 
+; 	      "JISX0208.1978 Japanese Kanji (so called \"old JIS\"): ISO-IR-42"
+; 	      '(dimension
+; 		2
+; 		registry "JISX0208.1990"
+; 		registry "JISX0208.1978"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?@
+; 		graphic 0
+; 		short-name "JISX0208.1978"
+; 		long-name "JISX0208.1978 (Japanese): ISO-IR-42"
+; 		))
+
+; (make-charset 'japanese-jisx0208 
+; 	      "JISX0208.1983/1990 Japanese Kanji: ISO-IR-87"
+; 	      '(dimension
+; 		2
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?B
+; 		graphic 0
+; 		short-name "JISX0208"
+; 		long-name "JISX0208.1983/1990 (Japanese): ISO-IR-87"
+; 		))
+
+; (make-charset 'japanese-jisx0212 
+; 	      "JISX0212 Japanese supplement: ISO-IR-159"
+; 	      '(dimension
+; 		2
+; 		registry "JISX0212"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?D
+; 		graphic 0
+; 		short-name "JISX0212"
+; 		long-name "JISX0212 (Japanese): ISO-IR-159"
+; 		))
+
+(make-charset 'japanese-jisx0213-1 "JISX0213 Plane 1 (Japanese)"
+	      '(dimension
+		2
+		registry "JISX0213.2000-1"
+		chars 94
+		columns 2
+		direction l2r
+		final ?O
+		graphic 0
+		short-name "JISX0213-1"
+		long-name "JISX0213-1"
+		))
+
+;; JISX0213 Plane 2
+(make-charset 'japanese-jisx0213-2 "JISX0213 Plane 2 (Japanese)"
+	      '(dimension
+		2
+		registry "JISX0213.2000-2"
+		chars 94
+		columns 2
+		direction l2r
+		final ?P
+		graphic 0
+		short-name "JISX0213-2"
+		long-name "JISX0213-2"
+		))
+
 ;;; Syntax of Japanese characters.
 (modify-syntax-entry 'katakana-jisx0201 "w")
 (modify-syntax-entry 'japanese-jisx0212 "w")

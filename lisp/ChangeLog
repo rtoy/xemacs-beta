@@ -1,3 +1,90 @@
+2002-03-16  Ben Wing  <ben@xemacs.org>
+
+	* mule\arabic.el:
+	* mule\arabic.el (arabic-1-column):
+	* mule\arabic.el (arabic-2-column):
+	* mule\canna-leim.el:
+	* mule\canna-leim.el (canna:*japanese-mode*):
+	* mule\canna-leim.el (canna-inactivate):
+	* mule\china-util.el:
+	* mule\chinese.el:
+	* mule\chinese.el (chinese-sisheng):
+	* mule\cyril-util.el:
+	* mule\cyril-util.el (cyrillic-encode-koi8-r-char):
+	* mule\cyril-util.el (cyrillic-encode-alternativnyj-char):
+	* mule\cyrillic.el:
+	* mule\devan-util.el:
+	* mule\devanagari.el:
+	* mule\english.el:
+	* mule\ethio-util.el:
+	* mule\ethio-util.el (ethio-modify-vowel):
+	* mule\ethiopic.el:
+	* mule\european.el:
+	* mule\greek.el:
+	* mule\hebrew.el:
+	* mule\indian.el:
+	* mule\japan-util.el:
+	* mule\japan-util.el (japanese-symbol-table):
+	* mule\japan-util.el (japanese-hankaku):
+	* mule\japan-util.el (japanese-hankaku-region):
+	* mule\japanese.el:
+	* mule\korea-util.el:
+	* mule\korean.el:
+	* mule\lao-util.el:
+	* mule\lao.el:
+	* mule\lao.el (lao):
+	* mule\misc-lang.el:
+	* mule\mule-charset.el:
+	* mule\mule-cmds.el (set-locale-for-language-environment):
+	* mule\mule-cmds.el (set-language-environment-coding-systems):
+	* mule\mule-cmds.el (init-locale-at-early-startup):
+	* mule\thai-util.el:
+	* mule\thai.el:
+	* mule\tibet-util.el:
+	* mule\tibetan.el:
+	* mule\tibetan.el (tibetan-1-column):
+	* mule\tibetan.el (tibetan):
+	* mule\viet-util.el:
+	* mule\viet-util.el (viet-encode-viscii-char):
+	* mule\vietnamese.el:
+	* mule\vietnamese.el (?v): New.
+	* mule\vietnamese.el (viet-viscii-decode-table):
+	* unicode.el:
+	Fix lots of warnings.  Sync up some files to FSF 21.1.  Copy over
+	all charset definitions from FSF 21.1, convert them to our format,
+	and stick them in the relevant files.  Eventually we will actually
+	be able to dump these files (though they may not quite work).
+
+2002-03-16  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el:
+	* autoload.el (make-autoload):
+	* autoload.el (generate-autoload-cookie):
+	* autoload.el (defun*):
+	Support defun*, defmacro*.
+	
+	* mule/mule-composite.el: New file, from FSF.
+	* mule/mule-composite-stub.el: New file, stubs for nonexistent
+	composition funs/vars.
+	* mule/viet-chars.el: Deleted, moved into vietnamese.el.
+	* dumped-lisp.el (preloaded-file-list):
+	Account for these changes.
+	
+	* font.el (mswindows-font-create-object):
+	* mouse.el (mouse-begin-drag-n-drop):
+	* msw-font-menu.el (mswindows-font-regexp):
+	* printer.el:
+	* printer.el (generic-page-setup):
+	* printer.el (generic-print-region):
+	* startup.el (early-error-handler):
+	fix warnings.
+
+2002-03-16  IKEYAMA Tomonori <tomonori@suiyokai.org>
+
+        * unicode.el (load-unicode-tables): Make table for latin-jisx0201.
+        * mule/mule-msw-init.el: Character sets to codepage mapping
+        change. Add japanese-jisx0212, delete japanese-jisx0208-1978.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* mule\mule-charset.el:

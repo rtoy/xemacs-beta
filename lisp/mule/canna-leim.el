@@ -32,6 +32,9 @@
 ;;
 ;;  Add pointers to Canna documentation in LEIM format
 
+(globally-declare-boundp 'canna:*japanese-mode*)
+(globally-declare-fboundp '(canna canna-toggle-japanese-mode))
+
 (defun canna-activate (&optional name)
   (if (featurep 'CANNA)
       (require 'canna)
@@ -43,7 +46,7 @@
   (canna-toggle-japanese-mode))
 
 (defun canna-inactivate ()
-  (cond (canna:*japanese-mode* (canna-toggle-japanese-mode))) )
+  (cond (canna:*japanese-mode* (canna-toggle-japanese-mode))))
 
 (register-input-method
  'japanese-canna "Japanese"

@@ -32,6 +32,104 @@
 ;; #### latin.el would be a better name for this file.
 
 ;;; Code:
+; (make-charset 'latin-iso8859-1 
+; 	      "Right-Hand Part of Latin Alphabet 1 (ISO/IEC 8859-1): ISO-IR-100"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?A
+; 		graphic 1
+; 		short-name "RHP of Latin-1"
+; 		long-name "RHP of Latin-1 (ISO 8859-1): ISO-IR-100"
+; 		))
+
+; (make-charset 'latin-iso8859-2 
+; 	      "Right-Hand Part of Latin Alphabet 2 (ISO/IEC 8859-2): ISO-IR-101"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-2"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?B
+; 		graphic 1
+; 		short-name "RHP of Latin-2"
+; 		long-name "RHP of Latin-2 (ISO 8859-2): ISO-IR-101"
+; 		))
+
+; (make-charset 'latin-iso8859-3 
+; 	      "Right-Hand Part of Latin Alphabet 3 (ISO/IEC 8859-3): ISO-IR-109"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-3"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?C
+; 		graphic 1
+; 		short-name "RHP of Latin-3"
+; 		long-name "RHP of Latin-3 (ISO 8859-3): ISO-IR-109"
+; 		))
+
+; (make-charset 'latin-iso8859-4 
+; 	      "Right-Hand Part of Latin Alphabet 4 (ISO/IEC 8859-4): ISO-IR-110"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-4"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?D
+; 		graphic 1
+; 		short-name "RHP of Latin-4"
+; 		long-name "RHP of Latin-4 (ISO 8859-4): ISO-IR-110"
+; 		))
+
+; (make-charset 'latin-iso8859-9 
+; 	      "Right-Hand Part of Latin Alphabet 5 (ISO/IEC 8859-9): ISO-IR-148"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-9"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?M
+; 		graphic 1
+; 		short-name "RHP of Latin-5"
+; 		long-name "RHP of Latin-5 (ISO 8859-9): ISO-IR-148"
+; 		))
+
+; (make-charset 'latin-iso8859-15 
+; 	      "Right-Hand Part of Latin Alphabet 9 (ISO/IEC 8859-15): ISO-IR-203"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-15"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?b
+; 		graphic 1
+; 		short-name "RHP of Latin-9"
+; 		long-name "RHP of Latin-9 (ISO 8859-15): ISO-IR-203"
+; 		))
+
+(make-charset 'latin-iso8859-14 
+	      "Right-Hand Part of Latin Alphabet 8 (ISO/IEC 8859-14)"
+	      '(dimension
+		1
+		registry "ISO8859-14"
+		chars 96
+		columns 1
+		direction l2r
+		final ?_
+		graphic 1
+		short-name "RHP of Latin-8"
+		long-name "RHP of Latin-8 (ISO 8859-14)"
+		))
+
 
 ;; For syntax of Latin-1 characters.
 (loop for c from 64 to 127              ; from ',A@(B' to ',A(B'
@@ -170,8 +268,9 @@
 (provide 'romanian)
 
 ;; Czech support originally from czech.el
-;; Author: Milan Zamazal <pdm@fi.muni.cz>
-;; Maintainer(for XEmacs): David Sauer <davids@penguin.cz>
+;; Author: Milan Zamazal <pdm@zamazal.org>
+;; Maintainer (FSF): Pavel Jan,Am(Bk <Pavel@Janik.cz>
+;; Maintainer (for XEmacs): David Sauer <davids@penguin.cz>
 
 (provide 'czech)
 

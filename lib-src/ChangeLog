@@ -1,3 +1,10 @@
+2002-03-14  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+        * make-mswin-unicode.pl: Pick up location of include files from
+          MSVCDIR environment variable.
+          Add --includedir command-line option.
+          Remove 'dir' command.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (blessmail):

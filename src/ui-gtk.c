@@ -22,6 +22,7 @@
 #include "hash.h"
 #include "events.h"
 #include "elhash.h"
+#include "event-gtk.h"
 
 /* XEmacs specific GTK types */
 #include "gtk-glue.c"
@@ -36,7 +37,9 @@ static GHashTable *dll_cache;
 
 Lisp_Object gtk_type_to_lisp (GtkArg *arg);
 int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg);
+#if 0
 void describe_gtk_arg (GtkArg *arg);
+#endif
 guint symbol_to_enum (Lisp_Object obj, GtkType t);
 static guint lisp_to_flag (Lisp_Object obj, GtkType t);
 static Lisp_Object flags_to_list (guint value, GtkType t);
@@ -367,7 +370,7 @@ typedef GList * (*__LIST_fn) ();
     if (freep) xfree(v);				\
   } while (0)
 
-gpointer __allocate_object_storage (GtkType t)
+static gpointer __allocate_object_storage (GtkType t)
 {
   size_t s = 0;
   void *rval = NULL;
@@ -437,7 +440,7 @@ gpointer __allocate_object_storage (GtkType t)
   return (rval);
 }
 
-Lisp_Object type_to_marshaller_type (GtkType t)
+static Lisp_Object type_to_marshaller_type (GtkType t)
 {
   switch (GTK_FUNDAMENTAL_TYPE (t))
     {
@@ -1363,6 +1366,7 @@ Do NOT modify unless you really understand ui-gtk.c.
 
 
 /* Various utility functions */
+#if 0
 void describe_gtk_arg (GtkArg *arg)
 {
   GtkArg a = *arg;
@@ -1441,6 +1445,7 @@ void describe_gtk_arg (GtkArg *arg)
       abort();
     }
 }
+#endif
 
 Lisp_Object gtk_type_to_lisp (GtkArg *arg)
 {

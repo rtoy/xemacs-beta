@@ -1467,7 +1467,7 @@ our_string_eq (const void *st1, const void *st2)
     return !strcmp ( (const char *) st1, (const char *) st2);
 }
 
-unsigned long
+static unsigned long
 our_string_hash (const void *xv)
 {
   unsigned int h = 0;

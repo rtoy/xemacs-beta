@@ -29,6 +29,20 @@
 
 ;;; Code:
 
+; (make-charset 'greek-iso8859-7 
+; 	      "Right-Hand Part of Latin/Greek Alphabet (ISO/IEC 8859-7): ISO-IR-126"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-7"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?F
+; 		graphic 1
+; 		short-name "RHP of ISO8859/7"
+; 		long-name "RHP of Greek (ISO 8859-7): ISO-IR-126"
+; 		))
+
 ;; For syntax of Greek
 (loop for c from 54 to 126
       do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))

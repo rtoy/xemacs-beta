@@ -2485,14 +2485,7 @@ qxemciGetDeviceID (const Extbyte * pszDevice)
 
 #if !defined (MINGW)
 
-MCIDEVICEID
-qxemciGetDeviceIDFromElementID (DWORD dwElementID, const Extbyte * lpstrType)
-{
-  if (XEUNICODE_P)
-    return mciGetDeviceIDFromElementIDW (dwElementID, (LPCWSTR) lpstrType);
-  else
-    return mciGetDeviceIDFromElementIDA (dwElementID, (LPCSTR) lpstrType);
-}
+/* Error if mciGetDeviceIDFromElementID used: missing from Win98se version of ADVAPI32.dll */
 
 #endif /* !defined (MINGW) */
 
@@ -2575,27 +2568,13 @@ qxeCreateMailslot (const Extbyte * lpName, DWORD nMaxMessageSize, DWORD lReadTim
 
 #if !defined (CYGWIN_HEADERS)
 
-BOOL
-qxeEncryptFile (const Extbyte * lpFileName)
-{
-  if (XEUNICODE_P)
-    return EncryptFileW ((LPCWSTR) lpFileName);
-  else
-    return EncryptFileA ((LPCSTR) lpFileName);
-}
+/* Error if EncryptFile used: Win2K+ only */
 
 #endif /* !defined (CYGWIN_HEADERS) */
 
 #if !defined (CYGWIN_HEADERS)
 
-BOOL
-qxeDecryptFile (const Extbyte * lpFileName, DWORD dwReserved)
-{
-  if (XEUNICODE_P)
-    return DecryptFileW ((LPCWSTR) lpFileName, dwReserved);
-  else
-    return DecryptFileA ((LPCSTR) lpFileName, dwReserved);
-}
+/* Error if DecryptFile used: Win2K+ only */
 
 #endif /* !defined (CYGWIN_HEADERS) */
 
@@ -3789,11 +3768,11 @@ qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath)
     return SHGetPathFromIDListA (pidl, (LPSTR) pszPath);
 }
 
-/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype */
+/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 
 /* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
 
-/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE */
+/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
 
 
 /*----------------------------------------------------------------------*/

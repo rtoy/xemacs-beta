@@ -225,8 +225,6 @@ face_to_style (Lisp_Object face)
   return (style);
 }
 
-extern int gtk_event_to_emacs_event (struct frame *, GdkEvent *, struct Lisp_Event *);
-
 static Lisp_Object
 gdk_event_to_emacs_event(GdkEvent *ev)
 {

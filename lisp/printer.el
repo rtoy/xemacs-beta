@@ -1,6 +1,6 @@
 ;;; printer.el --- support for hard-copy printing in XEmacs
 
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2002 Ben Wing.
 ;; Copyright (C) 2000 Kirill Katsnelson.
 
 ;; Maintainer: XEmacs Development Team
@@ -227,13 +227,16 @@ Changes made are recorded internally."
 	 (props
 	  (condition-case err
 	      (make-dialog-box 'page-setup :device d
-			       :properties default-msprinter-frame-plist)
+			       :properties (declare-boundp
+					    default-msprinter-frame-plist))
 	    (error
 	     (Printer-clear-device)
 	     (signal (car err) (cdr err))))))
     (while props
-      (setq default-msprinter-frame-plist
-	    (plist-put default-msprinter-frame-plist (car props) (cadr props)))
+      (with-boundp 'default-msprinter-frame-plist
+	(setq default-msprinter-frame-plist
+	      (plist-put default-msprinter-frame-plist (car props)
+			 (cadr props))))
       (setq props (cddr props)))))
 
 (defun generic-print-buffer (&optional buffer display-print-dialog)
@@ -350,7 +353,9 @@ Recognized properties are the same as those in `make-dialog-box':
 					:printer-name
 					(or (plist-get props 'name)
 					    printer-name
-					    (mswindows-get-default-printer))))
+					    (declare-fboundp
+					     (mswindows-get-default-printer)
+					     ))))
 			      header-window
 			      footer-window)
 

@@ -235,5 +235,20 @@ void Initialize_Locale (void);
 extern Lisp_Object Vgtk_initial_argv_list; /* #### ugh! */
 
 const char *gtk_event_name (GdkEventType event_type);
+
+void reinit_console_type_create_gtk (void);
+
+void emacs_gtk_selection_handle (GtkWidget *,
+				 GtkSelectionData *selection_data,
+				 guint info,
+				 guint time_stamp,
+				 gpointer data);
+void emacs_gtk_selection_clear_event_handle (GtkWidget *widget,
+					     GdkEventSelection *event,
+					     gpointer data);
+void emacs_gtk_selection_received (GtkWidget *widget,
+				   GtkSelectionData *selection_data,
+				   gpointer user_data);
+
 #endif /* HAVE_GTK */
 #endif /* _XEMACS_DEVICE_X_H_ */

@@ -3755,10 +3755,9 @@ Emacs Lisp includes a few of these, notably @code{elt} and
 @node Sequence Basics, Mapping over Sequences, Sequences, Sequences
 @section Sequence Basics
 
-@noindent
-Many of the sequence functions take keyword arguments; @pxref{Argument
-Lists}.  All keyword arguments are optional and, if specified,
-may appear in any order.
+@noindent Many of the sequence functions take keyword arguments;
+@pxref{Argument Lists}.  All keyword arguments are optional and, if
+specified, may appear in any order.
 
 The @code{:key} argument should be passed either @code{nil}, or a
 function of one argument.  This key function is used as a filter

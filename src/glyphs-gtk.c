@@ -574,7 +574,7 @@ gtk_locate_pixmap_file (Lisp_Object name)
   if (NILP (Vgtk_bitmap_file_path))
     {
       Vgtk_bitmap_file_path = nconc2 (Vgtk_bitmap_file_path,
-				      (decode_path (BITMAPDIR)));
+				      (split_external_path (BITMAPDIR)));
     }
 
   {
@@ -1090,10 +1090,9 @@ write_lisp_string_to_temp_file (Lisp_Object string)
   static Extbyte_dynarr *conversion_out_dynarr;
   Bytecount bstart, bend;
   Lisp_Object tempfile;
-  struct gcpro gcpro1, gcpro2, grpro3;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object conv_out_stream;
   Lstream *costr;
-  struct gcpro gcpro4;
 
   /* This function can GC */
   if (!conversion_out_dynarr)

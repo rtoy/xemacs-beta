@@ -1,4 +1,4 @@
-;;; viet-util.el ---  utilities for Vietnamese  -*- coding: iso-2022-7bit; -*-
+;;; viet-util.el --- utilities for Vietnamese  -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/viet-util.el).
+;;; Synched up with: Emacs 21.1 (language/viet-util.el).
 
 ;;; Commentary:
 
@@ -40,8 +40,7 @@
 ;;;###autoload
 (defun viet-encode-viscii-char (char)
   "Return VISCII character code of CHAR if appropriate."
-  (aref (char-table-extra-slot viet-viscii-nonascii-translation-table 0)
-	char))
+  (get-char-table char viet-viscii-nonascii-translation-table))
 
 ;; VIQR is a menmonic encoding specification for Vietnamese.
 ;; It represents diacritical marks by ASCII characters as follows:

@@ -1,4 +1,4 @@
-;;; devan-util.el --- Support for Devanagari Script Composition -*- coding: iso-2022-7bit; -*-
+;;; devan-util.el --- support for Devanagari Script Composition -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1996, 2001 Free Software Foundation, Inc.
 
@@ -23,7 +23,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/devan-util.el).
+;;; Synched up with: Emacs 21.1 (language/devan-util.el).
 
 ;;; Commentary:
 
@@ -1283,8 +1283,8 @@ If there's no corresponding narrow character, return CHAR as is."
 ;;
 (provide 'devan-util)
 
-;;; devan-util.el end here
-
 ;; Local Variables:
 ;; coding: iso-2022-7bit
 ;; End:
+
+;;; devan-util.el end here

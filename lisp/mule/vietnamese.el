@@ -29,6 +29,43 @@
 
 ;;; Code:
 
+;; Vietnamese VISCII.  VISCII is 1-byte character set which contains
+;; more than 96 characters.  Since Emacs can't handle it as one
+;; character set, it is divided into two: lower case letters and upper
+;; case letters.
+(make-charset 'vietnamese-viscii-lower "VISCII1.1 lower-case"
+	      '(dimension
+		1
+		registry "VISCII1.1"
+		chars 96
+		columns 1
+		direction l2r
+		final ?1
+		graphic 1
+		short-name "VISCII lower"
+		long-name "VISCII lower-case"
+		))
+
+(make-charset 'vietnamese-viscii-upper "VISCII1.1 upper-case"
+	      '(dimension
+		1
+		registry "VISCII1.1"
+		chars 96
+		columns 1
+		direction l2r
+		final ?2
+		graphic 1
+		short-name "VISCII upper"
+		long-name "VISCII upper-case"
+		))
+
+(modify-syntax-entry 'vietnamese-viscii-lower "w")
+(modify-syntax-entry 'vietnamese-viscii-upper "w")
+
+(define-category ?v "Vietnamese character.")
+(modify-category-entry 'vietnamese-viscii-lower ?v)
+(modify-category-entry 'vietnamese-viscii-upper ?v)
+
 (eval-and-compile
 
 (defvar viet-viscii-decode-table

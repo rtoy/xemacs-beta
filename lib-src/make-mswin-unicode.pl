@@ -56,7 +56,6 @@ and \"end-unicode-encapsulation-script\".  More than one section can
 occur in a single file.  Processed lines begin with a command word,
 followed by one or more args (no quotes are necessary for spaces):
 
-dir sets the directory for include files.
 file specifies a file to start reading from.
 yes indicates a function to be automatically Unicode-encapsulated.
    (All parameters either need no special processing or are LPTSTR or
@@ -88,6 +87,7 @@ $Getopt::Long::ignorecase = 0;
 	     \%options,
 	     'c-output=s',
 	     'h-output=s',
+             'includedir=s',
 	     'help',
 	    );
 
@@ -96,7 +96,15 @@ die $usage if $options{"help"};
 my $in_script;
 my $slurp;
 
-my ($cout, $hout) = ($options{"c-output"}, $options{"h-output"});
+my ($cout, $hout, $dir) = ($options{"c-output"},
+                          $options{"h-output"},
+                          $options{"includedir"});
+if (!$dir)
+  {
+    $dir=$ENV{"MSVCDIR"} or die "Environment variable MSVCDIR undefined - run vcvars32.bat from your MSVC installation";
+    $dir.='/include';
+  }
+die "Can't find MSVC include files in \"$dir\"" unless (-f $dir.'/WINDOWS.H');
 
 open (COUT, ">$cout") or die "Can't open C output file $cout: $!";
 open (HOUT, ">$hout") or die "Can't open C output file $hout: $!";
@@ -144,14 +152,10 @@ while (<>)
       {
 	next if (m!^//!);
 	next if (/^[ \t]*$/);
-	if (/(dir|file|yes|soon|no|skip|split|begin-bracket|end-bracket)(?: (.*))?/)
+	if (/(file|yes|soon|no|skip|split|begin-bracket|end-bracket)(?: (.*))?/)
 	  {
 	    my ($command, $parms) = ($1, $2);
-	    if ($command eq "dir")
-	      {
-		chdir $parms or die "Can't chdir to $parms: $!";
-	      }
-	    elsif ($command eq "file")
+	    if ($command eq "file")
 	      {
 		$current_file = $parms;
 	      }
@@ -400,7 +404,7 @@ foreach my $file (keys %files)
 sub FileContents
 {
   local $/ = undef;
-  open (FILE, "< $_[0]") or die "$_[0]: $!";
+  open (FILE, "< $dir/$_[0]") or die "$dir/$_[0]: $!";
   my $retval = scalar <FILE>;
   # must hack away CRLF junk.
   $retval =~ s/\r\n/\n/g;

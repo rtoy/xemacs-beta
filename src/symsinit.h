@@ -509,6 +509,8 @@ void syms_of_menubar_gtk (void);
 void syms_of_objects_gtk (void);
 void syms_of_select_gtk (void);
 void syms_of_ui_gtk (void);
+void syms_of_widget_accessors (void);
+void syms_of_ui_byhand (void);
 void console_type_create_gtk (void);
 void console_type_create_device_gtk (void);
 void console_type_create_frame_gtk (void);
@@ -533,5 +535,6 @@ void vars_of_select_gtk (void);
 void vars_of_ui_gtk (void);
 void complex_vars_of_glyphs_gtk (void);
 void init_event_gtk_late (void);
+void console_type_create_select_gtk (void);
 
 #endif /* INCLUDED_symsinit_h_ */

@@ -487,7 +487,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 	(princ "\n\n" stream)))
     (when (not suppress-early-error-handler-backtrace)
       (backtrace stream t)))
-  (if (fboundp 'mswindows-message-box)
+  (if-fboundp 'mswindows-message-box
       (mswindows-message-box "Initialization error"))
   (kill-emacs -1))
 

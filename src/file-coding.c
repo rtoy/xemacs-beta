@@ -3429,6 +3429,7 @@ detection_result_number_to_symbol (enum detection_result result)
   return Qnil; /* (usually) not reached */
 }
 
+#if 0 /* not used */
 static enum detection_result
 detection_result_symbol_to_number (Lisp_Object symbol)
 {
@@ -3445,6 +3446,7 @@ detection_result_symbol_to_number (Lisp_Object symbol)
   invalid_constant ("Unrecognized detection result", symbol);
   return ((enum detection_result) 0); /* not reached */
 }
+#endif /* 0 */
 
 /* Set all detection results for a given detector to a specified value. */
 void

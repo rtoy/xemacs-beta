@@ -838,7 +838,7 @@ for use in the 'weight' field of an mswindows font string.")
 (defun mswindows-font-create-object (fontname &optional device)
   "Return a font descriptor object for FONTNAME, appropriate for MS Windows devices."
   (let ((case-fold-search t)
-	(font (mswindows-font-canonicalize-name fontname)))
+	(font (declare-fboundp (mswindows-font-canonicalize-name fontname))))
     (if (or (not (stringp font))
 	    (not (string-match font-mswindows-font-regexp font)))
 	(make-font)

@@ -979,7 +979,7 @@ add_charsets_to_precedence_list (Lisp_Object list, int *lbs,
     EXTERNAL_LIST_LOOP_2 (elt, list)
       {
 	Lisp_Object charset = Fget_charset (elt);
-	int lb = XCHARSET_LEADING_BYTE (elt);
+	int lb = XCHARSET_LEADING_BYTE (charset);
 	if (lbs[lb - MIN_LEADING_BYTE] == 0)
 	  {
 	    Dynarr_add (unicode_precedence_dynarr, charset);

@@ -1,6 +1,7 @@
-;;; tibetan.el --- Support for Tibetan language -*- coding: iso-2022-7bit; -*-
+;;; tibetan.el --- support for Tibetan language -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 2002 Ben Wing.
 ;; Licensed to the Free Software Foundation.
 
 ;; Keywords: multilingual, Tibetan
@@ -22,7 +23,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/tibetan.el).
+;;; Synched up with: Emacs 21.1 (language/tibetan.el).
 
 ;; Author: Toru TOMABECHI, <Toru.Tomabechi@orient.unil.ch>
 
@@ -30,6 +31,8 @@
 
 ;; History:
 ;; 1997.03.13 Modification for special signs and punctuations. 
+
+;;; Commentary:
 
 ;;; Code:
 
@@ -81,6 +84,32 @@
 ;;;2570 $(7%p(B $(7%q(B $(7%r(B $(7%s(B $(7%t(B $(7%u(B $(7%v(B $(7%w(B $(7%x(B $(7%y(B $(7%z(B $(7%{(B $(7%|(B $(7%}(B $(7%~(B // ;
 ;;;
 
+(make-charset 'tibetan-1-column "Tibetan 1 column glyph"
+	      '(dimension
+		2
+		registry "MuleTibetan-1"
+		chars 94
+		columns 1
+		direction l2r
+		final ?8
+		graphic 0
+		short-name "Tibetan 1-col"
+		long-name "Tibetan 1 column"
+		))
+
+;; Tibetan script.
+(make-charset 'tibetan "Tibetan characters"
+	      '(dimension
+		2
+		registry "MuleTibetan-2"
+		chars 94
+		columns 2
+		direction l2r
+		final ?7
+		graphic 0
+		short-name "Tibetan 2-col"
+		long-name "Tibetan 2 column"
+		))
 
 ; (make-coding-system
 ;  'tibetan-iso-8bit 2 ?Q
@@ -129,8 +158,10 @@
   "Regexp matching a composable sequence of Tibetan characters.")
 
 ;; Register a function to compose Tibetan characters.
-(aset composition-function-table (make-char 'tibetan)
-      (list (cons tibetan-composable-pattern 'tibetan-composition-function)))
+(put-char-table 'tibetan
+		(list (cons tibetan-composable-pattern
+			    'tibetan-composition-function))
+		composition-function-table)
 
 ;;;
 ;;; Definitions of conversion data.
@@ -637,4 +668,4 @@ This also matches some punctuation characters which need conversion.")
 
 (provide 'tibetan)
 
-;;; language/tibetan.el ends here
+;;; tibetan.el ends here

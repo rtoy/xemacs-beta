@@ -71,4 +71,6 @@ DECLARE_LRECORD (emacs_gtk_boxed, emacs_gtk_boxed_data);
 #define GTK_BOXEDP(x) RECORDP (x, emacs_gtk_boxed)
 #define CHECK_GTK_BOXED(x) CHECK_RECORD (x, emacs_gtk_boxed)
 
+extern Lisp_Object build_gtk_boxed (void *obj, GtkType t);
+
 #endif /* __UI_GTK_H__ */

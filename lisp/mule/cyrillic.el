@@ -45,6 +45,20 @@
 
 ;; ISO-8859-5
 
+; (make-charset 'cyrillic-iso8859-5 
+; 	      "Right-Hand Part of Latin/Cyrillic Alphabet (ISO/IEC 8859-5): ISO-IR-144"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-5"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?L
+; 		graphic 1
+; 		short-name "RHP of ISO8859/5"
+; 		long-name "RHP of Cyrillic (ISO 8859-5): ISO-IR-144"
+; 		))
+
 (make-coding-system
  'iso-8859-5 'iso2022
  "ISO-8859-5 (Cyrillic)"

@@ -1,4 +1,4 @@
-;;; devanagari.el --- Support for Devanagari -*- coding: iso-2022-7bit; -*-
+;;; devanagari.el --- support for Devanagari -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1996 Free Software Foundation, Inc.
 
@@ -23,13 +23,14 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/devanagari.el).
+;;; Synched up with: Emacs 21.1 (language/devanagari.el).
 
 ;;; Commentary:
 
 ;; History:
 ;; 1996.10.18 written by KAWABATA, Taichi <kawabata@is.s.u-tokyo.ac.jp>
 ;; 1997.1.20 fixed some bugs.
+
 ;;; Code:
 
 ; (make-coding-system

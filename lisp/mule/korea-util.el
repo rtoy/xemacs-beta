@@ -21,7 +21,9 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/korea-util.el).
+;;; Synched up with: Emacs 21.1 (language/korea-util.el).
+
+;;; Commentary:
 
 ;;; Code:
 
@@ -135,4 +137,4 @@
 ;;
 (provide 'korea-util)
 
-;;; korean-util.el ends here
+;;; korea-util.el ends here

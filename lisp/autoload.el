@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 1996, 2000 Ben Wing.
+;; Copyright (C) 1996, 2000, 2002 Ben Wing.
 
 ;; Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Keywords: maint
@@ -43,8 +43,9 @@
   "Turn FORM, a defun or defmacro, into an autoload for source file FILE.
 Returns nil if FORM is not a defun, define-skeleton or defmacro."
   (let ((car (car-safe form)))
-    (if (memq car '(defun define-skeleton defmacro define-derived-mode))
-	(let ((macrop (eq car 'defmacro))
+    (if (memq car '(defun defun* define-skeleton defmacro defmacro*
+		     define-derived-mode))
+	(let ((macrop (memq car '(defmacro defmacro*)))
 	      name doc)
 	  (setq form (cdr form)
 		name (car form)
@@ -65,8 +66,6 @@ Returns nil if FORM is not a defun, define-skeleton or defmacro."
 		    (eq (car-safe (car form)) 'interactive))
 		(if macrop (list 'quote 'macro) nil)))
       nil)))
-
-(put 'define-skeleton 'doc-string-elt 3)
 
 (defvar generate-autoload-cookie ";;;###autoload"
   "Magic comment indicating the following form should be autoloaded.
@@ -113,9 +112,12 @@ the section of autoloads for a file.")
 
 (put 'autoload 'doc-string-elt 3)
 (put 'defun    'doc-string-elt 3)
+(put 'defun*   'doc-string-elt 3)
 (put 'defvar   'doc-string-elt 3)
 (put 'defconst 'doc-string-elt 3)
 (put 'defmacro 'doc-string-elt 3)
+(put 'defmacro* 'doc-string-elt 3)
+(put 'define-skeleton 'doc-string-elt 3)
 
 (defun autoload-trim-file-name (file)
   "Returns a relative pathname of FILE including the last directory."

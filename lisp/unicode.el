@@ -1,6 +1,6 @@
 ;;; unicode.el --- Unicode support -*- coding: iso-2022-7bit; -*-
 
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Keywords: multilingual, Unicode
 
@@ -28,6 +28,53 @@
 ;; Lisp support for Unicode, e.g. initialize the translation tables.
 
 ;;; Code:
+
+; ;; Subsets of Unicode.
+
+; (make-charset 'mule-unicode-2500-33ff 
+; 	      "Unicode characters of the range U+2500..U+33FF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?2
+; 		graphic 0
+; 		short-name "Unicode subset 2"
+; 		long-name "Unicode subset (U+2500..U+33FF)"
+; 		))
+
+
+; (make-charset 'mule-unicode-e000-ffff 
+; 	      "Unicode characters of the range U+E000..U+FFFF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?3
+; 		graphic 0
+; 		short-name "Unicode subset 3"
+; 		long-name "Unicode subset (U+E000+FFFF)"
+; 		))
+
+
+; (make-charset 'mule-unicode-0100-24ff 
+; 	      "Unicode characters of the range U+0100..U+24FF."
+; 	      '(dimension
+; 		2
+; 		registry "ISO10646-1"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?1
+; 		graphic 0
+; 		short-name "Unicode subset"
+; 		long-name "Unicode subset (U+0100..U+24FF)"
+; 		))
+
 
 ;; NOTE: This takes only a fraction of a second on my Pentium III
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
@@ -70,6 +117,7 @@
 	   ;; "GB12345.TXT" 
 	   ("GB2312.TXT" chinese-gb2312)
 	   ;; "HANGUL.TXT" 
+           ("JIS0201.TXT" latin-jisx0201 #x21 #x80)
 	   ("JIS0201.TXT" katakana-jisx0201 #xA0 #xFF #x-80)
 	   ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
 	   ("JIS0212.TXT" japanese-jisx0212)

@@ -159,7 +159,6 @@ think twice before doing this.
 
 \(The following is copied from lib-src/make-mswin-unicode.pl.)
 
-dir sets the directory for include files.
 file specifies a file to start reading from.
 yes indicates a function to be automatically Unicode-encapsulated.
    (All parameters either need no special processing or are LPTSTR or
@@ -191,10 +190,6 @@ This does the following:
 	cd $(SRC)
 	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
 
-NOTE: If your copy of VC++ is not in the directory indicated below, you'll
-have to change that directive (or create a symlink, provided you're using
-Cygwin perl).  #### There should be an option to the perl script to specify
-this.
 */
 
 /*
@@ -215,8 +210,6 @@ pointer to another split-sized structure.
 
 begin-unicode-encapsulation-script
 
-dir c:\Program Files\Microsoft Visual Studio\VC98\Include\
-
 file WINBASE.H
 
 yes GetBinaryType
@@ -227,8 +220,8 @@ yes FreeEnvironmentStrings
 yes FormatMessage
 yes CreateMailslot
 begin-bracket !defined (CYGWIN_HEADERS)
-yes EncryptFile
-yes DecryptFile
+no EncryptFile Win2K+ only
+no DecryptFile Win2K+ only
 end-bracket
 no OpenRaw error "The procedure entry point OpenRawW could not be located in the dynamic link library ADVAPI32.dll."
 no QueryRecoveryAgents split-sized LPRECOVERY_AGENT_INFORMATION
@@ -957,7 +950,7 @@ yes mciSendCommand
 yes mciSendString
 yes mciGetDeviceID
 begin-bracket !defined (MINGW)
-yes mciGetDeviceIDFromElementID
+no mciGetDeviceIDFromElementID missing from Win98se version of ADVAPI32.dll
 end-bracket
 yes mciGetErrorString
 
@@ -1409,7 +1402,7 @@ qxeFindNextFile (HANDLE hFindFile, WIN32_FIND_DATAW *lpFindFileData)
 
 static void
 copy_shfileinfoa_to_shfileinfow (const SHFILEINFOA *pa,
-				 SHFILEINFOW *pw)
+				 SHFILEINFOW *pw, UINT sz)
 {
   /* the layout of SHFILEINFO is
 
@@ -1418,6 +1411,7 @@ copy_shfileinfoa_to_shfileinfow (const SHFILEINFOA *pa,
      TCHAR szTypeName[...];
      */
 
+  assert (sz >= sizeof (SHFILEINFOW));
   xzero (*pw);
   memcpy (pw, pa, offsetof (SHFILEINFOA, szDisplayName));
   memcpy (pw->szDisplayName, pa->szDisplayName, sizeof (pa->szDisplayName));
@@ -1437,10 +1431,10 @@ qxeSHGetFileInfo (const Extbyte *pszPath, DWORD dwFileAttributes,
       BOOL retval;
 
       retval = SHGetFileInfoA ((LPCSTR) pszPath, dwFileAttributes,
-			       (SHFILEINFOA FAR *) &ansidat, sizeof (ansidat),
-			       uFlags);
-      if (retval)
-	copy_shfileinfoa_to_shfileinfow (&ansidat, psfi);
+			       (SHFILEINFOA FAR *) &ansidat,
+			       cbFileInfo ? sizeof (ansidat) : 0, uFlags);
+      if (retval && cbFileInfo)
+	copy_shfileinfoa_to_shfileinfow (&ansidat, psfi, cbFileInfo);
       return retval;
     }
 }

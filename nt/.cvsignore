@@ -4,4 +4,5 @@ xemacs.opt
 xemacs.plg
 obj
 make-docfile.out
+*.tmp
 

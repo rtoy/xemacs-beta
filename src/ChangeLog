@@ -1,3 +1,68 @@
+2002-03-16  Ben Wing  <ben@xemacs.org>
+
+	* cm.c (cmgoto):
+	* file-coding.c:
+	* file-coding.c (detection_result_symbol_to_number):
+	fix warnings.
+
+2002-03-16  IKEYAMA Tomonori <tomonori@suiyokai.org>
+
+        * unicode.c (add_charsets_to_precedence_list): Fix passing wrong
+        argument to XCHARSET_LEADING_BYTE.
+
+2002-03-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+        * intl-encap-win32.c (copy_shfileinfoa_to_shfileinfow):
+          Take size parameter and assert it's big enough.
+        * intl-encap-win32.c (qxeSHGetFileInfo):
+          Deal with the case where no fileinfo structure is passed in.
+
+2002-03-14  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+        * intl-encap-win32.c: Remove EncryptFile, DecryptFile &
+          mciGetDeviceIDFromElementID - APIs are not available on Win98
+        * intl-auto-encap-win32.c: ditto
+        * intl-auto-encap-win32.h: ditto
+        * intl-encap-win32.c: Remove 'dir' command.
+
+2002-03-13  William M. Perry  <wmperry@gnu.org>
+
+        * ui-gtk.c (__allocate_object_storage): Make static to avoid
+        warnings.
+        (type_to_marshaller_type): Ditto.
+
+        * symsinit.h: Added some missing *_gtk_* functions to avoid
+        warnings.
+
+        * select-gtk.c: Add extern definitions of lisp_to_time and
+        time_to_lisp to avoid warnings.
+
+        * redisplay-gtk.c (gtk_flash): reorder select/poll stuff to avoid
+        warning about 'poll' being implicitly defined.  Mirrors change
+        made to redisplay-x.c some time ago.
+        (gtk_bevel_area): Fix unused variable warning.
+
+        * gtk-xemacs.c (smash_face_fallbacks): ifdef this out to avoid
+        warnings.
+
+        * glyphs-gtk.c (write_lisp_string_to_temp_file): Fix 'grpro3'
+        typo.
+        (gtk_locate_pixmap_file): Use split_external_path instead of
+        decode_path.
+
+        * gccache-gtk.c (gc_cache_hash): Fix signed/unsigned warning.
+
+        * event-gtk.c: event-mods.h no longer needed.  event-gtk.h is.
+
+        * emacs-marshals.c (our_string_hash): Make this function static to
+        avoid warnings.
+
+        * device-gtk.c (gtk_event_name): Fix signed/unsigned warning.
+
+        * event-gtk.h: New header file to hold declarations from
+        event-gtk.c that are used in other files.  The quest to remove
+        compilation warnings from GTK files begins.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* config.h.in:

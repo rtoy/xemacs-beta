@@ -1,3 +1,8 @@
+2002-03-14  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+        * cl.texi (Sequence Basics): Avoid splitting link over two lines,
+          which makes cygwin texinfo 4.0 unhappy.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* Makefile (new-users-guide-srcs):

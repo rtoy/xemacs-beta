@@ -21,22 +21,21 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/cyril-util.el).
+;;; Synched up with: Emacs 21.1 (language/cyril-util.el).
+
+;;; Commentary:
 
 ;;; Code:
 
 ;;;###autoload
 (defun cyrillic-encode-koi8-r-char (char)
   "Return KOI8-R external character code of CHAR if appropriate."
-  (aref (char-table-extra-slot cyrillic-koi8-r-nonascii-translation-table 0)
-	char))
+  (get-char-table char cyrillic-koi8-r-nonascii-translation-table))
 
 ;;;###autoload
 (defun cyrillic-encode-alternativnyj-char (char)
   "Return ALTERNATIVNYJ external character code of CHAR if appropriate."
-  (aref (char-table-extra-slot
-	 cyrillic-alternativnyj-nonascii-translation-table 0)
-	char))
+  (get-char-table char cyrillic-alternativnyj-nonascii-translation-table))
 
 
 ;; Display 
@@ -191,8 +190,8 @@ If the argument is nil, we return the display table to its standard state."
 ;;
 (provide 'cyril-util)
 
-;;; cyril-util.el ends here
-
 ;; Local Variables:
 ;; coding: iso-2022-7bit
 ;; End:
+
+;;; cyril-util.el ends here

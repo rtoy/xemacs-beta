@@ -22,16 +22,18 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/tibet-util.el).
+;;; Synched up with: Emacs 21.1 (language/tibet-util.el).
 
 ;; Author: Toru TOMABECHI, <Toru.Tomabechi@orient.unil.ch>
 
 ;; Created: Feb. 17. 1997
 
-;; History:
+;;; History:
 ;; 1997.03.13 Modification in treatment of text properties;
 ;;            Support for some special signs and punctuations.
 ;; 1999.10.25 Modification for a new composition way by K.Handa.
+
+;;; Commentary:
 
 ;;; Code:
 
@@ -352,4 +354,4 @@ See also docstring of the function tibetan-compose-region."
 
 (provide 'tibet-util)
 
-;;; language/tibet-util.el ends here.
+;;; tibet-util.el ends here

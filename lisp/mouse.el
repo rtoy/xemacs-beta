@@ -222,16 +222,18 @@ Returns whether a drag was begun."
   ;; #### barely implemented.
   (when (click-inside-selection-p event)
     (cond ((featurep 'offix)
-	   (offix-start-drag-region
-	    event
-	    (extent-start-position zmacs-region-extent)
-	    (extent-end-position zmacs-region-extent))
+	   (declare-fboundp
+	    (offix-start-drag-region
+	     event
+	     (extent-start-position zmacs-region-extent)
+	     (extent-end-position zmacs-region-extent)))
 	   t)
 	  ((featurep 'cde)
 	   ;; should also work with CDE
-	   (cde-start-drag-region event
-				  (extent-start-position zmacs-region-extent)
-				  (extent-end-position zmacs-region-extent))
+	   (declare-fboundp
+	    (cde-start-drag-region event
+				   (extent-start-position zmacs-region-extent)
+				   (extent-end-position zmacs-region-extent)))
 	   t))))
 
 (defun mouse-eval-sexp (click force-window)

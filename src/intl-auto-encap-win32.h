@@ -654,7 +654,8 @@ MCIERROR qxemciSendCommand (MCIDEVICEID mciId, UINT uMsg, DWORD dwParam1, DWORD 
 MCIERROR qxemciSendString (const Extbyte * lpstrCommand, Extbyte * lpstrReturnString, UINT uReturnLength, HWND hwndCallback);
 MCIDEVICEID qxemciGetDeviceID (const Extbyte * pszDevice);
 #if !defined (MINGW)
-MCIDEVICEID qxemciGetDeviceIDFromElementID (DWORD dwElementID, const Extbyte * lpstrType);
+#undef mciGetDeviceIDFromElementID
+#define mciGetDeviceIDFromElementID error missing from Win98se version of ADVAPI32.dll
 #endif /* !defined (MINGW) */
 BOOL qxemciGetErrorString (MCIERROR mcierr, Extbyte * pszText, UINT cchText);
 
@@ -668,10 +669,12 @@ BOOL qxeFreeEnvironmentStrings (Extbyte * arg1);
 DWORD qxeFormatMessage (DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId, Extbyte * lpBuffer, DWORD nSize, va_list * Arguments);
 HANDLE qxeCreateMailslot (const Extbyte * lpName, DWORD nMaxMessageSize, DWORD lReadTimeout, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 #if !defined (CYGWIN_HEADERS)
-BOOL qxeEncryptFile (const Extbyte * lpFileName);
+#undef EncryptFile
+#define EncryptFile error Win2K+ only
 #endif /* !defined (CYGWIN_HEADERS) */
 #if !defined (CYGWIN_HEADERS)
-BOOL qxeDecryptFile (const Extbyte * lpFileName, DWORD dwReserved);
+#undef DecryptFile
+#define DecryptFile error Win2K+ only
 #endif /* !defined (CYGWIN_HEADERS) */
 #undef OpenRaw
 #define OpenRaw error error "The procedure entry point OpenRawW could not be located in the dynamic link library ADVAPI32.dll."
@@ -838,9 +841,9 @@ HWND   qxeReplaceText (LPFINDREPLACEW arg1);
 /* Processing file SHLOBJ.H */
 
 BOOL qxeSHGetPathFromIDList (LPCITEMIDLIST pidl, Extbyte * pszPath);
-/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype */
+/* Skipping SHGetSpecialFolderPath because error in Cygwin prototype, missing from Cygwin libraries */
 /* Skipping SHBrowseForFolder because need to intercept callback for SendMessage */
-/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE */
+/* Skipping SHGetDataFromIDList because split-sized WIN32_FIND_DATA or split-simple NETRESOURCE, missing from Cygwin libraries */
 
 /* Processing file IME.H */
 

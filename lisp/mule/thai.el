@@ -1,4 +1,4 @@
-;;; thai.el --- Support for Thai -*- coding: iso-2022-7bit; -*-
+;;; thai.el --- support for Thai -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/thai.el).
+;;; Synched up with: Emacs 21.1 (language/thai.el).
 
 ;;; Commentary:
 
@@ -32,6 +32,20 @@
 ;; I'm leaving it commented out.
 
 ;;; Code:
+
+; (make-charset 'thai-tis620 
+; 	      "Right-Hand Part of TIS620.2533 (Thai): ISO-IR-166"
+; 	      '(dimension
+; 		1
+; 		registry "TIS620"
+; 		chars 96
+; 		columns 1
+; 		direction l2r
+; 		final ?T
+; 		graphic 1
+; 		short-name "RHP of TIS620"
+; 		long-name "RHP of Thai (TIS620): ISO-IR-166"
+; 		))
 
 ; ; (make-coding-system
 ; ;  'thai-tis620 2 ?T
@@ -69,9 +83,11 @@
 ; 	  (documentation . t)))
 
 
-; ;; Register a function to compose Thai characters.
-; (aset composition-function-table (make-char 'thai-tis620)
-;       '(("\\c0\\c4\\|\\c0\\(\\c2\\|\\c3\\)\\c4?" . thai-composition-function)))
+;; Register a function to compose Thai characters.
+; (put-char-table 'thai-tis620
+; 		'(("\\c0\\c4\\|\\c0\\(\\c2\\|\\c3\\)\\c4?" .
+; 		   thai-composition-function))
+; 		composition-function-table)
 
 (provide 'thai)
 

@@ -1,3 +1,8 @@
+2002-03-16  Ben Wing  <ben@xemacs.org>
+
+	* .cvsignore:
+	Those pesky *.tmp files.
+
 2002-03-15  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak:

@@ -30,13 +30,19 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(make-charset 'ipa "International Phonetic Alphabet"
-	      '(registry "MuleIPA"
-		dimension 1
+;; IPA characters for phonetic symbols.
+(make-charset 'ipa "IPA (International Phonetic Association)"
+	      '(dimension
+		1
+		registry "MuleIPA"
 		chars 96
+		columns 1
+		direction l2r
 		final ?0
 		graphic 1
-		))		; for XEmacs
+		short-name "IPA"
+		long-name "IPA"
+		))
 
 (set-language-info-alist
  "IPA" '((charset . (ipa))

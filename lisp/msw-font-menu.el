@@ -38,6 +38,7 @@
 ;;;   "*If non-nil, then the font menu will only show fixed-width fonts.")
 
 (require 'font-menu)
+(globally-declare-boundp 'mswindows-font-regexp)
 
 (defvar mswindows-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")

@@ -857,7 +857,7 @@ gtk_output_string (struct window *w, struct display_line *dl,
 	  upos = dl->descent / 2;
 	  uthick = 1;
 
-	  if (dl->ypos + upos < dl->ypos + dl->descent - dl->clip)
+	  if ((dl->ypos + upos) < (dl->ypos + dl->descent - dl->clip))
 	    {
 	      if (dl->ypos + upos + uthick > dl->ypos + dl->descent - dl->clip)
 		uthick = dl->descent - dl->clip - upos;
@@ -1785,9 +1785,6 @@ gtk_flash (struct device *d)
 
   gdk_flush ();
 
-#ifdef HAVE_POLL
-  poll (0, 0, 100);
-#else /* !HAVE_POLL */
 #ifdef HAVE_SELECT
   {
     int usecs = 100000;
@@ -1798,9 +1795,12 @@ gtk_flash (struct device *d)
     select (0, 0, 0, 0, &tv);
   }
 #else
+#ifdef HAVE_POLL
+  poll (0, 0, 100);
+#else
   bite me
-#endif /* HAVE_POLL */
-#endif /* HAVE_SELECT */
+#endif
+#endif
 
   gdk_draw_rectangle (GDK_DRAWABLE (GET_GTK_WIDGET_WINDOW (FRAME_GTK_SHELL_WIDGET (f))),
 		      gc, TRUE, w->pixel_left, w->pixel_top,
@@ -1817,7 +1817,6 @@ gtk_bevel_area (struct window *w, face_index findex,
 		int shadow_thickness, int edges, enum edge_style style)
 {
   struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
 
   gtk_output_shadows (f, x, y, width, height, shadow_thickness);
 }

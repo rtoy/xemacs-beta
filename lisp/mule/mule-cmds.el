@@ -1110,7 +1110,8 @@ Returns non-nil if successfully set the locale(s)."
 	   (let ((ms-locale
 		  (gethash langenv mswindows-langenv-to-locale-table)))
 	     (if ms-locale (progn
-			  (mswindows-set-current-locale ms-locale)
+			  (declare-fboundp (mswindows-set-current-locale
+					    ms-locale))
 			  ms-locale)
 	       ;; ... if not, see if the langenv specifies any locale(s).
 	       ;; if not, construct one from the langenv name.
@@ -1129,7 +1130,8 @@ Returns non-nil if successfully set the locale(s)."
 		   (or (consp msloc) (setq msloc (cons msloc "DEFAULT")))
 		   (when (condition-case nil
 			     (progn
-			       (mswindows-set-current-locale msloc)
+			       (declare-fboundp (mswindows-set-current-locale
+						 msloc))
 			       t)
 			   (error nil))
 		     (return msloc))))))))
@@ -1198,7 +1200,7 @@ The optional arg EOL-TYPE specifies the eol-type of the default value
 of buffer-file-coding-system set by this function."
 
 ;; The following appeared as the third paragraph of the doc string for this
-;; function, but it's not in FSF 21.0.103, and it's not true, since we call
+;; function, but it's not in FSF 21.1, and it's not true, since we call
 ;; reset-coding-categories-to-default before calling this function.  ####
 ;; Should we rethink this?
 
@@ -1287,8 +1289,8 @@ of buffer-file-coding-system set by this function."
   (let (langenv)
     ;; under ms windows (any):
     (if (memq system-type '(windows-nt cygwin32))
-      (let ((userdef (mswindows-user-default-locale))
-	    (sysdef (mswindows-system-default-locale)))
+      (let ((userdef (declare-fboundp (mswindows-user-default-locale)))
+	    (sysdef (declare-fboundp (mswindows-system-default-locale))))
 	;; (1) current langenv comes from user-default locale.
 	(setq langenv (mswindows-get-language-environment-from-locale
 		       userdef))
@@ -1310,7 +1312,7 @@ of buffer-file-coding-system set by this function."
 	;;     user-default locale even if the langenv doesn't correspond;
 	;;     we might not be able to find a langenv for the user-default
 	;;     locale but we should still use the right code page, etc.
-	(mswindows-set-current-locale userdef))
+	(declare-fboundp (mswindows-set-current-locale userdef)))
       ;; Unix:
       (let ((locstring (set-current-locale "")))
 	;; assume C lib locale and LANG env var are set correctly.  use

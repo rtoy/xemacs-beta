@@ -28,6 +28,20 @@
 
 ;;; Code:
 
+; (make-charset 'hebrew-iso8859-8 
+; 	      "Right-Hand Part of Latin/Hebrew Alphabet (ISO/IEC 8859-8): ISO-IR-138"
+; 	      '(dimension
+; 		1
+; 		registry "ISO8859-8"
+; 		chars 96
+; 		columns 1
+; 		direction r2l
+; 		final ?H
+; 		graphic 1
+; 		short-name "RHP of ISO8859/8"
+; 		long-name "RHP of Hebrew (ISO 8859-8): ISO-IR-138"
+; 		))
+
 ;; Syntax of Hebrew characters
 (loop for c from 96 to 122
       do (modify-syntax-entry (make-char 'hebrew-iso8859-8 c) "w"))

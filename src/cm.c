@@ -255,7 +255,7 @@ done:
 #define	USELL	2
 #define	USECR	3
 
-#if OLD_CURSOR_MOTION_SHIT
+#ifdef OLD_CURSOR_MOTION_SHIT
 void
 cmgoto (struct frame *f, int row, int col)
 {

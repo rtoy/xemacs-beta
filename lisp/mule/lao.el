@@ -1,4 +1,4 @@
-;;; lao.el --- Support for Lao -*- coding: iso-2022-7bit; -*-
+;;; lao.el --- support for Lao -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -22,9 +22,26 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Emacs 21.0.103 (language/lao.el).
+;;; Synched up with: Emacs 21.1 (language/lao.el).
+
+;;; Commentary:
 
 ;;; Code:
+
+;; Lao script.
+;; ISO10646's 0x0E80..0x0EDF are mapped to 0x20..0x7F.
+(make-charset 'lao "Lao characters (ISO10646 0E80..0EDF)"
+	      '(dimension
+		1
+		registry "MuleLao-1"
+		chars 94
+		columns 1
+		direction l2r
+		final ?1
+		graphic 0
+		short-name "Lao"
+		long-name "Lao"
+		))
 
 ; (make-coding-system
 ;  'lao 2 ?L
@@ -58,9 +75,10 @@
 (aset ignore-relative-composition ?(1\(B t)
 
 ;; Register a function to compose Lao characters.
-(aset composition-function-table (make-char 'lao)
-      '(("\\c0\\c9?\\(\\(\\c2\\|\\c3\\)\\c4?\\|\\c4\\)?"
-	 . lao-composition-function)))
+(put-char-table 'lao
+		'(("\\c0\\c9?\\(\\(\\c2\\|\\c3\\)\\c4?\\|\\c4\\)?"
+		   . lao-composition-function))
+		 composition-function-table)
 
 (provide 'lao)
 

@@ -123,6 +123,8 @@
 	(when-feature mule "mule-charset")
 	(when-feature mule "mule-cmds") ; to sync with Emacs 20.1
 	(when-feature mule "mule-coding")
+	(when-feature mule "mule-composite-stub")
+	(when-feature mule "mule-composite")
 	;; may initialize coding systems
 	(when-feature (and mule x) "mule-x-init")
 	(when-feature (and mule tty) "mule-tty-init")
@@ -163,7 +165,6 @@
 	(when-feature mule "misc-lang")
 	(when-feature mule "thai-xtis-chars")
 	(when-feature mule "mule/thai-xtis") ; overloaded in leim/quail
-	(when-feature mule "viet-chars")
 	(when-feature mule "vietnamese")
 
 	;; Specialized language support

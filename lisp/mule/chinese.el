@@ -34,6 +34,76 @@
 (eval-when-compile
   (require 'china-util))
 
+; (make-charset 'chinese-gb2312 
+; 	      "GB2312 Chinese simplified: ISO-IR-58"
+; 	      '(dimension
+; 		2
+; 		registry "GB2312.1980"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?A
+; 		graphic 0
+; 		short-name "GB2312"
+; 		long-name "GB2312: ISO-IR-58"
+; 		))
+
+; (make-charset 'chinese-cns11643-1 
+; 	      "CNS11643 Plane 1 Chinese traditional: ISO-IR-171"
+; 	      '(dimension
+; 		2
+; 		registry "CNS11643.1992-1"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?G
+; 		graphic 0
+; 		short-name "CNS11643-1"
+; 		long-name "CNS11643-1 (Chinese traditional): ISO-IR-171"
+; 		))
+
+; (make-charset 'chinese-cns11643-2 
+; 	      "CNS11643 Plane 2 Chinese traditional: ISO-IR-172"
+; 	      '(dimension
+; 		2
+; 		registry "CNS11643.1992-2"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?H
+; 		graphic 0
+; 		short-name "CNS11643-2"
+; 		long-name "CNS11643-2 (Chinese traditional): ISO-IR-172"
+; 		))
+
+; (make-charset 'chinese-big5-1 
+; 	      "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
+; 	      '(dimension
+; 		2
+; 		registry "Big5"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?0
+; 		graphic 0
+; 		short-name "Big5 (Level-1)"
+; 		long-name "Big5 (Level-1) A141-C67F"
+; 		))
+
+; (make-charset 'chinese-big5-2 
+; 	      "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
+; 	      '(dimension
+; 		2
+; 		registry "Big5"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?1
+; 		graphic 0
+; 		short-name "Big5 (Level-2)"
+; 		long-name "Big5 (Level-2) C940-FEFE"
+; 		))
+
 ;; Syntax of Chinese characters.
 (modify-syntax-entry 'chinese-gb2312 "w")
 (loop for row in '(33 34 41)
@@ -47,6 +117,23 @@
 (modify-syntax-entry 'chinese-cns11643-2  "w")
 (modify-syntax-entry 'chinese-big5-1 "w")
 (modify-syntax-entry 'chinese-big5-2 "w")
+
+; ;; Chinese CNS11643 Plane3 thru Plane7.  Although these are official
+; ;; character sets, the use is rare and don't have to be treated
+; ;; space-efficiently in the buffer.
+; (make-charset 'chinese-cns11643-3 
+; 	      "CNS11643 Plane 3 Chinese Traditional: ISO-IR-183"
+; 	      '(dimension
+; 		2
+; 		registry "CNS11643.1992-3"
+; 		chars 94
+; 		columns 2
+; 		direction l2r
+; 		final ?I
+; 		graphic 0
+; 		short-name "CNS11643-3"
+; 		long-name "CNS11643-3 (Chinese traditional): ISO-IR-183"
+; 		))
 
 ;; CNS11643 Plane3 thru Plane7
 ;; These represent more and more obscure Chinese characters.
@@ -64,7 +151,10 @@
          dimension 2
          chars 94
          final ,final
-         graphic 0))
+         graphic 0
+	 short-name ,(concat "CNS11643-" plane)
+	 long-name ,(format "CNS11643-%s (Chinese traditional): ISO-IR-183"
+			    plane)))
       (modify-syntax-entry   name "w")
       (modify-category-entry name ?t)
       ))
@@ -78,22 +168,31 @@
 ;; ISO-IR-165 (CCITT Extended GB)
 ;;    It is based on CCITT Recommendation T.101, includes GB 2312-80 +
 ;;    GB 8565-88 table A4 + 293 characters.
-(make-charset
+(make-charset ;; not in FSF 21.1
  'chinese-isoir165
  "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"
  `(registry "isoir165"
    dimension 2
    chars 94
    final ?E
-   graphic 0))
+   graphic 0
+   short-name "ISO-IR-165"
+   long-name "ISO-IR-165 (CCITT Extended GB; Chinese simplified)"))
 
 ;; PinYin-ZhuYin
-(make-charset 'sisheng "PinYin-ZhuYin"
-	      '(registry "sisheng_cwnn\\|OMRON_UDC_ZH"
-		dimension 1
+(make-charset 'chinese-sisheng 
+	      "SiSheng characters for PinYin/ZhuYin"
+	      '(dimension
+		1
+		;; XEmacs addition: second half of registry spec
+		registry "sisheng_cwnn\\|OMRON_UDC_ZH"
 		chars 94
+		columns 1
+		direction l2r
 		final ?0
 		graphic 0
+		short-name "SiSheng"
+		long-name "SiSheng (PinYin/ZhuYin)"
 		))
 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
@@ -154,7 +253,7 @@
  "Chinese EUC"
  '(charset-g0 ascii
    charset-g1 chinese-gb2312
-   charset-g2 sisheng
+   charset-g2 chinese-sisheng
    charset-g3 t
    mnemonic "Zh-GB/EUC"
    documentation
@@ -221,7 +320,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 
 (set-language-info-alist
  "Chinese-GB" '((setup-function . setup-chinese-gb-environment-internal)
-		(charset chinese-gb2312 sisheng)
+		(charset chinese-gb2312 chinese-sisheng)
 		(coding-system cn-gb-2312 iso-2022-7bit hz-gb-2312)
 		(coding-priority cn-gb-2312 big5 iso-2022-7bit)
 		(cygwin-locale "zh")
