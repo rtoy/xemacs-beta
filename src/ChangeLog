@@ -1,3 +1,7 @@
+2003-08-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule-charset.c (get_unallocated_leading_byte): Compiler quietus.
+
 2003-10-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* nas.c (AudioLibraryVersionMajor, AudioLibraryVersionMinor):

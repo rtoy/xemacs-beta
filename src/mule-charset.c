@@ -301,8 +301,13 @@ get_unallocated_leading_byte (int dimension)
     }
   else
     {
+      /* awfully fragile, but correct */
+#if MAX_LEADING_BYTE_PRIVATE_2 == 255
+      if (chlook->next_allocated_2_byte_leading_byte == 0)
+#endif
       if (chlook->next_allocated_2_byte_leading_byte >
 	  MAX_LEADING_BYTE_PRIVATE_2)
+#endif
 	lb = 0;
       else
 	lb = chlook->next_allocated_2_byte_leading_byte++;
