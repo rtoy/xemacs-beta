@@ -1,3 +1,11 @@
+2002-04-13  Jonathan Harris  <jonathan@xemacs.org>
+
+	* unexnt.c (_start):
+	* unexnt.c (unexec):
+	* unexnt.c (map_in_heap):
+	Clean up one remaining file where nonintercepted Windows calls
+	were being used.
+
 2002-04-07  William M. Perry  <wmperry@gnu.org>
 
 	* event-gtk.c: 
