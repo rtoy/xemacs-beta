@@ -1,3 +1,22 @@
+2001-11-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-faq.texi (Top): Remove duplicate node "Introduction".
+	* xemacs-faq.texi (Q7.0.2): Rename changes sections uniquely.
+	* xemacs-faq.texi (Q7.0.3): Ditto.
+
+2001-11-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* external-widget.texi: Add @settitle to this stand-alone
+	document.
+
+2001-11-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* Makefile: Add rule to produce html from texi sources (currently
+	using texi2html).
+	* Makefile (HTMLDIR): New.
+	* Makefile (html_files): New.
+	* Makefile (html): New target.
+
 2001-09-16  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Q4.0.7): Fix link to VM FAQ thanks to word I

@@ -1,5 +1,6 @@
 \input texinfo  @c -*-texinfo-*-
 @setfilename ../info/external-widget.info
+@settitle The External Client Widget
 
 @ifinfo
 @dircategory XEmacs Editor
