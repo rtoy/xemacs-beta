@@ -1,3 +1,7 @@
+2002-03-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* fileio.c (Fwrite_region_internal): Document use of start == Qnil.
+
 2001-09-04   Daiki Ueno  <ueno@unixuser.org>
 
 	* insdel.c (prepare_to_modify_buffer): Don't call the function

@@ -3114,6 +3114,11 @@ of the CODESYS argument under XEmacs/Mule. (When Mule support is not
 present, both functions are identical and ignore the CODESYS argument.)
 If support for Mule exists in this Emacs, the file is encoded according
 to the value of CODESYS.  If this is nil, no code conversion occurs.
+
+As a special kludge to support auto-saving, when START is nil START and
+END are set to the beginning and end, respectively, of the buffer,
+regardless of any restrictions.  Don't use this feature.  It is documented
+here because write-region handler writers need to be aware of it.
 */
        (start, end, filename, append, visit, lockname, codesys))
 {
