@@ -36,6 +36,10 @@ Boston, MA 02111-1307, USA.  */
 
 #else /* not NO_SUBPROCESSES */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* struct Lisp_Process is defined in procimpl.h; only process-*.c need
    to know about the guts of it. */
 
@@ -117,6 +121,10 @@ Charcount read_process_output (Lisp_Object proc, int read_stderr);
 int process_has_separate_stderr (Lisp_Object proc);
 const char *signal_name (int signum);
 Lisp_Object canonicalize_host_name (Lisp_Object host);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* not NO_SUBPROCESSES */
 

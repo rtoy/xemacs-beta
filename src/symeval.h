@@ -27,6 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_symeval_h_
 #define INCLUDED_symeval_h_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum symbol_value_type
 {
   /* The following tags use the 'symbol_value_forward' structure
@@ -429,5 +433,9 @@ do									    \
 	DEFVAR_SYMVAL_FWD_INT (lname, c_location, SYMVAL_BOOLEAN_FORWARD, magicfun)
 
 void flush_all_buffer_local_cache (void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDED_symeval_h_ */

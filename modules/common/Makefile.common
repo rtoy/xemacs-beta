@@ -57,6 +57,7 @@ MODCFLAGS=@MODCFLAGS@
 INSTALLPATH=@INSTALLPATH@
 INSTALL_PROGRAM=@MOD_INSTALL_PROGRAM@
 OBJECT_TO_BUILD=@OBJECT_TO_BUILD@
+LIBSTDCPP=@LIBSTDCPP@
 #ifdef HAVE_MS_WINDOWS
 IMPORT_LIB=../../src/xemacs-import.a
 #endif
@@ -69,7 +70,7 @@ all: $(OBJECT_TO_BUILD)
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o $(IMPORT_LIB)
 	$(MODCC) --mode=link --mode=verbose --mod-output=$@ \
-	$(OBJS) $(MODNAME)_i.o $(IMPORT_LIB) $(LDFLAGS)
+	$(OBJS) $(MODNAME)_i.o $(IMPORT_LIB) $(LDFLAGS) $(LIBSTDCPP)
 
 $(MODNAME)_i.c: $(SRCS)
 	ELLMAKEDOC=$(MAKE_DOCFILE) $(MODCC) --mode=init --mod-output=$@ \

@@ -1005,6 +1005,10 @@ template<typename T> struct alignment_trick { char c; T member; };
    data of TYPE. */
 #define ALIGN_PTR(ptr, type) ((void *) ALIGN_FOR_TYPE ((size_t) (ptr), type))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ------------------------ assertions ------------------- */
 
 /* We define assert iff USE_ASSERTIONS or DEBUG_XEMACS is defined.
@@ -1672,11 +1676,19 @@ MODULE_API int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 /* OK, you can open them again */
 
+#ifdef __cplusplus
+}
+#endif
+
 /************************************************************************/
 /**		     Definitions of basic Lisp objects		       **/
 /************************************************************************/
 
 #include "lrecord.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*------------------------------ unbound -------------------------------*/
 
@@ -2827,6 +2839,9 @@ Lisp_Object make_weak_list (enum weak_list_type type);
 int finish_marking_weak_lists (void);
 void prune_weak_lists (void);
 
+#ifdef __cplusplus
+}
+#endif
 
 /************************************************************************/
 /*      Definitions related to the format of text and of characters     */
@@ -2953,6 +2968,10 @@ Lisp_Object,Lisp_Object,Lisp_Object
    and change the define of SUBR_MAX_ARGS above.  */
 
 #include "symeval.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* `specpdl' is the special binding/unwind-protect stack.
 
@@ -3138,6 +3157,10 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 
 extern MODULE_API struct gcpro *gcprolist;
 
+#ifdef __cplusplus
+}
+#endif
+
 /* #### Catching insufficient gcpro:
 
    The C++ code below catches GCPRO without UNGCPRO or vice-versa.
@@ -3203,6 +3226,10 @@ struct gcpro
    The QUIT macro cannot GC any more, although this wasn't true at some point,
    and so some "This function can GC" comments may be inaccurate.
 */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef DEBUG_GCPRO
 
@@ -3499,6 +3526,10 @@ void register_post_gc_action (void (*fun) (void *), void *arg);
 int begin_gc_forbidden (void);
 void end_gc_forbidden (int count);
 
+#ifdef __cplusplus
+}
+#endif
+
 
 /************************************************************************/
 /*		              Misc definitions        	                */
@@ -3522,6 +3553,10 @@ void end_gc_forbidden (int count);
 
 /* Prototypes for all init/syms_of/vars_of initialization functions. */
 #include "symsinit.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Defined in abbrev.c */
 MODULE_API EXFUN (Fexpand_abbrev, 0);
@@ -5262,5 +5297,9 @@ extern Lisp_Object Vstandard_input, Vstandard_output, Vstdio_str;
 extern Lisp_Object Vsynchronous_sounds, Vsystem_name;
 extern Lisp_Object Vthis_command_keys, Vunread_command_event;
 extern Lisp_Object Vx_initial_argv_list;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDED_lisp_h_ */

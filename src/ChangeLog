@@ -1,3 +1,27 @@
+2003-08-28  Jerry James  <james@xemacs.org>
+
+	* emodules.h: Add extern "C" declarations for C++ module builds.
+	* lisp.h: Ditto.
+	* lrecord.h: Ditto.
+	* opaque.h: Ditto.
+	* process.h: Ditto.
+	* symeval.h: Ditto.
+	* text.h: Ditto.
+	* mule-canna.c: Make key_buffer char instead of unsigned char.
+	* mule-canna.c (storeResults): 1st arg is char *, not unsigned
+	char *.
+	* mule-canna.c (Fcanna_initialize): Add casts for C++ builds.
+	* mule-canna.c (Fcanna_finalize): Ditto.
+	* mule-canna.c (Fcanna_touroku_string): Ditto.
+	* mule-canna.c (Fcanna_store_yomi): Ditto.
+	* mule-canna.c (Fcanna_parse): Ditto.
+	* mule-canna.c (Fcanna_query_mode): Ditto, and change buf to
+	unsigned char[] to reduce number of casts.
+	* mule-canna.c (Fcanna_henkan_begin): Ditto.
+	* mule-canna.c (Fcanna_henkan_next): Ditto.
+	* mule-canna.c (mule_make_string): Ditto.
+	* mule-wnnfns.c (Fwnn_open): Ditto.
+
 2003-08-26  Nickolay Pakoulin  <npak@ispras.ru>
 
 	* database.c (berkdb_get):

@@ -6,7 +6,7 @@
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
-void assert_failed (const char *, int, const char *);
+EXTERN_C void assert_failed (const char *, int, const char *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? 1 : (assert_failed (__FILE__, __LINE__, #x), 0))
 #else

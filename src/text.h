@@ -45,6 +45,10 @@ char *strlwr (char *);
 char *strupr (char *);
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ---------------------------------------------------------------------- */
 /*                     Super-basic character properties                   */
 /* ---------------------------------------------------------------------- */
@@ -2451,6 +2455,10 @@ do {									\
 #define eilwr(ei) EI_CASECHANGE (ei, 1)
 #define eiupr(ei) EI_CASECHANGE (ei, 0)
 
+#ifdef __cplusplus
+}
+#endif
+
 
 /************************************************************************/
 /*                                                                      */
@@ -2690,6 +2698,10 @@ enum dfc_conversion_type
 };
 typedef enum dfc_conversion_type dfc_conversion_type;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* WARNING: These use a static buffer.  This can lead to disaster if
    these functions are not used *very* carefully.  Another reason to only use
    TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT(). */
@@ -2896,6 +2908,10 @@ MODULE_API Bytecount new_dfc_convert_size (const char *srctext, const void *src,
 					   Bytecount src_size,
 					   enum new_dfc_src_type type,
 					   Lisp_Object codesys);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Version of EXTERNAL_TO_C_STRING that *RETURNS* the translated string,
    still in alloca() space.  Requires some trickiness to do this, but gets

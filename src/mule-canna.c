@@ -169,7 +169,7 @@ extern char *jrKanjiError;
 
 /* #### is this global really necessary? */
 #define KEYTOSTRSIZE 2048
-static unsigned char key_buffer[KEYTOSTRSIZE];
+static char key_buffer[KEYTOSTRSIZE];
 static char **warning;
 
 static int canna_empty_info, canna_through_info;
@@ -191,7 +191,7 @@ static Lisp_Object Vcanna_mode_string;
 
 static int IRCP_context;
 
-static Lisp_Object storeResults (unsigned char *, int, jrKanjiStatus *);
+static Lisp_Object storeResults (char *, int, jrKanjiStatus *);
 static Lisp_Object kanjiYomiList (int, int);
 static Lisp_Object CANNA_mode_keys (void);
 
@@ -222,7 +222,7 @@ variables.
 }
 
 static Lisp_Object
-storeResults (unsigned char *buf, int len, jrKanjiStatus *ks)
+storeResults (char *buf, int len, jrKanjiStatus *ks)
 {
   Lisp_Object val = Qnil;
 
@@ -233,27 +233,28 @@ storeResults (unsigned char *buf, int len, jrKanjiStatus *ks)
   else
     {
       /* 確定した文字列 (the confirmed string) */
-      Vcanna_kakutei_string = make_string (buf, len);
+      Vcanna_kakutei_string = make_string ((unsigned char *) buf, len);
       val = make_int (len);
       /* 確定した文字列の読みの情報...
 	 (info about the reading of the confirmed string) */
       Vcanna_kakutei_yomi = Vcanna_kakutei_romaji = Qnil;
       if (ks->info & KanjiYomiInfo)
 	{
-	  unsigned char *p = buf + len + 1;
+	  char *p = buf + len + 1;
 	  int yomilen = strlen (p);
 
 	  if (len + yomilen + 1 < KEYTOSTRSIZE)
 	    {
 	      int yomilen2;
 
-	      Vcanna_kakutei_yomi = make_string (p, yomilen); /* 読み
-								 (reading) */
+	      Vcanna_kakutei_yomi =
+		make_string ((unsigned char *) p, yomilen); /* 読み (reading) */
 	      p += yomilen + 1;
 	      yomilen2 = strlen (p);
 	      if (len + yomilen + yomilen2 + 2 < KEYTOSTRSIZE)
 		{
-		  Vcanna_kakutei_romaji = make_string (p, yomilen2);
+		  Vcanna_kakutei_romaji =
+		    make_string ((unsigned char *) p, yomilen2);
 				/* ローマ字 (romanization) */
 		}
 	    }
@@ -309,7 +310,8 @@ storeResults (unsigned char *buf, int len, jrKanjiStatus *ks)
       Vcanna_mode_string = Qnil;
       if (ks->info & KanjiModeInfo)
 	{
-	  Vcanna_mode_string = make_string (ks->mode, strlen (ks->mode));
+	  Vcanna_mode_string =
+	    make_string (ks->mode, strlen ((const char *) ks->mode));
 	}
 
       /* その他の情報 (other information) */
@@ -382,7 +384,8 @@ If nil is specified for each arg, the default value will be used.
       char servername[256];
 
       CHECK_STRING (server);
-      strncpy (servername, XSTRING_DATA (server), XSTRING_LENGTH (server));
+      strncpy (servername, (const char *) XSTRING_DATA (server),
+	       XSTRING_LENGTH (server));
       servername[XSTRING_LENGTH (server)] = '\0';
       jrKanjiControl (0, KC_SETSERVERNAME, servername);
     }
@@ -396,7 +399,8 @@ If nil is specified for each arg, the default value will be used.
       char rcname[256];
 
       CHECK_STRING (rcfile);
-      strncpy (rcname, XSTRING_DATA (rcfile), XSTRING_LENGTH (rcfile));
+      strncpy (rcname, (const char *) XSTRING_DATA (rcfile),
+	       XSTRING_LENGTH (rcfile));
       rcname[XSTRING_LENGTH (rcfile)] = '\0';
       jrKanjiControl (0, KC_SETINITFILENAME, rcname);
     }
@@ -417,14 +421,14 @@ If nil is specified for each arg, the default value will be used.
       while (p < q)
 	{
 	  q--;
-	  val = Fcons (make_string (*q, strlen (*q)), val);
+	  val = Fcons (make_string (*q, strlen ((const char *) *q)), val);
 	}
     }
   val = Fcons (val, Qnil);
 
   if (res == -1)
     {
-      val = Fcons (make_string ((unsigned char*) jrKanjiError,
+      val = Fcons (make_string ((unsigned char *) jrKanjiError,
 				strlen (jrKanjiError)), val);
       /* イニシャライズで失敗した場合。 (on initialization failure) */
       return Fcons (Qnil, val);
@@ -477,7 +481,7 @@ This cause to write miscellaneous informations to kana-to-kanji dictionary.
     {
       for (p = (unsigned char**) warning ; *p ; p++)
 	{
-	  val = Fcons (make_string (*p, strlen (*p)), val);
+	  val = Fcons (make_string (*p, strlen ((const char *) *p)), val);
 	}
     }
   val = Fcons (val, Qnil);
@@ -506,7 +510,7 @@ Register Kanji words into kana-to-kanji conversion dictionary.
 #else /* CANNA_MULE */
   m2c (XSTRING_DATA (str), XSTRING_LENGTH (str), cbuf);
   ks.echoStr = cbuf;
-  ks.length = strlen (cbuf);
+  ks.length = strlen ((const char *) cbuf);
 #endif /* CANNA_MULE */
   ksv.ks = &ks;
   len = jrKanjiControl (0, KC_DEFINEKANJI, (char *)&ksv);
@@ -576,7 +580,8 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
   ks.length = XSTRING_LENGTH (yomi);
   key_buffer[ks.length] = '\0';
 #else /* CANNA_MULE */
-  m2c (XSTRING_DATA (yomi), XSTRING_LENGTH (yomi), key_buffer);
+  m2c (XSTRING_DATA (yomi), XSTRING_LENGTH (yomi),
+       (unsigned char *) key_buffer);
   ks.length = strlen (key_buffer);
 #endif /* CANNA_MULE */
 
@@ -595,7 +600,8 @@ Store yomi characters as a YOMI of kana-to-kanji conversion.
       ks.mode = (unsigned char *)(key_buffer + XSTRING_LENGTH (yomi) + 1);
 #else /* CANNA_MULE */
       ks.mode = (unsigned char *)(key_buffer + ks.length + 1);
-      m2c (XSTRING_DATA (roma), XSTRING_LENGTH (roma), ks.mode);
+      m2c (XSTRING_DATA (roma), XSTRING_LENGTH (roma),
+	   (unsigned char *) ks.mode);
 #endif /* CANNA_MULE */
     }
 
@@ -652,7 +658,7 @@ Parse customize string.
   strncpy (key_buffer, XSTRING_DATA (str), XSTRING_LENGTH (str));
   key_buffer[XSTRING_LENGTH (str)] = '\0';
 #else /* CANNA_MULE */
-  m2c (XSTRING_DATA (str), XSTRING_LENGTH (str), key_buffer);
+  m2c (XSTRING_DATA (str), XSTRING_LENGTH (str), (unsigned char *) key_buffer);
 #endif /* CANNA_MULE */
   p = (unsigned char**) key_buffer;
   n = jrKanjiControl (0, KC_PARSE,  (char *) &p);
@@ -660,7 +666,7 @@ Parse customize string.
   while (n > 0)
     {
       n--;
-      val = Fcons (make_string (p[n], strlen (p[n])), val);
+      val = Fcons (make_string (p[n], strlen ((const char *) p[n])), val);
     }
   return val;
 }
@@ -670,10 +676,10 @@ Get current mode string.
 */
        ())
 {
-  unsigned char buf[256];
+  char buf[256];
 
   jrKanjiControl (0, KC_QUERYMODE, buf);
-  return make_string (buf, strlen (buf));
+  return make_string ((unsigned char *) buf, strlen (buf));
 }
 
 /*
@@ -743,7 +749,8 @@ Clause separator is set.
 		   (RK_XFER << RK_XFERBITS) | RK_KFER);
 #else /* CANNA_MULE */
   m2c (XSTRING_DATA (yomi), XSTRING_LENGTH (yomi), yomibuf);
-  nbun = RkBgnBun (IRCP_context, (char *) yomibuf, strlen (yomibuf),
+  nbun = RkBgnBun (IRCP_context, (char *) yomibuf,
+		   strlen ((const char *) yomibuf),
 		   (RK_XFER << RK_XFERBITS) | RK_KFER);
 #endif /* CANNA_MULE */
 
@@ -798,7 +805,7 @@ Return the list of candidates.
   p = RkBuf;
   for (i = 0 ; i < len ; i++)
     {
-      slen = strlen (p);
+      slen = strlen ((const char *) p);
       if (NILP(res))
 	{
 	  endp = res = Fcons (make_string (p, slen), Qnil);
@@ -1851,7 +1858,7 @@ mule_make_string (unsigned char *p, int l)
   unsigned char cbuf[4096];
 
   c2mu (p,l,cbuf);
-  return (make_string (cbuf,strlen (cbuf)));
+  return (make_string (cbuf, strlen ((const char *) cbuf)));
 }
 
 /* return the MULE internal string length of EUC string */

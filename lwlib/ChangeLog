@@ -1,3 +1,7 @@
+2003-08-28  Jerry James  <james@xemacs.org>
+
+	* lwlib-internal.h: Wrap assert_failed with EXTERN_C for modules.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

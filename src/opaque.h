@@ -63,8 +63,8 @@ DECLARE_LRECORD (opaque_ptr, Lisp_Opaque_Ptr);
 #define wrap_opaque_ptr(p) wrap_record (p, opaque_ptr)
 #define OPAQUE_PTRP(x) RECORDP (x, opaque_ptr)
 
-MODULE_API Lisp_Object make_opaque_ptr (void *val);
-MODULE_API void free_opaque_ptr (Lisp_Object ptr);
+EXTERN_C MODULE_API Lisp_Object make_opaque_ptr (void *val);
+EXTERN_C MODULE_API void free_opaque_ptr (Lisp_Object ptr);
 
 #define get_opaque_ptr(op) (XOPAQUE_PTR (op)->ptr)
 #define set_opaque_ptr(op, ptr_) (XOPAQUE_PTR (op)->ptr = (ptr_))

@@ -1,3 +1,9 @@
+2003-08-28  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common (LIBSTDCPP): New.
+	* common/Makefile.common (.c.o): Use it to avoid undefined symbol
+	errors when compiling  modules with g++.
+
 2003-08-18  Jerry James  <james@xemacs.org>
 
 	* postgresql/postgresql.c: Include emodules.h when building a module.
