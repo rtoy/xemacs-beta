@@ -191,7 +191,7 @@ mswindows_init_dde ()
 # endif
 
   mswindows_dde_mlid = 0;
-  mswindows_dde_enable = 1;
+  mswindows_dde_enable = 0;
   DdeInitialize (&mswindows_dde_mlid, (PFNCALLBACK)mswindows_dde_callback,
 		 APPCMD_FILTERINITS|CBF_FAIL_SELFCONNECTIONS|CBF_FAIL_ADVISES|
 		 CBF_FAIL_POKES|CBF_FAIL_REQUESTS|CBF_SKIP_ALLNOTIFICATIONS,
