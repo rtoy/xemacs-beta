@@ -1,3 +1,10 @@
+2003-05-08  Jerry James  <james@xemacs.org>
+
+	* code-init.el (coding-system-variable-default-value-table): Use
+	undecided-unix for keyboards to avoid EOL autodetection on TTYs.
+	* code-init.el (coding-system-variable-default-value): Update the
+	comment to reflect the changed table.
+
 2003-05-03  Steve Youngs  <youngs@xemacs.org>
 
 	* package-admin.el (package-admin-find-top-directory): You can't

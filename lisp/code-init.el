@@ -79,7 +79,7 @@ if you do this."
     (native
      binary binary binary raw-text-dos mswindows-multibyte-system-default-dos)
     (keyboard
-     binary raw-text undecided raw-text undecided)
+     binary raw-text undecided-unix raw-text undecided-unix)
     ;; the `terminal' coding system is used for output to stderr.  such
     ;; streams do automatic lf->crlf encoding in the C library, so we need
     ;; to not do the same translations ourselves.
@@ -158,16 +158,16 @@ to the current system configuration (as returned by
 The table of default values looks like this: (see below for abbreviations)
 
 
-                 Unix      Unix+EOL    Unix+Mule   MSW           MSW+Mule
-------------------------------------------------------------------------------
-bfcs-for-read    binary    raw-text    undecided   raw-text      undecided
-default bfcs     binary    binary      iso-2022-8  raw-text-dos  MSW-MB-dos
-native           binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
-keyboard         binary    raw-text    undecided   raw-text      undecided
-terminal         binary    binary      binary      binary        MSW-MB-unix
-process-read     binary    raw-text    undecided   raw-text      undecided
-process-write    binary    binary      binary      raw-text      MSW-MB-SD
-no-conv-cs       binary    raw-text    raw-text    raw-text      MSW-MB
+               Unix    Unix+EOL  Unix+Mule       MSW           MSW+Mule
+-----------------------------------------------------------------------------
+bfcs-for-read  binary  raw-text  undecided       raw-text      undecided
+default bfcs   binary  binary    iso-2022-8      raw-text-dos  MSW-MB-dos
+native         binary  binary    binary          raw-text-dos  MSW-MB-SD-dos
+keyboard       binary  raw-text  undecided-unix  raw-text      undecided-unix
+terminal       binary  binary    binary          binary        MSW-MB-unix
+process-read   binary  raw-text  undecided       raw-text      undecided
+process-write  binary  binary    binary          raw-text      MSW-MB-SD
+no-conv-cs     binary  raw-text  raw-text        raw-text      MSW-MB
 
 
 VAR can be one of: (abbreviations in parens)
