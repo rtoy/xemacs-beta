@@ -3631,7 +3631,7 @@ command_builder_find_leaf (struct command_builder *builder,
     {
 #ifdef USE_KKCC
       Lisp_Object keysym =
-	XKEY_DATA_KEYSYM(XEVENT (builder->most_current_event));
+	XKEY_DATA_KEYSYM(XEVENT_DATA (builder->most_current_event));
 #else /* not USE_KKCC */
       Lisp_Object keysym =
 	XEVENT (builder->most_current_event)->event.key.keysym;

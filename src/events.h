@@ -816,22 +816,17 @@ DECLARE_LRECORD (command_builder, struct command_builder);
 #define XEVENT_TYPE(a) (XEVENT (a)->event_type)
 #define EVENT_NEXT(a) ((a)->next)
 #define XEVENT_NEXT(e) (XEVENT (e)->next)
-#ifdef USE_KKCC
-#else /* not USE_KKCC */
-#define XSET_EVENT_NEXT(e, n) do { (XEVENT (e)->next = (n)); } while (0)
-#endif /* not USE_KKCC */
 
 #ifdef USE_KKCC
 #define XEVENT_DATA(ev) (XEVENT (ev)->event_data)
 #define EVENT_DATA(ev) ((ev)->event_data)
 #define XEVENT_CHANNEL(ev) (XEVENT (ev)->channel)
-#define EVENT_CHANNEL(ev) ((ev)->channel)
 #define EVENT_TIMESTAMP(ev)                                     \
   ((ev)->timestamp)
 #define XEVENT_TIMESTAMP(ev) EVENT_TIMESTAMP (XEVENT (ev))
 
 #define SET_EVENT_TIMESTAMP_ZERO(ev) \
-  ((ev)->timestamp = Qzero)
+  ((ev)->timestamp = 0)
 #define SET_EVENT_TIMESTAMP(ev, t)                      \
   (ev)->timestamp = (t)
 #define XSET_EVENT_TIMESTAMP(ev, t) SET_EVENT_TIMESTAMP (XEVENT (ev), t)
@@ -901,8 +896,9 @@ do {                                                    \
 } while (0)
 #define XSET_EVENT_NEXT(ev, n) SET_EVENT_NEXT (XEVENT (ev), n)
 
-#endif /* USE_KKCC */
-
+#else /* NOT USE_KKCC */
+#define XSET_EVENT_NEXT(e, n) do { (XEVENT (e)->next = (n)); } while (0)
+#endif
 
 #define EVENT_CHAIN_LOOP(event, chain) \
   for (event = chain; !NILP (event); event = XEVENT_NEXT (event))

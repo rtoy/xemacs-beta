@@ -1072,8 +1072,13 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
             ev->channel	            = DEVICE_CONSOLE (d);
             ev->event_type	    = key_press_event;
             ev->timestamp	    = event->time;
+#ifdef USE_KKCC
+	    SET_KEY_DATA_MODIFIERS (XKEY_DATA (emacs_event), 0);
+	    SET_KEY_DATA_KEYSYM (XKEY_DATA (emacs_event), make_char (ch));
+#else
             ev->event.key.modifiers = 0;
             ev->event.key.keysym    = make_char (ch);
+#endif
             enqueue_Xt_dispatch_event (emacs_event);
           }
 	Lstream_close (istr);

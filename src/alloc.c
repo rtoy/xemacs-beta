@@ -2910,9 +2910,9 @@ mark_with_description (const void *lheader, const struct lrecord_description *de
       case XD_LISP_OBJECT: 
 	{
 	  const Lisp_Object *stored_obj = (const Lisp_Object *)rdata;
-	  if (!(*stored_obj)){
+
+	  if (EQ (*stored_obj, Qnull_pointer))
 	    break;
-	  }
 
 	  if (desc[pos+1].type == XD_END)
 	    {
@@ -2938,10 +2938,9 @@ mark_with_description (const void *lheader, const struct lrecord_description *de
 	  for (i = 0; i < count; i++)
 	    {
 	      const Lisp_Object *stored_obj = ((const Lisp_Object *)rdata) + i;
-	      if (!(*stored_obj))
-		{
-		  break;
-		}
+
+	      if (EQ (*stored_obj, Qnull_pointer))
+		break;
 
 	      mark_object (*stored_obj);
 	    }

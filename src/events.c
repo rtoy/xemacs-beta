@@ -311,14 +311,13 @@ static void
 print_motion_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   char buf[64];
-  Lisp_Object Vx, Vy;
 
   if (print_readably)
     printing_unreadable_object ("#<motion_data>");
 
-  Vx = XMOTION_DATA_X (obj);
-  Vy = XMOTION_DATA_Y (obj);
-  sprintf (buf, "#<motion-data %ld, %ld>", (long) XINT (Vx), (long) XINT (Vy));
+  sprintf (buf, "#<motion-data %ld, %ld>",
+	   (long) XMOTION_DATA_X (obj),
+	   (long) XMOTION_DATA_Y (obj));
   write_c_string (printcharfun, buf);
 }
 
@@ -329,7 +328,7 @@ print_process_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("#<process_data>");
 
-  write_c_string (print_readably, "#<process-data ");
+  write_c_string (printcharfun, "#<process-data ");
   print_internal (XPROCESS_DATA_PROCESS (obj), printcharfun, 1);
   write_c_string (printcharfun, ">");
 }
@@ -1545,7 +1544,7 @@ make_misc_user_data (void)
 
   XSET_MISC_USER_DATA_FUNCTION (data, Qnil);
   XSET_MISC_USER_DATA_OBJECT (data, Qnil);
-  XSET_MISC_USER_DATA_BUTTON (data, Qnil);
+  XSET_MISC_USER_DATA_BUTTON (data, 0);
   XSET_MISC_USER_DATA_MODIFIERS (data, 0);
   XSET_MISC_USER_DATA_X (data, 0);
   XSET_MISC_USER_DATA_Y (data, 0);
