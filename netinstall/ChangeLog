@@ -1,3 +1,7 @@
+2002-03-12  Ben Wing  <ben@xemacs.org>
+
+	* The Great Mule Merge: placeholder.
+
 2002-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.5 "beets" is released.
@@ -397,7 +401,7 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.13 2002/03/05 14:45:58 stephent Exp $
-$Revision: 1.13 $
+%%% $Id: ChangeLog,v 1.14 2002/03/14 03:54:21 stephent Exp $
+$Revision: 1.14 $
 
 
