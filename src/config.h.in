@@ -941,18 +941,27 @@ extern "C" {
    set them. */
 #ifdef ERROR_CHECK_TYPECHECK
 #define type_checking_assert(assertion) assert (assertion)
+#define type_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
 #else
 #define type_checking_assert(assertion)
+#define type_checking_assert_at_line(assertion, file, line)
 #endif
 #ifdef ERROR_CHECK_CHARBPOS
 #define charbpos_checking_assert(assertion) assert (assertion)
+#define charbpos_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
 #else
 #define charbpos_checking_assert(assertion)
+#define charbpos_checking_assert_at_line(assertion, file, line)
 #endif
 #ifdef ERROR_CHECK_GC
 #define gc_checking_assert(assertion) assert (assertion)
+#define gc_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
 #else
 #define gc_checking_assert(assertion)
+#define gc_checking_assert_at_line(assertion, file, line)
 #endif
 
 #endif /* _SRC_CONFIG_H_ */

@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -82,13 +82,26 @@ Boston, MA 02111-1307, USA.  */
 extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
 /* Number of bytes in the string representation of a character. */
-INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE (int fb);
+
+#ifdef ERROR_CHECK_TYPECHECK
+
+INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file,
+					     int line);
 INLINE_HEADER int
-REP_BYTES_BY_FIRST_BYTE (int fb)
+REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file, int line)
 {
-  type_checking_assert (fb < 0xA0);
+  assert_at_line (fb < 0xA0, file, line);
   return rep_bytes_by_first_byte[fb];
 }
+
+#define REP_BYTES_BY_FIRST_BYTE(fb) \
+  REP_BYTES_BY_FIRST_BYTE_1 (fb, __FILE__, __LINE__) 
+
+#else /* ERROR_CHECK_TYPECHECK */
+
+#define REP_BYTES_BY_FIRST_BYTE(fb) (rep_bytes_by_first_byte[fb])
+
+#endif /* ERROR_CHECK_TYPECHECK */
 
 /* Is this character represented by more than one byte in a string? */
 

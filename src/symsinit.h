@@ -378,6 +378,7 @@ void vars_of_objects (void);
 void reinit_vars_of_objects (void);
 void vars_of_objects_tty (void);
 void vars_of_objects_mswindows (void);
+void reinit_vars_of_object_mswindows (void);
 void vars_of_objects_x (void);
 void vars_of_print (void);
 void reinit_vars_of_print (void);

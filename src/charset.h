@@ -533,6 +533,9 @@ breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
 #define BREAKUP_CHAR(c, charset, c1, c2) \
   breakup_char_1 (c, &(charset), &(c1), &(c2))
 
+void get_charset_limits (Lisp_Object charset, int *low, int *high);
+int char_to_unicode (Emchar chr);
+
 #endif /* MULE */
 
 #endif /* INCLUDED_charset_h_ */

@@ -1,5 +1,49 @@
 2002-03-20  Ben Wing  <ben@xemacs.org>
 
+	* mule\mule-category.el:
+	* mule\mule-category.el (with-category-table): New.
+	Start implementing a category API compatible with FSF.  Not there yet.
+	We need improvements to char-tables.
+	
+	* mule\mule-charset.el:
+	* mule\mule-charset.el ((translation-table): New.
+	* mule\mule-charset.el (make-translation-table): New.
+	* mule\mule-charset.el (named-translation-table-hash-table): New.
+	* mule\mule-charset.el (define-translation-table): New.
+	* mule\mule-charset.el (find-translation-table): New.
+	* mule\mule-charset.el (get-translation-table): New.
+	Copy translation table code from FSF 21.1 and fix up.  Eventually
+	we'll have them in XEmacs. (used in ccl) Not here quite yet, and
+	we need some improvements to char-tables.
+
+	* mule\cyril-util.el:
+	* mule\cyril-util.el (cyrillic-encode-koi8-r-char):
+	* mule\cyril-util.el (cyrillic-encode-alternativnyj-char):
+	* mule\cyrillic.el:
+	* mule\cyrillic.el (cyrillic-koi8-r-to-external-code-table): New.
+	* mule\cyrillic.el (cyrillic-alternativnyj-to-external-code-table): New.
+	* mule\devan-util.el (devanagari-compose-string):
+	* mule\ethio-util.el:
+	* mule\korea-util.el:
+	* mule\mule-tty-init.el (init-mule-tty-win):
+	* mule\tibet-util.el (tibetan-add-components):
+	* mule\tibet-util.el (tibetan-compose-region):
+	* mule\viet-util.el:
+	* mule\viet-util.el (viet-encode-viscii-char):
+	* mule\vietnamese.el:
+	* mule\vietnamese.el (viet-viscii-to-external-code-table): New.
+	Fix numerous compilation warnings.  Fix up code related to
+	translation tables and other types of char-tables.
+
+2002-03-20  Ben Wing  <ben@xemacs.org>
+
+	* menubar-items.el (default-menubar): Move the frame commands from
+	the View menu to the File menu, to be consistent with how most other
+	programs do things.  Move less-used revert/recover items to a submenu.
+	Make "recover" not prompt for a file, but recover the current buffer.
+
+2002-03-20  Ben Wing  <ben@xemacs.org>
+
 	* dumped-lisp.el (preloaded-file-list): debug.el -> diagnose.el.
 	* diagnose.el: Renamed from debug.el because of existing debug.el
 	in xemacs-base.

@@ -1,6 +1,7 @@
 ;;; cyril-util.el ---  utilities for Cyrillic scripts -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997  Free Software Foundation, Inc.
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Keywords: mule, multilingual, Cyrillic
 
@@ -30,12 +31,12 @@
 ;;;###autoload
 (defun cyrillic-encode-koi8-r-char (char)
   "Return KOI8-R external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-koi8-r-nonascii-translation-table))
+  (get-char-table char cyrillic-koi8-r-to-external-code-table))
 
 ;;;###autoload
 (defun cyrillic-encode-alternativnyj-char (char)
   "Return ALTERNATIVNYJ external character code of CHAR if appropriate."
-  (get-char-table char cyrillic-alternativnyj-nonascii-translation-table))
+  (get-char-table char cyrillic-alternativnyj-to-external-code-table))
 
 
 ;; Display 

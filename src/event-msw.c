@@ -3975,6 +3975,45 @@ emacs_mswindows_next_event (Lisp_Event *emacs_event)
   Fdeallocate_event (event);
 }
 
+static void
+emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
+				    Lisp_Object pstream)
+{
+#define FROB(msg) case msg: write_c_string ("type=" #msg, pstream); break
+
+  switch (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event))
+    {
+      FROB (XM_BUMPQUEUE);
+      FROB (WM_PAINT);
+      FROB (WM_SETFOCUS);
+      FROB (WM_KILLFOCUS);
+      FROB (XM_MAPFRAME);
+      FROB (XM_UNMAPFRAME);
+
+    default: abort ();
+    }
+#undef FROB
+  
+  if (!NILP (EVENT_CHANNEL (emacs_event)))
+    {
+      write_c_string (" ", pstream);
+      print_internal (EVENT_CHANNEL (emacs_event), pstream, 1);
+    }
+}
+
+static int
+emacs_mswindows_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+{
+  return (e1->event.magic.underlying_mswindows_event ==
+	  e2->event.magic.underlying_mswindows_event);
+}
+
+static Hashcode
+emacs_mswindows_hash_magic_event (Lisp_Event *e)
+{
+  return e->event.magic.underlying_mswindows_event;
+}
+
 /*
  * Handle a magic event off the dispatch queue.
  */
@@ -4616,6 +4655,9 @@ reinit_vars_of_event_mswindows (void)
   mswindows_event_stream->force_event_pending = 0;
   mswindows_event_stream->next_event_cb		= emacs_mswindows_next_event;
   mswindows_event_stream->handle_magic_event_cb = emacs_mswindows_handle_magic_event;
+  mswindows_event_stream->format_magic_event_cb = emacs_mswindows_format_magic_event;
+  mswindows_event_stream->compare_magic_event_cb= emacs_mswindows_compare_magic_event;
+  mswindows_event_stream->hash_magic_event_cb   = emacs_mswindows_hash_magic_event;
   mswindows_event_stream->add_timeout_cb 	= emacs_mswindows_add_timeout;
   mswindows_event_stream->remove_timeout_cb 	= emacs_mswindows_remove_timeout;
   mswindows_event_stream->quit_p_cb		= emacs_mswindows_quit_p;

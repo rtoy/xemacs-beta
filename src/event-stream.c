@@ -468,7 +468,8 @@ enum event_stream_operation
   EVENT_STREAM_PROCESS,
   EVENT_STREAM_TIMEOUT,
   EVENT_STREAM_CONSOLE,
-  EVENT_STREAM_READ
+  EVENT_STREAM_READ,
+  EVENT_STREAM_NOTHING,
 };
 
 static void
@@ -487,6 +488,8 @@ check_event_stream_ok (enum event_stream_operation op)
 	  invalid_operation ("Can't add consoles in -batch mode", Qunbound);
 	case EVENT_STREAM_READ:
 	  invalid_operation ("Can't read events in -batch mode", Qunbound);
+	case EVENT_STREAM_NOTHING:
+	  break;
 	default:
 	  abort ();
 	}
@@ -580,6 +583,27 @@ event_stream_handle_magic_event (Lisp_Event *event)
 {
   check_event_stream_ok (EVENT_STREAM_READ);
   event_stream->handle_magic_event_cb (event);
+}
+
+void
+event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
+{
+  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  event_stream->format_magic_event_cb (event, pstream);
+}
+
+int
+event_stream_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+{
+  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  return event_stream->compare_magic_event_cb (e1, e2);
+}
+
+Hashcode
+event_stream_hash_magic_event (Lisp_Event *e)
+{
+  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  return event_stream->hash_magic_event_cb (e);
 }
 
 static int

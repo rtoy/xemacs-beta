@@ -1,3 +1,123 @@
+2002-03-20  Ben Wing  <ben@xemacs.org>
+
+	* chartab.c:
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	Fix bugs in implementation and doc strings.
+	
+	* config.h.in (type_checking_assert_at_line):
+	Add foo_checking_assert_at_line() macros.  Not clear whether these
+	are actually useful, though; I'll take them out if not.
+
+	* symsinit.h:
+	* emacs.c:
+	* emacs.c (main_1):
+	Some improvements to the timeline.  Rearrange a bit the init
+	calls.  Add call for reinit_vars_of_object_mswindows() and
+	declare in symsinit.h.
+	
+	* event-Xt.c:
+	* event-Xt.c (emacs_Xt_format_magic_event):
+	* event-Xt.c (describe_event_window):
+	* event-Xt.c (describe_event):
+	* event-Xt.c (emacs_Xt_event_handler):
+	* event-Xt.c (reinit_vars_of_event_Xt):
+	* event-gtk.c:
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	* event-gtk.c (reinit_vars_of_event_gtk):
+	* event-msw.c:
+	* event-msw.c (emacs_mswindows_format_magic_event):
+	* event-msw.c (reinit_vars_of_event_mswindows):
+	* event-stream.c:
+	* event-stream.c (event_stream_operation):
+	* event-stream.c (check_event_stream_ok):
+	* event-stream.c (event_stream_handle_magic_event):
+	* event-tty.c:
+	* event-tty.c (emacs_tty_format_magic_event):
+	* event-tty.c (reinit_vars_of_event_tty):
+	* events.c:
+	* events.c (event_equal):
+	* events.c (event_hash):
+	* events.c (format_event_object):
+	* events.h:
+	* events.h (struct event_stream):
+	* events.h (union magic_data):
+
+	Introduce new event methods for printing, comparing, and hashing
+	magic events, to avoid event-type-specific stuff that had crept
+	into events.c. (And was crashing, since the channel in MS Windows
+	magic events may be nil.)  Implement the methods in
+	event-{tty,gtk,Xt,mswindows}.c.  Make wrapping functions
+	event_stream_{compare,hash,format}_magic_event() to check if
+	everything's OK and call the actual callback.  Fix events.c to use
+	the new methods.  Add a new event-stream-operation
+	EVENT_STREAM_NOTHING -- event stream not actually required to be
+	able to do anything, just be open. (#### This
+	event-stream-operation stuff needs to be rethought.)
+
+	Fixed describe_event() in event-Xt.c to print its output to a
+	stream, not always to stderr, so it can be used
+	elsewhere. (e.g. in print-event when a magic event is
+	encountered?)
+	
+	* lisp.h:
+	* lisp.h (XCHAR_1):
+	* lisp.h (XCHAR):
+	* lisp.h (XINT_1):
+	* lisp.h (XCHAR_OR_INT_1):
+	* lrecord.h:
+	* lrecord.h (DECLARE_LRECORD):
+	* lrecord.h (DECLARE_EXTERNAL_LRECORD):
+	* lrecord.h (DECLARE_NONRECORD):
+	* lrecord.h (XRECORD):
+	* lrecord.h (wrap_record_1):
+	* lrecord.h (wrap_record):
+	Define new assert_at_line(), for use in asserts inside of inline
+	functions.  The assert will report the line and file of the inline
+	function, which is almost certainly not what you want as it's
+	useless.  what you want to see is where the pseudo-macro was
+	called from.  So, when error-checking is on, we pass in the line
+	and file into the macros, for accurate printout using
+	assert_at_line().  Happens only when error-checking is defined so
+	doesn't slow down non-error-checking builds.  Fix XCHAR, XINT,
+	XCHAR_OR_INT, XFOO, and wrap_foo() in this fashion.
+	
+	* lstream.c:
+	* lstream.c (resizing_buffer_stream_ptr):
+	* lstream.h:
+	Add resizing_buffer_to_lisp_string().
+	
+	* objects-gtk.c (gtk_find_charset_font): Fix typo.
+	
+	* objects-msw.c:
+	* objects-msw.c (create_hfont_from_font_spec):
+	* objects-msw.c (initialize_font_instance):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-msw.c (reinit_vars_of_object_mswindows):
+	* objects-msw.c (vars_of_objects_mswindows):
+	Implement a smarter way of determining whether a font matches a
+	charset.  Formerly we just looked at the "script" element of the
+	font spec, converted it to a code page, and compared it with the
+	code page derived from the charset.  Now, as well as doing this,
+	we ask the font for the list of unicode ranges it supports, see
+	what range the charset falls into (#### bogus! need to do this
+	char-by-char), and see if any of the font's supported ranges
+	include the charset's range.  also do some caching in
+	Vfont_signature_data of previous inquiries.
+	
+	* charset.h:
+	* text.c (Fmake_char):
+	* mule-charset.c (get_charset_limits): New fun; extracted out of
+	Fmake_char() and declare prototype in charset.h.
+
+	* text.h: introduce assert_by_line() to make
+	REP_BYTES_BY_FIRST_BYTE report the file and line more accurately
+	in an assertion failure.
+
+	* unicode.c (char_to_unicode):
+	make non-static (used in objects-msw.c), declare in charset.h.
+
 2002-03-18  Ben Wing  <ben@xemacs.org>
 
 	* process.c:

@@ -71,9 +71,9 @@ version 21.0.64 released March 1, 1999.
 version 21.0.65 released March 5, 1999.
 version 21.0.66 released March 12, 1999.
 version 21.0.67 released March 25, 1999.
-version 21.1.2 released May 14, 1999. (This is the followup to 21.0.67.
-The second version number was bumped to indicate the beginning of the
-"stable" series.)
+version 21.1.2 released May 14, 1999; on comp.emacs, May 28. (This is
+ the followup to 21.0.67.  The second version number was bumped to indicate
+ the beginning of the "stable" series.)
 version 21.1.3 released June 26, 1999.
 version 21.1.4 released July 8, 1999.
 version 21.1.6 released August 14, 1999. (There was no 21.1.5.)
@@ -118,12 +118,19 @@ version 21.2.37 released November 14, 2000.
 version 21.2.38 released December 5, 2000.
 version 21.2.39 released December 31, 2000.
 version 21.2.40 released January 8, 2001.
-version 21.2.41 released January 17, 2001.
-version 21.2.42 released January 20, 2001.
-version 21.2.43 released January 26, 2001.
-version 21.2.44 released February 8, 2001.
-version 21.2.45 released February 23, 2001.
-version 21.2.46 released March 21, 2001.
+version 21.2.41 "Polyhymnia" released January 17, 2001.
+version 21.2.42 "Poseidon" released January 20, 2001.
+version 21.2.43 "Terspichore" released January 26, 2001.
+version 21.2.44 "Thalia" released February 8, 2001.
+version 21.2.45 "Thelxepeia" released February 23, 2001.
+version 21.2.46 "Urania" released March 21, 2001.
+version 21.5.0 "alfalfa" released April 18, 2001.
+version 21.5.1 "anise" released May 9, 2001.
+version 21.5.2 "artichoke" released July 28, 2001.
+version 21.5.3 "asparagus" released September 7, 2001.
+version 21.5.4 "bamboo" released January 8, 2002.
+version 21.5.5 "beets" released March 5, 2002.
+
 
 
 -- A time line for GNU Emacs version 19 is
@@ -144,7 +151,7 @@ version 19.19 (beta) released August 15, 1993.
 version 19.20 (beta) released November 17, 1993.
 version 19.21 (beta) released November 17, 1993.
 version 19.22 (beta) released November 28, 1993.
-version 19.23 (beta) released May 17, 1994.
+version 19.23 (beta) released on comp.emacs, May 17, 1994.
 version 19.24 (beta) released May 16, 1994.
 version 19.25 (beta) released June 3, 1994.
 version 19.26 (beta) released September 11, 1994.
@@ -155,15 +162,17 @@ version 19.30 released November 24, 1995.
 version 19.31 released May 25, 1996.
 version 19.32 released July 31, 1996.
 version 19.33 released August 11, 1996.
-version 19.34 released August 21, 1996.
+version 19.34 released August 21, 1996; on comp.emacs, August 22.
 version 19.34b released September 6, 1996.
 
 
--- A time line for GNU Emacs version 20 is
+-- A time line for GNU Emacs versions 20 and 21 is
 
 version 20.1 released September 17, 1997.
 version 20.2 released September 20, 1997.
 version 20.3 released August 19, 1998.
+version 20.4 released July 12, 1999; on comp.emacs, July 27.
+version 21.1 released October 20, 2001.
 
 
 -- A time line for GNU Emacs version 18 and older is
@@ -2070,17 +2079,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       reinit_vars_of_device ();
       reinit_vars_of_eval ();
-#ifdef HAVE_X_WINDOWS
-      reinit_vars_of_event_Xt ();
-#endif
-#ifdef HAVE_GTK
-      reinit_vars_of_event_gtk ();
-#endif
 #if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
       reinit_vars_of_event_tty ();
-#endif
-#ifdef HAVE_MS_WINDOWS
-      reinit_vars_of_event_mswindows ();
 #endif
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
@@ -2106,15 +2106,19 @@ main_1 (int argc, char **argv, char **envp, int restart)
       reinit_vars_of_window ();
 
 #ifdef HAVE_MS_WINDOWS
+      reinit_vars_of_event_mswindows ();
       reinit_vars_of_frame_mswindows ();
+      reinit_vars_of_object_mswindows ();
 #endif
 
 #ifdef HAVE_GTK
+      reinit_vars_of_event_gtk ();
       reinit_vars_of_menubar_gtk ();
 #endif
 
 #ifdef HAVE_X_WINDOWS
       reinit_vars_of_device_x ();
+      reinit_vars_of_event_Xt ();
 #ifdef HAVE_SCROLLBARS
       reinit_vars_of_scrollbar_x ();
 #endif

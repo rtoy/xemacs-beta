@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1868,6 +1868,37 @@ emacs_Xt_force_event_pending (struct frame* f)
 }
 
 static void
+emacs_Xt_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
+{
+  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
+  if (CONSOLE_X_P (XCONSOLE (console)))
+    write_c_string (x_event_name (event->event.magic.underlying_x_event.type),
+		    pstream);
+}
+
+static int
+emacs_Xt_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+{
+  if (CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) &&
+      CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
+    return (e1->event.magic.underlying_x_event.xany.serial ==
+	    e2->event.magic.underlying_x_event.xany.serial);
+  if (CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) ||
+      CONSOLE_X_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
+    return 0;
+  return 1;
+}
+
+static Hashcode
+emacs_Xt_hash_magic_event (Lisp_Event *e)
+{
+  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (e));
+  if (CONSOLE_X_P (XCONSOLE (console)))
+    return e->event.magic.underlying_x_event.xany.serial;
+  return 0;
+}
+
+static void
 emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
 {
   /* This function can GC */
@@ -2435,18 +2466,19 @@ Xt_tty_to_emacs_event (Lisp_Event *emacs_event)
 #include <X11/Xproto.h>		/* only describe_event() needs this */
 
 static void
-describe_event_window (Window window, Display *display)
+describe_event_window (Window window, Display *display, Lisp_Object pstream)
 {
   struct frame *f;
   Widget w;
-  stderr_out ("   window: 0x%lx", (unsigned long) window);
+  write_fmt_string (pstream, "   window: 0x%lx", (unsigned long) window);
   w = XtWindowToWidget (display, window);
   if (w)
-    stderr_out (" %s", w->core.widget_class->core_class.class_name);
+    write_fmt_string (pstream, " %s",
+		      w->core.widget_class->core_class.class_name);
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f)
-    stderr_out_lisp (" \"%s\"", 1, f->name);
-  stderr_out ("\n");
+    write_fmt_string_lisp (pstream, " \"%s\"", 1, f->name);
+  write_fmt_string (pstream, "\n");
 }
 
 static const char *
@@ -2491,23 +2523,25 @@ XEvent_visibility_to_string (int state)
 }
 
 static void
-describe_event (XEvent *event)
+describe_event (XEvent *event, Lisp_Object pstream)
 {
   char buf[100];
   struct device *d = get_device_from_display (event->xany.display);
 
   sprintf (buf, "%s%s", x_event_name (event->type),
 	   event->xany.send_event ? " (send)" : "");
-  stderr_out ("%-30s", buf);
+  write_fmt_string (pstream, "%-30s", buf);
   switch (event->type)
     {
     case FocusIn:
     case FocusOut:
       {
 	XFocusChangeEvent *ev = &event->xfocus;
-	describe_event_window (ev->window, ev->display);
-	stderr_out ("     mode: %s\n",   XEvent_mode_to_string  (ev->mode));
-	stderr_out ("     detail: %s\n", XEvent_detail_to_string(ev->detail));
+	describe_event_window (ev->window, ev->display, pstream);
+	write_fmt_string (pstream, "     mode: %s\n",
+			  XEvent_mode_to_string (ev->mode));
+	write_fmt_string (pstream, "     detail: %s\n",
+			  XEvent_detail_to_string (ev->detail));
 	break;
       }
 
@@ -2516,26 +2550,26 @@ describe_event (XEvent *event)
 	XKeyEvent *ev = &event->xkey;
 	unsigned int state = ev->state;
 
-	describe_event_window (ev->window, ev->display);
-	stderr_out ("   subwindow: %ld\n", ev->subwindow);
-	stderr_out ("   state: ");
+	describe_event_window (ev->window, ev->display, pstream);
+	write_fmt_string (pstream, "   subwindow: %ld\n", ev->subwindow);
+	write_fmt_string (pstream, "   state: ");
 	/* Complete list of modifier key masks */
-	if (state & ShiftMask)   stderr_out ("Shift ");
-	if (state & LockMask)    stderr_out ("Lock ");
-	if (state & ControlMask) stderr_out ("Control ");
-	if (state & Mod1Mask)    stderr_out ("Mod1 ");
-	if (state & Mod2Mask)    stderr_out ("Mod2 ");
-	if (state & Mod3Mask)    stderr_out ("Mod3 ");
-	if (state & Mod4Mask)    stderr_out ("Mod4 ");
-	if (state & Mod5Mask)    stderr_out ("Mod5 ");
+	if (state & ShiftMask)   write_fmt_string (pstream, "Shift ");
+	if (state & LockMask)    write_fmt_string (pstream, "Lock ");
+	if (state & ControlMask) write_fmt_string (pstream, "Control ");
+	if (state & Mod1Mask)    write_fmt_string (pstream, "Mod1 ");
+	if (state & Mod2Mask)    write_fmt_string (pstream, "Mod2 ");
+	if (state & Mod3Mask)    write_fmt_string (pstream, "Mod3 ");
+	if (state & Mod4Mask)    write_fmt_string (pstream, "Mod4 ");
+	if (state & Mod5Mask)    write_fmt_string (pstream, "Mod5 ");
 
 	if (! state)
-	  stderr_out ("vanilla\n");
+	  write_fmt_string (pstream, "vanilla\n");
 	else
-	  stderr_out ("\n");
+	  write_fmt_string (pstream, "\n");
 	if (x_key_is_modifier_p (ev->keycode, d))
-	  stderr_out ("   Modifier key");
-	stderr_out ("   keycode: 0x%x\n", ev->keycode);
+	  write_fmt_string (pstream, "   Modifier key");
+	write_fmt_string (pstream, "   keycode: 0x%x\n", ev->keycode);
       }
     break;
 
@@ -2543,29 +2577,31 @@ describe_event (XEvent *event)
       if (debug_x_events > 1)
 	{
 	  XExposeEvent *ev = &event->xexpose;
-	  describe_event_window (ev->window, ev->display);
-	  stderr_out ("   region: x=%d y=%d width=%d height=%d\n",
+	  describe_event_window (ev->window, ev->display, pstream);
+	  write_fmt_string (pstream,
+			    "   region: x=%d y=%d width=%d height=%d\n",
                       ev->x, ev->y, ev->width, ev->height);
-	  stderr_out ("    count: %d\n", ev->count);
+	  write_fmt_string (pstream, "    count: %d\n", ev->count);
 	}
       else
-	stderr_out ("\n");
+	write_fmt_string (pstream, "\n");
       break;
 
     case GraphicsExpose:
       if (debug_x_events > 1)
 	{
 	  XGraphicsExposeEvent *ev = &event->xgraphicsexpose;
-	  describe_event_window (ev->drawable, ev->display);
-	  stderr_out ("    major: %s\n",
+	  describe_event_window (ev->drawable, ev->display, pstream);
+	  write_fmt_string (pstream, "    major: %s\n",
 		      (ev ->major_code == X_CopyArea  ? "CopyArea" :
 		       (ev->major_code == X_CopyPlane ? "CopyPlane" : "?")));
-	  stderr_out ("   region: x=%d y=%d width=%d height=%d\n",
+	  write_fmt_string (pstream,
+			    "   region: x=%d y=%d width=%d height=%d\n",
                       ev->x, ev->y, ev->width, ev->height);
-	  stderr_out ("    count: %d\n", ev->count);
+	  write_fmt_string (pstream, "    count: %d\n", ev->count);
 	}
       else
-	stderr_out ("\n");
+	write_fmt_string (pstream, "\n");
       break;
 
     case EnterNotify:
@@ -2573,65 +2609,71 @@ describe_event (XEvent *event)
       if (debug_x_events > 1)
 	{
 	  XCrossingEvent *ev = &event->xcrossing;
-	  describe_event_window (ev->window, ev->display);
+	  describe_event_window (ev->window, ev->display, pstream);
 #if 0
-	  stderr_out(" subwindow: 0x%x\n", ev->subwindow);
-	  stderr_out("      pos: %d %d\n", ev->x, ev->y);
-	  stderr_out(" root pos: %d %d\n", ev->x_root, ev->y_root);
+	  write_fmt_string (pstream, " subwindow: 0x%x\n", ev->subwindow);
+	  write_fmt_string (pstream, "      pos: %d %d\n", ev->x, ev->y);
+	  write_fmt_string (pstream, " root pos: %d %d\n", ev->x_root,
+			    ev->y_root);
 #endif
-	  stderr_out("    mode: %s\n",   XEvent_mode_to_string(ev->mode));
-	  stderr_out("    detail: %s\n", XEvent_detail_to_string(ev->detail));
-	  stderr_out("    focus: %d\n", ev->focus);
+	  write_fmt_string (pstream, "    mode: %s\n",
+			    XEvent_mode_to_string(ev->mode));
+	  write_fmt_string (pstream, "    detail: %s\n",
+			    XEvent_detail_to_string(ev->detail));
+	  write_fmt_string (pstream, "    focus: %d\n", ev->focus);
 #if 0
-	  stderr_out("    state: 0x%x\n", ev->state);
+	  write_fmt_string (pstream, "    state: 0x%x\n", ev->state);
 #endif
 	}
       else
-	stderr_out("\n");
+	write_fmt_string (pstream, "\n");
       break;
 
     case ConfigureNotify:
       if (debug_x_events > 1)
 	{
 	  XConfigureEvent *ev = &event->xconfigure;
-	  describe_event_window (ev->window, ev->display);
-	  stderr_out("    above: 0x%lx\n", ev->above);
-	  stderr_out("     size: %d %d %d %d\n", ev->x, ev->y,
+	  describe_event_window (ev->window, ev->display, pstream);
+	  write_fmt_string (pstream, "    above: 0x%lx\n", ev->above);
+	  write_fmt_string (pstream, "     size: %d %d %d %d\n", ev->x, ev->y,
 		     ev->width, ev->height);
-	  stderr_out("  redirect: %d\n", ev->override_redirect);
+	  write_fmt_string (pstream, "  redirect: %d\n",
+			    ev->override_redirect);
 	}
       else
-	stderr_out("\n");
+	write_fmt_string (pstream, "\n");
       break;
 
     case VisibilityNotify:
       if (debug_x_events > 1)
 	{
 	  XVisibilityEvent *ev = &event->xvisibility;
-	  describe_event_window (ev->window, ev->display);
-	  stderr_out("    state: %s\n", XEvent_visibility_to_string(ev->state));
+	  describe_event_window (ev->window, ev->display, pstream);
+	  write_fmt_string (pstream, "    state: %s\n",
+		      XEvent_visibility_to_string (ev->state));
 	}
       else
-	stderr_out ("\n");
+	write_fmt_string (pstream, "\n");
       break;
 
     case ClientMessage:
       {
 	XClientMessageEvent *ev = &event->xclient;
 	char *name = XGetAtomName (ev->display, ev->message_type);
-	stderr_out ("%s", name);
-	if (!strcmp (name, "WM_PROTOCOLS")) {
-	  char *protname = XGetAtomName (ev->display, ev->data.l[0]);
-	  stderr_out ("(%s)", protname);
-	  XFree (protname);
-	}
+	write_fmt_string (pstream, "%s", name);
+	if (!strcmp (name, "WM_PROTOCOLS"))
+	  {
+	    char *protname = XGetAtomName (ev->display, ev->data.l[0]);
+	    write_fmt_string (pstream, "(%s)", protname);
+	    XFree (protname);
+	  }
 	XFree (name);
-	stderr_out ("\n");
+	write_fmt_string (pstream, "\n");
 	break;
       }
 
     default:
-      stderr_out ("\n");
+      write_fmt_string (pstream, "\n");
       break;
     }
 
@@ -2769,9 +2811,7 @@ emacs_Xt_event_handler (Widget wid /* unused */,
 
 #ifdef DEBUG_XEMACS
   if (debug_x_events > 0)
-    {
-      describe_event (event);
-    }
+    describe_event (event, Qexternal_debugging_output);
 #endif /* DEBUG_XEMACS */
   if (x_event_to_emacs_event (event, XEVENT (emacs_event)))
     enqueue_Xt_dispatch_event (emacs_event);
@@ -3286,6 +3326,9 @@ reinit_vars_of_event_Xt (void)
   Xt_event_stream->force_event_pending 	 = emacs_Xt_force_event_pending;
   Xt_event_stream->next_event_cb	 = emacs_Xt_next_event;
   Xt_event_stream->handle_magic_event_cb = emacs_Xt_handle_magic_event;
+  Xt_event_stream->format_magic_event_cb = emacs_Xt_format_magic_event;
+  Xt_event_stream->compare_magic_event_cb= emacs_Xt_compare_magic_event;
+  Xt_event_stream->hash_magic_event_cb   = emacs_Xt_hash_magic_event;
   Xt_event_stream->add_timeout_cb 	 = emacs_Xt_add_timeout;
   Xt_event_stream->remove_timeout_cb 	 = emacs_Xt_remove_timeout;
   Xt_event_stream->select_console_cb 	 = emacs_Xt_select_console;

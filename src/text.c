@@ -3123,10 +3123,7 @@ are allowed:
   charset = Fget_charset (charset);
   cs = XCHARSET (charset);
 
-  if      (EQ (charset, Vcharset_ascii))     lowlim =  0, highlim = 127;
-  else if (EQ (charset, Vcharset_control_1)) lowlim =  0, highlim =  31;
-  else if (CHARSET_CHARS (cs) == 94)         lowlim = 33, highlim = 126;
-  else	/* CHARSET_CHARS (cs) == 96) */	     lowlim = 32, highlim = 127;
+  get_charset_limits (charset, &lowlim, &highlim);
 
   CHECK_INT (arg1);
   /* It is useful (and safe, according to Olivier Galibert) to strip

@@ -1,6 +1,8 @@
 ;;; mule-charset.el --- Charset functions for Mule. -*- coding: iso-2022-7bit; -*-
 
-;; Copyright (C) 1992 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1992, 2001 Free Software Foundation, Inc.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1996 Sun Microsystems.
 ;; Copyright (C) 2002 Ben Wing.
@@ -154,6 +156,138 @@ If POS is out of range, the value is nil."
 (defalias 'put-charset-property 'put)
 (defalias 'charset-plist 'object-plist)
 (defalias 'set-charset-plist 'setplist)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                          translation tables                               ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defstruct (translation-table (:constructor internal-make-translation-table))
+  forward
+  reverse)
+
+(defun make-translation-table (&rest args)
+  "Make a translation table from arguments.
+A translation table is a char table intended for for character
+translation in CCL programs.
+
+Each argument is a list of elemnts of the form (FROM . TO), where FROM
+is a character to be translated to TO.
+
+FROM can be a generic character (see `make-char').  In this case, TO is
+a generic character containing the same number of characters, or a
+ordinary character.  If FROM and TO are both generic characters, all
+characters belonging to FROM are translated to characters belonging to TO
+without changing their position code(s).
+
+The arguments and forms in each argument are processed in the given
+order, and if a previous form already translates TO to some other
+character, say TO-ALT, FROM is also translated to TO-ALT."
+  (let ((table (internal-make-translation-table
+		:forward (make-char-table 'generic)))
+	revlist)
+    (while args
+      (let ((elts (car args)))
+	(while elts
+	  (let* ((from (car (car elts)))
+		 (from-i 0)		; degree of freedom of FROM
+		 (from-rev (nreverse (split-char from)))
+		 (to (cdr (car elts)))
+		 (to-i 0)		; degree of freedom of TO
+		 (to-rev (nreverse (split-char to))))
+	    ;; Check numbers of heading 0s in FROM-REV and TO-REV.
+	    (while (eq (car from-rev) 0)
+	      (setq from-i (1+ from-i) from-rev (cdr from-rev)))
+	    (while (eq (car to-rev) 0)
+	      (setq to-i (1+ to-i) to-rev (cdr to-rev)))
+	    (if (and (/= from-i to-i) (/= to-i 0))
+		(error "Invalid character pair (%d . %d)" from to))
+	    ;; If we have already translated TO to TO-ALT, FROM should
+	    ;; also be translated to TO-ALT.  But, this is only if TO
+	    ;; is a generic character or TO-ALT is not a generic
+	    ;; character.
+	    (let ((to-alt (get-char-table to table)))
+	      (if (and to-alt
+		       (or (> to-i 0) (not (find-charset to-alt))))
+		  (setq to to-alt)))
+	    (if (> from-i 0)
+		(set-char-table-default table from to)
+	      (put-char-table from to table))
+	    ;; If we have already translated some chars to FROM, they
+	    ;; should also be translated to TO.
+	    (let ((l (assq from revlist)))
+	      (if l
+		  (let ((ch (car l)))
+		    (setcar l to)
+		    (setq l (cdr l))
+		    (while l
+		      (put-char-table ch to table)
+		      (setq l (cdr l)) ))))
+	    ;; Now update REVLIST.
+	    (let ((l (assq to revlist)))
+	      (if l
+		  (setcdr l (cons from (cdr l)))
+		(setq revlist (cons (list to from) revlist)))))
+	  (setq elts (cdr elts))))
+      (setq args (cdr args)))
+    ;; Return TABLE just created.
+    table))
+
+;; Do we really need this?
+; (defun make-translation-table-from-vector (vec)
+;   "Make translation table from decoding vector VEC.
+; VEC is an array of 256 elements to map unibyte codes to multibyte characters.
+; See also the variable `nonascii-translation-table'."
+;   (let ((table (make-char-table 'translation-table))
+; 	(rev-table (make-char-table 'translation-table))
+; 	(i 0)
+; 	ch)
+;     (while (< i 256)
+;       (setq ch (aref vec i))
+;       (aset table i ch)
+;       (if (>= ch 256)
+; 	  (aset rev-table ch i))
+;       (setq i (1+ i)))
+;     (set-char-table-extra-slot table 0 rev-table)
+;     table))
+
+(defvar named-translation-table-hash-table (make-hash-table))
+
+(defun define-translation-table (symbol &rest args)
+  "Define SYMBOL as the name of translation table made by ARGS.
+This sets up information so that the table can be used for
+translations in a CCL program.
+
+If the first element of ARGS is a translation table, just define SYMBOL to
+name it.  (Note that this function does not bind SYMBOL.)
+
+Any other ARGS should be suitable as arguments of the function
+`make-translation-table' (which see).
+
+Look up a named translation table using `find-translation-table' or
+`get-translation-table'."
+  (let ((table (if (translation-table-p (car args))
+		   (car args)
+		 (apply 'make-translation-table args))))
+    (puthash symbol table named-translation-table-hash-table)))
+
+(defun find-translation-table (table-or-name)
+  "Retrieve the translation table of the given name.
+If TABLE-OR-NAME is a translation table object, it is simply returned.
+Otherwise, TABLE-OR-NAME should be a symbol.  If there is no such
+translation table, nil is returned.  Otherwise the associated translation
+table object is returned."
+  (if (translation-table-p table-or-name)
+      table-or-name
+    (check-argument-type 'symbolp table-or-name)
+    (gethash table-or-name named-translation-table-hash-table)))
+
+(defun get-translation-table (table-or-name)
+  "Retrieve the translation table of the given name.
+Same as `find-translation-table' except an error is signalled if there is
+no such translation table instead of returning nil."
+  (or (find-translation-table table-or-name)
+      (error 'invalid-argument "No such translation table" table-or-name)))
 
 
 ;; Setup auto-fill-chars for charsets that should invoke auto-filling.

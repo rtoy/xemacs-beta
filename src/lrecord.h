@@ -1,6 +1,6 @@
 /* The "lrecord" structure (header of a compound lisp object).
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -750,44 +750,46 @@ and DEFINE_LRECORD_IMPLEMENTATION.
 
 #ifdef ERROR_CHECK_TYPECHECK
 
-# define DECLARE_LRECORD(c_name, structtype)			\
-extern const struct lrecord_implementation lrecord_##c_name;	\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj);				\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj)				\
-{								\
-  assert (RECORD_TYPEP (obj, lrecord_type_##c_name));		\
-  return (structtype *) XPNTR (obj);				\
-}								\
+# define DECLARE_LRECORD(c_name, structtype)				  \
+extern const struct lrecord_implementation lrecord_##c_name;		  \
+INLINE_HEADER structtype *						  \
+error_check_##c_name (Lisp_Object obj, const char *file, int line);	  \
+INLINE_HEADER structtype *						  \
+error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+{									  \
+  assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
+  return (structtype *) XPNTR (obj);					  \
+}									  \
 extern Lisp_Object Q##c_name##p
 
-# define DECLARE_EXTERNAL_LRECORD(c_name, structtype)	       	\
-extern int lrecord_type_##c_name;				\
-extern struct lrecord_implementation lrecord_##c_name;		\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj);				\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj)				\
-{								\
-  assert (RECORD_TYPEP (obj, lrecord_type_##c_name));		\
-  return (structtype *) XPNTR (obj);				\
-}								\
+# define DECLARE_EXTERNAL_LRECORD(c_name, structtype)			  \
+extern int lrecord_type_##c_name;					  \
+extern struct lrecord_implementation lrecord_##c_name;			  \
+INLINE_HEADER structtype *						  \
+error_check_##c_name (Lisp_Object obj, const char *file, int line);	  \
+INLINE_HEADER structtype *						  \
+error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+{									  \
+  assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
+  return (structtype *) XPNTR (obj);					  \
+}									  \
 extern Lisp_Object Q##c_name##p
 
-# define DECLARE_NONRECORD(c_name, type_enum, structtype)	\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj);				\
-INLINE_HEADER structtype *					\
-error_check_##c_name (Lisp_Object obj)				\
-{								\
-  assert (XTYPE (obj) == type_enum);				\
-  return (structtype *) XPNTR (obj);				\
-}								\
+# define DECLARE_NONRECORD(c_name, type_enum, structtype)		\
+INLINE_HEADER structtype *						\
+error_check_##c_name (Lisp_Object obj, const char *file, int line);	\
+INLINE_HEADER structtype *						\
+error_check_##c_name (Lisp_Object obj, const char *file, int line)	\
+{									\
+  assert_at_line (XTYPE (obj) == type_enum, file, line);		\
+  return (structtype *) XPNTR (obj);					\
+}									\
 extern Lisp_Object Q##c_name##p
 
-# define XRECORD(x, c_name, structtype) error_check_##c_name (x)
-# define XNONRECORD(x, c_name, type_enum, structtype) error_check_##c_name (x)
+# define XRECORD(x, c_name, structtype) \
+  error_check_##c_name (x, __FILE__, __LINE__)
+# define XNONRECORD(x, c_name, type_enum, structtype) \
+  error_check_##c_name (x, __FILE__, __LINE__)
 
 # define XSETRECORD(var, p, c_name) do				\
 {								\
@@ -795,17 +797,19 @@ extern Lisp_Object Q##c_name##p
   assert (RECORD_TYPEP (var, lrecord_type_##c_name));		\
 } while (0)
 
-INLINE_HEADER Lisp_Object wrap_record_1 (void *ptr, enum lrecord_type ty);
+INLINE_HEADER Lisp_Object wrap_record_1 (void *ptr, enum lrecord_type ty,
+					 const char *file, int line);
 INLINE_HEADER Lisp_Object
-wrap_record_1 (void *ptr, enum lrecord_type ty)
+wrap_record_1 (void *ptr, enum lrecord_type ty, const char *file, int line)
 {
   Lisp_Object obj;
   XSETOBJ (obj, ptr);
-  assert (RECORD_TYPEP (obj, ty));
+  assert_at_line (RECORD_TYPEP (obj, ty), file, line);
   return obj;
 }
 
-#define wrap_record(ptr, ty) wrap_record_1 (ptr, lrecord_type_##ty)
+#define wrap_record(ptr, ty) \
+  wrap_record_1 (ptr, lrecord_type_##ty, __FILE__, __LINE__)
 
 #else /* not ERROR_CHECK_TYPECHECK */
 

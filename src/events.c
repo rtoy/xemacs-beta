@@ -1,7 +1,7 @@
 /* Events: printing them, converting them to and from characters.
    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -30,13 +30,12 @@ Boston, MA 02111-1307, USA.  */
 #include "console.h"
 #include "console-tty.h" /* for stuff in character_to_event */
 #include "device.h"
-#include "console-x.h"	/* for x_event_name prototype */
-#include "console-gtk.h" /* for gtk_event_name prototype */
-#include "extents.h"	/* Just for the EXTENTP abort check... */
+#include "extents.h"
 #include "events.h"
 #include "frame.h"
 #include "glyphs.h"
 #include "keymap.h" /* for key_desc_list_to_event() */
+#include "lstream.h"
 #include "redisplay.h"
 #include "window.h"
 
@@ -268,34 +267,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 			      e2->event.magic_eval.object, 0));
 
     case magic_event:
-      {
-	struct console *con = XCONSOLE (CDFW_CONSOLE (e1->channel));
-
-#ifdef HAVE_GTK
- 	if (CONSOLE_GTK_P (con))
-	  return (!memcmp (&e1->event.magic.underlying_gdk_event,
-			   &e2->event.magic.underlying_gdk_event,
-			   sizeof (GdkEvent)));
-#endif
-#ifdef HAVE_X_WINDOWS
-	if (CONSOLE_X_P (con))
-	  return (e1->event.magic.underlying_x_event.xany.serial ==
-		  e2->event.magic.underlying_x_event.xany.serial);
-#endif
-#ifdef HAVE_TTY
-	if (CONSOLE_TTY_P (con))
-	  return (e1->event.magic.underlying_tty_event ==
-		  e2->event.magic.underlying_tty_event);
-#endif
-#ifdef HAVE_MS_WINDOWS
-	if (CONSOLE_MSWINDOWS_P (con))
-	  return (!memcmp(&e1->event.magic.underlying_mswindows_event,
-			  &e2->event.magic.underlying_mswindows_event,
-			  sizeof (union magic_data)));
-#endif
-	abort ();
-	return 1; /* not reached */
-      }
+      return event_stream_compare_magic_event (e1, e2);
 
     case empty_event:      /* Empty and deallocated events are equal. */
     case dead_event:
@@ -345,27 +317,7 @@ event_hash (Lisp_Object obj, int depth)
 		    internal_hash (e->event.magic_eval.object, depth + 1));
 
     case magic_event:
-      {
-	struct console *con = XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e)));
-#ifdef HAVE_GTK
- 	if (CONSOLE_GTK_P (con))
- 	  return HASH2 (hash, e->event.magic.underlying_gdk_event.type);
-#endif
-#ifdef HAVE_X_WINDOWS
-	if (CONSOLE_X_P (con))
-	  return HASH2 (hash, e->event.magic.underlying_x_event.xany.serial);
-#endif
-#ifdef HAVE_TTY
-	if (CONSOLE_TTY_P (con))
-	  return HASH2 (hash, e->event.magic.underlying_tty_event);
-#endif
-#ifdef HAVE_MS_WINDOWS
-	if (CONSOLE_MSWINDOWS_P (con))
-	  return HASH2 (hash, e->event.magic.underlying_mswindows_event);
-#endif
-	abort ();
-	return 0;
-      }
+      return HASH2 (hash, event_stream_hash_magic_event (e));
 
     case empty_event:
     case dead_event:
@@ -1308,24 +1260,17 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
       }
     case magic_event:
       {
-        const char *name = NULL;
+	Lisp_Object stream;
+	struct gcpro gcpro1;
+	GCPRO1 (stream);
 
-#ifdef HAVE_GTK
- 	{
- 	  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
- 	  if (CONSOLE_GTK_P (XCONSOLE (console)))
- 	    name = gtk_event_name (event->event.magic.underlying_gdk_event.type);
- 	}
-#endif
-#ifdef HAVE_X_WINDOWS
-	{
-	  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
-	  if (CONSOLE_X_P (XCONSOLE (console)))
-	    name = x_event_name (event->event.magic.underlying_x_event.type);
-	}
-#endif /* HAVE_X_WINDOWS */
-	if (name) strcpy (buf, name);
-	else strcpy (buf, "???");
+	stream = make_resizing_buffer_output_stream ();
+	event_stream_format_magic_event (event, stream);
+	Lstream_flush (XLSTREAM (stream));
+	strncpy (buf, resizing_buffer_stream_ptr (XLSTREAM (stream)),
+		 Lstream_byte_count (XLSTREAM (stream)));
+	Lstream_delete (XLSTREAM (stream));
+	UNGCPRO;
 	return;
       }
     case magic_eval_event:	strcpy (buf, "magic-eval"); return;

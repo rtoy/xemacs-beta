@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1995, 1996, 2000, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1997 Jonathan Harris.
 
@@ -38,14 +38,15 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "hash.h"
 
 #include "console-msw.h"
 #include "objects-msw.h"
 #include "buffer.h"
 #include "charset.h"
 #include "device.h"
+#include "elhash.h"
 #include "insdel.h"
+#include "opaque.h"
 
 typedef struct colormap_t
 {
@@ -775,6 +776,139 @@ static const fontmap_t charset_map[] =
   {"OEM/DOS"		, OEM_CHARSET}
 };
 
+#ifdef MULE
+
+typedef struct unicode_subrange_raw_t
+{
+  int subrange_bit;
+  int start; /* first Unicode codepoint */
+  int end; /* last Unicode codepoint */
+} unicode_subrange_raw_t;
+
+/* This table comes from MSDN, Unicode Subset Bitfields [Platform SDK
+   Documentation, Base Services, International Features, Unicode and
+   Character Sets, Unicode and Character Set Reference, Unicode and
+   Character Set Constants].  We preprocess it at startup time into an
+   array of unicode_subrange_t.
+   */
+
+static const unicode_subrange_raw_t unicode_subrange_raw_map[] =
+{
+  {0, 0x0020, 0x007e}, /* Basic Latin */
+  {1, 0x00a0, 0x00ff}, /* Latin-1 Supplement */
+  {2, 0x0100, 0x017f}, /* Latin Extended-A */
+  {3, 0x0180, 0x024f}, /* Latin Extended-B */
+  {4, 0x0250, 0x02af}, /* IPA Extensions */
+  {5, 0x02b0, 0x02ff}, /* Spacing Modifier Letters */
+  {6, 0x0300, 0x036f}, /* Combining Diacritical Marks */
+  {7, 0x0370, 0x03ff}, /* Basic Greek */
+  /* 8  Reserved */
+  {9, 0x0400, 0x04ff}, /* Cyrillic */
+  {10, 0x0530, 0x058f}, /* Armenian */
+  {11, 0x0590, 0x05ff}, /* Basic Hebrew */
+  /* 12   Reserved */
+  {13, 0x0600, 0x06ff}, /* Basic Arabic */
+  /* 14   Reserved */
+  {15, 0x0900, 0x097f}, /* Devanagari */
+  {16, 0x0980, 0x09ff}, /* Bengali */
+  {17, 0x0a00, 0x0a7f}, /* Gurmukhi */
+  {18, 0x0a80, 0x0aff}, /* Gujarati */
+  {19, 0x0b00, 0x0b7f}, /* Oriya */
+  {20, 0x0b80, 0x0bff}, /* Tamil */
+  {21, 0x0c00, 0x0c7f}, /* Telugu */
+  {22, 0x0c80, 0x0cff}, /* Kannada */
+  {23, 0x0d00, 0x0d7f}, /* Malayalam */
+  {24, 0x0e00, 0x0e7f}, /* Thai */
+  {25, 0x0e80, 0x0eff}, /* Lao */
+  {26, 0x10a0, 0x10ff}, /* Basic Georgian */
+  /* 27   Reserved */
+  {28, 0x1100, 0x11ff}, /* Hangul Jamo */
+  {29, 0x1e00, 0x1eff}, /* Latin Extended Additional */
+  {30, 0x1f00, 0x1fff}, /* Greek Extended */
+  {31, 0x2000, 0x206f}, /* General Punctuation */
+  {32, 0x2070, 0x209f}, /* Subscripts and Superscripts */
+  {33, 0x20a0, 0x20cf}, /* Currency Symbols */
+  {34, 0x20d0, 0x20ff}, /* Combining Diacritical Marks for Symbols */
+  {35, 0x2100, 0x214f}, /* Letter-like Symbols */
+  {36, 0x2150, 0x218f}, /* Number Forms */
+  {37, 0x2190, 0x21ff}, /* Arrows */
+  {38, 0x2200, 0x22ff}, /* Mathematical Operators */
+  {39, 0x2300, 0x23ff}, /* Miscellaneous Technical */
+  {40, 0x2400, 0x243f}, /* Control Pictures */
+  {41, 0x2440, 0x245f}, /* Optical Character Recognition */
+  {42, 0x2460, 0x24ff}, /* Enclosed Alphanumerics */
+  {43, 0x2500, 0x257f}, /* Box Drawing */
+  {44, 0x2580, 0x259f}, /* Block Elements */
+  {45, 0x25a0, 0x25ff}, /* Geometric Shapes */
+  {46, 0x2600, 0x26ff}, /* Miscellaneous Symbols */
+  {47, 0x2700, 0x27bf}, /* Dingbats */
+  {48, 0x3000, 0x303f}, /* Chinese, Japanese, and Korean (CJK) Symbols and Punctuation */
+  {49, 0x3040, 0x309f}, /* Hiragana */
+  {50, 0x30a0, 0x30ff}, /* Katakana */
+  {51, 0x3100, 0x312f}, /* Bopomofo */
+  {51, 0x31a0, 0x31bf}, /* Extended Bopomofo */
+  {52, 0x3130, 0x318f}, /* Hangul Compatibility Jamo */
+  {53, 0x3190, 0x319f}, /* CJK Miscellaneous */
+  {54, 0x3200, 0x32ff}, /* Enclosed CJK Letters and Months */
+  {55, 0x3300, 0x33ff}, /* CJK Compatibility */
+  {56, 0xac00, 0xd7a3}, /* Hangul */
+  {57, 0xd800, 0xdfff}, /* Surrogates. Note that setting this bit implies that there is at least one codepoint beyond the Basic Multilingual Plane that is supported by this font.  */
+  /* 58   Reserved */
+  {59, 0x4e00, 0x9fff}, /* CJK Unified Ideographs */
+  {59, 0x2e80, 0x2eff}, /* CJK Radicals Supplement */
+  {59, 0x2f00, 0x2fdf}, /* Kangxi Radicals */
+  {59, 0x2ff0, 0x2fff}, /* Ideographic Description */
+  {59, 0x3400, 0x4dbf}, /* CJK Unified Ideograph Extension A */
+  {60, 0xe000, 0xf8ff}, /* Private Use Area */
+  {61, 0xf900, 0xfaff}, /* CJK Compatibility Ideographs */
+  {62, 0xfb00, 0xfb4f}, /* Alphabetic Presentation Forms */
+  {63, 0xfb50, 0xfdff}, /* Arabic Presentation Forms-A */
+  {64, 0xfe20, 0xfe2f}, /* Combining Half Marks */
+  {65, 0xfe30, 0xfe4f}, /* CJK Compatibility Forms */
+  {66, 0xfe50, 0xfe6f}, /* Small Form Variants */
+  {67, 0xfe70, 0xfefe}, /* Arabic Presentation Forms-B */
+  {68, 0xff00, 0xffef}, /* Halfwidth and Fullwidth Forms */
+  {69, 0xfff0, 0xfffd}, /* Specials */
+  {70, 0x0f00, 0x0fcf}, /* Tibetan */
+  {71, 0x0700, 0x074f}, /* Syriac */
+  {72, 0x0780, 0x07bf}, /* Thaana */
+  {73, 0x0d80, 0x0dff}, /* Sinhala */
+  {74, 0x1000, 0x109f}, /* Myanmar */
+  {75, 0x1200, 0x12bf}, /* Ethiopic */
+  {76, 0x13a0, 0x13ff}, /* Cherokee */
+  {77, 0x1400, 0x14df}, /* Canadian Aboriginal Syllabics */
+  {78, 0x1680, 0x169f}, /* Ogham */
+  {79, 0x16a0, 0x16ff}, /* Runic */
+  {80, 0x1780, 0x17ff}, /* Khmer */
+  {81, 0x1800, 0x18af}, /* Mongolian */
+  {82, 0x2800, 0x28ff}, /* Braille */
+  {83, 0xa000, 0xa48c}, /* Yi, Yi Radicals */
+  /* 84-122   Reserved */
+  /* 123   Windows 2000/XP: Layout progress: horizontal from right to left */
+  /* 124   Windows 2000/XP: Layout progress: vertical before horizontal */
+  /* 125   Windows 2000/XP: Layout progress: vertical bottom to top */
+  /* 126   Reserved; must be 0 */
+  /* 127   Reserved; must be 1 */
+};
+
+typedef struct unicode_subrange_t
+{
+  int no_subranges;
+  const unicode_subrange_raw_t *subranges;
+} unicode_subrange_t;
+
+unicode_subrange_t *unicode_subrange_table;
+
+/* Hash table mapping font specs (strings) to font signature data
+   (FONTSIGNATURE structures stored in opaques), as determined by
+   GetTextCharsetInfo().  I presume this is somewhat expensive because it
+   involves creating a font object.  At the very least, with no hashing, it
+   definitely took awhile (a few seconds) when encountering characters from
+   charsets needing stage 2 processing. */
+Lisp_Object Vfont_signature_data;
+
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                               helpers                                */
@@ -1187,14 +1321,12 @@ mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
 static void
 mswindows_finalize_font_instance (Lisp_Font_Instance *f);
 
-/*
- * This is a work horse for both mswindows_initialize_font_instance and
- * msprinter_initialize_font_instance.
- */
-static int
-initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-			  Lisp_Object device_font_list, HDC hdc,
-			  Error_Behavior errb)
+static HFONT
+create_hfont_from_font_spec (const Intbyte *namestr,
+			     HDC hdc,
+			     Lisp_Object name_for_errors,
+			     Lisp_Object device_font_list,
+			     Error_Behavior errb)
 {
   LOGFONTW logfont;
   int fields, i;
@@ -1202,9 +1334,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   Intbyte fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
   Intbyte effects[LF_FACESIZE], charset[LF_FACESIZE];
   Intbyte *c;
-  HFONT hfont, hfont2;
-  TEXTMETRICW metrics;
-  Intbyte *namestr = XSTRING_DATA (name);
+  HFONT hfont;
 
   /*
    * mswindows fonts look like:
@@ -1230,9 +1360,9 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (fields < 0)
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid font", name,
+      maybe_signal_error (Qinvalid_argument, "Invalid font", name_for_errors,
 			  Qfont, errb);
-      return (0);
+      return NULL;
     }
 
   if (fields > 0 && qxestrlen (fontname))
@@ -1246,8 +1376,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   else
     {
       maybe_signal_error (Qinvalid_argument, "Must specify a font name",
-			  name, Qfont, errb);
-      return (0);
+			  name_for_errors, Qfont, errb);
+      return NULL;
     }
 
   /* weight */
@@ -1278,9 +1408,9 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	}
       else
 	{
-	  maybe_signal_error (Qinvalid_constant, "Invalid font weight", name,
-			      Qfont, errb);
-	  return (0);
+	  maybe_signal_error (Qinvalid_constant, "Invalid font weight",
+			      name_for_errors, Qfont, errb);
+	  return NULL;
 	}
     }
 
@@ -1290,10 +1420,11 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       if (qxestrcasecmp_c (style, "italic") == 0)
 	logfont.lfItalic = TRUE;
       else
-      {
-        maybe_signal_error (Qinvalid_constant, "Invalid font weight or style",
-			    name, Qfont, errb);
-	return (0);
+	{
+	  maybe_signal_error (Qinvalid_constant,
+			      "Invalid font weight or style",
+			      name_for_errors, Qfont, errb);
+	  return NULL;
       }
 
       /* Glue weight and style together again */
@@ -1307,9 +1438,9 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
     pt = 10;	/* #### Should we reject strings that don't specify a size? */
   else if ((pt = qxeatoi (points)) == 0)
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid font pointsize", name,
-			  Qfont, errb);
-      return (0);
+      maybe_signal_error (Qinvalid_argument, "Invalid font pointsize",
+			  name_for_errors, Qfont, errb);
+      return NULL;
     }
 
   /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform SDK */
@@ -1338,9 +1469,9 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	logfont.lfStrikeOut = TRUE;
       else
         {
-          maybe_signal_error (Qinvalid_constant, "Invalid font effect", name,
-			      Qfont, errb);
-	  return (0);
+          maybe_signal_error (Qinvalid_constant, "Invalid font effect",
+			      name_for_errors, Qfont, errb);
+	  return NULL;
 	}
 
       if (effects2 && effects2[0] != '\0')
@@ -1352,8 +1483,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	  else
 	    {
 	      maybe_signal_error (Qinvalid_constant, "Invalid font effect",
-				  name, Qfont, errb);
-	      return (0);
+				  name_for_errors, Qfont, errb);
+	      return NULL;
 	    }
         }
 
@@ -1394,9 +1525,9 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 
   if (i == countof (charset_map))	/* No matching charset */
     {
-      maybe_signal_error (Qinvalid_argument, "Invalid charset", name, Qfont,
-			  errb);
-      return 0;
+      maybe_signal_error (Qinvalid_argument, "Invalid charset",
+			  name_for_errors, Qfont, errb);
+      return NULL;
     }
 
   /* Misc crud */
@@ -1434,18 +1565,38 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 	}
       if (NILP (fonttail))
 	{
-	  maybe_signal_error (Qinvalid_argument, "No matching font", name,
-			      Qfont, errb);
-	  return 0;
+	  maybe_signal_error (Qinvalid_argument, "No matching font",
+			      name_for_errors, Qfont, errb);
+	  return NULL;
 	}
     }
 
   if ((hfont = qxeCreateFontIndirect (&logfont)) == NULL)
-  {
-    maybe_signal_error (Qgui_error, "Couldn't create font", name, Qfont, errb);
-    return 0;
-  }
+    {
+      maybe_signal_error (Qgui_error, "Couldn't create font",
+			  name_for_errors, Qfont, errb);
+      return NULL;
+    }
 
+  return hfont;
+}
+
+
+/*
+ * This is a work horse for both mswindows_initialize_font_instance and
+ * msprinter_initialize_font_instance.
+ */
+static int
+initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
+			  Lisp_Object device_font_list, HDC hdc,
+			  Error_Behavior errb)
+{
+  HFONT hfont, hfont2;
+  TEXTMETRICW metrics;
+  Intbyte *namestr = XSTRING_DATA (name);
+
+  hfont = create_hfont_from_font_spec (namestr, hdc, name, device_font_list,
+				       errb);
   f->data = xnew_and_zero (struct mswindows_font_instance_data);
   FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0) = hfont;
 
@@ -1612,45 +1763,18 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 #ifdef MULE
 
 static int
-mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-				     const Intbyte *nonreloc,
-				     Lisp_Object reloc,
-				     Bytecount offset, Bytecount length)
+mswindows_font_spec_matches_charset_stage_1 (const Intbyte *font_charset,
+					     Lisp_Object charset)
 {
-  const Intbyte *the_nonreloc = nonreloc;
   int i, ms_charset = 0;
-  const Intbyte *c;
-  Bytecount the_length = length;
   CHARSETINFO info;
   int font_code_page;
   Lisp_Object charset_code_page;
 
-  if (UNBOUNDP (charset))
-    return 1;
-
-  if (!the_nonreloc)
-    the_nonreloc = XSTRING_DATA (reloc);
-  fixup_internal_substring (nonreloc, reloc, offset, &the_length);
-  the_nonreloc += offset;
-
   /* Get code page from the font spec */
   
-  c = the_nonreloc;
-  for (i = 0; i < 4; i++)
-    {
-      Intbyte *newc = (Intbyte *) memchr (c, ':', the_length);
-      if (!newc)
-	break;
-      newc++;
-      the_length -= (newc - c);
-      c = newc;
-    }
-
-  if (i < 4)
-    return 0;
-
   for (i = 0; i < countof (charset_map); i++)
-    if (qxestrcasecmp_c (c, charset_map[i].name) == 0)
+    if (qxestrcasecmp_c (font_charset, charset_map[i].name) == 0)
       {
 	ms_charset = charset_map[i].value;
 	break;
@@ -1673,6 +1797,151 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
     return 0;
 
   return font_code_page == XINT (charset_code_page);
+}
+
+static int
+mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+				     const Intbyte *nonreloc,
+				     Lisp_Object reloc,
+				     Bytecount offset, Bytecount length)
+{
+  const Intbyte *the_nonreloc = nonreloc;
+  int i;
+  const Intbyte *c;
+  Bytecount the_length = length;
+
+/* The idea is that, when trying to find a suitable font for a character,
+   we first see if the character comes from one of the known charsets
+   listed above; if so, we try to find a font which is declared as being of
+   that charset (that's the last element of the font spec).  If so, this
+   means that the font is specifically designed for the charset, and we
+   prefer it.  However, there are only a limited number of defined
+   charsets, and new ones aren't being defined; so if we fail the first
+   stage, we search through each font looking at the Unicode subranges it
+   supports, to see if the character comes from that subrange.
+*/
+
+  if (UNBOUNDP (charset))
+    return 1;
+
+  if (!the_nonreloc)
+    the_nonreloc = XSTRING_DATA (reloc);
+  fixup_internal_substring (nonreloc, reloc, offset, &the_length);
+  the_nonreloc += offset;
+
+  c = the_nonreloc;
+  for (i = 0; i < 4; i++)
+    {
+      Intbyte *newc = (Intbyte *) memchr (c, ':', the_length);
+      if (!newc)
+	break;
+      newc++;
+      the_length -= (newc - c);
+      c = newc;
+    }
+
+  if (i >= 4 && mswindows_font_spec_matches_charset_stage_1 (c, charset))
+    return 1;
+
+  /* Stage 2. */
+  {
+    FONTSIGNATURE fs;
+    FONTSIGNATURE *fsp = &fs;
+    struct gcpro gcpro1;
+    Lisp_Object fontsig;
+
+    /* Get the list of Unicode subranges corresponding to the font.  This
+      is contained inside of FONTSIGNATURE data, obtained by calling
+      GetTextCharsetInfo on a font object, which we need to create from the
+      spec.  See if the FONTSIGNATURE data is already cached.  If not, get
+      it and cache it. */
+    if (!STRINGP (reloc) || the_nonreloc != XSTRING_DATA (reloc))
+      reloc = build_intstring (the_nonreloc);
+    GCPRO1 (reloc);
+    fontsig = Fgethash (reloc, Vfont_signature_data, Qunbound);
+
+    if (!UNBOUNDP (fontsig))
+      {
+	fsp = (FONTSIGNATURE *) XOPAQUE_DATA (fontsig);
+	UNGCPRO;
+      }
+    else
+      {
+	HDC hdc = CreateCompatibleDC (NULL);
+	Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (d);
+	HFONT hfont = create_hfont_from_font_spec (the_nonreloc, hdc, Qnil,
+						   font_list, ERROR_ME_NOT);
+
+	if (!hfont || !(hfont = (HFONT) SelectObject (hdc, hfont)))
+	  {
+	  nope:
+	    DeleteDC (hdc);
+	    UNGCPRO;
+	    return 0;
+	  }
+    
+	if (GetTextCharsetInfo (hdc, &fs, 0) == DEFAULT_CHARSET)
+	  {
+	    SelectObject (hdc, hfont);
+	    goto nope;
+	  }
+	SelectObject (hdc, hfont);
+	DeleteDC (hdc);
+	Fputhash (reloc, make_opaque (&fs, sizeof (fs)), Vfont_signature_data);
+	UNGCPRO;
+      }
+
+    {
+      int lowlim, highlim;
+      int dim, j, cp = -1;
+
+      /* Try to find a Unicode char in the charset.  #### This is somewhat
+	 bogus.  We should really be doing these checks on the char level,
+	 not the charset level.  There's no guarantee that a charset covers
+	 a single Unicode range.  Furthermore, this is extremely wasteful.
+	 We should be doing this when we're about to redisplay and already
+	 have the Unicode codepoints in hand.
+
+	 #### Cache me baby!!!!!!!!!!!!!
+       */
+      get_charset_limits (charset, &lowlim, &highlim);
+      dim = XCHARSET_DIMENSION (charset);
+
+      if (dim == 1)
+	{
+	  for (i = lowlim; i <= highlim; i++)
+	    if ((cp = char_to_unicode (MAKE_CHAR (charset, i, 0))) >= 0)
+	      break;
+	}
+      else
+	{
+	  for (i = lowlim; i <= highlim; i++)
+	    for (j = lowlim; j <= highlim; j++)
+	      if ((cp = char_to_unicode (MAKE_CHAR (charset, i, j))) >= 0)
+		break;
+	}
+      
+      if (cp < 0)
+	return 0;
+
+      /* Check to see, for each subrange supported by the font,
+	 whether the Unicode char is within that subrange.  If any match,
+	 the font supports the char (whereby, the charset, bogusly). */
+      
+      for (i = 0; i < 128; i++)
+	{
+	  if (fsp->fsUsb[i >> 5] & (1 << (i & 32)))
+	    {
+	      for (j = 0; j < unicode_subrange_table[i].no_subranges; j++)
+		if (cp >= unicode_subrange_table[i].subranges[j].start &&
+		    cp <= unicode_subrange_table[i].subranges[j].end)
+		  return 1;
+	    }
+	}
+
+      return 0;
+    }
+  }
 }
 
 /* find a font spec that matches font spec FONT and also matches
@@ -1775,6 +2044,32 @@ console_type_create_objects_mswindows (void)
 }
 
 void
+reinit_vars_of_object_mswindows (void)
+{
+#ifdef MULE
+  int i;
+
+  unicode_subrange_table = xnew_array_and_zero (unicode_subrange_t, 128);
+  for (i = 0; i < countof (unicode_subrange_raw_map); i++)
+    {
+      const unicode_subrange_raw_t *el = &unicode_subrange_raw_map[i];
+      if (unicode_subrange_table[el->subrange_bit].subranges == 0)
+	unicode_subrange_table[el->subrange_bit].subranges = el;
+      unicode_subrange_table[el->subrange_bit].no_subranges++;
+    }
+
+  Fclrhash (Vfont_signature_data);
+#endif /* MULE */
+}
+
+void
 vars_of_objects_mswindows (void)
 {
+#ifdef MULE
+  Vfont_signature_data =
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
+  staticpro (&Vfont_signature_data);
+#endif /* MULE */
+
+  reinit_vars_of_object_mswindows ();
 }

@@ -41,7 +41,7 @@
 	 (when (string-match "^kterm" (getenv "TERM"))
 	   (set-terminal-coding-system 'euc-jp)
 	   (set-keyboard-coding-system 'euc-jp))
-	 (set-console-tty-coding-system))))
+	 (declare-fboundp (set-console-tty-coding-system)))))
     (setq mule-tty-win-initted t)))
 
 ;;; mule-tty-init.el ends here

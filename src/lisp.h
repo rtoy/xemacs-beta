@@ -417,9 +417,12 @@ template<typename T> struct alignment_trick { char c; T member; };
    time the assert checks take is measurable so let's not include them
    in production binaries.
 
-   assert() returns 1 if the assert succeeded (or wasn't tried), 0 if
-   failed. (Normally, it would have aborted here, but with
-   ASSERTIONS_DONT_ABORT defined, it will continue. */
+   If ASSERTIONS_DONT_ABORT defined, we will continue after assertion
+   failures.
+
+   assert_at_line() is used for asserts inside of inline functions called
+   from error-checking macros.  If we're not tricky, we just get the file
+   and line of the inline function, which is not very useful. */
 
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
@@ -427,11 +430,15 @@ template<typename T> struct alignment_trick { char c; T member; };
 void assert_failed (const char *, int, const char *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
+# define assert_at_line(x, file, line) \
+  ((x) ? (void) 0 : assert_failed (file, line, #x))
 #else
 # ifdef DEBUG_XEMACS
 #  define assert(x) ((x) ? (void) 0 : (void) abort ())
+#  define assert_at_line(x, file, line) assert (x)
 # else
 #  define assert(x) ((void) 0)
+#  define assert_at_line(x, file, line) assert (x)
 # endif
 #endif
 
@@ -1733,19 +1740,21 @@ DECLARE_LRECORD (marker, Lisp_Marker);
 
 #ifdef ERROR_CHECK_TYPECHECK
 
-INLINE_HEADER Emchar XCHAR (Lisp_Object obj);
+INLINE_HEADER Emchar XCHAR_1 (Lisp_Object obj, const char *file, int line);
 INLINE_HEADER Emchar
-XCHAR (Lisp_Object obj)
+XCHAR_1 (Lisp_Object obj, const char *file, int line)
 {
-  assert (CHARP (obj));
+  assert_at_line (CHARP (obj), file, line);
   return XCHARVAL (obj);
 }
 
-#else
+#define XCHAR(x) XCHAR_1 (x, __FILE__, __LINE__) 
 
-#define XCHAR(x) ((Emchar)XCHARVAL (x))
+#else /* no error checking */
 
-#endif
+#define XCHAR(x) ((Emchar) XCHARVAL (x))
+
+#endif /* no error checking */
 
 #define CHECK_CHAR(x) CHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
 #define CONCHECK_CHAR(x) CONCHECK_NONRECORD (x, Lisp_Type_Char, Qcharacterp)
@@ -1813,19 +1822,23 @@ DECLARE_LRECORD (float, Lisp_Float);
 
 #ifdef ERROR_CHECK_TYPECHECK
 
-INLINE_HEADER EMACS_INT XINT (Lisp_Object obj);
+#define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
+#define XINT(x) XINT_1 (x, __FILE__, __LINE__) 
+
+INLINE_HEADER EMACS_INT XINT_1 (Lisp_Object obj, const char *file, int line);
 INLINE_HEADER EMACS_INT
-XINT (Lisp_Object obj)
+XINT_1 (Lisp_Object obj, const char *file, int line)
 {
-  assert (INTP (obj));
+  assert_at_line (INTP (obj), file, line);
   return XREALINT (obj);
 }
 
-INLINE_HEADER EMACS_INT XCHAR_OR_INT (Lisp_Object obj);
+INLINE_HEADER EMACS_INT XCHAR_OR_INT_1 (Lisp_Object obj, const char *file,
+					int line);
 INLINE_HEADER EMACS_INT
-XCHAR_OR_INT (Lisp_Object obj)
+XCHAR_OR_INT_1 (Lisp_Object obj, const char *file, int line)
 {
-  assert (INTP (obj) || CHARP (obj));
+  assert_at_line (INTP (obj) || CHARP (obj), file, line);
   return CHARP (obj) ? XCHAR (obj) : XINT (obj);
 }
 

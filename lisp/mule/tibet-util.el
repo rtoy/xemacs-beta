@@ -143,14 +143,15 @@ The returned string has no composition information."
   (let ((last (last components))
 	(stack-upper '(tc . bc))
 	(stack-under '(bc . tc))
-	rule comp-vowel tmp)
+	rule comp-vowel ;tmp
+	)
     ;; Special treatment for 'a chung.
     ;; If 'a follows a consonant, turn it into the subjoined form.
     ;; * Disabled by Tomabechi 2000/06/09 *
     ;; Because in Unicode, $(7"A(B may follow directly a consonant without
     ;; any intervening vowel, as in 4$(7"90"914""0"""Q14"A0"A1!;(B=4$(7"90"91(B 4$(7""0""1(B 4$(7"A0"A1(B not 4$(7"90"91(B 4$(7""0""1(B $(7"Q(B 4$(7"A0"A1(B  
     ;;(if (and (= char ?$(7"A(B)
-    ;;	     (aref (char-category-set (car last)) ?0))
+    ;;	     (char-in-category-p (car last) ?0))
     ;;	(setq char ?$(7"R(B)) ;; modified for new font by Tomabechi 1999/12/10
 
     ;; Composite vowel signs are decomposed before being added
@@ -165,11 +166,11 @@ The returned string has no composition information."
 			   tibetan-composite-vowel-alist))))
     (cond
      ;; Compose upper vowel sign vertically over.
-     ((aref (char-category-set char) ?2)
+     ((char-in-category-p char ?2)
       (setq rule stack-upper))
 
      ;; Compose lower vowel sign vertically under.
-     ((aref (char-category-set char) ?3)
+     ((char-in-category-p char ?3)
       (if (eq char ?$(7"Q(B)		;; `$(7"Q(B' should not visible when composed.
 	  (setq rule nil)
 	(setq rule stack-under)))
@@ -227,7 +228,7 @@ The returned string has no composition information."
 (defun tibetan-compose-region (beg end)
   "Compose Tibetan text the region BEG and END."
   (interactive "r")
-  (let (str result chars)
+  ;(let (str result chars)
     (save-excursion
       (save-restriction
 	(narrow-to-region beg end)
@@ -253,7 +254,9 @@ The returned string has no composition information."
 	    (while (< (point) to)
 	      (tibetan-add-components components (following-char))
 	      (forward-char 1))
-	    (compose-region from to components)))))))
+	    (compose-region from to components)))))
+    ;)
+    )
 
 (defvar tibetan-decompose-precomposition-alist
   (mapcar (function (lambda (x) (cons (string-to-char (cdr x)) (car x))))

@@ -1,7 +1,7 @@
 /* The event_stream interface for tty's.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995 Ben Wing.
+   Copyright (C) 1995, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -187,6 +187,24 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 }
 
 static void
+emacs_tty_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
+{
+  /* Nothing to do currently */
+}
+
+static int
+emacs_tty_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+{
+  return 1;
+}
+
+static Hashcode
+emacs_tty_hash_magic_event (Lisp_Event *e)
+{
+  return 0;
+}
+
+static void
 emacs_tty_handle_magic_event (Lisp_Event *emacs_event)
 {
   /* Nothing to do currently */
@@ -252,6 +270,9 @@ reinit_vars_of_event_tty (void)
   tty_event_stream->force_event_pending = 0;
   tty_event_stream->next_event_cb	= emacs_tty_next_event;
   tty_event_stream->handle_magic_event_cb = emacs_tty_handle_magic_event;
+  tty_event_stream->format_magic_event_cb = emacs_tty_format_magic_event;
+  tty_event_stream->compare_magic_event_cb= emacs_tty_compare_magic_event;
+  tty_event_stream->hash_magic_event_cb   = emacs_tty_hash_magic_event;
   tty_event_stream->add_timeout_cb 	= emacs_tty_add_timeout;
   tty_event_stream->remove_timeout_cb 	= emacs_tty_remove_timeout;
   tty_event_stream->select_console_cb 	= emacs_tty_select_console;

@@ -1,7 +1,7 @@
 /* Generic stream implementation.
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1489,6 +1489,13 @@ unsigned char *
 resizing_buffer_stream_ptr (Lstream *stream)
 {
   return RESIZING_BUFFER_STREAM_DATA (stream)->buf;
+}
+
+Lisp_Object
+resizing_buffer_to_lisp_string (Lstream *stream)
+{
+  return make_string (resizing_buffer_stream_ptr (stream),
+		     Lstream_byte_count (stream));
 }
 
 /*********** write to an unsigned-char dynarr ***********/

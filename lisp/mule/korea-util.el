@@ -27,6 +27,10 @@
 
 ;;; Code:
 
+(globally-declare-boundp '(input-method-function
+			   isearch-input-method-function
+			   isearch-input-method-local-p))
+
 ;;;###autoload
 (defvar default-korean-keyboard
   (if (string-match "3" (or (getenv "HANGUL_KEYBOARD_TYPE") ""))

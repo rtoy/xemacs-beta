@@ -1,6 +1,6 @@
 /* Generic stream implementation -- header file.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -445,6 +445,7 @@ const unsigned char *fixed_buffer_input_stream_ptr (Lstream *stream);
 unsigned char *fixed_buffer_output_stream_ptr (Lstream *stream);
 Lisp_Object make_resizing_buffer_output_stream (void);
 unsigned char *resizing_buffer_stream_ptr (Lstream *stream);
+Lisp_Object resizing_buffer_to_lisp_string (Lstream *stream);
 Lisp_Object make_dynarr_output_stream (unsigned_char_dynarr *dyn);
 #define LSTR_SELECTIVE 1
 #define LSTR_IGNORE_ACCESSIBLE 2

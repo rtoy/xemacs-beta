@@ -30,6 +30,11 @@
 
 ;;; Code:
 
+(globally-declare-boundp '(sera-being-called-by-w3
+			   rmail-message-vector rmail-current-message))
+(globally-declare-fboundp '(rfc822-goto-eoh line-end-position quail-title
+					    quail-defrule))
+
 ;; Information for exiting Ethiopic environment.
 (defvar exit-ethiopic-environment-data nil)
 

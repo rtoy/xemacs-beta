@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; Keywords: multilingual, Cyrillic
 
@@ -162,9 +162,16 @@
 ;; (setq font-ccl-encoder-alist
 ;;       (cons (cons "koi8" ccl-encode-koi8-font) font-ccl-encoder-alist))
 
-;; (defvar cyrillic-koi8-r-nonascii-translation-table
-;;   (make-translation-table-from-vector cyrillic-koi8-r-decode-table)
-;;   "Value of `nonascii-translation-table' in Cyrillic-KOI8 language environment..")
+(defvar cyrillic-koi8-r-to-external-code-table
+  (let ((table (make-char-table 'generic))
+	(i 0)
+	(len (length cyrillic-koi8-r-decode-table)))
+    (while (< i len)
+      (let ((ch (aref cyrillic-koi8-r-decode-table i)))
+	(if (characterp ch)
+	    (put-char-table ch i table)))
+      (incf i)))
+  "Table to convert from characters to their Koi8-R code.")
 
 (set-language-info-alist
  "Cyrillic-KOI8" '((charset cyrillic-iso8859-5)
@@ -261,9 +268,16 @@
 ;;       (cons (cons "alternativnyj" ccl-encode-alternativnyj-font)
 ;;             font-ccl-encoder-alist))
 
-;; (defvar cyrillic-alternativnyj-nonascii-translation-table
-;;   (make-translation-table-from-vector cyrillic-alternativnyj-decode-table)
-;;   "Value of `nonascii-translation-table' in Cyrillic-ALT language environment.")
+(defvar cyrillic-alternativnyj-to-external-code-table
+  (let ((table (make-char-table 'generic))
+	(i 0)
+	(len (length cyrillic-alternativnyj-decode-table)))
+    (while (< i len)
+      (let ((ch (aref cyrillic-alternativnyj-decode-table i)))
+	(if (characterp ch)
+	    (put-char-table ch i table)))
+      (incf i)))
+  "Table to convert from characters to their Alternativnyj code.")
 
 (set-language-info-alist
  "Cyrillic-ALT" '((charset cyrillic-iso8859-5)

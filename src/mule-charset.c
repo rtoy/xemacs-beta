@@ -324,6 +324,17 @@ get_unallocated_leading_byte (int dimension)
 /*                      Basic charset Lisp functions                    */
 /************************************************************************/
 
+void
+get_charset_limits (Lisp_Object charset, int *low, int *high)
+{
+  Lisp_Charset *cs = XCHARSET (charset);
+
+  if      (EQ (charset, Vcharset_ascii))     *low =  0, *high = 127;
+  else if (EQ (charset, Vcharset_control_1)) *low =  0, *high =  31;
+  else if (CHARSET_CHARS (cs) == 94)         *low = 33, *high = 126;
+  else	/* CHARSET_CHARS (cs) == 96) */	     *low = 32, *high = 127;
+}
+     
 DEFUN ("charsetp", Fcharsetp, 1, 1, 0, /*
 Return non-nil if OBJECT is a charset.
 */

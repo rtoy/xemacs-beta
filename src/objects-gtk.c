@@ -499,7 +499,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset
 
   names = XListFonts (GDK_DISPLAY (),
 		      patternext, MAX_FONT_COUNT, &count);
-  /* ### This code seems awfully bogus -- mrb */
+  /* #### This code seems awfully bogus -- mrb */
   for (i = 0; i < count; i ++)
     {
       const Intbyte *intname;

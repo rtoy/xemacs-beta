@@ -1,7 +1,7 @@
 /* Definitions for the new event model;
    created 16-jul-91 by Jamie Zawinski
    Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -82,6 +82,15 @@ Boston, MA 02111-1307, USA.  */
 			XEmacs doesn't need to know about, but which must
 			happen in order.  If the next_event_cb never returns
 			an event of type "magic", this will never be used.
+
+ format_magic_event_cb  Called with a magic event; print a representation of
+                        the innards of the event to PSTREAM.
+                        
+ compare_magic_event_cb Called with two magic events; return non-zero if
+                        the innards of the two are equal, zero otherwise.
+
+ hash_magic_event_cb    Called with a magic event; return a hash of the
+                        innards of the event.
 
  add_timeout_cb		Called with an EMACS_TIME, the absolute time at
 			which a wakeup event should be generated; and a
@@ -187,6 +196,9 @@ struct event_stream
   int  (*event_pending_p)	(int);
   void (*next_event_cb)		(Lisp_Event *);
   void (*handle_magic_event_cb)	(Lisp_Event *);
+  void (*format_magic_event_cb)	(Lisp_Event *, Lisp_Object pstream);
+  int (*compare_magic_event_cb) (Lisp_Event *, Lisp_Event *);
+  Hashcode (*hash_magic_event_cb)(Lisp_Event *);
   int  (*add_timeout_cb)	(EMACS_TIME);
   void (*remove_timeout_cb)	(int);
   void (*select_console_cb)	(struct console *);
@@ -409,9 +421,6 @@ union magic_data
    aspect of this event model.
 */
 
-#ifdef HAVE_TTY
-  char              underlying_tty_event;
-#endif
 #ifdef HAVE_GTK
   GdkEvent          underlying_gdk_event;
 #endif
@@ -617,6 +626,9 @@ Lisp_Object allocate_command_builder (Lisp_Object console, int with_echo_buf);
 void enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object);
 void event_stream_next_event (Lisp_Event *event);
 void event_stream_handle_magic_event (Lisp_Event *event);
+void event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream);
+int event_stream_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2);
+Hashcode event_stream_hash_magic_event (Lisp_Event *e);
 void event_stream_select_console   (struct console *con);
 void event_stream_unselect_console (struct console *con);
 void event_stream_select_process   (Lisp_Process *proc);

@@ -133,6 +133,15 @@ The categories are given by their designators."
 ;    (if (null vec) nil
 ;      (= 1 (aref vec (- category 32))))))
 
+(put 'with-category-table 'lisp-indent-function 1)
+
+(defmacro with-category-table (category-table &rest body)
+  `(let ((current-category-table (category-table)))
+     (set-category-table ,category-table)
+     (unwind-protect
+	 (progn ,@body)
+       (set-category-table current-category-table))))
+
 (defun describe-category ()
   "Describe the category specifications in the category table.
 The descriptions are inserted in a buffer, which is then displayed."

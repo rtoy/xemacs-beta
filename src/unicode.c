@@ -912,7 +912,7 @@ set_unicode_conversion (Emchar chr, int code)
 #endif
 }
 
-static int
+int
 char_to_unicode (Emchar chr)
 {
   Lisp_Object charset;

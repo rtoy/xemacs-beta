@@ -1196,7 +1196,8 @@ If there's no corresponding narrow character, return CHAR as is."
 (defun devanagari-compose-string (str &rest langs)
   (setq str (copy-sequence str))
   (let ((idx 0)
-	rest match-b match-e)
+	;rest match-b match-e
+	)
     (while (string-match devanagari-composite-glyph-unit str idx)
       (let* ((match-b (match-beginning 0))
 	     (match-e (match-end 0))

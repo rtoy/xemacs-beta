@@ -1,6 +1,21 @@
+March 20, 2002:
 
+bugs:
 
-last update: August 29, 2001.
+-- TTY-mode problem.  When you start up in TTY mode, XEmacs goes through
+   the loadup process and appears to be working -- you see the startup
+   screen pulsing through the different screens, and it appears to be
+   listening (hitting a key stops the screen motion), but it's frozen --
+   the screen won't get off the startup, key commands don't cause anything
+   to happen. STATUS: In progress.
+
+-- Problem loading mule-ucs/reldata/iso8859-6.el or the languages/hebrew.el
+   file from GNU 21 sources.  Probably the escape sequences specify reverse
+   direction and we can't handle that yet.
+
+-- Memory ballooning in some cases.  Not yet understood.
+
+August 29, 2001.
 
 This is the most current list of priorities in `ben-mule-21-5'.
 Updated often.

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
+;; Copyright (C) 2002 Ben Wing.
 
 ;; Keywords: multilingual, Vietnamese
 
@@ -314,9 +315,16 @@ Both tables are indexed by the position code of Vietnamese characters.")
 ;; (setq font-ccl-encoder-alist
 ;;       (cons (cons "vscii" ccl-encode-vscii-font) font-ccl-encoder-alist))
 
-;; (defvar viet-viscii-nonascii-translation-table
-;;   (make-translation-table-from-vector viet-viscii-decode-table)
-;;   "Value of `nonascii-translation-table' in Vietnamese language environment.")
+(defvar viet-viscii-to-external-code-table
+  (let ((table (make-char-table 'generic))
+	(i 0)
+	(len (length viet-viscii-decode-table)))
+    (while (< i len)
+      (let ((ch (aref viet-viscii-decode-table i)))
+	(if (characterp ch)
+	    (put-char-table ch i table)))
+      (incf i)))
+  "Table to convert from characters to their VISCII code.")
 
 (set-language-info-alist
  "Vietnamese" '((charset vietnamese-viscii-lower vietnamese-viscii-upper)

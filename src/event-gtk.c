@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with gtk, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
    Copyright (C) 2000 William Perry.
 
 This file is part of XEmacs.
@@ -206,6 +206,39 @@ handle_client_message (struct frame *f, GdkEvent *event)
     {
       handle_focus_event_1 (f, 1);
     }
+}
+
+static void
+emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
+{
+  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
+  if (CONSOLE_GTK_P (XCONSOLE (console)))
+    write_c_string (gtk_event_name (event->event.magic.underlying_gdk_event.
+				    type));
+}
+
+static int
+emacs_gtk_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+{
+  if (CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) &&
+      CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
+    return (!memcmp (&e1->event.magic.underlying_gdk_event,
+		     &e2->event.magic.underlying_gdk_event,
+		     sizeof (GdkEvent)));
+  if (CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)))) ||
+      CONSOLE_GTK_P (XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e2)))))
+    return 0;
+  return 1;
+}
+
+static Hashcode
+emacs_gtk_hash_magic_event (Lisp_Event *e)
+{
+  Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (e));
+  if (CONSOLE_GTK_P (XCONSOLE (console)))
+    return memory_hash (&e->event.magic.underlying_gdk_event,
+			sizeof (GdkEvent));
+  return 0;
 }
 
 static void
@@ -1713,6 +1746,9 @@ void reinit_vars_of_event_gtk (void)
   gtk_event_stream->event_pending_p 	= emacs_gtk_event_pending_p;
   gtk_event_stream->next_event_cb	= emacs_gtk_next_event;
   gtk_event_stream->handle_magic_event_cb= emacs_gtk_handle_magic_event;
+  gtk_event_stream->format_magic_event_cb= emacs_gtk_format_magic_event;
+  gtk_event_stream->compare_magic_event_cb= emacs_gtk_compare_magic_event;
+  gtk_event_stream->hash_magic_event_cb  = emacs_gtk_hash_magic_event;
   gtk_event_stream->add_timeout_cb 	= emacs_gtk_add_timeout;
   gtk_event_stream->remove_timeout_cb 	= emacs_gtk_remove_timeout;
   gtk_event_stream->select_console_cb 	= emacs_gtk_select_console;

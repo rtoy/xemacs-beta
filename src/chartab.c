@@ -1,7 +1,7 @@
 /* XEmacs routines to deal with char tables.
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
    Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
    Licensed to the Free Software Foundation.
 
@@ -1648,15 +1648,15 @@ use, and defaults to BUFFER's category table.
   CHECK_INT (position);
   CHECK_CATEGORY_DESIGNATOR (designator);
   des = XCHAR (designator);
-  ctbl = check_category_table (category_table, Vstandard_category_table);
+  ctbl = check_category_table (category_table, buf->category_table);
   ch = BUF_FETCH_CHAR (buf, XINT (position));
   return check_category_char (ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
 DEFUN ("char-in-category-p", Fchar_in_category_p, 2, 3, 0, /*
-Return t if category of CHARACTER includes DESIGNATOR, else nil.
+Return non-nil if category of CHARACTER includes DESIGNATOR.
 Optional third arg CATEGORY-TABLE specifies the category table to use,
-and defaults to the standard category table.
+and defaults to the current buffer's category table.
 */
        (character, designator, category_table))
 {
@@ -1668,7 +1668,7 @@ and defaults to the standard category table.
   des = XCHAR (designator);
   CHECK_CHAR (character);
   ch = XCHAR (character);
-  ctbl = check_category_table (category_table, Vstandard_category_table);
+  ctbl = check_category_table (category_table, current_buffer->category_table);
   return check_category_char (ch, ctbl, des, 0) ? Qt : Qnil;
 }
 

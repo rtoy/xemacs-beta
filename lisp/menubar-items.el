@@ -252,6 +252,13 @@ Write your filter like this:
       ["%_Insert File..." insert-file]
       ["%_View File..." view-file]
       "------"
+      ["%_New Frame" make-frame]
+      ["Frame on Other %_Display..." make-frame-on-display
+       :active (fboundp 'make-frame-on-display)]
+      ["%_Close Frame" delete-frame
+       :active (not (eq (next-frame (selected-frame) 'nomini 'window-system)
+			(selected-frame)))]
+      "-----"
       ["%_Save" save-buffer
        :active (buffer-modified-p)
        :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
@@ -275,7 +282,8 @@ Write your filter like this:
       ["%_Revert Buffer" revert-buffer
        :active (or buffer-file-name revert-buffer-function)
        :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
-      ("Rever%_t Buffer with Specified Encoding"
+      ("%_Rever%_t/Recover"
+      ("Revert Buffer with Specified %_Encoding"
        :filter
        (lambda (menu)
 	 (coding-system-menu-filter
@@ -285,8 +293,11 @@ Write your filter like this:
 	  (lambda (entry) (or buffer-file-name revert-buffer-function))
 	  t))
        )
-      ["Re%_cover File..." recover-file]
-      ["Recover Sessio%_n..." recover-session]
+      ["Re%_cover Buffer from Autosave" (recover-file buffer-file-name)
+       :active buffer-file-name
+       :suffix (if put-buffer-names-in-file-menu (buffer-name) "")]
+      ["Recover %_Session..." recover-session]
+      )
       "-----"
       ["E%_xit XEmacs" save-buffers-kill-emacs]
       )
@@ -329,13 +340,6 @@ Write your filter like this:
       )
 
      ("%_View"
-      ["%_New Frame" make-frame]
-      ["Frame on Other Displa%_y..." make-frame-on-display
-       :active (fboundp 'make-frame-on-display)]
-      ["%_Delete Frame" delete-frame
-       :active (not (eq (next-frame (selected-frame) 'nomini 'window-system)
-			(selected-frame)))]
-      "-----"
       ["%_Split Window" split-window-vertically]
       ["S%_plit Window (Side by Side)" split-window-horizontally]
       ["%_Un-Split (Keep This)" delete-other-windows
