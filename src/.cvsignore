@@ -26,3 +26,4 @@ xemacs.map
 xemacs.opt
 *.tmp
 makeinfo_test.bat
+REBUILD_AUTOLOADS
