@@ -1,4 +1,26 @@
 to 21.5.1 "anise"
+-- This release contains a huge pile of changes by Ben Wing, including
+   both bug fixes and features.  Highlights:
+   -- Many changes to make printing work on Windows
+   -- byte-compilation speed improvements
+   -- New functions for cleanly eliminating byte-compiler warnings
+   -- Remove core bytecompiler warnings
+   -- Improve interactive help interface
+   -- etags improvements
+   -- Better "About XEmacs" page
+   -- Windows configury changes
+   -- Get QUIT working on Windows
+   -- Fix shy group regexp code
+   -- etc. etc.
+
+-- `custom' changes -- Didier Verna
+-- SET_FACE_PROPERTY bug fix -- Jerry James
+-- Unix tty configury changes -- Martin Buchholz
+-- Fix compile error with g++ on bsdi -- Martin Buchholz
+-- Fix crash with xlc -O3 -- Martin Buchholz
+-- Fix link error with (pre-release) gcc 3.0 -- Martin Buchholz
+-- Speed up `intern' and hash tables containing strings -- Martin Buchholz
+-- Make hash table mapping safe -- Martin Buchholz
 
 to 21.5.0 "alfalfa"
 -- Switch to new beta series
