@@ -1,3 +1,7 @@
+2002-04-15  Ben Wing  <ben@xemacs.org>
+
+	* process.c: Need sysdep.h for environ.
+
 2002-04-14  Ben Wing  <ben@xemacs.org>
 
 	* lisp.h:
