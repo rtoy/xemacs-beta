@@ -105,6 +105,7 @@
 #define IDC_UNINS_PKG                   1047
 #define IDC_ELISP_TYPE                  1047
 #define IDC_UNINS_FILE                  1048
+#define IDC_IDL_TYPE                    1048
 #define IDC_UNINS_DISKFULL              1049
 #define IDC_UNINS_IPROGRESS             1050
 #define IDC_UNINS_PPROGRESS             1051

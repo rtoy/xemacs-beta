@@ -316,6 +316,11 @@ do_desktop_setup()
 	      log (0, "Registering .txt files");
 	      setup_explorer ("txt", "Text file", batname);
 	    }
+	  if (reg_idl)
+	    {
+	      log (0, "Registering .idl files");
+	      setup_explorer ("idl", "OMG IDL file", batname);
+	    }
 	}
     }
 }
@@ -328,6 +333,7 @@ static int javat[] = { IDC_JAVA_TYPE, 0 };
 static int cppt[] = { IDC_CPP_TYPE, 0 };
 static int elispt[] = { IDC_ELISP_TYPE, 0 };
 static int txtt[] = { IDC_TXT_TYPE, 0 };
+static int idlt[] = { IDC_IDL_TYPE, 0 };
 
 static void
 check_if_enable_next (HWND h)
@@ -345,6 +351,7 @@ load_dialog (HWND h)
   rbset (h, cppt, reg_cpp);
   rbset (h, elispt, reg_elisp);
   rbset (h, txtt, reg_txt);
+  rbset (h, idlt, reg_idl);
   check_if_enable_next (h);
 }
 
@@ -418,6 +425,7 @@ save_dialog (HWND h)
   reg_cpp = rbget (h, cppt);
   reg_elisp = rbget (h, elispt);
   reg_txt = rbget (h, txtt);
+  reg_idl = rbget (h, idlt);
 }
 
 static BOOL
@@ -487,6 +495,7 @@ do_desktop (HINSTANCE h)
       reg_java = IDC_JAVA_TYPE;
       reg_elisp = IDC_ELISP_TYPE;
       reg_txt = IDC_TXT_TYPE;
+      reg_idl = IDC_IDL_TYPE;
     }
   else
     {
@@ -497,6 +506,7 @@ do_desktop (HINSTANCE h)
       reg_java = 0;
       reg_elisp = 0;
       reg_txt = 0;
+      reg_idl = 0;
     }
   
   int rv = 0;

@@ -34,6 +34,7 @@ extern int   reg_cpp;
 extern int   reg_java;
 extern int   reg_elisp;
 extern int   reg_txt;
+extern int   reg_idl;
 	
 extern int	net_method;
 extern char *	net_proxy_host;

@@ -147,15 +147,15 @@ STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "XEmacs Setup"
 FONT 8, "MS Sans Serif"
 BEGIN
-    PUSHBUTTON   "Next >",IDOK,199,176,45,15, WS_GROUP
+    PUSHBUTTON      "Next >",IDOK,199,176,45,15,WS_GROUP
     PUSHBUTTON      "< Back",IDC_BACK,154,176,45,15
     PUSHBUTTON      "Cancel",IDCANCEL,256,176,45,15
     LTEXT           "",IDC_STATIC,10,10,87,151,SS_SUNKEN | NOT WS_GROUP
     LTEXT           "",IDC_STATIC,10,169,291,1,SS_SUNKEN | NOT WS_GROUP
     LTEXT           "Setup will use the following connection method.",
-                    IDC_STATIC,112,11,170,17, NOT WS_GROUP
+                    IDC_STATIC,112,11,170,17,NOT WS_GROUP
     LTEXT           "To exit setup click Cancel at any time.",IDC_STATIC,112,
-                    32,166,17, NOT WS_GROUP
+                    32,166,17,NOT WS_GROUP
     CONTROL         "Use IE5 Settings",IDC_NET_IE5,"Button",
                     BS_AUTORADIOBUTTON | WS_TABSTOP,128,93,69,10
     CONTROL         "Direct Connection",IDC_NET_DIRECT,"Button",
@@ -347,6 +347,7 @@ BEGIN
     LTEXT           "",IDC_STATIC,10,169,291,1,SS_SUNKEN | NOT WS_GROUP
     LTEXT           "",IDC_STATIC,10,10,87,151,SS_SUNKEN | NOT WS_GROUP
     CONTROL         "GNU",IDC_STATIC,"Static",SS_BITMAP,19,36,69,62
+    CONTROL         "IDL",IDC_IDL_TYPE,"Button",BS_AUTOCHECKBOX,209,116,38,8
 END
 
 
@@ -469,6 +470,7 @@ BEGIN
     BEGIN
         VERTGUIDE, 113
         VERTGUIDE, 209
+        HORZGUIDE, 124
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -514,7 +516,7 @@ BEGIN
     IDS_ERR_OPEN_READ       "Can't open %s for reading: %s"
     IDS_ROOT_ABSOLUTE       "The install directory must be absolute, with both a drive letter and leading slash, like C:\\Cygwin"
     IDS_DOWNLOAD_COMPLETE   "Download Complete"
-    IDS_CVSID               "\n%%% $Id: res.rc,v 1.5 2001/09/25 02:35:32 andyp Exp $\n"
+    IDS_CVSID               "\n%%% $Id: res.rc,v 1.6 2001/10/26 02:42:53 andyp Exp $\n"
     IDS_NOLOGFILE           "Cannot open log file %s for writing"
     IDS_UNINSTALL_COMPLETE  "Uninstalls complete."
     IDS_WININET             "Unable to find or load the Internet Explorer 5 DLLs"
