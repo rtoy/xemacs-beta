@@ -107,6 +107,7 @@ structure."
 
 (defun import-widget-accessors (file syms-function-name &rest description)
   "Import multiple widgets, and emit a suitable vars_of_foo() function for them.\n"
+  (declare (special c-mode-common-hook c-mode-hook))
   (let ((c-mode-common-hook nil)
 	(c-mode-hook nil))
     (find-file file))

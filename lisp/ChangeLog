@@ -1,3 +1,24 @@
+2001-05-09  Ben Wing  <ben@xemacs.org>
+
+	* font.el (bold): New.
+	* font.el (italic): New.
+	* font.el (oblique): New.
+	* font.el (dim): New.
+	* font.el (underline): New.
+	* font.el (overline): New.
+	* font.el (linethrough): New.
+	* font.el (strikethru): New.
+	* font.el (reverse): New.
+	* font.el (blink): New.
+	* font.el (smallcaps): New.
+	* font.el (bigcaps): New.
+	* font.el (dropcaps): New.
+	* gtk-widget-accessors.el (import-widget-accessors):
+	* widgets-gtk.el (gtk-widget-instantiate-internal):
+	* x-font-menu.el (x-font-menu-font-data): New.
+	* x-font-menu.el (x-font-menu-load-font):
+	fix byte-compilation warnings.
+
 2001-05-09  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.5.1 "anise" is released.

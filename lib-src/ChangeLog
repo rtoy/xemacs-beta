@@ -1,3 +1,8 @@
+2001-05-09  Ben Wing  <ben@xemacs.org>
+
+	* etags.c (add_regex):
+	temporary fix to avoid crashes with new regex code.
+
 2001-05-09  Martin Buchholz <martin@xemacs.org>
 
 	* XEmacs 21.5.1 "anise" is released.

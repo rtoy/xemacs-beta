@@ -3087,6 +3087,8 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 			else
 			  PATUNFETCH;
 		      }
+		    else
+		      PATUNFETCH;
 		  }
 		  
 		if (reg > bufp->re_nsub)

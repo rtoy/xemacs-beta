@@ -1982,7 +1982,7 @@ Delete WIDGET." nil nil)
 
 ;;;***
 
-;;;### (autoloads (x-reset-device-font-menus) "x-font-menu" "lisp/x-font-menu.el")
+;;;### (autoloads (x-font-menu-font-data x-reset-device-font-menus) "x-font-menu" "lisp/x-font-menu.el")
 
 (autoload 'x-reset-device-font-menus "x-font-menu" "\
 Generates the `Font', `Size', and `Weight' submenus for the Options menu.
@@ -1992,7 +1992,7 @@ If you don't like the lazy invocation of this function, you can add it to
 when they are selected for the first time.  If you add fonts to your system, 
 or if you change your font path, you can call this to re-initialize the menus." nil nil)
 
-(defun* x-font-menu-font-data (face dcache) (defvar x-font-regexp) (defvar x-font-regexp-foundry-and-family) (let* ((case-fold-search t) (domain (if font-menu-this-frame-only-p (selected-frame) (selected-device))) (name (font-instance-name (face-font-instance face domain))) (truename (font-instance-truename (face-font-instance face domain (if (featurep 'mule) 'ascii)))) family size weight entry slant) (when (string-match x-font-regexp-foundry-and-family name) (setq family (capitalize (match-string 1 name))) (setq entry (vassoc family (aref dcache 0)))) (when (and (null entry) (string-match x-font-regexp-foundry-and-family truename)) (setq family (capitalize (match-string 1 truename))) (setq entry (vassoc family (aref dcache 0)))) (when (null entry) (return-from x-font-menu-font-data (make-vector 5 nil))) (when (string-match x-font-regexp name) (setq weight (capitalize (match-string 1 name))) (setq size (string-to-int (match-string 6 name)))) (when (string-match x-font-regexp truename) (when (not (member weight (aref entry 1))) (setq weight (capitalize (match-string 1 truename)))) (when (not (member size (aref entry 2))) (setq size (string-to-int (match-string 6 truename)))) (setq slant (capitalize (match-string 2 truename)))) (vector entry family size weight slant)))
+(autoload 'x-font-menu-font-data "x-font-menu" nil nil nil)
 
 ;;;***
 

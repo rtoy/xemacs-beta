@@ -5163,6 +5163,8 @@ add_regex (regexp_pattern, ignore_case, lang)
   (void) scan_separators (name);
 
   patbuf = xnew (1, struct re_pattern_buffer);
+  memset (patbuf, 0, sizeof (struct re_pattern_buffer));
+
   /* Translation table to fold case if appropriate. */
   patbuf->translate = (ignore_case) ? lc_trans : NULL;
   patbuf->fastmap = NULL;

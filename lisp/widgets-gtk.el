@@ -134,7 +134,6 @@
 					     (gtk-widget-get-style
 					      (frame-property nil 'text-widget))))
 		 widget)
-    (setq x widget)
     widget))
 
 (defun gtk-widget-property-internal ()

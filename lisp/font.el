@@ -33,7 +33,9 @@
 (globally-declare-fboundp
  '(x-list-fonts
    mswindows-list-fonts ns-list-fonts internal-facep fontsetp get-font-info
-   get-fontset-info mswindows-define-rgb-color cancel-function-timers))
+   get-fontset-info mswindows-define-rgb-color cancel-function-timers
+   ;; #### perhaps we should rewrite font-warn to avoid the warning
+   font-warn))
 
 (globally-declare-boundp
  '(global-face-data
@@ -222,20 +224,19 @@ for use in the 'weight' field of an X font string.")
 					(format "font-%s-mask" attr)))))))
        )))
 
-(let ((mask 0))
-  (define-new-mask bold        (setq mask (1+ mask)))
-  (define-new-mask italic      (setq mask (1+ mask)))
-  (define-new-mask oblique     (setq mask (1+ mask)))
-  (define-new-mask dim         (setq mask (1+ mask)))
-  (define-new-mask underline   (setq mask (1+ mask)))
-  (define-new-mask overline    (setq mask (1+ mask)))
-  (define-new-mask linethrough (setq mask (1+ mask)))
-  (define-new-mask strikethru  (setq mask (1+ mask)))
-  (define-new-mask reverse     (setq mask (1+ mask)))
-  (define-new-mask blink       (setq mask (1+ mask)))
-  (define-new-mask smallcaps   (setq mask (1+ mask)))
-  (define-new-mask bigcaps     (setq mask (1+ mask)))
-  (define-new-mask dropcaps    (setq mask (1+ mask))))
+(define-new-mask bold        1)
+(define-new-mask italic      2)
+(define-new-mask oblique     3)
+(define-new-mask dim         4)
+(define-new-mask underline   5)
+(define-new-mask overline    6)
+(define-new-mask linethrough 7)
+(define-new-mask strikethru  8)
+(define-new-mask reverse     9)
+(define-new-mask blink       10)
+(define-new-mask smallcaps   11)
+(define-new-mask bigcaps     12)
+(define-new-mask dropcaps    13)
 
 (defvar font-caps-display-table
   (let ((table (make-display-table))

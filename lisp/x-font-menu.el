@@ -190,7 +190,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 ;; If the user didn't specify one (with "-dt-*-*", for example)
 ;; get the truename and use the possibly suboptimal data from that.
 ;;;###autoload
-(defun* x-font-menu-font-data (face dcache)
+(defun x-font-menu-font-data (face dcache)
   (let* ((case-fold-search t)
 	 (domain (if font-menu-this-frame-only-p
 				  (selected-frame)
@@ -207,21 +207,22 @@ or if you change your font path, you can call this to re-initialize the menus."
 	       (string-match x-font-regexp-foundry-and-family truename))
       (setq family (capitalize (match-string 1 truename)))
       (setq entry  (vassoc family (aref dcache 0))))
-    (when (null entry)
-      (return-from x-font-menu-font-data (make-vector 5 nil)))
-    
-    (when (string-match x-font-regexp name)
-      (setq weight (capitalize    (match-string 1 name)))
-      (setq size   (string-to-int (match-string 6 name))))
+
+    (if (null entry)
+	(make-vector 5 nil)
+
+      (when (string-match x-font-regexp name)
+	(setq weight (capitalize    (match-string 1 name)))
+	(setq size   (string-to-int (match-string 6 name))))
       
-    (when (string-match x-font-regexp truename)
-      (when (not (member weight (aref entry 1)))
-	(setq weight (capitalize (match-string 1 truename))))
-      (when (not (member size   (aref entry 2)))
-	(setq size (string-to-int (match-string 6 truename))))
-      (setq slant (capitalize (match-string 2 truename))))
+      (when (string-match x-font-regexp truename)
+	(when (not (member weight (aref entry 1)))
+	  (setq weight (capitalize (match-string 1 truename))))
+	(when (not (member size   (aref entry 2)))
+	  (setq size (string-to-int (match-string 6 truename))))
+	(setq slant (capitalize (match-string 2 truename))))
       
-    (vector entry family size weight slant)))
+      (vector entry family size weight slant))))
 
 (defun x-font-menu-load-font (family weight size slant resolution)
   "Try to load a font with the requested properties.

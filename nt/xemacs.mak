@@ -1500,19 +1500,10 @@ XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_
 !endif
 !if $(HAVE_GTK)
   --------------------------------------------------------------------
-  WARNING: Compiling WITHOUT GTK support.
-  WARNING: As of xemacs-21.2-b44
-  WARNING: gtk-xemacs is not supported on MSWindows (mingw or msvc).
-  WARNING: Yes, we know that gtk has been ported to native MSWindows
-  WARNING: but XEmacs is not yet ready to use that port.
-  --------------------------------------------------------------------
-!else
-  --------------------------------------------------------------------
-  WARNING: Compiling without GTK support.
-  WARNING: As of xemacs-21.2-b44
-  WARNING: gtk-xemacs is not supported on MSWindows (mingw or msvc).
-  WARNING: Yes, we know that gtk has been ported to native MSWindows
-  WARNING: but XEmacs is not yet ready to use that port.
+  WARNING: You specified HAVE_GTK=1, but we are compiling WITHOUT GTK support.
+  WARNING: gtk-xemacs is not currently supported on MSWindows (mingw or msvc).
+  WARNING: Yes, we know that gtk has been ported to native MSWindows, but
+  WARNING: XEmacs is not yet ready to use that port.
   --------------------------------------------------------------------
 !endif
 !if $(HAVE_XPM)
