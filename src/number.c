@@ -124,9 +124,9 @@ Return t if INTEGER is even, nil otherwise.
        (integer))
 {
   CONCHECK_INTEGER (integer);
-  return BIGNUMP (integer)
-    ? bignum_evenp (XBIGNUM_DATA (integer))
-    : XTYPE (integer) == Lisp_Type_Int_Even;
+  return (BIGNUMP (integer)
+	  ? bignum_evenp (XBIGNUM_DATA (integer))
+	  : XTYPE (integer) == Lisp_Type_Int_Even) ? Qt : Qnil;
 }
 
 DEFUN ("odd", Foddp, 1, 1, 0, /*
@@ -135,9 +135,9 @@ Return t if INTEGER is odd, nil otherwise.
        (integer))
 {
   CONCHECK_INTEGER (integer);
-  return BIGNUMP (integer)
-    ? bignum_oddp (XBIGNUM_DATA (integer))
-    : XTYPE (integer) == Lisp_Type_Int_Odd;
+  return (BIGNUMP (integer)
+	  ? bignum_oddp (XBIGNUM_DATA (integer))
+	  : XTYPE (integer) == Lisp_Type_Int_Odd) ? Qt : Qnil;
 }
 
 

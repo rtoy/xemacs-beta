@@ -1,3 +1,9 @@
+2004-04-07  Jerry James  <james@xemacs.org>
+
+	* number.c (Fevenp): Change the C boolean into Qnil/Qt.  Thanks to
+	Robert Royar, Stephen Turnbull, and Hrvoje Niksic.
+	* number.c (Foddp): Ditto.
+
 2004-04-06  Jerry James  <james@xemacs.org>
 
 	* bytecode.c (bytecode_arithcompare): Provide a default case to
