@@ -1,3 +1,9 @@
+2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (replace-match): Revert test to Assert
+	that registers are preserved on a failed match.
+	(stale match data): Test for preserve-on-failure behavior.
+
 2003-04-24  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.12 "carrot" is released.

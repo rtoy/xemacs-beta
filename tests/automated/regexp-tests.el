@@ -205,13 +205,14 @@
 
 ;; (test-regex-charset-mule-paranoid)
 
-;; Test that replace-match errors after a failed match
+;; Test that replace-match does not clobber registers after a failed match
 (with-temp-buffer
   (insert "This is a test buffer.")
   (goto-char (point-min))
   (search-forward "this is a test ")
   (looking-at "Unmatchable text")
-  (Check-Error args-out-of-range (replace-match "")))
+  (replace-match "")
+  (Assert (looking-at "^buffer.$")))
 
 ;; Test that trivial regexps reset unused registers
 ;; Thanks to Martin Sternholm for the report.
@@ -283,15 +284,31 @@
 ;; Thanks to <bjacob@ca.metsci.com>.
 ;; These tests used to fail because we cleared match data only on success.
 ;; Fixed 2003-04-17.
-(Assert (not (progn (string-match "a" "a")
-		    (string-match "b" "a")
-		    (match-string 0 "a"))))
-(Assert (not (progn (string-match "a" "a")
-		    (string-match "b" "a")
-		    (match-string 1 "a"))))
-(Assert (not (progn (string-match "\\(a\\)" "a")
-		    (string-match "\\(b\\)" "a")
-		    (match-string 0 "a"))))
-(Assert (not (progn (string-match "\\(a\\)" "a")
-		    (string-match "\\(b\\)" "a")
-		    (match-string 1 "a"))))
+;; Have to revert 2003-05-09; too much code depends on failed matches
+;; preserving match-data.
+;; string match and regexp match are equivalent
+(let ((a "a"))
+  (Assert (string= (progn (string-match "a" a)
+			  (string-match "b" a)
+			  (match-string 0 a))
+		   a))
+  (Assert (not (progn (string-match "a" a)
+		      (string-match "b" a)
+		      (match-string 1 a))))
+  ;; test both for the second match is a plain string match and a regexp match
+  (Assert (string= (progn (string-match "\\(a\\)" a)
+			  (string-match "\\(b\\)" a)
+			  (match-string 0 a))
+		   a))
+  (Assert (string= (progn (string-match "\\(a\\)" a)
+			  (string-match "b" a)
+			  (match-string 0 a))
+		   a))
+  (Assert (string= (progn (string-match "\\(a\\)" a)
+			  (string-match "\\(b\\)" a)
+			  (match-string 1 a))
+		   a))
+  (Assert (string= (progn (string-match "\\(a\\)" a)
+			  (string-match "b" a)
+			  (match-string 1 a))
+		   a)))
