@@ -56,6 +56,7 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "lstream.h"
 #include "process.h"
+#include "profile.h"
 #include "redisplay.h"
 #include "specifier.h"
 #include "sysfile.h"
@@ -92,6 +93,8 @@ static Fixnum debug_allocation_backtrace_length;
 
 /* Number of bytes of consing done since the last gc */
 static EMACS_INT consing_since_gc;
+EMACS_UINT total_consing;
+
 int need_to_garbage_collect;
 int need_to_check_c_alloca;
 int need_to_signal_post_gc;
@@ -105,6 +108,9 @@ Bytecount funcall_alloca_count;
 do						\
 {						\
   consing_since_gc += (size);			\
+  total_consing += (size);			\
+  if (profiling_active)				\
+    profile_record_consing (size);		\
   recompute_need_to_garbage_collect ();		\
 } while (0)
 
@@ -143,6 +149,9 @@ do {								\
 
 #define DECREMENT_CONS_COUNTER(size) do {	\
   consing_since_gc -= (size);			\
+  total_consing -= (size);			\
+  if (profiling_active)				\
+    profile_record_unconsing (size);		\
   if (consing_since_gc < 0)			\
     consing_since_gc = 0;			\
   recompute_need_to_garbage_collect ();		\
@@ -189,6 +198,8 @@ Lisp_Object Vgc_message;
 Lisp_Object Vgc_pointer_glyph;
 static const Char_ASCII gc_default_message[] = "Garbage collecting";
 Lisp_Object Qgarbage_collecting;
+
+static Lisp_Object QSin_garbage_collection;
 
 /* Non-zero means we're in the process of doing the dump */
 int purify_flag;
@@ -302,11 +313,21 @@ set_alloc_mins_and_maxes (void *val, Bytecount size)
 
 /* like malloc and realloc but check for no memory left. */
 
+static int in_malloc;
+
 #undef xmalloc
 void *
 xmalloc (Bytecount size)
 {
-  void *val = malloc (size);
+  void *val;
+#ifdef ERROR_CHECK_MALLOC
+  assert (!in_malloc);
+  in_malloc = 1;
+#endif
+  val = malloc (size);
+#ifdef ERROR_CHECK_MALLOC
+  in_malloc = 0;
+#endif
   if (!val && (size != 0)) memory_full ();
   set_alloc_mins_and_maxes (val, size);
   return val;
@@ -316,7 +337,15 @@ xmalloc (Bytecount size)
 static void *
 xcalloc (Elemcount nelem, Bytecount elsize)
 {
-  void *val = calloc (nelem, elsize);
+  void *val;
+#ifdef ERROR_CHECK_MALLOC
+  assert (!in_malloc);
+  in_malloc = 1;
+#endif
+  val= calloc (nelem, elsize);
+#ifdef ERROR_CHECK_MALLOC
+  in_malloc = 0;
+#endif
 
   if (!val && (nelem != 0)) memory_full ();
   set_alloc_mins_and_maxes (val, nelem * elsize);
@@ -333,7 +362,14 @@ xmalloc_and_zero (Bytecount size)
 void *
 xrealloc (void *block, Bytecount size)
 {
+#ifdef ERROR_CHECK_MALLOC
+  assert (!in_malloc);
+  in_malloc = 1;
+#endif
   block = realloc (block, size);
+#ifdef ERROR_CHECK_MALLOC
+  in_malloc = 0;
+#endif
 
   if (!block && (size != 0)) memory_full ();
   set_alloc_mins_and_maxes (block, size);
@@ -353,8 +389,13 @@ xfree (void *block)
      the one that comes with Solaris 2.3.  FMH!! */
   assert (block != (void *) 0xDEADBEEF);
   assert (block);
+  assert (!in_malloc);
+  in_malloc = 1;
 #endif /* ERROR_CHECK_MALLOC */
   free (block);
+#ifdef ERROR_CHECK_MALLOC
+  in_malloc = 0;
+#endif
 }
 
 #ifdef ERROR_CHECK_GC
@@ -4363,6 +4404,7 @@ garbage_collect_1 (void)
   int cursor_changed;
   Lisp_Object pre_gc_cursor;
   struct gcpro gcpro1;
+  PROFILE_DECLARE ();
 
   assert (!in_display || gc_currently_forbidden);
 
@@ -4371,6 +4413,8 @@ garbage_collect_1 (void)
       || in_display
       || preparing_for_armageddon)
     return;
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_garbage_collection);
 
   /* We used to call selected_frame() here.
 
@@ -4530,7 +4574,9 @@ garbage_collect_1 (void)
 	int i;
 
 	mark_object (*backlist->function);
-	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */)
+	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */
+	    /* might be fake (internal profiling entry) */
+	    && backlist->args)
 	  mark_object (backlist->args[0]);
 	else
 	  for (i = 0; i < nargs; i++)
@@ -4619,6 +4665,8 @@ garbage_collect_1 (void)
 
   need_to_signal_post_gc = 1;
   funcall_allocation_flag = 1;
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_garbage_collection);
 
   return;
 }
@@ -5148,6 +5196,9 @@ syms_of_alloc (void)
 void
 vars_of_alloc (void)
 {
+  QSin_garbage_collection = build_msg_string ("(in garbage collection)");
+  staticpro (&QSin_garbage_collection);
+
   DEFVAR_INT ("gc-cons-threshold", &gc_cons_threshold /*
 *Number of bytes of consing between garbage collections.
 \"Consing\" is a misnomer in that this actually counts allocation

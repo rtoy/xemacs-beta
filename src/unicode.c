@@ -2076,7 +2076,8 @@ utf_16_detect (struct detection_state *st, const UExtbyte *src,
 	/* #### FUCKME!  There should really be an ASCII detector.  This
 	   would rule out the need to have this built-in here as
 	   well. --ben */
-	int pct_ascii = ((100 * data->num_ascii) / data->byteno);
+	int pct_ascii = data->byteno ? (100 * data->num_ascii) / data->byteno
+		        : 100;
 
 	if (pct_ascii > 90)
 	  SET_DET_RESULTS (st, utf_16, DET_QUITE_IMPROBABLE);

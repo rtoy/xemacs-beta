@@ -175,6 +175,8 @@ static int mswindows_pending_timers_count;
 
 static DWORD mswindows_last_mouse_button_state;
 
+extern int mswindows_is_blocking;
+
 
 #ifndef CYGWIN /* Skips past slurp, shove, or winsock streams */
 
@@ -1360,7 +1362,9 @@ mswindows_need_event (int badly_p)
 	    FD_CLR (windows_fd, &temp_mask);
 	}
 
+      mswindows_is_blocking = 1;
       active = select (MAXDESC, &temp_mask, 0, 0, pointer_to_this);
+      mswindows_is_blocking = 0;
 
       if (active == 0)
 	{
@@ -1535,10 +1539,15 @@ mswindows_need_event (int badly_p)
 	      qxePeekMessage (&msg, 0, 0, 0, PM_NOREMOVE))
 	    active = WAIT_OBJECT_0 + mswindows_waitable_count;
 	  else
-	    active = MsgWaitForMultipleObjects (mswindows_waitable_count,
-						mswindows_waitable_handles,
-						FALSE, badly_p ? INFINITE : 0,
-						what_events);
+	    {
+	      mswindows_is_blocking = 1;
+	      active = MsgWaitForMultipleObjects (mswindows_waitable_count,
+						  mswindows_waitable_handles,
+						  FALSE,
+						  badly_p ? INFINITE : 0,
+						  what_events);
+	      mswindows_is_blocking = 0;
+	    }
 	}
       __except (GetExceptionCode () == EXCEPTION_BREAKPOINT ?
 		EXCEPTION_CONTINUE_EXECUTION :

@@ -90,6 +90,7 @@ Boston, MA 02111-1307, USA.  */
 #include "macros.h"		/* for defining_keyboard_macro */
 #include "menubar.h"            /* #### for evil kludges. */
 #include "process.h"
+#include "profile.h"
 #include "window-impl.h"
 
 #include "sysdep.h"		/* init_poll_for_quit() */
@@ -248,6 +249,9 @@ int in_modal_loop;
 
 /* the number of keyboard characters read.  callint.c wants this. */
 Charcount num_input_chars;
+
+static Lisp_Object Qnext_event, Qdispatch_event, QSnext_event_internal;
+static Lisp_Object QSexecute_internal_event;
 
 #ifdef DEBUG_XEMACS
 Fixnum debug_emacs_events;
@@ -2103,7 +2107,11 @@ static void
 next_event_internal (Lisp_Object target_event, int allow_queued)
 {
   struct gcpro gcpro1;
+  PROFILE_DECLARE ();
+
   QUIT;
+
+  PROFILE_RECORD_ENTERING_SECTION (QSnext_event_internal);
 
   assert (NILP (XEVENT_NEXT (target_event)));
 
@@ -2158,6 +2166,8 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
     }
 
   UNGCPRO;
+
+  PROFILE_RECORD_EXITING_SECTION (QSnext_event_internal);
 }
 
 void
@@ -2228,6 +2238,7 @@ The returned event will be one of the following types:
   int store_this_key = 0;
   struct gcpro gcpro1;
   int depth;
+  PROFILE_DECLARE ();
 
   GCPRO1 (event);
 
@@ -2251,6 +2262,8 @@ The returned event will be one of the following types:
   if (in_menu_callback)
     invalid_operation ("Attempt to call next-event inside menu callback",
 		       Qunbound);
+
+  PROFILE_RECORD_ENTERING_SECTION (Qnext_event);
 
   depth = begin_dont_check_for_quit ();
 
@@ -2476,6 +2489,8 @@ The returned event will be one of the following types:
  RETURN:
   Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
   unbind_to (depth);
+
+  PROFILE_RECORD_EXITING_SECTION (Qnext_event);
 
   UNGCPRO;
 
@@ -3022,35 +3037,39 @@ wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 static void
 execute_internal_event (Lisp_Object event)
 {
+  PROFILE_DECLARE ();
+
   /* events on dead channels get silently eaten */
   if (object_dead_p (XEVENT (event)->channel))
     return;
+
+  PROFILE_RECORD_ENTERING_SECTION (QSexecute_internal_event);
 
   /* This function can GC */
   switch (XEVENT_TYPE (event))
     {
     case empty_event:
-      return;
+      goto done;
 
     case eval_event:
       {
 	call1 (XEVENT_EVAL_FUNCTION (event),
 	       XEVENT_EVAL_OBJECT (event));
-	return;
+	goto done;
       }
 
     case magic_eval_event:
       {
 	XEVENT_MAGIC_EVAL_INTERNAL_FUNCTION (event)
 	  XEVENT_MAGIC_EVAL_OBJECT (event);
-	return;
+	goto done;
       }
 
     case pointer_motion_event:
       {
 	if (!NILP (Vmouse_motion_handler))
 	  call1 (Vmouse_motion_handler, event);
-	return;
+	goto done;
       }
 
     case process_event:
@@ -3142,7 +3161,7 @@ execute_internal_event (Lisp_Object event)
 	    */
 	    status_notify ();
 	  }
-	return;
+	goto done;
       }
 
     case timeout_event:
@@ -3152,14 +3171,17 @@ execute_internal_event (Lisp_Object event)
 	if (!NILP (EVENT_TIMEOUT_FUNCTION (e)))
 	  call1 (EVENT_TIMEOUT_FUNCTION (e),
                  EVENT_TIMEOUT_OBJECT (e));
-	return;
+	goto done;
       }
     case magic_event:
 	event_stream_handle_magic_event (XEVENT (event));
-	return;
+	goto done;
     default:
       abort ();
     }
+
+ done:
+  PROFILE_RECORD_EXITING_SECTION (QSexecute_internal_event);
 }
 
 
@@ -4341,6 +4363,7 @@ Magic events are handled as necessary.
   Lisp_Event *ev;
   Lisp_Object console;
   Lisp_Object channel;
+  PROFILE_DECLARE ();
 
   CHECK_LIVE_EVENT (event);
   ev = XEVENT (event);
@@ -4349,6 +4372,8 @@ Magic events are handled as necessary.
   channel = EVENT_CHANNEL (ev);
   if (object_dead_p (channel))
     return Qnil;
+
+  PROFILE_RECORD_ENTERING_SECTION (Qdispatch_event);
 
   /* Some events don't have channels (e.g. eval events). */
   console = CDFW_CONSOLE (channel);
@@ -4548,6 +4573,8 @@ Magic events are handled as necessary.
 	execute_internal_event (event);
 	break;
     }
+
+  PROFILE_RECORD_EXITING_SECTION (Qdispatch_event);
   return Qnil;
 }
 
@@ -4818,6 +4845,9 @@ syms_of_event_stream (void)
 
   DEFSYMBOL (Qself_insert_defer_undo);
   DEFSYMBOL (Qcancel_mode_internal);
+
+  DEFSYMBOL (Qnext_event);
+  DEFSYMBOL (Qdispatch_event);
 }
 
 void
@@ -4873,6 +4903,11 @@ vars_of_event_stream (void)
 
   last_point_position_buffer = Qnil;
   staticpro (&last_point_position_buffer);
+
+  QSnext_event_internal = build_string ("next_event_internal()");
+  staticpro (&QSnext_event_internal);
+  QSexecute_internal_event = build_string ("execute_internal_event()");
+  staticpro (&QSexecute_internal_event);
 
   DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.

@@ -1,5 +1,5 @@
 /* Why the hell is XEmacs so fucking slow?
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2003 Ben Wing.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
@@ -34,129 +34,340 @@ Boston, MA 02111-1307, USA.  */
 #error Sorry charlie.  We need a scalpel and all we have is a lawnmower.
 #endif
 
-/* We implement our own profiling scheme so that we can determine
+#ifdef WIN32_ANY
+int mswindows_is_blocking;
+#endif
+
+/* Written by Ben Wing.
+
+   We implement our own profiling scheme so that we can determine
    things like which Lisp functions are occupying the most time.  Any
    standard OS-provided profiling works on C functions, which is
-   somewhat useless.
+   not always that useful -- and inconvenient, since it requires compiling
+   with profile info and can't be retrieved dynamically, as XEmacs is
+   running.
 
    The basic idea is simple.  We set a profiling timer using setitimer
-   (ITIMER_PROF), which generates a SIGPROF every so often.  (This
-   runs not in real time but rather when the process is executing or
-   the system is running on behalf of the process.) When the signal
-   goes off, we see what we're in, and add 1 to the count associated
-   with that function.
+   (ITIMER_PROF), which generates a SIGPROF every so often.  (This runs not
+   in real time but rather when the process is executing or the system is
+   running on behalf of the process.) When the signal goes off, we see what
+   we're in, and add 1 to the count associated with that function.
 
-   It would be nice to use the Lisp allocation mechanism etc. to keep
-   track of the profiling information, but we can't because that's not
-   safe, and trying to make it safe would be much more work than it's
-   worth.
+   It would be nice to use the Lisp allocation mechanism etc. to keep track
+   of the profiling information (i.e. to use Lisp hash tables), but we
+   can't because that's not safe -- updating the timing information happens
+   inside of a signal handler, so we can't rely on not being in the middle
+   of Lisp allocation, garbage collection, malloc(), etc.  Trying to make
+   it work would be much more work than it's worth.  Instead we use a basic
+   (non-Lisp) hash table, which will not conflict with garbage collection
+   or anything else as long as it doesn't try to resize itself.  Resizing
+   itself, however (which happens as a result of a puthash()), could be
+   deadly.  To avoid this, we make sure, at points where it's safe
+   (e.g. profile_record_about_to_call() -- recording the entry into a
+   function call), that the table always has some breathing room in it so
+   that no resizes will occur until at least that many items are added.
+   This is safe because any new item to be added in the sigprof would
+   likely have the profile_record_about_to_call() called just before it,
+   and the breathing room is checked.
 
-   Jan 1998: In addition to this, I have added code to remember call
+   In general: any entry that the sigprof handler puts into the table comes
+   from a backtrace frame (except "Processing Events at Top Level", and
+   there's only one of those).  Either that backtrace frame was added when
+   profiling was on (in which case profile_record_about_to_call() was
+   called and the breathing space updated), or when it was off -- and in
+   this case, no such frames can have been added since the last time
+   `start-profile' was called, so when `start-profile' is called we make
+   sure there is sufficient breathing room to account for all entries
+   currently on the stack.
+
+   Jan 1998: In addition to timing info, I have added code to remember call
    counts of Lisp funcalls.  The profile_increase_call_count()
    function is called from Ffuncall(), and serves to add data to
    Vcall_count_profile_table.  This mechanism is much simpler and
    independent of the SIGPROF-driven one.  It uses the Lisp allocation
    mechanism normally, since it is not called from a handler.  It may
    even be useful to provide a way to turn on only one profiling
-   mechanism, but I haven't done so yet.  --hniksic */
+   mechanism, but I haven't done so yet.  --hniksic
 
+   Dec 2002: Total overhaul of the interface, making it sane and easier to
+   use. --ben
+
+   Feb 2003: Lots of rewriting of the internal code.  Add GC-consing-usage,
+   total GC usage, and total timing to the information tracked.  Track
+   profiling overhead and allow the ability to have internal sections
+   (e.g. internal-external conversion, byte-char conversion) that are
+   treated like Lisp functions for the purpose of profiling.  --ben
+
+   BEWARE: If you are modifying this file, be *very* careful.  Correctly
+   implementing the "total" values is very tricky due to the possibility of
+   recursion and of functions already on the stack when starting to
+   profile/still on the stack when stopping.
+*/
+
+/* We use a plain table here because we're recording inside of a signal
+   handler. */
 static struct hash_table *big_profile_table;
+Lisp_Object Vtotal_timing_profile_table;
 Lisp_Object Vcall_count_profile_table;
+Lisp_Object Vtotal_gc_usage_profile_table;
+Lisp_Object Vgc_usage_profile_table;
+
+extern int lisp_eval_depth;
+
+extern EMACS_UINT total_consing;
+static volatile EMACS_UINT total_ticks;
 
 Fixnum default_profiling_interval;
 
 int profiling_active;
 
-/* The normal flag in_display is used as a critical-section flag
-   and is not set the whole time we're in redisplay. */
-int profiling_redisplay_flag;
-
-static Lisp_Object QSin_redisplay;
-static Lisp_Object QSin_garbage_collection;
 static Lisp_Object QSprocessing_events_at_top_level;
-static Lisp_Object QSunknown;
+static Lisp_Object QSunknown, QSprofile_overhead;
 
-static Lisp_Object Qtiming, Qcall_count;
+static Lisp_Object Qtiming, Qtotal_timing, Qcall_count;
+static Lisp_Object Qgc_usage, Qtotal_gc_usage;
 
-/* We use inside_profiling to prevent the handler from writing to
+/* This needs to be >= the total number of defined internal sections,
+   plus 1 or 2??  Set it extra big just to be ultra-paranoid. */
+#define EXTRA_BREATHING_ROOM 100
+
+/* We use profiling_lock to prevent the signal handler from writing to
    the table while another routine is operating on it.  We also set
-   inside_profiling in case the timeout between signal calls is short
+   profiling_lock in case the timeout between signal calls is short
    enough to catch us while we're already in there. */
-static volatile int inside_profiling;
+static volatile int profiling_lock;
 
-static void
-create_call_count_profile_table (void)
-{
-  if (NILP (Vcall_count_profile_table))
-    Vcall_count_profile_table =
-      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
-}
+/* Whether we're in the process of doing *any* profiling-related stuff.
+   Used to indicate amount of time spent profiling. */
+static int in_profiling;
+
+#if 0 /* #### for KKCC, eventually */
+
+static const struct memory_description hentry_description_1[] = {
+  { XD_LISP_OBJECT, offsetof (hentry, key) },
+  { XD_END }
+};
+
+static const struct sized_memory_description hentry_description = {
+  sizeof (hentry),
+  hentry_description_1
+};
+
+static const struct memory_description plain_hash_table_description_1[] = {
+  { XD_ELEMCOUNT,  offsetof (struct hash_table, size) },
+  { XD_STRUCT_PTR, offsetof (struct hash_table, harray), XD_INDIRECT (0, 0),
+    &hentry_description },
+  { XD_END }
+};
+
+static const struct sized_memory_description plain_hash_table_description = {
+  sizeof (struct hash_table),
+  plain_hash_table_description_1
+};
+
+#endif /* 0 */
 
 static void
 create_timing_profile_table (void)
 {
-  /* #### The hash code can safely be called from a signal handler
-     except when it has to grow the hash table.  In this case, it calls
-     realloc(), which is not (in general) re-entrant.  We'll just be
-     sleazy and make the table large enough that it (hopefully) won't
-     need to be realloc()ed. */
+  /* The hash code can safely be called from a signal handler except when
+     it has to grow the hash table.  In this case, it calls realloc(),
+     which is not (in general) re-entrant.  The way we deal with this is
+     documented at the top of this file. */
   if (!big_profile_table)
-    big_profile_table = make_hash_table (10000);
+    big_profile_table = make_hash_table (2000);
 }
 
-/* Increase the value of OBJ in Vcall_count_profile_table hash table.
-   If the hash table is nil, create it first.  */
-void
-profile_increase_call_count (Lisp_Object obj)
+static void
+create_profile_tables (void)
 {
+  create_timing_profile_table ();
+  if (NILP (Vtotal_timing_profile_table))
+    Vtotal_timing_profile_table =
+      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  if (NILP (Vcall_count_profile_table))
+    Vcall_count_profile_table =
+      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  if (NILP (Vgc_usage_profile_table))
+    Vgc_usage_profile_table =
+      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+  if (NILP (Vtotal_gc_usage_profile_table))
+    Vtotal_gc_usage_profile_table =
+      make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQ);
+}
+
+static Lisp_Object
+current_profile_function (void)
+{
+  Lisp_Object fun;
+  struct backtrace *bt = backtrace_list;
+
+  /* 2 because we set in_profiling when we entered the current routine. */
+  if (in_profiling >= 2)
+    return QSprofile_overhead;
+
+  /* Find a function actually being called.  Potentially (?) there could be
+     a number of non-calling funs -- calling foo autoloads, which tries to
+     call bar, but requires evalling its args first, which calls baz, ...
+     If profiling was not enabled when the function was called, just treat
+     the function as actually called, because the info about whether we've
+     finished the preamble will not have been recorded. */
+  for (; bt && !bt->function_being_called; bt = bt->next)
+    ;
+
+  if (bt)
+    {
+      fun = *bt->function;
+
+      if (!SYMBOLP (fun)
+	  && !COMPILED_FUNCTIONP (fun)
+	  && !SUBRP (fun)
+	  && !CONSP (fun)
+	  && !STRINGP (fun))
+	fun = QSunknown;
+    }
+  else
+    fun = QSprocessing_events_at_top_level;
+  return fun;
+}
+
+void
+profile_record_consing (EMACS_INT size)
+{
+  Lisp_Object fun;
   Lisp_Object count;
 
-  create_call_count_profile_table ();
+  in_profiling++;
+  fun = current_profile_function ();
+  count = Fgethash (fun, Vgc_usage_profile_table, Qzero);
+  Fputhash (fun, make_int (size + XINT (count)), Vgc_usage_profile_table);
+  in_profiling--;
+}
 
-  count = Fgethash (obj, Vcall_count_profile_table, Qzero);
-  if (!INTP (count))
-    count = Qzero;
-  Fputhash (obj, make_int (1 + XINT (count)), Vcall_count_profile_table);
+void
+profile_record_unconsing (EMACS_INT size)
+{
+  /* If we don't want to record values less than 0, change this; but then
+     the totals won't be accurate. */
+  profile_record_consing (-size);
+}
+
+inline static void
+profile_sow_backtrace (struct backtrace *bt)
+{
+  bt->current_total_timing_val =
+    XINT (Fgethash (*bt->function, Vtotal_timing_profile_table, Qzero));
+  bt->current_total_gc_usage_val =
+    XINT (Fgethash (*bt->function, Vtotal_gc_usage_profile_table, Qzero));
+  bt->function_being_called = 1;
+  /* Need to think carefully about the exact order of operations here
+    so that we don't end up with totals being less than function-only
+    values; */
+  bt->total_consing_at_start = total_consing;
+  /* Order of operation is tricky here because we want the total function
+     time to be as close as possible to (and absolutely not less than) the
+     function-only time.  From the sigprof-handler's perspective, the
+     function is "entered" the moment we finish executing the
+     in_profiling-- statement below, and ends the moment we finish
+     executing the in_profiling++ statement in
+     profile_record_just_called().  By recording the tick value as close as
+     possible to the "in-function" window but not in it, we satisfy the
+     conditions just mentioned. */
+  bt->total_ticks_at_start = total_ticks;
+}
+
+void
+profile_record_about_to_call (struct backtrace *bt)
+{
+  in_profiling++;
+  profiling_lock = 1;
+  /* See comments in create_timing_profile_table(). */
+  pregrow_hash_table_if_necessary (big_profile_table, EXTRA_BREATHING_ROOM);
+  profiling_lock = 0;
+  Fputhash (*bt->function,
+	    make_int (1 + XINT (Fgethash (*bt->function,
+					  Vcall_count_profile_table,
+					  Qzero))),
+	    Vcall_count_profile_table);
+  /* This may be set if the function was in its preamble at the time that
+     `start-profiling' was called.  If so, we shouldn't reset the values
+     because we may get inconsistent results, since we have already started
+     recording ticks and consing for the function. */
+  if (!bt->function_being_called)
+    profile_sow_backtrace (bt);
+  in_profiling--;
+}
+
+inline static void
+profile_reap_backtrace (struct backtrace *bt)
+{
+  EMACS_UINT ticks;
+  /* The following statement *MUST* come directly after the preceding one!
+     See the comment above. */
+  ticks = total_ticks;
+  /* We need to reset the "in-function" flag here.  Otherwise the sigprof
+     handler will record more ticks for the function while the post-amble
+     is executing, and its value will be > our total value. */
+  bt->function_being_called = 0;
+  Fputhash (*bt->function,
+	    /* This works even when the total_ticks value has overwrapped.
+	       Same for total_consing below. */
+	    make_int ((EMACS_INT) (ticks - bt->total_ticks_at_start)
+		      + bt->current_total_timing_val),
+	    Vtotal_timing_profile_table);
+  Fputhash (*bt->function,
+	    make_int ((EMACS_INT)
+		      (total_consing - bt->total_consing_at_start)
+		       + bt->current_total_gc_usage_val),
+	    Vtotal_gc_usage_profile_table);
+}
+
+void
+profile_record_just_called (struct backtrace *bt)
+{
+  in_profiling++;
+  profile_reap_backtrace (bt);
+  in_profiling--;
+}
+
+/* Called when unwinding the catch stack after a throw or signal, to
+   note that we are exiting the function. */
+void
+profile_record_unwind (struct backtrace *bt)
+{
+  /* We may have thrown while still in a function's preamble. */
+  if (bt->function_being_called)
+    profile_record_just_called (bt);
 }
 
 static SIGTYPE
 sigprof_handler (int signo)
 {
+#ifdef WIN32_ANY
+  /* Windows unfortunately does not have any such thing as setitimer
+     (ITIMER_PROF, ...), which runs in process time.  Everything is real
+     time.  So to get slightly more reasonable results, ignore completely
+     the times when we're blocking.  Same applies, of course, to Cygwin. */
+  if (mswindows_is_blocking)
+    return;
+#endif
+
+  in_profiling++;
+  total_ticks++;
+
   /* Don't do anything if we are shutting down, or are doing a maphash
      or clrhash on the table. */
-  if (!inside_profiling && !preparing_for_armageddon)
+  if (!profiling_lock && !preparing_for_armageddon)
     {
-      Lisp_Object fun;
+      Lisp_Object fun = current_profile_function ();
 
       /* If something below causes an error to be signaled, we'll
 	 not correctly reset this flag.  But we'll be in worse shape
 	 than that anyways, since we'll longjmp back to the last
 	 condition case. */
-      inside_profiling = 1;
-
-      if (profiling_redisplay_flag)
-	fun = QSin_redisplay;
-      else if (gc_in_progress)
-	fun = QSin_garbage_collection;
-      else if (backtrace_list)
-	{
-	  fun = *backtrace_list->function;
-
-	  if (!SYMBOLP (fun)
-	      && !COMPILED_FUNCTIONP (fun)
-	      && !SUBRP (fun)
-	      && !CONSP (fun))
-	     fun = QSunknown;
-	}
-      else
-	fun = QSprocessing_events_at_top_level;
+      profiling_lock = 1;
 
       {
-	/* #### see comment about memory allocation in start-profiling.
-	   Allocating memory in a signal handler is BAD BAD BAD.
-	   If you are using the non-mmap rel-alloc code, you might
-	   lose because of this.  Even worse, if the memory allocation
-	   fails, the `error' generated whacks everything hard. */
 	long count;
 	const void *vval;
 
@@ -169,34 +380,41 @@ sigprof_handler (int signo)
 	puthash (LISP_TO_VOID (fun), (void *) vval, big_profile_table);
       }
 
-      inside_profiling = 0;
+      profiling_lock = 0;
     }
+  in_profiling--;
 }
 
-DEFUN ("start-profiling", Fstart_profiling, 0, 1, 0, /*
+DEFUN ("start-profiling", Fstart_profiling, 0, 1, "", /*
 Start profiling, with profile queries every MICROSECS.
 If MICROSECS is nil or omitted, the value of `default-profiling-interval'
 is used.
 
 Information on function timings and call counts is currently recorded.
-You can retrieve the recorded profiling info using `get-profiling-info'.
+You can retrieve the recorded profiling info using `get-profiling-info',
+or the higher-level function `profile-results'.
 
 Starting and stopping profiling does not clear the currently recorded
 info.  Thus you can start and stop as many times as you want and everything
-will be properly accumulated.
+will be properly accumulated. (To clear, use `clear-profiling-info'.)
 */
        (microsecs))
 {
   /* This function can GC */
   int msecs;
   struct itimerval foo;
+  int depth;
 
-  /* #### The hash code can safely be called from a signal handler
-     except when it has to grow the hash table.  In this case, it calls
-     realloc(), which is not (in general) re-entrant.  We'll just be
-     sleazy and make the table large enough that it (hopefully) won't
-     need to be realloc()ed. */
-  create_timing_profile_table ();
+  if (profiling_active)
+    return Qnil;
+  depth = internal_bind_int (&in_profiling, 1 + in_profiling);
+
+  create_profile_tables ();
+  /* See comments at top of file and in create_timing_profile_table().
+     We ensure enough breathing room for all entries currently on the
+     stack. */
+  pregrow_hash_table_if_necessary (big_profile_table,
+				   EXTRA_BREATHING_ROOM + lisp_eval_depth);
 
   if (NILP (microsecs))
     msecs = default_profiling_interval;
@@ -209,17 +427,28 @@ will be properly accumulated.
     msecs = 1000;
 
   set_timeout_signal (SIGPROF, sigprof_handler);
+  {
+    struct backtrace *bt = backtrace_list;
+
+    /* When we begin profiling, pretend like we just entered all the
+       functions currently on the stack.  When we stop profiling, do the
+       opposite.  This ensures consistent values being recorded for both
+       function-only and total in such cases. */
+    for (; bt; bt = bt->next)
+      profile_sow_backtrace (bt);
+  }
+  profiling_active = 1;
+  profiling_lock = 0;
   foo.it_value.tv_sec = 0;
   foo.it_value.tv_usec = msecs;
   EMACS_NORMALIZE_TIME (foo.it_value);
   foo.it_interval = foo.it_value;
-  profiling_active = 1;
-  inside_profiling = 0;
   qxe_setitimer (ITIMER_PROF, &foo, 0);
+  unbind_to (depth);
   return Qnil;
 }
 
-DEFUN ("stop-profiling", Fstop_profiling, 0, 0, 0, /*
+DEFUN ("stop-profiling", Fstop_profiling, 0, 0, "", /*
 Stop profiling.
 */
        ())
@@ -227,12 +456,22 @@ Stop profiling.
   /* This function does not GC */
   struct itimerval foo;
 
+  if (!profiling_active)
+    return Qnil;
+  in_profiling++;
   foo.it_value.tv_sec = 0;
   foo.it_value.tv_usec = 0;
   foo.it_interval = foo.it_value;
   qxe_setitimer (ITIMER_PROF, &foo, 0);
   profiling_active = 0;
+  {
+    struct backtrace *bt = backtrace_list;
+
+    for (; bt; bt = bt->next)
+      profile_reap_backtrace (bt);
+  }
   set_timeout_signal (SIGPROF, fatal_error_signal);
+  in_profiling--;
   return Qnil;
 }
 
@@ -243,15 +482,24 @@ This clears both the internal timing information and the call counts in
 */
        ())
 {
+  in_profiling++;
   /* This function does not GC */
   if (big_profile_table)
     {
-      inside_profiling = 1;
+      profiling_lock = 1;
       clrhash (big_profile_table);
-      inside_profiling = 0;
+      profiling_lock = 0;
     }
+  if (!NILP (Vtotal_timing_profile_table))
+    Fclrhash (Vtotal_timing_profile_table);
   if (!NILP (Vcall_count_profile_table))
     Fclrhash (Vcall_count_profile_table);
+  if (!NILP (Vgc_usage_profile_table))
+    Fclrhash (Vgc_usage_profile_table);
+  if (!NILP (Vtotal_gc_usage_profile_table))
+    Fclrhash (Vtotal_gc_usage_profile_table);
+  in_profiling--;
+  
   return Qnil;
 }
 
@@ -278,6 +526,14 @@ get_profiling_info_timing_maphash (const void *void_key,
   return 0;
 }
 
+static Lisp_Object
+copy_hash_table_or_blank (Lisp_Object table)
+{
+  return !NILP (table) ? Fcopy_hash_table (table) :
+    make_lisp_hash_table (100, HASH_TABLE_NON_WEAK,
+			  HASH_TABLE_EQ);
+}
+
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
 Return the currently recorded profiling info.
 The format is a plist of symbols describing type of info recorded and
@@ -285,40 +541,66 @@ an associated type-specific entry.  Currently, the following info types
 are recorded
 
 `timing'
-  A hash table of funcallable objects or strings describing internal processing
-  operations \(redisplay, garbage collection, etc.), along with associated
-  tick counts (the frequency of ticks is controlled by
-  `default-profiling-interval' or the argument to `start-profiling').
+  A hash table of function descriptions (funcallable objects or strings
+  describing internal processing operations -- redisplay, garbage
+  collection, etc.), along with associated tick counts (the frequency of
+  ticks is controlled by `default-profiling-interval' or the argument to
+  `start-profiling').
+
+`total-timing'
+  A hash table of function descriptions and associated timing count for
+  the function and all descendants.
 
 `call-count'
-  A hash table of funcallable objects and associated call counts.
+  A hash table of function descriptions and associated call counts.
+
+`gc-usage'
+  A hash table of function descriptions and associated amount of consing.
+
+`total-gc-usage'
+  A hash table of function descriptions and associated amount of consing
+  in the function and all descendants.
 */
        ())
 {
   /* This function does not GC */
   struct get_profiling_info_closure closure;
+  Lisp_Object retv;
+  int depth = internal_bind_int (&in_profiling, 1 + in_profiling);
+  const void *overhead;
 
   closure.timing =
     make_lisp_hash_table (100, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 
   if (big_profile_table)
     {
-      int count = internal_bind_int ((int *) &inside_profiling, 1);
+      int count = internal_bind_int ((int *) &profiling_lock, 1);
       maphash (get_profiling_info_timing_maphash, big_profile_table, &closure);
+
+      /* OK, OK ...  the total-timing table is not going to have an entry
+	 for profile overhead, and it looks strange for it to come out 0,
+	 so make sure it looks reasonable. */
+      if (!gethash (LISP_TO_VOID (QSprofile_overhead), big_profile_table,
+		    &overhead))
+	overhead = 0;
+      Fputhash (QSprofile_overhead, make_int ((EMACS_INT) overhead),
+		Vtotal_timing_profile_table);
+
       unbind_to (count);
     }
 
-  return list4 (Qtiming, closure.timing, Qcall_count,
-		!NILP (Vcall_count_profile_table) ?
-		Fcopy_hash_table (Vcall_count_profile_table) :
-		make_lisp_hash_table (100, HASH_TABLE_NON_WEAK,
-				      HASH_TABLE_EQ));
+  retv = nconc2 (list6 (Qtiming, closure.timing, Qtotal_timing,
+			copy_hash_table_or_blank (Vtotal_timing_profile_table),
+			Qcall_count,
+			copy_hash_table_or_blank (Vcall_count_profile_table)),
+		 list4 (Qgc_usage,
+			copy_hash_table_or_blank (Vgc_usage_profile_table),
+			Qtotal_gc_usage,
+			copy_hash_table_or_blank (Vtotal_gc_usage_profile_table
+						  )));
+  unbind_to (depth);
+  return retv;
 }
-
-struct set_profiling_info_closure
-{
-  Lisp_Object timing;
-};
 
 static int
 set_profiling_info_timing_maphash (Lisp_Object key,
@@ -343,9 +625,11 @@ as described there.
 */
        (info))
 {
+  int depth;
   /* This function does not GC */
   Fclear_profiling_info ();
 
+  depth = internal_bind_int (&in_profiling, 1 + in_profiling);
   {
     EXTERNAL_PROPERTY_LIST_LOOP_3 (key, value, info)
       {
@@ -353,18 +637,25 @@ as described there.
 	  {
 	    CHECK_HASH_TABLE (value);
 	    create_timing_profile_table ();
+	    profiling_lock = 1;
 	    elisp_maphash_unsafe (set_profiling_info_timing_maphash, value,
 				  NULL);
+	    profiling_lock = 0;
 	  }
 	else if (EQ (key, Qcall_count))
-	  {
-	    Vcall_count_profile_table = Fcopy_hash_table (value);
-	  }
+	  Vcall_count_profile_table = Fcopy_hash_table (value);
+	else if (EQ (key, Qtotal_timing))
+	  Vtotal_timing_profile_table = Fcopy_hash_table (value);
+	else if (EQ (key, Qgc_usage))
+	  Vgc_usage_profile_table = Fcopy_hash_table (value);
+	else if (EQ (key, Qtotal_gc_usage))
+	  Vtotal_gc_usage_profile_table = Fcopy_hash_table (value);
 	else
 	  invalid_constant ("Unrecognized profiling-info keyword", key);
       }
   }
 
+  unbind_to (depth);
   return Qnil;
 }
 
@@ -373,10 +664,7 @@ mark_profiling_info_maphash (const void *void_key,
 			     void *void_val,
 			     void *void_closure)
 {
-  Lisp_Object key;
-
-  key = VOID_TO_LISP (void_key);
-  mark_object (key);
+  mark_object (VOID_TO_LISP (void_key));
   return 0;
 }
 
@@ -386,9 +674,9 @@ mark_profiling_info (void)
   /* This function does not GC */
   if (big_profile_table)
     {
-      inside_profiling = 1;
+      profiling_lock = 1;
       maphash (mark_profiling_info_maphash, big_profile_table, 0);
-      inside_profiling = 0;
+      profiling_lock = 0;
     }
 }
 
@@ -426,18 +714,34 @@ there is usually a machine-dependent limit on how small this value can be.
   staticpro (&Vcall_count_profile_table);
   Vcall_count_profile_table = Qnil;
 
-  inside_profiling = 0;
+  staticpro (&Vgc_usage_profile_table);
+  Vgc_usage_profile_table = Qnil;
 
-  QSin_redisplay = build_msg_string ("(in redisplay)");
-  staticpro (&QSin_redisplay);
-  QSin_garbage_collection = build_msg_string ("(in garbage collection)");
-  staticpro (&QSin_garbage_collection);
+  staticpro (&Vtotal_gc_usage_profile_table);
+  Vtotal_gc_usage_profile_table = Qnil;
+
+  staticpro (&Vtotal_timing_profile_table);
+  Vtotal_timing_profile_table = Qnil;
+
+#if 0
+  /* #### This is supposed to be for KKCC but KKCC doesn't use this stuff
+     currently. */
+  dump_add_root_struct_ptr (&big_profile_table, &plain_hash_table_description);
+#endif /* 0 */
+
+  profiling_lock = 0;
+
   QSunknown = build_msg_string ("(unknown)");
   staticpro (&QSunknown);
   QSprocessing_events_at_top_level =
     build_msg_string ("(processing events at top level)");
   staticpro (&QSprocessing_events_at_top_level);
+  QSprofile_overhead = build_msg_string ("(profile overhead)");
+  staticpro (&QSprofile_overhead);
 
   DEFSYMBOL (Qtiming);
+  DEFSYMBOL (Qtotal_timing);
   DEFSYMBOL (Qcall_count);
+  DEFSYMBOL (Qgc_usage);
+  DEFSYMBOL (Qtotal_gc_usage);
 }

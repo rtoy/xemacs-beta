@@ -68,6 +68,10 @@ Boston, MA 02111-1307, USA.  */
 
 static struct event_stream *gtk_event_stream;
 
+#ifdef WIN32_ANY
+extern int mswindows_is_blocking;
+#endif
+
 /* Do we accept events sent by other clients? */
 int gtk_allow_sendevents;
 
@@ -1158,7 +1162,13 @@ emacs_gtk_next_event (struct Lisp_Event *emacs_event)
 	 !process_events_occurred    &&
 	 !tty_events_occurred)
     {
-      gtk_main_iteration();
+#ifdef WIN32_ANY
+      mswindows_is_blocking = 1;
+#endif
+      gtk_main_iteration ();
+#ifdef WIN32_ANY
+      mswindows_is_blocking = 0;
+#endif
     }
 
   if (!NILP (dispatch_event_queue))

@@ -1,6 +1,6 @@
 /* The lisp stack.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -63,6 +63,51 @@ struct backtrace
     char evalargs;
     /* Nonzero means call value of debugger when done with this operation. */
     char debug_on_exit;
+
+    /* All the rest is information for the use of the profiler.  The only
+       thing that eval.c does is set the first value to 0 so that it can
+       be relied upon. */
+
+    /* ----------------------------------------------------------------- */
+
+    /* 0 = profiling not turned on when function called.
+           Since profiling can be turned on and off dynamically, we can't
+           always count on having info recorded when a function was called
+           and need to take evasive action if necessary.
+       1 = profiling turned on but function not yet actually called.  Lots of
+           stuff can happen between when a function is pushed onto the
+           backtrace list and when it's actually called (e.g. evalling its
+           arguments, autoloading, etc.).  For greater accuracy we don't
+           treat the preamble stuff as part of the function itself.
+       2 = profiling turned on, function called.
+    */
+    char function_being_called;
+    /* The trick here is handling recursive functions and dealing with the
+       dynamicity of in-profile/not-in-profile.  I used to just use a bunch
+       of hash tables for all info but that fails in the presence of
+       recursive functions because they can modify values out from under
+       you.  The algorithm here is that we record the total_ticks and
+       total_consing, as well as the current values of `total-timing' and
+       `total-gc-usage' for the OBJ -- that's because recursive functions,
+       which get called later and exit early, will go ahead and modify the
+       `total-timing' and `total-gc-usage' for the fun, even though it's
+       not "correct" because the outer function is still running.  However,
+       if we ask for profiling info at this point, at least we're getting
+       SOME info.
+
+       So ... On entry, we record these four values.  On exit, we compute
+       an offset from the recorded value to the current value and then
+       store it into the appropriate hash table entry, using the recorded
+       value in the entry rather than the actual one. (Inner recursive
+       functions may have added their own values to the total-counts, and
+       we want to subsume them, not add to them.)
+
+       #### Also we need to go through the backtrace list during
+       stop-profiling and record values, just like for unwind_to. */
+    EMACS_INT  current_total_timing_val;
+    EMACS_INT  current_total_gc_usage_val;
+    EMACS_UINT total_ticks_at_start;
+    EMACS_UINT total_consing_at_start;
   };
 
 /* This structure helps implement the `catch' and `throw' control
@@ -347,6 +392,19 @@ extern int specpdl_size;
     FFU_symbol->value = FFU_newval;					\
   else									\
     Fset (FFU_sym, FFU_newval);						\
+} while (0)
+
+/* Note: you must always fill in all of the fields in a backtrace structure
+   before pushing them on the backtrace_list.  The profiling code depends
+   on this. */
+
+#define PUSH_BACKTRACE(bt) do {		\
+  (bt).next = backtrace_list;		\
+  backtrace_list = &(bt);		\
+} while (0)
+
+#define POP_BACKTRACE(bt) do {		\
+  backtrace_list = (bt).next;		\
 } while (0)
 
 #endif /* INCLUDED_backtrace_h_ */

@@ -1,7 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -4036,6 +4036,7 @@ Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
 void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
 		     ...) PRINTF_ARGS (3, 4);
+extern int backtrace_with_internal_sections;
 
 
 /* Defined in event-stream.c */
@@ -4459,12 +4460,6 @@ Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object, Lisp_Object);
 void float_to_string (char *, double);
 void internal_object_printer (Lisp_Object, Lisp_Object, int);
-
-/* Defined in profile.c */
-void mark_profiling_info (void);
-void profile_increase_call_count (Lisp_Object);
-extern int profiling_active;
-extern int profiling_redisplay_flag;
 
 /* Defined in rangetab.c */
 EXFUN (Fclear_range_table, 1);

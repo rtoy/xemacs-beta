@@ -1,6 +1,6 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation, Inc.
    Copyright (c) 1995 Sun Microsystems, Inc.
-   Copyright (c) 1995, 1996, 2000, 2002 Ben Wing.
+   Copyright (c) 1995, 1996, 2000, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -226,6 +226,7 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h"
 #include "opaque.h"
 #include "process.h"
+#include "profile.h"
 #include "redisplay.h"
 #include "gutter.h"
 
@@ -429,6 +430,9 @@ typedef int Endpoint_Index;
 #define DE_MUST_BE_ATTACHED 2
 
 Lisp_Object Vlast_highlighted_extent;
+
+Lisp_Object QSin_map_extents_internal;
+
 Fixnum mouse_highlight_priority;
 
 Lisp_Object Qextentp;
@@ -2121,8 +2125,9 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
   Extent_List_Marker *posm = 0; /* marker for extent list,
 				   if ME_MIGHT_MODIFY_EXTENTS */
   /* count and struct for unwind-protect, if ME_MIGHT_THROW */
-  int count = 0;
+  int count = specpdl_depth ();
   struct map_extents_struct closure;
+  PROFILE_DECLARE ();
 
 #ifdef ERROR_CHECK_EXTENTS
   assert (from <= to);
@@ -2139,9 +2144,11 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
     }
 
   el = buffer_or_string_extent_list (obj);
-  if (!el || !extent_list_num_els(el))
+  if (!el || !extent_list_num_els (el))
     return;
   el = 0;
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_map_extents_internal);
 
   st = buffer_or_string_bytexpos_to_memxpos (obj, from);
   en = buffer_or_string_bytexpos_to_memxpos (obj, to);
@@ -2166,7 +2173,6 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
       /* The mapping function might throw past us so we need to use an
 	 unwind_protect() to eliminate the internal extent and range
 	 that we use. */
-      count = specpdl_depth ();
       closure.range = range;
       closure.mkr = 0;
       record_unwind_protect (map_extents_unwind,
@@ -2431,10 +2437,7 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
   /* ---------- Finished looping. ---------- */
   }
 
-  if (flags & ME_MIGHT_THROW)
-    /* This deletes the range extent and frees the marker. */
-    unbind_to (count);
-  else
+  if (!(flags & ME_MIGHT_THROW))
     {
       /* Delete them ourselves */
       if (range)
@@ -2442,6 +2445,11 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
       if (posm)
 	extent_list_delete_marker (el, posm);
     }
+
+  /* This deletes the range extent and frees the marker, if ME_MIGHT_THROW. */
+  unbind_to (count);
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_map_extents_internal);
 }
 
 /* ------------------------------- */
@@ -7421,4 +7429,7 @@ functions `get-text-property' or `get-char-property' are called.
   staticpro (&Vextent_face_reverse_memoize_hash_table);
   Vextent_face_reverse_memoize_hash_table =
     make_lisp_hash_table (100, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
+
+  QSin_map_extents_internal = build_msg_string ("(in map-extents-internal)");
+  staticpro (&QSin_map_extents_internal);
 }

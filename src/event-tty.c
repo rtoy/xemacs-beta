@@ -41,6 +41,10 @@ extern SELECT_TYPE process_only_mask, tty_only_mask;
 
 static struct event_stream *tty_event_stream;
 
+#ifdef WIN32_ANY
+extern int mswindows_is_blocking;
+#endif
+
 
 /************************************************************************/
 /*				timeout events				*/
@@ -118,7 +122,13 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 	  pointer_to_this = &select_time_to_block;
 	}
 
+#ifdef WIN32_ANY
+      mswindows_is_blocking = 1;
+#endif
       ndesc = select (MAXDESC, &temp_mask, 0, 0, pointer_to_this);
+#ifdef WIN32_ANY
+      mswindows_is_blocking = 0;
+#endif
       if (ndesc > 0)
 	{
 	  /* Look for a TTY event */

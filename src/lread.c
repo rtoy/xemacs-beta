@@ -30,9 +30,10 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "bytecode.h"
 #include "elhash.h"
+#include "file-coding.h"
 #include "lstream.h"
 #include "opaque.h"
-#include "file-coding.h"
+#include "profile.h"
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -59,8 +60,7 @@ Lisp_Object Qbackquote, Qbacktick, Qcomma, Qcomma_at, Qcomma_dot;
 Lisp_Object Qvariable_domain;	/* I18N3 */
 Lisp_Object Vvalues, Vstandard_input, Vafter_load_alist;
 Lisp_Object Qcurrent_load_list;
-Lisp_Object Qload, Qload_file_name;
-Lisp_Object Qfset;
+Lisp_Object Qload, Qload_file_name, Qload_internal, Qfset;
 
 /* Hash-table that maps directory names to hashes of their contents.  */
 static Lisp_Object Vlocate_file_hash_table;
@@ -497,6 +497,7 @@ encoding detection or end-of-line detection.
   Lisp_Object older   = Qnil;
   Lisp_Object handler = Qnil;
   Lisp_Object found   = Qnil;
+  Lisp_Object retval;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int reading_elc = 0;
   int from_require = EQ (nomessage, Qrequire);
@@ -504,15 +505,20 @@ encoding detection or end-of-line detection.
   struct stat s1, s2;
   Ibyte *spaces = alloca_ibytes (load_in_progress * 2 + 10);
   int i;
+  PROFILE_DECLARE ();
 
   GCPRO4 (file, newer, older, found);
   CHECK_STRING (file);
 
+  PROFILE_RECORD_ENTERING_SECTION (Qload_internal);
+
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
-    RETURN_UNGCPRO (call5 (handler, Qload, file, noerror,
-			  nomessage, nosuffix));
+    {
+      retval = call5 (handler, Qload, file, noerror, nomessage, nosuffix);
+      goto done;
+    }
 
   /* Do this after the handler to avoid
      the need to gcpro noerror, nomessage and nosuffix.
@@ -551,8 +557,8 @@ encoding detection or end-of-line detection.
 	    signal_error (Qfile_error, "Cannot open load file", file);
 	  else
 	    {
-	      UNGCPRO;
-	      return Qnil;
+	      retval = Qnil;
+	      goto done;
 	    }
 	}
 
@@ -751,8 +757,11 @@ do {								\
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
 
+  retval = Qt;
+done:
+  PROFILE_RECORD_EXITING_SECTION (Qload_internal);
   UNGCPRO;
-  return Qt;
+  return retval;
 }
 
 
@@ -3016,6 +3025,7 @@ syms_of_lread (void)
   DEFSYMBOL (Qcurrent_load_list);
   DEFSYMBOL (Qload);
   DEFSYMBOL (Qload_file_name);
+  DEFSYMBOL (Qload_internal);
   DEFSYMBOL (Qfset);
 
 #ifdef LISP_BACKQUOTES
@@ -3206,7 +3216,7 @@ character escape syntaxes or just read them incorrectly.
 #endif
 
   /* So that early-early stuff will work */
-  Ffset (Qload, intern ("load-internal"));
+  Ffset (Qload,	Qload_internal);
 
 #ifdef FEATUREP_SYNTAX
   DEFSYMBOL (Qfeaturep);

@@ -1,6 +1,6 @@
 /* Buffer manipulation primitives for XEmacs.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 1999 Martin Buchholz.
 
 This file is part of XEmacs.
@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "charset.h"
 #include "file-coding.h"
 #include "lstream.h"
+#include "profile.h"
 
 
 /************************************************************************/
@@ -40,19 +41,71 @@ Boston, MA 02111-1307, USA.  */
 
 /*
    ==========================================================================
-                               1. Character Sets
+                1. Intro to Characters, Character Sets, and Encodings
    ==========================================================================
-
-   A character set (or "charset") is an ordered set of characters.
 
    A character (which is, BTW, a surprisingly complex concept) is, in a
    written representation of text, the most basic written unit that has a
    meaning of its own.  It's comparable to a phoneme when analyzing words
-   in spoken speech.  Just like with a phoneme (which is an abstract
-   concept, and is represented in actual spoken speech by one or more
-   allophones, ...&&#### finish this., a character is actually an abstract
-   concept
+   in spoken speech (for example, the sound of `t' in English, which in
+   fact has different pronunciations in different words -- aspirated in
+   `time', unaspirated in `stop', unreleased or even pronounced as a
+   glottal stop in `button', etc. -- but logically is a single concept).
+   Like a phoneme, a character is an abstract concept defined by its
+   *meaning*.  The character `lowercase f', for example, can always be used
+   to represent the first letter in the word `fill', regardless of whether
+   it's drawn upright or italic, whether the `fi' combination is drawn as a
+   single ligature, whether there are serifs on the bottom of the vertical
+   stroke, etc. (These different appearances of a single character are
+   often called "graphs" or "glyphs".) Our concern when representing text
+   is on representing the abstract characters, and not on their exact
+   appearance.
+
+   A character set (or "charset"), as we define it, is a set of characters,
+   each with an associated number (or set of numbers -- see below), called
+   a "code point".  It's important to understand that a character is not
+   defined by any number attached to it, but by its meaning.  For example,
+   ASCII and EBCDIC are two charsets containing exactly the same characters
+   (lowercase and uppercase letters, numbers 0 through 9, particular
+   punctuation marks) but with different numberings. The `comma' character
+   in ASCII and EBCDIC, for instance, is the same character despite having
+   a different numbering.  Conversely, when comparing ASCII and JIS-Roman,
+   which look the same except that the latter has a yen sign substituted
+   for the backslash, we would say that the backslash and yen sign are
+   *not* the same characters, despite having the same number (95) and
+   despite the fact that all other characters are present in both charsets,
+   with the same numbering.  ASCII and JIS-Roman, then, do *not* have
+   exactly the same characters in them (ASCII has a backslash character but
+   no yen-sign character, and vice-versa for JIS-Roman), unlike ASCII and
+   EBCDIC, even though the numberings in ASCII and JIS-Roman are closer.
+
+   It's also important to distinguish between charsets and encodings.  For
+   a simple charset like ASCII, there is only one encoding normally used --
+   each character is represented by a single byte, with the same value as
+   its code point.  For more complicated charsets, however, things are not
+   so obvious.  Unicode version 2, for example, is a large charset with
+   thousands of characters, each indexed by a 16-bit number, often
+   represented in hex, e.g. 0x05D0 for the Hebrew letter "aleph".  One
+   obvious encoding uses two bytes per character (actually two encodings,
+   depending on which of the two possible byte orderings is chosen).  This
+   encoding is convenient for internal processing of Unicode text; however,
+   it's incompatible with ASCII, so a different encoding, e.g. UTF-8, is
+   usually used for external text, for example files or e-mail.  UTF-8
+   represents Unicode characters with one to three bytes (often extended to
+   six bytes to handle characters with up to 31-bit indices).  Unicode
+   characters 00 to 7F (identical with ASCII) are directly represented with
+   one byte, and other characters with two or more bytes, each in the range
+   80 to FF.
+
+   In general, a single encoding may be able to represent more than one
+   charset.
+
+   See also man/lispref/mule.texi.
    
+   ==========================================================================
+                               2. Character Sets
+   ==========================================================================
+
    A particular character in a charset is indexed using one or
    more "position codes", which are non-negative integers.
    The number of position codes needed to identify a particular
@@ -131,7 +184,7 @@ Boston, MA 02111-1307, USA.  */
    This is a bit ad-hoc but gets the job done.
 
    ==========================================================================
-                               2. Encodings
+                               3. Encodings
    ==========================================================================
 
    An "encoding" is a way of numerically representing
@@ -212,7 +265,7 @@ Boston, MA 02111-1307, USA.  */
    Initially, Printing-ASCII is invoked.
 
    ==========================================================================
-                          3. Internal Mule Encodings
+                          4. Internal Mule Encodings
    ==========================================================================
 
    In XEmacs/Mule, each character set is assigned a unique number,
@@ -336,7 +389,7 @@ Boston, MA 02111-1307, USA.  */
    of the search string and &&#### finish this.
 
    ==========================================================================
-                  4. Buffer Positions and Other Typedefs
+                  5. Buffer Positions and Other Typedefs
    ==========================================================================
 
    A. Buffer Positions
@@ -383,7 +436,7 @@ Boston, MA 02111-1307, USA.  */
    B. Other Typedefs
 
       Ichar:
-      -------
+      ------
         This typedef represents a single Emacs character, which can be
 	ASCII, ISO-8859, or some extended character, as would typically
 	be used for Kanji.  Note that the representation of a character
@@ -405,7 +458,7 @@ Boston, MA 02111-1307, USA.  */
 	the standard 8-bit representation of ASCII/ISO-8859-1.
 
       Ibyte:
-      --------
+      ------
         The data in a buffer or string is logically made up of Ibyte
 	objects, where a Ibyte takes up the same amount of space as a
 	char. (It is declared differently, though, to catch invalid
@@ -428,8 +481,8 @@ Boston, MA 02111-1307, USA.  */
 	     within the string, you need merely use standard
 	     searching routines.
 
-      array of char:
-      --------------
+      Extbyte:
+      --------
         Strings that go in or out of Emacs are in "external format",
 	typedef'ed as an array of char or a char *.  There is more
 	than one external format (JIS, EUC, etc.) but they all
@@ -515,26 +568,27 @@ Boston, MA 02111-1307, USA.  */
    case. #### unfinished
 
    ==========================================================================
-                                5. Miscellaneous
+                                6. Miscellaneous
    ==========================================================================
 
    A. Unicode Support
 
-   Adding Unicode support is very desirable.  Unicode will likely be a
-   very common representation in the future, and thus we should
-   represent Unicode characters using three bytes instead of four.
-   This means we need to find leading bytes for Unicode.  Given that
-   there are 65,536 characters in Unicode and we can attach 96x96 =
-   9,216 characters per leading byte, we need eight leading bytes for
-   Unicode.  We currently have four free (0x9A - 0x9D), and with a
-   little bit of rearranging we can get five: ASCII doesn't really
-   need to take up a leading byte. (We could just as well use 0x7F,
-   with a little change to the functions that assume that 0x80 is the
-   lowest leading byte.) This means we still need to dump three
-   leading bytes and move them into private space.  The CNS charsets
-   are good candidates since they are rarely used, and
-   JAPANESE_JISX0208_1978 is becoming less and less used and could
-   also be dumped.
+   Unicode support is very desirable.  Currrently we know how to handle
+   externally-encoded Unicode data in various encodings -- UTF-16, UTF-8,
+   etc.  However, we really need to represent Unicode characters internally
+   as-is, rather than converting to some language-specific character set.
+   For efficiency, we should represent Unicode characters using 3 bytes
+   rather than 4.  This means we need to find leading bytes for Unicode.
+   Given that there are 65,536 characters in Unicode and we can attach
+   96x96 = 9,216 characters per leading byte, we need eight leading bytes
+   for Unicode.  We currently have four free (0x9A - 0x9D), and with a
+   little bit of rearranging we can get five: ASCII doesn't really need to
+   take up a leading byte. (We could just as well use 0x7F, with a little
+   change to the functions that assume that 0x80 is the lowest leading
+   byte.) This means we still need to dump three leading bytes and move
+   them into private space.  The CNS charsets are good candidates since
+   they are rarely used, and JAPANESE_JISX0208_1978 is becoming less and
+   less used and could also be dumped.
 
    B. Composite Characters
       
@@ -623,6 +677,9 @@ static int composite_char_col_next;
 #endif /* ENABLE_COMPOSITE_CHARS */
 
 #endif /* MULE */
+
+Lisp_Object QSin_char_byte_conversion;
+Lisp_Object QSin_internal_external_conversion;
 
 
 /************************************************************************/
@@ -1599,6 +1656,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
   Bytebpos retval;
   int diff_so_far;
   int add_to_cache = 0;
+  PROFILE_DECLARE ();
 
   /* Check for some cached positions, for speed. */
   if (x == BUF_PT (buf))
@@ -1607,6 +1665,8 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
     return BYTE_BUF_ZV (buf);
   if (x == BUF_BEGV (buf))
     return BYTE_BUF_BEGV (buf);
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
 
   bufmin = buf->text->mule_bufmin;
   bufmax = buf->text->mule_bufmax;
@@ -1858,6 +1918,8 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       buf->text->mule_bytebpos_cache[replace_loc] = retval;
     }
 
+  PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
+
   return retval;
 }
 
@@ -1876,6 +1938,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
   Charbpos retval;
   int diff_so_far;
   int add_to_cache = 0;
+  PROFILE_DECLARE ();
 
   /* Check for some cached positions, for speed. */
   if (x == BYTE_BUF_PT (buf))
@@ -1884,6 +1947,8 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
     return BUF_ZV (buf);
   if (x == BYTE_BUF_BEGV (buf))
     return BUF_BEGV (buf);
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
 
   bufmin = buf->text->mule_bufmin;
   bufmax = buf->text->mule_bufmax;
@@ -2134,6 +2199,8 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       buf->text->mule_charbpos_cache[replace_loc] = retval;
       buf->text->mule_bytebpos_cache[replace_loc] = x;
     }
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
 
   return retval;
 }
@@ -2759,8 +2826,13 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
   /* It's guaranteed that many callers are not prepared for GC here,
      esp. given that this code conversion occurs in many very hidden
      places. */
-  int count = begin_gc_forbidden ();
+  int count;
   Extbyte_dynarr *conversion_out_dynarr;
+  PROFILE_DECLARE ();
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
+
+  count = begin_gc_forbidden ();
 
   type_checking_assert
     (((source_type == DFC_TYPE_DATA) ||
@@ -2945,6 +3017,8 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       Dynarr_add (conversion_out_dynarr, '\0');
       sink->data.ptr = Dynarr_atp (conversion_out_dynarr, 0);
     }
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_internal_external_conversion);
 }
 
 void
@@ -2957,8 +3031,13 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   /* It's guaranteed that many callers are not prepared for GC here,
      esp. given that this code conversion occurs in many very hidden
      places. */
-  int count = begin_gc_forbidden ();
+  int count;
   Ibyte_dynarr *conversion_in_dynarr;
+  PROFILE_DECLARE ();
+
+  PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
+
+  count = begin_gc_forbidden ();
 
   type_checking_assert
     ((source_type == DFC_TYPE_DATA ||
@@ -3010,7 +3089,8 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 #endif
     }
 #ifdef HAVE_WIN32_CODING_SYSTEMS
-  /* Optimize the common case involving Unicode where only ASCII/Latin-1 is involved */
+  /* Optimize the common case involving Unicode where only ASCII/Latin-1 is
+     involved */
   else if (source_type != DFC_TYPE_LISP_LSTREAM &&
 	   sink_type   != DFC_TYPE_LISP_LSTREAM &&
 	   dfc_coding_system_is_unicode (coding_system))
@@ -3135,6 +3215,8 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       Dynarr_add (conversion_in_dynarr, '\0');
       sink->data.ptr = Dynarr_atp (conversion_in_dynarr, 0);
     }
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_internal_external_conversion);
 }
 
 
@@ -3667,6 +3749,12 @@ void
 vars_of_text (void)
 {
   reinit_vars_of_text ();
+
+  QSin_char_byte_conversion = build_msg_string ("(in char-byte conversion)");
+  staticpro (&QSin_char_byte_conversion);
+  QSin_internal_external_conversion =
+    build_msg_string ("(in internal-external conversion)");
+  staticpro (&QSin_internal_external_conversion);
 
 #ifdef ENABLE_COMPOSITE_CHARS
   /* #### not dumped properly */

@@ -1,7 +1,7 @@
 /* Evaluator for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -147,22 +147,10 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "lstream.h"
 #include "opaque.h"
+#include "profile.h"
 #include "window.h"
 
 struct backtrace *backtrace_list;
-
-/* Note: you must always fill in all of the fields in a backtrace structure
-   before pushing them on the backtrace_list.  The profiling code depends
-   on this. */
-
-#define PUSH_BACKTRACE(bt) do {		\
-  (bt).next = backtrace_list;		\
-  backtrace_list = &(bt);		\
-} while (0)
-
-#define POP_BACKTRACE(bt) do {		\
-  backtrace_list = (bt).next;		\
-} while (0)
 
 /* Macros for calling subrs with an argument list whose length is only
    known at runtime.  See EXFUN and DEFUN for similar hackery.  */
@@ -292,13 +280,15 @@ int specpdl_depth_counter;
 Fixnum max_specpdl_size;
 
 /* Depth in Lisp evaluations and function calls.  */
-static int lisp_eval_depth;
+int lisp_eval_depth;
 
 /* Maximum allowed depth in Lisp evaluations and function calls.  */
 Fixnum max_lisp_eval_depth;
 
 /* Nonzero means enter debugger before next function call */
 static int debug_on_next_call;
+
+int backtrace_with_internal_sections;
 
 /* List of conditions (non-nil atom means all) which cause a backtrace
    if an error is handled by the command loop's error handler.  */
@@ -1595,7 +1585,16 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
 #endif /* Former code */
 
   UNWIND_GCPRO_TO (c->gcpro);
-  backtrace_list = c->backlist;
+  if (profiling_active)
+    {
+      while (backtrace_list != c->backlist)
+	{
+          profile_record_unwind (backtrace_list);
+	  backtrace_list = backtrace_list->next;
+	}
+    }
+  else
+    backtrace_list = c->backlist;
   lisp_eval_depth = c->lisp_eval_depth;
 
 #ifdef DEFEND_AGAINST_THROW_RECURSION
@@ -1706,7 +1705,7 @@ If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
 
 
 /************************************************************************/
-/*		      Signalling and trapping errors			*/
+/*                           Trapping errors                            */
 /************************************************************************/
 
 static Lisp_Object
@@ -3092,11 +3091,14 @@ when reading the arguments.
       backtrace.args = &cmd;
       backtrace.nargs = 1;
       backtrace.evalargs = 0;
-      backtrace.pdlcount = specpdl_depth();
+      backtrace.pdlcount = specpdl_depth ();
       backtrace.debug_on_exit = 0;
+      backtrace.function_being_called = 0;
       PUSH_BACKTRACE (backtrace);
 
+      PROFILE_ENTER_FUNCTION ();
       final = Fcall_interactively (cmd, record_flag, keys);
+      PROFILE_EXIT_FUNCTION ();
 
       POP_BACKTRACE (backtrace);
       return final;
@@ -3535,13 +3537,11 @@ Evaluate FORM and return its value.
   backtrace.nargs = UNEVALLED;
   backtrace.evalargs = 1;
   backtrace.debug_on_exit = 0;
+  backtrace.function_being_called = 0;
   PUSH_BACKTRACE (backtrace);
 
   if (debug_on_next_call)
     do_debug_on_call (Qt);
-
-  if (profiling_active)
-    profile_increase_call_count (original_fun);
 
   /* At this point, only original_fun and original_args
      have values that will be used below. */
@@ -3559,8 +3559,10 @@ Evaluate FORM and return its value.
       if (max_args == UNEVALLED) /* Optimize for the common case */
 	{
 	  backtrace.evalargs = 0;
+	  PROFILE_ENTER_FUNCTION ();
 	  val = (((Lisp_Object (*) (Lisp_Object)) subr_function (subr))
 		 (original_args));
+	  PROFILE_EXIT_FUNCTION ();
 	}
       else if (nargs <= max_args)
         {
@@ -3586,7 +3588,9 @@ Evaluate FORM and return its value.
           backtrace.args  = args;
           backtrace.nargs = nargs;
 
+	  PROFILE_ENTER_FUNCTION ();
 	  FUNCALL_SUBR (val, subr, args, max_args);
+	  PROFILE_EXIT_FUNCTION ();
 
 	  UNGCPRO;
         }
@@ -3611,8 +3615,10 @@ Evaluate FORM and return its value.
 	  backtrace.args  = args;
 	  backtrace.nargs = nargs;
 
+	  PROFILE_ENTER_FUNCTION ();
 	  val = (((Lisp_Object (*) (int, Lisp_Object *)) subr_function (subr))
 		 (nargs, args));
+	  PROFILE_EXIT_FUNCTION ();
 
 	  UNGCPRO;
 	}
@@ -3643,7 +3649,9 @@ Evaluate FORM and return its value.
       backtrace.nargs    = nargs;
       backtrace.evalargs = 0;
 
+      PROFILE_ENTER_FUNCTION ();
       val = funcall_compiled_function (fun, nargs, args);
+      PROFILE_EXIT_FUNCTION ();
 
       /* Do the debug-on-exit now, while args is still GCPROed.  */
       if (backtrace.debug_on_exit)
@@ -3665,7 +3673,9 @@ Evaluate FORM and return its value.
 	}
       else if (EQ (funcar, Qmacro))
 	{
+	  PROFILE_ENTER_FUNCTION ();
 	  val = Feval (apply1 (XCDR (fun), original_args));
+	  PROFILE_EXIT_FUNCTION ();
 	}
       else if (EQ (funcar, Qlambda))
 	{
@@ -3690,7 +3700,9 @@ Evaluate FORM and return its value.
 	  backtrace.nargs    = nargs;
 	  backtrace.evalargs = 0;
 
+	  PROFILE_ENTER_FUNCTION ();
 	  val = funcall_lambda (fun, nargs, args);
+	  PROFILE_EXIT_FUNCTION ();
 
 	  /* Do the debug-on-exit now, while args is still GCPROed.  */
 	  if (backtrace.debug_on_exit)
@@ -3745,6 +3757,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   struct backtrace backtrace;
   int fun_nargs = nargs - 1;
   Lisp_Object *fun_args = args + 1;
+  Lisp_Object orig_fun;
 
   QUIT;
 
@@ -3781,24 +3794,23 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 			Qunbound);
     }
 
-  backtrace.pdlcount = specpdl_depth();
+  backtrace.pdlcount = specpdl_depth ();
   backtrace.function = &args[0];
   backtrace.args  = fun_args;
   backtrace.nargs = fun_nargs;
   backtrace.evalargs = 0;
   backtrace.debug_on_exit = 0;
+  backtrace.function_being_called = 0;
   PUSH_BACKTRACE (backtrace);
 
   if (debug_on_next_call)
     do_debug_on_call (Qlambda);
 
+  orig_fun = args[0];
+
  retry:
 
   fun = args[0];
-
-  /* It might be useful to place this *after* all the checks.  */
-  if (profiling_active)
-    profile_increase_call_count (fun);
 
   /* We could call indirect_function directly, but profiling shows
      this is worth optimizing by partially unrolling the loop.  */
@@ -3822,7 +3834,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
       if (fun_nargs == max_args) /* Optimize for the common case */
 	{
 	funcall_subr:
+	  PROFILE_ENTER_FUNCTION ();
 	  FUNCALL_SUBR (val, subr, fun_args, max_args);
+	  PROFILE_EXIT_FUNCTION ();
 	}
       else if (fun_nargs < subr->min_args)
 	{
@@ -3843,7 +3857,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	}
       else if (max_args == MANY)
 	{
+	  PROFILE_ENTER_FUNCTION ();
 	  val = SUBR_FUNCTION (subr, MANY) (fun_nargs, fun_args);
+	  PROFILE_EXIT_FUNCTION ();
 	}
       else if (max_args == UNEVALLED) /* Can't funcall a special form */
 	{
@@ -3857,7 +3873,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
     }
   else if (COMPILED_FUNCTIONP (fun))
     {
+      PROFILE_ENTER_FUNCTION ();
       val = funcall_compiled_function (fun, fun_nargs, fun_args);
+      PROFILE_EXIT_FUNCTION ();
     }
   else if (CONSP (fun))
     {
@@ -3865,7 +3883,9 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 
       if (EQ (funcar, Qlambda))
 	{
+	  PROFILE_ENTER_FUNCTION ();
 	  val = funcall_lambda (fun, fun_nargs, fun_args);
+	  PROFILE_EXIT_FUNCTION ();
 	}
       else if (EQ (funcar, Qautoload))
 	{
@@ -6056,6 +6076,15 @@ backtrace_specials (int speccount, int speclimit, Lisp_Object stream)
   if (printing_bindings) write_c_string (stream, ")\n");
 }
 
+static Lisp_Object
+backtrace_unevalled_args (Lisp_Object *args)
+{
+  if (args)
+    return *args;
+  else
+    return list1 (build_string ("[internal]"));
+}
+
 DEFUN ("backtrace", Fbacktrace, 0, 2, "", /*
 Print a trace of Lisp function calls currently active.
 Optional arg STREAM specifies the output stream to send the backtrace to,
@@ -6135,7 +6164,9 @@ unwind-protects, as well as function calls, were made.
 	  write_c_string (stream, backlist->debug_on_exit ? "* " : "  ");
 	  if (backlist->nargs == UNEVALLED)
 	    {
-	      Fprin1 (Fcons (*backlist->function, *backlist->args), stream);
+	      Fprin1 (Fcons (*backlist->function,
+			     backtrace_unevalled_args (backlist->args)),
+		      stream);
 	      write_c_string (stream, "\n"); /* from FSFmacs 19.30 */
 	    }
 	  else
@@ -6213,7 +6244,8 @@ If NFRAMES is more than the number of frames, the value is nil.
   if (!backlist)
     return Qnil;
   if (backlist->nargs == UNEVALLED)
-    return Fcons (Qnil, Fcons (*backlist->function, *backlist->args));
+    return Fcons (Qnil, Fcons (*backlist->function,
+			       backtrace_unevalled_args (backlist->args)));
   else
     {
       if (backlist->nargs == MANY)
@@ -6513,6 +6545,19 @@ control-shift-G to signal a critical quit.
   DEFVAR_BOOL ("debug-on-next-call", &debug_on_next_call /*
 Non-nil means enter debugger before next `eval', `apply' or `funcall'.
 */ );
+
+  DEFVAR_BOOL ("backtrace-with-interal-sections",
+	       &backtrace_with_internal_sections /*
+Non-nil means backtraces will contain additional information indicating
+when particular sections of the C code have been entered, e.g. redisplay(),
+byte-char conversion, internal-external conversion, etc.  This can be
+particularly useful when XEmacs crashes, in helping to pinpoint the problem.
+*/ );
+#ifdef ERROR_CHECK_STRUCTURES
+  backtrace_with_internal_sections = 1;
+#else
+  backtrace_with_internal_sections = 0;
+#endif
 
   DEFVAR_LISP ("debugger", &Vdebugger /*
 Function to call to invoke debugger.

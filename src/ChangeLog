@@ -1,3 +1,165 @@
+2003-02-13  Ben Wing  <ben@xemacs.org>
+
+	* unicode.c (utf_16_detect):
+	Don't get snafued w/division-by-zero.
+
+2003-02-12  Ben Wing  <ben@xemacs.org>
+
+	* profile.c:
+	* profile.c (create_profile_tables):
+	* profile.c (current_profile_function):
+	* profile.c (profile_record_consing):
+	* profile.c (profile_record_about_to_call):
+	* profile.c (profile_record_just_called):
+	* profile.c (sigprof_handler):
+	* profile.c (Fstart_profiling):
+	* profile.c (Fstop_profiling):
+	* profile.c (Fclear_profiling_info):
+	* profile.c (copy_hash_table_or_blank):
+	* profile.c (Fget_profiling_info):
+	* profile.c (set_profiling_info_timing_maphash):
+	* profile.c (Fset_profiling_info):
+	* profile.c (mark_profiling_info_maphash):
+	* profile.c (mark_profiling_info):
+	* profile.c (vars_of_profile):
+	Major reworking.  Keep track of new information -- total
+	function timing (includes descendants), GC usage, total GC usage
+	(includes descendants).  New functions to be called appropriately
+	from eval.c, alloc.c to keep track of this information.  Keep track
+	of when we're actually in a function vs. in its profile, for more
+	accurate timing counts.  Track profile overhead separately.  Create
+	new mechanism for specifying "internal sections" that are tracked
+	just like regular Lisp functions and even appear in the backtrace
+	if `backtrace-with-internal-sections' is non-nil (t by default
+	for error-checking builds).  Add some KKCC information for the
+	straight (non-Elisp) hash table used by profile, which contains
+	Lisp objects in its keys -- but not used yet.  Remove old ad-hoc
+	methods for tracking garbage collection, redisplay (which was
+	incorrect anyway when Lisp was called within these sections).
+	Don't record any tick info when blocking under MS Windows, since
+	the timer there is in real time rather than in process time.
+	Make `start-profiling', `stop-profiling' interactive.  Be consistent
+	wrt. recursive functions and functions currently on the stack when
+	starting or stopping -- together these make implementing the
+	`total' values extremely difficult.  When we start profiling, we
+	act as if we just entered all the functions currently on the stack.
+	Likewise when exiting.  Create vars in_profile for tracking
+	time spent inside of profiling, and profiling_lock for setting
+	exclusive access to the main hash table when reading from it or
+	modifying it. (protects against getting screwed up by the signal
+	handle going off at the same time.
+
+	* profile.h: New file.
+	Create macros for declaring internal profiling sections.
+	
+	* lisp.h:
+	Move profile-related stuff to profile.h.
+
+	* alloc.c:
+	* alloc.c (INCREMENT_CONS_COUNTER_1):
+	* alloc.c (DECREMENT_CONS_COUNTER):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (vars_of_alloc):
+	Keep track of total consing, for profile.
+	Tell profile when we are consing.
+	Use new profile-section method for noting garbage-collection.
+
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xrealloc):
+	* alloc.c (endif):
+	Abort if we attempt to call the allocator reentrantly.
+
+	* backtrace.h:
+	* backtrace.h (FSET_FAST_UNSAFE):
+	* eval.c:
+	Add info for use by profile in the backtrace frame and transfer
+	PUSH_BACKTRACE/POP_BACKTRACE from eval.c, for use with profile.
+
+	* elhash.c: Author comment.
+
+	* eval.c (vars_of_eval):
+	* lisp.h:
+	New Lisp var `backtrace-with-internal-sections'.  Set to t when
+	error-checking is on.
+
+	* eval.c:
+	* eval.c (unwind_to_catch):
+	When unwinding, 
+	
+	* eval.c (Fcommand_execute):
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	Report to profile when we are about-to-call and just-called wrt. a
+	function.
+
+	* alloc.c (garbage_collect_1):
+	* eval.c (backtrace_unevalled_args):
+	* eval.c (Fbacktrace):
+	* eval.c (Fbacktrace_frame):
+	Allow for "fake" backtrace frames, for internal sections (used by
+	profile and `backtrace-with-internal-sections'.
+
+	* event-Xt.c:
+	* event-Xt.c (emacs_Xt_next_event):
+	* event-gtk.c:
+	* event-gtk.c (emacs_gtk_next_event):
+	* event-msw.c:
+	* event-msw.c (mswindows_need_event):
+	* event-tty.c:
+	* event-tty.c (emacs_tty_next_event):
+	Record when we are actually blocking on an event, for profile's sake.
+
+	* event-stream.c:
+	* event-stream.c (next_event_internal):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (execute_internal_event):
+	* event-stream.c (Fdispatch_event):
+	* event-stream.c (syms_of_event_stream):
+	* event-stream.c (vars_of_event_stream):
+	Record internal profiling sections for getting, dispatching events.
+
+	* extents.c:
+	* extents.c (map_extents):
+	* extents.c (vars_of_extents):
+	Record internal profiling sections for map_extents.
+
+	* hash.c: Author comment.
+	* hash.c (grow_hash_table):
+	* hash.h:
+	Add pregrow_hash_table_if_necessary(). (Used in profile code
+	since the signal handler is the main grower but can't allow
+	a realloc().  We make sure, at critical points, that the table
+	is large enough.)
+	
+	* lread.c:
+	* lread.c (Fload_internal):
+	* lread.c (done): New.
+	* lread.c (syms_of_lread):
+	* lread.c (vars_of_lread):
+	Create internal profiling sections for `load' (which may be triggered
+	internally by autoload, etc.).
+
+	* redisplay.c:
+	* redisplay.c (redisplay_without_hooks):
+	* redisplay.c (vars_of_redisplay):
+	Remove old profile_redisplay_flag.  Use new macros to declare
+	internal profiling section for redisplay.
+
+	* text.c (charbpos_to_bytebpos_func):
+	* text.c (bytebpos_to_charbpos_func):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* text.c (vars_of_text):
+	Use new macros to declare internal profiling sections for
+	char-byte conversion and internal-external conversion.
+
+	SEMI-UNRELATED CHANGES:
+	-----------------------
+
+	* text.c:
+	Update the long comments.
+
 2003-02-07  Mike Sperber  <mike@xemacs.org>
 
 	* scrollbar.c (specifier_vars_of_scrollbar): 

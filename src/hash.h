@@ -1,4 +1,5 @@
-/* This file is part of XEmacs.
+/* Copyright (C) 2003 Ben Wing.
+This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -78,4 +79,10 @@ void maphash (maphash_function mf, struct hash_table *hash_table, void* arg);
 void map_remhash (remhash_predicate predicate,
 		  struct hash_table *hash_table, void *arg);
 
+/* Grow the table if it has less than BREATHING_ROOM elements that can be
+   added before a resize will be triggered.  After the grow, the table can
+   hold at least BREATHING_ROOM elements (and probably a lot more) before
+   needing resizing again. */
+void pregrow_hash_table_if_necessary (struct hash_table *hash_table,
+				      Elemcount breathing_room);
 #endif /* INCLUDED_hash_h_ */

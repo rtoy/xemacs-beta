@@ -1,5 +1,6 @@
 /* Hash tables.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -19,6 +20,9 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* Author: Lost in the mists of history.  At least back to Lucid 19.3,
+   circa Sep 1992. */
 
 #include <config.h>
 #include "lisp.h"
@@ -204,6 +208,15 @@ grow_hash_table (struct hash_table *hash_table, Elemcount new_size)
   }
 
   xfree (old_harray);
+}
+
+void
+pregrow_hash_table_if_necessary (struct hash_table *hash_table,
+				 Elemcount breathing_room)
+{
+  Elemcount comfortable_size = COMFORTABLE_SIZE (hash_table->fullness);
+  if (hash_table->size < comfortable_size - breathing_room)
+    grow_hash_table (hash_table, comfortable_size + 1);
 }
 
 void

@@ -69,6 +69,7 @@ Boston, MA 02111-1307, USA.  */
 #include "menubar.h"
 #include "objects-impl.h"
 #include "process.h"
+#include "profile.h"
 #include "redisplay.h"
 #include "toolbar.h"
 #include "window-impl.h"
@@ -499,6 +500,8 @@ Lisp_Object Vleft_margin_width, Vright_margin_width;
 Lisp_Object Vminimum_line_ascent, Vminimum_line_descent;
 Lisp_Object Vuse_left_overflow, Vuse_right_overflow;
 Lisp_Object Vtext_cursor_visible_p;
+
+static Lisp_Object QSin_redisplay;
 
 int column_number_start_at_one;
 
@@ -6860,10 +6863,9 @@ redisplay_without_hooks (void)
 {
   Lisp_Object devcons, concons;
   int size_change_failed = 0;
-  int count = specpdl_depth ();
+  PROFILE_DECLARE ();
 
-  if (profiling_active)
-    internal_bind_int (&profiling_redisplay_flag, 1);
+  PROFILE_RECORD_ENTERING_SECTION (QSin_redisplay);
 
   if (asynch_device_change_pending)
     handle_asynch_device_change ();
@@ -6911,10 +6913,11 @@ redisplay_without_hooks (void)
   reset_buffer_changes ();
 
  done:
-  unbind_to (count);
 #ifdef ERROR_CHECK_DISPLAY
   sledgehammer_check_redisplay_structs ();
 #endif /* ERROR_CHECK_DISPLAY */
+
+  PROFILE_RECORD_EXITING_SECTION (QSin_redisplay);
 }
 
 /* Note: All places in the C code that call redisplay() are prepared
@@ -9655,6 +9658,8 @@ syms_of_redisplay (void)
 void
 vars_of_redisplay (void)
 {
+  QSin_redisplay = build_msg_string ("(in redisplay)");
+  staticpro (&QSin_redisplay);
 
 #if 0
   staticpro (&last_arrow_position);

@@ -22,6 +22,27 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+/* Author: Lost in the mists of history.  At least back to Lucid 19.3,
+   circa Sep 1992.  Early hash table implementation allowed only `eq' as a
+   test -- other tests possible only when these objects were created from
+   the C code.
+
+   Expansion to allow general `equal'-test Lisp-creatable tables, and hash
+   methods for the various Lisp objects in existence at the time, added
+   during 19.12 I think (early 1995?), by Ben Wing.
+
+   Weak hash tables added by Jamie (maybe?) early on, perhaps around 19.6,
+   maybe earlier; again, only possible through the C code, and only
+   supported fully weak hash tables.  Expansion to other kinds of weakness,
+   and exporting of the interface to Lisp, by Ben Wing during 19.12
+   (early-mid 1995) or maybe 19.13 cycle (mid 1995).
+
+   Expansion to full Common Lisp spec and interface, redoing of the
+   implementation, by Martin Buchholz, 1997? (Former hash table
+   implementation used "double hashing", I'm pretty sure, and was weirdly
+   tied into the generic hash.c code.  Martin completely separated them.)
+*/
+
 /* This file implements the hash table lisp object type.
 
    This implementation was mostly written by Martin Buchholz in 1997.

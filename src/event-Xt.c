@@ -67,6 +67,10 @@ Boston, MA 02111-1307, USA.  */
 #include "offix.h"
 #endif
 
+#ifdef WIN32_ANY
+extern int mswindows_is_blocking;
+#endif
+
 /* used in glyphs-x.c */
 void enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p);
 static void handle_focus_event_1 (struct frame *f, int in_p);
@@ -2790,10 +2794,13 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
 	     However, we can't just not process any events at all, because
 	     that will make sit-for etc. hang.  So we go ahead and process
 	     the non-X kinds of events. */
-	  XtInputMask pending_value = XtAppPending (Xt_app_con);
-
-	  if (pending_value & (XtIMTimer | XtIMAlternateInput))
-	    XtAppProcessEvent (Xt_app_con, XtIMTimer | XtIMAlternateInput);
+#ifdef WIN32_ANY
+	  mswindows_is_blocking = 1;
+#endif
+	  XtAppProcessEvent (Xt_app_con, XtIMTimer | XtIMAlternateInput);
+#ifdef WIN32_ANY
+	  mswindows_is_blocking = 0;
+#endif
 	}
       else
 	{
@@ -2829,7 +2836,13 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
 		    /* emacs may be exiting */
 		    XFlush (DEVICE_X_DISPLAY (d));
 		}
+#ifdef WIN32_ANY
+	      mswindows_is_blocking = 1;
+#endif
 	      XtAppProcessEvent (Xt_app_con, XtIMAll);
+#ifdef WIN32_ANY
+	      mswindows_is_blocking = 0;
+#endif
 	    }
 	}
     }
