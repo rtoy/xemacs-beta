@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
    The only exception is the alloc.c module, which implements the
    framework upon which this module (eval.c) works.  alloc.c works
    with creating the actual Lisp objects themselves and garbage
-   collecting them as necessary, preseting a nice, high-level
+   collecting them as necessary, presenting a nice, high-level
    interface for object creation, deletion, access, and modification.
 
    The only other exception that could be cited is the event-handling
@@ -73,7 +73,7 @@ Boston, MA 02111-1307, USA.  */
    functions such as `command-loop-1', a Lisp function.
 
    As the Lisp engine is doing its thing, it maintains the state of
-   the engine primarily in five list-like items, with are:
+   the engine primarily in five list-like items, which are:
 
    -- the backtrace list
    -- the catchtag list

@@ -1,3 +1,7 @@
+2004-03-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* eval.c: Typo fixes.
+
 2004-03-16  Jerry James  <james@xemacs.org>
 
 	* alloc.c: Make gc_currently_forbidden readable in other files.
