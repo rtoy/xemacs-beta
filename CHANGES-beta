@@ -1,3 +1,15 @@
+to 21.5.3 "asparagus"
+-- Add missing XIM unregister callback on Motif -- Glynn Clements
+-- Improve debugging in event-msw.c, fix "can't close last window" bug
+   -- Adrian Aichner
+-- Improve Info docs for widget.el -- Stephen J. Turnbull
+-- Many small bug, typo, and warning fixes -- Ben Wing, Stephen J. Turnbull,
+   Adrian Aichner
+-- Autoload handling improvements -- Didier Verna
+-- More 'report-xemacs-bug' updates -- Steve Youngs
+-- Fix unsigned warnings; turn sign-compare warnings on for NT -- Ben Wing
+-- Synch configure.usage options with configure -- Peter Brown
+
 to 21.5.2 "artichoke"
 -- fixes and improvements -- Ben Wing
    -- etags.c synched to upstream
