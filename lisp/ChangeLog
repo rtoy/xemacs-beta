@@ -1,5 +1,11 @@
 2005-02-03  Jerry James  <james@xemacs.org>
 
+	* dumped-lisp.el (preloaded-file-list): Add easy-mmode.
+	* paragraphs.el (paragraphs): Undo the require as it is now
+	unnecessary.
+
+2005-02-03  Jerry James  <james@xemacs.org>
+
 	* paragraphs.el: Require easy-mmode, due to its move in core.
 	* paragraphs.el (sentence-end): Fix a typo.
 

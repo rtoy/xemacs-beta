@@ -37,8 +37,6 @@
 
 ;;; Code:
 
-(require 'easy-mmode)
-
 (defgroup paragraphs nil
   "Paragraph and sentence parsing."
   :group 'editing)
