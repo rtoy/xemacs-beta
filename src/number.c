@@ -748,8 +748,8 @@ syms_of_number (void)
 void
 vars_of_number (void)
 {
-  /* This variable is a Lisp variable rather than a number variable so that we
-     can put bignums in it. */
+  /* These variables are Lisp variables rather than number variables so that
+     we can put bignums in them. */
   DEFVAR_LISP_MAGIC ("default-float-precision", &Vdefault_float_precision, /*
 The default floating-point precision for newly created floating point values.
 This should be 0 for the precision of the machine-supported floating point
@@ -762,6 +762,13 @@ bigfloat-max-prec (currently the size of a C unsigned long).
 The maximum number of bits of precision a bigfloat can have.
 This is currently the value of ULONG_MAX on the target machine.
 */);
+
+  /* See init_number for the other half of Vbigfloat_max_prec initialization */
+#if defined(HAVE_BIGFLOAT) && !defined(HAVE_BIGNUM)
+  Vbigfloat_max_prec = make_int (EMACS_INT_MAX);
+#else
+  Vbigfloat_max_prec = make_int (0);
+#endif /* HAVE_BIGFLOAT */
 
   DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
 The fixnum closest in value to negative infinity.
@@ -799,11 +806,6 @@ init_number (void)
       init_number_mp ();
 #endif
 
-#if defined(BIGNUM) && defined(BIGFLOAT)
-      Vbigfloat_max_prec = make_bignum (0L);
-      bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
-#endif
-
 #ifdef HAVE_BIGNUM
       bignum_init (scratch_bignum);
       bignum_init (scratch_bignum2);
@@ -818,4 +820,13 @@ init_number (void)
       bigfloat_init (scratch_bigfloat2);
 #endif
     }
+
+#if defined(HAVE_BIGFLOAT) && defined(HAVE_BIGNUM)
+  /* Avoid dumping a bignum */
+  if (initialized)
+    {
+      Vbigfloat_max_prec = make_bignum (0L);
+      bignum_set_ulong (XBIGNUM_DATA (Vbigfloat_max_prec), ULONG_MAX);
+    }
+#endif
 }

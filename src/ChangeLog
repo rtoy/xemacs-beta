@@ -1,3 +1,10 @@
+2004-04-30  Jerry James  <james@xemacs.org>
+
+	* number.c (vars_of_number): Fix comment.  Initialize
+	bigfloat-max-prec when it is possible to do so safely.
+	* number.c (init_number): If bigfloat-max-prec is a bignum, set it
+	only when initialized.
+
 2004-04-19  Jerry James  <james@xemacs.org>
 
 	* data.c (sign_extend_lisp_int): Use INT_VALBITS instead of
