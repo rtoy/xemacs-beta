@@ -243,7 +243,7 @@ typedef int ssize_t;
 #if (_MSC_VER >= 1200)
 #define DOESNT_RETURN_TYPE(rettype) __declspec(noreturn) rettype
 #define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) \
-  __declspec(noreturn) extern rettype XCDECL decl
+  __declspec(noreturn) rettype XCDECL decl
 #endif /* MSVC 6.0 */
 
 /* MSVC warnings no-no crap.  When adding one to this section,

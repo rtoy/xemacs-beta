@@ -1,3 +1,8 @@
+2004-09-19  Jerry James  <james@xemacs.org>
+
+	* s/windowsnt.h (DECLARE_DOESNT_RETURN_TYPE): Remove extern so
+	that static funcions can be declared.
+
 2004-09-14  Jerry James  <james@xemacs.org>
 
 	* mule-canna.c (CANNA_NEW_WCHAR_AWARE): Define to use new wchar
