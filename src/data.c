@@ -1995,10 +1995,7 @@ Arguments may be integers, or markers or characters converted to integers.
       switch (promote_args (&result, &other))
 	{
 	case FIXNUM_T:
-	  /* This looks evil, but it isn't.  The bits identifying the objects
-	     as fixnums will be present in both, so & will preserve them.
-	     The only bits possibly turned off are the actual data bits. */
-	  result &= other;
+	  result = make_int (XREALINT (result), XREALINT (other));
 	  break;
 	case BIGNUM_T:
 	  bignum_and (scratch_bignum, XBIGNUM_DATA (result),
@@ -2048,10 +2045,7 @@ Arguments may be integers, or markers or characters converted to integers.
       switch (promote_args (&result, &other))
 	{
 	case FIXNUM_T:
-	  /* This looks evil, but it isn't.  The bits identifying the objects
-	     as fixnums are the same in both, so | will preserve them.  The
-	     only bits possibly turned on are the actual data bits. */
-	  result |= other;
+	  result = make_int (XREALINT (result) | XREALINT (other));
 	  break;
 	case BIGNUM_T:
 	  bignum_ior (scratch_bignum, XBIGNUM_DATA (result),
