@@ -1779,8 +1779,8 @@ Also see: `reverse'.
        (list))
 {
   struct gcpro gcpro1, gcpro2;
-  REGISTER Lisp_Object prev = Qnil;
-  REGISTER Lisp_Object tail = list;
+  Lisp_Object prev = Qnil;
+  Lisp_Object tail = list;
 
   /* We gcpro our args; see `nconc' */
   GCPRO2 (prev, tail);

@@ -390,7 +390,7 @@ translation.
        (symbol, prop, raw))
 {
   /* This function can GC */
-  REGISTER Lisp_Object doc = Qnil;
+  Lisp_Object doc = Qnil;
 #ifdef I18N3
   REGISTER Lisp_Object domain;
 #endif

@@ -1364,7 +1364,7 @@ readevalloop (Lisp_Object readcharfun,
 {
   /* This function can GC */
   REGISTER Ichar c;
-  REGISTER Lisp_Object val = Qnil;
+  Lisp_Object val = Qnil;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2;
   struct buffer *b = 0;

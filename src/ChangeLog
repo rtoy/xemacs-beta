@@ -1,3 +1,12 @@
+2004-01-03  James C. McPherson  <james.mcpherson@optusnet.com.au>
+
+	* doc.c (Fdocumentation_property): GCPROd variables cannot be
+	declared register.
+	* eval.c (Fprog1): Ditto.
+	* eval.c (Fprog2): Ditto.
+	* fns.c (Fnreverse): Ditto.
+	* lread.c (readevalloop): Ditto.
+
 2003-11-29  Jerry James  <james@xemacs.org>
 
 	* emodules.c (emodules_load): Remove dll_error parameter.

@@ -969,7 +969,7 @@ whose values are discarded.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
+  Lisp_Object val;
   struct gcpro gcpro1;
 
   val = Feval (XCAR (args));
@@ -994,7 +994,7 @@ whose values are discarded.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
+  Lisp_Object val;
   struct gcpro gcpro1;
 
   Feval (XCAR (args));
