@@ -1,3 +1,7 @@
+2003-04-16  Chris Palmer  <chris@nodewarrior.org>
+
+	* sysdll.c (dll_open): Removed Objective C-ism to fix Mac build.
+
 2003-04-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* menubar-gtk.c (gtk_xemacs_menubar_class_init):

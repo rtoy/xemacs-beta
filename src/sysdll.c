@@ -268,15 +268,16 @@ dll_handle
 dll_open (const char *fname)
 {
   NSObjectFileImage file;
+  NSModule out;
   NSObjectFileImageReturnCode ret =
     NSCreateObjectFileImageFromFile(fname, &file);
   if (ret != NSObjectFileImageSuccess) {
     return NULL;
   }
-  NSModule out = NSLinkModule(file, fname,
-			      NSLINKMODULE_OPTION_BINDNOW |
-			      NSLINKMODULE_OPTION_PRIVATE |
-			      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+  out = NSLinkModule(file, fname,
+		     NSLINKMODULE_OPTION_BINDNOW |
+		     NSLINKMODULE_OPTION_PRIVATE |
+		     NSLINKMODULE_OPTION_RETURN_ON_ERROR);
   return (dll_handle)out;
 }
 
