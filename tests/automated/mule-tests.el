@@ -327,4 +327,27 @@ the Assert macro checks for correctness."
 	(Assert (eq scaron (unicode-to-char code '(latin-iso8859-2))))))
   
     (Check-Error wrong-type-argument (set-unicode-conversion scaron -10000)))
+
+  ;;---------------------------------------------------------------
+  ;; Test charset-in-* functions
+  ;;---------------------------------------------------------------
+  (with-temp-buffer
+    (insert-file-contents (locate-data-file "HELLO"))
+    ;; #### rewrite robustly, both assume that the tested implementation
+    ;; uses the same algorithm as was used by the version current at time
+    ;; this test was written
+    (Assert (eq (charsets-in-region (point-min) (point-max))
+		'(korean-ksc5601 chinese-big5-1 chinese-gb2312
+		  japanese-jisx0212 katakana-jisx0201 japanese-jisx0208
+		  vietnamese-viscii-lower thai-xtis cyrillic-iso8859-5
+		  hebrew-iso8859-8 greek-iso8859-7 latin-iso8859-1
+		  latin-iso8859-2 arabic-2-column arabic-1-column
+		  ethiopic ascii)))
+    (Assert (eq (charsets-in-string (buffer-substring (point-min) (point-max)))
+		'(korean-ksc5601 chinese-big5-1 chinese-gb2312
+		  japanese-jisx0212 katakana-jisx0201 japanese-jisx0208
+		  vietnamese-viscii-lower thai-xtis cyrillic-iso8859-5
+		  hebrew-iso8859-8 greek-iso8859-7 latin-iso8859-1
+		  latin-iso8859-2 arabic-2-column arabic-1-column
+		  ethiopic ascii))))
   )
