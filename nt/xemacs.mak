@@ -668,6 +668,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\editfns.obj \
 	$(OUTDIR)\elhash.obj \
 	$(OUTDIR)\emacs.obj \
+	$(OUTDIR)\emodules.obj \
 	$(OUTDIR)\eval.obj \
 	$(OUTDIR)\event-stream.obj \
 	$(OUTDIR)\events.obj \

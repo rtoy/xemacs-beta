@@ -1,3 +1,8 @@
+2003-10-15  Jerry James  <james@xemacs.org>
+
+	* xemacs.mak (TEMACS_OBJS): Add emodules.obj, which always has
+	content now.
+
 2003-09-26  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.16 "celeriac" is released.
