@@ -2616,6 +2616,9 @@ if test "${GTK_CONFIG}" != "no"; then
 
       AC_MSG_CHECKING(gtk cflags)
       GTK_CFLAGS=`${GTK_CONFIG} --cflags`
+      if test "$GCC" = "yes"; then
+      	GTK_CFLAGS="${GTK_CFLAGS} -Wno-shadow"
+      fi
       XE_APPEND(${GTK_CFLAGS}, c_switch_gtk)
       AC_MSG_RESULT(${GTK_CFLAGS})
 
@@ -3604,7 +3607,7 @@ if test "$with_gtk" = "yes"; then
   test "$with_menubars"   != "no"      && XE_ADD_OBJS(menubar-gtk.o)
   test "$with_scrollbars" != "no"      && XE_ADD_OBJS(scrollbar-gtk.o)
   test "$with_dialogs"    != "no"      && XE_ADD_OBJS(dialog-gtk.o)
-  test "$with_toolbars"   != "no"      && XE_ADD_OBJS(toolbar-gtk.o)
+  test "$with_toolbars"   != "no"      && XE_ADD_OBJS(toolbar-common.o toolbar-gtk.o)
   test "$all_widgets" != "no no no no no" && XE_ADD_OBJS(gui-gtk.o)
 fi
 
