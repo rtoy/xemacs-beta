@@ -2010,7 +2010,8 @@ fi
 dnl #### This may need to be overhauled so that all of XEMACS_CC's flags
 dnl are handled separately, not just the xe_cflags_warning stuff.
 
-dnl Calculate value of CFLAGS:
+AC_MSG_CHECKING([for preferred CFLAGS])
+
 dnl Use either command line flag, environment var, or autodetection
 if test "$cflags_specified" = "no"; then
   dnl Following values of CFLAGS are known to work well.
@@ -2033,10 +2034,13 @@ if test "$cflags_specified" = "no"; then
     CFLAGS="-O" ;dnl The only POSIX-approved flag
   fi
 fi
+AC_MSG_RESULT([${CFLAGS}])
 
 dnl Calculate warning flags.  We separate the flags for warnings from
 dnl the other flags because we want to force the warnings to be seen
 dnl by everyone who doesn't specifically override them.
+
+AC_MSG_CHECKING([for preferred warning flags for XEMACS_CC])
 
 dnl If this stays nil, it will be set to cflags_warning before use.
 xe_cflags_warning=""
@@ -2057,7 +2061,11 @@ if test "$cflags_warning_specified" = "no"; then
     if test "$__GCC3" = "yes"; then
       cflags_warning="$cflags_warning -Wpacked"
     fi
-    dnl Warning flags for the XEMACS_CC compiler
+    dnl glibc is intentionally not `-Wpointer-arith'-clean.
+    dnl Ulrich Drepper has rejected patches to fix the glibc header files.
+    test "$have_glibc" != "yes" && \
+      cflags_warning="$cflags_warning -Wpointer-arith"
+    dnl Warning flags that may differ for gcc and g++ (xemacs_compiler)
     dnl With g++, -Wshadow produces five zillion utterly random warnings --
     dnl a local var named `buffer' conflicts with `struct buffer' for
     dnl example.  Even with gcc, -Wshadow is questionable because of its
@@ -2067,23 +2075,23 @@ if test "$cflags_warning_specified" = "no"; then
     test "$xemacs_compiler" = "g++" && \
       xe_cflags_warning="$cflags_warning -Weffc++"
     cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
-    dnl glibc is intentionally not `-Wpointer-arith'-clean.
-    dnl Ulrich Drepper has rejected patches to fix the glibc header files.
-    test "$have_glibc" != "yes" && \
-      cflags_warning="$cflags_warning -Wpointer-arith"
-  elif test "$__ICC" = "yes"; then
-    cflags_warning="-Wall -w1"
     dnl **** If more gcc/g++ flags are added, from here on must handle
     dnl **** cflags_warning and xe_cflags_warning in parallel
+  elif test "$__ICC" = "yes"; then
+    cflags_warning="-Wall -w1"
   dnl ### Add optimal cflags_warning support for other compilers HERE!
   fi
 fi
+test -z "$xe_cflags_warning" && xe_cflags_warning="$cflags_warning"
+AC_MSG_RESULT([${xe_cflags_warning}])
+
+AC_MSG_CHECKING([for preferred warning flags for CC])
+AC_MSG_RESULT([${cflags_warning}])
 
 dnl Now combine all C flags.  Put the warning flags first so that
 dnl user-specified flags will override.
 dnl Do XE_CFLAGS before adding warning flags to CFLAGS.
 dnl Flags for XEMACS_CC:
-test -z "xe_cflags_warning" && xe_cflags_warning=cflags_warning
 XE_CFLAGS="$xe_cflags_warning $CFLAGS"
 dnl Flags for CC:
 CFLAGS="$cflags_warning $CFLAGS"

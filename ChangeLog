@@ -1,3 +1,8 @@
+2004-04-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (Compiler-specific hacks): Restore warning flags
+	for XEMACS_CC if gcc.  Report warning flags at compute time.
+
 2004-04-07  Jerry James  <james@xemacs.org>
 
 	* configure.in: FreeBSD MP needs -lcrypto.
