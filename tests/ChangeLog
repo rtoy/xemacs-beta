@@ -1,3 +1,7 @@
+2005-02-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* automated/region-tests.el: Test regions and zmacs-regions.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.
