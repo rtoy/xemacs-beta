@@ -488,7 +488,7 @@ at that point.  For example:
 @end group
 @end smallexample
 
-Every function that has no documentation string (because it is use only
+Every function that has no documentation string (because it is used only
 internally within the package it belongs to), should have instead a
 two-semicolon comment right before the function, explaining what the
 function does and how to call it properly.  Explain precisely what each
