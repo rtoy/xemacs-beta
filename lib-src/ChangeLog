@@ -1,3 +1,9 @@
+2005-01-29  Vin Shelton  <acs@xemacs.org>
+
+	* movemail.c (popmail): Pass error string as format parameter
+	instead of as part of format string. Security fixes for
+	CAN-2005-0100.
+
 2005-02-03  Jerry James  <james@xemacs.org>
 
 	* etags.c: Update to author version 17.11.
