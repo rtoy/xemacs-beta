@@ -1,16 +1,16 @@
 @\input texinfo @c -*-texinfo-*-
-settitle Notes about emacs Term mode
 @setfilename ../info/term.info
+@settitle XEmacs Terminal Emulator Mode
 
 @titlepage
 @sp 6
-@center @titlefont(Notes about Emacs TERM Mode)
+@center @titlefont(XEmacs Terminal Emulator Mode)
 @end titlepage
 
 @ifinfo
 @dircategory XEmacs Editor
 @direntry
-* Term mode: (term).		Emacs terminal emulator mode.
+* Term mode: (term).		XEmacs Terminal Emulator Mode.
 @end direntry
 
 @node Top, , (DIR)
@@ -24,7 +24,7 @@ This is some notes about the term Emacs mode.
 @end menu
 
 @node term mode
-@chapter Term Mode
+@chapter XEmacs Terminal Emulator Mode
 
 @menu
 * Overview::

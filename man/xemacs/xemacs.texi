@@ -88,7 +88,7 @@ except that the sections entitled ``The GNU Manifesto'',
 translation approved by the author instead of in the original English.
 @end titlepage
 @page
-@ifinfo
+@ifnottex
 @node Top, License,, (dir)
 @top The XEmacs Editor
 
@@ -102,7 +102,7 @@ This manual is intended as a detailed reference to XEmacs.  If
 you are looking for an introductory manual, see the New User's
 Guide.
 
-@end ifinfo
+@end ifnottex
 @menu
 * License::     The GNU General Public License gives you permission
 		to redistribute XEmacs on certain terms; and also

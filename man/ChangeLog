@@ -1,3 +1,13 @@
+2001-12-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs\xemacs.texi (Top): Change from @ifinfo to @ifnottex for
+	the benefit of HTML online docs.
+
+2001-12-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* term.texi: Fix broken settitle.  Make @titlepage, @direntry, and
+	@chapter agree with new title.
+
 2001-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/packaging.texi (The User's View):
