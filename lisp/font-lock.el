@@ -1714,9 +1714,8 @@ START should be at the beginning of a line."
 ;; Various functions.
 
 (defun font-lock-compile-keywords (keywords)
-  "Compile KEYWORDS into the form (t KEYWORD ...).
-Here KEYWORD is of the form (MATCHER HIGHLIGHT ...) as shown in the
-`font-lock-keywords' doc string."
+  "Compile KEYWORDS (a list) and return the list of compiled keywords.
+Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
   (if (eq (car-safe keywords) t)
       keywords
     (cons t (mapcar 'font-lock-compile-keyword keywords))))

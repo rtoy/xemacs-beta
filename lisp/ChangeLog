@@ -1,3 +1,7 @@
+2002-10-03  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* font-lock.el (font-lock-compile-keywords): Improve docstring.
+
 2002-09-22  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* files.el (auto-mode-alist): Move entries for modes in packages
