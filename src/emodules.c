@@ -256,7 +256,7 @@ module_load_unwind (Lisp_Object upto)
     {
       if (INTP (XCAR (upto)))
         l = XINT (XCAR (upto));
-      free_cons (XCONS (upto));
+      free_cons (upto);
     }
   else
     l = XINT (upto);

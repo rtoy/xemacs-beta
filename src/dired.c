@@ -284,7 +284,7 @@ file_name_completion_unwind (Lisp_Object locative)
       qxe_closedir (d);
       free_opaque_ptr (obj);
     }
-  free_cons (XCONS (locative));
+  free_cons (locative);
   return Qnil;
 }
 
@@ -593,7 +593,7 @@ user_name_completion_unwind (Lisp_Object cache_incomplete_p)
   if (! NILP (XCAR (cache_incomplete_p)))
     free_user_cache (&user_cache);
 
-  free_cons (XCONS (cache_incomplete_p));
+  free_cons (cache_incomplete_p);
 
   return Qnil;
 }

@@ -1,5 +1,6 @@
 /* The lisp stack.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -35,6 +36,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
+#ifdef ERROR_CHECK_CATCH
+/* you can use this if you are trying to debug corruption in the
+   catchlist */
+void check_catchlist_sanity (void);
+
+/* you can use this if you are trying to debug corruption in the specbind
+   stack */
+void check_specbind_stack_sanity (void);
+#else
+#define check_catchlist_sanity()
+#define check_specbind_stack_sanity()
+#endif
+
 /* These definitions are used in eval.c and alloc.c */
 
 struct backtrace
@@ -54,18 +68,24 @@ struct backtrace
 /* This structure helps implement the `catch' and `throw' control
    structure.  A struct catchtag contains all the information needed
    to restore the state of the interpreter after a non-local jump.
-
-   Handlers for error conditions (represented by `struct handler'
-   structures) just point to a catch tag to do the cleanup required
-   for their jumps.
+   (No information is stored concerning how to restore the state of
+   the condition-handler list; this is handled implicitly through
+   an unwind-protect.  unwind-protects are on the specbind stack,
+   which is reset to its proper value by `throw'.  In the process of
+   that, any intervening bindings are reset and unwind-protects called,
+   which fixes up the condition-handler list.
 
    catchtag structures are chained together in the C calling stack;
    the `next' member points to the next outer catchtag.
 
    A call like (throw TAG VAL) searches for a catchtag whose `tag'
-   member is TAG, and then unbinds to it.  The `val' member is used to
-   hold VAL while the stack is unwound; `val' is returned as the value
-   of the catch form.
+   member is TAG, and then unbinds to it.  A value of Vcatch_everything_tag
+   for the `tag' member of a catchtag is special and means "catch all throws,
+   regardless of the tag".  This is used internally by the C code.  The `val'
+   member is used to hold VAL while the stack is unwound; `val' is returned
+   as the value of the catch form.  The `actual_tag' member holds the value
+   of TAG as passed to throw, so that it can be retrieved when catches with
+   Vcatch_everything_tag are set up.
 
    All the other members are concerned with restoring the interpreter
    state.  */
@@ -73,6 +93,9 @@ struct backtrace
 struct catchtag
   {
     Lisp_Object tag;
+    /* Stores the actual tag used in `throw'; the same as TAG, unless
+       TAG is Vcatch_everything_tag. */
+    Lisp_Object actual_tag;
     Lisp_Object val;
     struct catchtag *next;
     struct gcpro *gcpro;
@@ -191,6 +214,7 @@ extern int specpdl_size;
     }									\
   else									\
     specbind_magic (SB_symbol, SB_newval);				\
+  check_specbind_stack_sanity ();					\
 } while (0)
 
 /* An even faster, but less safe inline version of specbind().
@@ -217,6 +241,7 @@ extern int specpdl_size;
     }									\
   else									\
     specbind_magic (SFU_symbol, SFU_newval);				\
+  check_specbind_stack_sanity ();					\
 } while (0)
 /* Request enough room for SIZE future entries on special binding stack */
 #define SPECPDL_RESERVE(size) do {			\
@@ -253,6 +278,7 @@ extern int specpdl_size;
 							\
       sym->value = specpdl_ptr->old_value;		\
     }							\
+  check_specbind_stack_sanity ();			\
 } while (0)
 
 /* A slightly faster inline version of unbind_to_1,
@@ -275,13 +301,8 @@ extern int specpdl_size;
 							\
       sym->value = specpdl_ptr->old_value;		\
     }							\
+  check_specbind_stack_sanity ();			\
 } while (0)
-
-#ifdef ERROR_CHECK_STRUCTURES
-#define CHECK_SPECBIND_VARIABLE assert (specpdl_ptr->func == 0)
-#else
-#define CHECK_SPECBIND_VARIABLE DO_NOTHING
-#endif
 
 #if 0
 /* Unused.  It's too hard to guarantee that the current bindings
@@ -298,7 +319,6 @@ extern int specpdl_size;
       --specpdl_ptr;						\
       --specpdl_depth_counter;					\
 								\
-      CHECK_SPECBIND_VARIABLE;					\
       sym = XSYMBOL (specpdl_ptr->symbol);			\
       if (!SYMBOL_VALUE_MAGIC_P (sym->value))			\
 	sym->value = specpdl_ptr->old_value;			\

@@ -162,19 +162,23 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 void
 init_intl (void)
 {
+  /* This function can GC */
   if (initialized)
     {
-      /* #### port to new error-trapping system when i sync up the code */
       int count = begin_gc_forbidden ();
+      Lisp_Object args[2];
+
       specbind (Qinhibit_quit, Qt);
-      call0_with_handler (Qreally_early_error_handler,
-			  intern ("init-locale-at-early-startup"));
+      args[0] = Qreally_early_error_handler;
+      args[1] = intern ("init-locale-at-early-startup");
+      Fcall_with_condition_handler (2, args);
+
       /* Should be calling this here, but problems with
          `data-directory' and locating the files.  See comment in
          mule-cmds.el:`init-mule-at-startup'.
 
-      call0_with_handler (Qreally_early_error_handler,
-                          intern ("init-unicode-at-early-startup"));
+      args[1] = intern ("init-unicode-at-early-startup");
+      Fcall_with_condition_handler (2, args);
        */
       unbind_to (count);
     }

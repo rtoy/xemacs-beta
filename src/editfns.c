@@ -311,8 +311,9 @@ save_excursion_save (void)
 {
   struct buffer *b;
 
-  /* #### Huh?  --hniksic */
-  /*if (preparing_for_armageddon) return Qnil;*/
+  /* There was once a check for preparing_for_armageddon here, which
+     did nothing; perhaps a left-over from FSF Emacs.  Obviously
+     incorrect. --ben */
 
 #ifdef ERROR_CHECK_TEXT
   assert (XINT (Fpoint (Qnil)) ==
@@ -362,7 +363,7 @@ save_excursion_restore (Lisp_Object info)
      for free in terms of GC junk. */
   free_marker (XMARKER (XCAR (info)));
   free_marker (XMARKER (XCDR (info)));
-  free_cons (XCONS (info));
+  free_cons (info);
   return Qnil;
 }
 
@@ -2105,8 +2106,8 @@ save_restriction_restore (Lisp_Object data)
      for free in terms of GC junk. */
   free_marker (XMARKER (XCAR (markers)));
   free_marker (XMARKER (XCDR (markers)));
-  free_cons (XCONS (markers));
-  free_cons (XCONS (data));
+  free_cons (markers);
+  free_cons (data);
 
   return Qnil;
 }

@@ -138,15 +138,16 @@ get_device_from_display (Display *dpy)
 # define FALLBACK_RESOURCE_NAME "infodock"
 #endif
 
-  if (!d) {
-    /* This isn't one of our displays.  Let's crash? */
-    stderr_out
-      ("\n%s: Fatal X Condition.  Asked about display we don't own: \"%s\"\n",
-       (STRINGP (Vinvocation_name) ?
-	(char *) XSTRING_DATA (Vinvocation_name) : FALLBACK_RESOURCE_NAME),
-       DisplayString (dpy) ? DisplayString (dpy) : "???");
-    abort();
-  }
+  if (!d)
+    {
+      /* This isn't one of our displays.  Let's crash? */
+      stderr_out
+	("\n%s: Fatal X Condition.  Asked about display we don't own: \"%s\"\n",
+	 (STRINGP (Vinvocation_name) ?
+	  (char *) XSTRING_DATA (Vinvocation_name) : FALLBACK_RESOURCE_NAME),
+	 DisplayString (dpy) ? DisplayString (dpy) : "???");
+      abort();
+    }
 
 #undef FALLBACK_RESOURCE_NAME
 
@@ -1048,6 +1049,8 @@ x_error_handler (Display *disp, XErrorEvent *event)
     }
   else
     {
+      int depth;
+
 #ifdef EXTERNAL_WIDGET
       struct frame *f;
       struct device *d = get_device_from_display (disp);
@@ -1083,11 +1086,14 @@ x_error_handler (Display *disp, XErrorEvent *event)
       }
 #endif /* EXTERNAL_WIDGET */
 
+      /* #### this should issue a warning instead of outputting to stderr */
+      depth = begin_dont_check_for_quit ();
       stderr_out ("\n%s: ",
 		  (STRINGP (Vinvocation_name)
 		   ? (char *) XSTRING_DATA (Vinvocation_name)
 		   : "xemacs"));
       XmuPrintDefaultErrorMessage (disp, event, stderr);
+      unbind_to (depth);
     }
   return 0;
 }
@@ -1156,6 +1162,7 @@ x_IO_error_handler (Display *disp)
 
   if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {
+      int depth = begin_dont_check_for_quit ();
       /* We're going down. */
       Intbyte *errmess;
       GET_STRERROR (errmess, errno);
@@ -1169,6 +1176,7 @@ x_IO_error_handler (Display *disp)
 		  NextRequest (disp) - 1, LastKnownRequestProcessed (disp),
 		  QLength (disp));
       /* assert (!_Xdebug); */
+      unbind_to (depth);
     }
   else
     {

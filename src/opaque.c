@@ -152,7 +152,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
 Lisp_Object
 make_opaque_ptr (void *val)
 {
-  Lisp_Object res = allocate_managed_lcrecord(Vopaque_ptr_free_list);
+  Lisp_Object res = allocate_managed_lcrecord (Vopaque_ptr_free_list);
   set_opaque_ptr (res, val);
   return res;
 }

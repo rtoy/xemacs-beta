@@ -239,7 +239,7 @@ init_user_info (void)
   /* Set dir from environment variables. */
   the_passwd.pw_dir = (char *) qxestrdup (get_home_directory ());
   /* We used to set pw_shell here, but the order is wrong (SHELL gets
-     initted in callproc.c, called later in the init process) and pw_shell
+     initted in process.c, called later in the init process) and pw_shell
      is not used anywhere. */
 }
 

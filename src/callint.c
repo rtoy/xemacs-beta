@@ -237,12 +237,8 @@ static Lisp_Object
 quotify_args (Lisp_Object expr)
 {
   Lisp_Object tail;
-  Lisp_Cons *ptr;
-  for (tail = expr; CONSP (tail); tail = ptr->cdr)
-    {
-      ptr = XCONS (tail);
-      ptr->car = Fquote_maybe (ptr->car);
-    }
+  EXTERNAL_LIST_LOOP (tail, expr)
+    XSETCAR (tail, Fquote_maybe (XCAR (tail)));
   return expr;
 }
 

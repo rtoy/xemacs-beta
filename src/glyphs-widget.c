@@ -506,13 +506,15 @@ widget_query_geometry (Lisp_Object image_instance,
       /* Finish off with dynamic sizing. */
       if (!NILP (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii)))
 	{
-	  dynamic_width = Feval (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
+	  dynamic_width =
+	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
 	  if (INTP (dynamic_width))
 	    *width = XINT (dynamic_width);
 	}
       if (!NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
 	{
-	  dynamic_height = Feval (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
+	  dynamic_height =
+	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
 	  if (INTP (dynamic_height))
 	    *height = XINT (dynamic_height);
 	}
@@ -1184,7 +1186,7 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
   if (!NILP (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii)))
     {
       Lisp_Object dynamic_width =
-	Feval (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
+	eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
       if (INTP (dynamic_width))
 	*width = XINT (dynamic_width);
     }
@@ -1200,7 +1202,7 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
   if (!NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
     {
       Lisp_Object dynamic_height =
-	Feval (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
+	eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
       if (INTP (dynamic_height))
 	*height = XINT (dynamic_height);
     }

@@ -124,9 +124,9 @@ Boston, MA 02111-1307, USA.  */
  unselect_device_cb	(those that use select() and file descriptors and
 			have a separate input fd per device).
 
- create_stream_pair_cb  These callbacks are called by process code to
- delete_stream_pair_cb  create and delete a pair of input and output lstreams
-			which are used for subprocess I/O.
+ create_io_streams_cb   These callbacks are called by process code to
+ delete_io_streams_cb   create the input and output lstreams which are used
+                        for subprocess I/O.
 
  quitp_cb		A handler function called from the `QUIT' macro which
 			should check whether the quit character has been
@@ -160,7 +160,7 @@ Boston, MA 02111-1307, USA.  */
   In this case, the handles passed are unix file descriptors, and the code
   may deal with these directly. Although, the same code may be used on Win32
   system with X-Windows. In this case, Win32 process implementation passes
-  handles of type HANDLE, and the create_stream_pair function must call
+  handles of type HANDLE, and the create_io_streams function must call
   appropriate function to get file descriptors given HANDLEs, so that these
   descriptors may be passed to XtAddInput.
 
@@ -203,20 +203,25 @@ struct event_stream
   void (*remove_timeout_cb)	(int);
   void (*select_console_cb)	(struct console *);
   void (*unselect_console_cb)	(struct console *);
-  void (*select_process_cb)	(Lisp_Process *);
-  void (*unselect_process_cb)	(Lisp_Process *);
+  void (*select_process_cb)	(Lisp_Process *, int doin, int doerr);
+  void (*unselect_process_cb)	(Lisp_Process *, int doin, int doerr);
   void (*quit_p_cb)		(void);
   void (*force_event_pending)	(struct frame* f);
-  USID (*create_stream_pair_cb) (void* /* inhandle*/, void* /*outhandle*/ ,
+  void (*create_io_streams_cb)  (void* /* inhandle*/, void* /*outhandle*/ ,
+				 void * /* errhandle*/,
 				 Lisp_Object* /* instream */,
 				 Lisp_Object* /* outstream */,
+				 Lisp_Object* /* errstream */,
+				 USID * /* in_usid */, USID * /* err_usid */,
 				 int /* flags */);
-  USID (*delete_stream_pair_cb) (Lisp_Object /* instream */,
-				 Lisp_Object /* outstream */);
+  void (*delete_io_streams_cb)  (Lisp_Object /* instream */,
+				 Lisp_Object /* outstream */,
+				 Lisp_Object /* errstream */,
+				 USID * /* in_usid */, USID * /* err_usid */);
   int (*current_event_timestamp_cb) (struct console *);
 };
 
-/* Flags for create_stream_pair_cb() FLAGS parameter */
+/* Flags for create_io_streams_cb() FLAGS parameter */
 #define STREAM_PTY_FLUSHING		0x0001
 #define STREAM_NETWORK_CONNECTION	0x0002
 
@@ -621,19 +626,28 @@ struct console *event_console_or_selected (Lisp_Object event);
 /* from event-stream.c */
 Lisp_Object allocate_command_builder (Lisp_Object console, int with_echo_buf);
 void enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object);
-void event_stream_next_event (Lisp_Event *event);
 void event_stream_handle_magic_event (Lisp_Event *event);
 void event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream);
 int event_stream_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2);
 Hashcode event_stream_hash_magic_event (Lisp_Event *e);
 void event_stream_select_console   (struct console *con);
 void event_stream_unselect_console (struct console *con);
-void event_stream_select_process   (Lisp_Process *proc);
-void event_stream_unselect_process (Lisp_Process *proc);
-USID event_stream_create_stream_pair (void* inhandle, void* outhandle,
-                Lisp_Object* instream, Lisp_Object* outstream, int flags);
-USID event_stream_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream);
+void event_stream_select_process   (Lisp_Process *proc, int doin, int doerr);
+void event_stream_unselect_process (Lisp_Process *proc, int doin, int doerr);
+void event_stream_create_io_streams (void* inhandle, void* outhandle,
+				     void *errhandle, Lisp_Object* instream,
+				     Lisp_Object* outstream,
+				     Lisp_Object* errstream,
+				     USID* in_usid,
+				     USID* err_usid,
+				     int flags);
+void event_stream_delete_io_streams (Lisp_Object instream,
+				     Lisp_Object outstream,
+				     Lisp_Object errstream,
+				     USID* in_usid,
+				     USID* err_usid);
 void event_stream_quit_p (void);
+void run_pre_idle_hook (void);
 
 struct low_level_timeout
 {
@@ -694,16 +708,25 @@ extern int fake_event_occurred;
 
 int event_stream_unixoid_select_console   (struct console *con);
 int event_stream_unixoid_unselect_console (struct console *con);
-int event_stream_unixoid_select_process   (Lisp_Process *proc);
-int event_stream_unixoid_unselect_process (Lisp_Process *proc);
+void event_stream_unixoid_select_process (Lisp_Process *proc, int doin,
+					  int doerr, int *infd, int *errfd);
+void event_stream_unixoid_unselect_process (Lisp_Process *proc, int doin,
+					    int doerr, int *infd, int *errfd);
 int read_event_from_tty_or_stream_desc (Lisp_Event *event,
 					struct console *con);
-USID event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
-                                             Lisp_Object* instream,
-                                             Lisp_Object* outstream,
-                                             int flags);
-USID event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
-                                              Lisp_Object outstream);
+void event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
+					     void *errhandle,
+					     Lisp_Object* instream,
+					     Lisp_Object* outstream,
+					     Lisp_Object* errstream,
+					     USID* in_usid,
+					     USID* err_usid,
+					     int flags);
+void event_stream_unixoid_delete_io_streams (Lisp_Object instream,
+					     Lisp_Object outstream,
+					     Lisp_Object errstream,
+					     USID* in_usid,
+					     USID* err_usid);
 
 /* Beware: this evil macro evaluates its arg many times */
 #define FD_TO_USID(fd) ((fd)==0 ? (USID)999999 : ((fd)<0 ? USID_DONTHASH : (USID)(fd)))

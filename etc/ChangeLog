@@ -1,3 +1,32 @@
+2001-03-30  Ben Wing  <ben@xemacs.org>
+
+	* sample.init.el:
+	* sample.init.el (Init-kill-entire-line):
+	* sample.init.el (describe-foo-at-point):
+	* sample.init.el (kill-current-buffer):
+	* sample.init.el (kill-current-buffer-and-window):
+	* sample.init.el (grep-c-files): Removed.
+	* sample.init.el (grep-all-files-history): New.
+	* sample.init.el (grep-all-files-omitted-expressions): New.
+	* sample.init.el (grep-all-files-omitted-directories): New.
+	* sample.init.el (construct-grep-all-files-command): New.
+	* sample.init.el (grep-all-files-in-current-directory): New.
+	* sample.init.el (grep-lisp-files): Removed.
+	* sample.init.el (grep-all-files-in-current-directory-and-below): New.
+	* sample.init.el (clear-select):
+	* sample.init.el ((control kp-add)):
+	* sample.init.el (pause):
+	* sample.init.el ((eq system-type 'windows-nt)):
+
+	Add documentation for defined functions.  Change grep functions to
+	be more generally useful.  Document more specifically what the
+	`menu-force' setting actually does -- what commands are overridden
+	and how to access them.
+
+2002-04-22  Hrvoje Niksic  <hniksic@xemacs.org>
+
+	* photos/hniksic.png, photos/hniksic.png: Update.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.

@@ -21,7 +21,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Written by Ben Wing. */
+/* Written by Ben Wing, late 1995?.
+   suspend-console, set-input-mode, and related stuff largely based on
+   existing code.
+*/
 
 #include <config.h>
 #include "lisp.h"
@@ -488,6 +491,7 @@ create_console (Lisp_Object name, Lisp_Object type, Lisp_Object connection,
 
   /* Do it this way so that the console list is in order of creation */
   Vconsole_list = nconc2 (Vconsole_list, Fcons (console, Qnil));
+  note_object_created (console);
 
   if (CONMETH_OR_GIVEN (con, initially_selected_for_input, (con), 0))
     event_stream_select_console (con);
@@ -603,6 +607,10 @@ delete_console_internal (struct console *con, int force,
     return;
 
   console = wrap_console (con);
+
+  if (!force)
+    check_allowed_operation (OPERATION_DELETE_OBJECT, console, Qnil);
+
   GCPRO1 (console);
 
   if (!called_from_kill_emacs)
@@ -726,6 +734,7 @@ delete_console_internal (struct console *con, int force,
      them. */
   nuke_all_console_slots (con, Qnil);
   con->conmeths = dead_console_methods;
+  note_object_deleted (console);
 
   UNGCPRO;
 }

@@ -1,7 +1,7 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
 ;; Copyright (C) 1985-7, 1993,4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 2000, 2001 Ben Wing.
+;; Copyright (C) 1995, 2000, 2001, 2002 Ben Wing.
 
 ;; Author: Ben Wing
 ;; Maintainer: XEmacs Development Team
@@ -61,7 +61,6 @@
 
 (defun start-process-shell-command (name buffer &rest args)
   "Start a program in a subprocess.  Return the process object for it.
-Args are NAME BUFFER COMMAND &rest COMMAND-ARGS.
 NAME is name for process.  It is modified if necessary to make it unique.
 BUFFER is the buffer or (buffer-name) to associate with the process.
  Process output goes at end of that buffer, unless you specify
@@ -76,162 +75,216 @@ Wildcards and redirection are handled as usual in the shell."
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat #'identity args " ")))
 
-(defun call-process-internal (program &optional infile buffer display &rest args)
-  "Call PROGRAM synchronously in separate process, with coding-system specified.
-Arguments are
- (PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS).
+(defun call-process-internal (program &optional infile buffer display
+				      &rest args)
+  "Internal function to call PROGRAM synchronously in separate process.
+Lisp callers should use `call-process' or `call-process-region'.
+
 The program's input comes from file INFILE (nil means `/dev/null').
+XEmacs feature: INFILE can also be a list of (BUFFER [START [END]]), i.e.
+a list of one to three elements, consisting of a buffer and optionally
+a start position or start and end position.  In this case, input comes
+from the buffer, starting from START (defaults to the beginning of the
+buffer) and ending at END (defaults to the end of the buffer).
+
 Insert output in BUFFER before point; t means current buffer;
  nil for BUFFER means discard it; 0 means discard and don't wait.
+If BUFFER is a string, then find or create a buffer with that name,
+then insert the output in that buffer, before point.
 BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
 REAL-BUFFER says what to do with standard output, as above,
 while STDERR-FILE says what to do with standard error in the child.
 STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
+t (mix it with ordinary output), a file name string, or (XEmacs feature)
+a buffer object.  If STDERR-FILE is a buffer object (but not the name of
+a buffer, since that would be interpreted as a file), the standard error
+output will be inserted into the buffer before point.
 
 Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
 Remaining arguments are strings passed as command arguments to PROGRAM.
 
-If BUFFER is 0, `call-process' returns immediately with value nil.
-Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
- or a signal description string.
-If you quit, the process is killed with SIGINT, or SIGKILL if you
- quit again."
-  ;; #### remove windows-nt check when this is ready for prime time.
-  (if (not (eq 'windows-nt system-type))
-      (apply 'old-call-process-internal program infile buffer display args)
-    (let (proc inbuf errbuf discard)
-      (unwind-protect
-	  (progn
-	    (when infile
-	      (setq infile (expand-file-name infile))
-	      (setq inbuf (generate-new-buffer "*call-process*"))
-	      (with-current-buffer inbuf
-               ;; Make sure this works with jka-compr
-               (let ((file-name-handler-alist nil))
-                 (insert-file-contents-internal infile nil nil nil nil
-                                                'binary))))
-	    (let ((stderr (if (consp buffer) (second buffer) t)))
-	      (if (consp buffer) (setq buffer (car buffer)))
-	      (setq buffer
-		    (cond ((null buffer) nil)
-			  ((eq buffer t) (current-buffer))
-			  ;; use integerp for compatibility with existing
-			  ;; call-process rmsism.
-			  ((integerp buffer) (setq discard t) nil)
-			  (t (get-buffer-create buffer))))
-	      (when (and stderr (not (eq t stderr)))
-		(setq stderr (expand-file-name stderr))
-		(setq errbuf (generate-new-buffer "*call-process*")))
-	      (setq proc
-		    (apply 'start-process-internal "*call-process*"
-			   buffer
-			   ;#### not implemented until my new process
-			   ;changes go in.
-			   ;(if (eq t stderr) buffer (list buffer errbuf))
-			   program args))
-	      (if buffer
-		  (set-marker (process-mark proc) (point buffer) buffer))
-	      (unwind-protect
-		  (prog1
-		    (catch 'call-process-done
-		      (when (not discard)
-			(set-process-sentinel
-			 proc
-			 #'(lambda (proc status)
-			     (cond ((eq 'exit (process-status proc))
-				    (set-process-sentinel proc nil)
-				    (throw 'call-process-done
-					   (process-exit-status proc)))
-				   ((eq 'signal (process-status proc))
-				    (set-process-sentinel proc nil)
-				    (throw 'call-process-done status))))))
-		      (when inbuf
-			(process-send-region proc 1
-					     (1+ (buffer-size inbuf)) inbuf))
-		      (process-send-eof proc)
-		      (when discard
-			;; we're trying really really hard to emulate
-			;; the old call-process.
-			(if errbuf
-			    (set-process-sentinel
-			     proc
-			     `(lambda (proc status)
-				(write-region-internal
-				 1 (1+ (buffer-size))
-				 ,stderr
-				 nil 'major-rms-kludge-city nil
-				 coding-system-for-write))))
-			(setq errbuf nil)
-			(setq proc nil)
-			(throw 'call-process-done nil))
-		      (while t
-			(accept-process-output proc)
-			(if display (sit-for 0))))
-		    (when errbuf
-		      (with-current-buffer errbuf
-			(write-region-internal 1 (1+ (buffer-size)) stderr
-					       nil 'major-rms-kludge-city nil
-					       coding-system-for-write))))
-		(if proc (set-process-sentinel proc nil)))))
-	(if inbuf (kill-buffer inbuf))
-	(if errbuf (kill-buffer errbuf))
-	(condition-case nil
-	    (if (and proc (process-live-p proc)) (kill-process proc))
-	  (error nil))))))
-
-(defun call-process (program &optional infile buffer displayp &rest args)
-  "Call PROGRAM synchronously in separate process.
-The program's input comes from file INFILE (nil means `/dev/null').
-Insert output in BUFFER before point; t means current buffer;
- nil for BUFFER means discard it; 0 means discard and don't wait.
-BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
-REAL-BUFFER says what to do with standard output, as above,
-while STDERR-FILE says what to do with standard error in the child.
-STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
-
-Fourth arg DISPLAYP non-nil means redisplay buffer as output is inserted.
-Remaining arguments are strings passed as command arguments to PROGRAM.
-
-If BUFFER is 0, `call-process' returns immediately with value nil.
-Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
- or a signal description string.
-If you quit, the process is killed with SIGINT, or SIGKILL if you
- quit again."
-  (apply 'call-process-internal program infile buffer displayp args))
-
-(defun call-process-region (start end program
-                            &optional deletep buffer displayp
-                            &rest args)
-  "Send text from START to END to a synchronous process running PROGRAM.
-Delete the text if fourth arg DELETEP is non-nil.
-
-Insert output in BUFFER before point; t means current buffer;
- nil for BUFFER means discard it; 0 means discard and don't wait.
-BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
-REAL-BUFFER says what to do with standard output, as above,
-while STDERR-FILE says what to do with standard error in the child.
-STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
-
-Sixth arg DISPLAYP non-nil means redisplay buffer as output is inserted.
-Remaining args are passed to PROGRAM at startup as command args.
-
 If BUFFER is 0, returns immediately with value nil.
-Otherwise waits for PROGRAM to terminate
-and returns a numeric exit status or a signal description string.
-If you quit, the process is first killed with SIGINT, then with SIGKILL if
-you quit again before the process exits."
-  (let ((temp
-	 (make-temp-name
-	  (concat (file-name-as-directory (temp-directory)) "emacs"))))
+Otherwise waits for PROGRAM to terminate and returns a numeric exit status
+or a signal description string.  If you quit, the process is first killed
+with SIGINT, then with SIGKILL if you quit again before the process exits.
+
+Coding systems for the process are the same as for `start-process-internal'."
+  (let (proc inbuf errbuf kill-inbuf kill-errbuf no-wait start end)
+    ;; first set up an unwind-protect to clean everything up.  this will:
+    ;;
+    ;; -- kill the process. (when we're not waiting for it to finish, we
+    ;;    set PROC to nil when we're ready to exit so this doesn't happen --
+    ;;    if we're interrupted before we're ready to exit, we should still
+    ;;    kill the process)
+    ;; -- kill temporary buffers created to handle I/O to or from a file.
+    ;;    KILL-INBUF/KILL-ERRBUF tell us if we should do so.
+    ;;
+    ;; note that we need to be *very* careful in this code to handle C-g
+    ;; at any point.
     (unwind-protect
 	(progn
-	  (write-region start end temp nil 'silent)
-	  (if deletep (delete-region start end))
-	  (apply #'call-process program temp buffer displayp args))
-      (ignore-file-errors (delete-file temp)))))
+	  ;; first handle INFILE.
+	  (cond ((stringp infile)
+		 (setq infile (expand-file-name infile))
+		 (setq kill-inbuf t)
+		 (setq inbuf (generate-new-buffer "*call-process*"))
+		 ;; transfer the exact contents of the file to the process.
+		 ;; we do that by reading in and writing out in
+		 ;; binary. #### is this even correct?  should we be doing
+		 ;; the same thing with stderr?  if so we'd need a way of
+		 ;; controlling the stderr coding system separate from
+		 ;; everything else.
+		 (with-current-buffer inbuf
+		   ;; Make sure this works with jka-compr
+		   (let ((file-name-handler-alist nil))
+		     (insert-file-contents-internal infile nil nil nil nil
+						    'binary))
+		   (setq start (point-min) end (point-max))))
+		((consp infile)
+		 (setq inbuf (get-buffer (car infile)))
+		 (setq start (or (nth 1 infile) (point-min inbuf)))
+		 (setq end (or (nth 2 infile) (point-max inbuf))))
+		((null infile) nil)
+		(t
+		 (error 'wrong-type-argument
+			"Must be filename or (BUFFER [START [END]])"
+			infile)))
+	  ;; now handle BUFFER
+	  (let ((stderr (if (consp buffer) (second buffer) t)))
+	    (if (consp buffer) (setq buffer (car buffer)))
+	    (setq buffer
+		  (cond ((null buffer) nil)
+			((eq buffer t) (current-buffer))
+			;; use integerp for compatibility with existing
+			;; call-process rmsism.
+			((integerp buffer) (setq no-wait t) nil)
+			(t (get-buffer-create buffer))))
+	    (when (and stderr (not (eq t stderr)))
+	      ;; both ERRBUF and STDERR being non-nil indicates to the
+	      ;; code below that STDERR is a file and we should write
+	      ;; ERRBUF to it; so clear out STDERR if we don't want this.
+	      (if (bufferp stderr) (setq errbuf stderr stderr nil)
+		(setq stderr (expand-file-name stderr))
+		(setq kill-errbuf t)
+		(setq errbuf (generate-new-buffer "*call-process*"))))
+	    ;; now start process.  using a pty causes all sorts of
+	    ;; weirdness, at least under cygwin, when there's input. #### i
+	    ;; don't know what's going wrong and whether it's a cygwin-only
+	    ;; problem.  suffice to say that there were NO pty connections
+	    ;; in the old version.
+	    (let ((process-connection-type nil))
+	      (setq proc
+		    (apply 'start-process-internal "*call-process*"
+			   (if (eq t stderr) buffer (list buffer errbuf))
+			   program args)))
+	    ;; see comment above where the data was read from the file.
+	    (if kill-inbuf
+		(set-process-output-coding-system proc 'binary))
+	    ;; point mark/stderr-mark at the right place (by default it's
+	    ;; end of buffer).
+	    (if buffer
+		(set-marker (process-mark proc) (point buffer) buffer))
+	    (if errbuf
+		(set-marker (process-stderr-mark proc) (point errbuf) errbuf))
+	    ;; now do I/O, very carefully!  the unwind-protect makes sure
+	    ;; to clear out the sentinel, since it does a `throw', which would
+	    ;; have no catch (or writes to a file -- we only want this on
+	    ;; normal exit)
+	    (unwind-protect
+		;; if not NO-WAIT, set a sentinel to return the exit
+		;; status.  it will throw to this catch so we can exit
+		;; properly.
+		(catch 'call-process-done
+		  (set-process-sentinel
+		   proc
+		   (if no-wait
+		       ;; we're trying really really hard to emulate
+		       ;; the old call-process, which would save the
+		       ;; stderr to a file even if discarding output.  so
+		       ;; we set a sentinel to save the output when
+		       ;; we finish.
+		       ;;
+		       ;; #### not clear if we should be doing this.
+		       ;;
+		       ;; NOTE NOTE NOTE: Due to the total bogosity of
+		       ;; dynamic scoping, and the lack of closures, we
+		       ;; have to be careful how we write the first
+		       ;; sentinel below since it may be executed after
+		       ;; this function has returned -- thus we fake a
+		       ;; closure. (This doesn't apply to the second one,
+		       ;; which only gets executed within the
+		       ;; unwind-protect.)
+		       (if (and errbuf stderr)
+			   (set-process-sentinel
+			    proc
+			    `(lambda (proc status)
+			       (set-process-sentinel proc nil)
+			       (with-current-buffer ,errbuf
+				 (write-region-internal
+				  1 (1+ (buffer-size))
+				  ,stderr
+				  nil 'major-rms-kludge-city nil
+				  coding-system-for-write))
+			       (kill-buffer ,errbuf))))
+		     ;; normal sentinel: maybe write out stderr and return
+		     ;; status.
+		     #'(lambda (proc status)
+			 (when (and errbuf stderr)
+			   (with-current-buffer errbuf
+			     (write-region-internal
+			      1 (1+ (buffer-size)) stderr
+			      nil 'major-rms-kludge-city nil
+			      coding-system-for-write)))
+			 (cond ((eq 'exit (process-status proc))
+				(set-process-sentinel proc nil)
+				(throw 'call-process-done
+				       (process-exit-status proc)))
+			       ((eq 'signal (process-status proc))
+				(set-process-sentinel proc nil)
+				(throw 'call-process-done status))))))
+		  (if (not no-wait)
+		      ;; we're waiting.  send the input and loop forever,
+		      ;; handling process output and maybe redisplaying.
+		      ;; exit happens through the sentinel or C-g.  if
+		      ;; C-g, send SIGINT the first time, EOF if not
+		      ;; already done so (might make the process exit),
+		      ;; and keep waiting.  Another C-g will exit the
+		      ;; whole function, and the unwind-protect will
+		      ;; kill the process. (Hence the documented semantics
+		      ;; of SIGINT/SIGKILL.)
+		      (let (eof-sent)
+			(condition-case nil
+			    (progn
+			      (when inbuf
+				(process-send-region proc start end inbuf))
+			      (process-send-eof proc)
+			      (setq eof-sent t)
+			      (while t
+				(accept-process-output proc)
+				(if display (sit-for 0))))
+			  (quit
+			   (process-send-signal 'SIGINT proc)
+			   (unless eof-sent
+			     (process-send-eof proc))
+			   (while t
+			     (accept-process-output proc)
+			     (if display (sit-for 0))))))
+		    ;; discard and no wait: send the input, set PROC
+		    ;; and ERRBUF to nil so that the unwind-protect
+		    ;; forms don't erase the sentinel, kill the process,
+		    ;; or kill ERRBUF (the sentinel does that), and exit.
+		    (when inbuf
+		      (process-send-region proc start end inbuf))
+		    (process-send-eof proc)
+		    (setq errbuf nil)
+		    (setq proc nil)))
+	      (if proc (set-process-sentinel proc nil)))))
+      ;; unwind-protect forms.
+      (if (and inbuf kill-inbuf) (kill-buffer inbuf))
+      (if (and errbuf kill-errbuf) (kill-buffer errbuf))
+      (condition-case nil
+	  (if (and proc (process-live-p proc)) (kill-process proc))
+	(error nil)))))
 
 
 (defun shell-command (command &optional output-buffer)
@@ -396,46 +449,6 @@ In either case, the output is inserted after point (leaving mark after it)."
 						     (point))))))
 		(t
 		 (set-window-start (display-buffer buffer) 1))))))))
-
-
-(defun start-process (name buffer program &rest program-args)
-  "Start a program in a subprocess.  Return the process object for it.
-Args are NAME BUFFER PROGRAM &rest PROGRAM-ARGS
-NAME is name for process.  It is modified if necessary to make it unique.
-BUFFER is the buffer or (buffer-name) to associate with the process.
- Process output goes at end of that buffer, unless you specify
- an output stream or filter function to handle the output.
- BUFFER may be also nil, meaning that this process is not associated
- with any buffer
-Third arg is program file name.  It is searched for as in the shell.
-Remaining arguments are strings to give program as arguments."
-  (apply 'start-process-internal name buffer program program-args))
-
-(defun open-network-stream (name buffer host service &optional protocol)
-  "Open a TCP connection for a service to a host.
-Returns a process object to represent the connection.
-Input and output work as for subprocesses; `delete-process' closes it.
-Args are NAME BUFFER HOST SERVICE.
-NAME is name for process.  It is modified if necessary to make it unique.
-BUFFER is the buffer (or buffer-name) to associate with the process.
- Process output goes at end of that buffer, unless you specify
- an output stream or filter function to handle the output.
- BUFFER may be also nil, meaning that this process is not associated
- with any buffer
-Third arg is name of the host to connect to, or its IP address.
-Fourth arg SERVICE is name of the service desired, or an integer
- specifying a port number to connect to.
-Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
- (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
- supported.  When omitted, 'tcp is assumed.
-
-Output via `process-send-string' and input via buffer or filter (see
-`set-process-filter') are stream-oriented.  That means UDP datagrams are
-not guaranteed to be sent and received in discrete packets. (But small
-datagrams around 500 bytes that are not truncated by `process-send-string'
-are usually fine.)  Note further that UDP protocol does not guard against
-lost packets."
-  (open-network-stream-internal name buffer host service protocol))
 
 (defun shell-quote-argument (argument)
   "Quote an argument for passing as argument to an inferior shell."

@@ -1,6 +1,7 @@
 /* Tooltalk support for Emacs.
    Copyright (C) 1993, 1994 Sun Microsystems, Inc.
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1257,7 +1258,7 @@ init_tooltalk (void)
       /* Don't ask the user for confirmation when exiting Emacs */
       Fprocess_kill_without_query (lp, Qnil);
       fil = wrap_subr (&SFreceive_tooltalk_message);
-      set_process_filter (lp, fil, 1);
+      set_process_filter (lp, fil, 1, 0);
     }
   else
     {

@@ -244,16 +244,6 @@ defining others, use \\[name-last-kbd-macro].
   return Qnil;
 }
 
-/* Restore Vexecuting_macro and executing_macro_index - called when
-   the unwind-protect in Fexecute_kbd_macro gets invoked.  */
-static Lisp_Object
-pop_kbd_macro (Lisp_Object info)
-{
-  Vexecuting_macro = Fcar (info);
-  executing_macro_index = XINT (Fcdr (info));
-  return Qnil;
-}
-
 DEFUN ("execute-kbd-macro", Fexecute_kbd_macro, 1, 2, 0, /*
 Execute MACRO as string of editor command characters.
 If MACRO is a symbol, its function definition is used.
@@ -263,7 +253,6 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
 {
   /* This function can GC */
   Lisp_Object final;
-  Lisp_Object tem;
   int speccount = specpdl_depth ();
   int repeat = 1;
   struct gcpro gcpro1;
@@ -279,8 +268,8 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
   if (!STRINGP (final) && !VECTORP (final))
     invalid_argument ("Keyboard macros must be strings or vectors", Qunbound);
 
-  tem = Fcons (Vexecuting_macro, make_int (executing_macro_index));
-  record_unwind_protect (pop_kbd_macro, tem);
+  internal_bind_lisp_object (&Vexecuting_macro, Vexecuting_macro);
+  internal_bind_int (&executing_macro_index, executing_macro_index);
 
   GCPRO1 (final);
   do
@@ -289,7 +278,7 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
       executing_macro_index = 0;
       con->prefix_arg = Qnil;
       internal_catch (Qexecute_kbd_macro, call_command_loop,
-		      Qnil, 0);
+		      Qnil, 0, 0);
     }
   while (--repeat != 0
 	 && (STRINGP (Vexecuting_macro) ||

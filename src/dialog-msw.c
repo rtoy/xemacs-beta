@@ -220,9 +220,8 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 	else
 	  mswindows_enqueue_misc_user_event (did->frame, Qrun_hooks,
 					     Qmenu_no_selection_hook);
-	/* #### need to error-protect!  will do so when i merge in
-	   my stderr-proc ws */
-	va_run_hook_with_args (Qdelete_dialog_box_hook, 1, data);
+	va_run_hook_with_args_trapping_problems
+	  (0, Qdelete_dialog_box_hook, 1, data, 0);
 
 	DestroyWindow (hwnd);
       }

@@ -642,6 +642,10 @@ execute_optimized_program (const Opbyte *program,
 	      specpdl_depth_counter++;
 
 	      symbol_ptr->value = new_value;
+
+#ifdef ERROR_CHECK_CATCH
+	      check_specbind_stack_sanity ();
+#endif
 	    }
 	  else
 	    specbind_magic (symbol, new_value);
@@ -1173,7 +1177,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
     case Bcatch:
       {
 	Lisp_Object arg = POP;
-	TOP = internal_catch (TOP, Feval, arg, 0);
+	TOP = internal_catch (TOP, Feval, arg, 0, 0);
 	break;
       }
 

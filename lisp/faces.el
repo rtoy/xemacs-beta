@@ -1600,6 +1600,7 @@ and 'global)."
   ;; Further X frobbing.
   (and (featurep 'x) (declare-fboundp (x-init-global-faces)))
   (and (featurep 'gtk) (declare-fboundp (gtk-init-global-faces)))
+  (and (featurep 'mswindows) (declare-fboundp (mswindows-init-global-faces)))
 
   ;; for bold and the like, make the global specification be bold etc.
   ;; if the user didn't already specify a value.  These will also be

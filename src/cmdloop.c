@@ -1,6 +1,6 @@
 /* Editor command loop.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -285,7 +285,7 @@ initial_command_loop (Lisp_Object load_me)
      Otherwise, this function will return normally when all command-
      line arguments have been processed, the user's initialization
      file has been read in, and the first frame has been created. */
-  internal_catch (Qtop_level, top_level_1, Qnil, 0);
+  internal_catch (Qtop_level, top_level_1, Qnil, 0, 0);
 
   /* If an error occurred during startup and the initial console
      wasn't created, then die now (the error was already printed out
@@ -305,7 +305,7 @@ initial_command_loop (Lisp_Object load_me)
       MARK_MODELINE_CHANGED;
       /* Now invoke the command loop.  It never returns; however, a
 	 throw to 'top-level will place us at the end of this loop. */
-      internal_catch (Qtop_level, command_loop_2, Qnil, 0);
+      internal_catch (Qtop_level, command_loop_2, Qnil, 0, 0);
       /* #### wrong with selected-console? */
       /* We don't actually call clear_echo_area() here, partially
 	 at least because that runs Lisp code and it may be unsafe
@@ -368,7 +368,7 @@ Alternately, `(throw 'exit t)' makes this function signal an error.
   specbind (Qstandard_output, Qt);
   specbind (Qstandard_input, Qt);
 
-  val = internal_catch (Qexit, command_loop_2, Qnil, 0);
+  val = internal_catch (Qexit, command_loop_2, Qnil, 0, 0);
 
   if (EQ (val, Qt))
     /* Turn abort-recursive-edit into a quit. */
@@ -436,7 +436,7 @@ call_command_loop (Lisp_Object catch_errors)
     Fcommand_loop_1 ();
   else
     internal_catch (Qtop_level,
-                    cold_load_command_loop, Qnil, 0);
+                    cold_load_command_loop, Qnil, 0, 0);
   goto loop;
   return Qnil;
 }
@@ -570,18 +570,11 @@ Don't call this unless you know what you're doing.
 	  int count = begin_dont_check_for_quit ();
 	  Fsit_for (make_int (2), Qnil);
 	  clear_echo_area (selected_frame (), Qnil, 0);
+	  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
 	  unbind_to (count);
 	}
 
       Fnext_event (event, Qnil);
-      /* If ^G was typed while emacs was reading input from the user, then
-	 Fnext_event() will have read it as a normal event and
-	 next_event_internal() will have set Vquit_flag.  We reset this
-	 so that the ^G is treated as just another key.  This is strange,
-	 but it is what emacs 18 did.
-
-	 Do not call check_quit() here. */
-      Vquit_flag = Qnil;
       Fdispatch_event (event);
 
       if (!was_locked)

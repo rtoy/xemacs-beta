@@ -97,7 +97,7 @@ read_minibuffer_internal_unwind (Lisp_Object unwind_data)
     {
       Lisp_Object victim = unwind_data;
       unwind_data = XCDR (unwind_data);
-      free_cons (XCONS (victim));
+      free_cons (victim);
     }
 
   /* If cursor is on the minibuffer line,

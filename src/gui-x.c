@@ -382,16 +382,15 @@ add_accel_and_to_external (Lisp_Object string)
   return retval;
 }
 
-/* This does the dirty work.  begin_gc_forbidden() is active when this is
- called. */
+/* This does the dirty work.  GC is inhibited when this is called.
+ */
 int
 button_item_to_widget_value (Lisp_Object gui_object_instance,
 			     Lisp_Object gui_item, widget_value *wv,
 			     int allow_text_field_p, int no_keys_p,
 			     int menu_entry_p, int accel_p)
 {
-  /* This function cannot GC because begin_gc_forbidden() is active when
-     it's called. */
+  /* This function cannot GC because GC is inhibited when it's called */
   Lisp_Gui_Item* pgui = 0;
 
   /* degenerate case */

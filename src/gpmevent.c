@@ -94,8 +94,8 @@ clear_gpm_state (int fd)
 static int
 get_process_infd (Lisp_Process *p)
 {
-  Lisp_Object instr, outstr;
-  get_process_streams (p, &instr, &outstr);
+  Lisp_Object instr, outstr, errstr;
+  get_process_streams (p, &instr, &outstr, &errstr);
   assert (!NILP (instr));
   return filedesc_stream_fd (XLSTREAM (instr));
 }
@@ -588,7 +588,7 @@ Toggle accepting of GPM mouse events.
 	  rval = 0;
 	  Fprocess_kill_without_query (gpm_process, Qnil);
 	  gpm_filter = wrap_subr (&SFreceive_gpm_event);
-	  set_process_filter (gpm_process, gpm_filter, 1);
+	  set_process_filter (gpm_process, gpm_filter, 1, 0);
 
 	  /* Keep track of the device for later */
 	  /* Fput (gpm_process, intern ("gpm-device"), device); */

@@ -129,6 +129,21 @@ static void hft_reset (struct console *c);
 /*                         subprocess control                           */
 /************************************************************************/
 
+#ifdef NEED_SYNC_PROCESS_CODE
+
+/* True iff we are about to fork off a synchronous process or if we
+   are waiting for it.  */
+volatile int synch_process_alive;
+
+/* Nonzero => this is a string explaining death of synchronous subprocess.  */
+const char *synch_process_death;
+
+/* If synch_process_death is zero,
+   this is exit code of synchronous subprocess.  */
+int synch_process_retcode;
+
+#endif /* NEED_SYNC_PROCESS_CODE */
+
 #ifdef HAVE_TTY
 
 #ifdef SIGTSTP
@@ -184,21 +199,9 @@ set_descriptor_non_blocking (int fd)
 #endif
 }
 
-#if defined (NO_SUBPROCESSES)
+#ifdef NEED_SYNC_PROCESS_CODE /* #### Used only on super-ancient systems */
 
-#ifdef BSD
-void
-wait_without_blocking (void)
-{
-  wait3 (0, WNOHANG | WUNTRACED, 0);
-  synch_process_alive = 0;
-}
-#endif /* BSD */
-
-#endif /* NO_SUBPROCESSES */
-
-
-void
+static void
 wait_for_termination (int pid)
 {
   /* #### With the new improved SIGCHLD handling stuff, there is much
@@ -309,8 +312,6 @@ wait_for_termination (int pid)
 
      Since implementations may add their own error indicators on top,
      we ignore it by default.  */
-#elif defined (WIN32_NATIVE)
-  /* not used */
 #elif defined (EMACS_BLOCK_SIGNAL) && !defined (BROKEN_WAIT_FOR_SIGNAL) && defined (SIGCHLD)
   while (1)
     {
@@ -342,7 +343,7 @@ wait_for_termination (int pid)
 	   Try defining BROKEN_WAIT_FOR_SIGNAL. */
 	EMACS_WAIT_FOR_SIGNAL (SIGCHLD);
     }
-#else /* not HAVE_WAITPID and not WIN32_NATIVE and (not EMACS_BLOCK_SIGNAL or BROKEN_WAIT_FOR_SIGNAL) */
+#else /* not HAVE_WAITPID and (not EMACS_BLOCK_SIGNAL or BROKEN_WAIT_FOR_SIGNAL) */
   /* This approach is kind of cheesy but is guaranteed(?!) to work
      for all systems. */
   while (1)
@@ -357,6 +358,7 @@ wait_for_termination (int pid)
 #endif /* OS features */
 }
 
+#endif /* NEED_SYNC_PROCESS_CODE */
 
 #if !defined (NO_SUBPROCESSES)
 
@@ -927,7 +929,7 @@ init_baud_rate (struct device *d)
 /*                       SIGIO control                    */
 /* ------------------------------------------------------ */
 
-#if defined(SIGIO) && !defined(BROKEN_SIGIO)
+#if defined (SIGIO) && !defined (BROKEN_SIGIO)
 
 static void
 init_sigio_on_device (struct device *d)
@@ -2640,7 +2642,7 @@ retry_read_1 (int fildes, void *buf, size_t nbyte, int allow_quit)
 	 && (errno == EINTR))
     {
       if (allow_quit)
-	REALLY_QUIT;
+	QUIT;
     }
   return rtnval;
 }
@@ -2663,7 +2665,7 @@ retry_write_1 (int fildes, const void *buf, size_t nbyte, int allow_quit)
       ssize_t rtnval = write (fildes, b, nbyte);
 
       if (allow_quit)
-	REALLY_QUIT;
+	QUIT;
 
       if (rtnval == -1)
 	{

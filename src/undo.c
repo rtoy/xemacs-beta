@@ -104,14 +104,6 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
 
 
 
-static Lisp_Object
-restore_inside_undo (Lisp_Object val)
-{
-  inside_undo = XINT (val);
-  return val;
-}
-
-
 /* Record an insertion that just happened or is about to happen,
    for LENGTH characters at position BEG.
    (It is possible to record an insertion before or after the fact
@@ -367,10 +359,7 @@ Return what remains of the list.
   Lisp_Object next = Qnil;
   /* This function can GC */
   int arg;
-  int speccount = specpdl_depth ();
-
-  record_unwind_protect (restore_inside_undo, make_int (inside_undo));
-  inside_undo = 1;
+  int speccount = internal_bind_int (&inside_undo, 1);
 
 #if 0  /* This is a good feature, but would make undo-start
 	  unable to do what is expected.  */

@@ -744,7 +744,11 @@ scan_c_file (const char *filename, const char *mode)
       if (defunflag | defvarflag)
 	{
 	  while (c != '/')
-	    c = getc (infile);
+	    {
+	      if (c < 0)
+		goto eof;
+	      c = getc (infile);
+	    }
 	  c = getc (infile);
 	  while (c == '*')
 	    c = getc (infile);
@@ -752,7 +756,11 @@ scan_c_file (const char *filename, const char *mode)
       else
 	{
 	  while (c != ',')
-	    c = getc (infile);
+	    {
+	      if (c < 0)
+		goto eof;
+	      c = getc (infile);
+	    }
 	  c = getc (infile);
 	}
       while (c == ' ' || c == '\n' || c == '\t')
@@ -798,7 +806,11 @@ scan_c_file (const char *filename, const char *mode)
 	      /* Copy arguments into ARGBUF.  */
 	      *p++ = c;
 	      do
-		*p++ = c = getc (infile);
+		{
+		  *p++ = c = getc (infile);
+		  if (c < 0)
+		    goto eof;
+		}
 	      while (c != ')');
 	      *p = '\0';
 	      /* Output them.  */
@@ -947,7 +959,11 @@ scan_lisp_file (const char *filename, const char *mode)
 	      /* Skip the newline.  */
 	      c = getc_skipping_iso2022 (infile);
 	      while (c != '\n')
-		c = getc_skipping_iso2022 (infile);
+		{
+		  c = getc_skipping_iso2022 (infile);
+		  if (c < 0)
+		    continue;
+		}
 	    }
 	  continue;
 	}
@@ -984,7 +1000,11 @@ scan_lisp_file (const char *filename, const char *mode)
 	    }
 	  else
 	    while (c != ')')
-	      c = getc_skipping_iso2022 (infile);
+	      {
+		c = getc_skipping_iso2022 (infile);
+		if (c < 0)
+		  continue;
+	      }
 	  skip_white (infile);
 
 	  /* If the next three characters aren't `dquote bslash newline'

@@ -72,7 +72,6 @@ void syms_of_balloon_x (void);
 void syms_of_buffer (void);
 void syms_of_bytecode (void);
 void syms_of_callint (void);
-void syms_of_callproc (void);
 void syms_of_casefiddle (void);
 void syms_of_casetab (void);
 void syms_of_chartab (void);

@@ -304,9 +304,6 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   struct syntax_cache scache_struct;
   struct syntax_cache *scache = &scache_struct;
   
-  if (running_asynch_code)
-    save_search_regs ();
-
   CHECK_STRING (string);
   bufp = compile_pattern (string, &search_regs,
 			  (!NILP (buf->case_fold_search)
@@ -393,8 +390,9 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   Charcount s;
   struct re_pattern_buffer *bufp;
 
-  if (running_asynch_code)
-    save_search_regs ();
+  /* Some FSF junk with running_asynch_code, to preserve the match
+     data.  Not necessary because we don't call process filters
+     asynchronously (i.e. from within QUIT). */
 
   CHECK_STRING (regexp);
   CHECK_STRING (string);
@@ -1193,8 +1191,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   Bytecount s1, s2;
   Bytebpos pos, lim;
 
-  if (running_asynch_code)
-    save_search_regs ();
+  /* Some FSF junk with running_asynch_code, to preserve the match
+     data.  Not necessary because we don't call process filters
+     asynchronously (i.e. from within QUIT). */
 
   /* Null string is found at starting position.  */
   if (len == 0)
@@ -2235,7 +2234,7 @@ free_created_dynarrs (Lisp_Object cons)
   Dynarr_free (get_opaque_ptr (XCDR (cons)));
   free_opaque_ptr (XCAR (cons));
   free_opaque_ptr (XCDR (cons));
-  free_cons (XCONS (cons));
+  free_cons (cons);
   return Qnil;
 }
 
@@ -2850,8 +2849,9 @@ LIST should have been created by calling `match-data' previously.
   int num_regs;
   int length;
 
-  if (running_asynch_code)
-    save_search_regs ();
+  /* Some FSF junk with running_asynch_code, to preserve the match
+     data.  Not necessary because we don't call process filters
+     asynchronously (i.e. from within QUIT). */
 
   CONCHECK_LIST (list);
 

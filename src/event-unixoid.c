@@ -183,32 +183,71 @@ event_stream_unixoid_unselect_console (struct console *con)
 static int
 get_process_infd (Lisp_Process *p)
 {
-  Lisp_Object instr, outstr;
-  get_process_streams (p, &instr, &outstr);
+  Lisp_Object instr, outstr, errstr;
+  get_process_streams (p, &instr, &outstr, &errstr);
   assert (!NILP (instr));
   return filedesc_stream_fd (XLSTREAM (instr));
 }
 
-int
-event_stream_unixoid_select_process (Lisp_Process *proc)
+static int
+get_process_errfd (Lisp_Process *p)
 {
-  int infd = get_process_infd (proc);
-
-  FD_SET (infd, &input_wait_mask);
-  FD_SET (infd, &non_fake_input_wait_mask);
-  FD_SET (infd, &process_only_mask);
-  return infd;
+  Lisp_Object instr, outstr, errstr;
+  get_process_streams (p, &instr, &outstr, &errstr);
+  if (!NILP (errstr))
+    return filedesc_stream_fd (XLSTREAM (errstr));
+  else
+    return -1;
 }
 
-int
-event_stream_unixoid_unselect_process (Lisp_Process *proc)
+void
+event_stream_unixoid_select_process (Lisp_Process *proc, int doin, int doerr,
+				     int *infd, int *errfd)
 {
-  int infd = get_process_infd (proc);
+  if (doin)
+    {
+      *infd = get_process_infd (proc);
+      FD_SET (*infd, &input_wait_mask);
+      FD_SET (*infd, &non_fake_input_wait_mask);
+      FD_SET (*infd, &process_only_mask);
+    }
 
-  FD_CLR (infd, &input_wait_mask);
-  FD_CLR (infd, &non_fake_input_wait_mask);
-  FD_CLR (infd, &process_only_mask);
-  return infd;
+  if (doerr)
+    {
+      *errfd = get_process_errfd (proc);
+
+      if (*errfd >= 0)
+	{
+	  FD_SET (*errfd, &input_wait_mask);
+	  FD_SET (*errfd, &non_fake_input_wait_mask);
+	  FD_SET (*errfd, &process_only_mask);
+	}
+    }
+}
+
+void
+event_stream_unixoid_unselect_process (Lisp_Process *proc, int doin, int doerr,
+				       int *infd, int *errfd)
+{
+  if (doin)
+    {
+      *infd = get_process_infd (proc);
+      FD_CLR (*infd, &input_wait_mask);
+      FD_CLR (*infd, &non_fake_input_wait_mask);
+      FD_CLR (*infd, &process_only_mask);
+    }
+
+  if (doerr)
+    {
+      *errfd = get_process_errfd (proc);
+
+      if (*errfd >= 0)
+	{
+	  FD_CLR (*errfd, &input_wait_mask);
+	  FD_CLR (*errfd, &non_fake_input_wait_mask);
+	  FD_CLR (*errfd, &process_only_mask);
+	}
+    }
 }
 
 int
@@ -245,47 +284,22 @@ poll_fds_for_input (SELECT_TYPE mask)
 /*     Unixoid (file descriptors based) process I/O streams routines        */
 /****************************************************************************/
 
-USID
-event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
-					 Lisp_Object* instream,
-					 Lisp_Object* outstream,
-					 int flags)
+void
+event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
+					void *errhandle, Lisp_Object* instream,
+					Lisp_Object* outstream,
+					Lisp_Object* errstream,
+					USID* in_usid,
+					USID* err_usid,
+					int flags)
 {
-  int infd, outfd;
+  int infd, outfd, errfd;
   /* Decode inhandle and outhandle. Their meaning depends on
      the process implementation being used. */
-#if defined (HAVE_WIN32_PROCESSES)
-  /* We're passed in Windows handles. Open new fds for them */
-  if ((HANDLE)inhandle != INVALID_HANDLE_VALUE)
-    {
-      infd = open_osfhandle ((HANDLE)inhandle, 0);
-      if (infd < 0)
-	return USID_ERROR;
-    }
-  else
-    infd = -1;
-
-  if ((HANDLE)outhandle != INVALID_HANDLE_VALUE)
-    {
-      outfd = open_osfhandle ((HANDLE)outhandle, 0);
-      if (outfd < 0)
-	{
-	  if (infd >= 0)
-	    retry_close (infd);
-	  return USID_ERROR;
-	}
-    }
-  else
-    outfd = -1;
-
-  flags = 0;
-#elif defined (HAVE_UNIX_PROCESSES)
   /* We are passed plain old file descs */
-  infd  = (int)inhandle;
-  outfd = (int)outhandle;
-#else
-# error Which processes do you have?
-#endif
+  infd  = (int) inhandle;
+  outfd = (int) outhandle;
+  errfd = (int) errhandle;
 
   *instream = (infd >= 0
 	       ? make_filedesc_input_stream (infd, 0, -1, 0)
@@ -295,34 +309,46 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
 		? make_filedesc_output_stream (outfd, 0, -1, LSTR_BLOCKED_OK)
 		: Qnil);
 
-#if defined(HAVE_UNIX_PROCESSES)
+  *errstream = (errfd >= 0
+	       ? make_filedesc_input_stream (errfd, 0, -1, 0)
+	       : Qnil);
+
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && outfd >= 0)
     {
       Intbyte eof_char = get_eof_char (outfd);
       int pty_max_bytes = get_pty_max_bytes (outfd);
-      filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
+      filedesc_stream_set_pty_flushing (XLSTREAM (*outstream), pty_max_bytes,
+					eof_char);
     }
-#endif
 
-  return FD_TO_USID (infd);
+  *in_usid = FD_TO_USID (infd);
+  *err_usid = FD_TO_USID (errfd);
 }
 
-USID
-event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
-					 Lisp_Object outstream)
+void
+event_stream_unixoid_delete_io_streams (Lisp_Object instream,
+					Lisp_Object outstream,
+					Lisp_Object errstream,
+					USID *in_usid,
+					USID *err_usid)
 {
-  int in = (NILP(instream) ? -1
+  int in = (NILP (instream) ? -1
 	    : filedesc_stream_fd (XLSTREAM (instream)));
-  int out = (NILP(outstream) ? -1
+  int out = (NILP (outstream) ? -1
 	     : filedesc_stream_fd (XLSTREAM (outstream)));
+  int err = (NILP (errstream) ? -1
+	     : filedesc_stream_fd (XLSTREAM (errstream)));
 
   if (in >= 0)
     retry_close (in);
   if (out != in && out >= 0)
     retry_close (out);
+  if (err != in && err != out && err >= 0)
+    retry_close (err);
 
-  return FD_TO_USID (in);
+  *in_usid = FD_TO_USID (in);
+  *err_usid = FD_TO_USID (err);
 }
 
 

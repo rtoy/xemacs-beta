@@ -44,8 +44,6 @@ void set_exclusive_use (int fd);
 
 void set_descriptor_non_blocking (int fd);
 
-void wait_without_blocking (void);
-
 int get_pty_max_bytes (int fd);
 Intbyte get_eof_char (int fd);
 

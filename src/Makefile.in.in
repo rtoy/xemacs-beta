@@ -309,7 +309,7 @@ ldflags  = $(LDFLAGS) $(ld_switch_all) $(ld_dynamic_link_flags)
 objs=\
  abbrev.o alloc.o alloca.o \
  $(balloon_help_objs) blocktype.o buffer.o bytecode.o \
- callint.o callproc.o casefiddle.o casetab.o chartab.o \
+ callint.o casefiddle.o casetab.o chartab.o \
  $(clash_detection_objs) cmdloop.o cmds.o $(coding_system_objs) console.o \
  console-stream.o\
  data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\

@@ -20,10 +20,6 @@
 
 /* Synched up with: Not in FSF. */
 
-/* -- Pre-Include Defines --------------------------------------------------- */
-
-#define STRICT
-
 /* -- Includes -------------------------------------------------------------- */
 
 #include <windows.h>

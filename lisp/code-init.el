@@ -1,6 +1,6 @@
 ;;; code-init.el --- Handle coding system default values
 
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2002 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -80,7 +80,7 @@ if you do this."
     ;; to not do the same translations ourselves.
     (terminal                            binary    binary      binary       binary         mswindows-multibyte-unix)
     (default-process-coding-system-read  binary    raw-text    undecided    raw-text       undecided)
-    (default-process-coding-system-write binary    binary      binary       raw-text-dos   mswindows-multibyte-system-default-dos)
+    (default-process-coding-system-write binary    binary      binary       raw-text   mswindows-multibyte-system-default)
     (no-conversion-coding-system-mapping binary    raw-text    raw-text     raw-text       mswindows-multibyte)
     ))
 
@@ -152,17 +152,17 @@ to the current system configuration (as returned by
 The table of default values looks like this: (see below for abbreviations)
 
 
-                  Unix      Unix+EOL    Unix+Mule   MSW           MSW+Mule
+                 Unix      Unix+EOL    Unix+Mule   MSW           MSW+Mule
 ------------------------------------------------------------------------------
-bfcs-for-read     binary    raw-text    undecided   raw-text      undecided
-default bfcs      binary    binary      iso-2022-8  raw-text-dos  MSW-MB-dos
-file-name         binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
-native            binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
-keyboard          binary    raw-text    undecided   raw-text      undecided
-terminal          binary    binary      binary      binary        MSW-MB-unix
-process-read      binary    raw-text    undecided   raw-text      undecided
-process-write     binary    binary      binary      raw-text-dos  MSW-MB-dos
-no-conv-cs        binary    raw-text    raw-text    raw-text      MSW-MB
+bfcs-for-read    binary    raw-text    undecided   raw-text      undecided
+default bfcs     binary    binary      iso-2022-8  raw-text-dos  MSW-MB-dos
+file-name        binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
+native           binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
+keyboard         binary    raw-text    undecided   raw-text      undecided
+terminal         binary    binary      binary      binary        MSW-MB-unix
+process-read     binary    raw-text    undecided   raw-text      undecided
+process-write    binary    binary      binary      raw-text      MSW-MB-SD
+no-conv-cs       binary    raw-text    raw-text    raw-text      MSW-MB
 
 
 VAR can be one of: (abbreviations in parens)

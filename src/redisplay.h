@@ -691,7 +691,9 @@ int redisplay_frame_text_width_string (struct frame *f,
 				       Lisp_Object reloc,
 				       Bytecount offset, Bytecount len);
 int redisplay_frame (struct frame *f, int preemption_check);
+void redisplay_no_pre_idle_hook (void);
 void redisplay (void);
+Lisp_Object eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker);
 struct display_block *get_display_block_from_line (struct display_line *dl,
 						   enum display_type type);
 layout_bounds calculate_display_line_boundaries (struct window *w,

@@ -220,6 +220,8 @@ allocate_frame_core (Lisp_Object device)
 
   FRAME_SET_PAGENUMBER (f, 1);
 
+  note_object_created (root_window);
+
   /* Choose a buffer for the frame's root window.  */
   XWINDOW (root_window)->buffer = Qt;
   {
@@ -250,6 +252,8 @@ setup_normal_frame (struct frame *f)
   XWINDOW (mini_window)->frame = frame;
   f->minibuffer_window = mini_window;
   f->has_minibuffer = 1;
+
+  note_object_created (mini_window);
 
   XWINDOW (mini_window)->buffer = Qt;
   Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
@@ -473,6 +477,8 @@ See `set-frame-properties', `default-x-frame-plist', and
   DEVICE_FRAME_LIST (d) = Fcons (frame, DEVICE_FRAME_LIST (d));
   RESET_CHANGED_SET_FLAGS;
 
+  note_object_created (frame);
+
   /* Now make sure that the initial cached values are set correctly.
      Do this after the init_frame method is called because that may
      do things (e.g. create widgets) that are necessary for the
@@ -598,32 +604,61 @@ decode_frame_or_selected (Lisp_Object cdf)
 }
 
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+
+static Lisp_Object
+commit_ritual_suicide (Lisp_Object ceci_nest_pas_une_pipe)
+{
+  assert (!in_display);
+  return Qnil;
+}
+
+#endif
+
 /*
  * window size changes are held up during critical regions.  Afterwards,
  * we want to deal with any delayed changes.
  */
-void
-hold_frame_size_changes (void)
+int
+enter_redisplay_critical_section (void)
 {
+  int depth = specpdl_depth ();
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  /* force every call to QUIT to check for in_displayness */
+  something_happened++;
+  record_unwind_protect (commit_ritual_suicide, Qnil);
+#endif
   in_display = 1;
+
+  return depth;
 }
 
 void
-unhold_one_frame_size_changes (struct frame *f)
-{
-  in_display = 0;
-
-  if (f->size_change_pending)
-    change_frame_size (f, f->new_height, f->new_width, 0);
-}
-
-void
-unhold_frame_size_changes (void)
+exit_redisplay_critical_section (int depth)
 {
   Lisp_Object frmcons, devcons, concons;
 
+  in_display = 0;
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  unbind_to (depth);
+  something_happened--;
+#endif
+
+  /* we used to have a function to do this for only one frame, and
+     it was typical to call it at the end of a critical section
+     (which occurs once per frame); but what then happens if multiple
+     frames have frame changes held up?
+
+     this means we are O(N^2) over frames.  i seriously doubt it matters.
+     --ben */
   FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
-    unhold_one_frame_size_changes (XFRAME (XCAR (frmcons)));
+    {
+      struct frame *f = XFRAME (XCAR (frmcons));
+      if (f->size_change_pending)
+	change_frame_size (f, f->new_height, f->new_width, 0);
+    }
 }
 
 void
@@ -670,8 +705,9 @@ adjust_frame_size (struct frame *f)
 	keep_char_size = 0;
       else
 	keep_char_size =
-	  NILP (call1_trapping_errors ("Error in adjust-frame-function",
-				       Vadjust_frame_function, frame));
+	  NILP (call1_trapping_problems ("Error in adjust-frame-function",
+					 Vadjust_frame_function, frame,
+					 0));
 
       if (keep_char_size)
 	Fset_frame_size (frame, make_int (FRAME_CHARWIDTH(f)),
@@ -1317,10 +1353,14 @@ delete_frame_internal (struct frame *f, int force,
   struct gcpro gcpro1;
 
   /* OK to delete an already deleted frame. */
-  if (! FRAME_LIVE_P (f))
+  if (!FRAME_LIVE_P (f))
     return;
 
   frame = wrap_frame (f);
+
+  if (!force)
+    check_allowed_operation (OPERATION_DELETE_OBJECT, frame, Qnil);
+
   GCPRO1 (frame);
 
   device = FRAME_DEVICE (f);
@@ -1575,6 +1615,7 @@ delete_frame_internal (struct frame *f, int force,
   f->visible = 0;
 
   free_window_mirror (XWINDOW_MIRROR (f->root_mirror));
+
 /*  free_line_insertion_deletion_costs (f); */
 
   /* If we've deleted the last non-minibuf frame, then try to find
@@ -1669,6 +1710,8 @@ delete_frame_internal (struct frame *f, int force,
 
   nuke_all_frame_slots (f);
   f->framemeths = dead_console_methods;
+
+  note_object_deleted (frame);
 
   UNGCPRO;
 }

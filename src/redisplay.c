@@ -33,10 +33,23 @@ Boston, MA 02111-1307, USA.  */
 /*****************************************************************************
  The Golden Rules of Redisplay
 
- First:		It Is Better To Be Correct Than Fast
- Second:	Thou Shalt Not Run Elisp From Within Redisplay
- Third:		It Is Better To Be Fast Than Not To Be
+ First:	  It Is Better To Be Correct Than Fast
+ Second:  Thou Shalt Use Due Caution When Running Elisp From Within Redisplay
+ Third:   It Is Better To Be Fast Than Not To Be
  ****************************************************************************/
+
+/* Note: The second rule used to prohibit running Elisp from within redisplay,
+   but that's not correct.
+
+   Use
+
+   callN_trapping_problems (..., INHIBIT_GC
+                            | INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY)
+
+   instead.
+
+   --ben
+*/
 
 #include <config.h>
 #include "lisp.h"
@@ -46,6 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "debug.h"
 #include "device.h"
 #include "elhash.h"
+#include "events.h"
 #include "extents.h"
 #include "faces.h"
 #include "frame.h"
@@ -6486,10 +6500,13 @@ call_redisplay_end_triggers (struct window *w, void *closure)
 	{
 	  Lisp_Object window = wrap_window (w);
 
-	  va_run_hook_with_args_in_buffer (XBUFFER (w->buffer),
-					   Qredisplay_end_trigger_functions,
-					   2, window,
-					   w->redisplay_end_trigger);
+	  va_run_hook_with_args_in_buffer_trapping_problems
+	    ("Error in redisplay end trigger",
+	     XBUFFER (w->buffer),
+	     Qredisplay_end_trigger_functions,
+	     2, window,
+	     w->redisplay_end_trigger,
+	     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	  w->redisplay_end_trigger = Qnil;
 	}
     }
@@ -6503,6 +6520,7 @@ int
 redisplay_frame (struct frame *f, int preemption_check)
 {
   struct device *d = XDEVICE (f->device);
+  int depth;
 
   if (preemption_check
       && !DEVICE_IMPL_FLAG (d, XDEVIMPF_DONT_PREEMPT_REDISPLAY))
@@ -6541,7 +6559,7 @@ redisplay_frame (struct frame *f, int preemption_check)
     }
 
   /* The menubar, toolbar, and icon updates must be done before
-     hold_frame_size_changes is called and we are officially
+     enter_redisplay_critical_section is called and we are officially
      'in_display'.  They may eval lisp code which may call Fsignal.
      If in_display is set Fsignal will abort. */
 
@@ -6580,7 +6598,7 @@ redisplay_frame (struct frame *f, int preemption_check)
       reset_gutter_display_lines (f);
     }
 
-  hold_frame_size_changes ();
+  depth = enter_redisplay_critical_section ();
 
   /* ----------------- BEGIN CRITICAL REDISPLAY SECTION ---------------- */
   /* Within this section, we are defenseless and assume that the
@@ -6590,7 +6608,7 @@ redisplay_frame (struct frame *f, int preemption_check)
      2) Lisp code evaluation
      3) frame size changes
 
-     We ensure (3) by calling hold_frame_size_changes(), which
+     We ensure (3) by calling enter_redisplay_critical_section(), which
      will cause any pending frame size changes to get put on hold
      till after the end of the critical section.  (1) follows
      automatically if (2) is met.  #### Unfortunately, there are
@@ -6644,10 +6662,8 @@ redisplay_frame (struct frame *f, int preemption_check)
 
   /* ----------------- END CRITICAL REDISPLAY SECTION ---------------- */
 
-  /* Allow frame size changes to occur again.
-
-     #### what happens if changes to other frames happen? */
-  unhold_one_frame_size_changes (f);
+  /* Allow frame size changes to occur again. */
+  exit_redisplay_critical_section (depth);
 
   map_windows (f, call_redisplay_end_triggers, 0);
   return 0;
@@ -6750,13 +6766,6 @@ redisplay_device (struct device *d, int automatic)
   return 0;
 }
 
-static Lisp_Object
-restore_profiling_redisplay_flag (Lisp_Object val)
-{
-  profiling_redisplay_flag = XINT (val);
-  return Qnil;
-}
-
 /* Ensure that all windows on all frames on all devices are displaying
    the current contents of their respective buffers. */
 
@@ -6768,11 +6777,7 @@ redisplay_without_hooks (void)
   int count = specpdl_depth ();
 
   if (profiling_active)
-    {
-      record_unwind_protect (restore_profiling_redisplay_flag,
-			     make_int (profiling_redisplay_flag));
-      profiling_redisplay_flag = 1;
-    }
+    internal_bind_int (&profiling_redisplay_flag, 1);
 
   if (asynch_device_change_pending)
     handle_asynch_device_change ();
@@ -6826,8 +6831,31 @@ redisplay_without_hooks (void)
 #endif /* ERROR_CHECK_DISPLAY */
 }
 
+/* Note: All places in the C code that call redisplay() are prepared
+   to handle GCing.  However, we can't currently handle GC inside the
+   guts of redisplay (#### someone should fix this), so we need to use
+   INHIBIT_GC when calling Lisp.
+
+   #### We probably can't handle any deletion of existing buffers, frames,
+   windows, devices, consoles, text changes, etc. either.  We should
+
+   (a) Create the appropriate INHIBIT_ flags for this.
+   (b) In the longer run, fix redisplay to handle this.
+
+   (#### What about other external entry points to the redisplay code?
+   Someone should go through and make sure that all callers can handle
+   GC there, too.)
+*/
+
 void
 redisplay (void)
+{
+  run_pre_idle_hook ();
+  redisplay_no_pre_idle_hook ();
+}
+
+void
+redisplay_no_pre_idle_hook (void)
 {
   if (last_display_warning_tick != display_warning_tick &&
       !inhibit_warning_display)
@@ -6835,27 +6863,40 @@ redisplay (void)
       /* If an error occurs during this function, oh well.
          If we report another warning, we could get stuck in an
 	 infinite loop reporting warnings. */
-      call0_trapping_errors (0, Qdisplay_warning_buffer);
+      call0_trapping_problems
+	(0, Qdisplay_warning_buffer,
+	 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
       last_display_warning_tick = display_warning_tick;
     }
-  /* The run_hook_trapping_errors functions are smart enough not
+  /* The run_hook_trapping_problems functions are smart enough not
      to do any evalling if the hook function is empty, so there
-     should not be any significant time loss.  All places in the
-     C code that call redisplay() are prepared to handle GCing,
-     so we should be OK. */
+     should not be any significant time loss. */
 #ifndef INHIBIT_REDISPLAY_HOOKS
-  run_hook_trapping_errors ("Error in pre-redisplay-hook",
-			    Qpre_redisplay_hook);
+  run_hook_trapping_problems
+    ("Error in pre-redisplay-hook",
+     Qpre_redisplay_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 #endif /* INHIBIT_REDISPLAY_HOOKS */
 
   redisplay_without_hooks ();
 
 #ifndef INHIBIT_REDISPLAY_HOOKS
-  run_hook_trapping_errors ("Error in post-redisplay-hook",
-			    Qpost_redisplay_hook);
+  run_hook_trapping_problems
+    ("Error in post-redisplay-hook",
+     Qpost_redisplay_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 #endif /* INHIBIT_REDISPLAY_HOOKS */
 }
 
+Lisp_Object
+eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
+{
+  return
+    eval_in_buffer_trapping_problems
+    ("Error calling function within redisplay", current_buffer,
+     dont_trust_this_damn_sucker,
+     INHIBIT_GC | INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY);
+}
 
 /* Efficiently determine the window line number, and return a pointer
    to its printed representation.  Do this regardless of whether
@@ -9014,6 +9055,7 @@ Ensure that all minibuffers are correctly showing the echo area.
       DEVICE_FRAME_LOOP (frmcons, d)
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
+	  int depth;
 
 	  if (FRAME_REPAINT_P (f) && FRAME_HAS_MINIBUF_P (f))
 	    {
@@ -9032,7 +9074,9 @@ Ensure that all minibuffers are correctly showing the echo area.
 		  MAYBE_DEVMETH (d, clear_frame, (f));
 		  f->echo_area_garbaged = 0;
 		}
+	      depth = enter_redisplay_critical_section ();
 	      redisplay_window (window, 0);
+	      exit_redisplay_critical_section (depth);
 	      MAYBE_DEVMETH (d, frame_output_end, (f));
 
 	      call_redisplay_end_triggers (XWINDOW (window), 0);
@@ -9040,13 +9084,6 @@ Ensure that all minibuffers are correctly showing the echo area.
 	}
     }
 
-  return Qnil;
-}
-
-static Lisp_Object
-restore_disable_preemption_value (Lisp_Object value)
-{
-  disable_preemption = XINT (value);
   return Qnil;
 }
 
@@ -9063,11 +9100,7 @@ input and is guaranteed to proceed to completion.
   int count = specpdl_depth ();
 
   if (!NILP (no_preempt))
-    {
-      record_unwind_protect (restore_disable_preemption_value,
-			     make_int (disable_preemption));
-      disable_preemption++;
-    }
+    internal_bind_int (&disable_preemption, 1 + disable_preemption);
 
   f->clear = 1;
   redisplay_frame (f, 1);
@@ -9094,11 +9127,7 @@ input and is guaranteed to proceed to completion.
   int count = specpdl_depth ();
 
   if (!NILP (no_preempt))
-    {
-      record_unwind_protect (restore_disable_preemption_value,
-			     make_int (disable_preemption));
-      disable_preemption++;
-    }
+    internal_bind_int (&disable_preemption, 1 + disable_preemption);
 
   redisplay_frame (f, 1);
 
@@ -9128,11 +9157,7 @@ input and is guaranteed to proceed to completion.
   int count = specpdl_depth ();
 
   if (!NILP (no_preempt))
-    {
-      record_unwind_protect (restore_disable_preemption_value,
-			     make_int (disable_preemption));
-      disable_preemption++;
-    }
+    internal_bind_int (&disable_preemption, 1 + disable_preemption);
 
   DEVICE_FRAME_LOOP (frmcons, d)
     {
@@ -9155,6 +9180,9 @@ DEVICE defaults to the selected device if omitted.
 Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
+
+Note: If you simply want everything redisplayed, the current idiom is
+`(sit-for 0)'.
 */
        (device, no_preempt))
 {
@@ -9162,11 +9190,7 @@ input and is guaranteed to proceed to completion.
   int count = specpdl_depth ();
 
   if (!NILP (no_preempt))
-    {
-      record_unwind_protect (restore_disable_preemption_value,
-			     make_int (disable_preemption));
-      disable_preemption++;
-    }
+    internal_bind_int (&disable_preemption, 1 + disable_preemption);
 
   redisplay_device (d, 0);
 

@@ -22,6 +22,119 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30 (except for Fsignal), Mule 2.0. */
 
+/* Authorship:
+
+   Based on code from pre-release FSF 19, c. 1991.
+   Some work by Richard Mlynarik long ago (c. 1993?) --
+     added call-with-condition-handler; synch. up to released FSF 19.7
+     for lemacs 19.8.  some signal changes.
+   Various work by Ben Wing, 1995-1996:
+     added all stuff dealing with trapping errors, suspended-errors, etc.
+     added most Fsignal front ends.
+     added warning code.
+     reworked the Fsignal code and synched the rest up to FSF 19.30.
+   Some changes by Martin Buchholz c. 1999?
+     e.g. PRIMITIVE_FUNCALL macros.
+   New call_trapping_problems code and large comments below
+     by Ben Wing, Mar-Apr 2000.
+*/
+
+/* This file has been Mule-ized. */
+
+/* What is in this file?
+
+   This file contains the engine for the ELisp interpreter in XEmacs.
+   The engine does the actual work of implementing function calls,
+   form evaluation, non-local exits (catch, throw, signal,
+   condition-case, call-with-condition-handler), unwind-protects,
+   dynamic bindings, let constructs, backtraces, etc.  You might say
+   that this module is the very heart of XEmacs, and everything else
+   in XEmacs is merely an auxiliary module implementing some specific
+   functionality that may be called from the heart at an appropriate
+   time.
+
+   The only exception is the alloc.c module, which implements the
+   framework upon which this module (eval.c) works.  alloc.c works
+   with creating the actual Lisp objects themselves and garbage
+   collecting them as necessary, preseting a nice, high-level
+   interface for object creation, deletion, access, and modification.
+
+   The only other exception that could be cited is the event-handling
+   module in event-stream.c.  From its perspective, it is also the
+   heart of XEmacs, and controls exactly what gets done at what time.
+   From its perspective, eval.c is merely one of the auxiliary modules
+   out there that can be invoked by event-stream.c.
+
+   Although the event-stream-centric view is a convenient fiction that
+   makes sense particularly from the user's perspective and from the
+   perspective of time, the engine-centric view is actually closest to
+   the truth, because anywhere within the event-stream module, you are
+   still somewhere in a Lisp backtrace, and event-loops are begun by
+   functions such as `command-loop-1', a Lisp function.
+
+   As the Lisp engine is doing its thing, it maintains the state of
+   the engine primarily in five list-like items, with are:
+
+   -- the backtrace list
+   -- the catchtag list
+   -- the condition-handler list
+   -- the specbind list
+   -- the GCPRO list.
+
+   These are described in detail in the next comment.
+
+   --ben
+ */
+
+/* Note that there are five separate lists used to maintain state in
+   the evaluator.  All of them conceptually are stacks (last-in,
+   first-out).  All non-local exits happen ultimately through the
+   catch/throw mechanism, which uses one of the five lists (the
+   catchtag list) and records the current state of the others in each
+   frame of the list (some other information is recorded and restored
+   as well, such as the current eval depth), so that all the state of
+   the evaluator is restored properly when a non-local exit occurs.
+   (Note that the current state of the condition-handler list is not
+   recorded in the catchtag list.  Instead, when a condition-case or
+   call-with-condition-handler is set up, it installs an
+   unwind-protect on the specbind list to restore the appropriate
+   setting for the condition-handler list.  During the course of
+   handling the non-local exit, all entries on the specbind list that
+   are past the location stored in the catch frame are "unwound"
+   (i.e. variable bindings are restored and unwind-protects are
+   executed), so the condition-handler list gets reset properly.
+
+   The five lists are
+
+   1. The backtrace list, which is chained through `struct backtrace's
+      declared in the stack frames of various primitives, and keeps
+      track of all Lisp function call entries and exits.
+   2. The catchtag list, which is chained through `struct catchtag's
+      declared in the stack frames of internal_catch and condition_case_1,
+      and keeps track of information needed to reset the internal state
+      of the evaluator to the state that was current when the catch or
+      condition-case were established, in the event of a non-local exit.
+   3. The condition-handler list, which is a simple Lisp list with new
+      entries consed onto the front of the list.  It records condition-cases
+      and call-with-condition-handlers established either from C or from
+      Lisp.  Unlike with the other lists (but similar to everything else
+      of a similar nature in the rest of the C and Lisp code), it takes care
+      of restoring itself appropriately in the event of a non-local exit
+      through the use of the unwind-protect mechanism.
+   4. The specbind list, which is a contiguous array of `struct specbinding's,
+      expanded as necessary using realloc().  It holds dynamic variable
+      bindings (the only kind we currently have in ELisp) and unwind-protects.
+   5. The GCPRO list, which is chained through `struct gcpro's declared in
+      the stack frames of any functions that need to GC-protect Lisp_Objects
+      declared on the stack.  This is one of the most fragile areas of the
+      entire scheme -- you must not forget to UNGCPRO at the end of your
+      function, you must make sure you GCPRO in many circumstances you don't
+      think you have to, etc.  See the internals manual for more information
+      about this.
+
+      --ben
+*/
+
 #include <config.h>
 #include "lisp.h"
 
@@ -30,7 +143,11 @@ Boston, MA 02111-1307, USA.  */
 #include "bytecode.h"
 #include "buffer.h"
 #include "console.h"
+#include "device.h"
+#include "frame.h"
+#include "lstream.h"
 #include "opaque.h"
+#include "window.h"
 
 struct backtrace *backtrace_list;
 
@@ -66,6 +183,7 @@ struct backtrace *backtrace_list;
 /* If subrs take more than 8 arguments, more cases need to be added
    to this switch.  (But wait - don't do it - if you really need
    a SUBR with more than 8 arguments, use max_args == MANY.
+   Or better, considering using a property list as one of your args.
    See the DEFUN macro in lisp.h)  */
 #define PRIMITIVE_FUNCALL(rv, fn, av, ac) do {			\
   void (*PF_fn)(void) = (void (*)(void)) fn;			\
@@ -89,15 +207,22 @@ struct backtrace *backtrace_list;
 
 
 /* This is the list of current catches (and also condition-cases).
-   This is a stack: the most recent catch is at the head of the
-   list.  Catches are created by declaring a 'struct catchtag'
-   locally, filling the .TAG field in with the tag, and doing
-   a setjmp() on .JMP.  Fthrow() will store the value passed
-   to it in .VAL and longjmp() back to .JMP, back to the function
-   that established the catch.  This will always be either
-   internal_catch() (catches established internally or through
-   `catch') or condition_case_1 (condition-cases established
-   internally or through `condition-case').
+   This is a stack: the most recent catch is at the head of the list.
+   The list is threaded through the stack frames of the C functions
+   that set up the catches; this is similar to the way the GCPRO list
+   is handled, but different from the condition-handler list (which is
+   a simple Lisp list) and the specbind stack, which is a contiguous
+   array of `struct specbinding's, grown (using realloc()) as
+   necessary. (Note that all four of these lists behave as a stacks.)
+
+   Catches are created by declaring a 'struct catchtag' locally,
+   filling the .TAG field in with the tag, and doing a setjmp() on
+   .JMP.  Fthrow() will store the value passed to it in .VAL and
+   longjmp() back to .JMP, back to the function that established the
+   catch.  This will always be either internal_catch() (catches
+   established internally or through `catch') or condition_case_1
+   (condition-cases established internally or through
+   `condition-case').
 
    The catchtag also records the current position in the
    call stack (stored in BACKTRACE_LIST), the current position
@@ -105,9 +230,13 @@ struct backtrace *backtrace_list;
    unwind-protects), the value of LISP_EVAL_DEPTH, and the
    current position in the GCPRO stack.  All of these are
    restored by Fthrow().
-   */
+  */
 
 struct catchtag *catchlist;
+
+/* A special tag that can be used internally from C code to catch
+   every attempt to throw past this level. */
+Lisp_Object Vcatch_everything_tag;
 
 Lisp_Object Qautoload, Qmacro, Qexit;
 Lisp_Object Qinteractive, Qcommandp, Qdefun, Qprogn, Qvalues;
@@ -123,29 +252,22 @@ Lisp_Object Qdisplay_warning;
 Lisp_Object Vpending_warnings, Vpending_warnings_tail;
 Lisp_Object Qif;
 
-/* Records whether we want errors to occur.  This will be a boolean,
-   nil (errors OK) or t (no errors).  If t, an error will cause a
-   throw to Qunbound_suspended_errors_tag.
+/* Flags specifying which operations are currently inhibited. */
+int inhibit_flags;
 
-   See call_with_suspended_errors(). */
-Lisp_Object Vcurrent_error_state;
+/* Buffers, frames, windows, devices, and consoles created since most
+   recent active
+   call_trapping_problems (INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION).
+*/
+Lisp_Object Vdeletable_permanent_display_objects;
 
-/* Current warning class when warnings occur, or nil for no warnings.
-   Only meaningful when Vcurrent_error_state is non-nil.
-   See call_with_suspended_errors(). */
-Lisp_Object Vcurrent_warning_class;
-
-/* Current warning level when warnings occur, or nil for no warnings.
-   Only meaningful when Vcurrent_error_state is non-nil.
-   See call_with_suspended_errors(). */
-Lisp_Object Vcurrent_warning_level;
+/* Buffers created since most recent active
+   call_trapping_problems (INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION). */
+Lisp_Object Vmodifiable_buffers;
 
 /* Minimum level at which warnings are logged.  Below this, they're ignored
    entirely -- not even generated. */
 Lisp_Object Vlog_warning_minimum_level;
-
-/* Special catch tag used in call_with_suspended_errors(). */
-Lisp_Object Qunbound_suspended_errors_tag;
 
 /* Non-nil means record all fset's and provide's, to be undone
    if the file being autoloaded is not fully loaded.
@@ -225,60 +347,69 @@ static int entering_debugger;
 /* Function to call to invoke the debugger */
 Lisp_Object Vdebugger;
 
-/* Chain of condition handlers currently in effect.
-   The elements of this chain are contained in the stack frames
-   of Fcondition_case and internal_condition_case.
-   When an error is signaled (by calling Fsignal, below),
-   this chain is searched for an element that applies.
+/* List of condition handlers currently in effect.
+   The elements of this lists were at one point in the past
+   threaded through the stack frames of Fcondition_case and
+   related functions, but now are stored separately in a normal
+   stack.  When an error is signaled (by calling Fsignal, below),
+   this list is searched for an element that applies.
 
    Each element of this list is one of the following:
 
-   A list of a handler function and possibly args to pass to
-   the function.  This is a handler established with
-   `call-with-condition-handler' (q.v.).
+   -- A list of a handler function and possibly args to pass to the
+   function.  This is a handler established with the Lisp primitive
+   `call-with-condition-handler' or related C function
+   call_with_condition_handler():
 
-   A list whose car is Qunbound and whose cdr is Qt.
-   This is a special condition-case handler established
-   by C code with condition_case_1().  All errors are
-   trapped; the debugger is not invoked even if
-   `debug-on-error' was set.
+     If the handler function is an opaque ptr object, it is a handler
+     that was established in C using call_with_condition_handler(),
+     and the contents of the object are a function pointer which takes
+     three arguments, the signal name and signal data (same arguments
+     passed to `signal') and a third Lisp_Object argument, specified
+     in the call to call_with_condition_handler() and stored as the
+     second element of the list containing the handler functionl.
+  
+     If the handler function is a regular Lisp_Object, it is a handler
+     that was established using `call-with-condition-handler'.
+     Currently there are no more arguments in the list containing the
+     handler function, and only one argument is passed to the handler
+     function: a cons of the signal name and signal data arguments
+     passed to `signal'.
+  
+   -- A list whose car is Qunbound and whose cdr is Qt.  This is a
+   special condition-case handler established by C code with
+   condition_case_1().  All errors are trapped; the debugger is not
+   invoked even if `debug-on-error' was set.
 
-   A list whose car is Qunbound and whose cdr is Qerror.
-   This is a special condition-case handler established
-   by C code with condition_case_1().  It is like Qt
-   except that the debugger is invoked normally if it is
-   called for.
+   -- A list whose car is Qunbound and whose cdr is Qerror.  This is a
+   special condition-case handler established by C code with
+   condition_case_1().  It is like Qt except that the debugger is
+   invoked normally if it is called for.
 
-   A list whose car is Qunbound and whose cdr is a list
-   of lists (CONDITION-NAME BODY ...) exactly as in
-   `condition-case'.  This is a normal `condition-case'
-   handler.
+   -- A list whose car is Qunbound and whose cdr is a list of lists
+   (CONDITION-NAME BODY ...) exactly as in `condition-case'.  This is
+   a normal `condition-case' handler.
 
-   Note that in all cases *except* the first, there is a
-   corresponding catch, whose TAG is the value of
-   Vcondition_handlers just after the handler data just
-   described is pushed onto it.  The reason is that
-   `condition-case' handlers need to throw back to the
-   place where the handler was installed before invoking
-   it, while `call-with-condition-handler' handlers are
-   invoked in the environment that `signal' was invoked
-   in.
-*/
+   Note that in all cases *except* the first, there is a corresponding
+   catch, whose TAG is the value of Vcondition_handlers just after the
+   handler data just described is pushed onto it.  The reason is that
+   `condition-case' handlers need to throw back to the place where the
+   handler was installed before invoking it, while
+   `call-with-condition-handler' handlers are invoked in the
+   environment that `signal' was invoked in.  */
+
+
 static Lisp_Object Vcondition_handlers;
 
-
+/* I think we should keep this enabled all the time, not just when
+   error checking is enabled, because if one of these puppies pops up,
+   it will trash the stack if not caught, making it that much harder to
+   debug.  It doesn't cause speed loss. */
 #define DEFEND_AGAINST_THROW_RECURSION
 
 #ifdef DEFEND_AGAINST_THROW_RECURSION
 /* Used for error catching purposes by throw_or_bomb_out */
 static int throw_level;
-#endif
-
-#ifdef ERROR_CHECK_STRUCTURES
-static void check_error_state_sanity (void);
-#define CHECK_ERROR_STATE_SANITY() check_error_state_sanity ()
-#else
-#define CHECK_ERROR_STATE_SANITY()
 #endif
 
 
@@ -316,6 +447,15 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
 /************************************************************************/
 /*			 Entering the debugger				*/
 /************************************************************************/
+
+static Lisp_Object
+current_warning_level (void)
+{
+  if (inhibit_flags & ISSUE_WARNINGS_AT_DEBUG_LEVEL)
+    return Qdebug;
+  else
+    return Qwarning;
+}
 
 /* unwind-protect used by call_debugger() to restore the value of
    entering_debugger. (We cannot use specbind() because the
@@ -386,17 +526,24 @@ call_debugger (Lisp_Object arg)
   Lisp_Object val;
   int speccount;
 
+  debug_on_next_call = 0;
+
+  if (inhibit_flags & INHIBIT_ENTERING_DEBUGGER)
+    {
+      if (!(inhibit_flags & INHIBIT_WARNING_ISSUE))
+	warn_when_safe
+	  (Qdebugger, current_warning_level (),
+	   "Unable to enter debugger within critical section");
+      return Qunbound;
+    }
+
   if (lisp_eval_depth + 20 > max_lisp_eval_depth)
     max_lisp_eval_depth = lisp_eval_depth + 20;
   if (specpdl_size + 40 > max_specpdl_size)
     max_specpdl_size = specpdl_size + 40;
-  debug_on_next_call = 0;
 
-  speccount = specpdl_depth();
-  record_unwind_protect (restore_entering_debugger,
-                         (entering_debugger ? Qt : Qnil));
-  entering_debugger = 1;
-  val = internal_catch (Qdebugger, call_debugger_259, arg, &threw);
+  speccount = internal_bind_int (&entering_debugger, 1);
+  val = internal_catch (Qdebugger, call_debugger_259, arg, &threw, 0);
 
   return unbind_to_1 (speccount, ((threw)
 				? Qunbound /* Not returning a value */
@@ -547,13 +694,26 @@ signal_call_debugger (Lisp_Object conditions,
 		      int *stack_trace_displayed,
 		      int *debugger_entered)
 {
+#ifdef PIGS_FLY_AND_ALL_C_CODE_CAN_HANDLE_GC_OCCURRING_ALMOST_ANYWHERE
   /* This function can GC */
+#else /* reality check */
+  /* This function cannot GC because it inhibits GC during its operation */
+#endif
+
   Lisp_Object val = Qunbound;
   Lisp_Object all_handlers = Vcondition_handlers;
   Lisp_Object temp_data = Qnil;
-  int speccount = specpdl_depth();
+  int outer_speccount = specpdl_depth();
+  int speccount;
+
+#ifdef PIGS_FLY_AND_ALL_C_CODE_CAN_HANDLE_GC_OCCURRING_ALMOST_ANYWHERE
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (all_handlers, temp_data);
+#else
+  begin_gc_forbidden ();
+#endif
+
+  speccount = specpdl_depth();
 
   Vcondition_handlers = active_handlers;
 
@@ -592,6 +752,7 @@ signal_call_debugger (Lisp_Object conditions,
       specbind (Qstack_trace_on_signal, Qnil);
 
       val = call_debugger (list2 (Qerror, (Fcons (sig, data))));
+      unbind_to (speccount);
       *debugger_entered = 1;
     }
 
@@ -629,9 +790,11 @@ signal_call_debugger (Lisp_Object conditions,
       *debugger_entered = 1;
     }
 
+#ifdef PIGS_FLY_AND_ALL_C_CODE_CAN_HANDLE_GC_OCCURRING_ALMOST_ANYWHERE
   UNGCPRO;
+#endif
   Vcondition_handlers = all_handlers;
-  return unbind_to_1 (speccount, val);
+  return unbind_to_1 (outer_speccount, val);
 }
 
 
@@ -710,7 +873,7 @@ BODY can be zero or more expressions.  If BODY is nil, return nil.
 {
   Lisp_Object cond = args[0];
   Lisp_Object body;
-
+ 
   switch (nargs)
     {
     case 1:  body = Qnil; break;
@@ -1280,7 +1443,7 @@ If a throw happens, it specifies the value to return from `catch'.
   /* This function can GC */
   Lisp_Object tag  = Feval (XCAR (args));
   Lisp_Object body = XCDR (args);
-  return internal_catch (tag, Fprogn, body, 0);
+  return internal_catch (tag, Fprogn, body, 0, 0);
 }
 
 /* Set up a catch, then call C function FUNC on argument ARG.
@@ -1291,7 +1454,8 @@ Lisp_Object
 internal_catch (Lisp_Object tag,
                 Lisp_Object (*func) (Lisp_Object arg),
                 Lisp_Object arg,
-                int * volatile threw)
+                int * volatile threw,
+		Lisp_Object * volatile thrown_tag)
 {
   /* This structure is made part of the chain `catchlist'.  */
   struct catchtag c;
@@ -1299,6 +1463,7 @@ internal_catch (Lisp_Object tag,
   /* Fill in the components of c, and put it on the list.  */
   c.next = catchlist;
   c.tag = tag;
+  c.actual_tag = Qnil;
   c.val = Qnil;
   c.backlist = backtrace_list;
 #if 0 /* FSFmacs */
@@ -1318,12 +1483,14 @@ internal_catch (Lisp_Object tag,
     {
       /* Throw works by a longjmp that comes right here.  */
       if (threw) *threw = 1;
+      if (thrown_tag) *thrown_tag = c.actual_tag;
       return c.val;
     }
   c.val = (*func) (arg);
   if (threw) *threw = 0;
+  if (thrown_tag) *thrown_tag = Qnil;
   catchlist = c.next;
-  CHECK_ERROR_STATE_SANITY ();
+  check_catchlist_sanity ();
   return c.val;
 }
 
@@ -1345,7 +1512,7 @@ internal_catch (Lisp_Object tag,
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
 static void
-unwind_to_catch (struct catchtag *c, Lisp_Object val)
+unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
 {
   REGISTER int last_time;
 
@@ -1360,6 +1527,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
      (Can't overwrite tag slot because an unwind-protect may
      want to throw to this same tag, which isn't yet invalid.) */
   c->val = val;
+  c->actual_tag = tag;
 
 #if 0 /* FSFmacs */
   /* Restore the polling-suppression count.  */
@@ -1375,7 +1543,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
          handlers.  */
       unbind_to (catchlist->pdlcount);
       catchlist = catchlist->next;
-      CHECK_ERROR_STATE_SANITY ();
+      check_catchlist_sanity ();
     }
   while (! last_time);
 #else
@@ -1402,7 +1570,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
   /* Unwind the specpdl stack */
   unbind_to (c->pdlcount);
   catchlist = c->next;
-  CHECK_ERROR_STATE_SANITY ();
+  check_catchlist_sanity ();
 #endif /* Former code */
 
   gcprolist = c->gcpro;
@@ -1439,7 +1607,9 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
      established at the same time, in initial_command_loop/
      top_level_1.
 
-     #### Fix this horrifitude!
+     [[#### Fix this horrifitude!]]
+
+     I don't think this is horrifitude, just defensive programming. --ben
      */
 
   while (1)
@@ -1451,8 +1621,8 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 #endif
       for (c = catchlist; c; c = c->next)
 	{
-	  if (EQ (c->tag, tag))
-	    unwind_to_catch (c, val);
+	  if (EQ (c->tag, tag) || EQ (c->tag, Vcatch_everything_tag))
+	    unwind_to_catch (c, val, tag);
 	}
       if (!bomb_out_p)
         tag = Fsignal (Qno_catch, list2 (tag, val));
@@ -1522,22 +1692,25 @@ condition_bind_unwind (Lisp_Object loser)
   /* There is no problem freeing stuff here like there is in
      condition_case_unwind(), because there are no outside pointers
      (like the tag below in the catchlist) pointing to the objects. */
-  Lisp_Cons *victim;
+  
   /* ((handler-fun . handler-args) ... other handlers) */
   Lisp_Object tem = XCAR (loser);
+  int first = 1;
 
   while (CONSP (tem))
     {
-      victim = XCONS (tem);
-      tem = victim->cdr;
+      Lisp_Object victim = tem;
+      if (first && OPAQUE_PTRP (XCAR (victim)))
+	free_opaque_ptr (XCAR (victim));
+      first = 0;
+      tem = XCDR (victim);
       free_cons (victim);
     }
-  victim = XCONS (loser);
 
   if (EQ (loser, Vcondition_handlers)) /* may have been rebound to some tail */
-    Vcondition_handlers = victim->cdr;
+    Vcondition_handlers = XCDR (loser);
 
-  free_cons (victim);
+  free_cons (loser);
   return Qnil;
 }
 
@@ -1656,6 +1829,7 @@ condition_case_1 (Lisp_Object handlers,
 			Vcondition_handlers);
 #endif
   c.val = Qnil;
+  c.actual_tag = Qnil;
   c.backlist = backtrace_list;
 #if 0 /* FSFmacs */
   /* #### */
@@ -1696,7 +1870,7 @@ condition_case_1 (Lisp_Object handlers,
   GCPRO3 (harg, c.val, c.tag);
 
   catchlist = c.next;
-  CHECK_ERROR_STATE_SANITY ();
+  check_catchlist_sanity ();
   /* Note: The unbind also resets Vcondition_handlers.  Maybe we should
      delete this here. */
   Vcondition_handlers = XCDR (c.tag);
@@ -1705,8 +1879,8 @@ condition_case_1 (Lisp_Object handlers,
   UNGCPRO;
   /* free the conses *after* the unbind, because the unbind will run
      condition_case_unwind above. */
-  free_cons (XCONS (XCAR (c.tag)));
-  free_cons (XCONS (c.tag));
+  free_cons (XCAR (c.tag));
+  free_cons (c.tag);
   return c.val;
 }
 
@@ -1855,16 +2029,52 @@ and invokes the standard error-handler if none is found.)
   int speccount = specpdl_depth();
   Lisp_Object tem;
 
-  /* #### If there were a way to check that args[0] were a function
-     which accepted one arg, that should be done here ... */
+  tem = Ffunction_max_args (args[0]);
+  if (! (XINT (Ffunction_min_args (args[0])) <= 1
+	 && (NILP (tem) || 1 <= XINT (tem))))
+    invalid_argument ("Must be function of one argument", args[0]);
 
-  /* (handler-fun . handler-args) */
+  /* (handler-fun . handler-args)  but currently there are no handler-args */
   tem = noseeum_cons (list1 (args[0]), Vcondition_handlers);
   record_unwind_protect (condition_bind_unwind, tem);
   Vcondition_handlers = tem;
 
   /* Caller should have GC-protected args */
   return unbind_to_1 (speccount, Ffuncall (nargs - 1, args + 1));
+}
+
+/* This is the C version of the above function.  It calls FUN, passing it
+   ARG, first setting up HANDLER to catch signals in the environment in
+   which they were signalled. (HANDLER is only invoked if there was no
+   handler (either from condition-case or call-with-condition-handler) set
+   later on that handled the signal; therefore, this is a real error.
+
+   HANDLER is invoked with three arguments: the ERROR-SYMBOL and DATA as
+   passed to `signal', and HANDLER_ARG.  Originally I made HANDLER_ARG and
+   ARG be void * to facilitate passing structures, but I changed to
+   Lisp_Objects because all the other C interfaces to catch/condition-case/etc.
+   take Lisp_Objects, and it is easy enough to use make_opaque_ptr() et al.
+   to convert between Lisp_Objects and structure pointers. */
+
+Lisp_Object
+call_with_condition_handler (Lisp_Object (*handler) (Lisp_Object, Lisp_Object,
+						     Lisp_Object),
+			     Lisp_Object handler_arg,
+			     Lisp_Object (*fun) (Lisp_Object),
+			     Lisp_Object arg)
+{
+  /* This function can GC */
+  int speccount = specpdl_depth();
+  Lisp_Object tem;
+
+  /* ((handler-fun . (handler-arg . nil)) ... ) */
+  tem = noseeum_cons (noseeum_cons (make_opaque_ptr (handler),
+				    noseeum_cons (handler_arg, Qnil)),
+		      Vcondition_handlers);
+  record_unwind_protect (condition_bind_unwind, tem);
+  Vcondition_handlers = tem;
+  
+  return unbind_to_1 (speccount, (*fun) (arg));
 }
 
 static int
@@ -1910,16 +2120,39 @@ extern int in_display;
 /*		 the workhorse error-signaling function			*/
 /************************************************************************/
 
+/* This exists only for debugging purposes, as a place to put a breakpoint
+   that won't get signalled for errors occurring when
+   call_with_suspended_errors() was invoked. */
+
+static void
+signal_1 (void)
+{
+}
+
 /* #### This function has not been synched with FSF.  It diverges
    significantly. */
 
-static Lisp_Object
-signal_1 (Lisp_Object sig, Lisp_Object data)
+/* The simplest external error function: it would be called
+   signal_continuable_error() in the terminology below, but it's
+   Lisp-callable. */
+
+DEFUN ("signal", Fsignal, 2, 2, 0, /*
+Signal a continuable error.  Args are ERROR-SYMBOL, and associated DATA.
+An error symbol is a symbol defined using `define-error'.
+DATA should be a list.  Its elements are printed as part of the error message.
+If the signal is handled, DATA is made available to the handler.
+See also the function `signal-error', and the functions to handle errors:
+`condition-case' and `call-with-condition-handler'.
+
+Note that this function can return, if the debugger is invoked and the
+user invokes the "return from signal" option.
+*/
+       (error_symbol, data))
 {
   /* This function can GC */
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object conditions;
-  Lisp_Object handlers;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  Lisp_Object conditions = Qnil;
+  Lisp_Object handlers = Qnil;
   /* signal_call_debugger() could get called more than once
      (once when a call-with-condition-handler is about to
      be dealt with, and another when a condition-case handler
@@ -1927,7 +2160,16 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
      stack trace aren't done more than once. */
   int stack_trace_displayed = 0;
   int debugger_entered = 0;
-  GCPRO2 (conditions, handlers);
+
+  /* Fsignal() is one of these functions that's called all the time
+     with newly-created Lisp objects.  We allow this; but we must GC-
+     protect the objects because all sorts of weird stuff could
+     happen. */
+
+  GCPRO4 (conditions, handlers, error_symbol, data);
+
+  if (!(inhibit_flags & CALL_WITH_SUSPENDED_ERRORS))
+    signal_1 ();
 
   if (!initialized)
     {
@@ -1937,12 +2179,22 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
       abort ();
     }
 
-  if (gc_in_progress || in_display)
-    /* This is one of many reasons why you can't run lisp code from redisplay.
-       There is no sensible way to handle errors there. */
+  if (gc_in_progress)
+    /* We used to abort if in_display:
+
+       [[This is one of many reasons why you can't run lisp code from
+       redisplay.  There is no sensible way to handle errors there.]]
+
+       The above comment is not correct.
+
+       Inhibit GC until the redisplay code is careful enough to properly
+       GCPRO their structures;
+
+       Surround all calls to Lisp code with error-trapping wrappers that
+       catch all errors. --ben */
     abort ();
 
-  conditions = Fget (sig, Qerror_conditions, Qnil);
+  conditions = Fget (error_symbol, Qerror_conditions, Qnil);
 
   for (handlers = Vcondition_handlers;
        CONSP (handlers);
@@ -1961,30 +2213,53 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
           NGCPRO1 (all_handlers);
           Vcondition_handlers = outer_handlers;
 
-          tem = signal_call_debugger (conditions, sig, data,
+          tem = signal_call_debugger (conditions, error_symbol, data,
 				      outer_handlers, 1,
 				      &stack_trace_displayed,
 				      &debugger_entered);
           if (!UNBOUNDP (tem))
 	    RETURN_NUNGCPRO (return_from_signal (tem));
 
-          tem = Fcons (sig, data);
-          if (NILP (handler_data))
-            tem = call1 (handler_fun, tem);
-          else
-            {
-              /* (This code won't be used (for now?).) */
-              struct gcpro nngcpro1;
-              Lisp_Object args[3];
-              NNGCPRO1 (args[0]);
-              nngcpro1.nvars = 3;
-              args[0] = handler_fun;
-              args[1] = tem;
-              args[2] = handler_data;
-              nngcpro1.var = args;
-              tem = Fapply (3, args);
-              NNUNGCPRO;
-            }
+	  if (OPAQUE_PTRP (handler_fun))
+	    {
+	      if (NILP (handler_data))
+		{
+		  Lisp_Object (*hfun) (Lisp_Object, Lisp_Object) =
+		    (Lisp_Object (*) (Lisp_Object, Lisp_Object))
+		    (get_opaque_ptr (handler_fun));
+
+		  tem = (*hfun) (error_symbol, data);
+		}
+	      else
+		{
+		  Lisp_Object (*hfun) (Lisp_Object, Lisp_Object, Lisp_Object) =
+		    (Lisp_Object (*) (Lisp_Object, Lisp_Object, Lisp_Object))
+		    (get_opaque_ptr (handler_fun));
+
+		  assert (NILP (XCDR (handler_data)));
+		  tem = (*hfun) (error_symbol, data, XCAR (handler_data));
+		}
+	    }
+	  else
+	    {
+	      tem = Fcons (error_symbol, data);
+	      if (NILP (handler_data))
+		tem = call1 (handler_fun, tem);
+	      else
+		{
+		  /* (This code won't be used (for now?).) */
+		  struct gcpro nngcpro1;
+		  Lisp_Object args[3];
+		  NNGCPRO1 (args[0]);
+		  nngcpro1.nvars = 3;
+		  args[0] = handler_fun;
+		  args[1] = tem;
+		  args[2] = handler_data;
+		  nngcpro1.var = args;
+		  tem = Fapply (3, args);
+		  NNUNGCPRO;
+		}
+	    }
           NUNGCPRO;
 #if 0
           if (!EQ (tem, Qsignal))
@@ -2001,7 +2276,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
       else if (EQ (handler_data, Qt))
 	{
           UNGCPRO;
-          return Fthrow (handlers, Fcons (sig, data));
+          return Fthrow (handlers, Fcons (error_symbol, data));
 	}
       /* `error' is used similarly to the way `t' is used, but in
          addition it invokes the debugger if debug_on_error.
@@ -2009,7 +2284,8 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
 	 handler. */
       else if (EQ (handler_data, Qerror))
         {
-          Lisp_Object tem = signal_call_debugger (conditions, sig, data,
+          Lisp_Object tem = signal_call_debugger (conditions, error_symbol,
+						  data,
                                                   outer_handlers, 0,
 						  &stack_trace_displayed,
 						  &debugger_entered);
@@ -2018,7 +2294,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
           if (!UNBOUNDP (tem))
             return return_from_signal (tem);
 
-          tem = Fcons (sig, data);
+          tem = Fcons (error_symbol, data);
           return Fthrow (handlers, tem);
         }
       else
@@ -2033,7 +2309,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
 
 	      if (condition_type_p (tem, conditions))
 		{
-		  tem = signal_call_debugger (conditions, sig, data,
+		  tem = signal_call_debugger (conditions, error_symbol, data,
                                               outer_handlers, 1,
 					      &stack_trace_displayed,
 					      &debugger_entered);
@@ -2042,7 +2318,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
                     return return_from_signal (tem);
 
                   /* Doesn't return */
-                  tem = Fcons (Fcons (sig, data), Fcdr (clause));
+                  tem = Fcons (Fcons (error_symbol, data), Fcdr (clause));
                   return Fthrow (handlers, tem);
                 }
 	    }
@@ -2057,58 +2333,26 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
      there is no 'top-level catch. (That's why the
      "bomb-out" hack was added.)
 
-     #### Fix this horrifitude!
-     */
-  signal_call_debugger (conditions, sig, data, Qnil, 0,
+     [[#### Fix this horrifitude!]]
+
+     I don't think this is horrifitude, but just defensive coding. --ben */
+
+  signal_call_debugger (conditions, error_symbol, data, Qnil, 0,
 			&stack_trace_displayed,
 			&debugger_entered);
   UNGCPRO;
-  throw_or_bomb_out (Qtop_level, Qt, 1, sig, data); /* Doesn't return */
+  throw_or_bomb_out (Qtop_level, Qt, 1, error_symbol,
+		     data); /* Doesn't return */
   return Qnil;
 }
 
-
 /****************** Error functions class 1 ******************/
 
 /* Class 1: General functions that signal an error.
    These functions take an error type and a list of associated error
    data. */
 
-/* The simplest external error function: it would be called
-   signal_continuable_error_1() in the terminology below, but it's
-   Lisp-callable. */
-
-DEFUN ("signal", Fsignal, 2, 2, 0, /*
-Signal a continuable error.  Args are ERROR-SYMBOL, and associated DATA.
-An error symbol is a symbol defined using `define-error'.
-DATA should be a list.  Its elements are printed as part of the error message.
-If the signal is handled, DATA is made available to the handler.
-See also the function `signal-error', and the functions to handle errors:
-`condition-case' and `call-with-condition-handler'.
-
-Note that this function can return, if the debugger is invoked and the
-user invokes the "return from signal" option.
-*/
-       (error_symbol, data))
-{
-  /* Fsignal() is one of these functions that's called all the time
-     with newly-created Lisp objects.  We allow this; but we must GC-
-     protect the objects because all sorts of weird stuff could
-     happen. */
-
-  struct gcpro gcpro1;
-
-  GCPRO1 (data);
-  if (!NILP (Vcurrent_error_state))
-    {
-      if (!NILP (Vcurrent_warning_class) && !NILP (Vcurrent_warning_level))
-	warn_when_safe_lispobj (Vcurrent_warning_class, Vcurrent_warning_level,
-				Fcons (error_symbol, data));
-      Fthrow (Qunbound_suspended_errors_tag, Qnil);
-      abort (); /* Better not get here! */
-    }
-  RETURN_UNGCPRO (signal_1 (error_symbol, data));
-}
+/* No signal_continuable_error_1(); it's called Fsignal(). */
 
 /* Signal a non-continuable error. */
 
@@ -2118,10 +2362,15 @@ signal_error_1 (Lisp_Object sig, Lisp_Object data)
   for (;;)
     Fsignal (sig, data);
 }
-#ifdef ERROR_CHECK_STRUCTURES
-static void
-check_error_state_sanity (void)
+
+#ifdef ERROR_CHECK_CATCH
+
+void
+check_catchlist_sanity (void)
 {
+#if 0
+  /* vou me tomar no cu!  i just masked andy's missing-unbind
+     bug! */
   struct catchtag *c;
   int found_error_tag = 0;
 
@@ -2135,147 +2384,15 @@ check_error_state_sanity (void)
     }
 
   assert (found_error_tag || NILP (Vcurrent_error_state));
+#endif /* vou me tomar no cul */
 }
-#endif
 
-static Lisp_Object
-restore_current_warning_class (Lisp_Object warning_class)
+void
+check_specbind_stack_sanity (void)
 {
-  Vcurrent_warning_class = warning_class;
-  return Qnil;
 }
 
-static Lisp_Object
-restore_current_warning_level (Lisp_Object warning_level)
-{
-  Vcurrent_warning_level = warning_level;
-  return Qnil;
-}
-
-static Lisp_Object
-restore_current_error_state (Lisp_Object error_state)
-{
-  Vcurrent_error_state = error_state;
-  return Qnil;
-}
-
-static Lisp_Object
-call_with_suspended_errors_1 (Lisp_Object opaque_arg)
-{
-  Lisp_Object val;
-  Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  int speccount = specpdl_depth ();
-
-  if (NILP (Vcurrent_error_state))
-    {
-      record_unwind_protect (restore_current_error_state,
-			     Vcurrent_error_state);
-      Vcurrent_error_state = Qt;
-    }
-  PRIMITIVE_FUNCALL (val, get_opaque_ptr (kludgy_args[0]),
-		     kludgy_args + 2, XINT (kludgy_args[1]));
-  return unbind_to_1 (speccount, val);
-}
-
-/* Many functions would like to do one of three things if an error
-   occurs:
-
-   (1) signal the error, as usual.
-   (2) silently fail and return some error value.
-   (3) do as (2) but issue a warning in the process.
-
-   Currently there's lots of stuff that passes an Error_Behavior
-   value and calls maybe_signal_error() and other such functions.
-   This approach is inherently error-prone and broken.  A much
-   more robust and easier approach is to use call_with_suspended_errors().
-   Wrap this around any function in which you might want errors
-   to not be errors.
-*/
-
-Lisp_Object
-call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
-			    Lisp_Object class, Error_Behavior errb,
-			    int nargs, ...)
-{
-  va_list vargs;
-  int speccount;
-  Lisp_Object kludgy_args[22];
-  Lisp_Object *args = kludgy_args + 2;
-  int i;
-
-  assert (SYMBOLP (class)); /* sanity-check */
-  assert (!NILP (class));
-  assert (nargs >= 0 && nargs < 20);
-
-  va_start (vargs, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (vargs, Lisp_Object);
-  va_end (vargs);
-
-  /* ERROR_ME means don't trap errors. (However, if errors are
-     already trapped, we leave them trapped.)
-
-     Otherwise, we trap errors, and display as warnings if ERROR_ME_WARN.
-
-     If ERROR_ME_NOT, we silently fail.
-     
-     If ERROR_ME_DEBUG_WARN, we display a warning, but at warning level to
-     `debug'.  Normally these disappear, but can be seen if we changed
-     log-warning-minimum-level.
-     */
-
-  /* If error-checking is not disabled, just call the function.
-     It's important not to override disabled error-checking with
-     enabled error-checking. */
-
-  if (ERRB_EQ (errb, ERROR_ME))
-    {
-      Lisp_Object val;
-      PRIMITIVE_FUNCALL (val, fun, args, nargs);
-      return val;
-    }
-
-  speccount = specpdl_depth ();
-  if (NILP (Vcurrent_warning_class))
-    {
-      /* Don't change the existing class.
-	 #### Should we be consing the two together? */
-      record_unwind_protect (restore_current_warning_class,
-			     Vcurrent_warning_class);
-      Vcurrent_warning_class = class;
-    }
-
-  record_unwind_protect (restore_current_warning_level,
-			 Vcurrent_warning_level);
-  Vcurrent_warning_level =
-    (ERRB_EQ (errb, ERROR_ME_NOT) ? Qnil :
-     ERRB_EQ (errb, ERROR_ME_DEBUG_WARN) ? Qdebug :
-     Qwarning);
-  
-
-  {
-    int threw;
-    Lisp_Object the_retval;
-    Lisp_Object opaque1 = make_opaque_ptr (kludgy_args);
-    Lisp_Object opaque2 = make_opaque_ptr ((void *) fun);
-    struct gcpro gcpro1, gcpro2;
-
-    GCPRO2 (opaque1, opaque2);
-    kludgy_args[0] = opaque2;
-    kludgy_args[1] = make_int (nargs);
-    the_retval = internal_catch (Qunbound_suspended_errors_tag,
-				 call_with_suspended_errors_1,
-				 opaque1, &threw);
-    free_opaque_ptr (opaque1);
-    free_opaque_ptr (opaque2);
-    UNGCPRO;
-    /* Use the returned value except in non-local exit, when
-       RETVAL applies. */
-    /* Some perverse compilers require the perverse cast below.  */
-    return unbind_to_1 (speccount,
-		      threw ? *((Lisp_Object*) &(retval)) : the_retval);
-  }
-}
+#endif /* ERROR_CHECK_CATCH */
 
 /* Signal a non-continuable error or display a warning or do nothing,
    according to ERRB.  CLASS is the class of warning and should
@@ -2606,12 +2723,19 @@ maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 void
 signal_quit (void)
 {
-  /* This function can GC */
+  /* This function cannot GC.  GC is prohibited because most callers do
+     not expect GC occurring in QUIT.  Remove this if/when that gets fixed.
+     --ben */
+
+  int count;
+
   if (EQ (Vquit_flag, Qcritical))
     debug_on_quit |= 2;		/* set critical bit. */
   Vquit_flag = Qnil;
+  count = begin_gc_forbidden ();
   /* note that this is continuable. */
   Fsignal (Qquit, Qnil);
+  unbind_to (count);
 }
 
 
@@ -3164,12 +3288,6 @@ static Lisp_Object funcall_lambda (Lisp_Object fun,
 				   int nargs, Lisp_Object args[]);
 static int in_warnings;
 
-static Lisp_Object
-in_warnings_restore (Lisp_Object minimus)
-{
-  in_warnings = 0;
-  return Qnil;
-}
 
 void handle_compiled_function_with_and_rest (Lisp_Compiled_Function *f,
 					     int nargs,
@@ -3298,20 +3416,20 @@ Evaluate FORM and return its value.
   struct backtrace backtrace;
 
   /* I think this is a pretty safe place to call Lisp code, don't you? */
-  while (!in_warnings && !NILP (Vpending_warnings))
+  while (!in_warnings && !NILP (Vpending_warnings)
+	 /* well, perhaps not so safe after all! */
+	 && !(inhibit_flags & INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY))
     {
       struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-      int speccount = specpdl_depth();
       Lisp_Object this_warning_cons, this_warning, class, level, messij;
+      int speccount = internal_bind_int (&in_warnings, 1);
 
-      record_unwind_protect (in_warnings_restore, Qnil);
-      in_warnings = 1;
       this_warning_cons = Vpending_warnings;
       this_warning = XCAR (this_warning_cons);
       /* in case an error occurs in the warn function, at least
 	 it won't happen infinitely */
       Vpending_warnings = XCDR (Vpending_warnings);
-      free_cons (XCONS (this_warning_cons));
+      free_cons (this_warning_cons);
       class = XCAR (this_warning);
       level = XCAR (XCDR (this_warning));
       messij = XCAR (XCDR (XCDR (this_warning)));
@@ -3814,6 +3932,9 @@ DEFUN ("function-min-args", Ffunction_min_args, 1, 1, 0, /*
 Return the minimum number of arguments a function may be called with.
 The function may be any form that can be passed to `funcall',
 any special form, or any macro.
+
+To check if a function can be called with a specified number of
+arguments, use `function-allows-args'.
 */
        (function))
 {
@@ -3826,6 +3947,9 @@ The function may be any form that can be passed to `funcall',
 any special form, or any macro.
 If the function takes an arbitrary number of arguments or is
 a built-in special form, nil is returned.
+
+To check if a function can be called with a specified number of
+arguments, use `function-allows-args'.
 */
        (function))
 {
@@ -4145,7 +4269,7 @@ run_hook_with_args (int nargs, Lisp_Object *args,
 
 #if 0
 
-/* From FSF 19.30, not currently used */
+/* From FSF 19.30, not currently used; seems like a big kludge. */
 
 /* Run a hook symbol ARGS[0], but use FUNLIST instead of the actual
    present value of that symbol.
@@ -4157,39 +4281,7 @@ run_hook_with_args (int nargs, Lisp_Object *args,
 Lisp_Object
 run_hook_list_with_args (Lisp_Object funlist, int nargs, Lisp_Object *args)
 {
-  Lisp_Object sym = args[0];
-  Lisp_Object val;
-  struct gcpro gcpro1, gcpro2;
-
-  GCPRO2 (sym, val);
-
-  for (val = funlist; CONSP (val); val = XCDR (val))
-    {
-      if (EQ (XCAR (val), Qt))
-	{
-	  /* t indicates this hook has a local binding;
-	     it means to run the global binding too.  */
-	  Lisp_Object globals;
-
-	  for (globals = Fdefault_value (sym);
-	       CONSP (globals);
-	       globals = XCDR (globals))
-	    {
-	      args[0] = XCAR (globals);
-	      /* In a global value, t should not occur.  If it does, we
-		 must ignore it to avoid an endless loop.  */
-	      if (!EQ (args[0], Qt))
-		Ffuncall (nargs, args);
-	    }
-	}
-      else
-	{
-	  args[0] = XCAR (val);
-	  Ffuncall (nargs, args);
-	}
-    }
-  UNGCPRO;
-  return Qnil;
+  omitted;
 }
 
 #endif /* 0 */
@@ -4241,8 +4333,7 @@ va_run_hook_with_args_in_buffer (struct buffer *buf, Lisp_Object hook_var,
 Lisp_Object
 run_hook (Lisp_Object hook)
 {
-  Frun_hooks (1, &hook);
-  return Qnil;
+  return run_hook_with_args (1, &hook, RUN_HOOKS_TO_COMPLETION);
 }
 
 
@@ -4542,348 +4633,890 @@ eval_in_buffer (struct buffer *buf, Lisp_Object form)
 /*	   Error-catching front-ends to eval, funcall, apply		*/
 /************************************************************************/
 
-/* Call function fn on no arguments, with condition handler */
-Lisp_Object
-call0_with_handler (Lisp_Object handler, Lisp_Object fn)
+int
+get_inhibit_flags (void)
 {
-  /* This function can GC */
-  struct gcpro gcpro1;
-  Lisp_Object args[2];
-  args[0] = handler;
-  args[1] = fn;
-  GCPRO1 (args[0]);
-  gcpro1.nvars = 2;
-  RETURN_UNGCPRO (Fcall_with_condition_handler (2, args));
+  return inhibit_flags;
 }
 
-/* Call function fn with argument arg0, with condition handler */
-Lisp_Object
-call1_with_handler (Lisp_Object handler, Lisp_Object fn,
-                    Lisp_Object arg0)
+void
+check_allowed_operation (int what, Lisp_Object obj, Lisp_Object prop)
 {
-  /* This function can GC */
-  struct gcpro gcpro1;
-  Lisp_Object args[3];
-  args[0] = handler;
-  args[1] = fn;
-  args[2] = arg0;
-  GCPRO1 (args[0]);
-  gcpro1.nvars = 3;
-  RETURN_UNGCPRO (Fcall_with_condition_handler (3, args));
-}
-
-
-/* The following functions provide you with error-trapping versions
-   of the various front-ends above.  They take an additional
-   "warning_string" argument; if non-zero, a warning with this
-   string and the actual error that occurred will be displayed
-   in the *Warnings* buffer if an error occurs.  In all cases,
-   QUIT is inhibited while these functions are running, and if
-   an error occurs, Qunbound is returned instead of the normal
-   return value.
-   */
-
-/* #### This stuff needs to catch throws as well.  We need to
-   improve internal_catch() so it can take a "catch anything"
-   argument similar to Qt or Qerror for condition_case_1(). */
-
-static Lisp_Object
-caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
-{
-  /* #### should be rewritten to work with emacs_sprintf_string_lisp(); but this
-     whole stuff is getting junked and replaced from my stderr-proc ws */
-  if (!NILP (errordata))
+  if (inhibit_flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
     {
-      Lisp_Object args[2];
-
-      if (!NILP (arg))
-        {
-          Intbyte *str = (Intbyte *) get_opaque_ptr (arg);
-          args[0] = build_intstring (str);
-        }
-      else
-        args[0] = build_msg_string ("error");
-      /* #### This should call
-	 (with-output-to-string (display-error errordata))
-	 but that stuff is all in Lisp currently. */
-      args[1] = errordata;
-      warn_when_safe_lispobj
-	(Qerror, Qwarning,
-	 emacs_vsprintf_string_lisp ("%s: %s", Qnil, 2, args));
+      if (what == OPERATION_MODIFY_BUFFER_TEXT && BUFFERP (obj)
+	  && NILP (memq_no_quit (obj, Vmodifiable_buffers)))
+	invalid_change
+	  ("Modification of this buffer not currently permitted", obj);
     }
-  return Qunbound;
+  if (inhibit_flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
+    {
+      if (what == OPERATION_DELETE_OBJECT
+	  && (BUFFERP (obj) || WINDOWP (obj) || FRAMEP (obj) || DEVICEP (obj)
+	      || CONSOLEP (obj))
+	  && NILP (memq_no_quit (obj, Vdeletable_permanent_display_objects)))
+	invalid_change
+	  ("Deletion of this object not currently permitted", obj);
+    }
+}
+
+void
+note_object_created (Lisp_Object obj)
+{
+  if (inhibit_flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
+    {
+      if (BUFFERP (obj))
+	Vmodifiable_buffers = Fcons (obj, Vmodifiable_buffers);
+    }
+  if (inhibit_flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
+    {
+      if (BUFFERP (obj) || WINDOWP (obj) || FRAMEP (obj) || DEVICEP (obj)
+	  || CONSOLEP (obj))
+	Vdeletable_permanent_display_objects =
+	  Fcons (obj, Vdeletable_permanent_display_objects);
+    }
+}
+
+void
+note_object_deleted (Lisp_Object obj)
+{
+  if (inhibit_flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
+    {
+      if (BUFFERP (obj))
+	Vmodifiable_buffers = delq_no_quit (obj, Vmodifiable_buffers);
+    }
+  if (inhibit_flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
+    {
+      if (BUFFERP (obj) || WINDOWP (obj) || FRAMEP (obj) || DEVICEP (obj)
+	  || CONSOLEP (obj))
+	Vdeletable_permanent_display_objects =
+	  delq_no_quit (obj, Vdeletable_permanent_display_objects);
+    }
+}
+
+struct call_trapping_problems
+{
+  Lisp_Object catchtag;
+  Lisp_Object error_conditions;
+  Lisp_Object data;
+  Lisp_Object backtrace;
+  Lisp_Object warning_class;
+
+  const CIntbyte *warning_string;
+  Lisp_Object (*fun) (void *);
+  void *arg;
+};
+
+static Lisp_Object
+flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
+		    Lisp_Object opaque)
+{
+  struct call_trapping_problems *p =
+    (struct call_trapping_problems *) get_opaque_ptr (opaque);
+  struct gcpro gcpro1;
+  Lisp_Object lstream = Qnil;
+  Lisp_Object errstr;
+  int speccount = specpdl_depth ();
+
+  if (! (inhibit_flags & INHIBIT_WARNING_ISSUE))
+    {
+      /* We're no longer protected against errors or quit here, so at
+	 least let's temporarily inhibit quit.  We definitely do not
+	 want to inhibit quit during the calling of the function
+	 itself!!!!!!!!!!! */
+     
+      specbind (Qinhibit_quit, Qt);
+
+      GCPRO1 (lstream);
+      lstream = make_resizing_buffer_output_stream ();
+      Fbacktrace (lstream, Qt);
+      Lstream_flush (XLSTREAM (lstream));
+      p->backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
+      Lstream_delete (XLSTREAM (lstream));
+      UNGCPRO;
+
+      /* #### This should call
+	 (with-output-to-string (display-error (cons error_conditions data))
+	 but that stuff is all in Lisp currently. */
+      errstr =
+	emacs_sprintf_string_lisp
+	("%s: (%s %s)\n\nBacktrace follows:\n\n%s",
+	 Qnil, 4,
+	 build_msg_string (p->warning_string ? p->warning_string : "error"),
+	 error_conditions, data, p->backtrace);
+
+      warn_when_safe_lispobj (p->warning_class, current_warning_level (),
+			      errstr);
+
+      unbind_to (speccount);
+
+    }
+  else
+    p->backtrace = Qnil;
+
+  p->error_conditions = error_conditions;
+  p->data = data;
+
+  Fthrow (p->catchtag, Qnil);
+  return Qnil; /* not reached */
 }
 
 static Lisp_Object
-allow_quit_caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
+call_trapping_problems_2 (Lisp_Object opaque)
 {
-  if (CONSP (errordata) && EQ (XCAR (errordata), Qquit))
-    return Fsignal (Qquit, XCDR (errordata));
-  return caught_a_squirmer (errordata, arg);
+  struct call_trapping_problems *p =
+    (struct call_trapping_problems *) get_opaque_ptr (opaque);
+
+  return (p->fun) (p->arg);
 }
 
 static Lisp_Object
-safe_run_hook_caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
+call_trapping_problems_1 (Lisp_Object opaque)
 {
-  Lisp_Object hook = Fcar (arg);
-  arg = Fcdr (arg);
-  /* Clear out the hook. */
-  Fset (hook, Qnil);
-  return caught_a_squirmer (errordata, arg);
+  return call_with_condition_handler (flagged_a_squirmer, opaque,
+				      call_trapping_problems_2, opaque);
 }
 
-static Lisp_Object
-allow_quit_safe_run_hook_caught_a_squirmer (Lisp_Object errordata,
-					    Lisp_Object arg)
-{
-  Lisp_Object hook = Fcar (arg);
-  arg = Fcdr (arg);
-  if (!CONSP (errordata) || !EQ (XCAR (errordata), Qquit))
-    /* Clear out the hook. */
-    Fset (hook, Qnil);
-  return allow_quit_caught_a_squirmer (errordata, arg);
-}
+/* This is equivalent to (*fun) (arg), except that various conditions
+   can be trapped or inhibited, according to FLAGS.
 
-static Lisp_Object
-catch_them_squirmers_eval_in_buffer (Lisp_Object cons)
-{
-  return eval_in_buffer (XBUFFER (XCAR (cons)), XCDR (cons));
-}
+   If FLAGS does not contain NO_INHIBIT_ERRORS, when an error occurs,
+   the error is caught and a warning is issued, specifying the
+   specific error that occurred and a backtrace.  In that case,
+   WARNING_STRING should be given, and will be printed at the
+   beginning of the error to indicate where the error occurred.
+
+   If FLAGS does not contain NO_INHIBIT_THROWS, all attempts to
+   `throw' out of the function being called are trapped, and a warning
+   issued. (Again, WARNING_STRING should be given.)
+
+   (If FLAGS contains INHIBIT_WARNING_ISSUE, no warnings are issued;
+   this applies to recursive invocations of call_trapping_problems, too.
+
+   If FLAGS contains ISSUE_WARNINGS_AT_DEBUG_LEVEL, warnings will be
+   issued, but at level `debug', which normally is below the minimum
+   specified by `log-warning-minimum-level', meaning such warnings will
+   be ignored entirely.  The user can change this variable, however,
+   to see the warnings.)
+
+   Note: If neither of NO_INHIBIT_THROWS or NO_INHIBIT_ERRORS is
+   given, you are *guaranteed* that there will be no non-local exits
+   out of this function.
+
+   If FLAGS contains INHIBIT_QUIT, QUIT using C-g is inhibited.  (This
+   is *rarely* a good idea.  Unless you use NO_INHIBIT_ERRORS, QUIT is
+   automatically caught as well, and treated as an error; you can
+   check for this using EQ (problems->error_conditions, Qquit).
+
+   If FLAGS contains UNINHIBIT_QUIT, QUIT checking will be explicitly
+   turned on. (It will abort the code being called, but will still be
+   trapped and reported as an error, unless NO_INHIBIT_ERRORS is
+   given.) This is useful when QUIT checking has been turned off by a
+   higher-level caller.
+
+   If FLAGS contains INHIBIT_GC, garbage collection is inhibited.
+   This is useful for Lisp called within redisplay or inside of the
+   QUIT macro (where GC is generally not expected), for example.
+
+   If FLAGS contains INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION,
+   Lisp code is not allowed to delete any window, buffers, frames, devices,
+   or consoles that were already in existence at the time this function
+   was called. (However, it's perfectly legal for code to create a new
+   buffer and then delete it.)
+
+   #### It might be useful to have a flag that inhibits deletion of a
+   specific permanent display object and everything it's attached to
+   (e.g. a window, and the buffer, frame, device, and console it's
+   attached to.
+
+   If FLAGS contains INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION, Lisp
+   code is not allowed to modify the text of any buffers that were
+   already in existence at the time this function was called.
+   (However, it's perfectly legal for code to create a new buffer and
+   then modify its text.)
+
+       [These last two flags are implemented using global variables
+       Vdeletable_permanent_display_objects and Vmodifiable_buffers,
+       which keep track of a list of all buffers or permanent display
+       objects created since the last time one of these flags was set.
+       The code that deletes buffers, etc. and modifies buffers checks
+    
+       (1) if the corresponding flag is set (through the global variable
+       inhibit_flags or its accessor function get_inhibit_flags()), and
+    
+       (2) if the object to be modified or deleted is not in the
+       appropriate list.
+    
+       If so, it signals an error.
+    
+       Recursive calls to call_trapping_problems() are allowed.  In
+       the case of the two flags mentioned above, the current values
+       of the global variables are stored in an unwind-protect, and
+       they're reset to nil.]
+    
+   If FLAGS contains INHIBIT_ENTERING_DEBUGGER, the debugger will not
+   be entered if an error occurs inside the Lisp code being called,
+   even when the user has requested an error.  In such case, a warning
+   is issued stating that access to the debugger is denied, unless
+   INHIBIT_WARNING_ISSUE has also been supplied.  This is useful when
+   calling Lisp code inside redisplay, in menu callbacks, etc. because
+   in such cases either the display is in an inconsistent state or
+   doing window operations is explicitly forbidden by the OS, and the
+   debugger would causes visual changes on the screen and might create
+   another frame.
+
+   If FLAGS contains INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY, no
+   changes of any sort to extents, faces, glyphs, buffer text,
+   specifiers relating to display, other variables relating to
+   display, splitting, deleting, or resizing windows or frames,
+   deleting buffers, windows, frames, devices, or consoles, etc. is
+   allowed.  This is for things called absolutely in the middle of
+   redisplay, which expects things to be *exactly* the same after the
+   call as before.  This isn't completely implemented and needs to be
+   thought out some more to determine exactly what its semantics are.
+   For the moment, turning on this flag also turns on
+
+        INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION
+        INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION
+        INHIBIT_ENTERING_DEBUGGER
+        INHIBIT_WARNING_ISSUE
+        INHIBIT_GC
+
+   #### The following five flags are defined, but unimplemented:
+
+   #define INHIBIT_EXISTING_CODING_SYSTEM_DELETION (1<<6)
+   #define INHIBIT_EXISTING_CHARSET_DELETION (1<<7)
+   #define INHIBIT_PERMANENT_DISPLAY_OBJECT_CREATION (1<<8)
+   #define INHIBIT_CODING_SYSTEM_CREATION (1<<9)
+   #define INHIBIT_CHARSET_CREATION (1<<10)
+
+   FLAGS containing CALL_WITH_SUSPENDED_ERRORS is a sign that
+   call_with_suspended_errors() was invoked.  This exists only for
+   debugging purposes -- often we want to break when a signal happens,
+   but ignore signals from call_with_suspended_errors(), because they
+   occur often and for legitimate reasons.
+
+   If PROBLEM is non-zero, it should be a pointer to a structure into
+   which exact information about any occurring problems (either an
+   error or an attempted throw past this boundary).
+
+   If a problem occurred and aborted operation (error, quit, or
+   invalid throw), Qunbound is returned.  Otherwise the return value
+   from the call to (*fun) (arg) is returned.  */
 
 Lisp_Object
-eval_in_buffer_trapping_errors (const CIntbyte *warning_string,
-				struct buffer *buf, Lisp_Object form)
+call_trapping_problems (Lisp_Object warning_class,
+			const CIntbyte *warning_string,
+			int flags,
+			struct call_trapping_problems_result *problem,
+			Lisp_Object (*fun) (void *),
+			void *arg)
 {
   int speccount = specpdl_depth();
-  Lisp_Object tem;
-  Lisp_Object buffer;
-  Lisp_Object cons;
-  Lisp_Object opaque;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct call_trapping_problems package;
+  Lisp_Object opaque, thrown_tag, tem;
+  int thrown = 0;
 
-  buffer = wrap_buffer (buf);
+  assert (SYMBOLP (warning_class)); /* sanity-check */
+  assert (!NILP (warning_class));
 
-  specbind (Qinhibit_quit, Qt);
-  /* begin_gc_forbidden(); Currently no reason to do this; */
+  flags ^= INTERNAL_INHIBIT_ERRORS | INTERNAL_INHIBIT_THROWS;
 
-  cons = noseeum_cons (buffer, form);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
-  GCPRO2 (cons, opaque);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_eval_in_buffer, cons,
-			  caught_a_squirmer, opaque);
-  free_cons (XCONS (cons));
-  if (OPAQUE_PTRP (opaque))
+  package.warning_class = warning_class;
+  package.warning_string = warning_string;
+  package.fun = fun;
+  package.arg = arg;
+  package.catchtag =
+    flags & INTERNAL_INHIBIT_THROWS ? Vcatch_everything_tag :
+    flags & INTERNAL_INHIBIT_ERRORS ? make_opaque_ptr (0) :
+    Qnil;
+  package.error_conditions = Qnil;
+  package.data = Qnil;
+  package.backtrace = Qnil;
+
+  if (flags & INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY)
+    flags |= INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION
+      | INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION
+      | INHIBIT_ENTERING_DEBUGGER
+      | INHIBIT_WARNING_ISSUE
+      | INHIBIT_GC;
+
+  {
+    int new_inhibit_flags = inhibit_flags | flags;
+    if (new_inhibit_flags != inhibit_flags)
+      internal_bind_int (&inhibit_flags, new_inhibit_flags);
+  }
+
+  if (flags & INHIBIT_QUIT)
+    specbind (Qinhibit_quit, Qt);
+
+  if (flags & UNINHIBIT_QUIT)
+    begin_do_check_for_quit ();
+
+  if (flags & INHIBIT_GC)
+    begin_gc_forbidden ();
+
+  /* #### If we have nested calls to call_trapping_problems(), and the
+     inner one creates some buffers/etc., should the outer one be able
+     to delete them?  I think so, but it means we need to combine rather
+     than just reset the value. */
+  if (flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
+    internal_bind_lisp_object (&Vdeletable_permanent_display_objects, Qnil);
+
+  if (flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
+    internal_bind_lisp_object (&Vmodifiable_buffers, Qnil);
+
+  if (flags & (INTERNAL_INHIBIT_THROWS | INTERNAL_INHIBIT_ERRORS))
+    opaque = make_opaque_ptr (&package);
+  else
+    opaque = Qnil;
+
+  GCPRO5 (package.catchtag, package.error_conditions, package.data,
+	  package.backtrace, opaque);
+
+  if (flags & INTERNAL_INHIBIT_ERRORS)
+    /* We need a catch so that our condition-handler can throw back here
+       after printing the warning. (We print the warning in the stack
+       context of the error, so we can get a backtrace.) */
+    tem = internal_catch (package.catchtag, call_trapping_problems_1, opaque,
+			  &thrown, &thrown_tag);
+  else if (flags & INTERNAL_INHIBIT_THROWS)
+    /* We skip over the first wrapper, which traps errors. */
+    tem = internal_catch (package.catchtag, call_trapping_problems_2, opaque,
+			  &thrown, &thrown_tag);
+  else
+    /* Nothing special. */
+    tem = (fun) (arg);
+
+  if (thrown && !EQ (thrown_tag, package.catchtag)
+      && (!flags & INHIBIT_WARNING_ISSUE))
+    {
+      Lisp_Object errstr;
+
+      if (!(flags & INHIBIT_QUIT))
+	/* We're no longer protected against errors or quit here, so at
+	   least let's temporarily inhibit quit. */
+	specbind (Qinhibit_quit, Qt);
+      errstr =
+	emacs_sprintf_string_lisp
+	("%s: Attempt to throw outside of function "
+	 "to catch `%s' with value `%s'",
+	 Qnil, 3, build_msg_string (warning_string ? warning_string : "error"),
+	 thrown_tag, tem);
+
+      warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
+    }
+
+  if (problem)
+    {
+      if (!thrown)
+	{
+	  problem->caught_error = 0;
+	  problem->caught_throw = 0;
+	  problem->error_conditions = Qnil;
+	  problem->data = Qnil;
+	  problem->backtrace = Qnil;
+	  problem->thrown_tag = Qnil;
+	  problem->thrown_value = Qnil;
+	}
+      else if (EQ (thrown_tag, package.catchtag))
+	{
+	  problem->caught_error = 1;
+	  problem->caught_throw = 0;
+	  problem->error_conditions = package.error_conditions;
+	  problem->data = package.data;
+	  problem->backtrace = package.backtrace;
+	  problem->thrown_tag = Qnil;
+	  problem->thrown_value = Qnil;
+	}
+      else
+	{
+	  problem->caught_error = 0;
+	  problem->caught_throw = 1;
+	  problem->error_conditions = Qnil;
+	  problem->data = Qnil;
+	  problem->backtrace = Qnil;
+	  problem->thrown_tag = thrown_tag;
+	  problem->thrown_value = tem;
+	}
+    }
+
+  if (!NILP (package.catchtag) &&
+      !EQ (package.catchtag, Vcatch_everything_tag))
+    free_opaque_ptr (package.catchtag);
+
+  if (!NILP (opaque))
     free_opaque_ptr (opaque);
-  UNGCPRO;
 
-  return unbind_to_1 (speccount, tem);
+  unbind_to (speccount);
+  RETURN_UNGCPRO (thrown ? Qunbound : tem);
+}
+
+struct va_call_trapping_problems
+{
+  lisp_fn_t fun;
+  int nargs;
+  Lisp_Object *args;
+};
+
+static Lisp_Object
+va_call_trapping_problems_1 (void *ai_mi_madre)
+{
+  struct va_call_trapping_problems *ai_no_corrida =
+    (struct va_call_trapping_problems *) ai_mi_madre;
+  Lisp_Object pegar_no_bumbum;
+
+  PRIMITIVE_FUNCALL (pegar_no_bumbum, ai_no_corrida->fun,
+		     ai_no_corrida->args, ai_no_corrida->nargs);
+  return pegar_no_bumbum;
+}
+
+/* #### document me. */
+
+Lisp_Object
+va_call_trapping_problems (Lisp_Object warning_class,
+			   const CIntbyte *warning_string,
+			   int flags,
+			   struct call_trapping_problems_result *problem,
+			   lisp_fn_t fun, int nargs, ...)
+{
+  va_list vargs;
+  Lisp_Object args[20];
+  int i;
+  struct va_call_trapping_problems fazer_invocacao_atrapalhando_problemas;
+  struct gcpro gcpro1;
+
+  assert (nargs >= 0 && nargs < 20);
+
+  va_start (vargs, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (vargs, Lisp_Object);
+  va_end (vargs);
+
+  fazer_invocacao_atrapalhando_problemas.fun = fun;
+  fazer_invocacao_atrapalhando_problemas.nargs = nargs;
+  fazer_invocacao_atrapalhando_problemas.args = args;
+
+  GCPRO1_ARRAY (args, nargs);
+  RETURN_UNGCPRO
+    (call_trapping_problems
+     (warning_class, warning_string, flags, problem,
+      va_call_trapping_problems_1, &fazer_invocacao_atrapalhando_problemas));
+}
+
+/* this is an older interface, barely different from
+   va_call_trapping_problems.
+
+   #### eliminate this or at least merge the ERROR_BEHAVIOR stuff into
+   va_call_trapping_problems(). */
+
+Lisp_Object
+call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
+			    Lisp_Object class, Error_Behavior errb,
+			    int nargs, ...)
+{
+  va_list vargs;
+  Lisp_Object args[20];
+  int i;
+  struct va_call_trapping_problems fazer_invocacao_atrapalhando_problemas;
+  int flags;
+  struct gcpro gcpro1;
+
+  assert (SYMBOLP (class)); /* sanity-check */
+  assert (!NILP (class));
+  assert (nargs >= 0 && nargs < 20);
+
+  va_start (vargs, nargs);
+  for (i = 0; i < nargs; i++)
+    args[i] = va_arg (vargs, Lisp_Object);
+  va_end (vargs);
+
+  /* If error-checking is not disabled, just call the function. */
+
+  if (ERRB_EQ (errb, ERROR_ME))
+    {
+      Lisp_Object val;
+      PRIMITIVE_FUNCALL (val, fun, args, nargs);
+      return val;
+    }
+
+  if (ERRB_EQ (errb, ERROR_ME_NOT)) /* person wants no warnings */
+    flags = INHIBIT_WARNING_ISSUE | INHIBIT_ENTERING_DEBUGGER;
+  else if (ERRB_EQ (errb, ERROR_ME_DEBUG_WARN))
+    flags = ISSUE_WARNINGS_AT_DEBUG_LEVEL | INHIBIT_ENTERING_DEBUGGER;
+  else
+    {
+      assert (ERRB_EQ (errb, ERROR_ME_WARN));
+      flags = INHIBIT_ENTERING_DEBUGGER;
+    }
+
+  flags |= CALL_WITH_SUSPENDED_ERRORS;
+
+  fazer_invocacao_atrapalhando_problemas.fun = fun;
+  fazer_invocacao_atrapalhando_problemas.nargs = nargs;
+  fazer_invocacao_atrapalhando_problemas.args = args;
+
+  GCPRO1_ARRAY (args, nargs);
+  {
+    Lisp_Object its_way_too_goddamn_late =
+      call_trapping_problems
+       (class, 0, flags, 0, va_call_trapping_problems_1,
+	&fazer_invocacao_atrapalhando_problemas);
+    UNGCPRO;
+    if (UNBOUNDP (its_way_too_goddamn_late))
+      return retval;
+    else
+      return its_way_too_goddamn_late;
+  }
+}
+
+struct calln_trapping_problems
+{
+  int nargs;
+  Lisp_Object *args;
+};
+
+static Lisp_Object
+calln_trapping_problems_1 (void *puta)
+{
+  struct calln_trapping_problems *p = (struct calln_trapping_problems *) puta;
+
+  return Ffuncall (p->nargs, p->args);
 }
 
 static Lisp_Object
-catch_them_squirmers_run_hook (Lisp_Object hook_symbol)
+calln_trapping_problems (Lisp_Object warning_class,
+			 const CIntbyte *warning_string, int flags,
+			 struct call_trapping_problems_result *problem,
+			 int nargs, Lisp_Object *args)
 {
-  /* This function can GC */
-  run_hook (hook_symbol);
+  struct calln_trapping_problems foo;
+  struct gcpro gcpro1;
+
+  if (SYMBOLP (args[0]))
+    {
+      Lisp_Object tem = XSYMBOL (args[0])->function;
+      if (NILP (tem) || UNBOUNDP (tem))
+	{
+	  if (problem)
+	    {
+	      problem->caught_error = 0;
+	      problem->caught_throw = 0;
+	      problem->error_conditions = Qnil;
+	      problem->data = Qnil;
+	      problem->backtrace = Qnil;
+	      problem->thrown_tag = Qnil;
+	      problem->thrown_value = Qnil;
+	    }
+	  return Qnil;
+	}
+    }
+
+  foo.nargs = nargs;
+  foo.args = args;
+
+  GCPRO1_ARRAY (args, nargs);
+  RETURN_UNGCPRO (call_trapping_problems (warning_class, warning_string,
+					  flags, problem,
+					  calln_trapping_problems_1,
+					  &foo));
+}
+
+/* #### fix these functions to follow the calling convention of
+   call_trapping_problems! */
+
+Lisp_Object
+call0_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 int flags)
+{
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 1,
+				  &function);
+}
+
+Lisp_Object
+call1_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 Lisp_Object object, int flags)
+{
+  Lisp_Object args[2];
+
+  args[0] = function;
+  args[1] = object;
+
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 2,
+				  args);
+}
+
+Lisp_Object
+call2_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 Lisp_Object object1, Lisp_Object object2,
+			 int flags)
+{
+  Lisp_Object args[3];
+
+  args[0] = function;
+  args[1] = object1;
+  args[2] = object2;
+
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 3,
+				  args);
+}
+
+Lisp_Object
+call3_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 Lisp_Object object1, Lisp_Object object2,
+			 Lisp_Object object3, int flags)
+{
+  Lisp_Object args[4];
+
+  args[0] = function;
+  args[1] = object1;
+  args[2] = object2;
+  args[3] = object3;
+
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 4,
+				  args);
+}
+
+Lisp_Object
+call4_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 Lisp_Object object1, Lisp_Object object2,
+			 Lisp_Object object3, Lisp_Object object4,
+			 int flags)
+{
+  Lisp_Object args[5];
+
+  args[0] = function;
+  args[1] = object1;
+  args[2] = object2;
+  args[3] = object3;
+  args[4] = object4;
+
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 5,
+				  args);
+}
+
+Lisp_Object
+call5_trapping_problems (const CIntbyte *warning_string, Lisp_Object function,
+			 Lisp_Object object1, Lisp_Object object2,
+			 Lisp_Object object3, Lisp_Object object4,
+			 Lisp_Object object5, int flags)
+{
+  Lisp_Object args[6];
+
+  args[0] = function;
+  args[1] = object1;
+  args[2] = object2;
+  args[3] = object3;
+  args[4] = object4;
+  args[5] = object5;
+
+  return calln_trapping_problems (Qerror, warning_string, flags, 0, 6,
+				  args);
+}
+
+struct eval_in_buffer_trapping_problems
+{
+  struct buffer *buf;
+  Lisp_Object form;
+};
+
+static Lisp_Object
+eval_in_buffer_trapping_problems_1 (void *arg)
+{
+  struct eval_in_buffer_trapping_problems *p =
+    (struct eval_in_buffer_trapping_problems *) arg;
+
+  return eval_in_buffer (p->buf, p->form);
+}
+
+/* #### fix these functions to follow the calling convention of
+   call_trapping_problems! */
+
+Lisp_Object
+eval_in_buffer_trapping_problems (const CIntbyte *warning_string,
+				  struct buffer *buf, Lisp_Object form,
+				  int flags)
+{
+  struct eval_in_buffer_trapping_problems p;
+  Lisp_Object buffer = wrap_buffer (buf);
+  struct gcpro gcpro1, gcpro2;
+
+  GCPRO2 (buffer, form);
+  p.buf = buf;
+  p.form = form;
+  RETURN_UNGCPRO (call_trapping_problems (Qerror, warning_string, flags, 0,
+					  eval_in_buffer_trapping_problems_1,
+					  &p));
+}
+
+Lisp_Object
+run_hook_trapping_problems (const CIntbyte *warning_string,
+			    Lisp_Object hook_symbol,
+			    int flags)
+{
+  return run_hook_with_args_trapping_problems (warning_string, 1, &hook_symbol,
+					       RUN_HOOKS_TO_COMPLETION,
+					       flags);
+}
+
+static Lisp_Object
+safe_run_hook_trapping_problems_1 (void *puta)
+{
+  Lisp_Object hook = VOID_TO_LISP (puta);
+
+  run_hook (hook);
   return Qnil;
 }
 
-Lisp_Object
-run_hook_trapping_errors (const CIntbyte *warning_string,
-			  Lisp_Object hook_symbol)
-{
-  int speccount;
-  Lisp_Object tem;
-  Lisp_Object opaque;
-  struct gcpro gcpro1;
-
-  if (!initialized || preparing_for_armageddon)
-    return Qnil;
-  tem = find_symbol_value (hook_symbol);
-  if (NILP (tem) || UNBOUNDP (tem))
-    return Qnil;
-
-  speccount = specpdl_depth();
-  specbind (Qinhibit_quit, Qt);
-
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
-  GCPRO1 (opaque);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_run_hook, hook_symbol,
-                          caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
-    free_opaque_ptr (opaque);
-  UNGCPRO;
-
-  return unbind_to_1 (speccount, tem);
-}
-
-/* Same as run_hook_trapping_errors() but also set the hook to nil
-   if an error occurs. */
+/* Same as run_hook_trapping_problems() but also set the hook to nil
+   if an error occurs (but not a quit). */
 
 Lisp_Object
-safe_run_hook_trapping_errors (const CIntbyte *warning_string,
-			       Lisp_Object hook_symbol,
-			       int allow_quit)
+safe_run_hook_trapping_problems (const CIntbyte *warning_string,
+				 Lisp_Object hook_symbol,
+				 int flags)
 {
-  int speccount = specpdl_depth();
   Lisp_Object tem;
-  Lisp_Object cons = Qnil;
-  struct gcpro gcpro1;
-
-  if (!initialized || preparing_for_armageddon)
-    return Qnil;
-  tem = find_symbol_value (hook_symbol);
-  if (NILP (tem) || UNBOUNDP (tem))
-    return Qnil;
-
-  if (!allow_quit)
-    specbind (Qinhibit_quit, Qt);
-
-  cons = noseeum_cons (hook_symbol,
-		       warning_string ? make_opaque_ptr ((void *)warning_string)
-		       : Qnil);
-  GCPRO1 (cons);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_run_hook,
-			  hook_symbol,
-			  allow_quit ?
-			  allow_quit_safe_run_hook_caught_a_squirmer :
-                          safe_run_hook_caught_a_squirmer,
-			  cons);
-  if (OPAQUE_PTRP (XCDR (cons)))
-    free_opaque_ptr (XCDR (cons));
-  free_cons (XCONS (cons));
-  UNGCPRO;
-
-  return unbind_to_1 (speccount, tem);
-}
-
-static Lisp_Object
-catch_them_squirmers_call0 (Lisp_Object function)
-{
-  /* This function can GC */
-  return call0 (function);
-}
-
-Lisp_Object
-call0_trapping_errors (const CIntbyte *warning_string, Lisp_Object function)
-{
-  int speccount;
-  Lisp_Object tem;
-  Lisp_Object opaque = Qnil;
   struct gcpro gcpro1, gcpro2;
+  struct call_trapping_problems_result prob;
 
-  if (SYMBOLP (function))
-    {
-      tem = XSYMBOL (function)->function;
-      if (NILP (tem) || UNBOUNDP (tem))
-	return Qnil;
-    }
+  if (!initialized || preparing_for_armageddon)
+    return Qnil;
+  tem = find_symbol_value (hook_symbol);
+  if (NILP (tem) || UNBOUNDP (tem))
+    return Qnil;
 
-  GCPRO2 (opaque, function);
-  speccount = specpdl_depth();
-  specbind (Qinhibit_quit, Qt);
-  /* begin_gc_forbidden(); Currently no reason to do this; */
-
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_call0, function,
-                          caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
-    free_opaque_ptr (opaque);
-  UNGCPRO;
-
-  return unbind_to_1 (speccount, tem);
+  GCPRO2 (hook_symbol, tem);
+  tem = call_trapping_problems (Qerror, warning_string, flags,
+				&prob,
+				safe_run_hook_trapping_problems_1,
+				LISP_TO_VOID (hook_symbol));
+  if (prob.caught_throw || (prob.caught_error && !EQ (prob.error_conditions,
+						      Qquit)))
+    Fset (hook_symbol, Qnil);
+  RETURN_UNGCPRO (tem);
 }
 
-static Lisp_Object
-catch_them_squirmers_call1 (Lisp_Object cons)
+struct run_hook_with_args_in_buffer_trapping_problems
 {
-  /* This function can GC */
-  return call1 (XCAR (cons), XCDR (cons));
-}
+  struct buffer *buf;
+  int nargs;
+  Lisp_Object *args;
+  enum run_hooks_condition cond;
+};
 
 static Lisp_Object
-catch_them_squirmers_call2 (Lisp_Object cons)
+run_hook_with_args_in_buffer_trapping_problems_1 (void *puta)
 {
-  /* This function can GC */
-  return call2 (XCAR (cons), XCAR (XCDR (cons)), XCAR (XCDR (XCDR (cons))));
+  struct run_hook_with_args_in_buffer_trapping_problems *porra =
+    (struct run_hook_with_args_in_buffer_trapping_problems *) puta;
+
+  return run_hook_with_args_in_buffer (porra->buf, porra->nargs, porra->args,
+				       porra->cond);
+}
+
+/* #### fix these functions to follow the calling convention of
+   call_trapping_problems! */
+
+Lisp_Object
+run_hook_with_args_in_buffer_trapping_problems (const CIntbyte *warning_string,
+						struct buffer *buf, int nargs,
+						Lisp_Object *args,
+						enum run_hooks_condition cond,
+						int flags)
+{
+  Lisp_Object sym, val, ret;
+  struct run_hook_with_args_in_buffer_trapping_problems diversity_and_distrust;
+  struct gcpro gcpro1;
+
+  if (!initialized || preparing_for_armageddon)
+    /* We need to bail out of here pronto. */
+    return Qnil;
+
+  GCPRO1_ARRAY (args, nargs);
+
+  sym = args[0];
+  val = symbol_value_in_buffer (sym, wrap_buffer (buf));
+  ret = (cond == RUN_HOOKS_UNTIL_FAILURE ? Qt : Qnil);
+
+  if (UNBOUNDP (val) || NILP (val))
+    RETURN_UNGCPRO (ret);
+
+  diversity_and_distrust.buf = buf;
+  diversity_and_distrust.nargs = nargs;
+  diversity_and_distrust.args = args;
+  diversity_and_distrust.cond = cond;
+
+  RETURN_UNGCPRO
+    (call_trapping_problems
+     (Qerror, warning_string,
+      flags, 0,
+      run_hook_with_args_in_buffer_trapping_problems_1,
+      &diversity_and_distrust));
 }
 
 Lisp_Object
-call1_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
-		       Lisp_Object object)
+run_hook_with_args_trapping_problems (const CIntbyte *warning_string,
+				      int nargs,
+				      Lisp_Object *args,
+				      enum run_hooks_condition cond,
+				      int flags)
 {
-  int speccount = specpdl_depth();
-  Lisp_Object tem;
-  Lisp_Object cons = Qnil;
-  Lisp_Object opaque = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-
-  if (SYMBOLP (function))
-    {
-      tem = XSYMBOL (function)->function;
-      if (NILP (tem) || UNBOUNDP (tem))
-	return Qnil;
-    }
-
-  GCPRO4 (cons, opaque, function, object);
-
-  specbind (Qinhibit_quit, Qt);
-  /* begin_gc_forbidden(); Currently no reason to do this; */
-
-  cons = noseeum_cons (function, object);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_call1, cons,
-                          caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
-    free_opaque_ptr (opaque);
-  free_cons (XCONS (cons));
-  UNGCPRO;
-
-  return unbind_to_1 (speccount, tem);
+  return run_hook_with_args_in_buffer_trapping_problems
+    (warning_string, current_buffer, nargs, args, cond, flags);
 }
 
 Lisp_Object
-call2_trapping_errors (const CIntbyte *warning_string, Lisp_Object function,
-		       Lisp_Object object1, Lisp_Object object2)
+va_run_hook_with_args_trapping_problems (const CIntbyte *warning_string,
+					 Lisp_Object hook_var,
+					 int nargs, ...)
 {
-  int speccount = specpdl_depth();
-  Lisp_Object tem;
-  Lisp_Object cons = Qnil;
-  Lisp_Object opaque = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  /* This function can GC */
+  struct gcpro gcpro1;
+  int i;
+  va_list vargs;
+  Lisp_Object *funcall_args = alloca_array (Lisp_Object, 1 + nargs);
+  int flags;
 
-  if (SYMBOLP (function))
-    {
-      tem = XSYMBOL (function)->function;
-      if (NILP (tem) || UNBOUNDP (tem))
-	return Qnil;
-    }
+  va_start (vargs, nargs);
+  funcall_args[0] = hook_var;
+  for (i = 0; i < nargs; i++)
+    funcall_args[i + 1] = va_arg (vargs, Lisp_Object);
+  flags = va_arg (vargs, int);
+  va_end (vargs);
 
-  GCPRO5 (cons, opaque, function, object1, object2);
-  specbind (Qinhibit_quit, Qt);
-  /* begin_gc_forbidden(); Currently no reason to do this; */
+  GCPRO1_ARRAY (funcall_args, nargs + 1);
+  RETURN_UNGCPRO (run_hook_with_args_in_buffer_trapping_problems
+		  (warning_string, current_buffer, nargs + 1, funcall_args,
+		   RUN_HOOKS_TO_COMPLETION, flags));
+}
 
-  cons = list3 (function, object1, object2);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
-  /* Qerror not Qt, so you can get a backtrace */
-  tem = condition_case_1 (Qerror,
-                          catch_them_squirmers_call2, cons,
-                          caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
-    free_opaque_ptr (opaque);
-  free_list (cons);
-  UNGCPRO;
+Lisp_Object
+va_run_hook_with_args_in_buffer_trapping_problems (const CIntbyte *
+						   warning_string,
+						   struct buffer *buf,
+						   Lisp_Object hook_var,
+						   int nargs, ...)
+{
+  /* This function can GC */
+  struct gcpro gcpro1;
+  int i;
+  va_list vargs;
+  Lisp_Object *funcall_args = alloca_array (Lisp_Object, 1 + nargs);
+  int flags;
 
-  return unbind_to_1 (speccount, tem);
+  va_start (vargs, nargs);
+  funcall_args[0] = hook_var;
+  for (i = 0; i < nargs; i++)
+    funcall_args[i + 1] = va_arg (vargs, Lisp_Object);
+  flags = va_arg (vargs, int);
+  va_end (vargs);
+
+  GCPRO1_ARRAY (funcall_args, nargs + 1);
+  RETURN_UNGCPRO (run_hook_with_args_in_buffer_trapping_problems
+		  (warning_string, buf, nargs + 1, funcall_args,
+		   RUN_HOOKS_TO_COMPLETION, flags));
 }
 
 
@@ -4922,6 +5555,7 @@ grow_specpdl (EMACS_INT reserved)
     }
   XREALLOC_ARRAY (specpdl, struct specbinding, specpdl_size);
   specpdl_ptr = specpdl + specpdl_depth();
+  check_specbind_stack_sanity ();
 }
 
 
@@ -4931,9 +5565,9 @@ specbind_unwind_local (Lisp_Object ovalue)
 {
   Lisp_Object current = Fcurrent_buffer ();
   Lisp_Object symbol = specpdl_ptr->symbol;
-  Lisp_Cons *victim = XCONS (ovalue);
-  Lisp_Object buf = get_buffer (victim->car, 0);
-  ovalue = victim->cdr;
+  Lisp_Object victim = ovalue;
+  Lisp_Object buf = get_buffer (XCAR (victim), 0);
+  ovalue = XCDR (victim);
 
   free_cons (victim);
 
@@ -5001,6 +5635,8 @@ void
 specbind (Lisp_Object symbol, Lisp_Object value)
 {
   SPECBIND (symbol, value);
+
+  check_specbind_stack_sanity ();
 }
 
 void
@@ -5033,6 +5669,8 @@ specbind_magic (Lisp_Object symbol, Lisp_Object value)
   specpdl_depth_counter++;
 
   Fset (symbol, value);
+
+  check_specbind_stack_sanity ();
 }
 
 /* Record an unwind-protect -- FUNCTION will be called with ARG no matter
@@ -5052,6 +5690,7 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object arg),
   specpdl_ptr->old_value = arg;
   specpdl_ptr++;
   specpdl_depth_counter++;
+  check_specbind_stack_sanity ();
   return specpdl_depth_counter - 1;
 }
 
@@ -5062,7 +5701,7 @@ restore_lisp_object (Lisp_Object cons)
   Lisp_Object *addr = (Lisp_Object *) get_opaque_ptr (opaque);
   *addr = XCDR (cons);
   free_opaque_ptr (opaque);
-  free_cons (XCONS (cons));
+  free_cons (cons);
   return Qnil;
 }
 
@@ -5109,7 +5748,7 @@ restore_int (Lisp_Object cons)
 
   *addr = val;
   free_opaque_ptr (opaque);
-  free_cons (XCONS (cons));
+  free_cons (cons);
   return Qnil;
 }
 
@@ -5183,6 +5822,7 @@ Lisp_Object
 unbind_to_1 (int count, Lisp_Object value)
 {
   UNBIND_TO_GCPRO (count, value);
+  check_specbind_stack_sanity ();
   return value;
 }
 
@@ -5242,6 +5882,7 @@ unbind_to_hairy (int count)
 #endif
     }
   Vquit_flag = oquit;
+  check_specbind_stack_sanity ();
 }
 
 
@@ -5655,9 +6296,6 @@ reinit_vars_of_eval (void)
 {
   preparing_for_armageddon = 0;
   in_warnings = 0;
-  Qunbound_suspended_errors_tag = make_opaque_ptr (&Qunbound_suspended_errors_tag);
-  staticpro_nodump (&Qunbound_suspended_errors_tag);
-
   specpdl_size = 50;
   specpdl = xnew_array (struct specbinding, specpdl_size);
   /* XEmacs change: increase these values. */
@@ -5686,8 +6324,14 @@ if that proves inconveniently small.
 */ );
 
   DEFVAR_LISP ("quit-flag", &Vquit_flag /*
-Non-nil causes `eval' to abort, unless `inhibit-quit' is non-nil.
-Typing C-G sets `quit-flag' non-nil, regardless of `inhibit-quit'.
+t causes running Lisp code to abort, unless `inhibit-quit' is non-nil.
+`critical' causes running Lisp code to abort regardless of `inhibit-quit'.
+Normally, you do not need to set this value yourself.  It is set to
+t each time a Control-G is detected, and to `critical' each time a
+Shift-Control-G is detected.  The XEmacs core C code is littered with
+calls to the QUIT; macro, which check the values of `quit-flag' and
+`inhibit-quit' and abort (or more accurately, call (signal 'quit)) if
+it's correct to do so.
 */ );
   Vquit_flag = Qnil;
 
@@ -5696,9 +6340,11 @@ Non-nil inhibits C-g quitting from happening immediately.
 Note that `quit-flag' will still be set by typing C-g,
 so a quit will be signalled as soon as `inhibit-quit' is nil.
 To prevent this happening, set `quit-flag' to nil
-before making `inhibit-quit' nil.  The value of `inhibit-quit' is
-ignored if a critical quit is requested by typing control-shift-G in
-an X frame.
+before making `inhibit-quit' nil.
+
+The value of `inhibit-quit' is ignored if a critical quit is
+requested by typing control-shift-G in a window-system frame;
+this is explained in more detail in `quit-flag'.
 */ );
   Vinhibit_quit = Qnil;
 
@@ -5783,6 +6429,9 @@ If due to `eval' entry, one arg, t.
 */ );
   Vdebugger = Qnil;
 
+  staticpro (&Vcatch_everything_tag);
+  Vcatch_everything_tag = make_opaque (OPAQUE_CLEAR, 0);
+
   staticpro (&Vpending_warnings);
   Vpending_warnings = Qnil;
   dump_add_root_object (&Vpending_warnings_tail);
@@ -5796,12 +6445,11 @@ If due to `eval' entry, one arg, t.
 
   staticpro (&Vcondition_handlers);
 
-  staticpro (&Vcurrent_warning_class);
-  Vcurrent_warning_class = Qnil;
+  staticpro (&Vdeletable_permanent_display_objects);
+  Vdeletable_permanent_display_objects = Qnil;
 
-  staticpro (&Vcurrent_warning_level);
-  Vcurrent_warning_level = Qnil;
+  staticpro (&Vmodifiable_buffers);
+  Vmodifiable_buffers = Qnil;
 
-  staticpro (&Vcurrent_error_state);
-  Vcurrent_error_state = Qnil; /* errors as normal */
+  inhibit_flags = 0;
 }

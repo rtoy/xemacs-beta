@@ -152,13 +152,16 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f) = 
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 #endif
-  /* hashtable of instantiated glyphs on the frame. */
+  /* hashtable of instantiated glyphs on the frame.
+     make them EQ because we only use ints as keys.
+     otherwise we run into stickiness in redisplay because
+     internal_equal() can QUIT. */
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
   FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f) =
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQ);
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
   FRAME_WIDTH (f) = 0;

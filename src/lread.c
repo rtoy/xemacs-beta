@@ -326,36 +326,6 @@ static Lisp_Object
 load_unwind (Lisp_Object stream)  /* used as unwind-protect function in load */
 {
   Lstream_close (XLSTREAM (stream));
-  if (--load_in_progress < 0)
-    load_in_progress = 0;
-  return Qnil;
-}
-
-static Lisp_Object
-load_descriptor_unwind (Lisp_Object oldlist)
-{
-  Vload_descriptor_list = oldlist;
-  return Qnil;
-}
-
-static Lisp_Object
-load_file_name_internal_unwind (Lisp_Object oldval)
-{
-  Vload_file_name_internal = oldval;
-  return Qnil;
-}
-
-static Lisp_Object
-load_file_name_internal_the_purecopy_unwind (Lisp_Object oldval)
-{
-  Vload_file_name_internal_the_purecopy = oldval;
-  return Qnil;
-}
-
-static Lisp_Object
-load_byte_code_version_unwind (Lisp_Object oldval)
-{
-  load_byte_code_version = XINT (oldval);
   return Qnil;
 }
 
@@ -490,13 +460,6 @@ close_load_descs (void)
 
 #ifdef I18N3
 Lisp_Object Vfile_domain;
-
-Lisp_Object
-restore_file_domain (Lisp_Object val)
-{
-  Vfile_domain = val;
-  return Qnil;
-}
 #endif /* I18N3 */
 
 DEFUN ("load-internal", Fload_internal, 1, 6, 0, /*
@@ -675,28 +638,24 @@ do {							\
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
     /* NOTE: Order of these is very important.  Don't rearrange them. */
+    internal_bind_int (&load_in_progress, 1 + load_in_progress);
     record_unwind_protect (load_unwind, lispstream);
-    record_unwind_protect (load_descriptor_unwind, Vload_descriptor_list);
-    record_unwind_protect (load_file_name_internal_unwind,
-			   Vload_file_name_internal);
-    record_unwind_protect (load_file_name_internal_the_purecopy_unwind,
-			   Vload_file_name_internal_the_purecopy);
+    internal_bind_lisp_object (&Vload_descriptor_list,
+			       Fcons (make_int (fd), Vload_descriptor_list));
+    internal_bind_lisp_object (&Vload_file_name_internal, found);
+    internal_bind_lisp_object (&Vload_file_name_internal_the_purecopy, Qnil);
+    /* this is not a simple internal_bind. */
     record_unwind_protect (load_force_doc_string_unwind,
 			   Vload_force_doc_string_list);
-    Vload_file_name_internal = found;
-    Vload_file_name_internal_the_purecopy = Qnil;
-    specbind (Qload_file_name, found);
-    Vload_descriptor_list = Fcons (make_int (fd), Vload_descriptor_list);
     Vload_force_doc_string_list = Qnil;
+    specbind (Qload_file_name, found);
 #ifdef I18N3
-    record_unwind_protect (restore_file_domain, Vfile_domain);
-    Vfile_domain = Qnil; /* set it to nil; a call to #'domain will set it. */
+    /* set it to nil; a call to #'domain will set it. */
+    internal_bind_lisp_object (&Vfile_domain, Qnil);
 #endif
-    load_in_progress++;
 
     /* Now determine what sort of ELC file we're reading in. */
-    record_unwind_protect (load_byte_code_version_unwind,
-			   make_int (load_byte_code_version));
+    internal_bind_int (&load_byte_code_version, load_byte_code_version);
     if (reading_elc)
       {
 	char elc_header[8];
@@ -1595,19 +1554,6 @@ START and END optionally delimit a substring of STRING from which to read;
 }
 
 
-#ifdef LISP_BACKQUOTES
-
-static Lisp_Object
-backquote_unwind (Lisp_Object ptr)
-{  /* used as unwind-protect function in read0() */
-  int *counter = (int *) get_opaque_ptr (ptr);
-  if (--*counter < 0)
-    *counter = 0;
-  free_opaque_ptr (ptr);
-  return Qnil;
-}
-
-#endif
 
 /* Use this for recursive reads, in contexts where internal tokens
    are not allowed.  See also read1(). */
@@ -1619,7 +1565,7 @@ read0 (Lisp_Object readcharfun)
   if (CONSP (val) && UNBOUNDP (XCAR (val)))
     {
       Emchar c = XCHAR (XCDR (val));
-      free_cons (XCONS (val));
+      free_cons (val);
       return Fsignal (Qinvalid_read_syntax,
 		      list1 (Fchar_to_string (make_char (c))));
     }
@@ -2202,10 +2148,8 @@ retry:
 	  case '`':
 	    {
 	      Lisp_Object tem;
-	      int speccount = specpdl_depth ();
-	      ++old_backquote_flag;
-	      record_unwind_protect (backquote_unwind,
-				     make_opaque_ptr (&old_backquote_flag));
+	      int speccount = internal_bind_int (&old_backquote_flag,
+						 1 + old_backquote_flag);
 	      tem = read0 (readcharfun);
 	      unbind_to (speccount);
 	      ch = reader_nextchar (readcharfun);
@@ -2337,7 +2281,7 @@ retry:
 	      if (!STRINGP (tmp))
 		{
 		  if (CONSP (tmp) && UNBOUNDP (XCAR (tmp)))
-		    free_cons (XCONS (tmp));
+		    free_cons (tmp);
 		  return Fsignal (Qinvalid_read_syntax,
 				   list1 (build_string ("#")));
 		}
@@ -2353,7 +2297,7 @@ retry:
 		  if (CONSP (beg) && UNBOUNDP (XCAR (beg)))
 		    {
 		      ch = XCHAR (XCDR (beg));
-		      free_cons (XCONS (beg));
+		      free_cons (beg);
 		      if (ch == ')')
 			break;
 		      else
@@ -2364,7 +2308,7 @@ retry:
 		      end = read1 (readcharfun);
 		      if (CONSP (end) && UNBOUNDP (XCAR (end)))
 			{
-			  free_cons (XCONS (end));
+			  free_cons (end);
 			  invalid = 1;
 			}
 		    }
@@ -2373,7 +2317,7 @@ retry:
 		      plist = read1 (readcharfun);
 		      if (CONSP (plist) && UNBOUNDP (XCAR (plist)))
 			{
-			  free_cons (XCONS (plist));
+			  free_cons (plist);
 			  invalid = 1;
 			}
 		    }
@@ -2513,10 +2457,8 @@ retry:
     case '`':
       {
 	Lisp_Object tem;
-	int speccount = specpdl_depth ();
-	++new_backquote_flag;
-	record_unwind_protect (backquote_unwind,
-			       make_opaque_ptr (&new_backquote_flag));
+	int speccount = internal_bind_int (&new_backquote_flag,
+					   1 + new_backquote_flag);
 	tem = read0 (readcharfun);
 	unbind_to (speccount);
 	return list2 (Qbackquote, tem);
@@ -2736,7 +2678,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
       Emchar ch;
 
       elt = XCDR (elt);
-      free_cons (XCONS (tem));
+      free_cons (tem);
       tem = Qnil;
       ch = XCHAR (elt);
 #ifdef FEATUREP_SYNTAX
@@ -2765,7 +2707,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 	  if (CONSP (elt) && UNBOUNDP (XCAR (elt)))
 	    {
 	      ch = XCHAR (XCDR (elt));
-	      free_cons (XCONS (elt));
+	      free_cons (elt);
 	      if (ch == s->terminator)
 		{
 		  unreadchar (readcharfun, s->terminator);
@@ -2936,10 +2878,10 @@ read_vector (Lisp_Object readcharfun,
        i < len;
        i++, p++)
   {
-    Lisp_Cons *otem = XCONS (tem);
+    Lisp_Object otem = tem;
     tem = Fcar (tem);
     *p = tem;
-    tem = otem->cdr;
+    tem = XCDR (otem);
     free_cons (otem);
   }
   return s.head;
@@ -2968,7 +2910,7 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
 
   for (iii = 0; CONSP (stuff); iii++)
     {
-      Lisp_Cons *victim = XCONS (stuff);
+      Lisp_Object victim = stuff;
       make_byte_code_args[iii] = Fcar (stuff);
       if ((purify_flag || load_force_doc_strings)
 	   && CONSP (make_byte_code_args[iii])

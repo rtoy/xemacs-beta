@@ -1737,15 +1737,15 @@ word_boundary_p (Emchar c1, Emchar c2)
   if (NILP (category_set2))
     return default_result;
 
-  for (; CONSP (tail); tail = XCONS (tail)->cdr)
+  for (; CONSP (tail); tail = XCDR (tail))
     {
-      Lisp_Object elt = XCONS(tail)->car;
+      Lisp_Object elt = XCAR (tail);
 
       if (CONSP (elt)
-	  && CATEGORYP (XCONS (elt)->car)
-	  && CATEGORYP (XCONS (elt)->cdr)
-	  && CATEGORY_MEMBER (XCHAR (XCONS (elt)->car), category_set1)
-	  && CATEGORY_MEMBER (XCHAR (XCONS (elt)->cdr), category_set2))
+	  && CATEGORYP (XCAR (elt))
+	  && CATEGORYP (XCDR (elt))
+	  && CATEGORY_MEMBER (XCHAR (XCAR (elt)), category_set1)
+	  && CATEGORY_MEMBER (XCHAR (XCDR (elt)), category_set2))
 	return !default_result;
     }
   return default_result;

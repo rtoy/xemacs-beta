@@ -1365,23 +1365,10 @@ check_modifiable_specifier (Lisp_Object spec)
 		  spec);
 }
 
-/* Helper function which unwind protects the value of
-   Vunlock_ghost_specifiers, then sets it to non-nil value */
-static Lisp_Object
-restore_unlock_value (Lisp_Object val)
-{
-  Vunlock_ghost_specifiers = val;
-  return val;
-}
-
 int
 unlock_ghost_specifiers_protected (void)
 {
-  int depth = specpdl_depth ();
-  record_unwind_protect (restore_unlock_value,
-			 Vunlock_ghost_specifiers);
-  Vunlock_ghost_specifiers = Qt;
-  return depth;
+  return internal_bind_lisp_object (&Vunlock_ghost_specifiers, Qt);
 }
 
 /* This gets hit so much that the function call overhead had a
@@ -2817,8 +2804,35 @@ works.
 /*                 Caching in the struct window or frame                */
 /************************************************************************/
 
-/* Either STRUCT_WINDOW_OFFSET or STRUCT_FRAME_OFFSET can be 0 to indicate
-   no caching in that sort of object. */
+/* Cause the current value of SPECIFIER in the domain of each frame and/or
+   window to be cached in the struct frame at STRUCT_FRAME_OFFSET and the
+   struct window at STRUCT_WINDOW_OFFSET.  When the value changes in a
+   particular window, VALUE_CHANGED_IN_WINDOW is called.  When the value
+   changes in a particular frame, VALUE_CHANGED_IN_FRAME is called.
+
+   Either STRUCT_WINDOW_OFFSET or STRUCT_FRAME_OFFSET can be 0 to indicate
+   no caching in that sort of object.  However, if they're not 0, you
+   must supply a corresponding value-changed function. (This is the case
+   so that you are forced to consider the ramifications of a value change.
+   You nearly always need to do something, e.g. set a dirty flag.)
+
+   If you create a built-in specifier, you should do the following:
+
+   - Make sure the file you create the specifier in has a
+     specifier_vars_of_foo() function.  If not, create it, declare it in
+     symsinit.h, and make sure it's called in the appropriate place in
+     emacs.c.
+   - In specifier_vars_of_foo(), do a DEFVAR_SPECIFIER(), followed by
+     initializing the specifier using Fmake_specifier(), followed by
+     set_specifier_fallback(), followed (optionally) by
+     set_specifier_caching().
+   - If you used set_specifier_caching(), make sure to create the
+     appropriate value-changed functions.  Also make sure to add the
+     appropriate slots where the values are cached to frameslots.h and
+     winslots.h.
+
+   Do a grep for menubar_visible_p for an example.
+*/
 
 /* #### It would be nice if the specifier caching automatically knew
    about specifier fallbacks, so we didn't have to do it ourselves. */
@@ -2843,6 +2857,10 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   sp->caching->value_changed_in_window = value_changed_in_window;
   sp->caching->offset_into_struct_frame = struct_frame_offset;
   sp->caching->value_changed_in_frame = value_changed_in_frame;
+  if (struct_window_offset)
+    assert (value_changed_in_window);
+  if (struct_frame_offset)
+    assert (value_changed_in_frame);
   sp->caching->always_recompute = always_recompute;
   Vcached_specifiers = Fcons (specifier, Vcached_specifiers);
   if (BODILY_SPECIFIER_P (sp))

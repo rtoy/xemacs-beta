@@ -155,7 +155,8 @@ static EMACS_INT gc_cons_threshold;
 static EMACS_INT gc_cons_percentage;
 
 #ifdef ERROR_CHECK_GC
-int always_gc;			/* Debugging hack */
+int always_gc;			/* Debugging hack; equivalent to
+				   (setq gc-cons-thresold -1) */
 #else
 #define always_gc 0
 #endif
@@ -173,7 +174,7 @@ static int lrecord_uid_counter;
 
 /* Nonzero when calling certain hooks or doing other things where
    a GC would be bad */
-int gc_currently_forbidden;
+static int gc_currently_forbidden;
 
 /* Hooks. */
 Lisp_Object Vpre_gc_hook, Qpre_gc_hook;
@@ -929,8 +930,8 @@ cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth)
 }
 
 static const struct lrecord_description cons_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Cons, car) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Cons, cdr) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Cons, car_) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Cons, cdr_) },
   { XD_END }
 };
 
@@ -958,8 +959,8 @@ Create a new cons, give it CAR and CDR as components, and return it.
   ALLOCATE_FIXED_TYPE (cons, Lisp_Cons, c);
   set_lheader_implementation (&c->lheader, &lrecord_cons);
   val = wrap_cons (c);
-  c->car = car;
-  c->cdr = cdr;
+  XSETCAR (val, car);
+  XSETCDR (val, cdr);
   return val;
 }
 
@@ -3027,8 +3028,10 @@ sweep_conses (void)
 
 /* Explicitly free a cons cell.  */
 void
-free_cons (Lisp_Cons *ptr)
+free_cons (Lisp_Object cons)
 {
+  Lisp_Cons *ptr = XCONS (cons);
+
 #ifdef ERROR_CHECK_GC
   /* If the CAR is not an int, then it will be a pointer, which will
      always be four-byte aligned.  If this cons cell has already been
@@ -3036,8 +3039,8 @@ free_cons (Lisp_Cons *ptr)
      a chain pointer to the next cons on the list, which has cleverly
      had all its 0's and 1's inverted.  This allows for a quick
      check to make sure we're not freeing something already freed. */
-  if (POINTER_TYPE_P (XTYPE (ptr->car)))
-    ASSERT_VALID_POINTER (XPNTR (ptr->car));
+  if (POINTER_TYPE_P (XTYPE (cons_car (ptr))))
+    ASSERT_VALID_POINTER (XPNTR (cons_car (ptr)));
 #endif /* ERROR_CHECK_GC */
 
 #ifndef ALLOC_NO_POOLS
@@ -3058,7 +3061,7 @@ free_list (Lisp_Object list)
   for (rest = list; !NILP (rest); rest = next)
     {
       next = XCDR (rest);
-      free_cons (XCONS (rest));
+      free_cons (rest);
     }
 }
 
@@ -3075,8 +3078,8 @@ free_alist (Lisp_Object alist)
   for (rest = alist; !NILP (rest); rest = next)
     {
       next = XCDR (rest);
-      free_cons (XCONS (XCAR (rest)));
-      free_cons (XCONS (rest));
+      free_cons (XCAR (rest));
+      free_cons (rest);
     }
 }
 
@@ -3506,20 +3509,10 @@ disksave_object_finalization (void)
 }
 
 
-static Lisp_Object
-restore_gc_inhibit (Lisp_Object val)
-{
-  gc_currently_forbidden = XINT (val);
-  return val;
-}
-
 int
 begin_gc_forbidden (void)
 {
-  int speccount = record_unwind_protect (restore_gc_inhibit,
-					 make_int (gc_currently_forbidden));
-  gc_currently_forbidden = 1;
-  return speccount;
+  return internal_bind_int (&gc_currently_forbidden, 1);
 }
 
 void
@@ -3632,7 +3625,9 @@ garbage_collect_1 (void)
   speccount = begin_gc_forbidden ();
 
   if (!gc_hooks_inhibited)
-    run_hook_trapping_errors ("Error in pre-gc-hook", Qpre_gc_hook);
+    run_hook_trapping_problems
+      ("Error in pre-gc-hook", Qpre_gc_hook,
+       INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* Now show the GC cursor/message. */
   if (!noninteractive)
@@ -3743,6 +3738,7 @@ garbage_collect_1 (void)
       {
 	mark_object (catch->tag);
 	mark_object (catch->val);
+	mark_object (catch->actual_tag);
       }
   }
 
@@ -3801,7 +3797,9 @@ garbage_collect_1 (void)
 
   /******* End of garbage collection ********/
 
-  run_hook_trapping_errors ("Error in post-gc-hook", Qpost_gc_hook);
+  run_hook_trapping_problems
+    ("Error in post-gc-hook", Qpost_gc_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* Now remove the GC cursor/message */
   if (!noninteractive)
@@ -4363,6 +4361,16 @@ called.  (Note that `funcall' is called implicitly as part of evaluation.)
 By binding this temporarily to a large number, you can effectively
 prevent garbage collection during a part of the program.
 
+Normally, you cannot set this value less than 10,000 (if you do, it is
+automatically reset during the next garbage collection).  However, if
+XEmacs was compiled with DEBUG_XEMACS, this does not happen, allowing
+you to set this value very low to track down problems with insufficient
+GCPRO'ing.  If you set this to a negative number, garbage collection will
+happen at *EVERY* call to `eval' or `funcall'.  This is an extremely
+effective way to check GCPRO problems, but be warned that your XEmacs
+will be unusable!  You almost certainly won't have the patience to wait
+long enough to be able to set it back.
+ 
 See also `consing-since-gc'.
 */ );
 

@@ -1,7 +1,7 @@
 /* Generic device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -22,8 +22,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Original version by Chuck Thompson;
-   rewritten and expanded by Ben Wing. */
+/* Written by Ben Wing, late 1995?
+   Based on prototype by Chuck Thompson.
+   device-system-metric stuff added 1998? by Kirill Katsnelson.
+*/
 
 #include <config.h>
 #include "lisp.h"
@@ -154,6 +156,8 @@ allocate_device (Lisp_Object console)
   Lisp_Object device;
   struct device *d = alloc_lcrecord_type (struct device, &lrecord_device);
   struct gcpro gcpro1;
+
+  zero_lcrecord (d);
 
   device = wrap_device (d);
   GCPRO1 (device);
@@ -567,6 +571,8 @@ have no effect.
 
   /* Do it this way so that the device list is in order of creation */
   con->device_list = nconc2 (con->device_list, Fcons (device, Qnil));
+  note_object_created (device);
+
   RESET_CHANGED_SET_FLAGS;
   if (NILP (Vdefault_device) || DEVICE_STREAM_P (XDEVICE (Vdefault_device)))
     Vdefault_device = device;
@@ -687,6 +693,10 @@ delete_device_internal (struct device *d, int force,
     return;
 
   device = wrap_device (d);
+
+  if (!force)
+    check_allowed_operation (OPERATION_DELETE_OBJECT, device, Qnil);
+
   GCPRO1 (device);
 
   c = XCONSOLE (DEVICE_CONSOLE (d));
@@ -808,6 +818,7 @@ delete_device_internal (struct device *d, int force,
      them. */
   nuke_all_device_slots (d, Qnil);
   d->devmeths = dead_console_methods;
+  note_object_deleted (device);
 
   UNGCPRO;
 }
@@ -1212,7 +1223,11 @@ void
 call_critical_lisp_code (struct device *d, Lisp_Object function,
 			 Lisp_Object object)
 {
+  /* This function cannot GC */
   int count = begin_gc_forbidden ();
+  struct gcpro gcpro1;
+  Lisp_Object args[3];
+
   specbind (Qinhibit_quit, Qt);
   record_unwind_protect (unlock_device, wrap_device (d));
 
@@ -1225,12 +1240,17 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
      */
   LOCK_DEVICE (d);
 
-  /* But it's useful to have an error handler; otherwise an infinite
+  args[0] = Qreally_early_error_handler;
+  args[1] = function;
+  args[2] = object;
+
+  GCPRO1_ARRAY (args, 3);
+
+  /* It's useful to have an error handler; otherwise an infinite
      loop may result. */
-  if (!NILP (object))
-    call1_with_handler (Qreally_early_error_handler, function, object);
-  else
-    call0_with_handler (Qreally_early_error_handler, function);
+  Fcall_with_condition_handler (!NILP (object) ? 3 : 2, args);
+
+  UNGCPRO;
 
   unbind_to (count);
 }

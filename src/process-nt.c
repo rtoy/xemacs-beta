@@ -50,6 +50,7 @@ struct nt_process_data
   HANDLE h_process;
   DWORD dwProcessId;
   HWND hwnd; /* console window */
+  int selected_for_exit_notify;
 };
 
 /* Control whether create_child causes the process to inherit Emacs'
@@ -69,8 +70,23 @@ Lisp_Object Vmswindows_start_process_inherit_error_mode;
 /* Process helpers							 */
 /*-----------------------------------------------------------------------*/
 
-/* This one breaks process abstraction. Prototype is in console-msw.h,
-   used by select_process method in event-msw.c */
+/* These break process abstraction. Prototypes in console-msw.h,
+   used by select_process method in event-msw.c.
+
+   If called the first time on a process, return the process handle, so we
+   can select on it and receive exit notification.  "First time only" so we
+   don't select the same process multiple times if someone turns off and on
+   the receipt of process data. */
+
+HANDLE
+get_nt_process_handle_only_first_time (Lisp_Process *p)
+{
+  if (NT_DATA (p)->selected_for_exit_notify)
+    return INVALID_HANDLE_VALUE;
+  NT_DATA (p)->selected_for_exit_notify = 1;
+  return (NT_DATA (p)->h_process);
+}
+
 HANDLE
 get_nt_process_handle (Lisp_Process *p)
 {
@@ -397,8 +413,6 @@ enable_child_signals (HANDLE h_process)
 			&d, sizeof (d));
 }
   
-#pragma warning (default : 4113)
-
 /* ---------------------------- the 95 way ------------------------------- */
 
 static BOOL CALLBACK
@@ -658,6 +672,16 @@ nt_init_process (void)
   WSAStartup (MAKEWORD (1,1), &wsa_data);
 }
 
+/*
+ * Fork off a subprocess. P is a pointer to newly created subprocess
+ * object. If this function signals, the caller is responsible for
+ * deleting (and finalizing) the process object.
+ *
+ * The method must return PID of the new process, a (positive??? ####) number
+ * which fits into Lisp_Int. No return value indicates an error, the method
+ * must signal an error instead.
+ */
+
 static DOESNT_RETURN
 mswindows_report_winsock_error (const char *string, Lisp_Object data,
 				int errnum)
@@ -709,11 +733,12 @@ mswindows_compare_env (const void *strp1, const void *strp2)
 static int
 nt_create_process (Lisp_Process *p,
 		   Lisp_Object *argv, int nargv,
-		   Lisp_Object program, Lisp_Object cur_dir)
+		   Lisp_Object program, Lisp_Object cur_dir,
+		   int separate_err)
 {
   /* Synched up with sys_spawnve in FSF 20.6.  Significantly different
      but still synchable. */
-  HANDLE hmyshove, hmyslurp, hprocin, hprocout, hprocerr;
+  HANDLE hmyshove, hmyslurp, hmyslurp_err, hprocin, hprocout, hprocerr;
   Extbyte *command_line;
   BOOL do_io, windowed;
   Extbyte *proc_env;
@@ -775,9 +800,12 @@ nt_create_process (Lisp_Process *p,
       CreatePipe (&hprocin, &hmyshove, &sa, 0);
       CreatePipe (&hmyslurp, &hprocout, &sa, 0);
 
-      /* Duplicate the stdout handle for use as stderr */
-      DuplicateHandle(GetCurrentProcess(), hprocout, GetCurrentProcess(),
-                      &hprocerr, 0, TRUE, DUPLICATE_SAME_ACCESS);
+      if (separate_err)
+	CreatePipe (&hmyslurp_err, &hprocerr, &sa, 0);
+      else
+	/* Duplicate the stdout handle for use as stderr */
+	DuplicateHandle(GetCurrentProcess(), hprocout, GetCurrentProcess(),
+			&hprocerr, 0, TRUE, DUPLICATE_SAME_ACCESS);
 
       /* Stupid Win32 allows to create a pipe with *both* ends either
 	 inheritable or not. We need process ends inheritable, and local
@@ -790,6 +818,13 @@ nt_create_process (Lisp_Process *p,
 		       &htmp, 0, FALSE,
 		       DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
       hmyslurp = htmp;
+      if (separate_err)
+	{
+	  DuplicateHandle (GetCurrentProcess(), hmyslurp_err,
+			   GetCurrentProcess(), &htmp, 0, FALSE,
+			   DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+	  hmyslurp_err = htmp;
+	}
     }
 
   /* Convert an argv vector into Win32 style command line by a call to
@@ -977,6 +1012,8 @@ nt_create_process (Lisp_Process *p,
 	  {
 	    CloseHandle (hmyshove);
 	    CloseHandle (hmyslurp);
+	    if (separate_err)
+	      CloseHandle (hmyslurp_err);
 	  }
 	mswindows_report_process_error
 	  ("Error starting",
@@ -988,7 +1025,9 @@ nt_create_process (Lisp_Process *p,
       {
 	NT_DATA(p)->h_process = pi.hProcess;
 	NT_DATA(p)->dwProcessId = pi.dwProcessId;
-	init_process_io_handles (p, (void *)hmyslurp, (void *)hmyshove, 0);
+	init_process_io_handles (p, (void *) hmyslurp, (void *) hmyshove,
+				 separate_err ? (void *) hmyslurp_err
+				 : (void *) -1, 0);
       }
     else
       {
@@ -1219,7 +1258,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address)
 	      WSACancelAsyncRequest (hasync);
 	      KillTimer (hwnd, SOCK_TIMER_ID);
 	      DestroyWindow (hwnd);
-	      REALLY_QUIT;
+	      QUIT;
 	    }
 	}
       qxeDispatchMessage (&msg);
@@ -1354,7 +1393,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 		WSAAsyncSelect (s, hwnd, XM_SOCKREPLY, 0);
 		KillTimer (hwnd, SOCK_TIMER_ID);
 		DestroyWindow (hwnd);
-		REALLY_QUIT;
+		QUIT;
 	      }
 	  }
 	DispatchMessage (&msg);
@@ -1378,7 +1417,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
       if (QUITP)
 	{
 	  closesocket (s);
-	  REALLY_QUIT;
+	  QUIT;
 	}
 
       /* Poll for quit every 250 ms */

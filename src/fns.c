@@ -1668,7 +1668,7 @@ delq_no_quit_and_free_cons (Lisp_Object elt, Lisp_Object list)
 	  else
 	    XCDR (prev) = XCDR (tail);
 	  tail = XCDR (tail);
-	  free_cons (XCONS (cons_to_free));
+	  free_cons (cons_to_free);
 	}
       else
 	{
@@ -1847,8 +1847,8 @@ merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
   Lisp_Object tmp;
 
   /* prevents the GC from happening in call2 */
-/* Emacs' GC doesn't actually relocate pointers, so this probably
-   isn't strictly necessary */
+  /* Emacs' GC doesn't actually relocate pointers, so this probably
+     isn't strictly necessary */
   int speccount = begin_gc_forbidden ();
   tmp = call2 (pred, obj1, obj2);
   unbind_to (speccount);
@@ -2770,6 +2770,33 @@ this may or may not have the desired effects.  Use `put' instead.
 }
 
 
+static Lisp_Object
+tweaked_internal_equal (Lisp_Object obj1, Lisp_Object obj2,
+			Lisp_Object depth)
+{
+  return make_int (internal_equal (obj1, obj2, XINT (depth)));
+}
+
+int
+internal_equal_trapping_problems (Lisp_Object warning_class,
+				  const char *warning_string,
+				  int flags,
+				  struct call_trapping_problems_result *p,
+				  int retval,
+				  Lisp_Object obj1, Lisp_Object obj2,
+				  int depth)
+{
+  Lisp_Object glorp =
+    va_call_trapping_problems (warning_class, warning_string,
+			       flags, p,
+			       (lisp_fn_t) tweaked_internal_equal,
+			       3, obj1, obj2, make_int (depth));
+  if (UNBOUNDP (glorp))
+    return retval;
+  else
+    return XINT (glorp);
+}
+
 int
 internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {

@@ -33,7 +33,6 @@ Boston, MA 02111-1307, USA.  */
 #define kill_buffer_processes(x) 0
 #define close_process_descs() 0
 #define init_xemacs_process() 0
-void wait_without_blocking (void);
 
 #else /* not NO_SUBPROCESSES */
 
@@ -65,31 +64,18 @@ Lisp_Object connect_to_file_descriptor (Lisp_Object name,
 int connected_via_filedesc_p (Lisp_Process *p);
 void kill_buffer_processes (Lisp_Object buffer);
 void close_process_descs (void);
-
-void set_process_filter (Lisp_Object proc,
-			 Lisp_Object filter, int filter_does_read);
-
-/* True iff we are about to fork off a synchronous process or if we
-   are waiting for it.  */
-extern volatile int synch_process_alive;
-
-/* Nonzero => this is a string explaining death of synchronous subprocess.  */
-extern const char *synch_process_death;
-
-/* If synch_process_death is zero,
-   this is exit code of synchronous subprocess.  */
-extern int synch_process_retcode;
-
-
+void set_process_filter (Lisp_Object proc, Lisp_Object filter,
+			 int filter_does_read,
+			 int set_stderr);
 void update_process_status (Lisp_Object p,
 			    Lisp_Object status_symbol,
 			    int exit_code, int core_dumped);
-
 void get_process_streams (Lisp_Process *p,
-			  Lisp_Object *instr, Lisp_Object *outstr);
-int get_process_selected_p (Lisp_Process *p);
-void set_process_selected_p (Lisp_Process *p, int selected_p);
-
+			  Lisp_Object *instr, Lisp_Object *outstr,
+			  Lisp_Object *errstr);
+int get_process_selected_p (Lisp_Process *p, int do_err);
+void set_process_selected_p (Lisp_Process *p, int in_selected,
+			     int err_selected);
 Lisp_Process *get_process_from_usid (USID usid);
 
 #ifdef HAVE_SOCKETS
@@ -106,16 +92,10 @@ extern Lisp_Object Vprocess_connection_type, Vprocess_list;
    This is done while Emacs is waiting for keyboard input.  */
 void status_notify (void);
 void kick_status_notify (void);
-
 void deactivate_process (Lisp_Object proc);
-
-void child_setup (int in, int out, int err,
-		  Intbyte **new_argv, Lisp_Object current_dir);
-
-Charcount read_process_output (Lisp_Object proc);
-
+Charcount read_process_output (Lisp_Object proc, int read_stderr);
+int process_has_separate_stderr (Lisp_Object proc);
 const char *signal_name (int signum);
-
 Lisp_Object canonicalize_host_name (Lisp_Object host);
 
 #endif /* not NO_SUBPROCESSES */

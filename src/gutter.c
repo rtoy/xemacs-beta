@@ -690,16 +690,17 @@ redraw_exposed_gutters (struct frame *f, int x, int y, int width,
 			int height)
 {
   enum gutter_pos pos;
+  int depth;
 
   /* We have to be "in display" when we output the gutter - make it
      so. */
-  hold_frame_size_changes ();
+  depth = enter_redisplay_critical_section ();
   GUTTER_POS_LOOP (pos)
     {
       if (FRAME_GUTTER_VISIBLE (f, pos))
 	redraw_exposed_gutter (f, pos, x, y, width, height);
     }
-  unhold_one_frame_size_changes (f);
+  exit_redisplay_critical_section (depth);
 }
 
 void
@@ -745,11 +746,13 @@ See `default-gutter-position'.
 
   if (cur != new)
     {
+      int depth;
+
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
       /* #### I think this should be GC protected. -sb */
-      hold_frame_size_changes ();
+      depth = enter_redisplay_critical_section ();
       set_specifier_fallback (Vgutter[cur], list1 (Fcons (Qnil, Qnil)));
       set_specifier_fallback (Vgutter[new], Vdefault_gutter);
       set_specifier_fallback (Vgutter_size[cur], list1 (Fcons (Qnil, Qzero)));
@@ -765,7 +768,7 @@ See `default-gutter-position'.
       set_specifier_fallback (Vgutter_visible_p[new], Vdefault_gutter_visible_p);
 
       Vdefault_gutter_position = position;
-      unhold_frame_size_changes ();
+      exit_redisplay_critical_section (depth);
     }
 
   run_hook (Qdefault_gutter_position_changed_hook);
@@ -1079,11 +1082,13 @@ Ensure that all gutters are correctly showing their gutter specifier.
 	    redisplay_frame (f, 1);
 	  else if (FRAME_REPAINT_P (f))
 	    {
+	      int depth;
+
 	      /* We have to be "in display" when we output the gutter
                  - make it so. */
-	      hold_frame_size_changes ();
+	      depth = enter_redisplay_critical_section ();
 	      update_frame_gutters (f);
-	      unhold_one_frame_size_changes (f);
+	      exit_redisplay_critical_section (depth);
 	    }
 
 	  MAYBE_DEVMETH (d, frame_output_end, (f));

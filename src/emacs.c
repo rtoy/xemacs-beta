@@ -376,8 +376,6 @@ Fixnum emacs_priority;
 /* Some FSF junk with running_asynch_code, to preserve the match
    data.  Not necessary because we don't call process filters
    asynchronously (i.e. from within QUIT). */
-/* #### Delete this when merging the rest of my code */
-int running_asynch_code;
 
 /* If non-zero, a window-system was specified on the command line. */
 int display_arg;
@@ -1189,9 +1187,6 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
-#ifndef WIN32_NATIVE
-      syms_of_callproc ();
-#endif
       syms_of_casefiddle ();
       syms_of_casetab ();
       syms_of_chartab ();
@@ -1614,7 +1609,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
       lstream_type_create ();
       lstream_type_create_file_coding ();
-#if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
+#if defined (HAVE_MS_WINDOWS) && !defined (HAVE_MSG_SELECT)
       lstream_type_create_mswindows_selectable ();
 #endif
 

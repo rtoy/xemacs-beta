@@ -319,8 +319,8 @@ traverse_keymaps (Lisp_Object start_keymap, Lisp_Object start_parents,
 	{
 	  while (CONSP (malloc_bites))
 	    {
-	      Lisp_Cons *victim = XCONS (malloc_bites);
-	      malloc_bites = victim->cdr;
+	      Lisp_Object victim = malloc_bites;
+	      malloc_bites = XCDR (victim);
 	      free_cons (victim);
 	    }
 	  UNGCPRO;
@@ -336,9 +336,9 @@ traverse_keymaps (Lisp_Object start_keymap, Lisp_Object start_parents,
 	  stack_depth--;
 	  if (CONSP (malloc_bites))
 	    {
-	      Lisp_Cons *victim = XCONS (malloc_bites);
-	      tail = victim->car;
-	      malloc_bites = victim->cdr;
+	      Lisp_Object victim = malloc_bites;
+	      tail = XCAR (victim);
+	      malloc_bites = XCDR (victim);
 	      free_cons (victim);
 	    }
 	  else

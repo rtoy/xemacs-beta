@@ -29,7 +29,8 @@
 ;; This file does the magic to parse mswindows font names, and make sure that
 ;; the default and modeline attributes of new frames are specified enough.
 
-(set-face-font 'gui-element "MS Sans Serif:Regular:8" nil 'mswindows)
+(defun mswindows-init-global-faces ()
+  (set-face-font 'gui-element "MS Sans Serif:Regular:8" nil 'mswindows))
 
 (defun mswindows-init-device-faces (device)
   (let ((color-default (device-system-metric device 'color-default))

@@ -1,3 +1,49 @@
+2002-05-28  Ben Wing  <ben@xemacs.org>
+
+	* code-init.el:
+	* code-init.el (coding-system-variable-default-value-table):
+	* code-init.el (coding-system-variable-default-value):
+	Don't use CRLF conversion by default on process output.  CMD.EXE and
+	friends work both ways but Cygwin programs don't like the CRs.
+	
+	* code-process.el:
+	* code-process.el (process-coding-system-alist):
+	* code-process.el (call-process):
+	* code-process.el (call-process-region):
+	* code-process.el (start-process):
+	* code-process.el (open-network-stream):
+	* code-process.el (set-buffer-process-coding-system):
+	* multicast.el:
+	* multicast.el (open-multicast-group):
+	* process.el:
+	* process.el (start-process-shell-command):
+	* process.el (call-process-internal):
+	* process.el (call-process): Removed.
+	* process.el (call-process-region): Removed.
+	* process.el (start-process): Removed.
+	* process.el (open-network-stream): Removed.
+
+	Improvements to call-process-internal:
+
+	-- allows a buffer to be specified for input and stderr output
+	-- use it on all systems
+	-- implement C-g as documented
+	-- clean up and comment
+
+	call-process-region uses new call-process facilities; no temp file.
+
+	remove duplicate funs in process.el.
+
+	comment exactly how coding systems work and fix various problems.
+
+	open-multicast-group now does similar coding-system frobbing to
+	open-network-stream.
+	
+	* dumped-lisp.el (preloaded-file-list):
+	* faces.el (init-global-faces):
+	* msw-faces.el (mswindows-init-global-faces): New.
+	Fix some hidden errors due to code not being defined at the right time.
+
 2002-05-25  Steve Youngs  <youngs@xemacs.org>
 
 	* package-ui.el (pui-help-echo): Display both installed and author

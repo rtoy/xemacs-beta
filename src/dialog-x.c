@@ -1,7 +1,7 @@
 /* Implements elisp-programmable dialog boxes -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -126,7 +126,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
   int allow_text_p = 1;
   widget_value *prev = 0, *kids = 0;
   int n = 0;
-  int count = specpdl_depth ();
+  int count;
   Lisp_Object wv_closure, gui_item;
   Lisp_Object question = Qnil;
   Lisp_Object title    = Qnil;  /* #### currently unused */
@@ -162,7 +162,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
      the same as in menu_item_descriptor_to_widget_value(); see
      the large comment above that function. */
 
-  begin_gc_forbidden ();
+  count = begin_gc_forbidden ();
 
   kids = prev = xmalloc_widget_value ();
 

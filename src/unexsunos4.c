@@ -487,7 +487,7 @@ unexec (char *new_name, char *old_name,
     plt_end = (caddr_t) N_DATADDR (old_hdr);
 
   /* never write protect the variable "environ", defined in /lib/crt0.o, and
-     set in process.c and callproc.c */
+     set in process.c */
   mprotect_bottom_addr = ((unsigned long) &environ) + sizeof (char **);
   /* never protect ABOVE the end of data emacs_edata specified */
   mprotect_top_addr = MIN (emacs_edata, N_DATADDR (old_hdr) + old_hdr.a_data);

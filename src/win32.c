@@ -551,12 +551,12 @@ setitimer_helper_proc (UINT uID, UINT uMsg, DWORD dwUser,
 /* Divide time in ms specified by IT by DENOM. Return 1 ms
    if division results in zero */
 static UINT
-setitimer_helper_period (const struct itimerval* it, UINT denom)
+setitimer_helper_period (const struct itimerval *it, UINT denom)
 {
   static TIMECAPS time_caps;
 
   UINT res;
-  const struct timeval* tv = 
+  const struct timeval *tv = 
     (it->it_value.tv_sec == 0 && it->it_value.tv_usec == 0)
     ? &it->it_interval : &it->it_value;
   
@@ -578,9 +578,9 @@ setitimer_helper_period (const struct itimerval* it, UINT denom)
 }
 
 static int
-setitimer_helper (const struct itimerval* itnew,
-		  struct itimerval* itold, struct itimerval* itcurrent,
-		  MMRESULT* tid, DWORD sigkind)
+setitimer_helper (const struct itimerval *itnew,
+		  struct itimerval *itold, struct itimerval *itcurrent,
+		  MMRESULT *tid, DWORD sigkind)
 {
   UINT delay, resolution, event_type;
 

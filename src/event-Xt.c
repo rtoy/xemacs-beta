@@ -845,7 +845,7 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
 
    Of course, we DO worry about it, so we need a special translation. */
 void
-emacs_Xt_mapping_action (Widget w, XEvent* event)
+emacs_Xt_mapping_action (Widget w, XEvent *event)
 {
   struct device *d = get_device_from_display (event->xany.display);
 
@@ -1602,9 +1602,9 @@ handle_focus_event_1 (struct frame *f, int in_p)
    with keyboard focus when FocusOut is processed, and then, when a
    widget gets unmapped, it calls this function to restore focus if
    appropriate. */
-void emacs_Xt_handle_widget_losing_focus (struct frame* f, Widget losing_widget);
+void emacs_Xt_handle_widget_losing_focus (struct frame *f, Widget losing_widget);
 void
-emacs_Xt_handle_widget_losing_focus (struct frame* f, Widget losing_widget)
+emacs_Xt_handle_widget_losing_focus (struct frame *f, Widget losing_widget)
 {
   if (losing_widget == widget_with_focus)
     {
@@ -1845,11 +1845,11 @@ handle_client_message (struct frame *f, XEvent *event)
    does the wrong thing.
 */
 static void
-emacs_Xt_force_event_pending (struct frame* f)
+emacs_Xt_force_event_pending (struct frame *f)
 {
   XEvent event;
 
-  Display* dpy = DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE  (f)));
+  Display *dpy = DEVICE_X_DISPLAY (XDEVICE (FRAME_DEVICE  (f)));
   event.xclient.type		= ClientMessage;
   event.xclient.display		= dpy;
   event.xclient.message_type	= XInternAtom (dpy, "BumpQueue", False);
@@ -2309,39 +2309,62 @@ unselect_filedesc (int fd)
 }
 
 static void
-emacs_Xt_select_process (Lisp_Process *p)
+emacs_Xt_select_process (Lisp_Process *process, int doin, int doerr)
 {
-  Lisp_Object process;
-  int infd = event_stream_unixoid_select_process (p);
+  Lisp_Object proc;
+  int infd, errfd;
 
-  process = wrap_process (p);
-  select_filedesc (infd, process);
+  event_stream_unixoid_select_process (process, doin, doerr, &infd, &errfd);
+
+  proc = wrap_process (process);
+  if (doin)
+    select_filedesc (infd, proc);
+  if (doerr)
+    select_filedesc (errfd, proc);
 }
 
 static void
-emacs_Xt_unselect_process (Lisp_Process *p)
+emacs_Xt_unselect_process (Lisp_Process *process, int doin, int doerr)
 {
-  int infd = event_stream_unixoid_unselect_process (p);
+  int infd, errfd;
 
-  unselect_filedesc (infd);
+  event_stream_unixoid_unselect_process (process, doin, doerr, &infd, &errfd);
+
+  if (doin)
+    unselect_filedesc (infd);
+  if (doerr)
+    unselect_filedesc (errfd);
 }
 
-static USID
-emacs_Xt_create_stream_pair (void* inhandle, void* outhandle,
-		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+static void
+emacs_Xt_create_io_streams (void *inhandle, void *outhandle,
+			    void *errhandle, Lisp_Object *instream,
+			    Lisp_Object *outstream,
+			    Lisp_Object *errstream,
+			    USID *in_usid,
+			    USID *err_usid,
+			    int flags)
 {
-  USID u = event_stream_unixoid_create_stream_pair
-		(inhandle, outhandle, instream, outstream, flags);
-  if (u != USID_ERROR)
-    u = USID_DONTHASH;
-  return u;
+  event_stream_unixoid_create_io_streams
+    (inhandle, outhandle, errhandle, instream, outstream,
+     errstream, in_usid, err_usid, flags);
+  if (*in_usid != USID_ERROR)
+    *in_usid = USID_DONTHASH;
+  if (*err_usid != USID_ERROR)
+    *err_usid = USID_DONTHASH;
 }
 
-static USID
-emacs_Xt_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+static void
+emacs_Xt_delete_io_streams (Lisp_Object instream,
+			    Lisp_Object outstream,
+			    Lisp_Object errstream,
+			    USID *in_usid,
+			    USID *err_usid)
 {
-  event_stream_unixoid_delete_stream_pair (instream, outstream);
-  return USID_DONTHASH;
+  event_stream_unixoid_delete_io_streams
+    (instream, outstream, errstream, in_usid, err_usid);
+  *in_usid = USID_DONTHASH;
+  *err_usid = USID_DONTHASH;
 }
 
 /* This is called from GC when a process object is about to be freed.
@@ -2352,12 +2375,13 @@ debug_process_finalization (Lisp_Process *p)
 {
 #if 0 /* #### */
   int i;
-  Lisp_Object instr, outstr;
+  Lisp_Object instr, outstr, errstr;
 
-  get_process_streams (p, &instr, &outstr);
+  get_process_streams (p, &instr, &outstr, &errstr);
   /* if it still has fds, then it hasn't been killed yet. */
   assert (NILP(instr));
   assert (NILP(outstr));
+  assert (NILP(errstr));
   /* Better not still be in the "with input" table; we know it's got no fds. */
   for (i = 0; i < MAXDESC; i++)
     {
@@ -3273,7 +3297,7 @@ emacs_Xt_event_widget_focus_in (Widget   w,
 				String   *params,
 				Cardinal *num_params)
 {
-  struct frame* f =
+  struct frame *f =
     x_any_widget_or_parent_to_frame (get_device_from_display (event->xany.display), w);
 
   XtSetKeyboardFocus (FRAME_X_SHELL_WIDGET (f), w);
@@ -3330,8 +3354,8 @@ reinit_vars_of_event_Xt (void)
   Xt_event_stream->select_process_cb 	 = emacs_Xt_select_process;
   Xt_event_stream->unselect_process_cb 	 = emacs_Xt_unselect_process;
   Xt_event_stream->quit_p_cb		 = emacs_Xt_quit_p;
-  Xt_event_stream->create_stream_pair_cb = emacs_Xt_create_stream_pair;
-  Xt_event_stream->delete_stream_pair_cb = emacs_Xt_delete_stream_pair;
+  Xt_event_stream->create_io_streams_cb  = emacs_Xt_create_io_streams;
+  Xt_event_stream->delete_io_streams_cb  = emacs_Xt_delete_io_streams;
   Xt_event_stream->current_event_timestamp_cb =
     emacs_Xt_current_event_timestamp;
 

@@ -42,8 +42,8 @@ unsigned long	static_heap_size=STATIC_HEAP_SIZE;
 int 	static_heap_initialized=0;
 int 	static_heap_dumped=0;
 
-void* more_static_core ( ptrdiff_t increment );
-void* more_static_core ( ptrdiff_t increment )
+void *more_static_core ( ptrdiff_t increment );
+void *more_static_core ( ptrdiff_t increment )
 {
   int size = (int) increment;
   void *result;

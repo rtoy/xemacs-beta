@@ -217,13 +217,6 @@ Stop profiling.
   return Qnil;
 }
 
-static Lisp_Object
-profile_lock_unwind (Lisp_Object ignore)
-{
-  inside_profiling = 0;
-  return Qnil;
-}
-
 struct get_profiling_info_closure
 {
   Lisp_Object accum;
@@ -258,9 +251,7 @@ Return the profiling info as an alist.
   closure.accum = Qnil;
   if (big_profile_table)
     {
-      int count = specpdl_depth ();
-      record_unwind_protect (profile_lock_unwind, Qnil);
-      inside_profiling = 1;
+      int count = internal_bind_int ((int *) &inside_profiling, 1);
       maphash (get_profiling_info_maphash, big_profile_table, &closure);
       unbind_to (count);
     }

@@ -1,6 +1,6 @@
 /* Handling asynchronous signals.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -214,8 +214,8 @@ handle_async_timeout_signal (void)
     }
   else
     /* call1 GC-protects its arguments */
-    call1_trapping_errors ("Error in asynchronous timeout callback",
-			   fun, arg);
+    call1_trapping_problems ("Error in asynchronous timeout callback",
+			     fun, arg, INHIBIT_GC);
 
   waiting_for_user_input_p = 0;
 
@@ -425,9 +425,17 @@ speed_up_interrupts (void)
 /* called from QUIT when something_happened gets set (as a result of
    a signal) */
 
-int
+void
 check_what_happened (void)
 {
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  if (in_display
+      && !((get_inhibit_flags () & INTERNAL_INHIBIT_ERRORS)
+	   && (get_inhibit_flags () & INTERNAL_INHIBIT_THROWS)))
+    assert_with_message
+      (0, "QUIT called from within redisplay without being properly wrapped");
+#endif
+
   /* No GC can happen anywhere here.  handle_async_timeout_signal()
      prevents GC (from asynch timeout handler), so does check_quit()
      (from processing a message such as WM_INITMENU as a result of
@@ -446,7 +454,7 @@ check_what_happened (void)
       establish_slow_interrupt_timer ();
     }
 
-  return check_quit ();
+  check_quit ();
 }
 
 #ifdef SIGIO
@@ -633,6 +641,134 @@ interrupt_signal (int sig)
 /*                        Control-G checking                          */
 /**********************************************************************/
 
+/* Note: The code to handle QUIT is divided between lisp.h and signal.c.
+   There is also some special-case code in the async timer code in
+   event-stream.c to notice when the poll-for-quit (and poll-for-sigchld)
+   timers have gone off. */
+
+/* OK, here's an overview of how this convoluted stuff works:
+
+[1] Scattered throughout the XEmacs core code are calls to the macro QUIT;
+    This macro checks to see whether a C-g has recently been pressed and
+    not yet handled, and if so, it handles the C-g by calling signal_quit(),
+    which invokes the standard Fsignal() code, with the error being Qquit.
+    Lisp code can establish handlers for this (using condition-case), but
+    normally there is no handler, and so execution is thrown back to the
+    innermost enclosing event loop. (One of the things that happens when
+    entering an event loop is that a condition-case is established that
+    catches *all* calls to `signal', including this one.)
+
+[2] How does the QUIT macro check to see whether C-g has been pressed;
+    obviously this needs to be extremely fast.  Now for some history.
+    In early Lemacs as inherited from the FSF going back 15 years or
+    more, there was a great fondness for using SIGIO (which is sent
+    whenever there is I/O available on a given socket, tty, etc.).
+    In fact, in GNU Emacs, perhaps even today, all reading of events
+    from the X server occurs inside the SIGIO handler!  This is crazy,
+    but not completely relevant.  What is relevant is that similar
+    stuff happened inside the SIGIO handler for C-g: it searched
+    through all the pending (i.e. not yet delivered to XEmacs yet)
+    X events for one that matched C-g.  When it saw a match, it set
+    Vquit_flag to Qt.  On TTY's, C-g is actually mapped to be the
+    interrupt character (i.e. it generates SIGINT), and XEmacs's
+    handler for this signal sets Vquit_flag to Qt.  Then, sometime
+    later after the signal handlers finished and a QUIT macro was
+    called, the macro noticed the setting of Vquit_flag and used
+    this as an indication to call signal_quit().  What signal_quit()
+    actually does is set Vquit_flag to Qnil (so that we won't get
+    repeated interruptions from a single C-g press) and then calls
+    the equivalent of (signal 'quit nil).
+
+[3] Another complication is introduced in that Vquit_flag is actually
+    exported to Lisp as `quit-flag'.  This allows users some level of
+    control over whether and when C-g is processed as quit, esp. in
+    combination with `inhibit-quit'.  This is another Lisp variable,
+    and if set to non-nil, it inhibits signal_quit() from getting
+    called, meaning that the C-g gets essentially ignored.  But not
+    completely: Because the resetting of `quit-flag' happens only
+    in signal_quit(), which isn't getting called, the C-g press is
+    still noticed, and as soon as `inhibit-quit' is set back to nil,
+    a quit will be signalled at the next QUIT macro.  Thus, what
+    `inhibit-quit' really does is defer quits until after the quit-
+    inhibitted period.
+
+[4] Another consideration, introduced by XEmacs, is critical quitting.
+    If you press Control-Shift-G instead of just C-g, `quit-flag' is
+    set to `critical' instead of to t.  When QUIT processes this value,
+    it *ignores* the value of `inhibit-quit'.  This allows you to quit
+    even out of a quit-inhibitted section of code!  Furthermore, when
+    signal_quit() notices that it was invoked as a result of a critical
+    quit, it automatically invokes the debugger (which otherwise would
+    only happen when `debug-on-quit' is set to t).
+
+[5] Well, I explained above about how `quit-flag' gets set correctly,
+    but I began with a disclaimer stating that this was the old way
+    of doing things.  What's done now?  Well, first of all, the SIGIO
+    handler (which formerly checked all pending events to see if there's
+    a C-g) now does nothing but set a flag -- or actually two flags,
+    something_happened and quit_check_signal_happened.  There are two
+    flags because the QUIT macro is now used for more than just handling
+    QUIT; it's also used for running asynchronous timeout handlers that
+    have recently expired, and perhaps other things.  The idea here is
+    that the QUIT macros occur extremely often in the code, but only occur
+    at places that are relatively safe -- in particular, if an error occurs,
+    nothing will get completely trashed.
+
+[6] Now, let's look at QUIT again.  
+
+    UNFINISHED.  Note, however, that as of the point when this comment
+    got committed to CVS (mid-2001), the interaction between reading
+    C-g as an event and processing it as QUIT was overhauled to (for
+    the first time) be understandable and actually work correctly.
+    Now, the way things work is that if C-g is pressed while XEmacs is
+    blocking at the top level, waiting for a user event, it will be
+    read as an event; otherwise, it will cause QUIT. (This includes
+    times when XEmacs is blocking, but not waiting for a user event,
+    e.g. accept-process-output and wait_delaying_user_events().)
+    Formerly, this was supposed to happen, but didn't always due to a
+    bizarre and broken scheme, documented in next_event_internal
+    like this:
+
+       If we read a ^G, then set quit-flag but do not discard the ^G.
+       The callers of next_event_internal() will do one of two things:
+
+       -- set Vquit_flag to Qnil. (next-event does this.) This will
+          cause the ^G to be treated as a normal keystroke.
+       -- not change Vquit_flag but attempt to enqueue the ^G, at
+          which point it will be discarded.  The next time QUIT is
+          called, it will notice that Vquit_flag was set.
+
+    This required weirdness in enqueue_command_event_1 like this:
+
+       put the event on the typeahead queue, unless
+       the event is the quit char, in which case the `QUIT'
+       which will occur on the next trip through this loop is
+       all the processing we should do - leaving it on the queue
+       would cause the quit to be processed twice.
+
+    And further weirdness elsewhere, none of which made any sense,
+    and didn't work, because (e.g.) it required that QUIT never
+    happen anywhere inside next_event_internal() or any callers when
+    C-g should be read as a user event, which was impossible to
+    implement in practice.
+
+    Now what we do is fairly simple.  Callers of next_event_internal()
+    that want C-g read as a user event call begin_dont_check_for_quit().
+    next_event_internal(), when it gets a C-g, simply sets Vquit_flag
+    (just as when a C-g is detected during the operation of QUIT or
+    QUITP), and then tries to QUIT.  This will fail if blocked by the
+    previous call, at which point next_event_internal() will return
+    the C-g as an event.  To unblock things, first set Vquit_flag to
+    nil (it was set to t when the C-g was read, and if we don't reset
+    it, the next call to QUIT will quit), and then unbind_to() the
+    depth returned by begin_dont_check_for_quit().  It makes no
+    difference is QUIT is called a zillion times in next_event_internal()
+    or anywhere else, because it's blocked and will never signal.
+
+  --ben
+ */
+
+
 static Lisp_Object
 restore_dont_check_for_quit (Lisp_Object val)
 {
@@ -654,19 +790,40 @@ begin_dont_check_for_quit (void)
      to check dont_check_for_quit when quit-flag == `critical', which is
      rare. */
   specbind (Qinhibit_quit, Qt);
-  record_unwind_protect (restore_dont_check_for_quit,
-			 make_int (dont_check_for_quit));
-  dont_check_for_quit = 1;
+  internal_bind_int (&dont_check_for_quit, 1);
 
   return depth;
 }
 
-/* The effect of this function is to set Vquit_flag if the user pressed
-   ^G and discard the ^G, so as to not notice the same ^G again. */
+/* If we're inside of a begin_dont_check_for_quit() section, but want
+   to temporarily enable quit-checking, call this.  This is used in
+   particular when processing menu filters -- some menu filters do
+   antisocial things like load large amounts of Lisp code (custom in
+   particular), and we obviously want a way of breaking out of any
+   problems.  If you do use this, you should really be trapping the
+   throw() that comes from the quitting (as does the code that handles
+   menus popping up). */
+
 int
+begin_do_check_for_quit (void)
+{
+  int depth = specpdl_depth ();
+  specbind (Qinhibit_quit, Qnil);
+  internal_bind_int (&dont_check_for_quit, 0);
+  /* #### should we set Vquit_flag to Qnil? */
+  return depth;
+ }
+
+/* The effect of this function is to set Vquit_flag appropriately if the
+   user pressed C-g or Sh-C-g.  After this function finishes, Vquit_flag
+   will be Qt for C-g, Qcritical for Sh-C-g, and unchanged otherwise.
+   The C-g or Sh-C-g is discarded, so it won't be noticed again. 
+*/
+
+void
 check_quit (void)
 {
-  /* dont_check_for_quit is set in two circumstances:
+  /* dont_check_for_quit is set in three circumstances:
 
      (1) when we are in the process of changing the window
      configuration.  The frame might be in an inconsistent state,
@@ -676,15 +833,11 @@ check_quit (void)
      as an event.  The normal check for quit will discard the C-g,
      which would be bad.
 
-     [[#### C-g is still often read as quit, e.g. if you type C-x C-g (the
-     C-g happens during the sit-for in maybe_echo_keys(); even if we
-     attempt to inhibit quit here, there is still a check later on for
-     QUIT.  To fix this properly requires a fairly substantial overhaul of
-     the quit-checking code, which is probably not worth it.)]] not true,
-     we just have to always do dont_check_for_quit around all code that
-     reads events.  my stderr-proc ws already does this.
+     (3) when we're going down with a fatal error.  we're most likely
+     in an inconsistent state, and we definitely don't want to be
+     interrupted. */
 
-     We should *not* conditionalize on Vinhibit_quit, or
+  /* We should *not* conditionalize on Vinhibit_quit, or
      critical-quit (Control-Shift-G) won't work right. */
 
   /* WARNING: Even calling check_quit(), without actually dispatching
@@ -824,9 +977,10 @@ _start() line 171
 KERNEL32! BaseProcessStart@4 + 115547 bytes
 
 */
-
+  int specdepth;
+  
   if (dont_check_for_quit)
-    return 0;
+    return;
 
   if (quit_check_signal_happened)
     {
@@ -834,14 +988,11 @@ KERNEL32! BaseProcessStart@4 + 115547 bytes
          which would majorly fuck a lot of things, e.g. re_match()
          [string gets relocated] and lots of other code that's not
          prepared to handle GC in QUIT. */
-      int specdepth = begin_gc_forbidden ();
+      specdepth = begin_gc_forbidden ();
       quit_check_signal_happened = 0;
       event_stream_quit_p ();
       unbind_to (specdepth);
-      return 1;
     }
-  else
-    return 0;
 }
 
 
@@ -880,7 +1031,7 @@ reset_poll_for_quit (void)
 
 #endif /* 0 */
 
-#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
+#if defined (HAVE_UNIX_PROCESSES) && !defined (SIGCHLD)
 
 static void
 init_poll_for_sigchld (void)
@@ -1065,7 +1216,7 @@ init_interrupts_late (void)
 #endif
     }
 
-#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
+#if defined (HAVE_UNIX_PROCESSES) && !defined (SIGCHLD)
   init_poll_for_sigchld ();
 #endif
 

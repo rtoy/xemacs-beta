@@ -39,6 +39,28 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#if defined (CYGWIN) && !defined (HAVE_MSG_SELECT)
+#error We do not support non-select() versions (i.e. very old) of Cygwin.
+#endif
+
+/* Acceptable are:
+
+   WIN32_NATIVE and HAVE_WIN32_PROCESSES and nothing else
+
+   CYGWIN and HAVE_MSG_SELECT and HAVE_UNIX_PROCESSES and nothing else
+*/
+#ifdef WIN32_NATIVE
+# if !(defined (HAVE_WIN32_PROCESSES && !defined (HAVE_UNIX_PROCESSES) && !defined (HAVE_MSG_SELECT) && !defined (CYGWIN)))
+#  error Something is wrong with your process definitions for Windows native.
+# endif
+#elif defined (CYGWIN)
+# if !(defined (HAVE_UNIX_PROCESSES) && defined (HAVE_MSG_SELECT) && !defined (HAVE_WIN32_PROCESSES) && !defined (WIN32_NATIVE))
+#  error Something is wrong with your process definitions for Cygwin.
+# endif
+#else
+# error Something is wrong -- you are neither Windows native (possibly MinGW) nor Cygwin.
+#endif
+
 #include "buffer.h"
 #include "device.h"
 #include "events.h"
@@ -72,10 +94,8 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 #include "syswait.h"
 
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
 #include "console-tty.h"
-#elif defined (CYGWIN)
-typedef unsigned int SOCKET;
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -105,12 +125,22 @@ static int mswindows_handle_sticky_modifiers (WPARAM wParam, LPARAM lParam,
 
 static struct event_stream *mswindows_event_stream;
 
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
+
 extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
 extern SELECT_TYPE process_only_mask, tty_only_mask;
 SELECT_TYPE zero_mask;
 extern int signal_event_pipe_initialized;
 int windows_fd;
+
+#else
+
+/* List of mswindows waitable handles. */
+static HANDLE mswindows_waitable_handles[MAX_WAITABLE];
+
+/* Number of wait handles */
+static int mswindows_waitable_count = 0;
+
 #endif
 
 /*
@@ -124,14 +154,6 @@ static Lisp_Object mswindows_s_dispatch_event_queue, mswindows_s_dispatch_event_
 
 /* The number of things we can wait on */
 #define MAX_WAITABLE (MAXIMUM_WAIT_OBJECTS - 1)
-
-#ifndef HAVE_MSG_SELECT
-/* List of mswindows waitable handles. */
-static HANDLE mswindows_waitable_handles[MAX_WAITABLE];
-
-/* Number of wait handles */
-static int mswindows_waitable_count=0;
-#endif /* HAVE_MSG_SELECT */
 
 /* Brush for painting widgets */
 static HBRUSH widget_brush = 0;
@@ -159,14 +181,17 @@ static void debug_output_mswin_message (HWND hwnd, UINT message_,
 
 /* This is the event signaled by the event pump.
    See mswindows_pump_outstanding_events for comments */
-static Lisp_Object mswindows_error_caught_in_modal_loop;
+static int mswindows_error_caught_in_modal_loop;
 static int mswindows_in_modal_loop;
 
 /* Count of wound timers */
 static int mswindows_pending_timers_count;
 
 static DWORD mswindows_last_mouse_button_state;
+
 
+#ifndef CYGWIN /* Skips past slurp, shove, or winsock streams */
+
 /************************************************************************/
 /*                Pipe instream - reads process output                  */
 /************************************************************************/
@@ -192,11 +217,11 @@ static DWORD mswindows_last_mouse_button_state;
 struct ntpipe_slurp_stream_shared_data
 {
   HANDLE hev_thread;	/* Our thread blocks on this, signaled by caller */
-  /* This is a manual-reset object. 		 */
+			/* This is a manual-reset object. 		 */
   HANDLE hev_caller;	/* Caller blocks on this, and we signal it	 */
-  /* This is a manual-reset object. 		 */
+			/* This is a manual-reset object. 		 */
   HANDLE hev_unsleep;	/* Pipe read delay is canceled if this is set	 */
-  /* This is a manual-reset object. 		 */
+			/* This is a manual-reset object. 		 */
   HANDLE hpipe;		/* Pipe read end handle.			 */
   LONG   die_p;		/* Thread must exit ASAP if non-zero		 */
   BOOL   eof_p   : 1;	/* Set when thread saw EOF			 */
@@ -467,6 +492,7 @@ init_slurp_stream (void)
   LSTREAM_HAS_METHOD (ntpipe_slurp, reader);
   LSTREAM_HAS_METHOD (ntpipe_slurp, closer);
 }
+
 
 /************************************************************************/
 /*                Pipe outstream - writes process input                 */
@@ -481,7 +507,7 @@ struct ntpipe_shove_stream
 {
   LPARAM user_data;	/* Any user data stored in the stream object	 */
   HANDLE hev_thread;	/* Our thread blocks on this, signaled by caller */
-  /* This is an auto-reset object. 		 */
+			/* This is an auto-reset object. 		 */
   HANDLE hpipe;		/* Pipe write end handle.			 */
   HANDLE hthread;	/* Reader thread handle.			 */
   char	 buffer[MAX_SHOVE_BUFFER_SIZE];	/* Buffer being written		 */
@@ -494,7 +520,6 @@ struct ntpipe_shove_stream
 
 DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-output", ntpipe_shove);
 
-#ifndef HAVE_MSG_SELECT
 static DWORD WINAPI
 shove_thread (LPVOID vparam)
 {
@@ -579,7 +604,6 @@ get_ntpipe_output_stream_param (Lstream *stream)
   struct ntpipe_shove_stream *s = NTPIPE_SHOVE_STREAM_DATA(stream);
   return s->user_data;
 }
-#endif
 
 static Bytecount
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
@@ -656,7 +680,6 @@ init_shove_stream (void)
 /************************************************************************/
 /*                         Winsock I/O stream                           */
 /************************************************************************/
-#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
 
 #define WINSOCK_READ_BUFFER_SIZE 1024
 
@@ -883,7 +906,7 @@ init_winsock_stream (void)
   LSTREAM_HAS_METHOD (winsock, closer);
   LSTREAM_HAS_METHOD (winsock, was_blocked_p);
 }
-#endif /* defined (HAVE_SOCKETS) */
+#endif /* ! CYGWIN */
 
 /************************************************************************/
 /*                     Dispatch queue management                        */
@@ -1104,7 +1127,7 @@ mswindows_cancel_dispatch_event (Lisp_Event *match)
   return Qnil;
 }
 
-#ifndef HAVE_MSG_SELECT
+#ifndef CYGWIN
 /************************************************************************/
 /*                     Waitable handles manipulation                    */
 /************************************************************************/
@@ -1140,7 +1163,8 @@ remove_waitable_handle (HANDLE h)
   mswindows_waitable_handles [ix] =
     mswindows_waitable_handles [--mswindows_waitable_count];
 }
-#endif /* HAVE_MSG_SELECT */
+
+#endif /* CYGWIN */
 
 /*
  * Given a lisp process pointer remove the corresponding process handle
@@ -1152,9 +1176,9 @@ remove_waitable_handle (HANDLE h)
 void
 mswindows_unwait_process (Lisp_Process *p)
 {
-#ifndef HAVE_MSG_SELECT
+#ifndef CYGWIN
   remove_waitable_handle (get_nt_process_handle (p));
-#endif /* HAVE_MSG_SELECT */
+#endif /* CYGWIN */
 }
 
 
@@ -1177,24 +1201,38 @@ mswindows_window_is_xemacs (HWND hwnd)
   return !ascii_strcasecmp (class_name_buf, XEMACS_CLASS);
 }
 
-static Lisp_Object
-mswindows_modal_loop_error_handler (Lisp_Object cons_sig_data,
-				    Lisp_Object u_n_u_s_e_d)
+struct mswindows_protect_modal_loop
 {
-  mswindows_error_caught_in_modal_loop = cons_sig_data;
-  return Qunbound;
+  Lisp_Object (*bfun) (Lisp_Object barg);
+  Lisp_Object barg;
+};
+
+static Lisp_Object
+mswindows_protect_modal_loop_1 (void *gack)
+{
+  struct mswindows_protect_modal_loop *gata =
+    (struct mswindows_protect_modal_loop *) gack;
+
+  return (gata->bfun) (gata->barg);
 }
 
 Lisp_Object
-mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
-			      Lisp_Object barg)
+mswindows_protect_modal_loop (const char *error_string,
+			      Lisp_Object (*bfun) (Lisp_Object barg),
+			      Lisp_Object barg, int flags)
 {
   Lisp_Object tmp;
+  struct mswindows_protect_modal_loop bluh;
+
+  bluh.bfun = bfun;
+  bluh.barg = barg;
 
   ++mswindows_in_modal_loop;
-  tmp = condition_case_1 (Qt,
-			  bfun, barg,
-			  mswindows_modal_loop_error_handler, Qnil);
+  tmp = call_trapping_problems (Qevent, error_string,
+				flags, 0,
+				mswindows_protect_modal_loop_1, &bluh);
+  if (UNBOUNDP (tmp))
+    mswindows_error_caught_in_modal_loop = 1;
   --mswindows_in_modal_loop;
 
   return tmp;
@@ -1203,15 +1241,7 @@ mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
 void
 mswindows_unmodalize_signal_maybe (void)
 {
-  if (!NILP (mswindows_error_caught_in_modal_loop))
-    {
-      /* Got an error while messages were pumped while
-	 in window procedure - have to resignal */
-      Lisp_Object sym = XCAR (mswindows_error_caught_in_modal_loop);
-      Lisp_Object data = XCDR (mswindows_error_caught_in_modal_loop);
-      mswindows_error_caught_in_modal_loop = Qnil;
-      Fsignal (sym, data);
-    }
+  mswindows_error_caught_in_modal_loop = 0;
 }
 
 /*
@@ -1259,26 +1289,23 @@ mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
  * Return value is Qt if no errors was trapped, or Qunbound if
  * there was an error.
  *
- * In case of error, a cons representing the error, in the
- * form (SIGNAL . DATA), is stored in the module local variable
- * mswindows_error_caught_in_modal_loop. This error is signaled
- * again when DispatchMessage returns. Thus, Windows internal
- * modal loops are protected against throws, which are proven
- * to corrupt internal Windows structures.
+ * In case of error, a warning is issued and the module local variable
+ * mswindows_error_caught_in_modal_loop is set to non-zero.  Thus,
+ * Windows internal modal loops are protected against throws, which
+ * are proven to corrupt internal Windows structures.
  *
  * In case of success, mswindows_error_caught_in_modal_loop is
- * assigned Qnil.
+ * assigned 0.
  *
  * If the value of mswindows_error_caught_in_modal_loop is not
- * nil already upon entry, the function just returns non-nil.
+ * zero already upon entry, the function just returns non-nil.
  * This situation means that a new event has been queued while
  * in cancel mode. The event will be dequeued on the next regular
  * call of next-event; the pump is off since error is caught.
  * The caller must *unconditionally* cancel modal loop if the
  * value returned by this function is nil. Otherwise, everything
  * will become frozen until the modal loop exits under normal
- * condition (scrollbar drag is released, menu closed etc.)
- */
+ * condition (scrollbar drag is released, menu closed etc.)  */
 Lisp_Object
 mswindows_pump_outstanding_events (void)
 {
@@ -1288,8 +1315,9 @@ mswindows_pump_outstanding_events (void)
   struct gcpro gcpro1;
   GCPRO1 (result);
 
-  if (NILP(mswindows_error_caught_in_modal_loop))
-    result = mswindows_protect_modal_loop (mswindows_unsafe_pump_events, Qnil);
+  if (!mswindows_error_caught_in_modal_loop)
+    result = mswindows_protect_modal_loop
+      ("Error during event handling", mswindows_unsafe_pump_events, Qnil, 0);
   UNGCPRO;
   return result;
 }
@@ -1409,7 +1437,7 @@ mswindows_need_event (int badly_p)
   while (NILP (mswindows_u_dispatch_event_queue)
 	 && NILP (mswindows_s_dispatch_event_queue))
     {
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
       int i;
       int active;
       SELECT_TYPE temp_mask = input_wait_mask;
@@ -1506,7 +1534,7 @@ mswindows_need_event (int badly_p)
 	{
 	  assert(0);
 	}
-#else /* not HAVE_MSG_SELECT */
+#else /* not CYGWIN */
       /* Now try getting a message or process event */
       DWORD active;
       DWORD what_events;
@@ -1592,18 +1620,18 @@ mswindows_need_event (int badly_p)
 	 (hyphen, VK_SUBTRACT) key on an 82-key keyboard.
 	 */
 
-  __try
-    {
-      active = MsgWaitForMultipleObjects (mswindows_waitable_count,
-					  mswindows_waitable_handles,
-					  FALSE, badly_p ? INFINITE : 0,
-					  what_events);
-    }
-  __except (GetExceptionCode () == EXCEPTION_BREAKPOINT ?
-	    EXCEPTION_CONTINUE_EXECUTION :
-	    EXCEPTION_CONTINUE_SEARCH)
-    {
-    }
+      __try
+	{
+	  active = MsgWaitForMultipleObjects (mswindows_waitable_count,
+					      mswindows_waitable_handles,
+					      FALSE, badly_p ? INFINITE : 0,
+					      what_events);
+	}
+      __except (GetExceptionCode () == EXCEPTION_BREAKPOINT ?
+		EXCEPTION_CONTINUE_EXECUTION :
+		EXCEPTION_CONTINUE_SEARCH)
+	{
+	}
 
       /* This will assert if handle being waited for becomes abandoned.
 	 Not the case currently tho */
@@ -1629,7 +1657,8 @@ mswindows_need_event (int badly_p)
 	  int ix = active - WAIT_OBJECT_0;
 	  /* First, try to find which process' output has signaled */
 	  Lisp_Process *p =
-	    get_process_from_usid (HANDLE_TO_USID (mswindows_waitable_handles[ix]));
+	    get_process_from_usid (HANDLE_TO_USID
+				   (mswindows_waitable_handles[ix]));
 	  if (p != NULL)
 	    {
 	      /* Found a signaled process input handle */
@@ -1652,22 +1681,20 @@ mswindows_need_event (int badly_p)
 		 (1) accept-process-output will return when called on this
 		 process, and (2) status notifications will happen in
 		 accept-process-output, sleep-for, and sit-for. */
-	      /* #### horrible kludge till my real process fixes go in.
-		 #### Replaced with a slightly less horrible kluge that
-		      at least finds the right process instead of axing the
-		      first one on the list.
-	       */
 	      if (!NILP (vproctail))
-		{
 		  mswindows_enqueue_process_event (XPROCESS (vaffanculo));
+	      else
+		{
+		  /* abort (); */
+		  /* #### FUCKME!  When can this happen?  I hit this abort()
+		     when I tried enabling it. */
+		  /* Have to return something: there may be no accompanying
+		     process event */
+		  mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 		}
-	      else /* trash me soon. */
-		/* Have to return something: there may be no accompanying
-		   process event */
-		mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 	    }
 	}
-#endif /* not HAVE_MSG_SELECT */
+#endif /* not CYGWIN */
     } /* while */
 }
 
@@ -1715,8 +1742,8 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
     {
     case XTYP_CONNECT:
       if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
-	return (HDDEDATA)TRUE;
-      return (HDDEDATA)FALSE;
+	return (HDDEDATA) TRUE;
+      return (HDDEDATA) FALSE;
 
     case XTYP_WILDCONNECT:
       {
@@ -1729,10 +1756,10 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	      || DdeCmpStringHandles (hszItem, mswindows_dde_service)) &&
 	    !(hszTopic
 	      || DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system)))
-	  return (DdeCreateDataHandle (mswindows_dde_mlid, (LPBYTE)pairs,
+	  return (DdeCreateDataHandle (mswindows_dde_mlid, (LPBYTE) pairs,
 				       sizeof (pairs), 0L, 0, uFmt, 0));
       }
-      return (HDDEDATA)NULL;
+      return (HDDEDATA) NULL;
 
     case XTYP_EXECUTE:
       if (!mswindows_dde_enable)
@@ -1741,7 +1768,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
       if (!DdeCmpStringHandles (hszTopic, mswindows_dde_topic_system))
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
-	  LPBYTE extcmd = (LPBYTE) ALLOCA (len+1);
+	  LPBYTE extcmd = (LPBYTE) ALLOCA (len + 1);
 	  Intbyte *cmd;
 	  Intbyte *end;
 	  struct gcpro gcpro1, gcpro2;
@@ -2197,7 +2224,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
       fobj = mswindows_find_frame (hwnd);
-      mswindows_enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
+      mswindows_enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj,
+							     Qt));
       break;
 
     case WM_KEYUP:
@@ -3163,7 +3191,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	mswindows_handle_scrollbar_event (hwndScrollBar, code,  pos);
 	GCPRO2 (emacs_event, fobj);
-	if (UNBOUNDP (mswindows_pump_outstanding_events()))	/* Can GC */
+	if (UNBOUNDP (mswindows_pump_outstanding_events ())) /* Can GC */
 	  {
 	    /* Error during event pumping - cancel scroll */
 	    qxeSendMessage (hwndScrollBar, WM_CANCELMODE, 0, 0);
@@ -3297,7 +3325,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       goto defproc;
 
 #ifdef HAVE_DRAGNDROP
-    case WM_DROPFILES:	/* implementation ripped-off from event-Xt.c */
+    case WM_DROPFILES:		/* implementation ripped-off from event-Xt.c */
       {
 	UINT filecount, i;
 	POINT point;
@@ -3311,7 +3339,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	GCPRO3 (emacs_event, l_dndlist, l_item);
 
 	if (!DragQueryPoint ((HDROP) wParam, &point))
-	  point.x = point.y = -1;		/* outside client area */
+	  point.x = point.y = -1; /* outside client area */
 
 	event->event_type = misc_user_event;
 	event->channel = mswindows_find_frame (hwnd);
@@ -4095,62 +4123,121 @@ emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
     }
 }
 
-#ifndef HAVE_MSG_SELECT
+#ifndef CYGWIN
+
 static HANDLE
 get_process_input_waitable (Lisp_Process *process)
 {
-  Lisp_Object instr, outstr, p;
+  Lisp_Object instr, outstr, errstr, p;
   p = wrap_process (process);
-  get_process_streams (process, &instr, &outstr);
+  get_process_streams (process, &instr, &outstr, &errstr);
   assert (!NILP (instr));
-#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
   return (network_connection_p (p)
 	  ? get_winsock_stream_waitable (XLSTREAM (instr))
 	  : get_ntpipe_input_stream_waitable (XLSTREAM (instr)));
-#else
-  return get_ntpipe_input_stream_waitable (XLSTREAM (instr));
-#endif
 }
 
-static void
-emacs_mswindows_select_process (Lisp_Process *process)
+static HANDLE
+get_process_stderr_waitable (Lisp_Process *process)
 {
-  HANDLE hev = get_process_input_waitable (process);
+  Lisp_Object instr, outstr, errstr;
+  get_process_streams (process, &instr, &outstr, &errstr);
+  if (NILP (errstr))
+    return INVALID_HANDLE_VALUE;
+  return get_ntpipe_input_stream_waitable (XLSTREAM (errstr));
+}
 
-  if (!add_waitable_handle (hev))
-    invalid_operation ("Too many active processes", Qunbound);
+#endif /* not CYGWIN */
 
-#ifdef HAVE_WIN32_PROCESSES
+static void
+emacs_mswindows_select_process (Lisp_Process *process, int doin, int doerr)
+{
+#ifdef CYGWIN
+  int infd, errfd;
+
+  event_stream_unixoid_select_process (process, doin, doerr, &infd, &errfd);
+#else
+  HANDLE hev = INVALID_HANDLE_VALUE;
+  HANDLE herr = INVALID_HANDLE_VALUE;
+
+  if (doin)
+    {
+      hev = get_process_input_waitable (process);
+      if (!add_waitable_handle (hev))
+	{
+	  hev = INVALID_HANDLE_VALUE;
+	  goto err;
+	}
+    }
+
+  if (doerr)
+    {
+      herr = get_process_stderr_waitable (process);
+      if (herr != INVALID_HANDLE_VALUE && !add_waitable_handle (herr))
+	{
+	  herr = INVALID_HANDLE_VALUE;
+	  goto err;
+	}
+    }
+
   {
+    /* Also select on the process handle itself, so we can receive
+       exit notifications.  Only do this once, not each time this
+       function is called (which can happen many times, e.g. if
+       (set-process-filter proc t) is called and then a process filter
+       is set again).  It will be unselected in mswindows_need_event(). */
     Lisp_Object p = wrap_process (process);
 
     if (!network_connection_p (p))
       {
-	HANDLE hprocess = get_nt_process_handle (process);
-	if (!add_waitable_handle (hprocess))
-	  {
-	    remove_waitable_handle (hev);
-	    invalid_operation ("Too many active processes", Qunbound);
-	  }
+	HANDLE hprocess = get_nt_process_handle_only_first_time (process);
+	if (hprocess != INVALID_HANDLE_VALUE
+	    && !add_waitable_handle (hprocess))
+	  goto err;
       }
   }
-#endif
+
+  return;
+
+ err:
+  if (hev != INVALID_HANDLE_VALUE)
+    remove_waitable_handle (hev);
+  if (herr != INVALID_HANDLE_VALUE)
+    remove_waitable_handle (herr);
+  invalid_operation ("Too many active processes", wrap_process (process));
+#endif /* CYGWIN */
 }
 
 static void
-emacs_mswindows_unselect_process (Lisp_Process *process)
+emacs_mswindows_unselect_process (Lisp_Process *process, int doin, int doerr)
 {
-  /* Process handle is removed in the event loop as soon
-     as it is signaled, so don't bother here about it */
-  HANDLE hev = get_process_input_waitable (process);
-  remove_waitable_handle (hev);
+#ifdef CYGWIN
+  int infd, errfd;
+
+  event_stream_unixoid_unselect_process (process, doin, doerr, &infd, &errfd);
+#else
+  if (doin)
+    {
+      /* Process handle is removed in the event loop as soon
+	 as it is signaled, so don't bother here about it */
+      HANDLE hev = get_process_input_waitable (process);
+      remove_waitable_handle (hev);
+    }
+  if (doerr)
+    {
+      /* Process handle is removed in the event loop as soon
+	 as it is signaled, so don't bother here about it */
+      HANDLE herr = get_process_stderr_waitable (process);
+      if (herr != INVALID_HANDLE_VALUE)
+        remove_waitable_handle (herr);
+    }
+#endif /* CYGWIN */
 }
-#endif /* HAVE_MSG_SELECT */
 
 static void
 emacs_mswindows_select_console (struct console *con)
 {
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
   if (CONSOLE_MSWINDOWS_P (con))
     return; /* mswindows consoles are automatically selected */
 
@@ -4161,7 +4248,7 @@ emacs_mswindows_select_console (struct console *con)
 static void
 emacs_mswindows_unselect_console (struct console *con)
 {
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
   if (CONSOLE_MSWINDOWS_P (con))
     return; /* mswindows consoles are automatically selected */
 
@@ -4209,107 +4296,95 @@ emacs_mswindows_quit_p (void)
     }
 }
 
-USID
-emacs_mswindows_create_stream_pair (void *inhandle, void *outhandle,
-				    Lisp_Object *instream,
-				    Lisp_Object *outstream,
-				    int flags)
+static void
+emacs_mswindows_create_io_streams (void *inhandle, void *outhandle,
+				   void *errhandle, Lisp_Object *instream,
+				   Lisp_Object *outstream,
+				   Lisp_Object *errstream,
+				   USID *in_usid,
+				   USID *err_usid,
+				   int flags)
 {
+#ifdef CYGWIN
+  event_stream_unixoid_create_io_streams (inhandle, outhandle,
+					  errhandle, instream,
+					  outstream, errstream,
+					  in_usid, err_usid, flags);
+#else
   /* Handles for streams */
-  HANDLE hin, hout;
+  HANDLE hin, hout, herr;
   /* fds. These just stored along with the streams, and are closed in
      delete stream pair method, because we need to handle fake unices
      here. */
-  int fdi, fdo;
+  int fdi, fdo, fde;
 
-  /* Decode inhandle and outhandle. Their meaning depends on
+  /* Decode inhandle, outhandle, errhandle. Their meaning depends on
      the process implementation being used. */
-#if defined (HAVE_WIN32_PROCESSES)
-  /* We're passed in Windows handles. That's what we like most... */
   hin = (HANDLE) inhandle;
   hout = (HANDLE) outhandle;
-  fdi = fdo = -1;
-#elif defined (HAVE_UNIX_PROCESSES)
-  /* We are passed UNIX fds. This must be Cygwin.
-     Fetch os handles */
-  hin = inhandle >= 0 ? (HANDLE)get_osfhandle ((int)inhandle) : INVALID_HANDLE_VALUE;
-  hout = outhandle >= 0 ? (HANDLE)get_osfhandle ((int)outhandle) : INVALID_HANDLE_VALUE;
-  fdi=(int)inhandle;
-  fdo=(int)outhandle;
-#else
-#error "So, WHICH kind of processes do you want?"
-#endif
+  if (errhandle == (void *) -1)
+    herr = INVALID_HANDLE_VALUE;
+  else
+    herr = (HANDLE) errhandle;
+  fdi = fdo = fde = -1;
 
   *instream = (hin == INVALID_HANDLE_VALUE
 	       ? Qnil
-#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
 	       : flags & STREAM_NETWORK_CONNECTION
-	       ? make_winsock_input_stream ((SOCKET)hin, fdi)
-#endif
+	       ? make_winsock_input_stream ((SOCKET) hin, fdi)
 	       : make_ntpipe_input_stream (hin, fdi));
 
-#ifdef HAVE_WIN32_PROCESSES
+  *errstream = (herr == INVALID_HANDLE_VALUE
+		? Qnil
+		: make_ntpipe_input_stream (herr, fde));
+
   *outstream = (hout == INVALID_HANDLE_VALUE
 		? Qnil
-#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
 		: flags & STREAM_NETWORK_CONNECTION
 		? make_winsock_output_stream ((SOCKET)hout, fdo)
-#endif
 		: make_ntpipe_output_stream (hout, fdo));
-#elif defined (HAVE_UNIX_PROCESSES)
-  *outstream = (fdo >= 0
-		? make_filedesc_output_stream (fdo, 0, -1, LSTR_BLOCKED_OK)
-		: Qnil);
 
-#if defined(HAVE_UNIX_PROCESSES)
-  /* FLAGS is process->pty_flag for UNIX_PROCESSES */
-  if ((flags & STREAM_PTY_FLUSHING) && fdo >= 0)
-    {
-      Intbyte eof_char = get_eof_char (fdo);
-      int pty_max_bytes = get_pty_max_bytes (fdo);
-      filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
-    }
-#endif
-#endif
+  *in_usid =
+    (NILP (*instream)
+     ? USID_ERROR
+     : flags & STREAM_NETWORK_CONNECTION
+     ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (*instream)))
+     : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM
+							 (*instream))));
 
-  return (NILP (*instream)
-	  ? USID_ERROR
-#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
-	  : flags & STREAM_NETWORK_CONNECTION
-	  ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (*instream)))
-#endif
-	  : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM (*instream))));
+  *err_usid =
+    (NILP (*errstream)
+     ? USID_DONTHASH
+     : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM
+							 (*errstream))));
+#endif /* CYGWIN */
 }
 
-USID
-emacs_mswindows_delete_stream_pair (Lisp_Object instream,
-				    Lisp_Object outstream)
+static void
+emacs_mswindows_delete_io_streams (Lisp_Object instream,
+				   Lisp_Object outstream,
+				   Lisp_Object errstream,
+				   USID *in_usid,
+				   USID *err_usid)
 {
-  /* Oh nothing special here for Win32 at all */
-#if defined (HAVE_UNIX_PROCESSES)
-  int in = (NILP(instream)
-	    ? -1
-#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
-	    : LSTREAM_TYPE_P (XLSTREAM (instream), winsock)
-	    ? get_winsock_stream_param (XLSTREAM (instream))
-#endif
-	    : get_ntpipe_input_stream_param (XLSTREAM (instream)));
-  int out = (NILP(outstream) ? -1
-	     : filedesc_stream_fd (XLSTREAM (outstream)));
+#ifdef CYGWIN
+  event_stream_unixoid_delete_io_streams (instream, outstream, errstream,
+					  in_usid, err_usid);
+#else
+  *in_usid =
+    (NILP (instream)
+     ? USID_DONTHASH
+     : LSTREAM_TYPE_P (XLSTREAM (instream), winsock)
+     ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (instream)))
+     : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM
+							 (instream))));
 
-  if (in >= 0)
-    retry_close (in);
-  if (out != in && out >= 0)
-    retry_close (out);
-#endif
-
-  return (NILP (instream)
-	  ? USID_DONTHASH
-#if defined(HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
-	  : LSTREAM_TYPE_P (XLSTREAM (instream), winsock)
-	  ? HANDLE_TO_USID (get_winsock_stream_waitable (XLSTREAM (instream)))
-#endif
-	  : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM (instream))));
+  *err_usid =
+    (NILP (errstream)
+     ? USID_DONTHASH
+     : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM
+							 (errstream))));
+#endif /* CYGWIN */
 }
 
 static int
@@ -4321,17 +4396,19 @@ emacs_mswindows_current_event_timestamp (struct console *c)
 #ifndef HAVE_X_WINDOWS
 /* This is called from GC when a process object is about to be freed.
    If we've still got pointers to it in this file, we're gonna lose hard.
- */
+*/
+void debug_process_finalization (Lisp_Process *p);
 void
 debug_process_finalization (Lisp_Process *p)
 {
 #if 0 /* #### */
-  Lisp_Object instr, outstr;
+  Lisp_Object instr, outstr, errstr;
 
-  get_process_streams (p, &instr, &outstr);
+  get_process_streams (p, &instr, &outstr, &errstr);
   /* if it still has fds, then it hasn't been killed yet. */
   assert (NILP (instr));
   assert (NILP (outstr));
+  assert (NILP (errstr));
 
   /* #### More checks here */
 #endif
@@ -4679,19 +4756,10 @@ reinit_vars_of_event_mswindows (void)
   mswindows_event_stream->quit_p_cb		= emacs_mswindows_quit_p;
   mswindows_event_stream->select_console_cb 	= emacs_mswindows_select_console;
   mswindows_event_stream->unselect_console_cb	= emacs_mswindows_unselect_console;
-#ifdef HAVE_MSG_SELECT
-  mswindows_event_stream->select_process_cb 	=
-    (void (*)(Lisp_Process *)) event_stream_unixoid_select_process;
-  mswindows_event_stream->unselect_process_cb	=
-    (void (*)(Lisp_Process *)) event_stream_unixoid_unselect_process;
-  mswindows_event_stream->create_stream_pair_cb = event_stream_unixoid_create_stream_pair;
-  mswindows_event_stream->delete_stream_pair_cb = event_stream_unixoid_delete_stream_pair;
-#else
   mswindows_event_stream->select_process_cb 	= emacs_mswindows_select_process;
   mswindows_event_stream->unselect_process_cb	= emacs_mswindows_unselect_process;
-  mswindows_event_stream->create_stream_pair_cb = emacs_mswindows_create_stream_pair;
-  mswindows_event_stream->delete_stream_pair_cb = emacs_mswindows_delete_stream_pair;
-#endif
+  mswindows_event_stream->create_io_streams_cb = emacs_mswindows_create_io_streams;
+  mswindows_event_stream->delete_io_streams_cb = emacs_mswindows_delete_io_streams;
   mswindows_event_stream->current_event_timestamp_cb =
     emacs_mswindows_current_event_timestamp;
 }
@@ -4711,9 +4779,7 @@ vars_of_event_mswindows (void)
   mswindows_s_dispatch_event_queue_tail = Qnil;
   dump_add_root_object (&mswindows_s_dispatch_event_queue_tail);
 
-  mswindows_error_caught_in_modal_loop = Qnil;
-  staticpro (&mswindows_error_caught_in_modal_loop);
-
+  mswindows_error_caught_in_modal_loop = 0;
 
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-mswindows-events", &debug_mswindows_events /*
@@ -4792,9 +4858,9 @@ syms_of_event_mswindows (void)
 void
 lstream_type_create_mswindows_selectable (void)
 {
+#ifndef CYGWIN
   init_slurp_stream ();
   init_shove_stream ();
-#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
   init_winsock_stream ();
 #endif
 }
@@ -4802,7 +4868,7 @@ lstream_type_create_mswindows_selectable (void)
 void
 init_event_mswindows_late (void)
 {
-#ifdef HAVE_MSG_SELECT
+#ifdef CYGWIN
   windows_fd = retry_open ("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
   assert (windows_fd >= 0);
   FD_SET (windows_fd, &input_wait_mask);

@@ -779,10 +779,10 @@ extract_xpm_color_names (Lisp_Object device,
 
       /* mustn't lose this when we return */
       colortbl[j].name = qxestrdup (XSTRING_DATA (XCAR (cons)));
-      free_cons (XCONS (cons));
+      free_cons (cons);
       cons = results;
       results = XCDR (results);
-      free_cons (XCONS (cons));
+      free_cons (cons);
     }
   return colortbl;
 }
@@ -1678,7 +1678,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
-  for (i = 0, p = F; i < (PIXELS / 8); ++i)
+  for (i = 0, p = (UChar_Binary *) F; i < (PIXELS / 8); ++i)
     {
       int n, b;
       /* reverse the bit order of each byte... */

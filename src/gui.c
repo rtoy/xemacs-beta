@@ -594,8 +594,7 @@ gui_item_id_hash (Lisp_Object hashtable, Lisp_Object gitem, int slot)
 {
   int hashid = gui_item_hash (gitem, 0);
   int id = GUI_ITEM_ID_BITS (hashid, slot);
-  while (!NILP (Fgethash (make_int (id),
-			  hashtable, Qnil)))
+  while (!UNBOUNDP (Fgethash (make_int (id), hashtable, Qunbound)))
     {
       id = GUI_ITEM_ID_BITS (id + 1, slot);
     }

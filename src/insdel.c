@@ -25,7 +25,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file has been Mule-ized. */
 
-/* Overhauled by Ben Wing, December 1994, for Mule implementation. */
+/* Original file from FSF, 1991.
+   Some changes for extents, c. 1991 by unknown Lucid author.
+   Completely rewritten December 1994, for Mule implementation by Ben Wing;
+     all buffer modification code ripped out of other files and consolidated
+     here.
+   Indirect buffers written c. 1997? by Hrvoje Niksic.
+*/
 
 #include <config.h>
 #include "lisp.h"
@@ -729,7 +735,9 @@ signal_first_change (struct buffer *buf)
 	  record_unwind_protect (first_change_hook_restore, buffer);
 	  set_buffer_internal (buf);
 	  in_first_change = 1;
-	  run_hook (Qfirst_change_hook);
+	  run_hook_trapping_problems
+	    (0, Qfirst_change_hook,
+	     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	  unbind_to (speccount);
 	}
     }
@@ -798,11 +806,15 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 	      || !NILP (symbol_value_in_buffer (Qbefore_change_function, buffer)))
 	    {
 	      set_buffer_internal (buf);
-	      va_run_hook_with_args (Qbefore_change_functions, 2,
-				     make_int (start), make_int (end));
+	      va_run_hook_with_args_trapping_problems
+		(0, Qbefore_change_functions, 2,
+		 make_int (start), make_int (end),
+		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
-	      va_run_hook_with_args (Qbefore_change_function, 2,
-				     make_int (start), make_int (end));
+	      va_run_hook_with_args_trapping_problems
+		(0, Qbefore_change_function, 2,
+		 make_int (start), make_int (end),
+		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	    }
 	}
 
@@ -883,13 +895,17 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
 	      set_buffer_internal (buf);
 	      /* The actual after-change functions take slightly
 		 different arguments than what we were passed. */
-	      va_run_hook_with_args (Qafter_change_functions, 3,
-				     make_int (start), make_int (new_end),
-				     make_int (orig_end - start));
+	      va_run_hook_with_args_trapping_problems
+		(0, Qafter_change_functions, 3,
+		 make_int (start), make_int (new_end),
+		 make_int (orig_end - start),
+		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	      /* Obsolete, for compatibility */
-	      va_run_hook_with_args (Qafter_change_function, 3,
-				     make_int (start), make_int (new_end),
-				     make_int (orig_end - start));
+	      va_run_hook_with_args_trapping_problems
+		(0, Qafter_change_function, 3,
+		 make_int (start), make_int (new_end),
+		 make_int (orig_end - start),
+		 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 	    }
 	}
 
@@ -930,6 +946,8 @@ prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
+      check_allowed_operation (OPERATION_MODIFY_BUFFER_TEXT,
+			       wrap_buffer (mbuf), Qnil);
       barf_if_buffer_read_only (mbuf, start, end);
     }
 
@@ -1139,6 +1157,8 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
      modified during quit processing, bad things can happen. */
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
+
+  memcpy (BUF_GPT_ADDR (buf), nonreloc + offset, length);
 
   copy_text_between_formats (nonreloc + offset, length, FORMAT_DEFAULT,
 			     STRINGP (reloc) ? reloc : Qnil,

@@ -186,7 +186,7 @@ close_file_unwind (Lisp_Object fd)
       if (INTP (XCAR (fd)))
 	retry_close (XINT (XCAR (fd)));
 
-      free_cons (XCONS (fd));
+      free_cons (fd);
     }
   else
     retry_close (XINT (fd));
@@ -3896,13 +3896,6 @@ do_auto_save_unwind (Lisp_Object fd)
   return (fd);
 }
 
-static Lisp_Object
-do_auto_save_unwind_2 (Lisp_Object old_auto_saving)
-{
-  auto_saving = XINT (old_auto_saving);
-  return Qnil;
-}
-
 /* Fdo_auto_save() checks whether a GC is in progress when it is called,
    and if so, tries to avoid touching lisp objects.
 
@@ -3959,10 +3952,7 @@ Non-nil second argument means save only current buffer.
 				 Vauto_save_list_file_name,
 				 auto_save_expand_name_error, Qnil);
 
-  /* Make sure auto_saving is reset. */
-  record_unwind_protect (do_auto_save_unwind_2, make_int (auto_saving));
-
-  auto_saving = 1;
+  internal_bind_int (&auto_saving, 1);
 
   /* First, save all files which don't have handlers.  If Emacs is
      crashing, the handlers may tweak what is causing Emacs to crash

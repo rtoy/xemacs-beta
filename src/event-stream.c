@@ -520,7 +520,7 @@ maybe_read_quit_event (Lisp_Event *event)
   return 0;
 }
 
-void
+static void
 event_stream_next_event (Lisp_Event *event)
 {
   Lisp_Object event_obj;
@@ -529,11 +529,20 @@ event_stream_next_event (Lisp_Event *event)
 
   event_obj = wrap_event (event);
   zero_event (event);
-  /* If C-g was pressed, treat it as a character to be read.
-     Note that if C-g was pressed while we were blocking,
-     the SIGINT signal handler will be called.  It will
-     set Vquit_flag and write a byte on our "fake pipe",
-     which will unblock us. */
+  /* SIGINT occurs when C-g was pressed on a TTY. (SIGINT might have
+     been sent manually by the user, but we don't care; we treat it
+     the same.)
+
+     The SIGINT signal handler sets Vquit_flag as well as sigint_happened
+     and write a byte on our "fake pipe", which unblocks us when we are
+     waiting for an event. */
+
+  /* If SIGINT was received after we disabled quit checking (because
+     we want to read C-g's as characters), but before we got a chance
+     to start reading, notice it now and treat it as a character to be
+     read.  If above callers wanted this to be QUIT, they can
+     determine this by comparing the event against quit-char. */
+
   if (maybe_read_quit_event (event))
     {
       DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
@@ -546,6 +555,14 @@ event_stream_next_event (Lisp_Event *event)
   emacs_is_blocking = 1;
   event_stream->next_event_cb (event);
   emacs_is_blocking = 0;
+
+  /* Now check to see if C-g was pressed while we were blocking.
+     We treat it as an event, just like above. */
+  if (maybe_read_quit_event (event))
+    {
+      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
+      return;
+    }
 
 #ifdef DEBUG_XEMACS
   /* timeout events have more info set later, so
@@ -621,41 +638,90 @@ event_stream_unselect_console (struct console *con)
 }
 
 void
-event_stream_select_process (Lisp_Process *proc)
+event_stream_select_process (Lisp_Process *proc, int doin, int doerr)
 {
+  int cur_in, cur_err;
+
   check_event_stream_ok (EVENT_STREAM_PROCESS);
-  if (!get_process_selected_p (proc))
+
+  cur_in = get_process_selected_p (proc, 0);
+  if (cur_in)
+    doin = 0;
+
+  if (!process_has_separate_stderr (wrap_process (proc)))
     {
-      event_stream->select_process_cb (proc);
-      set_process_selected_p (proc, 1);
+      doerr = 0;
+      cur_err = 0;
+    }
+  else
+    {
+      cur_err = get_process_selected_p (proc, 1);
+      if (cur_err)
+	doerr = 0;
+    }
+
+  if (doin || doerr)
+    {
+      event_stream->select_process_cb (proc, doin, doerr);
+      set_process_selected_p (proc, cur_in || doin, cur_err || doerr);
     }
 }
 
 void
-event_stream_unselect_process (Lisp_Process *proc)
+event_stream_unselect_process (Lisp_Process *proc, int doin, int doerr)
 {
+  int cur_in, cur_err;
+
   check_event_stream_ok (EVENT_STREAM_PROCESS);
-  if (get_process_selected_p (proc))
+
+  cur_in = get_process_selected_p (proc, 0);
+  if (!cur_in)
+    doin = 0;
+
+  if (!process_has_separate_stderr (wrap_process (proc)))
     {
-      event_stream->unselect_process_cb (proc);
-      set_process_selected_p (proc, 0);
+      doerr = 0;
+      cur_err = 0;
+    }
+  else
+    {
+      cur_err = get_process_selected_p (proc, 1);
+      if (!cur_err)
+	doerr = 0;
+    }
+
+  if (doin || doerr)
+    {
+      event_stream->unselect_process_cb (proc, doin, doerr);
+      set_process_selected_p (proc, cur_in && !doin, cur_err && !doerr);
     }
 }
 
-USID
-event_stream_create_stream_pair (void *inhandle, void *outhandle,
-		Lisp_Object *instream, Lisp_Object *outstream, int flags)
+void
+event_stream_create_io_streams (void *inhandle, void *outhandle,
+				void *errhandle, Lisp_Object *instream,
+				Lisp_Object *outstream,
+				Lisp_Object *errstream,
+				USID *in_usid,
+				USID *err_usid,
+				int flags)
 {
   check_event_stream_ok (EVENT_STREAM_PROCESS);
-  return event_stream->create_stream_pair_cb
-		(inhandle, outhandle, instream, outstream, flags);
+  event_stream->create_io_streams_cb
+    (inhandle, outhandle, errhandle, instream, outstream, errstream,
+     in_usid, err_usid, flags);
 }
 
-USID
-event_stream_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+void
+event_stream_delete_io_streams (Lisp_Object instream,
+				Lisp_Object outstream,
+				Lisp_Object errstream,
+				USID *in_usid,
+				USID *err_usid)
 {
   check_event_stream_ok (EVENT_STREAM_PROCESS);
-  return event_stream->delete_stream_pair_cb (instream, outstream);
+  event_stream->delete_io_streams_cb (instream, outstream, errstream,
+				      in_usid, err_usid);
 }
 
 void
@@ -734,9 +800,11 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
   /* This function can GC */
   double echo_keystrokes;
   struct frame *f = selected_frame ();
+  int depth = begin_dont_check_for_quit ();
+
   /* Message turns off echoing unless more keystrokes turn it on again. */
   if (echo_area_active (f) && !EQ (Qcommand, echo_area_status (f)))
-    return;
+    goto done;
 
   if (INTP (Vecho_keystrokes) || FLOATP (Vecho_keystrokes))
     echo_keystrokes = extract_float (Vecho_keystrokes);
@@ -752,11 +820,9 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
     {
       if (!no_snooze)
 	{
-	  /* #### C-g here will cause QUIT.  Setting dont_check_for_quit
-	     doesn't work.  See check_quit. */
 	  if (NILP (Fsit_for (Vecho_keystrokes, Qnil)))
 	    /* input came in, so don't echo. */
-	    return;
+	    goto done;
 	}
 
       echo_area_message (f, command_builder->echo_buf, Qnil, 0,
@@ -765,6 +831,10 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
 			 strlen ((char *) command_builder->echo_buf),
 			 Qcommand);
     }
+
+ done:
+  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+  unbind_to (depth);
 }
 
 static void
@@ -1548,19 +1618,10 @@ dequeue_command_event (void)
   return dequeue_event (&command_event_queue, &command_event_queue_tail);
 }
 
-/* put the event on the typeahead queue, unless
-   the event is the quit char, in which case the `QUIT'
-   which will occur on the next trip through this loop is
-   all the processing we should do - leaving it on the queue
-   would cause the quit to be processed twice.
-   */
 static void
 enqueue_command_event_1 (Lisp_Object event_to_copy)
 {
-  /* do not call check_quit() here.  Vquit_flag was set in
-     next_event_internal. */
-  if (NILP (Vquit_flag))
-    enqueue_command_event (Fcopy_event (event_to_copy, Qnil));
+  enqueue_command_event (Fcopy_event (event_to_copy, Qnil));
 }
 
 void
@@ -1969,12 +2030,23 @@ in_single_console_state (void)
 /* the number of keyboard characters read.  callint.c wants this. */
 Charcount num_input_chars;
 
+/* Read an event from the window system (or tty).  If ALLOW_QUEUED is
+   non-zero, read from the command-event queue first.
+
+   If C-g was pressed, this function will attempt to QUIT.  If you want
+   to read C-g as an event, wrap this function with a call to
+   begin_dont_check_for_quit(), and set Vquit_flag to Qnil just before
+   you unbind.  In this case, TARGET_EVENT will contain a C-g.
+
+   Note that even if you are interested in C-g doing QUIT, a caller of you
+   might not be.
+*/
+
 static void
 next_event_internal (Lisp_Object target_event, int allow_queued)
 {
   struct gcpro gcpro1;
-  /* QUIT;   This is incorrect - the caller must do this because some
-	     callers (ie, Fnext_event()) do not want to QUIT. */
+  QUIT;
 
   assert (NILP (XEVENT_NEXT (target_event)));
 
@@ -2017,35 +2089,29 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
 	  DEBUG_PRINT_EMACS_EVENT ("real, timeout", target_event);
 	}
 
-      /* If we read a ^G, then set quit-flag but do not discard the ^G.
-	 The callers of next_event_internal() will do one of two things:
-
-	 -- set Vquit_flag to Qnil. (next-event does this.) This will
-	    cause the ^G to be treated as a normal keystroke.
-	 -- not change Vquit_flag but attempt to enqueue the ^G, at
-	    which point it will be discarded.  The next time QUIT is
-	    called, it will notice that Vquit_flag was set.
-
+      /* If we read a ^G, then set quit-flag and try to QUIT.
+	 This may be blocked (see above).
        */
       if (e->event_type == key_press_event &&
 	  event_matches_key_specifier_p
 	  (e, make_char (CONSOLE_QUIT_CHAR (XCONSOLE (EVENT_CHANNEL (e))))))
 	{
 	  Vquit_flag = Qt;
+	  QUIT;
 	}
     }
 
   UNGCPRO;
 }
 
-static void
+void
 run_pre_idle_hook (void)
 {
   if (!NILP (Vpre_idle_hook)
       && !detect_input_pending ())
-    safe_run_hook_trapping_errors
+    safe_run_hook_trapping_problems
       ("Error in `pre-idle-hook' (setting hook to nil)",
-       Qpre_idle_hook, 1);
+       Qpre_idle_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 }
 
 static void push_this_command_keys (Lisp_Object event);
@@ -2108,10 +2174,11 @@ The returned event will be one of the following types:
     XCOMMAND_BUILDER (con->command_builder);
   int store_this_key = 0;
   struct gcpro gcpro1;
+  int depth;
 
   GCPRO1 (event);
-  /* DO NOT do QUIT anywhere within this function or the functions it calls.
-     We want to read the ^G as an event. */
+
+  depth = begin_dont_check_for_quit ();
 
 #ifdef LWLIB_MENUBARS_LUCID
   /*
@@ -2174,7 +2241,7 @@ The returned event will be one of the following types:
 	  if (!EVENTP (e) || !command_event_p (e))
 	    signal_error_1 (Qwrong_type_argument,
 			  list3 (Qcommand_event_p, e, Qunread_command_events));
-	  redisplay ();
+	  redisplay_no_pre_idle_hook ();
 	  if (!EQ (e, event))
 	    Fcopy_event (e, event);
 	  DEBUG_PRINT_EMACS_EVENT ("unread-command-events", event);
@@ -2194,7 +2261,7 @@ The returned event will be one of the following types:
 	}
       if (!EQ (e, event))
 	Fcopy_event (e, event);
-      redisplay ();
+      redisplay_no_pre_idle_hook ();
       DEBUG_PRINT_EMACS_EVENT ("unread-command-event", event);
     }
 
@@ -2206,7 +2273,7 @@ The returned event will be one of the following types:
     {
       if (!NILP (Vexecuting_macro))
 	{
-	  redisplay ();
+	  redisplay_no_pre_idle_hook ();
 	  pop_kbd_macro_event (event);  /* This throws past us at
 					   end-of-macro. */
 	  store_this_key = 1;
@@ -2217,15 +2284,18 @@ The returned event will be one of the following types:
 	 recent-keys. */
       else
 	{
-	  run_pre_idle_hook ();
 	  redisplay ();
 	  next_event_internal (event, 1);
-	  Vquit_flag = Qnil; /* Read C-g as an event. */
 	  store_this_key = 1;
 	}
     }
 
+  /* temporarily reenable quit checking here, because arbitrary lisp
+     is executed */
+  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+  unbind_to (depth);
   status_notify ();             /* Notice process change */
+  depth = begin_dont_check_for_quit ();
 
   /* Since we can free the most stuff here
    *  (since this is typically called from
@@ -2258,7 +2328,12 @@ The returned event will be one of the following types:
       break;
     }
 
+  /* temporarily reenable quit checking here, because we could get stuck */
+  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+  unbind_to (depth);
   maybe_do_auto_save ();
+  depth = begin_dont_check_for_quit ();
+
   num_input_chars++;
  STORE_AND_EXECUTE_KEY:
   if (store_this_key)
@@ -2326,18 +2401,26 @@ The returned event will be one of the following types:
 	  store_kbd_macro_event (event);
 	}
     }
-  /* If this is the help char and there is a help form, then execute the
-     help form and swallow this character.  This is the only place where
-     calling Fnext_event() can cause arbitrary lisp code to run.  Note
-     that execute_help_form() calls Fnext_command_event(), which calls
-     this function, as well as Fdispatch_event.
-     */
+  /* If this is the help char and there is a help form, then execute
+     the help form and swallow this character.  Note that
+     execute_help_form() calls Fnext_command_event(), which calls this
+     function, as well as Fdispatch_event.  */
   if (!NILP (Vhelp_form) &&
       event_matches_key_specifier_p (XEVENT (event), Vhelp_char))
-    execute_help_form (command_builder, event);
+    {
+      /* temporarily reenable quit checking here, because we could get stuck */
+      Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+      unbind_to (depth);
+      execute_help_form (command_builder, event);
+      depth = begin_dont_check_for_quit ();
+    }
 
  RETURN:
+  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+  unbind_to (depth);
+
   UNGCPRO;
+
   return event;
 }
 
@@ -2370,9 +2453,11 @@ but it also makes a provision for displaying keystrokes in the echo area.
   /* This function can GC */
   struct gcpro gcpro1;
   GCPRO1 (event);
+
   maybe_echo_keys (XCOMMAND_BUILDER
 		   (XCONSOLE (Vselected_console)->
 		    command_builder), 0); /* #### This sucks bigtime */
+
   for (;;)
     {
       event = Fnext_event (event, prompt);
@@ -2409,15 +2494,12 @@ function does not call redisplay or do any of the other things that
 
   while (event_stream_event_pending_p (0))
     {
-      QUIT; /* next_event_internal() does not QUIT. */
-
       /* We're a generator of the command_event_queue, so we can't be a
 	 consumer as well.  Also, we have no reason to consult the
 	 command_event_queue; there are only user and eval-events there,
 	 and we'd just have to put them back anyway.
        */
       next_event_internal (event, 0); /* blocks */
-      /* See the comment in accept-process-output about Vquit_flag */
       if (XEVENT_TYPE (event) == magic_event ||
 	  XEVENT_TYPE (event) == timeout_event ||
 	  XEVENT_TYPE (event) == process_event ||
@@ -2457,16 +2539,14 @@ A user event is a key press, button press, button release, or
    */
   Lisp_Object event = Fmake_event (Qnil, Qnil);
   Lisp_Object head = Qnil, tail = Qnil;
-  Lisp_Object oiq = Vinhibit_quit;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
   /* #### not correct here with Vselected_console?  Should
      discard-input take a console argument, or maybe map over
      all consoles? */
   struct console *con = XCONSOLE (Vselected_console);
 
   /* next_event_internal() can cause arbitrary Lisp code to be evalled */
-  GCPRO2 (event, oiq);
-  Vinhibit_quit = Qt;
+  GCPRO1 (event);
   /* If a macro was being defined then we have to mark the modeline
      has changed to ensure that it gets updated correctly. */
   if (!NILP (con->defining_kbd_macro))
@@ -2477,19 +2557,27 @@ A user event is a key press, button press, button release, or
   while (!NILP (command_event_queue)
          || event_stream_event_pending_p (1))
     {
+      /* We want to ignore C-g's along with all other keypresses. */
+      int depth = begin_dont_check_for_quit ();
       /* This will take stuff off the command_event_queue, or read it
 	 from the event_stream, but it will not block.
        */
       next_event_internal (event, 1);
-      Vquit_flag = Qnil; /* Treat C-g as a user event (ignore it).
-			    It is vitally important that we reset
-			    Vquit_flag here.  Otherwise, if we're
-			    reading from a TTY console,
-			    maybe_read_quit_event() will notice
-			    that C-g has been set and send us
-			    another C-g.  That will cause us
-			    to get right back here, and read
-			    another C-g, ad infinitum ... */
+      /* The following comment used to be here:
+
+	 [[Treat C-g as a user event (ignore it).  It is vitally
+	 important that we reset Vquit_flag here.  Otherwise, if we're
+	 reading from a TTY console, maybe_read_quit_event() will
+	 notice that C-g has been set and send us another C-g.  That
+	 will cause us to get right back here, and read another C-g,
+	 ad infinitum ...]]
+
+         but I don't think this is correct; maybe_read_quit_event()
+         checks and resets sigint_happened.  It shouldn't matter if we
+	 reset here or outside of the while loop. --ben */
+      Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
+
+      unbind_to (depth);
 
       /* If the event is a user event, ignore it. */
       if (!command_event_p (event))
@@ -2525,7 +2613,6 @@ A user event is a key press, button press, button release, or
   Fdeallocate_event (event);
   UNGCPRO;
 
-  Vinhibit_quit = oiq;
   return Qnil;
 }
 
@@ -2648,16 +2735,7 @@ Return non-nil iff we received any output before the timeout expired.
           continue;             /* Don't call next_event_internal */
 	}
 
-      QUIT;	/* next_event_internal() does not QUIT, so check for ^G
-		   before reading output from the process - this makes it
-		   less likely that the filter will actually be aborted.
-		 */
-
       next_event_internal (event, 0);
-      /* If C-g was pressed while we were waiting, Vquit_flag got
-	 set and next_event_internal() also returns C-g.  When
-	 we enqueue the C-g below, it will get discarded.  The
-	 next time through, QUIT will be called and will signal a quit. */
       switch (XEVENT_TYPE (event))
 	{
 	case process_event:
@@ -2694,6 +2772,9 @@ Return non-nil iff we received any output before the timeout expired.
   unbind_to_1 (count, timeout_enabled ? make_int (timeout_id) : Qnil);
 
   Fdeallocate_event (event);
+
+  status_notify ();
+
   UNGCPRO;
   current_buffer = old_buffer;
   return result;
@@ -2730,16 +2811,11 @@ filter function or timer event (either synchronous or asynchronous).
       if (!event_stream_wakeup_pending_p (id, 0))
 	goto DONE_LABEL;
 
-      QUIT;	/* next_event_internal() does not QUIT, so check for ^G
-		   before reading output from the process - this makes it
-		   less likely that the filter will actually be aborted.
-		 */
       /* We're a generator of the command_event_queue, so we can't be a
 	 consumer as well.  We don't care about command and eval-events
 	 anyway.
        */
       next_event_internal (event, 0); /* blocks */
-      /* See the comment in accept-process-output about Vquit_flag */
       switch (XEVENT_TYPE (event))
 	{
 	case timeout_event:
@@ -2808,13 +2884,10 @@ If sit-for is called from within a process filter function or timer
     return Qnil;
 
   /* Recursive call from a filter function or timeout handler. */
-  if (!NILP(recursive_sit_for))
+  if (!NILP (recursive_sit_for))
     {
       if (!event_stream_event_pending_p (1) && NILP (nodisplay))
-	{
-	  run_pre_idle_hook ();
 	  redisplay ();
-	}
       return Qnil;
     }
 
@@ -2843,10 +2916,7 @@ If sit-for is called from within a process filter function or timer
       /* If there is no user input pending, then redisplay.
        */
       if (!event_stream_event_pending_p (1) && NILP (nodisplay))
-	{
-	  run_pre_idle_hook ();
 	  redisplay ();
-	}
 
       /* If our timeout has arrived, we move along. */
       if (!event_stream_wakeup_pending_p (id, 0))
@@ -2855,24 +2925,14 @@ If sit-for is called from within a process filter function or timer
 	  goto DONE_LABEL;
 	}
 
-      QUIT;	/* next_event_internal() does not QUIT, so check for ^G
-		   before reading output from the process - this makes it
-		   less likely that the filter will actually be aborted.
-		 */
       /* We're a generator of the command_event_queue, so we can't be a
 	 consumer as well.  In fact, we know there's nothing on the
 	 command_event_queue that we didn't just put there.
        */
       next_event_internal (event, 0); /* blocks */
-      /* See the comment in accept-process-output about Vquit_flag */
 
       if (command_event_p (event))
 	{
-	  QUIT;			/* If the command was C-g check it here
-				   so that we abort out of the sit-for,
-				   not the next command.  sleep-for and
-				   accept-process-output continue looping
-				   so they check QUIT again implicitly.*/
 	  result = Qnil;
 	  goto DONE_LABEL;
 	}
@@ -2927,15 +2987,12 @@ wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 
   while (!(*predicate) (predicate_arg))
     {
-      QUIT; /* next_event_internal() does not QUIT. */
-
       /* We're a generator of the command_event_queue, so we can't be a
 	 consumer as well.  Also, we have no reason to consult the
 	 command_event_queue; there are only user and eval-events there,
 	 and we'd just have to put them back anyway.
        */
       next_event_internal (event, 0);
-      /* See the comment in accept-process-output about Vquit_flag */
       if (command_event_p (event)
           || (XEVENT_TYPE (event) == eval_event)
 	  || (XEVENT_TYPE (event) == magic_eval_event))
@@ -2989,85 +3046,79 @@ execute_internal_event (Lisp_Object event)
       {
 	Lisp_Object p = XEVENT (event)->event.process.process;
 	Charcount readstatus;
+	int iter;
 
-	assert  (PROCESSP (p));
-	while ((readstatus = read_process_output (p)) > 0)
-	  ;
-	if (readstatus > 0)
-	  ; /* this clauses never gets executed but allows the #ifdefs
-	       to work cleanly. */
+	assert (PROCESSP (p));
+	for (iter = 0; iter < 2; iter++)
+	  {
+	    if (iter == 1 && !process_has_separate_stderr (p))
+	      break;
+	    while ((readstatus = read_process_output (p, iter)) > 0)
+	      ;
+	    if (readstatus > 0)
+	      ;			/* this clauses never gets executed but
+				   allows the #ifdefs to work cleanly. */
 #ifdef EWOULDBLOCK
-	else if (readstatus == -1 && errno == EWOULDBLOCK)
-	  ;
+	    else if (readstatus == -1 && errno == EWOULDBLOCK)
+	      ;
 #endif /* EWOULDBLOCK */
 #ifdef EAGAIN
-	else if (readstatus == -1 && errno == EAGAIN)
-	  ;
+	    else if (readstatus == -1 && errno == EAGAIN)
+	      ;
 #endif /* EAGAIN */
-	else if ((readstatus == 0 &&
-		  /* Note that we cannot distinguish between no input
-		     available now and a closed pipe.
-		     With luck, a closed pipe will be accompanied by
-		     subprocess termination and SIGCHLD.  */
-		  (!network_connection_p (p) ||
-		   /*
-		      When connected to ToolTalk (i.e.
-		      connected_via_filedesc_p()), it's not possible to
-		      reliably determine whether there is a message
-		      waiting for ToolTalk to receive.  ToolTalk expects
-		      to have tt_message_receive() called exactly once
-		      every time the file descriptor becomes active, so
-		      the filter function forces this by returning 0.
-		      Emacs must not interpret this as a closed pipe. */
-		   connected_via_filedesc_p (XPROCESS (p))))
+	    else if ((readstatus == 0 &&
+		      /* Note that we cannot distinguish between no input
+			 available now and a closed pipe.
+			 With luck, a closed pipe will be accompanied by
+			 subprocess termination and SIGCHLD.  */
+		      (!network_connection_p (p) ||
+		       /*
+			  When connected to ToolTalk (i.e.
+			  connected_via_filedesc_p()), it's not possible to
+			  reliably determine whether there is a message
+			  waiting for ToolTalk to receive.  ToolTalk expects
+			  to have tt_message_receive() called exactly once
+			  every time the file descriptor becomes active, so
+			  the filter function forces this by returning 0.
+			  Emacs must not interpret this as a closed pipe. */
+		       connected_via_filedesc_p (XPROCESS (p))))
 
-		 /* On some OSs with ptys, when the process on one end of
-		    a pty exits, the other end gets an error reading with
-		    errno = EIO instead of getting an EOF (0 bytes read).
-		    Therefore, if we get an error reading and errno =
-		    EIO, just continue, because the child process has
-		    exited and should clean itself up soon (e.g. when we
-		    get a SIGCHLD). */
+		     /* On some OSs with ptys, when the process on one end of
+			a pty exits, the other end gets an error reading with
+			errno = EIO instead of getting an EOF (0 bytes read).
+			Therefore, if we get an error reading and errno =
+			EIO, just continue, because the child process has
+			exited and should clean itself up soon (e.g. when we
+			get a SIGCHLD). */
 #ifdef EIO
-		 || (readstatus == -1 && errno == EIO)
+		     || (readstatus == -1 && errno == EIO)
 #endif
 
-		 )
-	  {
-	    /* Currently, we rely on SIGCHLD to indicate that the
-	       process has terminated.  Unfortunately, on some systems
-	       the SIGCHLD gets missed some of the time.  So we put an
-	       additional check in status_notify() to see whether a
-	       process has terminated.  We must tell status_notify()
-	       to enable that check, and we do so now. */
-	    kick_status_notify ();
+		     )
+	      {
+		/* Currently, we rely on SIGCHLD to indicate that the
+		   process has terminated.  Unfortunately, on some systems
+		   the SIGCHLD gets missed some of the time.  So we put an
+		   additional check in status_notify() to see whether a
+		   process has terminated.  We must tell status_notify()
+		   to enable that check, and we do so now. */
+		kick_status_notify ();
+	      }
+	    
+	    /* We must call status_notify here to allow the
+	       event_stream->unselect_process_cb to be run if appropriate.
+	       Otherwise, dead fds may be selected for, and we will get a
+	       continuous stream of process events for them.  Since we don't
+	       return until all process events have been flushed, we would
+	       get stuck here, processing events on a process whose status
+	       was 'exit.  Call this after dispatch-event, or the fds will
+	       have been closed before we read the last data from them.
+	       It's safe for the filter to signal an error because
+	       status_notify() will be called on return to top-level.
+	    */
+	    status_notify ();
+	    return;
 	  }
-	else
-	  {
-	    /* Deactivate network connection */
-	    Lisp_Object status = Fprocess_status (p);
-	    if (EQ (status, Qopen)
-		/* In case somebody changes the theory of whether to
-		   return open as opposed to run for network connection
-		   "processes"... */
-		|| EQ (status, Qrun))
-	      update_process_status (p, Qexit, 256, 0);
-	    deactivate_process (p);
-	  }
-
-	/* We must call status_notify here to allow the
-	   event_stream->unselect_process_cb to be run if appropriate.
-	   Otherwise, dead fds may be selected for, and we will get a
-	   continuous stream of process events for them.  Since we don't
-	   return until all process events have been flushed, we would
-	   get stuck here, processing events on a process whose status
-	   was 'exit.  Call this after dispatch-event, or the fds will
-	   have been closed before we read the last data from them.
-	   It's safe for the filter to signal an error because
-	   status_notify() will be called on return to top-level.
-	   */
-	status_notify ();
-	return;
       }
 
     case timeout_event:
@@ -3860,6 +3911,8 @@ lookup_command_event (struct command_builder *command_builder,
 	    else
 	      maybe_echo_keys (command_builder, 0);
 	  }
+	/* #### i don't trust this at all. --ben */
+#if 0
 	else if (!NILP (Vquit_flag))
 	  {
 	    Lisp_Object quit_event = Fmake_event (Qnil, Qnil);
@@ -3874,6 +3927,7 @@ lookup_command_event (struct command_builder *command_builder,
 	    enqueue_command_event (quit_event);
 	    Vquit_flag = Qnil;
 	  }
+#endif
       }
     else if (!NILP (leaf))
       {
@@ -4095,9 +4149,9 @@ pre_command_hook (void)
   last_point_position = BUF_PT (current_buffer);
   last_point_position_buffer = wrap_buffer (current_buffer);
   /* This function can GC */
-  safe_run_hook_trapping_errors
+  safe_run_hook_trapping_problems
     ("Error in `pre-command-hook' (setting hook to nil)",
-     Qpre_command_hook, 1);
+     Qpre_command_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   /* This is a kludge, but necessary; see simple.el */
   call0 (Qhandle_pre_motion_command);
@@ -4140,9 +4194,38 @@ post_command_hook (void)
   else
     zmacs_update_region ();
 
-  safe_run_hook_trapping_errors
+  safe_run_hook_trapping_problems
     ("Error in `post-command-hook' (setting hook to nil)",
-     Qpost_command_hook, 1);
+     Qpost_command_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+
+#if 0 /* FSF Emacs crap */
+  if (!NILP (Vdeferred_action_list))
+    call0 (Vdeferred_action_function);
+
+  if (NILP (Vunread_command_events)
+      && NILP (Vexecuting_macro)
+      && !NILP (Vpost_command_idle_hook)
+      && !NILP (Fsit_for (make_float ((double) post_command_idle_delay
+				      / 1000000), Qnil)))
+  safe_run_hook_trapping_problems
+    ("Error in `post-command-idle-hook' (setting hook to nil)",
+     Qpost_command_idle_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+#endif /* FSF Emacs crap */
+
+#if 0 /* FSF Emacs */
+  if (!NILP (current_buffer->mark_active))
+    {
+      if (!NILP (Vdeactivate_mark) && !NILP (Vtransient_mark_mode))
+        {
+          current_buffer->mark_active = Qnil;
+	  run_hook (intern ("deactivate-mark-hook"));
+        }
+      else if (current_buffer != prev_buffer ||
+	       BUF_MODIFF (current_buffer) != prev_modiff)
+	run_hook (intern ("activate-mark-hook"));
+    }
+#endif /* FSF Emacs */
 
   /* #### Kludge!!! This is necessary to make sure that things
      are properly positioned even if post-command-hook moves point.
@@ -4447,8 +4530,6 @@ See `function-key-map' for more details.
   if (NILP (continue_echo))
     reset_this_command_keys (wrap_console (con), 1);
 
-  specbind (Qinhibit_quit, Qt);
-
   if (!NILP (dont_downcase_last))
     specbind (Qretry_undefined_key_binding_unshifted, Qnil);
 
@@ -4475,7 +4556,6 @@ See `function-key-map' for more details.
 	}
     }
 
-  Vquit_flag = Qnil;  /* In case we read a ^G; do not call check_quit() here */
   Fdeallocate_event (event);
   RETURN_UNGCPRO (unbind_to_1 (speccount, result));
 }
@@ -4727,7 +4807,7 @@ See also the variable `auto-save-timeout'.
 Function or functions to run before every command.
 This may examine the `this-command' variable to find out what command
 is about to be run, or may change it to cause a different command to run.
-Function on this hook must be careful to avoid signalling errors!
+Errors while running the hook are caught and turned into warnings.
 */ );
   Vpre_command_hook = Qnil;
 
@@ -4743,8 +4823,8 @@ Normal hook run when XEmacs it about to be idle.
 This occurs whenever it is going to block, waiting for an event.
 This generally happens as a result of a call to `next-event',
 `next-command-event', `sit-for', `sleep-for', `accept-process-output',
-or `x-get-selection'.
-Errors running the hook are caught and ignored.
+or `get-selection'.  Errors while running the hook are caught and
+turned into warnings.
 */ );
   Vpre_idle_hook = Qnil;
 
@@ -5063,6 +5143,8 @@ init_event_stream (void)
 
 
 /*
+#### this comment is at least 8 years old and some may no longer apply.
+
 useful testcases for v18/v19 compatibility:
 
 (defun foo ()

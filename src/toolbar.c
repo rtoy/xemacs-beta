@@ -242,7 +242,7 @@ See `default-toolbar-position'.
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
       /* #### I think this should be GC protected. -sb */
-      hold_frame_size_changes ();
+      int depth = enter_redisplay_critical_section ();
       set_specifier_fallback (Vtoolbar[cur], list1 (Fcons (Qnil, Qnil)));
       set_specifier_fallback (Vtoolbar[new], Vdefault_toolbar);
       set_specifier_fallback (Vtoolbar_size[cur], list1 (Fcons (Qnil, Qzero)));
@@ -259,7 +259,7 @@ See `default-toolbar-position'.
       set_specifier_fallback (Vtoolbar_visible_p[new],
 			      Vdefault_toolbar_visible_p);
       Vdefault_toolbar_position = position;
-      unhold_frame_size_changes ();
+      exit_redisplay_critical_section (depth);
     }
 
   return position;
@@ -527,13 +527,14 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	      tb->enabled = !NILP (tb->enabled_p);
 	    else
 	      {
+		/* #### do we really need to protect this call? */
 		Lisp_Object result =
-		  eval_in_buffer_trapping_errors
+		  eval_in_buffer_trapping_problems
 		    ("Error in toolbar enabled-p form",
 		     XBUFFER
 		     (WINDOW_BUFFER
 		      (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f)))),
-		     tb->enabled_p);
+		     tb->enabled_p, 0);
 		if (UNBOUNDP (result))
 		  /* #### if there was an error in the enabled-p
 		     form, should we pretend like it's enabled

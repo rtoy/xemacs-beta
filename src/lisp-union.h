@@ -167,6 +167,13 @@ extern Lisp_Object Qnull_pointer, Qzero;
 #define INT_PLUS1(x)   make_int (XINT (x) + 1)
 #define INT_MINUS1(x)  make_int (XINT (x) - 1)
 
+/* WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   You can only VOID_TO_LISP something that had previously been
+   LISP_TO_VOID'd.  You cannot go the other way, i.e. create a bogus
+   Lisp_Object.  If you want to stuff a void * into a Lisp_Object, use
+   make_opaque_ptr(). */
+
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */
 DECLARE_INLINE_HEADER (

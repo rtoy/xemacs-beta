@@ -22,6 +22,31 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
+/* Authorship:
+
+   Based on code from pre-release FSF 19, c. 1991.
+   Various changes by Jamie Zawinski 1991-1994:
+     converting to ANSI C, splitting out function prototypes to a separate
+     file (later moved back for unknown reasons by Steve Baur?), debug-gcpro
+     stuff (now moribund).
+   ANSI-fication of DEFUN macros by Felix Lee, c. 1992?
+   NOT_REACHED, DOESNT_RETURN, PRINTF_ARGS by Richard Mlynarik, c. 1994.
+   Many changes over the years corresponding to Lisp_Object definition
+     changes, esp. by Richard Mlynarik (c. 1993) and Kyle Jones (c. 1998).
+     See alloc.c for more details.
+   Overhauled and reordered by Ben Wing, 1995-1996, and many things added:
+     Dynarrs, REALLOC macros, asserts, typedefs, inline header code,
+     first LIST_LOOP macros, CONCHECK_*, all error-checking code
+     (e.g. error-checking versions of XFOO macros), structure read syntax,
+     weak lists, lcrecord lists, reworking of quit handling, object hashing,
+     nested GCPRO, character objects and Ebola checking, memory usage stats,
+     others.
+   LOADHIST changes from Steve Baur, c. 1997?
+   Various macro-related changes by Martin Buchholz, 1998-1999:
+     LIST_LOOP macros greatly expanded and tortoise-hared;
+     RETURN_SANS_WARNINGS; reworked DEFUN macros; EXFUN macros (???).
+*/
+
 #ifndef INCLUDED_lisp_h_
 #define INCLUDED_lisp_h_
 
@@ -44,6 +69,21 @@ Boston, MA 02111-1307, USA.  */
 #include <stddef.h>		/* offsetof */
 #include <sys/types.h>
 #include <limits.h>
+
+/* --------------------- error-checking sublevels --------------------- */
+
+/* The large categories established by configure can be subdivided into
+   smaller subcategories, for problems in specific modules.  You can't
+   control this using configure, but you can manually stick in a define as
+   necessary. */
+
+#ifdef ERROR_CHECK_STRUCTURES
+/* Check for problems with the catch list and specbind stack */
+#define ERROR_CHECK_CATCH
+/* Check for insufficient use of call_trapping_problems(), particularly
+   due to glyph-related changes causing eval or QUIT within redisplay */
+#define ERROR_CHECK_TRAPPING_PROBLEMS
+#endif
 
 /* ------------------------ definition of EMACS_INT ------------------- */
 
@@ -895,16 +935,42 @@ template<typename T> struct alignment_trick { char c; T member; };
 void assert_failed (const char *, int, const char *);
 # define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
+# define assert_with_message(x, msg) \
+  ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
 # define assert_at_line(x, file, line) \
   ((x) ? (void) 0 : assert_failed (file, line, #x))
 #else
 # ifdef DEBUG_XEMACS
 #  define assert(x) ((x) ? (void) 0 : (void) abort ())
+#  define assert_with_message(x, msg) ((x) ? (void) 0 : (void) abort ())
 #  define assert_at_line(x, file, line) assert (x)
 # else
 #  define assert(x) ((void) 0)
+#  define assert_with_message(x, msg)
 #  define assert_at_line(x, file, line) assert (x)
 # endif
+#endif
+
+/* ####
+   Why the hell do we do this??????????????????????????????? */
+/*#ifdef DEBUG_XEMACS*/
+#define REGISTER
+#define register
+/*#else*/
+/*#define REGISTER register*/
+/*#endif*/
+
+
+/* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
+   In particular, it must be large enough to contain a pointer.
+   config.h can override this, e.g. to use `long long' for bigger lisp ints.
+
+   #### In point of fact, it would NOT be a good idea for config.h to mess
+   with EMACS_INT.  A lot of code makes the basic assumption that EMACS_INT
+   is the size of a pointer. */
+
+#ifndef SIZEOF_EMACS_INT
+# define SIZEOF_EMACS_INT SIZEOF_VOID_P
 #endif
 
 #if 0
@@ -1144,10 +1210,7 @@ struct overhead_stats;
 Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
 #endif
 
-
-/************************************************************************/
-/*				  typedefs				*/
-/************************************************************************/
+/* Counts of bytes or chars */
 
 /* Note that the simplest typedefs are near the top of this file. */
 
@@ -1493,7 +1556,7 @@ int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 struct Lisp_Cons
 {
   struct lrecord_header lheader;
-  Lisp_Object car, cdr;
+  Lisp_Object car_, cdr_;
 };
 typedef struct Lisp_Cons Lisp_Cons;
 
@@ -1522,8 +1585,12 @@ DECLARE_LRECORD (cons, Lisp_Cons);
 extern Lisp_Object Qnil;
 
 #define NILP(x)  EQ (x, Qnil)
-#define XCAR(a) (XCONS (a)->car)
-#define XCDR(a) (XCONS (a)->cdr)
+#define cons_car(a) ((a)->car_)
+#define cons_cdr(a) ((a)->cdr_)
+#define XCAR(a) (XCONS (a)->car_)
+#define XCDR(a) (XCONS (a)->cdr_)
+#define XSETCAR(a, b) (XCONS (a)->car_ = (b))
+#define XSETCDR(a, b) (XCONS (a)->cdr_ = (b))
 #define LISTP(x) (CONSP(x) || NILP(x))
 
 #define CHECK_LIST(x) do {			\
@@ -2163,6 +2230,7 @@ set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
 #define BIT_VECTOR_LONG_STORAGE(len) \
   (((len) + LONGBITS_POWER_OF_2 - 1) >> LONGBITS_LOG2)
 
+
 /*------------------------------ symbol --------------------------------*/
 
 typedef struct Lisp_Symbol Lisp_Symbol;
@@ -2206,6 +2274,8 @@ DECLARE_LRECORD (symbol, Lisp_Symbol);
 
 /*------------------------------- subr ---------------------------------*/
 
+/* A function that takes no arguments and returns a Lisp_Object.
+   We could define such types for n arguments, if needed. */
 typedef Lisp_Object (*lisp_fn_t) (void);
 
 struct Lisp_Subr
@@ -2693,47 +2763,71 @@ extern int specpdl_depth_counter;
 /*			   Checking for QUIT				*/
 /************************************************************************/
 
+/* The exact workings of this mechanism are described in detail in signal.c. */
+
 /* Asynchronous events set something_happened, and then are processed
    within the QUIT macro.  At this point, we are guaranteed to not be in
    any sensitive code. */
 
 extern volatile int something_happened;
 extern int dont_check_for_quit;
-int check_what_happened (void);
+void check_what_happened (void);
 
 extern volatile int quit_check_signal_happened;
 extern volatile int quit_check_signal_tick_count;
-int check_quit (void);
+void check_quit (void);
 
 void signal_quit (void);
 
+extern int dont_check_for_quit;
+int begin_dont_check_for_quit (void);
+int begin_do_check_for_quit (void);
+
+/* Nonzero if the values of `quit-flag' and `inhibit-quit' indicate
+   that a quit should be signalled. */
 #define QUIT_FLAG_SAYS_SHOULD_QUIT				\
   (!NILP (Vquit_flag) &&					\
    (NILP (Vinhibit_quit)					\
     || (EQ (Vquit_flag, Qcritical) && !dont_check_for_quit)))
 
-/* Nonzero if ought to quit now.  */
+/* Nonzero if ought to quit now.  This is the "efficient" version, which
+   respects the flags set to indicate whether the full quit check should
+   be done.  Therefore it may be inaccurate (i.e. lagging reality), esp.
+   when poll for quit is used.
+
+   This is defined for code that wants to allow quitting, but needs to
+   do some cleanup if that happens. (You could always register the cleanup
+   code using record_unwind_protect(), but sometimes it makes more sense
+   to do it using QUITP.) To use this macro, just call it at the
+   appropriate time, and if its value is non-zero, do your cleanup code
+   and then call QUIT.
+
+   A different version (below) is used for the actual QUIT macro.  */
 #define QUITP							\
-  ((quit_check_signal_happened ? check_quit () : 0),		\
+  ((quit_check_signal_happened ? check_quit () : (void) 0),	\
    QUIT_FLAG_SAYS_SHOULD_QUIT)
 
-/* QUIT used to call QUITP, but there are some places where QUITP
-   is called directly, and check_what_happened() should only be called
-   when Emacs is actually ready to quit because it could do things
-   like switch threads. */
+/* This is the version actually called by QUIT.  The difference
+   between it and QUITP is that it also has side effects in that it
+   will handle anything else that has recently signalled itself
+   asynchronously and wants to be handled now.  Currently this
+   includes executing asynchronous timeouts that may have been set
+   from Lisp or from the poll-for-quit or poll-for-sigchld
+   timers. (#### It seems that, to be slightly more accurate, we
+   should also process poll-for-quit timers in the above version.
+   However, this mechanism is inherently approximate, so it really
+   doesn't matter much.) In the future, it might also include doing a
+   thread context switch.  Callers of QUITP generally don't except
+   random side effects to happen, so we have this different
+   version. */
 #define INTERNAL_QUITP						\
-  ((something_happened ? check_what_happened () : 0),		\
-   QUIT_FLAG_SAYS_SHOULD_QUIT)
-
-#define INTERNAL_REALLY_QUITP					\
-  (check_what_happened (),					\
+  ((something_happened ? check_what_happened () : (void) 0),	\
    QUIT_FLAG_SAYS_SHOULD_QUIT)
 
 /* Check quit-flag and quit if it is non-nil.  Also do any other things
-   that might have gotten queued until it was safe. */
+   that are triggered by asynchronous events and might want to be
+   handled. */
 #define QUIT do { if (INTERNAL_QUITP) signal_quit (); } while (0)
-
-#define REALLY_QUIT do { if (INTERNAL_REALLY_QUITP) signal_quit (); } while (0)
 
 
 /************************************************************************/
@@ -2924,6 +3018,21 @@ void debug_ungcpro(char *, int, struct gcpro *);
   gcpro5.next = &gcpro4,   gcpro5.var = &var5, gcpro5.nvars = 1,	\
   gcprolist = &gcpro5 ))
 
+#define GCPRO1_ARRAY(array, n) ((void) (				\
+  gcpro1.next = gcprolist, gcpro1.var = array, gcpro1.nvars = n,	\
+  gcprolist = &gcpro1 ))
+
+#define GCPRO2_ARRAY(array1, n1, array2, n2) ((void) (			\
+  gcpro1.next = gcprolist, gcpro1.var = array1, gcpro1.nvars = n1,	\
+  gcpro2.next = &gcpro1,   gcpro2.var = array2, gcpro2.nvars = n2,	\
+  gcprolist = &gcpro2 ))
+
+#define GCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	\
+  gcpro1.next = gcprolist, gcpro1.var = array1, gcpro1.nvars = n1,	\
+  gcpro2.next = &gcpro1,   gcpro2.var = array2, gcpro2.nvars = n2,	\
+  gcpro3.next = &gcpro2,   gcpro3.var = array3, gcpro3.nvars = n3,	\
+  gcprolist = &gcpro3 ))
+
 #define UNGCPRO ((void) (gcprolist = gcpro1.next))
 
 #define NGCPRO1(var1) ((void) (						\
@@ -2956,6 +3065,21 @@ void debug_ungcpro(char *, int, struct gcpro *);
   ngcpro5.next = &ngcpro4,  ngcpro5.var = &var5, ngcpro5.nvars = 1,	\
   gcprolist = &ngcpro5 ))
 
+#define NGCPRO1_ARRAY(array, n) ((void) (				\
+  ngcpro1.next = gcprolist, ngcpro1.var = array, ngcpro1.nvars = n,	\
+  gcprolist = &ngcpro1 ))
+
+#define NGCPRO2_ARRAY(array1, n1, array2, n2) ((void) (			\
+  ngcpro1.next = gcprolist, ngcpro1.var = array1, ngcpro1.nvars = n1,	\
+  ngcpro2.next = &ngcpro1,  ngcpro2.var = array2, ngcpro2.nvars = n2,	\
+  gcprolist = &ngcpro2 ))
+
+#define NGCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	\
+  ngcpro1.next = gcprolist, ngcpro1.var = array1, ngcpro1.nvars = n1,	\
+  ngcpro2.next = &ngcpro1,  ngcpro2.var = array2, ngcpro2.nvars = n2,	\
+  ngcpro3.next = &ngcpro2,  ngcpro3.var = array3, ngcpro3.nvars = n3,	\
+  gcprolist = &ngcpro3 ))
+
 #define NUNGCPRO ((void) (gcprolist = ngcpro1.next))
 
 #define NNGCPRO1(var1) ((void) (					\
@@ -2987,6 +3111,21 @@ void debug_ungcpro(char *, int, struct gcpro *);
   nngcpro4.next = &nngcpro3, nngcpro4.var = &var4, nngcpro4.nvars = 1,	\
   nngcpro5.next = &nngcpro4, nngcpro5.var = &var5, nngcpro5.nvars = 1,	\
   gcprolist = &nngcpro5 ))
+
+#define NNGCPRO1_ARRAY(array, n) ((void) (				\
+  nngcpro1.next = gcprolist, nngcpro1.var = array, nngcpro1.nvars = n,	\
+  gcprolist = &nngcpro1 ))
+
+#define NNGCPRO2_ARRAY(array1, n1, array2, n2) ((void) (		  \
+  nngcpro1.next = gcprolist,  nngcpro1.var = array1, nngcpro1.nvars = n1, \
+  nngcpro2.next = &nngcpro1,  nngcpro2.var = array2, nngcpro2.nvars = n2, \
+  gcprolist = &nngcpro2 ))
+
+#define NNGCPRO3_ARRAY(array1, n1, array2, n2, array3, n3) ((void) (	  \
+  nngcpro1.next = gcprolist,  nngcpro1.var = array1, nngcpro1.nvars = n1, \
+  nngcpro2.next = &nngcpro1,  nngcpro2.var = array2, nngcpro2.nvars = n2, \
+  nngcpro3.next = &nngcpro2,  nngcpro3.var = array3, nngcpro3.nvars = n3, \
+  gcprolist = &nngcpro3 ))
 
 #define NNUNGCPRO ((void) (gcprolist = nngcpro1.next))
 
@@ -3181,7 +3320,6 @@ Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 extern int purify_flag;
-extern int gc_currently_forbidden;
 extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
@@ -3196,7 +3334,7 @@ void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
 Lisp_Object make_float (double);
 Lisp_Object make_string_nocopy (const Intbyte *, Bytecount);
-void free_cons (Lisp_Cons *);
+void free_cons (Lisp_Object);
 void free_list (Lisp_Object);
 void free_alist (Lisp_Object);
 void mark_conses_in_list (Lisp_Object);
@@ -3272,11 +3410,6 @@ EXFUN (Fbyte_code, 3);
 
 DECLARE_DOESNT_RETURN (invalid_byte_code
 		       (const CIntbyte *reason, Lisp_Object frob));
-
-/* Defined in callproc.c */
-Intbyte *egetenv (const CIntbyte *var);
-void eputenv (const CIntbyte *var, const CIntbyte *value);
-extern int env_initted;
 
 /* Defined in callint.c */
 EXFUN (Fcall_interactively, 3);
@@ -3469,7 +3602,6 @@ extern int noninteractive, noninteractive1;
 extern int inhibit_non_essential_printing_operations;
 extern int preparing_for_armageddon;
 extern Fixnum emacs_priority;
-extern int running_asynch_code;
 extern int suppress_early_error_handler_backtrace;
 void debug_break (void);
 int debug_can_access_memory (void *ptr, Bytecount len);
@@ -3493,6 +3625,9 @@ EXFUN (Finteractive_p, 0);
 EXFUN (Fprogn, UNEVALLED);
 EXFUN (Fsignal, 2);
 EXFUN (Fthrow, 2);
+EXFUN (Fcall_with_condition_handler, MANY);
+EXFUN (Ffunction_max_args, 1);
+EXFUN (Ffunction_min_args, 1);
 
 DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
@@ -3652,21 +3787,116 @@ Lisp_Object call6_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
 			     Lisp_Object, Lisp_Object, Lisp_Object,
 			     Lisp_Object, Lisp_Object);
 Lisp_Object eval_in_buffer (struct buffer *, Lisp_Object);
-Lisp_Object call0_with_handler (Lisp_Object, Lisp_Object);
-Lisp_Object call1_with_handler (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object eval_in_buffer_trapping_errors (const CIntbyte *, struct buffer *,
-					    Lisp_Object);
-Lisp_Object run_hook_trapping_errors (const CIntbyte *, Lisp_Object);
-Lisp_Object safe_run_hook_trapping_errors (const CIntbyte *, Lisp_Object, int);
-Lisp_Object call0_trapping_errors (const CIntbyte *, Lisp_Object);
-Lisp_Object call1_trapping_errors (const CIntbyte *, Lisp_Object, Lisp_Object);
-Lisp_Object call2_trapping_errors (const CIntbyte *,
-				   Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object call_with_suspended_errors (lisp_fn_t, volatile Lisp_Object, Lisp_Object,
+
+struct call_trapping_problems_result
+{
+  int caught_error, caught_throw;
+  Lisp_Object error_conditions, data;
+  Lisp_Object backtrace;
+  Lisp_Object thrown_tag;
+  Lisp_Object thrown_value;
+};
+
+#define NO_INHIBIT_ERRORS (1<<0)
+#define NO_INHIBIT_THROWS (1<<1)
+#define INTERNAL_INHIBIT_ERRORS (1<<0)
+#define INTERNAL_INHIBIT_THROWS (1<<1)
+#define INHIBIT_WARNING_ISSUE (1<<2)
+#define ISSUE_WARNINGS_AT_DEBUG_LEVEL (1<<3)
+#define INHIBIT_QUIT (1<<4)
+#define UNINHIBIT_QUIT (1<<5)
+#define INHIBIT_GC (1<<6)
+#define INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION (1<<7)
+#define INHIBIT_EXISTING_CODING_SYSTEM_DELETION (1<<8)
+#define INHIBIT_EXISTING_CHARSET_DELETION (1<<9)
+#define INHIBIT_PERMANENT_DISPLAY_OBJECT_CREATION (1<<10)
+#define INHIBIT_CODING_SYSTEM_CREATION (1<<11)
+#define INHIBIT_CHARSET_CREATION (1<<12)
+#define INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION (1<<13)
+#define INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY (1<<14)
+#define INHIBIT_ENTERING_DEBUGGER (1<<15)
+#define CALL_WITH_SUSPENDED_ERRORS (1<<16)
+
+enum check_allowed_operation
+{
+  OPERATION_DELETE_OBJECT,
+  OPERATION_CREATE_OBJECT,
+  OPERATION_MODIFY_BUFFER_TEXT,
+  OPERATION_MODIFY_OBJECT_PROPERTY,
+};
+
+int get_inhibit_flags (void);
+void check_allowed_operation (int what, Lisp_Object obj, Lisp_Object prop);
+void note_object_created (Lisp_Object obj);
+void note_object_deleted (Lisp_Object obj);
+Lisp_Object call_with_condition_handler (Lisp_Object (*handler) (Lisp_Object,
+								 Lisp_Object,
+								 Lisp_Object),
+					 Lisp_Object handler_arg,
+					 Lisp_Object (*fun) (Lisp_Object),
+					 Lisp_Object arg);
+Lisp_Object call_trapping_problems (Lisp_Object warning_class,
+				    const char *warning_string,
+				    int flags,
+				    struct call_trapping_problems_result
+				    *problem,
+				    Lisp_Object (*fun) (void *),
+				    void *arg);
+Lisp_Object va_call_trapping_problems (Lisp_Object warning_class,
+				       const char *warning_string,
+				       int flags,
+				       struct call_trapping_problems_result
+				       *problem,
+				       lisp_fn_t fun, int nargs, ...);
+Lisp_Object call0_trapping_problems (const char *, Lisp_Object, int);
+Lisp_Object call1_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+				   int);
+Lisp_Object call2_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+				   Lisp_Object, int);
+Lisp_Object call3_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+				   Lisp_Object, Lisp_Object, int);
+Lisp_Object call4_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+				   Lisp_Object, Lisp_Object, Lisp_Object,
+				   int);
+Lisp_Object call5_trapping_problems (const char *, Lisp_Object, Lisp_Object,
+				   Lisp_Object, Lisp_Object, Lisp_Object,
+				   Lisp_Object, int);
+Lisp_Object eval_in_buffer_trapping_problems (const char *, struct buffer *,
+					    Lisp_Object, int);
+Lisp_Object run_hook_trapping_problems (const char *, Lisp_Object, int);
+Lisp_Object safe_run_hook_trapping_problems (const char *, Lisp_Object, int);
+Lisp_Object run_hook_with_args_in_buffer_trapping_problems (const char
+							    *warning_string,
+							    struct buffer
+							    *buf, int nargs,
+							    Lisp_Object *args,
+							    enum
+							    run_hooks_condition
+							    cond, int flags);
+Lisp_Object run_hook_with_args_trapping_problems (const char *warning_string,
+						  int nargs,
+						  Lisp_Object *args,
+						  enum run_hooks_condition
+						  cond,
+						  int flags);
+Lisp_Object va_run_hook_with_args_trapping_problems (const char
+						     *warning_string,
+						     Lisp_Object hook_var,
+						     int nargs, ...);
+Lisp_Object va_run_hook_with_args_in_buffer_trapping_problems (const char
+							       *warning_string,
+							       struct buffer
+							       *buf,
+							       Lisp_Object
+							       hook_var,
+							       int nargs, ...);
+Lisp_Object call_with_suspended_errors (lisp_fn_t, Lisp_Object,
+					Lisp_Object,
 					Error_Behavior, int, ...);
 /* C Code should be using internal_catch, record_unwind_p, condition_case_1 */
 Lisp_Object internal_catch (Lisp_Object, Lisp_Object (*) (Lisp_Object),
-			    Lisp_Object, int * volatile);
+			    Lisp_Object, int * volatile,
+			    Lisp_Object * volatile);
 Lisp_Object condition_case_1 (Lisp_Object,
 			      Lisp_Object (*) (Lisp_Object),
 			      Lisp_Object,
@@ -3677,6 +3907,7 @@ Lisp_Object unbind_to_1 (int, Lisp_Object);
 #define unbind_to(obj) unbind_to_1 (obj, Qnil)
 void specbind (Lisp_Object, Lisp_Object);
 int record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
+int record_unwind_protect_freeing (void *ptr);
 int record_unwind_protect_freeing_dynarr (void *ptr);
 int internal_bind_int (int *addr, int newval);
 int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
@@ -3964,6 +4195,13 @@ Lisp_Object external_plist_get (Lisp_Object *, Lisp_Object,
 void external_plist_put (Lisp_Object *, Lisp_Object,
 			 Lisp_Object, int, Error_Behavior);
 int external_remprop (Lisp_Object *, Lisp_Object, int, Error_Behavior);
+int internal_equal_trapping_problems (Lisp_Object warning_class,
+    				      const char *warning_string,
+				      int flags,
+				      struct call_trapping_problems_result *p,
+				      int retval,
+				      Lisp_Object obj1, Lisp_Object obj2,
+				      int depth);
 int internal_equal (Lisp_Object, Lisp_Object, int);
 int internal_equalp (Lisp_Object obj1, Lisp_Object obj2, int depth);
 Lisp_Object concat2 (Lisp_Object, Lisp_Object);
@@ -4199,6 +4437,10 @@ DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
 DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
+Intbyte *egetenv (const CIntbyte *var);
+void eputenv (const CIntbyte *var, const CIntbyte *value);
+extern int env_initted;
+
 /* Defined in profile.c */
 void mark_profiling_info (void);
 void profile_increase_call_count (Lisp_Object);
@@ -4253,7 +4495,6 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 
 /* Defined in signal.c */
 void init_interrupts_late (void);
-int begin_dont_check_for_quit (void);
 
 /* Defined in sound.c */
 EXFUN (Fding, 3);

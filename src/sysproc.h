@@ -1,6 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -181,5 +181,35 @@ int poll_fds_for_input (SELECT_TYPE mask);
 int qxe_execve (const Intbyte *filename, Intbyte * const argv[],
 		Intbyte * const envp[]);
 pid_t qxe_getpid (void);
+
+/* #### I would really like to delete the remaining synchronous code entirely.
+   We are now using it only for *REALLY* old systems -- how many systems
+   nowadays
+
+   (a) lack job control, or
+   (b) lack mkdir() or rmdir()
+
+   ?????
+
+   --ben
+*/
+
+#if !defined (WIN32_NATIVE) && ((!defined (SIGTSTP) && !defined (USG_JOBCTRL)) || !defined (HAVE_MKDIR) || !defined (HAVE_RMDIR))
+
+#define NEED_SYNC_PROCESS_CODE
+
+/* True iff we are about to fork off a synchronous process or if we
+   are waiting for it.  */
+extern volatile int synch_process_alive;
+
+/* Nonzero => this is a string explaining death of synchronous subprocess.  */
+extern const char *synch_process_death;
+
+/* If synch_process_death is zero,
+   this is exit code of synchronous subprocess.  */
+extern int synch_process_retcode;
+
+#endif
+
 
 #endif /* INCLUDED_sysproc_h_ */

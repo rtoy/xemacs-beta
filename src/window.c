@@ -24,6 +24,16 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.30. */
 /* Beginning to diverge significantly. */
 
+/* Authorship:
+
+   Based on code from pre-release FSF 19, c. 1991.
+   Significantly reworked by Chuck Thompson, 1993-1996.
+   window mirror stuff added by Chuck Thompson c. 1993.
+   various cleanup by Ben Wing c. 1995 (window slots, window init code,
+   memory usage, synch. up to FSF 19.30, other).
+   Unknown work by Andy Piper.
+   new window-width/height fns. by Ben Wing, Mar 2000. */
+
 /* This file has been Mule-ized. */
 
 #include <config.h>
@@ -2027,6 +2037,7 @@ mark_window_as_deleted (struct window *w)
   w->subwindow_instance_cache = Qnil;
 
   w->dead = 1;
+  note_object_deleted (wrap_window (w));
 }
 
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
@@ -2062,6 +2073,8 @@ will automatically call `save-buffers-kill-emacs'.)
   /* It's okay to delete an already-deleted window.  */
   if (! WINDOW_LIVE_P (w))
     return Qnil;
+
+  check_allowed_operation (OPERATION_DELETE_OBJECT, window, Qnil);
 
   frame = WINDOW_FRAME (w);
   f = XFRAME (frame);
@@ -3898,6 +3911,9 @@ returned.
     }
 
   XFRAME (p->frame)->mirror_dirty = 1;
+
+  note_object_created (new);
+
   /* do this last (after the window is completely initialized and
      the mirror-dirty flag is set) so that specifier recomputation
      caused as a result of this will work properly and not abort. */
@@ -5545,6 +5561,8 @@ by `current-window-configuration' (which see).
 	  w->gutter_extent_modiff[2] = 0;
 	  w->gutter_extent_modiff[3] = 0;
 	  w->dead = 0;
+
+	  note_object_created (p->window);
 
 	  if (p->parent_index >= 0)
 	    w->parent = SAVED_WINDOW_N (config, p->parent_index)->window;

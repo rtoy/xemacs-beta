@@ -733,7 +733,9 @@ unsafe_handle_wm_initmenu_1 (struct frame *f)
 
   /* We simply ignore return value. In any case, we construct the bar
      on the fly */
-  run_hook (Qactivate_menubar_hook);
+  run_hook_trapping_problems
+    ("Error in activate-menubar-hook", Qactivate_menubar_hook,
+     INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
 
   update_frame_menubar_maybe (f);
 
@@ -812,7 +814,12 @@ mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
   /* We cannot pass hmenu as a lisp object. Use static var */
   wm_initmenu_menu = hmenu;
   wm_initmenu_frame = frm;
-  return mswindows_protect_modal_loop (unsafe_handle_wm_initmenupopup, Qnil);
+  /* Allow runaway filter code, e.g. custom, to be aborted.  We are
+     usually called from next_event_internal(), which has turned off
+     quit checking to read the C-g as an event. */
+  return mswindows_protect_modal_loop ("Error during menu handling",
+				       unsafe_handle_wm_initmenupopup, Qnil,
+				       UNINHIBIT_QUIT);
 }
 
 Lisp_Object
@@ -822,7 +829,9 @@ mswindows_handle_wm_initmenu (HMENU hmenu, struct frame *f)
   if (GetMenu (FRAME_MSWINDOWS_HANDLE (f)) == hmenu)
     {
       wm_initmenu_frame = f;
-      return mswindows_protect_modal_loop (unsafe_handle_wm_initmenu, Qnil);
+      return mswindows_protect_modal_loop ("Error during menu handling",
+					   unsafe_handle_wm_initmenu, Qnil,
+					   UNINHIBIT_QUIT);
     }
   return Qt;
 }

@@ -114,6 +114,13 @@ make_int_verify (EMACS_INT val)
 #define Qnull_pointer ((Lisp_Object) 0)
 #define EQ(x,y) ((x) == (y))
 
+/* WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   You can only VOID_TO_LISP something that had previously been
+   LISP_TO_VOID'd.  You cannot go the other way, i.e. create a bogus
+   Lisp_Object.  If you want to stuff a void * into a Lisp_Object, use
+   make_opaque_ptr(). */
+
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */
 #define VOID_TO_LISP(varg) ((Lisp_Object) (varg))

@@ -1,3 +1,7 @@
+2001-03-26  Paul Stodghill  <stodghil@cs.cornell.edu>
+
+	* configure.in: Don't #define __STDC__ in confdefs.h
+
 2002-02-28  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* configure.in: Protect nocomboreloc linker arguments to avoid
@@ -20,10 +24,6 @@
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* README.packages: Update info about --package-path.
-
-2002-04-22  Hrvoje Niksic  <hniksic@xemacs.org>
-
-	* etc/photos/hniksic.png, etc/photos/hniksic.png: Update.
 
 2002-04-14  Ben Wing  <ben@xemacs.org>
 

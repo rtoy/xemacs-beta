@@ -1,3 +1,555 @@
+2002-05-28  Ben Wing  <ben@xemacs.org>
+
+	================================================================
+   	       ALLOW SEPARATION OF STDOUT AND STDERR IN PROCESSES   
+	================================================================
+
+	Standard output and standard error can be processed separately in
+	a process.  Each can have its own buffer, its own mark in that buffer,
+	and its filter function.  You can specify a separate buffer for stderr
+	in `start-process' to get things started, or use the new primitives:
+
+        set-process-stderr-buffer
+        process-stderr-buffer
+	process-stderr-mark
+        set-process-stderr-filter
+	process-stderr-filter
+
+        Also, process-send-region takes a 4th optional arg, a buffer.
+
+	Currently always uses a pipe() under Unix to read the error output.
+	(#### Would a PTY be better?)
+
+	* sysdep.h:
+	* sysproc.h:
+	* unexfreebsd.c (unexec):
+	* unexsunos4.c (unexec):
+	* nt.c (init_user_info):
+	* emacs.c:
+	* emacs.c (main_1):
+	* callproc.c:
+	* symsinit.h:
+	* sysdep.c:
+	* sysdep.c (wait_for_termination):
+	* Makefile.in.in (objs):
+	* process-unix.c (child_setup):
+	Delete callproc.c.  Move child_setup() to process-unix.c.
+	wait_for_termination() now only needed on a few really old systems.
+	
+	* console-msw.h:
+	* event-Xt.c (emacs_Xt_select_process):
+	* event-Xt.c (emacs_Xt_unselect_process):
+	* event-Xt.c (emacs_Xt_create_io_streams):
+	* event-Xt.c (emacs_Xt_delete_io_streams):
+	* event-Xt.c (debug_process_finalization):
+	* event-Xt.c (reinit_vars_of_event_Xt):
+	* event-msw.c (get_process_stderr_waitable):
+	* event-msw.c (emacs_mswindows_select_process):
+	* event-msw.c (emacs_mswindows_unselect_process):
+	* event-msw.c (emacs_mswindows_create_io_streams):
+	* event-msw.c (emacs_mswindows_delete_io_streams):
+	* event-msw.c (debug_process_finalization):
+	* event-msw.c (reinit_vars_of_event_mswindows):
+	* event-msw.c (vars_of_event_mswindows):
+	* event-msw.c (lstream_type_create_mswindows_selectable):
+	* event-stream.c (event_stream_select_process):
+	* event-stream.c (event_stream_unselect_process):
+	* event-stream.c (event_stream_create_io_streams):
+	* event-stream.c (event_stream_delete_io_streams):
+	* event-stream.c (Faccept_process_output):
+	* event-tty.c (emacs_tty_select_process):
+	* event-tty.c (emacs_tty_unselect_process):
+	* event-tty.c (emacs_tty_create_io_streams):
+	* event-tty.c (emacs_tty_delete_io_streams):
+	* event-tty.c (reinit_vars_of_event_tty):
+	* event-unixoid.c:
+	* event-unixoid.c (get_process_infd):
+	* event-unixoid.c (get_process_errfd):
+	* event-unixoid.c (event_stream_unixoid_select_process):
+	* event-unixoid.c (event_stream_unixoid_unselect_process):
+	* event-unixoid.c (event_stream_unixoid_create_io_streams):
+	* event-unixoid.c (event_stream_unixoid_delete_io_streams):
+	* events.h:
+	* events.h (struct event_stream):
+	* process-nt.c:
+	* process-nt.c (struct nt_process_data):
+	* process-nt.c (nt_create_process):
+	* process-nt.c (get_internet_address):
+	* process-nt.c (nt_open_network_stream):
+	* process-unix.c:
+	* process-unix.c (struct unix_process_data):
+	* process-unix.c (UNIX_DATA):
+	* process-unix.c (close_process_descs_mapfun):
+	* process-unix.c (close_process_descs):
+	* process-unix.c (connect_to_file_descriptor):
+	* process-unix.c (process_signal_char):
+	* process-unix.c (unix_alloc_process_data):
+	* process-unix.c (unix_init_process_io_handles):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (io_failure): Removed.
+	* process-unix.c (unix_tooltalk_connection_p):
+	* process-unix.c (unix_set_window_size):
+	* process-unix.c (unix_reap_exited_processes):
+	* process-unix.c (unix_deactivate_process):
+	* process-unix.c (unix_kill_child_process):
+	* process.c:
+	* process.c (mark_process):
+	* process.c (get_process_streams):
+	* process.c (get_process_from_usid):
+	* process.c (get_process_selected_p):
+	* process.c (set_process_selected_p):
+	* process.c (make_process_internal):
+	* process.c (init_process_io_handles):
+	* process.c (create_process):
+	* process.c (Fstart_process_internal):
+	* process.c (Fopen_multicast_group_internal):
+	* process.c (process_setup_for_insertion):
+	* process.c (read_process_output):
+	* process.c (Fset_process_stderr_buffer):
+	* process.c (Fprocess_stderr_mark):
+	* process.c (set_process_filter):
+	* process.c (Fset_process_filter):
+	* process.c (Fset_process_stderr_filter):
+	* process.c (Fprocess_stderr_filter):
+	* process.c (exec_sentinel_unwind):
+	* process.c (exec_sentinel):
+	* process.c (status_notify):
+	* process.c (Fprocess_send_eof):
+	* process.c (deactivate_process):
+	* process.c (syms_of_process):
+	* process.c (vars_of_process):
+	* process.h:
+	* procimpl.h:
+	* procimpl.h (struct process_methods):
+	* procimpl.h (struct Lisp_Process):
+	* procimpl.h (DATA_ERRSTREAM):
+	Rewrite the process methods to handle a separate channel for
+	error input.  Create Lstreams for reading in the error channel.
+	Many process methods need change.  In general the changes are
+	fairly clear as they involve duplicating what's used for reading
+	the normal stdout and changing for stderr -- although tedious,
+	as such changes are required throughout the entire process code.
+	Rewrote the code that reads process output to do two loops, one
+	for stdout and one for stderr.
+	
+	* gpmevent.c (get_process_infd):
+	* gpmevent.c (Fgpm_enable):
+	* tooltalk.c:
+	* tooltalk.c (init_tooltalk):
+        set_process_filter takes an argument for stderr.
+
+	================================================================
+                          NEW ERROR-TRAPPING MECHANISM
+	================================================================
+
+        Totally rewrite error trapping code to be unified and support more
+        features.  Basic function is call_trapping_problems(), which lets
+	you specify, by means of flags, what sorts of problems you want
+	trapped.  these can include
+
+	-- quit
+	-- errors
+	-- throws past the function
+	-- creation of "display objects" (e.g. buffers)
+	-- deletion of already-existing "display objects" (e.g. buffers)
+	-- modification of already-existing buffers
+	-- entering the debugger
+	-- gc
+	-- errors->warnings (ala suspended errors)
+
+	etc.  All other error funs rewritten in terms of this one.
+	Various older mechanisms removed or rewritten.
+
+	* window.c (mark_window_as_deleted):
+	* window.c (Fdelete_window):
+	* window.c (Fset_window_configuration):
+	* insdel.c (prepare_to_modify_buffer):
+	* insdel.c (buffer_insert_string_1):
+	* console.c (create_console):
+	* buffer.c (finish_init_buffer):
+	* device.c (allocate_device):
+	* device.c (Fmake_device):
+	* frame.c:
+	* frame.c (Fmake_frame):
+	* frame.c (allocate_frame_core):
+	* frame.c (setup_normal_frame):
+	* frame.c (delete_frame_internal):
+	* window.c (Fsplit_window):
+	* device.c (delete_device_internal):
+	* console.c (delete_console_internal):
+	* buffer.c (Fkill_buffer):
+	When creating a display object, added call to
+	note_object_created(), for use with trapping_problems mechanism.
+	When deleting, call check_allowed_operation() and note_object
+	deleted().
+
+	The trapping-problems code records the objects created since the
+	call-trapping-problems began.  Those objects can be deleted, but
+	none others (i.e. previously existing ones).
+
+	* bytecode.c (execute_rare_opcode):
+	* cmdloop.c:
+	* cmdloop.c (initial_command_loop):
+	* cmdloop.c (Frecursive_edit):
+	* cmdloop.c (call_command_loop):
+	internal_catch takes another arg.
+
+	* eval.c:
+        Add long comments describing the "five lists" used to maintain
+	state (backtrace, gcpro, specbind, etc.) in the Lisp engine.
+
+	* backtrace.h:
+	* eval.c (current_warning_level):
+	* eval.c (call_debugger):
+	* eval.c (signal_call_debugger):
+	* eval.c (Fwhen):
+	* eval.c (Fcatch):
+	* eval.c (internal_catch):
+	* eval.c (unwind_to_catch):
+	* eval.c (throw_or_bomb_out):
+	* eval.c (condition_bind_unwind):
+	* eval.c (condition_case_1):
+	* eval.c (Fcall_with_condition_handler):
+	* eval.c (call_with_condition_handler):
+	* eval.c (Fsignal):
+	* eval.c (check_catchlist_sanity):
+	* eval.c (check_specbind_stack_sanity):
+	* eval.c (signal_quit):
+	* eval.c (Feval):
+	* eval.c (run_hook_list_with_args):
+	* eval.c (run_hook):
+	* eval.c (get_inhibit_flags):
+	* eval.c (check_allowed_operation):
+	* eval.c (note_object_created):
+	* eval.c (note_object_deleted):
+	* eval.c (struct call_trapping_problems):
+	* eval.c (flagged_a_squirmer):
+	* eval.c (call_trapping_problems_2):
+	* eval.c (call_trapping_problems_1):
+	* eval.c (call_trapping_problems):
+	* eval.c (struct va_call_trapping_problems):
+	* eval.c (va_call_trapping_problems_1):
+	* eval.c (va_call_trapping_problems):
+	* eval.c (call_with_suspended_errors):
+	* eval.c (struct calln_trapping_problems):
+	* eval.c (calln_trapping_problems_1):
+	* eval.c (calln_trapping_problems):
+	* eval.c (call1_trapping_problems):
+	* eval.c (call2_trapping_problems):
+	* eval.c (call3_trapping_problems):
+	* eval.c (call4_trapping_problems):
+	* eval.c (call5_trapping_problems):
+	* eval.c (eval_in_buffer_trapping_problems_1):
+	* eval.c (eval_in_buffer_trapping_problems):
+	* eval.c (run_hook_trapping_problems):
+	* eval.c (safe_run_hook_trapping_problems_1):
+	* eval.c (safe_run_hook_trapping_problems):
+	* eval.c (struct run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (run_hook_with_args_in_buffer_trapping_problems_1):
+	* eval.c (run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (va_run_hook_with_args_trapping_problems):
+	* eval.c (va_run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (reinit_vars_of_eval):
+	* eval.c (vars_of_eval):
+	Implement trapping-problems mechanism, eliminate old mechanisms or
+	redo in terms of new one.
+
+	* frame.c (enter_redisplay_critical_section):
+	* frame.c (exit_redisplay_critical_section):
+	* gutter.c (redraw_exposed_gutters):
+	* gutter.c (Fset_default_gutter_position):
+	* gutter.c (Fredisplay_gutter_area):
+	Flush out the concept of "critical display section", defined by
+	the in_display() var.  Use an internal_bind() to get it reset,
+	rather than just doing it at end, because there may be a non-local
+	exit.
+
+	* event-msw.c (struct mswindows_protect_modal_loop):
+	* event-msw.c (mswindows_protect_modal_loop_1):
+	* event-msw.c (mswindows_protect_modal_loop):
+	* event-msw.c (mswindows_unmodalize_signal_maybe):
+	* event-msw.c (mswindows_pump_outstanding_events):
+	* event-msw.c (mswindows_need_event):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-msw.c:
+	* event-msw.c (vars_of_event_mswindows):
+	* event-msw.c (struct ntpipe_slurp_stream_shared_data):
+	* event-msw.c (struct ntpipe_shove_stream):
+	* event-stream.c (pre_command_hook):
+	* event-stream.c (post_command_hook):
+	* event-stream.c (vars_of_event_stream):
+	* event-stream.c (run_pre_idle_hook):
+	* console-msw.h:
+	* device.c (call_critical_lisp_code): Rewrite.
+	* dialog-msw.c (dialog_proc):
+	* frame.c (adjust_frame_size):
+	* frame.h:
+	* intl.c (init_intl):
+	* toolbar.c (Fset_default_toolbar_position):
+	* toolbar.c (update_toolbar_button):
+	* menubar-msw.c (unsafe_handle_wm_initmenu_1):
+	* menubar-msw.c (mswindows_handle_wm_initmenupopup):
+	* menubar-msw.c (mswindows_handle_wm_initmenu):
+	* redisplay.c:
+	* redisplay.c (call_redisplay_end_triggers):
+	* redisplay.c (redisplay_frame):
+	* redisplay.c (redisplay_no_pre_idle_hook):
+	* redisplay.c (eval_within_redisplay):
+	* redisplay.c (Fredisplay_echo_area):
+	* alloc.c (garbage_collect_1):
+	* menubar-x.c:
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	* menubar-x.c (struct menu_item_descriptor_to_widget_value):
+	* menubar-x.c (protected_menu_item_descriptor_to_widget_value_1):
+	* menubar-x.c (protected_menu_item_descriptor_to_widget_value):
+	* menubar-x.c (pre_activate_callback):
+	Make use of new trapping-errors stuff and rewrite code based on
+	old mechanisms.
+
+	* glyphs-widget.c (widget_query_geometry):
+	* glyphs-widget.c (layout_query_geometry):
+	* redisplay.h:
+        Protect calling Lisp in redisplay.
+
+	* insdel.c (signal_first_change):
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+        Protect hooks against deleting existing buffers.
+
+	* frame-msw.c (mswindows_init_frame_1):
+	Use EQ, not EQUAL in hash tables whose keys are just numbers.
+	Otherwise we run into stickiness in redisplay because
+	internal_equal() can QUIT.
+
+	================================================================
+                               SIGNAL, C-G CHANGES
+	================================================================
+
+	Here we change the way that C-g interacts with event reading.  The
+	idea is that a C-g occurring while we're reading a user event
+	should be read as C-g, but elsewhere should be a QUIT.  The former
+	code did all sorts of bizarreness -- requiring that no QUIT occurs
+	anywhere in event-reading code (impossible to enforce given the
+	stuff called or Lisp code invoked), and having some weird system
+	involving enqueue/dequeue of a C-g and interaction with Vquit_flag
+	-- and it didn't work.
+
+ 	Now, we simply enclose all code where we want C-g read as an event
+	with {begin/end}_dont_check_for_quit().  This completely turns off
+	the mechanism that checks (and may remove or alter) C-g in the
+	read-ahead queues, so we just get the C-g normal.
+
+	Signal.c documents this very carefully.
+	
+	* cmdloop.c (Fcommand_loop_1):
+        Correct use of dont_check_for_quit to new scheme, remove old
+        out-of-date comments.
+
+	* event-stream.c (maybe_echo_keys):
+	* event-stream.c (enqueue_command_event_1):
+	* event-stream.c (next_event_internal):
+	* event-stream.c (Fnext_event):
+	* event-stream.c (Fnext_command_event):
+	* event-stream.c (Fdispatch_non_command_events):
+	* event-stream.c (Fdiscard_input):
+	* event-stream.c (Fsleep_for):
+	* event-stream.c (Fsit_for):
+	* event-stream.c (wait_delaying_user_input):
+	* event-stream.c (execute_internal_event):
+	* event-stream.c (lookup_command_event):
+	* event-stream.c (Fread_key_sequence):
+	* event-stream.c:
+	* event-stream.c (event_stream_next_event):
+	 Fix C-g handling to actually work.
+	
+	* device-x.c (get_device_from_display):
+	* device-x.c (x_error_handler):
+	* device-x.c (x_IO_error_handler):
+	Disable quit checking when err out.
+
+	* signal.c:
+	* signal.c (handle_async_timeout_signal):
+	* signal.c (check_what_happened):
+	* signal.c (begin_dont_check_for_quit):
+	* signal.c (check_quit):
+        Cleanup.  Add large descriptive comment.
+
+	* process-unix.c (unix_open_network_stream):
+	* process-unix.c (unix_open_multicast_group):
+	* process-nt.c (nt_open_network_stream):
+	* sysdep.c (retry_read_1):
+	* sysdep.c (retry_write_1):
+        Use QUIT instead of REALLY_QUIT.
+        It's not necessary to use REALLY_QUIT and just confuses the issue.
+
+	* lisp.h (INTERNAL_QUITP): Comment quit handlers.
+
+	================================================================
+                                 CONS CHANGES
+	================================================================
+
+	free_cons() now takes a Lisp_Object not the result of XCONS().
+	car and cdr have been renamed so that they don't get used directly;
+	go through XCAR(), XCDR() instead.
+	
+	* alloc.c (Fcons):
+	* alloc.c (free_cons):
+	* alloc.c (free_list):
+	* alloc.c (free_alist):
+	* dired.c (file_name_completion_unwind):
+	* dired.c (user_name_completion_unwind):
+	* editfns.c (save_excursion_save):
+	* editfns.c (save_excursion_restore):
+	* editfns.c (save_restriction_restore):
+	* emodules.c (module_load_unwind):
+	* fns.c:
+	* fns.c (delq_no_quit_and_free_cons):
+	* fns.c (merge_pred_function):
+	* fns.c (tweaked_internal_equal):
+	* glyphs-msw.c (extract_xpm_color_names):
+	* glyphs-x.c (extract_xpm_color_names):
+	* glyphs.c (image_instantiate_cache_result):
+	* glyphs.c (image_instance_changed):
+	* keymap.c (traverse_keymaps):
+	* minibuf.c (read_minibuffer_internal_unwind):
+	* search.c (free_created_dynarrs):
+	* eval.c (specbind_unwind_local):
+	* lread.c (various):
+	* lisp.h (struct Lisp_Cons):
+	* lisp.h (cons_car):
+        Correct free_cons calling convention: now takes Lisp_Object,
+        not Lisp_Cons
+	
+	* chartab.c (word_boundary_p):
+        Eliminate direct use of ->car, ->cdr, should be black box.
+
+
+	* callint.c (quotify_args):
+        Rewrote using EXTERNAL_LIST_LOOP to avoid use of Lisp_Cons.
+
+	================================================================
+                           USE INTERNAL-BIND-*
+	================================================================
+	
+	* eval.c (restore_lisp_object):
+	* eval.c (restore_int):
+	Cleanups of these funs.
+
+	* alloc.c (begin_gc_forbidden):
+	* fileio.c:
+	* fileio.c (close_file_unwind):
+	* fileio.c (Fdo_auto_save):
+	* undo.c:
+	* undo.c (Fprimitive_undo):
+	* specifier.c:
+	* specifier.c (unlock_ghost_specifiers_protected):
+	* specifier.c (set_specifier_caching):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* profile.c (struct get_profiling_info_closure):
+	* profile.c (Fget_profiling_info):
+	* lread.c:
+	* lread.c (load_unwind):
+	* lread.c (Fload_internal):
+	* lread.c (read0):
+	* lread.c (read1):
+	* lread.c (read_list_conser):
+	* lread.c (read_vector):
+	* lread.c (read_compiled_function):
+	* redisplay.c (Fredraw_frame):
+	* redisplay.c (Fredisplay_frame):
+	* redisplay.c (Fredraw_device):
+	* redisplay.c (Note): New.
+	* redisplay.c (Fredisplay_device):
+	* redisplay.c (redisplay_without_hooks):
+	* menubar-x.c (pre_activate_callback):
+	* macros.c (Fexecute_kbd_macro):
+        Rewrote to use internal_bind_int() and internal_bind_lisp_object()
+	in place of whatever varied and cumbersome mechanisms were
+	formerly there.
+
+
+	================================================================
+                                SPECBIND SANITY   
+	================================================================
+
+	* backtrace.h:
+        - Improved comments
+
+	* backtrace.h (SPECBIND):
+	* backtrace.h (SPECBIND_FAST_UNSAFE):
+	* backtrace.h (UNBIND_TO_GCPRO):
+	* backtrace.h (UNBIND_TO):
+	* backtrace.h (UNBIND_TO_GCPRO_VARIABLES_ONLY):
+	* bytecode.c (execute_optimized_program):
+	* eval.c (grow_specpdl):
+	* eval.c (specbind):
+	* eval.c (specbind_magic):
+	* eval.c (record_unwind_protect):
+	* eval.c (unbind_to_1):
+	* eval.c (unbind_to_hairy):
+        Add new mechanism check_specbind_stack_sanity() for sanity
+	checking code each time the catchlist or specbind stack change.
+	Removed older prototype of same mechanism.
+
+	================================================================
+                                    MISC   
+	================================================================
+
+	* lisp.h:
+	* insdel.c:
+	* window.c:
+	* device.c:
+	* console.c:
+	* buffer.c:
+	 Fleshed out authorship.
+
+	* device-msw.c (mswindows_handle_page_setup_dialog_box):
+	Correct bad Unicode-ization.
+
+	* print.c (debug_print_no_newline):
+	* print.c (debug_backtrace):
+        Be more careful when not initialized or in fatal error handling.
+
+	* search.c (looking_at_1):
+	* search.c (string_match_1):
+	* search.c (search_buffer):
+	* search.c (Fstore_match_data):
+        Eliminate running_asynch_code, an FSF holdover.
+
+	* alloc.c (vars_of_alloc):
+	* alloc.c:
+	Added comments about gc-cons-threshold.
+
+	* dialog-x.c:
+	* dialog-x.c (dbox_descriptor_to_widget_value):
+	Use begin_gc_forbidden() around code to build up a widget value
+	tree, like in menubar-x.c.
+
+	* gui.c (gui_item_id_hash): Use Qunbound not Qnil as the default for
+	gethash.
+
+	* lisp-disunion.h:
+	* lisp-union.h:
+        Added warnings on use of VOID_TO_LISP().
+
+	* lisp.h:
+	Use ERROR_CHECK_STRUCTURES to turn on
+	ERROR_CHECK_TRAPPING_PROBLEMS and ERROR_CHECK_TYPECHECK
+
+	* lisp.h (assert_with_message):
+	Add assert_with_message.
+	
+	* lisp.h (GCPRO1_ARRAY):
+	* lisp.h (NGCPRO1_ARRAY):
+	* lisp.h (NNGCPRO1_ARRAY):
+	Add macros for gcproing entire arrays. (You could do this before
+	but it required manual twiddling the gcpro structure.)
+	
+	* lisp.h:
+        Add prototypes for new functions defined elsewhere.
+
 2002-05-23  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (objs):
@@ -1610,7 +2162,7 @@
 
 	Also fix warning in sysdep.c.
 
-	2002-03-31  Ben Wing  <ben@xemacs.org>
+2002-03-31  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
 	* alloc.c (INCREMENT_CONS_COUNTER):

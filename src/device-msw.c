@@ -871,12 +871,12 @@ mswindows_handle_page_setup_dialog_box (struct frame *f, Lisp_Object keys)
   {
     Lisp_Devmode *ldm = decode_devmode (device);
     PAGESETUPDLGW pd;
-    TCHAR measure[2*MAX_XETCHAR_SIZE];
+    Extbyte measure[2 * MAX_XETCHAR_SIZE];
     int data;
 
     qxeGetLocaleInfo (LOCALE_USER_DEFAULT, LOCALE_IMEASURE,
-		      measure, sizeof (measure)/MAX_XETCHAR_SIZE);
-    data = qxestrcmp (measure, XETEXT ("0"));
+		      measure, sizeof (measure) / XETCHAR_SIZE);
+    data = xetcscmp (measure, XETEXT ("0"));
 
     memset (&pd, 0, sizeof (pd));
     pd.lStructSize = sizeof (pd);

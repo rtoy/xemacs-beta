@@ -51,6 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #include "file-coding.h"
 
 #include <setjmp.h>
+#include "sysdir.h"
 #include "sysfile.h"
 #include "sysproc.h"
 #include "systime.h"
@@ -77,6 +78,9 @@ struct unix_process_data
   int connected_via_filedesc_p;
   /* Descriptor by which we read from this process.  -1 for dead process */
   int infd;
+  /* Descriptor by which we read stderr from this process.  -1 for
+     dead process */
+  int errfd;
   /* Descriptor for the tty which this process is using.
      -1 if we didn't record it (on some systems, there's no need).  */
   int subtty;
@@ -86,7 +90,7 @@ struct unix_process_data
   char pty_flag;
 };
 
-#define UNIX_DATA(p) ((struct unix_process_data*)((p)->process_data))
+#define UNIX_DATA(p) ((struct unix_process_data*) ((p)->process_data))
 
 
 
@@ -126,17 +130,18 @@ close_descriptor_pair (int in, int out)
    to get rid of irrelevant descriptors.  */
 
 static int
-close_process_descs_mapfun (const void* key, void* contents, void* arg)
+close_process_descs_mapfun (const void *key, void *contents, void *arg)
 {
-  Lisp_Object proc;
-  proc = VOID_TO_LISP (contents);
-  event_stream_delete_stream_pair (XPROCESS(proc)->pipe_instream,
-				   XPROCESS(proc)->pipe_outstream);
+  Lisp_Object proc = VOID_TO_LISP (contents);
+  USID vaffan, culo;
+
+  event_stream_delete_io_streams (XPROCESS (proc)->pipe_instream,
+				  XPROCESS (proc)->pipe_outstream,
+				  XPROCESS (proc)->pipe_errstream,
+				  &vaffan, &culo);
   return 0;
 }
 
-/* #### This function is currently called from child_setup
-   in callproc.c. It should become static though - kkm */
 void
 close_process_descs (void)
 {
@@ -186,11 +191,11 @@ connect_to_file_descriptor (Lisp_Object name, Lisp_Object buffer,
 
   XPROCESS (proc)->pid = Fcons (infd, name);
   XPROCESS (proc)->buffer = buffer;
-  init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)XINT (outfd),
-			   0);
+  init_process_io_handles (XPROCESS (proc), (void *) inch,
+			   (void *) XINT (outfd), (void *) -1, 0);
   UNIX_DATA (XPROCESS (proc))->connected_via_filedesc_p = 1;
 
-  event_stream_select_process (XPROCESS (proc));
+  event_stream_select_process (XPROCESS (proc), 1, 1);
 
   return proc;
 }
@@ -512,7 +517,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 #endif /* !USE_GETADDRINFO */
 
 static void
-set_socket_nonblocking_maybe (int fd, int port, const char* proto)
+set_socket_nonblocking_maybe (int fd, int port, const char *proto)
 {
 #ifdef PROCESS_IO_BLOCKING
   Lisp_Object tail;
@@ -720,17 +725,18 @@ static int
 process_signal_char (int tty_fd, int signo)
 {
   /* If it's not a tty, pray that these default values work */
-  if (! isatty (tty_fd)) {
+  if (! isatty (tty_fd))
+    {
 #define CNTL(ch) (037 & (ch))
-    switch (signo)
-      {
-      case SIGINT:  return CNTL ('C');
-      case SIGQUIT: return CNTL ('\\');
+      switch (signo)
+	{
+	case SIGINT:  return CNTL ('C');
+	case SIGQUIT: return CNTL ('\\');
 #ifdef SIGTSTP
-      case SIGTSTP: return CNTL ('Z');
+	case SIGTSTP: return CNTL ('Z');
 #endif
-      }
-  }
+	}
+    }
 
 #ifdef HAVE_TERMIOS
   /* TERMIOS is the latest and bestest, and seems most likely to work.
@@ -805,6 +811,7 @@ unix_alloc_process_data (Lisp_Process *p)
 
   UNIX_DATA(p)->connected_via_filedesc_p = 0;
   UNIX_DATA(p)->infd   = -1;
+  UNIX_DATA(p)->errfd  = -1;
   UNIX_DATA(p)->subtty = -1;
   UNIX_DATA(p)->tty_name = Qnil;
   UNIX_DATA(p)->pty_flag = 0;
@@ -843,9 +850,197 @@ unix_init_process (void)
  */
 
 static void
-unix_init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
+unix_init_process_io_handles (Lisp_Process *p, void *in, void *out, void *err,
+			      int flags)
 {
-  UNIX_DATA(p)->infd = (int)in;
+  UNIX_DATA(p)->infd = (int) in;
+  UNIX_DATA(p)->errfd = (int) err;
+}
+
+/* Move the file descriptor FD so that its number is not less than MIN. *
+   The original file descriptor remains open.  */
+static int
+relocate_fd (int fd, int min)
+{
+  if (fd >= min)
+    return fd;
+  else
+    {
+      int newfd = dup (fd);
+      if (newfd == -1)
+	{
+	  Intbyte *errmess;
+	  GET_STRERROR (errmess, errno);
+	  stderr_out ("Error while setting up child: %s\n", errmess);
+	  _exit (1);
+	}
+      return relocate_fd (newfd, min);
+    }
+}
+
+/* This is the last thing run in a newly forked inferior process.
+   Copy descriptors IN, OUT and ERR
+   as descriptors STDIN_FILENO, STDOUT_FILENO, and STDERR_FILENO.
+   Initialize inferior's priority, pgrp, connected dir and environment.
+   then exec another program based on new_argv.
+
+   XEmacs: We've removed the SET_PGRP argument because it's already
+   done by the callers of child_setup.
+
+   CURRENT_DIR is an elisp string giving the path of the current
+   directory the subprocess should have.  Since we can't really signal
+   a decent error from within the child (#### not quite correct in
+   XEmacs?), this should be verified as an executable directory by the
+   parent.  */
+
+static void
+child_setup (int in, int out, int err, Intbyte **new_argv,
+	     Lisp_Object current_dir)
+{
+  Intbyte **env;
+  Intbyte *pwd;
+
+#ifdef SET_EMACS_PRIORITY
+  if (emacs_priority != 0)
+    nice (- emacs_priority);
+#endif
+
+#if !defined (NO_SUBPROCESSES)
+  /* Close Emacs's descriptors that this process should not have.  */
+  close_process_descs ();
+#endif /* not NO_SUBPROCESSES */
+  close_load_descs ();
+
+  /* [[Note that use of alloca is always safe here.  It's obvious for systems
+     that do not have true vfork or that have true (stack) alloca.
+     If using vfork and C_ALLOCA it is safe because that changes
+     the superior's static variables as if the superior had done alloca
+     and will be cleaned up in the usual way.]] -- irrelevant because
+     XEmacs does not use vfork. */
+  {
+    REGISTER Bytecount i;
+
+    i = XSTRING_LENGTH (current_dir);
+    pwd = alloca_array (Intbyte, i + 6);
+    memcpy (pwd, "PWD=", 4);
+    memcpy (pwd + 4, XSTRING_DATA (current_dir), i);
+    i += 4;
+    if (!IS_DIRECTORY_SEP (pwd[i - 1]))
+      pwd[i++] = DIRECTORY_SEP;
+    pwd[i] = 0;
+
+    /* [[We can't signal an Elisp error here; we're in a vfork.  Since
+       the callers check the current directory before forking, this
+       should only return an error if the directory's permissions
+       are changed between the check and this chdir, but we should
+       at least check.]] -- irrelevant because XEmacs does not use vfork. */
+    if (qxe_chdir (pwd + 4) < 0)
+      {
+	/* Don't report the chdir error, or ange-ftp.el doesn't work. */
+	/* (FSFmacs does _exit (errno) here.) */
+	pwd = 0;
+      }
+    else
+      {
+	/* Strip trailing "/".  Cretinous *[]&@$#^%@#$% Un*x */
+	/* leave "//" (from FSF) */
+	while (i > 6 && IS_DIRECTORY_SEP (pwd[i - 1]))
+	  pwd[--i] = 0;
+      }
+  }
+
+  /* Set `env' to a vector of the strings in Vprocess_environment.  */
+  /* + 2 to include PWD and terminating 0.  */
+  env = alloca_array (Intbyte *, XINT (Flength (Vprocess_environment)) + 2);
+  {
+    REGISTER Lisp_Object tail;
+    Intbyte **new_env = env;
+
+    /* If we have a PWD envvar and we know the real current directory,
+       pass one down, but with corrected value.  */
+    if (pwd && egetenv ("PWD"))
+      *new_env++ = pwd;
+
+    /* Copy the Vprocess_environment strings into new_env.  */
+    for (tail = Vprocess_environment;
+	 CONSP (tail) && STRINGP (XCAR (tail));
+	 tail = XCDR (tail))
+      {
+      Intbyte **ep = env;
+      Intbyte *envvar = XSTRING_DATA (XCAR (tail));
+
+      /* See if envvar duplicates any string already in the env.
+	 If so, don't put it in.
+	 When an env var has multiple definitions,
+	 we keep the definition that comes first in process-environment.  */
+      for (; ep != new_env; ep++)
+	{
+	  Intbyte *p = *ep, *q = envvar;
+	  while (1)
+	    {
+	      if (*q == 0)
+		/* The string is malformed; might as well drop it.  */
+		goto duplicate;
+	      if (*q != *p)
+		break;
+	      if (*q == '=')
+		goto duplicate;
+	      p++, q++;
+	    }
+	}
+      if (pwd && !qxestrncmp ((Intbyte *) "PWD=", envvar, 4))
+	{
+	  *new_env++ = pwd;
+	  pwd = 0;
+	}
+      else
+        *new_env++ = envvar;
+
+    duplicate: ;
+    }
+
+    *new_env = 0;
+  }
+
+  /* Make sure that in, out, and err are not actually already in
+     descriptors zero, one, or two; this could happen if Emacs is
+     started with its standard in, out, or error closed, as might
+     happen under X.  */
+  in  = relocate_fd (in,  3);
+  out = relocate_fd (out, 3);
+  err = relocate_fd (err, 3);
+
+  /* Set the standard input/output channels of the new process.  */
+  retry_close (STDIN_FILENO);
+  retry_close (STDOUT_FILENO);
+  retry_close (STDERR_FILENO);
+
+  dup2 (in,  STDIN_FILENO);
+  dup2 (out, STDOUT_FILENO);
+  dup2 (err, STDERR_FILENO);
+
+  retry_close (in);
+  retry_close (out);
+  retry_close (err);
+
+  /* I can't think of any reason why child processes need any more
+     than the standard 3 file descriptors.  It would be cleaner to
+     close just the ones that need to be, but the following brute
+     force approach is certainly effective, and not too slow.
+
+     #### Who the hell added this?  We already close the descriptors
+     by using close_process_descs()!!! --ben */
+  {
+    int fd;
+    for (fd = 3; fd <= 64; fd++)
+      retry_close (fd);
+  }
+
+  /* we've wrapped execve; it translates its arguments */
+  qxe_execve (new_argv[0], new_argv, env);
+
+  stdout_out ("Can't exec program %s\n", new_argv[0]);
+  _exit (1);
 }
 
 /*
@@ -861,14 +1056,17 @@ unix_init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
 static int
 unix_create_process (Lisp_Process *p,
 		     Lisp_Object *argv, int nargv,
-		     Lisp_Object program, Lisp_Object cur_dir)
+		     Lisp_Object program, Lisp_Object cur_dir,
+		     int separate_err)
 {
   int pid;
   int inchannel  = -1;
   int outchannel = -1;
+  int errchannel = -1;
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   volatile int forkin   = -1;
   volatile int forkout  = -1;
+  volatile int forkerr  = -1;
   volatile int pty_flag = 0;
 
   if (!NILP (Vprocess_connection_type))
@@ -887,24 +1085,34 @@ unix_create_process (Lisp_Process *p,
 #if !defined(USG)
       /* On USG systems it does not work to open the pty's tty here
 	 and then close and reopen it in the child.  */
-#ifdef O_NOCTTY
+# ifdef O_NOCTTY
       /* Don't let this terminal become our controlling terminal
 	 (in case we don't have one).  */
       forkout = forkin = qxe_open (pty_name,
 				   O_RDWR | O_NOCTTY | OPEN_BINARY, 0);
-#else
+# else
       forkout = forkin = qxe_open (pty_name, O_RDWR | OPEN_BINARY, 0);
-#endif
+# endif
       if (forkin < 0)
 	goto io_failure;
 #endif /* not USG */
-      UNIX_DATA(p)->pty_flag = pty_flag = 1;
+      UNIX_DATA (p)->pty_flag = pty_flag = 1;
     }
   else
     if (create_bidirectional_pipe (&inchannel, &outchannel,
 				   &forkin, &forkout) < 0)
       goto io_failure;
 
+  if (separate_err)
+    {
+      int sv[2];
+      
+      if (pipe (sv) < 0)
+	goto io_failure;
+      forkerr = sv[1];
+      errchannel = sv[0];
+    }
+      
 #if 0
   /* Replaced by close_process_descs */
   set_exclusive_use (inchannel);
@@ -912,13 +1120,16 @@ unix_create_process (Lisp_Process *p,
 #endif
 
   set_descriptor_non_blocking (inchannel);
+  if (errchannel >= 0)
+    set_descriptor_non_blocking (errchannel);
 
   /* Record this as an active process, with its channels.
      As a result, child_setup will close Emacs's side of the pipes.  */
-  init_process_io_handles (p, (void*)inchannel, (void*)outchannel,
+  init_process_io_handles (p, (void *) inchannel, (void *) outchannel,
+			   (void *) errchannel,
 			   pty_flag ? STREAM_PTY_FLUSHING : 0);
   /* Record the tty descriptor used in the subprocess.  */
-  UNIX_DATA(p)->subtty = forkin;
+  UNIX_DATA (p)->subtty = forkin;
 
   {
     pid = fork ();
@@ -927,6 +1138,7 @@ unix_create_process (Lisp_Process *p,
 	/**** Now we're in the child process ****/
 	int xforkin = forkin;
 	int xforkout = forkout;
+	int xforkerr = forkerr;
 
 	/* Disconnect the current controlling terminal, pursuant to
 	   making the pty be the controlling terminal of the process.
@@ -967,11 +1179,12 @@ unix_create_process (Lisp_Process *p,
 	    /* SunOS has TIOCSCTTY but the close/open method
 	       also works. */
 
-#  if defined (USG) || !defined (TIOCSCTTY)
+#if defined (USG) || !defined (TIOCSCTTY)
 	    /* Now close the pty (if we had it open) and reopen it.
 	       This makes the pty the controlling terminal of the
 	       subprocess.  */
-	    /* I wonder if retry_close (qxe_open (pty_name, ...)) would work?  */
+	    /* I wonder if retry_close (qxe_open (pty_name, ...)) would
+	       work?  */
 	    if (xforkin >= 0)
 	      retry_close (xforkin);
 	    xforkout = xforkin = qxe_open (pty_name, O_RDWR | OPEN_BINARY, 0);
@@ -982,20 +1195,20 @@ unix_create_process (Lisp_Process *p,
 		retry_write (1, "\n", 1);
 		_exit (1);
 	      }
-#  endif /* USG or not TIOCSCTTY */
+#endif /* USG or not TIOCSCTTY */
 
 	    /* Miscellaneous setup required for some systems.
                Must be done before using tc* functions on xforkin.
                This guarantees that isatty(xforkin) is true. */
 
-#  if defined (HAVE_ISASTREAM) && defined (I_PUSH)
+#if defined (HAVE_ISASTREAM) && defined (I_PUSH)
 	    if (isastream (xforkin))
 	      {
-#    if defined (I_FIND)
-#      define stream_module_pushed(fd, module) (ioctl (fd, I_FIND, module) == 1)
-#    else
-#      define stream_module_pushed(fd, module) 0
-#    endif
+# if defined (I_FIND)
+#  define stream_module_pushed(fd, module) (ioctl (fd, I_FIND, module) == 1)
+# else
+#  define stream_module_pushed(fd, module) 0
+# endif
 		if (! stream_module_pushed (xforkin, "ptem"))
 		  ioctl (xforkin, I_PUSH, "ptem");
 		if (! stream_module_pushed (xforkin, "ldterm"))
@@ -1003,18 +1216,18 @@ unix_create_process (Lisp_Process *p,
 		if (! stream_module_pushed (xforkin, "ttcompat"))
 		  ioctl (xforkin, I_PUSH, "ttcompat");
 	      }
-#  endif /* HAVE_ISASTREAM */
+#endif /* defined (HAVE_ISASTREAM) && defined (I_PUSH) */
 
-#  ifdef TIOCSCTTY
+#ifdef TIOCSCTTY
 	    /* We ignore the return value
 	       because faith@cs.unc.edu says that is necessary on Linux.  */
             assert (isatty (xforkin));
 	    ioctl (xforkin, TIOCSCTTY, 0);
-#  endif /* TIOCSCTTY */
+#endif /* TIOCSCTTY */
 
 	    /* Change the line discipline. */
 
-# if defined (HAVE_TERMIOS) && defined (LDISC1)
+#if defined (HAVE_TERMIOS) && defined (LDISC1)
 	    {
 	      struct termios t;
               assert (isatty (xforkin));
@@ -1023,7 +1236,7 @@ unix_create_process (Lisp_Process *p,
 	      if (tcsetattr (xforkin, TCSANOW, &t) < 0)
 		perror ("create_process/tcsetattr LDISC1 failed\n");
 	    }
-# elif defined (NTTYDISC) && defined (TIOCSETD)
+#elif defined (NTTYDISC) && defined (TIOCSETD)
 	    {
 	      /* Use new line discipline.  TIOCSETD is accepted and
                  ignored on Sys5.4 systems with ttcompat. */
@@ -1031,7 +1244,7 @@ unix_create_process (Lisp_Process *p,
               assert (isatty (xforkin));
 	      ioctl (xforkin, TIOCSETD, &ldisc);
 	    }
-# endif /* TIOCSETD & NTTYDISC */
+#endif /* TIOCSETD & NTTYDISC */
 
 	    /* Make our process group be the foreground group
 	       of our new controlling terminal. */
@@ -1071,7 +1284,8 @@ unix_create_process (Lisp_Process *p,
 	    }
 	  new_argv[i + 1] = 0;
 
-	  child_setup (xforkin, xforkout, xforkout, new_argv, cur_dir);
+	  child_setup (xforkin, xforkout, separate_err ? xforkerr : xforkout,
+		       new_argv, cur_dir);
 	}
 
       } /**** End of child code ****/
@@ -1081,15 +1295,20 @@ unix_create_process (Lisp_Process *p,
 
   if (pid < 0)
     {
+      /* Note: The caller set up an unwind-protect to automatically delete
+	 the process if we fail.  This will correctly deselect and close
+	 inchannel, outchannel, and errchannel. */
       int save_errno = errno;
       close_descriptor_pair (forkin, forkout);
+      if (separate_err)
+	retry_close (forkerr);
       errno = save_errno;
       report_process_error ("Doing fork", Qunbound);
     }
 
   /* #### dmoore - why is this commented out, otherwise we leave
      subtty = forkin, but then we close forkin just below. */
-  /* UNIX_DATA(p)->subtty = -1; */
+  /* UNIX_DATA (p)->subtty = -1; */
 
   /* If the subfork execv fails, and it exits,
      this close hangs.  I don't know why.
@@ -1098,6 +1317,8 @@ unix_create_process (Lisp_Process *p,
     close_safely (forkin);
   if (forkin != forkout && forkout >= 0)
     retry_close (forkout);
+  if (separate_err)
+    retry_close (forkerr);
 
   UNIX_DATA (p)->tty_name = pty_flag ? build_intstring (pty_name) : Qnil;
 
@@ -1108,11 +1329,12 @@ unix_create_process (Lisp_Process *p,
      we're waiting for an event, when status_notify() is called). */
   return pid;
 
-io_failure:
+ io_failure:
   {
     int save_errno = errno;
     close_descriptor_pair (forkin, forkout);
     close_descriptor_pair (inchannel, outchannel);
+    close_descriptor_pair (forkerr, errchannel);
     errno = save_errno;
     report_process_error ("Opening pty or pipe", Qunbound);
     RETURN_NOT_REACHED (0)
@@ -1124,15 +1346,15 @@ io_failure:
 static int
 unix_tooltalk_connection_p (Lisp_Process *p)
 {
-  return UNIX_DATA(p)->connected_via_filedesc_p;
+  return UNIX_DATA (p)->connected_via_filedesc_p;
 }
 
 /* This is called to set process' virtual terminal size */
 
 static int
-unix_set_window_size (Lisp_Process* p, int cols, int rows)
+unix_set_window_size (Lisp_Process *p, int cols, int rows)
 {
-  return set_window_size (UNIX_DATA(p)->infd, cols, rows);
+  return set_window_size (UNIX_DATA (p)->infd, cols, rows);
 }
 
 /*
@@ -1145,7 +1367,7 @@ unix_set_window_size (Lisp_Process* p, int cols, int rows)
 
 #ifdef HAVE_WAITPID
 static void
-unix_update_status_if_terminated (Lisp_Process* p)
+unix_update_status_if_terminated (Lisp_Process *p)
 {
   int w;
 #ifdef SIGCHLD
@@ -1182,7 +1404,7 @@ unix_reap_exited_processes (void)
       return;
     }
 
-#ifdef  EMACS_BLOCK_SIGNAL
+#ifdef EMACS_BLOCK_SIGNAL
   EMACS_BLOCK_SIGNAL (SIGCHLD);
 #endif
   for (i = 0; i < exited_processes_index; i++)
@@ -1215,7 +1437,7 @@ unix_reap_exited_processes (void)
           /* If process has terminated, stop waiting for its output.  */
 	  if (WIFSIGNALED (w) || WIFEXITED (w))
 	    {
-	      if (!NILP(p->pipe_instream))
+	      if (!NILP (p->pipe_instream))
 		{
 		  /* We can't just call event_stream->unselect_process_cb (p)
 		     here, because that calls XtRemoveInput, which is not
@@ -1225,6 +1447,7 @@ unix_reap_exited_processes (void)
 		}
 	    }
 	}
+#ifdef NEED_SYNC_PROCESS_CODE
       else
 	{
           /* There was no asynchronous process found for that id.  Check
@@ -1242,6 +1465,7 @@ unix_reap_exited_processes (void)
 		synch_process_death = signal_name (WTERMSIG (w));
 	    }
         }
+#endif /* NEED_SYNC_PROCESS_CODE */
     }
 
   exited_processes_index = 0;
@@ -1265,7 +1489,7 @@ send_process_trap (int signum)
 }
 
 static void
-unix_send_process (Lisp_Object proc, struct lstream* lstream)
+unix_send_process (Lisp_Object proc, struct lstream *lstream)
 {
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   SIGTYPE (*volatile old_sigpipe) (int) = 0;
@@ -1381,31 +1605,34 @@ unix_process_send_eof (Lisp_Object proc)
  * inactive state.
  *
  * The return value is a unique stream ID, as returned by
- * event_stream_delete_stream_pair
+ * event_stream_delete_io_streams
  *
- * In the lack of this method, only event_stream_delete_stream_pair
+ * In the lack of this method, only event_stream_delete_io_streams
  * is called on both I/O streams of the process.
  *
  * The UNIX version guards this by ignoring possible SIGPIPE.
  */
 
-static USID
-unix_deactivate_process (Lisp_Process *p)
+static void
+unix_deactivate_process (Lisp_Process *p,
+			 USID *in_usid,
+			 USID *err_usid)
 {
   SIGTYPE (*old_sigpipe) (int) = 0;
-  USID usid;
 
   if (UNIX_DATA(p)->infd >= 0)
     flush_pending_output (UNIX_DATA(p)->infd);
+  if (UNIX_DATA(p)->errfd >= 0)
+    flush_pending_output (UNIX_DATA(p)->errfd);
 
   /* closing the outstream could result in SIGPIPE, so ignore it. */
   old_sigpipe = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, SIG_IGN);
-  usid = event_stream_delete_stream_pair (p->pipe_instream, p->pipe_outstream);
+  event_stream_delete_io_streams (p->pipe_instream, p->pipe_outstream,
+				  p->pipe_errstream, in_usid, err_usid);
   EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 
   UNIX_DATA(p)->infd  = -1;
-
-  return usid;
+  UNIX_DATA(p)->errfd  = -1;
 }
 
 /* If the subtty field of the process data is not filled in, do so now. */
@@ -1456,6 +1683,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
     case SIGQUIT:
     case SIGKILL:
       flush_pending_output (d->infd);
+      flush_pending_output (d->errfd);
       break;
     }
 
@@ -1504,10 +1732,10 @@ unix_kill_child_process (Lisp_Object proc, int signo,
       /* If possible, send signals to the entire pgrp
 	 by sending an input character to it.  */
       {
-        char sigchar = process_signal_char (d->subtty, signo);
+        Intbyte sigchar = process_signal_char (d->subtty, signo);
         if (sigchar)
 	  {
-	    send_process (proc, Qnil, (Intbyte *) &sigchar, 0, 1);
+	    send_process (proc, Qnil, &sigchar, 0, 1);
 	    return;
 	  }
       }
@@ -1785,7 +2013,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
 	    speed_up_interrupts ();
 #endif
-	    REALLY_QUIT;
+	    QUIT;
 	    /* In case something really weird happens ... */
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
 	    slow_down_interrupts ();
@@ -1920,8 +2148,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
 
 static void
 unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
-			   Lisp_Object port, Lisp_Object ttl, void** vinfd,
-			   void** voutfd)
+			   Lisp_Object port, Lisp_Object ttl, void **vinfd,
+			   void **voutfd)
 {
   struct ip_mreq imr;
   struct sockaddr_in sa;
@@ -2017,7 +2245,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       speed_up_interrupts ();
 #endif
-      REALLY_QUIT;
+      QUIT;
       /* In case something really weird happens ... */
 #ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       slow_down_interrupts ();

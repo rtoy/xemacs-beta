@@ -496,10 +496,11 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
 
 static int timeout_id_tick;
 
-struct GTK_timeout {
-    int id;
-    guint timeout_id;
-    struct GTK_timeout *next;
+struct GTK_timeout
+{
+  int id;
+  guint timeout_id;
+  struct GTK_timeout *next;
 } *pending_timeouts, *completed_timeouts;
 
 struct GTK_timeout_blocktype
@@ -526,7 +527,7 @@ gtk_timeout_callback (gpointer closure)
   /* Add this one to the list of completed timeouts */
   timeout->next = completed_timeouts;
   completed_timeouts = timeout;
-  return(FALSE);
+  return FALSE;
 }
 
 static int
@@ -685,15 +686,11 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
 	}
       filedesc_with_input[closure->fd] = closure->what;
       if (PROCESSP (closure->what))
-	{
-	  /* Don't increment this if the current process is already marked
-	   *  as having input. */
-	  process_events_occurred++;
-	}
+	/* Don't increment this if the current process is already marked
+	 *  as having input. */
+	process_events_occurred++;
       else
-	{
-	  tty_events_occurred++;
-	}
+	tty_events_occurred++;
     }
 }
 
@@ -778,39 +775,62 @@ unselect_filedesc (int fd)
 }
 
 static void
-emacs_gtk_select_process (struct Lisp_Process *p)
+emacs_gtk_select_process (Lisp_Process *process, int doin, int doerr)
 {
-  Lisp_Object process;
-  int infd = event_stream_unixoid_select_process (p);
+  Lisp_Object proc;
+  int infd, errfd;
 
-  process = wrap_process (p);
-  select_filedesc (infd, process);
+  event_stream_unixoid_select_process (process, doin, doerr, &infd, &errfd);
+
+  proc = wrap_process (process);
+  if (doin)
+    select_filedesc (infd, proc);
+  if (doerr)
+    select_filedesc (errfd, proc);
 }
 
 static void
-emacs_gtk_unselect_process (struct Lisp_Process *p)
+emacs_gtk_unselect_process (Lisp_Process *process, int doin, int doerr)
 {
-  int infd = event_stream_unixoid_unselect_process (p);
+  int infd, errfd;
 
-  unselect_filedesc (infd);
+  event_stream_unixoid_unselect_process (process, doin, doerr, &infd, &errfd);
+
+  if (doin)
+    unselect_filedesc (infd);
+  if (doerr)
+    unselect_filedesc (errfd);
 }
 
-static USID
-emacs_gtk_create_stream_pair (void* inhandle, void* outhandle,
-			      Lisp_Object* instream, Lisp_Object* outstream, int flags)
+static void
+emacs_gtk_create_io_streams (void *inhandle, void *outhandle,
+			     void *errhandle, Lisp_Object *instream,
+			     Lisp_Object *outstream,
+			     Lisp_Object *errstream,
+			     USID *in_usid,
+			     USID *err_usid,
+			     int flags)
 {
-    USID u = event_stream_unixoid_create_stream_pair
-	(inhandle, outhandle, instream, outstream, flags);
-    if (u != USID_ERROR)
-	u = USID_DONTHASH;
-    return u;
+  event_stream_unixoid_create_io_streams
+    (inhandle, outhandle, errhandle, instream, outstream,
+     errstream, in_usid, err_usid, flags);
+  if (*in_usid != USID_ERROR)
+    *in_usid = USID_DONTHASH;
+  if (*err_usid != USID_ERROR)
+    *err_usid = USID_DONTHASH;
 }
 
-static USID
-emacs_gtk_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+static void
+emacs_gtk_delete_io_streams (Lisp_Object instream,
+			     Lisp_Object outstream,
+			     Lisp_Object errstream,
+			     USID *in_usid,
+			     USID *err_usid)
 {
-  event_stream_unixoid_delete_stream_pair (instream, outstream);
-  return USID_DONTHASH;
+  event_stream_unixoid_delete_io_streams
+    (instream, outstream, errstream, in_usid, err_usid);
+  *in_usid = USID_DONTHASH;
+  *err_usid = USID_DONTHASH;
 }
 
 /* This is called from GC when a process object is about to be freed.

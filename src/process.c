@@ -28,7 +28,10 @@ Boston, MA 02111-1307, USA.  */
    the original author(s).
 
    Non-synch-subprocess stuff (mostly process environment) moved from
-   callproc.c, 4-3-02, Ben Wing. */
+   callproc.c, 4-3-02, Ben Wing.
+
+   callproc.c deleted entirely 5-23-02, Ben Wing.  Good riddance!
+*/
 
 #include <config.h>
 
@@ -101,7 +104,7 @@ static int update_tick;
 /* Nonzero means delete a process right away if it exits.  */
 int delete_exited_processes;
 
-/* Hash table which maps USIDs as returned by create_stream_pair_cb to
+/* Hash table which maps USIDs as returned by create_io_streams_cb to
    process objects. Processes are not GC-protected through this! */
 struct hash_table *usid_to_process;
 
@@ -113,6 +116,8 @@ Lisp_Object Vnull_device;
 /* Cons of coding systems used to initialize process I/O on a newly-
    created process. */
 Lisp_Object Vdefault_process_coding_system;
+/* Same for a network connection. */
+Lisp_Object Vdefault_network_coding_system;
 
 Lisp_Object Qprocess_error;
 Lisp_Object Qnetwork_error;
@@ -141,14 +146,19 @@ mark_process (Lisp_Object object)
   mark_object (process->name);
   mark_object (process->command);
   mark_object (process->filter);
+  mark_object (process->stderr_filter);
   mark_object (process->sentinel);
   mark_object (process->buffer);
   mark_object (process->mark);
+  mark_object (process->stderr_buffer);
+  mark_object (process->stderr_mark);
   mark_object (process->pid);
   mark_object (process->pipe_instream);
   mark_object (process->pipe_outstream);
+  mark_object (process->pipe_errstream);
   mark_object (process->coding_instream);
   mark_object (process->coding_outstream);
+  mark_object (process->coding_errstream);
   return process->status_symbol;
 }
 
@@ -215,15 +225,20 @@ DEFINE_LRECORD_IMPLEMENTATION ("process", process,
 /* This function returns low-level streams, connected directly to the child
    process, rather than en/decoding streams */
 void
-get_process_streams (Lisp_Process *p, Lisp_Object *instr, Lisp_Object *outstr)
+get_process_streams (Lisp_Process *p, Lisp_Object *instr, Lisp_Object *outstr,
+		     Lisp_Object *errstr)
 {
   assert (p);
-  assert (NILP (p->pipe_instream) || LSTREAMP(p->pipe_instream));
-  assert (NILP (p->pipe_outstream) || LSTREAMP(p->pipe_outstream));
+  assert (NILP (p->pipe_instream) || LSTREAMP (p->pipe_instream));
+  assert (NILP (p->pipe_outstream) || LSTREAMP (p->pipe_outstream));
+  assert (NILP (p->pipe_errstream) || LSTREAMP (p->pipe_errstream));
   *instr = p->pipe_instream;
   *outstr = p->pipe_outstream;
+  *errstr = p->pipe_errstream;
 }
 
+/* Given a USID referring to either a process's instream or errstream,
+   return the associated process. */
 Lisp_Process *
 get_process_from_usid (USID usid)
 {
@@ -242,15 +257,16 @@ get_process_from_usid (USID usid)
 }
 
 int
-get_process_selected_p (Lisp_Process *p)
+get_process_selected_p (Lisp_Process *p, int do_err)
 {
-  return p->selected;
+  return do_err ? p->err_selected : p->in_selected;
 }
 
 void
-set_process_selected_p (Lisp_Process *p, int selected_p)
+set_process_selected_p (Lisp_Process *p, int in_selected, int err_selected)
 {
-  p->selected = !!selected_p;
+  p->in_selected = !!in_selected;
+  p->err_selected = !!err_selected;
 }
 
 int
@@ -466,22 +482,29 @@ make_process_internal (Lisp_Object name)
 
   p->command  = Qnil;
   p->filter   = Qnil;
+  p->stderr_filter   = Qnil;
   p->sentinel = Qnil;
   p->buffer   = Qnil;
   p->mark = Fmake_marker ();
+  p->stderr_buffer   = Qnil;
+  p->stderr_mark = Fmake_marker ();
   p->pid = Qnil;
   p->status_symbol = Qrun;
   p->exit_code = 0;
   p->core_dumped = 0;
   p->filter_does_read = 0;
   p->kill_without_query = 0;
-  p->selected = 0;
+  p->separate_stderr = 0;
+  p->in_selected = 0;
+  p->err_selected = 0;
   p->tick = 0;
   p->update_tick = 0;
   p->pipe_instream  = Qnil;
   p->pipe_outstream = Qnil;
+  p->pipe_errstream = Qnil;
   p->coding_instream  = Qnil;
   p->coding_outstream = Qnil;
+  p->coding_errstream = Qnil;
 
   p->process_data = 0;
   MAYBE_PROCMETH (alloc_process_data, (p));
@@ -493,19 +516,34 @@ make_process_internal (Lisp_Object name)
 }
 
 void
-init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
+init_process_io_handles (Lisp_Process *p, void* in, void* out, void* err,
+			 int flags)
 {
-  USID usid;
+  USID in_usid, err_usid;
   Lisp_Object incode, outcode;
 
-  if (!CONSP (Vdefault_process_coding_system) ||
-      NILP (incode = (find_coding_system_for_text_file
-		      (Fcar (Vdefault_process_coding_system), 1))) ||
-      NILP (outcode = (find_coding_system_for_text_file
-		       (Fcdr (Vdefault_process_coding_system), 0))))
-    signal_error (Qinvalid_state,
-		  "Bogus value for `default-process-coding-system'",
-		  Vdefault_process_coding_system);
+  if (flags & STREAM_NETWORK_CONNECTION)
+    {
+      if (!CONSP (Vdefault_network_coding_system) ||
+	  NILP (incode = (find_coding_system_for_text_file
+			  (Fcar (Vdefault_network_coding_system), 1))) ||
+	  NILP (outcode = (find_coding_system_for_text_file
+			   (Fcdr (Vdefault_network_coding_system), 0))))
+	signal_error (Qinvalid_state,
+		      "Bogus value for `default-network-coding-system'",
+		      Vdefault_network_coding_system);
+    }
+  else
+    {
+      if (!CONSP (Vdefault_process_coding_system) ||
+	  NILP (incode = (find_coding_system_for_text_file
+			  (Fcar (Vdefault_process_coding_system), 1))) ||
+	  NILP (outcode = (find_coding_system_for_text_file
+			   (Fcdr (Vdefault_process_coding_system), 0))))
+	signal_error (Qinvalid_state,
+		      "Bogus value for `default-process-coding-system'",
+		      Vdefault_process_coding_system);
+    }
 
   if (!NILP (Vcoding_system_for_read) &&
       NILP (incode = (find_coding_system_for_text_file
@@ -521,27 +559,41 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
 		  "Bogus value for `coding-system-for-write'",
 		  Vcoding_system_for_write);
 
-  usid = event_stream_create_stream_pair (in, out,
-					  &p->pipe_instream,
-					  &p->pipe_outstream,
-					  flags);
+  event_stream_create_io_streams (in, out, err,
+				  &p->pipe_instream,
+				  &p->pipe_outstream,
+				  &p->pipe_errstream,
+				  &in_usid, &err_usid,
+				  flags);
 
-  if (usid == USID_ERROR)
+  if (in_usid == USID_ERROR || err_usid == USID_ERROR)
     signal_error (Qprocess_error, "Setting up communication with subprocess",
-		  Qunbound);
+		  wrap_process (p));
 
-  if (usid != USID_DONTHASH)
+  if (in_usid != USID_DONTHASH)
     {
       Lisp_Object process = Qnil;
       process = wrap_process (p);
-      puthash ((const void *) usid, LISP_TO_VOID (process), usid_to_process);
+      puthash ((const void*) in_usid, LISP_TO_VOID (process), usid_to_process);
     }
 
-  MAYBE_PROCMETH (init_process_io_handles, (p, in, out, flags));
+  if (err_usid != USID_DONTHASH)
+    {
+      Lisp_Object process = Qnil;
+      process = wrap_process (p);
+      puthash ((const void*) err_usid, LISP_TO_VOID (process),
+	       usid_to_process);
+    }
+
+  MAYBE_PROCMETH (init_process_io_handles, (p, in, out, err, flags));
 
   p->coding_instream =
     make_coding_input_stream (XLSTREAM (p->pipe_instream), incode,
 			      CODING_DECODE, 0);
+  if (!NILP (p->pipe_errstream))
+    p->coding_errstream =
+      make_coding_input_stream
+      (XLSTREAM (p->pipe_errstream), incode, CODING_DECODE, 0);
   p->coding_outstream =
     make_coding_output_stream (XLSTREAM (p->pipe_outstream), outcode,
 			       CODING_ENCODE, 0);
@@ -549,7 +601,8 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
 
 static void
 create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
-		Lisp_Object program, Lisp_Object cur_dir)
+		Lisp_Object program, Lisp_Object cur_dir,
+		int separate_err)
 {
   Lisp_Process *p = XPROCESS (process);
   int pid;
@@ -559,11 +612,12 @@ create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
   p->status_symbol = Qrun;
   p->exit_code = 0;
 
-  pid = PROCMETH (create_process, (p, argv, nargv, program, cur_dir));
+  pid = PROCMETH (create_process, (p, argv, nargv, program, cur_dir,
+				   separate_err));
 
   p->pid = make_int (pid);
   if (PROCESS_LIVE_P (p))
-    event_stream_select_process (p);
+    event_stream_select_process (p, 1, 1);
 }
 
 /* This function is the unwind_protect form for Fstart_process_internal.  If
@@ -581,23 +635,41 @@ start_process_unwind (Lisp_Object process)
 }
 
 DEFUN ("start-process-internal", Fstart_process_internal, 3, MANY, 0, /*
-Start a program in a subprocess.  Return the process object for it.
+Internal function to start a program in a subprocess.
+Lisp callers should use `start-process' instead.
+
+Returns the process object for it.
 Args are NAME BUFFER PROGRAM &rest PROGRAM-ARGS
 NAME is name for process.  It is modified if necessary to make it unique.
 BUFFER is the buffer or (buffer-name) to associate with the process.
  Process output goes at end of that buffer, unless you specify
  an output stream or filter function to handle the output.
  BUFFER may be also nil, meaning that this process is not associated
- with any buffer
+ with any buffer.
+BUFFER can also have the form (REAL-BUFFER STDERR-BUFFER); in that case,
+ REAL-BUFFER says what to do with standard output, as above,
+ while STDERR-BUFFER says what to do with standard error in the child.
+ STDERR-BUFFER may be nil (discard standard error output, unless a stderr
+ filter is set).  Note that if you do not use this form at process creation,
+ stdout and stderr will be mixed in the output buffer, and this cannot be
+ changed, even by setting a stderr filter.
 Third arg is program file name.  It is searched for as in the shell.
 Remaining arguments are strings to give program as arguments.
-INCODE and OUTCODE specify the coding-system objects used in input/output
- from/to the process.
+
+Read and write coding systems for the process are determined from
+`coding-system-for-read' and `coding-system-for-write' (intended as
+overriding coding systems to be *bound* by Lisp code, not set), or
+from `default-process-coding-system' if either or both are nil.  You can
+change the coding systems later on using `set-process-coding-system',
+`set-process-input-coding-system', or `set-process-output-coding-system'.
+
+See also `set-process-filter' and `set-process-stderr-filter'.
 */
        (int nargs, Lisp_Object *args))
 {
   /* This function can call lisp */
-  Lisp_Object buffer, name, program, process, current_dir;
+  Lisp_Object buffer, stderr_buffer, name, program, process, current_dir;
+  int separate_stderr;
   Lisp_Object tem;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -610,8 +682,28 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   /* Protect against various file handlers doing GCs below. */
   GCPRO3 (buffer, program, current_dir);
 
+  if (CONSP (buffer))
+    {
+      if (!CONSP (XCDR (buffer)))
+	invalid_argument ("Invalid BUFFER argument to `start-process'",
+			  buffer);
+      if (!NILP (XCDR (XCDR (buffer))))
+	invalid_argument ("Invalid BUFFER argument to `start-process'",
+			  buffer);
+      stderr_buffer = XCAR (XCDR (buffer));
+      buffer = XCAR (buffer);
+      separate_stderr = 1;
+    }
+  else
+    {
+      stderr_buffer = Qnil;
+      separate_stderr = 0;
+    }
+
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
+  if (!NILP (stderr_buffer))
+    stderr_buffer = Fget_buffer_create (stderr_buffer);
 
   CHECK_STRING (name);
   CHECK_STRING (program);
@@ -678,12 +770,17 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   process = make_process_internal (name);
 
   XPROCESS (process)->buffer = buffer;
+  XPROCESS (process)->stderr_buffer = stderr_buffer;
+  XPROCESS (process)->separate_stderr = separate_stderr;
   XPROCESS (process)->command = Flist (nargs - 2, args + 2);
 
   /* Make the process marker point into the process buffer (if any).  */
   if (!NILP (buffer))
     Fset_marker (XPROCESS (process)->mark,
 		 make_int (BUF_ZV (XBUFFER (buffer))), buffer);
+  if (!NILP (stderr_buffer))
+    Fset_marker (XPROCESS (process)->stderr_mark,
+		 make_int (BUF_ZV (XBUFFER (stderr_buffer))), stderr_buffer);
 
   /* If an error occurs and we can't start the process, we want to
      remove it from the process list.  This means that each error
@@ -691,7 +788,8 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
      itself; it's all taken care of here.  */
   record_unwind_protect (start_process_unwind, process);
 
-  create_process (process, args + 3, nargs - 3, program, current_dir);
+  create_process (process, args + 3, nargs - 3, program, current_dir,
+		  separate_stderr);
 
   UNGCPRO;
   return unbind_to_1 (speccount, process);
@@ -781,9 +879,10 @@ against lost packets.
   XPROCESS (process)->pid = Fcons (service, host);
   XPROCESS (process)->buffer = buffer;
   init_process_io_handles (XPROCESS (process), (void *) inch, (void *) outch,
+			   (void *) -1,
 			   STREAM_NETWORK_CONNECTION);
 
-  event_stream_select_process (XPROCESS (process));
+  event_stream_select_process (XPROCESS (process), 1, 1);
 
   UNGCPRO;
   NUNGCPRO;
@@ -830,10 +929,11 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
 
   XPROCESS (process)->pid = Fcons (port, dest);
   XPROCESS (process)->buffer = buffer;
-  init_process_io_handles (XPROCESS (process), (void*)inch, (void*)outch,
+  init_process_io_handles (XPROCESS (process), (void *) inch, (void *) outch,
+			   (void *) -1,
 			   STREAM_NETWORK_CONNECTION);
 
-  event_stream_select_process (XPROCESS (process));
+  event_stream_select_process (XPROCESS (process), 1, 1);
 
   UNGCPRO;
   return process;
@@ -876,11 +976,13 @@ Tell PROCESS that it has logical window size HEIGHT and WIDTH.
    necessary.
 */
 static int
-process_setup_for_insertion (Lisp_Object process)
+process_setup_for_insertion (Lisp_Object process, int read_stderr)
 {
   Lisp_Process *p = XPROCESS (process);
   int spec = specpdl_depth ();
-  struct buffer *buf = XBUFFER (p->buffer);
+  Lisp_Object buffer = read_stderr ? p->stderr_buffer : p->buffer;
+  Lisp_Object mark = read_stderr ? p->stderr_mark : p->mark;
+  struct buffer *buf = XBUFFER (buffer);
   Charbpos output_pt;
 
   if (buf != current_buffer)
@@ -896,8 +998,8 @@ process_setup_for_insertion (Lisp_Object process)
   /* Insert new output into buffer
      at the current end-of-output marker,
      thus preserving logical ordering of input and output.  */
-  if (XMARKER (p->mark)->buffer)
-    output_pt = marker_position (p->mark);
+  if (XMARKER (mark)->buffer)
+    output_pt = marker_position (mark);
   else
     output_pt = BUF_ZV (buf);
 
@@ -923,13 +1025,16 @@ process_setup_for_insertion (Lisp_Object process)
    you must call it repeatedly until it returns zero.  */
 
 Charcount
-read_process_output (Lisp_Object process)
+read_process_output (Lisp_Object process, int read_stderr)
 {
   /* This function can GC */
   Bytecount nbytes, nchars;
   Intbyte chars[1025];
   Lisp_Object outstream;
   Lisp_Process *p = XPROCESS (process);
+  Lisp_Object filter = read_stderr ? p->stderr_filter : p->filter;
+  Lisp_Object buffer = read_stderr ? p->stderr_buffer : p->buffer;
+  Lisp_Object mark = read_stderr ? p->stderr_mark : p->mark;
 
   /* If there is a lot of output from the subprocess, the loop in
      execute_internal_event() might call read_process_output() more
@@ -940,24 +1045,28 @@ read_process_output (Lisp_Object process)
      for a process-filter change, like in status_notify(); but the
      struct Lisp_Process is not exported outside of this file. */
   if (!PROCESS_LIVE_P (p))
-    return -1; /* already closed */
+    {
+      errno = 0;
+      return -1; /* already closed */
+    }
 
-  if (!NILP (p->filter) && (p->filter_does_read))
+  if (!NILP (filter) && (p->filter_does_read))
     {
       Lisp_Object filter_result;
 
       /* Some weird FSFmacs crap here with
-	 Vdeactivate_mark and current_buffer->keymap */
-      running_asynch_code = 1;
-      filter_result = call2_trapping_errors ("Error in process filter",
-					     p->filter, process, Qnil);
-      running_asynch_code = 0;
-      restore_match_data ();
+	 Vdeactivate_mark and current_buffer->keymap.
+         Some FSF junk with running_asynch_code, to preserve the match
+         data.  Not necessary because we don't call process filters
+	 asynchronously (i.e. from within QUIT). */
+      /* Don't catch errors here; we're not in any critical code. */
+      filter_result = call2 (filter, process, Qnil);
       CHECK_INT (filter_result);
       return XINT (filter_result);
     }
 
-  nbytes = Lstream_read (XLSTREAM (DATA_INSTREAM (p)), chars,
+  nbytes = Lstream_read (read_stderr ? XLSTREAM (DATA_ERRSTREAM (p)) :
+			 XLSTREAM (DATA_INSTREAM (p)), chars,
 			 sizeof (chars) - 1);
   if (nbytes <= 0) return nbytes;
 
@@ -970,25 +1079,23 @@ read_process_output (Lisp_Object process)
   /* !!#### if the coding system changed as a result of reading, we
      need to change the output coding system accordingly. */
   nchars = bytecount_to_charcount (chars, nbytes);
-  outstream = p->filter;
+  outstream = filter;
   if (!NILP (outstream))
     {
-      /* We used to bind inhibit-quit to t here, but
-	 call2_trapping_errors() does that for us. */
-      running_asynch_code = 1;
-      call2_trapping_errors ("Error in process filter",
-			     outstream, process, make_string (chars, nbytes));
-      running_asynch_code = 0;
-      restore_match_data ();
+      /* Some FSF junk with running_asynch_code, to preserve the match
+         data.  Not necessary because we don't call process filters
+	 asynchronously (i.e. from within QUIT). */
+      /* Don't catch errors here; we're not in any critical code. */
+      call2 (outstream, process, make_string (chars, nbytes));
       return nchars;
     }
 
   /* If no filter, write into buffer if it isn't dead.  */
-  if (!NILP (p->buffer) && BUFFER_LIVE_P (XBUFFER (p->buffer)))
+  if (!NILP (buffer) && BUFFER_LIVE_P (XBUFFER (buffer)))
     {
       struct gcpro gcpro1;
-      struct buffer *buf = XBUFFER (p->buffer);
-      int spec = process_setup_for_insertion (process);
+      struct buffer *buf = XBUFFER (buffer);
+      int spec = process_setup_for_insertion (process, read_stderr);
 
       GCPRO1 (process);
 
@@ -1003,13 +1110,21 @@ read_process_output (Lisp_Object process)
       buffer_insert_raw_string (buf, chars, nbytes);
 #endif
 
-      Fset_marker (p->mark, make_int (BUF_PT (buf)), p->buffer);
+      Fset_marker (mark, make_int (BUF_PT (buf)), buffer);
+
       MARK_MODELINE_CHANGED;
       unbind_to (spec);
       UNGCPRO;
     }
   return nchars;
 }
+
+int
+process_has_separate_stderr (Lisp_Object process)
+{
+  return XPROCESS (process)->separate_stderr;
+}
+
 
 /* Sending data to subprocess */
 
@@ -1095,6 +1210,33 @@ unless PROCESS has a filter.
   return XPROCESS (process)->buffer;
 }
 
+DEFUN ("set-process-stderr-buffer", Fset_process_stderr_buffer, 2, 2, 0, /*
+Set stderr buffer associated with PROCESS to BUFFER (a buffer, or nil).
+*/
+       (process, buffer))
+{
+  CHECK_PROCESS (process);
+  if (!XPROCESS (process)->separate_stderr)
+    invalid_change ("stdout and stderr not separate", process);
+  if (!NILP (buffer))
+    CHECK_BUFFER (buffer);
+  XPROCESS (process)->stderr_buffer = buffer;
+  return buffer;
+}
+
+DEFUN ("process-stderr-buffer", Fprocess_stderr_buffer, 1, 1, 0, /*
+Return the stderr buffer PROCESS is associated with.
+Output from the stderr of PROCESS is inserted in this buffer
+unless PROCESS has a stderr filter.
+*/
+       (process))
+{
+  CHECK_PROCESS (process);
+  if (!XPROCESS (process)->separate_stderr)
+    invalid_change ("stdout and stderr not separate", process);
+  return XPROCESS (process)->stderr_buffer;
+}
+
 DEFUN ("process-mark", Fprocess_mark, 1, 1, 0, /*
 Return the marker for the end of the last output from PROCESS.
 */
@@ -1104,23 +1246,58 @@ Return the marker for the end of the last output from PROCESS.
   return XPROCESS (process)->mark;
 }
 
-void
-set_process_filter (Lisp_Object process, Lisp_Object filter, int filter_does_read)
+DEFUN ("process-stderr-mark", Fprocess_stderr_mark, 1, 1, 0, /*
+Return the marker for the end of the last stderr output from PROCESS.
+*/
+       (process))
 {
   CHECK_PROCESS (process);
-  if (PROCESS_LIVE_P (XPROCESS (process))) {
-    if (EQ (filter, Qt))
-      event_stream_unselect_process (XPROCESS (process));
-    else
-      event_stream_select_process (XPROCESS (process));
-  }
+  if (!XPROCESS (process)->separate_stderr)
+    invalid_operation ("stdout and stderr not separate", process);
+  return XPROCESS (process)->stderr_mark;
+}
 
-  XPROCESS (process)->filter = filter;
+void
+set_process_filter (Lisp_Object process, Lisp_Object filter,
+		    int filter_does_read, int set_stderr)
+{
+  CHECK_PROCESS (process);
+  if (set_stderr && !XPROCESS (process)->separate_stderr)
+    invalid_change ("stdout and stderr not separate", process);
+  if (PROCESS_LIVE_P (XPROCESS (process)))
+    {
+      if (EQ (filter, Qt))
+	event_stream_unselect_process (XPROCESS (process), !set_stderr,
+				       set_stderr);
+      else
+	event_stream_select_process (XPROCESS (process), !set_stderr,
+				     set_stderr);
+    }
+
+  if (set_stderr)
+    XPROCESS (process)->stderr_filter = filter;
+  else
+    XPROCESS (process)->filter = filter;
   XPROCESS (process)->filter_does_read = filter_does_read;
 }
 
 DEFUN ("set-process-filter", Fset_process_filter, 2, 2, 0, /*
 Give PROCESS the filter function FILTER; nil means no filter.
+t means stop accepting output from the process. (If process was created
+with 
+When a process has a filter, each time it does output
+the entire string of output is passed to the filter.
+The filter gets two arguments: the process and the string of output.
+If the process has a filter, its buffer is not used for output.
+*/
+       (process, filter))
+{
+  set_process_filter (process, filter, 0, 0);
+  return filter;
+}
+
+DEFUN ("set-process-stderr-filter", Fset_process_stderr_filter, 2, 2, 0, /*
+Give PROCESS the stderr filter function FILTER; nil means no filter.
 t means stop accepting output from the process.
 When a process has a filter, each time it does output
 the entire string of output is passed to the filter.
@@ -1129,7 +1306,7 @@ If the process has a filter, its buffer is not used for output.
 */
        (process, filter))
 {
-  set_process_filter (process, filter, 0);
+  set_process_filter (process, filter, 0, 1);
   return filter;
 }
 
@@ -1143,14 +1320,26 @@ See `set-process-filter' for more info on filter functions.
   return XPROCESS (process)->filter;
 }
 
+DEFUN ("process-stderr-filter", Fprocess_stderr_filter, 1, 1, 0, /*
+Return the filter function of PROCESS; nil if none.
+See `set-process-stderr-filter' for more info on filter functions.
+*/
+       (process))
+{
+  CHECK_PROCESS (process);
+  if (!XPROCESS (process)->separate_stderr)
+    invalid_operation ("stdout and stderr not separate", process);
+  return XPROCESS (process)->stderr_filter;
+}
+
 DEFUN ("process-send-region", Fprocess_send_region, 3, 4, 0, /*
 Send current contents of the region between START and END as input to PROCESS.
 PROCESS may be a process or the name of a process, or a buffer or the
 name of a buffer, in which case the buffer's process is used.  If it
 is nil, the current buffer's process is used.
 BUFFER specifies the buffer to look in; if nil, the current buffer is used.
-If STRING is more than 100 or so characters long, it may be sent in
-several chunks.  This may happen even for shorter strings.  Output
+If the region is more than 100 or so characters long, it may be sent in
+several chunks.  This may happen even for shorter regions.  Output
 from processes can arrive in between chunks.
 */
        (process, start, end, buffer))
@@ -1284,9 +1473,8 @@ encode subprocess input.
 static Lisp_Object
 exec_sentinel_unwind (Lisp_Object datum)
 {
-  Lisp_Cons *d = XCONS (datum);
-  XPROCESS (d->car)->sentinel = d->cdr;
-  free_cons (d);
+  XPROCESS (XCAR (datum))->sentinel = XCDR (datum);
+  free_cons (datum);
   return Qnil;
 }
 
@@ -1304,16 +1492,20 @@ exec_sentinel (Lisp_Object process, Lisp_Object reason)
   /* Some weird FSFmacs crap here with
      Vdeactivate_mark and current_buffer->keymap */
 
+  /* Some FSF junk with running_asynch_code, to preserve the match
+     data.  Not necessary because we don't call process filters
+     asynchronously (i.e. from within QUIT). */
+
   /* Zilch the sentinel while it's running, to avoid recursive invocations;
-     assure that it gets restored no matter how the sentinel exits.  */
+     assure that it gets restored no matter how the sentinel exits.
+
+     (#### Why is this necessary?  Probably another relic of asynchronous
+     calling of process filters/sentinels.) */
   p->sentinel = Qnil;
-  record_unwind_protect (exec_sentinel_unwind, noseeum_cons (process, sentinel));
-  /* We used to bind inhibit-quit to t here, but call2_trapping_errors()
-     does that for us. */
-  running_asynch_code = 1;
-  call2_trapping_errors ("Error in process sentinel", sentinel, process, reason);
-  running_asynch_code = 0;
-  restore_match_data ();
+  record_unwind_protect (exec_sentinel_unwind,
+			 noseeum_cons (process, sentinel));
+  /* Don't catch errors here; we're not in any critical code. */
+  call2 (sentinel, process, reason);
   unbind_to (speccount);
 }
 
@@ -1401,7 +1593,7 @@ status_message (Lisp_Process *p)
 
 /* Tell status_notify() to check for terminated processes.  We do this
    because on some systems we sometimes miss SIGCHLD calls. (Not sure
-   why.) */
+   why.) This is also used under Mswin. */
 
 void
 kick_status_notify (void)
@@ -1465,7 +1657,10 @@ status_notify (void)
 
 	  /* If process is still active, read any output that remains.  */
           while (!EQ (p->filter, Qt)
-		 && read_process_output (process) > 0)
+		 && read_process_output (process, 0) > 0)
+            ;
+          while (p->separate_stderr && !EQ (p->stderr_filter, Qt)
+		 && read_process_output (process, 1) > 0)
             ;
 
 	  /* Get the text to use for the message.  */
@@ -1494,8 +1689,7 @@ status_notify (void)
 		   BUFFER_LIVE_P (XBUFFER (p->buffer)))
 	    {
 	      struct gcpro ngcpro1;
-	      struct buffer *buf = XBUFFER (p->buffer);
-	      int spec = process_setup_for_insertion (process);
+	      int spec = process_setup_for_insertion (process, 0);
 
 	      NGCPRO1 (process);
 	      buffer_insert_c_string (current_buffer, "\nProcess ");
@@ -1889,8 +2083,11 @@ text to PROCESS after you call this function.
     {
       if (!NILP (DATA_OUTSTREAM (XPROCESS (process))))
 	{
+	  USID humpty, dumpty;
 	  Lstream_close (XLSTREAM (DATA_OUTSTREAM (XPROCESS (process))));
-	  event_stream_delete_stream_pair (Qnil, XPROCESS (process)->pipe_outstream);
+	  event_stream_delete_io_streams (Qnil,
+					  XPROCESS (process)->pipe_outstream,
+					  Qnil, &humpty, &dumpty);
 	  XPROCESS (process)->pipe_outstream = Qnil;
 	  XPROCESS (process)->coding_outstream = Qnil;
 	}
@@ -1908,7 +2105,7 @@ void
 deactivate_process (Lisp_Object process)
 {
   Lisp_Process *p = XPROCESS (process);
-  USID usid;
+  USID in_usid, err_usid;
 
   /* It's possible that we got as far in the process-creation
      process as creating the descriptors but didn't get so
@@ -1916,30 +2113,38 @@ deactivate_process (Lisp_Object process)
      case, p->pid is nil: p->pid is set at the same time that
      the process is selected for input. */
   /* #### The comment does not look correct. event_stream_unselect_process
-     is guarded by process->selected, so this is not a problem. - kkm*/
+     is guarded by process->*_selected, so this is not a problem. - kkm*/
   /* Must call this before setting the streams to nil */
-  event_stream_unselect_process (p);
+  event_stream_unselect_process (p, 1, 1);
 
   if (!NILP (DATA_OUTSTREAM (p)))
     Lstream_close (XLSTREAM (DATA_OUTSTREAM (p)));
   if (!NILP (DATA_INSTREAM (p)))
     Lstream_close (XLSTREAM (DATA_INSTREAM (p)));
+  if (!NILP (DATA_ERRSTREAM (p)))
+    Lstream_close (XLSTREAM (DATA_ERRSTREAM (p)));
 
   /* Provide minimal implementation for deactivate_process
      if there's no process-specific one */
   if (HAS_PROCMETH_P (deactivate_process))
-    usid = PROCMETH (deactivate_process, (p));
+    PROCMETH (deactivate_process, (p, &in_usid, &err_usid));
   else
-    usid = event_stream_delete_stream_pair (p->pipe_instream,
-					    p->pipe_outstream);
+    event_stream_delete_io_streams (p->pipe_instream,
+				    p->pipe_outstream,
+				    p->pipe_errstream,
+				    &in_usid, &err_usid);
 
-  if (usid != USID_DONTHASH)
-    remhash ((const void*)usid, usid_to_process);
+  if (in_usid != USID_DONTHASH)
+    remhash ((const void*)in_usid, usid_to_process);
+  if (err_usid != USID_DONTHASH)
+    remhash ((const void*)err_usid, usid_to_process);
 
   p->pipe_instream = Qnil;
   p->pipe_outstream = Qnil;
+  p->pipe_errstream = Qnil;
   p->coding_instream = Qnil;
   p->coding_outstream = Qnil;
+  p->coding_errstream = Qnil;
 }
 
 static void
@@ -2305,10 +2510,15 @@ syms_of_process (void)
   DEFSUBR (Fprocess_tty_name);
   DEFSUBR (Fprocess_command);
   DEFSUBR (Fset_process_buffer);
+  DEFSUBR (Fset_process_stderr_buffer);
   DEFSUBR (Fprocess_buffer);
   DEFSUBR (Fprocess_mark);
+  DEFSUBR (Fprocess_stderr_buffer);
+  DEFSUBR (Fprocess_stderr_mark);
   DEFSUBR (Fset_process_filter);
   DEFSUBR (Fprocess_filter);
+  DEFSUBR (Fset_process_stderr_filter);
+  DEFSUBR (Fprocess_stderr_filter);
   DEFSUBR (Fset_process_window_size);
   DEFSUBR (Fset_process_sentinel);
   DEFSUBR (Fprocess_sentinel);
@@ -2419,6 +2629,14 @@ the cdr part is used for writing (encoding) data to a process.
 */ );
   /* This below will get its default set correctly in code-init.el. */
     Vdefault_process_coding_system = Fcons (Qundecided, Qnil);
+
+  DEFVAR_LISP ("default-network-coding-system",
+	       &Vdefault_network_coding_system /*
+Cons of coding systems used for network I/O by default.
+The car part is used for reading (decoding) data from a process, and
+the cdr part is used for writing (encoding) data to a process.
+*/ );
+    Vdefault_network_coding_system = Fcons (Qundecided, Qnil);
 
 #ifdef PROCESS_IO_BLOCKING
   DEFVAR_LISP ("network-stream-blocking-port-list", &network_stream_blocking_port_list /*

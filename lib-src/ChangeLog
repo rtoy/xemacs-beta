@@ -1,3 +1,9 @@
+2002-05-28  Ben Wing  <ben@xemacs.org>
+
+	* make-docfile.c (scan_c_file):
+	* make-docfile.c (scan_lisp_file):
+	Fix places where we forget to check for EOF.
+
 2002-05-05  Ben Wing  <ben@xemacs.org>
 
 	* i.c:
@@ -179,6 +185,7 @@
 
 	* XEmacs 21.5.0 "alfalfa" is released.
 
+>>>>>>> 1.136
 2000-08-01  Jon Schewe  <jpschewe@eggplant.mtu.net>
 
 	* gnuclient.c (filename_expand): Let Cygwin convert Windows path

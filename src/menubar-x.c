@@ -219,8 +219,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      if (filter_p || depth == 0)
 		{
 #endif
-		  desc = call1_trapping_errors ("Error in menubar filter",
-						hook_fn, desc);
+		  desc = call1 (hook_fn, desc);
 		  if (UNBOUNDP (desc))
 		    desc = Qnil;
 #if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
@@ -358,45 +357,56 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
   return wv;
 }
 
-
-#if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
-int in_menu_callback;
+struct menu_item_descriptor_to_widget_value
+{
+  Lisp_Object desc;
+  int menu_type, deep_p, filter_p;
+  widget_value *wv;
+};
 
 static Lisp_Object
-restore_in_menu_callback (Lisp_Object val)
+protected_menu_item_descriptor_to_widget_value_1 (void *gack)
 {
-  in_menu_callback = XINT (val);
+  struct menu_item_descriptor_to_widget_value *midtwv =
+    (struct menu_item_descriptor_to_widget_value *) gack;
+
+  midtwv->wv = menu_item_descriptor_to_widget_value (midtwv->desc,
+						     midtwv->menu_type,
+						     midtwv->deep_p,
+						     midtwv->filter_p);
   return Qnil;
 }
-#endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
 
-#if 0
-/* #### Sort of a hack needed to process Vactivate_menubar_hook
-   correctly wrt buffer-local values.  A correct solution would
-   involve adding a callback mechanism to run_hook().  This function
-   is currently unused.  */
-static int
-my_run_hook (Lisp_Object hooksym, int allow_global_p)
+/* Inside of the pre_activate_callback, we absolutely need to protect
+   against errors, esp. but not exclusively in the filter code. (We do
+   other evalling, too.) We also need to reenable quit checking, which
+   was disabled by next_event_internal() so as to read C-g as an
+   event. */
+
+static widget_value *
+protected_menu_item_descriptor_to_widget_value (Lisp_Object desc,
+						int menu_type, int deep_p,
+						int filter_p)
 {
-  /* This function can GC */
-  Lisp_Object tail;
-  Lisp_Object value = Fsymbol_value (hooksym);
-  int changes = 0;
+  struct menu_item_descriptor_to_widget_value midtwv;
 
-  if (!NILP (value) && (!CONSP (value) || EQ (XCAR (value), Qlambda)))
-    return !EQ (call0 (value), Qt);
+  midtwv.desc = desc;
+  midtwv.menu_type = menu_type;
+  midtwv.deep_p = deep_p;
+  midtwv.filter_p = filter_p;
 
-  EXTERNAL_LIST_LOOP (tail, value)
-    {
-      if (allow_global_p && EQ (XCAR (tail), Qt))
-	changes |= my_run_hook (Fdefault_value (hooksym), 0);
-      if (!EQ (call0 (XCAR (tail)), Qt))
-	changes = 1;
-    }
-  return changes;
+  if (UNBOUNDP
+      (call_trapping_problems
+       (Qmenubar, "Error during menu callback",	UNINHIBIT_QUIT, 0,
+	protected_menu_item_descriptor_to_widget_value_1, &midtwv)))
+    return 0;
+
+  return midtwv.wv;
 }
-#endif
 
+#if defined (LWLIB_MENUBARS_LUCID) || (defined LWLIB_MENUBARS_MOTIF)
+int in_menu_callback;
+#endif
 
 /* The order in which callbacks are run is funny to say the least.
    It's sometimes tricky to avoid running a callback twice, and to
@@ -457,12 +467,9 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
        * crash later when the code gets confused at the state
        * changes.
        */
-      count = specpdl_depth ();
-      record_unwind_protect (restore_in_menu_callback,
-			     make_int (in_menu_callback));
-      in_menu_callback = 1;
-      wv = menu_item_descriptor_to_widget_value (submenu_desc, SUBMENU_TYPE,
-						 1, 0);
+      count = internal_bind_int (&in_menu_callback, 1);
+      wv = (protected_menu_item_descriptor_to_widget_value
+	    (submenu_desc, SUBMENU_TYPE, 1, 0));
       unbind_to (count);
 
       if (!wv)
@@ -485,13 +492,6 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
     return;
   else
     {
-#if 0 /* Unused, see comment below. */
-      int any_changes;
-
-      /* #### - this menubar update mechanism is expensively anti-social and
-	 the activate-menubar-hook is now mostly obsolete. */
-      any_changes = my_run_hook (Qactivate_menubar_hook, 1);
-
       /* #### - It is necessary to *ALWAYS* call set_frame_menubar() now that
 	 incremental menus are implemented.  If a subtree of a menu has been
 	 updated incrementally (a destructive operation), then that subtree
@@ -500,13 +500,10 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	 It is difficult to undo the destructive operation in lwlib because
 	 a pointer back to lisp data needs to be hidden away somewhere.  So
 	 that an INCREMENTAL_TYPE widget_value can be recreated...  Hmmmmm. */
-      if (any_changes ||
-	  !XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date)
-	set_frame_menubar (f, 1, 0);
-#else
-      run_hook (Qactivate_menubar_hook);
+      run_hook_trapping_problems
+	("Error in activate-menubar-hook", Qactivate_menubar_hook,
+	 INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
       set_frame_menubar (f, 1, 0);
-#endif
       DEVICE_X_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
 	DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
 	x_focus_timestamp_really_sucks_fix_me_better;

@@ -212,15 +212,19 @@ emacs_tty_handle_magic_event (Lisp_Event *emacs_event)
 
 
 static void
-emacs_tty_select_process (Lisp_Process *process)
+emacs_tty_select_process (Lisp_Process *process, int doin, int doerr)
 {
-  event_stream_unixoid_select_process (process);
+  int infd, errfd;
+
+  event_stream_unixoid_select_process (process, doin, doerr, &infd, &errfd);
 }
 
 static void
-emacs_tty_unselect_process (Lisp_Process *process)
+emacs_tty_unselect_process (Lisp_Process *process, int doin, int doerr)
 {
-  event_stream_unixoid_unselect_process (process);
+  int infd, errfd;
+
+  event_stream_unixoid_unselect_process (process, doin, doerr, &infd, &errfd);
 }
 
 static void
@@ -242,18 +246,29 @@ emacs_tty_quit_p (void)
      This could change. */
 }
 
-static USID
-emacs_tty_create_stream_pair (void* inhandle, void* outhandle,
-		Lisp_Object* instream, Lisp_Object* outstream, int flags)
+static void
+emacs_tty_create_io_streams (void* inhandle, void* outhandle,
+			     void *errhandle, Lisp_Object* instream,
+			     Lisp_Object* outstream,
+			     Lisp_Object* errstream,
+			     USID* in_usid,
+			     USID* err_usid,
+			     int flags)
 {
-  return event_stream_unixoid_create_stream_pair
-		(inhandle, outhandle, instream, outstream, flags);
+  event_stream_unixoid_create_io_streams
+    (inhandle, outhandle, errhandle, instream, outstream,
+     errstream, in_usid, err_usid, flags);
 }
 
-static USID
-emacs_tty_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream)
+static void
+emacs_tty_delete_io_streams (Lisp_Object instream,
+			     Lisp_Object outstream,
+			     Lisp_Object errstream,
+			     USID* in_usid,
+			     USID* err_usid)
 {
-  return event_stream_unixoid_delete_stream_pair (instream, outstream);
+  event_stream_unixoid_delete_io_streams
+    (instream, outstream, errstream, in_usid, err_usid);
 }
 
 
@@ -280,8 +295,8 @@ reinit_vars_of_event_tty (void)
   tty_event_stream->select_process_cb 	= emacs_tty_select_process;
   tty_event_stream->unselect_process_cb = emacs_tty_unselect_process;
   tty_event_stream->quit_p_cb		= emacs_tty_quit_p;
-  tty_event_stream->create_stream_pair_cb = emacs_tty_create_stream_pair;
-  tty_event_stream->delete_stream_pair_cb = emacs_tty_delete_stream_pair;
+  tty_event_stream->create_io_streams_cb = emacs_tty_create_io_streams;
+  tty_event_stream->delete_io_streams_cb = emacs_tty_delete_io_streams;
 }
 
 void

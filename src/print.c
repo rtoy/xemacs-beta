@@ -1885,7 +1885,13 @@ static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
   /* This function can GC */
-  int specdepth = internal_bind_int (&print_depth, 0);
+
+  /* by doing this, we trick various things that are non-essential
+     but might cause crashes into not getting executed. */
+  int specdepth = 
+    internal_bind_int (&inhibit_non_essential_printing_operations, 1);
+
+  internal_bind_int (&print_depth, 0);
   internal_bind_int (&print_readably,
 		     debug_print_readably != -1 ? debug_print_readably : 0);
   internal_bind_int (&print_unbuffered, print_unbuffered + 1);
@@ -1920,7 +1926,13 @@ void
 debug_backtrace (void)
 {
   /* This function can GC */
-  int specdepth = internal_bind_int (&print_depth, 0);
+
+  /* by doing this, we trick various things that are non-essential
+     but might cause crashes into not getting executed. */
+  int specdepth = 
+    internal_bind_int (&inhibit_non_essential_printing_operations, 1);
+
+  internal_bind_int (&print_depth, 0);
   internal_bind_int (&print_readably, 0);
   internal_bind_int (&print_unbuffered, print_unbuffered + 1);
   if (debug_print_length > 0)

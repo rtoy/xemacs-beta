@@ -3107,8 +3107,8 @@ image_instantiate_cache_result (Lisp_Object locative)
      glyph, so as long as the glyph is marked the instantiator will be
      as well and hence the cached image instance also.*/
   Fputhash (XCAR (XCDR (locative)), XCAR (locative), XCDR (XCDR (locative)));
-  free_cons (XCONS (XCDR (locative)));
-  free_cons (XCONS (locative));
+  free_cons (XCDR (locative));
+  free_cons (locative);
   return Qnil;
 }
 
@@ -4587,8 +4587,17 @@ image_instance_changed (Lisp_Object subwindow)
      layouts. We are saved by layout optimization, but I'm undecided
      as to what the correct fix is. */
   else if (WIDGET_IMAGE_INSTANCEP (subwindow)
-	   && (!internal_equal (IMAGE_INSTANCE_WIDGET_ITEMS (ii),
-				IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii), 0)
+	   && (!internal_equal_trapping_problems
+	       (Qglyph, "bad subwindow instantiator",
+		/* in this case we really don't want to be
+		   interrupted by QUIT because we care about
+		   the return value; and we know that any loops
+		   will ultimately cause errors to be issued.
+		   We specify a retval of 1 in that case so that
+		   the glyph code doesn't try to keep reoutputting
+		   a bad subwindow. */
+		  INHIBIT_QUIT, 0, 1, IMAGE_INSTANCE_WIDGET_ITEMS (ii),
+		  IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii), 0)
 	       || !NILP (IMAGE_INSTANCE_LAYOUT_CHILDREN (ii))
 	       || IMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (ii)))
     return 1;

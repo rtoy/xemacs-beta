@@ -2749,20 +2749,6 @@ static Intbyte_dynarr_dynarr *conversion_in_dynarr_list;
 static int dfc_convert_to_external_format_in_use;
 static int dfc_convert_to_internal_format_in_use;
 
-static Lisp_Object
-dfc_convert_to_external_format_reset_in_use (Lisp_Object value)
-{
-  dfc_convert_to_external_format_in_use = XINT (value);
-  return Qnil;
-}
-
-static Lisp_Object
-dfc_convert_to_internal_format_reset_in_use (Lisp_Object value)
-{
-  dfc_convert_to_internal_format_in_use = XINT (value);
-  return Qnil;
-}
-
 void
 dfc_convert_to_external_format (dfc_conversion_type source_type,
 				dfc_conversion_data *source,
@@ -2784,15 +2770,15 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
      ((sink_type == DFC_TYPE_DATA) ||
       (sink_type == DFC_TYPE_LISP_LSTREAM && LSTREAMP (source->lisp_object))));
 
-  record_unwind_protect (dfc_convert_to_external_format_reset_in_use,
-			 make_int (dfc_convert_to_external_format_in_use));
   if (Dynarr_length (conversion_out_dynarr_list) <=
       dfc_convert_to_external_format_in_use)
     Dynarr_add (conversion_out_dynarr_list, Dynarr_new (Extbyte));
   conversion_out_dynarr = Dynarr_at (conversion_out_dynarr_list,
 				     dfc_convert_to_external_format_in_use);
-  dfc_convert_to_external_format_in_use++;
   Dynarr_reset (conversion_out_dynarr);
+
+  internal_bind_int (&dfc_convert_to_external_format_in_use,
+		     dfc_convert_to_external_format_in_use + 1);
 
   coding_system = get_coding_system_for_text_file (coding_system, 0);
 
@@ -2979,15 +2965,15 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
     (sink_type   == DFC_TYPE_DATA ||
      sink_type   == DFC_TYPE_LISP_LSTREAM));
 
-  record_unwind_protect (dfc_convert_to_internal_format_reset_in_use,
-			 make_int (dfc_convert_to_internal_format_in_use));
   if (Dynarr_length (conversion_in_dynarr_list) <=
       dfc_convert_to_internal_format_in_use)
     Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Intbyte));
   conversion_in_dynarr = Dynarr_at (conversion_in_dynarr_list,
 				    dfc_convert_to_internal_format_in_use);
-  dfc_convert_to_internal_format_in_use++;
   Dynarr_reset (conversion_in_dynarr);
+
+  internal_bind_int (&dfc_convert_to_internal_format_in_use,
+		     dfc_convert_to_internal_format_in_use + 1);
 
   coding_system = get_coding_system_for_text_file (coding_system, 1);
 

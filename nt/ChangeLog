@@ -1,3 +1,9 @@
+2002-05-28  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (CFLAGS_NO_LIB):
+	* xemacs.mak (X_DEFINES):
+	Add -DSTRICT.
+
 2002-05-23  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (TEMACS_OBJS):
@@ -333,6 +339,7 @@
 
 	* XEmacs 21.5.0 "alfalfa" is released.
 
+>>>>>>> 1.120
 2001-03-14  Craig Lanning  <CraigL@Knology.net>
 
 	* minitar.c: Clean up some compiler warnings.

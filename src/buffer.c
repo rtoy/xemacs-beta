@@ -24,12 +24,20 @@ Boston, MA 02111-1307, USA.  */
 
 /* Authorship:
 
-   FSF: long ago.
-   JWZ: some changes for Lemacs, long ago. (e.g. separate buffer
-        list per frame.)
-   Mly: a few changes for buffer-local vars, 19.8 or 19.9.
-   Ben Wing: some changes and cleanups for Mule, 19.12.
- */
+   Based on code from pre-release FSF 19, c. 1991.
+   Some changes by Jamie Zawinski, c. 1991-1994 (e.g. separate buffer
+     list per frame, buffer slots).
+   A few changes for buffer-local vars by Richard Mlynarik for
+     19.8 or 19.9, c. 1993.
+   Many changes by Ben Wing: changes and cleanups for Mule, esp. the
+     macros in buffer.h and the intial version of the coding-system
+     conversion macros (in buffer.h) and associated fns. (in this file),
+     19.12 (c. 1995); synch. to FSF 19.30 c. 1994; memory usage stats
+     c. 1996; generated-modeline-string c. 1996 for mousable modeline in
+     19.14.
+   Indirect buffer code by Hrvoje Niksic, c. 1997?
+   Coding conversion code rewritten by Martin Buchholz, early 2000,
+     based on design by Ben Wing.  */
 
 /* This file contains functions that work with buffer objects.
    Functions that manipulate a buffer's text, however, are not
@@ -569,6 +577,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
 
   /* Put this in the alist of all live buffers.  */
   push_buffer_alist (name, buf);
+  note_object_created (buf);
 
   init_buffer_markers (b);
   init_buffer_syntax_cache (b);
@@ -576,6 +585,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
 						   HASH_TABLE_EQ);
+
 
   return buf;
 }
@@ -1104,6 +1114,8 @@ with `delete-process'.
   if (!BUFFER_LIVE_P (b))
     return Qnil;
 
+  check_allowed_operation (OPERATION_DELETE_OBJECT, buf, Qnil);
+
   /* Don't kill the minibuffer now current.  */
   if (EQ (buf, Vminibuffer_zero))
     return Qnil;
@@ -1298,6 +1310,8 @@ with `delete-process'.
   /* Clear away all Lisp objects, so that they
      won't be protected from GC. */
     nuke_all_buffer_slots (b, Qnil);
+
+    note_object_deleted (buf);
 
     unbind_to (speccount);
   }

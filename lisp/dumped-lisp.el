@@ -24,6 +24,10 @@
 	"console"
 	"obsolete"
 	"specifier"
+	"frame"			; needed by faces
+	(when-feature x "x-faces") ; needed by faces
+ 	(when-feature gtk "gtk-faces")
+	(when-feature mswindows "msw-faces")
 	"faces"			; must be loaded before any make-face call
 ;;(pureload "facemenu") #### not yet ported
 	"glyphs"
@@ -34,7 +38,6 @@
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
 	(when-feature multicast "multicast") ; #+network-streams implicitly true
-	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"
 	"keydefs"		; Before loaddefs so that keymap vars exist.
@@ -203,7 +206,6 @@
 ;; others to control this programmatically.
 	(when-feature (and infodock (or x mswindows gtk) menubar) "id-menus")
 ;; preload the X code.
-	(when-feature x "x-faces")
 	(when-feature x "x-iso8859-1")
 	(when-feature x "x-mouse")
 	(when-feature x "x-select")
@@ -217,7 +219,6 @@
  	(when-feature gtk "gtk-widgets")
  	(when-feature gtk "gdk")
  	(when-feature gtk "gtk-init")
- 	(when-feature gtk "gtk-faces")
  	(when-feature gtk "gtk-iso8859-1")
  	(when-feature (and gtk dialog) "dialog-gtk")
  	(when-feature gtk "gtk-select")
@@ -228,7 +229,6 @@
 
 ;; preload the mswindows code.
 	(when-feature mswindows "msw-glyphs")
-	(when-feature mswindows "msw-faces")
 	(when-feature mswindows "msw-mouse")
 	(when-feature mswindows "msw-init")
 	(when-feature mswindows "msw-select")

@@ -1164,10 +1164,10 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 			  symbols[i].name, Qctext);
       symbols[i].pixel = color.pixel;
       symbols[i].value = 0;
-      free_cons (XCONS (cons));
+      free_cons (cons);
       cons = results;
       results = XCDR (results);
-      free_cons (XCONS (cons));
+      free_cons (cons);
     }
   return symbols;
 }
@@ -1559,16 +1559,17 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
-  Char_Binary *bits, *bp;
-  Char_Binary *p;
-  const Intbyte * volatile emsg = 0;
-  Char_Binary * volatile dstring;
+  UChar_Binary *p, *bits, *bp;
+  const CIntbyte * volatile emsg = 0;
+  const UChar_Binary * volatile dstring;
 
   assert (!NILP (data));
 
-  LISP_STRING_TO_EXTERNAL (data, dstring, Qbinary);
+  TO_EXTERNAL_FORMAT (LISP_STRING, data,
+		      C_STRING_ALLOCA, dstring,
+		      Qbinary);
 
-  if ((p = strchr (dstring, ':')))
+  if ((p = (UChar_Binary *) strchr ((char *) dstring, ':')))
     {
       dstring = p + 1;
     }
@@ -1576,7 +1577,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Must use setjmp not SETJMP because we used jmp_buf above not JMP_BUF */
   if (!(stattis = setjmp (comp_env)))
     {
-      UnCompAll (dstring);
+      UnCompAll ((char *) dstring);
       UnGenFace ();
     }
 
@@ -1594,13 +1595,13 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     }
 
   if (emsg)
-    gui_error_2 (emsg, data, Qimage);
+    signal_image_error_2 (emsg, data, Qimage);
 
-  bp = bits = (Char_Binary *) ALLOCA (PIXELS / 8);
+  bp = bits = (UChar_Binary *) ALLOCA (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
-  for (i = 0, p = F; i < (PIXELS / 8); ++i)
+  for (i = 0, p = (UChar_Binary *) F; i < (PIXELS / 8); ++i)
     {
       int n, b;
       /* reverse the bit order of each byte... */
@@ -1608,11 +1609,11 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	{
 	  n |= ((*p++) << b);
 	}
-      *bp++ = (Char_Binary) n;
+      *bp++ = (UChar_Binary) n;
     }
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
-		     pointer_bg, dest_mask, 48, 48, bits);
+		     pointer_bg, dest_mask, 48, 48, (Char_Binary *) bits);
 }
 
 #endif /* HAVE_XFACE */
