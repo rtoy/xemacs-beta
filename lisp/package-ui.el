@@ -196,7 +196,7 @@ Set this to `nil' to use the `default' face."
   	  package-get-site-release-download-sites))
 
 ;;;###autoload
-(defun pui-set-local-package-get-directory (dir)
+(defun pui-set-local-package-get-directory ()
   "Set a new package binary directory in `package-get-remote'.
 Note that no provision is made for saving any changes made by this function.
 It exists mainly as a convenience for one-time package installations from
