@@ -112,6 +112,15 @@ Not suitable in a `interprogram-paste-function', q.v."
 	   (signal (car err) (cdr err)))))
     (get-selection-internal type data-type)))
 
+(defun get-selection-foreign (&optional type data-type)
+  "Return the value of a window-system selection, or nil if XEmacs owns it.
+The argument TYPE (default `PRIMARY') says which selection,
+and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
+says how to convert the data. If there is no selection an error is signalled.
+See `interprogram-paste-function' for more information."
+  (unless (selection-owner-p type)
+    (get-selection type data-type)))
+
 ;; FSFmacs calls this `x-set-selection', and reverses the
 ;; first two arguments (duh ...).  This order is more logical.
 (defun own-selection (data &optional type how-to-add data-type)
