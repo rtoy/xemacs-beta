@@ -11,7 +11,7 @@ CONFIG_H=
 LISP_H=
 #else
 CONFIG_H=config.h
-LISP_H=lisp.h config.h dumper.h general-slots.h lrecord.h symeval.h symsinit.h text.h $(LISP_UNION_H)
+LISP_H=lisp.h compiler.h config.h dumper.h general-slots.h lrecord.h symeval.h symsinit.h text.h $(LISP_UNION_H)
 #endif
 
 #if defined(HAVE_MS_WINDOWS)

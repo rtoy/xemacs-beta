@@ -1,3 +1,8 @@
+2003-10-14  Jerry James  <james@xemacs.org>
+
+	* compiler.h: Check __GNUC_PATCHLEVEL__ definition.
+	* depend: Regenerate.
+
 2003-10-13  Jerry James  <james@xemacs.org>
 
 	* dumper.h: Use {BEGIN,END}_C_DECLS instead of explicit #ifdef.

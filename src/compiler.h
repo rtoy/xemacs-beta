@@ -75,12 +75,17 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif
 
-/* Macro simplification for non-GNU compilers */
+/* Macro simplification for non-GNU compilers and older gccs that did not
+   define all of these symbols */
 #ifndef __GNUC__
 #define __GNUC__            0
+#endif
+#ifndef __GNUC_MINOR__
 #define __GNUC_MINOR__      0
+#endif
+#ifndef __GNUC_PATCHLEVEL__
 #define __GNUC_PATCHLEVEL__ 0
-#endif /* __GNUC__ */
+#endif
 
 /* Simplify testing for specific GCC versions.  This also works for non-GCC
    compilers, where GCC_VERSION is zero. */
