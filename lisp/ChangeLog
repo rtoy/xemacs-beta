@@ -1,3 +1,8 @@
+2003-05-01  Steve Youngs  <youngs@xemacs.org>
+
+	* package-get.el (package-get-require-signed-base-updates): Force
+	default to nil while I sort out some PGP problems.
+
 2003-04-16  Jerry James  <james@xemacs.org>
 
 	* keydefs.el: Remove mappings for keys mapped to the nowhere
