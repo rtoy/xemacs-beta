@@ -3793,7 +3793,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
    But "cch" means "count of characters", not bytes.  I'll assume the doc
    writers messed up and the programmer was correct.  Also, this approach
    is safe even if it's actually the other way around. */
-#if defined (CYGWIN_HEADERS) && !defined (W32API_2_2)
+#if defined (CYGWIN_HEADERS) && W32API_INSTALLED_VER < W32API_VER(2,2)
 				/* Another Cygwin prototype error,
 				   fixed in v2.2 of w32api */
 				XECOMCALL4 (psl, GetPath, (LPSTR) resolved,

@@ -1,3 +1,10 @@
+2003-09-15  Jerry James  <james@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): Use new w32api macros.
+	* syswindows.h: Define w32api macros as 0 for non-Cygwin.
+	* unexcw.c (CHECK_AOUT_POS): Add cast to quiet compiler.
+	* unexcw.c (copy_executable_and_dump_data_section): Ditto.
+
 2002-07-04  Jonathan Harris  <jonathan@xemacs.org>
 
 	* intl-encap-win32.c:

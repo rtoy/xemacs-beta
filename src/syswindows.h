@@ -488,6 +488,9 @@ typedef struct _SHQUERYRBINFO
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
 
+#else /* !CYGWIN_HEADERS */
+#define W32API_VER(major,minor) 0
+#define W32API_INSTALLED_VER 0
 #endif /* CYGWIN_HEADERS */
 
 /* Not in VC 6 */

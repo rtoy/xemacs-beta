@@ -84,14 +84,15 @@ FILHDR f_hdr;
 PEAOUTHDR f_ohdr;
 SCNHDR f_data, f_bss, f_text, f_nextdata;
 
-#define CHECK_AOUT_POS(a)				\
-do {							\
-  if (lseek (a_out, 0, SEEK_CUR) != a)			\
-    {							\
-      printf ("we are at %lx, should be at %lx\n",	\
-	      lseek (a_out, 0, SEEK_CUR), a);		\
-      exit (-1);					\
-    }							\
+#define CHECK_AOUT_POS(a)					\
+do {								\
+  if (lseek (a_out, 0, SEEK_CUR) != a)				\
+    {								\
+      printf ("we are at %lx, should be at %lx\n",		\
+	      (unsigned long) lseek (a_out, 0, SEEK_CUR),	\
+	      (unsigned long) (a));				\
+      exit (-1);						\
+    }								\
 } while (0)
 
 /* Dump out .data and .bss sections into a new executable.  */
@@ -440,8 +441,8 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
       if (lseek (a_new, 0, SEEK_CUR) != (long) f_nextdata.s_scnptr)
 	{
 	  printf ("at %lx should be at %lx\n", 
-		 lseek (a_new, 0, SEEK_CUR),
-		 f_nextdata.s_scnptr);
+		  (unsigned long) lseek (a_new, 0, SEEK_CUR),
+		  (unsigned long) f_nextdata.s_scnptr);
 	  PERROR ("file positioning error\n");
 	}
       lseek (a_out, f_nextdata_s_scnptr, SEEK_SET);
