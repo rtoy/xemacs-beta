@@ -42,6 +42,7 @@ ERROR!  This ought not be getting compiled if EXTERNAL_WIDGET is undefined
 # include <X11/StringDefs.h>
 #endif
 
+#include "compiler.h"
 #include "ExternalClientP.h"
 #include "extw-Xt.h"
 

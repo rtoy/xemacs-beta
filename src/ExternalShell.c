@@ -56,6 +56,7 @@ ERROR!  This ought not be getting compiled if EXTERNAL_WIDGET is undefined
 #include <X11/ShellP.h>
 #include <X11/Vendor.h>
 #include <X11/VendorP.h>
+#include "compiler.h"
 #include "ExternalShellP.h"
 #include "extw-Xt.h"
 

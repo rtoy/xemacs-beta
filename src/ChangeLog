@@ -1,3 +1,8 @@
+2004-09-21  Jerry James  <james@xemacs.org>
+
+	* ExternalClient.c: Include compiler.h.
+	* ExternalShell.c: Ditto.
+
 2004-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* file-coding.c: Improve explanatory comments, add diatribes.
