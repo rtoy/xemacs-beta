@@ -611,6 +611,15 @@ The original plist is not modified.  See also `destructive-plist-to-alist'."
       (setq plist (cddr plist)))
     (nreverse alist)))
 
+(defun map-plist (_mp_fun _mp_plist)
+  "Map _MP_FUN (a function of two args) over each key/value pair in _MP_PLIST.
+Return a list of the results."
+  (let (_mp_result)
+    (while _mp_plist
+      (push (funcall _mp_fun (car _mp_plist) (cadr _mp_plist)) _mp_result)
+      (setq _mp_plist (cddr _mp_plist)))
+    (nreverse _mp_result)))
+
 (defun destructive-plist-to-alist (plist)
   "Convert property list PLIST into the equivalent association-list form.
 The alist is returned.  This converts from
