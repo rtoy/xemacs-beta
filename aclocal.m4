@@ -93,9 +93,6 @@ if test "$XEGCC" = yes; then
     # PIC is the default for these OSes.
     ;;
 
-  *darwin*) dll_cflags='-dynamic'
-    ;;
-
   os2*)
     # We can build DLLs from non-PIC.
     ;;
@@ -256,16 +253,8 @@ xldf=
 xcldf=
 AC_MSG_CHECKING(if C compiler can produce shared libraries)
 if test "$XEGCC" = yes; then
-  case "$xehost_os" in
-     *darwin*)
-          xcldf='-bundle'
-	  xldf='-bundle -bundle_loader ../../src/xemacs'
-     ;;
-     * )
-       xcldf="-shared"
-       xldf="-shared"
-     ;;
-  esac
+  xcldf="-shared"
+  xldf="-shared"
 else # Not using GCC
   case "$xehost_os" in
     aix[[3-9]]*)
@@ -522,6 +511,7 @@ else
       dll_ldflags="-r"
       dll_ld="shlicc2"
       ;;
+
     *)
       ld_shlibs=no
       can_build_shared=no
@@ -558,10 +548,6 @@ fi
 if test -z "$ld_dynamic_link_flags"; then
   case "$xehost_os" in
   aix[[3-9]]*)
-    ld_dynamic_link_flags=
-    ;;
-
-  *darwin*)
     ld_dynamic_link_flags=
     ;;
 

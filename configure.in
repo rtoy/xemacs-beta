@@ -3184,6 +3184,83 @@ dnl o same as the regular compiler, (determined previously)
 test -n "$xemacs_compiler" && XEMACS_CC="$xemacs_compiler"
 : ${XEMACS_CC:="$CC"}
 
+dnl Autodetect dll support
+dnl This must come before the detection code for anything that is in a module
+if test "$with_modules" != "no"; then
+  AC_CHECKING(for module support)
+
+  dnl Check for MS-Windows
+  if test "$with_msw" = "yes"; then
+    have_dl=yes;
+  else
+    case "$opsys" in
+     darwin ) have_dl=yes; AC_DEFINE(HAVE_DYLD) ;;
+     * )
+      dnl Find headers and libraries
+      AC_CHECK_HEADER(dlfcn.h, [
+	AC_MSG_CHECKING([for dlopen in -lc])
+	AC_TRY_LINK([#include <dlfcn.h>],dnl
+	  [dlopen ("", 0);], [ have_dl=yes ], [
+	  AC_MSG_CHECKING([for dlopen in -ldl])
+	ac_save_LIBS="$LIBS"
+	LIBS="-ldl $LIBS"
+	AC_TRY_LINK([#include <dlfcn.h>],dnl
+	  [dlopen ("", 0);], [ have_dl=yes ],
+	  [LIBS="$ac_save_LIBS"])
+	ac_save_LIBS=])])
+      if test -n "$have_dl"; then
+	AC_DEFINE(HAVE_DLOPEN)
+      else
+	AC_CHECK_LIB(dld, shl_load, [
+	  libdl=dld have_dl=yes;
+	  AC_DEFINE(HAVE_SHL_LOAD)], [
+	  AC_CHECK_LIB(dld, dld_init, [
+	  libdl=dld have_dl=yes;
+	  AC_DEFINE(HAVE_DLD_INIT)])])
+      fi
+    esac dnl end !darwin
+  fi dnl end !MS-Windows
+
+  if test -n "$have_dl"; then
+    dnl XE_SHLIB_STUFF (in aclocal.m4) defines $can_build_shared
+    XE_SHLIB_STUFF
+  fi
+
+  if test "$can_build_shared" = "yes"; then
+    AC_DEFINE(HAVE_SHLIB)
+    XE_APPEND(src, INSTALL_ARCH_DEP_SUBDIR)
+    test -n "$libdl" && XE_PREPEND(-l${libdl}, LIBS)
+    AC_CHECK_FUNCS(dlerror _dlerror)
+    with_modules=yes
+    MOD_CC="../../lib-src/ellcc"
+    MODCFLAGS="\$(CFLAGS) --mode=compile --mod-output=\$@ -I../../src -I\$(srcdir)/../../src"
+    INSTALLPATH="\$(moduledir)"
+    MOD_INSTALL_PROGRAM=${INSTALL_PROGRAM}
+    OBJECT_TO_BUILD="\$(MODNAME).ell"
+  else
+    if test "$with_modules" = "yes"; then
+      XE_DIE("Required module support cannot be provided.")
+    else
+      echo "    No module support."
+    fi
+    with_modules=no
+    MOD_CC="$XEMACS_CC"
+    MODCFLAGS="\$(CFLAGS) -I../../src -I\$(srcdir)/../../src"
+    INSTALLPATH=""
+    MOD_INSTALL_PROGRAM="true"
+    OBJECT_TO_BUILD="\$(MODNAME).o"
+  fi
+fi
+MODARCHDIR=
+MAKE_DOCFILE="../../lib-src/make-docfile"
+AC_SUBST(with_modules)
+AC_SUBST(MOD_CC)
+AC_SUBST(MODARCHDIR)
+AC_SUBST(MAKE_DOCFILE)
+AC_SUBST(MODCFLAGS)
+AC_SUBST(INSTALLPATH)
+AC_SUBST(MOD_INSTALL_PROGRAM)
+AC_SUBST(OBJECT_TO_BUILD)
 
 dnl Autodetect tooltalk
 if test "$with_tooltalk" != "no" ; then
@@ -3285,6 +3362,81 @@ if test "$with_dragndrop" != "no" ; then
   fi
 fi
 
+dnl Autodetect LDAP
+AC_CHECKING(for LDAP)
+ldap_libs=
+test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
+test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
+if test "$with_ldap" != "no"; then
+  AC_CHECK_LIB(ldap, ldap_search, with_ldap_nolber=yes, with_ldap_nolber=no)
+  test "$with_ldap_nolber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_lber=yes, with_ldap_lber=no, -llber) }
+  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krb=yes, with_ldap_krb=no, -llber -lkrb) }
+  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" -a "$with_ldap_krb" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krbdes=yes, with_ldap_krbdes=no, -llber -lkrb -ldes) }
+  test -z "$with_ldap" -a \( "$with_ldap_lber" = "yes" -o "$with_ldap_nolber" = "yes" -o "$with_ldap_krb" = "yes" -o "$with_ldap_krbdes" = "yes" \) && with_ldap=yes
+fi
+if test "$with_ldap" = "yes"; then
+  AC_DEFINE(HAVE_LDAP)
+  if test "$with_ldap_nolber" = "yes" ; then
+    XE_PREPEND(-lldap, ldap_libs)
+  else
+    if test "$with_ldap_krb" = "yes" ; then
+      XE_PREPEND(-lkrb, ldap_libs)
+    fi
+    if test "$with_ldap_krbdes" = "yes" ; then
+      XE_PREPEND(-ldes, ldap_libs)
+      XE_PREPEND(-lkrb, ldap_libs)
+    fi
+    XE_PREPEND(-llber, ldap_libs)
+    XE_PREPEND(-lldap, ldap_libs)
+  fi
+  save_LIBS="$LIBS" LIBS="$LIBS $ldap_libs"
+  AC_CHECK_FUNCS(ldap_set_option ldap_get_lderrno ldap_result2error ldap_parse_result)
+  LIBS="$save_LIBS"
+  XE_APPEND(modules/ldap, MAKE_SUBDIR)
+  need_modules_common=yes
+  if test "$with_modules" = "yes"; then
+    XE_APPEND(modules/ldap, INSTALL_ARCH_DEP_SUBDIR)
+  fi
+fi
+AC_SUBST(ldap_libs)
+
+dnl Autodetect PostgreSQL
+dnl On many Linux systems, PostgreSQL is packaged to be installed in /usr;
+dnl in this case, configure will easily detect it there.
+dnl
+dnl If PostgreSQL is installed into a different prefix,
+dnl (such as the default /usr/local/pgsql when building from source),
+dnl that prefix must be specified using the --site-prefixes flag.
+postgresql_libs=
+if test "$with_postgresql" != "no"; then
+  AC_CHECKING(for PostgreSQL)
+
+dnl Look for these standard header file locations, known to be used on Linux
+  for header_dir in "" "pgsql/" "postgresql/"; do
+    AC_CHECK_HEADER(${header_dir}libpq-fe.h,
+                    libpq_fe_h_file=${header_dir}libpq-fe.h; break)
+  done
+
+  test -n "$libpq_fe_h_file" && { AC_CHECK_LIB(pq,PQconnectdb,have_libpq=yes) }
+
+  if test -n "$libpq_fe_h_file" -a "$have_libpq" = "yes"; then
+    with_postgresql=yes
+    AC_DEFINE(HAVE_POSTGRESQL)
+    AC_CHECK_LIB(pq,PQconnectStart, [
+                 with_postgresqlv7=yes;
+                 AC_DEFINE(HAVE_POSTGRESQLV7)])
+    AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
+    XE_PREPEND(-lpq, postgresql_libs)
+    XE_APPEND(modules/postgresql, MAKE_SUBDIR)
+    need_modules_common=yes
+    if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/postgresql, INSTALL_ARCH_DEP_SUBDIR)
+    fi
+  elif test "$with_postgresql" = "yes"; then
+    XE_DIE("Required PostgreSQL support cannot be provided.  Check --site-prefixes.")
+  fi
+fi
+AC_SUBST(postgresql_libs)
 
 dnl ----------------------
 dnl Graphics libraries
@@ -4597,166 +4749,9 @@ XE_SPACE(ld_libs_general, $LIBS $libs_machine $libs_system $libs_standard)
 XE_SPACE(ld_libs_window_system, $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS)
 XE_SPACE(ld_libs_all, $ld_libs_window_system $ld_libs_general $ld_libs_module)
 
-
 dnl Compute lists of Makefiles and subdirs
 AC_SUBST(SRC_SUBDIR_DEPS)
 XE_APPEND(src, MAKE_SUBDIR)
-
-dnl Autodetect dll support
-dnl This must come before the detection code for anything that is in a module
-if test "$with_modules" != "no"; then
-  AC_CHECKING(for module support)
-
-  dnl Check for MS-Windows
-  if test "$with_msw" = "yes"; then
-    have_dl=yes;
-  else
-    case "$opsys" in
-     darwin ) have_dl=yes; AC_DEFINE(HAVE_DYLD) ;;
-     * )
-      dnl Find headers and libraries
-      AC_CHECK_HEADER(dlfcn.h, [
-	AC_MSG_CHECKING([for dlopen in -lc])
-	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	  [dlopen ("", 0);], [ have_dl=yes ], [
-	  AC_MSG_CHECKING([for dlopen in -ldl])
-	ac_save_LIBS="$LIBS"
-	LIBS="-ldl $LIBS"
-	AC_TRY_LINK([#include <dlfcn.h>],dnl
-	  [dlopen ("", 0);], [ have_dl=yes ],
-	  [LIBS="$ac_save_LIBS"])
-	ac_save_LIBS=])])
-      if test -n "$have_dl"; then
-	AC_DEFINE(HAVE_DLOPEN)
-      else
-	AC_CHECK_LIB(dld, shl_load, [
-	  libdl=dld have_dl=yes;
-	  AC_DEFINE(HAVE_SHL_LOAD)], [
-	  AC_CHECK_LIB(dld, dld_init, [
-	  libdl=dld have_dl=yes;
-	  AC_DEFINE(HAVE_DLD_INIT)])])
-      fi
-    esac dnl end !darwin
-  fi dnl end !MS-Windows
-
-  if test -n "$have_dl"; then
-    dnl XE_SHLIB_STUFF (in aclocal.m4) defines $can_build_shared
-    XE_SHLIB_STUFF
-  fi
-
-  if test "$can_build_shared" = "yes"; then
-    AC_DEFINE(HAVE_SHLIB)
-    XE_APPEND(src, INSTALL_ARCH_DEP_SUBDIR)
-    test -n "$libdl" && XE_PREPEND(-l${libdl}, LIBS)
-    AC_CHECK_FUNCS(dlerror _dlerror)
-    with_modules=yes
-    MOD_CC="../../lib-src/ellcc"
-    MODCFLAGS="\$(CFLAGS) --mode=compile --mod-output=\$@ -I../../src -I\$(srcdir)/../../src"
-    INSTALLPATH="\$(moduledir)"
-    MOD_INSTALL_PROGRAM=${INSTALL_PROGRAM}
-    OBJECT_TO_BUILD="\$(MODNAME).ell"
-  else
-    if test "$with_modules" = "yes"; then
-      XE_DIE("Required module support cannot be provided.")
-    else
-      echo "    No module support."
-    fi
-    with_modules=no
-    MOD_CC="$XEMACS_CC"
-    MODCFLAGS="\$(CFLAGS) -I../../src -I\$(srcdir)/../../src"
-    INSTALLPATH=""
-    MOD_INSTALL_PROGRAM="true"
-    OBJECT_TO_BUILD="\$(MODNAME).o"
-  fi
-fi
-MODARCHDIR=
-MAKE_DOCFILE="../../lib-src/make-docfile"
-AC_SUBST(with_modules)
-AC_SUBST(MOD_CC)
-AC_SUBST(MODARCHDIR)
-AC_SUBST(MAKE_DOCFILE)
-AC_SUBST(MODCFLAGS)
-AC_SUBST(INSTALLPATH)
-AC_SUBST(MOD_INSTALL_PROGRAM)
-AC_SUBST(OBJECT_TO_BUILD)
-
-
-dnl Autodetect LDAP
-AC_CHECKING(for LDAP)
-ldap_libs=
-test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
-test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
-if test "$with_ldap" != "no"; then
-  AC_CHECK_LIB(ldap, ldap_search, with_ldap_nolber=yes, with_ldap_nolber=no)
-  test "$with_ldap_nolber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_lber=yes, with_ldap_lber=no, -llber) }
-  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krb=yes, with_ldap_krb=no, -llber -lkrb) }
-  test "$with_ldap_nolber" = "no" -a "$with_ldap_lber" = "no" -a "$with_ldap_krb" = "no" && { AC_CHECK_LIB(ldap, ldap_open, with_ldap_krbdes=yes, with_ldap_krbdes=no, -llber -lkrb -ldes) }
-  test -z "$with_ldap" -a \( "$with_ldap_lber" = "yes" -o "$with_ldap_nolber" = "yes" -o "$with_ldap_krb" = "yes" -o "$with_ldap_krbdes" = "yes" \) && with_ldap=yes
-fi
-if test "$with_ldap" = "yes"; then
-  AC_DEFINE(HAVE_LDAP)
-  if test "$with_ldap_nolber" = "yes" ; then
-    XE_PREPEND(-lldap, ldap_libs)
-  else
-    if test "$with_ldap_krb" = "yes" ; then
-      XE_PREPEND(-lkrb, ldap_libs)
-    fi
-    if test "$with_ldap_krbdes" = "yes" ; then
-      XE_PREPEND(-ldes, ldap_libs)
-      XE_PREPEND(-lkrb, ldap_libs)
-    fi
-    XE_PREPEND(-llber, ldap_libs)
-    XE_PREPEND(-lldap, ldap_libs)
-  fi
-  save_LIBS="$LIBS" LIBS="$LIBS $ldap_libs"
-  AC_CHECK_FUNCS(ldap_set_option ldap_get_lderrno ldap_result2error ldap_parse_result)
-  LIBS="$save_LIBS"
-  XE_APPEND(modules/ldap, MAKE_SUBDIR)
-  need_modules_common=yes
-  if test "$with_modules" = "yes"; then
-    XE_APPEND(modules/ldap, INSTALL_ARCH_DEP_SUBDIR)
-  fi
-fi
-AC_SUBST(ldap_libs)
-
-dnl Autodetect PostgreSQL
-dnl On many Linux systems, PostgreSQL is packaged to be installed in /usr;
-dnl in this case, configure will easily detect it there.
-dnl
-dnl If PostgreSQL is installed into a different prefix,
-dnl (such as the default /usr/local/pgsql when building from source),
-dnl that prefix must be specified using the --site-prefixes flag.
-postgresql_libs=
-if test "$with_postgresql" != "no"; then
-  AC_CHECKING(for PostgreSQL)
-
-dnl Look for these standard header file locations, known to be used on Linux
-  for header_dir in "" "pgsql/" "postgresql/"; do
-    AC_CHECK_HEADER(${header_dir}libpq-fe.h,
-                    libpq_fe_h_file=${header_dir}libpq-fe.h; break)
-  done
-
-  test -n "$libpq_fe_h_file" && { AC_CHECK_LIB(pq,PQconnectdb,have_libpq=yes) }
-
-  if test -n "$libpq_fe_h_file" -a "$have_libpq" = "yes"; then
-    with_postgresql=yes
-    AC_DEFINE(HAVE_POSTGRESQL)
-    AC_CHECK_LIB(pq,PQconnectStart, [
-                 with_postgresqlv7=yes;
-                 AC_DEFINE(HAVE_POSTGRESQLV7)])
-    AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
-    XE_PREPEND(-lpq, postgresql_libs)
-    XE_APPEND(modules/postgresql, MAKE_SUBDIR)
-    need_modules_common=yes
-    if test "$with_modules" = "yes"; then
-      XE_APPEND(modules/postgresql, INSTALL_ARCH_DEP_SUBDIR)
-    fi
-  elif test "$with_postgresql" = "yes"; then
-    XE_DIE("Required PostgreSQL support cannot be provided.  Check --site-prefixes.")
-  fi
-fi
-AC_SUBST(postgresql_libs)
-
 internal_makefile_list="Makefile.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock

@@ -1,3 +1,18 @@
+2003-05-10  Steve Youngs  <youngs@xemacs.org>
+
+	* Revert this patch:
+	2003-05-01  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	        * configure.in: Move module detection to after src/ is added to
+	        MAKE_SUBDIR. On MacOS X, building modules requires xemacs to
+	        already be built.
+	        * aclocal.m4 (XE_SHLIB_STUFF): Properly define ellcc flags for
+	        MacOS X.
+	It was stopping certain libs from making their way into the
+	Makefiles. 
+
+	* configure: Regenerate.
+
 2003-05-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in: Revert Steve Youngs's patch, and set default for
