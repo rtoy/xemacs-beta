@@ -1,3 +1,13 @@
+2003-06-18  Nickolay Pakoulin  <npak@ispras.ru>
+
+	* cl-macs.el (cl-transform-lambda): Place doc on Common Lisp
+	lambda list after the original doc.  Care about
+	#'(lambda () "SingleString")
+	(cl-upcase-arg):
+	(cl-function-arglist):
+	Care about &cl-defs and &cl-quote in lambda list, dotted lists and
+	circular data structures in lambda list specification
+
 2003-07-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* derived.el (derived-mode-merge-syntax-tables): Reverse map
