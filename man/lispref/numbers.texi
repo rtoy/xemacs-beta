@@ -321,6 +321,10 @@ implemented by the XEmacs implementer, Jerry James, who is not a
 numerical analyst.  Arbitrary precision floats are not available with
 MP.
 
+  If your code needs to run correctly whether or not the feature is
+provided, you may test for the features @code{bignum}, @code{ratio}, and
+@code{bigfloat}.
+
   The XEmacs bignum facility implements the Common Lisp notion of
 @dfn{contagion}, so that integers are always represented using the
 ``smallest'' representation that is exact, and integral ratios are

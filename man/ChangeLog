@@ -1,5 +1,10 @@
 2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
+	* lispref/numbers.texi (The Bignum Extension): Mention the feature
+	symbols provided.
+
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
 	* lispref/numbers.texi (Rational Basics): There's a reason why
 	this node is named "Rational" and not "Ratio" in the menu....
 
