@@ -73,8 +73,7 @@ This option can be customized through the options menu."
 	     ;; Emacs window.  If windows are split, it probably results in
 	     ;; small adjustments in their sizes.
 	     (set-frame-size (selected-frame) width (+ height hdiff))
-	     )
-  )
+	     )))
 
 (defvar toolbar-help-enabled t
   "If non-nil help is echoed for toolbar buttons.")
