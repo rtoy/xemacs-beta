@@ -750,7 +750,7 @@ The default is to autodetect native and NAS sound support."])
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | pkgdir | \
-	archlibdir | docdir | package_path )
+	archlibdir | docdir | package_path | moduledir )
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -1221,6 +1221,13 @@ case "$canonical" in
 
   dnl Cubix QBx/386
   i[[3-9]]86-cubix-sysv* ) machine=intel386 opsys=usg5-3 ;;
+
+  dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
+  *-*-darwin*)
+    opsys=darwin
+    RANLIB="ranlib -c" dnl Avoids a link error with lwlib-config.c
+    pdump=yes          dnl No "native" working dumper available
+    ;;
 
   dnl Data General AViiON Machines
   i586-dg-dgux*R4*   | i586-dg-dgux5.4.4* ) machine=aviion opsys=dgux5-4r4 ;;

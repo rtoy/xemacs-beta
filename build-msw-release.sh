@@ -7,6 +7,7 @@
 # configuration
 NATIVE_ZLIB_DIR=/usr/local/mingw/lib
 PROGRAM_FILES='c:/Program Files/XEmacs'
+TMPINSTALL=/tmp/local
 # no configuration past this point
 
 INSTALL=
@@ -52,6 +53,7 @@ rm -rf windows
 mkdir -p windows/cygwin32
 mkdir -p windows/win32
 mkdir -p /usr/local
+mkdir -p ${TMPINSTALL}
 
 # first build win32
 (cd nt;
@@ -84,8 +86,8 @@ cp netinstall/setup.exe \
 	./XEmacs-${emacs_ver})
 
 # make the tarball
-make install
-(cd /usr/local;
+make prefix=${TMPINSTALL} bindir=${TMPINSTALL}/bin/i686-pc-cygwin install
+(cd ${TMPINSTALL};
     tar czvf ${DISTDIR}/cygwin32/${cygwin_tarball} \
     ./bin/i686-pc-cygwin \
     ./lib/xemacs-${emacs_ver} \
@@ -96,7 +98,8 @@ make install
     ./man/man1/gnuclient.1 \
     ./man/man1/gnudoit.1 \
     ./man/man1/gnuserv.1 \
-    ./man/man1/xemacs.1)
+    ./man/man1/xemacs.1;
+    rm -rf bin lib man)
 
 # figure out the ini file.
 cygwin_tarball_size=`ls -l windows/cygwin32/${cygwin_tarball} | awk '{ print $5; }'`
