@@ -1,5 +1,10 @@
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
+	* free-hook.c (check_free):
+	Fix aliasing warning.
+	
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
 	* redisplay.c:
 	* redisplay.c (generate_displayable_area):
 	* redisplay.c (regenerate_window):
@@ -68,9 +73,6 @@
 	* nt.c:
 	* fileio.c:
 	Fix sync comments.
-	
-	* free-hook.c (check_free):
-	Fix aliasing warning.
 	
 	* config.h.in:
 	* dired-msw.c (mswindows_get_files):

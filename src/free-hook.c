@@ -131,7 +131,8 @@ check_free (void *ptr)
 #endif
 
       EMACS_INT present = (EMACS_INT) gethash (ptr, pointer_table,
-					       (const void **) &size);
+					       (const void **)
+					       (void *) &size);
 
       if (!present)
 	{
