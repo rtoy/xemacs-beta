@@ -914,6 +914,63 @@ in the minibuffer."
 	  info))))
 
 ;;;###autoload
+(defun package-get-list-packages-where (item field &optional arg)
+  "Return a list of packages that fulfill certain criteria.
+
+Argument ITEM, a symbol, is what you want to check for.  ITEM must be a
+symbol even when it doesn't make sense to be a symbol \(think, searching
+maintainers, descriptions, etc\).  The function will convert the symbol
+to a string if a string is what is needed.  The downside to this is that
+ITEM can only ever be a single word.
+
+Argument FIELD, a symbol, is the field to check in.  You can specify
+any one of:
+
+      Field            Sane or Allowable Content
+    description          any single word
+    category             `standard' or `mule'
+    maintainer           any single word
+    build-date           yyyy-mm-dd
+    date                 yyyy-mm-dd
+    type                 `regular' or `single'
+    requires             any package name
+    provides             any symbol
+    priority             `low', `medium', or `high'
+
+Optional Argument ARG, a prefix arg, insert output at point in the
+current buffer."
+  (interactive "SList packages that have (item): \nSin their (field): \nP")
+  (package-get-require-base nil)
+  (let ((pkgs package-get-base)
+	(strings '(description category maintainer build-date date))
+	(symbols '(type requires provides priority))
+	results)
+    (cond ((memq field strings)
+	   (setq item (symbol-name item))
+	   (while pkgs
+	     (when (string-match item (package-get-info (caar pkgs) field))
+	       (setq results (push (caar pkgs) results)))
+	     (setq pkgs (cdr pkgs))))
+	  ((memq field symbols)
+	   (if (or (eq field 'type)
+		   (eq field 'priority))
+	       (while pkgs
+		 (when (eq item (package-get-info (caar pkgs) field))
+		   (setq results (push (caar pkgs) results)))
+		 (setq pkgs (cdr pkgs)))
+	     (while pkgs
+	       (when (memq item (package-get-info (caar pkgs) field))
+		 (setq results (push (caar pkgs) results)))
+	       (setq pkgs (cdr pkgs)))))
+	  (t 
+	   (error 'wrong-type-argument field)))
+    (if (interactive-p)
+	(if arg
+	    (insert (format "%s" results))
+	  (message "%s" results)))
+    results))
+
+;;;###autoload
 (defun package-get (package &optional version conflict install-dir)
   "Fetch PACKAGE from remote site.
 Optional arguments VERSION indicates which version to retrieve, nil

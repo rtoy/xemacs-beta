@@ -1,3 +1,9 @@
+2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
+
+	* package-get.el (package-get-list-packages-where): New.  A
+	function that allows searching for groups of packages.  For
+	example, find all packages that require the fsf-compat package.
+
 2003-11-05  Vin Shelton  <acs@xemacs.org>
 
 	* help.el (Help-prin1-face):
