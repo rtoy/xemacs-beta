@@ -1,3 +1,8 @@
+2001-04-26  John H. Palmieri  <palmieri@math.washington.edu>
+
+	* xemacs/frame.texi (XEmacs under X): Document default-frame-plist
+	rather than default-frame-alist.
+
 2001-04-15  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Q1.0.1):
