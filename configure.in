@@ -3166,28 +3166,32 @@ if test "$with_modules" != "no"; then
   if test "$with_msw" = "yes"; then
     have_dl=yes;
   else
-    dnl Find headers and libraries
-    AC_CHECK_HEADER(dlfcn.h, [
-      AC_MSG_CHECKING([for dlopen in -lc])
-      AC_TRY_LINK([#include <dlfcn.h>],dnl
-	[dlopen ("", 0);], [ have_dl=yes ], [
-      AC_MSG_CHECKING([for dlopen in -ldl])
-      ac_save_LIBS="$LIBS"
-      LIBS="-ldl $LIBS"
-      AC_TRY_LINK([#include <dlfcn.h>],dnl
-	[dlopen ("", 0);], [ have_dl=yes ],
-	[LIBS="$ac_save_LIBS"])
-      ac_save_LIBS=])])
-    if test -n "$have_dl"; then
-      AC_DEFINE(HAVE_DLOPEN)
-    else
-      AC_CHECK_LIB(dld, shl_load, [
-        libdl=dld have_dl=yes;
-        AC_DEFINE(HAVE_SHL_LOAD)], [
-        AC_CHECK_LIB(dld, dld_init, [
-        libdl=dld have_dl=yes;
-        AC_DEFINE(HAVE_DLD_INIT)])])
-    fi
+    case "$opsys" in
+     darwin ) have_dl=yes; AC_DEFINE(HAVE_DYLD) ;;
+     * )
+      dnl Find headers and libraries
+      AC_CHECK_HEADER(dlfcn.h, [
+	AC_MSG_CHECKING([for dlopen in -lc])
+	AC_TRY_LINK([#include <dlfcn.h>],dnl
+	  [dlopen ("", 0);], [ have_dl=yes ], [
+	  AC_MSG_CHECKING([for dlopen in -ldl])
+	ac_save_LIBS="$LIBS"
+	LIBS="-ldl $LIBS"
+	AC_TRY_LINK([#include <dlfcn.h>],dnl
+	  [dlopen ("", 0);], [ have_dl=yes ],
+	  [LIBS="$ac_save_LIBS"])
+	ac_save_LIBS=])])
+      if test -n "$have_dl"; then
+	AC_DEFINE(HAVE_DLOPEN)
+      else
+	AC_CHECK_LIB(dld, shl_load, [
+	  libdl=dld have_dl=yes;
+	  AC_DEFINE(HAVE_SHL_LOAD)], [
+	  AC_CHECK_LIB(dld, dld_init, [
+	  libdl=dld have_dl=yes;
+	  AC_DEFINE(HAVE_DLD_INIT)])])
+      fi
+    esac dnl end !darwin
   fi dnl end !MS-Windows
 
   if test -n "$have_dl"; then
