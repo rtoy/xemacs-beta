@@ -777,6 +777,25 @@ and replace a sub-expression, e.g.
 ;; END SYNCHED WITH FSF 21.2
 
 
+;; BEGIN SYNCHED WITH FSF 21.3
+
+(defun add-to-invisibility-spec (arg)
+  "Add elements to `buffer-invisibility-spec'.
+See documentation for `buffer-invisibility-spec' for the kind of elements
+that can be added."
+  (if (eq buffer-invisibility-spec t)
+      (setq buffer-invisibility-spec (list t)))
+  (setq buffer-invisibility-spec
+	(cons arg buffer-invisibility-spec)))
+
+(defun remove-from-invisibility-spec (arg)
+  "Remove elements from `buffer-invisibility-spec'."
+  (if (consp buffer-invisibility-spec)
+    (setq buffer-invisibility-spec (delete arg buffer-invisibility-spec))))
+
+;; END SYNCHED WITH FSF 21.3
+
+
 ;;; Basic string functions
 
 ;; XEmacs
