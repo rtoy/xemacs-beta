@@ -1299,8 +1299,8 @@ POS defaults to point in WINDOW's buffer; WINDOW, to the selected window.
        (pos, window))
 {
   struct window *w = decode_window (window);
-  Bufpos top = marker_position (w->start[CURRENT_DISP]);
-  Bufpos posint;
+  Charbpos top = marker_position (w->start[CURRENT_DISP]);
+  Charbpos posint;
   struct buffer *buf = XBUFFER (w->buffer);
 
   if (NILP (pos))
@@ -1438,7 +1438,7 @@ is non-nil, do not include space occupied by clipped lines.
      (window, noclipped))
 {
   struct window *w;
-  Bufpos start, eobuf;
+  Charbpos start, eobuf;
   int defheight;
   int hlimit, height, prev_height = -1;
   int line;
@@ -1728,7 +1728,7 @@ This function is potentially much slower with this flag set.
     }
   else
     {
-      Bufpos startp = marker_position (w->start[CURRENT_DISP]);
+      Charbpos startp = marker_position (w->start[CURRENT_DISP]);
       return make_int (end_of_last_line (w, startp));
     }
 }
@@ -1862,7 +1862,7 @@ unshow_buffer (struct window *w)
   if (! EQ (buf, XWINDOW (Fselected_window (Qnil))->buffer))
     {
       struct buffer *b= XBUFFER (buf);
-      BUF_SET_PT (b, bufpos_clip_to_bounds (BUF_BEGV (b),
+      BUF_SET_PT (b, charbpos_clip_to_bounds (BUF_BEGV (b),
                                      marker_position (w->pointm[CURRENT_DISP]),
                                      BUF_ZV (b)));
     }
@@ -3024,7 +3024,7 @@ value is reasonable when this function is called.
 {
   struct window *w = decode_window (window);
   struct buffer *b = XBUFFER (w->buffer);
-  Bufpos start_pos;
+  Charbpos start_pos;
   int old_top = WINDOW_TOP (w);
 
   XSETWINDOW (window, w);
@@ -3045,7 +3045,7 @@ value is reasonable when this function is called.
   if (start_pos >= BUF_BEGV (b) && start_pos <= BUF_ZV (b)
       && !MINI_WINDOW_P (w))
     {
-      Bufpos new_start = start_with_line_at_pixpos (w, start_pos, old_top);
+      Charbpos new_start = start_with_line_at_pixpos (w, start_pos, old_top);
 
       if (new_start >= BUF_BEGV (b) && new_start <= BUF_ZV (b))
 	{
@@ -3567,7 +3567,7 @@ global or per-frame buffer ordering.
      redisplay_window has altered point after scrolling,
      because it makes the change only in the window.  */
   {
-    Bufpos new_point = marker_position (w->pointm[CURRENT_DISP]);
+    Charbpos new_point = marker_position (w->pointm[CURRENT_DISP]);
     if (new_point < BUF_BEGV (current_buffer))
       new_point = BUF_BEGV (current_buffer);
     else if (new_point > BUF_ZV (current_buffer))
@@ -4296,7 +4296,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
     point = make_int (BUF_PT (b));
   else
     {
-      Bufpos pos = marker_position (w->pointm[CURRENT_DISP]);
+      Charbpos pos = marker_position (w->pointm[CURRENT_DISP]);
 
       if (pos < BUF_BEGV (b))
 	pos = BUF_BEGV (b);
@@ -4395,7 +4395,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
       else
 	{
 	  int vtarget;
-	  Bufpos startp, old_start;
+	  Charbpos startp, old_start;
 
 	  if (WINDOW_TEXT_TOP_CLIP (w))
 	    {
@@ -4453,7 +4453,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
       else
 	{
 	  int vtarget;
-	  Bufpos startp, old_start;
+	  Charbpos startp, old_start;
 
 	  if (WINDOW_TEXT_TOP_CLIP (w))
 	    {
@@ -4498,7 +4498,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 
 	      if (!point_would_be_visible (w, startp, XINT (point)))
 		{
-		  Bufpos new_point;
+		  Charbpos new_point;
 
 		  if (MINI_WINDOW_P (w))
 		    new_point = startp;
@@ -4531,9 +4531,9 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	{
 	  int vtarget;
 	  int movement = next_screen_context_lines - 1;
-	  Bufpos old_startp = marker_position (w->start[CURRENT_DISP]);
-	  Bufpos bottom = vmotion (w, old_startp, movement, &vtarget);
-	  Bufpos startp =
+	  Charbpos old_startp = marker_position (w->start[CURRENT_DISP]);
+	  Charbpos bottom = vmotion (w, old_startp, movement, &vtarget);
+	  Charbpos startp =
 	    start_with_point_on_display_line (w, bottom,
 					      -1 - (movement - vtarget));
 
@@ -4548,7 +4548,7 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 
 	  if (!point_would_be_visible (w, startp, XINT (point)))
 	    {
-	      Bufpos new_point = start_of_last_line (w, startp);
+	      Charbpos new_point = start_of_last_line (w, startp);
 
 	      if (selected)
 		BUF_SET_PT (b, new_point);
@@ -4712,8 +4712,8 @@ If WINDOW is nil, the selected window is used.
 {
   struct window *w = decode_window (window);
   struct buffer *b = XBUFFER (w->buffer);
-  Bufpos opoint = BUF_PT (b);
-  Bufpos startp;
+  Charbpos opoint = BUF_PT (b);
+  Charbpos startp;
 
   if (NILP (n))
     startp = start_with_line_at_pixpos (w, opoint, window_half_pixpos (w));
@@ -4744,7 +4744,7 @@ If WINDOW is nil, the selected window is used.
   struct window *w;
   struct buffer *b;
   int height;
-  Bufpos start, new_point;
+  Charbpos start, new_point;
   int selected;
 
   /* Don't use decode_window() because we need the new value of
@@ -5129,14 +5129,14 @@ mark_window_config (Lisp_Object obj)
   return Qnil;
 }
 
-inline static Memory_Count
+inline static Bytecount
 sizeof_window_config_for_n_windows (int n)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (struct window_config,
 				       struct saved_window, saved_windows, n);
 }
 
-static Memory_Count
+static Bytecount
 sizeof_window_config (const void *h)
 {
   const struct window_config *c = (const struct window_config *) h;
@@ -6028,7 +6028,7 @@ a non-nil result to be returned.
   if (y<0 || x<0 || y >= Dynarr_length (dla) || !NILP (pos))
     {
       int first_line, i;
-      Bufpos point;
+      Charbpos point;
 
       if (NILP (pos))
 	pos = Fwindow_point (window);
@@ -6045,20 +6045,20 @@ a non-nil result to be returned.
 	{
 	  dl = Dynarr_atp (dla, i);
 	  /* find the vertical location first */
-	  if (point >= dl->bufpos && point <= dl->end_bufpos)
+	  if (point >= dl->charbpos && point <= dl->end_charbpos)
 	    {
 	      db = get_display_block_from_line (dl, TEXT);
 	      for (i = 0; i < Dynarr_length (db->runes); i++)
 		{
 		  rb = Dynarr_atp (db->runes, i);
-		  if (point <= rb->bufpos)
-		    goto found_bufpos;
+		  if (point <= rb->charbpos)
+		    goto found_charbpos;
 		}
 	      return Qnil;
 	    }
 	}
       return Qnil;
-    found_bufpos:
+    found_charbpos:
       ;
     }
   else

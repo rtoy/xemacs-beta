@@ -3135,15 +3135,15 @@ and announce itself normally when it is run.
 /* Split STRING into a list of substrings.  The substrings are the
    parts of original STRING separated by SEPCHAR.  */
 static Lisp_Object
-split_string_by_emchar_1 (const Bufbyte *string, Bytecount size,
+split_string_by_emchar_1 (const Intbyte *string, Bytecount size,
 			  Emchar sepchar)
 {
   Lisp_Object result = Qnil;
-  const Bufbyte *end = string + size;
+  const Intbyte *end = string + size;
 
   while (1)
     {
-      const Bufbyte *p = string;
+      const Intbyte *p = string;
       while (p < end)
 	{
 	  if (charptr_emchar (p) == sepchar)
@@ -3169,7 +3169,7 @@ Lisp_Object
 decode_path (const char *path)
 {
   Bytecount newlen;
-  Bufbyte *newpath;
+  Intbyte *newpath;
   if (!path)
     return Qnil;
 
@@ -3584,7 +3584,7 @@ extents		- check extents prior to each extent change;
 typecheck	- check types strictly, aborting in case of error;
 malloc		- check operation of malloc;
 gc		- check garbage collection;
-bufpos		- check buffer positions.
+charbpos		- check buffer positions.
 
 quick-build     - user has requested the "quick-build" configure option.
 */ );
@@ -3605,8 +3605,8 @@ quick-build     - user has requested the "quick-build" configure option.
   Vinternal_error_checking = Fcons (intern ("gc"),
 				    Vinternal_error_checking);
 #endif
-#ifdef ERROR_CHECK_BUFPOS
-  Vinternal_error_checking = Fcons (intern ("bufpos"),
+#ifdef ERROR_CHECK_CHARBPOS
+  Vinternal_error_checking = Fcons (intern ("charbpos"),
 				    Vinternal_error_checking);
 #endif
 #ifdef QUICK_BUILD
@@ -3659,7 +3659,7 @@ The directory separator in search paths, as a string.
 */ );
   {
     char c = SEPCHAR;
-    Vpath_separator = make_string ((Bufbyte *)&c, 1);
+    Vpath_separator = make_string ((Intbyte *)&c, 1);
   }
 }
 

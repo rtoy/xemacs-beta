@@ -239,7 +239,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
 	      return;
 	    }
 	  buf = Dynarr_new (Emchar);
-	  convert_bufbyte_string_into_emchar_dynarr
+	  convert_intbyte_string_into_emchar_dynarr
 	    (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 	  find_charsets_in_emchar_string (charsets, Dynarr_atp (buf, 0),
 					  Dynarr_length (buf));

@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 /*                        changing a buffer's text                      */
 /************************************************************************/
 
-int begin_multiple_change (struct buffer *buf, Bufpos start, Bufpos end);
+int begin_multiple_change (struct buffer *buf, Charbpos start, Charbpos end);
 void end_multiple_change (struct buffer *buf, int count);
 
 /* flags for functions below */
@@ -37,23 +37,23 @@ void end_multiple_change (struct buffer *buf, int count);
 #define INSDEL_BEFORE_MARKERS 1
 #define INSDEL_NO_LOCKING 2
 
-Charcount buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
-				  const Bufbyte *nonreloc, Lisp_Object reloc,
+Charcount buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
+				  const Intbyte *nonreloc, Lisp_Object reloc,
 				  Bytecount offset, Bytecount length,
 				  int flags);
-Charcount buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
-				      const Bufbyte *nonreloc,
+Charcount buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
+				      const Intbyte *nonreloc,
 				      Bytecount length, int flags);
-Charcount buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos,
+Charcount buffer_insert_lisp_string_1 (struct buffer *buf, Charbpos pos,
 				       Lisp_Object str, int flags);
-Charcount buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos,
+Charcount buffer_insert_c_string_1 (struct buffer *buf, Charbpos pos,
 				    const char *s, int flags);
-Charcount buffer_insert_emacs_char_1 (struct buffer *buf, Bufpos pos,
+Charcount buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos,
 				      Emchar ch, int flags);
-Charcount buffer_insert_c_char_1 (struct buffer *buf, Bufpos pos, char c,
+Charcount buffer_insert_c_char_1 (struct buffer *buf, Charbpos pos, char c,
 				  int flags);
-Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
-				       struct buffer *buf2, Bufpos pos2,
+Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
+				       struct buffer *buf2, Charbpos pos2,
 				       Charcount length, int flags);
 
 /* Macros for insertion functions that insert at point after markers.
@@ -74,9 +74,9 @@ Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
 #define buffer_insert_from_buffer(buf, b, index, length) \
   buffer_insert_from_buffer_1 (buf, -1, b, index, length, 0)
 
-void buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to,
+void buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to,
 			  int flags);
-void buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
+void buffer_replace_char (struct buffer *b, Charbpos pos, Emchar ch,
 			  int not_real_change, int force_lock_check);
 
 
@@ -91,7 +91,7 @@ struct buffer_text_change_data
 {
   /* multiple change stuff */
   int in_multiple_change;
-  Bufpos mc_begin, mc_orig_end, mc_new_end;
+  Charbpos mc_begin, mc_orig_end, mc_new_end;
   int mc_begin_signaled;
 };
 
@@ -129,8 +129,8 @@ struct each_buffer_change_data
   ((buf)->changes->newline_was_deleted)
 
 void buffer_extent_signal_changed_region (struct buffer *buf,
-					  Bufpos start,
-					  Bufpos end);
+					  Charbpos start,
+					  Charbpos end);
 void buffer_reset_changes (struct buffer *buf);
 
 
@@ -139,22 +139,22 @@ void buffer_reset_changes (struct buffer *buf);
 /*                        other related functions                       */
 /************************************************************************/
 
-Memind do_marker_adjustment (Memind mpos, Memind from,
-			     Memind to, Bytecount amount);
+Membpos do_marker_adjustment (Membpos mpos, Membpos from,
+			     Membpos to, Bytecount amount);
 
-void fixup_internal_substring (const Bufbyte *nonreloc,
+void fixup_internal_substring (const Intbyte *nonreloc,
 			       Lisp_Object reloc,
 			       Bytecount offset, Bytecount *len);
 
 /* In font-lock.c */
 void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
-					      Bufpos start,
-					      Bufpos orig_end,
-					      Bufpos new_end);
+					      Charbpos start,
+					      Charbpos orig_end,
+					      Charbpos new_end);
 void font_lock_buffer_was_killed (struct buffer *buf);
 
-void barf_if_buffer_read_only (struct buffer *buf, Bufpos from,
-			       Bufpos to);
+void barf_if_buffer_read_only (struct buffer *buf, Charbpos from,
+			       Charbpos to);
 
 void init_buffer_text (struct buffer *b);
 void uninit_buffer_text (struct buffer *b);

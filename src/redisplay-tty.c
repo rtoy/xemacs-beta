@@ -81,9 +81,9 @@ static void tty_output_emchar_dynarr (struct window *w,
 				      Emchar_dynarr *buf, int xpos,
 				      face_index findex,
 				      int cursor);
-static void tty_output_bufbyte_string (struct window *w,
+static void tty_output_intbyte_string (struct window *w,
 				       struct display_line *dl,
-				       Bufbyte *str, Bytecount len,
+				       Intbyte *str, Bytecount len,
 				       int xpos, face_index findex,
 				       int cursor);
 static void tty_turn_on_face (struct window *w, face_index findex);
@@ -517,8 +517,8 @@ tty_clear_frame (struct frame *f)
 }
 
 static void
-tty_output_bufbyte_string (struct window *w, struct display_line *dl,
-			   Bufbyte *str, Bytecount len, int xpos,
+tty_output_intbyte_string (struct window *w, struct display_line *dl,
+			   Intbyte *str, Bytecount len, int xpos,
 			   face_index findex, int cursor)
 {
   struct frame *f = XFRAME (w->frame);
@@ -531,13 +531,13 @@ tty_output_bufbyte_string (struct window *w, struct display_line *dl,
   tty_turn_on_face (w, findex);
 
   send_string_to_tty_console (c, str, len);
-  TTY_INC_CURSOR_X (c, bufbyte_string_displayed_columns (str, len));
+  TTY_INC_CURSOR_X (c, intbyte_string_displayed_columns (str, len));
 
   /* Turn the face properties back off. */
   tty_turn_off_face (w, findex);
 }
 
-static Bufbyte_dynarr *tty_output_emchar_dynarr_dynarr;
+static Intbyte_dynarr *tty_output_emchar_dynarr_dynarr;
 
 /*****************************************************************************
  tty_output_emchar_dynarr
@@ -551,15 +551,15 @@ tty_output_emchar_dynarr (struct window *w, struct display_line *dl,
 			  int cursor)
 {
   if (!tty_output_emchar_dynarr_dynarr)
-    tty_output_emchar_dynarr_dynarr = Dynarr_new (Bufbyte);
+    tty_output_emchar_dynarr_dynarr = Dynarr_new (Intbyte);
   else
     Dynarr_reset (tty_output_emchar_dynarr_dynarr);
 
-  convert_emchar_string_into_bufbyte_dynarr (Dynarr_atp (buf, 0),
+  convert_emchar_string_into_intbyte_dynarr (Dynarr_atp (buf, 0),
 					    Dynarr_length (buf),
 					    tty_output_emchar_dynarr_dynarr);
 
-  tty_output_bufbyte_string (w, dl,
+  tty_output_intbyte_string (w, dl,
 			     Dynarr_atp (tty_output_emchar_dynarr_dynarr, 0),
 			     Dynarr_length (tty_output_emchar_dynarr_dynarr),
 			     xpos, findex, cursor);
@@ -567,17 +567,17 @@ tty_output_emchar_dynarr (struct window *w, struct display_line *dl,
 
 #if 0
 
-static Bufbyte_dynarr *sidcs_dynarr;
+static Intbyte_dynarr *sidcs_dynarr;
 
 static void
 substitute_in_dynamic_color_string (Lisp_Object spec, Lisp_Object string)
 {
   int i;
-  Bufbyte *specdata = XSTRING_DATA   (spec);
+  Intbyte *specdata = XSTRING_DATA   (spec);
   Bytecount speclen = XSTRING_LENGTH (spec);
 
   if (!sidcs_dynarr)
-    sidcs_dynarr = Dynarr_new (Bufbyte);
+    sidcs_dynarr = Dynarr_new (Intbyte);
   else
     Dynarr_reset (sidcs_dynarr);
 
@@ -606,7 +606,7 @@ static void
 set_foreground_to (struct console *c, Lisp_Object sym)
 {
   Lisp_Object result;
-  Bufbyte *escseq = 0;
+  Intbyte *escseq = 0;
   Bytecount escseqlen = 0;
 
   result = assq_no_quit (sym, Vtty_color_alist);
@@ -636,7 +636,7 @@ static void
 set_background_to (struct console *c, Lisp_Object sym)
 {
   Lisp_Object result;
-  Bufbyte *escseq = 0;
+  Intbyte *escseq = 0;
   Bytecount escseqlen = 0;
 
   result = assq_no_quit (sym, Vtty_color_alist);

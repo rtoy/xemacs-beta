@@ -148,7 +148,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 
 #define string_join(dest, s1, s2) \
   memcpy ((void *) dest, (void *) XSTRING_DATA (s1), XSTRING_LENGTH (s1)); \
-  memcpy ((void *) ((Bufbyte *) dest + XSTRING_LENGTH (s1)), \
+  memcpy ((void *) ((Intbyte *) dest + XSTRING_LENGTH (s1)), \
           (void *) XSTRING_DATA (s2), XSTRING_LENGTH (s2));  \
           dest[XSTRING_LENGTH (s1) + XSTRING_LENGTH (s2)] = '\0'
 
@@ -466,7 +466,7 @@ when doc strings are referred to in the dumped Emacs.
       if (p != end)
 	{
 	  end = strchr (p, '\n');
-	  sym = oblookup (Vobarray, (Bufbyte *) p + 2, end - p - 2);
+	  sym = oblookup (Vobarray, (Intbyte *) p + 2, end - p - 2);
 	  if (SYMBOLP (sym))
 	    {
               Lisp_Object offset = make_int (pos + end + 1 - buf);
@@ -748,18 +748,18 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
        (string))
 {
   /* This function can GC */
-  Bufbyte *buf;
+  Intbyte *buf;
   int changed = 0;
-  REGISTER Bufbyte *strdata;
-  REGISTER Bufbyte *bufp;
+  REGISTER Intbyte *strdata;
+  REGISTER Intbyte *bufp;
   Bytecount strlength;
   Bytecount idx;
   Bytecount bsize;
-  Bufbyte *new;
+  Intbyte *new;
   Lisp_Object tem = Qnil;
   Lisp_Object keymap = Qnil;
   Lisp_Object name = Qnil;
-  Bufbyte *start;
+  Intbyte *start;
   Bytecount length;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
@@ -794,14 +794,14 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
   strlength = XSTRING_LENGTH (string);
   bsize = 1 + strlength;
-  buf = (Bufbyte *) xmalloc (bsize);
+  buf = (Intbyte *) xmalloc (bsize);
   bufp = buf;
 
   /* Have to reset strdata every time GC might be called */
   strdata = XSTRING_DATA (string);
   for (idx = 0; idx < strlength; )
     {
-      Bufbyte *strp = strdata + idx;
+      Intbyte *strp = strdata + idx;
 
       if (strp[0] != '\\')
 	{
@@ -866,7 +866,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    if (NILP (tem))	/* but not on any keys */
 	      {
-		new = (Bufbyte *) xrealloc (buf, bsize += 4);
+		new = (Intbyte *) xrealloc (buf, bsize += 4);
 		bufp += new - buf;
 		buf = new;
 		memcpy (bufp, "M-x ", 4);
@@ -940,7 +940,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	  length = XSTRING_LENGTH (tem);
 	subst:
 	  bsize += length;
-	  new = (Bufbyte *) xrealloc (buf, bsize);
+	  new = (Intbyte *) xrealloc (buf, bsize);
 	  bufp += new - buf;
 	  buf = new;
 	  memcpy (bufp, start, length);

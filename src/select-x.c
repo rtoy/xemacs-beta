@@ -284,13 +284,13 @@ hack_motif_clipboard_selection (Atom selection_atom,
 #endif
       XmString fmh;
       String encoding = "STRING";
-      const Bufbyte *data  = XSTRING_DATA (selection_value);
+      const Intbyte *data  = XSTRING_DATA (selection_value);
       Bytecount bytes = XSTRING_LENGTH (selection_value);
 
 #ifdef MULE
       {
 	enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
-	const Bufbyte *ptr = data, *end = ptr + bytes;
+	const Intbyte *ptr = data, *end = ptr + bytes;
 	/* Optimize for the common ASCII case */
 	while (ptr <= end)
 	  {
@@ -461,16 +461,16 @@ x_selection_request_lisp_error (Lisp_Object closure)
  */
 static void
 x_reply_selection_request (XSelectionRequestEvent *event, int format,
-			   UChar_Binary *data, Memory_Count size, Atom type)
+			   UChar_Binary *data, Bytecount size, Atom type)
 {
   /* This function can GC */
   XSelectionEvent reply;
   Display *display = event->display;
   struct device *d = get_device_from_display (display);
   Window window = event->requestor;
-  Memory_Count bytes_remaining;
+  Bytecount bytes_remaining;
   int format_bytes = format/8;
-  Memory_Count max_bytes = SELECTION_QUANTUM (display);
+  Bytecount max_bytes = SELECTION_QUANTUM (display);
   if (max_bytes > MAX_SELECTION_QUANTUM) max_bytes = MAX_SELECTION_QUANTUM;
 
   reply.type      = SelectionNotify;
@@ -527,7 +527,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 
       while (bytes_remaining)
 	{
-	  Memory_Count i = ((bytes_remaining < max_bytes)
+	  Bytecount i = ((bytes_remaining < max_bytes)
 		   ? bytes_remaining
 		   : max_bytes);
 	  prop_id = expect_property_change (display, window, reply.property,
@@ -625,7 +625,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 
   {
     UChar_Binary *data;
-    Memory_Count size;
+    Bytecount size;
     int format;
     Atom type;
     lisp_data_to_selection_data (d, converted_selection,
@@ -840,8 +840,8 @@ static Lisp_Object
 copy_multiple_data (Lisp_Object obj)
 {
   Lisp_Object vec;
-  Element_Count i;
-  Element_Count len;
+  Elemcount i;
+  Elemcount len;
   if (CONSP (obj))
     return Fcons (XCAR (obj), copy_multiple_data (XCDR (obj)));
 
@@ -946,16 +946,16 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 
 static void
 x_get_window_property (Display *display, Window window, Atom property,
-		       UChar_Binary **data_ret, Memory_Count *bytes_ret,
+		       UChar_Binary **data_ret, Bytecount *bytes_ret,
 		       Atom *actual_type_ret, int *actual_format_ret,
 		       unsigned long *actual_size_ret, int delete_p)
 {
-  Memory_Count total_size;
+  Bytecount total_size;
   unsigned long bytes_remaining;
-  Memory_Count offset = 0;
+  Bytecount offset = 0;
   UChar_Binary *tmp_data = 0;
   int result;
-  Memory_Count buffer_size = SELECTION_QUANTUM (display);
+  Bytecount buffer_size = SELECTION_QUANTUM (display);
   if (buffer_size > MAX_SELECTION_QUANTUM) buffer_size = MAX_SELECTION_QUANTUM;
 
   /* First probe the thing to find out how big it is. */
@@ -987,7 +987,7 @@ x_get_window_property (Display *display, Window window, Atom property,
   while (bytes_remaining)
     {
 #if 0
-      Memory_Count last = bytes_remaining;
+      Bytecount last = bytes_remaining;
 #endif
       result =
 	XGetWindowProperty (display, window, property,
@@ -1017,14 +1017,14 @@ static void
 receive_incremental_selection (Display *display, Window window, Atom property,
 			       /* this one is for error messages only */
 			       Lisp_Object target_type,
-			       Memory_Count min_size_bytes,
+			       Bytecount min_size_bytes,
 			       UChar_Binary **data_ret,
-			       Memory_Count *size_bytes_ret,
+			       Bytecount *size_bytes_ret,
 			       Atom *type_ret, int *format_ret,
 			       unsigned long *size_ret)
 {
   /* This function can GC */
-  Memory_Count offset = 0;
+  Bytecount offset = 0;
   int prop_id;
   *size_bytes_ret = min_size_bytes;
   *data_ret = (UChar_Binary *) xmalloc (*size_bytes_ret);
@@ -1044,7 +1044,7 @@ receive_incremental_selection (Display *display, Window window, Atom property,
   while (1)
     {
       UChar_Binary *tmp_data;
-      Memory_Count tmp_size_bytes;
+      Bytecount tmp_size_bytes;
       wait_for_property_change (prop_id);
       /* expect it again immediately, because x_get_window_property may
 	 .. no it won't, I don't get it.
@@ -1097,7 +1097,7 @@ x_get_window_property_as_lisp_data (Display *display,
   int actual_format;
   unsigned long actual_size;
   UChar_Binary *data = NULL;
-  Memory_Count bytes = 0;
+  Bytecount bytes = 0;
   Lisp_Object val;
   struct device *d = get_device_from_display (display);
 
@@ -1125,9 +1125,9 @@ x_get_window_property_as_lisp_data (Display *display,
     {
       /* Ok, that data wasn't *the* data, it was just the beginning. */
 
-      Memory_Count min_size_bytes =
+      Bytecount min_size_bytes =
 	/* careful here. */
-	(Memory_Count) (* ((unsigned int *) data));
+	(Bytecount) (* ((unsigned int *) data));
       xfree (data);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
@@ -1245,7 +1245,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
   UChar_Binary *data;
-  Memory_Count bytes;
+  Bytecount bytes;
   Atom type;
   int format;
   unsigned long size;
@@ -1286,12 +1286,12 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  const Bufbyte *data  = XSTRING_DATA (string);
+  const Intbyte *data  = XSTRING_DATA (string);
   Bytecount bytes = XSTRING_LENGTH (string);
   Bytecount bytes_remaining;
-  Memory_Count max_bytes = SELECTION_QUANTUM (display);
+  Bytecount max_bytes = SELECTION_QUANTUM (display);
 #ifdef MULE
-  const Bufbyte *ptr, *end;
+  const Intbyte *ptr, *end;
   enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
 #endif
 
@@ -1346,7 +1346,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 
   while (bytes_remaining)
     {
-      Memory_Count chunk =
+      Bytecount chunk =
 	bytes_remaining < max_bytes ? bytes_remaining : max_bytes;
       XChangeProperty (display, window, cut_buffer_atom, XA_STRING, 8,
 		       (bytes_remaining == bytes

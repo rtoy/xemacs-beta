@@ -1399,7 +1399,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		    {
 		      len = strlen ((char*)data);
 		      hurl = dnd_url_hexify_string ((char *)data, "file:");
-		      l_item = make_string ((Bufbyte *)hurl, strlen (hurl));
+		      l_item = make_string ((Intbyte *)hurl, strlen (hurl));
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
 		      xfree (hurl);
@@ -1409,8 +1409,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		break;
 	      case DndText:
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Bufbyte *)"text/plain", 10) ),
-					    make_string ((Bufbyte *)"8bit", 4),
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Intbyte *)"text/plain", 10) ),
+					    make_string ((Intbyte *)"8bit", 4),
 					    make_ext_string ((Extbyte *)data,
 							     strlen((char *)data),
 							     Qctext) ) );
@@ -1435,7 +1435,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		{
 		  char *hurl = dnd_url_hexify_string ((char *) data, "file:");
 
-		  l_dndlist = list1 ( make_string ((Bufbyte *)hurl,
+		  l_dndlist = list1 ( make_string ((Intbyte *)hurl,
 						   strlen (hurl)) );
 		  l_type = Qdragdrop_URL;
 
@@ -1451,8 +1451,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		l_type = Qdragdrop_URL;
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Bufbyte *)"application/octet-stream", 24) ),
-					    make_string ((Bufbyte *)"8bit", 4),
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Intbyte *)"application/octet-stream", 24) ),
+					    make_string ((Intbyte *)"8bit", 4),
 					    make_ext_string ((Extbyte *)data,
 							     size,
 							     Qbinary) ) );
@@ -2448,7 +2448,7 @@ describe_event_window (Window window, Display *display)
     {
       char *buf = alloca_array (char, XSTRING_LENGTH (f->name) + 4);
       sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
-      write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0,
+      write_string_to_stdio_stream (stderr, 0, (Intbyte *) buf, 0,
 				    strlen (buf), Qterminal, 1);
     }
   stderr_out ("\n");

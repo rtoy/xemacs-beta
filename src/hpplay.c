@@ -75,7 +75,7 @@ void
 player_error_internal (Audio * audio, Char_ASCII * text, long errorCode)
 {
   Extbyte errorbuff[132];
-  Bufbyte *interr;
+  Intbyte *interr;
 
   AGetErrorText (audio, errorCode, errorbuff, 131);
   EXTERNAL_TO_C_STRING (errorbuf, interr, Qnative);

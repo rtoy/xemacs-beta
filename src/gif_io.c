@@ -98,13 +98,13 @@ void GifStdIOInit(GifFileType *GifFile, FILE *file, int filehandle)
     GifSetCloseFunc(GifFile, GifStdFileClose, IOData);
 }
 
-Memory_Count GifStdRead(GifByteType *buf, Memory_Count size, VoidPtr method_data)
+Bytecount GifStdRead(GifByteType *buf, Bytecount size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
   return (fread(buf, 1, size, IOtype->File));
 }
 
-Memory_Count GifStdWrite(GifByteType *buf, Memory_Count size, VoidPtr method_data)
+Bytecount GifStdWrite(GifByteType *buf, Bytecount size, VoidPtr method_data)
 {
   GifStdIODataType *IOtype = (GifStdIODataType*)method_data;
   return (fwrite(buf, 1, size, IOtype->File));  
@@ -120,14 +120,14 @@ int GifStdFileClose(VoidPtr method_data)
   return ret;
 }
 
-void GifRead(GifByteType *buf, Memory_Count size, GifFileType *GifFile)
+void GifRead(GifByteType *buf, Bytecount size, GifFileType *GifFile)
 {
   GifIODataType *GifIO = (GifIODataType*)GifFile->GifIO;
   if ((*(GifIO->ReadFunc))(buf, size, GifIO->ReadFunc_data) != size)
     GifError(GifFile, "Read error!");
 }
 
-void GifWrite(GifByteType *buf, Memory_Count size, GifFileType *GifFile)
+void GifWrite(GifByteType *buf, Bytecount size, GifFileType *GifFile)
 {
   GifIODataType *GifIO = (GifIODataType*)GifFile->GifIO;
   if ((*(GifIO->WriteFunc))(buf, size, GifIO->WriteFunc_data) != size)

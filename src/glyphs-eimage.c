@@ -260,7 +260,7 @@ typedef struct
 } our_jpeg_source_mgr;
 
 static void
-jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, Memory_Count len)
+jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, Bytecount len)
 {
   struct jpeg_source_mgr *src;
 
@@ -376,7 +376,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
     const UChar_Binary *bytes;
-    Memory_Count len;
+    Bytecount len;
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
@@ -561,12 +561,12 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
 typedef struct gif_memory_storage
 {
   UChar_Binary *bytes;		/* The data       */
-  Memory_Count len;		/* How big is it? */
-  Memory_Count index;		/* Where are we?  */
+  Bytecount len;		/* How big is it? */
+  Bytecount index;		/* Where are we?  */
 } gif_memory_storage;
 
-static Memory_Count
-gif_read_from_memory (GifByteType *buf, Memory_Count size, VoidPtr data)
+static Bytecount
+gif_read_from_memory (GifByteType *buf, Bytecount size, VoidPtr data)
 {
   gif_memory_storage *mem = (gif_memory_storage *) data;
 
@@ -613,7 +613,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   gif_memory_storage mem_struct;
   struct gif_error_struct gif_err;
   UChar_Binary *bytes;
-  Memory_Count len;
+  Bytecount len;
   int height = 0;
   int width = 0;
 
@@ -776,8 +776,8 @@ png_possible_dest_types (void)
 struct png_memory_storage
 {
   const UChar_Binary *bytes;	/* The data       */
-  Memory_Count len;		/* How big is it? */
-  Memory_Count index;		/* Where are we?  */
+  Bytecount len;		/* How big is it? */
+  Bytecount index;		/* Where are we?  */
 };
 
 static void
@@ -787,7 +787,7 @@ png_read_from_memory (png_structp png_ptr, png_bytep data,
    struct png_memory_storage *tbr =
      (struct png_memory_storage *) png_get_io_ptr (png_ptr);
 
-   if ((Memory_Count) length > (tbr->len - tbr->index))
+   if ((Bytecount) length > (tbr->len - tbr->index))
      png_error (png_ptr, (png_const_charp) "Read Error");
    memcpy (data, tbr->bytes + tbr->index,length);
    tbr->index = tbr->index + length;
@@ -900,7 +900,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
     const UChar_Binary *bytes;
-    Memory_Count len;
+    Bytecount len;
 
     assert (!NILP (data));
 
@@ -1087,8 +1087,8 @@ tiff_instantiate_unwind (Lisp_Object unwind_obj)
 typedef struct tiff_memory_storage
 {
   UChar_Binary *bytes;		/* The data       */
-  Memory_Count len;		/* How big is it? */
-  Memory_Count index;		/* Where are we?  */
+  Bytecount len;		/* How big is it? */
+  Bytecount index;		/* Where are we?  */
 } tiff_memory_storage;
 
 static size_t
@@ -1096,7 +1096,7 @@ tiff_memory_read (thandle_t data, tdata_t buf, tsize_t size)
 {
   tiff_memory_storage *mem = (tiff_memory_storage *) data;
 
-  if ((Memory_Count) size > (mem->len - mem->index))
+  if ((Bytecount) size > (mem->len - mem->index))
     return (size_t) -1;
   memcpy (buf, mem->bytes + mem->index, size);
   mem->index = mem->index + size;
@@ -1248,7 +1248,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
     UChar_Binary *bytes;
-    Memory_Count len;
+    Bytecount len;
 
     uint32 *raster;
     unsigned char *ep;

@@ -1189,11 +1189,11 @@ image_instance_live_p (Lisp_Object instance)
   return DOMAIN_LIVE_P (XIMAGE_INSTANCE_DOMAIN (instance));
 }
 
-static Hash_Code
+static Hashcode
 image_instance_hash (Lisp_Object obj, int depth)
 {
   Lisp_Image_Instance *i = XIMAGE_INSTANCE (obj);
-  Hash_Code hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
+  Hashcode hash = HASH5 (LISP_HASH (IMAGE_INSTANCE_DOMAIN (i)),
 			  IMAGE_INSTANCE_WIDTH (i),
 			  IMAGE_INSTANCE_MARGIN_WIDTH (i),
 			  IMAGE_INSTANCE_HEIGHT (i),
@@ -1381,7 +1381,7 @@ incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
     (Qinvalid_argument,
      list2
      (emacs_doprnt_string_lisp_2
-      ((const Bufbyte *)
+      ((const Intbyte *)
        "No compatible image-instance types given: wanted one of %s, got %s",
        Qnil, -1, 2,
        encode_image_instance_type_list (desired_dest_mask),
@@ -2293,7 +2293,7 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
   if (height)
     {
       /* Compute string metric info */
-      find_charsets_in_bufbyte_string (charsets,
+      find_charsets_in_intbyte_string (charsets,
 				       XSTRING_DATA   (string),
 				       XSTRING_LENGTH (string));
 
@@ -2343,7 +2343,7 @@ query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
   Lisp_Object frame = DOMAIN_FRAME (domain);
 
   /* Compute string font info */
-  find_charsets_in_bufbyte_string (charsets,
+  find_charsets_in_intbyte_string (charsets,
 				   XSTRING_DATA   (string),
 				   XSTRING_LENGTH (string));
 
@@ -3088,7 +3088,7 @@ instantiator_eq_equal (Lisp_Object obj1, Lisp_Object obj2)
   return 0;
 }
 
-static Hash_Code
+static Hashcode
 instantiator_eq_hash (Lisp_Object obj)
 {
   if (CONSP (obj))
@@ -3610,7 +3610,7 @@ glyph_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  !plists_differ (g1->plist,     g2->plist, 0, 0, depth + 1));
 }
 
-static Hash_Code
+static Hashcode
 glyph_hash (Lisp_Object obj, int depth)
 {
   depth++;

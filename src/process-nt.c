@@ -117,7 +117,7 @@ typedef struct
  */
 
 static int 
-alloc_process_memory (HANDLE h_process, Memory_Count size,
+alloc_process_memory (HANDLE h_process, Bytecount size,
 		      process_memory* pmc)
 {
   LPTHREAD_START_ROUTINE adr_ExitThread =
@@ -189,12 +189,12 @@ free_process_memory (process_memory* pmc)
 static DWORD
 run_in_other_process (HANDLE h_process,
 		      LPTHREAD_START_ROUTINE routine,
-		      LPVOID data, Memory_Count data_size)
+		      LPVOID data, Bytecount data_size)
 {
   process_memory pm;
-  const Memory_Count code_size = FRAGMENT_CODE_SIZE;
+  const Bytecount code_size = FRAGMENT_CODE_SIZE;
   /* Need at most 3 extra bytes of memory, for data alignment */
-  Memory_Count total_size = code_size + data_size + 3;
+  Bytecount total_size = code_size + data_size + 3;
   LPVOID remote_data;
   HANDLE h_thread;
   DWORD dw_unused;
@@ -1053,12 +1053,12 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
   /* use a reasonable-sized buffer (somewhere around the size of the
      stream buffer) so as to avoid inundating the stream with blocked
      data. */
-  Bufbyte chunkbuf[512];
+  Intbyte chunkbuf[512];
   Bytecount chunklen;
 
   while (1)
     {
-      Lstream_Data_Count writeret;
+      Bytecount writeret;
 
       chunklen = Lstream_read (lstream, chunkbuf, 512);
       if (chunklen <= 0)

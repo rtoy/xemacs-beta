@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
    of these are one-based: the beginning of the buffer is position or
    index 1, and 0 is not a valid position.
 
-   As a "buffer position" (typedef Bufpos):
+   As a "buffer position" (typedef Charbpos):
 
       This is an index specifying an offset in characters from the
       beginning of the buffer.  Note that buffer positions are
@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
       characters between those positions.  Buffer positions are the
       only kind of position externally visible to the user.
 
-   As a "byte index" (typedef Bytind):
+   As a "byte index" (typedef Bytebpos):
 
       This is an index over the bytes used to represent the characters
       in the buffer.  If there is no Mule support, this is identical
@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
       byte index may be greater than the corresponding buffer
       position.
 
-   As a "memory index" (typedef Memind):
+   As a "memory index" (typedef Membpos):
 
       This is the byte index adjusted for the gap.  For positions
       before the gap, this is identical to the byte index.  For
@@ -91,19 +91,19 @@ Boston, MA 02111-1307, USA.  */
 	This means that Emchar values are upwardly compatible with
 	the standard 8-bit representation of ASCII/ISO-8859-1.
 
-      Bufbyte:
+      Intbyte:
       --------
-        The data in a buffer or string is logically made up of Bufbyte
-	objects, where a Bufbyte takes up the same amount of space as a
+        The data in a buffer or string is logically made up of Intbyte
+	objects, where a Intbyte takes up the same amount of space as a
 	char. (It is declared differently, though, to catch invalid
-	usages.) Strings stored using Bufbytes are said to be in
+	usages.) Strings stored using Intbytes are said to be in
 	"internal format".  The important characteristics of internal
 	format are
 
-	  -- ASCII characters are represented as a single Bufbyte,
+	  -- ASCII characters are represented as a single Intbyte,
 	     in the range 0 - 0x7f.
-	  -- All other characters are represented as a Bufbyte in
-	     the range 0x80 - 0x9f followed by one or more Bufbytes
+	  -- All other characters are represented as a Intbyte in
+	     the range 0x80 - 0x9f followed by one or more Intbytes
 	     in the range 0xa0 to 0xff.
 
 	This leads to a number of desirable properties:
@@ -152,14 +152,14 @@ Boston, MA 02111-1307, USA.  */
         This typedef represents a count of characters, such as
 	a character offset into a string or the number of
 	characters between two positions in a buffer.  The
-	difference between two Bufpos's is a Charcount, and
+	difference between two Charbpos's is a Charcount, and
 	character positions in a string are represented using
 	a Charcount.
 
       Bytecount:
       ----------
         Similar to a Charcount but represents a count of bytes.
-	The difference between two Bytind's is a Bytecount.
+	The difference between two Bytebpos's is a Bytecount.
 
 
    Usage of the various representations:
@@ -211,14 +211,14 @@ Boston, MA 02111-1307, USA.  */
 #include "line-number.h"
 
 /* We write things this way because it's very important the
-   MAX_BYTIND_GAP_SIZE_3 is a multiple of 3. (As it happens,
+   MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
    65535 is a multiple of 3, but this may not always be the
    case.) */
 
-#define MAX_BUFPOS_GAP_SIZE_3 (65535/3)
-#define MAX_BYTIND_GAP_SIZE_3 (3 * MAX_BUFPOS_GAP_SIZE_3)
+#define MAX_CHARBPOS_GAP_SIZE_3 (65535/3)
+#define MAX_BYTEBPOS_GAP_SIZE_3 (3 * MAX_CHARBPOS_GAP_SIZE_3)
 
-short three_to_one_table[1 + MAX_BYTIND_GAP_SIZE_3];
+short three_to_one_table[1 + MAX_BYTEBPOS_GAP_SIZE_3];
 
 /* Various macros modelled along the lines of those in buffer.h.
    Purposefully omitted from buffer.h because files other than this
@@ -303,10 +303,10 @@ do						\
    the equivalent length in characters. */
 
 Charcount
-bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
+bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
 {
   Charcount count = 0;
-  const Bufbyte *end = ptr + len;
+  const Intbyte *end = ptr + len;
 
 #if SIZEOF_LONG == 8
 # define STRIDE_TYPE long
@@ -339,29 +339,29 @@ bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
 		(const unsigned STRIDE_TYPE *) ptr;
 	      /* This loop screams, because we can typically
 		 detect ASCII characters 8 at a time. */
-	      while ((const Bufbyte *) ascii_end + STRIDE <= end
+	      while ((const Intbyte *) ascii_end + STRIDE <= end
 		     && !(*ascii_end & HIGH_BIT_MASK))
 		ascii_end++;
-	      if ((Bufbyte *) ascii_end == ptr)
+	      if ((Intbyte *) ascii_end == ptr)
 		ptr++, count++;
 	      else
 		{
-		  count += (Bufbyte *) ascii_end - ptr;
-		  ptr = (Bufbyte *) ascii_end;
+		  count += (Intbyte *) ascii_end - ptr;
+		  ptr = (Intbyte *) ascii_end;
 		}
 	    }
 	}
       else
 	{
 	  /* optimize for successive characters from the same charset */
-	  Bufbyte leading_byte = *ptr;
-	  Memory_Count bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
+	  Intbyte leading_byte = *ptr;
+	  Bytecount bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
 	  while ((ptr < end) && (*ptr == leading_byte))
 	    ptr += bytes, count++;
 	}
     }
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   /* Bomb out if the specified substring ends in the middle
      of a character.  Note that we might have already gotten
      a core dump above from an invalid reference, but at least
@@ -376,9 +376,9 @@ bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
    the equivalent length in bytes. */
 
 Bytecount
-charcount_to_bytecount (const Bufbyte *ptr, Charcount len)
+charcount_to_bytecount (const Intbyte *ptr, Charcount len)
 {
-  const Bufbyte *newptr = ptr;
+  const Intbyte *newptr = ptr;
 
   while (len > 0)
     {
@@ -389,14 +389,14 @@ charcount_to_bytecount (const Bufbyte *ptr, Charcount len)
 }
 
 /* The next two functions are the actual meat behind the
-   bufpos-to-bytind and bytind-to-bufpos conversions.  Currently
+   charbpos-to-bytebpos and bytebpos-to-charbpos conversions.  Currently
    the method they use is fairly unsophisticated; see buffer.h.
 
-   Note that bufpos_to_bytind_func() is probably the most-called
+   Note that charbpos_to_bytebpos_func() is probably the most-called
    function in all of XEmacs.  Therefore, it must be FAST FAST FAST.
    This is the reason why so much of the code is duplicated.
 
-   Similar considerations apply to bytind_to_bufpos_func(), although
+   Similar considerations apply to bytebpos_to_charbpos_func(), although
    less so because the function is not called so often.
 
    #### At some point this should use a more sophisticated method;
@@ -404,16 +404,16 @@ charcount_to_bytecount (const Bufbyte *ptr, Charcount len)
 
 static int not_very_random_number;
 
-Bytind
-bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
+Bytebpos
+charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
 {
-  Bufpos bufmin;
-  Bufpos bufmax;
-  Bytind bytmin;
-  Bytind bytmax;
+  Charbpos bufmin;
+  Charbpos bufmax;
+  Bytebpos bytmin;
+  Bytebpos bytmax;
   int size;
   int forward_p;
-  Bytind retval;
+  Bytebpos retval;
   int diff_so_far;
   int add_to_cache = 0;
 
@@ -445,9 +445,9 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 
   if (x > bufmax)
     {
-      Bufpos diffmax = x - bufmax;
-      Bufpos diffpt = x - BUF_PT (buf);
-      Bufpos diffzv = BUF_ZV (buf) - x;
+      Charbpos diffmax = x - bufmax;
+      Charbpos diffpt = x - BUF_PT (buf);
+      Charbpos diffzv = BUF_ZV (buf) - x;
       /* #### This value could stand some more exploration. */
       Charcount heuristic_hack = (bufmax - bufmin) >> 2;
 
@@ -487,15 +487,15 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	  size = 1;
 	}
     }
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   else if (x >= bufmin)
     abort ();
 #endif
   else
     {
-      Bufpos diffmin = bufmin - x;
-      Bufpos diffpt = BUF_PT (buf) - x;
-      Bufpos diffbegv = x - BUF_BEGV (buf);
+      Charbpos diffmin = bufmin - x;
+      Charbpos diffpt = BUF_PT (buf) - x;
+      Charbpos diffbegv = x - BUF_BEGV (buf);
       /* #### This value could stand some more exploration. */
       Charcount heuristic_hack = (bufmax - bufmin) >> 2;
 
@@ -545,7 +545,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	 it doesn't seem like it would really matter. */
       for (i = 0; i < 16; i++)
 	{
-	  int diff = buf->text->mule_bufpos_cache[i] - x;
+	  int diff = buf->text->mule_charbpos_cache[i] - x;
 
 	  if (diff < 0)
 	    diff = -diff;
@@ -558,8 +558,8 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 
       if (minval < diff_so_far)
 	{
-	  bufmax = bufmin = buf->text->mule_bufpos_cache[found];
-	  bytmax = bytmin = buf->text->mule_bytind_cache[found];
+	  bufmax = bufmin = buf->text->mule_charbpos_cache[found];
+	  bytmax = bytmin = buf->text->mule_bytebpos_cache[found];
 	  size = 1;
 	}
     }
@@ -568,7 +568,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
      the same as one of the range edges. */
   if (x >= bufmax)
     {
-      Bytind newmax;
+      Bytebpos newmax;
       Bytecount newsize;
 
       forward_p = 1;
@@ -576,7 +576,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	{
 	  newmax = bytmax;
 
-	  INC_BYTIND (buf, newmax);
+	  INC_BYTEBPOS (buf, newmax);
 	  newsize = newmax - bytmax;
 	  if (newsize != size)
 	    {
@@ -594,7 +594,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
     }
   else /* x < bufmin */
     {
-      Bytind newmin;
+      Bytebpos newmin;
       Bytecount newsize;
 
       forward_p = 0;
@@ -602,7 +602,7 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	{
 	  newmin = bytmin;
 
-	  DEC_BYTIND (buf, newmin);
+	  DEC_BYTEBPOS (buf, newmin);
 	  newsize = bytmin - newmin;
 	  if (newsize != size)
 	    {
@@ -630,17 +630,17 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
       buf->text->mule_three_p = 1;
       buf->text->mule_shifter = 1;
 
-      if (gap > MAX_BYTIND_GAP_SIZE_3)
+      if (gap > MAX_BYTEBPOS_GAP_SIZE_3)
 	{
 	  if (forward_p)
 	    {
-	      bytmin = bytmax - MAX_BYTIND_GAP_SIZE_3;
-	      bufmin = bufmax - MAX_BUFPOS_GAP_SIZE_3;
+	      bytmin = bytmax - MAX_BYTEBPOS_GAP_SIZE_3;
+	      bufmin = bufmax - MAX_CHARBPOS_GAP_SIZE_3;
 	    }
 	  else
 	    {
-	      bytmax = bytmin + MAX_BYTIND_GAP_SIZE_3;
-	      bufmax = bufmin + MAX_BUFPOS_GAP_SIZE_3;
+	      bytmax = bytmin + MAX_BYTEBPOS_GAP_SIZE_3;
+	      bufmax = bufmin + MAX_CHARBPOS_GAP_SIZE_3;
 	    }
 	}
     }
@@ -671,8 +671,8 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 	 it's worth it to go to the trouble of maintaining that. */
       not_very_random_number += 621;
       replace_loc = not_very_random_number & 15;
-      buf->text->mule_bufpos_cache[replace_loc] = x;
-      buf->text->mule_bytind_cache[replace_loc] = retval;
+      buf->text->mule_charbpos_cache[replace_loc] = x;
+      buf->text->mule_bytebpos_cache[replace_loc] = retval;
     }
 
   return retval;
@@ -681,16 +681,16 @@ bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
 /* The logic in this function is almost identical to the logic in
    the previous function. */
 
-Bufpos
-bytind_to_bufpos_func (struct buffer *buf, Bytind x)
+Charbpos
+bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 {
-  Bufpos bufmin;
-  Bufpos bufmax;
-  Bytind bytmin;
-  Bytind bytmax;
+  Charbpos bufmin;
+  Charbpos bufmax;
+  Bytebpos bytmin;
+  Bytebpos bytmax;
   int size;
   int forward_p;
-  Bufpos retval;
+  Charbpos retval;
   int diff_so_far;
   int add_to_cache = 0;
 
@@ -722,9 +722,9 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 
   if (x > bytmax)
     {
-      Bytind diffmax = x - bytmax;
-      Bytind diffpt = x - BI_BUF_PT (buf);
-      Bytind diffzv = BI_BUF_ZV (buf) - x;
+      Bytebpos diffmax = x - bytmax;
+      Bytebpos diffpt = x - BI_BUF_PT (buf);
+      Bytebpos diffzv = BI_BUF_ZV (buf) - x;
       /* #### This value could stand some more exploration. */
       Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
 
@@ -764,15 +764,15 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	  size = 1;
 	}
     }
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   else if (x >= bytmin)
     abort ();
 #endif
   else
     {
-      Bytind diffmin = bytmin - x;
-      Bytind diffpt = BI_BUF_PT (buf) - x;
-      Bytind diffbegv = x - BI_BUF_BEGV (buf);
+      Bytebpos diffmin = bytmin - x;
+      Bytebpos diffpt = BI_BUF_PT (buf) - x;
+      Bytebpos diffbegv = x - BI_BUF_BEGV (buf);
       /* #### This value could stand some more exploration. */
       Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
 
@@ -822,7 +822,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	 it doesn't seem like it would really matter. */
       for (i = 0; i < 16; i++)
 	{
-	  int diff = buf->text->mule_bytind_cache[i] - x;
+	  int diff = buf->text->mule_bytebpos_cache[i] - x;
 
 	  if (diff < 0)
 	    diff = -diff;
@@ -835,8 +835,8 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 
       if (minval < diff_so_far)
 	{
-	  bufmax = bufmin = buf->text->mule_bufpos_cache[found];
-	  bytmax = bytmin = buf->text->mule_bytind_cache[found];
+	  bufmax = bufmin = buf->text->mule_charbpos_cache[found];
+	  bytmax = bytmin = buf->text->mule_bytebpos_cache[found];
 	  size = 1;
 	}
     }
@@ -845,7 +845,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
      the same as one of the range edges. */
   if (x >= bytmax)
     {
-      Bytind newmax;
+      Bytebpos newmax;
       Bytecount newsize;
 
       forward_p = 1;
@@ -853,7 +853,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	{
 	  newmax = bytmax;
 
-	  INC_BYTIND (buf, newmax);
+	  INC_BYTEBPOS (buf, newmax);
 	  newsize = newmax - bytmax;
 	  if (newsize != size)
 	    {
@@ -871,7 +871,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
     }
   else /* x <= bytmin */
     {
-      Bytind newmin;
+      Bytebpos newmin;
       Bytecount newsize;
 
       forward_p = 0;
@@ -879,7 +879,7 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	{
 	  newmin = bytmin;
 
-	  DEC_BYTIND (buf, newmin);
+	  DEC_BYTEBPOS (buf, newmin);
 	  newsize = bytmin - newmin;
 	  if (newsize != size)
 	    {
@@ -907,17 +907,17 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
       buf->text->mule_three_p = 1;
       buf->text->mule_shifter = 1;
 
-      if (gap > MAX_BYTIND_GAP_SIZE_3)
+      if (gap > MAX_BYTEBPOS_GAP_SIZE_3)
 	{
 	  if (forward_p)
 	    {
-	      bytmin = bytmax - MAX_BYTIND_GAP_SIZE_3;
-	      bufmin = bufmax - MAX_BUFPOS_GAP_SIZE_3;
+	      bytmin = bytmax - MAX_BYTEBPOS_GAP_SIZE_3;
+	      bufmin = bufmax - MAX_CHARBPOS_GAP_SIZE_3;
 	    }
 	  else
 	    {
-	      bytmax = bytmin + MAX_BYTIND_GAP_SIZE_3;
-	      bufmax = bufmin + MAX_BUFPOS_GAP_SIZE_3;
+	      bytmax = bytmin + MAX_BYTEBPOS_GAP_SIZE_3;
+	      bufmax = bufmin + MAX_CHARBPOS_GAP_SIZE_3;
 	    }
 	}
     }
@@ -948,18 +948,18 @@ bytind_to_bufpos_func (struct buffer *buf, Bytind x)
 	 it's worth it to go to the trouble of maintaining that. */
       not_very_random_number += 621;
       replace_loc = not_very_random_number & 15;
-      buf->text->mule_bufpos_cache[replace_loc] = retval;
-      buf->text->mule_bytind_cache[replace_loc] = x;
+      buf->text->mule_charbpos_cache[replace_loc] = retval;
+      buf->text->mule_bytebpos_cache[replace_loc] = x;
     }
 
   return retval;
 }
 
 /* Text of length BYTELENGTH and CHARLENGTH (in different units)
-   was inserted at bufpos START. */
+   was inserted at charbpos START. */
 
 static void
-buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
+buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 				    Bytecount bytelength,
 				    Charcount charlength)
 {
@@ -970,10 +970,10 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
   for (i = 0; i < 16; i++)
     {
 
-      if (buf->text->mule_bufpos_cache[i] > start)
+      if (buf->text->mule_charbpos_cache[i] > start)
 	{
-	  buf->text->mule_bufpos_cache[i] += charlength;
-	  buf->text->mule_bytind_cache[i] += bytelength;
+	  buf->text->mule_charbpos_cache[i] += charlength;
+	  buf->text->mule_bytebpos_cache[i] += bytelength;
 	}
     }
 
@@ -994,21 +994,21 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
     }
   else
     {
-      Bufpos end = start + charlength;
+      Charbpos end = start + charlength;
       /* the insertion point divides the known region in two.
 	 Keep the longer half, at least, and expand into the
 	 inserted chunk as much as possible. */
 
       if (start - buf->text->mule_bufmin > buf->text->mule_bufmax - start)
 	{
-	  Bytind bytestart = (buf->text->mule_bytmin
+	  Bytebpos bytestart = (buf->text->mule_bytmin
 			      + size * (start - buf->text->mule_bufmin));
-	  Bytind bytenew;
+	  Bytebpos bytenew;
 
 	  while (start < end)
 	    {
 	      bytenew = bytestart;
-	      INC_BYTIND (buf, bytenew);
+	      INC_BYTEBPOS (buf, bytenew);
 	      if (bytenew - bytestart != size)
 		break;
 	      start++;
@@ -1027,10 +1027,10 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
 	}
       else
 	{
-	  Bytind byteend = (buf->text->mule_bytmin
+	  Bytebpos byteend = (buf->text->mule_bytmin
 			    + size * (start - buf->text->mule_bufmin)
 			    + bytelength);
-	  Bytind bytenew;
+	  Bytebpos bytenew;
 
 	  buf->text->mule_bufmax += charlength;
 	  buf->text->mule_bytmax += bytelength;
@@ -1038,7 +1038,7 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
 	  while (end > start)
 	    {
 	      bytenew = byteend;
-	      DEC_BYTIND (buf, bytenew);
+	      DEC_BYTEBPOS (buf, bytenew);
 	      if (byteend - bytenew != size)
 		break;
 	      end--;
@@ -1053,13 +1053,13 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
     }
 }
 
-/* Text from START to END (equivalent in Bytinds: from BI_START to
+/* Text from START to END (equivalent in Bytebposs: from BI_START to
    BI_END) was deleted. */
 
 static void
-buffer_mule_signal_deleted_region (struct buffer *buf, Bufpos start,
-				   Bufpos end, Bytind bi_start,
-				   Bytind bi_end)
+buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
+				   Charbpos end, Bytebpos bi_start,
+				   Bytebpos bi_end)
 {
   int i;
 
@@ -1067,16 +1067,16 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Bufpos start,
   for (i = 0; i < 16; i++)
     {
       /* After the end; gets shoved backward */
-      if (buf->text->mule_bufpos_cache[i] > end)
+      if (buf->text->mule_charbpos_cache[i] > end)
 	{
-	  buf->text->mule_bufpos_cache[i] -= end - start;
-	  buf->text->mule_bytind_cache[i] -= bi_end - bi_start;
+	  buf->text->mule_charbpos_cache[i] -= end - start;
+	  buf->text->mule_bytebpos_cache[i] -= bi_end - bi_start;
 	}
       /* In the range; moves to start of range */
-      else if (buf->text->mule_bufpos_cache[i] > start)
+      else if (buf->text->mule_charbpos_cache[i] > start)
 	{
-	  buf->text->mule_bufpos_cache[i] = start;
-	  buf->text->mule_bytind_cache[i] = bi_start;
+	  buf->text->mule_charbpos_cache[i] = start;
+	  buf->text->mule_bytebpos_cache[i] = bi_start;
 	}
     }
 
@@ -1106,24 +1106,24 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Bufpos start,
 
 #endif /* MULE */
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 
-Bytind
-bufpos_to_bytind (struct buffer *buf, Bufpos x)
+Bytebpos
+charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
 {
-  Bytind retval = real_bufpos_to_bytind (buf, x);
-  ASSERT_VALID_BYTIND_UNSAFE (buf, retval);
+  Bytebpos retval = real_charbpos_to_bytebpos (buf, x);
+  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, retval);
   return retval;
 }
 
-Bufpos
-bytind_to_bufpos (struct buffer *buf, Bytind x)
+Charbpos
+bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
 {
-  ASSERT_VALID_BYTIND_UNSAFE (buf, x);
-  return real_bytind_to_bufpos (buf, x);
+  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, x);
+  return real_bytebpos_to_charbpos (buf, x);
 }
 
-#endif /* ERROR_CHECK_BUFPOS */
+#endif /* ERROR_CHECK_CHARBPOS */
 
 
 /************************************************************************/
@@ -1132,7 +1132,7 @@ bytind_to_bufpos (struct buffer *buf, Bytind x)
 
 /* Functions below are tagged with either _byte or _char indicating
    whether they return byte or character positions.  For a buffer,
-   a character position is a "Bufpos" and a byte position is a "Bytind".
+   a character position is a "Charbpos" and a byte position is a "Bytebpos".
    For strings, these are sometimes typed using "Charcount" and
    "Bytecount". */
 
@@ -1191,12 +1191,12 @@ bytind_to_bufpos (struct buffer *buf, Bytind x)
 
 */
 
-Bufpos
+Charbpos
 get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
 {
   /* Does not GC */
-  Bufpos ind;
-  Bufpos min_allowed, max_allowed;
+  Charbpos ind;
+  Charbpos min_allowed, max_allowed;
 
   CHECK_INT_COERCE_MARKER (pos);
   ind = XINT (pos);
@@ -1220,13 +1220,13 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
   return ind;
 }
 
-Bytind
+Bytebpos
 get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
 {
-  Bufpos bpos = get_buffer_pos_char (b, pos, flags);
+  Charbpos bpos = get_buffer_pos_char (b, pos, flags);
   if (bpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
     return -1;
-  return bufpos_to_bytind (b, bpos);
+  return charbpos_to_bytebpos (b, bpos);
 }
 
 /* Return a pair of buffer positions representing a range of text,
@@ -1242,10 +1242,10 @@ get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
 
 void
 get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Bufpos *from_out, Bufpos *to_out, unsigned int flags)
+		       Charbpos *from_out, Charbpos *to_out, unsigned int flags)
 {
   /* Does not GC */
-  Bufpos min_allowed, max_allowed;
+  Charbpos min_allowed, max_allowed;
 
   min_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
     BUF_BEG (b) : BUF_BEGV (b);
@@ -1275,7 +1275,7 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 	invalid_argument_2 ("start greater than end", from, to);
       else
 	{
-	  Bufpos temp = *from_out;
+	  Charbpos temp = *from_out;
 	  *from_out = *to_out;
 	  *to_out = temp;
 	}
@@ -1284,17 +1284,17 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 
 void
 get_buffer_range_byte (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Bytind *from_out, Bytind *to_out, unsigned int flags)
+		       Bytebpos *from_out, Bytebpos *to_out, unsigned int flags)
 {
-  Bufpos s, e;
+  Charbpos s, e;
 
   get_buffer_range_char (b, from, to, &s, &e, flags);
   if (s >= 0)
-    *from_out = bufpos_to_bytind (b, s);
+    *from_out = charbpos_to_bytebpos (b, s);
   else /* could happen with GB_NO_ERROR_IF_BAD */
     *from_out = -1;
   if (e >= 0)
-    *to_out = bufpos_to_bytind (b, e);
+    *to_out = charbpos_to_bytebpos (b, e);
   else
     *to_out = -1;
 }
@@ -1374,7 +1374,7 @@ get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 	invalid_argument_2 ("start greater than end", from, to);
       else
 	{
-	  Bufpos temp = *from_out;
+	  Charbpos temp = *from_out;
 	  *from_out = *to_out;
 	  *to_out = temp;
 	}
@@ -1400,7 +1400,7 @@ get_string_range_byte (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 
 }
 
-Bufpos
+Charbpos
 get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
@@ -1409,7 +1409,7 @@ get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
     get_buffer_pos_char (XBUFFER (object), pos, flags);
 }
 
-Bytind
+Bytebpos
 get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
@@ -1420,8 +1420,8 @@ get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 
 void
 get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Bufpos *from_out,
-				 Bufpos *to_out, unsigned int flags)
+				 Lisp_Object to, Charbpos *from_out,
+				 Charbpos *to_out, unsigned int flags)
 {
   if (STRINGP (object))
     get_string_range_char (object, from, to, from_out, to_out, flags);
@@ -1431,8 +1431,8 @@ get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
 
 void
 get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Bytind *from_out,
-				 Bytind *to_out, unsigned int flags)
+				 Lisp_Object to, Bytebpos *from_out,
+				 Bytebpos *to_out, unsigned int flags)
 {
   if (STRINGP (object))
     get_string_range_byte (object, from, to, from_out, to_out, flags);
@@ -1440,52 +1440,52 @@ get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
     get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out, flags);
 }
 
-Bufpos
+Charbpos
 buffer_or_string_accessible_begin_char (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object));
 }
 
-Bufpos
+Charbpos
 buffer_or_string_accessible_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
     XSTRING_CHAR_LENGTH (object) : BUF_ZV (XBUFFER (object));
 }
 
-Bytind
+Bytebpos
 buffer_or_string_accessible_begin_byte (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BI_BUF_BEGV (XBUFFER (object));
 }
 
-Bytind
+Bytebpos
 buffer_or_string_accessible_end_byte (Lisp_Object object)
 {
   return STRINGP (object) ?
     XSTRING_LENGTH (object) : BI_BUF_ZV (XBUFFER (object));
 }
 
-Bufpos
+Charbpos
 buffer_or_string_absolute_begin_char (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BUF_BEG (XBUFFER (object));
 }
 
-Bufpos
+Charbpos
 buffer_or_string_absolute_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
     XSTRING_CHAR_LENGTH (object) : BUF_Z (XBUFFER (object));
 }
 
-Bytind
+Bytebpos
 buffer_or_string_absolute_begin_byte (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BI_BUF_BEG (XBUFFER (object));
 }
 
-Bytind
+Bytebpos
 buffer_or_string_absolute_end_byte (Lisp_Object object)
 {
   return STRINGP (object) ?
@@ -1514,26 +1514,26 @@ buffer_or_string_absolute_end_byte (Lisp_Object object)
 
 /* This gets called more than enough to make the function call
    overhead a significant factor so we've turned it into a macro. */
-#define JUST_SET_POINT(buf, bufpos, ind)	\
+#define JUST_SET_POINT(buf, charbpos, ind)	\
 do						\
 {						\
-  buf->bufpt = (bufpos);			\
+  buf->bufpt = (charbpos);			\
   buf->pt = (ind);				\
 } while (0)
 
 /* Set a buffer's point. */
 
 void
-set_buffer_point (struct buffer *buf, Bufpos bufpos, Bytind bytpos)
+set_buffer_point (struct buffer *buf, Charbpos charbpos, Bytebpos bytpos)
 {
   assert (bytpos >= BI_BUF_BEGV (buf) && bytpos <= BI_BUF_ZV (buf));
   if (bytpos == BI_BUF_PT (buf))
     return;
-  JUST_SET_POINT (buf, bufpos, bytpos);
+  JUST_SET_POINT (buf, charbpos, bytpos);
   MARK_POINT_CHANGED;
   assert (MARKERP (buf->point_marker));
-  XMARKER (buf->point_marker)->memind =
-    bytind_to_memind (buf, bytpos);
+  XMARKER (buf->point_marker)->membpos =
+    bytebpos_to_membpos (buf, bytpos);
 
   /* FSF makes sure that PT is not being set within invisible text.
      However, this is the wrong place for that check.  The check
@@ -1558,9 +1558,9 @@ set_buffer_point (struct buffer *buf, Bufpos bufpos, Bytind bytpos)
 /* Do the correct marker-like adjustment on MPOS (see below).  FROM, TO,
    and AMOUNT are as in adjust_markers().  If MPOS doesn't need to be
    adjusted, nothing will happen. */
-Memind
-do_marker_adjustment (Memind mpos, Memind from,
-		      Memind to, Bytecount amount)
+Membpos
+do_marker_adjustment (Membpos mpos, Membpos from,
+		      Membpos to, Bytecount amount)
 {
   if (amount > 0)
     {
@@ -1602,27 +1602,27 @@ do_marker_adjustment (Memind mpos, Memind from,
 */
 
 static void
-adjust_markers (struct buffer *buf, Memind from, Memind to,
+adjust_markers (struct buffer *buf, Membpos from, Membpos to,
 		Bytecount amount)
 {
   Lisp_Marker *m;
 
   for (m = BUF_MARKERS (buf); m; m = marker_next (m))
-    m->memind = do_marker_adjustment (m->memind, from, to, amount);
+    m->membpos = do_marker_adjustment (m->membpos, from, to, amount);
 }
 
 /* Adjust markers whose insertion-type is t
    for an insertion of AMOUNT characters at POS.  */
 
 static void
-adjust_markers_for_insert (struct buffer *buf, Memind ind, Bytecount amount)
+adjust_markers_for_insert (struct buffer *buf, Membpos ind, Bytecount amount)
 {
   Lisp_Marker *m;
 
   for (m = BUF_MARKERS (buf); m; m = marker_next (m))
     {
-      if (m->insertion_type && m->memind == ind)
-	m->memind += amount;
+      if (m->insertion_type && m->membpos == ind)
+	m->membpos += amount;
     }
 }
 
@@ -1640,11 +1640,11 @@ adjust_markers_for_insert (struct buffer *buf, Memind ind, Bytecount amount)
 /* Move the gap to POS, which is less than the current GPT. */
 
 static void
-gap_left (struct buffer *buf, Bytind pos)
+gap_left (struct buffer *buf, Bytebpos pos)
 {
-  Bufbyte *to, *from;
+  Intbyte *to, *from;
   Bytecount i;
-  Bytind new_s1;
+  Bytebpos new_s1;
   struct buffer *mbuf;
   Lisp_Object bufcons;
 
@@ -1711,11 +1711,11 @@ gap_left (struct buffer *buf, Bytind pos)
 }
 
 static void
-gap_right (struct buffer *buf, Bytind pos)
+gap_right (struct buffer *buf, Bytebpos pos)
 {
-  Bufbyte *to, *from;
+  Intbyte *to, *from;
   Bytecount i;
-  Bytind new_s1;
+  Bytebpos new_s1;
   struct buffer *mbuf;
   Lisp_Object bufcons;
 
@@ -1794,7 +1794,7 @@ gap_right (struct buffer *buf, Bytind pos)
    Note that this can quit!  */
 
 static void
-move_gap (struct buffer *buf, Bytind pos)
+move_gap (struct buffer *buf, Bytebpos pos)
 {
   if (! BUF_BEG_ADDR (buf))
     abort ();
@@ -1810,7 +1810,7 @@ static void
 merge_gap_with_end_gap (struct buffer *buf)
 {
   Lisp_Object tem;
-  Bytind real_gap_loc;
+  Bytebpos real_gap_loc;
   Bytecount old_gap_size;
   Bytecount increment;
 
@@ -1852,9 +1852,9 @@ merge_gap_with_end_gap (struct buffer *buf)
 static void
 make_gap (struct buffer *buf, Bytecount increment)
 {
-  Bufbyte *result;
+  Intbyte *result;
   Lisp_Object tem;
-  Bytind real_gap_loc;
+  Bytebpos real_gap_loc;
   Bytecount old_gap_size;
 
   /* If we have to get more space, get enough to last a while.  We use
@@ -1920,8 +1920,8 @@ make_gap (struct buffer *buf, Bytecount increment)
 /* Those magic changes ... */
 
 static void
-buffer_signal_changed_region (struct buffer *buf, Bufpos start,
-			      Bufpos end)
+buffer_signal_changed_region (struct buffer *buf, Charbpos start,
+			      Charbpos end)
 {
   /* The changed region is recorded as the number of unchanged
      characters from the beginning and from the end of the
@@ -1937,8 +1937,8 @@ buffer_signal_changed_region (struct buffer *buf, Bufpos start,
 }
 
 void
-buffer_extent_signal_changed_region (struct buffer *buf, Bufpos start,
-				     Bufpos end)
+buffer_extent_signal_changed_region (struct buffer *buf, Charbpos start,
+				     Charbpos end)
 {
   if (buf->changes->begin_extent_unchanged < 0 ||
       buf->changes->begin_extent_unchanged > start - BUF_BEG (buf))
@@ -1959,8 +1959,8 @@ buffer_reset_changes (struct buffer *buf)
 }
 
 static void
-signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
-		     Bufpos new_end);
+signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
+		     Charbpos new_end);
 
 
 /* Call the after-change-functions according to the changes made so far
@@ -1984,7 +1984,7 @@ cancel_multiple_change (struct buffer *buf)
   if (buf->text->changes->mc_begin != 0 &&
       buf->text->changes->mc_begin_signaled)
     {
-      Bufpos real_mc_begin = buf->text->changes->mc_begin;
+      Charbpos real_mc_begin = buf->text->changes->mc_begin;
       buf->text->changes->mc_begin = 0;
 
       signal_after_change (buf, real_mc_begin, buf->text->changes->mc_orig_end,
@@ -2037,7 +2037,7 @@ multiple_change_finish_up (Lisp_Object buffer)
    whether we want to introduce a similar Lisp form.  */
 
 int
-begin_multiple_change (struct buffer *buf, Bufpos start, Bufpos end)
+begin_multiple_change (struct buffer *buf, Charbpos start, Charbpos end)
 {
   /* This function can GC */
   int count = -1;
@@ -2124,7 +2124,7 @@ signal_first_change (struct buffer *buf)
    START and END are the bounds of the text to be changed. */
 
 static void
-signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
+signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 {
   /* This function can GC */
   struct buffer *mbuf;
@@ -2212,14 +2212,14 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
 }
 
 /* Signal a change immediately after it happens.
-   START is the bufpos of the start of the changed text.
-   ORIG_END is the bufpos of the end of the before-changed text.
-   NEW_END is the bufpos of the end of the after-changed text.
+   START is the charbpos of the start of the changed text.
+   ORIG_END is the charbpos of the end of the before-changed text.
+   NEW_END is the charbpos of the end of the after-changed text.
  */
 
 static void
-signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
-		     Bufpos new_end)
+signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
+		     Charbpos new_end)
 {
   /* This function can GC */
   struct buffer *mbuf;
@@ -2301,7 +2301,7 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
    it should pay attention to that area.  */
 
 static void
-prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
+prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
 			  int lockit)
 {
   /* This function can GC */
@@ -2370,7 +2370,7 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 /************************************************************************/
 
 void
-fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
+fixup_internal_substring (const Intbyte *nonreloc, Lisp_Object reloc,
 			  Bytecount offset, Bytecount *len)
 {
   assert ((nonreloc && NILP (reloc)) || (!nonreloc && STRINGP (reloc)));
@@ -2382,7 +2382,7 @@ fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   assert (*len >= 0);
   if (STRINGP (reloc))
     {
@@ -2392,7 +2392,7 @@ fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
 #endif
 }
 
-/* Insert a string into BUF at Bufpos POS.  The string data comes
+/* Insert a string into BUF at Charbpos POS.  The string data comes
    from one of two sources: constant, non-relocatable data (specified
    in NONRELOC), or a Lisp string object (specified in RELOC), which
    is relocatable and may have extent data that needs to be copied
@@ -2411,14 +2411,14 @@ fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
    in the higher-level Lisp functions calling insert-file-contents. */
 
 Charcount
-buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
-			const Bufbyte *nonreloc, Lisp_Object reloc,
+buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
+			const Intbyte *nonreloc, Lisp_Object reloc,
 			Bytecount offset, Bytecount length,
 			int flags)
 {
   /* This function can GC */
   struct gcpro gcpro1;
-  Bytind ind;
+  Bytebpos ind;
   Charcount cclen;
   int move_point = 0;
   struct buffer *mbuf;
@@ -2472,7 +2472,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
 
-  ind = bufpos_to_bytind (buf, pos);
+  ind = charbpos_to_bytebpos (buf, pos);
   cclen = bytecount_to_charcount (nonreloc + offset, length);
 
   if (ind != BI_BUF_GPT (buf))
@@ -2525,7 +2525,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
       /* We know the gap is at IND so the cast is OK. */
-      adjust_markers_for_insert (mbuf, (Memind) ind, length);
+      adjust_markers_for_insert (mbuf, (Membpos) ind, length);
     }
 
   /* Point logically doesn't move, but may need to be adjusted because
@@ -2555,7 +2555,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
 	  /* ind - 1 is correct because the FROM argument is exclusive.
-	     I formerly used DEC_BYTIND() but that caused problems at the
+	     I formerly used DEC_BYTEBPOS() but that caused problems at the
 	     beginning of the buffer. */
 	  adjust_markers (mbuf, ind - 1, ind, length);
 	}
@@ -2576,8 +2576,8 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
    moves forward past the text.) FLAGS is as above. */
 
 Charcount
-buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
-			    const Bufbyte *nonreloc, Bytecount length,
+buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
+			    const Intbyte *nonreloc, Bytecount length,
 			    int flags)
 {
   /* This function can GC */
@@ -2586,7 +2586,7 @@ buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
 }
 
 Charcount
-buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos, Lisp_Object str,
+buffer_insert_lisp_string_1 (struct buffer *buf, Charbpos pos, Lisp_Object str,
 			     int flags)
 {
   /* This function can GC */
@@ -2601,27 +2601,27 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos, Lisp_Object str,
 /* Insert the null-terminated string S (in external format). */
 
 Charcount
-buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, const char *s,
+buffer_insert_c_string_1 (struct buffer *buf, Charbpos pos, const char *s,
 			  int flags)
 {
   /* This function can GC */
   const char *translated = GETTEXT (s);
-  return buffer_insert_string_1 (buf, pos, (const Bufbyte *) translated, Qnil,
+  return buffer_insert_string_1 (buf, pos, (const Intbyte *) translated, Qnil,
 				 0, strlen (translated), flags);
 }
 
 Charcount
-buffer_insert_emacs_char_1 (struct buffer *buf, Bufpos pos, Emchar ch,
+buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos, Emchar ch,
 			    int flags)
 {
   /* This function can GC */
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len = set_charptr_emchar (str, ch);
   return buffer_insert_string_1 (buf, pos, str, Qnil, 0, len, flags);
 }
 
 Charcount
-buffer_insert_c_char_1 (struct buffer *buf, Bufpos pos, char c,
+buffer_insert_c_char_1 (struct buffer *buf, Charbpos pos, char c,
 			int flags)
 {
   /* This function can GC */
@@ -2630,8 +2630,8 @@ buffer_insert_c_char_1 (struct buffer *buf, Bufpos pos, char c,
 }
 
 Charcount
-buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
-			     struct buffer *buf2, Bufpos pos2,
+buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
+			     struct buffer *buf2, Charbpos pos2,
 			     Charcount length, int flags)
 {
   /* This function can GC */
@@ -2648,11 +2648,11 @@ buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
 /* Delete characters in buffer from FROM up to (but not including) TO.  */
 
 void
-buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
+buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 {
   /* This function can GC */
   Charcount numdel;
-  Bytind bi_from, bi_to;
+  Bytebpos bi_from, bi_to;
   Bytecount bc_numdel;
   EMACS_INT shortage;
   struct buffer *mbuf;
@@ -2702,8 +2702,8 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
 	}
     }
 
-  bi_from = bufpos_to_bytind (buf, from);
-  bi_to = bufpos_to_bytind (buf, to);
+  bi_from = charbpos_to_bytebpos (buf, from);
+  bi_to = charbpos_to_bytebpos (buf, to);
   bc_numdel = bi_to - bi_from;
 
   delete_invalidate_line_number_cache (buf, from, to);
@@ -2721,10 +2721,10 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       MARK_BUFFERS_CHANGED;
 
       /* #### Point used to be modified here, but this causes problems
-	 with MULE, as point is used to calculate bytinds, and if the
+	 with MULE, as point is used to calculate bytebposs, and if the
 	 offset in bc_numdel causes point to move to a non first-byte
 	 location, causing some other function to throw an assertion
-	 in ASSERT_VALID_BYTIND. I've moved the code to right after
+	 in ASSERT_VALID_BYTEBPOS. I've moved the code to right after
 	 the other movements and adjustments, but before the gap is
 	 moved.  -- jh 970813 */
 
@@ -2796,10 +2796,10 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
       MARK_BUFFERS_CHANGED;
 
       /* #### Point used to be modified here, but this causes problems
-	 with MULE, as point is used to calculate bytinds, and if the
+	 with MULE, as point is used to calculate bytebposs, and if the
 	 offset in bc_numdel causes point to move to a non first-byte
 	 location, causing some other function to throw an assertion
-	 in ASSERT_VALID_BYTIND. I've moved the code to right after
+	 in ASSERT_VALID_BYTEBPOS. I've moved the code to right after
 	 the other movements and adjustments, but before the gap is
 	 moved.  -- jh 970813 */
 
@@ -2878,12 +2878,12 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
 /* Replace the character at POS in buffer B with CH. */
 
 void
-buffer_replace_char (struct buffer *buf, Bufpos pos, Emchar ch,
+buffer_replace_char (struct buffer *buf, Charbpos pos, Emchar ch,
 		     int not_real_change, int force_lock_check)
 {
   /* This function can GC */
-  Bufbyte curstr[MAX_EMCHAR_LEN];
-  Bufbyte newstr[MAX_EMCHAR_LEN];
+  Intbyte curstr[MAX_EMCHAR_LEN];
+  Intbyte newstr[MAX_EMCHAR_LEN];
   Bytecount curlen, newlen;
 
   /* Defensive steps just in case a buffer gets deleted and a calling
@@ -2986,12 +2986,12 @@ buffer_replace_char (struct buffer *buf, Bufpos pos, Emchar ch,
    and add any necessary extents from the buffer. */
 
 static Lisp_Object
-make_string_from_buffer_1 (struct buffer *buf, Bufpos pos, Charcount length,
+make_string_from_buffer_1 (struct buffer *buf, Charbpos pos, Charcount length,
 			   int no_extents)
 {
   /* This function can GC */
-  Bytind    bi_ind = bufpos_to_bytind (buf, pos);
-  Bytecount bi_len = bufpos_to_bytind (buf, pos + length) - bi_ind;
+  Bytebpos    bi_ind = charbpos_to_bytebpos (buf, pos);
+  Bytecount bi_len = charbpos_to_bytebpos (buf, pos + length) - bi_ind;
   Lisp_Object  val = make_uninit_string (bi_len);
 
   struct gcpro gcpro1;
@@ -3002,8 +3002,8 @@ make_string_from_buffer_1 (struct buffer *buf, Bufpos pos, Charcount length,
 
   {
     Bytecount len1 = BI_BUF_GPT (buf) - bi_ind;
-    Bufbyte *start1 = BI_BUF_BYTE_ADDRESS (buf, bi_ind);
-    Bufbyte *dest = XSTRING_DATA (val);
+    Intbyte *start1 = BI_BUF_BYTE_ADDRESS (buf, bi_ind);
+    Intbyte *dest = XSTRING_DATA (val);
 
     if (len1 < 0)
       {
@@ -3018,8 +3018,8 @@ make_string_from_buffer_1 (struct buffer *buf, Bufpos pos, Charcount length,
     else
       {
 	/* Spans gap */
-	Bytind pos2 = bi_ind + len1;
-	Bufbyte *start2 = BI_BUF_BYTE_ADDRESS (buf, pos2);
+	Bytebpos pos2 = bi_ind + len1;
+	Intbyte *start2 = BI_BUF_BYTE_ADDRESS (buf, pos2);
 
 	memcpy (dest, start1, len1);
 	memcpy (dest + len1, start2, bi_len - len1);
@@ -3031,20 +3031,20 @@ make_string_from_buffer_1 (struct buffer *buf, Bufpos pos, Charcount length,
 }
 
 Lisp_Object
-make_string_from_buffer (struct buffer *buf, Bufpos pos, Charcount length)
+make_string_from_buffer (struct buffer *buf, Charbpos pos, Charcount length)
 {
   return make_string_from_buffer_1 (buf, pos, length, 0);
 }
 
 Lisp_Object
-make_string_from_buffer_no_extents (struct buffer *buf, Bufpos pos,
+make_string_from_buffer_no_extents (struct buffer *buf, Charbpos pos,
 				    Charcount length)
 {
   return make_string_from_buffer_1 (buf, pos, length, 1);
 }
 
 void
-barf_if_buffer_read_only (struct buffer *buf, Bufpos from, Bufpos to)
+barf_if_buffer_read_only (struct buffer *buf, Charbpos from, Charbpos to)
 {
   Lisp_Object buffer;
   Lisp_Object iro;
@@ -3065,21 +3065,21 @@ barf_if_buffer_read_only (struct buffer *buf, Bufpos from, Bufpos to)
       if (to < 0)
 	to = from;
       verify_extent_modification (buffer,
-				  bufpos_to_bytind (buf, from),
-				  bufpos_to_bytind (buf, to),
+				  charbpos_to_bytebpos (buf, from),
+				  charbpos_to_bytebpos (buf, to),
 				  iro);
     }
 }
 
 void
-find_charsets_in_bufbyte_string (unsigned char *charsets, const Bufbyte *str,
+find_charsets_in_intbyte_string (unsigned char *charsets, const Intbyte *str,
 				 Bytecount len)
 {
 #ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
 #else
-  const Bufbyte *strend = str + len;
+  const Intbyte *strend = str + len;
   memset (charsets, 0, NUM_LEADING_BYTES);
 
   /* #### SJT doesn't like this. */
@@ -3124,10 +3124,10 @@ find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
 }
 
 int
-bufbyte_string_displayed_columns (const Bufbyte *str, Bytecount len)
+intbyte_string_displayed_columns (const Intbyte *str, Bytecount len)
 {
   int cols = 0;
-  const Bufbyte *end = str + len;
+  const Intbyte *end = str + len;
 
   while (str < end)
     {
@@ -3162,10 +3162,10 @@ emchar_string_displayed_columns (const Emchar *str, Charcount len)
 /* NOTE: Does not reset the Dynarr. */
 
 void
-convert_bufbyte_string_into_emchar_dynarr (const Bufbyte *str, Bytecount len,
+convert_intbyte_string_into_emchar_dynarr (const Intbyte *str, Bytecount len,
 					   Emchar_dynarr *dyn)
 {
-  const Bufbyte *strend = str + len;
+  const Intbyte *strend = str + len;
 
   while (str < strend)
     {
@@ -3176,10 +3176,10 @@ convert_bufbyte_string_into_emchar_dynarr (const Bufbyte *str, Bytecount len,
 }
 
 Charcount
-convert_bufbyte_string_into_emchar_string (const Bufbyte *str, Bytecount len,
+convert_intbyte_string_into_emchar_string (const Intbyte *str, Bytecount len,
 					   Emchar *arr)
 {
-  const Bufbyte *strend = str + len;
+  const Intbyte *strend = str + len;
   Charcount newlen = 0;
   while (str < strend)
     {
@@ -3191,14 +3191,14 @@ convert_bufbyte_string_into_emchar_string (const Bufbyte *str, Bytecount len,
 }
 
 /* Convert an array of Emchars into the equivalent string representation.
-   Store into the given Bufbyte dynarr.  Does not reset the dynarr.
+   Store into the given Intbyte dynarr.  Does not reset the dynarr.
    Does not add a terminating zero. */
 
 void
-convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
-					  Bufbyte_dynarr *dyn)
+convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
+					  Intbyte_dynarr *dyn)
 {
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   int i;
 
   for (i = 0; i < nels; i++)
@@ -3210,17 +3210,17 @@ convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
 
 /* Convert an array of Emchars into the equivalent string representation.
    Malloc the space needed for this and return it.  If LEN_OUT is not a
-   NULL pointer, store into LEN_OUT the number of Bufbytes in the
-   malloc()ed string.  Note that the actual number of Bufbytes allocated
+   NULL pointer, store into LEN_OUT the number of Intbytes in the
+   malloc()ed string.  Note that the actual number of Intbytes allocated
    is one more than this: the returned string is zero-terminated. */
 
-Bufbyte *
+Intbyte *
 convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 					   Bytecount *len_out)
 {
   /* Damn zero-termination. */
-  Bufbyte *str = (Bufbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
-  Bufbyte *strorig = str;
+  Intbyte *str = (Intbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
+  Intbyte *strorig = str;
   Bytecount len;
 
   int i;
@@ -3229,7 +3229,7 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
     str += set_charptr_emchar (str, arr[i]);
   *str = '\0';
   len = str - strorig;
-  str = (Bufbyte *) xmalloc (1 + len);
+  str = (Intbyte *) xmalloc (1 + len);
   memcpy (str, strorig, 1 + len);
   if (len_out)
     *len_out = len;
@@ -3249,7 +3249,7 @@ reinit_vars_of_insdel (void)
   inside_change_hook = 0;
   in_first_change = 0;
 
-  for (i = 0; i <= MAX_BYTIND_GAP_SIZE_3; i++)
+  for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
     three_to_one_table[i] = i / 3;
 }
 
@@ -3285,8 +3285,8 @@ init_buffer_text (struct buffer *b)
 
 	for (i = 0; i < 16; i++)
 	  {
-	    b->text->mule_bufpos_cache[i] = 1;
-	    b->text->mule_bytind_cache[i] = 1;
+	    b->text->mule_charbpos_cache[i] = 1;
+	    b->text->mule_bytebpos_cache[i] = 1;
 	  }
       }
 #endif /* MULE */

@@ -292,7 +292,7 @@ event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && outfd >= 0)
     {
-      Bufbyte eof_char = get_eof_char (outfd);
+      Intbyte eof_char = get_eof_char (outfd);
       int pty_max_bytes = get_pty_max_bytes (outfd);
       filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
     }

@@ -301,7 +301,7 @@ check_status (Tt_status st)
 {
   if (tt_is_err (st))
     {
-      CBufbyte *err;
+      CIntbyte *err;
 
       EXTERNAL_TO_C_STRING (tt_status_message (st), err, Qnative);
       signal_error (Qtooltalk_error, err, Qunbound);
@@ -532,7 +532,7 @@ static Lisp_Object
 tt_message_arg_bval_vector (Tt_message m, int n)
 {
   /* !!#### This function has not been Mule-ized */
-  Bufbyte *value;
+  Intbyte *value;
   int len = 0;
 
   check_status (tt_message_arg_bval (m, n, &value, &len));
@@ -762,7 +762,7 @@ New arguments can be added to a message with add-tooltalk-message-arg.
   else if (EQ (attribute, Qtt_arg_bval))
     {
       Extbyte *value_ext;
-      Extcount value_ext_len;
+      Bytecount value_ext_len;
       CHECK_STRING (value);
       TO_EXTERNAL_FORMAT (LISP_STRING, value,
 			  ALLOCA, (value_ext, value_ext_len),

@@ -534,8 +534,8 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1 ;;
 	      typecheck )     error_check_typecheck=yes ;;
 	      notypecheck )   error_check_typecheck=no ;;
 
-	      bufpos )	      error_check_bufpos=yes ;;
-	      nobufpos )      error_check_bufpos=no ;;
+	      charbpos )	      error_check_charbpos=yes ;;
+	      nocharbpos )      error_check_charbpos=no ;;
 
 	      gc )	      error_check_gc=yes ;;
 	      nogc )          error_check_gc=no ;;
@@ -554,9 +554,9 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1 ;;
 	    if test "$bogus_error_check" -o \
 	         \( -n "$new_default" -a -n "$echeck_notfirst" \) ; then
 		if test "$error_check_default" = yes ; then
-		  types="\`all' (default), \`none', \`noextents', \`notypecheck', \`nobufpos', \`nogc', \`nomalloc', \`noglyphs' and \`nobyte-code'."
+		  types="\`all' (default), \`none', \`noextents', \`notypecheck', \`nocharbpos', \`nogc', \`nomalloc', \`noglyphs' and \`nobyte-code'."
 		else
-		  types="\`all', \`none' (default), \`extents', \`typecheck', \`bufpos', \`gc', \`malloc', \`glyphs' and \`byte-code'."
+		  types="\`all', \`none' (default), \`extents', \`typecheck', \`charbpos', \`gc', \`malloc', \`glyphs' and \`byte-code'."
 		fi
 		(echo "$progname: Usage error:"
 echo " " "Valid types for the \`--$optname' option are:
@@ -565,7 +565,7 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1
 	    elif test -n "$new_default" ; then
 		error_check_extents=$new_default
 		error_check_typecheck=$new_default
-		error_check_bufpos=$new_default
+		error_check_charbpos=$new_default
 		error_check_gc=$new_default
 		error_check_malloc=$new_default
 		error_check_byte_code=$new_default
@@ -1032,11 +1032,11 @@ cat >> confdefs.h <<\EOF
 EOF
 }
 
-test "${error_check_bufpos=$beta}"    = yes && { test "$extra_verbose" = "yes" && cat << \EOF
-    Defining ERROR_CHECK_BUFPOS
+test "${error_check_charbpos=$beta}"    = yes && { test "$extra_verbose" = "yes" && cat << \EOF
+    Defining ERROR_CHECK_CHARBPOS
 EOF
 cat >> confdefs.h <<\EOF
-#define ERROR_CHECK_BUFPOS 1
+#define ERROR_CHECK_CHARBPOS 1
 EOF
 }
 
@@ -15990,7 +15990,7 @@ test "$use_union_type" = yes && echo "  Using the union type for Lisp_Objects."
 test "$pdump" = yes && echo "  Using the new portable dumper."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
-if test "$error_check_extents $error_check_typecheck $error_check_bufpos $error_check_gc $error_check_malloc $error_check_glyphs" \
+if test "$error_check_extents $error_check_typecheck $error_check_charbpos $error_check_gc $error_check_malloc $error_check_glyphs" \
   != "no no no no no no"; then
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: Compiling in support for runtime error checking."

@@ -816,7 +816,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
     {
       Lisp_Object name, value;
       Atom atom = props [i].name;
-      Bufbyte *name_str = 0;
+      Intbyte *name_str = 0;
       Bytecount name_len;
       Extbyte *namestrext = XGetAtomName (dpy, atom);
 
@@ -837,17 +837,17 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 	   atom == DEVICE_XATOM_SPACING (d) ||
 	   atom == DEVICE_XATOM_CHARSET_REGISTRY (d) ||
 	   atom == DEVICE_XATOM_CHARSET_ENCODING (d) ||
-	   !bufbyte_strcmp (name_str, "CHARSET_COLLECTIONS") ||
-	   !bufbyte_strcmp (name_str, "FONTNAME_REGISTRY") ||
-	   !bufbyte_strcmp (name_str, "CLASSIFICATION") ||
-	   !bufbyte_strcmp (name_str, "COPYRIGHT") ||
-	   !bufbyte_strcmp (name_str, "DEVICE_FONT_NAME") ||
-	   !bufbyte_strcmp (name_str, "FULL_NAME") ||
-	   !bufbyte_strcmp (name_str, "MONOSPACED") ||
-	   !bufbyte_strcmp (name_str, "QUALITY") ||
-	   !bufbyte_strcmp (name_str, "RELATIVE_SET") ||
-	   !bufbyte_strcmp (name_str, "RELATIVE_WEIGHT") ||
-	   !bufbyte_strcmp (name_str, "STYLE")))
+	   !intbyte_strcmp (name_str, "CHARSET_COLLECTIONS") ||
+	   !intbyte_strcmp (name_str, "FONTNAME_REGISTRY") ||
+	   !intbyte_strcmp (name_str, "CLASSIFICATION") ||
+	   !intbyte_strcmp (name_str, "COPYRIGHT") ||
+	   !intbyte_strcmp (name_str, "DEVICE_FONT_NAME") ||
+	   !intbyte_strcmp (name_str, "FULL_NAME") ||
+	   !intbyte_strcmp (name_str, "MONOSPACED") ||
+	   !intbyte_strcmp (name_str, "QUALITY") ||
+	   !intbyte_strcmp (name_str, "RELATIVE_SET") ||
+	   !intbyte_strcmp (name_str, "RELATIVE_WEIGHT") ||
+	   !intbyte_strcmp (name_str, "STYLE")))
 	{
 	  Extbyte *val_str = XGetAtomName (dpy, props [i].card32);
 
@@ -886,7 +886,7 @@ x_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
 static int
 x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			     const Bufbyte *nonreloc, Lisp_Object reloc,
+			     const Intbyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount length)
 {
   if (UNBOUNDP (charset))
@@ -898,7 +898,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
      */
   if (EQ (charset, Vcharset_ascii))
     {
-      const Bufbyte *the_nonreloc = nonreloc;
+      const Intbyte *the_nonreloc = nonreloc;
       int i;
       Bytecount the_length = length;
 
@@ -910,7 +910,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	{
 	  for (i = 0;; i++)
 	    {
-	      const Bufbyte *new_nonreloc = (const Bufbyte *)
+	      const Intbyte *new_nonreloc = (const Intbyte *)
 		memchr (the_nonreloc, '-', the_length);
 	      if (!new_nonreloc)
 		break;
@@ -951,7 +951,7 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
   /* #### This code seems awfully bogus -- mrb */
   for (i = 0; i < count; i ++)
     {
-      const Bufbyte *intname;
+      const Intbyte *intname;
       Bytecount intlen;
 
       TO_INTERNAL_FORMAT (C_STRING, names[i],

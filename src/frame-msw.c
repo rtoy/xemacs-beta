@@ -516,7 +516,7 @@ mswindows_disable_frame (struct frame *f)
 }
 
 static void
-mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title)
+mswindows_set_title_from_intbyte (struct frame *f, Intbyte *title)
 {
   unsigned int new_checksum = hash_string (title, strlen ((char *) title));
   if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM (f))
@@ -1086,8 +1086,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, internal_frame_property_p);
   CONSOLE_HAS_METHOD (mswindows, frame_properties);
   CONSOLE_HAS_METHOD (mswindows, set_frame_properties);
-  CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte);
-/*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_bufbyte); */
+  CONSOLE_HAS_METHOD (mswindows, set_title_from_intbyte);
+/*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_intbyte); */
   CONSOLE_HAS_METHOD (mswindows, frame_visible_p);
   CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);

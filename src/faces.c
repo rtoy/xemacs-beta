@@ -150,7 +150,7 @@ face_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
      ! plists_differ (f1->plist, f2->plist, 0, 0, depth + 1));
 }
 
-static Hash_Code
+static Hashcode
 face_hash (Lisp_Object obj, int depth)
 {
   Lisp_Face *f = XFACE (obj);

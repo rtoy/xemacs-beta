@@ -220,8 +220,8 @@ extern char etext;
 
 /* These two are for user programs to look at, when they are interested.  */
 
-Memory_Count malloc_sbrk_used;       /* amount of data space used now */
-Memory_Count malloc_sbrk_unused;     /* amount more we can have */
+Bytecount malloc_sbrk_used;       /* amount of data space used now */
+Bytecount malloc_sbrk_unused;     /* amount more we can have */
 
 /* start of data space; can be changed by calling init_malloc */
 static char *data_space_start;

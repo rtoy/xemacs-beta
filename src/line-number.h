@@ -23,10 +23,10 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not in FSF. */
 
 void narrow_line_number_cache (struct buffer *);
-void insert_invalidate_line_number_cache (struct buffer *, Bufpos,
-					  const Bufbyte *, Bytecount);
-void delete_invalidate_line_number_cache (struct buffer *, Bufpos, Bufpos);
+void insert_invalidate_line_number_cache (struct buffer *, Charbpos,
+					  const Intbyte *, Bytecount);
+void delete_invalidate_line_number_cache (struct buffer *, Charbpos, Charbpos);
 
-EMACS_INT buffer_line_number (struct buffer *, Bufpos, int);
+EMACS_INT buffer_line_number (struct buffer *, Charbpos, int);
 
 #endif /* INCLUDED_line_number_h_ */

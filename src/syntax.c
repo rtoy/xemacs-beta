@@ -99,12 +99,12 @@ struct lisp_parse_state
   int comstyle;		/* comment style a=0, or b=1, or ST_COMMENT_STYLE */
   int quoted;		/* Nonzero if just after an escape char at end of
 			   parsing */
-  Bufpos thislevelstart;/* Char number of most recent start-of-expression
+  Charbpos thislevelstart;/* Char number of most recent start-of-expression
                            at current level */
-  Bufpos prevlevelstart;/* Char number of start of containing expression */
-  Bufpos location;	/* Char number at which parsing stopped */
+  Charbpos prevlevelstart;/* Char number of start of containing expression */
+  Charbpos location;	/* Char number at which parsing stopped */
   int mindepth;		/* Minimum depth seen while scanning  */
-  Bufpos comstr_start;	/* Position just after last comment/string starter  */
+  Charbpos comstr_start;	/* Position just after last comment/string starter  */
   Lisp_Object levelstarts;	/* Char numbers of starts-of-expression
                                    of levels (starting from outermost).  */
 };
@@ -116,20 +116,20 @@ struct lisp_parse_state
    find_start_begv   is the BEGV value when it was found.
    find_start_modiff is the value of MODIFF when it was found.  */
 
-static Bufpos find_start_pos;
-static Bufpos find_start_value;
+static Charbpos find_start_pos;
+static Charbpos find_start_value;
 static struct buffer *find_start_buffer;
-static Bufpos find_start_begv;
+static Charbpos find_start_begv;
 static int find_start_modiff;
 
 /* Find a defun-start that is the last one before POS (or nearly the last).
    We record what we find, so that another call in the same area
    can return the same value right away.  */
 
-static Bufpos
-find_defun_start (struct buffer *buf, Bufpos pos)
+static Charbpos
+find_defun_start (struct buffer *buf, Charbpos pos)
 {
-  Bufpos tem;
+  Charbpos tem;
 
   /* Use previous finding, if it's valid and applies to this inquiry.  */
   if (buf == find_start_buffer
@@ -457,10 +457,10 @@ extern int word_boundary_p (Emchar c1, Emchar c2);
    If that many words cannot be found before the end of the buffer, return 0.
    COUNT negative means scan backward and stop at word beginning.  */
 
-Bufpos
-scan_words (struct buffer *buf, Bufpos from, int count)
+Charbpos
+scan_words (struct buffer *buf, Charbpos from, int count)
 {
-  Bufpos limit = count > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
+  Charbpos limit = count > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
   Emchar ch0, ch1;
   enum syntaxcode code;
 
@@ -573,7 +573,7 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 */
        (count, buffer))
 {
-  Bufpos val;
+  Charbpos val;
   struct buffer *buf = decode_buffer (buffer, 0);
   EMACS_INT n;
 
@@ -600,13 +600,13 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 
 static void scan_sexps_forward (struct buffer *buf,
 				struct lisp_parse_state *,
-				Bufpos from, Bufpos end,
+				Charbpos from, Charbpos end,
 				int targetdepth, int stopbefore,
 				Lisp_Object oldstate,
 				int commentstop);
 
 static int
-find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop,
+find_start_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
 		       int comstyle)
 {
   Emchar c;
@@ -624,8 +624,8 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop,
   int parity = 0;
   Emchar my_stringend = 0;
   int string_lossage = 0;
-  Bufpos comment_end = from;
-  Bufpos comstart_pos = 0;
+  Charbpos comment_end = from;
+  Charbpos comstart_pos = 0;
   int comstart_parity = 0;
   int styles_match_p = 0;
   /* mask to match comment styles against; for ST_COMMENT_STYLE, this
@@ -788,8 +788,8 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop,
   return from;
 }
 
-static Bufpos
-find_end_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int comstyle)
+static Charbpos
+find_end_of_comment (struct buffer *buf, Charbpos from, Charbpos stop, int comstyle)
 {
   int c;
   int prev_code;
@@ -877,8 +877,8 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 */
        (count, buffer))
 {
-  Bufpos from;
-  Bufpos stop;
+  Charbpos from;
+  Charbpos stop;
   Emchar c;
   enum syntaxcode code;
   int syncode;
@@ -960,7 +960,7 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 
 	  if (code == Scomment)
 	    {
-	      Bufpos newfrom = find_end_of_comment (buf, from, stop, comstyle);
+	      Charbpos newfrom = find_end_of_comment (buf, from, stop, comstyle);
 	      if (newfrom < 0)
 		{
 		  /* we stopped because from==stop */
@@ -1065,10 +1065,10 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 
 
 Lisp_Object
-scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
+scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 	    int sexpflag, int noerror)
 {
-  Bufpos stop;
+  Charbpos stop;
   Emchar c;
   int quoted;
   int mathexit = 0;
@@ -1169,7 +1169,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		break;
 	      UPDATE_SYNTAX_CACHE_FORWARD (from);
 	      {
-		Bufpos newfrom =
+		Charbpos newfrom =
 		  find_end_of_comment (buf, from, stop, comstyle);
 		if (newfrom < 0)
 		  {
@@ -1453,12 +1453,12 @@ lose:
 }
 
 int
-char_quoted (struct buffer *buf, Bufpos pos)
+char_quoted (struct buffer *buf, Charbpos pos)
 {
   enum syntaxcode code;
-  Bufpos beg = BUF_BEGV (buf);
+  Charbpos beg = BUF_BEGV (buf);
   int quoted = 0;
-  Bufpos startpos = pos;
+  Charbpos startpos = pos;
 
   while (pos > beg)
     {
@@ -1545,8 +1545,8 @@ Optional arg BUFFER defaults to the current buffer.
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  Bufpos beg = BUF_BEGV (buf);
-  Bufpos pos = BUF_PT (buf);
+  Charbpos beg = BUF_BEGV (buf);
+  Charbpos pos = BUF_PT (buf);
 #ifndef emacs
   Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 #endif
@@ -1574,7 +1574,7 @@ Optional arg BUFFER defaults to the current buffer.
 
 static void
 scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
-		    Bufpos from, Bufpos end,
+		    Charbpos from, Charbpos end,
 		    int targetdepth, int stopbefore,
 		    Lisp_Object oldstate,
 		    int commentstop)
@@ -1772,7 +1772,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	    goto done;
 	  UPDATE_SYNTAX_CACHE_FORWARD (from);
 	  {
-	    Bufpos newfrom = find_end_of_comment (buf, from, end, state.comstyle);
+	    Charbpos newfrom = find_end_of_comment (buf, from, end, state.comstyle);
 	    if (newfrom < 0)
 	      {
 		/* we terminated search because from == end */
@@ -1944,7 +1944,7 @@ the end of a comment or string.
 {
   struct lisp_parse_state state;
   int target;
-  Bufpos start, end;
+  Charbpos start, end;
   struct buffer *buf = decode_buffer (buffer, 0);
   Lisp_Object val;
 

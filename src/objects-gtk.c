@@ -72,7 +72,7 @@ allocate_nearest_color (GdkColormap *colormap, GdkVisual *visual,
 }
 
 int
-gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
+gtk_parse_nearest_color (struct device *d, GdkColor *color, Intbyte *name,
 			 Bytecount len, Error_Behavior errb)
 {
   GdkColormap *cmap;
@@ -85,7 +85,7 @@ gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
   xzero (*color);
   {
     const Extbyte *extname;
-    Extcount extnamelen;
+    Bytecount extnamelen;
 
     TO_EXTERNAL_FORMAT (DATA, (name, len), ALLOCA, (extname, extnamelen), Qbinary);
 
@@ -382,7 +382,7 @@ gtk_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
 static int
 gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			       const Bufbyte *nonreloc, Lisp_Object reloc,
+			       const Intbyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length)
 {
   if (UNBOUNDP (charset))
@@ -394,7 +394,7 @@ gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
      */
   if (EQ (charset, Vcharset_ascii))
     {
-      const Bufbyte *the_nonreloc = nonreloc;
+      const Intbyte *the_nonreloc = nonreloc;
       int i;
       Bytecount the_length = length;
 
@@ -406,7 +406,7 @@ gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	{
 	  for (i = 0;; i++)
 	    {
-	      const Bufbyte *new_nonreloc = (const Bufbyte *)
+	      const Intbyte *new_nonreloc = (const Intbyte *)
 		memchr (the_nonreloc, '-', the_length);
 	      if (!new_nonreloc)
 		break;
@@ -502,7 +502,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset
   /* ### This code seems awfully bogus -- mrb */
   for (i = 0; i < count; i ++)
     {
-      const Bufbyte *intname;
+      const Intbyte *intname;
       Bytecount intlen;
 
       TO_INTERNAL_FORMAT (C_STRING, names[i], ALLOCA, (intname, intlen),

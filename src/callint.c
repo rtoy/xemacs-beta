@@ -248,7 +248,7 @@ quotify_args (Lisp_Object expr)
   return expr;
 }
 
-static Bufpos
+static Charbpos
 check_mark (void)
 {
   Lisp_Object tem;
@@ -264,7 +264,7 @@ check_mark (void)
 }
 
 static Lisp_Object
-callint_prompt (const Bufbyte *prompt_start, Bytecount prompt_length,
+callint_prompt (const Intbyte *prompt_start, Bytecount prompt_length,
                 const Lisp_Object *args, int nargs)
 {
   Lisp_Object s = make_string (prompt_start, prompt_length);
@@ -651,7 +651,7 @@ when reading the arguments.
 	   prompts with "Set key C-x C-f to command: "instead of printing
 	   event objects in there.
 	 */
-#define PROMPT() callint_prompt ((const Bufbyte *) prompt_start, prompt_length, visargs, argnum)
+#define PROMPT() callint_prompt ((const Intbyte *) prompt_start, prompt_length, visargs, argnum)
 	switch (prompt_data[prompt_index])
 	  {
 	  case 'a':		/* Symbol defined as a function */
@@ -857,7 +857,7 @@ when reading the arguments.
             }
 	  case 'r':		/* Region, point and mark as 2 args. */
 	    {
-	      Bufpos tem = check_mark ();
+	      Charbpos tem = check_mark ();
 	      args[argnum] = (BUF_PT (current_buffer) < tem
 			      ? Fcopy_marker (current_buffer->point_marker, Qt)
 			      : current_buffer->mark);

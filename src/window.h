@@ -137,7 +137,7 @@ struct window
 
   /* Set by redisplay to the last position seen.  This is used
      to implement the redisplay-end-trigger-functions. */
-  Bufpos last_redisplay_pos;
+  Charbpos last_redisplay_pos;
 
 #define WINDOW_SLOT_DECLARATION
 #define WINDOW_SLOT(slot) Lisp_Object slot;

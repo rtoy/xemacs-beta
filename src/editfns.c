@@ -105,7 +105,7 @@ Convert CHARACTER to a one-character string containing that character.
        (character))
 {
   Bytecount len;
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
 
   if (EVENTP (character))
     {
@@ -142,7 +142,7 @@ An empty string will return the constant `nil'.
 
 
 static Lisp_Object
-buildmark (Bufpos val, Lisp_Object buffer)
+buildmark (Charbpos val, Lisp_Object buffer)
 {
   Lisp_Object mark = Fmake_marker ();
   Fset_marker (mark, make_int (val), buffer);
@@ -180,16 +180,16 @@ If BUFFER is nil, the current buffer is assumed.
 /* The following two functions end up being identical but it's
    cleaner to declare them separately. */
 
-Bufpos
-bufpos_clip_to_bounds (Bufpos lower, Bufpos num, Bufpos upper)
+Charbpos
+charbpos_clip_to_bounds (Charbpos lower, Charbpos num, Charbpos upper)
 {
   return (num < lower ? lower :
 	  num > upper ? upper :
 	  num);
 }
 
-Bytind
-bytind_clip_to_bounds (Bytind lower, Bytind num, Bytind upper)
+Bytebpos
+bytebpos_clip_to_bounds (Bytebpos lower, Bytebpos num, Bytebpos upper)
 {
   return (num < lower ? lower :
 	  num > upper ? upper :
@@ -216,7 +216,7 @@ Return value of POSITION, as an integer.
        (position, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = get_buffer_pos_char (b, position, GB_COERCE_RANGE);
+  Charbpos n = get_buffer_pos_char (b, position, GB_COERCE_RANGE);
   BUF_SET_PT (b, n);
   atomic_extent_goto_char_p = 1;
   return make_int (n);
@@ -332,7 +332,7 @@ save_excursion_save (void)
   /* #### Huh?  --hniksic */
   /*if (preparing_for_armageddon) return Qnil;*/
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   assert (XINT (Fpoint (Qnil)) ==
 	  XINT (Fmarker_position (Fpoint_marker (Qt, Qnil))));
 #endif
@@ -534,7 +534,7 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 int
-beginning_of_line_p (struct buffer *b, Bufpos pt)
+beginning_of_line_p (struct buffer *b, Charbpos pt)
 {
   return pt <= BUF_BEGV (b) || BUF_FETCH_CHAR (b, pt - 1) == '\n';
 }
@@ -572,7 +572,7 @@ If BUFFER is nil, the current buffer is assumed.
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = (NILP (pos) ? BUF_PT (b) :
+  Charbpos n = (NILP (pos) ? BUF_PT (b) :
 	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
 
   if (n < 0 || n == BUF_ZV (b))
@@ -590,7 +590,7 @@ If BUFFER is nil, the current buffer is assumed.
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = (NILP (pos) ? BUF_PT (b) :
+  Charbpos n = (NILP (pos) ? BUF_PT (b) :
 	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
 
   n--;
@@ -1106,7 +1106,7 @@ characters appearing in the day and month names may be incorrect.
        (format_string, time_))
 {
   time_t value;
-  Memory_Count size;
+  Bytecount size;
 
   CHECK_STRING (format_string);
 
@@ -1270,7 +1270,7 @@ and from `file-attributes'.
   time_t value;
   char *the_ctime;
   EMACS_INT len; /* this is what make_ext_string() accepts; ####
-		    should it be an Extcount? */
+		    should it be an Bytecount? */
 
   if (! lisp_to_time (specified_time, &value))
     value = -1;
@@ -1591,12 +1591,12 @@ text into.  If BUFFER is nil, the current buffer is assumed.
        (character, count, ignored, buffer))
 {
   /* This function can GC */
-  REGISTER Bufbyte *string;
+  REGISTER Intbyte *string;
   REGISTER int slen;
   REGISTER int i, j;
   REGISTER Bytecount n;
   REGISTER Bytecount charlen;
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   struct buffer *b = decode_buffer (buffer, 1);
   int cou;
 
@@ -1614,7 +1614,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   if (n <= 0)
     return Qnil;
   slen = min (n, 768);
-  string = alloca_array (Bufbyte, slen);
+  string = alloca_array (Intbyte, slen);
   /* Write as many copies of the character into the temp string as will fit. */
   for (i = 0; i + charlen <= slen; i += charlen)
     for (j = 0; j < charlen; j++)
@@ -1655,7 +1655,7 @@ If BUFFER is nil, the current buffer is assumed.
        (start, end, buffer))
 {
   /* This function can GC */
-  Bufpos begv, zv;
+  Charbpos begv, zv;
   struct buffer *b = decode_buffer (buffer, 1);
 
   get_buffer_range_char (b, start, end, &begv, &zv, GB_ALLOW_NIL);
@@ -1672,7 +1672,7 @@ Return the text from START to END as a string, without copying the extents.
        (start, end, buffer))
 {
   /* This function can GC */
-  Bufpos begv, zv;
+  Charbpos begv, zv;
   struct buffer *b = decode_buffer (buffer, 1);
 
   get_buffer_range_char (b, start, end, &begv, &zv, GB_ALLOW_NIL);
@@ -1688,7 +1688,7 @@ They default to the beginning and the end of BUFFER.
        (buffer, start, end))
 {
   /* This function can GC */
-  Bufpos b, e;
+  Charbpos b, e;
   struct buffer *bp;
 
   bp = XBUFFER (get_buffer (buffer, 1));
@@ -1712,7 +1712,7 @@ determines whether case is significant or ignored.
 */
        (buffer1, start1, end1, buffer2, start2, end2))
 {
-  Bufpos begp1, endp1, begp2, endp2;
+  Charbpos begp1, endp1, begp2, endp2;
   REGISTER Charcount len1, len2, length, i;
   struct buffer *bp1, *bp2;
   Lisp_Object trt = ((!NILP (current_buffer->case_fold_search)) ?
@@ -1783,7 +1783,7 @@ and don't mark the buffer as really changed.
   (start, end, fromchar, tochar, noundo))
 {
   /* This function can GC */
-  Bufpos pos, stop;
+  Charbpos pos, stop;
   Emchar fromc, toc;
   int mc_count;
   struct buffer *buf = current_buffer;
@@ -1861,7 +1861,7 @@ Returns the number of substitutions performed.
        (start, end, table))
 {
   /* This function can GC */
-  Bufpos pos, stop;	/* Limits of the region. */
+  Charbpos pos, stop;	/* Limits of the region. */
   int cnt = 0;		/* Number of changes made. */
   int mc_count;
   struct buffer *buf = current_buffer;
@@ -1879,7 +1879,7 @@ Returns the number of substitutions performed.
       if (size * (stop - pos) > 65536)
 	{
 	  Emchar *etable = alloca_array (Emchar, size);
-	  convert_bufbyte_string_into_emchar_string
+	  convert_intbyte_string_into_emchar_string
 	    (string_data (stable), string_length (stable), etable);
 	  for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	    {
@@ -1997,7 +1997,7 @@ If optional third arg BUFFER is nil, the current buffer is assumed.
        (start, end, buffer))
 {
   /* This function can GC */
-  Bufpos bp_start, bp_end;
+  Charbpos bp_start, bp_end;
   struct buffer *buf = decode_buffer (buffer, 1);
 
   get_buffer_range_char (buf, start, end, &bp_start, &bp_end, 0);
@@ -2054,14 +2054,14 @@ or markers) bounding the text that should remain visible.
 */
        (start, end, buffer))
 {
-  Bufpos bp_start, bp_end;
+  Charbpos bp_start, bp_end;
   struct buffer *buf = decode_buffer (buffer, 1);
-  Bytind bi_start, bi_end;
+  Bytebpos bi_start, bi_end;
 
   get_buffer_range_char (buf, start, end, &bp_start, &bp_end,
 			 GB_ALLOW_PAST_ACCESSIBLE);
-  bi_start = bufpos_to_bytind (buf, bp_start);
-  bi_end = bufpos_to_bytind (buf, bp_end);
+  bi_start = charbpos_to_bytebpos (buf, bp_start);
+  bi_end = charbpos_to_bytebpos (buf, bp_end);
 
   SET_BOTH_BUF_BEGV (buf, bp_start, bi_start);
   SET_BOTH_BUF_ZV (buf, bp_end, bi_end);
@@ -2119,14 +2119,14 @@ save_restriction_restore (Lisp_Object data)
     }
 
   {
-    Bufpos start, end;
-    Bytind bi_start, bi_end;
+    Charbpos start, end;
+    Bytebpos bi_start, bi_end;
 
     start = BUF_BEG (buf) + newhead;
     end = BUF_Z (buf) - newtail;
 
-    bi_start = bufpos_to_bytind (buf, start);
-    bi_end = bufpos_to_bytind (buf, end);
+    bi_start = charbpos_to_bytebpos (buf, start);
+    bi_end = charbpos_to_bytebpos (buf, end);
 
     if (BUF_BEGV (buf) != start)
       {
@@ -2145,7 +2145,7 @@ save_restriction_restore (Lisp_Object data)
 
   /* If point is outside the new visible range, move it inside. */
   BUF_SET_PT (buf,
-              bufpos_clip_to_bounds (BUF_BEGV (buf),
+              charbpos_clip_to_bounds (BUF_BEGV (buf),
 				     BUF_PT (buf),
 				     BUF_ZV (buf)));
 
@@ -2307,7 +2307,7 @@ Both arguments must be characters (i.e. NOT integers).
    It's the caller's job to see that (start1 <= end1 <= start2 <= end2).  */
 
 void
-transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
+transpose_markers (Charbpos start1, Charbpos end1, Charbpos start2, Charbpos end2)
 {
   Charcount amt1, amt2, diff;
   Lisp_Object marker;
@@ -2343,7 +2343,7 @@ transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
   for (marker = BUF_MARKERS (buf); !NILP (marker);
        marker = XMARKER (marker)->chain)
     {
-      Bufpos mpos = marker_position (marker);
+      Charbpos mpos = marker_position (marker);
       if (mpos >= start1 && mpos < end2)
 	{
 	  if (mpos < end1)
@@ -2372,7 +2372,7 @@ Transposing beyond buffer boundaries is an error.
 */
   (start1, end1, start2, end2, leave_markers))
 {
-  Bufpos startr1, endr1, startr2, endr2;
+  Charbpos startr1, endr1, startr2, endr2;
   Charcount len1, len2;
   Lisp_Object string1, string2;
   struct buffer *buf = current_buffer;

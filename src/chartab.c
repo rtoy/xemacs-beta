@@ -121,7 +121,7 @@ char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static Hash_Code
+static Hashcode
 char_table_entry_hash (Lisp_Object obj, int depth)
 {
   Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
@@ -413,11 +413,11 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static Hash_Code
+static Hashcode
 char_table_hash (Lisp_Object obj, int depth)
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  Hash_Code hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
+  Hashcode hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
 					   depth);
 #ifdef MULE
   hashval = HASH2 (hashval,

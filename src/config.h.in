@@ -450,11 +450,11 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* Make sure valid buffer positions are passed to BUF_* macros. */
-#undef ERROR_CHECK_BUFPOS
-#ifdef ERROR_CHECK_BUFPOS
-#define bufpos_checking_assert(assertion) assert (assertion)
+#undef ERROR_CHECK_CHARBPOS
+#ifdef ERROR_CHECK_CHARBPOS
+#define charbpos_checking_assert(assertion) assert (assertion)
 #else
-#define bufpos_checking_assert(assertion)
+#define charbpos_checking_assert(assertion)
 #endif
 
 /* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */

@@ -84,7 +84,7 @@ static struct regexp_cache *searchbuf_head;
    able to free or re-allocate it properly.  */
 
 /* Note: things get trickier under Mule because the values returned from
-   the regexp routines are in Bytinds but we need them to be in Bufpos's.
+   the regexp routines are in Bytebposs but we need them to be in Charbpos's.
    We take the easy way out for the moment and just convert them immediately.
    We could be more clever by not converting them until necessary, but
    that gets real ugly real fast since the buffer might have changed and
@@ -109,17 +109,17 @@ Fixnum warn_about_possibly_incompatible_back_references;
 /* range table for use with skip_chars.  Only needed for Mule. */
 Lisp_Object Vskip_chars_range_table;
 
-static void set_search_regs (struct buffer *buf, Bufpos beg, Charcount len);
+static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
 static void save_search_regs (void);
-static Bufpos simple_search (struct buffer *buf, Bufbyte *base_pat,
-			     Bytecount len, Bytind pos, Bytind lim,
+static Charbpos simple_search (struct buffer *buf, Intbyte *base_pat,
+			     Bytecount len, Bytebpos pos, Bytebpos lim,
 			     EMACS_INT n, Lisp_Object trt);
-static Bufpos boyer_moore (struct buffer *buf, Bufbyte *base_pat,
-			   Bytecount len, Bytind pos, Bytind lim,
+static Charbpos boyer_moore (struct buffer *buf, Intbyte *base_pat,
+			   Bytecount len, Bytebpos pos, Bytebpos lim,
 			   EMACS_INT n, Lisp_Object trt,
 			   Lisp_Object inverse_trt, int charset_base);
-static Bufpos search_buffer (struct buffer *buf, Lisp_Object str,
-			     Bufpos bufpos, Bufpos buflim, EMACS_INT n, int RE,
+static Charbpos search_buffer (struct buffer *buf, Lisp_Object str,
+			     Charbpos charbpos, Charbpos buflim, EMACS_INT n, int RE,
 			     Lisp_Object trt, Lisp_Object inverse_trt,
 			     int posix);
 
@@ -229,13 +229,13 @@ signal_failure (Lisp_Object arg)
   return Qnil; /* Not reached. */
 }
 
-/* Convert the search registers from Bytinds to Bufpos's.  Needs to be
+/* Convert the search registers from Bytebposs to Charbpos's.  Needs to be
    done after each regexp match that uses the search regs.
 
    We could get a potential speedup by not converting the search registers
    until it's really necessary, e.g. when match-data or replace-match is
    called.  However, this complexifies the code a lot (e.g. the buffer
-   could have changed and the Bytinds stored might be invalid) and is
+   could have changed and the Bytebposs stored might be invalid) and is
    probably not a great time-saver. */
 
 static void
@@ -247,9 +247,9 @@ fixup_search_regs_for_buffer (struct buffer *buf)
   for (i = 0; i < num_regs; i++)
     {
       if (search_regs.start[i] >= 0)
-	search_regs.start[i] = bytind_to_bufpos (buf, search_regs.start[i]);
+	search_regs.start[i] = bytebpos_to_charbpos (buf, search_regs.start[i]);
       if (search_regs.end[i] >= 0)
-	search_regs.end[i] = bytind_to_bufpos (buf, search_regs.end[i]);
+	search_regs.end[i] = bytebpos_to_charbpos (buf, search_regs.end[i]);
     }
 }
 
@@ -290,7 +290,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
   Lisp_Object val;
-  Bytind p1, p2;
+  Bytebpos p1, p2;
   Bytecount s1, s2;
   REGISTER int i;
   struct re_pattern_buffer *bufp;
@@ -458,14 +458,14 @@ tables) and defaults to the current buffer.
    This does not clobber the match data. */
 
 Bytecount
-fast_string_match (Lisp_Object regexp,  const Bufbyte *nonreloc,
+fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
 		   Bytecount length, int case_fold_search,
 		   Error_Behavior errb, int no_quit)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount val;
-  Bufbyte *newnonreloc = (Bufbyte *) nonreloc;
+  Intbyte *newnonreloc = (Intbyte *) nonreloc;
   struct re_pattern_buffer *bufp;
 
   bufp = compile_pattern (regexp, 0,
@@ -491,7 +491,7 @@ fast_string_match (Lisp_Object regexp,  const Bufbyte *nonreloc,
 	  /* QUIT could relocate RELOC.  Therefore we must alloca()
 	     and copy.  No way around this except some serious
 	     rewriting of re_search(). */
-	  newnonreloc = (Bufbyte *) alloca (length);
+	  newnonreloc = (Intbyte *) alloca (length);
 	  memcpy (newnonreloc, XSTRING_DATA (reloc), length);
 	}
     }
@@ -561,12 +561,12 @@ newline_cache_on_off (struct buffer *buf)
 
    If ALLOW_QUIT is non-zero, call QUIT periodically. */
 
-static Bytind
-bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
+static Bytebpos
+bi_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
 		EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   /* This function has been Mule-ized. */
-  Bytind lim = en > 0 ? en :
+  Bytebpos lim = en > 0 ? en :
     ((count > 0) ? BI_BUF_ZV (buf) : BI_BUF_BEGV (buf));
 
   /* #### newline cache stuff in this function not yet ported */
@@ -590,7 +590,7 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	    {
 	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
 		count--;
-	      INC_BYTIND (buf, st);
+	      INC_BYTEBPOS (buf, st);
 	    }
 	}
       else
@@ -598,12 +598,12 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	{
 	  while (st < lim && count > 0)
 	    {
-	      Bytind ceil;
-	      Bufbyte *bufptr;
+	      Bytebpos ceil;
+	      Intbyte *bufptr;
 
 	      ceil = BI_BUF_CEILING_OF (buf, st);
 	      ceil = min (lim, ceil);
-	      bufptr = (Bufbyte *) memchr (BI_BUF_BYTE_ADDRESS (buf, st),
+	      bufptr = (Intbyte *) memchr (BI_BUF_BYTE_ADDRESS (buf, st),
 					   (int) target, ceil - st);
 	      if (bufptr)
 		{
@@ -628,7 +628,7 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	{
 	  while (st > lim && count < 0)
 	    {
-	      DEC_BYTIND (buf, st);
+	      DEC_BYTEBPOS (buf, st);
 	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
 		count++;
 	    }
@@ -638,9 +638,9 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	{
 	  while (st > lim && count < 0)
 	    {
-	      Bytind floor;
-	      Bufbyte *bufptr;
-	      Bufbyte *floorptr;
+	      Bytebpos floor;
+	      Intbyte *bufptr;
+	      Intbyte *floorptr;
 
 	      floor = BI_BUF_FLOOR_OF (buf, st);
 	      floor = max (lim, floor);
@@ -674,54 +674,54 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	/* We found the character we were looking for; we have to return
 	   the position *after* it due to the strange way that the return
 	   value is defined. */
-	  INC_BYTIND (buf, st);
+	  INC_BYTEBPOS (buf, st);
 	  return st;
 	}
     }
 }
 
-Bufpos
-scan_buffer (struct buffer *buf, Emchar target, Bufpos start, Bufpos end,
+Charbpos
+scan_buffer (struct buffer *buf, Emchar target, Charbpos start, Charbpos end,
 	     EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
-  Bytind bi_retval;
-  Bytind bi_start, bi_end;
+  Bytebpos bi_retval;
+  Bytebpos bi_start, bi_end;
 
-  bi_start = bufpos_to_bytind (buf, start);
+  bi_start = charbpos_to_bytebpos (buf, start);
   if (end)
-    bi_end = bufpos_to_bytind (buf, end);
+    bi_end = charbpos_to_bytebpos (buf, end);
   else
     bi_end = 0;
   bi_retval = bi_scan_buffer (buf, target, bi_start, bi_end, count,
 			      shortage, allow_quit);
-  return bytind_to_bufpos (buf, bi_retval);
+  return bytebpos_to_charbpos (buf, bi_retval);
 }
 
-Bytind
-bi_find_next_newline_no_quit (struct buffer *buf, Bytind from, int count)
+Bytebpos
+bi_find_next_newline_no_quit (struct buffer *buf, Bytebpos from, int count)
 {
   return bi_scan_buffer (buf, '\n', from, 0, count, 0, 0);
 }
 
-Bufpos
-find_next_newline_no_quit (struct buffer *buf, Bufpos from, int count)
+Charbpos
+find_next_newline_no_quit (struct buffer *buf, Charbpos from, int count)
 {
   return scan_buffer (buf, '\n', from, 0, count, 0, 0);
 }
 
-Bufpos
-find_next_newline (struct buffer *buf, Bufpos from, int count)
+Charbpos
+find_next_newline (struct buffer *buf, Charbpos from, int count)
 {
   return scan_buffer (buf, '\n', from, 0, count, 0, 1);
 }
 
-Bytind
-bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytind st,
+Bytebpos
+bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytebpos st,
 			       EMACS_INT count)
 {
   /* This function has been Mule-ized. */
-  Bytind lim = string_length (str) -1;
-  Bufbyte* s = string_data (str);
+  Bytebpos lim = string_length (str) -1;
+  Intbyte* s = string_data (str);
 
   assert (count >= 0);
 
@@ -737,7 +737,7 @@ bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytind st,
 	{
 	  if (string_char (str, st) == target)
 	    count--;
-	  INC_CHARBYTIND (s, st);
+	  INC_CHARBYTEBPOS (s, st);
 	}
     }
   else
@@ -745,12 +745,12 @@ bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytind st,
     {
       while (st < lim && count > 0)
 	{
-	  Bufbyte *bufptr = (Bufbyte *) memchr (charptr_n_addr (s, st),
+	  Intbyte *bufptr = (Intbyte *) memchr (charptr_n_addr (s, st),
 						(int) target, lim - st);
 	  if (bufptr)
 	    {
 	      count--;
-	      st =  (Bytind)(bufptr - s) + 1;
+	      st =  (Bytebpos)(bufptr - s) + 1;
 	    }
 	  else
 	    st = lim;
@@ -762,11 +762,11 @@ bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytind st,
 /* Like find_next_newline, but returns position before the newline,
    not after, and only search up to TO.  This isn't just
    find_next_newline (...)-1, because you might hit TO.  */
-Bufpos
-find_before_next_newline (struct buffer *buf, Bufpos from, Bufpos to, int count)
+Charbpos
+find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to, int count)
 {
   EMACS_INT shortage;
-  Bufpos pos = scan_buffer (buf, '\n', from, to, count, &shortage, 1);
+  Charbpos pos = scan_buffer (buf, '\n', from, to, count, &shortage, 1);
 
   if (shortage == 0)
     pos--;
@@ -779,7 +779,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    Lisp_Object string, Lisp_Object lim)
 {
   /* This function has been Mule-ized. */
-  REGISTER Bufbyte *p, *pend;
+  REGISTER Intbyte *p, *pend;
   REGISTER Emchar c;
   /* We store the first 256 chars in an array here and the rest in
      a range table. */
@@ -789,7 +789,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 #ifndef emacs
   Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
 #endif
-  Bufpos limit;
+  Charbpos limit;
 
   if (NILP (lim))
     limit = forwardp ? BUF_ZV (buf) : BUF_BEGV (buf);
@@ -880,7 +880,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       fastmap[i] ^= 1;
 
   {
-    Bufpos start_point = BUF_PT (buf);
+    Charbpos start_point = BUF_PT (buf);
 
     if (syntaxp)
       {
@@ -1017,8 +1017,8 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
 		int RE, int posix)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
-  REGISTER Bufpos np;
-  Bufpos lim;
+  REGISTER Charbpos np;
+  Charbpos lim;
   EMACS_INT n = direction;
   struct buffer *buf;
 
@@ -1085,7 +1085,7 @@ trivial_regexp_p (Lisp_Object regexp)
 {
   /* This function has been Mule-ized. */
   Bytecount len = XSTRING_LENGTH (regexp);
-  Bufbyte *s = XSTRING_DATA (regexp);
+  Intbyte *s = XSTRING_DATA (regexp);
   while (--len >= 0)
     {
       switch (*s++)
@@ -1114,14 +1114,14 @@ trivial_regexp_p (Lisp_Object regexp)
 }
 
 /* Search for the n'th occurrence of STRING in BUF,
-   starting at position BUFPOS and stopping at position BUFLIM,
+   starting at position CHARBPOS and stopping at position BUFLIM,
    treating PAT as a literal string if RE is false or as
    a regular expression if RE is true.
 
    If N is positive, searching is forward and BUFLIM must be greater
-   than BUFPOS.
+   than CHARBPOS.
    If N is negative, searching is backward and BUFLIM must be less
-   than BUFPOS.
+   than CHARBPOS.
 
    Returns -x if only N-x occurrences found (x > 0),
    or else the position at the beginning of the Nth occurrence
@@ -1129,18 +1129,18 @@ trivial_regexp_p (Lisp_Object regexp)
 
    POSIX is nonzero if we want full backtracking (POSIX style)
    for this pattern.  0 means backtrack only enough to get a valid match.  */
-static Bufpos
-search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
-	       Bufpos buflim, EMACS_INT n, int RE, Lisp_Object trt,
+static Charbpos
+search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
+	       Charbpos buflim, EMACS_INT n, int RE, Lisp_Object trt,
 	       Lisp_Object inverse_trt, int posix)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount len = XSTRING_LENGTH (string);
-  Bufbyte *base_pat = XSTRING_DATA (string);
+  Intbyte *base_pat = XSTRING_DATA (string);
   REGISTER EMACS_INT i, j;
-  Bytind p1, p2;
+  Bytebpos p1, p2;
   Bytecount s1, s2;
-  Bytind pos, lim;
+  Bytebpos pos, lim;
 
   if (running_asynch_code)
     save_search_regs ();
@@ -1148,16 +1148,16 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
   /* Null string is found at starting position.  */
   if (len == 0)
     {
-      set_search_regs (buf, bufpos, 0);
-      return bufpos;
+      set_search_regs (buf, charbpos, 0);
+      return charbpos;
     }
 
   /* Searching 0 times means don't move.  */
   if (n == 0)
-    return bufpos;
+    return charbpos;
 
-  pos = bufpos_to_bytind (buf, bufpos);
-  lim = bufpos_to_bytind (buf, buflim);
+  pos = charbpos_to_bytebpos (buf, charbpos);
+  lim = charbpos_to_bytebpos (buf, buflim);
   if (RE && !trivial_regexp_p (string))
     {
       struct re_pattern_buffer *bufp;
@@ -1203,8 +1203,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	      /* Set pos to the new position. */
 	      pos = search_regs.start[0];
 	      fixup_search_regs_for_buffer (buf);
-	      /* And bufpos too. */
-	      bufpos = search_regs.start[0];
+	      /* And charbpos too. */
+	      charbpos = search_regs.start[0];
 	    }
 	  else
 	    {
@@ -1240,8 +1240,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	      /* Set pos to the new position. */
 	      pos = search_regs.end[0];
 	      fixup_search_regs_for_buffer (buf);
-	      /* And bufpos too. */
-	      bufpos = search_regs.end[0];
+	      /* And charbpos too. */
+	      charbpos = search_regs.end[0];
 	    }
 	  else
 	    {
@@ -1249,19 +1249,19 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	    }
 	  n--;
 	}
-      return bufpos;
+      return charbpos;
     }
   else				/* non-RE case */
     {
       int charset_base = -1;
       int boyer_moore_ok = 1;
-      Bufbyte *pat = 0;
-      Bufbyte *patbuf = alloca_array (Bufbyte, len * MAX_EMCHAR_LEN);
+      Intbyte *pat = 0;
+      Intbyte *patbuf = alloca_array (Intbyte, len * MAX_EMCHAR_LEN);
       pat = patbuf;
 #ifdef MULE
       while (len > 0)
 	{
-	  Bufbyte tmp_str[MAX_EMCHAR_LEN];
+	  Intbyte tmp_str[MAX_EMCHAR_LEN];
 	  Emchar c, translated, inverse;
 	  Bytecount orig_bytelen, new_bytelen, inv_bytelen;
 
@@ -1337,9 +1337,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
    regardless of what is in TRT.  It is used in cases where
    boyer_moore cannot work.  */
 
-static Bufpos
-simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
-	       Bytind idx, Bytind lim, EMACS_INT n, Lisp_Object trt)
+static Charbpos
+simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len_byte,
+	       Bytebpos idx, Bytebpos lim, EMACS_INT n, Lisp_Object trt)
 {
   int forward = n > 0;
   Bytecount buf_len = 0; /* Shut up compiler. */
@@ -1350,8 +1350,8 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 	while (1)
 	  {
 	    Bytecount this_len = len_byte;
-	    Bytind this_idx = idx;
-	    Bufbyte *p = base_pat;
+	    Bytebpos this_idx = idx;
+	    Intbyte *p = base_pat;
 	    if (idx >= lim)
 	      goto stop;
 
@@ -1371,7 +1371,7 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 		pat_len = charcount_to_bytecount (p, 1);
 		p += pat_len;
 		this_len -= pat_len;
-		INC_BYTIND (buf, this_idx);
+		INC_BYTEBPOS (buf, this_idx);
 	      }
 	    if (this_len == 0)
 	      {
@@ -1379,7 +1379,7 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 		idx = this_idx;
 		break;
 	      }
-	    INC_BYTIND (buf, idx);
+	    INC_BYTEBPOS (buf, idx);
 	  }
 	n--;
       }
@@ -1389,8 +1389,8 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 	while (1)
 	  {
 	    Bytecount this_len = len_byte;
-	    Bytind this_idx = idx;
-	    Bufbyte *p;
+	    Bytebpos this_idx = idx;
+	    Intbyte *p;
 	    if (idx <= lim)
 	      goto stop;
 	    p = base_pat + len_byte;
@@ -1400,7 +1400,7 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 		Emchar pat_ch, buf_ch;
 
 		DEC_CHARPTR (p);
-		DEC_BYTIND (buf, this_idx);
+		DEC_BYTEBPOS (buf, this_idx);
 		pat_ch = charptr_emchar (p);
 		buf_ch = BI_BUF_FETCH_CHAR (buf, this_idx);
 
@@ -1417,23 +1417,23 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 		idx = this_idx;
 		break;
 	      }
-	    DEC_BYTIND (buf, idx);
+	    DEC_BYTEBPOS (buf, idx);
 	  }
 	n++;
       }
  stop:
   if (n == 0)
     {
-      Bufpos beg, end, retval;
+      Charbpos beg, end, retval;
       if (forward)
 	{
-	  beg = bytind_to_bufpos (buf, idx - buf_len);
-	  retval = end = bytind_to_bufpos (buf, idx);
+	  beg = bytebpos_to_charbpos (buf, idx - buf_len);
+	  retval = end = bytebpos_to_charbpos (buf, idx);
 	}
       else
 	{
-	  retval = beg = bytind_to_bufpos (buf, idx);
-	  end = bytind_to_bufpos (buf, idx + buf_len);
+	  retval = beg = bytebpos_to_charbpos (buf, idx);
+	  end = bytebpos_to_charbpos (buf, idx + buf_len);
 	}
       set_search_regs (buf, beg, end - beg);
 
@@ -1458,9 +1458,9 @@ simple_search (struct buffer *buf, Bufbyte *base_pat, Bytecount len_byte,
 
    If that criterion is not satisfied, do not call this function.  */
 	    
-static Bufpos
-boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
-	     Bytind pos, Bytind lim, EMACS_INT n, Lisp_Object trt,
+static Charbpos
+boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
+	     Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt,
 	     Lisp_Object inverse_trt, int charset_base)
 {
   /* #### Someone really really really needs to comment the workings
@@ -1496,16 +1496,16 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
   EMACS_INT *BM_tab_base;
   REGISTER Bytecount dirlen;
   EMACS_INT infinity;
-  Bytind limit;
+  Bytebpos limit;
   Bytecount stride_for_teases = 0;
   REGISTER EMACS_INT i, j;
-  Bufbyte *pat, *pat_end;
-  REGISTER Bufbyte *cursor, *p_limit, *ptr2;
-  Bufbyte simple_translate[0400];
+  Intbyte *pat, *pat_end;
+  REGISTER Intbyte *cursor, *p_limit, *ptr2;
+  Intbyte simple_translate[0400];
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
-  Bufbyte translate_prev_byte = 0;
-  Bufbyte translate_anteprev_byte = 0;
+  Intbyte translate_prev_byte = 0;
+  Intbyte translate_anteprev_byte = 0;
 #endif
 #ifdef C_ALLOCA
   EMACS_INT BM_tab_space[0400];
@@ -1566,11 +1566,11 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
      in the pattern.  Others don't matter anyway!  */
   xzero (simple_translate);
   for (i = 0; i < 0400; i++)
-    simple_translate[i] = (Bufbyte) i;
+    simple_translate[i] = (Intbyte) i;
   i = 0;
   while (i != infinity)
     {
-      Bufbyte *ptr = base_pat + i;
+      Intbyte *ptr = base_pat + i;
       i += direction;
       if (i == dirlen)
 	i = infinity;
@@ -1581,19 +1581,19 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
-	  if (pat_end - ptr == 1 || BUFBYTE_FIRST_BYTE_P (ptr[1]))
+	  if (pat_end - ptr == 1 || INTBYTE_FIRST_BYTE_P (ptr[1]))
 	    {
-	      Bufbyte *charstart = ptr;
-	      while (!BUFBYTE_FIRST_BYTE_P (*charstart))
+	      Intbyte *charstart = ptr;
+	      while (!INTBYTE_FIRST_BYTE_P (*charstart))
 		charstart--;
 	      untranslated = charptr_emchar (charstart);
 	      if (charset_base == (untranslated & ~CHAR_FIELD3_MASK))
 		{
 		  ch = TRANSLATE (trt, untranslated);
-		  if (!BUFBYTE_FIRST_BYTE_P (*ptr))
+		  if (!INTBYTE_FIRST_BYTE_P (*ptr))
 		    {
 		      translate_prev_byte = ptr[-1];
-		      if (!BUFBYTE_FIRST_BYTE_P (translate_prev_byte))
+		      if (!INTBYTE_FIRST_BYTE_P (translate_prev_byte))
 			translate_anteprev_byte = ptr[-2];
 		    }
 		}
@@ -1651,7 +1651,7 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 
 	  while ((j = TRANSLATE (inverse_trt, j)) != k)
 	    {
-	      simple_translate[j] = (Bufbyte) k;
+	      simple_translate[j] = (Intbyte) k;
 	      BM_tab[j] = dirlen - i;
 	    }
 #endif
@@ -1676,8 +1676,8 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
      reverse) of pattern would align in a possible match.  */
   while (n != 0)
     {
-      Bytind tail_end;
-      Bufbyte *tail_end_ptr;
+      Bytebpos tail_end;
+      Intbyte *tail_end_ptr;
       /* It's been reported that some (broken) compiler thinks
 	 that Boolean expressions in an arithmetic context are
 	 unsigned.  Using an explicit ?1:0 prevents this.  */
@@ -1762,10 +1762,10 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 		      cursor -= direction;
 		      /* Translate only the last byte of a character.  */
 		      if ((cursor == tail_end_ptr
-			   || BUFBYTE_FIRST_BYTE_P (cursor[1]))
-			  && (BUFBYTE_FIRST_BYTE_P (cursor[0])
+			   || INTBYTE_FIRST_BYTE_P (cursor[1]))
+			  && (INTBYTE_FIRST_BYTE_P (cursor[0])
 			      || (translate_prev_byte == cursor[-1]
-				  && (BUFBYTE_FIRST_BYTE_P (translate_prev_byte)
+				  && (INTBYTE_FIRST_BYTE_P (translate_prev_byte)
 				      || translate_anteprev_byte == cursor[-2]))))
 			ch = simple_translate[*cursor];
 		      else
@@ -1790,11 +1790,11 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 		  cursor -= direction;
 
 		  {
-		    Bytind bytstart = (pos + cursor - ptr2 +
+		    Bytebpos bytstart = (pos + cursor - ptr2 +
 				       ((direction > 0)
 					? 1 - len : 0));
-		    Bufpos bufstart = bytind_to_bufpos (buf, bytstart);
-		    Bufpos bufend = bytind_to_bufpos (buf, bytstart + len);
+		    Charbpos bufstart = bytebpos_to_charbpos (buf, bytstart);
+		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
 		  }
@@ -1846,16 +1846,16 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 		{
 #ifdef MULE
 		  Emchar ch;
-		  Bufbyte *ptr;
+		  Intbyte *ptr;
 #endif
 		  pos -= direction;
 #ifdef MULE
 		  ptr = BI_BUF_BYTE_ADDRESS (buf, pos);
 		  if ((ptr == tail_end_ptr
-		       || BUFBYTE_FIRST_BYTE_P (ptr[1]))
-		      && (BUFBYTE_FIRST_BYTE_P (ptr[0])
+		       || INTBYTE_FIRST_BYTE_P (ptr[1]))
+		      && (INTBYTE_FIRST_BYTE_P (ptr[0])
 			  || (translate_prev_byte == ptr[-1]
-			      && (BUFBYTE_FIRST_BYTE_P (translate_prev_byte)
+			      && (INTBYTE_FIRST_BYTE_P (translate_prev_byte)
 				  || translate_anteprev_byte == ptr[-2]))))
 		    ch = simple_translate[*ptr];
 		  else
@@ -1879,11 +1879,11 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
 		  pos -= direction;
 
 		  {
-		    Bytind bytstart = (pos +
+		    Bytebpos bytstart = (pos +
 				       ((direction > 0)
 					? 1 - len : 0));
-		    Bufpos bufstart = bytind_to_bufpos (buf, bytstart);
-		    Bufpos bufend = bytind_to_bufpos (buf, bytstart + len);
+		    Charbpos bufstart = bytebpos_to_charbpos (buf, bytstart);
+		    Charbpos bufend = bytebpos_to_charbpos (buf, bytstart + len);
 
 		    set_search_regs (buf, bufstart, bufend - bufstart);
 		  }
@@ -1902,14 +1902,14 @@ boyer_moore (struct buffer *buf, Bufbyte *base_pat, Bytecount len,
       if ((lim - pos) * direction < 0)
 	return (0 - n) * direction;
     }
-  return bytind_to_bufpos (buf, pos);
+  return bytebpos_to_charbpos (buf, pos);
 }
 
 /* Record beginning BEG and end BEG + LEN
    for a match just found in the current buffer.  */
 
 static void
-set_search_regs (struct buffer *buf, Bufpos beg, Charcount len)
+set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
 {
   /* This function has been Mule-ized. */
   /* Make sure we have registers in which to store
@@ -1957,10 +1957,10 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   {
     /* The following value is an upper bound on the amount of storage we
        need.  In non-Mule, it is exact. */
-    Bufbyte *storage =
-      (Bufbyte *) alloca (XSTRING_LENGTH (string) - punct_count +
+    Intbyte *storage =
+      (Intbyte *) alloca (XSTRING_LENGTH (string) - punct_count +
                           5 * (word_count - 1) + 4);
-    Bufbyte *o = storage;
+    Intbyte *o = storage;
 
     *o++ = '\\';
     *o++ = 'b';
@@ -2259,7 +2259,7 @@ match since only regular expressions have distinguished subexpressions.
   /* This function has been Mule-ized. */
   /* This function can GC */
   enum { nochange, all_caps, cap_initial } case_action;
-  Bufpos pos, last;
+  Charbpos pos, last;
   int some_multiletter_word;
   int some_lowercase;
   int some_uppercase;
@@ -2648,7 +2648,7 @@ match since only regular expressions have distinguished subexpressions.
      in the replacement string. */
   if (ul_pos_dynarr)
     {
-      Bufpos eend = BUF_PT (buf);
+      Charbpos eend = BUF_PT (buf);
       int i = 0;
       int cur_action = 'E';
 
@@ -2756,7 +2756,7 @@ to hold all the values, and if INTEGERS is non-nil, no consing is done.
   len = -1;
   for (i = 0; i < search_regs.num_regs; i++)
     {
-      Bufpos start = search_regs.start[i];
+      Charbpos start = search_regs.start[i];
       if (start >= 0)
 	{
 	  if (EQ (last_thing_searched, Qt)
@@ -2933,12 +2933,12 @@ Return a regexp string which matches exactly STRING and nothing else.
 */
        (string))
 {
-  REGISTER Bufbyte *in, *out, *end;
-  REGISTER Bufbyte *temp;
+  REGISTER Intbyte *in, *out, *end;
+  REGISTER Intbyte *temp;
 
   CHECK_STRING (string);
 
-  temp = (Bufbyte *) alloca (XSTRING_LENGTH (string) * 2);
+  temp = (Intbyte *) alloca (XSTRING_LENGTH (string) * 2);
 
   /* Now copy the data into the new string, inserting escapes. */
 

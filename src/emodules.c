@@ -351,7 +351,7 @@ emodules_load(const char *module, const char *modname, const char *modver)
   dlhandle = dll_open (soname);
   if (dlhandle == (dll_handle)0)
     {
-      CBufbyte *dllerrint;
+      CIntbyte *dllerrint;
 
       EXTERNAL_TO_C_STRING (dll_error (dlhandle), dllerrint, Qnative);
       signal_error (Qdll_error, "Opening dynamic module",
@@ -492,7 +492,7 @@ void
 emodules_doc_subr(const char *symname, const char *doc)
 {
   Bytecount len = strlen (symname);
-  Lisp_Object sym = oblookup (Vobarray, (const Bufbyte *)symname, len);
+  Lisp_Object sym = oblookup (Vobarray, (const Intbyte *)symname, len);
   Lisp_Subr *subr;
 
   if (SYMBOLP(sym))
@@ -512,7 +512,7 @@ void
 emodules_doc_sym (const char *symname, const char *doc)
 {
   Bytecount len = strlen (symname);
-  Lisp_Object sym = oblookup (Vobarray, (const Bufbyte *)symname, len);
+  Lisp_Object sym = oblookup (Vobarray, (const Intbyte *)symname, len);
   Lisp_Object docstr;
   struct gcpro gcpro1;
 

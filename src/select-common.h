@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
 static Lisp_Object
 selection_data_to_lisp_data (struct device *d,
 			     UChar_Binary *data,
-			     Memory_Count size,
+			     Bytecount size,
 			     XE_ATOM_TYPE type,
 			     int format)
 {
@@ -106,8 +106,8 @@ selection_data_to_lisp_data (struct device *d,
 	return XE_ATOM_TO_SYMBOL (d, *((XE_ATOM_TYPE *) data));
       else
 	{
-	  Element_Count i;
-	  Element_Count len = size / sizeof (XE_ATOM_TYPE);
+	  Elemcount i;
+	  Elemcount len = size / sizeof (XE_ATOM_TYPE);
 	  Lisp_Object v = Fmake_vector (make_int (len), Qzero);
 	  for (i = 0; i < len; i++)
 	    Faset (v, make_int (i), XE_ATOM_TO_SYMBOL (d, ((XE_ATOM_TYPE *) data) [i]));
@@ -142,7 +142,7 @@ selection_data_to_lisp_data (struct device *d,
    */
   else if (format == 16)
     {
-      Element_Count i;
+      Elemcount i;
       Lisp_Object v = make_vector (size / 4, Qzero);
       for (i = 0; i < size / 4; i++)
 	{
@@ -153,7 +153,7 @@ selection_data_to_lisp_data (struct device *d,
     }
   else
     {
-      Element_Count i;
+      Elemcount i;
       Lisp_Object v = make_vector (size / 4, Qzero);
       for (i = 0; i < size / 4; i++)
 	{
@@ -170,7 +170,7 @@ lisp_data_to_selection_data (struct device *d,
 			     Lisp_Object obj,
 			     UChar_Binary **data_ret,
 			     XE_ATOM_TYPE *type_ret,
-			     Memory_Count *size_ret,
+			     Bytecount *size_ret,
 			     int *format_ret)
 {
   Lisp_Object type = Qnil;
@@ -193,7 +193,7 @@ lisp_data_to_selection_data (struct device *d,
   else if (STRINGP (obj))
     {
       const Extbyte *extval;
-      Extcount extvallen;
+      Bytecount extvallen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, obj,
 			  ALLOCA, (extval, extvallen),
@@ -210,10 +210,10 @@ lisp_data_to_selection_data (struct device *d,
     }
   else if (CHARP (obj))
     {
-      Bufbyte buf[MAX_EMCHAR_LEN];
+      Intbyte buf[MAX_EMCHAR_LEN];
       Bytecount len;
       const Extbyte *extval;
-      Extcount extvallen;
+      Bytecount extvallen;
 
       *format_ret = 8;
       len = set_charptr_emchar (buf, XCHAR (obj));
@@ -264,7 +264,7 @@ lisp_data_to_selection_data (struct device *d,
 	 a set of 16 or 32 bit INTEGERs;
 	 or a set of ATOM_PAIRs (represented as [[A1 A2] [A3 A4] ...]
        */
-      Element_Count i;
+      Elemcount i;
 
       if (SYMBOLP (XVECTOR_DATA (obj) [0]))
 	/* This vector is an ATOM set */

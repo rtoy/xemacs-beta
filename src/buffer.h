@@ -45,10 +45,10 @@ Boston, MA 02111-1307, USA.  */
 /*                                                                      */
 /************************************************************************/
 
-/* Note: we keep both Bytind and Bufpos versions of some of the
+/* Note: we keep both Bytebpos and Charbpos versions of some of the
    important buffer positions because they are accessed so much.
    If we didn't do this, we would constantly be invalidating the
-   bufpos<->bytind cache under Mule.
+   charbpos<->bytebpos cache under Mule.
 
    Note that under non-Mule, both versions will always be the
    same so we don't really need to keep track of them.  But it
@@ -79,12 +79,12 @@ Boston, MA 02111-1307, USA.  */
 
 struct buffer_text
 {
-  Bufbyte *beg;		/* Actual address of buffer contents. */
-  Bytind gpt;		/* Index of gap in buffer. */
-  Bytind z;		/* Index of end of buffer. */
-  Bufpos bufz;		/* Equivalent as a Bufpos. */
-  Memory_Count gap_size;/* Size of buffer's gap */
-  Memory_Count end_gap_size;/* Size of buffer's end gap */
+  Intbyte *beg;		/* Actual address of buffer contents. */
+  Bytebpos gpt;		/* Index of gap in buffer. */
+  Bytebpos z;		/* Index of end of buffer. */
+  Charbpos bufz;		/* Equivalent as a Charbpos. */
+  Bytecount gap_size;/* Size of buffer's gap */
+  Bytecount end_gap_size;/* Size of buffer's end gap */
   long modiff;		/* This counts buffer-modification events
 			   for this buffer.  It is incremented for
 			   each such event, and never otherwise
@@ -95,14 +95,14 @@ struct buffer_text
 #ifdef MULE
   /* We keep track of a "known" region for very fast access.
      This information is text-only so it goes here. */
-  Bufpos mule_bufmin, mule_bufmax;
-  Bytind mule_bytmin, mule_bytmax;
+  Charbpos mule_bufmin, mule_bufmax;
+  Bytebpos mule_bytmin, mule_bytmax;
   int mule_shifter, mule_three_p;
 
   /* And we also cache 16 positions for fairly fast access near those
      positions. */
-  Bufpos mule_bufpos_cache[16];
-  Bytind mule_bytind_cache[16];
+  Charbpos mule_charbpos_cache[16];
+  Bytebpos mule_bytebpos_cache[16];
 #endif
 
   /* Similar to the above, we keep track of positions for which line
@@ -127,12 +127,12 @@ struct buffer
      In an indirect buffer, this is the own_text field of another buffer.  */
   struct buffer_text *text;
 
-  Bytind pt;		/* Position of point in buffer. */
-  Bufpos bufpt;		/* Equivalent as a Bufpos. */
-  Bytind begv;		/* Index of beginning of accessible range. */
-  Bufpos bufbegv;	/* Equivalent as a Bufpos. */
-  Bytind zv;		/* Index of end of accessible range. */
-  Bufpos bufzv;		/* Equivalent as a Bufpos. */
+  Bytebpos pt;		/* Position of point in buffer. */
+  Charbpos bufpt;		/* Equivalent as a Charbpos. */
+  Bytebpos begv;		/* Index of beginning of accessible range. */
+  Charbpos bufbegv;	/* Equivalent as a Charbpos. */
+  Bytebpos zv;		/* Index of end of accessible range. */
+  Charbpos bufzv;		/* Equivalent as a Charbpos. */
 
   int face_change;	/* This is set when a change in how the text should
 			   be displayed (e.g., font, color) is made. */
@@ -394,12 +394,12 @@ for (mps_bufcons = Qunbound,					\
 /* ---------------------------------------------------------------------- */
 
 #ifdef MULE
-# define VALID_CHARPTR_P(ptr) BUFBYTE_FIRST_BYTE_P (* (unsigned char *) ptr)
+# define VALID_CHARPTR_P(ptr) INTBYTE_FIRST_BYTE_P (* (unsigned char *) ptr)
 #else
 # define VALID_CHARPTR_P(ptr) 1
 #endif
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 # define ASSERT_VALID_CHARPTR(ptr) assert (VALID_CHARPTR_P (ptr))
 #else
 # define ASSERT_VALID_CHARPTR(ptr)
@@ -415,38 +415,38 @@ for (mps_bufcons = Qunbound,					\
 #define REAL_INC_CHARPTR(ptr) \
   ((void) ((ptr) += REP_BYTES_BY_FIRST_BYTE (* (unsigned char *) (ptr))))
 
-#define REAL_INC_CHARBYTIND(ptr, pos) \
+#define REAL_INC_CHARBYTEBPOS(ptr, pos) \
   (pos += REP_BYTES_BY_FIRST_BYTE (* (unsigned char *) (ptr)))
 
 #define REAL_DEC_CHARPTR(ptr) do {	\
   (ptr)--;				\
 } while (!VALID_CHARPTR_P (ptr))
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 #define INC_CHARPTR(ptr) do {		\
   ASSERT_VALID_CHARPTR (ptr);		\
   REAL_INC_CHARPTR (ptr);		\
 } while (0)
 
-#define INC_CHARBYTIND(ptr, pos) do {		\
+#define INC_CHARBYTEBPOS(ptr, pos) do {		\
   ASSERT_VALID_CHARPTR (ptr);			\
-  REAL_INC_CHARBYTIND (ptr, pos);		\
+  REAL_INC_CHARBYTEBPOS (ptr, pos);		\
 } while (0)
 
 #define DEC_CHARPTR(ptr) do {			\
-  const Bufbyte *dc_ptr1 = (ptr);		\
-  const Bufbyte *dc_ptr2 = dc_ptr1;		\
+  const Intbyte *dc_ptr1 = (ptr);		\
+  const Intbyte *dc_ptr2 = dc_ptr1;		\
   REAL_DEC_CHARPTR (dc_ptr2);			\
   assert (dc_ptr1 - dc_ptr2 ==			\
 	  REP_BYTES_BY_FIRST_BYTE (*dc_ptr2));	\
-  (ptr) = (Bufbyte *) dc_ptr2;			\
+  (ptr) = (Intbyte *) dc_ptr2;			\
 } while (0)
 
-#else /* ! ERROR_CHECK_BUFPOS */
-#define INC_CHARBYTIND(ptr, pos) REAL_INC_CHARBYTIND (ptr, pos)
+#else /* ! ERROR_CHECK_CHARBPOS */
+#define INC_CHARBYTEBPOS(ptr, pos) REAL_INC_CHARBYTEBPOS (ptr, pos)
 #define INC_CHARPTR(ptr) REAL_INC_CHARPTR (ptr)
 #define DEC_CHARPTR(ptr) REAL_DEC_CHARPTR (ptr)
-#endif /* ! ERROR_CHECK_BUFPOS */
+#endif /* ! ERROR_CHECK_CHARBPOS */
 
 #ifdef MULE
 
@@ -458,7 +458,7 @@ for (mps_bufcons = Qunbound,					\
    the end of the string. */
 
 #define VALIDATE_CHARPTR_FORWARD(ptr) do {	\
-  Bufbyte *vcf_ptr = (ptr);			\
+  Intbyte *vcf_ptr = (ptr);			\
   VALIDATE_CHARPTR_BACKWARD (vcf_ptr);		\
   if (vcf_ptr != (ptr))				\
     {						\
@@ -477,10 +477,10 @@ for (mps_bufcons = Qunbound,					\
 /*     section of internally-formatted text 			  */
 /* -------------------------------------------------------------- */
 
-INLINE_HEADER const Bufbyte *
-charptr_n_addr (const Bufbyte *ptr, Charcount offset);
-INLINE_HEADER const Bufbyte *
-charptr_n_addr (const Bufbyte *ptr, Charcount offset)
+INLINE_HEADER const Intbyte *
+charptr_n_addr (const Intbyte *ptr, Charcount offset);
+INLINE_HEADER const Intbyte *
+charptr_n_addr (const Intbyte *ptr, Charcount offset)
 {
   return ptr + charcount_to_bytecount (ptr, offset);
 }
@@ -490,27 +490,27 @@ charptr_n_addr (const Bufbyte *ptr, Charcount offset)
 /* -------------------------------------------------------------------- */
 
 #define simple_charptr_emchar(ptr)		((Emchar) (ptr)[0])
-#define simple_set_charptr_emchar(ptr, x)	((ptr)[0] = (Bufbyte) (x), 1)
+#define simple_set_charptr_emchar(ptr, x)	((ptr)[0] = (Intbyte) (x), 1)
 #define simple_charptr_copy_char(ptr, ptr2)	((ptr2)[0] = *(ptr), 1)
 
 #ifdef MULE
 
-Emchar non_ascii_charptr_emchar (const Bufbyte *ptr);
-Bytecount non_ascii_set_charptr_emchar (Bufbyte *ptr, Emchar c);
-Bytecount non_ascii_charptr_copy_char (const Bufbyte *src, Bufbyte *dst);
+Emchar non_ascii_charptr_emchar (const Intbyte *ptr);
+Bytecount non_ascii_set_charptr_emchar (Intbyte *ptr, Emchar c);
+Bytecount non_ascii_charptr_copy_char (const Intbyte *src, Intbyte *dst);
 
-INLINE_HEADER Emchar charptr_emchar (const Bufbyte *ptr);
+INLINE_HEADER Emchar charptr_emchar (const Intbyte *ptr);
 INLINE_HEADER Emchar
-charptr_emchar (const Bufbyte *ptr)
+charptr_emchar (const Intbyte *ptr)
 {
   return BYTE_ASCII_P (*ptr) ?
     simple_charptr_emchar (ptr) :
     non_ascii_charptr_emchar (ptr);
 }
 
-INLINE_HEADER Bytecount set_charptr_emchar (Bufbyte *ptr, Emchar x);
+INLINE_HEADER Bytecount set_charptr_emchar (Intbyte *ptr, Emchar x);
 INLINE_HEADER Bytecount
-set_charptr_emchar (Bufbyte *ptr, Emchar x)
+set_charptr_emchar (Intbyte *ptr, Emchar x)
 {
   return !CHAR_MULTIBYTE_P (x) ?
     simple_set_charptr_emchar (ptr, x) :
@@ -520,9 +520,9 @@ set_charptr_emchar (Bufbyte *ptr, Emchar x)
 /* Copy the character pointed to by SRC into DST.
    Return the number of bytes copied.  */
 INLINE_HEADER Bytecount
-charptr_copy_char (const Bufbyte *src, Bufbyte *dst);
+charptr_copy_char (const Intbyte *src, Intbyte *dst);
 INLINE_HEADER Bytecount
-charptr_copy_char (const Bufbyte *src, Bufbyte *dst)
+charptr_copy_char (const Intbyte *src, Intbyte *dst)
 {
   return BYTE_ASCII_P (*src) ?
     simple_charptr_copy_char (src, dst) :
@@ -600,8 +600,8 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
    the positions. */
 
 /* Beginning of buffer.  */
-#define BI_BUF_BEG(buf) ((Bytind) 1)
-#define BUF_BEG(buf) ((Bufpos) 1)
+#define BI_BUF_BEG(buf) ((Bytebpos) 1)
+#define BUF_BEG(buf) ((Charbpos) 1)
 
 /* Beginning of accessible range of buffer.  */
 #define BI_BUF_BEGV(buf) ((buf)->begv + 0)
@@ -624,9 +624,9 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 /*----------------------------------------------------------------------*/
 
 /* Convert the address of a byte in the buffer into a position.  */
-INLINE_HEADER Bytind BI_BUF_PTR_BYTE_POS (struct buffer *buf, Bufbyte *ptr);
-INLINE_HEADER Bytind
-BI_BUF_PTR_BYTE_POS (struct buffer *buf, Bufbyte *ptr)
+INLINE_HEADER Bytebpos BI_BUF_PTR_BYTE_POS (struct buffer *buf, Intbyte *ptr);
+INLINE_HEADER Bytebpos
+BI_BUF_PTR_BYTE_POS (struct buffer *buf, Intbyte *ptr)
 {
   return (ptr - buf->text->beg + 1
 	  - ((ptr - buf->text->beg + 1) > buf->text->gpt
@@ -634,12 +634,12 @@ BI_BUF_PTR_BYTE_POS (struct buffer *buf, Bufbyte *ptr)
 }
 
 #define BUF_PTR_BYTE_POS(buf, ptr) \
-  bytind_to_bufpos (buf, BI_BUF_PTR_BYTE_POS (buf, ptr))
+  bytebpos_to_charbpos (buf, BI_BUF_PTR_BYTE_POS (buf, ptr))
 
 /* Address of byte at position POS in buffer. */
-INLINE_HEADER Bufbyte * BI_BUF_BYTE_ADDRESS (struct buffer *buf, Bytind pos);
-INLINE_HEADER Bufbyte *
-BI_BUF_BYTE_ADDRESS (struct buffer *buf, Bytind pos)
+INLINE_HEADER Intbyte * BI_BUF_BYTE_ADDRESS (struct buffer *buf, Bytebpos pos);
+INLINE_HEADER Intbyte *
+BI_BUF_BYTE_ADDRESS (struct buffer *buf, Bytebpos pos)
 {
   return (buf->text->beg +
 	  ((pos >= buf->text->gpt ? (pos + buf->text->gap_size) : pos)
@@ -647,12 +647,12 @@ BI_BUF_BYTE_ADDRESS (struct buffer *buf, Bytind pos)
 }
 
 #define BUF_BYTE_ADDRESS(buf, pos) \
-  BI_BUF_BYTE_ADDRESS (buf, bufpos_to_bytind (buf, pos))
+  BI_BUF_BYTE_ADDRESS (buf, charbpos_to_bytebpos (buf, pos))
 
 /* Address of byte before position POS in buffer. */
-INLINE_HEADER Bufbyte * BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytind pos);
-INLINE_HEADER Bufbyte *
-BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytind pos)
+INLINE_HEADER Intbyte * BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos);
+INLINE_HEADER Intbyte *
+BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
 {
   return (buf->text->beg +
 	  ((pos > buf->text->gpt ? (pos + buf->text->gap_size) : pos)
@@ -660,79 +660,79 @@ BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytind pos)
 }
 
 #define BUF_BYTE_ADDRESS_BEFORE(buf, pos) \
-  BI_BUF_BYTE_ADDRESS_BEFORE (buf, bufpos_to_bytind (buf, pos))
+  BI_BUF_BYTE_ADDRESS_BEFORE (buf, charbpos_to_bytebpos (buf, pos))
 
 /*----------------------------------------------------------------------*/
 /*	    Converting between byte indices and memory indices		*/
 /*----------------------------------------------------------------------*/
 
-INLINE_HEADER int valid_memind_p (struct buffer *buf, Memind x);
+INLINE_HEADER int valid_membpos_p (struct buffer *buf, Membpos x);
 INLINE_HEADER int
-valid_memind_p (struct buffer *buf, Memind x)
+valid_membpos_p (struct buffer *buf, Membpos x)
 {
-  return ((x >= 1 && x <= (Memind) buf->text->gpt) ||
-	  (x  > (Memind) (buf->text->gpt + buf->text->gap_size) &&
-	   x <= (Memind) (buf->text->z   + buf->text->gap_size)));
+  return ((x >= 1 && x <= (Membpos) buf->text->gpt) ||
+	  (x  > (Membpos) (buf->text->gpt + buf->text->gap_size) &&
+	   x <= (Membpos) (buf->text->z   + buf->text->gap_size)));
 }
 
-INLINE_HEADER Memind bytind_to_memind (struct buffer *buf, Bytind x);
-INLINE_HEADER Memind
-bytind_to_memind (struct buffer *buf, Bytind x)
+INLINE_HEADER Membpos bytebpos_to_membpos (struct buffer *buf, Bytebpos x);
+INLINE_HEADER Membpos
+bytebpos_to_membpos (struct buffer *buf, Bytebpos x)
 {
-  return (Memind) ((x > buf->text->gpt) ? (x + buf->text->gap_size) : x);
+  return (Membpos) ((x > buf->text->gpt) ? (x + buf->text->gap_size) : x);
 }
 
 
-INLINE_HEADER Bytind memind_to_bytind (struct buffer *buf, Memind x);
-INLINE_HEADER Bytind
-memind_to_bytind (struct buffer *buf, Memind x)
+INLINE_HEADER Bytebpos membpos_to_bytebpos (struct buffer *buf, Membpos x);
+INLINE_HEADER Bytebpos
+membpos_to_bytebpos (struct buffer *buf, Membpos x)
 {
-#ifdef ERROR_CHECK_BUFPOS
-  assert (valid_memind_p (buf, x));
+#ifdef ERROR_CHECK_CHARBPOS
+  assert (valid_membpos_p (buf, x));
 #endif
-  return (Bytind) ((x > (Memind) buf->text->gpt) ?
+  return (Bytebpos) ((x > (Membpos) buf->text->gpt) ?
 		   x - buf->text->gap_size :
 		   x);
 }
 
-#define memind_to_bufpos(buf, x) \
-  bytind_to_bufpos (buf, memind_to_bytind (buf, x))
-#define bufpos_to_memind(buf, x) \
-  bytind_to_memind (buf, bufpos_to_bytind (buf, x))
+#define membpos_to_charbpos(buf, x) \
+  bytebpos_to_charbpos (buf, membpos_to_bytebpos (buf, x))
+#define charbpos_to_membpos(buf, x) \
+  bytebpos_to_membpos (buf, charbpos_to_bytebpos (buf, x))
 
 /* These macros generalize many standard buffer-position functions to
    either a buffer or a string. */
 
-/* Converting between Meminds and Bytinds, for a buffer-or-string.
+/* Converting between Membposs and Bytebposs, for a buffer-or-string.
    For strings, this is a no-op.  For buffers, this resolves
-   to the standard memind<->bytind converters. */
+   to the standard membpos<->bytebpos converters. */
 
-#define buffer_or_string_bytind_to_memind(obj, ind) \
-  (BUFFERP (obj) ? bytind_to_memind (XBUFFER (obj), ind) : (Memind) ind)
+#define buffer_or_string_bytebpos_to_membpos(obj, ind) \
+  (BUFFERP (obj) ? bytebpos_to_membpos (XBUFFER (obj), ind) : (Membpos) ind)
 
-#define buffer_or_string_memind_to_bytind(obj, ind) \
-  (BUFFERP (obj) ? memind_to_bytind (XBUFFER (obj), ind) : (Bytind) ind)
+#define buffer_or_string_membpos_to_bytebpos(obj, ind) \
+  (BUFFERP (obj) ? membpos_to_bytebpos (XBUFFER (obj), ind) : (Bytebpos) ind)
 
-/* Converting between Bufpos's and Bytinds, for a buffer-or-string.
+/* Converting between Charbpos's and Bytebposs, for a buffer-or-string.
    For strings, this maps to the bytecount<->charcount converters. */
 
-#define buffer_or_string_bufpos_to_bytind(obj, pos)		\
-  (BUFFERP (obj) ? bufpos_to_bytind (XBUFFER (obj), pos) :	\
-   (Bytind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
+#define buffer_or_string_charbpos_to_bytebpos(obj, pos)		\
+  (BUFFERP (obj) ? charbpos_to_bytebpos (XBUFFER (obj), pos) :	\
+   (Bytebpos) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
-#define buffer_or_string_bytind_to_bufpos(obj, ind)		\
-  (BUFFERP (obj) ? bytind_to_bufpos (XBUFFER (obj), ind) :	\
-   (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
+#define buffer_or_string_bytebpos_to_charbpos(obj, ind)		\
+  (BUFFERP (obj) ? bytebpos_to_charbpos (XBUFFER (obj), ind) :	\
+   (Charbpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
-/* Similar for Bufpos's and Meminds. */
+/* Similar for Charbpos's and Membposs. */
 
-#define buffer_or_string_bufpos_to_memind(obj, pos)		\
-  (BUFFERP (obj) ? bufpos_to_memind (XBUFFER (obj), pos) :	\
-   (Memind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
+#define buffer_or_string_charbpos_to_membpos(obj, pos)		\
+  (BUFFERP (obj) ? charbpos_to_membpos (XBUFFER (obj), pos) :	\
+   (Membpos) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
-#define buffer_or_string_memind_to_bufpos(obj, ind)		\
-  (BUFFERP (obj) ? memind_to_bufpos (XBUFFER (obj), ind) :	\
-   (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
+#define buffer_or_string_membpos_to_charbpos(obj, ind)		\
+  (BUFFERP (obj) ? membpos_to_charbpos (XBUFFER (obj), ind) :	\
+   (Charbpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
 /************************************************************************/
 /*                                                                      */
@@ -745,68 +745,68 @@ memind_to_bytind (struct buffer *buf, Memind x)
    (A) Working with byte indices:
    ------------------------------
 
-   VALID_BYTIND_P(buf, bi):
+   VALID_BYTEBPOS_P(buf, bi):
 	Given a byte index, does it point to the beginning of a character?
 
-   ASSERT_VALID_BYTIND_UNSAFE(buf, bi):
+   ASSERT_VALID_BYTEBPOS_UNSAFE(buf, bi):
 	If error-checking is enabled, assert that the given byte index
 	is within range and points to the beginning of a character
 	or to the end of the buffer.  Otherwise, do nothing.
 
-   ASSERT_VALID_BYTIND_BACKWARD_UNSAFE(buf, bi):
+   ASSERT_VALID_BYTEBPOS_BACKWARD_UNSAFE(buf, bi):
 	If error-checking is enabled, assert that the given byte index
-	is within range and satisfies ASSERT_VALID_BYTIND() and also
+	is within range and satisfies ASSERT_VALID_BYTEBPOS() and also
         does not refer to the beginning of the buffer. (i.e. movement
 	backwards is OK.) Otherwise, do nothing.
 
-   ASSERT_VALID_BYTIND_FORWARD_UNSAFE(buf, bi):
+   ASSERT_VALID_BYTEBPOS_FORWARD_UNSAFE(buf, bi):
 	If error-checking is enabled, assert that the given byte index
-	is within range and satisfies ASSERT_VALID_BYTIND() and also
+	is within range and satisfies ASSERT_VALID_BYTEBPOS() and also
         does not refer to the end of the buffer. (i.e. movement
 	forwards is OK.) Otherwise, do nothing.
 
-   VALIDATE_BYTIND_BACKWARD(buf, bi):
+   VALIDATE_BYTEBPOS_BACKWARD(buf, bi):
 	Make sure that the given byte index is pointing to the beginning
 	of a character.  If not, back up until this is the case.  Note
 	that there are not too many places where it is legitimate to do
 	this sort of thing.  It's an error if you're passed an "invalid"
 	byte index.
 
-   VALIDATE_BYTIND_FORWARD(buf, bi):
+   VALIDATE_BYTEBPOS_FORWARD(buf, bi):
 	Make sure that the given byte index is pointing to the beginning
 	of a character.  If not, move forward until this is the case.
 	Note that there are not too many places where it is legitimate
 	to do this sort of thing.  It's an error if you're passed an
 	"invalid" byte index.
 
-   INC_BYTIND(buf, bi):
+   INC_BYTEBPOS(buf, bi):
 	Given a byte index (assumed to point at the beginning of a
 	character), modify that value so it points to the beginning
 	of the next character.
 
-   DEC_BYTIND(buf, bi):
+   DEC_BYTEBPOS(buf, bi):
 	Given a byte index (assumed to point at the beginning of a
 	character), modify that value so it points to the beginning
 	of the previous character.  Unlike for DEC_CHARPTR(), we can
 	do all the assert()s because there are sentinels at the
 	beginning of the gap and the end of the buffer.
 
-   BYTIND_INVALID:
-	A constant representing an invalid Bytind.  Valid Bytinds
+   BYTEBPOS_INVALID:
+	A constant representing an invalid Bytebpos.  Valid Bytebposs
 	can never have this value.
 
 
-   (B) Converting between Bufpos's and Bytinds:
+   (B) Converting between Charbpos's and Bytebposs:
    --------------------------------------------
 
-    bufpos_to_bytind(buf, bu):
-	Given a Bufpos, return the equivalent Bytind.
+    charbpos_to_bytebpos(buf, bu):
+	Given a Charbpos, return the equivalent Bytebpos.
 
-    bytind_to_bufpos(buf, bi):
-	Given a Bytind, return the equivalent Bufpos.
+    bytebpos_to_charbpos(buf, bi):
+	Given a Bytebpos, return the equivalent Charbpos.
 
-    make_bufpos(buf, bi):
-	Given a Bytind, return the equivalent Bufpos as a Lisp Object.
+    make_charbpos(buf, bi):
+	Given a Bytebpos, return the equivalent Charbpos as a Lisp Object.
  */
 
 
@@ -815,36 +815,36 @@ memind_to_bytind (struct buffer *buf, Memind x)
 /*----------------------------------------------------------------------*/
 
 #ifdef MULE
-# define VALID_BYTIND_P(buf, x) \
-  BUFBYTE_FIRST_BYTE_P (*BI_BUF_BYTE_ADDRESS (buf, x))
+# define VALID_BYTEBPOS_P(buf, x) \
+  INTBYTE_FIRST_BYTE_P (*BI_BUF_BYTE_ADDRESS (buf, x))
 #else
-# define VALID_BYTIND_P(buf, x) 1
+# define VALID_BYTEBPOS_P(buf, x) 1
 #endif
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 
-# define ASSERT_VALID_BYTIND_UNSAFE(buf, x) do {		\
+# define ASSERT_VALID_BYTEBPOS_UNSAFE(buf, x) do {		\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) >= BI_BUF_BEG (buf) && x <= BI_BUF_Z (buf));	\
-  assert (VALID_BYTIND_P (buf, x));				\
+  assert (VALID_BYTEBPOS_P (buf, x));				\
 } while (0)
-# define ASSERT_VALID_BYTIND_BACKWARD_UNSAFE(buf, x) do {	\
+# define ASSERT_VALID_BYTEBPOS_BACKWARD_UNSAFE(buf, x) do {	\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) > BI_BUF_BEG (buf) && x <= BI_BUF_Z (buf));	\
-  assert (VALID_BYTIND_P (buf, x));				\
+  assert (VALID_BYTEBPOS_P (buf, x));				\
 } while (0)
-# define ASSERT_VALID_BYTIND_FORWARD_UNSAFE(buf, x) do {	\
+# define ASSERT_VALID_BYTEBPOS_FORWARD_UNSAFE(buf, x) do {	\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) >= BI_BUF_BEG (buf) && x < BI_BUF_Z (buf));	\
-  assert (VALID_BYTIND_P (buf, x));				\
+  assert (VALID_BYTEBPOS_P (buf, x));				\
 } while (0)
 
-#else /* not ERROR_CHECK_BUFPOS */
-# define ASSERT_VALID_BYTIND_UNSAFE(buf, x)
-# define ASSERT_VALID_BYTIND_BACKWARD_UNSAFE(buf, x)
-# define ASSERT_VALID_BYTIND_FORWARD_UNSAFE(buf, x)
+#else /* not ERROR_CHECK_CHARBPOS */
+# define ASSERT_VALID_BYTEBPOS_UNSAFE(buf, x)
+# define ASSERT_VALID_BYTEBPOS_BACKWARD_UNSAFE(buf, x)
+# define ASSERT_VALID_BYTEBPOS_FORWARD_UNSAFE(buf, x)
 
-#endif /* not ERROR_CHECK_BUFPOS */
+#endif /* not ERROR_CHECK_CHARBPOS */
 
 /* Note that, although the Mule version will work fine for non-Mule
    as well (it should reduce down to nothing), we provide a separate
@@ -852,13 +852,13 @@ memind_to_bytind (struct buffer *buf, Memind x)
    results with stupid compilers. */
 
 #ifdef MULE
-# define VALIDATE_BYTIND_BACKWARD(buf, x) do {		\
-  Bufbyte *VBB_ptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
-  while (!BUFBYTE_FIRST_BYTE_P (*VBB_ptr))		\
+# define VALIDATE_BYTEBPOS_BACKWARD(buf, x) do {		\
+  Intbyte *VBB_ptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
+  while (!INTBYTE_FIRST_BYTE_P (*VBB_ptr))		\
     VBB_ptr--, (x)--;					\
 } while (0)
 #else
-# define VALIDATE_BYTIND_BACKWARD(buf, x)
+# define VALIDATE_BYTEBPOS_BACKWARD(buf, x)
 #endif
 
 /* Note that, although the Mule version will work fine for non-Mule
@@ -867,60 +867,60 @@ memind_to_bytind (struct buffer *buf, Memind x)
    results with stupid compilers. */
 
 #ifdef MULE
-# define VALIDATE_BYTIND_FORWARD(buf, x) do {		\
-  Bufbyte *VBF_ptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
-  while (!BUFBYTE_FIRST_BYTE_P (*VBF_ptr))		\
+# define VALIDATE_BYTEBPOS_FORWARD(buf, x) do {		\
+  Intbyte *VBF_ptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
+  while (!INTBYTE_FIRST_BYTE_P (*VBF_ptr))		\
     VBF_ptr++, (x)++;					\
 } while (0)
 #else
-# define VALIDATE_BYTIND_FORWARD(buf, x)
+# define VALIDATE_BYTEBPOS_FORWARD(buf, x)
 #endif
 
-/* Note that in the simplest case (no MULE, no ERROR_CHECK_BUFPOS),
+/* Note that in the simplest case (no MULE, no ERROR_CHECK_CHARBPOS),
    this crap reduces down to simply (x)++. */
 
-#define INC_BYTIND(buf, x) do				\
+#define INC_BYTEBPOS(buf, x) do				\
 {							\
-  ASSERT_VALID_BYTIND_FORWARD_UNSAFE (buf, x);		\
+  ASSERT_VALID_BYTEBPOS_FORWARD_UNSAFE (buf, x);		\
   /* Note that we do the increment first to		\
      make sure that the pointer in			\
-     VALIDATE_BYTIND_FORWARD() ends up on		\
+     VALIDATE_BYTEBPOS_FORWARD() ends up on		\
      the correct side of the gap */			\
   (x)++;						\
-  VALIDATE_BYTIND_FORWARD (buf, x);			\
+  VALIDATE_BYTEBPOS_FORWARD (buf, x);			\
 } while (0)
 
-/* Note that in the simplest case (no MULE, no ERROR_CHECK_BUFPOS),
+/* Note that in the simplest case (no MULE, no ERROR_CHECK_CHARBPOS),
    this crap reduces down to simply (x)--. */
 
-#define DEC_BYTIND(buf, x) do				\
+#define DEC_BYTEBPOS(buf, x) do				\
 {							\
-  ASSERT_VALID_BYTIND_BACKWARD_UNSAFE (buf, x);		\
+  ASSERT_VALID_BYTEBPOS_BACKWARD_UNSAFE (buf, x);		\
   /* Note that we do the decrement first to		\
      make sure that the pointer in			\
-     VALIDATE_BYTIND_BACKWARD() ends up on		\
+     VALIDATE_BYTEBPOS_BACKWARD() ends up on		\
      the correct side of the gap */			\
   (x)--;						\
-  VALIDATE_BYTIND_BACKWARD (buf, x);			\
+  VALIDATE_BYTEBPOS_BACKWARD (buf, x);			\
 } while (0)
 
-INLINE_HEADER Bytind prev_bytind (struct buffer *buf, Bytind x);
-INLINE_HEADER Bytind
-prev_bytind (struct buffer *buf, Bytind x)
+INLINE_HEADER Bytebpos prev_bytebpos (struct buffer *buf, Bytebpos x);
+INLINE_HEADER Bytebpos
+prev_bytebpos (struct buffer *buf, Bytebpos x)
 {
-  DEC_BYTIND (buf, x);
+  DEC_BYTEBPOS (buf, x);
   return x;
 }
 
-INLINE_HEADER Bytind next_bytind (struct buffer *buf, Bytind x);
-INLINE_HEADER Bytind
-next_bytind (struct buffer *buf, Bytind x)
+INLINE_HEADER Bytebpos next_bytebpos (struct buffer *buf, Bytebpos x);
+INLINE_HEADER Bytebpos
+next_bytebpos (struct buffer *buf, Bytebpos x)
 {
-  INC_BYTIND (buf, x);
+  INC_BYTEBPOS (buf, x);
   return x;
 }
 
-#define BYTIND_INVALID ((Bytind) -1)
+#define BYTEBPOS_INVALID ((Bytebpos) -1)
 
 /*----------------------------------------------------------------------*/
 /*	   Converting between buffer positions and byte indices		*/
@@ -928,13 +928,13 @@ next_bytind (struct buffer *buf, Bytind x)
 
 #ifdef MULE
 
-Bytind bufpos_to_bytind_func (struct buffer *buf, Bufpos x);
-Bufpos bytind_to_bufpos_func (struct buffer *buf, Bytind x);
+Bytebpos charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x);
+Charbpos bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x);
 
 /* The basic algorithm we use is to keep track of a known region of
    characters in each buffer, all of which are of the same width.  We
-   keep track of the boundaries of the region in both Bufpos and
-   Bytind coordinates and also keep track of the char width, which
+   keep track of the boundaries of the region in both Charbpos and
+   Bytebpos coordinates and also keep track of the char width, which
    is 1 - 4 bytes.  If the position we're translating is not in
    the known region, then we invoke a function to update the known
    region to surround the position in question.  This assumes
@@ -947,7 +947,7 @@ Bufpos bytind_to_bufpos_func (struct buffer *buf, Bytind x);
    shortcuts to catch all-ASCII buffers. (Note that this will
    thrash with bad locality of reference.) A smarter method would
    be to keep some sort of pseudo-extent layer over the buffer;
-   maybe keep track of the bufpos/bytind correspondence at the
+   maybe keep track of the charbpos/bytebpos correspondence at the
    beginning of each line, which would allow us to do a binary
    search over the pseudo-extents to narrow things down to the
    correct line, at which point you could use a linear movement
@@ -975,21 +975,21 @@ Bufpos bytind_to_bufpos_func (struct buffer *buf, Bytind x);
 
 extern short three_to_one_table[];
 
-INLINE_HEADER int real_bufpos_to_bytind (struct buffer *buf, Bufpos x);
+INLINE_HEADER int real_charbpos_to_bytebpos (struct buffer *buf, Charbpos x);
 INLINE_HEADER int
-real_bufpos_to_bytind (struct buffer *buf, Bufpos x)
+real_charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
 {
   if (x >= buf->text->mule_bufmin && x <= buf->text->mule_bufmax)
     return (buf->text->mule_bytmin +
 	    ((x - buf->text->mule_bufmin) << buf->text->mule_shifter) +
 	    (buf->text->mule_three_p ? (x - buf->text->mule_bufmin) : 0));
   else
-    return bufpos_to_bytind_func (buf, x);
+    return charbpos_to_bytebpos_func (buf, x);
 }
 
-INLINE_HEADER int real_bytind_to_bufpos (struct buffer *buf, Bytind x);
+INLINE_HEADER int real_bytebpos_to_charbpos (struct buffer *buf, Bytebpos x);
 INLINE_HEADER int
-real_bytind_to_bufpos (struct buffer *buf, Bytind x)
+real_bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
 {
   if (x >= buf->text->mule_bytmin && x <= buf->text->mule_bytmax)
     return (buf->text->mule_bufmin +
@@ -997,29 +997,29 @@ real_bytind_to_bufpos (struct buffer *buf, Bytind x)
 	      ? three_to_one_table[x - buf->text->mule_bytmin]
 	      : (x - buf->text->mule_bytmin) >> buf->text->mule_shifter)));
   else
-    return bytind_to_bufpos_func (buf, x);
+    return bytebpos_to_charbpos_func (buf, x);
 }
 
 #else /* not MULE */
 
-# define real_bufpos_to_bytind(buf, x)	((Bytind) x)
-# define real_bytind_to_bufpos(buf, x)	((Bufpos) x)
+# define real_charbpos_to_bytebpos(buf, x)	((Bytebpos) x)
+# define real_bytebpos_to_charbpos(buf, x)	((Charbpos) x)
 
 #endif /* not MULE */
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 
-Bytind bufpos_to_bytind (struct buffer *buf, Bufpos x);
-Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
+Bytebpos charbpos_to_bytebpos (struct buffer *buf, Charbpos x);
+Charbpos bytebpos_to_charbpos (struct buffer *buf, Bytebpos x);
 
-#else /* not ERROR_CHECK_BUFPOS */
+#else /* not ERROR_CHECK_CHARBPOS */
 
-#define bufpos_to_bytind real_bufpos_to_bytind
-#define bytind_to_bufpos real_bytind_to_bufpos
+#define charbpos_to_bytebpos real_charbpos_to_bytebpos
+#define bytebpos_to_charbpos real_bytebpos_to_charbpos
 
-#endif /* not ERROR_CHECK_BUFPOS */
+#endif /* not ERROR_CHECK_CHARBPOS */
 
-#define make_bufpos(buf, ind) make_int (bytind_to_bufpos (buf, ind))
+#define make_charbpos(buf, ind) make_int (bytebpos_to_charbpos (buf, ind))
 
 /*----------------------------------------------------------------------*/
 /*         Converting between buffer bytes and Emacs characters         */
@@ -1029,7 +1029,7 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
 #define BI_BUF_FETCH_CHAR(buf, pos) \
   charptr_emchar (BI_BUF_BYTE_ADDRESS (buf, pos))
 #define BUF_FETCH_CHAR(buf, pos) \
-  BI_BUF_FETCH_CHAR (buf, bufpos_to_bytind (buf, pos))
+  BI_BUF_FETCH_CHAR (buf, charbpos_to_bytebpos (buf, pos))
 
 /* The character at position POS in buffer, as a string.  This is
    equivalent to set_charptr_emchar (str, BUF_FETCH_CHAR (buf, pos))
@@ -1038,7 +1038,7 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
 # define BI_BUF_CHARPTR_COPY_CHAR(buf, pos, str) \
   charptr_copy_char (BI_BUF_BYTE_ADDRESS (buf, pos), str)
 #define BUF_CHARPTR_COPY_CHAR(buf, pos, str) \
-  BI_BUF_CHARPTR_COPY_CHAR (buf, bufpos_to_bytind (buf, pos), str)
+  BI_BUF_CHARPTR_COPY_CHAR (buf, charbpos_to_bytebpos (buf, pos), str)
 
 
 /************************************************************************/
@@ -1169,7 +1169,7 @@ do {										\
 
 typedef union
 {
-  struct { const void *ptr; Memory_Count len; } data;
+  struct { const void *ptr; Bytecount len; } data;
   Lisp_Object lisp_object;
 } dfc_conversion_data;
 
@@ -1293,7 +1293,7 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
   ((dfc_aliasing_voidpp) &(sink))->p = dfc_sink_ret;			\
 } while (0)
 #define DFC_LISP_STRING_USE_CONVERTED_DATA(sink) \
-  sink = make_string ((Bufbyte *) dfc_sink.data.ptr, dfc_sink.data.len)
+  sink = make_string ((Intbyte *) dfc_sink.data.ptr, dfc_sink.data.len)
 #define DFC_LISP_OPAQUE_USE_CONVERTED_DATA(sink) \
   sink = make_opaque (dfc_sink.data.ptr, dfc_sink.data.len)
 #define DFC_LISP_LSTREAM_USE_CONVERTED_DATA(sink) /* data already used */
@@ -1393,15 +1393,15 @@ do						\
 
 /* Set point. */
 /* Since BEGV and ZV are almost never set, it's reasonable to enforce
-   the restriction that the Bufpos and Bytind values must both be
+   the restriction that the Charbpos and Bytebpos values must both be
    specified.  However, point is set in lots and lots of places.  So
    we provide the ability to specify both (for efficiency) or just
    one. */
 #define BOTH_BUF_SET_PT(buf, val, bival) set_buffer_point (buf, val, bival)
 #define BI_BUF_SET_PT(buf, bival) \
-  BOTH_BUF_SET_PT (buf, bytind_to_bufpos (buf, bival), bival)
+  BOTH_BUF_SET_PT (buf, bytebpos_to_charbpos (buf, bival), bival)
 #define BUF_SET_PT(buf, value) \
-  BOTH_BUF_SET_PT (buf, value, bufpos_to_bytind (buf, value))
+  BOTH_BUF_SET_PT (buf, value, charbpos_to_bytebpos (buf, value))
 
 
 #if 0 /* FSFmacs */
@@ -1483,7 +1483,7 @@ do						\
   ((n) < (b)->text->gpt && (b)->text->gpt < BI_BUF_ZV (b) ?		\
    (b)->text->gpt : BI_BUF_ZV (b))
 #define BUF_CEILING_OF(b, n)						\
-  bytind_to_bufpos (b, BI_BUF_CEILING_OF (b, bufpos_to_bytind (b, n)))
+  bytebpos_to_charbpos (b, BI_BUF_CEILING_OF (b, charbpos_to_bytebpos (b, n)))
 
 /*  Return the minimum index in the buffer it is safe to scan backwards
     past N to.  All characters between FLOOR_OF(N) and N are located
@@ -1493,21 +1493,21 @@ do						\
         (BI_BUF_BEGV (b) < (b)->text->gpt && (b)->text->gpt < (n) ?	\
 	 (b)->text->gpt : BI_BUF_BEGV (b))
 #define BUF_FLOOR_OF(b, n)						\
-  bytind_to_bufpos (b, BI_BUF_FLOOR_OF (b, bufpos_to_bytind (b, n)))
+  bytebpos_to_charbpos (b, BI_BUF_FLOOR_OF (b, charbpos_to_bytebpos (b, n)))
 
 #define BI_BUF_CEILING_OF_IGNORE_ACCESSIBLE(b, n)			\
   ((n) < (b)->text->gpt && (b)->text->gpt < BI_BUF_Z (b) ?		\
    (b)->text->gpt : BI_BUF_Z (b))
 #define BUF_CEILING_OF_IGNORE_ACCESSIBLE(b, n) 				\
-  bytind_to_bufpos							\
-   (b, BI_BUF_CEILING_OF_IGNORE_ACCESSIBLE (b, bufpos_to_bytind (b, n)))
+  bytebpos_to_charbpos							\
+   (b, BI_BUF_CEILING_OF_IGNORE_ACCESSIBLE (b, charbpos_to_bytebpos (b, n)))
 
 #define BI_BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n)				\
         (BI_BUF_BEG (b) < (b)->text->gpt && (b)->text->gpt < (n) ?	\
 	 (b)->text->gpt : BI_BUF_BEG (b))
 #define BUF_FLOOR_OF_IGNORE_ACCESSIBLE(b, n) 				\
-  bytind_to_bufpos							\
-   (b, BI_BUF_FLOOR_OF_IGNORE_ACCESSIBLE (b, bufpos_to_bytind (b, n)))
+  bytebpos_to_charbpos							\
+   (b, BI_BUF_FLOOR_OF_IGNORE_ACCESSIBLE (b, charbpos_to_bytebpos (b, n)))
 
 
 extern struct buffer *current_buffer;
@@ -1566,18 +1566,18 @@ char *r_re_alloc (unsigned char **, size_t);
 void r_alloc_free (unsigned char **);
 
 #define BUFFER_ALLOC(data, size) \
-  ((Bufbyte *) r_alloc ((unsigned char **) &data, (size) * sizeof(Bufbyte)))
+  ((Intbyte *) r_alloc ((unsigned char **) &data, (size) * sizeof(Intbyte)))
 #define BUFFER_REALLOC(data, size) \
-  ((Bufbyte *) r_re_alloc ((unsigned char **) &data, (size) * sizeof(Bufbyte)))
+  ((Intbyte *) r_re_alloc ((unsigned char **) &data, (size) * sizeof(Intbyte)))
 #define BUFFER_FREE(data) r_alloc_free ((unsigned char **) &(data))
 #define R_ALLOC_DECLARE(var,data) r_alloc_declare (&(var), data)
 
 #else /* !REL_ALLOC */
 
 #define BUFFER_ALLOC(data,size)\
-	(data = xnew_array (Bufbyte, size))
+	(data = xnew_array (Intbyte, size))
 #define BUFFER_REALLOC(data,size)\
-	((Bufbyte *) xrealloc (data, (size) * sizeof(Bufbyte)))
+	((Intbyte *) xrealloc (data, (size) * sizeof(Intbyte)))
 /* Avoid excess parentheses, or syntax errors may rear their heads. */
 #define BUFFER_FREE(data) xfree (data)
 #define R_ALLOC_DECLARE(var,data)
@@ -1590,27 +1590,27 @@ struct buffer *decode_buffer (Lisp_Object buffer, int allow_string);
 
 /* from editfns.c */
 void widen_buffer (struct buffer *b, int no_clip);
-int beginning_of_line_p (struct buffer *b, Bufpos pt);
+int beginning_of_line_p (struct buffer *b, Charbpos pt);
 
 /* from insdel.c */
-void set_buffer_point (struct buffer *buf, Bufpos pos, Bytind bipos);
-void find_charsets_in_bufbyte_string (unsigned char *charsets,
-				      const Bufbyte *str,
+void set_buffer_point (struct buffer *buf, Charbpos pos, Bytebpos bipos);
+void find_charsets_in_intbyte_string (unsigned char *charsets,
+				      const Intbyte *str,
 				      Bytecount len);
 void find_charsets_in_emchar_string (unsigned char *charsets,
 				     const Emchar *str,
 				     Charcount len);
-int bufbyte_string_displayed_columns (const Bufbyte *str, Bytecount len);
+int intbyte_string_displayed_columns (const Intbyte *str, Bytecount len);
 int emchar_string_displayed_columns (const Emchar *str, Charcount len);
-void convert_bufbyte_string_into_emchar_dynarr (const Bufbyte *str,
+void convert_intbyte_string_into_emchar_dynarr (const Intbyte *str,
 						Bytecount len,
 						Emchar_dynarr *dyn);
-Charcount convert_bufbyte_string_into_emchar_string (const Bufbyte *str,
+Charcount convert_intbyte_string_into_emchar_string (const Intbyte *str,
 						     Bytecount len,
 						     Emchar *arr);
-void convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
-						Bufbyte_dynarr *dyn);
-Bufbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
+void convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
+						Intbyte_dynarr *dyn);
+Intbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 						    Bytecount *len_out);
 /* from marker.c */
 void init_buffer_markers (struct buffer *b);
@@ -1629,15 +1629,15 @@ void uninit_buffer_markers (struct buffer *b);
 #define GB_NEGATIVE_FROM_END		(1 << 5)
 #define GB_HISTORICAL_STRING_BEHAVIOR	(GB_NEGATIVE_FROM_END | GB_ALLOW_NIL)
 
-Bufpos get_buffer_pos_char (struct buffer *b, Lisp_Object pos,
+Charbpos get_buffer_pos_char (struct buffer *b, Lisp_Object pos,
 			    unsigned int flags);
-Bytind get_buffer_pos_byte (struct buffer *b, Lisp_Object pos,
+Bytebpos get_buffer_pos_byte (struct buffer *b, Lisp_Object pos,
 			    unsigned int flags);
 void get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
-			    Bufpos *from_out, Bufpos *to_out,
+			    Charbpos *from_out, Charbpos *to_out,
 			    unsigned int flags);
 void get_buffer_range_byte (struct buffer *b, Lisp_Object from, Lisp_Object to,
-			    Bytind *from_out, Bytind *to_out,
+			    Bytebpos *from_out, Bytebpos *to_out,
 			    unsigned int flags);
 Charcount get_string_pos_char (Lisp_Object string, Lisp_Object pos,
 			       unsigned int flags);
@@ -1649,24 +1649,24 @@ void get_string_range_char (Lisp_Object string, Lisp_Object from,
 void get_string_range_byte (Lisp_Object string, Lisp_Object from,
 			    Lisp_Object to, Bytecount *from_out,
 			    Bytecount *to_out, unsigned int flags);
-Bufpos get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
+Charbpos get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
 				      unsigned int flags);
-Bytind get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
+Bytebpos get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 				      unsigned int flags);
 void get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
-				      Lisp_Object to, Bufpos *from_out,
-				      Bufpos *to_out, unsigned int flags);
+				      Lisp_Object to, Charbpos *from_out,
+				      Charbpos *to_out, unsigned int flags);
 void get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
-				      Lisp_Object to, Bytind *from_out,
-				      Bytind *to_out, unsigned int flags);
-Bufpos buffer_or_string_accessible_begin_char (Lisp_Object object);
-Bufpos buffer_or_string_accessible_end_char (Lisp_Object object);
-Bytind buffer_or_string_accessible_begin_byte (Lisp_Object object);
-Bytind buffer_or_string_accessible_end_byte (Lisp_Object object);
-Bufpos buffer_or_string_absolute_begin_char (Lisp_Object object);
-Bufpos buffer_or_string_absolute_end_char (Lisp_Object object);
-Bytind buffer_or_string_absolute_begin_byte (Lisp_Object object);
-Bytind buffer_or_string_absolute_end_byte (Lisp_Object object);
+				      Lisp_Object to, Bytebpos *from_out,
+				      Bytebpos *to_out, unsigned int flags);
+Charbpos buffer_or_string_accessible_begin_char (Lisp_Object object);
+Charbpos buffer_or_string_accessible_end_char (Lisp_Object object);
+Bytebpos buffer_or_string_accessible_begin_byte (Lisp_Object object);
+Bytebpos buffer_or_string_accessible_end_byte (Lisp_Object object);
+Charbpos buffer_or_string_absolute_begin_char (Lisp_Object object);
+Charbpos buffer_or_string_absolute_end_char (Lisp_Object object);
+Bytebpos buffer_or_string_absolute_begin_byte (Lisp_Object object);
+Bytebpos buffer_or_string_absolute_end_byte (Lisp_Object object);
 void record_buffer (Lisp_Object buf);
 Lisp_Object get_buffer (Lisp_Object name,
 			int error_if_deleted_or_does_not_exist);
@@ -1771,22 +1771,22 @@ UPCASE (struct buffer *buf, Emchar ch)
 /************************************************************************/
 /* Because the representation of internally formatted data is subject to change,
    It's bad style to do something like strcmp (XSTRING_DATA (s), "foo")
-   Instead, use the portable: bufbyte_strcmp (XSTRING_DATA (s), "foo")
-   or bufbyte_memcmp (XSTRING_DATA (s), "foo", 3) */
+   Instead, use the portable: intbyte_strcmp (XSTRING_DATA (s), "foo")
+   or intbyte_memcmp (XSTRING_DATA (s), "foo", 3) */
 
 /* Like strcmp, except first arg points at internally formatted data,
    while the second points at a string of only ASCII chars. */
 INLINE_HEADER int
-bufbyte_strcmp (const Bufbyte *bp, const char *ascii_string);
+intbyte_strcmp (const Intbyte *bp, const char *ascii_string);
 INLINE_HEADER int
-bufbyte_strcmp (const Bufbyte *bp, const char *ascii_string)
+intbyte_strcmp (const Intbyte *bp, const char *ascii_string)
 {
 #ifdef MULE
   while (1)
     {
       int diff;
       type_checking_assert (BYTE_ASCII_P (*ascii_string));
-      if ((diff = charptr_emchar (bp) - *(Bufbyte *) ascii_string) != 0)
+      if ((diff = charptr_emchar (bp) - *(Intbyte *) ascii_string) != 0)
 	return diff;
       if (*ascii_string == '\0')
 	return 0;
@@ -1802,14 +1802,14 @@ bufbyte_strcmp (const Bufbyte *bp, const char *ascii_string)
 /* Like memcmp, except first arg points at internally formatted data,
    while the second points at a string of only ASCII chars. */
 INLINE_HEADER int
-bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, Memory_Count len);
+intbyte_memcmp (const Intbyte *bp, const char *ascii_string, Bytecount len);
 INLINE_HEADER int
-bufbyte_memcmp (const Bufbyte *bp, const char *ascii_string, Memory_Count len)
+intbyte_memcmp (const Intbyte *bp, const char *ascii_string, Bytecount len)
 {
 #ifdef MULE
   while (len--)
     {
-      int diff = charptr_emchar (bp) - *(Bufbyte *) ascii_string;
+      int diff = charptr_emchar (bp) - *(Intbyte *) ascii_string;
       type_checking_assert (BYTE_ASCII_P (*ascii_string));
       if (diff != 0)
 	return diff;

@@ -351,12 +351,12 @@ void mswindows_get_workspace_coords (RECT *rc);
 HWND mswindows_get_console_hwnd (void);
 void mswindows_hide_console (void);
 void mswindows_show_console (void);
-int mswindows_output_console_string (CONST Extbyte *str, Extcount len);
+int mswindows_output_console_string (CONST Extbyte *str, Bytecount len);
 
 Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
 int mswindows_char_is_accelerator (struct frame *f, Emchar ch);
-Bytecount mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
+Bytecount mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
 					     Bytecount maxlen, Emchar *accel,
 					     Lisp_Object error_name);
 

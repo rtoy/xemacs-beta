@@ -81,9 +81,9 @@ enum comment_style
 
 struct context_cache
 {
-  Bufpos start_point;			/* beginning of defun */
-  Bufpos cur_point;			/* cache location */
-  Bufpos end_point;			/* end of defun */
+  Charbpos start_point;			/* beginning of defun */
+  Charbpos cur_point;			/* cache location */
+  Charbpos end_point;			/* end of defun */
   struct buffer *buffer;		/* does this need to be staticpro'd? */
   enum syntactic_context context;	/* single-char-syntax state */
   enum block_comment_context ccontext;	/* block-comment state */
@@ -145,8 +145,8 @@ int font_lock_debug;
 
 
 void
-font_lock_maybe_update_syntactic_caches (struct buffer *buf, Bufpos start,
-					 Bufpos orig_end, Bufpos new_end)
+font_lock_maybe_update_syntactic_caches (struct buffer *buf, Charbpos start,
+					 Charbpos orig_end, Charbpos new_end)
 {
   /* Note: either both context_cache and bol_context_cache are valid and
      point to the same buffer, or both are invalid.  If we have to
@@ -238,11 +238,11 @@ font_lock_buffer_was_killed (struct buffer *buf)
     }
 }
 
-static Bufpos
-beginning_of_defun (struct buffer *buf, Bufpos pt)
+static Charbpos
+beginning_of_defun (struct buffer *buf, Charbpos pt)
 {
   /* This function can GC */
-  Bufpos opt = BUF_PT (buf);
+  Charbpos opt = BUF_PT (buf);
   if (pt == BUF_BEGV (buf))
     return pt;
   BUF_SET_PT (buf, pt);
@@ -256,8 +256,8 @@ beginning_of_defun (struct buffer *buf, Bufpos pt)
   return pt;
 }
 
-static Bufpos
-end_of_defun (struct buffer *buf, Bufpos pt)
+static Charbpos
+end_of_defun (struct buffer *buf, Charbpos pt)
 {
   Lisp_Object retval = scan_lists (buf, pt, 1, 0, 0, 1);
   if (NILP (retval))
@@ -270,7 +270,7 @@ end_of_defun (struct buffer *buf, Bufpos pt)
    in buffer BUF at point PT. */
 
 static void
-setup_context_cache (struct buffer *buf, Bufpos pt)
+setup_context_cache (struct buffer *buf, Charbpos pt)
 {
   int recomputed_start_point = 0;
   /* This function can GC */
@@ -361,7 +361,7 @@ setup_context_cache (struct buffer *buf, Bufpos pt)
     }
   {
     /* OK, we're past the end of the top-level form. */
-    Bufpos maxpt = max (context_cache.end_point, context_cache.cur_point);
+    Charbpos maxpt = max (context_cache.end_point, context_cache.cur_point);
 #if 0
     int shortage;
 #endif
@@ -421,7 +421,7 @@ setup_context_cache (struct buffer *buf, Bufpos pt)
 /* Set up context_cache for position PT in BUF. */
 
 static void
-find_context (struct buffer *buf, Bufpos pt)
+find_context (struct buffer *buf, Charbpos pt)
 {
   /* This function can GC */
 #ifndef emacs
@@ -430,7 +430,7 @@ find_context (struct buffer *buf, Bufpos pt)
 #endif
   Emchar prev_c, c;
   int prev_syncode, syncode;
-  Bufpos target = pt;
+  Charbpos target = pt;
   setup_context_cache (buf, pt);
   pt = context_cache.cur_point;
 
@@ -746,7 +746,7 @@ WARNING: this may alter match-data.
        (function, start, end, buffer))
 {
   /* This function can GC */
-  Bufpos s, pt, e;
+  Charbpos s, pt, e;
   int edepth;
   enum syntactic_context this_context;
   Lisp_Object extent = Qnil;
@@ -761,7 +761,7 @@ WARNING: this may alter match-data.
   GCPRO1 (extent);
   while (pt < e)
     {
-      Bufpos estart, eend;
+      Charbpos estart, eend;
       /* skip over "blank" areas, and bug out at end-of-buffer. */
       while (context_cache.context == context_none)
 	{

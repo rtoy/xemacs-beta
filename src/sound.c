@@ -323,7 +323,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
       const UChar_Binary *soundext;
-      Extcount soundextlen;
+      Bytecount soundextlen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,
 			  ALLOCA, (soundext, soundextlen),
@@ -337,7 +337,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
   if (DEVICE_CONNECTED_TO_ESD_P (d) && STRINGP (sound))
     {
       UChar_Binary *soundext;
-      Extcount soundextlen;
+      Bytecount soundextlen;
       int succes;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound, ALLOCA, (soundext, soundextlen),
@@ -358,7 +358,7 @@ If the sound cannot be played in any other way, the standard "bell" will sound.
       && STRINGP (sound))
     {
       UChar_Binary *soundext;
-      Extcount soundextlen;
+      Bytecount soundextlen;
       int succes;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,

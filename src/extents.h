@@ -44,8 +44,8 @@ struct extent
 {
   struct lrecord_header lheader;
 
-  Memind start;
-  Memind end;
+  Membpos start;
+  Membpos end;
   Lisp_Object object; /* A buffer, string, Qnil (extent detached from no
 			 buffer), Qt (destroyed extent) */
 
@@ -351,8 +351,8 @@ struct extent_fragment *extent_fragment_new (Lisp_Object buffer_or_string,
 					     struct frame *frm);
 face_index extent_fragment_update (struct window *w,
 				   struct extent_fragment *ef,
-				   /* Note this is in Bytinds */
-				   Bytind pos);
+				   /* Note this is in Bytebposs */
+				   Bytebpos pos);
 void extent_fragment_delete (struct extent_fragment *ef);
 
 
@@ -378,32 +378,32 @@ void allocate_extent_auxiliary (EXTENT ext);
 void init_buffer_extents (struct buffer *b);
 void uninit_buffer_extents (struct buffer *b);
 typedef int (*map_extents_fun) (EXTENT extent, void *arg);
-void map_extents (Bufpos from, Bufpos to, map_extents_fun fn,
+void map_extents (Charbpos from, Charbpos to, map_extents_fun fn,
 		  void *arg, Lisp_Object obj, EXTENT after,
 		  unsigned int flags);
 
-/* Note the following five functions are NOT in Bufpos's */
-void adjust_extents (Lisp_Object object, Memind from,
-		     Memind to, int amount);
-void adjust_extents_for_deletion (Lisp_Object object, Bytind from,
-				  Bytind to, int gapsize,
+/* Note the following five functions are NOT in Charbpos's */
+void adjust_extents (Lisp_Object object, Membpos from,
+		     Membpos to, int amount);
+void adjust_extents_for_deletion (Lisp_Object object, Bytebpos from,
+				  Bytebpos to, int gapsize,
 				  int numdel, int movegapsize);
-void verify_extent_modification (Lisp_Object object, Bytind from,
-				 Bytind to,
+void verify_extent_modification (Lisp_Object object, Bytebpos from,
+				 Bytebpos to,
 				 Lisp_Object inhibit_read_only_value);
 void process_extents_for_insertion (Lisp_Object object,
-				    Bytind opoint, Bytecount length);
-void process_extents_for_deletion (Lisp_Object object, Bytind from,
-				   Bytind to, int destroy_them);
-void report_extent_modification (Lisp_Object, Bufpos, Bufpos, int);
+				    Bytebpos opoint, Bytecount length);
+void process_extents_for_deletion (Lisp_Object object, Bytebpos from,
+				   Bytebpos to, int destroy_them);
+void report_extent_modification (Lisp_Object, Charbpos, Charbpos, int);
 
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 		       glyph_layout layout);
 
 void add_string_extents (Lisp_Object string, struct buffer *buf,
-			 Bytind opoint, Bytecount length);
+			 Bytebpos opoint, Bytecount length);
 void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
-			       Bytind opoint, Bytecount length,
+			       Bytebpos opoint, Bytecount length,
 			       Bytecount pos);
 void copy_string_extents (Lisp_Object new_string,
 			  Lisp_Object old_string,
@@ -411,7 +411,7 @@ void copy_string_extents (Lisp_Object new_string,
 			  Bytecount length);
 
 void detach_all_extents (Lisp_Object object);
-void set_extent_endpoints (EXTENT extent, Bytind s, Bytind e,
+void set_extent_endpoints (EXTENT extent, Bytebpos s, Bytebpos e,
 			   Lisp_Object object);
 
 #ifdef ERROR_CHECK_EXTENTS

@@ -39,8 +39,8 @@ struct pixel_to_glyph_translation_cache
   int low_x_coord, high_x_coord, col, obj_x;
   int low_y_coord, high_y_coord, row, obj_y;
   struct window *w;
-  Bufpos bufpos;
-  Bufpos closest;
+  Charbpos charbpos;
+  Charbpos closest;
   Charcount modeline_closest;
   Lisp_Object obj1, obj2;
   int retval;

@@ -550,7 +550,7 @@ struct Lisp_Image_Instance
   enum image_instance_type type;
   int x_offset, y_offset;	/* for layout purposes */
   int width, height, margin_width;
-  Hash_Code display_hash; /* Hash value representing the structure
+  Hashcode display_hash; /* Hash value representing the structure
 			     of the image_instance when it was
 			     last displayed. */
   unsigned int dirty : 1;

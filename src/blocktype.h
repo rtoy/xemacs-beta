@@ -31,10 +31,10 @@ Boston, MA 02111-1307, USA.
 
 #define Blocktype_declare(type)                                      \
   type *free;                                                        \
-  Memory_Count elsize;                                               \
+  Bytecount elsize;                                               \
   type *tempel
 
-void *Blocktype_newf (Memory_Count elsize);
+void *Blocktype_newf (Bytecount elsize);
 void Blocktype_allocf (void *b);
 void Blocktype_free (void *bbb, void *el);
 

@@ -111,7 +111,7 @@ int stdout_needs_newline;
 
 static void
 std_handle_out_external (FILE *stream, Lisp_Object lstream,
-			 const Extbyte *extptr, Extcount extlen,
+			 const Extbyte *extptr, Bytecount extlen,
 			 /* is this really stdout/stderr?
 			    (controls termscript writing) */
 			 int output_is_std_handle,
@@ -176,9 +176,9 @@ std_handle_out_external (FILE *stream, Lisp_Object lstream,
 static int
 std_handle_out_va (FILE *stream, const char *fmt, va_list args)
 {
-  Bufbyte kludge[8192];
+  Intbyte kludge[8192];
   Extbyte *extptr;
-  Extcount extlen;
+  Bytecount extlen;
   int retval;
 
   retval = vsprintf ((char *) kludge, fmt, args);
@@ -189,7 +189,7 @@ std_handle_out_va (FILE *stream, const char *fmt, va_list args)
   else
     {
       extptr = (Extbyte *) kludge;
-      extlen = (Extcount) strlen ((char *) kludge);
+      extlen = (Bytecount) strlen ((char *) kludge);
     }
 
   std_handle_out_external (stream, Qnil, extptr, extlen, 1, 1);
@@ -248,18 +248,18 @@ fatal (const char *fmt, ...)
 
 void
 write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      const Bufbyte *str,
+			      const Intbyte *str,
 			      Bytecount offset, Bytecount len,
 			      Lisp_Object coding_system,
 			      int must_flush)
 {
-  Extcount extlen;
+  Bytecount extlen;
   const Extbyte *extptr;
 
   /* #### yuck! sometimes this function is called with string data,
      and the following call may gc. */
   {
-    Bufbyte *puta = (Bufbyte *) alloca (len);
+    Intbyte *puta = (Intbyte *) alloca (len);
     memcpy (puta, str + offset, len);
     TO_EXTERNAL_FORMAT (DATA, (puta, len),
 			ALLOCA, (extptr, extlen),
@@ -283,7 +283,7 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
    buffer_insert_string_1() in insdel.c. */
 
 static void
-output_string (Lisp_Object function, const Bufbyte *nonreloc,
+output_string (Lisp_Object function, const Intbyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
@@ -293,7 +293,7 @@ output_string (Lisp_Object function, const Bufbyte *nonreloc,
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  const Bufbyte *newnonreloc = nonreloc;
+  const Intbyte *newnonreloc = nonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -319,7 +319,7 @@ output_string (Lisp_Object function, const Bufbyte *nonreloc,
 	     we inhibit GC.  */
 	  if (len < 65536)
 	    {
-	      Bufbyte *copied = alloca_array (Bufbyte, len);
+	      Intbyte *copied = alloca_array (Intbyte, len);
 	      memcpy (copied, newnonreloc + offset, len);
 	      Lstream_write (XLSTREAM (function), copied, len);
 	    }
@@ -347,7 +347,7 @@ output_string (Lisp_Object function, const Bufbyte *nonreloc,
   else if (MARKERP (function))
     {
       /* marker_position() will err if marker doesn't point anywhere.  */
-      Bufpos spoint = marker_position (function);
+      Charbpos spoint = marker_position (function);
 
       buffer_insert_string_1 (XMARKER (function)->buffer,
 			      spoint, nonreloc, reloc, offset, len,
@@ -478,7 +478,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 
 /* Used for printing a single-byte character (*not* any Emchar).  */
 #define write_char_internal(string_of_length_1, stream)			\
-  output_string (stream, (const Bufbyte *) (string_of_length_1),	\
+  output_string (stream, (const Intbyte *) (string_of_length_1),	\
 		 Qnil, 0, 1)
 
 /* NOTE: Do not call this with the data of a Lisp_String, as
@@ -491,10 +491,10 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
    canonicalize_printcharfun() (i.e. Qnil means stdout, not
    Vstandard_output, etc.)  */
 void
-write_string_1 (const Bufbyte *str, Bytecount size, Lisp_Object stream)
+write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream)
 {
   /* This function can GC */
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   assert (size >= 0);
 #endif
   output_string (stream, str, Qnil, 0, size);
@@ -504,7 +504,7 @@ void
 write_c_string (const char *str, Lisp_Object stream)
 {
   /* This function can GC */
-  write_string_1 ((const Bufbyte *) str, strlen (str), stream);
+  write_string_1 ((const Intbyte *) str, strlen (str), stream);
 }
 
 
@@ -515,7 +515,7 @@ STREAM defaults to the value of `standard-output' (which see).
        (character, stream))
 {
   /* This function can GC */
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
 
   CHECK_CHAR_COERCE_INT (character);
@@ -869,7 +869,7 @@ Lisp_Object Vfloat_output_format;
 void
 float_to_string (char *buf, double data)
 {
-  Bufbyte *cp, c;
+  Intbyte *cp, c;
   int width;
 
   if (NILP (Vfloat_output_format)
@@ -914,7 +914,7 @@ float_to_string (char *buf, double data)
      representation of that form not be corrupted by the printer.
    */
   {
-    Bufbyte *s = (Bufbyte *) buf; /* don't use signed chars here!
+    Intbyte *s = (Intbyte *) buf; /* don't use signed chars here!
 				     isdigit() can't hack them! */
     if (*s == '-') s++;
     for (; *s; s++)
@@ -1192,7 +1192,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_char_internal ("\"", printcharfun);
       for (i = 0; i < bcmax; i++)
 	{
-	  Bufbyte ch = string_byte (s, i);
+	  Intbyte ch = string_byte (s, i);
 	  if (ch == '\"' || ch == '\\'
 	      || (ch == '\n' && print_escape_newlines))
 	    {
@@ -1366,14 +1366,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	else if (ch < 160)
 	  {
 	    *p++ = '\\', *p++ = '^';
-	    p += set_charptr_emchar ((Bufbyte *) p, ch + 64);
+	    p += set_charptr_emchar ((Intbyte *) p, ch + 64);
 	  }
 	else
 	  {
-	    p += set_charptr_emchar ((Bufbyte *) p, ch);
+	    p += set_charptr_emchar ((Intbyte *) p, ch);
 	  }
 
-	output_string (printcharfun, (Bufbyte *) buf, Qnil, 0, p - buf);
+	output_string (printcharfun, (Intbyte *) buf, Qnil, 0, p - buf);
 
 	break;
       }
@@ -1508,7 +1508,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   /* Does it look like an integer or a float? */
   {
-    Bufbyte *data = string_data (name);
+    Intbyte *data = string_data (name);
     Bytecount confusing = 0;
 
     if (size == 0)
@@ -1591,7 +1591,7 @@ to 0.
 */
        (character))
 {
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
   int extlen;
   const Extbyte *extptr;
@@ -1654,7 +1654,7 @@ the output also will be logged to this file.
 				  Qterminal, 1);
   else
     {
-      Bufbyte str[MAX_EMCHAR_LEN];
+      Intbyte str[MAX_EMCHAR_LEN];
       Bytecount len;
 
       CHECK_CHAR_COERCE_INT (char_or_string);

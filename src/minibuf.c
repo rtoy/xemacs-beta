@@ -205,7 +205,7 @@ Lowest-level interface to minibuffers.  Don't call this.
    if IGNORE_CASE is true. */
 
 Charcount
-scmp_1 (const Bufbyte *s1, const Bufbyte *s2, Charcount len,
+scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
 	int ignore_case)
 {
   Charcount l = len;
@@ -244,7 +244,7 @@ scmp_1 (const Bufbyte *s1, const Bufbyte *s2, Charcount len,
 
 
 int
-regexp_ignore_completion_p (const Bufbyte *nonreloc,
+regexp_ignore_completion_p (const Intbyte *nonreloc,
 			    Lisp_Object reloc, Bytecount offset,
 			    Bytecount length)
 {
@@ -688,7 +688,7 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
     }
   else
     {
-      write_string_to_stdio_stream (stderr, 0, (const Bufbyte *) "\n", 0, 1,
+      write_string_to_stdio_stream (stderr, 0, (const Intbyte *) "\n", 0, 1,
 				    Qterminal, 0);
       return Qnil;
     }
@@ -709,7 +709,7 @@ clear_echo_area_from_print (struct frame *f, Lisp_Object label, int no_restore)
 }
 
 void
-echo_area_append (struct frame *f, const Bufbyte *nonreloc, Lisp_Object reloc,
+echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length,
 		  Lisp_Object label)
 {
@@ -763,7 +763,7 @@ echo_area_append (struct frame *f, const Bufbyte *nonreloc, Lisp_Object reloc,
 }
 
 void
-echo_area_message (struct frame *f, const Bufbyte *nonreloc,
+echo_area_message (struct frame *f, const Intbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset, Bytecount length,
 		   Lisp_Object label)
 {
@@ -808,7 +808,7 @@ echo_area_contents (struct frame *f)
 /* Dump an informative message to the echo area.  This function takes a
    string in internal format. */
 void
-message_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
+message_internal (const Intbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -818,7 +818,7 @@ message_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
 }
 
 void
-message_append_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
+message_append_internal (const Intbyte *nonreloc, Lisp_Object reloc,
 			 Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -840,7 +840,7 @@ message_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Bufbyte *) fmt, Qnil,
+      Lisp_Object obj = emacs_doprnt_string_va ((const Intbyte *) fmt, Qnil,
 						-1, args);
       GCPRO1 (obj);
       message_internal (0, obj, 0, -1);
@@ -859,7 +859,7 @@ message_append_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Bufbyte *) fmt, Qnil,
+      Lisp_Object obj = emacs_doprnt_string_va ((const Intbyte *) fmt, Qnil,
 						-1, args);
       GCPRO1 (obj);
       message_append_internal (0, obj, 0, -1);

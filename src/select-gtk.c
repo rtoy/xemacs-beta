@@ -64,7 +64,7 @@ atom_to_symbol (struct device *d, GdkAtom atom)
   if (atom == GDK_SELECTION_SECONDARY) return (QSECONDARY);
 
   {
-    CBufbyte *intstr;
+    CIntbyte *intstr;
     Extbyte *str = gdk_atom_name (atom);
 
     if (! str) return Qnil;
@@ -196,7 +196,7 @@ emacs_gtk_selection_handle (GtkWidget *widget,
 
   {
     UChar_Binary *data;
-    Memory_Count size;
+    Bytecount size;
     int format;
     GdkAtom type;
     lisp_data_to_selection_data (d, converted_selection,

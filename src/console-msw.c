@@ -218,7 +218,7 @@ mswindows_ensure_console_buffered (void)
 int mswindows_message_outputted;
 
 int
-mswindows_output_console_string (CONST Extbyte *str, Extcount len)
+mswindows_output_console_string (CONST Extbyte *str, Bytecount len)
 {
   DWORD num_written;
 
@@ -252,7 +252,7 @@ This function can be used as the STREAM argument of Fprint() or the like.
     }
   else
     {
-      Bufbyte str[MAX_EMCHAR_LEN + 1];
+      Intbyte str[MAX_EMCHAR_LEN + 1];
       Bytecount len;
 
       CHECK_CHAR_COERCE_INT (char_or_string);
@@ -309,8 +309,8 @@ DCONSCDR (Lisp_Object obj)
   return (CONSP (obj) && CONSP (XCDR (obj))) ? XCONS (XCDR (obj)) : 0;
 }
 
-Bufbyte *DSTRING (Lisp_Object obj);
-Bufbyte *
+Intbyte *DSTRING (Lisp_Object obj);
+Intbyte *
 DSTRING (Lisp_Object obj)
 {
   return STRINGP (obj) ? XSTRING_DATA (obj) : NULL;
@@ -330,8 +330,8 @@ DSYMBOL (Lisp_Object obj)
   return SYMBOLP (obj) ? XSYMBOL (obj) : NULL;
 }
 
-Bufbyte *DSYMNAME (Lisp_Object obj);
-Bufbyte *
+Intbyte *DSYMNAME (Lisp_Object obj);
+Intbyte *
 DSYMNAME (Lisp_Object obj)
 {
   return SYMBOLP (obj) ? string_data (XSYMBOL (obj)->name) : NULL;
@@ -561,7 +561,7 @@ mswindows_lisp_error (int errnum)
 {
   LPTSTR lpMsgBuf;
   Lisp_Object result;
-  Bufbyte *inres;
+  Intbyte *inres;
   Bytecount len;
   
   FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -578,7 +578,7 @@ mswindows_lisp_error (int errnum)
   TO_INTERNAL_FORMAT (C_STRING, lpMsgBuf, ALLOCA, (inres, len),
 		      Qmswindows_tstr);
   /* Messages tend to end with a period and newline */
-  if (len >= 3 && !bufbyte_strcmp (inres + len - 3, ".\r\n"))
+  if (len >= 3 && !intbyte_strcmp (inres + len - 3, ".\r\n"))
     len -= 3;
   result = make_string (inres, len);
   

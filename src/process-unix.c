@@ -1275,12 +1275,12 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
       /* use a reasonable-sized buffer (somewhere around the size of the
 	 stream buffer) so as to avoid inundating the stream with blocked
 	 data. */
-      Bufbyte chunkbuf[512];
+      Intbyte chunkbuf[512];
       Bytecount chunklen;
 
       while (1)
 	{
-	  Lstream_Data_Count writeret;
+	  Bytecount writeret;
 
 	  chunklen = Lstream_read (lstream, chunkbuf, 512);
 	  if (chunklen <= 0)
@@ -1357,10 +1357,10 @@ unix_process_send_eof (Lisp_Object proc)
      character in init_process_io_handles but here it simply screws
      things up. */
 #if 0
-  Bufbyte eof_char = get_eof_char (XPROCESS (proc));
+  Intbyte eof_char = get_eof_char (XPROCESS (proc));
   send_process (proc, Qnil, &eof_char, 0, 1);
 #else
-  send_process (proc, Qnil, (const Bufbyte *) "\004", 0, 1);
+  send_process (proc, Qnil, (const Intbyte *) "\004", 0, 1);
 #endif
   return 1;
 }
@@ -1497,7 +1497,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
         char sigchar = process_signal_char (d->subtty, signo);
         if (sigchar)
 	  {
-	    send_process (proc, Qnil, (Bufbyte *) &sigchar, 0, 1);
+	    send_process (proc, Qnil, (Intbyte *) &sigchar, 0, 1);
 	    return;
 	  }
       }
@@ -1591,7 +1591,7 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      CBufbyte *gai_error;
+      CIntbyte *gai_error;
 
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
       maybe_signal_error (Qio_error, gai_error, host,
@@ -1685,7 +1685,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	CBufbyte *gai_error;
+	CIntbyte *gai_error;
 
 	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_error, Qnative);
 	signal_error (Qio_error, gai_error, list2 (host, service));

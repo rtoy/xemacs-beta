@@ -434,7 +434,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 			 add_glyph_rune(). */
 		      Lisp_Object string =
 			XIMAGE_INSTANCE_TEXT_STRING (instance);
-		      convert_bufbyte_string_into_emchar_dynarr
+		      convert_intbyte_string_into_emchar_dynarr
 			(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 
 		      gtk_output_string (w, dl, buf, xpos,

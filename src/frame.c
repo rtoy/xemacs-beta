@@ -402,7 +402,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   else
     name = build_string ("emacs");
 
-  if (!NILP (Fstring_match (make_string ((const Bufbyte *) "\\.", 2), name,
+  if (!NILP (Fstring_match (make_string ((const Intbyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
     syntax_error (". not allowed in frame names", name);
 
@@ -1804,14 +1804,14 @@ the device's selected window for WINDOW and nil for X and Y.
   struct window *w;
   Lisp_Object frame, window = Qnil, lisp_x = Qnil, lisp_y = Qnil;
   int x, y, obj_x, obj_y;
-  Bufpos bufpos, closest;
+  Charbpos charbpos, closest;
   Charcount modeline_closest;
   Lisp_Object obj1, obj2;
 
   if (mouse_pixel_position_1 (d, &frame, &x, &y) > 0)
     {
       int res = pixel_to_glyph_translation (XFRAME (frame), x, y, &x, &y,
-					    &obj_x, &obj_y, &w, &bufpos,
+					    &obj_x, &obj_y, &w, &charbpos,
 					    &closest, &modeline_closest,
 					    &obj1, &obj2);
       if (res == OVER_TEXT)
@@ -3070,7 +3070,7 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
 
 
 /* The caller is responsible for freeing the returned string. */
-static Bufbyte *
+static Intbyte *
 generate_title_string (struct window *w, Lisp_Object format_str,
 		       face_index findex, int type)
 {
@@ -3106,7 +3106,7 @@ update_frame_title (struct frame *f)
   struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
   Lisp_Object title_format;
   Lisp_Object icon_format;
-  Bufbyte *title;
+  Intbyte *title;
 
   /* We don't change the title for the minibuffer unless the frame
      only has a minibuffer. */
@@ -3121,14 +3121,14 @@ update_frame_title (struct frame *f)
   title_format = symbol_value_in_buffer (Qframe_title_format,      w->buffer);
   icon_format  = symbol_value_in_buffer (Qframe_icon_title_format, w->buffer);
 
-  if (HAS_FRAMEMETH_P (f, set_title_from_bufbyte))
+  if (HAS_FRAMEMETH_P (f, set_title_from_intbyte))
     {
       title = generate_title_string (w, title_format,
 				     DEFAULT_INDEX, CURRENT_DISP);
-      FRAMEMETH (f, set_title_from_bufbyte, (f, title));
+      FRAMEMETH (f, set_title_from_intbyte, (f, title));
     }
 
-  if (HAS_FRAMEMETH_P (f, set_icon_name_from_bufbyte))
+  if (HAS_FRAMEMETH_P (f, set_icon_name_from_intbyte))
     {
       if (!EQ (icon_format, title_format) || !title)
 	{
@@ -3138,7 +3138,7 @@ update_frame_title (struct frame *f)
 	  title = generate_title_string (w, icon_format,
 					 DEFAULT_INDEX, CURRENT_DISP);
 	}
-      FRAMEMETH (f, set_icon_name_from_bufbyte, (f, title));
+      FRAMEMETH (f, set_icon_name_from_intbyte, (f, title));
     }
 
   if (title)

@@ -850,7 +850,7 @@ read_process_output (Lisp_Object process)
 {
   /* This function can GC */
   Bytecount nbytes, nchars;
-  Bufbyte chars[1024];
+  Intbyte chars[1024];
   Lisp_Object outstream;
   Lisp_Process *p = XPROCESS (process);
 
@@ -901,9 +901,9 @@ read_process_output (Lisp_Object process)
   if (!NILP (p->buffer) && BUFFER_LIVE_P (XBUFFER (p->buffer)))
     {
       Lisp_Object old_read_only = Qnil;
-      Bufpos old_point;
-      Bufpos old_begv;
-      Bufpos old_zv;
+      Charbpos old_point;
+      Charbpos old_begv;
+      Charbpos old_zv;
       struct gcpro gcpro1, gcpro2;
       struct buffer *buf = XBUFFER (p->buffer);
 
@@ -920,7 +920,7 @@ read_process_output (Lisp_Object process)
 	 thus preserving logical ordering of input and output.  */
       if (XMARKER (p->mark)->buffer)
 	BUF_SET_PT (buf,
-		    bufpos_clip_to_bounds (old_begv, marker_position (p->mark),
+		    charbpos_clip_to_bounds (old_begv, marker_position (p->mark),
 					   old_zv));
       else
 	BUF_SET_PT (buf, old_zv);
@@ -961,10 +961,10 @@ read_process_output (Lisp_Object process)
       if (old_begv != BUF_BEGV (buf) || old_zv != BUF_ZV (buf))
 	{
 	  Fwiden(p->buffer);
-	  old_begv = bufpos_clip_to_bounds (BUF_BEG (buf),
+	  old_begv = charbpos_clip_to_bounds (BUF_BEG (buf),
 					    old_begv,
 					    BUF_Z (buf));
-	  old_zv = bufpos_clip_to_bounds (BUF_BEG (buf),
+	  old_zv = charbpos_clip_to_bounds (BUF_BEG (buf),
 					  old_zv,
 					  BUF_Z (buf));
 	  Fnarrow_to_region (make_int (old_begv), make_int (old_zv),
@@ -972,7 +972,7 @@ read_process_output (Lisp_Object process)
 	}
 
       buf->read_only = old_read_only;
-      old_point = bufpos_clip_to_bounds (BUF_BEGV (buf),
+      old_point = charbpos_clip_to_bounds (BUF_BEGV (buf),
 					 old_point,
 					 BUF_ZV (buf));
       BUF_SET_PT (buf, old_point);
@@ -989,12 +989,12 @@ read_process_output (Lisp_Object process)
    object RELOCATABLE (either a string or a buffer).  START and LEN
    specify the offset and length of the data to send.
 
-   Note that START and LEN are in Bufpos's if RELOCATABLE is a buffer,
+   Note that START and LEN are in Charbpos's if RELOCATABLE is a buffer,
    and in Bytecounts otherwise. */
 
 void
 send_process (Lisp_Object process,
-              Lisp_Object relocatable, const Bufbyte *nonrelocatable,
+              Lisp_Object relocatable, const Intbyte *nonrelocatable,
               int start, int len)
 {
   /* This function can GC */
@@ -1116,7 +1116,7 @@ from processes can arrive in between chunks.
        (process, start, end, buffer))
 {
   /* This function can GC */
-  Bufpos bstart, bend;
+  Charbpos bstart, bend;
   struct buffer *buf = decode_buffer (buffer, 0);
 
   XSETBUFFER (buffer, buf);
@@ -1451,7 +1451,7 @@ status_notify (void)
 	    {
 	      Lisp_Object old_read_only = Qnil;
 	      Lisp_Object old = Fcurrent_buffer ();
-	      Bufpos opoint;
+	      Charbpos opoint;
               struct gcpro ngcpro1, ngcpro2;
 
 	      /* Avoid error if buffer is deleted
@@ -1484,7 +1484,7 @@ status_notify (void)
 	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
 			   p->buffer);
 
-	      opoint = bufpos_clip_to_bounds(BUF_BEGV (XBUFFER (p->buffer)),
+	      opoint = charbpos_clip_to_bounds(BUF_BEGV (XBUFFER (p->buffer)),
 					     opoint,
 					     BUF_ZV (XBUFFER (p->buffer)));
 	      BUF_SET_PT (current_buffer, opoint);
@@ -1560,7 +1560,7 @@ decode_signal (Lisp_Object signal_)
     return XINT (signal_);
   else
     {
-      Bufbyte *name;
+      Intbyte *name;
 
       CHECK_SYMBOL (signal_);
       name = string_data (XSYMBOL (signal_)->name);

@@ -805,10 +805,10 @@ get_pty_max_bytes (int fd)
 
 /* Figure out the eof character for the FD. */
 
-Bufbyte
+Intbyte
 get_eof_char (int fd)
 {
-  const Bufbyte ctrl_d = (Bufbyte) '\004';
+  const Intbyte ctrl_d = (Intbyte) '\004';
 
   if (!isatty (fd))
     return ctrl_d;
@@ -821,9 +821,9 @@ get_eof_char (int fd)
     if ((int) strlen ((const char *) t.c_cc) < (VEOF + 1))
       return ctrl_d;
     else
-      return (Bufbyte) t.c_cc[VEOF];
+      return (Intbyte) t.c_cc[VEOF];
 #endif
-    return t.c_cc[VEOF] == _POSIX_VDISABLE ? ctrl_d : (Bufbyte) t.c_cc[VEOF];
+    return t.c_cc[VEOF] == _POSIX_VDISABLE ? ctrl_d : (Intbyte) t.c_cc[VEOF];
   }
 #else /* ! HAVE_TERMIOS */
   /* On Berkeley descendants, the following IOCTL's retrieve the
@@ -832,7 +832,7 @@ get_eof_char (int fd)
   {
     struct tchars c;
     ioctl (fd, TIOCGETC, &c);
-    return (Bufbyte) c.t_eofc;
+    return (Intbyte) c.t_eofc;
   }
 #else /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
   /* On SYSV descendants, the TCGETA ioctl retrieves the current control
@@ -844,7 +844,7 @@ get_eof_char (int fd)
     if ((int) strlen ((const char *) t.c_cc) < (VINTR + 1))
       return ctrl_d;
     else
-      return (Bufbyte) t.c_cc[VINTR];
+      return (Intbyte) t.c_cc[VINTR];
   }
 #else /* ! defined (TCGETA) */
   /* Rather than complain, we'll just guess ^D, which is what
@@ -2389,7 +2389,7 @@ init_system_name (void)
   Vsystem_name = build_string (hostname);
 #endif /* HAVE_GETHOSTNAME  */
   {
-    Bufbyte *p;
+    Intbyte *p;
     Bytecount i;
 
     for (i = 0, p = XSTRING_DATA (Vsystem_name);
@@ -3022,8 +3022,8 @@ sys_readdir (DIR *dirp)
     return NULL;
   {
     const Extbyte * const external_name = (const Extbyte *) rtnval->d_name;
-    Extcount external_len = strlen (rtnval->d_name);
-    const Bufbyte *internal_name;
+    Bytecount external_len = strlen (rtnval->d_name);
+    const Intbyte *internal_name;
     Bytecount internal_len;
 
     TO_INTERNAL_FORMAT (DATA, (external_name, external_len),
@@ -3036,13 +3036,13 @@ sys_readdir (DIR *dirp)
       return rtnval;
 
     { /* Non-ASCII filename */
-      static Bufbyte_dynarr *internal_DIRENTRY;
+      static Intbyte_dynarr *internal_DIRENTRY;
       if (!internal_DIRENTRY)
-        internal_DIRENTRY = Dynarr_new (Bufbyte);
+        internal_DIRENTRY = Dynarr_new (Intbyte);
       else
         Dynarr_reset (internal_DIRENTRY);
 
-      Dynarr_add_many (internal_DIRENTRY, (Bufbyte *) rtnval,
+      Dynarr_add_many (internal_DIRENTRY, (Intbyte *) rtnval,
                        offsetof (DIRENTRY, d_name));
 
 

@@ -180,7 +180,7 @@ Lisp_Object
 intern (const char *str)
 {
   Bytecount len = strlen (str);
-  const Bufbyte *buf = (const Bufbyte *) str;
+  const Intbyte *buf = (const Intbyte *) str;
   Lisp_Object obarray = Vobarray;
 
   if (!VECTORP (obarray) || XVECTOR_LENGTH (obarray) == 0)
@@ -339,7 +339,7 @@ OBARRAY defaults to the value of the variable `obarray'.
    Also store the bucket number in oblookup_last_bucket_number.  */
 
 Lisp_Object
-oblookup (Lisp_Object obarray, const Bufbyte *ptr, Bytecount size)
+oblookup (Lisp_Object obarray, const Intbyte *ptr, Bytecount size)
 {
   unsigned int hash, obsize;
   Lisp_Symbol *tail;
@@ -379,7 +379,7 @@ oblookup (Lisp_Object obarray, const Bufbyte *ptr, Bytecount size)
    Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
    Do a web search for "g_str_hash X31_HASH" if you want to know more. */
 unsigned int
-hash_string (const Bufbyte *ptr, Bytecount len)
+hash_string (const Intbyte *ptr, Bytecount len)
 {
   unsigned int hash;
 
@@ -3218,7 +3218,7 @@ init_symbols_once_early (void)
 
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
-  Qnil = Fmake_symbol (make_string_nocopy ((const Bufbyte *) "nil", 3));
+  Qnil = Fmake_symbol (make_string_nocopy ((const Intbyte *) "nil", 3));
   XSYMBOL (Qnil)->name->plist = Qnil;
   XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
   XSYMBOL (Qnil)->plist = Qnil;
@@ -3286,7 +3286,7 @@ defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
   for (i = 0; i < len; i++)
     if (temp[i] == '_')
       temp[i] = '-';
-  *location = Fintern (make_string ((const Bufbyte *) temp, len), Qnil);
+  *location = Fintern (make_string ((const Intbyte *) temp, len), Qnil);
   if (dump_p)
     staticpro (location);
   else
@@ -3321,7 +3321,7 @@ defsymbol_massage_multiword_predicate (Lisp_Object *location, const char *name)
 void
 defsymbol_nodump (Lisp_Object *location, const char *name)
 {
-  *location = Fintern (make_string_nocopy ((const Bufbyte *) name,
+  *location = Fintern (make_string_nocopy ((const Intbyte *) name,
 					   strlen (name)),
 		       Qnil);
   staticpro_nodump (location);
@@ -3330,7 +3330,7 @@ defsymbol_nodump (Lisp_Object *location, const char *name)
 void
 defsymbol (Lisp_Object *location, const char *name)
 {
-  *location = Fintern (make_string_nocopy ((const Bufbyte *) name,
+  *location = Fintern (make_string_nocopy ((const Intbyte *) name,
 					   strlen (name)),
 		       Qnil);
   staticpro (location);
@@ -3592,7 +3592,7 @@ defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
     sym = Fintern (build_string (symbol_name), Qnil);
   else
 #endif
-    sym = Fintern (make_string_nocopy ((const Bufbyte *) symbol_name,
+    sym = Fintern (make_string_nocopy ((const Intbyte *) symbol_name,
 				       strlen (symbol_name)), Qnil);
 
   XSETOBJ (XSYMBOL (sym)->value, magic);

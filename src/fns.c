@@ -69,10 +69,10 @@ mark_bit_vector (Lisp_Object obj)
 static void
 print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Element_Count i;
+  Elemcount i;
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
-  Element_Count len = bit_vector_length (v);
-  Element_Count last = len;
+  Elemcount len = bit_vector_length (v);
+  Elemcount last = len;
 
   if (INTP (Vprint_length))
     last = min (len, XINT (Vprint_length));
@@ -101,7 +101,7 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 		   sizeof (long)));
 }
 
-static Hash_Code
+static Hashcode
 bit_vector_hash (Lisp_Object obj, int depth)
 {
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
@@ -111,7 +111,7 @@ bit_vector_hash (Lisp_Object obj, int depth)
 			     sizeof (long)));
 }
 
-static Memory_Count
+static Bytecount
 size_bit_vector (const void *lheader)
 {
   Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
@@ -223,7 +223,7 @@ Return the length of vector, bit vector, list or string SEQUENCE.
     return make_int (XSTRING_CHAR_LENGTH (sequence));
   else if (CONSP (sequence))
     {
-      Element_Count len;
+      Elemcount len;
       GET_EXTERNAL_LIST_LENGTH (sequence, len);
       return make_int (len);
     }
@@ -250,7 +250,7 @@ which is at least the number of distinct elements.
        (list))
 {
   Lisp_Object hare, tortoise;
-  Element_Count len;
+  Elemcount len;
 
   for (hare = tortoise = list, len = 0;
        CONSP (hare) && (! EQ (hare, tortoise) || len == 0);
@@ -371,8 +371,8 @@ may be solved.
   }
 #else /* not I18N2, or MULE */
   {
-    Bufbyte *ptr1 = string_data (p1);
-    Bufbyte *ptr2 = string_data (p2);
+    Intbyte *ptr1 = string_data (p1);
+    Intbyte *ptr2 = string_data (p2);
 
     /* #### It is not really necessary to do this: We could compare
        byte-by-byte and still get a reasonable comparison, since this
@@ -530,7 +530,7 @@ copy_list (Lisp_Object list)
   Lisp_Object list_copy = Fcons (XCAR (list), XCDR (list));
   Lisp_Object last = list_copy;
   Lisp_Object hare, tortoise;
-  Element_Count len;
+  Elemcount len;
 
   for (tortoise = hare = XCDR (list), len = 1;
        CONSP (hare);
@@ -603,8 +603,8 @@ concat (int nargs, Lisp_Object *args,
   Lisp_Object last_tail;
   Lisp_Object prev;
   struct merge_string_extents_struct *args_mse = 0;
-  Bufbyte *string_result = 0;
-  Bufbyte *string_result_ptr = 0;
+  Intbyte *string_result = 0;
+  Intbyte *string_result_ptr = 0;
   struct gcpro gcpro1;
 
   /* The modus operandi in Emacs is "caller gc-protects args".
@@ -709,7 +709,7 @@ concat (int nargs, Lisp_Object *args,
 	   realloc()ing in order to make the char fit properly.
 	   O(N^2) yuckage. */
         val = Qnil;
-	string_result = (Bufbyte *) alloca (total_length * MAX_EMCHAR_LEN);
+	string_result = (Intbyte *) alloca (total_length * MAX_EMCHAR_LEN);
 	string_result_ptr = string_result;
         break;
       default:
@@ -732,8 +732,8 @@ concat (int nargs, Lisp_Object *args,
       Charcount thisleni = 0;
       Charcount thisindex = 0;
       Lisp_Object seq = args[argnum];
-      Bufbyte *string_source_ptr = 0;
-      Bufbyte *string_prev_result_ptr = string_result_ptr;
+      Intbyte *string_source_ptr = 0;
+      Intbyte *string_prev_result_ptr = string_result_ptr;
 
       if (!CONSP (seq))
 	{
@@ -2728,9 +2728,9 @@ ARRAY is a vector, bit vector, or string.
       Bytecount old_bytecount = string_length (s);
       Bytecount new_bytecount;
       Bytecount item_bytecount;
-      Bufbyte item_buf[MAX_EMCHAR_LEN];
-      Bufbyte *p;
-      Bufbyte *end;
+      Intbyte item_buf[MAX_EMCHAR_LEN];
+      Intbyte *p;
+      Intbyte *end;
 
       CHECK_CHAR_COERCE_INT (item);
       CHECK_LISP_WRITEABLE (array);
@@ -2751,7 +2751,7 @@ ARRAY is a vector, bit vector, or string.
   else if (VECTORP (array))
     {
       Lisp_Object *p = XVECTOR_DATA (array);
-      Element_Count len = XVECTOR_LENGTH (array);
+      Elemcount len = XVECTOR_LENGTH (array);
       CHECK_LISP_WRITEABLE (array);
       while (len--)
 	*p++ = item;
@@ -2759,7 +2759,7 @@ ARRAY is a vector, bit vector, or string.
   else if (BIT_VECTORP (array))
     {
       Lisp_Bit_Vector *v = XBIT_VECTOR (array);
-      Element_Count len = bit_vector_length (v);
+      Elemcount len = bit_vector_length (v);
       int bit;
       CHECK_BIT (item);
       bit = XINT (item);
@@ -2798,7 +2798,7 @@ bytecode_nconc2 (Lisp_Object *args)
     {
       /* (setcdr (last args[0]) args[1]) */
       Lisp_Object tortoise, hare;
-      Element_Count count;
+      Elemcount count;
 
       for (hare = tortoise = args[0], count = 0;
 	   CONSP (XCDR (hare));
@@ -2867,7 +2867,7 @@ changing the value of `foo'.
 	      if (CONSP (next) || argnum == nargs -1)
 		{
 		  /* (setcdr (last val) next) */
-		  Element_Count count;
+		  Elemcount count;
 
 		  for (count = 0;
 		       CONSP (XCDR (last_cons));
@@ -2916,7 +2916,7 @@ changing the value of `foo'.
    If VALS is a null pointer, do not accumulate the results. */
 
 static void
-mapcar1 (Element_Count leni, Lisp_Object *vals,
+mapcar1 (Elemcount leni, Lisp_Object *vals,
 	 Lisp_Object function, Lisp_Object sequence)
 {
   Lisp_Object result;
@@ -2950,7 +2950,7 @@ mapcar1 (Element_Count leni, Lisp_Object *vals,
       if (vals)
 	{
 	  Lisp_Object *val = vals;
-	  Element_Count i;
+	  Elemcount i;
 
 	  LIST_LOOP_2 (elt, sequence)
 	      *val++ = elt;
@@ -2985,7 +2985,7 @@ mapcar1 (Element_Count leni, Lisp_Object *vals,
   else if (VECTORP (sequence))
     {
       Lisp_Object *objs = XVECTOR_DATA (sequence);
-      Element_Count i;
+      Elemcount i;
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = *objs++;
@@ -2997,8 +2997,8 @@ mapcar1 (Element_Count leni, Lisp_Object *vals,
     {
       /* The string data of `sequence' might be relocated during GC. */
       Bytecount slen = XSTRING_LENGTH (sequence);
-      Bufbyte *p = alloca_array (Bufbyte, slen);
-      Bufbyte *end = p + slen;
+      Intbyte *p = alloca_array (Intbyte, slen);
+      Intbyte *end = p + slen;
 
       memcpy (p, XSTRING_DATA (sequence), slen);
 
@@ -3013,7 +3013,7 @@ mapcar1 (Element_Count leni, Lisp_Object *vals,
   else if (BIT_VECTORP (sequence))
     {
       Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
-      Element_Count i;
+      Elemcount i;
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = make_int (bit_vector_bit (v, i));
@@ -3063,7 +3063,7 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
 */
        (function, sequence))
 {
-  Element_Count len = XINT (Flength (sequence));
+  Elemcount len = XINT (Flength (sequence));
   Lisp_Object *args = alloca_array (Lisp_Object, len);
 
   mapcar1 (len, args, function, sequence);
@@ -3078,7 +3078,7 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
 */
        (function, sequence))
 {
-  Element_Count len = XINT (Flength (sequence));
+  Elemcount len = XINT (Flength (sequence));
   Lisp_Object result = make_vector (len, Qnil);
   struct gcpro gcpro1;
 
@@ -3432,19 +3432,19 @@ base64_conversion_error (const char *reason, Lisp_Object frob)
   ((ec > 255) ?								\
    (base64_conversion_error ("Non-ascii character in base64 input",	\
     make_char (ec)), 0)							\
-   : (c = (Bufbyte)ec), 1))
+   : (c = (Intbyte)ec), 1))
 
-static Bytind
-base64_encode_1 (Lstream *istream, Bufbyte *to, int line_break)
+static Bytebpos
+base64_encode_1 (Lstream *istream, Intbyte *to, int line_break)
 {
   EMACS_INT counter = 0;
-  Bufbyte *e = to;
+  Intbyte *e = to;
   Emchar ec;
   unsigned int value;
 
   while (1)
     {
-      Bufbyte c;
+      Intbyte c;
       if (!ADVANCE_INPUT (c, istream))
 	break;
 
@@ -3509,11 +3509,11 @@ base64_encode_1 (Lstream *istream, Bufbyte *to, int line_break)
   ++ccnt;								\
 } while (0)
 
-static Bytind
-base64_decode_1 (Lstream *istream, Bufbyte *to, Charcount *ccptr)
+static Bytebpos
+base64_decode_1 (Lstream *istream, Intbyte *to, Charcount *ccptr)
 {
   Charcount ccnt = 0;
-  Bufbyte *e = to;
+  Intbyte *e = to;
   EMACS_INT streampos = 0;
 
   while (1)
@@ -3599,7 +3599,7 @@ free_malloced_ptr (Lisp_Object unwind_obj)
    ways these functions can blow up, and we don't want to have memory
    leaks in those cases.  */
 #define XMALLOC_OR_ALLOCA(ptr, len, type) do {			\
-  Element_Count XOA_len = (len);				\
+  Elemcount XOA_len = (len);				\
   if (XOA_len > MAX_ALLOCA)					\
     {								\
       ptr = xnew_array (type, XOA_len);				\
@@ -3623,11 +3623,11 @@ into shorter lines.
 */
        (start, end, no_line_break))
 {
-  Bufbyte *encoded;
-  Bytind encoded_length;
+  Intbyte *encoded;
+  Bytebpos encoded_length;
   Charcount allength, length;
   struct buffer *buf = current_buffer;
-  Bufpos begv, zv, old_pt = BUF_PT (buf);
+  Charbpos begv, zv, old_pt = BUF_PT (buf);
   Lisp_Object input;
   int speccount = specpdl_depth();
 
@@ -3644,7 +3644,7 @@ into shorter lines.
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
   /* We needn't multiply allength with MAX_EMCHAR_LEN because all the
      base64 characters will be single-byte.  */
-  XMALLOC_OR_ALLOCA (encoded, allength, Bufbyte);
+  XMALLOC_OR_ALLOCA (encoded, allength, Intbyte);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
@@ -3674,8 +3674,8 @@ into shorter lines.
        (string, no_line_break))
 {
   Charcount allength, length;
-  Bytind encoded_length;
-  Bufbyte *encoded;
+  Bytebpos encoded_length;
+  Intbyte *encoded;
   Lisp_Object input, result;
   int speccount = specpdl_depth();
 
@@ -3686,7 +3686,7 @@ into shorter lines.
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   input = make_lisp_string_input_stream (string, 0, -1);
-  XMALLOC_OR_ALLOCA (encoded, allength, Bufbyte);
+  XMALLOC_OR_ALLOCA (encoded, allength, Intbyte);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
@@ -3706,9 +3706,9 @@ Characters out of the base64 alphabet are ignored.
        (start, end))
 {
   struct buffer *buf = current_buffer;
-  Bufpos begv, zv, old_pt = BUF_PT (buf);
-  Bufbyte *decoded;
-  Bytind decoded_length;
+  Charbpos begv, zv, old_pt = BUF_PT (buf);
+  Intbyte *decoded;
+  Bytebpos decoded_length;
   Charcount length, cc_decoded_length;
   Lisp_Object input;
   int speccount = specpdl_depth();
@@ -3720,7 +3720,7 @@ Characters out of the base64 alphabet are ignored.
 
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
   /* We need to allocate enough room for decoding the text. */
-  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Bufbyte);
+  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Intbyte);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded, &cc_decoded_length);
   if (decoded_length > length * MAX_EMCHAR_LEN)
     abort ();
@@ -3748,8 +3748,8 @@ Characters out of the base64 alphabet are ignored.
 */
        (string))
 {
-  Bufbyte *decoded;
-  Bytind decoded_length;
+  Intbyte *decoded;
+  Bytebpos decoded_length;
   Charcount length, cc_decoded_length;
   Lisp_Object input, result;
   int speccount = specpdl_depth();
@@ -3758,7 +3758,7 @@ Characters out of the base64 alphabet are ignored.
 
   length = XSTRING_CHAR_LENGTH (string);
   /* We need to allocate enough room for decoding the text. */
-  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Bufbyte);
+  XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Intbyte);
 
   input = make_lisp_string_input_stream (string, 0, -1);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded,

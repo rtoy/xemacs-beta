@@ -58,13 +58,13 @@ static int last_known_column;
 static struct buffer *last_known_column_buffer;
 
 /* Value of point when current_column was called */
-static Bufpos last_known_column_point;
+static Charbpos last_known_column_point;
 
 /* Value of MODIFF when current_column was called */
 static int last_known_column_modified;
 
-static Bufpos
-last_visible_position (Bufpos pos, struct buffer *buf)
+static Charbpos
+last_visible_position (Charbpos pos, struct buffer *buf)
 {
   Lisp_Object buffer;
   Lisp_Object value;
@@ -124,13 +124,13 @@ invalidate_current_column (void)
 }
 
 int
-column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
+column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 {
   int col;
   int tab_seen;
   int tab_width = XINT (buf->tab_width);
   int post_tab;
-  Bufpos pos = init_pos;
+  Charbpos pos = init_pos;
   Emchar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -161,7 +161,7 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 	  /* #### FSFmacs looks at ctl_arrow, display tables.
 	     We need to do similar. */
 #if 0
-	  displayed_glyphs = glyphs_from_bufpos (sel_frame, buf,
+	  displayed_glyphs = glyphs_from_charbpos (sel_frame, buf,
 						 XWINDOW (selected_window),
 						 pos, dp, 0, col, 0, 0, 0);
 	  col += (displayed_glyphs->columns
@@ -195,12 +195,12 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 }
 
 int
-string_column_at_point (Lisp_String* s, Bufpos init_pos, int tab_width)
+string_column_at_point (Lisp_String* s, Charbpos init_pos, int tab_width)
 {
   int col;
   int tab_seen;
   int post_tab;
-  Bufpos pos = init_pos;
+  Charbpos pos = init_pos;
   Emchar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -283,7 +283,7 @@ If BUFFER is nil, the current buffer is assumed.
   int fromcol;
   struct buffer *buf = decode_buffer (buffer, 0);
   int tab_width = XINT (buf->tab_width);
-  Bufpos opoint = 0;
+  Charbpos opoint = 0;
 
   CHECK_INT (column);
   if (NILP (minimum))
@@ -305,7 +305,7 @@ If BUFFER is nil, the current buffer is assumed.
   if (!NILP (Fextent_at (make_int (BUF_PT (buf)), buffer, Qinvisible,
 			 Qnil, Qnil)))
     {
-      Bufpos last_visible = last_visible_position (BUF_PT (buf), buf);
+      Charbpos last_visible = last_visible_position (BUF_PT (buf), buf);
 
       opoint = BUF_PT (buf);
       if (last_visible >= BUF_BEGV (buf))
@@ -340,9 +340,9 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 int
-bi_spaces_at_point (struct buffer *b, Bytind bi_pos)
+bi_spaces_at_point (struct buffer *b, Bytebpos bi_pos)
 {
-  Bytind bi_end = BI_BUF_ZV (b);
+  Bytebpos bi_end = BI_BUF_ZV (b);
   int col = 0;
   Emchar c;
   int tab_width = XINT (b->tab_width);
@@ -355,7 +355,7 @@ bi_spaces_at_point (struct buffer *b, Bytind bi_pos)
 	  (c == '\t'
 	   ? (col += tab_width - col % tab_width)
 	   : (c == ' ' ? ++col : 0))))
-    INC_BYTIND (b, bi_pos);
+    INC_BYTEBPOS (b, bi_pos);
 
   return col;
 }
@@ -369,14 +369,14 @@ following any initial whitespace.
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  Bufpos pos = find_next_newline (buf, BUF_PT (buf), -1);
+  Charbpos pos = find_next_newline (buf, BUF_PT (buf), -1);
 
   XSETBUFFER (buffer, buf);
 
   if (!NILP (Fextent_at (make_int (pos), buffer, Qinvisible, Qnil, Qnil)))
     return Qzero;
 
-  return make_int (bi_spaces_at_point (buf, bufpos_to_bytind (buf, pos)));
+  return make_int (bi_spaces_at_point (buf, charbpos_to_bytebpos (buf, pos)));
 }
 
 
@@ -401,11 +401,11 @@ Returns the actual column that it moved to.
        (column, force, buffer))
 {
   /* This function can GC */
-  Bufpos pos;
+  Charbpos pos;
   struct buffer *buf = decode_buffer (buffer, 0);
   int col = current_column (buf);
   int goal;
-  Bufpos end;
+  Charbpos end;
   int tab_width = XINT (buf->tab_width);
 
   int prev_col = 0;
@@ -447,7 +447,7 @@ Returns the actual column that it moved to.
 	  /* #### FSFmacs looks at ctl_arrow, display tables.
 	     We need to do similar. */
 #if 0
-	  displayed_glyphs = glyphs_from_bufpos (selected_frame (),
+	  displayed_glyphs = glyphs_from_charbpos (selected_frame (),
 						 buf,
 						 XWINDOW (Fselected_window (Qnil)),
 						 pos, dp, 0, col, 0, 0, 0);
@@ -538,7 +538,7 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
 */
 	 (from, frompos, to, topos, width, offsets, window))
 {
-  Lisp_Object bufpos, hpos, vpos, prevhpos, contin;
+  Lisp_Object charbpos, hpos, vpos, prevhpos, contin;
   struct position *pos;
   int hscroll, tab_offset;
   struct window *w = decode_window (window);
@@ -569,12 +569,12 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
 			XINT (XCAR (topos)),
 			XINT (width), hscroll, tab_offset, w);
 
-  XSETINT (bufpos, pos->bufpos);
+  XSETINT (charbpos, pos->charbpos);
   XSETINT (hpos, pos->hpos);
   XSETINT (vpos, pos->vpos);
   XSETINT (prevhpos, pos->prevhpos);
 
-  return list5 (bufpos, hpos, vpos, prevhpos,
+  return list5 (charbpos, hpos, vpos, prevhpos,
 		pos->contin ? Qt : Qnil);
 }
 
@@ -610,8 +610,8 @@ vpix_motion (line_start_cache_dynarr *cache, int start, int end)
  pointer to an int and the vertical pixel height of the motion which
  took place is returned in it.
  ****************************************************************************/
-static Bufpos
-vmotion_1 (struct window *w, Bufpos orig, int vtarget,
+static Charbpos
+vmotion_1 (struct window *w, Charbpos orig, int vtarget,
            int *ret_vpos, int *ret_vpix)
 {
   struct buffer *b = XBUFFER (w->buffer);
@@ -631,7 +631,7 @@ vmotion_1 (struct window *w, Bufpos orig, int vtarget,
   if (vtarget > 0)
     {
       int cur_line = Dynarr_length (w->line_start_cache) - 1 - elt;
-      Bufpos ret_pt;
+      Charbpos ret_pt;
 
       if (cur_line > vtarget)
 	cur_line = vtarget;
@@ -694,8 +694,8 @@ vmotion_1 (struct window *w, Bufpos orig, int vtarget,
  taken to be a pointer to an int and the number of lines actually moved is
  returned in it.
  ****************************************************************************/
-Bufpos
-vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
+Charbpos
+vmotion (struct window *w, Charbpos orig, int vtarget, int *ret_vpos)
 {
   return vmotion_1 (w, orig, vtarget, ret_vpos, NULL);
 }
@@ -706,8 +706,8 @@ static
 Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
                                int pixels)
 {
-  Bufpos bufpos;
-  Bufpos orig;
+  Charbpos charbpos;
+  Charbpos orig;
   int selected;
   int *vpos, *vpix;
   int value=0;
@@ -729,14 +729,14 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   vpos = pixels ? NULL   : &value;
   vpix = pixels ? &value : NULL;
 
-  bufpos = vmotion_1 (w, orig, XINT (lines), vpos, vpix);
+  charbpos = vmotion_1 (w, orig, XINT (lines), vpos, vpix);
 
   /* Note that the buffer's point is set, not the window's point. */
   if (selected)
-    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
+    BUF_SET_PT (XBUFFER (w->buffer), charbpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
-			   make_int(bufpos),
+			   make_int(charbpos),
 			   w->buffer);
 
   return make_int (value);
@@ -771,12 +771,12 @@ sets current buffer's point, regardless of WINDOW.)
  * HOW specifies the stopping condition.  Positive means move at least
  * PIXELS.  Negative means at most.  Zero means as close as possible.
  */
-Bufpos
-vmotion_pixels (Lisp_Object window, Bufpos start, int pixels, int how,
+Charbpos
+vmotion_pixels (Lisp_Object window, Charbpos start, int pixels, int how,
                 int *motion)
 {
   struct window *w;
-  Bufpos eobuf, bobuf;
+  Charbpos eobuf, bobuf;
   int defheight;
   int needed;
   int line, next;
@@ -883,8 +883,8 @@ that the motion should be as close as possible to PIXELS.
 */
        (pixels, window, how))
 {
-  Bufpos bufpos;
-  Bufpos orig;
+  Charbpos charbpos;
+  Charbpos orig;
   int selected;
   int motion;
   int howto;
@@ -905,13 +905,13 @@ that the motion should be as close as possible to PIXELS.
 
   howto = INTP (how) ? XINT (how) : 0;
 
-  bufpos = vmotion_pixels (window, orig, XINT (pixels), howto, &motion);
+  charbpos = vmotion_pixels (window, orig, XINT (pixels), howto, &motion);
 
   if (selected)
-    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
+    BUF_SET_PT (XBUFFER (w->buffer), charbpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
-			   make_int(bufpos),
+			   make_int(charbpos),
 			   w->buffer);
 
   return make_int (motion);

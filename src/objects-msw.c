@@ -1663,7 +1663,7 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 
 static int
 mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			     const Bufbyte *nonreloc, Lisp_Object reloc,
+			     const Intbyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount length)
 {
   /* #### Implement me */

@@ -55,6 +55,23 @@ Boston, MA 02111-1307, USA.  */
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#if defined (CYGWIN) || defined (MINGW)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Fucking GCC complains about "no previous prototype" for inline
+   functions.  DUH!  See DECLARE_INLINE_HEADER. */
+extern __inline void *GetCurrentFiber (void);
+extern __inline void *GetFiberData (void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
 #include <windows.h>
 
 #if defined (WIN32_LEAN_AND_MEAN)
@@ -225,7 +242,7 @@ size_t	wcsxfrm(wchar_t*, const wchar_t*, size_t);
 
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)		\
 do {							\
-  Bufbyte *lttff;					\
+  Intbyte *lttff;					\
 							\
   LOCAL_TO_WIN32_FILE_FORMAT (path, lttff);		\
   C_STRING_TO_EXTERNAL (lttff, out, Qmswindows_tstr);	\
@@ -247,7 +264,7 @@ do {									\
   int ltwff2 =								\
     cygwin_posix_to_win32_path_list_buf_size ((char *)			\
 					      XSTRING_DATA (ltwff1));	\
-  pathout = (Bufbyte *) alloca (ltwff2);				\
+  pathout = (Intbyte *) alloca (ltwff2);				\
   cygwin_posix_to_win32_path_list ((char *) XSTRING_DATA (ltwff1),	\
 				   (char *) pathout);			\
 } while (0)
@@ -261,17 +278,17 @@ do {							\
 #ifdef CYGWIN
 #define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)			\
 do {									\
-  Bufbyte *wtlff1 = (path);						\
+  Intbyte *wtlff1 = (path);						\
   int wtlff2 =								\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
-  Bufbyte *wtlff3 = (Bufbyte *) alloca (wtlff2);			\
+  Intbyte *wtlff3 = (Intbyte *) alloca (wtlff2);			\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
-  (pathout) = build_string ((CBufbyte *) wtlff3);			\
+  (pathout) = build_string ((CIntbyte *) wtlff3);			\
 } while (0)
 #else
 #define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)	\
 do {							\
-  (pathout) = build_string ((CBufbyte *) path);		\
+  (pathout) = build_string ((CIntbyte *) path);		\
 } while (0)
 #endif
 

@@ -406,7 +406,7 @@ berkdb_get (Lisp_Database *db, Lisp_Object key)
 
   if (!status)
     /* #### Not mule-ized! will crash! */
-    return make_string ((Bufbyte *) valdatum.data, valdatum.size);
+    return make_string ((Intbyte *) valdatum.data, valdatum.size);
 
 #if DB_VERSION_MAJOR == 1
   db->dberrno = (status == 1) ? -1 : errno;
@@ -494,8 +494,8 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
     {
       /* #### Needs mule-izing */
-      key = make_string ((Bufbyte *) keydatum.data, keydatum.size);
-      val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
+      key = make_string ((Intbyte *) keydatum.data, keydatum.size);
+      val = make_string ((Intbyte *) valdatum.data, valdatum.size);
       call2 (func, key, val);
     }
 #else
@@ -512,8 +512,8 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
 	 status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
       {
 	/* #### Needs mule-izing */
-	key = make_string ((Bufbyte *) keydatum.data, keydatum.size);
-	val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
+	key = make_string ((Intbyte *) keydatum.data, keydatum.size);
+	val = make_string ((Intbyte *) valdatum.data, valdatum.size);
 	call2 (func, key, val);
       }
     dbcp->c_close (dbcp);

@@ -976,7 +976,7 @@ dragndrop_data_received (GtkWidget          *widget,
       /* Random filename */
       char *hurl = dnd_url_hexify_string (data->data, "file:");
 
-      l_dndlist = list1 (make_string ((Bufbyte *)hurl, strlen (hurl)));
+      l_dndlist = list1 (make_string ((Intbyte *)hurl, strlen (hurl)));
       l_type = Qdragdrop_URL;
 
       xfree (hurl);

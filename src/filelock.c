@@ -95,13 +95,13 @@ typedef struct
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
   (lock = (char *) alloca (XSTRING_LENGTH (file) + 2 + 1), \
-   fill_in_lock_file_name ((Bufbyte *) (lock), (file)))
+   fill_in_lock_file_name ((Intbyte *) (lock), (file)))
 
 static void
-fill_in_lock_file_name (Bufbyte *lockfile, Lisp_Object fn)
+fill_in_lock_file_name (Intbyte *lockfile, Lisp_Object fn)
 {
-  Bufbyte *file_name = XSTRING_DATA (fn);
-  Bufbyte *p;
+  Intbyte *file_name = XSTRING_DATA (fn);
+  Intbyte *p;
   Bytecount dirlen;
 
   for (p = file_name + XSTRING_LENGTH (fn) - 1;

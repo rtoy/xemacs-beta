@@ -81,7 +81,7 @@ marker_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   Lisp_Marker *marker2 = XMARKER (obj2);
 
   return ((marker1->buffer == marker2->buffer) &&
-	  (marker1->memind == marker2->memind ||
+	  (marker1->membpos == marker2->membpos ||
 	  /* All markers pointing nowhere are equal */
 	   !marker1->buffer));
 }
@@ -91,7 +91,7 @@ marker_hash (Lisp_Object obj, int depth)
 {
   unsigned long hash = (unsigned long) XMARKER (obj)->buffer;
   if (hash)
-    hash = HASH2 (hash, XMARKER (obj)->memind);
+    hash = HASH2 (hash, XMARKER (obj)->membpos);
   return hash;
 }
 
@@ -171,7 +171,7 @@ static Lisp_Object
 set_marker_internal (Lisp_Object marker, Lisp_Object position,
 		     Lisp_Object buffer, int restricted_p)
 {
-  Bufpos charno;
+  Charbpos charno;
   struct buffer *b;
   Lisp_Marker *m;
   int point_p;
@@ -237,7 +237,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
     }
   else
     {
-      m->memind = bufpos_to_memind (b, charno);
+      m->membpos = charbpos_to_membpos (b, charno);
     }
 
   if (m->buffer != b)
@@ -319,12 +319,12 @@ unchain_marker (Lisp_Object m)
   marker->buffer = 0;
 }
 
-Bytind
+Bytebpos
 bi_marker_position (Lisp_Object marker)
 {
   Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
-  Bytind pos;
+  Bytebpos pos;
 
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
@@ -335,9 +335,9 @@ bi_marker_position (Lisp_Object marker)
      shit, I don't think this can happen.  In any case, the following
      macro has an assert() in it that will catch these denormalized
      positions. */
-  pos = memind_to_bytind (buf, m->memind);
+  pos = membpos_to_bytebpos (buf, m->membpos);
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
 #endif
@@ -345,7 +345,7 @@ bi_marker_position (Lisp_Object marker)
   return pos;
 }
 
-Bufpos
+Charbpos
 marker_position (Lisp_Object marker)
 {
   struct buffer *buf = XMARKER (marker)->buffer;
@@ -353,11 +353,11 @@ marker_position (Lisp_Object marker)
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-  return bytind_to_bufpos (buf, bi_marker_position (marker));
+  return bytebpos_to_charbpos (buf, bi_marker_position (marker));
 }
 
 void
-set_bi_marker_position (Lisp_Object marker, Bytind pos)
+set_bi_marker_position (Lisp_Object marker, Bytebpos pos)
 {
   Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
@@ -365,23 +365,23 @@ set_bi_marker_position (Lisp_Object marker, Bytind pos)
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
 #endif
 
-  m->memind = bytind_to_memind (buf, pos);
+  m->membpos = bytebpos_to_membpos (buf, pos);
 }
 
 void
-set_marker_position (Lisp_Object marker, Bufpos pos)
+set_marker_position (Lisp_Object marker, Charbpos pos)
 {
   struct buffer *buf = XMARKER (marker)->buffer;
 
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-  set_bi_marker_position (marker, bufpos_to_bytind (buf, pos));
+  set_bi_marker_position (marker, charbpos_to_bytebpos (buf, pos));
 }
 
 static Lisp_Object
@@ -467,11 +467,11 @@ Return t if there are markers pointing at POSITION in the current buffer.
        (position))
 {
   Lisp_Marker *marker;
-  Memind pos;
+  Membpos pos;
 
-  /* A small optimization trick: convert POS to memind now, rather
-     than converting every marker's memory index to bufpos.  */
-  pos = bytind_to_memind (current_buffer,
+  /* A small optimization trick: convert POS to membpos now, rather
+     than converting every marker's memory index to charbpos.  */
+  pos = bytebpos_to_membpos (current_buffer,
 			  get_buffer_pos_byte (current_buffer, position,
 					       GB_COERCE_RANGE));
 
@@ -479,10 +479,10 @@ Return t if there are markers pointing at POSITION in the current buffer.
        marker;
        marker = marker_next (marker))
     {
-      /* We use marker->memind, so we don't have to go through the
+      /* We use marker->membpos, so we don't have to go through the
          unwieldy operation of creating a Lisp_Object for
          marker_position() every time around.  */
-      if (marker->memind == pos)
+      if (marker->membpos == pos)
 	return Qt;
     }
 

@@ -46,7 +46,7 @@ struct gtk_color_instance_data
 
 int allocate_nearest_color (GdkColormap *screen_colormap, GdkVisual *visual,
 							GdkColor *color_def);
-int gtk_parse_nearest_color (struct device *d, GdkColor *color, Bufbyte *name,
+int gtk_parse_nearest_color (struct device *d, GdkColor *color, Intbyte *name,
 							 Bytecount len, Error_Behavior errb);
 
 /*****************************************************************************

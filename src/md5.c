@@ -546,7 +546,7 @@ file-coding or Mule support.  Otherwise, they are ignored.
   if (BUFFERP (object))
     {
       struct buffer *b;
-      Bufpos begv, endv;
+      Charbpos begv, endv;
       CHECK_LIVE_BUFFER (object);
       b = XBUFFER (object);
       /* Figure out where we need to get info from */
@@ -578,8 +578,8 @@ file-coding or Mule support.  Otherwise, they are ignored.
   /* Get the data while doing the conversion.  */
   while (1)
     {
-      Bufbyte tempbuf[1024];	/* some random amount */
-      Lstream_Data_Count size_in_bytes =
+      Intbyte tempbuf[1024];	/* some random amount */
+      Bytecount size_in_bytes =
 	Lstream_read (XLSTREAM (instream), tempbuf, sizeof (tempbuf));
       if (!size_in_bytes)
 	break;

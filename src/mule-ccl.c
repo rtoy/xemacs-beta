@@ -737,7 +737,7 @@ static int stack_idx_of_map_multiple;
 	  }							\
 	else							\
 	  {							\
-	    Bufbyte work[MAX_EMCHAR_LEN];			\
+	    Intbyte work[MAX_EMCHAR_LEN];			\
 	    int len;						\
 	    len = non_ascii_set_charptr_emchar (work, ch);	\
 	    Dynarr_add_many (destination, work, len);		\
@@ -751,7 +751,7 @@ static int stack_idx_of_map_multiple;
 	  }							\
 	else							\
 	  {							\
-	    Bufbyte work[MAX_EMCHAR_LEN];			\
+	    Intbyte work[MAX_EMCHAR_LEN];			\
 	    int len;						\
 	    len = non_ascii_set_charptr_emchar (work, ch);	\
 	    Dynarr_add_many (destination, work, len);		\
@@ -764,7 +764,7 @@ static int stack_idx_of_map_multiple;
    cannot handle a multibyte string except for Control-1 characters. */
 #define CCL_WRITE_STRING(len)					\
   do {								\
-    Bufbyte work[MAX_EMCHAR_LEN];				\
+    Intbyte work[MAX_EMCHAR_LEN];				\
     int ch, bytes;						\
     if (!destination)						\
       CCL_INVALID_CMD;						\

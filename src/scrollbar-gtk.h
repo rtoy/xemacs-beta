@@ -60,7 +60,7 @@ struct gtk_scrollbar_data
 
   /* Recorded starting position for Motif-like scrollbar drags. */
   int vdrag_orig_value;
-  Bufpos vdrag_orig_window_start;
+  Charbpos vdrag_orig_window_start;
 };
 
 #define SCROLLBAR_GTK_DATA(i) ((struct gtk_scrollbar_data *) ((i)->scrollbar_data))

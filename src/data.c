@@ -1611,12 +1611,12 @@ weak_list_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	  internal_equal (w1->list, w2->list, depth + 1));
 }
 
-static Hash_Code
+static Hashcode
 weak_list_hash (Lisp_Object obj, int depth)
 {
   struct weak_list *w = XWEAK_LIST (obj);
 
-  return HASH2 ((Hash_Code) w->type,
+  return HASH2 ((Hashcode) w->type,
 		internal_hash (w->list, depth + 1));
 }
 

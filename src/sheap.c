@@ -126,7 +126,7 @@ report_sheap_usage (int die_if_pure_storage_exceeded)
 {
   int rc = 0;
 
-  Memory_Count lost = (STATIC_HEAP_BASE + STATIC_HEAP_SLOP + SHEAP_ADJUSTMENT)
+  Bytecount lost = (STATIC_HEAP_BASE + STATIC_HEAP_SLOP + SHEAP_ADJUSTMENT)
     - (static_heap_ptr - static_heap_buffer);
   char buf[200];
   sprintf (buf, "Static heap usage: %ld of %ld",

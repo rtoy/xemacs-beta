@@ -1134,7 +1134,7 @@ with `delete-process'.
       killp = call1
 	(Qyes_or_no_p,
 	 (emacs_doprnt_string_c
-	  ((const Bufbyte *) GETTEXT ("Buffer %s modified; kill anyway? "),
+	  ((const Intbyte *) GETTEXT ("Buffer %s modified; kill anyway? "),
 	   Qnil, -1, XSTRING_DATA (b->name))));
       UNGCPRO;
       if (NILP (killp))
@@ -1299,7 +1299,7 @@ with `delete-process'.
     uninit_buffer_extents (b);
     if (b->base_buffer)
       {
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
 	assert (!NILP (memq_no_quit (buf, b->base_buffer->indirect_children)));
 #endif
 	b->base_buffer->indirect_children =
@@ -1518,7 +1518,7 @@ discussion.
        (buffer, start, end))
 {
   struct buffer *b = decode_buffer (buffer, 0);
-  Bufpos s, e;
+  Charbpos s, e;
 
   if (NILP (start))
     s = e = -1;
@@ -1672,12 +1672,12 @@ struct buffer_stats
   int other;
 };
 
-static Memory_Count
+static Bytecount
 compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
 {
   int was_requested = b->text->z - 1;
-  Memory_Count gap = b->text->gap_size + b->text->end_gap_size;
-  Memory_Count malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
+  Bytecount gap = b->text->gap_size + b->text->end_gap_size;
+  Bytecount malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
 
   ovstats->gap_overhead    += gap;
   ovstats->was_requested   += was_requested;
@@ -1765,8 +1765,8 @@ coding_system_is_binary (Lisp_Object coding_system)
 
 typedef struct
 {
-  Dynarr_declare (Bufbyte_dynarr *);
-} Bufbyte_dynarr_dynarr;
+  Dynarr_declare (Intbyte_dynarr *);
+} Intbyte_dynarr_dynarr;
 
 typedef struct
 {
@@ -1774,7 +1774,7 @@ typedef struct
 } Extbyte_dynarr_dynarr;
 
 static Extbyte_dynarr_dynarr *conversion_out_dynarr_list;
-static Bufbyte_dynarr_dynarr *conversion_in_dynarr_list;
+static Intbyte_dynarr_dynarr *conversion_in_dynarr_list;
 
 static int dfc_convert_to_external_format_in_use;
 static int dfc_convert_to_internal_format_in_use;
@@ -1836,7 +1836,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       sink_type   != DFC_TYPE_LISP_LSTREAM &&
       coding_system_is_binary (coding_system))
     {
-      const Bufbyte *ptr;
+      const Intbyte *ptr;
       Bytecount len;
 
       if (source_type == DFC_TYPE_LISP_STRING)
@@ -1846,16 +1846,16 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	}
       else
 	{
-	  ptr = (Bufbyte *) source->data.ptr;
+	  ptr = (Intbyte *) source->data.ptr;
 	  len = source->data.len;
 	}
 
 #ifdef MULE
       {
-	const Bufbyte *end;
+	const Intbyte *end;
 	for (end = ptr + len; ptr < end;)
 	  {
-	    Bufbyte c =
+	    Intbyte c =
 	      (BYTE_ASCII_P (*ptr))		   ? *ptr :
 	      (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
 	      (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
@@ -1864,7 +1864,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	    Dynarr_add (conversion_out_dynarr, (Extbyte) c);
 	    INC_CHARPTR (ptr);
 	  }
-	bufpos_checking_assert (ptr == end);
+	charbpos_checking_assert (ptr == end);
       }
 #else
       Dynarr_add_many (conversion_out_dynarr, ptr, len);
@@ -1913,7 +1913,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 
       while (1)
         {
-          Lstream_Data_Count size_in_bytes;
+          Bytecount size_in_bytes;
 	  char tempbuf[1024]; /* some random amount */
 
 	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
@@ -1959,7 +1959,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 				dfc_conversion_data *sink)
 {
   int count = specpdl_depth ();
-  Bufbyte_dynarr *conversion_in_dynarr;
+  Intbyte_dynarr *conversion_in_dynarr;
 
   type_checking_assert
     ((source_type == DFC_TYPE_DATA ||
@@ -1972,7 +1972,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 			 make_int (dfc_convert_to_internal_format_in_use));
   if (Dynarr_length (conversion_in_dynarr_list) <=
       dfc_convert_to_internal_format_in_use)
-    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Bufbyte));
+    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Intbyte));
   conversion_in_dynarr = Dynarr_at (conversion_in_dynarr_list,
 				    dfc_convert_to_internal_format_in_use);
   dfc_convert_to_internal_format_in_use++;
@@ -1987,13 +1987,13 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       coding_system_is_binary (coding_system))
     {
 #ifdef MULE
-      const Bufbyte *ptr = (const Bufbyte *) source->data.ptr;
+      const Intbyte *ptr = (const Intbyte *) source->data.ptr;
       Bytecount len = source->data.len;
-      const Bufbyte *end = ptr + len;
+      const Intbyte *end = ptr + len;
 
       for (; ptr < end; ptr++)
         {
-          Bufbyte c = *ptr;
+          Intbyte c = *ptr;
 
 	  if (BYTE_ASCII_P (c))
 	    Dynarr_add (conversion_in_dynarr, c);
@@ -2051,7 +2051,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
       while (1)
         {
-          Lstream_Data_Count size_in_bytes;
+          Bytecount size_in_bytes;
 	  char tempbuf[1024]; /* some random amount */
 
 	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
@@ -2161,8 +2161,8 @@ syms_of_buffer (void)
 void
 reinit_vars_of_buffer (void)
 {
-  conversion_in_dynarr_list = Dynarr_new2 (Bufbyte_dynarr_dynarr,
-					   Bufbyte_dynarr *);
+  conversion_in_dynarr_list = Dynarr_new2 (Intbyte_dynarr_dynarr,
+					   Intbyte_dynarr *);
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
 
@@ -3038,7 +3038,7 @@ handled:
 static int
 directory_is_current_directory (Extbyte *pwd)
 {
-  Bufbyte *pwd_internal;
+  Intbyte *pwd_internal;
   Bytecount pwd_internal_len;
   struct stat dotstat, pwdstat;
 

@@ -309,7 +309,7 @@ static char valid_resource_char_p[256];
 
 /* #### not just char * here; may be fixed in my Mule ws */
 static void
-validify_resource_component (char *str, Memory_Count len)
+validify_resource_component (char *str, Bytecount len)
 {
   for (; len; len--, str++)
     if (!valid_resource_char_p[(unsigned char) (*str)])
@@ -1562,9 +1562,9 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   if (!display)
     return Qnil;
 
-  return Fcons (make_string ((Bufbyte *) Dynarr_atp (name_char_dynarr, 0),
+  return Fcons (make_string ((Intbyte *) Dynarr_atp (name_char_dynarr, 0),
 			     Dynarr_length (name_char_dynarr)),
-		make_string ((Bufbyte *) Dynarr_atp (class_char_dynarr, 0),
+		make_string ((Intbyte *) Dynarr_atp (class_char_dynarr, 0),
 			     Dynarr_length (class_char_dynarr)));
 }
 

@@ -367,9 +367,9 @@ get_ntpipe_input_stream_waitable (Lstream *stream)
   return s->thread_data->hev_caller;
 }
 
-static Lstream_Data_Count
+static Bytecount
 ntpipe_slurp_reader (Lstream *stream, unsigned char *data,
-		     Lstream_Data_Count size)
+		     Bytecount size)
 {
   /* This function must be called from the main thread only */
   struct ntpipe_slurp_stream_shared_data* s =
@@ -582,9 +582,9 @@ get_ntpipe_output_stream_param (Lstream *stream)
 }
 #endif
 
-static Lstream_Data_Count
+static Bytecount
 ntpipe_shove_writer (Lstream *stream, const unsigned char *data,
-		     Lstream_Data_Count size)
+		     Bytecount size)
 {
   struct ntpipe_shove_stream* s = NTPIPE_SHOVE_STREAM_DATA(stream);
 
@@ -668,7 +668,7 @@ struct winsock_stream
   OVERLAPPED ov;		/* Overlapped I/O structure		     */
   void *buffer;			/* Buffer.                                   */
   DWORD bufsize;		/* Number of bytes last read		     */
-  DWORD bufpos;			/* Position in buffer for next fetch	     */
+  DWORD charbpos;			/* Position in buffer for next fetch	     */
   unsigned int error_p :1;	/* I/O Error seen			     */
   unsigned int eof_p :1;	/* EOF Error seen			     */
   unsigned int pending_p :1;	/* There is a pending I/O operation	     */
@@ -684,7 +684,7 @@ static void
 winsock_initiate_read (struct winsock_stream *str)
 {
   ResetEvent (str->ov.hEvent);
-  str->bufpos = 0;
+  str->charbpos = 0;
 
   if (!ReadFile ((HANDLE)str->s, str->buffer, WINSOCK_READ_BUFFER_SIZE,
 		 &str->bufsize, &str->ov))
@@ -700,8 +700,8 @@ winsock_initiate_read (struct winsock_stream *str)
     str->eof_p = 1;
 }
 
-static Lstream_Data_Count
-winsock_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
+static Bytecount
+winsock_reader (Lstream *stream, unsigned char *data, Bytecount size)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
 
@@ -735,20 +735,20 @@ winsock_reader (Lstream *stream, unsigned char *data, Lstream_Data_Count size)
     return -1;
 
   /* Return as much of buffer as we have */
-  size = min (size, (Lstream_Data_Count) (str->bufsize - str->bufpos));
-  memcpy (data, (void*)((BYTE*)str->buffer + str->bufpos), size);
-  str->bufpos += size;
+  size = min (size, (Bytecount) (str->bufsize - str->charbpos));
+  memcpy (data, (void*)((BYTE*)str->buffer + str->charbpos), size);
+  str->charbpos += size;
 
   /* Read more if buffer is exhausted */
-  if (str->bufsize == str->bufpos)
+  if (str->bufsize == str->charbpos)
     winsock_initiate_read (str);
 
   return size;
 }
 
-static Lstream_Data_Count
+static Bytecount
 winsock_writer (Lstream *stream, const unsigned char *data,
-		Lstream_Data_Count size)
+		Bytecount size)
 {
   struct winsock_stream *str = WINSOCK_STREAM_DATA (stream);
 
@@ -3612,7 +3612,7 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && fdo >= 0)
     {
-      Bufbyte eof_char = get_eof_char (fdo);
+      Intbyte eof_char = get_eof_char (fdo);
       int pty_max_bytes = get_pty_max_bytes (fdo);
       filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
     }

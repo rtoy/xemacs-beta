@@ -552,7 +552,7 @@ mark_gutters (struct frame *f)
    knows exactly what extents have changed. */
 void
 gutter_extent_signal_changed_region_maybe (Lisp_Object obj,
-					   Bufpos start, Bufpos end)
+					   Charbpos start, Charbpos end)
 {
   /* #### Start and end are currently ignored but could be used by a
      more optimal gutter redisplay. We currently loop over all frames

@@ -905,7 +905,7 @@ stuff_buffered_input (Lisp_Object stuffstring)
 
   if (STRINGP (stuffstring))
     {
-      Extcount count;
+      Bytecount count;
       Extbyte *p;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, stuffstring,

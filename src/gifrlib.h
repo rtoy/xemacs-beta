@@ -58,7 +58,7 @@ typedef struct GifImageDesc {
 
 /* I/O operations.  If you roll your own, they need to be semantically equivilent to
    fread/fwrite, with an additional paramater to hold data local to your method. */
-typedef Memory_Count (*Gif_rw_func)(GifByteType *buffer, Memory_Count size, VoidPtr method_data);
+typedef Bytecount (*Gif_rw_func)(GifByteType *buffer, Bytecount size, VoidPtr method_data);
 /* Finish up stream. Non-zero return indicates failure */
 typedef int (*Gif_close_func)(VoidPtr close_data);
 /* Error handling function */
@@ -252,13 +252,13 @@ typedef struct GifStdIODataType {
 void GifStdIOInit(GifFileType *GifFile, FILE *file, int filehandle);
 
 /* Error checking reads, writes and closes */
-void GifRead(GifByteType *buf, Memory_Count size, GifFileType *GifFile);
-void GifWrite(GifByteType *buf, Memory_Count size, GifFileType *GifFile);
+void GifRead(GifByteType *buf, Bytecount size, GifFileType *GifFile);
+void GifWrite(GifByteType *buf, Bytecount size, GifFileType *GifFile);
 int GifClose(GifFileType *GifFile);
 
 /* The default Read and Write functions for files */
-Memory_Count GifStdRead(GifByteType *buf, Memory_Count size, VoidPtr method_data);
-Memory_Count GifStdWrite(GifByteType *buf, Memory_Count size, VoidPtr method_data);
+Bytecount GifStdRead(GifByteType *buf, Bytecount size, VoidPtr method_data);
+Bytecount GifStdWrite(GifByteType *buf, Bytecount size, VoidPtr method_data);
 int GifStdFileClose(VoidPtr method_data);
 
 ColorMapObject *MakeMapObject(int ColorCount, GifColorType *ColorMap);

@@ -190,10 +190,10 @@ Lisp_Object Vcharset_hash_table;
  */
 
 Bytecount
-non_ascii_set_charptr_emchar (Bufbyte *str, Emchar c)
+non_ascii_set_charptr_emchar (Intbyte *str, Emchar c)
 {
-  Bufbyte *p;
-  Bufbyte lb;
+  Intbyte *p;
+  Intbyte lb;
   int c1, c2;
   Lisp_Object charset;
 
@@ -217,9 +217,9 @@ non_ascii_set_charptr_emchar (Bufbyte *str, Emchar c)
    Use the macro charptr_emchar() instead. */
 
 Emchar
-non_ascii_charptr_emchar (const Bufbyte *str)
+non_ascii_charptr_emchar (const Intbyte *str)
 {
-  Bufbyte i0 = *str, i1, i2 = 0;
+  Intbyte i0 = *str, i1, i2 = 0;
   Lisp_Object charset;
 
   if (i0 == LEADING_BYTE_CONTROL_1)
@@ -327,7 +327,7 @@ non_ascii_valid_char_p (Emchar ch)
    Return the number of bytes copied.  */
 
 Bytecount
-non_ascii_charptr_copy_char (const Bufbyte *src, Bufbyte *dst)
+non_ascii_charptr_copy_char (const Intbyte *src, Intbyte *dst)
 {
   Bytecount bytes = REP_BYTES_BY_FIRST_BYTE (*src);
   Bytecount i;
@@ -348,17 +348,17 @@ non_ascii_charptr_copy_char (const Bufbyte *src, Bufbyte *dst)
 Emchar
 Lstream_get_emchar_1 (Lstream *stream, int ch)
 {
-  Bufbyte str[MAX_EMCHAR_LEN];
-  Bufbyte *strptr = str;
+  Intbyte str[MAX_EMCHAR_LEN];
+  Intbyte *strptr = str;
   Bytecount bytes;
 
-  str[0] = (Bufbyte) ch;
+  str[0] = (Intbyte) ch;
 
   for (bytes = REP_BYTES_BY_FIRST_BYTE (ch) - 1; bytes; bytes--)
     {
       int c = Lstream_getc (stream);
-      bufpos_checking_assert (c >= 0);
-      *++strptr = (Bufbyte) c;
+      charbpos_checking_assert (c >= 0);
+      *++strptr = (Intbyte) c;
     }
   return charptr_emchar (str);
 }
@@ -366,7 +366,7 @@ Lstream_get_emchar_1 (Lstream *stream, int ch)
 int
 Lstream_fput_emchar (Lstream *stream, Emchar ch)
 {
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len = set_charptr_emchar (str, ch);
   return Lstream_write (stream, str, len);
 }
@@ -374,7 +374,7 @@ Lstream_fput_emchar (Lstream *stream, Emchar ch)
 void
 Lstream_funget_emchar (Lstream *stream, Emchar ch)
 {
-  Bufbyte str[MAX_EMCHAR_LEN];
+  Intbyte str[MAX_EMCHAR_LEN];
   Bytecount len = set_charptr_emchar (str, ch);
   Lstream_unread (stream, str, len);
 }
@@ -452,7 +452,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
 static Lisp_Object
 make_charset (int id, Lisp_Object name, unsigned char rep_bytes,
 	      unsigned char type, unsigned char columns, unsigned char graphic,
-	      Bufbyte final, unsigned char direction,  Lisp_Object short_name,
+	      Intbyte final, unsigned char direction,  Lisp_Object short_name,
 	      Lisp_Object long_name, Lisp_Object doc,
 	      Lisp_Object reg)
 {
@@ -1172,7 +1172,7 @@ Return list of charset and one or two position-codes of CHARACTER.
 /************************************************************************/
 
 Emchar
-lookup_composite_char (Bufbyte *str, int len)
+lookup_composite_char (Intbyte *str, int len)
 {
   Lisp_Object lispstr = make_string (str, len);
   Lisp_Object ch = Fgethash (lispstr,

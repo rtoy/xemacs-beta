@@ -75,7 +75,7 @@ the documentation for this variable for more details.
      hooks, etcetera), that's not a good approach.  So we validate the
      proposed position, then set point.  */
   {
-    Bufpos new_point = BUF_PT (buf) + n;
+    Charbpos new_point = BUF_PT (buf) + n;
 
     if (new_point < BUF_BEGV (buf))
       {
@@ -136,8 +136,8 @@ the documentation for this variable for more details.
        (count, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
-  Bufpos pos2 = BUF_PT (buf);
-  Bufpos pos;
+  Charbpos pos2 = BUF_PT (buf);
+  Charbpos pos;
   EMACS_INT n, shortage, negp;
 
   if (NILP (count))
@@ -258,7 +258,7 @@ COUNT was explicitly specified.
        (count, killp))
 {
   /* This function can GC */
-  Bufpos pos;
+  Charbpos pos;
   struct buffer *buf = current_buffer;
   EMACS_INT n;
 

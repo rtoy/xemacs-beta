@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
   normalize_filename(s, DIRECTORY_SEP)
 /* Default implementation that coerces a file to use path_sep. */
 static void
-normalize_filename (Bufbyte *fp, Bufbyte path_sep)
+normalize_filename (Intbyte *fp, Intbyte path_sep)
 {
   /* Always lower-case drive letters a-z, even if the filesystem
      preserves case in filenames.
@@ -161,7 +161,7 @@ EXFUN (Frunning_temacs_p, 0);
 
 DOESNT_RETURN
 report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const CBufbyte *string, Lisp_Object data)
+			const CIntbyte *string, Lisp_Object data)
 {
   struct gcpro gcpro1;
   Lisp_Object errdata = build_error_data (NULL, data);
@@ -175,7 +175,7 @@ report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
 
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
-			 const CBufbyte *string, Lisp_Object data)
+			 const CIntbyte *string, Lisp_Object data)
 {
   report_file_type_error (errtype, lisp_strerror (errno), string, data);
 }
@@ -183,7 +183,7 @@ report_error_with_errno (Lisp_Object errtype,
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (const CBufbyte *string, Lisp_Object data)
+report_file_error (const CIntbyte *string, Lisp_Object data)
 {
   report_error_with_errno (Qfile_error, string, data);
 }
@@ -237,15 +237,15 @@ restore_point_unwind (Lisp_Object point_marker)
    (#### Actually, longjmp()ing out of the signal handler may not be
    as losing as I thought.  See qxe_reliable_signal() in sysdep.c.) */
 
-Memory_Count
-read_allowing_quit (int fildes, void *buf, Memory_Count size)
+Bytecount
+read_allowing_quit (int fildes, void *buf, Bytecount size)
 {
   QUIT;
   return sys_read_1 (fildes, buf, size, 1);
 }
 
-Memory_Count
-write_allowing_quit (int fildes, const void *buf, Memory_Count size)
+Bytecount
+write_allowing_quit (int fildes, const void *buf, Bytecount size)
 {
   QUIT;
   return sys_write_1 (fildes, buf, size, 1);
@@ -369,8 +369,8 @@ Given a Unix syntax file name, returns a string ending in slash.
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
-  Bufbyte *beg;
-  Bufbyte *p;
+  Intbyte *beg;
+  Intbyte *p;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -402,7 +402,7 @@ Given a Unix syntax file name, returns a string ending in slash.
   if (p == beg + 2 && beg[1] == ':')
     {
       /* MAXPATHLEN+1 is guaranteed to be enough space for getdefdir.  */
-      Bufbyte *res = (Bufbyte*) alloca (MAXPATHLEN + 1);
+      Intbyte *res = (Intbyte*) alloca (MAXPATHLEN + 1);
       if (_getdcwd (toupper (*beg) - 'A' + 1, (char *)res, MAXPATHLEN))
 	{
 	  char *c=((char *) res) + strlen ((char *) res);
@@ -428,7 +428,7 @@ or the entire name if it contains no slash.
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
-  Bufbyte *beg, *p, *end;
+  Intbyte *beg, *p, *end;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -620,7 +620,7 @@ be an absolute file name.
 
   Lisp_Object val;
   Bytecount len;
-  Bufbyte *p, *data;
+  Intbyte *p, *data;
 
   CHECK_STRING (prefix);
 
@@ -711,11 +711,11 @@ See also the function `substitute-in-file-name'.
        (name, default_directory))
 {
   /* This function can GC.  GC-checked 2000-11-18 */
-  Bufbyte *nm;
+  Intbyte *nm;
 
-  Bufbyte *newdir, *p, *o;
+  Intbyte *newdir, *p, *o;
   int tlen;
-  Bufbyte *target;
+  Intbyte *target;
 #ifdef WIN32_FILENAMES
   int drive = 0;
   int collapse_newdir = 1;
@@ -798,13 +798,13 @@ See also the function `substitute-in-file-name'.
 #ifdef WIN32_FILENAMES
   /* We will force directory separators to be either all \ or /, so make
      a local copy to modify, even if there ends up being no change. */
-  nm = (Bufbyte *) strcpy ((char *) alloca (strlen ((char *) nm) + 1),
+  nm = (Intbyte *) strcpy ((char *) alloca (strlen ((char *) nm) + 1),
 			   (char *) nm);
 
   /* Find and remove drive specifier if present; this makes nm absolute
      even if the rest of the name appears to be relative. */
   {
-    Bufbyte *colon = (Bufbyte *) strrchr ((char *)nm, ':');
+    Intbyte *colon = (Intbyte *) strrchr ((char *)nm, ':');
 
     if (colon)
       {
@@ -884,7 +884,7 @@ See also the function `substitute-in-file-name'.
 	      if (IS_DIRECTORY_SEP (nm[1]))
 		{
 		  if (strcmp ((char *) nm, (char *) XSTRING_DATA (name)) != 0)
-		    name = build_string ((CBufbyte *) nm);
+		    name = build_string ((CIntbyte *) nm);
 		}
 	      /* drive must be set, so this is okay */
 	      else if (strcmp ((char *) nm - 2,
@@ -931,7 +931,7 @@ See also the function `substitute-in-file-name'.
 	  Extbyte *newdir_external = get_home_directory ();
 
 	  if (newdir_external == NULL)
-	    newdir = (Bufbyte *) "";
+	    newdir = (Intbyte *) "";
 	  else
 	    TO_INTERNAL_FORMAT (C_STRING, newdir_external,
 				C_STRING_ALLOCA, (* ((char **) &newdir)),
@@ -946,7 +946,7 @@ See also the function `substitute-in-file-name'.
 	{
 	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)); p++)
 	    DO_NOTHING;
-	  o = (Bufbyte *) alloca (p - nm + 1);
+	  o = (Intbyte *) alloca (p - nm + 1);
 	  memcpy (o, (char *) nm, p - nm);
 	  o [p - nm] = 0;
 
@@ -961,7 +961,7 @@ See also the function `substitute-in-file-name'.
 	      /* Does the user login name match the ~name? */
 	      if (strcmp (user, (char *) o + 1) == 0)
 	        {
-		  newdir = (Bufbyte *) get_home_directory();
+		  newdir = (Intbyte *) get_home_directory();
 	          nm = p;
 		}
 	    }
@@ -975,7 +975,7 @@ See also the function `substitute-in-file-name'.
 	  speed_up_interrupts ();
 	  if (pw)
 	    {
-	      newdir = (Bufbyte *) pw -> pw_dir;
+	      newdir = (Intbyte *) pw -> pw_dir;
 	      nm = p;
 	    }
 #ifdef CYGWIN
@@ -997,7 +997,7 @@ See also the function `substitute-in-file-name'.
       /* Get default directory if needed to make nm absolute. */
       if (!IS_DIRECTORY_SEP (nm[0]))
 	{
-	  newdir = (Bufbyte *) alloca (MAXPATHLEN + 1);
+	  newdir = (Intbyte *) alloca (MAXPATHLEN + 1);
 	  if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 	    newdir = NULL;
 	}
@@ -1005,7 +1005,7 @@ See also the function `substitute-in-file-name'.
       if (!newdir)
 	{
 	  /* Either nm starts with /, or drive isn't mounted. */
-	  newdir = (Bufbyte *) alloca (4);
+	  newdir = (Intbyte *) alloca (4);
 	  newdir[0] = DRIVE_LETTER (drive);
 	  newdir[1] = ':';
 	  newdir[2] = '/';
@@ -1061,19 +1061,19 @@ See also the function `substitute-in-file-name'.
 	    }
 	  if (!IS_DIRECTORY_SEP (nm[0]))
 	    {
-	      Bufbyte *tmp = (Bufbyte *) alloca (strlen ((char *) newdir) +
+	      Intbyte *tmp = (Intbyte *) alloca (strlen ((char *) newdir) +
 						 strlen ((char *) nm) + 2);
 	      file_name_as_directory ((char *) tmp, (char *) newdir);
 	      strcat ((char *) tmp, (char *) nm);
 	      nm = tmp;
 	    }
-	  newdir = (Bufbyte *) alloca (MAXPATHLEN + 1);
+	  newdir = (Intbyte *) alloca (MAXPATHLEN + 1);
 	  if (drive)
 	    {
 #ifdef WIN32_NATIVE
 	      if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 #endif
-		newdir = (Bufbyte *) "/";
+		newdir = (Intbyte *) "/";
 	    }
 	  else
 	    getcwd ((char *) newdir, MAXPATHLEN);
@@ -1097,7 +1097,7 @@ See also the function `substitute-in-file-name'.
 	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
 	    {
 	      newdir =
-		(Bufbyte *)
+		(Intbyte *)
 		  strcpy ((char *) alloca (strlen ((char *) newdir) + 1),
 			  (char *) newdir);
 	      p = newdir + 2;
@@ -1107,7 +1107,7 @@ See also the function `substitute-in-file-name'.
 	      *p = 0;
 	    }
 	  else
-	    newdir = (Bufbyte *) "";
+	    newdir = (Intbyte *) "";
 	}
     }
 #endif /* WIN32_FILENAMES */
@@ -1123,7 +1123,7 @@ See also the function `substitute-in-file-name'.
 #endif
 	  )
 	{
-	  Bufbyte *temp = (Bufbyte *) alloca (length);
+	  Intbyte *temp = (Intbyte *) alloca (length);
 	  memcpy (temp, newdir, length - 1);
 	  temp[length - 1] = 0;
 	  newdir = temp;
@@ -1138,10 +1138,10 @@ See also the function `substitute-in-file-name'.
 #ifdef WIN32_FILENAMES
   /* Add reserved space for drive name.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
-  target = (Bufbyte *) alloca (tlen + 2);
+  target = (Intbyte *) alloca (tlen + 2);
   target += 2;
 #else  /* not WIN32_FILENAMES */
-  target = (Bufbyte *) alloca (tlen);
+  target = (Intbyte *) alloca (tlen);
 #endif /* not WIN32_FILENAMES */
   *target = 0;
 
@@ -1260,7 +1260,7 @@ No component of the resulting pathname will be a symbolic link, as
     char resolved_path[MAXPATHLEN];
     Extbyte *path;
     Extbyte *p;
-    Extcount elen;
+    Bytecount elen;
 
     TO_EXTERNAL_FORMAT (LISP_STRING, expanded_name,
 			ALLOCA, (path, elen),
@@ -1390,13 +1390,13 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben. */
-  Bufbyte *nm;
+  Intbyte *nm;
 
-  Bufbyte *s, *p, *o, *x, *endp;
-  Bufbyte *target = 0;
+  Intbyte *s, *p, *o, *x, *endp;
+  Intbyte *target = 0;
   int total = 0;
   int substituted = 0;
-  Bufbyte *xnm;
+  Intbyte *xnm;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -1474,7 +1474,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Bufbyte *) alloca (s - o + 1);
+	target = (Intbyte *) alloca (s - o + 1);
 	strncpy ((char *) target, (char *) o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1482,7 +1482,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = (Bufbyte *) egetenv ((char *) target);
+	o = (Intbyte *) egetenv ((char *) target);
 	if (!o) goto badvar;
 	total += strlen ((char *) o);
 	substituted = 1;
@@ -1493,7 +1493,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   /* If substitution required, recopy the filename and do it */
   /* Make space in stack frame for the new copy */
-  xnm = (Bufbyte *) alloca (XSTRING_LENGTH (filename) + total + 1);
+  xnm = (Intbyte *) alloca (XSTRING_LENGTH (filename) + total + 1);
   x = xnm;
 
   /* Copy the rest of the name through, replacing $ constructs with values */
@@ -1525,7 +1525,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Bufbyte *) alloca (s - o + 1);
+	target = (Intbyte *) alloca (s - o + 1);
 	strncpy ((char *) target, (char *) o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1533,7 +1533,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = (Bufbyte *) egetenv ((char *) target);
+	o = (Intbyte *) egetenv ((char *) target);
 	if (!o)
 	  goto badvar;
 
@@ -1627,7 +1627,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
 	  struct gcpro gcpro1;
 
 	  prompt = emacs_doprnt_string_c
-	    ((const Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
+	    ((const Intbyte *) GETTEXT ("File %s already exists; %s anyway? "),
 	     Qnil, -1, XSTRING_DATA (absname),
 	     GETTEXT (querystring));
 
@@ -2148,7 +2148,7 @@ On Unix, this is a name starting with a `/' or a `~'.
        (filename))
 {
   /* This function does not GC */
-  Bufbyte *ptr;
+  Intbyte *ptr;
 
   CHECK_STRING (filename);
   ptr = XSTRING_DATA (filename);
@@ -2373,7 +2373,7 @@ Otherwise returns nil.
       xfree (buf);
       return Qnil;
     }
-  val = make_string ((Bufbyte *) buf, valsize);
+  val = make_string ((Intbyte *) buf, valsize);
   xfree (buf);
   return val;
 #else /* not S_IFLNK */
@@ -2675,7 +2675,7 @@ positions), even in Mule. (Fixing this is very difficult.)
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   Lisp_Object handler = Qnil, val;
   int total;
-  Bufbyte read_buf[READ_BUF_SIZE];
+  Intbyte read_buf[READ_BUF_SIZE];
   int mc_count;
   struct buffer *buf = current_buffer;
   Lisp_Object curbuf;
@@ -2814,8 +2814,8 @@ positions), even in Mule. (Fixing this is very difficult.)
   if (!NILP (replace))
     {
       char buffer[1 << 14];
-      Bufpos same_at_start = BUF_BEGV (buf);
-      Bufpos same_at_end = BUF_ZV (buf);
+      Charbpos same_at_start = BUF_BEGV (buf);
+      Charbpos same_at_end = BUF_ZV (buf);
       int overlap;
 
       /* Count how many chars at the start of the file
@@ -2823,19 +2823,19 @@ positions), even in Mule. (Fixing this is very difficult.)
       while (1)
 	{
 	  int nread;
-	  Bufpos bufpos;
+	  Charbpos charbpos;
 	  nread = read_allowing_quit (fd, buffer, sizeof (buffer));
 	  if (nread < 0)
 	    report_file_error ("Reading", filename);
 	  else if (nread == 0)
 	    break;
-	  bufpos = 0;
-	  while (bufpos < nread && same_at_start < BUF_ZV (buf)
-		 && BUF_FETCH_CHAR (buf, same_at_start) == buffer[bufpos])
-	    same_at_start++, bufpos++;
+	  charbpos = 0;
+	  while (charbpos < nread && same_at_start < BUF_ZV (buf)
+		 && BUF_FETCH_CHAR (buf, same_at_start) == buffer[charbpos])
+	    same_at_start++, charbpos++;
 	  /* If we found a discrepancy, stop the scan.
 	     Otherwise loop around and scan the next bufferful.  */
-	  if (bufpos != nread)
+	  if (charbpos != nread)
 	    break;
 	}
       /* If the file matches the buffer completely,
@@ -2854,7 +2854,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       while (1)
 	{
 	  int total_read, nread;
-	  Bufpos bufpos, curpos, trial;
+	  Charbpos charbpos, curpos, trial;
 
 	  /* At what file position are we now scanning?  */
 	  curpos = st.st_size - (BUF_ZV (buf) - same_at_end);
@@ -2862,7 +2862,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  if (curpos == 0)
 	    break;
 	  /* How much can we scan in the next step?  */
-	  trial = min (curpos, (Bufpos) sizeof (buffer));
+	  trial = min (curpos, (Charbpos) sizeof (buffer));
 	  if (lseek (fd, curpos - trial, 0) < 0)
 	    report_file_error ("Setting file position", filename);
 
@@ -2877,16 +2877,16 @@ positions), even in Mule. (Fixing this is very difficult.)
 	    }
 	  /* Scan this bufferful from the end, comparing with
 	     the Emacs buffer.  */
-	  bufpos = total_read;
+	  charbpos = total_read;
 	  /* Compare with same_at_start to avoid counting some buffer text
 	     as matching both at the file's beginning and at the end.  */
-	  while (bufpos > 0 && same_at_end > same_at_start
+	  while (charbpos > 0 && same_at_end > same_at_start
 		 && BUF_FETCH_CHAR (buf, same_at_end - 1) ==
-		 buffer[bufpos - 1])
-	    same_at_end--, bufpos--;
+		 buffer[charbpos - 1])
+	    same_at_end--, charbpos--;
 	  /* If we found a discrepancy, stop the scan.
 	     Otherwise loop around and scan the preceding bufferful.  */
-	  if (bufpos != 0)
+	  if (charbpos != 0)
 	    break;
 	  /* If display current starts at beginning of line,
 	     keep it that way.  */
@@ -2939,7 +2939,7 @@ positions), even in Mule. (Fixing this is very difficult.)
     }
 
   {
-    Bufpos cur_point = BUF_PT (buf);
+    Charbpos cur_point = BUF_PT (buf);
     struct gcpro ngcpro1;
     Lisp_Object stream = make_filedesc_input_stream (fd, 0, total,
 						     LSTR_ALLOW_QUIT);
@@ -2960,7 +2960,7 @@ positions), even in Mule. (Fixing this is very difficult.)
        occurs inside of the filedesc stream. */
     while (1)
       {
-	Lstream_Data_Count this_len;
+	Bytecount this_len;
 	Charcount cc_inserted;
 
 	QUIT;
@@ -3128,7 +3128,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   Lisp_Object visit_file = Qnil;
   Lisp_Object annotations = Qnil;
   struct buffer *given_buffer;
-  Bufpos start1, end1;
+  Charbpos start1, end1;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct gcpro ngcpro1, ngcpro2;
   Lisp_Object curbuf;
@@ -3998,7 +3998,7 @@ Non-nil second argument means save only current buffer.
 	      if (listdesc >= 0)
 		{
 		  const Extbyte *auto_save_file_name_ext;
-		  Extcount auto_save_file_name_ext_len;
+		  Bytecount auto_save_file_name_ext_len;
 
 		  TO_EXTERNAL_FORMAT (LISP_STRING, b->auto_save_file_name,
 				      ALLOCA, (auto_save_file_name_ext,
@@ -4007,7 +4007,7 @@ Non-nil second argument means save only current buffer.
 		  if (!NILP (b->filename))
 		    {
 		      const Extbyte *filename_ext;
-		      Extcount filename_ext_len;
+		      Bytecount filename_ext_len;
 
 		      TO_EXTERNAL_FORMAT (LISP_STRING, b->filename,
 					  ALLOCA, (filename_ext,

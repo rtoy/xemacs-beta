@@ -161,8 +161,8 @@ struct console_methods
   int (*frame_visible_p_method) (struct frame *f);
   int (*frame_totally_visible_p_method) (struct frame *f);
   int (*frame_iconified_p_method) (struct frame *f);
-  void (*set_title_from_bufbyte_method) (struct frame *f, Bufbyte *title);
-  void (*set_icon_name_from_bufbyte_method) (struct frame *f, Bufbyte *title);
+  void (*set_title_from_intbyte_method) (struct frame *f, Intbyte *title);
+  void (*set_icon_name_from_intbyte_method) (struct frame *f, Intbyte *title);
   void (*set_frame_pointer_method) (struct frame *f);
   void (*set_frame_icon_method) (struct frame *f);
   void (*popup_menu_method) (Lisp_Object menu, Lisp_Object event);
@@ -219,7 +219,7 @@ struct console_methods
   int (*color_instance_equal_method) (Lisp_Color_Instance *,
 				      Lisp_Color_Instance *,
 				      int depth);
-  Hash_Code (*color_instance_hash_method) (Lisp_Color_Instance *,
+  Hashcode (*color_instance_hash_method) (Lisp_Color_Instance *,
 					   int depth);
   Lisp_Object (*color_instance_rgb_components_method) (Lisp_Color_Instance *);
   int (*valid_color_name_p_method) (struct device *, Lisp_Object color);
@@ -244,7 +244,7 @@ struct console_methods
 					   Lisp_Object charset);
   int (*font_spec_matches_charset_method) (struct device *d,
 					   Lisp_Object charset,
-					   const Bufbyte *nonreloc,
+					   const Intbyte *nonreloc,
 					   Lisp_Object reloc,
 					   Bytecount offset,
 					   Bytecount length);
@@ -264,7 +264,7 @@ struct console_methods
   int (*image_instance_equal_method) (Lisp_Image_Instance *,
 				      Lisp_Image_Instance *,
 				      int depth);
-  Hash_Code (*image_instance_hash_method) (Lisp_Image_Instance *,
+  Hashcode (*image_instance_hash_method) (Lisp_Image_Instance *,
 					   int depth);
   void (*init_image_instance_from_eimage_method) (Lisp_Image_Instance *ii,
 						  int width, int height,

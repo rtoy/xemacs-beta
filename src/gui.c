@@ -57,10 +57,10 @@ See `popup-menu' and `popup-dialog-box'.
 #endif /* HAVE_POPUPS */
 
 int
-separator_string_p (const Bufbyte *s)
+separator_string_p (const Intbyte *s)
 {
-  const Bufbyte *p;
-  Bufbyte first;
+  const Intbyte *p;
+  Intbyte first;
 
   if (!s || s[0] == '\0')
     return 0;
@@ -412,7 +412,7 @@ gui_item_accelerator (Lisp_Object gui_item)
 Lisp_Object
 gui_name_accelerator (Lisp_Object nm)
 {
-  Bufbyte *name = XSTRING_DATA (nm);
+  Intbyte *name = XSTRING_DATA (nm);
 
   while (*name)
     {
@@ -616,7 +616,7 @@ mark_gui_item (Lisp_Object obj)
   return Qnil;
 }
 
-static Hash_Code
+static Hashcode
 gui_item_hash (Lisp_Object obj, int depth)
 {
   Lisp_Gui_Item *p = XGUI_ITEM (obj);

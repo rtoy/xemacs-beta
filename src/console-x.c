@@ -48,9 +48,9 @@ static void
 split_up_display_spec (Lisp_Object display, int *hostname_length,
 		       int *display_length, int *screen_length)
 {
-  Bufbyte *beg = XSTRING_DATA (display);
-  Bufbyte *end = beg + XSTRING_LENGTH (display);
-  Bufbyte *p = end;
+  Intbyte *beg = XSTRING_DATA (display);
+  Intbyte *end = beg + XSTRING_LENGTH (display);
+  Intbyte *p = end;
 
   while (p > beg)
     {
@@ -198,8 +198,8 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   else
     {
       /* connection =~ s/^unix:/localhost:/; */
-      const Bufbyte *p   = XSTRING_DATA (connection);
-      const Bufbyte *end = XSTRING_DATA (connection) + XSTRING_LENGTH (connection);
+      const Intbyte *p   = XSTRING_DATA (connection);
+      const Intbyte *end = XSTRING_DATA (connection) + XSTRING_LENGTH (connection);
       int i;
 
       for (i = 0; i < (int) sizeof ("unix:") - 1; i++)

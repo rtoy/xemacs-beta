@@ -243,7 +243,7 @@ memory_full (void)
 
 #undef xmalloc
 void *
-xmalloc (Memory_Count size)
+xmalloc (Bytecount size)
 {
   void *val = malloc (size);
 
@@ -253,7 +253,7 @@ xmalloc (Memory_Count size)
 
 #undef xcalloc
 static void *
-xcalloc (Element_Count nelem, Memory_Count elsize)
+xcalloc (Elemcount nelem, Bytecount elsize)
 {
   void *val = calloc (nelem, elsize);
 
@@ -262,14 +262,14 @@ xcalloc (Element_Count nelem, Memory_Count elsize)
 }
 
 void *
-xmalloc_and_zero (Memory_Count size)
+xmalloc_and_zero (Bytecount size)
 {
   return xcalloc (size, sizeof (char));
 }
 
 #undef xrealloc
 void *
-xrealloc (void *block, Memory_Count size)
+xrealloc (void *block, Bytecount size)
 {
   block = realloc (block, size);
 
@@ -307,10 +307,10 @@ What kind of strange-ass system are we running on?
 #endif
 
 static void
-deadbeef_memory (void *ptr, Memory_Count size)
+deadbeef_memory (void *ptr, Bytecount size)
 {
   four_byte_t *ptr4 = (four_byte_t *) ptr;
-  Memory_Count beefs = size >> 2;
+  Bytecount beefs = size >> 2;
 
   /* In practice, size will always be a multiple of four.  */
   while (beefs--)
@@ -345,7 +345,7 @@ strdup (const char *s)
 
 
 static void *
-allocate_lisp_storage (Memory_Count size)
+allocate_lisp_storage (Bytecount size)
 {
   return xmalloc (size);
 }
@@ -357,7 +357,7 @@ allocate_lisp_storage (Memory_Count size)
 static struct lcrecord_header *all_lcrecords;
 
 void *
-alloc_lcrecord (Memory_Count size, const struct lrecord_implementation *implementation)
+alloc_lcrecord (Bytecount size, const struct lrecord_implementation *implementation)
 {
   struct lcrecord_header *lcheader;
 
@@ -1052,7 +1052,7 @@ mark_vector (Lisp_Object obj)
   return (len > 0) ? ptr->contents[len - 1] : Qnil;
 }
 
-static Memory_Count
+static Bytecount
 size_vector (const void *lheader)
 {
   return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object, contents,
@@ -1076,7 +1076,7 @@ vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   return 1;
 }
 
-static Hash_Code
+static Hashcode
 vector_hash (Lisp_Object obj, int depth)
 {
   return HASH2 (XVECTOR_LENGTH (obj),
@@ -1100,10 +1100,10 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
 
 /* #### should allocate `small' vectors from a frob-block */
 static Lisp_Vector *
-make_vector_internal (Element_Count sizei)
+make_vector_internal (Elemcount sizei)
 {
   /* no vector_next */
-  Memory_Count sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
+  Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
 					       contents, sizei);
   Lisp_Vector *p = (Lisp_Vector *) alloc_lcrecord (sizem, &lrecord_vector);
 
@@ -1112,7 +1112,7 @@ make_vector_internal (Element_Count sizei)
 }
 
 Lisp_Object
-make_vector (Element_Count length, Lisp_Object object)
+make_vector (Elemcount length, Lisp_Object object)
 {
   Lisp_Vector *vecp = make_vector_internal (length);
   Lisp_Object *p = vector_data (vecp);
@@ -1264,10 +1264,10 @@ static Lisp_Object all_bit_vectors;
 
 /* #### should allocate `small' bit vectors from a frob-block */
 static Lisp_Bit_Vector *
-make_bit_vector_internal (Element_Count sizei)
+make_bit_vector_internal (Elemcount sizei)
 {
-  Element_Count num_longs = BIT_VECTOR_LONG_STORAGE (sizei);
-  Memory_Count sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector,
+  Elemcount num_longs = BIT_VECTOR_LONG_STORAGE (sizei);
+  Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector,
 						     unsigned long,
 						     bits, num_longs);
   Lisp_Bit_Vector *p = (Lisp_Bit_Vector *) allocate_lisp_storage (sizem);
@@ -1285,10 +1285,10 @@ make_bit_vector_internal (Element_Count sizei)
 }
 
 Lisp_Object
-make_bit_vector (Element_Count length, Lisp_Object bit)
+make_bit_vector (Elemcount length, Lisp_Object bit)
 {
   Lisp_Bit_Vector *p = make_bit_vector_internal (length);
-  Element_Count num_longs = BIT_VECTOR_LONG_STORAGE (length);
+  Elemcount num_longs = BIT_VECTOR_LONG_STORAGE (length);
 
   CHECK_BIT (bit);
 
@@ -1296,7 +1296,7 @@ make_bit_vector (Element_Count length, Lisp_Object bit)
     memset (p->bits, 0, num_longs * sizeof (long));
   else
     {
-      Element_Count bits_in_last = length & (LONGBITS_POWER_OF_2 - 1);
+      Elemcount bits_in_last = length & (LONGBITS_POWER_OF_2 - 1);
       memset (p->bits, ~0, num_longs * sizeof (long));
       /* But we have to make sure that the unused bits in the
 	 last long are 0, so that equal/hash is easy. */
@@ -1312,9 +1312,9 @@ make_bit_vector (Element_Count length, Lisp_Object bit)
 }
 
 Lisp_Object
-make_bit_vector_from_byte_vector (unsigned char *bytevec, Element_Count length)
+make_bit_vector_from_byte_vector (unsigned char *bytevec, Elemcount length)
 {
-  Element_Count i;
+  Elemcount i;
   Lisp_Bit_Vector *p = make_bit_vector_internal (length);
 
   for (i = 0; i < length; i++)
@@ -1601,7 +1601,7 @@ Return a new marker which does not point at any place.
   ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
   set_lheader_implementation (&p->lheader, &lrecord_marker);
   p->buffer = 0;
-  p->memind = 0;
+  p->membpos = 0;
   marker_next (p) = 0;
   marker_prev (p) = 0;
   p->insertion_type = 0;
@@ -1618,7 +1618,7 @@ noseeum_make_marker (void)
   NOSEEUM_ALLOCATE_FIXED_TYPE (marker, Lisp_Marker, p);
   set_lheader_implementation (&p->lheader, &lrecord_marker);
   p->buffer = 0;
-  p->memind = 0;
+  p->membpos = 0;
   marker_next (p) = 0;
   marker_prev (p) = 0;
   p->insertion_type = 0;
@@ -1842,7 +1842,7 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&s->lheader, &lrecord_string);
 
   set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
-		   ? xnew_array (Bufbyte, length + 1)
+		   ? xnew_array (Intbyte, length + 1)
 		   : allocate_string_chars_struct (s, fullsize)->chars);
 
   set_string_length (s, length);
@@ -1872,7 +1872,7 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
   verify_string_chars_integrity ();
 #endif
 
-#ifdef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_CHARBPOS
   if (pos >= 0)
     {
       assert (pos <= string_length (s));
@@ -1884,7 +1884,7 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
       if (delta < 0)
 	assert ((-delta) <= string_length (s));
     }
-#endif /* ERROR_CHECK_BUFPOS */
+#endif /* ERROR_CHECK_CHARBPOS */
 
   if (delta == 0)
     /* simplest case: no size change. */
@@ -1912,16 +1912,16 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 
 	  if (delta < 0 && pos >= 0)
 	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
-	  set_string_data (s, (Bufbyte *) xrealloc (string_data (s),
+	  set_string_data (s, (Intbyte *) xrealloc (string_data (s),
 						    string_length (s) + delta + 1));
 	  if (delta > 0 && pos >= 0)
 	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
 	}
       else /* String has been demoted from BIG_STRING. */
 	{
-	  Bufbyte *new_data =
+	  Intbyte *new_data =
 	    allocate_string_chars_struct (s, newfullsize)->chars;
-	  Bufbyte *old_data = string_data (s);
+	  Intbyte *old_data = string_data (s);
 
 	  if (pos >= 0)
 	    {
@@ -1944,7 +1944,7 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	     constraints). */
 	  if (pos >= 0)
 	    {
-	      Bufbyte *addroff = pos + string_data (s);
+	      Intbyte *addroff = pos + string_data (s);
 
 	      memmove (addroff + delta, addroff,
 		       /* +1 due to zero-termination. */
@@ -1953,10 +1953,10 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 	}
       else
 	{
-	  Bufbyte *old_data = string_data (s);
-	  Bufbyte *new_data =
+	  Intbyte *old_data = string_data (s);
+	  Intbyte *new_data =
 	    BIG_STRING_FULLSIZE_P (newfullsize)
-	    ? xnew_array (Bufbyte, string_length (s) + delta + 1)
+	    ? xnew_array (Intbyte, string_length (s) + delta + 1)
 	    : allocate_string_chars_struct (s, newfullsize)->chars;
 
 	  if (pos >= 0)
@@ -2011,7 +2011,7 @@ resize_string (Lisp_String *s, Bytecount pos, Bytecount delta)
 void
 set_string_char (Lisp_String *s, Charcount i, Emchar c)
 {
-  Bufbyte newstr[MAX_EMCHAR_LEN];
+  Intbyte newstr[MAX_EMCHAR_LEN];
   Bytecount bytoff = charcount_to_bytecount (string_data (s), i);
   Bytecount oldlen = charcount_to_bytecount (string_data (s) + bytoff, 1);
   Bytecount newlen = set_charptr_emchar (newstr, c);
@@ -2033,7 +2033,7 @@ LENGTH must be a non-negative integer.
   CHECK_NATNUM (length);
   CHECK_CHAR_COERCE_INT (character);
   {
-    Bufbyte init_str[MAX_EMCHAR_LEN];
+    Intbyte init_str[MAX_EMCHAR_LEN];
     int len = set_charptr_emchar (init_str, XCHAR (character));
     Lisp_Object val = make_uninit_string (len * XINT (length));
 
@@ -2043,11 +2043,11 @@ LENGTH must be a non-negative integer.
     else
       {
 	EMACS_INT i;
-	Bufbyte *ptr = XSTRING_DATA (val);
+	Intbyte *ptr = XSTRING_DATA (val);
 
 	for (i = XINT (length); i; i--)
 	  {
-	    Bufbyte *init_ptr = init_str;
+	    Intbyte *init_ptr = init_str;
 	    switch (len)
 	      {
 	      case 4: *ptr++ = *init_ptr++;
@@ -2066,8 +2066,8 @@ Concatenate all the argument characters and make the result a string.
 */
        (int nargs, Lisp_Object *args))
 {
-  Bufbyte *storage = alloca_array (Bufbyte, nargs * MAX_EMCHAR_LEN);
-  Bufbyte *p = storage;
+  Intbyte *storage = alloca_array (Intbyte, nargs * MAX_EMCHAR_LEN);
+  Intbyte *p = storage;
 
   for (; nargs; nargs--, args++)
     {
@@ -2082,12 +2082,12 @@ Concatenate all the argument characters and make the result a string.
 /* Take some raw memory, which MUST already be in internal format,
    and package it up into a Lisp string. */
 Lisp_Object
-make_string (const Bufbyte *contents, Bytecount length)
+make_string (const Intbyte *contents, Bytecount length)
 {
   Lisp_Object val;
 
   /* Make sure we find out about bad make_string's when they happen */
-#if defined (ERROR_CHECK_BUFPOS) && defined (MULE)
+#if defined (ERROR_CHECK_CHARBPOS) && defined (MULE)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
 
@@ -2110,10 +2110,10 @@ make_ext_string (const Extbyte *contents, EMACS_INT length,
 }
 
 Lisp_Object
-build_string (const CBufbyte *str)
+build_string (const CIntbyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_string ((const Bufbyte *) str, (str ? strlen(str) : 0));
+  return make_string ((const Intbyte *) str, (str ? strlen(str) : 0));
 }
 
 Lisp_Object
@@ -2125,19 +2125,19 @@ build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 }
 
 Lisp_Object
-build_translated_string (const CBufbyte *str)
+build_translated_string (const CIntbyte *str)
 {
   return build_string (GETTEXT (str));
 }
 
 Lisp_Object
-make_string_nocopy (const Bufbyte *contents, Bytecount length)
+make_string_nocopy (const Intbyte *contents, Bytecount length)
 {
   Lisp_String *s;
   Lisp_Object val;
 
   /* Make sure we find out about bad make_string_nocopy's when they happen */
-#if defined (ERROR_CHECK_BUFPOS) && defined (MULE)
+#if defined (ERROR_CHECK_CHARBPOS) && defined (MULE)
   bytecount_to_charcount (contents, length); /* Just for the assertions */
 #endif
 
@@ -2146,7 +2146,7 @@ make_string_nocopy (const Bufbyte *contents, Bytecount length)
   set_lheader_implementation (&s->lheader, &lrecord_string);
   SET_C_READONLY_RECORD_HEADER (&s->lheader);
   s->plist = Qnil;
-  set_string_data (s, (Bufbyte *)contents);
+  set_string_data (s, (Intbyte *)contents);
   set_string_length (s, length);
 
   XSETSTRING (val, s);
@@ -2227,7 +2227,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
 			       mark_lcrecord_list, internal_object_printer,
 			       0, 0, 0, 0, struct lcrecord_list);
 Lisp_Object
-make_lcrecord_list (Element_Count size,
+make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
 {
   struct lcrecord_list *p = alloc_lcrecord_type (struct lcrecord_list,
@@ -2489,7 +2489,7 @@ tick_lcrecord_stats (const struct lrecord_header *h, int free_p)
       const struct lrecord_implementation *implementation =
 	LHEADER_IMPLEMENTATION (h);
 
-      Memory_Count sz = (implementation->size_in_bytes_method ?
+      Bytecount sz = (implementation->size_in_bytes_method ?
 		   implementation->size_in_bytes_method (h) :
 		   implementation->static_size);
       if (free_p)
@@ -3378,7 +3378,7 @@ garbage_collect_1 (void)
 				  GETTEXT ((const char *) gc_default_message));
 	  args[1] = build_string ("...");
 	  whole_msg = Fconcat (2, args);
-	  echo_area_message (f, (Bufbyte *) 0, whole_msg, 0, -1,
+	  echo_area_message (f, (Intbyte *) 0, whole_msg, 0, -1,
 			     Qgarbage_collecting);
 	}
     }
@@ -3396,10 +3396,10 @@ garbage_collect_1 (void)
     {
       /* Static buffer in which we save a copy of the C stack at each GC.  */
       static char *stack_copy;
-      static Memory_Count stack_copy_size;
+      static Bytecount stack_copy_size;
 
       ptrdiff_t stack_diff = &stack_top_variable - stack_bottom;
-      Memory_Count stack_size = (stack_diff > 0 ? stack_diff : -stack_diff);
+      Bytecount stack_size = (stack_diff > 0 ? stack_diff : -stack_diff);
       if (stack_size < MAX_SAVE_STACK)
 	{
 	  if (stack_copy_size < stack_size)
@@ -3424,14 +3424,14 @@ garbage_collect_1 (void)
 
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
-    Element_Count count;
+    Elemcount count;
     for (count = Dynarr_length (staticpros); count; count--)
       mark_object (**p++);
   }
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
-    Element_Count count;
+    Elemcount count;
     for (count = Dynarr_length (staticpros_nodump); count; count--)
       mark_object (**p++);
   }
@@ -3538,7 +3538,7 @@ garbage_collect_1 (void)
 					       gc_default_message));
 	      args[1] = build_string ("... done");
 	      whole_msg = Fconcat (2, args);
-	      echo_area_message (selected_frame (), (Bufbyte *) 0,
+	      echo_area_message (selected_frame (), (Intbyte *) 0,
 				 whole_msg, 0, -1,
 				 Qgarbage_collecting);
 	    }
@@ -3764,14 +3764,14 @@ object_dead_p (Lisp_Object obj)
        blocks are allocated in the minimum required size except
        that some minimum block size is imposed (e.g. 16 bytes). */
 
-Memory_Count
-malloced_storage_size (void *ptr, Memory_Count claimed_size,
+Bytecount
+malloced_storage_size (void *ptr, Bytecount claimed_size,
 		       struct overhead_stats *stats)
 {
-  Memory_Count orig_claimed_size = claimed_size;
+  Bytecount orig_claimed_size = claimed_size;
 
 #ifdef GNU_MALLOC
-  if (claimed_size < (Memory_Count) (2 * sizeof (void *)))
+  if (claimed_size < (Bytecount) (2 * sizeof (void *)))
     claimed_size = 2 * sizeof (void *);
 # ifdef SUNOS_LOCALTIME_BUG
   if (claimed_size < 16)
@@ -3796,7 +3796,7 @@ malloced_storage_size (void *ptr, Memory_Count claimed_size,
         }
       /* We have to come up with some average about the amount of
 	 blocks used. */
-      if ((Memory_Count) (rand () & 4095) < claimed_size)
+      if ((Bytecount) (rand () & 4095) < claimed_size)
 	claimed_size += 3 * sizeof (void *);
     }
   else
@@ -3847,12 +3847,12 @@ malloced_storage_size (void *ptr, Memory_Count claimed_size,
   return claimed_size;
 }
 
-Memory_Count
-fixed_type_block_overhead (Memory_Count size)
+Bytecount
+fixed_type_block_overhead (Bytecount size)
 {
-  Memory_Count per_block = TYPE_ALLOC_SIZE (cons, unsigned char);
-  Memory_Count overhead = 0;
-  Memory_Count storage_size = malloced_storage_size (0, per_block, 0);
+  Bytecount per_block = TYPE_ALLOC_SIZE (cons, unsigned char);
+  Bytecount overhead = 0;
+  Bytecount storage_size = malloced_storage_size (0, per_block, 0);
   while (size >= per_block)
     {
       size -= per_block;

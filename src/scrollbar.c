@@ -375,10 +375,10 @@ release_window_mirror_scrollbars (struct window_mirror *mir)
  * return w->start.  If flag, then return beginning point of line
  * which w->sb_point lies on.
  */
-static Bufpos
+static Charbpos
 scrollbar_point (struct window *w, int flag)
 {
-  Bufpos start_pos, end_pos, sb_pos;
+  Charbpos start_pos, end_pos, sb_pos;
   Lisp_Object buf;
   struct buffer *b;
 
@@ -420,7 +420,7 @@ update_scrollbar_instance (struct window *w, int vertical,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   struct buffer *b = XBUFFER (w->buffer);
-  Bufpos start_pos, end_pos, sb_pos;
+  Charbpos start_pos, end_pos, sb_pos;
   int scrollbar_width  = window_scrollbar_width  (w);
   int scrollbar_height = window_scrollbar_height (w);
 
@@ -665,8 +665,8 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
      accurate.  We know this because either set-window-start or
      recenter was called immediately prior to it being called. */
   Lisp_Object buf;
-  Bufpos start_pos = XINT (Fwindow_start (win));
-  Bufpos ptint = XINT (orig_pt);
+  Charbpos start_pos = XINT (Fwindow_start (win));
+  Charbpos ptint = XINT (orig_pt);
   struct window *w = XWINDOW (win);
   int selected = ((w == XWINDOW (Fselected_window (XFRAME (w->frame)->device)))
 		  ? 1
@@ -692,7 +692,7 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
       else
 	{
 	  /* #### Taken from forward-line. */
-	  Bufpos pos;
+	  Charbpos pos;
 
 	  pos = find_next_newline (XBUFFER (buf),
 				   marker_position (w->pointm[CURRENT_DISP]),
@@ -759,7 +759,7 @@ behavior.
     window_scroll (window, Qnil, -1, ERROR_ME_NOT);
   else
     {
-      Bufpos bufpos;
+      Charbpos charbpos;
       Lisp_Object value = Fcdr (object);
 
       CHECK_INT (value);
@@ -768,9 +768,9 @@ behavior.
 	 rather than the window's point.
 
 	 #### It does?  Why does it take a window argument then? */
-      bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
+      charbpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
 			XINT (value), 0);
-      Fset_window_point (window, make_int (bufpos));
+      Fset_window_point (window, make_int (charbpos));
       Fcenter_to_window_line (Qzero, window);
     }
 
@@ -852,7 +852,7 @@ change the scrollbar behavior.
 */
        (object))
 {
-  Bufpos start_pos;
+  Charbpos start_pos;
   Lisp_Object orig_pt;
   Lisp_Object window = Fcar (object);
   Lisp_Object value = Fcdr (object);

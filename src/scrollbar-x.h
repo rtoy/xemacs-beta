@@ -46,7 +46,7 @@ struct x_scrollbar_data
     defined (LWLIB_SCROLLBARS_ATHENA3D)
   /* Recorded starting position for Motif-like scrollbar drags. */
   int vdrag_orig_value;
-  Bufpos vdrag_orig_window_start;
+  Charbpos vdrag_orig_window_start;
 #endif
 };
 

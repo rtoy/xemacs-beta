@@ -535,8 +535,8 @@ void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 #define LEADING_BYTE_CONTROL_1		0x8F /* represent normal 80-9F */
 #define LEADING_BYTE_LATIN_ISO8859_1	0x81 /* Right half of ISO 8859-1 */
 #define BYTE_C1_P(c) ((unsigned int) ((unsigned int) (c) - 0x80) < 0x20)
-#define BUFBYTE_FIRST_BYTE_P(c) ((c) < 0xA0)
-#define BUFBYTE_LEADING_BYTE_P(c) BYTE_C1_P (c)
+#define INTBYTE_FIRST_BYTE_P(c) ((c) < 0xA0)
+#define INTBYTE_LEADING_BYTE_P(c) BYTE_C1_P (c)
 #endif /* not MULE */
 
 #endif /* INCLUDED_file_coding_h_ */

@@ -734,7 +734,7 @@ struct command_builder
     Lisp_Object first_mungeable_event;
   } munge_me[2];
 
-  Bufbyte *echo_buf;
+  Intbyte *echo_buf;
   Bytecount echo_buf_length;          /* size of echo_buf */
   Bytecount echo_buf_index;           /* index into echo_buf
 				       * -1 before doing echoing for new cmd */

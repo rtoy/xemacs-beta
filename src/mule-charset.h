@@ -401,9 +401,9 @@ enum LEADING_BYTE_OFFICIAL_2
 
 /* Is this a prefix for a private leading byte? */
 
-INLINE_HEADER int LEADING_BYTE_PREFIX_P (Bufbyte lb);
+INLINE_HEADER int LEADING_BYTE_PREFIX_P (Intbyte lb);
 INLINE_HEADER int
-LEADING_BYTE_PREFIX_P (Bufbyte lb)
+LEADING_BYTE_PREFIX_P (Intbyte lb)
 {
   return (lb == PRE_LEADING_BYTE_PRIVATE_1 ||
 	  lb == PRE_LEADING_BYTE_PRIVATE_2);
@@ -438,11 +438,11 @@ LEADING_BYTE_PREFIX_P (Bufbyte lb)
 
 /* Does BYTE represent the first byte of a character? */
 
-#define BUFBYTE_FIRST_BYTE_P(byte) ((byte) < 0xA0)
+#define INTBYTE_FIRST_BYTE_P(byte) ((byte) < 0xA0)
 
 /* Does BYTE represent the first byte of a multi-byte character? */
 
-#define BUFBYTE_LEADING_BYTE_P(byte) BYTE_C1_P (byte)
+#define INTBYTE_LEADING_BYTE_P(byte) BYTE_C1_P (byte)
 
 
 /************************************************************************/
@@ -465,7 +465,7 @@ struct Lisp_Charset
   Lisp_Object ccl_program;
 
   /* Final byte of this character set in ISO2022 designating escape sequence */
-  Bufbyte final;
+  Intbyte final;
 
   /* Number of bytes (1 - 4) required in the internal representation
      for characters in this character set.  This is *not* the
@@ -511,7 +511,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 
 /* Leading byte and id have been regrouped. -- OG */
 #define CHARSET_ID(cs)		 ((cs)->id)
-#define CHARSET_LEADING_BYTE(cs) ((Bufbyte) CHARSET_ID(cs))
+#define CHARSET_LEADING_BYTE(cs) ((Intbyte) CHARSET_ID(cs))
 #define CHARSET_NAME(cs)	 ((cs)->name)
 #define CHARSET_SHORT_NAME(cs)	 ((cs)->short_name)
 #define CHARSET_LONG_NAME(cs)	 ((cs)->long_name)
@@ -557,13 +557,13 @@ struct charset_lookup {
 
   /* Table of charsets indexed by type/final-byte/direction. */
   Lisp_Object charset_by_attributes[4][128][2];
-  Bufbyte next_allocated_1_byte_leading_byte;
-  Bufbyte next_allocated_2_byte_leading_byte;
+  Intbyte next_allocated_1_byte_leading_byte;
+  Intbyte next_allocated_2_byte_leading_byte;
 };
 
-INLINE_HEADER Lisp_Object CHARSET_BY_LEADING_BYTE (Bufbyte lb);
+INLINE_HEADER Lisp_Object CHARSET_BY_LEADING_BYTE (Intbyte lb);
 INLINE_HEADER Lisp_Object
-CHARSET_BY_LEADING_BYTE (Bufbyte lb)
+CHARSET_BY_LEADING_BYTE (Intbyte lb)
 {
   extern struct charset_lookup *chlook;
 
@@ -598,9 +598,9 @@ CHARSET_BY_ATTRIBUTES (int type, unsigned char final, int dir)
 extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
 /* Number of bytes in the string representation of a character. */
-INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE (Bufbyte fb);
+INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE (Intbyte fb);
 INLINE_HEADER int
-REP_BYTES_BY_FIRST_BYTE (Bufbyte fb)
+REP_BYTES_BY_FIRST_BYTE (Intbyte fb)
 {
   type_checking_assert (fb < 0xA0);
   return rep_bytes_by_first_byte[fb];
@@ -679,8 +679,8 @@ REP_BYTES_BY_FIRST_BYTE (Bufbyte fb)
    FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
    */
 
-INLINE_HEADER Bufbyte CHAR_LEADING_BYTE (Emchar c);
-INLINE_HEADER Bufbyte
+INLINE_HEADER Intbyte CHAR_LEADING_BYTE (Emchar c);
+INLINE_HEADER Intbyte
 CHAR_LEADING_BYTE (Emchar c)
 {
   if (CHAR_ASCII_P (c))
@@ -770,7 +770,7 @@ breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
 /*                           Composite characters                       */
 /************************************************************************/
 
-Emchar lookup_composite_char (Bufbyte *str, int len);
+Emchar lookup_composite_char (Intbyte *str, int len);
 Lisp_Object composite_char_string (Emchar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
 
@@ -790,9 +790,9 @@ Emchar Lstream_get_emchar_1 (Lstream *stream, int first_char);
 int Lstream_fput_emchar (Lstream *stream, Emchar ch);
 void Lstream_funget_emchar (Lstream *stream, Emchar ch);
 
-int copy_internal_to_external (const Bufbyte *internal, Bytecount len,
+int copy_internal_to_external (const Intbyte *internal, Bytecount len,
 			       unsigned char *external);
 Bytecount copy_external_to_internal (const unsigned char *external,
-				     int len, Bufbyte *internal);
+				     int len, Intbyte *internal);
 
 #endif /* INCLUDED_mule_charset_h_ */

@@ -330,7 +330,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
   if (err != LDAP_SUCCESS)
     {
-      Bufbyte *interrmess;
+      Intbyte *interrmess;
       EXTERNAL_TO_C_STRING (ldap_err2string (err), interrmess, Qnative);
       signal_error (Qprocess_error, "Failed binding to the server",
 		    build_string (interrmess));
@@ -601,7 +601,7 @@ containing attribute/value string pairs.
   struct berval *bervals;
   int rc;
   int i, j;
-  Element_Count len;
+  Elemcount len;
 
   Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
@@ -622,7 +622,7 @@ containing attribute/value string pairs.
     invalid_operation ("Cannot add void entry", entry);
 
   /* Build the ldap_mods array */
-  len = (Element_Count) XINT (Flength (entry));
+  len = (Elemcount) XINT (Flength (entry));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -637,7 +637,7 @@ containing attribute/value string pairs.
       values = XCDR (current);
       if (CONSP (values))
         {
-	  len = (Element_Count) XINT (Flength (values));
+	  len = (Elemcount) XINT (Flength (values));
           bervals = alloca_array (struct berval, len);
           ldap_mods[i].mod_vals.modv_bvals =
             alloca_array (struct berval *, 1 + len);
@@ -695,7 +695,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
   struct berval *bervals;
   int i, j, rc;
   Lisp_Object mod_op;
-  Element_Count len;
+  Elemcount len;
 
   Lisp_Object current = Qnil;
   Lisp_Object values  = Qnil;
@@ -714,7 +714,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
     return Qnil;
 
   /* Build the ldap_mods array */
-  len = (Element_Count) XINT (Flength (mods));
+  len = (Elemcount) XINT (Flength (mods));
   ldap_mods = alloca_array (LDAPMod, len);
   ldap_mods_ptrs = alloca_array (LDAPMod *, 1 + len);
   i = 0;
@@ -740,7 +740,7 @@ or `replace'. ATTR is the LDAP attribute type to modify.
       CHECK_STRING (XCAR (current));
       LISP_STRING_TO_EXTERNAL (XCAR (current), ldap_mods[i].mod_type, Qnative);
       values = XCDR (current);
-      len = (Element_Count) XINT (Flength (values));
+      len = (Elemcount) XINT (Flength (values));
       bervals = alloca_array (struct berval, len);
       ldap_mods[i].mod_vals.modv_bvals =
         alloca_array (struct berval *, 1 + len);

@@ -68,19 +68,19 @@ typedef int (*maphash_function_t) (Lisp_Object key, Lisp_Object value,
 				   void* extra_arg);
 
 Lisp_Object make_standard_lisp_hash_table (enum hash_table_test test,
-					   Element_Count size,
+					   Elemcount size,
 					   double rehash_size,
 					   double rehash_threshold,
 					   enum hash_table_weakness weakness);
 
 Lisp_Object make_general_lisp_hash_table (hash_table_hash_function_t hash_function,
 					  hash_table_test_function_t test_function,
-					  Element_Count size,
+					  Elemcount size,
 					  double rehash_size,
 					  double rehash_threshold,
 					  enum hash_table_weakness weakness);
 
-Lisp_Object make_lisp_hash_table (Element_Count size,
+Lisp_Object make_lisp_hash_table (Elemcount size,
 				  enum hash_table_weakness weakness,
 				  enum hash_table_test test);
 

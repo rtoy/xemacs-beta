@@ -1480,7 +1480,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
 
 DOESNT_RETURN
-invalid_byte_code (const CBufbyte *reason, Lisp_Object frob)
+invalid_byte_code (const CIntbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_byte_code, reason, frob);
 }
@@ -1600,7 +1600,7 @@ optimize_byte_code (/* in */
 		    int * const varbind_count)
 {
   Bytecount instructions_length = XSTRING_LENGTH (instructions);
-  Element_Count comfy_size = (Element_Count) (2 * instructions_length);
+  Elemcount comfy_size = (Elemcount) (2 * instructions_length);
 
   int * const icounts = alloca_array (int, comfy_size);
   int * icounts_ptr = icounts;
@@ -1616,8 +1616,8 @@ optimize_byte_code (/* in */
 
   Opbyte *program_ptr = program;
 
-  const Bufbyte *ptr = XSTRING_DATA (instructions);
-  const Bufbyte * const end = ptr + instructions_length;
+  const Intbyte *ptr = XSTRING_DATA (instructions);
+  const Intbyte * const end = ptr + instructions_length;
 
   *varbind_count = 0;
 
@@ -1996,7 +1996,7 @@ compiled_function_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 		     f2->doc_and_interactive, depth + 1));
 }
 
-static Hash_Code
+static Hashcode
 compiled_function_hash (Lisp_Object obj, int depth)
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
@@ -2054,9 +2054,9 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     /* Invert action performed by optimize_byte_code() */
     Lisp_Opaque *opaque = XOPAQUE (f->instructions);
 
-    Bufbyte * const buffer =
-      alloca_array (Bufbyte, OPAQUE_SIZE (opaque) * MAX_EMCHAR_LEN);
-    Bufbyte *bp = buffer;
+    Intbyte * const buffer =
+      alloca_array (Intbyte, OPAQUE_SIZE (opaque) * MAX_EMCHAR_LEN);
+    Intbyte *bp = buffer;
 
     const Opbyte * const program = (const Opbyte *) OPAQUE_DATA (opaque);
     const Opbyte *program_ptr = program;

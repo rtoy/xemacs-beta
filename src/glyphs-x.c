@@ -506,7 +506,7 @@ x_image_instance_equal (Lisp_Image_Instance *p1,
   return 1;
 }
 
-static Hash_Code
+static Hashcode
 x_image_instance_hash (Lisp_Image_Instance *p, int depth)
 {
   switch (IMAGE_INSTANCE_TYPE (p))
@@ -704,7 +704,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   /* Get the data while doing the conversion */
   while (1)
     {
-      Lstream_Data_Count size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+      Bytecount size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
       if (!size_in_bytes)
 	break;
       /* It does seem the flushes are necessary... */

@@ -136,18 +136,18 @@ static HMENU top_level_menu;
  * of not hitting an error, maxlen should be >= 2*len + 3.
  */
 Bytecount
-mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
+mswindows_translate_menu_or_dialog_item (Intbyte *item, Bytecount len,
 					 Bytecount maxlen, Emchar *accel,
 					 Lisp_Object error_name)
 {
-  Bufbyte *ptr;
+  Intbyte *ptr;
 
   if (accel)
     *accel = '\0';
 
   /* Escape '&' as '&&' */
   ptr = item;
-  while ((ptr = (Bufbyte *) memchr (ptr, '&', len - (ptr - item))) != NULL)
+  while ((ptr = (Intbyte *) memchr (ptr, '&', len - (ptr - item))) != NULL)
     {
       if (len + 2 > maxlen)
 	invalid_argument ("Menu item produces too long displayable string",
@@ -160,7 +160,7 @@ mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
   /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
      and `%%' with `%'. */
   ptr = item;
-  while ((ptr = (Bufbyte *) memchr (ptr, '%', len - (ptr - item))) != NULL)
+  while ((ptr = (Intbyte *) memchr (ptr, '%', len - (ptr - item))) != NULL)
     {
       if (*(ptr + 1) == '_')
 	{
@@ -214,7 +214,7 @@ mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
  * "Left Flush\tRight Flush"
  */
 
-/* #### This is junk.  Need correct handling of sizes.  Use a Bufbyte_dynarr,
+/* #### This is junk.  Need correct handling of sizes.  Use a Intbyte_dynarr,
    not a static buffer. */
 static char*
 displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
@@ -230,7 +230,7 @@ displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
   /* Left flush part of the string */
   ll = gui_item_display_flush_left (gui_item, buf, MAX_MENUITEM_LENGTH);
 
-  ll = mswindows_translate_menu_or_dialog_item ((Bufbyte *) buf, ll,
+  ll = mswindows_translate_menu_or_dialog_item ((Intbyte *) buf, ll,
 					  MAX_MENUITEM_LENGTH, accel,
 					  XGUI_ITEM (gui_item)->name);
 

@@ -1,3 +1,13 @@
+2001-09-19  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (USAGE_ERROR):
+	* configure.in (CANONICALIZE_PATH):
+	* configure.in (XE_COMPUTE_RUNPATH):
+
+	The great integral types renaming.
+
+	Please see the 2001-09-19 entry in src/ChangeLog for the full details.
+
 2001-09-17  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (TAB):

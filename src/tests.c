@@ -40,10 +40,10 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
 */
        ())
 {
-  void *ptr; Memory_Count len;
+  void *ptr; Bytecount len;
   Lisp_Object string, opaque;
 
-  Bufbyte int_foo[] = "\n\nfoo\nbar";
+  Intbyte int_foo[] = "\n\nfoo\nbar";
   Extbyte ext_unix[]= "\n\nfoo\nbar";
 
   Extbyte ext_dos[] = "\r\n\r\nfoo\r\nbar";
@@ -52,8 +52,8 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   Lisp_Object string_foo = make_string (int_foo, sizeof (int_foo) - 1);
 
   Extbyte ext_latin[]  = "f\372b\343\340";
-  Bufbyte int_latin1[] = "f\201\372b\201\343\201\340";
-  Bufbyte int_latin2[] = "f\202\372b\202\343\202\340";
+  Intbyte int_latin1[] = "f\201\372b\201\343\201\340";
+  Intbyte int_latin2[] = "f\202\372b\202\343\202\340";
 #ifdef MULE
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
   Extbyte ext_tilde[]  = "f~b~~";

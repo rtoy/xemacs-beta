@@ -115,7 +115,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 
   if (STRINGP (desc))
     {
-      Bufbyte *string_chars = XSTRING_DATA (desc);
+      Intbyte *string_chars = XSTRING_DATA (desc);
       wv->type = (separator_string_p (string_chars) ? SEPARATOR_TYPE :
 		  TEXT_TYPE);
       if (wv->type == SEPARATOR_TYPE)
@@ -251,7 +251,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      title_wv->enabled = 1;
 	      title_wv->next = sep_wv;
 	      sep_wv->type = SEPARATOR_TYPE;
-	      sep_wv->value = menu_separator_style_and_to_external ((Bufbyte *) "==");
+	      sep_wv->value = menu_separator_style_and_to_external ((Intbyte *) "==");
 	      sep_wv->next = 0;
 
 	      wv->contents = title_wv;
@@ -1164,7 +1164,7 @@ menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
       args[1] = errordata;
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
-	 emacs_doprnt_string_lisp ((const Bufbyte *) "%s: %s",
+	 emacs_doprnt_string_lisp ((const Intbyte *) "%s: %s",
 				   Qnil, -1, 2, args));
     }
 

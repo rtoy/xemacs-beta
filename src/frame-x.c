@@ -651,7 +651,7 @@ x_frame_properties (struct frame *f)
    individual properties. */
 
 static void
-x_set_frame_text_value (struct frame *f, Bufbyte *value,
+x_set_frame_text_value (struct frame *f, Intbyte *value,
 			String Xt_resource_name,
 			String Xt_resource_encoding_name)
 {
@@ -660,7 +660,7 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   String old_XtValue = NULL;
 
 #ifdef MULE
-  Bufbyte *ptr;
+  Intbyte *ptr;
   /* Optimize for common ASCII case */
   for (ptr = value; *ptr; ptr++)
     if (!BYTE_ASCII_P (*ptr))
@@ -685,13 +685,13 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
 }
 
 static void
-x_set_title_from_bufbyte (struct frame *f, Bufbyte *name)
+x_set_title_from_intbyte (struct frame *f, Intbyte *name)
 {
   x_set_frame_text_value (f, name, XtNtitle, XtNtitleEncoding);
 }
 
 static void
-x_set_icon_name_from_bufbyte (struct frame *f, Bufbyte *name)
+x_set_icon_name_from_intbyte (struct frame *f, Intbyte *name)
 {
   x_set_frame_text_value (f, name, XtNiconName, XtNiconNameEncoding);
 }
@@ -773,7 +773,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (STRINGP (val))
 	    {
 	      const Extbyte *extval;
-	      Extcount extvallen;
+	      Bytecount extvallen;
 
 	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
 				  ALLOCA, (extval, extvallen),
@@ -1264,7 +1264,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  filePath = transferInfo->dropData->data.files[ii];
 	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
           /* #### Mule-izing required */
-	  l_data = Fcons (make_string ((Bufbyte* )hurl,
+	  l_data = Fcons (make_string ((Intbyte* )hurl,
 				       strlen (hurl)),
 			  l_data);
 	  xfree (hurl);
@@ -1286,11 +1286,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  /* let us forget this name thing for now... */
  	  /* filePath = transferInfo->dropData->data.buffers[ii].name;
 	     path = (filePath == NULL) ? Qnil
-	     : make_string ((Bufbyte *)filePath, strlen (filePath)); */
+	     : make_string ((Intbyte *)filePath, strlen (filePath)); */
 	  /* what, if the data is no text, and how can I tell it? */
-	  l_data = Fcons ( list3 ( list1 ( make_string ((Bufbyte *)"text/plain", 10) ),
-				   make_string ((Bufbyte *)"8bit", 4),
-				   make_string ((Bufbyte *)transferInfo->dropData->data.buffers[ii].bp,
+	  l_data = Fcons ( list3 ( list1 ( make_string ((Intbyte *)"text/plain", 10) ),
+				   make_string ((Intbyte *)"8bit", 4),
+				   make_string ((Intbyte *)transferInfo->dropData->data.buffers[ii].bp,
 						transferInfo->dropData->data.buffers[ii].size) ),
 			   l_data );
  	}
@@ -2819,8 +2819,8 @@ console_type_create_frame_x (void)
   CONSOLE_HAS_METHOD (x, internal_frame_property_p);
   CONSOLE_HAS_METHOD (x, frame_properties);
   CONSOLE_HAS_METHOD (x, set_frame_properties);
-  CONSOLE_HAS_METHOD (x, set_title_from_bufbyte);
-  CONSOLE_HAS_METHOD (x, set_icon_name_from_bufbyte);
+  CONSOLE_HAS_METHOD (x, set_title_from_intbyte);
+  CONSOLE_HAS_METHOD (x, set_icon_name_from_intbyte);
   CONSOLE_HAS_METHOD (x, frame_visible_p);
   CONSOLE_HAS_METHOD (x, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (x, frame_iconified_p);

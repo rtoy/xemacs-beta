@@ -77,10 +77,10 @@ struct block_internal
 };
 
 void *
-Blocktype_newf (Memory_Count elsize)
+Blocktype_newf (Bytecount elsize)
 {
   Blocktype *b = xnew (Blocktype);
-  b->elsize = max (elsize, (Memory_Count) sizeof (void *));
+  b->elsize = max (elsize, (Bytecount) sizeof (void *));
   b->free = 0;
   return (void *) b;
 }

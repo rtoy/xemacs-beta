@@ -121,7 +121,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
     }
   /* Match abbreviation string against buffer text.  */
   {
-    Bufbyte *ptr = string_data (abbrev);
+    Intbyte *ptr = string_data (abbrev);
     Charcount idx;
 
     for (idx = 0; idx < abbrev_length; idx++)
@@ -178,8 +178,8 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
 static Lisp_Symbol *
 abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 {
-  Bufpos wordstart, wordend;
-  Bufbyte *word, *p;
+  Charbpos wordstart, wordend;
+  Intbyte *word, *p;
   Bytecount idx;
   Lisp_Object lookup;
 
@@ -204,7 +204,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
     }
   else
     {
-      Bufpos point = BUF_PT (buf);
+      Charbpos point = BUF_PT (buf);
 
       wordstart = scan_words (buf, point, -1);
       if (!wordstart)
@@ -227,7 +227,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
   if (wordend <= wordstart)
     return 0;
 
-  p = word = (Bufbyte *) alloca (MAX_EMCHAR_LEN * (wordend - wordstart));
+  p = word = (Intbyte *) alloca (MAX_EMCHAR_LEN * (wordend - wordstart));
   for (idx = wordstart; idx < wordend; idx++)
     {
       Emchar c = BUF_FETCH_CHAR (buf, idx);
@@ -246,12 +246,12 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 static int
 obarray_has_blank_p (Lisp_Object obarray)
 {
-  return !ZEROP (oblookup (obarray, (Bufbyte *)" ", 1));
+  return !ZEROP (oblookup (obarray, (Intbyte *)" ", 1));
 }
 
 /* Analyze case in the buffer substring, and report it.  */
 static void
-abbrev_count_case (struct buffer *buf, Bufpos pos, Charcount length,
+abbrev_count_case (struct buffer *buf, Charbpos pos, Charcount length,
 		   int *lccount, int *uccount)
 {
   *lccount = *uccount = 0;
@@ -279,8 +279,8 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   struct buffer *buf = current_buffer;
   int oldmodiff = BUF_MODIFF (buf);
   Lisp_Object pre_modiff_p;
-  Bufpos point;			/* position of point */
-  Bufpos abbrev_start;		/* position of abbreviation beginning */
+  Charbpos point;			/* position of point */
+  Charbpos abbrev_start;		/* position of abbreviation beginning */
 
   Lisp_Symbol *(*fun) (struct buffer *, Lisp_Object);
 
@@ -382,7 +382,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   else if (uccount)
     {
       /* Abbrev included some caps.  Cap first initial of expansion */
-      Bufpos pos = abbrev_start;
+      Charbpos pos = abbrev_start;
       /* Find the initial.  */
       while (pos < point
 	     && !WORD_SYNTAX_P (XCHAR_TABLE (buf->mirror_syntax_table),

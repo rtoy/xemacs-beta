@@ -341,7 +341,7 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
   /* Find the window to scroll */
   {
     int mene, _mene, tekel, upharsin;
-    Bufpos mens, sana;
+    Charbpos mens, sana;
     Charcount in;
     Lisp_Object corpore, sano;
     struct window *needle_in_haystack;

@@ -52,14 +52,14 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
-inline static Memory_Count
-aligned_sizeof_opaque (Memory_Count opaque_size)
+inline static Bytecount
+aligned_sizeof_opaque (Bytecount opaque_size)
 {
   return ALIGN_SIZE (offsetof (Lisp_Opaque, data) + opaque_size,
 		     ALIGNOF (max_align_t));
 }
 
-static Memory_Count
+static Bytecount
 sizeof_opaque (const void *header)
 {
   return aligned_sizeof_opaque (((const Lisp_Opaque *) header)->size);
@@ -70,7 +70,7 @@ sizeof_opaque (const void *header)
    If DATA is OPAQUE_UNINIT, the object's data is uninitialized.
    Else the object's data is initialized by copying from DATA. */
 Lisp_Object
-make_opaque (const void *data, Memory_Count size)
+make_opaque (const void *data, Bytecount size)
 {
   Lisp_Opaque *p = (Lisp_Opaque *)
     alloc_lcrecord (aligned_sizeof_opaque (size), &lrecord_opaque);
@@ -95,7 +95,7 @@ make_opaque (const void *data, Memory_Count size)
 static int
 equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  Memory_Count size;
+  Bytecount size;
   return ((size = XOPAQUE_SIZE (obj1)) == XOPAQUE_SIZE (obj2) &&
 	  !memcmp (XOPAQUE_DATA (obj1), XOPAQUE_DATA (obj2), size));
 }

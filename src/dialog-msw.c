@@ -253,7 +253,7 @@ push_lisp_string_as_unicode (unsigned_char_dynarr* dynarr, Lisp_Object string)
 /* Helper function which converts the supplied string STRING into Unicode and
    pushes it at the end of DYNARR */
 static void
-push_bufbyte_string_as_unicode (unsigned_char_dynarr* dynarr, Bufbyte *string,
+push_intbyte_string_as_unicode (unsigned_char_dynarr* dynarr, Intbyte *string,
 				Bytecount len)
 {
   Extbyte *mbcs_string;
@@ -474,7 +474,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 
   /* Determine the final width layout */
   {
-    Bufbyte *p = XSTRING_DATA (question);
+    Intbyte *p = XSTRING_DATA (question);
     Charcount string_max = 0, this_length = 0;
     while (1)
       {
@@ -504,7 +504,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
   
   /* Now calculate the height for the text control */
   {
-    Bufbyte *p = XSTRING_DATA (question);
+    Intbyte *p = XSTRING_DATA (question);
     Charcount break_at = text_width / X_DLU_PER_CHAR;
     Charcount char_pos = 0;
     int num_lines = 1;
@@ -612,7 +612,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	{
 	  Lisp_Object ctext = pgui_item->name;
 	  Emchar accel_unused;
-	  Bufbyte *trans = (Bufbyte *) alloca (2 * XSTRING_LENGTH (ctext) + 3);
+	  Intbyte *trans = (Intbyte *) alloca (2 * XSTRING_LENGTH (ctext) + 3);
 	  Bytecount translen;
 
 	  memcpy (trans, XSTRING_DATA (ctext), XSTRING_LENGTH (ctext) + 1);
@@ -622,7 +622,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 					       2 * XSTRING_LENGTH (ctext) + 3,
 					       &accel_unused,
 					       ctext);
-	  push_bufbyte_string_as_unicode (template_, trans, translen);
+	  push_intbyte_string_as_unicode (template_, trans, translen);
 	}
 
 	/* Specify 0 length creation data. */

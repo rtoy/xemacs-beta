@@ -217,7 +217,7 @@ static int
 tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 			      Lisp_Object device, Error_Behavior errb)
 {
-  Bufbyte *str = XSTRING_DATA (name);
+  Intbyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;
 
   if (strncmp ((const char *) str, "normal", 6))
@@ -284,10 +284,10 @@ tty_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
 static int
 tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			       const Bufbyte *nonreloc, Lisp_Object reloc,
+			       const Intbyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length)
 {
-  const Bufbyte *the_nonreloc = nonreloc;
+  const Intbyte *the_nonreloc = nonreloc;
 
   if (!the_nonreloc)
     the_nonreloc = XSTRING_DATA (reloc);
@@ -296,7 +296,7 @@ tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 
   if (UNBOUNDP (charset))
     return !memchr (the_nonreloc, '/', length);
-  the_nonreloc = (const Bufbyte *) memchr (the_nonreloc, '/', length);
+  the_nonreloc = (const Intbyte *) memchr (the_nonreloc, '/', length);
   if (!the_nonreloc)
     return 0;
   the_nonreloc++;
@@ -313,7 +313,7 @@ static Lisp_Object
 tty_find_charset_font (Lisp_Object device, Lisp_Object font,
 		       Lisp_Object charset)
 {
-  Bufbyte *fontname = XSTRING_DATA (font);
+  Intbyte *fontname = XSTRING_DATA (font);
 
   if (strchr ((const char *) fontname, '/'))
     {

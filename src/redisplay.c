@@ -70,10 +70,10 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HAVE_TTY */
 
 /* Note: We have to be careful throughout this code to properly handle
-   and differentiate between Bufbytes and Emchars.
+   and differentiate between Intbytes and Emchars.
 
-   Since strings are generally composed of Bufbytes, I've taken the tack
-   that any contiguous set of Bufbytes is called a "string", while
+   Since strings are generally composed of Intbytes, I've taken the tack
+   that any contiguous set of Intbytes is called a "string", while
    any contiguous set of Emchars is called an "array". */
 
 /* Return value to indicate a failure by an add_*_rune routine to add
@@ -93,7 +93,7 @@ Boston, MA 02111-1307, USA.  */
 /* The following structures are completely private to redisplay.c so
    we put them here instead of in a header file, for modularity. */
 
-/* NOTE: Bytinds not Bufpos's in this structure. */
+/* NOTE: Bytebposs not Charbpos's in this structure. */
 
 typedef struct position_redisplay_data_type
 {
@@ -121,8 +121,8 @@ typedef struct position_redisplay_data_type
   int font_is_bogus;	/* If true, it means we couldn't instantiate
 			   the font for this charset, so we substitute
 			   ~'s from the ASCII charset. */
-  Bytind bi_bufpos;
-  Bytind bi_endpos;
+  Bytebpos bi_charbpos;
+  Bytebpos bi_endpos;
   int pixpos;
   int max_pixpos;
   int blank_width;	/* Width of the blank that is to be added.
@@ -136,7 +136,7 @@ typedef struct position_redisplay_data_type
 			   the non-printing char '\n', which is stuck
 			   in the output routines with its width being
 			   BLANK_WIDTH. */
-  Bytind bi_cursor_bufpos;/* This stores the buffer position of the cursor. */
+  Bytebpos bi_cursor_charbpos;/* This stores the buffer position of the cursor. */
   unsigned int cursor_type :3;
   int cursor_x;		/* rune block cursor is at */
   int start_col;	/* Number of character columns (each column has
@@ -145,7 +145,7 @@ typedef struct position_redisplay_data_type
 			   scrolling, where a certain number of columns
 			   (those off the left side of the screen) need
 			   to be skipped before anything is displayed. */
-  Bytind bi_start_col_enabled;
+  Bytebpos bi_start_col_enabled;
   int start_col_xoffset;	/* Number of pixels that still need to
 			   be skipped.  This is used for
 			   horizontal scrolling of glyphs, where we want
@@ -196,12 +196,12 @@ enum prop_type
 };
 
 /* Data that should be propagated to the next line.  Either a single
-   Emchar or a string of Bufbyte's.
+   Emchar or a string of Intbyte's.
 
    The actual data that is propagated ends up as a Dynarr of these
    blocks.
 
-   #### It's unclean that both Emchars and Bufbytes are here.
+   #### It's unclean that both Emchars and Intbytes are here.
    */
 
 typedef struct prop_block prop_block;
@@ -213,14 +213,14 @@ struct prop_block
   {
     struct
     {
-      Bufbyte *str;
+      Intbyte *str;
       Bytecount len; /* length of the string. */
     } p_string;
 
     struct
     {
       Emchar ch;
-      Bytind bi_cursor_bufpos; /* NOTE: is in Bytinds */
+      Bytebpos bi_cursor_charbpos; /* NOTE: is in Bytebposs */
       unsigned int cursor_type :3;
     } p_char;
 
@@ -249,8 +249,8 @@ static prop_block_dynarr *add_glyph_rune (pos_data *data,
 					  struct glyph_block *gb,
 					  int pos_type, int allow_cursor,
 					  struct glyph_cachel *cachel);
-static Bytind create_text_block (struct window *w, struct display_line *dl,
-				 Bytind bi_start_pos, prop_block_dynarr **prop,
+static Bytebpos create_text_block (struct window *w, struct display_line *dl,
+				 Bytebpos bi_start_pos, prop_block_dynarr **prop,
 				 int type);
 static int create_overlay_glyph_block (struct window *w,
 				       struct display_line *dl);
@@ -262,9 +262,9 @@ static void create_right_glyph_block (struct window *w,
 static void redisplay_windows (Lisp_Object window, int skip_selected);
 static void decode_mode_spec (struct window *w, Emchar spec, int type);
 static void free_display_line (struct display_line *dl);
-static void update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
-				     Bufpos point, int no_regen);
-static int point_visible (struct window *w, Bufpos point, int type);
+static void update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
+				     Charbpos point, int no_regen);
+static int point_visible (struct window *w, Charbpos point, int type);
 
 /* This used to be 10 but 30 seems to give much better performance. */
 #define INIT_MAX_PREEMPTS	30
@@ -304,7 +304,7 @@ Fixnum cache_adjustment;
 
 /* This holds a string representing the text corresponding to a single
    modeline % spec. */
-static Bufbyte_dynarr *mode_spec_bufbyte_string;
+static Intbyte_dynarr *mode_spec_intbyte_string;
 
 int in_display;		/* 1 if in redisplay.  */
 
@@ -494,7 +494,7 @@ static Emchar_dynarr *rtw_emchar_dynarr;
 
 int
 redisplay_text_width_string (struct window *w, int findex,
-			     Bufbyte *nonreloc, Lisp_Object reloc,
+			     Intbyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount len)
 {
   if (!rtw_emchar_dynarr)
@@ -504,7 +504,7 @@ redisplay_text_width_string (struct window *w, int findex,
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
-  convert_bufbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
+  convert_intbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
   return redisplay_text_width_emchar_string
     (w, findex, Dynarr_atp (rtw_emchar_dynarr, 0),
      Dynarr_length (rtw_emchar_dynarr));
@@ -512,7 +512,7 @@ redisplay_text_width_string (struct window *w, int findex,
 
 int
 redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
-				   Bufbyte *nonreloc, Lisp_Object reloc,
+				   Intbyte *nonreloc, Lisp_Object reloc,
 				   Bytecount offset, Bytecount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
@@ -526,8 +526,8 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
-  convert_bufbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
-  find_charsets_in_bufbyte_string (charsets, nonreloc, len);
+  convert_intbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
+  find_charsets_in_intbyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
   XSETFRAME (frame, f);
@@ -687,12 +687,12 @@ calculate_display_line_boundaries (struct window *w, int modeline)
    when the contents of the line reach the right boundary of the given
    window. */
 
-static Bufpos
+static Charbpos
 generate_display_line (struct window *w, struct display_line *dl, int bounds,
-		       Bufpos start_pos, prop_block_dynarr **prop,
+		       Charbpos start_pos, prop_block_dynarr **prop,
 		       int type)
 {
-  Bufpos ret_bufpos;
+  Charbpos ret_charbpos;
   int overlay_width;
   struct buffer *b = XBUFFER (WINDOW_BUFFER (w));
 
@@ -720,17 +720,17 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
   /* Create a display block for the text region of the line. */
   {
     /* #### urk urk urk!!! Chuck fix this shit! */
-    Bytind hacked_up_bytind =
-      create_text_block (w, dl, bufpos_to_bytind (b, start_pos),
+    Bytebpos hacked_up_bytebpos =
+      create_text_block (w, dl, charbpos_to_bytebpos (b, start_pos),
 			 prop, type);
-    if (hacked_up_bytind > BI_BUF_ZV (b))
-      ret_bufpos = BUF_ZV (b) + 1;
+    if (hacked_up_bytebpos > BI_BUF_ZV (b))
+      ret_charbpos = BUF_ZV (b) + 1;
     else
-      ret_bufpos = bytind_to_bufpos (b, hacked_up_bytind);
+      ret_charbpos = bytebpos_to_charbpos (b, hacked_up_bytebpos);
   }
-  dl->bufpos = start_pos;
-  if (dl->end_bufpos < dl->bufpos)
-    dl->end_bufpos = dl->bufpos;
+  dl->charbpos = start_pos;
+  if (dl->end_charbpos < dl->charbpos)
+    dl->end_charbpos = dl->charbpos;
 
   if (MARKERP (Voverlay_arrow_position)
       && EQ (w->buffer, Fmarker_buffer (Voverlay_arrow_position))
@@ -756,9 +756,9 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
   /* In the future additional types of display blocks may be generated
      here. */
 
-  w->last_redisplay_pos = ret_bufpos;
+  w->last_redisplay_pos = ret_charbpos;
 
-  return ret_bufpos;
+  return ret_charbpos;
 }
 
 /* Adds an hscroll glyph to a display block.  If this is called, then
@@ -774,23 +774,23 @@ add_hscroll_rune (pos_data *data)
 {
   struct glyph_block gb;
   prop_block_dynarr *retval;
-  Bytind bi_old_cursor_bufpos = data->bi_cursor_bufpos;
+  Bytebpos bi_old_cursor_charbpos = data->bi_cursor_charbpos;
   int old_cursor_type = data->cursor_type;
-  Bytind bi_old_bufpos = data->bi_bufpos;
+  Bytebpos bi_old_charbpos = data->bi_charbpos;
 
   if (data->cursor_type == CURSOR_ON
-      && data->bi_cursor_bufpos >= data->bi_start_col_enabled
-      && data->bi_cursor_bufpos <= data->bi_bufpos)
+      && data->bi_cursor_charbpos >= data->bi_start_col_enabled
+      && data->bi_cursor_charbpos <= data->bi_charbpos)
     {
-      data->bi_cursor_bufpos = data->bi_start_col_enabled;
+      data->bi_cursor_charbpos = data->bi_start_col_enabled;
     }
   else
     {
       data->cursor_type = NO_CURSOR;
     }
 
-  data->bi_endpos = data->bi_bufpos;
-  data->bi_bufpos = data->bi_start_col_enabled;
+  data->bi_endpos = data->bi_charbpos;
+  data->bi_charbpos = data->bi_start_col_enabled;
 
   gb.extent = Qnil;
   gb.glyph = Vhscroll_glyph;
@@ -803,9 +803,9 @@ add_hscroll_rune (pos_data *data)
       data->pixpos - oldpixpos - space_width (XWINDOW (data->window));
   }
   data->bi_endpos = 0;
-  data->bi_cursor_bufpos = bi_old_cursor_bufpos;
+  data->bi_cursor_charbpos = bi_old_cursor_charbpos;
   data->cursor_type = old_cursor_type;
-  data->bi_bufpos = bi_old_bufpos;
+  data->bi_charbpos = bi_old_charbpos;
 
   data->bi_start_col_enabled = 0;
   return retval;
@@ -903,28 +903,28 @@ add_emchar_rune (pos_data *data)
   crb->findex = data->findex;
   crb->xpos = data->pixpos;
   crb->width = width;
-  if (data->bi_bufpos)
+  if (data->bi_charbpos)
     {
       if (NILP (data->string))
-	crb->bufpos =
-	  bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
-			    data->bi_bufpos);
+	crb->charbpos =
+	  bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
+			    data->bi_charbpos);
       else
-	crb->bufpos =
-	  bytecount_to_charcount (XSTRING_DATA (data->string), data->bi_bufpos);
+	crb->charbpos =
+	  bytecount_to_charcount (XSTRING_DATA (data->string), data->bi_charbpos);
     }
   else if (data->is_modeline)
-    crb->bufpos = data->modeline_charpos;
+    crb->charbpos = data->modeline_charpos;
   else
     /* Text but not in buffer */
-    crb->bufpos = 0;
+    crb->charbpos = 0;
   crb->type = RUNE_CHAR;
   crb->object.chr.ch = data->font_is_bogus ? '~' : data->ch;
   crb->endpos = 0;
 
   if (data->cursor_type == CURSOR_ON)
     {
-      if (data->bi_bufpos == data->bi_cursor_bufpos)
+      if (data->bi_charbpos == data->bi_cursor_charbpos)
 	{
 	  crb->cursor_type = CURSOR_ON;
 	  data->cursor_x = Dynarr_length (data->db->runes);
@@ -958,10 +958,10 @@ add_emchar_rune (pos_data *data)
    unless NO_PROP is non-zero. */
 
 static prop_block_dynarr *
-add_bufbyte_string_runes (pos_data *data, Bufbyte *c_string,
+add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
 			  Bytecount c_length, int no_prop)
 {
-  Bufbyte *pos, *end = c_string + c_length;
+  Intbyte *pos, *end = c_string + c_length;
   prop_block_dynarr *prop;
 
   /* #### This function is too simplistic.  It needs to do the same
@@ -972,7 +972,7 @@ add_bufbyte_string_runes (pos_data *data, Bufbyte *c_string,
 
   for (pos = c_string; pos < end;)
     {
-      Bufbyte *old_pos = pos;
+      Intbyte *old_pos = pos;
 
       data->ch = charptr_emchar (pos);
 
@@ -989,7 +989,7 @@ add_bufbyte_string_runes (pos_data *data, Bufbyte *c_string,
 	      prop = Dynarr_new (prop_block);
 
 	      pb.type = PROP_STRING;
-	      pb.data.p_string.str = xnew_array (Bufbyte, len);
+	      pb.data.p_string.str = xnew_array (Intbyte, len);
 	      strncpy ((char *) pb.data.p_string.str, (char *) pos, len);
 	      pb.data.p_string.len = len;
 
@@ -1056,19 +1056,19 @@ add_blank_rune (pos_data *data, struct window *w, int char_tab_width)
   rb.findex = data->findex;
   rb.xpos = data->pixpos;
   rb.width = data->blank_width;
-  if (data->bi_bufpos)
-    rb.bufpos =
-      bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
-			data->bi_bufpos);
+  if (data->bi_charbpos)
+    rb.charbpos =
+      bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
+			data->bi_charbpos);
   else
     /* #### and this is really correct too? */
-    rb.bufpos = 0;
+    rb.charbpos = 0;
   rb.endpos = 0;
   rb.type = RUNE_BLANK;
 
   if (data->cursor_type == CURSOR_ON)
     {
-      if (data->bi_bufpos == data->bi_cursor_bufpos)
+      if (data->bi_charbpos == data->bi_cursor_charbpos)
 	{
 	  rb.cursor_type = CURSOR_ON;
 	  data->cursor_x = Dynarr_length (data->db->runes);
@@ -1258,7 +1258,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 
   if (STRINGP (entry))
     {
-      prop = add_bufbyte_string_runes (data,
+      prop = add_intbyte_string_runes (data,
 				       XSTRING_DATA   (entry),
 				       XSTRING_LENGTH (entry),
 				       0);
@@ -1293,10 +1293,10 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	  && STRINGP (XCAR (XCDR (entry))))
 	{
 	  Lisp_Object format = XCAR (XCDR (entry));
-	  Bytind len = XSTRING_LENGTH (format);
-	  Bufbyte *src = XSTRING_DATA (format), *end = src + len;
-	  Bufbyte *result = alloca_array (Bufbyte, len);
-	  Bufbyte *dst = result;
+	  Bytebpos len = XSTRING_LENGTH (format);
+	  Intbyte *src = XSTRING_DATA (format), *end = src + len;
+	  Intbyte *result = alloca_array (Intbyte, len);
+	  Intbyte *dst = result;
 
 	  while (src < end)
 	    {
@@ -1320,7 +1320,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		    }
 		}
 	    }
-	  prop = add_bufbyte_string_runes (data, result, dst - result, 0);
+	  prop = add_intbyte_string_runes (data, result, dst - result, 0);
 	}
     }
 
@@ -1381,7 +1381,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
      record? */
   int elt;
   prop_block_dynarr *add_failed;
-  Bytind bi_old_cursor_bufpos = data->bi_cursor_bufpos;
+  Bytebpos bi_old_cursor_charbpos = data->bi_cursor_charbpos;
   int old_cursor_type = data->cursor_type;
 
   for (elt = 0; elt < Dynarr_length (*prop); elt++)
@@ -1392,7 +1392,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	{
 	case PROP_CHAR:
 	  data->ch = pb->data.p_char.ch;
-	  data->bi_cursor_bufpos = pb->data.p_char.bi_cursor_bufpos;
+	  data->bi_cursor_charbpos = pb->data.p_char.bi_cursor_charbpos;
 	  data->cursor_type = pb->data.p_char.cursor_type;
 	  add_failed = add_emchar_rune (data);
 
@@ -1403,16 +1403,16 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  if (pb->data.p_string.str)
 	    xfree (pb->data.p_string.str);
 	  /* #### bogus bogus -- this doesn't do anything!
-	     Should probably call add_bufbyte_string_runes(),
+	     Should probably call add_intbyte_string_runes(),
 	     once that function is fixed. */
 	  break;
 	case PROP_MINIBUF_PROMPT:
 	  {
 	    face_index old_findex = data->findex;
-	    Bytind bi_old_bufpos = data->bi_bufpos;
+	    Bytebpos bi_old_charbpos = data->bi_charbpos;
 
 	    data->findex = DEFAULT_INDEX;
-	    data->bi_bufpos = 0;
+	    data->bi_charbpos = 0;
 	    data->cursor_type = NO_CURSOR;
 
 	    while (pb->data.p_string.len > 0)
@@ -1423,13 +1423,13 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 		if (add_failed)
 		  {
 		    data->findex = old_findex;
-		    data->bi_bufpos = bi_old_bufpos;
+		    data->bi_charbpos = bi_old_charbpos;
 		    goto oops_no_more_space;
 		  }
 		else
 		  {
 		    /* Complicated equivalent of ptr++, len-- */
-		    Bufbyte *oldpos = pb->data.p_string.str;
+		    Intbyte *oldpos = pb->data.p_string.str;
 		    INC_CHARPTR (pb->data.p_string.str);
 		    pb->data.p_string.len -= pb->data.p_string.str - oldpos;
 		  }
@@ -1437,19 +1437,19 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 
 	    data->findex = old_findex;
 	    /* ##### FIXME FIXME FIXME -- Upon successful return from
-	       this function, data->bi_bufpos is automatically incremented.
+	       this function, data->bi_charbpos is automatically incremented.
 	       However, we don't want that to happen if we were adding
 	       the minibuffer prompt. */
 	    {
 	      struct buffer *buf =
 		XBUFFER (WINDOW_BUFFER (XWINDOW (data->window)));
 	      /* #### Chuck fix this shit or I'm gonna scream! */
-	      if (bi_old_bufpos > BI_BUF_BEGV (buf))
-	        data->bi_bufpos = prev_bytind (buf, bi_old_bufpos);
+	      if (bi_old_charbpos > BI_BUF_BEGV (buf))
+	        data->bi_charbpos = prev_bytebpos (buf, bi_old_charbpos);
               else
 		/* #### is this correct?  Does anyone know?
 		   Does anyone care? Is this a cheesy hack or what? */
-	        data->bi_bufpos = BI_BUF_BEGV (buf) - 1;
+	        data->bi_charbpos = BI_BUF_BEGV (buf) - 1;
 	    }
 	  }
 	  break;
@@ -1463,7 +1463,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 
 	    data->findex = pb->data.p_blank.findex;
 	    data->blank_width = pb->data.p_blank.width;
-	    data->bi_cursor_bufpos = 0;
+	    data->bi_cursor_charbpos = 0;
 	    data->cursor_type = IGNORE_CURSOR;
 
 	    if (data->pixpos + data->blank_width > data->max_pixpos)
@@ -1496,7 +1496,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 
  oops_no_more_space:
 
-  data->bi_cursor_bufpos = bi_old_cursor_bufpos;
+  data->bi_cursor_charbpos = bi_old_cursor_charbpos;
   data->cursor_type = old_cursor_type;
   if (elt < Dynarr_length (*prop))
     {
@@ -1670,17 +1670,17 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 	{
 	  Lisp_Object string = XIMAGE_INSTANCE_TEXT_STRING (instance);
 	  face_index orig_findex = data->findex;
-	  Bytind orig_bufpos = data->bi_bufpos;
-	  Bytind orig_start_col_enabled = data->bi_start_col_enabled;
+	  Bytebpos orig_charbpos = data->bi_charbpos;
+	  Bytebpos orig_start_col_enabled = data->bi_start_col_enabled;
 
 	  data->findex = findex;
 	  data->bi_start_col_enabled = 0;
 	  if (!allow_cursor)
-	    data->bi_bufpos = 0;
-	  add_bufbyte_string_runes (data, XSTRING_DATA (string),
+	    data->bi_charbpos = 0;
+	  add_intbyte_string_runes (data, XSTRING_DATA (string),
 				    XSTRING_LENGTH (string), 0);
 	  data->findex = orig_findex;
-	  data->bi_bufpos = orig_bufpos;
+	  data->bi_charbpos = orig_charbpos;
 	  data->bi_start_col_enabled = orig_start_col_enabled;
 	  return NULL;
 	}
@@ -1688,10 +1688,10 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
       rb.findex = findex;
       rb.xpos = data->pixpos;
       rb.width = width;
-      rb.bufpos = 0;			/* glyphs are never "at" anywhere */
+      rb.charbpos = 0;			/* glyphs are never "at" anywhere */
       if (data->bi_endpos)
 	/* #### is this necessary at all? */
-	rb.endpos = bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (w)),
+	rb.endpos = bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER (w)),
 				      data->bi_endpos);
       else
         rb.endpos = 0;
@@ -1702,12 +1702,12 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 
       if (allow_cursor)
 	{
-	  rb.bufpos = bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (w)),
-					data->bi_bufpos);
+	  rb.charbpos = bytebpos_to_charbpos (XBUFFER (WINDOW_BUFFER (w)),
+					data->bi_charbpos);
 
 	  if (data->cursor_type == CURSOR_ON)
 	    {
-	      if (data->bi_bufpos == data->bi_cursor_bufpos)
+	      if (data->bi_charbpos == data->bi_cursor_charbpos)
 		{
 		  rb.cursor_type = CURSOR_ON;
 		  data->cursor_x = Dynarr_length (data->db->runes);
@@ -1801,12 +1801,12 @@ add_glyph_runes (pos_data *data, int pos_type)
    display line DL accurately represents the text on a line starting
    at the given position.
 
-   NOTE NOTE NOTE NOTE: This function works with and returns Bytinds.
+   NOTE NOTE NOTE NOTE: This function works with and returns Bytebposs.
    You must do appropriate conversion. */
 
-static Bytind
+static Bytebpos
 create_text_block (struct window *w, struct display_line *dl,
-		   Bytind bi_start_pos, prop_block_dynarr **prop,
+		   Bytebpos bi_start_pos, prop_block_dynarr **prop,
 		   int type)
 {
   struct frame *f = XFRAME (w->frame);
@@ -1911,7 +1911,7 @@ create_text_block (struct window *w, struct display_line *dl,
   data.db = db;
   data.dl = dl;
 
-  data.bi_bufpos = bi_start_pos;
+  data.bi_charbpos = bi_start_pos;
   data.pixpos = dl->bounds.left_in;
   data.last_charset = Qunbound;
   data.last_findex = DEFAULT_INDEX;
@@ -1928,7 +1928,7 @@ create_text_block (struct window *w, struct display_line *dl,
 
   if (cursor_in_echo_area && MINI_WINDOW_P (w) && echo_area_active (f))
     {
-      data.bi_cursor_bufpos = BI_BUF_ZV (b);
+      data.bi_cursor_charbpos = BI_BUF_ZV (b);
       data.cursor_type = CURSOR_ON;
     }
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
@@ -1938,12 +1938,12 @@ create_text_block (struct window *w, struct display_line *dl,
 	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
 	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
     {
-      data.bi_cursor_bufpos = BI_BUF_PT (b);
+      data.bi_cursor_charbpos = BI_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
     }
   else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)))
     {
-      data.bi_cursor_bufpos = bi_marker_position (w->pointm[type]);
+      data.bi_cursor_charbpos = bi_marker_position (w->pointm[type]);
       data.cursor_type = CURSOR_ON;
     }
   else
@@ -1988,10 +1988,10 @@ create_text_block (struct window *w, struct display_line *dl,
 	 && (active_minibuffer || !NILP (synch_minibuffers_value)))
     {
       /* #### This check probably should not be necessary. */
-      if (data.bi_bufpos > BI_BUF_ZV (b))
+      if (data.bi_charbpos > BI_BUF_ZV (b))
 	{
 	  /* #### urk!  More of this lossage! */
-	  data.bi_bufpos--;
+	  data.bi_charbpos--;
 	  goto done;
 	}
 
@@ -1999,38 +1999,38 @@ create_text_block (struct window *w, struct display_line *dl,
          a continuation line then find the next line we are actually
          supposed to display. */
       if (selective > 0
-	  && (data.bi_bufpos == BI_BUF_BEGV (b)
-	      || BUF_FETCH_CHAR (b, prev_bytind (b, data.bi_bufpos)) == '\n'))
+	  && (data.bi_charbpos == BI_BUF_BEGV (b)
+	      || BUF_FETCH_CHAR (b, prev_bytebpos (b, data.bi_charbpos)) == '\n'))
 	{
-	  while (bi_spaces_at_point (b, data.bi_bufpos) >= selective)
+	  while (bi_spaces_at_point (b, data.bi_charbpos) >= selective)
 	    {
-	      data.bi_bufpos =
-		bi_find_next_newline_no_quit (b, data.bi_bufpos, 1);
-	      if (data.bi_bufpos >= BI_BUF_ZV (b))
+	      data.bi_charbpos =
+		bi_find_next_newline_no_quit (b, data.bi_charbpos, 1);
+	      if (data.bi_charbpos >= BI_BUF_ZV (b))
 		{
-		  data.bi_bufpos = BI_BUF_ZV (b);
+		  data.bi_charbpos = BI_BUF_ZV (b);
 		  goto done;
 		}
 	    }
 	}
 
       /* Check for face changes. */
-      if (initial || (!no_more_frags && data.bi_bufpos == data.ef->end))
+      if (initial || (!no_more_frags && data.bi_charbpos == data.ef->end))
 	{
 	  /* Now compute the face and begin/end-glyph information. */
 	  data.findex =
-	    /* Remember that the extent-fragment routines deal in Bytind's. */
-	    extent_fragment_update (w, data.ef, data.bi_bufpos);
+	    /* Remember that the extent-fragment routines deal in Bytebpos's. */
+	    extent_fragment_update (w, data.ef, data.bi_charbpos);
 
 	  get_display_tables (w, data.findex, &face_dt, &window_dt);
 
-	  if (data.bi_bufpos == data.ef->end)
+	  if (data.bi_charbpos == data.ef->end)
 	    no_more_frags = 1;
 	}
       initial = 0;
 
       /* Determine what is next to be displayed.  We first handle any
-         glyphs returned by glyphs_at_bufpos.  If there are no glyphs to
+         glyphs returned by glyphs_at_charbpos.  If there are no glyphs to
          display then we determine what to do based on the character at the
          current buffer position. */
 
@@ -2074,7 +2074,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	  /* If point is in an invisible region we place it on the
              next visible character. */
 	  if (data.cursor_type == CURSOR_ON
-	      && data.bi_bufpos == data.bi_cursor_bufpos)
+	      && data.bi_charbpos == data.bi_cursor_charbpos)
 	    {
 	      data.cursor_type = NEXT_CURSOR;
 	    }
@@ -2083,10 +2083,10 @@ create_text_block (struct window *w, struct display_line *dl,
 	  if (data.start_col)
 	    data.start_col--;
 
-	  if (data.bi_bufpos == BI_BUF_ZV (b))
+	  if (data.bi_charbpos == BI_BUF_ZV (b))
 	    goto done;
 	  else
-	    INC_BYTIND (b, data.bi_bufpos);
+	    INC_BYTEBPOS (b, data.bi_charbpos);
 	}
 
       /* If there is propagation data, then it represents the current
@@ -2100,13 +2100,13 @@ create_text_block (struct window *w, struct display_line *dl,
 
 	  if (*prop)
 	    goto done;	/* gee, a really narrow window */
-	  else if (data.bi_bufpos == BI_BUF_ZV (b))
+	  else if (data.bi_charbpos == BI_BUF_ZV (b))
 	    goto done;
-	  else if (data.bi_bufpos < BI_BUF_BEGV (b))
+	  else if (data.bi_charbpos < BI_BUF_BEGV (b))
 	    /* #### urk urk urk! Aborts are not very fun! Fix this please! */
-	    data.bi_bufpos = BI_BUF_BEGV (b);
+	    data.bi_charbpos = BI_BUF_BEGV (b);
 	  else
-	    INC_BYTIND (b, data.bi_bufpos);
+	    INC_BYTEBPOS (b, data.bi_charbpos);
 	}
 
       /* If there are end glyphs, add them to the line.  These are
@@ -2132,14 +2132,14 @@ create_text_block (struct window *w, struct display_line *dl,
       /* If at end-of-buffer, we've already processed begin and
 	 end-glyphs at this point and there's no text to process,
 	 so we're done. */
-      else if (data.bi_bufpos == BI_BUF_ZV (b))
+      else if (data.bi_charbpos == BI_BUF_ZV (b))
 	goto done;
 
       else
 	{
 	  Lisp_Object entry = Qnil;
 	  /* Get the character at the current buffer position. */
-	  data.ch = BI_BUF_FETCH_CHAR (b, data.bi_bufpos);
+	  data.ch = BI_BUF_FETCH_CHAR (b, data.bi_charbpos);
 	  if (!NILP (face_dt) || !NILP (window_dt))
 	    entry = display_table_entry (data.ch, face_dt, window_dt);
 
@@ -2164,7 +2164,7 @@ create_text_block (struct window *w, struct display_line *dl,
 
 	      if (selective > 0
 		  && (bi_spaces_at_point
-		      (b, next_bytind (b, data.bi_bufpos))
+		      (b, next_bytebpos (b, data.bi_charbpos))
 		      >= selective))
 		{
 		  if (!NILP (b->selective_display_ellipses))
@@ -2186,25 +2186,25 @@ create_text_block (struct window *w, struct display_line *dl,
 		      *prop = add_emchar_rune (&data);
 		    }
 
-		  /* We need to set data.bi_bufpos to the start of the
+		  /* We need to set data.bi_charbpos to the start of the
                      next visible region in order to make this line
                      appear to contain all of the invisible area.
                      Otherwise, the line cache won't work
                      correctly. */
-		  INC_BYTIND (b, data.bi_bufpos);
-		  while (bi_spaces_at_point (b, data.bi_bufpos) >= selective)
+		  INC_BYTEBPOS (b, data.bi_charbpos);
+		  while (bi_spaces_at_point (b, data.bi_charbpos) >= selective)
 		    {
-		      data.bi_bufpos =
-			bi_find_next_newline_no_quit (b, data.bi_bufpos, 1);
-		      if (data.bi_bufpos >= BI_BUF_ZV (b))
+		      data.bi_charbpos =
+			bi_find_next_newline_no_quit (b, data.bi_charbpos, 1);
+		      if (data.bi_charbpos >= BI_BUF_ZV (b))
 			{
-			  data.bi_bufpos = BI_BUF_ZV (b);
+			  data.bi_charbpos = BI_BUF_ZV (b);
 			  break;
 			}
 		    }
 		  if (BI_BUF_FETCH_CHAR
-		      (b, prev_bytind (b, data.bi_bufpos)) == '\n')
-		    DEC_BYTIND (b, data.bi_bufpos);
+		      (b, prev_bytebpos (b, data.bi_charbpos)) == '\n')
+		    DEC_BYTEBPOS (b, data.bi_charbpos);
 		}
 	      else
 		{
@@ -2221,20 +2221,20 @@ create_text_block (struct window *w, struct display_line *dl,
              line is done. */
 	  else if (data.ch == (('M' & 037)) && selective == -1)
 	    {
-	      Bytind bi_next_bufpos;
+	      Bytebpos bi_next_charbpos;
 
 	      /* Find the buffer position at the end of the line. */
-	      bi_next_bufpos =
-		bi_find_next_newline_no_quit (b, data.bi_bufpos, 1);
-	      if (BI_BUF_FETCH_CHAR (b, prev_bytind (b, bi_next_bufpos))
+	      bi_next_charbpos =
+		bi_find_next_newline_no_quit (b, data.bi_charbpos, 1);
+	      if (BI_BUF_FETCH_CHAR (b, prev_bytebpos (b, bi_next_charbpos))
 		  == '\n')
-		DEC_BYTIND (b, bi_next_bufpos);
+		DEC_BYTEBPOS (b, bi_next_charbpos);
 
 	      /* If the cursor is somewhere in the elided text make
                  sure that the cursor gets drawn appropriately. */
 	      if (data.cursor_type == CURSOR_ON
-		  && (data.bi_cursor_bufpos >= data.bi_bufpos &&
-		      data.bi_cursor_bufpos < bi_next_bufpos))
+		  && (data.bi_cursor_charbpos >= data.bi_charbpos &&
+		      data.bi_cursor_charbpos < bi_next_charbpos))
 		{
 		    data.cursor_type = NEXT_CURSOR;
 		}
@@ -2260,10 +2260,10 @@ create_text_block (struct window *w, struct display_line *dl,
                  need to do this before potentially adding a newline
                  so that the cursor flag will get set correctly (if
                  needed). */
-	      data.bi_bufpos = bi_next_bufpos;
+	      data.bi_charbpos = bi_next_charbpos;
 
 	      if (NILP (b->selective_display_ellipses)
-		  || data.bi_cursor_bufpos == bi_next_bufpos)
+		  || data.bi_cursor_charbpos == bi_next_charbpos)
 		{
 		  /* We have to at least add a newline character so
                      that the cursor shows up properly. */
@@ -2280,7 +2280,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	      /* This had better be a newline but doing it this way
                  we'll see obvious incorrect results if it isn't.  No
                  need to abort here. */
-	      data.ch = BI_BUF_FETCH_CHAR (b, data.bi_bufpos);
+	      data.ch = BI_BUF_FETCH_CHAR (b, data.bi_charbpos);
 
 	      goto done;
 	    }
@@ -2349,7 +2349,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	     often bites people who carelessly use `char' instead
 	     of `unsigned char'.)
 	     */
-	  else if (data.ch < 0x100 && iscntrl ((Bufbyte) data.ch))
+	  else if (data.ch < 0x100 && iscntrl ((Intbyte) data.ch))
 	    {
 	      *prop = add_control_char_runes (&data, b);
 
@@ -2376,7 +2376,7 @@ create_text_block (struct window *w, struct display_line *dl,
 		goto done;
 	    }
 
-	  INC_BYTIND (b, data.bi_bufpos);
+	  INC_BYTEBPOS (b, data.bi_charbpos);
 	}
     }
 
@@ -2384,15 +2384,15 @@ done:
 
   /* Determine the starting point of the next line if we did not hit the
      end of the buffer. */
-  if (data.bi_bufpos < BI_BUF_ZV (b)
+  if (data.bi_charbpos < BI_BUF_ZV (b)
       && (active_minibuffer || !NILP (synch_minibuffers_value)))
     {
       /* #### This check is not correct.  If the line terminated
 	 due to a begin-glyph or end-glyph hitting window-end, then
-	 data.ch will not point to the character at data.bi_bufpos.  If
+	 data.ch will not point to the character at data.bi_charbpos.  If
 	 you make the two changes mentioned at the top of this loop,
 	 you should be able to say '(if (*prop))'.  That should also
-	 make it possible to eliminate the data.bi_bufpos < BI_BUF_ZV (b)
+	 make it possible to eliminate the data.bi_charbpos < BI_BUF_ZV (b)
 	 check. */
 
       /* The common case is that the line ended because we hit a newline.
@@ -2408,15 +2408,15 @@ done:
 	    {
 	      if (data.cursor_type == CURSOR_ON)
 		{
-		  if (data.bi_cursor_bufpos >= bi_start_pos
-		      && data.bi_cursor_bufpos <= data.bi_bufpos)
-		    data.bi_cursor_bufpos = data.bi_bufpos;
+		  if (data.bi_cursor_charbpos >= bi_start_pos
+		      && data.bi_cursor_charbpos <= data.bi_charbpos)
+		    data.bi_cursor_charbpos = data.bi_charbpos;
 		}
 	      data.findex = DEFAULT_INDEX;
 	      data.start_col = 0;
 	      data.bi_start_col_enabled = 0;
 
-	      if (data.bi_bufpos != bi_start_pos)
+	      if (data.bi_charbpos != bi_start_pos)
 		{
 		  struct glyph_block gb;
 
@@ -2436,7 +2436,7 @@ done:
 		}
 	    }
 
-	  INC_BYTIND (b, data.bi_bufpos);
+	  INC_BYTEBPOS (b, data.bi_charbpos);
 	}
 
       /* Otherwise we have a buffer line which cannot fit on one display
@@ -2456,10 +2456,10 @@ done:
 
 	  if (truncate_win)
 	    {
-	      Bytind bi_pos;
+	      Bytebpos bi_pos;
 
 	      /* Now find the start of the next line. */
-	      bi_pos = bi_find_next_newline_no_quit (b, data.bi_bufpos, 1);
+	      bi_pos = bi_find_next_newline_no_quit (b, data.bi_charbpos, 1);
 
 	      /* If the cursor is past the truncation line then we
                  make it appear on the truncation glyph.  If we've hit
@@ -2468,17 +2468,17 @@ done:
                  newline.  In that case the cursor should actually
                  appear on the next line. */
 	      if (data.cursor_type == CURSOR_ON
-		  && data.bi_cursor_bufpos >= data.bi_bufpos
-		  && (data.bi_cursor_bufpos < bi_pos ||
+		  && data.bi_cursor_charbpos >= data.bi_charbpos
+		  && (data.bi_cursor_charbpos < bi_pos ||
 		      (bi_pos == BI_BUF_ZV (b)
 		       && (bi_pos == BI_BUF_BEGV (b)
-			   || (BI_BUF_FETCH_CHAR (b, prev_bytind (b, bi_pos))
+			   || (BI_BUF_FETCH_CHAR (b, prev_bytebpos (b, bi_pos))
 			       != '\n')))))
-		data.bi_cursor_bufpos = bi_pos;
+		data.bi_cursor_charbpos = bi_pos;
 	      else
 		data.cursor_type = NO_CURSOR;
 
-	      data.bi_bufpos = bi_pos;
+	      data.bi_charbpos = bi_pos;
 	      gb.glyph = Vtruncation_glyph;
 	      cachel = GLYPH_CACHEL (w, TRUN_GLYPH_INDEX);
 	    }
@@ -2487,7 +2487,7 @@ done:
 	      /* The cursor can never be on the continuation glyph. */
 	      data.cursor_type = NO_CURSOR;
 
-	      /* data.bi_bufpos is already at the start of the next line. */
+	      /* data.bi_charbpos is already at the start of the next line. */
 
 	      dl->line_continuation = 1;
 	      gb.glyph = Vcontinuation_glyph;
@@ -2496,14 +2496,14 @@ done:
 
 	  add_glyph_rune (&data, &gb, BEGIN_GLYPHS, 0, cachel);
 
-	  if (truncate_win && data.bi_bufpos == BI_BUF_ZV (b)
-	      && BI_BUF_FETCH_CHAR (b, prev_bytind (b, BI_BUF_ZV (b))) != '\n')
+	  if (truncate_win && data.bi_charbpos == BI_BUF_ZV (b)
+	      && BI_BUF_FETCH_CHAR (b, prev_bytebpos (b, BI_BUF_ZV (b))) != '\n')
 	    /* #### Damn this losing shit. */
-	    data.bi_bufpos++;
+	    data.bi_charbpos++;
 	}
     }
   else if ((active_minibuffer || !NILP (synch_minibuffers_value))
-	   && (!echo_area_active (f) || data.bi_bufpos == BI_BUF_ZV (b)))
+	   && (!echo_area_active (f) || data.bi_charbpos == BI_BUF_ZV (b)))
     {
       /* We need to add a marker to the end of the line since there is no
          newline character in order for the cursor to get drawn.  We label
@@ -2524,7 +2524,7 @@ done:
       /* #### urk!  Chuck, this shit is bad news.  Going around
 	 manipulating invalid positions is guaranteed to result in
 	 trouble sooner or later. */
-      data.bi_bufpos = BI_BUF_ZV (b) + 1;
+      data.bi_charbpos = BI_BUF_ZV (b) + 1;
     }
 
   /* Calculate left whitespace boundary. */
@@ -2624,17 +2624,17 @@ done:
 
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
-  if (data.bi_bufpos > BI_BUF_ZV (b))
-    dl->end_bufpos = BUF_ZV (b);
+  if (data.bi_charbpos > BI_BUF_ZV (b))
+    dl->end_charbpos = BUF_ZV (b);
   else
-    dl->end_bufpos = bytind_to_bufpos (b, data.bi_bufpos) - 1;
+    dl->end_charbpos = bytebpos_to_charbpos (b, data.bi_charbpos) - 1;
   if (truncate_win)
-    data.dl->num_chars = column_at_point (b, dl->end_bufpos, 0);
+    data.dl->num_chars = column_at_point (b, dl->end_charbpos, 0);
   else
     /* This doesn't correctly take into account tabs and control
        characters but if the window isn't being truncated then this
        value isn't going to end up being used anyhow. */
-    data.dl->num_chars = dl->end_bufpos - dl->bufpos;
+    data.dl->num_chars = dl->end_charbpos - dl->charbpos;
 
   /* #### handle horizontally scrolled line with text none of which
      was actually laid out. */
@@ -2657,10 +2657,10 @@ done:
      The main loop should get fixed so that it isn't necessary to call
      this function if we are already at EOB. */
 
-  if (data.bi_bufpos == BI_BUF_ZV (b) && bi_start_pos == BI_BUF_ZV (b))
-    return data.bi_bufpos + 1; /* Yuck! */
+  if (data.bi_charbpos == BI_BUF_ZV (b) && bi_start_pos == BI_BUF_ZV (b))
+    return data.bi_charbpos + 1; /* Yuck! */
   else
-    return data.bi_bufpos;
+    return data.bi_charbpos;
 }
 
 /* Display the overlay arrow at the beginning of the given line. */
@@ -2696,7 +2696,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
 
   if (STRINGP (Voverlay_arrow_string))
     {
-      add_bufbyte_string_runes
+      add_intbyte_string_runes
 	(&data,
 	 XSTRING_DATA   (Voverlay_arrow_string),
 	 XSTRING_LENGTH (Voverlay_arrow_string),
@@ -2830,7 +2830,7 @@ add_margin_blank (struct display_line *dl, struct display_block *db,
 	       : get_builtin_face_cache_index (w, Vright_margin_face));
   rb.xpos = xpos;
   rb.width = width;
-  rb.bufpos = -1;
+  rb.charbpos = -1;
   rb.endpos = 0;
   rb.type = RUNE_BLANK;
   rb.cursor_type = CURSOR_OFF;
@@ -3539,7 +3539,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
     {
       int elt;
       Bytecount len;
-      Bufbyte *strdata;
+      Intbyte *strdata;
       struct buffer *buf = XBUFFER (WINDOW_BUFFER (w));
 
       in_modeline_generation = 1;
@@ -3628,7 +3628,7 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
       rb.findex = MODELINE_INDEX;
       rb.xpos = dl->bounds.left_out;
       rb.width = dl->bounds.right_out - dl->bounds.left_out;
-      rb.bufpos = 0;
+      rb.charbpos = 0;
       rb.endpos = 0;
       rb.type = RUNE_HLINE;
       rb.object.hline.thickness = 1;
@@ -3681,12 +3681,12 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
 }
 
 static Charcount
-add_string_to_fstring_db_runes (pos_data *data, const Bufbyte *str,
+add_string_to_fstring_db_runes (pos_data *data, const Intbyte *str,
                                 Charcount pos, Charcount min_pos, Charcount max_pos)
 {
   /* This function has been Mule-ized. */
   Charcount end;
-  const Bufbyte *cur_pos = str;
+  const Intbyte *cur_pos = str;
   struct display_block *db = data->db;
 
   data->blank_width = space_width (XWINDOW (data->window));
@@ -3700,7 +3700,7 @@ add_string_to_fstring_db_runes (pos_data *data, const Bufbyte *str,
 
   while (pos < end && *cur_pos)
     {
-      const Bufbyte *old_cur_pos = cur_pos;
+      const Intbyte *old_cur_pos = cur_pos;
       int succeeded;
 
       data->ch = charptr_emchar (cur_pos);
@@ -3791,11 +3791,11 @@ tail_recurse:
       /* A string.  Add to the display line and check for %-constructs
          within it. */
 
-      Bufbyte *this = XSTRING_DATA (elt);
+      Intbyte *this = XSTRING_DATA (elt);
 
       while ((pos < max_pos || max_pos == -1) && *this)
         {
-          Bufbyte *last = this;
+          Intbyte *last = this;
 
           while (*this && *this != '%')
             this++;
@@ -3812,7 +3812,7 @@ tail_recurse:
 		{
 		  Charcount tmp_max = (max_pos == -1 ? pos + size - *offset :
 				       min (pos + size - *offset, max_pos));
-		  const Bufbyte *tmp_last = charptr_n_addr (last, *offset);
+		  const Intbyte *tmp_last = charptr_n_addr (last, *offset);
 
 		  pos = add_string_to_fstring_db_runes (data, tmp_last,
 							pos, pos, tmp_max);
@@ -3856,7 +3856,7 @@ tail_recurse:
                     {
                       int cur_pixsize;
                       int dash_pixsize;
-                      Bufbyte ch = '-';
+                      Intbyte ch = '-';
                       SET_CURRENT_MODE_CHARS_PIXSIZE;
 
                       dash_pixsize =
@@ -3869,26 +3869,26 @@ tail_recurse:
 
                   while (num_to_add--)
                     pos = add_string_to_fstring_db_runes
-                      (data, (const Bufbyte *) "-", pos, pos, max_pos);
+                      (data, (const Intbyte *) "-", pos, pos, max_pos);
                 }
               else if (*this != 0)
                 {
                   Emchar ch = charptr_emchar (this);
-                  Bufbyte *str;
+                  Intbyte *str;
 		  Charcount size;
 
                   decode_mode_spec (w, ch, type);
 
-                  str = Dynarr_atp (mode_spec_bufbyte_string, 0);
+                  str = Dynarr_atp (mode_spec_intbyte_string, 0);
 		  size = bytecount_to_charcount
 		    /* Skip the null character added by `decode_mode_spec' */
-		    (str, Dynarr_length (mode_spec_bufbyte_string)) - 1;
+		    (str, Dynarr_length (mode_spec_intbyte_string)) - 1;
 
 		  if (size <= *offset)
 		    *offset -= size;
 		  else
 		    {
-		      const Bufbyte *tmp_str = charptr_n_addr (str, *offset);
+		      const Intbyte *tmp_str = charptr_n_addr (str, *offset);
 
 		      /* #### NOTE: I don't understand why a tmp_max is not
 			 computed and used here as in the plain string case
@@ -3927,14 +3927,14 @@ tail_recurse:
              don't check for % within it.  */
           if (STRINGP (tem))
             {
-	      Bufbyte *str = XSTRING_DATA (tem);
+	      Intbyte *str = XSTRING_DATA (tem);
 	      Charcount size = XSTRING_CHAR_LENGTH (tem);
 
 	      if (size <= *offset)
 		*offset -= size;
 	      else
 		{
-		  const Bufbyte *tmp_str = charptr_n_addr (str, *offset);
+		  const Intbyte *tmp_str = charptr_n_addr (str, *offset);
 
 		  /* #### NOTE: I don't understand why a tmp_max is not
 		     computed and used here as in the plain string case
@@ -4128,8 +4128,8 @@ tail_recurse:
 	  *offset -= size;
 	else
 	  {
-	    const Bufbyte *tmp_str =
-	      charptr_n_addr ((const Bufbyte *) str, *offset);
+	    const Intbyte *tmp_str =
+	      charptr_n_addr ((const Intbyte *) str, *offset);
 
 	    /* #### NOTE: I don't understand why a tmp_max is not computed and
 	       used here as in the plain string case above. -- dv */
@@ -4142,7 +4142,7 @@ tail_recurse:
 
   if (min_pos > pos)
     {
-      add_string_to_fstring_db_runes (data, (const Bufbyte *) "", pos,
+      add_string_to_fstring_db_runes (data, (const Intbyte *) "", pos,
 				      min_pos, -1);
     }
 
@@ -4262,10 +4262,10 @@ real_current_modeline_height (struct window *w)
    modeline routines should be modified to use this code as it copes
    with many more types of display situation. */
 
-static Bufpos
+static Charbpos
 create_string_text_block (struct window *w, Lisp_Object disp_string,
 			  struct display_line *dl,
-			  Bufpos start_pos,
+			  Charbpos start_pos,
 			  prop_block_dynarr **prop,
 			  face_index default_face)
 {
@@ -4282,7 +4282,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   /* we're working with these a lot so precalculate them */
   Bytecount slen = XSTRING_LENGTH (disp_string);
   Bytecount bi_string_zv = slen;
-  Bytind bi_start_pos = charcount_to_bytecount (string_data (s), start_pos);
+  Bytebpos bi_start_pos = charcount_to_bytecount (string_data (s), start_pos);
 
   pos_data data;
 
@@ -4385,7 +4385,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   data.db = db;
   data.dl = dl;
 
-  data.bi_bufpos = bi_start_pos;
+  data.bi_charbpos = bi_start_pos;
   data.pixpos = dl->bounds.left_in;
   data.last_charset = Qunbound;
   data.last_findex = default_face;
@@ -4447,20 +4447,20 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
   while (data.pixpos <= data.max_pixpos)
     {
       /* #### This check probably should not be necessary. */
-      if (data.bi_bufpos > bi_string_zv)
+      if (data.bi_charbpos > bi_string_zv)
 	{
 	  /* #### urk!  More of this lossage! */
-	  data.bi_bufpos--;
+	  data.bi_charbpos--;
 	  goto done;
 	}
 
       /* Check for face changes. */
-      if (initial || (!no_more_frags && data.bi_bufpos == data.ef->end))
+      if (initial || (!no_more_frags && data.bi_charbpos == data.ef->end))
 	{
 	  /* Now compute the face and begin/end-glyph information. */
 	  data.findex =
-	    /* Remember that the extent-fragment routines deal in Bytind's. */
-	    extent_fragment_update (w, data.ef, data.bi_bufpos);
+	    /* Remember that the extent-fragment routines deal in Bytebpos's. */
+	    extent_fragment_update (w, data.ef, data.bi_charbpos);
 	  /* This is somewhat cheesy but the alternative is to
              propagate default_face into extent_fragment_update. */
 	  if (data.findex == DEFAULT_INDEX)
@@ -4468,13 +4468,13 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
 	  get_display_tables (w, data.findex, &face_dt, &window_dt);
 
-	  if (data.bi_bufpos == data.ef->end)
+	  if (data.bi_charbpos == data.ef->end)
 	    no_more_frags = 1;
 	}
       initial = 0;
 
       /* Determine what is next to be displayed.  We first handle any
-         glyphs returned by glyphs_at_bufpos.  If there are no glyphs to
+         glyphs returned by glyphs_at_charbpos.  If there are no glyphs to
          display then we determine what to do based on the character at the
          current buffer position. */
 
@@ -4519,10 +4519,10 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	  if (data.start_col)
 	    data.start_col--;
 
-	  if (data.bi_bufpos == bi_string_zv)
+	  if (data.bi_charbpos == bi_string_zv)
 	    goto done;
 	  else
-	    INC_CHARBYTIND (string_data (s), data.bi_bufpos);
+	    INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
 	}
 
       /* If there is propagation data, then it represents the current
@@ -4536,13 +4536,13 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
 	  if (*prop)
 	    goto done;	/* gee, a really narrow window */
-	  else if (data.bi_bufpos == bi_string_zv)
+	  else if (data.bi_charbpos == bi_string_zv)
 	    goto done;
-	  else if (data.bi_bufpos < 0)
+	  else if (data.bi_charbpos < 0)
 	    /* #### urk urk urk! Aborts are not very fun! Fix this please! */
-	    data.bi_bufpos = 0;
+	    data.bi_charbpos = 0;
 	  else
-	    INC_CHARBYTIND (string_data (s), data.bi_bufpos);
+	    INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
 	}
 
       /* If there are end glyphs, add them to the line.  These are
@@ -4568,14 +4568,14 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
       /* If at end-of-buffer, we've already processed begin and
 	 end-glyphs at this point and there's no text to process,
 	 so we're done. */
-      else if (data.bi_bufpos == bi_string_zv)
+      else if (data.bi_charbpos == bi_string_zv)
 	goto done;
 
       else
 	{
 	  Lisp_Object entry = Qnil;
 	  /* Get the character at the current buffer position. */
-	  data.ch = string_char (s, data.bi_bufpos);
+	  data.ch = string_char (s, data.bi_charbpos);
 	  if (!NILP (face_dt) || !NILP (window_dt))
 	    entry = display_table_entry (data.ch, face_dt, window_dt);
 
@@ -4663,7 +4663,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	     often bites people who carelessly use `char' instead
 	     of `unsigned char'.)
 	     */
-	  else if (data.ch < 0x100 && iscntrl ((Bufbyte) data.ch))
+	  else if (data.ch < 0x100 && iscntrl ((Intbyte) data.ch))
 	    {
 	      *prop = add_control_char_runes (&data, b);
 
@@ -4690,7 +4690,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 		goto done;
 	    }
 
-	  INC_CHARBYTIND (string_data (s), data.bi_bufpos);
+	  INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
 	}
     }
 
@@ -4698,14 +4698,14 @@ done:
 
   /* Determine the starting point of the next line if we did not hit the
      end of the buffer. */
-  if (data.bi_bufpos < bi_string_zv)
+  if (data.bi_charbpos < bi_string_zv)
     {
       /* #### This check is not correct.  If the line terminated
 	 due to a begin-glyph or end-glyph hitting window-end, then
-	 data.ch will not point to the character at data.bi_bufpos.  If
+	 data.ch will not point to the character at data.bi_charbpos.  If
 	 you make the two changes mentioned at the top of this loop,
 	 you should be able to say '(if (*prop))'.  That should also
-	 make it possible to eliminate the data.bi_bufpos < BI_BUF_ZV (b)
+	 make it possible to eliminate the data.bi_charbpos < BI_BUF_ZV (b)
 	 check. */
 
       /* The common case is that the line ended because we hit a newline.
@@ -4713,7 +4713,7 @@ done:
          position. */
       if (data.ch == '\n')
 	{
-	  INC_CHARBYTIND (string_data (s), data.bi_bufpos);
+	  INC_CHARBYTEBPOS (string_data (s), data.bi_charbpos);
 	}
 
       /* Otherwise we have a buffer line which cannot fit on one display
@@ -4733,13 +4733,13 @@ done:
 
 	  if (truncate_win)
 	    {
-	      Bytind bi_pos;
+	      Bytebpos bi_pos;
 
 	      /* Now find the start of the next line. */
-	      bi_pos = bi_find_next_emchar_in_string (s, '\n', data.bi_bufpos, 1);
+	      bi_pos = bi_find_next_emchar_in_string (s, '\n', data.bi_charbpos, 1);
 
 	      data.cursor_type = NO_CURSOR;
-	      data.bi_bufpos = bi_pos;
+	      data.bi_charbpos = bi_pos;
 	      gb.glyph = Vtruncation_glyph;
 	      cachel = GLYPH_CACHEL (w, TRUN_GLYPH_INDEX);
 	    }
@@ -4748,7 +4748,7 @@ done:
 	      /* The cursor can never be on the continuation glyph. */
 	      data.cursor_type = NO_CURSOR;
 
-	      /* data.bi_bufpos is already at the start of the next line. */
+	      /* data.bi_charbpos is already at the start of the next line. */
 
 	      dl->line_continuation = 1;
 	      gb.glyph = Vcontinuation_glyph;
@@ -4758,19 +4758,19 @@ done:
 	  if (end_glyph_width)
 	    add_glyph_rune (&data, &gb, BEGIN_GLYPHS, 0, cachel);
 
-	  if (truncate_win && data.bi_bufpos == bi_string_zv)
+	  if (truncate_win && data.bi_charbpos == bi_string_zv)
 	    {
-	      const Bufbyte* endb = charptr_n_addr (string_data (s), bi_string_zv);
+	      const Intbyte* endb = charptr_n_addr (string_data (s), bi_string_zv);
 	      DEC_CHARPTR (endb);
 	      if (charptr_emchar (endb) != '\n')
 		{
 		  /* #### Damn this losing shit. */
-		  data.bi_bufpos++;
+		  data.bi_charbpos++;
 		}
 	    }
 	}
     }
-  else if (data.bi_bufpos == bi_string_zv)
+  else if (data.bi_charbpos == bi_string_zv)
     {
       /* create_text_block () adds a bogus \n marker here which screws
 	 up subwindow display. Since we never have a cursor in the
@@ -4873,18 +4873,18 @@ done:
 
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
-  if (data.bi_bufpos > bi_string_zv)
-    dl->end_bufpos = buffer_or_string_bytind_to_bufpos (disp_string, bi_string_zv);
+  if (data.bi_charbpos > bi_string_zv)
+    dl->end_charbpos = buffer_or_string_bytebpos_to_charbpos (disp_string, bi_string_zv);
   else
-    dl->end_bufpos = buffer_or_string_bytind_to_bufpos (disp_string, data.bi_bufpos) - 1;
+    dl->end_charbpos = buffer_or_string_bytebpos_to_charbpos (disp_string, data.bi_charbpos) - 1;
   if (truncate_win)
     data.dl->num_chars =
-      string_column_at_point (s, dl->end_bufpos, b ? XINT (b->tab_width) : 8);
+      string_column_at_point (s, dl->end_charbpos, b ? XINT (b->tab_width) : 8);
   else
     /* This doesn't correctly take into account tabs and control
        characters but if the window isn't being truncated then this
        value isn't going to end up being used anyhow. */
-    data.dl->num_chars = dl->end_bufpos - dl->bufpos;
+    data.dl->num_chars = dl->end_charbpos - dl->charbpos;
 
   /* #### handle horizontally scrolled line with text none of which
      was actually laid out. */
@@ -4907,10 +4907,10 @@ done:
      The main loop should get fixed so that it isn't necessary to call
      this function if we are already at EOB. */
 
-  if (data.bi_bufpos == bi_string_zv && bi_start_pos == bi_string_zv)
-    return bytecount_to_charcount (string_data (s), data.bi_bufpos) + 1; /* Yuck! */
+  if (data.bi_charbpos == bi_string_zv && bi_start_pos == bi_string_zv)
+    return bytecount_to_charcount (string_data (s), data.bi_charbpos) + 1; /* Yuck! */
   else
-    return bytecount_to_charcount (string_data (s), data.bi_bufpos);
+    return bytecount_to_charcount (string_data (s), data.bi_charbpos);
 }
 
 /* Given a display line and a starting position, ensure that the
@@ -4922,16 +4922,16 @@ done:
 
    This is very similar to generate_display_line but with the same
    limitations as create_string_text_block. I have taken the liberty
-   of fixing the bytind stuff though.*/
+   of fixing the bytebpos stuff though.*/
 
-static Bufpos
+static Charbpos
 generate_string_display_line (struct window *w, Lisp_Object disp_string,
 			      struct display_line *dl,
-			      Bufpos start_pos,
+			      Charbpos start_pos,
 			      prop_block_dynarr **prop,
 			      face_index default_face)
 {
-  Bufpos ret_bufpos;
+  Charbpos ret_charbpos;
 
   /* you must set bounds before calling this. */
 
@@ -4953,11 +4953,11 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
   dl->modeline = 0;
 
   /* Create a display block for the text region of the line. */
-  ret_bufpos = create_string_text_block (w, disp_string, dl, start_pos,
+  ret_charbpos = create_string_text_block (w, disp_string, dl, start_pos,
 					 prop, default_face);
-  dl->bufpos = start_pos;
-  if (dl->end_bufpos < dl->bufpos)
-    dl->end_bufpos = dl->bufpos;
+  dl->charbpos = start_pos;
+  if (dl->end_charbpos < dl->charbpos)
+    dl->end_charbpos = dl->charbpos;
 
   /* If there are left glyphs associated with any character in the
      text block, then create a display block to handle them. */
@@ -4969,7 +4969,7 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
   if (dl->right_glyphs != NULL && Dynarr_length (dl->right_glyphs))
     create_right_glyph_block (w, dl);
 
-  return ret_bufpos;
+  return ret_charbpos;
 }
 
 /* This is ripped off from regenerate_window. All we want to do is
@@ -4979,7 +4979,7 @@ void
 generate_displayable_area (struct window *w, Lisp_Object disp_string,
 			   int xpos, int ypos, int width, int height,
 			   display_line_dynarr* dla,
-			   Bufpos start_pos,
+			   Charbpos start_pos,
 			   face_index default_face)
 {
   int yend = ypos + height;
@@ -5011,7 +5011,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
     {
       struct display_line dl;
       struct display_line *dlp;
-      Bufpos next_pos;
+      Charbpos next_pos;
       int local;
 
       if (Dynarr_length (dla) < Dynarr_largest (dla))
@@ -5085,7 +5085,7 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
    changed it to the echo area buffer. */
 
 static void
-regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
+regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int type)
 {
   struct frame *f = XFRAME (w->frame);
   struct buffer *b = XBUFFER (w->buffer);
@@ -5298,7 +5298,7 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
 	dla_end = Dynarr_length (cdla) - 1;	\
       }						\
 						\
-    start_pos = (Dynarr_atp (cdla, dla_start)->bufpos \
+    start_pos = (Dynarr_atp (cdla, dla_start)->charbpos \
 		 + Dynarr_atp (cdla, dla_start)->offset); \
     /* If this isn't true, then startp has changed and we need to do a \
        full regen. */				\
@@ -5320,8 +5320,8 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
    when dealing with buffer changes. */
 
 static int
-regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
-					Bufpos pointm,
+regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
+					Charbpos pointm,
 					Charcount beg_unchanged,
 					Charcount end_unchanged)
 {
@@ -5332,7 +5332,7 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
   int dla_start = 0;
   int dla_end, line;
   int first_line, last_line;
-  Bufpos start_pos;
+  Charbpos start_pos;
   /* Don't define this in the loop where it is used because we
      definitely want its value to survive between passes. */
   prop_block_dynarr *prop = NULL;
@@ -5396,8 +5396,8 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
   while (line <= dla_end)
     {
       struct display_line *dl = Dynarr_atp (cdla, line);
-      Bufpos lstart = dl->bufpos + dl->offset;
-      Bufpos lend = dl->end_bufpos + dl->offset;
+      Charbpos lstart = dl->charbpos + dl->offset;
+      Charbpos lend = dl->end_charbpos + dl->offset;
 
       if (beg_unchanged >= lstart && beg_unchanged <= lend)
 	break;
@@ -5431,20 +5431,20 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
   first_line = last_line = line;
   while (line <= dla_end)
     {
-      Bufpos old_start, old_end, new_start;
+      Charbpos old_start, old_end, new_start;
       struct display_line *cdl = Dynarr_atp (cdla, line);
       struct display_line *ddl = Dynarr_atp (ddla, line);
       struct display_block *db;
       int initial_size;
 
-      assert (cdl->bufpos == ddl->bufpos);
-      assert (cdl->end_bufpos == ddl->end_bufpos);
+      assert (cdl->charbpos == ddl->charbpos);
+      assert (cdl->end_charbpos == ddl->end_charbpos);
       assert (cdl->offset == ddl->offset);
 
       db = get_display_block_from_line (ddl, TEXT);
       initial_size = Dynarr_length (db->runes);
-      old_start = ddl->bufpos + ddl->offset;
-      old_end = ddl->end_bufpos + ddl->offset;
+      old_start = ddl->charbpos + ddl->offset;
+      old_end = ddl->end_charbpos + ddl->offset;
 
       /* If this is the first line being updated and it used
          propagation data, fail.  Otherwise we'll be okay because
@@ -5452,7 +5452,7 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
       if (line == first_line && ddl->used_prop_data)
 	return 0;
 
-      new_start = generate_display_line (w, ddl, 0, ddl->bufpos + ddl->offset,
+      new_start = generate_display_line (w, ddl, 0, ddl->charbpos + ddl->offset,
 					 &prop, DESIRED_DISP);
       ddl->offset = 0;
 
@@ -5475,8 +5475,8 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
 	  || cdl->top_clip != ddl->top_clip
 	  || (cdl->cursor_elt != -1 && ddl->cursor_elt == -1)
 	  || (cdl->cursor_elt == -1 && ddl->cursor_elt != -1)
-	  || old_start != ddl->bufpos
-	  || old_end != ddl->end_bufpos
+	  || old_start != ddl->charbpos
+	  || old_end != ddl->end_charbpos
 	  || initial_size != Dynarr_length (db->runes))
 	{
 	  return 0;
@@ -5492,7 +5492,7 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
 
       /* If the extent changes end on the line we just updated then
          we're done.  Otherwise go on to the next line. */
-      if (end_unchanged <= ddl->end_bufpos)
+      if (end_unchanged <= ddl->end_charbpos)
 	break;
       else
 	line++;
@@ -5509,8 +5509,8 @@ regenerate_window_extents_only_changed (struct window *w, Bufpos startp,
    invariants located here. */
 
 static int
-regenerate_window_incrementally (struct window *w, Bufpos startp,
-				 Bufpos pointm)
+regenerate_window_incrementally (struct window *w, Charbpos startp,
+				 Charbpos pointm)
 {
   struct buffer *b = XBUFFER (w->buffer);
   display_line_dynarr *cdla = window_display_lines (w, CURRENT_DISP);
@@ -5520,7 +5520,7 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 
   int dla_start = 0;
   int dla_end, line;
-  Bufpos start_pos;
+  Charbpos start_pos;
 
   /* If this function is called, the current and desired structures
      had better be identical.  If they are not, then that is a bug. */
@@ -5563,8 +5563,8 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
   while (line <= dla_end)
     {
       struct display_line *dl = Dynarr_atp (cdla, line);
-      Bufpos lstart = dl->bufpos + dl->offset;
-      Bufpos lend = dl->end_bufpos + dl->offset;
+      Charbpos lstart = dl->charbpos + dl->offset;
+      Charbpos lend = dl->end_charbpos + dl->offset;
 
       if (beg_unchanged >= lstart && beg_unchanged <= lend)
 	break;
@@ -5587,13 +5587,13 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
        we fail the next thing that is going to happen is a full regen
        so we will actually end up being safe. */
     {
-      Bufpos new_start;
+      Charbpos new_start;
       prop_block_dynarr *prop = NULL;
       struct display_line *cdl = Dynarr_atp (cdla, line);
       struct display_line *ddl = Dynarr_atp (ddla, line);
 
-      assert (cdl->bufpos == ddl->bufpos);
-      assert (cdl->end_bufpos == ddl->end_bufpos);
+      assert (cdl->charbpos == ddl->charbpos);
+      assert (cdl->end_charbpos == ddl->end_charbpos);
       assert (cdl->offset == ddl->offset);
 
       /* If the line continues to next display line, fail. */
@@ -5604,7 +5604,7 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
       if (ddl->used_prop_data)
 	return 0;
 
-      new_start = generate_display_line (w, ddl, 0, ddl->bufpos + ddl->offset,
+      new_start = generate_display_line (w, ddl, 0, ddl->charbpos + ddl->offset,
 					 &prop, DESIRED_DISP);
       ddl->offset = 0;
 
@@ -5634,7 +5634,7 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 
       /* If the changed area also ends on this line, then we may be in
          business.  Update everything and return success. */
-      if (end_unchanged >= ddl->bufpos && end_unchanged <= ddl->end_bufpos)
+      if (end_unchanged >= ddl->charbpos && end_unchanged <= ddl->end_charbpos)
 	{
 	  w->last_modified[DESIRED_DISP] = make_int (BUF_MODIFF (b));
 	  w->last_facechange[DESIRED_DISP] = make_int (BUF_FACECHANGE (b));
@@ -5679,8 +5679,8 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
              the line because we checked before entering the loop. */
 	  if (extent_beg_unchanged != -1
 	      && extent_end_unchanged != -1
-	      && ((extent_beg_unchanged < ddl->bufpos)
-		  || (extent_end_unchanged > ddl->end_bufpos)))
+	      && ((extent_beg_unchanged < ddl->charbpos)
+		  || (extent_end_unchanged > ddl->end_charbpos)))
 	    return regenerate_window_extents_only_changed (w, startp, pointm,
 							   extent_beg_unchanged,
 							   extent_end_unchanged);
@@ -5697,10 +5697,10 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
    that point is displayed in the middle of the window.
    Return the window's new start position. */
 
-static Bufpos
-regenerate_window_point_center (struct window *w, Bufpos point, int type)
+static Charbpos
+regenerate_window_point_center (struct window *w, Charbpos point, int type)
 {
-  Bufpos startp;
+  Charbpos startp;
 
   /* We need to make sure that the modeline is generated so that the
      window height can be calculated correctly. */
@@ -5717,7 +5717,7 @@ regenerate_window_point_center (struct window *w, Bufpos point, int type)
    indicating whether the given point is contained within. */
 
 static int
-point_visible (struct window *w, Bufpos point, int type)
+point_visible (struct window *w, Charbpos point, int type)
 {
   struct buffer *b = XBUFFER (w->buffer);
   display_line_dynarr *dla = window_display_lines (w, type);
@@ -5730,10 +5730,10 @@ point_visible (struct window *w, Bufpos point, int type)
 
   if (Dynarr_length (dla) > first_line)
     {
-      Bufpos start, end;
+      Charbpos start, end;
       struct display_line *dl = Dynarr_atp (dla, first_line);
 
-      start = dl->bufpos;
+      start = dl->charbpos;
       end = BUF_Z (b) - w->window_end_pos[type] - 1;
 
       if (point >= start && point <= end)
@@ -5742,8 +5742,8 @@ point_visible (struct window *w, Bufpos point, int type)
 	    {
 	      dl = Dynarr_atp (dla, Dynarr_length (dla) - 1);
 
-	      if (point >= (dl->bufpos + dl->offset)
-		  && point <= (dl->end_bufpos + dl->offset))
+	      if (point >= (dl->charbpos + dl->offset)
+		  && point <= (dl->end_charbpos + dl->offset))
 		return !dl->clip;
 	      else
 		return 1;
@@ -5771,7 +5771,7 @@ window_half_pixpos (struct window *w)
    window W for display lines TYPE. */
 
 int
-line_at_center (struct window *w, int type, Bufpos start, Bufpos point)
+line_at_center (struct window *w, int type, Charbpos start, Charbpos point)
 {
   display_line_dynarr *dla;
   int half;
@@ -5801,8 +5801,8 @@ line_at_center (struct window *w, int type, Bufpos start, Bufpos point)
 /* Return a value for point that would place it at the beginning of
    the line which is in the middle of the window. */
 
-Bufpos
-point_at_center (struct window *w, int type, Bufpos start, Bufpos point)
+Charbpos
+point_at_center (struct window *w, int type, Charbpos start, Charbpos point)
 {
   /* line_at_center will regenerate the display structures, if necessary. */
   int line = line_at_center (w, type, start, point);
@@ -5814,7 +5814,7 @@ point_at_center (struct window *w, int type, Bufpos start, Bufpos point)
       display_line_dynarr *dla = window_display_lines (w, type);
       struct display_line *dl = Dynarr_atp (dla, line);
 
-      return dl->bufpos;
+      return dl->charbpos;
     }
 }
 
@@ -6165,8 +6165,8 @@ regeneration_done:
 
   if (!skip_output)
     {
-      Bufpos start = marker_position (w->start[DESIRED_DISP]);
-      Bufpos end = (w->window_end_pos[DESIRED_DISP] == -1
+      Charbpos start = marker_position (w->start[DESIRED_DISP]);
+      Charbpos end = (w->window_end_pos[DESIRED_DISP] == -1
 		    ? BUF_ZV (b)
 		    : BUF_Z (b) - w->window_end_pos[DESIRED_DISP] - 1);
       /* Don't pollute the cache if not sure if we are correct */
@@ -6235,13 +6235,13 @@ redisplay_windows (Lisp_Object window, int skip_selected)
 static int
 call_redisplay_end_triggers (struct window *w, void *closure)
 {
-  Bufpos lrpos = w->last_redisplay_pos;
+  Charbpos lrpos = w->last_redisplay_pos;
   w->last_redisplay_pos = 0;
   if (!NILP (w->buffer)
       && !NILP (w->redisplay_end_trigger)
       && lrpos > 0)
     {
-      Bufpos pos;
+      Charbpos pos;
 
       if (MARKERP (w->redisplay_end_trigger)
 	  && XMARKER (w->redisplay_end_trigger)->buffer != 0)
@@ -6639,7 +6639,7 @@ window_line_number (struct window *w, int type)
   /* Be careful in the order of these tests. The first clause will
      fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
      This can occur when the frame title is computed really early */
-  Bufpos pos =
+  Charbpos pos =
     ((EQ(DEVICE_SELECTED_FRAME(d), w->frame) &&
        (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame(d)))) &&
       EQ(DEVICE_CONSOLE(d), Vselected_console) &&
@@ -6662,7 +6662,7 @@ window_line_number (struct window *w, int type)
 
 /* Given a character representing an object in a modeline
    specification, return a string (stored into the global array
-   `mode_spec_bufbyte_string') with the information that object
+   `mode_spec_intbyte_string') with the information that object
    represents.
 
    This function is largely unchanged from previous versions of the
@@ -6679,7 +6679,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
   const char *str = NULL;
   struct buffer *b = XBUFFER (w->buffer);
 
-  Dynarr_reset (mode_spec_bufbyte_string);
+  Dynarr_reset (mode_spec_intbyte_string);
 
   switch (spec)
     {
@@ -6696,7 +6696,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print the current column */
     case 'c':
       {
-        Bufpos pt = (w == XWINDOW (Fselected_window (Qnil)))
+        Charbpos pt = (w == XWINDOW (Fselected_window (Qnil)))
                     ? BUF_PT (b)
                     : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
@@ -6704,8 +6704,8 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 
 	long_to_string (buf, col);
 
-	Dynarr_add_many (mode_spec_bufbyte_string,
-			 (const Bufbyte *) buf, strlen (buf));
+	Dynarr_add_many (mode_spec_intbyte_string,
+			 (const Intbyte *) buf, strlen (buf));
 
 	goto decode_mode_spec_done;
       }
@@ -6809,7 +6809,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print percent of buffer above top of window, or Top, Bot or All */
     case 'p':
     {
-      Bufpos pos = marker_position (w->start[type]);
+      Charbpos pos = marker_position (w->start[type]);
 
       /* This had better be while the desired lines are being done. */
       if (w->window_end_pos[type] <= BUF_Z (b) - BUF_ZV (b))
@@ -6840,7 +6840,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	    percent = 99;
 
 	  sprintf (buf, "%d%%", percent);
-	  Dynarr_add_many (mode_spec_bufbyte_string, (Bufbyte *) buf,
+	  Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) buf,
 			   strlen (buf));
 
 	  goto decode_mode_spec_done;
@@ -6852,8 +6852,8 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
        Top, or print Bottom or All */
     case 'P':
     {
-      Bufpos toppos = marker_position (w->start[type]);
-      Bufpos botpos = BUF_Z (b) - w->window_end_pos[type];
+      Charbpos toppos = marker_position (w->start[type]);
+      Charbpos botpos = BUF_Z (b) - w->window_end_pos[type];
 
       /* botpos is only accurate as of the last redisplay, so we can
          only treat it as a hint.  In particular, after erase-buffer,
@@ -6891,7 +6891,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	  else
 	    sprintf (buf, "%d%%", percent);
 
-	  Dynarr_add_many (mode_spec_bufbyte_string, (Bufbyte *) buf,
+	  Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) buf,
 			   strlen (buf));
 
 	  goto decode_mode_spec_done;
@@ -6916,7 +6916,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	}
 
       for (i = 0; i < command_loop_level; i++)
-	Dynarr_add (mode_spec_bufbyte_string, '[');
+	Dynarr_add (mode_spec_intbyte_string, '[');
 
       goto decode_mode_spec_done;
     }
@@ -6933,7 +6933,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	}
 
       for (i = 0; i < command_loop_level; i++)
-	Dynarr_add (mode_spec_bufbyte_string, ']');
+	Dynarr_add (mode_spec_intbyte_string, ']');
 
       goto decode_mode_spec_done;
     }
@@ -6945,14 +6945,14 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
     }
 
   if (STRINGP (obj))
-    Dynarr_add_many (mode_spec_bufbyte_string,
+    Dynarr_add_many (mode_spec_intbyte_string,
 		     XSTRING_DATA   (obj),
 		     XSTRING_LENGTH (obj));
   else if (str)
-    Dynarr_add_many (mode_spec_bufbyte_string, (Bufbyte *) str, strlen (str));
+    Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) str, strlen (str));
 
 decode_mode_spec_done:
-  Dynarr_add (mode_spec_bufbyte_string, '\0');
+  Dynarr_add (mode_spec_intbyte_string, '\0');
 }
 
 /* Given a display line, free all of its data structures. */
@@ -7162,8 +7162,8 @@ update_internal_cache_list (struct window *w, int type)
 	{
 	  struct line_start_cache lsc;
 
-	  lsc.start = dl->bufpos;
-	  lsc.end = dl->end_bufpos;
+	  lsc.start = dl->charbpos;
+	  lsc.end = dl->end_charbpos;
 	  lsc.height = dl->ascent + dl->descent;
 
 	  Dynarr_add (internal_cache, lsc);
@@ -7206,7 +7206,7 @@ validate_line_start_cache (struct window *w)
    window's cache, or -1 if the cache is empty.  Assumes that the
    cache is valid. */
 
-static Bufpos
+static Charbpos
 line_start_cache_start (struct window *w)
 {
   line_start_cache_dynarr *cache = w->line_start_cache;
@@ -7221,7 +7221,7 @@ line_start_cache_start (struct window *w)
    window's cache, or -1 if the cache is empty.  Assumes that the
    cache is valid. */
 
-static Bufpos
+static Charbpos
 line_start_cache_end (struct window *w)
 {
   line_start_cache_dynarr *cache = w->line_start_cache;
@@ -7242,7 +7242,7 @@ line_start_cache_end (struct window *w)
    for any reason. */
 
 int
-point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
+point_in_line_start_cache (struct window *w, Charbpos point, int min_past)
 {
   struct buffer *b = XBUFFER (w->buffer);
   line_start_cache_dynarr *cache = w->line_start_cache;
@@ -7271,8 +7271,8 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
 
       if (!Dynarr_length (cache))
 	{
-	  Bufpos from = find_next_newline_no_quit (b, point, -1);
-	  Bufpos to = find_next_newline_no_quit (b, from, win_char_height);
+	  Charbpos from = find_next_newline_no_quit (b, point, -1);
+	  Charbpos to = find_next_newline_no_quit (b, from, win_char_height);
 
 	  update_line_start_cache (w, from, to, point, 0);
 
@@ -7289,7 +7289,7 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
       while (line_start_cache_start (w) > point
 	     && (loop < cache_adjustment || min_past == -1))
 	{
-	  Bufpos from, to;
+	  Charbpos from, to;
 
 	  from = line_start_cache_start (w);
 	  if (from <= BUF_BEGV (b))
@@ -7304,7 +7304,7 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
 
       if (line_start_cache_start (w) > point)
 	{
-	  Bufpos from, to;
+	  Charbpos from, to;
 
 	  from = find_next_newline_no_quit (b, point, -1);
 	  if (from >= BUF_ZV (b))
@@ -7323,7 +7323,7 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
       while (line_start_cache_end (w) < point
 	     && (loop < cache_adjustment || min_past == -1))
 	{
-	  Bufpos from, to;
+	  Charbpos from, to;
 
 	  to = line_start_cache_end (w);
 	  if (to >= BUF_ZV (b))
@@ -7338,7 +7338,7 @@ point_in_line_start_cache (struct window *w, Bufpos point, int min_past)
 
       if (line_start_cache_end (w) < point)
 	{
-	  Bufpos from, to;
+	  Charbpos from, to;
 
 	  from = find_next_newline_no_quit (b, point, -1);
 	  if (from >= BUF_ZV (b))
@@ -7375,7 +7375,7 @@ find_point_loop:
   while (1)
     {
       int new_pos;
-      Bufpos start, end;
+      Charbpos start, end;
 
       pos = (bottom + top + 1) >> 1;
       start = Dynarr_atp (cache, pos)->start;
@@ -7385,10 +7385,10 @@ find_point_loop:
 	{
 	  if (pos < min_past && line_start_cache_start (w) > BUF_BEGV (b))
 	    {
-	      Bufpos from =
+	      Charbpos from =
 		find_next_newline_no_quit (b, line_start_cache_start (w),
 					   -min_past - 1);
-	      Bufpos to = line_start_cache_end (w);
+	      Charbpos to = line_start_cache_end (w);
 
 	      update_line_start_cache (w, from, to, point, 0);
 	      goto find_point_loop;
@@ -7396,8 +7396,8 @@ find_point_loop:
 	  else if ((Dynarr_length (cache) - pos - 1) < min_past
 		   && line_start_cache_end (w) < BUF_ZV (b))
 	    {
-	      Bufpos from = line_start_cache_end (w);
-	      Bufpos to = find_next_newline_no_quit (b, from,
+	      Charbpos from = line_start_cache_end (w);
+	      Charbpos to = find_next_newline_no_quit (b, from,
 						     (min_past
 						      ? min_past
 						      : 1));
@@ -7431,7 +7431,7 @@ find_point_loop:
    if display of the window was to begin at STARTP. */
 
 int
-point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
+point_would_be_visible (struct window *w, Charbpos startp, Charbpos point)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int pixpos = -WINDOW_TEXT_TOP_CLIP(w);
@@ -7468,7 +7468,7 @@ point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
       /* Expand the cache if necessary. */
       if (start_elt == Dynarr_length (w->line_start_cache))
 	{
-	  Bufpos old_startp =
+	  Charbpos old_startp =
 	    Dynarr_atp (w->line_start_cache, start_elt - 1)->start;
 
 	  start_elt = point_in_line_start_cache (w, old_startp,
@@ -7522,15 +7522,15 @@ point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
    #### With a little work this could probably be reworked as just a
    call to start_with_line_at_pixpos. */
 
-static Bufpos
-start_end_of_last_line (struct window *w, Bufpos startp, int end,
+static Charbpos
+start_end_of_last_line (struct window *w, Charbpos startp, int end,
                         int may_error)
 {
   struct buffer *b = XBUFFER (w->buffer);
   line_start_cache_dynarr *cache = w->line_start_cache;
   int pixpos = 0;
   int bottom = WINDOW_TEXT_HEIGHT (w);
-  Bufpos cur_start;
+  Charbpos cur_start;
   int start_elt;
 
   validate_line_start_cache (w);
@@ -7580,9 +7580,9 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end,
       start_elt++;
       if (start_elt == Dynarr_length (cache))
 	{
-	  Bufpos from = line_start_cache_end (w);
+	  Charbpos from = line_start_cache_end (w);
 	  int win_char_height = window_char_height (w, 0);
-	  Bufpos to = find_next_newline_no_quit (b, from,
+	  Charbpos to = find_next_newline_no_quit (b, from,
 						 (win_char_height
 						  ? win_char_height
 						  : 1));
@@ -7605,8 +7605,8 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end,
 /* For the given window W, if display starts at STARTP, what will be
    the buffer position at the beginning of the last line displayed. */
 
-Bufpos
-start_of_last_line (struct window *w, Bufpos startp)
+Charbpos
+start_of_last_line (struct window *w, Charbpos startp)
 {
   return start_end_of_last_line (w, startp, 0 , 0);
 }
@@ -7615,14 +7615,14 @@ start_of_last_line (struct window *w, Bufpos startp)
    the buffer position at the end of the last line displayed.  This is
    also know as the window end position. */
 
-Bufpos
-end_of_last_line (struct window *w, Bufpos startp)
+Charbpos
+end_of_last_line (struct window *w, Charbpos startp)
 {
   return start_end_of_last_line (w, startp, 1, 0);
 }
 
-static Bufpos
-end_of_last_line_may_error (struct window *w, Bufpos startp)
+static Charbpos
+end_of_last_line_may_error (struct window *w, Charbpos startp)
 {
   return start_end_of_last_line (w, startp, 1, 1);
 }
@@ -7631,12 +7631,12 @@ end_of_last_line_may_error (struct window *w, Bufpos startp)
 /* For window W, what does the starting position have to be so that
    the line containing POINT will cover pixel position PIXPOS. */
 
-Bufpos
-start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
+Charbpos
+start_with_line_at_pixpos (struct window *w, Charbpos point, int pixpos)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int cur_elt;
-  Bufpos cur_pos, prev_pos = point;
+  Charbpos cur_pos, prev_pos = point;
   int point_line_height;
   int pixheight = pixpos - WINDOW_TEXT_TOP (w);
 
@@ -7675,7 +7675,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
       cur_elt--;
       while (cur_elt < 0)
 	{
-	  Bufpos from, to;
+	  Charbpos from, to;
 	  int win_char_height;
 
 	  if (cur_pos <= BUF_BEGV (b))
@@ -7719,8 +7719,8 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
    considered to be the number of lines from the bottom (-1 is the
    bottom line). */
 
-Bufpos
-start_with_point_on_display_line (struct window *w, Bufpos point, int line)
+Charbpos
+start_with_point_on_display_line (struct window *w, Charbpos point, int line)
 {
   validate_line_start_cache (w);
   w->line_cache_validation_override++;
@@ -7745,7 +7745,7 @@ start_with_point_on_display_line (struct window *w, Bufpos point, int line)
       int new_line = -line - 1;
       int cur_elt = point_in_line_start_cache (w, point, new_line);
       int pixpos = WINDOW_TEXT_BOTTOM (w);
-      Bufpos retval, search_point;
+      Charbpos retval, search_point;
 
       /* If scroll_on_clipped_lines is false, the last "visible" line of
  	 the window covers the pixel at WINDOW_TEXT_BOTTOM (w) - 1.
@@ -7802,12 +7802,12 @@ start_with_point_on_display_line (struct window *w, Bufpos point, int line)
    overhead for too little gain. */
 
 static void
-update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
-			 Bufpos point, int no_regen)
+update_line_start_cache (struct window *w, Charbpos from, Charbpos to,
+			 Charbpos point, int no_regen)
 {
   struct buffer *b = XBUFFER (w->buffer);
   line_start_cache_dynarr *cache = w->line_start_cache;
-  Bufpos low_bound, high_bound;
+  Charbpos low_bound, high_bound;
 
   validate_line_start_cache (w);
   w->line_cache_validation_override++;
@@ -7854,7 +7854,7 @@ update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
      to follow what's going on by having it separate. */
   if (no_regen)
     {
-      Bufpos start, end;
+      Charbpos start, end;
 
       update_internal_cache_list (w, DESIRED_DISP);
       if (!Dynarr_length (internal_cache))
@@ -7955,14 +7955,14 @@ update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
 
   if (!Dynarr_length (cache) || from < low_bound)
     {
-      Bufpos startp = find_next_newline_no_quit (b, from, -1);
+      Charbpos startp = find_next_newline_no_quit (b, from, -1);
       int marker = 0;
       int old_lb = low_bound;
 
       while (startp < old_lb || low_bound == -1)
 	{
 	  int ic_elt;
-          Bufpos new_startp;
+          Charbpos new_startp;
 
 	  regenerate_window (w, startp, point, CMOTION_DISP);
 	  update_internal_cache_list (w, CMOTION_DISP);
@@ -8031,7 +8031,7 @@ update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
 
   if (to > high_bound)
     {
-      Bufpos startp = Dynarr_atp (cache, Dynarr_length (cache) - 1)->end + 1;
+      Charbpos startp = Dynarr_atp (cache, Dynarr_length (cache) - 1)->end + 1;
 
       do
 	{
@@ -8218,7 +8218,7 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
     d->pixel_to_glyph_cache.obj_x = *obj_x;				\
     d->pixel_to_glyph_cache.obj_y = *obj_y;				\
     d->pixel_to_glyph_cache.w = *w;					\
-    d->pixel_to_glyph_cache.bufpos = *bufpos;				\
+    d->pixel_to_glyph_cache.charbpos = *charbpos;				\
     d->pixel_to_glyph_cache.closest = *closest;				\
     d->pixel_to_glyph_cache.modeline_closest = *modeline_closest;	\
     d->pixel_to_glyph_cache.obj1 = *obj1;				\
@@ -8262,8 +8262,8 @@ get_position_object (struct display_line *dl, Lisp_Object *obj1,
 int
 pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 			    int *col, int *row, int *obj_x, int *obj_y,
-			    struct window **w, Bufpos *bufpos,
-			    Bufpos *closest, Charcount *modeline_closest,
+			    struct window **w, Charbpos *charbpos,
+			    Charbpos *closest, Charcount *modeline_closest,
 			    Lisp_Object *obj1, Lisp_Object *obj2)
 {
   struct device *d;
@@ -8301,7 +8301,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
       *obj_x = cache->obj_x;
       *obj_y = cache->obj_y;
       *w = cache->w;
-      *bufpos = cache->bufpos;
+      *charbpos = cache->charbpos;
       *closest = cache->closest;
       *modeline_closest = cache->modeline_closest;
       *obj1 = cache->obj1;
@@ -8316,7 +8316,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
       *obj_x = 0;
       *obj_y = 0;
       *w = 0;
-      *bufpos = 0;
+      *charbpos = 0;
       *closest = 0;
       *modeline_closest = -1;
       *obj1 = Qnil;
@@ -8543,20 +8543,20 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		  if (x_check <= left_bound)
 		    {
 		      if (dl->modeline)
-			*modeline_closest = Dynarr_atp (db->runes, 0)->bufpos;
+			*modeline_closest = Dynarr_atp (db->runes, 0)->charbpos;
 		      else
-			*closest = Dynarr_atp (db->runes, 0)->bufpos;
+			*closest = Dynarr_atp (db->runes, 0)->charbpos;
 		    }
 		  else
 		    {
 		      if (dl->modeline)
 			*modeline_closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->bufpos;
+				      Dynarr_length (db->runes) - 1)->charbpos;
 		      else
 			*closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->bufpos;
+				      Dynarr_length (db->runes) - 1)->charbpos;
 		    }
 
 		  if (dl->modeline)
@@ -8611,7 +8611,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      rb = Dynarr_atp (db->runes, *col);
 		    }
 
-		  *bufpos = rb->bufpos + dl->offset;
+		  *charbpos = rb->charbpos + dl->offset;
 		  low_x_coord = rb->xpos;
 		  high_x_coord = rb->xpos + rb->width;
 
@@ -8626,11 +8626,11 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 			    {
 			      if (dl->modeline)
 				*modeline_closest =
-				  (Dynarr_atp (db->runes, elt)->bufpos +
+				  (Dynarr_atp (db->runes, elt)->charbpos +
 				   dl->offset);
 			      else
 				*closest =
-				  (Dynarr_atp (db->runes, elt)->bufpos +
+				  (Dynarr_atp (db->runes, elt)->charbpos +
 				   dl->offset);
 			      break;
 			    }
@@ -8644,18 +8644,18 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      if (elt == Dynarr_length (db->runes))
 			{
 			  if (dl->modeline)
-			    *modeline_closest = dl->end_bufpos + dl->offset;
+			    *modeline_closest = dl->end_charbpos + dl->offset;
 			  else
-			    *closest = dl->end_bufpos + dl->offset;
+			    *closest = dl->end_charbpos + dl->offset;
 			  really_over_nothing = 1;
 			}
 		    }
 		  else
 		    {
 		      if (dl->modeline)
-			*modeline_closest = rb->bufpos + dl->offset;
+			*modeline_closest = rb->charbpos + dl->offset;
 		      else
-			*closest = rb->bufpos + dl->offset;
+			*closest = rb->charbpos + dl->offset;
 		    }
 
 		  if (dl->modeline)
@@ -9124,8 +9124,8 @@ init_redisplay (void)
     {
       if (!cmotion_display_lines)
 	cmotion_display_lines = Dynarr_new (display_line);
-      if (!mode_spec_bufbyte_string)
-	mode_spec_bufbyte_string = Dynarr_new (Bufbyte);
+      if (!mode_spec_intbyte_string)
+	mode_spec_intbyte_string = Dynarr_new (Intbyte);
       if (!formatted_string_extent_dynarr)
 	formatted_string_extent_dynarr = Dynarr_new (EXTENT);
       if (!formatted_string_extent_start_dynarr)

@@ -268,7 +268,7 @@ readchar (Lisp_Object readcharfun)
   else if (MARKERP (readcharfun))
     {
       Emchar c;
-      Bufpos mpos = marker_position (readcharfun);
+      Charbpos mpos = marker_position (readcharfun);
       struct buffer *inbuffer = XMARKER (readcharfun)->buffer;
 
       if (mpos >= BUF_ZV (inbuffer))
@@ -626,7 +626,7 @@ encoding detection or end-of-line detection.
 	      if (result >= 0 &&
 		  (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
               {
-		Lisp_Object newer_name = make_string ((Bufbyte *) foundstr,
+		Lisp_Object newer_name = make_string ((Intbyte *) foundstr,
 						      foundlen - 1);
                 struct gcpro nngcpro1;
                 NNGCPRO1 (newer_name);
@@ -1868,7 +1868,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
   return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
-static Lisp_Object parse_integer (const Bufbyte *buf, Bytecount len, int base);
+static Lisp_Object parse_integer (const Intbyte *buf, Bytecount len, int base);
 
 static Lisp_Object
 read_atom (Lisp_Object readcharfun,
@@ -1923,7 +1923,7 @@ read_atom (Lisp_Object readcharfun,
 		return make_int (number);
 	      }
 #else
-              return parse_integer ((Bufbyte *) read_ptr, len, 10);
+              return parse_integer ((Intbyte *) read_ptr, len, 10);
 #endif
 	    }
 	}
@@ -1936,10 +1936,10 @@ read_atom (Lisp_Object readcharfun,
   {
     Lisp_Object sym;
     if (uninterned_symbol)
-      sym = Fmake_symbol ( make_string ((Bufbyte *) read_ptr, len));
+      sym = Fmake_symbol ( make_string ((Intbyte *) read_ptr, len));
     else
       {
-	Lisp_Object name = make_string ((Bufbyte *) read_ptr, len);
+	Lisp_Object name = make_string ((Intbyte *) read_ptr, len);
 	sym = Fintern (name, Qnil);
       }
     return sym;
@@ -1948,10 +1948,10 @@ read_atom (Lisp_Object readcharfun,
 
 
 static Lisp_Object
-parse_integer (const Bufbyte *buf, Bytecount len, int base)
+parse_integer (const Intbyte *buf, Bytecount len, int base)
 {
-  const Bufbyte *lim = buf + len;
-  const Bufbyte *p = buf;
+  const Intbyte *lim = buf + len;
+  const Intbyte *p = buf;
   EMACS_UINT num = 0;
   int negativland = 0;
 
@@ -2701,7 +2701,7 @@ int
 isfloat_string (const char *cp)
 {
   int state = 0;
-  const Bufbyte *ucp = (const Bufbyte *) cp;
+  const Intbyte *ucp = (const Intbyte *) cp;
 
   if (*ucp == '+' || *ucp == '-')
     ucp++;

@@ -27,8 +27,8 @@
 #define RE_TRANSLATE_TYPE Lisp_Object
 #else
 #define RE_TRANSLATE_TYPE char *
-#define Element_Count ssize_t
-#define Memory_Count ssize_t
+#define Elemcount ssize_t
+#define Bytecount ssize_t
 #endif /* emacs */
 
 /* POSIX says that <sys/types.h> must be included (by the caller) before

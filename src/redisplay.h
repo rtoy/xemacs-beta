@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 typedef struct line_start_cache line_start_cache;
 struct line_start_cache
 {
-  Bufpos start, end;
+  Charbpos start, end;
   int height;
 };
 
@@ -112,10 +112,10 @@ struct rune
 				   each of the face properties in this
 				   particular window. */
 
-  Bufpos bufpos;		/* buffer position this rune is displaying;
+  Charbpos charbpos;		/* buffer position this rune is displaying;
 				   for the modeline, the value here is a
 				   Charcount, but who's looking? */
-  Bufpos endpos;		/* if set this rune covers a range of pos */
+  Charbpos endpos;		/* if set this rune covers a range of pos */
  				/* #### Chuck, what does it mean for a rune
 				   to cover a range of pos?  I don't get
 				   this. */
@@ -257,7 +257,7 @@ typedef struct
 
 /*  Modeline commentary: IMO the modeline is handled very badly, we
   special case virtually *everything* in the redisplay routines for
-  the modeline. The fact that dl->bufpos can be either a buffer
+  the modeline. The fact that dl->charbpos can be either a buffer
   position or a char count highlights this. There is no abstraction at
   all that I can find and it means that the code is made very ugly as
   a result. Either we should treat the modeline *entirely* separately,
@@ -293,9 +293,9 @@ struct display_line
 					   in pixels.*/
   unsigned short top_clip;		/* amount of top of line to clip
 					   in pixels.*/
-  Bufpos bufpos;			/* first buffer position on line */
-  Bufpos end_bufpos;			/* last buffer position on line */
-  Charcount offset;			/* adjustment to bufpos vals */
+  Charbpos charbpos;			/* first buffer position on line */
+  Charbpos end_charbpos;			/* last buffer position on line */
+  Charcount offset;			/* adjustment to charbpos vals */
   Charcount num_chars;			/* # of chars on line
 					   including expansion of tabs
 					   and control chars */
@@ -383,13 +383,13 @@ struct font_metric_info
 };
 
 /* NOTE NOTE NOTE: Currently the positions in an extent fragment
-   structure are Bytind's, not Bufpos's.  This could change. */
+   structure are Bytebpos's, not Charbpos's.  This could change. */
 
 struct extent_fragment
 {
   Lisp_Object object; /* buffer or string */
   struct frame *frm;
-  Bytind pos, end;
+  Bytebpos pos, end;
   EXTENT_dynarr *extents;
   glyph_block_dynarr *begin_glyphs, *end_glyphs;
   unsigned int invisible:1;
@@ -681,11 +681,11 @@ extern Lisp_Object Qtop_bottom;
 EXFUN (Fredraw_frame, 2);
 
 int redisplay_text_width_string (struct window *w, int findex,
-				 Bufbyte *nonreloc, Lisp_Object reloc,
+				 Intbyte *nonreloc, Lisp_Object reloc,
 				 Bytecount offset, Bytecount len);
 int redisplay_frame_text_width_string (struct frame *f,
 				       Lisp_Object face,
-				       Bufbyte *nonreloc,
+				       Intbyte *nonreloc,
 				       Lisp_Object reloc,
 				       Bytecount offset, Bytecount len);
 int redisplay_frame (struct frame *f, int preemption_check);
@@ -694,9 +694,9 @@ struct display_block *get_display_block_from_line (struct display_line *dl,
 						   enum display_type type);
 layout_bounds calculate_display_line_boundaries (struct window *w,
 						 int modeline);
-Bufpos point_at_center (struct window *w, int type, Bufpos start,
-			Bufpos point);
-int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
+Charbpos point_at_center (struct window *w, int type, Charbpos start,
+			Charbpos point);
+int line_at_center (struct window *w, int type, Charbpos start, Charbpos point);
 int window_half_pixpos (struct window *w);
 void redisplay_echo_area (void);
 void free_display_structs (struct window_mirror *mir);
@@ -705,7 +705,7 @@ void mark_redisplay_structs (display_line_dynarr *dla);
 void generate_displayable_area (struct window *w, Lisp_Object disp_string,
 				int xpos, int ypos, int width, int height,
 				display_line_dynarr* dl,
-				Bufpos start_pos, face_index default_face);
+				Charbpos start_pos, face_index default_face);
 /* `generate_title_string' in frame.c needs this */
 void generate_formatted_string_db (Lisp_Object format_str,
 				   Lisp_Object result_str,
@@ -718,20 +718,20 @@ int real_current_modeline_height (struct window *w);
 int pixel_to_glyph_translation (struct frame *f, int x_coord,
 				int y_coord, int *col, int *row,
 				int *obj_x, int *obj_y,
-				struct window **w, Bufpos *bufpos,
-				Bufpos *closest, Charcount *modeline_closest,
+				struct window **w, Charbpos *charbpos,
+				Charbpos *closest, Charcount *modeline_closest,
 				Lisp_Object *obj1, Lisp_Object *obj2);
 void glyph_to_pixel_translation (struct window *w, int char_x,
 				 int char_y, int *pix_x, int *pix_y);
-int point_in_line_start_cache (struct window *w, Bufpos point,
+int point_in_line_start_cache (struct window *w, Charbpos point,
 			       int min_past);
-int point_would_be_visible (struct window *w, Bufpos startp,
-		    Bufpos point);
-Bufpos start_of_last_line (struct window *w, Bufpos startp);
-Bufpos end_of_last_line (struct window *w, Bufpos startp);
-Bufpos start_with_line_at_pixpos (struct window *w, Bufpos point,
+int point_would_be_visible (struct window *w, Charbpos startp,
+		    Charbpos point);
+Charbpos start_of_last_line (struct window *w, Charbpos startp);
+Charbpos end_of_last_line (struct window *w, Charbpos startp);
+Charbpos start_with_line_at_pixpos (struct window *w, Charbpos point,
 				  int pixpos);
-Bufpos start_with_point_on_display_line (struct window *w, Bufpos point,
+Charbpos start_with_point_on_display_line (struct window *w, Charbpos point,
 					 int line);
 int redisplay_variable_changed (Lisp_Object sym, Lisp_Object *val,
 				Lisp_Object in_object, int flags);
@@ -791,7 +791,7 @@ void redisplay_update_line (struct window *w, int first_line,
 			    int last_line, int update_values);
 void redisplay_output_window (struct window *w);
 void bevel_modeline (struct window *w, struct display_line *dl);
-int redisplay_move_cursor (struct window *w, Bufpos new_point,
+int redisplay_move_cursor (struct window *w, Charbpos new_point,
 			   int no_output_end);
 void redisplay_redraw_cursor (struct frame *f, int run_begin_end_meths);
 void output_display_line (struct window *w, display_line_dynarr *cdla,

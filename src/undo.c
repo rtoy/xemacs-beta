@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #include "extents.h"
 
 /* Maintained in event-stream.c */
-extern Bufpos last_point_position;
+extern Charbpos last_point_position;
 extern Lisp_Object last_point_position_buffer;
 
 /* Extent code needs to know about undo because the behavior of insert()
@@ -118,7 +118,7 @@ restore_inside_undo (Lisp_Object val)
    because we don't need to record the contents.)  */
 
 void
-record_insert (struct buffer *b, Bufpos beg, Charcount length)
+record_insert (struct buffer *b, Charbpos beg, Charcount length)
 {
   if (!undo_prelude (b, 1))
     return;
@@ -148,7 +148,7 @@ record_insert (struct buffer *b, Bufpos beg, Charcount length)
    for LENGTH characters at location BEG.  */
 
 void
-record_delete (struct buffer *b, Bufpos beg, Charcount length)
+record_delete (struct buffer *b, Charbpos beg, Charcount length)
 {
   /* This function can GC */
   Lisp_Object sbeg;
@@ -184,7 +184,7 @@ record_delete (struct buffer *b, Bufpos beg, Charcount length)
    The replacement does not change the number of characters.  */
 
 void
-record_change (struct buffer *b, Bufpos beg, Charcount length)
+record_change (struct buffer *b, Charbpos beg, Charcount length)
 {
   record_delete (b, beg, length);
   record_insert (b, beg, length);
@@ -222,7 +222,7 @@ record_extent (Lisp_Object extent, int attached)
 /* Record a change in property PROP (whose old value was VAL)
    for LENGTH characters starting at position BEG in BUFFER.  */
 
-record_property_change (Bufpos beg, Charcount length,
+record_property_change (Charbpos beg, Charcount length,
                         Lisp_Object prop, Lisp_Object value,
                         Lisp_Object buffer)
 {
@@ -408,7 +408,7 @@ Return what remains of the list.
 	  /* Handle an integer by setting point to that value.  */
 	  else if (INTP (next))
 	    BUF_SET_PT (current_buffer,
-			bufpos_clip_to_bounds (BUF_BEGV (current_buffer),
+			charbpos_clip_to_bounds (BUF_BEGV (current_buffer),
 					       XINT (next),
 					       BUF_ZV (current_buffer)));
 	  else if (CONSP (next))

@@ -350,15 +350,15 @@ specifier_hash (Lisp_Object obj, int depth)
 		internal_hash (s->buffer_specs, depth + 1));
 }
 
-inline static Memory_Count
-aligned_sizeof_specifier (Memory_Count specifier_type_specific_size)
+inline static Bytecount
+aligned_sizeof_specifier (Bytecount specifier_type_specific_size)
 {
   return ALIGN_SIZE (offsetof (Lisp_Specifier, data)
 		     + specifier_type_specific_size,
 		     ALIGNOF (max_align_t));
 }
 
-static Memory_Count
+static Bytecount
 sizeof_specifier (const void *header)
 {
   const Lisp_Specifier *p = (const Lisp_Specifier *) header;
@@ -473,7 +473,7 @@ add_entry_to_specifier_type_list (Lisp_Object symbol,
 
 static Lisp_Object
 make_specifier_internal (struct specifier_methods *spec_meths,
-			 Memory_Count data_size, int call_create_meth)
+			 Bytecount data_size, int call_create_meth)
 {
   Lisp_Object specifier;
   Lisp_Specifier *sp = (Lisp_Specifier *)

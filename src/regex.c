@@ -1167,8 +1167,8 @@ typedef union fail_stack_elt fail_stack_elt_t;
 typedef struct
 {
   fail_stack_elt_t *stack;
-  Element_Count size;
-  Element_Count avail;			/* Offset of next open position.  */
+  Elemcount size;
+  Elemcount avail;			/* Offset of next open position.  */
 } fail_stack_type;
 
 #define FAIL_STACK_EMPTY()     (fail_stack.avail == 0)
@@ -1551,7 +1551,7 @@ static unsigned char reg_unset_dummy;
 #define PATFETCH_EXTENDED(emch)						\
   do {if (p == pend) return REG_EEND;					\
     assert (p < pend);							\
-    emch = charptr_emchar ((const Bufbyte *) p);			\
+    emch = charptr_emchar ((const Intbyte *) p);			\
     INC_CHARPTR (p);							\
     if (TRANSLATE_P (translate) && emch < 0x80)				\
       emch = (Emchar) (unsigned char) RE_TRANSLATE (emch);		\
@@ -1560,7 +1560,7 @@ static unsigned char reg_unset_dummy;
 #define PATFETCH_RAW_EXTENDED(emch)					\
   do {if (p == pend) return REG_EEND;					\
     assert (p < pend);							\
-    emch = charptr_emchar ((const Bufbyte *) p);			\
+    emch = charptr_emchar ((const Intbyte *) p);			\
     INC_CHARPTR (p);							\
   } while (0)
 
@@ -3182,7 +3182,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 #else
 	    {
 	      Bytecount bt_count;
-	      Bufbyte tmp_buf[MAX_EMCHAR_LEN];
+	      Intbyte tmp_buf[MAX_EMCHAR_LEN];
 	      int i;
 
 	      bt_count = set_charptr_emchar (tmp_buf, c);
@@ -3443,12 +3443,12 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
 			reg_syntax_t syntax, Lisp_Object rtab)
 {
   Emchar this_char, range_start, range_end;
-  const Bufbyte *p;
+  const Intbyte *p;
 
   if (*p_ptr == pend)
     return REG_ERANGE;
 
-  p = (const Bufbyte *) *p_ptr;
+  p = (const Intbyte *) *p_ptr;
   range_end = charptr_emchar (p);
   p--; /* back to '-' */
   DEC_CHARPTR (p); /* back to start of range */
@@ -3632,7 +3632,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 		EMACS_INT first, last;
 		Lisp_Object dummy_val;
 		int jj;
-		Bufbyte strr[MAX_EMCHAR_LEN];
+		Intbyte strr[MAX_EMCHAR_LEN];
 
 		unified_range_table_get_range (p, i, &first, &last,
 					       &dummy_val);
@@ -4963,7 +4963,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             DEBUG_PRINT2 ("EXECUTING charset_mule%s.\n", not_p ? "_not" : "");
 
 	    REGEX_PREFETCH ();
-	    c = charptr_emchar ((const Bufbyte *) d);
+	    c = charptr_emchar ((const Intbyte *) d);
 	    c = TRANSLATE_EXTENDED_UNSAFE (c); /* The character to match.  */
 
 	    if (EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
@@ -5821,7 +5821,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    }
 #endif
 
-	    emch = charptr_emchar ((const Bufbyte *) d);
+	    emch = charptr_emchar ((const Intbyte *) d);
 	    matches = (SYNTAX_FROM_CACHE (regex_emacs_buffer->mirror_syntax_table,
 			emch) == (enum syntaxcode) mcnt);
 	    INC_CHARPTR (d);
@@ -5853,7 +5853,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 	    mcnt = *p++;
 	    REGEX_PREFETCH ();
-	    emch = charptr_emchar ((const Bufbyte *) d);
+	    emch = charptr_emchar ((const Intbyte *) d);
 	    INC_CHARPTR (d);
 	    if (check_category_char(emch, regex_emacs_buffer->category_table,
 				    mcnt, should_succeed))
@@ -6498,7 +6498,7 @@ regerror (int errcode, const regex_t *preg, char *errbuf,
 	  size_t errbuf_size)
 {
   const char *msg;
-  Memory_Count msg_size;
+  Bytecount msg_size;
 
   if (errcode < 0
       || errcode >= (int) (sizeof (re_error_msgid) /
@@ -6515,7 +6515,7 @@ regerror (int errcode, const regex_t *preg, char *errbuf,
 
   if (errbuf_size != 0)
     {
-      if (msg_size > (Memory_Count) errbuf_size)
+      if (msg_size > (Bytecount) errbuf_size)
         {
           strncpy (errbuf, msg, errbuf_size - 1);
           errbuf[errbuf_size - 1] = 0;

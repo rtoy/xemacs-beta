@@ -166,7 +166,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 
 	  {
 	    Lisp_Object name =
-	      make_string ((Bufbyte *)dp->d_name, len);
+	      make_string ((Intbyte *)dp->d_name, len);
 	    if (!NILP (full))
 	      name = concat2 (directory, name);
 
@@ -356,13 +356,13 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 	  Charcount cclen;
           int directoryp;
           int ignored_extension_p = 0;
-	  Bufbyte *d_name;
+	  Intbyte *d_name;
 
 	  dp = readdir (d);
 	  if (!dp) break;
 
-	  /* Cast to Bufbyte* is OK, as readdir() Mule-encapsulates.  */
-	  d_name = (Bufbyte *) dp->d_name;
+	  /* Cast to Intbyte* is OK, as readdir() Mule-encapsulates.  */
+	  d_name = (Intbyte *) dp->d_name;
 	  len = NAMLEN (dp);
 	  cclen = bytecount_to_charcount (d_name, len);
 
@@ -450,8 +450,8 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
           else
             {
               Charcount compare = min (bestmatchsize, cclen);
-              Bufbyte *p1 = XSTRING_DATA (bestmatch);
-              Bufbyte *p2 = d_name;
+              Intbyte *p1 = XSTRING_DATA (bestmatch);
+              Intbyte *p2 = d_name;
               Charcount matchsize = scmp (p1, p2, compare);
 
               if (matchsize < 0)
@@ -562,7 +562,7 @@ These are all the user names which begin with PARTIAL-USERNAME.
 
 struct user_name
 {
-  Bufbyte *ptr;
+  Intbyte *ptr;
   Bytecount len;
 };
 
@@ -729,7 +729,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
   for (i = 0; i < user_cache.length; i++)
     {
-      Bufbyte *u_name = user_cache.user_names[i].ptr;
+      Intbyte *u_name = user_cache.user_names[i].ptr;
       Bytecount len   = user_cache.user_names[i].len;
       /* scmp() works in chars, not bytes, so we have to compute this: */
       Charcount cclen = bytecount_to_charcount (u_name, len);
@@ -763,8 +763,8 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
       else
         {
           Charcount compare = min (bestmatchsize, cclen);
-          Bufbyte *p1 = XSTRING_DATA (bestmatch);
-          Bufbyte *p2 = u_name;
+          Intbyte *p1 = XSTRING_DATA (bestmatch);
+          Intbyte *p2 = u_name;
           Charcount matchsize = scmp_1 (p1, p2, compare, 0);
 
           if (matchsize < 0)
@@ -801,8 +801,8 @@ make_directory_hash_table (const char *path)
 	{
 	  Bytecount len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
-	    /* Cast to Bufbyte* is OK, as readdir() Mule-encapsulates.  */
-	    Fputhash (make_string ((Bufbyte *) dp->d_name, len), Qt, hash);
+	    /* Cast to Intbyte* is OK, as readdir() Mule-encapsulates.  */
+	    Fputhash (make_string ((Intbyte *) dp->d_name, len), Qt, hash);
 	}
       closedir (d);
       return hash;
@@ -915,7 +915,7 @@ If file does not exist, returns nil.
   if (XINT (values[7]) != s.st_size)
     values[7] = make_int (-1);
   filemodestring (&s, modes);
-  values[8] = make_string ((Bufbyte *) modes, 10);
+  values[8] = make_string ((Intbyte *) modes, 10);
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
   {
     struct stat sdir;

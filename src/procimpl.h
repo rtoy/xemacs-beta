@@ -178,7 +178,7 @@ void init_process_io_handles (Lisp_Process *p, void* in,
 			      void* out, int flags);
 void send_process (Lisp_Object proc,
 		   Lisp_Object relocatable,
-		   const Bufbyte *nonrelocatable,
+		   const Intbyte *nonrelocatable,
 		   int start, int len);
 
 #endif /* INCLUDED_procimpl_h_ */

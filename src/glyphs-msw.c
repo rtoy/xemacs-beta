@@ -942,7 +942,7 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   const Extbyte		*bytes;
-  Extcount 		len;
+  Bytecount 		len;
   UChar_Binary		*eimage;
   int			width, height, x_hot, y_hot;
   BITMAPINFO*		bmp_info;
@@ -1034,7 +1034,7 @@ bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   const Extbyte		*bytes;
-  Extcount 		len;
+  Bytecount 		len;
   BITMAPFILEHEADER*	bmp_file_header;
   BITMAPINFO*		bmp_info;
   void*			bmp_data;
@@ -1682,7 +1682,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
   UChar_Binary *p, *bits, *bp;
-  const CBufbyte * volatile emsg = 0;
+  const CIntbyte * volatile emsg = 0;
   const UChar_Binary * volatile dstring;
 
   assert (!NILP (data));
@@ -2151,7 +2151,7 @@ mswindows_image_instance_equal (Lisp_Image_Instance *p1,
   return 1;
 }
 
-static Hash_Code
+static Hashcode
 mswindows_image_instance_hash (Lisp_Image_Instance *p, int depth)
 {
   switch (IMAGE_INSTANCE_TYPE (p))
@@ -2159,7 +2159,7 @@ mswindows_image_instance_hash (Lisp_Image_Instance *p, int depth)
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return (Hash_Code) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p);
+      return (Hashcode) IMAGE_INSTANCE_MSWINDOWS_BITMAP (p);
 
     default:
       return 0;
@@ -2817,7 +2817,7 @@ mswindows_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   /* get the text from a control */
   if (EQ (prop, Q_text))
     {
-      Extcount len = SendMessage (wnd, WM_GETTEXTLENGTH, 0, 0);
+      Bytecount len = SendMessage (wnd, WM_GETTEXTLENGTH, 0, 0);
       Extbyte *buf = (Extbyte*) alloca (len+1);
 
       SendMessage (wnd, WM_GETTEXT, (WPARAM)len+1, (LPARAM) buf);
@@ -2853,7 +2853,7 @@ mswindows_combo_box_property (Lisp_Object image_instance, Lisp_Object prop)
   if (EQ (prop, Q_text))
     {
       long item = SendMessage (wnd, CB_GETCURSEL, 0, 0);
-      Extcount len = SendMessage (wnd, CB_GETLBTEXTLEN, (WPARAM)item, 0);
+      Bytecount len = SendMessage (wnd, CB_GETLBTEXTLEN, (WPARAM)item, 0);
       Extbyte* buf = (Extbyte*) alloca (len+1);
       SendMessage (wnd, CB_GETLBTEXT, (WPARAM)item, (LPARAM)buf);
       return build_ext_string (buf, Qnative);

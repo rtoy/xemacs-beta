@@ -440,7 +440,7 @@ make_key_description (const struct key_data *key, int prettify)
 	 "9" as its name.
        */
       /* !!#### I'm not sure how correct this is. */
-      Bufbyte str [1 + MAX_EMCHAR_LEN];
+      Intbyte str [1 + MAX_EMCHAR_LEN];
       Bytecount count = set_charptr_emchar (str, XCHAR (keysym));
       str[count] = 0;
       keysym = intern ((char *) str);
@@ -751,7 +751,7 @@ keymap_submaps (Lisp_Object keymap)
 /************************************************************************/
 
 static Lisp_Object
-make_keymap (Element_Count size)
+make_keymap (Elemcount size)
 {
   Lisp_Object result;
   Lisp_Keymap *keymap = alloc_lcrecord_type (Lisp_Keymap, &lrecord_keymap);
@@ -1341,7 +1341,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	strncpy(temp, name, sizeof (temp));
 	temp[sizeof (temp) - 1] = '\0';
 	temp[2] = '-';
-	*keysym = Fintern_soft(make_string((Bufbyte *)temp,
+	*keysym = Fintern_soft(make_string((Intbyte *)temp,
 					   strlen(temp)),
 			       Qnil);
       } else if (EQ (*keysym, QLFD))
@@ -3259,7 +3259,7 @@ of a key read from the user rather than a character from a buffer.
 	  else if (EQ (keysym, Qshift)) strcpy (bufp, "Sh-"), bufp += 3;
 	  else if (CHAR_OR_CHAR_INTP (keysym))
 	    {
-	      bufp += set_charptr_emchar ((Bufbyte *) bufp,
+	      bufp += set_charptr_emchar ((Intbyte *) bufp,
 					  XCHAR_OR_CHAR_INT (keysym));
 	      *bufp = 0;
 	    }
@@ -3297,8 +3297,8 @@ of a character from a buffer rather than a key read from the user.
 */
        (chr))
 {
-  Bufbyte buf[200];
-  Bufbyte *p;
+  Intbyte buf[200];
+  Intbyte *p;
   Emchar c;
   Lisp_Object ctl_arrow = current_buffer->ctl_arrow;
   int ctl_p = !NILP (ctl_arrow);
@@ -4362,7 +4362,7 @@ Incremented for each change to any keymap.
 
   staticpro (&Vcurrent_global_map);
 
-  Vsingle_space_string = make_string ((const Bufbyte *) " ", 1);
+  Vsingle_space_string = make_string ((const Intbyte *) " ", 1);
   staticpro (&Vsingle_space_string);
 }
 

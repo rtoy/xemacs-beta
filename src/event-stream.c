@@ -181,7 +181,7 @@ Lisp_Object Vthis_command;
 Lisp_Object Vthis_command_properties;
 
 /* The value of point when the last command was executed.  */
-Bufpos last_point_position;
+Charbpos last_point_position;
 
 /* The frame that was current when the last command was started. */
 Lisp_Object Vlast_selected_frame;
@@ -366,7 +366,7 @@ allocate_command_builder (Lisp_Object console)
   builder->console = console;
   reset_command_builder_event_chain (builder);
   builder->echo_buf_length = 300; /* #### Kludge */
-  builder->echo_buf = xnew_array (Bufbyte, builder->echo_buf_length);
+  builder->echo_buf = xnew_array (Intbyte, builder->echo_buf_length);
   builder->echo_buf[0] = 0;
   builder->echo_buf_index = -1;
   builder->echo_buf_index = -1;
@@ -620,7 +620,7 @@ echo_key_event (struct command_builder *command_builder,
   /* This function can GC */
   char buf[255];
   Bytecount buf_index = command_builder->echo_buf_index;
-  Bufbyte *e;
+  Intbyte *e;
   Bytecount len;
 
   if (buf_index < 0)
@@ -3706,7 +3706,7 @@ lookup_command_event (struct command_builder *command_builder,
 
 		if (len + buf_index + 1 <= command_builder->echo_buf_length)
 		  {
-		    Bufbyte *echo = command_builder->echo_buf + buf_index;
+		    Intbyte *echo = command_builder->echo_buf + buf_index;
 		    memcpy (echo, XSTRING_DATA (prompt), len);
 		    echo[len] = 0;
 		  }
@@ -4388,7 +4388,7 @@ dribble_out_event (Lisp_Object event)
       if (CHARP (XEVENT (event)->event.key.keysym))
 	{
 	  Emchar ch = XCHAR (keysym);
-	  Bufbyte str[MAX_EMCHAR_LEN];
+	  Intbyte str[MAX_EMCHAR_LEN];
 	  Bytecount len = set_charptr_emchar (str, ch);
 	  Lstream_write (XLSTREAM (Vdribble_file), str, len);
 	}

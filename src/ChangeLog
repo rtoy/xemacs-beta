@@ -1,3 +1,1318 @@
+2001-09-19  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (abbrev_oblookup):
+	* abbrev.c (obarray_has_blank_p):
+	* abbrev.c (abbrev_count_case):
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xmalloc_and_zero):
+	* alloc.c (xrealloc):
+	* alloc.c (deadbeef_memory):
+	* alloc.c (allocate_lisp_storage):
+	* alloc.c (alloc_lcrecord):
+	* alloc.c (size_vector):
+	* alloc.c (vector_hash):
+	* alloc.c (make_vector_internal):
+	* alloc.c (make_vector):
+	* alloc.c (make_bit_vector_internal):
+	* alloc.c (make_bit_vector):
+	* alloc.c (make_bit_vector_from_byte_vector):
+	* alloc.c (Fmake_marker):
+	* alloc.c (noseeum_make_marker):
+	* alloc.c (make_uninit_string):
+	* alloc.c (resize_string):
+	* alloc.c (set_string_char):
+	* alloc.c (Fmake_string):
+	* alloc.c (Fstring):
+	* alloc.c (make_string):
+	* alloc.c (build_string):
+	* alloc.c (build_translated_string):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (make_lcrecord_list):
+	* alloc.c (tick_lcrecord_stats):
+	* alloc.c (garbage_collect_1):
+	* alloc.c (malloced_storage_size):
+	* alloc.c (fixed_type_block_overhead):
+	* blocktype.c (Blocktype_newf):
+	* blocktype.h:
+	* blocktype.h (Blocktype_declare):
+	* buffer.c:
+	* buffer.c (Fkill_buffer):
+	* buffer.c (compute_buffer_text_usage):
+	* buffer.c (struct):
+	* buffer.c (reinit_vars_of_buffer):
+	* buffer.c (directory_is_current_directory):
+	* buffer.h:
+	* buffer.h (struct buffer_text):
+	* buffer.h (struct buffer):
+	* buffer.h (VALID_CHARPTR_P):
+	* buffer.h (REAL_INC_CHARBYTEBPOS):
+	* buffer.h (INC_CHARBYTEBPOS):
+	* buffer.h (DEC_CHARPTR):
+	* buffer.h (VALIDATE_CHARPTR_FORWARD):
+	* buffer.h (charptr_n_addr):
+	* buffer.h (simple_set_charptr_emchar):
+	* buffer.h (charptr_emchar):
+	* buffer.h (set_charptr_emchar):
+	* buffer.h (charptr_copy_char):
+	* buffer.h (BI_BUF_BEG):
+	* buffer.h (BI_BUF_PTR_BYTE_POS):
+	* buffer.h (BUF_PTR_BYTE_POS):
+	* buffer.h (BI_BUF_BYTE_ADDRESS):
+	* buffer.h (BUF_BYTE_ADDRESS):
+	* buffer.h (BI_BUF_BYTE_ADDRESS_BEFORE):
+	* buffer.h (BUF_BYTE_ADDRESS_BEFORE):
+	* buffer.h (valid_membpos_p):
+	* buffer.h (bytebpos_to_membpos):
+	* buffer.h (membpos_to_bytebpos):
+	* buffer.h (membpos_to_charbpos):
+	* buffer.h (buffer_or_string_bytebpos_to_membpos):
+	* buffer.h (buffer_or_string_membpos_to_bytebpos):
+	* buffer.h (buffer_or_string_charbpos_to_bytebpos):
+	* buffer.h (VALID_BYTEBPOS_P):
+	* buffer.h (ASSERT_VALID_BYTEBPOS_UNSAFE):
+	* buffer.h (VALIDATE_BYTEBPOS_BACKWARD):
+	* buffer.h (VALIDATE_BYTEBPOS_FORWARD):
+	* buffer.h (INC_BYTEBPOS):
+	* buffer.h (DEC_BYTEBPOS):
+	* buffer.h (prev_bytebpos):
+	* buffer.h (next_bytebpos):
+	* buffer.h (BYTEBPOS_INVALID):
+	* buffer.h (real_charbpos_to_bytebpos):
+	* buffer.h (real_bytebpos_to_charbpos):
+	* buffer.h (charbpos_to_bytebpos):
+	* buffer.h (make_charbpos):
+	* buffer.h (BUF_FETCH_CHAR):
+	* buffer.h (BUF_CHARPTR_COPY_CHAR):
+	* buffer.h (union):
+	* buffer.h (DFC_LISP_STRING_USE_CONVERTED_DATA):
+	* buffer.h (BUF_CEILING_OF):
+	* buffer.h (BUF_FLOOR_OF):
+	* buffer.h (BUF_CEILING_OF_IGNORE_ACCESSIBLE):
+	* buffer.h (BUF_FLOOR_OF_IGNORE_ACCESSIBLE):
+	* buffer.h (BUFFER_ALLOC):
+	* buffer.h (intbyte_strcmp):
+	* buffer.h (intbyte_memcmp):
+	* bytecode.c (invalid_byte_code):
+	* bytecode.c (optimize_byte_code):
+	* bytecode.c (compiled_function_hash):
+	* bytecode.c (compiled_function_instructions):
+	* callint.c (check_mark):
+	* callint.c (callint_prompt):
+	* callint.c (PROMPT):
+	* callint.c (Fcall_interactively):
+	* callproc.c (Fold_call_process_internal):
+	* callproc.c (getenv_internal):
+	* callproc.c (Fgetenv):
+	* callproc.c (egetenv):
+	* callproc.c (init_callproc):
+	* casefiddle.c (casify_object):
+	* casefiddle.c (casify_region_internal):
+	* casefiddle.c (casify_word):
+	* chartab.c (char_table_entry_hash):
+	* chartab.c (char_table_hash):
+	* cmds.c (Fforward_char):
+	* cmds.c (Fforward_line):
+	* cmds.c (Fdelete_char):
+	* config.h.in:
+	* console-msw.c (mswindows_output_console_string):
+	* console-msw.c (Fmswindows_debugging_output):
+	* console-msw.c (DSTRING):
+	* console-msw.c (DSYMNAME):
+	* console-msw.c (mswindows_lisp_error):
+	* console-msw.h:
+	* console-x.c (split_up_display_spec):
+	* console-x.c (x_semi_canonicalize_console_connection):
+	* console.c (stuff_buffered_input):
+	* console.h (struct console_methods):
+	* data.c (weak_list_hash):
+	* database.c (berkdb_get):
+	* database.c (berkdb_map):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (hash_devmode):
+	* device-msw.c (Fmswindows_printer_list):
+	* device-x.c (validify_resource_component):
+	* device-x.c (Fx_get_resource_prefix):
+	* device.h (struct pixel_to_glyph_translation_cache):
+	* dialog-msw.c (push_intbyte_string_as_unicode):
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired.c (Fdirectory_files):
+	* dired.c (file_name_completion):
+	* dired.c (struct user_name):
+	* dired.c (user_name_completion):
+	* dired.c (make_directory_hash_table):
+	* dired.c (Ffile_attributes):
+	* doc.c (string_join):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c (union printf_arg):
+	* doprnt.c (doprnt_1):
+	* doprnt.c (parse_off_posnum):
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (emacs_doprnt_1):
+	* doprnt.c (emacs_doprnt_2):
+	* doprnt.c (emacs_doprnt_c):
+	* doprnt.c (emacs_doprnt_va):
+	* doprnt.c (emacs_doprnt_lisp):
+	* doprnt.c (emacs_doprnt_lisp_2):
+	* doprnt.c (emacs_doprnt_string_c):
+	* doprnt.c (emacs_doprnt_string_va):
+	* doprnt.c (emacs_doprnt_string_lisp):
+	* doprnt.c (emacs_doprnt_string_lisp_2):
+	* dumper.c:
+	* dumper.c (struct):
+	* dumper.c (dump_add_opaque):
+	* dumper.c (pdump_align_stream):
+	* dumper.c (pdump_size_to_align):
+	* dumper.c (pdump_entry_list_elt):
+	* dumper.c (pdump_add_entry):
+	* dumper.c (pdump_get_indirect_count):
+	* dumper.c (pdump_register_sub):
+	* dumper.c (pdump_dump_data):
+	* dumper.c (pdump_reloc_one):
+	* dumper.c (pdump_allocate_offset):
+	* dumper.c (pdump_dump_root_struct_ptrs):
+	* dumper.c (pdump_dump_root_objects):
+	* dumper.c (pdump_load_finish):
+	* dumper.c (pdump_resource_get):
+	* dumper.c (pdump_file_get):
+	* dynarr.c (Dynarr_memory_usage):
+	* editfns.c (Fchar_to_string):
+	* editfns.c (buildmark):
+	* editfns.c (charbpos_clip_to_bounds):
+	* editfns.c (bytebpos_clip_to_bounds):
+	* editfns.c (Fgoto_char):
+	* editfns.c (save_excursion_save):
+	* editfns.c (beginning_of_line_p):
+	* editfns.c (Fchar_after):
+	* editfns.c (Fchar_before):
+	* editfns.c (Fformat_time_string):
+	* editfns.c (Fcurrent_time_string):
+	* editfns.c (Finsert_char):
+	* editfns.c (Fbuffer_substring):
+	* editfns.c (Fbuffer_substring_no_properties):
+	* editfns.c (Finsert_buffer_substring):
+	* editfns.c (Fcompare_buffer_substrings):
+	* editfns.c (Fsubst_char_in_region):
+	* editfns.c (Ftranslate_region):
+	* editfns.c (Fdelete_region):
+	* editfns.c (Fnarrow_to_region):
+	* editfns.c (save_restriction_restore):
+	* editfns.c (transpose_markers):
+	* editfns.c (Ftranspose_regions):
+	* eldap.c (Fldap_open):
+	* eldap.c (Fldap_add):
+	* eldap.c (Fldap_modify):
+	* elhash.c:
+	* elhash.c (struct Lisp_Hash_Table):
+	* elhash.c (HASHCODE):
+	* elhash.c (hash_table_size):
+	* elhash.c (lisp_string_hash):
+	* elhash.c (lisp_object_eql_hash):
+	* elhash.c (lisp_object_equal_hash):
+	* elhash.c (hash_table_hash):
+	* elhash.c (compute_hash_table_derived_values):
+	* elhash.c (make_standard_lisp_hash_table):
+	* elhash.c (make_general_lisp_hash_table):
+	* elhash.c (make_lisp_hash_table):
+	* elhash.c (decode_hash_table_size):
+	* elhash.c (resize_hash_table):
+	* elhash.c (pdump_reorganize_hash_table):
+	* elhash.c (enlarge_hash_table):
+	* elhash.c (find_hentry):
+	* elhash.c (remhash_1):
+	* elhash.c (internal_array_hash):
+	* elhash.c (internal_hash):
+	* elhash.h:
+	* emacs.c (split_string_by_emchar_1):
+	* emacs.c (decode_path):
+	* emacs.c (vars_of_emacs):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_subr):
+	* emodules.c (emodules_doc_sym):
+	* eval.c (print_subr):
+	* eval.c (build_error_data):
+	* eval.c (signal_error):
+	* eval.c (maybe_signal_error):
+	* eval.c (signal_continuable_error):
+	* eval.c (maybe_signal_continuable_error):
+	* eval.c (signal_error_2):
+	* eval.c (maybe_signal_error_2):
+	* eval.c (signal_continuable_error_2):
+	* eval.c (maybe_signal_continuable_error_2):
+	* eval.c (signal_ferror):
+	* eval.c (maybe_signal_ferror):
+	* eval.c (signal_continuable_ferror):
+	* eval.c (maybe_signal_continuable_ferror):
+	* eval.c (signal_ferror_with_frob):
+	* eval.c (maybe_signal_ferror_with_frob):
+	* eval.c (signal_continuable_ferror_with_frob):
+	* eval.c (maybe_signal_continuable_ferror_with_frob):
+	* eval.c (syntax_error):
+	* eval.c (syntax_error_2):
+	* eval.c (maybe_syntax_error):
+	* eval.c (sferror):
+	* eval.c (sferror_2):
+	* eval.c (maybe_sferror):
+	* eval.c (invalid_argument):
+	* eval.c (invalid_argument_2):
+	* eval.c (maybe_invalid_argument):
+	* eval.c (invalid_constant):
+	* eval.c (invalid_constant_2):
+	* eval.c (maybe_invalid_constant):
+	* eval.c (invalid_operation):
+	* eval.c (invalid_operation_2):
+	* eval.c (maybe_invalid_operation):
+	* eval.c (invalid_change):
+	* eval.c (invalid_change_2):
+	* eval.c (maybe_invalid_change):
+	* eval.c (invalid_state):
+	* eval.c (invalid_state_2):
+	* eval.c (maybe_invalid_state):
+	* eval.c (wtaerror):
+	* eval.c (stack_overflow):
+	* eval.c (out_of_memory):
+	* eval.c (printing_unreadable_object):
+	* eval.c (caught_a_squirmer):
+	* eval.c (eval_in_buffer_trapping_errors):
+	* eval.c (run_hook_trapping_errors):
+	* eval.c (safe_run_hook_trapping_errors):
+	* eval.c (call0_trapping_errors):
+	* eval.c (call1_trapping_errors):
+	* eval.c (call2_trapping_errors):
+	* eval.c (warn_when_safe):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-Xt.c (describe_event_window):
+	* event-gtk.c (dragndrop_data_received):
+	* event-msw.c (ntpipe_slurp_reader):
+	* event-msw.c (ntpipe_shove_writer):
+	* event-msw.c (struct winsock_stream):
+	* event-msw.c (winsock_initiate_read):
+	* event-msw.c (winsock_reader):
+	* event-msw.c (winsock_writer):
+	* event-msw.c (emacs_mswindows_create_stream_pair):
+	* event-stream.c:
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (echo_key_event):
+	* event-stream.c (lookup_command_event):
+	* event-stream.c (dribble_out_event):
+	* event-unixoid.c (event_stream_unixoid_create_stream_pair):
+	* events.c (event_hash):
+	* events.c (format_event_object):
+	* events.c (event_pixel_translation):
+	* events.c (Fevent_point):
+	* events.c (Fevent_closest_point):
+	* events.h (struct command_builder):
+	* extents.c:
+	* extents.c (stack_of_extents):
+	* extents.c (membpos_to_startind):
+	* extents.c (bytebpos_to_startind):
+	* extents.c (buffer_or_string_bytebpos_to_startind):
+	* extents.c (buffer_or_string_bytebpos_to_endind):
+	* extents.c (gap_array_adjust_markers):
+	* extents.c (gap_array_move_gap):
+	* extents.c (extent_list_locate_from_pos):
+	* extents.c (extent_list_at):
+	* extents.c (soe_dump):
+	* extents.c (soe_move):
+	* extents.c (extent_endpoint_bytebpos):
+	* extents.c (extent_endpoint_charbpos):
+	* extents.c (extent_changed_for_redisplay):
+	* extents.c (extent_in_region_p):
+	* extents.c (map_extents_bytebpos):
+	* extents.c (map_extents):
+	* extents.c (adjust_extents):
+	* extents.c (adjust_extents_for_deletion):
+	* extents.c (extent_find_end_of_run):
+	* extents.c (extent_find_beginning_of_run):
+	* extents.c (extent_fragment_update):
+	* extents.c (extent_hash):
+	* extents.c (extent_endpoint_external):
+	* extents.c (Fextent_length):
+	* extents.c (Fnext_extent_change):
+	* extents.c (Fprevious_extent_change):
+	* extents.c (set_extent_endpoints_1):
+	* extents.c (set_extent_endpoints):
+	* extents.c (make_extent_internal):
+	* extents.c (copy_extent):
+	* extents.c (Fmake_extent):
+	* extents.c (Fset_extent_endpoints):
+	* extents.c (Fextent_in_region_p):
+	* extents.c (Fmap_extents):
+	* extents.c (struct slow_map_extent_children_arg):
+	* extents.c (slow_map_extent_children_function):
+	* extents.c (Fmap_extent_children):
+	* extents.c (struct extent_at_arg):
+	* extents.c (extent_at_bytebpos):
+	* extents.c (Fextent_at):
+	* extents.c (Fextents_at):
+	* extents.c (struct verify_extents_arg):
+	* extents.c (verify_extent_modification):
+	* extents.c (struct process_extents_for_insertion_arg):
+	* extents.c (process_extents_for_insertion_mapper):
+	* extents.c (process_extents_for_insertion):
+	* extents.c (struct process_extents_for_deletion_arg):
+	* extents.c (process_extents_for_deletion):
+	* extents.c (report_extent_modification_mapper):
+	* extents.c (report_extent_modification):
+	* extents.c (run_extent_copy_paste_internal):
+	* extents.c (run_extent_copy_function):
+	* extents.c (run_extent_paste_function):
+	* extents.c (update_extent):
+	* extents.c (insert_extent):
+	* extents.c (Finsert_extent):
+	* extents.c (struct add_string_extents_arg):
+	* extents.c (add_string_extents_mapper):
+	* extents.c (add_string_extents):
+	* extents.c (struct splice_in_string_extents_arg):
+	* extents.c (splice_in_string_extents_mapper):
+	* extents.c (splice_in_string_extents):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	* extents.c (get_text_property_bytebpos):
+	* extents.c (get_text_property_1):
+	* extents.c (struct put_text_prop_arg):
+	* extents.c (put_text_prop_mapper):
+	* extents.c (put_text_prop_openness_mapper):
+	* extents.c (put_text_prop):
+	* extents.c (Fput_text_property):
+	* extents.c (Fadd_text_properties):
+	* extents.c (Fremove_text_properties):
+	* extents.h:
+	* extents.h (struct extent):
+	* faces.c (face_hash):
+	* file-coding.c:
+	* file-coding.c (detect_eol_type):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (determine_real_coding_system):
+	* file-coding.c (Fdetect_coding_region):
+	* file-coding.c (decoding_reader):
+	* file-coding.c (decoding_writer):
+	* file-coding.c (mule_decode):
+	* file-coding.c (Fdecode_coding_region):
+	* file-coding.c (encoding_reader):
+	* file-coding.c (encoding_writer):
+	* file-coding.c (mule_encode):
+	* file-coding.c (Fencode_coding_region):
+	* file-coding.c (detect_coding_sjis):
+	* file-coding.c (decode_coding_sjis):
+	* file-coding.c (encode_coding_sjis):
+	* file-coding.c (detect_coding_big5):
+	* file-coding.c (decode_coding_big5):
+	* file-coding.c (encode_coding_big5):
+	* file-coding.c (decode_ucs4):
+	* file-coding.c (detect_coding_ucs4):
+	* file-coding.c (decode_coding_ucs4):
+	* file-coding.c (encode_coding_ucs4):
+	* file-coding.c (detect_coding_utf8):
+	* file-coding.c (decode_coding_utf8):
+	* file-coding.c (encode_coding_utf8):
+	* file-coding.c (detect_coding_iso2022):
+	* file-coding.c (decode_coding_iso2022):
+	* file-coding.c (encode_coding_iso2022):
+	* file-coding.c (decode_coding_no_conversion):
+	* file-coding.c (encode_coding_no_conversion):
+	* file-coding.h (INTBYTE_FIRST_BYTE_P):
+	* fileio.c (normalize_filename):
+	* fileio.c (report_file_type_error):
+	* fileio.c (report_error_with_errno):
+	* fileio.c (report_file_error):
+	* fileio.c (read_allowing_quit):
+	* fileio.c (write_allowing_quit):
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (Ffile_name_nondirectory):
+	* fileio.c (Fmake_temp_name):
+	* fileio.c (Fexpand_file_name):
+	* fileio.c (Ffile_truename):
+	* fileio.c (Fsubstitute_in_file_name):
+	* fileio.c (barf_or_query_if_file_exists):
+	* fileio.c (Ffile_name_absolute_p):
+	* fileio.c (Ffile_symlink_p):
+	* fileio.c (Fdo_auto_save):
+	* filelock.c (MAKE_LOCK_NAME):
+	* filelock.c (fill_in_lock_file_name):
+	* floatfns.c (float_hash):
+	* fns.c (print_bit_vector):
+	* fns.c (bit_vector_hash):
+	* fns.c (size_bit_vector):
+	* fns.c (Flength):
+	* fns.c (Fsafe_length):
+	* fns.c (Fstring_lessp):
+	* fns.c (copy_list):
+	* fns.c (concat):
+	* fns.c (Ffillarray):
+	* fns.c (bytecode_nconc2):
+	* fns.c (Fnconc):
+	* fns.c (mapcar1):
+	* fns.c (Fmapcar):
+	* fns.c (Fmapvector):
+	* fns.c (ADVANCE_INPUT):
+	* fns.c (base64_encode_1):
+	* fns.c (base64_decode_1):
+	* fns.c (XMALLOC_OR_ALLOCA):
+	* fns.c (Fbase64_encode_region):
+	* fns.c (Fbase64_encode_string):
+	* fns.c (Fbase64_decode_region):
+	* fns.c (Fbase64_decode_string):
+	* font-lock.c (struct context_cache):
+	* font-lock.c (font_lock_maybe_update_syntactic_caches):
+	* font-lock.c (beginning_of_defun):
+	* font-lock.c (end_of_defun):
+	* font-lock.c (setup_context_cache):
+	* font-lock.c (find_context):
+	* font-lock.c (Fsyntactically_sectionize):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_set_title_from_intbyte):
+	* frame-gtk.c (gtk_set_icon_name_from_intbyte):
+	* frame-gtk.c (console_type_create_frame_gtk):
+	* frame-msw.c (mswindows_set_title_from_intbyte):
+	* frame-msw.c (console_type_create_frame_mswindows):
+	* frame-x.c (x_set_frame_text_value):
+	* frame-x.c (x_set_title_from_intbyte):
+	* frame-x.c (x_set_icon_name_from_intbyte):
+	* frame-x.c (x_set_frame_properties):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (console_type_create_frame_x):
+	* frame.c (Fmake_frame):
+	* frame.c (Fmouse_position):
+	* frame.c (generate_title_string):
+	* frame.c (update_frame_title):
+	* gif_io.c (GifStdRead):
+	* gif_io.c (GifStdWrite):
+	* gif_io.c (GifRead):
+	* gif_io.c (GifWrite):
+	* gifrlib.h:
+	* glyphs-eimage.c (jpeg_memory_src):
+	* glyphs-eimage.c (jpeg_instantiate):
+	* glyphs-eimage.c (gif_memory_storage):
+	* glyphs-eimage.c (gif_read_from_memory):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-eimage.c (struct png_memory_storage):
+	* glyphs-eimage.c (png_read_from_memory):
+	* glyphs-eimage.c (png_instantiate):
+	* glyphs-eimage.c (tiff_memory_storage):
+	* glyphs-eimage.c (tiff_memory_read):
+	* glyphs-eimage.c (tiff_instantiate):
+	* glyphs-msw.c (mswindows_xpm_instantiate):
+	* glyphs-msw.c (bmp_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-msw.c (mswindows_image_instance_hash):
+	* glyphs-msw.c (mswindows_widget_property):
+	* glyphs-msw.c (mswindows_combo_box_property):
+	* glyphs-x.c (x_image_instance_hash):
+	* glyphs-x.c (write_lisp_string_to_temp_file):
+	* glyphs.c (image_instance_hash):
+	* glyphs.c (incompatible_image_types):
+	* glyphs.c (query_string_geometry):
+	* glyphs.c (query_string_font):
+	* glyphs.c (instantiator_eq_hash):
+	* glyphs.c (glyph_hash):
+	* glyphs.h (struct Lisp_Image_Instance):
+	* gpmevent.c (tty_get_foreign_selection):
+	* gui-x.c (menu_separator_style_and_to_external):
+	* gui-x.c (add_accel_and_to_external):
+	* gui-x.c (button_item_to_widget_value):
+	* gui-x.h:
+	* gui.c (separator_string_p):
+	* gui.c (gui_name_accelerator):
+	* gui.c (gui_item_hash):
+	* gui.h:
+	* gutter.c (gutter_extent_signal_changed_region_maybe):
+	* gutter.h:
+	* hash.c:
+	* hash.c (memory_hash):
+	* hash.c (string_hash):
+	* hash.c (hash_table_size):
+	* hash.c (gethash):
+	* hash.c (make_hash_table):
+	* hash.c (make_general_hash_table):
+	* hash.c (grow_hash_table):
+	* hash.c (puthash):
+	* hash.c (rehash):
+	* hash.c (remhash):
+	* hash.h:
+	* hash.h (struct hash_table):
+	* hpplay.c (player_error_internal):
+	* indent.c:
+	* indent.c (last_visible_position):
+	* indent.c (column_at_point):
+	* indent.c (string_column_at_point):
+	* indent.c (Findent_to):
+	* indent.c (bi_spaces_at_point):
+	* indent.c (Fcurrent_indentation):
+	* indent.c (Fmove_to_column):
+	* indent.c (vmotion_1):
+	* indent.c (vmotion):
+	* indent.c (vertical_motion_1):
+	* indent.c (vmotion_pixels):
+	* indent.c (Fvertical_motion_pixels):
+	* insdel.c:
+	* insdel.c (MAX_CHARBPOS_GAP_SIZE_3):
+	* insdel.c (bytecount_to_charcount):
+	* insdel.c (charcount_to_bytecount):
+	* insdel.c (charbpos_to_bytebpos_func):
+	* insdel.c (bytebpos_to_charbpos_func):
+	* insdel.c (buffer_mule_signal_inserted_region):
+	* insdel.c (buffer_mule_signal_deleted_region):
+	* insdel.c (charbpos_to_bytebpos):
+	* insdel.c (bytebpos_to_charbpos):
+	* insdel.c (get_buffer_pos_char):
+	* insdel.c (get_buffer_pos_byte):
+	* insdel.c (get_buffer_range_char):
+	* insdel.c (get_buffer_range_byte):
+	* insdel.c (get_string_range_char):
+	* insdel.c (get_buffer_or_string_pos_char):
+	* insdel.c (get_buffer_or_string_pos_byte):
+	* insdel.c (get_buffer_or_string_range_char):
+	* insdel.c (get_buffer_or_string_range_byte):
+	* insdel.c (buffer_or_string_accessible_begin_char):
+	* insdel.c (buffer_or_string_accessible_end_char):
+	* insdel.c (buffer_or_string_accessible_begin_byte):
+	* insdel.c (buffer_or_string_accessible_end_byte):
+	* insdel.c (buffer_or_string_absolute_begin_char):
+	* insdel.c (buffer_or_string_absolute_end_char):
+	* insdel.c (buffer_or_string_absolute_begin_byte):
+	* insdel.c (buffer_or_string_absolute_end_byte):
+	* insdel.c (JUST_SET_POINT):
+	* insdel.c (set_buffer_point):
+	* insdel.c (do_marker_adjustment):
+	* insdel.c (adjust_markers):
+	* insdel.c (adjust_markers_for_insert):
+	* insdel.c (gap_left):
+	* insdel.c (gap_right):
+	* insdel.c (move_gap):
+	* insdel.c (merge_gap_with_end_gap):
+	* insdel.c (make_gap):
+	* insdel.c (buffer_signal_changed_region):
+	* insdel.c (buffer_extent_signal_changed_region):
+	* insdel.c (cancel_multiple_change):
+	* insdel.c (begin_multiple_change):
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+	* insdel.c (prepare_to_modify_buffer):
+	* insdel.c (fixup_internal_substring):
+	* insdel.c (buffer_insert_string_1):
+	* insdel.c (buffer_insert_raw_string_1):
+	* insdel.c (buffer_insert_lisp_string_1):
+	* insdel.c (buffer_insert_c_string_1):
+	* insdel.c (buffer_insert_emacs_char_1):
+	* insdel.c (buffer_insert_c_char_1):
+	* insdel.c (buffer_insert_from_buffer_1):
+	* insdel.c (buffer_delete_range):
+	* insdel.c (buffer_replace_char):
+	* insdel.c (make_string_from_buffer_1):
+	* insdel.c (make_string_from_buffer):
+	* insdel.c (make_string_from_buffer_no_extents):
+	* insdel.c (barf_if_buffer_read_only):
+	* insdel.c (find_charsets_in_intbyte_string):
+	* insdel.c (intbyte_string_displayed_columns):
+	* insdel.c (convert_intbyte_string_into_emchar_dynarr):
+	* insdel.c (convert_intbyte_string_into_emchar_string):
+	* insdel.c (convert_emchar_string_into_intbyte_dynarr):
+	* insdel.c (convert_emchar_string_into_malloced_string):
+	* insdel.c (reinit_vars_of_insdel):
+	* insdel.c (init_buffer_text):
+	* insdel.h:
+	* insdel.h (struct buffer_text_change_data):
+	* keymap.c (make_key_description):
+	* keymap.c (make_keymap):
+	* keymap.c (define_key_check_and_coerce_keysym):
+	* keymap.c (Fsingle_key_description):
+	* keymap.c (Ftext_char_description):
+	* keymap.c (vars_of_keymap):
+	* line-number.c (invalidate_line_number_cache):
+	* line-number.c (insert_invalidate_line_number_cache):
+	* line-number.c (delete_invalidate_line_number_cache):
+	* line-number.c (get_nearest_line_number):
+	* line-number.c (add_position_to_cache):
+	* line-number.c (buffer_line_number):
+	* line-number.h:
+	* line-number.h (buffer_line_number):
+	* lisp.h:
+	* lisp.h (DO_REALLOC):
+	* lisp.h (struct):
+	* lisp.h (struct Lisp_Buffer_Cons):
+	* lisp.h (struct Lisp_String):
+	* lisp.h (set_string_char):
+	* lisp.h (struct Lisp_Bit_Vector):
+	* lisp.h (bit_vector_bit):
+	* lisp.h (set_bit_vector_bit):
+	* lisp.h (struct Lisp_Marker):
+	* lisp.h (struct lcrecord_list):
+	* lisp.h (struct overhead_stats):
+	* lread.c:
+	* lread.c (readchar):
+	* lread.c (Fload_internal):
+	* lread.c (read_atom):
+	* lread.c (parse_integer):
+	* lread.c (isfloat_string):
+	* lrecord.h:
+	* lrecord.h (struct lrecord_implementation):
+	* lrecord.h (lrecord_description_type):
+	* lrecord.h (struct struct_description):
+	* lstream.c:
+	* lstream.c (aligned_sizeof_lstream):
+	* lstream.c (sizeof_lstream):
+	* lstream.c (Lstream_flush_out):
+	* lstream.c (Lstream_adding):
+	* lstream.c (Lstream_write_1):
+	* lstream.c (Lstream_write):
+	* lstream.c (Lstream_raw_read):
+	* lstream.c (Lstream_read_more):
+	* lstream.c (Lstream_read):
+	* lstream.c (Lstream_unread):
+	* lstream.c (Lstream_fputc):
+	* lstream.c (stdio_reader):
+	* lstream.c (stdio_writer):
+	* lstream.c (struct filedesc_stream):
+	* lstream.c (filedesc_reader):
+	* lstream.c (filedesc_writer):
+	* lstream.c (filedesc_stream_set_pty_flushing):
+	* lstream.c (lisp_string_reader):
+	* lstream.c (lisp_string_rewinder):
+	* lstream.c (struct fixed_buffer_stream):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (fixed_buffer_reader):
+	* lstream.c (fixed_buffer_writer):
+	* lstream.c (struct resizing_buffer_stream):
+	* lstream.c (resizing_buffer_writer):
+	* lstream.c (dynarr_writer):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (make_lisp_buffer_output_stream):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_writer):
+	* lstream.c (lisp_buffer_stream_startpos):
+	* lstream.h:
+	* lstream.h (lstream_implementation):
+	* lstream.h (struct lstream):
+	* malloc.c:
+	* marker.c (marker_equal):
+	* marker.c (marker_hash):
+	* marker.c (set_marker_internal):
+	* marker.c (bi_marker_position):
+	* marker.c (marker_position):
+	* marker.c (set_bi_marker_position):
+	* marker.c (set_marker_position):
+	* md5.c (Fmd5):
+	* menubar-msw.c (mswindows_translate_menu_or_dialog_item):
+	* menubar-msw.c (displayable_menu_item):
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	* menubar-x.c (menu_accelerator_junk_on_error):
+	* menubar.c (Fnormalize_menu_item_name):
+	* minibuf.c (scmp_1):
+	* minibuf.c (regexp_ignore_completion_p):
+	* minibuf.c (clear_echo_area_internal):
+	* minibuf.c (echo_area_append):
+	* minibuf.c (echo_area_message):
+	* minibuf.c (message_internal):
+	* minibuf.c (message_append_internal):
+	* minibuf.c (message_1):
+	* minibuf.c (message_append_1):
+	* mule-ccl.c (CCL_WRITE_CHAR):
+	* mule-ccl.c (CCL_WRITE_STRING):
+	* mule-charset.c (non_ascii_set_charptr_emchar):
+	* mule-charset.c (non_ascii_charptr_emchar):
+	* mule-charset.c (non_ascii_charptr_copy_char):
+	* mule-charset.c (Lstream_get_emchar_1):
+	* mule-charset.c (Lstream_fput_emchar):
+	* mule-charset.c (Lstream_funget_emchar):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (lookup_composite_char):
+	* mule-charset.h:
+	* mule-charset.h (LEADING_BYTE_PREFIX_P):
+	* mule-charset.h (INTBYTE_FIRST_BYTE_P):
+	* mule-charset.h (INTBYTE_LEADING_BYTE_P):
+	* mule-charset.h (struct Lisp_Charset):
+	* mule-charset.h (CHARSET_LEADING_BYTE):
+	* mule-charset.h (CHARSET_BY_LEADING_BYTE):
+	* mule-charset.h (REP_BYTES_BY_FIRST_BYTE):
+	* mule-charset.h (CHAR_LEADING_BYTE):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (m2w):
+	* objects-gtk.c (gtk_parse_nearest_color):
+	* objects-gtk.c (gtk_font_spec_matches_charset):
+	* objects-gtk.c (gtk_find_charset_font):
+	* objects-gtk.h:
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-tty.c (tty_font_spec_matches_charset):
+	* objects-tty.c (tty_find_charset_font):
+	* objects-x.c (x_font_instance_properties):
+	* objects-x.c (x_font_spec_matches_charset):
+	* objects-x.c (x_find_charset_font):
+	* objects.c (font_spec_matches_charset):
+	* objects.h:
+	* opaque.c (aligned_sizeof_opaque):
+	* opaque.c (sizeof_opaque):
+	* opaque.c (make_opaque):
+	* opaque.c (equal_opaque):
+	* opaque.h:
+	* opaque.h (Lisp_Opaque):
+	* print.c (std_handle_out_external):
+	* print.c (std_handle_out_va):
+	* print.c (write_string_to_stdio_stream):
+	* print.c (output_string):
+	* print.c (write_char_internal):
+	* print.c (write_string_1):
+	* print.c (write_c_string):
+	* print.c (Fwrite_char):
+	* print.c (float_to_string):
+	* print.c (print_string):
+	* print.c (print_internal):
+	* print.c (print_symbol):
+	* print.c (Falternate_debugging_output):
+	* print.c (Fexternal_debugging_output):
+	* process-nt.c (alloc_process_memory):
+	* process-nt.c (run_in_other_process):
+	* process-nt.c (nt_send_process):
+	* process-unix.c (unix_send_process):
+	* process-unix.c (unix_process_send_eof):
+	* process-unix.c (unix_kill_child_process):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process-unix.c (unix_open_network_stream):
+	* process.c:
+	* process.c (read_process_output):
+	* process.c (send_process):
+	* process.c (Fprocess_send_region):
+	* process.c (status_notify):
+	* process.c (decode_signal):
+	* procimpl.h:
+	* redisplay-gtk.c (gtk_output_display_block):
+	* redisplay-output.c:
+	* redisplay-output.c (compare_runes):
+	* redisplay-output.c (ADJ_CHARBPOS):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_output_layout):
+	* redisplay-output.c (redisplay_update_line):
+	* redisplay-tty.c:
+	* redisplay-tty.c (tty_output_intbyte_string):
+	* redisplay-tty.c (tty_output_emchar_dynarr):
+	* redisplay-tty.c (substitute_in_dynamic_color_string):
+	* redisplay-tty.c (set_foreground_to):
+	* redisplay-tty.c (set_background_to):
+	* redisplay.c:
+	* redisplay.c (position_redisplay_data_type):
+	* redisplay.c (struct prop_block):
+	* redisplay.c (redisplay_text_width_string):
+	* redisplay.c (redisplay_frame_text_width_string):
+	* redisplay.c (generate_display_line):
+	* redisplay.c (add_hscroll_rune):
+	* redisplay.c (add_emchar_rune):
+	* redisplay.c (add_intbyte_string_runes):
+	* redisplay.c (add_blank_rune):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* redisplay.c (add_propagation_runes):
+	* redisplay.c (add_glyph_rune):
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_overlay_glyph_block):
+	* redisplay.c (add_margin_blank):
+	* redisplay.c (generate_formatted_string_db):
+	* redisplay.c (generate_modeline):
+	* redisplay.c (add_string_to_fstring_db_runes):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (generate_string_display_line):
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (REGEN_INC_FIND_START_END):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally):
+	* redisplay.c (regenerate_window_point_center):
+	* redisplay.c (point_visible):
+	* redisplay.c (line_at_center):
+	* redisplay.c (point_at_center):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (call_redisplay_end_triggers):
+	* redisplay.c (window_line_number):
+	* redisplay.c (decode_mode_spec):
+	* redisplay.c (update_internal_cache_list):
+	* redisplay.c (line_start_cache_start):
+	* redisplay.c (line_start_cache_end):
+	* redisplay.c (point_in_line_start_cache):
+	* redisplay.c (point_would_be_visible):
+	* redisplay.c (start_end_of_last_line):
+	* redisplay.c (start_of_last_line):
+	* redisplay.c (end_of_last_line):
+	* redisplay.c (end_of_last_line_may_error):
+	* redisplay.c (start_with_line_at_pixpos):
+	* redisplay.c (start_with_point_on_display_line):
+	* redisplay.c (update_line_start_cache):
+	* redisplay.c (UPDATE_CACHE_RETURN):
+	* redisplay.c (pixel_to_glyph_translation):
+	* redisplay.c (init_redisplay):
+	* redisplay.h:
+	* redisplay.h (struct line_start_cache):
+	* redisplay.h (struct rune):
+	* redisplay.h (struct display_line):
+	* redisplay.h (struct extent_fragment):
+	* regex.c (struct):
+	* regex.c (PATFETCH_EXTENDED):
+	* regex.c (PATFETCH_RAW_EXTENDED):
+	* regex.c (regex_compile):
+	* regex.c (compile_extended_range):
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_match_2_internal):
+	* regex.c (regerror):
+	* regex.h (Elemcount):
+	* scrollbar-gtk.h (struct gtk_scrollbar_data):
+	* scrollbar-msw.c (mswindows_handle_mousewheel_event):
+	* scrollbar-x.h (struct x_scrollbar_data):
+	* scrollbar.c (scrollbar_point):
+	* scrollbar.c (update_scrollbar_instance):
+	* scrollbar.c (scrollbar_reset_cursor):
+	* scrollbar.c (Fscrollbar_page_up):
+	* scrollbar.c (Fscrollbar_vertical_drag):
+	* search.c:
+	* search.c (fixup_search_regs_for_buffer):
+	* search.c (looking_at_1):
+	* search.c (fast_string_match):
+	* search.c (bi_scan_buffer):
+	* search.c (scan_buffer):
+	* search.c (bi_find_next_newline_no_quit):
+	* search.c (find_next_newline_no_quit):
+	* search.c (find_next_newline):
+	* search.c (bi_find_next_emchar_in_string):
+	* search.c (find_before_next_newline):
+	* search.c (skip_chars):
+	* search.c (search_command):
+	* search.c (trivial_regexp_p):
+	* search.c (search_buffer):
+	* search.c (simple_search):
+	* search.c (boyer_moore):
+	* search.c (set_search_regs):
+	* search.c (wordify):
+	* search.c (Freplace_match):
+	* search.c (Fmatch_data):
+	* search.c (Fregexp_quote):
+	* select-common.h (selection_data_to_lisp_data):
+	* select-common.h (lisp_data_to_selection_data):
+	* select-gtk.c (atom_to_symbol):
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-x.c (hack_motif_clipboard_selection):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (copy_multiple_data):
+	* select-x.c (x_get_window_property):
+	* select-x.c (receive_incremental_selection):
+	* select-x.c (x_get_window_property_as_lisp_data):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	* sheap.c (report_sheap_usage):
+	* sound.c (Fplay_sound):
+	* sound.h (sound_perror):
+	* sound.h (sound_warn):
+	* specifier.c (aligned_sizeof_specifier):
+	* specifier.c (sizeof_specifier):
+	* specifier.c (make_specifier_internal):
+	* symbols.c (intern):
+	* symbols.c (oblookup):
+	* symbols.c (hash_string):
+	* symbols.c (init_symbols_once_early):
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defvar_magic):
+	* syntax.c:
+	* syntax.c (struct lisp_parse_state):
+	* syntax.c (find_defun_start):
+	* syntax.c (scan_words):
+	* syntax.c (Fforward_word):
+	* syntax.c (find_start_of_comment):
+	* syntax.c (find_end_of_comment):
+	* syntax.c (Fforward_comment):
+	* syntax.c (scan_lists):
+	* syntax.c (char_quoted):
+	* syntax.c (Fbackward_prefix_chars):
+	* syntax.c (scan_sexps_forward):
+	* syntax.c (Fparse_partial_sexp):
+	* syntax.h:
+	* syntax.h (struct syntax_cache):
+	* syntax.h (SYNTAX_CACHE_BYTE_TO_CHAR):
+	* syntax.h (SYNTAX_CACHE_OBJECT_BYTE_TO_CHAR):
+	* sysdep.c (get_eof_char):
+	* sysdep.c (init_system_name):
+	* sysdep.c (sys_readdir):
+	* sysdep.h:
+	* syswindows.h:
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT):
+	* syswindows.h (WIN32_TO_LOCAL_FILE_FORMAT):
+	* tests.c (Ftest_data_format_conversion):
+	* toolbar-gtk.c (gtk_output_toolbar_button):
+	* toolbar-x.c (x_output_toolbar_button):
+	* tooltalk.c (check_status):
+	* tooltalk.c (tt_message_arg_bval_vector):
+	* tparam.c:
+	* undo.c:
+	* undo.c (record_insert):
+	* undo.c (record_delete):
+	* undo.c (record_change):
+	* undo.c (record_property_change):
+	* undo.c (Fprimitive_undo):
+	* win32.c (tstr_to_local_file_format):
+	* window.c (Fpos_visible_in_window_p):
+	* window.c (Fwindow_end):
+	* window.c (unshow_buffer):
+	* window.c (Fdelete_other_windows):
+	* window.c (Fselect_window):
+	* window.c (window_scroll):
+	* window.c (Fcenter_to_window_line):
+	* window.c (Fmove_to_window_line):
+	* window.c (sizeof_window_config_for_n_windows):
+	* window.c (sizeof_window_config):
+	* window.c (Fcurrent_pixel_column):
+	* window.h (struct window):
+
+	The great integral types renaming.
+
+	The purpose of this is to rationalize the names used for various
+	integral types, so that they match their intended uses and follow
+	consist conventions, and eliminate types that were not semantically
+	different from each other.
+
+	The conventions are:
+
+	-- All integral types that measure quantities of anything are
+	   signed.  Some people disagree vociferously with this, but their
+	   arguments are mostly theoretical, and are vastly outweighed by
+	   the practical headaches of mixing signed and unsigned values,
+	   and more importantly by the far increased likelihood of
+	   inadvertent bugs: Because of the broken "viral" nature of
+	   unsigned quantities in C (operations involving mixed
+	   signed/unsigned are done unsigned, when exactly the opposite is
+	   nearly always wanted), even a single error in declaring a
+	   quantity unsigned that should be signed, or even the even more
+	   subtle error of comparing signed and unsigned values and
+	   forgetting the necessary cast, can be catastrophic, as
+	   comparisons will yield wrong results.  -Wsign-compare is turned
+	   on specifically to catch this, but this tends to result in a
+	   great number of warnings when mixing signed and unsigned, and
+	   the casts are annoying.  More has been written on this
+	   elsewhere.
+	
+	-- All such quantity types just mentioned boil down to EMACS_INT,
+	   which is 32 bits on 32-bit machines and 64 bits on 64-bit
+	   machines.  This is guaranteed to be the same size as Lisp
+	   objects of type `int', and (as far as I can tell) of size_t
+	   (unsigned!) and ssize_t.  The only type below that is not an
+	   EMACS_INT is Hashcode, which is an unsigned value of the same
+	   size as EMACS_INT.
+	
+	-- Type names should be relatively short (no more than 10
+	   characters or so), with the first letter capitalized and no
+	   underscores if they can at all be avoided.
+	
+	-- "count" == a zero-based measurement of some quantity.  Includes
+	   sizes, offsets, and indexes.
+	
+	-- "bpos" == a one-based measurement of a position in a buffer.
+	   "Charbpos" and "Bytebpos" count text in the buffer, rather than
+	   bytes in memory; thus Bytebpos does not directly correspond to
+	   the memory representation.  Use "Membpos" for this.
+	
+	-- "Char" refers to internal-format characters, not to the C type
+	   "char", which is really a byte.
+	
+	-- For the actual name changes, see the script below.
+	
+	I ran the following script to do the conversion. (NOTE: This script
+	is idempotent.  You can safely run it multiple times and it will
+	not screw up previous results -- in fact, it will do nothing if
+	nothing has changed.  Thus, it can be run repeatedly as necessary
+	to handle patches coming in from old workspaces, or old branches.) 
+	There are two tags, just before and just after the change:
+	`pre-integral-type-rename' and `post-integral-type-rename'.  When
+	merging code from the main trunk into a branch, the best thing to
+	do is first merge up to `pre-integral-type-rename', then apply the
+	script and associated changes, then merge from
+	`post-integral-type-change' to the present. (Alternatively, just do
+	the merging in one operation; but you may then have a lot of
+	conflicts needing to be resolved by hand.)
+
+	Script `fixtypes.sh' follows:
+
+
+----------------------------------- cut ------------------------------------
+files="*.[ch] s/*.h m/*.h config.h.in ../configure.in Makefile.in.in ../lib-src/*.[ch] ../lwlib/*.[ch]"
+gr Memory_Count Bytecount $files
+gr Lstream_Data_Count Bytecount $files
+gr Element_Count Elemcount $files
+gr Hash_Code Hashcode $files
+gr extcount bytecount $files
+gr bufpos charbpos $files
+gr bytind bytebpos $files
+gr memind membpos $files
+gr bufbyte intbyte $files
+gr Extcount Bytecount $files
+gr Bufpos Charbpos $files
+gr Bytind Bytebpos $files
+gr Memind Membpos $files
+gr Bufbyte Intbyte $files
+gr EXTCOUNT BYTECOUNT $files
+gr BUFPOS CHARBPOS $files
+gr BYTIND BYTEBPOS $files
+gr MEMIND MEMBPOS $files
+gr BUFBYTE INTBYTE $files
+gr MEMORY_COUNT BYTECOUNT $files
+gr LSTREAM_DATA_COUNT BYTECOUNT $files
+gr ELEMENT_COUNT ELEMCOUNT $files
+gr HASH_CODE HASHCODE $files
+----------------------------------- cut ------------------------------------
+
+
+	`fixtypes.sh' is a Bourne-shell script; it uses 'gr':
+
+
+----------------------------------- cut ------------------------------------
+#!/bin/sh
+
+# Usage is like this:
+
+# gr FROM TO FILES ...
+
+# globally replace FROM with TO in FILES.  FROM and TO are regular expressions.
+# backup files are stored in the `backup' directory.
+from="$1"
+to="$2"
+shift 2
+echo ${1+"$@"} | xargs global-replace "s/$from/$to/g"
+----------------------------------- cut ------------------------------------
+
+
+	`gr' in turn uses a Perl script to do its real work,
+	`global-replace', which follows:
+
+
+----------------------------------- cut ------------------------------------
+: #-*- Perl -*-
+
+### global-modify --- modify the contents of a file by a Perl expression
+
+## Copyright (C) 1999 Martin Buchholz.
+## Copyright (C) 2001 Ben Wing.
+
+## Authors: Martin Buchholz <martin@xemacs.org>, Ben Wing <ben@xemacs.org>
+## Maintainer: Ben Wing <ben@xemacs.org>
+## Current Version: 1.0, May 5, 2001
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+eval 'exec perl -w -S $0 ${1+"$@"}'
+    if 0;
+
+use strict;
+use FileHandle;
+use Carp;
+use Getopt::Long;
+use File::Basename;
+
+(my $myName = $0) =~ s@.*/@@; my $usage="
+Usage: $myName [--help] [--backup-dir=DIR] [--line-mode] [--hunk-mode]
+       PERLEXPR FILE ...
+
+Globally modify a file, either line by line or in one big hunk.
+
+Typical usage is like this:
+
+[with GNU print, GNU xargs: guaranteed to handle spaces, quotes, etc.
+ in file names]
+
+find . -name '*.[ch]' -print0 | xargs -0 $0 's/\bCONST\b/const/g'\n
+
+[with non-GNU print, xargs]
+
+find . -name '*.[ch]' -print | xargs $0 's/\bCONST\b/const/g'\n
+
+
+The file is read in, either line by line (with --line-mode specified)
+or in one big hunk (with --hunk-mode specified; it's the default), and
+the Perl expression is then evalled with \$_ set to the line or hunk of
+text, including the terminating newline if there is one.  It should
+destructively modify the value there, storing the changed result in \$_.
+
+Files in which any modifications are made are backed up to the directory
+specified using --backup-dir, or to `backup' by default.  To disable this,
+use --backup-dir= with no argument.
+
+Hunk mode is the default because it is MUCH MUCH faster than line-by-line.
+Use line-by-line only when it matters, e.g. you want to do a replacement
+only once per line (the default without the `g' argument).  Conversely,
+when using hunk mode, *ALWAYS* use `g'; otherwise, you will only make one
+replacement in the entire file!
+";
+
+my %options = ();
+$Getopt::Long::ignorecase = 0;
+&GetOptions (
+	     \%options,
+	     'help', 'backup-dir=s', 'line-mode', 'hunk-mode',
+);
+
+
+die $usage if $options{"help"} or @ARGV <= 1;
+my $code = shift;
+
+die $usage if grep (-d || ! -w, @ARGV);
+
+sub SafeOpen {
+  open ((my $fh = new FileHandle), $_[0]);
+  confess "Can't open $_[0]: $!" if ! defined $fh;
+  return $fh;
+}
+
+sub SafeClose {
+  close $_[0] or confess "Can't close $_[0]: $!";
+}
+
+sub FileContents {
+  my $fh = SafeOpen ("< $_[0]");
+  my $olddollarslash = $/;
+  local $/ = undef;
+  my $contents = <$fh>;
+  $/ = $olddollarslash;
+  return $contents;
+}
+
+sub WriteStringToFile {
+  my $fh = SafeOpen ("> $_[0]");
+  binmode $fh;
+  print $fh $_[1] or confess "$_[0]: $!\n";
+  SafeClose $fh;
+}
+
+foreach my $file (@ARGV) {
+  my $changed_p = 0;
+  my $new_contents = "";
+  if ($options{"line-mode"}) {
+    my $fh = SafeOpen $file;
+    while (<$fh>) {
+      my $save_line = $_;
+      eval $code;
+      $changed_p = 1 if $save_line ne $_;
+      $new_contents .= $_;
+    }
+  } else {
+    my $orig_contents = $_ = FileContents $file;
+    eval $code;
+    if ($_ ne $orig_contents) {
+      $changed_p = 1;
+      $new_contents = $_;
+    }
+  }
+
+  if ($changed_p) {
+    my $backdir = $options{"backup-dir"};
+    $backdir = "backup" if !defined ($backdir);
+    if ($backdir) {
+      my ($name, $path, $suffix) = fileparse ($file, "");
+      my $backfulldir = $path . $backdir;
+      my $backfile = "$backfulldir/$name";
+      mkdir $backfulldir, 0755 unless -d $backfulldir;
+      print "modifying $file (original saved in $backfile)\n";
+      rename $file, $backfile;
+    }
+    WriteStringToFile ($file, $new_contents);
+  }
+}
+----------------------------------- cut ------------------------------------
+
+
+	In addition to those programs, I needed to fix up a few other
+	things, particularly relating to the duplicate definitions of
+	types, now that some types merged with others.  Specifically:
+
+	1. in lisp.h, removed duplicate declarations of Bytecount.  The
+	   changed code should now look like this: (In each code snippet
+	   below, the first and last lines are the same as the original, as
+	   are all lines outside of those lines.  That allows you to locate
+	   the section to be replaced, and replace the stuff in that
+	   section, verifying that there isn't anything new added that
+	   would need to be kept.)
+
+--------------------------------- snip -------------------------------------
+/* Counts of bytes or chars */
+typedef EMACS_INT Bytecount;
+typedef EMACS_INT Charcount;
+
+/* Counts of elements */
+typedef EMACS_INT Elemcount;
+
+/* Hash codes */
+typedef unsigned long Hashcode;
+
+/* ------------------------ dynamic arrays ------------------- */
+--------------------------------- snip -------------------------------------
+
+	2. in lstream.h, removed duplicate declaration of Bytecount.
+	   Rewrote the comment about this type.  The changed code should
+	   now look like this:
+
+
+--------------------------------- snip -------------------------------------
+#endif
+
+/* The have been some arguments over the what the type should be that
+   specifies a count of bytes in a data block to be written out or read in,
+   using Lstream_read(), Lstream_write(), and related functions.
+   Originally it was long, which worked fine; Martin "corrected" these to
+   size_t and ssize_t on the grounds that this is theoretically cleaner and
+   is in keeping with the C standards.  Unfortunately, this practice is
+   horribly error-prone due to design flaws in the way that mixed
+   signed/unsigned arithmetic happens.  In fact, by doing this change,
+   Martin introduced a subtle but fatal error that caused the operation of
+   sending large mail messages to the SMTP server under Windows to fail.
+   By putting all values back to be signed, avoiding any signed/unsigned
+   mixing, the bug immediately went away.  The type then in use was
+   Lstream_Data_Count, so that it be reverted cleanly if a vote came to
+   that.  Now it is Bytecount.
+
+   Some earlier comments about why the type must be signed: This MUST BE
+   SIGNED, since it also is used in functions that return the number of
+   bytes actually read to or written from in an operation, and these
+   functions can return -1 to signal error.
+   
+   Note that the standard Unix read() and write() functions define the
+   count going in as a size_t, which is UNSIGNED, and the count going
+   out as an ssize_t, which is SIGNED.  This is a horrible design
+   flaw.  Not only is it highly likely to lead to logic errors when a
+   -1 gets interpreted as a large positive number, but operations are
+   bound to fail in all sorts of horrible ways when a number in the
+   upper-half of the size_t range is passed in -- this number is
+   unrepresentable as an ssize_t, so code that checks to see how many
+   bytes are actually written (which is mandatory if you are dealing
+   with certain types of devices) will get completely screwed up.
+
+   --ben
+*/
+
+typedef enum lstream_buffering
+--------------------------------- snip -------------------------------------
+
+
+	3. in dumper.c, there are four places, all inside of switch()
+	   statements, where XD_BYTECOUNT appears twice as a case tag.  In
+	   each case, the two case blocks contain identical code, and you
+	   should *REMOVE THE SECOND* and leave the first.
+
 2001-09-17  Ben Wing  <ben@xemacs.org>
 
 	* fileio.c (normalize_filename):

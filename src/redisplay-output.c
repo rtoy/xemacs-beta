@@ -188,7 +188,7 @@ sync_display_line_structs (struct window *w, int line, int do_blocks,
 static int
 compare_runes (struct window *w, struct rune *crb, struct rune *drb)
 {
-  /* Do not compare the values of bufpos and endpos.  They do not
+  /* Do not compare the values of charbpos and endpos.  They do not
      affect the display characteristics. */
 
   /* Note: (hanoi 6) spends 95% of its time in redisplay, and about
@@ -846,11 +846,11 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
  boolean indicating success or failure.
  ****************************************************************************/
 
-#define ADJ_BUFPOS (rb->bufpos + dl->offset)
+#define ADJ_CHARBPOS (rb->charbpos + dl->offset)
 #define ADJ_ENDPOS (rb->endpos + dl->offset)
 
 int
-redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
+redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -886,13 +886,13 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
 
   if (rb->cursor_type == CURSOR_OFF)
     return 0;
-  else if (ADJ_BUFPOS == new_point
-	   || (ADJ_ENDPOS && (new_point >= ADJ_BUFPOS)
+  else if (ADJ_CHARBPOS == new_point
+	   || (ADJ_ENDPOS && (new_point >= ADJ_CHARBPOS)
 	       && (new_point <= ADJ_ENDPOS)))
     {
       w->last_point_x[CURRENT_DISP] = x;
       w->last_point_y[CURRENT_DISP] = y;
-      Fset_marker (w->last_point[CURRENT_DISP], make_int (ADJ_BUFPOS),
+      Fset_marker (w->last_point[CURRENT_DISP], make_int (ADJ_CHARBPOS),
 		   w->buffer);
       dl->cursor_elt = x;
       return 1;
@@ -951,13 +951,13 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
       int first = 0;
       int cur_dl, up;
 
-      if (ADJ_BUFPOS < new_point)
+      if (ADJ_CHARBPOS < new_point)
 	{
 	  up = 1;
 	  cur_rb = x + 1;
 	  cur_dl = y;
 	}
-      else /* (rb->bufpos + dl->offset) > new_point */
+      else /* (rb->charbpos + dl->offset) > new_point */
 	{
 	  up = 0;
 
@@ -989,9 +989,9 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
 
 	      if (rb->cursor_type != IGNORE_CURSOR
 		  && rb->cursor_type != NO_CURSOR &&
-		  (ADJ_BUFPOS == new_point
-		   || (ADJ_ENDPOS && (new_point >= ADJ_BUFPOS)
-		       && (new_point <= ADJ_BUFPOS))))
+		  (ADJ_CHARBPOS == new_point
+		   || (ADJ_ENDPOS && (new_point >= ADJ_CHARBPOS)
+		       && (new_point <= ADJ_CHARBPOS))))
 		{
 		  rb->cursor_type = CURSOR_ON;
 		  dl->cursor_elt = cur_rb;
@@ -1003,7 +1003,7 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
 		  w->last_point_x[CURRENT_DISP] = cur_rb;
 		  w->last_point_y[CURRENT_DISP] = cur_dl;
 		  Fset_marker (w->last_point[CURRENT_DISP],
-			       make_int (ADJ_BUFPOS), w->buffer);
+			       make_int (ADJ_CHARBPOS), w->buffer);
 
 		  if (!no_output_end)
 		    {
@@ -1028,7 +1028,7 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
     }
   return 0;
 }
-#undef ADJ_BUFPOS
+#undef ADJ_CHARBPOS
 #undef ADJ_ENDPOS
 
 /*****************************************************************************
@@ -1453,12 +1453,12 @@ redisplay_output_layout (Lisp_Object domain,
 			unsigned char charsets[NUM_LEADING_BYTES];
 			struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-			find_charsets_in_bufbyte_string (charsets,
+			find_charsets_in_intbyte_string (charsets,
 							 XSTRING_DATA (string),
 							 XSTRING_LENGTH (string));
 			ensure_face_cachel_complete (cachel, window, charsets);
 
-			convert_bufbyte_string_into_emchar_dynarr
+			convert_intbyte_string_into_emchar_dynarr
 			  (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 
 			redisplay_normalize_display_box (&cdb, &cdga);
@@ -2080,10 +2080,10 @@ redisplay_update_line (struct window *w, int first_line, int last_line,
 
   while (first_line <= last_line)
     {
-      Charcount old_len = (Dynarr_atp (cdla, first_line)->end_bufpos -
-			   Dynarr_atp (cdla, first_line)->bufpos);
-      Charcount new_len = (Dynarr_atp (ddla, first_line)->end_bufpos -
-			   Dynarr_atp (ddla, first_line)->bufpos);
+      Charcount old_len = (Dynarr_atp (cdla, first_line)->end_charbpos -
+			   Dynarr_atp (cdla, first_line)->charbpos);
+      Charcount new_len = (Dynarr_atp (ddla, first_line)->end_charbpos -
+			   Dynarr_atp (ddla, first_line)->charbpos);
 
       assert (Dynarr_length (cdla) == Dynarr_length (ddla));
 

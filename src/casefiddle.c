@@ -49,10 +49,10 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
   if (STRINGP (string_or_char))
     {
       Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
-      Bufbyte *storage =
-	alloca_array (Bufbyte, XSTRING_LENGTH (string_or_char) * MAX_EMCHAR_LEN);
-      Bufbyte *newp = storage;
-      Bufbyte *oldp = XSTRING_DATA (string_or_char);
+      Intbyte *storage =
+	alloca_array (Intbyte, XSTRING_LENGTH (string_or_char) * MAX_EMCHAR_LEN);
+      Intbyte *newp = storage;
+      Intbyte *oldp = XSTRING_DATA (string_or_char);
       int wordp = 0, wordp_prev;
 
       while (*oldp)
@@ -154,7 +154,7 @@ casify_region_internal (enum case_action flag, Lisp_Object start,
 			Lisp_Object end, struct buffer *buf)
 {
   /* This function can GC */
-  Bufpos pos, s, e;
+  Charbpos pos, s, e;
   Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
   int mccount;
   int wordp = 0, wordp_prev;
@@ -273,7 +273,7 @@ Optional third arg BUFFER defaults to the current buffer.
 static Lisp_Object
 casify_word (enum case_action flag, Lisp_Object arg, Lisp_Object buffer)
 {
-  Bufpos farend;
+  Charbpos farend;
   struct buffer *buf = decode_buffer (buffer, 1);
 
   CHECK_INT (arg);

@@ -300,11 +300,11 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     }
 }
 
-static Hash_Code
+static Hashcode
 event_hash (Lisp_Object obj, int depth)
 {
   Lisp_Event *e = XEVENT (obj);
-  Hash_Code hash;
+  Hashcode hash;
 
   hash = HASH2 (e->event_type, LISP_HASH (e->channel));
   switch (e->event_type)
@@ -338,7 +338,7 @@ event_hash (Lisp_Object obj, int depth)
 
     case magic_eval_event:
       return HASH3 (hash,
-		    (Hash_Code) e->event.magic_eval.internal_function,
+		    (Hashcode) e->event.magic_eval.internal_function,
 		    internal_hash (e->event.magic_eval.object, depth + 1));
 
     case magic_event:
@@ -1329,7 +1329,7 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
 
   if (CHARP (key))
     {
-      buf += set_charptr_emchar ((Bufbyte *) buf, XCHAR (key));
+      buf += set_charptr_emchar ((Intbyte *) buf, XCHAR (key));
       *buf = 0;
     }
   else if (SYMBOLP (key))
@@ -1797,7 +1797,7 @@ See also `mouse-event-p' `event-window-y-pixel'.
 static int
 event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 			 int *obj_x, int *obj_y,
-			 struct window **w, Bufpos *bufp, Bufpos *closest,
+			 struct window **w, Charbpos *bufp, Charbpos *closest,
 			 Charcount *modeline_closest,
 			 Lisp_Object *obj1, Lisp_Object *obj2)
 {
@@ -1808,7 +1808,7 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 
   int ret_x, ret_y, ret_obj_x, ret_obj_y;
   struct window *ret_w;
-  Bufpos ret_bufp, ret_closest;
+  Charbpos ret_bufp, ret_closest;
   Charcount ret_modeline_closest;
   Lisp_Object ret_obj1, ret_obj2;
 
@@ -1988,7 +1988,7 @@ visible in the event's window.
 */
        (event))
 {
-  Bufpos bufp;
+  Charbpos bufp;
   struct window *w;
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, &bufp, 0, 0, 0, 0);
@@ -2010,7 +2010,7 @@ return the value of (window-end).
 */
        (event))
 {
-  Bufpos bufp;
+  Charbpos bufp;
 
   event_pixel_translation (event, 0, 0, 0, 0, 0, 0, &bufp, 0, 0, 0);
 

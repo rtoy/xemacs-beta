@@ -214,10 +214,10 @@ Dynarr_free (void *d)
    what was requested of it is returned in MALLOC_OVERHEAD in STATS.
    See the comment above the definition of this structure. */
 
-Memory_Count
+Bytecount
 Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 {
-  Memory_Count total = 0;
+  Bytecount total = 0;
   Dynarr *dy = (Dynarr *) d;
 
   /* We have to be a bit tricky here because not all of the
@@ -226,7 +226,7 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 
   if (dy->base)
     {
-      Memory_Count malloc_used = malloced_storage_size (dy->base,
+      Bytecount malloc_used = malloced_storage_size (dy->base,
 						  dy->elsize * dy->max, 0);
       /* #### This may or may not be correct.  Some Dynarrs would
 	 prefer that we use dy->cur instead of dy->largest here. */

@@ -256,8 +256,8 @@ struct lrecord_implementation
 
   /* Only one of `static_size' and `size_in_bytes_method' is non-0.
      If both are 0, this type is not instantiable by alloc_lcrecord(). */
-  Memory_Count static_size;
-  Memory_Count (*size_in_bytes_method) (const void *header);
+  Bytecount static_size;
+  Bytecount (*size_in_bytes_method) (const void *header);
 
   /* The (constant) index into lrecord_implementations_table */
   enum lrecord_type lrecord_type_index;
@@ -359,24 +359,24 @@ extern int gc_in_progress;
     XD_INT_RESET
   An integer which will be reset to a given value in the dump file.
 
+  
+    XD_CHARCOUNT
+  Charcount value.  Used for counts.
+  
+    XD_ELEMCOUNT
+  Elemcount value.  Used for counts.
 
-    XD_ELEMENT_COUNT
-  Element_Count value.  Used for counts.
+    XD_BYTECOUNT
+  Bytecount value.  Used for counts.
 
-    XD_MEMORY_COUNT
-  Memory_Count value.  Used for counts.
-
-    XD_HASH_CODE
-  Hash_Code value.  Used for the results of hashing functions.
+    XD_HASHCODE
+  Hashcode value.  Used for the results of hashing functions.
 
     XD_INT
   int value.  Used for counts.
 
     XD_LONG
   long value.  Used for counts.
-
-    XD_BYTECOUNT
-  bytecount value.  Used for counts.
 
     XD_END
   Special type indicating the end of the array.
@@ -404,12 +404,12 @@ enum lrecord_description_type
   XD_C_STRING,
   XD_DOC_STRING,
   XD_INT_RESET,
-  XD_MEMORY_COUNT,
-  XD_ELEMENT_COUNT,
-  XD_HASH_CODE,
+  XD_CHARCOUNT,
+  XD_BYTECOUNT,
+  XD_ELEMCOUNT,
+  XD_HASHCODE,
   XD_INT,
   XD_LONG,
-  XD_BYTECOUNT,
   XD_END,
   XD_SPECIFIER_END
 };
@@ -424,7 +424,7 @@ struct lrecord_description
 
 struct struct_description
 {
-  Memory_Count size;
+  Bytecount size;
   const struct lrecord_description *description;
 };
 
@@ -778,7 +778,7 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-void *alloc_lcrecord (Memory_Count size,
+void *alloc_lcrecord (Bytecount size,
 		      const struct lrecord_implementation *);
 
 #define alloc_lcrecord_type(type, lrecord_implementation) \

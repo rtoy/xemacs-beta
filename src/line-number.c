@@ -118,7 +118,7 @@ narrow_line_number_cache (struct buffer *b)
 
 /* Invalidate the line number cache positions that lie after POS. */
 static void
-invalidate_line_number_cache (struct buffer *b, Bufpos pos)
+invalidate_line_number_cache (struct buffer *b, Charbpos pos)
 {
   EMACS_INT i, j;
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
@@ -157,8 +157,8 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
 
    This will do nothing if the cache is uninitialized.  */
 void
-insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
-				     const Bufbyte *nonreloc, Bytecount length)
+insert_invalidate_line_number_cache (struct buffer *b, Charbpos pos,
+				     const Intbyte *nonreloc, Bytecount length)
 {
   if (NILP (b->text->line_number_cache))
     return;
@@ -179,7 +179,7 @@ insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
 
    This will do nothing if the cache is uninitialized.  */
 void
-delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
+delete_invalidate_line_number_cache (struct buffer *b, Charbpos from, Charbpos to)
 {
   if (NILP (b->text->line_number_cache))
     return;
@@ -204,7 +204,7 @@ delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
    BEG will be BUF_BEGV, and *LINE will be XINT (LINE_NUMBER_BEGV).
    This will initialize the cache, if necessary.  */
 static void
-get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
+get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
 			 EMACS_INT *line)
 {
   EMACS_INT i;
@@ -217,7 +217,7 @@ get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
   /* Find the ring entry closest to POS, if it is closer than BEG. */
   for (i = 0; i < LINE_NUMBER_RING_SIZE && CONSP (ring[i]); i++)
     {
-      Bufpos newpos = marker_position (XCAR (ring[i]));
+      Charbpos newpos = marker_position (XCAR (ring[i]));
       Charcount howfar = newpos - pos;
       if (howfar < 0)
 	howfar = -howfar;
@@ -232,7 +232,7 @@ get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
 
 /* Add a (POS . LINE) pair to the ring, and rotate it. */
 static void
-add_position_to_cache (struct buffer *b, Bufpos pos, EMACS_INT line)
+add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
 {
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
   int i = LINE_NUMBER_RING_SIZE - 1;
@@ -268,9 +268,9 @@ add_position_to_cache (struct buffer *b, Bufpos pos, EMACS_INT line)
    If the calculation (with or without the cache lookup) required more
    than LINE_NUMBER_FAR characters of traversal, update the cache.  */
 EMACS_INT
-buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
+buffer_line_number (struct buffer *b, Charbpos pos, int cachep)
 {
-  Bufpos beg = BUF_BEGV (b);
+  Charbpos beg = BUF_BEGV (b);
   EMACS_INT cached_lines = 0;
   EMACS_INT shortage, line;
 

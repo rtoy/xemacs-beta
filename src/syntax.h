@@ -248,9 +248,9 @@ extern const unsigned char syntax_spec_code[0400];
 
 extern const unsigned char syntax_code_spec[];
 
-Lisp_Object scan_lists (struct buffer *buf, Bufpos from, int count,
+Lisp_Object scan_lists (struct buffer *buf, Charbpos from, int count,
 			int depth, int sexpflag, int no_error);
-int char_quoted (struct buffer *buf, Bufpos pos);
+int char_quoted (struct buffer *buf, Charbpos pos);
 
 /* NOTE: This does not refer to the mirror table, but to the
    syntax table itself. */
@@ -281,9 +281,9 @@ struct syntax_cache
   Lisp_Object current_syntax_table;	/* Syntax table for current pos. */
   Lisp_Object old_prop;			/* Syntax-table prop at prev pos. */
 
-  Bufpos next_change;			/* Position of the next extent
+  Charbpos next_change;			/* Position of the next extent
                                            change. */
-  Bufpos prev_change;			/* Position of the previous
+  Charbpos prev_change;			/* Position of the previous
                                            extent change. */
 };
 extern struct syntax_cache syntax_cache;
@@ -332,7 +332,7 @@ void update_syntax_cache (int pos, int count, int init);
    : STRINGP (syntax_cache.object)						\
    ? bytecount_to_charcount (XSTRING_DATA (syntax_cache.object), bytepos)	\
    : (BUFFERP (syntax_cache.object) || NILP (syntax_cache.object))		\
-   ? bytind_to_bufpos (syntax_cache.buffer,					\
+   ? bytebpos_to_charbpos (syntax_cache.buffer,					\
 		       bytepos + BI_BUF_BEGV (syntax_cache.buffer))		\
    : (bytepos))
 
@@ -342,7 +342,7 @@ void update_syntax_cache (int pos, int count, int init);
    : STRINGP (obj)						\
    ? bytecount_to_charcount (XSTRING_DATA (obj), bytepos)	\
    : (BUFFERP (obj) || NILP (obj))				\
-   ? bytind_to_bufpos (buf, bytepos + BI_BUF_BEGV (buf))	\
+   ? bytebpos_to_charbpos (buf, bytepos + BI_BUF_BEGV (buf))	\
    : (bytepos))
 
 #else  /* not emacs */

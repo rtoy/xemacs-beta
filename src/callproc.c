@@ -478,7 +478,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	nread = 0;
 	while (nread < bufsize - 1024)
 	  {
-	    Lstream_Data_Count this_read
+	    Bytecount this_read
 	      = Lstream_read (XLSTREAM (instream), bufptr + nread,
 			      bufsize - nread);
 
@@ -515,7 +515,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	total_read += nread;
 
 	if (!NILP (buffer))
-	  buffer_insert_raw_string (XBUFFER (buffer), (Bufbyte *) bufptr,
+	  buffer_insert_raw_string (XBUFFER (buffer), (Intbyte *) bufptr,
 				    nread);
 
 	/* Make the buffer bigger as we continue to read more data,
@@ -795,9 +795,9 @@ child_setup (int in, int out, int err, char **new_argv,
 }
 
 static int
-getenv_internal (const Bufbyte *var,
+getenv_internal (const Intbyte *var,
 		 Bytecount varlen,
-		 Bufbyte **value,
+		 Intbyte **value,
 		 Bytecount *valuelen)
 {
   Lisp_Object scan;
@@ -833,7 +833,7 @@ When invoked interactively, prints the value in the echo area.
 */
        (var, interactivep))
 {
-  Bufbyte *value;
+  Intbyte *value;
   Bytecount valuelen;
   Lisp_Object v = Qnil;
   struct gcpro gcpro1;
@@ -861,10 +861,10 @@ char *
 egetenv (const char *var)
 {
   /* This cannot GC -- 7-28-00 ben */
-  Bufbyte *value;
+  Intbyte *value;
   Bytecount valuelen;
 
-  if (getenv_internal ((const Bufbyte *) var, strlen (var), &value, &valuelen))
+  if (getenv_internal ((const Intbyte *) var, strlen (var), &value, &valuelen))
     return (char *) value;
   else
     return 0;
@@ -916,7 +916,7 @@ init_callproc (void)
     
     if (!egetenv ("SHELL"))
       {
-	CBufbyte *faux_var = alloca_array (CBufbyte, 7 + strlen (shell));
+	CIntbyte *faux_var = alloca_array (CIntbyte, 7 + strlen (shell));
 	sprintf (faux_var, "SHELL=%s", shell);
 	Vprocess_environment = Fcons (build_string (faux_var),
 				      Vprocess_environment);

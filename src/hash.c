@@ -31,19 +31,19 @@ Boston, MA 02111-1307, USA.  */
 #define KEYS_DIFFER_P(old, new, testfun) \
   (((old) != (new)) && (!(testfun) || !(testfun) ((old),(new))))
 
-static void rehash (hentry *harray, struct hash_table *ht, Element_Count size);
+static void rehash (hentry *harray, struct hash_table *ht, Elemcount size);
 
-Hash_Code
-memory_hash (const void *xv, Memory_Count size)
+Hashcode
+memory_hash (const void *xv, Bytecount size)
 {
-  Hash_Code h = 0;
+  Hashcode h = 0;
   unsigned const char *x = (unsigned const char *) xv;
 
   if (!x) return 0;
 
   while (size--)
     {
-      Hash_Code g;
+      Hashcode g;
       h = (h << 4) + *x++;
       if ((g = h & 0xf0000000) != 0)
 	h = (h ^ (g >> 24)) ^ g;
@@ -52,17 +52,17 @@ memory_hash (const void *xv, Memory_Count size)
   return h;
 }
 
-Hash_Code
+Hashcode
 string_hash (const char *xv)
 {
-  Hash_Code h = 0;
+  Hashcode h = 0;
   unsigned const char *x = (unsigned const char *) xv;
 
   if (!x) return 0;
 
   while (*x)
     {
-      Hash_Code g;
+      Hashcode g;
       h = (h << 4) + *x++;
       if ((g = h & 0xf0000000) != 0)
 	h = (h ^ (g >> 24)) ^ g;
@@ -72,13 +72,13 @@ string_hash (const char *xv)
 }
 
 /* Return a suitable size for a hash table, with at least SIZE slots. */
-static Element_Count
-hash_table_size (Element_Count requested_size)
+static Elemcount
+hash_table_size (Elemcount requested_size)
 {
   /* Return some prime near, but greater than or equal to, SIZE.
      Decades from the time of writing, someone will have a system large
      enough that the list below will be too short... */
-  static const Element_Count primes [] =
+  static const Elemcount primes [] =
   {
     19, 29, 41, 59, 79, 107, 149, 197, 263, 347, 457, 599, 787, 1031,
     1361, 1777, 2333, 3037, 3967, 5167, 6719, 8737, 11369, 14783,
@@ -116,12 +116,12 @@ gethash (const void *key, struct hash_table *hash_table, const void **ret_value)
     {
       hentry *harray = hash_table->harray;
       hash_table_test_function test_function = hash_table->test_function;
-      Element_Count size = hash_table->size;
-      Hash_Code hcode_initial =
+      Elemcount size = hash_table->size;
+      Hashcode hcode_initial =
 	hash_table->hash_function ?
 	hash_table->hash_function (key) :
-	(Hash_Code) key;
-      Element_Count hcode = (Element_Count) (hcode_initial % size);
+	(Hashcode) key;
+      Elemcount hcode = (Elemcount) (hcode_initial % size);
       hentry *e = &harray [hcode];
       const void *e_key = e->key;
 
@@ -129,8 +129,8 @@ gethash (const void *key, struct hash_table *hash_table, const void **ret_value)
 	  KEYS_DIFFER_P (e_key, key, test_function) :
 	  e->contents == NULL_ENTRY)
 	{
-	  Element_Count h2 = size - 2;
-	  Element_Count incr = (Element_Count) (1 + (hcode_initial % h2));
+	  Elemcount h2 = size - 2;
+	  Elemcount incr = (Elemcount) (1 + (hcode_initial % h2));
 	  do
 	    {
 	      hcode += incr; if (hcode >= size) hcode -= size;
@@ -164,7 +164,7 @@ free_hash_table (struct hash_table *hash_table)
 }
 
 struct hash_table*
-make_hash_table (Element_Count size)
+make_hash_table (Elemcount size)
 {
   struct hash_table *hash_table = xnew_and_zero (struct hash_table);
   hash_table->size = hash_table_size (COMFORTABLE_SIZE (size));
@@ -174,7 +174,7 @@ make_hash_table (Element_Count size)
 }
 
 struct hash_table *
-make_general_hash_table (Element_Count size,
+make_general_hash_table (Elemcount size,
 			hash_table_hash_function hash_function,
 			hash_table_test_function test_function)
 {
@@ -185,9 +185,9 @@ make_general_hash_table (Element_Count size,
 }
 
 static void
-grow_hash_table (struct hash_table *hash_table, Element_Count new_size)
+grow_hash_table (struct hash_table *hash_table, Elemcount new_size)
 {
-  Element_Count old_size   = hash_table->size;
+  Elemcount old_size   = hash_table->size;
   hentry     *old_harray = hash_table->harray;
 
   hash_table->size   = hash_table_size (new_size);
@@ -217,15 +217,15 @@ puthash (const void *key, void *contents, struct hash_table *hash_table)
   else
     {
       hash_table_test_function test_function = hash_table->test_function;
-      Element_Count size = hash_table->size;
+      Elemcount size = hash_table->size;
       hentry *harray   = hash_table->harray;
-      Hash_Code hcode_initial =
+      Hashcode hcode_initial =
 	hash_table->hash_function ?
 	hash_table->hash_function (key) :
-	(Hash_Code) key;
-      Element_Count hcode = (Element_Count) (hcode_initial % size);
-      Element_Count h2 = size - 2;
-      Element_Count incr = (Element_Count) (1 + (hcode_initial % h2));
+	(Hashcode) key;
+      Elemcount hcode = (Elemcount) (hcode_initial % size);
+      Elemcount h2 = size - 2;
+      Elemcount incr = (Elemcount) (1 + (hcode_initial % h2));
       const void *e_key = harray [hcode].key;
       const void *oldcontents;
 
@@ -268,7 +268,7 @@ puthash (const void *key, void *contents, struct hash_table *hash_table)
       /* only increment the fullness when we used up a new hentry */
       if (!e_key || KEYS_DIFFER_P (e_key, key, test_function))
 	{
-	  Element_Count comfortable_size = COMFORTABLE_SIZE (++(hash_table->fullness));
+	  Elemcount comfortable_size = COMFORTABLE_SIZE (++(hash_table->fullness));
 	  if (hash_table->size < comfortable_size)
 	    grow_hash_table (hash_table, comfortable_size + 1);
 	}
@@ -276,7 +276,7 @@ puthash (const void *key, void *contents, struct hash_table *hash_table)
 }
 
 static void
-rehash (hentry *harray, struct hash_table *hash_table, Element_Count size)
+rehash (hentry *harray, struct hash_table *hash_table, Elemcount size)
 {
   hentry *limit = harray + size;
   hentry *e;
@@ -299,12 +299,12 @@ remhash (const void *key, struct hash_table *hash_table)
     {
       hentry *harray = hash_table->harray;
       hash_table_test_function test_function = hash_table->test_function;
-      Element_Count size = hash_table->size;
-      Hash_Code hcode_initial =
+      Elemcount size = hash_table->size;
+      Hashcode hcode_initial =
 	(hash_table->hash_function) ?
 	(hash_table->hash_function (key)) :
-	((Hash_Code) key);
-      Element_Count hcode = (Element_Count) (hcode_initial % size);
+	((Hashcode) key);
+      Elemcount hcode = (Elemcount) (hcode_initial % size);
       hentry *e = &harray [hcode];
       const void *e_key = e->key;
 
@@ -312,8 +312,8 @@ remhash (const void *key, struct hash_table *hash_table)
 	  KEYS_DIFFER_P (e_key, key, test_function) :
 	  e->contents == NULL_ENTRY)
 	{
-	  Element_Count h2 = size - 2;
-	  Element_Count incr = (Element_Count) (1 + (hcode_initial % h2));
+	  Elemcount h2 = size - 2;
+	  Elemcount incr = (Elemcount) (1 + (hcode_initial % h2));
 	  do
 	    {
 	      hcode += incr; if (hcode >= size) hcode -= size;

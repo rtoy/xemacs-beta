@@ -330,9 +330,9 @@ This removes %_'s (accelerator indications) and converts %% to %.
   Lisp_String *n;
   Charcount end;
   int i;
-  Bufbyte *name_data;
-  Bufbyte *string_result;
-  Bufbyte *string_result_ptr;
+  Intbyte *name_data;
+  Intbyte *string_result;
+  Intbyte *string_result_ptr;
   Emchar elt;
   int expecting_underscore = 0;
 
@@ -342,7 +342,7 @@ This removes %_'s (accelerator indications) and converts %% to %.
   end = string_char_length (n);
   name_data = string_data (n);
 
-  string_result = (Bufbyte *) alloca (end * MAX_EMCHAR_LEN);
+  string_result = (Intbyte *) alloca (end * MAX_EMCHAR_LEN);
   string_result_ptr = string_result;
   for (i = 0; i < end; i++)
     {
