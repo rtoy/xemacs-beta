@@ -1,4 +1,4 @@
-;;; debug.el --- routines for debugging problems in XEmacs
+;;; diagnose.el --- routines for debugging problems in XEmacs
 
 ;; Copyright (C) 2002 Ben Wing.
 
@@ -62,7 +62,7 @@
 				     (incf linelen fieldlen)
 				     (format "%%%ds" fieldlen)))
 			       types "")
-			      (progn (incf linelen 8) "%8s\n")))
+			      (progn (incf linelen 9) "%9s\n")))
 		   (princ "\n")
 		   (princ (apply 'format fmt objtypename
 				 (append types (list 'total))))
@@ -85,41 +85,81 @@
 				  (list totaltotal))))
 	     totaltotal)))
 
-    (let ((grandtotal 0))
-      (with-output-to-temp-buffer "*memory usage*"
-	(when-fboundp 'charset-list
+    (let ((grandtotal 0)
+	  (buffer "*memory usage*")
+	  begin)
+      (with-output-to-temp-buffer buffer
+	(save-excursion
+	  (set-buffer buffer)
+	  (when-fboundp 'charset-list
+	    (setq begin (point))
+	    (incf grandtotal
+		  (show-foo-stats 'charset (charset-list)
+				  #'charset-memory-usage))
+	    (sort-numeric-fields -1
+				 (save-excursion
+				   (goto-char begin)
+				   (forward-line 2)
+				   (point))
+				 (save-excursion
+				   (forward-line -2)
+				   (point)))
+	    (princ "\n"))
+	  (setq begin (point))
 	  (incf grandtotal
-		(show-foo-stats 'charset (charset-list)
-				#'charset-memory-usage))
-	  (princ "\n"))
-	(incf grandtotal
-	      (show-foo-stats 'buffer (buffer-list) #'buffer-memory-usage))
-	(princ "\n")
-	(incf grandtotal
-	      (show-foo-stats 'window (mapcan #'(lambda (fr)
-						  (window-list fr t))
-					      (frame-list))
-			      #'window-memory-usage))
-	(princ "\n")
-	(let ((total 0)
-	      (fmt "%-30s%10s\n"))
-	  (princ (format fmt "object" "storage"))
-	  (princ (make-string 40 ?-))
+		(show-foo-stats 'buffer (buffer-list) #'buffer-memory-usage))
+	  (sort-numeric-fields -1
+			       (save-excursion
+				 (goto-char begin)
+				 (forward-line 3)
+				 (point))
+			       (save-excursion
+				 (forward-line -2)
+				 (point)))
 	  (princ "\n")
-	  (map-plist #'(lambda (stat num)
-			 (when (string-match "\\(.*\\)-storage$"
-					     (symbol-name stat))
-			   (incf total num)
-			   (princ (format fmt
-					  (match-string 1 (symbol-name stat))
-					  num)))
-			 (when (eq stat 'long-strings-total-length)
-			   (incf total num)
-			   (princ (format fmt stat num))))
-		     (sixth (garbage-collect)))
+	  (setq begin (point))
+	  (incf grandtotal
+		(show-foo-stats 'window (mapcan #'(lambda (fr)
+						    (window-list fr t))
+						(frame-list))
+				#'window-memory-usage))
+	  (sort-numeric-fields -1
+			       (save-excursion
+				 (goto-char begin)
+				 (forward-line 3)
+				 (point))
+			       (save-excursion
+				 (forward-line -2)
+				 (point)))
 	  (princ "\n")
-	  (princ (format fmt "total" total))
-	  (incf grandtotal total))
+	  (let ((total 0)
+		(fmt "%-30s%10s\n"))
+	    (setq begin (point))
+	    (princ (format fmt "object" "storage"))
+	    (princ (make-string 40 ?-))
+	    (princ "\n")
+	    (map-plist #'(lambda (stat num)
+			   (when (string-match "\\(.*\\)-storage$"
+					       (symbol-name stat))
+			     (incf total num)
+			     (princ (format fmt
+					    (match-string 1 (symbol-name stat))
+					    num)))
+			   (when (eq stat 'long-strings-total-length)
+			     (incf total num)
+			     (princ (format fmt stat num))))
+		       (sixth (garbage-collect)))
+	    (princ "\n")
+	    (princ (format fmt "total" total))
+	    (incf grandtotal total))
+	  (sort-numeric-fields -1
+			       (save-excursion
+				 (goto-char begin)
+				 (forward-line 2)
+				 (point))
+			       (save-excursion
+				 (forward-line -2)
+				 (point)))
 
-	(princ (format "\n\ngrand total: %s\n" grandtotal))
+	  (princ (format "\n\ngrand total: %s\n" grandtotal)))
 	grandtotal))))

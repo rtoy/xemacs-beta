@@ -1,3 +1,8 @@
+2005-02-25  Adrian Aichner  <adrian@xemacs.org>
+
+	* diagnose.el: Fix typo.
+	* diagnose.el (show-memory-usage): Sort sections by total usage.
+
 2005-02-23  Adrian Aichner  <adrian@xemacs.org>
 
 	* cmdloop.el (keyboard-quit): Remove workaround for
