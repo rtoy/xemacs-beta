@@ -1763,7 +1763,7 @@ case "$opsys" in
     AC_DEFINE(_XOPEN_SOURCE,500)
     AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
     ;;
-  freebsd4.[5-9])
+  freebsd4*)
     AC_DEFINE(_POSIX_C_SOURCE,199506L)
     dnl #### Do we want these too?  Apparently yes for _XOPEN_SOURCE=500.
     AC_DEFINE(_XOPEN_SOURCE,500)
@@ -2935,9 +2935,13 @@ if test "${GTK_CONFIG}" != "no"; then
 	yes|no|gtk|"" )
 	    ;;
 	* )
-	  AC_MSG_WARN([${feature_value} requested for ${feature}, forcing to gtk]) ;;
+	  feature_conflict_with_gtk=yes
+	  AC_MSG_WARN([--with-${feature}=${feature_value} is incompatible with --with-gtk]) ;;
 	esac
       done
+      if test "${feature_conflict_with_gtk}" = "yes"; then
+	XE_DIE(["One or more GUI toolkit features conflict with GTK"])
+      fi
 
       test "${with_scrollbars}" != "no" && with_scrollbars=gtk
       test "${with_toolbars}" != "no" && with_toolbars=gtk
@@ -4778,9 +4782,9 @@ if test "$with_tty" = "yes"  ; then
       with_gpm=yes
       AC_DEFINE(HAVE_GPM)
       XE_PREPEND(-lgpm, LIBS)
+    elif test "$with_gpm" = "yes"; then
+      XE_DIE(["GPM requested, but gpm.h or libgpm seems to be missing."])
     else
-      test "$with_gpm" = "yes" && \
-        XE_DIE("GPM requested, but gpm.h or libgpm seems to be missing.")
       with_gpm=no
     fi
   fi
