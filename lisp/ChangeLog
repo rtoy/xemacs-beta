@@ -1,3 +1,9 @@
+2004-09-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* startup.el (load-init-file):
+	(load-user-init-file):
+	Remove bogus comments.
+
 2004-09-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* about.el (xemacs-hackers): Fix Malcolm's address.
