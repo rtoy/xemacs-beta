@@ -1,5 +1,10 @@
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
+	* autoload.el (batch-update-autoloads):
+	Use correct parameters when invoking older interface.
+
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
 	* shadow.el (find-emacs-lisp-shadows):
 	Ignore custom-defines.
 
