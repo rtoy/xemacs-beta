@@ -1,3 +1,7 @@
+2001-03-19  Karl M. Hegbloom  <karlheg@microsharp.com>
+
+	* cus-edit.el (custom-display): Support the GTK Window System also.
+
 2001-05-21  Martin Buchholz  <martin@xemacs.org>
 
 	* byte-optimize.el (=): `=' is not a binary predicate!
