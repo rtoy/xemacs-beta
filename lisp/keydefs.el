@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -340,6 +340,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-xry" 'yank-rectangle)
 (define-key global-map "\C-xro" 'open-rectangle)
 (define-key global-map "\C-xrt" 'string-rectangle)
+(define-key global-map "\C-xrp" 'replace-rectangle)
 (define-key global-map "\C-xrw" 'window-configuration-to-register)
 ;(define-key global-map "\C-xrf" 'frame-configuration-to-register)
 
@@ -511,7 +512,7 @@ Keymap for characters following C-c.")
 ;; expected behavior even in, for example, vi-mode.
 
 ;; We use here symbolic names, assuming that the corresponding keys will
-;; generate these keysyms.  This is not true on Suns, but x-win-sun.el 
+;; generate these keysyms.  This is not true on Suns, but x-win-sun.el
 ;; fixes that.  If it turns out that the semantics of these keys should
 ;; differ from server to server, this should be moved into server-specific
 ;; files, but these appear to be the standard Motif and PC bindings.

@@ -418,7 +418,7 @@ Also, the behavior of `string-rectangle' is now compliant with
 replaces the region rectangle.  Otherwise, the command does not delete
 or overwrite any existing text.  For those who want that feature but do
 not use pending-delete-mode, a new function, `replace-rectangle', is
-available.
+available, and bound to `C-x r p'.
 
 As a side effect, the FORCE argument to `move-to-column' now
 understands the special value `coerce', which means that the line

@@ -1,3 +1,7 @@
+2001-12-03  Didier Verna  <didier@xemacs.org>
+
+	* etc/NEWS: advertise `C-x r p' (replace-rectangle) in global map.
+
 2001-08-29  Jered Floyd  <jered@MIT.EDU>
 
 	* configure.in (moduledir,sitemoduledir,archlibdir):

@@ -1,3 +1,8 @@
+2001-12-03  Didier Verna  <didier@xemacs.org>
+
+	* rect.el: autoload `replace-rectangle'.
+	* keydefs.el (global-map): bind it to `C-x r p'.
+
 2001-11-29 Charles G Waldman <cgw@xemacs.org>
 
 	* startup.el (initial-scratch-message): be correct about case
@@ -22,7 +27,7 @@
 
 	* package-get.el (package-entries-are-signed): New.
 	(package-get-continue-update-base): New.
-	(package-get-update-base-from-buffer): Use them.  Fix PGP code. 
+	(package-get-update-base-from-buffer): Use them.  Fix PGP code.
 
 2001-11-29  Adrian Aichner  <adrian@xemacs.org>
 
