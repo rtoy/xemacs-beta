@@ -882,8 +882,11 @@ If N is nil, all messages will be printed."
 (defun view-lossage (&optional no-keys)
   "Display recent input keystrokes and recent minibuffer messages.
 The number of keys shown is controlled by `view-lossage-key-count'.
-The number of messages shown is controlled by `view-lossage-message-count'."
-  (interactive)
+The number of messages shown is controlled by `view-lossage-message-count'.
+
+If optional arg NO-KEYS (prefix arg, interactively) is non-nil,
+then recent input keystrokes output is omitted."
+  (interactive "P")
   (with-displaying-help-buffer
    (lambda ()
      (unless no-keys
