@@ -258,6 +258,7 @@ Debugging options:
                         int, for the fundamental Lisp_Object type; this
                         provides stricter type-checking.  Only works with
                         some systems and compilers.
+--use-kkcc              Enable the use of new GC algorithms. (EXPERIMENTAL)
 --with-quantify         Add support for performance debugging using Quantify.
 --with-purify           Add support for memory debugging using Purify.
 

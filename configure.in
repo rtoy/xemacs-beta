@@ -506,6 +506,7 @@ while test $# != 0; do
 	with_netinstall | \
 	with_ipv6_cname | \
 	external_widget | \
+	use_kkcc	| \
 	verbose		| \
 	extra_verbose	| \
 	usage_tracking	| \
@@ -4801,6 +4802,7 @@ elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
 fi
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
+test "$use_kkcc"           = "yes" && AC_DEFINE(USE_KKCC)
 test "$quick_build"        = "yes" && AC_DEFINE(QUICK_BUILD)
 test "$with_purify"        = "yes" && AC_DEFINE(PURIFY)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
@@ -5025,6 +5027,7 @@ test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$use_union_type" = yes && echo "  Using the union type for Lisp_Objects."
+test "$use_kkcc" = yes && echo "  Using the new GC algorithms."
 test "$pdump" = yes && echo "  Using the new portable dumper."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
