@@ -670,8 +670,8 @@ bignum extension is present, it returns @code{nil} for a bigfloat.
 @defun bigfloatp object
 @cindex floats
 The @code{bigfloatp} predicate tests to see whether @var{object} is an
-integer represented as a fixnum, and returns @code{t} if so, @code{nil}
-otherwise.
+floating point number represented as a bigfloat, and returns @code{t} if
+so, @code{nil} otherwise.
 @end defun
 
 
@@ -706,7 +706,9 @@ comparison without signaling an error on some expected return values.
 Because of canonicalization, @code{eql} can be used to compare a fixnum
 value to something that might be a ratio; if the potential ratio value
 is representable as a fixnum, it will be canonicalized to fixnum before
-comparing.
+comparing.  However, although floats and bigfloats are of different
+types for the purpose of comparisons via @code{eql}, two bigfloats of
+different @emph{precision} that are @code{=} will always be @code{eql}.
 
 @example
 (eql 2 (string-match "ere" "there"))

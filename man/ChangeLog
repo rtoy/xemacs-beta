@@ -1,3 +1,8 @@
+2004-05-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/numbers.texi (Comparison of Numbers): Clarify bigfloat eql.
+	(Predicates on Numbers): Fix thinko in description of `bigfloatp'.
+
 2004-05-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/numbers.texi (Numbers): Remove reference to "fixed-
