@@ -1162,8 +1162,14 @@ pdump (void)
   dump_add_opaque (&lrecord_implementations_table,
 		   lrecord_type_count *
 		   sizeof (lrecord_implementations_table[0]));
+#ifdef USE_KKCC  
+  dump_add_opaque (&lrecord_memory_descriptions,
+		   lrecord_type_count 
+		   * sizeof (lrecord_memory_descriptions[0]));
+#else /* not USE_KKCC */
   dump_add_opaque (&lrecord_markers,
 		   lrecord_type_count * sizeof (lrecord_markers[0]));
+#endif /* not USE_KKCC */
 
   pdump_hash = xnew_array_and_zero (pdump_entry_list_elt *, PDUMP_HASHSIZE);
 

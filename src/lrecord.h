@@ -329,7 +329,12 @@ extern int gc_in_progress;
 } while (0)
 #define SET_LISP_READONLY_RECORD_HEADER(lheader) \
   ((void) ((lheader)->lisp_readonly = 1))
+
+#ifdef USE_KKCC
+#define RECORD_DESCRIPTION(lheader) lrecord_memory_descriptions[(lheader)->type]
+#else /* not USE_KKCC */
 #define RECORD_MARKER(lheader) lrecord_markers[(lheader)->type]
+#endif /* not USE_KKCC */
 
 #define RECORD_DUMPABLE(lheader) (lrecord_implementations_table[(lheader)->type])->dumpable
 
@@ -924,6 +929,15 @@ struct lrecord_implementation lrecord_##c_name =			\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
 
+#ifdef USE_KKCC
+extern MODULE_API const struct memory_description *lrecord_memory_descriptions[];
+
+#define INIT_LRECORD_IMPLEMENTATION(type) do {				\
+  lrecord_implementations_table[lrecord_type_##type] = &lrecord_##type;	\
+  lrecord_memory_descriptions[lrecord_type_##type] =			\
+    lrecord_implementations_table[lrecord_type_##type]->description;	\
+} while (0)
+#else /* not USE_KKCC */
 extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 
 #define INIT_LRECORD_IMPLEMENTATION(type) do {				\
@@ -931,6 +945,7 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
   lrecord_markers[lrecord_type_##type] =				\
     lrecord_implementations_table[lrecord_type_##type]->marker;		\
 } while (0)
+#endif /* not USE_KKCC */
 
 #define INIT_EXTERNAL_LRECORD_IMPLEMENTATION(type) do {			\
   lrecord_type_##type = lrecord_type_count++;				\
@@ -941,10 +956,17 @@ extern MODULE_API Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 #ifdef HAVE_SHLIB
 /* Allow undefining types in order to support module unloading. */
 
+#ifdef USE_KKCC
+#define UNDEF_LRECORD_IMPLEMENTATION(type) do {				\
+  lrecord_implementations_table[lrecord_type_##type] = NULL;		\
+  lrecord_memory_descriptions[lrecord_type_##type] = NULL;		\
+} while (0)
+#else /* not USE_KKCC */
 #define UNDEF_LRECORD_IMPLEMENTATION(type) do {				\
   lrecord_implementations_table[lrecord_type_##type] = NULL;		\
   lrecord_markers[lrecord_type_##type] = NULL;				\
 } while (0)
+#endif /* not USE_KKCC */
 
 #define UNDEF_EXTERNAL_LRECORD_IMPLEMENTATION(type) do {		\
   if (lrecord_##type.lrecord_type_index == lrecord_type_count - 1) {	\

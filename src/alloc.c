@@ -2777,10 +2777,12 @@ Does not copy symbols.
    room in `lrecord_implementations_table' for such new lisp object types. */
 const struct lrecord_implementation *lrecord_implementations_table[(int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 int lrecord_type_count = lrecord_type_last_built_in_type;
+#ifndef USE_KKCC
 /* Object marker functions are in the lrecord_implementation structure.
    But copying them to a parallel array is much more cache-friendly.
    This hack speeds up (garbage-collect) by about 5%. */
 Lisp_Object (*lrecord_markers[countof (lrecord_implementations_table)]) (Lisp_Object);
+#endif /* not USE_KKCC */
 
 struct gcpro *gcprolist;
 
@@ -2950,113 +2952,6 @@ const struct sized_memory_description lisp_object_description = {
 };
 
 #if defined (USE_KKCC) || defined (PDUMP)
-
-/* the initial stack size in kkcc_gc_stack_entries */
-#define KKCC_INIT_GC_STACK_SIZE 16384
-
-typedef struct
-{
-  void *data;
-  const struct memory_description *desc;
-} kkcc_gc_stack_entry;
-
-static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
-static kkcc_gc_stack_entry *kkcc_gc_stack_top;
-static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
-static int kkcc_gc_stack_size;
-
-static void
-kkcc_gc_stack_init (void)
-{
-  kkcc_gc_stack_size = KKCC_INIT_GC_STACK_SIZE;
-  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
-    malloc (kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
-  if (!kkcc_gc_stack_ptr) 
-    {
-      stderr_out ("stack init failed for size %d\n", kkcc_gc_stack_size);
-      exit(23);
-    }
-  kkcc_gc_stack_top = kkcc_gc_stack_ptr - 1;
-  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
-}
-
-static void
-kkcc_gc_stack_free (void)
-{
-  free (kkcc_gc_stack_ptr);
-  kkcc_gc_stack_ptr = 0;
-  kkcc_gc_stack_top = 0;
-  kkcc_gc_stack_size = 0;
-}
-
-static void
-kkcc_gc_stack_realloc (void)
-{
-  int current_offset = (int)(kkcc_gc_stack_top - kkcc_gc_stack_ptr);
-  kkcc_gc_stack_size *= 2;
-  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
-    realloc (kkcc_gc_stack_ptr, 
-	     kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
-  if (!kkcc_gc_stack_ptr) 
-    {
-      stderr_out ("stack realloc failed for size %d\n", kkcc_gc_stack_size);
-      exit(23);
-    }
-  kkcc_gc_stack_top = kkcc_gc_stack_ptr + current_offset;
-  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
-}
-
-static int
-kkcc_gc_stack_full (void)
-{
-  if (kkcc_gc_stack_top >= kkcc_gc_stack_last_entry)
-    return 1;
-  return 0;
-}
-
-static int
-kkcc_gc_stack_empty (void)
-{
-  if (kkcc_gc_stack_top < kkcc_gc_stack_ptr)
-    return 1;
-  return 0;
-}
-
-static void
-kkcc_gc_stack_push (void *data, const struct memory_description *desc)
-{
-  if (kkcc_gc_stack_full ())
-      kkcc_gc_stack_realloc();
-  kkcc_gc_stack_top++;
-  kkcc_gc_stack_top->data = data;
-  kkcc_gc_stack_top->desc = desc;
-}
-
-static kkcc_gc_stack_entry *
-kkcc_gc_stack_pop (void) //void *data, const struct memory_description *desc)
-{
-  if (kkcc_gc_stack_empty ())
-    return 0;
-  kkcc_gc_stack_top--;
-  return kkcc_gc_stack_top + 1;
-}
-
-void
-kkcc_gc_stack_push_lisp_object (Lisp_Object obj)
-{
-  if (XTYPE (obj) == Lisp_Type_Record)
-    {
-      struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-      const struct memory_description *desc;
-      GC_CHECK_LHEADER_INVARIANTS (lheader);
-      desc = LHEADER_IMPLEMENTATION (lheader)->description;
-      if (! MARKED_RECORD_HEADER_P (lheader)) 
-	{
-	  MARK_RECORD_HEADER (lheader);
-	  kkcc_gc_stack_push((void*) lheader, desc);
-	}
-    }
-}
 
 /* This function extracts the value of a count variable described somewhere 
    else in the description. It is converted corresponding to the type */ 
@@ -3300,6 +3195,104 @@ lispdesc_structure_size (const void *obj,
    They mark objects according to their descriptions.  They 
    are modeled on the corresponding pdumper procedures. */
 
+/* Object memory descriptions are in the lrecord_implementation structure.
+   But copying them to a parallel array is much more cache-friendly. */
+const struct memory_description *lrecord_memory_descriptions[countof (lrecord_implementations_table)];
+
+/* the initial stack size in kkcc_gc_stack_entries */
+#define KKCC_INIT_GC_STACK_SIZE 16384
+
+typedef struct
+{
+  void *data;
+  const struct memory_description *desc;
+} kkcc_gc_stack_entry;
+
+static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
+static kkcc_gc_stack_entry *kkcc_gc_stack_top;
+static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
+static int kkcc_gc_stack_size;
+
+static void
+kkcc_gc_stack_init (void)
+{
+  kkcc_gc_stack_size = KKCC_INIT_GC_STACK_SIZE;
+  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
+    malloc (kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
+  if (!kkcc_gc_stack_ptr) 
+    {
+      stderr_out ("stack init failed for size %d\n", kkcc_gc_stack_size);
+      exit(23);
+    }
+  kkcc_gc_stack_top = kkcc_gc_stack_ptr - 1;
+  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
+}
+
+static void
+kkcc_gc_stack_free (void)
+{
+  free (kkcc_gc_stack_ptr);
+  kkcc_gc_stack_ptr = 0;
+  kkcc_gc_stack_top = 0;
+  kkcc_gc_stack_size = 0;
+}
+
+static void
+kkcc_gc_stack_realloc (void)
+{
+  int current_offset = (int)(kkcc_gc_stack_top - kkcc_gc_stack_ptr);
+  kkcc_gc_stack_size *= 2;
+  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
+    realloc (kkcc_gc_stack_ptr, 
+	     kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
+  if (!kkcc_gc_stack_ptr) 
+    {
+      stderr_out ("stack realloc failed for size %d\n", kkcc_gc_stack_size);
+      exit(23);
+    }
+  kkcc_gc_stack_top = kkcc_gc_stack_ptr + current_offset;
+  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
+}
+
+#define KKCC_GC_STACK_FULL (kkcc_gc_stack_top >= kkcc_gc_stack_last_entry)
+#define KKCC_GC_STACK_EMPTY (kkcc_gc_stack_top < kkcc_gc_stack_ptr)
+
+static void
+kkcc_gc_stack_push (void *data, const struct memory_description *desc)
+{
+  if (KKCC_GC_STACK_FULL)
+      kkcc_gc_stack_realloc();
+  kkcc_gc_stack_top++;
+  kkcc_gc_stack_top->data = data;
+  kkcc_gc_stack_top->desc = desc;
+}
+
+static kkcc_gc_stack_entry *
+kkcc_gc_stack_pop (void)
+{
+  if (KKCC_GC_STACK_EMPTY)
+    return 0;
+  kkcc_gc_stack_top--;
+  return kkcc_gc_stack_top + 1;
+}
+
+void
+kkcc_gc_stack_push_lisp_object (Lisp_Object obj)
+{
+  if (XTYPE (obj) == Lisp_Type_Record)
+    {
+      struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+      const struct memory_description *desc;
+      GC_CHECK_LHEADER_INVARIANTS (lheader);
+      desc = RECORD_DESCRIPTION (lheader);
+      if (! MARKED_RECORD_HEADER_P (lheader)) 
+	{
+	  MARK_RECORD_HEADER (lheader);
+	  kkcc_gc_stack_push((void*) lheader, desc);
+	}
+    }
+}
+
 #ifdef ERROR_CHECK_GC
 #define KKCC_DO_CHECK_FREE(obj, allow_free)			\
 do								\
@@ -3319,11 +3312,7 @@ static void
 mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
 {
   KKCC_DO_CHECK_FREE (obj, allow_free);
-#ifdef USE_KKCC
   kkcc_gc_stack_push_lisp_object (obj);
-#else /* NOT USE_KKCC */
-  mark_object (obj);
-#endif /* NOT USE_KKCC */
 }
 #else
 #define mark_object_maybe_checking_free(obj, allow_free) 	\
@@ -3474,7 +3463,7 @@ mark_object (Lisp_Object obj)
   stderr_out ("KKCC: Invalid mark_object call.\n");
   stderr_out ("Replace mark_object with kkcc_gc_stack_push_lisp_object.\n");
   abort ();
-#endif /* USE_KKCC */
+#else /* not USE_KKCC */
 
  tail_recurse:
 
@@ -3505,6 +3494,7 @@ mark_object (Lisp_Object obj)
 	    }
 	}
     }
+#endif /* not KKCC */
 }
 
 
@@ -4590,28 +4580,21 @@ garbage_collect_1 (void)
 #ifdef USE_KKCC
   /* initialize kkcc stack */
   kkcc_gc_stack_init();
+#define mark_object kkcc_gc_stack_push_lisp_object
 #endif /* USE_KKCC */
 
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
     Elemcount count;
     for (count = Dynarr_length (staticpros); count; count--)
-#ifdef USE_KKCC
-      kkcc_gc_stack_push_lisp_object (**p++);
-#else /* NOT USE_KKCC */
       mark_object (**p++);
-#endif /* NOT USE_KKCC */
   }
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
     Elemcount count;
     for (count = Dynarr_length (staticpros_nodump); count; count--)
-#ifdef USE_KKCC
-      kkcc_gc_stack_push_lisp_object (**p++);
-#else /* NOT USE_KKCC */
       mark_object (**p++);
-#endif /* NOT USE_KKCC */
   }
 
   { /* GCPRO() */
@@ -4619,24 +4602,15 @@ garbage_collect_1 (void)
     int i;
     for (tail = gcprolist; tail; tail = tail->next)
       for (i = 0; i < tail->nvars; i++)
-#ifdef USE_KKCC
-	kkcc_gc_stack_push_lisp_object (tail->var[i]);
-#else /* NOT USE_KKCC */
 	mark_object (tail->var[i]);
-#endif /* NOT USE_KKCC */
   }
 
   { /* specbind() */
     struct specbinding *bind;
     for (bind = specpdl; bind != specpdl_ptr; bind++)
       {
-#ifdef USE_KKCC
-	kkcc_gc_stack_push_lisp_object (bind->symbol);
-	kkcc_gc_stack_push_lisp_object (bind->old_value);
-#else /* NOT USE_KKCC */
 	mark_object (bind->symbol);
 	mark_object (bind->old_value);
-#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4644,15 +4618,9 @@ garbage_collect_1 (void)
     struct catchtag *catch;
     for (catch = catchlist; catch; catch = catch->next)
       {
-#ifdef USE_KKCC
-	kkcc_gc_stack_push_lisp_object (catch->tag);
-	kkcc_gc_stack_push_lisp_object (catch->val);
-	kkcc_gc_stack_push_lisp_object (catch->actual_tag);
-#else /* NOT USE_KKCC */
 	mark_object (catch->tag);
 	mark_object (catch->val);
 	mark_object (catch->actual_tag);
-#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4663,16 +4631,6 @@ garbage_collect_1 (void)
 	int nargs = backlist->nargs;
 	int i;
 
-#ifdef USE_KKCC
-	kkcc_gc_stack_push_lisp_object (*backlist->function);
-	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */
-	    /* might be fake (internal profiling entry) */
-	    && backlist->args)
-	  kkcc_gc_stack_push_lisp_object (backlist->args[0]);
-	else
-	  for (i = 0; i < nargs; i++)
-	    kkcc_gc_stack_push_lisp_object (backlist->args[i]);
-#else /* NOT USE_KKCC */
 	mark_object (*backlist->function);
 	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */
 	    /* might be fake (internal profiling entry) */
@@ -4681,7 +4639,6 @@ garbage_collect_1 (void)
 	else
 	  for (i = 0; i < nargs; i++)
 	    mark_object (backlist->args[i]);
-#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4717,6 +4674,7 @@ garbage_collect_1 (void)
 #ifdef USE_KKCC
   kkcc_marking ();
   kkcc_gc_stack_free ();
+#undef mark_object
 #endif /* USE_KKCC */
 
   /* And prune (this needs to be called after everything else has been
