@@ -3453,7 +3453,7 @@ command-line like this:
 
 @example
 $ xemacs -batch -l test-harness.elc -f batch-test-emacs TEST-FILE
-@end{example}
+@end example
 
 If something goes wrong, you can run the test suite interactively by
 loading @file{test-harness.el} into a running XEmacs and typing
@@ -3492,7 +3492,7 @@ comparisons from @file{case-tests.el}.
     (Assert (not (search-forward "Test buffer" nil t)))
     (goto-char (point-min))
     (Assert (eq (search-forward "Test Buffer" nil t) 12))))
-@end{example}
+@end example
 
 This example could be inserted in a file in @file{tests/automated}, and
 it would be a complete test, automatically executed when you run
