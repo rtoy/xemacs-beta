@@ -2315,8 +2315,6 @@ The returned event will be one of the following types:
 
   switch (XEVENT_TYPE (event))
     {
-    default:
-      goto RETURN;
     case button_release_event:
     case misc_user_event:
       /* don't echo menu accelerator keys */
@@ -2326,6 +2324,8 @@ The returned event will be one of the following types:
       goto STORE_AND_EXECUTE_KEY;
     case key_press_event:         /* any key input can trigger autosave */
       break;
+    default:
+      goto RETURN;
     }
 
   /* temporarily reenable quit checking here, because we could get stuck */
@@ -3104,6 +3104,19 @@ execute_internal_event (Lisp_Object event)
 		   to enable that check, and we do so now. */
 		kick_status_notify ();
 	      }
+	    else
+	      {
+		/* Deactivate network connection */
+		Lisp_Object status = Fprocess_status (p);
+		if (EQ (status, Qopen)
+		    /* In case somebody changes the theory of whether to
+		       return open as opposed to run for network connection
+		       "processes"... */
+		    || EQ (status, Qrun))
+		  update_process_status (p, Qexit, 256, 0);
+		deactivate_process (p);
+		status_notify ();
+	      }
 	    
 	    /* We must call status_notify here to allow the
 	       event_stream->unselect_process_cb to be run if appropriate.
@@ -3117,8 +3130,8 @@ execute_internal_event (Lisp_Object event)
 	       status_notify() will be called on return to top-level.
 	    */
 	    status_notify ();
-	    return;
 	  }
+	return;
       }
 
     case timeout_event:

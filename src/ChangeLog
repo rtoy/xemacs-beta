@@ -1,3 +1,15 @@
+2002-07-01  Mike Sperber <mike@xemacs.org>
+
+	* process-unix.c (unix_send_process): Mark coding_outstream as
+	non-open upon SIGPIPE.
+
+	* event-stream.c (execute_internal_event): Reinstate code to
+	deactivate a dead network connection that got lost during the
+	stdout/stderr separation.
+
+	* event-stream.c (Fnext_event): Reorder switch cases to something
+	that makes sense.
+
 2002-06-27  Olivier Galibert  <galibert@pobox.com>
 
 	* input-method-motif.c: Fix the #includes.
