@@ -1,3 +1,13 @@
+2004-03-18  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* configure.in (Compiler feature macros): Define _POSIX_C_SOURCE
+	for FreeBSD 4.9 to shut up viteno's compiler, and _XOPEN_SOURCE to
+	500 since apparently we'll use it if available.
+
+2004-03-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (libc detection): Fix progress message.
+
 2004-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (CFLAGS): Do XE_CFLAGS before adding warning flags to

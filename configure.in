@@ -1746,8 +1746,15 @@ case "$opsys" in
    fi ;;
   linux)
     AC_DEFINE(_POSIX_C_SOURCE,199506L)
+    dnl #### should this be 600?
     AC_DEFINE(_XOPEN_SOURCE,500)
     AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
+    ;;
+  freebsd4.9)
+    AC_DEFINE(_POSIX_C_SOURCE,199506L)
+    dnl #### Do we want these too?  Apparently yes for _XOPEN_SOURCE=500.
+    AC_DEFINE(_XOPEN_SOURCE,500)
+    dnl AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
     ;;
 esac
 
@@ -2295,7 +2302,7 @@ if test -z "$compiler_version"; then
   compiler_version="detection failed (please report this)"
 fi
 
-AC_MSG_CHECKING(for compiler version information)
+AC_MSG_CHECKING(for standard C library version information)
 
 case "$canonical" in
 	*-*-linux*)
