@@ -1,3 +1,10 @@
+2003-09-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* win32-native.el (grep-null-device): Defined in
+	xemacs-base/compile.el.
+
+	* files.el (null-device): Defined in C, remove defvar.
+
 2003-09-06  Mike Sperber  <mike@xemacs.org>
 
 	* bytecomp.el (byte-compile-defvar-or-defconst): Actually
