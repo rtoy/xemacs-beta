@@ -1,3 +1,10 @@
+2002-09-20  Steve Youngs  <youngs@xemacs.org>
+
+	* postgresql/Makefile.in.in (LDFLAGS): Add @ld_switch_all@ to pick
+	up '--site-libraries'.
+
+	* ldap/Makefile.in.in (LDFLAGS): Ditto.
+
 2002-08-08  Jerry James  <james@xemacs.org>
 
 	* auto-autoloads.el: New file containing module autoloads.

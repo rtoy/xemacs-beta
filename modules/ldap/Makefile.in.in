@@ -29,7 +29,7 @@
 MODNAME=eldap
 MODVER=1.0.0
 MODTITLE="LDAP Client Interface for XEmacs"
-LDFLAGS=@LDFLAGS@ @ldap_libs@
+LDFLAGS=@LDFLAGS@ @ld_switch_all@ @ldap_libs@
 SRCS=eldap.c
 
 ### You should not need to modify anything below this line

@@ -1,3 +1,8 @@
+2002-09-20  Steve Youngs  <youngs@xemacs.org>
+
+	* Makefile.in.in (TAGS tags): Descend into the modules directory
+	as well.
+
 2002-09-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS: AIX memcpy MACRO/#ifdef USE_KKCC lossage.  Thx, Valdis!

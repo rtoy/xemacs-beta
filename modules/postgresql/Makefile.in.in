@@ -29,7 +29,7 @@
 MODNAME=postgresql
 MODVER=1.0.0
 MODTITLE="PostgreSQL Client Interface for XEmacs"
-LDFLAGS=@LDFLAGS@ @postgresql_libs@
+LDFLAGS=@LDFLAGS@ @ld_switch_all@ @postgresql_libs@
 SRCS=postgresql.c
 
 ### You should not need to modify anything below this line
