@@ -1,3 +1,86 @@
+2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Synch to GNU Emacs 21.3.50:
+
+	* wid-edit.el: Update Copyright notice and Commentary.
+	(other):
+	(float):
+	(plist):
+	(widget-plist-value-type):
+	(widget-plist-convert-widget):
+	(widget-plist-convert-option):
+	(alist):
+	(widget-alist-value-type):
+	(widget-alist-convert-widget):
+	(widget-alist-convert-option):
+	New widgets and ancillary objects.
+	(coding-system):
+	(widget-coding-system-prompt-value-history):
+	(widget-coding-system-prompt-value):
+	(widget-coding-system-prompt-action):
+	Reenabled widget.
+	(default): Use `ignore' instead of lambda form.
+	(editable-field): New help-echo, better error.
+	(text): Use conventional argument order.
+	(character): Specify :size property.
+	(widget-menu-max-shortcuts): New user variable.
+	(widget-remove-if):
+	(widgetp):
+	(widget-copy):
+	(widget-types-copy):
+	(widget-field-at):
+	New functions.
+	(widget-convert): Use keywordp.
+	(widget-insert): Auto-autoload.
+	(widget-types-convert-widget): Make defsubst.
+	(widget-convert):
+	(widget-get-sibling):
+	(widget-insert):
+	(widget-default-complete):
+	(widget-item-value-create):
+	(widget-field-prompt-value):
+	(widget-field-validate):
+	(widget-choice-validate):
+	(widget-radio-value-inline):
+	(widget-editable-list-value-create):
+	(widget-regexp-validate):
+	(widget-file-complete):
+	(widget-color-complete):
+	Eliminate pointless let-bindings.
+	(widget-field-find): Delete old version; comment XEmacs use of
+	map-extents.
+	(widget-default-create):
+	(widget-checklist-add-item):
+	(widget-radio-add-item):
+	(widget-radio-chosen):
+	(widget-editable-list-entry-create):
+	(widget-documentation-string-value-create):
+	Insert characters, not one-element strings.
+	(widget-default-create): Use stream argument of princ.
+	(widget-default-format-handler): Check functionp before funcalling.
+	(widget-url-link-action): Fix if-fboundp typo and too-long line.
+	(widget-sublist):
+	(cons :value-to-external):
+	Use Common Lisp functions.
+	(widget-echo-help):
+	(widget-default-value-set):
+	Use `if' rather than `and' and `when'.
+	(widget-princ-to-string):
+	(widget-specify-sample):
+	(widget-specify-doc):
+	(widget-glyph-directory):
+	(widget-glyph-enable):
+	(widget-after-change):
+	Docstrings from comments or improve docstrings.
+	(widget-image-conversion): New GNU Emacs-compatible alias.
+	(widget-field-face): Handle light-background TTYs.
+
+2003-02-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* update-elc.el (lisp-files-needing-early-byte-compilation):
+	Comment referred to wrong variable.
+	(do-autoload-commands ...): Remove duplicate comment.
+
 2003-02-05  Ben Wing  <ben@xemacs.org>
 
 	* mule/cyril-util.el:

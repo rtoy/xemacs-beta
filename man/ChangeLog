@@ -1,3 +1,13 @@
+2003-02-06  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Top):
+	(Buffers and Textual Representation):
+	Fix up white space in menu.
+	(Character-Related Data Types):
+	(Conversion to and from External Data):
+	(Format of the Extent Info):
+	Pedantic grammatical nits.
+
 2003-02-05  Ben Wing  <ben@xemacs.org>
 
 	* lispref/mule.texi (Internationalization Terminology):

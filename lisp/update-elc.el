@@ -94,10 +94,9 @@
   '("bytecomp"
     "byte-optimize"))
 
-;; "Lisp files, other than those in
-;; `lisp-files-needing-early-byte-compilation',packages that need early
-;; byte compilation.  These are files loaded by update-elc.el in order to
-;; do the compilation of all the rest of the files.
+;; Lisp files not in `lisp-files-needed-for-byte-compilation' that need
+;; early byte compilation.  These are files loaded by update-elc.el in
+;; order to do the compilation of all the rest of the files.
 (defvar lisp-files-needing-early-byte-compilation
   '(;"easy-mmode"
     "autoload"
@@ -297,10 +296,6 @@
 	 (condition-case nil
 	     (delete-file "../src/BYTECOMPILE_CHANGE")
 	   (file-error nil)))
-	 ;; (1) Nothing to do at all.  BYTECOMPILE_CHANGE is used (only by
-	 ;;     the Unix makefile) to indicate whether some files needed
-	 ;;     for dump got recompiled, and hence the executable must be
-	 ;;     redumped.  We remove it if there were no files to compile.
 	((and (not update-elc-files-to-compile)
 	      (not dumped-exe-out-of-date-wrt-dump-files)
 	      (not dumped-exe-out-of-date-wrt-undumped-exe))

@@ -267,7 +267,7 @@ Buffers and Textual Representation
 * The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
-* Ibytes and Ichars::        Representation of individual characters.
+* Ibytes and Ichars::           Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
 
 MULE Character Sets and Encodings
@@ -2768,7 +2768,7 @@ An @code{Ichar} holds a single Emacs character.
 
 Obviously, the equality between characters and bytes is lost in the Mule
 world.  Characters can be represented by one or more bytes in the
-buffer, and @code{Ichar} is the C type large enough to hold any
+buffer, and @code{Ichar} is a C type large enough to hold any
 character.
 
 Without Mule support, an @code{Ichar} is equivalent to an
@@ -2783,7 +2783,7 @@ XEmacs does not work with the same character formats all the time; when
 reading characters from the outside, it decodes them to an internal
 format, and likewise encodes them when writing.  @code{Ibyte} (in fact
 @code{unsigned char}) is the basic unit of XEmacs internal buffers and
-strings format.  A @code{Ibyte *} is the type that points at text
+strings format.  An @code{Ibyte *} is the type that points at text
 encoded in the variable-width internal encoding.
 
 One character can correspond to one or more @code{Ibyte}s.  In the
@@ -2987,12 +2987,12 @@ The interface to conversion between the internal and external
 representations of text are the numerous conversion macros defined in
 @file{buffer.h}.  There used to be a fixed set of external formats
 supported by these macros, but now any coding system can be used with
-these macros.  The coding system alias mechanism is used to create the
+them.  The coding system alias mechanism is used to create the
 following logical coding systems, which replace the fixed external
 formats.  The (dontusethis-set-symbol-value-handler) mechanism was
 enhanced to make this possible (more work on that is needed).
 
-Example useful coding systems:
+Often useful coding systems:
 
 @table @code
 @item Qbinary
@@ -3040,6 +3040,8 @@ accept data of type @code{LPTSTR} or @code{LPCSTR}.  This maps to either
 @code{Qnative}) or @code{Qmswindows_unicode}, depending on whether
 XEmacs is being run under Windows 9X or Windows NT/2000/XP.
 @end table
+
+Many other coding systems are provided by default.
 
 There are two fundamental macros to convert between external and
 internal format, as well as various convenience macros to simplify the
@@ -3196,7 +3198,7 @@ XEmacs can crash if unexpected 8-bit sequences are copied to its internal
 buffers literally.
 
 This means that when a system function, such as @code{readdir}, returns
-a string, you may need to convert it using one of the conversion macros
+a string, you normally need to convert it using one of the conversion macros
 described in the previous chapter, before passing it further to Lisp.
 
 Actually, most of the basic system functions that accept '\0'-terminated
@@ -3216,7 +3218,8 @@ around in internal format.
 
 @item Do all work in internal format
 External-formatted data is completely unpredictable in its format.  It
-may be Unicode (non-ASCII compatible); it may be a modal encoding, in
+may be fixed-width Unicode (not even ASCII compatible); it may be a
+modal encoding, in
 which case some occurrences of (e.g.) the slash character may be part of
 two-byte Asian-language characters, and a naive attempt to split apart a
 pathname by slashes will fail; etc.  Internal-format text should be
@@ -8113,7 +8116,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 * The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
-* Ibytes and Ichars::        Representation of individual characters.
+* Ibytes and Ichars::           Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
 @end menu
 
@@ -8198,7 +8201,7 @@ a particular buffer position, and when you insert a character at a
 particular position, all characters after that position end up at new
 positions.  When we speak of the character @dfn{at} a position, we
 really mean the character after the position.  (This schizophrenia
-between a buffer position being ``between'' a character and ``on'' a
+between a buffer position being ``between'' two characters and ``on'' a
 character is rampant in Emacs.)
 
   Buffer positions are numbered starting at 1.  This means that
@@ -9796,7 +9799,7 @@ be there, use the @code{_force} version.
 string.) So use the @code{_force} version if you need the extent_info
 structure to be there.
 
-  A list of extents is maintained as a double gap array: One gap array
+  A list of extents is maintained as a double gap array.  One gap array
 is ordered by start index (the @dfn{display order}) and the other is
 ordered by end index (the @dfn{e-order}).  Note that positions in an
 extent list should logically be conceived of as referring @emph{to} a
@@ -9829,7 +9832,7 @@ generally a highly optimized operation on modern processors.
 Code to manipulate them is relatively simple to write.
 @end enumerate
 
-An alternative would be a balanced binary trees, which have guaranteed
+An alternative would be balanced binary trees, which have guaranteed
 @math{O(log N)} time for all operations (although the constant factors
 are not as good, and repeated localized operations will be slower than
 for a gap array).  Such code is quite tricky to write, however.
