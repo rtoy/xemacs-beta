@@ -1,3 +1,8 @@
+2003-02-03  Steve Youngs  <youngs@xemacs.org>
+
+	* xemacs/packages.texi (Local.rules File): Update to reflect Ben's
+	recent dabble into the packages.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.
