@@ -1460,7 +1460,7 @@ install:	all
 	set COPYCMD=/y
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
-	@$(COPY) PROBLEMS "$(INSTALL_DIR)\"
+	@$(COPY) $(BLDLIB_SRC)\PROBLEMS "$(INSTALL_DIR)\"
 	@$(COPY) PlaceHolder "$(INSTALL_DIR)\lock\"
 	-$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
 	@$(COPY) $(BLDLIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
