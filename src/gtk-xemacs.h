@@ -15,9 +15,7 @@
 #include <gdk/gdk.h>
 #include <gtk/gtkfixed.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+BEGIN_C_DECLS
 
 #define GTK_XEMACS(obj)			GTK_CHECK_CAST (obj, gtk_xemacs_get_type (), GtkXEmacs)
 #define GTK_XEMACS_CLASS(klass)	GTK_CHECK_CLASS_CAST (klass, gtk_xemacs_get_type (), GtkXEmacsClass)
@@ -41,8 +39,6 @@ extern "C" {
 	guint gtk_xemacs_get_type (void);
 	GtkWidget *gtk_xemacs_new (struct frame *f);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+END_C_DECLS
 
 #endif /* __GTK_XEMACS_H__ */

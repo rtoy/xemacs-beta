@@ -28,9 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HAVE_GIF */
 
 #ifdef HAVE_PNG
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 #define message message_ /* Yuck */
   /* See comment in libinterface.c for the following */
 #define PNG_EXPORT(type, symbol) type XCDECL symbol
@@ -38,9 +36,7 @@ extern "C" {
 #define ZEXPORTVA XCDECL
 #include <png.h>
 #undef message
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 #endif /* HAVE_PNG */
 
 /* #### WARNING: Utterly random magic here to prevent namespace conflicts
@@ -49,9 +45,7 @@ extern "C" {
    glyphs-msw.c.  For some reason, putting the XPM code after this fixes
    other problems; don't move it before. --ben */
 #if defined (HAVE_JPEG) && !defined (DONT_NEED_JPEG)
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 #ifdef _MSC_VER
 # ifndef XMD_H
   /* Yuck!  This tricks jpeglib.h into not defining INT32, which is defined
@@ -65,9 +59,7 @@ extern "C" {
 # undef XMD_H
 #endif
 #include <jerror.h>
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 boolean XCDECL qxe_jpeg_finish_decompress (j_decompress_ptr cinfo);
 boolean XCDECL qxe_jpeg_start_decompress (j_decompress_ptr cinfo);

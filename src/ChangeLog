@@ -1,3 +1,25 @@
+2003-10-13  Jerry James  <james@xemacs.org>
+
+	* dumper.h: Use {BEGIN,END}_C_DECLS instead of explicit #ifdef.
+	* glyphs-eimage.c: Ditto.
+	* glyphs-gtk.c: Ditto.
+	* glyphs-msw.c: Ditto.
+	* glyphs-x.c: Ditto.
+	* gtk-xemacs.h: Ditto.
+	* libinterface.h: Ditto.
+	* lrecord.h: Ditto.
+	* process.h: Ditto.
+	* symeval.h: Ditto.
+	* sysdll.h: Ditto.
+	* syswindows.h: Ditto.
+	* text.h: Ditto.
+	* lisp.h: Ditto.  Move basic compiler defines to compiler.h.
+	Remove redundant definitions.  Add MALLOC attribute to xmalloc,
+	xcalloc, etc.  Change attribute uses to match new compiler.h.
+	* compiler.h: New file containing basic compiler defines from lisp.h.
+	* s/windowsnt.h (DECLARE_DOESNT_RETURN): Remove definitions now in
+	compiler.h.
+
 2003-10-10  Jerry James  <james@xemacs.org>
 
 	* alloc.c (make_compiled_function): Fix C++ breakage introduced by

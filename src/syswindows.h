@@ -70,18 +70,14 @@ Boston, MA 02111-1307, USA.  */
 #  define _WIN32_IE 0x0400
 # endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Fucking GCC complains about "no previous prototype" for inline
    functions.  DUH!  See DECLARE_INLINE_HEADER. */
 extern __inline void *GetCurrentFiber (void);
 extern __inline void *GetFiberData (void);
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 #endif
 
@@ -851,16 +847,16 @@ int mswindows_locale_to_oem_code_page (LCID lcid);
 /* ------------------------- Filename conversion ------------------------- */
 
 #ifdef CYGWIN
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
+
 void cygwin_win32_to_posix_path_list (const char *, char *);
 int cygwin_win32_to_posix_path_list_buf_size (const char *);
 void cygwin_posix_to_win32_path_list (const char *, char *);
 int cygwin_posix_to_win32_path_list_buf_size (const char *);
-#ifdef __cplusplus
-}
-#endif
+
+END_C_DECLS
+
 #endif
 
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)			\

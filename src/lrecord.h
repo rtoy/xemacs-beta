@@ -58,9 +58,7 @@ Boston, MA 02111-1307, USA.  */
    the opaque type. --ben
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct lrecord_header
 {
@@ -1594,8 +1592,6 @@ lispdesc_process_xd_union (const struct memory_description *desc1,
 
 #endif /* defined (USE_KKCC) || defined (PDUMP) */
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 #endif /* INCLUDED_lrecord_h_ */

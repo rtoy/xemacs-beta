@@ -1615,13 +1615,10 @@ mswindows_xbm_instantiate (Lisp_Object image_instance,
 /* We have to define SYSV32 so that compface.h includes string.h
    instead of strings.h. */
 #define SYSV32
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 #include <compface.h>
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
+
 /* JMP_BUF cannot be used here because if it doesn't get defined
    to jmp_buf we end up with a conflicting type error with the
    definition in compface.h */

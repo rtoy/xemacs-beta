@@ -45,6 +45,9 @@ Boston, MA 02111-1307, USA.  */
    Various macro-related changes by Martin Buchholz, 1998-1999:
      LIST_LOOP macros greatly expanded and tortoise-hared;
      RETURN_SANS_WARNINGS; reworked DEFUN macros; EXFUN macros (???).
+   Various macro-related changes by Jerry James, 2003:
+     MODULE_API introduced;
+     Compiler-specific definitions modernized and moved to compiler.h.
 */
 
 #ifndef INCLUDED_lisp_h_
@@ -816,127 +819,7 @@ typedef unsigned long uintptr_t;
 
 /* ------------------------ basic compiler defines ------------------- */
 
-/* Also define min() and max(). (Some compilers put them in strange
-   places that won't be referenced by the above include files, such
-   as 'macros.h' under Solaris.) */
-
-#ifndef min
-#define min(a,b) (((a) <= (b)) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-/* Sim, senhor, prefiro toma-lo no cu.
-
-   Regular C complains about possible clobbering of local vars NOT declared
-   as volatile if there's a longjmp() in a function.  C++ complains if such
-   vars ARE volatile; or more correctly, sans volatile no problem even when
-   you longjmp, avec volatile you get unfixable compile errors like
-
-/src/xemacs/lilfix/src/process-unix.c: In function `void
-   unix_send_process(Lisp_Object, lstream*)':
-/src/xemacs/lilfix/src/process-unix.c:1577: no matching function for call to `
-   Lisp_Object::Lisp_Object(volatile Lisp_Object&)'
-/src/xemacs/lilfix/src/lisp-union.h:32: candidates are:
-   Lisp_Object::Lisp_Object(const Lisp_Object&)
-*/
-
-#ifdef __cplusplus
-#define VOLATILE_IF_NOT_CPP
-#else
-#define VOLATILE_IF_NOT_CPP volatile
-#endif
-
-#ifndef PRINTF_ARGS
-# if defined (__GNUC__) && (__GNUC__ >= 2)
-#  define PRINTF_ARGS(string_index,first_to_check) \
-          __attribute__ ((format (printf, string_index, first_to_check)))
-# else
-#  define PRINTF_ARGS(string_index,first_to_check)
-# endif /* GNUC */
-#endif
-
-#ifndef DOESNT_RETURN
-# if defined __GNUC__
-#  if ((__GNUC__ > 2) || (__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
-#   if __GNUC__ < 3
-      /* GCC 3.2 -O3 issues complaints in Fcommand_loop_1 about no return
-	 statement if we have this definition */
-#     define RETURN_NOT_REACHED(value) DO_NOTHING
-#   endif
-#   define DOESNT_RETURN void
-#   define DECLARE_DOESNT_RETURN(decl) \
-           extern void decl __attribute__ ((noreturn))
-#   define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
-     /* Should be able to state multiple independent __attribute__s, but  \
-        the losing syntax doesn't work that way, and screws losing cpp */ \
-           extern void decl \
-                  __attribute__ ((noreturn, format (printf, str, idx)))
-#  else
-#   define DOESNT_RETURN void volatile
-#   define DECLARE_DOESNT_RETURN(decl) extern void volatile decl
-#   define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
-           extern void volatile decl PRINTF_ARGS(str,idx)
-#  endif /* GNUC 2.5 */
-# else
-#  define DOESNT_RETURN void
-#  define DECLARE_DOESNT_RETURN(decl) extern void decl
-#  define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
-          extern void decl PRINTF_ARGS(str,idx)
-# endif /* GNUC */
-#endif
-
-/* Another try to fix SunPro C compiler warnings */
-/* "end-of-loop code not reached" */
-/* "statement not reached */
-#if defined __SUNPRO_C || defined __USLC__
-#define RETURN_SANS_WARNINGS if (1) return
-#define RETURN_NOT_REACHED(value) DO_NOTHING
-#endif
-
-/* More ways to shut up compiler.  This works in Fcommand_loop_1(),
-   where there's an infinite loop in a function returning a Lisp object.
-*/
-#if defined (_MSC_VER) || defined (__SUNPRO_C) || defined (__SUNPRO_CC) || \
-  (defined (DEC_ALPHA) && defined (OSF1))
-#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
-#else
-#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING
-#endif
-
-#ifndef RETURN_NOT_REACHED
-#define RETURN_NOT_REACHED(value) return (value)
-#endif
-
-#ifndef RETURN_SANS_WARNINGS
-#define RETURN_SANS_WARNINGS return
-#endif
-
-#ifndef DO_NOTHING
-#define DO_NOTHING do {} while (0)
-#endif
-
-#ifndef DECLARE_NOTHING
-#define DECLARE_NOTHING struct nosuchstruct
-#endif
-
-/*#ifdef DEBUG_XEMACS*/
-#define REGISTER
-#define register
-/*#else*/
-/*#define REGISTER register*/
-/*#endif*/
-
-#if defined(HAVE_MS_WINDOWS) && defined(HAVE_SHLIB)
-# ifdef EMACS_MODULE
-#  define MODULE_API __declspec(dllimport)
-# else
-#  define MODULE_API __declspec(dllexport)
-# endif
-#else
-# define MODULE_API
-#endif
+#include "compiler.h"
 
 /* ------------------------ alignment definitions ------------------- */
 
@@ -1005,9 +888,7 @@ template<typename T> struct alignment_trick { char c; T member; };
    data of TYPE. */
 #define ALIGN_PTR(ptr, type) ((void *) ALIGN_FOR_TYPE ((size_t) (ptr), type))
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* ------------------------ assertions ------------------- */
 
@@ -1045,16 +926,6 @@ MODULE_API void assert_failed (const char *, int, const char *);
 # endif
 #endif
 
-/* ####
-   Why the hell do we do this??????????????????????????????? */
-/*#ifdef DEBUG_XEMACS*/
-#define REGISTER
-#define register
-/*#else*/
-/*#define REGISTER register*/
-/*#endif*/
-
-
 /* EMACS_INT is the underlying integral type into which a Lisp_Object must fit.
    In particular, it must be large enough to contain a pointer.
    config.h can override this, e.g. to use `long long' for bigger lisp ints.
@@ -1067,30 +938,14 @@ MODULE_API void assert_failed (const char *, int, const char *);
 # define SIZEOF_EMACS_INT SIZEOF_VOID_P
 #endif
 
-#if 0
-#ifdef USE_ASSERTIONS
-/* Highly dubious kludge */
-/*   (thanks, Jamie, I feel better now -- ben) */
-void assert_failed (const char *, int, const char *);
-# define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
-# define assert(x) ((x) ? 1 : (assert_failed (__FILE__, __LINE__, #x), 0))
-#else
-# ifdef DEBUG_XEMACS
-#  define assert(x) ((x) ? 1 : ((void) abort (), 0))
-# else
-#  define assert(x) (1)
-# endif
-#endif
-#endif /* 0 */
-
 /* ------------------------ simple memory allocation ------------------- */
 
 /* Memory allocation */
 void malloc_warning (const char *);
-MODULE_API void *xmalloc (Bytecount size);
-MODULE_API void *xmalloc_and_zero (Bytecount size);
-MODULE_API void *xrealloc (void *, Bytecount size);
-MODULE_API char *xstrdup (const char *);
+MODULE_API void *xmalloc (Bytecount size) ATTRIBUTE_MALLOC;
+MODULE_API void *xmalloc_and_zero (Bytecount size) ATTRIBUTE_MALLOC;
+MODULE_API void *xrealloc (void *, Bytecount size) ATTRIBUTE_MALLOC;
+MODULE_API char *xstrdup (const char *) ATTRIBUTE_MALLOC;
 /* generally useful */
 #define countof(x) ((int) (sizeof(x)/sizeof((x)[0])))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
@@ -1102,7 +957,7 @@ MODULE_API char *xstrdup (const char *);
 #define alloca_new(type) ((type *) ALLOCA (sizeof (type)))
 #define alloca_array(type, len) ((type *) ALLOCA ((len) * sizeof (type)))
 
-MODULE_API void *xemacs_c_alloca (unsigned int size);
+MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
 
 MODULE_API int record_unwind_protect_freeing (void *ptr);
 
@@ -1675,9 +1530,7 @@ MODULE_API int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 /* OK, you can open them again */
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 /************************************************************************/
 /**		     Definitions of basic Lisp objects		       **/
@@ -1685,9 +1538,7 @@ MODULE_API int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 #include "lrecord.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*------------------------------ unbound -------------------------------*/
 
@@ -2838,9 +2689,7 @@ Lisp_Object make_weak_list (enum weak_list_type type);
 int finish_marking_weak_lists (void);
 void prune_weak_lists (void);
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 /************************************************************************/
 /*      Definitions related to the format of text and of characters     */
@@ -2968,9 +2817,7 @@ Lisp_Object,Lisp_Object,Lisp_Object
 
 #include "symeval.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* `specpdl' is the special binding/unwind-protect stack.
 
@@ -3156,9 +3003,7 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 
 extern MODULE_API struct gcpro *gcprolist;
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 /* #### Catching insufficient gcpro:
 
@@ -3226,9 +3071,7 @@ struct gcpro
    and so some "This function can GC" comments may be inaccurate.
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #ifdef DEBUG_GCPRO
 
@@ -3525,9 +3368,7 @@ void register_post_gc_action (void (*fun) (void *), void *arg);
 int begin_gc_forbidden (void);
 void end_gc_forbidden (int count);
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 
 /************************************************************************/
@@ -3553,9 +3394,7 @@ void end_gc_forbidden (int count);
 /* Prototypes for all init/syms_of/vars_of initialization functions. */
 #include "symsinit.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Defined in abbrev.c */
 MODULE_API EXFUN (Fexpand_abbrev, 0);
@@ -3920,10 +3759,8 @@ void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
 Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
 					      Lisp_Object, Error_Behavior);
-MODULE_API DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror
-							     (Lisp_Object,
-							      const CIbyte *,
-							      ...), 2, 3);
+MODULE_API DECLARE_DOESNT_RETURN (signal_ferror (Lisp_Object, const CIbyte *,
+						 ...)) PRINTF_ARGS(2, 3);
 void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_Behavior,
 			  const CIbyte *, ...) PRINTF_ARGS (4, 5);
 Lisp_Object signal_continuable_ferror (Lisp_Object, const CIbyte *, ...)
@@ -3943,10 +3780,9 @@ Lisp_Object signal_continuable_error (Lisp_Object, const CIbyte *,
 Lisp_Object maybe_signal_continuable_error (Lisp_Object, const CIbyte *,
 					    Lisp_Object,
 					    Lisp_Object, Error_Behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror_with_frob
-						  (Lisp_Object, Lisp_Object,
-						   const CIbyte *,
-						   ...), 3, 4);
+DECLARE_DOESNT_RETURN (signal_ferror_with_frob (Lisp_Object, Lisp_Object,
+						const CIbyte *, ...))
+       PRINTF_ARGS(3, 4);
 void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
 				    Error_Behavior,
 				    const CIbyte *, ...) PRINTF_ARGS (5, 6);
@@ -4028,10 +3864,9 @@ MODULE_API DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
 						 Lisp_Object frob));
 DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
-MODULE_API
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (printing_unreadable_object
-						  (const CIbyte *,
-						   ...), 1, 2);
+MODULE_API DECLARE_DOESNT_RETURN (printing_unreadable_object (const CIbyte *,
+							      ...))
+       PRINTF_ARGS (1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
 Lisp_Object signal_invalid_function_error (Lisp_Object);
@@ -4600,8 +4435,7 @@ void stderr_out_lisp (const CIbyte *, int nargs, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (fatal (const CIbyte *,
-							   ...), 1, 2);
+DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */
 Lisp_Object canonicalize_printcharfun (Lisp_Object printcharfun);
@@ -5300,8 +5134,6 @@ extern Lisp_Object Vsynchronous_sounds, Vsystem_name;
 extern Lisp_Object Vthis_command_keys, Vunread_command_event;
 extern Lisp_Object Vx_initial_argv_list;
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 #endif /* INCLUDED_lisp_h_ */

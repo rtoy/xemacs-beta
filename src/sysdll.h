@@ -22,9 +22,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #ifndef INCLUDED_sysdll_h_
 #define INCLUDED_sysdll_h_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #if defined(WIN32_NATIVE)
 #define DLLEXPORT __declspec(dllexport)
@@ -46,13 +44,11 @@ extern dll_func dll_function(dll_handle, const CIbyte *);
 extern dll_var dll_variable(dll_handle, const CIbyte *);
 extern Lisp_Object dll_error(dll_handle);
 
-#ifdef __cplusplus
-}
-#endif
-
 /* More stand-ins ... */
 
 #define Qdll_filename_encoding Qfile_name
 #define Qdll_function_name_encoding Qnative
+
+END_C_DECLS
 
 #endif /* INCLUDED_sysdll_h_ */

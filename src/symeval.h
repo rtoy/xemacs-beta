@@ -27,9 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_symeval_h_
 #define INCLUDED_symeval_h_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 enum symbol_value_type
 {
@@ -434,8 +432,6 @@ do									    \
 
 void flush_all_buffer_local_cache (void);
 
-#ifdef __cplusplus
-}
-#endif
+END_C_DECLS
 
 #endif /* INCLUDED_symeval_h_ */

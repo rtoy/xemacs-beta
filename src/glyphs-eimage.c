@@ -61,15 +61,15 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_PNG
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
+
 #define message message_ /* Yuck */
 #include <png.h>
 #undef message
-#ifdef __cplusplus
-}
-#endif
+
+END_C_DECLS
+
 #else
 #include <setjmp.h>
 #endif
@@ -102,14 +102,12 @@ Lisp_Object Qpng;
  *                             JPEG                                   *
  **********************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 #include <jpeglib.h>
 #include <jerror.h>
-#ifdef __cplusplus
-}
-#endif
+
+END_C_DECLS
 
 /*#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1*/
 static void
