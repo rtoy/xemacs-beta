@@ -1822,6 +1822,8 @@ XEmacs 21.4.14 "Reasonable Discussion" released September 3, 2003.
 @item
 XEmacs 21.4.15 "Security Through Obscurity" released February 2, 2004.
 @item
+XEmacs 21.4.16 "Successful IPO" released December 5, 2004.
+@item
 version 21.5.0 "alfalfa" released April 18, 2001.
 @item
 version 21.5.1 "anise" released May 9, 2001.
@@ -1907,19 +1909,26 @@ a number of reasons not to sign legal papers:
 
 @itemize @bullet
 @item
-By doing so you essentially give up all control over your code. You can
-no longer release your code under a different license. If you want to
+By doing so you essentially give up all control over your code.  You can
+no longer release your code under a different license.  If you want to
 use your code that you've contributed to the FSF in a project of your
 own, and that project is not released under the GPL, you are not allowed
-to do this. Obviously, large companies tend to want to reuse their code
-in many different projects and as a result feel very uncomfortable about
-signing legal papers.
+to do this.  (This is supposed to be avoided by the standard assignment
+contract used by the FSF, which either automatically relicenses the code
+to the author for any purpose under any license, or promises to do so,
+depending on the version -- stephen.)  Obviously, large companies tend
+to want to reuse their code in many different projects and as a result
+feel very uncomfortable about signing legal papers.
 @item
 One of the dangers of assigning copyright to the FSF is that if the FSF
 happens to be taken over by some evil corporate identity or anyone with
 different ideas than RMS, they will own all copyright-assigned code, and
-can revoke the GPL and enforce any license they please.  If the code has
-many different copyright holders, this is much less likely of a
+can revoke the GPL and enforce any license they please.  (This is false,
+according to RMS; the FSF's covenants and the assignment contracts
+require that it or any successors may release the code only under
+copyleft.  Thus, the only real loophole is if the FSF goes bankrupt,
+somehow leaving the code in the public domain -- stephen.)  If the code
+has many different copyright holders, this is much less likely of a
 scenario.
 @end itemize
 
@@ -2074,9 +2083,12 @@ following messages, from the Lucid Emacs mailing lists in 1992 and
 1993, comprise the bulk (if not the entirety) of the public
 discussions between the Lucid and FSF camps on why the split happened
 and why a merger never did.
+@uref{http://www.jwz.org/doc/lemacs.html,The Lucid Emacs Split}.
 
 The current XEmacs maintainers have a much more pusillanimous summary
-of this history on their XEmacs versus GNU Emacs page.
+of this history on
+@uref{http://www.xemacs.org/About/XEmacsVsGNUemacs.html,their XEmacs
+versus GNU Emacs page}.
 
 -- jwz, 11-Feb-2000. 
 
@@ -2415,8 +2427,8 @@ file.  (You may optionally run @file{autoconf} first to update the
 This determines what the build environment is, chooses the
 appropriate @file{s/} and @file{m/} file, and runs a series of tests to
 determine many details about your environment, such as which library
-functions are available and exactly how they work.  The reason for
-running these tests is that it allows XEmacs to be compiled on a much
+functions are available and exactly how they work.
+Running these tests allows XEmacs to be compiled on a much
 wider variety of platforms than those that the XEmacs developers happen
 to be familiar with, including various sorts of hybrid platforms.  This
 is especially important now that many operating systems give you a great
@@ -2425,11 +2437,16 @@ for easy upgrading of parts of a system without upgrading the rest.  It
 would be impossible to pre-determine and pre-specify the information for
 all possible configurations.
 
-In fact, the @file{s/} and @file{m/} files are basically @emph{evil},
-since they contain unmaintainable platform-specific hard-coded
-information.  XEmacs has been moving in the direction of having all
+Thus, the @file{s/} and @file{m/} files are basically @emph{evil},
+since they contain platform-specific hard-coded
+information.  XEmacs is moving in the direction of having all
 system-specific information be determined dynamically by
 @file{configure}.  Perhaps someday we can @code{rm -rf src/s src/m}.
+
+@file{configure} also parses the version information from
+@file{version.sh} and adds it to @file{config.h} as C preprocessor
+macros.  These macros in turn are used to initialize some Lisp
+variables, such as @samp{emacs-version}.  @xref{The version.sh Script}.
 
 When configure is done running, it generates @file{Makefile}s and
 @file{GNUmakefile}s and the file @file{src/config.h} (which describes
@@ -3054,6 +3071,7 @@ The following table contains cross-references from each module in XEmacs
 @file{configure}
 @file{config.h.in}
 @file{Makefile.in.in}
+@file{version.sh}
 @end example
 
 @example
@@ -3061,6 +3079,7 @@ The following table contains cross-references from each module in XEmacs
 @file{configure.in}
 @end example
 
+@xref{The version.sh Script}.
 @xref{The configure Script}.
 
 
@@ -3094,6 +3113,15 @@ update-elcs.el, and so on.
 @section Low-Level Modules
 @cindex low-level modules
 @cindex modules, low-level
+
+@example
+@file{version.sh}
+@end example
+
+This is a Bourne shell script which sets version-related variables.  It
+is updated in the release process by the maintainer of each series or
+branch, and may also be automatically updated.
+@xref{The version.sh Script}.
 
 @example
 @file{config.h}
@@ -4138,6 +4166,7 @@ configuration system.  A particular example is the set of @samp{XE_}
 macros in @file{configure.in} and @file{configure.ac}.
 
 @menu
+* The version.sh Script::
 * Adding Configurable Features::  
 * The configure Script::  
 * The Makefile Precursors::  
@@ -4145,7 +4174,98 @@ macros in @file{configure.in} and @file{configure.ac}.
 
 
 
-@node Adding Configurable Features, The configure Script, The Build Configuration System, The Build Configuration System
+@node The version.sh Script, Adding Configurable Features, The Build Configuration System, The Build Configuration System
+@section The version.sh Script
+@cindex version.sh script
+@cindex scripts, version.sh
+
+The @file{version.sh} script is a snippet of Bourne shell script which
+sets version variables.  By convention, these variables are given
+descriptive names, all in lower case ASCII letters, with words separated
+by underscores (@samp{_}, ASCII 0x5F).  They are converted to C
+preprocessor macro definitions and added to @file{src/config.h} by
+@file{configure}.  Thus each must have a corresponding @samp{#undef} in
+@file{src/config.h.in}.  Each macro's name is the same as the shell
+variable's, converted to all uppercase.  Finally, the macros are used to
+initialize Lisp variables defined in @file{src/emacs.c}.  These Lisp
+variables have the same name as the shell variables and preprocessor
+macros, except that they obey the Lisp conventions that Lisp variable
+names are all lowercase with words separated by hyphens (@samp{-}, ASCII
+0x2D), while the C implementations are the same as the shell variable
+with the letter @samp{V} (ASCII 0x56) prepended.
+
+The file is updated by various release engineers and their scripts.
+Other developers should have no need to edit this file.  The main
+exception would be to add a branch tag and possibly other information to
+@samp{xemacs_extra_name} to describe informal releases from a private
+branch.  In particular, @samp{xemacs_release_date} and the
+@samp{emacs_*_version} variables should refer to the most recent release
+in the parent branch, so ``private branch'' maintainers should not
+update them.  If the branch is significant and long-lasting, you might
+enjoy assigning your own codenames.  (Of course, if you have no intent
+of merging your changes to the mainline, you can do what you want with
+any of the variables.  But in that case you should change the name of
+the program, as well, in version strings and the like.)
+
+Regarding the syntax of the file, it is simply a sequence of shell
+variable assignments.  So the only thing that you can rely on is that
+the shebang (the shell's interpreter comment, @code{#!/bin/sh}) will
+occupy the first line of the file.  You should not count on order or
+other comments being preserved.  On the other hand, some maintainers'
+tools do depend on the order, so as much as possible your tools should
+preserve the order of assignments.
+
+Here is a table of the currently defined variables and their meanings (as
+of February 2005):
+
+@table @samp
+@item #!/bin/sh
+The shebang, making this an executable script on Unix.
+
+@item emacs_is_beta
+Set to @samp{t} when the release is a beta test release, otherwise null.
+
+@item emacs_major_version
+@itemx emacs_minor_version
+@itemx emacs_beta_version
+Strings containing decimal numbers representing the components of the
+version of the source tree.  The name @samp{emacs_beta_version} is a
+relic of the time when XEmacs had a two component version for public
+releases.  Since XEmacs 21.1, both the beta series and the stable series
+have three-component version numbers, and @samp{emacs_beta_version} holds
+the lowest-order component of the stable series as well as the beta series.
+
+@item xemacs_codename
+An optional string containing a codename for the release.  Recent
+maintainers have chosen humorous themes for their codenames, and
+typically the names are used in alphabetical order.
+
+@item emacs_kit_version
+An optional string used for special branches.  (This should be
+deprecated in favor of xemacs_extra_name.)
+
+@item infodock_major_version
+@itemx infodock_minor_version
+@itemx infodock_build_version
+Strings containing decimal numbers representing the components of the
+version of the Infodock applied to the source tree.  (The Infodock
+project has been in hibernation since XEmacs 21.1.9 or so; these
+variables are unused in current XEmacsen.)
+
+@item xemacs_extra_name
+A string containing arbitrary additional information.  If length is
+positive, it is automatically added to the version string after the
+codename.
+
+@item xemacs_release_date
+A string containing the date of the latest release in the series in ISO
+8601 format.  The time zone should not be present, it is defined to be
+UTC.  Time is optional.  Not currently used in the version string.
+@end table
+
+
+
+@node Adding Configurable Features, The configure Script, The version.sh Script, The Build Configuration System
 @section Adding Configurable Features
 @cindex adding configurable features
 @cindex configurable features, adding
@@ -4161,7 +4281,7 @@ Adding a configurable feature requires at least adding an option to the
 @node The configure Script, The Makefile Precursors, Adding Configurable Features, The Build Configuration System
 @section The configure Script
 @cindex configure script
-@cindex script, configure
+@cindex scripts, configure
 
 At the heart of the XEmacs build configuration system is the
 @file{configure} script.  This beast is maintained using the Autoconf

@@ -1,3 +1,26 @@
+2005-01-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/mule.texi (CCL Example): Detail an implementation of the
+	web's URL encoding as a CCL coding system example. 
+
+2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (The version.sh Script): New node.
+	(XEmacs from the Perspective of	Building):
+	(Low-Level Modules):
+	(The Build Configuration System):
+	(Adding Configurable Features):
+	Add or update references to the version.sh node and/or file.
+
+	(XEmacs from the Perspective of	Building): Improve text.
+
+
+2005-01-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (XEmacs): Add XEmacs 21.4.16 to list.
+	(The XEmacs Split): Add comments on untrue legal factoids.
+	(The XEmacs Split): Add some @urefs for Jamie's commentary.
+
 2005-02-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/searching.texi (Syntax of Regexps):
