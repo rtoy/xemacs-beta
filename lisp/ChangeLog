@@ -1,3 +1,16 @@
+2001-12-27  David A. Panariti  <davep@who.net>
+
+	* hyper-apropos.el (hyper-apropos-find-variable): 
+	Added this function based on hyper-apropos-find-function.
+
+	* hyper-apropos.el (hyper-apropos-help-map): 
+	Added binding of "v" to hyper-apropos-find-variable.
+
+2001-12-27  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* obsolete.el (interactive-form): new compatibility alias for 
+	function-interactive.
+
 2001-12-26  Adrian Aichner  <adrian@xemacs.org>
 
 	* printer.el (generic-print-region): Pass on arguments start, end,

@@ -257,6 +257,9 @@ set Info-directory-list.")
 
 (make-obsolete-variable 'executing-macro 'executing-kbd-macro)
 
+(define-compatible-function-alias 'interactive-form 
+  'function-interactive) ;FSFmacs 21.1
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; modeline
 
 (define-compatible-function-alias 'redraw-mode-line 'redraw-modeline)

@@ -174,6 +174,7 @@ you can get the full output by using \\[universal-argument] \\[hyper-apropos].)"
     (define-key map "l"     'hyper-apropos-last-help)
     (define-key map "c"     'hyper-apropos-customize-variable)
     (define-key map "f"     'hyper-apropos-find-function)
+    (define-key map "v"     'hyper-apropos-find-variable)
     (define-key map [button2] 'hyper-apropos-mouse-get-doc)
     (define-key map [button3] 'hyper-apropos-popup-menu)
     ;; for the totally hardcore...
@@ -1232,6 +1233,17 @@ window.  (See also `find-function'.)"
      (list fn)))
   (if fn
       (find-function-other-window fn)))
+
+(defun hyper-apropos-find-variable (fn)
+  "Find the variable for the symbol on the current line in other
+window.  (See also `find-variable'.)"
+  (interactive
+   (let ((fn (hyper-apropos-this-symbol)))
+     (or (boundp fn)
+	 (setq fn nil))
+     (list fn)))
+  (if fn
+      (find-variable-other-window fn)))
 
 ;; ---------------------------------------------------------------------- ;;
 
