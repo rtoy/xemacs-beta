@@ -1,3 +1,7 @@
+2001-08-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* buffer.h (valid_char_p): Make negative integers invalid again.
+
 2001-08-13  Ben Wing  <ben@xemacs.org>
 
 	* regex.c: need to include stddef.h for ptrdiff_t on Solaris, when

@@ -553,12 +553,12 @@ INLINE_HEADER int valid_char_p (Emchar ch);
 INLINE_HEADER int
 valid_char_p (Emchar ch)
 {
-  return ch <= 0xFF || non_ascii_valid_char_p (ch);
+  return (! (ch & ~0xFF)) || non_ascii_valid_char_p (ch);
 }
 
 #else /* not MULE */
 
-#define valid_char_p(ch) ((unsigned int) (ch) <= 0xff)
+#define valid_char_p(ch) (! (ch & ~0xFF))
 
 #endif /* not MULE */
 
