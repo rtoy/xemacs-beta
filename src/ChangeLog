@@ -1,3 +1,8 @@
+2004-12-06  Ben Wing  <ben@xemacs.org>
+
+	* rangetab.c (rangetab_instantiate):
+	Fix compile error.
+
 2004-12-05  Ben Wing  <ben@xemacs.org>
 
 	* elhash.c:

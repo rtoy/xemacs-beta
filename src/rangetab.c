@@ -645,7 +645,7 @@ rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 static Lisp_Object
 rangetab_instantiate (Lisp_Object plist)
 {
-  Lisp_Object data = Qnil, type = Qnil;
+  Lisp_Object data = Qnil, type = Qnil, rangetab;
 
   PROPERTY_LIST_LOOP_3 (key, value, plist)
     {
@@ -655,7 +655,7 @@ rangetab_instantiate (Lisp_Object plist)
 	abort ();
     }
 
-  Lisp_Object rangetab = Fmake_range_table (type);
+  rangetab = Fmake_range_table (type);
 
   {
     PROPERTY_LIST_LOOP_3 (range, val, data)
