@@ -1,3 +1,9 @@
+2002-07-25  Steve Youngs  <youngs@xemacs.org>
+
+	* process-unix.c (child_setup):
+	(unix_create_process):
+	Revert Mike's patch of 2002-07-20.
+
 2002-07-20  Mike Sperber <mike@xemacs.org>
 
 	* eval.c (run_post_gc_hook): Use more correct flags when running
