@@ -3816,6 +3816,14 @@ this to move memory around without actually having to block-copy it,
 which can speed things up; but it can still cause noticeable performance
 degradation.)
 
+On Linux systems using @samp{glibc 2}, these strategies are built in to
+the so-called ``Doug Lea malloc.''  See, for example, Doug Lea's home
+page, especially @uref{http://gee.cs.oswego.edu/dl/html/malloc.html,``A
+Memory Allocator''}.  The source file, @file{malloc.c} (available at the
+same place) is copiously (and usefully!) commented.
+@uref{http://www.malloc.de/,Wolfram Gloger's home page} may also be
+useful.
+
 @file{free-hook.c} contains some debugging functions for checking for invalid
 arguments to @code{free()}.
 
@@ -3827,7 +3835,6 @@ and @file{malloc.c} at appropriate times.
 page in virtual memory.  @file{mem-limits.h} provides a uniform interface for
 retrieving the total amount of available virtual memory.  Both are
 similar in spirit to the @file{sys*.h} files described in section J, below.
-
 
 
 @example
