@@ -35,11 +35,11 @@ event-xlike-inc.o:
 #endif
 #if defined(HAVE_X_WINDOWS)
 EmacsFrame.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h EmacsFrameP.h EmacsManager.h charset.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h faces.h frame-impl.h frame.h frameslots.h glyphs-x.h glyphs.h objects-x.h objects.h redisplay.h scrollbar.h specifier.h toolbar.h window-impl.h window.h winslots.h xintrinsic.h xintrinsicp.h xmotif.h xmprimitivep.h xmu.h
-EmacsManager.o: $(CONFIG_H) EmacsManager.h EmacsManagerP.h xintrinsicp.h xmmanagerp.h xmotif.h xmprimitivep.h
+EmacsManager.o: $(CONFIG_H) EmacsManager.h EmacsManagerP.h compiler.h xintrinsicp.h xmmanagerp.h xmotif.h xmprimitivep.h
 EmacsShell-sub.o: $(CONFIG_H) EmacsShell.h EmacsShellP.h xintrinsic.h xintrinsicp.h
 EmacsShell.o: $(CONFIG_H) EmacsShell.h ExternalShell.h xintrinsicp.h
 balloon-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h balloon_help.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h xintrinsic.h
-balloon_help.o: $(CONFIG_H) balloon_help.h xintrinsic.h
+balloon_help.o: $(CONFIG_H) balloon_help.h compiler.h xintrinsic.h
 console-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console-x-impl.h console-x.h console.h process.h redisplay.h xintrinsic.h
 device-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console-x-impl.h console-x.h console.h device-impl.h device.h devslots.h elhash.h events.h faces.h frame-impl.h frame.h frameslots.h glyphs-x.h glyphs.h objects-x.h objects.h offix-types.h offix.h redisplay.h scrollbar.h specifier.h sysdep.h sysdll.h sysfile.h systime.h window-impl.h window.h winslots.h xgccache.h xintrinsic.h xintrinsicp.h xmu.h
 dialog-x.o: $(LISP_H) $(LWLIB_SRCDIR)/lwlib.h EmacsFrame.h buffer.h bufslots.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console-x-impl.h console-x.h console.h events.h frame-impl.h frame.h frameslots.h gui.h opaque.h redisplay.h scrollbar.h systime.h window.h xintrinsic.h
@@ -241,20 +241,25 @@ tooltalk.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h elhash.h
 tparam.o: $(LISP_H)
 undo.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h extents.h
 unexaix.o: $(LISP_H) getpagesize.h
-unexalpha.o: $(CONFIG_H)
+unexalpha.o: $(CONFIG_H) compiler.h
 unexapollo.o: $(CONFIG_H)
-unexconvex.o: $(CONFIG_H) getpagesize.h
+unexconvex.o: $(CONFIG_H) compiler.h getpagesize.h
 unexcw.o: $(LISP_H) sysfile.h
 unexec.o: $(LISP_H) getpagesize.h
-unexelf.o: $(CONFIG_H)
-unexelfsgi.o: $(CONFIG_H)
-unexenix.o: $(CONFIG_H)
-unexfreebsd.o: $(CONFIG_H)
-unexhp9k3.o: $(CONFIG_H) sysdep.h syssignal.h
+unexelf.o: $(CONFIG_H) compiler.h
+unexelfsgi.o: $(CONFIG_H) compiler.h
+unexencap.o: compiler.h
+unexenix.o: $(CONFIG_H) compiler.h
+unexfreebsd.o: $(CONFIG_H) compiler.h
+unexfx2800.o: compiler.h
+unexhp9k3.o: $(CONFIG_H) compiler.h sysdep.h syssignal.h
 unexhp9k800.o: $(LISP_H)
-unexmips.o: $(CONFIG_H) getpagesize.h
+unexmips.o: $(CONFIG_H) compiler.h getpagesize.h
 unexnt.o: $(LISP_H) intl-auto-encap-win32.h sysfile.h syswindows.h
-unexsunos4.o: $(CONFIG_H)
+unexsni.o: compiler.h
+unexsol2-6.o: compiler.h
+unexsol2.o: compiler.h
+unexsunos4.o: $(CONFIG_H) compiler.h
 unicode.o: $(LISP_H) charset.h coding-system-slots.h file-coding.h opaque.h sysfile.h
 vm-limit.o: $(LISP_H) mem-limits.h
 widget.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h
