@@ -1,3 +1,7 @@
+2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.6 "bok choi" is released.
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
 	* The Great Mule Merge: placeholder.
@@ -401,7 +405,7 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.14 2002/03/14 03:54:21 stephent Exp $
-$Revision: 1.14 $
+%%% $Id: ChangeLog,v 1.15 2002/04/05 08:57:32 stephent Exp $
+$Revision: 1.15 $
 
 
