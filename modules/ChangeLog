@@ -1,3 +1,8 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* ldap/eldap.c (Fldap_open): Change ldap_passwd to ldap_password
+	to eliminate a gcc shadow warning.
+
 2004-09-13  Jerry James  <james@xemacs.org>
 
 	* ldap/eldap.c (signal_ldap_error): Mark as noreturn.

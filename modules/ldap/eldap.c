@@ -218,7 +218,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   int  ldap_port = 0;
   int  ldap_auth = LDAP_AUTH_SIMPLE;
   char *ldap_binddn = NULL;
-  char *ldap_passwd = NULL;
+  char *ldap_password = NULL;
   int  ldap_deref = LDAP_DEREF_NEVER;
   int  ldap_timelimit = 0;
   int  ldap_sizelimit = 0;
@@ -261,7 +261,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
 	else if (EQ (keyword, Qpasswd))
 	  {
 	    CHECK_STRING (value);
-	    LISP_STRING_TO_EXTERNAL (value, ldap_passwd, Qnative);
+	    LISP_STRING_TO_EXTERNAL (value, ldap_password, Qnative);
 	  }
 	/* Deref */
 	else if (EQ (keyword, Qderef))
@@ -334,7 +334,7 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   ld->ld_options |= LDAP_OPT_RESTART;
 #endif /* not HAVE_LDAP_SET_OPTION */
 
-  err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
+  err = ldap_bind_s (ld, ldap_binddn, ldap_password, ldap_auth);
   if (err != LDAP_SUCCESS)
     {
       Ibyte *interrmess;

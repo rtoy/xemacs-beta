@@ -1429,7 +1429,8 @@ gtk_resource_possible_dest_types (void)
 
 extern guint symbol_to_enum (Lisp_Object, GtkType);
 
-static guint resource_name_to_resource (Lisp_Object name, image_instance_type type)
+static guint resource_name_to_resource (Lisp_Object name,
+					enum image_instance_type type)
 {
   if (type == IMAGE_POINTER)
     return (symbol_to_enum (name, GTK_TYPE_GDK_CURSOR_TYPE));
@@ -1437,7 +1438,7 @@ static guint resource_name_to_resource (Lisp_Object name, image_instance_type ty
     return (0);
 }
 
-static image_instance_type
+static enum image_instance_type
 resource_symbol_to_type (Lisp_Object data)
 {
   if (EQ (data, Qcursor))
@@ -1459,7 +1460,7 @@ gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkCursor *c = NULL;
-  image_instance_type type;
+  enum image_instance_type type;
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object resource_type = find_keyword_in_vector (instantiator, Q_resource_type);
   Lisp_Object resource_id = find_keyword_in_vector (instantiator, Q_resource_id);

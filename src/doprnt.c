@@ -598,11 +598,11 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #endif
 		{
 		  /* WARNING!  This MUST be big enough for the sprintf below */
-		  CIbyte message[48];
-		  sprintf (message,
+		  CIbyte msg[48];
+		  sprintf (msg,
 			   "format specifier %%%c doesn't match argument type",
 			   ch);
-		  syntax_error (message, Qnil);
+		  syntax_error (msg, Qnil);
 		}
 	      else if (strchr (double_converters, ch))
 		{
@@ -720,10 +720,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      if (!valid_ichar_p (a))
 		{
 		  /* WARNING!  This MUST be big enough for the sprintf below */
-		  CIbyte message[60];
-		  sprintf (message, "invalid character value %d to %%c spec",
+		  CIbyte msg[60];
+		  sprintf (msg, "invalid character value %d to %%c spec",
 			   a);
-		  syntax_error (message, Qnil);
+		  syntax_error (msg, Qnil);
 		}
 
 	      charlen = set_itext_ichar (charbuf, a);
