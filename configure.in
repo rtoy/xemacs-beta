@@ -2396,6 +2396,7 @@ AC_CHECK_HEADERS(dnl
   inttypes.h dnl
   libgen.h dnl
   locale.h dnl
+  wchar.h dnl
   mach/mach.h dnl
   sys/param.h dnl
   sys/pstat.h dnl

@@ -1,3 +1,7 @@
+2002-07-08  Mike Sperber <mike@xemacs.org>
+
+	* configure.in: Test for wchar.h.
+
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.7 "broccoflower" is released.
