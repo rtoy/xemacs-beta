@@ -1,3 +1,18 @@
+2004-05-08  Sven Grundmann  <sven@xemacs.org>
+
+	* etags.el:
+	* etags.el (tags-exuberant-ctags-optimization-p): Enable optimization
+	only for use with exuberant ctags. This will also enable building of 
+	completion tables with exuberant ctags. This will not work with
+	xemacs ctags. New.
+	* etags.el (get-tag-table-buffer): New function for creating of
+	completion table is used if tags-exuberant-ctags-optimization-p ist t
+	* etags.el (add-to-tag-completion-table-exuberant-ctags): Defun for
+	building tag completion table with exuberant ctags. New.
+	* etags.el (find-tag-internal): Improve exact tag matching for tags
+	with name fields. Before the patch return types of functions or
+	function parameters (with exuberant ctags) were found as matches.
+
 2004-04-20  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
  	* gtk-marshal.el: Return type for INT is gint, not guint.

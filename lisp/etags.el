@@ -177,6 +177,19 @@ This affects the `tags-search' and `tags-query-replace' commands."
   :type 'boolean
   :group 'etags)
 
+(defcustom tags-exuberant-ctags-optimization-p nil
+  "*If this variable is nil (the default), then exact tag search is able
+to find tag names in the name part of the tagtable (enclosed by  ^?..^A)
+and in the sourceline part of the tagtable ( enclosed by ^..^?). 
+This is needed by xemacs etags as not every tag has a name field.
+It is slower for large tables and less precise than the other option.
+
+If it is non-nil, then exact tag will only search tag names in the name
+part (enclosed by ^?..^A). This is faster and more precise than the other
+option. This is only usable with exuberant etags, as it has a name field
+entry for every tag."
+:type 'boolean
+:group 'etags)
 
 ;; Buffer tag tables.
 
@@ -347,7 +360,9 @@ If appropriate, reverting the buffer, and possibly build a completion-table."
 	    ;; The user wants to build the table:
 	    (condition-case nil
 		(progn
-		  (add-to-tag-completion-table)
+          (if tags-exuberant-ctags-optimization-p
+              (add-to-tag-completion-table-exuberant-ctags)
+            (add-to-tag-completion-table))
 		  (setq tag-table-completion-status t))
 	      ;; Allow user to C-g out correctly
 	      (quit
@@ -506,6 +521,24 @@ this buffer uses."
   (concat "\\s-*(\\s-*def\\sw*\\s-*(?\\s-*\\(\\(\\sw\\|\\s_\\|:\\)+\\))?\\s-*"
 	  tags-explicit-name-pattern))
 (defconst tags-file-pattern "^\f\n\\(.+\\),[0-9]+\n")
+
+(defun add-to-tag-completion-table-exuberant-ctags ()
+  "Sucks the current buffer (a TAGS table) into the completion-table.
+This is a version which is optimized for exuberant etags and will not
+work with xemacs etags."
+  (message "Adding %s to tags completion table..." buffer-file-name)
+  (goto-char (point-min))
+  (let ((tag-table-symbol (intern buffer-file-name tag-completion-table))
+	;; tag-table-symbol is used by intern-tag-symbol
+	name tag-symbol
+	tag-symbol-tables
+	(case-fold-search nil))
+    (while (re-search-forward tags-explicit-name-pattern nil t)
+      ;; no need to check the mode here
+      (setq name (match-string 2))
+      (intern-tag-symbol name)))
+  (message "Adding %s to tags completion table...done" buffer-file-name))
+
 
 ;; #### Should make it work with the `include' directive!
 (defun add-to-tag-completion-table ()
@@ -675,7 +708,11 @@ If it returns non-nil, this file needs processing by evalling
 	  (t
 	   (setq tag-table-currently-matching-exact t)))
     ;; \_ in the tagname is used to indicate a symbol boundary.
-    (setq exact-tagname (format "\C-?\\_%s\\_\C-a\\|\\_%s\\_" tagname tagname))
+    (if tags-exuberant-ctags-optimization-p
+        (setq exact-tagname (format "\C-?%s\C-a" tagname))
+      (setq exact-tagname (format "\C-?%s\C-a\\|\
+\\_%s.?\C-?[0-9]*,[0-9]*$" tagname tagname))
+      )
     (while (string-match "\\\\_" exact-tagname)
       (aset exact-tagname (1- (match-end 0)) ?b))
     (save-excursion
