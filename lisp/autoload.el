@@ -272,7 +272,7 @@ are used."
 			      (setq autoloads-done (cons (nth 1 form)
 							 autoloads-done))
 			    (setq autoload form))
-			  (print-autoload autoload doc-string-elt outbuf))
+			  (print-autoload autoload doc-string-elt outbuf ""))
 		      ;; Copy the rest of the line to the output.
 		      (let ((begin (point)))
 			;; (terpri outbuf)
@@ -334,7 +334,7 @@ are used."
 
 (defun* generate-c-file-autoloads-1 (file funlist)
   "Insert at point a loaddefs autoload section for the C file FILE.
-autoloads are generated for Defuns and defmacros in FILE
+autoloads are generated for defuns and defmacros in FILE
 marked by `generate-c-autoload-cookie' (which see).
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
@@ -382,6 +382,16 @@ are used."
 		(if funlist
 		    (progn
 		      (message "Generating autoloads for %s..." trim-name)
+		      (princ "(when (or\n" outbuf)
+		      (princ (format
+			      "       (file-exists-p (expand-file-name \"%s.ell\" module-directory))\n"
+			      load-name) outbuf)
+		      (princ (format
+			      "       (file-exists-p (expand-file-name \"%s.dll\" module-directory))\n"
+			      load-name) outbuf)
+		      (princ (format
+			      "       (file-exists-p (expand-file-name \"%s.so\" module-directory)))\n"
+			      load-name) outbuf)
 		      (dolist (arg funlist)
 			(goto-char (point-min))
 			(re-search-forward
@@ -392,7 +402,8 @@ are used."
 			(let ((autoload (make-c-autoload load-name)))
 			  (when autoload
 			    (push (nth 1 (nth 1 autoload)) autoloads-done)
-			    (print-autoload autoload 3 outbuf)))))
+			    (print-autoload autoload 3 outbuf "  "))))
+		      (princ ")" outbuf))
 		  (goto-char (point-min))
 		  (let ((match
 			 (search-forward generate-c-autoload-cookie nil t)))
@@ -401,15 +412,25 @@ are used."
 		      (return-from generate-c-file-autoloads-1))
 
 		    (message "Generating autoloads for %s..." trim-name)
+		    (princ "(when (or\n" outbuf)
+		    (princ (format
+			    "       (file-exists-p (expand-file-name \"%s.ell\" module-directory))\n"
+			    load-name) outbuf)
+		    (princ (format
+			    "       (file-exists-p (expand-file-name \"%s.dll\" module-directory))\n"
+			    load-name) outbuf)
+		    (princ (format
+			    "       (file-exists-p (expand-file-name \"%s.so\" module-directory)))\n"
+			    load-name) outbuf)
 		    (while match
 		      (forward-line 1)
 		      (let ((autoload (make-c-autoload load-name)))
 			(when autoload
 			  (push (nth 1 (nth 1 autoload)) autoloads-done)
-			  (print-autoload autoload 3 outbuf)))
+			  (print-autoload autoload 3 outbuf "  ")))
 		      (setq match
-			    (search-forward generate-c-autoload-cookie nil t))
-		      ))))))
+			    (search-forward generate-c-autoload-cookie nil t)))
+		    (princ ")" outbuf))))))
 	(unless visited
 	  ;; We created this buffer, so we should kill it.
 	  (kill-buffer (current-buffer)))
@@ -425,7 +446,7 @@ are used."
     (or noninteractive ; XEmacs: only need one line in -batch mode.
 	(message "Generating autoloads for %s...done" trim-name))))
 
-(defun print-autoload (autoload doc-string-elt outbuf)
+(defun print-autoload (autoload doc-string-elt outbuf margin)
   "Print an autoload form, handling special characters.
 In particular, print docstrings with escapes inserted before left parentheses
 at the beginning of lines and ^L characters."
@@ -433,9 +454,10 @@ at the beginning of lines and ^L characters."
       ;; We need to hack the printing because the doc-string must be
       ;; printed specially for make-docfile (sigh).
       (let* ((p (nthcdr (1- doc-string-elt) autoload))
-	     (elt (cdr p)))
+	     (elt (cdr p))
+	     (start-string (format "\n%s(" margin)))
 	(setcdr p nil)
-	(princ "\n(" outbuf)
+	(princ start-string outbuf)
 	;; XEmacs change: don't let ^^L's get into
 	;; the file or sorting is hard.
 	(let ((print-escape-newlines t)
@@ -466,14 +488,15 @@ at the beginning of lines and ^L characters."
 	  (save-excursion
 	    (set-buffer outbuf)
 	    (save-excursion
-	      (while (search-backward "\n(" begin t)
+	      (while (search-backward start-string begin t)
 		(forward-char 1)
 		(insert "\\"))))
 	  (if (null (cdr elt))
 	      (princ ")" outbuf)
 	    (princ " " outbuf)
 	    (princ (substring (prin1-to-string (cdr elt)) 1) outbuf))
-	  (terpri outbuf)))
+	  (terpri outbuf)
+	  (princ margin outbuf)))
     ;; XEmacs change: another ^L hack
     (let ((p (save-excursion
 	       (set-buffer outbuf)

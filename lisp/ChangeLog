@@ -1,3 +1,16 @@
+2002-10-10  Jerry James  <james@xemacs.org>
+
+	* autoload.el (generate-file-autoloads-1): Use new print-autoload
+	margin parameter.
+	* autoload.el (generate-c-file-autoloads-1): Ditto.  Fix typo in
+	docstring.  Conditionalize module autoloads on the presence of the
+	module in module-directory.
+	* autoload.el (print-autoload): New margin parameter to prettify
+	module auto-autoloads without affecting Lisp auto-autoloads.
+	* dump-paths.el (startup-setup-paths): Always set
+	module-directory, site-module-directory, and module-load-path,
+	even when not called-early.
+
 2002-09-22  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* package-get.el (package-get-download-sites): Bring sites list

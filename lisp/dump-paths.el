@@ -119,24 +119,24 @@ It's idempotent, so call this as often as you like!"
 					     site-directory
 					     mule-lisp-directory))
 
-  (if called-early
-      (progn
-	(setq module-directory (paths-find-module-directory roots))
-	(if debug-paths
-	    (princ (format "module-directory:\n%S\n" module-directory)
-		   'external-debugging-output))
-	(setq site-module-directory (and (null inhibit-site-modules)
-					 (paths-find-site-module-directory
-					  roots)))
-	(if (and debug-paths (null inhibit-site-modules))
-	    (princ (format "site-module-directory:\n%S\n"
-			   site-module-directory)
-		   'external-debugging-output))
+  (setq module-directory (paths-find-module-directory roots))
+  (if debug-paths
+      (princ (format "module-directory:\n%S\n" module-directory)
+	     'external-debugging-output))
+  (setq site-module-directory (and (null inhibit-site-modules)
+				   (paths-find-site-module-directory
+				    roots)))
+  (if (and debug-paths (null inhibit-site-modules))
+      (princ (format "site-module-directory:\n%S\n"
+		     site-module-directory)
+	     'external-debugging-output))
 
-	(setq module-load-path (paths-construct-module-load-path
-				roots
-				module-directory
-				site-module-directory)))
+  (setq module-load-path (paths-construct-module-load-path
+			  roots
+			  module-directory
+			  site-module-directory))
+
+  (unless called-early
     (setq Info-directory-list
 	  (paths-construct-info-path
 	   roots early-packages late-packages last-packages))
