@@ -1,3 +1,8 @@
+2004-06-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi (Specifier Instancing): Add "neon
+	modeline" hack as an example.  Thanks to Giacomo Boffi.
+
 2004-06-07  Jerry James  <james@xemacs.org>
 
 	* lispref/modes.texi (Major Modes): Document -mode functions, and

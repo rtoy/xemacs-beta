@@ -471,6 +471,162 @@ locales, then device locales, then the @code{global} locale.  Instancing
 over a device domain looks only for device locales and the @code{global}
 locale.
 
+Note that specifiers are instanced on @emph{every} redisplay.  (This is
+the concept; of course the implementation keeps track of changes and
+doesn't reinstance unchanged specifiers.)  That means that changes in
+specifiers controlling appearance are reflected immediately in the UI.
+Also, since specifiers are instanced completely, removing a
+specification can be just as effective as adding one.
+
+@emph{E.g.}, Giacomo Boffi wanted a modeline that indicates whether the
+frame containing it is selected or not.  The first proposed implementation
+is natural in a world of ``local'' variables.  The later implementations
+apply the power of specifiers.
+
+(The copyright notice and permission statement below apply to the code in
+example format, up to the ``@code{;;; end of neon-modeline.el}''
+comment.)
+
+@example
+;;; neon-modeline.el
+
+;; Copyright (c) 2004  Stephen J. Turnbull <stephen@@xemacs.org>
+
+;; Based on a suggestion by Giacomo Boffi
+
+;; This code may be used and redistributed under the GNU GPL, v.2 or any
+;; later version as published by the FSF, or under the license used for
+;; XEmacs Texinfo manuals, at your option.
+@end example
+
+A few customizations:
+
+@example
+;; Placate the specifier and Customize gods.
+
+(unless (valid-specifier-tag-p 'modeline-background)
+  (define-specifier-tag 'modeline-background))
+
+(defgroup lisp-demos nil "Demos for Lisp programming techniques.")
+
+(defgroup neon-modeline nil "Neon modeline identifies selected frame."
+  :group 'lisp-demos)
+
+(defcustom neon-modeline-selected-background "LemonChiffon"
+  "Background color for modeline in selected frames."
+  :type 'color
+  :group 'neon-modeline)
+
+(defcustom neon-modeline-deselected-background "Wheat"
+  "Background color for modeline in unselected frames."
+  :type 'color
+  :group 'neon-modeline)
+
+@end example
+
+Our first try uses three functions, a setup and two hook functions.
+Separate hooks are defined for entry into a frame and exit from it.
+Since we're using hooks, it's a fairly natural approach: we operate on
+the background on each event corresponding to an appearance change we
+want to make.  This doesn't depend on the specifier API, ``frame-local''
+variables would serve as well.
+
+@example
+(defun select-modeline ()
+  (set-face-background 'modeline neon-modeline-selected-background
+		       (selected-frame)))
+
+(defun deselect-modeline ()
+  (set-face-background 'modeline neon-modeline-deselected-background
+		       (selected-frame)))
+@end example
+
+Note that the initialization removes no specifications, and therefore is
+not idempotent.  Cruft will accumulate in the specifier if the
+@samp{-setup} function is called repeatedly.  This shouldn't cause a
+performance problem; specifiers are quite efficient for their purpose.
+But it's ugly, and wastes a small amount of space.
+
+@example
+(defun neon-modeline-setup ()
+  (interactive)
+  (set-face-background 'modeline neon-modeline-deselected-background)
+  ;; Add the distinguished background on pointer entry to the frame;
+  (add-hook 'select-frame-hook 'select-modeline)
+  ;; restore the ordinary background on pointer exit from the frame.
+  (add-hook 'deselect-frame-hook 'deselect-modeline)
+@end example
+
+This approach causes a decided flicker on Boffi's platform, because the
+two hook functions are executed in response to separate GUI events.
+
+The following code should be an improvement.  First, the hook function.
+
+@example
+(defun neon-modeline-reselect ()
+  (set-face-background 'modeline neon-modeline-deselected-background
+		       (selected-frame) '(modeline-background)
+		       'remove-locale-type))
+@end example
+
+Only one event triggers the configuration change, which should reduce
+flicker.  Because this is implemented as a specifier, we can use the
+specifier API to reset all frame-local specifications (the
+@code{remove-locale-type} argument).  This leaves the @code{global}
+specification alone, but removes all existing frame-local
+specifications.  Then it adds the selected-frame background
+specification for the newly selected frame.  @emph{I.e.}, this
+effectively implements a ``move specification from frame to frame''
+operation.
+
+Why does it give the desired result?  By ensuring that only one frame
+has the selected-frame modeline background.  Frame-local specifications
+have precedence over global ones, so when the modeline background is
+instantiated in the selected frame, it matches the specification set up
+for it and gets the right color.  On the other hand, in any other frame,
+it does not match the selected frame, so it falls through the
+frame-local specifications and picks up the global specification.  Again
+we get the desired color, in this case for unselected frames.
+
+Here the @code{modeline-background} tag is simply good practice
+(identifying an application's specifications allows it to avoid
+interfering with other applications, and other well-behaved applications
+and Customize should not munge specifications with our tag on them).
+However, an alternative implementation of this functionality would be
+
+@example
+(defun neon-modeline-reselect-2 ()
+  (set-face-background 'modeline neon-modeline-deselected-background
+		       (selected-frame) '(modeline-background)
+		       'remove-tag-set-prepend))
+@end example
+
+@code{neon-modeline-reselect} may be a preferable implementation here, if we
+really want only one frame to have a local specification.  The
+@code{neon-modeline-reselect-2} style would be useful if we had groups of
+frames which have @emph{different} modeline backgrounds when deselected.
+
+Here's the initialization function, with different semantics from above.
+Note that it is destructive, unless the user saves off the state of the
+modeline face before invoking the function.  This is only a problem if
+you remove specifications and expect the older ones to persist.  In this
+example it should not be an issue.  We use the customizations defined
+above.
+
+@example
+(defun neon-modeline-modified-setup ()
+  (interactive)
+  (set-face-background 'modeline neon-modeline-selected-background
+		       'global nil 'remove-all)
+  (add-hook 'select-frame-hook 'neon-modeline-reselect)
+
+;;; end of neon-modeline.el
+@end example
+
+Note the use of @code{'remove-all} to clear out stale specifications.
+Thus it will be idempotent.
+
+
 @node Specifier Types
 @section Specifier Types
 
