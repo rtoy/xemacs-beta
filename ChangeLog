@@ -1,3 +1,16 @@
+2004-04-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (GTK setup): Warn if other toolkits requested.
+
+2004-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (Compiler feature macros): Kaarthik Sivakumar says
+	_POSIX_C_SOURCE should be defined for FreeBSD 4.5 to 4.9 at least.
+
+2004-03-31  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile.in.in (install-arch-indep): make gzip-el now saves ~4MB.
+
 2003-12-07  Olivier Galibert  <galibert@pobox.com>
 
 	* Makefile.in.in: Don't install the dmp file when it's in the
