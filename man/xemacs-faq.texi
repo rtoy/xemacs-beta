@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/03/13 08:52:24 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/05/11 18:19:18 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -151,6 +151,7 @@ Installation and Trouble Shooting
 * Q2.0.12::     Why can't I strip XEmacs?
 * Q2.0.13::     I don't need no steenkin' packages.  Do I? (NEW)
 * Q2.0.14::     How do I figure out which packages to install? (NEW)
+* Q2.0.15::     EFS fails with "500 AUTH not understood" (NEW)
 
 Trouble Shooting:
 * Q2.1.1::      XEmacs just crashed on me!
@@ -1272,6 +1273,7 @@ Installation:
 * Q2.0.12::     Why can't I strip XEmacs?
 * Q2.0.13::     I don't need no steenkin' packages.  Do I? (NEW)
 * Q2.0.14::     I don't want to install a million .els one at a time! (NEW)
+* Q2.0.15::     EFS fails with "500 AUTH not understood" (NEW)
 
 Trouble Shooting:
 * Q2.1.1::      XEmacs just crashed on me!
@@ -1644,8 +1646,8 @@ any packages installed.  However, only the most basic editing functions
 will be available with no packages installed, so installing packages is
 an essential part of making your installed XEmacs _useful_.
 
-@node Q2.0.14, Q2.1.1, Q2.0.13, Installation
-@unnumberedsubsec Q2.0.12: How do I figure out which packages to install? (NEW)
+@node Q2.0.14, Q2.0.15, Q2.0.13, Installation
+@unnumberedsubsec Q2.0.14: How do I figure out which packages to install? (NEW)
 
 Many people really liked the old way that packages were bundled and do
 not want to mess with packages at all.  You can grab all the packages at
@@ -1671,7 +1673,22 @@ As the Sumo tarballs are not regenerated as often as the individual
 packages, it is recommended that you use the automatic package tools
 afterwards to pick up any recent updates.
 
-@node Q2.1.1, Q2.1.2, Q2.0.14, Installation
+@node Q2.0.15, Q2.1.1, Q2.0.14, Installation
+@unnumberedsubsec Q2.0.15: EFS fails with "500 AUTH not understood" (NEW)
+
+A typical error: FTP Error: USER request failed; 500 AUTH not understood.
+
+Thanks to giacomo boffi @email{giacomo.boffi@@polimi.it} who recommends
+on comp.emacs.xemacs:
+
+   tell your ftp client to not attempt AUTH authentication (or do not
+   use FTP servers that don't understand AUTH)
+
+and notes that you need to add an element (often "-u") to
+`efs-ftp-program-args'.  Use M-x customize-variable, and verify the
+needed flag with `man ftp' or other local documentation.
+
+@node Q2.1.1, Q2.1.2, Q2.0.15, Installation
 @unnumberedsec 2.1: Trouble Shooting
 @unnumberedsubsec Q2.1.1: Help!  XEmacs just crashed on me!
 

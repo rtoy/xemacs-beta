@@ -1,3 +1,12 @@
+2002-05-11  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-faq.texi (Top): Add Q2.0.15 under "Installation and
+	Trouble Shooting".
+	* xemacs-faq.texi (Installation): Add Q2.0.15 to Installation
+	menu.
+	* xemacs-faq.texi (Q2.0.14): Fix unnumberedsubsec argument.
+	* xemacs-faq.texi (Q2.0.15): New.
+
 2002-05-01  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Automatically): Don't mention "Options"
