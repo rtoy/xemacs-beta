@@ -1,3 +1,7 @@
+2001-05-09  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.5.1 "anise" is released.
+
 2001-05-08  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* buffer.c (Vcase_fold_search): Remove obsolete
