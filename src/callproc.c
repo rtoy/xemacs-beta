@@ -116,6 +116,8 @@ Arguments are
 The program's input comes from file INFILE (nil means `/dev/null').
 Insert output in BUFFER before point; t means current buffer;
  nil for BUFFER means discard it; 0 means discard and don't wait.
+If BUFFER is a string, then find or create a buffer with that name,
+then insert the output in that buffer, before point.
 BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
 REAL-BUFFER says what to do with standard output, as above,
 while STDERR-FILE says what to do with standard error in the child.
