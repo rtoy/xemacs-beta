@@ -1,5 +1,10 @@
 2001-09-16  Adrian Aichner  <adrian@xemacs.org>
 
+	* xemacs-faq.texi (Q4.0.7): Fix link to VM FAQ thanks to word I
+	got from Gregory Neil Shapiro.
+
+2001-09-16  Adrian Aichner  <adrian@xemacs.org>
+
 	* xemacs-faq.texi (Q1.3.7): Update moved link.
 	* xemacs-faq.texi (Q7.0.2): Comment out empty list of bullets to
 	avoid HTML error in texi2html translation.

@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/09/16 10:09:54 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/09/16 21:11:15 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -3902,7 +3902,7 @@ Note that each string is a regular expression.
 @node Q4.0.7, Q4.0.8, Q4.0.6, Subsystems
 @unnumberedsubsec Q4.0.7: Is there a mailing list or FAQ for VM?
 
-A FAQ for VM exists at @uref{http://www.cyberpass.net/~gorkab/vmfaq.htm}.
+A FAQ for VM exists at @uref{http://www.wonderworks.com/vm/FAQ.html}.
 
 VM has its own newsgroups gnu.emacs.vm.info and gnu.emacs.vm.bug.
 
