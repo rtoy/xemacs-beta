@@ -1,7 +1,7 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2000, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -169,7 +169,6 @@ static void debug_output_mswin_message (HWND hwnd, UINT message_,
 /* This is the event signaled by the event pump.
    See mswindows_pump_outstanding_events for comments */
 static int mswindows_error_caught_in_modal_loop;
-static int mswindows_in_modal_loop;
 
 /* Count of wound timers */
 static int mswindows_pending_timers_count;
@@ -1129,43 +1128,6 @@ mswindows_window_is_xemacs (HWND hwnd)
   return !ascii_strcasecmp (class_name_buf, XEMACS_CLASS);
 }
 
-struct mswindows_protect_modal_loop
-{
-  Lisp_Object (*bfun) (Lisp_Object barg);
-  Lisp_Object barg;
-};
-
-static Lisp_Object
-mswindows_protect_modal_loop_1 (void *gack)
-{
-  struct mswindows_protect_modal_loop *gata =
-    (struct mswindows_protect_modal_loop *) gack;
-
-  return (gata->bfun) (gata->barg);
-}
-
-Lisp_Object
-mswindows_protect_modal_loop (const char *error_string,
-			      Lisp_Object (*bfun) (Lisp_Object barg),
-			      Lisp_Object barg, int flags)
-{
-  Lisp_Object tmp;
-  struct mswindows_protect_modal_loop bluh;
-
-  bluh.bfun = bfun;
-  bluh.barg = barg;
-
-  ++mswindows_in_modal_loop;
-  tmp = call_trapping_problems (Qevent, error_string,
-				flags, 0,
-				mswindows_protect_modal_loop_1, &bluh);
-  if (UNBOUNDP (tmp))
-    mswindows_error_caught_in_modal_loop = 1;
-  --mswindows_in_modal_loop;
-
-  return tmp;
-}
-
 void
 mswindows_unmodalize_signal_maybe (void)
 {
@@ -1177,7 +1139,7 @@ mswindows_unmodalize_signal_maybe (void)
  * condition_case. See mswindows_pump_outstanding_events
  */
 static Lisp_Object
-mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
+mswindows_unsafe_pump_events (void *arg)
 {
   /* This function can call lisp */
   Lisp_Object event = Fmake_event (Qnil, Qnil);
@@ -1185,7 +1147,7 @@ mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
   int do_redisplay = 0;
   GCPRO1 (event);
 
-  while (detect_input_pending ())
+  while (detect_input_pending (1))
     {
       Fnext_event (event, Qnil);
       Fdispatch_event (event);
@@ -1212,7 +1174,7 @@ mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
  * neither are waitable handles checked. The function pumps
  * thus only dispatch events already queued, as well as those
  * resulted in dispatching thereof. This is done by setting
- * module local variable mswindows_in_modal_loop to nonzero.
+ * in_modal_loop to nonzero.
  *
  * Return value is Qt if no errors was trapped, or Qunbound if
  * there was an error.
@@ -1244,85 +1206,12 @@ mswindows_pump_outstanding_events (void)
   GCPRO1 (result);
 
   if (!mswindows_error_caught_in_modal_loop)
-    result = mswindows_protect_modal_loop
-      ("Error during event handling", mswindows_unsafe_pump_events, Qnil, 0);
+    result = event_stream_protect_modal_loop
+      ("Error during event handling", mswindows_unsafe_pump_events, 0, 0);
   UNGCPRO;
+  if (UNBOUNDP (result))
+    mswindows_error_caught_in_modal_loop = 1;
   return result;
-}
-
-/*
- * KEYBOARD_ONLY_P is set to non-zero when we are called from
- * QUITP, and are interesting in keyboard messages only.
- */
-static void
-mswindows_drain_windows_queue (void)
-{
-  MSG msg;
-
-  /* should call mswindows_need_event_in_modal_loop() if in modal loop */
-  assert (!mswindows_in_modal_loop);
-
-  while (qxePeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
-    {
-#ifdef HAVE_DIALOGS
-      /* Don't translate messages destined for a dialog box, this
-	 makes keyboard traversal work. I think?? */
-      if (mswindows_is_dialog_msg (&msg))
-	{
-	  mswindows_unmodalize_signal_maybe ();
-	  continue;
-	}
-#endif /* HAVE_DIALOGS */
-
-      /* We have to translate messages that are not sent to an XEmacs
-         frame. This is so that key presses work ok in things like
-         edit fields. However, we *musn't* translate message for XEmacs
-         frames as this is handled in the wnd proc.
-         We also have to avoid generating paint magic events for windows
-	 that aren't XEmacs frames */
-
-      if (!mswindows_window_is_xemacs (msg.hwnd))
-	TranslateMessage (&msg);
-      else if (msg.message == WM_PAINT)
-	{
-	  struct mswindows_frame *msframe;
-	  
-	  /* hdc will be NULL unless this is a subwindow - in which case we
-	     shouldn't have received a paint message for it here. */
-	  assert (msg.wParam == 0);
-
-	  /* Queue a magic event for handling when safe */
-	  msframe =
-	    FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (msg.hwnd)));
-	  if (!msframe->paint_pending)
-	    {
-	      msframe->paint_pending = 1;
-	      mswindows_enqueue_magic_event (msg.hwnd, WM_PAINT);
-	    }
-	  /* Don't dispatch. WM_PAINT is always the last message in the
-	     queue so it's OK to just return. */
-	  return;
-	}
-      qxeDispatchMessage (&msg);
-      mswindows_unmodalize_signal_maybe ();
-    }
-}
-
-static void
-emacs_mswindows_drain_queue (void)
-{
-  mswindows_drain_windows_queue ();
-#ifdef HAVE_TTY
-  drain_tty_devices ();
-#endif
-}
-
-static int
-emacs_mswindows_quit_check_disallowed_p (void)
-{
-  /* Quit cannot happen in modal loop: all program
-     input is dedicated to Windows. */
-  return mswindows_in_modal_loop;
 }
 
 /*
@@ -1371,6 +1260,73 @@ mswindows_need_event_in_modal_loop (int badly_p)
     }
 }
 
+/* BADLY_P non-zero means we were called from mswindows_need_event(1).  It
+   only matters when we are in a modal loop, and causes us to fetch timer
+   events (the only kinds we can fetch in such a case).
+ */
+static void
+mswindows_drain_windows_queue (int badly_p)
+{
+  MSG msg;
+
+  if (in_modal_loop)
+    mswindows_need_event_in_modal_loop (badly_p);
+  else
+    while (qxePeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+      {
+#ifdef HAVE_DIALOGS
+	/* Don't translate messages destined for a dialog box, this
+	   makes keyboard traversal work. I think?? */
+	if (mswindows_is_dialog_msg (&msg))
+	  {
+	    mswindows_unmodalize_signal_maybe ();
+	    continue;
+	  }
+#endif /* HAVE_DIALOGS */
+
+	/* We have to translate messages that are not sent to an XEmacs
+	   frame. This is so that key presses work ok in things like
+	   edit fields. However, we *musn't* translate message for XEmacs
+	   frames as this is handled in the wnd proc.
+	   We also have to avoid generating paint magic events for windows
+	   that aren't XEmacs frames */
+
+	if (!mswindows_window_is_xemacs (msg.hwnd))
+	  TranslateMessage (&msg);
+	else if (msg.message == WM_PAINT)
+	  {
+	    struct mswindows_frame *msframe;
+	    
+	    /* hdc will be NULL unless this is a subwindow - in which case we
+	       shouldn't have received a paint message for it here. */
+	    assert (msg.wParam == 0);
+
+	    /* Queue a magic event for handling when safe */
+	    msframe =
+	      FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (msg.hwnd)));
+	    if (!msframe->paint_pending)
+	      {
+		msframe->paint_pending = 1;
+		mswindows_enqueue_magic_event (msg.hwnd, WM_PAINT);
+	      }
+	    /* Don't dispatch. WM_PAINT is always the last message in the
+	       queue so it's OK to just return. */
+	    return;
+	  }
+	qxeDispatchMessage (&msg);
+	mswindows_unmodalize_signal_maybe ();
+      }
+}
+
+static void
+emacs_mswindows_drain_queue (void)
+{
+  mswindows_drain_windows_queue (0);
+#ifdef HAVE_TTY
+  drain_tty_devices ();
+#endif
+}
+
 /*
  * This drains the event queue and fills up two internal queues until
  * an event of a type specified by USER_P is retrieved.
@@ -1398,7 +1354,7 @@ mswindows_need_event (int badly_p)
 	  EMACS_SET_SECS_USECS (sometime, 0, 0);
 	  EMACS_TIME_TO_SELECT_TIME (sometime, select_time_to_block);
 	  pointer_to_this = &select_time_to_block;
-	  if (mswindows_in_modal_loop)
+	  if (in_modal_loop)
 	    /* In modal loop with badly_p false, don't care about 
 	       Windows events. */
 	    FD_CLR (windows_fd, &temp_mask);
@@ -1414,12 +1370,7 @@ mswindows_need_event (int badly_p)
       else if (active > 0)
 	{
 	  if (FD_ISSET (windows_fd, &temp_mask))
-	    {
-	      if (mswindows_in_modal_loop)
-		mswindows_need_event_in_modal_loop (badly_p);
-	      else
-		mswindows_drain_windows_queue ();
-	    }
+ 	    mswindows_drain_windows_queue (badly_p);
 	  else
 	    {
 #ifdef HAVE_TTY
@@ -1486,7 +1437,7 @@ mswindows_need_event (int badly_p)
       /* Now try getting a message or process event */
       DWORD active;
       DWORD what_events;
-      if (mswindows_in_modal_loop)
+      if (in_modal_loop)
 	/* In a modal loop, only look for timer events, and only if
 	   we really need one. */
 	{
@@ -1607,13 +1558,7 @@ mswindows_need_event (int badly_p)
 	  return;
 	}
       else if (active == WAIT_OBJECT_0 + mswindows_waitable_count)
-	{
-	  /* Got your message, thanks */
-	  if (mswindows_in_modal_loop)
-	    mswindows_need_event_in_modal_loop (badly_p);
-	  else
-	    mswindows_drain_windows_queue ();
-	}
+	mswindows_drain_windows_queue (badly_p);
       else
 	{
 	  int ix = active - WAIT_OBJECT_0;
@@ -4384,11 +4329,32 @@ emacs_mswindows_remove_timeout (int id)
  * emacs_mswindows_next_event() would not block.
  */
 static int
-emacs_mswindows_event_pending_p (int user_p)
+emacs_mswindows_event_pending_p (int how_many)
 {
-  mswindows_need_event (0);
-  return (!NILP (dispatch_event_queue)
-	  || (!user_p && !NILP (mswindows_s_dispatch_event_queue)));
+  if (!how_many)
+    {
+      mswindows_need_event (0);
+      return (!NILP (dispatch_event_queue)
+	      || !NILP (mswindows_s_dispatch_event_queue));
+    }
+  else
+    {
+      Lisp_Object event;
+      int count = 0;
+
+      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
+	count++;
+
+      if (count >= how_many)
+	return 1;
+
+      emacs_mswindows_drain_queue ();
+
+      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
+	count++;
+
+      return count >= how_many;
+    }
 }
 
 /*
@@ -5145,7 +5111,6 @@ debug_output_mswin_message (HWND hwnd, UINT message_, WPARAM wParam,
 void
 reinit_vars_of_event_mswindows (void)
 {
-  mswindows_in_modal_loop = 0;
   mswindows_pending_timers_count = 0;
 
   mswindows_event_stream = xnew_and_zero (struct event_stream);
@@ -5159,7 +5124,6 @@ reinit_vars_of_event_mswindows (void)
   mswindows_event_stream->add_timeout_cb 	= emacs_mswindows_add_timeout;
   mswindows_event_stream->remove_timeout_cb 	= emacs_mswindows_remove_timeout;
   mswindows_event_stream->drain_queue_cb	= emacs_mswindows_drain_queue;
-  mswindows_event_stream->quit_check_disallowed_p_cb = emacs_mswindows_quit_check_disallowed_p;
   mswindows_event_stream->select_console_cb 	= emacs_mswindows_select_console;
   mswindows_event_stream->unselect_console_cb	= emacs_mswindows_unselect_console;
   mswindows_event_stream->select_process_cb 	= emacs_mswindows_select_process;

@@ -1,7 +1,7 @@
 /* Display generation from window structure and buffer text.
    Copyright (C) 1994, 1995, 1996 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996 Chuck Thompson.
 
@@ -314,14 +314,17 @@ static void sledgehammer_check_redisplay_structs (void);
 
 /* This used to be 10 but 30 seems to give much better performance. */
 #define INIT_MAX_PREEMPTS	30
-static int max_preempts;
+static Fixnum max_preempts;
+
+#define QUEUED_EVENTS_REQUIRED_FOR_PREEMPTION 4
 
 #define REDISPLAY_PREEMPTION_CHECK					\
 ((void)									\
  (preempted =								\
   (!disable_preemption &&						\
    ((preemption_count < max_preempts) || !NILP (Vexecuting_macro)) &&	\
-   (!INTERACTIVE || detect_input_pending ()))))
+   (!INTERACTIVE || 							\
+    detect_input_pending (QUEUED_EVENTS_REQUIRED_FOR_PREEMPTION)))))
 
 /*
  * Redisplay global variables.
@@ -9606,7 +9609,6 @@ init_redisplay (void)
 {
   disable_preemption = 0;
   preemption_count = 0;
-  max_preempts = INIT_MAX_PREEMPTS;
 
 #ifndef PDUMP
   if (!initialized)
@@ -9733,6 +9735,11 @@ vars_of_redisplay (void)
 line start cache.
 */ );
   cache_adjustment = 2;
+
+  DEFVAR_INT ("maximum-preempts", &max_preempts /*
+Maximum number of times redisplay can be preempted by user input.
+*/ );
+  max_preempts = INIT_MAX_PREEMPTS;
 
   DEFVAR_INT_MAGIC ("pixel-vertical-clip-threshold", &vertical_clip /*
 Minimum pixel height for clipped bottom display line.

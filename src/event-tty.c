@@ -1,7 +1,7 @@
 /* The event_stream interface for tty's.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 2002 Ben Wing.
+   Copyright (C) 1995, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -69,7 +69,8 @@ tty_timeout_to_emacs_event (Lisp_Event *emacs_event)
   /* timeout events have nil as channel */
   SET_EVENT_TYPE (emacs_event, timeout_event);
   SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
-  SET_EVENT_TIMEOUT_INTERVAL_ID (emacs_event, pop_low_level_timeout (&tty_timer_queue, 0));
+  SET_EVENT_TIMEOUT_INTERVAL_ID (emacs_event,
+				 pop_low_level_timeout (&tty_timer_queue, 0));
   SET_EVENT_TIMEOUT_FUNCTION (emacs_event, Qnil);
   SET_EVENT_TIMEOUT_OBJECT (emacs_event, Qnil);
 }
@@ -77,9 +78,9 @@ tty_timeout_to_emacs_event (Lisp_Event *emacs_event)
 
 
 static int
-emacs_tty_event_pending_p (int user_p)
+emacs_tty_event_pending_p (int how_many)
 {
-  if (!user_p)
+  if (!how_many)
     {
       EMACS_TIME sometime;
       /* see if there's a pending timeout. */
@@ -87,10 +88,14 @@ emacs_tty_event_pending_p (int user_p)
       if (tty_timer_queue &&
 	  EMACS_TIME_EQUAL_OR_GREATER (sometime, tty_timer_queue->time))
 	return 1;
+
+      return poll_fds_for_input (non_fake_input_wait_mask);
     }
 
-  return poll_fds_for_input (user_p ? tty_only_mask :
-			     non_fake_input_wait_mask);
+  /* #### Not right!  We need to *count* the number of pending events, which
+     means we need to have a dispatch queue and drain the pending events,
+     using drain_tty_devices(). */
+  return poll_fds_for_input (tty_only_mask);
 }
 
 static void

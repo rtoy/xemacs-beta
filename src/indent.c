@@ -758,9 +758,15 @@ vertical pixel height of the motion which took place is
 returned instead of the actual number of lines moved.  A
 motion of zero lines returns the height of the current line.
 
-Note that `vertical-motion' sets WINDOW's buffer's point, not
-WINDOW's point. (This differs from FSF Emacs, which buggily always
-sets current buffer's point, regardless of WINDOW.)
+NOTE NOTE NOTE: GNU Emacs/XEmacs difference.
+
+What `vertical-motion' actually does is set WINDOW's buffer's point
+if WINDOW is the selected window; else, it sets WINDOW's point.
+This is unfortunately somewhat tricky to work with, and different
+from GNU Emacs, which always uses the current buffer, not WINDOW's
+buffer, always sets current buffer's point, and, from the
+perspective of this function, temporarily makes WINDOW display
+the current buffer if it wasn't already.
 */
        (lines, window, pixels))
 {

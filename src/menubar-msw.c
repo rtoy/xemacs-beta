@@ -714,33 +714,43 @@ mswindows_handle_wm_command (struct frame *f, WORD id)
 /* Message handling proxies                                               */
 /*------------------------------------------------------------------------*/
 
-static HMENU wm_initmenu_menu;
-static struct frame *wm_initmenu_frame;
+struct handle_wm_initmenu
+{
+  HMENU menu;
+  struct frame *frame;
+};
 
 static Lisp_Object
-unsafe_handle_wm_initmenupopup (Lisp_Object u_n_u_s_e_d)
+unsafe_handle_wm_initmenupopup (void *arg)
 {
-  return unsafe_handle_wm_initmenupopup_1 (wm_initmenu_menu, wm_initmenu_frame);
+  struct handle_wm_initmenu *z = (struct handle_wm_initmenu *) arg;
+  return unsafe_handle_wm_initmenupopup_1 (z->menu, z->frame);
 }
 
 static Lisp_Object
-unsafe_handle_wm_initmenu (Lisp_Object u_n_u_s_e_d)
+unsafe_handle_wm_initmenu (void *arg)
 {
-  return unsafe_handle_wm_initmenu_1 (wm_initmenu_frame);
+  struct handle_wm_initmenu *z = (struct handle_wm_initmenu *) arg;
+  return unsafe_handle_wm_initmenu_1 (z->frame);
 }
 
 Lisp_Object
 mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
 {
-  /* We cannot pass hmenu as a lisp object. Use static var */
-  wm_initmenu_menu = hmenu;
-  wm_initmenu_frame = frm;
-  /* Allow runaway filter code, e.g. custom, to be aborted.  We are
+  struct handle_wm_initmenu z;
+
+  z.menu = hmenu;
+  z.frame = frm;
+
+  /* [[ Allow runaway filter code, e.g. custom, to be aborted.  We are
      usually called from next_event_internal(), which has turned off
-     quit checking to read the C-g as an event. */
-  return mswindows_protect_modal_loop ("Error during menu handling",
-				       unsafe_handle_wm_initmenupopup, Qnil,
-				       UNINHIBIT_QUIT);
+     quit checking to read the C-g as an event.]]
+
+     #### This is bogus because by the very act of calling
+     event_stream_protect_modal_loop(), we disable event retrieval! */
+  return event_stream_protect_modal_loop ("Error during menu handling",
+					  unsafe_handle_wm_initmenupopup, &z,
+					  UNINHIBIT_QUIT);
 }
 
 Lisp_Object
@@ -749,10 +759,12 @@ mswindows_handle_wm_initmenu (HMENU hmenu, struct frame *f)
   /* Handle only frame menubar, ignore if from popup or system menu */
   if (GetMenu (FRAME_MSWINDOWS_HANDLE (f)) == hmenu)
     {
-      wm_initmenu_frame = f;
-      return mswindows_protect_modal_loop ("Error during menu handling",
-					   unsafe_handle_wm_initmenu, Qnil,
-					   UNINHIBIT_QUIT);
+      struct handle_wm_initmenu z;
+
+      z.frame = f;
+      return event_stream_protect_modal_loop ("Error during menu handling",
+					      unsafe_handle_wm_initmenu, &z,
+					      UNINHIBIT_QUIT);
     }
   return Qt;
 }

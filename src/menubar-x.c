@@ -396,17 +396,14 @@ protected_menu_item_descriptor_to_widget_value (Lisp_Object desc,
   midtwv.filter_p = filter_p;
 
   if (UNBOUNDP
-      (call_trapping_problems
-       (Qmenubar, "Error during menu callback",	UNINHIBIT_QUIT, 0,
-	protected_menu_item_descriptor_to_widget_value_1, &midtwv)))
+      (event_stream_protect_modal_loop
+       ("Error during menu callback",
+	protected_menu_item_descriptor_to_widget_value_1, &midtwv,
+	UNINHIBIT_QUIT)))
     return 0;
 
   return midtwv.wv;
 }
-
-#if defined (LWLIB_MENUBARS_LUCID) || (defined LWLIB_MENUBARS_MOTIF)
-int in_menu_callback;
-#endif
 
 /* The order in which callbacks are run is funny to say the least.
    It's sometimes tricky to avoid running a callback twice, and to
@@ -435,7 +432,6 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
   Lisp_Object frame;
-  int count;
 
   /* set in lwlib to the time stamp associated with the most recent menu
      operation */
@@ -460,17 +456,8 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       assert (hack_wv->type == INCREMENTAL_TYPE);
       submenu_desc = VOID_TO_LISP (hack_wv->call_data);
 
-      /*
-       * #### Fix the menu code so this isn't necessary.
-       *
-       * Protect against reentering the menu code otherwise we will
-       * crash later when the code gets confused at the state
-       * changes.
-       */
-      count = internal_bind_int (&in_menu_callback, 1);
       wv = (protected_menu_item_descriptor_to_widget_value
 	    (submenu_desc, SUBMENU_TYPE, 1, 0));
-      unbind_to (count);
 
       if (!wv)
 	{

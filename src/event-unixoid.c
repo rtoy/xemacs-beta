@@ -3,7 +3,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -44,12 +44,14 @@ Boston, MA 02111-1307, USA.  */
 /* Mask of bits indicating the descriptors that we wait for input on.
    These work as follows:
 
+   In event-tty.c we call select() directly on this
+   to retrieve an event.  In event-Xt.c we use
+   XtAppAddInput() and the call to select() is down in
+   the guts of Xt, but we still use the masks when checking for pending input, even in event-Xt.c. (We can't use XtAppPending() because of the presence of the signal event pipe.)
+
    input_wait_mask == mask of all file descriptors we select() on,
                       including TTY/stream console descriptors,
 		      process descriptors, and the signal event pipe.
-		      Only used in event-tty.c; event-Xt.c uses
-		      XtAppAddInput(), and the call to select() is down in
-		      the guts of Xt.
 
    non_fake_input_wait_mask == same as input_wait_mask but minus the
                                signal event pipe.  Also only used in

@@ -124,10 +124,6 @@ void mswindows_enqueue_misc_user_event (Lisp_Object channel,
 					Lisp_Object object);
 Lisp_Object mswindows_cancel_dispatch_event (Lisp_Event *event);
 Lisp_Object mswindows_pump_outstanding_events (void);
-Lisp_Object mswindows_protect_modal_loop (const char *error_string,
-					  Lisp_Object (*bfun)
-					  (Lisp_Object barg),
-					  Lisp_Object barg, int flags);
 void mswindows_unmodalize_signal_maybe (void);
 
 COLORREF mswindows_string_to_color (const Ibyte *name);

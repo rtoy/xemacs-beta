@@ -4051,7 +4051,7 @@ EXFUN (Fsit_for, 2);
 EXFUN (Fsleep_for, 1);
 
 void wait_delaying_user_input (int (*) (void *), void *);
-int detect_input_pending (void);
+int detect_input_pending (int how_many);
 void reset_this_command_keys (Lisp_Object, int);
 Lisp_Object enqueue_misc_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object enqueue_misc_user_event_pos (Lisp_Object, Lisp_Object,
@@ -4216,6 +4216,7 @@ EXFUN (Fput, 3);
 EXFUN (Frassq, 2);
 EXFUN (Fremassq, 2);
 EXFUN (Freplace_list, 2);
+EXFUN (Fsafe_length, 1);
 EXFUN (Fsort, 2);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);

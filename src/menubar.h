@@ -62,8 +62,6 @@ Lisp_Object command_builder_find_menu_accelerator (struct command_builder
 						   *builder);
 Lisp_Object command_builder_operate_menu_accelerator (struct command_builder
 						      *builder);
-
-extern int in_menu_callback;
 #endif
 
 extern int popup_menu_up_p;

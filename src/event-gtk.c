@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with gtk, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 2000 William Perry.
 
 This file is part of XEmacs.
@@ -93,6 +93,8 @@ Lisp_Object Qsans_modifiers;
    || ((keysym) == GDK_Mode_switch) \
    || ((keysym) == GDK_Num_Lock))
 
+#define THIS_IS_GTK
+#include "event-xlike-inc.c"
 
 
 /************************************************************************/
@@ -1556,120 +1558,9 @@ emacs_gtk_drain_queue (void)
     while (gdk_events_pending ())
       gtk_main_iteration ();
 
+#ifdef HAVE_TTY
   drain_tty_devices ();
-}
-
-static int
-emacs_gtk_event_pending_p (int user_p)
-{
-  Lisp_Object event;
-  int tick_count_val;
-
-  /* If `user_p' is false, then this function returns whether there are any
-     X, timeout, or fd events pending (that is, whether emacs_gtk_next_event()
-     would return immediately without blocking).
-
-     if `user_p' is true, then this function returns whether there are any
-     *user generated* events available (that is, whether there are keyboard
-     or mouse-click events ready to be read).  This also implies that
-     emacs_Xt_next_event() would not block.
-
-     In a non-SIGIO world, this also checks whether the user has typed ^G,
-     since this is a convenient place to do so.  We don't need to do this
-     in a SIGIO world, since input causes an interrupt.
-   */
-
-  /* This function used to simply check whether there were any X
-     events (or if user_p was 1, it iterated over all the pending
-     X events using XCheckIfEvent(), looking for keystrokes and
-     button events).  That worked in the old cheesoid event loop,
-     which didn't go through XtAppDispatchEvent(), but it doesn't
-     work any more -- X events may not result in anything.  For
-     example, a button press in a blank part of the menubar appears
-     as an X event but will not result in any Emacs events (a
-     button press that activates the menubar results in an Emacs
-     event through the stop_next_event mechanism).
-
-     The only accurate way of determining whether these X events
-     translate into Emacs events is to go ahead and dispatch them
-     until there's something on the dispatch queue. */
-
-  /* See if there are any user events already on the queue. */
-  EVENT_CHAIN_LOOP (event, dispatch_event_queue)
-    if (!user_p || command_event_p (event))
-      return 1;
-
-  /* See if there's any TTY input available.
-   */
-  if (poll_fds_for_input (tty_only_mask))
-    return 1;
-
-  if (!user_p)
-    {
-      /* If not user_p and there are any timer or file-desc events
-	 pending, we know there will be an event so we're through. */
-/*      XtInputMask pending_value; */
-
-      /* Note that formerly we just checked the value of XtAppPending()
-	 to determine if there was file-desc input.  This doesn't
-	 work any more with the signal_event_pipe; XtAppPending()
-	 will says "yes" in this case but there isn't really any
-	 input.  Another way of fixing this problem is for the
-	 signal_event_pipe to generate actual input in the form
-	 of an identity eval event or something. (#### maybe this
-	 actually happens?) */
-
-      if (poll_fds_for_input (process_only_mask))
-	return 1;
-
-      /* #### Is there any way to do this in Gtk?  I don't think there
-              is a 'peek' for events */
-#if 0
-      pending_value = XtAppPending (Xt_app_con);
-
-      if (pending_value & XtIMTimer)
-	return 1;
 #endif
-    }
-
-  /* XtAppPending() can be super-slow, esp. over a network connection.
-     Quantify results have indicated that in some cases the
-     call to detect_input_pending() completely dominates the
-     running time of redisplay().  Fortunately, in a SIGIO world
-     we can more quickly determine whether there are any X events:
-     if an event has happened since the last time we checked, then
-     a SIGIO will have happened.  On a machine with broken SIGIO,
-     we'll still be in an OK state -- the sigio_happened flag
-     will get set at least once a second, so we'll be no more than
-     one second behind reality. (In general it's OK if we
-     erroneously report no input pending when input is actually
-     pending() -- preemption is just a bit less efficient, that's
-     all.  It's bad bad bad if you err the other way -- you've
-     promised that `next-event' won't block but it actually will,
-     and some action might get delayed until the next time you
-     hit a key.)
-     */
-
-  /* quit_check_signal_tick_count is volatile so try to avoid race conditions
-     by using a temporary variable */
-  tick_count_val = quit_check_signal_tick_count;
-  if (last_quit_check_signal_tick_count != tick_count_val)
-    {
-      last_quit_check_signal_tick_count = tick_count_val;
-
-      /* We need to drain the entire queue now -- if we only
-         drain part of it, we may later on end up with events
-         actually pending but detect_input_pending() returning
-         false because there wasn't another SIGIO. */
-
-      emacs_gtk_drain_queue ();
-
-      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
-        if (!user_p || command_event_p (event))
-          return 1;
-    }
-
-  return 0;
 }
 
 static void

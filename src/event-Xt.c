@@ -1,7 +1,7 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
    Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -98,7 +98,8 @@ static int tty_events_occurred;
 static Widget widget_with_focus;
 
 /* Mask of bits indicating the descriptors that we wait for input on */
-extern SELECT_TYPE input_wait_mask, process_only_mask, tty_only_mask;
+extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
+extern SELECT_TYPE process_only_mask, tty_only_mask;
 
 static const String x_fallback_resources[] =
 {
@@ -120,6 +121,9 @@ static int last_quit_check_signal_tick_count;
 
 Lisp_Object Qkey_mapping;
 Lisp_Object Qsans_modifiers;
+
+#define THIS_IS_X
+#include "event-xlike-inc.c"
 
 
 /************************************************************************/
@@ -2771,39 +2775,62 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
 	 !process_events_occurred    &&
 	 !tty_events_occurred)
     {
+      if (in_modal_loop)
+	{
+	  /* in_modal_loop gets set when we are in the process of
+	     dispatching an event (more specifically, when we are inside of
+	     a menu callback -- if we get here, it means we called a filter
+	     and the filter did something that tried to fetch an event,
+	     e.g. sit-for).  In such a case, we cannot safely dispatch any
+	     more events.  This is because those dispatching those events
+	     could cause lwlib to be entered reentranty, specifically if
+	     they are menu events.  lwlib is not designed for this and will
+	     crash.  We used to see this crash constantly as a result of
+	     QUIT checking, but QUIT will not now function in a modal loop.
+	     However, we can't just not process any events at all, because
+	     that will make sit-for etc. hang.  So we go ahead and process
+	     the non-X kinds of events. */
+	  XtInputMask pending_value = XtAppPending (Xt_app_con);
 
-      /* Stupid logic in XtAppProcessEvent() dictates that, if process
-	 events and X events are both available, the process event gets
-	 taken first.  This will cause an infinite loop if we're being
-	 called from Fdiscard_input().
-       */
-      if (XtAppPending (Xt_app_con) & XtIMXEvent)
-        XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+	  if (pending_value & (XtIMTimer | XtIMAlternateInput))
+	    XtAppProcessEvent (Xt_app_con, XtIMTimer | XtIMAlternateInput);
+	}
       else
 	{
-	  Lisp_Object devcons, concons;
+	  /* Stupid logic in XtAppProcessEvent() dictates that, if process
+	     events and X events are both available, the process event gets
+	     taken first.  This will cause an infinite loop if we're being
+	     called from Fdiscard_input().
+	  */
 
-	  /* We're about to block.  Xt has a bug in it (big surprise,
-	     there) in that it blocks using select() and doesn't
-	     flush the Xlib output buffers (XNextEvent() does this
-	     automatically before blocking).  So it's necessary
-	     for us to do this ourselves.  If we don't do it, then
-	     display output may not be seen until the next time
-	     an X event is received. (This happens esp. with
-	     subprocess output that gets sent to a visible buffer.)
-
-	     #### The above comment may not have any validity. */
-
-	  DEVICE_LOOP_NO_BREAK (devcons, concons)
+	  if (XtAppPending (Xt_app_con) & XtIMXEvent)
+	    XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+	  else
 	    {
-	      struct device *d;
-	      d = XDEVICE (XCAR (devcons));
+	      Lisp_Object devcons, concons;
 
-	      if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d))
-		/* emacs may be exiting */
-		XFlush (DEVICE_X_DISPLAY (d));
+	      /* We're about to block.  Xt has a bug in it (big surprise,
+		 there) in that it blocks using select() and doesn't
+		 flush the Xlib output buffers (XNextEvent() does this
+		 automatically before blocking).  So it's necessary
+		 for us to do this ourselves.  If we don't do it, then
+		 display output may not be seen until the next time
+		 an X event is received. (This happens esp. with
+		 subprocess output that gets sent to a visible buffer.)
+
+		 #### The above comment may not have any validity. */
+
+	      DEVICE_LOOP_NO_BREAK (devcons, concons)
+		{
+		  struct device *d;
+		  d = XDEVICE (XCAR (devcons));
+
+		  if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d))
+		    /* emacs may be exiting */
+		    XFlush (DEVICE_X_DISPLAY (d));
+		}
+	      XtAppProcessEvent (Xt_app_con, XtIMAll);
 	    }
-	  XtAppProcessEvent (Xt_app_con, XtIMAll);
 	}
     }
 
@@ -2864,154 +2891,36 @@ static void
 emacs_Xt_drain_queue (void)
 {
   Lisp_Object devcons, concons;
-  CONSOLE_LOOP (concons)
+  if (!in_modal_loop)
     {
-      struct console *con = XCONSOLE (XCAR (concons));
-      if (!con->input_enabled)
-	continue;
-
-      CONSOLE_DEVICE_LOOP (devcons, con)
+      CONSOLE_LOOP (concons)
 	{
-	  struct device *d;
-	  Display *display;
-	  d = XDEVICE (XCAR (devcons));
-	  if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d))
+	  struct console *con = XCONSOLE (XCAR (concons));
+	  if (!con->input_enabled)
+	    continue;
+
+	  CONSOLE_DEVICE_LOOP (devcons, con)
 	    {
-	      display = DEVICE_X_DISPLAY (d);
-	      while (XEventsQueued (display, QueuedAfterReading))
-		XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+	      struct device *d;
+	      Display *display;
+	      d = XDEVICE (XCAR (devcons));
+	      if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d))
+		{
+		  display = DEVICE_X_DISPLAY (d);
+		  while (XEventsQueued (display, QueuedAfterReading))
+		    XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+		}
 	    }
 	}
+      /*
+	while (XtAppPending (Xt_app_con) & XtIMXEvent)
+	XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+      */
     }
-  /*
-    while (XtAppPending (Xt_app_con) & XtIMXEvent)
-    XtAppProcessEvent (Xt_app_con, XtIMXEvent);
-  */
 
+#ifdef HAVE_TTY
   drain_tty_devices ();
-}
-
-static int
-emacs_Xt_event_pending_p (int user_p)
-{
-  Lisp_Object event;
-  int tick_count_val;
-
-  /* If `user_p' is false, then this function returns whether there are any
-     X, timeout, or fd events pending (that is, whether emacs_Xt_next_event()
-     would return immediately without blocking).
-
-     if `user_p' is true, then this function returns whether there are any
-     *user generated* events available (that is, whether there are keyboard
-     or mouse-click events ready to be read).  This also implies that
-     emacs_Xt_next_event() would not block.
-
-     In a non-SIGIO world, this also checks whether the user has typed ^G,
-     since this is a convenient place to do so.  We don't need to do this
-     in a SIGIO world, since input causes an interrupt.
-   */
-
-#if 0
-  /* I don't think there's any point to this and it will nullify
-     the speed gains achieved by the sigio_happened checking below.
-     Its only advantage is that it may possibly make C-g response
-     a bit faster.  The C-g will be noticed within 0.25 second, anyway,
-     even without this. */
-#ifndef SIGIO
-  /* First check for C-g if necessary */
-  event_stream_quit_p ();
 #endif
-#endif
-
-  /* This function used to simply check whether there were any X
-     events (or if user_p was 1, it iterated over all the pending
-     X events using XCheckIfEvent(), looking for keystrokes and
-     button events).  That worked in the old cheesoid event loop,
-     which didn't go through XtAppDispatchEvent(), but it doesn't
-     work any more -- X events may not result in anything.  For
-     example, a button press in a blank part of the menubar appears
-     as an X event but will not result in any Emacs events (a
-     button press that activates the menubar results in an Emacs
-     event through the stop_next_event mechanism).
-
-     The only accurate way of determining whether these X events
-     translate into Emacs events is to go ahead and dispatch them
-     until there's something on the dispatch queue. */
-
-  /* See if there are any user events already on the queue. */
-  EVENT_CHAIN_LOOP (event, dispatch_event_queue)
-    if (!user_p || command_event_p (event))
-      return 1;
-
-  /* See if there's any TTY input available.
-   */
-  if (poll_fds_for_input (tty_only_mask))
-    return 1;
-
-  if (!user_p)
-    {
-      /* If not user_p and there are any timer or file-desc events
-	 pending, we know there will be an event so we're through. */
-      XtInputMask pending_value;
-
-      /* Note that formerly we just checked the value of XtAppPending()
-	 to determine if there was file-desc input.  This doesn't
-	 work any more with the signal_event_pipe; XtAppPending()
-	 will says "yes" in this case but there isn't really any
-	 input.  Another way of fixing this problem is for the
-	 signal_event_pipe to generate actual input in the form
-	 of an identity eval event or something. (#### maybe this
-	 actually happens?) */
-
-      if (poll_fds_for_input (process_only_mask))
-	return 1;
-
-      pending_value = XtAppPending (Xt_app_con);
-
-      if (pending_value & XtIMTimer)
-	return 1;
-    }
-
-  /* XtAppPending() can be super-slow, esp. over a network connection.
-     Quantify results have indicated that in some cases the call to
-     detect_input_pending() completely dominates the running time of
-     redisplay().  Fortunately, in a SIGIO world we can more quickly
-     determine whether there are any X events: if an event has
-     happened since the last time we checked, then a SIGIO will have
-     happened.  On a machine with broken SIGIO, we'll still be in an
-     OK state -- quit_check_signal_tick_count will get ticked at least
-     every 1/4 second, so we'll be no more than that much behind
-     reality. (In general it's OK if we erroneously report no input
-     pending when input is actually pending() -- preemption is just a
-     bit less efficient, that's all.  It's bad bad bad if you err the
-     other way -- you've promised that `next-event' won't block but it
-     actually will, and some action might get delayed until the next
-     time you hit a key.)
-     */
-
-  /* quit_check_signal_tick_count is volatile so try to avoid race conditions
-     by using a temporary variable */
-  tick_count_val = quit_check_signal_tick_count;
-  if (last_quit_check_signal_tick_count != tick_count_val
-#if !defined (SIGIO) || defined (CYGWIN)
-      || (XtIMXEvent & XtAppPending (Xt_app_con))
-#endif 
-      )
-    {
-      last_quit_check_signal_tick_count = tick_count_val;
-
-      /* We need to drain the entire queue now -- if we only
-         drain part of it, we may later on end up with events
-         actually pending but detect_input_pending() returning
-         false because there wasn't another SIGIO. */
-      emacs_Xt_drain_queue ();
-
-      EVENT_CHAIN_LOOP (event, dispatch_event_queue)
-        if (!user_p || command_event_p (event))
-          return 1;
-    }
-
-  return 0;
 }
 
 int

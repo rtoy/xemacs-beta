@@ -2,7 +2,7 @@
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -140,11 +140,6 @@ Lisp_Object Vmodifier_keys_sticky_time;
    do not execute it; call disabled-command-hook's value instead. */
 Lisp_Object Qdisabled;
 
-EXFUN (Fnext_command_event, 2);
-
-static void pre_command_hook (void);
-static void post_command_hook (void);
-
 /* Last keyboard or mouse input event read as a command. */
 Lisp_Object Vlast_command_event;
 
@@ -249,8 +244,10 @@ int inhibit_input_event_recording;
 
 Lisp_Object Qself_insert_defer_undo;
 
-/* this is in keymap.c */
-extern Lisp_Object Fmake_keymap (Lisp_Object name);
+int in_modal_loop;
+
+/* the number of keyboard characters read.  callint.c wants this. */
+Charcount num_input_chars;
 
 #ifdef DEBUG_XEMACS
 Fixnum debug_emacs_events;
@@ -276,14 +273,17 @@ external_debugging_print_event (char *event_description, Lisp_Object event)
 /* The callback routines for the window system or terminal driver */
 struct event_stream *event_stream;
 
-static void echo_key_event (struct command_builder *, Lisp_Object event);
-static void maybe_kbd_translate (Lisp_Object event);
-
 /* There are two event queues here -- the command event queue (#### which
    should be called "deferred event queue" and is in my glyph ws) and the
-   dispatch event queue (#### MS Windows actually has an extra dispatch
-   queue for non-user events and uses the generic one only for user events;
-   we should probably generalize this).
+   dispatch event queue. (MS Windows actually has an extra dispatch
+   queue for non-user events and uses the generic one only for user events.
+   This is because user and non-user events in Windows come through the
+   same place -- the window procedure -- but under X, it's possible to
+   selectively process events such that we take all the user events before
+   the non-user ones. #### In fact, given the way we now drain the queue,
+   we might need two separate queues, like under Windows.  Need to think
+   carefully exactly how this works, and should certainly generalize the
+   two different queues.
 
    The dispatch queue (which used to occur duplicated inside of each event
    implementation) is used for events that have been read from the
@@ -343,8 +343,16 @@ int emacs_is_blocking;
    are not allowed to recursively call these routines.  We record here
    if we are in that situation. */
 
-static Lisp_Object recursive_sit_for;
+static int recursive_sit_for;
 
+static void pre_command_hook (void);
+static void post_command_hook (void);
+static void maybe_kbd_translate (Lisp_Object event);
+static void push_this_command_keys (Lisp_Object event);
+static void push_recent_keys (Lisp_Object event);
+static void dribble_out_event (Lisp_Object event);
+static void execute_internal_event (Lisp_Object event);
+static int is_scrollbar_event (Lisp_Object event);
 
 
 /**********************************************************************/
@@ -513,17 +521,8 @@ command_builder_append_event (struct command_builder *builder,
 /*             Low-level interfaces onto event methods                */
 /**********************************************************************/
 
-enum event_stream_operation
-{
-  EVENT_STREAM_PROCESS,
-  EVENT_STREAM_TIMEOUT,
-  EVENT_STREAM_CONSOLE,
-  EVENT_STREAM_READ,
-  EVENT_STREAM_NOTHING,
-};
-
 static void
-check_event_stream_ok (enum event_stream_operation op)
+check_event_stream_ok (void)
 {
   if (!event_stream && noninteractive)
     /* See comment in init_event_stream() */
@@ -531,147 +530,52 @@ check_event_stream_ok (enum event_stream_operation op)
   else assert (event_stream);
 }
 
-static int
-event_stream_event_pending_p (int user)
-{
-  /* #### Hmmm ...  There may be some duplication in "drain queue" and
-     "event pending".  Couldn't we just drain the queue and see what's in
-     it, and not maybe need a separate event method for this?  Would this
-     work when USER is 0?  Maybe this would be slow? */
-  return event_stream && event_stream->event_pending_p (user);
-}
-
-static void
-event_stream_force_event_pending (struct frame *f)
-{
-  if (event_stream->force_event_pending_cb)
-    event_stream->force_event_pending_cb (f);
-}
-
-static int
-maybe_read_quit_event (Lisp_Event *event)
-{
-  /* A C-g that came from `sigint_happened' will always come from the
-     controlling terminal.  If that doesn't exist, however, then the
-     user manually sent us a SIGINT, and we pretend the C-g came from
-     the selected console. */
-  struct console *con;
-
-  if (CONSOLEP (Vcontrolling_terminal) &&
-      CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)))
-    con = XCONSOLE (Vcontrolling_terminal);
-  else
-    con = XCONSOLE (Fselected_console ());
-
-  if (sigint_happened)
-    {
-      sigint_happened = 0;
-      Vquit_flag = Qnil;
-      Fcopy_event (CONSOLE_QUIT_EVENT (con), wrap_event (event));
-      return 1;
-    }
-  return 0;
-}
-
-static void
-event_stream_next_event (Lisp_Event *event)
-{
-  Lisp_Object event_obj;
-
-  check_event_stream_ok (EVENT_STREAM_READ);
-
-  event_obj = wrap_event (event);
-  zero_event (event);
-  /* SIGINT occurs when C-g was pressed on a TTY. (SIGINT might have
-     been sent manually by the user, but we don't care; we treat it
-     the same.)
-
-     The SIGINT signal handler sets Vquit_flag as well as sigint_happened
-     and write a byte on our "fake pipe", which unblocks us when we are
-     waiting for an event. */
-
-  /* If SIGINT was received after we disabled quit checking (because
-     we want to read C-g's as characters), but before we got a chance
-     to start reading, notice it now and treat it as a character to be
-     read.  If above callers wanted this to be QUIT, they can
-     determine this by comparing the event against quit-char. */
-
-  if (maybe_read_quit_event (event))
-    {
-      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
-      return;
-    }
-
-  /* If a longjmp() happens in the callback, we're screwed.
-     Let's hope it doesn't.  I think the code here is fairly
-     clean and doesn't do this. */
-  emacs_is_blocking = 1;
-  event_stream->next_event_cb (event);
-  emacs_is_blocking = 0;
-
-  /* Now check to see if C-g was pressed while we were blocking.
-     We treat it as an event, just like above. */
-  if (maybe_read_quit_event (event))
-    {
-      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
-      return;
-    }
-
-#ifdef DEBUG_XEMACS
-  /* timeout events have more info set later, so
-     print the event out in next_event_internal(). */
-  if (event->event_type != timeout_event)
-    DEBUG_PRINT_EMACS_EVENT ("real", event_obj);
-#endif
-  maybe_kbd_translate (event_obj);
-}
-
 void
 event_stream_handle_magic_event (Lisp_Event *event)
 {
-  check_event_stream_ok (EVENT_STREAM_READ);
+  check_event_stream_ok ();
   event_stream->handle_magic_event_cb (event);
 }
 
 void
 event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
 {
-  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  check_event_stream_ok ();
   event_stream->format_magic_event_cb (event, pstream);
 }
 
 int
 event_stream_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
 {
-  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  check_event_stream_ok ();
   return event_stream->compare_magic_event_cb (e1, e2);
 }
 
 Hashcode
 event_stream_hash_magic_event (Lisp_Event *e)
 {
-  check_event_stream_ok (EVENT_STREAM_NOTHING);
+  check_event_stream_ok ();
   return event_stream->hash_magic_event_cb (e);
 }
 
 static int
 event_stream_add_timeout (EMACS_TIME timeout)
 {
-  check_event_stream_ok (EVENT_STREAM_TIMEOUT);
+  check_event_stream_ok ();
   return event_stream->add_timeout_cb (timeout);
 }
 
 static void
 event_stream_remove_timeout (int id)
 {
-  check_event_stream_ok (EVENT_STREAM_TIMEOUT);
+  check_event_stream_ok ();
   event_stream->remove_timeout_cb (id);
 }
 
 void
 event_stream_select_console (struct console *con)
 {
-  check_event_stream_ok (EVENT_STREAM_CONSOLE);
+  check_event_stream_ok ();
   if (!con->input_enabled)
     {
       event_stream->select_console_cb (con);
@@ -682,7 +586,7 @@ event_stream_select_console (struct console *con)
 void
 event_stream_unselect_console (struct console *con)
 {
-  check_event_stream_ok (EVENT_STREAM_CONSOLE);
+  check_event_stream_ok ();
   if (con->input_enabled)
     {
       event_stream->unselect_console_cb (con);
@@ -695,7 +599,7 @@ event_stream_select_process (Lisp_Process *proc, int doin, int doerr)
 {
   int cur_in, cur_err;
 
-  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  check_event_stream_ok ();
 
   cur_in = get_process_selected_p (proc, 0);
   if (cur_in)
@@ -725,7 +629,7 @@ event_stream_unselect_process (Lisp_Process *proc, int doin, int doerr)
 {
   int cur_in, cur_err;
 
-  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  check_event_stream_ok ();
 
   cur_in = get_process_selected_p (proc, 0);
   if (!cur_in)
@@ -759,7 +663,7 @@ event_stream_create_io_streams (void *inhandle, void *outhandle,
 				USID *err_usid,
 				int flags)
 {
-  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  check_event_stream_ok ();
   event_stream->create_io_streams_cb
     (inhandle, outhandle, errhandle, instream, outstream, errstream,
      in_usid, err_usid, flags);
@@ -772,70 +676,9 @@ event_stream_delete_io_streams (Lisp_Object instream,
 				USID *in_usid,
 				USID *err_usid)
 {
-  check_event_stream_ok (EVENT_STREAM_PROCESS);
+  check_event_stream_ok ();
   event_stream->delete_io_streams_cb (instream, outstream, errstream,
 				      in_usid, err_usid);
-}
-
-static void
-event_stream_drain_queue (void)
-{
-  if (event_stream && event_stream->drain_queue_cb)
-    event_stream->drain_queue_cb ();
-}
-
-struct remove_quit_p_data
-{
-  int critical;
-};
-
-static int
-remove_quit_p_event (Lisp_Object ev, void *the_data)
-{
-  struct remove_quit_p_data *data = (struct remove_quit_p_data *) the_data;
-  struct console *con = event_console_or_selected (ev);
-
-  if (XEVENT_TYPE (ev) == key_press_event)
-    {
-      if (event_matches_key_specifier_p (ev, CONSOLE_QUIT_EVENT (con)))
-	return 1;
-      if (event_matches_key_specifier_p (ev,
-					 CONSOLE_CRITICAL_QUIT_EVENT (con)))
-	{
-	  data->critical = 1;
-	  return 1;
-	}
-    }
-
-  return 0;
-}
-
-static int
-event_stream_quit_check_disallowed_p (void)
-{
-  if (event_stream && event_stream->quit_check_disallowed_p_cb)
-    return event_stream->quit_check_disallowed_p_cb ();
-  else
-    return 0;
-}
-
-void
-event_stream_quit_p (void)
-{
-  struct remove_quit_p_data data;
-
-  if (event_stream_quit_check_disallowed_p ())
-    return;
-
-  /* Drain queue so we can check for pending C-g events. */
-  event_stream_drain_queue ();
-  data.critical = 0;
-
-  if (map_event_chain_remove (remove_quit_p_event,
-			      &dispatch_event_queue,
-			      &dispatch_event_queue_tail,
-			      &data, MECR_DEALLOCATE_EVENT))
-    Vquit_flag = data.critical ? Qcritical : Qt;
 }
 
 static int
@@ -963,80 +806,6 @@ reset_key_echo (struct command_builder *command_builder,
 /*                          random junk                               */
 /**********************************************************************/
 
-static void
-maybe_kbd_translate (Lisp_Object event)
-{
-  Ichar c;
-  int did_translate = 0;
-
-  if (XEVENT_TYPE (event) != key_press_event)
-    return;
-  if (!HASH_TABLEP (Vkeyboard_translate_table))
-    return;
-  if (EQ (Fhash_table_count (Vkeyboard_translate_table), Qzero))
-    return;
-
-  c = event_to_character (event, 0, 0, 0);
-  if (c != -1)
-    {
-      Lisp_Object traduit = Fgethash (make_char (c), Vkeyboard_translate_table,
-				      Qnil);
-      if (!NILP (traduit) && SYMBOLP (traduit))
-	{
-	  XSET_EVENT_KEY_KEYSYM (event, traduit);
-	  XSET_EVENT_KEY_MODIFIERS (event, 0);
-	  did_translate = 1;
-	}
-      else if (CHARP (traduit))
-	{
-	  /* This used to call Fcharacter_to_event() directly into EVENT,
-	     but that can eradicate timestamps and other such stuff.
-	     This way is safer. */
-	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
-
-	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
-	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
-	  XSET_EVENT_KEY_MODIFIERS (event, XEVENT_KEY_MODIFIERS (ev2));
-	  Fdeallocate_event (ev2);
-	  did_translate = 1;
-	}
-    }
-
-  if (!did_translate)
-    {
-      Lisp_Object traduit = Fgethash (XEVENT_KEY_KEYSYM (event),
-				      Vkeyboard_translate_table, Qnil);
-      if (!NILP (traduit) && SYMBOLP (traduit))
-	{
-	  XSET_EVENT_KEY_KEYSYM (event, traduit);
-	  did_translate = 1;
-	}
-      else if (CHARP (traduit))
-	{
-	  /* This used to call Fcharacter_to_event() directly into EVENT,
-	     but that can eradicate timestamps and other such stuff.
-	     This way is safer. */
-	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
-
-	  character_to_event (XCHAR (traduit), XEVENT (ev2),
-			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
-	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
-	  XSET_EVENT_KEY_MODIFIERS (event,
-                               XEVENT_KEY_MODIFIERS (event) |
-                               XEVENT_KEY_MODIFIERS (ev2));
-
-	  Fdeallocate_event (ev2);
-	  did_translate = 1;
-	}
-    }
-
-#ifdef DEBUG_XEMACS
-  if (did_translate)
-    DEBUG_PRINT_EMACS_EVENT ("->keyboard-translate-table", event);
-#endif
-}
-
 /* NB: The following auto-save stuff is in keyboard.c in FSFmacs, and
    keystrokes_since_auto_save is equivalent to the difference between
    num_nonmacro_input_chars and last_auto_save. */
@@ -1065,7 +834,7 @@ maybe_do_auto_save (void)
   keystrokes_since_auto_save++;
   if (auto_save_interval > 0 &&
       keystrokes_since_auto_save > max (auto_save_interval, 20) &&
-      !detect_input_pending ())
+      !detect_input_pending (1))
     {
       Fdo_auto_save (Qnil, Qnil);
       record_auto_save ();
@@ -1132,45 +901,6 @@ execute_help_form (struct command_builder *command_builder,
     memcpy (command_builder->echo_buf,
             XSTRING_DATA (echo), buf_index + 1); /* terminating 0 */
   UNGCPRO;
-}
-
-
-/**********************************************************************/
-/*                          input pending                             */
-/**********************************************************************/
-
-int
-detect_input_pending (void)
-{
-  /* Always call the event_pending_p hook even if there's an unread
-     character, because that might do some needed ^G detection (on
-     systems without SIGIO, for example).
-   */
-  if (event_stream_event_pending_p (1))
-    return 1;
-  if (!NILP (Vunread_command_events) || !NILP (Vunread_command_event))
-    return 1;
-  if (!NILP (command_event_queue))
-    {
-      Lisp_Object event;
-
-      EVENT_CHAIN_LOOP (event, command_event_queue)
-	{
-	  if (XEVENT_TYPE (event) != eval_event
-	      && XEVENT_TYPE (event) != magic_eval_event)
-	    return 1;
-	}
-    }
-  return 0;
-}
-
-DEFUN ("input-pending-p", Finput_pending_p, 0, 0, 0, /*
-Return t if command input is currently available with no waiting.
-Actually, the value is nil only if we can be sure that no input is available.
-*/
-  ())
-{
-  return detect_input_pending () ? Qt : Qnil;
 }
 
 
@@ -2121,6 +1851,165 @@ emacs_handle_focus_change_final (Lisp_Object frame_inp_and_dev)
 
 
 /**********************************************************************/
+/*                     input pending/quit checking                    */
+/**********************************************************************/
+
+/* If HOW_MANY is 0, return true if there are any user or non-user events
+   pending.  If HOW_MANY is > 0, return true if there are that many *user*
+   events pending, irrespective of non-user events. */
+
+static int
+event_stream_event_pending_p (int how_many)
+{
+  /* #### Hmmm ...  There may be some duplication in "drain queue" and
+     "event pending".  Couldn't we just drain the queue and see what's in
+     it, and not maybe need a separate event method for this?  Would this
+     work when HOW_MANY is 0?  Maybe this would be slow? */
+  return event_stream && event_stream->event_pending_p (how_many);
+}
+
+static void
+event_stream_force_event_pending (struct frame *f)
+{
+  if (event_stream->force_event_pending_cb)
+    event_stream->force_event_pending_cb (f);
+}
+
+void
+event_stream_drain_queue (void)
+{
+  if (event_stream && event_stream->drain_queue_cb)
+    event_stream->drain_queue_cb ();
+}
+
+/* Return non-zero if at least HOW_MANY user events are pending. */
+int
+detect_input_pending (int how_many)
+{
+  Lisp_Object event;
+
+  if (!NILP (Vunread_command_event))
+    how_many--;
+
+  how_many -= XINT (Fsafe_length (Vunread_command_events));
+
+  if (how_many <= 0)
+    return 1;
+
+  EVENT_CHAIN_LOOP (event, command_event_queue)
+    {
+      if (XEVENT_TYPE (event) != eval_event
+	  && XEVENT_TYPE (event) != magic_eval_event)
+	{
+	  how_many--;
+	  if (how_many <= 0)
+	    return 1;
+	}
+    }
+
+  return event_stream_event_pending_p (how_many);
+}
+
+DEFUN ("input-pending-p", Finput_pending_p, 0, 0, 0, /*
+Return t if command input is currently available with no waiting.
+Actually, the value is nil only if we can be sure that no input is available.
+*/
+  ())
+{
+  return detect_input_pending (1) ? Qt : Qnil;
+}
+
+static int
+maybe_read_quit_event (Lisp_Event *event)
+{
+  /* A C-g that came from `sigint_happened' will always come from the
+     controlling terminal.  If that doesn't exist, however, then the
+     user manually sent us a SIGINT, and we pretend the C-g came from
+     the selected console. */
+  struct console *con;
+
+  if (CONSOLEP (Vcontrolling_terminal) &&
+      CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)))
+    con = XCONSOLE (Vcontrolling_terminal);
+  else
+    con = XCONSOLE (Fselected_console ());
+
+  if (sigint_happened)
+    {
+      sigint_happened = 0;
+      Vquit_flag = Qnil;
+      Fcopy_event (CONSOLE_QUIT_EVENT (con), wrap_event (event));
+      return 1;
+    }
+  return 0;
+}
+
+struct remove_quit_p_data
+{
+  int critical;
+};
+
+static int
+remove_quit_p_event (Lisp_Object ev, void *the_data)
+{
+  struct remove_quit_p_data *data = (struct remove_quit_p_data *) the_data;
+  struct console *con = event_console_or_selected (ev);
+
+  if (XEVENT_TYPE (ev) == key_press_event)
+    {
+      if (event_matches_key_specifier_p (ev, CONSOLE_QUIT_EVENT (con)))
+	return 1;
+      if (event_matches_key_specifier_p (ev,
+					 CONSOLE_CRITICAL_QUIT_EVENT (con)))
+	{
+	  data->critical = 1;
+	  return 1;
+	}
+    }
+
+  return 0;
+}
+
+void
+event_stream_quit_p (void)
+{
+  struct remove_quit_p_data data;
+
+  /* Quit checking cannot happen in modal loop.  Because it attempts to
+     retrieve and dispatch events, it will cause lots of problems if we try
+     to do this when already in the process of doing this -- deadlocking
+     under Windows, crashes in lwlib etc. under X due to non-reentrant
+     code.  This is automatically caught, however, in
+     event_stream_drain_queue() (checks for in_modal_loop in the
+     event-specific code). */
+
+  /* Drain queue so we can check for pending C-g events. */
+  event_stream_drain_queue ();
+  data.critical = 0;
+
+  if (map_event_chain_remove (remove_quit_p_event,
+			      &dispatch_event_queue,
+			      &dispatch_event_queue_tail,
+			      &data, MECR_DEALLOCATE_EVENT))
+    Vquit_flag = data.critical ? Qcritical : Qt;
+}
+
+Lisp_Object
+event_stream_protect_modal_loop (const char *error_string,
+				 Lisp_Object (*bfun) (void *barg),
+				 void *barg, int flags)
+{
+  Lisp_Object tmp;
+
+  ++in_modal_loop;
+  tmp = call_trapping_problems (Qevent, error_string, flags, 0, bfun, barg);
+  --in_modal_loop;
+
+  return tmp;
+}
+
+
+/**********************************************************************/
 /*                      retrieving the next event                     */
 /**********************************************************************/
 
@@ -2145,8 +2034,58 @@ in_single_console_state (void)
   return in_single_console;
 }
 
-/* the number of keyboard characters read.  callint.c wants this. */
-Charcount num_input_chars;
+static void
+event_stream_next_event (Lisp_Event *event)
+{
+  Lisp_Object event_obj;
+
+  check_event_stream_ok ();
+
+  event_obj = wrap_event (event);
+  zero_event (event);
+  /* SIGINT occurs when C-g was pressed on a TTY. (SIGINT might have
+     been sent manually by the user, but we don't care; we treat it
+     the same.)
+
+     The SIGINT signal handler sets Vquit_flag as well as sigint_happened
+     and write a byte on our "fake pipe", which unblocks us when we are
+     waiting for an event. */
+
+  /* If SIGINT was received after we disabled quit checking (because
+     we want to read C-g's as characters), but before we got a chance
+     to start reading, notice it now and treat it as a character to be
+     read.  If above callers wanted this to be QUIT, they can
+     determine this by comparing the event against quit-char. */
+
+  if (maybe_read_quit_event (event))
+    {
+      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
+      return;
+    }
+
+  /* If a longjmp() happens in the callback, we're screwed.
+     Let's hope it doesn't.  I think the code here is fairly
+     clean and doesn't do this. */
+  emacs_is_blocking = 1;
+  event_stream->next_event_cb (event);
+  emacs_is_blocking = 0;
+
+  /* Now check to see if C-g was pressed while we were blocking.
+     We treat it as an event, just like above. */
+  if (maybe_read_quit_event (event))
+    {
+      DEBUG_PRINT_EMACS_EVENT ("SIGINT", event_obj);
+      return;
+    }
+
+#ifdef DEBUG_XEMACS
+  /* timeout events have more info set later, so
+     print the event out in next_event_internal(). */
+  if (event->event_type != timeout_event)
+    DEBUG_PRINT_EMACS_EVENT ("real", event_obj);
+#endif
+  maybe_kbd_translate (event_obj);
+}
 
 /* Read an event from the window system (or tty).  If ALLOW_QUEUED is
    non-zero, read from the command-event queue first.
@@ -2225,17 +2164,14 @@ void
 run_pre_idle_hook (void)
 {
   if (!NILP (Vpre_idle_hook)
-      && !detect_input_pending ())
+      && !detect_input_pending (1))
     safe_run_hook_trapping_problems
       ("Error in `pre-idle-hook' (setting hook to nil)",
-       Qpre_idle_hook, INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION);
+       Qpre_idle_hook,
+       /* Quit is inhibited as a result of being within next-event so
+	  we need to fix that. */
+       INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION | UNINHIBIT_QUIT);
 }
-
-static void push_this_command_keys (Lisp_Object event);
-static void push_recent_keys (Lisp_Object event);
-static void dribble_out_event (Lisp_Object event);
-static void execute_internal_event (Lisp_Object event);
-static int is_scrollbar_event (Lisp_Object event);
 
 DEFUN ("next-event", Fnext_event, 0, 2, 0, /*
 Return the next available event.
@@ -2295,22 +2231,24 @@ The returned event will be one of the following types:
 
   GCPRO1 (event);
 
-  depth = begin_dont_check_for_quit ();
-
-#ifdef LWLIB_MENUBARS_LUCID
-  /*
-   * #### Fix the menu code so this isn't necessary.
-   *
-   * We cannot allow the lwmenu code to be reentered, because the
-   * code is not written to be reentrant and will crash.  Therefore
-   * paths from the menu callbacks back into the menu code have to
-   * be blocked.  Fnext_event is the normal path into the menu code,
-   * so we signal an error here.
-   */
-  if (in_menu_callback)
-    invalid_operation ("Attempt to call next-event inside menu callback",
+  /* This is not strictly necessary.  Trying to retrieve an event inside of
+     a modal loop can cause major problems (see event_stream_quit_p()), but
+     the event-specific code knows about this and will make sure we don't
+     do anything dangerous.  However, if we've gotten here, it's highly
+     likely that some code is trying to fetch user events (e.g. in custom
+     dialog-box code), and will almost certainly deadlock, so it's probably
+     best to error out. #### This could cause problems because there are
+     (potentially, at least) legitimate reasons for calling next-event
+     inside of a modal loop, in particular if the code is trying to search
+     for a timeout event, which will still get retrieved in such a case.
+     However, the code to error in such a case has already been present for
+     a long time without obvious problems so leaving it in isn't so
+     bad. --ben */
+  if (in_modal_loop)
+    invalid_operation ("Attempt to call next-event inside modal loop",
 		       Qunbound);
-#endif /* LWLIB_MENUBARS_LUCID */
+
+  depth = begin_dont_check_for_quit ();
 
   if (NILP (event))
     event = Fmake_event (Qnil, Qnil);
@@ -2642,6 +2580,12 @@ reset_current_events (struct command_builder *command_builder)
     deallocate_event_chain (event);
 }
 
+static int
+command_event_p_cb (Lisp_Object ev, void *the_data)
+{
+  return command_event_p (ev);
+}
+
 DEFUN ("discard-input", Fdiscard_input, 0, 0, 0, /*
 Discard any pending "user" events.
 Also cancel any kbd macro being defined.
@@ -2650,84 +2594,31 @@ A user event is a key press, button press, button release, or
 */
        ())
 {
-  /* This throws away user-input on the queue, but doesn't process any
-     events.  Calling dispatch_event() here leads to a race condition.
-   */
-  Lisp_Object event = Fmake_event (Qnil, Qnil);
-  Lisp_Object head = Qnil, tail = Qnil;
-  struct gcpro gcpro1;
-  /* #### not correct here with Vselected_console?  Should
-     discard-input take a console argument, or maybe map over
-     all consoles? */
-  struct console *con = XCONSOLE (Vselected_console);
+  Lisp_Object concons;
 
-  /* next_event_internal() can cause arbitrary Lisp code to be evalled */
-  GCPRO1 (event);
-  /* If a macro was being defined then we have to mark the modeline
-     has changed to ensure that it gets updated correctly. */
-  if (!NILP (con->defining_kbd_macro))
-    MARK_MODELINE_CHANGED;
-  con->defining_kbd_macro = Qnil;
-  reset_current_events (XCOMMAND_BUILDER (con->command_builder));
-
-  while (!NILP (command_event_queue)
-         || event_stream_event_pending_p (1))
+  CONSOLE_LOOP (concons)
     {
-      /* We want to ignore C-g's along with all other keypresses. */
-      int depth = begin_dont_check_for_quit ();
-      /* This will take stuff off the command_event_queue, or read it
-	 from the event_stream, but it will not block.
-       */
-      next_event_internal (event, 1);
-      /* The following comment used to be here:
+      struct console *con = XCONSOLE (XCAR (concons));
 
-	 [[Treat C-g as a user event (ignore it).  It is vitally
-	 important that we reset Vquit_flag here.  Otherwise, if we're
-	 reading from a TTY console, maybe_read_quit_event() will
-	 notice that C-g has been set and send us another C-g.  That
-	 will cause us to get right back here, and read another C-g,
-	 ad infinitum ...]]
-
-         but I don't think this is correct; maybe_read_quit_event()
-         checks and resets sigint_happened.  It shouldn't matter if we
-	 reset here or outside of the while loop. --ben */
-      Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
-
-      unbind_to (depth);
-
-      /* If the event is a user event, ignore it. */
-      if (!command_event_p (event))
-	{
-	  /* Otherwise, chain the event onto our list of events not to ignore,
-	     and keep reading until the queue is empty.  This does not mean
-	     that if a subprocess is generating an infinite amount of output,
-	     we will never terminate (*provided* that the behavior of
-	     next_event_cb() is correct -- see the comment in events.h),
-	     because this loop ends as soon as there are no more user events
-	     on the command_event_queue or event_stream.
-	     */
-	  enqueue_event (Fcopy_event (event, Qnil), &head, &tail);
-	}
+      /* If a macro was being defined then we have to mark the modeline
+	 has changed to ensure that it gets updated correctly. */
+      if (!NILP (con->defining_kbd_macro))
+	MARK_MODELINE_CHANGED;
+      con->defining_kbd_macro = Qnil;
+      reset_current_events (XCOMMAND_BUILDER (con->command_builder));
     }
 
-  if (!NILP (command_event_queue) || !NILP (command_event_queue_tail))
-    abort ();
+  /* This function used to be a lot more complicated.  Now, we just
+     drain the pending queue and discard all user events from the
+     command and dispatch queues. */
+  event_stream_drain_queue ();
 
-  /* Now tack our chain of events back on to the front of the queue.
-     Actually, since the queue is now drained, we can just replace it.
-     The effect of this will be that we have deleted all user events
-     from the input stream without changing the relative ordering of
-     any other events.  (Some events may have been taken from the
-     event_stream and added to the command_event_queue, however.)
-
-     At this time, the command_event_queue will contain only eval_events.
-   */
-
-  command_event_queue = head;
-  command_event_queue_tail = tail;
-
-  Fdeallocate_event (event);
-  UNGCPRO;
+  map_event_chain_remove (command_event_p_cb,
+			  &dispatch_event_queue, &dispatch_event_queue_tail,
+			  0, MECR_DEALLOCATE_EVENT);
+  map_event_chain_remove (command_event_p_cb,
+			  &command_event_queue, &command_event_queue_tail,
+			  0, MECR_DEALLOCATE_EVENT);
 
   return Qnil;
 }
@@ -2739,8 +2630,8 @@ A user event is a key press, button press, button release, or
 
 /* This is used in accept-process-output, sleep-for and sit-for.
    Before running any process_events in these routines, we set
-   recursive_sit_for to Qt, and use this unwind protect to reset it to
-   Qnil upon exit.  When recursive_sit_for is Qt, calling sit-for will
+   recursive_sit_for to 1, and use this unwind protect to reset it to
+   Qnil upon exit.  When recursive_sit_for is 1, calling sit-for will
    cause it to return immediately.
 
    All of these routines install timeouts, so we clear the installed
@@ -2757,7 +2648,7 @@ sit_for_unwind (Lisp_Object timeout_id)
   if (!NILP(timeout_id))
     Fdisable_timeout (timeout_id);
 
-  recursive_sit_for = Qnil;
+  recursive_sit_for = 0;
   return Qnil;
 }
 
@@ -2822,7 +2713,7 @@ Return non-nil iff we received any output before the timeout expired.
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind,
 			 timeout_enabled ? make_int (timeout_id) : Qnil);
-  recursive_sit_for = Qt;
+  recursive_sit_for = 1;
 
   while (!done &&
          ((NILP (process) && timeout_enabled) ||
@@ -2919,7 +2810,7 @@ filter function or timer event (either synchronous or asynchronous).
 
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind, make_int (id));
-  recursive_sit_for = Qt;
+  recursive_sit_for = 1;
 
   while (1)
     {
@@ -3000,7 +2891,7 @@ If sit-for is called from within a process filter function or timer
     return Qnil;
 
   /* Recursive call from a filter function or timeout handler. */
-  if (!NILP (recursive_sit_for))
+  if (recursive_sit_for)
     {
       if (!event_stream_event_pending_p (1) && NILP (nodisplay))
 	  redisplay ();
@@ -3025,7 +2916,7 @@ If sit-for is called from within a process filter function or timer
 
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind, make_int (id));
-  recursive_sit_for = Qt;
+  recursive_sit_for = 1;
 
   while (1)
     {
@@ -3309,6 +3200,80 @@ command_builder_find_leaf_1 (struct command_builder *builder)
   return event_binding (event0, 1);
 }
 
+static void
+maybe_kbd_translate (Lisp_Object event)
+{
+  Ichar c;
+  int did_translate = 0;
+
+  if (XEVENT_TYPE (event) != key_press_event)
+    return;
+  if (!HASH_TABLEP (Vkeyboard_translate_table))
+    return;
+  if (EQ (Fhash_table_count (Vkeyboard_translate_table), Qzero))
+    return;
+
+  c = event_to_character (event, 0, 0, 0);
+  if (c != -1)
+    {
+      Lisp_Object traduit = Fgethash (make_char (c), Vkeyboard_translate_table,
+				      Qnil);
+      if (!NILP (traduit) && SYMBOLP (traduit))
+	{
+	  XSET_EVENT_KEY_KEYSYM (event, traduit);
+	  XSET_EVENT_KEY_MODIFIERS (event, 0);
+	  did_translate = 1;
+	}
+      else if (CHARP (traduit))
+	{
+	  /* This used to call Fcharacter_to_event() directly into EVENT,
+	     but that can eradicate timestamps and other such stuff.
+	     This way is safer. */
+	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
+
+	  character_to_event (XCHAR (traduit), XEVENT (ev2),
+			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
+	  XSET_EVENT_KEY_MODIFIERS (event, XEVENT_KEY_MODIFIERS (ev2));
+	  Fdeallocate_event (ev2);
+	  did_translate = 1;
+	}
+    }
+
+  if (!did_translate)
+    {
+      Lisp_Object traduit = Fgethash (XEVENT_KEY_KEYSYM (event),
+				      Vkeyboard_translate_table, Qnil);
+      if (!NILP (traduit) && SYMBOLP (traduit))
+	{
+	  XSET_EVENT_KEY_KEYSYM (event, traduit);
+	  did_translate = 1;
+	}
+      else if (CHARP (traduit))
+	{
+	  /* This used to call Fcharacter_to_event() directly into EVENT,
+	     but that can eradicate timestamps and other such stuff.
+	     This way is safer. */
+	  Lisp_Object ev2 = Fmake_event (Qnil, Qnil);
+
+	  character_to_event (XCHAR (traduit), XEVENT (ev2),
+			      XCONSOLE (XEVENT_CHANNEL (event)), 0, 1);
+	  XSET_EVENT_KEY_KEYSYM (event, XEVENT_KEY_KEYSYM (ev2));
+	  XSET_EVENT_KEY_MODIFIERS (event,
+                               XEVENT_KEY_MODIFIERS (event) |
+                               XEVENT_KEY_MODIFIERS (ev2));
+
+	  Fdeallocate_event (ev2);
+	  did_translate = 1;
+	}
+    }
+
+#ifdef DEBUG_XEMACS
+  if (did_translate)
+    DEBUG_PRINT_EMACS_EVENT ("->keyboard-translate-table", event);
+#endif
+}
+
 /* See if we can do function-key-map or key-translation-map translation
    on the current events in the command builder.  If so, do this, and
    return the resulting binding, if any.
@@ -3424,7 +3389,7 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
   /* #### this horribly-written crap can mess with global state, which
      this function should not do.  i'm not fixing it now.  someone
      needs to go and rewrite that shit correctly. --ben */
-#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
+#if defined (HAVE_X_WINDOWS) && defined (LWLIB_MENUBARS_LUCID)
   if (x_kludge_lw_menu_active ())
     {
       return command_builder_operate_menu_accelerator (builder);
@@ -3437,7 +3402,7 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
       if (NILP (result))
 #endif
 	result = command_builder_find_leaf_1 (builder);
-#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
+#if defined (HAVE_X_WINDOWS) && defined (LWLIB_MENUBARS_LUCID)
       if (NILP (result)
 	  && EQ (Vmenu_accelerator_enabled, Qmenu_fallback))
 	result = command_builder_find_menu_accelerator (builder);
@@ -4867,7 +4832,8 @@ reinit_vars_of_event_stream (void)
   the_low_level_timeout_blocktype =
     Blocktype_new (struct low_level_timeout_blocktype);
   something_happened = 0;
-  recursive_sit_for = Qnil;
+  recursive_sit_for = 0;
+  in_modal_loop = 0;
 }
 
 void

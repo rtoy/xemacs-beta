@@ -1,3 +1,158 @@
+2003-02-07  Ben Wing  <ben@xemacs.org>
+
+	This contains two related changes:
+
+	(1) Fix problems with reentrant calling of lwlib and associated
+	    crashes when selecting menu items.
+	(2) Improve redisplay handling of preemption.  Turn on lazy lock
+	    and hold down page-down or page-up and you'll see what I mean.
+
+	They are related because they both touch on the code that retrieves
+	events and handles the internal queues.
+	
+	* console-msw.h:
+	* event-msw.c:
+	* event-msw.c (mswindows_unmodalize_signal_maybe):
+	* event-msw.c (mswindows_unsafe_pump_events):
+	* event-msw.c (mswindows_pump_outstanding_events):
+	* event-msw.c (mswindows_need_event_in_modal_loop):
+	* event-msw.c (mswindows_drain_windows_queue):
+	* event-msw.c (mswindows_need_event):
+	* event-msw.c (reinit_vars_of_event_mswindows):
+	* event-stream.c (event_stream_protect_modal_loop):
+	* events.h:
+	* events.h (struct event_stream):
+	* menubar-msw.c (struct handle_wm_initmenu):
+	* menubar-msw.c (unsafe_handle_wm_initmenupopup):
+	* menubar-msw.c (unsafe_handle_wm_initmenu):
+	* menubar-msw.c (mswindows_handle_wm_initmenupopup):
+	* menubar-msw.c (mswindows_handle_wm_initmenu):
+	* menubar-x.c:
+	* menubar-x.c (protected_menu_item_descriptor_to_widget_value):
+	* menubar-x.c (pre_activate_callback):
+	* menubar.h:
+
+	mswindows_protect_modal_loop() has been generalized to
+	event_stream_protect_modal_loop(), and moved to event-stream.c.
+	mswindows_in_modal_loop ->in_modal_loop likewise.  Changes in
+	event-msw.c and menubar-msw.c for the new names and calling format
+	(use structures instead of static variables in menubar-msw.c).
+	Delete former in_menu_callback and use in_modal_loop in its place.
+	Remove emacs_mswindows_quit_check_disallowed_p(), superseded by
+	in_modal_loop.  Use event_stream_protect_modal_loop() in
+	pre_activate_callback() so that we get no lwlib reentrancy.
+
+	Rearrange some of the code in event-msw.c to be grouped better.
+	Make mswindows_drain_windows_queue() respect in_modal_loop and
+	do nothing if so.
+
+	* cmdloop.c (command_loop_3):
+	* event-stream.c (Fnext_event):
+	Don't conditionalize on LWLIB_MENUBARS_LUCID when giving error when
+	in_modal_loop, and give better error.
+
+	* event-Xt.c (emacs_Xt_next_event):
+	* event-Xt.c (emacs_Xt_drain_queue):
+	* event-gtk.c (emacs_gtk_drain_queue):
+	If in_modal_loop, only retrieve process and timeout events.
+	Don't retrieve any X events because processing them can lead
+	to reentrancy in lwlib -> death.
+	
+	* event-stream.c:
+	* event-stream.c (check_event_stream_ok):
+	* event-stream.c (event_stream_handle_magic_event):
+	* event-stream.c (event_stream_format_magic_event):
+	* event-stream.c (event_stream_compare_magic_event):
+	* event-stream.c (event_stream_hash_magic_event):
+	* event-stream.c (event_stream_add_timeout):
+	* event-stream.c (event_stream_remove_timeout):
+	* event-stream.c (event_stream_select_console):
+	* event-stream.c (event_stream_unselect_console):
+	* event-stream.c (event_stream_select_process):
+	* event-stream.c (event_stream_unselect_process):
+	* event-stream.c (event_stream_create_io_streams):
+ 	* event-stream.c (event_stream_delete_io_streams):
+	* event-stream.c (event_stream_current_event_timestamp):
+	* event-stream.c (event_stream_next_event):
+	Remove unused parameter to check_event_stream_ok() and change
+	all callers.
+	
+	* lisp.h:
+	* event-stream.c (maybe_do_auto_save):
+	* event-stream.c (emacs_handle_focus_change_preliminary):
+	* event-stream.c (emacs_handle_focus_change_final):
+	* event-stream.c (detect_input_pending):
+	* event-stream.c (maybe_read_quit_event):
+	* event-stream.c (remove_quit_p_event):
+	* event-stream.c (event_stream_quit_p):
+	* event-stream.c (event_stream_next_event):
+	* event-stream.c (sit_for_unwind):
+	* event-stream.c (Faccept_process_output):
+	* event-stream.c (Fsleep_for):
+	* event-stream.c (Fsit_for):
+	* event-stream.c (maybe_kbd_translate):
+	* event-stream.c (command_builder_find_leaf_no_mule_processing):
+	* event-stream.c (reinit_vars_of_event_stream):
+	Rearrange some functions for increased clarity -- in particular,
+	group all the input-pending/QUIT-related stuff together, and
+	put right next to next-event stuff, to which it's related.
+	Add the concept of "HOW_MANY" -- when asking whether user input
+	is pending, you can ask if at least HOW_MANY events are pending,
+	not just if any are.  Add parameter to detect_input_pending()
+	for this.  Change recursive_sit_for from a Lisp_Object (which
+	could only be Qt or Qnil) to an int, like it should be.
+	
+	* event-Xt.c:
+	* event-Xt.c (THIS_IS_X):
+	* event-gtk.c:
+	* event-gtk.c (THIS_IS_GTK):
+	* event-xlike-inc.c: New file.
+	Abstract out similar code in event_{Xt/gtk}_pending_p() and write
+	only once, using include-file tricks.  Rewrite this function to
+	implement HOW_MANY and only process events when not in_modal_loop.
+
+	* event-msw.c (emacs_mswindows_event_pending_p):
+	Implement HOW_MANY and only process events when not in_modal_loop.
+	
+	* event-tty.c:
+	* event-tty.c (tty_timeout_to_emacs_event):
+	* event-tty.c (emacs_tty_event_pending_p):
+	Implement HOW_MANY.
+
+	* redisplay.c:
+	* redisplay.c (QUEUED_EVENTS_REQUIRED_FOR_PREEMPTION):
+	* redisplay.c (init_redisplay):
+	* redisplay.c (vars_of_redisplay):
+	Add var `max-preempts' to control maximum number of preempts.
+	(#### perhaps not useful) Rewrite preemption check so that,
+	rather than preempting when any user events are available, only
+	preempt when a certain number (currently 4) of them are backed up.
+	This effectively allows redisplay to proceed to completion in the
+	presence of a fast auto-repeat (usually the auto-repeating is
+	generated dynamically as necessary), and you get much better
+	display behavior with lazy-lock active.
+	
+	* event-unixoid.c:
+	Comment changes.
+	
+	* event-stream.c (command_event_p_cb):
+	* event-stream.c (Fdiscard_input):
+	Rewrite discard-input much more simply and safely using the
+	drain-queue functions.  I think the old version might loop
+	forever if called when in_modal_loop.
+
+	SEMI-UNRELATED CHANGES:
+	-----------------------
+	
+	* event-stream.c (run_pre_idle_hook):
+	Turn QUIT-checking back on when running the pre-idle hook so it
+	can be quit out of.
+	
+	* indent.c:
+	Document exact functioning of `vertical-motion' better, and its
+	differences from GNU Emacs.
+	
+
 2003-02-06  Ben Wing  <ben@xemacs.org>
 
 	* unicode.c:

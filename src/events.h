@@ -65,12 +65,13 @@ Boston, MA 02111-1307, USA.  */
  event_pending_cb	A function which says whether there are events to be
 			read.  If called with an argument of 0, then this
 			should say whether calling the next_event_cb will
-			block.  If called with an argument of 1, then this
-			should say whether there are user-generated events
-			pending (that is, keypresses or mouse-clicks).  This
-			is used for redisplay optimization, among other
-			things.  On dumb ttys, these two results are the
-			same, but under a window system, they are not.
+			block.  If called with a non-zero argument, then this
+			should say whether there are that many user-generated
+			events pending (that is, keypresses, mouse-clicks,
+			dialog-box selection events, etc.). (This is used for
+			redisplay optimization, among other things.)  The
+			difference is that the former includes process events
+			and timer events, but the latter doesn't.
 
 			If this function is not sure whether there are events
 			to be read, it *must* return 0.  Otherwise various
@@ -205,7 +206,6 @@ struct event_stream
   void (*unselect_console_cb)	(struct console *);
   void (*select_process_cb)	(Lisp_Process *, int doin, int doerr);
   void (*unselect_process_cb)	(Lisp_Process *, int doin, int doerr);
-  int (*quit_check_disallowed_p_cb)(void);
   void (*drain_queue_cb)	(void);
   void (*force_event_pending_cb)(struct frame* f);
   void (*create_io_streams_cb)  (void* /* inhandle*/, void* /*outhandle*/ ,
@@ -1031,6 +1031,7 @@ EXFUN (Fevent_over_vertical_divider_p, 1);
 EXFUN (Fevent_point, 1);
 EXFUN (Fevent_window, 1);
 EXFUN (Fmake_event, 2);
+EXFUN (Fnext_command_event, 2);
 
 extern Lisp_Object QKbackspace, QKdelete, QKescape, QKlinefeed, QKreturn;
 extern Lisp_Object QKspace, QKtab, Qmouse_event_p, Vcharacter_set_property;
@@ -1127,6 +1128,10 @@ void event_stream_delete_io_streams (Lisp_Object instream,
 				     Lisp_Object errstream,
 				     USID* in_usid,
 				     USID* err_usid);
+Lisp_Object event_stream_protect_modal_loop (const char *error_string,
+					     Lisp_Object (*bfun) (void *barg),
+					     void *barg, int flags);
+void event_stream_drain_queue (void);
 void event_stream_quit_p (void);
 void run_pre_idle_hook (void);
 
@@ -1173,7 +1178,7 @@ void any_console_state (void);
 int in_single_console_state (void);
 
 extern int emacs_is_blocking;
-
+extern int in_modal_loop;
 extern volatile int sigint_happened;
 
 #ifdef HAVE_UNIXOID_EVENT_LOOP
