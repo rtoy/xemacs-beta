@@ -36,13 +36,13 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
 #else
-size_t wcslen(const wchar_t *);
+size_t wcslen (const wchar_t *);
 #endif
 #ifndef HAVE_STRLWR
-char *strlwr(char *);
+char *strlwr (char *);
 #endif
 #ifndef HAVE_STRUPR
-char *strupr(char *);
+char *strupr (char *);
 #endif
 
 /* ---------------------------------------------------------------------- */

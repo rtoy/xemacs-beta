@@ -1,3 +1,13 @@
+2003-02-04  Ben Wing  <ben@xemacs.org>
+
+	* s/windowsnt.h:
+	* s/windowsnt.h (HAVE_STRLWR):
+	Windows has strupr(), strlwr().  Comment fixes.
+
+2003-02-04  Ben Wing  <ben@xemacs.org>
+
+	* text.h: Style fixes.
+
 2003-01-31  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* alloc.c (mark_object_maybe_checking_free): C macro syntax

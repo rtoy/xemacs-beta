@@ -167,6 +167,8 @@ __MINGW32__ -> MINGW
 #define HAVE_RMDIR
 #define HAVE_SELECT
 #define HAVE_STRERROR
+#define HAVE_STRLWR
+#define HAVE_STRUPR
 
 #define HAVE_SOCKETS
 
@@ -248,14 +250,12 @@ typedef int ssize_t;
           extern void __cdecl decl PRINTF_ARGS(str,idx)
 #endif /* MSVC 6.0 */
 
-/* MSVC warnings no-no crap. When adding one to this section,
-   1. Think twice
+/* MSVC warnings no-no crap.  When adding one to this section,
+   1. Think twice.
    2. Insert textual description of the warning.
-   3. Think twice. Undo still works  */
+   3. Think again.  Undo still works. */
 #if (_MSC_VER >= 800)
 
-/* 'expression' : signed/unsigned mismatch */
-/* #pragma warning ( disable : 4018 ) */
 /* unnamed type definition in parentheses
   (Martin added a pedantically correct definition of ALIGNOF, which
   generates temporary anonymous structures, and MSVC complains) */
