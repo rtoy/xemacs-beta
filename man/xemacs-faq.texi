@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/05/22 07:41:21 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/06/30 09:30:58 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -3013,7 +3013,7 @@ Emacs.modeline.attributeFont: fixed
 This is confusing because @samp{default} and @samp{modeline} are face
 names, and can be found listed with all faces in the current mode by
 using @kbd{M-x set-face-font (enter) ?}.  They use the face-specific
-resource @samp{attributeFont}
+resource @samp{attributeFont}.
 
 On the other hand, @samp{menubar} is a normal X thing that uses the
 resource @samp{font}.  With Motif it @emph{may be} necessary to use

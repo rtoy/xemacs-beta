@@ -1,3 +1,17 @@
+2003-06-30  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q3.2.2): Fix typo.
+
+2003-06-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/objects.texi (Character Type): Document ?\x00 read
+	syntax and range limitations on ?\000 and ?\x00 read syntaxes.
+
+2003-06-16  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/lists.texi (List-related Predicates): Document
+	`true-list-p', and reference it from `listp'.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.

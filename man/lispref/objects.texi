@@ -613,24 +613,48 @@ bit values are 2**22 for alt, 2**23 for super and 2**24 for hyper.
 @cindex @samp{\} in character constant
 @cindex backslash in character constant
 @cindex octal character code
-  Finally, the most general read syntax consists of a question mark
+@cindex hexadecimal character code
+  Finally, there are two read syntaxes involving character codes.
+It is not possible to represent multibyte or wide characters in this
+way; the permissible range of codes is from 0 to 255 (@emph{i.e.},
+@samp{0377} octal or @samp{0xFF} hexadecimal).  If you wish to convert
+code points to other characters, you must use the @samp{make-char} or
+@samp{unicode-to-char} primitives in Mule.  (Non-Mule XEmacsen cannot
+represent codes out of that range at all, although you can set the font
+to a registry other than ISO 8859/1 to get the appearance of a greater
+range of characters.)  Although these syntaxes can represent any
+@sc{ascii} or Latin-1 character, they are preferred only when the
+precise integral value is more important than the @sc{ascii}
+representation.
+
+  The first consists of a question mark
 followed by a backslash and the character code in octal (up to three
 octal digits); thus, @samp{?\101} for the character @kbd{A},
 @samp{?\001} for the character @kbd{C-a}, and @code{?\002} for the
-character @kbd{C-b}.  Although this syntax can represent any @sc{ascii}
-character, it is preferred only when the precise octal value is more
-important than the @sc{ascii} representation.
+character @kbd{C-b}.
+
+  The second consists of a question mark followed by a backslash, the
+character @samp{x}, and the character code in hexadecimal (up to two
+hexadecimal digits); thus, @samp{?\x41} for the character @kbd{A},
+@samp{?\x1} for the character @kbd{C-a}, and @code{?\x2} for the
+character @kbd{C-b}.
+
+In both cases, the reader will finalize the character when a non-digit
+is encountered or the maximum length of a character code is reached.  It
+then starts reading the next token.
 
 @example
 @group
 ;; @r{Under XEmacs 20:}
 ?\012 @result{} ?\n        ?\n @result{} ?\n        ?\C-j @result{} ?\n
-?\101 @result{} ?A         ?A @result{} ?A
+?\101 @result{} ?A         ?A @result{} ?A          ?\x0A @result{} ?\n
+?\x41 @result{} ?A     '(?\xAZ) @result{} '(?\n Z)  '(?\0123) @result{} (?\n 3)
 @end group
 @group
 ;; @r{Under XEmacs 19:}
 ?\012 @result{} 10         ?\n @result{} 10         ?\C-j @result{} 10
 ?\101 @result{} 65         ?A @result{} 65
+;; ?\x41 @r{is a syntax error.}
 @end group
 @end example
 
