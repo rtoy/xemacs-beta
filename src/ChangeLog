@@ -1,3 +1,8 @@
+2002-06-17  Jerry James  <james@xemacs.org>
+
+	* sysdll.c: Remove RTLD_GLOBAL initialization.
+	* sysdll.c (dll_open): Do not use RTLD_GLOBAL.
+
 2002-06-24  Mike Sperber  <mike@xemacs.org>
 
 	* search.c (skip_chars): Fix a crash if NILP(lim).
