@@ -1,3 +1,17 @@
+2002-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/files.texi (Files):
+	(File Names):
+	Document remote file editing, refer to EFS and TRAMP.
+
+2002-02-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q4.7.7): New FAQ on remote files.
+
+2002-01-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.6): Update mail-to-news gateway information.
+
 2002-02-01  Steve Youngs  <youngs@xemacs.org>
 
 	* xemacs/packages.texi (Removing Packages): The interactive
