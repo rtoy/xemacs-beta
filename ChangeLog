@@ -1,3 +1,15 @@
+2003-05-04  Steve Youngs  <youngs@xemacs.org>
+
+	* configure: Regenerate.
+
+2003-05-01  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	* configure.in: Move module detection to after src/ is added to
+	MAKE_SUBDIR. On MacOS X, building modules requires xemacs to
+	already be built.
+	* aclocal.m4 (XE_SHLIB_STUFF): Properly define ellcc flags for
+	MacOS X.
+
 2003-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in (darwin): Collect random kludges in one place.
