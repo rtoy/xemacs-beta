@@ -35,12 +35,9 @@ Boston, MA 02111-1307, USA.  */
 #include "procimpl.h"
 #include "sysdep.h"
 
-#include <shellapi.h>
-#include <errno.h>
-#include <signal.h>
-#ifdef HAVE_SOCKETS
-#include <winsock.h>
-#endif
+#include "syssignal.h"
+#include "sysfile.h"
+#include "sysproc.h"
 
 /* Bound by win32-native.el */
 Lisp_Object Qmswindows_construct_process_command_line;
@@ -737,7 +734,7 @@ nt_create_process (Lisp_Process *p,
 	}
       else
 	{
-	  char progname[MAX_PATH];
+	  char progname[PATH_MAX];
 	  sprintf (progname, "%s.exe", (char *)XSTRING_DATA (program));
 	  image_type = xSHGetFileInfoA (progname, 0, NULL, 0, SHGFI_EXETYPE);
 	}

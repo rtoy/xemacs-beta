@@ -58,6 +58,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <config.h>
 #include "lisp.h"
 
+#include "sysfile.h"
 #include "syswindows.h"
 
 #include "nt.h"
@@ -128,9 +129,9 @@ _start (void)
      won't work.)  */
   if (heap_state == HEAP_UNLOADED) 
     {
-      char executable_path[MAX_PATH];
+      char executable_path[PATH_MAX];
 
-      if (GetModuleFileName (NULL, executable_path, MAX_PATH) == 0) 
+      if (GetModuleFileName (NULL, executable_path, PATH_MAX) == 0) 
 	{
 	  exit (1);
 	}
@@ -174,7 +175,7 @@ unexec (char *new_name, char *old_name, unsigned int start_data,
 	unsigned int start_bss, unsigned int entry_address)
 {
   file_data in_file, out_file;
-  char out_filename[MAX_PATH], in_filename[MAX_PATH];
+  char out_filename[PATH_MAX], in_filename[PATH_MAX];
   unsigned long size;
   char *ptr;
   HINSTANCE hImagehelp;
@@ -278,7 +279,7 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
 			    DWORD *p_bss_size)
 {
   int n, start, len;
-  char map_filename[MAX_PATH];
+  char map_filename[PATH_MAX];
   char buffer[256];
   FILE *map;
 

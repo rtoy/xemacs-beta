@@ -1,3 +1,109 @@
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	for 21.5:
+
+	* s\cygwin32.h:
+	* s\cygwin32.h (C_SWITCH_SYSTEM):
+	* s\cygwin32.h (BROKEN_SIGIO):
+	* s\mingw32.h (C_SWITCH_SYSTEM):
+	* s\mingw32.h (TEXT_START):
+	remove support for way old beta versions of cygwin.
+	don't put -Wno-sign-compare in the system switches; this
+	isn't a system issue.  define BROKEN_SIGIO for cygwin to
+	get C-g support.
+
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	for 21.4:
+	
+	* device-msw.c (msprinter_init_device):
+	signal an error rather than crash with an unavailable network
+	printer (from Mike Alexander).
+	
+	* event-msw.c:
+	* event-msw.c (struct winsock_stream):
+	* event-msw.c (winsock_writer):
+	* event-msw.c (winsock_closer):
+	* event-msw.c (make_winsock_stream_1):
+	cleanup headers.  fix (hopefully) an error with data corruption
+	when sending to a network connection.
+
+	* fileio.c (Fexpand_file_name): Fix evil code that attempts
+	to handle the ~user prefix by (a) always assuming we're referencing
+	ourselves and not even verifying the user -- hence any file with
+	a tilde as its first char is invalid! (b) if there wasn't a slash
+	following the filename, the pointer was set *past* the end of
+	file and we started reading from uninitialized memory.  Now we
+	simply treat these as files, always.
+
+	optionally for 21.4 (doc fix):
+	
+	* lread.c (pas_de_holgazan_ici):
+	* lread.c (load_force_doc_string_unwind):
+	cambia de pas_de_lache_ici -- al minimo usa la palabra certa.
+	
+	for 21.5:
+	
+	* frame.c (restore_frame_list_to_its_unbesmirched_state):
+	fix warnings.
+	
+	* emacs.c (make_arg_list_1):
+	* nt.c (win32_get_long_filename):
+	* nt.c (init_environment):
+	* nt.c (GetCachedVolumeInformation):
+	* nt.c (get_volume_info):
+	* nt.c (map_win32_filename):
+	* nt.c (sys_rename):
+	* nt.c (generate_inode_val):
+	* ntproc.c (Fwin32_short_file_name):
+	* ntproc.c (Fwin32_long_file_name):
+	* process-nt.c (nt_create_process):
+	* realpath.c (win32_readlink):
+	* unexnt.c:
+	* unexnt.c (_start):
+	* unexnt.c (unexec):
+	* unexnt.c (get_bss_info_from_map_file):
+	rename MAX_PATH to standard PATH_MAX.
+	
+	* process-nt.c:
+	* realpath.c:
+	cleanup headers.
+	
+	* process-unix.c (get_internet_address):
+	* sysdep.c (init_system_name):
+	* systime.h:
+	* syswindows.h:
+	kill BROKEN_CYGWIN and support for way old beta versions of cygwin.
+	
+	* sysfile.h:
+	use _MAX_PATH (Windows) preferentially for PATH_MAX if defined.
+	include io.h on Cygwin (we need get_osfhandle()).  include
+	sys/fcntl.h always, since we were including it in various
+	header files anyway.
+	
+	* unexcw.c:
+	* unexcw.c (DONT_ENCAPSULATE):
+	* unexcw.c (CHECK_AOUT_POS):
+	* unexcw.c (unexec):
+	* unexcw.c (get_section_info):
+	* unexcw.c (copy_executable_and_dump_data_section):
+	* unexcw.c (dup_file_area):
+	* unexcw.c (write_int_to_bss):
+	fix up style to conform to standard.  remove duplicate definition
+	of PERROR.
+
+	* buffer.c (common_init_complex_vars_of_buffer): comment change.
+	
+	* database.c:
+	* debug.h (struct debug_classes):
+	* device-tty.c:
+	* dired-msw.c:
+	* dired-msw.c (mswindows_sortby):
+	* glyphs-msw.c:
+	header cleanups (remove places that directly include a system
+	header file, because we have our own layer to do this more cleanly
+	and portably); indentation fixes.
+
 2001-05-22  Martin Buchholz  <martin@xemacs.org>
 
 	* config.h.in (SYSTEM_TYPE): Allow configure to set this.

@@ -38,17 +38,13 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "insdel.h"
 #include "opaque.h"
+#include "sysdep.h"
 #include "sysfile.h"
 #include "faces.h"
 #include "imgproc.h"
 
 #ifdef FILE_CODING
 #include "file-coding.h"
-#endif
-#include <stdio.h>
-#include <ctype.h>
-#ifdef HAVE_XFACE
-#include <setjmp.h>
 #endif
 
 #define WIDGET_GLYPH_SLOT 0

@@ -336,7 +336,7 @@ make_sure_its_a_fresh_plist (Lisp_Object foolist)
   return foolist;
 }
 
-Lisp_Object
+static Lisp_Object
 restore_frame_list_to_its_unbesmirched_state (Lisp_Object kawnz)
 {
   Lisp_Object lissed = XCDR (kawnz);

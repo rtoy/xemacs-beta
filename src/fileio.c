@@ -980,23 +980,11 @@ See also the function `substitute-in-file-name'.
 	  memcpy (o, (char *) nm, p - nm);
 	  o [p - nm] = 0;
 
-	  /* #### marcpa's syncing note: FSF uses getpwnam even on NT,
-	     which does not work.  The following works only if ~USER
-	     names the user who runs this instance of XEmacs.  While
-	     NT is single-user (for the moment) you still can have
-	     multiple user profiles users defined, each with its HOME.
-	     Therefore, the following should be reworked to handle
-	     this case.  */
-#ifdef  WIN32_NATIVE
-	  /* Now if the file given is "~foo/file" and HOME="c:/", then
-	     we want the file to be named "c:/file" ("~foo" becomes
-	     "c:/").  The variable o has "~foo", so we can use the
-	     length of that string to offset nm.  August Hill, 31 Aug
-	     1998.  */
-	  newdir = (Bufbyte *) get_home_directory();
-	  dostounix_filename (newdir);
-	  nm += strlen(o) + 1;
-#else  /* not WIN32_NATIVE */
+	  /* #### While NT is single-user (for the moment) you still
+	     can have multiple user profiles users defined, each with
+	     its HOME.  So maybe possibly we should think about handling
+	     ~user. --ben */
+#ifndef WIN32_NATIVE
 #ifdef CYGWIN
 	  if ((user = user_login_name (NULL)) != NULL)
 	    {

@@ -1,5 +1,6 @@
 /* system description file for cygwin32.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of GNU Emacs.
 
@@ -47,70 +48,12 @@ Boston, MA 02111-1307, USA.  */
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
 # include <signal.h>
-# ifdef HAVE_CYGWIN_VERSION_H
-#  include <cygwin/version.h>
-# else
-#  ifdef SIGIO
-#   define CYGWIN_VERSION_DLL_MAJOR 19
-#   define CYGWIN_VERSION_DLL_MINOR 0
-#   define CYGWIN_B19
-#  else
-#   define CYGWIN_VERSION_DLL_MAJOR 18
-#   define CYGWIN_VERSION_DLL_MINOR 0
-#   define BROKEN_CYGWIN
-#  endif
-# endif
+# include <cygwin/version.h>
 
-# if CYGWIN_VERSION_DLL_MAJOR < 20
-
-void cygwin32_win32_to_posix_path_list (const char*, char*);
-int cygwin32_win32_to_posix_path_list_buf_size (const char*);
-void cygwin32_posix_to_win32_path_list (const char*, char*);
-int cygwin32_posix_to_win32_path_list_buf_size (const char*);
-
-#define cygwin_win32_to_posix_path_list cygwin32_win32_to_posix_path_list
-#define cygwin_win32_to_posix_path_list_buf_size \
-  cygwin32_win32_to_posix_path_list_buf_size
-#define cygwin_posix_to_win32_path_list cygwin32_posix_to_win32_path_list
-#define cygwin_posix_to_win32_path_list_buf_size \
-  cygwin32_posix_to_win32_path_list_buf_size
-
-struct timeval;
-struct timezone;
-struct itimerval;
-struct stat;
-int gettimeofday (struct timeval *tp, struct timezone *tzp);
-int gethostname (char* name, int namelen);
-char*	mktemp (char *);
-double	logb (double);
-void	sync (void);
-int	ioctl (int, int, ...);
- 			/* sys/stat.h */
-int lstat (const char *path, struct stat *buf);
- 			/* unistd.h */
-int readlink (const char *path, void *buf, unsigned int bufsiz);
-int symlink (const char *name1, const char *name2);
- 			/* sys/time.h */
-int setitimer (int which, const struct itimerval *value,
- 	      struct itimerval *ovalue);
-int utimes (char *file, struct timeval *tvp);
-
-int srandom (unsigned seed);
-long random (void);
-
-# else /* not CYGWIN_VERSION_DLL_MAJOR < 20 */
-
-void cygwin_win32_to_posix_path_list (const char*, char*);
-int cygwin_win32_to_posix_path_list_buf_size (const char*);
-void cygwin_posix_to_win32_path_list (const char*, char*);
-int cygwin_posix_to_win32_path_list_buf_size (const char*);
-
-# endif /* CYGWIN_VERSION_DLL_MAJOR < 20 */
-
-# if CYGWIN_VERSION_DLL_MAJOR <= 20
-char *getpass (const char *prompt);
-double logb (double);
-# endif /* CYGWIN_VERSION_DLL_MAJOR <= 20 */
+void cygwin_win32_to_posix_path_list (const char *, char *);
+int cygwin_win32_to_posix_path_list_buf_size (const char *);
+void cygwin_posix_to_win32_path_list (const char *, char *);
+int cygwin_posix_to_win32_path_list_buf_size (const char *);
 
 /* Still left out of 1.1! */
 double logb (double);
@@ -122,7 +65,7 @@ int killpg (int pgrp, int sig);
 #define ORDINARY_LINK
 #endif
 
-#define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
+#define C_SWITCH_SYSTEM -fno-caller-saves
 #define LIBS_SYSTEM -lwinmm
 #define WIN32_LEAN_AND_MEAN
 
@@ -133,16 +76,8 @@ int killpg (int pgrp, int sig);
 #define NO_LIM_DATA
 #define UNEXEC "unexcw.o"
 
-#ifdef CYGWIN_VERSION_DLL_MAJOR
-#if 0
-/* #### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
-   behavior, bugs in cygwin mean that xemacs locks up frequently if
-   this is defined.  */
 #define BROKEN_SIGIO
-#endif
-#else
-#define PROCESS_IO_BLOCKING
-#endif
+
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS

@@ -37,13 +37,219 @@
 
 (require 'behavior)
 
+(define-behavior 'scroll-in-place
+"This package provides improved vertical scrolling commands for XEmacs.
+These new commands offer the following features:
+
++ When a scrolling command is executed, XEmacs tries to keep point as
+  close as possible to its original window position (window line and
+  column).  This is what \"scroll in place\" means: point stays \"in place\"
+  within the window.  (There are times when point must be moved from its
+  original window position in order to execute the scroll; see below.)
+
+  The variable `scroll-in-place', which is true by default, determines
+  whether or not the standard XEmacs scrolling commands (`scroll-down',
+  `scroll-up', `scroll-other-window-down', and `scroll-other-window') use
+  the \"in place\" features listed here.  When `scroll-in-place' is `nil'
+  the standard XEmacs scrolling commands essentially just call the
+  original versions of themselves.  (Note that even when `scroll-in-place'
+  is `nil' the new versions of `scroll-down' and `scroll-up' have slightly
+  different behavior when a minibuffer window is the selected window.  See
+  below.)
+
+  It is possible to turn off (or turn on) \"in place\" scrolling for certain
+  buffers by making buffer-local bindings of the variable `scroll-in-
+  place' for those buffers.  The variable `scroll-in-place' is not usually
+  buffer-local, but you can make it so if you desire.
+
++ Because the improved scrolling commands keep point at its original
+  window position, these scrolling commands are \"reversible.\"  The
+  `scroll-up' command undoes the effect of the immediately previous
+  `scroll-down' command (if any) and vice versa.  In other words, if you
+  scroll up and then immediately scroll back down, the window config-
+  uration is restored to its exact original state.  This allows you to
+  browse through a buffer more easily, as you can always get back to the
+  original configuration.
+
+  Note, however, that the improved scrolling commands are guaranteed to be
+  reversible only if there are no intervening non-scrolling commands.
+  Also, if you give a prefix argument to a scrolling command (in order to
+  specify the number of lines to scroll by), previous scrolling commands
+  may no longer be reversible.  More specifically, if the new prefix
+  argument has a different magnitude than the previous scrolling distance,
+  then any previous scrolling commands are not reversible.  The new prefix
+  argument takes precedence.
+
+  You might find it useful to think of the scrolling commands as forming
+  \"chains.\"  A scrolling command either starts or continues a chain.  By
+  issuing a non-scrolling command or by changing the number of lines to be
+  scrolled, you break the chain.  (Note that simply changing the scrolling
+  direction won't break the chain; changing the absolute number of lines
+  to be scrolled is what breaks the chain.)  Scrolling commands are
+  guaranteed to be reversible only within the current chain.  Hopefully
+  that's clear enough.
+
++ When a scrolling command is given a prefix argument (which specifies the
+  number of lines to scroll by), then that argument becomes the default
+  scrolling distance for all immediately subsequent scrolling commands.
+  This means that you can easily set the scrolling distance for a chain
+  of scrolling commands.  Note that a new prefix argument or any non-
+  scrolling command breaks the chain (as described above), and any further
+  scrolling commands will use the usual defaults (or the prefix argument
+  you specify at that time, of course).
+
+  However, there are cases in which one doesn't want the current scrolling
+  command to use the default scrolling distance that was set by the
+  previous scrolling command.  For example, suppose that you had special
+  commands that scrolled one line up and one line down.  When you invoke
+  one of these commands, the \"in place\" scrolling routines set the default
+  scrolling distance to be just one line.  Now suppose that you use one of
+  your special commands and then immediately invoke `scroll-up' (`C-v'),
+  expecting it to scroll by a near windowful of text.  You would be
+  disappointed --- because the previous command set the default scrolling
+  distance to be just one line, `scroll-up' just scrolls by one line.
+
+  To solve this problem, \"scroll-in-place\" allows you to divide scrolling
+  commands into separate \"groups.\"  Commands in a group can only form
+  chains with (and therefore, inherit defaults from) commands in the same
+  group.  (Note that no command can be in more than one group.)  If you
+  invoke a scrolling command that is not in the same group as that of the
+  immediately previous scrolling command, then the previous chain is
+  broken and you start a new chain --- with a new set of defaults.
+
+  So to solve the problem described above, you could put your one-line
+  scrolling commands in their own group.  Once that is done, the standard
+  scrolling commands will not form chains with your one-line scrolling
+  commands, and therefore will not use the default scrolling distance set
+  by those commands.  Problem solved!
+
+  By default, all \"in place\" scrolling commands are in a single group.  If
+  you want to partition some commands into separate groups, you must do
+  that yourself *before* any \"in place\" commands are invoked.  For more
+  information about grouping commands, see the documentation for the
+  variables `scroll-command-groups' and `scroll-default-command-group'.
+
++ The improved scrolling commands will avoid displaying empty lines past
+  the end of the buffer when possible.  In other words, just as you can't
+  see \"dead space\" before the beginning of the buffer text, the new
+  scrolling commands try to avoid displaying \"dead space\" past the end of
+  the buffer text.  This behavior is somewhat configurable; see the
+  documentation for the variable `scroll-allow-blank-lines-past-eob'.
+
+  Dead space will be displayed if it is necessary in order to make a
+  previous scrolling action reversible, however.
+
++ If the scrolling commands cannot keep point at its initial window
+  position (because a buffer boundary is on screen and the window can't be
+  scrolled as far as necessary to keep point at the right place), point is
+  allowed to temporarily stray from its initial window position.  That is,
+  point moves the correct number of window lines, even if it means that it
+  has to stray from its desired window position.  This straying is undone
+  when (and if) the scrolling action is reversed.
+
++ If a scrolling command tries to move point past a buffer boundary, point
+  is instead moved to the boundary (the beginning or the end of the buffer
+  as appropriate) and an appropriate message is displayed.  This motion is
+  reversible, of course.
+
+  However, if point was already at the buffer boundary when the scrolling
+  command was invoked, the command signals an appropriate error instead.
+
++ When a minibuffer window is the selected window, the new versions of
+  `scroll-up' and `scroll-down' either scroll the window in the variable
+  `minibuffer-scroll-window' (which is usually the window of completions)
+  or the `next-window' if there is no `minibuffer-scroll-window'.  This is
+  usually much more useful than scrolling the minibuffer itself.  (Note
+  that this feature is available even when the variable `scroll-in-place'
+  is `nil'.)
+
++ When a scrolling command is scrolling a window other than the selected
+  window, it will signal an appropriate buffer boundary error if the
+  window cannot be scrolled (because the appropriate buffer boundary is
+  already visible).  This means that an error is signalled even in cases
+  that would be allowed (by \"straying\" point or by moving it to the buffer
+  boundary) if the window were selected.
+
+  (If an error were not signalled in these cases, then there would be many
+  cases in which the last scroll in a particular direction would appear to
+  do nothing because only the point position would change --- the
+  displayed text would stay the same!  To avoid these cases the scrolling
+  commands signal boundary errors \"prematurely\" when the window to be
+  scrolled is not selected.)"
+  :short-doc "Keep cursor on same line when scrolling"
+  :require 'scroll-in-place
+  :enable #'turn-on-scroll-in-place
+  :disable #'turn-off-scroll-in-place)
+
 (define-behavior 'mouse-avoidance
-  "Mouse avoidance mode"
-  :title "Mouse Avoidance"
+"For those who are annoyed by the mouse pointer obscuring text,
+this mode moves the mouse pointer - either just a little out of
+the way, or all the way to the corner of the frame. 
+
+Customize `mouse-avoidance-mode' to one of the symbols `banish',
+`exile', `jump', `animate', `cat-and-mouse', `proteus', or `none'.
+
+Effects of the different modes: 
+ * banish: Move the mouse to the upper-right corner on any keypress.
+ * exile: Move the mouse to the corner only if the cursor gets too close,
+     and allow it to return once the cursor is out of the way.
+ * jump: If the cursor gets too close to the mouse, displace the mouse
+     a random distance & direction.
+ * animate: As `jump', but shows steps along the way for illusion of motion.
+ * cat-and-mouse: Same as `animate'.
+ * proteus: As `animate', but changes the shape of the mouse pointer too.
+
+Whenever the mouse is moved, the frame is also raised.
+
+\(see `mouse-avoidance-threshold' for definition of \"too close\",
+and `mouse-avoidance-nudge-dist' and `mouse-avoidance-nudge-var' for
+definition of \"random distance\".)"
+  :short-doc "Keep mouse away from cursor"
   :enable #'(lambda ()
 	       (mouse-avoidance-mode 'animate))
   :disable #'(lambda ()
 	       (mouse-avoidance-mode 'none)))
+
+(define-behavior 'jka-compr
+  "This package implements low-level support for reading, writing,
+and loading compressed files.  It hooks into the low-level file
+I/O functions (including write-region and insert-file-contents) so
+that they automatically compress or uncompress a file if the file
+appears to need it (based on the extension of the file name).
+Packages like Rmail, VM, GNUS, and Info should be able to work
+with compressed files without modification."
+  :short-doc "Transparently handle compressed files"
+  :enable #'jka-compr-install
+  :disable #'jka-compr-uninstall)
+
+(define-behavior 'efs
+"EFS is a system for transparent file-transfer between remote VMS, CMS,
+MTS, MVS, Twenex, Explorer (the last two are Lisp machines), TOPS-20,
+DOS (running the Distinct, Novell, FTP software, NCSA, Microsoft in both
+unix and DOS mode, Super TCP, and Hellsoft FTP servers), Windows NT
+\(running the Microsoft or Hummingbird ftp servers), Unix descriptive
+listings (dl), KA9Q, OS/2 hosts using FTP. This means that you can edit,
+copy and otherwise manipulate files on any machine you have access to
+from within Emacs as if it were a local file. EFS works by introducing
+an extended filename syntax, and overloading functions such as
+`insert-file-contents' so that accessing a remote file causes
+appropriate commands to be sent to an FTP process.
+
+The syntax to use is like this:
+
+\(for anonymous:)     /ftp.xemacs.org:/pub/xemacs/
+\(for non-anonymous:) /ben@gwyn.tux.org:/etc/mail/xemacs/aliases-xemacs
+
+You can specify either a file or a directory (in the latter case,
+Dired will be brought up).  All operations in XEmacs on such files
+should work exactly as on any other files, modulo the additional
+slowness."
+  :short-doc "Transparent file access over FTP"
+  :require 'efs-auto
+  :enable #'ignore
+  ;; can't :disable
+  )
+
 
 (define-behavior 'resize-minibuffer
   "When this behavior is enabled, the minibuffer is dynamically resized to
@@ -63,7 +269,7 @@ The variable `resize-minibuffer-frame' controls whether this should be
 done.  The variables `resize-minibuffer-frame-max-height' and
 `resize-minibuffer-frame-exactly' are analogous to their window
 counterparts."
-  :title "Resize Minibuffer Automatically"
+  :short-doc "Resize minibuffer automatically"
   :enable #'(lambda ()
 	      (resize-minibuffer-mode 1))
   :disable #'(lambda ()
@@ -79,7 +285,7 @@ easily go back to where you were. Alternatively, you can use enter the
 name of the desired function via the minibuffer which offers
 completing read input. In addition, the name of the function before
 point is optionally displayed in the modeline."
-  :title "Function Menu"
+  :short-doc "Add a menu of defined functions"
   :require 'func-menu
   :enable #'(lambda ()
 	      (add-hook 'find-file-hooks 'fume-add-menubar-entry)
@@ -111,7 +317,7 @@ events are sent as button4/button5 events, which are automatically
 set up to do scrolling in the expected way.  The actual way that the
 scrolling works can be controlled by `mwheel-scroll-amount' and
 `mwheel-follow-mouse'."
-  :title "Mouse Wheel Support"
+  :short-doc "Mouse wheel support for X Windows"
   :enable 'mwheel-install)
 
 (define-behavior 'recent-files
@@ -263,7 +469,7 @@ KNOWN BUG:
     file without merging in the new entries from the other Emacs
     process. This can be avoided by disabling the save on exit from
     the menu."
-  :title "Recent Files Menu"
+  :short-doc "`Recent Files' menu"
   :enable 'recent-files-initialize)
 
 (define-behavior 'filladapt
@@ -281,7 +487,7 @@ The net result of this is that blurbs of text that are offset
 from left margin by asterisks, dashes, and/or spaces, numbered
 examples, included text from USENET news articles, etc. are
 generally filled correctly with no fuss."
-  :title "Adaptive Filling"
+  :short-doc "Adaptive (smart) filling"
   :require 'filladapt
   :enable  #'(lambda ()
 	       (setq-default filladapt-mode t)

@@ -1,5 +1,6 @@
 /*
    Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,11 +27,11 @@ Boston, MA 02111-1307, USA.  */
 #include <errno.h>
 
 #ifndef WIN32_NATIVE
-#include <sys/errno.h>          /* <errno.h> does not always imply this */
+# include <sys/errno.h>          /* <errno.h> does not always imply this */
 #endif
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif
 
 #ifndef INCLUDED_FCNTL
@@ -38,38 +39,39 @@ Boston, MA 02111-1307, USA.  */
 # include <fcntl.h>
 #endif /* INCLUDED_FCNTL */
 
-/* Load sys/types.h if not already loaded.
+/* The anonymous voice of the past says:
    In some systems loading it twice is suicidal.  */
-#ifndef makedev
-#include <sys/types.h>		/* some typedefs are used in sys/file.h */
-#endif
+#ifndef INCLUDED_SYS_TYPES
+# define INCLUDED_SYS_TYPES
+# include <sys/types.h>		/* some typedefs are used in sys/file.h */
+#endif /* INCLUDED_SYS_TYPES */
 
 #ifndef WIN32_NATIVE
-#include <sys/file.h>
+# include <sys/file.h>
 #endif
 
 #include <sys/stat.h>
 
-#ifndef WIN32_NATIVE
-/* Some configuration files' definitions for the LOAD_AVE_CVT macro
-   (like sparc.h's) use macros like FSCALE, defined here. */
-#ifdef HAVE_GTK
-/* I hate GTK */
-#undef MIN
-#undef MAX
-#endif /* HAVE_GTK */
-#include <sys/param.h>
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+# include <io.h>
 #endif
 
-#if defined (NeXT) || defined(CYGWIN)
-/* what is needed from here?  Do others need it too?
- O_BINARY is in here under cygwin. */
-# include <sys/fcntl.h>
-#endif /* NeXT */
-
 #ifdef WIN32_NATIVE
-#include <io.h>
-#include <direct.h>
+# include <direct.h>
+#else
+/* Some configuration files' definitions for the LOAD_AVE_CVT macro
+   (like sparc.h's) use macros like FSCALE, defined here. */
+# ifdef HAVE_GTK
+/* I hate GTK */
+#  undef MIN
+#  undef MAX
+# endif /* HAVE_GTK */
+# include <sys/param.h>
+/* We used to conditionalize this on defined (NeXT) || defined (CYGWIN),
+   with the comment "what is needed from here?  Do others need it too?
+   O_BINARY is in here under cygwin." sunplay.c needed this, so let's
+   just include it always and fix any breakage (unlikely) that happens. */
+# include <sys/fcntl.h>
 #endif
 
 #ifndef	STDERR_FILENO
@@ -246,7 +248,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Client .c files should simply use `PATH_MAX'. */
 #ifndef PATH_MAX
-# if defined (_POSIX_PATH_MAX)
+# if defined (_MAX_PATH)
+/* MS Win -- and preferable to _POSIX_PATH_MAX, which is also defined */
+#  define PATH_MAX _MAX_PATH
+# elif defined (_POSIX_PATH_MAX)
 #  define PATH_MAX _POSIX_PATH_MAX
 # elif defined (MAXPATHLEN)
 #  define PATH_MAX MAXPATHLEN

@@ -30,8 +30,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef DEBUG_XEMACS
 
-#include <stdio.h>
-
 struct debug_classes
 {
   unsigned int redisplay :1;

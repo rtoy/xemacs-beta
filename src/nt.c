@@ -443,11 +443,11 @@ win32_get_long_filename (char * name, char * buf, int size)
   char * o = buf;
   char * p;
   char * q;
-  char full[ MAX_PATH ];
+  char full[ PATH_MAX ];
   int len;
 
   len = strlen (name);
-  if (len >= MAX_PATH)
+  if (len >= PATH_MAX)
     return FALSE;
 
   /* Use local copy for destructive modification.  */
@@ -632,9 +632,9 @@ init_environment (void)
 
   {
     char *p;
-    char modname[MAX_PATH];
+    char modname[PATH_MAX];
 
-    if (!GetModuleFileName (NULL, modname, MAX_PATH))
+    if (!GetModuleFileName (NULL, modname, PATH_MAX))
       abort ();
     if ((p = strrchr (modname, '\\')) == NULL)
       abort ();
@@ -770,12 +770,12 @@ volume_info_data *
 GetCachedVolumeInformation (char * root_dir)
 {
   volume_info_data * info;
-  char default_root[ MAX_PATH ];
+  char default_root[ PATH_MAX ];
 
   /* NULL for root_dir means use root from current directory.  */
   if (root_dir == NULL)
     {
-      if (GetCurrentDirectory (MAX_PATH, default_root) == 0)
+      if (GetCurrentDirectory (PATH_MAX, default_root) == 0)
 	return NULL;
       parse_root (default_root, &root_dir);
       *root_dir = 0;
@@ -860,7 +860,7 @@ GetCachedVolumeInformation (char * root_dir)
 int
 get_volume_info (const char * name, const char ** pPath)
 {
-  char temp[MAX_PATH];
+  char temp[PATH_MAX];
   char *rootname = NULL;  /* default to current volume */
   volume_info_data * info;
 
@@ -920,7 +920,7 @@ is_fat_volume (const char * name, const char ** pPath)
 const char *
 map_win32_filename (const char * name, const char ** pPath)
 {
-  static char shortname[MAX_PATH];
+  static char shortname[PATH_MAX];
   char * str = shortname;
   char c;
   const char * path;
@@ -1122,7 +1122,7 @@ readdir (DIR *dirp)
 int
 sys_rename (const char * oldname, const char * newname)
 {
-  char temp[MAX_PATH];
+  char temp[PATH_MAX];
   DWORD attr;
 
   /* MoveFile on Win95 doesn't correctly change the short file name
@@ -1348,14 +1348,14 @@ hashval (const unsigned char * str)
 static DWORD
 generate_inode_val (const char * name)
 {
-  char fullname[ MAX_PATH ];
+  char fullname[ PATH_MAX ];
   char * p;
   unsigned hash;
 
   /* Get the truly canonical filename, if it exists.  (Note: this
      doesn't resolve aliasing due to subst commands, or recognize hard
      links.  */
-  if (!win32_get_long_filename ((char *)name, fullname, MAX_PATH))
+  if (!win32_get_long_filename ((char *)name, fullname, PATH_MAX))
     abort ();
 
   parse_root (fullname, &p);

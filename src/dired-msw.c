@@ -73,20 +73,13 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "nt.h"
 #include "regex.h"
 
 #include "sysdir.h"
 #include "sysproc.h"
 #include "sysfile.h"
-
-#include <time.h>
-
-#include <winsock.h>		/* To make nt.h happy */
-#include "nt.h"		/* For prototypes */
-
-#if ROUND_FILE_SIZES > 0
-#include <math.h>		/* for floor() */
-#endif
+#include "sysfloat.h"
 
 
 static int mswindows_ls_sort_case_insensitive;
@@ -96,9 +89,8 @@ Lisp_Object		Qmswindows_insert_directory;
 
 extern Lisp_Object	Vmswindows_downcase_file_names;	/* in device-msw.c */
 
-
-
-enum mswindows_sortby {
+enum mswindows_sortby
+{
   MSWINDOWS_SORT_BY_NAME,
   MSWINDOWS_SORT_BY_NAME_NOCASE,
   MSWINDOWS_SORT_BY_MOD_DATE,

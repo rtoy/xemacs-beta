@@ -1469,7 +1469,9 @@ depend:
 $(XEMACS)\Installation::	installation
 
 installation::
-	@type > $(XEMACS)\Installation <<
+	@echo OS version:>$(XEMACS)\Installation
+	@ver >> $(XEMACS)\Installation
+	@type >> $(XEMACS)\Installation <<
 !if defined(OS)
 OS: $(OS)
 !endif

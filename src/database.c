@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 #include "sysfile.h"
 #include "buffer.h"
-#include <errno.h>
 
 #ifndef HAVE_DATABASE
 #error HAVE_DATABASE not defined!!

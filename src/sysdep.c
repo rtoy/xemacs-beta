@@ -2323,7 +2323,7 @@ init_system_name (void)
       hostname_size <<= 1;
       hostname = (char *) alloca (hostname_size);
     }
-# if defined( HAVE_SOCKETS) && !defined(BROKEN_CYGWIN)
+# if defined( HAVE_SOCKETS)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */

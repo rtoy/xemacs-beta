@@ -1037,7 +1037,7 @@ All path elements in FILENAME are converted to their short names.
 */
        (filename))
 {
-  char shortname[MAX_PATH];
+  char shortname[PATH_MAX];
 
   CHECK_STRING (filename);
 
@@ -1045,7 +1045,7 @@ All path elements in FILENAME are converted to their short names.
   filename = Fexpand_file_name (filename, Qnil);
 
   /* luckily, this returns the short version of each element in the path.  */
-  if (GetShortPathName (XSTRING_DATA (filename), shortname, MAX_PATH) == 0)
+  if (GetShortPathName (XSTRING_DATA (filename), shortname, PATH_MAX) == 0)
     return Qnil;
 
   CORRECT_DIR_SEPS (shortname);
@@ -1061,14 +1061,14 @@ All path elements in FILENAME are converted to their long names.
 */
        (filename))
 {
-  char longname[ MAX_PATH ];
+  char longname[ PATH_MAX ];
 
   CHECK_STRING (filename);
 
   /* first expand it.  */
   filename = Fexpand_file_name (filename, Qnil);
 
-  if (!win32_get_long_filename (XSTRING_DATA (filename), longname, MAX_PATH))
+  if (!win32_get_long_filename (XSTRING_DATA (filename), longname, PATH_MAX))
     return Qnil;
 
   CORRECT_DIR_SEPS (longname);

@@ -36,9 +36,8 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 
+#include "sysfile.h"
 #include "syssignal.h" /* for SIGWINCH */
-
-#include <errno.h>
 
 Lisp_Object Qinit_pre_tty_win, Qinit_post_tty_win;
 

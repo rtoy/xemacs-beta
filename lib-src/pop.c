@@ -989,9 +989,7 @@ socket_connection (char *host, int flags)
       hostent = gethostbyname (host);
       try_count++;
       if ((! hostent) 
-#ifndef BROKEN_CYGWIN	  
 	  && ((h_errno != TRY_AGAIN) || (try_count == 5))
-#endif
 	  )
 	{
 	  strcpy (pop_error, "Could not determine POP server's address");

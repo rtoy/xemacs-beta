@@ -454,9 +454,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
     {
 #ifdef TRY_AGAIN
       if (count++ > 10) break;
-#ifndef BROKEN_CYGWIN
       h_errno = 0;
-#endif
 #endif
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();

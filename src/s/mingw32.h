@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #define ORDINARY_LINK
 #endif
 
-#define C_SWITCH_SYSTEM "-mno-cygwin -Wno-sign-compare -fno-caller-saves -DWIN32_NATIVE"
+#define C_SWITCH_SYSTEM "-mno-cygwin -fno-caller-saves -DWIN32_NATIVE"
 #define LIBS_SYSTEM "-mno-cygwin -mwindows -lwinmm -lwsock32"
 #define WIN32_LEAN_AND_MEAN
 

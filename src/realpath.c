@@ -24,21 +24,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include <errno.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#if defined (HAVE_SYS_PARAM_H) && !defined (WIN32_NATIVE)
-#include <sys/param.h>
-#endif
-
-#ifdef WIN32_NATIVE
-#include <direct.h>
-#endif
-
-#include <sys/stat.h>			/* for S_IFLNK */
+#include "sysfile.h"
 
 /* First char after start of absolute filename. */
 #define ABS_START(name) (name + ABS_LENGTH (name))
@@ -81,7 +68,7 @@ win32_readlink (const char * name, char * buf, int size)
   assert (*name);
   
   /* Sort of check we have a valid filename. */
-  if (strpbrk (name, "*?|<>\"") || strlen (name) >= MAX_PATH)
+  if (strpbrk (name, "*?|<>\"") || strlen (name) >= PATH_MAX)
     {
       errno = EIO;
       return -1;

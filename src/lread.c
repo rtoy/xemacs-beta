@@ -421,7 +421,7 @@ ebolify_bytecode_constants (Lisp_Object vector)
 }
 
 static Lisp_Object
-pas_de_lache_ici (int fd, Lisp_Object victim)
+pas_de_holgazan_ici (int fd, Lisp_Object victim)
 {
   Lisp_Object tem;
   EMACS_INT pos;
@@ -456,7 +456,7 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	{
 	  assert (CONSP (XCAR (john)));
 	  assert (!purify_flag); /* should have been handled in read_list() */
-	  XCAR (john) = pas_de_lache_ici (fd, XCAR (john));
+	  XCAR (john) = pas_de_holgazan_ici (fd, XCAR (john));
 	}
       else
 	{
@@ -466,7 +466,7 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	  if (CONSP (XCOMPILED_FUNCTION (john)->instructions))
 	    {
 	      struct gcpro ngcpro1;
-	      Lisp_Object juan = (pas_de_lache_ici
+	      Lisp_Object juan = (pas_de_holgazan_ici
 				  (fd, XCOMPILED_FUNCTION (john)->instructions));
 	      Lisp_Object ivan;
 
@@ -487,7 +487,7 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	    {
 	      assert (!purify_flag); /* should have been handled in
 					read_compiled_function() */
-	      doc = pas_de_lache_ici (fd, doc);
+	      doc = pas_de_holgazan_ici (fd, doc);
 	      set_compiled_function_documentation (XCOMPILED_FUNCTION (john),
 						   doc);
 	    }

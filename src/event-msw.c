@@ -1,7 +1,7 @@
 /* The mswindows event_stream interface.
    Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1996, 2000 Ben Wing.
+   Copyright (C) 1996, 2000, 2001 Ben Wing.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -49,30 +49,29 @@ Boston, MA 02111-1307, USA.  */
 # include "dragdrop.h"
 #endif
 
+#include "buffer.h"
 #include "device.h"
 #include "events.h"
-#include "frame.h"
-#include "buffer.h"
 #include "faces.h"
+#include "frame.h"
 #include "lstream.h"
+#include "objects-msw.h"
 #include "process.h"
 #include "redisplay.h"
 #include "select.h"
-#include "window.h"
-#include "sysproc.h"
-#include "syswait.h"
-#include "systime.h"
 #include "sysdep.h"
-#include "objects-msw.h"
+#include "window.h"
+
+#include "sysfile.h"
+#include "sysproc.h"
+#include "systime.h"
+#include "syswait.h"
 
 #ifdef HAVE_MSG_SELECT
-#include "sysfile.h"
 #include "console-tty.h"
 #elif defined(CYGWIN)
 typedef unsigned int SOCKET;
 #endif
-#include <io.h>
-#include <errno.h>
 
 #if !(defined(CYGWIN) || defined(MINGW))
 # include <shlobj.h>	/* For IShellLink */
@@ -664,7 +663,7 @@ struct winsock_stream
   LPARAM user_data;		/* Any user data stored in the stream object */
   SOCKET s;			/* Socket handle (which is a Win32 handle)   */
   OVERLAPPED ov;		/* Overlapped I/O structure		     */
-  void* buffer;			/* Buffer. Allocated for input stream only   */
+  void* buffer;			/* Buffer.                                   */
   unsigned long bufsize;	/* Number of bytes last read		     */
   unsigned long bufpos;		/* Position in buffer for next fetch	     */
   unsigned int error_p :1;	/* I/O Error seen			     */
@@ -774,18 +773,24 @@ winsock_writer (Lstream *stream, const unsigned char *data,
   if (size == 0)
     return 0;
 
-  {
-    ResetEvent (str->ov.hEvent);
+  ResetEvent (str->ov.hEvent);
 
-    /* Docs indicate that 4th parameter to WriteFile can be NULL since this is
-     * an overlapped operation. This fails on Win95 with winsock 1.x so we
-     * supply a spare address which is ignored by Win95 anyway. Sheesh. */
-    if (WriteFile ((HANDLE)str->s, data, size, (LPDWORD)&str->buffer, &str->ov)
-	|| GetLastError() == ERROR_IO_PENDING)
-      str->pending_p = 1;
-    else
-      str->error_p = 1;
-  }
+  /* According to WriteFile docs, we must hold onto the data we pass to it
+     and not make any changes until it finishes -- which may not be until
+     the next time we get here, since we use asynchronous I/O.  We have
+     in fact seen data loss as a result of not doing this. */
+  str->buffer = xrealloc (str->buffer, size);
+  memcpy (str->buffer, data, size);
+
+  /* Docs indicate that 4th parameter to WriteFile can be NULL since this is
+   * an overlapped operation. This fails on Win95 with winsock 1.x so we
+   * supply a spare address which is ignored by Win95 anyway. Sheesh. */
+  if (WriteFile ((HANDLE)str->s, str->buffer, size, (LPDWORD)&str->buffer,
+		 &str->ov)
+      || GetLastError() == ERROR_IO_PENDING)
+    str->pending_p = 1;
+  else
+    str->error_p = 1;
 
   return str->error_p ? -1 : size;
 }
@@ -804,7 +809,7 @@ winsock_closer (Lstream *lstr)
   if (str->pending_p)
     WaitForSingleObject (str->ov.hEvent, INFINITE);
 
-  if (lstr->flags & LSTREAM_FL_READ)
+  if (str->buffer)
     xfree (str->buffer);
 
   CloseHandle (str->ov.hEvent);
@@ -825,14 +830,10 @@ make_winsock_stream_1 (SOCKET s, LPARAM param, const char *mode)
   Lstream *lstr = Lstream_new (lstream_winsock, mode);
   struct winsock_stream *str = WINSOCK_STREAM_DATA (lstr);
 
+  xzero (*str);
   str->s = s;
-  str->blocking_p = 0;
-  str->error_p = 0;
-  str->eof_p = 0;
-  str->pending_p = 0;
   str->user_data = param;
 
-  xzero (str->ov);
   str->ov.hEvent = CreateEvent (NULL, TRUE, FALSE, NULL);
 
   if (lstr->flags & LSTREAM_FL_READ)
@@ -2958,14 +2959,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    if (psl->lpVtbl->QueryInterface (psl, &IID_IPersistFile,
 						     &ppf) == S_OK)
 		      {
-			WORD wsz[MAX_PATH];
+			WORD wsz[PATH_MAX];
 			WIN32_FIND_DATA wfd;
-			LPSTR resolved = (char *) xmalloc (MAX_PATH+1);
+			LPSTR resolved = (char *) xmalloc (PATH_MAX+1);
 
-			MultiByteToWideChar (CP_ACP,0, fname, -1, wsz, MAX_PATH);
+			MultiByteToWideChar (CP_ACP,0, fname, -1, wsz, PATH_MAX);
 
 			if ((ppf->lpVtbl->Load (ppf, wsz, STGM_READ) == S_OK) &&
-			    (psl->lpVtbl->GetPath (psl, resolved, MAX_PATH,
+			    (psl->lpVtbl->GetPath (psl, resolved, PATH_MAX,
 						   &wfd, 0)==S_OK))
 			  {
 			    xfree (fname);

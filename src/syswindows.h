@@ -1,5 +1,5 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 2000, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -57,25 +57,19 @@ Boston, MA 02111-1307, USA.  */
 
 #include <windows.h>
 
-#if defined (CYGWIN) && CYGWIN_VERSION_DLL_MAJOR < 21
-extern BOOL WINAPI DdeFreeStringHandle(DWORD,HSZ);
-extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
-#define stricmp strcasecmp
-#define FONTENUMPROC FONTENUMEXPROC
-#define ntmTm ntmentm
-#elif defined (WIN32_LEAN_AND_MEAN)
-#ifdef HAVE_X_WINDOWS
+#if defined (WIN32_LEAN_AND_MEAN)
+# ifdef HAVE_X_WINDOWS
 /* Christ almighty.  The problems you get when combining two large code bases,
    neither with any respect for namespace purity. */
-#undef Status
-#endif
-#include <winspool.h>
-#ifdef HAVE_X_WINDOWS
-#define Status int
-#endif
-#include <mmsystem.h>
-#include <shellapi.h>
-#include <ddeml.h>
+#  undef Status
+# endif
+# include <winspool.h>
+# ifdef HAVE_X_WINDOWS
+#  define Status int
+# endif
+# include <mmsystem.h>
+# include <shellapi.h>
+# include <ddeml.h>
 #endif
 
 #include <lmaccess.h> /* next three for NetUserEnum and friends */

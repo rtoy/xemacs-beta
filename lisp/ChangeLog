@@ -1,3 +1,20 @@
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* behavior-defs.el:
+	* behavior-defs.el (scroll-in-place):
+	* behavior-defs.el ('scroll-in-place): New.
+	* behavior-defs.el (mouse-avoidance):
+	* behavior-defs.el (jka-compr):
+	* behavior-defs.el ('jka-compr): New.
+	* behavior-defs.el ('efs): New.
+	* behavior-defs.el (efs):
+	* behavior-defs.el (resize-minibuffer):
+	* behavior-defs.el (func-menu):
+	* behavior-defs.el (mwheel):
+	* behavior-defs.el (recent-files):
+	* behavior-defs.el (filladapt):
+	Add scroll-in-place, jka-compr, efs, fix up some things.
+
 2001-03-19  Karl M. Hegbloom  <karlheg@microsharp.com>
 
 	* cus-edit.el (custom-display): Support the GTK Window System also.

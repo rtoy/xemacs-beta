@@ -657,10 +657,10 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 	  if (i == 0)
 	    {
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
-	      Extbyte full_exe_path[MAX_PATH];
+	      Extbyte full_exe_path[PATH_MAX];
 	      Lisp_Object fullpath;
 
-	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
+	      GetModuleFileName (NULL, full_exe_path, PATH_MAX);
 	      fullpath = build_ext_string (full_exe_path, Qmswindows_tstr);
 	      result = Fcons (fullpath, result);
 #if defined(HAVE_SHLIB)
