@@ -1,3 +1,10 @@
+2001-11-29  Adrian Aichner  <adrian@xemacs.org>
+
+	* menubar-items.el (Menubar-items-truncate-list): Removed.
+	* menubar-items.el (Menubar-items-truncate-history): New.
+	* menubar-items.el (default-menubar): Use
+	Menubar-items-truncate-history.
+
 2001-11-28  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get-locate-index-file): Also search the
