@@ -1,3 +1,9 @@
+2003-10-10  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* lispref/mule.texi (Charset Property Functions): Charset registry
+	can be set.
+	(Predefined Charsets): Add registry to Vietnamese charset names.
+	
 2003-09-26  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.16 "celeriac" is released.
