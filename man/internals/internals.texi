@@ -3092,7 +3092,7 @@ Did you make sure you didn't introduce any new compiler warnings?
 Before submitting a patch, please try compiling at least once with
 
 @example
-configure --with-mule --with-union-type --error-checking=all
+configure --with-mule --use-union-type --error-checking=all
 @end example
 
 Here are things to know when you create a new source file:
