@@ -1,3 +1,10 @@
+2002-09-02  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* bytecomp-runtime.el (make-obsolete): Docstring argument nit.
+	(make-obsolete-variable): Ditto.
+	(make-compatible): Ditto.
+	(make-compatible-variable): Ditto.
+
 2002-07-12  Andy Piper  <andy@xemacs.org>
 
 	* custom.el (custom-theme-set-variables): remove bogus

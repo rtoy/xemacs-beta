@@ -93,7 +93,7 @@ They will only be compiled open-coded when `byte-optimize' is true."
 ;		    ''byte-optimizer ''byte-compile-inline-expand))))
 
 (defun make-obsolete (fn new)
-  "Make the byte-compiler warn that FUNCTION is obsolete.
+  "Make the byte-compiler warn that function FN is obsolete.
 The warning will say that NEW should be used instead.
 If NEW is a string, that is the `use instead' message."
   (interactive "aMake function obsolete: \nxObsoletion replacement: ")
@@ -105,7 +105,7 @@ If NEW is a string, that is the `use instead' message."
   fn)
 
 (defun make-obsolete-variable (var new)
-  "Make the byte-compiler warn that VARIABLE is obsolete,
+  "Make the byte-compiler warn that variable VAR is obsolete,
 and NEW should be used instead.  If NEW is a string, then that is the
 `use instead' message."
   (interactive
@@ -120,7 +120,7 @@ and NEW should be used instead.  If NEW is a string, then that is the
 ;; By overwhelming demand, we separate out truly obsolete symbols from
 ;; those that are present for GNU Emacs compatibility.
 (defun make-compatible (fn new)
-  "Make the byte-compiler know that FUNCTION is provided for compatibility.
+  "Make the byte-compiler know that function FN is provided for compatibility.
 The warning will say that NEW should be used instead.
 If NEW is a string, that is the `use instead' message."
   (interactive "aMake function compatible: \nxCompatible replacement: ")
@@ -132,7 +132,7 @@ If NEW is a string, that is the `use instead' message."
   fn)
 
 (defun make-compatible-variable (var new)
-  "Make the byte-compiler know that VARIABLE is provided for compatibility.
+  "Make the byte-compiler know that variable VAR is provided for compatibility,
 and NEW should be used instead.  If NEW is a string, then that is the
 `use instead' message."
   (interactive
