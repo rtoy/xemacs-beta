@@ -183,7 +183,7 @@ static DWORD mswindows_last_mouse_button_state;
    exists. For example, "start notepad" command is issued from the
    shell, then the shell is closed by C-c C-d. Although the shell
    process exits, its output pipe will not get closed until the
-   notepad process exits also, because it inherits the pipe form the
+   notepad process exits also, because it inherits the pipe from the
    shell. In this case, we abandon the thread, and let it live until
    all such processes exit. While struct ntpipe_slurp_stream is
    deallocated in this case, ntpipe_slurp_stream_shared_data are not. */
@@ -2624,7 +2624,13 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  }
 	else if (IsWindowVisible (hwnd))
 	  {
-	    FRAME_VISIBLE_P (frame) = 1;
+            /*
+               APA: It's too early here to set the frame visible.
+               Let's do this later, in WM_SIZE processing, after the
+               magic XM_MAPFRAME event has been sent (just like 21.1
+               did).
+            */
+            /* FRAME_VISIBLE_P (frame) = 1; */
 	    FRAME_ICONIFIED_P (frame) = 0;
 	  }
 	else
@@ -2689,6 +2695,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		{
 		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame))
 		    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+                  /*
+                     APA: Now that the magic XM_MAPFRAME event has
+                     been sent we can mark the frame as visible (just
+                     like 21.1 did).
+                  */
+                  FRAME_VISIBLE_P (frame) = 1;
 
 		  if (!msframe->sizing || mswindows_dynamic_frame_resize)
 		    redisplay ();
