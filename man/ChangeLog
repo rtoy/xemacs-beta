@@ -1,3 +1,9 @@
+2004-09-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/searching.texi (Syntax of Regexps): Add example of use
+	of shy groups in variable subexpression, correct rumor that there
+	may be substantial performance gain.
+
 2004-08-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/help.texi (Misc Help): Info-goto-emacs-key-command-node
@@ -21,7 +27,7 @@
 
 	* internals/internals.texi (Techniques for XEmacs Developers): Be
 	specific when discussing optimization.
-	(Techniques for XEmacs Developers): Fragments that are meaningful
+	(Techniques for XEmacs Developers): Fragments that are meaningless
 	by themselves or contain placeholders should be @samp, not @code.
 	(Modules for Internationalization): Add description of mule-coding.c
 	and further deprecate mule.c.
