@@ -1,3 +1,30 @@
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* lispref/mule.texi (Internationalization Terminology):
+	Lots of Mule rewriting.
+
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Coding for Mule):
+	* internals/internals.texi (Character-Related Data Types):
+	* internals/internals.texi (Working With Character and Byte Positions):
+	* internals/internals.texi (Conversion to and from External Data):
+	* internals/internals.texi (General Guidelines for Writing Mule-Aware Code):
+	* internals/internals.texi (An Example of Mule-Aware Code):
+	* internals/internals.texi (Mule-izing Code):
+	* internals/internals.texi (help): New.
+	* internals/internals.texi (Buffers and Textual Representation):
+	* internals/internals.texi (The Text in a Buffer):
+	* internals/internals.texi (Markers and Extents):
+	* internals/internals.texi (MULE Character Sets and Encodings):
+	* internals/internals.texi (Lstream Functions):
+	* internals/internals.texi (Lstream Methods):
+	* internals/internals.texi (Format of the Extent Info):
+	* internals/internals.texi (Mathematics of Extent Ordering):
+	Major fixup.  Correct for new names of Bytebpos, Ichar, etc. and
+	lots of Mule rewriting.
+
 2003-02-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/startup.texi (Startup Paths): Clarification of package

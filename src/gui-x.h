@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific header file.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2000, 2002 Ben Wing.
+   Copyright (C) 1996, 2000, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -69,6 +69,7 @@ DECLARE_LRECORD (popup_data, struct popup_data);
 #define POPUP_DATAP(x) RECORDP (x, popup_data)
 #define CHECK_POPUP_DATA(x) CHECK_RECORD (x, popup_data)
 
+void snarf_widget_values_for_gcpro (Lisp_Object popup_data);
 void gcpro_popup_callbacks (LWLIB_ID id);
 void ungcpro_popup_callbacks (LWLIB_ID id);
 int popup_handled_p (LWLIB_ID id);

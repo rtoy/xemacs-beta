@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -213,8 +213,8 @@ EXFUN (Fread_from_string, 3);
 /* When errors are signaled, the actual readcharfun should not be used
    as an argument if it is an lstream, so that lstreams don't escape
    to the Lisp level.  */
-#define READCHARFUN_MAYBE(x) (LSTREAMP (x)					\
-			      ? (build_msg_string ("internal input stream"))	\
+#define READCHARFUN_MAYBE(x) (LSTREAMP (x)				     \
+			      ? (build_msg_string ("internal input stream")) \
 			      : (x))
 
 
@@ -500,23 +500,17 @@ encoding detection or end-of-line detection.
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   int reading_elc = 0;
   int from_require = EQ (nomessage, Qrequire);
-  int message_p =
-    NILP (nomessage) || from_require || load_always_display_messages;
-/*#ifdef DEBUG_XEMACS*/
+  int message_p = NILP (nomessage) || load_always_display_messages;
   static Lisp_Object last_file_loaded;
-/*#endif*/
   struct stat s1, s2;
   GCPRO4 (file, newer, older, found);
+  Ibyte *spaces = alloca_ibytes (load_in_progress * 2 + 10);
+  int i;
 
   CHECK_STRING (file);
 
-/*#ifdef DEBUG_XEMACS*/
-  if (purify_flag && noninteractive)
-    {
-      message_p = 1;
-      last_file_loaded = file;
-    }
-/*#endif / * DEBUG_XEMACS */
+  if (noninteractive)
+    last_file_loaded = file;
 
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
@@ -530,6 +524,15 @@ encoding detection or end-of-line detection.
   file = Fsubstitute_in_file_name (file);
   if (!NILP (used_codesys))
     CHECK_SYMBOL (used_codesys);
+
+  if (noninteractive)
+    {
+      for (i = 0; i < load_in_progress * 2; i++)
+	spaces[i] = ' ';
+      spaces[i] = '\0';
+    }
+  else
+    spaces[0] = '\0';
 
   /* Avoid weird lossage with null string as arg,
      since it would try to load a directory as a Lisp file.
@@ -621,40 +624,40 @@ encoding detection or end-of-line detection.
   if (load_ignore_elc_files)						\
     {									\
       if (message_p)							\
-	message (loading done,						\
+	message (loading done, spaces,					\
 		 XSTRING_DATA (load_show_full_path_in_messages ?	\
 			       found : newer));				\
     }									\
   else if (!NILP (older))						\
     {									\
       assert (load_ignore_out_of_date_elc_files);			\
-      message (loading done " (file %s is out-of-date)",		\
+      message (loading done " (file %s is out-of-date)", spaces,	\
 	       XSTRING_DATA (load_show_full_path_in_messages ?		\
 			     found : newer),				\
 	       XSTRING_DATA (older));					\
     }									\
   else if (!NILP (newer))						\
-    message (loading done " (file %s is newer)",			\
+    message (loading done " (file %s is newer)", spaces,		\
 	     XSTRING_DATA (load_show_full_path_in_messages ?		\
 			   found : file),				\
 	     XSTRING_DATA (newer));					\
   else if (source_only)							\
-    message (loading done " (file %s.elc does not exist)",		\
+    message (loading done " (file %s.elc does not exist)", spaces,	\
 	     XSTRING_DATA (load_show_full_path_in_messages ?		\
 			   found : file),				\
 	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
   else if (message_p)							\
-    message (loading done,						\
+    message (loading done, spaces,					\
 	     XSTRING_DATA (load_show_full_path_in_messages ?		\
 			   found : file));				\
   } while (0)
 
-#define PRINT_LOADING_MESSAGE(done)			\
-do {							\
-  if (from_require)					\
-    PRINT_LOADING_MESSAGE_1 ("Requiring %s...", done);	\
-  else							\
-    PRINT_LOADING_MESSAGE_1 ("Loading %s...", done);	\
+#define PRINT_LOADING_MESSAGE(done)				\
+do {								\
+  if (from_require)						\
+    PRINT_LOADING_MESSAGE_1 ("%sRequiring %s...", done);	\
+  else								\
+    PRINT_LOADING_MESSAGE_1 ("%sLoading %s...", done);		\
 } while (0)
 
   PRINT_LOADING_MESSAGE ("");
@@ -736,13 +739,7 @@ do {							\
     if (!NILP (Ffile_name_absolute_p (file)))
 	name = Ffile_name_nondirectory (file);
 
-    {
-      struct gcpro ngcpro1;
-
-      NGCPRO1 (name);
-      tem = Fassoc (name, Vafter_load_alist);
-      NUNGCPRO;
-    }
+    tem = Fassoc (name, Vafter_load_alist);
     if (!NILP (tem))
       {
 	struct gcpro ngcpro1;
@@ -755,13 +752,13 @@ do {							\
       }
   }
 
-/* #ifdef DEBUG_XEMACS */
-  if (purify_flag && noninteractive)
+  if (message_p && noninteractive && !EQ (last_file_loaded, file))
     {
-      if (!EQ (last_file_loaded, file))
-	message ("Loading %s ...done", XSTRING_DATA (file));
+      if (from_require)
+	message ("%sRequiring %s ...done", spaces, XSTRING_DATA (file));
+      else
+	message ("%sLoading %s ...done", spaces, XSTRING_DATA (file));
     }
-/* #endif / * DEBUG_XEMACS */
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
@@ -3116,7 +3113,7 @@ but does prevent execution of the rest of the FORMS.
 If this variable is true, then when a `.elc' file is being loaded and the
 corresponding `.el' is newer, a warning message will be printed.
 */ );
-  load_warn_when_source_newer = 0;
+  load_warn_when_source_newer = 1;
 
   DEFVAR_BOOL ("load-warn-when-source-only", &load_warn_when_source_only /*
 *Whether `load' should warn when loading a `.el' file instead of an `.elc'.

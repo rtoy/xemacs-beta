@@ -1,6 +1,6 @@
 /* General GUI code -- X-specific. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -105,6 +105,21 @@ snarf_widget_value_mapper (widget_value *val, void *closure)
   return 0;
 }
 
+/* Snarf the callbacks and other Lisp data that are hidden in the lwlib
+   call-data and accel and stick them into POPUP-DATA for proper marking. */
+
+void
+snarf_widget_values_for_gcpro (Lisp_Object popup_data)
+{
+  struct popup_data *pdata = XPOPUP_DATA (popup_data);
+
+  free_list (pdata->protect_me);
+  pdata->protect_me = Qnil;
+
+  if (pdata->id)
+    lw_map_widget_values (pdata->id, snarf_widget_value_mapper, pdata);
+}
+
 void
 gcpro_popup_callbacks (LWLIB_ID id)
 {
@@ -120,12 +135,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
   pdata->menubar_contents_up_to_date = 0;
   lpdata = wrap_popup_data (pdata);
 
-  /* Now snarf the callbacks and such that are hidden in the lwlib
-     call-data and accel and stick them into the list for proper
-     marking. */
-
-  if (pdata->id)
-    lw_map_widget_values (pdata->id, snarf_widget_value_mapper, pdata);
+  snarf_widget_values_for_gcpro (lpdata);
 
   Vpopup_callbacks = Fcons (Fcons (lid, lpdata), Vpopup_callbacks);
 }

@@ -51,8 +51,7 @@ esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
   fmtType        ffmt;
   int            fmt,speed,tracks;
   unsigned char *pptr,*optr,*cptr,*sptr;
-  ssize_t        wrtn;
-  size_t         crtn;
+  Bytecount      wrtn, crtn;
   size_t         prtn;
   int flags, sock;
 
@@ -116,18 +115,21 @@ esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
   for (pptr = data; (prtn = parsesndfile((void **)&pptr,&length,
                                         (void **)&optr)) > 0; )
     for (cptr = optr; (crtn = sndcnv((void **)&cptr,&prtn,
-                                    (void **)&sptr)) > 0; ) {
-      if ((wrtn = write(sock,sptr,crtn)) < 0) {
-	sound_perror ("write error");
-       goto END_OF_PLAY;
+                                    (void **)&sptr)) > 0; )
+      {
+	if ((wrtn = write(sock,sptr,crtn)) < 0)
+	  {
+	    sound_perror ("write error");
+	    goto END_OF_PLAY;
+	  }
+	if (wrtn != crtn)
+	  {
+	    Extbyte warn_buf[255];
+	    sprintf (warn_buf, "only wrote %ld of %ld bytes", wrtn, crtn);
+	    sound_warn (warn_buf);
+	    goto END_OF_PLAY;
+	  }
       }
-      if (wrtn != crtn) {
-	Extbyte warn_buf[255];
-	sprintf (warn_buf , "only wrote %d of %d bytes", wrtn, crtn);
-	sound_warn (warn_buf);
-       goto END_OF_PLAY;
-      }
-    }
 
   if (ffmt == fmtWave)
     parse_wave_complete();

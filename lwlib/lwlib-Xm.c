@@ -72,7 +72,7 @@ static void xm_pull_down_callback (Widget, XtPointer, XtPointer);
 #endif
 static void xm_internal_update_other_instances (Widget, XtPointer,
 						XtPointer);
-static void xm_pop_down_callback (Widget, XtPointer, XtPointer);
+/* static void xm_pop_down_callback (Widget, XtPointer, XtPointer); */
 static void xm_generic_callback (Widget, XtPointer, XtPointer);
 static void mark_dead_instance_destroyed (Widget widget, XtPointer closure,
 					  XtPointer call_data);
@@ -2071,11 +2071,13 @@ xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
   do_call (widget, closure, selection);
 }
 
+#if 0 /* Caller above is commented out */
 static void
 xm_pop_down_callback (Widget widget, XtPointer closure, XtPointer call_data)
 {
   do_call (widget, closure, post_activate);
 }
+#endif /* 0 */
 
 #ifdef LWLIB_MENUBARS_MOTIF
 

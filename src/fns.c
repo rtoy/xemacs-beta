@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
    Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -63,8 +63,6 @@ Lisp_Object Vpath_separator;
 
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
-
-int require_prints_loading_message;
 
 static Lisp_Object
 mark_bit_vector (Lisp_Object obj)
@@ -3565,7 +3563,7 @@ is not found instead of signaling an error.
       Vautoload_queue = Qt;
 
       tem = call4 (Qload, NILP (filename) ? Fsymbol_name (feature) : filename,
-		   noerror, require_prints_loading_message ? Qrequire : Qt, Qnil);
+		   noerror, Qrequire, Qnil);
       /* If load failed entirely, return nil.  */
       if (NILP (tem))
 	return unbind_to_1 (speccount, Qnil);
@@ -4072,11 +4070,6 @@ The directory separator in search paths, as a string.
     char c = SEPCHAR;
     Vpath_separator = make_string ((Ibyte *) &c, 1);
   }
-
-  DEFVAR_BOOL ("require-prints-loading-message",
-	       &require_prints_loading_message /*
-If non-nil, every time a file is loaded by `require' a message is printed.
-*/ );
 }
 
 void

@@ -1,7 +1,7 @@
 ;;; update-elc-2.el --- Recompile remaining .el files, post-dumping
 
 ;; Copyright (C) 1997 by Free Software Foundation, Inc.
-;; Copyright (C) 2000 Ben Wing.
+;; Copyright (C) 2000, 2003 Ben Wing.
 
 ;; Author: Ben Wing <ben@xemacs.org>, based on cleantree.el by
 ;;         Steven L Baur <steve@xemacs.org>
@@ -45,6 +45,10 @@
 ;; from Gnus based on a suggestion by David Moore <dmoore@ucsd.edu>
 
 ;;; Code:
+
+;; Help debug problems.
+(setq stack-trace-on-error t
+      load-always-display-messages t)
 
 (defvar update-elc-ignored-dirs
   `("." ".." "CVS" "SCCS" "RCS" ,@(unless (featurep 'mule) '("mule"))))
@@ -162,7 +166,7 @@
 	 t)
 	(byte-recompile-file generated-autoload-file 0)))
     (when (featurep 'mule)
-      (let* ((muledir (expand-file-name "../modules" (file-truename dir)))
+      (let* ((muledir (expand-file-name "../lisp/mule" (file-truename dir)))
 	     (generated-autoload-file
 	      (expand-file-name "auto-autoloads.el" muledir))
 	     (autoload-package-name "mule")) ; feature prefix

@@ -4432,6 +4432,7 @@ DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (fatal (const CIbyte *,
 							   ...), 1, 2);
 
 /* Internal functions: */
+Lisp_Object canonicalize_printcharfun (Lisp_Object printcharfun);
 void temp_output_buffer_setup (Lisp_Object);
 void temp_output_buffer_show (Lisp_Object, Lisp_Object);
 void print_cons (Lisp_Object, Lisp_Object, int);

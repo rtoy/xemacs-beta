@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar -- X interface.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2000, 2001 ,2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -487,6 +487,10 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       assert (wv && wv->type == CASCADE_TYPE && wv->contents);
       replace_widget_value_tree (hack_wv, wv->contents);
       free_popup_widget_value_tree (wv);
+      /* Now that we've destructively modified part of the widget value
+	 hierarchy, our list of protected callbacks will no longer be
+	 valid, so we need to recompute it. */
+      snarf_widget_values_for_gcpro (FRAME_MENUBAR_DATA (f));
     }
   else if (!POPUP_DATAP (FRAME_MENUBAR_DATA (f)))
     return;
@@ -612,6 +616,12 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
       lw_modify_all_widgets (id, data, deep_p ? True : False);
     }
   free_popup_widget_value_tree (data);
+
+  /* Buried inside of the lwlib data are pointers to Lisp objects that may
+     have been freshly created.  They need to be GC-protected, so snarf them
+     now and record them into the popup-data object associated with the
+     frame. */
+  snarf_widget_values_for_gcpro (FRAME_MENUBAR_DATA (f));
 
   XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date = deep_p;
   XFRAME_MENUBAR_DATA (f)->last_menubar_buffer =

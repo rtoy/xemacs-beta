@@ -1,3 +1,55 @@
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* mule/cyril-util.el:
+	* mule/cyril-util.el (standard-display-table):
+	* mule/cyril-util.el (standard-display-table)): New.
+	Fix compile warning.
+
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* loadup.el:
+	* loadup.el (really-early-error-handler):
+	* loadup.el (load-warn-when-source-only):
+	* loadup.el ((member "dump" command-line-args)):
+	* make-docfile.el:
+	* update-elc-2.el:
+	* update-elc.el:
+	Set stack-trace-on-error, load-always-display-messages so we
+	get better debug results.
+
+	* update-elc-2.el (batch-update-elc-2):
+	Fix typo in name of lisp/mule, leading to compile failure.
+
+	* simple.el:
+	* simple.el (motion-keys-for-shifted-motion):
+	Omit M-S-home/end from motion keys.
+	
+	* update-elc.el (undumped-exe): New.
+	* update-elc.el (dumped-exe): New.
+	* update-elc.el (dumped-exe-out-of-date-wrt-dump-files): New.
+	* update-elc.el (dumped-exe-out-of-date-wrt-undumped-exe): New.
+	* update-elc.el ("very-early-lisp.el"):
+	* update-elc.el (lisp-files-needed-for-byte-compilation): New.
+	* update-elc.el (lisp-files-needing-early-byte-compilation): New.
+	* update-elc.el (unbytecompiled-lisp-files): New.
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+	Overhaul:
+
+	-- allow list of "early-compile" files to be specified, not hardcoded
+	-- fix autoload checking to include all .el files, not just dumped ones
+	-- be smarter about regenerating autoloads, so we don't need to use
+	   loadup-el if not necessary
+	-- use standard methods for loading/not loading auto-autoloads.el
+	   (maybe fixes "Already loaded" error?)
+	-- rename misleading NOBYTECOMPILE flag file.
+	
+	* window-xemacs.el (window-list):
+	Fix bug in default param.
+	
+	* window-xemacs.el (really-set-window-configuration):
+	* window-xemacs.el (restore-saved-window-parameters):
+	Fix compile warnings.
+
 2003-02-02  Steve Youngs  <youngs@xemacs.org>
 
 	* about.el (xemacs-hackers): Add Jerry, Ville, Rendhalver

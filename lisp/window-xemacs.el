@@ -74,8 +74,8 @@ FRAME and WINDOW default to the selected ones.
 Optional second arg MINIBUF t means count the minibuffer window
 even if not active.  If MINIBUF is neither t nor nil it means
 not to count the minibuffer even if it is active."
-  (setq window (or window (selected-window))
-	frame (or frame (selected-frame)))
+  (setq frame (or frame (selected-frame))
+	window (or window (selected-window frame)))
   (if (not (eq (window-frame window) frame))
       (error "Window must be on frame."))
   (let ((current-frame (selected-frame))
@@ -298,6 +298,7 @@ by `current-window-configuration'."
     (select-window (minibuffer-window frame))
 
     (let ((window-configuration-current-window nil))
+      (declare (special window-configuration-current-window))
       (restore-saved-window configuration
 			    root-window
 			    (window-configuration-saved-root-window configuration)
@@ -373,6 +374,7 @@ by `current-window-configuration'."
 
 (defun restore-saved-window-parameters (configuration window saved-window)
   "Restore the window parameters stored in SAVED-WINDOW on WINDOW."
+  (declare (special window-configuration-current-window))
   (let ((buffer (saved-window-buffer saved-window)))
     (if (and buffer (buffer-live-p buffer))
 	(progn

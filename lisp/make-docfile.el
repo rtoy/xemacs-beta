@@ -34,6 +34,10 @@
 
 ;;; Code:
 
+;; Help debug problems.
+(setq stack-trace-on-error t
+      load-always-display-messages t)
+
 (defvar options nil)
 (defvar processed nil)
 (defvar docfile nil)
@@ -79,18 +83,14 @@
 (let ((build-root (expand-file-name ".." invocation-directory)))
   (setq load-path (list (expand-file-name "lisp" build-root))))
 
-(load "very-early-lisp" nil t)
-
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
+(load "very-early-lisp.el")
 (load "find-paths.el")
 (load "packages.el")
 (load "setup-paths.el")
 (load "dump-paths.el")
-(require 'custom)
-(load "process")
-;; need for stuff called from C by process code
-(if (featurep 'windows-nt) (load "win32-native"))
+(load "raw-process.el")
 
 (let (preloaded-file-list)
   (load (expand-file-name "../lisp/dumped-lisp.el"))

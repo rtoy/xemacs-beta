@@ -48,6 +48,8 @@
 	    '("Russian") '("Serbian") '("Ukrainian"))
       "*List of known cyrillic languages")
 
+(defvar standard-display-table)
+
 ;;;###autoload
 (defun standard-display-cyrillic-translit (&optional cyrillic-language)
   "Display a cyrillic buffer using a transliteration.

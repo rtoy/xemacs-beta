@@ -1,3 +1,16 @@
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp (GTK_DIR):
+	* config.inc.samp (XPM_DIR):
+	* config.inc.samp (HAVE_GIF):
+	* config.inc.samp (ZLIB_DIR):
+	* config.inc.samp (TIFF_DIR):
+	* config.inc.samp (JPEG_DIR):
+	* config.inc.samp (COMPFACE_DIR):
+	* config.inc.samp (USE_PORTABLE_DUMPER):
+	* config.inc.samp (USE_KKCC):
+	Various fixups.
+
 2002-12-16  Ben Wing  <ben@xemacs.org>
 
 	* README (NOTE):

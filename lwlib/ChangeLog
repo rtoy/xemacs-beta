@@ -1,3 +1,10 @@
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-Xm.c:
+	* lwlib-Xm.c (xm_pop_down_callback):
+	* lwlib-Xm.c (xm_pull_down_callback):
+	Fix compile warning.
+
 2002-12-16  Ben Wing  <ben@xemacs.org>
 
 	* lwlib-Xlw.c (xlw_update_one_widget):

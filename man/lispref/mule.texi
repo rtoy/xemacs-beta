@@ -39,7 +39,8 @@ ideograph (an @dfn{ideograph} is a ``picture'' character, such as is
 used in Japanese Kanji, Chinese Hanzi, and Korean Hanja; typically there
 are thousands of such ideographs in each language), etc.  The basic
 property of a character is that it is the smallest unit of text with
-semantic significance in text processing.
+semantic significance in text processing---i.e., characters are abstract
+units defined by their meaning, not by their exact appearance.
 
   Human beings normally process text visually, so to a first approximation
 a character may be identified with its shape.  Note that the same
@@ -98,62 +99,100 @@ Identifying characters is simple enough for alphabetic character sets,
 but the difference in ordering can cause great headaches when the same
 thousands of characters are used by different cultures as in the Hanzi.)
 
-  A code point may be broken into a number of @dfn{position codes}.  The
-number of position codes required to index a particular character in a
-character set is called the @dfn{dimension} of the character set.  For
-practical purposes, a position code may be thought of as a byte-sized
-index.  The printing characters of ASCII, being a relatively small
-character set, is of dimension one, and each character in the set is
-indexed using a single position code, in the range 1 through 94.  Use of
-this unusual range, rather than the familiar 33 through 126, is an
-intentional abstraction; to understand the programming issues you must
-break the equation between character sets and encodings.
+  It's important to understand that a character is defined not by any
+number attached to it, but by its meaning.  For example, ASCII and
+EBCDIC are two charsets containing exactly the same characters
+(lowercase and uppercase letters, numbers 0 through 9, particular
+punctuation marks) but with different numberings.  The @samp{comma}
+character in ASCII and EBCDIC, for instance, is the same character
+despite having a different numbering.  Conversely, when comparing ASCII
+and JIS-Roman, which look the same except that the latter has a yen sign
+substituted for the backslash, we would say that the backslash and yen
+sign are @emph{not} the same characters, despite having the same number
+(95) and despite the fact that all other characters are present in both
+charsets, with the same numbering.  ASCII and JIS-Roman, then, do
+@emph{not} have exactly the same characters in them (ASCII has a
+backslash character but no yen-sign character, and vice-versa for
+JIS-Roman), unlike ASCII and EBCDIC, even though the numberings in ASCII
+and JIS-Roman are closer.
 
-  JIS X 0208, i.e. Japanese Kanji, has thousands of characters, and is
-of dimension two -- every character is indexed by two position codes,
-each in the range 1 through 94.  (This number ``94'' is not a
-coincidence; we shall see that the JIS position codes were chosen so
-that JIS kanji could be encoded without using codes that in ASCII are
-associated with device control functions.)  Note that the choice of the
-range here is somewhat arbitrary.  You could just as easily index the
-printing characters in ASCII using numbers in the range 0 through 93, 2
-through 95, 3 through 96, etc.  In fact, the standardized
-@emph{encoding} for the ASCII @emph{character set} uses the range 33
-through 126.
+  Sometimes, a code point is not a single number, but instead a group of
+numbers, called @dfn{position codes}.  In such cases, the number of
+position codes required to index a particular character in a character
+set is called the @dfn{dimension} of the character set.  Character sets
+indexed by more than one position code typically use byte-sized position
+codes.  Small character sets, e.g. ASCII, invariably use a single
+position code, but for larger character sets, the choice of whether to
+use multiple position codes or a single large (16-bit or 32-bit) number
+is arbitrary.  Unicode typically uses a single large number, but
+language-specific or "national" character sets often use multiple
+(usually two) position codes.  For example, JIS X 0208, i.e. Japanese
+Kanji, has thousands of characters, and is of dimension two -- every
+character is indexed by two position codes, each in the range 1 through
+94.  (This number ``94'' is not a coincidence; it is the same as the
+number of printable characters in ASCII, and was chosen so that JIS
+characters could be directly encoded using two printable ASCII
+characters.)  Note that the choice of the range here is somewhat
+arbitrary -- it could just as easily be 0 through 93, 2 through 95, etc.
+In fact, the range for JIS position codes (and for other character sets
+modeled after it) is often given as range 33 through 126, so as to
+directly match ASCII printing characters.
 
   An @dfn{encoding} is a way of numerically representing characters from
 one or more character sets into a stream of like-sized numerical values
-called @dfn{words}; typically these are 8-bit, 16-bit, or 32-bit
-quantities.  If an encoding encompasses only one character set, then the
-position codes for the characters in that character set could be used
-directly.  (This is the case with the trivial cipher used by children,
-assigning 1 to `A', 2 to `B', and so on.)  However, even with ASCII,
-other considerations intrude.  For example, why are the upper- and
-lowercase alphabets separated by 8 characters?  Why do the digits start
-with `0' being assigned the code 48?  In both cases because semantically
-interesting operations (case conversion and numerical value extraction)
-become convenient masking operations.  Other artificial aspects (the
-control characters being assigned to codes 0--31 and 127) are historical
-accidents.  (The use of 127 for @samp{DEL} is an artifact of the "punch
-once" nature of paper tape, for example.)
+called @dfn{words} -- typically 8-bit bytes, but sometimes 16-bit or
+32-bit quantities.  It's very important to clearly distinguish between
+charsets and encodings.  For a simple charset like ASCII, there is only
+one encoding normally used -- each character is represented by a single
+byte, with the same value as its code point.  For more complicated
+charsets, however, or when a single encoding needs to represent more
+than charset, things are not so obvious.  Unicode version 2, for
+example, is a large charset with thousands of characters, each indexed
+by a 16-bit number, often represented in hex, e.g. 0x05D0 for the Hebrew
+letter "aleph".  One obvious encoding (actually two encodings, depending
+on which of the two possible byte orderings is chosen) simply uses two
+bytes per character.  This encoding is convenient for internal
+processing of Unicode text; however, it's incompatible with ASCII, and
+thus external text (files, e-mail, etc.) that is encoded this way is
+completely uninterpretable by programs lacking Unicode support.  For
+this reason, a different, ASCII-compatible encoding, e.g. UTF-8, is
+usually used for external text.  UTF-8 represents Unicode characters
+with one to three bytes (often extended to six bytes to handle
+characters with up to 31-bit indices).  Unicode characters 00 to 7F
+(identical with ASCII) are directly represented with one byte, and other
+characters with two or more bytes, each in the range 80 to FF.
+Applications that don't understand Unicode will still be able to process
+ASCII characters represented in UTF-8-encoded text, and will typically
+ignore (and hopefully preserve) the high-bit characters.
 
-  Naive use of the position code is not possible, however, if more than
-one character set is to be used in the encoding.  For example, printed
+  Naive use of code points is also not possible if more than one
+character set is to be used in the encoding.  For example, printed
 Japanese text typically requires characters from multiple character sets
 -- ASCII, JIS X 0208, and JIS X 0212, to be specific.  Each of these is
-indexed using one or more position codes in the range 1 through 94, so
-the position codes could not be used directly or there would be no way
-to tell which character was meant.  Different Japanese encodings handle
-this differently -- JIS uses special escape characters to denote
-different character sets; EUC sets the high bit of the position codes
-for JIS X 0208 and JIS X 0212, and puts a special extra byte before each
-JIS X 0212 character; etc.  (JIS, EUC, and most of the other encodings
-you will encounter in files are 7-bit or 8-bit encodings.  There is one
-common 16-bit encoding, which is Unicode; this strives to represent all
-the world's characters in a single large character set.  32-bit
-encodings are often used internally in programs, such as XEmacs with
-MULE support, to simplify the code that manipulates them; however, they
-are not used externally because they are not very space-efficient.)
+indexed using one or more position codes in the range 1 through 94 (or
+33 through 126), so the position codes could not be used directly or
+there would be no way to tell which character was meant.  Different
+Japanese encodings handle this differently -- JIS uses special escape
+characters to denote different character sets; EUC sets the high bit of
+the position codes for JIS X 0208 and JIS X 0212, and puts a special
+extra byte before each JIS X 0212 character; etc.
+
+  The encodings described above are all 7-bit or 8-bit encodings.  The
+fixed-width Unicode encoding previous described, however, is sometimes
+considered to be a 16-bit encoding, in which case the issue of byte
+ordering does not come up. (Imagine, for example, that the text is
+represented as an array of shorts.) Similarly, Unicode version 3 (which
+has characters with indices above 0xFFFF), and other very large
+character sets, may be represented internally as 32-bit encodings,
+i.e. arrays of ints.  However, it does not make too much sense to talk
+about 16-bit or 32-bit encodings for external data, since nowadays 8-bit
+data is a universal standard -- the closest you can get is fixed-width
+encodings using two or four bytes to encode 16-bit or 32-bit values. (A
+"7-bit" encoding is used when it cannot be guaranteed that the high bit
+of 8-bit data will be correctly preserved.  Some e-mail gateways, for
+example, strip the high bit of text passing through them.  These same
+gateways often handle non-printable characters incorrectly, and so 7-bit
+encodings usually avoid using bytes with such values.)
 
   A general method of handling text using multiple character sets
 (whether for multilingual text, or simply text in an extremely

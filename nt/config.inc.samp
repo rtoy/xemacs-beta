@@ -35,29 +35,38 @@ GTK_DIR=
 ############################################################################
 
 # Set this to enable XPM support (virtually mandatory), and specify
-# the directory containing xpm.
+# the directory containing xpm.  Get the library from
+# http://ftp.xemacs.org/aux/xpm-3.4k.tar.gz.
 HAVE_XPM=1
 XPM_DIR=c:\src\xpm-3.4k
 
-# Set this to enable GIF support.
+# Set this to enable GIF support (built-in).
 HAVE_GIF=1
 
 # Set this to enable PNG support (virtually mandatory), and specify
-# the directories containing png and zlib.
+# the directories containing png and zlib.  Get the latest version from
+# ftp://ftp.uu.net/graphics/png/.  You will have to rename the zlib directory
+# from zlib-1.1.3 or whatever to just `zlib' for the build to work.
 HAVE_PNG=1
-PNG_DIR=c:\src\libpng-1.0.9
+PNG_DIR=c:\src\libpng-1.0.12
 ZLIB_DIR=c:\src\zlib
 
 # Set this to enable TIFF support, and specify the directory containing tiff.
+# Get the latest version from ftp://ftp.uu.net/graphics/tiff/.  Not on by
+# default since TIFF isn't really very important and those TIFF wankers
+# couldn't be bothered to incorporate minimal MS-Windows patches they've
+# had sitting around for years, so getting it to build is a major pain in
+# the ass.
 HAVE_TIFF=0
-TIFF_DIR=
+TIFF_DIR=c:\src\tiff-v3.4
 
 # Set this to enable JPEG support, and specify the directory containing jpeg.
+# Get the latest version from ftp://ftp.uu.net/graphics/jpeg/.
 HAVE_JPEG=1
 JPEG_DIR=c:\src\jpeg-6b
 
 # Set this to enable XFace support, and specify the directory containing
-# compface.
+# compface.  Get the library from http://ftp.xemacs.org/aux/compface.tar.gz.
 HAVE_XFACE=0
 COMPFACE_DIR=
 
@@ -69,8 +78,9 @@ COMPFACE_DIR=
 # attempt to use its built-in, much slower texinfo support when building
 # info files.) If you are building XEmacs yourself, you probably have
 # Cygwin sitting around already.  If not, you should.  Cygwin provides a
-# `makeinfo.exe' in /usr/bin/makeinfo.
-MAKEINFO=c:\cygwin\usr\bin\makeinfo.exe
+# `makeinfo.exe' in /usr/bin/makeinfo (/usr/bin is virtual, it's /bin in
+# the actual file system).
+MAKEINFO=c:\cygwin\bin\makeinfo.exe
 
 # Set this to turn on optimization when compiling.
 OPTIMIZED_BUILD=0
@@ -125,7 +135,8 @@ DEPEND=0
 # routines, instead of the older "unexec" routines in unexnt.c.
 USE_PORTABLE_DUMPER=1
 
-# Set this to use new experimental GC algorithms.
+# Set this to use the new experimental garbage-collection routines instead
+# of the traditional XEmacs garbage-collection routines.
 USE_KKCC=0
 
 # Set this to turn on the use of the union type, which gets you improved

@@ -1,3 +1,52 @@
+2003-02-05  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (update-elc.stamp):
+	NOBYTECOMPILE -> BYTECOMPILE_CHANGE.
+
+	* esd.c (esd_play_sound_data):
+	Warning fixes.
+	
+	* fns.c:
+	* fns.c (mark_bit_vector):
+	* fns.c (Frequire):
+	* fns.c (vars_of_fns):
+	Eliminate bogus require-prints-loading-message; use already
+	existent load-always-display-messages instead.  Make sure `load'
+	knows we are coming from `require'.
+	
+	* lread.c:
+	* lread.c (READCHARFUN_MAYBE):
+	* lread.c (Fload_internal):
+	* lread.c (PRINT_LOADING_MESSAGE_1):
+	* lread.c (PRINT_LOADING_MESSAGE):
+	* lread.c (vars_of_lread):
+	Turn on `load-warn-when-source-newer' by default.  Change loading
+	message to indicate when we are `require'ing.  Eliminate
+	purify_flag hacks to display more messages; instead, loadup and
+	friends specify this explicitly with
+	`load-always-display-messages'.  Add spaces when batch to clearly
+	indicate recursive loading.  Fassoc() does not GC so no need to
+	gcpro.
+
+	* gui-x.c:
+	* gui-x.c (snarf_widget_values_for_gcpro):
+	* gui-x.c (gcpro_popup_callbacks):
+	* gui-x.h:
+	* menubar-x.c:
+	* menubar-x.c (pre_activate_callback):
+	* menubar-x.c (set_frame_menubar):
+	Fix up crashes when selecting menubar items due to lack of GCPROing
+	of callbacks in lwlib structures.
+
+	* eval.c (Fbacktrace):
+	* lisp.h:
+	* print.c:
+	* print.c (canonicalize_printcharfun):
+	Don't canonicalize to selected-frame when noninteractive, or
+	backtraces get all screwed up as some values are printed through
+	the stream console and some aren't.  Export
+	canonicalize_printcharfun() and use in Fbacktrace().
+
 2003-02-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* config.h.in: New symbol: DLSYM_NEEDS_UNDERSCORE.

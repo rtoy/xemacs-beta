@@ -503,10 +503,10 @@ fastdump: ${EXE_TARGET}
 FRC.update-elc.stamp :
 
 update-elc.stamp : ${EXE_TARGET} FRC.update-elc.stamp
-	@touch NOBYTECOMPILE
+	@touch BYTECOMPILE_CHANGE
 	./${EXE_TARGET} -nd ${batch} -l ${srcdir}/../lisp/update-elc.el
-	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \
-	 $(RM) NOBYTECOMPILE
+	@if test ! -f $@ -o -f BYTECOMPILE_CHANGE; then touch $@; fi; \
+	 $(RM) BYTECOMPILE_CHANGE
 
 obj_src = $(objs:.o=.c)
 

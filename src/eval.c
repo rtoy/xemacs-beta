@@ -6094,10 +6094,7 @@ unwind-protects, as well as function calls, were made.
 
   GCPRO2 (stream, old_level);
 
-  if (NILP (stream))
-    stream = Vstandard_output;
-  if (!noninteractive && (NILP (stream) || EQ (stream, Qt)))
-    stream = Fselected_frame (Qnil);
+  stream = canonicalize_printcharfun (stream);
 
   for (;;)
     {

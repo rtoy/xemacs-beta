@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
    Copyright (C) 1985, 1986, 1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -439,13 +439,13 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     Vprint_gensym_alist = Qnil;			\
 } while (0)
 
-static Lisp_Object
+Lisp_Object
 canonicalize_printcharfun (Lisp_Object printcharfun)
 {
   if (NILP (printcharfun))
     printcharfun = Vstandard_output;
 
-  if (EQ (printcharfun, Qt) || NILP (printcharfun))
+  if (!noninteractive && (EQ (printcharfun, Qt) || NILP (printcharfun)))
     printcharfun = Fselected_frame (Qnil); /* print to minibuffer */
 
   return printcharfun;

@@ -267,7 +267,7 @@ Buffers and Textual Representation
 * The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
-* Bufbytes and Emchars::        Representation of individual characters.
+* Ibytes and Ichars::        Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
 
 MULE Character Sets and Encodings
@@ -2748,6 +2748,7 @@ code generalization for future I18N work.
 * Conversion to and from External Data::
 * General Guidelines for Writing Mule-Aware Code::
 * An Example of Mule-Aware Code::
+* Mule-izing Code::
 @end menu
 
 @node Character-Related Data Types
@@ -2756,77 +2757,90 @@ code generalization for future I18N work.
 @cindex data types, character-related
 
 First, let's review the basic character-related datatypes used by
-XEmacs.  Note that the separate @code{typedef}s are not mandatory in the
-current implementation (all of them boil down to @code{unsigned char} or
-@code{int}), but they improve clarity of code a great deal, because one
+XEmacs.  Note that some of the separate @code{typedef}s are not
+mandatory, but they improve clarity of code a great deal, because one
 glance at the declaration can tell the intended use of the variable.
 
 @table @code
-@item Emchar
-@cindex Emchar
-An @code{Emchar} holds a single Emacs character.
+@item Ichar
+@cindex Ichar
+An @code{Ichar} holds a single Emacs character.
 
 Obviously, the equality between characters and bytes is lost in the Mule
 world.  Characters can be represented by one or more bytes in the
-buffer, and @code{Emchar} is the C type large enough to hold any
+buffer, and @code{Ichar} is the C type large enough to hold any
 character.
 
-Without Mule support, an @code{Emchar} is equivalent to an
+Without Mule support, an @code{Ichar} is equivalent to an
 @code{unsigned char}.
 
-@item Bufbyte
-@cindex Bufbyte
+@item Ibyte
+@cindex Ibyte
 The data representing the text in a buffer or string is logically a set
-of @code{Bufbyte}s.
+of @code{Ibyte}s.
 
 XEmacs does not work with the same character formats all the time; when
 reading characters from the outside, it decodes them to an internal
-format, and likewise encodes them when writing.  @code{Bufbyte} (in fact
+format, and likewise encodes them when writing.  @code{Ibyte} (in fact
 @code{unsigned char}) is the basic unit of XEmacs internal buffers and
-strings format.  A @code{Bufbyte *} is the type that points at text
+strings format.  A @code{Ibyte *} is the type that points at text
 encoded in the variable-width internal encoding.
 
-One character can correspond to one or more @code{Bufbyte}s.  In the
+One character can correspond to one or more @code{Ibyte}s.  In the
 current Mule implementation, an ASCII character is represented by the
-same @code{Bufbyte}, and other characters are represented by a sequence
-of two or more @code{Bufbyte}s.
+same @code{Ibyte}, and other characters are represented by a sequence
+of two or more @code{Ibyte}s.
 
 Without Mule support, there are exactly 256 characters, implicitly
-Latin-1, and each character is represented using one @code{Bufbyte}, and
-there is a one-to-one correspondence between @code{Bufbyte}s and
-@code{Emchar}s.
+Latin-1, and each character is represented using one @code{Ibyte}, and
+there is a one-to-one correspondence between @code{Ibyte}s and
+@code{Ichar}s.
 
-@item Bufpos
+@item Charxpos
+@item Charbpos
 @itemx Charcount
-@cindex Bufpos
+@cindex Charxpos
+@cindex Charbpos
 @cindex Charcount
-A @code{Bufpos} represents a character position in a buffer or string.
-A @code{Charcount} represents a number (count) of characters.
-Logically, subtracting two @code{Bufpos} values yields a
-@code{Charcount} value.  Although all of these are @code{typedef}ed to
+A @code{Charbpos} represents a character position in a buffer.  A
+@code{Charcount} represents a number (count) of characters.  Logically,
+subtracting two @code{Charbpos} values yields a @code{Charcount} value.
+When representing a character position in a string, we just use
+@code{Charcount} directly.  The reason for having a separate typedef for
+buffer positions is that they are 1-based, whereas string positions are
+0-based and hence string counts and positions can be freely intermixed (a
+string position is equivalent to the count of characters from the
+beginning).  When representing a character position that could be either
+in a buffer or string (for example, in the extent code), @code{Charxpos}
+is used.  Although all of these are @code{typedef}ed to
 @code{EMACS_INT}, we use them in preference to @code{EMACS_INT} to make
 it clear what sort of position is being used.
 
-@code{Bufpos} and @code{Charcount} values are the only ones that are
-ever visible to Lisp.
+@code{Charxpos}, @code{Charbpos} and @code{Charcount} values are the
+only ones that are ever visible to Lisp.
 
-@item Bytind
+@item Bytexpos
 @itemx Bytecount
-@cindex Bytind
+@cindex Bytebpos
 @cindex Bytecount
-A @code{Bytind} represents a byte position in a buffer or string.  A
-@code{Bytecount} represents the distance between two positions, in bytes.
-The relationship between @code{Bytind} and @code{Bytecount} is the same
-as the relationship between @code{Bufpos} and @code{Charcount}.
+A @code{Bytebpos} represents a byte position in a buffer.  A
+@code{Bytecount} represents the distance between two positions, in
+bytes.  Byte positions in strings use @code{Bytecount}, and for byte
+positions that can be either in a buffer or string, @code{Bytexpos} is
+used.  The relationship between @code{Bytexpos}, @code{Bytebpos} and
+@code{Bytecount} is the same as the relationship between
+@code{Charxpos}, @code{Charbpos} and @code{Charcount}.
 
 @item Extbyte
-@itemx Extcount
 @cindex Extbyte
-@cindex Extcount
 When dealing with the outside world, XEmacs works with @code{Extbyte}s,
-which are equivalent to @code{unsigned char}.  Obviously, an
-@code{Extcount} is the distance between two @code{Extbyte}s.  Extbytes
-and Extcounts are not all that frequent in XEmacs code.
+which are equivalent to @code{char}.  The distance between two
+@code{Extbyte}s is a @code{Bytecount}, since external text is a
+byte-by-byte encoding.  Extbytes occur mainly at the transition point
+between internal text and external functions.  XEmacs code should not,
+if it can possibly avoid it, do any actual manipulation using external
+text, since its format is completely unpredictable (it might not even be
+ASCII-compatible).
 @end table
 
 @node Working With Character and Byte Positions
@@ -2843,8 +2857,8 @@ most important ones.  Examining the existing code is the best way to
 learn about them.
 
 @table @code
-@item MAX_EMCHAR_LEN
-@cindex MAX_EMCHAR_LEN
+@item MAX_ICHAR_LEN
+@cindex MAX_ICHAR_LEN
 This preprocessor constant is the maximum number of buffer bytes to
 represent an Emacs character in the variable width internal encoding.
 It is useful when allocating temporary strings to keep a known number of
@@ -2857,75 +2871,75 @@ characters.  For instance:
   ...
   @{
     /* Allocate place for @var{cclen} characters. */
-    Bufbyte *buf = (Bufbyte *)alloca (cclen * MAX_EMCHAR_LEN);
+    Ibyte *buf = (Ibyte *) alloca (cclen * MAX_ICHAR_LEN);
 ...
 @end group
 @end example
 
 If you followed the previous section, you can guess that, logically,
-multiplying a @code{Charcount} value with @code{MAX_EMCHAR_LEN} produces
+multiplying a @code{Charcount} value with @code{MAX_ICHAR_LEN} produces
 a @code{Bytecount} value.
 
-In the current Mule implementation, @code{MAX_EMCHAR_LEN} equals 4.
+In the current Mule implementation, @code{MAX_ICHAR_LEN} equals 4.
 Without Mule, it is 1.
 
-@item charptr_emchar
-@itemx set_charptr_emchar
-@cindex charptr_emchar
-@cindex set_charptr_emchar
-The @code{charptr_emchar} macro takes a @code{Bufbyte} pointer and
-returns the @code{Emchar} stored at that position.  If it were a
+@item itext_ichar
+@itemx set_itext_ichar
+@cindex itext_ichar
+@cindex set_itext_ichar
+The @code{itext_ichar} macro takes a @code{Ibyte} pointer and
+returns the @code{Ichar} stored at that position.  If it were a
 function, its prototype would be:
 
 @example
-Emchar charptr_emchar (Bufbyte *p);
+Ichar itext_ichar (Ibyte *p);
 @end example
 
-@code{set_charptr_emchar} stores an @code{Emchar} to the specified byte
+@code{set_itext_ichar} stores an @code{Ichar} to the specified byte
 position.  It returns the number of bytes stored:
 
 @example
-Bytecount set_charptr_emchar (Bufbyte *p, Emchar c);
+Bytecount set_itext_ichar (Ibyte *p, Ichar c);
 @end example
 
-It is important to note that @code{set_charptr_emchar} is safe only for
+It is important to note that @code{set_itext_ichar} is safe only for
 appending a character at the end of a buffer, not for overwriting a
 character in the middle.  This is because the width of characters
-varies, and @code{set_charptr_emchar} cannot resize the string if it
+varies, and @code{set_itext_ichar} cannot resize the string if it
 writes, say, a two-byte character where a single-byte character used to
 reside.
 
-A typical use of @code{set_charptr_emchar} can be demonstrated by this
+A typical use of @code{set_itext_ichar} can be demonstrated by this
 example, which copies characters from buffer @var{buf} to a temporary
-string of Bufbytes.
+string of Ibytes.
 
 @example
 @group
 @{
-  Bufpos pos;
+  Charbpos pos;
   for (pos = beg; pos < end; pos++)
     @{
-      Emchar c = BUF_FETCH_CHAR (buf, pos);
-      p += set_charptr_emchar (buf, c);
+      Ichar c = BUF_FETCH_CHAR (buf, pos);
+      p += set_itext_ichar (buf, c);
     @}
 @}
 @end group
 @end example
 
-Note how @code{set_charptr_emchar} is used to store the @code{Emchar}
+Note how @code{set_itext_ichar} is used to store the @code{Ichar}
 and increment the counter, at the same time.
 
-@item INC_CHARPTR
-@itemx DEC_CHARPTR
-@cindex INC_CHARPTR
-@cindex DEC_CHARPTR
-These two macros increment and decrement a @code{Bufbyte} pointer,
+@item INC_IBYTEPTR
+@itemx DEC_IBYTEPTR
+@cindex INC_IBYTEPTR
+@cindex DEC_IBYTEPTR
+These two macros increment and decrement an @code{Ibyte} pointer,
 respectively.  They will adjust the pointer by the appropriate number of
 bytes according to the byte length of the character stored there.  Both
 macros assume that the memory address is located at the beginning of a
 valid character.
 
-Without Mule support, @code{INC_CHARPTR (p)} and @code{DEC_CHARPTR (p)}
+Without Mule support, @code{INC_IBYTEPTR (p)} and @code{DEC_IBYTEPTR (p)}
 simply expand to @code{p++} and @code{p--}, respectively.
 
 @item bytecount_to_charcount
@@ -2934,7 +2948,7 @@ Given a pointer to a text string and a length in bytes, return the
 equivalent length in characters.
 
 @example
-Charcount bytecount_to_charcount (Bufbyte *p, Bytecount bc);
+Charcount bytecount_to_charcount (Ibyte *p, Bytecount bc);
 @end example
 
 @item charcount_to_bytecount
@@ -2943,16 +2957,16 @@ Given a pointer to a text string and a length in characters, return the
 equivalent length in bytes.
 
 @example
-Bytecount charcount_to_bytecount (Bufbyte *p, Charcount cc);
+Bytecount charcount_to_bytecount (Ibyte *p, Charcount cc);
 @end example
 
-@item charptr_n_addr
-@cindex charptr_n_addr
+@item itext_n_addr
+@cindex itext_n_addr
 Return a pointer to the beginning of the character offset @var{cc} (in
 characters) from @var{p}.
 
 @example
-Bufbyte *charptr_n_addr (Bufbyte *p, Charcount cc);
+Ibyte *itext_n_addr (Ibyte *p, Charcount cc);
 @end example
 @end table
 
@@ -2962,7 +2976,7 @@ Bufbyte *charptr_n_addr (Bufbyte *p, Charcount cc);
 @cindex external data, conversion to and from
 
 When an external function, such as a C library function, returns a
-@code{char} pointer, you should almost never treat it as @code{Bufbyte}.
+@code{char} pointer, you should almost never treat it as @code{Ibyte}.
 This is because these returned strings may contain 8bit characters which
 can be misinterpreted by XEmacs, and cause a crash.  Likewise, when
 exporting a piece of internal text to the outside world, you should
@@ -2976,8 +2990,9 @@ supported by these macros, but now any coding system can be used with
 these macros.  The coding system alias mechanism is used to create the
 following logical coding systems, which replace the fixed external
 formats.  The (dontusethis-set-symbol-value-handler) mechanism was
-enhanced to make this possible (more work on that is needed - like
-remove the @code{dontusethis-} prefix).
+enhanced to make this possible (more work on that is needed).
+
+Example useful coding systems:
 
 @table @code
 @item Qbinary
@@ -3000,26 +3015,35 @@ On output, characters 0--255 are converted into bytes 0--255 and other
 characters are converted into `~'.
 @end enumerate
 
-@item Qfile_name
-Format used for filenames.  This is user-definable via either the
-@code{file-name-coding-system} or @code{pathname-coding-system} (now
-obsolete) variables.
-
 @item Qnative
 Format used for the external Unix environment---@code{argv[]}, stuff
 from @code{getenv()}, stuff from the @file{/etc/passwd} file, etc.
-Currently this is the same as Qfile_name.  The two should be
-distinguished for clarity and possible future separation.
+This is encoded according to the encoding specified by the current locale.
+
+@item Qfile_name
+Format used for filenames.  This is normally the same as @code{Qnative},
+but the two should be distinguished for clarity and possible future
+separation -- and also because @code{Qfile_name} can be changed using either
+the @code{file-name-coding-system} or @code{pathname-coding-system} (now
+obsolete) variables.
 
 @item Qctext
-Compound--text format.  This is the standard X11 format used for data
+Compound-text format.  This is the standard X11 format used for data
 stored in properties, selections, and the like.  This is an 8-bit
 no-lock-shift ISO2022 coding system.  This is a real coding system,
-unlike Qfile_name, which is user-definable.
+unlike @code{Qfile_name}, which is user-definable.
+
+@item Qmswindows_tstr
+Used for external data in all MS Windows functions that are declared to
+accept data of type @code{LPTSTR} or @code{LPCSTR}.  This maps to either
+@code{Qmswindows_multibyte} (a locale-specific encoding, same as
+@code{Qnative}) or @code{Qmswindows_unicode}, depending on whether
+XEmacs is being run under Windows 9X or Windows NT/2000/XP.
 @end table
 
 There are two fundamental macros to convert between external and
-internal format.
+internal format, as well as various convenience macros to simplify the
+most common operations.
 
 @code{TO_INTERNAL_FORMAT} converts external data to internal format, and
 @code{TO_EXTERNAL_FORMAT} converts the other way around.  The arguments
@@ -3067,7 +3091,7 @@ equivalent to @code{ALLOCA (ptr, len_ignored)} on output.
 @item @code{C_STRING_MALLOC, ptr,}
 equivalent to @code{MALLOC (ptr, len_ignored)} on output
 @item @code{C_STRING, ptr,}
-equivalent to @code{DATA, (ptr, strlen (ptr) + 1)} on input
+equivalent to @code{DATA, (ptr, strlen/wcslen (ptr))} on input
 @item @code{LISP_STRING, string,}
 input or output is a Lisp_Object of type string
 @item @code{LISP_BUFFER, buffer,}
@@ -3078,15 +3102,19 @@ input or output is a Lisp_Object of type lstream
 input or output is a Lisp_Object of type opaque
 @end table
 
-Often, the data is being converted to a '\0'-byte-terminated string,
-which is the format required by many external system C APIs.  For these
-purposes, a source type of @code{C_STRING} or a sink type of
-@code{C_STRING_ALLOCA} or @code{C_STRING_MALLOC} is appropriate.
-Otherwise, we should try to keep XEmacs '\0'-byte-clean, which means
-using (ptr, len) pairs.
+A source type of @code{C_STRING} or a sink type of
+@code{C_STRING_ALLOCA} or @code{C_STRING_MALLOC} is appropriate where
+the external API is not '\0'-byte-clean -- i.e. it expects strings to be
+terminated with a null byte.  For external API's that are in fact
+'\0'-byte-clean, we should of course not use these.
 
 The sinks to be specified must be lvalues, unless they are the lisp
 object types @code{LISP_LSTREAM} or @code{LISP_BUFFER}.
+
+There is no problem using the same lvalue for source and sink.
+
+Garbage collection is inhibited during these conversion operations, so
+it is OK to pass in data from Lisp strings using @code{XSTRING_DATA}.
 
 For the sink types @code{ALLOCA} and @code{C_STRING_ALLOCA}, the
 resulting text is stored in a stack-allocated buffer, which is
@@ -3099,6 +3127,42 @@ Note that it doesn't make sense for @code{LISP_STRING} to be a source
 for @code{TO_INTERNAL_FORMAT} or a sink for @code{TO_EXTERNAL_FORMAT}.
 You'll get an assertion failure if you try.
 
+99% of conversions involve raw data or Lisp strings as both source and
+sink, and usually data is output as @code{alloca()}, or sometimes
+@code{xmalloc()}.  For this reason, convenience macros are defined for
+many types of conversions involving raw data and/or Lisp strings,
+especially when the output is an @code{alloca()}ed string. (When the
+destination is a Lisp string, there are other functions that should be
+used instead -- @code{build_ext_string()} and @code{make_ext_string()},
+for example.) The convenience macros are of two types -- the older kind
+that store the result into a specified variable, and the newer kind that
+return the result.  The newer kind of macros don't exist when the output
+is sized data, because that would have two return values.  NOTE: All
+convenience macros are ultimately defined in terms of
+@code{TO_EXTERNAL_FORMAT} and @code{TO_INTERNAL_FORMAT}.  Thus, any
+comments above about the workings of these macros also apply to all
+convenience macros.
+
+A typical old-style convenience macro is
+
+@example
+  C_STRING_TO_EXTERNAL (in, out, codesys);
+@end example
+
+This is equivalent to
+
+@example
+  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys);
+@end example
+
+but is easier to write and somewhat clearer, since it clearly identifies
+the arguments without the clutter of having the preprocessor types mixed
+in.
+
+The new-style equivalent is @code{NEW_C_STRING_TO_EXTERNAL (src,
+codesys)}, which @emph{returns} the converted data (still in
+@code{alloca()} space).  This is far more convenient for most
+operations.
 
 @node General Guidelines for Writing Mule-Aware Code
 @subsection General Guidelines for Writing Mule-Aware Code
@@ -3113,20 +3177,22 @@ code, as well as some pitfalls you should avoid.
 @item Never use @code{char} and @code{char *}.
 In XEmacs, the use of @code{char} and @code{char *} is almost always a
 mistake.  If you want to manipulate an Emacs character from ``C'', use
-@code{Emchar}.  If you want to examine a specific octet in the internal
-format, use @code{Bufbyte}.  If you want a Lisp-visible character, use a
+@code{Ichar}.  If you want to examine a specific octet in the internal
+format, use @code{Ibyte}.  If you want a Lisp-visible character, use a
 @code{Lisp_Object} and @code{make_char}.  If you want a pointer to move
-through the internal text, use @code{Bufbyte *}.  Also note that you
-almost certainly do not need @code{Emchar *}.
+through the internal text, use @code{Ibyte *}.  Also note that you
+almost certainly do not need @code{Ichar *}.  Other typedefs to clarify
+the use of @code{char} are @code{Char_ASCII}, @code{Char_Binary},
+@code{UChar_Binary}, and @code{CIbyte}.
 
-@item Be careful not to confuse @code{Charcount}, @code{Bytecount}, and @code{Bufpos}.
+@item Be careful not to confuse @code{Charcount}, @code{Bytecount}, @code{Charbpos} and @code{Bytebpos}.
 The whole point of using different types is to avoid confusion about the
 use of certain variables.  Lest this effect be nullified, you need to be
 careful about using the right types.
 
 @item Always convert external data
 It is extremely important to always convert external data, because
-XEmacs can crash if unexpected 8bit sequences are copied to its internal
+XEmacs can crash if unexpected 8-bit sequences are copied to its internal
 buffers literally.
 
 This means that when a system function, such as @code{readdir}, returns
@@ -3134,25 +3200,30 @@ a string, you may need to convert it using one of the conversion macros
 described in the previous chapter, before passing it further to Lisp.
 
 Actually, most of the basic system functions that accept '\0'-terminated
-string arguments, like @code{stat()} and @code{open()}, have been
-@strong{encapsulated} so that they are they @code{always} do internal to
-external conversion themselves.  This means you must pass internally
-encoded data, typically the @code{XSTRING_DATA} of a Lisp_String to
-these functions.  This is actually a design bug, since it unexpectedly
-changes the semantics of the system functions.  A better design would be
-to provide separate versions of these system functions that accepted
-Lisp_Objects which were lisp strings in place of their current
-@code{char *} arguments.
-
-@example
-int stat_lisp (Lisp_Object path, struct stat *buf); /* Implement me */
-@end example
+string arguments, like @code{stat()} and @code{open()}, have
+@strong{encapsulated} equivalents that do the internal to external
+conversion themselves.  The encapsulated equivalents have a @code{qxe_}
+prefix and have string arguments of type @code{Ibyte *}, and you can
+pass internally encoded data to them, often from a Lisp string using
+@code{XSTRING_DATA}. (A better design might be to provide versions that
+accept Lisp strings directly.)
 
 Also note that many internal functions, such as @code{make_string},
-accept Bufbytes, which removes the need for them to convert the data
-they receive.  This increases efficiency because that way external data
-needs to be decoded only once, when it is read.  After that, it is
-passed around in internal format.
+accept Ibytes, which removes the need for them to convert the data they
+receive.  This increases efficiency because that way external data needs
+to be decoded only once, when it is read.  After that, it is passed
+around in internal format.
+
+@item Do all work in internal format
+External-formatted data is completely unpredictable in its format.  It
+may be Unicode (non-ASCII compatible); it may be a modal encoding, in
+which case some occurrences of (e.g.) the slash character may be part of
+two-byte Asian-language characters, and a naive attempt to split apart a
+pathname by slashes will fail; etc.  Internal-format text should be
+converted to external format only at the point where an external API is
+actually called, and the first thing done after receiving
+external-format text from an external API should be to convert it to
+internal text.
 @end table
 
 @node An Example of Mule-Aware Code
@@ -3171,14 +3242,14 @@ Concatenate all the argument characters and make the result a string.
 */
        (int nargs, Lisp_Object *args))
 @{
-  Bufbyte *storage = alloca_array (Bufbyte, nargs * MAX_EMCHAR_LEN);
-  Bufbyte *p = storage;
+  Ibyte *storage = alloca_array (Ibyte, nargs * MAX_ICHAR_LEN);
+  Ibyte *p = storage;
 
   for (; nargs; nargs--, args++)
     @{
       Lisp_Object lisp_char = *args;
       CHECK_CHAR_COERCE_INT (lisp_char);
-      p += set_charptr_emchar (p, XCHAR (lisp_char));
+      p += set_itext_ichar (p, XCHAR (lisp_char));
     @}
   return make_string (storage, p - storage);
 @}
@@ -3188,17 +3259,17 @@ Concatenate all the argument characters and make the result a string.
 Now we can analyze the source line by line.
 
 Obviously, string will be as long as there are arguments to the
-function.  This is why we allocate @code{MAX_EMCHAR_LEN} * @var{nargs}
+function.  This is why we allocate @code{MAX_ICHAR_LEN} * @var{nargs}
 bytes on the stack, i.e. the worst-case number of bytes for @var{nargs}
-@code{Emchar}s to fit in the string.
+@code{Ichar}s to fit in the string.
 
 Then, the loop checks that each element is a character, converting
 integers in the process.  Like many other functions in XEmacs, this
 function silently accepts integers where characters are expected, for
 historical and compatibility reasons.  Unless you know what you are
 doing, @code{CHECK_CHAR} will also suffice.  @code{XCHAR (lisp_char)}
-extracts the @code{Emchar} from the @code{Lisp_Object}, and
-@code{set_charptr_emchar} stores it to storage, increasing @code{p} in
+extracts the @code{Ichar} from the @code{Lisp_Object}, and
+@code{set_itext_ichar} stores it to storage, increasing @code{p} in
 the process.
 
 Other instructive examples of correct coding under Mule can be found all
@@ -3206,6 +3277,37 @@ over the XEmacs code.  For starters, I recommend
 @code{Fnormalize_menu_item_name} in @file{menubar.c}.  After you have
 understood this section of the manual and studied the examples, you can
 proceed writing new Mule-aware code.
+
+@node Mule-izing Code
+@subsection Mule-izing Code
+
+A lot of code is written without Mule in mind, and needs to be made
+Mule-correct or "Mule-ized".  There is really no substitute for
+line-by-line analysis when doing this, but the following checklist can
+help:
+
+@itemize @bullet
+@item
+Check all uses of @code{XSTRING_DATA}.
+@item
+Check all uses of @code{build_string} and @code{make_string}.
+@item
+Check all uses of @code{tolower} and @code{toupper}.
+@item
+Check object print methods.
+@item
+Check for use of functions such as @code{write_c_string},
+@code{write_fmt_string}, @code{stderr_out}, @code{stdout_out}.
+@item
+Check all occurrences of @code{char} and correct to one of the other
+typedefs described above.
+@item
+Check all existing uses of @code{TO_EXTERNAL_FORMAT},
+@code{TO_INTERNAL_FORMAT}, and any convenience macros (grep for
+@samp{EXTERNAL_TO}, @samp{TO_EXTERNAL}, and @samp{TO_SIZED_EXTERNAL}).
+@item
+In Windows code, string literals may need to be encapsulated with @code{XETEXT}.
+@end itemize
 
 @node Techniques for XEmacs Developers
 @section Techniques for XEmacs Developers
@@ -8011,7 +8113,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 * The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
-* Bufbytes and Emchars::        Representation of individual characters.
+* Ibytes and Ichars::        Representation of individual characters.
 * The Buffer Object::           The Lisp object corresponding to a buffer.
 @end menu
 
@@ -8087,7 +8189,7 @@ characters is quite large.
 has some shape that defines how it typically appears (e.g. as an
 uppercase A). (The exact way in which a character appears depends on the
 font used to display the character.) The internal type of characters in
-the C code is an @code{Emchar}; this is just an @code{int}, but using a
+the C code is an @code{Ichar}; this is just an @code{int}, but using a
 symbolic type makes the code clearer.
 
   Between every character in a buffer is a @dfn{buffer position} or
@@ -8104,12 +8206,12 @@ position 1 is before the first character, and position 0 is not
 valid.  If there are N characters in a buffer, then buffer
 position N+1 is after the last one, and position N+2 is not valid.
 
-  The internal makeup of the Emchar integer varies depending on whether
-we have compiled with MULE support.  If not, the Emchar integer is an
+  The internal makeup of the Ichar integer varies depending on whether
+we have compiled with MULE support.  If not, the Ichar integer is an
 8-bit integer with possible values from 0 - 255.  0 - 127 are the
 standard ASCII characters, while 128 - 255 are the characters from the
 ISO-8859-1 character set.  If we have compiled with MULE support, an
-Emchar is a 19-bit integer, with the various bits having meanings
+Ichar is a 19-bit integer, with the various bits having meanings
 according to a complex scheme that will be detailed later.  The
 characters numbered 0 - 255 still have the same meanings as for the
 non-MULE case, though.
@@ -8148,14 +8250,14 @@ released back to the operating system.  However, this tends to result in a
 noticeable speed penalty.)
 
   Astute readers may notice that the text in a buffer is represented as
-an array of @emph{bytes}, while (at least in the MULE case) an Emchar is
+an array of @emph{bytes}, while (at least in the MULE case) an Ichar is
 a 19-bit integer, which clearly cannot fit in a byte.  This means (of
 course) that the text in a buffer uses a different representation from
-an Emchar: specifically, the 19-bit Emchar becomes a series of one to
+an Ichar: specifically, the 19-bit Ichar becomes a series of one to
 four bytes.  The conversion between these two representations is complex
 and will be described later.
 
-  In the non-MULE case, everything is very simple: An Emchar
+  In the non-MULE case, everything is very simple: An Ichar
 is an 8-bit value, which fits neatly into one byte.
 
   If we are given a buffer position and want to retrieve the
@@ -8180,7 +8282,7 @@ the @emph{beginning}, not at the end, of the gap.
 @item
 Fetch the appropriate bytes at the determined memory position.
 @item
-Convert these bytes into an Emchar.
+Convert these bytes into an Ichar.
 @end enumerate
 
   In the non-Mule case, (3) and (4) boil down to a simple one-byte
@@ -8190,11 +8292,11 @@ memory access.
 
 @enumerate
 @item
-@dfn{buffer positions} or @dfn{character positions}, typedef @code{Bufpos}
+@dfn{buffer positions} or @dfn{character positions}, typedef @code{Charbpos}
 @item
-@dfn{byte indices}, typedef @code{Bytind}
+@dfn{byte indices}, typedef @code{Bytebpos}
 @item
-@dfn{memory indices}, typedef @code{Memind}
+@dfn{memory indices}, typedef @code{Membpos}
 @end enumerate
 
   All three typedefs are just @code{int}s, but defining them this way makes
@@ -8205,8 +8307,8 @@ that refers to text in a buffer uses buffer positions.  Lisp code does
 not know that byte indices or memory indices exist.
 
   Finally, we have a typedef for the bytes in a buffer.  This is a
-@code{Bufbyte}, which is an unsigned char.  Referring to them as
-Bufbytes underscores the fact that we are working with a string of bytes
+@code{Ibyte}, which is an unsigned char.  Referring to them as
+Ibytes underscores the fact that we are working with a string of bytes
 in the internal Emacs buffer representation rather than in one of a
 number of possible alternative representations (e.g. EUC-encoded text,
 etc.).
@@ -8276,7 +8378,7 @@ elsewhere.
 buffer positions in them as integers, and every time text is inserted or
 deleted, these positions must be updated.  In order to minimize the
 amount of shuffling that needs to be done, the positions in markers and
-extents (there's one per marker, two per extent) are stored in Meminds.
+extents (there's one per marker, two per extent) are stored in Membpos's.
 This means that they only need to be moved when the text is physically
 moved in memory; since the gap structure tries to minimize this, it also
 minimizes the number of marker and extent indices that need to be
@@ -8290,10 +8392,10 @@ given the buffer.  Extents remain in a buffer until they are detached
 (which could happen as a result of text being deleted) or the buffer is
 deleted, and primitives do exist to enumerate the extents in a buffer.
 
-@node Bufbytes and Emchars
-@section Bufbytes and Emchars
-@cindex Bufbytes and Emchars
-@cindex Emchars, Bufbytes and
+@node Ibytes and Ichars
+@section Ibytes and Ichars
+@cindex Ibytes and Ichars
+@cindex Ichars, Ibytes and
 
   Not yet documented.
 
@@ -8404,9 +8506,9 @@ or @code{nil}.
 
   Recall that there are two primary ways that text is represented in
 XEmacs.  The @dfn{buffer} representation sees the text as a series of
-bytes (Bufbytes), with a variable number of bytes used per character.
+bytes (Ibytes), with a variable number of bytes used per character.
 The @dfn{character} representation sees the text as a series of integers
-(Emchars), one per character.  The character representation is a cleaner
+(Ichars), one per character.  The character representation is a cleaner
 representation from a theoretical standpoint, and is thus used in many
 cases when lots of manipulations on a string need to be done.  However,
 the buffer representation is the standard representation used in both
@@ -9039,18 +9141,18 @@ argument is evaluated more than once.
 Function equivalents of the above macros.
 @end deftypefun
 
-@deftypefun ssize_t Lstream_read (Lstream *@var{stream}, void *@var{data}, size_t @var{size})
+@deftypefun Bytecount Lstream_read (Lstream *@var{stream}, void *@var{data}, Bytecount @var{size})
 Read @var{size} bytes of @var{data} from the stream.  Return the number
 of bytes read.  0 means EOF. -1 means an error occurred and no bytes
 were read.
 @end deftypefun
 
-@deftypefun ssize_t Lstream_write (Lstream *@var{stream}, void *@var{data}, size_t @var{size})
+@deftypefun Bytecount Lstream_write (Lstream *@var{stream}, void *@var{data}, Bytecount @var{size})
 Write @var{size} bytes of @var{data} to the stream.  Return the number
 of bytes written.  -1 means an error occurred and no bytes were written.
 @end deftypefun
 
-@deftypefun void Lstream_unread (Lstream *@var{stream}, void *@var{data}, size_t @var{size})
+@deftypefun void Lstream_unread (Lstream *@var{stream}, void *@var{data}, Bytecount @var{size})
 Push back @var{size} bytes of @var{data} onto the input queue.  The next
 call to @code{Lstream_read()} with the same size will read the same
 bytes back.  Note that this will be the case even if there is other
@@ -9076,7 +9178,7 @@ Rewind the stream to the beginning.
 @section Lstream Methods
 @cindex lstream methods
 
-@deftypefn {Lstream Method} ssize_t reader (Lstream *@var{stream}, unsigned char *@var{data}, size_t @var{size})
+@deftypefn {Lstream Method} Bytecount reader (Lstream *@var{stream}, unsigned char *@var{data}, Bytecount @var{size})
 Read some data from the stream's end and store it into @var{data}, which
 can hold @var{size} bytes.  Return the number of bytes read.  A return
 value of 0 means no bytes can be read at this time.  This may be because
@@ -9093,7 +9195,7 @@ calls @code{Lstream_read()} with a very small size.
 This function can be @code{NULL} if the stream is output-only.
 @end deftypefn
 
-@deftypefn {Lstream Method} ssize_t writer (Lstream *@var{stream}, const unsigned char *@var{data}, size_t @var{size})
+@deftypefn {Lstream Method} Bytecount writer (Lstream *@var{stream}, const unsigned char *@var{data}, Bytecount @var{size})
 Send some data to the stream's end.  Data to be sent is in @var{data}
 and is @var{size} bytes.  Return the number of bytes sent.  This
 function can send and return fewer bytes than is passed in; in that
@@ -9694,7 +9796,7 @@ be there, use the @code{_force} version.
 string.) So use the @code{_force} version if you need the extent_info
 structure to be there.
 
-  A list of extents is maintained as a double gap array: one gap array
+  A list of extents is maintained as a double gap array: One gap array
 is ordered by start index (the @dfn{display order}) and the other is
 ordered by end index (the @dfn{e-order}).  Note that positions in an
 extent list should logically be conceived of as referring @emph{to} a
@@ -9703,6 +9805,34 @@ between two extents.  Note also that callers of these functions should
 not be aware of the fact that the extent list is implemented as an
 array, except for the fact that positions are integers (this should be
 generalized to handle integers and linked list equally well).
+
+A gap array is the same structure used by buffer text: an array of
+elements with a "gap" somewhere in the middle.  Insertion and deletion
+happens by moving the gap to the insertion/deletion point, and then
+expanding/contracting as necessary.  Gap arrays have a number of
+useful properties:
+
+@enumerate
+@item
+They are space efficient, as there is no need for next/previous pointers.
+
+@item
+If the items in them are sorted, locating an item is fast -- @math{O(log N)}.
+
+@item
+Insertion and deletion is very fast (constant time, essentially) if the
+gap is near (which favors localized operations, as will usually be the
+case).  Even if not, it requires only a block move of memory, which is
+generally a highly optimized operation on modern processors.
+
+@item
+Code to manipulate them is relatively simple to write.
+@end enumerate
+
+An alternative would be a balanced binary trees, which have guaranteed
+@math{O(log N)} time for all operations (although the constant factors
+are not as good, and repeated localized operations will be slower than
+for a gap array).  Such code is quite tricky to write, however.
 
 @node Zero-Length Extents
 @section Zero-Length Extents
@@ -9831,24 +9961,17 @@ sorts by increasing ending index.
 
   Therefore, @math{F} can be found in the same amount of time as
 operation (1), i.e. the time that it takes to locate where an extent
-would go if inserted into the e-order list.
-
-  If the lists were stored as balanced binary trees, then operation (1)
-would take logarithmic time, which is usually quite fast.  However,
-currently they're stored as simple doubly-linked lists, and instead we
-do some caching to try to speed things up.
+would go if inserted into the e-order list.  This is @math{O(log N)},
+since we are using gap arrays to manage extents.
 
   Define a @dfn{stack of extents} (or @dfn{SOE}) as the set of extents
-(ordered in the display order) that overlap an index @math{I}, together
-with the SOE's @dfn{previous} extent, which is an extent that precedes
-@math{I} in the e-order. (Hopefully there will not be very many extents
-between @math{I} and the previous extent.)
+(ordered in display order and e-order, just like for normal extent
+lists) that overlap an index @math{I}.
 
 Now:
 
 Let @math{I} be an index, let @math{S} be the stack of extents on
-@math{I}, let @math{F} be the first extent in @math{S}, and let @math{P}
-be @math{S}'s previous extent.
+@math{I} and let @math{F} be the first extent in @math{S}.
 
 Theorem 3: The first extent in @math{S} is the first extent that overlaps
 any range @math{[I, J]}.
