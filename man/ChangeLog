@@ -1,3 +1,26 @@
+2002-07-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs/packages.texi (Installing Packages): Fix reference to
+	EFS.
+
+2002-07-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* new-users-guide/custom1.texi (Customizing key Bindings): Fix
+	improper use of indef. art. "a".
+
+2002-07-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref/commands.texi (Peeking and Discarding): Ditto.
+	* lispref/customize.texi (Type Keywords): Ditto.
+	* lispref/dragndrop.texi (Drop Interface): Ditto.
+
+2002-07-06  Adrian Aichner  <adrian@xemacs.org>
+
+	* termcap.texi (Clearing): Ditto.
+	* widget.texi (User Interface): Ditto.
+	* widget.texi (Basic Types): Ditto.
+	* widget.texi (group): Ditto.
+
 2002-07-05  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs/menus.texi (Edit Menu): Typo fixes for incorrect use of
