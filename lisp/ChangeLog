@@ -1,3 +1,16 @@
+2004-06-07  Adrian Aichner  <adrian@xemacs.org>
+
+	* mule/ethio-util.el (ethio-sera-to-fidel-region): Phrase
+	duplication typo fixes for typos found by
+	xemacs-builds/adrian/typology/phrase-duplication-typo.pl.
+	* mule/mule-charset.el (make-translation-table): Ditto.
+
+2004-06-07  Adrian Aichner  <adrian@xemacs.org>
+
+	* files.el (basic-save-buffer): Ditto.
+	* lisp-mode.el (eval-interactive-verbose): Ditto.
+	* newcomment.el (uncomment-region): Ditto.
+
 2003-12-03  Adrian Aichner  <adrian@xemacs.org>
 
 	* files.el (delete-old-versions): Avoid going interactive during

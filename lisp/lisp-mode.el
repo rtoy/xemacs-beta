@@ -428,8 +428,8 @@ if that value is non-nil."
 (defcustom eval-interactive-verbose t
   "*Non-nil means that interactive evaluation can print messages.
 The messages are printed when the expression is treated differently
-using `\\[eval-last-sexp]' and `\\[eval-defun]' than it than it would have been
-treated noninteractively.
+using `\\[eval-last-sexp]' and `\\[eval-defun]' than it would have
+been treated noninteractively.
 
 The printed messages are \"defvar treated as defconst\" and \"defcustom
  evaluation forced\".  See `eval-interactive' for more details."

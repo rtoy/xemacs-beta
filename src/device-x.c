@@ -1184,7 +1184,7 @@ x_IO_error_handler (Display *disp)
       warn_when_safe
 	(Qx, Qcritical,
 	 "I/O Error %d (%s) on display connection\n"
-	 "  \"%s\" after after %lu requests (%lu known processed)\n"
+	 "  \"%s\" after %lu requests (%lu known processed)\n"
 	 "  with %d events remaining.\n"
 	 "  Throwing to top level.\n",
 	 errno, errmess, DisplayString (disp),

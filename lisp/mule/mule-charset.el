@@ -167,8 +167,8 @@ If POS is out of range, the value is nil."
 
 (defun make-translation-table (&rest args)
   "Make a translation table from arguments.
-A translation table is a char table intended for for character
-translation in CCL programs.
+A translation table is a char table intended for character translation
+in CCL programs.
 
 Each argument is a list of elemnts of the form (FROM . TO), where FROM
 is a character to be translated to TO.

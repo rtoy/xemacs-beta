@@ -2806,7 +2806,7 @@ in such cases.")
   "Save the current buffer in its visited file, if it has been modified.
 The hooks `write-contents-hooks', `local-write-file-hooks' and
 `write-file-hooks' get a chance to do the job of saving; if they do not,
-then the buffer is saved in the visited file file in the usual way.
+then the buffer is saved in the visited file in the usual way.
 After saving the buffer, this function runs `after-save-hook'."
   (interactive)
   (save-current-buffer

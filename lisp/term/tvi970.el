@@ -44,7 +44,7 @@
 	  ;; ("\eOR"	[kp-f3])
 	  ;; ("\eOS"	[kp-f4])
 
-	  ;; These might br set by terminfo
+	  ;; These might be set by terminfo
 	  ("\e[H"	[home])
 	  ("\e[Z"	[backtab])
 	  ("\e[i"	[print])
@@ -59,7 +59,7 @@
 	  ("\eOn"	[kp-decimal])
 	  ("\eOM"	[kp-enter])
 
-	  ;; These won't be set up by either either
+	  ;; These won't be set up by either
 	  ("\e[K"	[key-eol])	;; Not an X keysym
 	  ("\e[J"	[key-eos])	;; Not an X keysym
 	  ("\e[2J"	[key-clear])	;; Not an X keysym

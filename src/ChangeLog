@@ -1,3 +1,9 @@
+2004-06-07  Adrian Aichner  <adrian@xemacs.org>
+
+	* device-x.c (x_IO_error_handler): Phrase duplication typo fixes
+	for typos found by
+	xemacs-builds/adrian/typology/phrase-duplication-typo.pl.
+
 2004-06-06  Ilya N. Golubev  <gin@mo.msk.ru>
 
 	* extw-Xt.c (_XT_WAIT_FOR_SOMETHING): Fix: complete macro
