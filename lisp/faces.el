@@ -847,10 +847,21 @@ the function to be called on it."
 
 
       (setq temp-sp (copy-specifier sp))
-      (if (and (or (eq locale 'global) (eq locale 'all) (not locale))
-	       (not (face-property face property 'global)))
-	  (copy-specifier (face-property 'default property)
-			  temp-sp 'global))
+      (if (or (eq locale 'global) (eq locale 'all) (not locale))
+	  (when (not (specifier-specs temp-sp 'global))
+	    ;; Try fallback via the official ways and then do it "by hand"
+	    (let* ((fallback (specifier-fallback sp))
+		   (fallback-sp 
+		    (cond ((specifierp fallback) fallback)
+			  ;; just an inst list
+			  (fallback
+			   (make-specifier-and-init (specifier-type sp)
+						    fallback))
+			  ((eq (get-face face) (get-face 'default))
+			   (error "Unable to find global specification"))
+			  ;; If no fallback we snoop from default
+			  (t (face-property 'default property)))))
+	      (copy-specifier fallback-sp temp-sp 'global))))
       (if (and (valid-specifier-locale-p locale)
 	       (not (specifier-specs temp-sp locale)))
 	  (error "Property must have a specification in locale %S" locale))
@@ -986,6 +997,27 @@ multi-charset environments."
 		  (face-property-instance unfrobbed-face 'font domain))
 	   (set-face-property face 'font (vector frobbed-face) the-locale tags)))))))
 
+;; WE DEMAND FOUNDRY FROBBING!
+
+;; Family frobbing
+;; Thx Jan Vroonhof, Ref xemacs-beta <87oflypbum.fsf@petteflet.ntlworld.com>
+;; Brainlessly derived from make-face-size by Stephen; don't blame Jan.
+;; I'm long since flown to Rio, it does you little good to blame me, either.
+(defun make-face-family (face family &optional locale tags)
+  "Set FACE's family to FAMILY in LOCALE, if possible.
+
+Add/replace settings specified by TAGS only."
+  (frob-face-property face 'font
+		      ;; uses dynamic scope of family
+		      #'(lambda (f d)
+			  ;; keep the dependency on font.el for now
+			  (let ((fo (font-create-object (font-instance-name f)
+							d)))
+			    (set-font-family fo family)
+			    (font-create-name fo d)))
+		      nil locale tags))
+
+;; Style (ie, typographical face) frobbing
 (defun make-face-bold (face &optional locale tags)
   "Make FACE bold in LOCALE, if possible.
 This will attempt to make the font bold for X/MSW locales and will set the
@@ -1168,6 +1200,23 @@ specifics on exactly how this function works."
      ([italic] . [default])
      ([bold-italic] . [bold]))))
 
+
+;; Size frobbing
+;; Thx Jan Vroonhof, Ref xemacs-beta <87oflypbum.fsf@petteflet.ntlworld.com>
+;; Jan had a separate helper function 
+(defun make-face-size (face size &optional locale tags)
+  "Adjust FACE to SIZE in LOCALE, if possible.
+
+Add/replace settings specified by TAGS only."
+  (frob-face-property face 'font
+		      ;; uses dynamic scope of size
+		      #'(lambda (f d)
+			  ;; keep the dependency on font.el for now
+			  (let ((fo (font-create-object (font-instance-name f)
+							d)))
+			    (set-font-size fo size)
+			    (font-create-name fo d)))
+		      nil locale tags))
 
 ;; Why do the following two functions lose so badly in so many
 ;; circumstances?
@@ -1579,10 +1628,12 @@ and 'global)."
 (defun face-complain-about-font (face device)
   (if (symbolp face) (setq face (symbol-name face)))
 ;;  (if (not inhibit-font-complaints)
-  (display-warning
-   'font
-   (let ((default-name (face-font-name 'default device)))
-     (format "%s: couldn't deduce %s %s version of the font
+  ;; complaining for printers is generally annoying.
+  (unless (device-printer-p device)
+    (display-warning
+	'font
+      (let ((default-name (face-font-name 'default device)))
+	(format "%s: couldn't deduce %s %s version of the font
 %S.
 
 Please specify X resources to make the %s face
@@ -1592,14 +1643,14 @@ For example, you could add one of the following to $HOME/Emacs:
 Emacs.%s.attributeFont: -dt-*-medium-i-*
 or
 Emacs.%s.attributeForeground: hotpink\n"
-             invocation-name
-             (if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
-             face
-             default-name
-             face
-             face
-             face
-             ))))
+		invocation-name
+		(if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
+		face
+		default-name
+		face
+		face
+		face
+		)))))
 
 
 ;; #### This is quite a mess.  We should use the custom mechanism for

@@ -3392,7 +3392,7 @@ Leave point at the location of the call, or after the last expression."
  	(princ "\n"))
        (princ "(custom-set-variables")
        (mapatoms (lambda (symbol)
- 		  (let ((spec (car-safe (get symbol 'theme-value)))
+		   (let ((spec (car-safe (get symbol 'theme-value)))
  			(requests (get symbol 'custom-requests))
  			(now (not (or (get symbol 'standard-value)
  				      (and (not (boundp symbol))
@@ -3400,7 +3400,9 @@ Leave point at the location of the call, or after the last expression."
 						    'rogue))))))
 			(comment (get symbol 'saved-variable-comment)))
  		    (when (or (and spec (eq (car spec) 'user)
- 			       (eq (second spec) 'set)) comment)
+ 			       (eq (second spec) 'set)) comment
+			       ;; support non-themed vars
+			       (and (null spec) (get symbol 'saved-value)))
  		      (princ "\n '(")
  		      (prin1 symbol)
  		      (princ " ")
@@ -3431,9 +3433,12 @@ Leave point at the location of the call, or after the last expression."
 		   (not (eq (get symbol 'force-face) 'rogue)))))))
     (when (or (and (not (memq symbol custom-save-face-ignoring))
 	       ;; Don't print default face here.
-	       theme-spec
-	       (eq (car theme-spec) 'user)
-	       (eq (second theme-spec) 'set)) comment)
+		   (or (and theme-spec
+			    (eq (car theme-spec) 'user)
+			    (eq (second theme-spec) 'set))
+		       ;; cope with non-themed faces
+		       (and (null theme-spec)
+			    (get symbol 'saved-face)))) comment)
       (princ "\n '(")
       (prin1 symbol)
       (princ " ")

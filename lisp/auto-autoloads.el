@@ -887,7 +887,8 @@ in the tag table that matches the tagname used in the previous find-tag.
 the tag.
 
 This version of this function supports multiple active tags tables,
-and completion.
+and completion. See also the commands `\\[push-tag-mark]' and
+`\\[pop-tag-mark]'.
 
 Variables of note:
 
@@ -1249,7 +1250,8 @@ or if you change your font path, you can call this to re-initialize the menus." 
 
 ;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-encoding-for-device font-default-registry-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "lisp/font.el")
 
-(autoload 'font-create-object "font" nil nil nil)
+(autoload 'font-create-object "font" "\
+Return a font descriptor object for FONTNAME, appropriate for DEVICE." nil nil)
 
 (autoload 'font-default-font-for-device "font" nil nil nil)
 

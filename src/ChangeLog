@@ -1,3 +1,93 @@
+2001-12-11  Andy Piper  <andy@xemacs.org>
+
+	* dialog-msw.c (dialog_popped_down): new function. unset popup_up_p.
+	* dialog-msw.c (mswindows_make_dialog_box_internal): set
+	popup_up_p.
+	* menubar-msw.c (unsafe_handle_wm_initmenupopup_1): ditto.
+	* menubar-msw.c (mswindows_handle_wm_command): ditto.
+	* menubar-msw.c (mswindows_popup_menu): ditto.
+
+2001-11-24  Andy Piper  <andy@xemacs.org>
+
+	* window.c (Fsplit_window): Doc return type.
+
+2001-07-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* event-msw.c: Typo fix.
+	* event-msw.c (mswindows_wnd_proc): Set FRAME_VISIBLE_P after
+	magic XM_MAPFRAME event has been sent.
+
+2001-11-23  Andy Piper  <andy@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): Don't pump mousewheel events.
+
+2001-11-21  Andy Piper  <andy@xemacs.org>
+
+	* scrollbar-msw.c (mswindows_handle_mousewheel_event): cope with
+	mouse events outside the frame.
+
+2001-11-15  Andy Piper  <andy@xemacs.org>
+
+	(Fmswindows_shell_execute): fix handling of URL's under cygwin (again).
+
+2001-11-14  Andy Piper  <andy@xemacs.org>
+
+	* nt.c (REG_ROOT): change registry key to XEmacs.
+
+2001-10-29  Andy Piper  <andy@xemacs.org>
+
+	* dialog-msw.c (handle_directory_dialog_box): quit if the user
+	cancels.
+
+2001-12-16  Torsten Duwe  <duwe@caldera.de>
+
+	* search.c (Freplace_match): Add missing sub-expression functionality.
+
+	* buffer.c (decode_buffer): Add a check for pointer type to
+	decode_buffer, before gcc's CSE optimization reorders a
+	dereference in front of the allow_string test.
+
+2001-11-16  Darryl Okahata  <darrylo@xemacs.org>
+
+	* window.c (window_loop): Fix bug that sometimes prevented
+	window_loop() from iterating across multiple devices.  Also, at
+	Ben's request, changed infloop-detecting code to abort() instead
+	of silently terminating window_loop().
+
+2001-11-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Based on analysis and patch by Simon Josefson <jas@extundo.com>.
+	* editfns.c (make_time): New function.
+	(Fencode_time): Use it instead of wasteful_word_to_lisp.
+	* lisp.h (make_time): Prototype and comment it.
+	* dired.c (wasteful_word_to_lisp): Deprecate.
+	(Ffile_attributes): Use make_time() instead of wasteful_word_to_lisp().
+
+2001-10-31  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* fileio.c (auto_save_1): Use current coding system, not
+	escape-quoted.
+
+2001-11-13  Ben Wing  <ben@xemacs.org>
+
+	* window.c:
+	* window.c (window_truncation_on):
+	* window.c (syms_of_window):
+	truncate-partial-width-windows should respect the buffer being
+	displayed, like other redisplay vars.
+
+2001-11-13  Hirokazu FUKUI  <hfukui@sannet.ne.jp>
+
+	* event-stream.c (Fread_key_sequence): save current buffer.
+
+2001-10-29  Andrew Begel  <abegel@eecs.berkeley.edu>
+
+	* ntheap.c (_heap_init): Don't redefine in VS.NET (MSC >= 1300).
+
+2001-10-29  Andrew Begel  <abegel@eecs.berkeley.edu>
+
+	* alloc.c (lcrecord_stats): Add space for types defined in modules.
+
 2001-12-18  Adrian Aichner  <adrian@xemacs.org>
 
 	* .cvsignore: Sort lines, add dump-id.c.

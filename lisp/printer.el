@@ -310,7 +310,10 @@ Recognized properties are the same as those in `make-dialog-box':
 	 ;; re-create the frame each time so that we eject the piece
 	 ;; of paper at the end even if we're printing more than one
 	 ;; page per sheet of paper.
-	 (let ((copies (plist-get props 'copies 1)))
+	 (let ((copies (plist-get props 'copies 1))
+	       ;; This is not relevant to printing and can mess up
+	       ;; msprinter frame sizing
+	       default-frame-plist)
 	   (while (> copies 0)
 	     (let (d f header-buffer footer-buffer)
 	       (setq buffer (decode-buffer buffer))
@@ -443,5 +446,5 @@ Recognized properties are the same as those in `make-dialog-box':
 	     (setq copies (1- copies)))))
 	((and (not (eq system-type 'windows-nt))
 	      (fboundp 'lpr-region))
-	 (lpr-region buffer))
+	 (lpr-region (point-min) (point-max)))
 	(t (error "No print support available"))))

@@ -4290,6 +4290,7 @@ See `function-key-map' for more details.
   struct gcpro gcpro1;
   GCPRO1 (event);
 
+  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
   if (!NILP (prompt))
     CHECK_STRING (prompt);
   /* else prompt = Fkeymap_prompt (current_buffer->keymap); may GC */

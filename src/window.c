@@ -123,6 +123,8 @@ Fixnum next_screen_context_lines;
 /* List of freed window configurations with 1 - 10 windows. */
 static Lisp_Object Vwindow_configuration_free_list[10];
 
+Lisp_Object Qtruncate_partial_width_windows;
+
 #define SET_LAST_MODIFIED(w, cache_too)		\
 do {						\
   (w)->last_modified[CURRENT_DISP] = Qzero;	\
@@ -756,7 +758,8 @@ window_truncation_on (struct window *w)
 
   /* If truncate_partial_width_windows is true and the window is not
      the full width of the frame it is truncated. */
-  if (truncate_partial_width_windows
+  if (!NILP (symbol_value_in_buffer (Qtruncate_partial_width_windows,
+				     w->buffer))
       && !(window_is_leftmost (w) && window_is_rightmost (w)))
     return 1;
 
@@ -2670,7 +2673,7 @@ window_loop (enum window_loop type,
 	 We can't just wait until we hit the first window again,
 	 because it might be deleted.  */
 
-      last_window = Fprevious_window (w, mini ? Qt : Qnil, frame_arg, Qt);
+      last_window = Fprevious_window (w, mini ? Qt : Qnil, frame_arg, device);
 
       best_window = Qnil;
       for (;;)
@@ -2685,7 +2688,17 @@ window_loop (enum window_loop type,
 	  /* Given the outstanding quality of the rest of this code,
 	     I feel no shame about putting this piece of shit in. */
 	  if (++lose_lose >= 500)
-	    return Qnil;
+	    {
+	      /* Call to abort() added by Darryl Okahata (16 Nov. 2001),
+	         at Ben's request, to catch any remaining bugs.
+
+		 If you find that XEmacs is aborting here, and you
+		 need to be up and running ASAP, it should be safe to
+		 comment out the following abort(), as long as you
+		 leave the "break;" alone.  */
+	      abort();
+	      break;	/* <--- KEEP THIS HERE!  Do not delete!  */
+	    }
 
 	  /* Note that we do not pay attention here to whether
 	     the frame is visible, since Fnext_window skips non-visible frames
@@ -3683,8 +3696,9 @@ make_dummy_parent (Lisp_Object window)
 DEFUN ("split-window", Fsplit_window, 0, 3, "", /*
 Split WINDOW, putting SIZE lines in the first of the pair.
 WINDOW defaults to the selected one and SIZE to half its size.
-If optional third arg HORFLAG is non-nil, split side by side
-and put SIZE columns in the first of the pair.
+If optional third arg HORFLAG is non-nil, split side by side and put
+SIZE columns in the first of the pair. The newly created window is
+returned.
 */
        (window, size, horflag))
 {
@@ -6146,6 +6160,8 @@ syms_of_window (void)
   /* Qother in general.c */
 #endif
 
+  DEFSYMBOL (Qtruncate_partial_width_windows);
+  
   DEFSUBR (Fselected_window);
   DEFSUBR (Flast_nonminibuf_window);
   DEFSUBR (Fminibuffer_window);

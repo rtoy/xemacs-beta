@@ -2630,13 +2630,11 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  }
 	else if (IsWindowVisible (hwnd))
 	  {
-            /*
-               APA: It's too early here to set the frame visible.
-               Let's do this later, in WM_SIZE processing, after the
-               magic XM_MAPFRAME event has been sent (just like 21.1
-               did).
-            */
-            /* FRAME_VISIBLE_P (frame) = 1; */
+	    /* APA: It's too early here to set the frame visible.
+	     * Let's do this later, in WM_SIZE processing, after the
+	     * magic XM_MAPFRAME event has been sent (just like 21.1
+	     * did). */
+	    /* FRAME_VISIBLE_P (frame) = 1; */
 	    FRAME_ICONIFIED_P (frame) = 0;
 	  }
 	else
@@ -2701,12 +2699,10 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		{
 		  if (!msframe->sizing && !FRAME_VISIBLE_P (frame))
 		    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
-                  /*
-                     APA: Now that the magic XM_MAPFRAME event has
-                     been sent we can mark the frame as visible (just
-                     like 21.1 did).
-                  */
-                  FRAME_VISIBLE_P (frame) = 1;
+		  /* APA: Now that the magic XM_MAPFRAME event has
+		   * been sent we can mark the frame as visible (just
+		   * like 21.1 did). */
+		  FRAME_VISIBLE_P (frame) = 1;
 
 		  if (!msframe->sizing || mswindows_dynamic_frame_resize)
 		    redisplay ();
@@ -2829,20 +2825,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
       {
 	int keys = LOWORD (wParam); /* Modifier key flags */
 	int delta = (short) HIWORD (wParam); /* Wheel rotation amount */
-	struct gcpro gcpro1, gcpro2;
 
 	if (mswindows_handle_mousewheel_event (mswindows_find_frame (hwnd),
 					       keys, delta,
 					       MAKEPOINTS (lParam)))
-	  {
-	    GCPRO2 (emacs_event, fobj);
-	    if (UNBOUNDP(mswindows_pump_outstanding_events ()))	/* Can GC */
-	      SendMessage (hwnd, WM_CANCELMODE, 0, 0);
-	    UNGCPRO;
-	  }
+	  /* We are not in a modal loop so no pumping is necessary. */
+	  break;
 	else
 	  goto defproc;
-	break;
       }
 #endif
 

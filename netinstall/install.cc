@@ -47,7 +47,7 @@
 #include "reginfo.h"
 #include "log.h"
 #include "hash.h"
-
+#include "desktop.h"
 #include "port.h"
 
 static HWND ins_dialog = 0;
@@ -231,6 +231,10 @@ uninstall_one (char *name, int action, int type)
     {
       SetWindowText (ins_pkgname, name);
       SetWindowText (ins_action, "Uninstalling...");
+      // remove shortcuts and registry entries
+      if (type != TY_GENERIC)
+	remove_xemacs_setup();
+
       if (action == ACTION_UPGRADE)
 	log (0, "Uninstalling old %s", name);
       else

@@ -2293,9 +2293,7 @@ match since only regular expressions have distinguished subexpressions.
     }
   else
     {
-      if (NILP (strbuffer))
-	sub = 0;
-      else
+      if (!NILP (strbuffer))
 	{
 	  CHECK_INT (strbuffer);
 	  sub = XINT (strbuffer);
@@ -2337,7 +2335,7 @@ match since only regular expressions have distinguished subexpressions.
     {
       /* Decide how to casify by examining the matched text. */
 
-      last = search_regs.end[0];
+      last = search_regs.end[sub];
       prevc = '\n';
       case_action = all_caps;
 
@@ -2348,7 +2346,7 @@ match since only regular expressions have distinguished subexpressions.
       some_nonuppercase_initial = 0;
       some_uppercase = 0;
 
-      for (pos = search_regs.start[0]; pos < last; pos++)
+      for (pos = search_regs.start[sub]; pos < last; pos++)
 	{
 	  if (NILP (string))
 	    c = BUF_FETCH_CHAR (buf, pos);
@@ -2564,8 +2562,8 @@ match since only regular expressions have distinguished subexpressions.
       return concat3 (before, replacement, after);
     }
 
-  mc_count = begin_multiple_change (buf, search_regs.start[0],
-				    search_regs.end[0]);
+  mc_count = begin_multiple_change (buf, search_regs.start[sub],
+				    search_regs.end[sub]);
 
   /* begin_multiple_change() records an unwind-protect, so we need to
      record this value now. */
@@ -2575,7 +2573,7 @@ match since only regular expressions have distinguished subexpressions.
      delete the original text.  This means that markers at the
      beginning or end of the original will float to the corresponding
      position in the replacement.  */
-  BUF_SET_PT (buf, search_regs.start[0]);
+  BUF_SET_PT (buf, search_regs.start[sub]);
   if (!NILP (literal))
     Finsert (1, &replacement);
   else
@@ -2586,11 +2584,21 @@ match since only regular expressions have distinguished subexpressions.
       GCPRO1 (replacement);
       for (strpos = 0; strpos < stlen; strpos++)
 	{
-	  Charcount offset = BUF_PT (buf) - search_regs.start[0];
+	  /* on the first iteration assert(offset==0),
+	     exactly complementing BUF_SET_PT() above.
+	     During the loop, it keeps track of the amount inserted.
+	   */
+	  Charcount offset = BUF_PT (buf) - search_regs.start[sub];
 
 	  c = string_char (XSTRING (replacement), strpos);
 	  if (c == '\\' && strpos < stlen - 1)
 	    {
+	      /* XXX FIXME: replacing just a substring non-literally
+		 using backslash refs to the match looks dangerous.  But
+		 <15366.18513.698042.156573@ns.caldera.de> from Torsten Duwe
+		 <duwe@caldera.de> claims Finsert_buffer_substring already
+		 handles this correctly.
+	      */
 	      c = string_char (XSTRING (replacement), ++strpos);
 	      if (c == '&')
 		Finsert_buffer_substring
@@ -2633,9 +2641,9 @@ match since only regular expressions have distinguished subexpressions.
       UNGCPRO;
     }
 
-  inslen = BUF_PT (buf) - (search_regs.start[0]);
-  buffer_delete_range (buf, search_regs.start[0] + inslen, search_regs.end[0] +
-		       inslen, 0);
+  inslen = BUF_PT (buf) - (search_regs.start[sub]);
+  buffer_delete_range (buf, search_regs.start[sub] + inslen,
+		       search_regs.end[sub] +  inslen, 0);
 
   if (case_action == all_caps)
     Fupcase_region (make_int (BUF_PT (buf) - inslen),

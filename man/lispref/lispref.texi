@@ -1000,6 +1000,7 @@ Glyphs
 * Redisplay Glyphs::    Glyphs controlling various redisplay functions.
 * Subwindows::          Inserting an externally-controlled subwindow
                           into a buffer.
+* Glyph Examples::      Examples of how to work with glyphs.
 
 Glyph Functions
 

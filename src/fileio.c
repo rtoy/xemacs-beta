@@ -3789,8 +3789,8 @@ auto_save_1 (Lisp_Object ignored)
   return
     /* !!#### need to deal with this 'escape-quoted everywhere */
     Fwrite_region_internal (Qnil, Qnil, a, Qnil, Qlambda, Qnil,
-#ifdef MULE
-			    Qescape_quoted
+#ifdef FILE_CODING
+			    current_buffer->buffer_file_coding_system
 #else
 			    Qnil
 #endif
