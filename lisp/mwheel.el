@@ -126,6 +126,18 @@ This can be slightly disconcerting, but some people may prefer it."
 	  (setq keys (cdr keys)))
       (error nil))))
 
+;;;###autoload
+(define-behavior 'mwheel
+  "This code enables the use of the infamous 'wheel' on the new
+crop of mice.  Under XFree86 and the XSuSE X Servers, the wheel
+events are sent as button4/button5 events, which are automatically
+set up to do scrolling in the expected way.  The actual way that the
+scrolling works can be controlled by `mwheel-scroll-amount' and
+`mwheel-follow-mouse'."
+  :group 'mouse
+  :short-doc "Mouse wheel support for X Windows"
+  :enable 'mwheel-install)
+
 (provide 'mwheel)
 
 ;;; mwheel.el ends here

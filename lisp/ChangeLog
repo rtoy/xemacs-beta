@@ -1,5 +1,55 @@
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
+	* behavior.el:
+	* behavior.el (behavior-group-hash-table): New.
+	* behavior.el (behavior-override-hash-table): New.
+	* behavior.el (define-behavior): Removed.
+	* behavior.el (behavior-group-p): New.
+	* behavior.el (check-behavior-group): New.
+	* behavior.el (override-behavior):
+	* behavior.el (define-behavior-group):
+	* behavior.el (read-behavior):
+	* behavior.el (compute-behavior-group-children): New.
+	* behavior.el (behavior-menu-filter-1): New.
+	* behavior.el (behavior-menu-filter): New.
+	Major update.  Add documentation of how it works.
+
+	* behavior-defs.el:
+	* behavior-defs.el (tty):
+	* behavior-defs.el ('scroll-in-place): Removed.
+	* behavior-defs.el ('mouse-avoidance): Removed.
+	* behavior-defs.el ('jka-compr): Removed.
+	* behavior-defs.el ('efs): Removed.
+	* behavior-defs.el ('resize-minibuffer): Removed.
+	* behavior-defs.el ('func-menu): Removed.
+	* behavior-defs.el ('mwheel): Removed.
+	* behavior-defs.el ('recent-files): Removed.
+	* behavior-defs.el ('filladapt): Removed.
+	* behavior-defs.el ('tty)): New.
+	* behavior-defs.el ('toolbars)): New.
+	* behavior-defs.el ('menus)): New.
+	* behavior-defs.el ('mouse)): New.
+	* behavior-defs.el ('editing)): New.
+	* behavior-defs.el ('keyboard)): New.
+	* behavior-defs.el ('files)): New.
+	* behavior-defs.el ('games)): New.
+	* behavior-defs.el ('processes)): New.
+	* behavior-defs.el ('display)): New.
+	* behavior-defs.el ('programming)): New.
+	* behavior-defs.el ('international)): New.
+	* behavior-defs.el ('buffers-and-windows)): New.
+	* behavior-defs.el ('internet)): New.
+	* behavior-defs.el ('compose-mail): New.
+	Only define the basic behavior groups here.
+	Move the definitions for particular packages to the
+	appropriate package files.
+
+	* mwheel.el:
+	* mwheel.el ('mwheel): New.
+	Add define-behavior for mwheel.
+
+2005-02-02  Ben Wing  <ben@xemacs.org>
+
 	* easymenu.el (easy-menu-add):
 	* easymenu.el (easy-menu-remove):
 	* map-ynp.el (map-y-or-n-p):
@@ -193,54 +243,6 @@
 	Major update.  Sync with FSF 21.2.
 	Create the ability to make custom-defines files.
 
-	* behavior-defs.el:
-	* behavior-defs.el (tty):
-	* behavior-defs.el ('scroll-in-place): Removed.
-	* behavior-defs.el ('mouse-avoidance): Removed.
-	* behavior-defs.el ('jka-compr): Removed.
-	* behavior-defs.el ('efs): Removed.
-	* behavior-defs.el ('resize-minibuffer): Removed.
-	* behavior-defs.el ('func-menu): Removed.
-	* behavior-defs.el ('mwheel): Removed.
-	* behavior-defs.el ('recent-files): Removed.
-	* behavior-defs.el ('filladapt): Removed.
-	* behavior-defs.el ('tty)): New.
-	* behavior-defs.el ('toolbars)): New.
-	* behavior-defs.el ('menus)): New.
-	* behavior-defs.el ('mouse)): New.
-	* behavior-defs.el ('editing)): New.
-	* behavior-defs.el ('keyboard)): New.
-	* behavior-defs.el ('files)): New.
-	* behavior-defs.el ('games)): New.
-	* behavior-defs.el ('processes)): New.
-	* behavior-defs.el ('display)): New.
-	* behavior-defs.el ('programming)): New.
-	* behavior-defs.el ('international)): New.
-	* behavior-defs.el ('buffers-and-windows)): New.
-	* behavior-defs.el ('internet)): New.
-	* behavior-defs.el ('compose-mail): New.
-	Only define the basic behavior groups here.
-	Move the definitions for particular packages to the
-	appropriate package files.
-	
-	* behavior.el:
-	* behavior.el (behavior-group-hash-table): New.
-	* behavior.el (behavior-override-hash-table): New.
-	* behavior.el (define-behavior): Removed.
-	* behavior.el (behavior-group-p): New.
-	* behavior.el (check-behavior-group): New.
-	* behavior.el (override-behavior):
-	* behavior.el (define-behavior-group):
-	* behavior.el (read-behavior):
-	* behavior.el (compute-behavior-group-children): New.
-	* behavior.el (behavior-menu-filter-1): New.
-	* behavior.el (behavior-menu-filter): New.
-	Major update.  Add documentation of how it works.
-	
-	* mwheel.el:
-	* mwheel.el ('mwheel): New.
-	Add define-behavior for mwheel.
-	
 	* paragraphs.el:
 	* paragraphs.el (paragraphs): New.
 	* paragraphs.el (use-hard-newlines): Removed.
