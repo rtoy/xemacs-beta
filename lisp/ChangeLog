@@ -1,3 +1,9 @@
+2003-05-11  Simon Josefsson  <jas@extundo.com>
+
+	* replace.el (delete-non-matching-lines, kill-non-matching-lines)
+	(copy-non-matching-lines, delete-matching-lines)
+	(kill-matching-lines, copy-matching-lines): Don't message.
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.

@@ -1,6 +1,6 @@
 ;;; replace.el --- search and replace commands for XEmacs.
 
-;; Copyright (C) 1985-7, 1992, 1994, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985-7, 1992, 1994, 1997, 2003 Free Software Foundation, Inc.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: dumped, matching
@@ -300,7 +300,8 @@ buffer (or within the region, if it is active)."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-non-matching-lines regexp t nil beg end))
-    (message "%i lines deleted" count)))
+    (when (interactive-p)
+      (message "%i lines deleted" count))))
 
 (defun kill-non-matching-lines (regexp)
   "Delete the lines that do not match REGEXP, from point to the end of
@@ -316,7 +317,8 @@ are placed in the kill ring as one block of text."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-non-matching-lines regexp t t beg end))
-    (message "%i lines killed" count)))
+    (when (interactive-p)
+      (message "%i lines killed" count))))
 
 (defun copy-non-matching-lines (regexp)
   "Find all lines that do not match REGEXP from point to the end of the
@@ -332,7 +334,8 @@ kill ring as one block of text."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-non-matching-lines regexp nil t beg end))
-    (message "%i lines copied" count)))
+    (when (interactive-p)
+      (message "%i lines copied" count))))
 
 (defun operate-on-matching-lines (regexp delete kill &optional beg end)
   "Internal function used by delete-matching-lines, kill-matching-lines,
@@ -393,7 +396,8 @@ buffer (or within the region, if it is active)."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-matching-lines regexp t nil beg end))
-    (message "%i lines deleted" count)))
+    (when (interactive-p)
+      (message "%i lines deleted" count))))
 
 (defun kill-matching-lines (regexp)
   "Delete the lines that match REGEXP, from point to the end of the
@@ -409,7 +413,8 @@ placed in the kill ring as one block of text."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-matching-lines regexp t t beg end))
-    (message "%i lines killed" count)))
+    (when (interactive-p)
+      (message "%i lines killed" count))))
 
 (defun copy-matching-lines (regexp)
   "Find all lines that match REGEXP from point to the end of the
@@ -425,7 +430,8 @@ kill ring as one block of text."
       (setq beg (region-beginning))
       (setq end (region-end)))
     (setq count (operate-on-matching-lines regexp nil t beg end))
-    (message "%i lines copied" count)))
+    (when (interactive-p)
+      (message "%i lines copied" count))))
 
 (define-function 'how-many 'count-matches)
 (defun count-matches (regexp)
