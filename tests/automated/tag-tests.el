@@ -26,11 +26,14 @@
 
 ;;; Commentary:
 
-;; Test tag completion.
+;; Test tag support.
 ;; See test-harness.el for instructions on how to run these tests.
 
 (let ((testfile "tag-test.c")
-      (tagfile "TAGS"))
+      (tagfile "TAGS")
+      (tags-build-completion-table nil))
+
+  (cd (temp-directory))
 
   ;; Create a TAGS file
   (with-temp-file tagfile
