@@ -45,13 +45,6 @@
 #include <sys/types.h>
 #include <stddef.h> /* needed for ptrdiff_t under Solaris */
 
-/* This is for other GNU distributions with internationalized messages.  */
-#if defined (I18N3) && (defined (HAVE_LIBINTL_H) || defined (_LIBC))
-# include <libintl.h>
-#else
-# define gettext(msgid) (msgid)
-#endif
-
 /* XEmacs addition */
 #ifdef REL_ALLOC
 #define REGEX_REL_ALLOC /* may be undefined below */
@@ -124,6 +117,13 @@ typedef int Ichar;
 #define itext_ichar_len_fmt(ptr, fmt) 1
 
 #include <string.h>
+
+/* This is for other GNU distributions with internationalized messages.  */
+#if defined (I18N3) && (defined (HAVE_LIBINTL_H) || defined (_LIBC))
+# include <libintl.h>
+#else
+# define gettext(msgid) (msgid)
+#endif
 
 /* Define the syntax stuff for \<, \>, etc.  */
 

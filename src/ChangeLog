@@ -1,3 +1,8 @@
+2004-08-03  Jerry James  <james@xemacs.org>
+
+	* regex.c: Move #define gettext after #include "lisp.h" to avoid
+	breaking the C++ build on Fedora systems.
+
 2004-07-27  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* frame-gtk.c (gtk_make_frame_visible):
