@@ -1,3 +1,11 @@
+2002-03-21  William M. Perry  <wmperry@gnu.org>
+
+	* event-gtk.c (emacs_gtk_force_event_pending): Bogus definition
+	that does nothing right now.
+	(reinit_vars_of_event_gtk): Register a force_event_pending
+	handler.  This seems to cure the crashes at startup caused by the
+	progress bar.
+
 2002-03-21  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* event-gtk.c (emacs_gtk_format_magic_event):  Fixed compilation

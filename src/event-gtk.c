@@ -1728,6 +1728,14 @@ emacs_gtk_event_pending_p (int user_p)
   return 0;
 }
 
+static void
+emacs_gtk_force_event_pending (struct frame* f)
+{
+#if 0
+  stderr_out ("Force event pending called on frame %p!\n", f);
+#endif
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1758,6 +1766,7 @@ void reinit_vars_of_event_gtk (void)
   gtk_event_stream->quit_p_cb		= emacs_gtk_quit_p;
   gtk_event_stream->create_stream_pair_cb= emacs_gtk_create_stream_pair;
   gtk_event_stream->delete_stream_pair_cb= emacs_gtk_delete_stream_pair;
+  gtk_event_stream->force_event_pending	 = emacs_gtk_force_event_pending;
 
   the_GTK_timeout_blocktype = Blocktype_new (struct GTK_timeout_blocktype);
 
