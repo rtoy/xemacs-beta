@@ -1693,7 +1693,7 @@ handle_map_event (struct frame *f, XEvent *event)
      of these values (e.g. "totally visible"), and (b) there may be
      race conditions (see below).
 
-     However, according the the ICCCM, there's a specific way to
+     However, according to the ICCCM, there's a specific way to
      ask the window manager whether the state is (a) visible,
      (b) iconic, (c) withdrawn.  It must be one of these three.
      We already use this call to check for the iconified state.

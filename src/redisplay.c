@@ -4515,7 +4515,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 		goto done;
 	    }
 
-	  /* #### What if we we're dealing with a display table? */
+	  /* #### What if we're dealing with a display table? */
 	  if (data.start_col)
 	    data.start_col--;
 
