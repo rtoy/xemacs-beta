@@ -1203,12 +1203,12 @@ case "$canonical" in
   *-*-ultrix4.[12]* ) opsys=bsd4-3 ;;
   *-*-ultrix* )         opsys=ultrix4-3 ;;
 
-    *-*-aix3.1*  ) opsys=aix3-1	;;
-  *-*-aix3.2.5 ) opsys=aix3-2-5	;;
-  *-*-aix3*    ) opsys=aix3-2	;;
-  *-*-aix4.0*  ) opsys=aix4	;;
-  *-*-aix4.1*  ) opsys=aix4-1	;;
-  *-*-aix4*    ) opsys=aix4-2	;;
+    *-*-aix3.1*     ) opsys=aix3-1   ;;
+  *-*-aix3.2.5    ) opsys=aix3-2-5 ;;
+  *-*-aix3*       ) opsys=aix3-2   ;;
+  *-*-aix4.0*     ) opsys=aix4	   ;;
+  *-*-aix4.1*     ) opsys=aix4-1   ;;
+  *-*-aix[4-9]* ) opsys=aix4-2   ;;
 
     *-gnu* )			opsys=gnu    ;;
   *-*-bsd4.[01] )		opsys=bsd4-1 ;;
