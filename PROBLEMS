@@ -60,55 +60,6 @@ library, you only need the shared library.  To compile objects that
 link with it, you need the headers---and distros don't provide them with
 the libraries.  You need the additional "development" package, too.
 
-*** Don't use -O2 with gcc 2.8.1 and egcs 1.0 under SPARC architectures
-without also using `-fno-schedule-insns'.
-
-gcc will generate incorrect code otherwise, typically resulting in
-crashes in the function skip-syntax-backward.
-
-*** egcs-1.1
-
-There have been reports of egcs-1.1 not compiling XEmacs correctly on
-Alpha Linux.  There have also been reports that egcs-1.0.3a is O.K.
-
-*** Don't use -O2 or -O3 with Cygwin 1.0, CodeFusion-99070 or gcc 2.7.2 on x86
-without also using `-fno-strength-reduce'.
-
-gcc will generate incorrect code otherwise.  This bug is present in at
-least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
-later.  This bug is O/S independent, but is limited to x86 architectures.
-
-This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
-
-Unfortunately, later releases of Cygnus-released compilers (not the
-Net-released ones) have a bug with the same `problem signature'.
-
-If you're lucky, you'll get an error while compiling that looks like:
-
-event-stream.c:3189: internal error--unrecognizable insn:
-(insn 256 14 15 (set (reg/v:SI 24)
-        (minus:SI (reg/v:SI 25)
-            (const_int 2))) -1 (insn_list 11 (nil))
-    (nil))
-    0       0 [main]
-
-If you're unlucky, your code will simply execute incorrectly.
-
-*** Don't use gcc-2.95.2 with -mcpu=ultrasparc on Solaris 2.6.
-
-gcc will assume a 64-bit operating system, even though you've
-merely told it to assume a 64-bit instruction set.
-
-*** Don't use -O2 with gcc 2.7.2 under Intel architectures without also
-using `-fno-caller-saves'.
-
-gcc will generate incorrect code otherwise.  This bug is still
-present in gcc 2.7.2.3.  There have been no reports to indicate the
-bug is present in egcs 1.0 (or pgcc 1.0) or later.  This bug is O/S
-independent, but limited to x86 architectures.
-
-This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
-
 *** When using gcc, you get the error message "undefined symbol __fixunsdfsi".
 When using gcc, you get the error message "undefined symbol __main".
 
@@ -162,6 +113,41 @@ characters, you can fix them by running:
  make all-elc
 
 This will rebuild all the needed .elc files.
+
+** Intel Architecture General
+
+*** Don't use -O2 or -O3 with Cygwin 1.0, CodeFusion-99070 or gcc 2.7.2 on x86
+without also using `-fno-strength-reduce'.
+
+gcc will generate incorrect code otherwise.  This bug is present in at
+least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
+later.  This bug is O/S independent, but is limited to x86 architectures.
+
+This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
+
+Unfortunately, later releases of Cygnus-released compilers (not the
+Net-released ones) have a bug with the same `problem signature'.
+
+If you're lucky, you'll get an error while compiling that looks like:
+
+event-stream.c:3189: internal error--unrecognizable insn:
+(insn 256 14 15 (set (reg/v:SI 24)
+        (minus:SI (reg/v:SI 25)
+            (const_int 2))) -1 (insn_list 11 (nil))
+    (nil))
+    0       0 [main]
+
+If you're unlucky, your code will simply execute incorrectly.
+
+*** Don't use -O2 with gcc 2.7.2 under Intel architectures without also
+using `-fno-caller-saves'.
+
+gcc will generate incorrect code otherwise.  This bug is still
+present in gcc 2.7.2.3.  There have been no reports to indicate the
+bug is present in egcs 1.0 (or pgcc 1.0) or later.  This bug is O/S
+independent, but limited to x86 architectures.
+
+This problem is known to be fixed in egcs (or pgcc) 1.0 or later.
 
 *** `compress' and `uncompress' not found and XFree86
 
@@ -360,6 +346,17 @@ Valdis.Kletnieks@vt.edu writes:
 
 
 ** SunOS/Solaris
+*** Don't use -O2 with gcc 2.8.1 and egcs 1.0 under SPARC architectures
+without also using `-fno-schedule-insns'.
+
+gcc will generate incorrect code otherwise, typically resulting in
+crashes in the function skip-syntax-backward.
+
+*** Don't use gcc-2.95.2 with -mcpu=ultrasparc on Solaris 2.6.
+
+gcc will assume a 64-bit operating system, even though you've
+merely told it to assume a 64-bit instruction set.
+
 *** Dumping error when using GNU binutils / GNU ld on a Sun.
 
 Errors similar to the following:
@@ -480,6 +477,14 @@ The solution is to install Patch-ID# 100267-03 from Sun.
   broken.  Use the ones in /usr/openwin/{include,lib} instead.
 
 ** Linux
+
+See also Intel Architecture General, above.
+
+*** egcs-1.1 on Alpha Linux
+
+There have been reports of egcs-1.1 not compiling XEmacs correctly on
+Alpha Linux.  There have also been reports that egcs-1.0.3a is O.K.
+
 *** Under Linux, you get "too many arguments to function `getpgrp'".
 
 You have probably installed LessTiff under `/usr/local' and `libXm.so'
@@ -734,6 +739,19 @@ Note: Much of the above entry is probably not valid for XEmacs 21.0
 and later.
 
 ** Cygwin
+
+See also Intel Architecture General, above.
+
+*** Signal 11 when building or running a dumped XEmacs.
+
+This appears to happen when using the traditional dumping mechanism and
+the system malloc.  Andy Piper writes:
+
+  Traditional dumping on cygwin relies on using gmalloc (there are specific
+  hacks in our version of gmalloc to support this), I suspect using sysmalloc
+  is the problem.
+
+Try configuring with pdump or without system malloc.
 
 *** In general use etc/check_cygwin_setup.sh to trap environment problems.
 
@@ -1953,6 +1971,10 @@ problem still exists.  Also ask on xemacs-nt@xemacs.org.
 
 
 ** Cygwin
+*** Signal 11 when building or running a dumped XEmacs.
+
+See the section on Cygwin above, under building.
+
 *** XEmacs fails to start because cygXpm-noX4.dll was not found.
 
 Andy Piper <andy@xemacs.org> sez:

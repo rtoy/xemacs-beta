@@ -1,6 +1,6 @@
 /* Commonly-used symbols -- include file
    Copyright (C) 1995 Sun Microsystems.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -63,6 +63,7 @@ SYMBOL_KEYWORD (Q_border);
 SYMBOL (Qbottom);
 SYMBOL (Qbottom_margin);
 SYMBOL (Qbuffer);
+SYMBOL (Qbuffers);
 SYMBOL (Qbuilt_in);
 SYMBOL (Qbutton);
 SYMBOL_KEYWORD (Q_buttons);
@@ -99,6 +100,7 @@ SYMBOL (Qdelq);
 SYMBOL (Qdescription);
 SYMBOL_KEYWORD (Q_descriptor);
 SYMBOL (Qdevice);
+SYMBOL (Qdevices);
 SYMBOL_KEYWORD (Q_device);
 SYMBOL (Qdialog);
 SYMBOL (Qdirectory);
@@ -118,12 +120,14 @@ SYMBOL (Qevent);
 SYMBOL (Qextents);
 SYMBOL (Qexternal);
 SYMBOL (Qface);
+SYMBOL (Qfaces);
 SYMBOL (Qfallback);
 SYMBOL (Qfile);
 SYMBOL (Qfile_name);
 SYMBOL_KEYWORD (Q_filter);
 SYMBOL (Qfont);
 SYMBOL (Qframe);
+SYMBOL (Qframes);
 SYMBOL (Qfrom_page);
 SYMBOL (Qfull_assoc);
 SYMBOL (Qfuncall);
@@ -225,6 +229,7 @@ SYMBOL_KEYWORD (Q_question);
 SYMBOL (Qradio);
 SYMBOL (Qrassoc);
 SYMBOL (Qrassq);
+SYMBOL (Qredisplay);
 SYMBOL (Qremove_all);
 SYMBOL (Qrequire);
 SYMBOL (Qresource);
@@ -280,6 +285,8 @@ SYMBOL (Qwidget);
 SYMBOL (Qwidth);
 SYMBOL_KEYWORD (Q_width);
 SYMBOL (Qwindow);
+SYMBOL (Qwindows);
+SYMBOL (Qwindow_id);
 SYMBOL (Qwindow_system);
 SYMBOL (Qx);
 SYMBOL (Qy);

@@ -3219,6 +3219,156 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   PROFILE_RECORD_EXITING_SECTION (QSin_internal_external_conversion);
 }
 
+/* ----------------------------------------------------------------------- */
+/* New-style DFC converters (data is returned rather than stored into var) */
+/* ----------------------------------------------------------------------- */
+
+/* We handle here the cases where SRC is a Lisp_Object, internal data
+   (sized or unsized), or external data (sized or unsized), and return type
+   is unsized alloca() or malloc() data.  If the return type is a
+   Lisp_Object, use build_ext_string() for unsized external data,
+   make_ext_string() for sized external data.  If the return type needs to
+   be sized data, use the *_TO_SIZED_*() macros, and for other more
+   complicated cases, use the original TO_*_FORMAT() macros. */
+
+static void
+new_dfc_convert_now_damn_it (const void *src, Bytecount src_size,
+			     enum new_dfc_src_type type,
+			     void **dst, Bytecount *dst_size,
+			     Lisp_Object codesys)
+{
+  /* #### In the case of alloca(), it would be a bit more efficient, for
+     small strings, to use static Dynarr's like are used internally in
+     TO_*_FORMAT(), or some other way of avoiding malloc() followed by
+     free().  I doubt it really matters, though. */
+
+  switch (type)
+    {
+    case DFC_EXTERNAL:
+      TO_INTERNAL_FORMAT (C_STRING, src,
+			  MALLOC, (*dst, *dst_size), codesys);
+      break;
+
+    case DFC_SIZED_EXTERNAL:
+      TO_INTERNAL_FORMAT (DATA, (src, src_size),
+			  MALLOC, (*dst, *dst_size), codesys);
+      break;
+
+    case DFC_INTERNAL:
+      TO_EXTERNAL_FORMAT (C_STRING, src,
+			  MALLOC, (*dst, *dst_size), codesys);
+      break;
+
+    case DFC_SIZED_INTERNAL:
+      TO_EXTERNAL_FORMAT (DATA, (src, src_size),
+			  MALLOC, (*dst, *dst_size), codesys);
+      break;
+
+    case DFC_LISP_STRING:
+      TO_EXTERNAL_FORMAT (LISP_STRING, VOID_TO_LISP (src),
+			  MALLOC, (*dst, *dst_size), codesys);
+      break;
+
+    default:
+      abort ();
+    }
+}
+
+void *
+new_dfc_convert_malloc (const void *src, Bytecount src_size,
+			enum new_dfc_src_type type, Lisp_Object codesys)
+{
+  void *dst;
+  Bytecount dst_size;
+
+  new_dfc_convert_now_damn_it (src, src_size, type, &dst, &dst_size, codesys);
+  return dst;
+}
+
+/* For alloca(), things are trickier because the calling function needs to
+   allocate.  This means that the caller needs to do the following:
+
+   (a) invoke us to do the conversion, remember the data and return the size.
+   (b) alloca() the proper size.
+   (c) invoke us again to copy the data.
+
+   We need to handle the possibility of two or more invocations of the
+   converter in the same expression.  In such cases it's conceivable that
+   the evaluation of the sub-expressions will be overlapping (e.g. one size
+   function called, then the other one called, then the copy functions
+   called).  To handle this, we keep a list of active data, indexed by the
+   src expression. (We use the stringize operator to avoid evaluating the
+   expression multiple times.) If the caller uses the exact same src
+   expression twice in two converter calls in the same subexpression, we
+   will lose, but at least we can check for this and abort().  We could
+   conceivably try to index on other parameters as well, but there is not
+   really any point. */
+
+typedef struct
+{
+  const char *srctext;
+  void *dst;
+  Bytecount dst_size;
+} dfc_e2c_vals;
+
+typedef struct
+{
+  Dynarr_declare (dfc_e2c_vals);
+} dfc_e2c_vals_dynarr;
+
+static dfc_e2c_vals_dynarr *active_dfc_e2c;
+
+static int
+find_pos_of_existing_active_dfc_e2c (const char *srctext)
+{
+  dfc_e2c_vals *vals = NULL;
+  int i;
+
+  for (i = 0; i < Dynarr_length (active_dfc_e2c); i++)
+    {
+      vals = Dynarr_atp (active_dfc_e2c, i);
+      if (vals->srctext == srctext)
+	return i;
+    }
+
+  return -1;
+}
+
+void *
+new_dfc_convert_alloca (const char *srctext, void *alloca_data)
+{
+  dfc_e2c_vals *vals;
+  int i = find_pos_of_existing_active_dfc_e2c (srctext);
+
+  assert (i >= 0);
+  vals = Dynarr_atp (active_dfc_e2c, i);
+  assert (alloca_data);
+  memcpy (alloca_data, vals->dst, vals->dst_size + 2);
+  xfree (vals->dst);
+  Dynarr_delete (active_dfc_e2c, i);
+  return alloca_data;
+}
+
+Bytecount
+new_dfc_convert_size (const char *srctext, const void *src,
+		      Bytecount src_size, enum new_dfc_src_type type,
+		      Lisp_Object codesys)
+{
+  dfc_e2c_vals vals;
+
+  assert (find_pos_of_existing_active_dfc_e2c (srctext) < 0);
+
+  vals.srctext = srctext;
+
+  new_dfc_convert_now_damn_it (src, src_size, type, &vals.dst, &vals.dst_size,
+			       codesys);
+
+  Dynarr_add (active_dfc_e2c, vals);
+  /* The size is always + 2 because we have double zero-termination at the
+     end of all data (for Unicode-correctness). */
+  return vals.dst_size + 2;
+}
+
 
 /************************************************************************/
 /*                       Basic Ichar functions                         */
@@ -3740,6 +3890,7 @@ reinit_vars_of_text (void)
 					   Ibyte_dynarr *);
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
+  active_dfc_e2c = Dynarr_new (dfc_e2c_vals);
 
   for (i = 0; i <= MAX_BYTEBPOS_GAP_SIZE_3; i++)
     three_to_one_table[i] = i / 3;

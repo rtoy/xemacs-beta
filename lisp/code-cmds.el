@@ -53,7 +53,6 @@
   (define-key coding-keymap "x" 'set-selection-coding-system)
   (define-key coding-keymap "X" 'set-next-selection-coding-system))
 
-
 (defun coding-system-change-eol-conversion (coding-system eol-type)
   "Return a coding system which differs from CODING-SYSTEM in eol conversion.
 The returned coding system converts end-of-line by EOL-TYPE
@@ -75,19 +74,20 @@ They means `lf', `crlf', and `cr' respectively."
 				(eq eol-type 'cr))
 			    'eol-cr)
                            (t eol-type))))
-  (let ((orig-eol-type (coding-system-eol-type coding-system)))
-    (if (null orig-eol-type)
-        (if (not eol-type)
-            coding-system
-          (coding-system-property coding-system eol-type))
-      (let ((base (coding-system-base coding-system)))
-        (if (not eol-type)
-            base
-          (if (eq eol-type orig-eol-type)
-              coding-system
-            (setq orig-eol-type (coding-system-eol-type base))
-            (if (null orig-eol-type)
-                (coding-system-property base eol-type))))))))
+  (coding-system-name
+   (let ((orig-eol-type (coding-system-eol-type coding-system)))
+     (if (null orig-eol-type)
+	 (if (not eol-type)
+	     coding-system
+	   (coding-system-property coding-system eol-type))
+       (let ((base (coding-system-base coding-system)))
+	 (if (not eol-type)
+	     base
+	   (if (eq eol-type orig-eol-type)
+	       coding-system
+	     (setq orig-eol-type (coding-system-eol-type base))
+	     (if (null orig-eol-type)
+		 (coding-system-property base eol-type)))))))))
 
 ;; (defun coding-system-change-text-conversion (coding-system coding)
 ;;   "Return a coding system which differs from CODING-SYSTEM in text conversion.

@@ -404,7 +404,6 @@ static int throw_level;
 #endif
 
 static int warning_will_be_discarded (Lisp_Object level);
-static void check_proper_critical_section_nonlocal_exit_protection (void);
 
 
 /************************************************************************/
@@ -1442,6 +1441,34 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 /*			    Non-local exits				*/
 /************************************************************************/
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+
+int
+proper_redisplay_wrapping_in_place (void)
+{
+  return !in_display
+    || ((get_inhibit_flags () & INTERNAL_INHIBIT_ERRORS)
+	&& (get_inhibit_flags () & INTERNAL_INHIBIT_THROWS));
+}
+
+static void
+check_proper_critical_section_nonlocal_exit_protection (void)
+{
+  assert_with_message
+    (proper_redisplay_wrapping_in_place (),
+     "Attempted non-local exit from within redisplay without being properly wrapped");
+}
+
+static void
+check_proper_critical_section_lisp_protection (void)
+{
+  assert_with_message
+    (proper_redisplay_wrapping_in_place (),
+     "Attempt to call Lisp code from within redisplay without being properly wrapped");
+}
+
+#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
+
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
 \(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
@@ -1613,7 +1640,9 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
     abort ();
 #endif
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   check_proper_critical_section_nonlocal_exit_protection ();
+#endif
 
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and
@@ -2135,9 +2164,6 @@ return_from_signal (Lisp_Object value)
 #endif
 }
 
-extern int in_display;
-extern int gc_currently_forbidden;
-
 
 /************************************************************************/
 /*		 the workhorse error-signaling function			*/
@@ -2153,28 +2179,6 @@ void signal_1 (void);
 void
 signal_1 (void)
 {
-}
-
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-
-static void
-check_proper_critical_section_gc_protection (void)
-{
-  assert_with_message
-    (!in_display || gc_currently_forbidden,
-     "Potential GC from within redisplay without being properly wrapped");
-}
-
-#endif /* ERROR_CHECK_TRAPPING_PROBLEMS */
-
-static void
-check_proper_critical_section_nonlocal_exit_protection (void)
-{
-  assert_with_message
-    (!in_display
-     || ((get_inhibit_flags () & INTERNAL_INHIBIT_ERRORS)
-	 && (get_inhibit_flags () & INTERNAL_INHIBIT_THROWS)),
-     "Attempted non-local exit from within redisplay without being properly wrapped");
 }
 
 /* #### This function has not been synched with FSF.  It diverges
@@ -2234,7 +2238,9 @@ user invokes the "return from signal" option.
      messy, difficult-to-debug ways.  See enter_redisplay_critical_section().
   */
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
   check_proper_critical_section_nonlocal_exit_protection ();
+#endif
 
   conditions = Fget (error_symbol, Qerror_conditions, Qnil);
 
@@ -3464,6 +3470,10 @@ Evaluate FORM and return its value.
   int nargs;
   struct backtrace backtrace;
 
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  check_proper_critical_section_lisp_protection ();
+#endif
+
   /* I think this is a pretty safe place to call Lisp code, don't you? */
   while (!in_warnings && !NILP (Vpending_warnings)
 	 /* well, perhaps not so safe after all! */
@@ -3505,9 +3515,6 @@ Evaluate FORM and return its value.
     }
 
   QUIT;
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  check_proper_critical_section_gc_protection ();
-#endif
   if (need_to_garbage_collect)
     {
       struct gcpro gcpro1;
@@ -3759,13 +3766,12 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
   Lisp_Object *fun_args = args + 1;
   Lisp_Object orig_fun;
 
+  /* QUIT will check for proper redisplay wrapping */
+
   QUIT;
 
   if (funcall_allocation_flag)
     {
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-      check_proper_critical_section_gc_protection ();
-#endif
       if (need_to_garbage_collect)
 	/* Callers should gcpro lexpr args */
 	garbage_collect_1 ();
@@ -4876,6 +4882,52 @@ call_trapping_problems_1 (Lisp_Object opaque)
 				      call_trapping_problems_2, opaque);
 }
 
+/* Turn on the trapping flags in FLAGS -- see call_trapping_problems().
+   This cannot handle INTERNAL_INHIBIT_THROWS() or INTERNAL_INHIBIT_ERRORS
+   (because they ultimately boil down to a setjmp()!) -- you must directly
+   use call_trapping_problems() for that.  Turn the flags off with
+   unbind_to().  Returns the "canonicalized" flags (particularly in the
+   case of INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY, which is shorthand for
+   various other flags). */
+
+int
+set_trapping_problems_flags (int flags)
+{
+  int new_inhibit_flags;
+
+  if (flags & INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY)
+    flags |= INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION
+      | INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION
+      | INHIBIT_ENTERING_DEBUGGER
+      | INHIBIT_WARNING_ISSUE
+      | INHIBIT_GC;
+
+  new_inhibit_flags = inhibit_flags | flags;
+  if (new_inhibit_flags != inhibit_flags)
+    internal_bind_int (&inhibit_flags, new_inhibit_flags);
+
+  if (flags & INHIBIT_QUIT)
+    specbind (Qinhibit_quit, Qt);
+
+  if (flags & UNINHIBIT_QUIT)
+    begin_do_check_for_quit ();
+
+  if (flags & INHIBIT_GC)
+    begin_gc_forbidden ();
+
+  /* #### If we have nested calls to call_trapping_problems(), and the
+     inner one creates some buffers/etc., should the outer one be able
+     to delete them?  I think so, but it means we need to combine rather
+     than just reset the value. */
+  if (flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
+    internal_bind_lisp_object (&Vdeletable_permanent_display_objects, Qnil);
+
+  if (flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
+    internal_bind_lisp_object (&Vmodifiable_buffers, Qnil);
+
+  return flags;
+}
+
 /* This is equivalent to (*fun) (arg), except that various conditions
    can be trapped or inhibited, according to FLAGS.
 
@@ -5010,7 +5062,7 @@ call_trapping_problems (Lisp_Object warning_class,
 			Lisp_Object (*fun) (void *),
 			void *arg)
 {
-  int speccount = specpdl_depth();
+  int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct call_trapping_problems package;
   Lisp_Object opaque, thrown_tag, tem;
@@ -5033,37 +5085,7 @@ call_trapping_problems (Lisp_Object warning_class,
   package.data = Qnil;
   package.backtrace = Qnil;
 
-  if (flags & INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY)
-    flags |= INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION
-      | INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION
-      | INHIBIT_ENTERING_DEBUGGER
-      | INHIBIT_WARNING_ISSUE
-      | INHIBIT_GC;
-
-  {
-    int new_inhibit_flags = inhibit_flags | flags;
-    if (new_inhibit_flags != inhibit_flags)
-      internal_bind_int (&inhibit_flags, new_inhibit_flags);
-  }
-
-  if (flags & INHIBIT_QUIT)
-    specbind (Qinhibit_quit, Qt);
-
-  if (flags & UNINHIBIT_QUIT)
-    begin_do_check_for_quit ();
-
-  if (flags & INHIBIT_GC)
-    begin_gc_forbidden ();
-
-  /* #### If we have nested calls to call_trapping_problems(), and the
-     inner one creates some buffers/etc., should the outer one be able
-     to delete them?  I think so, but it means we need to combine rather
-     than just reset the value. */
-  if (flags & INHIBIT_EXISTING_PERMANENT_DISPLAY_OBJECT_DELETION)
-    internal_bind_lisp_object (&Vdeletable_permanent_display_objects, Qnil);
-
-  if (flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
-    internal_bind_lisp_object (&Vmodifiable_buffers, Qnil);
+  flags = set_trapping_problems_flags (flags);
 
   if (flags & (INTERNAL_INHIBIT_THROWS | INTERNAL_INHIBIT_ERRORS))
     opaque = make_opaque_ptr (&package);

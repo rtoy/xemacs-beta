@@ -1,6 +1,6 @@
 /* Generic frame functions.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
 
 This file is part of XEmacs.
@@ -705,70 +705,6 @@ frame_live_p (struct frame *f)
 }
 
 
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-
-static Lisp_Object
-commit_ritual_suicide (Lisp_Object ceci_nest_pas_une_pipe)
-{
-  assert (!in_display);
-  return Qnil;
-}
-
-#endif
-
-/*
- * window size changes are held up during critical regions.  Afterwards,
- * we want to deal with any delayed changes.
- */
-int
-enter_redisplay_critical_section (void)
-{
-  int depth = specpdl_depth ();
-
-  /* NOTE NOTE NOTE: Inside the redisplay critical section, every place
-     that could QUIT or call Lisp code needs to be wrapped, since GC
-     or a non-local exit will be fatal.  The way to do this is with
-     call_trapping_problems(..., INHIBIT_GC), or the like. */
-
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  /* Force every call to QUIT to check for in_displayness.  This will
-     verify proper wrapping, as in the previous comment, aborting if not. */
-  something_happened++;
-  record_unwind_protect (commit_ritual_suicide, Qnil);
-#endif
-  begin_gc_forbidden ();
-  in_display = 1;
-
-  return depth;
-}
-
-void
-exit_redisplay_critical_section (int depth)
-{
-  Lisp_Object frmcons, devcons, concons;
-
-  in_display = 0;
-
-  unbind_to (depth);
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  something_happened--;
-#endif
-
-  /* we used to have a function to do this for only one frame, and
-     it was typical to call it at the end of a critical section
-     (which occurs once per frame); but what then happens if multiple
-     frames have frame changes held up?
-
-     this means we are O(N^2) over frames.  i seriously doubt it matters.
-     --ben */
-  FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
-    {
-      struct frame *f = XFRAME (XCAR (frmcons));
-      if (f->size_change_pending)
-	change_frame_size (f, f->new_height, f->new_width, 0);
-    }
-}
-
 void
 invalidate_vertical_divider_cache_in_frame (struct frame *f)
 {
@@ -785,9 +721,9 @@ invalidate_vertical_divider_cache_in_frame (struct frame *f)
 void
 adjust_frame_size (struct frame *f)
 {
+  /* This can call Lisp. */
   int keep_char_size = 0;
   Lisp_Object frame = wrap_frame (f);
-
 
   if (!f->size_slipped)
     return;
@@ -2316,8 +2252,8 @@ static void internal_set_frame_size (struct frame *f, int cols, int rows,
 static void
 store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
 {
+  /* This can call Lisp. */
   Lisp_Object frame = wrap_frame (f);
-
 
   if (WINDOWP (val))
     {
@@ -2505,6 +2441,7 @@ recognized for particular types of frames.
 */
        (frame, plist))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   Lisp_Object tail;
   Lisp_Object *tailp;
@@ -2816,8 +2753,9 @@ No argument or nil as argument means use selected frame as FRAME.
 static void
 internal_set_frame_size (struct frame *f, int cols, int rows, int pretend)
 {
+  /* This can call Lisp.  See mswindows_set_frame_size(). */
   /* An explicit size change cancels any pending frame size adjustment */
-  CLEAR_FRAME_SIZE_SLIPPED(f);
+  CLEAR_FRAME_SIZE_SLIPPED (f);
 
   if (pretend || !HAS_FRAMEMETH_P (f, set_frame_size))
     change_frame_size (f, rows, cols, 0);
@@ -2832,6 +2770,7 @@ but that the idea of the actual height of the frame should not be changed.
 */
        (frame, lines, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int height, width;
   frame = wrap_frame (f);
@@ -2859,6 +2798,7 @@ but that the idea of the actual height of the frame should not be changed.
 */
        (frame, height, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int pheight, width;
   frame = wrap_frame (f);
@@ -2888,6 +2828,7 @@ but that the idea of the actual height of the frame should not be changed.
 */
        (frame, height, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int pheight, width;
   frame = wrap_frame (f);
@@ -2917,6 +2858,7 @@ but that the idea of the actual width of the frame should not be changed.
 */
        (frame, cols, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int width, height;
   frame = wrap_frame (f);
@@ -2944,6 +2886,7 @@ but that the idea of the actual height of the frame should not be changed.
 */
        (frame, width, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int height, pwidth;
   frame = wrap_frame (f);
@@ -2972,6 +2915,7 @@ but that the idea of the actual height of the frame should not be changed.
 */
        (frame, width, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int height, pwidth;
   frame = wrap_frame (f);
@@ -3000,6 +2944,7 @@ but that the idea of the actual size of the frame should not be changed.
 */
        (frame, cols, rows, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int height, width;
   frame = wrap_frame (f);
@@ -3025,6 +2970,7 @@ but that the idea of the actual size of the frame should not be changed.
 */
        (frame, width, height, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int pheight, pwidth;
   frame = wrap_frame (f);
@@ -3054,6 +3000,7 @@ but that the idea of the actual size of the frame should not be changed.
 */
        (frame, width, height, pretend))
 {
+  /* This can call Lisp. */
   struct frame *f = decode_frame (frame);
   int pheight, pwidth;
   frame = wrap_frame (f);
@@ -3264,7 +3211,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
      update code relies on this function to cause window `top' and
      `left' coordinates to be recomputed even though no frame size
      change occurs. --kyle */
-  if (in_display)
+  if (in_display || hold_frame_size_changes)
     abort ();
 
   frame = wrap_frame (f);
@@ -3439,7 +3386,7 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
      --andy. */
   MARK_FRAME_SIZE_CHANGED (f);
 
-  if (delay || in_display || gc_in_progress)
+  if (delay || hold_frame_size_changes || gc_in_progress)
     {
       f->new_width = newwidth;
       f->new_height = newheight;

@@ -54,7 +54,7 @@ Boston, MA 02111-1307, USA.  */
 /*			  general definitions				*/
 /************************************************************************/
 
-/* ------------------------ include files ------------------- */
+/* -------------------------- include files --------------------- */
 
 /* We include the following generally useful header files so that you
    don't have to worry about prototypes when using the standard C
@@ -70,7 +70,7 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #include <limits.h>
 
-/* --------------------- error-checking sublevels --------------------- */
+/* -------------------------- error-checking ------------------------ */
 
 /* The large categories established by configure can be subdivided into
    smaller subcategories, for problems in specific modules.  You can't
@@ -83,6 +83,51 @@ Boston, MA 02111-1307, USA.  */
 /* Check for insufficient use of call_trapping_problems(), particularly
    due to glyph-related changes causing eval or QUIT within redisplay */
 #define ERROR_CHECK_TRAPPING_PROBLEMS
+#endif
+
+#ifdef ERROR_CHECK_TYPES
+#define type_checking_assert(assertion) assert (assertion)
+#define type_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define type_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else
+#define type_checking_assert(assertion)
+#define type_checking_assert_at_line(assertion, file, line)
+#define type_checking_assert_with_message(assertion, msg)
+#endif
+#ifdef ERROR_CHECK_GC
+#define gc_checking_assert(assertion) assert (assertion)
+#define gc_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define gc_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else
+#define gc_checking_assert(assertion)
+#define gc_checking_assert_at_line(assertion, file, line)
+#define gc_checking_assert_with_message(assertion, msg)
+#endif
+#ifdef ERROR_CHECK_TEXT
+#define text_checking_assert(assertion) assert (assertion)
+#define text_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define text_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else
+#define text_checking_assert(assertion)
+#define text_checking_assert_at_line(assertion, file, line)
+#define text_checking_assert_with_message(assertion, msg)
+#endif
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+#define trapping_problems_checking_assert(assertion) assert (assertion)
+#define trapping_problems_checking_assert_at_line(assertion, file, line) \
+  assert_at_line (assertion, file, line)
+#define trapping_problems_checking_assert_with_message(assertion, msg) \
+  assert_with_message (assertion, msg)
+#else
+#define trapping_problems_checking_assert(assertion)
+#define trapping_problems_checking_assert_at_line(assertion, file, line)
+#define trapping_problems_checking_assert_with_message(assertion, msg)
 #endif
 
 /* ------------------------ definition of EMACS_INT ------------------- */
@@ -578,7 +623,7 @@ class Memxpos;
 
 /* Basic declaration at the top of all X-position classes (that can refer
    to buffers or strings).  CL1 and CL2 are the equivalent more specific
-   classes referring only to buffers or strings, respefitvely. */
+   classes referring only to buffers or strings, respectively. */
 
 #define DECLARE_XPOS_CLASS(cl, countcl, cl1, cl2)	\
   DECLARE_INTCLASS (cl)					\
@@ -1114,6 +1159,15 @@ expression has side effects -- something easy to forget. */
    (need_to_check_c_alloca ? xemacs_c_alloca (0) : 0,	\
     alloca (__temp_alloca_size__)))
 
+/* Version of ALLOCA() that is guaranteed to work inside of function calls
+   (i.e., we call the C alloca if regular alloca() is broken inside of
+   function calls). */
+#ifdef BROKEN_ALLOCA_IN_FUNCTION_CALLS
+#define ALLOCA_FUNCALL_OK(size) xemacs_c_alloca (size)
+#else
+#define ALLOCA_FUNCALL_OK(size) ALLOCA (size)
+#endif
+
 /* WARNING: If you use this, you must unbind_to() at the end of your
    function! */
 
@@ -1157,12 +1211,22 @@ void xfree (void *);
 
 /* ------------------------ dynamic arrays ------------------- */
 
+#ifdef ERROR_CHECK_STRUCTURES
+#define Dynarr_declare(type)	\
+  type *base;			\
+  int locked;			\
+  int elsize;			\
+  int cur;			\
+  int largest;			\
+  int max
+#else
 #define Dynarr_declare(type)	\
   type *base;			\
   int elsize;			\
   int cur;			\
   int largest;			\
   int max
+#endif /* ERROR_CHECK_STRUCTURES */
 
 typedef struct dynarr
 {
@@ -1196,58 +1260,75 @@ Dynarr_verify_1 (void *d, const char *file, int line)
   return dy;
 }
 
+DECLARE_INLINE_HEADER (
+Dynarr *
+Dynarr_verify_mod_1 (void *d, const char *file, int line)
+)
+{
+  Dynarr *dy = (Dynarr *) d;
+  assert_at_line (!dy->locked, file, line);
+  assert_at_line (dy->cur >= 0 && dy->cur <= dy->largest &&
+		  dy->largest <= dy->max, file, line);
+  return dy;
+}
+
 #define Dynarr_verify(d) Dynarr_verify_1 (d, __FILE__, __LINE__)
+#define Dynarr_verify_mod(d) Dynarr_verify_mod_1 (d, __FILE__, __LINE__)
+#define Dynarr_lock(d) (Dynarr_verify_mod (d)->locked = 1)
+#define Dynarr_unlock(d) ((d)->locked = 0)
 #else
 #define Dynarr_verify(d) (d)
+#define Dynarr_verify_mod(d) (d)
+#define Dynarr_lock(d)
+#define Dynarr_unlock(d)
 #endif /* ERROR_CHECK_STRUCTURES */
 
 #define Dynarr_length(d) (Dynarr_verify (d)->cur)
 #define Dynarr_largest(d) (Dynarr_verify (d)->largest)
-#define Dynarr_reset(d) (Dynarr_verify (d)->cur = 0)
+#define Dynarr_reset(d) (Dynarr_verify_mod (d)->cur = 0)
 #define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
 #define Dynarr_insert_many_at_start(d, el, len)	\
   Dynarr_insert_many (d, el, len, 0)
 #define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof (s) - 1)
-#define Dynarr_add_lisp_string(d, s, codesys)		\
-do {							\
-  Lisp_Object dyna_ls_s = (s);				\
-  Lisp_Object dyna_ls_cs = (codesys);			\
-  Extbyte *dyna_ls_eb;					\
-  Bytecount dyna_ls_bc;					\
-							\
-  TO_EXTERNAL_FORMAT (LISP_STRING, dyna_ls_s,		\
-                      ALLOCA, (dyna_ls_eb, dyna_ls_bc),	\
-		      dyna_ls_cs);			\
-  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);		\
+#define Dynarr_add_lisp_string(d, s, codesys)			\
+do {								\
+  Lisp_Object dyna_ls_s = (s);					\
+  Lisp_Object dyna_ls_cs = (codesys);				\
+  Extbyte *dyna_ls_eb;						\
+  Bytecount dyna_ls_bc;						\
+								\
+  LISP_STRING_TO_SIZED_EXTERNAL (dyna_ls_s, dyna_ls_eb,		\
+				 dyna_ls_bc, dyna_ls_cs);	\
+  Dynarr_add_many (d, dyna_ls_eb, dyna_ls_bc);			\
 } while (0)
 
-#define Dynarr_add(d, el) (						 \
-  Dynarr_verify (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
-      (void) 0,								 \
-  ((d)->base)[(d)->cur++] = (el),					 \
+#define Dynarr_add(d, el) (						     \
+  Dynarr_verify_mod (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : \
+      (void) 0,								     \
+  ((d)->base)[(d)->cur++] = (el),					     \
   (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
 
 /* The following defines will get you into real trouble if you aren't
    careful.  But they can save a lot of execution time when used wisely. */
-#define Dynarr_increment(d) ((d)->cur++)
-#define Dynarr_set_size(d, n) ((d)->cur = n)
+#define Dynarr_increment(d) (Dynarr_verify_mod (d)->cur++)
+#define Dynarr_set_size(d, n) (Dynarr_verify_mod (d)->cur = n)
 
-#define Dynarr_pop(d) \
-  (assert ((d)->cur > 0), (d)->cur--, Dynarr_at (d, (d)->cur))
-#define Dynarr_delete(d, i) Dynarr_delete_many (d, i, len)
+#define Dynarr_pop(d)					\
+  (assert ((d)->cur > 0), Dynarr_verify_mod (d)->cur--,	\
+   Dynarr_at (d, (d)->cur))
+#define Dynarr_delete(d, i) Dynarr_delete_many (d, i, 1)
 #define Dynarr_delete_by_pointer(d, p) \
   Dynarr_delete_many (d, (p) - ((d)->base), 1)
 
-#define Dynarr_delete_object(d, el)				\
-do {								\
-  if (d != NULL) {						\
-    REGISTER int i;						\
-    for (i = Dynarr_length (d) - 1; i >= 0; i--) {		\
-      if (el == Dynarr_at (d, i)) {				\
-	Dynarr_delete_many (d, i, 1);				\
-      }								\
-    }								\
-  }								\
+#define Dynarr_delete_object(d, el)		\
+do						\
+{						\
+  REGISTER int i;				\
+  for (i = Dynarr_length (d) - 1; i >= 0; i--)	\
+    {						\
+      if (el == Dynarr_at (d, i))		\
+	Dynarr_delete_many (d, i, 1);		\
+    }						\
 } while (0)
 
 #ifdef MEMORY_USAGE_STATS
@@ -1633,6 +1714,23 @@ extern Lisp_Object Qnil;
 #define cons_cdr(a) ((a)->cdr_)
 #define XCAR(a) (XCONS (a)->car_)
 #define XCDR(a) (XCONS (a)->cdr_)
+#define XCADR(a) (XCAR (XCDR (a)))
+#define XCDDR(a) (XCDR (XCDR (a)))
+#define XCADDR(a) (XCAR (XCDDR (a)))
+#define XCDDDR(a) (XCDR (XCDDR (a)))
+#define XCADDDR(a) (XCAR (XCDDDR (a)))
+#define XCDDDDR(a) (XCDR (XCDDDR (a)))
+#define XCADDDDR(a) (XCAR (XCDDDDR (a)))
+#define XCDDDDDR(a) (XCDR (XCDDDDR (a)))
+#define XCADDDDDR(a) (XCAR (XCDDDDDR (a)))
+#define XCDDDDDDR(a) (XCDR (XCDDDDDR (a)))
+#define X1ST(a) XCAR (a)
+#define X2ND(a) XCADR (a)
+#define X3RD(a) XCADDR (a)
+#define X4TH(a) XCADDDR (a)
+#define X5TH(a) XCADDDDR (a)
+#define X6TH(a) XCADDDDDR (a)
+
 #define XSETCAR(a, b) (XCONS (a)->car_ = (b))
 #define XSETCDR(a, b) (XCONS (a)->cdr_ = (b))
 #define LISTP(x) (CONSP(x) || NILP(x))
@@ -3959,6 +4057,7 @@ Lisp_Object call_with_condition_handler (Lisp_Object (*handler) (Lisp_Object,
 					 Lisp_Object handler_arg,
 					 Lisp_Object (*fun) (Lisp_Object),
 					 Lisp_Object arg);
+int set_trapping_problems_flags (int flags);
 Lisp_Object call_trapping_problems (Lisp_Object warning_class,
 				    const char *warning_string,
 				    int flags,
@@ -4018,6 +4117,7 @@ Lisp_Object call_with_suspended_errors (lisp_fn_t, Lisp_Object,
 					Lisp_Object,
 					Error_Behavior, int, ...);
 /* C Code should be using internal_catch, record_unwind_p, condition_case_1 */
+int proper_redisplay_wrapping_in_place (void);
 Lisp_Object internal_catch (Lisp_Object, Lisp_Object (*) (Lisp_Object),
 			    Lisp_Object, int * volatile,
 			    Lisp_Object * volatile);

@@ -1,3 +1,30 @@
+2003-02-20  Ben Wing  <ben@xemacs.org>
+
+	* mule/mule-cmds.el:
+	* mule/mule-cmds.el (get-native-coding-system-from-language-environment):
+	* mule/mule-cmds.el (set-language-environment-coding-systems):
+	* mule/mule-cmds.el (init-locale-at-early-startup):
+	Alias file-name to native not vice-versa.
+	Do set EOL of native but not of process output to fix various
+	problems and be consistent with code-init.el.
+
+2003-02-20  Ben Wing  <ben@xemacs.org>
+
+	* code-cmds.el (coding-system-change-eol-conversion):
+	Return a name not a coding system.
+	
+	* code-init.el:
+	* code-init.el (coding-system-default-variable-list):
+	* code-init.el (get-coding-system-variable):
+	* code-init.el (set-coding-system-variable):
+	* code-init.el (coding-system-variable-default-value):
+	Reindent.  Remove `file-name' since it should always be the same
+	as native.
+	
+	* unicode.el (load-unicode-tables):
+	Rename to load-unicode-mapping-table as suggested by the anonymous
+	(but rather Turnbullian) comment in unicode.c.
+
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
 	* mule/mule-msw-init.el:

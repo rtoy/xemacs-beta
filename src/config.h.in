@@ -1018,31 +1018,4 @@ extern "C" {
 #define ERROR_CHECK_STRUCTURES
 #endif /* ERROR_CHECK_ALL */
 
-/* Move these down here so that the s/m files (esp. windowsnt.h) can
-   set them. */
-#ifdef ERROR_CHECK_TYPES
-#define type_checking_assert(assertion) assert (assertion)
-#define type_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#else
-#define type_checking_assert(assertion)
-#define type_checking_assert_at_line(assertion, file, line)
-#endif
-#ifdef ERROR_CHECK_GC
-#define gc_checking_assert(assertion) assert (assertion)
-#define gc_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#else
-#define gc_checking_assert(assertion)
-#define gc_checking_assert_at_line(assertion, file, line)
-#endif
-#ifdef ERROR_CHECK_TEXT
-#define text_checking_assert(assertion) assert (assertion)
-#define text_checking_assert_at_line(assertion, file, line) \
-  assert_at_line (assertion, file, line)
-#else
-#define text_checking_assert(assertion)
-#define text_checking_assert_at_line(assertion, file, line)
-#endif
-
 #endif /* _SRC_CONFIG_H_ */

@@ -1,6 +1,6 @@
 /* Generic GUI code. (menubars, scrollbars, toolbars, dialogs)
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003 Ben Wing.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1998 Free Software Foundation, Inc.
 
@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "gui.h"
 #include "menubar.h"
+#include "redisplay.h"
 
 Lisp_Object Qmenu_no_selection_hook;
 Lisp_Object Vmenu_no_selection_hook;
@@ -381,18 +382,33 @@ gui_add_item_keywords_to_plist (Lisp_Object plist, Lisp_Object gui_item)
     Fplist_put (plist, Q_value, pgui_item->value);
 }
 
+static int
+gui_item_value (Lisp_Object form, int in_redisplay)
+{
+  /* This function can call Lisp. */
+
+#ifndef ERROR_CHECK_DISPLAY
+  /* Shortcut to avoid evaluating Qt/Qnil each time; but don't do it when
+     error-checking so we catch unprotected eval within redisplay quicker */
+  if (NILP (form))
+    return 0;
+  if (EQ (form, Qt))
+    return 1;
+#endif
+  if (in_redisplay)
+    return !NILP (eval_within_redisplay (form));
+  else
+    return !NILP (Feval (form));
+}
+
 /*
  * Decide whether a GUI item is active by evaluating its :active form
  * if any
  */
 int
-gui_item_active_p (Lisp_Object gui_item)
+gui_item_active_p (Lisp_Object gui_item, int in_redisplay)
 {
-  /* This function can call lisp */
-
-  /* Shortcut to avoid evaluating Qt each time */
-  return (EQ (XGUI_ITEM (gui_item)->active, Qt)
-	  || !NILP (Feval (XGUI_ITEM (gui_item)->active)));
+  return gui_item_value (XGUI_ITEM (gui_item)->active, in_redisplay);
 }
 
 /* set menu accelerator key to first underlined character in menu name */
@@ -436,23 +452,20 @@ gui_name_accelerator (Lisp_Object nm)
  * if any
  */
 int
-gui_item_selected_p (Lisp_Object gui_item)
+gui_item_selected_p (Lisp_Object gui_item, int in_redisplay)
 {
-  /* This function can call lisp */
-
-  /* Shortcut to avoid evaluating Qt each time */
-  return (EQ (XGUI_ITEM (gui_item)->selected, Qt)
-	  || !NILP (Feval (XGUI_ITEM (gui_item)->selected)));
+  return gui_item_value (XGUI_ITEM (gui_item)->selected, in_redisplay);
 }
 
 Lisp_Object
 gui_item_list_find_selected (Lisp_Object gui_item_list)
 {
-  /* This function can GC. */
+  /* This function can call Lisp but cannot GC because it is called within
+     redisplay, and redisplay disables GC. */
   Lisp_Object rest;
   LIST_LOOP (rest, gui_item_list)
     {
-      if (gui_item_selected_p (XCAR (rest)))
+      if (gui_item_selected_p (XCAR (rest), 1))
 	return XCAR (rest);
     }
   return XCAR (gui_item_list);
@@ -470,8 +483,7 @@ gui_item_included_p (Lisp_Object gui_item, Lisp_Object conflist)
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
 
   /* Evaluate :included first. Shortcut to avoid evaluating Qt each time */
-  if (!EQ (pgui_item->included, Qt)
-      && NILP (Feval (pgui_item->included)))
+  if (!gui_item_value (pgui_item->included, 0))
     return 0;
 
   /* Do :config if conflist is given */
@@ -619,17 +631,33 @@ gui_item_id_hash (Lisp_Object hashtable, Lisp_Object gitem, int slot)
   return id;
 }
 
+static int
+gui_value_equal (Lisp_Object a, Lisp_Object b, int depth, int in_redisplay)
+{
+  if (in_redisplay)
+    return internal_equal_trapping_problems
+      (Qredisplay, "Error calling function within redisplay", 0, 0,
+       /* say they're not equal in case of error; code calling
+	  gui_item_equal_sans_selected() in redisplay does extra stuff
+	  only when equal */
+       0, a, b, depth);
+  else
+    return internal_equal (a, b, depth);
+}
+
 int
-gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth)
+gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth,
+			      int in_redisplay)
 {
   Lisp_Gui_Item *p1 = XGUI_ITEM (obj1);
   Lisp_Gui_Item *p2 = XGUI_ITEM (obj2);
 
-  if (!(internal_equal (p1->name, p2->name, depth + 1)
+  if (!(gui_value_equal (p1->name, p2->name, depth + 1, in_redisplay)
 	&&
-	internal_equal (p1->callback, p2->callback, depth + 1)
+	gui_value_equal (p1->callback, p2->callback, depth + 1, in_redisplay)
 	&&
-	internal_equal (p1->callback_ex, p2->callback_ex, depth + 1)
+	gui_value_equal (p1->callback_ex, p2->callback_ex, depth + 1,
+			 in_redisplay)
 	&&
 	EQ (p1->suffix, p2->suffix)
 	&&
@@ -658,8 +686,7 @@ gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
   Lisp_Gui_Item *p1 = XGUI_ITEM (obj1);
   Lisp_Gui_Item *p2 = XGUI_ITEM (obj2);
 
-  if (!(gui_item_equal_sans_selected (obj1, obj2, depth)
-	&&
+  if (!(gui_item_equal_sans_selected (obj1, obj2, depth, 0) &&
 	EQ (p1->selected, p2->selected)))
     return 0;
   return 1;

@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -63,8 +63,6 @@ static void mswindows_update_dc (HDC hdc, Lisp_Object fg, Lisp_Object bg,
 static void mswindows_set_dc_font (HDC hdc, Lisp_Object font,
 				   int under, int strike);
 static void mswindows_output_vertical_divider (struct window *w, int clear);
-static void mswindows_redraw_exposed_windows (Lisp_Object window, int x,
-					int y, int width, int height);
 static void mswindows_output_dibitmap (struct frame *f, 
 				       Lisp_Image_Instance *p,
 				       struct display_box *db,
@@ -714,8 +712,10 @@ mswindows_output_pixmap (struct window *w, Lisp_Object image_instance,
  * to by PRC, and paints only the intersection
  */
 static void
-mswindows_redisplay_deadbox_maybe (struct window *w, const RECT *prc)
+mswindows_redisplay_deadbox (struct window *w, int x, int y, int width,
+			     int height)
 {
+  RECT rc = { x, y, x + width, y + height };
   int sbh = window_scrollbar_height (w);
   int sbw = window_scrollbar_width (w);
   RECT rect_dead, rect_paint;
@@ -734,7 +734,7 @@ mswindows_redisplay_deadbox_maybe (struct window *w, const RECT *prc)
     rect_dead.top = WINDOW_TEXT_BOTTOM (w);
   rect_dead.bottom = rect_dead.top + sbh;
       
-  if (IntersectRect (&rect_paint, &rect_dead, prc))
+  if (IntersectRect (&rect_paint, &rect_dead, &rc))
     {
       struct frame *f = XFRAME (WINDOW_FRAME (w));
       FillRect (get_frame_dc (f, 1), &rect_paint,
@@ -743,133 +743,6 @@ mswindows_redisplay_deadbox_maybe (struct window *w, const RECT *prc)
 }
 
 #endif /* HAVE_SCROLLBARS */
-
-/*****************************************************************************
- mswindows_redraw_exposed_window
-
- Given a bounding box for an area that needs to be redrawn, determine
- what parts of what lines are contained within and re-output their
- contents.
- Copied from redisplay-x.c
- ****************************************************************************/
-static void
-mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
-			   int height)
-{
-  struct frame *f = XFRAME (w->frame);
-  int line;
-  int orig_windows_structure_changed;
-  RECT rect_window = { WINDOW_LEFT (w), WINDOW_TOP (w),
-		       WINDOW_RIGHT (w), WINDOW_BOTTOM (w) };
-  RECT rect_expose = { x, y, x + width, y + height };
-  RECT rect_draw;
-
-  display_line_dynarr *cdla = window_display_lines (w, CURRENT_DISP);
-
-  if (!NILP (w->vchild))
-    {
-      mswindows_redraw_exposed_windows (w->vchild, x, y, width, height);
-      return;
-    }
-  else if (!NILP (w->hchild))
-    {
-      mswindows_redraw_exposed_windows (w->hchild, x, y, width, height);
-      return;
-    }
-
-  /* If the window doesn't intersect the exposed region, we're done here. */
-  if (!IntersectRect (&rect_draw, &rect_window, &rect_expose))
-      return;
-
-  /* We do this to make sure that the 3D modelines get redrawn if
-     they are in the exposed region. */
-  orig_windows_structure_changed = f->windows_structure_changed;
-  f->windows_structure_changed = 1;
-
-  if (window_needs_vertical_divider (w))
-    {
-      mswindows_output_vertical_divider (w, 0);
-    }
-
-  for (line = 0; line < Dynarr_length (cdla); line++)
-    {
-      struct display_line *cdl = Dynarr_atp (cdla, line);
-
-      if (DISPLAY_LINE_YPOS (cdl) + DISPLAY_LINE_HEIGHT (cdl)
-	  >= rect_draw.top)
-	{
-	  if (DISPLAY_LINE_YPOS (cdl) > rect_draw.bottom)
-	    {
-	      if (line == 0)
-		continue;
-	      else
-		break;
-	    }
-	  else
-	    {
-	      output_display_line (w, 0, cdla, line,
-				   rect_draw.left, rect_draw.right);
-	    }
-	}
-    }
-
-  f->windows_structure_changed = orig_windows_structure_changed;
-
-  /* If there have never been any face cache_elements created, then this
-     expose event doesn't actually have anything to do. */
-  if (Dynarr_largest (w->face_cachels))
-    redisplay_clear_bottom_of_window (w, cdla, rect_draw.top, rect_draw.bottom);
-
-#ifdef HAVE_SCROLLBARS
-  mswindows_redisplay_deadbox_maybe (w, &rect_expose);
-#endif
-}
-
-/*****************************************************************************
- mswindows_redraw_exposed_windows
-
- For each window beneath the given window in the window hierarchy,
- ensure that it is redrawn if necessary after an Expose event.
- ****************************************************************************/
-static void
-mswindows_redraw_exposed_windows (Lisp_Object window, int x, int y, int width,
-			    int height)
-{
-  for (; !NILP (window); window = XWINDOW (window)->next)
-    mswindows_redraw_exposed_window (XWINDOW (window), x, y, width, height);
-}
-
-/*****************************************************************************
- mswindows_redraw_exposed_area
-
- For each window on the given frame, ensure that any area in the
- Exposed area is redrawn.
- ****************************************************************************/
-void
-mswindows_redraw_exposed_area (struct frame *f, int x, int y, int width, int height)
-{
-  /* If any window on the frame has had its face cache reset then the
-     redisplay structures are effectively invalid.  If we attempt to
-     use them we'll blow up.  We mark the frame as changed to ensure
-     that redisplay will do a full update.  This probably isn't
-     necessary but it can't hurt. */
-#ifdef HAVE_TOOLBARS
-  /* #### We would rather put these off as well but there is currently
-     no combination of flags which will force an unchanged toolbar to
-     redraw anyhow. */
-  MAYBE_FRAMEMETH (f, redraw_exposed_toolbars, (f, x, y, width, height));
-#endif
-  redraw_exposed_gutters (f, x, y, width, height);
-
-  if (!f->window_face_cache_reset)
-	{
-	  mswindows_redraw_exposed_windows (f->root_window, x, y, width, height);
-	  GdiFlush();
-	}
-  else
-    MARK_FRAME_CHANGED (f);
-}
-
 
 /*****************************************************************************
  mswindows_bevel_area
@@ -1338,15 +1211,15 @@ mswindows_clear_region (Lisp_Object locale, struct device *d, struct frame *f,
 
 #ifdef HAVE_SCROLLBARS
   if (WINDOWP (locale))
-    mswindows_redisplay_deadbox_maybe (XWINDOW (locale), &rect);
+    mswindows_redisplay_deadbox (XWINDOW (locale), x, y, width, height);
 #endif
 }
 
-/* XXX Implement me! */
+/* #### Implement me! */
 static void
 mswindows_clear_frame (struct frame *f)
 {
-  GdiFlush();
+  GdiFlush ();
 }
 
 
@@ -1372,6 +1245,9 @@ console_type_create_redisplay_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, bevel_area);
   CONSOLE_HAS_METHOD (mswindows, output_string);
   CONSOLE_HAS_METHOD (mswindows, output_pixmap);
+#ifdef HAVE_SCROLLBARS
+  CONSOLE_HAS_METHOD (mswindows, redisplay_deadbox);
+#endif
 
   /* redisplay methods - printer */
   CONSOLE_HAS_METHOD (msprinter, frame_output_end);

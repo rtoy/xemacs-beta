@@ -67,7 +67,6 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_x_frame_plist;
 
-Lisp_Object Qwindow_id;
 Lisp_Object Qx_resource_name;
 
 static const struct memory_description x_frame_data_description_1 [] = {
@@ -2757,7 +2756,6 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 void
 syms_of_frame_x (void)
 {
-  DEFSYMBOL (Qwindow_id);
   DEFSYMBOL (Qx_resource_name);
 
   DEFSUBR (Fx_window_id);

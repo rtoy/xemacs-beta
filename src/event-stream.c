@@ -1882,6 +1882,7 @@ event_stream_force_event_pending (struct frame *f)
 void
 event_stream_drain_queue (void)
 {
+  /* This can call Lisp */
   if (event_stream && event_stream->drain_queue_cb)
     event_stream->drain_queue_cb ();
 }
@@ -1890,6 +1891,7 @@ event_stream_drain_queue (void)
 int
 detect_input_pending (int how_many)
 {
+  /* This can call Lisp */
   Lisp_Object event;
 
   if (!NILP (Vunread_command_event))
@@ -1920,6 +1922,7 @@ Actually, the value is nil only if we can be sure that no input is available.
 */
   ())
 {
+  /* This can call Lisp */
   return detect_input_pending (1) ? Qt : Qnil;
 }
 
@@ -1977,6 +1980,7 @@ remove_quit_p_event (Lisp_Object ev, void *the_data)
 void
 event_stream_quit_p (void)
 {
+  /* This can call Lisp */
   struct remove_quit_p_data data;
 
   /* Quit checking cannot happen in modal loop.  Because it attempts to
@@ -2173,6 +2177,7 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
 void
 run_pre_idle_hook (void)
 {
+  /* This can call Lisp */
   if (!NILP (Vpre_idle_hook)
       && !detect_input_pending (1))
     safe_run_hook_trapping_problems
@@ -2615,6 +2620,7 @@ A user event is a key press, button press, button release, or
 */
        ())
 {
+  /* This can call Lisp */
   Lisp_Object concons;
 
   CONSOLE_LOOP (concons)

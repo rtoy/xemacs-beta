@@ -1,7 +1,7 @@
 /* Define X specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1996, 2002 Ben Wing.
+   Copyright (C) 1996, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -111,8 +111,6 @@ int x_error_occurred_p (Display *dpy);
 int signal_if_x_error (Display *dpy, int resumable_p);
 int x_IO_error_handler (Display *disp);
 
-void x_redraw_exposed_area (struct frame *f, int x, int y,
-			    int width, int height);
 void x_output_string (struct window *w, struct display_line *dl,
 		      Ichar_dynarr *buf, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,

@@ -2,7 +2,7 @@
    #### rename me to coding-system.c or coding.c
    Copyright (C) 1991, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -4953,15 +4953,14 @@ complex_vars_of_file_coding (void)
   Fdefine_coding_system_alias (intern ("no-conversion-mac"),
 			       intern ("raw-text-mac"));
 
-  /* These four below will get their defaults set correctly in
-     code-init.el.  We init them now so we can handle stuff at dump
+  /* These three below will get their defaults set correctly
+     in code-init.el.  We init them now so we can handle stuff at dump
      time before we get to code-init.el. */
-  Fdefine_coding_system_alias (Qfile_name, Qbinary);
-  Fdefine_coding_system_alias (Qnative, Qfile_name);
-
+  Fdefine_coding_system_alias (Qnative, Qbinary);
   Fdefine_coding_system_alias (Qterminal, Qbinary);
   Fdefine_coding_system_alias (Qkeyboard, Qbinary);
 
+  Fdefine_coding_system_alias (Qfile_name, Qnative);
   Fdefine_coding_system_alias (Qidentity, Qconvert_eol_lf);
   
   /* Need this for bootstrapping */

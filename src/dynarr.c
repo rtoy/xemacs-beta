@@ -1,6 +1,6 @@
-/* Simple 'n' stupid dynamic-array module.
+/* Support for dynamic arrays.
    Copyright (C) 1993 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -155,7 +155,7 @@ Dynarr_resize (void *d, int size)
 {
   int newsize;
   double multiplier;
-  Dynarr *dy = (Dynarr *) d;
+  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
 
   if (dy->max <= 8)
     multiplier = 2;
@@ -180,11 +180,16 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
   Dynarr *dy = (Dynarr *) Dynarr_verify (d);
   
   Dynarr_resize (dy, dy->cur+len);
+#if 0
+  /* WTF? We should be catching these problems. */
   /* Silently adjust start to be valid. */
   if (start > dy->cur)
     start = dy->cur;
   else if (start < 0)
     start = 0;
+#else
+  assert (start >= 0 && start <= dy->cur);
+#endif
 
   if (start != dy->cur)
     {
@@ -203,7 +208,7 @@ Dynarr_insert_many (void *d, const void *el, int len, int start)
 void
 Dynarr_delete_many (void *d, int start, int len)
 {
-  Dynarr *dy = (Dynarr *) d;
+  Dynarr *dy = (Dynarr *) Dynarr_verify (d);
 
   assert (start >= 0 && len >= 0 && start + len <= dy->cur);
   memmove ((char *) dy->base + start*dy->elsize,
@@ -246,11 +251,11 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
   if (dy->base)
     {
       Bytecount malloc_used = malloced_storage_size (dy->base,
-						  dy->elsize * dy->max, 0);
+						     dy->elsize * dy->max, 0);
       /* #### This may or may not be correct.  Some Dynarrs would
 	 prefer that we use dy->cur instead of dy->largest here. */
-      int was_requested = dy->elsize * dy->largest;
-      int dynarr_overhead = dy->elsize * (dy->max - dy->largest);
+      Bytecount was_requested = dy->elsize * dy->largest;
+      Bytecount dynarr_overhead = dy->elsize * (dy->max - dy->largest);
 
       total += malloc_used;
       stats->was_requested += was_requested;

@@ -358,7 +358,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
 	}
 
       if (j == Dynarr_length (specs))
- syntax_error ("No conversion spec for argument", make_int (i));
+	syntax_error ("No conversion spec for argument", make_int (i));
 
       ch = spec->converter;
 
@@ -431,10 +431,10 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
       /* allow too many args for string, but not too few */
       if (nargs < get_args_needed (specs))
 	signal_error_1 (Qwrong_number_of_arguments,
-		      list3 (Qformat,
-			     make_int (nargs),
-			     !NILP (format_reloc) ? format_reloc :
-			     make_string (format_nonreloc, format_length)));
+			list3 (Qformat,
+			       make_int (nargs),
+			       !NILP (format_reloc) ? format_reloc :
+			       make_string (format_nonreloc, format_length)));
     }
   else
     {

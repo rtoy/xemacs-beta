@@ -428,21 +428,26 @@ speed_up_interrupts (void)
 void
 check_what_happened (void)
 {
-#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  if (in_display
-      && !((get_inhibit_flags () & INTERNAL_INHIBIT_ERRORS)
-	   && (get_inhibit_flags () & INTERNAL_INHIBIT_THROWS)))
-    assert_with_message
-      (0, "QUIT called from within redisplay without being properly wrapped");
-#endif
-
   /* No GC can happen anywhere here.  handle_async_timeout_signal()
      prevents GC (from asynch timeout handler), so does check_quit()
      (from processing a message such as WM_INITMENU as a result of
      draining the message queue).  establish_slow_interrupt_timer() is
      too low-level to do anything that might invoke QUIT or call Lisp
      code. */
-  something_happened = 0;
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  assert_with_message
+    (proper_redisplay_wrapping_in_place (),
+     "QUIT called from within redisplay without being properly wrapped");
+
+  /* When in a critical section, don't reset something_happened, so that
+     every single QUIT will verify proper wrapping. (something_happened
+     was set by enter_redisplay_critical_section() and will be reset
+     upon exit.) */
+  if (!in_display)
+#endif
+    something_happened = 0;
+
   if (async_timeout_happened)
     {
       async_timeout_happened = 0;

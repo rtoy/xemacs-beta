@@ -1,7 +1,7 @@
 /* Define mswindows-specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -93,8 +93,6 @@ LRESULT WINAPI mswindows_control_wnd_proc (HWND hwnd,
 					   UINT msg, WPARAM wParam,
 					   LPARAM lParam);
 
-void mswindows_redraw_exposed_area (struct frame *f, int x, int y,
-				    int width, int height);
 void mswindows_size_frame_internal (struct frame *f, XEMACS_RECT_WH *dest);
 HWND mswindows_get_selected_frame_hwnd (void);
 void mswindows_enqueue_magic_event (HWND hwnd, UINT msg);

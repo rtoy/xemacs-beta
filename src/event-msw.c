@@ -1323,6 +1323,7 @@ mswindows_drain_windows_queue (int badly_p)
 static void
 emacs_mswindows_drain_queue (void)
 {
+  /* This can call Lisp */
   mswindows_drain_windows_queue (0);
 #ifdef HAVE_TTY
   drain_tty_devices ();
@@ -2173,7 +2174,7 @@ mswindows_handle_paint (struct frame *frame)
       if (!check_for_ignored_expose (frame, x, y, width, height))
 	{
 	  hold_ignored_expose_registration = 1;
-	  mswindows_redraw_exposed_area (frame, x, y, width, height);
+	  redisplay_redraw_exposed_area (frame, x, y, width, height);
 	  hold_ignored_expose_registration = 0;
 	}
       EndPaint (hwnd, &paintStruct);
@@ -4343,6 +4344,7 @@ emacs_mswindows_remove_timeout (int id)
 static int
 emacs_mswindows_event_pending_p (int how_many)
 {
+  /* This can call Lisp */
   if (!how_many)
     {
       mswindows_need_event (0);

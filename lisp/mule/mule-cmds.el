@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2000, 2001, 2002 Ben Wing.
+;; Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 ;; Keywords: mule, multilingual
 
@@ -1078,7 +1078,7 @@ Under MS Windows, the native coding system must be set from the default
 system locale and is not influenced by LOCALE. (In other words, a program
 can't set the text encoding used to communicate with the OS.  To get around
 this, we use Unicode whenever available, i.e. on Windows NT always and on
-Windows 9x for a few system calls.)"
+Windows 9x whenever a Unicode version of a system call is available.)"
   (if (eq system-type 'windows-nt)
       ;; should not apply to Cygwin, I don't think
       'mswindows-multibyte-system-default
@@ -1263,19 +1263,22 @@ of buffer-file-coding-system set by this function."
 	 (maybe-change-coding-system-with-eol default-coding eol-type))))
     ;; (setq default-sendmail-coding-system default-coding)
 
-    ;; set the native and file-name aliases (currently always the same),
-    ;; and the terminal-write system.
+    ;; set the native coding system and the default process-output system.
     (let ((native (get-native-coding-system-from-language-environment
 		   language-name (current-locale))))
+
       (condition-case nil
-	(define-coding-system-alias 'file-name native)
+	  (define-coding-system-alias 'native
+	    (maybe-change-coding-system-with-eol native eol-type))
 	(error
 	 (warn "Invalid native-coding-system %s in language environment %s"
 	       native language-name)))
-      (define-coding-system-alias 'native 'file-name)
+      (define-coding-system-alias 'file-name 'native)
+      ;; process output should not have EOL conversion.  under MS Windows
+      ;; and Cygwin, this screws things up (`cmd' is fine with just LF and
+      ;; `bash' chokes on CR-LF).
       (setq default-process-coding-system
-	(cons (car default-process-coding-system)
-	      (maybe-change-coding-system-with-eol native eol-type))))))
+	    (cons (car default-process-coding-system) native)))))
 
 (defun init-locale-at-early-startup ()
   "Don't call this."

@@ -1,7 +1,7 @@
 /* Define X specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -58,8 +58,6 @@ void gtk_handle_property_notify (GdkEventProperty *event);
 
 void signal_special_gtk_user_event (Lisp_Object channel, Lisp_Object function,
 				    Lisp_Object object);
-void gtk_redraw_exposed_area (struct frame *f, int x, int y,
-			    int width, int height);
 void gtk_output_string (struct window *w, struct display_line *dl,
 		      Ichar_dynarr *buf, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,

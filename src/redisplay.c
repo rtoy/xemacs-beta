@@ -38,15 +38,9 @@ Boston, MA 02111-1307, USA.  */
  Third:   It Is Better To Be Fast Than Not To Be
  ****************************************************************************/
 
-/* Note: The second rule used to prohibit running Elisp from within redisplay,
-   but that's not correct.
-
-   Use
-
-   callN_trapping_problems (..., INHIBIT_GC
-                            | INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY)
-
-   instead.
+/* Note: The second rule used to prohibit running Elisp from within
+   redisplay, but that's not correct any more -- use
+   call*_trapping_problems() or call_with_suspended_errors() instead.
 
    --ben
 */
@@ -68,6 +62,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "menubar.h"
 #include "objects-impl.h"
+#include "opaque.h"
 #include "process.h"
 #include "profile.h"
 #include "redisplay.h"
@@ -319,6 +314,7 @@ static Fixnum max_preempts;
 
 #define QUEUED_EVENTS_REQUIRED_FOR_PREEMPTION 4
 
+/* Note that doing this can call Lisp. */
 #define REDISPLAY_PREEMPTION_CHECK					\
 ((void)									\
  (preempted =								\
@@ -357,6 +353,10 @@ Fixnum cache_adjustment;
 static Ibyte_dynarr *mode_spec_ibyte_string;
 
 int in_display;		/* 1 if in redisplay.  */
+
+/* Whether we should delay size changes.  Broken out of
+   enter_redisplay_critical_section(). */
+int hold_frame_size_changes;
 
 int disable_preemption;	/* Used for debugging redisplay and for
 			   force-redisplay. */
@@ -502,6 +502,8 @@ Lisp_Object Vuse_left_overflow, Vuse_right_overflow;
 Lisp_Object Vtext_cursor_visible_p;
 
 static Lisp_Object QSin_redisplay;
+
+static Lisp_Object Vpost_redisplay_actions;
 
 int column_number_start_at_one;
 
@@ -5314,6 +5316,115 @@ generate_string_display_line (struct window *w, Lisp_Object disp_string,
   return ret_charcount;
 }
 
+
+/* Tricky tricky tricky.  generate_displayable_area() can (could) be called reentrantly, and redisplay is not prepared to handle this:
+
+assert_failed(const char * 0x0129c8c8 `string', int 5328, const char * 0x01274068 `string') line 3620
+Dynarr_verify_mod_1(void * 0x0250f228, const char * 0x0129c8c8 `string', int 5328) line 1256 + 36 bytes
+generate_displayable_area(window * 0x02480028, long 38776292, int 0, int 0, int 265, int 169, display_line_dynarr * 0x0250f228, long 0, int 2) line 5328 + 25 bytes
+output_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 1) line 409 + 69 bytes
+redraw_exposed_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 8, int 23, int 249, int 127) line 687 + 15 bytes
+redraw_exposed_gutters(frame * 0x0228ad90, int 8, int 23, int 249, int 127) line 703 + 29 bytes
+mswindows_redraw_exposed_area(frame * 0x0228ad90, int 8, int 23, int 249, int 127) line 862 + 25 bytes
+mswindows_handle_paint(frame * 0x0228ad90) line 2176 + 25 bytes
+mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 15, unsigned int 0, long 0) line 3233 + 45 bytes
+intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 15, unsigned int 0, long 0) line 2488
+USER32! 77e3a244()
+USER32! 77e14730()
+USER32! 77e1558a()
+NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
+USER32! 77e14680()
+USER32! 77e1a792()
+qxeIsDialogMessage(HWND__ * 0x001003e2, tagMSG * 0x0082a93c {msg=0x0000000f wp=0x00000000 lp=0x00000000}) line 2298 + 14 bytes
+mswindows_is_dialog_msg(tagMSG * 0x0082a93c {msg=0x0000000f wp=0x00000000 lp=0x00000000}) line 165 + 13 bytes
+mswindows_drain_windows_queue(int 0) line 1282 + 9 bytes
+emacs_mswindows_drain_queue() line 1326 + 7 bytes
+event_stream_drain_queue() line 1887
+event_stream_quit_p() line 1992
+check_quit() line 993
+unbind_to_hairy(int 35) line 5963
+unbind_to_1(int 35, long 20888208) line 5945 + 200 bytes
+specifier_instance_from_inst_list(long 21379344, long 38135616, long 36220304, long 20888208, _error_behavior_struct_ {...}, int 1, long 3) line 2522 + 16 bytes
+specifier_instance(long 21379344, long 38135616, long 36220304, _error_behavior_struct_ {...}, int 1, int 0, long 3) line 2625 + 65 bytes
+specifier_instance_no_quit(long 21379344, long 38135616, long 36220304, _error_behavior_struct_ {...}, int 0, long 1) line 2658 + 31 bytes
+face_property_matching_instance(long 22612340, long 20860632, long 22530956, long 36220304, _error_behavior_struct_ {...}, int 0, long 1) line 565 + 48 bytes
+ensure_face_cachel_contains_charset(face_cachel * 0x0082b014, long 36220304, long 22530956) line 1104 + 35 bytes
+update_face_cachel_data(face_cachel * 0x0082b014, long 36220304, long 22612340) line 1304 + 19 bytes
+query_string_geometry(long 21110576, long 22612340, int * 0x00000000, int * 0x0082b5b4, int * 0x00000000, long 38852960) line 2370 + 23 bytes
+mswindows_widget_query_string_geometry(long 21110576, long 22612340, int * 0x0082b5b8, int * 0x0082b5b4, long 38852960) line 2914 + 25 bytes
+widget_query_string_geometry(long 21110576, long 22612340, int * 0x0082b5b8, int * 0x0082b5b4, long 38852960) line 514 + 32 bytes
+edit_field_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 920 + 390 bytes
+widget_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 567 + 26 bytes
+image_instance_query_geometry(long 38857648, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 2015 + 26 bytes
+glyph_query_geometry(long 38853384, int * 0x0082b7b4, int * 0x0082b7b8, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38852960) line 4197 + 25 bytes
+layout_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 1351 + 25 bytes
+widget_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 567 + 26 bytes
+image_instance_query_geometry(long 38852960, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 2015 + 26 bytes
+glyph_query_geometry(long 38537976, int * 0x0082b9cc, int * 0x0082b9d0, image_instance_geometry IMAGE_DESIRED_GEOMETRY, long 38404624) line 4197 + 25 bytes
+layout_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 1468 + 23 bytes
+widget_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 626 + 30 bytes
+image_instance_layout(long 38404624, int 265, int 156, int -2, int -2, long 38273064) line 2102 + 51 bytes
+glyph_ascent(long 38404624, long 38273064) line 4009 + 21 bytes
+update_glyph_cachel_data(window * 0x02480028, long 36201168, glyph_cachel * 0x0248c3d8) line 4272 + 13 bytes
+get_glyph_cachel_index(window * 0x02480028, long 36201168) line 4306 + 17 bytes
+add_glyph_rune(position_redisplay_data_type * 0x0082bf2c, glyph_block * 0x024bd028, int 0, int 0, glyph_cachel * 0x00000000) line 1800 + 15 bytes
+add_glyph_runes(position_redisplay_data_type * 0x0082bf2c, int 0) line 2085 + 31 bytes
+create_string_text_block(window * 0x02480028, long 38776292, display_line * 0x02514500, long 0, prop_block_dynarr * * 0x0082c13c, int 2) line 4907 + 14 bytes
+generate_string_display_line(window * 0x02480028, long 38776292, display_line * 0x02514500, long 0, prop_block_dynarr * * 0x0082c13c, int 2) line 5293 + 29 bytes
+generate_displayable_area(window * 0x02480028, long 38776292, int 0, int 0, int 265, int 169, display_line_dynarr * 0x0250f228, long 0, int 2) line 5372 + 29 bytes
+output_gutter(frame * 0x0228ad90, gutter_pos TOP_GUTTER, int 0) line 409 + 69 bytes
+update_frame_gutters(frame * 0x0228ad90) line 639 + 15 bytes
+redisplay_frame(frame * 0x0228ad90, int 1) line 6792 + 9 bytes
+redisplay_device(device * 0x0171df00, int 1) line 6911 + 11 bytes
+redisplay_without_hooks() line 6957 + 11 bytes
+redisplay_no_pre_idle_hook() line 7029
+redisplay() line 7011
+mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 5, unsigned int 0, long 10223881) line 3424
+intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 5, unsigned int 0, long 10223881) line 2488
+USER32! 77e3a244()
+USER32! 77e16362()
+USER32! 77e14c1a()
+USER32! 77e1dd30()
+mswindows_wnd_proc(HWND__ * 0x001003e2, unsigned int 71, unsigned int 0, long 8578308) line 3926 + 21 bytes
+intercepted_wnd_proc(HWND__ * 0x001003e2, unsigned int 71, unsigned int 0, long 8578308) line 2488
+USER32! 77e3a244()
+USER32! 77e14730()
+USER32! 77e174b4()
+NTDLL! KiUserCallbackDispatcher@12 + 19 bytes
+mswindows_set_frame_size(frame * 0x0228ad90, int 265, int 156) line 355
+internal_set_frame_size(frame * 0x0228ad90, int 265, int 156, int 0) line 2754 + 24 bytes
+Fset_frame_displayable_pixel_size(long 36220304, long 531, long 313, long 20888208) line 3004 + 32 bytes
+Ffuncall(int 4, long * 0x0082e778) line 3844 + 168 bytes
+execute_optimized_program(const unsigned char * 0x02286e48, int 40, long * 0x01529b80) line 609 + 16 bytes
+funcall_compiled_function(long 22433308, int 0, long * 0x0082ec08) line 3452 + 85 bytes
+Ffuncall(int 1, long * 0x0082ec04) line 3883 + 17 bytes
+execute_optimized_program(const unsigned char * 0x02286d40, int 6, long * 0x01548ddc) line 609 + 16 bytes
+funcall_compiled_function(long 22505864, int 11, long * 0x0082f00c) line 3452 + 85 bytes
+Ffuncall(int 12, long * 0x0082f008) line 3883 + 17 bytes
+execute_optimized_program(const unsigned char * 0x02503e38, int 47, long * 0x0152dc48) line 609 + 16 bytes
+funcall_compiled_function(long 22436784, int 0, long * 0x0082f534) line 3452 + 85 bytes
+Ffuncall(int 1, long * 0x0082f530) line 3883 + 17 bytes
+apply1(long 22436784, long 20888208) line 4458 + 11 bytes
+Fcall_interactively(long 20742816, long 20888208, long 20888208) line 460 + 13 bytes
+Ffuncall(int 2, long * 0x0082f8ec) line 3844 + 127 bytes
+call1(long 20854392, long 20742816) line 4489 + 11 bytes
+execute_command_event(command_builder * 0x01798f98, long 24439276) line 4198 + 69 bytes
+Fdispatch_event(long 24439276) line 4569 + 13 bytes
+Fcommand_loop_1() line 569 + 9 bytes
+command_loop_1(long 20888208) line 489
+condition_case_1(long 20886024, long (long)* 0x010955a0 command_loop_1(long), long 20888208, long (long, long)* 0x01095150 cmd_error(long, long), long 20888208) line 1917 + 7 bytes
+command_loop_3() line 251 + 35 bytes
+command_loop_2(long 20888208) line 264
+internal_catch(long 20650992, long (long)* 0x010952c0 command_loop_2(long), long 20888208, int * volatile 0x00000000, long * volatile 0x00000000) line 1527 + 7 bytes
+initial_command_loop(long 20888208) line 300 + 28 bytes
+xemacs_21_5_b10_i586_pc_win32(int 1, char * * 0x00e52620, char * * 0x00e52bb0, int 0) line 2356
+main(int 1, char * * 0x00e52620, char * * 0x00e52bb0) line 2733
+mainCRTStartup() line 338 + 17 bytes
+KERNEL32! 77ea847c()
+
+*/
+
+
 /* This is ripped off from regenerate_window. All we want to do is
    loop through elements in the string creating display lines until we
    have covered the provided area. Simple really.  */
@@ -5373,8 +5484,10 @@ generate_displayable_area (struct window *w, Lisp_Object disp_string,
 
       dlp->bounds = bounds;
       dlp->offset = 0;
+      Dynarr_lock (dla);
       next_pos = generate_string_display_line (w, disp_string, dlp, start_pos,
 					       &prop, default_face);
+      Dynarr_unlock (dla);
       /* we need to make sure that we continue along the line if there
          is more left to display otherwise we just end up redisplaying
          the same chunk over and over again. */
@@ -5521,7 +5634,9 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
 
       dlp->bounds = bounds;
       dlp->offset = 0;
+      Dynarr_lock (dla);
       start_pos = generate_display_line (w, dlp, 1, start_pos, &prop, type);
+      Dynarr_unlock (dla);
 
       if (yclip > dlp->ascent)
 	{
@@ -5577,8 +5692,11 @@ regenerate_window (struct window *w, Charbpos start_pos, Charbpos point, int typ
 	    {
 	      /* #### This means that we've added a cursor at EOB
                  twice.  Yuck oh yuck. */
-	      struct display_block *db =
-		get_display_block_from_line (dlp, TEXT);
+	      struct display_block *db;
+
+	      Dynarr_lock (dla);
+	      db = get_display_block_from_line (dlp, TEXT);
+	      Dynarr_unlock (dla);
 
 	      Dynarr_atp (db->runes, dlp->cursor_elt)->cursor_type = NO_CURSOR;
 	      dlp->cursor_elt = -1;
@@ -6580,6 +6698,205 @@ redisplay_windows (Lisp_Object window, int skip_selected)
     }
 }
 
+/* Register an action to be called at the end of redisplay.
+   in_display is 0 when this is called.
+   This is used when it is discovered that an action needs to be taken,
+   but it's during redisplay, so it's not safe. (Typically, it's an action
+   that needs to enter redisplay, which can't happen reentrantly.)
+
+   NEVER signal an error in these functions.
+*/
+
+void
+register_post_redisplay_action (void (*fun) (Lisp_Object), Lisp_Object arg)
+{
+  Vpost_redisplay_actions = nconc2 (Vpost_redisplay_actions,
+				    list1 (Fcons (make_opaque_ptr
+						  ((void *) fun), arg)));
+}
+
+static void
+run_post_redisplay_actions (void)
+{
+  while (!NILP (Vpost_redisplay_actions))
+    {
+      Lisp_Object car = XCAR (Vpost_redisplay_actions);
+      void (*fun) (Lisp_Object) =
+	(void (*)(Lisp_Object)) get_opaque_ptr (XCAR (car));
+      (*fun) (XCDR (car));
+      free_opaque_ptr (XCAR (car));
+      free_cons (car);
+      Vpost_redisplay_actions = XCDR (Vpost_redisplay_actions);
+    }
+}
+
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+
+static Lisp_Object
+commit_ritual_suicide (Lisp_Object ceci_nest_pas_une_pipe)
+{
+  assert (!in_display);
+  return Qnil;
+}
+
+#endif
+
+/* Within the guts of redisplay, we are defenseless and cannot allow any of
+   the following to happen:
+
+   1) garbage collection
+   2) QUIT
+   3) any non-local exits
+   4) frame size changes
+   5) deletion of any buffers, windows, frames, etc.
+   6) modification of buffer text
+   7) reentrant entry of redisplay (see the stack trace above
+      generate_displayable_area())
+
+   The general reason is that the redisplay code is written to assume that
+   it is the only code running, and thus (a) cannot tolerate structures
+   changed out from under it (hence 1, 4, 5, 6, 7) and (b) at various points
+   within redisplay the redisplay structures may be in an inconsistent
+   state and there are no unwind-protects to clean the structures up in
+   case of non-local exit (hence 2, 3).  Fixing redisplay to address these
+   issues is hard and perhaps not worth it (and might slow things down a
+   fair amount).  We address 1, 4, 5 and 6 ourselves inside of
+   enter_redisplay_critical_section() by simply inhibiting them, but we
+   cannot handle 2 and 3, which must be handled at the actual point where
+   they may occur (especially, internal_equal() or any place that may call
+   Lisp), by wrapping the code in call_trapping_problems() or
+   call_with_suspended_errors(). [[ NOTE: We could address QUIT by inhibiting
+   it but this would be anti-social because it would prevent the user from
+   interrupting any Lisp code called within the critical section.  With the
+   call_*() wrapping, C-g will interrupt the Lisp code and throw back to
+   the innermost wrapping. ]] In fact we do turn off QUIT handling, since
+   it's just too dangerous otherwise.  See below.
+
+   Code calling enter_redisplay_critical_section() must check for reentrancy
+   (#7) and take appropriate corrective action.
+
+   To help debug potential problems, we arrange (when
+   ERROR_CHECK_TRAPPING_PROBLEMS is set) to crash automatically every time
+   we execute QUIT or call Lisp code unless proper wrapping is in place, as
+   well as further checks when we actually Fsignal(), Fthrow(),
+   garbage_collect_1().
+
+   #### If a frame-size change does occur we should probably actually be
+   preempting redisplay. */
+
+/* Count of number of recursive times we call
+   enter_redisplay_critical_section() or
+   enter_redisplay_critical_section_maybe().
+   enter_redisplay_critical_section() cannot occur reentrantly but we have
+   to know in the *maybe() version whether to exit the section when we're
+   done. */
+static int in_display_nesting;
+
+static Lisp_Object
+end_hold_frame_size_changes (Lisp_Object obj)
+{
+  if (!hold_frame_size_changes)
+    {
+      /* we used to have a function to do this for only one frame, and
+	 it was typical to call it at the end of a critical section
+	 (which occurs once per frame); but what then happens if multiple
+	 frames have frame changes held up?
+	 
+	 This means we are O(N^2) over frames.  I seriously doubt it matters.
+	 --ben */
+      Lisp_Object frmcons, devcons, concons;
+  
+      FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+	{
+	  struct frame *f = XFRAME (XCAR (frmcons));
+	  if (f->size_change_pending)
+	    change_frame_size (f, f->new_height, f->new_width, 0);
+	}
+    }
+  return Qnil;
+}
+
+/* Call this to temporarily prevent frame-size changes from being processed.
+   To undo, use unbind_to(), passing it the value returned by this function.
+*/
+
+int
+begin_hold_frame_size_changes (void)
+{
+  int depth = specpdl_depth ();
+  record_unwind_protect (end_hold_frame_size_changes, Qnil);
+  internal_bind_int (&hold_frame_size_changes, 1 + hold_frame_size_changes);
+  return depth;
+}
+
+int
+enter_redisplay_critical_section (void)
+{
+  int depth = specpdl_depth ();
+
+  /* Reentrant entry is deadly.  The calling function must check for this. */
+  assert (!in_display);
+  begin_hold_frame_size_changes ();
+  /* Make sure in_display gets reset, but don't set it yet so that
+     commit_ritual_suicide() can be used. */
+  internal_bind_int (&in_display, 0);
+  internal_bind_int (&in_display_nesting, 1 + in_display_nesting);
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+  /* Force every call to QUIT to check for in_displayness.  This will
+     verify proper wrapping, as in the previous comment, aborting if not. */
+  something_happened++;
+  /* Verify that no nonlocal exits blow past us. */
+  record_unwind_protect (commit_ritual_suicide, Qnil);
+#endif
+  in_display++;
+
+  set_trapping_problems_flags (INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY);
+  /* Even checking for QUIT can cause arbitrary Lisp code to be executed,
+     e.g. through a menu handler.  We really don't want that happening
+     inside of redisplay.  Code that we `eval' is at least written with the
+     expectation that it's inside of redisplay, and shouldn't try anything
+     weird; but that's not the case for menu code (e.g. custom loads huge
+     amounts of LISP FILES from a menu handler! FMH!).  Safest just to turn
+     this off.  We could turn it on using UNINHIBIT_QUIT or
+     begin_do_check_for_quit() in certain places if we want, if we know
+     it's not in an especially tricky place. */
+  begin_dont_check_for_quit ();
+  return depth;
+}
+
+void
+exit_redisplay_critical_section (int depth)
+{
+  in_display--;
+  assert (!in_display);
+  unbind_to (depth);
+
+  run_post_redisplay_actions ();
+}
+
+/* Enter the redisplay critical section if we're not already in it.  This
+   is for code that needs frame changes held up and other protections from
+   being inside, but doesn't modify the redisplay structures, and doesn't
+   look at them in a way that they will be confused by inconsistencies. */
+
+int
+enter_redisplay_critical_section_maybe (void)
+{
+  if (!in_display)
+    return enter_redisplay_critical_section ();
+  else
+    return internal_bind_int (&in_display_nesting, 1 + in_display_nesting);
+}
+
+void
+exit_redisplay_critical_section_maybe (int depth)
+{
+  if (in_display_nesting == 1)
+    exit_redisplay_critical_section (depth);
+  else
+    unbind_to (depth);
+}
+
 /* Ensure that all windows on the given frame are correctly displayed.
    Return non-zero if pre-empted. */
 
@@ -6591,8 +6908,18 @@ redisplay_frame (struct frame *f, int preemption_check)
 
   assert (f->init_finished);
 
+  /* NOTE: Without sufficient checks for stream frames, we got weird
+     crashes in pdump.  These came and went very easily -- adding the
+     critical-section code for redisplay was enough to trigger them.
+     Perhaps I should have debugged them but there didn't seem to be any
+     point. --ben */
   if (FRAME_STREAM_P (f)) /* nothing to do */
     return 0;
+
+  /* Reentrancy into redisplay can be deadly.  See stack trace above
+     generate_displayable_area(). */
+  if (in_display)
+    return 1;
 
   if (preemption_check
       && !DEVICE_IMPL_FLAG (d, XDEVIMPF_DONT_PREEMPT_REDISPLAY))
@@ -6630,11 +6957,11 @@ redisplay_frame (struct frame *f, int preemption_check)
       assert (!f->size_slipped);
     }
 
-  /* The menubar, toolbar, and icon updates must be done before
+  /* The menubar, toolbar, and icon updates should be done before
      enter_redisplay_critical_section is called and we are officially
-     'in_display'.  They may eval lisp code which may call QUIT.
-     If in_display is set, QUIT will abort (unless the code is wrapped
-     to protect against errors). */
+     'in_display'.  They is because they tend to eval Lisp code, which
+     needs to be carefully wrapped within the critical section (and hence
+     is difficult to debug). */
 
 #ifdef HAVE_MENUBARS
   /* Update the menubar.  It is done first since it could change
@@ -6679,32 +7006,8 @@ redisplay_frame (struct frame *f, int preemption_check)
   depth = enter_redisplay_critical_section ();
 
   /* ----------------- BEGIN CRITICAL REDISPLAY SECTION ---------------- */
-  /* Within this section, we are defenseless and assume that the
-     following cannot happen:
 
-     1) garbage collection
-     2) QUIT
-     3) Any non-local exits
-     4) frame size changes
-
-     We ensure (4) by calling enter_redisplay_critical_section(), which
-     will cause any pending frame size changes to get put on hold
-     till after the end of the critical section.  (2) is required because
-     of the possibility of (3).  (2) and (3) mean that any place that
-     can execute QUIT (e.g. internal_equal()), and especially any place
-     that executes Lisp code, need to be properly wrapped to protect
-     against these possibilities.  This wrapping happens using 
-     call_trapping_problems(..., INHIBIT_GC), or related functions.
-
-     To help debug potential problems, we arrange (when
-     ERROR_CHECK_TRAPPING_PROBLEMS is set) to crash automatically every
-     time we execute QUIT or check to see whether garbage collection is
-     necessary, inside of an unprotected critical section, as well as
-     further checks when we actually Fsignal(), Fthrow(),
-     garbage_collect_1().
-
-     #### If a frame-size change does occur we should probably
-     actually be preempting redisplay. */
+  /* See comments in enter_redisplay_critical_section() */
 
   MAYBE_DEVMETH (d, frame_output_begin, (f));
 
@@ -6715,7 +7018,11 @@ redisplay_frame (struct frame *f, int preemption_check)
      inhibit_quit.  More importantly the code involving display lines
      *assumes* that GC will not happen and so does not GCPRO
      anything. Since we use this code the whole time with the gutters
-     we cannot allow GC to happen when manipulating the gutters. */
+     we cannot allow GC to happen when manipulating the gutters.
+
+     This must be inside of the critical section for various reasons.
+     For example, it messes with display structures, which be left in
+     an inconsistent state. */
   update_frame_gutters (f);
 
   /* Erase the frame before outputting its contents. */
@@ -6920,16 +7227,10 @@ redisplay_without_hooks (void)
   PROFILE_RECORD_EXITING_SECTION (QSin_redisplay);
 }
 
-/* Note: All places in the C code that call redisplay() are prepared
-   to handle GCing.  However, we can't currently handle GC inside the
-   guts of redisplay (#### someone should fix this), so we need to use
-   INHIBIT_GC when calling Lisp.
-
-   #### We probably can't handle any deletion of existing buffers, frames,
-   windows, devices, consoles, text changes, etc. either.  We should
-
-   (a) Create the appropriate INHIBIT_ flags for this.
-   (b) In the longer run, fix redisplay to handle this.
+/* Note: All places in the C code that call redisplay() are prepared to
+   handle GCing, which can happen from run_pre_idle_hook().  However, we
+   can't currently handle GC inside the guts of redisplay; see
+   enter_redisplay_critical_section().
 
    (#### What about other external entry points to the redisplay code?
    Someone should go through and make sure that all callers can handle
@@ -6967,8 +7268,7 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
   return
     eval_in_buffer_trapping_problems
     ("Error calling function within redisplay", current_buffer,
-     dont_trust_this_damn_sucker,
-     INHIBIT_GC | INHIBIT_ANY_CHANGE_AFFECTING_REDISPLAY);
+     dont_trust_this_damn_sucker, 0);
 }
 
 /* Efficiently determine the window line number, and return a pointer
@@ -7308,7 +7608,7 @@ free_display_line (struct display_line *dl)
   if (dl->display_blocks)
     {
       for (block = 0; block < Dynarr_largest (dl->display_blocks); block++)
-	{
+  	{
 	  struct display_block *db = Dynarr_atp (dl->display_blocks, block);
 
 	  Dynarr_free (db->runes);
@@ -9120,6 +9420,9 @@ Ensure that all minibuffers are correctly showing the echo area.
 {
   Lisp_Object devcons, concons;
 
+  if (in_display)
+    return Qnil;
+
   DEVICE_LOOP_NO_BREAK (devcons, concons)
     {
       struct device *d = XDEVICE (XCAR (devcons));
@@ -9660,6 +9963,9 @@ vars_of_redisplay (void)
 {
   QSin_redisplay = build_msg_string ("(in redisplay)");
   staticpro (&QSin_redisplay);
+
+  Vpost_redisplay_actions = Qnil;
+  staticpro (&Vpost_redisplay_actions);
 
 #if 0
   staticpro (&last_arrow_position);

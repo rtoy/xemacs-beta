@@ -29,7 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
 int separator_string_p (const Ibyte *s);
 void get_gui_callback (Lisp_Object, Lisp_Object *, Lisp_Object *);
-int gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth);
+int gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2,
+				  int depth, int in_redisplay);
 
 
 
@@ -76,13 +77,13 @@ int gui_item_add_keyval_pair (Lisp_Object gui_item,
 Lisp_Object gui_parse_item_keywords (Lisp_Object item);
 Lisp_Object gui_parse_item_keywords_no_errors (Lisp_Object item);
 void gui_add_item_keywords_to_plist (Lisp_Object plist, Lisp_Object gui_item);
-int  gui_item_active_p (Lisp_Object);
-int  gui_item_selected_p (Lisp_Object);
+int gui_item_active_p (Lisp_Object, int);
+int gui_item_selected_p (Lisp_Object, int);
 Lisp_Object gui_item_list_find_selected (Lisp_Object gui_item_list);
-int  gui_item_included_p (Lisp_Object, Lisp_Object into);
+int gui_item_included_p (Lisp_Object, Lisp_Object into);
 Lisp_Object gui_item_accelerator (Lisp_Object gui_item);
 Lisp_Object gui_name_accelerator (Lisp_Object name);
-int  gui_item_id_hash (Lisp_Object, Lisp_Object gui_item, int);
+int gui_item_id_hash (Lisp_Object, Lisp_Object gui_item, int);
 Lisp_Object gui_item_display_flush_left (Lisp_Object gui_item);
 Lisp_Object gui_item_display_flush_right (Lisp_Object gui_item);
 Lisp_Object allocate_gui_item (void);

@@ -1,6 +1,6 @@
 /* Synchronize redisplay structures and output changes.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1999, 2002 Andy Piper.
 
@@ -59,6 +59,8 @@ static void redisplay_clear_clipped_region (Lisp_Object locale, face_index finde
 					    struct display_box* dest,
 					    struct display_glyph_area* glyphsrc,
 					    int fullheight_p, Lisp_Object);
+static void redisplay_redraw_exposed_windows (Lisp_Object window, int x,
+					      int y, int width, int height);
 
 /*****************************************************************************
  sync_rune_structs
@@ -2488,6 +2490,177 @@ redisplay_output_window (struct window *w)
 #ifdef HAVE_SCROLLBARS
   update_window_scrollbars (w, NULL, !MINI_WINDOW_P (w), 0);
 #endif
+}
+
+/*****************************************************************************
+ redisplay_redraw_exposed_window
+
+ Given a bounding box for an area that needs to be redrawn, determine
+ what parts of what lines are contained within and re-output their
+ contents.
+ ****************************************************************************/
+static void
+redisplay_redraw_exposed_window (struct window *w, int x, int y, int width,
+				 int height)
+{
+  struct frame *f = XFRAME (w->frame);
+  int line;
+  int start_x, start_y, end_x, end_y;
+  int orig_windows_structure_changed;
+
+  display_line_dynarr *cdla = window_display_lines (w, CURRENT_DISP);
+
+  if (!NILP (w->vchild))
+    {
+      redisplay_redraw_exposed_windows (w->vchild, x, y, width, height);
+      return;
+    }
+  else if (!NILP (w->hchild))
+    {
+      redisplay_redraw_exposed_windows (w->hchild, x, y, width, height);
+      return;
+    }
+
+  /* If the window doesn't intersect the exposed region, we're done here. */
+  if (x >= WINDOW_RIGHT (w) || (x + width) <= WINDOW_LEFT (w)
+      || y >= WINDOW_BOTTOM (w) || (y + height) <= WINDOW_TOP (w))
+    {
+      return;
+    }
+  else
+    {
+      start_x = max (WINDOW_LEFT (w), x);
+      end_x = min (WINDOW_RIGHT (w), (x + width));
+      start_y = max (WINDOW_TOP (w), y);
+      end_y = min (WINDOW_BOTTOM (w), y + height);
+
+      /* We do this to make sure that the 3D modelines get redrawn if
+         they are in the exposed region. */
+      orig_windows_structure_changed = f->windows_structure_changed;
+      f->windows_structure_changed = 1;
+    }
+
+  /* #### Not in GTK or MS Windows.  I think is because of toolbars, which
+     are handled as widgets in GTK and MS Windows, but drawn ourselves in
+     X.  For the moment I'm leaving this in, if it causes problems we have
+     some device method indicating whether we're drawing our own
+     toolbars. */
+  redisplay_clear_top_of_window (w);
+  if (window_needs_vertical_divider (w))
+    {
+      FRAMEMETH (f, output_vertical_divider, (w, 0));
+    }
+
+  for (line = 0; line < Dynarr_length (cdla); line++)
+    {
+      struct display_line *cdl = Dynarr_atp (cdla, line);
+      int top_y = DISPLAY_LINE_YPOS (cdl);
+      int bottom_y = DISPLAY_LINE_YPOS (cdl) + DISPLAY_LINE_HEIGHT (cdl);
+
+      if (bottom_y >= start_y)
+	{
+	  if (top_y > end_y)
+	    {
+	      if (line == 0)
+		continue;
+	      else
+		break;
+	    }
+	  else
+	    {
+	      output_display_line (w, 0, cdla, line, start_x, end_x);
+	    }
+	}
+    }
+
+  f->windows_structure_changed = orig_windows_structure_changed;
+
+  /* If there have never been any face cache_elements created, then this
+     expose event doesn't actually have anything to do. */
+  if (Dynarr_largest (w->face_cachels))
+    redisplay_clear_bottom_of_window (w, cdla, start_y, end_y);
+
+#ifdef HAVE_SCROLLBARS
+  MAYBE_FRAMEMETH (f, redisplay_deadbox, (w, x, y, width, height));
+#endif
+}
+
+
+/*****************************************************************************
+ redisplay_redraw_exposed_windows
+
+ For each window beneath the given window in the window hierarchy,
+ ensure that it is redrawn if necessary after an Expose event.
+ ****************************************************************************/
+static void
+redisplay_redraw_exposed_windows (Lisp_Object window, int x, int y, int width,
+				  int height)
+{
+  for (; !NILP (window); window = XWINDOW (window)->next)
+    redisplay_redraw_exposed_window (XWINDOW (window), x, y, width, height);
+}
+
+static void
+redisplay_redraw_exposed_area_1 (Lisp_Object arg)
+{
+  assert (!in_display);
+  redisplay_redraw_exposed_area (XFRAME (X1ST (arg)),
+				 XINT (X2ND (arg)),
+				 XINT (X3RD (arg)),
+				 XINT (X4TH (arg)),
+				 XINT (X5TH (arg)));
+  free_list (arg);
+}
+
+/*****************************************************************************
+ redisplay_redraw_exposed_area
+
+ For each window on the given frame, ensure that any area in the
+ Exposed area is redrawn.
+ ****************************************************************************/
+void
+redisplay_redraw_exposed_area (struct frame *f, int x, int y, int width,
+			       int height)
+{
+  int depth;
+
+  if (in_display)
+    {
+      /* Not safe to do it now, so delay it */
+      register_post_redisplay_action (redisplay_redraw_exposed_area_1,
+				      list5 (wrap_frame (f), make_int (x),
+					     make_int (y), make_int (width),
+					     make_int (height)));
+      return;
+    }
+
+  depth = enter_redisplay_critical_section ();
+
+  MAYBE_FRAMEMETH (f, frame_output_begin, (f));
+
+  /* If any window on the frame has had its face cache reset then the
+     redisplay structures are effectively invalid.  If we attempt to
+     use them we'll blow up.  We mark the frame as changed to ensure
+     that redisplay will do a full update.  This probably isn't
+     necessary but it can't hurt. */
+#ifdef HAVE_TOOLBARS
+  /* #### We would rather put these off as well but there is currently
+     no combination of flags which will force an unchanged toolbar to
+     redraw anyhow. */
+  MAYBE_FRAMEMETH (f, redraw_exposed_toolbars, (f, x, y, width, height));
+#endif
+  redraw_exposed_gutters (f, x, y, width, height);
+
+  if (!f->window_face_cache_reset)
+    {
+      redisplay_redraw_exposed_windows (f->root_window, x, y, width, height);
+      /* #### Why not call this always? */
+      MAYBE_FRAMEMETH (f, frame_output_end, (f));
+    }
+  else
+    MARK_FRAME_CHANGED (f);
+
+  exit_redisplay_critical_section (depth);
 }
 
 /*****************************************************************************

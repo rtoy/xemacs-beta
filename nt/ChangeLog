@@ -1,3 +1,8 @@
+2003-02-20  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.dsp (CFG):
+	Add /k to default build.
+
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (DO_TEMACS): New.

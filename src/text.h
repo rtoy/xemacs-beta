@@ -1,7 +1,7 @@
 /* Header file for text manipulation primitives and macros.
    Copyright (C) 1985-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -336,7 +336,7 @@ objects_have_same_internal_representation (Lisp_Object srcobj,
 
 #endif /* MULE */
 
-int dfc_coding_system_is_unicode (Lisp_Object coding_system);
+int dfc_coding_system_is_unicode (Lisp_Object codesys);
 
 DECLARE_INLINE_HEADER (
 Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
@@ -1410,10 +1410,10 @@ next_string_index (Lisp_Object s, Bytecount idx)
         ... from an ASCII string, with length specified.  Non-ASCII characters
 	in the string are *ILLEGAL* (read abort() with error-checking defined).
    void eicpy_ext (Eistring *eistr, const Extbyte *extdata,
-                   Lisp_Object coding_system);
+                   Lisp_Object codesys);
         ... from external null-terminated data, with coding system specified.
    void eicpy_ext_len (Eistring *eistr, const Extbyte *extdata,
-                       Bytecount extlen, Lisp_Object coding_system);
+                       Bytecount extlen, Lisp_Object codesys);
         ... from external data, with length and coding system specified.
    void eicpy_lstream (Eistring *eistr, Lisp_Object lstream);
         ... from an lstream; reads data till eof.  Data must be in default
@@ -1592,7 +1592,7 @@ next_string_index (Lisp_Object s, Bytecount idx)
     *      Converting to an external format      * 
     ********************************************** 
 
-   void eito_external (Eistring *eistr, Lisp_Object coding_system);
+   void eito_external (Eistring *eistr, Lisp_Object codesys);
         Convert the Eistring to an external format and store the result
 	in the string.  NOTE: Further changes to the Eistring will *NOT*
 	change the external data stored in the string.  You will have to
@@ -2003,24 +2003,23 @@ do {						\
   eicpy_ext_len (ei, ei6, ei6len, Qbinary);	\
 } while (0)
 
-#define eicpy_ext_len(ei, extdata, extlen, coding_system)		 \
+#define eicpy_ext_len(ei, extdata, extlen, codesys)			 \
 do {									 \
   const Extbyte *ei7 = (extdata);					 \
   int ei7len = (extlen);						 \
 									 \
-  TO_INTERNAL_FORMAT (DATA, (ei7, ei7len),				 \
-		      ALLOCA, ((ei)->data_, (ei)->bytelen_),		 \
-		      coding_system);					 \
+  SIZED_EXTERNAL_TO_SIZED_C_STRING (ei7, ei7len, (ei)->data_,		 \
+				    (ei)->bytelen_, codesys);		 \
   (ei)->max_size_allocated_ = (ei)->bytelen_ + 1;			 \
   (ei)->charlen_ = bytecount_to_charcount ((ei)->data_, (ei)->bytelen_); \
 } while (0)
 
-#define eicpy_ext(ei, extdata, coding_system)				\
-do {									\
-  const Extbyte *ei8 = (extdata);					\
-									\
-  eicpy_ext_len (ei, ei8, dfc_external_data_len (ei8, coding_system),	\
-		 coding_system);					\
+#define eicpy_ext(ei, extdata, codesys)				\
+do {								\
+  const Extbyte *ei8 = (extdata);				\
+								\
+  eicpy_ext_len (ei, ei8, dfc_external_data_len (ei8, codesys),	\
+		 codesys);					\
 } while (0)
 
 #define eicpy_lbuf(eistr, lisp_buf, off, charoff, len, charlen) \
@@ -2312,7 +2311,7 @@ do {								\
 
 /*   ----- Converting to an external format -----   */
 
-#define eito_external(ei, coding_system)				\
+#define eito_external(ei, codesys)				\
 do {									\
   if ((ei)->mallocp_)							\
     {									\
@@ -2323,12 +2322,12 @@ do {									\
 	}								\
       TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
 			  MALLOC, ((ei)->extdata_, (ei)->extlen_),	\
-			  coding_system);				\
+			  codesys);				\
     }									\
   else									\
     TO_EXTERNAL_FORMAT (DATA, ((ei)->data_, (ei)->bytelen_),		\
 			ALLOCA, ((ei)->extdata_, (ei)->extlen_),	\
-			coding_system);					\
+			codesys);					\
 } while (0)
 
 #define eiextdata(ei) ((ei)->extdata_)
@@ -2457,10 +2456,57 @@ do {									\
 /*                                                                      */
 /************************************************************************/
 /*
-  All client code should use only the two macros
+  The macros below are used for converting data between different formats.
+  Generally, the data is textual, and the formats are related to
+  internationalization (e.g. converting between internal-format text and
+  UTF-8) -- but the mechanism is general, and could be used for anything,
+  e.g. decoding gzipped data.
 
-  TO_EXTERNAL_FORMAT (source_type, source, sink_type, sink, coding_system)
-  TO_INTERNAL_FORMAT (source_type, source, sink_type, sink, coding_system)
+  In general, conversion involves a source of data, a sink, the existing
+  format of the source data, and the desired format of the sink.  The
+  macros below, however, always require that either the source or sink is
+  internal-format text.  Therefore, in practice the conversions below
+  involve source, sink, an external format (specified by a coding system),
+  and the direction of conversion (internal->external or vice-versa).
+
+  Sources and sinks can be raw data (sized or unsized -- when unsized,
+  input data is assumed to be null-terminated [double null-terminated for
+  Unicode-format data], and on output the length is not stored anywhere),
+  Lisp strings, Lisp buffers, lstreams, and opaque data objects.  When the
+  output is raw data, the result can be allocated either with alloca() or
+  malloc(). (There is currently no provision for writing into a fixed
+  buffer.  If you want this, use alloca() output and then copy the data --
+  but be careful with the size!  Unless you are very sure of the encoding
+  being used, upper bounds for the size are not in general computable.)
+  The obvious restrictions on source and sink types apply (e.g. Lisp
+  strings are a source and sink only for internal data).
+
+  All raw data outputted will contain an extra null byte (two bytes for
+  Unicode -- currently, in fact, all output data, whether internal or
+  external, is double-null-terminated, but you can't count on this; see
+  below).  This means that enough space is allocated to contain the extra
+  nulls; however, these nulls are not reflected in the returned output
+  size.
+
+  The most basic macros are TO_EXTERNAL_FORMAT and TO_INTERNAL_FORMAT.
+  These can be used to convert between any kinds of sources or sinks.
+  However, 99% of conversions involve raw data or Lisp strings as both
+  source and sink, and usually data is output as alloca() rather than
+  malloc().  For this reason, convenience macros are defined for many types
+  of conversions involving raw data and/or Lisp strings, especially when
+  the output is an alloca()ed string. (When the destination is a
+  Lisp_String, there are other functions that should be used instead --
+  build_ext_string() and make_ext_string(), for example.) The convenience
+  macros are of two types -- the older kind that store the result into a
+  specified variable, and the newer kind that return the result.  The newer
+  kind of macros don't exist when the output is sized data, because that
+  would have two return values.  NOTE: All convenience macros are
+  ultimately defined in terms of TO_EXTERNAL_FORMAT and TO_INTERNAL_FORMAT.
+  Thus, any comments below about the workings of these macros also apply to
+  all convenience macros.
+
+  TO_EXTERNAL_FORMAT (source_type, source, sink_type, sink, codesys)
+  TO_INTERNAL_FORMAT (source_type, source, sink_type, sink, codesys)
 
   Typical use is
 
@@ -2648,13 +2694,13 @@ typedef enum dfc_conversion_type dfc_conversion_type;
 void
 dfc_convert_to_external_format (dfc_conversion_type source_type,
 				dfc_conversion_data *source,
-				Lisp_Object coding_system,
+				Lisp_Object codesys,
 				dfc_conversion_type sink_type,
 				dfc_conversion_data *sink);
 void
 dfc_convert_to_internal_format (dfc_conversion_type source_type,
 				dfc_conversion_data *source,
-				Lisp_Object coding_system,
+				Lisp_Object codesys,
 				dfc_conversion_type sink_type,
 				dfc_conversion_data *sink);
 /* CPP Trickery */
@@ -2766,19 +2812,131 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define DFC_LISP_BUFFER_USE_CONVERTED_DATA(sink) \
   Lstream_delete (XLSTREAM (dfc_sink.lisp_object))
 
+/* #define TEST_NEW_DFC */
+
 /* Convenience macros for extremely common invocations */
-#define C_STRING_TO_EXTERNAL(in, out, coding_system) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, coding_system)
-#define C_STRING_TO_EXTERNAL_MALLOC(in, out, coding_system) \
-  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, coding_system)
-#define EXTERNAL_TO_C_STRING(in, out, coding_system) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, coding_system)
-#define EXTERNAL_TO_C_STRING_MALLOC(in, out, coding_system) \
-  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, coding_system)
-#define LISP_STRING_TO_EXTERNAL(in, out, coding_system) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_ALLOCA, out, coding_system)
-#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, coding_system) \
-  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_MALLOC, out, coding_system)
+#ifdef TEST_NEW_DFC
+#define C_STRING_TO_EXTERNAL(in, out, codesys)			\
+  do { * (Extbyte **) &(out) = 					\
+       NEW_C_STRING_TO_EXTERNAL (in, codesys); } while (0)
+#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys)		\
+  do { * (Extbyte **) &(out) =						\
+       NEW_SIZED_C_STRING_TO_EXTERNAL (in, inlen, codesys); } while (0)
+#define EXTERNAL_TO_C_STRING(in, out, codesys)			\
+  do { * (Ibyte **) &(out) =					\
+       NEW_EXTERNAL_TO_C_STRING (in, codesys); } while (0)
+#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys)		\
+  do { * (Ibyte **) &(out) =						\
+       NEW_SIZED_EXTERNAL_TO_C_STRING (in, inlen, codesys); } while (0)
+#define LISP_STRING_TO_EXTERNAL(in, out, codesys)		\
+  do { * (Extbyte **) &(out) =					\
+       NEW_LISP_STRING_TO_EXTERNAL (in, codesys); } while (0)
+#else
+#define C_STRING_TO_EXTERNAL(in, out, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
+#define SIZED_C_STRING_TO_EXTERNAL(in, inlen, out, codesys) \
+  TO_EXTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
+#define EXTERNAL_TO_C_STRING(in, out, codesys) \
+  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_ALLOCA, out, codesys)
+#define SIZED_EXTERNAL_TO_C_STRING(in, inlen, out, codesys) \
+  TO_INTERNAL_FORMAT (DATA, (in, inlen), C_STRING_ALLOCA, out, codesys)
+#define LISP_STRING_TO_EXTERNAL(in, out, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_ALLOCA, out, codesys)
+#endif /* TEST_NEW_DFC */
+
+#define C_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
+#define SIZED_C_STRING_TO_SIZED_EXTERNAL(in, inlen, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
+#define EXTERNAL_TO_SIZED_C_STRING(in, out, outlen, codesys) \
+  TO_INTERNAL_FORMAT (C_STRING, in, ALLOCA, (out, outlen), codesys)
+#define SIZED_EXTERNAL_TO_SIZED_C_STRING(in, inlen, out, outlen, codesys) \
+  TO_INTERNAL_FORMAT (DATA, (in, inlen), ALLOCA, (out, outlen), codesys)
+#define LISP_STRING_TO_SIZED_EXTERNAL(in, out, outlen, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, ALLOCA, (out, outlen), codesys)
+
+/* In place of EXTERNAL_TO_LISP_STRING(), use build_ext_string() and/or
+   make_ext_string(). */
+
+#ifdef TEST_NEW_DFC
+#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)			\
+  do { * (Extbyte **) &(out) =						\
+       NEW_C_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
+#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys)			\
+  do { * (Ibyte **) &(out) =						\
+       NEW_EXTERNAL_TO_C_STRING_MALLOC (in, codesys); } while (0)
+#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys)		\
+  do { * (Extbyte **) &(out) =						\
+       NEW_LISP_STRING_TO_EXTERNAL_MALLOC (in, codesys); } while (0)
+#else
+#define C_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
+  TO_EXTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
+#define EXTERNAL_TO_C_STRING_MALLOC(in, out, codesys) \
+  TO_INTERNAL_FORMAT (C_STRING, in, C_STRING_MALLOC, out, codesys)
+#define LISP_STRING_TO_EXTERNAL_MALLOC(in, out, codesys) \
+  TO_EXTERNAL_FORMAT (LISP_STRING, in, C_STRING_MALLOC, out, codesys)
+#endif /* TEST_NEW_DFC */
+
+enum new_dfc_src_type
+{
+  DFC_EXTERNAL,
+  DFC_SIZED_EXTERNAL,
+  DFC_INTERNAL,
+  DFC_SIZED_INTERNAL,
+  DFC_LISP_STRING
+};
+
+void *new_dfc_convert_malloc (const void *src, Bytecount src_size,
+			      enum new_dfc_src_type type, Lisp_Object codesys);
+void *new_dfc_convert_alloca (const char *srctext, void *alloca_data);
+Bytecount new_dfc_convert_size (const char *srctext, const void *src,
+				Bytecount src_size, enum new_dfc_src_type type,
+				Lisp_Object codesys);
+
+/* Version of EXTERNAL_TO_C_STRING that *RETURNS* the translated string,
+   still in alloca() space.  Requires some trickiness to do this, but gets
+   it done! */
+
+/* NOTE: If you make two invocations of the dfc functions below in the same
+   subexpression and use the exact same expression for the source in both
+   cases, you will lose.  In this unlikely case, you will get an abort, and
+   need to rewrite the code.
+*/
+
+/* We need to use ALLOCA_FUNCALL_OK here.  Some compilers have been known
+   to choke when alloca() occurs as a funcall argument, and so we check
+   this in configure.  Rewriting the expressions below to use a temporary
+   variable, so that the call to alloca() is outside of
+   new_dfc_convert_alloca(), won't help because the entire NEW_DFC call
+   could be inside of a function call. */
+
+#define NEW_DFC_CONVERT_1_ALLOCA(src, src_size, type, codesys)		\
+  new_dfc_convert_alloca						\
+   (#src, ALLOCA_FUNCALL_OK (new_dfc_convert_size (#src, src, src_size,	\
+						   type, codesys)))
+
+#define NEW_EXTERNAL_TO_C_STRING(src, codesys)	\
+  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_EXTERNAL, codesys)
+#define NEW_EXTERNAL_TO_C_STRING_MALLOC(src, codesys)	\
+  (Ibyte *) new_dfc_convert_malloc (src, -1, DFC_EXTERNAL, codesys)
+#define NEW_SIZED_EXTERNAL_TO_C_STRING(src, len, codesys)	\
+  (Ibyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_EXTERNAL, codesys)
+#define NEW_SIZED_EXTERNAL_TO_C_STRING_MALLOC(src, len, codesys)	\
+  (Ibyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_EXTERNAL, codesys)
+#define NEW_C_STRING_TO_EXTERNAL(src, codesys)	\
+  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, -1, DFC_INTERNAL, codesys)
+#define NEW_C_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
+  (Extbyte *) new_dfc_convert_malloc (src, -1, DFC_INTERNAL, codesys)
+#define NEW_SIZED_C_STRING_TO_EXTERNAL(src, len, codesys)	\
+  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (src, len, DFC_SIZED_INTERNAL, codesys)
+#define NEW_SIZED_C_STRING_TO_EXTERNAL_MALLOC(src, len, codesys)	\
+  (Extbyte *) new_dfc_convert_malloc (src, len, DFC_SIZED_INTERNAL, codesys)
+#define NEW_LISP_STRING_TO_EXTERNAL(src, codesys)			\
+  (Extbyte *) NEW_DFC_CONVERT_1_ALLOCA (LISP_TO_VOID (src), -1,		\
+					DFC_LISP_STRING, codesys)
+#define NEW_LISP_STRING_TO_EXTERNAL_MALLOC(src, codesys)	\
+  (Extbyte *) new_dfc_convert_malloc (LISP_TO_VOID (src), -1,	\
+				      DFC_LISP_STRING, codesys)
 
 /* Standins for various encodings, until we know them better */
 #define Qcommand_argument_encoding Qnative
@@ -2788,24 +2946,93 @@ typedef union { char c; void *p; } *dfc_aliasing_voidpp;
 #define Qmswindows_host_name_encoding Qmswindows_multibyte
 #define Qmswindows_service_name_encoding Qmswindows_multibyte
 
-/* Standins for various X encodings, until we know them better */
+/* Standins for various X encodings, until we know them better.
+
+   About encodings in X:
+
+   X works with 5 different encodings:
+
+   -- "Host Portable Character Encoding" == printable ASCII + space, tab,
+      newline
+
+   -- STRING encoding == ASCII + Latin-1 + tab, newline
+
+   -- Locale-specific encoding
+
+   -- Compound text == STRING encoding + ISO-2022 escape sequences to
+      switch between different locale-specific encodings.
+
+   -- ANSI C wide-character encoding
+
+   The Host Portable Character Encoding (HPCE) is used for atom names, font
+   names, color names, keysyms, geometry strings, resource manager quarks,
+   display names, locale names, and various other things.  When describing
+   such strings, the X manual typically says "If the ... is not in the Host
+   Portable Character Encoding, the result is implementation dependent."
+
+   The wide-character encoding is used only in the Xwc* functions, which
+   are provided as equivalents to Xmb* functions.
+
+   STRING and compound text are used in the value of string properties and
+   selection data, both of which are values with an associated type atom,
+   which can be STRING or COMPOUND_TEXT.  It can also be a locale name, as
+   specified in setlocale() (#### as usual, there is no normalization
+   whatsoever of these names).
+
+   X also defines a type called "TEXT", which is used only as a requested
+   type, and produces data in a type "convenient to the owner".  However,
+   there is some indication that X expects this to be the locale-specific
+   encoding.
+
+   According to the glossary, the locale is used in
+
+   -- Encoding and processing of input method text
+   -- Encoding of resource files and values
+   -- Encoding and imaging of text strings
+   -- Encoding and decoding for inter-client text communication 
+
+   The functions XmbTextListToTextProperty and XmbTextPropertyToTextList
+   (and Xwc* equivalents) can be used to convert between the
+   locale-specific encoding (XTextStyle), STRING (XStringStyle), and
+   compound text (XCompoundTextStyle), as well as XStdICCTextStyle, which
+   converts to STRING if possible, and if not, COMPOUND_TEXT.  This is
+   used, for example, in XmbSetWMProperties, in the window_name and
+   icon_name properties (WM_NAME and WM_ICON_NAME), which are in the
+   locale-specific encoding on input, and are stored as STRING if possible,
+   COMPOUND_TEXT otherwise.
+   */
 
 /* !!#### Need to verify the encoding used in lwlib -- Qnative or Qctext?
    Almost certainly the former.  Use a standin for now. */
 #define Qlwlib_encoding Qnative
 
-#define Qx_atom_name_encoding Qctext
-/* font names are often stored in atoms, so it gets sticky if we set this
-   to something different from atom-name encoding */
-#define Qx_font_name_encoding Qctext
+/* The Host Portable Character Encoding. */
+#define Qx_hpc_encoding Qnative
 
-#define Qx_color_name_encoding Qctext
-
+#define Qx_atom_name_encoding Qx_hpc_encoding
+#define Qx_font_name_encoding Qx_hpc_encoding
+#define Qx_color_name_encoding Qx_hpc_encoding
+#define Qx_keysym_encoding Qx_hpc_encoding
+#define Qx_geometry_encoding Qx_hpc_encoding
+#define Qx_resource_name_encoding Qx_hpc_encoding
+#define Qx_application_class_encoding Qx_hpc_encoding
 /* the following probably must agree with Qcommand_argument_encoding and
    Qenvironment_variable_encoding */
-#define Qx_display_name_encoding Qnative
+#define Qx_display_name_encoding Qx_hpc_encoding
+#define Qx_xpm_data_encoding Qx_hpc_encoding
+
+/* RedHat 6.2 contains a locale called "Francais" with the C-cedilla
+   encoded in ISO2022! */
+#define Qlocale_name_encoding Qctext
 
 #define Qstrerror_encoding Qnative
+
+/* Encoding for strings coming from Offix drag-n-drop */
+#define Qoffix_dnd_encoding Qnative
+
+/* !!#### This exists to remind us that our hexify routine is totally
+   un-Muleized. */
+#define Qdnd_hexify_encoding Qascii
 
 #define GET_STRERROR(var, num)					\
 do {								\

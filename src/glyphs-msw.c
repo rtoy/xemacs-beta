@@ -1,6 +1,6 @@
 /* mswindows-specific glyph objects.
    Copyright (C) 1998, 1999, 2000 Andy Piper.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2039,7 +2039,7 @@ mswindows_redisplay_widget (Lisp_Image_Instance *p)
       if (CONSP (item))
 	item = XCAR (item);
 
-      if (gui_item_active_p (item))
+      if (gui_item_active_p (item, 1))
 	qxeSetWindowLong (WIDGET_INSTANCE_MSWINDOWS_HANDLE (p),
 			  GWL_STYLE, style & ~WS_DISABLED);
       else
@@ -2230,7 +2230,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 
   CHECK_MSWINDOWS_DEVICE (device);
 
-  if (!gui_item_active_p (gui))
+  if (!gui_item_active_p (gui, 0))
     flags |= WS_DISABLED;
 
   style = pgui->style;
@@ -2375,7 +2375,7 @@ mswindows_button_instantiate (Lisp_Object image_instance,
 
   wnd = WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii);
   /* set the checked state */
-  if (gui_item_selected_p (gui))
+  if (gui_item_selected_p (gui, 0))
     qxeSendMessage (wnd, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
   else
     qxeSendMessage (wnd, BM_SETCHECK, (WPARAM)BST_UNCHECKED, 0);
@@ -2401,7 +2401,7 @@ mswindows_button_redisplay (Lisp_Object image_instance)
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
   /* buttons checked or otherwise */
-  if (gui_item_selected_p (IMAGE_INSTANCE_WIDGET_ITEM (ii)))
+  if (gui_item_selected_p (IMAGE_INSTANCE_WIDGET_ITEM (ii), 1))
     qxeSendMessage (WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii),
 		    BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
   else
@@ -2643,7 +2643,7 @@ mswindows_tab_control_instantiate (Lisp_Object image_instance,
     {
       int idx = add_tab_item (image_instance, wnd, XCAR (rest), domain, i);
       assert (idx == i);
-      if (gui_item_selected_p (XCAR (rest)))
+      if (gui_item_selected_p (XCAR (rest), 0))
 	selected = i;
       i++;
     }
@@ -2657,7 +2657,8 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
   /* This function can GC if IN_REDISPLAY is false. */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 #ifdef DEBUG_WIDGET_OUTPUT
-  stderr_out ("tab control %p redisplayed\n", IMAGE_INSTANCE_SUBWINDOW_ID (ii));
+  stderr_out ("tab control %p redisplayed\n",
+	      IMAGE_INSTANCE_SUBWINDOW_ID (ii));
 #endif
   if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii)
       ||
@@ -2682,9 +2683,10 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
 		{
-		  Lisp_Object old_selected = gui_item_list_find_selected
+		  Lisp_Object old_selected =
+		    gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
 
 		  /* Pick up the new selected item. */
@@ -2699,7 +2701,7 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 		  qxeSendMessage (wnd, TCM_SETCURSEL, i, 0);
 #ifdef DEBUG_WIDGET_OUTPUT
 		  stderr_out ("tab control %p selected item %d\n",
-			  IMAGE_INSTANCE_SUBWINDOW_ID (ii), i);
+			      IMAGE_INSTANCE_SUBWINDOW_ID (ii), i);
 #endif
 		  break;
 		}
@@ -2716,7 +2718,7 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 	    {
 	      add_tab_item (image_instance, wnd, XCAR (rest),
 			    IMAGE_INSTANCE_FRAME (ii), i);
-	      if (gui_item_selected_p (XCAR (rest)))
+	      if (gui_item_selected_p (XCAR (rest), 1))
 		selected_idx = i;
 	      i++;
 	    }

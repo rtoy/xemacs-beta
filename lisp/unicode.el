@@ -164,7 +164,7 @@
 		(let ((undir
 		       (expand-file-name (car tables) data-directory)))
 		  (mapcar #'(lambda (args)
-			      (apply 'parse-unicode-translation-table
+			      (apply 'load-unicode-mapping-table
 				     (expand-file-name (car args) undir)
 				     (cdr args)))
 			  (cdr tables))))

@@ -1965,18 +1965,21 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
 	
     case Expose:
       if (!check_for_ignored_expose (f, event->xexpose.x, event->xexpose.y,
-				     event->xexpose.width, event->xexpose.height)
+				     event->xexpose.width,
+				     event->xexpose.height)
 	  &&
 	  !find_matching_subwindow (f, event->xexpose.x, event->xexpose.y,
 	  event->xexpose.width, event->xexpose.height))
-	x_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
-			       event->xexpose.width, event->xexpose.height);
+	redisplay_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
+				       event->xexpose.width,
+				       event->xexpose.height);
       break;
 
     case GraphicsExpose: /* This occurs when an XCopyArea's source area was
 			    obscured or not available. */
-      x_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
-			     event->xexpose.width, event->xexpose.height);
+      redisplay_redraw_exposed_area (f, event->xexpose.x, event->xexpose.y,
+				     event->xexpose.width,
+				     event->xexpose.height);
       break;
 
     case MapNotify:

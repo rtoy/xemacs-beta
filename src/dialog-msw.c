@@ -714,7 +714,8 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	Lisp_Gui_Item *pgui_item = XGUI_ITEM (*gui_item);
 	
 	item_tem.style = (WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON
-			  | (gui_item_active_p (*gui_item) ? 0 : WS_DISABLED));
+			  | (gui_item_active_p (*gui_item, 0) ? 0 :
+			     WS_DISABLED));
 	item_tem.cx = button_width (pgui_item->name);
 	/* Item ids are indices into dialog_items plus offset, to avoid having
            items by reserved ids (IDOK, IDCANCEL) */

@@ -54,7 +54,11 @@ Boston, MA 02111-1307, USA.  */
    something evil and unpredictable?  Signaling an error is OK: for
    all national standards, the national to Unicode map is an inclusion
    (1-to-1).  Any character set that does not behave that way is
-   broken according to the Unicode standard. */
+   broken according to the Unicode standard.
+
+   Answer: You will get an abort(), since the purpose of the sledgehammer
+   routines is self-checking.  The above problem with non-1-to-1 mapping
+   occurs in the Big5 tables, as provided by the Unicode Consortium. */
 
 /* #define SLEDGEHAMMER_CHECK_UNICODE */
 
@@ -164,7 +168,10 @@ Lisp_Object Qutf_8_bom;
 #ifdef MULE 
 
 /* #### Using ints for to_unicode is OK (as long as they are >= 32 bits).
-   However, shouldn't the shorts below be unsigned? */
+   However, shouldn't the shorts below be unsigned?
+
+   Answer: Doesn't matter because the values being converted to are only
+   96x96. */
 static int *to_unicode_blank_1;
 static int **to_unicode_blank_2;
 
@@ -299,7 +306,11 @@ init_blank_unicode_tables (void)
   for (i = 0; i < 256; i++)
     {
       /* #### IMWTK: Why does using -1 here work? Simply because there are
-         no existing 96x96 charsets? */
+         no existing 96x96 charsets?
+
+         Answer: I don't understand the concern.  -1 indicates there is no
+         entry for this particular codepoint, which is always the case for
+	 blank tables. */
       from_unicode_blank_1[i] = (short) -1;
       from_unicode_blank_2[i] = from_unicode_blank_1;
       from_unicode_blank_3[i] = from_unicode_blank_2;
@@ -354,7 +365,7 @@ create_new_from_unicode_table (int level)
 }
 
 /* Allocate and blank the tables.
-   Loading them up is done by parse-unicode-translation-table. */
+   Loading them up is done by load-unicode-mapping-table. */
 void
 init_charset_unicode_tables (Lisp_Object charset)
 {
@@ -1055,6 +1066,8 @@ are followed by the remaining charsets, in some arbitrary order.
 The language-specific precedence list is meant to be set as part of the
 language environment initialization; the default precedence list is meant
 to be set by the user.
+
+#### NOTE: This interface may be changed.
 */
        ())
 {
@@ -1073,13 +1086,17 @@ to be set by the user.
    precedence, respectively.  This means that users are sometimes going to
    want to set Vlanguage_unicode_precedence_list.
    Furthermore, this should be language-local (buffer-local would be a
-   reasonable approximation). */
+   reasonable approximation).
+
+   Answer: You are right, this needs rethinking. */
 DEFUN ("set-language-unicode-precedence-list",
        Fset_language_unicode_precedence_list,
        1, 1, 0, /*
 Set the language-specific precedence of charsets in Unicode decoding.
 LIST is a list of charsets.
 See `unicode-precedence-list' for more information.
+
+#### NOTE: This interface may be changed.
 */
        (list))
 {
@@ -1098,6 +1115,8 @@ DEFUN ("language-unicode-precedence-list",
        0, 0, 0, /*
 Return the language-specific precedence list used for Unicode decoding.
 See `unicode-precedence-list' for more information.
+
+#### NOTE: This interface may be changed.
 */
        ())
 {
@@ -1110,6 +1129,8 @@ DEFUN ("set-default-unicode-precedence-list",
 Set the default precedence list used for Unicode decoding.
 This is intended to be set by the user.  See
 `unicode-precedence-list' for more information.
+
+#### NOTE: This interface may be changed.
 */
        (list))
 {
@@ -1128,6 +1149,8 @@ DEFUN ("default-unicode-precedence-list",
        0, 0, 0, /*
 Return the default precedence list used for Unicode decoding.
 See `unicode-precedence-list' for more information.
+
+#### NOTE: This interface may be changed.
 */
        ())
 {
@@ -1259,9 +1282,7 @@ cerrar_el_fulano (Lisp_Object fulano)
   return Qnil;
 }
 
-/* #### shouldn't this interface be called load-unicode-mapping-table
-   for consistency with Unicode Consortium terminology? */
-DEFUN ("parse-unicode-translation-table", Fparse_unicode_translation_table,
+DEFUN ("load-unicode-mapping-table", Fload_unicode_mapping_table,
        2, 6, 0, /*
 Load Unicode tables with the Unicode mapping data in FILENAME for CHARSET.
 Data is text, in the form of one translation per line -- charset
@@ -1331,7 +1352,7 @@ Unicode tables or in the charset:
 	  big5 = 1;
 	else
 	  invalid_constant
-	    ("Unrecognized `parse-unicode-translation-table' flag", elt);
+	    ("Unrecognized `load-unicode-mapping-table' flag", elt);
       }
   }
 
@@ -2315,7 +2336,7 @@ syms_of_unicode (void)
   DEFSUBR (Fdefault_unicode_precedence_list);
   DEFSUBR (Fset_unicode_conversion);
 
-  DEFSUBR (Fparse_unicode_translation_table);
+  DEFSUBR (Fload_unicode_mapping_table);
 
   DEFSYMBOL (Qignore_first_column);
 #endif /* MULE */

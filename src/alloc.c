@@ -187,7 +187,7 @@ static int lrecord_uid_counter;
 
 /* Nonzero when calling certain hooks or doing other things where
    a GC would be bad */
-int gc_currently_forbidden;
+static int gc_currently_forbidden;
 
 /* Hooks. */
 Lisp_Object Vpre_gc_hook, Qpre_gc_hook;
@@ -4444,7 +4444,7 @@ garbage_collect_1 (void)
   speccount = begin_gc_forbidden ();
 
   need_to_signal_post_gc = 0;
-  recompute_funcall_allocation_flag();
+  recompute_funcall_allocation_flag ();
 
   if (!gc_hooks_inhibited)
     run_hook_trapping_problems

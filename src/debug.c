@@ -31,15 +31,13 @@ Boston, MA 02111-1307, USA.  */
 
 /*
  * To add a new debug class:
- * 1.  Add a symbol definition for it here, if one doesn't exist
- *     elsewhere.  If you add it here, make sure to add a defsymbol
- *     line for it in syms_of_debug.
+ * 1.  Add a symbol definition for it here or in general-slots.h, if one
+ *     doesn't exist elsewhere.  If you add it here, make sure to add a
+ *     defsymbol line for it in syms_of_debug.
  * 2.  Add an extern definition for the symbol to debug.h.
  * 3.  Add entries for the class to struct debug_classes in debug.h.
  * 4.  Add a FROB line for it in xemacs_debug_loop.
  */
-
-static Lisp_Object Qredisplay, Qbuffers, Qfaces, Qwindows, Qframes, Qdevices;
 
 struct debug_classes active_debug_classes;
 
@@ -61,21 +59,21 @@ xemacs_debug_loop (enum debug_loop op, Lisp_Object class_, Lisp_Object type)
   int flag = (op == X_ADD) ? 1 : 0;
   Lisp_Object retval = Qnil;
 
-#define FROB(item)							\
-  if (op == X_LIST || op == X_ACTIVE || op == X_INIT || EQ (class_, Q##item))	\
-    {									\
-      if (op == X_ADD || op == X_DELETE || op == X_INIT)			\
-	active_debug_classes.item = flag;				\
-      else if (op == X_LIST						\
-	       || (op == X_ACTIVE && active_debug_classes.item))		\
-	retval = Fcons (Q##item, retval);				\
-      else if (op == X_VALIDATE)						\
-	return Qt;							\
-      else if (op == X_SETTYPE)						\
-        active_debug_classes.types_of_##item = XINT (type);		\
-      else if (op == X_TYPE)						\
-        retval = make_int (active_debug_classes.types_of_##item);	\
-      if (op == X_INIT) active_debug_classes.types_of_##item = VALBITS;	\
+#define FROB(item)							      \
+  if (op == X_LIST || op == X_ACTIVE || op == X_INIT || EQ (class_, Q##item)) \
+    {									      \
+      if (op == X_ADD || op == X_DELETE || op == X_INIT)		      \
+	active_debug_classes.item = flag;				      \
+      else if (op == X_LIST						      \
+	       || (op == X_ACTIVE && active_debug_classes.item))	      \
+	retval = Fcons (Q##item, retval);				      \
+      else if (op == X_VALIDATE)					      \
+	return Qt;							      \
+      else if (op == X_SETTYPE)						      \
+        active_debug_classes.types_of_##item = XINT (type);		      \
+      else if (op == X_TYPE)						      \
+        retval = make_int (active_debug_classes.types_of_##item);	      \
+      if (op == X_INIT) active_debug_classes.types_of_##item = VALBITS;	      \
     }
 
   FROB (redisplay);
@@ -187,13 +185,6 @@ For the given CLASS, return the associated type value.
 void
 syms_of_debug (void)
 {
-  DEFSYMBOL (Qredisplay);
-  DEFSYMBOL (Qbuffers);
-  DEFSYMBOL (Qfaces);
-  DEFSYMBOL (Qwindows);
-  DEFSYMBOL (Qframes);
-  DEFSYMBOL (Qdevices);
-
   DEFSUBR (Fadd_debug_class_to_check);
   DEFSUBR (Fdelete_debug_class_to_check);
   DEFSUBR (Fdebug_classes_being_checked);

@@ -1,6 +1,6 @@
 ;;; code-init.el --- Handle coding system default values
 
-;; Copyright (C) 2001, 2002 Ben Wing.
+;; Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -69,19 +69,28 @@ if you do this."
 	(eol-detection-enabled-p 'unix-no-mule-eol-detection)
 	(t 'unix-no-mule-no-eol-detection)))
 
+;; NOTE NOTE NOTE: These values may get overridden when the language
+;; environment is initialized (set-language-environment-coding-systems).
 (defvar coding-system-variable-default-value-table
-  '((buffer-file-coding-system-for-read  binary    raw-text    undecided    raw-text       undecided)
-    (default-buffer-file-coding-system   binary    binary      iso-2022-8   raw-text-dos   mswindows-multibyte-dos)
-    (file-name                           binary    binary      binary       raw-text-dos   mswindows-multibyte-system-default-dos)
-    (native                              binary    binary      binary       raw-text-dos   mswindows-multibyte-system-default-dos)
-    (keyboard                            binary    raw-text    undecided    raw-text       undecided)
+  '((buffer-file-coding-system-for-read
+     binary raw-text undecided raw-text undecided)
+    (default-buffer-file-coding-system
+      binary binary iso-2022-8 raw-text-dos mswindows-multibyte-dos)
+    (native
+     binary binary binary raw-text-dos mswindows-multibyte-system-default-dos)
+    (keyboard
+     binary raw-text undecided raw-text undecided)
     ;; the `terminal' coding system is used for output to stderr.  such
     ;; streams do automatic lf->crlf encoding in the C library, so we need
     ;; to not do the same translations ourselves.
-    (terminal                            binary    binary      binary       binary         mswindows-multibyte-unix)
-    (default-process-coding-system-read  binary    raw-text    undecided    raw-text       undecided)
-    (default-process-coding-system-write binary    binary      binary       raw-text   mswindows-multibyte-system-default)
-    (no-conversion-coding-system-mapping binary    raw-text    raw-text     raw-text       mswindows-multibyte)
+    (terminal
+     binary binary binary binary mswindows-multibyte-unix)
+    (default-process-coding-system-read
+      binary raw-text undecided raw-text undecided)
+    (default-process-coding-system-write
+      binary binary binary raw-text mswindows-multibyte-system-default)
+    (no-conversion-coding-system-mapping
+     binary raw-text raw-text raw-text mswindows-multibyte)
     ))
 
 (defvar coding-system-default-configuration-list
@@ -94,7 +103,6 @@ if you do this."
 (defvar coding-system-default-variable-list
   '(buffer-file-coding-system-for-read
     default-buffer-file-coding-system
-    file-name
     native
     keyboard
     terminal
@@ -111,7 +119,6 @@ VAR."
     (buffer-file-coding-system-for-read buffer-file-coding-system-for-read)
     (default-buffer-file-coding-system
       (default-value 'buffer-file-coding-system))
-    (file-name (coding-system-aliasee 'file-name))
     (native (coding-system-aliasee 'native))
     (keyboard (coding-system-aliasee 'keyboard))
     (terminal (coding-system-aliasee 'terminal))
@@ -130,7 +137,6 @@ VAR."
      (set-buffer-file-coding-system-for-read value))
     (default-buffer-file-coding-system
       (set-default-buffer-file-coding-system value))
-    (file-name (define-coding-system-alias 'file-name value))
     (native (define-coding-system-alias 'native value))
     (keyboard (set-keyboard-coding-system value))
     (terminal (set-terminal-coding-system value))
@@ -156,7 +162,6 @@ The table of default values looks like this: (see below for abbreviations)
 ------------------------------------------------------------------------------
 bfcs-for-read    binary    raw-text    undecided   raw-text      undecided
 default bfcs     binary    binary      iso-2022-8  raw-text-dos  MSW-MB-dos
-file-name        binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
 native           binary    binary      binary      raw-text-dos  MSW-MB-SD-dos
 keyboard         binary    raw-text    undecided   raw-text      undecided
 terminal         binary    binary      binary      binary        MSW-MB-unix
@@ -184,18 +189,11 @@ VAR can be one of: (abbreviations in parens)
   system used to read the file in; the default value applies to newly
   created files.
 
-`file-name' (file-name)
-
-  The coding system named `file-name'.  Changed using
-  `define-coding-system-alias'.  Used internally when passing file
-  names to or from system API's, unless the particular API specifies
-  another coding system.
-
 `native' (native)
 
   The coding system named `native'.  Changed using
   `define-coding-system-alias'.  Used internally when passing
-  non-file-name text to or from system API's, unless the particular
+  text to or from system API's, unless the particular
   API specifies another coding system.
 
 `keyboard' (keyboard)

@@ -138,8 +138,6 @@ void change_frame_size (struct frame *frame,
 void adjust_frame_size (struct frame *frame);
 void frame_size_slipped (Lisp_Object specifier, struct frame *f,
 			 Lisp_Object oldval);
-int enter_redisplay_critical_section (void);
-void exit_redisplay_critical_section (int);
 void select_frame_1 (Lisp_Object frame);
 void select_frame_2 (Lisp_Object frame);
 struct frame *selected_frame (void);

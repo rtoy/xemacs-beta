@@ -6,7 +6,7 @@ define([AC_INIT_NOTICE],
 #### Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 #### Copyright (C) 1993-1995 Board of Trustees, University of Illinois.
 #### Copyright (C) 1996, 1997 Sun Microsystems, Inc.
-#### Copyright (C) 1995, 1996, 2002 Ben Wing.
+#### Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
 #### Copyright (C) 2000, 2001 Martin Buchholz.
 #### Copyright (C) 1998, 1999 J. Kean Johnston.
 
@@ -4155,6 +4155,61 @@ if test "$__DECC" != "yes"; then
   AC_FUNC_ALLOCA
   test -n "$ALLOCA" && XE_ADD_OBJS($ALLOCA)
 fi
+
+AC_MSG_CHECKING(for working alloca in function calls)
+AC_TRY_RUN([
+#if defined (__CYGWIN__)
+#include <alloca.h>
+#elif defined (__GNUC__)
+#define alloca __builtin_alloca
+#elif defined (__DECC)
+#include <alloca.h>
+#pragma intrinsic(alloca)
+#elif defined (HAVE_ALLOCA_H)
+#include <alloca.h>
+#elif defined (_AIX)
+#pragma alloca
+#elif ! defined (alloca)
+#ifdef C_ALLOCA
+#define alloca xemacs_c_alloca
+#else
+void *alloca ();
+#endif /* C_ALLOCA */
+#endif /* !defined (alloca) */
+
+void
+f1 (double a, void *ptr, int b)
+{
+  unsigned char *ptr2 = (unsigned char *) ptr;
+  if (ptr2[0] != 0xBF || ptr2[1] != 0xBF || ptr2[3000] != 0xBF)
+    exit (1);
+  if (a != 3.1415 || b != -5490)
+    exit (1);
+}
+
+int
+f2 (short c, void *ptr, long e)
+{
+  unsigned char *ptr2 = (unsigned char *) ptr;
+  if (ptr2[0] != 0xFB || ptr2[1] != 0xFB || ptr2[1000] != 0xFB)
+    exit (1);
+  if (c != 665 || e != 776776776)
+    exit (1);
+  f1 (3.1415, memset (alloca (3001), 0xBF, 3001), -5490);
+  return 42;
+}
+
+int
+main (int argc, char *argv[])
+{
+  if (f2 (665, memset (alloca (1001), 0xFB, 1001), 776776776) != 42)
+    return 1;
+  return 0;
+}
+], working_alloca_in_function_calls=yes, working_alloca_in_function_calls=no)
+AC_MSG_RESULT($working_alloca_in_function_calls)
+test "$working_alloca_in_function_calls" != "yes" && \
+  AC_DEFINE(BROKEN_ALLOCA_IN_FUNCTION_CALLS)
 
 dnl Check whether strcoll exists and works correctly. (This does more
 dnl than just check for its existence.) If so, it defines HAVE_STRCOLL.

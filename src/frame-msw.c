@@ -341,6 +341,8 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
   rect.right = width;
   rect.bottom = height;
 
+  /* This can call Lisp, because it runs the window procedure, which can
+     call redisplay() */
   AdjustWindowRectEx (&rect,
 		      qxeGetWindowLong (FRAME_MSWINDOWS_HANDLE (f), GWL_STYLE),
 		      GetMenu (FRAME_MSWINDOWS_HANDLE (f)) != NULL,

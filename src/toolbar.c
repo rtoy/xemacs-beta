@@ -1,7 +1,7 @@
 /* Generic toolbar implementation.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2003 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -257,8 +257,7 @@ See `default-toolbar-position'.
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
-      /* #### I think this should be GC protected. -sb */
-      int depth = enter_redisplay_critical_section ();
+      int depth = begin_hold_frame_size_changes ();
       set_specifier_fallback (Vtoolbar[cur], list1 (Fcons (Qnil, Qnil)));
       set_specifier_fallback (Vtoolbar[new], Vdefault_toolbar);
       set_specifier_fallback (Vtoolbar_size[cur], list1 (Fcons (Qnil, Qzero)));
@@ -275,7 +274,7 @@ See `default-toolbar-position'.
       set_specifier_fallback (Vtoolbar_visible_p[new],
 			      Vdefault_toolbar_visible_p);
       Vdefault_toolbar_position = position;
-      exit_redisplay_critical_section (depth);
+      unbind_to (depth);
     }
 
   return position;

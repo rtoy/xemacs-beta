@@ -2452,7 +2452,7 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
 		{
 		  Lisp_Object old_selected =gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
@@ -2494,17 +2494,21 @@ gtk_tab_control_redisplay (Lisp_Object image_instance)
 	      char *c_name = NULL;
 
 	      if (!STRINGP (pgui->name))
-		pgui->name = Feval (pgui->name);
+		pgui->name = eval_within_redisplay (pgui->name);
 
-	      CHECK_STRING (pgui->name);
+	      if (!STRINGP (pgui->name))
+		warn_when_safe (Qredisplay, Qwarning,
+				"Name does not evaluate to string");
+	      else
+		{
+		  TO_EXTERNAL_FORMAT (LISP_STRING, pgui->name,
+				      C_STRING_ALLOCA, c_name,
+				      Qctext);
 
-	      TO_EXTERNAL_FORMAT (LISP_STRING, pgui->name,
-				  C_STRING_ALLOCA, c_name,
-				  Qctext);
-
-	      gtk_notebook_append_page (nb,
-					gtk_vbox_new (FALSE, 3),
-					gtk_label_new (c_name));
+		  gtk_notebook_append_page (nb,
+					    gtk_vbox_new (FALSE, 3),
+					    gtk_label_new (c_name));
+		}
 	    }
 
 	  /* Show all the new widgets we just added... */

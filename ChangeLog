@@ -1,3 +1,18 @@
+2003-02-20  Ben Wing  <ben@xemacs.org>
+
+	* PROBLEMS:
+	* PROBLEMS (event-stream.c): Removed.
+	* PROBLEMS (ABSTRACT):
+	* PROBLEMS (patch.):
+	* PROBLEMS (Note):
+	Add comment about Cygwin, unexec and sysmalloc.
+	Move some non-general stuff out of general.
+	Make a section for x86.
+	
+	* configure.in (AC_INIT_NOTICE):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	Add check for broken alloca in funcalls.
+
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in:

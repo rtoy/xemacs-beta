@@ -1,5 +1,6 @@
 /* Widget-specific glyph objects.
    Copyright (C) 1998, 1999, 2000, 2002 Andy Piper.
+   Copyright (C) 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -670,7 +671,8 @@ widget_normalize (Lisp_Object inst, Lisp_Object console_type,
      #### should just normalize the data. */
   if (!NILP (glyph))
     {
-      substitute_keyword_value (inst, Q_image, glyph_instantiator_to_glyph (glyph));
+      substitute_keyword_value (inst, Q_image,
+				glyph_instantiator_to_glyph (glyph));
     }
 
   return inst;
@@ -989,8 +991,10 @@ tab_control_query_geometry (Lisp_Object image_instance,
 }
 
 /* Determine whether only the order has changed for a tab. */
-int tab_control_order_only_changed (Lisp_Object image_instance)
+int
+tab_control_order_only_changed (Lisp_Object image_instance)
 {
+  /* Called within redisplay */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int found = 0, len, pending_len;
   Lisp_Object rest;
@@ -1013,7 +1017,7 @@ int tab_control_order_only_changed (Lisp_Object image_instance)
 		     XCDR (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)))
 	    {
 	      if (gui_item_equal_sans_selected (XCAR (rest),
-						XCAR (pending_rest), 0))
+						XCAR (pending_rest), 0, 1))
 		{
 		  found = 1;
 		  break;
@@ -1362,49 +1366,51 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
 
   /* Work out minimum space we need to fit all the items. This could
      have been fixed by the user. */
-  if (IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii)) {
+  if (IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii))
+    {
       if (!NILP (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii)))
-      {
+	{
           Lisp_Object dynamic_width =
-              Feval (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
+	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
           if (INTP (dynamic_width))
-              *width = XINT (dynamic_width);
-      }
+	    *width = XINT (dynamic_width);
+	}
       else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_HORIZONTAL) 
-      {
+	{
           *width = maxpw + ((nitems + 1) * widget_instance_border_width (ii) +
                             IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2;
-      }
+	}
       else
-      {
+	{
           *width = maxpw + 2 * (widget_instance_border_width (ii) * 2 +
                                 IMAGE_INSTANCE_MARGIN_WIDTH (ii));
-      }
+	}
   }
  
   /* Work out vertical spacings. */
-  if (IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii)) {
+  if (IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii))
+    {
       if (!NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
-      {
+	{
           Lisp_Object dynamic_height =
-              Feval (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
+	    eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
           if (INTP (dynamic_height))
-              *height = XINT (dynamic_height);
-      }
+	    *height = XINT (dynamic_height);
+	}
       else if (IMAGE_INSTANCE_SUBWINDOW_LOGICAL_LAYOUT (ii))
-      {
+	{
           *height = nitems * luh + ph_adjust;
-      }
+	}
       else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_VERTICAL)
-      {
+	{
           *height = maxph + ((nitems + 1) * widget_instance_border_width (ii) +
                              IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
-      }
+	}
       else
-      {
+	{
           *height = maxph + (2 * widget_instance_border_width (ii) +
                              IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
-      }
+	}
   }
 #ifdef DEBUG_WIDGET_OUTPUT
   stderr_out ("layout wants %dx%d\n", *width, *height);

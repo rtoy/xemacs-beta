@@ -1,5 +1,5 @@
 /* Define console object for XEmacs.
-   Copyright (C) 1996, 2002 Ben Wing
+   Copyright (C) 1996, 2002, 2003 Ben Wing
 
 This file is part of XEmacs.
 
@@ -290,6 +290,10 @@ struct console_methods
 						  struct scrollbar_instance *,
 						  struct overhead_stats *);
 #endif
+  /* Paint the window's deadbox, a rectangle between window
+     borders and two short edges of both scrollbars. */
+  void (*redisplay_deadbox_method) (struct window *w, int x, int y, int width,
+				    int height);
 #endif /* HAVE_SCROLLBARS */
 
 #ifdef HAVE_MENUBARS

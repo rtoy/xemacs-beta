@@ -2,7 +2,7 @@
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Tinker Systems
-   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2001, 2002, 2003 Ben Wing
    Copyright (C) 1995 Sun Microsystems
    Copyright (C) 1999, 2000, 2002 Andy Piper
 
@@ -2466,7 +2466,8 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* update the font. */
   update_widget_face (wv, ii, domain);
 
-  wid = lw_create_widget (type, wv->name, id, wv, IMAGE_INSTANCE_X_CLIPWIDGET (ii),
+  wid = lw_create_widget (type, wv->name, id, wv,
+			  IMAGE_INSTANCE_X_CLIPWIDGET (ii),
 			  False, 0, popup_selection_callback, 0);
 
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = (void*)wid;
@@ -2545,7 +2546,8 @@ x_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       int ac =0;
 #ifdef LWLIB_WIDGETS_MOTIF
       XtSetArg (al [ac], XmNlabelType, XmPIXMAP);	ac++;
-      XtSetArg (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));ac++;
+      XtSetArg (al [ac], XmNlabelPixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));
+      ac++;
 #else
       XtSetArg (al [ac], XtNpixmap, XIMAGE_INSTANCE_X_PIXMAP (glyph));	ac++;
 #endif
@@ -2597,9 +2599,10 @@ x_button_property (Lisp_Object image_instance, Lisp_Object prop)
 
 /* instantiate a progress gauge */
 static void
-x_progress_gauge_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			int dest_mask, Lisp_Object domain)
+x_progress_gauge_instantiate (Lisp_Object image_instance,
+			      Lisp_Object instantiator,
+			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			      int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
@@ -2662,7 +2665,8 @@ x_combo_box_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #endif
 
 static void
-x_tab_control_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+x_tab_control_instantiate (Lisp_Object image_instance,
+			   Lisp_Object instantiator,
 			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			   int dest_mask, Lisp_Object domain)
 {
@@ -2682,8 +2686,7 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
-  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii)
-      ||
+  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii) ||
       IMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (ii))
     {
       /* If only the order has changed then simply select the first
@@ -2700,11 +2703,12 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 
 	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
 	    {
-	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0, 1))
 		{
 		  /* There may be an encapsulated way of doing this,
 		     but I couldn't find it. */
-		  Lisp_Object old_selected =gui_item_list_find_selected
+		  Lisp_Object old_selected =
+		    gui_item_list_find_selected
 		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
 		  Arg al [1];
 		  char* name;
@@ -2715,8 +2719,9 @@ x_tab_control_redisplay (Lisp_Object image_instance)
 					   name, Qnative);
 		  /* The name may contain a `.' which confuses
 		     XtNameToWidget, so we do it ourselves. */
-		  children = XtCompositeChildren (IMAGE_INSTANCE_X_WIDGET_ID (ii),
-						  &num_children);
+		  children =
+		    XtCompositeChildren (IMAGE_INSTANCE_X_WIDGET_ID (ii),
+					 &num_children);
 		  for (i = 0; i < num_children; i++)
 		    {
 		      if (!strcmp (XtName (children [i]), name))

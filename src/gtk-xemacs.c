@@ -298,7 +298,8 @@ gtk_xemacs_paint (GtkWidget *widget, GdkRectangle *area)
 {
     GtkXEmacs *x = GTK_XEMACS (widget);
     struct frame *f = GTK_XEMACS_FRAME (x);
-    gtk_redraw_exposed_area (f, area->x, area->y, area->width, area->height);
+    redisplay_redraw_exposed_area (f, area->x, area->y, area->width,
+				   area->height);
 }
 
 static void
@@ -355,7 +356,7 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
     /* Now draw the actual frame data */
     if (!check_for_ignored_expose (f, a->x, a->y, a->width, a->height) &&
 	!find_matching_subwindow (f, a->x, a->y, a->width, a->height))
-      gtk_redraw_exposed_area (f, a->x, a->y, a->width, a->height);
+      redisplay_redraw_exposed_area (f, a->x, a->y, a->width, a->height);
     return (TRUE);
 }
 

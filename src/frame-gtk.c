@@ -67,7 +67,6 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_gtk_frame_plist;
 
-Lisp_Object Qwindow_id;
 Lisp_Object Qdetachable_menubar;
 Lisp_Object Qtext_widget;
 Lisp_Object Qcontainer_widget;
@@ -1404,7 +1403,6 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
 void
 syms_of_frame_gtk (void)
 {
-  DEFSYMBOL (Qwindow_id);
   DEFSYMBOL (Qtext_widget);
   DEFSYMBOL (Qcontainer_widget);
   DEFSYMBOL (Qshell_widget);

@@ -1,3 +1,231 @@
+2003-02-20  Ben Wing  <ben@xemacs.org>
+
+	* alloc.c:
+	* alloc.c (garbage_collect_1):
+	Make gc_currently_forbidden static.
+	
+	* config.h.in:
+	* lisp.h:
+	Move some stuff to lisp.h.
+
+	* console-gtk.h:
+	* console-impl.h:
+	* console-impl.h (struct console_methods):
+	* console-msw.h:
+	* console-x.h:
+	* event-Xt.c (emacs_Xt_handle_magic_event):
+	* event-msw.c (emacs_mswindows_drain_queue):
+	* event-msw.c (mswindows_handle_paint):
+	* event-msw.c (emacs_mswindows_event_pending_p):
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (gtk_clear_to_window_end):
+	* redisplay-msw.c:
+	* redisplay-msw.c (mswindows_redisplay_deadbox):
+	* redisplay-msw.c (mswindows_clear_region):
+	* redisplay-msw.c (mswindows_clear_frame):
+	* redisplay-msw.c (console_type_create_redisplay_mswindows):
+	* redisplay-output.c:
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay-output.c (redisplay_redraw_exposed_window):
+	* redisplay-output.c (redisplay_redraw_exposed_area):
+	* redisplay-x.c:
+	* redisplay-x.c (x_generate_shadow_pixels):
+	* gtk-xemacs.c (gtk_xemacs_paint):
+	* gtk-xemacs.c (gtk_xemacs_expose):
+	Remove duplicated code to redraw exposed area.  Add deadbox
+	method needed by the generalized redraw code.  Defer redrawing
+	if already in redisplay.
+
+	* frame-msw.c (mswindows_set_frame_size):
+	* event-stream.c (event_stream_drain_queue):
+	* event-stream.c (detect_input_pending):
+	* event-stream.c (Finput_pending_p):
+	* event-stream.c (event_stream_quit_p):
+	* event-stream.c (run_pre_idle_hook):
+	* event-stream.c (Fdiscard_input):
+	* frame.c:
+	Add comments about calling Lisp.
+	
+	* debug.c:
+	* debug.c (FROB):
+	* debug.c (syms_of_debug):
+	* general-slots.h:
+	Move generalish symbols to general-slots.h.
+	
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (emacs_doprnt_1):
+	reindent.
+	
+	* lisp.h (Dynarr_reset):
+	* lisp.h (Dynarr_add):
+	* lisp.h (Dynarr_increment):
+	* lisp.h (Dynarr_pop):
+	* lisp.h (Dynarr_delete_object):
+	* dynarr.c:
+	* dynarr.c (Dynarr_resize):
+	* dynarr.c (Dynarr_insert_many):
+	* dynarr.c (Dynarr_delete_many):
+	* dynarr.c (Dynarr_memory_usage):
+	Add debug code for locking a dynarr to catch invalid mods.
+	Use in redisplay.c.
+	
+	* eval.c:
+	* eval.c (throw_or_bomb_out):
+	* eval.c (Fsignal):
+	* eval.c (Feval):
+	* eval.c (Ffuncall):
+	* eval.c (set_trapping_problems_flags):
+	* eval.c (call_trapping_problems):
+
+	* file-coding.c:
+	* file-coding.c (complex_vars_of_file_coding):
+	Define file-name as alias for native not vice-versa.
+	
+	* frame-gtk.c:
+	* frame-gtk.c (syms_of_frame_gtk):
+	* frame-x.c:
+	* frame-x.c (syms_of_frame_x):
+	Move Qwindow_id to general-slots.
+	
+	* dialog-msw.c (handle_question_dialog_box):
+	* glyphs-gtk.c (gtk_tab_control_redisplay):
+	* glyphs-msw.c:
+	* glyphs-msw.c (mswindows_redisplay_widget):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-msw.c (mswindows_button_instantiate):
+	* glyphs-msw.c (mswindows_button_redisplay):
+	* glyphs-msw.c (mswindows_tab_control_instantiate):
+	* glyphs-msw.c (mswindows_tab_control_redisplay):
+	* glyphs-widget.c:
+	* glyphs-widget.c (widget_normalize):
+	* glyphs-widget.c (tab_control_order_only_changed):
+	* glyphs-widget.c (layout_query_geometry):
+	* glyphs-x.c:
+	* glyphs-x.c (x_widget_instantiate):
+	* glyphs-x.c (x_button_instantiate):
+	* glyphs-x.c (x_progress_gauge_instantiate):
+	* glyphs-x.c (x_tab_control_instantiate):
+	* glyphs-x.c (x_tab_control_redisplay):
+	* gui.c:
+	* gui.c (gui_item_value):
+	* gui.c (gui_item_active_p):
+	* gui.c (gui_item_selected_p):
+	* gui.c (gui_item_list_find_selected):
+	* gui.c (gui_item_included_p):
+	* gui.c (gui_value_equal):
+	* gui.c (gui_item_equal_sans_selected):
+	* gui.c (gui_item_equal):
+	* gui.h:
+	* menubar-msw.c (populate_menu_add_item):
+	* menubar.c (Fmenu_find_real_submenu):
+	Ensure that various glyph functions that eval within redisplay
+	protect the evals.  Same for calls to internal_equal().
+	Modify various functions, e.g. gui_item_*(), to protect evals
+	within redisplay, taking an in_redisplay parameter if it's
+	possible for them to be called both inside and outside of
+	redisplay.
+	
+	* gutter.c:
+	* gutter.c (calculate_gutter_size):
+	* gutter.c (redraw_exposed_gutters):
+	* gutter.c (Fset_default_gutter_position):
+	* gutter.c (gutter_specs_changed):
+	* gutter.c (gutter_geometry_changed_in_window):
+	Defer specifier-changed updating till after redisplay, if
+	necessary, since we need to enter redisplay to do it.
+	
+	* gutter.c (Fredisplay_gutter_area):
+	Do nothing if in redisplay.
+	
+	* lisp.h:
+	Add version of alloca() for use in function calls.
+	
+	* lisp.h (XCADR):
+	Add XCAD[D+]R up to 6 D's, and aliases X1ST, X2ND, etc.
+	
+	* frame.c (invalidate_vertical_divider_cache_in_frame):
+	* frame.c (adjust_frame_size):
+	* frame.c (store_minibuf_frame_prop):
+	* frame.c (Fset_frame_properties):
+	* frame.c (internal_set_frame_size):
+	* frame.c (Fset_frame_height):
+	* frame.c (Fset_frame_pixel_height):
+	* frame.c (Fset_frame_displayable_pixel_height):
+	* frame.c (Fset_frame_width):
+	* frame.c (Fset_frame_pixel_width):
+	* frame.c (Fset_frame_displayable_pixel_width):
+	* frame.c (Fset_frame_size):
+	* frame.c (Fset_frame_pixel_size):
+	* frame.c (Fset_frame_displayable_pixel_size):
+	* frame.c (change_frame_size_1):
+	* frame.c (change_frame_size):
+	* frame.h:
+	* redisplay.c:
+	* redisplay.c (REDISPLAY_PREEMPTION_CHECK					\):
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (regenerate_window):
+	* redisplay.c (enter_redisplay_critical_section):
+	* redisplay.c (exit_redisplay_critical_section):
+	* redisplay.c (redisplay_frame):
+	* redisplay.c (eval_within_redisplay):
+	* redisplay.c (free_display_line):
+	* redisplay.c (Fredisplay_echo_area):
+	* redisplay.c (vars_of_redisplay):
+	* redisplay.h:
+	* signal.c (check_what_happened):
+	* toolbar.c:
+	* toolbar.c (Fset_default_toolbar_position):
+	Redo critical-section code and move from frame.c to redisplay.c.
+	Require that every place inside of redisplay catch errors itself,
+	not at the edge of the critical section (thereby bypassing the
+	rest of redisplay and leaving things in an inconsistent state).
+	Introduce separate means of holding frame-size changes without
+	entering a complete critical section.  Introduce "post-redisplay"
+	methods for deferring things till after redisplay.  Abort if
+	we enter redisplay reentrantly.  Disable all quit checking in
+	redisplay since it's too dangerous.  Ensure that all calls to
+	QUIT trigger an abort if unprotected.
+	
+	* redisplay.c:
+	* scrollbar-gtk.c (gtk_update_frame_scrollbars):
+	* scrollbar-x.c (x_update_frame_scrollbars):
+	* scrollbar.c:
+	* scrollbar.c (update_window_scrollbars):
+	Create enter/exit_redisplay_critical_section_maybe() for code
+	that needs to ensure it's in a critical section but doesn't
+	interfere with an existing critical section.
+	
+	* sysdep.c:
+	* sysdep.c (qxe_execve):
+	Use _wexecve() when under Windows NT for Unicode correctness.
+	
+	* text.c:
+	* text.c (new_dfc_convert_now_damn_it):
+	* text.c (new_dfc_convert_malloc):
+	* text.c (find_pos_of_existing_active_dfc_e2c):
+	* text.c (new_dfc_convert_alloca):
+	* text.c (new_dfc_convert_size):
+	* text.c (reinit_vars_of_text):
+	* text.h:
+	* text.h (eicpy_ext_len):
+	* text.h (eicpy_ext):
+	* text.h (eito_external):
+	* text.h (Qx_atom_name_encoding):
+	Add new_dfc() functions, which return an alloca()ed value rather
+	than requiring an lvalue. (Not really used yet; used in another
+	workspace, to come.) Add some macros for SIZED_EXTERNAL.
+
+	Update the encoding aliases after involved scrutinization of the
+	X manual.
+	
+	* unicode.c:
+	* unicode.c (init_blank_unicode_tables):
+	* unicode.c (init_charset_unicode_tables):
+	* unicode.c (syms_of_unicode):
+	Answer the anonymous but suspiciously Turnbullian questions.
+	Rename parse-unicode-translation-table to
+	load-unicode-mapping-table, as suggested.
+
 2003-02-19  Ben Wing  <ben@xemacs.org>
 
 	* Makefile.in.in (all): New.

@@ -335,10 +335,11 @@ static Lisp_Object
 calculate_gutter_size (struct window *w, enum gutter_pos pos)
 {
   struct frame* f = XFRAME (WINDOW_FRAME (w));
-  int count;
-  display_line_dynarr* ddla;
+  display_line_dynarr *ddla;
   Lisp_Object ret = Qnil;
 
+  /* Callers need to handle this. */
+  assert (!in_display);
   /* degenerate case */
   if (NILP (RAW_WINDOW_GUTTER (w, pos))
       ||
@@ -347,26 +348,31 @@ calculate_gutter_size (struct window *w, enum gutter_pos pos)
       NILP (w->buffer))
     return Qnil;
 
-  /* Redisplay code that we use relies on GC not happening. Make it
-     so. */
-  count = begin_gc_forbidden ();
+  if (!in_display)
+    {
+      int count;
 
-  ddla = Dynarr_new (display_line);
-  /* generate some display lines */
-  generate_displayable_area (w, WINDOW_GUTTER (w, pos),
-			     FRAME_LEFT_BORDER_END (f),
-			     FRAME_TOP_BORDER_END (f),
-			     FRAME_RIGHT_BORDER_START (f)
-			     - FRAME_LEFT_BORDER_END (f),
-			     FRAME_BOTTOM_BORDER_START (f)
-			     - FRAME_TOP_BORDER_END (f),
-			     ddla, 0, 0);
+      /* We are calling directly into redisplay from the outside, so turn on
+	 critical section protection. */
+      count = enter_redisplay_critical_section ();
 
-  /* Let GC happen again. */
-  unbind_to (count);
+      ddla = Dynarr_new (display_line);
+      /* generate some display lines */
+      generate_displayable_area (w, WINDOW_GUTTER (w, pos),
+				 FRAME_LEFT_BORDER_END (f),
+				 FRAME_TOP_BORDER_END (f),
+				 FRAME_RIGHT_BORDER_START (f)
+				 - FRAME_LEFT_BORDER_END (f),
+				 FRAME_BOTTOM_BORDER_START (f)
+				 - FRAME_TOP_BORDER_END (f),
+				 ddla, 0, 0);
 
-  ret = make_int (calculate_gutter_size_from_display_lines (pos, ddla));
-  free_display_lines (ddla);
+      /* Let GC happen again. */
+      exit_redisplay_critical_section (count);
+
+      ret = make_int (calculate_gutter_size_from_display_lines (pos, ddla));
+      free_display_lines (ddla);
+    }
 
   return ret;
 }
@@ -693,17 +699,13 @@ redraw_exposed_gutters (struct frame *f, int x, int y, int width,
 			int height)
 {
   enum gutter_pos pos;
-  int depth;
 
-  /* We have to be "in display" when we output the gutter - make it
-     so. */
-  depth = enter_redisplay_critical_section ();
+  /* We are already inside the critical section -- our caller did that. */
   GUTTER_POS_LOOP (pos)
     {
       if (FRAME_GUTTER_VISIBLE (f, pos))
 	redraw_exposed_gutter (f, pos, x, y, width, height);
     }
-  exit_redisplay_critical_section (depth);
 }
 
 void
@@ -749,13 +751,12 @@ See `default-gutter-position'.
 
   if (cur != new)
     {
-      int depth;
-
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
       /* #### I think this should be GC protected. -sb */
-      depth = enter_redisplay_critical_section ();
+      int depth = begin_hold_frame_size_changes ();
+
       set_specifier_fallback (Vgutter[cur], list1 (Fcons (Qnil, Qnil)));
       set_specifier_fallback (Vgutter[new], Vdefault_gutter);
       set_specifier_fallback (Vgutter_size[cur], list1 (Fcons (Qnil, Qzero)));
@@ -769,9 +770,9 @@ See `default-gutter-position'.
 			      Vdefault_gutter_border_width);
       set_specifier_fallback (Vgutter_visible_p[cur], list1 (Fcons (Qnil, Qt)));
       set_specifier_fallback (Vgutter_visible_p[new], Vdefault_gutter_visible_p);
-
       Vdefault_gutter_position = position;
-      exit_redisplay_critical_section (depth);
+
+      unbind_to (depth);
     }
 
   run_hook (Qdefault_gutter_position_changed_hook);
@@ -885,21 +886,39 @@ recompute_overlaying_specifier (Lisp_Object real_one[4])
   Fset_specifier_dirty_flag (real_one[pos]);
 }
 
+static void gutter_specs_changed (Lisp_Object specifier, struct window *w,
+				  Lisp_Object oldval, enum gutter_pos pos);
+
+static void
+gutter_specs_changed_1 (Lisp_Object arg)
+{
+  gutter_specs_changed (X1ST (arg), XWINDOW (X2ND (arg)),
+			X3RD (arg), (enum gutter_pos) XINT (X4TH (arg)));
+  free_list (arg);
+}
+
 static void
 gutter_specs_changed (Lisp_Object specifier, struct window *w,
-		       Lisp_Object oldval, enum gutter_pos pos)
+		      Lisp_Object oldval, enum gutter_pos pos)
 {
-  w->real_gutter[pos] = construct_window_gutter_spec (w, pos);
-  w->real_gutter_size[pos] = w->gutter_size[pos];
-
-  if (EQ (w->real_gutter_size[pos], Qautodetect)
-      && !NILP (w->gutter_visible_p[pos]))
+  if (in_display)
+    register_post_redisplay_action (gutter_specs_changed_1,
+				    list4 (specifier, wrap_window (w),
+					   oldval, make_int (pos)));
+  else
     {
-      w->real_gutter_size [pos] = calculate_gutter_size (w, pos);
+      w->real_gutter[pos] = construct_window_gutter_spec (w, pos);
+      w->real_gutter_size[pos] = w->gutter_size[pos];
+
+      if (EQ (w->real_gutter_size[pos], Qautodetect)
+	  && !NILP (w->gutter_visible_p[pos]))
+	{
+	  w->real_gutter_size [pos] = calculate_gutter_size (w, pos);
+	}
+      MARK_GUTTER_CHANGED;
+      MARK_MODELINE_CHANGED;
+      MARK_WINDOWS_CHANGED (w);
     }
-  MARK_GUTTER_CHANGED;
-  MARK_MODELINE_CHANGED;
-  MARK_WINDOWS_CHANGED (w);
 }
 
 /* We define all of these so we can access which actual gutter changed. */
@@ -938,24 +957,43 @@ default_gutter_specs_changed (Lisp_Object specifier, struct window *w,
   recompute_overlaying_specifier (Vgutter);
 }
 
+static void gutter_geometry_changed_in_window (Lisp_Object specifier,
+					       struct window *w,
+					       Lisp_Object oldval);
+
+static void
+gutter_geometry_changed_in_window_1 (Lisp_Object arg)
+{
+  gutter_geometry_changed_in_window (X1ST (arg), XWINDOW (X2ND (arg)),
+				     X3RD (arg));
+  free_list (arg);
+}
+
 static void
 gutter_geometry_changed_in_window (Lisp_Object specifier, struct window *w,
 				    Lisp_Object oldval)
 {
-  enum gutter_pos pos;
-  GUTTER_POS_LOOP (pos)
+  if (in_display)
+    register_post_redisplay_action (gutter_geometry_changed_in_window_1,
+				    list3 (specifier, wrap_window (w),
+					   oldval));
+  else
     {
-      w->real_gutter_size[pos] = w->gutter_size[pos];
-      if (EQ (w->real_gutter_size[pos], Qautodetect)
-	  && !NILP (w->gutter_visible_p[pos]))
+      enum gutter_pos pos;
+      GUTTER_POS_LOOP (pos)
 	{
-	  w->real_gutter_size [pos] = calculate_gutter_size (w, pos);
+	  w->real_gutter_size[pos] = w->gutter_size[pos];
+	  if (EQ (w->real_gutter_size[pos], Qautodetect)
+	      && !NILP (w->gutter_visible_p[pos]))
+	    {
+	      w->real_gutter_size [pos] = calculate_gutter_size (w, pos);
+	    }
 	}
-    }
 
-  MARK_GUTTER_CHANGED;
-  MARK_MODELINE_CHANGED;
-  MARK_WINDOWS_CHANGED (w);
+      MARK_GUTTER_CHANGED;
+      MARK_MODELINE_CHANGED;
+      MARK_WINDOWS_CHANGED (w);
+    }
 }
 
 static void
@@ -1054,6 +1092,10 @@ Ensure that all gutters are correctly showing their gutter specifier.
        ())
 {
   Lisp_Object devcons, concons;
+
+  /* Can't reentrantly enter redisplay */
+  if (in_display)
+    return Qnil;
 
   DEVICE_LOOP_NO_BREAK (devcons, concons)
     {

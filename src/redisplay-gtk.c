@@ -2,7 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 2002 Ben Wing.
+   Copyright (C) 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -73,10 +73,6 @@ static void gtk_output_blank (struct window *w, struct display_line *dl,
 static void gtk_output_horizontal_line (struct window *w,
 					struct display_line *dl,
 					struct rune *rb);
-static void gtk_redraw_exposed_window (struct window *w, int x, int y,
-				       int width, int height);
-static void gtk_redraw_exposed_windows (Lisp_Object window, int x, int y,
-					int width, int height);
 static void gtk_clear_region (Lisp_Object locale, struct device* d, struct frame* f,
 			      face_index findex, int x, int y,
 			      int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
@@ -1467,133 +1463,6 @@ gtk_clear_to_window_end (struct window *w, int ypos1, int ypos2)
 	redisplay_clear_region (window, DEFAULT_INDEX, FRAME_RIGHT_BORDER_START (f),
 				ypos1, FRAME_BORDER_WIDTH (f), height);
     }
-}
-
-/*****************************************************************************
- gtk_redraw_exposed_window
-
- Given a bounding box for an area that needs to be redrawn, determine
- what parts of what lines are contained within and re-output their
- contents.
- ****************************************************************************/
-static void
-gtk_redraw_exposed_window (struct window *w, int x, int y, int width, int height)
-{
-  struct frame *f = XFRAME (w->frame);
-  int line;
-  int start_x, start_y, end_x, end_y;
-  int orig_windows_structure_changed;
-
-  display_line_dynarr *cdla = window_display_lines (w, CURRENT_DISP);
-
-  if (!NILP (w->vchild))
-    {
-      gtk_redraw_exposed_windows (w->vchild, x, y, width, height);
-      return;
-    }
-  else if (!NILP (w->hchild))
-    {
-      gtk_redraw_exposed_windows (w->hchild, x, y, width, height);
-      return;
-    }
-
-  /* If the window doesn't intersect the exposed region, we're done here. */
-  if (x >= WINDOW_RIGHT (w) || (x + width) <= WINDOW_LEFT (w)
-      || y >= WINDOW_BOTTOM (w) || (y + height) <= WINDOW_TOP (w))
-    {
-      return;
-    }
-  else
-    {
-      start_x = max (WINDOW_LEFT (w), x);
-      end_x = min (WINDOW_RIGHT (w), (x + width));
-      start_y = max (WINDOW_TOP (w), y);
-      end_y = min (WINDOW_BOTTOM (w), y + height);
-
-      /* We do this to make sure that the 3D modelines get redrawn if
-         they are in the exposed region. */
-      orig_windows_structure_changed = f->windows_structure_changed;
-      f->windows_structure_changed = 1;
-    }
-
-  if (window_needs_vertical_divider (w))
-    {
-      gtk_output_vertical_divider (w, 0);
-    }
-
-  for (line = 0; line < Dynarr_length (cdla); line++)
-    {
-      struct display_line *cdl = Dynarr_atp (cdla, line);
-      int top_y = cdl->ypos - cdl->ascent;
-      int bottom_y = cdl->ypos + cdl->descent;
-
-      if (bottom_y >= start_y)
-	{
-	  if (top_y > end_y)
-	    {
-	      if (line == 0)
-		continue;
-	      else
-		break;
-	    }
-	  else
-	    {
-	      output_display_line (w, 0, cdla, line, start_x, end_x);
-	    }
-	}
-    }
-
-  f->windows_structure_changed = orig_windows_structure_changed;
-
-  /* If there have never been any face cache_elements created, then this
-     expose event doesn't actually have anything to do. */
-  if (Dynarr_largest (w->face_cachels))
-    redisplay_clear_bottom_of_window (w, cdla, start_y, end_y);
-}
-
-/*****************************************************************************
- gtk_redraw_exposed_windows
-
- For each window beneath the given window in the window hierarchy,
- ensure that it is redrawn if necessary after an Expose event.
- ****************************************************************************/
-static void
-gtk_redraw_exposed_windows (Lisp_Object window, int x, int y, int width,
-			    int height)
-{
-  for (; !NILP (window); window = XWINDOW (window)->next)
-    gtk_redraw_exposed_window (XWINDOW (window), x, y, width, height);
-}
-
-/*****************************************************************************
- gtk_redraw_exposed_area
-
- For each window on the given frame, ensure that any area in the
- Exposed area is redrawn.
- ****************************************************************************/
-void
-gtk_redraw_exposed_area (struct frame *f, int x, int y, int width, int height)
-{
-  /* If any window on the frame has had its face cache reset then the
-     redisplay structures are effectively invalid.  If we attempt to
-     use them we'll blow up.  We mark the frame as changed to ensure
-     that redisplay will do a full update.  This probably isn't
-     necessary but it can't hurt. */
-
-#ifdef HAVE_TOOLBARS
-  /* #### We would rather put these off as well but there is currently
-     no combination of flags which will force an unchanged toolbar to
-     redraw anyhow. */
-  MAYBE_FRAMEMETH (f, redraw_exposed_toolbars, (f, x, y, width, height));
-#endif
-  redraw_exposed_gutters (f, x, y, width, height);
-
-  if (!f->window_face_cache_reset)
-    {
-      gtk_redraw_exposed_windows (f->root_window, x, y, width, height);
-    }
-  else
-    MARK_FRAME_CHANGED (f);
 }
 
 /****************************************************************************

@@ -1,7 +1,7 @@
 /* Interfaces to system-dependent kernel and library entries.
    Copyright (C) 1985-1988, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 2000, 2001, 2002 Ben Wing.
+   Copyright (C) 2000, 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -2469,6 +2469,11 @@ strerror (int errnum)
 /*                    Encapsulations of system calls                    */
 /************************************************************************/
 
+/* The documentation in VC++ claims that the pathname library functions
+   accept strings in the current locale-specific encoding, but that's
+   false, because they just call the native Win32 routines directly, which
+   always use the system-default encoding (which is what Qmswindows_tstr
+   will give us when not XEUNICODE_P). */
 #ifdef WIN32_NATIVE
 #define PATHNAME_CONVERT_OUT(path, pathout) C_STRING_TO_TSTR (path, pathout)
 #else
@@ -3223,6 +3228,12 @@ qxe_execve (const Ibyte *filename, Ibyte * const argv[],
     C_STRING_TO_EXTERNAL (envp[i], new_envp[i], Qnative);
   new_envp[envc] = NULL;
 
+#if defined (WIN32_NATIVE)
+  if (XEUNICODE_P)
+    return _wexecve ((const wchar_t *) pathext,
+		     (const wchar_t * const *) new_argv,
+		     (const wchar_t * const *) new_envp);
+#endif
   return execve (pathext, new_argv, new_envp);
 }
 

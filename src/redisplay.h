@@ -1,7 +1,7 @@
 /* Redisplay data structures.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1996 Chuck Thompson.
-   Copyright (C) 1995, 1996, 2002 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -662,6 +662,10 @@ extern int truncate_partial_width_windows;
 /* Nonzero if we're in a display critical section. */
 extern int in_display;
 
+/* Whether we should delay size changes.  Broken out of
+   enter_redisplay_critical_section(). */
+extern int hold_frame_size_changes;
+
 /* Nonzero means no need to redraw the entire frame on resuming
    a suspended Emacs.  This is useful on terminals with multiple pages,
    where one page is used for Emacs and another for all else. */
@@ -827,5 +831,14 @@ void output_display_line (struct window *w, display_line_dynarr *cdla,
 void sync_display_line_structs (struct window *w, int line, int do_blocks,
 				display_line_dynarr *cdla,
 				display_line_dynarr *ddla);
+void redisplay_redraw_exposed_area (struct frame *f, int x, int y, int width,
+				    int height);
+void register_post_redisplay_action (void (*fun) (Lisp_Object),
+				     Lisp_Object arg);
+int begin_hold_frame_size_changes (void);
+int enter_redisplay_critical_section (void);
+void exit_redisplay_critical_section (int);
+int enter_redisplay_critical_section_maybe (void);
+void exit_redisplay_critical_section_maybe (int depth);
 
 #endif /* INCLUDED_redisplay_h_ */

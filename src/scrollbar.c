@@ -3,6 +3,7 @@
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995 Darrell Kindred <dkindred+@cmu.edu>.
+   Copyright (C) 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -285,11 +286,12 @@ update_window_scrollbars (struct window *w, struct window_mirror *mirror,
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
+  int depth;
 
   if (!HAS_DEVMETH_P (d, create_scrollbar_instance))
     return;
 
-  in_display++;
+  depth = enter_redisplay_critical_section_maybe ();
 
   /* It is possible for this to get called from the mirror update
      routines.  In that case the structure is in an indeterminate
@@ -347,7 +349,7 @@ update_window_scrollbars (struct window *w, struct window_mirror *mirror,
  	}
     }
 
-  in_display--;
+  exit_redisplay_critical_section_maybe (depth);
 }
 
 void
