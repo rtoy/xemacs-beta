@@ -1,3 +1,73 @@
+2003-02-14  Ben Wing  <ben@xemacs.org>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-form):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	Review carefully and sync up to 20.7 except for areas as noted.
+	Fixes problem with JDE compilation.
+
+2003-02-14  Ben Wing  <ben@xemacs.org>
+
+	* autoload.el:
+	* autoload.el (generate-file-autoloads):
+	* autoload.el (generate-autoload-ish-1):
+	* autoload.el (generate-file-autoloads-1):
+	* autoload.el (generate-c-file-autoloads-1):
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-form):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	* cus-dep.el:
+	* cus-dep.el (cusload-hash-table-marker): New.
+	* cus-dep.el (Custom-make-dependencies-1):
+	* update-elc-2.el:
+	* update-elc-2.el (dirfiles-table): New.
+	* update-elc-2.el (do-update-elc-2):
+	* update-elc-2.el (batch-update-elc-2):
+	* update-elc.el:
+	* update-elc.el (dumped-exe): Removed.
+	* update-elc.el (dumped-exe-out-of-date-wrt-undumped-exe): Removed.
+	* update-elc.el (lisp-files-ignored-when-checking-for-autoload-updating): New.
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+
+2003-02-11  Ben Wing  <ben@xemacs.org>
+
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-inline-expand):
+	* byte-optimize.el (byte-compile-unfold-lambda):
+	* byte-optimize.el (byte-optimize-form-code-walker):
+	* byte-optimize.el (byte-optimize-form):
+	* byte-optimize.el (byte-decompile-bytecode-1):
+	* byte-optimize.el (byte-optimize-lapcode):
+	
+	* update-elc-2.el:
+	* update-elc-2.el (dirfiles-table): New.
+	* update-elc-2.el (dolist): New.
+	* update-elc-2.el (do-update-elc-2):
+	* update-elc-2.el (batch-update-elc-2):
+	Rewrite algorithm to be much faster -- cache calls to
+	directory-files and don't make needless calls to file-exists-p,
+	file-directory-p because they're way way slow.
+
+	Autoload early and only when update-elc has told us to.
+	
+	* update-elc.el:
+	* update-elc.el (dumped-exe-exists): New.
+	* update-elc.el (lisp-files-ignored-when-checking-for-autoload-updating): New.
+	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
+	If no files need byte compilation, signal to update-elc-2 to do
+	any necessary autoload updating rather than doing it ourselves,
+	which would be way slow.  Ignore updates to custom-load.el and
+	auto-autoloads.el when checking to see whether autoloads need
+	updating.
+
 2003-02-12  Jerry James  <james@xemacs.org>
 
 	* about.el (about-url-alist): Add my home page.
@@ -15,17 +85,6 @@
 	it would loop forever.  The FSF version fixes this but i didn't
 	sync to them because (a) it conses (bad for lazy-lock), (b) it
 	calls select-window.
-
-2003-02-09  Ben Wing  <ben@xemacs.org>
-
-	* byte-optimize.el:
-	* byte-optimize.el (byte-compile-inline-expand):
-	* byte-optimize.el (byte-compile-unfold-lambda):
-	* byte-optimize.el (byte-optimize-form-code-walker):
-	* byte-optimize.el (byte-optimize-form):
-	* byte-optimize.el (byte-decompile-bytecode-1):
-	* byte-optimize.el (byte-optimize-lapcode):
-	Review carefully and sync up to 20.7 except for areas as noted.
 
 2003-02-07  Ben Wing  <ben@xemacs.org>
 
