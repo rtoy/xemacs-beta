@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #include <limits.h>
 #include <math.h>
 #include "lisp.h"
+#include "sysproc.h"    /* For qxe_getpid */
 
 static mpf_t float_print_min, float_print_max;
 gmp_randstate_t random_state;

@@ -85,7 +85,7 @@ Lisp_Object
 string_to_bignum(const Ibyte *str, Bytecount len, int base)
 {
   Lisp_Object b = make_bignum (0L);
-  return (bignum_set_string (XBIGNUM_DATA (b), str, base) < 0)
+  return (bignum_set_string (XBIGNUM_DATA (b), (const char *) str, base) < 0)
     ? Fsignal (Qinvalid_read_syntax,
 	       list3 (build_msg_string
 		      ("Invalid integer constant in reader"),
@@ -398,6 +398,8 @@ get_number_type (Lisp_Object arg)
 #endif
   /* Catch unintentional bad uses of this function */
   abort ();
+  /* NOTREACHED */
+  return FIXNUM_T;
 }
 
 /* Convert NUMBER to type TYPE.  If TYPE is BIGFLOAT_T then use the indicated
@@ -513,7 +515,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
       switch (type)
 	{
 	case FIXNUM_T:
-	  return Fround (number);
+	  return Ftruncate (number);
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
 	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
@@ -570,6 +572,8 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 #endif /* HAVE_BIGFLOAT */
     }
   abort ();
+  /* NOTREACHED */
+  return Qzero;
 }
 
 /* This function promotes its arguments as necessary to make them both the

@@ -950,17 +950,6 @@ greater than NUMBER/DIVISOR.
 			XBIGNUM_DATA (divisor));
 	  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #endif
-	case FLOAT_T:
-	  {
-	    double f1 = extract_float (number);
-	    double f2 = extract_float (divisor);
-
-	    if (f2 == 0.0)
-	      Fsignal (Qarith_error, Qnil);
-
-	    IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
-	    return float_to_int (f1, "floor", number, divisor);
-	  }
 #ifdef HAVE_RATIO
 	case RATIO_T:
 	  if (ratio_sign (XRATIO_DATA (divisor)) == 0)
@@ -983,6 +972,17 @@ greater than NUMBER/DIVISOR.
 	  bigfloat_floor (scratch_bigfloat, scratch_bigfloat);
 	  return make_bigfloat_bf (scratch_bigfloat);
 #endif
+	default: /* FLOAT_T */
+	  {
+	    double f1 = extract_float (number);
+	    double f2 = extract_float (divisor);
+	    
+	    if (f2 == 0.0)
+	      Fsignal (Qarith_error, Qnil);
+	    
+	    IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
+	    return float_to_int (f1, "floor", number, divisor);
+	  }
 	}
     }
 #else /* !WITH_NUMBER_TYPES */

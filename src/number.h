@@ -324,6 +324,7 @@ EXFUN (Fcanonicalize_number, 1);
 
 enum number_type {FIXNUM_T, BIGNUM_T, RATIO_T, FLOAT_T, BIGFLOAT_T};
 
+extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
 
 #endif /* INCLUDED_number_h_ */

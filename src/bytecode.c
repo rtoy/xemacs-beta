@@ -304,15 +304,15 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
     case RATIO_T:
       return ratio_cmp (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 #endif
-    case FLOAT_T:
-      {
-	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
-	return dval1 < dval2 ? -1 : dval1 > dval2 ? 1 : 0;
-      }
 #ifdef HAVE_BIGFLOAT
     case BIGFLOAT_T:
       return bigfloat_cmp (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
 #endif
+    default: /* FLOAT_T */
+      {
+	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
+	return dval1 < dval2 ? -1 : dval1 > dval2 ? 1 : 0;
+      }
     }
 #else /* !WITH_NUMBER_TYPES */
   retry:
@@ -453,23 +453,6 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	}
       return make_ratio_rt (scratch_ratio);
 #endif
-    case FLOAT_T:
-      {
-	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
-	switch (opcode)
-	  {
-	  case Bplus: dval1 += dval2; break;
-	  case Bdiff: dval1 -= dval2; break;
-	  case Bmult: dval1 *= dval2; break;
-	  case Bquo:
-	    if (dval2 == 0.0) Fsignal (Qarith_error, Qnil);
-	    dval1 /= dval2;
-	    break;
-	  case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
-	  case Bmin:  if (dval1 > dval2) dval1 = dval2; break;
-	  }
-	return make_float (dval1);
-      }
 #ifdef HAVE_BIGFLOAT
     case BIGFLOAT_T:
       bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (obj1),
@@ -503,6 +486,23 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	}
       return make_bigfloat_bf (scratch_bigfloat);
 #endif
+    default: /* FLOAT_T */
+      {
+	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
+	switch (opcode)
+	  {
+	  case Bplus: dval1 += dval2; break;
+	  case Bdiff: dval1 -= dval2; break;
+	  case Bmult: dval1 *= dval2; break;
+	  case Bquo:
+	    if (dval2 == 0.0) Fsignal (Qarith_error, Qnil);
+	    dval1 /= dval2;
+	    break;
+	  case Bmax:  if (dval1 < dval2) dval1 = dval2; break;
+	  case Bmin:  if (dval1 > dval2) dval1 = dval2; break;
+	  }
+	return make_float (dval1);
+      }
     }
 #else /* !WITH_NUMBER_TYPES */
   EMACS_INT ival1, ival2;

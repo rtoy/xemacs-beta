@@ -728,25 +728,29 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #ifdef HAVE_BIGNUM
 	      if (BIGNUMP (arg.obj))
 		{
-		  char *text_to_print =
-		    bignum_to_string (XBIGNUM_DATA (arg.obj),
-				      ch == 'n' ? 10 :
-				      (ch == 'p' ? 8 : 16));
-		  doprnt_2 (stream, text_to_print, strlen (text_to_print),
+		  Ibyte *text_to_print =
+		    (Ibyte *) bignum_to_string (XBIGNUM_DATA (arg.obj),
+						ch == 'n' ? 10 :
+						(ch == 'p' ? 8 : 16));
+		  doprnt_2 (stream, text_to_print,
+			    strlen ((const char *) text_to_print),
 			    spec->minwidth, -1, spec->minus_flag,
 			    spec->zero_flag);
+		  xfree (text_to_print, Ibyte *);
 		}
 #endif
 #ifdef HAVE_RATIO
 	      if (RATIOP (arg.obj))
 		{
-		  char *text_to_print =
-		    ratio_to_string (XRATIO_DATA (arg.obj),
-				     ch == 'n' ? 10 :
-				     (ch == 'p' ? 8 : 16));
-		  doprnt_2 (stream, text_to_print, strlen (text_to_print),
+		  Ibyte *text_to_print =
+		    (Ibyte *) ratio_to_string (XRATIO_DATA (arg.obj),
+					       ch == 'n' ? 10 :
+					       (ch == 'p' ? 8 : 16));
+		  doprnt_2 (stream, text_to_print,
+			    strlen ((const char *) text_to_print),
 			    spec->minwidth, -1, spec->minus_flag,
 			    spec->zero_flag);
+		  xfree (text_to_print, Ibyte *);
 		}
 #endif
 	    }
@@ -754,10 +758,12 @@ emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 #ifdef HAVE_BIGFLOAT
 	  else if (strchr (bigfloat_converters, ch))
 	    {
-	      char *text_to_print =
-		bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
-	      doprnt_2 (stream, text_to_print, strlen (text_to_print),
+	      Ibyte *text_to_print =
+		(Ibyte *) bigfloat_to_string (XBIGFLOAT_DATA (arg.obj), 10);
+	      doprnt_2 (stream, text_to_print,
+			strlen ((const char *) text_to_print),
 			spec->minwidth, -1, spec->minus_flag, spec->zero_flag);
+	      xfree (text_to_print, Ibyte *);
 	    }
 #endif /* HAVE_BIGFLOAT */
 	  else

@@ -1237,7 +1237,7 @@ Floating point numbers always use base 10.
 */
        (string, base))
 {
-  char *p;
+  Ibyte *p;
   int b;
 
   CHECK_STRING (string);
@@ -1251,24 +1251,24 @@ Floating point numbers always use base 10.
       check_int_range (b, 2, 16);
     }
 
-  p = (char *) XSTRING_DATA (string);
+  p = XSTRING_DATA (string);
 
   /* Skip any whitespace at the front of the number.  Some versions of
      atoi do this anyway, so we might as well make Emacs lisp consistent.  */
   while (*p == ' ' || *p == '\t')
     p++;
 
-  if (isfloat_string (p) && b == 10)
+  if (isfloat_string ((const char *) p) && b == 10)
     {
 #ifdef HAVE_BIGFLOAT
       if (ZEROP (Vdefault_float_precision))
 #endif
-	return make_float (atof (p));
+	return make_float (atof ((const char *) p));
 #ifdef HAVE_BIGFLOAT
       else
 	{
 	  bigfloat_set_prec (scratch_bigfloat, bigfloat_get_default_prec ());
-	  bigfloat_set_string (scratch_bigfloat, p, b);
+	  bigfloat_set_string (scratch_bigfloat, (const char *) p, b);
 	  return make_bigfloat_bf (scratch_bigfloat);
 	}
 #endif
@@ -1277,7 +1277,7 @@ Floating point numbers always use base 10.
 #ifdef HAVE_RATIO
   if (qxestrchr (p, '/') != NULL)
     {
-      ratio_set_string (scratch_ratio, p, b);
+      ratio_set_string (scratch_ratio, (const char *) p, b);
       return make_ratio_rt (scratch_ratio);
     }
 #endif /* HAVE_RATIO */
@@ -1286,7 +1286,7 @@ Floating point numbers always use base 10.
   /* GMP bignum_set_string returns random values when fed an empty string */
   if (*p == '\0')
     return make_int (0);
-  bignum_set_string (scratch_bignum, p, b);
+  bignum_set_string (scratch_bignum, (const char *) p, b);
   return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #else
   if (b == 10)
@@ -1795,7 +1795,6 @@ to numbers.
     args[0] = make_int (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
-    retry:
       comp1 = args[maxindex];
       comp2 = args[i];
       switch (promote_args (&comp1, &comp2))
@@ -1992,10 +1991,10 @@ Arguments may be integers, or markers or characters converted to integers.
       while (!(CHARP (args[i]) || MARKERP (args[i]) || INTEGERP (args[i])))
 	args[i] = wrong_type_argument (Qnumber_char_or_marker_p, args[i]);
       other = args[i];
-      switch (promote_args (&result & &other))
+      switch (promote_args (&result, &other))
 	{
 	case FIXNUM_T:
-	  result = make_int (XREALINT (result), XREALINT (other));
+	  result = make_int (XREALINT (result) & XREALINT (other));
 	  break;
 	case BIGNUM_T:
 	  bignum_and (scratch_bignum, XBIGNUM_DATA (result),

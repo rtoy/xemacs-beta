@@ -1,5 +1,23 @@
 2004-04-06  Jerry James  <james@xemacs.org>
 
+	* bytecode.c (bytecode_arithcompare): Provide a default case to
+	silence ICC.
+	* bytecode.c (bytecode_arithop): Ditto.
+	* data.c (Fstring_to_number): Use Ibyte instead of char.
+	* data.c (Fmax): Cast from Ibyte to char as needed.
+	* data.c (Flogand): REALLY commit the previous patch to data.c.
+	* doprnt.c (emacs_doprnt_1): Use Ibyte instead of char.
+	* floatfns.c (Ffloor): Provide a default case to silence ICC.
+	* lread.c (parse_integer): Cast from Ibyte to char.
+	* number-gmp.c: Get the qxe_getpid prototype.
+	* number.c (string_to_bignum): Cast from Ibyte to char.
+	* number.c (get_number_type): ICC does not know that abort does
+	not return.
+	* number.c (internal_coerce_number): Ditto.
+	* number.h: Declare get_number_type.
+
+2004-04-06  Jerry James  <james@xemacs.org>
+
 	* number-mp.c (bignum_set_string): Read negative numbers correctly.
 
 2004-04-06  Jerry James  <james@xemacs.org>
