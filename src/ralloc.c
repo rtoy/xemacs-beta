@@ -2022,6 +2022,10 @@ init_ralloc (void)
   if (r_alloc_initialized > 1)
     return;	/* used to return 1 */
 
+#ifdef PDUMP
+  /* Under pdump, we need to activate ralloc on the first go. */
+  ++r_alloc_initialized;
+#endif
   if (++r_alloc_initialized == 1)
     return;	/* used to return 1 */
 
