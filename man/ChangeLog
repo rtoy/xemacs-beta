@@ -1,3 +1,7 @@
+2003-08-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs-faq.texi (Q1.3.8): Fix typo, note errorneous recognition.
+
 2003-08-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/packaging.texi (Creating Packages):

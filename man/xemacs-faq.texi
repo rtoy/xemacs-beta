@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/06/30 09:30:58 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/08/12 06:15:51 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1176,12 +1176,18 @@ Unicode Fonts?}
 To get Unicode support, you need a Mule-enabled XEmacs.  Install
 Mule-UCS from packages in the usual way.  Put
 
+@example
 (require 'un-define)
 (set-coding-priority-list '(utf-8))
-(set-coding-category-system 'utf-8 utf-8)
+(set-coding-category-system 'utf-8 'utf-8)
+@end example
+
+in your init file to enable the UTF-8 coding system.  You may wish to
+view the documentation of @code{set-coding-priority-list} if you find
+that files that are not UTF-8 are being mis-recognized as UTF-8.
 
 Install standard national fonts (not Unicode fonts) for all
-character sets you use.
+character sets you use.  See @ref{Q1.3.9}.
 
 Mule-UCS also supports 16-bit forms of Unicode (UTF-16).  It does not
 support 31-bit forms of Unicode (UTF-32 or UCS-4).
