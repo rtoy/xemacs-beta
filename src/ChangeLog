@@ -1,3 +1,7 @@
+2001-09-07  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.3 "asparagus" is released.
+
 2001-04-19  Glynn Clements  <glynn.clements@virgin.net>
 
 	* input-method-motif.c (XIM_delete_frame): New callback.
