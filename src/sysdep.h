@@ -66,11 +66,15 @@ void sys_suspend_process (int process);
 void request_sigio (void);
 void unrequest_sigio (void);
 
+BEGIN_C_DECLS
+
 void stop_interrupts (void);
 void start_interrupts (void);
 MODULE_API void slow_down_interrupts (void);
 MODULE_API void speed_up_interrupts (void);
 void init_poll_for_quit (void);
+
+END_C_DECLS
 
 /* Used so that signals can break out of system calls that aren't
    naturally interruptible. */

@@ -1,5 +1,10 @@
 2004-02-25  Jerry James  <james@xemacs.org>
 
+	* sysdep.h: Declare interrupt/quit-related symbols as C symbols.
+	* xemacs.def.in.in: Fix placement error in previous patch.
+
+2004-02-25  Jerry James  <james@xemacs.org>
+
 	* general-slots.h: Make Qcritical, Qdelete, Qsearch, and Qsimple
 	visible to modules (all are used by the LDAP module).
 	* lisp.h: Make stuff in QUIT and QUITP visible to modules.

@@ -230,6 +230,6 @@ Qt
 Qunbound
 #ifdef USE_UNION_TYPE
 Qzero				/* ZEROP */
+#endif
 Vinhibit_quit			/* QUIT, QUITP */
 Vquit_flag			/* QUIT, QUITP */
-#endif
