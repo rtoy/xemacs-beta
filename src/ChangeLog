@@ -1,3 +1,13 @@
+2005-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (set_unicode_conversion): Don't try to write to the
+	non-existent conversion tables for ASCII and control-1, in the
+	interest of not segfaulting. 
+	* unicode.c (unicode_convert): The "position code" for a control-1
+	character has #xA0 added to it when encoded in Mule, unlike #x80
+	for all the other non-ASCII character sets ; take this into
+	account.
+
 2005-03-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c: Declare Funicode_to_char. 

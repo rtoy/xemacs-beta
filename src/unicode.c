@@ -857,6 +857,9 @@ set_unicode_conversion (Ichar chr, int code)
   sledgehammer_check_unicode_tables (charset);
 #endif
 
+  if (EQ(charset, Vcharset_ascii) || EQ(charset, Vcharset_control_1))
+    return;
+
   /* First, the char -> unicode translation */
 
   if (XCHARSET_DIMENSION (charset) == 1)
@@ -1921,7 +1924,13 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	    {			/* Processing Non-ASCII character */
 	      char_boundary = 1;
 	      if (EQ (charset, Vcharset_control_1))
-		encode_unicode_char (Vcharset_control_1, c, 0, dst,
+		/* See:
+
+		   (Info-goto-node "(internals)Internal String Encoding")
+
+		   for the rationale behind subtracting #xa0 from the
+		   character's code. */
+		encode_unicode_char (Vcharset_control_1, c - 0xa0, 0, dst,
 				     type, little_endian);
 	      else
 		{
