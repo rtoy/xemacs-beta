@@ -39,10 +39,10 @@ Boston, MA 02111-1307, USA.  */
    under Solaris.) */
 
 #ifndef min
-#define min(a,b) (((a) <= (b)) ? (a) : (b))
+# define min(a,b) (((a) <= (b)) ? (a) : (b))
 #endif
 #ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+# define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* Regular C complains about possible clobbering of local vars NOT declared
@@ -59,9 +59,9 @@ Boston, MA 02111-1307, USA.  */
 */
 
 #ifdef __cplusplus
-#define VOLATILE_IF_NOT_CPP
+# define VOLATILE_IF_NOT_CPP
 #else
-#define VOLATILE_IF_NOT_CPP volatile
+# define VOLATILE_IF_NOT_CPP volatile
 #endif
 
 /* Avoid indentation problems when XEmacs sees the curly braces */
@@ -75,25 +75,27 @@ Boston, MA 02111-1307, USA.  */
 # endif
 #endif
 
-/* Macro simplification for non-GNU compilers and older gccs that did not
-   define all of these symbols */
-#ifndef __GNUC__
-#define __GNUC__            0
-#endif
-#ifndef __GNUC_MINOR__
-#define __GNUC_MINOR__      0
-#endif
-#ifndef __GNUC_PATCHLEVEL__
-#define __GNUC_PATCHLEVEL__ 0
-#endif
+/* Guard against older gccs that did not define all of these symbols */
+#ifdef __GNUC__
+# ifndef __GNUC_MINOR__
+#  define __GNUC_MINOR__      0
+# endif
+# ifndef __GNUC_PATCHLEVEL__
+#  define __GNUC_PATCHLEVEL__ 0
+# endif
+#endif /* __GNUC__ */
 
-/* Simplify testing for specific GCC versions.  This also works for non-GCC
-   compilers, where GCC_VERSION is zero. */
+/* Simplify testing for specific GCC versions.  For non-GNU compilers,
+   GCC_VERSION evaluates to zero. */
 #ifndef NEED_GCC
-#define NEED_GCC(major,minor,patch) (major * 1000000 + minor * 1000 + patch)
+# define NEED_GCC(major,minor,patch) (major * 1000000 + minor * 1000 + patch)
 #endif /* NEED_GCC */
 #ifndef GCC_VERSION
-#define GCC_VERSION NEED_GCC (__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__)
+# ifdef __GNUC__
+#  define GCC_VERSION NEED_GCC (__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__)
+# else
+#  define GCC_VERSION 0
+# endif /* __GNUC__ */
 #endif /* GCC_VERSION */
 
 /* GCC < 2.6.0 could only declare one attribute per function.  In that case,
@@ -132,8 +134,8 @@ Boston, MA 02111-1307, USA.  */
 /* "end-of-loop code not reached" */
 /* "statement not reached */
 #if defined __SUNPRO_C || defined __USLC__
-#define RETURN_SANS_WARNINGS if (1) return
-#define RETURN_NOT_REACHED(value) DO_NOTHING
+# define RETURN_SANS_WARNINGS if (1) return
+# define RETURN_NOT_REACHED(value) DO_NOTHING
 #endif
 
 /* More ways to shut up compiler.  This works in Fcommand_loop_1(),
@@ -141,25 +143,25 @@ Boston, MA 02111-1307, USA.  */
 */
 #if defined (_MSC_VER) || defined (__SUNPRO_C) || defined (__SUNPRO_CC) || \
   (defined (DEC_ALPHA) && defined (OSF1))
-#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
+# define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS if (0) return Qnil
 #else
-#define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING
+# define DO_NOTHING_DISABLING_NO_RETURN_WARNINGS DO_NOTHING
 #endif
 
 #ifndef RETURN_NOT_REACHED
-#define RETURN_NOT_REACHED(value) return (value)
+# define RETURN_NOT_REACHED(value) return (value)
 #endif
 
 #ifndef RETURN_SANS_WARNINGS
-#define RETURN_SANS_WARNINGS return
+# define RETURN_SANS_WARNINGS return
 #endif
 
 #ifndef DO_NOTHING
-#define DO_NOTHING do {} while (0)
+# define DO_NOTHING do {} while (0)
 #endif
 
 #ifndef DECLARE_NOTHING
-#define DECLARE_NOTHING struct nosuchstruct
+# define DECLARE_NOTHING struct nosuchstruct
 #endif
 
 #ifndef ATTRIBUTE_MALLOC
@@ -198,10 +200,10 @@ Boston, MA 02111-1307, USA.  */
 #endif /* ATTRIBUTE_UNUSED */
 
 #ifdef DEBUG_XEMACS
-#define REGISTER
-#define register
+# define REGISTER
+# define register
 #else
-#define REGISTER register
+# define REGISTER register
 #endif
 
 #if defined(HAVE_MS_WINDOWS) && defined(HAVE_SHLIB)

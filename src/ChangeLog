@@ -1,3 +1,8 @@
+2003-10-14  Jerry James  <james@xemacs.org>
+
+	* compiler.h: Don't define __GNUC__ if using a non-GNU compiler.
+	Use a consistent spacing scheme.
+
 2003-08-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule-charset.c (get_unallocated_leading_byte): Compiler quietus.
