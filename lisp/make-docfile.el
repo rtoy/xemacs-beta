@@ -112,7 +112,8 @@
 	  (princ (format "Error:  dumped file %s does not exist\n" arg0))
 	  ;; Uncomment in case of difficulties
 	  ;;(print (format "late-packages: %S" late-packages))
-	  ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name)))
+	  ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p)))
+	  ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
 	  )
 	(if (null (member arg processed))
 	    (progn

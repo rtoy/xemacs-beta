@@ -100,9 +100,26 @@ from the search."
 			     max-depth paths-no-lisp-directory-regexp))
 
 (defun paths-emacs-root-p (directory)
-  "Check if DIRECTORY is a plausible installation root for XEmacs."
+  "Check if DIRECTORY is a plausible installation root."
   (or
    ;; installed
+   (paths-file-readable-directory-p (paths-construct-path (list directory
+								"lib"
+								(construct-emacs-version-name))))
+   ;; in-place or windows-nt
+   (and
+    (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
+    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
+
+(defun paths-emacs-data-root-p (directory)
+  "Check if DIRECTORY is a plausible data installation root.
+A data installation root is one containing data files that may be shared
+among multiple different versions of XEmacs, the packages in particular."
+  (or
+   ;; installed
+   (paths-file-readable-directory-p (paths-construct-path (list directory
+								"lib"
+								emacs-program-name)))
    (paths-file-readable-directory-p (paths-construct-path (list directory
 								"lib"
 								(construct-emacs-version-name))))
@@ -282,8 +299,13 @@ Otherwise, they are left alone."
       directories)))
 
 (defun paths-find-emacs-roots (invocation-directory
-			       invocation-name)
-  "Find all plausible installation roots for XEmacs."
+			       invocation-name
+			       root-p)
+  "Find all plausible installation roots for XEmacs.
+INVOCATION-DIRECTORY is the directory from which XEmacs was started.
+INVOCATION-NAME is the name of the XEmacs executable that was originally
+started.
+ROOT-P is a function that tests whether a root is plausible."
   (let* ((potential-invocation-root
 	  (paths-find-emacs-root invocation-directory invocation-name))
 	 (invocation-roots
@@ -298,7 +320,7 @@ Otherwise, they are left alone."
 		(list (file-name-as-directory
 		       configure-prefix-directory)))))
 	 (installation-roots
-	  (paths-filter #'paths-emacs-root-p potential-installation-roots)))
+	  (paths-filter root-p potential-installation-roots)))
     (paths-uniq-append invocation-roots
 		       installation-roots)))
 

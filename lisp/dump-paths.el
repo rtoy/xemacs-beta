@@ -31,7 +31,7 @@
 ;; This is the only file of the basic path/package files (find-paths.el,
 ;; package.el, setup-paths.el, dump-paths.el) that actually does stuff.
 
-(defun startup-setup-paths (roots user-init-directory
+(defun startup-setup-paths (roots data-roots user-init-directory
 				  &optional
 				  inhibit-packages inhibit-site-lisp
 				  debug-paths called-early)
@@ -56,18 +56,17 @@ It's idempotent, so call this as often as you like!"
 				       last))
 	     )
 	 (packages-find-packages
-	  roots
+	  data-roots
 	  (packages-compute-package-locations user-init-directory)))
 
-  (setq early-package-load-path (packages-find-package-load-path
-				 early-packages))
+  (setq early-package-load-path (packages-find-package-load-path early-packages))
   (setq late-package-load-path (packages-find-package-load-path late-packages))
   (setq last-package-load-path (packages-find-package-load-path last-packages))
 
   (if debug-paths
       (progn
-	(princ (format "arguments:\nroots: %S\nuser-init-directory: %S\n"
-		       roots user-init-directory)
+	(princ (format "arguments:\nroots: %S\ndata-roots: %S\nuser-init-directory: %S\n"
+		       roots data-roots user-init-directory)
 	       'external-debugging-output)
 	(princ (format "inhibit-packages: %S\ninhibit-site-lisp: %S\n"
 		       inhibit-packages inhibit-site-lisp)
@@ -185,13 +184,21 @@ It's idempotent, so call this as often as you like!"
 		      (and (getenv "EMACSDEBUGPATHS")
 			   t)))
       (roots (paths-find-emacs-roots invocation-directory
-				     invocation-name)))
+				     invocation-name
+				     #'paths-emacs-root-p))
+      (data-roots (paths-find-emacs-roots invocation-directory
+					  invocation-name
+					  #'paths-emacs-data-root-p)))
 
   (if debug-paths
-      (princ (format "XEmacs thinks the roots of its hierarchy are:\n%S\n"
-		     roots)
-	     'external-debugging-output))
-  (startup-setup-paths roots
+      (progn
+	(princ (format "XEmacs thinks the roots of its hierarchy are:\n%S\n"
+		       roots)
+	     'external-debugging-output)
+	(princ (format "XEmacs thinks the data roots of its hierarchy are:\n%S\n"
+		       data-roots)
+	     'external-debugging-output)))
+  (startup-setup-paths roots data-roots
 		       (paths-construct-path '("~" ".xemacs"))
 		       (if inhibit-all-packages t
 			 '(early last))

@@ -133,6 +133,9 @@ the user's init file.")
 (defvar emacs-roots nil
   "List of plausible roots of the XEmacs hierarchy.")
 
+(defvar emacs-data-roots nil
+  "List of plausible data roots of the XEmacs hierarchy.")
+
 (defvar user-init-directory-base ".xemacs"
   "Base of directory where user-installed init files may go.")
 
@@ -517,7 +520,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 				t))))
 
       (setq emacs-roots (paths-find-emacs-roots invocation-directory
-						invocation-name))
+						invocation-name
+						#'paths-emacs-root-p))
+      (setq emacs-data-roots (paths-find-emacs-roots invocation-directory
+						     invocation-name
+						     #'paths-emacs-data-root-p))
 
       (if debug-paths
 	  (princ (format "emacs-roots:\n%S\n" emacs-roots)
@@ -525,7 +532,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
 
       (if (null emacs-roots)
 	  (startup-find-roots-warning))
-      (startup-setup-paths emacs-roots
+      (startup-setup-paths emacs-roots emacs-data-roots
 			   user-init-directory
 			   (cond (inhibit-all-packages t)
 				 (inhibit-early-packages '(early))

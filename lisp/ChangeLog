@@ -1,3 +1,20 @@
+2003-01-19  Mike Sperber  <mike@xemacs.org>
+
+	* startup.el (normal-top-level): Compute `emacs-data-roots.'  Call
+	`startup-setup-paths' with data-roots argument.
+	(emacs-data-roots): Add.
+
+	* dump-paths.el: Call `startup-setup-paths' with
+	data-roots argument.
+	(startup-setup-paths): Use `data-roots' instead of `roots' to find
+	packages.
+	Call `paths-find-emacs-roots' with `root-p' argument.
+
+	* make-docfile.el: Call `paths-find-emacs-roots' with `root-p' argument.
+
+	* find-paths.el (paths-emacs-data-root-p): Add.
+	(paths-find-emacs-roots): Parmeterize over `root-p.'
+
 2003-01-13  Ilya Golubev  <golubev@xemacs.org>
 
 	* about.el: Update golubev data.

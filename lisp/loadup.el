@@ -124,7 +124,8 @@
 						 file))
 	      ;; Uncomment in case of trouble
 	      ;;(print (format "late-packages: %S" late-packages))
-	      ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name)))
+	      ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p)))
+	      ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
 	      nil)))
 
 	(load (expand-file-name "../lisp/dumped-lisp.el"))
