@@ -281,6 +281,17 @@ with the same principles as the Mule-internal encoding:
 "
    type utf-8))
 
+(make-coding-system
+ 'utf-8-bom 'unicode
+ "UTF-8 w/BOM"
+ '(mnemonic "MSW-UTF8"
+   documentation
+   "UTF-8 Unicode encoding, with byte order mark.
+Standard encoding for representing UTF-8 under MS Windows."
+   type utf-8
+   little-endian t
+   need-bom t))
+
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
 ;; 2.0, but I don't know its licensing characteristics.

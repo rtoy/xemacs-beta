@@ -159,6 +159,8 @@ Lisp_Object Qneed_bom;
 Lisp_Object Qutf_16_little_endian, Qutf_16_bom;
 Lisp_Object Qutf_16_little_endian_bom;
 
+Lisp_Object Qutf_8_bom;
+
 #ifdef MULE 
 
 /* #### Using ints for to_unicode is OK (as long as they are >= 32 bits).
@@ -1924,6 +1926,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 /* DEFINE_DETECTOR (utf_7); */
 DEFINE_DETECTOR (utf_8);
 DEFINE_DETECTOR_CATEGORY (utf_8, utf_8);
+DEFINE_DETECTOR_CATEGORY (utf_8, utf_8_bom);
 DEFINE_DETECTOR (ucs_4);
 DEFINE_DETECTOR_CATEGORY (ucs_4, ucs_4);
 DEFINE_DETECTOR (utf_16);
@@ -2081,6 +2084,9 @@ utf_16_detect (struct detection_state *st, const UExtbyte *src,
 
 struct utf_8_detector
 {
+  int byteno;
+  int first_byte;
+  int second_byte;
   int in_utf_8_byte;
 };
 
@@ -2093,11 +2099,32 @@ utf_8_detect (struct detection_state *st, const UExtbyte *src,
   while (n--)
     {
       UExtbyte c = *src++;
+      switch (data->byteno)
+	{
+	case 0:
+	  data->first_byte = c;
+	  break;
+	case 1:
+	  data->second_byte = c;
+	  break;
+	case 2:
+	  if (data->first_byte == 0xef &&
+	      data->second_byte == 0xbb &&
+	      c == 0xbf)
+	    {
+	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
+	      DET_RESULT (st, utf_8_bom) = DET_NEAR_CERTAINTY;
+	      return;
+	    }
+	  break;
+	}
+
       switch (data->in_utf_8_byte)
 	{
 	case 0:
 	  if (c == ISO_CODE_ESC || c == ISO_CODE_SI || c == ISO_CODE_SO)
 	    {
+	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
 	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
 	      return;
 	    }
@@ -2113,6 +2140,7 @@ utf_8_detect (struct detection_state *st, const UExtbyte *src,
 	    data->in_utf_8_byte = 1;
 	  else if (c >= 0x80)
 	    {
+	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
 	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
 	      return;
 	    }
@@ -2120,14 +2148,17 @@ utf_8_detect (struct detection_state *st, const UExtbyte *src,
 	default:
 	  if ((c & 0xc0) != 0x80)
 	    {
+	      SET_DET_RESULTS (st, utf_8, DET_NEARLY_IMPOSSIBLE);
 	      DET_RESULT (st, utf_8) = DET_SOMEWHAT_UNLIKELY;
 	      return;
 	    }
 	  else
 	    data->in_utf_8_byte--;
 	}
+
+      data->byteno++;
     }
-  DET_RESULT (st, utf_8) = DET_SOMEWHAT_LIKELY;
+  SET_DET_RESULTS (st, utf_8, DET_SOMEWHAT_LIKELY);
 }
 
 static void
@@ -2256,6 +2287,9 @@ syms_of_unicode (void)
   DEFSYMBOL (Qutf_16_little_endian);
   DEFSYMBOL (Qutf_16_bom);
   DEFSYMBOL (Qutf_16_little_endian_bom);
+
+  DEFSYMBOL (Qutf_8);
+  DEFSYMBOL (Qutf_8_bom);
 }
 
 void
@@ -2272,6 +2306,7 @@ coding_system_type_create_unicode (void)
   INITIALIZE_DETECTOR (utf_8);
   DETECTOR_HAS_METHOD (utf_8, detect);
   INITIALIZE_DETECTOR_CATEGORY (utf_8, utf_8);
+  INITIALIZE_DETECTOR_CATEGORY (utf_8, utf_8_bom);
 
   INITIALIZE_DETECTOR (ucs_4);
   DETECTOR_HAS_METHOD (ucs_4, detect);

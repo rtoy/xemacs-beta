@@ -201,7 +201,10 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 	(no-conversion 'no-conversion)
 	(shift-jis 'shift-jis)
 	(unicode (case (coding-system-property coding-system 'type)
-		   (utf-8 'utf-8)
+		   (utf-8 (let ((bom (coding-system-property coding-system
+							     'need-bom)))
+			    (cond (bom 'utf-8-bom)
+				  ((not bom) 'utf-8))))
 		   (ucs-4 'ucs-4)
 		   (utf-16 (let ((bom (coding-system-property coding-system
 							      'need-bom))

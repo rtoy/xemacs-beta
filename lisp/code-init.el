@@ -276,6 +276,7 @@ bound to each category are as follows:
 	--------------------------------------------------
         utf-16-little-endian-bom  utf-16-little-endian
 	utf-16-bom		  utf-16-bom
+	utf-8-bom		  utf-8-bom
 	iso-7			  iso-2022-7bit
 	no-conversion		  raw-text
 	utf-8			  utf-8
@@ -324,6 +325,7 @@ bound to each category are as follows:
    (coding-system-variable-default-value 'no-conversion-coding-system-mapping))
   (set-coding-category-system 'ucs-4 'ucs-4)
   (set-coding-category-system 'utf-8 'utf-8)
+  (set-coding-category-system 'utf-8-bom 'utf-8-bom)
   (set-coding-category-system 'utf-16-little-endian 'utf-16-little-endian)
   (set-coding-category-system 'utf-16 'utf-16)
   (set-coding-category-system 'utf-16-little-endian-bom
@@ -333,6 +335,7 @@ bound to each category are as follows:
    (if (featurep 'mule)
        '(utf-16-little-endian-bom
 	 utf-16-bom
+	 utf-8-bom
 	 iso-7
 	 no-conversion
 	 utf-8
@@ -347,6 +350,7 @@ bound to each category are as follows:
 	 ucs-4)
      '(utf-16-little-endian-bom
        utf-16-bom
+       utf-8-bom
        no-conversion
        utf-8
        utf-16-little-endian

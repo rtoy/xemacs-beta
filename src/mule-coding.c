@@ -599,6 +599,7 @@ DEFINE_DETECTOR_CATEGORY (big5, big5);
 struct big5_detector
 {
   int seen_big5_char;
+  int seen_euc_char;
   unsigned int seen_iso2022_esc:1;
   unsigned int seen_bad_first_byte:1;
   unsigned int seen_bad_second_byte:1;
@@ -628,7 +629,9 @@ big5_detect (struct detection_state *st, const UExtbyte *src,
       else
 	{
 	  data->in_second_byte = 0;
-	  if ((c >= 0x40 && c <= 0x7E) || (c >= 0xA1 && c <= 0xFE))
+	  if (c >= 0xA1 && c <= 0xFE)
+	    data->seen_euc_char++;
+	  else if (c >= 0x40 && c <= 0x7E)
 	    data->seen_big5_char++;
 	  else
 	    data->seen_bad_second_byte = 1;
@@ -643,6 +646,8 @@ big5_detect (struct detection_state *st, const UExtbyte *src,
     DET_RESULT (st, big5) = DET_SOMEWHAT_UNLIKELY;
   else if (data->seen_big5_char >= 4)
     DET_RESULT (st, big5) = DET_SOMEWHAT_LIKELY;
+  else if (data->seen_euc_char)
+    DET_RESULT (st, big5) = DET_SLIGHTLY_LIKELY;
   else
     DET_RESULT (st, big5) = DET_AS_LIKELY_AS_UNLIKELY;
 }
@@ -2749,6 +2754,7 @@ struct iso2022_detector
   unsigned int bad_multibyte_escape_sequences;
   unsigned int good_multibyte_escape_sequences;
   int even_high_byte_groups;
+  int longest_even_high_byte;
   int odd_high_byte_groups;
 };
 
@@ -2794,7 +2800,11 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
 	      if (data->high_byte_count & 1)
 		data->odd_high_byte_groups++;
 	      else
-		data->even_high_byte_groups++;
+		{
+		  data->even_high_byte_groups++;
+		  if (data->longest_even_high_byte < data->high_byte_count)
+		    data->longest_even_high_byte = data->high_byte_count;
+		}
 	    }
 	  data->high_byte_count = 0;
 	  data->saw_single_shift_just_now = 0;
@@ -2861,6 +2871,19 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
     label_continue_loop:;
     }
 
+  if (data->high_byte_count &&
+      !data->saw_single_shift_just_now)
+    {
+      if (data->high_byte_count & 1)
+	data->odd_high_byte_groups++;
+      else
+	{
+	  data->even_high_byte_groups++;
+	  if (data->longest_even_high_byte < data->high_byte_count)
+	    data->longest_even_high_byte = data->high_byte_count;
+	}
+    }
+
   if (data->bad_multibyte_escape_sequences > 2 ||
       (data->bad_multibyte_escape_sequences > 0 &&
        data->good_multibyte_escape_sequences /
@@ -2919,6 +2942,7 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
   else if (data->odd_high_byte_groups == 0 &&
 	   data->even_high_byte_groups > 0)
     {
+#if 0
       SET_DET_RESULTS (st, iso2022, DET_SOMEWHAT_UNLIKELY);
       if (data->even_high_byte_groups > 10)
 	{
@@ -2930,6 +2954,15 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
 	    DET_RESULT (st, iso_8_1) = DET_SOMEWHAT_UNLIKELY;
 	  /* else it stays at quite improbable */
 	}
+#else
+      SET_DET_RESULTS (st, iso2022, DET_SOMEWHAT_UNLIKELY);
+      if (data->seen_single_shift)
+	DET_RESULT (st, iso_8_2) = DET_QUITE_PROBABLE;
+      else if (data->even_high_byte_groups > 10)
+	DET_RESULT (st, iso_8_2) = DET_SOMEWHAT_LIKELY;
+      else if (data->longest_even_high_byte > 6)
+	DET_RESULT (st, iso_8_2) = DET_SLIGHTLY_LIKELY;
+#endif
     }
   else if (data->odd_high_byte_groups > 0 &&
 	   data->even_high_byte_groups > 0)

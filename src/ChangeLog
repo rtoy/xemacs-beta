@@ -1,3 +1,18 @@
+2002-08-31  Seiichi Ikiuo  <ikiuo@polyphony.co.jp>
+
+	* file-coding.h (detection_result): fix DET_LOWEST.
+
+	* mule-coding.c
+	(big5_detector): Add member 'seen_euc_char'.
+	(big5_detect): It was made not to become the trouble of EUC.
+	(iso2022_detector): Add member 'longest_even_high_byte'.
+	(iso2022_detect): Fix checking for even/odd_high_byte_group.
+	The judgment of EUC is changed. 
+
+	* unicode.c: Add DETECTOR_CATEGORY utf_8_bom.
+	(utf_8_detector): Add member byteno, first_byte and second_byte.
+	(utf_8_detect): The judgment of UTF-8-BOM is added.
+
 2002-08-30  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.9 "brussels sprouts" is released.

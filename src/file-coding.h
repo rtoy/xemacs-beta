@@ -756,7 +756,7 @@ enum detection_result
   DET_QUITE_IMPROBABLE = -2,
   /* An erroneous sequence was seen. */
   DET_NEARLY_IMPOSSIBLE = -3,
-  DET_LOWEST = 3,
+  DET_LOWEST = -3,
  };
 
 extern int coding_detector_count;
