@@ -786,6 +786,8 @@ x_init_device (struct device *d, Lisp_Object props)
   validify_resource_component ((char *) XSTRING_DATA (DEVICE_NAME (d)),
 			       XSTRING_LENGTH (DEVICE_NAME (d)));
 
+  /* #### If we're going to implement X session management, this would
+     be the place.  Make sure it doesn't conflict with GNOME. */
   {
     Arg al[3];
     XtSetArg (al[0], XtNvisual,   visual);
@@ -1081,10 +1083,14 @@ x_error_handler (Display *disp, XErrorEvent *event)
 
       /* #### this should issue a warning instead of outputting to stderr */
       depth = begin_dont_check_for_quit ();
+#if 0
+      /* This ends up calling X, which isn't allowed in an X error handler
+       */
       stderr_out ("\n%s: ",
 		  (STRINGP (Vinvocation_name)
 		   ? (char *) XSTRING_DATA (Vinvocation_name)
 		   : "xemacs"));
+#endif
       XmuPrintDefaultErrorMessage (disp, event, stderr);
       unbind_to (depth);
     }

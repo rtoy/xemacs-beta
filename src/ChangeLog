@@ -1,3 +1,7 @@
+2004-01-30  Glynn Clements  <glynn.clements@virgin.net>
+
+	* device-x.c (x_error_handler): Don't call stderr_out
+
 2004-04-08  Jerry James  <james@xemacs.org>
 
 	* data.c: Use #ifndef for functions unused with new number types.
