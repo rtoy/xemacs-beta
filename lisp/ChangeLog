@@ -1,3 +1,8 @@
+2004-01-08  Nickolay Pakoulin  <npak@ispras.ru>
+
+	* info.el (Info-insert-file-contents): Use `shell-command-switch'
+	instead of hard-coded "-c".
+
 2003-12-15  Steve Youngs  <sryoungs@bigpond.net.au>
 
 	* wid-edit.el (lazy): New.
