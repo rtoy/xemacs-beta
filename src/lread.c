@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001 Ben Wing.
+   Copyright (C) 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -543,7 +543,8 @@ encoding detection or end-of-line detection.
   Lisp_Object found   = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
   int reading_elc = 0;
-  int message_p = NILP (nomessage);
+  int from_require = EQ (nomessage, Qrequire);
+  int message_p = NILP (nomessage) || from_require;
 /*#ifdef DEBUG_XEMACS*/
   static Lisp_Object last_file_loaded;
 /*#endif*/
@@ -647,23 +648,31 @@ encoding detection or end-of-line detection.
 	reading_elc = 1;
     }
 
-#define PRINT_LOADING_MESSAGE(done) do {				\
-  if (load_ignore_elc_files)						\
-    {									\
-      if (message_p)							\
-	message ("Loading %s..." done, XSTRING_DATA (newer));		\
-    }									\
-  else if (!NILP (newer))						\
-    message ("Loading %s..." done " (file %s is newer)",		\
-	     XSTRING_DATA (file),					\
-	     XSTRING_DATA (newer));					\
-  else if (source_only)							\
-    message ("Loading %s..." done " (file %s.elc does not exist)",	\
-	     XSTRING_DATA (file),					\
-	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
-  else if (message_p)							\
-    message ("Loading %s..." done, XSTRING_DATA (file));		\
+#define PRINT_LOADING_MESSAGE_1(loading, done) do {		\
+  if (load_ignore_elc_files)					\
+    {								\
+      if (message_p)						\
+	message (loading done, XSTRING_DATA (newer));		\
+    }								\
+  else if (!NILP (newer))					\
+    message (loading done " (file %s is newer)",		\
+	     XSTRING_DATA (file),				\
+	     XSTRING_DATA (newer));				\
+  else if (source_only)						\
+    message (loading done " (file %s.elc does not exist)",	\
+	     XSTRING_DATA (file),				\
+	     XSTRING_DATA (Ffile_name_nondirectory (file)));	\
+  else if (message_p)						\
+    message (loading done, XSTRING_DATA (file));		\
   } while (0)
+
+#define PRINT_LOADING_MESSAGE(done)			\
+do {							\
+  if (from_require)					\
+    PRINT_LOADING_MESSAGE_1 ("Requiring %s...", done);	\
+  else							\
+    PRINT_LOADING_MESSAGE_1 ("Loading %s...", done);	\
+} while (0)
 
   PRINT_LOADING_MESSAGE ("");
 

@@ -18,38 +18,6 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;; mapping between XEmacs charsets and code pages.  something like
-;; this will remain around even after Unicode conversion, so we know
-;; how to choose the right font.  (perhaps "code pages" will become
-;; "Unicode subranges"; they're more or less equivalent under Windows
-;; from a font perspective.)
-(let ((l '((ascii . 1252)
-	   (latin-iso8859-2 . 1250)
-	   (cyrillic-iso8859-5 . 1251)
-	   (latin-iso8859-1 . 1252)
-	   (greek-iso8859-7 . 1253) 
-	   (latin-iso8859-9 . 1254)
-	   (hebrew-iso8859-8 . 1255)
-	   ;; (arabic-iso8859-6 . 1256)
-	   (latin-iso8859-4 . 1257)
-	   ;; (vietnamese-viscii-lower . 1258)
-	   ;; (vietnamese-viscii-upper . 1258)
-	   ;; (thai-tis620 . 874)
-	   (latin-jisx0201 . 932)
-	   (katakana-jisx0201 . 932)
-	   ;; (japanese-jisx0208-1978 . 932)
-	   (japanese-jisx0208 . 932)
-	   (japanese-jisx0212 . 932)
-	   (chinese-gb2312 . 936)
-	   (korean-ksc5601 . 949)
-	   (chinese-big5-1 . 950)
-	   (chinese-big5-2 . 950))))
-  (while l
-    (let ((charset (car (car l)))
-	  (code-page (cdr (car l))))
-    (mswindows-set-charset-code-page charset code-page)
-    (setq l (cdr l)))))
-
 (make-coding-system
  'mswindows-multibyte 'mswindows-multibyte
  "MS Windows Multibyte (current code page)"

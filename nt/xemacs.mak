@@ -325,6 +325,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if !defined(DEPEND)
 DEPEND=0
 !endif
+!if !defined(PERL_NEEDS_MORE_QUOTING)
+PERL_NEEDS_MORE_QUOTING=1
+!endif
 !if $(DEPEND) && exist("$(SRC)\depend")
 ! if [if not exist $(OUTDIR)\nul mkdir "$(OUTDIR)"]
 ! endif
@@ -333,7 +336,11 @@ DEPEND=0
 # much backslash quoting.  This does not happen, of course, with a non-
 # Cygwin Perl, so in that circumstance, you'd be screwed and would have
 # to fix this Makefile to not have a special Cygwin case.
-! if defined(_)
+# ! if defined(_)
+# #### 3-17-02 Double yuck!  Suddenly, perl is wanting more quoting always.
+# #### I have no idea what changed.  So I'm just making a variable for
+# #### this. --ben
+! if $(PERL_NEEDS_MORE_QUOTING)
 !  if [perl -p -e "s/^\\x23if defined(.+)/!if defined$$1/; s/^\\x23e/!e/;" \
 	-e "s/([\\s=^])([\\w\\d\\.\\-^]+\\.[ch^])/$$1$(SRC:\=\\\\)\\\\$$2/g;" \
 	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2 $(NT:\=\\\\)\\\\config.inc/;" \

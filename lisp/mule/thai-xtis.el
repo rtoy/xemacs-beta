@@ -34,6 +34,17 @@
 
 ;;; Code:
 
+(make-charset 'thai-xtis "Precomposed Thai (XTIS by Virach)."
+	      '(registry "xtis-0"
+			 dimension 2
+			 columns 1
+			 chars 94
+			 final ??
+			 graphic 0))
+
+(define-category ?x "Precomposed Thai character.")
+(modify-category-entry 'thai-xtis ?x)
+
 (when (featurep 'xemacs)
   (let ((deflist	'(;; chars	syntax
 			  ("$(?!0(B-$(?NxP0R0S0`0(B-$(?e0(B"	"w")

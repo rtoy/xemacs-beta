@@ -68,11 +68,11 @@
 	 (features lao-util)
 	 (documentation . t)))
 
-(aset use-default-ascent ?(1;(B t)
-(aset use-default-ascent ?(1=(B t)
-(aset use-default-ascent ?(1?(B t)
-(aset use-default-ascent ?(1B(B t)
-(aset ignore-relative-composition ?(1\(B t)
+(put-char-table ?(1;(B t use-default-ascent)
+(put-char-table ?(1=(B t use-default-ascent)
+(put-char-table ?(1?(B t use-default-ascent)
+(put-char-table ?(1B(B t use-default-ascent)
+(put-char-table ?(1\(B t ignore-relative-composition)
 
 ;; Register a function to compose Lao characters.
 (put-char-table 'lao

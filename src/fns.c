@@ -63,6 +63,8 @@ Lisp_Object Vpath_separator;
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
 
+int require_prints_loading_message;
+
 static Lisp_Object
 mark_bit_vector (Lisp_Object obj)
 {
@@ -3441,7 +3443,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
       Vautoload_queue = Qt;
 
       call4 (Qload, NILP (filename) ? Fsymbol_name (feature) : filename,
-	     Qnil, Qt, Qnil);
+	     Qnil, require_prints_loading_message ? Qrequire : Qt, Qnil);
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
@@ -3975,8 +3977,13 @@ The directory separator in search paths, as a string.
 */ );
   {
     char c = SEPCHAR;
-    Vpath_separator = make_string ((Intbyte *)&c, 1);
+    Vpath_separator = make_string ((Intbyte *) &c, 1);
   }
+
+  DEFVAR_BOOL ("require-prints-loading-message",
+	       &require_prints_loading_message /*
+If non-nil, every time a file is loaded by `require' a message is printed.
+*/ );
 }
 
 void

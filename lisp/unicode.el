@@ -80,60 +80,87 @@
 ;; 700Mhz even with a totally optimization-disabled XEmacs.
 (defun load-unicode-tables ()
   "Initialize the Unicode translation tables for all standard charsets."
-  (let ((undir (expand-file-name "unicode/unicode-consortium" data-directory))
-	(parse-args
-	 '(("8859-1.TXT" latin-iso8859-1 #xA0 #xFF #x-80)
-	   ;; "8859-10.TXT"
-	   ;; "8859-13.TXT"
-	   ;; "8859-14.TXT"
-	   ;; "8859-15.TXT"
-	   ("8859-2.TXT" latin-iso8859-2 #xA0 #xFF #x-80)
-	   ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
-	   ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)
-	   ("8859-5.TXT" cyrillic-iso8859-5 #xA0 #xFF #x-80)
-	   ("8859-6.TXT" arabic-iso8859-6 #xA0 #xFF #x-80)
-	   ("8859-7.TXT" greek-iso8859-7 #xA0 #xFF #x-80)
-	   ("8859-8.TXT" hebrew-iso8859-8 #xA0 #xFF #x-80)
-	   ("8859-9.TXT" latin-iso8859-9 #xA0 #xFF #x-80)
-	   ;; charset for Big5 does not matter; specifying `big5' will
-	   ;; automatically make the right thing happen
-	   ("BIG5.TXT" chinese-big5-1 nil nil nil big5)
-	   ("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
-	   ("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
-	   ;; "CP1250.TXT" 
-	   ;; "CP1251.TXT" 
-	   ;; "CP1252.TXT" 
-	   ;; "CP1253.TXT" 
-	   ;; "CP1254.TXT" 
-	   ;; "CP1255.TXT" 
-	   ;; "CP1256.TXT" 
-	   ;; "CP1257.TXT" 
-	   ;; "CP1258.TXT" 
-	   ;; "CP874.TXT" 
-	   ;; "CP932.TXT" 
-	   ;; "CP936.TXT" 
-	   ;; "CP949.TXT" 
-	   ;; "CP950.TXT" 
-	   ;; "GB12345.TXT" 
-	   ("GB2312.TXT" chinese-gb2312)
-	   ;; "HANGUL.TXT" 
-           ("JIS0201.TXT" latin-jisx0201 #x21 #x80)
-	   ("JIS0201.TXT" katakana-jisx0201 #xA0 #xFF #x-80)
-	   ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
-	   ("JIS0212.TXT" japanese-jisx0212)
-	   ;; "JOHAB.TXT" 
-	   ;; "KOI8-R.TXT" 
-	   ;; "KSC5601.TXT" 
-	   ;; note that KSC5601.TXT as currently distributed is NOT what
-	   ;; it claims to be!  see comments in KSX1001.TXT.
-	   ("KSX1001.TXT" korean-ksc5601)
-	   ;; "OLD5601.TXT" 
-	   ;; "SHIFTJIS.TXT"
+  (let ((parse-args
+	 '(("unicode/unicode-consortium"
+	    ("8859-1.TXT" latin-iso8859-1 #xA0 #xFF #x-80)
+	    ;; "8859-10.TXT"
+	    ;; "8859-13.TXT"
+	    ;; "8859-14.TXT"
+	    ("8859-14.TXT" latin-iso8859-14 #xA0 #xFF #x-80)
+	    ("8859-15.TXT" latin-iso8859-15 #xA0 #xFF #x-80)
+	    ("8859-2.TXT" latin-iso8859-2 #xA0 #xFF #x-80)
+	    ("8859-3.TXT" latin-iso8859-3 #xA0 #xFF #x-80)
+	    ("8859-4.TXT" latin-iso8859-4 #xA0 #xFF #x-80)
+	    ("8859-5.TXT" cyrillic-iso8859-5 #xA0 #xFF #x-80)
+	    ("8859-6.TXT" arabic-iso8859-6 #xA0 #xFF #x-80)
+	    ("8859-7.TXT" greek-iso8859-7 #xA0 #xFF #x-80)
+	    ("8859-8.TXT" hebrew-iso8859-8 #xA0 #xFF #x-80)
+	    ("8859-9.TXT" latin-iso8859-9 #xA0 #xFF #x-80)
+	    ;; charset for Big5 does not matter; specifying `big5' will
+	    ;; automatically make the right thing happen
+	    ("BIG5.TXT" chinese-big5-1 nil nil nil big5)
+	    ("CNS11643.TXT" chinese-cns11643-1 #x10000 #x1FFFF #x-10000)
+	    ("CNS11643.TXT" chinese-cns11643-2 #x20000 #x2FFFF #x-20000)
+	    ;; "CP1250.TXT" 
+	    ;; "CP1251.TXT" 
+	    ;; "CP1252.TXT" 
+	    ;; "CP1253.TXT" 
+	    ;; "CP1254.TXT" 
+	    ;; "CP1255.TXT" 
+	    ;; "CP1256.TXT" 
+	    ;; "CP1257.TXT" 
+	    ;; "CP1258.TXT" 
+	    ;; "CP874.TXT" 
+	    ;; "CP932.TXT" 
+	    ;; "CP936.TXT" 
+	    ;; "CP949.TXT" 
+	    ;; "CP950.TXT" 
+	    ;; "GB12345.TXT" 
+	    ("GB2312.TXT" chinese-gb2312)
+	    ;; "HANGUL.TXT" 
+	    ("JIS0201.TXT" latin-jisx0201 #x21 #x80)
+	    ("JIS0201.TXT" katakana-jisx0201 #xA0 #xFF #x-80)
+	    ("JIS0208.TXT" japanese-jisx0208 nil nil nil ignore-first-column)
+	    ("JIS0212.TXT" japanese-jisx0212)
+	    ;; "JOHAB.TXT" 
+	    ;; "KOI8-R.TXT" 
+	    ;; "KSC5601.TXT" 
+	    ;; note that KSC5601.TXT as currently distributed is NOT what
+	    ;; it claims to be!  see comments in KSX1001.TXT.
+	    ("KSX1001.TXT" korean-ksc5601)
+	    ;; "OLD5601.TXT" 
+	    ;; "SHIFTJIS.TXT"
+	    )
+	   ("unicode/mule-ucs"
+	    ;; use these instead of the above ones once we support surrogates
+	    ;;("chinese-cns11643-1.txt" chinese-cns11643-1)
+	    ;;("chinese-cns11643-2.txt" chinese-cns11643-2)
+	    ;;("chinese-cns11643-3.txt" chinese-cns11643-3)
+	    ;;("chinese-cns11643-4.txt" chinese-cns11643-4)
+	    ;;("chinese-cns11643-5.txt" chinese-cns11643-5)
+	    ;;("chinese-cns11643-6.txt" chinese-cns11643-6)
+	    ;;("chinese-cns11643-7.txt" chinese-cns11643-7)
+	    ("chinese-sisheng.txt" chinese-sisheng)
+	    ("ethiopic.txt" ethiopic)
+	    ("indian-is13194.txt" indian-is13194)
+	    ("ipa.txt" ipa)
+	    ("thai-tis620.txt" thai-tis620)
+	    ("tibetan.txt" tibetan)
+	    ("vietnamese-viscii-lower.txt" vietnamese-viscii-lower)
+	    ("vietnamese-viscii-upper.txt" vietnamese-viscii-upper)
+	    )
+	   ("unicode/other"
+	    ("lao.txt" lao)
+	    )
 	   )))
-    (mapcar #'(lambda (args)
-		(apply 'parse-unicode-translation-table
-		       (expand-file-name (car args) undir)
-		       (cdr args)))
+    (mapcar #'(lambda (tables)
+		(let ((undir
+		       (expand-file-name (car tables) data-directory)))
+		  (mapcar #'(lambda (args)
+			      (apply 'parse-unicode-translation-table
+				     (expand-file-name (car args) undir)
+				     (cdr args)))
+			  (cdr tables))))
 	    parse-args)))
 
 (defun init-unicode-at-startup ()

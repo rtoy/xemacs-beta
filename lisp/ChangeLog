@@ -1,3 +1,35 @@
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* mule\lao.el (?):
+	* mule\lao.el (lao):
+	Convert stuff to XEmacs-style.
+	
+	* mule\thai-xtis.el:
+	* mule\thai-xtis.el (thai-xtis):
+	* mule\thai-xtis.el (?x): New.
+	Move thai-xtis-chars.el stuff to here, since we can now handle
+	encountering characters of a charset before the charset is defined.
+
+	* mule\thai-xtis-chars.el: Removed, moved into thai-xtis.el.
+
+	* mule\mule-msw-init.el: Move some stuff into mule-msw-init-late.el,
+	which references charsets and thus needs to be delayed until after
+	all charsets have been created.
+
+	* mule\mule-msw-init-late.el: New file, some stuff from
+	mule-msw-init.el.
+
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Load the remaining languages -- lao, indian, devanagari, tibetan.
+	Load new file mule-msw-init-late.
+	
+	* unicode.el (load-unicode-tables):
+	* unicode.el (init-unicode-at-startup):
+	Load the new tables for Ethiopic, Vietnamese, and other languages
+	extracted from mule-ucs.
+
 2002-03-16  Ben Wing  <ben@xemacs.org>
 
 	* mule\arabic.el:

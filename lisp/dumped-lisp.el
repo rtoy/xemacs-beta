@@ -148,23 +148,30 @@
 ;;     (pureload "canna")
 ;;   )
 
-;; Now load files to set up all the different languages/environments
-;; that Mule knows about.
+;; Now load files to set up all the different languages/environments that
+;; Mule knows about.  Formerly we had to worry about files shadowed by
+;; those of the same name in leim/quail.el, but no longer, since we now
+;; compile with -no-packages.
 
 	(when-feature mule "arabic")
 	(when-feature mule "chinese")
-	(when-feature mule "mule/cyrillic") ; overloaded in leim/quail
+	(when-feature mule "cyrillic")
 	(when-feature mule "english")
 	(when-feature mule "ethiopic")
 	(when-feature mule "european")
-	(when-feature mule "mule/greek") ; overloaded in leim/quail
+	(when-feature mule "greek")
 	(when-feature mule "hebrew")
+	(when-feature mule "indian")
+	(when-feature mule "devanagari") ; must be loaded after indian.el
 	(when-feature mule "japanese")
 	(when-feature mule "korean")
+	(when-feature mule "lao")
 	(when-feature mule "latin")
 	(when-feature mule "misc-lang")
-	(when-feature mule "thai-xtis-chars")
-	(when-feature mule "mule/thai-xtis") ; overloaded in leim/quail
+	;; #### merge thai and thai-xtis!!!
+	;(when-feature mule "thai")
+	(when-feature mule "thai-xtis")
+	(when-feature mule "tibetan")
 	(when-feature mule "vietnamese")
 
 	;; Specialized language support
@@ -177,10 +184,14 @@
 ;; SKK is now a package
 ;	(when-feature mule "skk-leim")
 
-
 ;; Enable Mule capability for Gnus, mail, etc...
 ;; Moved to sunpro-load.el - the default only for Sun.
 ;;(pureload "mime-setup")
+
+	;; needs access to the charsets created by the above
+	;; language-specific files.
+	(when-feature (and mule mswindows) "mule-msw-init-late")
+
 ;;; mule-load.el ends here
 
 ;; preload InfoDock stuff.  should almost certainly not be here if

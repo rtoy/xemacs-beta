@@ -1,3 +1,11 @@
+2002-03-18  Ben Wing  <ben@xemacs.org>
+
+	* config.inc.samp (DEPEND):
+	* config.inc.samp (PERL_NEEDS_MORE_QUOTING):
+	* xemacs.mak (DEPEND):
+	* xemacs.mak (PERL_NEEDS_MORE_QUOTING):
+	Deal with never-ending perl quoting problems.
+
 2002-03-16  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore:
