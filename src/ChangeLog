@@ -1,3 +1,8 @@
+2001-09-04   Daiki Ueno  <ueno@unixuser.org>
+
+	* insdel.c (prepare_to_modify_buffer): Don't call the function
+	ask-user-about-supersession-threat when CLASH_DETECTION is set.
+
 2002-02-13  Ben Wing  <ben@xemacs.org>
 
 	* event-stream.c (reset_key_echo):
