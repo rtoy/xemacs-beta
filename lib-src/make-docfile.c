@@ -525,9 +525,16 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
       char c = *p;
       int ident_start = 0;
 
-      /* XEmacs addition: add support for ANSI prototypes.  Hop over
-	 "Lisp_Object" string (the only C type allowed in DEFUNs) */
+      /* XEmacs addition:  add support for ANSI prototypes and the UNUSED
+	 macros.  Hop over them.  "Lisp_Object" is the only C type allowed
+	 in DEFUNs.  For the UNUSED macros we need to eat parens, too. */
+      static char uu [] = "UNUSED";
+      static char ui [] = "USED_IF_";
       static char lo[] = "Lisp_Object";
+
+      /* aren't these all vulnerable to buffer overrun?  I guess that
+	 means that the .c is busted, so we may as well just die ... */
+      /* skip over "Lisp_Object" */
       if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
 	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
 	  isspace ((unsigned char) p[sizeof (lo) - 1]))
@@ -536,6 +543,45 @@ write_c_args (FILE *out, const char *UNUSED (func), char *buf,
 	  while (isspace ((unsigned char) (*p)))
 	    p++;
 	  c = *p;
+	}
+
+      /* skip over "UNUSED" invocation */
+      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
+	  (strncmp (p, uu, sizeof (uu) - 1) == 0))
+	{
+	  char *here = p;
+	  p += (sizeof (uu) - 1);
+	  while (isspace ((unsigned char) (*p)))
+	    p++;
+	  if (*p == '(')
+	    {
+	      while (isspace ((unsigned char) (*++p)))
+		;
+	      c = *p;
+	    }
+	  else
+	    p = here;
+	}
+
+      /* skip over "USED_IF_*" invocation (only if USED failed) */
+      else if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
+	  (strncmp (p, ui, sizeof (ui) - 1) == 0))
+	{
+	  char *here = p;
+	  p += (sizeof (ui) - 1);
+	  /* There should be a law against parsing in C:
+	     this allows a broken USED_IF call, skipping to next macro's
+	     parens.  *You* can fix that, I don't see how offhand. ;-) */
+	  while (*p && *p++ != '(')
+	    ;
+	  if (*p)
+	    {
+	      while (isspace ((unsigned char) (*p)))
+		p++;
+	      c = *p;
+	    }
+	  else
+	    p = here;
 	}
 
       /* Notice when we start printing a new identifier.  */
@@ -836,6 +882,7 @@ scan_c_file (const char *filename, const char *mode)
 	  if (defunflag && maxargs != -1)
 	    {
 	      char argbuf[1024], *p = argbuf;
+	      int paren_level = 1;
 #if 0				/* For old DEFUN's only */
 	      while (c != ')')
 		{
@@ -858,8 +905,13 @@ scan_c_file (const char *filename, const char *mode)
 		  *p++ = c = getc (infile);
 		  if (c < 0)
 		    goto eof;
+		  /* XEmacs change: handle macros with args (eg, UNUSED) */
+		  if (c == ')')
+		    paren_level--;
+		  if (c == '(')
+		    paren_level++;
 		}
-	      while (c != ')');
+	      while (paren_level > 0);
 	      *p = '\0';
 	      /* Output them.  */
 	      if (ellcc)

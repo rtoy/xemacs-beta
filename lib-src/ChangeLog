@@ -1,3 +1,8 @@
+2004-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* make-docfile.c (write_c_args): Handle UNUSED, USED_IF macros.
+	(scan_c_file): Handle nested parens in DEFUN argument lists.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.
