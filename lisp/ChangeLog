@@ -1,3 +1,8 @@
+2004-09-20  Martin Buchholz <martin@xemacs.org>
+
+	* itimer.el (set-itimer-name): New function.
+	(start-itimer): Use it.
+
 2003-12-12  Katsumi Yamaoka  <yamaoka@jpl.org>
 
 	* itimer.el (activate-itimer): Modify the itimer timeout value as

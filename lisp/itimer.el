@@ -25,11 +25,13 @@
 ;; `itimer' feature means Emacs-Lisp programmers get:
 ;;    itimerp
 ;;    itimer-live-p
+;;    itimer-name
 ;;    itimer-value
 ;;    itimer-restart
 ;;    itimer-function
 ;;    itimer-uses-arguments
 ;;    itimer-function-arguments
+;;    set-itimer-name
 ;;    set-itimer-value
 ;;    set-itimer-restart
 ;;    set-itimer-function
@@ -218,6 +220,19 @@ ITIMER's function is called with these arguments each time ITIMER expires."
   (check-itimer itimer)
   (nth 7 itimer))
 
+(defun set-itimer-name (itimer name)
+  "Set the name of ITIMER to be NAME.
+NAME is an identifier for the itimer.  It must be a string.  If an itimer
+already exists with this name, NAME will be modified slightly to make it
+unique."
+  (check-string name)
+  (let ((oname name)
+	(num 2))
+    (while (get-itimer name)
+      (setq name (format "%s<%d>" oname num))
+      (itimer-increment num)))
+  (setcar itimer name))
+
 (defun set-itimer-value (itimer value)
   "Set the timeout value of ITIMER to be VALUE.
 Itimer will expire in this many seconds.
@@ -352,15 +367,10 @@ Returns the newly created itimer."
 	 ;; hard to imagine the user specifying these interactively
 	 nil
 	 nil ))
-  (check-string name)
   (check-nonnegative-number value)
   (if restart (check-nonnegative-number restart))
   ;; Make proposed itimer name unique if it's not already.
-  (let ((oname name)
-	(num 2))
-    (while (get-itimer name)
-      (setq name (format "%s<%d>" oname num))
-      (itimer-increment num)))
+  (set-itimer-name name)
   (activate-itimer (list name value restart function is-idle
 			 with-args function-arguments (list 0 0 0)))
   (car itimer-list))
