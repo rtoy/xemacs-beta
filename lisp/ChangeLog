@@ -1,3 +1,8 @@
+2002-04-07  William M. Perry  <wmperry@gnu.org>
+
+	* startup.el (command-line): Don't call init-menubar-at-startup
+	unless we were built with menubar support.
+
 2002-03-19  Daiki Ueno  <daiki@xemacs.org>
 
 	* mule/japanese.el: Don't quote function expressions listed as

@@ -718,7 +718,8 @@ If this is nil, no message will be displayed.")
     ;; Actually using hooks within Emacs is bad for future maintenance. --rms.
     ;;
     ;; In this case, I completely agree. --ben
-    (init-menubar-at-startup)
+    (if (featurep 'menubar)
+	(init-menubar-at-startup))
     ;; perhaps this should go earlier in the proecess?
     (if (featurep 'mule)
 	(declare-fboundp (init-mule-at-startup)))
