@@ -1,3 +1,7 @@
+2005-02-24  Andrey Slusar  <anrays@gmail.com>
+
+        * unexelf.c: define `Elfw(type)' for FreeBSD alpha and amd64. 
+
 2005-03-25  Marcus Crestani  <crestani@xemacs.org>
 
 	* device-x.c: Include process.h for egetenv.

@@ -1,3 +1,9 @@
+2005-03-25  Andrey Slusar  <anrays@gmail.com>
+ 
+        * fakemail.c (CURRENT_USER): Define it if FreeBSD version is >= 
+        400000.  Also, when FreeBSD version is >= 400000 geteuid returns 
+        uid_t instead of unsigned short. 
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.
