@@ -1,3 +1,7 @@
+2004-09-29  Jerry James  <james@xemacs.org>
+
+	* configure.in: Don't use -Wunused-parameter with g++.
+
 2004-09-21  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* configure.in: Unused parameter and variables warnings are GCC 3

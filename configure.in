@@ -2059,9 +2059,7 @@ if test "$cflags_warning_specified" = "no"; then
     dnl Yuck, bad compares have been worth at least 3 crashes!
     cflags_warning="$cflags_warning -Wsign-compare"
     cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"
-    if test "$__GCC3" = "yes"; then
-      cflags_warning="$cflags_warning -Wpacked -Wunused-parameter -Wunused-variable"
-    fi
+    test "$__GCC3" = "yes" && cflags_warning="$cflags_warning -Wpacked"
     dnl glibc is intentionally not `-Wpointer-arith'-clean.
     dnl Ulrich Drepper has rejected patches to fix the glibc header files.
     test "$have_glibc" != "yes" && \
@@ -2073,8 +2071,13 @@ if test "$cflags_warning_specified" = "no"; then
     dnl complaints about parameters with the same names as global functions.
     dnl There is no -Wmissing-declarations under g++.
     dnl But gcc warns about -Weffc++ in C compiles.
-    test "$xemacs_compiler" = "g++" && \
+    dnl With g++, there is no effective way to use -Wunused-parameter without
+    dnl some very ugly code changes.
+    if test "$xemacs_compiler" = "g++"; then
       xe_cflags_warning="$cflags_warning -Weffc++"
+    elif test "$__GCC3" = "yes"; then
+      xe_cflags_warning="$cflags_warning -Wunused-parameter"
+    fi
     cflags_warning="$cflags_warning -Wshadow -Wmissing-declarations"
     dnl **** If more gcc/g++ flags are added, from here on must handle
     dnl **** cflags_warning and xe_cflags_warning in parallel
