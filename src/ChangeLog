@@ -1,3 +1,21 @@
+2002-11-25  Mike Sperber <mike@xemacs.org>
+
+	* frame.c (frame_conversion_internal): Convert pixel_to_char
+	argument to an enum; allow additional option
+	CHAR_TO_DISPLAYABLE_PIXEL.
+	* frame.c (Fset_frame_pixel_height): Make `set-frame-pixel-height'
+	conform to `frame-pixel-height'.
+	(Fset_frame_displayable_pixel_height): New function, equivalent to
+	old `set-frame-pixel-height'.
+	(Fset_frame_width): Make `set-frame-pixel-width conform to
+	`frame-pixel-width'.
+	(Fset_frame_displayable_pixel_width): New function, equivalent to
+	old `set-frame-pixel-width'.
+	(Fset_frame_pixel_size): Make `set-frame-pixel-size conform to
+	`frame-pixel-height' and `frame-pixel-width'.
+	(Fset_frame_displayable_pixel_size): New function, equivalent to
+	old `set-frame-size'.
+
 2002-11-30  Ben Wing  <ben@xemacs.org>
 
 	* eval.c:
