@@ -1,3 +1,47 @@
+2002-08-13  David Bush  <David.Bush@intel.com>
+
+	* device-msw.c: Correct initialization list for devmode_description
+	Add dumpable flag to msprinter-settings for USE_KKCC
+	* dialog-msw.c: Add dumpable flag to mswindows-dialog-id for USE_KKCC
+	* event-msw.c (mswindows_enqueue_misc_user_event): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_enqueue_magic_event): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_enqueue_process_event): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_enqueue_mouse_button_event): Reorder
+	event setup so event type is set first to support USE_KKCC.
+	For USE_KKCC use mutator macros to set event parameters
+	* event-msw.c (mswindows_enqueue_keypress_event): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_dequeue_dispatch_event): With USE_KKCC
+	use accessor to get and mutator macros to set event parameters
+	* event-msw.c (mswindows_cancel_dispatch_event): With USE_KKCC
+	use accessor macros to get event parameters
+	* event-msw.c (mswindows_wm_timer_callback): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_dde_callback): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (mswindows_wnd_proc): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (emacs_mswindows_remove_timeout): With USE_KKCC
+	use mutator macros to set event parameters
+	* event-msw.c (emacs_mswindows_format_magic_event): With USE_KKCC
+	use accessor macro to access magic event type
+	* event-msw.c (emacs_mswindows_compare_magic_event): With USE_KKCC
+	use accessor macro to access magic event type
+	* event-msw.c (emacs_mswindows_hash_magic_event): With USE_KKCC
+	use accessor macro to access magic event type
+	* event-msw.c (emacs_mswindows_handle_magic_event): With USE_KKCC
+	use accessor macro to access magic event type and event data
+	* event-msw.c (emacs_mswindows_quit_p): With USE_KKCC use event
+	accessor and mutator macros to get/set event parameters
+	* gui-msw.c (mswindows_handle_gui_wm_command): For USE_KKCC
+	use mutator macros to set event parameters.  Make the event
+	data type match the event type.
+	* menubar-msw.c (mswindows_popup_menu): With USE_KKCC use
+	accessor macros to extract button position
+
 2002-08-12  David Bush  <David.Bush@intel.com>
 
 	* events.c: Use DEFINE_BASIC_LRECORD_IMPLEMENTATION instead of

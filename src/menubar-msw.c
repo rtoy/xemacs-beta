@@ -888,8 +888,13 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   /* Default is to put the menu at the point (10, 10) in frame */
   if (eev)
     {
+#ifdef USE_KKCC
+      pt.x = XBUTTON_DATA_X (EVENT_DATA (eev));
+      pt.y = XBUTTON_DATA_Y (EVENT_DATA (eev));
+#else /* not USE_KKCC */
       pt.x = eev->event.button.x;
       pt.y = eev->event.button.y;
+#endif /* not USE_KKCC */
       ClientToScreen (FRAME_MSWINDOWS_HANDLE (f), &pt);
     }
   else

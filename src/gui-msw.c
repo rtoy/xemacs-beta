@@ -64,12 +64,21 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
     {
       event = Fmake_event (Qnil, Qnil);
 
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (event, misc_user_event);
+      XSET_EVENT_CHANNEL (event, frame);
+      XSET_EVENT_TIMESTAMP (event, GetTickCount());
+      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qeval);
+      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event),
+			     list4 (Qfuncall, callback_ex, image_instance, event));
+#else /* not USE_KKCC */
       XEVENT (event)->event_type = misc_user_event;
       XEVENT (event)->channel = frame;
       XEVENT (event)->timestamp = GetTickCount ();
       XEVENT (event)->event.eval.function = Qeval;
       XEVENT (event)->event.eval.object =
 	list4 (Qfuncall, callback_ex, image_instance, event);
+#endif /* not USE_KKCC */
     }
   else if (NILP (callback) || UNBOUNDP (callback))
     return Qnil;
@@ -80,11 +89,19 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
       event = Fmake_event (Qnil, Qnil);
 
       get_gui_callback (callback, &fn, &arg);
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (event, misc_user_event);
+      XSET_EVENT_CHANNEL (event, frame);
+      XSET_EVENT_TIMESTAMP (event, GetTickCount());
+      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), fn);
+      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), arg);
+#else /* not USE_KKCC */
       XEVENT (event)->event_type = misc_user_event;
       XEVENT (event)->channel = frame;
       XEVENT (event)->timestamp = GetTickCount ();
       XEVENT (event)->event.eval.function = fn;
       XEVENT (event)->event.eval.object = arg;
+#endif /* not USE_KKCC */
     }
 
   mswindows_enqueue_dispatch_event (event);

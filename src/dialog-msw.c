@@ -187,6 +187,7 @@ mark_mswindows_dialog_id (Lisp_Object obj)
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("mswindows-dialog-id", mswindows_dialog_id,
+			       0, /* dump-able flag */
 			       mark_mswindows_dialog_id,
 			       internal_object_printer, 0, 0, 0, 
 			       mswindows_dialog_id_description,

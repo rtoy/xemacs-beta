@@ -949,6 +949,15 @@ mswindows_enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 				   Lisp_Object object)
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
+
+#ifdef USE_KKCC
+
+  XSET_EVENT_TYPE (event, misc_user_event);
+  XSET_EVENT_CHANNEL (event, channel);
+  XSET_EVENT_TIMESTAMP (event, GetTickCount());
+  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), function);
+  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), object);
+#else /* not USE_KKCC */
   Lisp_Event *e = XEVENT (event);
 
   e->event_type = misc_user_event;
@@ -956,6 +965,7 @@ mswindows_enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
   e->timestamp = GetTickCount ();
   e->event.misc.function = function;
   e->event.misc.object = object;
+#endif /* not USE_KKCC */
 
   mswindows_enqueue_dispatch_event (event);
 }
@@ -964,12 +974,20 @@ void
 mswindows_enqueue_magic_event (HWND hwnd, UINT msg)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+
+#ifdef USE_KKCC
+  XSET_EVENT_CHANNEL (emacs_event, (hwnd ? mswindows_find_frame (hwnd) : Qnil));
+  XSET_EVENT_TIMESTAMP (emacs_event, GetMessageTime ());
+  XSET_EVENT_TYPE (emacs_event, magic_event);
+  XSET_MAGIC_DATA_MSWINDOWS_EVENT (XEVENT_DATA(emacs_event), msg);
+#else /* not USE_KKCC */
   Lisp_Event *event = XEVENT (emacs_event);
 
   event->channel = hwnd ? mswindows_find_frame (hwnd) : Qnil;
   event->timestamp = GetMessageTime();
   event->event_type = magic_event;
   EVENT_MSWINDOWS_MAGIC_TYPE (event) = msg;
+#endif /* not USE_KKCC */
 
   mswindows_enqueue_dispatch_event (emacs_event);
 }
@@ -982,9 +1000,15 @@ mswindows_enqueue_process_event (Lisp_Process *p)
   Lisp_Object process = wrap_process (p);
 
 
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (emacs_event, process_event);
+  XSET_EVENT_TIMESTAMP (emacs_event, GetTickCount());
+  XSET_PROCESS_DATA_PROCESS (XEVENT_DATA (emacs_event), process);
+#else /* not USE_KKCC */
   event->event_type = process_event;
   event->timestamp  = GetTickCount ();
   event->event.process.process = process;
+#endif /* not USE_KKCC */
 
   mswindows_enqueue_dispatch_event (emacs_event);
 }
@@ -1004,6 +1028,35 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT msg, POINTS where,
   Lisp_Event *event = XEVENT (emacs_event);
 
   mswindows_handle_sticky_modifiers (0, 0, downp, 0);
+
+  if (downp)
+    {
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (emacs_event, button_press_event);
+#else /* not USE_KKCC */
+      event->event_type = button_press_event;
+#endif /* not USE_KKCC */
+    }
+  else
+    {
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (emacs_event, button_release_event);
+#else /* not USE_KKCC */
+      event->event_type = button_release_event;
+#endif /* not USE_KKCC */
+    }
+
+#ifdef USE_KKCC
+  XSET_EVENT_CHANNEL (emacs_event, mswindows_find_frame (hwnd));
+  XSET_EVENT_TIMESTAMP (emacs_event, when);
+  XSET_BUTTON_DATA_BUTTON (XEVENT_DATA (emacs_event), 
+	 (msg==WM_LBUTTONDOWN || msg==WM_LBUTTONUP) ? 1 :
+	 ((msg==WM_RBUTTONDOWN || msg==WM_RBUTTONUP) ? 3 : 2));
+  XSET_BUTTON_DATA_X (XEVENT_DATA (emacs_event), where.x);
+  XSET_BUTTON_DATA_Y (XEVENT_DATA (emacs_event), where.y);
+  XSET_BUTTON_DATA_MODIFIERS (XEVENT_DATA (emacs_event),
+			      mswindows_modifier_state (NULL, mods, 0));
+#else /* not USE_KKCC */
   event->channel = mswindows_find_frame (hwnd);
   event->timestamp = when;
   event->event.button.button =
@@ -1012,10 +1065,10 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT msg, POINTS where,
   event->event.button.x = where.x;
   event->event.button.y = where.y;
   event->event.button.modifiers = mswindows_modifier_state (NULL, mods, 0);
+#endif /* not USE_KKCC */
 
   if (downp)
     {
-      event->event_type = button_press_event;
       SetCapture (hwnd);
       /* we need this to make sure the main window regains the focus
          from control subwindows */
@@ -1027,7 +1080,6 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT msg, POINTS where,
     }
   else
     {
-      event->event_type = button_release_event;
       ReleaseCapture ();
     }
 
@@ -1038,6 +1090,14 @@ static Lisp_Object
 mswindows_enqueue_keypress_event (HWND hwnd, Lisp_Object keysym, int mods)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+
+#ifdef USE_KKCC
+  XSET_EVENT_CHANNEL (emacs_event,  mswindows_find_console(hwnd));
+  XSET_EVENT_TIMESTAMP (emacs_event, GetMessageTime());
+  XSET_EVENT_TYPE (emacs_event, key_press_event);
+  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (emacs_event), keysym);
+  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (emacs_event), mods);
+#else /* not USE_KKCC */
   Lisp_Event *event = XEVENT(emacs_event);
 
   event->channel = mswindows_find_console(hwnd);
@@ -1045,6 +1105,7 @@ mswindows_enqueue_keypress_event (HWND hwnd, Lisp_Object keysym, int mods)
   event->event_type = key_press_event;
   event->event.key.keysym = keysym;
   event->event.key.modifiers = mods;
+#endif /* not USE_KKCC */
   mswindows_enqueue_dispatch_event (emacs_event);
   return emacs_event;
 }
@@ -1070,11 +1131,19 @@ mswindows_dequeue_dispatch_event (void)
 			 &mswindows_s_dispatch_event_queue_tail :
 			 &mswindows_u_dispatch_event_queue_tail);
 
+#ifdef USE_KKCC
+  if (XEVENT_TYPE (event) == key_press_event
+      && (XKEY_DATA_MODIFIERS (XEVENT_DATA(event)) & FAKE_MOD_QUIT))
+    XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), 
+			    XKEY_DATA_MODIFIERS (XEVENT_DATA (event)) &
+						 ~(FAKE_MOD_QUIT | FAKE_MOD_QUIT_CRITICAL));
+#else /* not USE_KKCC */
   sevt = XEVENT (event);
   if (sevt->event_type == key_press_event
       && (sevt->event.key.modifiers & FAKE_MOD_QUIT))
     sevt->event.key.modifiers &=
       ~(FAKE_MOD_QUIT | FAKE_MOD_QUIT_CRITICAL);
+#endif /* not USE_KKCC */
 
   return event;
 }
@@ -1105,11 +1174,20 @@ mswindows_cancel_dispatch_event (Lisp_Event *match)
   EVENT_CHAIN_LOOP (event, *head)
     {
       Lisp_Event *e = XEVENT (event);
+#ifdef USE_KKCC
+      if ((EVENT_TYPE (e) == EVENT_TYPE (match)) &&
+	  ((EVENT_TYPE (e) == timeout_event) ?
+	   (XTIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (e)) ==
+	    XTIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (match))) :
+	   ((XKEY_DATA_MODIFIERS (EVENT_DATA (e)) &
+	     XKEY_DATA_MODIFIERS (EVENT_DATA (match))) != 0)))
+#else /* not USE_KKCC */
       if ((e->event_type == match->event_type) &&
 	  ((e->event_type == timeout_event) ?
 	   (e->event.timeout.interval_id == match->event.timeout.interval_id) :
 	   /* Must be key_press_event */
 	   ((e->event.key.modifiers & match->event.key.modifiers) != 0)))
+#endif /* not USE_KKCC */
 	{
 	  if (NILP (previous_event))
 	    dequeue_event (head, tail);
@@ -1728,12 +1806,21 @@ mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
   if (KillTimer (NULL, id_timer))
     --mswindows_pending_timers_count;
 
+#ifdef USE_KKCC
+  XSET_EVENT_CHANNEL (emacs_event, Qnil);
+  XSET_EVENT_TIMESTAMP (emacs_event, dwtime);
+  XSET_EVENT_TYPE (emacs_event, timeout_event);
+  XSET_TIMEOUT_DATA_INTERVAL_ID (XEVENT_DATA(emacs_event), id_timer);
+  XSET_TIMEOUT_DATA_FUNCTION (XEVENT_DATA(emacs_event), Qnil);
+  XSET_TIMEOUT_DATA_OBJECT (XEVENT_DATA(emacs_event), Qnil);
+#else /* not USE_KKCC */
   event->channel = Qnil;
   event->timestamp = dwtime;
   event->event_type = timeout_event;
   event->event.timeout.interval_id = id_timer;
   event->event.timeout.function = Qnil;
   event->event.timeout.object = Qnil;
+#endif /* not USE_KKCC */
 
   mswindows_enqueue_dispatch_event (emacs_event);
 }
@@ -2175,6 +2262,19 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	    };
 	  assert (!NILP (event->channel));
 
+#ifdef USE_KKCC
+	  SET_EVENT_TIMESTAMP (event, GetTickCount());
+	  SET_EVENT_TYPE (event, misc_user_event);
+	  XSET_MISC_USER_DATA_BUTTON (EVENT_DATA (event), 1);
+	  XSET_MISC_USER_DATA_MODIFIERS (EVENT_DATA (event), 0);
+	  XSET_MISC_USER_DATA_X (EVENT_DATA (event), -1);
+	  XSET_MISC_USER_DATA_Y (EVENT_DATA (event), -1);
+	  XSET_MISC_USER_DATA_FUNCTION (EVENT_DATA (event),
+					Qdragdrop_drop_dispatch);
+	  XSET_MISC_USER_DATA_OBJECT (EVENT_DATA (event),
+				      Fcons (Qdragdrop_URL,
+					    Fcons (l_dndlist, Qnil)));
+#else /* not USE_KKCC */
 	  event->timestamp = GetTickCount();
 	  event->event_type = misc_user_event;
 	  event->event.misc.button = 1;
@@ -2184,6 +2284,7 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	  event->event.misc.function = Qdragdrop_drop_dispatch;
 	  event->event.misc.object = Fcons (Qdragdrop_URL,
 					    Fcons (l_dndlist, Qnil));
+#endif /* not USE_KKCC */
 	  mswindows_enqueue_dispatch_event (emacs_event);
 	  UNGCPRO;
 	  return (HDDEDATA) DDE_FACK;
@@ -3218,6 +3319,15 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  emacs_event = Fmake_event (Qnil, Qnil);
 	  event = XEVENT(emacs_event);
 
+#ifdef USE_KKCC
+	  XSET_EVENT_CHANNEL (emacs_event,  mswindows_find_frame(hwnd));
+	  XSET_EVENT_TIMESTAMP (emacs_event, GetMessageTime());
+	  XSET_EVENT_TYPE (emacs_event, pointer_motion_event);
+	  XSET_MOTION_DATA_X (XEVENT_DATA (emacs_event),MAKEPOINTS (lParam).x);
+	  XSET_MOTION_DATA_Y (XEVENT_DATA (emacs_event),MAKEPOINTS (lParam).y);
+	  XSET_MOTION_DATA_MODIFIERS (XEVENT_DATA(emacs_event),
+                                mswindows_modifier_state (NULL, wParam, 0));
+#else /* not USE_KKCC */	  
 	  event->channel = mswindows_find_frame (hwnd);
 	  event->timestamp = GetMessageTime ();
 	  event->event_type = pointer_motion_event;
@@ -3225,6 +3335,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  event->event.motion.y = MAKEPOINTS (lParam).y;
 	  event->event.motion.modifiers =
 	    mswindows_modifier_state (NULL, wParam, 0);
+#endif /* not USE_KKCC */
 
 	  mswindows_enqueue_dispatch_event (emacs_event);
 	}
@@ -3745,6 +3856,18 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	if (!DragQueryPoint ((HDROP) wParam, &point))
 	  point.x = point.y = -1; /* outside client area */
 
+#ifdef USE_KKCC
+	XSET_EVENT_TYPE (emacs_event, misc_user_event);
+	XSET_EVENT_CHANNEL (emacs_event,  mswindows_find_frame(hwnd));
+	XSET_EVENT_TIMESTAMP (emacs_event, GetMessageTime());
+	XSET_MISC_USER_DATA_BUTTON (XEVENT_DATA (emacs_event), 1);
+	XSET_MISC_USER_DATA_MODIFIERS (XEVENT_DATA (emacs_event),
+              mswindows_modifier_state (NULL, (DWORD) -1, 0));
+	XSET_MISC_USER_DATA_X (XEVENT_DATA (emacs_event), point.x);
+	XSET_MISC_USER_DATA_Y (XEVENT_DATA (emacs_event), point.y);
+	XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (emacs_event),
+					Qdragdrop_drop_dispatch);
+#else /* not USE_KKCC */
 	event->event_type = misc_user_event;
 	event->channel = mswindows_find_frame (hwnd);
 	event->timestamp = GetMessageTime();
@@ -3754,6 +3877,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	event->event.misc.x = point.x;
 	event->event.misc.y = point.y;
 	event->event.misc.function = Qdragdrop_drop_dispatch;
+#endif /* not USE_KKCC */
 
 	filecount = qxeDragQueryFile ((HDROP) wParam, 0xffffffff, NULL, 0);
 	for (i = 0; i < filecount; i++)
@@ -3929,7 +4053,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	DragFinish ((HDROP) wParam);
 
+#ifdef USE_KKCC
+	XSET_MISC_USER_DATA_OBJECT (EVENT_DATA (event),
+				    Fcons (Qdragdrop_URL, l_dndlist));
+#else /* not USE_KKCC */
 	event->event.misc.object = Fcons (Qdragdrop_URL, l_dndlist);
+#endif /* not USE_KKCC */
 	mswindows_enqueue_dispatch_event (emacs_event);
 	UNGCPRO;
       }
@@ -4383,8 +4512,13 @@ emacs_mswindows_remove_timeout (int id)
 
   /* If there is a dispatch event generated by this
      timeout in the queue, we have to remove it too. */
+#ifdef USE_KKCC
+  SET_EVENT_TYPE(&match_against, timeout_event);
+  XSET_TIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (&match_against), id);
+#else /* not USE_KKCC */
   match_against.event_type = timeout_event;
   match_against.event.timeout.interval_id = id;
+#endif /* not USE_KKCC */
   emacs_event = mswindows_cancel_dispatch_event (&match_against);
   if (!NILP (emacs_event))
     Fdeallocate_event(emacs_event);
@@ -4429,7 +4563,11 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
 {
 #define FROB(msg) case msg: write_c_string (pstream, "type=" #msg); break
 
+#ifdef USE_KKCC
+  switch (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA(emacs_event)))
+#else /* not USE_KKCC */
   switch (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event))
+#endif /* not USE_KKCC */
     {
       FROB (XM_BUMPQUEUE);
       FROB (WM_PAINT);
@@ -4452,14 +4590,23 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
 static int
 emacs_mswindows_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
 {
+#ifdef USE_KKCC
+  return (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e1)) ==
+	  XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e2)));
+#else /* not USE_KKCC */
   return (e1->event.magic.underlying_mswindows_event ==
 	  e2->event.magic.underlying_mswindows_event);
+#endif /* not USE_KKCC */
 }
 
 static Hashcode
 emacs_mswindows_hash_magic_event (Lisp_Event *e)
 {
+#ifdef USE_KKCC
+  return (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e)));
+#else /* not USE_KKCC */
   return e->event.magic.underlying_mswindows_event;
+#endif /* not USE_KKCC */
 }
 
 /*
@@ -4468,7 +4615,11 @@ emacs_mswindows_hash_magic_event (Lisp_Event *e)
 static void
 emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
 {
+#ifdef USE_KKCC
+  switch (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA(emacs_event)))
+#else /* not USE_KKCC */
   switch (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event))
+#endif /* not USE_KKCC */
     {
     case XM_BUMPQUEUE:
       break;
@@ -4486,7 +4637,12 @@ emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
       {
 	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
 	struct frame *f = XFRAME (frame);
+#ifdef USE_KKCC
+	int in_p = (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA(emacs_event))
+		    == WM_SETFOCUS);
+#else /* not USE_KKCC */
 	int in_p = (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event) == WM_SETFOCUS);
+#endif /* not USE_KKCC */
 	Lisp_Object conser;
 	struct gcpro gcpro1;
 
@@ -4509,7 +4665,11 @@ emacs_mswindows_handle_magic_event (Lisp_Event *emacs_event)
     case XM_UNMAPFRAME:
       {
 	Lisp_Object frame = EVENT_CHANNEL (emacs_event);
+#ifdef USE_KKCC
+	va_run_hook_with_args (XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA(emacs_event))
+#else /* not USE_KKCC */
 	va_run_hook_with_args (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event)
+#endif /* not USE_KKCC */
 			       == XM_MAPFRAME ?
 			       Qmap_frame_hook : Qunmap_frame_hook,
 			       1, frame);
@@ -4680,15 +4840,24 @@ emacs_mswindows_quit_p (void)
       Lisp_Object emacs_event;
       int critical_p = 0;
 
+#ifdef USE_KKCC
+      SET_EVENT_TYPE (&match_against, key_press_event);
+      XSET_KEY_DATA_MODIFIERS (EVENT_DATA (&match_against), FAKE_MOD_QUIT);
+#else /* not USE_KKCC */
       match_against.event_type = key_press_event;
       match_against.event.key.modifiers = FAKE_MOD_QUIT;
+#endif /* not USE_KKCC */
 
       while (mswindows_quit_chars_count > 0)
 	{
 	  emacs_event = mswindows_cancel_dispatch_event (&match_against);
 	  assert (!NILP (emacs_event));
 
+#ifdef USE_KKCC
+	  if (XKEY_DATA_MODIFIERS (XEVENT_DATA(emacs_event)) &
+#else /* not USE_KKCC */
 	  if (XEVENT (emacs_event)->event.key.modifiers &
+#endif /* not USE_KKCC */
 	      FAKE_MOD_QUIT_CRITICAL)
 	    critical_p = 1;
 

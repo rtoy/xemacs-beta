@@ -1077,7 +1077,7 @@ Return value is the currently selected settings object.
 #ifdef USE_KKCC
 static const struct lrecord_description devmode_description[] = {
   { XD_LISP_OBJECT, offsetof (struct Lisp_Devmode, printer_name) },
-  { XD_LISP_OBJECT, offsetof (struct Lisp_Devmode, device) }
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Devmode, device) },
   { XD_END }
 };
 #endif /* USE_KKCC */
@@ -1153,6 +1153,7 @@ hash_devmode (Lisp_Object obj, int depth)
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("msprinter-settings", devmode,
+			       0, /*dumpable-flag*/
 			       mark_devmode, print_devmode, finalize_devmode,
 			       equal_devmode, hash_devmode, 
 			       devmode_description,
