@@ -1,3 +1,7 @@
+2005-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* CHANGES-beta: Update.
+
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
 	* BUGS, README.packages: Delete, incorporate into FAQ.

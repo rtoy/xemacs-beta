@@ -1,3 +1,129 @@
+to 21.5.19 "chives"
+
+Major Features
+
+-- Improve: major reorganization of source tree docs. (Ben Wing)
+-- Improve: behaviors get new code and many new implementations. (Ben Wing)
+
+User-Visible Bug Fixes and Minor Improvements
+
+-- Fix: security hole (CAN-2005-0100) in movemail. (Vin Shelton)
+-- Fix: data truncation in i.c. (Ben Wing)
+-- Fix: region deletion bug. (Stephen Turnbull)
+-- Fix: crash in Frecord_buffer. (Yoshiki Hayashi)
+-- Fix: Metacity maximize bug. (Stephen Turnbull)
+-- Fix: data truncation bugs in unix_send_process. (David Evers, Jerry James)
+-- Fix: recognise AltGr as a valid modifier in GTK. (Malcolm Purvis)
+-- Fix: recognize ISO keysyms. (Ville Skyttä)
+-- New: on Windows, dump Unicode tables to allow non-ASCII invocation.
+   (Ben Wing)
+-- New: splash screen. (Ben Wing)
+-- New: support treating shortcuts under Windows as symbolic links. (Ben Wing)
+-- Improve: GNU-compatible coding system aliases. (Aidan Kehoe)
+-- Improve: help system. (Ben Wing)
+-- Improve: mouse-track. (Ben Wing)
+-- Improve: support ISO 8859/16 by default. (Aidan Kehoe)
+
+Build Infrastructure
+
+-- Fix: copy BUGS, README, COPYING and Installation on installation on
+   Windows. (Ben Wing)
+-- Fix: installation for Cygwin. (Marcus Crestani)
+-- Fix: various build problems. (Ben Wing)
+-- Fix: various things in configure. (Ben Wing)
+-- New: default pdump on for Cygwin. (Marcus Crestani)
+-- New: support NetBSD sound via Linux API. (Aidan Kehoe)
+-- Improve: generation of CFLAGS (Jerry James, Ben Wing)
+-- Improve: parallel build support. (Malcolm Purvis)
+-- Improve: support --package-prefix as simple interface to --package-path
+   facility. (Ben Wing)
+-- Improve: support mmdf and pop arguments to --mail-locking. (Ben Wing)
+
+Documentation
+
+-- Fix: beta.texi. (Stephen Turnbull, Robert Royar)
+-- Fix: typos. (Alexey Mahotkin, Andreas Eder)
+-- New: "Future Work -- Better Rendering Support". (Stephen turnbull)
+-- New: "Future Work" collects feature proposals in Internals. (Ben Wing)
+-- New: empty ChangeLog entry. (Ben Wing)
+-- New: personal photos. (Malcolm Purvis)
+-- Improve: Lispref (Shyamal Prasad, Stephen Turnbull, Aidan Kehoe)
+-- Improve: Users' Guide. (Ben Wing)
+-- Improve: about.el. (Malcolm Purvis, Ben Wing)
+-- Improve: docstrings. (Ben Wing, Stephen Turnbull, Adrian Aichner,
+   Aidan Kehoe)
+-- Improve: gnuserv docs. (Stephen J. Turnbull)
+-- Improve: incorporate source tree docs in FAQ. (Ben Wing)
+-- Improve: major overhauls of FAQ, Internals. (Ben Wing)
+-- Improve: various comments. (Ben Wing)
+
+Lisp API
+
+-- Improve: sync bytecomp-runtime.el (make-obsolete, make-obsolete-variable).
+   (Ville Skyttä)
+-- Improve: sync paragraphs.el, custom.el, subr.el, newcomment.el,
+   fill.el, page.el, register.el. (Ben Wing)
+-- New: move regexp-opt.el and easy-mmode.el from packages to core. (Ben Wing)
+-- New: next/previous-single-char-property-change and make
+   next/previous-single-property-change work like in FSF. (Ben Wing)
+-- New: xemacs-font-lock-c-keywords and friends. (Ben Wing)
+
+Internal API and Implementation
+
+-- Fix: ^M brokenness in res.rc. (Ben Wing)
+-- Fix: adapt to recent changes in Cygwin. (Ben Wing)
+-- Fix: byte-char conversion, should speed up Mule if there are
+   non-ASCII characters in the buffer. (Ben Wing)
+-- Fix: coding cookie recognition in .elc. (Ben Wing)
+-- Fix: data-in-executable problems. (Olivier Galibert, Ben Wing)
+-- Fix: find-coding-system-magic-cookie-in-file. (Ben Wing)
+-- Fix: leaking process handles. (Ben Wing)
+-- Fix: only call device method compute_scrollbar_instance_usage() if it
+   is defined. (Zajcev Evgeny)
+-- Fix: protect callers of MSFT syscalls from MSFT API randomization.
+   (Ben Wing)
+-- Fix: typos. (Robert Royar)
+-- Fix: warnings. (Aidan Kehoe, Ben Wing)
+-- New: Hashcode type. (Ben Wing)
+-- New: color API. (Ben Wing)
+-- New: rename abort() macro to ABORT() to placate VC 7. (Ben Wing)
+-- Improve: GCPRO macros. (Ben Wing)
+-- Improve: Mule-ize various things. (Ben Wing)
+-- Improve: Suppress aliasing warning in free_hook; Jerry says not a fix?
+   (Ben Wing)
+-- Improve: UNUSED parameter marking, UNO support. (Malcolm Purvis,
+   Jerry James)
+-- Improve: Unicode-ize various things. (Ben Wing)
+-- Improve: critical section protection. (Ben Wing)
+-- Improve: debug info on attempt to throw outside of a function where
+   call_trapping_problems() has been used. (Ben Wing)
+-- Improve: menubar support. (Ben Wing)
+-- Improve: more orthogonality in emacs-root-finding. (Mike Sperber)
+-- Improve: move etc/aliases.ksh to xemacs-builds CVS module. (Ben Wing)
+-- Improve: move etc/chr.png, etc/chrm.png to etc/photos/ (Ben Wing)
+-- Improve: partially rework Unicode support. (Ben Wing)
+-- Improve: path handling correctness. (Ben Wing)
+-- Improve: rangetabs get different types of ranges (open/closed start
+   and end).  Change default to be start-closed, end-open. (Ben Wing)
+-- Improve: refactor Initialization changes: (Ben Wing)
+-- Improve: refer to init.el not .emacs in menus. (Stephen Turnbull)
+-- Improve: s&m files by removing autodetected stuff. (Ben Wing)
+-- Improve: support dumping bignums. (Jerry James, Olivier Galibert)
+-- Improve: support for crashing gently. (Ben Wing)
+-- Improve: type and keyword pedantry. (Jerry James, Ben Wing)
+-- Improve: update etags from upstream. (Jerry James)
+-- Remove: EXTERNAL_LIST_LOOP because it can infloop. (Ben Wing)
+-- Remove: etc/gnu.xpm, etc/gnu.xbm, etc/sink.xbm, etc/ms-kermit,
+   etc/ms-kermit-7bit (Ben Wing)
+-- Remove: unneeded/unused code. (Ben Wing, Stephen Turnbull)
+
+Quality Assurance Infrastructure
+
+-- Fix: conflict with builtin in .gdbinit. (Golubev I. N.)
+-- New: regexp tests. (Stephen Turnbull, Vin Shelton)
+-- New: os-tests.el. (Stephen Turnbull)
+-- Improve: profiling support. (Ben Wing)
+
 to 21.5.18 "chestnut"
 
 Major Features
