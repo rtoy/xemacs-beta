@@ -1,3 +1,8 @@
+2004-04-18  Jerry James  <james@xemacs.org>
+
+	* dump-data.c (dumped_data_get): Change return type to char *.
+	* dump-data.h (dumped_data_get): Ditto.
+
 2004-04-15  Jerry James  <james@xemacs.org>
 
 	* signal.c (check_what_happened): Remove check for proper

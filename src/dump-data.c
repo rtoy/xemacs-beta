@@ -73,11 +73,11 @@ dumped_data_align_offset(void)
   return iptr2-iptr;
 }
 
-unsigned char *
+char *
 dumped_data_get(void)
 {
   EMACS_INT iptr = (EMACS_INT)dumped_data;
   iptr = (iptr+4+4095) & ~(EMACS_INT)4095;
-  return (unsigned char *)iptr;
+  return (char *)iptr;
 }
 

@@ -33,6 +33,6 @@ size_t dumped_data_max_size(void);
 size_t dumped_data_align_offset(void);
 
 /* inline data */
-unsigned char *dumped_data_get(void);
+char *dumped_data_get(void);
 
 #endif
