@@ -1,3 +1,8 @@
+2004-09-07  Steve Youngs  <steve@youngs.au.com>
+
+	* packages.el (package-require): Fix incorrect arg to format.
+	This fixes a `format specifier' error.
+
 2004-08-15  Jan Rychter <jwr@xemacs.org>
 
 	* window-xemacs.el (really-set-window-configuration): deal
