@@ -1,3 +1,8 @@
+2005-03-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* register.el (insert-register): Revert part of Ben's incomplete
+	sync of 2005-01-26--we don't have insert-for-yank. 
+
 2005-03-25  Ralf Angeli  <angeli@iwi.uni-sb.de> 
 
 	* easymenu.el (easy-menu-remove): As described in 

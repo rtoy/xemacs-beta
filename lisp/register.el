@@ -265,7 +265,7 @@ Interactively, second arg is non-nil if prefix arg is supplied."
      ((consp val)
       (insert-rectangle val))
      ((stringp val)
-      (insert-for-yank val))
+      (insert val))
      ((numberp val)
       (princ val (current-buffer)))
      ((and (markerp val) (marker-position val))
