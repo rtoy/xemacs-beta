@@ -125,12 +125,12 @@ currently contains a @file{MANIFEST.@var{package-name}} file for each
 package to ensure that no cruft remains when a package is removed or
 updated.  The @file{lisp}, @file{etc}, and @file{lib-src} subdirectories
 are further subdivided, with a subdirectory for each package.  The
-@file{info} and @file{man} directories obey the respective documentation
-systems' conventions.  @emph{I.e.}, the @file{info} directory is flat
+@file{info} directory obeys the usual conventions.
+@emph{I.e.}, the @file{info} directory is flat
 with a(n) (optional) @file{dir} file and one (set of) info file(s) per
-package.  The @file{man} subdirectory is divided into sections.  As
-mentioned, this structure is used for historical reasions, and it is
-likely to change in the future.
+package.  The @file{man} subdirectory typically contains documentation
+sources, separated by package.  (It does not contain @file{man(1)}
+pages, as Emacs provides very few of them.)
 
 There are several standard package hierarchies, and administrators can
 configure others at build time, while users can configure others at run
@@ -176,7 +176,7 @@ specifying the @code{EMACSPACKAGEPATH} environment variable.
 @xref{Packages,,,xemacs}.
 
 @c #### The following description is quite possibly inaccurate.
-@c Arrgh, Michael!
+@c Please, Michael, write some specs up!
 The default order of search is hierarchically determined.  First, the
 roots are ordered.  The @dfn{early} roots are the user-specific roots,
 typically @file{~/.xemacs}.  The @dfn{late} roots are the system roots,
@@ -419,12 +419,18 @@ build packages.
 @node The Package Release Engineer's View, , The Library Maintainer's View, Package Overview
 @subsection The Package Release Engineer's View
 
-Bu-wha-ha-ha-ha-ha!  If you aren't the package release engineer, you
-@emph{don't want to know}.  If you @emph{are} the package release
-engineer, you have my condolences.  Rest (if you can get any rest)
-assured you are in my prayers.
+The XEmacs Package Release Engineer is responsible for keeping the
+system coherent.  The changes to @file{packages/package-compile.el} and
+@file{packages/xemacs-packages/Makefile} required to make the package
+available to others, and for building SUMO tarballs, @emph{etc}, are
+done by the Package Release Engineer, not individual library
+maintainers.
 
-To be completed.
+The Package Release Engineer also maintains assorted infrastructure for
+actually making releases.  These are generally available for inspection
+in the @code{xemacs-builds} module in the CVS repository.
+
+@c #### To be completed.
 
 
 @c #### The following section is lifted verbatim from the XEmacs User's
@@ -840,7 +846,7 @@ environment or loads/requires that search load-path will fail.  The
 changes that need to be made are
 
 @table @strong
-@item an entry in package-directory-map
+@item an entry in @code{package-directory-map}
 This tells the @xpms{} which distribution (currently
 @samp{xemacs-packages} or @samp{mule-packages}) your package is found
 in.  It then looks in the distribution subdirectory whose name is the
@@ -858,10 +864,23 @@ Your changes to @file{package-compile.el} must be cleared and checked in
 by the XEmacs Package Release Engineer before your package will build
 correctly from a fresh checkout.
 
-Obviously all of this is really horrible, and would be totally
-inexcusable if I wasn't afraid the XEmacs Package Release Engineer would
-kill me if I complained loud enough for him to hear.  Maybe it will
-change some day....
+This is unfortunate; it works pretty well once set up, but can cause
+confusion when first building a package in the @xpms{} context.  In
+particular, if the @code{package-directory-map} entry for a required
+package
+@c #### including the package itself?
+is not found, the necessary requires will not be executed by
+@file{package-compile.el}.  If required functions are executed (under
+@code{eval-when-compile}), they won't be found and the compile will
+fail.  If required function is actually a macro, the byte compiler will
+not recognize that, compile a function call to the macro.  This will
+cause a run-time error because the byte-code interpreter does not know
+how to execute macros.  (Macros can always be expanded at compile-time,
+and this is more efficient.)
+
+If your package keeps some or all Lisp code somewhere other than the top
+directory, then an entry in @code{package-name-to-directory} is also
+necessary, or requires will fail, leading to the problems just described.
 
 
 @node package-info.in Fields, Makefile Variables, package-compile.el, Creating Packages
@@ -1222,7 +1241,5 @@ or a future revision of this manual for details.
 @node Issues, , Creating Packages, Packaging
 @section Issues
 
-``Issues''?  Mu-wha-ha-ha!  Ha-ha-ha!  Honeychile, they ain't nuthin'
-@emph{but} ``issues'' at this point.  @xref{The Package Release
-Engineer's View}.
+To be completed.
 

@@ -1,3 +1,15 @@
+2001-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi (The User's View):
+	Correct description of man subdirectory.
+
+	(The Package Release Engineer's View):
+	(package-compile.el):
+	Change hazmat to useful documentation.
+
+	(Issues):
+	Hazmat removal.
+
 2001-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/packaging.texi: New file.
