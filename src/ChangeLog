@@ -1,3 +1,13 @@
+2003-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* database.c (Fopen_database): DB_AUTO_COMMIT is invalid in
+	Berkeley db 4.1 unless you have a transaction environment.
+
+2003-03-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* regex.c (re_match_2_internal): Fix matching degenerate word
+	boundaries.
+
 2003-03-09  Ben Wing  <ben@xemacs.org>
 
 	* file-coding.c:

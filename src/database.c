@@ -713,8 +713,9 @@ variable `database-coding-system'.
       status = dbase->open (dbase, filename, NULL,
                             real_subtype, accessmask, modemask);
 #else /* DB_VERSION >= 4.1 */
+      /* You can't use DB_AUTO_COMMIT unless you have a txn environment. */
       status = dbase->open (dbase, NULL, filename, NULL, real_subtype,
-			    accessmask | DB_AUTO_COMMIT, modemask);
+			    accessmask, modemask);
 #endif /* DB_VERSION < 4.1 */
       if (status)
         {
