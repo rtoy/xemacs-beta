@@ -51,14 +51,14 @@ This function returns non-@code{nil} if @var{object} is a specifier.
 
 Perhaps the most useful way to explain specifiers is via an analogy.
 Emacs Lisp programmers are used to @emph{buffer-local variables}
-@ref{buffer-local variables}.  For example, the variable
+@ref{Buffer-Local Variables}. For example, the variable
 @code{modeline-format}, which controls the format of the modeline, can
 have different values depending on the particular buffer being edited.
 The variable has a default value which most modes will use, but a
-specialized package such as Calendar might change the variable so as
-to tailor the modeline to its own purposes.  Other variables are
-perhaps best thought of as ``mode local,'' such as font-lock keywords,
-but they are implemented as buffer locals.
+specialized package such as Calendar might change the variable so as to
+tailor the modeline to its own purposes. Other variables are perhaps
+best thought of as ``mode local,'' such as font-lock keywords, but they
+are implemented as buffer locals.
 
 Other properties (such as those that can be changed by the
 @code{modify-frame-parameters} function, for example the color of the
@@ -261,13 +261,12 @@ toolbars are rarely changed.  Since instantiation is trivial, multiple
 specs are not useful---the first one always succeeds.)
 
 In fact, @code{specifier-specs} is intended to be used to display specs
-to humans with a minimum of clutter.  The robust way to access
-specifications is via @code{specifier-spec-list}.  @xref{Adding
-Specifications}, for the definition of @dfn{spec-list}.
-@xref{Retrieving Specifications} for documentation of
-@code{specifier-specs} and @code{specifier-spec-list}. To get the
-desired effect, replace the form @code{(specifier-spec default-toolbar
-'global)} with
+to humans with a minimum of clutter. The robust way to access
+specifications is via @code{specifier-spec-list}. @xref{Adding
+Specifications}, for the definition of @dfn{spec-list}. @xref{Retrieving
+Specifications}, for documentation of @code{specifier-specs} and
+@code{specifier-spec-list}. To get the desired effect, replace the form
+@code{(specifier-spec default-toolbar 'global)} with
 
 @example
 (cdr (second (first (specifier-spec-list default-toolbar 'global))))
@@ -1363,4 +1362,3 @@ value returned from @code{map-specifier}.  Otherwise,
 @defun specifier-locale-type-from-locale locale
 Given a specifier @var{locale}, this function returns its type.
 @end defun
-

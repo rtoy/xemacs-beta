@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/12/02 17:56:58 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2002/12/03 11:01:40 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1408,7 +1408,7 @@ the packages you'll never want to use.  Remove the TexInfo manuals.
 Remove the Info (and use just hardcopy versions of the manual).  Remove
 most of the stuff in etc.  Remove or gzip all the source code.  Gzip or
 remove the C source code.  Configure it so that copies are not made of
-the support lisp.  
+the support lisp.
 
 These are all Emacs Lisp source code and bytecompiled object code.  You
 may safely gzip everything named *.el here.  You may remove any package
@@ -2557,6 +2557,7 @@ Textual Fonts & Colors:
 * Q3.2.4::      How can I limit color map usage?
 * Q3.2.5::      My tty supports color, but XEmacs doesn't use them.
 * Q3.2.6::      Can I have pixmap backgrounds in XEmacs?
+* Q3.2.7::      How do I display non-ASCII characters?
 
 The Modeline:
 * Q3.3.1::      How can I make the modeline go away?
@@ -3063,7 +3064,7 @@ If your XEmacs is not Mule-enabled, and for some reason getting a
 Mule-enabled XEmacs seems like the wrong thing to do, all is not lost.
 You can arrange it by brute force.  In @file{event-Xt.c} (suppress the
 urge to look in this file---play Doom instead, because you'll survive
-longer), it is written: 
+longer), it is written:
 
 @quotation
 In a non-Mule world, a user can still have a multi-lingual editor, by
@@ -3085,7 +3086,7 @@ non-Mule XEmacs, @xref{Q3.5.7}.
 @c Starting with XEmacs 19.14 the modeline responds to mouse clicks, so if
 @c you haven't liked or used the modeline in the past, you might want to
 @c try the new version out.
-@c 
+@c
 @node Q3.3.2, Q3.3.3, Q3.3.1, Customization
 @unnumberedsubsec Q3.3.2: How do you have XEmacs display the line number in the modeline?
 
@@ -3136,19 +3137,19 @@ etc. are given in the modeline.  How can I turn this off?
 It's not AUC TeX, it comes from @code{func-menu} in @file{func-menu.el}.
 
 @c Add this code to your @file{init.el}/@file{.emacs} to turn it off:
-@c 
+@c
 @c @lisp
 @c (setq fume-display-in-modeline-p nil)
 @c @end lisp
-@c 
+@c
 @c Or just add a hook to @code{TeX-mode-hook} to turn it off only for TeX
 @c mode:
-@c 
+@c
 @c @lisp
 @c (add-hook 'TeX-mode-hook
 @c           '(lambda () (setq fume-display-in-modeline-p nil)))
 @c @end lisp
-@c 
+@c
 @email{dhughes@@origin-at.co.uk, David Hughes} writes:
 
 @quotation
@@ -3685,13 +3686,13 @@ delay for a second if you let it.
 
 @c If you are running XEmacs 19.13 or earlier, add this command to your
 @c @file{init.el}/@file{.emacs}.
-@c 
+@c
 @c @lisp
 @c (set-menubar nil)
 @c @end lisp
-@c 
+@c
 @c Starting with XEmacs 19.14 the preferred method is:
-@c 
+@c
 @lisp
 (set-specifier menubar-visible-p nil)
 @end lisp
@@ -3804,9 +3805,9 @@ turn the scrollbars off only in a single buffer:
 @lisp
 (set-specifier scrollbar-width 0 (current-buffer))
 @end lisp
-@c 
+@c
 @c In XEmacs versions prior to 19.14, you had to use the hairier construct:
-@c 
+@c
 @c @lisp
 @c (set-specifier scrollbar-width (cons (selected-frame) 0))
 @c @end lisp
@@ -3903,7 +3904,7 @@ To get this behavior, add the following lines to your @file{init.el}/@file{.emac
   (pending-delete-on t)))
 @end lisp
 
-Note that this will work with both Backspace and Delete.  This code is a 
+Note that this will work with both Backspace and Delete.  This code is a
 tad more complicated than it has to be for XEmacs in order to make it
 more portable.
 
@@ -5039,15 +5040,15 @@ Use the following code in your @file{init.el}/@file{.emacs}:
 
 @c In versions of XEmacs prior to 19.14, you had to use a kludgy solution
 @c like this:
-@c 
+@c
 @c @lisp
 @c (setq c-font-lock-keywords c-font-lock-keywords-2
 @c       c++-font-lock-keywords c++-font-lock-keywords-2
 @c       lisp-font-lock-keywords lisp-font-lock-keywords-2)
 @c @end lisp
-@c 
+@c
 @c It will work for C, C++ and Lisp.
-@c 
+@c
 See also @code{Syntax Highlighting} from the @code{Options} menu.
 Remember to save options.
 
@@ -5759,7 +5760,7 @@ in your @file{init.el}/@file{.emacs}:
 
 @c The sound support in XEmacs 19.14 was greatly improved over previous
 @c versions.
-@c 
+@c
 @node Q5.2.3, Q5.2.4, Q5.2.2, Miscellaneous
 @unnumberedsubsec Q5.2.3: What's NAS, how do I get it?
 
@@ -7046,7 +7047,7 @@ searches exact tag matches before inexact ones; function
 @code{user-full-name} with no arguments returns the var
 @code{user-full-name}; a prefix arg to @kbd{M-:} and @kbd{C-h c} inserts
 the result in the current buffer.
- 
+
 @item
 @strong{Other changes}: Under X, new application class @samp{XEmacs};
 byte-compilation of user-specs now works.

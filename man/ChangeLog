@@ -1,5 +1,14 @@
 2002-12-03  Didier Verna  <didier@xemacs.org>
 
+	* xemacs-faq.texi (Customization): add missing menu entry for Q3.2.7.
+
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
+	* lispref/specifiers.texi (Introduction to Specifiers): fix case
+	spelling of `Buffer-Local Variables' crossref.
+
+2002-12-03  Didier Verna  <didier@xemacs.org>
+
 	* xemacs/custom.texi (Faces): document
 	`set-face-background-pixmap-file'.
 
