@@ -161,7 +161,7 @@ Larger Units of Text
 * Files::       All about handling files.
 * Buffers::     Multiple buffers; editing several files at once.
 * Windows::     Viewing two pieces of text at once.
-* Mule::	Using world scripts.
+* Mule::	Multibyte characters; multiple scripts at once; Unicode.
 
 Advanced Features
 * Major Modes:: Text mode vs. Lisp mode vs. C mode ...
@@ -403,6 +403,18 @@ Multiple Windows
 * Other Window::     Moving to another window or doing something to it.
 * Pop Up Window::    Finding a file or buffer in another window.
 * Change Window::    Deleting windows and changing their sizes.
+
+Multiple Scripts and Unicode
+
+* Mule Intro::              Basic concepts of multilingual text.
+* Language Environments::   Setting things up for the language you use.
+* Input Methods::           Entering text characters not on your keyboard.
+* Select Input Method::     Specifying your choice of input methods.
+* Coding Systems::          Character set conversion when you read and
+                              write files, and so on.
+* Recognize Coding::        How XEmacs figures out which conversion to use.
+* Unification::             Integrating overlapping character sets.
+* Charsets and Coding Systems:: Tables and other reference material.
 
 Major Modes
 
