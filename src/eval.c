@@ -284,10 +284,10 @@ static void
 print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Subr *subr = XSUBR (obj);
-  const char *header =
+  const CBufbyte *header =
     (subr->max_args == UNEVALLED) ? "#<special-form " : "#<subr ";
-  const char *name = subr_name (subr);
-  const char *trailer = subr->prompt ? " (interactive)>" : ">";
+  const CBufbyte *name = subr_name (subr);
+  const CBufbyte *trailer = subr->prompt ? " (interactive)>" : ">";
 
   if (print_readably)
     printing_unreadable_object ("%s%s%s", header, name, trailer);
@@ -2270,7 +2270,7 @@ maybe_signal_continuable_error_1 (Lisp_Object sig, Lisp_Object data,
    to signal_error_1(). */
 
 Lisp_Object
-build_error_data (const char *reason, Lisp_Object frob)
+build_error_data (const CBufbyte *reason, Lisp_Object frob)
 {
   if (EQ (frob, Qunbound))
     frob = Qnil;
@@ -2285,13 +2285,13 @@ build_error_data (const char *reason, Lisp_Object frob)
 }
 
 DOESNT_RETURN
-signal_error (Lisp_Object type, const char *reason, Lisp_Object frob)
+signal_error (Lisp_Object type, const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error_1 (type, build_error_data (reason, frob));
 }
 
 void
-maybe_signal_error (Lisp_Object type, const char *reason,
+maybe_signal_error (Lisp_Object type, const CBufbyte *reason,
 		    Lisp_Object frob, Lisp_Object class,
 		    Error_Behavior errb)
 {
@@ -2302,14 +2302,14 @@ maybe_signal_error (Lisp_Object type, const char *reason,
 }
 
 Lisp_Object
-signal_continuable_error (Lisp_Object type, const char *reason,
+signal_continuable_error (Lisp_Object type, const CBufbyte *reason,
 			  Lisp_Object frob)
 {
   return Fsignal (type, build_error_data (reason, frob));
 }
 
 Lisp_Object
-maybe_signal_continuable_error (Lisp_Object type, const char *reason,
+maybe_signal_continuable_error (Lisp_Object type, const CBufbyte *reason,
 				Lisp_Object frob, Lisp_Object class,
 				Error_Behavior errb)
 {
@@ -2331,7 +2331,7 @@ maybe_signal_continuable_error (Lisp_Object type, const char *reason,
    but these are more convenient in this particular case.) */
 
 DOESNT_RETURN
-signal_error_2 (Lisp_Object type, const char *reason,
+signal_error_2 (Lisp_Object type, const CBufbyte *reason,
 		Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error_1 (type, list3 (build_translated_string (reason), frob0,
@@ -2339,7 +2339,7 @@ signal_error_2 (Lisp_Object type, const char *reason,
 }
 
 void
-maybe_signal_error_2 (Lisp_Object type, const char *reason,
+maybe_signal_error_2 (Lisp_Object type, const CBufbyte *reason,
 		      Lisp_Object frob0, Lisp_Object frob1,
 		      Lisp_Object class, Error_Behavior errb)
 {
@@ -2351,7 +2351,7 @@ maybe_signal_error_2 (Lisp_Object type, const char *reason,
 }
 
 Lisp_Object
-signal_continuable_error_2 (Lisp_Object type, const char *reason,
+signal_continuable_error_2 (Lisp_Object type, const CBufbyte *reason,
 			    Lisp_Object frob0, Lisp_Object frob1)
 {
   return Fsignal (type, list3 (build_translated_string (reason), frob0,
@@ -2359,7 +2359,7 @@ signal_continuable_error_2 (Lisp_Object type, const char *reason,
 }
 
 Lisp_Object
-maybe_signal_continuable_error_2 (Lisp_Object type, const char *reason,
+maybe_signal_continuable_error_2 (Lisp_Object type, const CBufbyte *reason,
 				  Lisp_Object frob0, Lisp_Object frob1,
 				  Lisp_Object class, Error_Behavior errb)
 {
@@ -2379,7 +2379,7 @@ maybe_signal_continuable_error_2 (Lisp_Object type, const char *reason,
    is a single string, created using the arguments. */
 
 DOESNT_RETURN
-signal_ferror (Lisp_Object type, const char *fmt, ...)
+signal_ferror (Lisp_Object type, const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2395,7 +2395,7 @@ signal_ferror (Lisp_Object type, const char *fmt, ...)
 
 void
 maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
-		     const char *fmt, ...)
+		     const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2414,7 +2414,7 @@ maybe_signal_ferror (Lisp_Object type, Lisp_Object class, Error_Behavior errb,
 }
 
 Lisp_Object
-signal_continuable_ferror (Lisp_Object type, const char *fmt, ...)
+signal_continuable_ferror (Lisp_Object type, const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2430,7 +2430,7 @@ signal_continuable_ferror (Lisp_Object type, const char *fmt, ...)
 
 Lisp_Object
 maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
-				 Error_Behavior errb, const char *fmt, ...)
+				 Error_Behavior errb, const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2464,7 +2464,7 @@ maybe_signal_continuable_ferror (Lisp_Object type, Lisp_Object class,
 */
 
 DOESNT_RETURN
-signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const char *fmt,
+signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const CBufbyte *fmt,
 			 ...)
 {
   Lisp_Object obj;
@@ -2482,7 +2482,7 @@ signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob, const char *fmt,
 void
 maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 			       Lisp_Object class, Error_Behavior errb,
-			       const char *fmt, ...)
+			       const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2503,7 +2503,7 @@ maybe_signal_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 
 Lisp_Object
 signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
-				     const char *fmt, ...)
+				     const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2521,7 +2521,7 @@ Lisp_Object
 maybe_signal_continuable_ferror_with_frob (Lisp_Object type, Lisp_Object frob,
 					   Lisp_Object class,
 					   Error_Behavior errb,
-					   const char *fmt, ...)
+					   const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2603,158 +2603,161 @@ signal_circular_property_list_error (Lisp_Object list)
 }
 
 DOESNT_RETURN
-syntax_error (const char *reason, Lisp_Object frob)
+syntax_error (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qsyntax_error, reason, frob);
 }
 
 DOESNT_RETURN
-syntax_error_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+syntax_error_2 (const CBufbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
   signal_error_2 (Qsyntax_error, reason, frob1, frob2);
 }
 
 void
-maybe_syntax_error (const char *reason, Lisp_Object frob,
+maybe_syntax_error (const CBufbyte *reason, Lisp_Object frob,
 		    Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qsyntax_error, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-sferror (const char *reason, Lisp_Object frob)
+sferror (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qstructure_formation_error, reason, frob);
 }
 
 DOESNT_RETURN
-sferror_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+sferror_2 (const CBufbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
   signal_error_2 (Qstructure_formation_error, reason, frob1, frob2);
 }
 
 void
-maybe_sferror (const char *reason, Lisp_Object frob,
+maybe_sferror (const CBufbyte *reason, Lisp_Object frob,
 	       Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qstructure_formation_error, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-invalid_argument (const char *reason, Lisp_Object frob)
+invalid_argument (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_argument, reason, frob);
 }
 
 DOESNT_RETURN
-invalid_argument_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+invalid_argument_2 (const CBufbyte *reason, Lisp_Object frob1,
+		    Lisp_Object frob2)
 {
   signal_error_2 (Qinvalid_argument, reason, frob1, frob2);
 }
 
 void
-maybe_invalid_argument (const char *reason, Lisp_Object frob,
+maybe_invalid_argument (const CBufbyte *reason, Lisp_Object frob,
 			Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_argument, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-invalid_constant (const char *reason, Lisp_Object frob)
+invalid_constant (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_constant, reason, frob);
 }
 
 DOESNT_RETURN
-invalid_constant_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+invalid_constant_2 (const CBufbyte *reason, Lisp_Object frob1,
+		    Lisp_Object frob2)
 {
   signal_error_2 (Qinvalid_constant, reason, frob1, frob2);
 }
 
 void
-maybe_invalid_constant (const char *reason, Lisp_Object frob,
+maybe_invalid_constant (const CBufbyte *reason, Lisp_Object frob,
 			Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_constant, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-invalid_operation (const char *reason, Lisp_Object frob)
+invalid_operation (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_operation, reason, frob);
 }
 
 DOESNT_RETURN
-invalid_operation_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+invalid_operation_2 (const CBufbyte *reason, Lisp_Object frob1,
+		     Lisp_Object frob2)
 {
   signal_error_2 (Qinvalid_operation, reason, frob1, frob2);
 }
 
 void
-maybe_invalid_operation (const char *reason, Lisp_Object frob,
+maybe_invalid_operation (const CBufbyte *reason, Lisp_Object frob,
 			 Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_operation, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-invalid_change (const char *reason, Lisp_Object frob)
+invalid_change (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_change, reason, frob);
 }
 
 DOESNT_RETURN
-invalid_change_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+invalid_change_2 (const CBufbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
   signal_error_2 (Qinvalid_change, reason, frob1, frob2);
 }
 
 void
-maybe_invalid_change (const char *reason, Lisp_Object frob,
+maybe_invalid_change (const CBufbyte *reason, Lisp_Object frob,
 		      Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_change, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-invalid_state (const char *reason, Lisp_Object frob)
+invalid_state (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_state, reason, frob);
 }
 
 DOESNT_RETURN
-invalid_state_2 (const char *reason, Lisp_Object frob1, Lisp_Object frob2)
+invalid_state_2 (const CBufbyte *reason, Lisp_Object frob1, Lisp_Object frob2)
 {
   signal_error_2 (Qinvalid_state, reason, frob1, frob2);
 }
 
 void
-maybe_invalid_state (const char *reason, Lisp_Object frob,
+maybe_invalid_state (const CBufbyte *reason, Lisp_Object frob,
 		     Lisp_Object class, Error_Behavior errb)
 {
   maybe_signal_error (Qinvalid_state, reason, frob, class, errb);
 }
 
 DOESNT_RETURN
-wtaerror (const char *reason, Lisp_Object frob)
+wtaerror (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qwrong_type_argument, reason, frob);
 }
 
 DOESNT_RETURN
-stack_overflow (const char *reason, Lisp_Object frob)
+stack_overflow (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qstack_overflow, reason, frob);
 }
 
 DOESNT_RETURN
-out_of_memory (const char *reason, Lisp_Object frob)
+out_of_memory (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qout_of_memory, reason, frob);
 }
 
 DOESNT_RETURN
-printing_unreadable_object (const char *fmt, ...)
+printing_unreadable_object (const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -4385,7 +4388,7 @@ caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
 
       if (!NILP (arg))
         {
-          char *str = (char *) get_opaque_ptr (arg);
+          CBufbyte *str = (CBufbyte *) get_opaque_ptr (arg);
           args[0] = build_string (str);
         }
       else
@@ -4439,7 +4442,7 @@ catch_them_squirmers_eval_in_buffer (Lisp_Object cons)
 }
 
 Lisp_Object
-eval_in_buffer_trapping_errors (const char *warning_string,
+eval_in_buffer_trapping_errors (const CBufbyte *warning_string,
 				struct buffer *buf, Lisp_Object form)
 {
   int speccount = specpdl_depth();
@@ -4479,7 +4482,8 @@ catch_them_squirmers_run_hook (Lisp_Object hook_symbol)
 }
 
 Lisp_Object
-run_hook_trapping_errors (const char *warning_string, Lisp_Object hook_symbol)
+run_hook_trapping_errors (const CBufbyte *warning_string,
+			  Lisp_Object hook_symbol)
 {
   int speccount;
   Lisp_Object tem;
@@ -4512,7 +4516,7 @@ run_hook_trapping_errors (const char *warning_string, Lisp_Object hook_symbol)
    if an error occurs. */
 
 Lisp_Object
-safe_run_hook_trapping_errors (const char *warning_string,
+safe_run_hook_trapping_errors (const CBufbyte *warning_string,
 			       Lisp_Object hook_symbol,
 			       int allow_quit)
 {
@@ -4558,7 +4562,7 @@ catch_them_squirmers_call0 (Lisp_Object function)
 }
 
 Lisp_Object
-call0_trapping_errors (const char *warning_string, Lisp_Object function)
+call0_trapping_errors (const CBufbyte *warning_string, Lisp_Object function)
 {
   int speccount;
   Lisp_Object tem;
@@ -4605,7 +4609,7 @@ catch_them_squirmers_call2 (Lisp_Object cons)
 }
 
 Lisp_Object
-call1_trapping_errors (const char *warning_string, Lisp_Object function,
+call1_trapping_errors (const CBufbyte *warning_string, Lisp_Object function,
 		       Lisp_Object object)
 {
   int speccount = specpdl_depth();
@@ -4642,7 +4646,7 @@ call1_trapping_errors (const char *warning_string, Lisp_Object function,
 }
 
 Lisp_Object
-call2_trapping_errors (const char *warning_string, Lisp_Object function,
+call2_trapping_errors (const CBufbyte *warning_string, Lisp_Object function,
 		       Lisp_Object object1, Lisp_Object object2)
 {
   int speccount = specpdl_depth();
@@ -5199,7 +5203,7 @@ warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
    automatically be called when it is safe to do so. */
 
 void
-warn_when_safe (Lisp_Object class, Lisp_Object level, const char *fmt, ...)
+warn_when_safe (Lisp_Object class, Lisp_Object level, const CBufbyte *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;

@@ -301,7 +301,7 @@ check_status (Tt_status st)
 {
   if (tt_is_err (st))
     {
-      Bufbyte *err;
+      CBufbyte *err;
 
       EXTERNAL_TO_C_STRING (tt_status_message (st), err, Qnative);
       signal_error (Qtooltalk_error, err, Qunbound);

@@ -1480,7 +1480,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
 
 DOESNT_RETURN
-invalid_byte_code (const char *reason, Lisp_Object frob)
+invalid_byte_code (const CBufbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_byte_code, reason, frob);
 }

@@ -1,3 +1,99 @@
+2001-06-06  Ben Wing  <ben@xemacs.org>
+
+	* emodules.c (emodules_load):
+	* tooltalk.c (check_status):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process-unix.c (unix_open_network_stream):
+	Fix warnings pointed out by Martin.
+
+	* lisp.h:
+	Correct usage of CBufbyte.
+
+	* esd.c (esd_play_sound_file):
+	* esd.c (esd_play_sound_data):
+	indentation changes.
+
+	* bytecode.c (invalid_byte_code):
+	* eval.c (print_subr):
+	* eval.c (build_error_data):
+	* eval.c (signal_error):
+	* eval.c (maybe_signal_error):
+	* eval.c (signal_continuable_error):
+	* eval.c (maybe_signal_continuable_error):
+	* eval.c (signal_error_2):
+	* eval.c (maybe_signal_error_2):
+	* eval.c (signal_continuable_error_2):
+	* eval.c (maybe_signal_continuable_error_2):
+	* eval.c (signal_ferror):
+	* eval.c (maybe_signal_ferror):
+	* eval.c (signal_continuable_ferror):
+	* eval.c (maybe_signal_continuable_ferror):
+	* eval.c (signal_ferror_with_frob):
+	* eval.c (maybe_signal_ferror_with_frob):
+	* eval.c (signal_continuable_ferror_with_frob):
+	* eval.c (maybe_signal_continuable_ferror_with_frob):
+	* eval.c (syntax_error):
+	* eval.c (syntax_error_2):
+	* eval.c (maybe_syntax_error):
+	* eval.c (sferror):
+	* eval.c (sferror_2):
+	* eval.c (maybe_sferror):
+	* eval.c (invalid_argument):
+	* eval.c (invalid_argument_2):
+	* eval.c (maybe_invalid_argument):
+	* eval.c (invalid_constant):
+	* eval.c (invalid_constant_2):
+	* eval.c (maybe_invalid_constant):
+	* eval.c (invalid_operation):
+	* eval.c (invalid_operation_2):
+	* eval.c (maybe_invalid_operation):
+	* eval.c (invalid_change):
+	* eval.c (invalid_change_2):
+	* eval.c (maybe_invalid_change):
+	* eval.c (invalid_state):
+	* eval.c (invalid_state_2):
+	* eval.c (maybe_invalid_state):
+	* eval.c (wtaerror):
+	* eval.c (stack_overflow):
+	* eval.c (out_of_memory):
+	* eval.c (printing_unreadable_object):
+	* eval.c (caught_a_squirmer):
+	* eval.c (eval_in_buffer_trapping_errors):
+	* eval.c (run_hook_trapping_errors):
+	* eval.c (safe_run_hook_trapping_errors):
+	* eval.c (call0_trapping_errors):
+	* eval.c (call1_trapping_errors):
+	* eval.c (call2_trapping_errors):
+	* eval.c (warn_when_safe):
+	* fileio.c (report_file_type_error):
+	* fileio.c (report_error_with_errno):
+	* fileio.c (report_file_error):
+	Use CBufbyte instead of char for error/warning functions.
+	
+	* linuxplay.c:
+	* linuxplay.c (DONT_ENCAPSULATE):
+	* miscplay.c:
+	* miscplay.c (DONT_ENCAPSULATE):
+	* sgiplay.c:
+	* sgiplay.c (DONT_ENCAPSULATE):
+	* sunplay.c:
+	* sunplay.c (DONT_ENCAPSULATE):
+	Define DONT_ENCAPSULATE. (All encapsulation is removed in my
+	pending Mule workspace.)
+
+	* sgiplay.c (play_sound_data):
+	* sgiplay.c (play_internal):
+	Put back #include <audio.h> accidentally removed.
+	Make play_sound_data return an int, like all other
+	such functions in *play.c.
+	
+	* sound.c:
+	Fix up documentation of `play-sound'.
+	
+	* sysfile.h:
+	Don't include sys/fcntl.h, as per Martin's advice.
+	
+
 2001-06-04  William M. Perry  <wmperry@gnu.org>
 
 	* gpmevent.c (KG_CTRL): Just define these unconditionally.  The

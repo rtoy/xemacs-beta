@@ -67,11 +67,12 @@ Boston, MA 02111-1307, USA.  */
 #  undef MAX
 # endif /* HAVE_GTK */
 # include <sys/param.h>
-/* We used to conditionalize this on defined (NeXT) || defined (CYGWIN),
-   with the comment "what is needed from here?  Do others need it too?
-   O_BINARY is in here under cygwin." sunplay.c needed this, so let's
-   just include it always and fix any breakage (unlikely) that happens. */
-# include <sys/fcntl.h>
+/* As per Martin's recommendation, we do not include this.  There was
+   a comment stating that stuff from here was needed on NeXT, Cygwin,
+   and sunplay.c.  However, Cygwin includes this automatically from
+   fcntl.h, and Martin says that a "conforming" system should never
+   need this.  We will put it back if necessary on systems requiring it. */
+/* # include <sys/fcntl.h> */
 #endif
 
 #ifndef	STDERR_FILENO

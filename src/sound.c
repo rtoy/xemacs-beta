@@ -273,6 +273,8 @@ parse_sound_alist_elt (Lisp_Object elt,
 DEFUN ("play-sound", Fplay_sound, 1, 3, 0, /*
 Play a sound of the provided type.
 See the variable `sound-alist'.
+
+If the sound cannot be played in any other way, the standard "bell" will sound.
 */
        (sound, volume, device))
 {

@@ -23,6 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file Mule-ized by Ben Wing, 5-15-01. */
 
+#define DONT_ENCAPSULATE
+
 #include <config.h>
 #include "lisp.h"
 
@@ -30,6 +32,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 #include "sysproc.h" /* netinet/in.h for ntohl() etc. */
+
+#include <audio.h>
 
 /* Configuration options */
 
@@ -173,7 +177,7 @@ AudioContextRec;
 
 static Lisp_Object close_sound_file (Lisp_Object);
 static AudioContext audio_initialize (UChar_Binary *, int, int);
-static void play_internal (UChar_Binary *, int, AudioContext);
+static int play_internal (UChar_Binary *, int, AudioContext);
 static void drain_audio_port (AudioContext);
 static void write_mulaw_8_chunk (void *, void *, AudioContext);
 static void write_linear_chunk (void *, void *, AudioContext);
@@ -253,18 +257,20 @@ restore_audio_port (Lisp_Object closure)
   return Qnil;
 }
 
-void
+int
 play_sound_data (UChar_Binary *data, int length, int volume)
 {
   int count = specpdl_depth ();
   AudioContext ac;
+  int result;
 
   ac = audio_initialize (data, length, volume);
   if (ac == (AudioContext) 0)
-    return;
-  play_internal (data, length, ac);
+    return 0;
+  result = play_internal (data, length, ac);
   drain_audio_port (ac);
   unbind_to (count, Qnil);
+  return result;
 }
 
 static AudioContext
@@ -311,12 +317,12 @@ audio_initialize (UChar_Binary *data, int length, int volume)
   return ac;
 }
 
-static void
+static int
 play_internal (UChar_Binary *data, int length, AudioContext ac)
 {
   UChar_Binary * limit;
   if (ac == (AudioContext) 0)
-    return;
+    return 0;
 
   data = (UChar_Binary *) ac->ac_data;
   limit = data + ac->ac_size;
@@ -332,6 +338,8 @@ play_internal (UChar_Binary *data, int length, AudioContext ac)
       (* ac->ac_write_chunk_function) (data, chunklimit, ac);
       data = chunklimit;
     }
+
+  return 1;
 }
 
 static void

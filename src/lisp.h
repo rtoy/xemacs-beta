@@ -329,8 +329,16 @@ void assert_failed (const char *, int, const char *);
    of Bufbytes, declared as follows. */
 
 typedef unsigned char Bufbyte;
-/* The following should only be used when you have to apply a stdlib
-   string function to internal data */
+
+/* The following should be used when you are working with internal data
+   but for whatever reason need to have it declared a "char *".  Examples
+   are function arguments whose values are most commonly literal strings,
+   or where you have to apply a stdlib string function to internal data.
+
+   In general, you should avoid this where possible and use Bufbyte instead,
+   for consistency.  For example, the new Mule workspace contains
+   Bufbyte versions of the stdlib string functions. */
+
 typedef char CBufbyte;
 
 /* The data representing a string in "external" format (binary or any
@@ -2325,9 +2333,9 @@ Lisp_Object restore_gc_inhibit (Lisp_Object);
 extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
-Lisp_Object build_string (const char *);
-Lisp_Object build_ext_string (const char *, Lisp_Object);
-Lisp_Object build_translated_string (const char *);
+Lisp_Object build_string (const CBufbyte *);
+Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
+Lisp_Object build_translated_string (const CBufbyte *);
 Lisp_Object make_string (const Bufbyte *, Bytecount);
 Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
 Lisp_Object make_uninit_string (Bytecount);
@@ -2365,7 +2373,7 @@ extern int find_file_use_truenames;
 
 /* Defined in bytecode.c */
 DECLARE_DOESNT_RETURN (invalid_byte_code
-		       (const char *reason, Lisp_Object frob));
+		       (const CBufbyte *reason, Lisp_Object frob));
 
 /* Defined in callproc.c */
 char *egetenv (const char *);
@@ -2467,51 +2475,52 @@ void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
 Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
 					      Lisp_Object, Error_Behavior);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror (Lisp_Object,
-								 const char *,
-								 ...), 2, 3);
+DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror
+						  (Lisp_Object,
+						   const CBufbyte *,
+						   ...), 2, 3);
 void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_Behavior,
-			  const char *, ...) PRINTF_ARGS (4, 5);
-Lisp_Object signal_continuable_ferror (Lisp_Object, const char *, ...)
+			  const CBufbyte *, ...) PRINTF_ARGS (4, 5);
+Lisp_Object signal_continuable_ferror (Lisp_Object, const CBufbyte *, ...)
      PRINTF_ARGS (2, 3);
 Lisp_Object maybe_signal_continuable_ferror (Lisp_Object, Lisp_Object,
 					     Error_Behavior,
-					     const char *, ...)
+					     const CBufbyte *, ...)
      PRINTF_ARGS (4, 5);
 
-Lisp_Object build_error_data (const char *reason, Lisp_Object frob);
-DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const char *,
+Lisp_Object build_error_data (const CBufbyte *reason, Lisp_Object frob);
+DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const CBufbyte *,
 				     Lisp_Object));
-void maybe_signal_error (Lisp_Object, const char *, Lisp_Object,
+void maybe_signal_error (Lisp_Object, const CBufbyte *, Lisp_Object,
 			 Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error (Lisp_Object, const char *,
+Lisp_Object signal_continuable_error (Lisp_Object, const CBufbyte *,
 				      Lisp_Object);
-Lisp_Object maybe_signal_continuable_error (Lisp_Object, const char *,
+Lisp_Object maybe_signal_continuable_error (Lisp_Object, const CBufbyte *,
 					    Lisp_Object,
 					    Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror_with_frob
 						  (Lisp_Object, Lisp_Object,
-						   const char *,
+						   const CBufbyte *,
 						   ...), 3, 4);
 void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
 				    Error_Behavior,
-				    const char *, ...) PRINTF_ARGS (5, 6);
+				    const CBufbyte *, ...) PRINTF_ARGS (5, 6);
 Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
-						 const char *,
+						 const CBufbyte *,
 						 ...) PRINTF_ARGS (3, 4);
 Lisp_Object maybe_signal_continuable_ferror_with_frob (Lisp_Object,
 						       Lisp_Object,
 						       Lisp_Object,
 						       Error_Behavior,
-						       const char *, ...)
+						       const CBufbyte *, ...)
      PRINTF_ARGS (5, 6);
-DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const char *,
+DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const CBufbyte *,
 				       Lisp_Object, Lisp_Object));
-void maybe_signal_error_2 (Lisp_Object, const char *, Lisp_Object,
+void maybe_signal_error_2 (Lisp_Object, const CBufbyte *, Lisp_Object,
 			   Lisp_Object, Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error_2 (Lisp_Object, const char *,
+Lisp_Object signal_continuable_error_2 (Lisp_Object, const CBufbyte *,
 					Lisp_Object, Lisp_Object);
-Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const char *,
+Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const CBufbyte *,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object,
 					      Error_Behavior);
@@ -2522,58 +2531,60 @@ DECLARE_DOESNT_RETURN (signal_malformed_property_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_circular_property_list_error (Lisp_Object));
 
-DECLARE_DOESNT_RETURN (syntax_error (const char *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (syntax_error_2 (const char *reason, Lisp_Object frob1,
+DECLARE_DOESNT_RETURN (syntax_error (const CBufbyte *reason,
+				     Lisp_Object frob));
+DECLARE_DOESNT_RETURN (syntax_error_2 (const CBufbyte *reason,
+				       Lisp_Object frob1,
 				       Lisp_Object frob2));
-void maybe_syntax_error (const char *, Lisp_Object, Lisp_Object,
+void maybe_syntax_error (const CBufbyte *, Lisp_Object, Lisp_Object,
 			 Error_Behavior);
-DECLARE_DOESNT_RETURN (sferror (const char *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (sferror_2 (const char *reason, Lisp_Object frob1,
+DECLARE_DOESNT_RETURN (sferror (const CBufbyte *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (sferror_2 (const CBufbyte *reason, Lisp_Object frob1,
 				  Lisp_Object frob2));
-void maybe_sferror (const char *, Lisp_Object, Lisp_Object,
+void maybe_sferror (const CBufbyte *, Lisp_Object, Lisp_Object,
 		    Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_argument (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_argument (const CBufbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_argument_2 (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_argument_2 (const CBufbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_argument (const char *, Lisp_Object, Lisp_Object,
+void maybe_invalid_argument (const CBufbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_operation (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_operation (const CBufbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_operation_2 (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_operation_2 (const CBufbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_operation (const char *, Lisp_Object, Lisp_Object,
+void maybe_invalid_operation (const CBufbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_state (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_state (const CBufbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_state_2 (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_state_2 (const CBufbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_state (const char *, Lisp_Object, Lisp_Object,
-			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_change (const char *reason,
+void maybe_invalid_state (const CBufbyte *, Lisp_Object, Lisp_Object,
+			  Error_Behavior);
+DECLARE_DOESNT_RETURN (invalid_change (const CBufbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_change_2 (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_change_2 (const CBufbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_change (const char *, Lisp_Object, Lisp_Object,
-			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_constant (const char *reason,
+void maybe_invalid_change (const CBufbyte *, Lisp_Object, Lisp_Object,
+			   Error_Behavior);
+DECLARE_DOESNT_RETURN (invalid_constant (const CBufbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_constant_2 (const char *reason,
+DECLARE_DOESNT_RETURN (invalid_constant_2 (const CBufbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_constant (const char *, Lisp_Object, Lisp_Object,
+void maybe_invalid_constant (const CBufbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (wtaerror (const char *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (out_of_memory (const char *reason,
+DECLARE_DOESNT_RETURN (wtaerror (const CBufbyte *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (out_of_memory (const CBufbyte *reason,
 				      Lisp_Object frob));
-DECLARE_DOESNT_RETURN (stack_overflow (const char *reason,
+DECLARE_DOESNT_RETURN (stack_overflow (const CBufbyte *reason,
 				       Lisp_Object frob));
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (printing_unreadable_object
-						  (const char *,
+						  (const CBufbyte *,
 						   ...), 1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
@@ -2619,13 +2630,13 @@ Lisp_Object call6_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
 Lisp_Object eval_in_buffer (struct buffer *, Lisp_Object);
 Lisp_Object call0_with_handler (Lisp_Object, Lisp_Object);
 Lisp_Object call1_with_handler (Lisp_Object, Lisp_Object, Lisp_Object);
-Lisp_Object eval_in_buffer_trapping_errors (const char *, struct buffer *,
+Lisp_Object eval_in_buffer_trapping_errors (const CBufbyte *, struct buffer *,
 					    Lisp_Object);
-Lisp_Object run_hook_trapping_errors (const char *, Lisp_Object);
-Lisp_Object safe_run_hook_trapping_errors (const char *, Lisp_Object, int);
-Lisp_Object call0_trapping_errors (const char *, Lisp_Object);
-Lisp_Object call1_trapping_errors (const char *, Lisp_Object, Lisp_Object);
-Lisp_Object call2_trapping_errors (const char *,
+Lisp_Object run_hook_trapping_errors (const CBufbyte *, Lisp_Object);
+Lisp_Object safe_run_hook_trapping_errors (const CBufbyte *, Lisp_Object, int);
+Lisp_Object call0_trapping_errors (const CBufbyte *, Lisp_Object);
+Lisp_Object call1_trapping_errors (const CBufbyte *, Lisp_Object, Lisp_Object);
+Lisp_Object call2_trapping_errors (const CBufbyte *,
 				   Lisp_Object, Lisp_Object, Lisp_Object);
 Lisp_Object call_with_suspended_errors (lisp_fn_t, volatile Lisp_Object, Lisp_Object,
 					Error_Behavior, int, ...);
@@ -2644,7 +2655,7 @@ void record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
 void do_autoload (Lisp_Object, Lisp_Object);
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
-void warn_when_safe (Lisp_Object, Lisp_Object, const char *,
+void warn_when_safe (Lisp_Object, Lisp_Object, const CBufbyte *,
 		     ...) PRINTF_ARGS (3, 4);
 
 
@@ -2670,13 +2681,13 @@ Lisp_Object allocate_event (void);
 void record_auto_save (void);
 void force_auto_save_soon (void);
 DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
-						const char *string,
+						const CBufbyte *string,
 						Lisp_Object data));
 DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
 					       Lisp_Object oserrmess,
-					       const char *string,
+					       const CBufbyte *string,
 					       Lisp_Object data));
-DECLARE_DOESNT_RETURN (report_file_error (const char *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_file_error (const CBufbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 ssize_t read_allowing_quit (int, void *, size_t);

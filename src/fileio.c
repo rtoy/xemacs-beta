@@ -132,7 +132,7 @@ EXFUN (Frunning_temacs_p, 0);
 
 DOESNT_RETURN
 report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const char *string, Lisp_Object data)
+			const CBufbyte *string, Lisp_Object data)
 {
   struct gcpro gcpro1;
   Lisp_Object errdata = build_error_data (NULL, data);
@@ -146,7 +146,7 @@ report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
 
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
-			 const char *string, Lisp_Object data)
+			 const CBufbyte *string, Lisp_Object data)
 {
   report_file_type_error (errtype, lisp_strerror (errno), string, data);
 }
@@ -154,7 +154,7 @@ report_error_with_errno (Lisp_Object errtype,
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (const char *string, Lisp_Object data)
+report_file_error (const CBufbyte *string, Lisp_Object data)
 {
   report_error_with_errno (Qfile_error, string, data);
 }
