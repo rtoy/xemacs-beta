@@ -1,3 +1,7 @@
+2002-07-27  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.8 "broccoli" is released.
+
 2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.7 "broccoflower" is released.
@@ -455,6 +459,6 @@
 
 	* all: port from cygwin setup.
 
-%%% $Id: ChangeLog,v 1.20 2002/07/02 15:01:01 stephent Exp $
-$Revision: 1.20 $
+%%% $Id: ChangeLog,v 1.21 2002/07/27 03:53:00 youngs Exp $
+$Revision: 1.21 $
 

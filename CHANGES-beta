@@ -1,3 +1,59 @@
+to 21.5.8 "broccoli"
+
+Lots of fixes and changes.  This release is primarily been done to
+make way for the new GC stuff from Mike Sperber.
+
+CHANGES now uses surnames as listed in the ChangeLogs to identify
+contributors.  And I haven't sorted the changes into different
+categories.  Maybe next release...
+
+-- New configure option "--use-kkcc" for the upcoming new GC
+   algorithms - Sperber.
+-- Identify "--with-modules" as an autodetected configure option -
+   James. 
+-- Add a couple of configuration questions to PROBLEMS - Turnball.
+-- Test for wchar.h in configure - Sperber.
+-- Update package-index files - Youngs.
+-- s/Xemacs/XEmacs/ doc fixes - Aichner.
+-- Sync make-docfile.c with GNU - James.
+-- Updates to gutter-items - Palmieri.
+-- Sync setenv with GNU - Wallington.
+-- Remove package-get's dependence on APEL - Youngs.
+-- Fix case fold bug in replace-in-string - Verna.
+-- Updates to code-process.el and process.el - Alexander.
+-- Updates to mule/kinsoku.el - Yamaoka.
+-- Updates to define-derived-mode - Wallington.
+-- Printer fixes - Piper.
+-- Updates to window-xemacs.el & frame.el - James.
+-- Doc fix gutter-items.el - Piper.
+-- Sync ":set-after" in custom with GNU - Piper.
+-- Sort the lists in enabled-behavior-list - Galibert
+-- Updates to lwlib-Xm.c - Piper.
+-- Various doc fixes to the TeXinfo docs - Aichner.
+-- GC fixes - Sperber.
+-- Updates to lisp.h, symbols.c for DSO's - James.
+-- Fix to mswindows_need_event - Alexander.
+-- Declare Fcdr_safe to be callable from C - Turnball.
+-- Ffunctionp return nil for autoloaded macros & keymaps - Niksic.
+-- Subwindow fixes - Ueno.
+-- Include wchar.h only if available, define wclsen if not - Sperber.
+-- Fixes to Fstart_process_internal - Sperber.
+-- Fixes to init_ralloc for pdump - Sperber.
+-- Remove duplicated definition of Lisp_Devmode - Bush.
+-- Fixes to toolbar/redisplay - Piper.
+-- Windows DDE fixes - Moore.
+-- Fixes to 'query_string_geometry' and 'widget_logical_unit_height' -
+   Piper.
+-- Fix problem with XEmacs freezing with certain virtual window
+   managers on Windows - Rankin.
+-- Conditionalise calls to syms_of_dired_mswindows &
+   vars_of_dired_mswindows on WIN32_NATIVE instead of HAVE_MSW_C_DIRED
+   - Harris.
+-- Process related fixes - Sperber.
+-- Fix #includes in input-method-motif.c - Galibert.
+-- Fixes to automated tests - Sperber.
+
+
 to 21.5.7 "broccoflower"
 
 CHANGES now uses @xemacs.org alias to identify contributors.  If the
