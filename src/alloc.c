@@ -187,7 +187,7 @@ static int lrecord_uid_counter;
 
 /* Nonzero when calling certain hooks or doing other things where
    a GC would be bad */
-static int gc_currently_forbidden;
+int gc_currently_forbidden;
 
 /* Hooks. */
 Lisp_Object Vpre_gc_hook, Qpre_gc_hook;

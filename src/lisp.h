@@ -3367,6 +3367,7 @@ MODULE_API void unstaticpro_nodump (Lisp_Object *);
 void register_post_gc_action (void (*fun) (void *), void *arg);
 int begin_gc_forbidden (void);
 void end_gc_forbidden (int count);
+extern int gc_currently_forbidden;
 
 END_C_DECLS
 

@@ -1,3 +1,26 @@
+2004-03-16  Jerry James  <james@xemacs.org>
+
+	* alloc.c: Make gc_currently_forbidden readable in other files.
+	* lisp.h: Add a declaration for gc_currently_forbidden.
+	* print.c: Add a debug_bindings struct to bind without consing.
+	* print.c (debug_prin1_bindings): New variable.
+	* print.c (output_string): Avoid calling begin_gc_forbidden, which
+	conses, if it is already forbidden.
+	* print.c (print_internal): Do not bump print_depth, which
+	involves consing, when inhibit_non_essential_printing_operations
+	is set, in which case we set print_depth to zero anyway.
+	* print.c (alternate_do_size): New variable.
+	* print.c (alternate_do_string): Dynamically allocated to avoid a
+	buffer overflow bug.
+	* print.c (write_string_to_alternate_debugging_output): Make sure
+	we do not overflow alternate_do_string.
+	* print.c (debug_prin1_exit): New function.  Unbind variables
+	bound by debug_prin1.
+	* print.c (debug_prin1): Avoid using internal_bind_int, which
+	conses; use debug_binding instead.  Always inhibit quit.
+	* print.c (vars_of_print): Initialize debug_prin1_bindings,
+	alternate_do_size, and alternate_do_string.
+
 2004-03-15  Jerry James  <james@xemacs.org>
 
 	* eval.c (grow_specpdl): Add some specpdl space, even when not

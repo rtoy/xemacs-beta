@@ -119,6 +119,21 @@ FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 static void write_string_to_alternate_debugging_output (const Ibyte *str,
 							Bytecount len);
 
+/* To avoid consing in debug_prin1, we package up variables we need to bind
+   into an opaque object. */
+struct debug_bindings 
+{
+  int inhibit_non_essential_printing_operations;
+  int print_depth;
+  int print_readably;
+  int print_unbuffered;
+  int gc_currently_forbidden;
+  Lisp_Object Vprint_length;
+  Lisp_Object Vprint_level;
+  Lisp_Object Vinhibit_quit;
+};
+
+static Lisp_Object debug_prin1_bindings;
 
 
 int stdout_needs_newline;
@@ -412,6 +427,13 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	      Ibyte *copied = alloca_array (Ibyte, len);
 	      memcpy (copied, newnonreloc + offset, len);
 	      Lstream_write (XLSTREAM (function), copied, len);
+	    }
+	  else if (gc_currently_forbidden)
+	    {
+	      /* Avoid calling begin_gc_forbidden, which conses.  We can reach
+		 this point from the cons debug code, which will get us into
+		 an infinite loop if we cons again. */
+	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
 	    }
 	  else
 	    {
@@ -1535,10 +1557,16 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 
   being_printed[print_depth] = obj;
-  specdepth = internal_bind_int (&print_depth, print_depth + 1);
 
-  if (print_depth > PRINT_CIRCLE)
-    signal_error (Qstack_overflow, "Apparently circular structure being printed", Qunbound);
+  /* Avoid calling internal_bind_int, which conses, when called from
+     debug_prin1.  In that case, we have bound print_depth to 0 anyway. */
+  if (!inhibit_non_essential_printing_operations)
+    {
+      specdepth = internal_bind_int (&print_depth, print_depth + 1);
+
+      if (print_depth > PRINT_CIRCLE)
+	signal_error (Qstack_overflow, "Apparently circular structure being printed", Qunbound);
+    }
 
   switch (XTYPE (obj))
     {
@@ -1712,7 +1740,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
     }
 
-  unbind_to (specdepth);
+  if (!inhibit_non_essential_printing_operations)
+    unbind_to (specdepth);
   UNGCPRO;
 }
 
@@ -1857,7 +1886,8 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
    not working. */
 
 static int alternate_do_pointer;
-static char alternate_do_string[5000];
+static int alternate_do_size;
+static char *alternate_do_string;
 
 DEFUN ("alternate-debugging-output", Falternate_debugging_output, 1, 1, 0, /*
 Append CHARACTER to the array `alternate_do_string'.
@@ -1892,6 +1922,17 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
     {
       extlen = len;
       extptr = (Extbyte *) str;
+    }
+
+  /* If not yet initialized, just skip it. */
+  if (alternate_do_string == NULL)
+    return;
+
+  if (alternate_do_pointer + extlen >= alternate_do_size)
+    {
+      alternate_do_size =
+	max(alternate_do_size * 2, alternate_do_pointer + extlen + 1);
+      XREALLOC_ARRAY (alternate_do_string, char, alternate_do_size);
     }
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
@@ -2012,11 +2053,29 @@ static int debug_print_length   = 50;
 static int debug_print_level    = 15;
 static int debug_print_readably = -1;
 
+/* Restore values temporarily bound by debug_prin1.  We use this approach to
+   avoid consing in debug_prin1.  That is verboten, since debug_prin1 can be
+   called by cons debugging code. */
+static Lisp_Object
+debug_prin1_exit (Lisp_Object ignored UNUSED_ARG)
+{
+  struct debug_bindings *bindings = 
+    (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
+  inhibit_non_essential_printing_operations =
+    bindings->inhibit_non_essential_printing_operations;
+  print_depth = bindings->print_depth;
+  print_readably = bindings->print_readably;
+  print_unbuffered = bindings->print_unbuffered;
+  gc_currently_forbidden = bindings->gc_currently_forbidden;
+  Vprint_length = bindings->Vprint_length;
+  Vprint_level = bindings->Vprint_level;
+  Vinhibit_quit = bindings->Vinhibit_quit;
+  return Qnil;
+}
+
 /* Print an object, `prin1'-style, to various possible debugging outputs.
    Make sure it's completely unbuffered so that, in the event of a crash
    somewhere, we see as much as possible that happened before it.
-
-
    */
 static void
 debug_prin1 (Lisp_Object debug_print_obj, int flags)
@@ -2025,19 +2084,30 @@ debug_prin1 (Lisp_Object debug_print_obj, int flags)
 
   /* by doing this, we trick various things that are non-essential
      but might cause crashes into not getting executed. */
-  int specdepth = 
-    internal_bind_int (&inhibit_non_essential_printing_operations, 1);
+  int specdepth;
+  struct debug_bindings *bindings = 
+    (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;
 
-  internal_bind_int (&print_depth, 0);
-  internal_bind_int (&print_readably,
-		     debug_print_readably != -1 ? debug_print_readably : 0);
-  internal_bind_int (&print_unbuffered, print_unbuffered + 1);
+  bindings->inhibit_non_essential_printing_operations =
+    inhibit_non_essential_printing_operations;
+  bindings->print_depth = print_depth;
+  bindings->print_readably = print_readably;
+  bindings->print_unbuffered = print_unbuffered;
+  bindings->gc_currently_forbidden = gc_currently_forbidden;
+  bindings->Vprint_length = Vprint_length;
+  bindings->Vprint_level = Vprint_level;
+  bindings->Vinhibit_quit = Vinhibit_quit;
+  specdepth = record_unwind_protect (debug_prin1_exit, Qnil);
+
+  inhibit_non_essential_printing_operations = 1;
+  print_depth = 0;
+  print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
+  print_unbuffered++;
   if (debug_print_length > 0)
-    internal_bind_lisp_object (&Vprint_length, make_int (debug_print_length));
+    Vprint_length = make_int (debug_print_length);
   if (debug_print_level > 0)
-    internal_bind_lisp_object (&Vprint_level, make_int (debug_print_level));
-  /* #### Do we need this?  It was in the old code. */
-  internal_bind_lisp_object (&Vinhibit_quit, Vinhibit_quit);
+    Vprint_level = make_int (debug_print_level);
+  Vinhibit_quit = Qt;
 
   if ((flags & EXT_PRINT_STDOUT) || (flags & EXT_PRINT_STDERR))
     print_internal (debug_print_obj, Qexternal_debugging_output, 1);
@@ -2406,4 +2476,11 @@ Label for minibuffer messages created with `print'.  This should
 generally be bound with `let' rather than set.  (See `display-message'.)
 */ );
   Vprint_message_label = Qprint;
+
+  debug_prin1_bindings =
+    make_opaque (OPAQUE_UNINIT, sizeof (struct debug_bindings));
+  staticpro (&debug_prin1_bindings);
+
+  alternate_do_size = 5000;
+  alternate_do_string = xnew_array(char, 5000);
 }
