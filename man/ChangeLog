@@ -1,3 +1,74 @@
+2004-11-16  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (Introduction):
+	* internals/internals.texi (Authorship of XEmacs):
+	* internals/internals.texi (A History of Emacs):
+	* internals/internals.texi (Through Version 18):
+	* internals/internals.texi (Epoch):
+	* internals/internals.texi (Lucid Emacs):
+	* internals/internals.texi (GNU Emacs 19):
+	* internals/internals.texi (GNU Emacs 20):
+	* internals/internals.texi (XEmacs):
+	* internals/internals.texi (The XEmacs Split):
+	* internals/internals.texi (Build-Time Dependencies):
+	* internals/internals.texi (Low-Level Modules):
+	* internals/internals.texi (Modules for Interfacing with the Operating System):
+	* internals/internals.texi (Rules When Writing New C Code):
+	* internals/internals.texi (Introduction to Writing C Code):
+	* internals/internals.texi (Writing New Modules):
+	* internals/internals.texi (Working with Lisp Objects):
+	* internals/internals.texi (Writing Lisp Primitives):
+	* internals/internals.texi (Adding Global Lisp Variables):
+	* internals/internals.texi (Writing Macros):
+	* internals/internals.texi (Proper Use of Unsigned Types):
+	* internals/internals.texi (Major Textual Changes):
+	* internals/internals.texi (Great Integral Type Renaming):
+	* internals/internals.texi (Text/Char Type Renaming):
+	* internals/internals.texi (Debugging and Testing):
+	* internals/internals.texi (Modules for Regression Testing):
+	* internals/internals.texi (Merging a Branch into the Trunk):
+	* internals/internals.texi (XEmacs from the Inside):
+	* internals/internals.texi (Basic Types):
+	* internals/internals.texi (Low-Level Allocation):
+	* internals/internals.texi (Basic Heap Allocation):
+	* internals/internals.texi (Stack Allocation):
+	* internals/internals.texi (Dynamic Arrays):
+	* internals/internals.texi (Allocation by Blocks):
+	* internals/internals.texi (Modules for Allocation):
+	* internals/internals.texi (Critical Redisplay Sections):
+	* internals/internals.texi (Control-G (Quit) Checking):
+	* internals/internals.texi (Future Work Discussion):
+	* internals/internals.texi (Discussion -- Garbage Collection):
+	* internals/internals.texi (Discussion -- Pure Space):
+	* internals/internals.texi (Discussion -- Hashtable-Based Marking and Cleanup):
+	* internals/internals.texi (Discussion -- The Anti-Cons):
+	* internals/internals.texi (Discussion -- Glyphs):
+	* internals/internals.texi (Discussion -- Dialog Boxes):
+	* internals/internals.texi (Discussion -- Multilingual Issues):
+	* internals/internals.texi (Discussion -- Instantiators and Generic Property Accessors):
+	* internals/internals.texi (image-instance-property): New.
+	* internals/internals.texi (set-image-instance-property): New.
+	* internals/internals.texi (Discussion -- Switching to C++):
+	* internals/internals.texi (Discussion -- Windows External Widget):
+
+	Add sections on Basic Types and Low-Level Allocation.  Move module
+	docs here.  Incorporate dynamic array and blocktype docs from
+	source.
+
+	Add info on beta releases up to present.
+
+	Redo chapter on "Rules When Writing New C Code", grouping stuff
+	together properly.  Put "Major Textual Changes" under this
+	chapter.  Incorporate etc/CODING-STANDARDS.
+
+	Add discussion sections on "Instantiators and Generic Property
+	Accessors" and "Switching to C++".  Fill out discussion on garbage
+	collection.
+
+	Incorporate backtraces showing crashes due to problems with
+	redisplay-critical-section protection.
+
 2004-11-04  Ben Wing  <ben@xemacs.org>
 
 	* lispref/mule.texi (CCL Syntax):
