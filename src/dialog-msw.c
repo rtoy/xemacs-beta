@@ -42,7 +42,6 @@ Lisp_Object Qdialog_box_error;
 static Lisp_Object Q_initial_directory;
 static Lisp_Object Q_initial_filename;
 static Lisp_Object Q_filter_list;
-static Lisp_Object Q_title;
 static Lisp_Object Q_allow_multi_select;
 static Lisp_Object Q_create_prompt_on_nonexistent;
 static Lisp_Object Q_overwrite_prompt;
@@ -286,11 +285,11 @@ free_dynarr_opaque_ptr (Lisp_Object arg)
 }
 
 
-#define ALIGN_TEMPLATE					\
-{							\
-  unsigned int slippage = Dynarr_length (template) & 3;	\
-  if (slippage)						\
-    Dynarr_add_many (template, &zeroes, slippage);	\
+#define ALIGN_TEMPLATE						\
+{								\
+  unsigned int slippage = Dynarr_length (template_) & 3;	\
+  if (slippage)							\
+    Dynarr_add_many (template_, &zeroes, slippage);		\
 }
 
 static struct
@@ -413,7 +412,7 @@ static Lisp_Object
 handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 {
   Lisp_Object_dynarr *dialog_items = Dynarr_new (Lisp_Object);
-  unsigned_char_dynarr *template = Dynarr_new (unsigned_char);
+  unsigned_char_dynarr *template_ = Dynarr_new (unsigned_char);
   unsigned int button_row_width = 0;
   unsigned int text_width, text_height;
   Lisp_Object question = Qnil, title = Qnil;
@@ -422,7 +421,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
   record_unwind_protect (free_dynarr_opaque_ptr,
 			 make_opaque_ptr (dialog_items));
   record_unwind_protect (free_dynarr_opaque_ptr,
-			 make_opaque_ptr (template));
+			 make_opaque_ptr (template_));
 
   /* A big NO NEED to GCPRO gui_items stored in the array: they are just
      pointers into KEYS list, which is GC-protected by the caller */
@@ -543,20 +542,20 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
     dlg_tem.cx = text_width + 2 * X_TEXT_FROM_EDGE;
     dlg_tem.cy = (Y_TEXT_FROM_EDGE + text_height + Y_TEXT_FROM_BUTTON
 		  + Y_BUTTON + Y_BUTTON_FROM_EDGE);
-    Dynarr_add_many (template, &dlg_tem, sizeof (dlg_tem));
+    Dynarr_add_many (template_, &dlg_tem, sizeof (dlg_tem));
 
     /* We want no menu and standard class */
-    Dynarr_add_many (template, &zeroes, 4);
+    Dynarr_add_many (template_, &zeroes, 4);
 
     /* And the third is the dialog title. "XEmacs" unless one is supplied.
        Note that the string must be in Unicode. */
     if (NILP (title))
-      Dynarr_add_many (template, L"XEmacs", 14);
+      Dynarr_add_many (template_, L"XEmacs", 14);
     else
-      push_lisp_string_as_unicode (template, title);
+      push_lisp_string_as_unicode (template_, title);
 
     /* We want standard dialog font */
-    Dynarr_add_many (template, L"\x08MS Shell Dlg", 28);
+    Dynarr_add_many (template_, L"\x08MS Shell Dlg", 28);
 
     /* Next add text control. */
     item_tem.style = WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX;
@@ -568,17 +567,17 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
     item_tem.id = 0xFFFF;
 
     ALIGN_TEMPLATE;
-    Dynarr_add_many (template, &item_tem, sizeof (item_tem));
+    Dynarr_add_many (template_, &item_tem, sizeof (item_tem));
 
     /* Right after class id follows */
-    Dynarr_add_many (template, &ones, 2);
-    Dynarr_add_many (template, &static_class_id, sizeof (static_class_id));
+    Dynarr_add_many (template_, &ones, 2);
+    Dynarr_add_many (template_, &static_class_id, sizeof (static_class_id));
 
     /* Next thing to add is control text, as Unicode string */
-    push_lisp_string_as_unicode (template, question);
+    push_lisp_string_as_unicode (template_, question);
 
     /* Specify 0 length creation data */
-    Dynarr_add_many (template, &zeroes, 2);
+    Dynarr_add_many (template_, &zeroes, 2);
 
     /* Now it's the button time */
     item_tem.y = Y_TEXT_FROM_EDGE + text_height + Y_TEXT_FROM_BUTTON;
@@ -601,11 +600,12 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	item_tem.id = i + ID_ITEM_BIAS;
 
 	ALIGN_TEMPLATE;
-	Dynarr_add_many (template, &item_tem, sizeof (item_tem));
+	Dynarr_add_many (template_, &item_tem, sizeof (item_tem));
 
 	/* Right after 0xFFFF and class id atom follows */
-	Dynarr_add_many (template, &ones, 2);
-	Dynarr_add_many (template, &button_class_id, sizeof (button_class_id));
+	Dynarr_add_many (template_, &ones, 2);
+	Dynarr_add_many (template_, &button_class_id,
+			 sizeof (button_class_id));
 
 	/* Next thing to add is control text, as Unicode string */
 	{
@@ -621,11 +621,11 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 					       2 * XSTRING_LENGTH (ctext) + 3,
 					       &accel_unused,
 					       ctext);
-	  push_bufbyte_string_as_unicode (template, trans, translen);
+	  push_bufbyte_string_as_unicode (template_, trans, translen);
 	}
 
 	/* Specify 0 length creation data. */
-	Dynarr_add_many (template, &zeroes, 2);
+	Dynarr_add_many (template_, &zeroes, 2);
 
 	item_tem.x += item_tem.cx + X_BUTTON_SPACING;
       }
@@ -654,7 +654,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
     /* Woof! Everything is ready. Pop pop pop in now! */
     did->hwnd =
       CreateDialogIndirectParam (NULL,
-				 (LPDLGTEMPLATE) Dynarr_atp (template, 0),
+				 (LPDLGTEMPLATE) Dynarr_atp (template_, 0),
 				 FRAME_MSWINDOWS_HANDLE (f), dialog_proc,
 				 (LPARAM) LISP_TO_VOID (dialog_data));
     if (!did->hwnd)

@@ -1,3 +1,140 @@
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	* s\cygwin32.h:
+	Don't unilaterally include ntplay, but only when we're compiling
+	with native sound (look in configure now).
+
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	For 21.4:
+
+	(Stephen, just take all event-msw.c patches.  This includes
+	the "iconify" fix below.)
+
+	* event-msw.c:
+	* event-msw.c (mswindows_dequeue_dispatch_event):
+	* event-msw.c (assert):
+	* event-msw.c (emacs_mswindows_quit_p):
+	* event-msw.c (debug_mswin_messages):
+	* event-msw.c (debug_output_mswin_message):
+	* event-msw.c (vars_of_event_mswindows):
+	Fix yet more problems with C-g handling.
+	Implement debug-mswindows-events.
+	
+	For 21.5:
+	
+	* event-stream.c:
+	* event-stream.c (add_low_level_timeout):
+	* event-stream.c (event_stream_generate_wakeup):
+	* event-stream.c (event_stream_resignal_wakeup):
+	* event-stream.c (event_stream_disable_wakeup):
+	* event-stream.c (event_stream_wakeup_pending_p):
+	* events.h:
+	* signal.c:
+	* signal.c (handle_async_timeout_signal):
+	* signal.c (signal_remove_async_interval_timeout):
+	* signal.c (alarm):
+	* signal.c (Fwaiting_for_user_input_p):
+	* signal.c (start_interrupts):
+	* signal.c (establish_slow_interrupt_timer):
+	* signal.c (slow_down_interrupts):
+	* signal.c (check_what_happened):
+	* signal.c (alarm_signal):
+	* signal.c (interrupt_signal):
+	* sysdep.h:
+	Rearrange the signal-handling code to eliminate the former
+	spaghetti logic paths in it.  Document clearly what
+	"low-level" and "high-level" timeouts are.  Rename some
+	functions with unclear names (e.g. "...alarm...") to names
+	that reflect what they actually do (e.g. "...async_timeout...").
+	Fix numerous bugs discovered in the process.
+
+	* console-x.h:
+	* event-Xt.c:
+	* event-Xt.c (update_frame_iconify_status):
+	* event-Xt.c (handle_map_event):
+	* event-Xt.c (emacs_Xt_handle_magic_event):
+	* event-Xt.c (emacs_Xt_event_pending_p):
+	* event-msw.c:
+	* frame-x.c:
+	* frame-x.c (x_frame_window_state):
+	* frame-x.c (x_frame_iconified_p):
+	* frame-x.c (x_frame_visible_p):
+	Hopefully make XEmacs properly maintain the "iconified"
+	state on frames at all times.  This should fix the "can't
+	delete a frame with C-x 5 0 when there's another iconified
+	frame out there" bug.
+
+	Put a notice in of further changes that should probably
+	be made to clean up the frame-visibility support.
+	(especially directed at Jan Vroonhof)
+
+	* lisp.h:
+	* miscplay.c (sndcnv8S_2mono):
+	* miscplay.c (sndcnv2monounsigned):
+	* miscplay.c (int2ulaw):
+	* miscplay.c (sndcnv2byteLE):
+	* miscplay.c (sndcnv2byteBE):
+	* miscplay.c (sndcnv2monobyteLE):
+	* miscplay.c (sndcnv2monobyteBE):
+	Rename SBufbyte to CBufbyte to avoid a misleading name.
+	Eliminate UChar, which is not used anywhere and contributes
+	no semantic info.  Add a comment about the documentation-only
+	properties of the char/unsigned char typedefs.  Add
+	SChar_Binary as an explicitly `signed' version of Char_Binary
+	and put back the `signed' declarations in miscplay.c.
+	
+	* alloc.c (build_string):
+	* alloc.c (build_ext_string):
+	* alloc.c (build_translated_string):
+	Use char typedefs.
+
+	* console-msw.c (mswindows_lisp_error):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-msw.c (handle_devmode_changes):
+	* device-msw.c (Fmsprinter_select_settings):
+	* device-msw.c (Fmswindows_printer_list):
+	* dialog-msw.c:
+	* dialog-msw.c (ALIGN_TEMPLATE):
+	* dialog-msw.c (handle_question_dialog_box):
+	* editfns.c (user_login_name):
+	* fileio.c (Ffile_readable_p):
+	* glyphs-eimage.c (tiff_memory_seek):
+	* menubar-msw.c (mswindows_translate_menu_or_dialog_item):
+	* menubar-msw.c (populate_menu_add_item):
+	* ntplay.c:
+	* ntplay.c (DONT_ENCAPSULATE):
+	* ntplay.c (play_sound_file):
+	* ntplay.c (play_sound_data_1):
+	* objects-msw.c (initialize_font_instance):
+	* objects-msw.c (mswindows_list_fonts):
+	* realpath.c (cygwin_readlink):
+	* redisplay-msw.c (mswindows_text_width_single_run):
+	* select-msw.c (symbol_to_ms_cf):
+	* select-msw.c (mswindows_register_selection_data_type):
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT):
+	* syswindows.h (WIN32_TO_LOCAL_FILE_FORMAT):
+	* win32.c (Fmswindows_shell_execute):
+	Eliminate numerous C++ errors.
+
+	* frame-msw.c (mswindows_set_title_from_bufbyte):
+	Eliminate numerous C++ errors and Mule-ize.
+
+	* glyphs-msw.c (convert_EImage_to_DIBitmap):
+	* glyphs-msw.c (mswindows_init_image_instance_from_eimage):
+	* glyphs-msw.c (set_mono_pixel):
+	* glyphs-msw.c (mswindows_initialize_image_instance_mask):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (mswindows_xpm_instantiate):
+	* glyphs-msw.c (read_bitmap_data):
+	* glyphs-msw.c (read_bitmap_data_from_file):
+	* glyphs-msw.c (xbm_create_bitmap_from_data):
+	* glyphs-msw.c (init_image_instance_from_xbm_inline):
+	* glyphs-msw.c (xbm_instantiate_1):
+	* glyphs-msw.c (mswindows_xbm_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	Eliminate numerous C++ errors and use char typedefs.
+
 2001-05-29  Adrian Aichner  <adrian@xemacs.org>
 
 	* fileio.c: Include nt.h.  Remove lisp_string_set_file_times()

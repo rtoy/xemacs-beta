@@ -129,7 +129,8 @@ cygwin_readlink (const char * name, char * buf, int size)
     {
       /* The file may exist, but isn't a symlink. Try to find the
          right name. */
-      char* tmp = alloca (cygwin_posix_to_win32_path_list_buf_size (name));
+      /* !!#### mule-bogosity */
+      char* tmp = (char *) alloca (cygwin_posix_to_win32_path_list_buf_size (name));
       cygwin_posix_to_win32_path_list (name, tmp);
       n = win32_readlink (tmp, buf, size);
     }

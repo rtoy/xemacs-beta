@@ -626,11 +626,13 @@ int event_stream_generate_wakeup (unsigned int milliseconds,
 				  Lisp_Object function,
 				  Lisp_Object object,
 				  int async_p);
+int event_stream_resignal_wakeup (int interval_id, int async_p,
+				  Lisp_Object *function, Lisp_Object *object);
 void event_stream_disable_wakeup (int id, int async_p);
-void event_stream_deal_with_async_timeout (int interval_id);
 
-int event_stream_add_async_timeout (EMACS_TIME thyme);
-void event_stream_remove_async_timeout (int id);
+/* from signal.c */
+int signal_add_async_interval_timeout (EMACS_TIME thyme);
+void signal_remove_async_interval_timeout (int id);
 
 /* from event-stream.c -- focus sanity */
 extern int focus_follows_mouse;

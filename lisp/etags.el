@@ -193,7 +193,15 @@ the current buffer."
     ;; Parent directories
     (when tags-check-parent-directories-for-tag-files
       (let ((cur default-directory))
-	(while (file-exists-p (setq cur (expand-file-name ".." cur)))
+	;; Fuck!  Shouldn't there be a more obvious portable way
+	;; to determine if we're the root?  Shouldn't we have a
+	;; proper path manipulation API?  Do you know how many
+	;; god-damn bugs are lurking out there because of Unix/
+	;; Windows differences?  And how much code is littered
+	;; with stuff such as 10 lines down from here?
+	(while (not (and (equal (file-name-as-directory cur) cur)
+			 (equal (directory-file-name cur) cur)))
+	  (setq cur (expand-file-name ".." cur))
 	  (let ((parent-tag-file (expand-file-name "TAGS" cur)))
 	    (when (file-readable-p parent-tag-file)
 	      (push parent-tag-file result))))))

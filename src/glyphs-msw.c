@@ -160,16 +160,16 @@ static void init_image_instance_geometry (Lisp_Image_Instance *ii)
 /************************************************************************/
 static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
 					       int width, int height,
-					       unsigned char *pic,
+					       UChar_Binary *pic,
 					       int *bit_count,
-					       unsigned char** bmp_data)
+					       UChar_Binary** bmp_data)
 {
   struct device *d = XDEVICE (device);
   int i,j;
   RGBQUAD* colortbl;
   int		ncolors;
   BITMAPINFO*	bmp_info;
-  unsigned char *ip, *dp;
+  UChar_Binary *ip, *dp;
 
   if (GetDeviceCaps (get_device_compdc (d), BITSPIXEL) > 0)
     {
@@ -194,7 +194,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
 
       /* bitmap data needs to be in blue, green, red triples - in that
 	 order, eimage is in RGB format so we need to convert */
-      *bmp_data = xnew_array_and_zero (unsigned char, bpline * height);
+      *bmp_data = xnew_array_and_zero (UChar_Binary, bpline * height);
       *bit_count = bpline * height;
 
       if (!bmp_data)
@@ -234,7 +234,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
 	  return NULL;
 	}
 
-      colortbl=(RGBQUAD*)(((unsigned char*)bmp_info)+sizeof(BITMAPINFOHEADER));
+      colortbl=(RGBQUAD*)(((UChar_Binary*)bmp_info)+sizeof(BITMAPINFOHEADER));
 
       bmp_info->bmiHeader.biBitCount=8;
       bmp_info->bmiHeader.biCompression=BI_RGB;
@@ -242,7 +242,7 @@ static BITMAPINFO* convert_EImage_to_DIBitmap (Lisp_Object device,
       bmp_info->bmiHeader.biClrUsed=ncolors;
       bmp_info->bmiHeader.biClrImportant=ncolors;
 
-      *bmp_data = (unsigned char *) xmalloc_and_zero (bpline * height);
+      *bmp_data = (UChar_Binary *) xmalloc_and_zero (bpline * height);
       *bit_count = bpline * height;
 
       if (!*bmp_data)
@@ -429,14 +429,14 @@ static void
 mswindows_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 					   int width, int height,
 					   int slices,
-					   unsigned char *eimage,
+					   UChar_Binary *eimage,
 					   int dest_mask,
 					   Lisp_Object instantiator,
 					   Lisp_Object domain)
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   BITMAPINFO*		bmp_info;
-  unsigned char*	bmp_data;
+  UChar_Binary*	bmp_data;
   int			bmp_bits;
   COLORREF		bkcolor;
   int slice;
@@ -474,18 +474,18 @@ mswindows_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 }
 
 inline static void
-set_mono_pixel (unsigned char* bits,
+set_mono_pixel (UChar_Binary* bits,
 		int bpline, int height,
 		int x, int y, int white)
 {
   int i;
-  unsigned char bitnum;
+  UChar_Binary bitnum;
   /* Find the byte on which this scanline begins */
   i = (height - y - 1) * bpline;
   /* Find the byte containing this pixel */
   i += (x >> 3);
   /* Which bit is it? */
-  bitnum = (unsigned char) (7 - (x & 7));
+  bitnum = (UChar_Binary) (7 - (x & 7));
   if (white)	/* Turn it on */
     bits[i] |= (1 << bitnum);
   else          /* Turn it off */
@@ -498,7 +498,7 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance* image,
 {
   HBITMAP mask;
   HGDIOBJ old = NULL;
-  unsigned char *dibits, *and_bits;
+  UChar_Binary *dibits, *and_bits;
   BITMAPINFO *bmp_info =
     (BITMAPINFO*) xmalloc_and_zero (sizeof (BITMAPINFO) + sizeof (RGBQUAD));
   int i, j;
@@ -552,7 +552,7 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance* image,
   bmp_info->bmiHeader.biClrImportant = 0;
   bmp_info->bmiHeader.biSizeImage = height * bpline;
 
-  dibits = (unsigned char*) xmalloc_and_zero (bpline * height);
+  dibits = (UChar_Binary*) xmalloc_and_zero (bpline * height);
   if (GetDIBits (hcdc,
 		 IMAGE_INSTANCE_MSWINDOWS_BITMAP (image),
 		 0,
@@ -571,7 +571,7 @@ mswindows_initialize_image_instance_mask (Lisp_Image_Instance* image,
     {
       for (j=0; j<height; j++)
 	{
-	  unsigned char* idx = &dibits[j * bpline + i * 3];
+	  UChar_Binary* idx = &dibits[j * bpline + i * 3];
 
 	  if (RGB (idx[2], idx[1], idx[0]) == transparent_color)
 	    {
@@ -786,7 +786,7 @@ extract_xpm_color_names (Lisp_Object device,
 }
 
 static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
-			  unsigned char** data,
+			  UChar_Binary** data,
 			  int* width, int* height,
 			  int* x_hot, int* y_hot,
 			  int* transp,
@@ -796,7 +796,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
   XpmImage xpmimage;
   XpmInfo xpminfo;
   int result, i, j, transp_idx, maskbpline;
-  unsigned char* dptr;
+  UChar_Binary* dptr;
   unsigned int* sptr;
   COLORREF color; /* the american spelling virus hits again .. */
   COLORREF* colortbl;
@@ -834,7 +834,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
   *height = xpmimage.height;
   maskbpline = BPLINE ((~7UL & (unsigned long)(*width + 7)) / 8);
 
-  *data = xnew_array_and_zero (unsigned char, *width * *height * 3);
+  *data = xnew_array_and_zero (UChar_Binary, *width * *height * 3);
 
   if (!*data)
     {
@@ -943,10 +943,10 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   const Extbyte		*bytes;
   Extcount 		len;
-  unsigned char		*eimage;
+  UChar_Binary		*eimage;
   int			width, height, x_hot, y_hot;
   BITMAPINFO*		bmp_info;
-  unsigned char*	bmp_data;
+  UChar_Binary*	bmp_data;
   int			bmp_bits;
   int 			nsymbols=0, transp;
   struct color_symbol*	color_symbols=NULL;
@@ -1499,10 +1499,10 @@ NextInt (FILE *fstream)
  * like the Xlib routine XReadBitmapfile as possible.
  */
 int read_bitmap_data (FILE* fstream, unsigned int *width,
-		      unsigned int *height, unsigned char **datap,
+		      unsigned int *height, UChar_Binary **datap,
 		      int *x_hot, int *y_hot)
 {
-    unsigned char *data = NULL;		/* working variable */
+    UChar_Binary *data = NULL;		/* working variable */
     char line[MAX_SIZE];		/* input line from file */
     int size;				/* number of bytes of data */
     char name_and_type[MAX_SIZE];	/* an input line */
@@ -1577,12 +1577,12 @@ int read_bitmap_data (FILE* fstream, unsigned int *width,
 	bytes_per_line = (ww+7)/8 + padding;
 
 	size = bytes_per_line * hh;
-	data = (unsigned char *) Xmalloc ((unsigned int) size);
+	data = (UChar_Binary *) Xmalloc ((unsigned int) size);
 	if (!data)
 	  RETURN (BitmapNoMemory);
 
 	if (version10p) {
-	    unsigned char *ptr;
+	    UChar_Binary *ptr;
 	    int bytes;
 
 	    for (bytes=0, ptr=data; bytes<size; (bytes += 2)) {
@@ -1593,7 +1593,7 @@ int read_bitmap_data (FILE* fstream, unsigned int *width,
 		  *(ptr++) = value >> 8;
 	    }
 	} else {
-	    unsigned char *ptr;
+	    UChar_Binary *ptr;
 	    int bytes;
 
 	    for (bytes=0, ptr=data; bytes<size; bytes++, ptr++) {
@@ -1621,7 +1621,7 @@ int read_bitmap_data (FILE* fstream, unsigned int *width,
 
 
 int read_bitmap_data_from_file (const char *filename, unsigned int *width,
-				unsigned int *height, unsigned char **datap,
+				unsigned int *height, UChar_Binary **datap,
 				int *x_hot, int *y_hot)
 {
     FILE *fstream;
@@ -1650,15 +1650,15 @@ static int flip_table[] =
    byte order from left to right, big-endian within a byte.  0 =
    black, 1 = white.  */
 static HBITMAP
-xbm_create_bitmap_from_data (HDC hdc, char *data,
+xbm_create_bitmap_from_data (HDC hdc, const UChar_Binary *data,
 			     unsigned int width, unsigned int height,
 			     int mask, COLORREF fg, COLORREF bg)
 {
   int old_width = (width + 7)/8;
   int new_width = BPLINE (2*((width + 15)/16));
-  unsigned char *offset;
+  const UChar_Binary *offset;
   void *bmp_buf = 0;
-  unsigned char *new_data, *new_offset;
+  UChar_Binary *new_data, *new_offset;
   int i, j;
   BITMAPINFO *bmp_info =
     (BITMAPINFO*) xmalloc_and_zero (sizeof(BITMAPINFO) + sizeof(RGBQUAD));
@@ -1667,7 +1667,7 @@ xbm_create_bitmap_from_data (HDC hdc, char *data,
   if (!bmp_info)
     return NULL;
 
-  new_data = (unsigned char *) xmalloc_and_zero (height * new_width);
+  new_data = (UChar_Binary *) xmalloc_and_zero (height * new_width);
 
   if (!new_data)
     {
@@ -1683,7 +1683,7 @@ xbm_create_bitmap_from_data (HDC hdc, char *data,
       for (j=0; j<old_width; j++)
 	{
 	  int byte = offset[j];
-	  new_offset[j] = ~ (unsigned char)
+	  new_offset[j] = ~ (UChar_Binary)
 	    ((flip_table[byte & 0xf] << 4) + flip_table[byte >> 4]);
 	}
     }
@@ -1743,8 +1743,7 @@ xbm_create_bitmap_from_data (HDC hdc, char *data,
 static void
 init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     int width, int height,
-				     /* Note that data is in ext-format! */
-				     const char *bits,
+				     const UChar_Binary *bits,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
@@ -1795,14 +1794,13 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
   init_image_instance_geometry (ii);
 
   IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = mask ? mask :
-    xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height,
-				 TRUE, black, white);
+    xbm_create_bitmap_from_data (hdc, bits, width, height, TRUE, black, white);
 
   switch (type)
     {
     case IMAGE_MONO_PIXMAP:
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) =
-	xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height,
+	xbm_create_bitmap_from_data (hdc, bits, width, height,
 				     FALSE, black, black);
       break;
 
@@ -1831,7 +1829,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 
 	IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) =
-	  xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height,
+	  xbm_create_bitmap_from_data (hdc, bits, width, height,
 				       FALSE, fg, black);
       }
       break;
@@ -1858,7 +1856,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 	  bg = COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (background));
 
 	IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) =
-	  xbm_create_bitmap_from_data (hdc, (Extbyte *) bits, width, height,
+	  xbm_create_bitmap_from_data (hdc, bits, width, height,
 				       TRUE, fg, black);
 	mswindows_initialize_image_instance_icon (ii, TRUE);
       }
@@ -1873,8 +1871,7 @@ static void
 xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		   int dest_mask, int width, int height,
-		   /* Note that data is in ext-format! */
-		   const char *bits)
+		   const UChar_Binary *bits)
 {
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
@@ -1884,13 +1881,13 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (mask_data))
     {
-      const char *ext_data;
+      UChar_Binary *ext_data;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (XCDR (XCDR (mask_data))),
 			  C_STRING_ALLOCA, ext_data,
 			  Qbinary);
       mask = xbm_create_bitmap_from_data (hdc,
-					  (unsigned char *) ext_data,
+					  ext_data,
 					  XINT (XCAR (mask_data)),
 					  XINT (XCAR (XCDR (mask_data))),
 					  FALSE,
@@ -1912,7 +1909,7 @@ mswindows_xbm_instantiate (Lisp_Object image_instance,
 			   int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  const char *ext_data;
+  const UChar_Binary *ext_data;
 
   assert (!NILP (data));
 
@@ -1957,9 +1954,9 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
-  char *p, *bits, *bp;
-  const char * volatile emsg = 0;
-  const char * volatile dstring;
+  UChar_Binary *p, *bits, *bp;
+  const CBufbyte * volatile emsg = 0;
+  const UChar_Binary * volatile dstring;
 
   assert (!NILP (data));
 
@@ -1967,7 +1964,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
 		      C_STRING_ALLOCA, dstring,
 		      Qbinary);
 
-  if ((p = strchr (dstring, ':')))
+  if ((p = (UChar_Binary *) strchr ((char *) dstring, ':')))
     {
       dstring = p + 1;
     }
@@ -1995,7 +1992,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
   if (emsg)
     signal_image_error_2 (emsg, data, Qimage);
 
-  bp = bits = (char *) alloca (PIXELS / 8);
+  bp = bits = (UChar_Binary *) alloca (PIXELS / 8);
 
   /* the compface library exports char F[], which uses a single byte per
      pixel to represent a 48x48 bitmap.  Yuck. */
@@ -2007,7 +2004,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
 	{
 	  n |= ((*p++) << b);
 	}
-      *bp++ = (char) n;
+      *bp++ = (UChar_Binary) n;
     }
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,

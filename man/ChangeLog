@@ -1,3 +1,27 @@
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (MS Windows):
+	* xemacs-faq.texi (Q6.0.1):
+	* xemacs-faq.texi (Q6.0.2):
+	* xemacs-faq.texi (Q6.0.3):
+	* xemacs-faq.texi (Q6.0.4):
+	* xemacs-faq.texi (Q6.1.1):
+	* xemacs-faq.texi (Q6.1.4):
+	* xemacs-faq.texi (Q6.1.5):
+	* xemacs-faq.texi (Q6.1.6):
+	* xemacs-faq.texi (Q6.2.1):
+	* xemacs-faq.texi (Q6.2.2):
+	* xemacs-faq.texi (Q6.3.1):
+	* xemacs-faq.texi (Q6.3.2):
+	* xemacs-faq.texi (Q6.3.3):
+	* xemacs-faq.texi (Q6.4.1):
+	* xemacs-faq.texi (Current Events):
+	Major rewrite.
+	Update all MS Windows info to current.
+	Redo section 6.1 almost completely.
+	Incorporate sections 1 and 2 of Hrvoje's FAQ.
+
 2001-05-24  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Top):

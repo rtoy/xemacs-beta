@@ -82,7 +82,6 @@ int killpg (int pgrp, int sig);
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS
 #endif
-#define OBJECTS_SYSTEM	ntplay.o
 
 #undef MAIL_USE_SYSTEM_LOCK
 
@@ -150,6 +149,7 @@ int killpg (int pgrp, int sig);
 #define CYGWIN_CONV_PATH(src, dst) \
 dst = alloca (cygwin_win32_to_posix_path_list_buf_size(src)); \
 cygwin_win32_to_posix_path_list(src, dst)
+     /* !!#### more mule bogosity */
 #define CYGWIN_WIN32_PATH(src, dst) \
-dst = alloca (cygwin_posix_to_win32_path_list_buf_size(src)); \
+dst = (Extbyte *) alloca (cygwin_posix_to_win32_path_list_buf_size(src)); \
 cygwin_posix_to_win32_path_list(src, dst)

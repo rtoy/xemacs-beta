@@ -427,6 +427,9 @@ void x_generate_shadow_pixels (struct frame *f,
 int x_initialize_frame_menubar (struct frame *f);
 void x_init_modifier_mapping (struct device *d);
 
+int x_frame_window_state (struct frame *f);
+
+
 #define X_ERROR_OCCURRED(dpy, body)	\
      (expect_x_error (dpy), body, x_error_occurred_p (dpy))
 

@@ -518,11 +518,14 @@ mswindows_disable_frame (struct frame *f)
 static void
 mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title)
 {
-  unsigned int new_checksum = hash_string (title, strlen (title));
-  if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM(f))
+  unsigned int new_checksum = hash_string (title, strlen ((char *) title));
+  if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM (f))
     {
-      FRAME_MSWINDOWS_TITLE_CHECKSUM(f) = new_checksum;
-      SetWindowText (FRAME_MSWINDOWS_HANDLE(f), title);
+      Extbyte *title_ext;
+
+      FRAME_MSWINDOWS_TITLE_CHECKSUM (f) = new_checksum;
+      C_STRING_TO_EXTERNAL (title, title_ext, Qmswindows_tstr);
+      SetWindowText (FRAME_MSWINDOWS_HANDLE (f), title_ext);
     }
 }
 

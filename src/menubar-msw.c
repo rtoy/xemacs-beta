@@ -160,7 +160,7 @@ mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
   /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
      and `%%' with `%'. */
   ptr = item;
-  while ((ptr = memchr (ptr, '%', len - (ptr - item))) != NULL)
+  while ((ptr = (Bufbyte *) memchr (ptr, '%', len - (ptr - item))) != NULL)
     {
       if (*(ptr + 1) == '_')
 	{
@@ -354,7 +354,8 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	{
 	  item_info.fType = MFT_STRING;
 	  item_info.fState = MFS_DISABLED;
-	  item_info.dwTypeData = XSTRING_DATA (item);
+	  /* !!#### mule-bogosity, fixed in my mule ws */
+	  item_info.dwTypeData = (Extbyte *) XSTRING_DATA (item);
 	  oldflags |= MF_STRING | MF_DISABLED;
 	  oldlpnewitem = item_info.dwTypeData;
 	}

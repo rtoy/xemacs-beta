@@ -740,7 +740,8 @@ user_login_name (uid_t *uid)
 	     return "unknown" instead of the null if the username
 	     cannot be determined.
 	  */
-	  return pw ? pw->pw_name : "unknown";
+	  /* !!#### fix up in my mule ws */
+	  return pw ? pw->pw_name : (char *) "unknown";
 #else
 	  /* For all but Cygwin return NULL (nil) */
 	  return pw ? pw->pw_name : NULL;

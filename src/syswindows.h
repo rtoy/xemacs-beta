@@ -236,11 +236,20 @@ Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
 #ifdef CYGWIN
 #define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)			\
 do {									\
+  /* NOTE: It is a bit evil that here and below we are passing		\
+     internal-format data to a function that (nominally) should work	\
+     with external-format data.  But in point of fact, the Cygwin	\
+     conversion functions are *NOT* localized, and will fail if they	\
+     get 7-bit ISO2022-encoded data.  We know that our internal format	\
+     is ASCII-compatible, and so these functions will work fine with	\
+     this data. */							\
   Lisp_Object ltwff1 = (path);						\
   int ltwff2 =								\
-    cygwin_posix_to_win32_path_list_buf_size (XSTRING_DATA (ltwff1));	\
+    cygwin_posix_to_win32_path_list_buf_size ((char *)			\
+					      XSTRING_DATA (ltwff1));	\
   pathout = (Bufbyte *) alloca (ltwff2);				\
-  cygwin_posix_to_win32_path_list (XSTRING_DATA (ltwff1), pathout);	\
+  cygwin_posix_to_win32_path_list ((char *) XSTRING_DATA (ltwff1),	\
+				   (char *) pathout);			\
 } while (0)
 #else
 #define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)	\
@@ -250,19 +259,19 @@ do {							\
 #endif
 
 #ifdef CYGWIN
-#define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)	\
-do {							\
-  Bufbyte *wtlff1 = (path);				\
-  int wtlff2 =						\
-    cygwin_win32_to_posix_path_list_buf_size (wtlff1);	\
-  Bufbyte *wtlff3 = (Bufbyte *) alloca (wtlff2);	\
-  cygwin_win32_to_posix_path_list (wtlff1, wtlff3);	\
-  (pathout) = build_string (wtlff3);			\
+#define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)			\
+do {									\
+  Bufbyte *wtlff1 = (path);						\
+  int wtlff2 =								\
+    cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
+  Bufbyte *wtlff3 = (Bufbyte *) alloca (wtlff2);			\
+  cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
+  (pathout) = build_string ((CBufbyte *) wtlff3);			\
 } while (0)
 #else
 #define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)	\
 do {							\
-  (pathout) = build_string (path);			\
+  (pathout) = build_string ((CBufbyte *) path);		\
 } while (0)
 #endif
 

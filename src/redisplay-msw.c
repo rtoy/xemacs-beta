@@ -195,7 +195,8 @@ mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
       assert(run->dimension == 1);	/* #### FIXME! */
       mswindows_set_dc_font (hdc, font_inst,
 			     cachel->underline, cachel->strikethru);
-      GetTextExtentPoint32 (hdc, run->ptr, run->len, &size);
+      /* !!#### more mule bogosity */
+      GetTextExtentPoint32 (hdc, (char *) run->ptr, run->len, &size);
       return(size.cx);
     }
 }

@@ -1,6 +1,6 @@
 /* Handling asynchronous signals.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2001 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console.h"
 #include "events.h" /* for signal_fake_event() */
 #include "frame.h"
+#include "process.h"
 #include "sysdep.h"
 #include "syssignal.h"
 #include "systime.h"
@@ -47,22 +48,21 @@ volatile int quit_check_signal_tick_count;
 volatile int sigint_happened;
 
 /* Set to 1 when an asynch. timeout signal occurs. */
-static volatile int alarm_happened;
+static volatile int async_timeout_happened;
+
+/* Set to 1 when a multiple of SLOWED_DOWN_INTERRUPTS_SECS elapses,
+   after slow_down_interrupts() is called. */
+static volatile int slowed_interrupt_timeout_happened;
 
 /* This is used to synchronize setting the waiting_for_user_input_p
    flag. */
-static volatile int alarm_happened_while_emacs_was_blocking;
+static volatile int async_timeout_happened_while_emacs_was_blocking;
 
 /* See check_quit() for when this is set. */
 int dont_check_for_quit;
 
-#if !defined (SIGIO) && !defined (DONT_POLL_FOR_QUIT)
-int poll_for_quit_id;
-#endif
-
-#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
-int poll_for_sigchld_id;
-#endif
+static int poll_for_quit_id;
+static int poll_for_sigchld_id;
 
 /* This variable is used to communicate to a lisp
    process-filter/sentinel/asynchronous callback (via the function
@@ -82,10 +82,17 @@ static int interrupts_slowed_down;
 JMP_BUF break_system_call_jump;
 volatile int can_break_system_calls;
 
+static SIGTYPE alarm_signal (int signo);
+
+
 
 /**********************************************************************/
 /*                  Asynchronous timeout functions                    */
 /**********************************************************************/
+
+/* See the comment in event-stream.c, under major heading "Timeouts",
+   for the difference between low-level (one-shot) and high-level
+   (periodic/resignaling) timeouts. */
 
 /* The pending timers are stored in an ordered list, where the first timer
    on the list is the first one to fire.  Times recorded here are
@@ -131,91 +138,6 @@ reset_interval_timer (void)
   set_one_shot_timer (interval);
 }
 
-int
-event_stream_add_async_timeout (EMACS_TIME thyme)
-{
-  int id = add_low_level_timeout (&async_timer_queue, thyme);
-
-  /* If this timeout is at the head of the queue, then we need to
-     set the timer right now for this timeout.  Otherwise, things
-     are fine as-is; after the timers ahead of us are signalled,
-     the timer will be set for us. */
-
-  if (async_timer_queue->id == id)
-    reset_interval_timer ();
-
-  return id;
-}
-
-void
-event_stream_remove_async_timeout (int id)
-{
-  int first = (async_timer_queue && async_timer_queue->id == id);
-  remove_low_level_timeout (&async_timer_queue, id);
-
-  /* If we removed the timeout from the head of the queue, then
-     we need to reset the interval timer right now. */
-  if (first)
-    reset_interval_timer ();
-}
-
-/* Handle an alarm once each second and read pending input
-   so as to handle a C-g if it comes in.  */
-
-static SIGTYPE
-alarm_signal (int signo)
-{
-  if (interrupts_slowed_down)
-    {
-      something_happened = 1; /* tell QUIT to wake up */
-      /* we are in "slowed-down interrupts" mode; the only alarm
-	 happening here is the slowed-down quit-check alarm, so
-	 we set this flag.
-
-	 Do NOT set alarm_happened, because we don't want anyone
-	 looking at the timeout queue.  We didn't set it and
-	 it needs to stay the way it is. */
-      quit_check_signal_happened = 1;
-
-#ifdef WIN32_NATIVE
-      can_break_system_calls = 0;
-#else
-      /* can_break_system_calls is set when we want to break out of
-	 non-interruptible system calls. */
-      if (can_break_system_calls)
-	{
-	  /* reset the flag for safety and such.  Do this *before*
-	     unblocking or reestablishing the signal to avoid potential
-	     race conditions. */
-	  can_break_system_calls = 0;
-	  EMACS_UNBLOCK_SIGNAL (signo);
-	  EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
-	  LONGJMP (break_system_call_jump, 0);
-	}
-#endif
-
-      EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
-      SIGRETURN;
-    }
-
-  something_happened = 1; /* tell QUIT to wake up */
-  alarm_happened = 1;
-  if (emacs_is_blocking)
-    alarm_happened_while_emacs_was_blocking = 1;
-  /* #### This is for QUITP.  When it is run, it may not be the
-     place to do arbitrary stuff like run asynch. handlers, but
-     it needs to know whether the poll-for-quit asynch. timeout
-     went off.  Rather than put the code in to compute this
-     specially, we just set this flag.  Should fix this. */
-  quit_check_signal_happened = 1;
-
-#ifdef HAVE_UNIXOID_EVENT_LOOP
-  signal_fake_event ();
-#endif
-
-  EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
-  SIGRETURN;
-}
 
 static void
 init_async_timeouts (void)
@@ -255,76 +177,90 @@ start_async_timeouts (void)
     }
 }
 
-/* Some functions don't like being interrupted with SIGALRM or SIGIO.
-   Previously we were calling stop_interrupts() / start_interrupts(),
-   but then if the program hangs in one of those functions, e.g.
-   waiting for a connect(), we're really screwed.  So instead we
-   just "slow them down".  We do this by disabling all interrupts
-   and then installing a timer of length fairly large, like 5 or
-   10 secs.  That way, any "legitimate" connections (which should
-   take a fairly short amount of time) go through OK, but we can
-   interrupt bogus ones. */
-
-void
-slow_down_interrupts (void)
-{
-  EMACS_TIME thyme;
-
-  /* We have to set the flag *before* setting the slowed-down timer,
-     to avoid a race condition -- if the signal occurs between the
-     call to set_one_shot_timer() and the setting of this flag,
-     alarm_happened will get set, which will be a Bad Thing if
-     there were no timeouts on the queue. */
-  interrupts_slowed_down++;
-  if (interrupts_slowed_down == 1)
-    {
-      stop_interrupts ();
-      EMACS_SET_SECS_USECS (thyme, SLOWED_DOWN_INTERRUPTS_SECS, 0);
-      set_one_shot_timer (thyme);
-    }
-}
-
-void
-speed_up_interrupts (void)
-{
-  if (interrupts_slowed_down > 0)
-    {
-      start_interrupts ();
-      /* Change this flag AFTER fiddling with interrupts, for the same
-	 race-condition reasons as above. */
-      interrupts_slowed_down--;
-    }
-}
-
 static void
-handle_alarm_going_off (void)
+handle_async_timeout_signal (void)
 {
   int interval_id;
+  int wakeup_id;
+  Lisp_Object fun, arg;
 
-  /* If asynch. timeouts are blocked, then don't do anything now,
-     but make this function get called again next QUIT.
-
-     #### This is a bit inefficient because there will be function call
-     overhead each time QUIT occurs. */
-
-  if (!NILP (Vinhibit_quit))
-    {
-      something_happened = 1;
-      alarm_happened = 1;
-      return;
-    }
-
+  /* No checks for Vinhibit_quit here or anywhere else in this file!!!
+     Otherwise critical quit will not work right.
+     The only check for Vinhibit_quit is in QUIT itself. */
   interval_id = pop_low_level_timeout (&async_timer_queue, 0);
 
   reset_interval_timer ();
-  if (alarm_happened_while_emacs_was_blocking)
+  if (async_timeout_happened_while_emacs_was_blocking)
     {
-      alarm_happened_while_emacs_was_blocking = 0;
+      async_timeout_happened_while_emacs_was_blocking = 0;
       waiting_for_user_input_p = 1;
     }
-  event_stream_deal_with_async_timeout (interval_id);
+
+  wakeup_id = event_stream_resignal_wakeup (interval_id, 1, &fun, &arg);
+
+  if (wakeup_id == poll_for_quit_id)
+    {
+      quit_check_signal_happened = 1;
+      quit_check_signal_tick_count++;
+    }
+  else if (wakeup_id == poll_for_sigchld_id)
+    {
+      kick_status_notify ();
+    }
+  else
+    /* call1 GC-protects its arguments */
+    call1_trapping_errors ("Error in asynchronous timeout callback",
+			   fun, arg);
+
   waiting_for_user_input_p = 0;
 }
+
+/* The following two functions are the external interface onto
+   creating/deleting asynchronous interval timeouts, and are
+   called by event-stream.c.  We call back to event-stream.c using
+   event_stream_resignal_wakeup(), when an interval goes off. */
+
+int
+signal_add_async_interval_timeout (EMACS_TIME thyme)
+{
+  int id = add_low_level_timeout (&async_timer_queue, thyme);
+
+  /* If this timeout is at the head of the queue, then we need to
+     set the timer right now for this timeout.  Otherwise, things
+     are fine as-is; after the timers ahead of us are signalled,
+     the timer will be set for us. */
+
+  if (async_timer_queue->id == id)
+    reset_interval_timer ();
+
+  return id;
+}
+
+void
+signal_remove_async_interval_timeout (int id)
+{
+  int first = (async_timer_queue && async_timer_queue->id == id);
+  remove_low_level_timeout (&async_timer_queue, id);
+
+  /* If we removed the timeout from the head of the queue, then
+     we need to reset the interval timer right now. */
+  if (first)
+    reset_interval_timer ();
+}
+
+/* If alarm() gets called when polling isn't disabled, it will mess up
+   the asynchronous timeouts, and then C-g checking won't work again.
+   Some libraries call alarm() directly, so we override the standard
+   library's alarm() and abort() if the caller of the library function
+   didn't wrap in stop_interrupts()/start_interrupts().
+
+   NOTE: We could potentially avoid the need to wrap by adding a
+   one-shot timeout to simulate the alarm(), smashing our signal
+   handler back into place, and calling the library function when the
+   alarm goes off.  But do we want to?  We're not going to gain the
+   ability to C-g out of library functions this way (unless we forcibly
+   longjmp() out of a signal handler, which is likely to lead to a
+   crash). --ben */
 
 #ifdef HAVE_SETITIMER
 unsigned int
@@ -332,8 +268,6 @@ alarm (unsigned int howlong)
 {
   struct itimerval old_it, new_it;
 
-  /* If alarm() gets called when polling isn't disabled, it can mess
-     up the periodic timer. */
   assert (async_timer_suppress_count > 0);
 
   new_it.it_value.tv_sec = howlong;
@@ -361,21 +295,229 @@ an asynchronous timeout or process callback.
 
 
 /**********************************************************************/
-/*                        Control-G checking                          */
+/*                     Enabling/disabling signals                     */
 /**********************************************************************/
+
+static int interrupts_initted;
+
+void
+stop_interrupts (void)
+{
+  if (!interrupts_initted)
+    return;
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
+  unrequest_sigio ();
+#endif
+  stop_async_timeouts ();
+}
+
+void
+start_interrupts (void)
+{
+  if (!interrupts_initted)
+    return;
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
+  request_sigio ();
+#endif
+  start_async_timeouts ();
+}
+
+
+static void
+establish_slow_interrupt_timer (void)
+{
+  EMACS_TIME thyme;
+
+  EMACS_SET_SECS_USECS (thyme, SLOWED_DOWN_INTERRUPTS_SECS, 0);
+  set_one_shot_timer (thyme);
+}
+
+/* Some functions don't like being interrupted with SIGALRM or SIGIO.
+   Previously we were calling stop_interrupts() / start_interrupts(),
+   but then if the program hangs in one of those functions, e.g.
+   waiting for a connect(), we're really screwed.  So instead we
+   just "slow them down".  We do this by disabling all interrupts
+   and then installing a timer of length fairly large, like 5 or
+   10 secs.  That way, any "legitimate" connections (which should
+   take a fairly short amount of time) go through OK, but we can
+   interrupt bogus ones. */
+
+void
+slow_down_interrupts (void)
+{
+  /* We have to set the flag *before* setting the slowed-down timer,
+     to avoid a race condition -- if the signal occurs between the
+     call to set_one_shot_timer() and the setting of this flag,
+     async_timeout_happened will get set, which will be a Bad Thing if
+     there were no timeouts on the queue. */
+  interrupts_slowed_down++;
+  if (interrupts_slowed_down == 1)
+    {
+      stop_interrupts ();
+      establish_slow_interrupt_timer ();
+    }
+}
+
+void
+speed_up_interrupts (void)
+{
+  if (interrupts_slowed_down > 0)
+    {
+      start_interrupts ();
+      /* Change this flag AFTER fiddling with interrupts, for the same
+	 race-condition reasons as above. */
+      interrupts_slowed_down--;
+    }
+}
+
+/* Cheesy but workable implementation of sleep() that doesn't
+   interfere with our periodic timers. */
+
+void
+emacs_sleep (int secs)
+{
+  stop_interrupts ();
+  sleep (secs);
+  start_interrupts ();
+}
+
+
+/**********************************************************************/
+/*                 The mechanism that drives it all                   */
+/**********************************************************************/
+
+/* called from QUIT when something_happened gets set (as a result of
+   a signal) */
+
+int
+check_what_happened (void)
+{
+  something_happened = 0;
+  if (async_timeout_happened)
+    {
+      async_timeout_happened = 0;
+      handle_async_timeout_signal ();
+    }
+  if (slowed_interrupt_timeout_happened)
+    {
+      slowed_interrupt_timeout_happened = 0;
+      establish_slow_interrupt_timer ();
+    }
+
+  return check_quit ();
+}
+
+#ifdef SIGIO
+
+/* Signal handler for SIGIO. */
+
+static void
+input_available_signal (int signo)
+{
+  something_happened = 1; /* tell QUIT to wake up */
+  quit_check_signal_happened = 1;
+  quit_check_signal_tick_count++;
+  EMACS_REESTABLISH_SIGNAL (signo, input_available_signal);
+  SIGRETURN;
+}
+
+#endif /* SIGIO */
+
+/* Actual signal handler for SIGALRM.  Called when:
+
+   -- asynchronous timeouts (added with `add-async-timeout') go off
+
+   -- when the poll-for-quit timer (used for C-g handling; more or
+      less when SIGIO is unavailable or BROKEN_SIGIO is defined) or
+      poll-for-sigchld timer (used when BROKEN_SIGCHLD is defined) go
+      off.  The latter two timers, if set, normally go off every 1/4
+      of a second -- see NORMAL_QUIT_CHECK_TIMEOUT_MSECS and
+      NORMAL_SIGCHLD_CHECK_TIMEOUT_MSECS. (Both of these timers are
+      treated like other asynchronous timeouts, but special-cased
+      in handle_async_timeout_signal().)
+
+   -- we called slow_down_interrupts() and SLOWED_DOWN_INTERRUPTS_SECS
+      (or a multiple of it) has elapsed.
+
+   Note that under Windows, we have no working setitimer(), so we
+   simulate it using the multimedia timeout functions,
+   e.g. timeSetEvent().  See setitimer() in nt.c.
+
+   Note also that we don't actually *do* anything here (except in the
+   case of can_break_system_calls).  Instead, we just set various
+   flags; next time QUIT is called, the flags will cause
+   check_what_happened() to be called, at which point we do everything
+   indicated by the flags.
+*/
+
+static SIGTYPE
+alarm_signal (int signo)
+{
+  something_happened = 1; /* tell QUIT to wake up and call
+			     check_what_happened() */
+
+  if (interrupts_slowed_down)
+    {
+      /* we are in "slowed-down interrupts" mode; the only alarm
+	 happening here is the slowed-down quit-check alarm, so
+	 we set this flag.
+
+	 Do NOT set async_timeout_happened, because we don't want
+	 anyone looking at the timeout queue -- async timeouts
+	 are disabled. */
+      quit_check_signal_happened = 1;
+      quit_check_signal_tick_count++;
+      /* make sure we establish the slow timer again. */
+      slowed_interrupt_timeout_happened = 1;
+
+      /* can_break_system_calls is set when we want to break out of
+	 non-interruptible system calls. */
+      if (can_break_system_calls)
+	{
+	  /* reset the flag for safety and such.  Do this *before*
+	     unblocking or reestablishing the signal to avoid potential
+	     race conditions. */
+	  can_break_system_calls = 0;
+#ifndef WIN32_NATIVE
+	  /* #### I didn't add this WIN32_NATIVE check.  I'm not sure
+	     why it's here.  But then again, someone needs to review
+	     this can_break_system_calls stuff and see if it still
+	     makes sense. --ben */
+	  EMACS_UNBLOCK_SIGNAL (signo);
+	  EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
+	  LONGJMP (break_system_call_jump, 0);
+#endif
+	}
+    }
+  else
+    {
+      async_timeout_happened = 1;
+      if (emacs_is_blocking)
+	async_timeout_happened_while_emacs_was_blocking = 1;
+      /* #### This is for QUITP.  When it is run, it may not be the
+	 place to do arbitrary stuff like run asynch. handlers, but
+	 it needs to know whether the poll-for-quit asynch. timeout
+	 went off.  Rather than put the code in to compute this
+	 specially, we just set this flag.  Should fix this. */
+      quit_check_signal_happened = 1;
+
+#ifdef HAVE_UNIXOID_EVENT_LOOP
+      signal_fake_event ();
+#endif
+    }
+
+  EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
+  SIGRETURN;
+}
 
 /* Set this for debugging, to have a way to get out */
 int stop_character; /* #### not currently implemented */
 
-/* This routine is called in response to a SIGINT or SIGQUIT.
-   On TTY's, one of these two signals will get generated in response
-   to C-g.  (When running under X, C-g is handled using the SIGIO
-   handler, which sets a flag telling the QUIT macro to scan the
-   unread events for a ^G.)
-
-   Otherwise it sets the Lisp variable  quit-flag  not-nil.
-   This causes  eval  to throw, when it gets a chance.
-   If  quit-flag  is already non-nil, it stops the job right away.  */
+/* Signal handler for SIGINT and SIGQUIT.  On TTY's, one of these two
+   signals will get generated in response to C-g.  (When running under
+   X, C-g is handled using the SIGIO handler, which sets a flag
+   telling the QUIT macro to scan the unread events for a ^G.)
+   */
 
 static SIGTYPE
 interrupt_signal (int sig)
@@ -388,14 +530,12 @@ interrupt_signal (int sig)
 
   EMACS_REESTABLISH_SIGNAL (sig, interrupt_signal);
 
-/* with the macroized error-checking stuff, the garbage below
-   may mess things up because XCONSOLE() and such can use and
-   change global vars. */
-#if ! (defined (ERROR_CHECK_TYPECHECK) && defined (MACROIZE_ERROR_CHECKING))
   if (sigint_happened && CONSOLEP (Vcontrolling_terminal) &&
       CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)) &&
       !emacs_is_blocking)
     {
+      /* #### this is inherited from GNU Emacs.  Do we really want this?
+	 --ben */
       char c;
       fflush (stdout);
       reset_initial_console ();
@@ -434,7 +574,6 @@ interrupt_signal (int sig)
 					     (Vcontrolling_terminal))))));
     }
   else
-#endif /* ! (defined (ERROR_CHECKING) && defined (MACROIZE_ERROR_CHECKING)) */
     {
       /* Else request quit when it's safe */
       Vquit_flag = Qt;
@@ -446,6 +585,11 @@ interrupt_signal (int sig)
   errno = old_errno;
   SIGRETURN;
 }
+
+
+/**********************************************************************/
+/*                        Control-G checking                          */
+/**********************************************************************/
 
 static Lisp_Object
 restore_dont_check_for_quit (Lisp_Object val)
@@ -501,19 +645,6 @@ check_quit (void)
     return 0;
 }
 
-int
-check_what_happened (void)		/* called from QUIT when
-					   something_happened gets set */
-{
-  something_happened = 0;
-  if (alarm_happened)
-    {
-      alarm_happened = 0;
-      handle_alarm_going_off ();
-    }
-  return check_quit ();
-}
-
 
 
 void
@@ -534,6 +665,8 @@ init_poll_for_quit (void)
 #endif /* not SIGIO and not DONT_POLL_FOR_QUIT */
 }
 
+#if 0 /* not used anywhere */
+
 void
 reset_poll_for_quit (void)
 {
@@ -545,6 +678,8 @@ reset_poll_for_quit (void)
     }
 #endif /* not SIGIO and not DONT_POLL_FOR_QUIT */
 }
+
+#endif /* 0 */
 
 #if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
 
@@ -565,60 +700,6 @@ init_poll_for_sigchld (void)
 }
 
 #endif /* not SIGCHLD */
-
-#ifdef SIGIO
-
-static void
-input_available_signal (int signo)
-{
-  something_happened = 1; /* tell QUIT to wake up */
-  quit_check_signal_happened = 1;
-  quit_check_signal_tick_count++;
-  EMACS_REESTABLISH_SIGNAL (signo, input_available_signal);
-  SIGRETURN;
-}
-
-#endif /* SIGIO */
-
-
-/**********************************************************************/
-/*                     Enabling/disabling signals                     */
-/**********************************************************************/
-
-static int interrupts_initted;
-
-void
-stop_interrupts (void)
-{
-  if (!interrupts_initted)
-    return;
-#if defined(SIGIO) && !defined(BROKEN_SIGIO)
-  unrequest_sigio ();
-#endif
-  stop_async_timeouts ();
-}
-
-void
-start_interrupts (void)
-{
-  if (!interrupts_initted)
-    return;
-#if defined(SIGIO) && !defined(BROKEN_SIGIO)
-  request_sigio ();
-#endif
-  start_async_timeouts ();
-}
-
-/* Cheesy but workable implementation of sleep() that doesn't
-   interfere with our periodic timers. */
-
-void
-emacs_sleep (int secs)
-{
-  stop_interrupts ();
-  sleep (secs);
-  start_interrupts ();
-}
 
 
 /************************************************************************/

@@ -2109,14 +2109,14 @@ make_ext_string (const Extbyte *contents, EMACS_INT length,
 }
 
 Lisp_Object
-build_string (const char *str)
+build_string (const CBufbyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
   return make_string ((const Bufbyte *) str, (str ? strlen(str) : 0));
 }
 
 Lisp_Object
-build_ext_string (const char *str, Lisp_Object coding_system)
+build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 {
   /* Some strlen's crash and burn if passed null. */
   return make_ext_string ((const Extbyte *) str, (str ? strlen(str) : 0),
@@ -2124,7 +2124,7 @@ build_ext_string (const char *str, Lisp_Object coding_system)
 }
 
 Lisp_Object
-build_translated_string (const char *str)
+build_translated_string (const CBufbyte *str)
 {
   return build_string (GETTEXT (str));
 }

@@ -221,10 +221,12 @@ otherwise it is an integer representing a ShowWindow flag:
 
   ret = (int) ShellExecute (NULL,
 			    (STRINGP (operation) ?
-			     XSTRING_DATA (operation) : NULL),
+			     /* !!#### more mule bogosity */
+			     (char *) XSTRING_DATA (operation) : NULL),
 			    doc, 
 			    (STRINGP (parameters) ?
-			     XSTRING_DATA (parameters) : NULL),
+			     /* !!#### more mule bogosity */
+			     (char *) XSTRING_DATA (parameters) : NULL),
 			    path,
 			    (INTP (show_flag) ?
 			     XINT (show_flag) : SW_SHOWDEFAULT));

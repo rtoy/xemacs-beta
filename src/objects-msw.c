@@ -1276,7 +1276,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
   HFONT hfont, hfont2;
   TEXTMETRIC metrics;
 
-  extname = XSTRING_DATA (name);
+  /* !!#### more mule bogosity */
+  extname = (const char *) XSTRING_DATA (name);
 
   /*
    * mswindows fonts look like:
@@ -1489,7 +1490,8 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
       sprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects, charset);
       LIST_LOOP (fonttail, device_font_list)
 	{
-	  if (match_font (XSTRING_DATA (XCAR (fonttail)), truename, NULL))
+	  /* !!#### more mule bogosity */
+	  if (match_font ((char *) XSTRING_DATA (XCAR (fonttail)), truename, NULL))
 	    break;
 	}
       if (NILP (fonttail))
@@ -1604,7 +1606,8 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
   LIST_LOOP (fonttail, DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device)))
     {
-      if (match_font (XSTRING_DATA (XCAR (fonttail)), extpattern, NULL))
+      /* !!#### more mule bogosity */
+      if (match_font ((char *) XSTRING_DATA (XCAR (fonttail)), extpattern, NULL))
 	result = Fcons (XCAR (fonttail), result);
     }
 

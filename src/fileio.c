@@ -2218,7 +2218,7 @@ See also `file-exists-p' and `file-attributes'.
 #if defined(WIN32_NATIVE) || defined(CYGWIN)
   /* Under MS-DOS and Windows, open does not work for directories.  */
   UNGCPRO;
-  if (access (XSTRING_DATA (abspath), 0) == 0)
+  if (access ((char *) XSTRING_DATA (abspath), 0) == 0)
     return Qt;
   else
     return Qnil;

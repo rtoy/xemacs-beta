@@ -22,6 +22,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /* This file Mule-ized by Ben Wing, 5-15-01. */
 
+#define DONT_ENCAPSULATE
+
 #include <config.h>
 #include "lisp.h"
 
@@ -49,14 +51,14 @@ play_sound_file (Extbyte *sound_file, int volume)
     {
       /* file isn't in the path so read it as data */
       int size;
-      UChar_Binary* data;
+      UChar_Binary *data;
       int ofd = open (sound_file, O_RDONLY | OPEN_BINARY, 0);
       
       if (ofd <0)
 	return;
 
       size = lseek (ofd, 0, SEEK_END);
-      data = (UChar_Binary *)xmalloc (size);
+      data = (UChar_Binary *) xmalloc (size);
       lseek (ofd, 0, SEEK_SET);
       
       if (!data)
@@ -86,23 +88,23 @@ play_sound_data_1 (UChar_Binary *data, int length, int volume,
 		   int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
-  static UChar_Binary* sound_data=0;
+  static UChar_Binary *sound_data = 0;
   if (sound_data)
     {
       PlaySound (NULL, NULL, flags);
       xfree (sound_data);
-      sound_data=0;
+      sound_data = 0;
     }
 
   if (convert_to_malloc)
     {
-      sound_data = (UChar_Binary *)xmalloc (length);
+      sound_data = (UChar_Binary *) xmalloc (length);
       memcpy (sound_data, data, length);
     }
   else
     sound_data = data;
 
-  PlaySound(sound_data, NULL, flags);
+  PlaySound ((Extbyte *) sound_data, NULL, flags);
 
   /* #### Error handling? */ 
   return 1;

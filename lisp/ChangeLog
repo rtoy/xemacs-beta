@@ -1,3 +1,8 @@
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	* etags.el (buffer-tag-table-list):
+	Fix infloop when going up to the root.
+
 2001-05-30  William M. Perry  <wmperry@gnu.org>
 
 	* gtk-marshal.el: Make sure that we use 'const' instead of 'CONST'

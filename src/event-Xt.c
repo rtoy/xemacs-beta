@@ -1668,11 +1668,46 @@ change_frame_visibility (struct frame *f, int is_visible)
 }
 
 static void
+update_frame_iconify_status (struct frame *f)
+{
+  f->iconified = (x_frame_window_state (f) == IconicState);
+}
+
+static void
 handle_map_event (struct frame *f, XEvent *event)
 {
   Lisp_Object frame;
 
   XSETFRAME (frame, f);
+
+  /* It seems that, given the multiplicity of window managers and X
+     implementations, plus the fact that X was designed without
+     window managers or icons in mind and this was then grafted on
+     with about the skill of a drunk freshman med student attempting
+     surgery with a rusty razor blade, we cannot treat any off
+     MapNotify/UnmapNotify/VisibilityNotify as more than vague hints
+     as to the actual situation.
+
+     So we should just query the actual status.  Unfortunately, things
+     are worse because (a) there aren't obvious ways to query some
+     of these values (e.g. "totally visible"), and (b) there may be
+     race conditions (see below).
+
+     However, according the the ICCCM, there's a specific way to
+     ask the window manager whether the state is (a) visible,
+     (b) iconic, (c) withdrawn.  It must be one of these three.
+     We already use this call to check for the iconified state.
+     I'd suggest we do the same for visible (i.e. NormalState),
+     and scrap most of the nasty code below.
+
+     --ben
+     */
+
+  update_frame_iconify_status (f);
+
+  /* #### Ben suggests rewriting the code below using
+     x_frame_window_state (f). */
+
   if (event->type == MapNotify)
     {
       XWindowAttributes xwa;
@@ -1691,12 +1726,7 @@ handle_map_event (struct frame *f, XEvent *event)
       XGetWindowAttributes (event->xany.display, event->xmap.window,
 			    &xwa);
       if (xwa.map_state != IsViewable)
-	{
-	  /* Calling Fframe_iconified_p is the only way we have to
-             correctly update FRAME_ICONIFIED_P */
-	  Fframe_iconified_p (frame);
-	  return;
-	}
+	return;
 
       FRAME_X_TOTALLY_VISIBLE_P (f) = 1;
 #if 0
@@ -1731,9 +1761,6 @@ handle_map_event (struct frame *f, XEvent *event)
     {
       FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
       change_frame_visibility (f, 0);
-      /* Calling Fframe_iconified_p is the only way we have to
-         correctly update FRAME_ICONIFIED_P */
-      Fframe_iconified_p (frame);
     }
 }
 
@@ -1932,6 +1959,11 @@ emacs_Xt_handle_magic_event (Lisp_Event *emacs_event)
     case VisibilityNotify: /* window visibility has changed */
       if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
 	{
+	  /* See comment in handle_map_event */
+	  update_frame_iconify_status (f);
+
+	  /* #### Ben suggests rewriting the code below using
+	     x_frame_window_state (f). */
 	  FRAME_X_TOTALLY_VISIBLE_P (f) =
 	    (event->xvisibility.state == VisibilityUnobscured);
 	  /* Note that the fvwm pager only sends VisibilityNotify when
@@ -2987,21 +3019,20 @@ emacs_Xt_event_pending_p (int user_p)
     }
 
   /* XtAppPending() can be super-slow, esp. over a network connection.
-     Quantify results have indicated that in some cases the
-     call to detect_input_pending() completely dominates the
-     running time of redisplay().  Fortunately, in a SIGIO world
-     we can more quickly determine whether there are any X events:
-     if an event has happened since the last time we checked, then
-     a SIGIO will have happened.  On a machine with broken SIGIO,
-     we'll still be in an OK state -- the sigio_happened flag
-     will get set at least once a second, so we'll be no more than
-     one second behind reality. (In general it's OK if we
-     erroneously report no input pending when input is actually
-     pending() -- preemption is just a bit less efficient, that's
-     all.  It's bad bad bad if you err the other way -- you've
-     promised that `next-event' won't block but it actually will,
-     and some action might get delayed until the next time you
-     hit a key.)
+     Quantify results have indicated that in some cases the call to
+     detect_input_pending() completely dominates the running time of
+     redisplay().  Fortunately, in a SIGIO world we can more quickly
+     determine whether there are any X events: if an event has
+     happened since the last time we checked, then a SIGIO will have
+     happened.  On a machine with broken SIGIO, we'll still be in an
+     OK state -- quit_check_signal_tick_count will get ticked at least
+     every 1/4 second, so we'll be no more than that much behind
+     reality. (In general it's OK if we erroneously report no input
+     pending when input is actually pending() -- preemption is just a
+     bit less efficient, that's all.  It's bad bad bad if you err the
+     other way -- you've promised that `next-event' won't block but it
+     actually will, and some action might get delayed until the next
+     time you hit a key.)
      */
 
   /* quit_check_signal_tick_count is volatile so try to avoid race conditions

@@ -396,15 +396,15 @@ x_wm_maybe_move_wm_command (struct frame *f)
 }
 #endif /* !HAVE_WMCOMMAND */
 
-static int
-x_frame_iconified_p (struct frame *f)
+int
+x_frame_window_state (struct frame *f)
 {
   Atom actual_type;
   int actual_format;
   unsigned long nitems, bytesafter;
   unsigned long *datap = 0;
   Widget widget;
-  int result = 0;
+  int result = -1;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
 
   widget = FRAME_X_SHELL_WIDGET (f);
@@ -415,12 +415,18 @@ x_frame_iconified_p (struct frame *f)
 				     (unsigned char **) &datap)
       && datap)
     {
-      if (nitems <= 2	/* "suggested" by ICCCM version 1 */
-	  && datap[0] == IconicState)
-	result = 1;
+      if (nitems <= 2)	/* "suggested" by ICCCM version 1 */
+	result = (int) datap[0];
       XFree ((char *) datap);
     }
+
   return result;
+}
+
+static int
+x_frame_iconified_p (struct frame *f)
+{
+  return x_frame_window_state (f) == IconicState;
 }
 
 
@@ -2527,6 +2533,9 @@ static int
 x_frame_visible_p (struct frame *f)
 {
 #if 0
+
+  /* #### Ben suggests using x_frame_window_state (f) == NormalState. */
+
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
   XWindowAttributes xwa;
   int result;

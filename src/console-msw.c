@@ -578,7 +578,7 @@ mswindows_lisp_error (int errnum)
   TO_INTERNAL_FORMAT (C_STRING, lpMsgBuf, ALLOCA, (inres, len),
 		      Qmswindows_tstr);
   /* Messages tend to end with a period and newline */
-  if (len >= 3 && !strcmp (inres + len - 3, ".\r\n"))
+  if (len >= 3 && !bufbyte_strcmp (inres + len - 3, ".\r\n"))
     len -= 3;
   result = make_string (inres, len);
   

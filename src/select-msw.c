@@ -71,7 +71,8 @@ symbol_to_ms_cf (Lisp_Object value)
 
   /* If it's a string, register the format(!) */
   if (STRINGP (value))
-    return RegisterClipboardFormat (XSTRING_DATA (value));
+    /* !!#### more mule bogosity */
+    return RegisterClipboardFormat ((Extbyte *) XSTRING_DATA (value));
 
   /* Check for Windows clipboard format symbols */
   if (EQ (value, QCF_TEXT))		return CF_TEXT;
@@ -378,7 +379,8 @@ static Lisp_Object
 mswindows_register_selection_data_type (Lisp_Object type_name)
 {
   /* Type already checked in select.c */
-  const char *name = XSTRING_DATA (type_name);
+  /* !!#### more mule bogosity */
+  const char *name = (char *) XSTRING_DATA (type_name);
   UINT	      format;
 
   format = RegisterClipboardFormat (name);

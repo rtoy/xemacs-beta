@@ -1123,11 +1123,11 @@ static toff_t tiff_memory_seek(thandle_t data, toff_t off, int whence)
     break;
   default:
     fprintf(stderr,"Eh? invalid seek mode in tiff_memory_seek\n");
-    return -1;
+    return (toff_t) -1;
   }
 
   if ((newidx > mem->len) || (newidx < 0))
-    return -1;
+    return (toff_t) -1;
 
   mem->index = newidx;
   return newidx;

@@ -318,18 +318,20 @@ void assert_failed (const char *, int, const char *);
    be interpreted as text. [A fifth possible type "e) a general pointer
    to memory" should be replaced with void *.]  Using these more specific
    types rather than the general ones helps avoid the confusions that
-   occur when the semantics of a char * argument being studied are unclear. */
+   occur when the semantics of a char * argument being studied are unclear.
 
-typedef unsigned char UChar;
+   Note that these typedefs are purely for documentation purposes; from
+   the C code's perspective, they are exactly equivalent to `char *',
+   `unsigned char *', etc., so you can freely use them with library
+   functions declared as such. */
 
 /* The data representing the text in a buffer is logically a set
    of Bufbytes, declared as follows. */
 
-typedef UChar Bufbyte;
-
-/* Explicitly signed or unsigned versions: */
-typedef UChar UBufbyte;
-typedef char  SBufbyte;
+typedef unsigned char Bufbyte;
+/* The following should only be used when you have to apply a stdlib
+   string function to internal data */
+typedef char CBufbyte;
 
 /* The data representing a string in "external" format (binary or any
    external encoding) is logically a set of Extbytes, declared as
@@ -341,13 +343,14 @@ typedef char Extbyte;
 
 /* A byte in a string in binary format: */
 typedef char Char_Binary;
-typedef UChar UChar_Binary;
+typedef signed char SChar_Binary;
+typedef unsigned char UChar_Binary;
 
 /* A byte in a string in entirely US-ASCII format: (Nothing outside
  the range 00 - 7F) */
 
 typedef char Char_ASCII;
-typedef UChar UChar_ASCII;
+typedef unsigned char UChar_ASCII;
 
 
 /* To the user, a buffer is made up of characters, declared as follows.
@@ -2361,7 +2364,8 @@ extern int find_file_compare_truenames;
 extern int find_file_use_truenames;
 
 /* Defined in bytecode.c */
-DOESNT_RETURN invalid_byte_code (const char *reason, Lisp_Object frob);
+DECLARE_DOESNT_RETURN (invalid_byte_code
+		       (const char *reason, Lisp_Object frob));
 
 /* Defined in callproc.c */
 char *egetenv (const char *);

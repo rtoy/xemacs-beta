@@ -572,7 +572,7 @@ sync_printer_with_devmode (struct device* d, DEVMODE* devmode_in,
 	     Nothing wrong on the Windows side, just forge a unique
 	     connection name. Use the memory address of d as a unique
 	     suffix. */
-	  char* new_connext = alloca (strlen (devname + 11));
+	  Extbyte *new_connext = (Extbyte *) alloca (strlen (devname + 11));
 	  sprintf (new_connext, "%s:%X", devname, d->header.uid);
 	  new_connection = build_ext_string (devname, Qmswindows_tstr);
 	}
@@ -616,7 +616,7 @@ handle_devmode_changes (Lisp_Devmode *ldm, HGLOBAL hDevNames, HGLOBAL hDevMode)
   DEVMODE* devmode = (DEVMODE*) GlobalLock (hDevMode);
 
   /* Size and name may have changed */
-  ldm->devmode = xrealloc (ldm->devmode, DEVMODE_SIZE (devmode));
+  ldm->devmode = (DEVMODE *) xrealloc (ldm->devmode, DEVMODE_SIZE (devmode));
   if (new_name)
     {
       if (ldm->printer_name)
@@ -941,7 +941,7 @@ Return value is the previously selected settings object.
 		      device);
 
       assert (XDEVMODE_SIZE (ldm) <= dm_size);
-      ldm->devmode = xrealloc (ldm->devmode, dm_size);
+      ldm->devmode = (DEVMODE *) xrealloc (ldm->devmode, dm_size);
     }
 
   /* If we bail out on signal here, no damage is done, except that
@@ -1222,7 +1222,7 @@ values.  Return value is nil if there are no printers installed.
   if (GetLastError () != ERROR_INSUFFICIENT_BUFFER)
     signal_enum_printer_error ();
 
-  data_buf = alloca (bytes_needed);
+  data_buf = (BYTE *) alloca (bytes_needed);
   ok = EnumPrinters (enum_flags, NULL, enum_level, data_buf, bytes_needed,
 		     &bytes_needed, &num_printers);
   if (!ok)
