@@ -1,3 +1,14 @@
+2004-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi (Specifier Instancing Functions): Add
+	documentation of `specifier-matching-instance'.
+	(Introduction to Specifiers): Fix typos.
+	(Simple Specifier Usage): Cross-reference Toolbar Intro.
+	(Creating Specifiers):
+	(Specifier Instancing Functions):
+	(Adding Specifications):
+	Various improvements.  Deprecate set-specifier a bit more.
+
 2004-01-20  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/specifiers.texi (Specifier Examples): Add new example,

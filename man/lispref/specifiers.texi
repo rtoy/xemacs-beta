@@ -78,7 +78,7 @@ Specifiers vary according to the @emph{display} context.  Font-lock
 keywords in a buffer will be the same no matter which window the
 buffer is displayed in, but windows on TTY devices will simply not be
 capable of the flexibility that windows on modern GUI devices are.
-Specifiers provide a way for the programmer to @emph{declare} that a
+Specifiers provide a way for the programmer to @emph{declare} that an
 emphasized text should be italic on GUI devices and inverse video on
 TTYs.  They also provide a way for the programmer to declare
 fallbacks, so that a color specified as ``chartreuse'' where possible
@@ -99,13 +99,13 @@ You may think of a locale as a class of domains, which may span
 different devices.  Since the specification is abstract (a Lisp form),
 you can state it without reference to a device.  On the other hand, when
 you instantiate a specification, you must know the type of the device.
-It is useless to specify that ``blue mean italic'' on a monochrome
+It is useless to specify that ``blue means emphasis'' on a monochrome
 device.  Thus instantiation requires specification of the device on
 which it will be rendered.
 
 Thus a @dfn{specifier} allows a great deal of flexibility in
 controlling exactly what value a property has in which circumstances.
-It is most commonly used for display properties, such as an image or
+Specifiers are most commonly used for display properties, such as an image or
 the foreground color of a face.  As a simple example, you can specify
 that the foreground of the default face be
 
@@ -141,7 +141,8 @@ white for all other buffers
 A useful specifier application is adding a button to a toolbar.  XEmacs
 provides several toolbars, one along each edge of the frame.  Normally
 only one is used at a time, the default.  The default toolbar is
-actually a specifier object which is the value of @code{default-toolbar}.
+actually a specifier object which is the value of
+@code{default-toolbar}.  @xref{Toolbar Intro}.
 
 The specification of a toolbar is simple:  it is a list of buttons.
 Each button is a vector with four elements:  an icon, a command, the
@@ -682,8 +683,13 @@ specifications.
 the existing ones, and has the same semantics as for
 @code{add-spec-to-specifier}.
 
-In many circumstances, the higher-level function @code{set-specifier} is
-more convenient and should be used instead.
+The higher-level function @code{set-specifier} is often
+more convenient because it allows abbreviations of spec-lists to be used
+instead of the heavily nested canonical syntax.  However, one should
+take great care in using them with specifiers types which can have lists
+as instantiators, such as toolbar specifiers and generic specifiers.  In
+those cases it's probably best to use @code{add-spec-to-specifier} or
+@code{add-spec-list-to-specifier}.
 @end defun
 
 @defspec let-specifier specifier-list &rest body
@@ -733,7 +739,7 @@ specification), a list of tagged and/or untagged instantiators (added as
 a global specification), a cons of a locale and instantiator or locale
 and instantiator list, a list of such conses, or nearly any other
 reasonable form.  More specifically, @var{value} can be anything
-accepted by @code{canonicalize-spec-list}.
+accepted by @code{canonicalize-spec-list} (described below).
 
 @var{locale}, @var{tag-set}, and @var{how-to-add} are the same as in
 @code{add-spec-to-specifier}.
@@ -746,7 +752,10 @@ specs at all in it but @code{nil} is a valid instantiator (in that case,
 adding a global instantiator and its value is @code{nil}''), or in
 strange cases where there is an ambiguity between a spec-list and an
 inst-list, etc. (The built-in specifier types are designed in such a way
-as to avoid any such ambiguities.)
+as to avoid any such ambiguities.)  For robust code,
+@code{set-specifier} should probably be avoided for specifier types
+which accept lists as instantiators (currently toolbar specifiers and
+generic specifiers).
 
 If you want to work with spec-lists, you should probably not use these
 functions, but should use the lower-level functions
@@ -809,6 +818,10 @@ specifications).
 @var{specifier-type} specifies the type of specifier that this
 @var{spec-list} will be used for.
 
+If @var{noerror} is @code{nil}, signal an error if the spec-list is
+invalid; otherwise return @code{t} for an invalid spec-list.  (Note that
+this cannot be confused with a canonical spec-list.)
+
 Canonicalizing means converting to the full form for a spec-list, i.e.
 @code{((@var{locale} (@var{tag-set} . @var{instantiator}) ...) ...)}.
 This function accepts a possibly abbreviated specification or a list of
@@ -820,8 +833,59 @@ This function tries extremely hard to resolve any ambiguities,
 and the built-in specifier types (font, image, toolbar, etc.) are
 designed so that there won't be any ambiguities.
 
-If @var{noerror} is @code{nil}, signal an error if the spec-list is
-invalid; otherwise return @code{t}.
+The canonicalization algorithm is as follows:
+
+@enumerate
+@item
+Attempt to parse @var{spec-list} as a single, possibly abbreviated,
+specification.
+@item
+If that fails, attempt to parse @var{spec-list} as a list of (abbreviated)
+specifications.
+@item
+If that fails, @var{spec-list} is invalid.
+@end enumerate
+
+A possibly abbreviated specification @var{spec} is parsed by
+
+@enumerate
+@item
+Attempt to parse @var{spec} as a possibly abbreviated inst-list.
+@item
+If that fails, attempt to parse @var{spec} as a cons of a locale and an
+(abbreviated) inst-list.
+@item
+If that fails, @var{spec} is invalid.
+@end enumerate
+
+A possibly abbreviated inst-list @var{inst-list} is parsed by
+
+@enumerate
+@item
+Attempt to parse @var{inst-list} as a possibly abbreviated inst-pair.
+@item
+If that fails, attempt to parse @var{inst-list} as a list of (abbreviated)
+inst-pairs.
+@item
+If that fails, @var{inst-list} is invalid.
+@end enumerate
+
+A possibly abbreviated inst-pair @var{inst-pair} is parsed by
+
+@enumerate
+@item
+Check if @var{inst-pair} is @code{valid-instantiator-p}.
+@item
+If not, check if @var{inst-pair} is a cons of something that is a tag, ie,
+@code{valid-specifier-tag-p}, and something that is @code{valid-instantiator-p}.
+@item
+If not, check if @var{inst-pair} is a cons of a list of tags and something that
+is @code{valid-instantiator-p}.
+@item
+Otherwise, @var{inst-pair} is invalid.
+@end enumerate
+
+In summary, this function generally prefers more abbreviated forms.
 @end defun
 
 @node Retrieving Specifications
@@ -1035,6 +1099,36 @@ The returned value is dependent on the type of specifier.  For example,
 for a font specifier (as returned by the @code{face-font} function), the
 returned value will be a font-instance object.  For images, the returned
 value will be a string, pixmap, or subwindow.
+@end defun
+
+@defun specifier-matching-instance specifier matchspec &optional domain default no-fallback
+This function return an instance for @var{specifier} in @var{domain}
+that matches @var{matchspec}.  If no instance can be generated for
+@var{domain}, return @var{default}.
+
+This function is identical to @code{specifier-instance} except that a
+specification will only be considered if it matches @var{matchspec}.
+The definition of ``match,'' and allowed values for @var{matchspec}, are
+dependent on the particular type of specifier.  Here are some examples:
+
+@itemize
+@item
+For chartable (e.g. display table) specifiers, @var{matchspec} should be a
+character, and the specification (a chartable) must give a value for
+that character in order to be considered.  This allows you to specify,
+@emphe.g.}, a buffer-local display table that only gives values for particular
+characters.  All other characters are handled as if the buffer-local
+display table is not there. (Chartable specifiers are not yet
+implemented.)
+
+For font specifiers, @var{matchspec} should be a list (@var{charset}
+. @var{second-stage-p}), and the specification (a font string) must have
+a registry that matches the charset's registry.  (This only makes sense
+with Mule support.)  This makes it easy to choose a font that can
+display a particular character.  (This is what redisplay does, in fact.)
+@var{second-stage-p} means to ignore the font's registry and instead
+look at the characters in the font to see if the font can support the
+charset.  This currently only makes sense under MS Windows.
 @end defun
 
 @defun specifier-instance-from-inst-list specifier domain inst-list &optional default
@@ -1288,16 +1382,20 @@ functions @code{make-generic-specifier}, @code{make-integer-specifier},
 @end defun
 
 @defun make-specifier-and-init type spec-list &optional dont-canonicalize
-This function creates and initialize a new specifier.
+This function creates and initializes a new specifier.
 
-This is a front-end onto @code{make-specifier} that allows you to create
+This is a convenience API combining @code{make-specifier} and
+@code{set-specifier} that allows you to create
 a specifier and add specs to it at the same time.  @var{type} specifies
-the specifier type.  @var{spec-list} supplies the specification(s) to be
-added to the specifier. Normally, almost any reasonable abbreviation of
-the full spec-list form is accepted, and is converted to the full form;
-however, if optional argument @var{dont-canonicalize} is non-@code{nil},
-this conversion is not performed, and the @var{spec-list} must already
-be in full form.  See @code{canonicalize-spec-list}.
+the specifier type.  Allowed types are as for @code{make-specifier}.
+
+@var{spec-list} supplies the specification(s) to be
+added to the specifier.  Any abbreviation of
+the full spec-list form accepted by @code{canonicalize-spec-list} may
+be used.
+However, if the optional argument @var{dont-canonicalize} is non-@code{nil},
+canonicalization is not performed, and the @var{spec-list} must already
+be in full form.
 @end defun
 
 @defun make-integer-specifier spec-list
@@ -1482,11 +1580,16 @@ instantiator's tag set for the instantiator to be removed.
 This function applies @var{func} to the specification(s) for
 @var{locale} in @var{specifier}.
 
-If @var{locale} is a locale, @var{func} will be called for that locale.
+If optional @var{locale} is a locale, @var{func} will be called for that
+locale.
 If @var{locale} is a locale type, @var{func} will be mapped over all
 locales of that type.  If @var{locale} is @code{nil} or the symbol
 @code{all}, @var{func} will be mapped over all locales in
 @var{specifier}.
+
+Optional @var{ms-tag-set} and @var{ms-exact-p} are as in
+@code{specifier-spec-list'}.
+Optional @var{ms-maparg} will be passed to @var{ms-func}.
 
 @var{func} is called with four arguments: the @var{specifier}, the
 locale being mapped over, the inst-list for that locale, and the

@@ -1,3 +1,7 @@
+2004-01-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.c (Fvalid_specifier_type_p): Fix docstring typo.
+
 2003-12-29  Malcolm Purvis  <malcolmpurvis@optushome.com.au>
 
 	* sysdll.c (dll_function): Added support for finding symbols in

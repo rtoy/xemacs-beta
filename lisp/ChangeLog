@@ -1,3 +1,12 @@
+2004-01-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.el (canonicalize-spec): Fix typo in docstring.
+	(make-specifier-and-init):
+	(map-specifier):
+	(canonicalize-spec-list):
+	(set-specifier):
+	Improve docstring.
+	
 2004-01-21  Jerry James  <james@xemacs.org>
 
 	* wid-edit.el: Remove duplicate sexp widget definitions.
