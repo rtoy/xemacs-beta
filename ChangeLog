@@ -1,3 +1,7 @@
+2001-12-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* info\dir (File): Update version to 21.5.
+
 2001-12-03  Didier Verna  <didier@xemacs.org>
 
 	* etc/NEWS: advertise `C-x r p' (replace-rectangle) in global map.
