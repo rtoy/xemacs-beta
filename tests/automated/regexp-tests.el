@@ -394,3 +394,17 @@ baaaa
 			  (string-match "b" a)
 			  (match-string 1 a))
 		   a)))
+
+;; bug identified by Katsumi Yamaoka 2004-09-03 <b9ywtzbbpue.fsf_-_@jpl.org>
+;; fix submitted by sjt 2004-09-08
+;; trailing comments are values from buggy 21.4.15
+(let ((text "abc"))
+  (Assert (eq 0 (string-match "\\(?:ab+\\)*c" text)))	; 2
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)*c" text)))	; nil
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)*" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:ab+\\)c" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:ab\\)*c" text)))	; 0
+  (Assert (eq 0 (string-match "^\\(?:a+\\)*b" text)))	; nil
+  (Assert (eq 0 (string-match "^\\(?:a\\)*b" text)))	; 0
+)
+
