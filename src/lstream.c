@@ -385,7 +385,7 @@ Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 	}
     }
 
-  if (lstr->imp->flusher)
+  if (!error_occurred && lstr->imp->flusher)
     error_occurred = (lstr->imp->flusher) (lstr) < 0;
 
   if (data == orig_data && error_occurred)
