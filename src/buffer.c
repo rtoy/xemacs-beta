@@ -341,7 +341,9 @@ Return t if OBJECT is an editor buffer that has not been deleted.
   return BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)) ? Qt : Qnil;
 }
 
-static void
+static DECLARE_DOESNT_RETURN (nsberror (Lisp_Object));
+
+static DOESNT_RETURN
 nsberror (Lisp_Object spec)
 {
   if (STRINGP (spec))

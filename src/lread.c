@@ -218,6 +218,8 @@ EXFUN (Fread_from_string, 3);
 			      : (x))
 
 
+static DECLARE_DOESNT_RETURN (read_syntax_error (const char *));
+
 static DOESNT_RETURN
 read_syntax_error (const char *string)
 {

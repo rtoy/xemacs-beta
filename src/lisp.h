@@ -2767,6 +2767,8 @@ Lisp_Object,Lisp_Object,Lisp_Object
 #define EXFUN_MANY int, Lisp_Object*
 #define EXFUN_UNEVALLED Lisp_Object
 #define EXFUN(sym, max_args) Lisp_Object sym (EXFUN_##max_args)
+#define EXFUN_NORETURN(sym, max_args) \
+  DECLARE_DOESNT_RETURN_TYPE (Lisp_Object, sym (EXFUN_##max_args))
 
 #define SUBR_MAX_ARGS 8
 #define MANY -2
@@ -2794,6 +2796,26 @@ Lisp_Object,Lisp_Object,Lisp_Object
     (lisp_fn_t) Fname							\
   };									\
   Lisp_Object Fname (DEFUN_##max_args arglist)
+
+#define DEFUN_NORETURN(lname, Fname, min_args, max_args, prompt, arglist) \
+  DECLARE_DOESNT_RETURN_TYPE (Lisp_Object, Fname (EXFUN_##max_args));	\
+  static struct Lisp_Subr S##Fname =					\
+  {									\
+    { /* struct lrecord_header */					\
+      lrecord_type_subr, /* lrecord_type_index */			\
+      1, /* mark bit */							\
+      1, /* c_readonly bit */						\
+      1, /* lisp_readonly bit */					\
+      0  /* unused */                                                   \
+    },									\
+    min_args,								\
+    max_args,								\
+    prompt,								\
+    0,	/* doc string */						\
+    lname,								\
+    (lisp_fn_t) Fname							\
+  };									\
+  DOESNT_RETURN_TYPE (Lisp_Object) Fname (DEFUN_##max_args arglist)
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
    prototype that matches max_args, and add the obligatory
@@ -3720,7 +3742,7 @@ int beginning_of_line_p (struct buffer *b, Charbpos pt);
 Lisp_Object save_current_buffer_restore (Lisp_Object);
 
 /* Defined in emacs.c */
-EXFUN (Fkill_emacs, 1);
+EXFUN_NORETURN (Fkill_emacs, 1);
 EXFUN (Frunning_temacs_p, 0);
 EXFUN (Fforce_debugging_signal, 1);
 
@@ -3760,7 +3782,7 @@ EXFUN (Ffunctionp, 1);
 EXFUN (Finteractive_p, 0);
 EXFUN (Fprogn, UNEVALLED);
 MODULE_API EXFUN (Fsignal, 2);
-MODULE_API EXFUN (Fthrow, 2);
+MODULE_API EXFUN_NORETURN (Fthrow, 2);
 MODULE_API EXFUN (Fcall_with_condition_handler, MANY);
 EXFUN (Ffunction_max_args, 1);
 EXFUN (Ffunction_min_args, 1);

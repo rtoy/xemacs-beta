@@ -137,8 +137,10 @@ static Charbpos search_buffer (struct buffer *buf, Lisp_Object str,
 			       int RE, Lisp_Object trt,
 			       Lisp_Object inverse_trt, int posix);
 
-static void
-matcher_overflow (void)
+static DECLARE_DOESNT_RETURN (matcher_overflow (void));
+
+static DOESNT_RETURN
+matcher_overflow ()
 {
   stack_overflow ("Stack overflow in regexp matcher", Qunbound);
 }
@@ -243,12 +245,13 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
 /* Error condition used for failing searches */
 Lisp_Object Qsearch_failed;
 
-static Lisp_Object
+static DECLARE_DOESNT_RETURN (signal_failure (Lisp_Object));
+
+static DOESNT_RETURN
 signal_failure (Lisp_Object arg)
 {
   for (;;)
     Fsignal (Qsearch_failed, list1 (arg));
-  return Qnil; /* Not reached. */
 }
 
 /* Convert the search registers from Bytebpos's to Charbpos's.  Needs to be
@@ -1159,7 +1162,10 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
   if (np <= 0)
     {
       if (NILP (noerror))
-	return signal_failure (string);
+	{
+	  signal_failure (string);
+	  RETURN_NOT_REACHED (Qnil);
+	}
       if (!EQ (noerror, Qt))
 	{
 	  if (lim < BUF_BEGV (buf) || lim > BUF_ZV (buf))

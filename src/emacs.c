@@ -2682,7 +2682,7 @@ Currently defined values:
     return Fnreverse (plist);
 }
 
-DEFUN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
+DEFUN_NORETURN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 */
 /* If this function is called from startup.el, it will be possible to run
@@ -3374,7 +3374,7 @@ voodoo_free_hook (void *mem)
 }
 #endif /* GNU_MALLOC */
 
-DEFUN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
+DEFUN_NORETURN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
 If ARG is an integer, return ARG as the exit program code.
 If ARG is a string, stuff it as keyboard input.
@@ -3440,8 +3440,7 @@ all of which are called before XEmacs is actually killed.
 #endif
 
   exit (INTP (arg) ? XINT (arg) : 0);
-  /* NOTREACHED */
-  return Qnil; /* I'm sick of the compiler warning */
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /* -------------------------------- */

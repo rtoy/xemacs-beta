@@ -70,8 +70,14 @@ Lisp_Object Qerrors_deactivate_region;
 Lisp_Object Qtop_level;
 Lisp_Object Vminibuffer_echo_wait_function;
 
+#ifdef LISP_COMMAND_LOOP
 static Lisp_Object command_loop_1 (Lisp_Object dummy);
 EXFUN (Fcommand_loop_1, 0);
+#else
+static DECLARE_DOESNT_RETURN_TYPE (Lisp_Object,
+				   command_loop_1 (Lisp_Object dummy));
+EXFUN_NORETURN (Fcommand_loop_1, 0);
+#endif
 
 /* There are two possible command loops -- one written entirely in
    C and one written mostly in Lisp, except stuff written in C for
@@ -107,7 +113,8 @@ default_error_handler (Lisp_Object data)
   return (unbind_to_1 (speccount, Qt));
 }
 
-DEFUN ("really-early-error-handler", Freally_early_error_handler, 1, 1, 0, /*
+DEFUN_NORETURN ("really-early-error-handler", Freally_early_error_handler,
+		1, 1, 0, /*
 You should almost certainly not be using this.
 */
        (x))
@@ -134,7 +141,8 @@ You should almost certainly not be using this.
   Fmswindows_message_box (build_msg_string ("Initialization error"),
 			  Qnil, Qnil);
 #endif
-  return Fkill_emacs (make_int (-1));
+  Fkill_emacs (make_int (-1));
+  RETURN_NOT_REACHED (Qnil);
 }
 
 
@@ -236,6 +244,8 @@ top_level_1 (Lisp_Object dummy)
    to condition_case_1() returns. */
 
 /* Avoid confusing the compiler. A helper function for command_loop_2 */
+static DECLARE_DOESNT_RETURN (command_loop_3 (void));
+
 static DOESNT_RETURN
 command_loop_3 (void)
 {
@@ -257,11 +267,13 @@ command_loop_3 (void)
     }
 }
 
-static Lisp_Object
+static DECLARE_DOESNT_RETURN_TYPE (Lisp_Object, command_loop_2 (Lisp_Object));
+
+static DOESNT_RETURN_TYPE (Lisp_Object)
 command_loop_2 (Lisp_Object dummy)
 {
   command_loop_3(); /* doesn't return */
-  return Qnil;
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /* This is called from emacs.c when it's done with initialization. */
@@ -314,14 +326,15 @@ initial_command_loop (Lisp_Object load_me)
 
    Note that this function never returns (but may be thrown out of). */
 
-Lisp_Object
+DOESNT_RETURN_TYPE (Lisp_Object)
 call_command_loop (Lisp_Object catch_errors)
 {
   /* This function can GC */
   if (NILP (catch_errors))
-    return (command_loop_1 (Qnil));
+    command_loop_1 (Qnil);
   else
-    return (command_loop_2 (Qnil));
+    command_loop_2 (Qnil);
+  RETURN_NOT_REACHED (Qnil);
 }
 
 static Lisp_Object
@@ -406,7 +419,7 @@ cold_load_command_loop (Lisp_Object dummy)
                             cold_load_command_error, Qnil));
 }
 
-Lisp_Object
+DOESNT_RETURN_TYPE (Lisp_Object)
 call_command_loop (Lisp_Object catch_errors)
 {
   /* This function can GC */
@@ -430,7 +443,7 @@ call_command_loop (Lisp_Object catch_errors)
     internal_catch (Qtop_level,
                     cold_load_command_loop, Qnil, 0, 0);
   goto loop;
-  return Qnil;
+  RETURN_NOT_REACHED (Qnil);
 }
 
 static Lisp_Object
@@ -480,13 +493,22 @@ initial_command_loop (Lisp_Object load_me)
 /*                     Guts of command loop                           */
 /**********************************************************************/
 
+#ifdef LISP_COMMAND_LOOP
 static Lisp_Object
+#else
+static DOESNT_RETURN_TYPE (Lisp_Object)
+#endif
 command_loop_1 (Lisp_Object dummy)
 {
   /* This function can GC */
   /* #### not correct with Vselected_console */
   XCONSOLE (Vselected_console)->prefix_arg = Qnil;
-  return (Fcommand_loop_1 ());
+  Fcommand_loop_1 ();
+#ifdef LISP_COMMAND_LOOP
+  return Qnil;
+#else
+  RETURN_NOT_REACHED (Qnil);
+#endif
 }
 
 /* This is the actual command reading loop, sans error-handling
@@ -499,7 +521,13 @@ command_loop_1 (Lisp_Object dummy)
    command loop, this will return only when the user specifies
    a new command loop by changing the command-loop variable. */
 
-DEFUN ("command-loop-1", Fcommand_loop_1, 0, 0, 0, /*
+#ifdef LISP_COMMAND_LOOP
+#define DEFUN_COMMAND_LOOP(a,b,c,d,e,f) DEFUN (a, b, c, d, e, f)
+#else
+#define DEFUN_COMMAND_LOOP(a,b,c,d,e,f) DEFUN_NORETURN (a, b, c, d, e, f)
+#endif
+
+DEFUN_COMMAND_LOOP ("command-loop-1", Fcommand_loop_1, 0, 0, 0, /*
 Invoke the internals of the canonical editor command loop.
 Don't call this unless you know what you're doing.
 */

@@ -216,7 +216,7 @@ const char *GetGifError(int errore)
 /******************************
 * These are called internally *        
 ******************************/
-void GifError(GifFileType *GifFile, const char *err_str)
+DOESNT_RETURN GifError(GifFileType *GifFile, const char *err_str)
 {
   GifIODataType *GifIO = (GifIODataType*)GifFile->GifIO;
   if (GifIO->ErrorFunc)
@@ -233,7 +233,7 @@ void GifWarning(GifFileType *GifFile, const char *err_str)
     (*(GifIO->WarningFunc))(err_str, GifIO->WarningFunc_data);
 }
 
-void GifInternError(GifFileType *GifFile, int error_num)
+DOESNT_RETURN GifInternError(GifFileType *GifFile, int error_num)
 {
   const char *ErrStr = GetGifError(error_num);
   GifError(GifFile, ErrStr);

@@ -134,13 +134,18 @@ input methods to relay state information to the user.
   return Qnil;
 }
 
-DEFUN ("read-minibuffer-internal", Fread_minibuffer_internal, 1, 1, 0, /*
+DEFUN_NORETURN ("read-minibuffer-internal", Fread_minibuffer_internal,
+		1, 1, 0, /*
 Lowest-level interface to minibuffers.  Don't call this.
 */
        (prompt))
 {
   /* This function can GC */
-  int speccount = specpdl_depth ();
+
+  /* We used to record the specpdl_depth here, but since call_command_loop
+     never returns, we can never call unbind_to_1.  Since we exit via a throw,
+     we let whoever catches unbind for us. */
+
   Lisp_Object val;
 
   CHECK_STRING (prompt);
@@ -188,7 +193,7 @@ Lowest-level interface to minibuffers.  Don't call this.
 
   val = call_command_loop (Qt);
 
-  return unbind_to_1 (speccount, val);
+  RETURN_NOT_REACHED (val);
 }
 
 

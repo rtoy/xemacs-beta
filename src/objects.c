@@ -45,11 +45,10 @@ Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
 
 /* Authors: Ben Wing, Chuck Thompson */
 
-void
+DOESNT_RETURN
 finalose (void *ptr)
 {
   Lisp_Object obj = wrap_pointer_1 (ptr);
-
 
   invalid_operation
     ("Can't dump an emacs containing window system objects", obj);

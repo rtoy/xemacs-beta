@@ -68,7 +68,9 @@ static Lisp_Object Qadd, Qreplace;
 /*                         Utility Functions                            */
 /************************************************************************/
 
-static void
+static DECLARE_DOESNT_RETURN (signal_ldap_error (LDAP *, LDAPMessage *, int));
+
+static DOESNT_RETURN
 signal_ldap_error (LDAP *ld, LDAPMessage *res, int ldap_err)
 {
   if (ldap_err <= 0)

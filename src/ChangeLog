@@ -1,3 +1,55 @@
+2004-09-13  Jerry James  <james@xemacs.org>
+
+	* s/windowsnt.h: Define (DECLARE_)DOESNT_RETURN_TYPE instead of
+	(DECLARE_)DOESNT_RETURN.
+	* buffer.c (nsberror): Mark as noreturn.
+	* cmdloop.c (Fcommand_loop_1): Mark as noreturn when
+	!LISP_COMMAND_LOOP.
+	* cmdloop.c (Freally_early_error_handler): Mark as noreturn.  Use
+	RETURN_NOT_REACHED to quash compiler warnings.
+	* cmdloop.c (command_loop_3): Ditto.
+	* cmdloop.c (command_loop_2): Ditto.
+	* cmdloop.c (call_command_loop): Ditto, both versions.
+	* cmdloop.c (command_loop_1): Ditto, when !LISP_COMMAND_LOOP.
+	* cmdloop.c (Fcommand_loop_1): Ditto, when !LISP_COMMAND_LOOP.
+	* commands.h (call_command_loop): Declare as noreturn.
+	* compiler.h: Define (DECLARE_)DOESNT_RETURN_TYPE for functions
+	with non-void return types.  Use them to define
+	(DECLARE_)DOESNT_RETURN.
+	* device-x.c (x_IO_error_handler): Use RETURN_NOT_REACHED.
+	* emacs.c (Frun_emacs_from_temacs): Mark as noreturn.
+	* emacs.c (Fkill_emacs): Ditto.  Use RETURN_NOT_REACHED.
+	* eval.c (unwind_to_catch): Declare as noreturn.
+	* eval.c (throw_or_bomb_out): Ditto.  Remove comments about
+	warnings that will now not be generated.
+	* eval.c (Fthrow): Mark as noreturn.  Use RETURN_NOT_REACHED.
+	* eval.c (Fsignal): Use RETURN_NOT_REACHED.
+	* eval.c (flagged_a_squirmer): Mark as noreturn.  Use
+	RETURN_NOT_REACHED.
+	* fns.c (base64_conversion_error): Declare as noreturn.
+	* frame-gtk.c (gtk_cant_notify_wm_error): Ditto.
+	* frame-x.c (x_cant_notify_wm_error): Ditto.
+	* gif_io.c (GifError): Mark as noreturn.
+	* gif_io.c (GifInternError): Ditto.
+	* gifrlib.h (GifInternError): Declare as noreturn.
+	* gifrlib.h (GifError): Ditto.
+	* lisp.h (EXFUN_NORETURN): New macro.
+	* lisp.h (DEFUN_NORETURN): New macro.
+	* lisp.h (Fkill_emacs): Declare as noreturn.
+	* lisp.h (Fthrow): Ditto.
+	* lread.c (read_syntax_error): Ditto.
+	* minibuf.c (Fread_minibuffer_internal): Mark as noreturn.  Don't
+	bother calling specpdl_depth and unbind_to_1 since
+	call_command_loop never returns.
+	* objects.c (finalose): Mark as noreturn.
+	* objects.h (finalose): Declare as noreturn.
+	* process-unix.c (child_setup): Ditto.
+	* search.c (matcher_overflow): Ditto.
+	* search.c (signal_failure): Ditto.  Make the return type void and
+	remove the return statement.
+	* search.c (search_command): Change the use of signal_failure to
+	match, using RETURN_NOT_REACHED.
+
 2004-08-18  Felix H. Gatzemeier  <f.g@tzemeier.info>
 
 	* doprnt.c (emacs_doprnt_1): Use sprintf to format error messages

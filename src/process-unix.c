@@ -879,7 +879,10 @@ relocate_fd (int fd, int min)
    XEmacs?), this should be verified as an executable directory by the
    parent.  */
 
-static void
+static DECLARE_DOESNT_RETURN (child_setup (int, int, int, Ibyte **,
+					   Lisp_Object));
+
+static DOESNT_RETURN
 child_setup (int in, int out, int err, Ibyte **new_argv,
 	     Lisp_Object current_dir)
 {

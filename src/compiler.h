@@ -110,24 +110,25 @@ Boston, MA 02111-1307, USA.  */
 # endif /* GNUC */
 #endif
 
-#ifndef DOESNT_RETURN
+#ifndef DOESNT_RETURN_TYPE
 # if (GCC_VERSION > NEED_GCC (0, 0, 0))
 #  if (GCC_VERSION >= NEED_GCC (2, 5, 0))
-#   if (GCC_VERSION < NEED_GCC (3, 0, 0))
-      /* GCC 3.2 -O3 issues complaints in Fcommand_loop_1 about no return
-	 statement if we have this definition */
-#    define RETURN_NOT_REACHED(value) DO_NOTHING
-#   endif
-#   define DOESNT_RETURN void
-#   define DECLARE_DOESNT_RETURN(decl) void decl __attribute__ ((noreturn))
+#   define RETURN_NOT_REACHED(value) DO_NOTHING
+#   define DOESNT_RETURN_TYPE(rettype) rettype
+#   define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype decl \
+	   __attribute__ ((noreturn))
 #  else /* GCC_VERSION < NEED_GCC (2, 5, 0) */
-#   define DOESNT_RETURN void volatile
-#   define DECLARE_DOESNT_RETURN(decl) void volatile decl
+#   define DOESNT_RETURN_TYPE(rettype) rettype volatile
+#   define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype volatile decl
 #  endif /* GCC_VERSION >= NEED_GCC (2, 5, 0) */
 # else /* not gcc */
-#  define DOESNT_RETURN void
-#  define DECLARE_DOESNT_RETURN(decl) void decl
+#  define DOESNT_RETURN_TYPE(rettype) rettype
+#  define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype decl
 # endif /* GCC_VERSION > NEED_GCC (0, 0, 0) */
+#endif /* DOESNT_RETURN_TYPE */
+#ifndef DOESNT_RETURN
+# define DOESNT_RETURN DOESNT_RETURN_TYPE (void)
+# define DECLARE_DOESNT_RETURN(decl) DECLARE_DOESNT_RETURN_TYPE (void, decl)
 #endif /* DOESNT_RETURN */
 
 /* Another try to fix SunPro C compiler warnings */

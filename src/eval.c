@@ -1549,7 +1549,10 @@ internal_catch (Lisp_Object tag,
 
    This is used for correct unwinding in Fthrow and Fsignal.  */
 
-static void
+static DECLARE_DOESNT_RETURN (unwind_to_catch (struct catchtag *, Lisp_Object,
+					       Lisp_Object));
+
+static DOESNT_RETURN
 unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
 {
   REGISTER int last_time;
@@ -1630,6 +1633,9 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val, Lisp_Object tag)
   LONGJMP (c->jmp, 1);
 }
 
+static DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object, Lisp_Object, int,
+						 Lisp_Object, Lisp_Object));
+
 static DOESNT_RETURN
 throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 		   Lisp_Object sig, Lisp_Object data)
@@ -1680,11 +1686,6 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
       else
         call1 (Qreally_early_error_handler, Fcons (sig, data));
     }
-
-  /* can't happen.  who cares? - (Sun's compiler does) */
-  /* throw_level--; */
-  /* getting tired of compilation warnings */
-  /* return Qnil; */
 }
 
 /* See above, where CATCHLIST is defined, for a description of how
@@ -1706,14 +1707,14 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
    condition_case_1).  See below for more info.
 */
 
-DEFUN ("throw", Fthrow, 2, 2, 0, /*
+DEFUN_NORETURN ("throw", Fthrow, 2, 2, 0, /*
 Throw to the catch for TAG and return VALUE from it.
 Both TAG and VALUE are evalled.
 */
        (tag, value))
 {
   throw_or_bomb_out (tag, value, 0, Qnil, Qnil); /* Doesn't return */
-  return Qnil;
+  RETURN_NOT_REACHED (Qnil);
 }
 
 DEFUN ("unwind-protect", Funwind_protect, 1, UNEVALLED, 0, /*
@@ -2391,7 +2392,7 @@ user invokes the "return from signal" option.
   UNGCPRO;
   throw_or_bomb_out (Qtop_level, Qt, 1, error_symbol,
 		     data); /* Doesn't return */
-  return Qnil;
+  RETURN_NOT_REACHED (Qnil);
 }
 
 /****************** Error functions class 1 ******************/
@@ -4813,7 +4814,10 @@ struct call_trapping_problems
   void *arg;
 };
 
-static Lisp_Object
+static DECLARE_DOESNT_RETURN_TYPE
+  (Lisp_Object, flagged_a_squirmer (Lisp_Object, Lisp_Object, Lisp_Object));
+
+static DOESNT_RETURN_TYPE (Lisp_Object)
 flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
 		    Lisp_Object opaque)
 {
@@ -4851,7 +4855,7 @@ flagged_a_squirmer (Lisp_Object error_conditions, Lisp_Object data,
   p->data = data;
 
   Fthrow (p->catchtag, Qnil);
-  return Qnil; /* not reached */
+  RETURN_NOT_REACHED (Qnil);
 }
 
 static Lisp_Object

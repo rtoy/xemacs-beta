@@ -1195,7 +1195,7 @@ x_IO_error_handler (Display *disp)
   DEVICE_X_BEING_DELETED (d) = 1;
   Fthrow (Qtop_level, Qnil);
 
-  return 0; /* not reached */
+  RETURN_NOT_REACHED (0);
 }
 
 DEFUN ("x-debug-mode", Fx_debug_mode, 1, 2, 0, /*

@@ -241,8 +241,9 @@ typedef int ssize_t;
 
 /* MSVC 6.0 has a mechanism to declare functions which never return */
 #if (_MSC_VER >= 1200)
-#define DOESNT_RETURN __declspec(noreturn) void
-#define DECLARE_DOESNT_RETURN(decl) __declspec(noreturn) extern void XCDECL decl
+#define DOESNT_RETURN_TYPE(rettype) __declspec(noreturn) rettype
+#define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) \
+  __declspec(noreturn) extern rettype XCDECL decl
 #endif /* MSVC 6.0 */
 
 /* MSVC warnings no-no crap.  When adding one to this section,

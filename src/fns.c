@@ -3675,6 +3675,9 @@ static short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
+static DECLARE_DOESNT_RETURN (base64_conversion_error (const char *,
+						       Lisp_Object));
+
 static DOESNT_RETURN
 base64_conversion_error (const char *reason, Lisp_Object frob)
 {

@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_objects_h_
 #define INCLUDED_objects_h_
 
-void finalose (void *ptr);
+DECLARE_DOESNT_RETURN (finalose (void *ptr));
 
 /****************************************************************************
  *                           Color Instance Object                          *
