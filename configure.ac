@@ -1200,7 +1200,7 @@ case "$ac_cv_build" in
 
   dnl NetBSD ports
   *-*-netbsd* )
-    case "ac_cv_build" in
+    case "${ac_cv_build}" in
       i[[3-9]]86-*-netbsd*) machine=intel386 ;;
       hp300-*-netbsd* | amiga-*-netbsd* | sun3-*-netbsd* | mac68k-*-netbsd* | da30-*-netbsd* | m68k-*-netbsd* )
                       dnl Yes, this is somewhat bogus.
@@ -4730,12 +4730,18 @@ if test "$enable_sound_native" != "no"; then
     for dir in "machine" "sys" "linux"; do
       AC_CHECK_HEADER([${dir}/soundcard.h], [
         sound_found=yes
-        case "$canonical" in
+        case "${ac_cv_build}" in
         *netbsd* )
 	  # #### this is probably not the right way to do this
 	  # we should port to native NetBSD stuff
+
+	  dnl Aidan says: We have other things to be doing. If some
+	  dnl energetic NetBSD partisan volunteers, then yeah, cool,
+	  dnl but as it is, this works, and is unlikely to stop
+	  dnl working any time soon.
+
 	  AC_CHECK_LIB(ossaudio, _oss_ioctl,
-		[native_sound_lib=-lossaudio
+		[with_native_sound_lib=-lossaudio
 		 AC_MSG_WARN([Using NetBSD-deprecated -lossaudio])],
 		[sound_found=no])
           ;;

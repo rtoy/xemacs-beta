@@ -1,3 +1,8 @@
+2005-03-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac (TAB): Check $ac_cv_build, not $canonical, when
+	working out whether to link against libossaudio.so on NetBSD.
+
 2005-03-11  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.20 "cilantro" is released.
