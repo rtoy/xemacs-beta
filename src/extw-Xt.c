@@ -66,6 +66,8 @@ EXTERN_C int
 _XtwaitForSomething (Boolean ignoreTimers, Boolean ignoreInputs,
 		     Boolean ignoreEvents, Boolean block,
 		     unsigned long *howlong, XtAppContext app);
+# define _XT_WAIT_FOR_SOMETHING(timers,inputs,events,block,howlong,appCtx) \
+         _XtwaitForSomething (timers,inputs,events,block,howlong,appCtx)
 #endif
 
 #ifdef DEBUG_WIDGET

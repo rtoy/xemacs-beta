@@ -1,3 +1,8 @@
+2004-06-06  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* extw-Xt.c (_XT_WAIT_FOR_SOMETHING): Fix: complete macro
+	renaming: #define.
+
 2004-06-03  Didier Verna  <didier@xemacs.org>
 
 	* config.h.in (EXTERN_C_BLOCK_BEGIN): New macro.
