@@ -1,3 +1,17 @@
+2001-04-30  Ben Wing  <ben@xemacs.org>
+
+	* printer.el:
+	* printer.el (printer-page-header):
+	* printer.el (Print-context): New.
+	* printer.el (printer-page-footer):
+	* printer.el (generate-header-element): New.
+	* printer.el (generate-header-line): New.
+	* printer.el (print-context-property):
+	* printer.el (generic-print-buffer):
+	* printer.el (generic-print-region):
+	Implement headers and footers.  Implement calling Print dialog box
+	(#### but it doesn't quite work yet).
+
 2001-04-28  Ben Wing  <ben@xemacs.org>
 
 	* about.el (xemacs-hackers):
