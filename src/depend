@@ -99,8 +99,8 @@ mule-wnnfns.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h redis
 #endif
 #if defined(EXTERNAL_WIDGET)
 ExternalClient-Xlib.o: extw-Xlib.h
-ExternalClient.o: $(CONFIG_H) ExternalClient.h ExternalClientP.h extw-Xlib.h extw-Xt.h xintrinsicp.h
-ExternalShell.o: $(CONFIG_H) ExternalShell.h ExternalShellP.h extw-Xlib.h extw-Xt.h xintrinsic.h xintrinsicp.h
+ExternalClient.o: $(CONFIG_H) ExternalClient.h ExternalClientP.h compiler.h extw-Xlib.h extw-Xt.h xintrinsicp.h
+ExternalShell.o: $(CONFIG_H) ExternalShell.h ExternalShellP.h compiler.h extw-Xlib.h extw-Xt.h xintrinsic.h xintrinsicp.h
 extw-Xlib.o: $(CONFIG_H) extw-Xlib.h
 extw-Xt.o: $(CONFIG_H) extw-Xlib.h extw-Xt.h
 #endif
