@@ -307,7 +307,7 @@ setup_syntax_cache (struct syntax_cache *cache, Lisp_Object object,
       if (count <= 0)
 	{
 	  from--;
-	  from = buffer_or_string_clip_to_accessible_byte (cache->object,
+	  from = buffer_or_string_clip_to_accessible_char (cache->object,
 							   from);
 	}
       if (!(from >= cache->prev_change && from < cache->next_change))

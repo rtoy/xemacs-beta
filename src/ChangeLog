@@ -1,3 +1,8 @@
+2004-07-06  Lutz Euler  <lutz.euler@freenet.de>
+
+	* syntax.c (setup_syntax_cache): Fix behavior for buffers
+	containing multibyte chars.
+
 2004-06-29  Jerry James  <james@xemacs.org>
 
 	* specifier.c (check_valid_inst_list): Change LIST_LOOP to
