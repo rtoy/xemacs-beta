@@ -1746,9 +1746,9 @@ Please specify X resources to make the %s face
 visually distinguishable from the default face.
 For example, you could add one of the following to $HOME/Emacs:
 
-Emacs.%s.attributeFont: -dt-*-medium-i-*
+XEmacs.%s.attributeFont: -dt-*-medium-i-*
 or
-Emacs.%s.attributeForeground: hotpink\n"
+XEmacs.%s.attributeForeground: hotpink\n"
 		invocation-name
 		(if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
 		face

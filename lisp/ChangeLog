@@ -1,3 +1,11 @@
+2005-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* faces.el (face-complain-about-font):
+	* x-faces.el:
+	The warnings when there wasn't a bold or italic version of a given
+	font available still specified "Emacs" as the X11 resource
+	class. Change this to "XEmacs."
+	
 2005-03-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* startup.el (command-line): Move Mule initialisation before

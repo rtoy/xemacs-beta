@@ -39,20 +39,20 @@
 
 ;;  The resource-manager syntax for faces is
 
-;;	 Emacs.bold.attributeFont:		font-name
-;;	 Emacs.bold.attributeForeground:	fg
-;;	 Emacs.bold.attributeBackground:	bg
-;;	 Emacs.bold.attributeBackgroundPixmap:	file
-;;	 Emacs.bold.attributeUnderline:		true/false
-;;	 Emacs.bold.attributeStrikethru:	true/false
+;;	 XEmacs.bold.attributeFont:		font-name
+;;	 XEmacs.bold.attributeForeground:	fg
+;;	 XEmacs.bold.attributeBackground:	bg
+;;	 XEmacs.bold.attributeBackgroundPixmap:	file
+;;	 XEmacs.bold.attributeUnderline:		true/false
+;;	 XEmacs.bold.attributeStrikethru:	true/false
 
 ;;  You can specify the properties of a face on a per-frame basis.  For
 ;;  example, to have the "isearch" face use a red foreground on frames
-;;  named "emacs" (the default) but use a blue foreground on frames that
+;;  named "XEmacs" (the default) but use a blue foreground on frames that
 ;;  you create named "debugger", you could do
 
-;;	 Emacs*emacs.isearch.attributeForeground:	red
-;;	 Emacs*debugger.isearch.attributeForeground:	blue
+;;	 XEmacs*XEmacs.isearch.attributeForeground:	red
+;;	 XEmacs*debugger.isearch.attributeForeground:	blue
 
 ;;  Generally things that make faces won't set any of the face attributes if
 ;;  you have already given them values via the resource database.  You can
