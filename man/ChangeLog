@@ -1,3 +1,8 @@
+2002-08-02  Ville Skyttä  <ville.skytta@xemacs.org>
+
+	* xemacs/packages.texi (Available Packages):
+	Bring package list up to date, thanks also to Brian Palmer.
+
 2002-07-30  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* term.texi (Input to the inferior): Fix term line/char mode
