@@ -1,3 +1,9 @@
+2004-02-23  Steve Youngs  <sryoungs@bigpond.net.au>
+ 
+	* package-get.el (package-get-update-base-from-buffer): Force
+ 	binary coding system for verifying GnuPG signature in the
+ 	package-index file.
+ 
 2004-02-06  Jerry James  <james@xemacs.org>
 
 	* term/linux.el: Change iso-latin-1 to iso-8859-1.

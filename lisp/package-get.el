@@ -582,7 +582,9 @@ BUFFER defaults to the current buffer.  This command can be
 used interactively, for example from a mail or news buffer."
   (interactive)
   (setq buf (or buf (current-buffer)))
-  (let (content-beg content-end)
+  (let ((coding-system-for-read 'binary)
+	(coding-system-for-write 'binary)
+	content-beg content-end)
     (save-excursion
       (set-buffer buf)
       (goto-char (point-min))
