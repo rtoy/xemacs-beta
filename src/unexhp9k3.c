@@ -41,7 +41,7 @@ Modified Jan 93 by Hamish Macdonald for HPUX
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <signal.h>
+#include "syssignal.h"
 #ifdef __hp9000s300
 # include </usr/include/debug.h>
 #endif

@@ -79,21 +79,11 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/filio.h>
 #include <termio.h>
 #include <sys/ttold.h>
-#include <signal.h>
 #include <sys/stream.h>
 #include <sys/termios.h>
 #endif
 
 #undef BROKEN_SIGIO
-
-/* Some SVr4s don't define NSIG in sys/signal.h for ANSI environments;
- * instead, there's a system variable _sys_nsig.  Unfortunately, we need the
- * constant to dimension an array.  So wire in the appropriate value here.
- */
-
-#ifndef NSIG
-#define NSIG	32
-#endif
 
 /* We need bss_end from emacs.c for undumping */
 

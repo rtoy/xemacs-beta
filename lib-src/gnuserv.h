@@ -39,15 +39,6 @@
 
 #define PATCHLEVEL 2
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <errno.h>
-
 #define NO_SHORTNAMES
 /* gnuserv should not be compiled using SOCKS */
 #define DO_NOT_SOCKSIFY
@@ -109,6 +100,15 @@
 #endif /* BSD */
 
 #endif /* No communication method pre-defined */
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "syssignal.h"
+#include <errno.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

@@ -32,6 +32,9 @@ Boston, MA 02111-1307, USA.
  *	cc -O -o tcp tcp.c -DFUJITSU_UTS -lu -lsocket
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -51,7 +54,7 @@ Boston, MA 02111-1307, USA.
 
 #ifdef USG
 #include <sys/stat.h>
-#include <signal.h>
+#include "syssignal.h"
 #endif
 
 #ifdef USG

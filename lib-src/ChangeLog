@@ -1,3 +1,10 @@
+2002-08-21  Jerry James  <james@xemacs.org>
+
+	* gnuserv.h: Revert previous patch.  Include syssignal.h instead
+	of signal.h.
+	* tcp.c: Include config.h, and substitute syssignal.h for
+	signal.h.
+
 2002-08-02  Jerry James  <james@xemacs.org>
 
 	* gnuserv.h: Include signal.h early to define NSIG before config.h

@@ -251,7 +251,15 @@ signal_handler_t qxe_reliable_signal (int signal_number,
 #endif
 
 #ifndef NSIG
-# define NSIG (SIGUSR2+1) /* guess how many elements are in sys_siglist... */
+# ifdef USG5_4
+/* Some SVr4s don't define NSIG in sys/signal.h for ANSI environments;
+ * instead, there's a system variable _sys_nsig.  Unfortunately, we need the
+ * constant to dimension an array.  So wire in the appropriate value here.
+ */
+#  define NSIG 32
+# else
+#  define NSIG (SIGUSR2+1) /* guess how many elements are in sys_siglist... */
+# endif
 #endif
 
 /* SYS_SIGLIST_DECLARED is determined by configure.  On Linux, it seems,

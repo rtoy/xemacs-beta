@@ -408,7 +408,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef UMAX
 #include <stdio.h>
-#include <signal.h>
+#include "syssignal.h"
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>

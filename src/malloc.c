@@ -149,7 +149,7 @@ what you give them.   Help stamp out software-hoarding!  */
 #else
 
 /* Determine which kind of system this is.  */
-#include <signal.h>
+#include "syssignal.h"
 #ifndef SIGTSTP
 #ifndef USG
 #define USG

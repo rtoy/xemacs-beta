@@ -1,3 +1,12 @@
+2002-08-21  Jerry James  <james@xemacs.org>
+
+	* getloadavg.c: Substitute syssignal.h for signal.h.
+	* malloc.c: Ditto.
+	* unexhp9k3.c: Ditto.
+	* syssignal.h: Put NSIG setting code for SVR4 here.
+	* s/usg5-4.h: Don't include signal.h.  Remove NSIG setting code,
+	since signal.h has not yet been included.
+
 2002-08-16  Steve Youngs  <youngs@xemacs.org>
 
 	* config.h.in (XEMACS_EXTRA_NAME): New.
