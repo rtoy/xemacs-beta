@@ -1,3 +1,79 @@
+to 21.5.17 "chayote"
+
+Build
+
+-- New: configure reports cc and libc versions - Kletnieks, Turnbull.
+-- New: configure supports icc - James.
+-- New: configure supports typeof extension - James.
+-- New: use XCFLAGS to allow different flags for XEMACS_CC - Turnbull.
+-- Improve: module build process - James.-- Fix: compiler warnings - Turnbull.
+-- Fix: configure CFLAGS detection - James, Turnbull.
+-- Fix: configure arg parsing on Solaris - Niksic, Shelton, Turnbull.
+-- Fix: configure warning and progress messages - Turnbull.
+-- Fix: force regeneration of Lisp on every build - Turnbull.
+-- Fix: minitar compiler warnings, errors - Aichner.
+-- Fix: mislocation of installexe.sh - James.
+-- Fix: missing $(ldflags) in libsrc - James.
+-- Fix: remove dead references to GNU DLD - James.
+-- Fix: remove obsolete makefile cruft - Turnbull.
+
+Documentation
+
+-- Improve: charset registry docs - Golubev.
+-- Improve: specifier and internals docs - Turnbull.
+-- Improve: test-harness reporting - Aichner, Shelton, Turnbull.
+-- New: weak data structure testing - Kaltenbach.
+-- Remove: own photos and personal information - Youngs.
+-- Update: library versions in Windows docs - James.
+-- Update: package list - Koch.
+-- Fix: TeXinfo syntax - Golubev, Turnbull.
+-- Fix: clarifications - Turnbull.
+-- Fix: typos - Aichner, Golubev, Turnbull.
+-- Fix: workaround version issues in NAS headers - Turnbull.
+
+Lisp API
+
+-- New: device-num-screens, device-backing-store, device-save-under,
+    add-to-invisibility-spec, remove-from-invisibility-spec - James.
+-- New: lazy (widget), widget-child-value-get, widget-child-value-inline,
+    widget-child-validate, widget-type-value-create, widget-type-default-get,
+    widget-type-match - Abrahamsen, Youngs.
+-- New: package-get-list-packages-where - Youngs.
+-- New: pui-display-maintainer command - Youngs.
+-- New: pui-help-echo displays both installed and available versions - Youngs.
+-- Synch: frame.el to GNU Emacs 21.3 - James.
+-- Fix: cl-do-prettyprint formatting of prog* - Youngs.
+-- Fix: update coding system name usage - James.
+
+Internals
+
+-- Improve: KKCC - Kaltenbach.
+-- Improve: compiler.h for use with modules - James.
+-- Improve: make QUIT-related APIs visible to modules - James.
+-- New: support more device metrics on X11 - James.
+-- New: support symbols in Darwin shared libraries - Purvis.
+-- New: widget-default-create uses char-table - Haddock.
+-- New: xfree gets a type parameter for error-checking - James.
+-- Fix: (remove) duplicated code - James.
+-- Fix: GCPRO_STACK in byte interpreter - Turnbull.
+-- Fix: GTK marshalling code - Purvis.
+-- Fix: aliasing problems - Turnbull.
+-- Fix: bad interaction in initialization of args with pdumper - Benson.
+-- Fix: bit fields need to be unsigned in unicode detectors - James.
+-- Fix: coding system for GPG verification - Youngs.
+-- Fix: hard-coded options to use APIs - Pakoulin.
+-- Fix: improper use of XSetArg in frame-x.c - Turnbull.
+-- Fix: lstream close code - Euler.
+-- Fix: paragraph detection in Japanese - Yamaoka, Turnbull.
+-- Fix: regexps using \{ - Monnier, Turnbull.
+-- Fix: set dirty flag in mirror window at proper time - Galibert.
+-- Fix: several missing GC wrappers which caused crashes - James.
+-- Fix: some GCPROed variables were declared register - McPherson.
+-- Fix: stale info in realpath computation - James.
+-- Fix: two infloops in GC - James.
+-- Fix: usage of prin1 and princ in help - Eide, Shelton.
+
+
 to 21.5.16 "celeriac"
 
 Build
