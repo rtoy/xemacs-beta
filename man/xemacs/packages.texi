@@ -664,7 +664,7 @@ xemacs.org and it's mirrors.  If a particular package that you are
 looking for isn't here, please send a message to the
 @email{xemacs-beta@@xemacs.org, XEmacs Beta list}.
 
-This data is up-to-date as of August 2, 2002.
+This data is up-to-date as of August 8, 2002.
 
 @subsection Normal Packages
 A very broad selection of elisp packages.
@@ -719,6 +719,12 @@ Interface to RFC2229 dictionary servers.
 @item dired
 The DIRectory EDitor is for manipulating, and running commands on
 files in a directory.
+
+@item docbookide
+DocBook editing support.
+
+@item ecrypto
+Crypto functionality in Emacs Lisp.
 
 @item edebug
 A Lisp debugger.
@@ -834,6 +840,9 @@ files may be deleted at will.
 Miscellaneous single-file O/S utilities, for printing, archiving,
 compression, remote shells, etc.
 
+@item ocaml
+Objective Caml editing support.
+
 @item pc
 PC style interface emulation.
 
@@ -858,6 +867,9 @@ Emacs support for LaTeX cross-references, citations.
 @item rmail
 An obsolete Emacs mailer.  If you do not already use it don't start.
 
+@item sasl
+Simple Authentication and Security Layer (SASL) library.
+
 @item scheme
 Front-end support for Inferior Scheme.
 
@@ -875,6 +887,9 @@ Manage Sieve email filtering scripts.
 
 @item slider
 User interface tool.
+
+@item sml-mode
+Standard ML editing support.
 
 @item sounds-au
 XEmacs Sun sound files.
