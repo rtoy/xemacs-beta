@@ -1,3 +1,9 @@
+2003-12-12  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* itimer.el (activate-itimer): Modify the itimer timeout value as
+	if it were begun at the last time when the itimer driver was woken
+	up.
+
 2004-09-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix bug: apropos errors if a defalias refers to an undefined
