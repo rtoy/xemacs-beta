@@ -408,3 +408,18 @@ baaaa
   (Assert (eq 0 (string-match "^\\(?:a\\)*b" text)))	; 0
 )
 
+;; per Steve Youngs 2004-09-30 <microsoft-free.87ekkjhj7t.fsf@youngs.au.com>
+;; fix submitted by sjt 2004-10-07
+;; trailing comments are values from buggy 21.4.pre16
+(let ((text "abc"))
+  (Assert (eq 0 (string-match "\\(?:a\\(b\\)\\)" text)))	; 0
+  (Assert (string= (match-string 1 text) "b"))			; ab
+  (Assert (null (match-string 2 text)))				; b
+  (Assert (null (match-string 3 text)))				; nil
+  (Assert (eq 0 (string-match "\\(?:a\\(?:b\\(c\\)\\)\\)" text)))	; 0
+  (Assert (string= (match-string 1 text) "c"))			; abc
+  (Assert (null (match-string 2 text)))				; ab
+  (Assert (null (match-string 3 text)))				; c
+  (Assert (null (match-string 4 text)))				; nil
+)
+
