@@ -277,10 +277,6 @@ This functionality should be considered beta.
 The `--without-xmu' option can be used if your vendor doesn't ship
 the Xmu library.
 
-The `--puresize' option can be used to change the amount of purespace
-allocated for the dumped XEmacs.  As of XEmacs 20.1 usage of this
-parameter is deprecated and will be ignored.
-
 The `--with-sound=TYPE' option specifies that XEmacs should be built
 with sound support.  Native (`--with-sound=native') sound support is
 currently available only on Sun SparcStations, SGI's, HP9000s, and

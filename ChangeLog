@@ -1,3 +1,47 @@
+2003-01-12  Mike Sperber <mike@xemacs.org>
+
+	* configure.in: Check for strupr and strlwr.
+
+2002-12-16  Ben Wing  <ben@xemacs.org>
+
+	* INSTALL (Rationale):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	* configure.usage (Usage):
+	* configure.usage (--xemacs-compiler):
+	* configure.usage (--srcdir):
+	* configure.usage (--with-prefix):
+	* configure.usage (--bindir): New.
+	* configure.usage (--datadir): New.
+	* configure.usage (--statedir): New.
+	* configure.usage (--libdir): New.
+	* configure.usage (--infodir): New.
+	* configure.usage (--mandir): New.
+	* configure.usage (--lispdir): New.
+	* configure.usage (--sitelispdir): New.
+	* configure.usage (--etcdir): New.
+	* configure.usage (--lockdir): New.
+	* configure.usage (--archlibdir): New.
+	* configure.usage (--docdir): New.
+	* configure.usage (--moduledir): New.
+	* configure.usage (--with-site-lisp): New.
+	* configure.usage (--with-site-modules): New.
+	* configure.usage (--package-path): New.
+	* configure.usage (--infopath): New.
+	* configure.usage (--with-xmu):
+	* configure.usage (--with-tty):
+	* configure.usage (--with-gif):
+	* configure.usage (--native-sound-lib):
+	* configure.usage (--with-xim): New.
+	* configure.usage (--with-clash-detection): New.
+	* configure.usage (--with-database):
+	* configure.usage (--mail-locking):
+	* configure.usage (--with-ipv6-cname): Removed.
+	* configure.usage (--error-checking):
+	Redo usage message more logically, fix some problems.  In configure,
+	when outputting the compilation options, put in a big ugly warning
+	about using union-type, since it's been known to trigger so many
+	compiler bugs, invariably leading to weird crashes.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.

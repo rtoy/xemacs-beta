@@ -20,6 +20,7 @@ for diagnosing problems.
 
 
 General options:
+----------------
 
 --help                  Issue this usage message.
 --verbose               Accepted but ignored.
@@ -27,9 +28,13 @@ General options:
 
 
 Compilation options:
+--------------------
 
 --compiler=PROG         C compiler to use
---xemacs-compiler=PROG  compiler to use to compile just the xemacs executable
+--xemacs-compiler=PROG  compiler to use to compile just the xemacs executable.
+			If you want to compile XEmacs as C++, use e.g.
+			`--xemacs-compiler=g++'.  This turns on a lot of
+			additional error-checking.
 --with-gcc (*)          Use GCC to compile XEmacs.
 --cflags=FLAGS          Compiler flags (such as -O); setting this overrides
                         all default compiler flags except those that control
@@ -53,17 +58,65 @@ Compilation options:
 --dynamic=no            Force static linking on systems where dynamic
                         linking is the default.
 --srcdir=DIR            Look for the XEmacs source files in DIR.
-                        Works best when using GNU Make.
+                        Works best when using GNU Make.  Allows you to build
+			XEmacs in various different ways using the same
+			source tree.
 
 
 Installation options:
+---------------------
 
 --prefix=DIR            Install files below DIR.  Defaults to `/usr/local'.
 --with-prefix=no        Don't compile the value of --prefix into the
                         executable.
+--with-netinstall       Compile in support for installation over the internet.
+                        Only functional on the MS Windows platforms.
+--bindir=DIR
+--datadir=DIR
+--statedir=DIR
+--libdir=DIR
+--infodir=DIR
+--mandir=DIR
+--lispdir=DIR
+--sitelispdir=DIR
+--etcdir=DIR
+--lockdir=DIR
+--archlibdir=DIR
+--docdir=DIR
+--moduledir=DIR
+			You may also control individually where various
+			parts of XEmacs are installed.  Note that we
+			recommend against explicitly setting any of these
+			variables.  See the INSTALL file for a complete list
+			plus the reasons we advise not changing them.
+
+
+Run-time path-searching options:
+--------------------------------
+
+--with-site-lisp=yes    Allow for a site-lisp directory in the XEmacs hierarchy
+                        searched before the installation packages.
+--with-site-modules=no  Disable site-modules directory in the XEmacs hierarchy,
+                        which is searched before the installation modules.
+--package-path=PATH     Directories to search for packages to dump with xemacs.
+                        PATH splits into three parts separated by double
+                        colons (::), an early, a late, and a last part,
+                        corresponding to their position in the various
+                        system paths:  The early part is always first,
+                        the late part somewhere in the middle, and the
+                        last part at the very back.
+                        Only the late part gets seen at dump time.
+                        If PATH has only one component, that component
+                        is late.
+                        If PATH has two components, the first is
+                        early, the second is late.
+--infopath=PATH         Directories to search for Info documents, info dir
+                        and localdir files in case run-time searching
+                        for them fails.
 
 
 Window-system options:
+----------------------
 
 --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
 --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
@@ -107,6 +160,7 @@ Window-system options:
 
 
 TTY (character terminal) options:
+---------------------------------
 
 --with-tty=no           Don't support ttys.
 --with-ncurses (*)      Use the ncurses library for tty support.
@@ -114,6 +168,7 @@ TTY (character terminal) options:
 
 
 Image options:
+--------------
 
 --with-xpm (*)          Compile with support for XPM images.  PRACTICALLY
                         REQUIRED.  Although this library is nonstandard and
@@ -135,6 +190,7 @@ Image options:
 
 
 Sound options:
+--------------
 
 --with-sound=TYPE[,TYPE[,...]] (*) Compile with sound support.
                         Valid types are `native', `nas' and `esd'.
@@ -148,72 +204,8 @@ Sound options:
                         libraries are called libaudio.
 
 
-Database options:
-
---with-database=TYPE (*) Compile with database support.  Valid types are
-                        `no' or a comma-separated list of one or more
-                        of `berkdb' and either `dbm' or `gnudbm'.
---with-ldap (*)         Compile with support for the LDAP protocol.
---with-postgresql (*)   Compile with support for the PostgreSQL RDBMS.
-
-
-Mail options:
-
---mail-locking=TYPE (*) Specify the locking to be used by movemail to prevent
-                        concurrent updates of mail spool files. Valid types
-                        are `lockf', `flock', `dot', `locking' or `mmdf'.
---with-pop              Support POP for mail retrieval.
---with-kerberos         Support Kerberos-authenticated POP.
---with-hesiod           Support Hesiod to get the POP server host.
-
-
-Additional features:
-
---with-tooltalk (*)     Support the ToolTalk IPC protocol.
---with-workshop         Support the Sun WorkShop (formerly Sparcworks)
-                        development environment.
---with-socks            Compile with support for SOCKS (an Internet proxy).
---with-dnet (*)         Compile with support for DECnet.
---with-modules (*)      Compile in experimental support for dynamically
-                        loaded libraries (Dynamic Shared Objects).
---with-netinstall       Compile in support for installation over the internet.
-                        Only functional on the MS Windows platforms.
---with-ipv6-cname=yes   Try IPv6 information first when canonicalizing host
-                        names.  This option has no effect unless system
-                        supports getaddrinfo(3) and getnameinfo(3).
---with-site-lisp=yes    Allow for a site-lisp directory in the XEmacs hierarchy
-                        searched before the installation packages.
---with-site-modules=no  Disable site-modules directory in the XEmacs hierarchy,
-                        which is searched before the installation modules.
---package-path=PATH     Directories to search for packages to dump with xemacs.
-                        PATH splits into three parts separated by double
-                        colons (::), an early, a late, and a last part,
-                        corresponding to their position in the various
-                        system paths:  The early part is always first,
-                        the late part somewhere in the middle, and the
-                        last part at the very back.
-                        Only the late part gets seen at dump time.
-                        If PATH has only one component, that component
-                        is late.
-                        If PATH has two components, the first is
-                        early, the second is late.
---infodir=DIR           Directory to install XEmacs Info manuals and dir in.
---infopath=PATH         Directories to search for Info documents, info dir
-                        and localdir files in case run-time searching
-                        for them fails.
---moduledir=DIR         Directory to install dynamic modules in.
---pdump                 New, experimental, don't-sue-me-if-your-house-
-                        collapses-and-your-wife-leaves-you, portable dumper.
-			(Actually, not as experimental or non-working as
-			Olivier claims.  Works quite well, in fact.)
---with-default-eol-detection
-                        Turns on by default auto-detection of end-of-line type
-			when reading a file.  Applies to those platforms where
-			auto-detection is off by default (non-Mule Unix).  Has
-			no effect otherwise.
-
-
 Internationalization options:
+-----------------------------
 
 --with-mule             Compile with Mule (MUlti-Lingual Emacs) support,
                         needed to support non-Latin-1 (including Asian)
@@ -238,7 +230,65 @@ Internationalization options:
                         `--with-menubars=lucid' (the default) is desirable.
 
 
+File-related options:
+---------------------
+
+--with-default-eol-detection
+                        Turns on by default auto-detection of end-of-line type
+			when reading a file.  Applies to those platforms where
+			auto-detection is off by default (non-Mule Unix).  Has
+			no effect otherwise.
+--with-clash-detection=no
+			Disable use of lock files to detect multiple edits
+			of the same file.
+
+
+Database options:
+-----------------
+
+--with-database=TYPE (*) Compile with database support.  Valid types are
+                        `no' or a comma-separated list of one or more
+                        of `berkdb' and either `dbm' or `gnudbm'.
+--with-ldap (*)         Compile with support for the LDAP protocol.
+--with-postgresql (*)   Compile with support for the PostgreSQL RDBMS.
+
+
+Mail options:
+-------------
+
+--mail-locking=TYPE (*) Specify the locking to be used by movemail to prevent
+                        concurrent updates of mail spool files. Valid types
+                        are `lockf', `flock', `dot', `locking' or `mmdf'.
+--with-pop              Support POP for mail retrieval.
+--with-kerberos         Support Kerberos-authenticated POP.
+--with-hesiod           Support Hesiod to get the POP server host.
+
+
+Networking options:
+-------------------
+
+--with-tooltalk (*)     Support the ToolTalk IPC protocol.
+--with-socks            Compile with support for SOCKS (an Internet proxy).
+--with-dnet (*)         Compile with support for DECnet.
+--with-ipv6-cname	Try IPv6 information first when canonicalizing host
+                        names.  This option has no effect unless system
+                        supports getaddrinfo(3) and getnameinfo(3).
+
+
+Memory allocation options:
+--------------------------
+
+--rel-alloc             Use the relocating allocator (default for this option
+                        is system-dependent).
+--with-dlmalloc         Control usage of Doug Lea malloc on systems that have
+                        it in the standard C library (default is to use it if
+                        it is available).
+--with-system-malloc    Force use of the system malloc, rather than GNU malloc.
+--with-debug-malloc     Use the debugging malloc package.
+
+
 Debugging options:
+------------------
 
 --debug                 Compile with support for debugging XEmacs.
                         (Causes code-size increase and little loss of speed.)
@@ -261,30 +311,39 @@ Debugging options:
                         to get it rebuilt.)
 --use-union-type        Enable or disable use of a union, instead of an
                         int, for the fundamental Lisp_Object type; this
-                        provides stricter type-checking.  Only works with
-                        some systems and compilers.
---use-kkcc              Enable the use of new GC algorithms. (EXPERIMENTAL)
+                        provides stricter type-checking.  WARNING: This has
+			a tendency to trigger compiler bugs, especially in
+			combination with other features that increase the
+			complexity of expressions, for example `--with-mule'
+			and `--error-checking=all'.  Crashes have been
+			observed with union type in combination with the
+			two options just mentioned under various versions of
+			GCC as well as MSVC++ 6.0.  Furthermore, many
+			debuggers have problems (i.e. bugs) dealing with
+			unions, and even for those that don't, debugging can
+			be inconvenient because of no syntax for entering a
+			union.  We recommend `--use-union-type' *ONLY* for
+			testing purposes, not for production builds.  If you
+			are using `-use-union-type' and get some weird
+			crash, try redoing without union type.
 --with-quantify         Add support for performance debugging using Quantify.
 --with-purify           Add support for memory debugging using Purify.
 
 
-Other options:
+Developer options:
+------------------
 
---rel-alloc             Use the relocating allocator (default for this option
-                        is system-dependent).
---with-dlmalloc         Control usage of Doug Lea malloc on systems that have
-                        it in the standard C library (default is to use it if
-                        it is available).
---with-system-malloc    Force use of the system malloc, rather than GNU malloc.
---with-debug-malloc     Use the debugging malloc package.
---with-clash-detection  Use lock files to detect multiple edits of the same
-                        file.  The default is to do clash detection.
+--with-workshop         Support the Sun WorkShop (formerly Sparcworks)
+                        development environment.
+--pdump                 New, portable, relocatable dumper.  Currently works
+			quite well, somewhere in beta-to-late-beta, we
+			might say. (Infamous for being the former
+			"experimental, don't-sue-me-if-your-house-collapses-
+			and-your-wife-leaves-you" portable dumper.)
+--use-kkcc              Enable the use of new GC algorithms. (EXPERIMENTAL)
+--with-modules (*)      Compile in experimental support for dynamically
+                        loaded libraries (Dynamic Shared Objects).
 
-You may also specify any of the `path' variables found in Makefile.in.in,
-including --bindir, --libdir, --docdir, --lispdir, --sitelispdir,
---datadir, --infodir, --mandir and so on.  Note that we recommend
-against explicitly setting any of these variables.  See the INSTALL
-file for a complete list plus the reasons we advise not changing them.
 
 If successful, configure leaves its status in config.status.  If
 unsuccessful after disturbing the status quo, it removes config.status.
