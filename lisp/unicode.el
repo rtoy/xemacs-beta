@@ -304,6 +304,20 @@ Standard encoding for representing UTF-8 under MS Windows."
    little-endian t
    need-bom t))
 
+(defun decode-char (quote-ucs code &optional restriction) 
+  "FSF compatibility--return Mule character with Unicode codepoint `code'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs) 
+	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
+  (unicode-to-char code))
+
+(defun encode-char (char quote-ucs &optional restriction)
+  "FSF compatibility--return the Unicode code point of `char'.
+The second argument must be 'ucs, the third argument is ignored.  "
+  (assert (eq quote-ucs 'ucs)
+	  "Sorry, encode-char doesn't yet support anything but the UCS.  ")
+  (char-to-unicode char))
+
 ;; #### UTF-7 is not yet implemented, and it's tricky to do.  There's
 ;; an implementation in appendix A.1 of the Unicode Standard, Version
 ;; 2.0, but I don't know its licensing characteristics.

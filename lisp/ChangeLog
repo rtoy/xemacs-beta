@@ -1,3 +1,13 @@
+2005-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (decode-char): New. This is what the FSF Mule API
+	calls unicode-to-char. The API of the function is more general,
+	but support for anything beyond Unicode isn't implemented, and I
+	can't see why it would be, given that make-char does a fine job
+	already.
+	* unicode.el (encode-char): New. This is what the FSF Mule calls
+	char-to-unicode.
+
 2005-02-28  Simon Josefsson  <jas@extundo.com>
 
 	* about.el (xemacs-hackers): Add jas.
