@@ -1,3 +1,7 @@
+2003-01-13  Ilya Golubev  <golubev@xemacs.org>
+
+	* etc/photos/golubev.png, etc/photos/golubevm.png: New.
+
 2003-01-12  Mike Sperber <mike@xemacs.org>
 
 	* configure.in: Check for strupr and strlwr.
