@@ -198,7 +198,8 @@ Sound options:
                         The first type can be `none' or `all'.  `none' means
                         `nonative,nonas,noesd'.  `all' means `native,nas,esd'.
                         Later options override earlier ones for the same TYPE.
-                        The default is to autodetect all sound support.
+                        The default is to autodetect all sound support except 
+                        for ESD which defaults to off.
 --native-sound-lib=LIB  Native sound support library.  Needed on Suns
                         with `--with-sound=native,nas' because both sound
                         libraries are called libaudio.

@@ -4303,8 +4303,8 @@ if test "$with_nas_sound" != "no"; then
   fi
 fi
 
-dnl ESD Sound support
-if test "$with_esd_sound" != "no"; then
+dnl ESD Sound support (default to off)
+if test "$with_esd_sound" != "no" -a "x$with_esd_sound" != "x"; then
   AC_CHECK_PROG(have_esd_config, esd-config, yes, no)
   if test "$have_esd_config" = "yes"; then
     save_c_switch_site="$c_switch_site" save_LIBS="$LIBS"

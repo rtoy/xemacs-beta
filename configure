@@ -12996,7 +12996,7 @@ rm -f conftest*
   fi
 fi
 
-if test "$with_esd_sound" != "no"; then
+if test "$with_esd_sound" != "no" -a "x$with_esd_sound" != "x"; then
   # Extract the first word of "esd-config", so it can be a program name with args.
 set dummy esd-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
