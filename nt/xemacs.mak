@@ -56,11 +56,13 @@ XEMACSDIRSTRING=$(MAKEDIRSTRING:\\nt=)
 # So only delete one glob at a time.  Override flags in config.inc.
 DEL=del
 
-# Define the 'copy' command to use
-# Suppress confirmation for overwriting files
+# Tell COPY, MOVE, and XCOPY to suppress confirmation for overwriting
+# files.
+# set COPYCMD=/y
+# Define the 'copy' command to use.
 # Use /r (instead of /y), which exists on Windows NT 4 and 5.
-COPY=xcopy /q /y
-COPYDIR=xcopy /q /y /e
+COPY=xcopy /q /r
+COPYDIR=xcopy /q /r /e
 
 # Program name and version
 
@@ -570,9 +572,11 @@ $(SRC)\config.h:	$(SRC)\config.h.in
 	@copy $(SRC)\config.h.in $(SRC)\config.h
 
 $(SRC)\Emacs.ad.h:	Emacs.ad.h
+	set COPYCMD=/y
 	@$(COPY) Emacs.ad.h $(SRC)
 
 $(SRC)\paths.h:	paths.h
+	set COPYCMD=/y
 	@$(COPY) paths.h $(SRC)
 
 #------------------------------------------------------------------------------
@@ -1334,6 +1338,7 @@ temacs: $(LASTFILE) $(TEMACS)
 # use this rule to install the system
 install:	all
 	cd $(NT)
+	set COPYCMD=/y
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
 	@$(COPY) PROBLEMS "$(INSTALL_DIR)\"
@@ -1447,7 +1452,7 @@ installation::
 OS: $(OS)
 !endif
 
-XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for `$(EMACS_CONFIGURATION)'.
+XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") $(xemacs_extra_name:"=\") configured for `$(EMACS_CONFIGURATION)'.
 
   Building XEmacs using \"$(MAKE:\=\\)\".
   Building XEmacs using make flags \"$(MAKEFLAGS)\".
