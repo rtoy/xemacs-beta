@@ -1,3 +1,7 @@
+2004-08-12  "Johann 'Myrkraverk' Oskarsson" <myrkraverk@users.sourceforge.net>
+
+	* config.guess: Identify PlayStation2.
+
 2004-06-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in: Character classes in globs don't work, die when
