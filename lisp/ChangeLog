@@ -1,3 +1,8 @@
+2003-03-24  Jerry James  <james@xemacs.org>
+
+	* window-xemacs.el (saved-window-equal): Use equal instead of = to
+	compare saved-window-modeline-hscroll values.
+
 2003-03-25  Steve Youngs  <youngs@xemacs.org>
 
 	* package-admin.el: (package-admin-delete-binary-package): Only
