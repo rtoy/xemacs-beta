@@ -2004,6 +2004,7 @@ Change the list contained in a weak-list object.
   return new_list;
 }
 
+
 /************************************************************************/
 /*                              weak boxes                              */
 /************************************************************************/
@@ -2014,24 +2015,38 @@ void
 prune_weak_boxes (void)
 {
   Lisp_Object rest, prev = Qnil;
+  int removep = 0;
 
   for (rest = Vall_weak_boxes;
        !NILP(rest);
        rest = XWEAK_BOX (rest)->next_weak_box)
     {
       if (! (marked_p (rest)))
-	/* This weak box itself is garbage.  Remove it from the list. */
-	if (NILP (prev))
-	  Vall_weak_boxes = XWEAK_BOX (rest)->next_weak_box;
-	else
-	  XWEAK_BOX (prev)->next_weak_box = XWEAK_BOX (rest)->next_weak_box;
-      else if (!marked_p(XWEAK_BOX (rest)->value))
-	XSET_WEAK_BOX (rest, Qnil);
+	/* This weak box itself is garbage. */
+	removep = 1;
+
+       if (! marked_p (XWEAK_BOX (rest)->value))
+	 {
+	   XSET_WEAK_BOX (rest, Qnil);
+	   removep = 1;
+	 }
+
+       if (removep)
+	 {
+	   /* Remove weak box from list. */
+	   if (NILP (prev))
+	     Vall_weak_boxes = XWEAK_BOX (rest)->next_weak_box;
+	   else
+	     XWEAK_BOX (prev)->next_weak_box = XWEAK_BOX (rest)->next_weak_box;
+	   removep = 0;
+	 }
+       else
+	 prev = rest;
     }
 }
 
 static Lisp_Object
-mark_weak_box (Lisp_Object obj) 
+mark_weak_box (Lisp_Object obj)
 {
   return Qnil;
 }
@@ -2047,18 +2062,18 @@ print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  struct weak_box *b1 = XWEAK_BOX (obj1);
-  struct weak_box *b2 = XWEAK_BOX (obj2);
+  struct weak_box *wb1 = XWEAK_BOX (obj1);
+  struct weak_box *wb2 = XWEAK_BOX (obj2);
 
-  return (internal_equal (b1->value, b2->value, depth + 1));
+  return (internal_equal (wb1->value, wb2->value, depth + 1));
 }
 
 static Hashcode
 weak_box_hash (Lisp_Object obj, int depth)
 {
-  struct weak_box *b = XWEAK_BOX (obj);
+  struct weak_box *wb = XWEAK_BOX (obj);
 
-  return internal_hash (b->value, depth + 1);
+  return internal_hash (wb->value, depth + 1);
 }
 
 Lisp_Object
@@ -2076,9 +2091,9 @@ make_weak_box (Lisp_Object value)
   return result;
 }
 
-static const struct lrecord_description weak_box_description[] = { 
+static const struct lrecord_description weak_box_description[] = {
   { XD_LO_LINK, offsetof (struct weak_box, value) },
-  { XD_END} 
+  { XD_END}
 };
 
 DEFINE_LRECORD_IMPLEMENTATION ("weak_box", weak_box,
@@ -2103,9 +2118,9 @@ DEFUN ("weak-box-ref", Fweak_box_ref, 1, 1, 0, /*
 Return the contents of weak box WEAK-BOX.
 If the contents have been GCed, return NIL.
 */
-       (box))
+       (wb))
 {
-  return XWEAK_BOX(box)->value;
+  return XWEAK_BOX (wb)->value;
 }
 
 DEFUN ("weak-box-p", Fweak_boxp, 1, 1, 0, /*
@@ -2116,6 +2131,187 @@ Return non-nil if OBJECT is a weak box.
   return WEAK_BOXP (object) ? Qt : Qnil;
 }
 
+/************************************************************************/
+/*                              ephemerons                              */
+/************************************************************************/
+
+static Lisp_Object Vall_ephemerons; /* Gemarke es niemals ever!!! */
+static Lisp_Object Vfinalize_list;
+
+int
+finish_marking_ephemerons(void)
+{
+  Lisp_Object rest;
+  int did_mark = 0;
+
+  for (rest = Vall_ephemerons;
+       !NILP (rest);
+       rest = XEPHEMERON_NEXT (rest))
+    {
+      if (marked_p (rest) && ! marked_p (XEPHEMERON (rest)->cons_chain))
+	{
+	  MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
+	  mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
+	  did_mark = 1;
+	}
+    }
+  return did_mark;
+}
+
+void
+prune_ephemerons(void)
+{
+  int removep = 0;
+  Lisp_Object rest = Vall_ephemerons, next, prev = Qnil;
+
+  while (! NILP (rest))
+    {
+      next = XEPHEMERON_NEXT (rest);
+
+      if (marked_p (rest))
+	/* The ephemeron itself is live ... */
+	{
+	  if (! marked_p(XEPHEMERON (rest)->key))
+	    /* ... but its key is garbage */
+	    {
+	      removep = 1;
+	      XSET_EPHEMERON_VALUE (rest, Qnil);
+	      if (! NILP (XEPHEMERON_FINALIZER (rest)))
+		/* Register the finalizer */
+		{
+		  XSET_EPHEMERON_NEXT (rest, Vfinalize_list);
+		  Vfinalize_list = XEPHEMERON (rest)->cons_chain;
+		}
+	    }
+	}
+      else
+	/* The ephemeron itself is dead. */
+	removep = 1;
+
+      if (removep)
+	{
+	  /* Remove it from the list. */
+	  if (NILP (prev))
+	    Vall_ephemerons = next;
+	  else
+	    XSET_EPHEMERON_NEXT (prev, next);
+	  removep = 0;
+	}
+      else
+	prev = rest;
+
+      rest = next;
+    }
+}
+
+Lisp_Object
+zap_finalize_list(void)
+{
+  Lisp_Object finalizers = Vfinalize_list;
+
+  Vfinalize_list = Qnil;
+
+  return finalizers;
+}
+
+static Lisp_Object
+mark_ephemeron (Lisp_Object obj)
+{
+  return Qnil;
+}
+
+static void
+print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<ephemeron>");
+  write_fmt_string (printcharfun, "#<ephemeron>");
+}
+
+static int
+ephemeron_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return
+    internal_equal (XEPHEMERON_REF (obj1), XEPHEMERON_REF(obj2), depth + 1);
+}
+
+static Hashcode
+ephemeron_hash(Lisp_Object obj, int depth)
+{
+  return internal_hash (XEPHEMERON_REF (obj), depth + 1);
+}
+
+Lisp_Object
+make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
+{
+  Lisp_Object result, temp = Qnil;
+  struct gcpro gcpro1, gcpro2;
+
+  struct ephemeron *eph =
+    alloc_lcrecord_type (struct ephemeron, &lrecord_ephemeron);
+
+  eph->key = Qnil;
+  eph->cons_chain = Qnil;
+  eph->value = Qnil;
+
+  result = wrap_ephemeron(eph);
+  GCPRO2 (result, temp);
+
+  eph->key = key;
+  temp = Fcons(value, finalizer);
+  eph->cons_chain = Fcons(temp, Vall_ephemerons);
+  eph->value = value;
+
+  Vall_ephemerons = result;
+
+  UNGCPRO;
+  return result;
+}
+
+static const struct lrecord_description ephemeron_description[] = {
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, key)},
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, cons_chain)},
+  { XD_LISP_OBJECT, offsetof(struct ephemeron, value)},
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("ephemeron", ephemeron,
+			       mark_ephemeron, print_ephemeron,
+			       0, ephemeron_equal, ephemeron_hash,
+			       ephemeron_description,
+			       struct ephemeron);
+
+DEFUN ("make-ephemeron", Fmake_ephemeron, 2, 3, 0, /*
+Return a new ephemeron with key KEY, value CONTENTS, and finalizer FINALIZER.
+The ephemeron is a reference to CONTENTS which may be extracted with
+`ephemeron-ref'.  CONTENTS is only reachable through the ephemeron as
+long as KEY is reachable; the ephemeron does not contribute to the
+reachability of KEY.  When KEY becomes unreachable while the ephemeron
+itself is still reachable, CONTENTS is queued for finalization: FINALIZER
+will possibly be called on CONTENTS some time in the future.  Moreover,
+future calls to `ephemeron-ref' will return NIL.
+*/
+       (key, value, finalizer))
+{
+  return make_ephemeron(key, value, finalizer);
+}
+
+DEFUN ("ephemeron-ref",  Fephemeron_ref, 1, 1, 0, /*
+Return the contents of ephemeron EPHEMERON.
+If the contents have been GCed, return NIL.
+*/
+       (eph))
+{
+  return XEPHEMERON_REF (eph);
+}
+
+DEFUN ("ephemeron-p", Fephemeronp, 1, 1, 0, /*
+Return non-nil if OBJECT is an ephemeron.
+*/
+       (object))
+{
+  return EPHEMERONP (object) ? Qt : Qnil;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -2224,6 +2420,7 @@ void
 syms_of_data (void)
 {
   INIT_LRECORD_IMPLEMENTATION (weak_list);
+  INIT_LRECORD_IMPLEMENTATION (ephemeron);
   INIT_LRECORD_IMPLEMENTATION (weak_box);
 
   DEFSYMBOL (Qquote);
@@ -2342,6 +2539,9 @@ syms_of_data (void)
   DEFSUBR (Fweak_list_list);
   DEFSUBR (Fset_weak_list_list);
 
+  DEFSUBR (Fmake_ephemeron);
+  DEFSUBR (Fephemeron_ref);
+  DEFSUBR (Fephemeronp);
   DEFSUBR (Fmake_weak_box);
   DEFSUBR (Fweak_box_ref);
   DEFSUBR (Fweak_boxp);
@@ -2353,6 +2553,12 @@ vars_of_data (void)
   /* This must not be staticpro'd */
   Vall_weak_lists = Qnil;
   dump_add_weak_object_chain (&Vall_weak_lists);
+
+  Vall_ephemerons = Qnil;
+  dump_add_weak_object_chain (&Vall_ephemerons);
+
+  Vfinalize_list = Qnil;
+  staticpro (&Vfinalize_list);
 
   Vall_weak_boxes = Qnil;
   dump_add_weak_object_chain (&Vall_weak_boxes);

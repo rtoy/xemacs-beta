@@ -2571,6 +2571,46 @@ DECLARE_LRECORD (weak_box, struct weak_box);
 #define CHECK_WEAK_BOX(x) CHECK_RECORD (x, weak_box)
 #define CONCHECK_WEAK_BOX(x) CONCHECK_RECORD (x, weak_box)
 
+/*--------------------------- ephemerons ----------------------------*/
+
+struct ephemeron 
+{
+  struct lcrecord_header header;
+
+  Lisp_Object key;
+
+  /* This field holds a pair.  The cdr of this cons points to the next
+     ephemeron in Vall_ephemerons.  The car points to another pair
+     whose car is the value and whose cdr is the finalizer.
+
+     This representation makes it very easy to unlink an ephemeron
+     from Vall_ephemerons and chain it into
+     Vall_ephemerons_to_finalize. */
+
+  Lisp_Object cons_chain;
+
+  Lisp_Object value;
+};
+
+void prune_ephemerons (void);
+Lisp_Object ephemeron_value(Lisp_Object ephi);
+int finish_marking_ephemerons(void);
+Lisp_Object zap_finalize_list(void);
+Lisp_Object make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer);
+
+DECLARE_LRECORD(ephemeron, struct ephemeron);
+#define XEPHEMERON(x) XRECORD (x, ephemeron, struct ephemeron)
+#define XEPHEMERON_REF(x) (XEPHEMERON (x)->value)
+#define XEPHEMERON_NEXT(x) (XCDR (XEPHEMERON(x)->cons_chain))
+#define XEPHEMERON_FINALIZER(x) (XCDR (XCAR (XEPHEMERON (x)->cons_chain)))
+#define XSET_EPHEMERON_NEXT(x, n) (XSETCDR (XEPHEMERON(x)->cons_chain, n))
+#define XSET_EPHEMERON_VALUE(x, v) (XEPHEMERON(x)->value = (v))
+#define XSET_EPHEMERON_KEY(x, k) (XEPHEMERON(x)->key = (k))
+#define wrap_ephemeron(p) wrap_record (p, ephemeron)
+#define EPHEMERONP(x) RECORDP (x, ephemeron)
+#define CHECK_EPHEMERON(x) CHECK_RECORD (x, ephemeron)
+#define CONCHECK_EPHEMERON(x) CONCHECK_RECORD (x, ephemeron)
+
 
 /*---------------------------- weak lists ------------------------------*/
 
@@ -3368,6 +3408,8 @@ int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;
 extern int need_to_check_c_alloca;
+extern int need_to_signal_post_gc;
+extern Lisp_Object Qpost_gc_hook;
 void recompute_funcall_allocation_flag (void);
 
 #ifdef MEMORY_USAGE_STATS
