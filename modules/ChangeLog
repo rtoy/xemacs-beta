@@ -1,3 +1,7 @@
+2003-06-10  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common: Change GNUish := to =.
+
 2003-06-01  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.14 "cassava" is released.
