@@ -95,9 +95,9 @@ where you grabbed the core distribution from, and are located in the
 subdirectory @file{packages}.  Package file names follow
 the naming convention @file{<package-name>-<version>-pkg.tar.gz}.
 
-If you have EFS @ref{(EFS)}, packages can be installed over the network.
-Alternatively, if you have copies of the packages locally, you can
-install packages from a local disk or CDROM.
+If you have @ref{Top, EFS, , efs}, packages can be installed over the
+network.  Alternatively, if you have copies of the packages locally, you
+can install packages from a local disk or CDROM.
 
 The file @file{etc/PACKAGES} in the core distribution contains a list of
 the @ref{Available Packages} at the time of the XEmacs release.
