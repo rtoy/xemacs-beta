@@ -1708,6 +1708,52 @@ for current buffer."
 	;; Ordinary variable, really set it.
 	(t (make-local-variable var)
 	   (set var val))))
+
+(defun find-coding-system-magic-cookie-in-file (file)
+  "Look for the coding-system magic cookie in FILE.
+The coding-system magic cookie is either the local variable specification
+-*- ... coding: ... -*- on the first line, or the exact string
+\";;;###coding system: \" somewhere within the first 3000 characters
+of the file.  If found, the coding system name (as a string) is returned;
+otherwise nil is returned.  Note that it is extremely unlikely that
+either such string would occur coincidentally as the result of encoding
+some characters in a non-ASCII charset, and that the spaces make it
+even less likely since the space character is not a valid octet in any
+ISO 2022 encoding of most non-ASCII charsets."
+  (save-excursion
+    (with-temp-buffer
+      (let ((coding-system-for-read 'raw-text))
+	(insert-file-contents file nil 1 3001))
+      (goto-char (point-min))
+      (or (and (looking-at
+		"^[^\n]*-\\*-[^\n]*coding: \\([^ \t\n;]+\\)[^\n]*-\\*-")
+	       (buffer-substring (match-beginning 1) (match-end 1)))
+	  ;; (save-excursion
+	  ;;   (let (start end)
+	  ;;     (and (re-search-forward "^;+[ \t]*Local Variables:" nil t)
+	  ;;          (setq start (match-end 0))
+	  ;;          (re-search-forward "\n;+[ \t]*End:")
+	  ;;          (setq end (match-beginning 0))
+	  ;;          (save-restriction
+	  ;;            (narrow-to-region start end)
+	  ;;            (goto-char start)
+	  ;;            (re-search-forward "^;;; coding: \\([^\n]+\\)$" nil t)
+	  ;;            )
+	  ;;          (let ((codesys
+	  ;;                 (intern (buffer-substring
+	  ;;                          (match-beginning 1)(match-end 1)))))
+	  ;;            (if (find-coding-system codesys) codesys))
+	  ;;          )))
+	  (let ((case-fold-search nil))
+	    (if (search-forward
+		 ";;;###coding system: " (+ (point-min) 3000) t)
+		(let ((start (point))
+		      (end (progn
+			     (skip-chars-forward "^ \t\n\r")
+			     (point))))
+		  (if (> end start) (buffer-substring start end))
+		  )))
+	  ))))
 
 (defcustom change-major-mode-with-file-name t
   "*Non-nil means \\[write-file] should set the major mode from the file name.
@@ -1789,10 +1835,11 @@ the old visited file has been renamed to the new name FILENAME."
   (kill-local-variable 'backup-inhibited)
   ;; If buffer was read-only because of version control,
   ;; that reason is gone now, so make it writable.
-  (when (boundp 'vc-mode)
-    (if vc-mode
-	(setq buffer-read-only nil))
-    (kill-local-variable 'vc-mode))
+  (if-boundp 'vc-mode
+      (progn
+	(if vc-mode
+	    (setq buffer-read-only nil))
+	(kill-local-variable 'vc-mode)))
   ;; Turn off backup files for certain file names.
   ;; Since this is a permanent local, the major mode won't eliminate it.
   (and buffer-file-name
@@ -2290,8 +2337,8 @@ After saving the buffer, run `after-save-hook'."
 	  ;; delete it now.
 	  (delete-auto-save-file-if-necessary recent-save)
 	  ;; Support VC `implicit' locking.
-	  (when (fboundp 'vc-after-save)
-	    (vc-after-save))
+	  (if-fboundp 'vc-after-save
+	      (vc-after-save))
 	  (run-hooks 'after-save-hook))
       (display-message 'no-log "(No changes need to be saved)"))))
 
@@ -2477,9 +2524,10 @@ Optional second argument EXITING means ask about certain non-file buffers
 			       ;; #### FSF has an EXIT-ACTION argument
 			       ;; to `view-buffer'.
 			       (view-buffer buf)
-			       (setq view-exit-action
-				     (lambda (ignore)
-				       (exit-recursive-edit)))
+			       (with-boundp 'view-exit-action
+				 (setq view-exit-action
+				       (lambda (ignore)
+					 (exit-recursive-edit))))
 			       (recursive-edit)
 			       ;; Return nil to ask about BUF again.
 			       nil)
@@ -3223,8 +3271,10 @@ absolute one."
 (defun file-remote-p (file-name)
   "Test whether FILE-NAME is looked for on a remote system."
   (cond ((not allow-remote-paths) nil)
-	((featurep 'ange-ftp) (ange-ftp-ftp-path file-name))
-	((fboundp 'efs-ftp-path) (efs-ftp-path file-name))
+	((fboundp 'ange-ftp-ftp-path)
+	 (declare-fboundp (ange-ftp-ftp-path file-name)))
+	((fboundp 'efs-ftp-path)
+	 (declare-fboundp (efs-ftp-path file-name)))
 	(t nil)))
 
 ;; #### FSF has file-name-non-special here.

@@ -28,5 +28,15 @@ Boston, MA 02111-1307, USA.  */
 #undef SYSTEM_TYPE
 #define SYSTEM_TYPE "ultrix"
 
+/* #### A very old comment in unix_open_network_stream() said this:
+
+   Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
+   when connect is interrupted.  So let's not let it get interrupted.
+
+   Someone using Ultrix (anyone still out there?) should verify this.
+*/
+
+#define CONNECT_NEEDS_SLOWED_INTERRUPTS
+
 /* We don't have a built-in strdup() function */
 #define NEED_STRDUP

@@ -1,34 +1,44 @@
 ;;; font.el --- New font model
+
+;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
+
 ;; Author: wmperry
+;; Maintainer: XEmacs Development Team
 ;; Created: 1997/09/05 15:44:37
-;; Version: 1.52
 ;; Keywords: faces
+;; Version: 1.52
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
-;;;
-;;; This file is part of GNU Emacs.
-;;;
-;;; GNU Emacs is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2, or (at your option)
-;;; any later version.
-;;;
-;;; GNU Emacs is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 1, or (at your option)
+;; any later version.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; The emacsen compatibility package - load it up before anything else
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
+
+;;; Code:
+
+(globally-declare-fboundp
+ '(x-list-fonts
+   mswindows-list-fonts ns-list-fonts internal-facep fontsetp get-font-info
+   get-fontset-info mswindows-define-rgb-color cancel-function-timers))
+
+(globally-declare-boundp
+ '(global-face-data
+   x-font-regexp x-font-regexp-foundry-and-family))
+
 (require 'cl)
 
 (eval-and-compile
@@ -74,12 +84,6 @@
       (and (symbolp face) (get face property))))
 
 (require 'disp-table)
-
-(if (not (fboundp '<<))   (fset '<< 'lsh))
-(if (not (fboundp '&))    (fset '& 'logand))
-(if (not (fboundp '|))    (fset '| 'logior))
-(if (not (fboundp '~))    (fset '~ 'lognot))
-(if (not (fboundp '>>))   (defun >> (value count) (<< value (- count))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,40 +153,40 @@ for use in the 'weight' field of an X font string.")
 
 (defvar font-style-keywords nil)
 
-(defsubst set-font-family (fontobj family)
+(defun set-font-family (fontobj family)
   (aset fontobj 1 family))
 
-(defsubst set-font-weight (fontobj weight)
+(defun set-font-weight (fontobj weight)
   (aset fontobj 3 weight))
 
-(defsubst set-font-style (fontobj style)
+(defun set-font-style (fontobj style)
   (aset fontobj 5 style))
 
-(defsubst set-font-size (fontobj size)
+(defun set-font-size (fontobj size)
   (aset fontobj 7 size))
 
-(defsubst set-font-registry (fontobj reg)
+(defun set-font-registry (fontobj reg)
   (aset fontobj 9 reg))
 
-(defsubst set-font-encoding (fontobj enc)
+(defun set-font-encoding (fontobj enc)
   (aset fontobj 11 enc))
 
-(defsubst font-family (fontobj)
+(defun font-family (fontobj)
   (aref fontobj 1))
 
-(defsubst font-weight (fontobj)
+(defun font-weight (fontobj)
   (aref fontobj 3))
 
-(defsubst font-style (fontobj)
+(defun font-style (fontobj)
   (aref fontobj 5))
 
-(defsubst font-size (fontobj)
+(defun font-size (fontobj)
   (aref fontobj 7))
 
-(defsubst font-registry (fontobj)
+(defun font-registry (fontobj)
   (aref fontobj 9))
 
-(defsubst font-encoding (fontobj)
+(defun font-encoding (fontobj)
   (aref fontobj 11))
 
 (eval-when-compile
@@ -194,13 +198,13 @@ for use in the 'weight' field of an X font string.")
 			  (quote ,(intern (format "set-font-%s-p" attr)))
 			  (quote ,(intern (format "font-%s-p" attr)))))
 		   font-style-keywords))
-       (defconst ,(intern (format "font-%s-mask" attr)) (<< 1 ,mask)
+       (defconst ,(intern (format "font-%s-mask" attr)) (lsh 1 ,mask)
 	 ,(format
 	   "Bitmask for whether a font is to be rendered in %s or not."
 	   attr))
        (defun ,(intern (format "font-%s-p" attr)) (fontobj)
 	 ,(format "Whether FONTOBJ will be renderd in `%s' or not." attr)
-	 (if (/= 0 (& (font-style fontobj)
+	 (if (/= 0 (logand (font-style fontobj)
 		      ,(intern (format "font-%s-mask" attr))))
 	     t
 	   nil))
@@ -209,9 +213,9 @@ for use in the 'weight' field of an X font string.")
 		  attr)
 	 (cond
 	  (val
-	   (set-font-style fontobj (| (font-style fontobj)
-				      ,(intern
-					(format "font-%s-mask" attr)))))
+	   (set-font-style fontobj (logior (font-style fontobj)
+					   ,(intern
+					     (format "font-%s-mask" attr)))))
 	  ((,(intern (format "font-%s-p" attr)) fontobj)
 	   (set-font-style fontobj (- (font-style fontobj)
 				      ,(intern
@@ -254,7 +258,7 @@ for use in the 'weight' field of an X font string.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utility functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defsubst set-font-style-by-keywords (fontobj styles)
+(defun set-font-style-by-keywords (fontobj styles)
   (make-local-variable 'font-func)
   (declare (special font-func))
   (if (listp styles)
@@ -265,9 +269,8 @@ for use in the 'weight' field of an X font string.")
     (setq font-func (car-safe (cdr-safe (assq styles font-style-keywords))))
     (and (fboundp font-func) (funcall font-func fontobj t))))
 
-(defsubst font-properties-from-style (fontobj)
-  (let ((style (font-style fontobj))
-	(todo font-style-keywords)
+(defun font-properties-from-style (fontobj)
+  (let ((todo font-style-keywords)
 	type func retval)
     (while todo
       (setq func (cdr (cdr (car todo)))
@@ -394,7 +397,8 @@ for use in the 'weight' field of an X font string.")
 						(font-weight fontobj-2)))
     (set-font-family retval (font-unique (append (font-family fontobj-1)
 						 (font-family fontobj-2))))
-    (set-font-style retval (| (font-style fontobj-1) (font-style fontobj-2)))
+    (set-font-style retval (logior (font-style fontobj-1)
+				   (font-style fontobj-2)))
     (set-font-registry retval (or (font-registry fontobj-1)
 				  (font-registry fontobj-2)))
     (set-font-encoding retval (or (font-encoding fontobj-1)
@@ -454,9 +458,9 @@ for use in the 'weight' field of an X font string.")
      ((- 		"[-?]")
       (foundry		"[^-]*")
       (family 		"[^-]*")
-      (weight		"\\(bold\\|demibold\\|medium\\|black\\)")
+      ;(weight		"\\(bold\\|demibold\\|medium\\|black\\)")
       (weight\?		"\\([^-]*\\)")
-      (slant		"\\([ior]\\)")
+      ;(slant		"\\([ior]\\)")
       (slant\?		"\\([^-]?\\)")
       (swidth		"\\([^-]*\\)")
       (adstyle		"\\([^-]*\\)")
@@ -523,7 +527,6 @@ for use in the 'weight' field of an X font string.")
 	    (not (string-match font-x-font-regexp fontname)))
 	(make-font)
       (let ((family nil)
-	    (style nil)
 	    (size nil)
 	    (weight  (match-string 1 fontname))
 	    (slant   (match-string 2 fontname))
@@ -634,7 +637,6 @@ for use in the 'weight' field of an X font string.")
 		       (font-family default)
 		       (x-font-families-for-device device)))
 	   (weight (or (font-weight fontobj) :medium))
-	   (style (font-style fontobj))
 	   (size (or (if font-running-xemacs
 			 (font-size fontobj))
 		     (font-size default)))
@@ -717,9 +719,7 @@ for use in the 'weight' field of an X font string.")
 		    (ns-font-families-for-device device)))
 	(weight (or (font-weight fontobj) :medium))
 	(style (or (font-style fontobj) (list :normal)))
-	(size (font-size fontobj))
-	(registry (or (font-registry fontobj) "*"))
-	(encoding (or (font-encoding fontobj) "*")))
+	(size (font-size fontobj)))
     ;; Create a font, wow!
     (if (stringp family)
 	(setq family (list family)))
@@ -863,7 +863,6 @@ for use in the 'weight' field of an mswindows font string.")
 	   (family (or (font-family fontobj)
 		       (font-family default)))
 	   (weight (or (font-weight fontobj) :regular))
-	   (style (font-style fontobj))
 	   (size (or (if font-running-xemacs
 			 (font-size fontobj))
 		     (font-size default)))
@@ -996,7 +995,6 @@ for use in the 'weight' field of an mswindows font string.")
   ;; create-device-hook.  This is XEmacs 19.12+ specific
   (let ((faces (face-list 2))
 	(cur nil)
-	(font nil)
 	(font-spec nil))
     (while faces
       (setq cur (car faces)
@@ -1012,8 +1010,7 @@ for use in the 'weight' field of an mswindows font string.")
   (if (devicep device-list)
       (setq device-list (list device-list)))
   (let* ((cur-device nil)
-	 (font-spec (face-property face 'font-specification))
-	 (font nil))
+	 (font-spec (face-property face 'font-specification)))
     (if (not font-spec)
 	;; Hey!  Don't mess with fonts we didn't create in the
 	;; first place.
@@ -1189,14 +1186,14 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 	       b 0)))
   (list r g b) ))
 
-(defsubst font-rgb-color-p (obj)
+(defun font-rgb-color-p (obj)
   (or (and (vectorp obj)
 	   (= (length obj) 4)
 	   (eq (aref obj 0) 'rgb))))
 
-(defsubst font-rgb-color-red (obj) (aref obj 1))
-(defsubst font-rgb-color-green (obj) (aref obj 2))
-(defsubst font-rgb-color-blue (obj) (aref obj 3))
+(defun font-rgb-color-red (obj) (aref obj 1))
+(defun font-rgb-color-green (obj) (aref obj 2))
+(defun font-rgb-color-blue (obj) (aref obj 3))
 
 (defun font-color-rgb-components (color)
   "Return the RGB components of COLOR as a list of integers (R G B).
@@ -1237,7 +1234,7 @@ The variable x-library-search-path is use to locate the rgb.txt file."
      (t
       (font-lookup-rgb-components color)))))
 
-(defsubst font-tty-compute-color-delta (col1 col2)
+(defun font-tty-compute-color-delta (col1 col2)
   (+
    (* (- (aref col1 0) (aref col2 0))
       (- (aref col1 0) (aref col2 0)))
@@ -1295,7 +1292,7 @@ is returned."
    (tty
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))
    (ns
-    (let ((vals (mapcar #'(lambda (x) (>> x 8))
+    (let ((vals (mapcar #'(lambda (x) (lsh x -8))
 			(font-color-rgb-components color))))
       (apply 'format "RGB%02x%02x%02xff" vals)))
    (otherwise

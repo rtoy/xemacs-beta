@@ -1,4 +1,4 @@
-;;; canna-leim.el --- Canna-related code for LEIM
+;;; canna-leim.el --- Canna-related code for LEIM -*- coding: iso-2022-7bit; -*-
 ;; Copyright (C) 1997  Stephen Turnbull <turnbull@sk.tsukuba.ac.jp>
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;;

@@ -45,11 +45,11 @@ This variable can be customized through the options menu."
   (when (and (featurep 'x)
 	     (or (eq locale 'global)
 		 (eq 'x (device-or-frame-type locale))))
-    (x-init-scrollbar-from-resources locale))
+    (declare-fboundp (x-init-scrollbar-from-resources locale)))
   (when (and (featurep 'mswindows)
 	     (or (eq locale 'global)
 		 (eq 'mswindows (device-or-frame-type locale))))
-    (mswindows-init-scrollbar-metrics locale)))
+    (declare-fboundp (mswindows-init-scrollbar-metrics locale))))
 
 ;;
 ;; vertical scrollbar functions

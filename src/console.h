@@ -420,8 +420,9 @@ struct console
   void *console_data;
 
   /* Character that causes a quit.  Normally C-g.
-     #### Should be possible for this not to be ASCII. */
-  int quit_char;
+     #### Should be possible for this not to be ASCII. (Currently works
+     under Windows.) */
+  Emchar quit_char;
 
   /* ----- begin partially-completed console localization of
            event loop ---- */

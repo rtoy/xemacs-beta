@@ -6,7 +6,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;	   Richard Stallman <rms@gnu.ai.mit.edu>
 ;; Maintainer: Dave Gillespie <daveg@synaptics.com>
-;; Version: 1.07 of 7/22/93
+;; Version: diverged at version 1.07 of 7/22/93
 ;; Keywords: docs, help
 
 ;; This file is part of XEmacs.
@@ -26,7 +26,8 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Not synched with FSF.
+;;; Synched up with: Not synched with FSF.  Highly divergent, and with
+;;; many new features added for XEmacs.
 
 ;; Commentary:
 
@@ -37,7 +38,8 @@
 ;; Also, Info tries adding ".info" to a file name if the name itself
 ;; is not found.
 ;;
-;; See the change log below for further details.
+;; See the partial change log below for further details, and look into
+;; ChangeLog for the rest.
 
 
 ;; LCD Archive Entry:
@@ -1795,7 +1797,16 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
       (Info-select-node)
       (or (and (equal onode Info-current-node)
                (equal ofile Info-current-file))
-          (Info-history-add ofile onode opoint)))))
+          (Info-history-add ofile onode opoint))))
+  (message "Found \"%s\" in %s.  Press `z' to continue search."
+	   regexp Info-current-node)
+  )
+
+(defun Info-search-next ()
+  "Repeat search starting from point with last regexp used in `Info-search'."
+  (interactive)
+  (Info-search Info-last-search))
+
 
 ;; Extract the value of the node-pointer named NAME.
 ;; If there is none, use ERRORNAME in the error message;
@@ -2255,17 +2266,9 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	(Info-page-prev)
 	(setq this-command 'Info))
     (scroll-down arg)))
+
 
-(defun Info-index (topic)
-  "Look up a string in the index for this file.
-The index is defined as the first node in the top-level menu whose
-name contains the word \"Index\", plus any immediately following
-nodes whose names also contain the word \"Index\".
-If there are no exact matches to the specified topic, this chooses
-the first match which is a case-insensitive substring of a topic.
-Use the `,' command to see the other matches.
-Give a blank topic name to go to the Index node itself."
-  (interactive "sIndex topic: ")
+(defun Info-find-index-alternatives (topic)
   (let ((pattern (format "\n\\* \\([^\n:]*%s[^\n:]*\\):[ \t]*%s"
 			 (regexp-quote topic)
 			 "\\(.*\\)\\.[ t]*\\([0-9]*\\)$"))
@@ -2283,9 +2286,7 @@ Give a blank topic name to go to the Index node itself."
       (Info-goto-node (Info-extract-menu-node-name)))
     (or (equal topic "")
 	(let ((matches nil)
-	      (exact nil)
-	      (Info-keeping-history nil)
-	      found)
+	      (Info-keeping-history nil))
 	  (while
 	      (progn
 		(goto-char (point-min))
@@ -2305,17 +2306,41 @@ Give a blank topic name to go to the Index node itself."
 		     (string-match "\\<Index\\>" node)))
 	    (let ((Info-fontify nil))
 	      (Info-goto-node node)))
-	  (or matches
-	      (progn
-		(Info-last)
-		(error "No \"%s\" in index" topic)))
-	  ;; Here it is a feature that assoc is case-sensitive.
-	  (while (setq found (assoc topic matches))
-	    (setq exact (cons found exact)
-		  matches (delq found matches)))
-	  (setq Info-index-alternatives (nconc exact (nreverse matches))
-		Info-index-first-alternative (car Info-index-alternatives))
-	  (Info-index-next 0)))))
+	  (nreverse matches)))))
+
+(defun Info-index (topic &optional starting-nodes)
+  "Look up a string in the index for this file.
+The index is defined as the first node in the top-level menu whose
+name contains the word \"Index\", plus any immediately following
+nodes whose names also contain the word \"Index\".
+If there are no exact matches to the specified topic, this chooses
+the first match which is a case-insensitive substring of a topic.
+Use the `,' command to see the other matches.
+Give a blank topic name to go to the Index node itself.
+
+If STARTING-NODES is given, it should be a list of nodes specifying
+files in which the indices will be searched.  The results will be
+combined together."
+  (interactive "sIndex topic: ")
+  (let ((matches (if starting-nodes
+		     (mapcan #'(lambda (node)
+				 (Info-goto-node node)
+				 (Info-find-index-alternatives topic))
+			     starting-nodes)
+		   (Info-find-index-alternatives topic)))
+	exact found)
+    (or matches
+	(progn
+	  (if (or (not starting-nodes) (< (length starting-nodes) 2))
+	      (Info-last))
+	  (error "No \"%s\" in index" topic)))
+    ;; Here it is a feature that assoc is case-sensitive.
+    (while (setq found (assoc topic matches))
+      (setq exact (cons found exact)
+	    matches (delq found matches)))
+  (setq Info-index-alternatives (nconc exact matches)
+	Info-index-first-alternative (car Info-index-alternatives))
+  (Info-index-next 0)))
 
 (defun Info-index-next (num)
   "Go to the next matching index item from the last `i' command."
@@ -2441,6 +2466,43 @@ This command is designed to be used whether you are already in Info or not."
       (error (Info-find-node "elisp" "Top")))
     (Info-index (symbol-name func)))
   (pop-to-buffer "*info*"))
+
+(defun Info-read-search-text-regexp ()
+  (read-from-minibuffer
+   (if (and (boundp 'Info-last-search) Info-last-search)
+       (format "Search (regexp, default %s): "
+	       Info-last-search)
+     "Search (regexp): ")
+   nil nil nil nil nil (and (boundp 'Info-last-search) Info-last-search)))
+
+;;;###autoload
+(defun Info-search-text-in-lispref (regexp)
+  "Search for REGEXP in Lispref text and select node it's found in."
+  (interactive (list (Info-read-search-text-regexp)))
+  (Info-goto-node "(Lispref)")
+  (Info-search regexp))
+
+;;;###autoload
+(defun Info-search-text-in-xemacs (regexp)
+  "Search for REGEXP in User's Manual text and select node it's found in."
+  (interactive (list (Info-read-search-text-regexp)))
+  (Info-goto-node "(XEmacs)")
+  (Info-search regexp))
+
+;;;###autoload
+(defun Info-search-index-in-lispref (regexp)
+  "Search for REGEXP in Lispref index and select node it's found in."
+  (interactive "sIndex topic: ")
+  (Info-goto-node "(Lispref)")
+  (Info-index regexp))
+
+;;;###autoload
+(defun Info-search-index-in-xemacs-and-lispref (regexp)
+  "Search for REGEXP in both User's Manual and Lispref indices.
+Select node it's found in."
+  (interactive "sIndex topic: ")
+  (Info-index regexp '("(XEmacs)" "(Lispref)")))
+
 
 (defun Info-reannotate-node ()
   (let ((bufs (delq nil (mapcar 'get-file-buffer Info-annotations-path))))
@@ -2852,6 +2914,7 @@ At end of the node's text, moves to the next node."
   (define-key Info-mode-map "u" 'Info-up)
   (define-key Info-mode-map "v" 'Info-visit-file)
   (define-key Info-mode-map "x" 'Info-bookmark)
+  (define-key Info-mode-map "z" 'Info-search-next)
   (define-key Info-mode-map "<" 'Info-top)
   (define-key Info-mode-map ">" 'Info-end)
   (define-key Info-mode-map "[" 'Info-global-prev)

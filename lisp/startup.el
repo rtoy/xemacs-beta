@@ -30,11 +30,39 @@
 
 ;; This file is dumped with XEmacs.
 
-;; -batch, -t, and -nw are processed by main() in emacs.c and are
-;; never seen by lisp code.
-
-;; -version and -help are special-cased as well: they imply -batch,
-;; but are left on the list for lisp code to process.
+;; It handles the all aspects of startup once the C code has finished
+;; initializing itself.  Entry from C is through the function set in
+;; the `top-level' variable, which is normally `normal-top-level'.  At
+;; the point that `normal-top-level' has been invoked:
+;;
+;; (1) the dumped Elisp files are available.  Either they were loaded
+;;     during this invocation of temacs and it was then converted to
+;;     XEmacs using the run-temacs mechanism, or (more likely) the
+;;     loadup and dumping occurred at some point in the past and we
+;;     just read in the dumped data.
+;;
+;; (2) All C subsystems have been initialized.
+;;
+;; (3) A "stream" device has been created, which does I/O over stdin
+;;     and stdout.  This is the only device we have available and our
+;;     only means of communication, other than disk files.
+;;
+;; (4) The command-line arguments have been sorted according to
+;;     priority specs (this implies that the names of all arguments
+;;     must be hard-coded into emacs.c), and certain low-level
+;;     arguments such as -sd, -t, -nd, -nw, -batch, etc. have been
+;;     processed by main_1() and removed. (NOTE: main_1() is the name
+;;     in the source code, but in the object file it has some other
+;;     name, such as xemacs_21_2_34_mips_sgi_irix6().) Certain other
+;;     arguments such as -version and -help are partially-processed,
+;;     triggering some special behavior but being left on the list for
+;;     further processing by the Lisp code.
+;;
+;; The job of the code here is to process the remaining command-line
+;; args, set up the various paths, locate where all the packages are
+;; and set things up for them (initialize the load path, read in the
+;; autoloads, etc.), read in the init files, display the splash
+;; screen, and set up any remaining environment-dependent variables.
 
 ;;; Code:
 
@@ -565,14 +593,19 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	  (push (pop args) new-args)))
        (t (push arg new-args))))
 
-    (setq init-file-user (and load-user-init-file-p ""))
+    (with-obsolete-variable 'init-file-user
+      (setq init-file-user (and load-user-init-file-p "")))
 
     (nreverse new-args)))
 
 (defconst initial-scratch-message "\
 ;; This buffer is for notes you don't want to save, and for Lisp evaluation.
 ;; If you want to create a file, first visit that file with C-x C-f,
-;; then enter the text in that file's own buffer.
+;; then enter the text in that file's own buffer. (C-x is the standard
+;; XEmacs abbreviation for `Control+X', i.e. hold down the Control key
+;; while hitting the X key.)
+;;
+;; For Lisp evaluation, type an expression, move to the end and hit C-j.
 
 "
   "Initial message displayed in *scratch* buffer at startup.

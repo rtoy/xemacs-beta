@@ -307,44 +307,47 @@ If so, return the true (non-nil) value returned by PREDICATE."
 
 (defun cl-map-overlays (cl-func &optional cl-buffer cl-start cl-end cl-arg)
   (or cl-buffer (setq cl-buffer (current-buffer)))
-  (if (fboundp 'overlay-lists)
+  (with-fboundp '(overlay-start overlay-end overlays-at next-overlay-change)
+    (if-fboundp 'overlay-lists
 
-      ;; This is the preferred algorithm, though overlay-lists is undocumented.
-      (let (cl-ovl)
-	(save-excursion
-	  (set-buffer cl-buffer)
-	  (setq cl-ovl (overlay-lists))
-	  (if cl-start (setq cl-start (copy-marker cl-start)))
-	  (if cl-end (setq cl-end (copy-marker cl-end))))
-	(setq cl-ovl (nconc (car cl-ovl) (cdr cl-ovl)))
-	(while (and cl-ovl
-		    (or (not (overlay-start (car cl-ovl)))
-			(and cl-end (>= (overlay-start (car cl-ovl)) cl-end))
-			(and cl-start (<= (overlay-end (car cl-ovl)) cl-start))
-			(not (funcall cl-func (car cl-ovl) cl-arg))))
-	  (setq cl-ovl (cdr cl-ovl)))
-	(if cl-start (set-marker cl-start nil))
-	(if cl-end (set-marker cl-end nil)))
+	;; This is the preferred algorithm, though overlay-lists is
+	;; undocumented.
+	(let (cl-ovl)
+	  (save-excursion
+	    (set-buffer cl-buffer)
+	    (setq cl-ovl (overlay-lists))
+	    (if cl-start (setq cl-start (copy-marker cl-start)))
+	    (if cl-end (setq cl-end (copy-marker cl-end))))
+	  (setq cl-ovl (nconc (car cl-ovl) (cdr cl-ovl)))
+	  (while (and cl-ovl
+		      (or (not (overlay-start (car cl-ovl)))
+			  (and cl-end (>= (overlay-start (car cl-ovl)) cl-end))
+			  (and cl-start (<= (overlay-end (car cl-ovl))
+					    cl-start))
+			  (not (funcall cl-func (car cl-ovl) cl-arg))))
+	    (setq cl-ovl (cdr cl-ovl)))
+	  (if cl-start (set-marker cl-start nil))
+	  (if cl-end (set-marker cl-end nil)))
 
-    ;; This alternate algorithm fails to find zero-length overlays.
-    (let ((cl-mark (save-excursion (set-buffer cl-buffer)
-				   (copy-marker (or cl-start (point-min)))))
-	  (cl-mark2 (and cl-end (save-excursion (set-buffer cl-buffer)
-						(copy-marker cl-end))))
-	  cl-pos cl-ovl)
-      (while (save-excursion
-	       (and (setq cl-pos (marker-position cl-mark))
-		    (< cl-pos (or cl-mark2 (point-max)))
-		    (progn
-		      (set-buffer cl-buffer)
-		      (setq cl-ovl (overlays-at cl-pos))
-		      (set-marker cl-mark (next-overlay-change cl-pos)))))
-	(while (and cl-ovl
-		    (or (/= (overlay-start (car cl-ovl)) cl-pos)
-			(not (and (funcall cl-func (car cl-ovl) cl-arg)
-				  (set-marker cl-mark nil)))))
-	  (setq cl-ovl (cdr cl-ovl))))
-      (set-marker cl-mark nil) (if cl-mark2 (set-marker cl-mark2 nil)))))
+      ;; This alternate algorithm fails to find zero-length overlays.
+      (let ((cl-mark (save-excursion (set-buffer cl-buffer)
+				     (copy-marker (or cl-start (point-min)))))
+	    (cl-mark2 (and cl-end (save-excursion (set-buffer cl-buffer)
+						  (copy-marker cl-end))))
+	    cl-pos cl-ovl)
+	(while (save-excursion
+		 (and (setq cl-pos (marker-position cl-mark))
+		      (< cl-pos (or cl-mark2 (point-max)))
+		      (progn
+			(set-buffer cl-buffer)
+			(setq cl-ovl (overlays-at cl-pos))
+			(set-marker cl-mark (next-overlay-change cl-pos)))))
+	  (while (and cl-ovl
+		      (or (/= (overlay-start (car cl-ovl)) cl-pos)
+			  (not (and (funcall cl-func (car cl-ovl) cl-arg)
+				    (set-marker cl-mark nil)))))
+	    (setq cl-ovl (cdr cl-ovl))))
+	(set-marker cl-mark nil) (if cl-mark2 (set-marker cl-mark2 nil))))))
 
 ;;; Support for `setf'.
 (defun cl-set-frame-visible-p (frame val)

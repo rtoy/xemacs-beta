@@ -1,5 +1,9 @@
 ;; A GTK version of package-ui.el
 
+(globally-declare-fboundp
+ '(gtk-window-new
+   gtk-hbox-new gtk-container-add gtk-widget-show-all))
+
 (require 'package-get)
 (require 'package-ui)
 

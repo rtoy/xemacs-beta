@@ -1,11 +1,12 @@
 ;;; hyper-apropos.el --- Hypertext emacs lisp documentation interface.
 
-;; Copyright (C)  1997 Free Software Foundation, Inc.
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994, 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1996 Ben Wing.
 
-;; Maintainer: Jonathan Stigelman <Stig@hackvan.com>
+;; Author: Jonathan Stigelman <stig@xemacs.org>
+;; Maintainer: XEmacs Development Team
 ;; Keywords: lisp, tools, help, docs, matching
 
 ;; This file is part of XEmacs.
@@ -79,13 +80,19 @@ Setting this to nil will speed up searches."
   :group 'hyper-apropos)
 (define-obsolete-variable-alias
   'hypropos-show-brief-docs 'hyper-apropos-show-brief-docs)
-;; I changed this to true because I think it's more useful this way. --ben
+
+;; I changed the following to true because it's obviously more useful
+;; that way, and is a very good example of following the principle of
+;; least surprise. --ben
 
 (defcustom hyper-apropos-programming-apropos t
   "*If non-nil, list all the functions and variables.
 This will cause more output to be generated, and take a longer time.
+Otherwise, only the interactive functions and user variables will be listed.
 
-Otherwise, only the interactive functions and user variables will be listed."
+If you're thinking of setting it to nil, consider that you can get the
+equivalent just by using the command \\[command-hyper-apropos]. (And if you do set it to nil,
+you can get the full output by using \\[universal-argument] \\[hyper-apropos].)"
   :type 'boolean
   :group 'hyper-apropos)
 (define-obsolete-variable-alias
@@ -231,13 +238,26 @@ This map inherits from `hyper-apropos-help-map.'")
 (defconst hyper-apropos-help-buf "*Hyper Help*")
 
 ;;;###autoload
+(defun command-hyper-apropos (regexp)
+  "Display lists of commands and user options matching REGEXP
+in buffer \"*Hyper Apropos*\".  See `hyper-apropos-mode' for a
+description of the available commands in a Hyper-Apropos buffer."
+  (interactive (list (read-from-minibuffer
+		      "List symbols matching regexp: "
+		      nil nil nil 'hyper-apropos-regexp-history)))
+  (let ((hyper-apropos-programming-apropos nil))
+    (hyper-apropos regexp nil)))
+
+;;;###autoload
 (defun hyper-apropos (regexp toggle-apropos)
   "Display lists of functions and variables matching REGEXP
 in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the
 value of `hyper-apropos-programming-apropos' is toggled for this search.
-See also `hyper-apropos-mode'."
-  (interactive (list (read-from-minibuffer "List symbols matching regexp: "
-					   nil nil nil 'hyper-apropos-regexp-history)
+See `hyper-apropos-mode' for a description of the available commands in
+a Hyper-Apropos buffer."
+  (interactive (list (read-from-minibuffer
+		      "List symbols matching regexp: "
+		      nil nil nil 'hyper-apropos-regexp-history)
 		     current-prefix-arg))
   (or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
       (setq hyper-apropos-prev-wconfig (current-window-configuration)))

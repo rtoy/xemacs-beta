@@ -1,4 +1,4 @@
-;;; vietnamese-chars.el --- pre-loaded support for Vietnamese, part 1.
+;;; vietnamese-chars.el --- pre-loaded support for Vietnamese, part 1. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.

@@ -1,4 +1,4 @@
-;;; mule-help.el --- Mule-ized Help functions 
+;;; mule-help.el --- Mule-ized Help functions  -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997 by Free Software Foundation, Inc.
 

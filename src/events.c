@@ -38,7 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h" /* for key_desc_list_to_event() */
 #include "redisplay.h"
 #include "window.h"
-#include "events-mod.h"
 
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed

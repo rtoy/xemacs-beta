@@ -35,6 +35,10 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-get-cutbuffer-internal
+   x-rotate-cutbuffers-internal x-store-cutbuffer-internal))
+
 (define-obsolete-function-alias 'x-selection-exists-p 'selection-exists-p)
 (define-obsolete-function-alias 'x-selection-owner-p 'selection-owner-p)
 (define-obsolete-variable-alias 'x-selection-converter-alist 'selection-converter-alist)

@@ -1237,40 +1237,38 @@ buffer modifications are performed or a buffer is reverted.")
 		 ;; syntactically-sectionize any more.  Do we still
 		 ;; need the widen?
 		 (widen)
-		 (let ((zmacs-region-stays
-			zmacs-region-stays)) ; protect from change!
-		   (map-extents
-		    #'(lambda (ex dummy-maparg)
-			;; first expand the ranges to full lines,
-			;; because that is what will be fontified;
-			;; then use a range table to merge the
-			;; ranges. (we could also do this simply using
-			;; text properties.  the range table code was
-			;; here from a previous version of this code
-			;; and works just as well.)
-			(let* ((beg (extent-start-position ex))
-			       (end (extent-end-position ex))
-			       (beg (progn (goto-char beg)
-					   (beginning-of-line)
-					   (point)))
-			       (end (progn (goto-char end)
-					   (forward-line 1)
-					   (point))))
-			  (put-range-table beg end t
-					   font-lock-range-table)))
-		    nil nil nil nil nil 'font-lock-pending t)
-		   ;; clear all pending extents first in case of error below.
-		   (put-text-property (point-min) (point-max)
-				      'font-lock-pending nil)
-		   (map-range-table
-		    #'(lambda (beg end val)
+		 (map-extents
+		  #'(lambda (ex dummy-maparg)
+		      ;; first expand the ranges to full lines,
+		      ;; because that is what will be fontified;
+		      ;; then use a range table to merge the
+		      ;; ranges. (we could also do this simply using
+		      ;; text properties.  the range table code was
+		      ;; here from a previous version of this code
+		      ;; and works just as well.)
+		      (let* ((beg (extent-start-position ex))
+			     (end (extent-end-position ex))
+			     (beg (progn (goto-char beg)
+					 (beginning-of-line)
+					 (point)))
+			     (end (progn (goto-char end)
+					 (forward-line 1)
+					 (point))))
+			(put-range-table beg end t
+					 font-lock-range-table)))
+		  nil nil nil nil nil 'font-lock-pending t)
+		 ;; clear all pending extents first in case of error below.
+		 (put-text-property (point-min) (point-max)
+				    'font-lock-pending nil)
+		 (map-range-table
+		  #'(lambda (beg end val)
 			;; This creates some unnecessary progress gauges.
 ;;			(if (and (= beg (point-min))
 ;;				 (= end (point-max)))
 ;;			    (font-lock-fontify-buffer)
 ;;			  (font-lock-fontify-region beg end)))
-			(font-lock-fontify-region beg end))
-		    font-lock-range-table)))))))
+		      (font-lock-fontify-region beg end))
+		  font-lock-range-table))))))
      font-lock-pending-buffer-table)))
 
 ;; Syntactic fontification functions.
@@ -1664,12 +1662,12 @@ START should be at the beginning of a line."
 	((and (boundp 'lazy-shot-mode) lazy-shot-mode)
 	 (lazy-shot-mode -1))))
 
-;; Do something special for these packages after fontifying.  I prefer a hook.
+; Do something special for these packages after fontifying.  I prefer a hook.
 (defun font-lock-after-fontify-buffer ()
   (cond ((and (boundp 'fast-lock-mode) fast-lock-mode)
-	 (fast-lock-after-fontify-buffer))
+	 (declare-fboundp (fast-lock-after-fontify-buffer)))
 	((and (boundp 'lazy-lock-mode) lazy-lock-mode)
-	 (lazy-lock-after-fontify-buffer))))
+	 (declare-fboundp (lazy-lock-after-fontify-buffer)))))
 
 
 ;; Various functions.

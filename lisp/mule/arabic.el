@@ -1,4 +1,4 @@
-;;; arabic.el --- pre-loaded support for Arabic.
+;;; arabic.el --- pre-loaded support for Arabic. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.

@@ -30,6 +30,7 @@
 	"objects"
 	"extents"
 	"events"
+	"hash-table"
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
 	(when-feature multicast "multicast") ; #+network-streams implicitly true

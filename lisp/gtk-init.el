@@ -23,6 +23,11 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(globally-declare-boundp
+ '(gtk-initial-argv-list
+   gtk-initial-geometry
+   gtk-keysym-on-keyboard-p))
+
 (defvar gtk-win-initted nil)
 (defvar gtk-pre-win-initted nil)
 (defvar gtk-post-win-initted nil)

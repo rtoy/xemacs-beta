@@ -31,6 +31,10 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(coding-system-lock-shift
+   coding-system-seven coding-system-charset charset-dimension))
+
 (defalias 'check-coding-system 'get-coding-system)
 
 (defconst modeline-multibyte-status '("%C")
@@ -105,8 +109,8 @@ or a function symbol which, when called, returns such a cons cell."
   (get-coding-system coding-system) ; correctness check
   (setq keyboard-coding-system coding-system)
   (if (eq (device-type) 'tty)
-      (set-console-tty-input-coding-system
-       (device-console) keyboard-coding-system))
+      (declare-fboundp (set-console-tty-input-coding-system
+			(device-console) keyboard-coding-system)))
   (redraw-modeline t))
 
 (defsubst terminal-coding-system ()
@@ -120,8 +124,8 @@ or a function symbol which, when called, returns such a cons cell."
   (setq terminal-coding-system coding-system)
   ; #### should this affect all current tty consoles ?
   (if (eq (device-type) 'tty)
-      (set-console-tty-output-coding-system
-       (device-console) terminal-coding-system))
+      (declare-fboundp (set-console-tty-output-coding-system
+			(device-console) terminal-coding-system)))
   (redraw-modeline t))
 
 (defun set-pathname-coding-system (coding-system)
@@ -193,6 +197,62 @@ Does not modify STR.  Returns the encoded string on successful conversion."
        0
        (string-match "-unix$\\|-dos$\\|-mac$"
 		     (symbol-name (coding-system-name coding-system))))))))
+
+
+;;; #### bleagh!!!!!!!
+
+(defun coding-system-get (coding-system prop)
+  "Extract a value from CODING-SYSTEM's property list for property PROP."
+  (or (plist-get
+       (get (coding-system-name coding-system) 'coding-system-property)
+       prop)
+      (condition-case nil
+	  (coding-system-property coding-system prop)
+	(error nil))))
+
+(defun coding-system-put (coding-system prop value)
+  "Change value in CODING-SYSTEM's property list PROP to VALUE."
+  (put (coding-system-name coding-system)
+       'coding-system-property
+       (plist-put (get (coding-system-name coding-system)
+		       'coding-system-property)
+		  prop value)))
+
+(defun coding-system-category (coding-system)
+  "Return the coding category of CODING-SYSTEM."
+  (or (coding-system-get coding-system 'category)
+      (let ((type (coding-system-type coding-system)))
+	(cond ((eq type 'no-conversion)
+	       'no-conversion)
+	      ((eq type 'shift-jis)
+	       'shift-jis)
+	      ((eq type 'ucs-4)
+	       'ucs-4)
+	      ((eq type 'utf-8)
+	       'utf-8)
+	      ((eq type 'big5)
+	       'big5)
+	      ((eq type 'iso2022)
+	       (cond ((coding-system-lock-shift coding-system)
+		      'iso-lock-shift)
+		     ((coding-system-seven coding-system)
+		      'iso-7)
+		     (t
+		      (let ((dim 0)
+			    ccs
+			    (i 0))
+			(while (< i 4)
+			  (setq ccs (coding-system-charset coding-system i))
+			  (if (and ccs
+				   (> (charset-dimension ccs) dim))
+			      (setq dim (charset-dimension ccs))
+			    )
+			  (setq i (1+ i)))
+			(cond ((= dim 1) 'iso-8-1)
+			      ((= dim 2) 'iso-8-2)
+			      (t 'iso-8-designate))
+			))))))))
+
 
 ;;;; Definitions of predefined coding systems
 

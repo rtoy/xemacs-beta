@@ -36,27 +36,28 @@
 ;; called both from init-tty-win and from the C code.
 (defun init-pre-tty-win ()
   "Initialize TTY at startup (pre).  Don't call this."
-  (unless pre-tty-win-initted
-    (register-tty-color "black"   "\e[30m" "\e[40m")
-    (register-tty-color "red"     "\e[31m" "\e[41m")
-    (register-tty-color "green"   "\e[32m" "\e[42m")
-    (register-tty-color "yellow"  "\e[33m" "\e[43m")
-    (register-tty-color "blue"    "\e[34m" "\e[44m")
-    (register-tty-color "magenta" "\e[35m" "\e[45m")
-    (register-tty-color "cyan"    "\e[36m" "\e[46m")
-    (register-tty-color "white"   "\e[37m" "\e[47m")
+  (with-fboundp 'register-tty-color
+    (unless pre-tty-win-initted
+      (register-tty-color "black"   "\e[30m" "\e[40m")
+      (register-tty-color "red"     "\e[31m" "\e[41m")
+      (register-tty-color "green"   "\e[32m" "\e[42m")
+      (register-tty-color "yellow"  "\e[33m" "\e[43m")
+      (register-tty-color "blue"    "\e[34m" "\e[44m")
+      (register-tty-color "magenta" "\e[35m" "\e[45m")
+      (register-tty-color "cyan"    "\e[36m" "\e[46m")
+      (register-tty-color "white"   "\e[37m" "\e[47m")
 
-    ;; Define `highlighted' tty colors
-    (register-tty-color "darkgrey"      "\e[1;30m" "\e[1;40m")
-    (register-tty-color "brightred"     "\e[1;31m" "\e[1;41m")
-    (register-tty-color "brightgreen"   "\e[1;32m" "\e[1;42m")
-    (register-tty-color "brightyellow"  "\e[1;33m" "\e[1;43m")
-    (register-tty-color "brightblue"    "\e[1;34m" "\e[1;44m")
-    (register-tty-color "brightmagenta" "\e[1;35m" "\e[1;45m")
-    (register-tty-color "brightcyan"    "\e[1;36m" "\e[1;46m")
-    (register-tty-color "brightwhite"   "\e[1;37m" "\e[1;47m")
+      ;; Define `highlighted' tty colors
+      (register-tty-color "darkgrey"      "\e[1;30m" "\e[1;40m")
+      (register-tty-color "brightred"     "\e[1;31m" "\e[1;41m")
+      (register-tty-color "brightgreen"   "\e[1;32m" "\e[1;42m")
+      (register-tty-color "brightyellow"  "\e[1;33m" "\e[1;43m")
+      (register-tty-color "brightblue"    "\e[1;34m" "\e[1;44m")
+      (register-tty-color "brightmagenta" "\e[1;35m" "\e[1;45m")
+      (register-tty-color "brightcyan"    "\e[1;36m" "\e[1;46m")
+      (register-tty-color "brightwhite"   "\e[1;37m" "\e[1;47m")
 
-    (setq pre-tty-win-initted t)))
+      (setq pre-tty-win-initted t))))
 
 ;; called both from init-tty-win and from the C code.
 ;; we have to do this for every created TTY console.
@@ -67,7 +68,7 @@
   ;; override term-file-prefix. (startup.el does it after
   ;; loading the init file.)
   (if (featurep 'mule)
-      (init-mule-tty-win))
+      (declare-fboundp (init-mule-tty-win)))
   (when init-file-loaded
     ;; temporarily select the console so that the changes
     ;; to function-key-map are made for the right console.

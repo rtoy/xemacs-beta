@@ -37,13 +37,6 @@
 
 ;;; Code:
 
-;; Suppress warning message from bytecompiler
-(eval-when-compile
-  (defvar pending-delete-mode)
-  ;; #### The compiler still warns about missing
-  ;; `pending-delete-pre-hook'.  Any way to get rid of the warning?
-  )
-
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"
   :group 'environment)
@@ -132,9 +125,9 @@
   (interactive)
   ;; This horrible kludge is for pending-delete to work correctly.
   (and (boundp 'pending-delete-mode)
-       pending-delete-mode
+       (declare-boundp pending-delete-mode)
        (let ((this-command toolbar-paste-function))
-	 (pending-delete-pre-hook)))
+	 (declare-fboundp (pending-delete-pre-hook))))
   (call-interactively toolbar-paste-function))
 
 (defcustom toolbar-undo-function 'undo

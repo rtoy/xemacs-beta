@@ -204,53 +204,6 @@ object (the entry specified a coding system)."
 ;(defun convert-mbox-coding-system (filename visit start end)
 ;...
 
-(defun find-coding-system-magic-cookie ()
-  "Look for the coding-system magic cookie in the current buffer.
-The coding-system magic cookie is the exact string
-\";;;###coding system: \" followed by a valid coding system symbol,
-somewhere within the first 3000 characters of the file.  If found,
-the coding system symbol is returned; otherwise nil is returned.
-Note that it is extremely unlikely that such a string would occur
-coincidentally as the result of encoding some characters in a non-ASCII
-charset, and that the spaces make it even less likely since the space
-character is not a valid octet in any ISO 2022 encoding of most non-ASCII
-charsets."
-  (save-excursion
-    (goto-char (point-min))
-    (or (and (looking-at
-	      "^[^\n]*-\\*-[^\n]*coding: \\([^ \t\n;]+\\)[^\n]*-\\*-")
-	     (let ((codesys (intern (buffer-substring
-				     (match-beginning 1)(match-end 1)))))
-	       (if (find-coding-system codesys) codesys)))
-        ;; (save-excursion
-        ;;   (let (start end)
-        ;;     (and (re-search-forward "^;+[ \t]*Local Variables:" nil t)
-        ;;          (setq start (match-end 0))
-        ;;          (re-search-forward "\n;+[ \t]*End:")
-        ;;          (setq end (match-beginning 0))
-        ;;          (save-restriction
-        ;;            (narrow-to-region start end)
-        ;;            (goto-char start)
-        ;;            (re-search-forward "^;;; coding: \\([^\n]+\\)$" nil t)
-        ;;            )
-        ;;          (let ((codesys
-        ;;                 (intern (buffer-substring
-        ;;                          (match-beginning 1)(match-end 1)))))
-        ;;            (if (find-coding-system codesys) codesys))
-        ;;          )))
-	(let ((case-fold-search nil))
-	  (if (search-forward
-	       ";;;###coding system: " (+ (point-min) 3000) t)
-	      (let ((start (point))
-		    (end (progn
-			   (skip-chars-forward "^ \t\n\r")
-			   (point))))
-		(if (> end start)
-		    (let ((codesys (intern (buffer-substring start end))))
-		      (if (find-coding-system codesys) codesys)))
-		)))
-	)))
-
 (defun load (file &optional noerror nomessage nosuffix)
   "Execute a file of Lisp code named FILE.
 First tries FILE with .elc appended, then tries with .el,
@@ -270,7 +223,8 @@ Return t if file exists."
       (if (or (<= (length filename) 0)
 	      (null (setq path
 			  (locate-file filename load-path
-				       (and (not nosuffix) '(".elc" ".el" ""))))))
+				       (and (not nosuffix)
+					    '(".elc" ".el" ""))))))
 	  (and (null noerror)
 	       (signal 'file-error (list "Cannot open load file" filename)))
 	;; now use the internal load to actually load the file.
@@ -280,12 +234,10 @@ Return t if file exists."
 		(string= ".elc" (downcase (substring path -4)))))
 	   (or (and (not elc) coding-system-for-read) ; prefer for source file
 	       ;; find magic-cookie
-	       (save-excursion
-		 (set-buffer (get-buffer-create " *load*"))
-		 (erase-buffer)
-		 (let ((coding-system-for-read 'raw-text))
-		   (insert-file-contents path nil 1 3001))
-		 (find-coding-system-magic-cookie))
+	       (let ((codesys (find-coding-system-magic-cookie-in-file path)))
+		 (when codesys
+		   (setq codesys (intern codesys))
+		   (if (find-coding-system codesys) codesys)))
 	       (if elc
 		   ;; if reading a byte-compiled file and we didn't find
 		   ;; a coding-system magic cookie, then use `binary'.

@@ -1099,9 +1099,11 @@ This is not enabled by default because
 		    (if (and filename-kludge-p
 			     ;; #### evil evil evil evil
 			     (or (and (fboundp 'ange-ftp-ftp-path)
-				      (ange-ftp-ftp-path string))
+				      (declare-fboundp
+				       (ange-ftp-ftp-path string)))
 				 (and (fboundp 'efs-ftp-path)
-				      (efs-ftp-path string))))
+				      (declare-fboundp
+				       (efs-ftp-path string)))))
 			(setq comp t)
 		      (setq comp
 			    (try-completion string
@@ -1126,11 +1128,12 @@ This is not enabled by default because
     (set-buffer mouse-grabbed-buffer) ; the minibuf
     (let ((kludge-string (concat (buffer-string) string)))
       (if (or (and (fboundp 'ange-ftp-ftp-path)
-		   (ange-ftp-ftp-path kludge-string))
-	       (and (fboundp 'efs-ftp-path) (efs-ftp-path kludge-string)))
-	   ;; #### evil evil evil, but more so.
-	   string
-	 (append-expand-filename (buffer-string) string)))))
+		   (declare-fboundp (ange-ftp-ftp-path kludge-string)))
+	       (and (fboundp 'efs-ftp-path)
+		    (declare-fboundp (efs-ftp-path kludge-string))))
+	  ;; #### evil evil evil, but more so.
+	  string
+	(append-expand-filename (buffer-string) string)))))
 
 (defun minibuffer-smart-select-highlighted-completion (event)
   "Select the highlighted text under the mouse as a minibuffer response.
@@ -1787,10 +1790,12 @@ DIR defaults to current buffer's directory default."
                     ((eq action 't)
                      ;; all completions
                      (mapcar #'(lambda (p) (concat "~" p))
-                             (user-name-all-completions user)))
+                             (declare-fboundp
+			      (user-name-all-completions user))))
                     (t;; 'nil
                      ;; complete
-                     (let* ((val+uniq (user-name-completion-1 user))
+                     (let* ((val+uniq (declare-fboundp
+				       (user-name-completion-1 user)))
                             (val  (car val+uniq))
                             (uniq (cdr val+uniq)))
                        (cond ((stringp val)
@@ -2239,9 +2244,9 @@ whether it is a file(/result) or a directory (/result/)."
 	 (setq x-read-color-completion-table clist)
 	 x-read-color-completion-table)))
     (mswindows
-     (mapcar #'list (mswindows-color-list)))
+     (mapcar #'list (declare-fboundp (mswindows-color-list))))
     (tty
-     (mapcar #'list (tty-color-list)))))
+     (mapcar #'list (declare-fboundp (tty-color-list))))))
 
 (defun read-color (prompt &optional must-match initial-contents)
   "Read the name of a color from the minibuffer.

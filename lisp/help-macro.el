@@ -78,13 +78,15 @@ A value of nil means skip the middle step, so that
 
 (defmacro make-help-screen (fname help-line help-text helped-map)
   "Construct help-menu function name FNAME.
-When invoked, FNAME shows HELP-LINE and reads a command using HELPED-MAP.
-If the command is the help character, FNAME displays HELP-TEXT
-and continues trying to read a command using HELPED-MAP.
-When FNAME finally does get a command, it executes that command
-and then returns."
+When invoked, FNAME shows HELP-LINE and reads a command using
+HELPED-MAP.  If the command is the help character, FNAME displays
+HELP-TEXT and continues trying to read a command using HELPED-MAP.
+When FNAME finally does get a command, it executes that command and
+then returns.  As of 21.5 (or 21.4?), HELP-LINE and HELP-TEXT are
+`eval'd, just like for a function call.  This allows you to place
+Lisp expressions in those arguments."
   `(defun ,fname ()
-     ,help-text
+     ,(eval help-text)
      (interactive)
      (flet ((help-read-key (prompt)
 	      ;; This is in `flet' to avoid problems with autoloading.
@@ -105,7 +107,7 @@ and then returns."
 		      (car key)
 		    key)))))
        (let ((line-prompt
-	      (substitute-command-keys ,help-line)))
+	      (substitute-command-keys ,(eval help-line))))
 	 (when three-step-help
 	   (message "%s" line-prompt))
 	 (let* ((help-screen (documentation (quote ,fname)))

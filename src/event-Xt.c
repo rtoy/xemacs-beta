@@ -65,8 +65,6 @@ Boston, MA 02111-1307, USA.  */
 #include "offix.h"
 #endif
 
-#include "events-mod.h"
-
 static void handle_focus_event_1 (struct frame *f, int in_p);
 
 static struct event_stream *Xt_event_stream;

@@ -190,6 +190,8 @@ which will not be used as accelerators."
       "----"
       ["Select %_All" mark-whole-buffer]
       ["Select Pa%_ge" mark-page]
+      ["Select Paragrap%_h" mark-paragraph]
+      ["Re%_select Region" activate-region :active (mark t)]
       "----"
       ["%_Find..." make-search-dialog]
       ["R%_eplace..." query-replace]
@@ -335,14 +337,7 @@ which will not be used as accelerators."
        ["%_Save Abbrevs As..." write-abbrev-file]
        ["L%_oad Abbrevs..." read-abbrev-file]
        )
-      ("%_Register"
-       ["%_Copy to Register..." copy-to-register :active (region-exists-p)]
-       ["%_Paste Register..." insert-register]
-       "---"
-       ["%_Save Point to Register" point-to-register]
-       ["%_Jump to Register"  register-to-point]
-       )
-      ("R%_ectangles"
+      ("%_Rectangles"
        ["%_Kill Rectangle" kill-rectangle]
        ["%_Yank Rectangle" yank-rectangle]
        ["Rectangle %_to Register" copy-rectangle-to-register]
@@ -354,6 +349,13 @@ which will not be used as accelerators."
 	(customize-set-variable	'mouse-track-rectangle-p
 				(not mouse-track-rectangle-p))
 	:style toggle :selected mouse-track-rectangle-p]
+       )
+      ("Re%_gister"
+       ["%_Copy to Register..." copy-to-register :active (region-exists-p)]
+       ["%_Paste Register..." insert-register]
+       "---"
+       ["%_Save Point to Register" point-to-register]
+       ["%_Jump to Register"  register-to-point]
        )
       ("%_Sort"
        ["%_Lines in Region" sort-lines :active (region-exists-p)]
@@ -381,6 +383,16 @@ which will not be used as accelerators."
        ["%_Region" indent-region :active (region-exists-p)]
        ["%_Balanced Expression" indent-sexp]
        ["%_C Expression" indent-c-exp]
+       )
+      ("%_Tabs"
+       ["%_Convert Tabs to Spaces" untabify :active (and (region-exists-p)
+							 (fboundp 'untabify))]
+       ["Convert %_Spaces to Tabs" tabify :active (and (region-exists-p)
+						       (fboundp 'tabify))]
+       "---"
+       ["%_Tab to Tab Stop" tab-to-tab-stop]
+       ["%_Move to Tab Stop" move-to-tab-stop]
+       ["%_Edit Tab Stops" edit-tab-stops]
        )
       ("S%_pell-Check"
        ["%_Buffer" ispell-buffer
@@ -1403,9 +1415,13 @@ which will not be used as accelerators."
       ["Edit I%_nit File"
        ;; #### there should be something that holds the name that the init
        ;; file should be created as, when it's not present.
-       (progn (find-file (or user-init-file "~/.xemacs/init.el"))
-	      (or (eq major-mode 'emacs-lisp-mode)
-		  (emacs-lisp-mode)))]
+       (let ((el-file (or user-init-file "~/.xemacs/init.el")))
+	 (if (string-match "\\.elc$" el-file)
+	     (setq el-file
+		   (substring user-init-file 0 (1- (length el-file)))))
+	 (find-file el-file)
+	 (or (eq major-mode 'emacs-lisp-mode)
+	     (emacs-lisp-mode)))]
       ["%_Save Options to Init File" customize-save-customized]
       )
 
@@ -1424,54 +1440,67 @@ which will not be used as accelerators."
 
      ("%_Help"
       ["%_About XEmacs..." about-xemacs]
+      ["%_Home Page (www.xemacs.org)" xemacs-www-page
+       :active (fboundp 'browse-url)]
       "-----"
       ["What's %_New in XEmacs" view-emacs-news]
       ["%_Obtaining XEmacs" describe-distribution]
       "-----"
       ("%_Info (Online Docs)"
-       ["%_Info Contents" info]
-       ["Lookup %_Key Binding..." Info-goto-emacs-key-command-node]
-       ["Lookup %_Command..." Info-goto-emacs-command-node]
-       ["Lookup %_Function..." Info-elisp-ref]
-       ["Lookup %_Topic..." Info-query])
+       ["Info Con%_tents" (Info-goto-node "(dir)")]
+       "-----"
+       ["XEmacs %_User's Manual" (Info-goto-node "(XEmacs)")]
+       ["XEmacs %_Lisp Reference Manual" (Info-goto-node "(Lispref)")]
+       ["All About %_Packages" (Info-goto-node "(xemacs)Packages")]
+       ["%_Getting Started with XEmacs" (Info-goto-node "(New-Users-Guide)")]
+       ["XEmacs In%_ternals Manual" (Info-goto-node "(Internals)")]
+       ["%_How to Use Info" (Info-goto-node "(Info)")]
+       "-----"
+       ["Lookup %_Key Sequence in User's Manual..."
+	Info-goto-emacs-key-command-node]
+       ["Lookup %_Command in User's Manual..." Info-goto-emacs-command-node]
+       ["Lookup %_Function in Lisp Reference..." Info-elisp-ref]
+       "-----"
+       ["Search %_Index in User's Manual/Lispref..."
+	Info-search-index-in-xemacs-and-lispref]
+       ["%_Search Text in User's Manual..." Info-search-text-in-xemacs]
+       ["S%_earch Text in Lisp Reference..."
+	Info-search-text-in-lispref]
+       )
       ("XEmacs %_FAQ"
        ["%_FAQ (local)" xemacs-local-faq]
        ["FAQ via %_WWW" xemacs-www-faq
-	:active (fboundp 'browse-url)]
-       ["%_Home Page" xemacs-www-page
 	:active (fboundp 'browse-url)])
       ("%_Tutorials"
        :filter tutorials-menu-filter)
       ("%_Samples"
-       ["Sample %_init.el"
-	(find-file (locate-data-file "sample.init.el"))
+       ["View Sample %_init.el" view-sample-init-el
 	:active (locate-data-file "sample.init.el")]
-       ["Sample .%_gtkrc"
-	(find-file (locate-data-file "sample.gtkrc"))
+       ["View Sample .%_gtkrc"
+	(Help-find-file (locate-data-file "sample.gtkrc"))
 	:included (featurep 'gtk)
 	:active (locate-data-file "sample.gtkrc")]
-       ["Sample .%_Xdefaults"
-	(find-file (locate-data-file "sample.Xdefaults"))
+       ["View Sample .%_Xdefaults"
+	(Help-find-file (locate-data-file "sample.Xdefaults"))
 	:included (featurep 'x)
 	:active (locate-data-file "sample.Xdefaults")]
-       ["Sample %_enriched"
-	(find-file (locate-data-file "enriched.doc"))
+       ["View Sample %_enriched.doc"
+	(Help-find-file (locate-data-file "enriched.doc"))
 	:active (locate-data-file "enriched.doc")])
-      ("%_Commands & Keys"
-       ["%_Mode" describe-mode]
+      ("%_Commands, Variables, Keys"
+       ["Describe %_Mode" describe-mode]
        ["%_Apropos..." hyper-apropos]
+       ["%_Command-Only Apropos..." command-hyper-apropos]
        ["Apropos %_Docs..." apropos-documentation]
        "-----"
-       ["%_Key..." describe-key]
-       ["%_Bindings" describe-bindings]
-       ["%_Mouse Bindings" describe-pointer]
+       ["Describe %_Key..." describe-key]
+       ["Show %_Bindings" describe-bindings]
+       ["Show M%_ouse Bindings" describe-pointer]
        ["%_Recent Keys" view-lossage]
        "-----"
-       ["%_Function..." describe-function]
-       ["%_Variable..." describe-variable]
-       ["%_Locate Command..." where-is])
-      "-----"
-      ["%_Recent Messages" view-lossage]
+       ["Describe %_Function..." describe-function]
+       ["Describe %_Variable..." describe-variable]
+       ["%_Locate Command in Keymap..." where-is])
       ("%_Misc"
        ["%_Current Installation Info" describe-installation
 	:active (boundp 'Installation-string)]
@@ -1480,6 +1509,8 @@ which will not be used as accelerators."
        ["Find %_Packages" finder-by-keyword]
        ["View %_Splash Screen" xemacs-splash-buffer]
        ["%_Unix Manual..." manual-entry])
+      "-----"
+      ["%_Recent Messages" view-lossage]
       ["Send %_Bug Report..." report-emacs-bug
        :active (fboundp 'report-emacs-bug)])))
 
@@ -1924,24 +1955,12 @@ If this is a relative filename, it is put into the same directory as your
 
 (defconst default-popup-menu
   '("XEmacs Commands"
-    ["%_Undo" advertised-undo
-     :active (and (not (eq buffer-undo-list t))
-		  (or buffer-undo-list pending-undo-list))
-     :suffix (if (or (eq last-command 'undo)
-		     (eq last-command 'advertised-undo))
-		 "More" "")]
-    ["Cu%_t" kill-primary-selection
-     :active (selection-owner-p)]
-    ["%_Copy" copy-primary-selection
-     :active (selection-owner-p)]
-    ["%_Paste" yank-clipboard-selection
-     :active (selection-exists-p 'CLIPBOARD)]
-    ["%_Delete" delete-primary-selection
-     :active (selection-owner-p)]
-    "-----"
-    ["Select %_Block" mark-paragraph]
-    ["Sp%_lit Window" split-window-vertically]
-    ["U%_nsplit Window" delete-other-windows]
+    ["%_Split Window" split-window-vertically]
+    ["S%_plit Window (Side by Side)" split-window-horizontally]
+    ["%_Un-Split (Keep This)" delete-other-windows
+     :active (not (one-window-p t))]
+    ["Un-Split (Keep %_Others)" delete-window
+     :active (not (one-window-p t))]
     ))
 
 ;; In an effort to avoid massive menu clutter, this mostly worthless menu is

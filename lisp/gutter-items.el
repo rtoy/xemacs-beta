@@ -488,8 +488,7 @@ you should just use (progress nil)."
       (clear-message label frame nil no-restore)
     (or frame (setq frame (selected-frame)))
     (remove-progress-feedback label frame)
-    (let ((inhibit-read-only t)
-	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
+    (let ((inhibit-read-only t))
       (erase-buffer (get-buffer-create " *Gutter Area*")))
     (if no-restore
 	nil			; just preparing to put another msg up
@@ -558,8 +557,7 @@ you should just use (progress nil)."
     (or frame (setq frame (selected-frame)))
     ;; Add a new entry to the message-stack, or modify an existing one
     (let* ((top (car progress-stack))
-	   (inhibit-read-only t)
-	   (zmacs-region-stays zmacs-region-stays))
+	   (inhibit-read-only t))
       (if (eq label (car top))
 	  (setcdr top message)
 	(push (cons label message) progress-stack))
@@ -589,7 +587,6 @@ you should just use (progress nil)."
 (defun raw-append-progress-feedback (message &optional value frame)
   (unless (equal message "")
     (let* ((inhibit-read-only t)
-	  (zmacs-region-stays zmacs-region-stays)
 	  (val (or value 0))
 	  (gutter-string (copy-sequence "\n"))
 	  (ext (make-extent 0 1 gutter-string)))

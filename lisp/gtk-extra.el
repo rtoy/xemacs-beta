@@ -31,6 +31,9 @@
 (eval-and-compile
   (require 'gtk-ffi))
 
+(globally-declare-fboundp
+ '(gtk-import-function-internal gtk-call-function))
+
 ;;; gtkbordercombo.h
 (gtk-import-function GtkType gtk_border_combo_get_type)
 (gtk-import-function GtkWidget gtk_border_combo_new)

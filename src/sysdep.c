@@ -1063,12 +1063,38 @@ request_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined(HPUX10) && !defined(LINUX)
+  /* NOTE: It appears that Linux has its own mechanism for requesting
+     SIGIO, using the F_GETSIG and F_SETSIG commands to fcntl().
+     These let you pick which signal you want sent (not just SIGIO),
+     and if you do this, you get additional info which tells you which
+     file descriptor has input ready on it.  The man page says:
+
+       Using  these  mechanisms,  a  program  can implement fully
+       asynchronous I/O without using select(2) or  poll(2)  most
+       of the time.
+
+       The  use of O_ASYNC, F_GETOWN, F_SETOWN is specific to BSD
+       and Linux.   F_GETSIG  and  F_SETSIG  are  Linux-specific.
+       POSIX  has asynchronous I/O and the aio_sigevent structure
+       to achieve similar things; these  are  also  available  in
+       Linux as part of the GNU C Library (Glibc).
+
+     But it appears that Linux also supports O_ASYNC, so I see no
+     particular need to switch. --ben
+  */
+
+#if defined (I_SETSIG) && !defined (HPUX10) && !defined (LINUX)
   {
-    int events=0;
+    int events = 0;
     ioctl (filedesc, I_GETSIG, &events);
     ioctl (filedesc, I_SETSIG, events | S_INPUT);
   }
+#elif defined (O_ASYNC)
+  /* Generally FASYNC and O_ASYNC are both defined, and both equal;
+     but let's not depend on that.  O_ASYNC appears to be more
+     standard (at least the Linux include files think so), so
+     check it first. */
+  fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) | O_ASYNC);
 #elif defined (FASYNC)
   fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) | FASYNC);
 #elif defined (FIOSSAIOSTAT)
@@ -1108,12 +1134,14 @@ unrequest_sigio_on_device (struct device *d)
 {
   int filedesc = DEVICE_INFD (d);
 
-#if defined (I_SETSIG) && !defined(HPUX10)
+#if defined (I_SETSIG) && !defined (HPUX10) && !defined (LINUX)
   {
-    int events=0;
+    int events = 0;
     ioctl (filedesc, I_GETSIG, &events);
     ioctl (filedesc, I_SETSIG, events & ~S_INPUT);
   }
+#elif defined (O_ASYNC)
+  fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) & ~O_ASYNC);
 #elif defined (FASYNC)
   fcntl (filedesc, F_SETFL, fcntl (filedesc, F_GETFL, 0) & ~FASYNC);
 #elif defined (FIOSSAIOSTAT)

@@ -24,6 +24,15 @@
 
 ;;; Synched up with: Not in FSF.
 
+(globally-declare-fboundp
+ '(gtk-dialog-new
+   gtk-dialog-vbox gtk-dialog-action-area
+   gtk-window-set-title gtk-button-new-with-label
+   gtk-container-add gtk-signal-connect gtk-entry-get-text
+   gtk-widget-destroy gtk-container-set-border-width gtk-label-new
+   gtk-misc-set-alignment gtk-entry-new gtk-widget-set-sensitive
+   gtk-entry-set-text gtk-entry-select-region))
+
 (defun gtk-password-dialog-ok-button (dlg)
   (get dlg 'x-ok-button))
 

@@ -69,21 +69,21 @@
 Slows them down more or less.  Set this non-nil if you have a fast machine.")
 
 ;; XEmacs addition
-(defvar apropos-symbol-face (if (boundp 'font-lock-keyword-face)
+(defvar apropos-symbol-face (if-boundp 'font-lock-keyword-face
 				font-lock-keyword-face
 			      'bold)
   "*Face for symbol name in apropos output or `nil'.
 This looks good, but slows down the commands several times.")
 
 ;; XEmacs addition
-(defvar apropos-keybinding-face (if (boundp 'font-lock-string-face)
+(defvar apropos-keybinding-face (if-boundp 'font-lock-string-face
 				    font-lock-string-face
 				  'underline)
   "*Face for keybinding display in apropos output or `nil'.
 This looks good, but slows down the commands several times.")
 
 ;; XEmacs addition
-(defvar apropos-label-face (if (boundp 'font-lock-comment-face)
+(defvar apropos-label-face (if-boundp 'font-lock-comment-face
 			       font-lock-comment-face
 			     'italic)
   "*Face for label (Command, Variable ...) in apropos output or `nil'.
@@ -93,7 +93,7 @@ When this is a face name, as it is initially, it gets transformed to a
 text-property list for efficiency.")
 
 ;; XEmacs addition
-(defvar apropos-property-face (if (boundp 'font-lock-variable-name-face)
+(defvar apropos-property-face (if-boundp 'font-lock-variable-name-face
 				  font-lock-variable-name-face
 				'bold-italic)
   "*Face for property name in apropos output or `nil'.

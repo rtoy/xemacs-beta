@@ -1,3 +1,337 @@
+2001-04-22  Ben Wing  <ben@xemacs.org>
+
+	----------------------- byte-comp warning fixes -----------------
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (with-boundp): New.
+	* bytecomp-runtime.el (if-boundp): New.
+	* bytecomp-runtime.el (declare-boundp): New.
+	* bytecomp-runtime.el (globally-declare-boundp): New.
+	* bytecomp-runtime.el (byte-compile-with-fboundp): New.
+	* bytecomp-runtime.el ('with-fboundp-1): New.
+	* bytecomp-runtime.el (with-fboundp): New.
+	* bytecomp-runtime.el (if-fboundp): New.
+	* bytecomp-runtime.el (declare-fboundp): New.
+	* bytecomp-runtime.el (globally-declare-fboundp): New.
+	* bytecomp-runtime.el (byte-compile-with-byte-compiler-warnings-suppressed): New.
+	* bytecomp-runtime.el ('with-byte-compiler-warnings-suppressed-1): New.
+	* bytecomp-runtime.el (with-byte-compiler-warnings-suppressed): New.
+	* bytecomp-runtime.el (with-obsolete-variable): New.
+	* bytecomp-runtime.el (with-obsolete-function): New.
+	New functions for cleanly eliminating byte-compiler warnings.
+	Their definitions require no changes at all in bytecomp.el,
+	meaning that any package that wants to use them and be compatible
+	with older versions of XEmacs need only copy the code and rename
+	the functions (i.e. prefix them with the package name).
+
+	* apropos.el (apropos-symbol-face):
+	* apropos.el (apropos-keybinding-face):
+	* apropos.el (apropos-label-face):
+	* apropos.el (apropos-property-face):
+	* cl-extra.el (cl-map-overlays):
+	* coding.el:
+	* coding.el (set-keyboard-coding-system):
+	* coding.el (set-terminal-coding-system):
+	* console.el (resume-pid-console):
+	* dialog-gtk.el:
+	* dialog-gtk.el (popup-builtin-open-dialog):
+	* dialog-gtk.el (popup-builtin-color-dialog):
+	* dragdrop.el (experimental-dragdrop-drop-mime-default):
+	* dragdrop.el (gtk-start-drag):
+	* dragdrop.el (gtk-start-drag-region):
+	* faces.el (init-face-from-resources):
+	* faces.el (init-device-faces):
+	* faces.el (init-frame-faces):
+	* faces.el (init-global-faces):
+	* faces.el (set-face-stipple):
+	* files.el (set-visited-file-name):
+	* files.el (basic-save-buffer):
+	* files.el (save-some-buffers-1):
+	* files.el (file-remote-p):
+	* fill.el (fill-move-forward-to-break-point):
+	* fill.el (find-space-insertable-point):
+	* font-lock.el:
+	* frame.el (suspend-or-iconify-emacs):
+	* frame.el (suspend-emacs-or-iconify-frame):
+	* gdk.el:
+	* generic-widgets.el:
+	* generic-widgets.el (build-ui::radio-group):
+	* generic-widgets.el (build-ui::button):
+	* glade.el:
+	* gnome-widgets.el:
+	* gnome.el:
+	* gtk-extra.el:
+	* gtk-faces.el (gtk-choose-font):
+	* gtk-file-dialog.el:
+	* gtk-file-dialog.el (gtk-file-dialog-fill-file-list):
+	* gtk-file-dialog.el (gtk-file-dialog-fill-directory-list):
+	* gtk-file-dialog.el (gtk-file-dialog-new):
+	* gtk-font-menu.el:
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* gtk-init.el:
+	* gtk-init.el (gtk-initialize-compose):
+	* gtk-package.el:
+	* gtk-password-dialog.el:
+	* gtk-widget-accessors.el:
+	* gtk-widgets.el:
+	* gtk.el:
+	* isearch-mode.el (isearch-help-or-delete-char):
+	* ldap.el:
+	* lib-complete.el (read-library-internal):
+	* lib-complete.el (read-library):
+	* lib-complete.el (read-library-name):
+	* lisp-mnt.el (lm-report-bug):
+	* minibuf.el (minibuffer-smart-mouse-tracker):
+	* minibuf.el (minibuffer-smart-select-kludge-filename):
+	* minibuf.el (read-file-name-internal-1):
+	* minibuf.el (read-color-completion-table):
+	* modeline.el (modeline-toggle-read-only):
+	* mouse.el (mouse-consolidated-yank):
+	* mouse.el (default-mouse-track-maybe-own-selection):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* multicast.el (open-multicast-group):
+	* mwheel.el:
+	* package-get.el (package-get-update-base-from-buffer):
+	* scrollbar.el (init-scrollbar-from-resources):
+	* symbols.el:
+	* syntax.el (describe-syntax-table):
+	* toolbar.el (init-toolbar-from-resources):
+	* toolbar-items.el (toolbar):
+	* toolbar-items.el (toolbar-paste):
+	* tty-init.el (init-pre-tty-win):
+	* tty-init.el (init-post-tty-win):
+	* wid-browse.el (widget-browse-sexp):
+	* widgets-gtk.el:
+	* x-faces.el:
+	* x-font-menu.el:
+	* x-font-menu.el (x-font-menu-font-data):
+	* x-init.el:
+	* x-misc.el:
+	* x-mouse.el:
+	* x-scrollbar.el:
+	* x-select.el:
+	* x-win-sun.el:
+	* x-win-xfree86.el:
+	Eliminate byte-compiler warnings using the new functions in
+	bytecomp-runtime.el.
+
+	* coding.el (coding-system-get): New.
+	* coding.el (coding-system-put): New.
+	* coding.el (coding-system-category): New.
+	* mule\mule-misc.el (coding-system-get): Removed.
+	* mule\mule-misc.el (coding-system-put): Removed.
+	* mule\mule-misc.el (coding-system-category): Removed.
+	Move these functions, since they're not Mule-specific and
+	are used in prefer-coding-system.
+
+	* font.el:
+	* font.el (cl):
+	* font.el (set-font-family):
+	* font.el (set-font-weight):
+	* font.el (set-font-style):
+	* font.el (set-font-size):
+	* font.el (set-font-registry):
+	* font.el (set-font-encoding):
+	* font.el (font-family):
+	* font.el (font-weight):
+	* font.el (font-style):
+	* font.el (font-size):
+	* font.el (font-registry):
+	* font.el (font-encoding):
+	* font.el (set-font-style-by-keywords):
+	* font.el (font-properties-from-style):
+	* font.el (font-combine-fonts-internal):
+	* font.el (font-x-font-regexp):
+	* font.el (x-font-create-object):
+	* font.el (x-font-create-name):
+	* font.el (ns-font-create-name):
+	* font.el (mswindows-font-create-name):
+	* font.el (font-update-device-fonts):
+	* font.el (font-update-one-face):
+	* font.el (font-rgb-color-p):
+	* font.el (font-rgb-color-red):
+	* font.el (font-tty-compute-color-delta):
+	* font.el (font-normalize-color):
+	This file was incredibly ugly.  Clean it up.  Avoid using defsubst
+	for any exported functions, to avoid possible compatibility
+	problems if we later change the internal interface. (It happened
+	before, with face accessors, between 19.8 and 19.9). Fix tons
+	of warnings.
+
+	* gpm.el:
+	* gpm.el (gpm-is-supported-p): New.
+	* gpm.el (gpm-delete-device-hook):
+	Clean up (new function gpm-is-supported-p eliminates duplicate
+	code in gpm-create/delete-device-hook) and eliminate warnings.
+
+	---------- make byte-recompile-directory work in the ---------
+	           core `lisp' dir, even in the absence of
+		   a Mule XEmacs (i.e. make it skip the Mule
+	           files rather than trying to compile them).
+	           now you should be able to do `touch *.el'
+	           in the `lisp' dir, then
+	           M-x byte-recompile-directory, and get no
+	           warnings.
+
+	* bytecomp.el:
+	* bytecomp.el (byte-recompile-ignore-uncompilable-mule-files): New.
+	* bytecomp.el (byte-compile-inbuffer):
+	* bytecomp.el (byte-compile-inbuffer)): New.
+	* bytecomp.el (byte-compile-outbuffer)): New.
+	* bytecomp.el (byte-compile-warn):
+	* bytecomp.el (byte-recompile-directory):
+	* bytecomp.el (byte-recompile-file):
+	Avoid trying to compile Mule files in byte-recompile-directory
+	when we're not in a Mule XEmacs, since we're highly likely to get
+	syntax errors.
+
+	* mule\arabic.el:
+	* mule\canna-leim.el:
+	* mule\english.el:
+	* mule\greek.el:
+	* mule\kinsoku.el:
+	* mule\latin.el:
+	* mule\misc-lang.el:
+	* mule\mule-category.el:
+	* mule\mule-ccl.el:
+	* mule\mule-charset.el:
+	* mule\mule-cmds.el:
+	* mule\mule-coding.el:
+	* mule\mule-help.el:
+	* mule\mule-init.el:
+	* mule\mule-misc.el:
+	* mule\mule-tty-init.el:
+	* mule\mule-x-init.el:
+	* mule\thai-xtis-chars.el:
+	* mule\viet-chars.el:
+	Add a coding-system cookie to all Mule files so that
+	byte-recompile-directory ignores them.
+
+	* code-files.el (load):
+	* code-files.el (find-coding-system-magic-cookie): Removed.
+	* files.el:
+	* files.el (find-coding-system-magic-cookie-in-file): New.
+	Magic cookie function moved to files.el from code-files.el (for
+	use by bytecomp even in a non-coding-system XEmacs), and changed
+	names and semantics for use by bytecomp.  NOTE: IMO this is an
+	internal function that we can change as we like (and there is
+	absolutely no code anywhere else using the function).
+
+	---------------- GUI improvements: menus, help -------------------
+
+	* help.el:
+	* help.el (help-map): Removed.
+	* help.el (help-for-help):
+	* help.el (Help-princ-face):
+	* help.el (Help-prin1-face):
+	* help.el (describe-function-1):
+	* help.el (describe-variable):
+	Rearrange order of keymap declarations to be alphabetical.
+	Improve help on help to include all bindings, and group by
+	category.  Add bindings for new Info commands.  Remove
+	warnings.  Use command-hyper-apropos in place of command-apropos.
+
+	* hyper-apropos.el:
+	* hyper-apropos.el (hyper-apropos-programming-apropos):
+	* hyper-apropos.el (command-hyper-apropos): New.
+	Add a function to do the equivalent of command-apropos.
+
+	* help-macro.el (make-help-screen):
+	Evals its help-text argument so you can put expressions there.
+	Used now by help-for-help.
+
+	* info.el:
+	* info.el (Info-search):
+	* info.el (Info-search-next): New.
+	* info.el (Info-index): Removed.
+	* info.el (Info-find-index-alternatives): New.
+	* info.el (Info-read-search-text-regexp): New.
+	* info.el (Info-search-text-in-lispref): New.
+	* info.el (Info-search-text-in-xemacs): New.
+	* info.el (Info-search-index-in-lispref): New.
+	* info.el (Info-search-index-in-xemacs-and-lispref): New.
+	* info.el (Info-mode-map):
+	Add binding to continue text searches.  Expand index searches to
+	work over multiple info documents.  Add commands to search
+	text/index in User and Lispref.
+
+	* lisp-mode.el (construct-lisp-mode-menu):
+	 Add new entry,	"Uncomment Region" (parallels "Comment Out Region").
+
+	* menubar-items.el (default-menubar):
+	* menubar-items.el (default-popup-menu):
+	Redo Help menu; add bindings for new Info commands to search the
+	index or text of the User and Lispref manuals.  Add command for
+	mark-paragraph, activate-region.  Make Edit->R accelerator be
+	rectangle, not register (more commonly used), and put rectangle
+	first.  Fix the Edit Init File entry to never load the .elc file.
+	Simplify the default-popup-menu.  Add Cmds->Tabs menu.
+	
+	* menubar.el (popup-buffer-menu): Doc fix.
+	* menubar.el ((boundp 'menu-accelerator-map)):
+	Use kp-left not kp_left, etc.
+
+	---------------- Miscellaneous bug fixes/cleanup -------------------
+
+	* bytecomp-runtime.el (byte-compiler-options):
+	Correct doc string.
+	
+	* easymenu.el (easy-menu-do-define): fix extra quote.
+
+	* fill.el (fill-paragraph-or-region):
+	Rewrite to be more correct -- use call-interactively so that
+	we always get exactly the same behavior as if the functions
+	were called directly.
+	
+	* font-lock.el (font-lock-fontify-pending-extents):
+	* gutter-items.el (clear-progress-feedback):
+	* gutter-items.el (abort-progress-feedback):
+	* gutter-items.el (raw-append-progress-feedback):
+	* simple.el (clear-message):
+	* simple.el (raw-append-message):
+	No need to fiddle with zmacs-region-stays, now that bogus
+	clearing of it (2001-04-28 src/ChangeLog) is removed.
+
+	* dialog.el (make-dialog-box):
+	Put dialog titles back in -- this time correctly.  Fix various
+	other problems with leaks and such.
+
+	* keymap.el (key-sequence-list-description):
+	Clean up fun to always correctly canonicalize.
+	
+	* simple.el:
+	* simple.el (delete-forward-p):
+	* simple.el (comment-padding): New.
+	* simple.el (comment-region):
+	* simple.el (do-auto-fill):
+	* simple.el (indent-new-comment-line):
+	Clean up Kinsoku comments, synch comment-region with FSF 20.7.
+	
+	* simple.el (region-exists-p):
+	* simple.el (region-active-p):
+	Add comment about which one is correct to use in menu specs.
+
+	* sound.el (load-sound-file):
+	Minor code clean up.
+	
+	* startup.el:
+	* startup.el (command-line-early):
+	* startup.el (initial-scratch-message):
+	Comment changes.  Add info about sample.init.el to splash screen.
+	Improve initial-scratch-message and clarify purpose of Scratch
+	buffer.  Fix byte-compile warning.
+
+	------------------------ Added features -------------------------
+
+	* etags.el:
+	* etags.el (tags-check-parent-directories-for-tag-files): New.
+	* etags.el (buffer-tag-table-list):
+	Add new variable to control whether etags checks all parent
+	directories for tag files. (On by default.)
+
+	* hash-table.el: New file, useful utility functions.
+	* dumped-lisp.el (preloaded-file-list): Dump hash-table.el.
+	
 2001-05-03  Adrian Aichner  <adrian@xemacs.org>
 
 	* build-report.el: Remove CVS keywords since this file has been in

@@ -65,6 +65,11 @@ Boston, MA 02111-1307, USA.  */
 #include <grp.h>		/* See grantpt fixups for HPUX below. */
 #endif
 
+#if defined (HAVE_GETADDRINFO) && defined (HAVE_GETNAMEINFO)
+#define USE_GETADDRINFO
+#endif
+
+
 /*
  * Implementation-specific data. Pointed to by Lisp_Process->process_data
  */
@@ -435,7 +440,7 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
 
 #ifdef HAVE_SOCKETS
 
-#if !(defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO))
+#ifndef USE_GETADDRINFO
 static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 		      Error_behavior errb)
@@ -468,7 +473,8 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   if (host_info_ptr)
     {
       address->sin_family = host_info_ptr->h_addrtype;
-      memcpy (&address->sin_addr, host_info_ptr->h_addr, host_info_ptr->h_length);
+      memcpy (&address->sin_addr, host_info_ptr->h_addr,
+	      host_info_ptr->h_length);
     }
   else
     {
@@ -491,7 +497,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 
   return 1;
 }
-#endif /*  !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
+#endif /* !USE_GETADDRINFO */
 
 static void
 set_socket_nonblocking_maybe (int fd, int port, const char* proto)
@@ -1578,7 +1584,7 @@ unix_get_tty_name (Lisp_Process *p)
 static Lisp_Object
 unix_canonicalize_host_name (Lisp_Object host)
 {
-#if defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO)
+#ifdef USE_GETADDRINFO
   struct addrinfo hints, *res;
   static char addrbuf[NI_MAXHOST];
   Lisp_Object canonname;
@@ -1612,7 +1618,7 @@ unix_canonicalize_host_name (Lisp_Object host)
     }
 
   return canonname;
-#else /* ! HAVE_GETADDRINFO */
+#else /* ! USE_GETADDRINFO */
   struct sockaddr_in address;
 
   if (!get_internet_address (host, &address, ERROR_ME_NOT))
@@ -1623,7 +1629,7 @@ unix_canonicalize_host_name (Lisp_Object host)
   else
     /* #### any clue what to do here? */
     return host;
-#endif /* ! HAVE_GETADDRINFO */
+#endif /* ! USE_GETADDRINFO */
 }
 
 /* Open a TCP network connection to a given HOST/SERVICE.
@@ -1633,14 +1639,17 @@ unix_canonicalize_host_name (Lisp_Object host)
    do is deactivate and close it via delete-process. */
 
 static void
-unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
-			  Lisp_Object protocol, void** vinfd, void** voutfd)
+unix_open_network_stream (Lisp_Object name, Lisp_Object host,
+			  Lisp_Object service, Lisp_Object protocol,
+			  void **vinfd, void **voutfd)
 {
   int inch;
   int outch;
-  volatile int s;
+  volatile int s = -1;
   volatile int port;
   volatile int retry = 0;
+  volatile int xerrno = 0;
+  volatile int failed_connect = 0;
   int retval;
 
   CHECK_STRING (host);
@@ -1649,12 +1658,11 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
     invalid_argument ("Unsupported protocol", protocol);
 
   {
-#if defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO)
+#ifdef USE_GETADDRINFO
+
     struct addrinfo hints, *res;
     struct addrinfo * volatile lres;
     char *portstring;
-    volatile int xerrno = 0;
-    volatile int failed_connect = 0;
     char *ext_host;
     /*
      * Caution: service can either be a string or int.
@@ -1694,118 +1702,11 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
 
     /* address loop */
     for (lres = res; lres ; lres = lres->ai_next)
-      {
-	if (EQ (protocol, Qtcp))
-	  s = socket (lres->ai_family, SOCK_STREAM, 0);
-	else /* EQ (protocol, Qudp) */
-	  s = socket (lres->ai_family, SOCK_DGRAM, 0);
 
-	if (s < 0)
-	  continue;
+#else /* !USE_GETADDRINFO */
 
-	/* Turn off interrupts here -- see comments below.  There used to
-	   be code which called bind_polling_period() to slow the polling
-	   period down rather than turn it off, but that seems rather
-	   bogus to me.  Best thing here is to use a non-blocking connect
-	   or something, to check for QUIT. */
-
-	/* Comments that are not quite valid: */
-
-	/* Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
-	   when connect is interrupted.  So let's not let it get interrupted.
-	   Note we do not turn off polling, because polling is only used
-	   when not interrupt_input, and thus not normally used on the systems
-	   which have this bug.  On systems which use polling, there's no way
-	   to quit if polling is turned off.  */
-
-	/* Slow down polling.  Some kernels have a bug which causes retrying
-	   connect to fail after a connect.  */
-
-	slow_down_interrupts ();
-
-      loop:
-
-	/* A system call interrupted with a SIGALRM or SIGIO comes back
-	   here, with can_break_system_calls reset to 0. */
-	SETJMP (break_system_call_jump);
-	if (QUITP)
-	  {
-	    speed_up_interrupts ();
-	    REALLY_QUIT;
-	    /* In case something really weird happens ... */
-	    slow_down_interrupts ();
-	  }
-
-	/* Break out of connect with a signal (it isn't otherwise possible).
-	   Thus you don't get screwed with a hung network. */
-	can_break_system_calls = 1;
-	retval = connect (s, lres->ai_addr, lres->ai_addrlen);
-	can_break_system_calls = 0;
-	if (retval == -1)
-	  {
-	    xerrno = errno;
-	    if (errno != EISCONN)
-	      {
-		if (errno == EINTR)
-		  goto loop;
-		if (errno == EADDRINUSE && retry < 20)
-		  {
-		    /* A delay here is needed on some FreeBSD systems,
-		       and it is harmless, since this retrying takes time anyway
-		       and should be infrequent.
-		       `sleep-for' allowed for quitting this loop with interrupts
-		       slowed down so it can't be used here.  Async timers should
-		       already be disabled at this point so we can use `sleep'. */
-		    sleep (1);
-		    retry++;
-		    goto loop;
-		  }
-	      }
-
-	    failed_connect = 1;
-	    close (s);
-            s = -1;
-
-	    speed_up_interrupts ();
-
-	    continue;
-	  }
-
-	if (port == 0)
-	  {
-	    int gni;
-	    char servbuf[NI_MAXSERV];
-
-	    if (EQ (protocol, Qtcp))
-	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
-				 NULL, 0, servbuf, sizeof(servbuf),
-				 NI_NUMERICSERV);
-	    else /* EQ (protocol, Qudp) */
-	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
-				 NULL, 0, servbuf, sizeof(servbuf),
-				 NI_NUMERICSERV | NI_DGRAM);
-
-	    if (gni == 0)
-	      port = strtol (servbuf, NULL, 10);
-	  }
-
-	break;
-      } /* address loop */
-
-    speed_up_interrupts ();
-
-    freeaddrinfo (res);
-    if (s < 0)
-      {
-	errno = xerrno;
-
-	if (failed_connect)
-	  report_file_error ("connection failed", list2 (host, name));
-	else
-	  report_file_error ("error creating socket", list1 (name));
-      }
-#else /* ! HAVE_GETADDRINFO */
     struct sockaddr_in address;
+    volatile int i;
 
     if (INTP (service))
       port = htons ((unsigned short) XINT (service));
@@ -1827,80 +1728,144 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
     get_internet_address (host, &address, ERROR_ME);
     address.sin_port = port;
 
-    if (EQ (protocol, Qtcp))
-      s = socket (address.sin_family, SOCK_STREAM, 0);
-    else /* EQ (protocol, Qudp) */
-      s = socket (address.sin_family, SOCK_DGRAM, 0);
+    /* use a trivial address loop */
+    for (i = 0; i < 1; i++)
 
-    if (s < 0)
-      report_file_error ("error creating socket", list1 (name));
-
-    /* Turn off interrupts here -- see comments below.  There used to
-       be code which called bind_polling_period() to slow the polling
-       period down rather than turn it off, but that seems rather
-       bogus to me.  Best thing here is to use a non-blocking connect
-       or something, to check for QUIT. */
-
-    /* Comments that are not quite valid: */
-
-    /* Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
-       when connect is interrupted.  So let's not let it get interrupted.
-       Note we do not turn off polling, because polling is only used
-       when not interrupt_input, and thus not normally used on the systems
-       which have this bug.  On systems which use polling, there's no way
-       to quit if polling is turned off.  */
-
-    /* Slow down polling.  Some kernels have a bug which causes retrying
-       connect to fail after a connect.  */
-
-    slow_down_interrupts ();
-
-  loop:
-
-    /* A system call interrupted with a SIGALRM or SIGIO comes back
-       here, with can_break_system_calls reset to 0. */
-    SETJMP (break_system_call_jump);
-    if (QUITP)
+#endif /* !USE_GETADDRINFO */
       {
-	speed_up_interrupts ();
-	REALLY_QUIT;
-	/* In case something really weird happens ... */
-	slow_down_interrupts ();
-      }
+#ifdef USE_GETADDRINFO
+	int family = lres->ai_family;
+#else
+	int family = address.sin_family;
+#endif
 
-    /* Break out of connect with a signal (it isn't otherwise possible).
-       Thus you don't get screwed with a hung network. */
-    can_break_system_calls = 1;
-    retval = connect (s, (struct sockaddr *) &address, sizeof (address));
-    can_break_system_calls = 0;
-    if (retval == -1 && errno != EISCONN)
-      {
-	int xerrno = errno;
-	if (errno == EINTR)
-	  goto loop;
-	if (errno == EADDRINUSE && retry < 20)
+	if (EQ (protocol, Qtcp))
+	  s = socket (family, SOCK_STREAM, 0);
+	else /* EQ (protocol, Qudp) */
+	  s = socket (family, SOCK_DGRAM, 0);
+
+	if (s < 0)
 	  {
-	    /* A delay here is needed on some FreeBSD systems,
-	       and it is harmless, since this retrying takes time anyway
-	       and should be infrequent.
-	       `sleep-for' allowed for quitting this loop with interrupts
-	       slowed down so it can't be used here.  Async timers should
-	       already be disabled at this point so we can use `sleep'. */
-	    sleep (1);
-	    retry++;
-	    goto loop;
+	    xerrno = errno;
+	    failed_connect = 0;
+	    continue;
 	  }
 
-	close (s);
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
+	/* Slow down polling.  Some kernels have a bug which causes retrying
+	   connect to fail after a connect. (Note that the entire purpose
+	   for this code is a very old comment concerning an Ultrix bug that
+	   requires this code.  We used to do this ALWAYS despite this!
+	   This messes up C-g out of connect() in a big way.  So instead we
+	   just assume that anyone who sees such a kernel bug will define
+	   this constant, which for now is only defined under Ultrix.) --ben
+	*/
+	slow_down_interrupts ();
+#endif
 
-	speed_up_interrupts ();
+      loop:
 
-	errno = xerrno;
-	report_file_error ("connection failed", list2 (host, name));
-      }
+	/* A system call interrupted with a SIGALRM or SIGIO comes back
+	   here, with can_break_system_calls reset to 0. */
+	SETJMP (break_system_call_jump);
+	if (QUITP)
+	  {
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
+	    speed_up_interrupts ();
+#endif
+	    REALLY_QUIT;
+	    /* In case something really weird happens ... */
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
+	    slow_down_interrupts ();
+#endif
+	  }
 
+	/* Break out of connect with a signal (it isn't otherwise possible).
+	   Thus you don't get screwed with a hung network. */
+	can_break_system_calls = 1;
+
+#ifdef USE_GETADDRINFO
+	retval = connect (s, lres->ai_addr, lres->ai_addrlen);
+#else
+	retval = connect (s, (struct sockaddr *) &address, sizeof (address));
+#endif
+	can_break_system_calls = 0;
+	if (retval == -1 && errno != EISCONN)
+	  {
+	    xerrno = errno;
+	    if (errno == EINTR)
+	      goto loop;
+	    if (errno == EADDRINUSE && retry < 20)
+	      {
+#ifdef __FreeBSD__
+		/* A delay here is needed on some FreeBSD systems,
+		   and it is harmless, since this retrying takes
+		   time anyway and should be infrequent.
+		   `sleep-for' allowed for quitting this loop with
+		   interrupts slowed down so it can't be used
+		   here.  Async timers should already be disabled
+		   at this point so we can use `sleep'.
+
+		   (Again, this was not conditionalized on FreeBSD.
+		   Let's not mess up systems without the problem. --ben) 
+		*/
+		sleep (1);
+#endif
+		retry++;
+		goto loop;
+	      }
+
+	    failed_connect = 1;
+	    close (s);
+            s = -1;
+
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
+	    speed_up_interrupts ();
+#endif
+
+	    continue;
+	  }
+
+#ifdef USE_GETADDRINFO
+	if (port == 0)
+	  {
+	    int gni;
+	    char servbuf[NI_MAXSERV];
+
+	    if (EQ (protocol, Qtcp))
+	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
+				 NULL, 0, servbuf, sizeof(servbuf),
+				 NI_NUMERICSERV);
+	    else /* EQ (protocol, Qudp) */
+	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
+				 NULL, 0, servbuf, sizeof(servbuf),
+				 NI_NUMERICSERV | NI_DGRAM);
+
+	    if (gni == 0)
+	      port = strtol (servbuf, NULL, 10);
+	  }
+
+	break;
+#endif /* USE_GETADDRINFO */
+      } /* address loop */
+
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
     speed_up_interrupts ();
-#endif /* ! HAVE_GETADDRINFO */
+#endif
+
+#ifdef USE_GETADDRINFO
+    freeaddrinfo (res);
+#endif
+
+    if (s < 0)
+      {
+	errno = xerrno;
+
+	if (failed_connect)
+	  report_file_error ("connection failed", list2 (host, name));
+	else
+	  report_file_error ("error creating socket", list1 (name));
+      }
   }
 
   inch = s;
@@ -1913,8 +1878,8 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
 
   set_socket_nonblocking_maybe (inch, port, "tcp");
 
-  *vinfd = (void*)inch;
-  *voutfd = (void*)outch;
+  *vinfd = (void *) inch;
+  *voutfd = (void *) outch;
 }
 
 
@@ -2015,7 +1980,9 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
      instead of 'sendto'. Consequently, we 'connect' this socket. */
 
   /* See open-network-stream-internal for comments on this part of the code */
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
   slow_down_interrupts ();
+#endif
 
  loop:
 
@@ -2024,10 +1991,14 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   SETJMP (break_system_call_jump);
   if (QUITP)
     {
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       speed_up_interrupts ();
+#endif
       REALLY_QUIT;
       /* In case something really weird happens ... */
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       slow_down_interrupts ();
+#endif
     }
 
   /* Break out of connect with a signal (it isn't otherwise possible).
@@ -2056,13 +2027,17 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
 
       close (rs);
       close (ws);
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
       speed_up_interrupts ();
+#endif
 
       errno = xerrno;
       report_file_error ("error connecting socket", list2(name, port));
     }
 
+#ifdef CONNECT_NEEDS_SLOWED_INTERRUPTS
   speed_up_interrupts ();
+#endif
 
   /* scope */
   if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,

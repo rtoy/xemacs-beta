@@ -139,6 +139,74 @@ If the string begins with `_', then this command will not cause the region
  set to t when the command exits successfully.
 You may use any of `@', `*' and `_' at the beginning of the string;
  they are processed in the order that they appear.
+
+
+When writing your own interactive spec, it can be useful to know the
+equivalent Lisp expressions for the various code letters.  They are:
+
+a -- (read-function "PROMPT")
+b -- (let ((def (current-buffer)))
+       (if (eq (selected-window) (active-minibuffer-window))
+           (setq def (other-buffer def))
+       (read-buffer "PROMPT" def t)))
+B -- (read-buffer "PROMPT" (other-buffer (current-buffer)))
+c -- (prog1
+         (let ((cursor-in-echo-area t))
+           (message "%s" "PROMPT")
+           (read-char))
+       (message nil))
+C -- (read-command "PROMPT")
+d -- (point)
+D -- (read-directory-name "PROMPT" nil default-directory t)
+e -- current-mouse-event ;; #### not quite right. needs access to the KEYS
+                         ;; argument of `call-interactively', but that's
+                         ;; currently impossible.
+f -- (read-file-name "PROMPT" nil nil 0)
+F -- (read-file-name "PROMPT")
+i -- nil
+k -- (read-key-sequence "PROMPT")
+K -- (read-key-sequence "PROMPT" nil t)
+m -- (mark)
+n -- (read-number "PROMPT")
+N -- (if current-prefix-arg
+         (prefix-numeric-value current-prefix-arg)
+       (read-number "PROMPT"))
+p -- (prefix-numeric-value current-prefix-arg)
+P -- current-prefix-arg
+r -- (if (and zmacs-regions (not zmacs-region-active-p))
+         (error "The region is not active now"))
+     (let ((tem (marker-buffer (mark-marker t))))
+       (unless (and tem (eq tem (current-buffer)))
+         (error "The mark is now set now")))
+     (region-beginning) +
+     (region-end)
+s -- (read-string "PROMPT")
+S -- (let (tem prev-tem)
+       (while (not tem)
+         (setq tem (completing-read "PROMPT" obarray nil nil prev-tem))
+         (setq prev-tem tem)
+         (setq tem (intern tem))
+         (if (= (length tem) 0)
+             (setq tem nil))))
+v -- (read-variable "PROMPT")
+x -- (read-expression "PROMPT")
+X -- (eval (read-expression "PROMPT"))
+z -- (and (fboundp 'read-coding-system) (read-coding-system "PROMPT"))
+Z -- (and current-prefix-arg (fboundp 'read-coding-system)
+       (read-coding-system "PROMPT"))
+
+`*' (barf-if-buffer-read-only)
+`@' (let ((event current-mouse-event)) ;; #### not quite right; needs the
+      (when event                      ;; value from the `e' spec above.
+        (let ((window event-window event))
+          (when window
+            (if (and (window-minibuffer-p window)
+                     (not (and (> (minibuffer-depth) 0)
+                               (eq window (active-minibuffer-window)))))
+              (error "Attempt to select inactive minibuffer window"))
+            (select window)))))
+`_' (setq zmacs-region-stays t)
+
 */
        (args))
 {

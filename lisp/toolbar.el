@@ -107,7 +107,7 @@ customized through the options menu."
 	   (not (featurep 'infodock))
 	   (or (eq locale 'global)
 	       (eq 'x (device-or-frame-type locale))))
-      (x-init-toolbar-from-resources locale)))
+      (declare-fboundp (x-init-toolbar-from-resources locale))))
 
 
 ;; #### Is this actually needed or will the code in

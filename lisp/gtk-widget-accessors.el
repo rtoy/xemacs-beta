@@ -1,3 +1,6 @@
+(globally-declare-fboundp
+ '(gtk-fundamental-type))
+
 (require 'gtk-ffi)
 
 (defconst GTK_TYPE_INVALID 0)

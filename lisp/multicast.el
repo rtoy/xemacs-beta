@@ -75,7 +75,7 @@ WARNING: it is *strongly* recommended to avoid using groups beginning with
 	 (error "invalid port specification."))
     (and (= 0 (setq ttl (string-to-int (match-string 3 address))))
 	 (error "invalid ttl specification."))
-    (open-multicast-group-internal name buffer dest port ttl)
+    (declare-fboundp (open-multicast-group-internal name buffer dest port ttl))
     ))
 
 ;;; multicast.el ends here

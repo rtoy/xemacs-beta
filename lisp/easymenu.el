@@ -159,7 +159,7 @@ is a list of menu items, as above."
 		    ,doc
 		    (interactive "@e")
 		    (run-hooks 'activate-menubar-hook)
-		    (setq zmacs-region-stays 't)
+		    (setq zmacs-region-stays t)
 		    (popup-menu ,symbol)))))
 
 (defun easy-menu-change (&rest args)

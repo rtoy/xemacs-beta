@@ -461,8 +461,8 @@ int preparing_for_armageddon;
 static JMP_BUF run_temacs_catch;
 
 static int run_temacs_argc;
-static char **run_temacs_argv;
-static char *run_temacs_args;
+static Extbyte **run_temacs_argv;
+static Extbyte *run_temacs_args;
 static size_t run_temacs_argv_size;
 static size_t run_temacs_args_size;
 
@@ -657,7 +657,7 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 	  if (i == 0)
 	    {
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
-	      char full_exe_path[MAX_PATH];
+	      Extbyte full_exe_path[MAX_PATH];
 	      Lisp_Object fullpath;
 
 	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
@@ -668,7 +668,7 @@ make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 		Extbyte *fullpathext;
 
 		LISP_STRING_TO_EXTERNAL (fullpath, fullpathext,
-				  Qdll_filename_encoding);
+					 Qdll_filename_encoding);
 		(void) dll_init (fullpathext);
 	      }
 #endif
@@ -994,6 +994,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
       noninteractive = 1;
     }
 
+  /* #### is it correct that -debug-paths is handled here (and presumably
+     removed), and then checked again below? */
   if (argmatch (argv, argc, "-debug-paths", "--debug-paths",
 		11, NULL, &skip_args))
       debug_paths = 1;

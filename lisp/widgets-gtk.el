@@ -28,6 +28,17 @@
 
 ;; This file is dumped with XEmacs (when embedded widgets are compiled in).
 
+(globally-declare-fboundp
+ '(gtk-button-new-with-label
+   gtk-signal-connect
+   gtk-radio-button-new-with-label gtk-radio-button-group
+   gtk-toggle-button-set-active gtk-check-button-new-with-label
+   gtk-widget-show-all gtk-notebook-new gtk-notebook-append-page
+   gtk-vbox-new gtk-label-new gtk-adjustment-new
+   gtk-progress-bar-new-with-adjustment gtk-adjustment-set-value
+   gtk-entry-new gtk-entry-set-text gtk-widget-set-style
+   gtk-widget-get-style))
+
 (defvar foo)
 
 (defun gtk-widget-instantiate-button-internal (plist callback)

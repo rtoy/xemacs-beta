@@ -31,6 +31,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-store-cutbuffer x-get-resource))
+
 ;;(define-key global-map 'button2 'x-set-point-and-insert-selection)
 ;; This is reserved for use by Hyperbole.
 ;;(define-key global-map '(shift button2) 'x-mouse-kill)

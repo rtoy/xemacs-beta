@@ -128,7 +128,7 @@ This function is used when `adaptive-fill-regexp' does not match."
       (forward-char -1)
       (if (< (point) opoint)
 	  (forward-char))))
-  (if (featurep 'mule) (kinsoku-process-extend)))
+  (if (featurep 'mule) (declare-fboundp (kinsoku-process-extend))))
 
 (defun fill-end-of-sentence-p ()
   (save-excursion
@@ -458,7 +458,7 @@ space does not end a sentence, so don't break a line there."
 		      ;; 97/3/14 jhod: Kinsoku
 		      ;(skip-chars-backward "^ \n" linebeg)))
 		      (fill-move-backward-to-break-point re-break-point linebeg)))
-		(if (featurep 'mule) (kinsoku-process))
+		(if (featurep 'mule) (declare-fboundp (kinsoku-process)))
 		;end patch
 
 		;; If the left margin and fill prefix by themselves
@@ -662,14 +662,13 @@ space does not end a sentence, so don't break a line there."
 	      (fill-region-as-paragraph (point) end justify nosqueeze)
 	    (goto-char end)))))))
 
-;; XEmacs addition: from Tim Bradshaw <tfb@edinburgh.ac.uk>
 (defun fill-paragraph-or-region (arg)
   "Fill the current region, if it's active; otherwise, fill the paragraph.
 See `fill-paragraph' and `fill-region' for more information."
   (interactive "*P")
   (if (region-active-p)
-      (fill-region (point) (mark) arg)
-    (fill-paragraph arg)))
+      (call-interactively 'fill-region)
+    (call-interactively 'fill-paragraph)))
 
 
 (defconst default-justification 'left
@@ -787,7 +786,7 @@ If the mark is not active, this applies to the current paragraph."
 (defun find-space-insertable-point ()
  "Search backward for a permissible point for inserting justification spaces."
  (if (boundp 'space-insertable)
-     (if (re-search-backward space-insertable nil t)
+     (if (re-search-backward (declare-boundp space-insertable) nil t)
 	 (progn (forward-char 1)
 		t)
        nil)

@@ -248,8 +248,8 @@ This is similar to `map-char-table', but works only on syntax tables, and
 		 (if (equal first last)
 		     (cond ((vectorp first)
 			    (princ (format "%s, row %d\t"
-					   (charset-name
-					    (aref first 0))
+					   (declare-fboundp (charset-name
+							     (aref first 0)))
 					   (aref first 1))
 				   stream))
 			   ((symbolp first)
@@ -260,8 +260,8 @@ This is similar to `map-char-table', but works only on syntax tables, and
 			    (princ "\t" stream)))
 		   (cond ((vectorp first)
 			  (princ (format "%s, rows %d .. %d\t"
-					 (charset-name
-					  (aref first 0))
+					 (declare-fboundp (charset-name
+							   (aref first 0)))
 					 (aref first 1)
 					 (aref last 1))
 				 stream))
@@ -303,8 +303,8 @@ This is similar to `map-char-table', but works only on syntax tables, and
 		 (and (characterp range)
 		      (characterp first-char)
 		      (or (not (featurep 'mule))
-			  (eq (char-charset range)
-			      (char-charset first-char)))
+			  (eq (declare-fboundp (char-charset range))
+			      (declare-fboundp (char-charset first-char))))
 		      (= (char-int last-char) (1- (char-int range))))
 		 (and (vectorp range)
 		      (vectorp first-char)

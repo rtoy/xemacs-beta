@@ -226,7 +226,7 @@ VALUE is assumed to be a list of widgets."
   "Insert description of WIDGET's KEY VALUE.
 Nothing is assumed about value."
   (let ((pp (condition-case signal
-		(pp-to-string value)
+		(declare-fboundp (pp-to-string value))
 	      (error (prin1-to-string signal)))))
     (when (string-match "\n\\'" pp)
       (setq pp (substring pp 0 (1- (length pp)))))

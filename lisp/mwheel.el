@@ -45,6 +45,10 @@
 (require 'custom)
 (require 'cl)
 
+(globally-declare-fboundp
+ '(event-basic-type
+   posn-window event-start mwheel-event-window mwheel-event-button))
+
 (defcustom mwheel-scroll-amount '(5 . 1)
   "Amount to scroll windows by when spinning the mouse wheel.
 This is actually a cons cell, where the first item is the amount to scroll

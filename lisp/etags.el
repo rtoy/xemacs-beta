@@ -172,6 +172,11 @@ This affects the `tags-search' and `tags-query-replace' commands."
   :type 'boolean
   :group 'etags)
 
+(defcustom tags-check-parent-directories-for-tag-files t
+  "*If non-nil, look for TAGS files in all parent directories."
+  :type 'boolean
+  :group 'etags)
+
 
 ;; Buffer tag tables.
 
@@ -185,10 +190,13 @@ the current buffer."
     ;; Current directory
     (when (file-readable-p (concat default-directory "TAGS"))
       (push (concat default-directory "TAGS") result))
-    ;; Parent directory
-    (let ((parent-tag-file (expand-file-name "../TAGS" default-directory)))
-      (when (file-readable-p parent-tag-file)
-	(push parent-tag-file result)))
+    ;; Parent directories
+    (when tags-check-parent-directories-for-tag-files
+      (let ((cur default-directory))
+	(while (file-exists-p (setq cur (expand-file-name ".." cur)))
+	  (let ((parent-tag-file (expand-file-name "TAGS" cur)))
+	    (when (file-readable-p parent-tag-file)
+	      (push parent-tag-file result))))))
     ;; tag-table-alist
     (let* ((key (or buffer-file-name
 		    (concat default-directory (buffer-name))))

@@ -140,10 +140,11 @@ also tried in the given order.
 
 You can only play sound files if you are running on display 0 of the
 console of a machine with native sound support or running a NetAudio
-server and XEmacs has the necessary sound support compiled in.
+or ESD server and XEmacs has the necessary sound support compiled in.
 
-The sound file must be in the Sun/NeXT U-LAW format, except on Linux,
-where .wav files are also supported by the sound card drivers."
+The sound file must be in the Sun/NeXT U-LAW format, except on Linux
+and MS Windows, where .wav files are also supported by the sound card
+drivers."
   (interactive "fSound file name: \n\
 SSymbol to name this sound: \n\
 nVolume (0 for default): ")
@@ -151,17 +152,14 @@ nVolume (0 for default): ")
     (error "sound-name not a symbol"))
   (unless (or (null volume) (integerp volume))
     (error "volume not an integer or nil"))
-  (let ((file (if (file-name-absolute-p filename)
-		  ;; For absolute file names, we don't have on choice on the
-		  ;; location, but sound extensions however can still be tried
-		  (setq file (locate-file filename
-					  (list (file-name-directory filename))
-					  (split-string sound-extension-list
-							":")))
-		(setq file (locate-file filename
-					default-sound-directory-list
-					(split-string sound-extension-list
-						      ":")))))
+  (let ((file
+	 ;; For absolute file names, we don't have on choice on the
+	 ;; location, but sound extensions however can still be tried
+	 (locate-file filename
+		      (if (file-name-absolute-p filename)
+			  (list (file-name-directory filename))
+			default-sound-directory-list)
+		      (split-string sound-extension-list ":")))
 	buf data)
     (unless file
       (error "Couldn't load sound file %s" filename))

@@ -374,28 +374,35 @@ Optional arg NO-MICE means that button events are not allowed."
 
 (defun key-sequence-list-description (keys)
   "Convert a key sequence KEYS to the full [(modifiers... key)...] form.
-Argument KEYS can be in any form accepted by `define-key' function."
+Argument KEYS can be in any form accepted by `define-key' function.
+The output is always in a canonical form, meaning you can use this
+function to determine if two key sequence specifications are equivalent
+by comparing the respective outputs of this function using `equal'."
   (let ((vec
-	  (cond ((vectorp keys)
-		 keys)
-		((stringp keys)
-		 (vconcat keys))
-		(t
-		 (vector keys))))
-	 (event-to-list
-	  #'(lambda (ev)
-	    (append (event-modifiers ev) (list (event-key ev))))))
-    (mapvector
-     #'(lambda (key)
-       (cond ((key-press-event-p key)
-	      (funcall event-to-list key))
-	     ((characterp key)
-	      (funcall event-to-list (character-to-event key)))
-	     ((listp key)
-	      key)
-	     (t
-	      (list key))))
-     vec)))
+	 (cond ((vectorp keys)
+		keys)
+	       ((stringp keys)
+		(vconcat keys))
+	       (t
+		(vector keys)))))
+    (flet ((event-to-list (ev)
+	     (append (event-modifiers ev) (list (event-key ev)))))
+      (mapvector
+       #'(lambda (key)
+	   (let* ((full-key
+		   (cond ((key-press-event-p key)
+			  (event-to-list key))
+			 ((characterp key)
+			  (event-to-list (character-to-event key)))
+			 ((listp key)
+			  (copy-sequence key))
+			 (t
+			  (list key))))
+		  (keysym (car (last full-key))))
+	     (if (characterp keysym)
+		 (setcar (last full-key) (intern (char-to-string keysym))))
+	     full-key))
+       vec))))
 
 
 ;;; Support keyboard commands to turn on various modifiers.

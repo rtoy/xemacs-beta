@@ -221,6 +221,7 @@ where each <cache-record> has the form
 (defun read-library-internal (FILE FILTER FLAG)
   "Don't call this."
   ;; Relies on read-library-internal-search-path being let-bound
+  (declare (special read-library-internal-search-path))
   (let ((completion-table
 	 (lib-complete:get-completion-table
 	  FILE read-library-internal-search-path FILTER)))
@@ -248,6 +249,7 @@ Optional sixth argument FILTER can be used to provide a function to
   filter the completions.  This function is passed the filename, and should
   return a transformed filename (possibly a null transformation) or nil, 
   indicating that the filename should not be included in the completions."
+  (declare (special read-library-internal-search-path))
   (let* ((read-library-internal-search-path SEARCH-PATH)
 	 (library (completing-read PROMPT 'read-library-internal 
 				   FILTER (or MUST-MATCH FULL) nil)))
@@ -258,8 +260,10 @@ Optional sixth argument FILTER can be used to provide a function to
      (t library))))
 
 (defun read-library-name (prompt)
-  "PROMPTs for and returns an existing Elisp library name (without any suffix) or the empty string."
+  "PROMPTs for and returns an existing Elisp library name (without any suffix)
+or the empty string."
   (interactive)
+  (declare (special read-library-internal-search-path))
   (let ((read-library-internal-search-path load-path))
     (completing-read prompt
 		     'read-library-internal 

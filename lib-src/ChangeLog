@@ -1,3 +1,7 @@
+2001-04-29  Ben Wing  <ben@xemacs.org>
+
+	* gnuclient.c (filename_expand): Warning fix.
+
 2001-04-20  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore: Added stuff for Windows.

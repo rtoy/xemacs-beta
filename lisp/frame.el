@@ -782,7 +782,8 @@ all frames that were visible, and iconify all frames that were not."
   (cond ((device-on-window-system-p)
 	 (iconify-emacs))
 	((and (eq (device-type) 'tty)
-	      (console-tty-controlling-process (selected-console)))
+	      (declare-fboundp (console-tty-controlling-process
+				(selected-console))))
 	 (suspend-console (selected-console)))
 	(t
 	 (suspend-emacs))))
@@ -797,7 +798,8 @@ all frames that were visible, and iconify all frames that were not."
   (cond ((device-on-window-system-p)
 	 (iconify-frame))
 	((and (eq (frame-type) 'tty)
-	      (console-tty-controlling-process (selected-console)))
+	      (declare-fboundp (console-tty-controlling-process
+				(selected-console))))
 	 (suspend-console (selected-console)))
 	(t
 	 (suspend-emacs))))

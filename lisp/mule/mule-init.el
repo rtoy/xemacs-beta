@@ -1,4 +1,4 @@
-;; Mule default configuration file
+;; Mule default configuration file -*- coding: iso-2022-7bit; -*-
 
 ;; This file is part of XEmacs.
 

@@ -183,7 +183,253 @@ If (featurep 'FEATURE), evals now; otherwise adds an elt to
 	   (funcall bodythunk)
 	 (setq after-load-alist (cons '(,file . (list 'lambda '() bodythunk))
 				      after-load-alist))))))
-      
+
+
+
+;;; Functions to cleanly eliminate warnings about undefined functions
+;;; or variables when the code knows what it's doing.  These macros DO
+;;; NOT rely on any byte-compiler changes, and thus can be copied into
+;;; a package and used within it.
+
+;; NOTE: As a result of the above requirement, the macros rely on
+;; "tricks" to get the warnings suppressed.  A cleaner way, of course,
+;; would be to extend the byte compiler to provide a proper interface.
+
+;; #### Should we require an unquoted symbol rather than a quoted one,
+;; as we currently do?  The quoting gets no generality, as `eval' is
+;; called at compile time.  But most functions and macros want quoted
+;; arguments, and I find it extremely confusing to deal with cases
+;; such as `throw' requiring a quoted argument but `block' an unquoted
+;; one.
+
+(put 'with-boundp 'lisp-indent-function 1)
+(defmacro with-boundp (symbols &rest body)
+  "Evaluate BODY, but do not issue bytecomp warnings about SYMBOLS undefined.
+SYMBOLS can be a symbol or a list of symbols and must be quoted.  When
+compiling this file, the warning `reference to free variable SYMBOL'
+will not occur.  This is a clean way to avoid such warnings.  See also
+`declare-boundp' and `if-boundp'."
+  (setq symbols (eval symbols))
+  (unless (consp symbols)
+      (setq symbols (list symbols)))
+  `(progn
+     (declare (special ,@symbols))
+     ,@body))
+
+(put 'if-boundp 'lisp-indent-function 2)
+(defmacro if-boundp (symbol then &rest else)
+  "Equivalent to (if (boundp SYMBOL) THEN ELSE) but handles bytecomp warnings.
+When compiling this file, the warning `reference to free variable SYMBOL'
+will not occur.  This is a clean way to avoid such warnings.  See also
+`with-boundp' and `declare-boundp'."
+  `(with-boundp ,symbol
+     (if (boundp ,symbol) ,then ,@else)))
+
+(defmacro declare-boundp (symbol)
+  "Evaluate SYMBOL without bytecomp warnings about the symbol.
+Sample usage is
+
+  (declare-boundp gpm-minor-mode)
+
+which is equivalent to
+
+  (with-fboundp 'gpm-minor-mode
+    gpm-minor-mode)"
+  `(with-boundp ',symbol ,symbol))
+
+(defmacro globally-declare-boundp (symbol)
+  "Declare that all free uses of SYMBOL in this file are valid.
+SYMBOL can also be a list of symbols.  SYMBOL must be quoted.
+
+When compiling this file, the warning `reference to free variable
+SYMBOL' will not occur regardless of where calls to SYMBOL occur in
+the file.
+
+In general, you should *NOT* use this; use `declare-boundp',
+`if-boundp', or `with-boundp' to wrap individual uses, as necessary.
+That way, you're more likely to remember to put in the explicit checks
+for the variable's existence that are usually necessary.  However,
+`globally-declare-boundp' is better in some circumstances, such as
+when writing an ELisp package that makes integral use of
+optionally-compiled-in functionality (typically, an interface onto a
+system library) and checks for the existence of the functionality at
+some entry point to the package.  See `globally-declare-fboundp' for
+more information."
+  (setq symbol (eval symbol))
+  (if (not (consp symbol))
+      (setq symbol (list symbol)))
+  `(progn
+     ;; (defvar FOO) has no side effects.
+     ,@(mapcar #'(lambda (sym) `(defvar ,sym)) symbol)))
+
+(defun byte-compile-with-fboundp (form)
+  (byte-compile-form (cons 'progn (cdr (cdr form))))
+  ;; Unfortunately, byte-compile-unresolved-functions is used not only
+  ;; for unresolved-function warnings, but also in connection with the
+  ;; following warnings:
+
+  ;; "defsubst %s was used before it was defined"
+  ;; "%s being defined to take %s%s, but was previously called with %s"
+
+  ;; By hacking byte-compile-unresolved-functions like this, we
+  ;; effectively disable these warnings.  But code should not be using
+  ;; `with-fboundp' with a function defined later on in the same
+  ;; file, so this is not a big deal.
+
+  (let ((symbols (eval (car (cdr form)))))
+    (unless (consp symbols)
+      (setq symbols (list symbols)))
+    (setq symbols (mapcar #'(lambda (sym) (cons sym nil)) symbols))
+    (setq byte-compile-unresolved-functions
+	  (set-difference byte-compile-unresolved-functions symbols
+			  :key #'car))
+    ))
+
+;; EEEEEEEEVIL hack.  We need to create our own byte-compilation
+;; method so that the proper variables are bound while compilation
+;; takes place (which is when the warnings get noticed and batched
+;; up).  What we really want to do is make `with-fboundp' a macro
+;; that simply `progn's its BODY; but GOD DAMN IT, macros can't have
+;; their own byte-compilation methods!  So we make `with-fboundp' a
+;; macro calling `with-fboundp-1', which is cleverly aliased to
+;; progn.  This way we can put a byte-compilation method on
+;; `with-fboundp-1', and when interpreting, progn will duly skip
+;; the first, quoted argument, i.e. the symbol name. (We could make
+;; `with-fboundp-1' a regular function, but then we'd have to thunk
+;; BODY and eval it at runtime.  We could probably just do this using
+;; (apply 'progn BODY), but the existing method is more obviously
+;; guaranteed to work.)
+;;
+;; In defense, cl-macs.el does a very similar thing with
+;; `cl-block-wrapper'.
+
+(put 'with-fboundp-1 'byte-compile 'byte-compile-with-fboundp)
+(defalias 'with-fboundp-1 'progn)
+
+(put 'with-fboundp 'lisp-indent-function 1)
+(defmacro with-fboundp (symbol &rest body)
+  "Evaluate BODY, but do not issue bytecomp warnings about SYMBOL.
+SYMBOL must be quoted.  When compiling this file, the warning `the
+function SYMBOL is not known to be defined' will not occur.  This is a
+clean way to avoid such warnings.  See also `declare-fboundp',
+`if-fboundp', and `globally-declare-fboundp'."
+  `(with-fboundp-1 ,symbol ,@body))
+
+(put 'if-fboundp 'lisp-indent-function 2)
+(defmacro if-fboundp (symbol then &rest else)
+  "Equivalent to (if (fboundp SYMBOL) THEN ELSE) but handles bytecomp warnings.
+When compiling this file, the warning `the function SYMBOL is not
+known to be defined' will not occur.  This is a clean way to avoid
+such warnings.  See also `declare-fboundp', `with-fboundp', and
+`globally-declare-fboundp'."
+  `(with-fboundp ,symbol
+     (if (fboundp ,symbol) ,then ,@else)))
+
+(defmacro declare-fboundp (form)
+  "Execute FORM (a function call) without bytecomp warnings about the call.
+Sample usage is
+
+  (declare-fboundp (x-keysym-on-keyboard-sans-modifiers-p 'backspace))
+
+which is equivalent to
+
+  (with-fboundp 'x-keysym-on-keyboard-sans-modifiers-p
+    (x-keysym-on-keyboard-sans-modifiers-p 'backspace))"
+  `(with-fboundp ',(car form) ,form))
+
+(defmacro globally-declare-fboundp (symbol)
+  "Declare that all calls to function SYMBOL in this file are valid.
+SYMBOL can also be a list of symbols.  SYMBOL must be quoted.
+
+When compiling this file, the warning `the function SYMBOL is not
+known to be defined' will not occur regardless of where calls to
+SYMBOL occur in the file.
+
+In general, you should *NOT* use this; use `declare-fboundp',
+`if-fboundp', or `with-fboundp' to wrap individual uses, as necessary.
+That way, you're more likely to remember to put in the explicit checks
+for the function's existence that are usually necessary.  However,
+`globally-declare-fboundp' is better in some circumstances, such as
+when writing an ELisp package that makes integral use of
+optionally-compiled-in functionality (typically, an interface onto a
+system library) and checks for the existence of the functionality at
+some entry point to the package.  The file `ldap.el' is a good
+example: It provides a layer on top of the optional LDAP ELisp
+primitives, makes calls to them throughout its code, and verifies the
+presence of LDAP support at load time.  Putting calls to
+`declare-fboundp' throughout the code would be a major annoyance."
+  (when (cl-compiling-file)
+    (setq symbol (eval symbol))
+    (if (not (consp symbol))
+	(setq symbol (list symbol)))
+    ;; Another hack.  This works because the autoload environment is
+    ;; currently used ONLY to suppress warnings, and the actual
+    ;; autoload definition is not used. (NOTE: With this definition,
+    ;; we will get spurious "multiple autoloads for %s" warnings if we
+    ;; have an autoload later in the file for any functions in SYMBOL.
+    ;; This is not something that code should ever do, though.)
+    (setq byte-compile-autoload-environment
+	  (append (mapcar #'(lambda (sym) (cons sym nil)) symbol)
+		  byte-compile-autoload-environment)))
+  nil)
+
+(defun byte-compile-with-byte-compiler-warnings-suppressed (form)
+  (let ((byte-compile-warnings byte-compile-warnings)
+	(types (car (cdr form))))
+    (unless (consp types)
+      (setq types (list types)))
+    (if (eq byte-compile-warnings t)
+	(setq byte-compile-warnings byte-compile-default-warnings))
+    (setq byte-compile-warnings (set-difference byte-compile-warnings types))
+    (byte-compile-form (cons 'progn (cdr (cdr form))))))
+
+;; Same hack here as with `with-fboundp'.
+(put 'with-byte-compiler-warnings-suppressed-1 'byte-compile
+     'byte-compile-with-byte-compiler-warnings-suppressed)
+(defalias 'with-byte-compiler-warnings-suppressed-1 'progn)
+
+(put 'with-byte-compiler-warnings-suppressed 'lisp-indent-function 1)
+(defmacro with-byte-compiler-warnings-suppressed (type &rest body)
+  "Evaluate BODY, but do not issue bytecomp warnings TYPE.
+TYPE should be one of `redefine', `callargs', `subr-callargs',
+`free-vars', `unresolved', `unused-vars', `obsolete', or `pedantic',
+or a list of one or more of these symbols. (See `byte-compile-warnings'.)
+TYPE must be quoted.
+
+NOTE: You should *NOT* under normal circumstances be using this!
+There are better ways of avoiding most of these warnings.  In particular:
+
+-- use (declare (special ...)) if you are making use of
+   dynamically-scoped variables.
+-- use `with-fboundp', `declare-fboundp', `if-fboundp', or
+   `globally-declare-fboundp' to avoid warnings about undefined
+   functions when you know the function actually exists.
+-- use `with-boundp', `declare-boundp', or `if-boundp' to avoid
+   warnings about undefined variables when you know the variable
+   actually exists.
+-- use `with-obsolete-variable' or `with-obsolete-function' if you
+   are purposely using such a variable or function."
+  `(with-byte-compiler-warnings-suppressed-1 ,type ,@body))
+
+;; #### These should be more clever.  You could (e.g.) try fletting
+;; `byte-compile-obsolete' or temporarily removing the obsolete info
+;; from the symbol and putting it back with an unwind-protect. (Or
+;; better, modify the byte-compiler to provide a proper solution, and
+;; fix these macros to use it if available, or fall back on the way
+;; below.  Remember, these definitions need to work with an unchanged
+;; byte compiler so that they can be copied and used in packages.)
+
+(put 'with-obsolete-variable 'lisp-indent-function 1)
+(defmacro with-obsolete-variable (symbol &rest body)
+  "Evaluate BODY but do not warn about usage of obsolete variable SYMBOL.
+SYMBOL must be quoted.  See also `with-obsolete-function'."
+  `(with-byte-compiler-warnings-suppressed 'obsolete ,@body))
+
+(put 'with-obsolete-function 'lisp-indent-function 1)
+(defmacro with-obsolete-function (symbol &rest body)
+  "Evaluate BODY but do not warn about usage of obsolete function SYMBOL.
+SYMBOL must be quoted.  See also `with-obsolete-variable'."
+  `(with-byte-compiler-warnings-suppressed 'obsolete ,@body))
 
 
 ;;; Interface to file-local byte-compiler parameters.
@@ -222,8 +468,11 @@ some subset of the following flags:
   unused-vars	references to non-global variables bound but not referenced.
   unresolved	calls to unknown functions.
   callargs	lambda calls with args that don't match the definition.
+  subr-callargs	calls to subrs with args that don't match the definition.
   redefine	function cell redefined from a macro to a lambda or vice
 		versa, or redefined to take a different number of arguments.
+  obsolete	use of an obsolete function or variable.
+  pedantic	warn of use of compatible symbols.
 
 If the first element if the list is `+' or `-' then the specified elements 
 are added to or removed from the current set of warnings, instead of the

@@ -1,4 +1,4 @@
-;;; misc-lang.el --- support for miscellaneous languages (characters)
+;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.

@@ -1,4 +1,4 @@
-;;; mule-charset.el --- Charset functions for Mule.
+;;; mule-charset.el --- Charset functions for Mule. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.

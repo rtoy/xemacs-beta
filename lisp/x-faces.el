@@ -62,6 +62,10 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-get-resource-and-maybe-bogosity-check
+   x-get-resource x-init-pointer-shape))
+
 (defconst x-font-regexp nil)
 (defconst x-font-regexp-head nil)
 (defconst x-font-regexp-head-2 nil)

@@ -568,13 +568,18 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   CHECK_STRING (program);
 
   /* Make sure that the child will be able to chdir to the current
-     buffer's current directory, or its unhandled equivalent.  We
+     buffer's current directory, or its unhandled equivalent. [[ We
      can't just have the child check for an error when it does the
-     chdir, since it's in a vfork.
+     chdir, since it's in a vfork. ]] -- not any more, we don't use
+     vfork. -ben
 
-     Note: these assignments and calls are like this in order to insure
-     "caller protects args" GC semantics. */
+     Note: These calls are spread out to insure that the return values
+     of the calls (which may be newly-created strings) are properly
+     GC-protected. */
   current_dir = current_buffer->directory;
+    /* If the current dir has no terminating slash, we'll get undesirable
+       results, so put the slash back. */
+  current_dir = Ffile_name_as_directory (current_dir);
   current_dir = Funhandled_file_name_directory (current_dir);
   current_dir = expand_and_dir_to_file (current_dir, Qnil);
 
@@ -884,7 +889,6 @@ read_process_output (Lisp_Object process)
       Bufpos old_point;
       Bufpos old_begv;
       Bufpos old_zv;
-      int old_zmacs_region_stays = zmacs_region_stays;
       struct gcpro gcpro1, gcpro2;
       struct buffer *buf = XBUFFER (p->buffer);
 
@@ -952,8 +956,6 @@ read_process_output (Lisp_Object process)
 			     p->buffer);
 	}
 
-      /* Handling the process output should not deactivate the mark.  */
-      zmacs_region_stays = old_zmacs_region_stays;
       buf->read_only = old_read_only;
       old_point = bufpos_clip_to_bounds (BUF_BEGV (buf),
 					 old_point,

@@ -61,9 +61,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_OFFIX_DND
 #include "offix.h"
 #endif
-#if defined (HAVE_OFFIX_DND) || defined (HAVE_CDE)
-#include "events-mod.h"
-#endif
 
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_x_frame_plist;

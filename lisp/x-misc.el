@@ -31,6 +31,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-get-resource))
+
 (defun x-bogosity-check-resource (name class type)
   "Check for a bogus resource specification."
   (let ((bogus (x-get-resource

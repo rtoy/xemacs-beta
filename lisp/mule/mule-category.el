@@ -1,4 +1,4 @@
-;;; mule-category.el --- category functions for XEmacs/Mule.
+;;; mule-category.el --- category functions for XEmacs/Mule. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.

@@ -58,10 +58,10 @@
 ;; this isn't a user-visible change.  These functions have also been altered
 ;; to use (mark t) for the same reason.
 
-;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added kinsoku processing (support
-;; for filling of Asian text) into the fill code. This was ripped bleeding from
-;; Mule-2.3, and could probably use some feature additions (like additional wrap
-;; styles, etc)
+;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added kinsoku processing
+;; (support for filling of Asian text) into the fill code. This was
+;; ripped bleeding from Mule-2.3, and could probably use some feature
+;; additions (like additional wrap styles, etc)
 
 ;; 97/06/11 Steve Baur (steve@xemacs.org) Convert use of
 ;;  (preceding|following)-char to char-(after|before).
@@ -453,7 +453,8 @@ popular alternate setting."
 (defsubst delete-forward-p ()
   (and delete-key-deletes-forward
        (or (not (eq (device-type) 'x))
-	   (x-keysym-on-keyboard-sans-modifiers-p 'backspace))))
+	   (declare-fboundp
+	     (x-keysym-on-keyboard-sans-modifiers-p 'backspace)))))
 
 (defun backward-or-forward-delete-char (arg)
   "Delete either one character backwards or one character forwards.
@@ -2791,6 +2792,15 @@ With argument, kill comments on that many lines starting with this one."
       (if arg (forward-line 1))
       (setq count (1- count)))))
 
+;; This variable: Synched up with 20.7.
+(defvar comment-padding 1
+  "Number of spaces `comment-region' puts between comment chars and text.
+
+Extra spacing between the comment characters and the comment text
+makes the comment easier to read.  Default is 1.  Nil means 0 and is
+more efficient.")
+
+;; This function: Synched up with 20.7.
 (defun comment-region (start end &optional arg)
   "Comment or uncomment each line in the region.
 With just C-u prefix arg, uncomment each line in region.
@@ -2808,6 +2818,8 @@ not end the comment.  Blank lines do not get comments."
   (save-excursion
     (save-restriction
       (let ((cs comment-start) (ce comment-end)
+	    (cp (when comment-padding
+		  (make-string comment-padding ? )))
 	    numarg)
         (if (consp arg) (setq numarg t)
 	  (setq numarg (prefix-numeric-value arg))
@@ -2820,17 +2832,40 @@ not end the comment.  Blank lines do not get comments."
 	;; Loop over all lines from START to END.
         (narrow-to-region start end)
         (goto-char start)
-        (while (not (eobp))
-          (if (or (eq numarg t) (< numarg 0))
-	      (progn
+	;; if user didn't specify how many comments to remove, be smart
+	;; and remove the minimal number that all lines have.  that way,
+	;; comments in a region of Elisp code that gets commented out will
+	;; get put back correctly.
+	(if (eq numarg t)
+	    (let ((min-comments 999999))
+	      (while (not (eobp))
+		(let ((this-comments 0))
+		  (while (looking-at (regexp-quote cs))
+		    (incf this-comments)
+		    (forward-char (length cs)))
+		  (if (and (> this-comments 0) (< this-comments min-comments))
+		      (setq min-comments this-comments))
+		  (forward-line 1)))
+	      (if (< min-comments 999999)
+		  (setq numarg (- min-comments)))
+	      (goto-char start)))
+	(if (or (eq numarg t) (< numarg 0))
+	    (while (not (eobp))
+	      (let (found-comment)
 		;; Delete comment start from beginning of line.
 		(if (eq numarg t)
 		    (while (looking-at (regexp-quote cs))
+		      (setq found-comment t)
 		      (delete-char (length cs)))
 		  (let ((count numarg))
 		    (while (and (> 1 (setq count (1+ count)))
 				(looking-at (regexp-quote cs)))
+		      (setq found-comment t)
 		      (delete-char (length cs)))))
+		;; Delete comment padding from beginning of line
+		(when (and found-comment comment-padding
+			   (looking-at (regexp-quote cp)))
+		  (delete-char comment-padding))
 		;; Delete comment end from end of line.
                 (if (string= "" ce)
 		    nil
@@ -2840,23 +2875,29 @@ not end the comment.  Blank lines do not get comments."
 			;; This is questionable if comment-end ends in
 			;; whitespace.  That is pretty brain-damaged,
 			;; though.
-			(skip-chars-backward " \t")
-			(if (and (>= (- (point) (point-min)) (length ce))
-				 (save-excursion
-				   (backward-char (length ce))
-				   (looking-at (regexp-quote ce))))
-			    (delete-char (- (length ce)))))
+			(while (progn (skip-chars-backward " \t")
+				      (and (>= (- (point) (point-min))
+					       (length ce))
+					   (save-excursion
+					     (backward-char (length ce))
+					     (looking-at (regexp-quote ce)))))
+			  (delete-char (- (length ce)))))
 		    (let ((count numarg))
 		      (while (> 1 (setq count (1+ count)))
 			(end-of-line)
 			;; This is questionable if comment-end ends in
 			;; whitespace.  That is pretty brain-damaged though
 			(skip-chars-backward " \t")
-			(save-excursion
-			  (backward-char (length ce))
-			  (if (looking-at (regexp-quote ce))
-			      (delete-char (length ce))))))))
-		(forward-line 1))
+			(if (>= (- (point) (point-min)) (length ce))
+			    (save-excursion
+			      (backward-char (length ce))
+			      (if (looking-at (regexp-quote ce))
+				  (delete-char (length ce)))))))))
+		(forward-line 1)))
+
+	  (when comment-padding
+	    (setq cs (concat cs cp)))
+	  (while (not (eobp))
 	    ;; Insert at beginning and at end.
             (if (looking-at "[ \t]*$") ()
               (insert cs)
@@ -2989,12 +3030,11 @@ indicating whether soft newlines should be inserted.")
 		(fill-point
 		 (let ((opoint (point))
 		       bounce
-		       ;; 97/3/14 jhod: Kinsoku
-		       (re-break-point (if (featurep 'mule)
-					    (concat "[ \t\n]\\|" word-across-newline
-						    ".\\|." word-across-newline)
-					"[ \t\n]"))
-		       ;; end patch
+		       (re-break-point ;; Kinsoku processing
+			(if (featurep 'mule)
+			    (concat "[ \t\n]\\|" word-across-newline
+				    ".\\|." word-across-newline)
+			  "[ \t\n]"))
 		       (first t))
 		   (save-excursion
 		     (move-to-column (1+ fill-column))
@@ -3011,24 +3051,21 @@ indicating whether soft newlines should be inserted.")
 						     (and (looking-at "\\. ")
 							  (not (looking-at "\\.  "))))))
 		       (setq first nil)
-		       ;; 97/3/14 jhod: Kinsoku
-		       ; (skip-chars-backward "^ \t\n"))
+		       ;; XEmacs: change for Kinsoku processing
 		       (fill-move-backward-to-break-point re-break-point)
-		       ;; end patch
 		       ;; If we find nowhere on the line to break it,
 		       ;; break after one word.  Set bounce to t
 		       ;; so we will not keep going in this while loop.
 		       (if (bolp)
 			   (progn
-			     ;; 97/3/14 jhod: Kinsoku
-			     ; (re-search-forward "[ \t]" opoint t)
+			     ;; XEmacs: change for Kinsoku processing
 			     (fill-move-forward-to-break-point re-break-point
 							       opoint)
-			     ;; end patch
 			     (setq bounce t)))
 		       (skip-chars-backward " \t"))
 		     (if (and (featurep 'mule)
-			      (or bounce (bolp))) (kinsoku-process)) ;; 97/3/14 jhod: Kinsoku
+			      (or bounce (bolp)))
+			 (declare-fboundp (kinsoku-process)))
 		     ;; Let fill-point be set to the place where we end up.
 		     (point)))))
 
@@ -3047,7 +3084,8 @@ indicating whether soft newlines should be inserted.")
 	    ;; break the line there.
 	    (if (save-excursion
 		  (goto-char fill-point)
-		  (not (or (bolp) (eolp)))) ; 97/3/14 jhod: during kinsoku processing it is possible to move beyond
+		  ;; during kinsoku processing it is possible to move beyond
+		  (not (or (bolp) (eolp))))
 		(let ((prev-column (current-column)))
 		  ;; If point is at the fill-point, do not `save-excursion'.
 		  ;; Otherwise, if a comment prefix or fill-prefix is inserted,
@@ -3058,7 +3096,7 @@ indicating whether soft newlines should be inserted.")
 		      ;; 1999-09-17 hniksic: turn off Kinsoku until
 		      ;; it's debugged.
 		      (funcall comment-line-break-function)
-		      ;; 97/3/14 jhod: Kinsoku processing
+		      ;; XEmacs: Kinsoku processing
 ;		      ;(indent-new-comment-line)
 ;		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
 ;			(funcall comment-line-break-function)
@@ -3248,9 +3286,8 @@ unless optional argument SOFT is non-nil."
   (interactive)
   (let (comcol comstart)
     (skip-chars-backward " \t")
-    ;; 97/3/14 jhod: Kinsoku processing
     (if (featurep 'mule)
-	(kinsoku-process))
+	(declare-fboundp (kinsoku-process)))
     (delete-region (point)
 		   (progn (skip-chars-forward " \t")
 			  (point)))
@@ -3868,14 +3905,28 @@ If active regions are in use (i.e. `zmacs-regions' is true), this means that
  the region is active.  Otherwise, this means that the user has pushed
  a mark in this buffer at some point in the past.
 The functions `region-beginning' and `region-end' can be used to find the
- limits of the region."
+ limits of the region.
+
+You should use this, *NOT* `region-active-p', in a menu item
+specification that you want grayed out when the region is not active:
+
+  [ ... ... :active (region-exists-p)]
+
+This correctly caters to the user's setting of `zmacs-regions'."
   (not (null (mark))))
 
 ;; XEmacs
 (defun region-active-p ()
   "Return non-nil if the region is active.
 If `zmacs-regions' is true, this is equivalent to `region-exists-p'.
-Otherwise, this function always returns false."
+Otherwise, this function always returns false.
+
+You should generally *NOT* use this in a menu item specification that you
+want grayed out when the region is not active.  Instead, use this:
+
+  [ ... ... :active (region-exists-p)]
+
+Which correctly caters to the user's setting of `zmacs-regions'."
   (and zmacs-regions zmacs-region-extent))
 
 (defvar zmacs-activate-region-hook nil
@@ -4216,8 +4267,7 @@ you should just use (message nil)."
   (or frame (setq frame (selected-frame)))
   (let ((clear-stream (and message-stack (eq 'stream (frame-type frame)))))
     (remove-message label frame)
-    (let ((inhibit-read-only t)
-	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
+    (let ((inhibit-read-only t))
       (erase-buffer " *Echo Area*"))
     (if clear-stream
 	(send-string-to-terminal ?\n stdout-p))
@@ -4275,8 +4325,7 @@ you should just use (message nil)."
 ;; message-stack.
 (defun raw-append-message (message &optional frame stdout-p)
   (unless (equal message "")
-    (let ((inhibit-read-only t)
-	  (zmacs-region-stays zmacs-region-stays)) ; preserve from change
+    (let ((inhibit-read-only t))
       (insert-string message " *Echo Area*")
       ;; Conditionalizing on the device type in this way is not that clean,
       ;; but neither is having a device method, as I originally implemented

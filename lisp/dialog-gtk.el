@@ -32,6 +32,20 @@
 (require 'gtk-password-dialog)
 (require 'gtk-file-dialog)
 
+(globally-declare-fboundp
+'(gtk-signal-connect
+  gtk-main-quit gtk-window-set-transient-for
+  gtk-widget-show-all gtk-main gtk-color-selection-dialog-new
+  gtk-color-selection-dialog-ok-button gtk-widget-hide-all
+  gtk-color-selection-get-color
+  gtk-color-selection-dialog-colorsel
+  gtk-color-selection-dialog-cancel-button gtk-widget-show-now
+  gtk-widget-grab-focus gtk-widget-destroy gtk-dialog-new
+  gtk-window-set-title gtk-container-set-border-width
+  gtk-box-set-spacing gtk-dialog-vbox gtk-container-add
+  gtk-label-new gtk-button-new-with-label
+  gtk-widget-set-sensitive gtk-widget-show gtk-dialog-action-area))
+
 (defun popup-builtin-open-dialog (keys)
   ;; Allowed keywords are:
   ;;
@@ -48,7 +62,6 @@
   ;;  :no-read-only-return t/nil
   (let ((initial-filename (plist-get keys :initial-filename))
 	(clicked-ok nil)
-	(filename nil)
 	(widget nil))
     (setq widget (gtk-file-dialog-new
  		  :directory (plist-get keys :directory)
@@ -76,7 +89,7 @@
 (defun popup-builtin-color-dialog (keys)
   ;; Allowed keys:
   ;;   :initial-color COLOR
-  (let ((initial-color (or (plist-get keys :initial-color) "white"))
+  (let (;(initial-color (or (plist-get keys :initial-color) "white"))
 	(title (or (plist-get keys :title "Select color...")))
 	(dialog nil)
 	(clicked-ok nil)

@@ -1,3 +1,9 @@
+(globally-declare-fboundp
+ '(gtk-import-function-internal gtk-call-function gtk-type-name))
+
+(globally-declare-boundp
+ '(gtk-enumeration-info))
+
 (gtk-import-function nil "gdk_flush")
 
 (defun gtk-describe-enumerations ()

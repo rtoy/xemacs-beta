@@ -1,4 +1,4 @@
-;;; latin.el --- Support for Latin charsets.
+;;; latin.el --- Support for Latin charsets. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 2001 Free Software Foundation, Inc.
 

@@ -613,45 +613,44 @@ The keywords allowed are
 		     (setq frame
 			   (make-frame
 			    (append cl-properties
-				    `(popup ,cl-parent initially-unmapped t
-					    menubar-visible-p nil
-					    has-modeline-p nil
-					    default-toolbar-visible-p nil
-					    top-gutter-visible-p t
-					    top-gutter-height ,
-					    (* dfheight fonth)
-					    top-gutter ,gutter-spec
-					    minibuffer none
-					    name ,name
-					    modeline-shadow-thickness 0
-					    vertical-scrollbar-visible-p nil
-					    horizontal-scrollbar-visible-p nil
-					    unsplittable t
-					    left ,(+ fleft (- (/ fwidth 2)
-							      (/ (* dfwidth
-								    fontw)
-								 2)))
-					    top ,(+ ftop (- (/ fheight 2)
-							    (/ (* dfheight
-								  fonth)
-							       2)))))))
+				    `(popup
+				      ,cl-parent initially-unmapped t
+				      menubar-visible-p nil
+				      has-modeline-p nil
+				      default-toolbar-visible-p nil
+				      top-gutter-visible-p t
+				      top-gutter-height ,(* dfheight fonth)
+				      top-gutter ,gutter-spec
+				      minibuffer none
+				      name ,name
+				      modeline-shadow-thickness 0
+				      vertical-scrollbar-visible-p nil
+				      horizontal-scrollbar-visible-p nil
+				      unsplittable t
+				      left ,(+ fleft (- (/ fwidth 2)
+							(/ (* dfwidth
+							      fontw)
+							   2)))
+				      top ,(+ ftop (- (/ fheight 2)
+						      (/ (* dfheight
+							    fonth)
+							 2)))))))
 		     (set-face-foreground 'modeline [default foreground] frame)
 		     (set-face-background 'modeline [default background] frame)
 		     (unless unmapped (make-frame-visible frame))
 		     (let ((newbuf (generate-new-buffer " *dialog box*")))
 		       (set-buffer-dedicated-frame newbuf frame)
 		       (set-frame-property frame 'dialog-box-buffer newbuf)
+		       (set-window-buffer (frame-root-window frame) newbuf)
 		       (with-current-buffer newbuf
-			 ;; Should be frame specific, so
-			 ;; we don't do this for now.
-			 ;; (setq frame-title-format cl-title)
-			 (make-local-hook 'delete-frame-hook)
-			 (add-hook 'delete-frame-hook
-				   #'(lambda (frame)
-				       (kill-buffer
-					(frame-property
-					 frame
-					 'dialog-box-buffer))))))
+			 (set (make-local-variable 'frame-title-format)
+			      cl-title)
+			 (add-local-hook 'delete-frame-hook
+					 #'(lambda (frame)
+					     (kill-buffer
+					      (frame-property
+					       frame
+					       'dialog-box-buffer))))))
 		     frame)))
 	    (if cl-modal
 		(dialog-box-modal-loop '(create-dialog-box-frame))

@@ -31,6 +31,9 @@
 (eval-and-compile
   (require 'gtk-ffi))
 
+(globally-declare-fboundp
+ '(gtk-import-function-internal gtk-call-function))
+
 (gtk-import-function none glade_init)
 (gtk-import-function none glade_gnome_init)
 (gtk-import-function none glade_bonobo_init)

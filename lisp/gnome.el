@@ -1,3 +1,8 @@
+(globally-declare-fboundp
+ '(gtk-type-from-name
+   gtk-import-function-internal
+   gtk-call-function))
+
 (defvar gnome-init-called nil)
 
 (defun gnome-init (app-id app-version argv)

@@ -37,7 +37,6 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "keymap.h"
 #include "window.h"
-#include "events-mod.h"
 
 
 /* A keymap contains six slots:
@@ -4223,14 +4222,14 @@ syms_of_keymap (void)
 {
   INIT_LRECORD_IMPLEMENTATION (keymap);
 
-  defsymbol (&Qminor_mode_map_alist, "minor-mode-map-alist");
+  DEFSYMBOL (Qminor_mode_map_alist);
 
-  defsymbol (&Qkeymapp, "keymapp");
+  DEFSYMBOL (Qkeymapp);
 
-  defsymbol (&Qsuppress_keymap, "suppress-keymap");
+  DEFSYMBOL (Qsuppress_keymap);
 
-  defsymbol (&Qmodeline_map, "modeline-map");
-  defsymbol (&Qtoolbar_map, "toolbar-map");
+  DEFSYMBOL (Qmodeline_map);
+  DEFSYMBOL (Qtoolbar_map);
 
   DEFSUBR (Fkeymap_parents);
   DEFSUBR (Fset_keymap_parents);
@@ -4265,51 +4264,51 @@ syms_of_keymap (void)
 
   DEFSUBR (Ftext_char_description);
 
-  defsymbol (&Qcontrol, "control");
-  defsymbol (&Qctrl, "ctrl");
-  defsymbol (&Qmeta, "meta");
-  defsymbol (&Qsuper, "super");
-  defsymbol (&Qhyper, "hyper");
-  defsymbol (&Qalt, "alt");
-  defsymbol (&Qshift, "shift");
-  defsymbol (&Qbutton0, "button0");
-  defsymbol (&Qbutton1, "button1");
-  defsymbol (&Qbutton2, "button2");
-  defsymbol (&Qbutton3, "button3");
-  defsymbol (&Qbutton4, "button4");
-  defsymbol (&Qbutton5, "button5");
-  defsymbol (&Qbutton6, "button6");
-  defsymbol (&Qbutton7, "button7");
-  defsymbol (&Qbutton0up, "button0up");
-  defsymbol (&Qbutton1up, "button1up");
-  defsymbol (&Qbutton2up, "button2up");
-  defsymbol (&Qbutton3up, "button3up");
-  defsymbol (&Qbutton4up, "button4up");
-  defsymbol (&Qbutton5up, "button5up");
-  defsymbol (&Qbutton6up, "button6up");
-  defsymbol (&Qbutton7up, "button7up");
-  defsymbol (&Qmouse_1, "mouse-1");
-  defsymbol (&Qmouse_2, "mouse-2");
-  defsymbol (&Qmouse_3, "mouse-3");
-  defsymbol (&Qmouse_4, "mouse-4");
-  defsymbol (&Qmouse_5, "mouse-5");
-  defsymbol (&Qmouse_6, "mouse-6");
-  defsymbol (&Qmouse_7, "mouse-7");
-  defsymbol (&Qdown_mouse_1, "down-mouse-1");
-  defsymbol (&Qdown_mouse_2, "down-mouse-2");
-  defsymbol (&Qdown_mouse_3, "down-mouse-3");
-  defsymbol (&Qdown_mouse_4, "down-mouse-4");
-  defsymbol (&Qdown_mouse_5, "down-mouse-5");
-  defsymbol (&Qdown_mouse_6, "down-mouse-6");
-  defsymbol (&Qdown_mouse_7, "down-mouse-7");
-  defsymbol (&Qmenu_selection, "menu-selection");
-  defsymbol (&QLFD, "LFD");
-  defsymbol (&QTAB, "TAB");
-  defsymbol (&QRET, "RET");
-  defsymbol (&QESC, "ESC");
-  defsymbol (&QDEL, "DEL");
-  defsymbol (&QSPC, "SPC");
-  defsymbol (&QBS, "BS");
+  DEFSYMBOL (Qcontrol);
+  DEFSYMBOL (Qctrl);
+  DEFSYMBOL (Qmeta);
+  DEFSYMBOL (Qsuper);
+  DEFSYMBOL (Qhyper);
+  DEFSYMBOL (Qalt);
+  DEFSYMBOL (Qshift);
+  DEFSYMBOL (Qbutton0);
+  DEFSYMBOL (Qbutton1);
+  DEFSYMBOL (Qbutton2);
+  DEFSYMBOL (Qbutton3);
+  DEFSYMBOL (Qbutton4);
+  DEFSYMBOL (Qbutton5);
+  DEFSYMBOL (Qbutton6);
+  DEFSYMBOL (Qbutton7);
+  DEFSYMBOL (Qbutton0up);
+  DEFSYMBOL (Qbutton1up);
+  DEFSYMBOL (Qbutton2up);
+  DEFSYMBOL (Qbutton3up);
+  DEFSYMBOL (Qbutton4up);
+  DEFSYMBOL (Qbutton5up);
+  DEFSYMBOL (Qbutton6up);
+  DEFSYMBOL (Qbutton7up);
+  DEFSYMBOL (Qmouse_1);
+  DEFSYMBOL (Qmouse_2);
+  DEFSYMBOL (Qmouse_3);
+  DEFSYMBOL (Qmouse_4);
+  DEFSYMBOL (Qmouse_5);
+  DEFSYMBOL (Qmouse_6);
+  DEFSYMBOL (Qmouse_7);
+  DEFSYMBOL (Qdown_mouse_1);
+  DEFSYMBOL (Qdown_mouse_2);
+  DEFSYMBOL (Qdown_mouse_3);
+  DEFSYMBOL (Qdown_mouse_4);
+  DEFSYMBOL (Qdown_mouse_5);
+  DEFSYMBOL (Qdown_mouse_6);
+  DEFSYMBOL (Qdown_mouse_7);
+  DEFSYMBOL (Qmenu_selection);
+  DEFSYMBOL (QLFD);
+  DEFSYMBOL (QTAB);
+  DEFSYMBOL (QRET);
+  DEFSYMBOL (QESC);
+  DEFSYMBOL (QDEL);
+  DEFSYMBOL (QSPC);
+  DEFSYMBOL (QBS);
 }
 
 void

@@ -1,4 +1,4 @@
-;;; thai-xtis-chars.el --- definition of the Thai XTIS charset.
+;;; thai-xtis-chars.el --- definition of the Thai XTIS charset. -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.

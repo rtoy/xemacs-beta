@@ -31,6 +31,16 @@
 
 ;; This file is dumped with XEmacs (when GTK support is compiled in).
 
+(globally-declare-fboundp
+ '(gtk-init-pointers
+   gtk-font-selection-dialog-new
+   gtk-widget-set-sensitive gtk-font-selection-dialog-apply-button
+   gtk-signal-connect gtk-main-quit
+   gtk-font-selection-dialog-ok-button
+   gtk-font-selection-dialog-get-font-name gtk-widget-destroy
+   font-menu-set-font font-family font-size
+   gtk-font-selection-dialog-cancel-button gtk-widget-show-all
+   gtk-main))
 
 (defun gtk-init-find-device ()
   (let ((dev nil)
@@ -282,7 +292,6 @@ applicable to adobe-courier fonts"
 			'clicked
 			(lambda (button data)
 			  (let* ((dialog (car data))
-				 (locale (cdr data))
 				 (font (font-create-object
 					(gtk-font-selection-dialog-get-font-name dialog))))
 			    (gtk-widget-destroy dialog)

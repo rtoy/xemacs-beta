@@ -1278,13 +1278,19 @@ or if you change your font path, you can call this to re-initialize the menus." 
 
 ;;;***
 
-;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-read-variable-symbol hyper-describe-function hyper-where-is hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "lisp/hyper-apropos.el")
+;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-read-variable-symbol hyper-describe-function hyper-where-is hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos command-hyper-apropos) "hyper-apropos" "lisp/hyper-apropos.el")
+
+(autoload 'command-hyper-apropos "hyper-apropos" "\
+Display lists of commands and user options matching REGEXP
+in buffer \"*Hyper Apropos*\".  See `hyper-apropos-mode' for a
+description of the available commands in a Hyper-Apropos buffer." t nil)
 
 (autoload 'hyper-apropos "hyper-apropos" "\
 Display lists of functions and variables matching REGEXP
 in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the
 value of `hyper-apropos-programming-apropos' is toggled for this search.
-See also `hyper-apropos-mode'." t nil)
+See `hyper-apropos-mode' for a description of the available commands in
+a Hyper-Apropos buffer." t nil)
 
 (autoload 'hyper-describe-key "hyper-apropos" nil t nil)
 
@@ -1327,7 +1333,7 @@ Interactively set the variable on the current line." t nil)
 
 ;;;***
 
-;;;### (autoloads (Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-batch-rebuild-dir Info-find-node Info-query info) "info" "lisp/info.el")
+;;;### (autoloads (Info-search-index-in-xemacs-and-lispref Info-search-index-in-lispref Info-search-text-in-xemacs Info-search-text-in-lispref Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-batch-rebuild-dir Info-find-node Info-query info) "info" "lisp/info.el")
 
 (defvar Info-directory-list nil "\
 List of directories to search for Info documentation files.
@@ -1405,6 +1411,19 @@ This command is designed to be used whether you are already in Info or not." t n
 (autoload 'Info-elisp-ref "info" "\
 Look up an Emacs Lisp function in the Elisp manual in the Info system.
 This command is designed to be used whether you are already in Info or not." t nil)
+
+(autoload 'Info-search-text-in-lispref "info" "\
+Search for REGEXP in Lispref text and select node it's found in." t nil)
+
+(autoload 'Info-search-text-in-xemacs "info" "\
+Search for REGEXP in User's Manual text and select node it's found in." t nil)
+
+(autoload 'Info-search-index-in-lispref "info" "\
+Search for REGEXP in Lispref index and select node it's found in." t nil)
+
+(autoload 'Info-search-index-in-xemacs-and-lispref "info" "\
+Search for REGEXP in both User's Manual and Lispref indices.
+Select node it's found in." t nil)
 
 ;;;***
 
@@ -1820,10 +1839,11 @@ also tried in the given order.
 
 You can only play sound files if you are running on display 0 of the
 console of a machine with native sound support or running a NetAudio
-server and XEmacs has the necessary sound support compiled in.
+or ESD server and XEmacs has the necessary sound support compiled in.
 
-The sound file must be in the Sun/NeXT U-LAW format, except on Linux,
-where .wav files are also supported by the sound card drivers." t nil)
+The sound file must be in the Sun/NeXT U-LAW format, except on Linux
+and MS Windows, where .wav files are also supported by the sound card
+drivers." t nil)
 
 (autoload 'load-default-sounds "sound" "\
 Load and install some sound files as beep-types, using

@@ -38,6 +38,21 @@
 ;;
 ;; This attempts to rectify the situation.
 
+(globally-declare-fboundp
+ '(gtk-clist-clear
+   gtk-clist-freeze gtk-clist-append
+   gtk-clist-thaw gtk-combo-set-popdown-strings gtk-dialog-new
+   gtk-dialog-vbox gtk-dialog-action-area gtk-window-set-title
+   gtk-button-new-with-label gtk-container-add gtk-signal-connect
+   gtk-entry-get-text gtk-widget-destroy gtk-combo-new
+   gtk-combo-disable-activate gtk-box-pack-start gtk-combo-entry
+   gtk-hbox-new gtk-clist-new-with-titles gtk-scrolled-window-new
+   gtk-widget-set-usize gtk-clist-get-text gtk-entry-set-text
+   gtk-button-clicked gtk-option-menu-new gtk-menu-new
+   gtk-label-new gtk-menu-item-new-with-label gtk-menu-append
+   gtk-widget-show gtk-option-menu-set-menu gtk-box-pack-end
+   gtk-entry-new gtk-widget-set-sensitive gtk-widget-realize))
+
 (defun gtk-file-dialog-fill-file-list (dialog dir)
   (if (not dir)
       (setq dir (get dialog 'x-file-dialog-current-dir nil)))
@@ -45,7 +60,8 @@
   (put dialog 'x-file-dialog-current-dir dir)
 
   (let ((list (get dialog 'x-file-dialog-files-list nil))
-	(remotep (file-remote-p dir)))
+	;(remotep (file-remote-p dir))
+	)
     (if (not list)
 	nil
       (gtk-clist-clear list)
@@ -53,11 +69,12 @@
       ;; NOTE: Current versions of efs / ange-ftp do not honor the
       ;; files-only flag to directory-files, but actually DOING these
       ;; checks is hideously expensive.  Leave it turned off for now.
-      (mapc (lambda (f)
-	      (if (or t			; Lets just wait for EFS to
-		      (not remotep)	; fix itself, shall we?
-		      (not (file-directory-p (expand-file-name f dir))))
-		  (gtk-clist-append list (list f))))
+      (mapc #'(lambda (f)
+		(if (or t		; Lets just wait for EFS to
+			;(not remotep)	; fix itself, shall we?
+			;(not (file-directory-p (expand-file-name f dir)))
+			)
+		    (gtk-clist-append list (list f))))
 	    (directory-files dir nil
 			     (get dialog 'x-file-dialog-active-filter nil)
 			     nil t))
@@ -65,8 +82,8 @@
 
 (defun gtk-file-dialog-fill-directory-list (dialog dir)
   (let ((subdirs (directory-files dir nil nil nil 5))
-	(remotep (file-remote-p dir))
-	(selected-dir (get dialog 'x-file-dialog-current-dir "/"))
+	;(remotep (file-remote-p dir))
+	;(selected-dir (get dialog 'x-file-dialog-current-dir "/"))
 	(directory-list (get dialog 'x-file-dialog-directory-list)))
 
     (gtk-clist-freeze directory-list)
@@ -79,8 +96,9 @@
 	;; files-only flag to directory-files, but actually DOING these
 	;; checks is hideously expensive.  Leave it turned off for now.
 	(if (or t			; Lets just wait for EFS to
-		(not remotep)		; fix itself, shall we?
-		(file-directory-p (expand-file-name (car subdirs) dir)))
+		;(not remotep)		; fix itself, shall we?
+		;(file-directory-p (expand-file-name (car subdirs) dir))
+		)
 	    (gtk-clist-append directory-list (list (car subdirs)))))
       (pop subdirs))
     (gtk-clist-thaw directory-list)))
@@ -121,7 +139,7 @@ Optional keyword arguments allowed:
 	 (vbox (gtk-dialog-vbox dialog))
 	 (dir (plist-get keywords :initial-directory default-directory))
 	 (button-area (gtk-dialog-action-area dialog))
-	 (initializing-gtk-file-dialog t)
+	 ;(initializing-gtk-file-dialog t)
 	 (select-box nil)
 	 button hbox)
 
@@ -171,8 +189,7 @@ Optional keyword arguments allowed:
 
     ;; Directory listing
     (let ((directories (gtk-clist-new-with-titles 1 '("Directories")))
-	  (scrolled (gtk-scrolled-window-new nil nil))
-	  (item nil))
+	  (scrolled (gtk-scrolled-window-new nil nil)))
       (gtk-container-add scrolled directories)
       (gtk-widget-set-usize scrolled 200 300)
       (gtk-box-pack-start hbox scrolled t t 0)

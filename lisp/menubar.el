@@ -564,7 +564,7 @@ button was clicked."
     ))
 
 (defun popup-buffer-menu (event)
-  "Pop up a copy of the Buffers menu (from the menubar) where the mouse is clicked."
+  "Pop up a copy of the menubar Buffers menu where the mouse is clicked."
   (interactive "e")
   (let ((window (and (event-over-text-area-p event) (event-window event)))
 	(bmenu nil))
@@ -717,11 +717,11 @@ MENU-DESC."
        (define-key menu-accelerator-map [up] 'menu-up)
        (define-key menu-accelerator-map [down] 'menu-down)
        (define-key menu-accelerator-map [return] 'menu-select)
-       (define-key menu-accelerator-map [kp_down] 'menu-down)
-       (define-key menu-accelerator-map [kp_up] 'menu-down)
-       (define-key menu-accelerator-map [kp_left] 'menu-left)
-       (define-key menu-accelerator-map [kp_right] 'menu-right)
-       (define-key menu-accelerator-map [kp_enter] 'menu-select)
+       (define-key menu-accelerator-map [kp-down] 'menu-down)
+       (define-key menu-accelerator-map [kp-up] 'menu-down)
+       (define-key menu-accelerator-map [kp-left] 'menu-left)
+       (define-key menu-accelerator-map [kp-right] 'menu-right)
+       (define-key menu-accelerator-map [kp-enter] 'menu-select)
        (define-key menu-accelerator-map "\C-g" 'menu-quit)))
 
 

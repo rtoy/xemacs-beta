@@ -29,7 +29,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "device.h"
 #include "events.h"
-#include "events-mod.h"
 #include "sysdep.h"
 #include "commands.h"
 #include "lstream.h"

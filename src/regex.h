@@ -153,6 +153,12 @@ typedef unsigned reg_syntax_t;
    If not set, then an unmatched ) is invalid.  */
 #define RE_UNMATCHED_RIGHT_PAREN_ORD (RE_NO_SHY_GROUPS << 1)
 
+/* If this bit is set, then \22 will read as a back reference,
+   provided at least 22 non-shy groups have been seen so far.  In all
+   other cases (bit not set, not 22 non-shy groups seen so far), it
+   reads as a back reference \2 followed by a digit 2. */
+#define RE_NO_MULTI_DIGIT_BK_REFS (RE_UNMATCHED_RIGHT_PAREN_ORD << 1)
+
 /* This global variable defines the particular regexp syntax to use (for
    some interfaces).  When a regexp is compiled, the syntax used is
    stored in the pattern buffer, so changing this does not affect
@@ -170,7 +176,7 @@ extern reg_syntax_t re_syntax_options;
    | RE_NO_BK_PARENS            | RE_NO_BK_REFS				\
    | RE_NO_BK_VBAR               | RE_NO_EMPTY_RANGES			\
    | RE_UNMATCHED_RIGHT_PAREN_ORD | RE_NO_SHY_GROUPS			\
-   | RE_NO_MINIMAL_MATCHING)
+   | RE_NO_MINIMAL_MATCHING | RE_NO_MULTI_DIGIT_BK_REFS)
 
 #define RE_SYNTAX_POSIX_AWK 						\
   (RE_SYNTAX_POSIX_EXTENDED | RE_BACKSLASH_ESCAPE_IN_LISTS)
@@ -179,17 +185,18 @@ extern reg_syntax_t re_syntax_options;
   (RE_BK_PLUS_QM              | RE_CHAR_CLASSES				\
    | RE_HAT_LISTS_NOT_NEWLINE | RE_INTERVALS				\
    | RE_NEWLINE_ALT           | RE_NO_SHY_GROUPS			\
-   | RE_NO_MINIMAL_MATCHING)
+   | RE_NO_MINIMAL_MATCHING | RE_NO_MULTI_DIGIT_BK_REFS)
 
 #define RE_SYNTAX_EGREP							\
   (RE_CHAR_CLASSES        | RE_CONTEXT_INDEP_ANCHORS			\
    | RE_CONTEXT_INDEP_OPS | RE_HAT_LISTS_NOT_NEWLINE			\
    | RE_NEWLINE_ALT       | RE_NO_BK_PARENS				\
    | RE_NO_BK_VBAR        | RE_NO_SHY_GROUPS				\
-   | RE_NO_MINIMAL_MATCHING)
+   | RE_NO_MINIMAL_MATCHING | RE_NO_MULTI_DIGIT_BK_REFS)
 
 #define RE_SYNTAX_POSIX_EGREP						\
-  (RE_SYNTAX_EGREP | RE_INTERVALS | RE_NO_BK_BRACES)
+  (RE_SYNTAX_EGREP | RE_INTERVALS | RE_NO_BK_BRACES |			\
+   RE_NO_MULTI_DIGIT_BK_REFS)
 
 /* P1003.2/D11.2, section 4.20.7.1, lines 5078ff.  */
 #define RE_SYNTAX_ED RE_SYNTAX_POSIX_BASIC
@@ -200,7 +207,7 @@ extern reg_syntax_t re_syntax_options;
 #define _RE_SYNTAX_POSIX_COMMON						\
   (RE_CHAR_CLASSES | RE_DOT_NEWLINE      | RE_DOT_NOT_NULL		\
    | RE_INTERVALS  | RE_NO_EMPTY_RANGES | RE_NO_SHY_GROUPS		\
-   | RE_NO_MINIMAL_MATCHING)
+   | RE_NO_MINIMAL_MATCHING | RE_NO_MULTI_DIGIT_BK_REFS)
 
 #define RE_SYNTAX_POSIX_BASIC						\
   (_RE_SYNTAX_POSIX_COMMON | RE_BK_PLUS_QM)
@@ -337,8 +344,13 @@ struct re_pattern_buffer
            when it is matched.  */
   RE_TRANSLATE_TYPE translate;
 
-	/* Number of subexpressions found by the compiler.  */
+	/* Number of returnable groups found by the compiler. (This does
+           not count shy groups.) */
   size_t re_nsub;
+
+	/* Total number of groups found by the compiler. (Including
+	   shy ones.) */
+  int re_ngroups;
 
         /* Zero if this pattern cannot match the empty string, one else.
            Well, in truth it's used only in `re_search_2', to see
@@ -373,6 +385,14 @@ struct re_pattern_buffer
 
         /* If true, an anchor at a newline matches.  */
   unsigned newline_anchor : 1;
+
+  unsigned warned_about_incompatible_back_references : 1;
+
+	/* Mapping between back references and groups (may not be
+	   equivalent with shy groups). */
+  int *external_to_internal_register;
+
+  int external_to_internal_register_size;
 
 /* [[[end pattern_buffer]]] */
 };

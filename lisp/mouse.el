@@ -90,7 +90,7 @@ between point and mark."
   (interactive)
   (if (and (not (console-on-window-system-p))
 	   (and (featurep 'gpm)
-		(not gpm-minor-mode)))
+		(not (declare-boundp gpm-minor-mode))))
       (yank)
     (push-mark)
     (if (region-active-p)
@@ -1052,7 +1052,7 @@ at the initial click position."
 	     (not (= start end)))
 	;; I guess cutbuffers should do something with rectangles too.
 	;; does anybody use them?
-	(x-store-cutbuffer (buffer-substring start end)))))
+	(declare-fboundp (x-store-cutbuffer (buffer-substring start end))))))
 
 (defun mouse-track-activate-rectangular-selection ()
   (if (consp default-mouse-track-extent)

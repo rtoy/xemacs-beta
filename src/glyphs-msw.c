@@ -1250,9 +1250,10 @@ resource_symbol_to_type (Lisp_Object data)
 }
 
 static void
-mswindows_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		    int dest_mask, Lisp_Object domain)
+mswindows_resource_instantiate (Lisp_Object image_instance,
+				Lisp_Object instantiator,
+				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+				int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   unsigned int type = 0;
@@ -1988,7 +1989,8 @@ extern jmp_buf comp_env;
 #undef SYSV32
 
 static void
-mswindows_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+mswindows_xface_instantiate (Lisp_Object image_instance,
+			     Lisp_Object instantiator,
 			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			     int dest_mask, Lisp_Object domain)
 {
@@ -2376,8 +2378,10 @@ mswindows_register_widget_instance (Lisp_Object instance, Lisp_Object domain)
 }
 
 static void
-mswindows_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-				 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+mswindows_subwindow_instantiate (Lisp_Object image_instance,
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg,
+				 Lisp_Object pointer_bg,
 				 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2496,7 +2500,8 @@ mswindows_initialize_dibitmap_image_instance (Lisp_Image_Instance *ii,
 /*                            widgets                            */
 /************************************************************************/
 static void
-mswindows_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+mswindows_widget_instantiate (Lisp_Object image_instance,
+			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			      int dest_mask, Lisp_Object domain,
 			      const char* class, int flags, int exflags)
@@ -2587,7 +2592,8 @@ mswindows_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiat
 static void
 mswindows_native_layout_instantiate (Lisp_Object image_instance,
 				     Lisp_Object instantiator,
-				     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+				     Lisp_Object pointer_fg,
+				     Lisp_Object pointer_bg,
 				     int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2612,7 +2618,8 @@ mswindows_native_layout_instantiate (Lisp_Object image_instance,
    many-to-one relationship with things you see, whereas widgets can
    only be one-to-one (i.e. per frame) */
 static void
-mswindows_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+mswindows_button_instantiate (Lisp_Object image_instance,
+			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			      int dest_mask, Lisp_Object domain)
 {
@@ -2697,9 +2704,11 @@ mswindows_button_redisplay (Lisp_Object image_instance)
 
 /* instantiate an edit control */
 static void
-mswindows_edit_field_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			    int dest_mask, Lisp_Object domain)
+mswindows_edit_field_instantiate (Lisp_Object image_instance,
+				  Lisp_Object instantiator,
+				  Lisp_Object pointer_fg,
+				  Lisp_Object pointer_bg,
+				  int dest_mask, Lisp_Object domain)
 {
   mswindows_widget_instantiate (image_instance, instantiator, pointer_fg,
 				pointer_bg, dest_mask, domain, "EDIT",
@@ -2709,9 +2718,11 @@ mswindows_edit_field_instantiate (Lisp_Object image_instance, Lisp_Object instan
 
 /* instantiate a progress gauge */
 static void
-mswindows_progress_gauge_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-				int dest_mask, Lisp_Object domain)
+mswindows_progress_gauge_instantiate (Lisp_Object image_instance,
+				      Lisp_Object instantiator,
+				      Lisp_Object pointer_fg,
+				      Lisp_Object pointer_bg,
+				      int dest_mask, Lisp_Object domain)
 {
   HWND wnd;
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2721,17 +2732,15 @@ mswindows_progress_gauge_instantiate (Lisp_Object image_instance, Lisp_Object in
 				WS_BORDER | PBS_SMOOTH, WS_EX_CLIENTEDGE);
   wnd = WIDGET_INSTANCE_MSWINDOWS_HANDLE (ii);
   /* set the colors */
-#ifdef PBS_SETBKCOLOR
-  SendMessage (wnd, PBS_SETBKCOLOR, 0,
+#if 0 /* #### fix this */
+  SendMessage (wnd, PBM_SETBKCOLOR, 0,
 	       (LPARAM) (COLOR_INSTANCE_MSWINDOWS_COLOR
 			 (XCOLOR_INSTANCE
 			  (FACE_BACKGROUND
 			   (XIMAGE_INSTANCE_WIDGET_FACE (ii),
 			    XIMAGE_INSTANCE_FRAME (ii))))));
-#endif
-#ifdef PBS_SETBARCOLOR
-  SendMessage (wnd, PBS_SETBARCOLOR, 0,
-	       (L:PARAM) (COLOR_INSTANCE_MSWINDOWS_COLOR
+  SendMessage (wnd, PBM_SETBARCOLOR, 0,
+	       (LPARAM) (COLOR_INSTANCE_MSWINDOWS_COLOR
 			  (XCOLOR_INSTANCE
 			   (FACE_FOREGROUND
 			    (XIMAGE_INSTANCE_WIDGET_FACE (ii),
@@ -2798,9 +2807,11 @@ static void add_tree_item_list (Lisp_Object image_instance,
 }
 
 static void
-mswindows_tree_view_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			    int dest_mask, Lisp_Object domain)
+mswindows_tree_view_instantiate (Lisp_Object image_instance,
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg,
+				 Lisp_Object pointer_bg,
+				 int dest_mask, Lisp_Object domain)
 {
   Lisp_Object rest;
   HWND wnd;
@@ -2901,9 +2912,11 @@ add_tab_item (Lisp_Object image_instance,
 }
 
 static void
-mswindows_tab_control_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			   int dest_mask, Lisp_Object domain)
+mswindows_tab_control_instantiate (Lisp_Object image_instance,
+				   Lisp_Object instantiator,
+				   Lisp_Object pointer_fg,
+				   Lisp_Object pointer_bg,
+				   int dest_mask, Lisp_Object domain)
 {
   /* This function can call lisp */
   Lisp_Object rest;
@@ -3016,7 +3029,8 @@ mswindows_tab_control_redisplay (Lisp_Object image_instance)
 
 /* instantiate a static control possible for putting other things in */
 static void
-mswindows_label_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+mswindows_label_instantiate (Lisp_Object image_instance,
+			     Lisp_Object instantiator,
 			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			     int dest_mask, Lisp_Object domain)
 {
@@ -3027,8 +3041,10 @@ mswindows_label_instantiate (Lisp_Object image_instance, Lisp_Object instantiato
 
 /* instantiate a scrollbar control */
 static void
-mswindows_scrollbar_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-				 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+mswindows_scrollbar_instantiate (Lisp_Object image_instance,
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg,
+				 Lisp_Object pointer_bg,
 				 int dest_mask, Lisp_Object domain)
 {
   mswindows_widget_instantiate (image_instance, instantiator, pointer_fg,
@@ -3038,9 +3054,11 @@ mswindows_scrollbar_instantiate (Lisp_Object image_instance, Lisp_Object instant
 
 /* instantiate a combo control */
 static void
-mswindows_combo_box_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			     int dest_mask, Lisp_Object domain)
+mswindows_combo_box_instantiate (Lisp_Object image_instance,
+				 Lisp_Object instantiator,
+				 Lisp_Object pointer_fg,
+				 Lisp_Object pointer_bg,
+				 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   HWND wnd;

@@ -205,26 +205,30 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     error ("Operating system cannot handle asynchronous subprocesses");
 #endif /* NO_SUBPROCESSES */
 
-  /* Do this before building new_argv because GC in Lisp code
-   *  called by various filename-hacking routines might relocate strings */
+  /* Do all filename munging before building new_argv because GC in
+   *  Lisp code called by various filename-hacking routines might
+   *  relocate strings */
   locate_file (Vexec_path, args[0], Vlisp_EXEC_SUFFIXES, &path, X_OK);
 
   /* Make sure that the child will be able to chdir to the current
-     buffer's current directory, or its unhandled equivalent.  We
+     buffer's current directory, or its unhandled equivalent. [[ We
      can't just have the child check for an error when it does the
-     chdir, since it's in a vfork. */
+     chdir, since it's in a vfork. ]] -- not any more, we don't use
+     vfork. -ben
+
+     Note: These calls are spread out to insure that the return values
+     of the calls (which may be newly-created strings) are properly
+     GC-protected. */
   {
     struct gcpro ngcpro1, ngcpro2;
-    /* Do this test before building new_argv because GC in Lisp code
-     *  called by various filename-hacking routines might relocate strings */
-    /* Make sure that the child will be able to chdir to the current
-       buffer's current directory.  We can't just have the child check
-       for an error when it does the chdir, since it's in a vfork.  */
-
-    current_dir = current_buffer->directory;
     NGCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
+    current_dir = current_buffer->directory;
+    /* If the current dir has no terminating slash, we'll get undesirable
+       results, so put the slash back. */
+    current_dir = Ffile_name_as_directory (current_dir);
     current_dir = Funhandled_file_name_directory (current_dir);
     current_dir = expand_and_dir_to_file (current_dir, Qnil);
+
 #if 0
     /* This is in FSF, but it breaks everything in the presence of
        ange-ftp-visited files, so away with it.  */

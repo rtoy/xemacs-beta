@@ -31,6 +31,9 @@
 (eval-and-compile
   (require 'gtk-ffi))
 
+(globally-declare-fboundp
+ '(gtk-import-function-internal gtk-call-function))
+
 (gtk-import-function nil gdk_set_show_events (gboolean . show_events))
 (gtk-import-function nil gdk_set_use_xshm (gboolean . use_xshm))
 (gtk-import-function GtkString gdk_get_display)

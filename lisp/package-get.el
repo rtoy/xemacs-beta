@@ -445,7 +445,7 @@ used interactively, for example from a mail or news buffer."
                (fboundp 'mc-pgp-verify-region)
                (or (not
                     (condition-case err
-                        (mc-pgp-verify-region beg end)
+                        (declare-fboundp (mc-pgp-verify-region beg end))
                       (file-error
                        (and (string-match "No such file" (nth 2 err))
                             (or (not package-get-require-signed-base-updates)

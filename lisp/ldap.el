@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.11 $
+;; Version: $Revision: 1.12 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -34,6 +34,9 @@
 
 
 ;;; Code:
+
+(globally-declare-fboundp '(ldapp ldap-open ldap-close ldap-add ldap-modify
+				  ldap-delete))
 
 (eval-when '(load)
   (if (not (fboundp 'ldap-open))

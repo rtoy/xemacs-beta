@@ -1496,7 +1496,7 @@ and 'global)."
 			      ((framep locale) (frame-type locale))
 			      (t nil))))
 	   (cond ((or (and (not devtype) (featurep 'x)) (eq 'x devtype))
-		  (x-init-face-from-resources face locale))
+		  (declare-fboundp (x-init-face-from-resources face locale)))
 		 ((or (not devtype) (eq 'tty devtype))
 		  ;; Nothing to do for TTYs?
 		  ))))))
@@ -1508,11 +1508,11 @@ and 'global)."
 	  (init-face-from-resources face device))
     ;; Then do any device-specific initialization.
     (cond ((eq 'x (device-type device))
-	   (x-init-device-faces device))
+	   (declare-fboundp (x-init-device-faces device)))
 	  ((eq 'gtk (device-type device))
-	   (gtk-init-device-faces device))
+	   (declare-fboundp (gtk-init-device-faces device)))
 	  ((eq 'mswindows (device-type device))
-	   (mswindows-init-device-faces device))
+	   (declare-fboundp (mswindows-init-device-faces device)))
 	  ;; Nothing to do for TTYs?
 	  )
     (or (eq 'stream (device-type device))
@@ -1525,11 +1525,11 @@ and 'global)."
 	  (init-face-from-resources face frame))
     ;; Then do any frame-specific initialization.
     (cond ((eq 'x (frame-type frame))
-	   (x-init-frame-faces frame))
+	   (declare-fboundp (x-init-frame-faces frame)))
 	  ((eq 'gtk (frame-type frame))
-	   (gtk-init-frame-faces frame))
+	   (declare-fboundp (gtk-init-frame-faces frame)))
 	  ((eq 'mswindows (frame-type frame))
-	   (mswindows-init-frame-faces frame))
+	   (declare-fboundp (mswindows-init-frame-faces frame)))
 	  ;; Is there anything which should be done for TTY's?
 	  )))
 
@@ -1544,8 +1544,8 @@ and 'global)."
   (loop for face in (face-list) do
 	(init-face-from-resources face 'global))
   ;; Further X frobbing.
-  (and (featurep 'x) (x-init-global-faces))
-  (and (featurep 'gtk) (gtk-init-global-faces))
+  (and (featurep 'x) (declare-fboundp (x-init-global-faces)))
+  (and (featurep 'gtk) (declare-fboundp (gtk-init-global-faces)))
 
   ;; for bold and the like, make the global specification be bold etc.
   ;; if the user didn't already specify a value.  These will also be
@@ -1701,9 +1701,10 @@ If the optional FRAME argument is provided, change only
 in that frame; otherwise change each frame."
   (while (not (find-face face))
     (setq face (wrong-type-argument 'facep face)))
-  (let ((bitmap-path (ecase (console-type)
-		       (x         x-bitmap-file-path)
-		       (mswindows mswindows-bitmap-file-path)))
+  (let ((bitmap-path
+	 (ecase (console-type)
+	   (x         (declare-boundp x-bitmap-file-path))
+	   (mswindows (declare-boundp mswindows-bitmap-file-path))))
 	instantiator)
     (while
 	(null

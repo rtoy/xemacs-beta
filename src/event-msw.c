@@ -65,7 +65,6 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "objects-msw.h"
 
-#include "events-mod.h"
 #ifdef HAVE_MSG_SELECT
 #include "sysfile.h"
 #include "console-tty.h"
@@ -87,7 +86,8 @@ typedef unsigned int SOCKET;
 
 /* Fake key modifier which is attached to a quit char event.
    Removed upon dequeueing an event */
-#define FAKE_MOD_QUIT	0x80
+#define FAKE_MOD_QUIT (1 << 20)
+#define FAKE_MOD_QUIT_CRITICAL (1 << 21)
 
 /* Timer ID used for button2 emulation */
 #define BUTTON_2_TIMER_ID 1
@@ -1048,7 +1048,8 @@ mswindows_dequeue_dispatch_event (void)
   if (sevt->event_type == key_press_event
       && (sevt->event.key.modifiers & FAKE_MOD_QUIT))
     {
-      sevt->event.key.modifiers &= ~FAKE_MOD_QUIT;
+      sevt->event.key.modifiers &=
+	~(FAKE_MOD_QUIT | FAKE_MOD_QUIT_CRITICAL);
       --mswindows_quit_chars_count;
     }
 
@@ -2147,7 +2148,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	BYTE keymap_orig[256];
 	BYTE keymap_sticky[256];
 	int has_AltGr = mswindows_current_layout_has_AltGr ();
-	int mods = 0;
+	int mods = 0, mods_with_shift = 0;
 	int extendedp = lParam & 0x1000000;
 	Lisp_Object keysym;
 	int sticky_changed;
@@ -2182,6 +2183,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  memcpy (keymap_sticky, keymap_orig, 256);
 
 	mods = mswindows_modifier_state (keymap_sticky, (DWORD) -1, has_AltGr);
+	mods_with_shift = mods;
 
 	/* Handle non-printables */
 	if (!NILP (keysym = mswindows_key_to_emacs_keysym (wParam, mods,
@@ -2250,22 +2252,27 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		   || PeekMessage (&tranmsg, hwnd, WM_SYSCHAR, WM_SYSCHAR,
 				   PM_REMOVE))
 	      {
-		int mods1 = mods;
+		int mods_with_quit = mods;
 		WPARAM ch = tranmsg.wParam;
 
 		/* If a quit char with no modifiers other than control and
 		   shift, then mark it with a fake modifier, which is removed
 		   upon dequeueing the event */
-		/* #### This might also not withstand localization, if
-		   quit character is not a latin-1 symbol */
+		/* !!#### Fix this in my mule ws -- replace current_buffer
+		   with 0 */
 		if (((quit_ch < ' ' && (mods & XEMACS_MOD_CONTROL)
-		      && quit_ch + 'a' - 1 == ch)
+		      && DOWNCASE (current_buffer, quit_ch + 'a' - 1) ==
+		      DOWNCASE (current_buffer, ch))
 		     || (quit_ch >= ' ' && !(mods & XEMACS_MOD_CONTROL)
-			 && quit_ch == ch))
-		    && ((mods  & ~(XEMACS_MOD_CONTROL | XEMACS_MOD_SHIFT))
+			 && DOWNCASE (current_buffer, quit_ch) ==
+			 DOWNCASE (current_buffer, ch)))
+		    && ((mods_with_shift &
+			 ~(XEMACS_MOD_CONTROL | XEMACS_MOD_SHIFT))
 			== 0))
 		  {
-		    mods1 |= FAKE_MOD_QUIT;
+		    mods_with_quit |= FAKE_MOD_QUIT;
+		    if (mods_with_shift & XEMACS_MOD_SHIFT)
+		      mods_with_quit |= FAKE_MOD_QUIT_CRITICAL;
 		    ++mswindows_quit_chars_count;
 		  }
 		else if (potential_accelerator && !got_accelerator &&
@@ -2274,7 +2281,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    got_accelerator = 1;
 		    break;
 		  }
-		mswindows_enqueue_keypress_event (hwnd, make_char (ch), mods1);
+		mswindows_enqueue_keypress_event (hwnd, make_char (ch),
+						  mods_with_quit);
 	      } /* while */
 
 	    /* This generates WM_SYSCHAR messages, which are interpreted
@@ -3464,8 +3472,8 @@ emacs_mswindows_quit_p (void)
   if (mswindows_in_modal_loop)
     return;
 
-  /* Drain windows queue. This sets up number of quit characters in
-     the queue */
+  /* Drain windows queue.  This sets up number of quit characters in
+     the queue. */
   mswindows_drain_windows_queue ();
 
   if (mswindows_quit_chars_count > 0)
@@ -3483,10 +3491,11 @@ emacs_mswindows_quit_p (void)
 	  emacs_event = mswindows_cancel_dispatch_event (&match_against);
 	  assert (!NILP (emacs_event));
 
-	  if (XEVENT(emacs_event)->event.key.modifiers & XEMACS_MOD_SHIFT)
+	  if (XEVENT (emacs_event)->event.key.modifiers &
+	      FAKE_MOD_QUIT_CRITICAL)
 	    critical_p = 1;
 
-	  Fdeallocate_event(emacs_event);
+	  Fdeallocate_event (emacs_event);
 	}
 
       Vquit_flag = critical_p ? Qcritical : Qt;
@@ -3759,7 +3768,7 @@ lstream_type_create_mswindows_selectable (void)
 {
   init_slurp_stream ();
   init_shove_stream ();
-#if defined (HAVE_SOCKETS) && !defined(HAVE_MSG_SELECT)
+#if defined (HAVE_SOCKETS) && !defined (HAVE_MSG_SELECT)
   init_winsock_stream ();
 #endif
 }

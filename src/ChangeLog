@@ -1,3 +1,129 @@
+2001-04-23  Ben Wing  <ben@xemacs.org>
+
+	------------ notable bug fix: Windows event code --------------
+
+	* event-msw.c (FAKE_MOD_QUIT):
+	* event-msw.c (mswindows_dequeue_dispatch_event):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-msw.c (emacs_mswindows_quit_p):
+	Get critical quit working.
+
+	------------ notable bug fix and new feature: regex code --------------
+
+	* lisp.h:
+	* regex.c:
+	* regex.c (enum):
+	* regex.c (print_compiled_pattern):
+	* regex.c (INIT_REG_TRANSLATE_SIZE):
+	* regex.c (regex_compile):
+	* regex.c (re_match_2_internal):
+	* regex.h:
+	* regex.h (RE_SYNTAX_AWK):
+	* regex.h (RE_SYNTAX_GREP):
+	* regex.h (RE_SYNTAX_EGREP):
+	* regex.h (RE_SYNTAX_POSIX_EGREP):
+	* regex.h (_RE_SYNTAX_POSIX_COMMON):
+	* regex.h (struct re_pattern_buffer):
+	* search.c:
+	* search.c (vars_of_search):
+	Shy groups were implemented in a horrible, half-assed way that
+	would cause them to screw up regex searching in most cases.
+	Fixed to work correctly.
+
+	Also extended back-reference syntax past 9.  Only is recognized
+	as such if there are at least that many non-shy groups; and
+	optionally will warn about such uses, to catch old code that
+	might be using them differently. (Added variable to control
+	this in search.c -- `warn-about-possibly-incompatible-back-
+	references', on by default for the moment.  Declared in lisp.h.
+
+	---------------- process/SIGIO improvements -------------------
+
+	* process-unix.c:
+	* process-unix.c (get_internet_address):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process-unix.c (unix_open_network_stream):
+	* process-unix.c (unix_open_multicast_group):
+	define USE_GETADDRINFO to replace more complex conditional,
+	and use it.  the code conditionalized on this in
+	unix_open_network_stream had *serious* problems handling errors.
+	it's now fixed, and major amounts of duplicate code between
+	the two versions were combined.
+
+	don't disable SIGIO and other interrupts unless
+	CONNECT_NEEDS_SLOWED_INTERRUPTS is defined -- don't penalize OS's
+	without bugs.  similarly for a freebsd bug that was affecting all
+	OS's.
+
+	* s\ultrix.h:
+	define CONNECT_NEEDS_SLOWED_INTERRUPTS, since that's the OS
+	mentioned as having a kernel bug.
+
+	* sysdep.c (request_sigio_on_device):
+	* sysdep.c (unrequest_sigio_on_device):
+	fix SIGIO problems on Linux.  add check for O_ASYNC in case it's
+	defined and FASYNC isn't.  add comment about other ways to do
+	SIGIO on Linux.
+
+	* callproc.c (Fold_call_process_internal):
+	* process.c (Fstart_process_internal):
+	Deal with the possibility that `default-directory' doesn't
+	have terminating slash.  Correct comments about vfork.
+
+	---------------- Miscellaneous bug fixes/cleanup -------------------
+
+	* callint.c (Finteractive):
+	Add lots of documentation -- exactly what the Lisp equivalents of
+	all the interactive specs are.
+	
+	* console.h (struct console): change type of quit_char to Emchar.
+
+	* event-msw.c (lstream_type_create_mswindows_selectable): spacing
+	change.
+
+	* event-Xt.c:
+	* event-msw.c:
+	* event-stream.c:
+	* events-mod.h:
+	* events.c:
+	* events.h:
+	* frame-x.c:
+	* gpmevent.c:
+	* keymap.c:
+	Eliminate events-mod.h and combine into events.h.
+
+	* emacs.c:
+	* emacs.c (make_arg_list_1):
+	* emacs.c (main_1):
+	A couple of char->Extbyte changes, add a comment.
+
+	* glyphs-msw.c (mswindows_resource_instantiate):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-msw.c (mswindows_subwindow_instantiate):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-msw.c (mswindows_native_layout_instantiate):
+	* glyphs-msw.c (mswindows_button_instantiate):
+	* glyphs-msw.c (mswindows_edit_field_instantiate):
+	* glyphs-msw.c (mswindows_progress_gauge_instantiate):
+	* glyphs-msw.c (mswindows_tree_view_instantiate):
+	* glyphs-msw.c (mswindows_tab_control_instantiate):
+	* glyphs-msw.c (mswindows_label_instantiate):
+	* glyphs-msw.c (mswindows_scrollbar_instantiate):
+	* glyphs-msw.c (mswindows_combo_box_instantiate):
+	Correct indentation of function defns to not exceed 80 cols.
+	Try (sort of) to fix some code that sets the colors of the
+	progress gauge. (Commented out)
+
+	* keymap.c (syms_of_keymap):
+	use DEFSYMBOL.
+
+	* process.c (read_process_output):
+	No need to fiddle with zmacs_region_stays, now that bogus
+	clearing of it (see below) is removed.
+
+	* search.c (Freplace_match): warning fix.
+
+
 2001-05-03  Martin Buchholz  <martin@xemacs.org>
 
 	* s/aix4.h: Fix crash with xlc -O3.

@@ -35,6 +35,10 @@
 
 (require 'font-menu)
 
+(globally-declare-boundp
+ '(gtk-font-regexp
+   gtk-font-regexp-foundry-and-family gtk-font-regexp-spacing))
+
 (defvar gtk-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")
 
@@ -82,7 +86,8 @@ or if you change your font path, you can call this to re-initialize the menus."
   ;; recalculate the menus from the cache w/o having to do list-fonts again.
   (unless gtk-font-regexp-ascii
     (setq gtk-font-regexp-ascii (if (featurep 'mule)
-				    (charset-registry 'ascii)
+				    (declare-fboundp
+				     (charset-registry 'ascii))
 				  "iso8859-1")))
   (setq gtk-font-menu-registry-encoding
 	(if (featurep 'mule) "*-*" "iso8859-1"))

@@ -26,25 +26,26 @@
 					     :size 13
 					     :weakness 'key)
   "A hash table of devices with GPM currently turned on.")
-
+ 
 (defun gpm-mode (&optional arg device)
   "Toggle GPM mouse mode.
 With prefix arg, turn GPM mouse mode on if and only if arg is positive."
   (interactive (list current-prefix-arg (selected-device)))
-  (cond
-   ((null arg)				; Toggle
-    (if (gethash device gpm-enabled-devices)
-	(progn
-	  (gpm-enable device nil)
-	  (remhash device gpm-enabled-devices))
+  (with-fboundp 'gpm-enable
+    (cond
+     ((null arg)				; Toggle
+      (if (gethash device gpm-enabled-devices)
+	  (progn
+	    (gpm-enable device nil)
+	    (remhash device gpm-enabled-devices))
+	(gpm-enable device t)
+	(puthash device t gpm-enabled-devices)))
+     ((> arg 0)				; Turn on
       (gpm-enable device t)
-      (puthash device t gpm-enabled-devices)))
-   ((> arg 0)				; Turn on
-    (gpm-enable device t)
-    (puthash device t gpm-enabled-devices))
-   ((gethash device gpm-enabled-devices) ; Turn off
-    (gpm-enable device nil)
-    (remhash device gpm-enabled-devices))))
+      (puthash device t gpm-enabled-devices))
+     ((gethash device gpm-enabled-devices) ; Turn off
+      (gpm-enable device nil)
+      (remhash device gpm-enabled-devices)))))
 
 (defun turn-on-gpm-mouse-tracking (&optional device)
   ;; Enable mouse tracking on linux console
@@ -54,22 +55,24 @@ With prefix arg, turn GPM mouse mode on if and only if arg is positive."
   ;; Disable mouse tracking on linux console
   (gpm-mode -5 device))
 
+(defun gpm-is-supported-p (device)
+  "Returns non-nil if GPM is usable right now on DEVICE in this XEmacs session.
+This checks whether GPM support was compiled in, TTY support was
+compiled in, XEmacs is running on Linux, the current console/device is
+TTY, and its terminal type has been set to `linux'."
+  (and (not noninteractive)	; Don't want to do this in batch mode
+       (fboundp 'gpm-enable)	; Must have C-level GPM support
+       (eq system-type 'linux)	; Must be running linux
+       (eq (device-type device) 'tty) ; on a tty
+       (equal "linux" (declare-fboundp ; an a linux terminal type
+		       (console-tty-terminal-type (device-console device))))))
+  
 (defun gpm-create-device-hook (device)
-  (if (and (not noninteractive)		; Don't want to do this in batch mode
-	   (fboundp 'gpm-enable)	; Must have C-level GPM support
-	   (eq system-type 'linux)	; Must be running linux
-	   (eq (device-type device) 'tty) ; on a tty
-	   (equal "linux" (console-tty-terminal-type ; an a linux terminal type
-			   (device-console device))))
+  (if (gpm-is-supported-p device)
       (turn-on-gpm-mouse-tracking device)))
 
 (defun gpm-delete-device-hook (device)
-  (if (and (not noninteractive)		; Don't want to do this in batch mode
-	   (fboundp 'gpm-enable)	; Must have C-level GPM support
-	   (eq system-type 'linux)	; Must be running linux
-	   (eq (device-type device) 'tty) ; on a tty
-	   (equal "linux" (console-tty-terminal-type ; an a linux terminal type
-			   (device-console device))))
+  (if (gpm-is-supported-p device)
       (turn-off-gpm-mouse-tracking device)))
 
 ;; Restore normal mouse behavior outside Emacs

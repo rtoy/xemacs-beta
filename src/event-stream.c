@@ -92,7 +92,6 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"		/* to set Vlast_input_time */
 
-#include "events-mod.h"
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif

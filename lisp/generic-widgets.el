@@ -28,6 +28,21 @@
 
 ;; This file is dumped with XEmacs.
 
+(globally-declare-fboundp
+ '(gtk-label-new
+   gtk-widget-show-all gtk-signal-connect
+   gtk-window-new gtk-container-add gtk-vbox-new gtk-hbox-new
+   gtk-box-pack-start gtk-notebook-new
+   gtk-notebook-set-homogeneous-tabs gtk-notebook-set-scrollable
+   gtk-notebook-set-show-tabs gtk-notebook-set-tab-pos
+   gtk-notebook-append-page gtk-text-new gtk-text-set-editable
+   gtk-text-set-word-wrap gtk-text-set-line-wrap
+   gtk-widget-set-style gtk-text-insert gtk-label-set-line-wrap
+   gtk-label-set-justify gtk-radio-button-new
+   gtk-radio-button-group gtk-check-button-new
+   gtk-toggle-button-new gtk-button-new gtk-progress-bar-new
+   gtk-progress-bar-set-orientation gtk-progress-bar-set-bar-style))
+
 (defun build-ui (ui)
   (if (null ui)
       (gtk-label-new "[empty]")
@@ -222,6 +237,7 @@ Properties:
 
 (defun build-ui::radio-group (spec)
   "A convenience when specifying a group of radio buttons."
+  (declare (special build-ui::radio-group))
   (let ((build-ui::radio-group nil))
     (mapcar 'build-ui (plist-get (cdr spec) :items))))
 
@@ -236,10 +252,10 @@ Properties:
 
 NOTE: Radio buttons must be in a radio-group object for them to work.
 "
-  (let ((plist (cdr spec))
-	(button nil)
-	(button-type (plist-get plist :type 'normal))
-	(label nil))
+  (declare (special build-ui::radio-group))
+  (let* ((plist (cdr spec))
+	 (button nil)
+	 (button-type (plist-get plist :type 'normal)))
     (case button-type
       (radio
        (if (not (boundp 'build-ui::radio-group))

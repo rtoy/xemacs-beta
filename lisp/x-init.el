@@ -32,6 +32,13 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-keysym-on-keyboard-p
+   x-server-vendor x-init-specifier-from-resources init-mule-x-win))
+
+(globally-declare-boundp
+ '(x-initial-argv-list))
+
 ;; If you want to change this variable, this is the place you must do it.
 ;; Do not set it to a string containing periods.  X doesn't like that.
 ;(setq x-emacs-application-class "Emacs")

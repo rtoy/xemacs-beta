@@ -31,6 +31,11 @@
 (eval-and-compile
   (require 'gtk-ffi))
 
+(globally-declare-fboundp
+ '(gtk-import-function-internal
+   gtk-call-function
+   gtk-button-new-with-label))
+
 (gtk-import-function GtkType gnome_about_get_type)
 (gtk-import-function GtkWidget gnome_about_new
 		     (GtkString . title)

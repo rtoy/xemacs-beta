@@ -64,118 +64,77 @@
 (define-key help-map 'help 'help-for-help)
 (define-key help-map '(f1) 'help-for-help)
 
-(define-key help-map "\C-l" 'describe-copying) ; on \C-c in FSFmacs
-(define-key help-map "\C-d" 'describe-distribution)
-(define-key help-map "\C-w" 'describe-no-warranty)
 (define-key help-map "a" 'hyper-apropos) ; 'command-apropos in FSFmacs
-(define-key help-map "A" 'command-apropos)
+(define-key help-map "A" 'command-hyper-apropos)
+;; #### should be hyper-apropos-documentation, once that's written.
+(define-key help-map "\C-a" 'apropos-documentation)
 
 (define-key help-map "b" 'describe-bindings)
 (define-key help-map "B" 'describe-beta)
-(define-key help-map "\C-p" 'describe-pointer)
 
-(define-key help-map "C" 'customize)
 (define-key help-map "c" 'describe-key-briefly)
-(define-key help-map "k" 'describe-key)
-
-(define-key help-map "d" 'describe-function)
-(define-key help-map "e" 'describe-last-error)
-(define-key help-map "f" 'describe-function)
-
-(define-key help-map "F" 'xemacs-local-faq)
-
-(define-key help-map "i" 'info)
-(define-key help-map '(control i) 'Info-query)
+(define-key help-map "C" 'customize)
 ;; FSFmacs has Info-goto-emacs-command-node on C-f, no binding
 ;; for Info-elisp-ref
-(define-key help-map '(control c) 'Info-goto-emacs-command-node)
-(define-key help-map '(control k) 'Info-goto-emacs-key-command-node)
-(define-key help-map '(control f) 'Info-elisp-ref)
+(define-key help-map "\C-c" 'Info-goto-emacs-command-node)
+
+(define-key help-map "d" 'describe-function)
+(define-key help-map "\C-d" 'describe-distribution)
+
+(define-key help-map "e" (if (fboundp 'view-last-error) 'view-last-error
+			   'describe-last-error))
+
+(define-key help-map "f" 'describe-function)
+;; #### not a good interface.  no way to specify that C-h is preferred
+;; as a prefix and not BS.  should instead be specified as part of
+;; `define-key'.
+;; (put 'describe-function 'preferred-key-sequence "\C-hf")
+(define-key help-map "F" 'xemacs-local-faq)
+(define-key help-map "\C-f" 'Info-elisp-ref)
+
+(define-key help-map "i" 'info)
+(define-key help-map "I" 'Info-search-index-in-xemacs-and-lispref)
+(define-key help-map "\C-i" 'Info-query)
+
+(define-key help-map "k" 'describe-key)
+(define-key help-map "\C-k" 'Info-goto-emacs-key-command-node)
 
 (define-key help-map "l" 'view-lossage)
+(define-key help-map "\C-l" 'describe-copying) ; on \C-c in FSFmacs
 
 (define-key help-map "m" 'describe-mode)
 
-(define-key help-map "\C-n" 'view-emacs-news)
 (define-key help-map "n" 'view-emacs-news)
+(define-key help-map "\C-n" 'view-emacs-news)
 
 (define-key help-map "p" 'finder-by-keyword)
+(define-key help-map "\C-p" 'describe-pointer)
+
+(define-key help-map "q" 'help-quit)
 
 ;; Do this right with an autoload cookie in finder.el.
 ;;(autoload 'finder-by-keyword "finder"
 ;;  "Find packages matching a given keyword." t)
 
 (define-key help-map "s" 'describe-syntax)
+(define-key help-map "S" 'view-sample-init-el)
 
 (define-key help-map "t" 'help-with-tutorial)
 
-(define-key help-map "w" 'where-is)
-
 (define-key help-map "v" 'describe-variable)
 
-(if (fboundp 'view-last-error)
-    (define-key help-map "e" 'view-last-error))
+(define-key help-map "w" 'where-is)
+(define-key help-map "\C-w" 'describe-no-warranty)
 
-
-(define-key help-map "q" 'help-quit)
-
-;#### This stuff was an attempt to have font locking and hyperlinks in the
-;help buffer, but it doesn't really work.  Some of this stuff comes from
-;FSF Emacs; but the FSF Emacs implementation is rather broken, as usual.
-;What needs to happen is this:
-;
-; -- we probably need a "hyperlink mode" from which help-mode is derived.
-; -- this means we probably need multiple inheritance of modes!
-;    Thankfully this is not hard to implement; we already have the
-;    ability for a keymap to have multiple parents.  However, we'd
-;    have to define any multiply-inherited-from modes using a standard
-;    `define-mode' construction instead of manually doing it, because
-;    we don't want each guy calling `kill-all-local-variables' and
-;    messing up the previous one.
-; -- we need to scan the buffer ourselves (not from font-lock, because
-;    the user might not have font-lock enabled) and highlight only
-;    those words that are *documented* functions and variables (and
-;    probably excluding words without dashes in them unless enclosed
-;    in quotes, so that common words like "list" and "point" don't
-;    become hyperlinks.
-; -- we should *not* use font-lock keywords like below.  Instead we
-;    should add the font-lock stuff ourselves during the scanning phase,
-;    if font-lock is enabled in this buffer.
-
-;(defun help-follow-reference (event extent user-data)
-;  (let ((symbol (intern-soft (extent-string extent))))
-;    (cond ((and symbol (fboundp symbol))
-;	   (describe-function symbol))
-;	  ((and symbol (boundp symbol))
-;	   (describe-variable symbol))
-;	  (t nil))))
-
-;(defvar help-font-lock-keywords
-;  (let ((name-char "[-+a-zA-Z0-9_*]") (sym-char "[-+a-zA-Z0-9_:*]"))
-;    (list
-;     ;;
-;     ;; The symbol itself.
-;     (list (concat "\\`\\(" name-char "+\\)\\(:\\)?")
-;	   '(1 (if (match-beginning 2)
-;		   'font-lock-function-name-face
-;		 'font-lock-variable-name-face)
-;	       nil t))
-;     ;;
-;     ;; Words inside `' which tend to be symbol names.
-;     (list (concat "`\\(" sym-char sym-char "+\\)'")
-;	   1 '(prog1
-;		  'font-lock-reference-face
-;		(add-list-mode-item (match-beginning 1)
-;			       (match-end 1)
-;			       nil
-;			       'help-follow-reference))
-;	   t)
-;     ;;
-;     ;; CLisp `:' keywords as references.
-;     (list (concat "\\<:" sym-char "+\\>") 0 'font-lock-reference-face t)))
-;  "Default expressions to highlight in Help mode.")
-
-;(put 'help-mode 'font-lock-defaults '(help-font-lock-keywords))
+;; #### It would be nice if the code below to add hyperlinks was
+;; generalized.  We would probably need a "hyperlink mode" from which
+;; help-mode is derived.  This means we probably need multiple
+;; inheritance of modes!  Thankfully this is not hard to implement; we
+;; already have the ability for a keymap to have multiple parents.
+;; However, we'd have to define any multiply-inherited-from modes using
+;; a standard `define-mode' construction instead of manually doing it,
+;; because we don't want each guy calling `kill-all-local-variables' and
+;; messing up the previous one.
 
 (define-derived-mode help-mode view-major-mode "Help"
   "Major mode for viewing help text.
@@ -819,41 +778,68 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 
 (make-help-screen help-for-help
   "A B C F I K L M N P S T V W C-c C-d C-f C-i C-k C-n C-w;  ? for more help:"
-  "Type a Help option:
+  (concat
+   "Type a Help option:
 \(Use SPC or DEL to scroll through this text.  Type \\<help-map>\\[help-quit] to exit the Help command.)
+
+Help on key bindings:
+
+\\[describe-bindings]	Table of all key bindings.
+\\[describe-key-briefly]	Type a key sequence or select a menu item;
+        it displays the corresponding command name.
+\\[describe-key]	Type a key sequence or select a menu item;
+        it displays the documentation for the command bound to that key.
+	(Terser but more up-to-date than what's in the manual.)
+\\[Info-goto-emacs-key-command-node]	Type a key sequence or select a menu item;
+	it jumps to the full documentation in the XEmacs User's Manual
+	for the corresponding command.
+\\[view-lossage]	Recent input keystrokes and minibuffer messages.
+\\[describe-mode]	Documentation of current major and minor modes.
+\\[describe-pointer]	Table of all mouse-button bindings.
+\\[where-is]	Type a command name; it displays which keystrokes invoke that command.
+
+Help on functions and variables:
 
 \\[hyper-apropos]	Type a substring; it shows a hypertext list of
         functions and variables that contain that substring.
-	See also the `apropos' command.
-\\[command-apropos]	Type a substring; it shows a list of commands
-        (interactively callable functions) that contain that substring.
-\\[describe-bindings]	Table of all key bindings.
-\\[describe-key-briefly]	Type a command key sequence;
-        it displays the function name that sequence runs.
-\\[customize]	Customize Emacs options.
-\\[Info-goto-emacs-command-node]	Type a function name; it displays the Info node for that command.
-\\[describe-function]	Type a function name; it shows its documentation.
+\\[command-apropos]	Older version of apropos; superseded by previous command.
+\\[apropos-documentation]	Type a substring; it shows a hypertext list of
+        functions and variables containing that substring anywhere
+        in their documentation.
+\\[Info-goto-emacs-command-node]	Type a command name; it jumps to the full documentation
+	in the XEmacs User's Manual.
+\\[describe-function]	Type a command or function name; it shows its documentation.
+	(Terser but more up-to-date than what's in the manual.)
 \\[Info-elisp-ref]	Type a function name; it jumps to the full documentation
-	in the XEmacs Lisp Programmer's Manual.
+	in the XEmacs Lisp Reference Manual.
+\\[Info-search-index-in-xemacs-and-lispref]	Type a substring; it looks it up in the indices of both
+	the XEmacs User's Manual and the XEmacs Lisp Reference Manual.
+	It jumps to the first match (preferring an exact match); you
+	can use `\\<Info-mode-map>\\[Info-index-next]\\<help-map>' to successively visit other matches.
+\\[describe-variable]	Type a variable name; it displays its documentation and value.
+
+Miscellaneous:
+
+"
+   (if (string-match "beta" emacs-version)
+"\\[describe-beta]	Special considerations about running a beta version of XEmacs.
+"
+"")
+"
+\\[customize]	Customize Emacs options.
+\\[describe-distribution]	How to obtain XEmacs.
+\\[describe-last-error]	Information about the most recent error.
 \\[xemacs-local-faq]	Local copy of the XEmacs FAQ.
 \\[info]	Info documentation reader.
 \\[Info-query]	Type an Info file name; it displays it in Info reader.
-\\[describe-key]	Type a command key sequence;
-        it displays the documentation for the command bound to that key.
-\\[Info-goto-emacs-key-command-node]	Type a command key sequence;
-        it displays the Info node for the command bound to that key.
-\\[view-lossage]	Recent input keystrokes and minibuffer messages.
-\\[describe-mode]	Documentation of current major and minor modes.
+\\[describe-copying]	XEmacs copying permission (General Public License).
 \\[view-emacs-news]	News of recent XEmacs changes.
 \\[finder-by-keyword]	Type a topic keyword; it finds matching packages.
-\\[describe-pointer]	Table of all mouse-button bindings.
 \\[describe-syntax]	Contents of syntax table with explanations.
+\\[view-sample-init-el]	View the sample init.el that comes with XEmacs.
 \\[help-with-tutorial]	XEmacs learn-by-doing tutorial.
-\\[describe-variable]	Type a variable name; it displays its documentation and value.
-\\[where-is]	Type a command name; it displays which keystrokes invoke that command.
-\\[describe-distribution]	XEmacs ordering information.
-\\[describe-no-warranty]	Information on absence of warranty for XEmacs.
-\\[describe-copying]	XEmacs copying permission (General Public License)."
+\\[describe-no-warranty]	Information on absence of warranty for XEmacs."
+)
   help-map)
 
 (defmacro with-syntax-table (syntab &rest body)
@@ -1222,12 +1208,13 @@ part of the documentation of internal subroutines."
       (setq def (symbol-function def)))
     (if (and (fboundp 'compiled-function-annotation)
 	     (compiled-function-p def))
-	(setq file-name (compiled-function-annotation def)))
+	(setq file-name (declare-fboundp (compiled-function-annotation def))))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
 	      file-name (and (compiled-function-p (cdr def))
 			     (fboundp 'compiled-function-annotation)
-			     (compiled-function-annotation (cdr def)))
+			     (declare-fboundp
+			      (compiled-function-annotation (cdr def))))
 	      macrop t)
       (setq fndef def))
     (if aliases (princ aliases))
@@ -1413,7 +1400,7 @@ there is no variable around that point, nil is returned."
        (let ((print-escape-newlines t))
 	 (princ "`")
 	 ;; (Help-princ-face (symbol-name variable)
-	 ;;		  'font-lock-variable-name-face) overkill
+	 ;;               'font-lock-variable-name-face) overkill
 	 (princ (symbol-name variable))
 	 (princ "' is ")
 	 (while (variable-alias variable)

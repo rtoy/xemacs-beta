@@ -83,6 +83,9 @@
 ;; perhaps there should be something that combines
 ;; `define-magic-variable-handlers' with `defvaralias'.
 
+(globally-declare-fboundp
+ '(set-magic-variable-handler))
+
 (defun define-magic-variable-handlers (variable handler-class harg)
   "Set the magic variable handles for VARIABLE to those in HANDLER-CLASS.
 HANDLER-CLASS should be a symbol.  The handlers are constructed by adding

@@ -104,6 +104,8 @@ Lisp_Object Qinvalid_regexp;
 /* Regular expressions used in forward/backward-word */
 Lisp_Object Vforward_word_regexp, Vbackward_word_regexp;
 
+int warn_about_possibly_incompatible_back_references;
+
 /* range table for use with skip_chars.  Only needed for Mule. */
 Lisp_Object Vskip_chars_range_table;
 
@@ -2269,7 +2271,7 @@ match since only regular expressions have distinguished subexpressions.
   Lisp_Object buffer;
   int_dynarr *ul_action_dynarr = 0;
   int_dynarr *ul_pos_dynarr = 0;
-  int sub;
+  int sub = 0;
   int speccount;
 
   CHECK_STRING (replacement);
@@ -3042,6 +3044,15 @@ vars_of_search (void)
 #### Not yet implemented.
 */ );
   Vbackward_word_regexp = Qnil;
+
+  DEFVAR_INT ("warn-about-possibly-incompatible-back-references",
+	      &warn_about_possibly_incompatible_back_references /*
+If true, issue warnings when new-semantics back references occur.
+This is to catch places where old code might inadvertently have changed
+semantics.  This will occur in old code only where more than nine groups
+occur and a back reference to one of them is directly followed by a digit.
+*/ );
+  warn_about_possibly_incompatible_back_references = 1;
 }
 
 void

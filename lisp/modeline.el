@@ -672,7 +672,7 @@ This function is designed to be called when the read-only indicator on the
 modeline is clicked.  It will call `vc-toggle-read-only' if available,
 otherwise it will call the usual `toggle-read-only'."
   (interactive)
-  (if (fboundp 'vc-toggle-read-only)
+  (if-fboundp 'vc-toggle-read-only
       (vc-toggle-read-only)
     (toggle-read-only)))
 

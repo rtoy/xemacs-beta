@@ -34,6 +34,13 @@
 
 (require 'font-menu)
 
+(globally-declare-boundp
+ '(x-font-regexp
+   x-font-regexp-foundry-and-family x-font-regexp-spacing))
+
+(globally-declare-fboundp
+ '(charset-registry))
+
 (defvar x-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")
 
@@ -184,8 +191,6 @@ or if you change your font path, you can call this to re-initialize the menus."
 ;; get the truename and use the possibly suboptimal data from that.
 ;;;###autoload
 (defun* x-font-menu-font-data (face dcache)
-  (defvar x-font-regexp)
-  (defvar x-font-regexp-foundry-and-family)
   (let* ((case-fold-search t)
 	 (domain (if font-menu-this-frame-only-p
 				  (selected-frame)

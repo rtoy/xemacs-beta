@@ -33,6 +33,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ '(x-init-specifier-from-resources x-get-resource))
+
 (defun x-init-scrollbar-from-resources (locale)
   (x-init-specifier-from-resources
    (specifier-fallback scrollbar-width) 'natnum locale

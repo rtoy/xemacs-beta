@@ -304,7 +304,7 @@ Returns nil if object does not contain MIME data."
 			(erase-buffer)
 			(insert data)
 			(and (featurep 'tm-view)
-			     (mime/viewer-mode buf)))
+			     (declare-fboundp (mime/viewer-mode buf))))
 		       ((and (listp data)
 			     (= (length data) 3))
 			;; change the internal content-type representation to the
@@ -318,7 +318,8 @@ Returns nil if object does not contain MIME data."
 			(and (featurep 'tm-view)
 			     ;; this list of (car data) should be done before
 			     ;; enqueing the event
-			     (mime/viewer-mode buf (car data) (cadr data))))
+			     (declare-fboundp 
+			      (mime/viewer-mode buf (car data) (cadr data)))))
 		       (t
 			(display-message 'error "Wrong drop data")))))
 	     (undo-boundary)
@@ -423,13 +424,13 @@ This always assumes DndText as type."
 (defun gtk-start-drag (event data &optional type)
   (interactive "esi")
   (if (featurep 'gtk)
-      (gtk-start-drag-internal event data type)
+      (declare-fboundp (gtk-start-drag-internal event data type))
     (error "GTK functionality not compiled in.")))
 
 (defun gtk-start-drag-region (event begin end)
   (interactive "_er")
   (if (featurep 'gtk)
-      (gtk-start-drag-internal event (buffer-substring-no-properties begin end) "text/plain")
+      (declare-fboundp (gtk-start-drag-internal event (buffer-substring-no-properties begin end) "text/plain"))
     (error "GTK functionality not compiled in.")))
 
 ;;; dragdrop.el ends here

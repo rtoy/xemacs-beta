@@ -39,6 +39,11 @@
 ;; For no obvious reason, shift-F1 is called F13, although Meta-F1 and
 ;; Control-F1 have normal names.
 
+;;; Code:
+
+(globally-declare-fboundp
+ '(x-keysym-on-keyboard-p x-keysym-on-keyboard-sans-modifiers-p))
+
 ;;;###autoload
 (defun x-win-init-xfree86 ()
   (loop for (key sane-key) in

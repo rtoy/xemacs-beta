@@ -195,6 +195,7 @@ filename_expand (char *fullpath, char *filename)
 {
 #ifdef  CYGWIN
   char cygwinFilename[MAXPATHLEN+1];
+  extern void cygwin_conv_to_posix_path(const char *, char *);
 #endif
 
   int len;

@@ -421,6 +421,12 @@ which the link points to being overwritten.")
 when an error occurs in a file.  This is bound to t by
 `batch-byte-recompile-directory'.")
 
+(defvar byte-recompile-ignore-uncompilable-mule-files t
+  "If non-nil, `byte-recompile-*' ignores non-ASCII .el files in a non-Mule
+XEmacs.  This assumes that such files have a -*- coding: ??? -*- magic
+cookie in their first line or a ;;;###coding system: magic cookie
+early in the file.")
+
 (defvar byte-recompile-directory-recursively t
   "*If true, then `byte-recompile-directory' will recurse on subdirectories.")
 
@@ -943,11 +949,63 @@ otherwise pop it")
 	      " at " (current-time-string) "\n")
       (setq byte-compile-current-file nil))))
 
+(defvar byte-compile-inbuffer)
+(defvar byte-compile-outbuffer)
+
 (defun byte-compile-warn (format &rest args)
   (setq format (apply 'format format args))
   (if byte-compile-error-on-warn
       (error "%s" format)		; byte-compile-file catches and logs it
     (byte-compile-log-1 (concat "** " format) t)
+
+    ;; This was a first attempt to add line numbers to the
+    ;; byte-compilation output.  Unfortunately, it doesn't work
+    ;; perfectly: it reports the line number at the end of the form
+    ;; (which may be an entire function), rather than the line number
+    ;; of the actual problem.  Doing this right is hard because we
+    ;; currently use the built-in Lisp parser to parse the entire form
+    ;; at once.  What we basically need is a whole separate parser
+    ;; that annotates its output with line numbers.  For example, we
+    ;; might modify the parser in lread.c so that, with the right
+    ;; option set, it replaces every Lisp object contained in the
+    ;; structure it returns with a cons of that object and the line
+    ;; number it was found on (determined by counting newlines,
+    ;; starting from some arbitrary point).  You then have two
+    ;; options: (a) Modify the byte compiler so that everything that
+    ;; compiles a form deals with the new annotated form rather than
+    ;; the old one, or (b) The byte compiler saves this structure
+    ;; while converting it into a normal structure that's given to the
+    ;; various form handlers, which need no (or less) modification.
+    ;; In the former case, finding the line number is trivial because
+    ;; it's in the form.  In the latter case, finding the line number
+    ;; depends on having a unique Lisp object that can be looked up in
+    ;; the annotated structure -- i.e. a list, vector, or string.
+    ;; You'd have to look at the various places where errors are spit
+    ;; out (not very many, really), and make sure that such a unique
+    ;; object is available.  Then you do a depth-first search through
+    ;; the annotated structure to find the object.
+    ;;
+    ;; An alternative way of doing (b) that's probably much more
+    ;; efficient (and easier to implement) is simply to have the
+    ;; parser in lread.c annotate every unique object using a separate
+    ;; hash table.  This also eliminates the need for a search to find
+    ;; the line number.  In order to be fine-grained enough to get at
+    ;; every symbol in a form -- e.g. if we want to pinpoint a
+    ;; particular undefined variable in a function call -- we need to
+    ;; annotate every cons, not just each list.  We still have
+    ;; (probably unimportant) problems with vectors, since all we have
+    ;; is the start of the vector.  If we cared about this, we could
+    ;; store in the hash table a list of the line numbers for each
+    ;; item in the vector, not just its start.
+    ;;
+    ;; --ben
+
+;     (byte-compile-log-1 (concat "** line: "
+; 				(save-excursion
+; 				  (set-buffer byte-compile-inbuffer)
+; 				  (int-to-string (line-number)))
+; 				" "
+; 				format) t)
 ;;; RMS says:
 ;;; It is useless to flash warnings too fast to be read.
 ;;; Besides, they will all be shown at the end.
@@ -1436,6 +1494,11 @@ recompile every `.el' file that already has a `.elc' file."
 	     ;; It is an ordinary file.  Decide whether to compile it.
 	     (if (and (string-match emacs-lisp-file-regexp source)
 		      (not (auto-save-file-name-p source))
+		      ;; make sure not a mule file we can't handle.
+		      (or (not byte-recompile-ignore-uncompilable-mule-files)
+			  (featurep 'mule)
+			  (not (find-coding-system-magic-cookie-in-file
+				source)))
 		      (setq dest (byte-compile-dest-file source))
 		      (if (file-exists-p dest)
 			  ;; File was already compiled.
@@ -1480,7 +1543,10 @@ whether to compile it.  Prefix argument 0 don't ask and recompile anyway."
 		 (file-newer-than-file-p filename dest)
 	       (and force
 		    (or (eq 0 force)
-			(y-or-n-p (concat "Compile " filename "? "))))))
+			(y-or-n-p (concat "Compile " filename "? ")))))
+	     (or (not byte-recompile-ignore-uncompilable-mule-files)
+		 (featurep 'mule)
+		 (not (find-coding-system-magic-cookie-in-file filename))))
 	(byte-compile-file filename))))
 
 ;;;###autoload
@@ -1621,9 +1687,6 @@ With argument, insert value in current buffer after the form."
 	     (prin1 value (current-buffer))
 	     (insert "\n"))
 	    ((message "%s" (prin1-to-string value)))))))
-
-(defvar byte-compile-inbuffer)
-(defvar byte-compile-outbuffer)
 
 (defun byte-compile-from-buffer (byte-compile-inbuffer filename &optional eval)
   ;; buffer --> output-buffer, or buffer --> eval form, return nil

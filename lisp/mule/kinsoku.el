@@ -1,4 +1,4 @@
-;; kinsoku.el -- Kinsoku (line wrap) processing for XEmacs/Mule
+;; kinsoku.el -- Kinsoku (line wrap) processing for XEmacs/Mule -*- coding: iso-2022-7bit; -*-
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; This file is part of Mule (MULtilingual Enhancement of XEmacs).
