@@ -1,3 +1,10 @@
+2002-06-28  Steve Youngs  <youngs@xemacs.org>
+
+	* inline.c: Include device-impl.h, extents-impl.h, and
+	frame-impl.h to pick up some error_check_* functions.  Remove
+	console.h, extents.h, and frame.h because the *-impl.h files
+	include them.
+
 2002-06-17  Jerry James  <james@xemacs.org>
 
 	* sysdll.c: Remove RTLD_GLOBAL initialization.
