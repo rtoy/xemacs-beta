@@ -1,3 +1,8 @@
+2003-02-07  Mike Sperber  <mike@xemacs.org>
+
+	* scrollbar.c (specifier_vars_of_scrollbar): 
+	(specifier_vars_of_scrollbar): TTY devices don't have scrollbars.
+
 2003-01-28  Martin Buchholz  <martin@xemacs.org>
 
 	* config.h.in (_ALL_SOURCE): Guard against multiple definition.
