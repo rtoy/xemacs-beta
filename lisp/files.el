@@ -920,9 +920,10 @@ If RAWFILE is non-nil, the file is read literally."
   (setq filename (abbreviate-file-name (expand-file-name filename)))
   (if (file-directory-p filename)
       (if (and (fboundp 'dired-noselect) find-file-run-dired)
-	  (dired-noselect (if find-file-use-truenames
-			      (abbreviate-file-name (file-truename filename))
-			    filename))
+	  (declare-fboundp
+	   (dired-noselect (if find-file-use-truenames
+			       (abbreviate-file-name (file-truename filename))
+			     filename)))
 	(error "%s is a directory" filename))
     (let* ((buf (get-file-buffer filename))
 	   (truename (abbreviate-file-name (file-truename filename)))
@@ -2883,14 +2884,14 @@ This command is used in the special Dired buffer created by
 \\[recover-session]."
   (interactive)
   ;; Get the name of the session file to recover from.
-  (let ((file (dired-get-filename))
+  (let ((file (declare-fboundp (dired-get-filename)))
 	files
 	(buffer (get-buffer-create " *recover*")))
     ;; #### dired-do-flagged-delete in FSF.
     ;; This version is for ange-ftp
     ;;(dired-do-deletions t)
     ;; This version is for efs
-    (dired-expunge-deletions)
+    (declare-fboundp (dired-expunge-deletions))
     (unwind-protect
 	(save-excursion
 	  ;; Read in the auto-save-list file.

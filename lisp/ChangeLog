@@ -1,5 +1,11 @@
 2001-05-09  Ben Wing  <ben@xemacs.org>
 
+	* files.el (find-file-noselect):
+	* files.el (recover-session-finish):
+	fix byte-compilation warnings.
+
+2001-05-09  Ben Wing  <ben@xemacs.org>
+
 	* font.el (bold): New.
 	* font.el (italic): New.
 	* font.el (oblique): New.
