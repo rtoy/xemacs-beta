@@ -1,3 +1,17 @@
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref\windows.texi (Window Configurations): Fix typos.
+	* lispref\x-windows.texi (Resources): Ditto.
+
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* internals\internals.texi (XEmacs From the Inside): Ditto.
+
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* emodules.texi (Initialization Mode): Ditto.
+	* xemacs-faq.texi (Q6.3.2): Ditto.
+
 2001-06-10  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Q1.0.10):

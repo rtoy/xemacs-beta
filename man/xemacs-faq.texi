@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/06/10 10:42:25 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/07/02 20:45:03 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -6398,9 +6398,9 @@ NT Emacs
 @itemize @minus
 
 @item
-NT Emacs is a version of GNU Emacs modified to compile and run under
-MS MS Windows 95 and NT using the native Win32 API.  As such, it is close
-in spirit to the XEmacs "native" port.
+NT Emacs is a version of GNU Emacs modified to compile and run under MS
+Windows 95 and NT using the native Win32 API.  As such, it is close in
+spirit to the XEmacs "native" port.
 
 @item
 NT Emacs has been written by Geoff Voelker, and more information can be

@@ -1332,7 +1332,7 @@ The redisplay mechanism is responsible for making sure that windows and
 frames are displayed correctly.  It is periodically told (by the event
 loop) to actually ``do its job'', i.e. snoop around and see what the
 current state of the environment (mostly of the currently-existing
-windows, frames, and buffers) is, and make sure that that state matches
+windows, frames, and buffers) is, and make sure that state matches
 what's actually displayed.  It keeps lots and lots of information around
 (such as what is actually being displayed currently, and what the
 environment was last time it checked) so that it can minimize the work
