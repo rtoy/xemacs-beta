@@ -1,3 +1,9 @@
+2002-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* files.el (revert-buffer):
+	(revert-buffer-internal):
+	Update docstrings from 21.4.
+
 2002-04-17  Nickolay Pakoulin  <npak@ispras.ru>
 
 	* cus-edit.el (custom-save-delete-any): New function

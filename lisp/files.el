@@ -2764,7 +2764,9 @@ which are the arguments that `revert-buffer' received.")
 (defvar revert-buffer-insert-file-contents-function nil
   "Function to use to insert contents when reverting this buffer.
 Gets two args, first the nominal file name to use,
-and second, t if reading the auto-save file.")
+and second, t if reading the auto-save file.
+If the current buffer contents are to be discarded, the function must do
+so itself.")
 
 (defvar before-revert-hook nil
   "Normal hook for `revert-buffer' to run before reverting.
@@ -2789,10 +2791,10 @@ This undoes all changes since the file was visited or saved.
 With a prefix argument, offer to revert from latest auto-save file, if
 that is more recent than the visited file.
 
-This command also works for special buffers that contain text which
-doesn't come from a file, but reflects some other data base instead:
-for example, Dired buffers and buffer-list buffers.  In these cases,
-it reconstructs the buffer contents from the appropriate data base.
+This command also refreshes certain special buffers that contain text
+which doesn't come from a file, but reflects some other data base
+instead: for example, Dired buffers and buffer-list buffers.  This is
+implemented by having the modes set `revert-buffer-function'.
 
 When called from Lisp, the first argument is IGNORE-AUTO; only offer
 to revert from the auto-save file when this is nil.  Note that the
@@ -2804,7 +2806,7 @@ Optional second argument NOCONFIRM means don't ask for confirmation at
 all.
 
 Optional third argument PRESERVE-MODES non-nil means don't alter
-the files modes.  Normally we reinitialize them using `normal-mode'.
+the buffer's modes.  Otherwise, reinitialize them using `normal-mode'.
 
 If the value of `revert-buffer-function' is non-nil, it is called to
 do all the work for this command.  Otherwise, the hooks
@@ -2812,10 +2814,9 @@ do all the work for this command.  Otherwise, the hooks
 and the end, and if `revert-buffer-insert-file-contents-function' is
 non-nil, it is called instead of rereading visited file contents.
 
-If the buffer has not been obviously modified, and no auto-save file
-exists, then `revert-buffer-internal' is
-called. `revert-buffer-internal' will not actually change the buffer
-at all if reversion would not cause any user-visible changes."
+If the buffer-modified flag is nil, and we are not reverting from an
+auto-save file, then compare the contents of the buffer and the file.
+Revert only if they differ."
 
   ;; I admit it's odd to reverse the sense of the prefix argument, but
   ;; there is a lot of code out there which assumes that the first
@@ -2968,6 +2969,9 @@ at all if reversion would not cause any user-visible changes."
 	     t)))))
 
 (defun revert-buffer-internal (&optional file-name)
+  "Read contents of FILE-NAME into a buffer, and compare to current buffer.
+Return nil if identical, and the new buffer if different."
+
   (let* ((newbuf (get-buffer-create " *revert*"))
 	 bmin bmax)
     (save-excursion

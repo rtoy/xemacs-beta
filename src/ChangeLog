@@ -1,3 +1,7 @@
+2002-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* eldap.c (print_ldap): swap arguments of write_c_string.
+
 2002-05-16  Ben Wing  <ben@xemacs.org>
 
 	* bytecode.c (execute_rare_opcode):
