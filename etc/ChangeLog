@@ -1,3 +1,7 @@
+2005-02-03  Jerry James  <james@xemacs.org>
+
+	* ETAGS.EBNF: Update to author version 17.11.
+
 2005-01-31  Ben Wing  <ben@xemacs.org>
 
 	Delete stuff that is irrelevant, mislocated or woefully out-of-date.

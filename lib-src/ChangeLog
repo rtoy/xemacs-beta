@@ -1,3 +1,7 @@
+2005-02-03  Jerry James  <james@xemacs.org>
+
+	* etags.c: Update to author version 17.11.
+
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
 	* fakemail.c (main):  Add args to fix warning.
