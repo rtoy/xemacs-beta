@@ -376,7 +376,7 @@ BROWSERFLAGS=-Fr$*.sbr -Fd$(OUTDIR)\temacs.pdb
 # ---- No debugging support ----
 DEBUG_FLAGS_COMPILE=
 DEBUG_FLAGS_LINK=-incremental:no
-DEBUG_DEFINES=-DDEBUG_XEMACS -D_DEBUG 
+DEBUG_DEFINES=
 BROWSERFLAGS=
 
 !endif
