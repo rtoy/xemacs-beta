@@ -327,17 +327,16 @@ by `current-window-configuration'."
 
 (defun window-reduce-to-one (window)
   "Make sure only one subwindow of WINDOW is left."
-  (let ((window (window-next-child window)))
-    (while window
-      (if (window-live-p window)
-	  (let ((next (window-next-child window)))
-	    (delete-window window)
-	    (setq window next)))))
-  (cond
-   ((window-first-hchild window)
-    (window-reduce-to-one (window-first-hchild window)))
-   ((window-first-vchild window)
-    (window-reduce-to-one (window-first-vchild window)))))
+  (let ((buffer-window (window-find-buffer-subwindow window)))
+    (delete-other-windows buffer-window)))
+
+(defun window-find-buffer-subwindow (window)
+  "Find a subwindow of window which contains a buffer."
+  (while (not (window-buffer window))
+    (if (window-first-vchild window)
+	(setq window (window-first-vchild window))
+      (setq window (window-first-hchild window))))
+  window)
 
 (defun restore-saved-window (configuration window saved-window direction)
   "Within CONFIGURATION, restore WINDOW to the state of SAVED-WINDOW."

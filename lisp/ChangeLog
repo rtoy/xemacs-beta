@@ -1,3 +1,9 @@
+2003-01-10  Mike Sperber  <mike@xemacs.org>
+
+	* window-xemacs.el (window-reduce-to-one): Rewrite in terms of
+	`delete-other-windows.'
+	(window-find-buffer-subwindow): Add.
+
 2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule/japan-util.el (setup-japanese-environment-internal):
