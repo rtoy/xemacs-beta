@@ -1,3 +1,8 @@
+2003-12-03  Adrian Aichner  <adrian@xemacs.org>
+
+	* files.el (delete-old-versions): Avoid going interactive during
+	make install when environment variable VERSION_CONTROL is set.
+
 2004-04-21  Sven Grundmann  <sven@hellerhof.de>
 
 	* list-mode.el (display-completion-list): Fixed completion list was
