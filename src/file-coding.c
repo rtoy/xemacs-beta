@@ -3541,10 +3541,10 @@ detected_coding_system (struct detection_state *st)
    blanks).  If found, return it, otherwise nil. */
 
 static Lisp_Object
-snarf_coding_system (const Ibyte *p, Bytecount len)
+snarf_coding_system (const UExtbyte *p, Bytecount len)
 {
   Bytecount n;
-  Ibyte *name;
+  UExtbyte *name;
 
   while (*p == ' ' || *p == '\t') p++, len--;
   len = min (len, 1000);
@@ -3563,7 +3563,9 @@ snarf_coding_system (const Ibyte *p, Bytecount len)
   if (n > 0)
     {
       name[n] = '\0';
-      return find_coding_system_for_text_file (intern_int (name), 0);
+      /* This call to intern_int() is OK because we already verified that
+	 there are only ASCII characters in the string */
+      return find_coding_system_for_text_file (intern_int ((Ibyte *) name), 0);
     }
 
   return Qnil;
@@ -3598,6 +3600,7 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 {
   const UExtbyte *p;
   const UExtbyte *scan_end;
+  Bytecount cookie_len;
 
   /* Look for initial "-*-"; mode line prefix */
   for (p = data,
@@ -3639,20 +3642,26 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	break;
       }
 
-#if 0
-  /* #### Totally wrong as is, rewrite */
-  /* Look for initial ;;;###coding system */
+  /* Look for ;;;###coding system */
 
+  cookie_len = LENGTH (";;;###coding system: ");
+
+  for (p = data,
+       scan_end = data + len - cookie_len;
+       p <= scan_end;
+       p++)
   {
-    Bytecount ind = fast_string_match (QScoding_system_cookie,
-				       data, Qnil, 0, len, 0, ERROR_ME_NOT,
-				       1);
-    if (ind >= 0)
-      return
-	snarf_coding_system (data + ind + LENGTH (";;;###coding system: "),
-			     len - ind - LENGTH (";;;###coding system: "));
+    if (*p == ';' && !memcmp (p, ";;;###coding system: ", cookie_len))
+      {
+	const UExtbyte *suffix;
+
+	p += cookie_len;
+	suffix = p;
+	while (suffix < scan_end && !isspace (*suffix))
+	  suffix++;
+	return snarf_coding_system (p, suffix - p);
+      }
   }
-#endif /* 0 */
 
   return Qnil;
 } 

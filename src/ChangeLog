@@ -1,3 +1,10 @@
+2005-01-29  Ben Wing  <ben@xemacs.org>
+
+	* file-coding.c (snarf_coding_system):
+	Use UExtbyte for semantic correctness.
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	Fix code that recognizes ;;;###coding cookie.
+
 2005-01-27  Ben Wing  <ben@xemacs.org>
 
 	* console-impl.h (struct console_methods):
