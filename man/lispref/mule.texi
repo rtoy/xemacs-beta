@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
-@c Copyright (C) 1996 Ben Wing.
+@c Copyright (C) 1996 Ben Wing, 2001-2002 Free Software Foundation.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/internationalization.info
 @node MULE, Tips, Internationalization, top
@@ -23,6 +23,7 @@ it is based on @dfn{MULE}.
 * Coding Systems::      Ways of representing a string of chars using integers.
 * CCL::                 A special language for writing fast converters.
 * Category Tables::     Subdividing charsets into groups.
+* Unicode Support::     The universal coded character set.
 @end menu
 
 @node Internationalization Terminology, Charsets, , MULE
@@ -2009,7 +2010,7 @@ Resets the CCL interpreter's internal elapsed time registers.
 
   This section is not yet written.
 
-@node Category Tables, , CCL, MULE
+@node Category Tables, Unicode Support, CCL, MULE
 @section Category Tables
 
   A category table is a type of char table used for keeping track of
@@ -2067,5 +2068,116 @@ char in the range @samp{' '} to @samp{'~'}).
 @defun category-table-value-p object
 This function returns @code{t} if @var{object} is a category table value.
 Valid values are @code{nil} or a bit vector of size 95.
+@end defun
+
+
+@c Added 2002-03-13 sjt
+@node Unicode Support, , Category Tables, MULE
+@section Unicode Support
+@cindex unicode
+@cindex utf-8
+@cindex utf-16
+@cindex ucs-2
+@cindex ucs-4
+@cindex bmp
+@cindex basic multilingual plance
+
+Unicode support was added by Ben Wing to XEmacs 21.5.6.
+
+@defun set-language-unicode-precedence-list list
+Set the language-specific precedence list used for Unicode decoding.
+This is a list of charsets, which are consulted in order for a translation
+matching a given Unicode character.  If no matches are found, the charsets
+in the default precedence list (see
+@code{set-default-unicode-precedence-list}) are consulted, and then all
+remaining charsets, in some arbitrary order.
+
+The language-specific precedence list is meant to be set as part of the
+language environment initialization; the default precedence list is meant
+to be set by the user.
+@end defun
+
+@defun language-unicode-precedence-list
+Return the language-specific precedence list used for Unicode decoding.
+See @code{set-language-unicode-precedence-list} for more information.
+@end defun
+
+@defun set-default-unicode-precedence-list list
+Set the default precedence list used for Unicode decoding.
+This is meant to be set by the user.  See
+`set-language-unicode-precedence-list' for more information.
+@end defun
+
+@defun default-unicode-precedence-list
+Return the default precedence list used for Unicode decoding.
+See @code{set-language-unicode-precedence-list} for more information.
+@end defun
+
+@defun set-unicode-conversion character code
+Add conversion information between Unicode codepoints and characters.
+@var{character} is one of the following:
+
+@c #### fix this markup
+-- A character (in which case @var{code} must be a non-negative integer)
+-- A vector of characters (in which case @var{code} must be a vector of
+   non-negative integers of the same length)
+
+Values of @var{code} above 2^20 - 1 are allowed for the purpose of specifying
+private characters, but will cause errors when converted to UTF-16 or UTF-32.
+UCS-4 and UTF-8 can handle values to 2^31 - 1, but XEmacs Lisp integers top
+out at 2^30 - 1.
+@end defun
+
+@defun character-to-unicode character
+Convert @var{character} to Unicode codepoint.
+When there is no international support (i.e. MULE is not defined),
+this function simply does @code{char-to-int}.
+@end defun
+
+@defun unicode-to-character code [charsets]
+Convert Unicode codepoint @var{code} to character.
+@var{code} should be a non-negative integer.
+If @var{charsets} is given, it should be a list of charsets, and only those
+charsets will be consulted, in the given order, for a translation.
+Otherwise, the default ordering of all charsets will be given (see
+@code{set-unicode-charset-precedence}).
+
+When there is no international support (i.e. MULE is not defined),
+this function simply does @code{int-to-char} and ignores the
+@var{charsets} argument.
+@end defun
+
+@defun parse-unicode-translation-table filename charset start end offset flags
+Parse Unicode translation data in @var{filename} for MULE @var{charset}.
+Data is text, in the form of one translation per line -- charset
+codepoint followed by Unicode codepoint.  Numbers are decimal or hex
+\(preceded by 0x).  Comments are marked with a #.  Charset codepoints
+for two-dimensional charsets should have the first octet stored in the
+high 8 bits of the hex number and the second in the low 8 bits.
+
+If @var{start} and @var{end} are given, only charset codepoints within
+the given range will be processed.  If @var{offset} is given, that value
+will be added to all charset codepoints in the file to obtain the
+internal charset codepoint.  @var{start} and @var{end} apply to the
+codepoints in the file, before @var{offset} is applied.
+
+(Note that, as usual, we assume that octets are in the range 32 to
+127 or 33 to 126.  If you have a table in kuten form, with octets in
+the range 1 to 94, you will have to use an offset of 5140,
+i.e. 0x2020.)
+
+@var{flags}, if specified, control further how the tables are interpreted
+and are used to special-case certain known table weirdnesses in the
+Unicode tables:
+
+@table @code
+@item ignore-first-column'
+Exactly as it sounds.  The JIS X 0208 tables have 3 columns of data instead
+of 2; the first is the Shift-JIS codepoint.
+
+@item big5
+The charset codepoint is a Big Five codepoint; convert it to the
+proper hacked-up codepoint in `chinese-big5-1' or `chinese-big5-2'.
+@end table
 @end defun
 

@@ -1,3 +1,12 @@
+2002-03-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* emodules.texi (Using DEFUN): Add @ref{Lisp Primitives}.
+
+	* lispref/mule.texi (Unicode Support): 
+	* xemacs/custom.texi (Behaviors):
+	* lispref/customize.texi (Enabling Behavior):
+	New nodes.
+
 2002-03-12  Ben Wing  <ben@xemacs.org>
 
 	* The Great Mule Merge: placeholder.

@@ -17,6 +17,9 @@ file to do the customization in each session.  @xref{Init File}.
 @menu
 * Minor Modes::     Each minor mode is one feature you can turn on
                      independently of any others.
+* Behaviors::       Like minor modes, behaviors are independent of other
+                     features, but behaviors are usually enabled globally,
+                     while minor modes are per-buffer and often temporary.
 * Variables::       Many Emacs commands examine Emacs variables
                      to decide what to do; by setting variables,
                      you can control their functioning.
@@ -74,6 +77,42 @@ mode, it changes to @samp{FOOGAR}, instead of @samp{FOOGBAR}.@refill
   Abbrev mode allows you to define abbreviations that automatically expand
 as you type them.  For example, @samp{amd} might expand to @samp{abbrev
 mode}.  @xref{Abbrevs}, for full information.
+
+@c Updated for 21.5.6 2002/03/13 sjt
+@node Behaviors
+@section Behaviors
+@cindex behavior
+
+Some functionality requires a fair amount of effort to enable globally
+in a session.  For example, someone who discovers filladapt and really
+likes it must toggle it separately in each buffer.  On the other hand,
+after trying it for a while she might like to disable it everywhere,
+having decided it doesn't work very well for her.  Such a functionality
+is called a @dfn{behavior}.
+
+The package developer will register behaviors with XEmacs.  Then the
+user invokes the @code{enable-behavior} and @code{disable-behavior}
+functions to enable or disable a given behavior.  The behavior registry
+was introduced in XEmacs 21.5.6.
+
+@defun enable-behavior behavior [force]
+Called interactively, prompt the user, read a behavior symbol name with
+completion for @var{behavior}, and take @var{force} from the prefix
+argument.  Then enable the behavior registered under the symbol
+@var{behavior}.
+
+The optional argument @var{force} is unimplemented in 21.5.6.
+@end defun
+
+@defun disable-behavior behavior [force]
+Called interactively, prompt the user, read a behavior symbol name with
+completion for @var{behavior}, and take @var{force} from the prefix
+argument.  Then disable the behavior registered under the symbol
+@var{behavior}.
+
+The optional argument @var{force} is unimplemented in 21.5.6.
+@end defun
+
 
 @node Variables
 @section Variables

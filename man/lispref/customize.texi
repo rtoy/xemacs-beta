@@ -16,6 +16,7 @@ definitions---as well as face definitions.
 * Group Definitions::
 * Variable Definitions::
 * Customization Types::
+* Enabling Behavior::
 @end menu
 
 @node Common Keywords
@@ -287,7 +288,7 @@ and @code{saved-value} to record the value saved by the user with the
 customization buffer.  The @code{saved-value} property is actually a
 list whose car is an expression which evaluates to the value.
 
-@node Customization Types
+@node Customization Types, Enabling Behavior, Variable Definitions, Customization
 @section Customization Types
 
   When you define a user option with @code{defcustom}, you must specify
@@ -748,3 +749,106 @@ arguments, which will be used when creating the @code{radio-button} or
 @code{checkbox} associated with this item.
 @end ignore
 @end table
+
+
+@node Enabling Behavior, , Customization Types, Customization
+@subsection Enabling Behavior
+@cindex behavior
+
+@c #### Does this belong here?
+
+Some functionality requires a fair amount of effort to enable globally
+in a session.  For example, someone who discovers filladapt and really
+likes it must toggle it separately in each buffer.  On the other hand,
+after trying it for a while she might like to disable it everywhere,
+having decided it doesn't work very well for her.  Such a functionality
+is called a @dfn{behavior}.
+
+@code{define-behavior} allows the programmer to register functions to
+enable or disable a package globally in a session.  The user sees a
+consistent interface through the @code{enable-behavior} and
+@code{disable-behavior} functions.  These functions were introduced in
+XEmacs 21.5.6.
+
+@defvar behavior-hash-table
+
+Internal table of registered behaviors.
+@end defvar
+
+@defvar behavior-history
+
+History of entered behaviors.
+@end defvar
+
+@defun define-behavior name doc-string [cl-keys ...]
+
+Define a behavior named @var{name}.
+
+@var{doc-string} must be specified.  It is a description of what the
+behavior does when it's enabled and how to further control it (typically
+through custom variables).  Accepted keywords are
+
+@table @code
+@item :title
+A "pretty" version of the name, for use in menus.  If omitted
+a prettified name will be generated.
+
+@item :require
+A single symbol or a list of such symbols, which need to be
+present at enable time, or will be loaded using @code{require}.
+
+@item :enable
+A function of no variables, which turns the behavior on.
+
+@item :disable
+A function of no variables, which turns the behavior off.
+@end table
+
+Behaviors are assumed to be global, and to take effect immediately; if
+the underlying package is per-buffer, the enabler may have to scan all
+existing buffers and frob them.  When a behavior is disabled, it should
+completely go away @strong{everywhere}, as if it were never invoked at
+all.
+
+The @code{:disable} keyword can be missing.  This is bad practice.  In
+such a case, attempting to disable the behavior will signal an error
+unless you use the @code{force} option.
+@end defun
+
+@defun read-behavior prompt [require-match [initial-contents [history [default]]]]
+
+Return a behavior symbol from the minibuffer, prompting with string
+@var{prompt}.
+
+The optional arguments @var{require-match}, @var{initial-contents},
+@var{history}, and @var{default} are passed to @code{completing-read},
+and have semantics derived from that function.  @ref{Minibuffer
+Completion}.  The default value of @var{history} is
+@code{behavior-history}.
+@end defun
+
+@defun behavior-enabled-p name
+
+Return non-nil if the behavior registered under @var{name} is enabled.
+
+Unimplemented in 21.5.6.
+@end defun
+
+@defun enable-behavior behavior [force]
+Enable the behavior registered under the symbol @var{behavior}.
+
+The optional argument @var{force} is unimplemented in 21.5.6.
+
+Called interactively, prompt the user for @var{behavior}, and take
+@var{force} from the prefix argument.
+@end defun
+
+@defun disable-behavior (behavior &optional force)
+Disable the behavior registered under the symbol @var{behavior}.
+
+The optional argument @var{force} is unimplemented in 21.5.6.
+
+Called interactively, prompt the user for @var{behavior}, and take
+@var{force} from the prefix argument.
+@end defun
+

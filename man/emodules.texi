@@ -855,11 +855,12 @@ for this to happen.  It is all taken care of in the
 @cindex functions, Lisp
 @cindex functions, defining
 
-  Although the full syntax of a function declaration is discussed in the
-@value{emacs} internals manual in greater depth, what follows is a brief
-description of how to define and implement a new Lisp primitive in a
-module.  This is done using the @code{DEFUN} macro.  Here is a small
-example:
+  The full syntax of a function declaration is discussed in the
+@value{emacs} internals manual in greater depth.  @ref{Writing Lisp
+Primitives,,,internals,@value{emacs} Internals Manual}.  What follows is
+a brief description of how to define and implement a new Lisp primitive
+in a module.  This is done using the @code{DEFUN} macro.  Here is a
+small example:
 
 @example
 @cartouche
