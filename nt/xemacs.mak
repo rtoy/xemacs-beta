@@ -957,7 +957,7 @@ dump_temacs   = $(temacs_loadup) dump
 run_temacs    = $(temacs_loadup) run-temacs
 ## We have automated tests!!
 testdir=../tests/automated
-batch_test_emacs=$(BATCH) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
+batch_test_emacs=$(BATCH_PACKAGES) -l $(testdir)/test-harness.el -f batch-test-emacs $(testdir)
 
 # .PHONY: check check-temacs
 

@@ -1189,7 +1189,16 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 	  {
 	    dst += the_dst_used;
 	    dstlen -= the_dst_used;
-	    if (!dstlen)
+	    /* Stop if we didn't use all of the source text.  Also stop
+	       if the destination is full.  We need the first test because
+	       there might be a couple bytes left in the destination, but
+	       not enough to fit a full character.  The first test will in
+	       fact catch the vast majority of cases where the destination
+	       is empty, too -- but in case the destination holds *exactly*
+	       the run length, we put in the second check. (It shouldn't
+	       really matter though -- next time through we'll just get a
+	       0.) */
+	    if (the_src_used < runlen || !dstlen)
 	      break;
 	  }
       }

@@ -1,5 +1,12 @@
 2002-05-14  Ben Wing  <ben@xemacs.org>
 
+	* xemacs.mak (batch_test_emacs):
+	* xemacs.mak (check):
+	Run tests with the packages so we don't get errors about
+	advice not present, etc.
+
+2002-05-14  Ben Wing  <ben@xemacs.org>
+
 	* xemacs.mak (CONFIG_VALUES):
 	* xemacs.mak (LINK_DEPENDENCY_ARGS): New.
 	* xemacs.mak (LINK_STANDARD_LIBRARY_ARGS): New.

@@ -1,5 +1,12 @@
 2002-05-14  Ben Wing  <ben@xemacs.org>
 
+	* text.c (copy_buffer_text_out): Fix bug leading to crashes
+	with multibyte text.
+	* win32.c (Fmswindows_shell_execute): Fix crash due to errant
+	xfree().
+
+2002-05-14  Ben Wing  <ben@xemacs.org>
+
 	* callproc.c (Fold_call_process_internal):
 	Use Fget_buffer_create() with a string buffer, as documented.
 	

@@ -338,8 +338,6 @@ otherwise it is an integer representing a ShowWindow flag:
     ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,
 				 (INTP (show_flag) ?
 				  XINT (show_flag) : SW_SHOWDEFAULT));
-
-    xfree (doc);
   }
 
   if (ret <= 32)
