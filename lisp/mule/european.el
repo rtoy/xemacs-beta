@@ -374,7 +374,7 @@ German (Deutsch S,A|(Bd)	Gr,A|_(B Gott"
       ("Norwegian" "no" "TUTORIAL.no")
       ("Portuguese" "pt" nil "Bem-vindo! Tudo bem?")
       ("Spanish" "es" "TUTORIAL.es" ",A!(BHola!")
-      ("Swedish" "sv")))
+      ("Swedish" "sv" "TUTORIAL.se" "Hej!")))
     ((latin-iso8859-15 iso-8859-15 "latin-1-prefix" ;; #### FIXME
 		       "Latin-9" "ISO-8859-15"
 		       ("\
