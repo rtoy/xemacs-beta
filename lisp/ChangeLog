@@ -1,3 +1,17 @@
+2001-05-30  William M. Perry  <wmperry@gnu.org>
+
+	* gtk-marshal.el: Make sure that we use 'const' instead of 'CONST'
+	in the generated file.  Put in a comment at the top of the
+	generated file that it _IS_ auto-generated, and should not be
+	edited by hand.
+	
+
+	* gtk-widget-accessors.el (define-widget-accessors): Use
+	wtaerror() instead of signal_simple_error.
+	(import-widget-accessors): Put in a comment at the top of the
+	generated file that it _IS_ auto-generated, and should not be
+	edited by hand.
+
 2001-05-10   Daiki Ueno  <ueno@unixuser.org>
 
 	* font-lock.el (font-lock-compile-keywords): Rewrite as a side
