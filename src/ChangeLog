@@ -1,3 +1,8 @@
+2005-02-03  David Evers  <extsw@appliedgenerics.com>
+
+	* process-unix.c (unix_send_process): Flush the last chunk, even
+	when the pipe is blocked.
+
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
 	* dumper.c:

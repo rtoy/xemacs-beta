@@ -1511,30 +1511,38 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
       Ibyte chunkbuf[512];
       Bytecount chunklen;
 
-      while (1)
+      do
 	{
 	  int writeret;
 
 	  chunklen = Lstream_read (lstream, chunkbuf, 512);
-	  if (chunklen <= 0)
-	    break; /* perhaps should ABORT() if < 0?
-		      This should never happen. */
 	  old_sigpipe =
 	    (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, send_process_trap);
-	  /* Lstream_write() will never successfully write less than
-	     the amount sent in.  In the worst case, it just buffers
-	     the unwritten data. */
-	  writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM (p)), chunkbuf,
-				    chunklen);
-	  {
-	    int save_errno = errno;
-	    EMACS_SIGNAL (SIGPIPE, old_sigpipe);
-	    errno = save_errno;
-	    if (writeret < 0)
-	      /* This is a real error.  Blocking errors are handled
-		 specially inside of the filedesc stream. */
-	      report_process_error ("writing to process", proc);
-	  }
+	  if (chunklen > 0)
+	    {
+	      int save_errno;
+
+	      /* Lstream_write() will never successfully write less than
+		 the amount sent in.  In the worst case, it just buffers
+		 the unwritten data. */
+	      writeret = Lstream_write (XLSTREAM (DATA_OUTSTREAM(p)), chunkbuf,
+					chunklen);
+	      save_errno = errno;
+	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
+	      errno = save_errno;
+	      if (writeret < 0)
+		/* This is a real error.  Blocking errors are handled
+		   specially inside of the filedesc stream. */
+		report_file_error ("writing to process", list1 (proc));
+	    }
+	  else
+	    {
+	      /* Need to make sure that everything up to and including the
+		 last chunk is flushed, even when the pipe is currently
+		 blocked. */
+	      Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
+	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
+	    }
 	  while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
 	    {
 	      /* Buffer is full.  Wait, accepting input;
@@ -1549,7 +1557,9 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
 	      Lstream_flush (XLSTREAM (p->pipe_outstream));
 	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 	    }
+	  /* Perhaps should ABORT() if < 0?  This should never happen. */
 	}
+      while (chunklen > 0);
     }
   else
     { /* We got here from a longjmp() from the SIGPIPE handler */
