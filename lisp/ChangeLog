@@ -1,3 +1,8 @@
+2003-10-29  Ville Skyttä  <scop@xemacs.org>
+
+	* mule/lao-util.el (lao-transcription-pattern):
+	Comment out duplicate which uses regexp-opt.
+
 2003-10-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* autoload.el (Copyright): Update.

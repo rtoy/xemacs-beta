@@ -313,22 +313,23 @@
    )
   "Regexp of Roman transcription pattern for one Lao syllable.")
 
-(defconst lao-transcription-pattern
-  (concat
-   "\\("
-   (regexp-opt (mapcar 'car lao-transcription-consonant-alist))
-   "\\)\\("
-   (regexp-opt (mapcar 'car lao-transcription-semi-vowel-alist))
-   "\\)?\\(\\("
-   (regexp-opt (mapcar 'car lao-transcription-vowel-alist))
-   "\\)\\("
-   (regexp-opt (mapcar 'car lao-transcription-maa-sakod-alist))
-   "\\)?\\("
-   (regexp-opt (mapcar 'car lao-transcription-tone-alist))
-   "\\)?\\)?\\|"
-   (regexp-opt (mapcar 'car lao-transcription-punctuation-alist))
-   )
-  "Regexp of Roman transcription pattern for one Lao syllable.")
+;; regexp-opt is in packages...
+;(defconst lao-transcription-pattern
+;  (concat
+;   "\\("
+;   (regexp-opt (mapcar 'car lao-transcription-consonant-alist))
+;   "\\)\\("
+;   (regexp-opt (mapcar 'car lao-transcription-semi-vowel-alist))
+;   "\\)?\\(\\("
+;   (regexp-opt (mapcar 'car lao-transcription-vowel-alist))
+;   "\\)\\("
+;   (regexp-opt (mapcar 'car lao-transcription-maa-sakod-alist))
+;   "\\)?\\("
+;   (regexp-opt (mapcar 'car lao-transcription-tone-alist))
+;   "\\)?\\)?\\|"
+;   (regexp-opt (mapcar 'car lao-transcription-punctuation-alist))
+;   )
+;  "Regexp of Roman transcription pattern for one Lao syllable.")
 
 (defconst lao-vowel-reordering-rule
   '(("(1P(B" (0 ?(1P(B) (0 ?(1Q(B))
