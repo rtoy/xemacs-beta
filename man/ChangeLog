@@ -1,3 +1,12 @@
+2002-10-29  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* lispref/compile.texi (Compilation Options): New node.
+	(Byte Compilation): Add it to menu.
+	(Compilation Functions): Minor mods.
+	(Docs and Compilation):
+	(Dynamic Loading):
+	Document some variable defaults.
+
 2002-11-07  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
 
 	* internals/internals.texi (Low-Level Modules): Add urefs to Doug
