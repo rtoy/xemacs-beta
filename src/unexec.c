@@ -220,13 +220,14 @@ int need_coff_header = 1;
 #include <fcntl.h>
 #endif
 
+#include "compiler.h"
+
 #ifndef O_RDONLY
 #define O_RDONLY 0
 #endif
 #ifndef O_RDWR
 #define O_RDWR 2
 #endif
-
 
 extern char *start_of_text ();		/* Start of text */
 
@@ -812,7 +813,13 @@ static void write_segment (int, char *, char *);
  * Copy the text and data segments from memory to the new a.out
  */
 static int
-copy_text_and_data (int new, int a_out)
+copy_text_and_data (int new, 
+#if defined (COFF) && defined (USG_SHARED_LIBRARIES)
+		    int a_out
+#else
+		    int UNUSED (a_out)
+#endif
+		    )
 {
   char *end;
   char *ptr;
@@ -1154,8 +1161,8 @@ mark_x (char *name)
 
 int
 adjust_lnnoptrs (writedesc, readdesc, new_name)
-     int writedesc;
-     int readdesc;
+     int UNUSED (writedesc);
+     int UNUSED (readdesc);
      char *new_name;
 {
   int nsyms;

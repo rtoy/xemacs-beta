@@ -688,7 +688,8 @@ gui_item_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 }
 
 static void
-print_gui_item (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_gui_item (Lisp_Object obj, Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   Lisp_Gui_Item *g = XGUI_ITEM (obj);
 
@@ -804,7 +805,7 @@ parse_gui_item_tree_list (Lisp_Object list)
 }
 
 static void
-finalize_gui_item (void *header, int for_disksave)
+finalize_gui_item (void *UNUSED (header), int UNUSED (for_disksave))
 {
 }
 

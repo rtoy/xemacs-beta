@@ -1,5 +1,30 @@
 2004-09-14  Jerry James  <james@xemacs.org>
 
+	* Makefile.in.in (cppflags): Make compiler.h available.
+	* config.h.in: Include compiler.h.
+	* lwlib.c (max): Remove; now defined in compiler.h.
+	(merge_widget_value): Fix misplaced `change' computation.
+	* xlwcheckbox.c (DrawCheck): conditionalize declaration and
+	assignment of variable bw like its use.
+	* xlwtabs.c (TabsResize): Comment out declaration and assignment
+	of variable tab, whose use is commented out.
+
+	* lwlib-Xaw.c:
+	* lwlib-Xlw.c:
+	* lwlib-Xm.c:
+	* lwlib-utils.c:
+	* lwlib.c:
+	* xlwcheckbox.c:
+	* xlwgauge.c:
+	* xlwgcs.c:
+	* xlwmenu.c:
+	* xlwradio.c:
+	* xlwscrollbar.c:
+	* xlwtabs.c:
+	Mark unused parameters with the UNUSED macro.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
 	* xlwgauge.c (GaugeConvert): Fix type-punning warning.
 
 2004-04-23  Jerry James  <james@xemacs.org>

@@ -63,7 +63,7 @@ shared_resource_validate (Lisp_Object instantiator)
 
 Lisp_Object
 shared_resource_normalize (Lisp_Object inst, Lisp_Object console_type,
-			   Lisp_Object dest_mask, Lisp_Object tag)
+			   Lisp_Object UNUSED (dest_mask), Lisp_Object tag)
 {
   /* This function can call lisp */
   Lisp_Object file = Qnil;

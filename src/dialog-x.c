@@ -128,8 +128,8 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
   int count;
   Lisp_Object wv_closure, gui_item;
   Lisp_Object question = Qnil;
-  Lisp_Object title    = Qnil;  /* #### currently unused */
   Lisp_Object buttons  = Qnil;
+  /* Lisp_Object title = Qnil;  #### currently unused */
 
   {
     EXTERNAL_PROPERTY_LIST_LOOP_3 (key, value, keys)
@@ -142,7 +142,7 @@ dbox_descriptor_to_widget_value (Lisp_Object keys)
 	else if (EQ (key, Q_title))
 	  {
 	    CHECK_STRING (value);
-	    title = value;
+	    /* title = value; */
 	  }
 	else if (EQ (key, Q_buttons))
 	  {
@@ -253,7 +253,7 @@ x_make_dialog_box_internal (struct frame* f, Lisp_Object type,
 {
   int dbox_id;
   widget_value *data;
-  Widget parent, dbox;
+  Widget parent;
 
   if (!EQ (type, Qquestion))
     signal_error (Qunimplemented, "Dialog box type", type);
@@ -263,7 +263,7 @@ x_make_dialog_box_internal (struct frame* f, Lisp_Object type,
   parent = FRAME_X_SHELL_WIDGET (f);
 
   dbox_id = new_lwlib_id ();
-  dbox = lw_create_widget (data->name, "dialog", dbox_id, data, parent, 1, 0,
+  (void) lw_create_widget (data->name, "dialog", dbox_id, data, parent, 1, 0,
 			   dbox_selection_callback, 0);
   lw_modify_all_widgets (dbox_id, data, True);
   lw_modify_all_widgets (dbox_id, data->contents, True);

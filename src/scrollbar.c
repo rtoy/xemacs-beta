@@ -437,7 +437,9 @@ update_scrollbar_instance (struct window *w, int vertical,
   int new_minimum = -1, new_maximum = -1;
   int new_slider_size = -1, new_slider_position = -1;
   int new_width = -1, new_height = -1, new_x = -1, new_y = -1;
+#if 0
   struct window *new_window = 0; /* #### currently unused */
+#endif
 
   end_pos = BUF_Z (b) - w->window_end_pos[CURRENT_DISP];
   sb_pos = scrollbar_point (w, 0);
@@ -528,7 +530,9 @@ update_scrollbar_instance (struct window *w, int vertical,
 	  new_slider_size = min ((end_pos - start_pos),
 				 (new_maximum - new_minimum));
 	  new_slider_position = sb_pos;
+#if 0
 	  new_window = w;
+#endif
 	}
     }
   else if (!MINI_WINDOW_P (w))
@@ -620,9 +624,9 @@ init_global_scrollbars (struct device *d)
 }
 
 static void
-vertical_scrollbar_changed_in_window (Lisp_Object specifier,
+vertical_scrollbar_changed_in_window (Lisp_Object UNUSED (specifier),
 				      struct window *w,
-				      Lisp_Object oldval)
+				      Lisp_Object UNUSED (oldval))
 {
   /* Hold on your cerebella guys. If we always show the dividers,
      changing scrollbar affects only how the text and scrollbar are
@@ -642,8 +646,9 @@ vertical_scrollbar_changed_in_window (Lisp_Object specifier,
 /* This function is called as a result of a change to the
    `scrollbar-pointer' glyph.  */
 static void
-scrollbar_pointer_changed_in_window (Lisp_Object specifier, struct window *w,
-				     Lisp_Object oldval)
+scrollbar_pointer_changed_in_window (Lisp_Object UNUSED (specifier),
+				     struct window *w,
+				     Lisp_Object UNUSED (oldval))
 {
   struct frame *f = XFRAME (WINDOW_FRAME (w));
 

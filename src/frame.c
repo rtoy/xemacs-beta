@@ -234,7 +234,8 @@ mark_frame (Lisp_Object obj)
 }
 
 static void
-print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_frame (Lisp_Object obj, Lisp_Object printcharfun,
+	     int UNUSED (escapeflag))
 {
   struct frame *frm = XFRAME (obj);
 
@@ -773,8 +774,8 @@ adjust_frame_size (struct frame *f)
  * changing which causes frame size adjustment
  */
 void
-frame_size_slipped (Lisp_Object specifier, struct frame *f,
-		    Lisp_Object oldval)
+frame_size_slipped (Lisp_Object UNUSED (specifier), struct frame *f,
+		    Lisp_Object UNUSED (oldval))
 {
   MARK_FRAME_SIZE_SLIPPED(f);
 }
@@ -3527,8 +3528,8 @@ update_frame_icon (struct frame *f)
 }
 
 static void
-icon_glyph_changed (Lisp_Object glyph, Lisp_Object property,
-		    Lisp_Object locale)
+icon_glyph_changed (Lisp_Object UNUSED (glyph), Lisp_Object UNUSED (property),
+		    Lisp_Object UNUSED (locale))
 {
   MARK_ICON_CHANGED;
 }

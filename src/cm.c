@@ -43,7 +43,7 @@ static void cmgoto_for_real (struct console *c, int row, int col);
 static int cm_cost_counter;		/* sums up costs */
 
 static void
-evalcost (int c)
+evalcost (int UNUSED (c))
 {
   cm_cost_counter++;
 }

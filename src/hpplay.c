@@ -92,7 +92,7 @@ myHandler( Audio * audio, AErrorEvent * err_event)
 
 /* Playing */
 void
-play_bucket_internal( Audio *audio, SBucket *pSBucket, long volume)
+play_bucket_internal( Audio *audio, SBucket *pSBucket, long UNUSED (volume))
 {
   SBPlayParams playParams;
   AGainEntry gainEntry;
@@ -186,7 +186,7 @@ play_sound_file (Extbyte * sound_file, int volume)
 
 
 int
-play_sound_data (UChar_Binary * data, int length, int volume)
+play_sound_data (UChar_Binary * data, int UNUSED (length), int volume)
 {
   SBucket *pSBucket;
   Audio *audio;

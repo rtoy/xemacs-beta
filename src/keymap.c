@@ -254,7 +254,8 @@ mark_keymap (Lisp_Object obj)
 }
 
 static void
-print_keymap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   /* This function can GC */
   Lisp_Keymap *keymap = XKEYMAP (obj);
@@ -690,8 +691,8 @@ struct keymap_submaps_closure
 };
 
 static int
-keymap_submaps_mapper_0 (Lisp_Object key, Lisp_Object value,
-                         void *keymap_submaps_closure)
+keymap_submaps_mapper_0 (Lisp_Object UNUSED (key), Lisp_Object value,
+                         void *UNUSED (keymap_submaps_closure))
 {
   /* This function can GC */
   /* Perform any autoloads, etc */
@@ -830,7 +831,7 @@ of all keymaps.
 
 
 static Lisp_Object
-traverse_keymaps_noop (Lisp_Object keymap, void *arg)
+traverse_keymaps_noop (Lisp_Object UNUSED (keymap), void *UNUSED (arg))
 {
   return Qnil;
 }
@@ -917,7 +918,7 @@ when reading a key-sequence to be looked-up in this keymap.
 }
 
 static Lisp_Object
-keymap_prompt_mapper (Lisp_Object keymap, void *arg)
+keymap_prompt_mapper (Lisp_Object keymap, void *UNUSED (arg))
 {
   return XKEYMAP (keymap)->prompt;
 }
@@ -2896,7 +2897,7 @@ map_keymap_sorted_mapper (Lisp_Object key, Lisp_Object value,
  */
 static int
 map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
-                           Lisp_Object pred)
+                           Lisp_Object UNUSED (pred))
 {
   /* obj1 and obj2 are conses with keysyms in their cars.  Cdrs are ignored.
    */
@@ -3469,7 +3470,7 @@ If optional 4th arg NOINDIRECT is non-nil, don't follow indirections
  to other keymaps or slots.  This makes it possible to search for an
  indirect definition itself.
 */
-       (definition, keymaps, firstonly, noindirect, event_or_keys))
+       (definition, keymaps, firstonly, UNUSED (noindirect), event_or_keys))
 {
   /* This function can GC */
   Lisp_Object maps[100];

@@ -150,7 +150,13 @@ rwx (unsigned short bits, char *chars)
    according to the file mode BITS. */
 
 static void
-setst (unsigned short bits, char *chars)
+setst (
+#if defined(S_ISUID) || defined(S_ISGID) || defined(S_ISVTX)
+       unsigned short bits, char *chars
+#else
+       unsigned short UNUSED (bits), char *UNUSED (chars)
+#endif
+       )
 {
 #ifdef S_ISUID
   if (bits & S_ISUID)

@@ -241,8 +241,8 @@ x_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
    */
 
 static int
-x_text_width (struct frame *f, struct face_cachel *cachel, const Ichar *str,
-	      Charcount len)
+x_text_width (struct frame *UNUSED (f), struct face_cachel *cachel,
+	      const Ichar *str, Charcount len)
 {
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
@@ -291,7 +291,7 @@ x_eol_cursor_width (void)
  Perform any necessary initialization prior to an update.
  ****************************************************************************/
 static void
-x_window_output_begin (struct window *w)
+x_window_output_begin (struct window *UNUSED (w))
 {
 }
 
@@ -1235,7 +1235,7 @@ static void
 x_output_pixmap (struct window *w, Lisp_Object image_instance,
 		 struct display_box *db, struct display_glyph_area *dga,
 		 face_index findex, int cursor_start, int cursor_width,
-		 int cursor_height, int bg_pixmap)
+		 int cursor_height, int UNUSED (bg_pixmap))
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -1526,8 +1526,8 @@ x_output_hline (struct window *w, struct display_line *dl, struct rune *rb)
  ****************************************************************************/
 void
 x_output_shadows (struct frame *f, int x, int y, int width, int height,
-		  GC top_shadow_gc, GC bottom_shadow_gc, GC background_gc,
-		  int shadow_thickness, int edges)
+		  GC top_shadow_gc, GC bottom_shadow_gc,
+		  GC UNUSED (background_gc), int shadow_thickness, int edges)
 {
   struct device *d = XDEVICE (f->device);
 
@@ -1677,7 +1677,8 @@ x_generate_shadow_pixels (struct frame *f, unsigned long *top_shadow,
  given face.
  ****************************************************************************/
 static void
-x_clear_region (Lisp_Object locale, struct device* d, struct frame* f, face_index findex,
+x_clear_region (Lisp_Object UNUSED (locale), struct device* d,
+		struct frame* f, face_index UNUSED (findex),
 		int x, int y,
 		int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
 		Lisp_Object background_pixmap)

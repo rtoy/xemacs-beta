@@ -497,7 +497,6 @@ Register Kanji words into kana-to-kanji conversion dictionary.
 {
   jrKanjiStatusWithValue ksv;
   jrKanjiStatus ks;
-  int len;
 #ifdef CANNA_MULE
   unsigned char cbuf[4096];
 #endif
@@ -514,7 +513,7 @@ Register Kanji words into kana-to-kanji conversion dictionary.
   ks.length = strlen ((const char *) cbuf);
 #endif /* CANNA_MULE */
   ksv.ks = &ks;
-  len = jrKanjiControl (0, KC_DEFINEKANJI, (char *)&ksv);
+  jrKanjiControl (0, KC_DEFINEKANJI, (char *)&ksv);
   return storeResults (key_buffer, ksv.val, ksv.ks);
 }
 
@@ -794,7 +793,7 @@ Return the list of candidates.
 {
   int i, slen, len;
   unsigned char *p, RkBuf[RKBUFSIZE];
-  Lisp_Object res = Qnil, endp;
+  Lisp_Object res = Qnil;
 
   CHECK_INT (bunsetsu);
   if (confirmContext () == 0)
@@ -809,11 +808,11 @@ Return the list of candidates.
       slen = strlen ((const char *) p);
       if (NILP(res))
 	{
-	  endp = res = Fcons (make_string (p, slen), Qnil);
+	  res = Fcons (make_string (p, slen), Qnil);
 	}
       else
 	{
-	  endp = XCDR (res) = Fcons (make_string (p, slen), Qnil);
+	  XCDR (res) = Fcons (make_string (p, slen), Qnil);
 	}
       p += slen + 1;
     }

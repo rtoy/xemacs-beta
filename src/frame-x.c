@@ -583,7 +583,7 @@ x_frame_property (struct frame *f, Lisp_Object property)
 }
 
 static int
-x_internal_frame_property_p (struct frame *f, Lisp_Object property)
+x_internal_frame_property_p (struct frame *UNUSED (f), Lisp_Object property)
 {
   return EQ (property, Qleft)
     || EQ (property, Qtop)
@@ -1472,7 +1472,7 @@ is_valid_window (Window w, struct device *d)
    before the user moves the mouse for the first time. */
 
 static void
-x_send_synthetic_mouse_event (struct frame *f)
+x_send_synthetic_mouse_event (struct frame *UNUSED (f))
 {
   /* #### write this function. */
 }
@@ -1759,7 +1759,8 @@ x_get_layout_sizes (struct frame *f, Dimension *topbreadth)
 }
 
 static void
-x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
+x_layout_widgets (Widget UNUSED (w), XtPointer client_data,
+		  XtPointer call_data)
 {
   struct frame *f = (struct frame *) client_data;
   EmacsManagerResizeStruct *emst = (EmacsManagerResizeStruct *) call_data;
@@ -1799,7 +1800,8 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
 }
 
 static void
-x_do_query_geometry (Widget w, XtPointer client_data, XtPointer call_data)
+x_do_query_geometry (Widget UNUSED (w), XtPointer client_data,
+		     XtPointer call_data)
 {
   struct frame *f = (struct frame *) client_data;
   EmacsManagerQueryGeometryStruct *emst =
@@ -2135,7 +2137,7 @@ allocate_x_frame_struct (struct frame *f)
 
 static void
 x_init_frame_1 (struct frame *f, Lisp_Object props,
-		int frame_name_is_defaulted)
+		int UNUSED (frame_name_is_defaulted))
 {
   /* This function can GC */
   Lisp_Object device = FRAME_DEVICE (f);
@@ -2169,7 +2171,7 @@ x_init_frame_1 (struct frame *f, Lisp_Object props,
 }
 
 static void
-x_init_frame_2 (struct frame *f, Lisp_Object props)
+x_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 {
   /* Set up the values of the widget/frame.  A case could be made for putting
      this inside of the widget's initialize method. */

@@ -108,7 +108,7 @@ DEFUN ("receive-gpm-event", Freceive_gpm_event, 0, 2, 0, /*
 Run GPM_GetEvent().
 This function is the process handler for the GPM connection.
 */
-       (process, string))
+       (process, UNUSED (string)))
 {
   Gpm_Event ev;
   int modifiers = 0;
@@ -206,8 +206,8 @@ static void turn_off_gpm (char *process_name)
 
 #ifdef TIOCLINUX
 static Lisp_Object
-tty_get_foreign_selection (Lisp_Object selection_symbol,
-			   Lisp_Object target_type)
+tty_get_foreign_selection (Lisp_Object UNUSED (selection_symbol),
+			   Lisp_Object UNUSED (target_type))
 {
   /* This function can GC */
   struct device *d = decode_device (Qnil);
@@ -300,7 +300,8 @@ tty_get_foreign_selection (Lisp_Object selection_symbol,
 }
 
 static Lisp_Object
-tty_selection_exists_p (Lisp_Object selection, Lisp_Object selection_type)
+tty_selection_exists_p (Lisp_Object UNUSED (selection),
+			Lisp_Object UNUSED (selection_type))
 {
   return (Qt);
 }
@@ -357,7 +358,8 @@ tty_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
 }
 
 static void
-tty_set_mouse_position (struct window *w, int x, int y)
+tty_set_mouse_position (struct window *UNUSED (w), int UNUSED (x),
+			int UNUSED (y))
 {
   /*
      #### I couldn't find any GPM functions that set the mouse position.

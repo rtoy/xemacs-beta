@@ -251,8 +251,8 @@ ExternalShellClassRec externalShellClassRec = {
 WidgetClass externalShellWidgetClass = (WidgetClass) &externalShellClassRec;
 
 static void
-ExternalShellInitialize (Widget req, Widget new, ArgList args,
-			 Cardinal *num_args)
+ExternalShellInitialize (Widget req, Widget new, ArgList UNUSED (args),
+			 Cardinal *UNUSED (num_args))
 {
   XtAddEventHandler(new, 0,
 		    TRUE, EventHandler, (XtPointer) NULL);
@@ -276,9 +276,9 @@ find_managed_child (CompositeWidget w)
 # define XtCXtToolkitError "XtToolkitError"
 #endif
 
-static void EventHandler (Widget wid, XtPointer closure /* unused */,
+static void EventHandler (Widget wid, XtPointer UNUSED (closure),
 			  XEvent *event,
-			  Boolean *continue_to_dispatch /* unused */)
+			  Boolean *UNUSED (continue_to_dispatch))
 {
   ExternalShellWidget w = (ExternalShellWidget) wid;
 
@@ -364,7 +364,7 @@ static void EventHandler (Widget wid, XtPointer closure /* unused */,
 /* Lifted almost entirely from GetGeometry() in Shell.c
  */
 static void
-GetGeometry (Widget W, Widget child)
+GetGeometry (Widget W, Widget UNUSED (child))
 {
     ExternalShellWidget w = (ExternalShellWidget)W;
     int x, y, win_gravity = -1, flag;

@@ -219,8 +219,8 @@ RadioClassPartInit (WidgetClass class_)
 static void
 RadioInit (Widget   request,
 	   Widget   new,
-	   ArgList  args,
-	   Cardinal *num_args)
+	   ArgList  UNUSED (args),
+	   Cardinal *UNUSED (num_args))
 {
     RadioWidget rw = (RadioWidget) new;
     RadioWidget rw_req = (RadioWidget) request;
@@ -247,9 +247,9 @@ RadioInit (Widget   request,
 
 /* ARGSUSED */
 static void
-RadioDestroy (Widget w,
-	      XtPointer junk,
-	      XtPointer garbage)
+RadioDestroy (Widget UNUSED (w),
+	      XtPointer UNUSED (junk),
+	      XtPointer UNUSED (garbage))
 {
 	/* TODO: get rid of this */
 }
@@ -344,10 +344,10 @@ RadioExpose (Widget w,
 /* ARGSUSED */
 static Boolean
 RadioSetValues (Widget   current,
-		Widget   request,
+		Widget   UNUSED (request),
 		Widget   new,
-		ArgList  args,
-		Cardinal *num_args)
+		ArgList  UNUSED (args),
+		Cardinal *UNUSED (num_args))
 {
     RadioWidget oldrw = (RadioWidget) current;
     RadioWidget newrw = (RadioWidget) new;
@@ -445,9 +445,9 @@ DrawHighlight (Widget w,
 
 static	void
 RadioHighlight (Widget   w,
-		XEvent   *event,
-		String   *params,
-		Cardinal *num_params)
+		XEvent   *UNUSED (event),
+		String   *UNUSED (params),
+		Cardinal *UNUSED (num_params))
 {
     RadioWidget	rw = (RadioWidget)w;
     DrawHighlight(w, rw->command.normal_GC) ;
@@ -456,9 +456,9 @@ RadioHighlight (Widget   w,
 
 static	void
 RadioUnhighlight (Widget   w,
-		  XEvent   *event,
-		  String   *params,
-		  Cardinal *num_params)
+		  XEvent   *UNUSED (event),
+		  String   *UNUSED (params),
+		  Cardinal *UNUSED (num_params))
 {
     RadioWidget	rw = (RadioWidget)w;
     DrawHighlight(w, rw->command.inverse_GC) ;
@@ -468,9 +468,9 @@ RadioUnhighlight (Widget   w,
 /* ARGSUSED */
 void
 RadioSet (Widget   w,
-	  XEvent   *event,
-	  String   *params,     /* unused */
-	  Cardinal *num_params) /* unused */
+	  XEvent   *UNUSED (event),
+	  String   *UNUSED (params),
+	  Cardinal *UNUSED (num_params))
 {
     RadioWidget	rw = (RadioWidget)w;
     RadioWidgetClass class_ = (RadioWidgetClass) w->core.widget_class ;
@@ -487,9 +487,9 @@ RadioSet (Widget   w,
 /* ARGSUSED */
 void
 RadioUnset (Widget   w,
-	    XEvent   *event,
-	    String   *params,     /* unused */
-	    Cardinal *num_params) /* unused */
+	    XEvent   *UNUSED (event),
+	    String   *UNUSED (params),
+	    Cardinal *UNUSED (num_params))
 {
     RadioWidget	rw = (RadioWidget)w;
     RadioWidgetClass class_ = (RadioWidgetClass) w->core.widget_class ;

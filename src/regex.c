@@ -83,6 +83,8 @@
 
 #else  /* not emacs */
 
+#include "compiler.h"   /* Get compiler-specific definitions like UNUSED */
+
 /* If we are not linking with Emacs proper,
    we can't use the relocating allocator
    even if config.h says that we can.  */
@@ -6963,7 +6965,7 @@ regexec (const regex_t *preg, const char *string, size_t nmatch,
    from either regcomp or regexec.   We don't use PREG here.  */
 
 size_t
-regerror (int errcode, const regex_t *preg, char *errbuf,
+regerror (int errcode, const regex_t *UNUSED (preg), char *errbuf,
 	  size_t errbuf_size)
 {
   const char *msg;

@@ -78,13 +78,12 @@ bigfloat_to_string(mpf_t f, int base)
 
 /* We need the next two functions since GNU MP insists on giving us an extra
    parameter. */
-static void *gmp_realloc (void *ptr, size_t old_size /* unused */,
-                          size_t new_size)
+static void *gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
 {
   return xrealloc (ptr, new_size);
 }
 
-static void gmp_free (void *ptr, size_t size /* unused */)
+static void gmp_free (void *ptr, size_t UNUSED (size))
 {
   xfree (ptr, void *);
 }

@@ -236,8 +236,8 @@ gtk_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
    */
 
 static int
-gtk_text_width (struct frame *f, struct face_cachel *cachel, CONST Ichar *str,
-		Charcount len)
+gtk_text_width (struct frame *UNUSED (f), struct face_cachel *cachel,
+		CONST Ichar *str, Charcount len)
 {
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
@@ -1118,7 +1118,7 @@ gtk_output_pixmap (struct window *w,
 		   int cursor_start,
 		   int cursor_width,
 		   int cursor_height,
-		   int bg_pixmap)
+		   int UNUSED (bg_pixmap))
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -1472,8 +1472,8 @@ gtk_clear_to_window_end (struct window *w, int ypos1, int ypos2)
  given face.
  ****************************************************************************/
 static void
-gtk_clear_region (Lisp_Object locale, struct device* d, struct frame* f, face_index findex,
-		  int x, int y,
+gtk_clear_region (Lisp_Object UNUSED (locale), struct device* d,
+		  struct frame* f, face_index UNUSED (findex), int x, int y,
 		  int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
 		  Lisp_Object background_pixmap)
 {
@@ -1683,9 +1683,10 @@ gtk_flash (struct device *d)
 }
 
 static void
-gtk_bevel_area (struct window *w, face_index findex,
+gtk_bevel_area (struct window *w, face_index UNUSED (findex),
 		int x, int y, int width, int height,
-		int shadow_thickness, int edges, enum edge_style style)
+		int shadow_thickness, int UNUSED (edges),
+		enum edge_style UNUSED (style))
 {
   struct frame *f = XFRAME (w->frame);
 
@@ -1696,7 +1697,8 @@ gtk_bevel_area (struct window *w, face_index findex,
 
 /* Make audible bell.  */
 static void
-gtk_ring_bell (struct device *d, int volume, int pitch, int duration)
+gtk_ring_bell (struct device *UNUSED (d), int volume, int UNUSED (pitch),
+	       int UNUSED (duration))
 {
   /* Gdk does not allow us to control the duration / pitch / volume */
   if (volume > 0)

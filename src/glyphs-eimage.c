@@ -118,7 +118,7 @@ jpeg_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 jpeg_normalize (Lisp_Object inst, Lisp_Object console_type,
-		Lisp_Object dest_mask)
+		Lisp_Object UNUSED (dest_mask))
 {
   return simple_image_type_normalize (inst, console_type, Qjpeg);
 }
@@ -196,7 +196,7 @@ METHODDEF(void)
 #else
 METHODDEF void
 #endif
-our_init_source (j_decompress_ptr cinfo)
+our_init_source (j_decompress_ptr UNUSED (cinfo))
 {
 }
 
@@ -247,7 +247,7 @@ METHODDEF(void)
 #else
 METHODDEF void
 #endif
-our_term_source (j_decompress_ptr cinfo)
+our_term_source (j_decompress_ptr UNUSED (cinfo))
 {
 }
 
@@ -313,7 +313,8 @@ my_jpeg_output_message (j_common_ptr cinfo)
    source code and from gif_instantiate() */
 static void
 jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		  Lisp_Object UNUSED (pointer_fg),
+		  Lisp_Object UNUSED (pointer_bg),
 		  int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -517,7 +518,7 @@ gif_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 gif_normalize (Lisp_Object inst, Lisp_Object console_type,
-	       Lisp_Object dest_mask)
+	       Lisp_Object UNUSED (dest_mask))
 {
   return simple_image_type_normalize (inst, console_type, Qgif);
 }
@@ -577,7 +578,7 @@ gif_read_from_memory (GifByteType *buf, Bytecount size, VoidPtr data)
 }
 
 static int
-gif_memory_close (VoidPtr data)
+gif_memory_close (VoidPtr UNUSED (data))
 {
   return 0;
 }
@@ -600,7 +601,8 @@ gif_error_func (const Extbyte *err_str, VoidPtr error_ptr)
 
 static void
 gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		 Lisp_Object UNUSED (pointer_fg),
+		 Lisp_Object UNUSED (pointer_bg),
 		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -763,7 +765,7 @@ png_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 png_normalize (Lisp_Object inst, Lisp_Object console_type,
-	       Lisp_Object dest_mask)
+	       Lisp_Object UNUSED (dest_mask))
 {
   return simple_image_type_normalize (inst, console_type, Qpng);
 }
@@ -809,14 +811,14 @@ struct png_error_struct
 static struct png_error_struct png_err_stct;
 
 static void
-png_error_func (png_structp png_ptr, png_const_charp msg)
+png_error_func (png_structp UNUSED (png_ptr), png_const_charp msg)
 {
   png_err_stct.err_str = msg;
   longjmp (png_err_stct.setjmp_buffer, 1);
 }
 
 static void
-png_warning_func (png_structp png_ptr, png_const_charp msg)
+png_warning_func (png_structp UNUSED (png_ptr), png_const_charp msg)
 {
   warn_when_safe (Qpng, Qinfo, "%s", msg);
 }
@@ -849,7 +851,8 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
 
 static void
 png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		 Lisp_Object UNUSED (pointer_fg),
+		 Lisp_Object UNUSED (pointer_bg),
 		 int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1053,7 +1056,7 @@ tiff_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 tiff_normalize (Lisp_Object inst, Lisp_Object console_type,
-		Lisp_Object dest_mask)
+		Lisp_Object UNUSED (dest_mask))
 {
   return simple_image_type_normalize (inst, console_type, Qtiff);
 }
@@ -1108,7 +1111,8 @@ tiff_memory_read (thandle_t data, tdata_t buf, tsize_t size)
 }
 
 static size_t
-tiff_memory_write (thandle_t data, tdata_t buf, tsize_t size)
+tiff_memory_write (thandle_t UNUSED (data), tdata_t UNUSED (buf),
+		   tsize_t UNUSED (size))
 {
   abort();
   return 0;
@@ -1143,19 +1147,21 @@ tiff_memory_seek (thandle_t data, toff_t off, int whence)
 }
 
 static int
-tiff_memory_close (thandle_t data)
+tiff_memory_close (thandle_t UNUSED (data))
 {
   return 0;
 }
 
 static int
-tiff_map_noop (thandle_t data, tdata_t* pbase, toff_t* psize)
+tiff_map_noop (thandle_t UNUSED (data), tdata_t* UNUSED (pbase),
+	       toff_t* UNUSED (psize))
 {
   return 0;
 }
 
 static void
-tiff_unmap_noop (thandle_t data, tdata_t pbase, toff_t psize)
+tiff_unmap_noop (thandle_t UNUSED (data), tdata_t UNUSED (pbase),
+		 toff_t UNUSED (psize))
 {
   return;
 }
@@ -1184,7 +1190,7 @@ struct tiff_error_struct
 static struct tiff_error_struct tiff_err_data;
 
 static void
-tiff_error_func (const char *module, const char *fmt, ...)
+tiff_error_func (const char *UNUSED (module), const char *fmt, ...)
 {
   va_list vargs;
 
@@ -1223,7 +1229,8 @@ tiff_warning_func (const char *module, const char *fmt, ...)
 
 static void
 tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		  Lisp_Object UNUSED (pointer_fg),
+		  Lisp_Object UNUSED (pointer_bg),
 		  int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);

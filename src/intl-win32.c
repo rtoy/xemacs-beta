@@ -53,6 +53,12 @@ int _getmbcp (void);
 # define NO_EXT_MULTIBYTE_FEATURES
 #endif
 
+#ifdef MULE
+#define USED_IF_MULE(decl) decl
+#else
+#define USED_IF_MULE(decl) UNUSED (decl)
+#endif
+
 Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
 Lisp_Object Qmswindows_multibyte_system_default;
@@ -1604,7 +1610,7 @@ mswindows_start_ime_composition (struct frame *f)
 #else /* not MULE */
 
 int
-mswindows_locale_to_code_page (LCID lcid)
+mswindows_locale_to_code_page (LCID UNUSED (lcid))
 {
   return CP_ACP;
 }
@@ -1745,7 +1751,7 @@ mswindows_multibyte_to_unicode_init (Lisp_Object codesys)
 }
 
 static Lisp_Object
-lcid_to_locale_mule_or_no (LCID lcid)
+lcid_to_locale_mule_or_no (LCID USED_IF_MULE (lcid))
 {
 #ifdef MULE
   return lcid_to_locale (lcid);
@@ -1755,7 +1761,7 @@ lcid_to_locale_mule_or_no (LCID lcid)
 }
 
 static int
-determine_code_page (Lisp_Object codesys)
+determine_code_page (Lisp_Object USED_IF_MULE (codesys))
 {
 #ifdef MULE
   LCID locale;
@@ -1907,8 +1913,8 @@ mswindows_multibyte_to_unicode_getprop (Lisp_Object coding_system,
 }
 
 static void
-mswindows_multibyte_to_unicode_print (Lisp_Object cs,
-				      Lisp_Object printcharfun, int escapeflag)
+mswindows_multibyte_to_unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
+				      int UNUSED (escapeflag))
 {
   struct mswindows_multibyte_to_unicode_coding_system *data =
     XCODING_SYSTEM_TYPE_DATA (cs, mswindows_multibyte_to_unicode);
@@ -2073,7 +2079,7 @@ mswindows_multibyte_to_unicode_convert (struct coding_stream *str,
 }
 
 static enum source_sink_type
-mswindows_multibyte_to_unicode_conversion_end_type (Lisp_Object codesys)
+mswindows_multibyte_to_unicode_conversion_end_type (Lisp_Object UNUSED (codesys))
 {
   return DECODES_BYTE_TO_BYTE;
 }
@@ -2106,9 +2112,9 @@ static const struct memory_description
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (mswindows_multibyte);
 
 static Bytecount
-mswindows_multibyte_convert (struct coding_stream *str,
-			     const UExtbyte *src,
-			     unsigned_char_dynarr *dst, Bytecount n)
+mswindows_multibyte_convert (struct coding_stream *UNUSED (str),
+			     const UExtbyte *UNUSED (src),
+			     unsigned_char_dynarr *UNUSED (dst), Bytecount n)
 {
   Bytecount orign = n;
   /* should never be called; is preprocessed away in the

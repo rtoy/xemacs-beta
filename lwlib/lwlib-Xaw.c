@@ -122,7 +122,7 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
 
 void
 xaw_update_one_widget (widget_instance *instance, Widget widget,
-		       widget_value *val, Boolean deep_p)
+		       widget_value *val, Boolean UNUSED (deep_p))
 {
   if (0)
     ;
@@ -258,7 +258,7 @@ xaw_destroy_instance (widget_instance *instance)
 }
 
 void
-xaw_popup_menu (Widget widget, XEvent *event)
+xaw_popup_menu (Widget UNUSED (widget), XEvent *UNUSED (event))
 {
   /* An Athena menubar has not been implemented. */
   return;
@@ -344,7 +344,7 @@ static Boolean actions_initted = False;
 
 static Widget
 make_dialog (const char* name, Widget parent, Boolean pop_up_p,
-	     const char* shell_title, const char* icon_name,
+	     const char* shell_title, const char* UNUSED (icon_name),
              Boolean text_input_slot,
 	     Boolean radio_box, Boolean list,
 	     int left_buttons, int right_buttons)
@@ -587,7 +587,8 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 #ifdef LWLIB_DIALOGS_ATHENA
 
 static XtActionProc
-wm_delete_window (Widget shell, XtPointer closure, XtPointer call_data)
+wm_delete_window (Widget shell, XtPointer UNUSED (closure),
+		  XtPointer UNUSED (call_data))
 {
   LWLIB_ID id;
   Widget *kids = 0;

@@ -350,7 +350,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
 static void
 gtk_print_image_instance (struct Lisp_Image_Instance *p,
 			  Lisp_Object printcharfun,
-			  int escapeflag)
+			  int UNUSED (escapeflag))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -460,7 +460,7 @@ gtk_finalize_image_instance (struct Lisp_Image_Instance *p)
 
 static int
 gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
-			  struct Lisp_Image_Instance *p2, int depth)
+			  struct Lisp_Image_Instance *p2, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p1))
     {
@@ -483,7 +483,7 @@ gtk_image_instance_equal (struct Lisp_Image_Instance *p1,
 }
 
 static unsigned long
-gtk_image_instance_hash (struct Lisp_Image_Instance *p, int depth)
+gtk_image_instance_hash (struct Lisp_Image_Instance *p, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -599,8 +599,8 @@ locate_pixmap_file (Lisp_Object name)
    message. */
 
 static void
-check_pointer_sizes (unsigned int width, unsigned int height,
-		     Lisp_Object instantiator)
+check_pointer_sizes (unsigned int UNUSED (width), unsigned int UNUSED (height),
+		     Lisp_Object UNUSED (instantiator))
 {
     /* #### BILL!!! There is no way to call XQueryBestCursor from Gdk! */
 #if 0
@@ -649,8 +649,9 @@ generate_cursor_fg_bg (Lisp_Object device, Lisp_Object *foreground,
 }
 
 static void
-maybe_recolor_cursor (Lisp_Object image_instance, Lisp_Object foreground,
-		      Lisp_Object background)
+maybe_recolor_cursor (Lisp_Object UNUSED (image_instance),
+		      Lisp_Object UNUSED (foreground),
+		      Lisp_Object UNUSED (background))
 {
 #if 0
     /* #### BILL!!! */
@@ -830,7 +831,7 @@ gtk_init_image_instance_from_eimage (struct Lisp_Image_Instance *ii,
 				     unsigned char *eimage, 
 				     int dest_mask,
 				     Lisp_Object instantiator,
-				     Lisp_Object domain)
+				     Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   GdkColormap *cmap = DEVICE_GTK_COLORMAP (XDEVICE(device));
@@ -892,7 +893,7 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 				     Lisp_Object pointer_bg,
 				     int dest_mask,
 				     GdkPixmap *mask,
-				     Lisp_Object mask_filename)
+				     Lisp_Object UNUSED (mask_filename))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
@@ -1048,7 +1049,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+		     int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   const char *gcc_go_home;
@@ -1335,8 +1336,8 @@ extern jmp_buf comp_env;
 
 static void
 gtk_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		   int dest_mask, Lisp_Object domain)
+		       Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		       int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
@@ -1455,8 +1456,9 @@ resource_symbol_to_type (Lisp_Object data)
 
 static void
 gtk_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			  int dest_mask, Lisp_Object domain)
+			  Lisp_Object UNUSED (pointer_fg),
+			  Lisp_Object UNUSED (pointer_bg),
+			  int UNUSED (dest_mask), Lisp_Object UNUSED (domain))
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   GdkCursor *c = NULL;
@@ -1537,7 +1539,7 @@ autodetect_validate (Lisp_Object instantiator)
 static Lisp_Object
 autodetect_normalize (Lisp_Object instantiator,
 		      Lisp_Object console_type,
-		      Lisp_Object dest_mask)
+		      Lisp_Object UNUSED (dest_mask))
 {
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Object filename = Qnil;
@@ -1691,7 +1693,7 @@ font_possible_dest_types (void)
 static void
 font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask, Lisp_Object domain)
+		  int dest_mask, Lisp_Object UNUSED (domain))
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -1876,7 +1878,7 @@ cursor_name_to_index (const char *name)
 static void
 cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			 int dest_mask, Lisp_Object domain)
+			 int dest_mask, Lisp_Object UNUSED (domain))
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -2132,9 +2134,11 @@ gtk_redisplay_widget (Lisp_Image_Instance *p)
 
 /* instantiate and gtk type subwindow */
 static void
-gtk_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			   int dest_mask, Lisp_Object domain)
+gtk_subwindow_instantiate (Lisp_Object image_instance,
+			   Lisp_Object UNUSED (instantiator),
+			   Lisp_Object UNUSED (pointer_fg),
+			   Lisp_Object UNUSED (pointer_bg),
+			   int UNUSED (dest_mask), Lisp_Object UNUSED (domain))
 {
   /* This function can GC */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2285,7 +2289,7 @@ gtk_widget_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 gtk_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			int dest_mask, Lisp_Object domain)
+			int UNUSED (dest_mask), Lisp_Object domain)
 {
   call_with_suspended_errors ((lisp_fn_t) gtk_widget_instantiate_1,
 			      Qnil, Qimage,
@@ -2298,7 +2302,7 @@ gtk_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 /* get properties of a control */
 static Lisp_Object
-gtk_widget_property (Lisp_Object image_instance, Lisp_Object prop)
+gtk_widget_property (Lisp_Object UNUSED (image_instance), Lisp_Object prop)
 {
   /* Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance); */
 
@@ -2348,7 +2352,8 @@ FAKE_GTK_WIDGET_INSTANTIATOR(label);
 static void
 gtk_widget_query_geometry (Lisp_Object image_instance,
 			   int* width, int* height,
-			   enum image_instance_geometry disp, Lisp_Object domain)
+			   enum image_instance_geometry UNUSED (disp),
+			   Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
 
@@ -2463,7 +2468,7 @@ gtk_register_gui_item (Lisp_Object image_instance, Lisp_Object gui,
 static void
 gtk_add_tab_item(Lisp_Object image_instance,
 		 GtkNotebook* nb, Lisp_Object item,
-		 Lisp_Object domain, int i)
+		 Lisp_Object domain, int UNUSED (i))
 {
   Lisp_Object name;
   int hash_id = 0;
@@ -2515,8 +2520,8 @@ gtk_add_tab_item(Lisp_Object image_instance,
 /* Signal handler for the switch-page signal. */
 static void gtk_tab_control_callback(GtkNotebook *notebook,
 				     GtkNotebookPage *page,
-				     gint page_num,
-				     gpointer user_data)
+				     gint UNUSED (page_num),
+				     gpointer UNUSED (user_data))
 {
   /*
     This callback is called for every selection, not just user selection.

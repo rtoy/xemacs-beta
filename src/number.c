@@ -44,7 +44,8 @@ bigfloat scratch_bigfloat, scratch_bigfloat2;
 /********************************* Bignums **********************************/
 #ifdef HAVE_BIGNUM
 static void
-bignum_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   CIbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
   write_c_string (printcharfun, bstr);
@@ -52,13 +53,13 @@ bignum_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+bignum_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   return bignum_eql (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
 }
 
 static Hashcode
-bignum_hash (Lisp_Object obj, int depth)
+bignum_hash (Lisp_Object obj, int UNUSED (depth))
 {
   return bignum_hashcode (XBIGNUM_DATA (obj));
 }
@@ -120,7 +121,8 @@ Return t if INTEGER is odd, nil otherwise.
 /********************************** Ratios **********************************/
 #ifdef HAVE_RATIO
 static void
-ratio_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
+	     int UNUSED (escapeflag))
 {
   CIbyte *rstr = ratio_to_string (XRATIO_DATA (obj), 10);
   write_c_string (printcharfun, rstr);
@@ -128,13 +130,13 @@ ratio_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+ratio_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   return ratio_eql (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 }
 
 static Hashcode
-ratio_hash (Lisp_Object obj, int depth)
+ratio_hash (Lisp_Object obj, int UNUSED (depth))
 {
   return ratio_hashcode (XRATIO_DATA (obj));
 }
@@ -206,7 +208,8 @@ If RATIONAL is an integer, 1 is returned.
 /******************************** Bigfloats *********************************/
 #ifdef HAVE_BIGFLOAT
 static void
-bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   CIbyte *fstr = bigfloat_to_string (XBIGFLOAT_DATA (obj), 10);
   write_c_string (printcharfun, fstr);
@@ -214,13 +217,13 @@ bigfloat_print (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+bigfloat_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   return bigfloat_eql (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
 }
 
 static Hashcode
-bigfloat_hash (Lisp_Object obj, int depth)
+bigfloat_hash (Lisp_Object obj, int UNUSED (depth))
 {
   return bigfloat_hashcode (XBIGFLOAT_DATA (obj));
 }
@@ -295,8 +298,9 @@ PRECISION bits of precision.
 }
 
 static int
-default_float_precision_changed (Lisp_Object sym, Lisp_Object *val,
-				 Lisp_Object in_object, int flags)
+default_float_precision_changed (Lisp_Object UNUSED (sym), Lisp_Object *val,
+				 Lisp_Object UNUSED (in_object),
+				 int UNUSED (flags))
 {
   unsigned long prec;
 
@@ -406,7 +410,12 @@ get_number_type (Lisp_Object arg)
    PRECISION; otherwise, PRECISION is ignored. */
 static Lisp_Object
 internal_coerce_number (Lisp_Object number, enum number_type type,
-			unsigned long precision)
+#ifdef HAVE_BIGFLOAT
+			unsigned long precision
+#else
+			unsigned long UNUSED (precision)
+#endif
+			)
 {
   enum number_type current_type;
 
@@ -638,7 +647,13 @@ bigfloat; it is ignored otherwise.  If nil, the default precision is used.
 Note that some conversions lose information.  No error is signaled in such
 cases; the information is silently lost.
 */
-       (number, type, precision))
+       (number, type,
+#ifdef HAVE_BIGFLOAT
+	precision
+#else
+	UNUSED (precision)
+#endif
+	))
 {
   CHECK_SYMBOL (type);
   if (EQ (type, Qfixnum))

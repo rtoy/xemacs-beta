@@ -356,7 +356,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 static void
 x_print_image_instance (Lisp_Image_Instance *p,
 			Lisp_Object printcharfun,
-			int escapeflag)
+			int UNUSED (escapeflag))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -476,7 +476,7 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
 
 static int
 x_image_instance_equal (Lisp_Image_Instance *p1,
-			Lisp_Image_Instance *p2, int depth)
+			Lisp_Image_Instance *p2, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p1))
     {
@@ -495,7 +495,7 @@ x_image_instance_equal (Lisp_Image_Instance *p1,
 }
 
 static Hashcode
-x_image_instance_hash (Lisp_Image_Instance *p, int depth)
+x_image_instance_hash (Lisp_Image_Instance *p, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -846,7 +846,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
 				   UChar_Binary *eimage,
 				   int dest_mask,
 				   Lisp_Object instantiator,
-				   Lisp_Object domain)
+				   Lisp_Object UNUSED (domain))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Colormap cmap = DEVICE_X_COLORMAP (XDEVICE(device));
@@ -914,7 +914,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     Lisp_Object pointer_bg,
 				     int dest_mask,
 				     Pixmap mask,
-				     Lisp_Object mask_filename)
+				     Lisp_Object UNUSED (mask_filename))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
@@ -1074,7 +1074,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		   int dest_mask, Lisp_Object domain)
+		   int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   Char_Binary *ext_data;
@@ -1558,7 +1558,7 @@ extern jmp_buf comp_env;
 static void
 x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+		     int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
@@ -1635,7 +1635,7 @@ autodetect_validate (Lisp_Object instantiator)
 static Lisp_Object
 autodetect_normalize (Lisp_Object instantiator,
 		      Lisp_Object console_type,
-		      Lisp_Object dest_mask)
+		      Lisp_Object UNUSED (dest_mask))
 {
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Object filename = Qnil;
@@ -1796,7 +1796,7 @@ font_validate (Lisp_Object instantiator)
 static int XLoadFont_got_error;
 
 static int
-XLoadFont_error_handler (Display *dpy, XErrorEvent *xerror)
+XLoadFont_error_handler (Display *UNUSED (dpy), XErrorEvent *UNUSED (xerror))
 {
   XLoadFont_got_error = 1;
   return 0;
@@ -1829,7 +1829,7 @@ font_possible_dest_types (void)
 static void
 font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask, Lisp_Object domain)
+		  int dest_mask, Lisp_Object UNUSED (domain))
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -1927,7 +1927,7 @@ cursor_font_possible_dest_types (void)
 static void
 cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			 int dest_mask, Lisp_Object domain)
+			 int dest_mask, Lisp_Object UNUSED (domain))
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -2205,9 +2205,11 @@ x_redisplay_widget (Lisp_Image_Instance *p)
 
 /* instantiate and x type subwindow */
 static void
-x_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			int dest_mask, Lisp_Object domain)
+x_subwindow_instantiate (Lisp_Object image_instance,
+			 Lisp_Object UNUSED (instantiator),
+			 Lisp_Object UNUSED (pointer_fg),
+			 Lisp_Object UNUSED (pointer_bg),
+			 int UNUSED (dest_mask), Lisp_Object domain)
 {
   /* This function can GC */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2374,9 +2376,11 @@ update_tab_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 }
 
 static void
-x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		      int dest_mask, Lisp_Object domain,
+x_widget_instantiate (Lisp_Object image_instance,
+		      Lisp_Object UNUSED (instantiator),
+		      Lisp_Object UNUSED (pointer_fg),
+		      Lisp_Object UNUSED (pointer_bg),
+		      int UNUSED (dest_mask), Lisp_Object domain,
 		      const char* type, widget_value* wv)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);

@@ -263,7 +263,8 @@ prune_specifiers (void)
 }
 
 static void
-print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
+		 int UNUSED (escapeflag))
 {
   Lisp_Specifier *sp = XSPECIFIER (obj);
   int count = specpdl_depth ();
@@ -2186,7 +2187,7 @@ remove_specifier_mapfun (Lisp_Object specifier,
 			 enum spec_locale_type locale_type,
 			 Lisp_Object tag_set,
 			 int exact_p,
-			 void *ignored_closure)
+			 void *UNUSED (closure))
 {
   if (NILP (locale))
     specifier_remove_locale_type (specifier, locale_type, tag_set, exact_p);
@@ -2547,7 +2548,6 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   Lisp_Object window = Qnil;
   Lisp_Object frame = Qnil;
   Lisp_Object device = Qnil;
-  Lisp_Object tag = Qnil;	/* #### currently unused */
   Lisp_Specifier *sp = XSPECIFIER (specifier);
 
   /* Attempt to determine buffer, window, frame, and device from the
@@ -2579,7 +2579,7 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
     device = FRAME_DEVICE (XFRAME (frame));
 
   /* device had better be determined by now; abort if not. */
-  tag = DEVICE_CLASS (XDEVICE (device));
+  (void) DEVICE_CLASS (XDEVICE (device));
 
   depth = make_int (1 + XINT (depth));
   if (XINT (depth) > 20)

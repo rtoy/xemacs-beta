@@ -166,7 +166,7 @@ XtWidgetBeingDestroyedP (Widget widget)
 }
 
 void
-XtSafelyDestroyWidget (Widget widget)
+XtSafelyDestroyWidget (Widget UNUSED (widget))
 {
 #if 0
 

@@ -536,7 +536,7 @@ print_coding_system_properties (Lisp_Object obj, Lisp_Object printcharfun)
 
 static void
 print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
-		     int escapeflag)
+		     int UNUSED (escapeflag))
 {
   Lisp_Coding_System *c = XCODING_SYSTEM (obj);
   if (print_readably)
@@ -553,7 +553,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 
 static void
 print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
-				     int escapeflag)
+				     int UNUSED (escapeflag))
 {
   write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
@@ -894,7 +894,7 @@ struct coding_system_list_closure
 };
 
 static int
-add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object value,
+add_coding_system_to_list_mapper (Lisp_Object key, Lisp_Object UNUSED (value),
 				  void *coding_system_list_closure)
 {
   /* This function can GC */
@@ -1695,7 +1695,7 @@ Return the coding-system symbol for which symbol ALIAS is an alias.
 
 /* A maphash function, for removing dangling coding system aliases. */
 static int
-dangling_coding_system_alias_p (Lisp_Object alias,
+dangling_coding_system_alias_p (Lisp_Object UNUSED (alias),
 				Lisp_Object aliasee,
 				void *dangling_aliases)
 {
@@ -1729,7 +1729,7 @@ and `coding-system-canonical-name-p'.
 */
        (alias, aliasee))
 {
-  Lisp_Object real_coding_system, probe;
+  Lisp_Object probe;
 
   CHECK_SYMBOL (alias);
 
@@ -1776,7 +1776,7 @@ and `coding-system-canonical-name-p'.
     aliasee = XCODING_SYSTEM_NAME (aliasee);
 
   /* Checks that aliasee names a coding-system */
-  real_coding_system = Fget_coding_system (aliasee);
+  (void) Fget_coding_system (aliasee);
 
   /* Check for coding system alias loops */
   if (EQ (alias, aliasee))
@@ -3006,8 +3006,8 @@ struct no_conversion_detector
 };
 
 static void
-no_conversion_detect (struct detection_state *st, const UExtbyte *src,
-		      Bytecount n)
+no_conversion_detect (struct detection_state *st, const UExtbyte *UNUSED (src),
+		      Bytecount UNUSED (n))
 {
   /* Hack until we get better handling of this stuff! */
   DET_RESULT (st, no_conversion) = DET_SLIGHTLY_LIKELY;
@@ -3056,7 +3056,8 @@ static const struct memory_description
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (convert_eol);
 
 static void
-convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
+convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun,
+		   int UNUSED (escapeflag))
 {
   struct convert_eol_coding_system *data =
     XCODING_SYSTEM_TYPE_DATA (cs, convert_eol);
@@ -3070,7 +3071,7 @@ convert_eol_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 }
 
 static enum source_sink_type
-convert_eol_conversion_end_type (Lisp_Object codesys)
+convert_eol_conversion_end_type (Lisp_Object UNUSED (codesys))
 {
   return DECODES_CHARACTER_TO_CHARACTER;
 }
@@ -4312,7 +4313,7 @@ type.  Optional arg BUFFER defaults to the current buffer.
 DEFINE_CODING_SYSTEM_TYPE (internal);
 
 static Bytecount
-internal_convert (struct coding_stream *str, const UExtbyte *src,
+internal_convert (struct coding_stream *UNUSED (str), const UExtbyte *src,
 		  unsigned_char_dynarr *dst, Bytecount n)
 {
   Bytecount orign = n;

@@ -43,7 +43,7 @@ static void tty_raise_frame (struct frame *);
 
 
 static void
-tty_init_frame_1 (struct frame *f, Lisp_Object props,
+tty_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
 		  int frame_name_is_defaulted)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
@@ -79,7 +79,7 @@ tty_schedule_frame_select (struct frame *f)
 }
 
 static void
-tty_after_init_frame (struct frame *f, int first_on_device,
+tty_after_init_frame (struct frame *f, int UNUSED (first_on_device),
 		      int first_on_console)
 {
   if (first_on_console)
@@ -195,7 +195,7 @@ tty_frame_property (struct frame *f, Lisp_Object property)
 }
 
 static int
-tty_internal_frame_property_p (struct frame *f, Lisp_Object property)
+tty_internal_frame_property_p (struct frame *UNUSED (f), Lisp_Object property)
 {
   return EQ (property, Qframe_number);
 }

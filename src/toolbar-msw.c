@@ -84,7 +84,7 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos);
 
 static int
 allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
-			  enum toolbar_pos pos)
+			  enum toolbar_pos UNUSED (pos))
 {
   /* hmm what do we generate an id based on */
   int id = TOOLBAR_ITEM_ID_BITS (internal_hash (button->callback, 0));
@@ -98,7 +98,7 @@ allocate_toolbar_item_id (struct frame *f, struct toolbar_button *button,
 
 static void
 mswindows_clear_toolbar (struct frame *f, enum toolbar_pos pos,
-			 int thickness_change)
+			 int UNUSED (thickness_change))
 {
   HIMAGELIST ilist = NULL;
   int i;
@@ -513,8 +513,9 @@ mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos)
 }
 
 static void
-mswindows_redraw_exposed_toolbars (struct frame *f, int x, int y, int width,
-				   int height)
+mswindows_redraw_exposed_toolbars (struct frame *f,
+				   int UNUSED (x), int UNUSED (y),
+				   int UNUSED (width), int UNUSED (height))
 {
   assert (FRAME_MSWINDOWS_P (f));
 
@@ -539,7 +540,7 @@ mswindows_redraw_frame_toolbars (struct frame *f)
 }
 
 static void
-mswindows_initialize_frame_toolbars (struct frame *f)
+mswindows_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
 
 }
@@ -616,7 +617,8 @@ mswindows_get_toolbar_button_text (struct frame *f, int command_id)
  * command if we return nil
  */
 Lisp_Object
-mswindows_handle_toolbar_wm_command (struct frame *f, HWND ctrl, WORD id)
+mswindows_handle_toolbar_wm_command (struct frame *f, HWND UNUSED (ctrl),
+				     WORD id)
 {
   /* Try to map the command id through the proper hash table */
   Lisp_Object button, data, fn, arg, frame;

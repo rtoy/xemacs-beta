@@ -85,7 +85,8 @@ mark_case_table (Lisp_Object obj)
 }
 
 static void
-print_case_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_case_table (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
 {
   Lisp_Case_Table *ct = XCASE_TABLE (obj);
   if (print_readably)
@@ -286,7 +287,7 @@ Return a new case table which is a copy of CASE-TABLE
 
 static int
 compute_canon_mapper (struct chartab_range *range,
-		      Lisp_Object table, Lisp_Object val, void *arg)
+		      Lisp_Object UNUSED (table), Lisp_Object val, void *arg)
 {
   Lisp_Object casetab = VOID_TO_LISP (arg);
   if (range->type == CHARTAB_RANGE_CHAR)
@@ -300,7 +301,8 @@ compute_canon_mapper (struct chartab_range *range,
 
 static int
 initialize_identity_mapper (struct chartab_range *range,
-			    Lisp_Object table, Lisp_Object val, void *arg)
+			    Lisp_Object UNUSED (table),
+			    Lisp_Object UNUSED (val), void *arg)
 {
   Lisp_Object trt = VOID_TO_LISP (arg);
   if (range->type == CHARTAB_RANGE_CHAR)
@@ -311,7 +313,8 @@ initialize_identity_mapper (struct chartab_range *range,
 
 static int
 compute_up_or_eqv_mapper (struct chartab_range *range,
-			  Lisp_Object table, Lisp_Object val, void *arg)
+			  Lisp_Object UNUSED (table),
+			  Lisp_Object val, void *arg)
 {
   Lisp_Object inverse = VOID_TO_LISP (arg);
   Ichar toch = XCHAR (val);

@@ -29,6 +29,12 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_number_gmp_h_
 #define INCLUDED_number_gmp_h_
 
+#ifdef UNO
+/* Uno complains about several inline functions that include conditions with
+   assignments and side effects if we don't do this */
+#undef __GNUC__
+#endif
+
 #include <gmp.h>
 
 typedef mpz_t bignum;

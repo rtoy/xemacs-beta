@@ -210,7 +210,7 @@ get_frame_compdc (struct frame *f)
  ****************************************************************************/
 static void
 mswindows_update_dc (HDC hdc, Lisp_Object fg, Lisp_Object bg,
-		     Lisp_Object bg_pmap)
+		     Lisp_Object UNUSED (bg_pmap))
 {
   if (!NILP (fg))
     {
@@ -242,7 +242,9 @@ mswindows_set_dc_font (HDC hdc, Lisp_Object font, int under, int strike)
  Output a horizontal line in the foreground of its face.
  ****************************************************************************/
 static void
-mswindows_output_hline (struct window *w, struct display_line *dl, struct rune *rb)
+mswindows_output_hline (struct window *UNUSED (w),
+			struct display_line *UNUSED (dl),
+			struct rune *UNUSED (rb))
 { /* #### Implement me */
 }
 
@@ -436,10 +438,10 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
  ****************************************************************************/
 static void
 mswindows_output_string (struct window *w, struct display_line *dl,
-			 Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
-			 int width, face_index findex,
-			 int cursor, int cursor_start, int cursor_width,
-			 int cursor_height)
+			 Ichar_dynarr *buf, int xpos, int xoffset,
+			 int clip_start, int width, face_index findex,
+			 int UNUSED (cursor), int UNUSED (cursor_start),
+			 int UNUSED (cursor_width), int UNUSED (cursor_height))
 {
   struct frame *f = XFRAME (w->frame);
   /* struct device *d = XDEVICE (f->device);*/
@@ -682,9 +684,10 @@ mswindows_output_dibitmap_region (struct frame *f,
    DGA		normalized display_glyph_area. */
 static void
 mswindows_output_pixmap (struct window *w, Lisp_Object image_instance,
-			 struct display_box *db, struct display_glyph_area *dga,
-			 face_index findex, int cursor_start, int cursor_width,
-			 int cursor_height, int bg_pixmap)
+			 struct display_box *db,
+			 struct display_glyph_area *dga, face_index findex,
+			 int UNUSED (cursor_start), int UNUSED (cursor_width),
+			 int UNUSED (cursor_height), int bg_pixmap)
 {
   struct frame *f = XFRAME (w->frame);
   HDC hdc = get_frame_dc (f, 1);
@@ -829,7 +832,7 @@ mswindows_eol_cursor_width (void)
  Perform any necessary initialization prior to an update.
  ****************************************************************************/
 static void
-mswindows_frame_output_begin (struct frame *f)
+mswindows_frame_output_begin (struct frame *UNUSED (f))
 {
 }
 
@@ -839,7 +842,13 @@ mswindows_frame_output_begin (struct frame *f)
  Perform any necessary flushing of queues when an update has completed.
  ****************************************************************************/
 static void
-mswindows_frame_output_end (struct frame *f)
+mswindows_frame_output_end (struct frame *
+#ifdef DEFER_WINDOW_POS
+			    f
+#else
+			    UNUSED (f)
+#endif
+			    )
 {
 #ifdef DEFER_WINDOW_POS
   HDWP hdwp = FRAME_MSWINDOWS_DATA (f)->hdwp;
@@ -855,7 +864,7 @@ mswindows_frame_output_end (struct frame *f)
 
 /* Printer version is more lightweight. */
 static void
-msprinter_frame_output_end (struct frame *f)
+msprinter_frame_output_end (struct frame *UNUSED (f))
 {
   GdiFlush();
 }
@@ -877,7 +886,8 @@ mswindows_flash (struct device *d)
 }
 
 static void
-mswindows_ring_bell (struct device *d, int volume, int pitch, int duration)
+mswindows_ring_bell (struct device *UNUSED (d), int UNUSED (volume),
+		     int UNUSED (pitch), int UNUSED (duration))
 {
   /* Beep does not work at all, anyways! -kkm */
   MessageBeep (MB_OK);
@@ -1103,7 +1113,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
  Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-mswindows_output_vertical_divider (struct window *w, int clear_unused)
+mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
 {
   struct frame *f = XFRAME (w->frame);
   HDC hdc = get_frame_dc (f, 1);
@@ -1187,10 +1197,16 @@ mswindows_text_width (struct frame *f, struct face_cachel *cachel,
  given face.
  ****************************************************************************/
 static void
-mswindows_clear_region (Lisp_Object locale, struct device *d, struct frame *f, 
-			face_index findex, int x, int y,
-			int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
-			Lisp_Object background_pixmap)
+mswindows_clear_region (
+#ifdef HAVE_SCROLLBARS
+			Lisp_Object locale,
+#else
+			Lisp_Object UNUSED (locale),
+#endif
+			struct device *UNUSED (d), struct frame *f, 
+			face_index UNUSED (findex), int x, int y,
+			int width, int height, Lisp_Object fcolor,
+			Lisp_Object bcolor, Lisp_Object background_pixmap)
 {
   RECT rect = { x, y, x+width, y+height };
   HDC hdc = get_frame_dc (f, 1);
@@ -1217,7 +1233,7 @@ mswindows_clear_region (Lisp_Object locale, struct device *d, struct frame *f,
 
 /* #### Implement me! */
 static void
-mswindows_clear_frame (struct frame *f)
+mswindows_clear_frame (struct frame *UNUSED (f))
 {
   GdiFlush ();
 }

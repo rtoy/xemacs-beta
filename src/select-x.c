@@ -203,9 +203,20 @@ x_atom_to_symbol (struct device *d, Atom atom)
 /* Do protocol to assert ourself as a selection owner.
  */
 static Lisp_Object
-x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
-		 Lisp_Object how_to_add, Lisp_Object selection_type,
-		 int owned_p)
+x_own_selection (Lisp_Object selection_name,
+#ifdef MOTIF_CLIPBOARDS
+		 Lisp_Object selection_value,
+#else
+		 Lisp_Object UNUSED (selection_value),
+#endif
+		 Lisp_Object UNUSED (how_to_add),
+		 Lisp_Object UNUSED (selection_type),
+#ifdef MOTIF_CLIPBOARDS
+		 int owned_p
+#else
+		 int UNUSED (owned_p)
+#endif
+)
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
@@ -881,7 +892,7 @@ static Atom reading_which_selection;
 static int selection_reply_timed_out;
 
 static int
-selection_reply_done (void *ignore)
+selection_reply_done (void *UNUSED (unused))
 {
   return !reading_selection_reply;
 }
@@ -891,7 +902,7 @@ static Lisp_Object Qx_selection_reply_timeout_internal;
 DEFUN ("x-selection-reply-timeout-internal", Fx_selection_reply_timeout_internal,
        1, 1, 0, /*
 */
-       (arg))
+       (UNUSED (arg)))
 {
   selection_reply_timed_out = 1;
   reading_selection_reply = 0;
@@ -1028,7 +1039,7 @@ x_get_window_property (Display *display, Window window, Atom property,
 static void
 receive_incremental_selection (Display *display, Window window, Atom property,
 			       /* this one is for error messages only */
-			       Lisp_Object target_type,
+			       Lisp_Object UNUSED (target_type),
 			       Bytecount min_size_bytes,
 			       UChar_Binary **data_ret,
 			       Bytecount *size_bytes_ret,
@@ -1203,7 +1214,7 @@ x_disown_selection (Lisp_Object selection, Lisp_Object timeval)
 
 static Lisp_Object
 x_selection_exists_p (Lisp_Object selection,
-		      Lisp_Object selection_type)
+		      Lisp_Object UNUSED (selection_type))
 {
   struct device *d = decode_x_device (Qnil);
   Display *dpy = DEVICE_X_DISPLAY (d);

@@ -1,5 +1,11 @@
 2004-09-14  Jerry James  <james@xemacs.org>
 
+	* postgresql/postgresql.c:
+	* ldap/eldap.c:
+	Mark unused parameters with the UNUSED macro.
+
+2004-09-14  Jerry James  <james@xemacs.org>
+
 	* ldap/eldap.c (Fldap_open): Change ldap_passwd to ldap_password
 	to eliminate a gcc shadow warning.
 

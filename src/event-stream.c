@@ -2606,7 +2606,7 @@ reset_current_events (struct command_builder *command_builder)
 }
 
 static int
-command_event_p_cb (Lisp_Object ev, void *the_data)
+command_event_p_cb (Lisp_Object ev, void *UNUSED (the_data))
 {
   return command_event_p (ev);
 }

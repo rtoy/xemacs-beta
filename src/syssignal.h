@@ -148,6 +148,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
   sigsuspend (&ES_mask);			\
 } while (0)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
+#define SIG_ARG_MAYBE_UNUSED(decl) UNUSED (decl)
 
 #elif defined (HAVE_SIGBLOCK)
 
@@ -173,6 +174,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
   sigpause (ES_mask & ~sigmask (sig));		\
 } while (0)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
+#define SIG_ARG_MAYBE_UNUSED(decl) UNUSED (decl)
 
 #elif defined (HAVE_SIGHOLD)
 
@@ -188,6 +190,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
 #define EMACS_UNBLOCK_ALL_SIGNALS() 0
 #define EMACS_WAIT_FOR_SIGNAL(sig) sigpause (sig)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
+#define SIG_ARG_MAYBE_UNUSED(decl) UNUSED (decl)
 
 #elif defined (WIN32_NATIVE)
 
@@ -203,6 +206,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
 #define EMACS_UNBLOCK_ALL_SIGNALS() 0
 #define EMACS_WAIT_FOR_SIGNAL(sig) mswindows_sigpause (sig)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
+#define SIG_ARG_MAYBE_UNUSED(decl) UNUSED (decl)
 
 /* Defines that we need that aren't in the standard signal.h  */
 #define SIGHUP  1               /* Hang up */
@@ -227,6 +231,7 @@ signal_handler_t qxe_reliable_signal (int signal_number,
   signal (sig, handler);				\
   errno = old_errno;					\
 } while (0)
+#define SIG_ARG_MAYBE_UNUSED(decl) decl
 
 /* Under SYSV, setting a signal handler for SIGCLD causes
    SIGCLD to immediately be sent if there any unwaited processes

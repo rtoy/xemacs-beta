@@ -54,7 +54,8 @@ mark_marker (Lisp_Object obj)
 }
 
 static void
-print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_marker (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   Lisp_Marker *marker = XMARKER (obj);
 
@@ -76,7 +77,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-marker_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+marker_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Lisp_Marker *marker1 = XMARKER (obj1);
   Lisp_Marker *marker2 = XMARKER (obj2);
@@ -88,7 +89,7 @@ marker_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 }
 
 static unsigned long
-marker_hash (Lisp_Object obj, int depth)
+marker_hash (Lisp_Object obj, int UNUSED (depth))
 {
   unsigned long hash = (unsigned long) XMARKER (obj)->buffer;
   if (hash)

@@ -30,7 +30,13 @@ Lisp_Object Qxintl;
 int init_x_locale (Lisp_Object locale);
 
 int
-init_x_locale (Lisp_Object locale)
+init_x_locale (Lisp_Object
+#ifdef MULE
+	       locale
+#else
+	       UNUSED (locale)
+#endif
+	       )
 {
 #ifdef MULE
   /* dverna - Nov. 98: #### DON'T DO THIS !!! The default XtLanguageProc

@@ -306,6 +306,7 @@ what you give them.   Help stamp out software-hoarding!  */
 #include <fcntl.h>
 #include <elf.h>
 #include <sys/mman.h>
+#include "compiler.h"
 
 #ifndef emacs
 #define fatal(a, b, c) fprintf(stderr, a, b, c), exit(1)
@@ -357,7 +358,9 @@ round_up (x, y)
 void
 unexec (new_name, old_name, data_start, bss_start, entry_address)
      char *new_name, *old_name;
-     unsigned data_start, bss_start, entry_address;
+     unsigned UNUSED (data_start);
+     unsigned UNUSED (bss_start);
+     unsigned UNUSED (entry_address);
 {
   extern unsigned int bss_end;
   int new_file, old_file, new_file_size;

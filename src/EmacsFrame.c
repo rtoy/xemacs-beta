@@ -266,8 +266,8 @@ update_various_frame_slots (EmacsFrame ew)
 }
 
 static void
-EmacsFrameInitialize (Widget request, Widget new,
-		       ArgList dum1, Cardinal *dum2)
+EmacsFrameInitialize (Widget UNUSED (request), Widget new,
+		      ArgList UNUSED (unused1), Cardinal *UNUSED (unused2))
 {
   EmacsFrame ew = (EmacsFrame)new;
   struct frame *f = ew->emacs_frame.frame;
@@ -376,8 +376,8 @@ EmacsFrameResize (Widget widget)
 }
 
 static Boolean
-EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
-		      ArgList argv, Cardinal *argc)
+EmacsFrameSetValues (Widget cur_widget, Widget UNUSED (req_widget),
+		     Widget new_widget, ArgList argv, Cardinal *argc)
 {
   EmacsFrame cur = (EmacsFrame) cur_widget;
   EmacsFrame new = (EmacsFrame) new_widget;
@@ -558,10 +558,10 @@ static unsigned char cvt_string_scrollbar_placement;
 
 /* ARGSUSED */
 static void
-Xt_StringToScrollBarPlacement (XrmValuePtr args,   /* unused */
-				 Cardinal *num_args, /* unused */
-				 XrmValuePtr fromVal,
-				 XrmValuePtr toVal)
+Xt_StringToScrollBarPlacement (XrmValuePtr UNUSED (args),
+			       Cardinal *UNUSED (num_args),
+			       XrmValuePtr fromVal,
+			       XrmValuePtr toVal)
 {
   XrmQuark q;
   char *lowerName = (char *) ALLOCA (strlen ((char *) fromVal->addr) + 1);

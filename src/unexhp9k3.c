@@ -51,6 +51,7 @@ Modified Jan 93 by Hamish Macdonald for HPUX
 #include <sys/dir.h>
 
 #include "sysdep.h"
+#include "compiler.h"
 
 /* XEmacs: Richard Cognot <cognot@ensg.u-nancy.fr> says we need these */
 extern void perror(const char*);
@@ -274,8 +275,8 @@ unexec_fchmod (int fd, int mode)
 static void *dynamic_addr = (void *) &_DYNAMIC;
 
 int
-unexec (char *new_name, char *old_name,
-        unsigned int emacs_edata, unsigned int dummy1, unsigned int dummy2)
+unexec (char *new_name, char *old_name, unsigned int emacs_edata,
+	unsigned int UNUSED (dummy1), unsigned int UNUSED (dummy2))
 {
   /* /dld.sl data */
   struct dynamic *ld = 0;
@@ -506,7 +507,7 @@ unexec (char *new_name, char *old_name,
 
 
 int
-run_time_remap (char *dummy)
+run_time_remap (char *UNUSED (dummy))
 {
     unsigned long current_sbrk = (unsigned long) sbrk (0);
 

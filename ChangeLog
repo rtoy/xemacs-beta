@@ -1,3 +1,8 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* configure.in (TAB): Add unused parameter and variables warnings
+	to gcc CFLAGS.
+
 2004-09-20  Jerry James  <james@xemacs.org>
 
 	* INSTALL: Update Canna description to reflect recent changes.

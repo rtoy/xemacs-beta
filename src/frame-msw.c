@@ -119,7 +119,7 @@ mswindows_get_selected_frame_hwnd (void)
 
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
-			int frame_name_is_defaulted)
+			int UNUSED (frame_name_is_defaulted))
 {
   Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
@@ -261,7 +261,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props,
 }
 
 static void
-mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
+mswindows_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 {
   if (NILP (Vmswindows_use_system_frame_size_defaults))
     {
@@ -286,8 +286,8 @@ mswindows_init_frame_3 (struct frame *f)
 }
 
 static void
-mswindows_after_init_frame (struct frame *f, int first_on_device,
-		            int first_on_console)
+mswindows_after_init_frame (struct frame *UNUSED (f),
+			    int UNUSED (first_on_device), int first_on_console)
 {
   /* Windows, unlike X, is very synchronous. After the initial
      frame is created, it will never be displayed, except for
@@ -488,7 +488,8 @@ mswindows_set_mouse_position (struct window *w, int x, int y)
 }
 
 static int
-mswindows_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
+mswindows_get_mouse_position (struct device *UNUSED (d), Lisp_Object *frame,
+			      int *x, int *y)
 {
   POINT pt;
   HWND hwnd;
@@ -575,7 +576,8 @@ mswindows_frame_property (struct frame *f, Lisp_Object property)
 }
 
 static int
-mswindows_internal_frame_property_p (struct frame *f, Lisp_Object property)
+mswindows_internal_frame_property_p (struct frame *UNUSED (f),
+				     Lisp_Object property)
 {
   return EQ (property, Qleft)
     || EQ (property, Qtop);
@@ -778,7 +780,8 @@ mswindows_get_frame_parent (struct frame *f)
 }
 
 static void
-mswindows_update_frame_external_traits (struct frame *frm, Lisp_Object name)
+mswindows_update_frame_external_traits (struct frame *UNUSED (frm),
+					Lisp_Object UNUSED (name))
 {
 }
 
@@ -835,8 +838,8 @@ maybe_error_if_job_active (struct frame *f)
 }
 
 static void
-msprinter_init_frame_1 (struct frame *f, Lisp_Object props,
-			int frame_name_is_defaulted)
+msprinter_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
+			int UNUSED (frame_name_is_defaulted))
 {
   /* Make sure this is the only frame on device. Windows printer can
      handle only one job at a time. */
@@ -964,7 +967,7 @@ msprinter_init_frame_3 (struct frame *f)
 }
 
 static void
-msprinter_mark_frame (struct frame *f)
+msprinter_mark_frame (struct frame *UNUSED (f))
 {
 }
 
@@ -1000,7 +1003,8 @@ msprinter_frame_property (struct frame *f, Lisp_Object property)
 }
 
 static int
-msprinter_internal_frame_property_p (struct frame *f, Lisp_Object property)
+msprinter_internal_frame_property_p (struct frame *UNUSED (f),
+				     Lisp_Object property)
 {
   return (EQ (Qleft_margin, property) || EQ (Qtop_margin, property) ||
 	  EQ (Qright_margin, property) || EQ (Qbottom_margin, property));
@@ -1081,7 +1085,8 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 }
 
 static void
-msprinter_set_frame_size (struct frame *f, int width, int height)
+msprinter_set_frame_size (struct frame *f, int UNUSED (width),
+			  int UNUSED (height))
 {
   /* We're absolutely unsizeable */
   error_frame_unsizable (f);

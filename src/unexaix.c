@@ -197,7 +197,7 @@ int unexec (char *new_name, char *a_name,
 static int
 make_hdr (int new, int a_out,
 	  unsigned data_start, unsigned bss_start,
-	  unsigned entry_address,
+	  unsigned UNUSED (entry_address),
 	  char *a_name, char *new_name)
 {
   int scns;
@@ -535,7 +535,7 @@ mark_x (char *name)
 }
 
 static int
-adjust_lnnoptrs (int writedesc, int readdesc, char *new_name)
+adjust_lnnoptrs (int UNUSED (writedesc), int UNUSED (readdesc), char *new_name)
 {
   int nsyms;
   int naux;

@@ -366,7 +366,8 @@ free_widget_info (widget_info *info)
 }
 
 static void
-mark_widget_destroyed (Widget widget, XtPointer closure, XtPointer call_data)
+mark_widget_destroyed (Widget widget, XtPointer closure,
+		       XtPointer UNUSED (call_data))
 {
   widget_instance *instance = (widget_instance*)closure;
 
@@ -511,15 +512,6 @@ safe_strcmp (const char *s1, const char *s2)
   if (!!s1 ^ !!s2) return True;
   return (s1 && s2) ? strcmp (s1, s2) : s1 ? False : !!s2;
 }
-
-#ifndef WIN32_NATIVE
-static change_type
-max (change_type i1, change_type i2)
-{
-  return (int)i1 > (int)i2 ? i1 : i2;
-}
-#endif
-
 
 #if 0
 # define EXPLAIN(name, oc, nc, desc, a1, a2)				\
@@ -672,8 +664,8 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
       {
 	EXPLAIN (val1->name, change, merged_next->change, "(following change)",
 		 0, 0);
+	change = max (change, merged_next->change);
       }
-      change = max (change, merged_next->change);
     }
 
   val1->next = merged_next;
@@ -1277,7 +1269,7 @@ lw_get_widget_value_for_widget (widget_instance *instance, Widget w)
   widget_instance. */
 void
 lw_internal_update_other_instances (Widget widget, XtPointer closure,
-				    XtPointer call_data)
+				    XtPointer UNUSED (call_data))
 {
   /* To forbid recursive calls */
   static Boolean updating;
@@ -1341,7 +1333,7 @@ lw_set_keyboard_focus (Widget parent, Widget w)
 
 /* Show busy */
 static void
-show_one_widget_busy (Widget w, Boolean flag)
+show_one_widget_busy (Widget w, Boolean UNUSED (flag))
 {
   Pixel foreground = 0;
   Pixel background = 1;

@@ -2036,7 +2036,7 @@ mark_string (Lisp_Object obj)
 }
 
 static int
-string_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+string_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Bytecount len;
   return (((len = XSTRING_LENGTH (obj1)) == XSTRING_LENGTH (obj2)) &&
@@ -3532,7 +3532,13 @@ kkcc_marking (void)
    seen yet, recursively mark all the references contained in it. */
 
 void
-mark_object (Lisp_Object obj)
+mark_object (
+#ifdef USE_KKCC
+	     Lisp_Object UNUSED (obj)
+#else
+	     Lisp_Object obj
+#endif
+	     )
 {
 #ifdef USE_KKCC
   /* this code should never be reached when configured for KKCC */
@@ -5129,7 +5135,7 @@ object_dead_p (Lisp_Object obj)
        that some minimum block size is imposed (e.g. 16 bytes). */
 
 Bytecount
-malloced_storage_size (void *ptr, Bytecount claimed_size,
+malloced_storage_size (void *UNUSED (ptr), Bytecount claimed_size,
 		       struct overhead_stats *stats)
 {
   Bytecount orig_claimed_size = claimed_size;

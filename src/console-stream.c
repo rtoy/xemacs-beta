@@ -58,7 +58,7 @@ const struct sized_memory_description stream_console_data_description = {
 };
 
 static void
-stream_init_console (struct console *con, Lisp_Object params)
+stream_init_console (struct console *con, Lisp_Object UNUSED (params))
 {
   Lisp_Object tty = CONSOLE_CONNECTION (con);
   struct stream_console *stream_con;
@@ -90,7 +90,7 @@ stream_init_console (struct console *con, Lisp_Object params)
 }
 
 static void
-stream_init_device (struct device *d, Lisp_Object params)
+stream_init_device (struct device *d, Lisp_Object UNUSED (params))
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
@@ -101,7 +101,7 @@ stream_init_device (struct device *d, Lisp_Object params)
 }
 
 static int
-stream_initially_selected_for_input (struct console *con)
+stream_initially_selected_for_input (struct console *UNUSED (con))
 {
   return noninteractive && initialized;
 }
@@ -130,7 +130,7 @@ stream_delete_console (struct console *con)
 
 Lisp_Object
 stream_semi_canonicalize_console_connection (Lisp_Object connection,
-					     Error_Behavior errb)
+					     Error_Behavior UNUSED (errb))
 {
   return NILP (connection) ? Vstdio_str : connection;
 }
@@ -169,7 +169,7 @@ stream_canonicalize_device_connection (Lisp_Object connection,
 
 
 static void
-stream_init_frame_1 (struct frame *f, Lisp_Object props,
+stream_init_frame_1 (struct frame *f, Lisp_Object UNUSED (props),
 		     int frame_name_is_defaulted)
 {
 #if 0
@@ -186,20 +186,21 @@ stream_init_frame_1 (struct frame *f, Lisp_Object props,
 
 
 static int
-stream_text_width (struct frame *f, struct face_cachel *cachel,
-		   const Ichar *str, Charcount len)
+stream_text_width (struct frame *UNUSED (f),
+		   struct face_cachel *UNUSED (cachel),
+		   const Ichar *UNUSED (str), Charcount len)
 {
   return len;
 }
 
 static int
-stream_left_margin_width (struct window *w)
+stream_left_margin_width (struct window *UNUSED (w))
 {
   return 0;
 }
 
 static int
-stream_right_margin_width (struct window *w)
+stream_right_margin_width (struct window *UNUSED (w))
 {
   return 0;
 }
@@ -224,55 +225,61 @@ stream_eol_cursor_width (void)
    is a few changes to the redisplay critical-section handling. */
 
 static void
-stream_window_output_begin (struct window *w)
+stream_window_output_begin (struct window *UNUSED (w))
 {
   abort ();
 }
 
 static void
-stream_window_output_end (struct window *w)
+stream_window_output_end (struct window *UNUSED (w))
 {
   abort ();
 }
 
 static void
-stream_frame_output_begin (struct frame *f)
+stream_frame_output_begin (struct frame *UNUSED (f))
 {
   abort ();
 }
 
 static void
-stream_frame_output_end (struct frame *f)
+stream_frame_output_end (struct frame *UNUSED (f))
 {
   abort ();
 }
 
 static void
-stream_output_display_block (struct window *w, struct display_line *dl,
-			     int block, int start, int end,
-			     int start_pixpos, int cursor_start,
-			     int cursor_width, int cursor_height)
+stream_output_display_block (struct window *UNUSED (w),
+			     struct display_line *UNUSED (dl),
+			     int UNUSED (block), int UNUSED (start),
+			     int UNUSED (end), int UNUSED (start_pixpos),
+			     int UNUSED (cursor_start),
+			     int UNUSED (cursor_width),
+			     int UNUSED (cursor_height))
 {
   abort ();
 }
 
 static void
-stream_clear_region (Lisp_Object window, struct device* d, struct frame * f,
-		     face_index findex, int x, int y,
-		     int width, int height, Lisp_Object fcolor,
-		     Lisp_Object bcolor, Lisp_Object background_pixmap)
+stream_clear_region (Lisp_Object UNUSED (window), struct device* UNUSED (d),
+		     struct frame *UNUSED (f), face_index UNUSED (findex),
+		     int UNUSED (x), int UNUSED (y), int UNUSED (width),
+		     int UNUSED (height), Lisp_Object UNUSED (fcolor),
+		     Lisp_Object UNUSED (bcolor),
+		     Lisp_Object UNUSED (background_pixmap))
 {
   abort ();
 }
 
 static int
-stream_flash (struct device *d)
+stream_flash (struct device *UNUSED (d))
 {
   return 0; /* sorry can't do it */
 }
 
 static void
-stream_ring_bell (struct device *d, int volume, int pitch, int duration)
+stream_ring_bell (struct device *d, int UNUSED (volume), int UNUSED (pitch),
+		  int UNUSED (duration))
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
   /* Don't output ^G when not a TTY -- in particular, under MS Windows, ^G

@@ -468,7 +468,7 @@ __remove_gcpro_by_id (gpointer user_data)
 }
 
 static void
-__generic_toolbar_callback (GtkWidget *item, gpointer user_data)
+__generic_toolbar_callback (GtkWidget *UNUSED (item), gpointer user_data)
 {
   Lisp_Object callback;
   Lisp_Object lisp_user_data;

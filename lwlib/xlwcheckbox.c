@@ -221,10 +221,14 @@ CheckboxClassInit (void)
 
 /*ARGSUSED*/
 static void
-CheckboxInit (Widget   request,
+CheckboxInit (Widget   UNUSED (request),
+#if DRAW_CHECK
 	      Widget   new,
-	      ArgList  args,
-	      Cardinal *num_args)
+#else
+	      Widget   UNUSED (new),
+#endif
+	      ArgList  UNUSED (args),
+	      Cardinal *UNUSED (num_args))
 {
 #if DRAW_CHECK
     CheckboxWidget cw = (CheckboxWidget) new;
@@ -277,9 +281,14 @@ CheckboxRealize(Widget w,
 
 /* ARGSUSED */
 static void
-CheckboxDestroy (Widget w,
-		 XtPointer junk,
-		 XtPointer garbage)
+CheckboxDestroy (
+#if DRAW_CHECK
+		 Widget w,
+#else
+		 Widget UNUSED (w),
+#endif
+		 XtPointer UNUSED (junk),
+		 XtPointer UNUSED (garbage))
 {
 #if DRAW_CHECK
     CheckboxWidget cw = (CheckboxWidget) w;
@@ -356,8 +365,9 @@ DrawCheck (Widget w)
 	Dimension	s = swid(cw);
 	Dimension	bsz = bsize(cw);
 	Position	bx,by ;		/* Check upper-left */
-	Dimension	bw,bh ;
+	Dimension	bh ;
 #ifdef	_ThreeDP_h
+	Dimension	bw;
 	GC		top, bot;
 #endif
 	GC		ctr ;
@@ -365,11 +375,13 @@ DrawCheck (Widget w)
 	/* foreground GC */
 	gc = XtIsSensitive(w) ? cw->command.normal_GC : cw->label.gray_GC ;
 
-	bw = bh = bs(cw) ;
+	bh = bs(cw) ;
 	bx = cw->label.internal_width ;
 	by = cw->core.height/2 - bh/2 ;
 
 #ifdef	_ThreeDP_h
+	bw = bh ;
+
 	if( !cw->command.set ) {
 	  top = cw->threeD.top_shadow_GC ;
 	  bot = cw->threeD.bot_shadow_GC ;

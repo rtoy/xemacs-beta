@@ -37,14 +37,14 @@ Boston, MA 02111-1307, USA.  */
 
 int esd_play_sound_file (Extbyte *file, int vol);
 int
-esd_play_sound_file (Extbyte *file, int vol)
+esd_play_sound_file (Extbyte *file, int UNUSED (vol))
 {                              /* #### FIXME: vol is ignored */
   return esd_play_file(ESD_NAME, file, 0);
 }
 
 int esd_play_sound_data (UChar_Binary *data, size_t length, int vol);
 int
-esd_play_sound_data (UChar_Binary *data, size_t length, int vol)
+esd_play_sound_data (UChar_Binary *data, size_t length, int UNUSED (vol))
 {                              /* #### FIXME: vol is ignored */
   size_t         (*parsesndfile)(void **dayta,size_t *sz,void **outbuf);
   size_t         (*sndcnv)(void **dayta,size_t *sz,void **);

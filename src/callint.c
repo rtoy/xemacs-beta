@@ -206,7 +206,7 @@ Z -- (and current-prefix-arg (fboundp 'read-coding-system)
 `_' (setq zmacs-region-stays t)
 
 */
-       (args))
+       (UNUSED (args)))
 {
   return Qnil;
 }

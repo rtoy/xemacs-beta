@@ -54,7 +54,7 @@ all: liblw.a
 
 c_switch_all=@c_switch_all@
 
-cppflags = $(CPPFLAGS) -I. $(c_switch_all)
+cppflags = $(CPPFLAGS) -I. -I$(srcdir)/../src $(c_switch_all)
 cflags = $(CFLAGS) $(cppflags)
 
 #ifdef SOLARIS2

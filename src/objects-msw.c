@@ -1155,8 +1155,9 @@ font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
 }
 
 static int CALLBACK
-font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
-		      int FontType, struct font_enum_t *font_enum)
+font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe,
+		      NEWTEXTMETRICEXW *UNUSED (lpntme),
+		      int UNUSED (FontType), struct font_enum_t *font_enum)
 {
   /* This function gets called once per facename per character set.
    * We call a second callback to enumerate the fonts in each facename */
@@ -1172,7 +1173,7 @@ font_enum_callback_1 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
 
 static int
 sort_font_list_function (Lisp_Object obj1, Lisp_Object obj2,
-			 Lisp_Object pred)
+			 Lisp_Object UNUSED (pred))
 {
   Ibyte *font1, *font2;
   Ibyte *c1, *c2;
@@ -1334,7 +1335,8 @@ mswindows_get_hfont (Lisp_Font_Instance *f,
 
 static int
 mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-				     Lisp_Object device, Error_Behavior errb)
+				     Lisp_Object UNUSED (device),
+				     Error_Behavior errb)
 {
   COLORREF color;
 
@@ -1360,7 +1362,7 @@ mswindows_mark_color_instance (Lisp_Color_Instance *c)
 static void
 mswindows_print_color_instance (Lisp_Color_Instance *c,
 				Lisp_Object printcharfun,
-				int escapeflag)
+				int UNUSED (escapeflag))
 {
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
   write_fmt_string (printcharfun,
@@ -1382,14 +1384,14 @@ mswindows_finalize_color_instance (Lisp_Color_Instance *c)
 static int
 mswindows_color_instance_equal (Lisp_Color_Instance *c1,
 				Lisp_Color_Instance *c2,
-				int depth)
+				int UNUSED (depth))
 {
   return (COLOR_INSTANCE_MSWINDOWS_COLOR (c1) ==
 	  COLOR_INSTANCE_MSWINDOWS_COLOR (c2));
 }
 
 static unsigned long
-mswindows_color_instance_hash (Lisp_Color_Instance *c, int depth)
+mswindows_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR (c);
 }
@@ -1404,7 +1406,7 @@ mswindows_color_instance_rgb_components (Lisp_Color_Instance *c)
 }
 
 static int
-mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
+mswindows_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
 {
   return (mswindows_string_to_color (XSTRING_DATA (color)) != (COLORREF) -1);
 }
@@ -1915,7 +1917,7 @@ mswindows_mark_font_instance (Lisp_Font_Instance *f)
 static void
 mswindows_print_font_instance (Lisp_Font_Instance *f,
 			       Lisp_Object printcharfun,
-			       int escapeflag)
+			       int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
 		    (unsigned long)
@@ -1925,7 +1927,7 @@ mswindows_print_font_instance (Lisp_Font_Instance *f,
 
 static Lisp_Object
 mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device,
-		      Lisp_Object maxnumber)
+		      Lisp_Object UNUSED (maxnumber))
 {
   struct device *d = XDEVICE (device);
   Lisp_Object font_list = Qnil, fonttail, result = Qnil;
@@ -1951,7 +1953,8 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device,
 }
 
 static Lisp_Object
-mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
+mswindows_font_instance_truename (Lisp_Font_Instance *f,
+				  Error_Behavior UNUSED (errb))
 {
   return f->truename;
 }
@@ -1959,7 +1962,7 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 #ifdef MULE
 
 static int
-mswindows_font_spec_matches_charset_stage_1 (struct device *d,
+mswindows_font_spec_matches_charset_stage_1 (struct device *UNUSED (d),
 					     Lisp_Object charset,
 					     const Ibyte *nonreloc,
 					     Lisp_Object reloc,

@@ -2536,13 +2536,14 @@ static Lisp_Object Vall_weak_lists; /* Gemarke es nicht!!! */
 static Lisp_Object encode_weak_list_type (enum weak_list_type type);
 
 static Lisp_Object
-mark_weak_list (Lisp_Object obj)
+mark_weak_list (Lisp_Object UNUSED (obj))
 {
   return Qnil; /* nichts ist gemarkt */
 }
 
 static void
-print_weak_list (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_weak_list (Lisp_Object obj, Lisp_Object printcharfun,
+		 int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<weak-list>");
@@ -3014,13 +3015,14 @@ prune_weak_boxes (void)
 }
 
 static Lisp_Object
-mark_weak_box (Lisp_Object obj)
+mark_weak_box (Lisp_Object UNUSED (obj))
 {
   return Qnil;
 }
 
 static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_weak_box (Lisp_Object UNUSED (obj), Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<weak_box>");
@@ -3239,13 +3241,14 @@ zap_finalize_list(void)
 }
 
 static Lisp_Object
-mark_ephemeron (Lisp_Object obj)
+mark_ephemeron (Lisp_Object UNUSED (obj))
 {
   return Qnil;
 }
 
 static void
-print_ephemeron (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_ephemeron (Lisp_Object UNUSED (obj), Lisp_Object printcharfun,
+		 int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<ephemeron>");

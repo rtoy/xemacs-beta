@@ -23,12 +23,14 @@ Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include "compiler.h"
 
 int unexec (char *new_name, char *old_name, unsigned int data_start,
 	    unsigned int bss_start, unsigned int entry_address);
 int
-unexec (char *new_name, char *old_name, unsigned int data_start,
-	unsigned int bss_start, unsigned int entry_address)
+unexec (char *new_name, char *UNUSED (old_name),
+	unsigned int UNUSED (data_start), unsigned int UNUSED (bss_start),
+	unsigned int UNUSED (entry_address))
 {
   if (dldump (0, new_name, RTLD_MEMORY) != 0)
     {

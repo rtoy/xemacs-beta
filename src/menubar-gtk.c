@@ -127,7 +127,7 @@ gtk_xemacs_menubar_class_init	(GtkXEmacsMenubarClass *klass)
 }
 
 static void
-gtk_xemacs_menubar_init		(GtkXEmacsMenubar *xemacs)
+gtk_xemacs_menubar_init		(GtkXEmacsMenubar *UNUSED (xemacs))
 {
 }
 
@@ -222,13 +222,13 @@ gtk_xemacs_accel_label_get_type(void)
 }
 
 static void
-gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *klass)
+gtk_xemacs_accel_label_class_init(GtkXEmacsAccelLabelClass *UNUSED (klass))
 {
   /* Nothing to do. */
 }
 
 static void
-gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *xemacs)
+gtk_xemacs_accel_label_init(GtkXEmacsAccelLabel *UNUSED (xemacs))
 {
   /* Nothing to do. */
 }
@@ -311,7 +311,7 @@ static void __activate_menu(GtkMenuItem *, gpointer);
 
 #ifdef TEAR_OFF_MENUS
 static void
-__torn_off_sir(GtkMenuItem *item, gpointer user_data)
+__torn_off_sir(GtkMenuItem *UNUSED (item), gpointer user_data)
 {
   GtkWidget *menu_item = GTK_WIDGET (user_data);
 
@@ -342,7 +342,7 @@ __torn_off_sir(GtkMenuItem *item, gpointer user_data)
    does the delayed creation of the menu items.  We populate the
    submenu and away we go. */
 static void
-__maybe_destroy (GtkWidget *child, GtkWidget *precious)
+__maybe_destroy (GtkWidget *child, GtkWidget *UNUSED (precious))
 {
   if (GTK_IS_MENU_ITEM (child) && !GTK_IS_TEAROFF_MENU_ITEM (child))
     {
@@ -456,7 +456,7 @@ __remove_gcpro_by_id (gpointer user_data)
 }
 
 static void
-__kill_stupid_gtk_timer (GtkObject *obj, gpointer user_data)
+__kill_stupid_gtk_timer (GtkObject *obj, gpointer UNUSED (user_data))
 {
   GtkMenuItem *mi = GTK_MENU_ITEM (obj);
 
@@ -1196,7 +1196,8 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 #endif
 
 static gboolean
-run_menubar_hook (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+run_menubar_hook (GtkWidget *widget, GdkEventButton *UNUSED (event),
+		  gpointer UNUSED (user_data))
 {
   if (!GTK_MENU_SHELL(widget)->active)
     {
@@ -1389,7 +1390,7 @@ gtk_free_frame_menubars (struct frame *f)
 }
 
 static void 
-popdown_menu_cb (GtkMenuShell *menu, gpointer user_data)
+popdown_menu_cb (GtkMenuShell *UNUSED (menu), gpointer UNUSED (user_data))
 {
   popup_up_p--;
 }

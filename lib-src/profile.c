@@ -91,7 +91,7 @@ get_time (void)
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   int c;
   while ((c = getchar ()) != EOF)

@@ -307,7 +307,7 @@ gtk_frame_properties (struct frame *f)
    individual properties. */
 
 static void
-gtk_set_frame_text_value (struct frame *f, Ibyte *value,
+gtk_set_frame_text_value (struct frame *UNUSED (f), Ibyte *value,
 			  void (*func) (gpointer, gchar *),
 			  gpointer arg)
 {
@@ -642,7 +642,8 @@ gtk_initialize_frame_size (struct frame *f)
 }
 
 static gboolean
-resize_event_cb (GtkWidget *w, GtkAllocation *allocation, gpointer user_data)
+resize_event_cb (GtkWidget *UNUSED (w), GtkAllocation *allocation,
+		 gpointer user_data)
 {
   struct frame *f = (struct frame *) user_data;
 
@@ -660,7 +661,8 @@ resize_event_cb (GtkWidget *w, GtkAllocation *allocation, gpointer user_data)
 }
 
 static gboolean
-delete_event_cb (GtkWidget *w, GdkEvent *ev, gpointer user_data)
+delete_event_cb (GtkWidget *UNUSED (w), GdkEvent *UNUSED (ev),
+		 gpointer user_data)
 {
     struct frame *f = (struct frame *) user_data;
     Lisp_Object frame = wrap_frame (f);
@@ -713,12 +715,12 @@ Lisp_Object Vcurrent_drag_object;
 
 #define DRAG_SELECTION_DATA_ERROR "Error converting drag data to external format"
 static void
-dragndrop_get_drag (GtkWidget *widget,
-		    GdkDragContext *drag_context,
+dragndrop_get_drag (GtkWidget *UNUSED (widget),
+		    GdkDragContext *UNUSED (drag_context),
 		    GtkSelectionData *data,
 		    guint info,
-		    guint time,
-		    gpointer user_data)
+		    guint UNUSED (time),
+		    gpointer UNUSED (user_data))
 {
   gtk_selection_data_set (data, GDK_SELECTION_TYPE_STRING, 8,
 			  DRAG_SELECTION_DATA_ERROR,
@@ -993,7 +995,7 @@ allocate_gtk_frame_struct (struct frame *f)
 
 static void
 gtk_init_frame_1 (struct frame *f, Lisp_Object props,
-		  int frame_name_is_defaulted)
+		  int UNUSED (frame_name_is_defaulted))
 {
   /* This function can GC */
   Lisp_Object initially_unmapped;
@@ -1036,7 +1038,7 @@ gtk_init_frame_1 (struct frame *f, Lisp_Object props,
 }
 
 static void
-gtk_init_frame_2 (struct frame *f, Lisp_Object props)
+gtk_init_frame_2 (struct frame *f, Lisp_Object UNUSED (props))
 {
   /* Set up the values of the widget/frame.  A case could be made for putting
      this inside of the widget's initialize method. */

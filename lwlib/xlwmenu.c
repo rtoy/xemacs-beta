@@ -1339,7 +1339,7 @@ separator_decoration_draw (XlwMenuWidget mw,
 			   Window window,
 			   int x, int y,
 			   unsigned int width,
-			   Boolean vertical,
+			   Boolean UNUSED (vertical),
 			   shadow_type type)
 {
   Display *dpy = XtDisplay (mw);
@@ -1531,7 +1531,7 @@ menu_item_type (widget_value *val)
 static void
 label_button_size (XlwMenuWidget mw,
 		   widget_value *val,
-		   Boolean in_menubar,
+		   Boolean UNUSED (in_menubar),
 		   unsigned int *toggle_width,
 		   unsigned int *label_width,
 		   unsigned int *bindings_width,
@@ -1554,10 +1554,10 @@ label_button_draw (XlwMenuWidget mw,
 		   Boolean       highlighted,
 		   Window        window,
 		   int x, int y,
-		   unsigned int width,
-		   unsigned int height,
+		   unsigned int UNUSED (width),
+		   unsigned int UNUSED (height),
 		   unsigned int label_offset,
-		   unsigned int binding_tab)
+		   unsigned int UNUSED (binding_tab))
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   GC gc;
@@ -1949,7 +1949,7 @@ separator_decoration_height (XlwMenuWidget mw, widget_value *val)
 static void
 separator_size (XlwMenuWidget mw,
 		widget_value *val,
-		Boolean in_menubar,
+		Boolean UNUSED (in_menubar),
 		unsigned int *toggle_width,
 		unsigned int *label_width,
 		unsigned int *rest_width,
@@ -1964,13 +1964,13 @@ static void
 separator_draw (XlwMenuWidget mw,
 		widget_value *val,
 		Boolean       in_menubar,
-		Boolean       highlighted,
+		Boolean       UNUSED (highlighted),
 		Window        window,
 		int x, int y,
 		unsigned int  width,
 		unsigned int  height,
-		unsigned int  label_tab,
-		unsigned int  binding_tab)
+		unsigned int  UNUSED (label_tab),
+		unsigned int  UNUSED (binding_tab))
 {
   unsigned int sep_width;
 
@@ -1989,9 +1989,9 @@ separator_draw (XlwMenuWidget mw,
 }
 
 static void
-pushright_size (XlwMenuWidget mw,
-		widget_value *val,
-		Boolean in_menubar,
+pushright_size (XlwMenuWidget UNUSED (mw),
+		widget_value *UNUSED (val),
+		Boolean UNUSED (in_menubar),
 		unsigned int *toggle_width,
 		unsigned int *label_width,
 		unsigned int *rest_width,
@@ -3000,8 +3000,8 @@ default_font_of_font_list (XmFontList font_list)
 #endif /* NEED_MOTIF */
 
 static void
-XlwMenuInitialize (Widget request, Widget new_, ArgList args,
-		   Cardinal *num_args)
+XlwMenuInitialize (Widget UNUSED (request), Widget new_, ArgList UNUSED (args),
+		   Cardinal *UNUSED (num_args))
 {
   /* Get the GCs and the widget size */
   XlwMenuWidget mw = (XlwMenuWidget)new_;
@@ -3104,7 +3104,7 @@ XlwMenuRealize (Widget w, Mask *valueMask, XSetWindowAttributes *attributes)
    receives expose events through Xt.  So we repaint all the other panes
    when receiving an Expose event. */
 static void
-XlwMenuRedisplay (Widget w, XEvent *ev, Region region)
+XlwMenuRedisplay (Widget w, XEvent *UNUSED (ev), Region UNUSED (region))
 {
   XlwMenuWidget mw = (XlwMenuWidget)w;
   int i;
@@ -3163,8 +3163,8 @@ XlwMenuDestroy (Widget w)
 }
 
 static Boolean
-XlwMenuSetValues (Widget current, Widget request, Widget new_, ArgList args,
-		  Cardinal *num_args)
+XlwMenuSetValues (Widget current, Widget UNUSED (request), Widget new_,
+		  ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
   XlwMenuWidget oldmw = (XlwMenuWidget)current;
   XlwMenuWidget newmw = (XlwMenuWidget)new_;
@@ -3304,7 +3304,8 @@ handle_motion_event (XlwMenuWidget mw, XMotionEvent *ev,
 Time x_focus_timestamp_really_sucks_fix_me_better;
 
 static void
-Start (Widget w, XEvent *ev, String *params, Cardinal *num_params)
+Start (Widget w, XEvent *ev, String *UNUSED (params),
+       Cardinal *UNUSED (num_params))
 {
   XlwMenuWidget mw = (XlwMenuWidget)w;
 
@@ -3339,14 +3340,16 @@ Start (Widget w, XEvent *ev, String *params, Cardinal *num_params)
 }
 
 static void
-Drag (Widget w, XEvent *ev, String *params, Cardinal *num_params)
+Drag (Widget w, XEvent *ev, String *UNUSED (params),
+      Cardinal *UNUSED (num_params))
 {
   XlwMenuWidget mw = (XlwMenuWidget)w;
   handle_motion_event (mw, &ev->xmotion, False);
 }
 
 static void
-Select (Widget w, XEvent *ev, String *params, Cardinal *num_params)
+Select (Widget w, XEvent *ev, String *UNUSED (params),
+	Cardinal *UNUSED (num_params))
 {
   XlwMenuWidget mw = (XlwMenuWidget)w;
   widget_value *selected_item = mw->menu.old_stack [mw->menu.old_depth - 1];
@@ -3467,7 +3470,7 @@ xlw_map_menu (Time t)
 
 /* display the stupid menu already */
 void
-xlw_display_menu (Time t)
+xlw_display_menu (Time UNUSED (t))
 {
   XlwMenuWidget mw = (XlwMenuWidget)lw_menubar_widget;
 

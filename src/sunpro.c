@@ -46,7 +46,11 @@ actually logged.  If usage-tracking support was not compiled in, this
 function has no effect and always returns `nil'.  See function
 `has-usage-tracking-p'.
 */
-       (int nargs, Lisp_Object *args))
+#ifdef USAGE_TRACKING
+       (int nargs, Lisp_Object *args)
+#else
+       (int UNUSED (nargs), Lisp_Object *UNUSED (args))
+#endif
 {
 #ifdef USAGE_TRACKING
   Lisp_Object xs;

@@ -2748,7 +2748,7 @@ struct read_list_state
   };
 
 static void *
-read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
+read_list_conser (Lisp_Object readcharfun, void *state, Charcount UNUSED (len))
 {
   struct read_list_state *s = (struct read_list_state *) state;
   Lisp_Object elt;

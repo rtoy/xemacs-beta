@@ -80,7 +80,7 @@ Lisp_Object Qyesnocancel;
 /************************************************************************/
 
 static int
-mswindows_initially_selected_for_input (struct console *con)
+mswindows_initially_selected_for_input (struct console *UNUSED (con))
 {
   return 1;
 }

@@ -692,7 +692,7 @@ x_update_frame_scrollbars (struct frame *f)
 #ifdef MEMORY_USAGE_STATS
 
 static int
-x_compute_scrollbar_instance_usage (struct device *d,
+x_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				    struct scrollbar_instance *inst,
 				    struct overhead_stats *ovstats)
 {

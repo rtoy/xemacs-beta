@@ -42,6 +42,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 
+#include "compiler.h"
 #include "xintrinsic.h"
 
 #include "balloon_help.h"
@@ -229,8 +230,8 @@ text_extent (XFontStruct* fontStruct, const char* text, int len,
 }
 
 static void
-get_text_size (Display* dpy, XFontStruct* fontStruct, const char* text,
-	       int* max_width, int* max_height)
+get_text_size (Display* UNUSED (dpy), XFontStruct* fontStruct,
+	       const char* text, int* max_width, int* max_height)
 {
   int width;
   int height;
@@ -307,7 +308,7 @@ get_shape (int last_shape, int x, int y, int width, int height,
 }
 
 static void
-make_mask (int shape, int x, int y, int width, int height)
+make_mask (int shape, int UNUSED (x), int UNUSED (y), int width, int height)
 {
   XPoint cone[ 3 ];
 
@@ -336,7 +337,7 @@ make_mask (int shape, int x, int y, int width, int height)
 }
 
 static void
-show_help (XtPointer data, XtIntervalId* id)
+show_help (XtPointer UNUSED (data), XtIntervalId* id)
 {
   int x, y;
   int shape;

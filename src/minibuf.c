@@ -146,8 +146,6 @@ Lowest-level interface to minibuffers.  Don't call this.
      never returns, we can never call unbind_to_1.  Since we exit via a throw,
      we let whoever catches unbind for us. */
 
-  Lisp_Object val;
-
   CHECK_STRING (prompt);
 
   single_console_state ();
@@ -191,9 +189,9 @@ Lowest-level interface to minibuffers.  Don't call this.
   minibuf_level++;
   clear_echo_area (selected_frame (), Qnil, 0);
 
-  val = call_command_loop (Qt);
+  call_command_loop (Qt);
 
-  RETURN_NOT_REACHED (val);
+  RETURN_NOT_REACHED (Qnil);
 }
 
 
@@ -776,7 +774,7 @@ echo_area_message (struct frame *f, const Ibyte *nonreloc,
 }
 
 int
-echo_area_active (struct frame *f)
+echo_area_active (struct frame *UNUSED (f))
 {
   /* By definition, the echo area is active if the echo-area buffer
      is not empty.  No need to call Lisp code. (Anyway, this function
@@ -800,7 +798,7 @@ echo_area_status (struct frame *f)
 }
 
 Lisp_Object
-echo_area_contents (struct frame *f)
+echo_area_contents (struct frame *UNUSED (f))
 {
   /* See above.  By definition, the contents of the echo-area buffer
      are the contents of the echo area. */

@@ -71,7 +71,13 @@ static Lisp_Object Qadd, Qreplace;
 static DECLARE_DOESNT_RETURN (signal_ldap_error (LDAP *, LDAPMessage *, int));
 
 static DOESNT_RETURN
-signal_ldap_error (LDAP *ld, LDAPMessage *res, int ldap_err)
+signal_ldap_error (LDAP *ld,
+#if defined HAVE_LDAP_PARSE_RESULT || defined HAVE_LDAP_RESULT2ERROR
+		   LDAPMessage *res,
+#else
+		   LDAPMessage *UNUSED (res),
+#endif
+		   int ldap_err)
 {
   if (ldap_err <= 0)
     {
@@ -117,7 +123,7 @@ mark_ldap (Lisp_Object obj)
 }
 
 static void
-print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 {
   Lisp_LDAP *ldap = XLDAP (obj);
 

@@ -52,7 +52,8 @@ mark_range_table (Lisp_Object obj)
 }
 
 static void
-print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
+		   int UNUSED (escapeflag))
 {
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
@@ -490,8 +491,8 @@ exactly once) if FUNCTION modifies or deletes the current entry
 /************************************************************************/
 
 static int
-rangetab_data_validate (Lisp_Object keyword, Lisp_Object value,
-			Error_Behavior errb)
+rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+			Error_Behavior UNUSED (errb))
 {
   Lisp_Object rest;
 

@@ -1503,7 +1503,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 
 Ibyte *
 eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
-		     Lisp_Object object)
+		     Lisp_Object UNUSED (object))
 {
   Ibyte *ptr;
 

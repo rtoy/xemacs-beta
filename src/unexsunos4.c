@@ -51,6 +51,7 @@ Tweaked 06-Aug-93 by Dean Michaels to work with sun3.
 #include <stab.h>
 #include <sys/dir.h>
 #include <link.h>
+#include "compiler.h"
 
 /********************** Macros *************************************/
 
@@ -434,8 +435,8 @@ extern int getpagesize (void);
 static void *dynamic_addr = (void *) &_DYNAMIC;
 
 int
-unexec (char *new_name, char *old_name,
-        unsigned int emacs_edata, unsigned int dummy1, unsigned int dummy2)
+unexec (char *new_name, char *old_name, unsigned int emacs_edata,
+	unsigned int UNUSED (dummy1), unsigned int UNUSED (dummy2))
 {
   /* ld.so data */
   struct link_dynamic *ld = 0;
@@ -615,7 +616,7 @@ unexec (char *new_name, char *old_name,
 
 
 int
-run_time_remap (char *dummy)
+run_time_remap (char *UNUSED (dummy))
 {
   long page_size = getpagesize();
   unsigned long base_addr = MASK_UP (mprotect_bottom_addr, page_size);

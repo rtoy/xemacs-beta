@@ -51,7 +51,7 @@ allocate_tty_device_struct (struct device *d)
 }
 
 static void
-tty_init_device (struct device *d, Lisp_Object props)
+tty_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   Lisp_Object terminal_type = CONSOLE_TTY_DATA (con)->terminal_type;
@@ -113,7 +113,7 @@ tty_delete_device (struct device *d)
 #ifdef SIGWINCH
 
 static SIGTYPE
-tty_device_size_change_signal (int signo)
+tty_device_size_change_signal (int UNUSED (signo))
 {
   int old_errno = errno;
   asynch_device_change_pending++;

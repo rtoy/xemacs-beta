@@ -227,7 +227,7 @@ mswindows_own_selection (Lisp_Object selection_name,
 			 Lisp_Object selection_value,
 			 Lisp_Object how_to_add,
 			 Lisp_Object selection_type,
-			 int owned_p /* Not used */)
+			 int UNUSED (owned_p))
 {
   HGLOBAL 	hValue = NULL;
   UINT		cfType;
@@ -584,7 +584,8 @@ mswindows_get_foreign_selection (Lisp_Object selection_symbol,
 }
 
 static void
-mswindows_disown_selection (Lisp_Object selection, Lisp_Object timeval)
+mswindows_disown_selection (Lisp_Object selection,
+			    Lisp_Object UNUSED (timeval))
 {
   if (EQ (selection, QCLIPBOARD))
     {

@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "xmotif.h"
 #include <Xm/RowColumn.h>
 #endif /* LWLIB_MENUBARS_MOTIF */
+#include "compiler.h"
 
 /* For I, Emacs, am a kind god.  Unlike the goddess Athena and the
    Titan Motif, I require no ritual sacrifices to placate the lesser
@@ -178,7 +179,8 @@ Resize (Widget w)
 }
 
 static XtGeometryResult
-GeometryManager (Widget w, XtWidgetGeometry *request, XtWidgetGeometry *reply)
+GeometryManager (Widget w, XtWidgetGeometry *request,
+		 XtWidgetGeometry *UNUSED (reply))
 {
   /* Sure, any changes are fine. */
 

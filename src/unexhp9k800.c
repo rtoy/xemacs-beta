@@ -101,8 +101,9 @@ int calculate_checksum(struct header *hdr);
 int
 unexec (char *new_name,		/* name of the new a.out file to be created */
         char *old_name,		/* name of the old a.out file */
-        uintptr_t new_end_of_text, /* ptr to new edata/etext; NOT USED YET */
-        uintptr_t dummy1, uintptr_t dummy2) /* not used by emacs */
+        uintptr_t UNUSED (new_end_of_text), /* ptr to new edata/etext */
+        uintptr_t UNUSED (dummy1), /* not used by emacs */
+	uintptr_t UNUSED (dummy2))
 {
   int old, new;
   int old_size, new_size;
@@ -164,7 +165,7 @@ unexec (char *new_name,		/* name of the new a.out file to be created */
 /* Save current data space in the file, update header.  */
 
 void
-save_data_space (int file, struct header *hdr,
+save_data_space (int file, struct header *UNUSED (hdr),
 		 struct som_exec_auxhdr *auxhdr, int size)
 {
   /* Write the entire data space out to the file */
@@ -358,7 +359,7 @@ Restore_Shared_Data (void)
 /* run_time_remap is the magic called by startup code in the dumped executable
    if RUN_TIME_REMAP is set. */
 int
-run_time_remap (char *dummy)
+run_time_remap (char *UNUSED (dummy))
 {
   Restore_Shared_Data ();
   return 0;

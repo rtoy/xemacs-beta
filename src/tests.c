@@ -407,7 +407,7 @@ typedef struct
 
 
 static int
-test_hash_tables_mapper (Lisp_Object key, Lisp_Object value,
+test_hash_tables_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			 void *extra_arg)
 {
   test_hash_tables_data *p = (test_hash_tables_data *) extra_arg;
@@ -428,8 +428,9 @@ test_hash_tables_modifying_mapper (Lisp_Object key, Lisp_Object value,
 }
 
 static int
-test_hash_tables_predicate (Lisp_Object key, Lisp_Object value,
-			    void *extra_arg)
+test_hash_tables_predicate (Lisp_Object key,
+			    Lisp_Object UNUSED (value),
+			    void *UNUSED (extra_arg))
 {
   return XINT (key) < 0;
 }

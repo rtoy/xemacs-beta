@@ -88,8 +88,8 @@ Lisp_Object Qmenu_select;
 Lisp_Object Qmenu_escape;
 
 static int
-menubar_variable_changed (Lisp_Object sym, Lisp_Object *val,
-			  Lisp_Object in_object, int flags)
+menubar_variable_changed (Lisp_Object UNUSED (sym), Lisp_Object *UNUSED (val),
+			  Lisp_Object UNUSED (in_object), int UNUSED (flags))
 {
   MARK_MENUBAR_CHANGED;
   return 0;
@@ -114,15 +114,17 @@ free_frame_menubars (struct frame *f)
 }
 
 static void
-menubar_visible_p_changed (Lisp_Object specifier, struct window *w,
-			   Lisp_Object oldval)
+menubar_visible_p_changed (Lisp_Object UNUSED (specifier),
+			   struct window *UNUSED (w),
+			   Lisp_Object UNUSED (oldval))
 {
   MARK_MENUBAR_CHANGED;
 }
 
 static void
-menubar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				    Lisp_Object oldval)
+menubar_visible_p_changed_in_frame (Lisp_Object UNUSED (specifier),
+				    struct frame *f,
+				    Lisp_Object UNUSED (oldval))
 {
   update_frame_menubars (f);
 }

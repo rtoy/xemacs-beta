@@ -37,6 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #include <aouthdr.h>
 #include <scnhdr.h>
 #include <syms.h>
+#include "compiler.h"
 
 static void fatal_unexec (char *, char *);
 static void mark_x (char *);
@@ -92,7 +93,7 @@ EXTERN_C int DEFAULT_ENTRY_ADDRESS (void);
 int
 unexec (char *new_name, char *a_name,
 	unsigned long data_start,
-	unsigned long bss_start,
+	unsigned long UNUSED (bss_start),
 	unsigned long entry_address)
 {
   int new, old;

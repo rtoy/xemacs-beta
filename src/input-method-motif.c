@@ -40,14 +40,15 @@ Boston, MA 02111-1307, USA.  */
 
 /* Create X input method for device */
 void
-XIM_init_device (struct device *d)
+XIM_init_device (struct device *UNUSED (d))
 {
   /* Nothing to do */
 }
 
 /* Callback for the deleting frame. */
 static void
-XIM_delete_frame (Widget w, XtPointer client_data, XtPointer call_data)
+XIM_delete_frame (Widget UNUSED (w), XtPointer client_data,
+		  XtPointer UNUSED (call_data))
 {
   XmImUnregister ((Widget) client_data);
 }
@@ -115,7 +116,7 @@ XIM_init_frame (struct frame *f)
 }
 
 void
-XIM_SetGeometry (struct frame *f)
+XIM_SetGeometry (struct frame *UNUSED (f))
 {
 }
 

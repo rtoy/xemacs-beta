@@ -74,9 +74,9 @@ static void xm_internal_update_other_instances (Widget, XtPointer,
 						XtPointer);
 /* static void xm_pop_down_callback (Widget, XtPointer, XtPointer); */
 static void xm_generic_callback (Widget, XtPointer, XtPointer);
+#if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_WIDGETS_MOTIF)
 static void mark_dead_instance_destroyed (Widget widget, XtPointer closure,
 					  XtPointer call_data);
-#if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_WIDGETS_MOTIF)
 static void xm_nosel_callback (Widget, XtPointer, XtPointer);
 #endif
 #ifdef LWLIB_SCROLLBARS_MOTIF
@@ -339,7 +339,7 @@ xm_update_list (widget_instance* instance, Widget widget, widget_value* val)
 /* update of buttons */
 static void
 xm_update_pushbutton (widget_instance* instance, Widget widget,
-		      widget_value* val)
+		      widget_value* UNUSED (val))
 {
   Arg al [1];
   XtSetArg (al [0], XmNalignment, XmALIGNMENT_CENTER);
@@ -828,7 +828,13 @@ xm_update_scrollbar (widget_instance *instance, Widget widget,
 
 void
 xm_update_one_widget (widget_instance* instance, Widget widget,
-		      widget_value* val, Boolean deep_p)
+		      widget_value* val,
+#ifdef LWLIB_MENUBARS_MOTIF
+		      Boolean deep_p
+#else
+		      Boolean UNUSED (deep_p)
+#endif
+		      )
 {
   WidgetClass class_;
   Arg al [20];
@@ -1873,7 +1879,13 @@ xm_creation_table [] =
 
 /* Destruction of instances */
 void
-xm_destroy_instance (widget_instance* instance)
+xm_destroy_instance (
+#if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_WIDGETS_MOTIF)
+		     widget_instance* instance
+#else
+		     widget_instance* UNUSED (instance)
+#endif
+		     )
 {
 #if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_WIDGETS_MOTIF)
   /* It appears that this is used only for dialog boxes. */
@@ -2223,7 +2235,7 @@ xm_nosel_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 /* set the keyboard focus */
 void
-xm_set_keyboard_focus (Widget parent, Widget w)
+xm_set_keyboard_focus (Widget UNUSED (parent), Widget w)
 {
   XmProcessTraversal (w, XmTRAVERSE_CURRENT);
   /* At some point we believed that it was necessary to use XtSetKeyboardFocus

@@ -297,7 +297,7 @@ hash_table_equal (Lisp_Object hash_table1, Lisp_Object hash_table2, int depth)
    Examining all entries is too expensive, and examining a random
    subset does not yield a correct hash function. */
 static Hashcode
-hash_table_hash (Lisp_Object hash_table, int depth)
+hash_table_hash (Lisp_Object hash_table, int UNUSED (depth))
 {
   return XHASH_TABLE (hash_table)->count;
 }
@@ -356,7 +356,8 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 }
 
 static void
-print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
 
@@ -599,14 +600,14 @@ make_lisp_hash_table (Elemcount size,
    function.  The errors should maybe be continuable, but it is
    unclear how this would cope with ERRB.  */
 static int
-hash_table_size_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_Behavior errb)
+hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+			  Error_Behavior errb)
 {
   if (NATNUMP (value))
     return 1;
 
   maybe_signal_error_1 (Qwrong_type_argument, list2 (Qnatnump, value),
-		      Qhash_table, errb);
+			Qhash_table, errb);
   return 0;
 }
 
@@ -617,7 +618,7 @@ decode_hash_table_size (Lisp_Object obj)
 }
 
 static int
-hash_table_weakness_validate (Lisp_Object keyword, Lisp_Object value,
+hash_table_weakness_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 			      Error_Behavior errb)
 {
   if (EQ (value, Qnil))			return 1;
@@ -661,8 +662,8 @@ decode_hash_table_weakness (Lisp_Object obj)
 }
 
 static int
-hash_table_test_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_Behavior errb)
+hash_table_test_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+			  Error_Behavior errb)
 {
   if (EQ (value, Qnil))	  return 1;
   if (EQ (value, Qeq))	  return 1;
@@ -670,7 +671,7 @@ hash_table_test_validate (Lisp_Object keyword, Lisp_Object value,
   if (EQ (value, Qeql))	  return 1;
 
   maybe_invalid_constant ("Invalid hash table test",
-			     value, Qhash_table, errb);
+			  value, Qhash_table, errb);
   return 0;
 }
 
@@ -687,8 +688,8 @@ decode_hash_table_test (Lisp_Object obj)
 }
 
 static int
-hash_table_rehash_size_validate (Lisp_Object keyword, Lisp_Object value,
-				 Error_Behavior errb)
+hash_table_rehash_size_validate (Lisp_Object UNUSED (keyword),
+				 Lisp_Object value, Error_Behavior errb)
 {
   if (!FLOATP (value))
     {
@@ -718,8 +719,8 @@ decode_hash_table_rehash_size (Lisp_Object rehash_size)
 }
 
 static int
-hash_table_rehash_threshold_validate (Lisp_Object keyword, Lisp_Object value,
-				     Error_Behavior errb)
+hash_table_rehash_threshold_validate (Lisp_Object UNUSED (keyword),
+				      Lisp_Object value, Error_Behavior errb)
 {
   if (!FLOATP (value))
     {
@@ -749,8 +750,8 @@ decode_hash_table_rehash_threshold (Lisp_Object rehash_threshold)
 }
 
 static int
-hash_table_data_validate (Lisp_Object keyword, Lisp_Object value,
-			 Error_Behavior errb)
+hash_table_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+			  Error_Behavior errb)
 {
   int len;
 

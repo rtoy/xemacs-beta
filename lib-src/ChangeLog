@@ -1,3 +1,15 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* digest-doc.c (main): Remove unused argc and argv.
+	* fakemail.c (main): Ditto.
+	* make-dump-id.c (main): Ditto.
+	* profile.c (main): Ditto.
+	* sorted-doc.c (main): Ditto.
+	* gnuclient.c (tell_emacs_to_resume): Mark unused parameters.
+	* gnuserv.c (main): Ditto.
+	* make-docfile.c (write_c_args): Ditto.
+	* pop.c (socket_connection): Ditto.
+
 2004-08-10  Jerry James  <james@xemacs.org>
 
 	* etags.c: Update to author version 16.56.

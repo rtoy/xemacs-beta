@@ -224,7 +224,7 @@ free_popup_widget_value_tree (widget_value *wv)
 */
 
 void
-popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
+popup_selection_callback (Widget widget, LWLIB_ID UNUSED (id),
 			  XtPointer client_data)
 {
   Lisp_Object data, image_instance, callback, callback_ex;
@@ -505,13 +505,13 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
   if (NILP (pgui->style))
     {
       Ibyte *intname;
-      Bytecount intlen;
+      Bytecount unused_intlen;
       /* If the callback is nil, treat this item like unselectable text.
 	 This way, dashes will show up as a separator. */
       if (!wv->enabled)
 	wv->type = BUTTON_TYPE;
       TO_INTERNAL_FORMAT (C_STRING, wv->name,
-			  ALLOCA, (intname, intlen),
+			  ALLOCA, (intname, unused_intlen),
 			  Qlwlib_encoding);
       if (separator_string_p (intname))
 	{

@@ -200,7 +200,7 @@ You should almost certainly not be using this.
 
 
 static Lisp_Object
-cmd_error (Lisp_Object data, Lisp_Object dummy)
+cmd_error (Lisp_Object data, Lisp_Object UNUSED (dummy))
 {
   /* This function can GC */
   check_quit (); /* make Vquit_flag accurate */
@@ -215,7 +215,7 @@ cmd_error (Lisp_Object data, Lisp_Object dummy)
 }
 
 static Lisp_Object
-top_level_1 (Lisp_Object dummy)
+top_level_1 (Lisp_Object UNUSED (dummy))
 {
   /* This function can GC */
   /* On entry to the outer level, run the startup file */
@@ -270,7 +270,7 @@ command_loop_3 (void)
 static DECLARE_DOESNT_RETURN_TYPE (Lisp_Object, command_loop_2 (Lisp_Object));
 
 static DOESNT_RETURN_TYPE (Lisp_Object)
-command_loop_2 (Lisp_Object dummy)
+command_loop_2 (Lisp_Object UNUSED (dummy))
 {
   command_loop_3(); /* doesn't return */
   RETURN_NOT_REACHED (Qnil);
@@ -498,7 +498,7 @@ static Lisp_Object
 #else
 static DOESNT_RETURN_TYPE (Lisp_Object)
 #endif
-command_loop_1 (Lisp_Object dummy)
+command_loop_1 (Lisp_Object UNUSED (dummy))
 {
   /* This function can GC */
   /* #### not correct with Vselected_console */

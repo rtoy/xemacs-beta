@@ -2298,7 +2298,8 @@ unicode_getprop (Lisp_Object coding_system, Lisp_Object prop)
 }
 
 static void
-unicode_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
+unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
+	       int UNUSED (escapeflag))
 {
   write_fmt_string_lisp (printcharfun, "(%s", 1, unicode_getprop (cs, Qtype));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
@@ -2309,7 +2310,13 @@ unicode_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 }
 
 int
-dfc_coding_system_is_unicode (Lisp_Object codesys)
+dfc_coding_system_is_unicode (
+#ifdef WIN32_ANY
+			      Lisp_Object codesys
+#else
+			      Lisp_Object UNUSED (codesys)
+#endif
+			      )
 {
 #ifdef WIN32_ANY
   codesys = Fget_coding_system (codesys);

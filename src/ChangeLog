@@ -1,3 +1,198 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* compiler.h: Change old UNUSED_ARG into UNUSED_ARG and
+	ATTRIBUTE_UNUSED.  Create a new UNUSED macro that works in the
+	common case.  Define conservatively for the Intel compiler.
+	* dialog-x.c (dbox_descriptor_to_widget_value): Comment out
+	declaration and assignment of unused variable title.
+	(x_make_dialog_box_internal): Remove unused variable parent.
+	* emacs.c (Fkill_emacs): Uno doesn't grok typeof.
+	* file-coding.c (Fdefine_coding_system_alias): Remove unused
+	variable real_coding_system.
+	* glyphs.c (map_subwindow): Remove unused variable f.
+	* gui-x.c (button_item_to_widget_value): Rename intlen to
+	unused_intlen to quiet Uno.
+	* miscplay.c (UNUSED): Removed in favor of compiler.h version.
+	* mule-canna.c (Fcanna_touroku_string): Remove unused variable
+	len.
+	* mule-canna.c (Fcanna_henkan_next): Remove unused variable endp.
+	* mule-ccl.c (CCL_WRITE_STRING): Remove unused variable bytes and
+	fix some indentation problems.
+	* number-gmp.h: Turn off gcc extensions for Uno.
+	* redisplay-output.c (compare_display_blocks): #if 0 out
+	declaration and assignment of unused variable block_end.
+	* redisplay.c (regenerate_window_extents_only_changed): Remove
+	unused variable new_start.
+	(regenerate_window_incrementally): Ditto.
+	* scrollbar.c (update_scrollbar_instance): #if 0 out declaration
+	and assignment of unused variable new_window.
+	* specifier.c (specifier_instance): Remove unused variable tag.
+	* sysdep.c (tty_init_sys_modes_on_device): Define and assigne
+	variable output_fd only when it will be used.
+	(tty_reset_sys_modes_on_device): Ditto.
+	* sysproc.h: Define the FD_* macros conservatively for Uno.
+	* syssignal.h (SIG_ARG_MAYBE_UNUSED): New macro.
+	* syswait.h: Define the W* macros conservatively for Uno.
+
+	* EmacsFrame.c:
+	* EmacsManager.c:
+	* ExternalClient.c:
+	* ExternalShell.c:
+	* alloc.c:
+	* balloon_help.c:
+	* bytecode.c:
+	* callint.c:
+	* casetab.c:
+	* chartab.c:
+	* cm.c:
+	* cmdloop.c:
+	* console-gtk.c:
+	* console-msw.c:
+	* console-stream.c:
+	* console-tty.c:
+	* console-x.c:
+	* console.c:
+	* data.c:
+	* database.c:
+	* device-gtk.c:
+	* device-msw.c:
+	* device-tty.c:
+	* device-x.c:
+	* device.c:
+	* dialog-gtk.c:
+	* dialog-msw.c:
+	* dired.c:
+	* dumper.c:
+	* editfns.c:
+	* elhash.c:
+	* emacs.c:
+	* esd.c:
+	* eval.c:
+	* event-Xt.c:
+	* event-gtk.c:
+	* event-msw.c:
+	* event-stream.c:
+	* event-tty.c:
+	* events.c:
+	* extents.c:
+	* faces.c:
+	* file-coding.c:
+	* fileio.c:
+	* filemode.c:
+	* floatfns.c:
+	* fns.c:
+	* frame-gtk.c:
+	* frame-msw.c:
+	* frame-tty.c:
+	* frame-x.c:
+	* frame.c:
+	* free-hook.c:
+	* glyphs-eimage.c:
+	* glyphs-gtk.c:
+	* glyphs-msw.c:
+	* glyphs-shared.c:
+	* glyphs-widget.c:
+	* glyphs-x.c:
+	* glyphs.c:
+	* gpmevent.c:
+	* gtk-xemacs.c:
+	* gui-msw.c:
+	* gui-x.c:
+	* gui.c:
+	* gutter.c:
+	* hpplay.c:
+	* input-method-motif.c:
+	* input-method-xlib.c:
+	* intl-win32.c:
+	* intl-x.c:
+	* keymap.c:
+	* lread.c:
+	* lstream.c:
+	* marker.c:
+	* menubar-gtk.c:
+	* menubar-msw.c:
+	* menubar-x.c:
+	* menubar.c:
+	* minibuf.c:
+	* miscplay.c:
+	* mule-charset.c:
+	* mule-coding.c:
+	* nas.c:
+	* native-gtk-toolbar.c:
+	* nt.c:
+	* ntplay.c:
+	* number-gmp.c:
+	* number.c:
+	* objects-gtk.c:
+	* objects-msw.c:
+	* objects-tty.c:
+	* objects-x.c:
+	* objects.c:
+	* opaque.c:
+	* print.c:
+	* process-nt.c:
+	* process-unix.c:
+	* profile.c:
+	* rangetab.c:
+	* redisplay-gtk.c:
+	* redisplay-msw.c:
+	* redisplay-output.c:
+	* redisplay-tty.c:
+	* redisplay-x.c:
+	* redisplay.c:
+	* regex.c:
+	* scrollbar-gtk.c:
+	* scrollbar-msw.c:
+	* scrollbar-x.c:
+	* scrollbar.c:
+	* search.c:
+	* select-gtk.c:
+	* select-msw.c:
+	* select-x.c:
+	* sgiplay.c:
+	* signal.c:
+	* sound.c:
+	* specifier.c:
+	* sunpro.c:
+	* symbols.c:
+	* syntax.c:
+	* sysdep.c:
+	* terminfo.c:
+	* tests.c:
+	* text.c:
+	* text.h:
+	* toolbar-gtk.c:
+	* toolbar-msw.c:
+	* toolbar-x.c:
+	* toolbar.c:
+	* tooltalk.c:
+	* ui-byhand.c:
+	* ui-gtk.c:
+	* unexaix.c:
+	* unexalpha.c:
+	* unexconvex.c:
+	* unexcw.c:
+	* unexec.c:
+	* unexelf.c:
+	* unexelfsgi.c:
+	* unexencap.c:
+	* unexenix.c:
+	* unexfreebsd.c:
+	* unexfx2800.c:
+	* unexhp9k3.c:
+	* unexhp9k800.c:
+	* unexmips.c:
+	* unexnt.c:
+	* unexsni.c:
+	* unexsol2-6.c:
+	* unexsol2.c:
+	* unexsunos4.c:
+	* unicode.c:
+	* vm-limit.c:
+	* win32.c:
+	* window.c:
+	Mark unused parameters with the UNUSED macro.
+
 2004-09-19  Jerry James  <james@xemacs.org>
 
 	* s/windowsnt.h (DECLARE_DOESNT_RETURN_TYPE): Remove extern so

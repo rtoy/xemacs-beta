@@ -856,7 +856,7 @@ mswindows_closedir (DIR *dirp)
 }
 
 struct direct *
-mswindows_readdir (DIR *dirp)
+mswindows_readdir (DIR *UNUSED (dirp))
 {
   Ibyte *val;
   int need_to_free = 0;
@@ -947,7 +947,7 @@ open_unc_volume (const Ibyte *path)
 }
 
 static Ibyte *
-read_unc_volume (HANDLE henum)
+read_unc_volume (HANDLE UNUSED (henum))
 {
   DWORD count;
   int result;

@@ -609,7 +609,7 @@ mswindows_char_is_accelerator (struct frame *f, Ichar ch)
 /* Message handlers                                                       */
 /*------------------------------------------------------------------------*/
 static Lisp_Object
-unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame *f)
+unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame *UNUSED (f))
 {
   /* This function can call lisp, beat dogs and stick chewing gum to
      everything! */

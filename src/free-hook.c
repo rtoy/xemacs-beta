@@ -361,7 +361,7 @@ DEFUN ("really-free", Freally_free, 0, 1, "P", /*
 Actually free the storage held by the free() debug hook.
 A no-op if the free hook is disabled.
 */
-       (arg))
+       (UNUSED (arg)))
 {
   int count[2];
   Lisp_Object lisp_count[2];

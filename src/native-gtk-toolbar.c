@@ -57,7 +57,7 @@ static void
 gtk_clear_toolbar (struct frame *f, enum toolbar_pos pos);
 
 static void
-gtk_toolbar_callback (GtkWidget *w, gpointer user_data)
+gtk_toolbar_callback (GtkWidget *UNUSED (w), gpointer user_data)
 {
   struct toolbar_button *tb = (struct toolbar_button *) user_data;
 
@@ -226,7 +226,7 @@ gtk_output_frame_toolbars (struct frame *f)
 }
 
 static void
-gtk_initialize_frame_toolbars (struct frame *f)
+gtk_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
   stderr_out ("We should draw toolbars\n");
 }

@@ -1975,7 +1975,8 @@ If FILENAME has multiple names, it continues to exist with the other names.
 }
 
 static Lisp_Object
-internal_delete_file_1 (Lisp_Object ignore, Lisp_Object ignore2)
+internal_delete_file_1 (Lisp_Object UNUSED (ignore),
+			Lisp_Object UNUSED (ignore2))
 {
   return Qt;
 }
@@ -3829,7 +3830,8 @@ An argument specifies the modification time value to use
 }
 
 static Lisp_Object
-auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
+auto_save_error (Lisp_Object UNUSED (condition_object),
+		 Lisp_Object UNUSED (ignored))
 {
   /* This function can call lisp */
   if (gc_in_progress)
@@ -3849,7 +3851,7 @@ auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
 }
 
 static Lisp_Object
-auto_save_1 (Lisp_Object ignored)
+auto_save_1 (Lisp_Object UNUSED (ignored))
 {
   /* This function can call lisp */
   /* #### I think caller is protecting current_buffer? */
@@ -3883,7 +3885,8 @@ auto_save_1 (Lisp_Object ignored)
 }
 
 static Lisp_Object
-auto_save_expand_name_error (Lisp_Object condition_object, Lisp_Object ignored)
+auto_save_expand_name_error (Lisp_Object condition_object,
+			     Lisp_Object UNUSED (ignored))
 {
   warn_when_safe_lispobj
     (Qfile, Qerror,

@@ -1438,7 +1438,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 static void
 default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			int escapeflag)
+			int UNUSED (escapeflag))
 {
   struct lcrecord_header *header =
     (struct lcrecord_header *) XPNTR (obj);
@@ -1456,7 +1456,7 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 
 void
 internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
-			 int escapeflag)
+			 int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun,
 		    "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%lx>",
@@ -1746,7 +1746,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 void
-print_float (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_float (Lisp_Object obj, Lisp_Object printcharfun,
+	     int UNUSED (escapeflag))
 {
   char pigbuf[350];	/* see comments in float_to_string */
 
@@ -2057,7 +2058,7 @@ static int debug_print_readably = -1;
    avoid consing in debug_prin1.  That is verboten, since debug_prin1 can be
    called by cons debugging code. */
 static Lisp_Object
-debug_prin1_exit (Lisp_Object ignored UNUSED_ARG)
+debug_prin1_exit (Lisp_Object UNUSED (ignored))
 {
   struct debug_bindings *bindings = 
     (struct debug_bindings *) XOPAQUE (debug_prin1_bindings)->data;

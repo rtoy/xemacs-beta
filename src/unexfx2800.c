@@ -20,10 +20,13 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.31. */
 
 #include <stdio.h>
+#include "compiler.h"
 
 unexec (new_name, a_name, data_start, bss_start, entry_address)
      char *new_name, *a_name;
-     unsigned data_start, bss_start, entry_address;
+     unsigned UNUSED (data_start);
+     unsigned UNUSED (bss_start);
+     unsigned UNUSED (entry_address);
 {
   int stat;
     

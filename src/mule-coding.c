@@ -2585,7 +2585,13 @@ iso2022_putprop (Lisp_Object codesys,
 }
 
 static void
-iso2022_finalize_coding_stream (struct coding_stream *str)
+iso2022_finalize_coding_stream (
+#ifdef ENABLE_COMPOSITE_CHARS
+				struct coding_stream *str
+#else
+				struct coding_stream *UNUSED (str)
+#endif
+				)
 {
 #ifdef ENABLE_COMPOSITE_CHARS
   struct iso2022_coding_stream *data =
@@ -2662,7 +2668,8 @@ iso2022_getprop (Lisp_Object coding_system, Lisp_Object prop)
 }
 
 static void
-iso2022_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
+iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
+	       int UNUSED (escapeflag))
 {
   int i;
   

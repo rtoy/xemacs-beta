@@ -96,7 +96,7 @@ struct unix_process_data
 /**********************************************************************/
 
 static SIGTYPE
-close_safely_handler (int signo)
+close_safely_handler (int SIG_ARG_MAYBE_UNUSED (signo))
 {
   EMACS_REESTABLISH_SIGNAL (signo, close_safely_handler);
   SIGRETURN;
@@ -127,7 +127,8 @@ close_descriptor_pair (int in, int out)
    to get rid of irrelevant descriptors.  */
 
 static int
-close_process_descs_mapfun (const void *key, void *contents, void *arg)
+close_process_descs_mapfun (const void *UNUSED (key), void *contents,
+			    void *UNUSED (arg))
 {
   Lisp_Object proc = VOID_TO_LISP (contents);
   USID vaffan, culo;
@@ -516,7 +517,13 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 #endif /* !USE_GETADDRINFO */
 
 static void
-set_socket_nonblocking_maybe (int fd, int port, const char *proto)
+set_socket_nonblocking_maybe (int fd,
+#ifdef PROCESS_IO_BLOCKING
+			      int port, const char *proto
+#else
+			      int UNUSED (port), const char *UNUSED (proto)
+#endif
+			      )
 {
 #ifdef PROCESS_IO_BLOCKING
   Lisp_Object tail;
@@ -696,7 +703,7 @@ record_exited_processes (int block_sigchld)
  behavior when we use sigaction(), which we do use.) */
 
 static SIGTYPE
-sigchld_handler (int signo)
+sigchld_handler (int SIG_ARG_MAYBE_UNUSED (signo))
 {
 #ifdef OBNOXIOUS_SYSV_SIGCLD_BEHAVIOR
   int old_errno = errno;
@@ -836,8 +843,8 @@ unix_init_process (void)
  */
 
 static void
-unix_init_process_io_handles (Lisp_Process *p, void *in, void *out, void *err,
-			      int flags)
+unix_init_process_io_handles (Lisp_Process *p, void *in, void *UNUSED (out),
+			      void *err, int UNUSED (flags))
 {
   UNIX_DATA(p)->infd = (int) in;
   UNIX_DATA(p)->errfd = (int) err;

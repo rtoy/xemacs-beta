@@ -2055,6 +2055,8 @@ if test "$cflags_warning_specified" = "no"; then
     cflags_warning="-qinfo"
   elif test "$GCC" = "yes"; then
     cflags_warning="-Wall -Wno-switch -Winline -Wmissing-prototypes"
+    cflags_warning="$cflags_warning -Wunused-parameter -Wunused-variable"
+
     dnl Yuck, bad compares have been worth at least 3 crashes!
     cflags_warning="$cflags_warning -Wsign-compare"
     cflags_warning="$cflags_warning -Wundef -Wstrict-prototypes"

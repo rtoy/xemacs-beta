@@ -183,7 +183,7 @@ tty_mark_console (struct console *con)
 }
 
 static int
-tty_initially_selected_for_input (struct console *con)
+tty_initially_selected_for_input (struct console *UNUSED (con))
 {
   return 1;
 }

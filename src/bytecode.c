@@ -1348,7 +1348,7 @@ execute_optimized_program (const Opbyte *program,
    Don't make this function static, since then the compiler might inline it. */
 Lisp_Object *
 execute_rare_opcode (Lisp_Object *stack_ptr,
-		     const Opbyte *program_ptr,
+		     const Opbyte *UNUSED (program_ptr),
 		     Opcode opcode)
 {
   switch (opcode)

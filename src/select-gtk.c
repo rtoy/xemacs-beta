@@ -49,7 +49,8 @@ extern int lisp_to_time (Lisp_Object, time_t *);
 extern Lisp_Object time_to_lisp (time_t);
 
 static GdkAtom
-symbol_to_gtk_atom (struct device *d, Lisp_Object sym, int only_if_exists)
+symbol_to_gtk_atom (struct device *UNUSED (d), Lisp_Object sym,
+		    int only_if_exists)
 {
   if (NILP (sym))		return GDK_SELECTION_PRIMARY;
   if (EQ (sym, Qt))		return GDK_SELECTION_SECONDARY;
@@ -64,7 +65,7 @@ symbol_to_gtk_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 }
 
 static Lisp_Object
-atom_to_symbol (struct device *d, GdkAtom atom)
+atom_to_symbol (struct device *UNUSED (d), GdkAtom atom)
 {
   if (atom == GDK_SELECTION_PRIMARY) return (QPRIMARY);
   if (atom == GDK_SELECTION_SECONDARY) return (QSECONDARY);
@@ -129,11 +130,11 @@ gtk_selection_request_lisp_error (Lisp_Object closure)
 ** WMP Feb 12 2001
 */
 void
-emacs_gtk_selection_handle (GtkWidget *widget,
+emacs_gtk_selection_handle (GtkWidget *UNUSED (widget),
 			    GtkSelectionData *selection_data,
-			    guint info,
+			    guint UNUSED (info),
 			    guint time_stamp,
-			    gpointer data)
+			    gpointer UNUSED (data))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2;
@@ -241,9 +242,9 @@ emacs_gtk_selection_handle (GtkWidget *widget,
 
 
 void
-emacs_gtk_selection_clear_event_handle (GtkWidget *widget,
+emacs_gtk_selection_clear_event_handle (GtkWidget *UNUSED (widget),
                                         GdkEventSelection *event,
-                                        gpointer data)
+                                        gpointer UNUSED (data))
 {
   GdkAtom selection = event->selection;
   guint32 changed_owner_time = event->time;
@@ -281,9 +282,9 @@ static int selection_reply_timed_out;
 
 /* Gets the current selection owned by another application */
 void
-emacs_gtk_selection_received (GtkWidget *widget,
+emacs_gtk_selection_received (GtkWidget *UNUSED (widget),
 			      GtkSelectionData *selection_data,
-			      gpointer user_data)
+			      gpointer UNUSED (user_data))
 {
   waiting_for_selection = FALSE;
   Vretrieved_selection = Qnil;
@@ -306,7 +307,7 @@ emacs_gtk_selection_received (GtkWidget *widget,
 }
 
 static int
-selection_reply_done (void *ignore)
+selection_reply_done (void *UNUSED (ignore))
 {
   return !reading_selection_reply;
 }
@@ -404,8 +405,10 @@ gtk_get_window_property_as_lisp_data (struct device *d,
 
 
 static Lisp_Object
-gtk_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
-		   Lisp_Object how_to_add, Lisp_Object selection_type, int owned_p)
+gtk_own_selection (Lisp_Object selection_name,
+		   Lisp_Object UNUSED (selection_value),
+		   Lisp_Object UNUSED (how_to_add),
+		   Lisp_Object UNUSED (selection_type), int UNUSED (owned_p))
 {
   struct device *d = decode_gtk_device (Qnil);
   GtkWidget *selecting_window = GTK_WIDGET (DEVICE_GTK_APP_SHELL (d));
@@ -459,7 +462,7 @@ gtk_disown_selection (Lisp_Object selection, Lisp_Object timeval)
 
 static Lisp_Object
 gtk_selection_exists_p (Lisp_Object selection,
-			Lisp_Object selection_type)
+			Lisp_Object UNUSED (selection_type))
 {
   struct device *d = decode_gtk_device (Qnil);
   

@@ -15,6 +15,7 @@
 #include <sys/file.h>
 #include <stdio.h>
 #include "/usr/gnu/lib/gcc/gcc-include/a.out.h"
+#include "compiler.h"
 
 filecpy(to, from, n)
 FILE *to, *from;
@@ -41,7 +42,9 @@ int n;
  * ****************************************************************/
 unexec (new_name, a_name, data_start, bss_start, entry_address)
 char *new_name, *a_name;
-unsigned data_start, bss_start, entry_address;
+unsigned UNUSED (data_start);
+unsigned UNUSED (bss_start);
+unsigned UNUSED (entry_address);
 {	
 	struct coffheader header1;
 	struct coffscn *tp, *dp, *bp;

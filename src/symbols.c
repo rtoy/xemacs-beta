@@ -995,8 +995,8 @@ mark_symbol_value_varalias (Lisp_Object obj)
 
 /* Should never, ever be called. (except by an external debugger) */
 void
-print_symbol_value_magic (Lisp_Object obj,
-			  Lisp_Object printcharfun, int escapeflag)
+print_symbol_value_magic (Lisp_Object obj, Lisp_Object printcharfun,
+			  int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun,
 		    "#<INTERNAL OBJECT (XEmacs bug?) (%s type %d) 0x%lx>",
@@ -1323,7 +1323,7 @@ buffer_local_alist_element (struct buffer *buffer, Lisp_Object symbol,
 */
 
 static void
-write_out_buffer_local_cache (Lisp_Object symbol,
+write_out_buffer_local_cache (Lisp_Object UNUSED (symbol),
 			      struct symbol_value_buffer_local *bfwd)
 {
   if (!NILP (bfwd->current_buffer))
@@ -2998,7 +2998,8 @@ If you do, suffer the wrath of Ben, who is likely to rename
 this function (or change the semantics of its arguments) without
 pity, thereby invalidating your code.
 */
-       (variable, handler_type, handler, harg, keep_existing))
+       (variable, handler_type, handler, harg,
+	UNUSED (keep_existing)))
 {
   Lisp_Object valcontents;
   struct symbol_value_lisp_magic *bfwd;

@@ -173,8 +173,8 @@ ExternalClientClassRec externalClientClassRec = {
 WidgetClass externalClientWidgetClass = (WidgetClass) &externalClientClassRec;
 
 static void
-externalClientInitialize (Widget req, Widget new, ArgList args,
-			  Cardinal *num_args)
+externalClientInitialize (Widget UNUSED (req), Widget new,
+			  ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
   ExternalClientWidget ecw = (ExternalClientWidget) new;
   static int error_handler_added = 0;
@@ -217,7 +217,7 @@ externalClientInitialize (Widget req, Widget new, ArgList args,
 
 #ifdef TOOLTALK
 static Tt_callback_action
-tt_callback(Tt_message m, Tt_pattern p)
+tt_callback(Tt_message m, Tt_pattern UNUSED (p))
 {
   ExternalClientWidget ecw = (ExternalClientWidget)tt_message_user (m, 0);
 
@@ -400,9 +400,8 @@ my_error_handler (Display *display, XErrorEvent *xev)
 }
 
 static void
-MaskableEventHandler (Widget wid, XtPointer closure, XEvent *event,
-		      Boolean *continue_to_dispatch)
-     /* closure and continue_to_dispatch unused */
+MaskableEventHandler (Widget wid, XtPointer UNUSED (closure), XEvent *event,
+		      Boolean *UNUSED (continue_to_dispatch))
 {
   ExternalClientWidget w = (ExternalClientWidget) wid;
 
@@ -432,9 +431,8 @@ MaskableEventHandler (Widget wid, XtPointer closure, XEvent *event,
 }
 
 static void
-EventHandler (Widget wid, XtPointer closure, XEvent *event,
-	      Boolean *continue_to_dispatch)
-     /* closure and continue_to_dispatch unused */
+EventHandler (Widget wid, XtPointer UNUSED (closure), XEvent *event,
+	      Boolean *UNUSED (continue_to_dispatch))
 {
   ExternalClientWidget w = (ExternalClientWidget) wid;
 
@@ -554,8 +552,15 @@ QueryGeometry (Widget gw, XtWidgetGeometry *request, XtWidgetGeometry *reply)
   }
 }
 
-static void ExternalClientFocusIn (Widget w, XEvent *event, String *params,
-				   Cardinal *num_params)
+#ifdef EXTW_USES_MOTIF
+# define USED_IF_MOTIF(decl) decl
+#else
+# define USED_IF_MOTIF(decl) UNUSED (decl)
+#endif
+
+static void ExternalClientFocusIn (Widget w, XEvent *event,
+				   String *USED_IF_MOTIF (params),
+				   Cardinal *USED_IF_MOTIF (num_params))
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -568,8 +573,9 @@ static void ExternalClientFocusIn (Widget w, XEvent *event, String *params,
 #endif
 }
 
-static void ExternalClientFocusOut (Widget w, XEvent *event, String *params,
-				    Cardinal *num_params)
+static void ExternalClientFocusOut (Widget w, XEvent *event,
+				    String *USED_IF_MOTIF (params),
+				    Cardinal *USED_IF_MOTIF (num_params))
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -582,8 +588,9 @@ static void ExternalClientFocusOut (Widget w, XEvent *event, String *params,
 #endif
 }
 
-static void ExternalClientEnter (Widget w, XEvent *event, String *params,
-				 Cardinal *num_params)
+static void ExternalClientEnter (Widget w, XEvent *event,
+				 String *USED_IF_MOTIF (params),
+				 Cardinal *USED_IF_MOTIF (num_params))
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 
@@ -601,8 +608,9 @@ static void ExternalClientEnter (Widget w, XEvent *event, String *params,
 #endif
 }
 
-static void ExternalClientLeave (Widget w, XEvent *event, String *params,
-				 Cardinal *num_params)
+static void ExternalClientLeave (Widget w, XEvent *event,
+				 String *USED_IF_MOTIF (params),
+				 Cardinal *USED_IF_MOTIF (num_params))
 {
   ExternalClientWidget ecw = (ExternalClientWidget) w;
 

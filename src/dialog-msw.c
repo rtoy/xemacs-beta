@@ -280,7 +280,7 @@ free_dynarr_opaque_ptr (Lisp_Object arg)
 
 /* Unwind protection decrements dialog count */
 static Lisp_Object
-dialog_popped_down (Lisp_Object arg)
+dialog_popped_down (Lisp_Object UNUSED (arg))
 {
   popup_up_p--;
   return Qnil;

@@ -3160,7 +3160,7 @@ add_margin_runes (struct display_line *dl, struct display_block *db, int start,
 /* Add a blank to a margin display block. */
 
 static void
-add_margin_blank (struct display_line *dl, struct display_block *db,
+add_margin_blank (struct display_line *UNUSED (dl), struct display_block *db,
 		  struct window *w, int xpos, int width, int side)
 {
   struct rune rb;
@@ -4071,7 +4071,7 @@ add_string_to_fstring_db_runes (pos_data *data, const Ibyte *str,
    modeline extents. */
 static Charcount
 add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
-                               Charcount pos, Charcount min_pos,
+                               Charcount pos, Charcount UNUSED (min_pos),
 			       Charcount max_pos, Lisp_Object extent)
 {
   /* This function has been Mule-ized. */
@@ -5897,7 +5897,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   first_line = last_line = line;
   while (line <= dla_end)
     {
-      Charbpos old_start, old_end, new_start;
+      Charbpos old_start, old_end;
       struct display_line *cdl = Dynarr_atp (cdla, line);
       struct display_line *ddl = Dynarr_atp (ddla, line);
       struct display_block *db;
@@ -5918,8 +5918,8 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
       if (line == first_line && ddl->used_prop_data)
 	return 0;
 
-      new_start = generate_display_line (w, ddl, 0, ddl->charpos + ddl->offset,
-					 &prop, DESIRED_DISP);
+      generate_display_line (w, ddl, 0, ddl->charpos + ddl->offset,
+			     &prop, DESIRED_DISP);
       ddl->offset = 0;
 
       /* #### If there is propagated stuff the fail.  We could
@@ -6053,7 +6053,6 @@ regenerate_window_incrementally (struct window *w, Charbpos startp,
        we fail the next thing that is going to happen is a full regen
        so we will actually end up being safe. */
     {
-      Charbpos new_start;
       prop_block_dynarr *prop = NULL;
       struct display_line *cdl = Dynarr_atp (cdla, line);
       struct display_line *ddl = Dynarr_atp (ddla, line);
@@ -6070,8 +6069,8 @@ regenerate_window_incrementally (struct window *w, Charbpos startp,
       if (ddl->used_prop_data)
 	return 0;
 
-      new_start = generate_display_line (w, ddl, 0, ddl->charpos + ddl->offset,
-					 &prop, DESIRED_DISP);
+      generate_display_line (w, ddl, 0, ddl->charpos + ddl->offset,
+			     &prop, DESIRED_DISP);
       ddl->offset = 0;
 
       /* If there is propagated stuff then it is pretty much a
@@ -6666,7 +6665,7 @@ regeneration_done:
    be a better way to do this. */
 
 static int
-reset_buffer_changes_mapfun (struct window *w, void *ignored_closure)
+reset_buffer_changes_mapfun (struct window *w, void *UNUSED (closure))
 {
   buffer_reset_changes (XBUFFER (w->buffer));
   return 0;
@@ -6745,7 +6744,7 @@ run_post_redisplay_actions (void)
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
 
 static Lisp_Object
-commit_ritual_suicide (Lisp_Object ceci_nest_pas_une_pipe)
+commit_ritual_suicide (Lisp_Object UNUSED (ceci_nest_pas_une_pipe))
 {
   assert (!in_display);
   return Qnil;
@@ -6805,7 +6804,7 @@ commit_ritual_suicide (Lisp_Object ceci_nest_pas_une_pipe)
 static int in_display_nesting;
 
 static Lisp_Object
-end_hold_frame_size_changes (Lisp_Object obj)
+end_hold_frame_size_changes (Lisp_Object UNUSED (obj))
 {
   if (!hold_frame_size_changes)
     {
@@ -9599,7 +9598,7 @@ DEFUN ("redraw-modeline", Fredraw_modeline, 0, 1, 0, /*
 Force the modeline of the current buffer to be redisplayed.
 With optional non-nil ALL, force redisplay of all modelines.
 */
-       (all))
+       (UNUSED (all)))
 {
   MARK_MODELINE_CHANGED;
   return Qnil;
@@ -9626,15 +9625,18 @@ FRAME defaults to the selected frame if omitted.
 /***************************************************************************/
 
 static void
-margin_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
-			       Lisp_Object oldval)
+margin_width_changed_in_frame (Lisp_Object UNUSED (specifier),
+			       struct frame *UNUSED (f),
+			       Lisp_Object UNUSED (oldval))
 {
   /* Nothing to be done? */
 }
 
 int
-redisplay_variable_changed (Lisp_Object sym, Lisp_Object *val,
-			    Lisp_Object in_object, int flags)
+redisplay_variable_changed (Lisp_Object UNUSED (sym),
+			    Lisp_Object *UNUSED (val),
+			    Lisp_Object UNUSED (in_object),
+			    int UNUSED (flags))
 {
   /* #### clip_changed should really be renamed something like
      global_redisplay_change. */
@@ -9645,8 +9647,8 @@ redisplay_variable_changed (Lisp_Object sym, Lisp_Object *val,
 /* This is called if the built-in glyphs have their properties
    changed. */
 void
-redisplay_glyph_changed (Lisp_Object glyph, Lisp_Object property,
-			 Lisp_Object locale)
+redisplay_glyph_changed (Lisp_Object UNUSED (glyph),
+			 Lisp_Object UNUSED (property), Lisp_Object locale)
 {
   if (WINDOWP (locale))
     {
@@ -9677,8 +9679,8 @@ redisplay_glyph_changed (Lisp_Object glyph, Lisp_Object property,
 }
 
 static void
-text_cursor_visible_p_changed (Lisp_Object specifier, struct window *w,
-			       Lisp_Object oldval)
+text_cursor_visible_p_changed (Lisp_Object UNUSED (specifier),
+			       struct window *w, Lisp_Object UNUSED (oldval))
 {
   if (XFRAME (w->frame)->init_finished)
     Fforce_cursor_redisplay (w->frame);
@@ -9827,7 +9829,8 @@ compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
 #ifdef ERROR_CHECK_DISPLAY
 
 static int
-sledgehammer_check_redisplay_structs_1 (struct window *w, void *closure)
+sledgehammer_check_redisplay_structs_1 (struct window *w,
+					void *UNUSED (closure))
 {
   int i, j;
   display_line_dynarr *dl;

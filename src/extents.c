@@ -1702,7 +1702,8 @@ extent_endpoint_char (EXTENT extent, int endp)
 
 static void
 signal_single_extent_changed (EXTENT extent, Lisp_Object property,
-			      Bytexpos old_start, Bytexpos old_end)
+			      Bytexpos UNUSED (old_start),
+			      Bytexpos UNUSED (old_end))
 {
   EXTENT anc = extent_ancestor (extent);
   /* Redisplay checks */
@@ -3109,7 +3110,8 @@ mark_extent (Lisp_Object obj)
 }
 
 static void
-print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   EXTENT ext = XEXTENT (obj);
   EXTENT anc = extent_ancestor (ext);
@@ -7236,7 +7238,8 @@ If two or more extents with conflicting non-nil values for PROP overlap
 #ifdef MEMORY_USAGE_STATS
 
 int
-compute_buffer_extent_usage (struct buffer *b, struct overhead_stats *ovstats)
+compute_buffer_extent_usage (struct buffer *UNUSED (b),
+			     struct overhead_stats *UNUSED (ovstats))
 {
   /* #### not yet written */
   return 0;

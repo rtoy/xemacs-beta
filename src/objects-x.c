@@ -283,7 +283,7 @@ x_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
 static void
 x_print_color_instance (Lisp_Color_Instance *c,
 			Lisp_Object printcharfun,
-			int escapeflag)
+			int UNUSED (escapeflag))
 {
   XColor color = COLOR_INSTANCE_X_COLOR (c);
   write_fmt_string (printcharfun, " %ld=(%X,%X,%X)",
@@ -317,7 +317,7 @@ x_finalize_color_instance (Lisp_Color_Instance *c)
 static int
 x_color_instance_equal (Lisp_Color_Instance *c1,
 			Lisp_Color_Instance *c2,
-			int depth)
+			int UNUSED (depth))
 {
   XColor color1 = COLOR_INSTANCE_X_COLOR (c1);
   XColor color2 = COLOR_INSTANCE_X_COLOR (c2);
@@ -327,7 +327,7 @@ x_color_instance_equal (Lisp_Color_Instance *c1,
 }
 
 static unsigned long
-x_color_instance_hash (Lisp_Color_Instance *c, int depth)
+x_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   XColor color = COLOR_INSTANCE_X_COLOR (c);
   return HASH3 (color.red, color.green, color.blue);
@@ -361,7 +361,7 @@ x_valid_color_name_p (struct device *d, Lisp_Object color)
 /************************************************************************/
 
 static int
-x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
+x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object UNUSED (name),
 			    Lisp_Object device, Error_Behavior errb)
 {
   Display *dpy = DEVICE_X_DISPLAY (XDEVICE (device));
@@ -456,7 +456,7 @@ x_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 static void
 x_print_font_instance (Lisp_Font_Instance *f,
 		       Lisp_Object printcharfun,
-		       int escapeflag)
+		       int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
 		    (unsigned long) FONT_INSTANCE_X_FONT (f)->fid);
@@ -881,7 +881,7 @@ x_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 #ifdef MULE
 
 static int
-x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+x_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
 			     const Ibyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount length,
 			     int stage)

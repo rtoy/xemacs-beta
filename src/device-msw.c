@@ -136,7 +136,7 @@ build_devicecaps_cons (HDC hdc, int index1, int index2)
 /************************************************************************/
 
 static void
-mswindows_init_device (struct device *d, Lisp_Object props)
+mswindows_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   HDC hdc;
   WNDCLASSEXW wc;
@@ -252,7 +252,8 @@ init_mswindows_dde_very_early (void)
 }
 
 static void
-mswindows_finish_init_device (struct device *d, Lisp_Object props)
+mswindows_finish_init_device (struct device *UNUSED (d),
+			      Lisp_Object UNUSED (props))
 {
 #ifdef HAVE_DRAGNDROP
   /* Tell pending clients we are ready. */
@@ -488,7 +489,7 @@ msprinter_default_printer (void)
 /************************************************************************/
 
 static void
-msprinter_init_device (struct device *d, Lisp_Object props)
+msprinter_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   DEVMODEW *pdm;
   LONG dm_size;
@@ -790,7 +791,7 @@ print_dialog_worker (Lisp_Object dev, DWORD flags)
 }
 
 Lisp_Object
-mswindows_handle_print_dialog_box (struct frame *f, Lisp_Object keys)
+mswindows_handle_print_dialog_box (struct frame *UNUSED (f), Lisp_Object keys)
 {
   Lisp_Object device = Qunbound, settings = Qunbound;
   DWORD flags = PD_NOSELECTION;
@@ -870,7 +871,8 @@ plist_set_margin (Lisp_Object plist, Lisp_Object prop, int margin, int mm_p)
 }
 
 Lisp_Object
-mswindows_handle_page_setup_dialog_box (struct frame *f, Lisp_Object keys)
+mswindows_handle_page_setup_dialog_box (struct frame *UNUSED (f),
+					Lisp_Object keys)
 {
   Lisp_Object device = Qunbound, settings = Qunbound;
   Lisp_Object plist = Qnil;
@@ -1114,7 +1116,7 @@ mark_devmode (Lisp_Object obj)
 
 static void
 print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
-	       int escapeflag)
+	       int UNUSED (escapeflag))
 {
   Lisp_Devmode *dm = XDEVMODE (obj);
   if (print_readably)
@@ -1146,7 +1148,7 @@ finalize_devmode (void *header, int for_disksave)
 }
 
 static int
-equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int depth)
+equal_devmode (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Lisp_Devmode *dm1 = XDEVMODE (obj1);
   Lisp_Devmode *dm2 = XDEVMODE (obj2);

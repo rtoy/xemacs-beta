@@ -97,7 +97,7 @@ mark_face (Lisp_Object obj)
 }
 
 static void
-print_face (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 {
   Lisp_Face *face = XFACE (obj);
 
@@ -289,7 +289,7 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
 /************************************************************************/
 
 static int
-face_name_validate (Lisp_Object keyword, Lisp_Object value,
+face_name_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
 		    Error_Behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
@@ -387,7 +387,7 @@ struct face_list_closure
 };
 
 static int
-add_face_to_list_mapper (Lisp_Object key, Lisp_Object value,
+add_face_to_list_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			 void *face_list_closure)
 {
   /* This function can GC */
@@ -427,7 +427,7 @@ temporary_faces_list (void)
 
 
 static int
-mark_face_as_clean_mapper (Lisp_Object key, Lisp_Object value,
+mark_face_as_clean_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			   void *flag_closure)
 {
   /* This function can GC */

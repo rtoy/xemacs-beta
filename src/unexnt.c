@@ -180,8 +180,8 @@ _start (void)
 
 /* Dump out .data and .bss sections into a new executable.  */
 int
-unexec (Ibyte *new_name, Ibyte *old_name, unsigned int start_data,
-	unsigned int start_bss, unsigned int entry_address)
+unexec (Ibyte *new_name, Ibyte *old_name, unsigned int UNUSED (start_data),
+	unsigned int UNUSED (start_bss), unsigned int UNUSED (entry_address))
 {
   file_data in_file, out_file;
   Ibyte *out_filename = alloca_ibytes (qxestrlen (new_name) + 10);
@@ -479,7 +479,7 @@ copy_executable_and_dump_data_section (file_data *p_infile,
 }
 
 static void
-dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
+dump_bss_and_heap (file_data *UNUSED (p_infile), file_data *p_outfile)
 {
   UChar_Binary *heap_data;
   unsigned long size, index;

@@ -961,7 +961,7 @@ pdump_reloc_one (void *data, EMACS_INT delta,
 
 static void
 pdump_allocate_offset (pdump_entry_list_elt *elt,
-		       const struct memory_description *desc)
+		       const struct memory_description *UNUSED (desc))
 {
   Bytecount size = elt->count * elt->size;
   elt->save_offset = cur_offset;

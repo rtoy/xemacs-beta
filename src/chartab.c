@@ -306,7 +306,7 @@ struct ptemap
 };
 
 static int
-print_table_entry (struct chartab_range *range, Lisp_Object table,
+print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
 		   Lisp_Object val, void *arg)
 {
   struct ptemap *a = (struct ptemap *) arg;
@@ -323,7 +323,8 @@ print_table_entry (struct chartab_range *range, Lisp_Object table,
 }
 
 static void
-print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   struct chartab_range range;
@@ -779,7 +780,7 @@ Find value for CHARACTER in CHAR-TABLE.
 }
 
 static int
-copy_mapper (struct chartab_range *range, Lisp_Object table,
+copy_mapper (struct chartab_range *range, Lisp_Object UNUSED (table),
 	     Lisp_Object val, void *arg)
 {
   put_char_table (VOID_TO_LISP (arg), range, val);
@@ -1439,7 +1440,8 @@ struct slow_map_char_table_arg
 
 static int
 slow_map_char_table_fun (struct chartab_range *range,
-			 Lisp_Object table, Lisp_Object val, void *arg)
+			 Lisp_Object UNUSED (table), Lisp_Object val,
+			 void *arg)
 {
   struct slow_map_char_table_arg *closure =
     (struct slow_map_char_table_arg *) arg;
@@ -1483,8 +1485,8 @@ the entire table.
 /************************************************************************/
 
 static int
-chartab_type_validate (Lisp_Object keyword, Lisp_Object value,
-		       Error_Behavior errb)
+chartab_type_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+		       Error_Behavior UNUSED (errb))
 {
   /* #### should deal with ERRB */
   symbol_to_char_table_type (value);
@@ -1494,8 +1496,8 @@ chartab_type_validate (Lisp_Object keyword, Lisp_Object value,
 /* #### Document the print/read format; esp. what's this cons element? */
 
 static int
-chartab_data_validate (Lisp_Object keyword, Lisp_Object value,
-		       Error_Behavior errb)
+chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
+		       Error_Behavior UNUSED (errb))
 {
   Lisp_Object rest;
 

@@ -939,7 +939,8 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
 static void
 mswindows_xpm_instantiate (Lisp_Object image_instance,
 			   Lisp_Object instantiator,
-			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			   Lisp_Object UNUSED (pointer_fg),
+			   Lisp_Object UNUSED (pointer_bg),
 			   int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1018,7 +1019,7 @@ bmp_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 bmp_normalize (Lisp_Object inst, Lisp_Object console_type,
-	       Lisp_Object dest_mask)
+	       Lisp_Object UNUSED (dest_mask))
 {
   return simple_image_type_normalize (inst, console_type, Qbmp);
 }
@@ -1031,8 +1032,9 @@ bmp_possible_dest_types (void)
 
 static void
 bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+		 Lisp_Object UNUSED (pointer_fg),
+		 Lisp_Object UNUSED (pointer_bg),
+		 int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -1198,8 +1200,9 @@ resource_symbol_to_type (Lisp_Object data)
 static void
 mswindows_resource_instantiate (Lisp_Object image_instance,
 				Lisp_Object instantiator,
-				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-				int dest_mask, Lisp_Object domain)
+				Lisp_Object UNUSED (pointer_fg),
+				Lisp_Object UNUSED (pointer_bg),
+				int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int type = 0;
@@ -1431,7 +1434,7 @@ init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     Lisp_Object pointer_bg,
 				     int dest_mask,
 				     HBITMAP mask,
-				     Lisp_Object mask_filename)
+				     Lisp_Object UNUSED (mask_filename))
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Lisp_Object foreground = find_keyword_in_vector (instantiator, Q_foreground);
@@ -1588,7 +1591,7 @@ static void
 mswindows_xbm_instantiate (Lisp_Object image_instance,
 			   Lisp_Object instantiator,
 			   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			   int dest_mask, Lisp_Object domain)
+			   int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   const UChar_Binary *ext_data;
@@ -1629,7 +1632,7 @@ static void
 mswindows_xface_instantiate (Lisp_Object image_instance,
 			     Lisp_Object instantiator,
 			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			     int dest_mask, Lisp_Object domain)
+			     int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
@@ -1699,7 +1702,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
 static void
 mswindows_print_image_instance (Lisp_Image_Instance *p,
 				Lisp_Object printcharfun,
-				int escapeflag)
+				int UNUSED (escapeflag))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -1797,7 +1800,13 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 /************************************************************************/
 
 static Lisp_Object
-charset_of_text (Lisp_Object text)
+charset_of_text (Lisp_Object
+#ifdef MULE
+		 text
+#else
+		 UNUSED (text)
+#endif
+		 )
 {
 #ifdef MULE
   Ibyte *p;
@@ -2085,10 +2094,10 @@ mswindows_register_widget_instance (Lisp_Object instance, Lisp_Object domain)
 
 static void
 mswindows_subwindow_instantiate (Lisp_Object image_instance,
-				 Lisp_Object instantiator,
-				 Lisp_Object pointer_fg,
-				 Lisp_Object pointer_bg,
-				 int dest_mask, Lisp_Object domain)
+				 Lisp_Object UNUSED (instantiator),
+				 Lisp_Object UNUSED (pointer_fg),
+				 Lisp_Object UNUSED (pointer_bg),
+				 int UNUSED (dest_mask), Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -2143,7 +2152,7 @@ mswindows_subwindow_instantiate (Lisp_Object image_instance,
 
 static int
 mswindows_image_instance_equal (Lisp_Image_Instance *p1,
-				Lisp_Image_Instance *p2, int depth)
+				Lisp_Image_Instance *p2, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p1))
     {
@@ -2163,7 +2172,7 @@ mswindows_image_instance_equal (Lisp_Image_Instance *p1,
 }
 
 static Hashcode
-mswindows_image_instance_hash (Lisp_Image_Instance *p, int depth)
+mswindows_image_instance_hash (Lisp_Image_Instance *p, int UNUSED (depth))
 {
   switch (IMAGE_INSTANCE_TYPE (p))
     {
@@ -2209,9 +2218,10 @@ mswindows_initialize_dibitmap_image_instance (Lisp_Image_Instance *ii,
 /************************************************************************/
 static void
 mswindows_widget_instantiate (Lisp_Object image_instance,
-			      Lisp_Object instantiator,
-			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			      int dest_mask, Lisp_Object domain,
+			      Lisp_Object UNUSED (instantiator),
+			      Lisp_Object UNUSED (pointer_fg),
+			      Lisp_Object UNUSED (pointer_bg),
+			      int UNUSED (dest_mask), Lisp_Object domain,
 			      const CIbyte *class_, int flags, int exflags)
 {
   /* this function can call lisp */

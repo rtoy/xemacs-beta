@@ -463,7 +463,7 @@ check_what_happened (void)
 /* Signal handler for SIGIO. */
 
 static void
-input_available_signal (int signo)
+input_available_signal (int SIG_ARG_MAYBE_UNUSED (signo))
 {
   something_happened = 1; /* tell QUIT to wake up */
   quit_check_signal_happened = 1;

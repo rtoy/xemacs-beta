@@ -458,7 +458,8 @@ signal_syntax_table_extent_adjust (struct buffer *buf)
    outward to the current buffer (#### rewrite in English please?!). */
 
 void
-update_syntax_cache (struct syntax_cache *cache, Charxpos cpos, int count)
+update_syntax_cache (struct syntax_cache *cache, Charxpos cpos,
+		     int UNUSED (count))
 {
   Lisp_Object tmp_table;
   Bytexpos pos;
@@ -615,7 +616,8 @@ syntax table.
 #ifdef MULE
 
 enum syntaxcode
-charset_syntax (struct buffer *buf, Lisp_Object charset, int *multi_p_out)
+charset_syntax (struct buffer *UNUSED (buf), Lisp_Object UNUSED (charset),
+		int *multi_p_out)
 {
   *multi_p_out = 1;
   /* !!#### get this right */
@@ -2234,7 +2236,7 @@ to the current buffer.
    */
 
 static int
-copy_to_mirrortab (struct chartab_range *range, Lisp_Object table,
+copy_to_mirrortab (struct chartab_range *range, Lisp_Object UNUSED (table),
 		   Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = VOID_TO_LISP (arg);
@@ -2247,7 +2249,8 @@ copy_to_mirrortab (struct chartab_range *range, Lisp_Object table,
 }
 
 static int
-copy_if_not_already_present (struct chartab_range *range, Lisp_Object table,
+copy_if_not_already_present (struct chartab_range *range,
+			     Lisp_Object UNUSED (table),
 			     Lisp_Object val, void *arg)
 {
   Lisp_Object mirrortab = VOID_TO_LISP (arg);

@@ -199,15 +199,12 @@ mode.
 }
 
 static void
-gtk_init_device (struct device *d, Lisp_Object props)
+gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
-  Lisp_Object device;
   Lisp_Object display;
   GtkWidget *app_shell = NULL;
   GdkVisual *visual = NULL;
   GdkColormap *cmap = NULL;
-
-  device = wrap_device (d);
 
   /* gtk_init() and even gtk_check_init() are so brain dead that
      getting an empty argv array causes them to abort. */
@@ -331,7 +328,7 @@ gtk_init_device (struct device *d, Lisp_Object props)
 }
 
 static void
-gtk_finish_init_device (struct device *d, Lisp_Object props)
+gtk_finish_init_device (struct device *UNUSED (d), Lisp_Object UNUSED (props))
 {
   call0 (Qinit_post_gtk_win);
 }
@@ -357,14 +354,11 @@ free_gtk_device_struct (struct device *d)
 static void
 gtk_delete_device (struct device *d)
 {
-  Lisp_Object device;
-
 #ifdef FREE_CHECKING
   extern void (*__free_hook)();
   int checking_free;
 #endif
 
-  device = wrap_device (d);
   if (1)
     {
 #ifdef FREE_CHECKING
@@ -538,7 +532,7 @@ If the second optional argument IGNORE-KEYBOARD is non-nil, ignore all
   keyboard events during the grab.
 Returns t if the grab is successful, nil otherwise.
 */
-       (device, cursor, ignore_keyboard))
+       (device, cursor, UNUSED (ignore_keyboard)))
 {
   GdkWindow *w;
   int result;
@@ -614,7 +608,7 @@ Returns t if the grab is successful, nil otherwise.
 DEFUN ("gtk-ungrab-keyboard", Fgtk_ungrab_keyboard, 0, 1, 0, /*
 Release a keyboard grab made with `gtk-grab-keyboard'.
 */
-       (device))
+       (UNUSED (device)))
 {
   gdk_keyboard_ungrab (GDK_CURRENT_TIME);
   return Qnil;

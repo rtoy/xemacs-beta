@@ -492,7 +492,7 @@ x_try_best_visual (Display *dpy, int scrnum)
 
 
 static void
-x_init_device (struct device *d, Lisp_Object props)
+x_init_device (struct device *d, Lisp_Object UNUSED (props))
 {
   Lisp_Object display;
   Display *dpy;
@@ -857,7 +857,7 @@ x_init_device (struct device *d, Lisp_Object props)
 }
 
 static void
-x_finish_init_device (struct device *d, Lisp_Object props)
+x_finish_init_device (struct device *UNUSED (d), Lisp_Object UNUSED (props))
 {
   call0 (Qinit_post_x_win);
 }

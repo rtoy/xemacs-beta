@@ -1151,7 +1151,7 @@ nt_send_process (Lisp_Object proc, struct lstream *lstream)
 
 static void
 nt_kill_child_process (Lisp_Object proc, int signo,
-		       int current_group, int nomsg)
+		       int UNUSED (current_group), int UNUSED (nomsg))
 {
   Lisp_Process *p = XPROCESS (proc);
 

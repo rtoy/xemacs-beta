@@ -252,9 +252,9 @@ nas_close_down_play (void)
  \********************************************************************/
 
 static void
-doneCB (AuServer       *auserver,
-	AuEventHandlerRec *handler,
-	AuEvent        *ev,
+doneCB (AuServer       *UNUSED (auserver),
+	AuEventHandlerRec *UNUSED (handler),
+	AuEvent        *UNUSED (ev),
 	AuPointer       data)
 {
   int         *in_play_p = (int *) data;
@@ -593,14 +593,14 @@ CatchIoErrorAndJump (AuServer *old_aud)
 }
 
 SIGTYPE
-sigpipe_handle (int signo)
+sigpipe_handle (int UNUSED (signo))
 {
   CatchIoErrorAndJump (NULL);
 }
 
 static AuBool
 CatchErrorAndJump (AuServer *old_aud,
-		   AuErrorEvent *event)
+		   AuErrorEvent *UNUSED (event))
 {
   return CatchIoErrorAndJump (old_aud);
 }

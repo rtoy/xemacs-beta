@@ -1192,7 +1192,8 @@ toolbar_validate (Lisp_Object instantiator)
 }
 
 static void
-toolbar_after_change (Lisp_Object specifier, Lisp_Object locale)
+toolbar_after_change (Lisp_Object UNUSED (specifier),
+		      Lisp_Object UNUSED (locale))
 {
   /* #### This is overkill.  I really need to rethink the after-change
      functions to make them easier to use. */
@@ -1223,8 +1224,9 @@ recompute_overlaying_specifier (Lisp_Object real_one[4])
 }
 
 static void
-toolbar_specs_changed (Lisp_Object specifier, struct window *w,
-		       Lisp_Object oldval)
+toolbar_specs_changed (Lisp_Object UNUSED (specifier),
+		       struct window *UNUSED (w),
+		       Lisp_Object UNUSED (oldval))
 {
   /* This could be smarter but I doubt that it would make any
      noticeable difference given the infrequency with which this is
@@ -1234,69 +1236,74 @@ toolbar_specs_changed (Lisp_Object specifier, struct window *w,
 }
 
 static void
-default_toolbar_specs_changed (Lisp_Object specifier, struct window *w,
-			       Lisp_Object oldval)
+default_toolbar_specs_changed (Lisp_Object UNUSED (specifier),
+			       struct window *UNUSED (w),
+			       Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar);
 }
 
 static void
-default_toolbar_size_changed_in_frame (Lisp_Object specifier, struct frame *f,
-				       Lisp_Object oldval)
+default_toolbar_size_changed_in_frame (Lisp_Object UNUSED (specifier),
+				       struct frame *UNUSED (f),
+				       Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_size);
 }
 
 static void
-default_toolbar_border_width_changed_in_frame (Lisp_Object specifier,
-					       struct frame *f,
-					       Lisp_Object oldval)
+default_toolbar_border_width_changed_in_frame (Lisp_Object UNUSED (specifier),
+					       struct frame *UNUSED (f),
+					       Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_border_width);
 }
 
 static void
-default_toolbar_visible_p_changed_in_frame (Lisp_Object specifier,
-					    struct frame *f,
-					    Lisp_Object oldval)
+default_toolbar_visible_p_changed_in_frame (Lisp_Object UNUSED (specifier),
+					    struct frame *UNUSED (f),
+					    Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_visible_p);
 }
 
 static void
-toolbar_geometry_changed_in_window (Lisp_Object specifier, struct window *w,
-				    Lisp_Object oldval)
+toolbar_geometry_changed_in_window (Lisp_Object UNUSED (specifier),
+				    struct window *w,
+				    Lisp_Object UNUSED (oldval))
 {
   MARK_TOOLBAR_CHANGED;
   MARK_WINDOWS_CHANGED (w);
 }
 
 static void
-default_toolbar_size_changed_in_window (Lisp_Object specifier, struct window *w,
-					Lisp_Object oldval)
+default_toolbar_size_changed_in_window (Lisp_Object UNUSED (specifier),
+					struct window *UNUSED (w),
+					Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_size);
 }
 
 static void
-default_toolbar_border_width_changed_in_window (Lisp_Object specifier,
-						struct window *w,
-						Lisp_Object oldval)
+default_toolbar_border_width_changed_in_window (Lisp_Object UNUSED (specifier),
+						struct window *UNUSED (w),
+						Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_border_width);
 }
 
 static void
-default_toolbar_visible_p_changed_in_window (Lisp_Object specifier,
-					     struct window *w,
-					     Lisp_Object oldval)
+default_toolbar_visible_p_changed_in_window (Lisp_Object UNUSED (specifier),
+					     struct window *UNUSED (w),
+					     Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vtoolbar_visible_p);
 }
 
 static void
-toolbar_buttons_captioned_p_changed (Lisp_Object specifier, struct window *w,
-				     Lisp_Object oldval)
+toolbar_buttons_captioned_p_changed (Lisp_Object UNUSED (specifier),
+				     struct window *UNUSED (w),
+				     Lisp_Object UNUSED (oldval))
 {
   /* This could be smarter but I doubt that it would make any
      noticeable difference given the infrequency with which this is
@@ -1305,8 +1312,9 @@ toolbar_buttons_captioned_p_changed (Lisp_Object specifier, struct window *w,
 }
 
 static void
-toolbar_shadows_changed (Lisp_Object specifier, struct window *w,
-			 Lisp_Object oldval)
+toolbar_shadows_changed (Lisp_Object UNUSED (specifier),
+			 struct window *w,
+			 Lisp_Object UNUSED (oldval))
 {
   struct frame *f = XFRAME (w->frame);
 

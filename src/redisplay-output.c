@@ -68,7 +68,8 @@ static void redisplay_redraw_exposed_windows (Lisp_Object window, int x,
  Synchronize the given rune blocks.
  ****************************************************************************/
 static void
-sync_rune_structs (struct window *w, rune_dynarr *cra, rune_dynarr *dra)
+sync_rune_structs (struct window *UNUSED (w), rune_dynarr *cra,
+		   rune_dynarr *dra)
 {
   int rune_elt;
   int max_move = ((Dynarr_length (dra) > Dynarr_largest (cra))
@@ -493,7 +494,9 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
   int start_pos;
   int stop_pos;
   int force = 0;
+#if 0
   int block_end;
+#endif
 
   cdb = Dynarr_atp (cdl->display_blocks, c_block);
   ddb = Dynarr_atp (ddl->display_blocks, d_block);
@@ -503,11 +506,13 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
   start_pos = -1;
   stop_pos = min (Dynarr_length (cdb->runes), Dynarr_length (ddb->runes));
 
+#if 0
   block_end =
     (!Dynarr_length (ddb->runes)
      ? 0
      : (Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->xpos +
 	Dynarr_atp (ddb->runes, Dynarr_length (ddb->runes) - 1)->width));
+#endif
 
   /* If the new block type is not text and the cursor status is
      changing and it overlaps the position of this block then force a
@@ -1311,8 +1316,9 @@ void
 redisplay_output_subwindow (struct window *w,
 			    Lisp_Object image_instance,
 			    struct display_box* db, struct display_glyph_area* dga,
-			    face_index findex, int cursor_start, int cursor_width,
-			    int cursor_height)
+			    face_index findex, int UNUSED (cursor_start),
+			    int UNUSED (cursor_width),
+			    int UNUSED (cursor_height))
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object window;
@@ -1396,8 +1402,8 @@ void
 redisplay_output_layout (Lisp_Object domain,
 			 Lisp_Object image_instance,
 			 struct display_box* db, struct display_glyph_area* dga,
-			 face_index findex, int cursor_start, int cursor_width,
-			 int cursor_height)
+			 face_index findex, int UNUSED (cursor_start),
+			 int UNUSED (cursor_width), int UNUSED (cursor_height))
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object rest, window = DOMAIN_WINDOW (domain);

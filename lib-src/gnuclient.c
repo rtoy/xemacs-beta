@@ -53,6 +53,7 @@ extern void cygwin_conv_to_posix_path(const char *path, char *posix_path);
 #endif
 
 #include "gnuserv.h"
+#include "compiler.h"
 
 char gnuserv_version[] = "gnuclient version " GNUSERV_VERSION;
 
@@ -81,7 +82,7 @@ static pid_t emacs_pid;			/* Process id for emacs process */
 void initialize_signals (void);
 
 static void
-tell_emacs_to_resume (int sig)
+tell_emacs_to_resume (int UNUSED (sig))
 {
   char buffer[GSERV_BUFSZ+1];
   int s;			/* socket / msqid to server */

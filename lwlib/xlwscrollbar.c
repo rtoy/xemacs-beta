@@ -1286,7 +1286,8 @@ redraw_everything (XlwScrollBarWidget w, Region region, Boolean behind_arrows)
 /*-------------------------- Method Functions ---------------------------*/
 
 static void
-Initialize (Widget treq, Widget tnew, ArgList args, Cardinal *num_args)
+Initialize (Widget treq, Widget tnew, ArgList UNUSED (args),
+	    Cardinal *UNUSED (num_args))
 {
   XlwScrollBarWidget request = (XlwScrollBarWidget) treq;
   XlwScrollBarWidget w = (XlwScrollBarWidget) tnew;
@@ -1398,7 +1399,7 @@ Resize (Widget widget)
 }
 
 static void
-Redisplay (Widget widget, XEvent *event, Region region)
+Redisplay (Widget widget, XEvent *UNUSED (event), Region region)
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
 
@@ -1415,8 +1416,8 @@ Redisplay (Widget widget, XEvent *event, Region region)
 }
 
 static Boolean
-SetValues (Widget current, Widget request, Widget neww,
-	   ArgList args, Cardinal *num_args)
+SetValues (Widget current, Widget UNUSED (request), Widget neww,
+	   ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
   XlwScrollBarWidget cur = (XlwScrollBarWidget) current;
   XlwScrollBarWidget w = (XlwScrollBarWidget) neww;
@@ -1534,7 +1535,7 @@ XlwScrollBarSetValues (Widget widget, int value, int sliderSize,
 /*-------------------------- Action Functions ---------------------------*/
 
 static void
-timer (XtPointer data, XtIntervalId *id)
+timer (XtPointer data, XtIntervalId *UNUSED (id))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) data;
   w->sb.timerActive = False;
@@ -1623,7 +1624,8 @@ what_button (XlwScrollBarWidget w, int mouse_x, int mouse_y)
 }
 
 static void
-Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+Select (Widget widget, XEvent *event, String *UNUSED (parms),
+	Cardinal *UNUSED (num_parms))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
   button_where sb_button;
@@ -1757,7 +1759,8 @@ PageUpOrLeft (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 }
 
 static void
-Drag (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+Drag (Widget widget, XEvent *event, String *UNUSED (parms),
+      Cardinal *UNUSED (num_parms))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
 
@@ -1797,7 +1800,8 @@ Drag (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 }
 
 static void
-Release (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+Release (Widget widget, XEvent *event, String *UNUSED (parms),
+	 Cardinal *UNUSED (num_parms))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
 
@@ -1824,7 +1828,8 @@ Release (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 }
 
 static void
-Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+Jump (Widget widget, XEvent *event, String *UNUSED (parms),
+      Cardinal *UNUSED (num_parms))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
   int last_value;
@@ -1883,7 +1888,8 @@ Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 }
 
 static void
-Abort (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+Abort (Widget widget, XEvent *event, String *UNUSED (parms),
+       Cardinal *UNUSED (num_parms))
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
 

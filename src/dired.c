@@ -290,7 +290,7 @@ file_name_completion_unwind (Lisp_Object locative)
 
 static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
-		      int ver_flag)
+		      int UNUSED (ver_flag))
 {
   /* This function can GC */
   DIR *d = 0;

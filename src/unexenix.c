@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>
 #include <varargs.h>
 #include <a.out.h>
+#include "compiler.h"
 
 static void fatal_unexec ();
 
@@ -72,14 +73,16 @@ extern char *strerror ();
 /* Should check the magic number of the old executable;
    not yet written.  */
 check_exec (x)
-     struct xexec *x;
+     struct xexec *UNUSED (x);
 {
 }
 
 
 unexec (new_name, a_name, data_start, bss_start, entry_address)
      char *new_name, *a_name;
-     unsigned data_start, bss_start, entry_address;
+     unsigned UNUSED (data_start);
+     unsigned UNUSED (bss_start);
+     unsigned UNUSED (entry_address);
 {
   char *sbrk (), *datalim = sbrk (0), *data_org;
   long segpos, textseen, textpos, textlen, datapos, datadiff, datalen;

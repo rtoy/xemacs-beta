@@ -167,7 +167,7 @@ mark_tooltalk_message (Lisp_Object obj)
 
 static void
 print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
-			int escapeflag)
+			int UNUSED (escapeflag))
 {
   Lisp_Tooltalk_Message *p = XTOOLTALK_MESSAGE (obj);
 
@@ -245,7 +245,7 @@ mark_tooltalk_pattern (Lisp_Object obj)
 
 static void
 print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
-			int escapeflag)
+			int UNUSED (escapeflag))
 {
   Lisp_Tooltalk_Pattern *p = XTOOLTALK_PATTERN (obj);
 
@@ -323,7 +323,7 @@ DEFUN ("receive-tooltalk-message", Freceive_tooltalk_message, 0, 2, 0, /*
 Run tt_message_receive().
 This function is the process handler for the ToolTalk connection process.
 */
-       (ignore1, ignore2))
+       (UNUSED (ignore1), UNUSED (ignore2)))
 {
   /* This function can GC */
   Tt_message mess = tt_message_receive ();

@@ -265,7 +265,8 @@ mark_window (Lisp_Object obj)
 }
 
 static void
-print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_window (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
@@ -280,7 +281,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static void
-finalize_window (void *header, int for_disksave)
+finalize_window (void *header, int UNUSED (for_disksave))
 {
   struct window *w = (struct window *) header;
 
@@ -960,7 +961,7 @@ window_needs_vertical_divider (struct window *w)
 /* Called from invalidate_vertical_divider_cache_in_frame */
 int
 invalidate_vertical_divider_cache_in_window (struct window *w,
-					     void *u_n_u_s_e_d)
+					     void *UNUSED (unused))
 {
   w->need_vertical_divider_valid_p = 0;
   return 0;
@@ -5048,17 +5049,18 @@ map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
 
 
 static void
-modeline_shadow_thickness_changed (Lisp_Object specifier, struct window *w,
-				   Lisp_Object oldval)
+modeline_shadow_thickness_changed (Lisp_Object UNUSED (specifier),
+				   struct window *w,
+				   Lisp_Object UNUSED (oldval))
 {
   w->shadow_thickness_changed = 1;
   MARK_WINDOWS_CHANGED (w);
 }
 
 static void
-vertical_divider_changed_in_window (Lisp_Object specifier,
+vertical_divider_changed_in_window (Lisp_Object UNUSED (specifier),
 				    struct window *w,
-				    Lisp_Object oldval)
+				    Lisp_Object UNUSED (oldval))
 {
   MARK_WINDOWS_CHANGED (w);
   MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (XFRAME (WINDOW_FRAME (w)));
@@ -5066,8 +5068,9 @@ vertical_divider_changed_in_window (Lisp_Object specifier,
 
 /* also used in scrollbar.c */
 void
-some_window_value_changed (Lisp_Object specifier, struct window *w,
-			   Lisp_Object oldval)
+some_window_value_changed (Lisp_Object UNUSED (specifier),
+			   struct window *w,
+			   Lisp_Object UNUSED (oldval))
 {
   MARK_WINDOWS_CHANGED (w);
 }

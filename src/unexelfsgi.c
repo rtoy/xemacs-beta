@@ -100,6 +100,8 @@ extern void fatal (const char *, ...);
 # include <link.h>	/* get ElfW etc */
 #endif
 
+#include "compiler.h"
+
 #ifndef ElfW
 # ifdef __STDC__
 #  define ElfBitsW(bits, type) Elf##bits##_##type
@@ -197,9 +199,9 @@ find_section (char *name,
 void
 unexec (char *new_name,
 	char *old_name,
-	uintptr_t data_start,
-	uintptr_t bss_start,
-	uintptr_t entry_address)
+	uintptr_t UNUSED (data_start),
+	uintptr_t UNUSED (bss_start),
+	uintptr_t UNUSED (entry_address))
 {
   int old_file;
 

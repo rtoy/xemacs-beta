@@ -851,7 +851,7 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
 
    Of course, we DO worry about it, so we need a special translation. */
 void
-emacs_Xt_mapping_action (Widget w, XEvent *event)
+emacs_Xt_mapping_action (Widget UNUSED (w), XEvent *event)
 {
   struct device *d = get_device_from_display (event->xany.display);
 
@@ -2086,7 +2086,7 @@ static struct Xt_timeout_blocktype
 
 /* called by XtAppNextEvent() */
 static void
-Xt_timeout_callback (XtPointer closure, XtIntervalId *id)
+Xt_timeout_callback (XtPointer closure, XtIntervalId *UNUSED (id))
 {
   struct Xt_timeout *timeout = (struct Xt_timeout *) closure;
   struct Xt_timeout *t2 = pending_timeouts;
@@ -2271,7 +2271,7 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
 }
 
 static void
-Xt_what_callback (void *closure, int *source, XtInputId *id)
+Xt_what_callback (void *closure, int *UNUSED (source), XtInputId *UNUSED (id))
 {
   /* If closure is 0, then we got a fake event from a signal handler.
      The only purpose of this is to make XtAppProcessEvent() stop
@@ -2415,7 +2415,7 @@ emacs_Xt_delete_io_streams (Lisp_Object instream,
    If we've still got pointers to it in this file, we're gonna lose hard.
  */
 void
-debug_process_finalization (Lisp_Process *p)
+debug_process_finalization (Lisp_Process *UNUSED (p))
 {
 #if 0 /* #### */
   int i;
@@ -2879,10 +2879,10 @@ emacs_Xt_next_event (Lisp_Event *emacs_event)
 }
 
 void
-emacs_Xt_event_handler (Widget wid /* unused */,
-			XtPointer closure /* unused */,
+emacs_Xt_event_handler (Widget UNUSED (wid),
+			XtPointer UNUSED (closure),
 			XEvent *event,
-			Boolean *continue_to_dispatch /* unused */)
+			Boolean *UNUSED (continue_to_dispatch))
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 
@@ -3138,8 +3138,8 @@ static void EmacsFreePixel (
 static void
 emacs_Xt_event_widget_focus_in (Widget   w,
 				XEvent   *event,
-				String   *params,
-				Cardinal *num_params)
+				String   *UNUSED (params),
+				Cardinal *UNUSED (num_params))
 {
   struct frame *f =
     x_any_widget_or_parent_to_frame (get_device_from_display (event->xany.display), w);
@@ -3148,10 +3148,10 @@ emacs_Xt_event_widget_focus_in (Widget   w,
 }
 
 static void
-emacs_Xt_event_widget_focus_out (Widget   w,
-				 XEvent   *event,
-				 String   *params,
-				 Cardinal *num_params)
+emacs_Xt_event_widget_focus_out (Widget   UNUSED (w),
+				 XEvent   *UNUSED (event),
+				 String   *UNUSED (params),
+				 Cardinal *UNUSED (num_params))
 {
 }
 

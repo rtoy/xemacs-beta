@@ -638,7 +638,7 @@ alist_to_tagged_vector (Lisp_Object tag, Lisp_Object alist)
 
 #ifdef ERROR_CHECK_GLYPHS
 static int
-check_instance_cache_mapper (Lisp_Object key, Lisp_Object value,
+check_instance_cache_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			     void *flag_closure)
 {
   /* This function can GC */
@@ -2247,8 +2247,9 @@ nothing_possible_dest_types (void)
 
 static void
 nothing_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+		     Lisp_Object UNUSED (pointer_fg),
+		     Lisp_Object UNUSED (pointer_bg),
+		     int dest_mask, Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
@@ -2274,8 +2275,8 @@ inherit_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-inherit_normalize (Lisp_Object inst, Lisp_Object console_type,
-		   Lisp_Object dest_mask)
+inherit_normalize (Lisp_Object inst, Lisp_Object UNUSED (console_type),
+		   Lisp_Object UNUSED (dest_mask))
 {
   Lisp_Object face;
 
@@ -2293,9 +2294,11 @@ inherit_possible_dest_types (void)
 }
 
 static void
-inherit_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+inherit_instantiate (Lisp_Object UNUSED (image_instance),
+		     Lisp_Object UNUSED (instantiator),
+		     Lisp_Object UNUSED (pointer_fg),
+		     Lisp_Object UNUSED (pointer_bg),
+		     int UNUSED (dest_mask), Lisp_Object UNUSED (domain))
 {
   /* handled specially in image_instantiate */
   abort ();
@@ -2321,7 +2324,8 @@ string_possible_dest_types (void)
 /* Called from autodetect_instantiate() */
 void
 string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		    Lisp_Object UNUSED (pointer_fg),
+		    Lisp_Object UNUSED (pointer_bg),
 		    int dest_mask, Lisp_Object domain)
 {
   Lisp_Object string = find_keyword_in_vector (instantiator, Q_data);
@@ -2446,7 +2450,8 @@ query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
 static void
 text_query_geometry (Lisp_Object image_instance,
 		     int* width, int* height,
-		     enum image_instance_geometry disp, Lisp_Object domain)
+		     enum image_instance_geometry UNUSED (disp),
+		     Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int descent = 0;
@@ -2751,7 +2756,7 @@ xbm_mask_file_munging (Lisp_Object alist, Lisp_Object file,
 
 static Lisp_Object
 xbm_normalize (Lisp_Object inst, Lisp_Object console_type,
-	       Lisp_Object dest_mask)
+	       Lisp_Object UNUSED (dest_mask))
 {
   Lisp_Object file = Qnil, mask_file = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -2835,7 +2840,7 @@ xface_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 xface_normalize (Lisp_Object inst, Lisp_Object console_type,
-		 Lisp_Object dest_mask)
+		 Lisp_Object UNUSED (dest_mask))
 {
   /* This function can call lisp */
   Lisp_Object file = Qnil, mask_file = Qnil;
@@ -3052,7 +3057,7 @@ evaluate_xpm_color_symbols (void)
 
 static Lisp_Object
 xpm_normalize (Lisp_Object inst, Lisp_Object console_type,
-	       Lisp_Object dest_mask)
+	       Lisp_Object UNUSED (dest_mask))
 {
   Lisp_Object file = Qnil;
   Lisp_Object color_symbols;
@@ -3212,7 +3217,7 @@ image_instantiate_cache_result (Lisp_Object locative)
    displayed in the given domain. */
 
 static Lisp_Object
-image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
+image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		   Lisp_Object domain, Lisp_Object instantiator,
 		   Lisp_Object depth)
 {
@@ -3506,7 +3511,7 @@ set_image_attached_to (Lisp_Object obj, Lisp_Object face_or_glyph,
 }
 
 static Lisp_Object
-image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
+image_going_to_add (Lisp_Object specifier, Lisp_Object UNUSED (locale),
 		    Lisp_Object tag_set, Lisp_Object instantiator)
 {
   Lisp_Object possible_console_types = Qnil;
@@ -3652,7 +3657,8 @@ mark_glyph (Lisp_Object obj)
 }
 
 static void
-print_glyph (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
+	     int UNUSED (escapeflag))
 {
   Lisp_Glyph *glyph = XGLYPH (obj);
 
@@ -4184,7 +4190,7 @@ glyph_baseline (Lisp_Object glyph, Lisp_Object domain)
 }
 
 Lisp_Object
-glyph_face (Lisp_Object glyph, Lisp_Object domain)
+glyph_face (Lisp_Object glyph, Lisp_Object UNUSED (domain))
 {
   /* #### Domain parameter not currently used but it will be */
   return GLYPHP (glyph) ? GLYPH_FACE (XGLYPH (glyph)) : Qnil;
@@ -4452,8 +4458,8 @@ cache_subwindow_instance_in_frame_maybe (Lisp_Object instance)
    system windows before deleting XEmacs windows, and hence
    subwindows.  */
 int
-unmap_subwindow_instance_cache_mapper (Lisp_Object key, Lisp_Object value,
-				       void* finalize)
+unmap_subwindow_instance_cache_mapper (Lisp_Object UNUSED (key),
+				       Lisp_Object value, void* finalize)
 {
   /* value can be nil; we cache failures as well as successes */
   if (!NILP (value))
@@ -4784,7 +4790,6 @@ map_subwindow (Lisp_Object subwindow, int x, int y,
 	       struct display_glyph_area *dga)
 {
   Lisp_Image_Instance* ii = XIMAGE_INSTANCE (subwindow);
-  struct frame* f;
 
   ERROR_CHECK_IMAGE_INSTANCE (subwindow);
 
@@ -4797,7 +4802,8 @@ map_subwindow (Lisp_Object subwindow, int x, int y,
 	      IMAGE_INSTANCE_SUBWINDOW_ID (ii),
 	      dga->width, dga->height, x, y);
 #endif
-  f = XFRAME (IMAGE_INSTANCE_FRAME (ii));
+  /* Error check by side effect */
+  (void) XFRAME (IMAGE_INSTANCE_FRAME (ii));
   IMAGE_INSTANCE_DISPLAY_X (ii) = x;
   IMAGE_INSTANCE_DISPLAY_Y (ii) = y;
   IMAGE_INSTANCE_DISPLAY_WIDTH (ii) = dga->width;
@@ -4823,7 +4829,8 @@ subwindow_governing_domain (void)
 /* Partially instantiate a subwindow. */
 void
 subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		       Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		       Lisp_Object UNUSED (pointer_fg),
+		       Lisp_Object UNUSED (pointer_bg),
 		       int dest_mask, Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -4864,9 +4871,10 @@ subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /* This is just a backup in case no-one has assigned a suitable geometry.
    #### It should really query the enclose window for geometry. */
 static void
-subwindow_query_geometry (Lisp_Object image_instance, int* width,
-			  int* height, enum image_instance_geometry disp,
-			  Lisp_Object domain)
+subwindow_query_geometry (Lisp_Object UNUSED (image_instance),
+			  int* width, int* height,
+			  enum image_instance_geometry UNUSED (disp),
+			  Lisp_Object UNUSED (domain))
 {
   if (width)	*width = 20;
   if (height)	*height = 20;

@@ -75,7 +75,8 @@ gtk_release_scrollbar_instance (struct scrollbar_instance *instance)
 }
 
 static gboolean
-scrollbar_drag_hack_cb (GtkWidget *w, GdkEventButton *ev, gpointer v)
+scrollbar_drag_hack_cb (GtkWidget *UNUSED (w), GdkEventButton *UNUSED (ev),
+			gpointer v)
 {
   vertical_drag_in_progress = (int) v;
   inhibit_slider_size_change = (int) v;
@@ -472,7 +473,7 @@ gtk_update_frame_scrollbars (struct frame *f)
 
 #ifdef MEMORY_USAGE_STATS
 static int
-gtk_compute_scrollbar_instance_usage (struct device *d,
+gtk_compute_scrollbar_instance_usage (struct device *UNUSED (d),
 				      struct scrollbar_instance *inst,
 				      struct overhead_stats *ovstats)
 {

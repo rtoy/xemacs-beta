@@ -367,7 +367,13 @@ wait_for_termination (int pid)
  */
 
 void
-flush_pending_output (int channel)
+flush_pending_output (
+#if !defined (HAVE_TERMIOS) && (defined (TCFLSH) || defined (TIOCFLUSH))
+		      int channel
+#else
+		      int UNUSED (channel)
+#endif
+		      )
 {
 #ifdef HAVE_TERMIOS
   /* If we try this, we get hit with SIGTTIN, because
@@ -1479,11 +1485,16 @@ static void
 tty_init_sys_modes_on_device (struct device *d)
 {
   struct emacs_tty tty;
-  int input_fd, output_fd;
+  int input_fd;
+#if defined (IBMR2AIX) && defined (AIXHFT)
+  int output_fd;
+#endif
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
   input_fd = CONSOLE_TTY_DATA (con)->infd;
+#if defined (IBMR2AIX) && defined (AIXHFT)
   output_fd = CONSOLE_TTY_DATA (con)->outfd;
+#endif
 
   emacs_get_tty (input_fd, &CONSOLE_TTY_DATA (con)->old_tty);
   tty = CONSOLE_TTY_DATA (con)->old_tty;
@@ -1863,11 +1874,16 @@ eight_bit_tty (struct device *d)
 static void
 tty_reset_sys_modes_on_device (struct device *d)
 {
-  int input_fd, output_fd;
+#if defined (BSD) || (defined (IBMR2AIX) && defined (AIXHFT))
+  int output_fd;
+#endif
+  int input_fd;
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
   input_fd = CONSOLE_TTY_DATA (con)->infd;
+#if defined (BSD) || (defined (IBMR2AIX) && defined (AIXHFT))
   output_fd = CONSOLE_TTY_DATA (con)->outfd;
+#endif
 
 #if defined (IBMR2AIX) && defined (AIXHFT)
   {

@@ -466,11 +466,11 @@ mswindows_sigrelse (int nsig)
 }
 
 int
-mswindows_sigpause (int nsig)
+mswindows_sigpause (int UNUSED (nsig))
 {
   /* This is currently not called, because the only call to sigpause
      inside XEmacs is with SIGCHLD parameter. Just in case, we put an
-     assert here, so anyone adds a call to sigpause will be surprised
+     assert here, so anyone who adds a call to sigpause will be surprised
      (or surprise someone else...) */
   assert (0);
   return 0;
@@ -541,8 +541,8 @@ MMRESULT tid_alarm = 0;
 MMRESULT tid_prof = 0;
 
 static void CALLBACK
-setitimer_helper_proc (UINT uID, UINT uMsg, DWORD dwUser,
-		       DWORD dw1, DWORD dw2)
+setitimer_helper_proc (UINT UNUSED (uID), UINT UNUSED (uMsg), DWORD dwUser,
+		       DWORD UNUSED (dw1), DWORD UNUSED (dw2))
 {
   /* Just raise the signal indicated by the dwUser parameter */
   mswindows_raise (dwUser);

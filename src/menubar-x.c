@@ -442,7 +442,8 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
    */
 
 static void
-pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
+pre_activate_callback (Widget widget, LWLIB_ID UNUSED (id),
+		       XtPointer client_data)
 {
   /* This function can GC */
   struct device *d = get_device_from_display (XtDisplay (widget));
@@ -647,7 +648,8 @@ popup_menu_selection_callback (Widget widget, LWLIB_ID id,
 }
 
 static void
-popup_menu_down_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
+popup_menu_down_callback (Widget widget, LWLIB_ID id,
+			  XtPointer UNUSED (client_data))
 {
   if (popup_handled_p (id))
     return;
@@ -1147,7 +1149,8 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 }
 
 static Lisp_Object
-menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
+menu_accelerator_junk_on_error (Lisp_Object errordata,
+				Lisp_Object UNUSED (ignored))
 {
   Vmenu_accelerator_prefix    = Qnil;
   Vmenu_accelerator_modifiers = Qnil;

@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
    Many changes and improvements by Jerry James, 2003.
      Split out of lisp.h, reorganized, and modernized.
      {BEGIN,END}_C_DECLS, NEED_GCC, GCC_VERSION
-     ATTRIBUTE_MALLOC, ATTRIBUTE_CONST, ATTRIBUTE_PURE, UNUSED_ARG
+     ATTRIBUTE_MALLOC, ATTRIBUTE_CONST, ATTRIBUTE_PURE, UNUSED
 */
 
 #ifndef INCLUDED_compiler_h
@@ -193,14 +193,18 @@ Boston, MA 02111-1307, USA.  */
 # endif /* GCC_VERSION >= NEED_GCC (2, 5, 0) */
 #endif /* ATTRIBUTE_CONST */
 
-/* Unused declarations; g++ doesn't support this. */
+/* Unused declarations; g++ and icc do not support this. */
 #ifndef UNUSED_ARG
-# if defined(__GNUC__) && !defined(__cplusplus)
-#  define UNUSED_ARG __attribute__ ((unused))
+# define UNUSED_ARG(decl) unused_##decl
+#endif
+#ifndef UNUSED
+# if defined(__GNUC__) && !defined(__cplusplus) && !defined(__INTEL_COMPILER)
+#  define ATTRIBUTE_UNUSED __attribute__ ((unused))
 # else
-#  define UNUSED_ARG
+#  define ATTRIBUTE_UNUSED
 # endif
-#endif /* ATTRIBUTE_UNUSED */
+# define UNUSED(decl) UNUSED_ARG (decl) ATTRIBUTE_UNUSED
+#endif /* UNUSED */
 
 #ifdef DEBUG_XEMACS
 # define REGISTER

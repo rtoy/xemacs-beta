@@ -149,7 +149,7 @@ check_valid_border (Lisp_Object data)
 }
 
 static void
-check_valid_anything (Lisp_Object data)
+check_valid_anything (Lisp_Object UNUSED (data))
 {
 }
 
@@ -659,8 +659,8 @@ combo_box_validate (Lisp_Object instantiator)
 /* we need to convert things like glyphs to images, eval expressions
    etc.*/
 static Lisp_Object
-widget_normalize (Lisp_Object inst, Lisp_Object console_type,
-		  Lisp_Object dest_mask)
+widget_normalize (Lisp_Object inst, Lisp_Object UNUSED (console_type),
+		  Lisp_Object UNUSED (dest_mask))
 {
   /* This function can call lisp */
   Lisp_Object glyph = find_keyword_in_vector (inst, Q_image);
@@ -870,8 +870,13 @@ widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 }
 
 static void
-widget_post_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			 Lisp_Object domain)
+widget_post_instantiate (Lisp_Object UNUSED (image_instance),
+#ifdef DEBUG_WIDGETS
+			 Lisp_Object instantiator,
+#else
+			 Lisp_Object UNUSED (instantiator),
+#endif
+			 Lisp_Object UNUSED (domain))
 {
 #ifdef DEBUG_WIDGETS
   debug_widget_instances++;
@@ -886,7 +891,8 @@ widget_post_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 button_query_geometry (Lisp_Object image_instance,
 		       int* width, int* height,
-		       enum image_instance_geometry disp, Lisp_Object domain)
+		       enum image_instance_geometry UNUSED (disp),
+		       Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int w, h;
@@ -911,8 +917,9 @@ button_query_geometry (Lisp_Object image_instance,
 /* Get the geometry of an edit field. */
 static void
 edit_field_query_geometry (Lisp_Object image_instance,
-		       int* width, int* height,
-		       enum image_instance_geometry disp, Lisp_Object domain)
+			   int* width, int* height,
+			   enum image_instance_geometry UNUSED (disp),
+			   Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   int w, h;
@@ -930,7 +937,8 @@ edit_field_query_geometry (Lisp_Object image_instance,
 static void
 tree_view_query_geometry (Lisp_Object image_instance,
 			  int* width, int* height,
-			  enum image_instance_geometry disp, Lisp_Object domain)
+			  enum image_instance_geometry UNUSED (disp),
+			  Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object items = IMAGE_INSTANCE_WIDGET_ITEMS (ii);
@@ -958,7 +966,8 @@ tree_view_query_geometry (Lisp_Object image_instance,
 static void
 tab_control_query_geometry (Lisp_Object image_instance,
 			    int* width, int* height,
-			    enum image_instance_geometry disp, Lisp_Object domain)
+			    enum image_instance_geometry UNUSED (disp),
+			    Lisp_Object domain)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object items = XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii));
@@ -1232,8 +1241,9 @@ layout_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 }
 
 static void
-layout_post_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			 Lisp_Object domain)
+layout_post_instantiate (Lisp_Object UNUSED (image_instance),
+			 Lisp_Object UNUSED (instantiator),
+			 Lisp_Object UNUSED (domain))
 {
 }
 
@@ -1310,7 +1320,7 @@ layout_post_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 layout_query_geometry (Lisp_Object image_instance, int* width,
 		       int* height, enum image_instance_geometry disp,
-		       Lisp_Object domain)
+		       Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object items = IMAGE_INSTANCE_LAYOUT_CHILDREN (ii), rest;
@@ -1419,8 +1429,8 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
 
 int
 layout_layout (Lisp_Object image_instance,
-	       int width, int height, int xoffset, int yoffset,
-	       Lisp_Object domain)
+	       int width, int height, int UNUSED (xoffset), int yoffset,
+	       Lisp_Object UNUSED (domain))
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object rest;
@@ -1636,7 +1646,7 @@ Convert the width in logical widget units to characters.
 Logical widget units do not take into account adjusments made for
 layout borders, so this adjusment is approximated.
 */
-       (width, face, domain))
+       (width, UNUSED (face), domain))
 {
   int w, neww, charwidth;
   int border_width = DEFAULT_WIDGET_BORDER_WIDTH;
@@ -1674,7 +1684,7 @@ identical alignment for their subcontrols.
 Since frame sizes are measured in characters, this function allows you
 to do appropriate conversion between logical units and characters.
 */
-       (height, face, domain))
+       (height, UNUSED (face), domain))
 {
   int h, newh, charheight;
   

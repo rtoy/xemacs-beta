@@ -106,8 +106,8 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
  column, so we use ichar_string_displayed_columns().
  ****************************************************************************/
 static int
-tty_text_width (struct frame *f, struct face_cachel *cachel, const Ichar *str,
-		Charcount len)
+tty_text_width (struct frame *UNUSED (f), struct face_cachel *UNUSED (cachel),
+		const Ichar *str, Charcount len)
 {
   return ichar_string_displayed_columns (str, len);
 }
@@ -141,13 +141,19 @@ tty_eol_cursor_width (void)
 
  Perform any necessary initialization prior to an update.
  ****************************************************************************/
+#ifdef HAVE_TERMIOS
+#define TERMIOS_MAYBE_UNUSED(decl) UNUSED(decl)
+#else
+#define TERMIOS_MAYBE_UNUSED(decl) decl
+#endif
+
 #ifdef DEBUG_XEMACS
-void tty_frame_output_begin (struct frame *f);
+void tty_frame_output_begin (struct frame *TERMIOS_MAYBE_UNUSED(f));
 void
 #else
 static void
 #endif
-tty_frame_output_begin (struct frame *f)
+tty_frame_output_begin (struct frame *TERMIOS_MAYBE_UNUSED(f))
 {
 #ifndef HAVE_TERMIOS
   /* Termcap requires `ospeed' to be a global variable so we have to
@@ -196,8 +202,8 @@ tty_set_final_cursor_coords (struct frame *f, int y, int x)
 static void
 tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int start, int end, int start_pixpos,
-			  int cursor_start, int cursor_width,
-			  int cursor_height)
+			  int cursor_start, int UNUSED (cursor_width),
+			  int UNUSED (cursor_height))
 {
   struct frame *f = XFRAME (w->frame);
   Ichar_dynarr *buf = Dynarr_new (Ichar);
@@ -377,7 +383,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
  Draw a vertical divider down the right side of the given window.
  ****************************************************************************/
 static void
-tty_output_vertical_divider (struct window *w, int clear)
+tty_output_vertical_divider (struct window *w, int UNUSED (clear))
 {
   /* Divider width can either be 0 or 1 on TTYs */
   if (window_divider_width (w))
@@ -411,10 +417,11 @@ tty_output_vertical_divider (struct window *w, int clear)
  Clear the area in the box defined by the given parameters.
  ****************************************************************************/
 static void
-tty_clear_region (Lisp_Object window, struct device* d, struct frame * f,
-		  face_index findex, int x, int y,
-		  int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
-		  Lisp_Object background_pixmap)
+tty_clear_region (Lisp_Object window, struct device* UNUSED (d),
+		  struct frame * f, face_index findex, int x, int y,
+		  int width, int height, Lisp_Object UNUSED (fcolor),
+		  Lisp_Object UNUSED (bcolor),
+		  Lisp_Object UNUSED (background_pixmap))
 {
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
   int line;
@@ -521,8 +528,8 @@ tty_clear_frame (struct frame *f)
 
 static void
 tty_output_ibyte_string (struct window *w, struct display_line *dl,
-			   Ibyte *str, Bytecount len, int xpos,
-			   face_index findex, int cursor)
+			 Ibyte *str, Bytecount len, int xpos,
+			 face_index findex, int UNUSED (cursor))
 {
   struct frame *f = XFRAME (w->frame);
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
@@ -1034,7 +1041,8 @@ tty_flash (struct device *d)
  * tty_ring_bell - sound an audio beep.
  */
 static void
-tty_ring_bell (struct device *d, int volume, int pitch, int duration)
+tty_ring_bell (struct device *d, int volume, int UNUSED (pitch),
+	       int UNUSED (duration))
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
 
@@ -1376,7 +1384,7 @@ term_get_fkeys (Lisp_Object keymap, char **address)
 }
 
 static Lisp_Object
-term_get_fkeys_error (Lisp_Object err, Lisp_Object arg)
+term_get_fkeys_error (Lisp_Object UNUSED (err), Lisp_Object arg)
 {
   return arg;
 }

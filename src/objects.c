@@ -556,7 +556,7 @@ color_mark (Lisp_Object obj)
    of for `equal' */
 
 static Lisp_Object
-color_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
+color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 		   Lisp_Object domain, Lisp_Object instantiator,
 		   Lisp_Object depth)
 {
@@ -789,7 +789,7 @@ invalidate_charset_font_caches (Lisp_Object charset)
 
 
 static Lisp_Object
-font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
+font_instantiate (Lisp_Object UNUSED (specifier), Lisp_Object matchspec,
 		  Lisp_Object domain, Lisp_Object instantiator,
 		  Lisp_Object depth)
 {
@@ -986,7 +986,8 @@ face_boolean_mark (Lisp_Object obj)
    of for `equal' */
 
 static Lisp_Object
-face_boolean_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
+face_boolean_instantiate (Lisp_Object specifier,
+			  Lisp_Object UNUSED (matchspec),
 			  Lisp_Object domain, Lisp_Object instantiator,
 			  Lisp_Object depth)
 {

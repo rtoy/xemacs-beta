@@ -97,8 +97,8 @@ do {								\
 
 /* Dump out .data and .bss sections into a new executable.  */
 int
-unexec (char *out_name, char *in_name, uintptr_t start_data, 
-	uintptr_t d1, uintptr_t d2)
+unexec (char *out_name, char *in_name, uintptr_t UNUSED (start_data), 
+	uintptr_t UNUSED (d1), uintptr_t UNUSED (d2))
 {
   /* ugly nt hack - should be in lisp */
   int a_new, a_out = -1;

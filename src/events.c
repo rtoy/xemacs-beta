@@ -311,7 +311,8 @@ print_event_1 (const char *str, Lisp_Object obj, Lisp_Object printcharfun)
 }
 
 static void
-print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_event (Lisp_Object obj, Lisp_Object printcharfun,
+	     int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<event>");
@@ -376,7 +377,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+event_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Lisp_Event *e1 = XEVENT (obj1);
   Lisp_Event *e2 = XEVENT (obj2);

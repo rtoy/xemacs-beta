@@ -436,6 +436,8 @@ extern void fatal (const char *, ...);
 #include <sym.h> /* for HDRR declaration */
 #endif /* __sgi */
 
+#include "compiler.h"
+
 #if defined (__alpha__) && !defined (__NetBSD__) && !defined (__OpenBSD__)
 /* Declare COFF debugging symbol table.  This used to be in
    /usr/include/sym.h, but this file is no longer included in Red Hat
@@ -556,8 +558,8 @@ round_up (ElfW(Addr) x, ElfW(Addr) y)
 void unexec (char *new_name, char *old_name, unsigned int data_start,
 	    unsigned int bss_start, unsigned int entry_address);
 void
-unexec (char *new_name, char *old_name, unsigned int data_start,
-	unsigned int bss_start, unsigned int entry_address)
+unexec (char *new_name, char *old_name, unsigned int UNUSED (data_start),
+	unsigned int UNUSED (bss_start), unsigned int UNUSED (entry_address))
 {
   int new_file, old_file, new_file_size;
 

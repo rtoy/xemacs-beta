@@ -241,8 +241,8 @@ GaugeClassInit (void)
 static void
 GaugeInit (Widget   request,
 	   Widget   new,
-	   ArgList  args,
-	   Cardinal *num_args)
+	   ArgList  UNUSED (args),
+	   Cardinal *UNUSED (num_args))
 {
     GaugeWidget gw = (GaugeWidget) new;
 
@@ -366,8 +366,8 @@ GaugeResize (Widget w)
 /* ARGSUSED */
 static void
 GaugeExpose (Widget w,
-	     XEvent *event,
-	     Region region)
+	     XEvent *UNUSED (event),
+	     Region UNUSED (region))
 {
 	GaugeWidget gw = (GaugeWidget) w;
 register Display *dpy = XtDisplay(w) ;
@@ -376,7 +376,6 @@ register Window	win = XtWindow(w) ;
 	GC	gctop, gcbot ;	/* dark, light shadows */
 
 	int	len ;		/* length (width or height) of widget */
-	int	hgt ;		/* height (width) of widget */
 	int	e0,e1 ;		/* ends of the gauge */
 	int	x ;
 	int	y ;		/* vertical (horizontal) position */
@@ -397,10 +396,8 @@ register Window	win = XtWindow(w) ;
 
 	if( gw->gauge.orientation == XtorientHorizontal ) {
 	  len = gw->core.width ;
-	  hgt = gw->core.height ;
 	} else {
 	  len = gw->core.height ;
-	  hgt = gw->core.width ;
 	}
 
 	/* if the gauge is selected, signify by drawing the background
@@ -503,10 +500,10 @@ register Window	win = XtWindow(w) ;
 
 static Boolean
 GaugeSetValues (Widget   old,
-		Widget   request,
+		Widget   UNUSED (request),
 		Widget   new,
-		ArgList  args,
-		Cardinal *num_args)
+		ArgList  UNUSED (args),
+		Cardinal *UNUSED (num_args))
 {
 	GaugeWidget oldgw = (GaugeWidget) old;
 	GaugeWidget gw = (GaugeWidget) new;
@@ -724,7 +721,7 @@ GaugeConvert (Widget	w,
 
 static	void
 GaugeLoseSel (Widget w,
-	      Atom   *selection)	/* usually XA_PRIMARY */
+	      Atom   *UNUSED (selection))	/* usually XA_PRIMARY */
 {
 	GaugeWidget	gw = (GaugeWidget)w ;
 	Display *dpy = XtDisplay(w) ;
@@ -742,9 +739,9 @@ GaugeLoseSel (Widget w,
 
 
 static	void
-GaugeDoneSel (Widget w,
-	      Atom   *selection,	/* usually XA_PRIMARY */
-	      Atom   *target)		/* requested target */
+GaugeDoneSel (Widget UNUSED (w),
+	      Atom   *UNUSED (selection),	/* usually XA_PRIMARY */
+	      Atom   *UNUSED (target))		/* requested target */
 {
 	/* selection done, anything to do? */
 }
@@ -775,8 +772,8 @@ GaugeGetSelCB (Widget    w,
 	       Atom      *selection,
 	       Atom      *type,
 	       XtPointer value,
-	       unsigned long    *length,
-	       int       *format)
+	       unsigned long    *UNUSED (length),
+	       int       *UNUSED (format))
 {
 	Display	*dpy = XtDisplay(w) ;
 	Atom	target = (Atom)client ;
@@ -1108,7 +1105,7 @@ DisableUpdate (GaugeWidget gw)
 
 static	void
 GaugeGetValue (XtPointer    clientData,
-	       XtIntervalId *intervalId)
+	       XtIntervalId *UNUSED (intervalId))
 {
 	GaugeWidget	gw = (GaugeWidget)clientData ;
 	Cardinal	value ;

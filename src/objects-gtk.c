@@ -58,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
    Return value is 1 for normal success, 2 for nearest color success,
    3 for Non-deallocable sucess. */
 int
-allocate_nearest_color (GdkColormap *colormap, GdkVisual *visual,
+allocate_nearest_color (GdkColormap *colormap, GdkVisual *UNUSED (visual),
 		        GdkColor *color_def)
 {
   int rc;
@@ -138,7 +138,7 @@ gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
 static void
 gtk_print_color_instance (struct Lisp_Color_Instance *c,
 			  Lisp_Object printcharfun,
-			  int escapeflag)
+			  int UNUSED (escapeflag))
 {
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
   write_fmt_string (printcharfun, " %ld=(%X,%X,%X)",
@@ -172,14 +172,14 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
 static int
 gtk_color_instance_equal (struct Lisp_Color_Instance *c1,
 			  struct Lisp_Color_Instance *c2,
-			  int depth)
+			  int UNUSED (depth))
 {
     return (gdk_color_equal (COLOR_INSTANCE_GTK_COLOR (c1),
 			     COLOR_INSTANCE_GTK_COLOR (c2)));
 }
 
 static unsigned long
-gtk_color_instance_hash (struct Lisp_Color_Instance *c, int depth)
+gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth))
 {
     return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c), NULL));
 }
@@ -194,7 +194,7 @@ gtk_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 }
 
 static int
-gtk_valid_color_name_p (struct device *d, Lisp_Object color)
+gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
 {
   GdkColor c;
   const char *extname;
@@ -212,8 +212,9 @@ gtk_valid_color_name_p (struct device *d, Lisp_Object color)
 /************************************************************************/
 
 static int
-gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
-			      Lisp_Object device, Error_Behavior errb)
+gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
+			      Lisp_Object UNUSED (name),
+			      Lisp_Object UNUSED (device), Error_Behavior errb)
 {
   GdkFont *gf;
   XFontStruct *xf;
@@ -307,7 +308,7 @@ gtk_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
 static void
 gtk_print_font_instance (struct Lisp_Font_Instance *f,
 			 Lisp_Object printcharfun,
-			 int escapeflag)
+			 int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
 		    (unsigned long) gdk_font_id (FONT_INSTANCE_GTK_FONT (f)));
@@ -332,7 +333,8 @@ Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
 static Lisp_Object __gtk_list_fonts_internal (const char *pattern);
 
 static Lisp_Object
-gtk_font_instance_truename (struct Lisp_Font_Instance *f, Error_Behavior errb)
+gtk_font_instance_truename (struct Lisp_Font_Instance *f,
+			    Error_Behavior UNUSED (errb))
 {
   if (NILP (FONT_INSTANCE_TRUENAME (f)))
     {
@@ -349,7 +351,7 @@ gtk_font_instance_truename (struct Lisp_Font_Instance *f, Error_Behavior errb)
 }
 
 static Lisp_Object
-gtk_font_instance_properties (struct Lisp_Font_Instance *f)
+gtk_font_instance_properties (struct Lisp_Font_Instance *UNUSED (f))
 {
   Lisp_Object result = Qnil;
 
@@ -359,7 +361,8 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-gtk_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
+gtk_list_fonts (Lisp_Object pattern, Lisp_Object UNUSED (device),
+		Lisp_Object UNUSED (maxnumber))
 {
   const char *patternext;
 
@@ -371,7 +374,7 @@ gtk_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 #ifdef MULE
 
 static int
-gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+gtk_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
 			       const Ibyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length,
 			       int stage)

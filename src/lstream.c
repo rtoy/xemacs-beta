@@ -58,7 +58,8 @@ mark_lstream (Lisp_Object obj)
 }
 
 static void
-print_lstream (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
+	       int UNUSED (escapeflag))
 {
   Lstream *lstr = XLSTREAM (obj);
 
@@ -1601,7 +1602,7 @@ dynarr_rewinder (Lstream *stream)
 }
 
 static int
-dynarr_closer (Lstream *stream)
+dynarr_closer (Lstream *UNUSED (stream))
 {
   return 0;
 }

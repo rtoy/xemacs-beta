@@ -161,7 +161,8 @@ mark_database (Lisp_Object object)
 }
 
 static void
-print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_database (Lisp_Object obj, Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   Lisp_Database *db = XDATABASE (obj);
 
@@ -368,7 +369,7 @@ static DB_FUNCS ndbm_func_block =
 
 #ifdef HAVE_BERKELEY_DB
 static Lisp_Object
-berkdb_type (Lisp_Database *db)
+berkdb_type (Lisp_Database *UNUSED (db))
 {
   return Qberkeley_db;
 }

@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #define CLOSESOCKET(s) close(s)
 #endif
 #include "pop.h"
+#include "compiler.h"
 
 #ifdef sun
 #include <malloc.h>
@@ -950,7 +951,13 @@ static int have_winsock = 0;
  * 	into pop_error.
  */
 static int
-socket_connection (char *host, int flags)
+socket_connection (char *host,
+#if defined (KERBEROS) || defined (HESIOD)
+		   int flags
+#else
+		   int UNUSED (flags)
+#endif
+		   )
 {
   struct hostent *hostent;
   struct servent *servent;

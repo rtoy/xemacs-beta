@@ -42,7 +42,8 @@ Boston, MA 02111-1307, USA.  */
  * command if we return nil
  */
 Lisp_Object
-mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
+mswindows_handle_gui_wm_command (struct frame *f, HWND UNUSED (ctrl),
+				 LPARAM id)
 {
   /* Try to map the command id through the proper hash table */
   Lisp_Object callback, callback_ex, image_instance, frame, event;

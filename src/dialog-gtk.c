@@ -39,7 +39,8 @@ Lisp_Object Qgtk_make_dialog_box_internal;
 
 /* We just bounce up into lisp here... see $(srcdir)/lisp/dialog-gtk.el */
 static Lisp_Object
-gtk_make_dialog_box_internal (struct frame* f, Lisp_Object type, Lisp_Object keys)
+gtk_make_dialog_box_internal (struct frame* UNUSED (f), Lisp_Object type,
+			      Lisp_Object keys)
 {
   return (call2 (Qgtk_make_dialog_box_internal, type, keys));
 }

@@ -142,7 +142,13 @@ check_memory_limits (void)
    also declare where the end of pure storage is. */
 
 void
-memory_warnings (void *start, void (*warnfun) (const char *))
+memory_warnings (void *start,
+#ifdef _NO_MALLOC_WARNING_
+		 void (*UNUSED_ARG (warnfun)) (const char *) ATTRIBUTE_UNUSED
+#else
+		 void (*warnfun) (const char *)
+#endif
+		 )
 {
 #ifndef _NO_MALLOC_WARNING_
   extern void (* __after_morecore_hook) (void);	/* From gmalloc.c */

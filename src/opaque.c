@@ -42,7 +42,8 @@ Lisp_Object Vopaque_ptr_free_list;
 
 /* Should never, ever be called. (except by an external debugger) */
 static void
-print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_opaque (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   const Lisp_Opaque *p = XOPAQUE (obj);
 
@@ -90,7 +91,7 @@ make_opaque (const void *data, Bytecount size)
 /* This will not work correctly for opaques with subobjects! */
 
 static int
-equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth)
+equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Bytecount size;
   return ((size = XOPAQUE_SIZE (obj1)) == XOPAQUE_SIZE (obj2) &&
@@ -100,7 +101,7 @@ equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth)
 /* This will not work correctly for opaques with subobjects! */
 
 static unsigned long
-hash_opaque (Lisp_Object obj, int depth)
+hash_opaque (Lisp_Object obj, int UNUSED (depth))
 {
   if (XOPAQUE_SIZE (obj) == sizeof (unsigned long))
     return *((unsigned long *) XOPAQUE_DATA (obj));
@@ -123,7 +124,8 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
 
 /* Should never, ever be called. (except by an external debugger) */
 static void
-print_opaque_ptr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_opaque_ptr (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
 {
   const Lisp_Opaque_Ptr *p = XOPAQUE_PTR (obj);
 
@@ -134,13 +136,13 @@ print_opaque_ptr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-equal_opaque_ptr (Lisp_Object obj1, Lisp_Object obj2, int depth)
+equal_opaque_ptr (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   return (XOPAQUE_PTR (obj1)->ptr == XOPAQUE_PTR (obj2)->ptr);
 }
 
 static unsigned long
-hash_opaque_ptr (Lisp_Object obj, int depth)
+hash_opaque_ptr (Lisp_Object obj, int UNUSED (depth))
 {
   return (unsigned long) XOPAQUE_PTR (obj)->ptr;
 }

@@ -184,25 +184,27 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 }
 
 static void
-emacs_tty_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
+emacs_tty_format_magic_event (Lisp_Event *UNUSED (emacs_event),
+			      Lisp_Object UNUSED (pstream))
 {
   /* Nothing to do currently */
 }
 
 static int
-emacs_tty_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2)
+emacs_tty_compare_magic_event (Lisp_Event *UNUSED (e1),
+			       Lisp_Event *UNUSED (e2))
 {
   return 1;
 }
 
 static Hashcode
-emacs_tty_hash_magic_event (Lisp_Event *e)
+emacs_tty_hash_magic_event (Lisp_Event *UNUSED (e))
 {
   return 0;
 }
 
 static void
-emacs_tty_handle_magic_event (Lisp_Event *emacs_event)
+emacs_tty_handle_magic_event (Lisp_Event *UNUSED (emacs_event))
 {
   /* Nothing to do currently */
 }

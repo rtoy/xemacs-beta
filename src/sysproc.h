@@ -152,6 +152,17 @@ Boston, MA 02111-1307, USA.  */
 #include <util.h>		/* openpty() on NetBSD */
 #endif
 
+/* The FD_* macros expand to __extension__ forms on glibc-based systems.  Uno
+   does not understand such forms, so let's help it out. */
+#ifdef UNO
+#undef FD_SET
+#undef FD_CLR
+#undef FD_ISSET
+#undef FD_ZERO
+#undef MAXDESC
+#undef SELECT_TYPE
+#endif /* UNO */
+
 #ifdef FD_SET
 
 /* We could get this from param.h, but better not to depend on finding that.

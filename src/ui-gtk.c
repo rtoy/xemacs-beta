@@ -318,7 +318,8 @@ mark_ffi_data (Lisp_Object obj)
 }
 
 static void
-ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+		    int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<ffi %p>", XFFI (obj)->function_ptr);
@@ -505,7 +506,8 @@ struct __dll_mapper_closure {
   void **storage;
 };
 
-static void __dll_mapper (gpointer key, gpointer value, gpointer user_data)
+static void __dll_mapper (gpointer UNUSED (key), gpointer value,
+			  gpointer user_data)
 {
   struct __dll_mapper_closure *closure = (struct __dll_mapper_closure *) user_data;
 
@@ -786,7 +788,8 @@ Call an external function.
 
 /* GtkObject wrapping for Lisp */
 static void
-emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			  int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<GtkObject %p>", XGTK_OBJECT (obj)->object);
@@ -969,7 +972,7 @@ allocate_emacs_gtk_object_data (void)
    lisp_to_gtk_type() routine to defend against passing dead objects
    to GTK routines. */
 static void
-__notice_object_destruction (GtkObject *obj, gpointer user_data)
+__notice_object_destruction (GtkObject *UNUSED (obj), gpointer user_data)
 {
   ungcpro_popup_callbacks ((GUI_ID) user_data);
 }
@@ -1104,7 +1107,8 @@ static const struct memory_description emacs_gtk_boxed_description [] = {
 };
 
 static void
-emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun,
+			 int UNUSED (escapeflag))
 {
   if (print_readably)
     printing_unreadable_object ("#<GtkBoxed %p>", XGTK_BOXED (obj)->object);
@@ -1115,7 +1119,7 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapefl
 }
 
 static int
-emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int depth)
+emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int UNUSED (depth))
 {
   emacs_gtk_boxed_data *data1 = XGTK_BOXED(o1);
   emacs_gtk_boxed_data *data2 = XGTK_BOXED(o2);
@@ -1125,7 +1129,7 @@ emacs_gtk_boxed_equality (Lisp_Object o1, Lisp_Object o2, int depth)
 }
 
 static unsigned long
-emacs_gtk_boxed_hash (Lisp_Object obj, int depth)
+emacs_gtk_boxed_hash (Lisp_Object obj, int UNUSED (depth))
 {
   emacs_gtk_boxed_data *data = XGTK_BOXED(obj);
   return (HASH2 ((unsigned long)data->object, data->object_type));

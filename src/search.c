@@ -158,7 +158,7 @@ matcher_overflow ()
 
 static int
 compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
-		   struct re_registers *regp, Lisp_Object translate,
+		   struct re_registers *UNUSED (regp), Lisp_Object translate,
 		   int posix, Error_Behavior errb)
 {
   const char *val;
@@ -197,8 +197,9 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
 struct re_pattern_buffer *
 compile_pattern (Lisp_Object pattern, struct re_registers *regp,
-		 Lisp_Object translate, Lisp_Object searchobj,
-		 struct buffer *searchbuf, int posix, Error_Behavior errb)
+		 Lisp_Object translate, Lisp_Object UNUSED (searchobj),
+		 struct buffer *UNUSED (searchbuf), int posix,
+		 Error_Behavior errb)
 {
   struct regexp_cache *cp, **cpp;
 
@@ -404,7 +405,7 @@ Optional argument BUFFER defaults to the current buffer.
 
 static Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
-		struct buffer *buf, int posix)
+		struct buffer *buf, int UNUSED (posix))
 {
   Bytecount val;
   Charcount s;
@@ -3085,7 +3086,7 @@ Set the regexp to be used to match a word in regular-expression searching.
 #### Not yet implemented.  Currently does nothing.
 #### Do not use this yet.  Its calling interface is likely to change.
 */
-       (regexp))
+       (UNUSED (regexp)))
 {
   return Qnil;
 }

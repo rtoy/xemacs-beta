@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 DEFINE_CONSOLE_TYPE (x);
 
 static int
-x_initially_selected_for_input (struct console *con)
+x_initially_selected_for_input (struct console *UNUSED (con))
 {
   return 1;
 }

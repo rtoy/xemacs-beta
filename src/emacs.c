@@ -702,7 +702,13 @@ check_compatible_window_system (char *must)
 */
 DECLARE_DOESNT_RETURN (main_1 (int, Extbyte **, Extbyte **, int));
 DOESNT_RETURN
-main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
+main_1 (int argc, Extbyte **argv,
+#if defined (WIN32_NATIVE) || defined (_SCO_DS)
+	Extbyte **envp,
+#else
+	Extbyte **UNUSED (envp),
+#endif
+	int restart)
 {
   char stack_bottom_variable;
   int skip_args = 0;
@@ -3361,12 +3367,12 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 /* GCC >= 2.8.  -slb */
 #if defined (GNU_MALLOC)
 static void
-voodoo_free_hook (void *mem)
+voodoo_free_hook (void *UNUSED (mem))
 {
   /* Disable all calls to free() when XEmacs is exiting and it doesn't */
   /* matter. */
   __free_hook =
-#ifdef TYPEOF
+#if defined (TYPEOF) && !defined (UNO)
     /* prototype of __free_hook varies with glibc version */
     (TYPEOF (__free_hook))
 #endif
@@ -3432,7 +3438,7 @@ all of which are called before XEmacs is actually killed.
 
 #if defined (GNU_MALLOC)
   __free_hook =
-#ifdef TYPEOF
+#if defined (TYPEOF) && !defined (UNO)
     /* prototype of __free_hook varies with glibc version */
     (TYPEOF (__free_hook))
 #endif

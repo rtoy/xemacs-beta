@@ -149,7 +149,8 @@ mark_console (Lisp_Object obj)
 }
 
 static void
-print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_console (Lisp_Object obj, Lisp_Object printcharfun,
+	       int UNUSED (escapeflag))
 {
   struct console *con = XCONSOLE (obj);
 
@@ -974,7 +975,13 @@ On such systems, Emacs will start a subshell and wait for it to exit.
    Then in any case stuff anything Emacs has read ahead and not used.  */
 
 void
-stuff_buffered_input (Lisp_Object stuffstring)
+stuff_buffered_input (
+#ifdef BSD
+		      Lisp_Object stuffstring
+#else
+		      Lisp_Object UNUSED (stuffstring)
+#endif
+		      )
 {
 /* stuff_char works only in BSD, versions 4.2 and up.  */
 #if defined (BSD)
@@ -1102,7 +1109,7 @@ Optional fifth arg CONSOLE specifies console to make changes to; nil means
  the selected console.
 See also `current-input-mode'.
 */
-     (ignored, flow, meta, quit, console))
+       (UNUSED (ignored), flow, meta, quit, console))
 {
   struct console *con = decode_console (console);
   int meta_key = (!CONSOLE_TTY_P (con) ? 1 :

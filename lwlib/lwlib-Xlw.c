@@ -266,7 +266,7 @@ xlw_create_horizontal_scrollbar (widget_instance *instance)
 }
 
 static void
-xlw_update_scrollbar (widget_instance *instance, Widget widget,
+xlw_update_scrollbar (widget_instance *UNUSED (instance), Widget widget,
 		      widget_value *val)
 {
   if (val->scrollbar_data)
@@ -392,8 +392,8 @@ xlw_create_tab_control (widget_instance *instance)
   return tab;
 }
 
-static void build_tabs_in_widget (widget_instance* instance, Widget widget, 
-				  widget_value* val)
+static void build_tabs_in_widget (widget_instance* UNUSED (instance),
+				  Widget widget, widget_value* val)
 {
   widget_value* cur = val;
   for (cur = val; cur; cur = cur->next)
@@ -533,7 +533,7 @@ lw_lucid_widget_p (Widget widget)
 
 void
 xlw_update_one_widget (widget_instance* instance, Widget widget,
-		       widget_value* val, Boolean deep_p)
+		       widget_value* val, Boolean UNUSED (deep_p))
 {
   WidgetClass class_ = XtClass (widget);
 
@@ -570,14 +570,13 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
 }
 
 void
-xlw_update_one_value (widget_instance* instance, Widget widget,
-		      widget_value* val)
+xlw_update_one_value (widget_instance* UNUSED (instance),
+		      Widget UNUSED (widget), widget_value* UNUSED (val))
 {
-  return;
 }
 
 void
-xlw_pop_instance (widget_instance* instance, Boolean up)
+xlw_pop_instance (widget_instance* UNUSED (instance), Boolean UNUSED (up))
 {
 }
 

@@ -134,7 +134,8 @@ mark_charset (Lisp_Object obj)
 }
 
 static void
-print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_charset (Lisp_Object obj, Lisp_Object printcharfun,
+	       int UNUSED (escapeflag))
 {
   Lisp_Charset *cs = XCHARSET (obj);
 
@@ -382,7 +383,7 @@ struct charset_list_closure
 };
 
 static int
-add_charset_to_list_mapper (Lisp_Object key, Lisp_Object value,
+add_charset_to_list_mapper (Lisp_Object UNUSED (key), Lisp_Object value,
 			    void *charset_list_closure)
 {
   /* This function can GC */
@@ -1014,8 +1015,8 @@ syms_of_mule_charset (void)
 }
 
 static int
-init_charset_unicode_tables_mapper (Lisp_Object key, Lisp_Object value,
-				    void *closure)
+init_charset_unicode_tables_mapper (Lisp_Object UNUSED (key),
+				    Lisp_Object value, void *UNUSED (closure))
 {
   init_charset_unicode_tables (value);
   return 0;

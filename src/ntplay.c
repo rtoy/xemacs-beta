@@ -35,7 +35,7 @@ static int play_sound_data_1 (UChar_Binary *data, int length,
 			      int volume, int convert);
 
 void
-play_sound_file (Extbyte *sound_file, int volume)
+play_sound_file (Extbyte *sound_file, int UNUSED (volume))
 {
   DWORD flags = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
   Lisp_Object fname =
@@ -82,7 +82,7 @@ play_sound_file (Extbyte *sound_file, int volume)
 /* mswindows can't cope with playing a sound from alloca space so we
    have to convert if necessary */
 static int
-play_sound_data_1 (UChar_Binary *data, int length, int volume,
+play_sound_data_1 (UChar_Binary *data, int length, int UNUSED (volume),
 		   int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;

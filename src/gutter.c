@@ -552,7 +552,8 @@ mark_gutters (struct frame *f)
    knows exactly what extents have changed. */
 void
 gutter_extent_signal_changed_region_maybe (Lisp_Object obj,
-					   Charbpos start, Charbpos end)
+					   Charbpos UNUSED (start),
+					   Charbpos UNUSED (end))
 {
   /* #### Start and end are currently ignored but could be used by a
      more optimal gutter redisplay. We currently loop over all frames
@@ -832,7 +833,8 @@ the current window.
 DEFINE_SPECIFIER_TYPE (gutter);
 
 static void
-gutter_after_change (Lisp_Object specifier, Lisp_Object locale)
+gutter_after_change (Lisp_Object UNUSED (specifier),
+		     Lisp_Object UNUSED (locale))
 {
   MARK_GUTTER_CHANGED;
 }
@@ -948,8 +950,9 @@ right_gutter_specs_changed (Lisp_Object specifier, struct window *w,
 }
 
 static void
-default_gutter_specs_changed (Lisp_Object specifier, struct window *w,
-			       Lisp_Object oldval)
+default_gutter_specs_changed (Lisp_Object UNUSED (specifier),
+			      struct window *UNUSED (w),
+			      Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vgutter);
 }
@@ -994,24 +997,25 @@ gutter_geometry_changed_in_window (Lisp_Object specifier, struct window *w,
 }
 
 static void
-default_gutter_size_changed_in_window (Lisp_Object specifier, struct window *w,
-					Lisp_Object oldval)
+default_gutter_size_changed_in_window (Lisp_Object UNUSED (specifier),
+				       struct window *UNUSED (w),
+				       Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vgutter_size);
 }
 
 static void
-default_gutter_border_width_changed_in_window (Lisp_Object specifier,
-						struct window *w,
-						Lisp_Object oldval)
+default_gutter_border_width_changed_in_window (Lisp_Object UNUSED (specifier),
+					       struct window *UNUSED (w),
+					       Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vgutter_border_width);
 }
 
 static void
-default_gutter_visible_p_changed_in_window (Lisp_Object specifier,
-					     struct window *w,
-					     Lisp_Object oldval)
+default_gutter_visible_p_changed_in_window (Lisp_Object UNUSED (specifier),
+					    struct window *UNUSED (w),
+					    Lisp_Object UNUSED (oldval))
 {
   recompute_overlaying_specifier (Vgutter_visible_p);
   /* Need to reconstruct the gutter specifier as it is affected by the

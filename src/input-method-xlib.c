@@ -137,7 +137,8 @@ static Boolean xim_initted = False;
 /* Called from when XIM is destroying.
    Clear all the XIC when the XIM was destroying... */
 static void
-IMDestroyCallback (XIM im, XPointer client_data, XPointer call_data)
+IMDestroyCallback (XIM UNUSED (im), XPointer client_data,
+		   XPointer UNUSED (call_data))
 {
   struct device *d = (struct device *)client_data;
   Lisp_Object tail;
@@ -160,7 +161,8 @@ IMDestroyCallback (XIM im, XPointer client_data, XPointer call_data)
 /* This is registered in XIM_init_device (when DEVICE is initializing).
    This activates XIM when XIM becomes available. */
 static void
-IMInstantiateCallback (Display *dpy, XPointer client_data, XPointer call_data)
+IMInstantiateCallback (Display *dpy, XPointer client_data,
+		       XPointer UNUSED (call_data))
 {
   struct device *d = (struct device *)client_data;
   XIM xim;
@@ -243,7 +245,8 @@ XIM_init_device (struct device *d)
 
 /* Callback for the deleting frame. */
 static void
-XIM_delete_frame (Widget w, XtPointer client_data, XtPointer call_data)
+XIM_delete_frame (Widget UNUSED (w), XtPointer client_data,
+		  XtPointer UNUSED (call_data))
 {
   struct frame *f = (struct frame *) client_data;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
@@ -686,7 +689,7 @@ EmacsFreeXIMStyles (
   XtAppContext app,
   XrmValuePtr  toVal,
   XtPointer    converter_data,
-  XrmValuePtr  args,
+  XrmValuePtr  UNUSED (args),
   Cardinal    *num_args)
 {
 #ifdef DEBUG_XIM

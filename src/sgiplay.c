@@ -316,7 +316,7 @@ audio_initialize (UChar_Binary *data, int length, int volume)
 }
 
 static int
-play_internal (UChar_Binary *data, int length, AudioContext ac)
+play_internal (UChar_Binary *data, int UNUSED (length), AudioContext ac)
 {
   UChar_Binary * limit;
   if (ac == (AudioContext) 0)

@@ -28,6 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>
 #include <errno.h>
 #include <varargs.h>
+#include "compiler.h"
 
 #ifdef MACH
 
@@ -124,7 +125,9 @@ struct headers {
 
 unexec (new_name, a_name, data_start, bss_start, entry_address)
      char *new_name, *a_name;
-     unsigned data_start, bss_start, entry_address;
+     unsigned data_start;
+     unsigned UNUSED (bss_start);
+     unsigned entry_address;
 {
   int new, old;
   int pagesize, brk;

@@ -421,7 +421,8 @@ TabsClassInit(void)
 /* ARGSUSED */
 
 static void
-TabsInit(Widget request, Widget new, ArgList args, Cardinal *num_args)
+TabsInit(Widget request, Widget new, ArgList UNUSED (args),
+	 Cardinal *UNUSED (num_args))
 {
     TabsWidget newTw = (TabsWidget)new;
 
@@ -477,8 +478,8 @@ TabsInit(Widget request, Widget new, ArgList args, Cardinal *num_args)
 	 */
 /* ARGSUSED */
 static	void
-TabsConstraintInitialize(Widget request, Widget new,
-	ArgList args, Cardinal *num_args)
+TabsConstraintInitialize(Widget UNUSED (request), Widget new,
+			 ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
 	TabsConstraints tab = (TabsConstraints) new->core.constraints ;
 	tab->tabs.greyAlloc = False ;	/* defer allocation of pixel */
@@ -527,7 +528,7 @@ TabsResize(Widget w)
 	int		i ;
 	int		num_children = tw->composite.num_children ;
 	Widget		*childP ;
-	TabsConstraints tab ; /* #### unused */
+	/* TabsConstraints tab ; */ /* #### unused */
 	Dimension	cw,ch,bw ;
 
 	/* Our size has now been dictated by the parent.  Lay out the
@@ -566,7 +567,7 @@ TabsResize(Widget w)
 		++i, ++childP)
 	    if( XtIsManaged(*childP) )
 	    {
-	      tab = (TabsConstraints) (*childP)->core.constraints ;
+	      /* tab = (TabsConstraints) (*childP)->core.constraints ; */
 	      bw = (*childP)->core.border_width ;
 	      /* Don't do anything if we can't see any of the child. */
 	      if (ch >= bw*2 && ch > 0 && cw >= bw*2 && cw > 0)
@@ -589,7 +590,7 @@ TabsResize(Widget w)
 
 /* ARGSUSED */
 static	void
-TabsExpose(Widget w, XEvent *event, Region region)
+TabsExpose(Widget w, XEvent *UNUSED (event), Region UNUSED (region))
 {
 	TabsWidget	tw = (TabsWidget) w;
 
@@ -604,8 +605,8 @@ TabsExpose(Widget w, XEvent *event, Region region)
 
 /* ARGSUSED */
 static	Boolean
-TabsSetValues(Widget current, Widget request, Widget new,
-	ArgList args, Cardinal *num_args)
+TabsSetValues(Widget current, Widget UNUSED (request), Widget new,
+	      ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
 	TabsWidget curtw = (TabsWidget) current ;
 	TabsWidget tw = (TabsWidget) new ;
@@ -684,8 +685,8 @@ TabsSetValues(Widget current, Widget request, Widget new,
 
 /* ARGSUSED */
 static	Boolean
-TabsConstraintSetValues(Widget current, Widget request, Widget new,
-	ArgList args, Cardinal *num_args)
+TabsConstraintSetValues(Widget current, Widget UNUSED (request), Widget new,
+			ArgList UNUSED (args), Cardinal *UNUSED (num_args))
 {
 	TabsWidget tw = (TabsWidget) XtParent(new) ;
 	TabsConstraints ctab = (TabsConstraints) current->core.constraints ;
@@ -737,7 +738,7 @@ TabsConstraintSetValues(Widget current, Widget request, Widget new,
 
 
 static	Boolean
-TabsAcceptFocus(Widget w, Time *t)
+TabsAcceptFocus(Widget w, Time *UNUSED (t))
 {
 	if( !w->core.being_destroyed && XtIsRealized(w) &&
 	    XtIsSensitive(w) && XtIsManaged(w) && w->core.visible )
@@ -1038,7 +1039,8 @@ TabsChangeManaged(Widget w)
 
 /* ARGSUSED */
 static	void
-TabsSelect(Widget w, XEvent *event, String *params, Cardinal *num_params)
+TabsSelect(Widget w, XEvent *event, String *UNUSED (params),
+	   Cardinal *UNUSED (num_params))
 {
 	TabsWidget	tw = (TabsWidget) w ;
 	Widget	*childP ;
@@ -1086,7 +1088,8 @@ TabsSelect(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	/* User hits a key */
 
 static	void
-TabsPage(Widget w, XEvent *event, String *params, Cardinal *num_params)
+TabsPage(Widget w, XEvent *UNUSED (event), String *params,
+	 Cardinal *num_params)
 {
 	TabsWidget	tw = (TabsWidget) w ;
 	Widget		newtop = NULL;
@@ -1150,7 +1153,8 @@ TabsPage(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	/* User hits up/down key */
 
 static	void
-TabsHighlight(Widget w, XEvent *event, String *params, Cardinal *num_params)
+TabsHighlight(Widget w, XEvent *UNUSED (event), String *params,
+	      Cardinal *num_params)
 {
 	TabsWidget	tw = (TabsWidget) w ;
 	Widget		newhl = NULL;
@@ -1215,7 +1219,8 @@ TabsHighlight(Widget w, XEvent *event, String *params, Cardinal *num_params)
 
 
 static	void
-TabsUnhighlight(Widget w, XEvent *event, String *params, Cardinal *num_params)
+TabsUnhighlight(Widget w, XEvent *UNUSED (event), String *UNUSED (params),
+		Cardinal *UNUSED (num_params))
 {
 	TabsWidget	tw = (TabsWidget) w ;
 	int		nc = tw->composite.num_children ;

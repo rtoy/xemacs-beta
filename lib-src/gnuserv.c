@@ -59,9 +59,11 @@ char gnuserv_version[] = "gnuserv version" GNUSERV_VERSION;
 #include <string.h>
 #endif /* HAVE_STRING_H */
 
+#include "compiler.h"
+
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)
-main ()
+int main ()
 {
   fprintf (stderr,"Sorry, the Emacs server is only supported on systems that have\n");
   fprintf (stderr,"Unix Domain sockets, Internet Domain sockets or System V IPC\n");
@@ -855,7 +857,7 @@ handle_unix_request (int ls)
 
 
 int
-main (int argc, char *argv[])
+main (int UNUSED (argc), char *argv[])
 {
   int chan;			/* temporary channel number */
 #ifdef SYSV_IPC

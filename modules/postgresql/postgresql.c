@@ -187,16 +187,18 @@ static const struct memory_description pgconn_description [] = {
 
 static Lisp_Object
 #ifdef RUNNING_XEMACS_21_1
-mark_pgconn (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_pgconn (Lisp_Object UNUSED (obj),
+	     void (*UNUSED_ARG (markobj)) (Lisp_Object) ATTRIBUTE_UNUSED)
 #else
-mark_pgconn (Lisp_Object obj)
+mark_pgconn (Lisp_Object UNUSED (obj))
 #endif
 {
   return Qnil;
 }
 
 static void
-print_pgconn (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_pgconn (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   char buf[256];
   PGconn *P;
@@ -295,9 +297,10 @@ static const struct memory_description pgresult_description [] = {
 
 static Lisp_Object
 #ifdef RUNNING_XEMACS_21_1
-mark_pgresult (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_pgresult (Lisp_Object UNUSED (obj),
+	       void (*UNUSED_ARG (markobj)) (Lisp_Object) ATTRIBUTE_UNUSED)
 #else
-mark_pgresult (Lisp_Object obj)
+mark_pgresult (Lisp_Object UNUSED (obj))
 #endif
 {
   return Qnil;
@@ -307,7 +310,8 @@ mark_pgresult (Lisp_Object obj)
 #define RESULT_CMD_TUPLES_FMT "#<PGresult %s[%s] - %s>"
 #define RESULT_DEFAULT_FMT "#<PGresult %s - %s>"
 static void
-print_pgresult (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_pgresult (Lisp_Object obj, Lisp_Object printcharfun,
+		int UNUSED (escapeflag))
 {
   char buf[1024];
   PGresult *res;
@@ -403,7 +407,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 
 /* notices */
 static void
-xemacs_notice_processor (void *arg, const char *msg)
+xemacs_notice_processor (void *UNUSED (arg), const char *msg)
 {
   warn_when_safe (Qpostgresql, Qnotice, "%s", msg);
 }

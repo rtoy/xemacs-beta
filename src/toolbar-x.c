@@ -65,7 +65,7 @@ x_initialize_frame_toolbars (struct frame *f)
 /* This only calls one function but we go ahead and create this in
    case we ever do decide that we need to do more work. */
 static void
-x_free_frame_toolbars (struct frame *f)
+x_free_frame_toolbars (struct frame *UNUSED (unused))
 {
 }
 

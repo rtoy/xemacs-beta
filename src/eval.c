@@ -411,7 +411,7 @@ static int warning_will_be_discarded (Lisp_Object level);
 /************************************************************************/
 
 static void
-print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_subr (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 {
   Lisp_Subr *subr = XSUBR (obj);
   const CIbyte *header =
@@ -4747,7 +4747,7 @@ get_inhibit_flags (void)
 }
 
 void
-check_allowed_operation (int what, Lisp_Object obj, Lisp_Object prop)
+check_allowed_operation (int what, Lisp_Object obj, Lisp_Object UNUSED (prop))
 {
   if (inhibit_flags & INHIBIT_EXISTING_BUFFER_TEXT_MODIFICATION)
     {

@@ -160,7 +160,8 @@ See `set-tty-dynamic-color-specs'.
 
 static int
 tty_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
-			       Lisp_Object device, Error_Behavior errb)
+			       Lisp_Object UNUSED (device),
+			       Error_Behavior UNUSED (errb))
 {
   Lisp_Object result;
 
@@ -190,9 +191,9 @@ tty_mark_color_instance (Lisp_Color_Instance *c)
 }
 
 static void
-tty_print_color_instance (Lisp_Color_Instance *c,
-			  Lisp_Object printcharfun,
-			  int escapeflag)
+tty_print_color_instance (Lisp_Color_Instance *UNUSED (c),
+			  Lisp_Object UNUSED (printcharfun),
+			  int UNUSED (escapeflag))
 {
 }
 
@@ -206,20 +207,20 @@ tty_finalize_color_instance (Lisp_Color_Instance *c)
 static int
 tty_color_instance_equal (Lisp_Color_Instance *c1,
 			  Lisp_Color_Instance *c2,
-			  int depth)
+			  int UNUSED (depth))
 {
   return (EQ (COLOR_INSTANCE_TTY_SYMBOL (c1),
 	      COLOR_INSTANCE_TTY_SYMBOL (c2)));
 }
 
 static unsigned long
-tty_color_instance_hash (Lisp_Color_Instance *c, int depth)
+tty_color_instance_hash (Lisp_Color_Instance *c, int UNUSED (depth))
 {
   return LISP_HASH (COLOR_INSTANCE_TTY_SYMBOL (c));
 }
 
 static int
-tty_valid_color_name_p (struct device *d, Lisp_Object color)
+tty_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
 {
   return (!NILP (assoc_no_quit (Fintern (color, Qnil), Vtty_color_alist)));
 #if 0
@@ -231,7 +232,8 @@ tty_valid_color_name_p (struct device *d, Lisp_Object color)
 
 static int
 tty_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
-			      Lisp_Object device, Error_Behavior errb)
+			      Lisp_Object UNUSED (device),
+			      Error_Behavior UNUSED (errb))
 {
   Ibyte *str = XSTRING_DATA (name);
   Lisp_Object charset = Qnil;
@@ -277,9 +279,9 @@ tty_mark_font_instance (Lisp_Font_Instance *f)
 }
 
 static void
-tty_print_font_instance (Lisp_Font_Instance *f,
-			 Lisp_Object printcharfun,
-			 int escapeflag)
+tty_print_font_instance (Lisp_Font_Instance *UNUSED (f),
+			 Lisp_Object UNUSED (printcharfun),
+			 int UNUSED (escapeflag))
 {
 }
 
@@ -291,7 +293,8 @@ tty_finalize_font_instance (Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-tty_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
+tty_list_fonts (Lisp_Object UNUSED (pattern), Lisp_Object UNUSED (device),
+		Lisp_Object UNUSED (maxnumber))
 {
   return list1 (build_string ("normal"));
 }
@@ -299,7 +302,7 @@ tty_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 #ifdef MULE
 
 static int
-tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+tty_font_spec_matches_charset (struct device *UNUSED (d), Lisp_Object charset,
 			       const Ibyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length,
 			       int stage)

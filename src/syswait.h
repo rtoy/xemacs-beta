@@ -28,6 +28,19 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/wait.h>
 #endif
 
+#ifdef UNO
+/* On glibc-based systems, these macros expand to forms containing
+   __extension__, which Uno cannot understand. */
+#undef WEXITSTATUS
+#undef WIFEXITED
+#undef WIFSTOPPED
+#undef WIFSIGNALED
+#undef WCOREDUMP
+#undef WTERMSIG
+#undef WSTOPSIG
+#undef WRETCODE
+#endif
+
 #ifndef WEXITSTATUS
 #define WEXITSTATUS(s) ((s) >> 8)
 #endif

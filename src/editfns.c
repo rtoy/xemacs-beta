@@ -1553,7 +1553,7 @@ This is highly bogus, however, and XEmacs always behaves as if
 The optional fourth arg BUFFER specifies the buffer to insert the
 text into.  If BUFFER is nil, the current buffer is assumed.
 */
-       (character, count, ignored, buffer))
+       (character, count, UNUSED (ignored), buffer))
 {
   /* This function can GC */
   REGISTER Ibyte *string;
@@ -2329,7 +2329,7 @@ this function always acts as if LEAVE-MARKERS is non-nil.)
 
 Transposing beyond buffer boundaries is an error.
 */
-  (start1, end1, start2, end2, leave_markers))
+       (start1, end1, start2, end2, UNUSED (leave_markers)))
 {
   Charbpos startr1, endr1, startr2, endr2;
   Charcount len1, len2;

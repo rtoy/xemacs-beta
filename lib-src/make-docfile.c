@@ -49,6 +49,8 @@ Boston, MA 02111-1307, USA.  */
 #include <string.h>
 #include <ctype.h>
 
+#include "compiler.h"
+
 /* XEmacs addition */
 #define C_IDENTIFIER_CHAR_P(c)			\
  (('A' <= c && c <= 'Z') ||			\
@@ -495,7 +497,8 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
    MINARGS and MAXARGS are the minimum and maximum number of arguments.  */
 
 static void
-write_c_args (FILE *out, const char *func, char *buf, int minargs, int maxargs)
+write_c_args (FILE *out, const char *UNUSED (func), char *buf,
+	      int minargs, int maxargs)
 {
   register char *p;
   int in_ident = 0;

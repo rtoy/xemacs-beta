@@ -708,7 +708,8 @@ mark_what_as_being_ready (struct what_is_ready_closure *closure)
 }
 
 static void
-gtk_what_callback (gpointer closure, gint source, GdkInputCondition why)
+gtk_what_callback (gpointer closure, gint UNUSED (source),
+		   GdkInputCondition UNUSED (why))
 {
   /* If closure is 0, then we got a fake event from a signal handler.
      The only purpose of this is to make XtAppProcessEvent() stop
@@ -850,7 +851,7 @@ emacs_gtk_delete_io_streams (Lisp_Object instream,
    If we've still got pointers to it in this file, we're gonna lose hard.
  */
 void
-debug_process_finalization (struct Lisp_Process *p)
+debug_process_finalization (struct Lisp_Process *UNUSED (p))
 {
 #if 0 /* #### */
   int i;
@@ -968,7 +969,7 @@ dragndrop_data_received (GtkWidget          *widget,
 			 gint                x,
 			 gint                y,
 			 GtkSelectionData   *data,
-			 guint               info,
+			 guint               UNUSED (info),
 			 guint               time)
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
@@ -1056,10 +1057,10 @@ dragndrop_data_received (GtkWidget          *widget,
 }
 
 gboolean
-dragndrop_dropped (GtkWidget *widget,
+dragndrop_dropped (GtkWidget *UNUSED (widget),
 		   GdkDragContext *drag_context,
-		   gint x,
-		   gint y,
+		   gint UNUSED (x),
+		   gint UNUSED (y),
 		   guint time,
 		   gpointer user_data)
 {
@@ -1515,7 +1516,7 @@ emacs_gtk_motion_event_handler (GtkWidget *widget, GdkEventMotion *event)
 }
 
 gboolean
-emacs_shell_event_handler (GtkWidget *wid /* unused */,
+emacs_shell_event_handler (GtkWidget *UNUSED (wid),
 			   GdkEvent *event,
 			   gpointer closure)
 {
@@ -1598,7 +1599,7 @@ emacs_gtk_drain_queue (void)
 }
 
 static void
-emacs_gtk_force_event_pending (struct frame* f)
+emacs_gtk_force_event_pending (struct frame* UNUSED (f))
 {
 #if 0
   stderr_out ("Force event pending called on frame %p!\n", f);

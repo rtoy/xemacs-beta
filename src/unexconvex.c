@@ -180,6 +180,8 @@ extern char *start_of_data ();		/* Start of initialized data */
 #include <machine/scnhdr.h>
 #include <machine/pte.h>
 
+#include "compiler.h"
+
 static long block_copy_start;	/* Old executable start point */
 static struct filehdr f_hdr;	/* File header */
 static struct opthdr f_ohdr;	/* Optional file header (a.out) */
@@ -266,7 +268,8 @@ unsigned data_start, bss_start, entry_address;
 static int
 make_hdr (new, a_out, data_start, bss_start, entry_address, a_name, new_name)
      int new, a_out;
-     unsigned data_start, bss_start, entry_address;
+     unsigned data_start, bss_start;
+     unsigned UNUSED (entry_address);
      char *a_name;
      char *new_name;
 {

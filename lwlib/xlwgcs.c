@@ -231,7 +231,13 @@ AllocGreyGC(Widget w, Pixel fg, Font font, int contrast, Bool be_nice_to_cmap)
 
 GC
 AllocShadeGC(Widget w, Pixel fg, Pixel bg, Font font,
-	int contrast, Bool be_nice_to_cmap)
+	     int contrast,
+#ifdef HAVE_XMU
+	     Bool be_nice_to_cmap
+#else
+	     Bool UNUSED (be_nice_to_cmap)
+#endif
+	     )
 {
 	XGCValues	values ;
 	unsigned long	vmask, dcmask ;
@@ -318,7 +324,13 @@ AllocBotShadowGC(Widget w, int contrast, Bool be_nice_to_cmap)
 	/* return arm-shadow gc. */
 
 GC
-AllocArmGC(Widget w, int contrast, Bool be_nice_to_cmap)
+AllocArmGC(Widget w, int contrast,
+#ifdef HAVE_XMU
+	   Bool be_nice_to_cmap
+#else
+	   Bool UNUSED (be_nice_to_cmap)
+#endif
+	   )
 {
 	Screen		*scr = XtScreen (w);
 	XGCValues	values ;
@@ -514,8 +526,9 @@ Draw3dBox(Widget w, int x, int y, int wid, int hgt, int s, GC topgc, GC botgc)
 #if XtSpecificationRelease < 5
 
 static	GC
-XtAllocateGC(Widget w, int depth, unsigned long mask, XGCValues *values,
-	     unsigned long dynamic, unsigned long dontcare)
+XtAllocateGC(Widget w, int UNUSED (depth), unsigned long mask,
+	     XGCValues *values, unsigned long UNUSED (dynamic),
+	     unsigned long UNUSED (dontcare))
 {
 	return XtGetGC(w, mask, values) ;
 }

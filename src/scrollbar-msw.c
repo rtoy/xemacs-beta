@@ -129,10 +129,10 @@ mswindows_release_scrollbar_instance (struct scrollbar_instance *sb)
   }
 
 static void
-mswindows_update_scrollbar_instance_values (struct window *w,
+mswindows_update_scrollbar_instance_values (struct window *UNUSED (w),
 					    struct scrollbar_instance *sb,
-					    int new_line_increment,
-					    int new_page_increment,
+					    int UNUSED (new_line_increment),
+					    int UNUSED (new_page_increment),
 					    int new_minimum, int new_maximum,
 					    int new_slider_size,
 					    int new_slider_position,
@@ -184,8 +184,8 @@ mswindows_update_scrollbar_instance_values (struct window *w,
 }
 
 static void
-mswindows_update_scrollbar_instance_status (struct window *w,
-					    int active, int size,
+mswindows_update_scrollbar_instance_status (struct window *UNUSED (w),
+					    int UNUSED (active), int size,
 					    struct scrollbar_instance *sb)
 {
   if (SCROLLBAR_MSW_SIZE (sb) != size)
@@ -199,7 +199,7 @@ mswindows_update_scrollbar_instance_status (struct window *w,
 }
 
 void
-mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
+mswindows_handle_scrollbar_event (HWND hwnd, int code, int UNUSED (pos))
 {
   struct frame *f;
   Lisp_Object win, frame;
@@ -422,9 +422,9 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 #ifdef MEMORY_USAGE_STATS
 
 static int
-mswindows_compute_scrollbar_instance_usage (struct device *d,
-				    struct scrollbar_instance *inst,
-				    struct overhead_stats *ovstats)
+mswindows_compute_scrollbar_instance_usage (struct device *UNUSED (d),
+					    struct scrollbar_instance *inst,
+					    struct overhead_stats *ovstats)
 {
   int total = 0;
 

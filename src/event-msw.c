@@ -39,6 +39,14 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#ifdef CYGWIN
+# define USED_IF_CYGWIN(decl) decl
+# define UNUSED_IF_CYGWIN(decl) UNUSED (decl)
+#else
+# define USED_IF_CYGWIN(decl) UNUSED (decl)
+# define UNUSED_IF_CYGWIN(decl) decl
+#endif
+
 #if defined (CYGWIN) && !defined (HAVE_MSG_SELECT)
 #error We do not support non-select() versions (i.e. very old) of Cygwin.
 #endif
@@ -1107,7 +1115,7 @@ remove_waitable_handle (HANDLE h)
  * handle since it will be invalid and will cause the wait to fail
  */
 void
-mswindows_unwait_process (Lisp_Process *p)
+mswindows_unwait_process (Lisp_Process *UNUSED_IF_CYGWIN (p))
 {
 #ifndef CYGWIN
   remove_waitable_handle (get_nt_process_handle (p));
@@ -1145,7 +1153,7 @@ mswindows_unmodalize_signal_maybe (void)
  * condition_case. See mswindows_pump_outstanding_events
  */
 static Lisp_Object
-mswindows_unsafe_pump_events (void *arg)
+mswindows_unsafe_pump_events (void *UNUSED (arg))
 {
   /* This function can call lisp */
   Lisp_Object event = Fmake_event (Qnil, Qnil);
@@ -1669,7 +1677,8 @@ mswindows_need_event (int badly_p)
  * Callback procedure for synchronous timer messages
  */
 static void CALLBACK
-mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
+mswindows_wm_timer_callback (HWND UNUSED (hwnd), UINT UNUSED (umsg),
+			     UINT id_timer, DWORD dwtime)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 
@@ -1712,7 +1721,7 @@ static Lisp_Object dde_eval_result;
 static Lisp_Object dde_eval_error;
 
 static Lisp_Object
-dde_error (Lisp_Object err, Lisp_Object obj)
+dde_error (Lisp_Object err, Lisp_Object UNUSED (obj))
 {
   dde_eval_error = err;
   return Qnil;
@@ -1881,9 +1890,9 @@ ITEM must be an advise token allocated using dde-alloc-advise-item.
 }
 
 HDDEDATA CALLBACK
-mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
+mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 			HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
-			DWORD dwData1, DWORD dwData2)
+			DWORD UNUSED (dwData1), DWORD UNUSED (dwData2))
 {
   switch (uType)
     {
@@ -4054,8 +4063,8 @@ mswindows_modifier_state (BYTE *keymap, DWORD fwKeys, int has_AltGr)
  * Only returns non-Qnil for keys that don't generate WM_CHAR messages
  * or whose ASCII codes (like space) xemacs doesn't like.
  */
-Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
-					   int extendedp)
+Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key,
+					   int UNUSED (mods), int extendedp)
 {
   if (extendedp)	/* Keys not present on a 82 key keyboard */
     {
@@ -4269,7 +4278,7 @@ Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
  * Find the console that matches the supplied mswindows window handle
  */
 Lisp_Object
-mswindows_find_console (HWND hwnd)
+mswindows_find_console (HWND UNUSED (hwnd))
 {
   /* We only support one console */
   return XCAR (Vconsole_list);
@@ -4614,7 +4623,7 @@ emacs_mswindows_unselect_process (Lisp_Process *process, int doin, int doerr)
 }
 
 static void
-emacs_mswindows_select_console (struct console *con)
+emacs_mswindows_select_console (struct console *USED_IF_CYGWIN (con))
 {
 #ifdef CYGWIN
   if (CONSOLE_MSWINDOWS_P (con))
@@ -4649,7 +4658,7 @@ emacs_mswindows_select_console (struct console *con)
 }
 
 static void
-emacs_mswindows_unselect_console (struct console *con)
+emacs_mswindows_unselect_console (struct console *USED_IF_CYGWIN (con))
 {
 #ifdef CYGWIN
   if (CONSOLE_MSWINDOWS_P (con))
@@ -4739,7 +4748,7 @@ emacs_mswindows_create_io_streams (void *inhandle, void *outhandle,
 
 static void
 emacs_mswindows_delete_io_streams (Lisp_Object instream,
-				   Lisp_Object outstream,
+				   Lisp_Object USED_IF_CYGWIN (outstream),
 				   Lisp_Object errstream,
 				   USID *in_usid,
 				   USID *err_usid)
@@ -4765,7 +4774,7 @@ emacs_mswindows_delete_io_streams (Lisp_Object instream,
 }
 
 static int
-emacs_mswindows_current_event_timestamp (struct console *c)
+emacs_mswindows_current_event_timestamp (struct console *UNUSED (c))
 {
   return GetTickCount ();
 }
@@ -4776,7 +4785,7 @@ emacs_mswindows_current_event_timestamp (struct console *c)
 */
 void debug_process_finalization (Lisp_Process *p);
 void
-debug_process_finalization (Lisp_Process *p)
+debug_process_finalization (Lisp_Process *UNUSED (p))
 {
 #if 0 /* #### */
   Lisp_Object instr, outstr, errstr;

@@ -65,13 +65,14 @@ static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 Lisp_Object safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth);
 
 static Lisp_Object
-mark_bit_vector (Lisp_Object obj)
+mark_bit_vector (Lisp_Object UNUSED (obj))
 {
   return Qnil;
 }
 
 static void
-print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun,
+		  int UNUSED (escapeflag))
 {
   Elemcount i;
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
@@ -94,7 +95,7 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static int
-bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   Lisp_Bit_Vector *v1 = XBIT_VECTOR (obj1);
   Lisp_Bit_Vector *v2 = XBIT_VECTOR (obj2);
@@ -106,7 +107,7 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 }
 
 static Hashcode
-bit_vector_hash (Lisp_Object obj, int depth)
+bit_vector_hash (Lisp_Object obj, int UNUSED (depth))
 {
   Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
   return HASH2 (bit_vector_length (v),

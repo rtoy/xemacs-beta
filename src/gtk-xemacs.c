@@ -413,7 +413,7 @@ gtk_xemacs_expose (GtkWidget *widget, GdkEventExpose *event)
 }
 
 Lisp_Object
-xemacs_gtk_convert_color(GdkColor *c, GtkWidget *w)
+xemacs_gtk_convert_color(GdkColor *c, GtkWidget *UNUSED (w))
 {
   char color_buf[255];
 

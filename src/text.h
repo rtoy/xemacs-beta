@@ -275,7 +275,8 @@ typedef enum internal_format
 
 DECLARE_INLINE_HEADER (
 Raw_Ichar
-ichar_to_raw (Ichar ch, Internal_Format fmt, Lisp_Object object)
+ichar_to_raw (Ichar ch, Internal_Format fmt,
+	      Lisp_Object UNUSED (object))
 )
 {
   switch (fmt)
@@ -299,7 +300,8 @@ ichar_to_raw (Ichar ch, Internal_Format fmt, Lisp_Object object)
 
 DECLARE_INLINE_HEADER (
 int
-ichar_fits_in_format (Ichar ch, Internal_Format fmt, Lisp_Object object)
+ichar_fits_in_format (Ichar ch, Internal_Format fmt,
+		      Lisp_Object UNUSED (object))
 )
 {
   switch (fmt)
@@ -321,8 +323,8 @@ ichar_fits_in_format (Ichar ch, Internal_Format fmt, Lisp_Object object)
 
 DECLARE_INLINE_HEADER (
 int
-objects_have_same_internal_representation (Lisp_Object srcobj,
-					   Lisp_Object dstobj)
+objects_have_same_internal_representation (Lisp_Object UNUSED (srcobj),
+					   Lisp_Object UNUSED (dstobj))
 )
 {
   /* &&#### implement this properly when we allow per-object format
@@ -833,7 +835,7 @@ itext_ichar (const Ibyte *ptr)
 DECLARE_INLINE_HEADER (
 Ichar
 itext_ichar_fmt (const Ibyte *ptr, Internal_Format fmt,
-		    Lisp_Object object)
+		 Lisp_Object UNUSED (object))
 )
 {
   switch (fmt)
@@ -863,7 +865,7 @@ itext_ichar_fmt (const Ibyte *ptr, Internal_Format fmt,
 DECLARE_INLINE_HEADER (
 Ichar
 itext_ichar_ascii_fmt (const Ibyte *ptr, Internal_Format fmt,
-			  Lisp_Object object)
+		       Lisp_Object UNUSED (object))
 )
 {
   switch (fmt)
@@ -929,7 +931,7 @@ set_itext_ichar (Ibyte *ptr, Ichar x)
 DECLARE_INLINE_HEADER (
 Bytecount
 set_itext_ichar_fmt (Ibyte *ptr, Ichar x, Internal_Format fmt,
-			Lisp_Object object)
+		     Lisp_Object UNUSED (object))
 )
 {
   switch (fmt)

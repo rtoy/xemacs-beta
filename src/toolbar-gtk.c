@@ -44,14 +44,14 @@ Boston, MA 02111-1307, USA.  */
 
 
 static void
-gtk_initialize_frame_toolbars (struct frame *f)
+gtk_initialize_frame_toolbars (struct frame *UNUSED (f))
 {
 }
 
 /* This only calls one function but we go ahead and create this in
    case we ever do decide that we need to do more work. */
 static void
-gtk_free_frame_toolbars (struct frame *f)
+gtk_free_frame_toolbars (struct frame *UNUSED (f))
 {
 }
 

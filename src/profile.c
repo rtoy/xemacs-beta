@@ -349,7 +349,7 @@ profile_record_unwind (struct backtrace *bt)
 }
 
 static SIGTYPE
-sigprof_handler (int signo)
+sigprof_handler (int UNUSED (signo))
 {
 #ifdef WIN32_ANY
   /* Windows unfortunately does not have any such thing as setitimer
@@ -613,7 +613,7 @@ are recorded
 static int
 set_profiling_info_timing_maphash (Lisp_Object key,
 				   Lisp_Object val,
-				   void *void_closure)
+				   void *UNUSED (void_closure))
 {
   /* This function does not GC */
   if (!INTP (val))
@@ -669,8 +669,8 @@ as described there.
 
 static int
 mark_profiling_info_maphash (const void *void_key,
-			     void *void_val,
-			     void *void_closure)
+			     void *UNUSED (void_val),
+			     void *UNUSED (void_closure))
 {
 #ifdef USE_KKCC
   kkcc_gc_stack_push_lisp_object (VOID_TO_LISP (void_key));

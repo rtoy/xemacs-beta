@@ -29,12 +29,6 @@
 #include "syssignal.h"
 #include "sysfile.h"
 
-#ifdef __GNUC__
-#define UNUSED(x) ((void)(x))
-#else
-#define UNUSED(x)
-#endif
-
 /* Maintain global variable for keeping parser state information; this struct
    is set to zero before the first invocation of the parser. The use of a
    global variable prevents multiple concurrent executions of this code, but
@@ -102,11 +96,9 @@ static size_t parseraw(void **data,size_t *sz,void **outbuf)
 
 /* Currently we cannot cope with files in VOC format; if you really need
    to play these files, they should be converted by using SOX */
-static size_t parsevoc(void **data,size_t *sz,void **outbuf)
+static size_t parsevoc(void **UNUSED (data), size_t *UNUSED (sz),
+		       void **UNUSED (outbuf))
 {
-  UNUSED(data);
-  UNUSED(sz);
-  UNUSED(outbuf);
   return(0);
 }
 

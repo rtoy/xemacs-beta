@@ -139,7 +139,8 @@ mark_device (Lisp_Object obj)
 }
 
 static void
-print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+print_device (Lisp_Object obj, Lisp_Object printcharfun,
+	      int UNUSED (escapeflag))
 {
   struct device *d = XDEVICE (obj);
 

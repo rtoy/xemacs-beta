@@ -122,7 +122,14 @@ static const char *float_error_fn_name;
    error using the given arguments.  If bignums are available, range errors
    are never signaled.  */
 static Lisp_Object
-float_to_int (double x, const char *name, Lisp_Object num, Lisp_Object num2)
+float_to_int (double x,
+#ifdef HAVE_BIGNUM
+	      const char *UNUSED (name), Lisp_Object UNUSED (num),
+	      Lisp_Object UNUSED (num2)
+#else
+	      const char *name, Lisp_Object num, Lisp_Object num2
+#endif
+	      )
 {
 #ifdef HAVE_BIGNUM
   bignum_set_double (scratch_bignum, x);
@@ -166,19 +173,19 @@ in_float_error (void)
 
 
 static Lisp_Object
-mark_float (Lisp_Object obj)
+mark_float (Lisp_Object UNUSED (obj))
 {
   return Qnil;
 }
 
 static int
-float_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+float_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth))
 {
   return (extract_float (obj1) == extract_float (obj2));
 }
 
 static Hashcode
-float_hash (Lisp_Object obj, int depth)
+float_hash (Lisp_Object obj, int UNUSED (depth))
 {
   /* mod the value down to 32-bit range */
   /* #### change for 64-bit machines */

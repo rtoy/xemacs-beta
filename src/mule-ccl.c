@@ -728,9 +728,9 @@ static int stack_idx_of_map_multiple;
 	  }							\
 	else							\
 	  {							\
-	    Ibyte work[MAX_ICHAR_LEN];			\
+	    Ibyte work[MAX_ICHAR_LEN];				\
 	    int len;						\
-	    len = non_ascii_set_itext_ichar (work, ch);	\
+	    len = non_ascii_set_itext_ichar (work, ch);		\
 	    Dynarr_add_many (destination, work, len);		\
 	  }							\
       }								\
@@ -742,9 +742,9 @@ static int stack_idx_of_map_multiple;
 	  }							\
 	else							\
 	  {							\
-	    Ibyte work[MAX_ICHAR_LEN];			\
+	    Ibyte work[MAX_ICHAR_LEN];				\
 	    int len;						\
-	    len = non_ascii_set_itext_ichar (work, ch);	\
+	    len = non_ascii_set_itext_ichar (work, ch);		\
 	    Dynarr_add_many (destination, work, len);		\
 	  }							\
       }								\
@@ -755,8 +755,8 @@ static int stack_idx_of_map_multiple;
    cannot handle a multibyte string except for Control-1 characters. */
 #define CCL_WRITE_STRING(len)					\
   do {								\
-    Ibyte work[MAX_ICHAR_LEN];				\
-    int ch, bytes;						\
+    Ibyte work[MAX_ICHAR_LEN];					\
+    int ch;							\
     if (!destination)						\
       CCL_INVALID_CMD;						\
     else if (conversion_mode == CCL_MODE_ENCODING)		\
@@ -783,7 +783,7 @@ static int stack_idx_of_map_multiple;
 	      }							\
 	    else						\
 	      {							\
-		bytes = non_ascii_set_itext_ichar (work, ch); \
+		non_ascii_set_itext_ichar (work, ch);		\
 		Dynarr_add_many (destination, work, len);	\
 	      }							\
 	  }							\
@@ -800,7 +800,7 @@ static int stack_idx_of_map_multiple;
 	      }							\
 	    else						\
 	      {							\
-		bytes = non_ascii_set_itext_ichar (work, ch); \
+		non_ascii_set_itext_ichar (work, ch);		\
 		Dynarr_add_many (destination, work, len);	\
 	      }							\
 	  }							\
