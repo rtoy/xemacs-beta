@@ -783,12 +783,6 @@ the system malloc.  Andy Piper writes:
 
 Try configuring with pdump or without system malloc.
 
-*** In general use etc/check_cygwin_setup.sh to trap environment problems.
-
-The script etc/check_cygwin_setup.sh will attempt to detect whether
-you have a suitable environment for building.  This script may not work
-correctly if you are using ash instead of bash (see below).
-
 *** Syntax errors running configure scripts, make failing with exit code 127
     in inexplicable situations, etc.
 
@@ -1004,7 +998,7 @@ certain thing in the XKeysymDB file.  This file is normally in /usr/lib/X11/
 or in /usr/openwin/lib/.  If you keep yours in a different place, set the
 environment variable $XKEYSYMDB to point to it before starting emacs.  If
 you still have the problem after doing that, perhaps your version of X is
-too old.  There is a copy of the MIT X11R5 XKeysymDB file in the emacs `etc'
+too old.  There is a copy of the MIT X11R6 XKeysymDB file in the emacs `etc'
 directory.  Try using that one.
 
 *** My X resources used to work, and now some of them are being ignored.

@@ -598,7 +598,7 @@ extraclean:
 ## Note: it's no disaster if these productions miss a file or two; tar
 ## and VC will swiftly let you know if this happens, and it is easily
 ## corrected.
-SOURCES = ChangeLog GETTING.GNU.SOFTWARE INSTALL Makefile.in.in PROBLEMS \
+SOURCES = ChangeLog INSTALL Makefile.in.in PROBLEMS \
 	README build-install.in configure make-dist move-if-change
 
 .PHONY: unlock relock TAGS tags dist info dvi mcs

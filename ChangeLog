@@ -1,3 +1,11 @@
+2005-01-31  Ben Wing  <ben@xemacs.org>
+
+	* GETTING.GNU.SOFTWARE: Delete.
+	* Makefile.in.in (SOURCES):
+	Delete GETTING.GNU.SOFTWARE from SOURCES.
+	* PROBLEMS:
+	Delete reference to check_cygwin_setup.sh.
+
 2005-01-26  Ben Wing  <ben@xemacs.org>
 
 	* configure.in (AC_INIT_PARSE_ARGS):
