@@ -140,7 +140,6 @@ Letters do not insert themselves; instead, they are commands.
   (setq revert-buffer-function 'Buffer-menu-revert-function)
   (setq truncate-lines t)
   (setq buffer-read-only t)
-  (make-local-variable 'mouse-track-click-hook) ; XEmacs
   (add-hook 'mouse-track-click-hook 'Buffer-menu-maybe-mouse-select) ; XEmacs
   (run-hooks 'buffer-menu-mode-hook))
 

@@ -1,3 +1,10 @@
+2001-05-13  Adrian Aichner  <adrian@xemacs.org>
+
+	* buff-menu.el (Buffer-menu-mode): `mouse-track-click-hook' was
+	made buffer-local incorrectly (make-local-variable instead of
+	make-local-hook).  Furthermore this hook must not be local so that
+	it can keep track of buffers and windows.
+
 2001-05-13  Mike Alexander  <mta@arbortext.com>
 
 	* dragdrop.el (experimental-dragdrop-drop-url-default): If event
