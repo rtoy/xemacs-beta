@@ -1247,6 +1247,22 @@ Use the following instead
 
 	Emacs*EmacsFrame.geometry:		81x56--9--1
 
+*** When I try to use the PostgreSQL functions, I get a message about
+undefined symbols.
+
+The only known case in which this happens is if you are using gcc, you
+configured with --error-checking=all and --with-modules, and you
+compiled with no optimization.  If you encounter this problem in any
+other situation, please inform xemacs-beta@xemacs.org.
+
+This problem stems from a gcc bug.  With no optimization, functions
+declared `extern inline' sometimes are not completely compiled away.  An
+undefined symbol with the function's name is put into the resulting
+object file.  In this case, when the postgresql module is loaded, the
+linker is unable to resolve that symbol, so the module load fails.  The
+workaround is to recompile the module with optimization turned on.  Any
+optimization level, including -Os, appears to work.
+
 
 ** MacOS/X, Darwin
 *** XEmacs crashes on MacOS within font-lock, or when dealing
