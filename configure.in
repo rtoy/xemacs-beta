@@ -16,6 +16,7 @@ define([AC_INIT_NOTICE],
 ### To rebuild it, execute the command
 ###	autoconf
 ### in the this directory.  You must have autoconf version 2.13 or later.
+### Note: this script has not yet been ported to autoconf version 2.5x.
 
 ### This file is part of XEmacs.
 
@@ -375,6 +376,7 @@ pdump="no"
 dnl dragndrop is still experimental.  When it is stable, comment out the following line:
 with_dragndrop="no"
 dnl Too annoying, even if mandated by IPv6 (and I'm not even sure of that)
+dnl #### Change this to yes when somebody understands IPv6 and handle bugs.
 with_ipv6_cname="no"
 
 dnl ------------------
@@ -501,7 +503,8 @@ while test $# != 0; do
 	with_hesiod	| \
 	with_dnet	| \
 	with_infodock	| \
-	with_netinstall   | \
+	with_netinstall | \
+	with_ipv6_cname | \
 	external_widget | \
 	verbose		| \
 	extra_verbose	| \
@@ -618,7 +621,8 @@ while test $# != 0; do
 		types="\`all', \`none', \`(no)native', \`no(nas)', \`(no)esd'."
 		USAGE_ERROR(["Valid types for the \`--$optname' option are:
   $types.
-The default is to autodetect all sound support."])
+Option \`all' or \`none' must be first in the list.
+The default is to autodetect native and NAS sound support."])
 	    elif test -n "$new_sdefault" ; then
 		with_native_sound=$new_sdefault
 		with_nas_sound=$new_sdefault
@@ -785,12 +789,12 @@ The default is to autodetect all sound support."])
 	"with_widgets" )
 	  case "$val" in
 	    l | lu | luc | luci | lucid )		val=lucid  ;;
-	    m | mo | mot | moti | motif )		val=motif  ;;
+	    mo | mot | moti | motif )			val=motif  ;;
 	    a | at | ath | athe | athen | athena )	val=athena ;;
 	    n | no | non | none )			val=no     ;;
 	    y | ye | yes )				val=yes    ;;
 	    g | gt | gtk )				val=gtk    ;;
-	    m | ms | msw )				val=msw    ;;
+	    ms | msw )					val=msw    ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
   \`gtk', \`lucid', \`motif', \`athena', \`yes', or \`no'."]) ;;
 	  esac
@@ -2647,8 +2651,10 @@ if test "${GTK_CONFIG}" != "no"; then
 
       dnl Check for libglade support (it rocks)
       OLD_CFLAGS="${CFLAGS}"
+      OLD_CPPFLAGS="${CPPFLAGS}"
       OLD_LDFLAGS="${LDFLAGS}"
       CFLAGS="${GTK_CFLAGS} ${CFLAGS}"
+      CPPFLAGS="${GTK_CFLAGS} ${CFLAGS}"
       LDFLAGS="${LDFLAGS} ${GTK_LIBS}"
       AC_CHECK_HEADERS(glade/glade.h glade.h)
       AC_CHECK_LIB(xml, main, XE_PREPEND(-lxml, libs_gtk))
@@ -2659,6 +2665,7 @@ if test "${GTK_CONFIG}" != "no"; then
                        AC_DEFINE(LIBGLADE_XML_TXTDOMAIN,1)],
                       [AC_MSG_RESULT(no)])
       CFLAGS="${OLD_CFLAGS}"
+      CPPFLAGS="${OLD_CPPFLAGS}"
       LDFLAGS="${OLD_LDFLAGS}"
 fi
 
@@ -3215,9 +3222,38 @@ dnl ----------------------
 if test "$window_system" != "none"; then
   AC_CHECKING(for graphics libraries)
 
+  dnl add special code to handle xpm-nox on Cygwin (csw)
+  dnl   -- should only happen if CYGWIN && WITH_XPM && WITH_MSW && !WITH_X
+  libpath_xpm=
+  incpath_xpm=
+  case "$opsys" in 
+    cygwin*)
+      cygwin_top=`eval "gcc -print-file-name=libc.a"` ;
+      cygwin_top=`eval "dirname ${cygwin_top}"`;
+      cygwin_top="${cygwin_top}/..";
+      case "$window_system" in
+        dnl use "standard" search pattern
+        x11)  ;;
+        dnl hardcode "standard" non-X11 xpm lib/inc dirs
+        msw) libpath_xpm="-L${cygwin_top}/lib/noX"
+             incpath_xpm="-I${cygwin_top}/include/noX"
+              ;;
+        dnl not supported on cygwin (yet?)
+        gtk)  ;;
+        dnl probably not reached...
+        none) ;;
+        dnl ditto
+        *)    ;;
+      esac
+      ;;
+    dnl use "standard" search pattern for all other OS's
+    *) ;;
+  esac
   dnl Autodetect Xpm
   xpm_problem=""
   if test -z "$with_xpm"; then
+    XE_PREPEND("$incpath_xpm", CFLAGS)
+    XE_PREPEND("$libpath_xpm", LDFLAGS)
     AC_MSG_CHECKING(for Xpm - no older than 3.4f)
     xe_check_libs=-lXpm
     AC_TRY_RUN([#define XPM_NUMBERS
@@ -3253,7 +3289,9 @@ if test "$window_system" != "none"; then
     dnl #### then it will succeed if FOR_MSW is defined,
     dnl #### but doesn't actually verify this assumption.
     AC_DEFINE(HAVE_XPM)
+    XE_PREPEND("$libpath_xpm", LDFLAGS)
     XE_PREPEND(-lXpm, libs_x)
+    XE_PREPEND("$incpath_xpm", CFLAGS)
     AC_MSG_CHECKING(for \"FOR_MSW\" xpm)
     xe_check_libs=-lXpm
     AC_TRY_LINK(, [XpmCreatePixmapFromData()],
@@ -3370,9 +3408,10 @@ dnl X-Specific Graphics libraries
 dnl ----------------------
 
 if test "$with_x11" = "yes"; then
-
   AC_CHECKING(for X11 graphics libraries)
+fi
 
+if test "$with_x11" = "yes" -a "$with_widgets" = "athena"; then
   AC_CHECKING(for the Athena widgets)
 
   dnl What in heck did the user actually want?
@@ -3469,6 +3508,11 @@ if test "$with_x11" = "yes"; then
     have_xaw=no
   fi
 
+else
+  have_xaw=no
+fi dnl "$with_x11" = "yes" -a "$with_widgets" = "athena"
+
+if test "$with_x11" = "yes"; then
   dnl autodetect Motif - but only add to libs_x later (if necessary)
   AC_CHECK_HEADER(Xm/Xm.h,
    [AC_CHECK_LIB(Xm, XmStringFree, have_motif=yes, have_motif=no)],
@@ -4805,6 +4849,7 @@ test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
 test "$use_union_type"     = "yes" && AC_DEFINE(USE_UNION_TYPE)
 test "$pdump"              = "yes" && AC_DEFINE(PDUMP)
+test "$with_ipv6_cname"    = "yes" && AC_DEFINE(IPV6_CANONICALIZE)
 
 dnl -------------------------------
 dnl Report on what we decided to do

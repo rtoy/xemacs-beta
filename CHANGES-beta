@@ -1,3 +1,110 @@
+to 21.5.4 "bamboo"
+-- auto-mode support .9 files as man pages -- Michael Sperber
+-- auto-mode support configure.ac as m4 -- Edward M. Lee
+-- bind `replace-rectangle' to `C-x r p' -- Didier Verna
+-- bind `hyper-apropos-find-variable' (new) to `v' in hyper-apropos-help-map
+   -- David A. Panariti
+-- bind `delete-other-frames' to `C-x 5 1' -- John Paul Wallington
+-- default Info-auto-generate-directory to 'if-outdated -- Adrian Aichner
+-- improve printer handling -- Andy Piper, Mike Alexander, Adrian Aichner
+-- mark buffer as modified when changing coding system -- Andy Piper
+-- minor mode mode-line-strings now customizable -- John Paul Wallington
+   isearch-mode, abbrev-mode, overwrite-mode, auto-fill-mode,
+   gnuserv-mode, defining-kbd-macro-mode, font-lock-mode, view-mode
+-- search the core etc/ for package index if not in ~/.xemacs/ -- Steve Youngs
+-- support sub-expression replacement in replace-match -- Torsten Duwe
+-- support user {site,infodock}-packages hierarchies -- Michael Sperber
+-- truncate-partial-width-windows now applied in redisplay -- Ben Wing
+-- use version-specific name for root testing -- Michael Sperber
+   Eg, /usr/local/lib/xemacs-21.5.4.  Fixes common "can't find root" bug,
+   but run-in-place XEmacs won't find installed packages.
+
+-- HTML docs from Texinfo sources -- Adrian Aichner
+-- document fix for Motif related crashes (Sun/Solaris) -- Robert Pluim
+-- improve package system documentation -- Stephen Turnbull
+-- new Japanese translation of xemacs.1 -- Kazuo Oishi
+-- update developer personal info -- Jan Vroonhof, Michael Diers
+-- many doc fixes and improvements, sorry about the credits :-(
+
+-- alias `interactive-form' to `function-interactive' -- John Paul Wallington
+-- etags to Potorti` version 14.28. -- Yoshiki Hayashi
+-- mark-paragraph - added optional argument -- John Paul Wallington
+
+-- arch-specific files go under ${libdir}, not ${datadir} -- Jered Floyd
+-- configure recognizes LDFLAGS and adds to top Makefile -- Lutz Jaenicke
+-- eliminate bogus check for Athena widgets -- Alexey Mahotkin
+-- omit -Wshadow when compiling with g++ -- Ben Wing
+-- use the ld reported by gcc, not gcc -- Andrew Begel
+-- work around lack of support for autoconf 2.5x -- Didier Verna
+
+-- fix "can't Customize standard faces" bug (partially) -- Jan Vroonhof
+-- fix "can't close last window" bug -- Adrian Aichner
+-- fix "doubled escape" bug in Mule (ISO-2022-7) autosave files -- Kyle Jones
+-- fix "fail to save (non-themed) variable customizations" bug -- Andy Piper
+-- fix PGP signature handling in package UI -- Steve Youngs
+-- fix allocation of module-defined names in symbol table -- Andrew Begel
+-- fix conversion of host and network byte order in multicast -- Daiki Ueno
+-- fix crash from missing XIM unregister callback on Motif -- Glynn Clements
+-- fix crash/infloops in read_key_sequence -- Hirokazu FUKUI
+-- fix early dereference crash in decode_buffer -- Torsten Duwe
+-- fix handling of negative C times -- Simon Josefsson and Stephen Turnbull
+-- fix 'report-xemacs-bug' issues -- Steve Youngs
+-- fix several font-lock bugs -- Jan Vroonhof, Andy Piper, Bill Perry
+-- fix several package-get bugs -- Steve Youngs
+-- fix some slow startups - default with_ipv6_cname=no -- Stephen Turnbull
+-- fix unsigned warnings; turn sign-compare warnings on for NT -- Ben Wing
+-- fix window_loop iteration across multiple devices -- Darryl Okahata
+-- fix/avoid GNU ld -z combreloc lossage -- Stephen Turnbull
+-- make sure installed.db gets updated after updating packages -- Andy Piper
+
+-- GTK improvements/fixes -- Bill Perry
+   -- add face mappings
+   -- fix "can't shut up bell" bug
+   -- fix some face initialization bugs
+   -- fix subwindow handling
+   -- fix yes-or-no-p lossage
+   -- improve conformance to internal APIs
+   -- munge highlight, zmacs-region, toolbar, and gui-button faces from
+      default GtkStyle
+   -- remove useless XPM color symbol checks
+
+-- MS Windows improvements/fixes -- Andy Piper
+   -- better build portability
+   -- change registry key to XEmacs.
+   -- add/fix Cygwin handling of URLs and win32 paths
+   -- fix focus and event handling in scrollbars
+   -- fix get-popup-menu-response bug
+   -- improve DDE support
+   -- improve netinstaller, especially uninstall and shortcuts
+   -- improve popup dialog handling
+   -- new directory dialog support
+   -- quit if the user cancels in directory dialog
+-- Cygwin nox-xpm detection -- Charles Wilson
+-- fix compile problems when --with-msw, --with-x=no, --with-tty=no -- Ben Wing
+-- fix file handle leak in pipes -- Mike Alexander
+-- initial VC.NET support -- Andrew Begel
+
+-- Rename/redefine integral types -- Ben Wing
+   -- See src/ChangeLog for details and rationale.
+   -- All integral types that measure quantities of anything are signed.
+   -- All quantity types boil down to EMACS_INT, except Hashcode,
+      which is an unsigned value of the same size as EMACS_INT.
+   -- Type names should be relatively short, with the first letter
+      capitalized and no underscores if they can be avoided.
+   -- "*count" == zero-based quantity.  Includes sizes, offsets, and indexes.
+   -- "*bpos" == one-based buffer position.
+   -- "Char" refers to internal-format characters, not to the C type "char".
+-- CVS: improve .cvsignore files -- Adrian Aichner
+-- autoload handling improvements -- Didier Verna
+-- improve handling of face inheritance/fallback -- Jan Vroonhof
+-- condense repetitive window-system settings to 'win default' -- Bill Perry
+-- improve debugging in event-msw.c -- Adrian Aichner
+-- rename Menubar-items-truncate-list to Menubar-items-truncate-history
+   -- Adrian Aichner
+-- rename default package index to 'package-index.LATEST.gpg' -- Steve Youngs
+-- unify GUI pixmap handling -- Bill Perry
+-- unify toolbar handling across GUI platforms -- Bill Perry
+
 to 21.5.3 "asparagus"
 -- Add missing XIM unregister callback on Motif -- Glynn Clements
 -- Improve debugging in event-msw.c, fix "can't close last window" bug

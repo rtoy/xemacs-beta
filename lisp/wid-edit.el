@@ -202,12 +202,19 @@ minibuffer."
 	      (console-on-window-system-p))
 	 ;; Pressed by the mouse.
 	 (let ((val (get-popup-menu-response
+		     (let ((menu-thingee
 		     (cons title
 			   (mapcar (lambda (x)
 				     (if (stringp x)
 					 (vector x nil nil)
-				       (vector (car x) (list (car x)) t)))
-				   items)))))
+				       (vector (car x)
+					       (list (car x))  ; 'eval 'quote
+					       t)))
+				   items))
+		     ))
+		       (message "%s" menu-thingee)
+		       menu-thingee)
+		     )))
 	   (setq val (and val
 			  (listp (event-object val))
 			  (stringp (car-safe (event-object val)))

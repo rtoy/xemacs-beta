@@ -66,7 +66,8 @@ Window-system options:
 --x-includes=DIR        Search for X header files in DIR.
 --x-libraries=DIR       Search for X libraries in DIR.
 --with-msw (*)          Support MS Windows as a window system (only under
-                        Cygwin and MinGW).
+                        Cygwin and MinGW).  `--with-msw=no' may be needed on
+                        *nix systems with Wine installed.
 --with-toolbars=no      Don't compile with any toolbar support.
 --with-wmcommand=no     Compile without realized leader window which will
                         keep the WM_COMMAND property.
@@ -130,16 +131,16 @@ Image options:
 
 Sound options:
 
---with-sound=TYPE,[TYPE],... Compile with native sound support.
+--with-sound=TYPE[,TYPE[,...]] (*) Compile with sound support.
                         Valid types are `native', `nas' and `esd'.
                         Prefix a type with 'no' to disable.
-                        The first option can be `none' or `all'.
-                        `none' is a synonym for `nonative,nonas,noesd'.
-                        `all' is a synonym for native,nas,esd or `all'.
+                        The first type can be `none' or `all'.  `none' means
+                        `nonative,nonas,noesd'.  `all' means `native,nas,esd'.
+                        Later options override earlier ones for the same TYPE.
                         The default is to autodetect all sound support.
 --native-sound-lib=LIB  Native sound support library.  Needed on Suns
-                        with --with-sound=both because both sound libraries
-                        are called libaudio.
+                        with `--with-sound=native,nas' because both sound
+                        libraries are called libaudio.
 
 
 Database options:
@@ -196,9 +197,8 @@ Additional features:
                         and localdir files in case run-time searching
                         for them fails.
 --moduledir=DIR         Directory to install dynamic modules in.
---pdump                 New, experimental, non-working, don't-sue-me-if-
-                        your-house-collapses-and-your-wife-leaves-you,
-                        portable dumper.
+--pdump                 New, experimental, don't-sue-me-if-your-house-
+                        collapses-and-your-wife-leaves-you, portable dumper.
 --with-file-coding      Allows transparent use of "foreign" line break
                         conventions in text files (such as LF-delimited text
                         imported from a Unix system to a Windows environment),
@@ -221,14 +221,14 @@ Internationalization options:
                         on Solaris and the XmIm* routines are detected.
 --with-canna (*)        Compile with support for Canna (a Japanese input method
                         used in conjunction with Mule support).
---with-wnn (*)          Compile with support for WNN (a multi-language input
+--with-wnn (*)          Compile with support for Wnn (a multi-language input
                         method used in conjunction with Mule support).
---with-wnn6 (*)         Compile with support for the commercial package WNN6.
+--with-wnn6 (*)         Compile with support for the commercial package Wnn6.
 --with-i18n3            Compile with I18N level 3 (support for message
                         translation).  This doesn't currently work.
---with-xfs              Compile with XFontSet support for bilingual menubar.
-                        Can't use this option with --with-xim=motif or xlib.
-                        And should have --with-menubars=lucid.
+--with-xfs              Compile with XFontSet support for internationalized
+                        menubar.  Incompatible with `--with-xim=motif'.
+                        `--with-menubars=lucid' (the default) is desirable.
 
 
 Debugging options:
@@ -269,7 +269,7 @@ Other options:
 --with-clash-detection  Use lock files to detect multiple edits of the same
                         file.  The default is to do clash detection.
 
-You may also specify any of the `path' variables found in Makefile.in,
+You may also specify any of the `path' variables found in Makefile.in.in,
 including --bindir, --libdir, --docdir, --lispdir, --sitelispdir,
 --datadir, --infodir, --mandir and so on.  Note that we recommend
 against explicitly setting any of these variables.  See the INSTALL

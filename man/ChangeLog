@@ -1,3 +1,9 @@
+2001-11-15  Darryl Okahata  <darrylo@xemacs.org>
+
+	* glyphs.texi:
+	lispref.texi: Add examples of how to insert graphics into a
+	buffer.
+	
 2002-01-02  Adrian Aichner  <adrian@xemacs.org>
 
 	* emodules.texi: Add missing direntry, reword "dynamic loadable"

@@ -1459,7 +1459,8 @@ getaddrinfo() interface from the older gethostbyname() interface.  The
 solution above is insufficient, because getaddrinfo() by default tries
 to get IPv6 information for localhost.  This always involves a dns
 lookup to get the CNAME, and the strategies above don't work.  It then
-falls back to IPv4 behavior.  This is good[tm]; trust us.
+falls back to IPv4 behavior.  This is good[tm] according the people at
+WIDE who know about IPv6.
 
 ***** Robust network case
 
@@ -1476,21 +1477,7 @@ is appropriate) works in most cases.
 
 If you cannot or do not want to do that, you can hard code IPv4
 behavior in src/process-unix.c.  This is bad[tm], on your own head be
-it.  In the function unix_canonicalize_host_name() about ten lines
-down, change the statement
-
-  hints.ai_family = AF_UNSPEC;
-
-to
-
-  hints.ai_family = PF_INET;
-
-and rebuild XEmacs.
-
-getaddrinfo() is also called in src/sysdep.c:init_system_name() and in
-src/process-unix.c:unix_open_network_stream().  It should not be
-useful to make this change in either of those places.
-
+it.  Use the configure option `--with-ipv6-cname=no'.
 
 ** IRIX
 *** On Irix, I don't see the toolbar icons and I'm getting lots of

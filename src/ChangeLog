@@ -1,3 +1,10 @@
+2001-07-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in (IPV6_CANONICALIZE): New #define for --with-ipv6-lookup.
+	* process-unix.c (unix_canonicalize_host_name):
+	sysdep.c (init_system_name):
+	Use it to conditionally support IPv6 canonicalization.
+
 2002-01-04  Martin Buchholz  <martin@xemacs.org>
 
 	* keymap.c (define_key_alternate_name): Parenthesize EQ.
