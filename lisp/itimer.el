@@ -369,10 +369,11 @@ Returns the newly created itimer."
 	 nil ))
   (check-nonnegative-number value)
   (if restart (check-nonnegative-number restart))
-  ;; Make proposed itimer name unique if it's not already.
-  (set-itimer-name name)
-  (activate-itimer (list name value restart function is-idle
-			 with-args function-arguments (list 0 0 0)))
+  (let ((itimer (list name value restart function is-idle
+		      with-args function-arguments (list 0 0 0))))
+    ;; Make proposed itimer name unique if it's not already.
+    (set-itimer-name itimer name)
+    (activate-itimer itimer))
   (car itimer-list))
 
 (defun make-itimer ()
