@@ -2275,7 +2275,9 @@ int
 mswindows_utime (Lisp_Object path, struct utimbuf *times)
 {
   struct utimbuf deftime;
+#if 0
   HANDLE fh;
+#endif
   static FILETIME mtime;
   static FILETIME atime;
   Extbyte *filename;
@@ -2311,7 +2313,7 @@ mswindows_utime (Lisp_Object path, struct utimbuf *times)
     }
   return 0;
 #else
-  return utime (filename, &times);
+  return utime (filename, times);
 #endif
 }
 

@@ -1,5 +1,11 @@
 2001-06-01  Ben Wing  <ben@xemacs.org>
 
+	* nt.c (mswindows_utime):
+	* nt.c (close_file_data):
+	fix off-by-one-indirection error.
+
+2001-06-01  Ben Wing  <ben@xemacs.org>
+
 	* event-msw.c (debug_mswin_messages):
 	conditionalize the messages that were causing compile errors.
 	(if only macros could generate #ifdef statements ...)
