@@ -147,10 +147,6 @@ SOURCE=..\src\callint.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\callproc.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\casefiddle.c
 # End Source File
 # Begin Source File

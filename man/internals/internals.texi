@@ -5468,7 +5468,7 @@ various security applications on the Internet.
 @cindex operating system, modules for interfacing with the
 
 @example
-callproc.c
+process.el
 process.c
 process.h
 @end example
@@ -5478,7 +5478,7 @@ and network connections.
 
 @cindex synchronous subprocesses
 @cindex subprocesses, synchronous
-  @file{callproc.c} implements (through the @code{call-process}
+  @file{process.el} implements (through the @code{call-process}
 primitive) what are called @dfn{synchronous subprocesses}.  This means
 that XEmacs runs a program, waits till it's done, and retrieves its
 output.  A typical example might be calling the @file{ls} program to get

@@ -1,3 +1,9 @@
+2004-09-13  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Modules for Interfacing with the
+	Operating System): The code formerly in callproc.c is now
+	implemented in Lisp in process.el.
+
 2004-08-30  Jerry James  <james@xemacs.org>
 
 	* lispref/text.texi: Document text fields.

@@ -1,5 +1,9 @@
 2004-09-13  Jerry James  <james@xemacs.org>
 
+	* callproc.c: Really remove.
+
+2004-09-13  Jerry James  <james@xemacs.org>
+
 	* s/windowsnt.h: Define (DECLARE_)DOESNT_RETURN_TYPE instead of
 	(DECLARE_)DOESNT_RETURN.
 	* buffer.c (nsberror): Mark as noreturn.
