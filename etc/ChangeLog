@@ -1,3 +1,8 @@
+2002-10-25  Steve Youngs  <youngs@xemacs.org>
+
+	* TUTORIAL.fr (suivante): Typo fix.
+	From juergen stuber <stuberj@mines.inpl-nancy.fr>.
+
 2002-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* Emacs.ad: Add charsets to *menubar*FontSet and *popup*FontSet.
