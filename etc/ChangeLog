@@ -1,3 +1,7 @@
+2003-11-28  Norbert Koch  <viteno@xemacs.org>
+
+	* PACKAGES (erc): new.
+
 2003-11-18  Norbert Koch  <viteno@xemacs.org>
 
 	* PACKAGES (MH-E): Update the MH-E package information string.

@@ -101,6 +101,9 @@ Portable Emacs Lisp utilities library.
 *** emerge
 Another interface over GNU patch.
 
+*** erc
+ERC is an Emacs InternetRelayChat client.
+
 *** eshell
 Command shell implemented entirely in Emacs Lisp.
 
