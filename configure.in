@@ -3228,6 +3228,10 @@ if test "$with_modules" != "no"; then
 
   if test "$can_build_shared" = "yes"; then
     AC_DEFINE(HAVE_SHLIB)
+    dnl src must be built before modules on MacOSX and Windows platforms, since
+    dnl the binary must be available to properly link the modules
+    dnl For no-module builds, this is added *after* the module directories
+    XE_APPEND(src, MAKE_SUBDIR)
     XE_APPEND(src, INSTALL_ARCH_DEP_SUBDIR)
     test -n "$libdl" && XE_PREPEND(-l${libdl}, LIBS)
     AC_CHECK_FUNCS(dlerror _dlerror)
@@ -3244,12 +3248,14 @@ if test "$with_modules" != "no"; then
       echo "    No module support."
     fi
     with_modules=no
-    MOD_CC="$XEMACS_CC"
-    MODCFLAGS="\$(CFLAGS) -I../../src -I\$(srcdir)/../../src"
-    INSTALLPATH=""
-    MOD_INSTALL_PROGRAM="true"
-    OBJECT_TO_BUILD="\$(MODNAME).o"
   fi
+fi
+if test "$with_modules" != "yes"; then
+  MOD_CC="$XEMACS_CC"
+  MODCFLAGS="\$(CFLAGS) -I../../src -I\$(srcdir)/../../src"
+  INSTALLPATH=""
+  MOD_INSTALL_PROGRAM="true"
+  OBJECT_TO_BUILD="\$(MODNAME).o"
 fi
 MODARCHDIR=
 MAKE_DOCFILE="../../lib-src/make-docfile"
@@ -4749,9 +4755,13 @@ XE_SPACE(ld_libs_general, $LIBS $libs_machine $libs_system $libs_standard)
 XE_SPACE(ld_libs_window_system, $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS)
 XE_SPACE(ld_libs_all, $ld_libs_window_system $ld_libs_general $ld_libs_module)
 
+dnl For no-module builds, make the src dir last
+if test "$with_modules" = "no"; then
+  XE_APPEND(src, MAKE_SUBDIR)
+fi
+
 dnl Compute lists of Makefiles and subdirs
 AC_SUBST(SRC_SUBDIR_DEPS)
-XE_APPEND(src, MAKE_SUBDIR)
 internal_makefile_list="Makefile.in"
 SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock

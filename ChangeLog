@@ -1,3 +1,11 @@
+2003-05-20  Jerry James  <james@xemacs.org>
+
+	* configure.in: Add src to MAKE_SUBDIR early for module builds for
+	MacOSX and Windows; thanks to Andrew Begel.  Set module makefile
+	variables appropriately if --with-modules=no is specified.
+
+	* configure: Regenerate.
+
 2003-05-10  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.13 "cauliflower" is released.
