@@ -1,3 +1,8 @@
+2002-06-20  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs/mule.texi (Language Environments): Typo fix suggested by
+	Frank Schmitt.
+
 2002-06-11  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Q1.3.7): Update broken link to russian.el

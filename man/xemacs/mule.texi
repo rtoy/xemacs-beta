@@ -71,7 +71,7 @@ to world scripts, coding systems, and input methods.
 @cindex language environments
 
   All supported character sets are supported in XEmacs buffers if it is
-compile with mule; there is no need to select a particular language in
+compiled with mule; there is no need to select a particular language in
 order to display its characters in an XEmacs buffer.  However, it is
 important to select a @dfn{language environment} in order to set various
 defaults.  The language environment really represents a choice of
