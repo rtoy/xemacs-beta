@@ -309,8 +309,21 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   1)
 (make-obsolete 'char-bytes "This function always returns 1")
 
-(define-obsolete-function-alias 'find-non-ascii-charset-region 'charsets-in-region)
-(define-obsolete-function-alias 'find-non-ascii-charset-string 'charsets-in-string)
+(defun find-non-ascii-charset-string (string)
+  "Return a list of charsets in the STRING except ascii.
+It might be available for compatibility with Mule 2.3,
+because its `find-charset-string' ignores ASCII charset."
+  (delq 'ascii (charsets-in-string string)))
+(make-obsolete 'find-non-ascii-charset-string
+	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
+
+(defun find-non-ascii-charset-region (start end)
+  "Return a list of charsets except ascii in the region between START and END.
+It might be available for compatibility with Mule 2.3,
+because its `find-charset-string' ignores ASCII charset."
+  (delq 'ascii (charsets-in-region start end)))
+(make-obsolete 'find-non-ascii-charset-region
+	       "use (delq 'ascii (charsets-in-region START END)) instead.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 

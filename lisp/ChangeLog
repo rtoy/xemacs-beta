@@ -1,3 +1,9 @@
+2002-05-28  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* obsolete.el (find-non-ascii-charset-region): Revert the function
+	definition.
+	(find-non-ascii-charset-string): Ditto.
+
 2002-06-01  Ben Wing  <ben@xemacs.org>
 
 	* process.el (call-process-internal):
