@@ -1,3 +1,10 @@
+2005-04-04  Steve Youngs  <steve@sxemacs.org>
+
+	* files.el (backup-buffer): Write "%backup%~" in
+	`auto-save-directory' and fall back to $HOME if for some reason
+	that isn't possible.
+	Suggested By: Jamie Zawinski <jwz@jwz.org>
+
 2005-03-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* faces.el (face-complain-about-font):

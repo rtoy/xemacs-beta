@@ -2390,10 +2390,15 @@ no longer accessible under its old name."
 				(rename-file real-file-name backupname t)
 				(setq setmodes (file-modes backupname)))
 			    (file-error
-			     ;; If trouble writing the backup, write it in ~.
+			     ;; If trouble writing the backup, write
+			     ;; it in `auto-save-directory'.  Fall
+			     ;; back to $HOME if that's not possible.
 			     (setq backupname
-				   (expand-file-name
-				    (convert-standard-filename "~/%backup%~")))
+				   (expand-file-name "%backup%~"
+						     (or (when (and auto-save-directory
+								    (file-writable-p auto-save-directory))
+							   auto-save-directory)
+							 (getenv "HOME"))))
 			     (lwarn 'file 'alert "Cannot write backup file; backing up in %s"
 				    (file-name-nondirectory backupname))
 			     (sleep-for 1)
