@@ -169,7 +169,7 @@ Additional features:
 --with-dnet (*)         Compile with support for DECnet.
 --with-modules          Compile in experimental support for dynamically
                         loaded libraries (Dynamic Shared Objects).
---with-netinstall      Compile in support for installation over the internet.		
+--with-netinstall       Compile in support for installation over the internet.
 --with-site-lisp=yes    Allow for a site-lisp directory in the XEmacs hierarchy
                         searched before the installation packages.
 --with-site-modules=no  Disable site-modules directory in the XEmacs hierarchy,
