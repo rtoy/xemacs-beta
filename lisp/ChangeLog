@@ -1,3 +1,22 @@
+2001-05-05  Ben Wing  <ben@xemacs.org>
+
+	* dialog.el (make-dialog-box): fix doc string.
+	* menubar-items.el (default-menubar): Add Page Setup for Windows,
+	take out Pretty Print.
+	* printer.el:
+	* printer.el (printer-current-device): New.
+	* printer.el (Printer-get-device): New.
+	* printer.el (Printer-clear-device): New.
+	* printer.el (generic-page-setup): New.
+	* printer.el (generic-print-buffer):
+	* printer.el (generic-print-region):
+	Implement Page Setup.  Handle errors properly.
+
+	unrelated:
+	
+	* gtk-init.el: Fix the warning properly.
+
+	
 2001-05-04  Ben Wing  <ben@xemacs.org>
 
 	* printer.el (generic-print-buffer):

@@ -53,8 +53,7 @@
 ;; hidden from the user and there is a consistent set of options to
 ;; control how to print, which works across all implementations.
 ;;
-;; The code here is just a start and needs a huge amount of work.  Probably
-;; the interfaces below will change and the functions renamed.
+;; The code here currently only really supports Windows.
 
 (defgroup printing nil
   "Generic printing support."
@@ -69,6 +68,15 @@ printers."
   :group 'printing)
 
 (defstruct Print-context pageno window start-time printer-name)
+
+(defvar printer-current-device nil)
+
+(defun Printer-get-device ()
+  (or printer-current-device (setq printer-current-device
+				   (make-device 'msprinter printer-name))))
+
+(defun Printer-clear-device ()
+  (setq printer-current-device nil))
 
 (defcustom printer-page-header '((face bold date) nil (face bold buffer-name))
 "*Controls printed page header.
@@ -211,6 +219,23 @@ user-name        User full name"
       (t (error 'invalid-argument "Unrecognized print-context property"
 		prop)))))
 
+(defun generic-page-setup ()
+  "Display the Page Setup dialog box.
+Changes made are recorded internally."
+  (interactive)
+  (let* ((d (Printer-get-device))
+	 (props
+	  (condition-case err
+	      (make-dialog-box 'page-setup :device d
+			       :properties default-msprinter-frame-plist)
+	    (error
+	     (Printer-clear-device)
+	     (signal (car err) (cdr err))))))
+    (while props
+      (setq default-msprinter-frame-plist
+	    (plist-put default-msprinter-frame-plist (car props) (cadr props)))
+      (setq props (cddr props)))))
+
 (defun generic-print-buffer (&optional buffer display-print-dialog)
   "Print buffer BUFFER using a printing method appropriate to the O.S. being run.
 Under Unix, `lpr' is normally used to spool out a no-frills version of the
@@ -231,8 +256,12 @@ If BUFFER is nil or omitted, the current buffer is used."
   (if (or (not (valid-specifier-tag-p 'msprinter))
 	  (not display-print-dialog))
       (generic-print-region (point-min buffer) (point-max buffer) buffer)
-    (let* ((d (make-device 'msprinter printer-name))
-	   (props (make-dialog-box 'print :device d)))
+    (let* ((d (Printer-get-device))
+	   (props (condition-case err
+		      (make-dialog-box 'print :device d)
+		    (error
+		     (Printer-clear-device)
+		     (signal (car err) (cdr err))))))
       (and props (generic-print-region (point-min buffer)
 				       (point-max buffer) buffer
 				       d props)))))
@@ -270,8 +299,7 @@ Recognized properties are the same as those in `make-dialog-box':
 	   (setq buffer (decode-buffer buffer))
 	   (unwind-protect
 	       (progn
-		 (setq d (or print-device
-			     (make-device 'msprinter printer-name)))
+		 (setq d (or print-device (Printer-get-device)))
 		 (setq f (make-frame
 			  (list* 'name (concat
 					(substitute ?_ ?. (buffer-name buffer))
@@ -389,7 +417,6 @@ Recognized properties are the same as those in `make-dialog-box':
 			 (setq pageno (1+ pageno))))
 		     (setq copies (1- copies)))))
 	     (and f (delete-frame f))
-	     (and d (delete-device d))
 	     (and header-buffer (kill-buffer header-buffer))
 	     (and footer-buffer (kill-buffer footer-buffer))
 	     )))

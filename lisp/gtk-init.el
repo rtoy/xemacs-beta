@@ -25,8 +25,10 @@
 
 (globally-declare-boundp
  '(gtk-initial-argv-list
-   gtk-initial-geometry
-   gtk-keysym-on-keyboard-p))
+   gtk-initial-geometry))
+
+(globally-declare-fboundp
+ '(gtk-keysym-on-keyboard-p))
 
 (defvar gtk-win-initted nil)
 (defvar gtk-pre-win-initted nil)

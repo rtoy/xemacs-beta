@@ -1,3 +1,13 @@
+2001-05-05  Ben Wing  <ben@xemacs.org>
+
+	* console-msw.h:
+	* device-msw.c:
+	* device-msw.c (mswindows_get_default_margin):
+	* frame-msw.c (mswindows_size_frame_internal):
+	* frame-msw.c (msprinter_init_frame_1):
+	* frame-msw.c (vars_of_frame_mswindows):
+	Change top/bottom margin defaults to 0.5 inches.
+
 2001-04-23  Ben Wing  <ben@xemacs.org>
 
 	------------ notable bug fix: Windows event code --------------
