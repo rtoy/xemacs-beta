@@ -1,3 +1,8 @@
+2004-09-14  Jerry James  <james@xemacs.org>
+
+	* compiler.h: Change definition of RETURN_NOT_REACHED for icc.
+	* glyphs-eimage.c (tiff_memory_write): Quiet gcc warning.
+
 2004-09-13  Jerry James  <james@xemacs.org>
 
 	* callproc.c: Really remove.

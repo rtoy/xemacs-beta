@@ -113,7 +113,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef DOESNT_RETURN_TYPE
 # if (GCC_VERSION > NEED_GCC (0, 0, 0))
 #  if (GCC_VERSION >= NEED_GCC (2, 5, 0))
-#   define RETURN_NOT_REACHED(value) DO_NOTHING
+#   ifndef __INTEL_COMPILER
+#    define RETURN_NOT_REACHED(value) DO_NOTHING
+#   endif
 #   define DOESNT_RETURN_TYPE(rettype) rettype
 #   define DECLARE_DOESNT_RETURN_TYPE(rettype,decl) rettype decl \
 	   __attribute__ ((noreturn))
