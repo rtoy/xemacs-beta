@@ -1,3 +1,7 @@
+2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.18 "chestnut" is released.
+
 2003-11-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/control.texi (Examples of Catch): Mention use of a cons

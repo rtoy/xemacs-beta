@@ -1,3 +1,7 @@
+2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.18 "chestnut" is released.
+
 2004-10-19  Jerry James  <james@xemacs.org>
 
 	* console-stream.c (init_console_stream): Mark another unused param.
