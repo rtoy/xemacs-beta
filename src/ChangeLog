@@ -1,3 +1,8 @@
+2004-11-07  Ben Wing  <ben@xemacs.org>
+
+	* frame-x.c (x_set_frame_properties):
+	Fix compile error.
+
 2004-10-27  Ben Wing  <ben@xemacs.org>
 
 	---------------------------------------------------------------

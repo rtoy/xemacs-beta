@@ -857,9 +857,9 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    }
 	  else
 	    {
-	      CHECK_STRING (val);
 	      const Extbyte *extval;
 	      Bytecount extvallen;
+	      CHECK_STRING (val);
 
 	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
 				  ALLOCA, (extval, extvallen),
