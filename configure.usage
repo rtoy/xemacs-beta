@@ -42,6 +42,22 @@ Compilation options:
 --cflags-warning=FLAGS  Override compiler flags used to control warnings.
                         Normally, don't set this, as XEmacs already turns on
                         the maximum safe warning level.
+--with-optimization     Control whether compilation is optimized.
+                        By default, optimization is on in release versions
+                        and off in beta versions, since it can interfere
+                        with proper stack backtraces.
+--cflags-optimization=FLAGS
+                        Override compiler flags used to control optimization.
+			Only has an effect when optimization is enabled.
+                        Normally, don't set this, as XEmacs will already set
+                        the maximum safe optimization flags appropriate for
+                        the compiler being invoked.
+--cflags-debugging=FLAGS
+                        Override compiler flags used to add debugging
+                        information to the executable.  Normally, debugging
+                        information is added whenever possible (i.e. unless
+                        optimization is turned on and the compiler does not
+                        permit debugging and optimization simultaneously).
 --cpp=PROG              C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)
 --cppflags=FLAGS        C preprocessor flags (e.g. -I/foo or -Dfoo=bar)
 --libs=LIBS             Additional libraries (e.g. -lfoo)

@@ -1,3 +1,13 @@
+2005-01-26  Ben Wing  <ben@xemacs.org>
+
+	* configure.in (AC_INIT_PARSE_ARGS):
+	* configure.in (CANONICALIZE_PATH):
+	* configure.in (TAB):
+	* configure.usage:
+	Add --with-optimization, cflags-optimization,
+        cflags-debugging.  Separate out optimization and debugging arguments.
+	Document.
+
 2005-01-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure:

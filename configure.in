@@ -531,6 +531,7 @@ while test $# != 0; do
 	with_dnet	| \
 	with_infodock	| \
 	with_netinstall | \
+        with_optimization | \
 	with_ipv6_cname | \
 	external_widget | \
 	use_kkcc	| \
@@ -560,6 +561,8 @@ while test $# != 0; do
 	xemacs_compiler	| \
 	cflags		| \
         cflags_warning  | \
+        cflags_optimization | \
+        cflags_debugging | \
 	cpp		| \
 	cppflags	| \
 	libs		| \
@@ -1675,6 +1678,16 @@ if test "${cflags_warning-unset}" != unset
   else cflags_warning_specified=no;
 fi
 
+if test "${cflags_optimization-unset}" != unset
+  then cflags_optimization_specified=yes;
+  else cflags_optimization_specified=no;
+fi
+
+if test "${cflags_debugging-unset}" != unset
+  then cflags_debugging_specified=yes;
+  else cflags_debugging_specified=no;
+fi
+
 xe_save_CFLAGS="$CFLAGS"
 
 AC_PROG_CC dnl Autoconf has its own magic for compiler autodetection
@@ -2011,34 +2024,66 @@ if test "$CC" != "$XEMACS_CC"; then
   fi
 fi
 
-dnl #### This may need to be overhauled so that all of XEMACS_CC's flags
-dnl are handled separately, not just the xe_cflags_warning stuff.
+dnl Calculate optimization flags.  These will be off by default in beta
+dnl versions and on in release versions.
 
-AC_MSG_CHECKING([for preferred CFLAGS])
-
-dnl Use either command line flag, environment var, or autodetection
-if test "$cflags_specified" = "no"; then
-  dnl Following values of CFLAGS are known to work well.
-  dnl Should we take debugging options into consideration?
-  if test "$GCC" = "yes"; then
-    CFLAGS="-g -O3"
-  elif test "$__SUNPRO_C" = "yes"; then
-    case "$opsys" in
-      sol2    ) CFLAGS="-xO4" ;;
-      sunos4* ) CFLAGS="-xO2" ;;
-    esac
-  elif test "$__DECC" = "yes"; then
-    CFLAGS="-O3"
-  elif test "$CC" = "xlc"; then
-    CFLAGS="-g -O3 -qstrict -qnoansialias -qlibansi -qro -qmaxmem=20000"
-  elif test "$__ICC" = "yes"; then
-    CFLAGS="-g -O3 -Ob2"
-  dnl ### Add optimal CFLAGS support for other compilers HERE!
+if test -z "$with_optimization" ; then
+  if test -n "$emacs_is_beta" ; then
+    with_optimization=no
   else
-    CFLAGS="-O" ;dnl The only POSIX-approved flag
+    with_optimization=yes
   fi
 fi
-AC_MSG_RESULT([${CFLAGS}])
+
+dnl #### We should be checking C_OPTIMIZE_SWITCH in m/*, s/*.
+
+AC_MSG_CHECKING([for preferred optimization flags])
+if test "$with_optimization" = "yes" ; then
+  if test "$cflags_optimization_specified" = "no"; then
+    dnl Following values of cflags_optimization are known to work well.
+    dnl Should we take debugging options into consideration?
+    if test "$GCC" = "yes"; then
+      cflags_optimization="-O3"
+    elif test "$__SUNPRO_C" = "yes"; then
+      case "$opsys" in
+        sol2    ) cflags_optimization="-xO4" ;;
+        sunos4* ) cflags_optimization="-xO2" ;;
+      esac
+    elif test "$__DECC" = "yes"; then
+      cflags_optimization="-O3"
+    elif test "$CC" = "xlc"; then
+      dnl see http://www.nersc.gov/vendor_docs/ibm/vac/sc094959.pdf
+      cflags_optimization="-O3 -qstrict -qnoansialias -qlibansi -qmaxmem=20000"
+    elif test "$__ICC" = "yes"; then
+      cflags_optimization="-O3 -Ob2"
+    dnl ### Add optimal cflags_optimization support for other compilers HERE!
+    else
+      cflags_optimization="-O" ;dnl The only POSIX-approved flag
+    fi
+  fi
+else
+  cflags_optimization=
+fi
+
+AC_MSG_RESULT([${cflags_optimization}])
+
+dnl #### We should be checking C_DEBUG_SWITCH in m/*, s/*.
+
+AC_MSG_CHECKING([for preferred debugging flags])
+if test "$cflags_debugging_specified" = "no"; then
+  dnl ### Add optimal debugging support for other compilers HERE!
+  cflags_debugging="-g"
+  
+  debugging_ok_with_optimization=no
+  if test "$GCC" = "yes" -o "$CC" = "xlc" -o "$__ICC" = "yes"; then
+    debugging_ok_with_optimization=yes
+  fi
+  
+  if test "$with_optimization" = "yes" -a "$debugging_ok_with_optimization" = "no"; then
+    cflags_debugging=
+  fi
+fi
+AC_MSG_RESULT([${cflags_debugging}])
 
 dnl Calculate warning flags.  We separate the flags for warnings from
 dnl the other flags because we want to force the warnings to be seen
@@ -2102,13 +2147,33 @@ AC_MSG_RESULT([${xe_cflags_warning}])
 AC_MSG_CHECKING([for preferred warning flags for CC])
 AC_MSG_RESULT([${cflags_warning}])
 
-dnl Now combine all C flags.  Put the warning flags first so that
-dnl user-specified flags will override.
-dnl Do XE_CFLAGS before adding warning flags to CFLAGS.
+dnl Calculate remaining cflags.
+dnl Use either command line flag, environment var, or autodetection
+
+AC_MSG_CHECKING([for remaining CFLAGS])
+
+if test "$cflags_specified" = "no"; then
+  dnl Following values of CFLAGS are known to work well.
+  if test "$CC" = "xlc"; then
+    CFLAGS="-qro"
+  dnl ### Add optimal CFLAGS support for other compilers HERE!
+  fi
+fi
+AC_MSG_RESULT([${CFLAGS}])
+
+dnl Now combine all C flags.  Put the warning and optimization flags first
+dnl so that user-specified flags will override.
+dnl Do XE_CFLAGS before adding flags to CFLAGS.
 dnl Flags for XEMACS_CC:
-XE_CFLAGS="$xe_cflags_warning $CFLAGS"
+
+XE_CFLAGS="$xe_cflags_warning $cflags_debugging $cflags_optimization $CFLAGS"
 dnl Flags for CC:
-CFLAGS="$cflags_warning $CFLAGS"
+CFLAGS="$cflags_warning $cflags_debugging $cflags_optimization $CFLAGS"
+
+AC_MSG_CHECKING([total value of XE_CFLAGS])
+AC_MSG_RESULT([${XE_CFLAGS}])
+AC_MSG_CHECKING([total value of CFLAGS])
+AC_MSG_RESULT([${CFLAGS}])
 
 dnl Search for GCC specific build problems we know about
 if test "$GCC" = "yes"; then
