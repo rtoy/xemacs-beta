@@ -941,6 +941,11 @@ extern "C" {
 
 #endif /* WIN32_NO_CONFIGURE */
 
+/* For the moment, we go ahead and keep this, since it's used in mouse.el.
+   #### font-lock does its own version using parse-partial-sexp.  We should
+   merge the two. */
+#define USE_C_FONT_LOCK
+
 #if defined (WIN32_NATIVE) || defined (CYGWIN)
 # define HAVE_WIN32_CODING_SYSTEMS
 #endif

@@ -1,3 +1,11 @@
+2002-05-13  Ben Wing  <ben@xemacs.org>
+
+	* config.h.in:
+	* font-lock.c:
+	Reenable font-lock code since it's used by mouse.el.  The flag for
+	this exists in config.h.in but not currently controllable through
+	configure.
+
 2002-05-13  Adrian Aichner  <adrian@xemacs.org>
 
 	* callproc.c: Process-related docstring improvements spurred by

@@ -1,3 +1,11 @@
+2002-05-13  Ben Wing  <ben@xemacs.org>
+
+	* files.el (revert-buffer):
+	Andy's patch from 21.4.  Fix evil nasty problems with revert-buffer.
+	
+	* menubar-items.el (default-menubar):
+	Add Append to Register to Rectangles/Register menu.
+
 2002-05-13  Adrian Aichner  <adrian@xemacs.org>
 
 	* code-process.el (call-process): Process-related docstring

@@ -2861,10 +2861,11 @@ at all if reversion would not cause any user-visible changes."
 			(buffer-modified-p)
 			(and (setq newbuf (revert-buffer-internal
 					   file-name))
-			     (and delay-prompt
-				  (yes-or-no-p 
-				   (format "Revert buffer from file %s? "
-					   file-name)))))
+			     (or noconfirm
+				 (and delay-prompt
+				      (yes-or-no-p 
+				       (format "Revert buffer from file %s? "
+					       file-name))))))
 		    ;; If file was backed up but has changed since,
 		    ;; we should make another backup.
 		    (and (not auto-save-p)

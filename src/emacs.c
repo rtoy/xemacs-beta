@@ -233,7 +233,7 @@ version 18.58 released ?????.
 version 18.59 released October 31, 1992.
 
 */
-
+   
 /* Note: It is necessary to specify <config.h> and not "config.h" in
    order for the --srcdir type of compilation to work properly.
    Otherwise the config.h from the srcdir, rather than the one from

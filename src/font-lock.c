@@ -44,9 +44,10 @@ Boston, MA 02111-1307, USA.  */
    This way there would be no guessing or incorrect results.
  */
 
-#if 0 /* no longer used */
-
 #include <config.h>
+
+#ifdef USE_C_FONT_LOCK
+
 #include "lisp.h"
 
 #include "buffer.h"
@@ -842,4 +843,5 @@ vars_of_font_lock (void)
 {
   reinit_vars_of_font_lock ();
 }
-#endif /* 0 */
+
+#endif /* USE_C_FONT_LOCK */

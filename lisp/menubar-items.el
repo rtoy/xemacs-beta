@@ -424,7 +424,7 @@ Write your filter like this:
 
 
      ("C%_mds"
-      ["Repeat Last %_Complex Command..." repeat-complex-command]
+      ["Repeat Last Comple%_x Command..." repeat-complex-command]
       ["E%_valuate Lisp Expression..." eval-expression]
       ["Execute %_Named Command..." execute-extended-command]
       "----"
@@ -432,7 +432,7 @@ Write your filter like this:
        :included (not defining-kbd-macro)]
       ["Stop %_Defining Macro" end-kbd-macro
        :included defining-kbd-macro]
-      ["E%_xecute Last Macro" call-last-kbd-macro
+      ["%_Execute Last Macro" call-last-kbd-macro
        :active last-kbd-macro]
       ("Other %_Macro"
        ["Edit %_Last Macro" edit-last-kbd-macro
@@ -506,12 +506,12 @@ Write your filter like this:
        ["L%_oad Abbrevs..." read-abbrev-file]
        )
 	"---"
-      ["%_Kill Rectangle" kill-rectangle]
+      ["%_Cut Rectangle" kill-rectangle]
       ("Other %_Rectangles/Register"
        ["%_Yank Rectangle" yank-rectangle]
        ["Rectangle %_to Register" copy-rectangle-to-register]
        ["Rectangle %_from Register" insert-register]
-       ["%_Clear Rectangle" clear-rectangle]
+       ["%_Delete Rectangle" clear-rectangle]
        ["%_Open Rectangle" open-rectangle]
        ["%_Prefix Rectangle..." string-rectangle]
        ["Rectangle %_Mousing"
@@ -520,7 +520,8 @@ Write your filter like this:
 	:style toggle :selected mouse-track-rectangle-p]
        "---"
        ["%_Copy to Register..." copy-to-register :active (region-exists-p)]
-       ["%_Paste Register..." insert-register]
+       ["%_Append to Register..." append-register :active (region-exists-p)]
+       ["%_Insert Register..." insert-register]
        "---"
        ["%_Save Point to Register" point-to-register]
        ["%_Jump to Register"  register-to-point]
