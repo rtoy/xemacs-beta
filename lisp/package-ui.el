@@ -104,6 +104,7 @@ Set this to `nil' to use the `default' face."
     (define-key m "q" 'pui-quit)
     (define-key m "g" 'pui-list-packages)
     (define-key m "i" 'pui-display-info)
+    (define-key m "m" 'pui-display-maintainer)
     (define-key m "?" 'describe-mode)
     (define-key m "v" 'pui-toggle-verbosity-redisplay)
     (define-key m "d" 'pui-toggle-package-delete-key)
@@ -462,13 +463,14 @@ and whether or not it is up-to-date."
   "Display additional package info in the modeline.
 EXTENT determines the package to display (the package information is
 attached to the extent as properties)."
-  (let (pkg-sym info inst-ver auth-ver date maintainer balloon req)
+  (let (pkg-sym info inst-ver inst-auth-ver auth-ver date maintainer balloon req)
     (if (or force-update (not (current-message))
 	    (string-match ".*: .*: " (current-message)))
 	(progn
 	  (setq pkg-sym (extent-property extent 'pui-package)
 		info (extent-property extent 'pui-info)
 		inst-ver (package-get-key pkg-sym :version)
+		inst-auth-ver (package-get-key pkg-sym :author-version)
 		auth-ver (package-get-info-prop info 'author-version)
 		date (package-get-info-prop info 'date)
 		maintainer (package-get-info-prop info 'maintainer)
@@ -480,20 +482,16 @@ attached to the extent as properties)."
 		(setq balloon (format "
 Package Information:  [For package: \"%s\"]
 ================
-Installed Version : %.2f
-Author Version : %s
+Installed Upstream Ver: %s  Available Upstream Ver: %s
 Maintainer : %s
 Released : %s
 Required Packages : %s\n\n"
-				      pkg-sym inst-ver auth-ver maintainer 
+				      pkg-sym inst-auth-ver auth-ver maintainer 
 				      date req))
 		(set-extent-property extent 'balloon-help balloon)))
-	  (if pui-list-verbose
-	      (format 
-	       "Inst V: %.2f Auth V: %s Maint: %s" 
-	       inst-ver auth-ver maintainer)
-	    (format "%.2f : %s : %s"
-		    inst-ver auth-ver maintainer))))))
+	  (format 
+	   "Installed upstream ver: %s  Available upstream ver: %s" 
+	   inst-auth-ver auth-ver)))))
 
 (defun pui-display-info (&optional no-error event)
   "Display additional package info in the modeline.
@@ -504,6 +502,23 @@ Designed to be called interactively (from a keypress)."
       (beginning-of-line)
       (if (setq extent 	(extent-at (point) (current-buffer) 'pui))
 	  (message (pui-help-echo extent t))
+	(if no-error
+	    (clear-message nil)
+	  (error 'invalid-operation
+		 "No package under cursor!"))))))
+
+(defun pui-display-maintainer (&optional no-error event)
+  "Display a package's maintainer in the minibuffer."
+  (interactive)
+  (let (extent pkg-sym info maintainer)
+    (save-excursion
+      (beginning-of-line)
+      (if (setq extent 	(extent-at (point) (current-buffer) 'pui))
+	  (progn
+	    (setq pkg-sym (extent-property extent 'pui-package)
+		  info (extent-property extent 'pui-info)
+		  maintainer (package-get-info-prop info 'maintainer))
+	    (message (format "Maintainer: %s" maintainer)))
 	(if no-error
 	    (clear-message nil)
 	  (error 'invalid-operation
@@ -550,7 +565,8 @@ Useful keys:
   `\\[pui-toggle-package-delete-key]' to select/unselect the current package for removal.
   `\\[pui-add-required-packages]' to add any packages required by those selected.
   `\\[pui-install-selected-packages]' to install/delete selected packages.
-  `\\[pui-display-info]' to display additional information about the package in the modeline.
+  `\\[pui-display-info]' to display additional information about the package in the minibuffer.
+  `\\[pui-display-maintainer]' to display the package's maintainer in the minibuffer
   `\\[pui-list-packages]' to refresh the package list.
   `\\[pui-toggle-verbosity-redisplay]' to toggle between a verbose and non-verbose display.
   `\\[pui-quit]' to kill this buffer.

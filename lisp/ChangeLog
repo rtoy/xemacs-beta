@@ -1,3 +1,11 @@
+2003-10-11  Steve Youngs  <sryoungs@bigpond.net.au>
+
+	* package-ui.el (pui-display-keymap): Map `m' to
+	`pui-display-maintainer'. 
+	(pui-help-echo): Display both the installed upstream version
+	number and the available upstream version number.
+	(pui-display-maintainer): New.
+
 2003-10-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* wid-edit.el (widget-url-link-action): Fix typo.
