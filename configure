@@ -13101,18 +13101,25 @@ fi
   fi
 
     if test -z "$sound_found"; then
+    if test "$with_msw" = "yes"; then
+    sound_found=yes
+    native_sound_lib=
+    fi
+  fi
+
+    if test -z "$sound_found"; then
     for dir in "machine" "sys" "linux"; do
       ac_safe=`echo "${dir}/soundcard.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for ${dir}/soundcard.h""... $ac_c" 1>&6
-echo "configure:13108: checking for ${dir}/soundcard.h" >&5
+echo "configure:13115: checking for ${dir}/soundcard.h" >&5
 
 cat > conftest.$ac_ext <<EOF
-#line 13111 "configure"
+#line 13118 "configure"
 #include "confdefs.h"
 #include <${dir}/soundcard.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:13116: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:13123: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -13146,13 +13153,6 @@ else
 fi
 
     done
-  fi
-
-    if test -z "$sound_found"; then
-    if test "$with_msw" = "yes"; then
-    sound_found=yes
-    native_sound_lib=
-    fi
   fi
 
   test "$sound_found" = "yes" && with_native_sound=yes
