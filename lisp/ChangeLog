@@ -1,3 +1,11 @@
+2005-02-28  Simon Josefsson  <jas@extundo.com>
+
+	* about.el (xemacs-hackers): Add jas.
+	(about-other-current-hackers): Likewise.
+	(about-url-alist): Add URL for jas.
+	(about-personal-info): Document jas.
+	(about-hacker-contribution): Describe jas contributions.
+
 2005-02-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.el (selected-text-type): Removed.
