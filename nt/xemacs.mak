@@ -962,7 +962,7 @@ INFO_FILES= \
 
 {$(MANDIR)}.texi{$(INFODIR)}.info:
 	cd $(MANDIR)
-	$(MAKEINFO) $**
+	$(MAKEINFO) $(**F)
 
 XEMACS_SRCS = \
 	$(MANDIR)\xemacs\abbrevs.texi \
@@ -1263,10 +1263,13 @@ TEMACS_LIBS=$(LASTFILE) $(MSW_LIBS) \
  oldnames.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib \
  shell32.lib wsock32.lib netapi32.lib winmm.lib winspool.lib ole32.lib \
  mpr.lib uuid.lib imm32.lib $(LIBC_LIB)
-TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) \
+TEMACS_COMMON_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS_LINK) \
  -base:0x1000000 -stack:0x800000 $(TEMACS_ENTRYPOINT) -subsystem:windows \
- -pdb:$(BLDSRC)\temacs.pdb -map:$(BLDSRC)\temacs.map \
  -heap:0x00100000 -nodefaultlib $(PROFILE_FLAGS) setargv.obj
+TEMACS_LFLAGS=$(TEMACS_COMMON_LFLAGS) \
+ -pdb:$(BLDSRC)\temacs.pdb -map:$(BLDSRC)\temacs.map
+XEMACS_LFLAGS=$(TEMACS_COMMON_LFLAGS) \
+ -pdb:$(BLDSRC)\xemacs.pdb -map:$(BLDSRC)\xemacs.map
 
 ########################### Definitions for running temacs.exe/xemacs.exe
 
@@ -1380,7 +1383,7 @@ $(DUMP_TARGET): $(DOC) $(RAW_EXE) $(BLDSRC)\NEEDTODUMP
 # Make the resource section read/write since almost all of it is the dump
 # data which needs to be writable.  This avoids having to copy it.
 	link.exe @<<
-  $(TEMACS_LFLAGS) -section:.rsrc,rw -out:$(BLDSRC)\xemacs.exe $(TEMACS_OBJS) $(OUTDIR)\xemacs.res $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
+  $(XEMACS_LFLAGS) -section:.rsrc,rw -out:$(BLDSRC)\xemacs.exe $(TEMACS_OBJS) $(OUTDIR)\xemacs.res $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
 <<
 	-$(DEL) $(BLDSRC)\xemacs.dmp
 !endif

@@ -1,3 +1,14 @@
+2005-01-27  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak ({$(MANDIR)}.texi{$(INFODIR)}.info):
+	Use filename only when calling makeinfo, or it chokes on index
+	generation.
+	
+	* xemacs.mak (TEMACS_COMMON_LFLAGS):
+	* xemacs.mak (  $(XEMACS_LFLAGS) -section):
+	Generate separate .pdb and .map files for temacs/xemacs; may
+	make profiling possible.
+
 2005-01-24  Ben Wing  <ben@xemacs.org>
 
 	* config.inc.samp:
