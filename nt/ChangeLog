@@ -465,7 +465,7 @@
 
 	* xemacs.mak: Fix for generation of $(XEMACS)\Installation.
 
-2000-03-14  Adrian Aichner  <adrain@xemacs.org>
+2000-03-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak (LIB_SRC_TOOLS): LIB_SRC_TOOLS depend on
 	XEMACS_INCLUDES when we USE_PORTABLE_DUMPER.

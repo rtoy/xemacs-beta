@@ -1,3 +1,7 @@
+2002-03-19  Adrian Aichner  <adrian@xemacs.org>
+
+	* widget.texi (constants): Typo fix.
+
 2002-03-14  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
         * cl.texi (Sequence Basics): Avoid splitting link over two lines,
