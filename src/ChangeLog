@@ -1,3 +1,8 @@
+2001-05-22  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in (SYSTEM_TYPE): Allow configure to set this.
+	* s/darwin.h: New.  Add support for MacOS X.
+
 2001-05-20  Mike Alexander  <mta@arbortext.com>
 
 	* device-msw.c (msprinter_init_device): Don't assert out if the

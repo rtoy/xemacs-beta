@@ -629,6 +629,13 @@ extern "C" {
 }
 #endif
 
+/* s&m files shouldn't be required to define anything, or even to exist.
+   If the s&m files don't define SYSTEM_TYPE, configure will select an
+   appropriate default value. */
+#ifndef SYSTEM_TYPE
+#undef SYSTEM_TYPE
+#endif
+
 #if defined (USE_SYSTEM_MALLOC) && !defined (SYSTEM_MALLOC)
 #define SYSTEM_MALLOC
 #endif

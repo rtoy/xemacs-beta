@@ -1,3 +1,9 @@
+2001-05-22  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: 
+	If no native dumper (UNEXEC) is defined, simply use pdump.
+	If no SYSTEM_TYPE is defined, choose an appopriate default.
+
 2001-05-10  Paul Stodghill  <stodghil@cs.cornell.edu>
 
 	* configure.in: Reverse the order of Windows and Linux sound tests

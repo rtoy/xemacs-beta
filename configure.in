@@ -1769,7 +1769,9 @@ CPP_to_sh(C_SWITCH_SYSTEM,    c_switch_system)
 CPP_to_sh(LD_SWITCH_MACHINE,  ld_switch_machine)
 CPP_to_sh(LD_SWITCH_SYSTEM,   ld_switch_system)
 
-CPP_to_sh(UNEXEC, unexec, unexec.o)
+CPP_to_sh(UNEXEC, unexec)
+
+CPP_to_sh(SYSTEM_TYPE, system_type)
 
 CPP_to_sh(LD_SWITCH_SHARED, ld_switch_shared, -c)
 
@@ -1830,6 +1832,17 @@ eval `$CPP -Isrc $tempcname \
 changequote([, ])dnl
 
 rm $tempcname
+
+dnl s&m files shouldn't be required to define anything, or even to exist.
+dnl So we default SYSTEM_TYPE to the obvious documented standard, `uname -s`,
+dnl appropriately emacsulated.
+test -z "$system_type" && \
+  AC_DEFINE_UNQUOTED(SYSTEM_TYPE,"`uname -s | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz`")
+
+dnl If the s&m files don't define a system-specific dumper, simply use pdump.
+dnl Sometime in the future, we'll remove all definitions of UNEXEC
+dnl from all the s&m files.
+test -z "$unexec" && pdump=yes
 
 if test "$pdump" = "yes"; then
   ordinary_link="yes"
