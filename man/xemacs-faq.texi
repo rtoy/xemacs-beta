@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/07/02 20:45:03 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/07/02 21:00:02 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -708,8 +708,9 @@ No, but Alexander Nikolaev <avn_1251@@mail.ru> is working on it.
 Pre-printed manuals are not available.  If you are familiar with
 TeX, you can generate your own manual from the XEmacs sources.
 
-HTML and Postscript versions of XEmacs manuals may be available from the
-XEmacs web site in the future.  Send requests to @email{faq@@xemacs.org}.
+HTML and Postscript versions of XEmacs manuals are available from the
+XEmacs web site at
+@uref{http://www.xemacs.org/Documentation/index.html}.
 
 @node Q1.1.1, Q1.1.2, Q1.0.14, Introduction
 @unnumberedsec 1.1: Policies

@@ -1,5 +1,10 @@
 2001-07-02  Adrian Aichner  <adrian@xemacs.org>
 
+	* xemacs-faq.texi (Q1.0.14): Update information following a
+	request by Tom Mostyn.
+
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
 	* lispref\windows.texi (Window Configurations): Fix typos.
 	* lispref\x-windows.texi (Resources): Ditto.
 
