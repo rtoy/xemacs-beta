@@ -1413,7 +1413,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_sunpro ();
 #endif
 
-#ifdef HAVE_LDAP
+#if defined (HAVE_LDAP) && !defined (HAVE_SHLIB)
       syms_of_eldap ();
 #endif
 
@@ -1421,7 +1421,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_gpmevent ();
 #endif
 
-#ifdef HAVE_POSTGRESQL
+#if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
       syms_of_postgresql ();
 #endif
 
@@ -1903,11 +1903,11 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       vars_of_sunpro ();
 #endif
 
-#ifdef HAVE_LDAP
+#if defined (HAVE_LDAP) && !defined (HAVE_SHLIB)
       vars_of_eldap ();
 #endif
 
-#ifdef HAVE_POSTGRESQL
+#if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
       vars_of_postgresql ();
 #endif
 
@@ -2255,7 +2255,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #if defined (HAVE_NATIVE_SOUND) && defined (hp9000s800)
   init_hpplay ();
 #endif
-#ifdef HAVE_POSTGRESQL
+#if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
   /* Set some values taken from environment variables */
   init_postgresql_from_environment ();
 #endif

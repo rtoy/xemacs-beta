@@ -1,3 +1,43 @@
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* auto-autoloads.el: New file containing module autoloads.
+	* auto-autoloads.elc: Ditto.
+	* README: Update to reflect the new architecture.
+	* ldap/configure.ac: New file.
+	* ldap/configure: Ditto.
+	* ldap/eldap.h: Copy the version from src.
+	* ldap/eldap.c: Ditto.  Add autoloads.
+	* ldap/eldap.c (unload_eldap): New function to unstaticpro symbols
+	defined in this file.
+	* ldap/install-sh: New script for independent module building.
+	* ldap/Makefile: Remove in favor of autoconf solution.
+	* ldap/Makefile.in.in: New file containing the autoconf solution.
+	* postgresql: New directory.
+	* postgresql/.cvsignore: New file.
+	* postgresql/configure.ac: Ditto.
+	* postgresql/configure: Ditto.
+	* postgresql/install-sh: New script for independent module
+	building.
+	* postgresql/Makefile.in.in: New file.
+	* postgresql/postgresql.h: Copy the version from src.
+	* postgresql/postgresql.c: Ditto.  Add autoloads.
+	* sample/Makefile: Move to internal and external subdirectories.
+	* sample/sample.c: Ditto.
+	* sample/external: New directory containing sample external
+	modules.
+	* sample/external/.cvsignore: New file.
+	* sample/external/configure.ac: Ditto.
+	* sample/external/install-sh: Ditto.
+	* sample/external/Makefile.in.in: New.
+	* sample/external/sample.c: Move from next higher directory.
+	* sample/internal: New directory containing sample internal
+	modules.
+	* sample/internal/.cvsignore: New file.
+	* sample/internal/configure.ac: Ditto.
+	* sample/internal/install-sh: Ditto.
+	* sample/internal/Makefile.in.in: New.
+	* sample/internal/sample.c: Move from next higher directory.
+
 2002-08-30  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.9 "brussels sprouts" is released.

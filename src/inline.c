@@ -67,12 +67,12 @@ Boston, MA 02111-1307, USA.  */
 #include "syntax.h"
 #include "window.h"
 
-#ifdef HAVE_LDAP
-#include "eldap.h"
+#if defined (HAVE_LDAP) && !defined (HAVE_SHLIB)
+#include "../modules/ldap/eldap.h"
 #endif
 
-#ifdef HAVE_POSTGRESQL
-#include "postgresql.h"
+#if defined (HAVE_POSTGRESQL) && !defined (HAVE_SHLIB)
+#include "../modules/postgresql/postgresql.h"
 #endif
 
 #ifdef HAVE_TOOLBARS

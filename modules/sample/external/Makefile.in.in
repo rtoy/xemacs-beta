@@ -1,0 +1,52 @@
+##   Makefile for the sample module in XEmacs.
+##   Copyright (C) 2002 Jerry James.
+
+## This file is not part of XEmacs.
+
+### Specialize this part for your module
+MODNAME=sample
+MODVER=0.0.1
+MODTITLE="Sample module for XEmacs"
+SRCS=sample.c
+
+### You should not need to modify anything below this line
+SRC_SRCS=$(SRCS:%=$(srcdir)/%)
+OBJS=$(SRCS:.c=.o)
+
+SHELL=/bin/sh
+RM=rm -f
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+
+srcdir=@srcdir@
+VPATH=@srcdir@
+
+ELLCC=@ELLCC@
+MODARCHDIR=$(shell @ELLCC@ --mod-archdir)
+INSTALLPATH=$(shell @ELLCC@ --mod-site-location)
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+
+.PHONY:	clean distclean install
+all: $(MODNAME).ell
+
+.c.o:
+	$(ELLCC) $(CFLAGS) --mode=compile --mod-output=$@ \
+	-I$(MODARCHDIR)/include -c $<
+
+$(MODNAME).ell: $(OBJS) $(MODNAME)_i.o
+	$(ELLCC) --mode=link --mod-output=$@ $^ $(LDFLAGS)
+
+$(MODNAME)_i.c: $(SRCS)
+	ELLMAKEDOC=$(MODARCHDIR)/make-docfile $(ELLCC) --mode=init \
+	--mod-output=$@ --mod-name=$(MODNAME) --mod-version=$(MODVER) \
+	--mod-title=$(MODTITLE) $(SRC_SRCS)
+
+clean:
+	$(RM) $(MODNAME).ell $(OBJS) $(MODNAME)_i.* *~
+
+distclean: clean
+	$(RM) Makefile config.* configure
+
+install: $(MODNAME).ell
+	$(INSTALL_PROGRAM) $< $(INSTALLPATH)

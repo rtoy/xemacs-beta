@@ -1205,6 +1205,18 @@ do {							\
 #define Dynarr_delete_by_pointer(d, p) \
   Dynarr_delete_many (d, (p) - ((d)->base), 1)
 
+#define Dynarr_delete_object(d, el)				\
+do {								\
+  if (d != NULL) {						\
+    REGISTER int i;						\
+    for (i = Dynarr_length (d) - 1; i >= 0; i--) {		\
+      if (el == Dynarr_at (d, i)) {				\
+	Dynarr_delete_many (d, i, 1);				\
+      }								\
+    }								\
+  }								\
+} while (0)
+
 #ifdef MEMORY_USAGE_STATS
 struct overhead_stats;
 Bytecount Dynarr_memory_usage (void *d, struct overhead_stats *stats);
@@ -3232,6 +3244,11 @@ void staticpro_nodump_1 (Lisp_Object *, char *);
 #define staticpro(ptr) staticpro_1 (ptr, #ptr)
 #define staticpro_nodump(ptr) staticpro_nodump_1 (ptr, #ptr)
 
+#ifdef HAVE_SHLIB
+void unstaticpro_nodump_1 (Lisp_Object *, char *);
+#define unstaticpro_nodump(ptr) unstaticpro_nodump_1 (ptr, #ptr)
+#endif
+
 #else
 
 /* Call staticpro (&var) to protect static variable `var'. */
@@ -3240,6 +3257,11 @@ void staticpro (Lisp_Object *);
 /* Call staticpro_nodump (&var) to protect static variable `var'. */
 /* var will not be saved at dump time */
 void staticpro_nodump (Lisp_Object *);
+
+#ifdef HAVE_SHLIB
+/* Call unstaticpro_nodump (&var) to stop protecting static variable `var'. */
+void unstaticpro_nodump (Lisp_Object *);
+#endif
 
 #endif
 
@@ -3678,9 +3700,11 @@ void really_abort (void);
 void zero_out_command_line_status_vars (void);
 
 /* Defined in emodules.c */
+#ifdef HAVE_SHLIB
 EXFUN (Flist_modules, 0);
 EXFUN (Fload_module, 3);
-
+extern int unloading_module;
+#endif
 
 /* Defined in eval.c */
 EXFUN (Fapply, MANY);
@@ -4984,7 +5008,8 @@ extern Lisp_Object Qdisplay_table, Qdll_error, Qdomain_error, Qediting_error;
 extern Lisp_Object Qend_of_buffer, Qend_of_file, Qend_open, Qerror;
 extern Lisp_Object Qerror_conditions, Qerror_lacks_explanatory_string;
 extern Lisp_Object Qerror_message, Qevent_live_p, Qexit, Qextent_live_p;
-extern Lisp_Object Qexternal_debugging_output, Qfeaturep, Qfile_error, Qfinal;
+extern Lisp_Object Qexternal_debugging_output, Qfeaturep, Qfile_error;
+extern Lisp_Object Qfile_name_sans_extension, Qfinal;
 extern Lisp_Object Qforeground, Qformat, Qframe_live_p, Qgraphic, Qgtk;
 extern Lisp_Object Qgui_error, Qicon_glyph_p, Qidentity, Qinhibit_quit;
 extern Lisp_Object Qinhibit_read_only, Qinteger_char_or_marker_p;
@@ -4995,7 +5020,7 @@ extern Lisp_Object Qinvalid_function, Qinvalid_operation;
 extern Lisp_Object Qinvalid_read_syntax, Qinvalid_state, Qio_error, Qlambda;
 extern Lisp_Object Qlayout, Qlist_formation_error, Qlistp, Qload, Qlock_shift;
 extern Lisp_Object Qlong_name, Qmacro, Qmakunbound, Qmalformed_list;
-extern Lisp_Object Qmalformed_property_list, Qmark;
+extern Lisp_Object Qmalformed_property_list, Qmark, Qmodule;
 extern Lisp_Object Qmono_pixmap_image_instance_p, Qmouse_leave_buffer_hook;
 extern Lisp_Object Qnative_layout, Qnatnump, Qnetwork_error, Qno_catch;
 extern Lisp_Object Qnothing_image_instance_p, Qnumber_char_or_marker_p;

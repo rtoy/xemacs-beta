@@ -1,3 +1,23 @@
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* config.values.in: Regenerate.
+	* ellcc.c: A thorough cleanup to eliminate potential buffer
+	overruns and null pointer dereferences, make some global variables
+	local, add braces for clarity, etc., using hints supplied by
+	splint.
+	* ellcc.c (EXEC_GROW_SIZE): New constant for dynamic allocation.
+	* ellcc.c (xrealloc): New function.
+	* ellcc.c (xstrdup): New function.
+	* ellcc.c (fatal): Use varargs for flexibility.
+	* ellcc.c (add_string): New function for abstracting the addition
+	of a string to the exec_argv array.
+	* ellcc.c (add_to_argv): Use add_string.  Improve whitespace
+	handling.  Recode finite state machine as a clearer while loop.
+	* ellcc.c (do_compile_mode): Use new functions.
+	* ellcc.c (do_link_mode): Ditto.
+	* ellcc.c (do_init_mode): Ditto.  Default to in-source
+	make-docfile.
+
 2002-08-30  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.9 "brussels sprouts" is released.

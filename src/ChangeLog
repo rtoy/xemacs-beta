@@ -1,3 +1,49 @@
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: ldap.o and postgresql.o have moved.
+	* alloc.c (unstaticpro_nodump_1): New function.
+	* alloc.c (unstaticpro_nodump): Ditto.
+	* depend: Regenerate.
+	* eldap.c: Move to modules/ldap.
+	* eldap.h: Ditto.
+	* emacs.c (main_1): Call LDAP and PostgreSQL initialization
+	functions only if they are not modules.
+	* emodules.c: Define EMODULES_DO_NOT_REDEFINE to skip changes to
+	core functions and macros made in emodules.h.
+	* emodules.c (unloading_module): New variable to flag when a
+	module unload is in progress.
+	* emodules.c (emodules_list): New member unload, to hold a
+	function for doing module cleanup at unload time.
+	* emodules.c (Fload_module): Note that users should not call this
+	function directly.
+	* emodules.c (Funload_module): Ditto.  Compile it.  Call the
+	module's unload function if it has one.
+	* emodules.c (emodules_load): Stop working around formerly broken
+	build_string() declaration.  Update load-history for module
+	unloading.
+	* emodules.c (syms_of_module): Add new symbols.
+	* emodules.c (vars_of_module): Add unloading-module.  Make
+	Vmodule_extensions use the new format.
+	* emodules.h: Block paths from module code into the dump_add*
+	functions.
+	* emodules.h (EMODULES_VERSION): New version.
+	* fileio.c: Add Qfile_name_nondirectory for use in emodules.c.
+	* inline.c: eldap.h and postgresql.h have moved.
+	* lisp.h: Add unstaticpro_nodump, unloading_module, Qmodule, and
+	Qfile_name_sans_extension declarations.
+	* lisp.h (Dynarr_delete_object): New macro.
+	* lrecord.h (UNDEF_LRECORD_IMPLEMENTATION): New macro.
+	* lrecord.h (UNDEF_EXTERNAL_LRECORD_IMPLEMENTATION): New macro.
+	* postgresql.c: Move to modules/postgresql.
+	* postgresql.h: Ditto.
+	* symbols.c (reject_constant_symbols): Allow it if we are
+	unloading a module.
+	* symbols.c (Fset): Allow unbinding constant value forward symbols
+	if we are unloading a module.
+	* symbols.c (defsubr): Update the load history for modules.
+	* symbols.c (defsubr_macro): Ditto.
+	* symbols.c (defvar_magic): Ditto.
+
 2002-08-29  Jerry James  <james@xemacs.org>
 
 	* eldap.c: Put #endif tokens in a comment.

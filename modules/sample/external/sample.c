@@ -2,9 +2,11 @@
  * Very simple sample module. Illustrates most of the salient features
  * of Emacs dynamic modules.
  * (C) Copyright 1998, 1999 J. Kean Johnston. All rights reserved.
+ * (C) Copyright 2002 Jerry James.
  */
 
-#include <emodules.h>
+#include <config.h>
+#include "lisp.h"
 
 /*
  * This sample introduces three new Lisp objects to the Lisp reader.
@@ -49,10 +51,15 @@ version of Emacs.
  * vars_of_XXXX functions, you use the exact same syntax that you
  * would as if this module were being compiled into the pure Emacs.
  *
- * All three of these functions are declared as void functions,
+ * The fourth function, which is optional, is unload_XXXX, in which actions
+ * that must be taken to unload the module are listed.  XEmacs will unbind
+ * functions and variables for you.  Anything else that must be done should
+ * appear in this function.
+ *
+ * All four of these functions are declared as void functions,
  * taking no parameters. Since this sample module is called 'sample',
- * the functions will be named 'modules_of_sample', 'syms_of_sample'
- * and 'vars_of_sample'.
+ * the functions will be named 'modules_of_sample', 'syms_of_sample',
+ * 'vars_of_sample', and 'unload_sample'.
  */
 
 void
@@ -90,3 +97,14 @@ a module exactly as it would be internally in Emacs.
 */ );
 }
 
+#ifdef HAVE_SHLIB
+void
+unload_sample()
+{
+  /* We don't need to do anything here in the sample case.  However, if you
+     create any new types with INIT_LRECORD_IMPLEMENTATION (sample_type), then
+     UNDEF_LRECORD_IMPLEMENTATION (sample_type) must appear here.  Also, any
+     symbols declared with DEFSYMBOL (Qsample_var), or one of its variants,
+     must have a corresponding unstaticpro_nodump (&Qsample_var) here. */
+}
+#endif

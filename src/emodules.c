@@ -18,6 +18,10 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+/* This gross hack is so that we can make DEFVAR_foo register with the
+   portable dumper in core, but not do so in modules.  Since the hackery to do
+   that is in emodules.h, we have to turn it off for this file. */
+#define EMODULES_DO_NOT_REDEFINE
 #include "emodules.h"
 #include "sysdll.h"
 
@@ -29,19 +33,24 @@ Lisp_Object Vmodule_version;
 /* Do we do our work quietly? */
 int load_modules_quietly;
 
+/* Set this while unloading a module.  This should NOT be made set by users,
+   as it allows the unbinding of symbol-value-forward variables. */
+int unloading_module;
+
 /* Load path */
 Lisp_Object Vmodule_load_path;
-
 Lisp_Object Qdll_error;
+Lisp_Object Qmodule, Qunload_module, module_tag;
 
 typedef struct _emodules_list
 {
-  int used;             /* Is this slot used?                           */
-  char *soname;         /* Name of the shared object loaded (full path) */
-  char *modname;        /* The name of the module                       */
-  char *modver;         /* The version that the module is at            */
-  char *modtitle;       /* How the module announces itself              */
-  dll_handle dlhandle;  /* Dynamic lib handle                           */
+  int used;             /* Is this slot used?                              */
+  char *soname;         /* Name of the shared object loaded (full path)    */
+  char *modname;        /* The name of the module                          */
+  char *modver;         /* The module version string                       */
+  char *modtitle;       /* How the module announces itself                 */
+  void (*unload)(void); /* Module cleanup function to run before unloading */
+  dll_handle dlhandle;  /* Dynamic lib handle                              */
 } emodules_list;
 
 static Lisp_Object Vmodule_extensions;
@@ -51,13 +60,16 @@ static dll_handle dlhandle;
 static emodules_list *modules;
 static int modnum;
 
-static int find_make_module (const char *mod, const char *name, const char *ver, int make_or_find);
+static int find_make_module (const char *mod, const char *name,
+			     const char *ver, int make_or_find);
 static Lisp_Object module_load_unwind (Lisp_Object);
 static void attempt_module_delete (int mod);
 
 DEFUN ("load-module", Fload_module, 1, 3, "FLoad dynamic module: ", /*
 Load in a C Emacs Extension module named FILE.
 The optional NAME and VERSION are used to identify specific modules.
+
+DO NOT USE THIS FUNCTION in your programs.  Use `require' instead.
 
 This function is similar in intent to `load' except that it loads in
 pre-compiled C or C++ code, using dynamic shared objects.  If NAME is
@@ -74,7 +86,7 @@ FILE depends on will be automatically loaded.  You can determine which
 modules have been loaded as dynamic shared objects by examining the
 return value of the function `list-modules'.
 
-It is possible, although unwise, to unload modules using `unload-module'.
+It is possible, although unwise, to unload modules using `unload-feature'.
 The preferred mechanism for unloading or reloading modules is to quit
 XEmacs, and then reload those new or changed modules that are required.
 
@@ -108,10 +120,10 @@ the variable `load-modules-quietly' is non-NIL.
   return Qt;
 }
 
-#ifdef DANGEROUS_NASTY_SCARY_MONSTER
-
-DEFUN ("unload-module", Fmodule_unload, 1, 3, 0, /*
+DEFUN ("unload-module", Funload_module, 1, 3, 0, /*
 Unload a module previously loaded with load-module.
+
+DO NOT USE THIS FUNCTION in your programs.  Use `unload-feature' instead.
 
 As with load-module, this function requires at least the module FILE, and
 optionally the module NAME and VERSION to unload.  It may not be possible
@@ -124,10 +136,17 @@ soon as the last reference to symbols within the module is destroyed.
 {
   int x;
   char *mod, *mname, *mver;
+  Lisp_Object foundname = Qnil;
+  struct gcpro gcpro1;
 
   CHECK_STRING(file);
 
-  mod = (char *)XSTRING_DATA (file);
+  GCPRO1 (foundname);
+  if (locate_file (Vmodule_load_path, file, Vmodule_extensions, &foundname, 0)
+      < 0)
+    return Qt;
+  mod = (char *)XSTRING_DATA (foundname);
+  UNGCPRO;
 
   if (NILP (name))
     mname = "";
@@ -141,10 +160,13 @@ soon as the last reference to symbols within the module is destroyed.
 
   x = find_make_module (mod, mname, mver, 1);
   if (x != -1)
-    attempt_module_delete (x);
+    {
+      if (modules[x].unload != NULL)
+	modules[x].unload ();
+      attempt_module_delete (x);
+    }
   return Qt;
 }
-#endif /* DANGEROUS_NASTY_SCARY_MONSTER */
 
 DEFUN ("list-modules", Flist_modules, 0, 0, "", /*
 Produce a list of loaded dynamic modules.
@@ -308,10 +330,11 @@ module_load_unwind (Lisp_Object upto)
 void
 emodules_load(const char *module, const char *modname, const char *modver)
 {
+  Lisp_Object old_load_list;
   Lisp_Object filename;
-  Lisp_Object foundname;
-  int fd, x, mpx;
-  char *soname, *tmod;
+  Lisp_Object foundname, lisp_modname;
+  int x, mpx;
+  char *soname;
   const char **f;
   const long *ellcc_rev;
   char *mver, *mname, *mtitle, *symname;
@@ -319,8 +342,9 @@ emodules_load(const char *module, const char *modname, const char *modver)
   void (*modsyms)(void) = 0;
   void (*modvars)(void) = 0;
   void (*moddocs)(void) = 0;
+  void (*modunld)(void) = 0;
   emodules_list *mp;
-  struct gcpro gcpro1,gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   filename = Qnil;
   foundname = Qnil;
@@ -331,22 +355,16 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if ((module == (const char *)0) || (module[0] == '\0'))
     invalid_argument ("Empty module name", Qunbound);
 
-  /* This is to get around the fact that build_string() is not declared
-     as taking a const char * as an argument. I HATE compiler warnings. */
-  tmod = (char *)ALLOCA (strlen (module) + 1);
-  strcpy (tmod, module);
-
-  GCPRO2(filename, foundname);
-  filename = build_string (tmod);
-  fd = locate_file (Vmodule_load_path, filename, Vmodule_extensions,
-		    &foundname, -1);
-  UNGCPRO;
-
-  if (fd < 0)
+  GCPRO4(filename, foundname, old_load_list, lisp_modname);
+  filename = build_string (module);
+  if (locate_file (Vmodule_load_path, filename, Vmodule_extensions,
+		   &foundname, 0) < 0)
     signal_error (Qdll_error, "Cannot open dynamic module", filename);
 
   soname = (char *)ALLOCA (XSTRING_LENGTH (foundname) + 1);
   strcpy (soname, (char *)XSTRING_DATA (foundname));
+  lisp_modname = call1 (Qfile_name_sans_extension,
+			Ffile_name_nondirectory (foundname));
 
   dlhandle = dll_open (soname);
   if (dlhandle == (dll_handle)0)
@@ -419,6 +437,11 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if (moddocs == (void (*)(void))0)
     goto missing_symbol;
 
+  /* Now look for the optional unload function. */
+  strcpy (symname, "unload_");
+  strcat (symname, mname);
+  modunld = (void (*)(void))dll_function (dlhandle, symname);
+
   if (modname && modname[0] && strcmp (modname, mname))
     signal_error (Qdll_error, "Module name mismatch", Qunbound);
 
@@ -454,7 +477,13 @@ emodules_load(const char *module, const char *modname, const char *modver)
   mp->modver = xstrdup (mver);
   mp->modtitle = xstrdup (mtitle);
   mp->dlhandle = dlhandle;
+  mp->unload = modunld;
   dlhandle = 0;
+
+  old_load_list = Vcurrent_load_list;
+  Vcurrent_load_list = Qnil;
+  LOADHIST_ATTACH (lisp_modname);
+  LOADHIST_ATTACH (module_tag);
 
   /*
    * Now we need to call the module init function and perform the various
@@ -474,6 +503,9 @@ emodules_load(const char *module, const char *modname, const char *modver)
   if (!load_modules_quietly)
     message ("Loaded module %s v%s (%s)", mname, mver, mtitle);
 
+  Vload_history = Fcons (Fnreverse (Vcurrent_load_list), Vload_history);
+  Vcurrent_load_list = old_load_list;
+  UNGCPRO;
 
   emodules_depth--;
   if (emodules_depth == 0)
@@ -531,11 +563,14 @@ void
 syms_of_module (void)
 {
   DEFERROR_STANDARD (Qdll_error, Qerror);
+  DEFSYMBOL (Qmodule);
+  DEFSYMBOL (Qunload_module);
   DEFSUBR(Fload_module);
   DEFSUBR(Flist_modules);
-#ifdef DANGEROUS_NASTY_SCARY_MONSTER
   DEFSUBR(Funload_module);
-#endif
+  module_tag = Fcons (Qmodule, Qnil);
+  staticpro (&module_tag);
+  Fput (Qunload_module, Qdisabled, Qt);
 }
 
 void
@@ -593,8 +628,15 @@ the correctness of a dynamic module, which can have unpredictable results
 when a dynamic module is loaded.
 */);
 
+  DEFVAR_BOOL ("unloading-module", &unloading_module /*
+Used internally by `unload-feature'.  Do not set this variable.
+Danger, danger, Will Robinson!
+*/);
+
   /* #### Export this to Lisp */
-  Vmodule_extensions = build_string (":.ell:.so:.dll");
+  Vmodule_extensions = list3 (build_string (".ell"),
+			      build_string (".so"),
+			      build_string (".dll"));
   staticpro (&Vmodule_extensions);
 
   load_modules_quietly = 0;
@@ -603,4 +645,3 @@ when a dynamic module is loaded.
 }
 
 #endif /* HAVE_SHLIB */
-

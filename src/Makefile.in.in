@@ -215,8 +215,8 @@ gif_objs=dgif_lib.o gif_io.o
 gpm_objs=gpmevent.o
 #endif
 
-#ifdef HAVE_LDAP
-ldap_objs=eldap.o
+#if defined(HAVE_LDAP) && !defined(HAVE_SHLIB)
+ldap_objs=../modules/ldap/eldap.o
 #endif
 
 #ifdef MULE
@@ -231,8 +231,8 @@ mule_canna_objs=mule-canna.o
 mule_wnn_objs=mule-wnnfns.o
 #endif
 
-#ifdef HAVE_POSTGRESQL
-postgresql_objs=postgresql.o
+#if defined(HAVE_POSTGRESQL) && !defined(HAVE_SHLIB)
+postgresql_objs=../modules/postgresql/postgresql.o
 #endif
 
 #ifdef HAVE_WIN32_PROCESSES

@@ -146,6 +146,12 @@
     (load "autoload")
     (update-autoload-files (list dir))
     (byte-recompile-file (expand-file-name "auto-autoloads.el" dir) 0)
+    (if (featurep 'modules)
+      (let* ((moddir (expand-file-name "../modules" (file-truename dir)))
+	     (generated-autoload-file
+	      (expand-file-name "auto-autoloads.el" moddir)))
+	(update-autoload-files (directory-files moddir t nil nil 0) t)
+	(byte-recompile-file generated-autoload-file 0)))
     (when (featurep 'mule)
       (update-autoload-files (list (expand-file-name "mule" dir)))
       (byte-recompile-file (expand-file-name "mule/auto-autoloads.el" dir) 0))

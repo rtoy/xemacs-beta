@@ -273,12 +273,12 @@ Return t if file exists."
 		   ))))
 	;; The file name is invalid, or we want to load a binary module
 	(if (and (> (length filename) 0)
-		 (setq path (locate-file filename module-load-path
-					 (and (not nosuffix)
-					      '(".ell" ".dll" ".so" "")))))
+		 (locate-file filename module-load-path
+			      (and (not nosuffix)
+				   '(".ell" ".dll" ".so" ""))))
 	    (if (featurep 'modules)
 		(let ((load-modules-quietly nomessage))
-		  (load-module path))
+		  (load-module filename))
 	      (signal 'file-error '("This XEmacs does not support modules")))
 	  (and (null noerror)
 	       (signal 'file-error (list "Cannot open load file" filename))))

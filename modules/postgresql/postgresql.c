@@ -402,7 +402,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 #else
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
-			       0, /*dumpable-flag*/			       
+			       0, /*dumpable-flag*/
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       pgresult_description,
@@ -431,6 +431,7 @@ xemacs_notice_processor (void *arg, const char *msg)
    Note that PQconnectStart does not exist prior to v7.
 */
 
+/* ###autoload */
 DEFUN ("pq-conn-defaults", Fpq_conn_defaults, 0, 0, 0, /*
 Return a connection default structure.
 */
@@ -476,6 +477,7 @@ Return a connection default structure.
 PGconn *PQconnectdb(const char *conninfo)
 */
 
+/* ###autoload */
 DEFUN ("pq-connectdb", Fpq_connectdb, 1, 1, 0, /*
 Make a new connection to a PostgreSQL backend.
 */
@@ -520,6 +522,7 @@ PGconn *PQconnectStart(const char *conninfo)
 */
 
 #ifdef HAVE_POSTGRESQLV7
+/* ###autoload */
 DEFUN ("pq-connect-start", Fpq_connect_start, 1, 1, 0, /*
 Make a new asynchronous connection to a PostgreSQL backend.
 */
@@ -1392,6 +1395,7 @@ aren't any notifications to process.
 }
 
 #if defined (HAVE_POSTGRESQLV7) && defined(MULE)
+/* ###autoload */
 DEFUN ("pq-env-2-encoding", Fpq_env_2_encoding, 0, 0, 0, /*
 Get encoding id from environment variable PGCLIENTENCODING.
 */
@@ -1821,6 +1825,12 @@ The initial value is set from the PGTZ environment variable.
 Default date style to use.
 The initial value is set from the PGDATESTYLE environment variable.
 */ );
+
+#ifdef HAVE_SHLIB
+  /* If we are building this as a module, we need the initializing function to
+     run at module load time. */
+  init_postgresql_from_environment ();
+#endif
 }
 
 /* These initializations should not be done at dump-time. */
@@ -1868,3 +1878,49 @@ init_postgresql_from_environment (void)
     }
 }
 
+#ifdef HAVE_SHLIB
+void
+unload_postgresql (void)
+{
+#ifndef RUNNING_XEMACS_21_1
+  /* Remove defined types */
+  UNDEF_LRECORD_IMPLEMENTATION (pgconn);
+  UNDEF_LRECORD_IMPLEMENTATION (pgresult);
+#endif
+
+  /* Remove staticpro'ing of symbols */
+  unstaticpro_nodump (&Qpostgresql);
+  unstaticpro_nodump (&Qpgconnp);
+  unstaticpro_nodump (&Qpgresultp);
+  unstaticpro_nodump (&Qpg_connection_ok);
+  unstaticpro_nodump (&Qpg_connection_bad);
+  unstaticpro_nodump (&Qpg_connection_started);
+  unstaticpro_nodump (&Qpg_connection_made);
+  unstaticpro_nodump (&Qpg_connection_awaiting_response);
+  unstaticpro_nodump (&Qpg_connection_auth_ok);
+  unstaticpro_nodump (&Qpg_connection_setenv);
+  unstaticpro_nodump (&Qpqdb);
+  unstaticpro_nodump (&Qpquser);
+  unstaticpro_nodump (&Qpqpass);
+  unstaticpro_nodump (&Qpqhost);
+  unstaticpro_nodump (&Qpqport);
+  unstaticpro_nodump (&Qpqtty);
+  unstaticpro_nodump (&Qpqoptions);
+  unstaticpro_nodump (&Qpqstatus);
+  unstaticpro_nodump (&Qpqerrormessage);
+  unstaticpro_nodump (&Qpqbackendpid);
+  unstaticpro_nodump (&Qpgres_empty_query);
+  unstaticpro_nodump (&Qpgres_command_ok);
+  unstaticpro_nodump (&Qpgres_tuples_ok);
+  unstaticpro_nodump (&Qpgres_copy_out);
+  unstaticpro_nodump (&Qpgres_copy_in);
+  unstaticpro_nodump (&Qpgres_bad_response);
+  unstaticpro_nodump (&Qpgres_nonfatal_error);
+  unstaticpro_nodump (&Qpgres_fatal_error);
+  unstaticpro_nodump (&Qpgres_polling_failed);
+  unstaticpro_nodump (&Qpgres_polling_reading);
+  unstaticpro_nodump (&Qpgres_polling_writing);
+  unstaticpro_nodump (&Qpgres_polling_ok);
+  unstaticpro_nodump (&Qpgres_polling_active);
+}
+#endif /* HAVE_SHLIB */

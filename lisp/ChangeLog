@@ -1,3 +1,24 @@
+2002-08-08  Jerry James  <james@xemacs.org>
+
+	* autoload.el (make-c-autoload): New function for reading autoload
+	markers in C files.
+	* autoload.el (generate-c-autoload-cookie): New variable.
+	* autoload.el (generate-c-autoload-module): New variable.
+	* autoload.el (generate-file-autoloads): Do C autoloads, too.
+	* autoload.el (generate-file-autoloads-1): Use print-autoload.
+	* autoload.el (generate-c-file-autoloads-1): New function.
+	* autoload.el (print-autoload): New function to abstract the
+	printing of autoload forms.
+	* autoload.el (update-file-autoloads): Do C autoloads, too.
+	* autoload.el (update-autoloads-from-directory): Ditto.
+	* code-files.el (load): Pass the pathless filename to load-module.
+	* loadhist.el (unload-feature): Set unloading-module when a
+	module marker is seen in load-history.  Call unload-module if
+	unloading-module is non-nil.
+	* startup.el (startup-load-autoloads): Look for module autoloads.
+	* update-elc-2.el (batch-update-elc-2): Generate module
+	autoloads.
+
 2002-09-02  Ville Skyttä  <ville.skytta@xemacs.org>
 
 	* bytecomp-runtime.el (make-obsolete): Docstring argument nit.

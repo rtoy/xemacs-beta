@@ -770,6 +770,24 @@ extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
   INIT_LRECORD_IMPLEMENTATION(type);					\
 } while (0)
 
+#ifdef HAVE_SHLIB
+/* Allow undefining types in order to support module unloading. */
+
+#define UNDEF_LRECORD_IMPLEMENTATION(type) do {				\
+  lrecord_implementations_table[lrecord_type_##type] = NULL;		\
+  lrecord_markers[lrecord_type_##type] = NULL;				\
+} while (0)
+
+#define UNDEF_EXTERNAL_LRECORD_IMPLEMENTATION(type) do {		\
+  if (lrecord_##type.lrecord_type_index == lrecord_type_count - 1) {	\
+    /* This is the most recently defined type.  Clean up nicely. */	\
+    lrecord_type_##type = lrecord_type_count--;				\
+  } /* Else we can't help leaving a hole with this implementation. */	\
+  UNDEF_LRECORD_IMPLEMENTATION(type);					\
+} while (0)
+
+#endif /* HAVE_SHLIB */
+
 #define LRECORDP(a) (XTYPE (a) == Lisp_Type_Record)
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
 

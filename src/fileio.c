@@ -218,6 +218,7 @@ Lisp_Object Qsubstitute_in_file_name;
 Lisp_Object Qdirectory_file_name;
 Lisp_Object Qfile_name_directory;
 Lisp_Object Qfile_name_nondirectory;
+Lisp_Object Qfile_name_sans_extension;
 Lisp_Object Qunhandled_file_name_directory;
 Lisp_Object Qfile_name_as_directory;
 Lisp_Object Qcopy_file;
@@ -4208,6 +4209,7 @@ syms_of_fileio (void)
   DEFSYMBOL (Qdirectory_file_name);
   DEFSYMBOL (Qfile_name_directory);
   DEFSYMBOL (Qfile_name_nondirectory);
+  DEFSYMBOL (Qfile_name_sans_extension);
   DEFSYMBOL (Qunhandled_file_name_directory);
   DEFSYMBOL (Qfile_name_as_directory);
   DEFSYMBOL (Qcopy_file);

@@ -1415,6 +1415,10 @@ Copyright (C) 1995-1996 Ben Wing\n"))
       (load (expand-file-name (file-name-sans-extension autoload-file-name)
 			      lisp-directory) nil t))
 
+  ;; Hey!  Let's use a packages-* function for a non-package purpose!
+  (if (and (not inhibit-autoloads) (featurep 'modules))
+      (packages-load-package-auto-autoloads module-load-path))
+
   (if (and (not inhibit-autoloads) (not inhibit-all-packages))
       (progn
 	(if (not inhibit-early-packages)

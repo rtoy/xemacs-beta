@@ -35,6 +35,8 @@
 
 ;; ChangeLog:
 
+;; Jun-25-2002:  Jerry James added code for processing C files, to
+;;               support modularization
 ;; Sep-26-1997:  slb removed code dealing with customization.
 
 ;;; Code:
@@ -68,6 +70,40 @@ define-skeleton, or define-derived-mode."
 		(if macrop (list 'quote 'macro) nil)))
       nil)))
 
+(defun make-c-autoload (module)
+  "Make an autoload list for the DEFUN at point in MODULE.
+Returns nil if the DEFUN is malformed."
+  (and
+   ;; Match the DEFUN
+   (search-forward "DEFUN" nil t)
+   ;; Match the opening parenthesis
+   (progn
+     (skip-syntax-forward " ")
+     (eq (char-after) ?\())
+   ;; Match the opening quote of the Lisp function name
+   (progn
+     (forward-char)
+     (skip-syntax-forward " ")
+     (eq (char-after) ?\"))
+   ;; Extract the Lisp function name, interactive indicator, and docstring
+   (let* ((func-name (let ((begin (progn (forward-char) (point))))
+		       (search-forward "\"" nil t)
+		       (backward-char)
+		       (intern (buffer-substring begin (point)))))
+	  (interact (progn
+		      (search-forward "," nil t 4)
+		      (skip-syntax-forward " ")
+		      (not (eq (char-after) ?0))))
+	  (begin (progn
+		   (search-forward "/*" nil t)
+		   (forward-line 1)
+		   (point))))
+     (search-forward "*/" nil t)
+     (goto-char (match-beginning 0))
+     (skip-chars-backward " \t\n\f")
+     (list 'autoload (list 'quote func-name) module
+	   (buffer-substring begin (point)) interact nil))))
+
 (defvar generate-autoload-cookie ";;;###autoload"
   "Magic comment indicating the following form should be autoloaded.
 Used by `update-file-autoloads'.  This string should be
@@ -83,6 +119,26 @@ read and an autoload made for it.  If it is followed by the string
 \"immediate\", then the form on the following line will be copied
 verbatim.  If there is further text on the line, that text will be
 copied verbatim to `generated-autoload-file'.")
+
+(defvar generate-c-autoload-cookie "/* ###autoload"
+  "Magic C comment indicating the following form should be autoloaded.
+Used by `update-file-autoloads'.  This string should be
+meaningless to C (e.g., a comment).
+
+This string is used:
+
+/* ###autoload */
+DEFUN (\"function-to-be-autoloaded\", ... )
+
+If this string appears alone on a line, the following form will be
+read and an autoload made for it.  If there is further text on the line,
+that text will be copied verbatim to `generated-autoload-file'.")
+
+(defvar generate-c-autoload-module "/* ###module"
+  "Magic C comment indicating the module containing autoloaded functions.
+Since a module can consist of multiple C files, the module name may not be
+the same as the C source file base name.  In that case, use this comment to
+indicate the actual name of the module from which to autoload functions.")
 
 (defvar generate-autoload-section-header "\f\n;;;### "
   "String inserted before the form identifying
@@ -138,7 +194,9 @@ marked by `generate-autoload-cookie' (which see).
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
   (interactive "fGenerate autoloads for file: ")
-  (generate-file-autoloads-1 file funlist))
+  (if (string-match "\\.el$" file)
+      (generate-file-autoloads-1 file funlist)
+    (generate-c-file-autoloads-1 file funlist)))
 
 (defun* generate-file-autoloads-1 (file funlist)
   "Insert at point a loaddefs autoload section for FILE.
@@ -214,79 +272,7 @@ are used."
 			      (setq autoloads-done (cons (nth 1 form)
 							 autoloads-done))
 			    (setq autoload form))
-			  (if (and doc-string-elt
-				   (stringp (nth doc-string-elt autoload)))
-			      ;; We need to hack the printing because the
-			      ;; doc-string must be printed specially for
-			      ;; make-docfile (sigh).
-			      (let* ((p (nthcdr (1- doc-string-elt)
-						autoload))
-				     (elt (cdr p)))
-				(setcdr p nil)
-				(princ "\n(" outbuf)
-				;; XEmacs change: don't let ^^L's get into
-				;; the file or sorting is hard.
-				(let ((print-escape-newlines t)
-				      (p (save-excursion
-					   (set-buffer outbuf)
-					   (point)))
-				      p2)
-				  (mapcar (function (lambda (elt)
-						      (prin1 elt outbuf)
-						      (princ " " outbuf)))
-					  autoload)
-				  (save-excursion
-				    (set-buffer outbuf)
-				    (setq p2 (point-marker))
-				    (goto-char p)
-				    (save-match-data
-				      (while (search-forward "\^L" p2 t)
-					(delete-char -1)
-					(insert "\\^L")))
-				    (goto-char p2)
-				    ))
-				(princ "\"\\\n" outbuf)
-				(let ((begin (save-excursion
-					       (set-buffer outbuf)
-					       (point))))
-				  (princ (substring
-					  (prin1-to-string (car elt)) 1)
-					 outbuf)
-				  ;; Insert a backslash before each ( that
-				  ;; appears at the beginning of a line in
-				  ;; the doc string.
-				  (save-excursion
-				    (set-buffer outbuf)
-				    (save-excursion
-				      (while (search-backward "\n(" begin t)
-					(forward-char 1)
-					(insert "\\"))))
-				  (if (null (cdr elt))
-				      (princ ")" outbuf)
-				    (princ " " outbuf)
-				    (princ (substring
-					    (prin1-to-string (cdr elt))
-					    1)
-					   outbuf))
-				  (terpri outbuf)))
-			    ;; XEmacs change: another fucking ^L hack
-			    (let ((p (save-excursion
-				       (set-buffer outbuf)
-				       (point)))
-				  (print-escape-newlines t)
-				  p2)
-			      (print autoload outbuf)
-			      (save-excursion
-				(set-buffer outbuf)
-				(setq p2 (point-marker))
-				(goto-char p)
-				(save-match-data
-				  (while (search-forward "\^L" p2 t)
-				    (delete-char -1)
-				    (insert "\\^L")))
-				(goto-char p2)
-				))
-			    ))
+			  (print-autoload autoload doc-string-elt outbuf))
 		      ;; Copy the rest of the line to the output.
 		      (let ((begin (point)))
 			;; (terpri outbuf)
@@ -346,6 +332,165 @@ are used."
     (or noninteractive ; XEmacs: only need one line in -batch mode.
 	(message "Generating autoloads for %s...done" file))))
 
+(defun* generate-c-file-autoloads-1 (file funlist)
+  "Insert at point a loaddefs autoload section for the C file FILE.
+autoloads are generated for Defuns and defmacros in FILE
+marked by `generate-c-autoload-cookie' (which see).
+If FILE is being visited in a buffer, the contents of the buffer
+are used."
+  (let ((outbuf (current-buffer))
+	(autoloads-done '())
+	(load-name (replace-in-string (file-name-nondirectory file)
+				      "\\.c?$"
+				      ""))
+	(trim-name (autoload-trim-file-name file))
+	(print-length nil)
+	(print-readably t)
+	(float-output-format nil)
+	;; (done-any nil)
+	(visited (get-file-buffer file))
+	output-end)
+
+    ;; If the autoload section we create here uses an absolute
+    ;; pathname for FILE in its header, and then Emacs is installed
+    ;; under a different path on another system,
+    ;; `update-autoloads-here' won't be able to find the files to be
+    ;; autoloaded.  So, if FILE is in the same directory or a
+    ;; subdirectory of the current buffer's directory, we'll make it
+    ;; relative to the current buffer's directory.
+    (setq file (expand-file-name file))
+
+    (save-excursion
+      (unwind-protect
+	  (progn
+	    (let ((find-file-hooks nil)
+		  (enable-local-variables nil))
+	      (set-buffer (or visited (find-file-noselect file t t)))
+	      ;; This doesn't look right, but it is.  The only place we need
+	      ;; the syntax table is when snarfing the Lisp function name.
+	      (set-syntax-table emacs-lisp-mode-syntax-table))
+	    (save-excursion
+	      (save-restriction
+		(widen)
+		(goto-char (point-min))
+		;; Is there a module name comment?
+		(when (search-forward generate-c-autoload-module nil t)
+		  (skip-chars-forward " \t")
+		  (let ((begin (point)))
+		    (skip-chars-forward "^ \t\n\f")
+		    (setq load-name (buffer-substring begin (point)))))
+		(if funlist
+		    (progn
+		      (message "Generating autoloads for %s..." trim-name)
+		      (dolist (arg funlist)
+			(goto-char (point-min))
+			(re-search-forward
+			 (concat "DEFUN (\""
+				 (regexp-quote (symbol-name arg))
+				 "\""))
+			(goto-char (match-beginning 0))
+			(let ((autoload (make-c-autoload load-name)))
+			  (when autoload
+			    (push (nth 1 (nth 1 autoload)) autoloads-done)
+			    (print-autoload autoload 3 outbuf)))))
+		  (goto-char (point-min))
+		  (let ((match
+			 (search-forward generate-c-autoload-cookie nil t)))
+		    (unless match
+		      (message "No autoloads found in %s" trim-name)
+		      (return-from generate-c-file-autoloads-1))
+
+		    (message "Generating autoloads for %s..." trim-name)
+		    (while match
+		      (forward-line 1)
+		      (let ((autoload (make-c-autoload load-name)))
+			(when autoload
+			  (push (nth 1 (nth 1 autoload)) autoloads-done)
+			  (print-autoload autoload 3 outbuf)))
+		      (setq match
+			    (search-forward generate-c-autoload-cookie nil t))
+		      ))))))
+	(unless visited
+	  ;; We created this buffer, so we should kill it.
+	  (kill-buffer (current-buffer)))
+	(set-buffer outbuf)
+	(setq output-end (point-marker))))
+    (insert generate-autoload-section-header)
+    (prin1 (list 'autoloads autoloads-done load-name trim-name) outbuf)
+    (terpri outbuf)
+    (when (< output-end (point))
+      (setq output-end (point-marker)))
+    (goto-char output-end)
+    (insert generate-autoload-section-trailer)
+    (or noninteractive ; XEmacs: only need one line in -batch mode.
+	(message "Generating autoloads for %s...done" trim-name))))
+
+(defun print-autoload (autoload doc-string-elt outbuf)
+  "Print an autoload form, handling special characters.
+In particular, print docstrings with escapes inserted before left parentheses
+at the beginning of lines and ^L characters."
+  (if (and doc-string-elt (stringp (nth doc-string-elt autoload)))
+      ;; We need to hack the printing because the doc-string must be
+      ;; printed specially for make-docfile (sigh).
+      (let* ((p (nthcdr (1- doc-string-elt) autoload))
+	     (elt (cdr p)))
+	(setcdr p nil)
+	(princ "\n(" outbuf)
+	;; XEmacs change: don't let ^^L's get into
+	;; the file or sorting is hard.
+	(let ((print-escape-newlines t)
+	      (p (save-excursion
+		   (set-buffer outbuf)
+		   (point)))
+	      p2)
+	  (mapcar #'(lambda (elt)
+		      (prin1 elt outbuf)
+		      (princ " " outbuf))
+		  autoload)
+	  (save-excursion
+	    (set-buffer outbuf)
+	    (setq p2 (point-marker))
+	    (goto-char p)
+	    (save-match-data
+	      (while (search-forward "\^L" p2 t)
+		(delete-char -1)
+		(insert "\\^L")))
+	    (goto-char p2)))
+	(princ "\"\\\n" outbuf)
+	(let ((begin (save-excursion
+		       (set-buffer outbuf)
+		       (point))))
+	  (princ (substring (prin1-to-string (car elt)) 1) outbuf)
+	  ;; Insert a backslash before each ( that appears at the beginning
+	  ;; of a line in the doc string.
+	  (save-excursion
+	    (set-buffer outbuf)
+	    (save-excursion
+	      (while (search-backward "\n(" begin t)
+		(forward-char 1)
+		(insert "\\"))))
+	  (if (null (cdr elt))
+	      (princ ")" outbuf)
+	    (princ " " outbuf)
+	    (princ (substring (prin1-to-string (cdr elt)) 1) outbuf))
+	  (terpri outbuf)))
+    ;; XEmacs change: another ^L hack
+    (let ((p (save-excursion
+	       (set-buffer outbuf)
+	       (point)))
+	  (print-escape-newlines t)
+	  p2)
+      (print autoload outbuf)
+      (save-excursion
+	(set-buffer outbuf)
+	(setq p2 (point-marker))
+	(goto-char p)
+	(save-match-data
+	  (while (search-forward "\^L" p2 t)
+	    (delete-char -1)
+	    (insert "\\^L")))
+	(goto-char p2)))))
+
 
 (defconst autoload-file-name "auto-autoloads.el"
   "Generic filename to put autoloads into.
@@ -383,7 +528,7 @@ This function refuses to update autoloads files."
 			  (list autoload-file-name))))
 
     (let ((load-name (replace-in-string (file-name-nondirectory file)
-					"\\.elc?$"
+					"\\.\\(elc?\\|c\\)$"
 					""))
 	  (trim-name (autoload-trim-file-name file))
 	  section-begin form)
@@ -473,7 +618,7 @@ This function refuses to update autoloads files."
 ;;;###autoload
 (defun update-autoloads-from-directory (dir)
   "Update `generated-autoload-file' with all the current autoloads from DIR.
-This runs `update-file-autoloads' on each .el file in DIR.
+This runs `update-file-autoloads' on each .el and .c file in DIR.
 Obsolete autoload entries for files that no longer exist are deleted.
 Note that, if this function is called from `batch-update-directory',
 `generated-autoload-file' was rebound in that function.
@@ -505,7 +650,8 @@ You don't really want to be calling this function.  Try using
 	    (search-forward generate-autoload-section-trailer)
 	    (delete-region begin (point)))))
       ;; Update or create autoload sections for existing files.
-      (mapcar 'update-file-autoloads (directory-files dir t "^[^=].*\\.el$"))
+      (mapcar 'update-file-autoloads
+	      (directory-files dir t "^[^=].*\\.\\(el\\|c\\)$"))
       (unless noninteractive
 	(save-buffer)))))
 

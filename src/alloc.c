@@ -2785,6 +2785,17 @@ staticpro_nodump_1 (Lisp_Object *varaddress, char *varname)
   Dynarr_add (staticpro_nodump_names, varname);
 }
 
+#ifdef HAVE_SHLIB
+/* Stop treating the Lisp_Object at non-heap VARADDRESS as a root object
+   for garbage collection, but not for dumping. */
+void
+unstaticpro_nodump_1 (Lisp_Object *varaddress, char *varname)
+{
+  Dynarr_delete_object (staticpros, varaddress);
+  Dynarr_delete_object (staticpro_names, varname);
+}
+#endif
+
 #else /* not DEBUG_XEMACS */
 
 Lisp_Object_ptr_dynarr *staticpros;
@@ -2823,6 +2834,16 @@ staticpro_nodump (Lisp_Object *varaddress)
 {
   Dynarr_add (staticpros_nodump, varaddress);
 }
+
+#ifdef HAVE_SHLIB
+/* Unmark the Lisp_Object at non-heap VARADDRESS as a root object for
+   garbage collection, but not for dumping. */
+void
+unstaticpro_nodump (Lisp_Object *varaddress)
+{
+  Dynarr_delete_object (staticpros, varaddress);
+}
+#endif
 
 #endif /* not DEBUG_XEMACS */
 

@@ -1,5 +1,6 @@
 /* ellcc.c - front-end for compiling Emacs modules
 Copyright (C) 1998, 1999 J. Kean Johnston.
+Copyright (C) 2002 Jerry James.
 
 This file is part of XEmacs.
 
@@ -62,6 +63,7 @@ See the samples for more details.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -72,11 +74,10 @@ See the samples for more details.
 #endif /* HAVE_UNISTD_H */
 
 #define EMODULES_GATHER_VERSION
+#define EXEC_GROW_SIZE 4
 
 #include <emodules.h>
 #include <ellcc.h> /* Generated files must be included using <...> */
-
-#define DEBUG
 
 #ifndef HAVE_SHLIB
 int
@@ -91,6 +92,31 @@ main (int argc, char *argv[])
  * Try to figure out the commands we need to use to create shared objects,
  * and how to compile for PIC mode.
  */
+
+static char *progname;
+static char *mod_name = NULL;
+static char *mod_version = NULL;
+static char *mod_title = NULL;
+static char *mod_output = NULL;
+static int exec_argc = 1;
+static int exec_length = 0;
+static int *exec_args;
+static int real_argc = 0;
+static char **prog_argv;
+
+/*
+ * We allow the user to override things in the environment
+ */
+static char *ellcc, *ellld, *ellcflags, *ellldflags, *ellpicflags,
+  *elldllflags;
+
+#define OVERENV(STR,EVAR,DFLT)			\
+do {						\
+  STR = getenv (EVAR);				\
+  if ((STR) == NULL) {				\
+    STR = DFLT;					\
+  }						\
+} while(0)
 
 /*
  *	xnew, xrnew -- allocate, reallocate storage
@@ -108,94 +134,141 @@ main (int argc, char *argv[])
 # define xnew(n,Type)	  ((Type *) xmalloc ((n) * sizeof (Type)))
 # define xrnew(op,n,Type) ((Type *) xrealloc ((op), (n) * sizeof (Type)))
 #endif
-static void *xmalloc (size_t);
-static void fatal (char *, char *);
-static void add_to_argv (const char *);
-static void do_compile_mode (void);
-static void do_link_mode (void);
-static void do_init_mode (void);
-
-#define SSTR(S) ((S)?(S):"")
-
-#define ELLCC_COMPILE_MODE      0
-#define ELLCC_LINK_MODE         1
-#define ELLCC_INIT_MODE         2
-
-static int ellcc_mode = ELLCC_COMPILE_MODE;
-static char *progname;
-static char *mod_name = NULL;
-static char *mod_version = NULL;
-static char *mod_title = NULL;
-static char *mod_output = NULL;
-static int verbose = 0;
-static char **exec_argv;
-static int exec_argc = 1;
-static int *exec_args;
-static int real_argc = 0;
-static int prog_argc;
-static char **prog_argv;
 
 /*
- * We allow the user to over-ride things in the environment
+ * Ellcc modes of operation
  */
-char *ellcc, *ellld, *ellcflags, *ellldflags, *ellpicflags, *elldllflags;
-#define OVERENV(STR,EVAR,DFLT) \
-  STR = getenv(EVAR); \
-  if ((STR) == (char *)0) \
-    STR = DFLT
+
+enum mode { ELLCC_COMPILE_MODE, ELLCC_LINK_MODE, ELLCC_INIT_MODE };
+
+#ifdef DEBUG
+static const char *ellcc_mode_name (enum mode ellcc_mode)
+#if defined(__GNUC__) && __GNUC__ >= 2 && __GNUC_MINOR__ >= 5
+     __attribute__ ((const))
+#endif
+     ;
+
+static const char *
+ellcc_mode_name (enum mode ellcc_mode)
+{
+  switch (ellcc_mode)
+    {
+    case ELLCC_COMPILE_MODE:
+      return "compile";
+    case ELLCC_LINK_MODE:
+      return "link";
+    case ELLCC_INIT_MODE:
+      return "init";
+    }
+  return "";
+}
+#endif
+
+/*
+ * Function Prototypes
+ */
+
+static void *xmalloc (size_t size)
+#ifdef __GNUC__
+     __attribute__ ((malloc))
+#endif
+     ;
+
+static void *xrealloc (void *ptr, size_t size)
+#ifdef __GNUC__
+     __attribute__ ((malloc))
+#endif
+     ;
+
+static char *xstrdup (char *)
+#ifdef __GNUC__
+     __attribute__ ((malloc))
+#endif
+     ;
+
+static void fatal (char *, ...)
+#ifdef __GNUC__
+     __attribute__ ((noreturn, format (printf, 1, 2)))
+#endif
+     ;
+
+static char ** add_string (char **, char *);
+static char ** add_to_argv (char **, const char *);
+static char ** do_compile_mode (void);
+static char ** do_link_mode (void);
+static char ** do_init_mode (void);
+
+#define SSTR(S) ((S) != NULL ? (S) : "")
 
 int
 main (int argc, char *argv[])
 {
   char *tmp;
-  int i, done_mode = 0;
+  char ** exec_argv;
+  int i, done_mode = 0, verbose = 0;
+  enum mode ellcc_mode;
 
-  prog_argc = argc;
+  if (argc < 2)
+    {
+      /* FIXME: Print usage output instead */
+      fatal ("too few arguments");
+    }
+
   prog_argv = argv;
 
 #if defined(WIN32_NATIVE)
   tmp = strrchr (argv[0], '\\');
-  if (tmp != (char *)0)
-    tmp++;
+  if (tmp != NULL)
+    {
+      tmp++;
+    }
 #elif !defined (VMS)
   tmp = strrchr (argv[0], '/');
-  if (tmp != (char *)0)
-    tmp++;
+  if (tmp != NULL)
+    {
+      tmp++;
+    }
 #else
   tmp = argv[0];
 #endif
 
-  if (tmp != (char *)0)
-    progname = tmp;
-  else
-    progname = argv[0];
+  progname = (tmp == NULL) ? argv[0] : tmp;
 
   tmp = &progname[strlen(progname)-2];
   if (strcmp (tmp, "cc") == 0)
-    ellcc_mode = ELLCC_COMPILE_MODE;
+    {
+      ellcc_mode = ELLCC_COMPILE_MODE;
+    }
   else if (strcmp (tmp, "ld") == 0)
-    ellcc_mode = ELLCC_LINK_MODE;
+    {
+      ellcc_mode = ELLCC_LINK_MODE;
+    }
   else if (strcmp (tmp, "it") == 0)
-    ellcc_mode = ELLCC_INIT_MODE;
+    {
+      ellcc_mode = ELLCC_INIT_MODE;
+    }
+  else
+    {
+      ellcc_mode = ELLCC_COMPILE_MODE;
+    }
 
-  exec_argv = xnew(argc + 20, char *);
   exec_args = xnew(argc, int);
-  for (i = 0; i < argc; i++)
-    exec_args[i] = -1;
-
-  if (argc < 2)
-    fatal ("too few arguments", (char *)0);
-
   exec_args[0] = 0;
+  for (i = 1; i < argc; i++)
+    {
+      exec_args[i] = -1;
+    }
 
   for (i = 1; i < argc; i++)
     {
-      if (strncmp (argv[i], "--mode=", 7) == 0)
+      if (strncmp (argv[i], "--mode=", (size_t)7) == 0)
         {
-          char *modeopt = argv[i] + 7;
+          char *modeopt = &argv[i][7];
 
-          if (done_mode && strcmp (modeopt, "verbose"))
-            fatal ("more than one mode specified", (char *) 0);
+          if (done_mode && strcmp (modeopt, "verbose") != 0)
+	    {
+	      fatal ("more than one mode specified");
+	    }
           if (strcmp (modeopt, "link") == 0)
             {
               done_mode++;
@@ -212,36 +285,50 @@ main (int argc, char *argv[])
               ellcc_mode = ELLCC_INIT_MODE;
             }
           else if (strcmp (modeopt, "verbose") == 0)
-            verbose += 1;
+	    {
+	      verbose++;
+	    }
+	  else
+	    {
+	      fatal ("Mode must be link, compile, init, or verbose");
+	    }
         }
       else if (strcmp (argv[i], "--mod-location") == 0)
         {
           printf ("%s\n", ELLCC_MODDIR);
-          return 0;
+          exit (EXIT_SUCCESS);
         }
       else if (strcmp (argv[i], "--mod-site-location") == 0)
         {
           printf ("%s\n", ELLCC_SITEMODS);
-          return 0;
+          exit (EXIT_SUCCESS);
         }
       else if (strcmp (argv[i], "--mod-archdir") == 0)
         {
           printf ("%s\n", ELLCC_ARCHDIR);
-          return 0;
+          exit (EXIT_SUCCESS);
         }
       else if (strcmp (argv[i], "--mod-config") == 0)
         {
           printf ("%s\n", ELLCC_CONFIG);
-          return 0;
+          exit (EXIT_SUCCESS);
         }
-      else if (strncmp (argv[i], "--mod-name=", 11) == 0)
-        mod_name = argv[i] + 11;
-      else if (strncmp (argv[i], "--mod-title=", 12) == 0)
-        mod_title = argv[i] + 12;
-      else if (strncmp (argv[i], "--mod-version=", 14) == 0)
-        mod_version = argv[i] + 14;
-      else if (strncmp (argv[i], "--mod-output=", 13) == 0)
-        mod_output = argv[i] + 13;
+      else if (strncmp (argv[i], "--mod-name=", (size_t)11) == 0)
+	{
+	  mod_name = &argv[i][11];
+	}
+      else if (strncmp (argv[i], "--mod-title=", (size_t)12) == 0)
+	{
+	  mod_title = &argv[i][12];
+	}
+      else if (strncmp (argv[i], "--mod-version=", (size_t)14) == 0)
+	{
+	  mod_version = &argv[i][14];
+	}
+      else if (strncmp (argv[i], "--mod-output=", (size_t)13) == 0)
+	{
+	  mod_output = &argv[i][13];
+	}
       else
         {
           exec_args[exec_argc] = i;
@@ -249,27 +336,34 @@ main (int argc, char *argv[])
         }
     }
 
-  if (ellcc_mode == ELLCC_LINK_MODE && mod_output == (char *)0)
-    fatal ("must specify --mod-output when linking", (char *)0);
-  if (ellcc_mode == ELLCC_INIT_MODE && mod_output == (char *)0)
-    fatal ("must specify --mod-output when creating init file", (char *)0);
-  if (ellcc_mode == ELLCC_INIT_MODE && mod_name == (char *)0)
-    fatal ("must specify --mod-name when creating init file", (char *)0);
+  if (ellcc_mode == ELLCC_LINK_MODE && mod_output == NULL)
+    {
+      fatal ("must specify --mod-output when linking");
+    }
+  if (ellcc_mode == ELLCC_INIT_MODE && mod_output == NULL)
+    {
+      fatal ("must specify --mod-output when creating init file");
+    }
+  if (ellcc_mode == ELLCC_INIT_MODE && mod_name == NULL)
+    {
+      fatal ("must specify --mod-name when creating init file");
+    }
 
   /*
    * We now have the list of arguments to pass to the compiler or
-   * linker (or to process for doc files). We can do the real work
-   * now.
+   * linker (or to process for doc files).  We can do the real work now.
    */
   if (verbose)
-    printf ("ellcc driver version %s for EMODULES version %s (%ld)\n",
-            ELLCC_EMACS_VER, EMODULES_VERSION, EMODULES_REVISION);
+    {
+      printf ("ellcc driver version %s for EMODULES version %s (%ld)\n",
+	      ELLCC_EMACS_VER, EMODULES_VERSION, EMODULES_REVISION);
+    }
+
 #ifdef DEBUG
   if (verbose >= 2)
     {
-      printf ("              mode = %d (%s)\n", ellcc_mode,
-              ellcc_mode == ELLCC_COMPILE_MODE ? "compile" :
-              ellcc_mode == ELLCC_LINK_MODE ? "link" : "init");
+      printf ("              mode = %d (%s)\n", (int)ellcc_mode,
+	      ellcc_mode_name (ellcc_mode));
       printf ("       module_name = \"%s\"\n", SSTR(mod_name));
       printf ("      module_title = \"%s\"\n", SSTR(mod_title));
       printf ("    module_version = \"%s\"\n", SSTR(mod_version));
@@ -286,10 +380,13 @@ main (int argc, char *argv[])
 #endif
 
   if (exec_argc < 2)
-    fatal ("too few arguments", (char *) 0);
+    {
+      /* FIXME: Print usage output instead */
+      fatal ("too few arguments");
+    }
 
   /*
-   * Get the over-rides from the environment
+   * Get the overrides from the environment
    */
   OVERENV(ellcc, "ELLCC", ELLCC_CC);
   OVERENV(ellld, "ELLLD", ELLCC_DLL_LD);
@@ -298,12 +395,18 @@ main (int argc, char *argv[])
   OVERENV(elldllflags, "ELLDLLFLAGS", ELLCC_DLL_LDFLAGS);
   OVERENV(ellpicflags, "ELLPICFLAGS", ELLCC_DLL_CFLAGS);
 
-  if (ellcc_mode == ELLCC_COMPILE_MODE)
-    do_compile_mode();
-  else if (ellcc_mode == ELLCC_LINK_MODE)
-    do_link_mode();
-  else
-    do_init_mode();
+  switch (ellcc_mode)
+    {
+    case ELLCC_COMPILE_MODE:
+      exec_argv = do_compile_mode ();
+      break;
+    case ELLCC_LINK_MODE:
+      exec_argv = do_link_mode ();
+      break;
+    default:
+      exec_argv = do_init_mode ();
+      break;
+    }
 
   /*
    * The arguments to pass on to the desired program have now been set
@@ -312,16 +415,22 @@ main (int argc, char *argv[])
   if (verbose)
     {
       for (i = 0; i < real_argc; i++)
-        printf ("%s ", exec_argv[i]);
+	{
+	  printf ("%s ", exec_argv[i]);
+	}
       printf ("\n");
-      fflush (stdout);
+      (void)fflush (stdout);
     }
-  exec_argv[real_argc] = (char *)0; /* Terminate argument list */
+
+  /* Terminate argument list. */
+  exec_argv = add_string (exec_argv, NULL);
 
   i = execvp (exec_argv[0], exec_argv);
   if (verbose)
-    printf ("%s exited with status %d\n", exec_argv[0], i);
-  return i;
+    {
+      printf ("%s exited with status %d\n", exec_argv[0], i);
+    }
+  exit (i);
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
@@ -330,112 +439,166 @@ xmalloc (size_t size)
 {
   void *result = malloc (size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", (char *)0);
+    {
+      fatal ("virtual memory exhausted");
+    }
+  return result;
+}
+
+/* Like realloc but get fatal error if memory is exhausted.  */
+static void *
+xrealloc (void *ptr, size_t size)
+{
+  void *result = realloc (ptr, size);
+  if (result == NULL)
+    {
+      fatal ("virtual memory exhausted");
+    }
+  return result;
+}
+
+/* Like strdup but get fatal error if memory is exhausted.  */
+static char *
+xstrdup (char *s)
+{
+  char *result = strdup (s);
+  if (result == NULL)
+    {
+      fatal ("virtual memory exhausted");
+    }
   return result;
 }
 
 /* Print error message and exit.  */
 static void
-fatal (char *s1, char *s2)
+fatal (char *format, ...)
 {
-  fprintf (stderr, "%s: ", progname);
-  fprintf (stderr, s1, s2);
-  fprintf (stderr, "\n");
+  va_list ap;
+
+  va_start (ap, format);
+  (void)fprintf (stderr, "%s: ", progname);
+  (void)vfprintf (stderr, format, ap);
+  (void)fprintf (stderr, "\n");
+  va_end (ap);
   exit (EXIT_FAILURE);
+}
+
+static char **
+add_string (char **exec_argv, char *str)
+{
+  if (real_argc >= exec_length)
+    {
+      exec_length = real_argc + EXEC_GROW_SIZE;
+      exec_argv = xrnew (exec_argv, exec_length, char *);
+    }
+  exec_argv[real_argc++] = str;
+  return exec_argv;
 }
 
 /*
  * Add a string to the argument vector list that will be passed on down
  * to the compiler or linker. We need to split individual words into
- * arguments, taking quoting into account. This can get ugly.
+ * arguments, taking quoting into account.
  */
-static void
-add_to_argv (const char *str)
+static char **
+add_to_argv (char **exec_argv, const char *str)
 {
-  int sm = 0;
-  const char *s = (const char *)0;
-
-  if ((str == (const char *)0) || (str[0] == '\0'))
-    return;
-
-  while (*str)
+  /* Don't add nonexistent strings */
+  if (str == NULL)
     {
-      switch (sm)
-        {
-        case 0: /* Start of case - string leading whitespace */
-          if (isspace ((unsigned char) *str))
-            str++;
-          else
-            {
-              sm = 1; /* Change state to non-whitespace */
-              s = str; /* Mark the start of THIS argument */
-            }
-          break;
-
-        case 1: /* Non-whitespace character. Mark the start */
-          if (isspace ((unsigned char) *str))
-            {
-              /* Reached the end of the argument. Add it. */
-              int l = str-s;
-              exec_argv[real_argc] = xnew (l+2, char);
-              strncpy (exec_argv[real_argc], s, l);
-              exec_argv[real_argc][l] = '\0';
-              real_argc++;
-              sm = 0; /* Back to start state */
-              s = (const char *)0;
-              break;
-            }
-          else if (*str == '\\')
-            {
-              sm = 2; /* Escaped character */
-              str++;
-              break;
-            }
-          else if (*str == '\'')
-            {
-              /* Start of quoted string (single quotes) */
-              sm = 3;
-            }
-          else if (*str == '"')
-            {
-              /* Start of quoted string (double quotes) */
-              sm = 4;
-            }
-          else
-            {
-              /* This was just a normal character. Advance the pointer. */
-              str++;
-            }
-          break;
-
-        case 2: /* Escaped character */
-          str++; /* Preserve the quoted character */
-          sm = 1; /* Go back to gathering state */
-          break;
-
-        case 3: /* Inside single quoted string */
-          if (*str == '\'')
-            sm = 1;
-          str++;
-          break;
-
-        case 4: /* inside double quoted string */
-          if (*str == '"')
-            sm = 1;
-          str++;
-          break;
-        }
+      return exec_argv;
     }
 
-  if (s != (const char *)0)
+  /* Skip leading whitespace */
+  while (isspace (*str))
     {
-      int l = str-s;
-      exec_argv[real_argc] = xnew (l+2, char);
-      strncpy (exec_argv[real_argc], s, l);
-      exec_argv[real_argc][l] = '\0';
-      real_argc++;
-      s = (const char *)0;
+      str++;
     }
+
+  /* Don't add nonexistent strings */
+  if (*str == '\0')
+    {
+      return exec_argv;
+    }
+
+  while (*str != '\0')
+    {
+      const char *s;
+      char *arg;
+      int l;
+
+      s = str; /* Mark the start of THIS argument */
+
+      /* Find contiguous nonwhitespace characters */
+      while (*str != '\0' && !isspace(*str))
+	{
+	  if (*str == '\\')  /* Escaped character */
+	    {
+	      str++;
+	      if (*str != '\0')
+		{
+		  str++;
+		}
+	    }
+	  else if (*str == '\'')
+	    {
+	      str++;
+	      while (*str != '\0' && *str != '\'')
+		{
+		  if (str[0] == '\\' && str[1] != '\0')
+		    {
+		      str += 2;
+		    }
+		  else
+		    {
+		      str++;
+		    }
+		}
+	      if (*str == '\'')
+		{
+		  str++;
+		}
+	    }
+	  else if (*str == '\"')
+	    {
+	      str++;
+	      while (*str != '\0' && *str != '\"')
+		{
+		  if (str[0] == '\\' && str[1] != '\0')
+		    {
+		      str += 2;
+		    }
+		  else
+		    {
+		      str++;
+		    }
+		}
+	      if (*str == '\"')
+		{
+		  str++;
+		}
+	    }
+	  else
+	    {
+	      str++;   /* Normal character.  Advance the pointer. */
+	    }
+	}
+
+      /* Reached the end of the argument. Add it. */
+      l = str-s;
+      arg = xnew(l+1, char);
+      strncpy(arg, s, (size_t)l);
+      arg[l] = '\0';
+      exec_argv = add_string (exec_argv, arg);
+
+      /* Skip trailing whitespace */
+      while (isspace (*str))
+	{
+	  str++;
+	}
+    }
+
+  return exec_argv;
 }
 
 /*
@@ -443,27 +606,29 @@ add_to_argv (const char *str)
  * is build up the argument vector and exec() it. We must just make sure
  * that we get all of the required arguments in place.
  */
-static void
+static char **
 do_compile_mode (void)
 {
   int i;
-  char ts[4096]; /* Plenty big enough */
+  char **exec_argv = xnew (exec_argc + 20, char *);
 
-  add_to_argv (ellcc);
-  add_to_argv (ellcflags);
-  add_to_argv (ellpicflags);
-  add_to_argv ("-DPIC");
-  add_to_argv ("-DEMACS_MODULE");
+  exec_argv = add_to_argv (exec_argv, ellcc);
+  exec_argv = add_to_argv (exec_argv, ellcflags);
+  exec_argv = add_to_argv (exec_argv, ellpicflags);
+  exec_argv = add_to_argv (exec_argv, "-DPIC");
+  exec_argv = add_to_argv (exec_argv, "-DEMACS_MODULE");
 #ifdef XEMACS
-  add_to_argv ("-DXEMACS_MODULE"); /* Cover both cases */
-  add_to_argv ("-Dxemacs");
+  /* Cover both cases */
+  exec_argv = add_to_argv (exec_argv, "-DXEMACS_MODULE");
+  exec_argv = add_to_argv (exec_argv, "-Dxemacs");
 #endif
-  add_to_argv ("-Demacs");
-  sprintf (ts, "-I%s/include", ELLCC_ARCHDIR);
-  add_to_argv (ts);
-  add_to_argv (ELLCC_CF_ALL);
+  exec_argv = add_to_argv (exec_argv, "-Demacs");
+  exec_argv = add_to_argv (exec_argv, ELLCC_CF_ALL);
   for (i = 1; i < exec_argc; i++)
-    exec_argv[real_argc++] = strdup (prog_argv[exec_args[i]]);
+    {
+      exec_argv = add_string (exec_argv, xstrdup (prog_argv[exec_args[i]]));
+    }
+  return exec_argv;
 }
 
 /*
@@ -473,20 +638,23 @@ do_compile_mode (void)
  * all of the provided arguments, then the final post arguments. Once
  * all of this has been done, the argument vector is ready to run.
  */
-static void
+static char **
 do_link_mode (void)
 {
   int i,x;
-  char *t, ts[4096]; /* Plenty big enough */
+  char *t, *ts;
+  char **exec_argv = xnew(exec_argc + 10, char *);
 
-  add_to_argv (ellld);
-  add_to_argv (ellldflags);
-  add_to_argv (elldllflags);
-  add_to_argv (ELLCC_DLL_LDO);
-  add_to_argv (mod_output);
+  exec_argv = add_to_argv (exec_argv, ellld);
+  exec_argv = add_to_argv (exec_argv, ellldflags);
+  exec_argv = add_to_argv (exec_argv, elldllflags);
+  exec_argv = add_to_argv (exec_argv, ELLCC_DLL_LDO);
+  exec_argv = add_to_argv (exec_argv, mod_output);
   for (i = 1; i < exec_argc; i++)
-    exec_argv[real_argc++] = strdup (prog_argv[exec_args[i]]);
-  add_to_argv (ELLCC_DLL_POST);
+    {
+      exec_argv = add_string (exec_argv, xstrdup (prog_argv[exec_args[i]]));
+    }
+  exec_argv = add_to_argv (exec_argv, ELLCC_DLL_POST);
 
   /*
    * Now go through each argument and replace ELLSONAME with mod_output.
@@ -494,18 +662,19 @@ do_link_mode (void)
   for (i = 0; i < real_argc; i++)
     {
       x = 0;
+      ts = xnew (2 * strlen (exec_argv[i]), char);
       ts[0] = '\0';
 
       t = exec_argv[i];
-      while (*t)
+      while (*t != '\0')
         {
           if (*t == 'E')
             {
-              if (strncmp (t, "ELLSONAME", 9) == 0)
+              if (strncmp (t, "ELLSONAME", (size_t)9) == 0)
                 {
                   strcat (ts, mod_output);
-                  t += 8;
                   x += strlen (mod_output);
+                  t += 8;
                 }
               else
                 {
@@ -523,8 +692,9 @@ do_link_mode (void)
           t++;
         }
       free (exec_argv[i]);
-      exec_argv[i] = strdup (ts);
+      exec_argv[i] = ts;
     }
+  return exec_argv;
 }
 
 /*
@@ -534,16 +704,18 @@ do_link_mode (void)
  * the header information first, as make-doc will append to the file by
  * special dispensation.
  */
-static void
+static char **
 do_init_mode (void)
 {
   int i;
-  char ts[4096]; /* Plenty big enough */
-  char *mdocprog;
+  char *ts, *mdocprog;
+  char **exec_argv = xnew(exec_argc + 8, char *);
   FILE *mout = fopen (mod_output, "w");
 
-  if (mout == (FILE *)0)
-    fatal ("failed to open output file", mod_output);
+  if (mout == NULL)
+    {
+      fatal ("Failed to open output file %s", mod_output);
+    }
   fprintf (mout, "/* DO NOT EDIT - AUTOMATICALLY GENERATED */\n\n");
   fprintf (mout, "#include <emodules.h>\n\n");
   fprintf (mout, "const long emodule_compiler = %ld;\n", EMODULES_REVISION);
@@ -552,16 +724,27 @@ do_init_mode (void)
   fprintf (mout, "const char *emodule_title = \"%s\";\n", SSTR(mod_title));
   fprintf (mout, "\n\n");
   fprintf (mout, "void docs_of_%s()\n", SSTR(mod_name));
-  fclose (mout);
+  if (fclose (mout) != 0)
+    {
+      fatal ("Failed to close output file %s", mod_output);
+    }
 
-  sprintf (ts, "%s/make-docfile", ELLCC_ARCHDIR);
-  OVERENV(mdocprog, "ELLMAKEDOC", ts);
-  add_to_argv (mdocprog);
+  mdocprog = getenv ("ELLMAKEDOC");
+  if (mdocprog == NULL)
+    {
+      mdocprog = xnew (14 + strlen (ELLCC_ARCHDIR), char);
+      sprintf (mdocprog, "%s/make-docfile", ELLCC_ARCHDIR);
+    }
+  exec_argv = add_to_argv (exec_argv, mdocprog);
+  ts = xnew (4 + strlen (mod_output), char);
   sprintf (ts, "-E %s", mod_output);
-  add_to_argv (ts);
+  exec_argv = add_to_argv (exec_argv, ts);
+  free (ts);
   for (i = 1; i < exec_argc; i++)
-    exec_argv[real_argc++] = strdup (prog_argv[exec_args[i]]);
+    {
+      exec_argv = add_string (exec_argv, xstrdup (prog_argv[exec_args[i]]));
+    }
+  return exec_argv;
 }
 
 #endif /* HAVE_SHLIB */
-

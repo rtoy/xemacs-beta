@@ -603,8 +603,12 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
     invalid_change ("Use `set-specifier' to change a specifier's value",
 		    sym);
 
-  if (symbol_is_constant (sym, val)
-      || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym)))
+  if (
+#ifdef HAVE_SHLIB
+!(unloading_module && UNBOUNDP(newval)) &&
+#endif
+      (symbol_is_constant (sym, val)
+       || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym))))
     signal_error_1 (Qsetting_constant,
 		    UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
@@ -1807,12 +1811,41 @@ Set SYMBOL's value to NEWVAL, and return NEWVAL.
       goto retry;
 
     case SYMVAL_FIXNUM_FORWARD:
+    case SYMVAL_CONST_FIXNUM_FORWARD:
     case SYMVAL_BOOLEAN_FORWARD:
-    case SYMVAL_OBJECT_FORWARD:
+    case SYMVAL_CONST_BOOLEAN_FORWARD:
     case SYMVAL_DEFAULT_BUFFER_FORWARD:
     case SYMVAL_DEFAULT_CONSOLE_FORWARD:
       if (UNBOUNDP (newval))
-	invalid_change ("Cannot makunbound", symbol);
+	{
+#ifdef HAVE_SHLIB
+	  if (unloading_module)
+	    {
+	      sym->value = newval;
+	      return newval;
+	    }
+	  else
+#endif
+	    invalid_change ("Cannot makunbound", symbol);
+	}
+      break;
+
+    case SYMVAL_OBJECT_FORWARD:
+    case SYMVAL_CONST_OBJECT_FORWARD:
+      if (UNBOUNDP (newval))
+	{
+#ifdef HAVE_SHLIB
+	  if (unloading_module)
+	    {
+	      unstaticpro_nodump (symbol_value_forward_forward
+				  (XSYMBOL_VALUE_FORWARD (valcontents)));
+	      sym->value = newval;
+	      return newval;
+	    }
+	  else
+#endif
+	    invalid_change ("Cannot makunbound", symbol);
+	}
       break;
 
       /* case SYMVAL_UNBOUND_MARKER: break; */
@@ -3501,6 +3534,12 @@ defsubr (Lisp_Subr *subr)
 
   fun = wrap_subr (subr);
   XSYMBOL (sym)->function = fun;
+
+#ifdef HAVE_SHLIB
+  /* If it is declared in a module, update the load history */
+  if (initialized)
+    LOADHIST_ATTACH (sym);
+#endif
 }
 
 /* Define a lisp macro using a Lisp_Subr. */
@@ -3515,6 +3554,12 @@ defsubr_macro (Lisp_Subr *subr)
 
   fun = wrap_subr (subr);
   XSYMBOL (sym)->function = Fcons (Qmacro, fun);
+
+#ifdef HAVE_SHLIB
+  /* If it is declared in a module, update the load history */
+  if (initialized)
+    LOADHIST_ATTACH (sym);
+#endif
 }
 
 static void
@@ -3655,14 +3700,17 @@ defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
 {
   Lisp_Object sym;
 
-#if defined(HAVE_SHLIB)
+#ifdef HAVE_SHLIB
   /*
    * As with defsubr(), this will only be called in a dumped Emacs when
    * we are adding variables from a dynamically loaded module. That means
    * we can't use purespace. Take that into account.
    */
   if (initialized)
-    sym = Fintern (build_string (symbol_name), Qnil);
+    {
+      sym = Fintern (build_string (symbol_name), Qnil);
+      LOADHIST_ATTACH (sym);
+    }
   else
 #endif
     sym = Fintern (make_string_nocopy ((const Ibyte *) symbol_name,

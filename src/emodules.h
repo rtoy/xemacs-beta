@@ -24,9 +24,9 @@ Boston, MA 02111-1307, USA.  */
 #define EMODULES_HDR
 #endif
 
-#define EMODULES_VERSION    "1.0.0"
+#define EMODULES_VERSION    "1.1.0"
 #define EMODULES_MAJOR      1
-#define EMODULES_MINOR      0
+#define EMODULES_MINOR      1
 #define EMODULES_PATCH      0
 #define EMODULES_REVISION   (long)((EMODULES_MAJOR * 1000) + \
                              (EMODULES_MINOR * 10) + \
@@ -79,5 +79,24 @@ extern void emodules_doc_sym (const char *objname, const char *docstr);
 #define CDOCSUBR(Fname, DOC) emodules_doc_subr (Fname, DOC)
 #define CDOCSYM(Sname, DOC)  emodules_doc_sym  (Sname, DOC)
 #endif /* EMODULES_GATHER_VERSION */
+
+/* We should not expose module entities to the portable dumper. */
+#if defined(PDUMP) && !defined(EMODULES_DO_NOT_REDEFINE)
+#define dump_add_root_struct_ptr(varaddr,descaddr) DO_NOTHING
+#define dump_add_opaque(varaddr,size) DO_NOTHING
+#define dump_add_root_block(ptraddress,desc) DO_NOTHING
+#define dump_add_opaque_int(int_varaddr) DO_NOTHING
+#define dump_add_opaque_fixnum(fixnum_varaddr) DO_NOTHING
+#define dump_add_root_object(varaddr) DO_NOTHING
+#define dump_add_weak_object_chain(varaddr) DO_NOTHING
+#define staticpro(DSF_location) staticpro_nodump(DSF_location)
+
+#undef DEFSYMBOL
+#undef DEFSYMBOL_MULTIWORD_PREDICATE
+#define DEFSYMBOL(name) DEFSYMBOL_NO_DUMP (name)
+#define DEFSYMBOL_MULTIWORD_PREDICATE(name) \
+        DEFSYMBOL_MULTIWORD_PREDICATE_NO_DUMP (name)
+#define defsymbol(location,name) defsymbol_nodump (location, name)
+#endif
 
 #endif /* EMODULES_HDR */

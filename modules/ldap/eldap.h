@@ -18,22 +18,65 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: Not in FSF. */
+#ifndef INCLUDED_eldap_h_
+#define INCLUDED_eldap_h_
 
-/* Author: Oscar Figueiredo */
+#include <lber.h>
+#include <ldap.h>
+
+/*
+ * The following structure records pertinent information about a
+ * LDAP connection.
+ */
+
+struct Lisp_LDAP
+{
+  /* lcrecord header */
+  struct lcrecord_header header;
+  /* The LDAP connection handle used by the LDAP API */
+  LDAP *ld;
+  /* Name of the host we connected to */
+  Lisp_Object host;
+};
+typedef struct Lisp_LDAP Lisp_LDAP;
 
 
-#ifndef _XEMACS_ELDAP_H_
-#define _XEMACS_ELDAP_H_
+DECLARE_LRECORD (ldap, Lisp_LDAP);
+#define XLDAP(x) XRECORD (x, ldap, Lisp_LDAP)
+#define wrap_ldap(p) wrap_record (p, ldap)
+#define LDAPP(x) RECORDP (x, ldap)
+#define CHECK_LDAP(x) CHECK_RECORD (x, ldap)
+#define CONCHECK_LDAP(x) CONCHECK_RECORD (x, ldap)
 
-#ifdef HAVE_LDAP
+#define CHECK_LIVE_LDAP(ldap) do {					\
+  CHECK_LDAP (ldap);							\
+  if (!XLDAP (ldap)->ld)						\
+    invalid_operation ("Attempting to access closed LDAP connection",	\
+                         ldap);						\
+} while (0)
 
-#ifdef emacs
 
-Lisp_Object Fldap_search_internal (Lisp_Object search_plist);
+Lisp_Object Fldapp (Lisp_Object object);
+Lisp_Object Fldap_host (Lisp_Object ldap);
+Lisp_Object Fldap_live_p (Lisp_Object ldap);
+Lisp_Object Fldap_open (Lisp_Object host,
+                        Lisp_Object ldap_plist);
+Lisp_Object Fldap_close (Lisp_Object ldap);
+Lisp_Object Fldap_search_basic (Lisp_Object ldap,
+                                Lisp_Object filter,
+                                Lisp_Object base,
+                                Lisp_Object scope,
+                                Lisp_Object attrs,
+                                Lisp_Object attrsonly,
+                                Lisp_Object withdn,
+                                Lisp_Object verbose);
+Lisp_Object Fldap_add (Lisp_Object ldap,
+                       Lisp_Object dn,
+                       Lisp_Object entry);
+Lisp_Object Fldap_modify (Lisp_Object ldap,
+                          Lisp_Object dn,
+                          Lisp_Object entry);
+Lisp_Object Fldap_delete (Lisp_Object ldap,
+                          Lisp_Object dn);
 
-#endif /* emacs */
-
-#endif /* HAVE_LDAP */
-
-#endif /* _XEMACS_ELDAP_H_ */
+#endif /* INCLUDED_eldap_h_ */
