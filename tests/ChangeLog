@@ -1,3 +1,11 @@
+2003-10-21  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/test-harness.el (test-harness-test-compiled): 
+	New variable to notify tests whether they are compiled or interpreted.
+	
+	* automated/weak-tests.el (test-harness-test-compiled):
+	Temporary hack to remind me of the reverted byte-interpreter patch.
+
 2003-10-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/test-harness.el: Whitespace/readability tweaks.

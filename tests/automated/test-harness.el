@@ -44,6 +44,9 @@
 
 (require 'bytecomp)
 
+(defvar test-harness-test-compiled nil
+  "Non-nil means the test code was compiled before execution.")
+
 (defvar test-harness-verbose
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of emacs-tester.")
@@ -316,7 +319,8 @@ BODY is a sequence of expressions and may contain several tests."
 	 (message "Test suite execution aborted." error-info)
 	 ))
       (princ "\nTesting Compiled Lisp\n\n")
-      (let (code)
+      (let (code
+	    (test-harness-test-compiled t))
 	(condition-case error-info
 	    (setq code
 		  ;; our lisp code is often intentionally dubious,

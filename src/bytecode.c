@@ -447,8 +447,6 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
    but don't pop it. */
 #define TOP (*stack_ptr)
 
-#define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
-
 /* The actual interpreter for byte code.
    This function has been seriously optimized for performance.
    Don't change the constructs unless you are willing to do
@@ -462,8 +460,8 @@ execute_optimized_program (const Opbyte *program,
 {
   /* This function can GC */
   REGISTER const Opbyte *program_ptr = (Opbyte *) program;
-  Lisp_Object *stack_beg = alloca_array (Lisp_Object, stack_depth + 1);
-  REGISTER Lisp_Object *stack_ptr = stack_beg;
+  REGISTER Lisp_Object *stack_ptr
+    = alloca_array (Lisp_Object, stack_depth + 1);
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
 
@@ -473,11 +471,23 @@ execute_optimized_program (const Opbyte *program,
 #endif
 
 #ifdef ERROR_CHECK_BYTE_CODE
+  Lisp_Object *stack_beg = stack_ptr;
   Lisp_Object *stack_end = stack_beg + stack_depth;
 #endif
 
+  /* Initialize all the objects on the stack to Qnil,
+     so we can GCPRO the whole stack.
+     The first element of the stack is actually a dummy. */
+  {
+    int i;
+    Lisp_Object *p;
+    for (i = stack_depth, p = stack_ptr; i--;)
+      *++p = Qnil;
+  }
+
   GCPRO1 (stack_ptr[1]);
-  
+  gcpro1.nvars = stack_depth;
+
   while (1)
     {
       REGISTER Opcode opcode = (Opcode) READ_UINT_1;
@@ -502,10 +512,7 @@ execute_optimized_program (const Opbyte *program,
 	  if (opcode >= Bconstant)
 	    PUSH (constants_data[opcode - Bconstant]);
 	  else
-	    {
-	      GCPRO_STACK;
-	      stack_ptr = execute_rare_opcode (stack_ptr, program_ptr, opcode);
-	    }
+	    stack_ptr = execute_rare_opcode (stack_ptr, program_ptr, opcode);
 	  break;
 
 	case Bvarref:
@@ -590,7 +597,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bcall+7:
 	  n = (opcode <  Bcall+6 ? opcode - Bcall :
 	       opcode == Bcall+6 ? READ_UINT_1 : READ_UINT_2);
-	  GCPRO_STACK;
 	  DISCARD (n);
 #ifdef BYTE_CODE_METER
 	  if (byte_metering_on && SYMBOLP (TOP))
