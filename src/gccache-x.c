@@ -1,4 +1,7 @@
-/*
+/* Efficient caching of GCs (graphics contexts) -- shared code, X and GTK.
+   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -19,10 +22,5 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* This is a helper for precompiled headers.
-   Pay no attention to the man behind the curtain. */
-
-#include <config.h>
-#include <X11/Xlib.h>
-#include "xintrinsicp.h"
-#include "lisp.h"
+#define THIS_IS_X
+#include "gccache-xlike-inc.c"

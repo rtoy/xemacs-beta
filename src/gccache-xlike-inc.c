@@ -1,6 +1,7 @@
-/* Efficient caching of X GCs (graphics contexts).
+/* Efficient caching of GCs (graphics contexts) -- shared code, X and GTK.
    Copyright (C) 1993 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
+   Copyright (C) 2003, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -49,37 +50,53 @@ Boston, MA 02111-1307, USA.  */
    will be ~100.
 
    Written by jwz, 14 jun 93
+   Hacked by William Perry, apr 2000 for GTK and introduced code
+   duplication (a no-no)
+   Undid code duplication, Ben Wing, Jan 28, 2003.
  */
 
 #include <config.h>
-#include <X11/Xlib.h>
-#include "xgccache.h"
+#include "lisp.h"
+#include "hash.h"
 
+#ifndef THIS_IS_GTK
+#include <X11/Xlib.h>
+#else /* THIS_IS_GTK */
+#include <gtk/gtk.h>
+#endif /* THIS_IS_GTK */
 
 #define GC_CACHE_SIZE 100
 
 #define GCCACHE_HASH
 
-
-#ifdef GCCACHE_HASH
-#include "lisp.h"
-#include "hash.h"
+#ifndef THIS_IS_GTK
+#define ZZGCVALUES XGCValues
+#define ZZGC GC
+#define ZZ(z) x_##z
+#else
+#define ZZGCVALUES GdkGCValues
+#define ZZGC GdkGC *
+#define ZZ(z) gtk_##z
 #endif
 
 struct gcv_and_mask {
-  XGCValues gcv;
+  ZZGCVALUES gcv;
   unsigned long mask;
 };
 
 struct gc_cache_cell {
-  GC gc;
+  ZZGC gc;
   struct gcv_and_mask gcvm;
   struct gc_cache_cell *prev, *next;
 };
 
 struct gc_cache {
+#ifndef THIS_IS_GTK
   Display *dpy;		/* used only as arg to XCreateGC/XFreeGC */
   Window window;	/* used only as arg to XCreateGC */
+#else /* THIS_IS_GTK */
+  GdkWindow *window;	/* used only as arg to XCreateGC */
+#endif /* THIS_IS_GTK */
   int size;
   struct gc_cache_cell *head;
   struct gc_cache_cell *tail;
@@ -104,7 +121,8 @@ gc_cache_hash (const void *arg)
      every slot of the gcv when calling gc_cache_lookup.  But we need
      the hash function to be as fast as possible; some timings should
      be done. */
-  for (i = 0; i < (int) (sizeof (XGCValues) / sizeof (unsigned long)); i++)
+  for (i = 0; i < (int) (sizeof (ZZGCVALUES) /
+			 sizeof (unsigned long)); i++)
     hash = (hash << 1) ^ *longs++;
   return hash;
 }
@@ -115,15 +133,31 @@ static int
 gc_cache_eql (const void *arg1, const void *arg2)
 {
   /* See comment in gc_cache_hash */
+#ifndef THIS_IS_GTK
   return !memcmp (arg1, arg2, sizeof (struct gcv_and_mask));
+#else /* THIS_IS_GTK */
+  const struct gcv_and_mask *gcvm1 = (const struct gcv_and_mask *) arg1;
+  const struct gcv_and_mask *gcvm2 = (const struct gcv_and_mask *) arg2;
+
+  return !memcmp (&gcvm1->gcv, &gcvm2->gcv, sizeof (gcvm1->gcv))
+    && gcvm1->mask == gcvm2->mask;
+#endif /* THIS_IS_GTK */
 }
 
 struct gc_cache *
-make_gc_cache (Display *dpy, Window window)
+#ifndef THIS_IS_GTK
+ZZ (make_gc_cache) (Display *dpy, Window window)
+#else /* THIS_IS_GTK */
+ZZ (make_gc_cache) (GtkWidget *widget)
+#endif /* THIS_IS_GTK */
 {
   struct gc_cache *cache = xnew (struct gc_cache);
+#ifndef THIS_IS_GTK
   cache->dpy = dpy;
   cache->window = window;
+#else /* THIS_IS_GTK */
+  cache->window = widget->window;
+#endif /* THIS_IS_GTK */
   cache->size = 0;
   cache->head = cache->tail = 0;
   cache->create_count = cache->delete_count = 0;
@@ -135,13 +169,17 @@ make_gc_cache (Display *dpy, Window window)
 }
 
 void
-free_gc_cache (struct gc_cache *cache)
+ZZ (free_gc_cache) (struct gc_cache *cache)
 {
   struct gc_cache_cell *rest, *next;
   rest = cache->head;
   while (rest)
     {
+#ifndef THIS_IS_GTK
       XFreeGC (cache->dpy, rest->gc);
+#else /* THIS_IS_GTK */
+      gdk_gc_destroy (rest->gc);
+#endif /* THIS_IS_GTK */
       next = rest->next;
       xfree (rest, struct gc_cache_cell *);
       rest = next;
@@ -152,8 +190,8 @@ free_gc_cache (struct gc_cache *cache)
   xfree (cache, struct gc_cache *);
 }
 
-GC
-gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
+ZZGC
+ZZ (gc_cache_lookup) (struct gc_cache *cache, ZZGCVALUES *gcv, unsigned long mask)
 {
   struct gc_cache_cell *cell, *next, *prev;
   struct gcv_and_mask gcvm;
@@ -161,14 +199,20 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
   if ((!!cache->head) != (!!cache->tail)) ABORT ();
   if (cache->head && (cache->head->prev || cache->tail->next)) ABORT ();
 
+#ifdef THIS_IS_GTK
+  /* Gdk does not have the equivalent of 'None' for the clip_mask, so
+     we need to check it carefully, or gdk_gc_new_with_values will
+     coredump */
+  if ((mask & GDK_GC_CLIP_MASK) && !gcv->clip_mask)
+    mask = (GdkGCValuesMask) (mask & ~GDK_GC_CLIP_MASK);
+#endif /* THIS_IS_GTK */
+
   gcvm.mask = mask;
   gcvm.gcv = *gcv;	/* this copies... */
 
 #ifdef GCCACHE_HASH
 
-  /* The intermediate cast fools gcc into not outputting strict-aliasing
-     complaints */
-  if (gethash (&gcvm, cache->table, (const void **) (void *) &cell))
+  if (gethash (&gcvm, cache->table, (const void **) &cell))
 
 #else /* !GCCACHE_HASH */
 
@@ -182,9 +226,17 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
     }
 
   /* #### This whole file needs some serious overhauling. */
+#ifndef THIS_IS_GTK
   if (!(mask | GCTile) && cell->gc->values.tile)
+#else /* THIS_IS_GTK */
+  if (!(mask | GDK_GC_TILE) && cell->gcvm.gcv.tile)
+#endif /* THIS_IS_GTK */
     cell = 0;
+#ifndef THIS_IS_GTK
   else if (!(mask | GCStipple) && cell->gc->values.stipple)
+#else /* THIS_IS_GTK */
+  else if (!(mask | GDK_GC_STIPPLE) && cell->gcvm.gcv.stipple)
+#endif /* THIS_IS_GTK */
     cell = 0;
 
   if (cell)
@@ -226,7 +278,11 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
       cache->head = cell->next;
       cache->head->prev = 0;
       if (cache->tail == cell) cache->tail = 0; /* only one */
+#ifndef THIS_IS_GTK
       XFreeGC (cache->dpy, cell->gc);
+#else /* THIS_IS_GTK */
+      gdk_gc_destroy (cell->gc);
+#endif /* THIS_IS_GTK */
       cache->delete_count++;
 #ifdef GCCACHE_HASH
       remhash (&cell->gcvm, cache->table);
@@ -242,7 +298,7 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
     }
 
   /* Now we've got a cell (new or reused).  Fill it in. */
-  memcpy (&cell->gcvm.gcv, gcv, sizeof (XGCValues));
+  memcpy (&cell->gcvm.gcv, gcv, sizeof (ZZGCVALUES));
   cell->gcvm.mask = mask;
 
   /* Put the cell on the end of the list. */
@@ -259,20 +315,25 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 #endif
 
   /* Now make and return the GC. */
+#ifndef THIS_IS_GTK
   cell->gc = XCreateGC (cache->dpy, cache->window, mask, gcv);
+#else /* THIS_IS_GTK */
+  cell->gc = gdk_gc_new_with_values (cache->window, gcv, (GdkGCValuesMask) mask);
+#endif /* THIS_IS_GTK */
 
   /* debug */
-  assert (cell->gc == gc_cache_lookup (cache, gcv, mask));
+  assert (cell->gc == ZZ (gc_cache_lookup) (cache, gcv, mask));
 
   return cell->gc;
 }
+#ifndef THIS_IS_GTK
 
 
 #ifdef DEBUG_XEMACS
 
-void describe_gc_cache (struct gc_cache *cache);
+void x_describe_gc_cache (struct gc_cache *cache);
 void
-describe_gc_cache (struct gc_cache *cache)
+x_describe_gc_cache (struct gc_cache *cache)
 {
   int count = 0;
   struct gc_cache_cell *cell = cache->head;
@@ -331,3 +392,4 @@ describe_gc_cache (struct gc_cache *cache)
 }
 
 #endif /* DEBUG_XEMACS */
+#endif /* ! THIS_IS_GTK */
