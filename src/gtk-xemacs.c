@@ -13,6 +13,8 @@
 #include "console-gtk.h"
 #include "objects-gtk.h"
 #include "gtk-xemacs.h"
+#include "device.h"
+#include "glyphs.h"
 #include "window.h"
 #include "faces.h"
 #include "event-gtk.h"

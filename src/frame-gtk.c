@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "extents.h"
 #include "faces.h"
 #include "frame.h"
+#include "device.h"
 #include "window.h"
 
 #ifdef HAVE_GNOME

@@ -43,6 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"
+#include "device.h"
 
 #include "sysproc.h" /* for select() */
 

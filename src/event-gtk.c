@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "redisplay.h"
 #include "elhash.h"
+#include "window.h"
+#include "device.h"
 
 #include "gtk-xemacs.h"
 
@@ -192,9 +194,6 @@ handle_map_event (struct frame *f, GdkEvent *event)
 static void
 handle_client_message (struct frame *f, GdkEvent *event)
 {
-  Lisp_Object frame = wrap_frame (f);
-
-
   /* The event-Xt code used to handle WM_DELETE_WINDOW here, but we
      handle that directly in frame-gtk.c */
 	 

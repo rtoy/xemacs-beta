@@ -1,3 +1,15 @@
+2002-04-07  William M. Perry  <wmperry@gnu.org>
+
+	* event-gtk.c: 
+	* device-gtk.c: 
+	* glyphs-gtk.c: 
+	* frame-gtk.c: 
+	* gtk-xemacs.c: 
+	* menubar-gtk.c: 
+	* redisplay-gtk.c: Need to include device.h and window.h in a few
+	places.  Not sure which .h has changed that was transparently
+	pulling them in before, but...
+
 2002-03-06  Jerry James  <james@xemacs.org>
 
 	* emodules.c (emodules_load): Fix multiple loading of same module.
