@@ -2369,8 +2369,6 @@ XCHAR_1 (Lisp_Object obj, const char *file, int line)
 
 /*------------------------------ float ---------------------------------*/
 
-#ifdef LISP_FLOAT_TYPE
-
 /* Note: the 'unused_next_' field exists only to ensure that the
    `next' pointer fits within the structure, for the purposes of the
    free list.  This makes a difference in the unlikely case of
@@ -2406,20 +2404,6 @@ DECLARE_LRECORD (float, Lisp_Float);
 } while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
-
-#else /* not LISP_FLOAT_TYPE */
-
-#define XFLOAT(x) --- error!  No float support. ---
-#define FLOATP(x) 0
-#define CHECK_FLOAT(x) --- error!  No float support. ---
-#define CONCHECK_FLOAT(x) --- error!  No float support. ---
-
-#define XFLOATINT(n) XINT(n)
-#define CHECK_INT_OR_FLOAT CHECK_INT
-#define CONCHECK_INT_OR_FLOAT CONCHECK_INT
-#define INT_OR_FLOATP(x) INTP (x)
-
-#endif /* not LISP_FLOAT_TYPE */
 
 /*-------------------------------- int ---------------------------------*/
 

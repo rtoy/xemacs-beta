@@ -1720,11 +1720,6 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
   while (c > 040	/* #### - comma should be here as should backquote */
          && !(c == '\"' || c == '\'' || c == ';'
               || c == '(' || c == ')'
-#ifndef LISP_FLOAT_TYPE
-	      /* If we have floating-point support, then we need
-		 to allow <digits><dot><digits>.  */
-	      || c =='.'
-#endif /* not LISP_FLOAT_TYPE */
               || c == '[' || c == ']' || c == '#'
               ))
     {
@@ -1780,18 +1775,14 @@ read_atom (Lisp_Object readcharfun,
 
           while (p1 != p && (c = *p1) >= '0' && c <= '9')
             p1++;
-#ifdef LISP_FLOAT_TYPE
 	  /* Integers can have trailing decimal points.  */
 	  if (p1 > read_ptr && p1 < p && *p1 == '.')
 	    p1++;
-#endif
           if (p1 == p)
             {
               /* It is an integer. */
-#ifdef LISP_FLOAT_TYPE
 	      if (p1[-1] == '.')
 		p1[-1] = '\0';
-#endif
 #if 0
 	      {
 		int number = 0;
@@ -1808,10 +1799,8 @@ read_atom (Lisp_Object readcharfun,
 #endif
 	    }
 	}
-#ifdef LISP_FLOAT_TYPE
       if (isfloat_string (read_ptr))
 	return make_float (atof (read_ptr));
-#endif
     }
 
   {
@@ -2220,7 +2209,6 @@ retry:
       return noseeum_cons (Qunbound, make_char (c));
     case '.':
       {
-#ifdef LISP_FLOAT_TYPE
 	/* If a period is followed by a number, then we should read it
 	   as a floating point number.  Otherwise, it denotes a dotted
 	   pair.
@@ -2238,10 +2226,6 @@ retry:
 	   (I think this doesn't matter anymore because there should
 	   be no more danger in unreading multiple characters) */
         return read_atom (readcharfun, '.', 0);
-
-#else /* ! LISP_FLOAT_TYPE */
-	return noseeum_cons (Qunbound, make_char ('.'));
-#endif /* ! LISP_FLOAT_TYPE */
       }
 
     case '#':
@@ -2566,8 +2550,6 @@ retry:
 
 
 
-#ifdef LISP_FLOAT_TYPE
-
 #define LEAD_INT 1
 #define DOT_CHAR 2
 #define TRAIL_INT 4
@@ -2622,7 +2604,6 @@ isfloat_string (const char *cp)
 	      || state == (LEAD_INT|DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)
 	      || state == (DOT_CHAR|TRAIL_INT|E_CHAR|EXP_INT)));
 }
-#endif /* LISP_FLOAT_TYPE */
 
 static void *
 sequence_reader (Lisp_Object readcharfun,

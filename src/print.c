@@ -971,8 +971,6 @@ Display ERROR-OBJECT on STREAM in a user-friendly way.
 }
 
 
-#ifdef LISP_FLOAT_TYPE
-
 Lisp_Object Vfloat_output_format;
 
 /*
@@ -1060,7 +1058,6 @@ float_to_string (char *buf, double data)
       buf [(buf [0] == '-' ? 1 : 0)] = '0';
     }
 }
-#endif /* LISP_FLOAT_TYPE */
 
 #define ONE_DIGIT(figure) *p++ = n / (figure) + '0'
 #define ONE_DIGIT_ADVANCE(figure) (ONE_DIGIT (figure), n %= (figure))
@@ -1608,8 +1605,6 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   unbind_to (specdepth);
 }
 
-
-#ifdef LISP_FLOAT_TYPE
 void
 print_float (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
@@ -1618,7 +1613,6 @@ print_float (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   float_to_string (pigbuf, XFLOAT_DATA (obj));
   write_c_string (printcharfun, pigbuf);
 }
-#endif /* LISP_FLOAT_TYPE */
 
 void
 print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
@@ -1707,13 +1701,11 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
   not_yet_confused:
 
-#ifdef LISP_FLOAT_TYPE
     if (!confusing)
       /* #### Ugh, this is needlessly complex and slow for what we
          need here.  It might be a good idea to copy equivalent code
          from FSF.  --hniksic */
       confusing = isfloat_string ((char *) data);
-#endif
     if (confusing)
       write_c_string (printcharfun, "\\");
   }
@@ -2040,7 +2032,6 @@ or the symbol t (output appears in the minibuffer line).
 */ );
   Vstandard_output = Qt;
 
-#ifdef LISP_FLOAT_TYPE
   DEFVAR_LISP ("float-output-format", &Vfloat_output_format /*
 The format descriptor string that lisp uses to print floats.
 This is a %-spec like those accepted by `printf' in C,
@@ -2064,7 +2055,6 @@ point and/or an exponent, even if the digits following the decimal point
 are all zero.  This is to preserve read-equivalence.
 */ );
   Vfloat_output_format = Qnil;
-#endif /* LISP_FLOAT_TYPE */
 
   DEFVAR_LISP ("print-length", &Vprint_length /*
 Maximum length of list or vector to print before abbreviating.

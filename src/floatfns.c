@@ -48,9 +48,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 #include "syssignal.h"
-
-#ifdef LISP_FLOAT_TYPE
-
 #include "sysfloat.h"
 
 /* The code uses emacs_rint, so that it works to undefine HAVE_RINT
@@ -211,11 +208,8 @@ extract_float (Lisp_Object num)
 
   return extract_float (wrong_type_argument (Qnumberp, num));
 }
-#endif /* LISP_FLOAT_TYPE */
-
 
 /* Trig functions.  */
-#ifdef LISP_FLOAT_TYPE
 
 DEFUN ("acos", Facos, 1, 1, 0, /*
 Return the inverse cosine of NUMBER.
@@ -302,12 +296,9 @@ Return the tangent of NUMBER.
   IN_FLOAT (d = (sin (d) / c), "tan", number);
   return make_float (d);
 }
-#endif /* LISP_FLOAT_TYPE (trig functions) */
-
 
 /* Bessel functions */
 #if 0 /* Leave these out unless we find there's a reason for them.  */
-/* #ifdef LISP_FLOAT_TYPE */
 
 DEFUN ("bessel-j0", Fbessel_j0, 1, 1, 0, /*
 Return the bessel function j0 of NUMBER.
@@ -379,7 +370,6 @@ The first number (the order) is truncated to an integer.
 
 /* Error functions. */
 #if 0 /* Leave these out unless we see they are worth having.  */
-/* #ifdef LISP_FLOAT_TYPE */
 
 DEFUN ("erf", Ferf, 1, 1, 0, /*
 Return the mathematical error function of NUMBER.
@@ -416,7 +406,6 @@ Return the log gamma of NUMBER.
 
 /* Root and Log functions. */
 
-#ifdef LISP_FLOAT_TYPE
 DEFUN ("exp", Fexp, 1, 1, 0, /*
 Return the exponential base e of NUMBER.
 */
@@ -433,8 +422,6 @@ Return the exponential base e of NUMBER.
     IN_FLOAT (d = exp (d), "exp", number);
   return make_float (d);
 }
-#endif /* LISP_FLOAT_TYPE */
-
 
 DEFUN ("expt", Fexpt, 2, 2, 0, /*
 Return the exponential NUMBER1 ** NUMBER2.
@@ -471,7 +458,6 @@ Return the exponential NUMBER1 ** NUMBER2.
       return make_int (retval);
     }
 
-#ifdef LISP_FLOAT_TYPE
   {
     double f1 = extract_float (number1);
     double f2 = extract_float (number2);
@@ -485,14 +471,8 @@ Return the exponential NUMBER1 ** NUMBER2.
     IN_FLOAT2 (f1 = pow (f1, f2), "expt", number1, number2);
     return make_float (f1);
   }
-#else
-  CHECK_INT_OR_FLOAT (number1);
-  CHECK_INT_OR_FLOAT (number2);
-  return Fexpt (number1, number2);
-#endif /* LISP_FLOAT_TYPE */
 }
 
-#ifdef LISP_FLOAT_TYPE
 DEFUN ("log", Flog, 1, 2, 0, /*
 Return the natural logarithm of NUMBER.
 If second optional argument BASE is given, return the logarithm of
@@ -569,12 +549,8 @@ Return the cube root of NUMBER.
 #endif
   return make_float (d);
 }
-#endif /* LISP_FLOAT_TYPE */
-
 
 /* Inverse trig functions. */
-#ifdef LISP_FLOAT_TYPE
-/* #if 0  Not clearly worth adding...  */
 
 DEFUN ("acosh", Facosh, 1, 1, 0, /*
 Return the inverse hyperbolic cosine of NUMBER.
@@ -663,7 +639,6 @@ Return the hyperbolic tangent of NUMBER.
   IN_FLOAT (d = tanh (d), "tanh", number);
   return make_float (d);
 }
-#endif /* LISP_FLOAT_TYPE (inverse trig functions) */
 
 /* Rounding functions */
 
@@ -672,14 +647,12 @@ Return the absolute value of NUMBER.
 */
        (number))
 {
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     {
       IN_FLOAT (number = make_float (fabs (XFLOAT_DATA (number))),
 		"abs", number);
       return number;
     }
-#endif /* LISP_FLOAT_TYPE */
 
   if (INTP (number))
     return (XINT (number) >= 0) ? number : make_int (- XINT (number));
@@ -687,7 +660,6 @@ Return the absolute value of NUMBER.
   return Fabs (wrong_type_argument (Qnumberp, number));
 }
 
-#ifdef LISP_FLOAT_TYPE
 DEFUN ("float", Ffloat, 1, 1, 0, /*
 Return the floating point number numerically equal to NUMBER.
 */
@@ -701,10 +673,7 @@ Return the floating point number numerically equal to NUMBER.
 
   return Ffloat (wrong_type_argument (Qnumberp, number));
 }
-#endif /* LISP_FLOAT_TYPE */
 
-
-#ifdef LISP_FLOAT_TYPE
 DEFUN ("logb", Flogb, 1, 1, 0, /*
 Return largest integer <= the base 2 log of the magnitude of NUMBER.
 This is the same as the exponent of a float.
@@ -755,22 +724,18 @@ This is the same as the exponent of a float.
 #endif /* ! HAVE_FREXP */
 #endif /* ! HAVE_LOGB */
 }
-#endif /* LISP_FLOAT_TYPE */
-
 
 DEFUN ("ceiling", Fceiling, 1, 1, 0, /*
 Return the smallest integer no less than NUMBER.  (Round toward +inf.)
 */
        (number))
 {
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     {
       double d;
       IN_FLOAT ((d = ceil (XFLOAT_DATA (number))), "ceiling", number);
       return (float_to_int (d, "ceiling", number, Qunbound));
     }
-#endif /* LISP_FLOAT_TYPE */
 
   if (INTP (number))
     return number;
@@ -794,7 +759,6 @@ greater than NUMBER/DIVISOR.
 
       CHECK_INT_OR_FLOAT (divisor);
 
-#ifdef LISP_FLOAT_TYPE
       if (FLOATP (number) || FLOATP (divisor))
 	{
 	  double f1 = extract_float (number);
@@ -806,7 +770,6 @@ greater than NUMBER/DIVISOR.
 	  IN_FLOAT2 (f1 = floor (f1 / f2), "floor", number, divisor);
 	  return float_to_int (f1, "floor", number, divisor);
 	}
-#endif /* LISP_FLOAT_TYPE */
 
       i1 = XINT (number);
       i2 = XINT (divisor);
@@ -823,14 +786,12 @@ greater than NUMBER/DIVISOR.
       return (make_int (i1));
     }
 
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     {
       double d;
       IN_FLOAT ((d = floor (XFLOAT_DATA (number))), "floor", number);
       return (float_to_int (d, "floor", number, Qunbound));
     }
-#endif /* LISP_FLOAT_TYPE */
 
   return number;
 }
@@ -840,7 +801,6 @@ Return the nearest integer to NUMBER.
 */
        (number))
 {
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     {
       double d;
@@ -848,7 +808,6 @@ Return the nearest integer to NUMBER.
       IN_FLOAT ((d = emacs_rint (XFLOAT_DATA (number))), "round", number);
       return (float_to_int (d, "round", number, Qunbound));
     }
-#endif /* LISP_FLOAT_TYPE */
 
   if (INTP (number))
     return number;
@@ -862,10 +821,8 @@ Rounds the value toward zero.
 */
        (number))
 {
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     return float_to_int (XFLOAT_DATA (number), "truncate", number, Qunbound);
-#endif /* LISP_FLOAT_TYPE */
 
   if (INTP (number))
     return number;
@@ -874,8 +831,6 @@ Rounds the value toward zero.
 }
 
 /* Float-rounding functions. */
-#ifdef LISP_FLOAT_TYPE
-/* #if 1  It's not clear these are worth adding... */
 
 DEFUN ("fceiling", Ffceiling, 1, 1, 0, /*
 Return the smallest integer no less than NUMBER, as a float.
@@ -922,11 +877,7 @@ Rounds the value toward zero.
     IN_FLOAT (d = ceil (d), "ftruncate", number);
   return make_float (d);
 }
-
-#endif /* LISP_FLOAT_TYPE (float-rounding functions) */
-
 
-#ifdef LISP_FLOAT_TYPE
 #ifdef FLOAT_CATCH_SIGILL
 static SIGTYPE
 float_error (int signo)
@@ -981,18 +932,14 @@ matherr (struct exception *x)
   return 1;	/* don't set errno or print a message */
 }
 #endif /* HAVE_MATHERR */
-#endif /* LISP_FLOAT_TYPE */
-
 
 void
 init_floatfns_very_early (void)
 {
-#ifdef LISP_FLOAT_TYPE
 # ifdef FLOAT_CATCH_SIGILL
   EMACS_SIGNAL (SIGILL, float_error);
 # endif
   in_float = 0;
-#endif /* LISP_FLOAT_TYPE */
 }
 
 void
@@ -1002,14 +949,12 @@ syms_of_floatfns (void)
 
   /* Trig functions.  */
 
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Facos);
   DEFSUBR (Fasin);
   DEFSUBR (Fatan);
   DEFSUBR (Fcos);
   DEFSUBR (Fsin);
   DEFSUBR (Ftan);
-#endif /* LISP_FLOAT_TYPE */
 
   /* Bessel functions */
 
@@ -1032,35 +977,27 @@ syms_of_floatfns (void)
 
   /* Root and Log functions. */
 
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Fexp);
-#endif /* LISP_FLOAT_TYPE */
   DEFSUBR (Fexpt);
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Flog);
   DEFSUBR (Flog10);
   DEFSUBR (Fsqrt);
   DEFSUBR (Fcube_root);
-#endif /* LISP_FLOAT_TYPE */
 
   /* Inverse trig functions. */
 
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Facosh);
   DEFSUBR (Fasinh);
   DEFSUBR (Fatanh);
   DEFSUBR (Fcosh);
   DEFSUBR (Fsinh);
   DEFSUBR (Ftanh);
-#endif /* LISP_FLOAT_TYPE */
 
   /* Rounding functions */
 
   DEFSUBR (Fabs);
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Ffloat);
   DEFSUBR (Flogb);
-#endif /* LISP_FLOAT_TYPE */
   DEFSUBR (Fceiling);
   DEFSUBR (Ffloor);
   DEFSUBR (Fround);
@@ -1068,18 +1005,14 @@ syms_of_floatfns (void)
 
   /* Float-rounding functions. */
 
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Ffceiling);
   DEFSUBR (Fffloor);
   DEFSUBR (Ffround);
   DEFSUBR (Fftruncate);
-#endif /* LISP_FLOAT_TYPE */
 }
 
 void
 vars_of_floatfns (void)
 {
-#ifdef LISP_FLOAT_TYPE
   Fprovide (intern ("lisp-float-type"));
-#endif
 }

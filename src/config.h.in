@@ -136,9 +136,6 @@ things are arranged in config.h.in.  In particular:
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
-/* Does XEmacs support floating-point numbers? */
-#undef LISP_FLOAT_TYPE
-
 /* Define GNU_MALLOC if you want to use the GNU memory allocator. */
 #undef GNU_MALLOC
 

@@ -166,10 +166,8 @@ or if you change your font path, you can call this to re-initialize the menus."
 	      families)
       (mapcar (lambda (x)
 		(vector (if (/= 0 (% x 10))
-			    ;; works with no LISP_FLOAT_TYPE
-			    (concat (int-to-string (/ x 10)) "."
-				    (int-to-string (% x 10)))
-			  (int-to-string (/ x 10)))
+			    (number-to-string (/ x 10.0))
+			  (number-to-string (/ x 10)))
 			(list 'font-menu-set-font nil nil x)
 			':style 'radio ':active nil ':selected nil))
 	      sizes)

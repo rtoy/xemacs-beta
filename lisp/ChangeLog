@@ -1,3 +1,9 @@
+2002-10-14  Jerry James  <james@xemacs.org>
+
+	* gtk-font-menu.el (gtk-reset-device-font-menus): Simplify code
+	that previously could not depend on LISP_FLOAT_TYPE.
+	* x-font-menu.el (x-reset-device-font-menus): Ditto.
+
 2002-11-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Synch to 21.4 (suggested by Edward M. Lee <edward@tailifer.com>):

@@ -1048,9 +1048,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 
   init_signals_very_early ();
   init_data_very_early (); /* Catch math errors. */
-#ifdef LISP_FLOAT_TYPE
   init_floatfns_very_early (); /* Catch floating-point math errors. */
-#endif
   init_process_times_very_early (); /* Initialize our process timers.
 				       As early as possible, of course,
 				       so we can be fairly accurate. */

@@ -247,9 +247,7 @@ bytecode_negate (Lisp_Object obj)
  retry:
 
   if (INTP    (obj)) return make_int (- XINT (obj));
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
-#endif
   if (CHARP   (obj)) return make_int (- ((int) XCHAR (obj)));
   if (MARKERP (obj)) return make_int (- ((int) marker_position (obj)));
 
@@ -283,7 +281,6 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
   retry:
 
-#ifdef LISP_FLOAT_TYPE
   {
     EMACS_INT ival1, ival2;
 
@@ -327,37 +324,11 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 
     return dval1 < dval2 ? -1 : dval1 > dval2 ? 1 : 0;
   }
-#else /* !LISP_FLOAT_TYPE */
-  {
-    EMACS_INT ival1, ival2;
-
-    if      (INTP    (obj1)) ival1 = XINT  (obj1);
-    else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
-    else if (MARKERP (obj1)) ival1 = marker_position (obj1);
-    else
-      {
-	obj1 = wrong_type_argument (Qnumber_char_or_marker_p, obj1);
-	goto retry;
-      }
-
-    if      (INTP    (obj2)) ival2 = XINT  (obj2);
-    else if (CHARP   (obj2)) ival2 = XCHAR (obj2);
-    else if (MARKERP (obj2)) ival2 = marker_position (obj2);
-    else
-      {
-	obj2 = wrong_type_argument (Qnumber_char_or_marker_p, obj2);
-	goto retry;
-      }
-
-    return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
-  }
-#endif /* !LISP_FLOAT_TYPE */
 }
 
 static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
-#ifdef LISP_FLOAT_TYPE
   EMACS_INT ival1, ival2;
   int float_p;
 
@@ -419,43 +390,6 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	}
       return make_float (dval1);
     }
-#else /* !LISP_FLOAT_TYPE */
-  EMACS_INT ival1, ival2;
-
- retry:
-
-  if      (INTP    (obj1)) ival1 = XINT  (obj1);
-  else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
-  else if (MARKERP (obj1)) ival1 = marker_position (obj1);
-  else
-    {
-      obj1 = wrong_type_argument (Qnumber_char_or_marker_p, obj1);
-      goto retry;
-    }
-
-  if      (INTP    (obj2)) ival2 = XINT  (obj2);
-  else if (CHARP   (obj2)) ival2 = XCHAR (obj2);
-  else if (MARKERP (obj2)) ival2 = marker_position (obj2);
-  else
-    {
-      obj2 = wrong_type_argument (Qnumber_char_or_marker_p, obj2);
-      goto retry;
-    }
-
-  switch (opcode)
-    {
-    case Bplus: ival1 += ival2; break;
-    case Bdiff: ival1 -= ival2; break;
-    case Bmult: ival1 *= ival2; break;
-    case Bquo:
-      if (ival2 == 0) Fsignal (Qarith_error, Qnil);
-      ival1 /= ival2;
-      break;
-    case Bmax:  if (ival1 < ival2) ival1 = ival2; break;
-    case Bmin:  if (ival1 > ival2) ival1 = ival2; break;
-    }
-  return make_int (ival1);
-#endif /* !LISP_FLOAT_TYPE */
 }
 
 

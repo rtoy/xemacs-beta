@@ -1095,8 +1095,6 @@ Return a new list of length LENGTH, with each element being OBJECT.
 /*			  Float allocation				*/
 /************************************************************************/
 
-#ifdef LISP_FLOAT_TYPE
-
 DECLARE_FIXED_TYPE_ALLOC (float, Lisp_Float);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_float 1000
 
@@ -1115,8 +1113,6 @@ make_float (double float_value)
   float_data (f) = float_value;
   return wrap_float (f);
 }
-
-#endif /* LISP_FLOAT_TYPE */
 
 
 /************************************************************************/
@@ -3649,8 +3645,6 @@ sweep_compiled_functions (void)
   SWEEP_FIXED_TYPE_BLOCK (compiled_function, Lisp_Compiled_Function);
 }
 
-
-#ifdef LISP_FLOAT_TYPE
 static void
 sweep_floats (void)
 {
@@ -3659,7 +3653,6 @@ sweep_floats (void)
 
   SWEEP_FIXED_TYPE_BLOCK (float, Lisp_Float);
 }
-#endif /* LISP_FLOAT_TYPE */
 
 static void
 sweep_symbols (void)
@@ -4066,10 +4059,8 @@ gc_sweep (void)
   /* Free all unmarked compiled-function objects */
   sweep_compiled_functions ();
 
-#ifdef LISP_FLOAT_TYPE
   /* Put all unmarked floats on free list */
   sweep_floats ();
-#endif
 
   /* Put all unmarked symbols on free list */
   sweep_symbols ();
@@ -4581,11 +4572,9 @@ Garbage collection happens automatically if you cons more than
   HACK_O_MATIC (marker, "marker-storage", pl);
   pl = gc_plist_hack ("markers-free", gc_count_num_marker_freelist, pl);
   pl = gc_plist_hack ("markers-used", gc_count_num_marker_in_use, pl);
-#ifdef LISP_FLOAT_TYPE
   HACK_O_MATIC (float, "float-storage", pl);
   pl = gc_plist_hack ("floats-free", gc_count_num_float_freelist, pl);
   pl = gc_plist_hack ("floats-used", gc_count_num_float_in_use, pl);
-#endif /* LISP_FLOAT_TYPE */
   HACK_O_MATIC (string, "string-header-storage", pl);
   pl = gc_plist_hack ("long-strings-total-length",
                       gc_count_string_total_size
@@ -4874,9 +4863,7 @@ common_init_alloc_once_early (void)
   init_cons_alloc ();
   init_symbol_alloc ();
   init_compiled_function_alloc ();
-#ifdef LISP_FLOAT_TYPE
   init_float_alloc ();
-#endif /* LISP_FLOAT_TYPE */
   init_marker_alloc ();
   init_extent_alloc ();
   init_event_alloc ();

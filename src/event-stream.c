@@ -1521,15 +1521,9 @@ event_stream_wakeup_pending_p (int id, int async_p)
 static unsigned long
 lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
 {
-#ifdef LISP_FLOAT_TYPE
   double fsecs;
   CHECK_INT_OR_FLOAT (secs);
   fsecs = XFLOATINT (secs);
-#else
-  long fsecs;
-  CHECK_INT (secs);
-  fsecs = XINT (secs);
-#endif
   if (fsecs < 0)
     invalid_argument ("timeout is negative", secs);
   if (!allow_0 && fsecs == 0)

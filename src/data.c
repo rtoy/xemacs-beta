@@ -535,7 +535,6 @@ Return t if OBJECT is a number, character or a marker.
     ? Qt : Qnil;
 }
 
-#ifdef LISP_FLOAT_TYPE
 DEFUN ("floatp", Ffloatp, 1, 1, 0, /*
 Return t if OBJECT is a floating point number.
 */
@@ -543,7 +542,6 @@ Return t if OBJECT is a floating point number.
 {
   return FLOATP (object) ? Qt : Qnil;
 }
-#endif /* LISP_FLOAT_TYPE */
 
 DEFUN ("type-of", Ftype_of, 1, 1, 0, /*
 Return a symbol representing the type of OBJECT.
@@ -819,9 +817,7 @@ number_char_or_marker_to_int_or_double (Lisp_Object obj, int_or_double *p)
   if      (INTP    (obj)) p->c.ival = XINT  (obj);
   else if (CHARP   (obj)) p->c.ival = XCHAR (obj);
   else if (MARKERP (obj)) p->c.ival = marker_position (obj);
-#ifdef LISP_FLOAT_TYPE
   else if (FLOATP  (obj)) p->c.dval = XFLOAT_DATA (obj), p->int_p = 0;
-#endif
   else
     {
       obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);
@@ -836,9 +832,7 @@ number_char_or_marker_to_double (Lisp_Object obj)
   if      (INTP    (obj)) return (double) XINT  (obj);
   else if (CHARP   (obj)) return (double) XCHAR (obj);
   else if (MARKERP (obj)) return (double) marker_position (obj);
-#ifdef LISP_FLOAT_TYPE
   else if (FLOATP  (obj)) return XFLOAT_DATA (obj);
-#endif
   else
     {
       obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);
@@ -965,10 +959,8 @@ Return t if NUMBER is zero.
  retry:
   if (INTP (number))
     return EQ (number, Qzero) ? Qt : Qnil;
-#ifdef LISP_FLOAT_TYPE
   else if (FLOATP (number))
     return XFLOAT_DATA (number) == 0.0 ? Qt : Qnil;
-#endif /* LISP_FLOAT_TYPE */
   else
     {
       number = wrong_type_argument (Qnumberp, number);
@@ -1014,7 +1006,6 @@ NUMBER may be an integer or a floating point number.
 {
   CHECK_INT_OR_FLOAT (number);
 
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
     {
       char pigbuf[350];	/* see comments in float_to_string */
@@ -1022,7 +1013,6 @@ NUMBER may be an integer or a floating point number.
       float_to_string (pigbuf, XFLOAT_DATA (number));
       return build_string (pigbuf);
     }
-#endif /* LISP_FLOAT_TYPE */
 
   {
     char buffer[DECIMAL_PRINT_SIZE (long)];
@@ -1076,10 +1066,8 @@ Floating point numbers always use base 10.
   while (*p == ' ' || *p == '\t')
     p++;
 
-#ifdef LISP_FLOAT_TYPE
   if (isfloat_string (p) && b == 10)
     return make_float (atof (p));
-#endif /* LISP_FLOAT_TYPE */
 
   if (b == 10)
     {
@@ -1461,7 +1449,6 @@ If either argument is a float, a float will be returned.
   number_char_or_marker_to_int_or_double (x, &iod1);
   number_char_or_marker_to_int_or_double (y, &iod2);
 
-#ifdef LISP_FLOAT_TYPE
   if (!iod1.int_p || !iod2.int_p)
     {
       double dval1 = iod1.int_p ? (double) iod1.c.ival : iod1.c.dval;
@@ -1475,7 +1462,7 @@ If either argument is a float, a float will be returned.
 
       return make_float (dval1);
     }
-#endif /* LISP_FLOAT_TYPE */
+
   {
     EMACS_INT ival;
     if (iod2.c.ival == 0) goto divide_by_zero;
@@ -1535,9 +1522,7 @@ Markers and characters are converted to integers.
   if (INTP    (number)) return make_int (XINT  (number) + 1);
   if (CHARP   (number)) return make_int (XCHAR (number) + 1);
   if (MARKERP (number)) return make_int (marker_position (number) + 1);
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) + 1.0);
-#endif /* LISP_FLOAT_TYPE */
 
   number = wrong_type_argument (Qnumber_char_or_marker_p, number);
   goto retry;
@@ -1554,9 +1539,7 @@ Markers and characters are converted to integers.
   if (INTP    (number)) return make_int (XINT  (number) - 1);
   if (CHARP   (number)) return make_int (XCHAR (number) - 1);
   if (MARKERP (number)) return make_int (marker_position (number) - 1);
-#ifdef LISP_FLOAT_TYPE
   if (FLOATP  (number)) return make_float (XFLOAT_DATA (number) - 1.0);
-#endif /* LISP_FLOAT_TYPE */
 
   number = wrong_type_argument (Qnumber_char_or_marker_p, number);
   goto retry;
@@ -2488,10 +2471,7 @@ syms_of_data (void)
   DEFSYMBOL (Qcdr);
   DEFSYMBOL (Qerror_lacks_explanatory_string);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qweak_listp);
-
-#ifdef LISP_FLOAT_TYPE
   DEFSYMBOL (Qfloatp);
-#endif /* LISP_FLOAT_TYPE */
 
   DEFSUBR (Fwrong_type_argument);
 
@@ -2517,9 +2497,7 @@ syms_of_data (void)
   DEFSUBR (Fnumberp);
   DEFSUBR (Fnumber_or_marker_p);
   DEFSUBR (Fnumber_char_or_marker_p);
-#ifdef LISP_FLOAT_TYPE
   DEFSUBR (Ffloatp);
-#endif /* LISP_FLOAT_TYPE */
   DEFSUBR (Fnatnump);
   DEFSUBR (Fsymbolp);
   DEFSUBR (Fkeywordp);
