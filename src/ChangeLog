@@ -1,3 +1,8 @@
+2001-05-13  Mike Alexander  <mta@arbortext.com>
+
+	* frame-msw.c (mswindows_make_frame_visible): Call SetActiveWindow
+	to make the frame the active window.
+
 2001-05-11  Martin Buchholz  <martin@xemacs.org>
 
 	Eliminate the need to define HAVE_PTYS in s&m files.

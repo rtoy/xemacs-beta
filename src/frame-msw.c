@@ -339,6 +339,7 @@ mswindows_make_frame_visible (struct frame *f)
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
   else
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOW);
+  SetActiveWindow (FRAME_MSWINDOWS_HANDLE(f));
   f->visible = 1;
   f->iconified = 0;
 }

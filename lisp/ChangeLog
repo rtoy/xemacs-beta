@@ -1,3 +1,8 @@
+2001-05-13  Mike Alexander  <mta@arbortext.com>
+
+	* dragdrop.el (experimental-dragdrop-drop-url-default): If event
+	has no window, use one from the frame in the event
+
 2001-05-12  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore: auto-autoloads/custom-load need to be added now that they're not in cvs.

@@ -229,10 +229,12 @@ The function always returns nil."
   "*{EXPERIMENTAL} Default handler for dropped URL data.
 Finds files and URLs. Returns nil if object does not contain URL data."
   (cond ((eq (car object) 'dragdrop-URL)
-	 (let ((data (cdr object))
-	       (frame (event-channel event))
-	       (x pop-up-windows)
-	       (window (event-window event)))
+	 (let* ((data (cdr object))
+		(frame (event-channel event))
+		(x pop-up-windows)
+		(window (or (event-window event)
+			    (frame-selected-window frame)
+			    (frame-highest-window frame 0))))
 	   (setq pop-up-windows nil)
 	   (while (not (eq data ()))
 	     (cond ((dragdrop-is-some-url "file" (car data))
