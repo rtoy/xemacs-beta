@@ -3796,7 +3796,6 @@ mswindows_handle_hardware_exceptions (DWORD code)
    in one session without having to recompile. */
 /* #define ASSERTIONS_DONT_ABORT */
 
-#ifdef USE_ASSERTIONS
 /* This highly dubious kludge ... shut up Jamie, I'm tired of your slagging. */
 
 /* Nonzero if handling an assertion failure. (Bumped by one each time
@@ -3896,7 +3895,6 @@ assert_failed (const Ascbyte *file, int line, const Ascbyte *expr)
   inhibit_non_essential_conversion_operations = 0;
   in_assert_failed = 0;
 }
-#endif /* USE_ASSERTIONS */
 
 /* -------------------------------------- */
 /*        low-memory notification         */

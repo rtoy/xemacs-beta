@@ -1,7 +1,7 @@
 /* Fundamental definitions for XEmacs Lisp interpreter.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1993-1996 Richard Mlynarik.
-   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004 Ben Wing.
+   Copyright (C) 1995, 1996, 2000, 2001, 2002, 2003, 2004, 2005 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -1040,26 +1040,25 @@ BEGIN_C_DECLS
    from error-checking macros.  If we're not tricky, we just get the file
    and line of the inline function, which is not very useful. */
 
-#ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 MODULE_API void assert_failed (const Ascbyte *, int, const Ascbyte *);
-# define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+#define ABORT() (assert_failed (__FILE__, __LINE__, "ABORT()"))
+
+#ifdef USE_ASSERTIONS
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 # define assert_with_message(x, msg) \
   ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, msg))
 # define assert_at_line(x, file, line) \
   ((x) ? (void) 0 : assert_failed (file, line, #x))
+#elif defined (DEBUG_XEMACS)
+# define assert(x) ((x) ? (void) 0 : (void) ABORT ())
+# define assert_with_message(x, msg) ((x) ? (void) 0 : (void) ABORT ())
+# define assert_at_line(x, file, line) assert (x)
 #else
-# ifdef DEBUG_XEMACS
-#  define assert(x) ((x) ? (void) 0 : (void) ABORT ())
-#  define assert_with_message(x, msg) ((x) ? (void) 0 : (void) ABORT ())
-#  define assert_at_line(x, file, line) assert (x)
-# else
-#  define assert(x) ((void) 0)
-#  define assert_with_message(x, msg)
-#  define assert_at_line(x, file, line) assert (x)
-# endif
+# define assert(x) ((void) 0)
+# define assert_with_message(x, msg)
+# define assert_at_line(x, file, line) assert (x)
 #endif
 
 /************************************************************************/
