@@ -1,3 +1,8 @@
+2003-01-14  Jerry James  <james@xemacs.org>
+
+	* ellcc.c (do_compile_mode): Search XEmacs directories first for
+	include files.  Thanks to Raymond Toy.
+
 2003-01-28  Steve Youngs  <youngs@xemacs.org>
 
 	* rcs2log: Synch to GNU version.

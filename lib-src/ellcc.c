@@ -613,6 +613,7 @@ do_compile_mode (void)
   char **exec_argv = xnew (exec_argc + 20, char *);
 
   exec_argv = add_to_argv (exec_argv, ellcc);
+  exec_argv = add_to_argv (exec_argv, ELLCC_CF_ALL);
   exec_argv = add_to_argv (exec_argv, ellcflags);
   exec_argv = add_to_argv (exec_argv, ellpicflags);
   exec_argv = add_to_argv (exec_argv, "-DPIC");
@@ -623,7 +624,6 @@ do_compile_mode (void)
   exec_argv = add_to_argv (exec_argv, "-Dxemacs");
 #endif
   exec_argv = add_to_argv (exec_argv, "-Demacs");
-  exec_argv = add_to_argv (exec_argv, ELLCC_CF_ALL);
   for (i = 1; i < exec_argc; i++)
     {
       exec_argv = add_string (exec_argv, xstrdup (prog_argv[exec_args[i]]));
