@@ -1,3 +1,11 @@
+2003-11-29  Jerry James  <james@xemacs.org>
+
+	* emodules.c (emodules_load): Remove dll_error parameter.
+	* sysdll.c: Ditto.
+	* sysdll.h: Ditto.  Remove unused DLLEXPORT definitions.
+	* ui-gtk.c (initialize_dll_cache): dll_open now takes a Lisp_Object.
+	* ui-gtk.c (Fdll_load): Ditto.  Remove dll_error parameter.
+
 2003-11-18  Jerry James  <james@xemacs.org>
 
 	* config.h.in: Add TYPEOF.

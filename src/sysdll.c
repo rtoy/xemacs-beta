@@ -105,7 +105,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 }
 
 Lisp_Object
-dll_error (dll_handle h)
+dll_error ()
 {
   const Extbyte *msg;
 #if defined(HAVE_DLERROR) || defined(dlerror)
@@ -172,7 +172,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 }
 
 Lisp_Object
-dll_error (dll_handle h)
+dll_error ()
 {
   /* #### WTF?!  Shouldn't this at least attempt to get strerror or
      something?  --hniksic */
@@ -225,7 +225,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 }
 
 Lisp_Object
-dll_error (dll_handle h)
+dll_error ()
 {
   CIbyte err[32];
   snprintf (err, 32, "Windows DLL Error %lu", GetLastError ());
@@ -298,7 +298,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 }
 
 Lisp_Object
-dll_error (dll_handle h)
+dll_error ()
 {
   NSLinkEditErrors c;
   int errorNumber;
@@ -339,7 +339,7 @@ dll_variable (dll_handle h, const CIbyte *n)
 }
 
 Lisp_Object
-dll_error (dll_handle h)
+dll_error ()
 {
   return build_string ("Shared libraries not implemented on this system");
 }

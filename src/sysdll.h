@@ -24,14 +24,6 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 BEGIN_C_DECLS
 
-#if defined(WIN32_NATIVE)
-#define DLLEXPORT __declspec(dllexport)
-#elif defined(WIN16)
-#define DLLEXPORT FAR PASCAL _EXPORT
-#else
-#define DLLEXPORT
-#endif
-
 typedef void * dll_handle;
 typedef void * dll_func;
 typedef void * dll_var;
@@ -42,7 +34,7 @@ extern dll_handle dll_open(Lisp_Object);
 extern int dll_close(dll_handle);
 extern dll_func dll_function(dll_handle, const CIbyte *);
 extern dll_var dll_variable(dll_handle, const CIbyte *);
-extern Lisp_Object dll_error(dll_handle);
+extern Lisp_Object dll_error(void);
 
 /* More stand-ins ... */
 

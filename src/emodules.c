@@ -368,8 +368,7 @@ emodules_load (const CIbyte *module, const CIbyte *modname,
   dlhandle = dll_open (foundname);
   if (dlhandle == NULL)
     {
-      signal_error (Qdll_error, "Opening dynamic module",
-		    dll_error (dlhandle));
+      signal_error (Qdll_error, "Opening dynamic module", dll_error ());
     }
 
   ellcc_rev = (const long *)dll_variable (dlhandle, "emodule_compiler");

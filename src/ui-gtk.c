@@ -54,7 +54,7 @@ initialize_dll_cache (void)
     {
       dll_cache = g_hash_table_new (g_str_hash, g_str_equal);
 
-      g_hash_table_insert (dll_cache, "---XEmacs Internal Handle---", dll_open (NULL));
+      g_hash_table_insert (dll_cache, "---XEmacs Internal Handle---", dll_open (Qnil));
     }
 }
 
@@ -80,7 +80,7 @@ This is for loading dependency DLLs into XEmacs.
 
   if (!h)
     {
-      h = dll_open ((char *) XSTRING_DATA (dll));
+      h = dll_open (dll);
 
       if (h)
 	{
@@ -89,7 +89,7 @@ This is for loading dependency DLLs into XEmacs.
       else
 	{
 	  signal_error (Qfile_error,
-			     "dll_open error", build_string (dll_error (NULL)));
+			"dll_open error", build_string (dll_error ()));
 	}
     }
   return (h ? Qt : Qnil);
