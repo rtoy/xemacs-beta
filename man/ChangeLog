@@ -1,3 +1,12 @@
+2001-11-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi: New file.
+	* lispref/lispref.texi (Top): Add Packaging & subnodes to menus.
+	Include packaging.texi.
+	* lispref/intro.texi (Introduction): Next -> Packaging.
+	* lispref/objects.texi (Lisp Data Types): Previous -> Packaging.
+	* Makefile (lispref-srcs): Depend on lispref/packaging.texi.
+	
 2001-11-26  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Top): Remove duplicate node "Introduction".
