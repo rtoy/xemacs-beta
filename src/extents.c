@@ -1666,9 +1666,9 @@ signal_extent_changed (EXTENT extent, Lisp_Object property,
 	  /* first process all of the extent's children.  We will lose
 	     big-time if there are any circularities here, so we sure as
 	     hell better ensure that there aren't. */
-	  LIST_LOOP_2 (rest, XWEAK_LIST_LIST (children))
-	    signal_extent_changed (extent, property, old_start, old_end,
-				   descendants_too);
+	  LIST_LOOP_2 (child, XWEAK_LIST_LIST (children))
+	    signal_extent_changed (XEXTENT (child), property, old_start,
+				   old_end, descendants_too);
 	}
     }
 

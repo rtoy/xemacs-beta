@@ -101,7 +101,8 @@ make_int_verify (EMACS_INT val)
 #define make_int(x) ((Lisp_Object) (((x) << INT_GCBITS) | Lisp_Type_Int_Bit))
 
 #define volatile_make_int(x) make_int (x)
-#define make_char(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
+
+#define make_char_1(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
 
 #define INTP(x) ((EMACS_UINT)(x) & Lisp_Type_Int_Bit)
 #define INT_PLUS(x,y)  ((x)+(y)-Lisp_Type_Int_Bit)

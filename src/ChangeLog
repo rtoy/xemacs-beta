@@ -1,3 +1,27 @@
+2002-05-09  Ben Wing  <ben@xemacs.org>
+
+	* doprnt.c (emacs_doprnt_1):
+	Use make_int() not make_char() when error about bad charval,
+	or abort will occur.
+	
+	* extents.c (signal_extent_changed):
+	Loop over children, not ourself -- avoid infinite loop.
+	
+	* lisp-disunion.h:
+	* lisp-union.h:
+	Rename make_char() to make_char_1 for error-checking purposes.
+	
+	* lread.c (read_escape):
+	Syntax error if escape is outside of ISO-8859-1 range.
+	Remove hopelessly broken (and unworkable) FSF_KEYS code.
+	
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* search.c (skip_chars):
+	Spacing changes.
+	
+	* text.h:
+	New make_char() -- verify that the char value is legal.
+
 2002-04-23  Jerry James  <james@xemacs.org>
 
 	* select.c (Fown_selection_internal): Document connection with

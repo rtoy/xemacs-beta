@@ -599,7 +599,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
 	      if (!valid_emchar_p (a))
 		syntax_error ("invalid character value %d to %%c spec",
-			      make_char (a));
+			      make_int (a));
 
 	      charlen = set_charptr_emchar (charbuf, a);
 	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,

@@ -1003,6 +1003,15 @@ valid_emchar_p (Emchar ch)
 
 #endif /* not MULE */
 
+DECLARE_INLINE_HEADER (
+Lisp_Object
+make_char (Emchar val)
+)
+{
+  type_checking_assert (valid_emchar_p (val));
+  return make_char_1 (val);
+}
+
 #define CHAR_INTP(x) (INTP (x) && valid_emchar_p (XINT (x)))
 
 #define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))

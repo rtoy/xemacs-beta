@@ -1673,41 +1673,9 @@ read_escape (Lisp_Object readcharfun)
 
          For these reasons, FSF_KEYS hack is useless and without hope
          of ever working under XEmacs 20.  */
-#undef FSF_KEYS
-
 #ifdef FSF_KEYS
-#define alt_modifier   (0x040000)
-#define super_modifier (0x080000)
-#define hyper_modifier (0x100000)
-#define shift_modifier (0x200000)
-/* fsf uses a different modifiers for meta and control.  Possibly
-   byte_compiled code will still work fsfmacs, though... --Stig
-
-   #define ctl_modifier   (0x400000)
-   #define meta_modifier  (0x800000)
-*/
-#define FSF_LOSSAGE(mask)						\
-      if (fail_on_bucky_bit_character_escapes ||			\
-	  ((c = readchar (readcharfun)) != '-'))			\
- syntax_error ("Invalid escape character syntax", Qunbound);		\
-      c = readchar (readcharfun);					\
-      if (c < 0)							\
-  signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));	\
-      if (c == '\\')							\
-	c = read_escape (readcharfun);					\
-      return c | mask
-
-    case 'S': FSF_LOSSAGE (shift_modifier);
-    case 'H': FSF_LOSSAGE (hyper_modifier);
-    case 'A': FSF_LOSSAGE (alt_modifier);
-    case 's': FSF_LOSSAGE (super_modifier);
-#undef alt_modifier
-#undef super_modifier
-#undef hyper_modifier
-#undef shift_modifier
-#undef FSF_LOSSAGE
-
-#endif /* FSF_KEYS */
+      /* Deleted */
+#endif
 
     case 'C':
       c = readchar (readcharfun);
@@ -1750,6 +1718,9 @@ read_escape (Lisp_Object readcharfun)
 		break;
 	      }
 	  }
+	if (i >= 0400)
+	  syntax_error ("Attempt to create non-ASCII/ISO-8859-1 character",
+			make_int (i));
 	return i;
       }
 

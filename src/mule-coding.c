@@ -207,7 +207,7 @@ Return the corresponding character.
     {
       DECODE_SHIFT_JIS (s1, s2, c1, c2);
       return make_char (make_emchar (Vcharset_japanese_jisx0208,
-				   c1 & 0x7F, c2 & 0x7F));
+				     c1 & 0x7F, c2 & 0x7F));
     }
   else
     return Qnil;
