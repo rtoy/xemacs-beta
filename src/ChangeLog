@@ -1,3 +1,8 @@
+2003-05-02  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	* lrecord.h: Added casts from int to enum lrecord_type to support
+	externally defined lrecord types.
+
 2003-05-01  Andrew Begel  <abegel@CS.Berkeley.EDU>
 
 	* text.h (IBYTE_STRING_TO_ALLOCA): Removed a stray backslash from
