@@ -1,3 +1,8 @@
+2002-04-14  Golubev I. N.  <gin@mo.msk.ru>
+
+	* info.el (Info-find-index-alternatives): fix missing \ in \t.
+	Port of `Info-index' change from 21.4.
+
 2002-04-23  Jerry James  <james@xemacs.org>
 
 	* select.el (get-clipboard): Document connection with

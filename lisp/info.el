@@ -2277,7 +2277,7 @@ A positive or negative prefix argument moves by multiple screenfuls."
 (defun Info-find-index-alternatives (topic)
   (let ((pattern (format "\n\\* \\([^\n:]*%s[^\n:]*\\):[ \t]*%s"
 			 (regexp-quote topic)
-			 "\\(.*\\)\\.[ t]*\\([0-9]*\\)$"))
+			 "\\(.*\\)\\.[ \t]*\\([0-9]*\\)$"))
 	node)
     (message "Searching index for `%s'..." topic)
     (Info-goto-node "Top")
