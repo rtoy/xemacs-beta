@@ -252,6 +252,11 @@ dnl Initialize some variables set by options.
 dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
 
+define([USAGE_ERROR],
+[(echo "$progname: Usage error:"
+echo " " $1
+echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])
+
 define([AC_INIT_PARSE_ARGS],[
 
 dnl Get sane consistent behavior from various shells
@@ -274,6 +279,16 @@ else
   if test -n "$CDPATH"; then CDPATH="."; export CDPATH; fi
 fi
 
+dnl srcdir is used internally by autoconf macros
+dnl parse it here
+for xe_parse_arg in "$@"; do
+  case $xe_parse_arg in
+    --srcdir) USAGE_ERROR("The \`--srcdir' option requires a boolean value: \`yes' or \`no'.") ;;
+    --srcdir=*) srcdir=`echo $xe_parse_arg | sed -e 's/--srcdir=//'` ;;
+    *) ;;
+  esac
+done
+
 dnl Initialize some variables set by options.
 dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
@@ -288,7 +303,6 @@ program_suffix=NONE
 program_transform_name=s,x,x,
 silent=
 site=
-srcdir=
 target=NONE
 verbose=
 x_includes=NONE
@@ -393,11 +407,6 @@ dnl ------------------
 dnl Options Processing
 dnl ------------------
 
-define([USAGE_ERROR],
-[(echo "$progname: Usage error:"
-echo " " $1
-echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])
-
 dnl Record all the arguments, so we can save them in config.status.
 arguments="$@"
 
@@ -429,6 +438,7 @@ while test $# != 0; do
   arg="$1"; shift
   case "$arg" in
     --no-create|--no-recursion) ;;
+    --srcdir=*) ;;
     dnl Anything starting with a hyphen we assume is an option.
     -* )
       dnl Separate the switch name from the value it is being given.
@@ -539,7 +549,6 @@ while test $# != 0; do
 
 	dnl Options that take a user-supplied value, as in --x-includes=/usr/X11R6/include
 	dnl The cache-file option is ignored (for compatibility with other configures)
-	srcdir		| \
 	compiler	| \
 	xemacs_compiler	| \
 	cflags		| \
@@ -886,7 +895,7 @@ XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
 dnl Find the source directory.
 case "$srcdir" in
 
-  dnl If srcdir is not specified, see if  "." or ".." might work.
+  dnl If srcdir is not specified, try directory part of $0, ".", or "..".
   "" )
     for dir in "`echo $0 | sed 's|//|/|' | sed 's|/[[^/]]*$||'`" "." ".." ; do
       if test -f "$dir/src/lisp.h" -a \
@@ -896,11 +905,11 @@ case "$srcdir" in
       fi
     done
     if test -z "$srcdir" ; then
-      USAGE_ERROR(["Neither the current directory nor its parent seem to
-  contain the XEmacs sources.  If you do not want to build XEmacs in its
-  source tree, you should run \`$progname' in the directory in which
-  you wish to build XEmacs, using the \`--srcdir' option to say where the
-  sources may be found."])
+      USAGE_ERROR(["None of the path to configure, the current directory,
+  and its parent seem to contain the XEmacs sources.  If you do not want
+  to build XEmacs in its source tree, you should run \`$progname' in the
+  directory in which you wish to build XEmacs, using the \`--srcdir' option
+  to say where the sources may be found."])
     fi
   ;;
 
@@ -1601,9 +1610,9 @@ dnl --------------------------------------------------------------
 
 if test -z "$pdump"; then
   case "$opsys" in
-    linux* )      pdump=yes ;;    dnl glibc 2.3.1 seems to hose unexec
-    *-*-darwin* ) pdump=yes ;;    dnl No "native" working dumper available
-    *)            pdump=no ;;
+    linux* )  pdump=yes ;;    dnl glibc 2.3.1 seems to hose unexec
+    darwin )  pdump=yes ;;    dnl No "native" working dumper available
+    *)        pdump=no ;;
   esac
 fi
 
@@ -1617,6 +1626,7 @@ if test "$dynamic" = "yes"; then
   case "$opsys" in
     hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
     decosf* ) ld_call_shared="-call_shared" ;;
+    darwin ) AC_DEFINE(DLSYM_NEEDS_UNDERSCORE) ;;
   esac
 else dnl "$dynamic" = "no"
   case "$opsys" in

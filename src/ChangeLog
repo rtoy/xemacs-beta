@@ -1,3 +1,11 @@
+2003-02-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in: New symbol: DLSYM_NEEDS_UNDERSCORE.
+
+2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in: Restore USE_XFONTSET.
+
 2003-02-04  Ben Wing  <ben@xemacs.org>
 
 	* s/windowsnt.h:

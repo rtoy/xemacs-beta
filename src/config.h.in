@@ -297,6 +297,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_SHL_LOAD
 #undef HAVE_DLD_INIT
 #undef HAVE_SHLIB
+#undef DLSYM_NEEDS_UNDERSCORE
 
 #undef HAVE_LIBINTL
 #undef HAVE_LIBDNET
@@ -593,6 +594,10 @@ things are arranged in config.h.in.  In particular:
    in a non-Mule Unix; otherwise, defaults will be set so that all
    files are read in as binary.  Doesn't apply to Cygwin or MinGW. */
 #undef HAVE_DEFAULT_EOL_DETECTION
+
+/* Support X FontSets.  Evil, yes, but if we're going to make it go away
+   by using faces in the menubar we should do so. */
+#undef USE_XFONTSET
 
 /* Do we want to use X window input methods for use with Mule? (requires X11R5)
    If so, use raw Xlib or higher level Motif interface? */
