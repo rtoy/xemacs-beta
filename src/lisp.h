@@ -3568,6 +3568,9 @@ void free_alist (Lisp_Object);
 void free_marker (Lisp_Object);
 int object_dead_p (Lisp_Object);
 void mark_object (Lisp_Object obj);
+#ifdef USE_KKCC
+void kkcc_gc_stack_push_lisp_object (Lisp_Object obj);
+#endif /* USE_KKCC */
 int marked_p (Lisp_Object obj);
 extern int funcall_allocation_flag;
 extern int need_to_garbage_collect;

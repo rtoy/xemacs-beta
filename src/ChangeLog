@@ -1,3 +1,37 @@
+2003-07-29  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+
+	* README.kkcc: Aligned to the changes.
+	* alloc.c: Implemented the kkcc_gc_stack.
+	(kkcc_gc_stack_init): 
+	(kkcc_gc_stack_free): 
+	(kkcc_gc_stack_realloc): 
+	(kkcc_gc_stack_full): 
+	(kkcc_gc_stack_empty): 
+	(kkcc_gc_stack_push): 
+	(kkcc_gc_stack_pop): 
+	(kkcc_gc_stack_push_lisp_object): 
+	(mark_object_maybe_checking_free): Push objects on kkcc stack instead 
+	of marking.
+	(mark_struct_contents): Push objects on kkcc stack instead of marking.
+	(kkcc_marking): KKCC mark algorithm using the kkcc_gc_stack.
+	(mark_object): Removed KKCC ifdefs.
+	(garbage_collect_1): Push objects on kkcc stack instead of marking.
+	* data.c: Added XD_FLAG_NO_KKCC to ephemeron_description and to
+	weak_list_description.
+	* data.c (finish_marking_weak_lists): Push objects on kkcc stack 
+	instead of marking.
+	(continue_marking_ephemerons): Push objects on kkcc stack instead 
+	of marking.
+	(finish_marking_ephemerons): Push objects on kkcc stack instead 
+	of marking.
+	* elhash.c (finish_marking_weak_hash_tables): Push objects on kkcc 
+	stack instead of marking.
+	* eval.c: Added XD_FLAG_NO_KKCC to subr_description.
+	* lisp.h: Added prototype for kkcc_gc_stack_push_lisp_object.
+	* profile.c (mark_profiling_info_maphash): Push keys on kkcc stack 
+	instead of marking.
+
 2003-07-30  Jerry James  <james@xemacs.org>
 
 	* sysdll.c: configure sets HAVE_DLD_INIT, not HAVE_INIT_DLD.

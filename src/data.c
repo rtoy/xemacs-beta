@@ -1613,8 +1613,10 @@ make_weak_list (enum weak_list_type type)
 }
 
 static const struct memory_description weak_list_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct weak_list, list) },
-  { XD_LO_LINK,     offsetof (struct weak_list, next_weak) },
+  { XD_LISP_OBJECT, offsetof (struct weak_list, list), 
+  0, 0, XD_FLAG_NO_KKCC },
+  { XD_LO_LINK,     offsetof (struct weak_list, next_weak), 
+  0, 0, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
@@ -1761,7 +1763,11 @@ finish_marking_weak_lists (void)
 
 	  if (need_to_mark_elem && ! marked_p (elem))
 	    {
+#ifdef USE_KKCC
+	      kkcc_gc_stack_push_lisp_object (elem);
+#else /* NOT USE_KKCC */
 	      mark_object (elem);
+#endif /* NOT USE_KKCC */
 	      did_mark = 1;
 	    }
 
@@ -1785,7 +1791,11 @@ finish_marking_weak_lists (void)
          because we're not removing it */
       if (!NILP (rest2) && ! marked_p (rest2))
 	{
+#ifdef USE_KKCC
+	  kkcc_gc_stack_push_lisp_object (rest2);
+#else /* NOT USE_KKCC */
 	  mark_object (rest2);
+#endif /* NOT USE_KKCC */
 	  did_mark = 1;
 	}
     }
@@ -2160,7 +2170,12 @@ continue_marking_ephemerons(void)
 	  MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
 	  if (marked_p (XEPHEMERON (rest)->key))
 	    {
+#ifdef USE_KKCC
+	      kkcc_gc_stack_push_lisp_object 
+	      (XCAR (XEPHEMERON (rest)->cons_chain));
+#else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
+#endif /* NOT USE_KKCC */
 	      did_mark = 1;
 	      XSET_EPHEMERON_NEXT (rest, Vnew_all_ephemerons);
 	      Vnew_all_ephemerons = rest;
@@ -2205,7 +2220,12 @@ finish_marking_ephemerons(void)
 	  if (! NILP (XEPHEMERON_FINALIZER (rest)))
 	    {
 	      MARK_CONS (XCONS (XEPHEMERON (rest)->cons_chain));
+#ifdef USE_KKCC
+	      kkcc_gc_stack_push_lisp_object 
+	      (XCAR (XEPHEMERON (rest)->cons_chain));
+#else /* NOT USE_KKCC */
 	      mark_object (XCAR (XEPHEMERON (rest)->cons_chain));
+#endif /* NOT USE_KKCC */
 
 	      /* Register the finalizer */
 	      XSET_EPHEMERON_NEXT (rest, Vfinalize_list);
@@ -2298,6 +2318,8 @@ make_ephemeron(Lisp_Object key, Lisp_Object value, Lisp_Object finalizer)
   return result;
 }
 
+/* Ephemerons are special cases in the KKCC mark algorithm, so nothing
+   is marked here. */
 static const struct memory_description ephemeron_description[] = {
   { XD_LISP_OBJECT, offsetof(struct ephemeron, key),
     0, 0, XD_FLAG_NO_KKCC },

@@ -2951,6 +2951,116 @@ const struct sized_memory_description lisp_object_description = {
 
 #if defined (USE_KKCC) || defined (PDUMP)
 
+/* the initial stack size in kkcc_gc_stack_entries */
+#define KKCC_INIT_GC_STACK_SIZE 16384
+
+typedef struct
+{
+  void *data;
+  const struct memory_description *desc;
+} kkcc_gc_stack_entry;
+
+static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
+static kkcc_gc_stack_entry *kkcc_gc_stack_top;
+static int kkcc_gc_stack_size;
+static int kkcc_gc_stack_count;
+
+static void
+kkcc_gc_stack_init (void)
+{
+  kkcc_gc_stack_size = KKCC_INIT_GC_STACK_SIZE;
+  kkcc_gc_stack_ptr = 
+    malloc (kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
+  if (!kkcc_gc_stack_ptr) 
+    {
+      stderr_out ("stack init failed for size %d\n", kkcc_gc_stack_size);
+      exit(23);
+    }
+  kkcc_gc_stack_top = kkcc_gc_stack_ptr - 1;
+  kkcc_gc_stack_count = 0;
+}
+
+static void
+kkcc_gc_stack_free (void)
+{
+  free (kkcc_gc_stack_ptr);
+  kkcc_gc_stack_ptr = 0;
+  kkcc_gc_stack_top = 0;
+  kkcc_gc_stack_size = 0;
+}
+
+static void
+kkcc_gc_stack_realloc (void)
+{
+  kkcc_gc_stack_size *= 2;
+  kkcc_gc_stack_ptr = 
+    realloc (kkcc_gc_stack_ptr, 
+	     kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
+  if (!kkcc_gc_stack_ptr) 
+    {
+      stderr_out ("stack realloc failed for size %d\n", kkcc_gc_stack_size);
+      exit(23);
+    }
+  kkcc_gc_stack_top = kkcc_gc_stack_ptr + kkcc_gc_stack_count - 1;
+}
+
+static int
+kkcc_gc_stack_full (void)
+{
+  if (kkcc_gc_stack_count > (kkcc_gc_stack_size - 1))
+    return 1;
+  return 0;
+}
+
+static int
+kkcc_gc_stack_empty (void)
+{
+  if (kkcc_gc_stack_count == 0)
+    return 1;
+  return 0;
+}
+
+static void
+kkcc_gc_stack_push (void *data, const struct memory_description *desc)
+{
+  if (kkcc_gc_stack_full ())
+      kkcc_gc_stack_realloc();
+
+  kkcc_gc_stack_top++;
+  kkcc_gc_stack_count++;
+  kkcc_gc_stack_top->data = data;
+  kkcc_gc_stack_top->desc = desc;
+}
+
+static kkcc_gc_stack_entry *
+kkcc_gc_stack_pop (void) //void *data, const struct memory_description *desc)
+{
+  if (kkcc_gc_stack_empty ())
+    return 0;
+
+  kkcc_gc_stack_top--;
+  kkcc_gc_stack_count--;
+
+  return kkcc_gc_stack_top + 1;
+}
+
+void
+kkcc_gc_stack_push_lisp_object (Lisp_Object obj)
+{
+  if (XTYPE (obj) == Lisp_Type_Record)
+    {
+      struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+      const struct memory_description *desc;
+      GC_CHECK_LHEADER_INVARIANTS (lheader);
+      desc = LHEADER_IMPLEMENTATION (lheader)->description;
+      if (! MARKED_RECORD_HEADER_P (lheader)) 
+	{
+	  MARK_RECORD_HEADER (lheader);
+	  kkcc_gc_stack_push((void*) lheader, desc);
+	}
+    }
+}
+
 /* This function extracts the value of a count variable described somewhere 
    else in the description. It is converted corresponding to the type */ 
 EMACS_INT
@@ -3193,10 +3303,6 @@ lispdesc_structure_size (const void *obj,
    They mark objects according to their descriptions.  They 
    are modeled on the corresponding pdumper procedures. */
 
-static void mark_struct_contents (const void *data,
-				  const struct sized_memory_description *sdesc,
-				  int count);
-
 #ifdef ERROR_CHECK_GC
 #define KKCC_DO_CHECK_FREE(obj, allow_free)			\
 do								\
@@ -3212,183 +3318,20 @@ do								\
 #endif
 
 #ifdef ERROR_CHECK_GC
-void
+static void
 mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
 {
   KKCC_DO_CHECK_FREE (obj, allow_free);
+#ifdef USE_KKCC
+  kkcc_gc_stack_push_lisp_object (obj);
+#else /* NOT USE_KKCC */
   mark_object (obj);
+#endif /* NOT USE_KKCC */
 }
 #else
 #define mark_object_maybe_checking_free(obj, allow_free) mark_object (obj)
 #endif /* ERROR_CHECK_GC */
 
-/* This function is called to mark the elements of an object. It processes
-   the description of the object and calls mark object with every described
-   object. */
-static void
-mark_with_description (const void *data,
-		       const struct memory_description *desc)
-{
-  int pos;
-  static const Lisp_Object *last_occurred_object = (Lisp_Object *) 0;
-  static int mark_last_occurred_object = 0;
-#ifdef ERROR_CHECK_GC
-  static int last_occurred_flags;
-#endif
-
- tail_recurse:
-
-  for (pos = 0; desc[pos].type != XD_END; pos++)
-    {
-      const struct memory_description *desc1 = &desc[pos];
-      const void *rdata =
-	(const char *) data + lispdesc_indirect_count (desc1->offset,
-						       desc, data);
-    union_switcheroo:
-
-      /* If the flag says don't mark, then don't mark. */
-      if ((desc1->flags) & XD_FLAG_NO_KKCC)
-	continue;
-
-      switch (desc1->type)
-	{
-	case XD_BYTECOUNT:
-	case XD_ELEMCOUNT:
-	case XD_HASHCODE:
-	case XD_INT:
-	case XD_LONG:
-	case XD_INT_RESET:
-	case XD_LO_LINK:
-	case XD_OPAQUE_PTR:
-	case XD_OPAQUE_DATA_PTR:
-	case XD_C_STRING:
-	case XD_DOC_STRING:
-	  break;
-	case XD_LISP_OBJECT: 
-	  {
-	    const Lisp_Object *stored_obj = (const Lisp_Object *) rdata;
-
-	    /* Because of the way that tagged objects work (pointers and
-	       Lisp_Objects have the same representation), XD_LISP_OBJECT
-	       can be used for untagged pointers.  They might be NULL,
-	       though. */
-	    if (EQ (*stored_obj, Qnull_pointer))
-	      break;
-
-	    if (desc[pos+1].type == XD_END)
-	      {
-		mark_last_occurred_object = 1;
-		last_occurred_object = stored_obj;
-#ifdef ERROR_CHECK_GC
-		last_occurred_flags = desc1->flags;
-#endif
-		break;
-	      }
-	    else
-	      mark_object_maybe_checking_free
-		(*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
-
-	    break;
-	  }
-	case XD_LISP_OBJECT_ARRAY:
-	  {
-	    int i;
-	    EMACS_INT count =
-	      lispdesc_indirect_count (desc1->data1, desc, data);
-	
-	    for (i = 0; i < count; i++)
-	      {
-		const Lisp_Object *stored_obj =
-		  (const Lisp_Object *) rdata + i;
-
-		if (EQ (*stored_obj, Qnull_pointer))
-		  break;
-
-		mark_object_maybe_checking_free
-		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
-	      }
-	    break;
-	  }
-	case XD_STRUCT_PTR:
-	  {
-	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
-						       data);
-	    const struct sized_memory_description *sdesc =
-	      lispdesc_indirect_description (data, desc1->data2);
-	    const char *dobj = * (const char **) rdata;
-	    if (dobj)
-	      mark_struct_contents (dobj, sdesc, count);
-	    break;
-	  }
-	case XD_STRUCT_ARRAY:
-	  {
-	    EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
-						       data);
-	    const struct sized_memory_description *sdesc =
-	      lispdesc_indirect_description (data, desc1->data2);
-		      
-	    mark_struct_contents (rdata, sdesc, count);
-	    break;
-	  }
-	case XD_UNION:
-	case XD_UNION_DYNAMIC_SIZE:
-	  desc1 = lispdesc_process_xd_union (desc1, desc, data);
-	  if (desc1)
-	    goto union_switcheroo;
-	  break;
-		    
-	default:
-	  stderr_out ("Unsupported description type : %d\n", desc1->type);
-	  abort ();
-	}
-    }
-
-  if (mark_last_occurred_object)
-    {
-      Lisp_Object obj = *last_occurred_object;
-
-    old_tail_recurse:
-      /* NOTE: The second parameter isn't even evaluated
-	 non-ERROR_CHECK_GC, so it's OK for the variable not to exist.
-       */
-      KKCC_DO_CHECK_FREE
-	(obj, (last_occurred_flags & XD_FLAG_FREE_LISP_OBJECT) != 0);
-
-      if (XTYPE (obj) == Lisp_Type_Record)
-	{
-	  struct lrecord_header *lheader = XRECORD_LHEADER (obj);
-
-	  GC_CHECK_LHEADER_INVARIANTS (lheader);
-
-	  /* All c_readonly objects have their mark bit set,
-	     so that we only need to check the mark bit here. */
-	  if (! MARKED_RECORD_HEADER_P (lheader))
-	    {
-	      MARK_RECORD_HEADER (lheader);
-
-	      {
-		desc = LHEADER_IMPLEMENTATION (lheader)->description;
-		if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
-		  {
-		    data = lheader;
-		    mark_last_occurred_object = 0;
-		    goto tail_recurse;
-		  }
-		else 
-		  {
-		    if (RECORD_MARKER (lheader))
-		      {
-			obj = RECORD_MARKER (lheader) (obj);
-			if (!NILP (obj)) goto old_tail_recurse;
-		      }
-		  }
-	      }
-	    }
-	}
-
-      mark_last_occurred_object = 0;
-    }
-}
 
 /* This function loops all elements of a struct pointer and calls 
    mark_with_description with each element. */
@@ -3403,11 +3346,123 @@ mark_struct_contents (const void *data,
 
   for (i = 0; i < count; i++)
     {
-      mark_with_description (((char *) data) + elsize * i,
-					  sdesc->description);
+      kkcc_gc_stack_push (((char *) data) + elsize * i, sdesc->description);
     }
 }
 
+
+/* This function implements the KKCC mark algorithm.
+   Instead of calling mark_object, all the alive Lisp_Objects are pushed
+   on the kkcc_gc_stack. This function processes all elements on the stack
+   according to their descriptions. */
+static void
+kkcc_marking (void) 
+{
+  kkcc_gc_stack_entry *stack_entry = 0;
+  void *data = 0;
+  const struct memory_description *desc = 0;
+  int pos;
+  
+  while ((stack_entry = kkcc_gc_stack_pop ()) != 0)
+    {
+      data = stack_entry->data;
+      desc = stack_entry->desc;
+
+      for (pos = 0; desc[pos].type != XD_END; pos++)
+	{
+	  const struct memory_description *desc1 = &desc[pos];
+	  const void *rdata =
+	    (const char *) data + lispdesc_indirect_count (desc1->offset,
+							   desc, data);
+	union_switcheroo:
+	  
+	  /* If the flag says don't mark, then don't mark. */
+	  if ((desc1->flags) & XD_FLAG_NO_KKCC)
+	    continue;
+
+	  switch (desc1->type)
+	    {
+	    case XD_BYTECOUNT:
+	    case XD_ELEMCOUNT:
+	    case XD_HASHCODE:
+	    case XD_INT:
+	    case XD_LONG:
+	    case XD_INT_RESET:
+	    case XD_LO_LINK:
+	    case XD_OPAQUE_PTR:
+	    case XD_OPAQUE_DATA_PTR:
+	    case XD_C_STRING:
+	    case XD_DOC_STRING:
+	      break;
+	    case XD_LISP_OBJECT: 
+	      {
+		const Lisp_Object *stored_obj = (const Lisp_Object *) rdata;
+
+		/* Because of the way that tagged objects work (pointers and
+		   Lisp_Objects have the same representation), XD_LISP_OBJECT
+		   can be used for untagged pointers.  They might be NULL,
+		   though. */
+		if (EQ (*stored_obj, Qnull_pointer))
+		  break;
+		mark_object_maybe_checking_free
+		  (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
+	    
+		break;
+	      }
+	    case XD_LISP_OBJECT_ARRAY:
+	      {
+		int i;
+		EMACS_INT count =
+		  lispdesc_indirect_count (desc1->data1, desc, data);
+	
+		for (i = 0; i < count; i++)
+		  {
+		    const Lisp_Object *stored_obj =
+		      (const Lisp_Object *) rdata + i;
+
+		    if (EQ (*stored_obj, Qnull_pointer))
+		      break;
+
+		    mark_object_maybe_checking_free
+		      (*stored_obj, (desc1->flags) & XD_FLAG_FREE_LISP_OBJECT);
+		  }
+		break;
+	      }
+	    case XD_STRUCT_PTR:
+	      {
+		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+							   data);
+		const struct sized_memory_description *sdesc =
+		  lispdesc_indirect_description (data, desc1->data2);
+		const char *dobj = * (const char **) rdata;
+		if (dobj)
+		  mark_struct_contents (dobj, sdesc, count);
+		break;
+	      }
+	    case XD_STRUCT_ARRAY:
+	      {
+		EMACS_INT count = lispdesc_indirect_count (desc1->data1, desc,
+							   data);
+		const struct sized_memory_description *sdesc =
+		  lispdesc_indirect_description (data, desc1->data2);
+		      
+		mark_struct_contents (rdata, sdesc, count);
+		break;
+	      }
+	    case XD_UNION:
+	    case XD_UNION_DYNAMIC_SIZE:
+	      desc1 = lispdesc_process_xd_union (desc1, desc, data);
+	      if (desc1)
+		goto union_switcheroo;
+	      break;
+		    
+	    default:
+	      stderr_out ("Unsupported description type : %d\n", desc1->type);
+	      abort ();
+	    }
+	}
+    }
+}
 #endif /* USE_KKCC */  
 
 /* Mark reference to a Lisp_Object.  If the object referred to has not been
@@ -3416,6 +3471,13 @@ mark_struct_contents (const void *data,
 void
 mark_object (Lisp_Object obj)
 {
+#ifdef USE_KKCC
+  /* this code should never be reached when configured for KKCC */
+  stderr_out ("KKCC: Invalid mark_object call.\n");
+  stderr_out ("Replace mark_object with kkcc_gc_stack_push_lisp_object.\n");
+  abort ();
+#endif /* USE_KKCC */
+
  tail_recurse:
 
   /* Checks we used to perform */
@@ -3429,10 +3491,8 @@ mark_object (Lisp_Object obj)
 
       GC_CHECK_LHEADER_INVARIANTS (lheader);
 
-#ifndef USE_KKCC
       /* We handle this separately, above, so we can mark free objects */
       GC_CHECK_NOT_FREE (lheader);
-#endif /* not USE_KKCC */
 
       /* All c_readonly objects have their mark bit set,
 	 so that we only need to check the mark bit here. */
@@ -3440,28 +3500,15 @@ mark_object (Lisp_Object obj)
 	{
 	  MARK_RECORD_HEADER (lheader);
 
-	  {
-#ifdef USE_KKCC
-	    const struct memory_description *desc;
-	    desc = LHEADER_IMPLEMENTATION (lheader)->description;
-	    if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
-	      mark_with_description (lheader, desc);
-	    else 
-#endif /* USE_KKCC */
-	      {
-		if (RECORD_MARKER (lheader))
-		  {
-		    obj = RECORD_MARKER (lheader) (obj);
-		    if (!NILP (obj)) goto tail_recurse;
-		  }
-	      }
-	  }
+	  if (RECORD_MARKER (lheader))
+	    {
+	      obj = RECORD_MARKER (lheader) (obj);
+	      if (!NILP (obj)) goto tail_recurse;
+	    }
 	}
     }
 }
 
-
-/* Find all structures not marked, and free them. */
 
 static int gc_count_num_short_string_in_use;
 static Bytecount gc_count_string_total_size;
@@ -4542,18 +4589,31 @@ garbage_collect_1 (void)
 
   /* Mark all the special slots that serve as the roots of accessibility. */
 
+#ifdef USE_KKCC
+  /* initialize kkcc stack */
+  kkcc_gc_stack_init();
+#endif /* USE_KKCC */
+
   { /* staticpro() */
     Lisp_Object **p = Dynarr_begin (staticpros);
     Elemcount count;
     for (count = Dynarr_length (staticpros); count; count--)
+#ifdef USE_KKCC
+      kkcc_gc_stack_push_lisp_object (**p++);
+#else /* NOT USE_KKCC */
       mark_object (**p++);
+#endif /* NOT USE_KKCC */
   }
 
   { /* staticpro_nodump() */
     Lisp_Object **p = Dynarr_begin (staticpros_nodump);
     Elemcount count;
     for (count = Dynarr_length (staticpros_nodump); count; count--)
+#ifdef USE_KKCC
+      kkcc_gc_stack_push_lisp_object (**p++);
+#else /* NOT USE_KKCC */
       mark_object (**p++);
+#endif /* NOT USE_KKCC */
   }
 
   { /* GCPRO() */
@@ -4561,15 +4621,24 @@ garbage_collect_1 (void)
     int i;
     for (tail = gcprolist; tail; tail = tail->next)
       for (i = 0; i < tail->nvars; i++)
+#ifdef USE_KKCC
+	kkcc_gc_stack_push_lisp_object (tail->var[i]);
+#else /* NOT USE_KKCC */
 	mark_object (tail->var[i]);
+#endif /* NOT USE_KKCC */
   }
 
   { /* specbind() */
     struct specbinding *bind;
     for (bind = specpdl; bind != specpdl_ptr; bind++)
       {
+#ifdef USE_KKCC
+	kkcc_gc_stack_push_lisp_object (bind->symbol);
+	kkcc_gc_stack_push_lisp_object (bind->old_value);
+#else /* NOT USE_KKCC */
 	mark_object (bind->symbol);
 	mark_object (bind->old_value);
+#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4577,9 +4646,15 @@ garbage_collect_1 (void)
     struct catchtag *catch;
     for (catch = catchlist; catch; catch = catch->next)
       {
+#ifdef USE_KKCC
+	kkcc_gc_stack_push_lisp_object (catch->tag);
+	kkcc_gc_stack_push_lisp_object (catch->val);
+	kkcc_gc_stack_push_lisp_object (catch->actual_tag);
+#else /* NOT USE_KKCC */
 	mark_object (catch->tag);
 	mark_object (catch->val);
 	mark_object (catch->actual_tag);
+#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4590,6 +4665,16 @@ garbage_collect_1 (void)
 	int nargs = backlist->nargs;
 	int i;
 
+#ifdef USE_KKCC
+	kkcc_gc_stack_push_lisp_object (*backlist->function);
+	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */
+	    /* might be fake (internal profiling entry) */
+	    && backlist->args)
+	  kkcc_gc_stack_push_lisp_object (backlist->args[0]);
+	else
+	  for (i = 0; i < nargs; i++)
+	    kkcc_gc_stack_push_lisp_object (backlist->args[i]);
+#else /* NOT USE_KKCC */
 	mark_object (*backlist->function);
 	if (nargs < 0 /* nargs == UNEVALLED || nargs == MANY */
 	    /* might be fake (internal profiling entry) */
@@ -4598,6 +4683,7 @@ garbage_collect_1 (void)
 	else
 	  for (i = 0; i < nargs; i++)
 	    mark_object (backlist->args[i]);
+#endif /* NOT USE_KKCC */
       }
   }
 
@@ -4609,12 +4695,19 @@ garbage_collect_1 (void)
      a weak hash table might be unmarked, but after processing a later
      weak hash table, the former one might get marked.  So we have to
      iterate until nothing more gets marked. */
-  
+#ifdef USE_KKCC
+  kkcc_marking ();
+#endif /* USE_KKCC */
   init_marking_ephemerons ();
   while (finish_marking_weak_hash_tables () > 0 ||
 	 finish_marking_weak_lists       () > 0 ||
 	 continue_marking_ephemerons     () > 0)
     ;
+
+#ifdef USE_KKCC
+  kkcc_marking ();
+  kkcc_gc_stack_free ();
+#endif /* USE_KKCC */
 
   /* At this point, we know which objects need to be finalized: we
      still need to resurrect them */

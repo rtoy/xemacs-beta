@@ -428,7 +428,7 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 static const struct memory_description subr_description[] = {
-  { XD_DOC_STRING, offsetof (Lisp_Subr, doc) },
+  { XD_DOC_STRING, offsetof (Lisp_Subr, doc), 0, 0, XD_FLAG_NO_KKCC },
   { XD_END }
 };
 
