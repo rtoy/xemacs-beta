@@ -1,5 +1,9 @@
 2004-08-26  Jerry James  <james@xemacs.org>
 
+	* event-stream.c (munge_keymap_translate): Remove unused variable n.
+
+2004-08-26  Jerry James  <james@xemacs.org>
+
 	* glyphs-eimage.c (tiff_memory_write): Use RETURN_NOT_REACHED.
 
 2004-08-26  Jerry James  <james@xemacs.org>

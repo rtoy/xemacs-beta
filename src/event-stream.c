@@ -3357,7 +3357,6 @@ munge_keymap_translate (struct command_builder *builder,
 	{
 	  Lisp_Object new_chain = key_sequence_to_event_chain (result);
 	  Lisp_Object tempev;
-	  int n;
 
 	  /* If the first_mungeable_event of the other munger is
 	     within the events we're munging, then it will point to
@@ -3375,7 +3374,6 @@ munge_keymap_translate (struct command_builder *builder,
 	    }
 
 	  /* Now munge the current event chain in the command builder. */
-	  n = event_chain_count (suffix);
 	  command_builder_replace_suffix (builder, suffix, new_chain);
 	  builder->first_mungeable_event[munge] = Qnil;
 
