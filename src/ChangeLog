@@ -1,3 +1,8 @@
+2003-10-11  Olivier Galibert  <galibert@pobox.com>
+
+	* window.c (Fdelete_window): Dirty the mirror structure _before_
+	marking the window deleted.
+
 2003-10-14  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (shlib_objs): Remove emodules.o.
