@@ -709,8 +709,9 @@ The default is to autodetect native and NAS sound support."])
 	  case "$val" in
 	    gmp ) val=gmp ;;
 	    mp )  val=mp ;;
+	    no|non|none ) val=no ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
-  \`gmp' or \`mp'."]) ;;
+  \`gmp', \`mp', or \`no'."]) ;;
 	  esac
           eval "$opt=\"$val\""
         ;;

@@ -1,3 +1,8 @@
+2004-04-06  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* configure.in (use_number_lib): Accepts no to disable bignums.
+	* configure.usage: Document the "no" value.
+
 2004-04-05  Jerry James  <james@xemacs.org>
 
 	* configure.in (use_number_lib): New.  Values are "gmp" or "mp".

@@ -294,7 +294,7 @@ Emacs Lisp options:
 
 --use-number-lib=TYPE   Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
-                        (for GNU MP) or "mp" (for BSD MP).
+                        (for GNU MP), "mp" (for BSD MP), or "no" (disabled).
 
 
 Debugging options:
