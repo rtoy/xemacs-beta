@@ -1,3 +1,7 @@
+2004-11-13  Ben Wing  <ben@xemacs.org>
+
+	* CODING-STANDARDS: Delete and incorporate into Internals manual.
+
 2004-11-16  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gnuserv.1: Various fixes and improvements.
