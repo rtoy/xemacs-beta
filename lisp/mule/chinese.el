@@ -326,7 +326,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 		(cygwin-locale "zh")
 		(locale "zh_CN.eucCN" "zh_CN.EUC" "zh_CN"
 			"chinese-s" "zh"
-			  #'(lambda (arg)
+			 (lambda (arg)
 			      (and arg (let ((case-fold-search t))
 					 (string-match "^zh_.*.GB.*" arg)))))
 		(mswindows-locale ("CHINESE" . "CHINESE_SIMPLIFIED"))
@@ -399,7 +399,7 @@ of a Chinese character\"."))
 		  (cygwin-locale "zh_TW")
 		  (locale "zh_TW.Big5" "zh_TW.big5" "zh_CN.big5" "zh_TW"
 			  "chinese-t"
-			  #'(lambda (arg)
+			  (lambda (arg)
 			      (and arg (let ((case-fold-search t))
 					 (string-match "^zh_.*.BIG5.*" arg)))))
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))

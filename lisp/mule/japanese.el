@@ -499,7 +499,7 @@ a similar structure:
 
 	      (native-coding-system
 	       ;; first, see if an explicit encoding was given.
-	       #'(lambda (locale)
+	       (lambda (locale)
 		   (let ((case-fold-search t))
 		     (cond
 		      ;; many unix versions
@@ -521,21 +521,21 @@ a similar structure:
 		      )))
 
 	       ;; aix (CJKV p. 465)
-	       #'(lambda (locale)
+	       (lambda (locale)
 		   (when (eq system-type 'aix)
 		     (cond
 		      ((string-match "^Ja_JP" locale) 'shift-jis)
 		      ((string-match "^ja_JP" locale) 'euc-jp))))
 
 	       ;; other X11R6 locale.alias
-	       #'(lambda (locale)
+	       (lambda (locale)
 		   (cond
 		    ((string-match "^Jp_JP" locale) 'euc-jp)
 		    ((and (eq system-type 'hpux) (eq locale "japanese"))
 		     'shift-jis)))
 
 	       ;; fallback
-	       'euc-jp)
+	       euc-jp)
 
 ;;	      (input-method . "japanese")
 	      (features japan-util)

@@ -1,3 +1,9 @@
+2002-03-19  Daiki Ueno  <daiki@xemacs.org>
+
+	* mule/japanese.el: Don't quote function expressions listed as
+	`native-coding-system'.
+	* mule/chinese.el: Likewise.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.
