@@ -452,7 +452,7 @@ debug_temacs = gdb $(EXE_TARGET)
 
 ## build-the-mofo: ${EXE_TARGET} update-elc ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} update-elc-2 $(LISP)/finder-inf.el load-shadows
 
-build-the-mofo: ${EXE_TARGET} update-elc ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} load-shadows
+build-the-mofo: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} ${DUMP_TARGET} load-shadows
 .NO_PARALLEL: ${EXE_TARGET} update-elc ${libsrc}DOC ${DUMP_TARGET} update-elc-2
 
 release: all
@@ -466,7 +466,7 @@ update-elc: $(EXE_TARGET)
 	$(TEMACS_BATCH) -l $(LISP)/update-elc.el
 
 ## Update out-of-date .elcs, other than needed for dumping.
-update-elc-2: $(EXE_TARGET) $(DUMP_TARGET)
+update-elc-2: update-elc $(EXE_TARGET) $(DUMP_TARGET)
 	$(XEMACS_BATCH) -no-autoloads -l update-elc-2.el -f batch-update-elc-2 $(LISP)
 
 $(LISP)/finder-inf.el: update-elc-2 $(EXE_TARGET) $(DUMP_TARGET)
@@ -518,7 +518,7 @@ dump-id.c: ${libsrc}make-dump-id ${link_deps}
 
 obj_src = $(objs:.o=.c)
 
-${libsrc}DOC: ${libsrc}make-docfile NEEDTODUMP ${temacs_deps}
+${libsrc}DOC: ${libsrc}make-docfile NEEDTODUMP ${temacs_deps} ${EXE_TARGET}
 #ifdef QUICK_BUILD
 	if test ! -f $@ ; then \
 #else

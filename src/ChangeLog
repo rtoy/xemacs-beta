@@ -1,3 +1,8 @@
+2003-02-20  Mike Sperber  <mike@xemacs.org>
+
+	* Makefile.in.in (update-elc-2): Sequentialize dependencies even
+	more.
+
 2003-02-23  Ben Wing  <ben@xemacs.org>
 
 	* eval.c (unbind_to_hairy):
