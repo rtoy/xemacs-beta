@@ -1,3 +1,7 @@
+2002-07-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame-impl.h (struct frame): Make comment refer to new file.
+
 2002-06-27  Mike Sperber <mike@xemacs.org>
 
 	* eval.c (Ffuncall): Run `post-gc-hook' if GC just happened.
@@ -10,7 +14,8 @@
 	    Jens Müller <jmueller@informatik.uni-tuebingen.de>
 	    Mike Sperber <mike@xemacs.org>
 
-        * lrecord.h (lrecord_type): add lrecord_type_ephemeron  to lrecord_type enumeration.
+        * lrecord.h (lrecord_type): add lrecord_type_ephemeron
+	to lrecord_type enumeration.
 
 	* lisp.h (XEPHEMERON): 
 	(XEPHEMERON_REF): 
@@ -58,6 +63,10 @@
 2002-06-24  Mike Sperber  <mike@xemacs.org>
 
 	* search.c (skip_chars): Fix a crash if NILP(lim).
+
+2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* unicode.c: More comment and string fiddling.
 
 2002-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
@@ -1529,7 +1538,7 @@
 	* process.c (syms_of_process):
 	Add process-has-separate-stderr-p, used by call-process-internal.
 
-2002-05-28  Martin K,Av(Bbele <mkoebele@mkoebele.de>, Jens M,A|(Bller <jmueller@informatik.uni-tuebingen.de>
+2002-05-28  Martin Köbele <mkoebele@mkoebele.de>, Jens Müller <jmueller@informatik.uni-tuebingen.de>
 
 	* lrecord.h (lrecord_type): Add lrecord_type_weak_box to
 	lrecord_type enumeration.

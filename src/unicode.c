@@ -964,7 +964,8 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
   type_checking_assert (code >= 0);
   /* This shortcut depends on the representation of an Ichar, see text.c.
      Note that it may _not_ be extended to U+00A0 to U+00FF (many ISO 8859
-     coded character sets have points that map into that region). */
+     coded character sets have points that map into that region, so this
+     function is many-valued). */
   if (code < 0xA0)
     return (Ichar) code;
 
@@ -1183,7 +1184,7 @@ CHARACTER is one of the following:
        EQ (charset, Vcharset_control_1) ||
        EQ (charset, Vcharset_latin_iso8859_1))
       && unicode != ichar)
-    signal_error (Qinvalid_argument, "Can't change Unicode translation for ASCII, Control-1 or Latin-1 char",
+    signal_error (Qinvalid_argument, "Can't change Unicode translation for ASCII, Control-1 or Latin-1 character",
 		  character);
 
   /* #### Composite characters are not properly implemented yet. */

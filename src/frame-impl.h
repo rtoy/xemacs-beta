@@ -110,7 +110,7 @@ struct frame
   display_line_dynarr *desired_display_lines[4];
 
   /* A structure of auxiliary data specific to the device type.
-     struct x_frame is used for X window frames; defined in console-x.h */
+     struct x_frame is for X window frames; defined in console-x-impl.h */
   void *frame_data;
 
 #define FRAME_SLOT_DECLARATION
