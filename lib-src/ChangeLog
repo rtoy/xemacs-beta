@@ -1,3 +1,11 @@
+2004-12-06  Ben Wing  <ben@xemacs.org>
+
+	* gnuclient.c:
+	* gnuclient.c (get_current_working_directory):
+	* gnuclient.c (filename_expand):
+	* gnuclient.c (main):
+	Use QXE_PATH_MAX.
+
 2004-12-05  Ben Wing  <ben@xemacs.org>
 
 	* make-docfile.c (main):

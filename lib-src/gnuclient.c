@@ -74,10 +74,10 @@ main (int argc, char *argv[])
 } /* main */
 #else /* SYSV_IPC || UNIX_DOMAIN_SOCKETS || INTERNET_DOMAIN_SOCKETS */
 
-static char cwd[PATH_MAX+2];	/* current working directory when calculated */
+static char cwd[QXE_PATH_MAX+2];/* current working directory when calculated */
 static char *cp = NULL;		/* ptr into valid bit of cwd above */
 
-static pid_t emacs_pid;			/* Process id for emacs process */
+static pid_t emacs_pid;		/* Process id for emacs process */
 
 void initialize_signals (void);
 
@@ -149,7 +149,7 @@ get_current_working_directory (void)
   if (cp == NULL)
     {				/* haven't calculated it yet */
 #ifdef HAVE_GETCWD
-      if (getcwd (cwd,PATH_MAX) == NULL)
+      if (getcwd (cwd,QXE_PATH_MAX) == NULL)
 #else
       if (getwd (cwd) == 0)
 #endif /* HAVE_GETCWD */
@@ -182,7 +182,7 @@ filename_expand (char *fullpath, char *filename)
   /* filename - filename to expand */
 {
 #ifdef  CYGWIN
-  char cygwinFilename[PATH_MAX+1];
+  char cygwinFilename[QXE_PATH_MAX+1];
   extern void cygwin_conv_to_posix_path(const char *, char *);
 #endif
 
@@ -297,8 +297,8 @@ int
 main (int argc, char *argv[])
 {
   int starting_line = 1;	/* line to start editing at */
-  char command[PATH_MAX+50];	/* emacs command buffer */
-  char fullpath[PATH_MAX+1];	/* full pathname to file */
+  char command[QXE_PATH_MAX+50];/* emacs command buffer */
+  char fullpath[QXE_PATH_MAX+1];/* full pathname to file */
   char *eval_form = NULL;	/* form to evaluate with `-eval' */
   char *eval_function = NULL;	/* function to evaluate with `-f' */
   char *load_library = NULL;	/* library to load */
@@ -317,7 +317,7 @@ main (int argc, char *argv[])
   char *hostarg = NULL;		/* remote hostname */
   char *remotearg;
   char thishost[HOSTNAMSZ];	/* this hostname */
-  char remotepath[PATH_MAX+1]; /* remote pathname */
+  char remotepath[QXE_PATH_MAX+1]; /* remote pathname */
   char *path;
   int rflg = 0;			/* pathname given on cmdline */
   char *portarg;
