@@ -299,7 +299,7 @@ M-x customize-group RET build-report RET
 M-x build-report RET
 
 See also
-<http://www.au.xemacs.org/Releases/Public-21.2/tester.html#reporting>
+<http://www.xemacs.org/Releases/Public-21.2/tester.html#reporting>
 
 If you create the report manually by other means, here is what the
 build report should include:
