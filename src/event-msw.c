@@ -1622,10 +1622,24 @@ mswindows_need_event (int badly_p)
 
       __try
 	{
-	  active = MsgWaitForMultipleObjects (mswindows_waitable_count,
-					      mswindows_waitable_handles,
-					      FALSE, badly_p ? INFINITE : 0,
-					      what_events);
+	  /* This fixes a long outstanding bug, where XEmacs would occasionally
+	   * not redraw its window (or process other events) until "something
+	   * happened" - usually the mouse moving over a frame.
+	   *
+	   * The problem is that MsgWaitForMultipleObjects only checks to see
+	   * if NEW messages have been placed into the thread queue. So we
+	   * specifically check to see if the queue is empty (using PeekMessage
+	   * with the PM_NOREMOVE flag) before we wait.
+	   */
+	  MSG msg;
+	  if (what_events == QS_ALLINPUT && badly_p &&
+	      qxePeekMessage (&msg, 0, 0, 0, PM_NOREMOVE))
+	    active = WAIT_OBJECT_0 + mswindows_waitable_count;
+	  else
+	    active = MsgWaitForMultipleObjects (mswindows_waitable_count,
+						mswindows_waitable_handles,
+						FALSE, badly_p ? INFINITE : 0,
+						what_events);
 	}
       __except (GetExceptionCode () == EXCEPTION_BREAKPOINT ?
 		EXCEPTION_CONTINUE_EXECUTION :

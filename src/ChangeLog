@@ -1,3 +1,8 @@
+2002-07-14  Mike Alexander  <mta@arbortext.com>
+
+	* event-msw.c (mswindows_need_event): Don't wait for a new message
+	if the queue is not empty.  Suggested by Paul Moore.
+
 2002-07-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lisp.h: Declare Fcdr_safe to be callable from C.
