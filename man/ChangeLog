@@ -1,3 +1,9 @@
+2005-02-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Syntax of Regexps):
+	Mention the \c and \C regular expression constructs; cross
+	reference to the Category Table documentation. 
+
 2005-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* internals/internals.texi (The version.sh Script): New node.
@@ -8,7 +14,6 @@
 	Add or update references to the version.sh node and/or file.
 
 	(XEmacs from the Perspective of Building): Improve text.
-
 
 2005-02-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
