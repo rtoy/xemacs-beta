@@ -1,3 +1,8 @@
+2002-12-02  Greg Allen  <greg_allen@westlb-systems.co.uk>
+
+	* database.c: Fix open_database. Berkeley DB API has changed in
+	4.1. see: http://www.sleepycat.com/docs/ref/upgrade.4.1/fop.html
+
 2002-11-25  Mike Sperber <mike@xemacs.org>
 
 	* frame.c (frame_conversion_internal): Convert pixel_to_char
