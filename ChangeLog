@@ -1,3 +1,25 @@
+2003-02-19  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in:
+	* Makefile.in.in (GENERATED_HEADERS):
+	* Makefile.in.in (GENERATED_LISP): Removed.
+	* Makefile.in.in (.NO_PARALLEL):
+	* Makefile.in.in (beta):
+	* Makefile.in.in (dist):
+	* Makefile.in.in (batch): Removed.
+	* Makefile.in.in (batch_packages): Removed.
+	* Makefile.in.in (check): New.
+	* Makefile.in.in (finder): Removed.
+	* Makefile.in.in (check-features): New.
+	* Makefile.in.in (.PHONY):
+	* Makefile.in.in (install-only):
+	* Makefile.in.in (tagslisp):
+	* Makefile.in.in (info):
+	Major surgery.  Move all stuff related to building anything in the
+	src/ directory into src/.  Simplify the dependencies -- everything
+	in src/ is dependent on the single entry `src' in MAKE_SUBDIRS.
+	Remove weirdo targets like `all-elc[s]', dump-elc[s], etc.
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.

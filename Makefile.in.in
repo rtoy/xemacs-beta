@@ -1,3 +1,5 @@
+## Copyright (C) 2003 Ben Wing.
+
 ## DIST: This is the distribution Makefile for XEmacs.  configure can
 ## DIST: make most of the changes to this file you might want, so try
 ## DIST: that first.
@@ -240,25 +242,25 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
 GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/config.h lwlib/config.h src/sheap-adjust.h
-GENERATED_LISP = lisp/finder-inf.el
 
-all: Makefile ${PROGNAME} all-elc info
-
-${PROGNAME}:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
+## MAKE_SUBDIR will always be of the form lib-src ... src, where
+## `...' includes various other directories that may be inserted by
+## configure.
+all: Makefile ${GENERATED_HEADERS} ${MAKE_SUBDIR} info
 
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
 
-.NO_PARALLEL:	${GENERATED_HEADERS} ${MAKE_SUBDIR} dump-elcs
-.PHONY: ${SUBDIR} all beta all-elc all-elcs dump-elc dump-elcs finder
+.NO_PARALLEL: ${GENERATED_HEADERS} ${MAKE_SUBDIR}
+.PHONY: ${SUBDIR} all beta
 
 ## Convenience target for XEmacs beta testers
-beta: clean all-elc finder info
+beta: clean all
 
 ## Convenience target for XEmacs maintainers
 ## This would run `make-xemacsdist' if I were really confident that everything
 ## was turnkey.
-dist: all-elc info
+dist: all
 
 ## Convenience target for XEmacs maintainers
 ## Updates some rarely generated files:
@@ -278,34 +280,11 @@ ${srcdir}/lib-src/config.values.in : ${srcdir}/configure
 depend ${srcdir}/src/depend:
 	cd ./src && $(RECURSIVE_MAKE) depend
 
-batch = -no-packages -batch
-batch_packages = -vanilla -batch
+check:
+	cd ./src && $(RECURSIVE_MAKE) $@
 
-## Build XEmacs and recompile out-of-date and missing .elc files along
-## the way.
-all-elc all-elcs: lib-src lwlib dump-elcs src
-	${blddir}/src/${PROGNAME} ${batch} \
-		-no-autoloads -l update-elc-2.el -f batch-update-elc-2 lisp
-
-## Sub-target for all-elc.
-dump-elc dump-elcs: ${GENERATED_HEADERS} FRC.dump-elcs
-	cd ./src && $(RECURSIVE_MAKE) dump-elcs
-
-finder: src
-	@echo "Building finder database ..."
-	@(cd ./lisp; \
-		${blddir}/src/${PROGNAME} ${batch} \
-		-eval '(setq finder-compile-keywords-quiet t)' \
-		-l finder -f finder-compile-keywords )
-	@echo "Building finder database ...(done)"
-
-lisp/finder-inf.el:
-	@echo "Building finder database ..."
-	@(cd ./lisp; \
-		${blddir}/src/${PROGNAME} ${batch} \
-		-eval '(setq finder-compile-keywords-quiet t)' \
-		-l finder -f finder-compile-keywords )
-	@echo "Building finder database ...(done)"
+check-features: all
+	cd ./src && $(RECURSIVE_MAKE) $@
 
 ## We have to force the building of Emacs.ad.h as well in order to get it
 ## updated correctly when VPATH is being used.  Since we use move-if-change,
@@ -371,7 +350,7 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## On Xenix, use tar xpf.
 
 .PHONY: install-only install install-arch-dep install-arch-indep gzip.el mkdir
-.PHONY: check-features
+.PHONY: check check-features
 
 ## We delete each directory in ${COPYDESTS} before we copy into it;
 ## that way, we can reinstall over directories that have been put in
@@ -386,9 +365,6 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## don't see the point in avoiding modifying paths.h.  It creates an
 ## inconsistency in the build process.  So we go ahead and depend on
 ## all.  --cet
-
-check-features: all
-	${blddir}/src/${PROGNAME} ${batch} -l check-features.el
 
 install-only: ${MAKE_SUBDIR} check-features install-arch-dep install-arch-indep
 
@@ -620,7 +596,7 @@ extraclean:
 SOURCES = ChangeLog GETTING.GNU.SOFTWARE INSTALL Makefile.in.in PROBLEMS \
 	README build-install.in configure make-dist move-if-change
 
-.PHONY: unlock relock TAGS tags check dist info dvi mcs
+.PHONY: unlock relock TAGS tags dist info dvi mcs
 
 unlock:
 	chmod u+w $(SOURCES) cpp/*
@@ -650,9 +626,6 @@ TAGS tags: FRC.tags
 	  xargs etags -a -r '/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/'; \
 	find ${tagslisp} ${PRUNE_VC} -name '*.el' ! -name 'auto-autoloads.el' -print | \
 	  xargs etags -a -l none -r "/^(def\\(var\\|un\\|alias\\|const\\|macro\\|subst\\|struct\\|face\\|group\\|custom\\|ine-\\(function\\|compiler-macro\\|[a-z-]+alias\\)\\)[ 	]+'?\\([^ 	]+\\)/\\3/"
-
-check:
-	cd ./src && $(RECURSIVE_MAKE) $@
 
 info: FRC.info
 	cd ${srcdir}/man && $(RECURSIVE_MAKE) $@
