@@ -222,7 +222,7 @@ Negative arg means select the size of the lowermost window instead.
 With no argument, split equally or close to it.
 Both windows display the same buffer now current.
 
-If the variable split-window-keep-point is non-nil, both new windows
+If the variable `split-window-keep-point' is non-nil, both new windows
 will get the same value of point as the current window.  This is often
 more convenient for editing.
 
@@ -342,31 +342,51 @@ or if the window is the only window of its frame."
 	(kill-buffer buffer))
     (error "Aborted")))
 
-(defun window-list (&optional minibuf which-frames which-devices)
-  "Return a list of existing windows.
-If the optional argument MINIBUF is non-nil, then include minibuffer
-windows in the result.
+(defun quit-window (&optional kill window)
+  "Quit the current buffer.  Bury it, and maybe delete the selected frame.
+\(The frame is deleted if it is contains a dedicated window for the buffer.)
+With a prefix argument, kill the buffer instead.
 
-By default, only the windows in the selected frame are returned.
-The optional argument WHICH-FRAMES changes this behavior:
-WHICH-FRAMES = `visible' means include windows on all visible frames.
-WHICH-FRAMES = 0 means include windows on all visible and iconified frames.
-WHICH-FRAMES = t means include windows on all frames including invisible frames.
-Anything else means restrict to the selected frame.
+Noninteractively, if KILL is non-nil, then kill the current buffer,
+otherwise bury it.
 
-The optional fourth argument WHICH-DEVICES further clarifies on which
-devices to search for frames as specified by WHICH-FRAMES.  This value
-is only meaningful if WHICH-FRAMES is non-nil.
-If nil or omitted, search all devices on the selected console.
-If a device, only search that device.
-If a console, search all devices on that console.
-If a device type, search all devices of that type.
-If `window-system', search all devices on window-system consoles.
-Any other non-nil value means search all devices."
-  (let ((wins nil))
-    (walk-windows (lambda (win)
-                    (push win wins))
-                  minibuf which-frames which-devices)
-    wins))
+If WINDOW is non-nil, it specifies a window; we delete that window,
+and the buffer that is killed or buried is the one in that window."
+  (interactive "P")
+  (let ((buffer (window-buffer window))
+	(frame (window-frame (or window (selected-window))))
+	(window-solitary
+	 (save-selected-window
+	   (if window
+	       (select-window window))
+	   (one-window-p t)))
+	window-handled)
+
+    (save-selected-window
+      (if window
+	  (select-window window))
+      (or (window-minibuffer-p)
+	  (window-dedicated-p (selected-window))
+	  (switch-to-buffer (other-buffer))))
+
+    ;; Get rid of the frame, if it has just one dedicated window
+    ;; and other visible frames exist.
+    (and (or (window-minibuffer-p) (window-dedicated-p window))
+	 (delq frame (visible-frame-list))
+	 window-solitary
+	 (if (and (eq default-minibuffer-frame frame)
+		  (= 1 (length (minibuffer-frame-list))))
+	     (setq window nil)
+	   (delete-frame frame)
+	   (setq window-handled t)))
+
+    ;; Deal with the buffer.
+    (if kill
+	(kill-buffer buffer)
+      (bury-buffer buffer))
+
+    ;; Maybe get rid of the window.
+    (and window (not window-handled) (not window-solitary)
+	 (delete-window window))))
 
 ;;; window.el ends here
