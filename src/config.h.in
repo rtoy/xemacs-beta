@@ -26,26 +26,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _SRC_CONFIG_H_
 #define _SRC_CONFIG_H_
 
-
-/* alloca twiddling belongs in one place, not the s&m headers
-   AIX requires this to be the first thing in the file.  */
-#undef HAVE_ALLOCA_H
-
-#ifndef NOT_C_CODE
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#elif defined __DECC
-#include <alloca.h>
-#pragma intrinsic(alloca)
-#elif defined HAVE_ALLOCA_H
-#include <alloca.h>
-#elif defined(_AIX)
-#pragma alloca
-#elif ! defined (alloca)
-void *alloca ();
-#endif
-#endif /* C code */
-
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
 #define XEMACS 1
@@ -602,6 +582,26 @@ void *alloca ();
    seem to require this, probably because something with the int
    definitions isn't right with 64-bit systems.  */
 #undef USE_UNION_TYPE
+
+/* alloca twiddling.
+   Because we might be #including alloca.h here, feature test macros
+   such as _XOPEN_SOURCE must be defined above. */
+#undef HAVE_ALLOCA_H
+#ifndef NOT_C_CODE
+#ifdef __GNUC__
+#define alloca __builtin_alloca
+#elif defined __DECC
+#include <alloca.h>
+#pragma intrinsic(alloca)
+#elif defined HAVE_ALLOCA_H
+#include <alloca.h>
+#elif defined(_AIX)
+/* AIX requires this before any "real" code in the translation unit.  */
+#pragma alloca
+#elif ! defined (alloca)
+void *alloca ();
+#endif
+#endif /* C code */
 
 /* The configuration script may define `opsysfile' to be the name of
    the s/...h file that describes your operating system.

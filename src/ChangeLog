@@ -1,3 +1,10 @@
+2001-06-12  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in (alloca): All feature test macros must be defined
+	before the first system header file inclusion.  So move alloca
+	twiddling after the feature test definitions, but before the first
+	"real" code.
+
 2001-06-11  Martin Buchholz  <martin@xemacs.org>
 
 	* lisp.h (DECIMAL_PRINT_SIZE): Don't use floating point.
