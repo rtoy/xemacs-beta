@@ -4477,7 +4477,12 @@ find_pos_of_existing_active_alloca_convert (const char *srctext)
   for (i = 0; i < Dynarr_length (active_alloca_convert); i++)
     {
       vals = Dynarr_atp (active_alloca_convert, i);
-      if (vals->srctext == srctext)
+      /* On my system, two different occurrences of the same stringized
+	 argument always point to the same string.  However, on someone
+	 else's system, that wasn't the case.  We check for equality
+	 first, since it seems systems work my way more than the other
+	 way. */
+      if (vals->srctext == srctext || !strcmp (vals->srctext, srctext))
 	return i;
     }
 

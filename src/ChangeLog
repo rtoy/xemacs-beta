@@ -1,3 +1,10 @@
+2004-11-12  Ben Wing  <ben@xemacs.org>
+
+	* text.c (find_pos_of_existing_active_alloca_convert):
+	Two different occurrences of a string stringized from the exact
+	same parameter may not necessarily be the same string, so check
+	with strcmp.
+
 2004-11-12  Jerry James  <james@xemacs.org>
 
 	* lstream.c (Lstream_really_write): Don't call the flusher if the
