@@ -1,3 +1,7 @@
+2003-09-25  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (multiple-match): Test \{m,n\}.
+
 2003-09-03  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.15 "celery" is released.
