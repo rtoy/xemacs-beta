@@ -1,6 +1,7 @@
 ;;; cus-dep.el --- Find customization dependencies.
 ;;
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
+;; Copyright (C) 2003 Ben Wing.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>, then
 ;;         Richard Stallman <rms@gnu.ai.mit.edu>, then
@@ -76,6 +77,11 @@
 ;; files.  This is not necessary under FSF (they simply use `put'),
 ;; since they have only one file with custom dependencies.  With the
 ;; advent of packages, we cannot afford the same luxury.
+;;
+;; Feb 2003: Added code to speed up building by caching the values we've
+;; constructed, and using them instead of scanning a file when custom-load
+;; is up-to-date w.r.t. the file.  Also use `message' not `princ' to print
+;; out messages so nl's are correctly inserted when necessary. --ben
 
 
 ;;; Code:
@@ -90,6 +96,7 @@
 ;; Don't change this, unless you plan to change the code in
 ;; cus-start.el, too.
 (defconst cusload-base-file "custom-load.el")
+(defconst cusload-hash-table-marker ";old-cus-dep-hash: ")
 
 ;; Be very careful when changing this function.  It looks easy to
 ;; understand, but is in fact very easy to break.  Be sure to read and
@@ -99,9 +106,11 @@
   (setq subdirs (mapcar #'expand-file-name subdirs))
   (with-temp-buffer
     (let ((enable-local-eval nil)
-	  (hash (make-hash-table :test 'eq)))
+	  (hash (make-hash-table :test 'eq))
+	  (hash-cache (make-hash-table :test 'equal))
+	  old-hash)
       (dolist (dir subdirs)
-	(princ (format "Processing %s\n" dir))
+	(message "Processing %s\n" dir)
 	(let ((cusload-file (expand-file-name cusload-base-file dir))
 	      (files (directory-files dir t "\\`[^=].*\\.el\\'")))
 	  ;; A trivial optimization: if no file in the directory is
@@ -110,46 +119,77 @@
 		   (dolist (file files t)
 		     (when (file-newer-than-file-p file cusload-file)
 		       (return nil))))
-	      (princ "(No changes need to be written)\n")
+	      (message "(No changes need to be written)")
+	    (when (file-exists-p cusload-file)
+	      (let ((buf (find-file-noselect cusload-file)))
+		(with-current-buffer buf
+		  (goto-char (point-min))
+		  (when (search-forward cusload-hash-table-marker nil t)
+		    (setq old-hash (read buf))))
+		(kill-buffer buf)))
 	    ;; Process directory
 	    (dolist (file files)
-	      (when (file-exists-p file)
-		(erase-buffer)
-		(insert-file-contents file)
-		(goto-char (point-min))
-		(let ((name (file-name-sans-extension
-			     (file-name-nondirectory file))))
-		  ;; Search for defcustom/defface/defgroup
-		  ;; expressions, and evaluate them.
-		  (while (re-search-forward
-			  "^(defcustom\\|^(defface\\|^(defgroup"
-			  nil t)
-		    (beginning-of-line)
-		    (let ((expr (read (current-buffer))))
-		      ;; We need to ignore errors here, so that
-		      ;; defcustoms with :set don't bug out.  Of
-		      ;; course, their values will not be assigned in
-		      ;; case of errors, but their `custom-group'
-		      ;; properties will by that time be in place, and
-		      ;; that's all we care about.
-		      (ignore-errors
-			(eval expr))
-		      ;; Hash the file of the affected symbol.
-		      (setf (gethash (nth 1 expr) hash) name))))))
+	      (let ((old-cache (if (hash-table-p old-hash)
+				   (gethash file old-hash t)
+				 t)))
+		(if (and (not (file-newer-than-file-p file cusload-file))
+			 (not (eq old-cache t)))
+		    (progn
+		      (dolist (c old-cache)
+			(puthash (car c) (cdr c) hash))
+		      (puthash file old-cache hash-cache))
+		  (erase-buffer)
+		  (insert-file-contents file)
+		  (goto-char (point-min))
+		  (let ((name (file-name-sans-extension
+			       (file-name-nondirectory file)))
+			cache
+			(first t))
+		    ;; Search for defcustom/defface/defgroup
+		    ;; expressions, and evaluate them.
+		    (while (re-search-forward
+			    "^(defcustom\\|^(defface\\|^(defgroup"
+			    nil t)
+		      (when first
+			(message "Computing custom-loads for %s..." name)
+			(setq first nil))
+		      (beginning-of-line)
+		      (let ((expr (read (current-buffer))))
+			;; We need to ignore errors here, so that
+			;; defcustoms with :set don't bug out.  Of
+			;; course, their values will not be assigned in
+			;; case of errors, but their `custom-group'
+			;; properties will by that time be in place, and
+			;; that's all we care about.
+			(ignore-errors
+			  (eval expr))
+			;; Hash the file of the affected symbol.
+			(setf (gethash (nth 1 expr) hash) name)
+			;; Remember the values computed.
+			(push (cons (nth 1 expr) name) cache)))
+		    (or cache
+			(message "No custom-loads for %s" name))
+		    (puthash file cache hash-cache)))
+		))
 	    (cond
 	     ((zerop (hash-table-count hash))
-	      (princ "(No customization dependencies")
-	      (when (file-exists-p cusload-file)
-		(princ (format ", deleting %s" cusload-file))
-		(delete-file cusload-file))
-	      (princ ")\n"))
+	      (if (not (file-exists-p cusload-file))
+		  (message "(No customization dependencies)")
+		(message "(No customization dependencies, deleting %s)"
+			 cusload-file)
+		(delete-file cusload-file)))
 	     (t
-	      (princ (format "Generating %s...\n" cusload-base-file))
+	      (message "Generating %s...\n" cusload-base-file)
 	      (with-temp-file cusload-file
 		(insert ";;; " cusload-base-file
 			" --- automatically extracted custom dependencies\n"
-			"\n;;; Code:\n\n"
-			"(autoload 'custom-add-loads \"cus-load\")\n\n")
+			"\n;;; Code:\n\n")
+		(insert cusload-hash-table-marker)
+		(let ((print-readably t)
+		      (standard-output (current-buffer)))
+		  (princ hash-cache)
+		  (terpri))
+		(insert "(autoload 'custom-add-loads \"cus-load\")\n\n")
 		(mapatoms
 		 (lambda (sym)
 		   (let ((members (get sym 'custom-group))

@@ -59,9 +59,9 @@
 (defvar need-to-recompile-autoloads nil)
 (defvar need-to-recompile-mule-autoloads nil)
 (defvar undumped-exe nil)
-(defvar dumped-exe nil)
+;(defvar dumped-exe nil)
 (defvar dumped-exe-out-of-date-wrt-dump-files nil)
-(defvar dumped-exe-out-of-date-wrt-undumped-exe nil)
+;(defvar dumped-exe-out-of-date-wrt-undumped-exe nil)
 
 ;(setq update-elc-files-to-compile
 ;      (delq nil
@@ -112,6 +112,11 @@
     "very-early-lisp.el")
   "Lisp files that should not be byte compiled.")
 
+(defvar lisp-files-ignored-when-checking-for-autoload-updating
+  '("custom-load.el"
+    "auto-autoloads.el")
+  "Lisp files that should not trigger auto-autoloads rebuilding.")
+
 (defun update-elc-chop-extension (file)
   (if (string-match "\\.elc?$" file)
       (substring file 0 (match-beginning 0))
@@ -130,30 +135,31 @@
 	      ((file-exists-p "../src/xemacs") "../src/xemacs")
 	      (t nil)))
 
-  (let ((temacs-exe
-	 (cond ((file-exists-p "../src/temacs.exe") "../src/temacs.exe")
-	       ((file-exists-p "../src/temacs") "../src/temacs")
-	       (t nil)))
-	(data-file
-	 (cond ((file-exists-p "../src/xemacs.dmp") "../src/xemacs.dmp")
-	       (t nil))))
+  ;; Not currently used but might be at some point.
+;   (let ((temacs-exe
+; 	 (cond ((file-exists-p "../src/temacs.exe") "../src/temacs.exe")
+; 	       ((file-exists-p "../src/temacs") "../src/temacs")
+; 	       (t nil)))
+; 	(data-file
+; 	 (cond ((file-exists-p "../src/xemacs.dmp") "../src/xemacs.dmp")
+; 	       (t nil))))
 
-    ;; two setups here:
-    ;; (1) temacs.exe is undumped, dumped into xemacs.exe.  Happens with
-    ;;     unexec, but also with pdump under MS Windows native, since
-    ;;     the dumped data is stored as a resource in the xemacs.exe
-    ;;     executable.
-    ;; (2) xemacs.exe is dumped or undumped.  Running `xemacs -nd' gets
-    ;;     you the equivalent of `temacs'.  Dumping creates a file
-    ;;     `xemacs.dmp'.
+;     ;; two setups here:
+;     ;; (1) temacs.exe is undumped, dumped into xemacs.exe.  Happens with
+;     ;;     unexec, but also with pdump under MS Windows native, since
+;     ;;     the dumped data is stored as a resource in the xemacs.exe
+;     ;;     executable.
+;     ;; (2) xemacs.exe is dumped or undumped.  Running `xemacs -nd' gets
+;     ;;     you the equivalent of `temacs'.  Dumping creates a file
+;     ;;     `xemacs.dmp'.
 
-    (setq dumped-exe-out-of-date-wrt-undumped-exe
-	  (cond ((not dumped-exe) t)
-		(temacs-exe (file-newer-than-file-p temacs-exe dumped-exe))
-		((not data-file) t)
-		(t (file-newer-than-file-p dumped-exe data-file))))
-    )
-                                                              
+;     (setq dumped-exe-out-of-date-wrt-undumped-exe
+; 	  (cond ((not dumped-exe) t)
+; 		(temacs-exe (file-newer-than-file-p temacs-exe dumped-exe))
+; 		((not data-file) t)
+; 		(t (file-newer-than-file-p dumped-exe data-file))))
+;     (setq dumped-exe-exists (or (and temacs-exe dumped-exe)
+; 				(and data-file dumped-exe))))
 
   ;; Path setup
   (let ((package-preloaded-file-list
@@ -200,18 +206,18 @@
       ;; now check if .el or .elc is newer than the dumped exe.
       ;; if so, need to redump.
       (when (and dumped-exe arg-is-preloaded
-		 (or (and (file-exists-p full-arg-el)
-			  (file-newer-than-file-p full-arg-el dumped-exe))
-		     (and (file-exists-p full-arg-elc)
-			  (file-newer-than-file-p full-arg-elc dumped-exe))))
+		 ;; no need to check for existence of either of the files
+		 ;; because of the definition of file-newer-than-file-p.
+		 (or (file-newer-than-file-p full-arg-el dumped-exe)
+		     (file-newer-than-file-p full-arg-elc dumped-exe)))
 	(setq dumped-exe-out-of-date-wrt-dump-files t))
 
       (if (and (not (member (file-name-nondirectory arg)
 			    unbytecompiled-lisp-files))
 	       (not (member full-arg-el processed))
-	       (file-exists-p full-arg-el)
-	       (or (not (file-exists-p full-arg-elc))
-		   (file-newer-than-file-p full-arg-el full-arg-elc)))
+	       ;; no need to check for existence of either of the files
+	       ;; because of the definition of file-newer-than-file-p.
+	       (file-newer-than-file-p full-arg-el full-arg-elc))
 	  (setq processed (cons full-arg-el processed)))
 
       (setq files-to-process (cdr files-to-process))))
@@ -228,9 +234,14 @@
 	     (autoload-is-mule (equal dir "../lisp/mule")))
 	(while all-files-in-dir
 	  (let* ((full-arg (car all-files-in-dir)))
-	    (when (or (not (file-exists-p autoload-file))
-		      (and (file-exists-p full-arg)
-			   (file-newer-than-file-p full-arg autoload-file)))
+	    ;; custom-load.el always gets regenerated so don't let that
+	    ;; trigger us.
+	    (when (and (not
+			(member
+			 (file-name-nondirectory full-arg)
+			 lisp-files-ignored-when-checking-for-autoload-updating
+			 ))
+		       (file-newer-than-file-p full-arg autoload-file))
 	      (if autoload-is-mule
 		  (setq need-to-rebuild-mule-autoloads t)
 		(setq need-to-rebuild-autoloads t))))
@@ -245,15 +256,22 @@
   )
 
 (when (or need-to-rebuild-autoloads
+	  ;; no real need for the following check either, because if the file
+	  ;; doesn't exist, need-to-rebuild-autoloads gets set above.  but
+	  ;; it's only one call, so it won't slow things down much and it keeps
+	  ;; the logic cleaner.
 	  (not (file-exists-p "../lisp/auto-autoloads.el"))
-	  (not (file-exists-p "../lisp/auto-autoloads.elc"))
+	  ;; no need to check for file-exists of .elc due to definition
+	  ;; of file-newer-than-file-p
 	  (file-newer-than-file-p "../lisp/auto-autoloads.el"
 				  "../lisp/auto-autoloads.elc"))
   (setq need-to-recompile-autoloads t))
 
 (when (or need-to-rebuild-mule-autoloads
+	  ;; not necessary but ...  see comment above.
 	  (not (file-exists-p "../lisp/mule/auto-autoloads.el"))
-	  (not (file-exists-p "../lisp/mule/auto-autoloads.elc"))
+	  ;; no need to check for file-exists of .elc due to definition
+	  ;; of file-newer-than-file-p
 	  (file-newer-than-file-p "../lisp/mule/auto-autoloads.el"
 				  "../lisp/mule/auto-autoloads.elc"))
   (setq need-to-recompile-mule-autoloads t))
@@ -285,6 +303,9 @@
 	(if need-to-recompile-mule-autoloads
 	    '("-f" "batch-byte-compile-one-file"
 		   "../lisp/mule/auto-autoloads.el")))))
+  (condition-case nil
+      (delete-file "../src/REBUILD_AUTOLOADS")
+    (file-error nil))
   (cond ((and (not update-elc-files-to-compile)
 	      (not need-to-rebuild-autoloads)
 	      (not need-to-rebuild-mule-autoloads)
@@ -297,24 +318,16 @@
 	 (condition-case nil
 	     (delete-file "../src/BYTECOMPILE_CHANGE")
 	   (file-error nil)))
-	((and (not update-elc-files-to-compile)
-	      (not dumped-exe-out-of-date-wrt-dump-files)
-	      (not dumped-exe-out-of-date-wrt-undumped-exe))
+	((not update-elc-files-to-compile)
 	 ;; (2) We have no files to byte-compile, but we do need to
-	 ;;     regenerate and compile the auto-autoloads file. (This will
-	 ;;     be needed to be up-to-date before we run update-elc-2.)
-	 ;;     If the dumped exe exists and is up-to-date, both with
-	 ;;     respect to the undumped exe and the files that will be dumped
-	 ;;     into it, then we can use the dumped exe to rebuild the
-	 ;;     autoloads.  Else, we have to do it the "hard way" by loading
-	 ;;     raw temacs, running loadup, then regenerating the autoloads.
-	 ;;     #### We should see whether it's possible to load up a
-	 ;;     minimal number of files in order to get autoload.el to work.
-	 (load "raw-process.el")
-	 (apply 'call-process-internal dumped-exe nil t nil
-		(append
-		 '("-batch -no-autoloads -no-packages")
-		 do-autoload-commands))
+	 ;;     regenerate and compile the auto-autoloads file, so signal
+	 ;;     update-elc-2 to do it.  This is much faster than loading
+	 ;;     all the .el's and doing it here. (We only need to rebuild
+	 ;;     the autoloads here when we have files to compile, since
+	 ;;     they may depend on the updated autoloads.)
+	 (condition-case nil
+	     (write-region-internal "foo" nil "../src/REBUILD_AUTOLOADS")
+	   (file-error nil))
 	 (condition-case nil
 	     (delete-file "../src/BYTECOMPILE_CHANGE")
 	   (file-error nil)))
@@ -384,6 +397,6 @@
 	 ;;(print command-line-args)
 	 (load "loadup-el.el"))))
 
-(kill-emacs)
+;(kill-emacs)
 
 ;;; update-elc.el ends here

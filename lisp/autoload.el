@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 1996, 2000, 2002 Ben Wing.
+;; Copyright (C) 1996, 2000, 2002, 2003 Ben Wing.
 
 ;; Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Keywords: maint
@@ -291,31 +291,33 @@ If FILE is being visited in a buffer, the contents of the buffer
 are used."
   (interactive "fGenerate autoloads for file: ")
   (cond ((string-match "\\.el$" file)
-	 (generate-file-autoloads-1 file funlist))
+	 (generate-autoload-ish-1
+	  file
+	  (replace-in-string (file-name-nondirectory file) "\\.elc?$" "")
+	  nil #'generate-file-autoloads-1
+	  funlist))
 	;; #### jj, are C++ modules possible?
 	((string-match "\\.c$" file)
-	 (generate-c-file-autoloads-1 file funlist))
+	 (generate-autoload-ish-1
+	  file
+	  (replace-in-string (file-name-nondirectory file) "\\.c$" "")
+	  t #'generate-c-file-autoloads-1))
 	(t
 	 (error 'wrong-type-argument file "not a C or Elisp source file"))))
 
-(defun* generate-file-autoloads-1 (file funlist)
-  "Insert at point an autoload section for FILE.
-autoloads are generated for defuns and defmacros in FILE
-marked by `generate-autoload-cookie' (which see).
-If FILE is being visited in a buffer, the contents of the buffer
-are used."
+(defun* generate-autoload-ish-1 (file load-name literal fun-to-call &rest args)
+  "Insert at point an autoload-type section for FILE.
+If LITERAL, open the file literally, without decoding.
+Calls FUN-TO-CALL to compute the autoloads, passing it OUTBUF, LOAD-NAME,
+  TRIM-NAME, and ARGS."
   (let ((outbuf (current-buffer))
-	(autoloads-done '())
-	(load-name (replace-in-string (file-name-nondirectory file)
-				      "\\.elc?$"
-				      ""))
 	(trim-name (autoload-trim-file-name file))
-	(dofiles (not (null funlist)))
+	(autoloads-done '())
 	(print-length nil)
 	(print-readably t) ; XEmacs
 	(float-output-format nil)
-	;; (done-any nil)
 	(visited (get-file-buffer file))
+	;; (done-any nil)
 	output-end)
 
     ;; If the autoload section we create here uses an absolute
@@ -332,74 +334,19 @@ are used."
 	  (progn
 	    (let ((find-file-hooks nil)
 		  (enable-local-variables nil))
-	      (set-buffer (or visited (find-file-noselect file)))
+	      (set-buffer (or visited (find-file-noselect file literal literal
+							  )))
+	      ;; This doesn't look right for C files, but it is.  The only
+	      ;; place we need the syntax table is when snarfing the Lisp
+	      ;; function name.
 	      (set-syntax-table emacs-lisp-mode-syntax-table))
-	    (save-excursion
-	      (save-restriction
-		(widen)
-		(goto-char (point-min))
-		(unless (search-forward generate-autoload-cookie nil t)
-		  (message "No autoloads found in %s" trim-name)
-		  (return-from generate-file-autoloads-1))
-
-		(message "Generating autoloads for %s..." trim-name)
-		(goto-char (point-min))
-		(while (if dofiles funlist (not (eobp)))
-		  (if (not dofiles)
-		      (skip-chars-forward " \t\n\f")
-		    (goto-char (point-min))
-		    (re-search-forward
-		     (concat "(def\\(un\\|var\\|const\\|macro\\) "
-			     (regexp-quote (symbol-name (car funlist)))
-			     "\\s "))
-		    (goto-char (match-beginning 0)))
-		  (cond
-		   ((or dofiles
-			(looking-at (regexp-quote generate-autoload-cookie)))
-		    (if dofiles
-			nil
-		      (search-forward generate-autoload-cookie)
-		      (skip-chars-forward " \t"))
-		    ;; (setq done-any t)
-		    (if (or dofiles (eolp))
-			;; Read the next form and make an autoload.
-			(let* ((form (prog1 (read (current-buffer))
-				       (or (bolp) (forward-line 1))))
-			       (autoload (make-autoload form load-name))
-			       (doc-string-elt (get (car-safe form)
-						    'doc-string-elt)))
-			  (if autoload
-			      (setq autoloads-done (cons (nth 1 form)
-							 autoloads-done))
-			    (setq autoload form))
-			  (print-autoload autoload doc-string-elt outbuf ""))
-		      ;; Copy the rest of the line to the output.
-		      (let ((begin (point)))
-			;; (terpri outbuf)
-			(cond ((looking-at "immediate\\s *$") ; XEmacs
-			       ;; This is here so that you can automatically
-			       ;; have small hook functions copied to
-			       ;; auto-autoloads.el so that it's not necessary
-			       ;; to load a whole file just to get a two-line
-			       ;; do-nothing find-file-hook... --Stig
-			       (forward-line 1)
-			       (setq begin (point))
-			       (forward-sexp)
-			       (forward-line 1))
-			      (t
-			       (forward-line 1)))
-			(princ (buffer-substring begin (point)) outbuf))))
-		   ((looking-at ";")
-		    ;; Don't read the comment.
-		    (forward-line 1))
-		   (t
-		    (forward-sexp 1)
-		    (forward-line 1)))
-		  (if dofiles
-		      (setq funlist (cdr funlist)))))))
+	    (unless (setq autoloads-done
+			  (apply fun-to-call outbuf load-name trim-name args))
+	      (return-from generate-autoload-ish-1))
+	    )
 	(unless visited
-	    ;; We created this buffer, so we should kill it.
-	    (kill-buffer (current-buffer)))
+	  ;; We created this buffer, so we should kill it.
+	  (kill-buffer (current-buffer)))
 	(set-buffer outbuf)
 	(setq output-end (point-marker))))
     (if t ;; done-any
@@ -432,119 +379,153 @@ are used."
     (or noninteractive ; XEmacs: only need one line in -batch mode.
 	(message "Generating autoloads for %s...done" file))))
 
-(defun* generate-c-file-autoloads-1 (file funlist)
+(defun* generate-file-autoloads-1 (outbuf load-name trim-name funlist)
+  "Insert at point an autoload section for FILE.
+autoloads are generated for defuns and defmacros in FILE
+marked by `generate-autoload-cookie' (which see).
+If FILE is being visited in a buffer, the contents of the buffer
+are used."
+  (let ((autoloads-done '())
+	(dofiles (not (null funlist)))
+	)
+
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (point-min))
+	(unless (search-forward generate-autoload-cookie nil t)
+	  (message "No autoloads found in %s" trim-name)
+	  (return-from generate-file-autoloads-1 nil))
+
+	(message "Generating autoloads for %s..." trim-name)
+	(goto-char (point-min))
+	(while (if dofiles funlist (not (eobp)))
+	  (if (not dofiles)
+	      (skip-chars-forward " \t\n\f")
+	    (goto-char (point-min))
+	    (re-search-forward
+	     (concat "(def\\(un\\|var\\|const\\|macro\\) "
+		     (regexp-quote (symbol-name (car funlist)))
+		     "\\s "))
+	    (goto-char (match-beginning 0)))
+	  (cond
+	   ((or dofiles
+		(looking-at (regexp-quote generate-autoload-cookie)))
+	    (if dofiles
+		nil
+	      (search-forward generate-autoload-cookie)
+	      (skip-chars-forward " \t"))
+	    ;; (setq done-any t)
+	    (if (or dofiles (eolp))
+		;; Read the next form and make an autoload.
+		(let* ((form (prog1 (read (current-buffer))
+			       (or (bolp) (forward-line 1))))
+		       (autoload (make-autoload form load-name))
+		       (doc-string-elt (get (car-safe form)
+					    'doc-string-elt)))
+		  (if autoload
+		      (setq autoloads-done (cons (nth 1 form)
+						 autoloads-done))
+		    (setq autoload form))
+		  (print-autoload autoload doc-string-elt outbuf ""))
+	      ;; Copy the rest of the line to the output.
+	      (let ((begin (point)))
+		;; (terpri outbuf)
+		(cond ((looking-at "immediate\\s *$") ; XEmacs
+		       ;; This is here so that you can automatically
+		       ;; have small hook functions copied to
+		       ;; auto-autoloads.el so that it's not necessary
+		       ;; to load a whole file just to get a two-line
+		       ;; do-nothing find-file-hook... --Stig
+		       (forward-line 1)
+		       (setq begin (point))
+		       (forward-sexp)
+		       (forward-line 1))
+		      (t
+		       (forward-line 1)))
+		(princ (buffer-substring begin (point)) outbuf))))
+	   ((looking-at ";")
+	    ;; Don't read the comment.
+	    (forward-line 1))
+	   (t
+	    (forward-sexp 1)
+	    (forward-line 1)))
+	  (if dofiles
+	      (setq funlist (cdr funlist))))))
+    autoloads-done))
+
+(defun* generate-c-file-autoloads-1 (outbuf load-name trim-name funlist)
   "Insert at point an autoload section for the C file FILE.
 autoloads are generated for defuns and defmacros in FILE
 marked by `generate-c-autoload-cookie' (which see).
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
-  (let ((outbuf (current-buffer))
-	(autoloads-done '())
-	(load-name (replace-in-string (file-name-nondirectory file)
-				      "\\.c?$"
-				      ""))
-	(exists-p-format 
+  (let ((exists-p-format 
 	 "(file-exists-p (expand-file-name \"%s.%s\" module-directory))")
-	(trim-name (autoload-trim-file-name file))
-	(print-length nil)
-	(print-readably t)
-	(float-output-format nil)
-	;; (done-any nil)
-	(visited (get-file-buffer file))
-	output-end)
-
-    ;; If the autoload section we create here uses an absolute
-    ;; pathname for FILE in its header, and then Emacs is installed
-    ;; under a different path on another system,
-    ;; `update-autoloads-here' won't be able to find the files to be
-    ;; autoloaded.  So, if FILE is in the same directory or a
-    ;; subdirectory of the current buffer's directory, we'll make it
-    ;; relative to the current buffer's directory.
-    (setq file (expand-file-name file))
+	(autoloads-done '())
+	)
 
     (save-excursion
-      (unwind-protect
-	  (progn
-	    (let ((find-file-hooks nil)
-		  (enable-local-variables nil))
-	      (set-buffer (or visited (find-file-noselect file t t)))
-	      ;; This doesn't look right, but it is.  The only place we need
-	      ;; the syntax table is when snarfing the Lisp function name.
-	      (set-syntax-table emacs-lisp-mode-syntax-table))
-	    (save-excursion
-	      (save-restriction
-		(widen)
+      (save-restriction
+	(widen)
+	(goto-char (point-min))
+	;; Is there a module name comment?
+	(when (search-forward generate-c-autoload-module nil t)
+	  (skip-chars-forward " \t")
+	  (let ((begin (point)))
+	    (skip-chars-forward "^ \t\n\f")
+	    (setq load-name (buffer-substring begin (point)))))
+	(if funlist
+	    (progn
+	      (message "Generating autoloads for %s..." trim-name)
+	      (princ "(when (or\n       " outbuf)
+	      (princ (format exists-p-format load-name "ell") outbuf)
+	      (princ "\n       " outbuf)
+	      (princ (format exists-p-format load-name "dll") outbuf)
+	      (princ "\n       " outbuf)
+	      (princ (format exists-p-format load-name "so") outbuf)
+	      ;; close the princ'd `or' form
+	      (princ ")\n       " outbuf)
+	      (dolist (arg funlist)
 		(goto-char (point-min))
-		;; Is there a module name comment?
-		(when (search-forward generate-c-autoload-module nil t)
-		  (skip-chars-forward " \t")
-		  (let ((begin (point)))
-		    (skip-chars-forward "^ \t\n\f")
-		    (setq load-name (buffer-substring begin (point)))))
-		(if funlist
-		    (progn
-		      (message "Generating autoloads for %s..." trim-name)
-		      (princ "(when (or\n       " outbuf)
-		      (princ (format exists-p-format load-name "ell") outbuf)
-		      (princ "\n       " outbuf)
-		      (princ (format exists-p-format load-name "dll") outbuf)
-		      (princ "\n       " outbuf)
-		      (princ (format exists-p-format load-name "so") outbuf)
-		      ;; close the princ'd `or' form
-		      (princ ")\n       " outbuf)
-		      (dolist (arg funlist)
-			(goto-char (point-min))
-			(re-search-forward
-			 (concat "DEFUN (\""
-				 (regexp-quote (symbol-name arg))
-				 "\""))
-			(goto-char (match-beginning 0))
-			(let ((autoload (make-c-autoload load-name)))
-			  (when autoload
-			    (push (nth 1 (nth 1 autoload)) autoloads-done)
-			    (print-autoload autoload 3 outbuf "  "))))
-		      ;; close the princ'd `when' form
-		      (princ ")" outbuf))
-		  (goto-char (point-min))
-		  (let ((match
-			 (search-forward generate-c-autoload-cookie nil t)))
-		    (unless match
-		      (message "No autoloads found in %s" trim-name)
-		      (return-from generate-c-file-autoloads-1))
-
-		    (message "Generating autoloads for %s..." trim-name)
-		    (princ "(when (or\n       " outbuf)
-		    (princ (format exists-p-format load-name "ell") outbuf)
-		    (princ "\n       " outbuf)
-		    (princ (format exists-p-format load-name "dll") outbuf)
-		    (princ "\n       " outbuf)
-		    (princ (format exists-p-format load-name "so") outbuf)
-		    ;; close the princ'd `or' form
-		    (princ ")\n       " outbuf)
-		    (while match
-		      (forward-line 1)
-		      (let ((autoload (make-c-autoload load-name)))
-			(when autoload
-			  (push (nth 1 (nth 1 autoload)) autoloads-done)
-			  (print-autoload autoload 3 outbuf "  ")))
-		      (setq match
-			    (search-forward generate-c-autoload-cookie nil t)))
-		    ;; close the princ'd `when' form
-		    (princ ")" outbuf))))))
-	(unless visited
-	  ;; We created this buffer, so we should kill it.
-	  (kill-buffer (current-buffer)))
-	(set-buffer outbuf)
-	(setq output-end (point-marker))))
-    (insert generate-autoload-section-header)
-    (prin1 (list 'autoloads autoloads-done load-name trim-name) outbuf)
-    (terpri outbuf)
-    (when (< output-end (point))
-      (setq output-end (point-marker)))
-    (goto-char output-end)
-    (insert generate-autoload-section-trailer)
-    (or noninteractive ; XEmacs: only need one line in -batch mode.
-	(message "Generating autoloads for %s...done" trim-name))))
+		(re-search-forward
+		 (concat "DEFUN (\""
+			 (regexp-quote (symbol-name arg))
+			 "\""))
+		(goto-char (match-beginning 0))
+		(let ((autoload (make-c-autoload load-name)))
+		  (when autoload
+		    (push (nth 1 (nth 1 autoload)) autoloads-done)
+		    (print-autoload autoload 3 outbuf "  "))))
+	      ;; close the princ'd `when' form
+	      (princ ")" outbuf))
+	  (goto-char (point-min))
+	  (let ((match
+		 (search-forward generate-c-autoload-cookie nil t)))
+	    (unless match
+	      (message "No autoloads found in %s" trim-name)
+	      (return-from generate-c-file-autoloads-1 nil))
+	    
+	    (message "Generating autoloads for %s..." trim-name)
+	    (princ "(when (or\n       " outbuf)
+	    (princ (format exists-p-format load-name "ell") outbuf)
+	    (princ "\n       " outbuf)
+	    (princ (format exists-p-format load-name "dll") outbuf)
+	    (princ "\n       " outbuf)
+	    (princ (format exists-p-format load-name "so") outbuf)
+	    ;; close the princ'd `or' form
+	    (princ ")\n       " outbuf)
+	    (while match
+	      (forward-line 1)
+	      (let ((autoload (make-c-autoload load-name)))
+		(when autoload
+		  (push (nth 1 (nth 1 autoload)) autoloads-done)
+		  (print-autoload autoload 3 outbuf "  ")))
+	      (setq match
+		    (search-forward generate-c-autoload-cookie nil t)))
+	    ;; close the princ'd `when' form
+	    (princ ")" outbuf)))))
+    autoloads-done))
 
 ;; Assorted utilities for generating  autoloads and pieces thereof
 

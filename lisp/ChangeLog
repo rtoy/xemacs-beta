@@ -17,57 +17,46 @@
 	* autoload.el (generate-autoload-ish-1):
 	* autoload.el (generate-file-autoloads-1):
 	* autoload.el (generate-c-file-autoloads-1):
-	* byte-optimize.el:
-	* byte-optimize.el (byte-compile-inline-expand):
-	* byte-optimize.el (byte-compile-unfold-lambda):
-	* byte-optimize.el (byte-optimize-form-code-walker):
-	* byte-optimize.el (byte-optimize-form):
-	* byte-optimize.el (byte-decompile-bytecode-1):
-	* byte-optimize.el (byte-optimize-lapcode):
+	Factor out common code in generate-{c-,}file-autoloads-1 into new
+	function generate-autoload-ish-1.  \(I was originally going to use
+	this for custom as well but ended up thinking better of it.)
+	
 	* cus-dep.el:
 	* cus-dep.el (cusload-hash-table-marker): New.
 	* cus-dep.el (Custom-make-dependencies-1):
-	* update-elc-2.el:
-	* update-elc-2.el (dirfiles-table): New.
-	* update-elc-2.el (do-update-elc-2):
-	* update-elc-2.el (batch-update-elc-2):
-	* update-elc.el:
-	* update-elc.el (dumped-exe): Removed.
-	* update-elc.el (dumped-exe-out-of-date-wrt-undumped-exe): Removed.
-	* update-elc.el (lisp-files-ignored-when-checking-for-autoload-updating): New.
-	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
-
-2003-02-11  Ben Wing  <ben@xemacs.org>
-
-	* byte-optimize.el:
-	* byte-optimize.el (byte-compile-inline-expand):
-	* byte-optimize.el (byte-compile-unfold-lambda):
-	* byte-optimize.el (byte-optimize-form-code-walker):
-	* byte-optimize.el (byte-optimize-form):
-	* byte-optimize.el (byte-decompile-bytecode-1):
-	* byte-optimize.el (byte-optimize-lapcode):
+	Cache the old computed values in custom-load.el and reuse them as
+	necessary, to speed up running cus-dep (which would take 25-30
+	seconds to do all files in lisp/*, lisp/*/* on my Pentium III
+	700).  Use `message' not `princ' to get correct newline behavior.
+	Output messages showing each file we do actually process.
 	
 	* update-elc-2.el:
 	* update-elc-2.el (dirfiles-table): New.
-	* update-elc-2.el (dolist): New.
 	* update-elc-2.el (do-update-elc-2):
 	* update-elc-2.el (batch-update-elc-2):
 	Rewrite algorithm to be much faster -- cache calls to
 	directory-files and don't make needless calls to file-exists-p,
 	file-directory-p because they're way way slow.
-
 	Autoload early and only when update-elc has told us to.
-	
+
 	* update-elc.el:
-	* update-elc.el (dumped-exe-exists): New.
+	* update-elc.el (dumped-exe): Removed.
+	* update-elc.el (dumped-exe-out-of-date-wrt-undumped-exe): Removed.
 	* update-elc.el (lisp-files-ignored-when-checking-for-autoload-updating): New.
 	* update-elc.el ((preloaded-file-list site-load-packages files-to-process)):
 	If no files need byte compilation, signal to update-elc-2 to do
-	any necessary autoload updating rather than doing it ourselves,
-	which would be way slow.  Ignore updates to custom-load.el and
-	auto-autoloads.el when checking to see whether autoloads need
-	updating.
-
+	any necessary autoload updating (using the file REBUILD_AUTOLOADS)
+	rather than doing it ourselves, which would be way slow.  Ignore
+	updates to custom-load.el and auto-autoloads.el when checking to
+	see whether autoloads need updating.  Optimize out many
+	unnecessary calls to file-exists-p to speed it up somewhat. (####
+	The remaining time is 50% or more in locate-file; this is
+	presumably because, even though it has a cache, it's still
+	statting each file to determine it's actually there.  By calling
+	directory-files ourselves, building a tree, and then looking in
+	that tree, we could drastically shorten the time needed to do the
+	locate operation.)
+	
 2003-02-12  Jerry James  <james@xemacs.org>
 
 	* about.el (about-url-alist): Add my home page.
