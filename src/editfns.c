@@ -134,7 +134,7 @@ An empty string will return the constant `nil'.
   CHECK_STRING (string);
 
   if (XSTRING_LENGTH (string) != 0)
-    return make_char (XSTRING_CHAR (string, 0));
+    return make_char (string_emchar (string, 0));
   else
     /* This used to return Qzero.  That is broken, broken, broken. */
     /* It might be kinder to signal an error directly. -slb */
@@ -176,25 +176,6 @@ If BUFFER is nil, the current buffer is assumed.
     return Fcopy_marker (b->point_marker, Qnil);
   else
     return b->point_marker;
-}
-
-/* The following two functions end up being identical but it's
-   cleaner to declare them separately. */
-
-Charbpos
-charbpos_clip_to_bounds (Charbpos lower, Charbpos num, Charbpos upper)
-{
-  return (num < lower ? lower :
-	  num > upper ? upper :
-	  num);
-}
-
-Bytebpos
-bytebpos_clip_to_bounds (Bytebpos lower, Bytebpos num, Bytebpos upper)
-{
-  return (num < lower ? lower :
-	  num > upper ? upper :
-	  num);
 }
 
 /*
@@ -1856,9 +1837,9 @@ Returns the number of substitutions performed.
   mc_count = begin_multiple_change (buf, pos, stop);
   if (STRINGP (table))
     {
-      Charcount size = XSTRING_CHAR_LENGTH (table);
+      Charcount size = string_char_length (table);
 #ifdef MULE
-      /* Under Mule, XSTRING_CHAR(n) is O(n), so for large tables or
+      /* Under Mule, string_emchar(n) is O(n), so for large tables or
          large regions it makes sense to create an array of Emchars.  */
       if (size * (stop - pos) > 65536)
 	{
@@ -1885,7 +1866,7 @@ Returns the number of substitutions performed.
 	    {
 	      if (oc < size)
 		{
-		  Emchar nc = XSTRING_CHAR (table, oc);
+		  Emchar nc = string_emchar (table, oc);
 		  if (nc != oc)
 		    {
 		      buffer_replace_char (buf, pos, nc, 0, 0);
@@ -1917,7 +1898,7 @@ Returns the number of substitutions performed.
 		}
 	      else if (STRINGP (replacement))
 		{
-		  Charcount incr = XSTRING_CHAR_LENGTH (replacement) - 1;
+		  Charcount incr = string_char_length (replacement) - 1;
 		  buffer_delete_range (buf, pos, pos + 1, 0);
 		  buffer_insert_lisp_string_1 (buf, pos, replacement, 0);
 		  pos += incr, stop += incr;
@@ -1935,11 +1916,10 @@ Returns the number of substitutions performed.
 	   && (XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_GENERIC
 	       || XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_CHAR))
     {
-      Lisp_Char_Table *ctable = XCHAR_TABLE (table);
 
       for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	{
-	  Lisp_Object replacement = get_char_table (oc, ctable);
+	  Lisp_Object replacement = get_char_table (oc, table);
 	retry2:
 	  if (CHAR_OR_CHAR_INTP (replacement))
 	    {
@@ -1952,7 +1932,7 @@ Returns the number of substitutions performed.
 	    }
 	  else if (STRINGP (replacement))
 	    {
-	      Charcount incr = XSTRING_CHAR_LENGTH (replacement) - 1;
+	      Charcount incr = string_char_length (replacement) - 1;
 	      buffer_delete_range (buf, pos, pos + 1, 0);
 	      buffer_insert_lisp_string_1 (buf, pos, replacement, 0);
 	      pos += incr, stop += incr;
@@ -1960,7 +1940,8 @@ Returns the number of substitutions performed.
 	    }
 	  else if (!NILP (replacement))
 	    {
-	      replacement = wrong_type_argument (Qchar_or_string_p, replacement);
+	      replacement = wrong_type_argument (Qchar_or_string_p,
+						 replacement);
 	      goto retry2;
 	    }
 	}
@@ -1981,11 +1962,11 @@ If optional third arg BUFFER is nil, the current buffer is assumed.
        (start, end, buffer))
 {
   /* This function can GC */
-  Charbpos bp_start, bp_end;
+  Charbpos char_start, char_end;
   struct buffer *buf = decode_buffer (buffer, 1);
 
-  get_buffer_range_char (buf, start, end, &bp_start, &bp_end, 0);
-  buffer_delete_range (buf, bp_start, bp_end, 0);
+  get_buffer_range_char (buf, start, end, &char_start, &char_end, 0);
+  buffer_delete_range (buf, char_start, char_end, 0);
   return Qnil;
 }
 
@@ -1995,12 +1976,12 @@ widen_buffer (struct buffer *b, int no_clip)
   if (BUF_BEGV (b) != BUF_BEG (b))
     {
       clip_changed = 1;
-      SET_BOTH_BUF_BEGV (b, BUF_BEG (b), BI_BUF_BEG (b));
+      SET_BOTH_BUF_BEGV (b, BUF_BEG (b), BYTE_BUF_BEG (b));
     }
   if (BUF_ZV (b) != BUF_Z (b))
     {
       clip_changed = 1;
-      SET_BOTH_BUF_ZV (b, BUF_Z (b), BI_BUF_Z (b));
+      SET_BOTH_BUF_ZV (b, BUF_Z (b), BYTE_BUF_Z (b));
     }
   if (clip_changed)
     {
@@ -2038,21 +2019,21 @@ or markers) bounding the text that should remain visible.
 */
        (start, end, buffer))
 {
-  Charbpos bp_start, bp_end;
+  Charbpos char_start, char_end;
   struct buffer *buf = decode_buffer (buffer, 1);
-  Bytebpos bi_start, bi_end;
+  Bytebpos byte_start, byte_end;
 
-  get_buffer_range_char (buf, start, end, &bp_start, &bp_end,
+  get_buffer_range_char (buf, start, end, &char_start, &char_end,
 			 GB_ALLOW_PAST_ACCESSIBLE);
-  bi_start = charbpos_to_bytebpos (buf, bp_start);
-  bi_end = charbpos_to_bytebpos (buf, bp_end);
+  byte_start = charbpos_to_bytebpos (buf, char_start);
+  byte_end = charbpos_to_bytebpos (buf, char_end);
 
-  SET_BOTH_BUF_BEGV (buf, bp_start, bi_start);
-  SET_BOTH_BUF_ZV (buf, bp_end, bi_end);
-  if (BUF_PT (buf) < bp_start)
-    BUF_SET_PT (buf, bp_start);
-  if (BUF_PT (buf) > bp_end)
-    BUF_SET_PT (buf, bp_end);
+  SET_BOTH_BUF_BEGV (buf, char_start, byte_start);
+  SET_BOTH_BUF_ZV (buf, char_end, byte_end);
+  if (BUF_PT (buf) < char_start)
+    BUF_SET_PT (buf, char_start);
+  if (BUF_PT (buf) > char_end)
+    BUF_SET_PT (buf, char_end);
   MARK_CLIP_CHANGED;
   /* Changing the buffer bounds invalidates any recorded current column.  */
   invalidate_current_column ();
@@ -2104,24 +2085,24 @@ save_restriction_restore (Lisp_Object data)
 
   {
     Charbpos start, end;
-    Bytebpos bi_start, bi_end;
+    Bytebpos byte_start, byte_end;
 
     start = BUF_BEG (buf) + newhead;
     end = BUF_Z (buf) - newtail;
 
-    bi_start = charbpos_to_bytebpos (buf, start);
-    bi_end = charbpos_to_bytebpos (buf, end);
+    byte_start = charbpos_to_bytebpos (buf, start);
+    byte_end = charbpos_to_bytebpos (buf, end);
 
     if (BUF_BEGV (buf) != start)
       {
 	local_clip_changed = 1;
-	SET_BOTH_BUF_BEGV (buf, start, bi_start);
+	SET_BOTH_BUF_BEGV (buf, start, byte_start);
 	narrow_line_number_cache (buf);
       }
     if (BUF_ZV (buf) != end)
       {
 	local_clip_changed = 1;
-	SET_BOTH_BUF_ZV (buf, end, bi_end);
+	SET_BOTH_BUF_ZV (buf, end, byte_end);
       }
   }
   if (local_clip_changed)

@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Hacked on for Mule by Ben Wing, December 1994 and August 1995. */
 
-/* This file has been Mule-ized except for the TRT stuff. */
+/* This file has been Mule-ized. */
 
 #include <config.h>
 #include "lisp.h"
@@ -85,7 +85,7 @@ static struct regexp_cache *searchbuf_head;
    able to free or re-allocate it properly.  */
 
 /* Note: things get trickier under Mule because the values returned from
-   the regexp routines are in Bytebposs but we need them to be in Charbpos's.
+   the regexp routines are in Bytebpos's but we need them to be in Charbpos's.
    We take the easy way out for the moment and just convert them immediately.
    We could be more clever by not converting them until necessary, but
    that gets real ugly real fast since the buffer might have changed and
@@ -113,57 +113,16 @@ Lisp_Object Vskip_chars_range_table;
 static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
 static void save_search_regs (void);
 static Charbpos simple_search (struct buffer *buf, Intbyte *base_pat,
-			     Bytecount len, Bytebpos pos, Bytebpos lim,
-			     EMACS_INT n, Lisp_Object trt);
+			       Bytecount len, Bytebpos pos, Bytebpos lim,
+			       EMACS_INT n, Lisp_Object trt);
 static Charbpos boyer_moore (struct buffer *buf, Intbyte *base_pat,
-			   Bytecount len, Bytebpos pos, Bytebpos lim,
-			   EMACS_INT n, Lisp_Object trt,
-			   Lisp_Object inverse_trt, int charset_base);
+			     Bytecount len, Bytebpos pos, Bytebpos lim,
+			     EMACS_INT n, Lisp_Object trt,
+			     Lisp_Object inverse_trt, int charset_base);
 static Charbpos search_buffer (struct buffer *buf, Lisp_Object str,
-			     Charbpos charbpos, Charbpos buflim, EMACS_INT n, int RE,
-			     Lisp_Object trt, Lisp_Object inverse_trt,
-			     int posix);
-
-struct regex_reentrancy
-{
-  struct syntax_cache cache;
-  struct buffer *regex_emacs_buffer;
-  Lisp_Object regex_match_object;
-};
-
-typedef struct
-{
-  Dynarr_declare (struct regex_reentrancy);
-} regex_reentrancy_dynarr;
-
-static regex_reentrancy_dynarr *the_regex_reentrancy_dynarr;
-
-static Lisp_Object
-restore_regex_reentrancy (Lisp_Object dummy)
-{
-  struct regex_reentrancy rr = Dynarr_pop (the_regex_reentrancy_dynarr);
-  syntax_cache = rr.cache;
-  regex_emacs_buffer = rr.regex_emacs_buffer;
-  regex_match_object = rr.regex_match_object;
-  return Qnil;
-}
-
-static int
-begin_regex_reentrancy (void)
-{
-  /* #### there is still a potential problem with the regex cache --
-     the compiled regex could be overwritten.  we'd need 20-fold
-     reentrancy, though. */
-  struct regex_reentrancy rr;
-  rr.cache = syntax_cache;
-  rr.regex_emacs_buffer = regex_emacs_buffer;
-  rr.regex_match_object = regex_match_object;
-  if (!the_regex_reentrancy_dynarr)
-    the_regex_reentrancy_dynarr = Dynarr_new2 (regex_reentrancy_dynarr,
-					       struct regex_reentrancy);
-  Dynarr_add (the_regex_reentrancy_dynarr, rr);
-  return record_unwind_protect (restore_regex_reentrancy, Qnil);
-}
+			       Charbpos charbpos, Charbpos buflim, EMACS_INT n,
+			       int RE, Lisp_Object trt,
+			       Lisp_Object inverse_trt, int posix);
 
 static void
 matcher_overflow (void)
@@ -174,7 +133,7 @@ matcher_overflow (void)
 /* Compile a regexp and signal a Lisp error if anything goes wrong.
    PATTERN is the pattern to compile.
    CP is the place to put the result.
-   TRANSLATE is a translation table for ignoring case, or NULL for none.
+   TRANSLATE is a translation table for ignoring case, or Qnil for none.
    REGP is the structure that says where to store the "register"
    values that will result from matching this pattern.
    If it is 0, we should compile the pattern not to record any
@@ -184,8 +143,8 @@ matcher_overflow (void)
 
 static int
 compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
-		   Lisp_Object translate, struct re_registers *regp, int posix,
-		   Error_Behavior errb)
+		   struct re_registers *regp, Lisp_Object translate,
+		   int posix, Error_Behavior errb)
 {
   const char *val;
   reg_syntax_t old;
@@ -213,7 +172,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 /* Compile a regexp if necessary, but first check to see if there's one in
    the cache.
    PATTERN is the pattern to compile.
-   TRANSLATE is a translation table for ignoring case, or NULL for none.
+   TRANSLATE is a translation table for ignoring case, or Qnil for none.
    REGP is the structure that says where to store the "register"
    values that will result from matching this pattern.
    If it is 0, we should compile the pattern not to record any
@@ -223,13 +182,21 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
 struct re_pattern_buffer *
 compile_pattern (Lisp_Object pattern, struct re_registers *regp,
-		 Lisp_Object translate, int posix, Error_Behavior errb)
+		 Lisp_Object translate, Lisp_Object searchobj,
+		 struct buffer *searchbuf, int posix, Error_Behavior errb)
 {
   struct regexp_cache *cp, **cpp;
 
   for (cpp = &searchbuf_head; ; cpp = &cp->next)
     {
       cp = *cpp;
+      /* &&#### once we fix up the fastmap code in regex.c for 8-bit-fixed,
+         we need to record and compare the buffer and format, since the
+         fastmap will reflect the state of the buffer -- and things get
+         more complicated if the buffer has changed formats or (esp.) has
+         kept the format but changed its interpretation!  may need to have
+         the code that changes the interpretation go through and invalidate
+         cache entries for that buffer. */
       if (!NILP (Fstring_equal (cp->regexp, pattern))
 	  && EQ (cp->buf.translate, translate)
 	  && cp->posix == posix)
@@ -238,8 +205,8 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
       /* If we're at the end of the cache, compile into the last cell.  */
       if (cp->next == 0)
 	{
-	  if (!compile_pattern_1 (cp, pattern, translate, regp, posix,
-				  errb))
+	  if (!compile_pattern_1 (cp, pattern, regp, translate,
+				  posix, errb))
 	    return 0;
 	  break;
 	}
@@ -271,13 +238,13 @@ signal_failure (Lisp_Object arg)
   return Qnil; /* Not reached. */
 }
 
-/* Convert the search registers from Bytebposs to Charbpos's.  Needs to be
+/* Convert the search registers from Bytebpos's to Charbpos's.  Needs to be
    done after each regexp match that uses the search regs.
 
    We could get a potential speedup by not converting the search registers
    until it's really necessary, e.g. when match-data or replace-match is
    called.  However, this complexifies the code a lot (e.g. the buffer
-   could have changed and the Bytebposs stored might be invalid) and is
+   could have changed and the Bytebpos's stored might be invalid) and is
    probably not a great time-saver. */
 
 static void
@@ -289,7 +256,8 @@ fixup_search_regs_for_buffer (struct buffer *buf)
   for (i = 0; i < num_regs; i++)
     {
       if (search_regs.start[i] >= 0)
-	search_regs.start[i] = bytebpos_to_charbpos (buf, search_regs.start[i]);
+	search_regs.start[i] = bytebpos_to_charbpos (buf,
+						     search_regs.start[i]);
       if (search_regs.end[i] >= 0)
 	search_regs.end[i] = bytebpos_to_charbpos (buf, search_regs.end[i]);
     }
@@ -328,14 +296,14 @@ fixup_search_regs_for_string (Lisp_Object string)
 static Lisp_Object
 looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 {
-  /* This function has been Mule-ized, except for the trt table handling. */
   Lisp_Object val;
   Bytebpos p1, p2;
   Bytecount s1, s2;
   REGISTER int i;
   struct re_pattern_buffer *bufp;
-  int count = begin_regex_reentrancy ();
-
+  struct syntax_cache scache_struct;
+  struct syntax_cache *scache = &scache_struct;
+  
   if (running_asynch_code)
     save_search_regs ();
 
@@ -343,43 +311,51 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   bufp = compile_pattern (string, &search_regs,
 			  (!NILP (buf->case_fold_search)
 			   ? XCASE_TABLE_DOWNCASE (buf->case_table) : Qnil),
-			  posix, ERROR_ME);
+			  wrap_buffer (buf), buf, posix, ERROR_ME);
 
   QUIT;
 
   /* Get pointers and sizes of the two strings
      that make up the visible portion of the buffer. */
 
-  p1 = BI_BUF_BEGV (buf);
-  p2 = BI_BUF_CEILING_OF (buf, p1);
+  p1 = BYTE_BUF_BEGV (buf);
+  p2 = BYTE_BUF_CEILING_OF (buf, p1);
   s1 = p2 - p1;
-  s2 = BI_BUF_ZV (buf) - p2;
+  s2 = BYTE_BUF_ZV (buf) - p2;
 
-  regex_match_object = Qnil;
-  regex_emacs_buffer = buf;
-  i = re_match_2 (bufp, (char *) BI_BUF_BYTE_ADDRESS (buf, p1),
-		  s1, (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
-		  BI_BUF_PT (buf) - BI_BUF_BEGV (buf), &search_regs,
-		  BI_BUF_ZV (buf) - BI_BUF_BEGV (buf));
+  /* By making the regex object, regex buffer, and syntax cache arguments
+     to re_{search,match}{,_2}, we've removed the need to do nasty things
+     to deal with regex reentrancy. (See stack trace in signal.c for proof
+     that this can happen.)
+
+     #### there is still a potential problem with the regex cache --
+     the compiled regex could be overwritten.  we'd need 20-fold
+     reentrancy, though.  Fix this. */
+
+  i = re_match_2 (bufp, (char *) BYTE_BUF_BYTE_ADDRESS (buf, p1),
+		  s1, (char *) BYTE_BUF_BYTE_ADDRESS (buf, p2), s2,
+		  BYTE_BUF_PT (buf) - BYTE_BUF_BEGV (buf), &search_regs,
+		  BYTE_BUF_ZV (buf) - BYTE_BUF_BEGV (buf), wrap_buffer (buf),
+		  buf, scache);
 
   if (i == -2)
     matcher_overflow ();
 
   val = (0 <= i ? Qt : Qnil);
   if (NILP (val))
-    return unbind_to (count);
+    return Qnil;
   {
     int num_regs = search_regs.num_regs;
     for (i = 0; i < num_regs; i++)
       if (search_regs.start[i] >= 0)
 	{
-	  search_regs.start[i] += BI_BUF_BEGV (buf);
-	  search_regs.end[i] += BI_BUF_BEGV (buf);
+	  search_regs.start[i] += BYTE_BUF_BEGV (buf);
+	  search_regs.end[i] += BYTE_BUF_BEGV (buf);
 	}
   }
   last_thing_searched = wrap_buffer (buf);
   fixup_search_regs_for_buffer (buf);
-  return unbind_to_1 (count, val);
+  return val;
 }
 
 DEFUN ("looking-at", Flooking_at, 1, 2, 0, /*
@@ -406,18 +382,16 @@ Optional argument BUFFER defaults to the current buffer.
 */
        (regexp, buffer))
 {
-  return looking_at_1 (regexp,  decode_buffer (buffer, 0), 1);
+  return looking_at_1 (regexp, decode_buffer (buffer, 0), 1);
 }
 
 static Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 		struct buffer *buf, int posix)
 {
-  /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount val;
   Charcount s;
   struct re_pattern_buffer *bufp;
-  int count = begin_regex_reentrancy ();
 
   if (running_asynch_code)
     save_search_regs ();
@@ -429,7 +403,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
     s = 0;
   else
     {
-      Charcount len = XSTRING_CHAR_LENGTH (string);
+      Charcount len = string_char_length (string);
 
       CHECK_INT (start);
       s = XINT (start);
@@ -443,25 +417,33 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   bufp = compile_pattern (regexp, &search_regs,
 			  (!NILP (buf->case_fold_search)
 			   ? XCASE_TABLE_DOWNCASE (buf->case_table) : Qnil),
-			  0, ERROR_ME);
+			  string, buf, 0, ERROR_ME);
   QUIT;
   {
     Bytecount bis = string_index_char_to_byte (string, s);
-    regex_match_object = string;
-    regex_emacs_buffer = buf;
+    struct syntax_cache scache_struct;
+    struct syntax_cache *scache = &scache_struct;
+  
+    /* By making the regex object, regex buffer, and syntax cache arguments
+       to re_{search,match}{,_2}, we've removed the need to do nasty things
+       to deal with regex reentrancy. (See stack trace in signal.c for proof
+       that this can happen.)
+       
+       #### there is still a potential problem with the regex cache --
+       the compiled regex could be overwritten.  we'd need 20-fold
+       reentrancy, though.  Fix this. */
+
     val = re_search (bufp, (char *) XSTRING_DATA (string),
 		     XSTRING_LENGTH (string), bis,
 		     XSTRING_LENGTH (string) - bis,
-		     &search_regs);
+		     &search_regs, string, buf, scache);
   }
   if (val == -2)
     matcher_overflow ();
-  if (val < 0) return unbind_to (count);
+  if (val < 0) return Qnil;
   last_thing_searched = Qt;
   fixup_search_regs_for_string (string);
-  return
-    unbind_to_1 (count,
-	       make_int (string_index_byte_to_char (string, val)));
+  return make_int (string_index_byte_to_char (string, val));
 }
 
 DEFUN ("string-match", Fstring_match, 2, 4, 0, /*
@@ -471,12 +453,26 @@ For index of first char beyond the match, do (match-end 0).
 `match-end' and `match-beginning' also give indices of substrings
 matched by parenthesis constructs in the pattern.
 
-Optional arg BUFFER controls how case folding is done (according to
-the value of `case-fold-search' in that buffer and that buffer's case
-tables) and defaults to the current buffer.
+Optional arg BUFFER controls how case folding and syntax and category
+lookup is done (according to the value of `case-fold-search' in that buffer
+and that buffer's case tables, syntax tables, and category table).  If nil
+or unspecified, it defaults *NOT* to the current buffer but instead:
+
+-- the value of `case-fold-search' in the current buffer is still respected
+   because of idioms like
+
+      (let ((case-fold-search nil))
+         (string-match "^foo.*bar" string))
+
+   but the case, syntax, and category tables come from the standard tables,
+   which are accessed through functions `default-{case,syntax,category}-table' and serve as the parents of the
+   tables in particular buffer
+
 */
        (regexp, string, start, buffer))
 {
+/* &&#### implement new interp for buffer arg; check code to see if it
+   makes more sense than prev */
   return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 0);
 }
 
@@ -507,17 +503,17 @@ fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
 		   Bytecount length, int case_fold_search,
 		   Error_Behavior errb, int no_quit)
 {
-  /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount val;
   Intbyte *newnonreloc = (Intbyte *) nonreloc;
   struct re_pattern_buffer *bufp;
-  int count;
+  struct syntax_cache scache_struct;
+  struct syntax_cache *scache = &scache_struct;
 
   bufp = compile_pattern (regexp, 0,
 			  (case_fold_search
 			   ? XCASE_TABLE_DOWNCASE (Vstandard_case_table)
 			   : Qnil),
-			  0, errb);
+			  reloc, 0, 0, errb);
   if (!bufp)
     return -1; /* will only do this when errb != ERROR_ME */
   if (!no_quit)
@@ -532,15 +528,19 @@ fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
   if (!NILP (reloc))
     newnonreloc = XSTRING_DATA (reloc);
 
-  count = begin_regex_reentrancy ();
-  /* #### evil current-buffer dependency */
-  regex_match_object = reloc;
-  regex_emacs_buffer = current_buffer;
+  /* By making the regex object, regex buffer, and syntax cache arguments
+     to re_{search,match}{,_2}, we've removed the need to do nasty things
+     to deal with regex reentrancy. (See stack trace in signal.c for proof
+     that this can happen.)
+
+     #### there is still a potential problem with the regex cache --
+     the compiled regex could be overwritten.  we'd need 20-fold
+     reentrancy, though.  Fix this. */
+  
   val = re_search (bufp, (char *) newnonreloc + offset, length, 0,
-		   length, 0);
+		   length, 0, reloc, 0, scache);
 
   no_quit_in_re_search = 0;
-  unbind_to (count);
   return val;
 }
 
@@ -600,15 +600,13 @@ newline_cache_on_off (struct buffer *buf)
    If ALLOW_QUIT is non-zero, call QUIT periodically. */
 
 static Bytebpos
-bi_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
+byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
 		EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
-  /* This function has been Mule-ized. */
   Bytebpos lim = en > 0 ? en :
-    ((count > 0) ? BI_BUF_ZV (buf) : BI_BUF_BEGV (buf));
+    ((count > 0) ? BYTE_BUF_ZV (buf) : BYTE_BUF_BEGV (buf));
 
   /* #### newline cache stuff in this function not yet ported */
-
   assert (count != 0);
 
   if (shortage)
@@ -617,16 +615,26 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
   if (count > 0)
     {
 #ifdef MULE
-      /* Due to the Mule representation of characters in a buffer,
-	 we can simply search for characters in the range 0 - 127
-	 directly.  For other characters, we do it the "hard" way.
-	 Note that this way works for all characters but the other
-	 way is faster. */
-      if (target >= 0200)
+      Internal_Format fmt = buf->text->format;
+      /* Check for char that's unrepresentable in the buffer -- it
+         certainly can't be there. */
+      if (!emchar_fits_in_format (target, fmt, wrap_buffer (buf)))
 	{
+	  *shortage = count;
+	  return lim;
+	}
+      /* Due to the Mule representation of characters in a buffer, we can
+	 simply search for characters in the range 0 - 127 directly; for
+	 8-bit-fixed, we can do this for all characters.  In other cases,
+	 we do it the "hard" way.  Note that this way works for all
+	 characters and all formats, but the other way is faster. */
+      else if (! (fmt == FORMAT_8_BIT_FIXED ||
+		  (fmt == FORMAT_DEFAULT && emchar_ascii_p (target))))
+	{
+	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st < lim && count > 0)
 	    {
-	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
+	      if (BYTE_BUF_FETCH_CHAR_RAW (buf, st) == raw)
 		count--;
 	      INC_BYTEBPOS (buf, st);
 	    }
@@ -634,19 +642,20 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
       else
 #endif
 	{
+	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st < lim && count > 0)
 	    {
 	      Bytebpos ceil;
 	      Intbyte *bufptr;
 
-	      ceil = BI_BUF_CEILING_OF (buf, st);
+	      ceil = BYTE_BUF_CEILING_OF (buf, st);
 	      ceil = min (lim, ceil);
-	      bufptr = (Intbyte *) memchr (BI_BUF_BYTE_ADDRESS (buf, st),
-					   (int) target, ceil - st);
+	      bufptr = (Intbyte *) memchr (BYTE_BUF_BYTE_ADDRESS (buf, st),
+					   raw, ceil - st);
 	      if (bufptr)
 		{
 		  count--;
-		  st = BI_BUF_PTR_BYTE_POS (buf, bufptr) + 1;
+		  st = BYTE_BUF_PTR_BYTE_POS (buf, bufptr) + 1;
 		}
 	      else
 		st = ceil;
@@ -662,36 +671,47 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
   else
     {
 #ifdef MULE
-      if (target >= 0200)
+      Internal_Format fmt = buf->text->format;
+      /* Check for char that's unrepresentable in the buffer -- it
+         certainly can't be there. */
+      if (!emchar_fits_in_format (target, fmt, wrap_buffer (buf)))
 	{
+	  *shortage = -count;
+	  return lim;
+	}
+      else if (! (fmt == FORMAT_8_BIT_FIXED ||
+		  (fmt == FORMAT_DEFAULT && emchar_ascii_p (target))))
+	{
+	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st > lim && count < 0)
 	    {
 	      DEC_BYTEBPOS (buf, st);
-	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
+	      if (BYTE_BUF_FETCH_CHAR_RAW (buf, st) == raw)
 		count++;
 	    }
 	}
       else
 #endif
 	{
+	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st > lim && count < 0)
 	    {
 	      Bytebpos floor;
 	      Intbyte *bufptr;
 	      Intbyte *floorptr;
 
-	      floor = BI_BUF_FLOOR_OF (buf, st);
+	      floor = BYTE_BUF_FLOOR_OF (buf, st);
 	      floor = max (lim, floor);
 	      /* No memrchr() ... */
-	      bufptr = BI_BUF_BYTE_ADDRESS_BEFORE (buf, st);
-	      floorptr = BI_BUF_BYTE_ADDRESS (buf, floor);
+	      bufptr = BYTE_BUF_BYTE_ADDRESS_BEFORE (buf, st);
+	      floorptr = BYTE_BUF_BYTE_ADDRESS (buf, floor);
 	      while (bufptr >= floorptr)
 		{
 		  st--;
 		  /* At this point, both ST and BUFPTR refer to the same
 		     character.  When the loop terminates, ST will
 		     always point to the last character we tried. */
-		  if (* (unsigned char *) bufptr == (unsigned char) target)
+		  if (*bufptr == (Intbyte) raw)
 		    {
 		      count++;
 		      break;
@@ -722,23 +742,23 @@ Charbpos
 scan_buffer (struct buffer *buf, Emchar target, Charbpos start, Charbpos end,
 	     EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
-  Bytebpos bi_retval;
-  Bytebpos bi_start, bi_end;
+  Bytebpos byte_retval;
+  Bytebpos byte_start, byte_end;
 
-  bi_start = charbpos_to_bytebpos (buf, start);
+  byte_start = charbpos_to_bytebpos (buf, start);
   if (end)
-    bi_end = charbpos_to_bytebpos (buf, end);
+    byte_end = charbpos_to_bytebpos (buf, end);
   else
-    bi_end = 0;
-  bi_retval = bi_scan_buffer (buf, target, bi_start, bi_end, count,
+    byte_end = 0;
+  byte_retval = byte_scan_buffer (buf, target, byte_start, byte_end, count,
 			      shortage, allow_quit);
-  return bytebpos_to_charbpos (buf, bi_retval);
+  return bytebpos_to_charbpos (buf, byte_retval);
 }
 
 Bytebpos
-bi_find_next_newline_no_quit (struct buffer *buf, Bytebpos from, int count)
+byte_find_next_newline_no_quit (struct buffer *buf, Bytebpos from, int count)
 {
-  return bi_scan_buffer (buf, '\n', from, 0, count, 0, 0);
+  return byte_scan_buffer (buf, '\n', from, 0, count, 0, 0);
 }
 
 Charbpos
@@ -753,11 +773,10 @@ find_next_newline (struct buffer *buf, Charbpos from, int count)
   return scan_buffer (buf, '\n', from, 0, count, 0, 1);
 }
 
-Bytebpos
-bi_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytebpos st,
+Bytecount
+byte_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytecount st,
 			       EMACS_INT count)
 {
-  /* This function has been Mule-ized. */
   Bytebpos lim = XSTRING_LENGTH (str) -1;
   Intbyte *s = XSTRING_DATA (str);
 
@@ -773,9 +792,9 @@ bi_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytebpos st,
     {
       while (st < lim && count > 0)
 	{
-	  if (XSTRING_CHAR (str, st) == target)
+	  if (string_emchar (str, st) == target)
 	    count--;
-	  INC_CHARBYTEBPOS (s, st);
+	  INC_BYTECOUNT (s, st);
 	}
     }
   else
@@ -788,7 +807,7 @@ bi_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytebpos st,
 	  if (bufptr)
 	    {
 	      count--;
-	      st =  (Bytebpos)(bufptr - s) + 1;
+	      st =  (Bytebpos) (bufptr - s) + 1;
 	    }
 	  else
 	    st = lim;
@@ -801,7 +820,8 @@ bi_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytebpos st,
    not after, and only search up to TO.  This isn't just
    find_next_newline (...)-1, because you might hit TO.  */
 Charbpos
-find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to, int count)
+find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to,
+			  int count)
 {
   EMACS_INT shortage;
   Charbpos pos = scan_buffer (buf, '\n', from, to, count, &shortage, 1);
@@ -816,7 +836,6 @@ static Lisp_Object
 skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    Lisp_Object string, Lisp_Object lim)
 {
-  /* This function has been Mule-ized. */
   REGISTER Intbyte *p, *pend;
   REGISTER Emchar c;
   /* We store the first 256 chars in an array here and the rest in
@@ -824,11 +843,9 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   unsigned char fastmap[0400];
   int negate = 0;
   REGISTER int i;
-#ifndef emacs
-  Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
-#endif
   Charbpos limit;
-
+  struct syntax_cache *scache;
+  
   if (NILP (lim))
     limit = forwardp ? BUF_ZV (buf) : BUF_BEGV (buf);
   else
@@ -922,7 +939,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
     if (syntaxp)
       {
-	SETUP_SYNTAX_CACHE_FOR_BUFFER (buf, BUF_PT (buf), forwardp ? 1 : -1);
+	scache = setup_buffer_syntax_cache (buf, BUF_PT (buf),
+					    forwardp ? 1 : -1);
 	/* All syntax designators are normal chars so nothing strange
 	   to worry about */
 	if (forwardp)
@@ -930,12 +948,11 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    while (BUF_PT (buf) < limit
 		   && fastmap[(unsigned char)
                               syntax_code_spec
-			      [(int) SYNTAX_FROM_CACHE (syntax_table,
-							BUF_FETCH_CHAR
-							(buf, BUF_PT (buf)))]])
+			      [(int) SYNTAX_FROM_CACHE
+			       (scache, BUF_FETCH_CHAR (buf, BUF_PT (buf)))]])
 	      {
 		BUF_SET_PT (buf, BUF_PT (buf) + 1);
-		UPDATE_SYNTAX_CACHE_FORWARD (BUF_PT (buf));
+		UPDATE_SYNTAX_CACHE_FORWARD (scache, BUF_PT (buf));
 	      }
 	  }
 	else
@@ -943,12 +960,12 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    while (BUF_PT (buf) > limit
 		   && fastmap[(unsigned char)
                               syntax_code_spec
-			      [(int) SYNTAX_FROM_CACHE (syntax_table,
-							BUF_FETCH_CHAR
-							(buf, BUF_PT (buf) - 1))]])
+			      [(int) SYNTAX_FROM_CACHE
+			       (scache,
+			       BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1))]])
 	      {
 		BUF_SET_PT (buf, BUF_PT (buf) - 1);
-		UPDATE_SYNTAX_CACHE_BACKWARD (BUF_PT (buf) - 1);
+		UPDATE_SYNTAX_CACHE_BACKWARD (scache, BUF_PT (buf) - 1);
 	      }
 	  }
       }
@@ -1054,7 +1071,6 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
 		Lisp_Object count, Lisp_Object buffer, int direction,
 		int RE, int posix)
 {
-  /* This function has been Mule-ized, except for the trt table handling. */
   REGISTER Charbpos np;
   Charbpos lim;
   EMACS_INT n = direction;
@@ -1121,7 +1137,6 @@ search_command (Lisp_Object string, Lisp_Object limit, Lisp_Object noerror,
 static int
 trivial_regexp_p (Lisp_Object regexp)
 {
-  /* This function has been Mule-ized. */
   Bytecount len = XSTRING_LENGTH (regexp);
   Intbyte *s = XSTRING_DATA (regexp);
   while (--len >= 0)
@@ -1172,14 +1187,12 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	       Charbpos buflim, EMACS_INT n, int RE, Lisp_Object trt,
 	       Lisp_Object inverse_trt, int posix)
 {
-  /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount len = XSTRING_LENGTH (string);
   Intbyte *base_pat = XSTRING_DATA (string);
   REGISTER EMACS_INT i, j;
   Bytebpos p1, p2;
   Bytecount s1, s2;
   Bytebpos pos, lim;
-  int count;
 
   if (running_asynch_code)
     save_search_regs ();
@@ -1200,30 +1213,41 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
   if (RE && !trivial_regexp_p (string))
     {
       struct re_pattern_buffer *bufp;
-      count = begin_regex_reentrancy ();
 
-      bufp = compile_pattern (string, &search_regs, trt, posix,
-			      ERROR_ME);
+      bufp = compile_pattern (string, &search_regs, trt,
+			      wrap_buffer (buf), buf, posix, ERROR_ME);
 
       /* Get pointers and sizes of the two strings
 	 that make up the visible portion of the buffer. */
 
-      p1 = BI_BUF_BEGV (buf);
-      p2 = BI_BUF_CEILING_OF (buf, p1);
+      p1 = BYTE_BUF_BEGV (buf);
+      p2 = BYTE_BUF_CEILING_OF (buf, p1);
       s1 = p2 - p1;
-      s2 = BI_BUF_ZV (buf) - p2;
-      regex_match_object = Qnil;
+      s2 = BYTE_BUF_ZV (buf) - p2;
 
-      while (n < 0)
+      while (n != 0)
 	{
 	  Bytecount val;
+	  struct syntax_cache scache_struct;
+	  struct syntax_cache *scache = &scache_struct;
+  
 	  QUIT;
-          regex_emacs_buffer = buf;
+	  /* By making the regex object, regex buffer, and syntax cache
+	     arguments to re_{search,match}{,_2}, we've removed the need to
+	     do nasty things to deal with regex reentrancy. (See stack
+	     trace in signal.c for proof that this can happen.)
+
+	     #### there is still a potential problem with the regex cache --
+	     the compiled regex could be overwritten.  we'd need 20-fold
+	     reentrancy, though.  Fix this. */
+
 	  val = re_search_2 (bufp,
-			     (char *) BI_BUF_BYTE_ADDRESS (buf, p1), s1,
-			     (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
-                             pos - BI_BUF_BEGV (buf), lim - pos, &search_regs,
-			     pos - BI_BUF_BEGV (buf));
+			     (char *) BYTE_BUF_BYTE_ADDRESS (buf, p1), s1,
+			     (char *) BYTE_BUF_BYTE_ADDRESS (buf, p2), s2,
+                             pos - BYTE_BUF_BEGV (buf), lim - pos, &search_regs,
+			     n > 0 ? lim - BYTE_BUF_BEGV (buf) :
+			     pos - BYTE_BUF_BEGV (buf), wrap_buffer (buf),
+			     buf, scache);
 
 	  if (val == -2)
 	    {
@@ -1232,7 +1256,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  if (val >= 0)
 	    {
 	      int num_regs = search_regs.num_regs;
-	      j = BI_BUF_BEGV (buf);
+	      j = BYTE_BUF_BEGV (buf);
 	      for (i = 0; i < num_regs; i++)
 		if (search_regs.start[i] >= 0)
 		  {
@@ -1241,57 +1265,15 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 		  }
 	      last_thing_searched = wrap_buffer (buf);
 	      /* Set pos to the new position. */
-	      pos = search_regs.start[0];
+	      pos = n > 0 ? search_regs.end[0] : search_regs.start[0];
 	      fixup_search_regs_for_buffer (buf);
 	      /* And charbpos too. */
-	      charbpos = search_regs.start[0];
+	      charbpos = n > 0 ? search_regs.end[0] : search_regs.start[0];
 	    }
 	  else
-	    {
-	      unbind_to (count);
-	      return n;
-	    }
-	  n++;
+	    return (n > 0 ? 0 - n : n);
+	  if (n > 0) n--; else n++;
 	}
-      while (n > 0)
-	{
-	  Bytecount val;
-	  QUIT;
-          regex_emacs_buffer = buf;
-          val = re_search_2 (bufp,
-			     (char *) BI_BUF_BYTE_ADDRESS (buf, p1), s1,
-			     (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
-                             pos - BI_BUF_BEGV (buf), lim - pos, &search_regs,
-                             lim - BI_BUF_BEGV (buf));
-	  if (val == -2)
-	    {
-	      matcher_overflow ();
-	    }
-	  if (val >= 0)
-	    {
-	      int num_regs = search_regs.num_regs;
-	      j = BI_BUF_BEGV (buf);
-	      for (i = 0; i < num_regs; i++)
-		if (search_regs.start[i] >= 0)
-		  {
-		    search_regs.start[i] += j;
-		    search_regs.end[i] += j;
-		  }
-	      last_thing_searched = wrap_buffer (buf);
-	      /* Set pos to the new position. */
-	      pos = search_regs.end[0];
-	      fixup_search_regs_for_buffer (buf);
-	      /* And charbpos too. */
-	      charbpos = search_regs.end[0];
-	    }
-	  else
-	    {
-	      unbind_to (count);
-	      return 0 - n;
-	    }
-	  n--;
-	}
-      unbind_to (count);
       return charbpos;
     }
   else				/* non-RE case */
@@ -1302,6 +1284,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
       Intbyte *patbuf = alloca_array (Intbyte, len * MAX_EMCHAR_LEN);
       pat = patbuf;
 #ifdef MULE
+      /* &&#### needs some 8-bit work here */
       while (len > 0)
 	{
 	  Intbyte tmp_str[MAX_EMCHAR_LEN];
@@ -1320,10 +1303,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  translated = TRANSLATE (trt, c);
 	  inverse = TRANSLATE (inverse_trt, c);
 
-	  orig_bytelen = charcount_to_bytecount (base_pat, 1);
+	  orig_bytelen = charptr_emchar_len (base_pat);
 	  inv_bytelen = set_charptr_emchar (tmp_str, inverse);
 	  new_bytelen = set_charptr_emchar (tmp_str, translated);
-
 
 	  if (new_bytelen != orig_bytelen || inv_bytelen != orig_bytelen)
 	    boyer_moore_ok = 0;
@@ -1331,7 +1313,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	    {
 	      /* Keep track of which character set row
 		 contains the characters that need translation.  */
-	      int charset_base_code = c & ~CHAR_FIELD3_MASK;
+	      int charset_base_code = c & ~EMCHAR_FIELD3_MASK;
 	      if (charset_base == -1)
 		charset_base = charset_base_code;
 	      else if (charset_base != charset_base_code)
@@ -1368,10 +1350,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
     }
 }
 
-/* Do a simple string search N times for the string PAT,
-   whose length is LEN/LEN_BYTE,
-   from buffer position POS/POS_BYTE until LIM/LIM_BYTE.
-   TRT is the translation table.
+/* Do a simple string search N times for the string PAT, whose length is
+   LEN/LEN_BYTE, from buffer position POS until LIM.  TRT is the
+   translation table.
 
    Return the character position where the match is found.
    Otherwise, if M matches remained to be found, return -M.
@@ -1381,21 +1362,21 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
    boyer_moore cannot work.  */
 
 static Charbpos
-simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len_byte,
-	       Bytebpos idx, Bytebpos lim, EMACS_INT n, Lisp_Object trt)
+simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
+	       Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt)
 {
   int forward = n > 0;
   Bytecount buf_len = 0; /* Shut up compiler. */
 
-  if (lim > idx)
+  if (lim > pos)
     while (n > 0)
       {
 	while (1)
 	  {
-	    Bytecount this_len = len_byte;
-	    Bytebpos this_idx = idx;
+	    Bytecount this_len = len;
+	    Bytebpos this_pos = pos;
 	    Intbyte *p = base_pat;
-	    if (idx >= lim)
+	    if (pos >= lim)
 	      goto stop;
 
 	    while (this_len > 0)
@@ -1404,25 +1385,25 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len_byte,
 		Bytecount pat_len;
 
 		pat_ch = charptr_emchar (p);
-		buf_ch = BI_BUF_FETCH_CHAR (buf, this_idx);
+		buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
 
 		buf_ch = TRANSLATE (trt, buf_ch);
 
 		if (buf_ch != pat_ch)
 		  break;
 
-		pat_len = charcount_to_bytecount (p, 1);
+		pat_len = charptr_emchar_len (p);
 		p += pat_len;
 		this_len -= pat_len;
-		INC_BYTEBPOS (buf, this_idx);
+		INC_BYTEBPOS (buf, this_pos);
 	      }
 	    if (this_len == 0)
 	      {
-		buf_len = this_idx - idx;
-		idx = this_idx;
+		buf_len = this_pos - pos;
+		pos = this_pos;
 		break;
 	      }
-	    INC_BYTEBPOS (buf, idx);
+	    INC_BYTEBPOS (buf, pos);
 	  }
 	n--;
       }
@@ -1431,36 +1412,36 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len_byte,
       {
 	while (1)
 	  {
-	    Bytecount this_len = len_byte;
-	    Bytebpos this_idx = idx;
+	    Bytecount this_len = len;
+	    Bytebpos this_pos = pos;
 	    Intbyte *p;
-	    if (idx <= lim)
+	    if (pos <= lim)
 	      goto stop;
-	    p = base_pat + len_byte;
+	    p = base_pat + len;
 
 	    while (this_len > 0)
 	      {
 		Emchar pat_ch, buf_ch;
 
 		DEC_CHARPTR (p);
-		DEC_BYTEBPOS (buf, this_idx);
+		DEC_BYTEBPOS (buf, this_pos);
 		pat_ch = charptr_emchar (p);
-		buf_ch = BI_BUF_FETCH_CHAR (buf, this_idx);
+		buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
 
 		buf_ch = TRANSLATE (trt, buf_ch);
 
 		if (buf_ch != pat_ch)
 		  break;
 
-		this_len -= charcount_to_bytecount (p, 1);
+		this_len -= charptr_emchar_len (p);
 	      }
 	    if (this_len == 0)
 	      {
-		buf_len = idx - this_idx;
-		idx = this_idx;
+		buf_len = pos - this_pos;
+		pos = this_pos;
 		break;
 	      }
-	    DEC_BYTEBPOS (buf, idx);
+	    DEC_BYTEBPOS (buf, pos);
 	  }
 	n++;
       }
@@ -1470,13 +1451,13 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len_byte,
       Charbpos beg, end, retval;
       if (forward)
 	{
-	  beg = bytebpos_to_charbpos (buf, idx - buf_len);
-	  retval = end = bytebpos_to_charbpos (buf, idx);
+	  beg = bytebpos_to_charbpos (buf, pos - buf_len);
+	  retval = end = bytebpos_to_charbpos (buf, pos);
 	}
       else
 	{
-	  retval = beg = bytebpos_to_charbpos (buf, idx);
-	  end = bytebpos_to_charbpos (buf, idx + buf_len);
+	  retval = beg = bytebpos_to_charbpos (buf, pos);
+	  end = bytebpos_to_charbpos (buf, pos + buf_len);
 	}
       set_search_regs (buf, beg, end - beg);
 
@@ -1506,6 +1487,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	     Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt,
 	     Lisp_Object inverse_trt, int charset_base)
 {
+  /* &&#### needs some 8-bit work here */
   /* #### Someone really really really needs to comment the workings
      of this junk somewhat better.
 
@@ -1624,19 +1606,19 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
-	  if (pat_end - ptr == 1 || INTBYTE_FIRST_BYTE_P (ptr[1]))
+	  if (pat_end - ptr == 1 || intbyte_first_byte_p (ptr[1]))
 	    {
 	      Intbyte *charstart = ptr;
-	      while (!INTBYTE_FIRST_BYTE_P (*charstart))
+	      while (!intbyte_first_byte_p (*charstart))
 		charstart--;
 	      untranslated = charptr_emchar (charstart);
-	      if (charset_base == (untranslated & ~CHAR_FIELD3_MASK))
+	      if (charset_base == (untranslated & ~EMCHAR_FIELD3_MASK))
 		{
 		  ch = TRANSLATE (trt, untranslated);
-		  if (!INTBYTE_FIRST_BYTE_P (*ptr))
+		  if (!intbyte_first_byte_p (*ptr))
 		    {
 		      translate_prev_byte = ptr[-1];
-		      if (!INTBYTE_FIRST_BYTE_P (translate_prev_byte))
+		      if (!intbyte_first_byte_p (translate_prev_byte))
 			translate_anteprev_byte = ptr[-2];
 		    }
 		}
@@ -1660,7 +1642,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	    stride_for_teases = BM_tab[j];
 	  BM_tab[j] = dirlen - i;
 	  /* A translation table is accompanied by its inverse --
-	     see comment following downcase_table for details */
+	     see comment in casetab.c. */
 	  if (this_translated)
 	    {
 	      Emchar starting_ch = ch;
@@ -1690,8 +1672,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	    stride_for_teases = BM_tab[j];
 	  BM_tab[j] = dirlen - i;
 	  /* A translation table is accompanied by its inverse --
-	     see comment following downcase_table for details */
-
+	     see comment in casetab.c. */
 	  while ((j = TRANSLATE (inverse_trt, j)) != k)
 	    {
 	      simple_translate[j] = (Intbyte) k;
@@ -1734,20 +1715,22 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
       /* XEmacs change: definitions of CEILING_OF and FLOOR_OF
 	 have changed.  See buffer.h. */
       limit = ((direction > 0)
-	       ? BI_BUF_CEILING_OF (buf, limit) - 1
-	       : BI_BUF_FLOOR_OF (buf, limit + 1));
+	       ? BYTE_BUF_CEILING_OF (buf, limit) - 1
+	       : BYTE_BUF_FLOOR_OF (buf, limit + 1));
       /* LIMIT is now the last (not beyond-last!) value POS can
 	 take on without hitting edge of buffer or the gap.  */
       limit = ((direction > 0)
 	       ? min (lim - 1, min (limit, pos + 20000))
 	       : max (lim, max (limit, pos - 20000)));
-      tail_end = BI_BUF_CEILING_OF (buf, pos);
-      tail_end_ptr = BI_BUF_BYTE_ADDRESS (buf, tail_end);
+      tail_end = BYTE_BUF_CEILING_OF (buf, pos);
+      tail_end_ptr = BYTE_BUF_BYTE_ADDRESS (buf, tail_end);
 
       if ((limit - pos) * direction > 20)
 	{
-	  p_limit = BI_BUF_BYTE_ADDRESS (buf, limit);
-	  ptr2 = (cursor = BI_BUF_BYTE_ADDRESS (buf, pos));
+	  /* We have to be careful because the code can generate addresses
+	     that don't point to the beginning of characters. */
+	  p_limit = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, limit);
+	  ptr2 = (cursor = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos));
 	  /* In this loop, pos + cursor - ptr2 is the surrogate
 	     for pos */
 	  while (1)	/* use one cursor setting as long as i can */
@@ -1805,10 +1788,10 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		      cursor -= direction;
 		      /* Translate only the last byte of a character.  */
 		      if ((cursor == tail_end_ptr
-			   || INTBYTE_FIRST_BYTE_P (cursor[1]))
-			  && (INTBYTE_FIRST_BYTE_P (cursor[0])
+			   || intbyte_first_byte_p (cursor[1]))
+			  && (intbyte_first_byte_p (cursor[0])
 			      || (translate_prev_byte == cursor[-1]
-				  && (INTBYTE_FIRST_BYTE_P (translate_prev_byte)
+				  && (intbyte_first_byte_p (translate_prev_byte)
 				      || translate_anteprev_byte == cursor[-2]))))
 			ch = simple_translate[*cursor];
 		      else
@@ -1860,8 +1843,8 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	  /* XEmacs change: definitions of CEILING_OF and FLOOR_OF
 	     have changed.  See buffer.h. */
 	  limit = ((direction > 0)
-		   ? BI_BUF_CEILING_OF (buf, pos - dirlen + 1) - 1
-		   : BI_BUF_FLOOR_OF (buf, pos - dirlen));
+		   ? BYTE_BUF_CEILING_OF (buf, pos - dirlen + 1) - 1
+		   : BYTE_BUF_FLOOR_OF (buf, pos - dirlen));
 	  limit = ((direction > 0)
 		   ? min (limit + len, lim - 1)
 		   : max (limit - len, lim));
@@ -1874,9 +1857,9 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		 (the reach is at most len + 21, and typically
 		 does not exceed len) */
 	      while ((limit - pos) * direction >= 0)
-		/* *not* BI_BUF_FETCH_CHAR.  We are working here
+		/* *not* BYTE_BUF_FETCH_CHAR.  We are working here
 		   with bytes, not characters. */
-		pos += BM_tab[*BI_BUF_BYTE_ADDRESS (buf, pos)];
+		pos += BM_tab[*BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos)];
 	      /* now run the same tests to distinguish going off
 		 the end, a match or a phony match. */
 	      if ((pos - limit) * direction <= len)
@@ -1893,12 +1876,12 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 #endif
 		  pos -= direction;
 #ifdef MULE
-		  ptr = BI_BUF_BYTE_ADDRESS (buf, pos);
+		  ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos);
 		  if ((ptr == tail_end_ptr
-		       || INTBYTE_FIRST_BYTE_P (ptr[1]))
-		      && (INTBYTE_FIRST_BYTE_P (ptr[0])
+		       || intbyte_first_byte_p (ptr[1]))
+		      && (intbyte_first_byte_p (ptr[0])
 			  || (translate_prev_byte == ptr[-1]
-			      && (INTBYTE_FIRST_BYTE_P (translate_prev_byte)
+			      && (intbyte_first_byte_p (translate_prev_byte)
 				  || translate_anteprev_byte == ptr[-2]))))
 		    ch = simple_translate[*ptr];
 		  else
@@ -1907,8 +1890,9 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		    break;
 		      
 #else
-		  if (pat[i] != TRANSLATE (trt,
-					   *BI_BUF_BYTE_ADDRESS (buf, pos)))
+		  if (pat[i] !=
+		      TRANSLATE (trt,
+				 *BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos)))
 		    break;
 #endif
 		}
@@ -1954,7 +1938,6 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 static void
 set_search_regs (struct buffer *buf, Charbpos beg, Charcount len)
 {
-  /* This function has been Mule-ized. */
   /* Make sure we have registers in which to store
      the match position.  */
   if (search_regs.num_regs == 0)
@@ -1980,20 +1963,20 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   Charcount i, len;
   EMACS_INT punct_count = 0, word_count = 0;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
+  Lisp_Object syntax_table = buf->mirror_syntax_table;
 
   CHECK_STRING (string);
-  len = XSTRING_CHAR_LENGTH (string);
+  len = string_char_length (string);
 
   for (i = 0; i < len; i++)
-    if (!WORD_SYNTAX_P (syntax_table, XSTRING_CHAR (string, i)))
+    if (!WORD_SYNTAX_P (syntax_table, string_emchar (string, i)))
       {
 	punct_count++;
 	if (i > 0 && WORD_SYNTAX_P (syntax_table,
-				    XSTRING_CHAR (string, i - 1)))
+				    string_emchar (string, i - 1)))
           word_count++;
       }
-  if (WORD_SYNTAX_P (syntax_table, XSTRING_CHAR (string, len - 1)))
+  if (WORD_SYNTAX_P (syntax_table, string_emchar (string, len - 1)))
     word_count++;
   if (!word_count) return build_string ("");
 
@@ -2010,13 +1993,13 @@ wordify (Lisp_Object buffer, Lisp_Object string)
 
     for (i = 0; i < len; i++)
       {
-	Emchar ch = XSTRING_CHAR (string, i);
+	Emchar ch = string_emchar (string, i);
 
 	if (WORD_SYNTAX_P (syntax_table, ch))
 	  o += set_charptr_emchar (o, ch);
 	else if (i > 0
 		 && WORD_SYNTAX_P (syntax_table,
-				   XSTRING_CHAR (string, i - 1))
+				   string_emchar (string, i - 1))
 		 && --word_count)
 	  {
 	    *o++ = '\\';
@@ -2299,7 +2282,6 @@ match since only regular expressions have distinguished subexpressions.
 */
        (replacement, fixedcase, literal, string, strbuffer))
 {
-  /* This function has been Mule-ized. */
   /* This function can GC */
   enum { nochange, all_caps, cap_initial } case_action;
   Charbpos pos, last;
@@ -2310,7 +2292,7 @@ match since only regular expressions have distinguished subexpressions.
   Emchar c, prevc;
   Charcount inslen;
   struct buffer *buf;
-  Lisp_Char_Table *syntax_table;
+  Lisp_Object syntax_table;
   int mc_count;
   Lisp_Object buffer;
   int_dynarr *ul_action_dynarr = 0;
@@ -2349,13 +2331,14 @@ match since only regular expressions have distinguished subexpressions.
       buf = XBUFFER (buffer);
     }
 
-  syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
+  syntax_table = buf->mirror_syntax_table;
 
   case_action = nochange;	/* We tried an initialization */
 				/* but some C compilers blew it */
 
   if (search_regs.num_regs == 0)
-    signal_error (Qinvalid_operation, "replace-match called before any match found", Qunbound);
+    signal_error (Qinvalid_operation,
+		  "replace-match called before any match found", Qunbound);
 
   if (NILP (string))
     {
@@ -2369,7 +2352,7 @@ match since only regular expressions have distinguished subexpressions.
     {
       if (search_regs.start[0] < 0
 	  || search_regs.start[0] > search_regs.end[0]
-	  || search_regs.end[0] > XSTRING_CHAR_LENGTH (string))
+	  || search_regs.end[0] > string_char_length (string))
 	args_out_of_range (make_int (search_regs.start[0]),
 			   make_int (search_regs.end[0]));
     }
@@ -2394,7 +2377,7 @@ match since only regular expressions have distinguished subexpressions.
 	  if (NILP (string))
 	    c = BUF_FETCH_CHAR (buf, pos);
 	  else
-	    c = XSTRING_CHAR (string, pos);
+	    c = string_emchar (string, pos);
 
 	  if (LOWERCASEP (buf, c))
 	    {
@@ -2452,7 +2435,7 @@ match since only regular expressions have distinguished subexpressions.
       /* Do case substitution into REPLACEMENT if desired.  */
       if (NILP (literal))
 	{
-	  Charcount stlen = XSTRING_CHAR_LENGTH (replacement);
+	  Charcount stlen = string_char_length (replacement);
 	  Charcount strpos;
 	  /* XEmacs change: rewrote this loop somewhat to make it
 	     cleaner.  Also added \U, \E, etc. */
@@ -2479,10 +2462,10 @@ match since only regular expressions have distinguished subexpressions.
 	      Charcount substart = -1;
 	      Charcount subend   = -1;
 
-	      c = XSTRING_CHAR (replacement, strpos);
+	      c = string_emchar (replacement, strpos);
 	      if (c == '\\' && strpos < stlen - 1)
 		{
-		  c = XSTRING_CHAR (replacement, ++strpos);
+		  c = string_emchar (replacement, ++strpos);
 		  if (c == '&')
 		    {
 		      literal_end = strpos - 1;
@@ -2518,7 +2501,7 @@ match since only regular expressions have distinguished subexpressions.
 		      literal_end = strpos - 1;
 		      Dynarr_add (ul_pos_dynarr,
 				  (!NILP (accum)
-				  ? XSTRING_CHAR_LENGTH (accum)
+				  ? string_char_length (accum)
 				  : 0) + (literal_end - literal_start));
 		      Dynarr_add (ul_action_dynarr, c);
 		    }
@@ -2567,12 +2550,12 @@ match since only regular expressions have distinguished subexpressions.
 	{
 	  int i = 0;
 	  int cur_action = 'E';
-	  Charcount stlen = XSTRING_CHAR_LENGTH (replacement);
+	  Charcount stlen = string_char_length (replacement);
 	  Charcount strpos;
 
 	  for (strpos = 0; strpos < stlen; strpos++)
 	    {
-	      Emchar curchar = XSTRING_CHAR (replacement, strpos);
+	      Emchar curchar = string_emchar (replacement, strpos);
 	      Emchar newchar = -1;
 	      if (i < Dynarr_length (ul_pos_dynarr) &&
 		  strpos == Dynarr_at (ul_pos_dynarr, i))
@@ -2621,7 +2604,7 @@ match since only regular expressions have distinguished subexpressions.
     Finsert (1, &replacement);
   else
     {
-      Charcount stlen = XSTRING_CHAR_LENGTH (replacement);
+      Charcount stlen = string_char_length (replacement);
       Charcount strpos;
       struct gcpro gcpro1;
       GCPRO1 (replacement);
@@ -2633,7 +2616,7 @@ match since only regular expressions have distinguished subexpressions.
 	   */
 	  Charcount offset = BUF_PT (buf) - search_regs.start[sub];
 
-	  c = XSTRING_CHAR (replacement, strpos);
+	  c = string_emchar (replacement, strpos);
 	  if (c == '\\' && strpos < stlen - 1)
 	    {
 	      /* XXX FIXME: replacing just a substring non-literally
@@ -2642,7 +2625,7 @@ match since only regular expressions have distinguished subexpressions.
 		 <duwe@caldera.de> claims Finsert_buffer_substring already
 		 handles this correctly.
 	      */
-	      c = XSTRING_CHAR (replacement, ++strpos);
+	      c = string_emchar (replacement, ++strpos);
 	      if (c == '&')
 		Finsert_buffer_substring
                   (buffer,
@@ -2743,7 +2726,6 @@ match since only regular expressions have distinguished subexpressions.
 static Lisp_Object
 match_limit (Lisp_Object num, int beginningp)
 {
-  /* This function has been Mule-ized. */
   int n;
 
   CHECK_INT (num);
@@ -2792,7 +2774,6 @@ to hold all the values, and if INTEGERS is non-nil, no consing is done.
 */
        (integers, reuse))
 {
-  /* This function has been Mule-ized. */
   Lisp_Object tail, prev;
   Lisp_Object *data;
   int i;
@@ -2865,7 +2846,6 @@ LIST should have been created by calling `match-data' previously.
 */
        (list))
 {
-  /* This function has been Mule-ized. */
   REGISTER int i;
   REGISTER Lisp_Object marker;
   int num_regs;

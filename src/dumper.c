@@ -1,7 +1,7 @@
 /* Portable data dumper for XEmacs.
    Copyright (C) 1999-2000 Olivier Galibert
    Copyright (C) 2001 Martin Buchholz
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -152,7 +152,7 @@ retry_fwrite (&object, sizeof (object), 1, pdump_out);
 (((type *) (ptr = (char*) (((type *) ptr) + 1)))[-1])
 
 #define PDUMP_READ_ALIGNED(ptr, type) \
-((ptr = (char *) ALIGN_PTR (ptr, ALIGNOF (type))), PDUMP_READ (ptr, type))
+((ptr = (char *) ALIGN_PTR (ptr, type)), PDUMP_READ (ptr, type))
 
 
 
@@ -755,7 +755,7 @@ pdump_structure_size (const void *obj, const struct struct_description *sdesc)
 
   /* We have no way of knowing the required alignment for this structure,
      so just max it maximally aligned. */
-  return ALIGN_SIZE (max_offset + size_at_max, ALIGNOF (max_align_t));
+  return MAX_ALIGN_SIZE (max_offset + size_at_max);
 }
 
 /* Register the referenced objects in the array of COUNT objects of
@@ -1355,11 +1355,11 @@ pdump (void)
   header.nb_root_struct_ptrs = Dynarr_length (pdump_root_struct_ptrs);
   header.nb_opaques = Dynarr_length (pdump_opaques);
 
-  cur_offset = ALIGN_SIZE (sizeof (header), ALIGNOF (max_align_t));
+  cur_offset = MAX_ALIGN_SIZE (sizeof (header));
   max_size = 0;
 
   pdump_scan_by_alignment (pdump_allocate_offset);
-  cur_offset = ALIGN_SIZE (cur_offset, ALIGNOF (max_align_t));
+  cur_offset = MAX_ALIGN_SIZE (cur_offset);
   header.stab_offset = cur_offset;
 
   pdump_buf = xmalloc (max_size);
@@ -1423,7 +1423,7 @@ pdump_load_finish (void)
   p = pdump_start + header->stab_offset;
 
   /* Put back the pdump_root_struct_ptrs */
-  p = (char *) ALIGN_PTR (p, ALIGNOF (pdump_static_pointer));
+  p = (char *) ALIGN_PTR (p, pdump_static_pointer);
   for (i=0; i<header->nb_root_struct_ptrs; i++)
     {
       pdump_static_pointer ptr = PDUMP_READ (p, pdump_static_pointer);
@@ -1444,7 +1444,7 @@ pdump_load_finish (void)
   for (;;)
     {
       pdump_reloc_table rt = PDUMP_READ_ALIGNED (p, pdump_reloc_table);
-      p = (char *) ALIGN_PTR (p, ALIGNOF (char *));
+      p = (char *) ALIGN_PTR (p, char *);
       if (rt.desc)
 	{
 	  char **reloc = (char **)p;
@@ -1461,7 +1461,7 @@ pdump_load_finish (void)
 
   /* Put the pdump_root_objects variables in place */
   i = PDUMP_READ_ALIGNED (p, Elemcount);
-  p = (char *) ALIGN_PTR (p, ALIGNOF (pdump_static_Lisp_Object));
+  p = (char *) ALIGN_PTR (p, pdump_static_Lisp_Object);
   while (i--)
     {
       pdump_static_Lisp_Object obj = PDUMP_READ (p, pdump_static_Lisp_Object);
@@ -1478,7 +1478,7 @@ pdump_load_finish (void)
   for (;;)
     {
       pdump_reloc_table rt = PDUMP_READ_ALIGNED (p, pdump_reloc_table);
-      p = (char *) ALIGN_PTR (p, ALIGNOF (Lisp_Object));
+      p = (char *) ALIGN_PTR (p, Lisp_Object);
       if (!rt.desc)
 	break;
       if (rt.desc == hash_table_description)

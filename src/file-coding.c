@@ -550,7 +550,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
   print_coding_system_properties (obj, printcharfun);
-  write_c_string (">", printcharfun);
+  write_c_string (printcharfun, ">");
 }
 
 /* Print an abbreviated version of a coding system (but still containing
@@ -562,7 +562,7 @@ print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 {
   write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
-  write_c_string ("]", printcharfun);
+  write_c_string (printcharfun, "]");
 }
 
 static void
@@ -2684,10 +2684,10 @@ chain_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 {
   int i;
 
-  write_c_string ("(", printcharfun);
+  write_c_string (printcharfun, "(");
   for (i = 0; i < XCODING_SYSTEM_CHAIN_COUNT (cs); i++)
     {
-      write_c_string (i == 0 ? "" : "->", printcharfun);
+      write_c_string (printcharfun, i == 0 ? "" : "->");
       print_coding_system_in_print_method (XCODING_SYSTEM_CHAIN_CHAIN (cs)[i],
 					   printcharfun, escapeflag);
     }
@@ -2696,13 +2696,13 @@ chain_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
     if (!NILP (cac))
       {
 	if (i > 0)
-	  write_c_string (" ", printcharfun);
-	write_c_string ("canonicalize-after-coding=", printcharfun);
+	  write_c_string (printcharfun, " ");
+	write_c_string (printcharfun, "canonicalize-after-coding=");
 	print_coding_system_in_print_method (cac, printcharfun, escapeflag);
       }
   }
 
-  write_c_string (")", printcharfun);
+  write_c_string (printcharfun, ")");
 }
 
 static void
@@ -2944,13 +2944,13 @@ no_conversion_convert (struct coding_stream *str,
       while (n--)
 	{
 	  c = *src++;
-	  if (BYTE_ASCII_P (c))
+	  if (byte_ascii_p (c))
 	    {
 	      assert (ch == 0);
 	      Dynarr_add (dst, c);
 	    }
 #ifdef MULE
-	  else if (INTBYTE_LEADING_BYTE_P (c))
+	  else if (intbyte_leading_byte_p (c))
 	    {
 	      assert (ch == 0);
 	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
@@ -3322,27 +3322,27 @@ undecided_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
     XCODING_SYSTEM_TYPE_DATA (cs, undecided);
   int need_space = 0;
 
-  write_c_string ("(", printcharfun);
+  write_c_string (printcharfun, "(");
   if (data->do_eol)
     {
-      write_c_string ("do-eol", printcharfun);
+      write_c_string (printcharfun, "do-eol");
       need_space = 1;
     }
   if (data->do_coding)
     {
       if (need_space)
-	write_c_string (" ", printcharfun);
-      write_c_string ("do-coding", printcharfun);
+	write_c_string (printcharfun, " ");
+      write_c_string (printcharfun, "do-coding");
       need_space = 1;
     }
   if (!NILP (data->cs))
     {
       if (need_space)
-	write_c_string (" ", printcharfun);
-      write_c_string ("coding-system=", printcharfun);
+	write_c_string (printcharfun, " ");
+      write_c_string (printcharfun, "coding-system=");
       print_coding_system_in_print_method (data->cs, printcharfun, escapeflag);
     }      
-  write_c_string (")", printcharfun);
+  write_c_string (printcharfun, ")");
 }
 
 static void
@@ -4303,12 +4303,12 @@ gzip_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 {
   struct gzip_coding_system *data = XCODING_SYSTEM_TYPE_DATA (cs, gzip);
 
-  write_c_string ("(", printcharfun);
+  write_c_string (printcharfun, "(");
   if (data->level == -1)
-    write_c_string ("default", printcharfun);
+    write_c_string (printcharfun, "default");
   else
     print_internal (make_int (data->level), printcharfun, 0);
-  write_c_string (")", printcharfun);
+  write_c_string (printcharfun, ")");
 }
 
 static int

@@ -48,10 +48,7 @@ mswindows_handle_gui_wm_command (struct frame *f, HWND ctrl, LPARAM id)
 
   frame = wrap_frame (f);
 
-  /* #### make_int should assert that --kkm */
-  assert (XINT (make_int (id)) == id);
-
-  image_instance = Fgethash (make_int (id), 
+  image_instance = Fgethash (make_int_verify (id), 
 			     FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f), Qnil);
   /* It is possible for a widget action to cause it to get out of sync
      with its instantiator. Thus it is necessary to signal this

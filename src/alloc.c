@@ -345,20 +345,10 @@ xfree (void *block)
 
 #ifdef ERROR_CHECK_GC
 
-#if SIZEOF_INT == 4
-typedef unsigned int four_byte_t;
-#elif SIZEOF_LONG == 4
-typedef unsigned long four_byte_t;
-#elif SIZEOF_SHORT == 4
-typedef unsigned short four_byte_t;
-#else
-What kind of strange-ass system are we running on?
-#endif
-
 static void
 deadbeef_memory (void *ptr, Bytecount size)
 {
-  four_byte_t *ptr4 = (four_byte_t *) ptr;
+  UINT_32_BIT *ptr4 = (UINT_32_BIT *) ptr;
   Bytecount beefs = size >> 2;
 
   /* In practice, size will always be a multiple of four.  */
@@ -1832,8 +1822,7 @@ static struct string_chars_block *current_string_chars_block;
  *  (including alignment padding).
  */
 #define STRING_FULLSIZE(size) \
-   ALIGN_SIZE (((size) + 1 + sizeof (Lisp_String *)),\
-               ALIGNOF (Lisp_String *))
+   ALIGN_FOR_TYPE (((size) + 1 + sizeof (Lisp_String *)), Lisp_String *)
 
 #define BIG_STRING_FULLSIZE_P(fullsize) ((fullsize) >= STRING_CHARS_BLOCK_SIZE)
 #define BIG_STRING_SIZE_P(size) (BIG_STRING_FULLSIZE_P (STRING_FULLSIZE(size)))
@@ -1908,7 +1897,7 @@ sledgehammer_check_ascii_begin (Lisp_Object str)
 
   for (i = 0; i < XSTRING_LENGTH (str); i++)
     {
-      if (!BYTE_ASCII_P (XSTRING_BYTE (str, i)))
+      if (!byte_ascii_p (string_byte (str, i)))
 	break;
     }
 
@@ -1936,12 +1925,12 @@ make_uninit_string (Bytecount length)
   xzero (*s);
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   
-  set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
+  set_lispstringp_data (s, BIG_STRING_FULLSIZE_P (fullsize)
 		   ? xnew_array (Intbyte, length + 1)
 		   : allocate_string_chars_struct (wrap_string (s),
 						   fullsize)->chars);
 
-  set_string_length (s, length);
+  set_lispstringp_length (s, length);
   s->plist = Qnil;
   set_string_byte (wrap_string (s), length, 0);
 
@@ -2106,7 +2095,7 @@ set_string_char (Lisp_Object s, Charcount i, Emchar c)
 {
   Intbyte newstr[MAX_EMCHAR_LEN];
   Bytecount bytoff = string_index_char_to_byte (s, i);
-  Bytecount oldlen = charcount_to_bytecount (XSTRING_DATA (s) + bytoff, 1);
+  Bytecount oldlen = charptr_emchar_len (XSTRING_DATA (s) + bytoff);
   Bytecount newlen = set_charptr_emchar (newstr, c);
 
   sledgehammer_check_ascii_begin (s);
@@ -2126,7 +2115,7 @@ set_string_char (Lisp_Object s, Charcount i, Emchar c)
 	  Bytecount j;
 	  for (j = (Bytecount) i + 1; j < XSTRING_LENGTH (s); j++)
 	    {
-	      if (!BYTE_ASCII_P (XSTRING_DATA (s)[j]))
+	      if (!byte_ascii_p (XSTRING_DATA (s)[j]))
 		break;
 	    }
 	  XSET_STRING_ASCII_BEGIN (s, min (j, (Bytecount) MAX_STRING_ASCII_BEGIN));
@@ -2208,7 +2197,7 @@ init_string_ascii_begin (Lisp_Object string)
 
   for (i = 0; i < length; i++)
     {
-      if (!BYTE_ASCII_P (contents[i]))
+      if (!byte_ascii_p (contents[i]))
 	break;
     }
   XSET_STRING_ASCII_BEGIN (string, min (i, MAX_STRING_ASCII_BEGIN));
@@ -2301,8 +2290,8 @@ make_string_nocopy (const Intbyte *contents, Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   SET_C_READONLY_RECORD_HEADER (&s->u.lheader);
   s->plist = Qnil;
-  set_string_data (s, (Intbyte *) contents);
-  set_string_length (s, length);
+  set_lispstringp_data (s, (Intbyte *) contents);
+  set_lispstringp_length (s, length);
   val = wrap_string (s);
   init_string_ascii_begin (val);
   sledgehammer_check_ascii_begin (val);
@@ -3279,7 +3268,7 @@ compact_string_chars (void)
             memmove (to_s_chars, from_s_chars, fullsize);
 
           /* Relocate FROM_S_CHARS's reference */
-          set_string_data (string, &(to_s_chars->chars[0]));
+          set_lispstringp_data (string, &(to_s_chars->chars[0]));
 
           from_pos += fullsize;
           to_pos += fullsize;
@@ -3311,11 +3300,11 @@ static void
 debug_string_purity_print (Lisp_Object p)
 {
   Charcount i;
-  Charcount s = XSTRING_CHAR_LENGTH (p);
+  Charcount s = string_char_length (p);
   stderr_out ("\"");
   for (i = 0; i < s; i++)
   {
-    Emchar ch = XSTRING_CHAR (p, i);
+    Emchar ch = string_emchar (p, i);
     if (ch < 32 || ch >= 126)
       stderr_out ("\\%03o", ch);
     else if (ch == '\\' || ch == '\"')

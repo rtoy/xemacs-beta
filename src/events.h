@@ -585,7 +585,6 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
    then Alt generates XEMACS_MOD_META instead.
  */
 
-#ifdef emacs
 /* Maybe this should be trickier */
 #define KEYSYM(x) (intern (x))
 
@@ -715,7 +714,6 @@ USID event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
    first console is tty, even if HAVE_X_WINDOWS is defined */
 /* #define DEBUG_TTY_EVENT_STREAM */
 
-#endif /* emacs */
 
 /* #### a hack, until accelerator shit is cleaned up */
 

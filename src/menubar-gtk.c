@@ -206,7 +206,7 @@ __torn_off_sir(GtkMenuItem *item, gpointer user_data)
       Lisp_Object menu_desc = Qnil;
       GtkWidget *old_submenu = GTK_MENU_ITEM (menu_item)->submenu;
 
-      VOID_TO_LISP (menu_desc, gtk_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
+      menu_desc = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (menu_item), XEMACS_MENU_DESCR_TAG));
 
       /* GCPRO all of our very own */
       gcpro_popup_callbacks (id, menu_desc);
@@ -271,7 +271,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       return;
     }
 
-  VOID_TO_LISP (desc, gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_DESCR_TAG));
+  desc = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_DESCR_TAG));
 
 #ifdef TEAR_OFF_MENUS
   /* Lets stick in a detacher just for giggles */
@@ -290,7 +290,7 @@ __activate_menu(GtkMenuItem *item, gpointer user_data)
       Lisp_Object hook_fn;
       struct gcpro gcpro1, gcpro2;
 
-      VOID_TO_LISP (hook_fn, gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
+      hook_fn = VOID_TO_LISP (gtk_object_get_data (GTK_OBJECT (item), XEMACS_MENU_FILTER_TAG));
 
       GCPRO2 (desc, hook_fn);
 
@@ -566,7 +566,7 @@ __generic_button_callback (GtkMenuItem *item, gpointer user_data)
 
   channel = wrap_frame (__get_channel (GTK_WIDGET (item)));
 
-  VOID_TO_LISP (callback, user_data);
+  callback = VOID_TO_LISP (user_data);
 
   get_gui_callback (callback, &function, &data);
 

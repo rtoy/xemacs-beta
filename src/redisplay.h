@@ -1,7 +1,7 @@
 /* Redisplay data structures.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1996 Chuck Thompson.
-   Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1996, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -112,15 +112,14 @@ struct rune
 				   each of the face properties in this
 				   particular window. */
 
-  Charbpos charbpos;		/* buffer position this rune is displaying;
+  Charxpos charpos;		/* buffer position this rune is displaying;
 				   for the modeline, the value here is a
 				   Charcount, but who's looking? */
-  Charbpos endpos;		/* if set this rune covers a range of pos */
+  Charxpos endpos;		/* if set this rune covers a range of pos;
+				   used in redisplay_move_cursor(). */
  				/* #### Chuck, what does it mean for a rune
 				   to cover a range of pos?  I don't get
 				   this. */
-                                /* #### This isn't used as an rvalue anywhere!
-                                   remove! */
 
 
   short xpos;			/* horizontal starting position in pixels */
@@ -258,9 +257,9 @@ typedef struct
 /*                              display lines                            */
 /*************************************************************************/
 
-/*  Modeline commentary: IMO the modeline is handled very badly, we
+/* Modeline commentary: IMO the modeline is handled very badly, we
   special case virtually *everything* in the redisplay routines for
-  the modeline. The fact that dl->charbpos can be either a buffer
+  the modeline. The fact that dl->charpos can be either a buffer
   position or a char count highlights this. There is no abstraction at
   all that I can find and it means that the code is made very ugly as
   a result. Either we should treat the modeline *entirely* separately,
@@ -296,9 +295,9 @@ struct display_line
 					   in pixels.*/
   unsigned short top_clip;		/* amount of top of line to clip
 					   in pixels.*/
-  Charbpos charbpos;			/* first buffer position on line */
-  Charbpos end_charbpos;			/* last buffer position on line */
-  Charcount offset;			/* adjustment to charbpos vals */
+  Charxpos charpos;			/* first buffer position on line */
+  Charxpos end_charpos;			/* last buffer position on line */
+  Charcount offset;			/* adjustment to charpos vals */
   Charcount num_chars;			/* # of chars on line
 					   including expansion of tabs
 					   and control chars */
@@ -386,13 +385,13 @@ struct font_metric_info
 };
 
 /* NOTE NOTE NOTE: Currently the positions in an extent fragment
-   structure are Bytebpos's, not Charbpos's.  This could change. */
+   structure are Bytexpos's, not Charxpos's.  This could change. */
 
 struct extent_fragment
 {
   Lisp_Object object; /* buffer or string */
   struct frame *frm;
-  Bytebpos pos, end;
+  Bytexpos pos, end;
   EXTENT_dynarr *extents;
   glyph_block_dynarr *begin_glyphs, *end_glyphs;
   unsigned int invisible:1;
@@ -698,8 +697,9 @@ struct display_block *get_display_block_from_line (struct display_line *dl,
 layout_bounds calculate_display_line_boundaries (struct window *w,
 						 int modeline);
 Charbpos point_at_center (struct window *w, int type, Charbpos start,
-			Charbpos point);
-int line_at_center (struct window *w, int type, Charbpos start, Charbpos point);
+			  Charbpos point);
+int line_at_center (struct window *w, int type, Charbpos start,
+		    Charbpos point);
 int window_half_pixpos (struct window *w);
 void redisplay_echo_area (void);
 void free_display_structs (struct window_mirror *mir);
@@ -729,13 +729,13 @@ void glyph_to_pixel_translation (struct window *w, int char_x,
 int point_in_line_start_cache (struct window *w, Charbpos point,
 			       int min_past);
 int point_would_be_visible (struct window *w, Charbpos startp,
-		    Charbpos point);
+			    Charbpos point);
 Charbpos start_of_last_line (struct window *w, Charbpos startp);
 Charbpos end_of_last_line (struct window *w, Charbpos startp);
 Charbpos start_with_line_at_pixpos (struct window *w, Charbpos point,
-				  int pixpos);
+				    int pixpos);
 Charbpos start_with_point_on_display_line (struct window *w, Charbpos point,
-					 int line);
+					   int line);
 int redisplay_variable_changed (Lisp_Object sym, Lisp_Object *val,
 				Lisp_Object in_object, int flags);
 void redisplay_glyph_changed (Lisp_Object glyph, Lisp_Object property,

@@ -1,6 +1,6 @@
  /* Lisp functions for making directory listings.
    Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -117,7 +117,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
       /* MATCH might be a flawed regular expression.  Rather than
 	 catching and signalling our own errors, we just call
 	 compile_pattern to do the work for us.  */
-      bufp = compile_pattern (match, 0, Qnil, 0, ERROR_ME);
+      bufp = compile_pattern (match, 0, Qnil, Qnil, 0, 0, ERROR_ME);
     }
 
   /* Now *bufp is the compiled form of MATCH; don't call anything
@@ -130,9 +130,6 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   if (!d)
     report_file_error ("Opening directory", directory);
 
-  regex_match_object = Qt;
-  regex_emacs_buffer = current_buffer;
-
   record_unwind_protect (close_directory_unwind, make_opaque_ptr ((void *)d));
 
   /* Loop reading blocks */
@@ -140,13 +137,16 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
     {
       DIRENTRY *dp = qxe_readdir (d);
       int len;
+      struct syntax_cache scache_struct;
+      struct syntax_cache *scache = &scache_struct;
 
       if (!dp)
 	break;
       len = NAMLEN (dp);
       if (DIRENTRY_NONEMPTY (dp)
 	  && (NILP (match)
-	      || (0 <= re_search (bufp, dp->d_name, len, 0, len, 0))))
+	      || (0 <= re_search (bufp, dp->d_name, len, 0, len, 0, Qnil, 0,
+				  scache))))
 	{
 	  if (!NILP (files_only))
 	    {
@@ -318,7 +318,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
   file = FILE_SYSTEM_CASE (file);
 #endif
   directory = Fexpand_file_name (directory, Qnil);
-  file_name_length = XSTRING_CHAR_LENGTH (file);
+  file_name_length = string_char_length (file);
 
   /* With passcount = 0, ignore files that end in an ignored extension.
      If nothing found then try again with passcount = 1, don't ignore them.
@@ -399,12 +399,12 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 
 		      CHECK_STRING (elt);
 
-		      skip = cclen - XSTRING_CHAR_LENGTH (elt);
+		      skip = cclen - string_char_length (elt);
 		      if (skip < 0) continue;
 
 		      if (0 > scmp (charptr_n_addr (d_name, skip),
 				    XSTRING_DATA (elt),
-				    XSTRING_CHAR_LENGTH (elt)))
+				    string_char_length (elt)))
 			{
 			  ignored_extension_p = 1;
 			  break;
@@ -440,7 +440,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
               else
                 {
                   bestmatch = name;
-                  bestmatchsize = XSTRING_CHAR_LENGTH (name);
+                  bestmatchsize = string_char_length (name);
                 }
               NUNGCPRO;
             }
@@ -461,7 +461,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
                      of the actual match.  */
                   if ((matchsize == cclen
                        && matchsize + !!directoryp
-                       < XSTRING_CHAR_LENGTH (bestmatch))
+                       < string_char_length (bestmatch))
                       ||
                       /* If there is no exact match ignoring case,
                          prefer a match that does not change the case
@@ -469,7 +469,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
                       (((matchsize == cclen)
                         ==
                         (matchsize + !!directoryp
-                         == XSTRING_CHAR_LENGTH (bestmatch)))
+                         == string_char_length (bestmatch)))
                        /* If there is more than one exact match aside from
                           case, and one of them is exact including case,
                           prefer that one.  */
@@ -616,7 +616,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
   CHECK_STRING (user);
 
-  user_name_length = XSTRING_CHAR_LENGTH (user);
+  user_name_length = string_char_length (user);
 
   /* Cache user name lookups because it tends to be quite slow.
    * Rebuild the cache occasionally to catch changes */
@@ -744,7 +744,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
           else
             {
               bestmatch = name;
-              bestmatchsize = XSTRING_CHAR_LENGTH (name);
+              bestmatchsize = string_char_length (name);
             }
           NUNGCPRO;
         }

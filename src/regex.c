@@ -24,17 +24,6 @@
 
 /* Synched up with: FSF 19.29. */
 
-/* Changes made for XEmacs:
-
-   (1) the REGEX_BEGLINE_CHECK code from the XEmacs v18 regex routines
-       was added.  This causes a huge speedup in font-locking.
-   (2) Rel-alloc is disabled when the MMAP version of rel-alloc is
-       being used, because it's too slow -- all those calls to mmap()
-       add humongous overhead.
-   (3) Lots and lots of changes for Mule.  They are bracketed by
-       `#ifdef MULE' or with comments that have `XEmacs' in them.
- */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -45,14 +34,6 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
-#endif
-
-#ifdef emacs
-/* Converts the pointer to the char to BEG-based offset from the start.	 */
-#define PTR_TO_OFFSET(d) (MATCHING_IN_FIRST_STRING			\
-			  ? (d) - string1 : (d) - (string2 - size1))
-#else
-#define PTR_TO_OFFSET(d) 0
 #endif
 
 /* We assume non-Mule if emacs isn't defined. */
@@ -120,8 +101,30 @@ vars_of_regex (void)
 
 #endif /* MULE */
 
-#define RE_TRANSLATE(ch) TRT_TABLE_OF (translate, (Emchar) ch)
+#define RE_TRANSLATE_1(ch) TRT_TABLE_OF (translate, (Emchar) ch)
 #define TRANSLATE_P(tr) (!NILP (tr))
+
+/* Converts the pointer to the char to BEG-based offset from the start.	 */
+#define PTR_TO_OFFSET(d) (MATCHING_IN_FIRST_STRING			\
+			  ? (d) - string1 : (d) - (string2 - size1))
+
+/* Convert an offset from the start of the logical text string formed by
+   concatenating the two strings together into a character position in the
+   Lisp buffer or string that the text represents.  Knows that
+   when handling buffer text, the "string" we're passed in is always
+   BEGV - ZV. */
+
+static Charxpos
+offset_to_charxpos (Lisp_Object lispobj, int off)
+{
+  if (STRINGP (lispobj))
+    return string_index_byte_to_char (lispobj, off);
+  else if (BUFFERP (lispobj))
+    return bytebpos_to_charbpos (XBUFFER (lispobj),
+				 off + BYTE_BUF_BEGV (XBUFFER (lispobj)));
+  else
+    return 0;
+}
 
 #else  /* not emacs */
 
@@ -139,7 +142,9 @@ vars_of_regex (void)
 
 #include <stdlib.h>
 
-#define charptr_emchar(str)		((Emchar) (str)[0])
+#define charptr_emchar(str)				((Emchar) (str)[0])
+#define charptr_emchar_fmt(str, fmt, object)		((Emchar) (str)[0])
+#define charptr_emchar_ascii_fmt(str, fmt, object)	((Emchar) (str)[0])
 
 #if (LONGBITS > INTBITS)
 # define EMACS_INT long
@@ -150,7 +155,11 @@ vars_of_regex (void)
 typedef int Emchar;
 
 #define INC_CHARPTR(p) ((p)++)
+#define INC_CHARPTR_FMT(p, fmt) ((p)++)
 #define DEC_CHARPTR(p) ((p)--)
+#define DEC_CHARPTR_FMT(p, fmt) ((p)--)
+#define charptr_emchar_len(ptr) 1
+#define charptr_emchar_len_fmt(ptr, fmt) 1
 
 #include <string.h>
 
@@ -194,11 +203,11 @@ init_syntax_once (void)
 
 #endif /* SYNTAX_TABLE */
 
-#define SYNTAX_UNSAFE(ignored, c) re_syntax_table[c]
+#define SYNTAX(ignored, c) re_syntax_table[c]
 #undef SYNTAX_FROM_CACHE
-#define SYNTAX_FROM_CACHE SYNTAX_UNSAFE
+#define SYNTAX_FROM_CACHE SYNTAX
 
-#define RE_TRANSLATE(c) translate[(unsigned char) (c)]
+#define RE_TRANSLATE_1(c) translate[(unsigned char) (c)]
 #define TRANSLATE_P(tr) tr
 
 #endif /* emacs */
@@ -1140,19 +1149,19 @@ static const char *re_error_msgid[] =
    matching calls, which it leaves unprotected, in the faith that they
    will not malloc.]] This previous paragraph is irrelevant.
 
-   XEmacs: We *do not* do anything so stupid as process input from
-   within a signal handler.  However, the regexp routines may get
-   called reentrantly as a result of QUIT processing (e.g. under
-   Windows: re_match -> QUIT -> quit_p -> drain events -> process
-   WM_INITMENU -> call filter -> re_match), so we cannot have any
-   global variables (unless we do lots of trickiness including some
+   XEmacs: We *do not* do anything so stupid as process input from within a
+   signal handler.  However, the regexp routines may get called reentrantly
+   as a result of QUIT processing (e.g. under Windows: re_match -> QUIT ->
+   quit_p -> drain events -> process WM_INITMENU -> call filter ->
+   re_match; see stack trace in signal.c), so we cannot have any global
+   variables (unless we do lots of trickiness including some
    unwind-protects, which isn't worth it at this point).  The first
    paragraph appears utterly garbled to me -- shouldn't *ANY* use of
-   rel-alloc to different potentially cause buffer data to be
-   relocated?  I must be missing something, though -- perhaps the
-   writer above is assuming that the failure stack(s) will always be
-   allocated after the buffer data, and thus reallocating them with
-   rel-alloc won't move buffer data. --ben */
+   rel-alloc to different potentially cause buffer data to be relocated?  I
+   must be missing something, though -- perhaps the writer above is
+   assuming that the failure stack(s) will always be allocated after the
+   buffer data, and thus reallocating them with rel-alloc won't move buffer
+   data. --ben */
 
 /* Normally, this is fine.  */
 #define MATCH_MAY_ALLOCATE
@@ -1574,13 +1583,11 @@ static unsigned char reg_unset_dummy;
 /* Subroutine declarations and macros for regex_compile.  */
 
 /* Fetch the next character in the uncompiled pattern---translating it
-   if necessary.  Also cast from a signed character in the constant
-   string passed to us by the user to an unsigned char that we can use
-   as an array index (in, e.g., `translate').  */
+   if necessary.  */
 #define PATFETCH(c)							\
   do {									\
     PATFETCH_RAW (c);							\
-    c = TRANSLATE (c);							\
+    c = RE_TRANSLATE (c);						\
   } while (0)
 
 /* Fetch the next character in the uncompiled pattern, with no
@@ -1595,70 +1602,12 @@ static unsigned char reg_unset_dummy;
 /* Go backwards one character in the pattern.  */
 #define PATUNFETCH DEC_CHARPTR (p)
 
-#ifdef MULE
-
-#define PATFETCH_EXTENDED(emch)						\
-  do {if (p == pend) return REG_EEND;					\
-    assert (p < pend);							\
-    emch = charptr_emchar ((const Intbyte *) p);			\
-    INC_CHARPTR (p);							\
-    if (TRANSLATE_P (translate) && emch < 0x80)				\
-      emch = (Emchar) (unsigned char) RE_TRANSLATE (emch);		\
-  } while (0)
-
-#define PATFETCH_RAW_EXTENDED(emch)					\
-  do {if (p == pend) return REG_EEND;					\
-    assert (p < pend);							\
-    emch = charptr_emchar ((const Intbyte *) p);			\
-    INC_CHARPTR (p);							\
-  } while (0)
-
-#define PATUNFETCH_EXTENDED DEC_CHARPTR (p)
-
-#define PATFETCH_EITHER(emch)			\
-  do {						\
-    if (has_extended_chars)			\
-      PATFETCH_EXTENDED (emch);			\
-    else					\
-      PATFETCH (emch);				\
-  } while (0)
-
-#define PATFETCH_RAW_EITHER(emch)		\
-  do {						\
-    if (has_extended_chars)			\
-      PATFETCH_RAW_EXTENDED (emch);		\
-    else					\
-      PATFETCH_RAW (emch);			\
-  } while (0)
-
-#define PATUNFETCH_EITHER			\
-  do {						\
-    if (has_extended_chars)			\
-      PATUNFETCH_EXTENDED (emch);		\
-    else					\
-      PATUNFETCH (emch);			\
-  } while (0)
-
-#else /* not MULE */
-
-#define PATFETCH_EITHER(emch) PATFETCH (emch)
-#define PATFETCH_RAW_EITHER(emch) PATFETCH_RAW (emch)
-#define PATUNFETCH_EITHER PATUNFETCH
-
-#endif /* MULE */
-
 /* If `translate' is non-null, return translate[D], else just D.  We
    cast the subscript to translate because some data is declared as
    `char *', to avoid warnings when a string constant is passed.  But
    when we use a character as a subscript we must make it unsigned.  */
-#define TRANSLATE(d) (TRANSLATE_P (translate) ? RE_TRANSLATE (d) : (d))
-
-#ifdef MULE
-
-#define TRANSLATE_EXTENDED_UNSAFE(emch) \
-  (TRANSLATE_P (translate) && emch < 0x80 ? RE_TRANSLATE (emch) : (emch))
-
-#endif
+#define RE_TRANSLATE(d) \
+  (TRANSLATE_P (translate) ? RE_TRANSLATE_1 (d) : (d))
 
 /* Macros for outputting the compiled pattern into `buffer'.  */
 
@@ -1729,7 +1678,7 @@ static unsigned char reg_unset_dummy;
    being larger than MAX_BUF_SIZE, then flag memory exhausted.  */
 #define EXTEND_BUFFER()							\
   do { 									\
-    re_char *old_buffer = bufp->buffer;				\
+    re_char *old_buffer = bufp->buffer;					\
     if (bufp->allocated == MAX_BUF_SIZE) 				\
       return REG_ESIZE;							\
     bufp->allocated <<= 1;						\
@@ -1883,12 +1832,17 @@ static re_bool alt_match_null_string_p (unsigned char *p, unsigned char *end,
 static re_bool common_op_match_null_string_p (unsigned char **p,
 					      unsigned char *end,
 					      register_info_type *reg_info);
-static int bcmp_translate (const unsigned char *s1, const unsigned char *s2,
-			   REGISTER int len, RE_TRANSLATE_TYPE translate);
+static int bcmp_translate (re_char *s1, re_char *s2,
+			   REGISTER int len, RE_TRANSLATE_TYPE translate
+#ifdef emacs
+			   , Internal_Format fmt, Lisp_Object lispobj
+#endif
+			   );
 static int re_match_2_internal (struct re_pattern_buffer *bufp,
 				re_char *string1, int size1,
 				re_char *string2, int size2, int pos,
-				struct re_registers *regs, int stop);
+				struct re_registers *regs, int stop
+				RE_LISP_CONTEXT_ARGS_DECL);
 
 #ifndef MATCH_MAY_ALLOCATE
 
@@ -3182,7 +3136,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
               /* You might think it would be useful for \ to mean
                  not to translate; but if we don't translate it,
                  it will never match anything.  */
-              c = TRANSLATE (c);
+              c = RE_TRANSLATE (c);
               goto normal_char;
             }
           break;
@@ -3439,7 +3393,10 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
    Return an error code.
 
    We use these short variable names so we can use the same macros as
-   `regex_compile' itself.  */
+   `regex_compile' itself.
+
+   Under Mule, this is only called when both chars of the range are
+   ASCII. */
 
 static reg_errcode_t
 compile_range (re_char **p_ptr, re_char *pend, RE_TRANSLATE_TYPE translate,
@@ -3478,7 +3435,7 @@ compile_range (re_char **p_ptr, re_char *pend, RE_TRANSLATE_TYPE translate,
      loop, since all characters <= 0xff.  */
   for (this_char = range_start; this_char <= range_end; this_char++)
     {
-      SET_LIST_BIT (TRANSLATE (this_char));
+      SET_LIST_BIT (RE_TRANSLATE (this_char));
     }
 
   return REG_NOERROR;
@@ -3514,15 +3471,13 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
      ranges entirely within the first 256 chars. */
 
   if ((range_start >= 0x100 || range_end >= 0x100)
-      && CHAR_LEADING_BYTE (range_start) !=
-      CHAR_LEADING_BYTE (range_end))
+      && emchar_leading_byte (range_start) !=
+      emchar_leading_byte (range_end))
     return REG_ERANGESPAN;
 
-  /* As advertised, translations only work over the 0 - 0x7F range.
-     Making this kind of stuff work generally is much harder.
-     Iterating over the whole range like this would be way efficient
-     if the range encompasses 10,000 chars or something.  You'd have
-     to do something like this:
+  /* #### This might be way inefficient if the range encompasses 10,000
+     chars or something.  To be efficient, you'd have to do something like
+     this:
 
      range_table a;
      range_table b;
@@ -3533,10 +3488,9 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
      compute the union of a, b
      union the result into rtab
    */
-  for (this_char = range_start;
-       this_char <= range_end && this_char < 0x80; this_char++)
+  for (this_char = range_start; this_char <= range_end; this_char++)
     {
-      SET_RANGETAB_BIT (TRANSLATE (this_char));
+      SET_RANGETAB_BIT (RE_TRANSLATE (this_char));
     }
 
   if (this_char <= range_end)
@@ -3561,7 +3515,8 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
    Returns 0 if we succeed, -2 if an internal error.   */
 
 int
-re_compile_fastmap (struct re_pattern_buffer *bufp)
+re_compile_fastmap (struct re_pattern_buffer *bufp
+		    RE_LISP_SHORT_CONTEXT_ARGS_DECL)
 {
   int j, k;
 #ifdef MATCH_MAY_ALLOCATE
@@ -3570,6 +3525,9 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   DECLARE_DESTINATION;
   /* We don't push any register information onto the failure stack.  */
 
+  /* &&#### this should be changed for 8-bit-fixed, for efficiency.  see
+     comment marked with &&#### in re_search_2. */
+    
   REGISTER char *fastmap = bufp->fastmap;
   unsigned char *pattern = bufp->buffer;
   long size = bufp->used;
@@ -3732,34 +3690,6 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 #endif /* MULE */
 
 
-	case wordchar:
-#ifdef emacs
-	  k = (int) Sword;
-	  goto matchsyntax;
-#else
-	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE
-		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) == Sword)
-	      fastmap[j] = 1;
-	  break;
-#endif
-
-
-	case notwordchar:
-#ifdef emacs
-	  k = (int) Sword;
-	  goto matchnotsyntax;
-#else
-	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE
-		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) != Sword)
-	      fastmap[j] = 1;
-	  break;
-#endif
-
-
         case anychar:
 	  {
 	    int fastmap_newline = fastmap['\n'];
@@ -3788,7 +3718,21 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	    break;
 	  }
 
-#ifdef emacs
+#ifndef emacs
+	case wordchar:
+	  for (j = 0; j < (1 << BYTEWIDTH); j++)
+	    if (SYNTAX (ignored, j) == Sword)
+	      fastmap[j] = 1;
+	  break;
+
+	case notwordchar:
+	  for (j = 0; j < (1 << BYTEWIDTH); j++)
+	    if (SYNTAX (ignored, j) != Sword)
+	      fastmap[j] = 1;
+	  break;
+#else /* emacs */
+	case wordchar:
+	case notwordchar:
 	case wordbound:
 	case notwordbound:
 	case wordbeg:
@@ -3799,23 +3743,30 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	     aborting optimizations.  */
 	  bufp->can_be_null = 1;
 	  goto done;
+#if 0 /* all of the following code is unused now that the `syntax-table'
+	 property exists -- it's trickier to do this than just look in
+	 the buffer.  &&#### but we could just use the syntax-cache stuff
+	 instead; why don't we? --ben */
+	case wordchar:
+	  k = (int) Sword;
+	  goto matchsyntax;
 
-#ifdef emacs
-#if 0   /* Removed during syntax-table properties patch -- 2000/12/07 mct */
+	case notwordchar:
+	  k = (int) Sword;
+	  goto matchnotsyntax;
+	  
         case syntaxspec:
 	  k = *p++;
-#endif
-	  matchsyntax:
+	matchsyntax:
 #ifdef MULE
 	  for (j = 0; j < 0x80; j++)
-	    if (SYNTAX_UNSAFE
-		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) ==
+	    if (SYNTAX
+		(XCHAR_TABLE (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) ==
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
 	  for (j = 0x80; j < 0xA0; j++)
 	    {
-	      if (LEADING_BYTE_PREFIX_P((unsigned char) j))
+	      if (leading_byte_prefix_p ((unsigned char) j))
 		/* too complicated to calculate this right */
 		fastmap[j] = 1;
 	      else
@@ -3823,11 +3774,10 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 		  int multi_p;
 		  Lisp_Object cset;
 
-		  cset = CHARSET_BY_LEADING_BYTE (j);
+		  cset = charset_by_leading_byte (j);
 		  if (CHARSETP (cset))
 		    {
-		      if (charset_syntax (regex_emacs_buffer, cset,
-					  &multi_p)
+		      if (charset_syntax (lispbuf, cset, &multi_p)
 			  == Sword || multi_p)
 			fastmap[j] = 1;
 		    }
@@ -3835,30 +3785,27 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	    }
 #else /* not MULE */
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE
-		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) ==
+	    if (SYNTAX
+		(XCHAR_TABLE (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) ==
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
 #endif /* MULE */
 	  break;
 
 
-#if 0   /* Removed during syntax-table properties patch -- 2000/12/07 mct */
 	case notsyntaxspec:
 	  k = *p++;
-#endif
-	  matchnotsyntax:
+	matchnotsyntax:
 #ifdef MULE
 	  for (j = 0; j < 0x80; j++)
-	    if (SYNTAX_UNSAFE
+	    if (SYNTAX
 		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) !=
+		 (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) !=
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
 	  for (j = 0x80; j < 0xA0; j++)
 	    {
-	      if (LEADING_BYTE_PREFIX_P((unsigned char) j))
+	      if (leading_byte_prefix_p ((unsigned char) j))
 		/* too complicated to calculate this right */
 		fastmap[j] = 1;
 	      else
@@ -3866,11 +3813,10 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 		  int multi_p;
 		  Lisp_Object cset;
 
-		  cset = CHARSET_BY_LEADING_BYTE (j);
+		  cset = charset_by_leading_byte (j);
 		  if (CHARSETP (cset))
 		    {
-		      if (charset_syntax (regex_emacs_buffer, cset,
-					  &multi_p)
+		      if (charset_syntax (lispbuf, cset, &multi_p)
 			  != Sword || multi_p)
 			fastmap[j] = 1;
 		    }
@@ -3878,14 +3824,14 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	    }
 #else /* not MULE */
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE
+	    if (SYNTAX
 		(XCHAR_TABLE
-		 (regex_emacs_buffer->mirror_syntax_table), j) !=
+		 (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf)), j) !=
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
 #endif /* MULE */
 	  break;
-#endif /* emacs */
+#endif /* 0 */
 
 #ifdef MULE
 /* 97/2/17 jhod category patch */
@@ -3898,13 +3844,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 
       /* All cases after this match the empty string.  These end with
          `continue'.  */
-
-
 	case before_dot:
 	case at_dot:
 	case after_dot:
           continue;
-#endif /* not emacs */
+#endif /* emacs */
 
 
         case no_op:
@@ -4074,32 +4018,26 @@ re_set_registers (struct re_pattern_buffer *bufp, struct re_registers *regs,
 
 int
 re_search (struct re_pattern_buffer *bufp, const char *string, int size,
-	   int startpos, int range, struct re_registers *regs)
+	   int startpos, int range, struct re_registers *regs
+	   RE_LISP_CONTEXT_ARGS_DECL)
 {
   return re_search_2 (bufp, NULL, 0, string, size, startpos, range,
-		      regs, size);
+		      regs, size RE_LISP_CONTEXT_ARGS);
 }
-
-#ifndef emacs
-/* Snarfed from src/lisp.h, needed for compiling [ce]tags. */
-# define bytecount_to_charcount(ptr, len) (len)
-# define charcount_to_bytecount(ptr, len) (len)
-typedef int Charcount;
-#endif
 
 /* Using the compiled pattern in BUFP->buffer, first tries to match the
    virtual concatenation of STRING1 and STRING2, starting first at index
    STARTPOS, then at STARTPOS + 1, and so on.
-
-   With MULE, STARTPOS is a byte position, not a char position.  And the
-   search will increment STARTPOS by the width of the current leading
-   character.
 
    STRING1 and STRING2 have length SIZE1 and SIZE2, respectively.
 
    RANGE is how far to scan while trying to match.  RANGE = 0 means try
    only at STARTPOS; in general, the last start tried is STARTPOS +
    RANGE.
+
+   All sizes and positions refer to bytes (not chars); under Mule, the code
+   knows about the format of the text and will only check at positions
+   where a character starts.
 
    With MULE, RANGE is a byte position, not a char position.  The last
    start tried is the character starting <= STARTPOS + RANGE.
@@ -4118,7 +4056,8 @@ typedef int Charcount;
 int
 re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	     int size1, const char *str2, int size2, int startpos,
-	     int range, struct re_registers *regs, int stop)
+	     int range, struct re_registers *regs, int stop
+	     RE_LISP_CONTEXT_ARGS_DECL)
 {
   int val;
   re_char *string1 = (re_char *) str1;
@@ -4131,7 +4070,12 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   int anchored_at_begline = 0;
 #endif
   re_char *d;
-  Charcount d_size;
+#ifdef emacs
+  Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#endif /* emacs */
+#if 1
+  int forward_search_p;
+#endif
 
   /* Check for out-of-range STARTPOS.  */
   if (startpos < 0 || startpos > total_size)
@@ -4144,6 +4088,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   else if (endpos > total_size)
     range = total_size - startpos;
 
+#if 1
+  forward_search_p = range > 0;
+#endif
+
   /* If the search isn't to be a backwards one, don't waste time in a
      search for a pattern that must be anchored.  */
   if (bufp->used > 0 && (re_opcode_t) bufp->buffer[0] == begbuf && range > 0)
@@ -4154,7 +4102,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	{
 	  d = ((const unsigned char *)
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	    range = charcount_to_bytecount (d, 1);
+	  range = charptr_emchar_len_fmt (d, fmt);
 	}
     }
 
@@ -4163,8 +4111,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
      don't keep searching past point.  */
   if (bufp->used > 0 && (re_opcode_t) bufp->buffer[0] == at_dot && range > 0)
     {
-      range = BUF_PT (regex_emacs_buffer) - BUF_BEGV (regex_emacs_buffer)
-	      - startpos;
+      if (!BUFFERP (lispobj))
+	return -1;
+      range = (BUF_PT (XBUFFER (lispobj)) - BUF_BEGV (XBUFFER (lispobj))
+	       - startpos);
       if (range < 0)
 	return -1;
     }
@@ -4172,7 +4122,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 
   /* Update the fastmap now if not correct already.  */
   if (fastmap && !bufp->fastmap_accurate)
-    if (re_compile_fastmap (bufp) == -2)
+    if (re_compile_fastmap (bufp RE_LISP_SHORT_CONTEXT_ARGS) == -2)
       return -2;
 
 #ifdef REGEX_BEGLINE_CHECK
@@ -4192,53 +4142,83 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 #endif
 
 #ifdef emacs
-    SETUP_SYNTAX_CACHE_FOR_OBJECT (regex_match_object,
-				   regex_emacs_buffer,
-				   SYNTAX_CACHE_OBJECT_BYTE_TO_CHAR (regex_match_object,
-								     regex_emacs_buffer,
-								     startpos),
-				   1);
+  scache = setup_syntax_cache (scache, lispobj, lispbuf,
+			       offset_to_charxpos (lispobj, startpos),
+			       1);
 #endif
 
   /* Loop through the string, looking for a place to start matching.  */
   for (;;)
     {
 #ifdef REGEX_BEGLINE_CHECK
-      /* If the regex is anchored at the beginning of a line (i.e. with a ^),
-	 then we can speed things up by skipping to the next beginning-of-
-	 line. */
-      if (anchored_at_begline && startpos > 0 && startpos != size1 &&
-	  range > 0)
+      /* If the regex is anchored at the beginning of a line (i.e. with a
+	 ^), then we can speed things up by skipping to the next
+	 beginning-of-line.  However, to determine "beginning of line" we
+	 need to look at the previous char, so can't do this check if at
+	 beginning of either string. (Well, we could if at the beginning of
+	 the second string, but it would require additional code, and this
+	 is just an optimization.) */
+      if (anchored_at_begline && startpos > 0 && startpos != size1)
 	{
-	  /* whose stupid idea was it anyway to make this
-	     function take two strings to match?? */
-	  int lim = 0;
-	  int irange = range;
+	  if (range > 0)
+	    {
+	      /* whose stupid idea was it anyway to make this
+		 function take two strings to match?? */
+	      int lim = 0;
+	      re_char *orig_d;
+	      re_char *stop_d;
 
-	  if (startpos < size1 && startpos + range >= size1)
-	    lim = range - (size1 - startpos);
+	      /* Compute limit as below in fastmap code, so we are guaranteed
+		 to remain within a single string. */
+	      if (startpos < size1 && startpos + range >= size1)
+		lim = range - (size1 - startpos);
 
-	  d = ((const unsigned char *)
-	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	  DEC_CHARPTR(d);	/* Ok, since startpos != size1. */
-	  d_size = charcount_to_bytecount (d, 1);
+	      d = ((const unsigned char *)
+		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
+	      orig_d = d;
+	      stop_d = d + range - lim;
 
-	  if (TRANSLATE_P (translate))
-	    while (range > lim && *d != '\n')
-	      {
-		d += d_size;	/* Speedier INC_CHARPTR(d) */
-		d_size = charcount_to_bytecount (d, 1);
-		range -= d_size;
-	      }
-	  else
-	    while (range > lim && *d != '\n')
-	      {
-		d += d_size;	/* Speedier INC_CHARPTR(d) */
-		d_size = charcount_to_bytecount (d, 1);
-		range -= d_size;
-	      }
+	      /* We want to find the next location (including the current
+		 one) where the previous char is a newline, so back up one
+		 and search forward for a newline. */
+	      DEC_CHARPTR_FMT (d, fmt);	/* Ok, since startpos != size1. */
 
-	  startpos += irange - range;
+	      /* Written out as an if-else to avoid testing `translate'
+		 inside the loop.  */
+	      if (TRANSLATE_P (translate))
+		while (d < stop_d &&
+		       RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj))
+		       != '\n')
+		  INC_CHARPTR_FMT (d, fmt);
+	      else
+		while (d < stop_d &&
+		       charptr_emchar_ascii_fmt (d, fmt, lispobj) != '\n')
+		  INC_CHARPTR_FMT (d, fmt);
+
+	      /* If we were stopped by a newline, skip forward over it.
+		 Otherwise we will get in an infloop when our start position
+		 was at begline. */
+	      if (d < stop_d)
+		INC_CHARPTR_FMT (d, fmt);
+	      range -= d - orig_d;
+	      startpos += d - orig_d;
+#if 1
+	      assert (!forward_search_p || range >= 0);
+#endif
+	    }
+	  else if (range < 0)
+	    {
+	      /* We're lazy, like in the fastmap code below */
+	      Emchar c;
+
+	      d = ((const unsigned char *)
+		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
+	      DEC_CHARPTR_FMT (d, fmt);
+	      c = charptr_emchar_fmt (d, fmt, lispobj);
+	      c = RE_TRANSLATE (c);
+	      if (c != '\n')
+		goto advance;
+	    }
 	}
 #endif /* REGEX_BEGLINE_CHECK */
 
@@ -4248,6 +4228,20 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
          the first null string.  */
       if (fastmap && startpos < total_size && !bufp->can_be_null)
 	{
+	  /* For the moment, fastmap always works as if buffer
+	     is in default format, so convert chars in the search strings
+	     into default format as we go along, if necessary.
+
+	     &&#### fastmap needs rethinking for 8-bit-fixed so
+	     it's faster.  We need it to reflect the raw
+	     8-bit-fixed values.  That isn't so hard if we assume
+	     that the top 96 bytes represent a single 1-byte
+	     charset.  For 16-bit/32-bit stuff it's probably not
+	     worth it to make the fastmap represent the raw, due to
+	     its nature -- we'd have to use the LSB for the
+	     fastmap, and that causes lots of problems with Mule
+	     chars, where it essentially wipes out the usefulness
+	     of the fastmap entirely. */
 	  if (range > 0)	/* Searching forwards.  */
 	    {
 	      int lim = 0;
@@ -4262,46 +4256,82 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
               /* Written out as an if-else to avoid testing `translate'
                  inside the loop.  */
 	      if (TRANSLATE_P (translate))
-                while (range > lim)
-		  {
+		{
+		  while (range > lim)
+		    {
+		      re_char *old_d = d;
 #ifdef MULE
-		    Emchar buf_ch;
-
-		    buf_ch = charptr_emchar (d);
-		    buf_ch = RE_TRANSLATE (buf_ch);
-		    if (buf_ch >= 0200 || fastmap[(unsigned char) buf_ch])
-		      break;
+		      Intbyte tempch[MAX_EMCHAR_LEN];
+		      Emchar buf_ch =
+			RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj));
+		      set_charptr_emchar (tempch, buf_ch);
+		      if (fastmap[*tempch])
+			break;
 #else
-		    if (fastmap[(unsigned char)RE_TRANSLATE (*d)])
-		      break;
+		      if (fastmap[(unsigned char) RE_TRANSLATE_1 (*d)])
+			break;
 #endif /* MULE */
-		    d_size = charcount_to_bytecount (d, 1);
-		    range -= d_size;
-		    d += d_size; /* Speedier INC_CHARPTR(d) */
-		  }
+		      INC_CHARPTR_FMT (d, fmt);
+		      range -= (d - old_d);
+#if 1
+		assert (!forward_search_p || range >= 0);
+#endif
+		    }
+		}
+#ifdef MULE
+	      else if (fmt != FORMAT_DEFAULT)
+		{
+		  while (range > lim)
+		    {
+		      re_char *old_d = d;
+		      Intbyte tempch[MAX_EMCHAR_LEN];
+		      Emchar buf_ch = charptr_emchar_fmt (d, fmt, lispobj);
+		      set_charptr_emchar (tempch, buf_ch);
+		      if (fastmap[*tempch])
+			break;
+		      INC_CHARPTR_FMT (d, fmt);
+		      range -= (d - old_d);
+#if 1
+		assert (!forward_search_p || range >= 0);
+#endif
+		    }
+		}
+#endif /* MULE */
 	      else
-                while (range > lim && !fastmap[*d])
-		  {
-		    d_size = charcount_to_bytecount (d, 1);
-		    range -= d_size;
-		    d += d_size; /* Speedier INC_CHARPTR(d) */
-		  }
+		{
+		  while (range > lim && !fastmap[*d])
+		    {
+		      re_char *old_d = d;
+		      INC_CHARPTR (d);
+		      range -= (d - old_d);
+#if 1
+		assert (!forward_search_p || range >= 0);
+#endif
+		    }
+		}
 
 	      startpos += irange - range;
 	    }
 	  else				/* Searching backwards.  */
 	    {
-	      Emchar c = (size1 == 0 || startpos >= size1
-			  ? charptr_emchar (string2 + startpos - size1)
-			  : charptr_emchar (string1 + startpos));
-	      c = TRANSLATE (c);
+	      /* #### It's not clear why we don't just write a loop, like
+		 for the moving-forward case.  Perhaps the writer got lazy,
+		 since backward searches aren't so common. */
+	      d = ((const unsigned char *)
+		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
 #ifdef MULE
-	      if (!(c >= 0200 || fastmap[(unsigned char) c]))
-		goto advance;
+	      {
+		Intbyte tempch[MAX_EMCHAR_LEN];
+		Emchar buf_ch =
+		  RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj));
+		set_charptr_emchar (tempch, buf_ch);
+		if (!fastmap[*tempch])
+		  goto advance;
+	      }
 #else
-	      if (!fastmap[(unsigned char) c])
+	      if (!fastmap[(unsigned char) RE_TRANSLATE (*d)])
 		goto advance;
-#endif
+#endif /* MULE */
 	    }
 	}
 
@@ -4315,7 +4345,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	QUIT;
 #endif
       val = re_match_2_internal (bufp, string1, size1, string2, size2,
-				 startpos, regs, stop);
+				 startpos, regs, stop
+				 RE_LISP_CONTEXT_ARGS);
 #ifndef REGEX_MALLOC
 #ifdef C_ALLOCA
       alloca (0);
@@ -4333,26 +4364,35 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	break;
       else if (range > 0)
 	{
+	  Bytecount d_size;
 	  d = ((const unsigned char *)
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	  d_size = charcount_to_bytecount (d, 1);
+	  d_size = charptr_emchar_len_fmt (d, fmt);
 	  range -= d_size;
+#if 1
+		assert (!forward_search_p || range >= 0);
+#endif
 	  startpos += d_size;
 	}
       else
 	{
+	  Bytecount d_size;
 	  /* Note startpos > size1 not >=.  If we are on the
 	     string1/string2 boundary, we want to backup into string1. */
 	  d = ((const unsigned char *)
 	       (startpos > size1 ? string2 - size1 : string1) + startpos);
-	  DEC_CHARPTR(d);
-	  d_size = charcount_to_bytecount (d, 1);
+	  DEC_CHARPTR_FMT (d, fmt);
+	  d_size = charptr_emchar_len_fmt (d, fmt);
 	  range += d_size;
+#if 1
+		assert (!forward_search_p || range >= 0);
+#endif
 	  startpos -= d_size;
 	}
     }
   return -1;
 } /* re_search_2 */
+
 
 /* Declarations and macros for re_match_2.  */
 
@@ -4369,7 +4409,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 
 /* Call before fetching a character with *d.  This switches over to
    string2 if necessary.  */
-#define REGEX_PREFETCH()							\
+#define REGEX_PREFETCH()						\
   while (d == dend)						    	\
     {									\
       /* End of string2 => fail.  */					\
@@ -4394,9 +4434,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 #define POS_AFTER_GAP_UNSAFE(d) ((d) == end1 ? string2 : (d))
 
 /* Test if CH is a word-constituent character. (XEmacs change) */
-#define WORDCHAR_P_UNSAFE(ch)						   \
-  (SYNTAX_UNSAFE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),   \
-                               ch) == Sword)
+#define WORDCHAR_P(ch)						\
+  (SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (lispbuf), ch) == Sword)
 
 /* Free everything we malloc.  */
 #ifdef MATCH_MAY_ALLOCATE
@@ -4430,20 +4469,21 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 
 /* Matching routines.  */
 
-#ifndef emacs   /* Emacs never uses this.  */
+#ifndef emacs   /* XEmacs never uses this.  */
 /* re_match is like re_match_2 except it takes only a single string.  */
 
 int
 re_match (struct re_pattern_buffer *bufp, const char *string, int size,
-	  int pos, struct re_registers *regs)
+	  int pos, struct re_registers *regs
+	  RE_LISP_CONTEXT_ARGS_DECL)
 {
   int result = re_match_2_internal (bufp, NULL, 0, (re_char *) string, size,
-				    pos, regs, size);
+				    pos, regs, size
+				    RE_LISP_CONTEXT_ARGS);
   alloca (0);
   return result;
 }
 #endif /* not emacs */
-
 
 /* re_match_2 matches the compiled pattern in BUFP against the
    (virtual) concatenation of STRING1 and STRING2 (of length SIZE1 and
@@ -4461,55 +4501,33 @@ re_match (struct re_pattern_buffer *bufp, const char *string, int size,
 int
 re_match_2 (struct re_pattern_buffer *bufp, const char *string1,
 	    int size1, const char *string2, int size2, int pos,
-	    struct re_registers *regs, int stop)
+	    struct re_registers *regs, int stop
+	    RE_LISP_CONTEXT_ARGS_DECL)
 {
   int result;
 
 #ifdef emacs
-    SETUP_SYNTAX_CACHE_FOR_OBJECT (regex_match_object,
-				   regex_emacs_buffer,
-				   SYNTAX_CACHE_OBJECT_BYTE_TO_CHAR (regex_match_object,
-								     regex_emacs_buffer,
-								     pos),
-				   1);
+  scache = setup_syntax_cache (scache, lispobj, lispbuf,
+			       offset_to_charxpos (lispobj, pos),
+			       1);
 #endif
 
   result = re_match_2_internal (bufp, (re_char *) string1, size1,
 				(re_char *) string2, size2,
-				pos, regs, stop);
+				pos, regs, stop
+				RE_LISP_CONTEXT_ARGS);
 
   alloca (0);
   return result;
 }
-
-#if defined (ERROR_CHECK_TEXT) && defined (emacs)
-int in_re_match_2_internal;
-
-/* #### I am seeing an error (once) where regex_match_object gets set
-   to a string while matching on a buffer.  The only way this seems
-   possible is recursive invocation of re_match_2_internal(). */
-static Lisp_Object
-restore_in_re_match_2_internal (Lisp_Object val)
-{
-  in_re_match_2_internal = 0;
-  return Qnil;
-}
-
-#define RESTORE_IN_MATCH_FLAG unbind_to (speccount)
-
-#else
-
-#define RESTORE_IN_MATCH_FLAG do {} while (0)
-
-#endif /* defined (ERROR_CHECK_TEXT) && defined (emacs) */
-
 
 /* This is a separate function so that we can force an alloca cleanup
    afterwards.  */
 static int
 re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		     int size1, re_char *string2, int size2, int pos,
-		     struct re_registers *regs, int stop)
+		     struct re_registers *regs, int stop
+		     RE_LISP_CONTEXT_ARGS_DECL)
 {
   /* General temporaries.  */
   int mcnt;
@@ -4639,16 +4657,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   /* 1 if this match is the best seen so far.  */
   re_bool best_match_p;
 
-#if defined (ERROR_CHECK_TEXT) && defined (emacs)
-  int speccount = specpdl_depth ();
-
-#if 0
-  /* we've hopefully fixed the reentrancy problem. */
-  assert (!in_re_match_2_internal);
-#endif
-  in_re_match_2_internal = 1;
-  record_unwind_protect (restore_in_re_match_2_internal, Qnil);
-#endif /* defined (ERROR_CHECK_TEXT) && defined (emacs) */
+#ifdef emacs
+  Internal_Format fmt = buffer_or_other_internal_format (lispobj);
+#endif /* emacs */
 
   DEBUG_PRINT1 ("\n\nEntering re_match_2.\n");
 
@@ -4676,7 +4687,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             && best_regstart && best_regend && reg_dummy && reg_info_dummy))
         {
           FREE_VARIABLES ();
-	  RESTORE_IN_MATCH_FLAG;
           return -2;
         }
     }
@@ -4694,7 +4704,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
   if (pos < 0 || pos > size1 + size2)
     {
       FREE_VARIABLES ();
-      RESTORE_IN_MATCH_FLAG;
       return -1;
     }
 
@@ -4852,7 +4861,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
                   if (regs->start == NULL || regs->end == NULL)
 		    {
 		      FREE_VARIABLES ();
-		      RESTORE_IN_MATCH_FLAG;
 		      return -2;
 		    }
                   bufp->regs_allocated = REGS_REALLOCATE;
@@ -4869,7 +4877,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
                       if (regs->start == NULL || regs->end == NULL)
 			{
 			  FREE_VARIABLES ();
-			  RESTORE_IN_MATCH_FLAG;
 			  return -2;
 			}
                     }
@@ -4931,7 +4938,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           DEBUG_PRINT2 ("Returning %d from re_match_2.\n", mcnt);
 
           FREE_VARIABLES ();
-	  RESTORE_IN_MATCH_FLAG;
           return mcnt;
         }
 
@@ -4948,9 +4954,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           DEBUG_PRINT1 ("EXECUTING succeed.\n");
 	  goto succeed_label;
 
-        /* Match the next n pattern characters exactly.  The following
-           byte in the pattern defines n, and the n bytes after that
-           are the characters to match.  */
+        /* Match exactly a string of length n in the pattern.  The
+           following byte in the pattern defines n, and the n bytes after
+           that make up the string to match. (Under Mule, this will be in
+           the default internal format.) */
 	case exactn:
 	  mcnt = *p++;
           DEBUG_PRINT2 ("EXECUTING exactn %d.\n", mcnt);
@@ -4962,23 +4969,21 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      do
 		{
 #ifdef MULE
-		  Emchar pat_ch, buf_ch;
 		  Bytecount pat_len;
 
 		  REGEX_PREFETCH ();
-		  pat_ch = charptr_emchar (p);
-		  buf_ch = charptr_emchar (d);
-		  if (RE_TRANSLATE (buf_ch) != pat_ch)
+		  if (RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj))
+		      != charptr_emchar (p))
                     goto fail;
 
-		  pat_len = charcount_to_bytecount (p, 1);
+		  pat_len = charptr_emchar_len (p);
 		  p += pat_len;
-		  INC_CHARPTR (d);
+		  INC_CHARPTR_FMT (d, fmt);
 		  
 		  mcnt -= pat_len;
 #else /* not MULE */
 		  REGEX_PREFETCH ();
-		  if ((unsigned char) RE_TRANSLATE (*d++) != *p++)
+		  if ((unsigned char) RE_TRANSLATE_1 (*d++) != *p++)
                     goto fail;
 		  mcnt--;
 #endif
@@ -4987,12 +4992,40 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    }
 	  else
 	    {
-	      do
+#ifdef MULE
+	      /* If buffer format is default, then we can shortcut and just
+		 compare the text directly, byte by byte.  Otherwise, we
+		 need to go character by character. */
+	      if (fmt != FORMAT_DEFAULT)
 		{
-		  REGEX_PREFETCH ();
-		  if (*d++ != *p++) goto fail;
+		  do
+		    {
+		      Bytecount pat_len;
+
+		      REGEX_PREFETCH ();
+		      if (charptr_emchar_fmt (d, fmt, lispobj) !=
+			  charptr_emchar (p))
+			goto fail;
+
+		      pat_len = charptr_emchar_len (p);
+		      p += pat_len;
+		      INC_CHARPTR_FMT (d, fmt);
+		  
+		      mcnt -= pat_len;
+		    }
+		  while (mcnt > 0);
 		}
-	      while (--mcnt);
+	      else
+#endif
+		{
+		  do
+		    {
+		      REGEX_PREFETCH ();
+		      if (*d++ != *p++) goto fail;
+		      mcnt--;
+		    }
+		  while (mcnt > 0);
+		}
 	    }
 	  SET_REGS_MATCHED ();
           break;
@@ -5004,13 +5037,16 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
           REGEX_PREFETCH ();
 
-          if ((!(bufp->syntax & RE_DOT_NEWLINE) && TRANSLATE (*d) == '\n')
-              || (bufp->syntax & RE_DOT_NOT_NULL && TRANSLATE (*d) == '\000'))
+          if ((!(bufp->syntax & RE_DOT_NEWLINE) &&
+	       RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj)) == '\n')
+              || (bufp->syntax & RE_DOT_NOT_NULL &&
+		  RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj)) ==
+		  '\000'))
 	    goto fail;
 
           SET_REGS_MATCHED ();
           DEBUG_PRINT2 ("  Matched `%d'.\n", *d);
-	  INC_CHARPTR (d); /* XEmacs change */
+	  INC_CHARPTR_FMT (d, fmt); /* XEmacs change */
 	  break;
 
 
@@ -5023,7 +5059,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             DEBUG_PRINT2 ("EXECUTING charset%s.\n", not_p ? "_not" : "");
 
 	    REGEX_PREFETCH ();
-	    c = TRANSLATE (*d); /* The character to match.  */
+	    c = charptr_emchar_fmt (d, fmt, lispobj);
+	    c = RE_TRANSLATE (c); /* The character to match.  */
 
             /* Cast to `unsigned int' instead of `unsigned char' in case the
                bit list is a full 32 bytes long.  */
@@ -5036,7 +5073,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    if (!not_p) goto fail;
 
 	    SET_REGS_MATCHED ();
-            INC_CHARPTR (d); /* XEmacs change */
+            INC_CHARPTR_FMT (d, fmt); /* XEmacs change */
 	    break;
 	  }
 
@@ -5050,8 +5087,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             DEBUG_PRINT2 ("EXECUTING charset_mule%s.\n", not_p ? "_not" : "");
 
 	    REGEX_PREFETCH ();
-	    c = charptr_emchar ((const Intbyte *) d);
-	    c = TRANSLATE_EXTENDED_UNSAFE (c); /* The character to match.  */
+	    c = charptr_emchar_fmt (d, fmt, lispobj);
+	    c = RE_TRANSLATE (c); /* The character to match.  */
 
 	    if (EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
 	      not_p = !not_p;
@@ -5061,7 +5098,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    if (!not_p) goto fail;
 
 	    SET_REGS_MATCHED ();
-	    INC_CHARPTR (d);
+	    INC_CHARPTR_FMT (d, fmt);
 	    break;
 	  }
 #endif /* MULE */
@@ -5318,8 +5355,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		/* Compare that many; failure if mismatch, else move
                    past them.  */
 		if (TRANSLATE_P (translate)
-                    ? bcmp_translate ((unsigned char *) d,
-				      (unsigned char *) d2, mcnt, translate)
+                    ? bcmp_translate (d, d2, mcnt, translate
+#ifdef emacs
+				      , fmt, lispobj
+#endif
+				      )
                     : memcmp (d, d2, mcnt))
 		  goto fail;
 		d += mcnt, d2 += mcnt;
@@ -5341,10 +5381,14 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             {
               if (!bufp->not_bol) break;
             }
-          else if (d[-1] == '\n' && bufp->newline_anchor)
-            {
-              break;
-            }
+          else
+	    {
+	      re_char *d2 = d;
+	      DEC_CHARPTR (d2);
+	      if (charptr_emchar_ascii_fmt (d2, fmt, lispobj) == '\n' &&
+		  bufp->newline_anchor)
+		break;
+	    }
           /* In all other cases, we fail.  */
           goto fail;
 
@@ -5359,7 +5403,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             }
 
           /* We have to ``prefetch'' the next character.  */
-          else if ((d == end1 ? *string2 : *d) == '\n'
+          else if ((d == end1 ?
+		    charptr_emchar_ascii_fmt (string2, fmt, lispobj) :
+		    charptr_emchar_ascii_fmt (d, fmt, lispobj)) == '\n'
                    && bufp->newline_anchor)
             {
               break;
@@ -5744,29 +5790,29 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		re_char *d_before = POS_BEFORE_GAP_UNSAFE (d);
 		re_char *d_after = POS_AFTER_GAP_UNSAFE (d);
 
-		/* emch1 is the character before d, syn1 is the syntax of emch1,
-		   emch2 is the character at d, and syn2 is the syntax of emch2. */
+		/* emch1 is the character before d, syn1 is the syntax of
+		   emch1, emch2 is the character at d, and syn2 is the
+		   syntax of emch2. */
 		Emchar emch1, emch2;
 		int syn1, syn2;
 #ifdef emacs
-		int pos_before;
+		Charxpos pos_before;
 #endif
 
-		DEC_CHARPTR (d_before);
-		emch1 = charptr_emchar (d_before);
-		emch2 = charptr_emchar (d_after);
+		DEC_CHARPTR_FMT (d_before, fmt);
+		emch1 = charptr_emchar_fmt (d_before, fmt, lispobj);
+		emch2 = charptr_emchar_fmt (d_after, fmt, lispobj);
 
 #ifdef emacs
-		pos_before = SYNTAX_CACHE_BYTE_TO_CHAR (PTR_TO_OFFSET (d)) - 1;
-		UPDATE_SYNTAX_CACHE (pos_before);
+		pos_before =
+		  offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)) - 1;
+		UPDATE_SYNTAX_CACHE (scache, pos_before);
 #endif
-		syn1 = SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-					  emch1);
+		syn1 = SYNTAX_FROM_CACHE (scache, emch1);
 #ifdef emacs
-		UPDATE_SYNTAX_CACHE_FORWARD (pos_before + 1);
+		UPDATE_SYNTAX_CACHE_FORWARD (scache, pos_before + 1);
 #endif
-		syn2 = SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-					  emch2);
+		syn2 = SYNTAX_FROM_CACHE (scache, emch2);
 
 		result = ((syn1 == Sword) != (syn2 == Sword));
 	      }
@@ -5792,24 +5838,22 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 	      */
 	    re_char *dtmp = POS_AFTER_GAP_UNSAFE (d);
-	    Emchar emch = charptr_emchar (dtmp);
+	    Emchar emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
-	    int charpos = SYNTAX_CACHE_BYTE_TO_CHAR (PTR_TO_OFFSET (d));
-	    UPDATE_SYNTAX_CACHE (charpos);
+	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
+	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
-	    if (SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-				   emch) != Sword)
+	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
 	      goto fail;
 	    if (AT_STRINGS_BEG (d))
 	      break;
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
-	    DEC_CHARPTR (dtmp);
-	    emch = charptr_emchar (dtmp);
+	    DEC_CHARPTR_FMT (dtmp, fmt);
+	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
-	    UPDATE_SYNTAX_CACHE_BACKWARD (charpos - 1);
+	    UPDATE_SYNTAX_CACHE_BACKWARD (scache, charpos - 1);
 #endif
-	    if (SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-				   emch) != Sword)
+	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
 	      break;
 	    goto fail;
 	  }
@@ -5830,24 +5874,22 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    re_char *dtmp;
 	    Emchar emch;
 #ifdef emacs
-	    int charpos = SYNTAX_CACHE_BYTE_TO_CHAR (PTR_TO_OFFSET (d)) - 1;
-	    UPDATE_SYNTAX_CACHE (charpos);
+	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
+	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
-	    DEC_CHARPTR (dtmp);
-	    emch = charptr_emchar (dtmp);
-	    if (SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-				   emch) != Sword)
+	    DEC_CHARPTR_FMT (dtmp, fmt);
+	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
+	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
 	      goto fail;
 	    if (AT_STRINGS_END (d))
 	      break;
 	    dtmp = POS_AFTER_GAP_UNSAFE (d);
-	    emch = charptr_emchar (dtmp);
+	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
-	    UPDATE_SYNTAX_CACHE_FORWARD (charpos + 1);
+	    UPDATE_SYNTAX_CACHE_FORWARD (scache, charpos + 1);
 #endif
-	    if (SYNTAX_FROM_CACHE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
-				   emch) != Sword)
+	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
 	      break;
 	    goto fail;
 	  }
@@ -5855,35 +5897,27 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
   	case before_dot:
           DEBUG_PRINT1 ("EXECUTING before_dot.\n");
- 	  if (! (NILP (regex_match_object) || BUFFERP (regex_match_object))
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  >= BUF_PT (regex_emacs_buffer)))
+ 	  if (!BUFFERP (lispobj)
+	      || (BUF_PTR_BYTE_POS (XBUFFER (lispobj), (unsigned char *) d)
+		  >= BUF_PT (XBUFFER (lispobj))))
   	    goto fail;
   	  break;
 
   	case at_dot:
           DEBUG_PRINT1 ("EXECUTING at_dot.\n");
- 	  if (! (NILP (regex_match_object) || BUFFERP (regex_match_object))
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  != BUF_PT (regex_emacs_buffer)))
+ 	  if (!BUFFERP (lispobj)
+	      || (BUF_PTR_BYTE_POS (XBUFFER (lispobj), (unsigned char *) d)
+		  != BUF_PT (XBUFFER (lispobj))))
   	    goto fail;
   	  break;
 
   	case after_dot:
           DEBUG_PRINT1 ("EXECUTING after_dot.\n");
-          if (! (NILP (regex_match_object) || BUFFERP (regex_match_object))
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  <= BUF_PT (regex_emacs_buffer)))
+ 	  if (!BUFFERP (lispobj)
+	      || (BUF_PTR_BYTE_POS (XBUFFER (lispobj), (unsigned char *) d)
+		  <= BUF_PT (XBUFFER (lispobj))))
   	    goto fail;
   	  break;
-#if 0 /* not emacs19 */
-	case at_dot:
-          DEBUG_PRINT1 ("EXECUTING at_dot.\n");
-	  if (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d) + 1
-	      != BUF_PT (regex_emacs_buffer))
-	    goto fail;
-	  break;
-#endif /* not emacs19 */
 
 	case syntaxspec:
           DEBUG_PRINT2 ("EXECUTING syntaxspec %d.\n", mcnt);
@@ -5901,17 +5935,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    Emchar emch;
 
 	    REGEX_PREFETCH ();
-#ifdef emacs
-	    {
-	      int charpos = SYNTAX_CACHE_BYTE_TO_CHAR (PTR_TO_OFFSET (d));
-	      UPDATE_SYNTAX_CACHE (charpos);
-	    }
-#endif
+	    UPDATE_SYNTAX_CACHE
+	      (scache, offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)));
 
-	    emch = charptr_emchar ((const Intbyte *) d);
-	    matches = (SYNTAX_FROM_CACHE (regex_emacs_buffer->mirror_syntax_table,
-			emch) == (enum syntaxcode) mcnt);
-	    INC_CHARPTR (d);
+	    emch = charptr_emchar_fmt (d, fmt, lispobj);
+	    matches = (SYNTAX_FROM_CACHE (scache, emch) ==
+		       (enum syntaxcode) mcnt);
+	    INC_CHARPTR_FMT (d, fmt);
 	    if (matches != should_succeed)
 	      goto fail;
 	    SET_REGS_MATCHED ();
@@ -5940,10 +5970,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 	    mcnt = *p++;
 	    REGEX_PREFETCH ();
-	    emch = charptr_emchar ((const Intbyte *) d);
-	    INC_CHARPTR (d);
-	    if (check_category_char(emch, regex_emacs_buffer->category_table,
-				    mcnt, should_succeed))
+	    emch = charptr_emchar_fmt (d, fmt, lispobj);
+	    INC_CHARPTR_FMT (d, fmt);
+	    if (check_category_char (emch, BUFFER_CATEGORY_TABLE (lispbuf),
+				     mcnt, should_succeed))
 	      goto fail;
 	    SET_REGS_MATCHED ();
 	  }
@@ -5958,7 +5988,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	case wordchar:
           DEBUG_PRINT1 ("EXECUTING non-Emacs wordchar.\n");
 	  REGEX_PREFETCH ();
-          if (!WORDCHAR_P_UNSAFE ((int) (*d)))
+          if (!WORDCHAR_P ((int) (*d)))
             goto fail;
 	  SET_REGS_MATCHED ();
           d++;
@@ -5967,7 +5997,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	case notwordchar:
           DEBUG_PRINT1 ("EXECUTING non-Emacs notwordchar.\n");
 	  REGEX_PREFETCH ();
-          if (!WORDCHAR_P_UNSAFE ((int) (*d)))
+          if (!WORDCHAR_P ((int) (*d)))
             goto fail;
           SET_REGS_MATCHED ();
           d++;
@@ -6034,7 +6064,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
   FREE_VARIABLES ();
 
-  RESTORE_IN_MATCH_FLAG;
   return -1;         			/* Failure to match.  */
 } /* re_match_2 */
 
@@ -6284,30 +6313,34 @@ common_op_match_null_string_p (unsigned char **p, unsigned char *end,
 
 static int
 bcmp_translate (re_char *s1, re_char *s2,
-		REGISTER int len, RE_TRANSLATE_TYPE translate)
+		REGISTER int len, RE_TRANSLATE_TYPE translate
+#ifdef emacs
+		, Internal_Format fmt, Lisp_Object lispobj
+#endif
+		)
 {
-  REGISTER const unsigned char *p1 = s1, *p2 = s2;
+  REGISTER re_char *p1 = s1, *p2 = s2;
 #ifdef MULE
-  const unsigned char *p1_end = s1 + len;
-  const unsigned char *p2_end = s2 + len;
+  re_char *p1_end = s1 + len;
+  re_char *p2_end = s2 + len;
 
   while (p1 != p1_end && p2 != p2_end)
     {
       Emchar p1_ch, p2_ch;
 
-      p1_ch = charptr_emchar (p1);
-      p2_ch = charptr_emchar (p2);
+      p1_ch = charptr_emchar_fmt (p1, fmt, lispobj);
+      p2_ch = charptr_emchar_fmt (p2, fmt, lispobj);
 
-      if (RE_TRANSLATE (p1_ch)
-	  != RE_TRANSLATE (p2_ch))
+      if (RE_TRANSLATE_1 (p1_ch)
+	  != RE_TRANSLATE_1 (p2_ch))
 	return 1;
-      INC_CHARPTR (p1);
-      INC_CHARPTR (p2);
+      INC_CHARPTR_FMT (p1, fmt);
+      INC_CHARPTR_FMT (p2, fmt);
     }
 #else /* not MULE */
   while (len)
     {
-      if (RE_TRANSLATE (*p1++) != RE_TRANSLATE (*p2++)) return 1;
+      if (RE_TRANSLATE_1 (*p1++) != RE_TRANSLATE_1 (*p2++)) return 1;
       len--;
     }
 #endif /* MULE */
@@ -6343,7 +6376,8 @@ re_compile_pattern (const char *pattern, int length,
   /* Match anchors at newline.  */
   bufp->newline_anchor = 1;
 
-  ret = regex_compile ((unsigned char *) pattern, length, re_syntax_options, bufp);
+  ret = regex_compile ((unsigned char *) pattern, length, re_syntax_options,
+		       bufp);
 
   if (!ret)
     return NULL;
@@ -6388,7 +6422,8 @@ re_comp (const char *s)
   /* Match anchors at newlines.  */
   re_comp_buf.newline_anchor = 1;
 
-  ret = regex_compile ((unsigned char *)s, strlen (s), re_syntax_options, &re_comp_buf);
+  ret = regex_compile ((unsigned char *)s, strlen (s), re_syntax_options,
+		       &re_comp_buf);
 
   if (!ret)
     return NULL;
@@ -6640,10 +6675,3 @@ regfree (regex_t *preg)
 
 #endif /* not emacs  */
 
-/*
-Local variables:
-make-backup-files: t
-version-control: t
-trim-versions-without-asking: nil
-End:
-*/

@@ -147,7 +147,7 @@ separate_textual_runs (unsigned char *text_storage,
       int dimension;
       int graphic;
 
-      BREAKUP_CHAR (ch, charset, byte1, byte2);
+      BREAKUP_EMCHAR (ch, charset, byte1, byte2);
       dimension = XCHARSET_DIMENSION (charset);
       graphic   = XCHARSET_GRAPHIC   (charset);
 
@@ -345,7 +345,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
   findex = rb->findex;
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
-    charset = CHAR_CHARSET (rb->object.chr.ch);
+    charset = emchar_charset (rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -357,7 +357,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, CHAR_CHARSET (rb->object.chr.ch)))
+	  && EQ (charset, emchar_charset (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -380,7 +380,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = CHAR_CHARSET (rb->object.chr.ch);
+	      charset = emchar_charset (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

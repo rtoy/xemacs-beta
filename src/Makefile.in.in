@@ -600,7 +600,7 @@ run-temacs: ${EXE_TARGET}
 
 ## We have automated tests!!
 testdir = ${srcdir}/../tests/automated
-batch_test_emacs = ${batch} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
+batch_test_emacs = ${batch_packages} -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
 
 .PHONY: check check-temacs
 check:

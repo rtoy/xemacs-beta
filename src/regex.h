@@ -2,6 +2,7 @@
    expression library, version 0.12.
 
    Copyright (C) 1985, 89, 90, 91, 92, 93, 95 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,8 +26,16 @@
 
 #ifdef emacs
 #define RE_TRANSLATE_TYPE Lisp_Object
+#define RE_LISP_SHORT_CONTEXT_ARGS_DECL , Lisp_Object lispobj, struct buffer *lispbuf
+#define RE_LISP_SHORT_CONTEXT_ARGS , lispobj, lispbuf
+#define RE_LISP_CONTEXT_ARGS_DECL , Lisp_Object lispobj, struct buffer *lispbuf, struct syntax_cache *scache
+#define RE_LISP_CONTEXT_ARGS , lispobj, lispbuf, scache
 #else
 #define RE_TRANSLATE_TYPE char *
+#define RE_LISP_SHORT_CONTEXT_ARGS_DECL
+#define RE_LISP_SHORT_CONTEXT_ARGS
+#define RE_LISP_CONTEXT_ARGS_DECL
+#define RE_LISP_CONTEXT_ARGS
 #define Elemcount ssize_t
 #define Bytecount ssize_t
 #endif /* emacs */
@@ -448,7 +457,8 @@ const char *re_compile_pattern (const char *pattern, int length,
 /* Compile a fastmap for the compiled pattern in BUFFER; used to
    accelerate searches.  Return 0 if successful and -2 if was an
    internal error.  */
-int re_compile_fastmap (struct re_pattern_buffer *buffer);
+int re_compile_fastmap (struct re_pattern_buffer *buffer
+			RE_LISP_SHORT_CONTEXT_ARGS_DECL);
 
 
 /* Search in the string STRING (with length LENGTH) for the pattern
@@ -458,27 +468,31 @@ int re_compile_fastmap (struct re_pattern_buffer *buffer);
    information in REGS (if REGS and BUFFER->no_sub are nonzero).  */
 int re_search (struct re_pattern_buffer *buffer, const char *string,
 	       int length, int start, int range,
-	       struct re_registers *regs);
+	       struct re_registers *regs RE_LISP_CONTEXT_ARGS_DECL);
 
 
 /* Like `re_search', but search in the concatenation of STRING1 and
    STRING2.  Also, stop searching at index START + STOP.  */
 int re_search_2 (struct re_pattern_buffer *buffer, const char *string1,
 		 int length1, const char *string2, int length2, int start,
-		 int range, struct re_registers *regs, int stop);
+		 int range, struct re_registers *regs, int stop
+		 RE_LISP_CONTEXT_ARGS_DECL);
 
+#ifndef emacs /* never used by XEmacs */
 
 /* Like `re_search', but return how many characters in STRING the regexp
    in BUFFER matched, starting at position START.  */
 int re_match (struct re_pattern_buffer *buffer, const char *string,
-	      int length, int start, struct re_registers *regs);
+	      int length, int start, struct re_registers *regs
+	      RE_LISP_CONTEXT_ARGS_DECL);
 
+#endif /* not emacs */
 
 /* Relates to `re_match' as `re_search_2' relates to `re_search'.  */
 int re_match_2 (struct re_pattern_buffer *buffer, const char *string1,
 		int length1, const char *string2, int length2,
-		int start, struct re_registers *regs, int stop);
-
+		int start, struct re_registers *regs, int stop
+		RE_LISP_CONTEXT_ARGS_DECL);
 
 /* Set REGS to hold NUM_REGS registers, storing them in STARTS and
    ENDS.  Subsequent matches using BUFFER and REGS will use this memory

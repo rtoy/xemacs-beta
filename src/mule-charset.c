@@ -591,7 +591,7 @@ character set.  Recognized properties are:
   else
     type = (chars == 94) ? CHARSET_TYPE_94X94 : CHARSET_TYPE_96X96;
 
-  existing_charset = CHARSET_BY_ATTRIBUTES (type, final, direction);
+  existing_charset = charset_by_attributes (type, final, direction);
 
   if (!NILP (existing_charset) && !XCHARSET (existing_charset)->temporary)
     invalid_argument
@@ -632,7 +632,7 @@ character set.  Recognized properties are:
 
   {
     Lisp_Object revdircs =
-      CHARSET_BY_ATTRIBUTES (type, final,
+      charset_by_attributes (type, final,
 			     direction == CHARSET_LEFT_TO_RIGHT ?
 			     CHARSET_RIGHT_TO_LEFT : CHARSET_LEFT_TO_RIGHT);
     if (!NILP (revdircs))
@@ -752,12 +752,12 @@ will be returned if character sets exist for both directions).
 
   if (di == -1)
     {
-      obj = CHARSET_BY_ATTRIBUTES (type, fi, CHARSET_LEFT_TO_RIGHT);
+      obj = charset_by_attributes (type, fi, CHARSET_LEFT_TO_RIGHT);
       if (NILP (obj))
-	obj = CHARSET_BY_ATTRIBUTES (type, fi, CHARSET_RIGHT_TO_LEFT);
+	obj = charset_by_attributes (type, fi, CHARSET_RIGHT_TO_LEFT);
     }
   else
-    obj = CHARSET_BY_ATTRIBUTES (type, fi, di);
+    obj = charset_by_attributes (type, fi, di);
 
   if (CHARSETP (obj))
     return XCHARSET_NAME (obj);

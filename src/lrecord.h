@@ -843,10 +843,10 @@ and DEFINE_LRECORD_IMPLEMENTATION.
 
 # define DECLARE_LRECORD(c_name, structtype)				  \
 extern const struct lrecord_implementation lrecord_##c_name;		  \
-INLINE_HEADER structtype *						  \
-error_check_##c_name (Lisp_Object obj, const char *file, int line);	  \
-INLINE_HEADER structtype *						  \
+DECLARE_INLINE_HEADER (							  \
+structtype *								  \
 error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+)									  \
 {									  \
   assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
   return (structtype *) XPNTR (obj);					  \
@@ -856,10 +856,10 @@ extern Lisp_Object Q##c_name##p
 # define DECLARE_EXTERNAL_LRECORD(c_name, structtype)			  \
 extern int lrecord_type_##c_name;					  \
 extern struct lrecord_implementation lrecord_##c_name;			  \
-INLINE_HEADER structtype *						  \
-error_check_##c_name (Lisp_Object obj, const char *file, int line);	  \
-INLINE_HEADER structtype *						  \
+DECLARE_INLINE_HEADER (							  \
+structtype *								  \
 error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
+)									  \
 {									  \
   assert_at_line (RECORD_TYPEP (obj, lrecord_type_##c_name), file, line); \
   return (structtype *) XPNTR (obj);					  \
@@ -867,10 +867,10 @@ error_check_##c_name (Lisp_Object obj, const char *file, int line)	  \
 extern Lisp_Object Q##c_name##p
 
 # define DECLARE_NONRECORD(c_name, type_enum, structtype)		\
-INLINE_HEADER structtype *						\
-error_check_##c_name (Lisp_Object obj, const char *file, int line);	\
-INLINE_HEADER structtype *						\
+DECLARE_INLINE_HEADER (							\
+structtype *								\
 error_check_##c_name (Lisp_Object obj, const char *file, int line)	\
+)									\
 {									\
   assert_at_line (XTYPE (obj) == type_enum, file, line);		\
   return (structtype *) XPNTR (obj);					\
@@ -882,11 +882,11 @@ extern Lisp_Object Q##c_name##p
 # define XNONRECORD(x, c_name, type_enum, structtype) \
   error_check_##c_name (x, __FILE__, __LINE__)
 
-INLINE_HEADER Lisp_Object wrap_record_1 (const void *ptr, enum lrecord_type ty,
-					 const char *file, int line);
-INLINE_HEADER Lisp_Object
+DECLARE_INLINE_HEADER (
+Lisp_Object
 wrap_record_1 (const void *ptr, enum lrecord_type ty, const char *file,
 	       int line)
+)
 {
   Lisp_Object obj = wrap_pointer_1 (ptr);
 
@@ -958,6 +958,9 @@ extern Lisp_Object Q##c_name##p
  if (XTYPE (x) != lisp_enum)				\
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
+
+/* Various ways of allocating lcrecords.  All bytes (except lcrecord
+   header) are zeroed in returned structure. */
 
 void *alloc_lcrecord (Bytecount size,
 		      const struct lrecord_implementation *);

@@ -209,8 +209,9 @@ emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (emacs_event));
   if (CONSOLE_GTK_P (XCONSOLE (console)))
-    write_c_string (gtk_event_name (emacs_event->event.magic.underlying_gdk_event.type),
-		    pstream);
+    write_c_string
+      (pstream,
+       gtk_event_name (emacs_event->event.magic.underlying_gdk_event.type));
 }
 
 static int

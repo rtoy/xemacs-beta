@@ -297,7 +297,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
 	/* Optimize for the common ASCII case */
 	while (ptr <= end)
 	  {
-	    if (BYTE_ASCII_P (*ptr))
+	    if (byte_ascii_p (*ptr))
 	      {
 		ptr++;
 		continue;
@@ -1322,7 +1322,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   /* Optimize for the common ASCII case */
   for (ptr = data, end = ptr + bytes; ptr <= end; )
     {
-      if (BYTE_ASCII_P (*ptr))
+      if (byte_ascii_p (*ptr))
 	{
 	  ptr++;
 	  continue;

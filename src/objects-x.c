@@ -834,17 +834,17 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 	   atom == DEVICE_XATOM_SPACING (d) ||
 	   atom == DEVICE_XATOM_CHARSET_REGISTRY (d) ||
 	   atom == DEVICE_XATOM_CHARSET_ENCODING (d) ||
-	   !intbyte_strcmp (name_str, "CHARSET_COLLECTIONS") ||
-	   !intbyte_strcmp (name_str, "FONTNAME_REGISTRY") ||
-	   !intbyte_strcmp (name_str, "CLASSIFICATION") ||
-	   !intbyte_strcmp (name_str, "COPYRIGHT") ||
-	   !intbyte_strcmp (name_str, "DEVICE_FONT_NAME") ||
-	   !intbyte_strcmp (name_str, "FULL_NAME") ||
-	   !intbyte_strcmp (name_str, "MONOSPACED") ||
-	   !intbyte_strcmp (name_str, "QUALITY") ||
-	   !intbyte_strcmp (name_str, "RELATIVE_SET") ||
-	   !intbyte_strcmp (name_str, "RELATIVE_WEIGHT") ||
-	   !intbyte_strcmp (name_str, "STYLE")))
+	   !qxestrcmp_c (name_str, "CHARSET_COLLECTIONS") ||
+	   !qxestrcmp_c (name_str, "FONTNAME_REGISTRY") ||
+	   !qxestrcmp_c (name_str, "CLASSIFICATION") ||
+	   !qxestrcmp_c (name_str, "COPYRIGHT") ||
+	   !qxestrcmp_c (name_str, "DEVICE_FONT_NAME") ||
+	   !qxestrcmp_c (name_str, "FULL_NAME") ||
+	   !qxestrcmp_c (name_str, "MONOSPACED") ||
+	   !qxestrcmp_c (name_str, "QUALITY") ||
+	   !qxestrcmp_c (name_str, "RELATIVE_SET") ||
+	   !qxestrcmp_c (name_str, "RELATIVE_WEIGHT") ||
+	   !qxestrcmp_c (name_str, "STYLE")))
 	{
 	  Extbyte *val_str = XGetAtomName (dpy, props [i].card32);
 

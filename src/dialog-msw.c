@@ -194,7 +194,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
     case WM_DESTROY:
       {
 	Lisp_Object data;
-	VOID_TO_LISP (data, qxeGetWindowLong (hwnd, DWL_USER));
+	data = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, DWL_USER));
 	Vdialog_data_list = delq_no_quit (data, Vdialog_data_list);
       }
       break;
@@ -204,7 +204,7 @@ dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
 	Lisp_Object fn, arg, data;
 	struct mswindows_dialog_id *did;
 
-	VOID_TO_LISP (data, qxeGetWindowLong (hwnd, DWL_USER));
+	data = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, DWL_USER));
 	did = XMSWINDOWS_DIALOG_ID (data);
 	if (w_param != IDCANCEL) /* user pressed escape */
 	  {

@@ -46,7 +46,7 @@ enum gutter_pos
 
 /* Iterate over all possible gutter positions */
 #define GUTTER_POS_LOOP(var) \
-for (var = (enum gutter_pos) 0; var < 4; var = (enum gutter_pos) (var + 1))
+  for (var = (enum gutter_pos) 0; var < 4; var = (enum gutter_pos) (var + 1))
 
 extern Lisp_Object Qgutter;
 

@@ -1,6 +1,6 @@
 /* Fundamental definitions for XEmacs Lisp interpreter -- non-union objects.
    Copyright (C) 1985, 1986, 1987, 1992, 1993 Free Software Foundation, Inc.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -79,16 +79,30 @@ Boston, MA 02111-1307, USA.  */
 typedef EMACS_INT Lisp_Object;
 
 #define Lisp_Type_Int_Bit (Lisp_Type_Int_Even & Lisp_Type_Int_Odd)
-#define wrap_pointer_1(ptr) ((Lisp_Object) (ptr))
-#define make_int(x) ((Lisp_Object) (((x) << INT_GCBITS) | Lisp_Type_Int_Bit))
-#define volatile_make_int(x) make_int (x)
-#define make_char(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
 #define VALMASK (((1UL << VALBITS) - 1UL) << GCTYPEBITS)
 #define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) & ~VALMASK))
 #define XPNTRVAL(x) (x) /* This depends on Lisp_Type_Record == 0 */
 #define XCHARVAL(x) ((x) >> GCBITS)
 #define XREALINT(x) ((x) >> INT_GCBITS)
 #define XUINT(x) ((EMACS_UINT)(x) >> INT_GCBITS)
+
+#define wrap_pointer_1(ptr) ((Lisp_Object) (ptr))
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+make_int_verify (EMACS_INT val)
+)
+{
+  Lisp_Object obj = (Lisp_Object) ((val << INT_GCBITS) | Lisp_Type_Int_Bit);
+  type_checking_assert (XREALINT (obj) == val);
+  return obj;
+}
+
+#define make_int(x) ((Lisp_Object) (((x) << INT_GCBITS) | Lisp_Type_Int_Bit))
+
+#define volatile_make_int(x) make_int (x)
+#define make_char(x) ((Lisp_Object) (((x) << GCBITS) | Lisp_Type_Char))
+
 #define INTP(x) ((EMACS_UINT)(x) & Lisp_Type_Int_Bit)
 #define INT_PLUS(x,y)  ((x)+(y)-Lisp_Type_Int_Bit)
 #define INT_MINUS(x,y) ((x)-(y)+Lisp_Type_Int_Bit)
@@ -101,10 +115,8 @@ typedef EMACS_INT Lisp_Object;
 
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */
-#define VOID_TO_LISP(larg,varg) ((void) ((larg) = ((Lisp_Object) (varg))))
-#define CVOID_TO_LISP VOID_TO_LISP
+#define VOID_TO_LISP(varg) ((Lisp_Object) (varg))
 #define LISP_TO_VOID(larg) ((void *) (larg))
-#define LISP_TO_CVOID(larg) ((const void *) (larg))
 
 /* Convert a Lisp_Object into something that can't be used as an
    lvalue.  Useful for type-checking. */

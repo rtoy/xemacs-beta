@@ -448,7 +448,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       widget_value *wv;
 
       assert (hack_wv->type == INCREMENTAL_TYPE);
-      VOID_TO_LISP (submenu_desc, hack_wv->call_data);
+      submenu_desc = VOID_TO_LISP (hack_wv->call_data);
 
       /*
        * #### Fix the menu code so this isn't necessary.
@@ -994,7 +994,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
 	i++;
 	write_fmt_string (Qexternal_debugging_output, "OPERATE (%d): ",i);
 	print_internal (t, Qexternal_debugging_output, 1);
-	write_c_string ("\n", Qexternal_debugging_output);
+	write_c_string (Qexternal_debugging_output, "\n");
 	t = XEVENT_NEXT (t);
       }
   }
@@ -1027,7 +1027,7 @@ command_builder_operate_menu_accelerator (struct command_builder *builder)
   while (entries)
     {
       Lisp_Object accel;
-      VOID_TO_LISP (accel, entries->accel);
+      accel = VOID_TO_LISP (entries->accel);
       if (entries->name && !NILP (accel))
 	{
 	  if (event_matches_key_specifier_p (XEVENT (evee), accel))
@@ -1260,7 +1260,7 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
       while (val)
 	{
 	  Lisp_Object accel;
-	  VOID_TO_LISP (accel, val->accel);
+	  accel = VOID_TO_LISP (val->accel);
 	  if (val->name && !NILP (accel))
 	    {
 	      Fsetcar (last, accel);

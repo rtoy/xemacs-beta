@@ -53,8 +53,6 @@ DECLARE_LRECORD (process, Lisp_Process);
     dead_wrong_type_argument (Qprocess_live_p, (x));	\
 } while (0)
 
-#ifdef emacs
-
 EXFUN (Fprocess_kill_without_query, 2);
 EXFUN (Fprocess_id, 1);
 
@@ -111,9 +109,8 @@ void kick_status_notify (void);
 
 void deactivate_process (Lisp_Object proc);
 
-void
-child_setup (int in, int out, int err,
-	     Intbyte **new_argv, Lisp_Object current_dir);
+void child_setup (int in, int out, int err,
+		  Intbyte **new_argv, Lisp_Object current_dir);
 
 Charcount read_process_output (Lisp_Object proc);
 
@@ -134,7 +131,5 @@ Lisp_Object canonicalize_host_name (Lisp_Object host);
 #ifndef EXEC_SUFFIXES
 #define EXEC_SUFFIXES ""
 #endif
-
-#endif /* emacs */
 
 #endif /* INCLUDED_process_h_ */

@@ -248,12 +248,11 @@ struct lstream
   ((lstr)->imp == lstream_##type)
 
 #ifdef ERROR_CHECK_TYPES
-INLINE_HEADER struct lstream *
-error_check_lstream_type (struct lstream *stream,
-			  const Lstream_implementation *imp);
-INLINE_HEADER struct lstream *
+DECLARE_INLINE_HEADER (
+struct lstream *
 error_check_lstream_type (struct lstream *stream,
 			  const Lstream_implementation *imp)
+)
 {
   assert (stream->imp == imp);
   return stream;
@@ -361,12 +360,13 @@ void Lstream_unset_character_mode (Lstream *lstr);
 
 #ifdef MULE
 
-INLINE_HEADER Emchar Lstream_get_emchar (Lstream *stream);
-INLINE_HEADER Emchar
+DECLARE_INLINE_HEADER (
+Emchar
 Lstream_get_emchar (Lstream *stream)
+)
 {
   int c = Lstream_getc (stream);
-  return (c < 0x80		/* c == EOF || BYTE_ASCII_P (c) */
+  return (c < 0x80		/* c == EOF || byte_ascii_p (c) */
 	  ? (Emchar) c
 	  : Lstream_get_emchar_1 (stream, c));
 }
@@ -374,20 +374,22 @@ Lstream_get_emchar (Lstream *stream)
 /* Write an Emchar to a stream.  Return value is 0 for success, -1 for
    failure. */
 
-INLINE_HEADER int Lstream_put_emchar (Lstream *stream, Emchar ch);
-INLINE_HEADER int
+DECLARE_INLINE_HEADER (
+int
 Lstream_put_emchar (Lstream *stream, Emchar ch)
+)
 {
-  return CHAR_ASCII_P (ch) ?
+  return emchar_ascii_p (ch) ?
     Lstream_putc (stream, ch) :
     Lstream_fput_emchar (stream, ch);
 }
 
-INLINE_HEADER void Lstream_unget_emchar (Lstream *stream, Emchar ch);
-INLINE_HEADER void
+DECLARE_INLINE_HEADER (
+void
 Lstream_unget_emchar (Lstream *stream, Emchar ch)
+)
 {
-  if (CHAR_ASCII_P (ch))
+  if (emchar_ascii_p (ch))
     Lstream_ungetc (stream, ch);
   else
     Lstream_funget_emchar (stream, ch);

@@ -167,14 +167,15 @@ print_process (Lisp_Object object, Lisp_Object printcharfun, int escapeflag)
   else
     {
       int netp = network_connection_p (object);
-      write_c_string ((netp ? GETTEXT ("#<network connection ") :
-		       GETTEXT ("#<process ")), printcharfun);
+      write_c_string (printcharfun,
+		      netp ? GETTEXT ("#<network connection ") :
+		      GETTEXT ("#<process "));
       print_internal (process->name, printcharfun, 1);
-      write_c_string ((netp ? " " : " pid "), printcharfun);
+      write_c_string (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
       write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
-      write_c_string (">", printcharfun);
+      write_c_string (printcharfun, ">");
     }
 }
 
@@ -233,7 +234,7 @@ get_process_from_usid (USID usid)
   if (gethash ((const void*)usid, usid_to_process, &vval))
     {
       Lisp_Object process;
-      CVOID_TO_LISP (process, vval);
+      process = VOID_TO_LISP (vval);
       return XPROCESS (process);
     }
   else
@@ -640,9 +641,9 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 #endif /* 0 */
 
   /* If program file name is not absolute, search our path for it */
-  if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
+  if (!IS_DIRECTORY_SEP (string_byte (program, 0))
       && !(XSTRING_LENGTH (program) > 1
-	   && IS_DEVICE_SEP (XSTRING_BYTE (program, 1))))
+	   && IS_DEVICE_SEP (string_byte (program, 1))))
     {
       struct gcpro ngcpro1;
 
@@ -1390,7 +1391,7 @@ status_message (Lisp_Process *p)
       else
 	string2 = build_string ("\n");
       set_string_char (string, 0,
-		       DOWNCASE (0, XSTRING_CHAR (string, 0)));
+		       DOWNCASE (0, string_emchar (string, 0)));
       return concat2 (string, string2);
     }
   else if (EQ (symbol, Qexit))
@@ -1521,8 +1522,8 @@ status_notify (void)
 	      else
 		BUF_SET_PT (current_buffer, BUF_ZV (current_buffer));
 	      if (BUF_PT (current_buffer) <= opoint)
-		opoint += (XSTRING_CHAR_LENGTH (msg)
-                           + XSTRING_CHAR_LENGTH (p->name)
+		opoint += (string_char_length (msg)
+                           + string_char_length (p->name)
                            + 10);
 
 	      old_read_only = current_buffer->read_only;
@@ -2062,7 +2063,7 @@ Return t if PROCESS will be killed without query when emacs is exited.
 
 #if 0
 
-xxDEFUN ("process-connection", Fprocess_connection, 0, 1, 0, /*
+DEFUN ("process-connection", Fprocess_connection, 0, 1, 0, /*
 Return the connection type of `PROCESS'.  This can be nil (pipe),
 t or pty (pty) or stream (socket connection).
 */
@@ -2090,7 +2091,7 @@ getenv_internal (const Intbyte *var,
 
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
-	  && XSTRING_BYTE (entry, varlen) == '='
+	  && string_byte (entry, varlen) == '='
 #ifdef WIN32_NATIVE
 	  /* NT environment variables are case insensitive.  */
 	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
@@ -2124,7 +2125,7 @@ putenv_internal (const Intbyte *var,
 
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
-	  && XSTRING_BYTE (entry, varlen) == '='
+	  && string_byte (entry, varlen) == '='
 #ifdef WIN32_NATIVE
 	  /* NT environment variables are case insensitive.  */
 	  && ! memicmp (XSTRING_DATA (entry), var, varlen)

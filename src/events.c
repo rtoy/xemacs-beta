@@ -138,9 +138,9 @@ static void
 print_event_1 (const char *str, Lisp_Object obj, Lisp_Object printcharfun)
 {
   DECLARE_EISTRING_MALLOC (ei);
-  write_c_string (str, printcharfun);
+  write_c_string (printcharfun, str);
   format_event_object (ei, XEVENT (obj), 0);
-  write_eistring (ei, printcharfun);
+  write_eistring (printcharfun, ei);
   eifree (ei);
 }
 
@@ -183,7 +183,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	write_fmt_string_lisp (printcharfun, "#<timeout-event %S", 1, XEVENT (obj)->event.timeout.object);
 	break;
     case empty_event:
-	write_c_string ("#<empty-event", printcharfun);
+	write_c_string (printcharfun, "#<empty-event");
 	break;
     case misc_user_event:
 	write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S", 1, XEVENT (obj)->event.misc.function);
@@ -194,13 +194,13 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	write_fmt_string_lisp (printcharfun, " %S)", 1, XEVENT (obj)->event.eval.object);
 	break;
     case dead_event:
-	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
+	write_c_string (printcharfun, "#<DEALLOCATED-EVENT");
 	break;
     default:
-	write_c_string ("#<UNKNOWN-EVENT-TYPE", printcharfun);
+	write_c_string (printcharfun, "#<UNKNOWN-EVENT-TYPE");
 	break;
       }
-  write_c_string (">", printcharfun);
+  write_c_string (printcharfun, ">");
 }
 
 static int
@@ -1187,7 +1187,7 @@ nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
 
   if (STRINGP (seq))
     {
-      Emchar ch = XSTRING_CHAR (seq, n);
+      Emchar ch = string_emchar (seq, n);
       Fcharacter_to_event (make_char (ch), event, Qnil, Qnil);
     }
   else
@@ -1344,7 +1344,7 @@ True if OBJECT is an event object that has not been deallocated.
 
 #if 0 /* debugging functions */
 
-xxDEFUN ("event-next", Fevent_next, 1, 1, 0, /*
+DEFUN ("event-next", Fevent_next, 1, 1, 0, /*
 Return the event object's `next' event, or nil if it has none.
 The `next-event' field is changed by calling `set-next-event'.
 */
@@ -1356,7 +1356,7 @@ The `next-event' field is changed by calling `set-next-event'.
   return XEVENT_NEXT (event);
 }
 
-xxDEFUN ("set-event-next", Fset_event_next, 2, 2, 0, /*
+DEFUN ("set-event-next", Fset_event_next, 2, 2, 0, /*
 Set the `next event' of EVENT to NEXT-EVENT.
 NEXT-EVENT must be an event object or nil.
 */

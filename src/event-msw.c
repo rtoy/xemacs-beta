@@ -3251,7 +3251,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	if (ii)
 	  {
 	    Lisp_Object image_instance;
-	    VOID_TO_LISP (image_instance, ii);
+	    image_instance = VOID_TO_LISP ((void *) ii);
 	    if (IMAGE_INSTANCEP (image_instance)
 		&&
 		IMAGE_INSTANCE_TYPE_P (image_instance, IMAGE_WIDGET))
@@ -3910,7 +3910,7 @@ mswindows_find_frame (HWND hwnd)
       assert (!NILP (Vmswindows_frame_being_created));
       return Vmswindows_frame_being_created;
     }
-  VOID_TO_LISP (f, l);
+  f = VOID_TO_LISP ((void *) l);
   return f;
 }
 
@@ -3990,7 +3990,7 @@ static void
 emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
 				    Lisp_Object pstream)
 {
-#define FROB(msg) case msg: write_c_string ("type=" #msg, pstream); break
+#define FROB(msg) case msg: write_c_string (pstream, "type=" #msg); break
 
   switch (EVENT_MSWINDOWS_MAGIC_TYPE (emacs_event))
     {
@@ -4007,7 +4007,7 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
   
   if (!NILP (EVENT_CHANNEL (emacs_event)))
     {
-      write_c_string (" ", pstream);
+      write_c_string (pstream, " ");
       print_internal (EVENT_CHANNEL (emacs_event), pstream, 1);
     }
 }

@@ -74,25 +74,16 @@ enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
 
 /* Return the syntax code for a particular character and mirror table. */
 
-#define SYNTAX_CODE_UNSAFE(table, c) \
-   XINT (CHAR_TABLE_VALUE_UNSAFE (table, c))
-
-INLINE_HEADER int SYNTAX_CODE (Lisp_Char_Table *table, Emchar c);
-INLINE_HEADER int
-SYNTAX_CODE (Lisp_Char_Table *table, Emchar c)
-{
-  return SYNTAX_CODE_UNSAFE (table, c);
-}
-
-#define SYNTAX_UNSAFE(table, c) \
-  ((enum syntaxcode) (SYNTAX_CODE_UNSAFE (table, c) & 0177))
+#define SYNTAX_CODE(table, c) XINT (get_char_table (c, table))
 
 #define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
+
 #define SYNTAX(table, c) SYNTAX_FROM_CODE (SYNTAX_CODE (table, c))
 
-INLINE_HEADER int WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c);
-INLINE_HEADER int
-WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
+DECLARE_INLINE_HEADER (
+int
+WORD_SYNTAX_P (Lisp_Object table, Emchar c)
+)
 {
   return SYNTAX (table, c) == Sword;
 }
@@ -136,8 +127,6 @@ WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
 
 /* The prefix flag bit for backward-prefix-chars is now put into bit 7. */
 
-#define SYNTAX_PREFIX_UNSAFE(table, c) \
-  ((SYNTAX_CODE_UNSAFE (table, c) >> 7) & 1)
 #define SYNTAX_PREFIX(table, c) \
   ((SYNTAX_CODE (table, c) >> 7) & 1)
 
@@ -175,6 +164,9 @@ WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
 #define SYNTAX_SECOND_CHAR_END   0x03
 #define SYNTAX_SECOND_CHAR       0x33
 
+#if 0
+
+/* #### Entirely unused.  Should they be deleted? */
 
 /* #### These are now more or less equivalent to
    SYNTAX_COMMENT_MATCH_START ...*/
@@ -232,12 +224,7 @@ WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
       ? SYNTAX_COMMENT_STYLE_B					\
 	 : 0)))
 
-EXFUN (Fchar_syntax, 2);
-EXFUN (Fforward_word, 2);
-
-/* The standard syntax table is stored where it will automatically
-   be used in all new buffers.  */
-extern Lisp_Object Vstandard_syntax_table;
+#endif /* 0 */
 
 /* This array, indexed by a character, contains the syntax code which
    that character signifies (as a char).
@@ -258,161 +245,113 @@ int char_quoted (struct buffer *buf, Charbpos pos);
 Lisp_Object syntax_match (Lisp_Object table, Emchar ch);
 
 extern int no_quit_in_re_search;
-extern struct buffer *regex_emacs_buffer;
 
-/* This is the string or buffer in which we are matching.  It is used
-   for looking up syntax properties.  */
-extern Lisp_Object regex_match_object;
+void update_syntax_table (Lisp_Object table);
 
-void update_syntax_table (Lisp_Char_Table *ct);
-
-#ifdef emacs
+
+/****************************** syntax caches ********************************/
 
 extern int lookup_syntax_properties;
 
+/* Now that the `syntax-table' property exists, and can override the syntax
+   table or directly specify the syntax, we cache the last place we
+   retrieved the syntax-table property.  This is because, when moving
+   linearly through text (e.g. in the regex routines or the scanning
+   routines in syntax.c), we only need to recalculate at the next place the
+   syntax-table property changes (i.e. not every position), and when we do
+   need to recalculate, we can update the info from the previous info
+   faster than if we did the whole calculation from scratch. */
 struct syntax_cache
 {
-  int use_code;				/* Whether to use syntax_code
-					   or current_syntax_table. */
-  struct buffer* buffer;		/* The buffer the current syntax cache
-					   applies to. */
+  int use_code;				/* Whether to use syntax_code or
+					   current_syntax_table.  This is
+					   set depending on whether the
+					   syntax-table property is a
+					   syntax table or a syntax
+					   code. */
+  int no_syntax_table_prop;		/* If non-zero, there was no
+					   `syntax-table' property on the
+					   current range, and so we're
+					   using the buffer's syntax table.
+					   This is important to note because
+					   sometimes the buffer's syntax
+					   table can be changed. */
   Lisp_Object object;			/* The buffer or string the current
-					   syntax cache applies to. */
+					   syntax cache applies to, or
+					   Qnil for a string of text not
+					   coming from a buffer or string. */
+  struct buffer *buffer;		/* The buffer that supplies the
+					   syntax tables, or 0 for the
+					   standard syntax table.  If
+					   OBJECT is a buffer, this will
+					   always be the same buffer. */
   int syntax_code;			/* Syntax code of current char. */
   Lisp_Object current_syntax_table;	/* Syntax table for current pos. */
-  Lisp_Object old_prop;			/* Syntax-table prop at prev pos. */
-
-  Charbpos next_change;			/* Position of the next extent
+  Lisp_Object start, end;		/* Markers to keep track of the
+					   known region in a buffer.
+					   Formerly we used an internal
+					   extent, but it seems that having
+					   an extent over the entire buffer
+					   causes serious slowdowns in
+					   extent operations!  Yuck! */
+  Charxpos next_change;			/* Position of the next extent
                                            change. */
-  Charbpos prev_change;			/* Position of the previous
-                                           extent change. */
+  Charxpos prev_change;			/* Position of the previous extent
+					   change. */
 };
-extern struct syntax_cache syntax_cache;
 
-void update_syntax_cache (int pos, int count, int init);
+/* Note that the external interface to the syntax-cache uses charpos's, but
+   intnernally we use bytepos's, for speed. */
+
+void update_syntax_cache (struct syntax_cache *cache, Charxpos pos, int count);
+struct syntax_cache *setup_syntax_cache (struct syntax_cache *cache,
+					 Lisp_Object object,
+					 struct buffer *buffer,
+					 Charxpos from, int count);
+struct syntax_cache *setup_buffer_syntax_cache (struct buffer *buffer,
+						Charxpos from, int count);
 
 /* Make syntax cache state good for CHARPOS, assuming it is
    currently good for a position before CHARPOS.  */
-#define UPDATE_SYNTAX_CACHE_FORWARD(pos)	\
-   (lookup_syntax_properties			\
-    ? (update_syntax_cache ((pos), 1, 0), 1)	\
-    : 0)
+DECLARE_INLINE_HEADER (
+void
+UPDATE_SYNTAX_CACHE_FORWARD (struct syntax_cache *cache, Charxpos pos)
+)
+{
+  if (!(pos >= cache->prev_change && pos < cache->next_change))
+    update_syntax_cache (cache, pos, 1);
+}
 
 /* Make syntax cache state good for CHARPOS, assuming it is
    currently good for a position after CHARPOS.  */
-#define UPDATE_SYNTAX_CACHE_BACKWARD(pos)	\
-   (lookup_syntax_properties			\
-    ? (update_syntax_cache ((pos), -1, 0), 1)	\
-    : 0)
+DECLARE_INLINE_HEADER (
+void
+UPDATE_SYNTAX_CACHE_BACKWARD (struct syntax_cache *cache, Charxpos pos)
+)
+{
+  if (!(pos >= cache->prev_change && pos < cache->next_change))
+    update_syntax_cache (cache, pos, -1);
+}
 
 /* Make syntax cache state good for CHARPOS */
-#define UPDATE_SYNTAX_CACHE(pos)		\
-   (lookup_syntax_properties			\
-    ? (update_syntax_cache ((pos), 0, 0), 1)	\
-    : 0)
+DECLARE_INLINE_HEADER (
+void
+UPDATE_SYNTAX_CACHE (struct syntax_cache *cache, Charxpos pos)
+)
+{
+  if (!(pos >= cache->prev_change && pos < cache->next_change))
+    update_syntax_cache (cache, pos, 0);
+}
 
-#define SYNTAX_FROM_CACHE(table, c)			\
-   SYNTAX_FROM_CODE (SYNTAX_CODE_FROM_CACHE (table, c))
+#define SYNTAX_FROM_CACHE(cache, c)			\
+   SYNTAX_FROM_CODE (SYNTAX_CODE_FROM_CACHE (cache, c))
 
-#define SYNTAX_CODE_FROM_CACHE(table, c)				\
-  ( syntax_cache.use_code						\
-      ? syntax_cache.syntax_code					\
-      : SYNTAX_CODE (XCHAR_TABLE (syntax_cache.current_syntax_table),	\
-		     c)							\
- )
+#define SYNTAX_CODE_FROM_CACHE(cache, c)				\
+  ((cache)->use_code ? (cache)->syntax_code				\
+   : SYNTAX_CODE ((cache)->current_syntax_table, c))
 
-/* Convert the byte offset BYTEPOS into a character position,
-   for the object recorded in syntax_cache with SETUP_SYNTAX_TABLE_FOR_OBJECT.
-
-   The value is meant for use in the UPDATE_SYNTAX_TABLE... macros.
-   These macros do nothing when parse_sexp_lookup_properties is 0,
-   so we return 0 in that case, for speed.  */
-#define SYNTAX_CACHE_BYTE_TO_CHAR(bytepos)				\
-  (! lookup_syntax_properties						\
-   ? 0									\
-   : STRINGP (syntax_cache.object)					\
-   ? string_index_byte_to_char (syntax_cache.object, bytepos)		\
-   : (BUFFERP (syntax_cache.object) || NILP (syntax_cache.object))	\
-   ? bytebpos_to_charbpos (syntax_cache.buffer,				\
-		       bytepos + BI_BUF_BEGV (syntax_cache.buffer))	\
-   : (bytepos))
-
-#define SYNTAX_CACHE_OBJECT_BYTE_TO_CHAR(obj, buf, bytepos)	\
-  (! lookup_syntax_properties					\
-   ? 0								\
-   : STRINGP (obj)						\
-   ? string_index_byte_to_char (obj, bytepos)			\
-   : (BUFFERP (obj) || NILP (obj))				\
-   ? bytebpos_to_charbpos (buf, bytepos + BI_BUF_BEGV (buf))	\
-   : (bytepos))
-
-#else  /* not emacs */
-
-#define update_syntax_cache(pos, count, init)
-#define UPDATE_SYNTAX_CACHE_FORWARD(pos)
-#define UPDATE_SYNTAX_CACHE_BACKWARD(pos)
-#define UPDATE_SYNTAX_CACHE(pos)
-#define SYNTAX_FROM_CACHE SYNTAX
-#define SYNTAX_CODE_FROM_CACHE SYNTAX_CODE
-
-#endif /* emacs */
-
-#define SETUP_SYNTAX_CACHE(FROM, COUNT)				\
-  do {								\
-    syntax_cache.buffer = current_buffer;			\
-    syntax_cache.object = Qnil;					\
-    syntax_cache.current_syntax_table				\
-      = current_buffer->mirror_syntax_table;			\
-    syntax_cache.use_code = 0;					\
-    if (lookup_syntax_properties)				\
-      update_syntax_cache ((COUNT) > 0 ? (FROM) : (FROM) - 1,	\
-			   (COUNT), 1);				\
-  } while (0)
-
-#define SETUP_SYNTAX_CACHE_FOR_BUFFER(BUFFER, FROM, COUNT)	\
-  do {								\
-    syntax_cache.buffer = (BUFFER);				\
-    syntax_cache.object = Qnil;					\
-    syntax_cache.current_syntax_table =				\
-      syntax_cache.buffer->mirror_syntax_table;			\
-    syntax_cache.use_code = 0;					\
-    if (lookup_syntax_properties)				\
-      update_syntax_cache ((FROM) + ((COUNT) > 0 ? 0 : -1),	\
-			   (COUNT), 1);				\
-  } while (0)
-
-#define SETUP_SYNTAX_CACHE_FOR_OBJECT(OBJECT, BUFFER, FROM, COUNT)	\
-  do {									\
-    syntax_cache.buffer = (BUFFER);					\
-    syntax_cache.object = (OBJECT);					\
-    if (NILP (syntax_cache.object))					\
-      {									\
-        /* do nothing */;						\
-      }									\
-    else if (EQ (syntax_cache.object, Qt))				\
-      {									\
-        /* do nothing */;						\
-      }									\
-    else if (STRINGP (syntax_cache.object))				\
-      {									\
-        /* do nothing */;						\
-      }									\
-    else if (BUFFERP (syntax_cache.object))				\
-      {									\
-        syntax_cache.buffer = XBUFFER (syntax_cache.object);		\
-      }									\
-    else								\
-      {									\
-        /* OBJECT must be buffer/string/t/nil */			\
-        assert(0);							\
-      }									\
-    syntax_cache.current_syntax_table					\
-      = syntax_cache.buffer->mirror_syntax_table;			\
-    syntax_cache.use_code = 0;						\
-    if (lookup_syntax_properties)					\
-      update_syntax_cache ((FROM) + ((COUNT) > 0 ? 0 : -1),		\
-			   (COUNT), 1);					\
-  } while (0)
+
+/***************************** syntax code macros ****************************/
 
 #define SYNTAX_CODE_PREFIX(c) \
   ((c >> 7) & 1)

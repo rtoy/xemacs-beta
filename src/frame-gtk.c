@@ -291,7 +291,7 @@ gtk_set_frame_text_value (struct frame *f, Intbyte *value,
     
     /* Optimize for common ASCII case */
     for (ptr = value; *ptr; ptr++)
-      if (!BYTE_ASCII_P (*ptr))
+      if (!byte_ascii_p (*ptr))
 	{
 	  char *tmp;
 	  C_STRING_TO_EXTERNAL (value, tmp, Qctext);

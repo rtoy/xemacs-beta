@@ -1981,7 +1981,7 @@ m2w (unsigned char *mp, w_char *wp)
 
   while ((ch = *mp++) != 0)
     {
-      if (INTBYTE_LEADING_BYTE_P (ch))
+      if (intbyte_leading_byte_p (ch))
 	{
 	  switch (ch)
 	    {
@@ -2009,7 +2009,7 @@ m2w (unsigned char *mp, w_char *wp)
 		mp++;
 	      break;
 	    default:			/* ignore this character */
-	      mp += REP_BYTES_BY_FIRST_BYTE(ch) - 1;
+	      mp += rep_bytes_by_first_byte(ch) - 1;
 	    }
 	}
       else

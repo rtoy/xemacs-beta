@@ -77,23 +77,39 @@ union Lisp_Object
      GCC to accept any (yes, any) pointer as the argument of
      a function declared to accept a Lisp_Object. */
   struct nosuchstruct *v;
-  const struct nosuchstruct *cv;
 }
 Lisp_Object;
 
 #define XCHARVAL(x) ((x).gu.val)
-# define XPNTRVAL(x) ((x).ui)
+#define XPNTRVAL(x) ((x).ui)
 
-INLINE_HEADER Lisp_Object make_int (EMACS_INT val);
-INLINE_HEADER Lisp_Object
+#define XREALINT(x) ((x).s.val)
+#define XUINT(x) ((x).u.val)
+#define XTYPE(x) ((x).gu.type)
+#define EQ(x,y) ((x).v == (y).v)
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
+make_int_verify (EMACS_INT val)
+)
+{
+  Lisp_Object obj;
+  obj.s.bits = 1;
+  obj.s.val = val;
+  type_checking_assert (XREALINT (obj) == val);
+  return obj;
+}
+
+DECLARE_INLINE_HEADER (
+Lisp_Object
 make_int (EMACS_INT val)
+)
 {
   Lisp_Object obj;
   obj.s.bits = 1;
   obj.s.val = val;
   return obj;
 }
-
 
 #ifdef __cplusplus
 
@@ -109,9 +125,10 @@ make_int (EMACS_INT val)
    already has a built-in system for dealing with non-local exits and such,
    in a smart way that doesn't clobber registers, and incorporates
    longjmp() into that.  */
-INLINE_HEADER Lisp_Object volatile_make_int (EMACS_INT val);
-INLINE_HEADER Lisp_Object
+DECLARE_INLINE_HEADER (
+Lisp_Object
 volatile_make_int (EMACS_INT val)
+)
 {
   volatile Lisp_Object obj;
   obj.s.bits = 1;
@@ -122,9 +139,10 @@ volatile_make_int (EMACS_INT val)
 #endif /* __cplusplus */
 
 
-INLINE_HEADER Lisp_Object make_char (Emchar val);
-INLINE_HEADER Lisp_Object
+DECLARE_INLINE_HEADER (
+Lisp_Object
 make_char (Emchar val)
+)
 {
   Lisp_Object obj;
   obj.gu.type = Lisp_Type_Char;
@@ -132,9 +150,10 @@ make_char (Emchar val)
   return obj;
 }
 
-INLINE_HEADER Lisp_Object wrap_pointer_1 (const void *ptr);
-INLINE_HEADER Lisp_Object
+DECLARE_INLINE_HEADER (
+Lisp_Object
 wrap_pointer_1 (const void *ptr)
+)
 {
   Lisp_Object obj;
   obj.ui = (EMACS_UINT) ptr;
@@ -142,11 +161,6 @@ wrap_pointer_1 (const void *ptr)
 }
 
 extern Lisp_Object Qnull_pointer, Qzero;
-
-#define XREALINT(x) ((x).s.val)
-#define XUINT(x) ((x).u.val)
-#define XTYPE(x) ((x).gu.type)
-#define EQ(x,y) ((x).v == (y).v)
 
 #define INTP(x) ((x).s.bits)
 #define INT_PLUS(x,y)  make_int (XINT (x) + XINT (y))
@@ -156,12 +170,17 @@ extern Lisp_Object Qnull_pointer, Qzero;
 
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */
-#define VOID_TO_LISP(larg,varg) \
-     ((void) ((larg).v = (struct nosuchstruct *) (varg)))
-#define CVOID_TO_LISP(larg,varg) \
-     ((void) ((larg).cv = (const struct nosuchstruct *) (varg)))
+DECLARE_INLINE_HEADER (
+Lisp_Object
+VOID_TO_LISP (const void *arg)
+)
+{
+  Lisp_Object larg;
+  larg.v = (struct nosuchstruct *) arg;
+  return larg;
+}
+
 #define LISP_TO_VOID(larg) ((void *) ((larg).v))
-#define LISP_TO_CVOID(larg) ((const void *) ((larg).cv))
 
 /* Convert a Lisp_Object into something that can't be used as an
    lvalue.  Useful for type-checking. */

@@ -1,8 +1,8 @@
 /* Indentation functions.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
-   Copyright (C) 2002 Ben Wing.
    Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -170,7 +170,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
+	  col += XCHARSET_COLUMNS (emchar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */
@@ -213,7 +213,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
 	break;
 
       pos--;
-      c = XSTRING_CHAR (s, pos);
+      c = string_emchar (s, pos);
       if (c == '\t')
 	{
 	  if (tab_seen)
@@ -227,7 +227,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
 	break;
       else
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
+	  col += XCHARSET_COLUMNS (emchar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */
@@ -341,9 +341,9 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 int
-bi_spaces_at_point (struct buffer *b, Bytebpos bi_pos)
+byte_spaces_at_point (struct buffer *b, Bytebpos byte_pos)
 {
-  Bytebpos bi_end = BI_BUF_ZV (b);
+  Bytebpos byte_end = BYTE_BUF_ZV (b);
   int col = 0;
   Emchar c;
   int tab_width = XINT (b->tab_width);
@@ -351,12 +351,12 @@ bi_spaces_at_point (struct buffer *b, Bytebpos bi_pos)
   if (tab_width <= 0 || tab_width > 1000)
     tab_width = 8;
 
-  while (bi_pos < bi_end &&
-	 (c = BI_BUF_FETCH_CHAR (b, bi_pos),
+  while (byte_pos < byte_end &&
+	 (c = BYTE_BUF_FETCH_CHAR (b, byte_pos),
 	  (c == '\t'
 	   ? (col += tab_width - col % tab_width)
 	   : (c == ' ' ? ++col : 0))))
-    INC_BYTEBPOS (b, bi_pos);
+    INC_BYTEBPOS (b, byte_pos);
 
   return col;
 }
@@ -377,7 +377,7 @@ following any initial whitespace.
   if (!NILP (Fextent_at (make_int (pos), buffer, Qinvisible, Qnil, Qnil)))
     return Qzero;
 
-  return make_int (bi_spaces_at_point (buf, charbpos_to_bytebpos (buf, pos)));
+  return make_int (byte_spaces_at_point (buf, charbpos_to_bytebpos (buf, pos)));
 }
 
 
@@ -457,7 +457,7 @@ Returns the actual column that it moved to.
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
+	  col += XCHARSET_COLUMNS (emchar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */
@@ -497,7 +497,7 @@ Returns the actual column that it moved to.
 #if 0 /* #### OK boys, this function needs to be present, I think.
 	 It was there before the 19.12 redisplay rewrite. */
 
-xxDEFUN ("compute-motion", Fcompute_motion, 7, 7, 0, /*
+DEFUN ("compute-motion", Fcompute_motion, 7, 7, 0, /*
   "Scan through the current buffer, calculating screen position.
 Scan the current buffer forward from offset FROM,
 assuming it is at position FROMPOS--a cons of the form (HPOS . VPOS)--

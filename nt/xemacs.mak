@@ -366,7 +366,9 @@ C_LIBFLAG=-ML
 LIBC_LIB=libc.lib
 !endif
 
-CFLAGS=-nologo -W3 $(DEBUGFLAGS) $(OPTFLAGS) $(C_LIBFLAG)
+CFLAGS_NO_LIB=-nologo -W3 $(DEBUGFLAGS) $(OPTFLAGS)
+CFLAGS=$(CFLAGS_NO_LIB) $(C_LIBFLAG)
+
 
 !if $(HAVE_X_WINDOWS)
 X_DEFINES=-DHAVE_X_WINDOWS
@@ -560,7 +562,7 @@ $(LIB_SRC)/winclient.exe: $(LIB_SRC)/winclient.c
 	cd $(NT)
 
 $(LIB_SRC)/minitar.exe : $(NT)/minitar.c
-	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ $** "$(ZLIB_DIR)\zlib.lib" -link -incremental:no
+	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_NO_LIB) -Fe$@ $** "$(ZLIB_DIR)\zlib.lib" -link -incremental:no
 
 LIB_SRC_TOOLS = \
 	$(LIB_SRC)/etags.exe		\

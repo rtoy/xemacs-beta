@@ -168,7 +168,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("#<window 0x%x>", XWINDOW (obj)->header.uid);
 
-  write_c_string ("#<window", printcharfun);
+  write_c_string (printcharfun, "#<window");
   if (!NILP (XWINDOW (obj)->buffer))
     {
       Lisp_Object name = XBUFFER (XWINDOW (obj)->buffer)->name;
@@ -1601,7 +1601,7 @@ NCOL should be zero or positive.
 
 #if 0 /* bogus FSF crock */
 
-xxDEFUN ("window-redisplay-end-trigger",
+DEFUN ("window-redisplay-end-trigger",
 	 Fwindow_redisplay_end_trigger, 0, 1, 0, /*
 Return WINDOW's redisplay end trigger value.
 See `set-window-redisplay-end-trigger' for more information.
@@ -1611,7 +1611,7 @@ See `set-window-redisplay-end-trigger' for more information.
   return decode_window (window)->redisplay_end_trigger;
 }
 
-xxDEFUN ("set-window-redisplay-end-trigger",
+DEFUN ("set-window-redisplay-end-trigger",
 	 Fset_window_redisplay_end_trigger, 2, 2, 0, /*
 Set WINDOW's redisplay end trigger value to VALUE.
 VALUE should be a buffer position (typically a marker) or nil.
@@ -5158,7 +5158,7 @@ print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("#<window-configuration 0x%x>",
 				config->header.uid);
-  write_c_string ("#<window-configuration ", printcharfun);
+  write_c_string (printcharfun, "#<window-configuration ");
   write_fmt_string (printcharfun, "0x%x>", config->header.uid);
 }
 
@@ -6049,20 +6049,20 @@ a non-nil result to be returned.
 	{
 	  dl = Dynarr_atp (dla, i);
 	  /* find the vertical location first */
-	  if (point >= dl->charbpos && point <= dl->end_charbpos)
+	  if (point >= dl->charpos && point <= dl->end_charpos)
 	    {
 	      db = get_display_block_from_line (dl, TEXT);
 	      for (i = 0; i < Dynarr_length (db->runes); i++)
 		{
 		  rb = Dynarr_atp (db->runes, i);
-		  if (point <= rb->charbpos)
-		    goto found_charbpos;
+		  if (point <= rb->charpos)
+		    goto found_charpos;
 		}
 	      return Qnil;
 	    }
 	}
       return Qnil;
-    found_charbpos:
+    found_charpos:
       ;
     }
   else

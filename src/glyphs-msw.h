@@ -68,21 +68,17 @@ struct mswindows_image_instance_data
 #define XIMAGE_INSTANCE_MSWINDOWS_ICON(i) \
   IMAGE_INSTANCE_MSWINDOWS_ICON (XIMAGE_INSTANCE (i))
 
-int
-mswindows_resize_dibitmap_instance (Lisp_Image_Instance *ii,
-				    struct frame *f,
-				    int newx, int newy);
-HBITMAP
-mswindows_create_resized_bitmap (Lisp_Image_Instance *ii,
-				 struct frame *f,
-				 int newx, int newy);
-HBITMAP
-mswindows_create_resized_mask (Lisp_Image_Instance *ii,
-			       struct frame *f,
-			       int newx, int newy);
-void
-mswindows_initialize_image_instance_icon (Lisp_Image_Instance *image,
-					  int cursor);
+int mswindows_resize_dibitmap_instance (Lisp_Image_Instance *ii,
+					struct frame *f,
+					int newx, int newy);
+HBITMAP mswindows_create_resized_bitmap (Lisp_Image_Instance *ii,
+					 struct frame *f,
+					 int newx, int newy);
+HBITMAP mswindows_create_resized_mask (Lisp_Image_Instance *ii,
+				       struct frame *f,
+				       int newx, int newy);
+void mswindows_initialize_image_instance_icon (Lisp_Image_Instance *image,
+					       int cursor);
 
 #define WIDGET_INSTANCE_MSWINDOWS_HANDLE(i) \
      (HWND) (IMAGE_INSTANCE_SUBWINDOW_ID (i))

@@ -1,5 +1,6 @@
 /* Simple built-in editing commands.
    Copyright (C) 1985, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -370,12 +371,12 @@ internal_self_insert (Emchar c1, int noautofill)
   REGISTER enum syntaxcode synt;
   REGISTER Emchar c2;
   Lisp_Object overwrite;
-  Lisp_Char_Table *syntax_table;
+  Lisp_Object syntax_table;
   struct buffer *buf = current_buffer;
   int tab_width;
 
   overwrite = buf->overwrite_mode;
-  syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
+  syntax_table = buf->mirror_syntax_table;
 
 #if 0
   /* No, this is very bad, it makes undo *always* undo a character at a time
@@ -440,7 +441,7 @@ internal_self_insert (Emchar c1, int noautofill)
         }
     }
   if ((CHAR_TABLEP (Vauto_fill_chars)
-       ? !NILP (XCHAR_TABLE_VALUE_UNSAFE (Vauto_fill_chars, c1))
+       ? !NILP (get_char_table (c1, Vauto_fill_chars))
        : (c1 == ' ' || c1 == '\n'))
       && !noautofill
       && !NILP (buf->auto_fill_function))

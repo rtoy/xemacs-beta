@@ -130,7 +130,7 @@ version 21.5.2 "artichoke" released July 28, 2001.
 version 21.5.3 "asparagus" released September 7, 2001.
 version 21.5.4 "bamboo" released January 8, 2002.
 version 21.5.5 "beets" released March 5, 2002.
-
+version 21.5.6 "bok choi" released April 5, 2002.
 
 
 -- A time line for GNU Emacs version 19 is
@@ -280,7 +280,7 @@ version 18.59 released October 31, 1992.
 /* For PATH_EXEC */
 #include <paths.h>
 
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#if defined (HEAP_IN_DATA) && !defined (PDUMP)
 void report_sheap_usage (int die_if_pure_storage_exceeded);
 #endif
 
@@ -493,6 +493,10 @@ static int run_temacs_args_size;
 
 #ifdef _MSC_VER
 static DWORD mswindows_handle_hardware_exceptions (DWORD code);
+#endif
+
+#ifdef WIN32_NATIVE
+static DWORD CALLBACK wait_for_termination_signal (LPVOID handle);
 #endif
 
 
@@ -877,6 +881,30 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
     }
 
 #ifdef WIN32_NATIVE
+  {
+    /* Since we aren't a console application, we can't easily be terminated
+       using ^C. (We aren't a console application to avoid Windows from
+       automatically and unwantedly creating a console window for us.  If
+       only the Windows designers had some sense in them and didn't create
+       this artificial console/non-console distinction!) Therefore, we set
+       up a communication path with i.exe so that when a ^C is sent to it
+       (using GenerateConsoleCtrlEvent), it in turn signals us to commit
+       suicide. (This is cleaner than using TerminateProcess()).  This
+       makes (e.g.) the "Stop Build" command from VC++ correctly terminate
+       XEmacs. */
+    
+    char *heventstr;
+    if (argmatch (argv, argc, "-mswindows-termination-handle", 0, 0,
+		  &heventstr, &skip_args))
+      {
+	HANDLE hevent = (HANDLE) atol (heventstr);
+	DWORD unused;
+	HANDLE h_thread = CreateThread (NULL, 0, wait_for_termination_signal,
+					(void *) hevent, 0, &unused);
+	CloseHandle (h_thread);
+      }
+  }
+
   /* Handle the -nuni switch, which forces XEmacs to use the ANSI
      versions of Unicode-split API's even on Windows NT, which has
      full Unicode support.  This helps flush out problems in the code
@@ -1204,7 +1232,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif /* CLASH_DETECTION */
       syms_of_floatfns ();
       syms_of_fns ();
+#ifdef USE_C_FONT_LOCK
       syms_of_font_lock ();
+#endif /* USE_C_FONT_LOCK */
       syms_of_frame ();
       syms_of_general ();
       syms_of_glyphs ();
@@ -1707,7 +1737,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
       vars_of_floatfns ();
       vars_of_fns ();
+#ifdef USE_C_FONT_LOCK
       vars_of_font_lock ();
+#endif /* USE_C_FONT_LOCK */
       vars_of_frame ();
       vars_of_glyphs ();
       vars_of_glyphs_eimage ();
@@ -1979,7 +2011,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
          knows what. */
       complex_vars_of_chartab ();
 
-      /* This calls set_string_char(), which (under Mule) depends on the
+      /* This calls Fput_char_table(), which (under Mule) depends on the
 	 charsets being initialized. */
       complex_vars_of_casetab ();
 
@@ -2094,7 +2126,9 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       reinit_vars_of_extents ();
       reinit_vars_of_file_coding ();
       reinit_vars_of_fileio ();
+#ifdef USE_C_FONT_LOCK
       reinit_vars_of_font_lock ();
+#endif /* USE_C_FONT_LOCK */
       reinit_vars_of_glyphs ();
       reinit_vars_of_glyphs_widget ();
       reinit_vars_of_insdel ();
@@ -2341,8 +2375,9 @@ static const struct standard_args standard_args[] =
   { "-t", "--terminal", 100, 1 },
   { "-nd", "--no-dump-file", 95, 0 },
   { "-nw", "--no-windows", 90, 0 },
-  { "-batch", "--batch", 85, 0 },
+  { "-batch", "--batch", 88, 0 },
 #ifdef WIN32_NATIVE
+  { "-mswindows-termination-handle", 0, 84, 1 },
   { "-nuni", "--no-unicode-lib-calls", 83, 0 },
 #endif /* WIN32_NATIVE */
   { "-debug-paths", "--debug-paths", 82, 0 },
@@ -3060,6 +3095,18 @@ pause_so_user_can_read_messages (int allow_further)
 }
 #endif
 
+#ifdef WIN32_NATIVE
+
+static DWORD CALLBACK
+wait_for_termination_signal (LPVOID handle)
+{
+  HANDLE hevent = (HANDLE) handle;
+  WaitForSingleObject (hevent, INFINITE);
+  ExitProcess (0);
+  return 0; /* not reached */
+}
+
+#endif
 /* -------------------------------- */
 /* a (more-or-less) normal shutdown */
 /* -------------------------------- */

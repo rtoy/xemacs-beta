@@ -81,7 +81,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 	 (i.e. files with non-ASCII/Latin-1 chars in them).  Currently this
 	 is "solved" in bytecomp.el by never inserting lazy references in
 	 such files. */
-      (XLSTREAM (fdstream), standard_doc_file ? Qundecided : Qbinary,
+      (XLSTREAM (fdstream), standard_doc_file ? Qescape_quoted : Qbinary,
        CODING_DECODE, 0);
   Lstream_set_buffering (XLSTREAM (instream), LSTREAM_UNBUFFERED, 0);
   

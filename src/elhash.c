@@ -314,16 +314,16 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
   int count = 0;
   hentry *e, *sentinel;
 
-  write_c_string (" data (", printcharfun);
+  write_c_string (printcharfun, " data (");
 
   for (e = ht->hentries, sentinel = e + ht->size; e < sentinel; e++)
     if (!HENTRY_CLEAR_P (e))
       {
 	if (count > 0)
-	  write_c_string (" ", printcharfun);
+	  write_c_string (printcharfun, " ");
 	if (!print_readably && count > 3)
 	  {
-	    write_c_string ("...", printcharfun);
+	    write_c_string (printcharfun, "...");
 	    break;
 	  }
 	print_internal (e->key, printcharfun, 1);
@@ -331,7 +331,7 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	count++;
       }
 
-  write_c_string (")", printcharfun);
+  write_c_string (printcharfun, ")");
 }
 
 static void
@@ -339,16 +339,16 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Hash_Table *ht = XHASH_TABLE (obj);
 
-  write_c_string (print_readably ? "#s(hash-table" : "#<hash-table",
-		  printcharfun);
+  write_c_string (printcharfun,
+		  print_readably ? "#s(hash-table" : "#<hash-table");
 
   /* These checks have a kludgy look to them, but they are safe.
      Due to nature of hashing, you cannot use arbitrary
      test functions anyway.  */
   if (!ht->test_function)
-    write_c_string (" test eq", printcharfun);
+    write_c_string (printcharfun, " test eq");
   else if (ht->test_function == lisp_object_equal_equal)
-    write_c_string (" test equal", printcharfun);
+    write_c_string (printcharfun, " test equal");
   else if (ht->test_function == lisp_object_eql_equal)
     DO_NOTHING;
   else
@@ -378,7 +378,7 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     print_hash_table_data (ht, printcharfun);
 
   if (print_readably)
-    write_c_string (")", printcharfun);
+    write_c_string (printcharfun, ")");
   else
     {
       write_fmt_string (printcharfun, " 0x%x>", ht->header.uid);
@@ -1611,7 +1611,7 @@ Return a hash value for OBJECT.
 }
 
 #if 0
-xxDEFUN ("internal-hash-value", Finternal_hash_value, 1, 1, 0, /*
+DEFUN ("internal-hash-value", Finternal_hash_value, 1, 1, 0, /*
 Hash value of OBJECT.  For debugging.
 The value is returned as (HIGH . LOW).
 */

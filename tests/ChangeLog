@@ -1,3 +1,15 @@
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* automated/lisp-tests.el:
+	* automated/symbol-tests.el:
+	* automated/test-harness.el:
+	* automated/test-harness.el (test-harness-from-buffer):
+	Fix test harness to output FAIL messages to stderr when in
+	batch mode.
+
+	Fix up some problems in lisp-tests/symbol-tests that were
+	causing spurious failures.
+
 2002-04-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.6 "bok choi" is released.

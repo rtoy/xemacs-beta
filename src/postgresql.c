@@ -220,7 +220,7 @@ print_pgconn (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("%s", buf);
   else
-    write_c_string (buf, printcharfun);
+    write_c_string (printcharfun, buf);
 }
 
 static Lisp_PGconn *
@@ -333,7 +333,7 @@ notuples:
   if (print_readably)
     printing_unreadable_object ("%s", buf);
   else
-    write_c_string (buf, printcharfun);
+    write_c_string (printcharfun, buf);
 }
 
 #undef RESULT_TUPLES_FMT

@@ -1,5 +1,6 @@
 /* CCL (Code Conversion Language) interpreter.
    Copyright (C) 1995, 1997 Electrotechnical Laboratory, JAPAN.
+   Copyright (C) 2002 Ben Wing.
    Licensed to the Free Software Foundation.
 
 This file is part of XEmacs.
@@ -735,7 +736,7 @@ static int stack_idx_of_map_multiple;
       }								\
     else							\
       {								\
-	if (!CHAR_MULTIBYTE_P(ch))				\
+	if (!emchar_multibyte_p(ch))				\
 	  {							\
 	    Dynarr_add (destination, ch);			\
 	  }							\
@@ -793,7 +794,7 @@ static int stack_idx_of_map_multiple;
 	  {							\
 	    ch = ((XINT (ccl_prog[ic + (i / 3)]))		\
 		  >> ((2 - (i % 3)) * 8)) & 0xFF;		\
-	    if (!CHAR_MULTIBYTE_P(ch))				\
+	    if (!emchar_multibyte_p(ch))				\
 	      {							\
 		Dynarr_add (destination, ch);			\
 	      }							\
@@ -827,7 +828,7 @@ static int stack_idx_of_map_multiple;
 
 
 /* Set C to the character code made from CHARSET and CODE.  This is
-   like MAKE_CHAR but check the validity of CHARSET and CODE.  If they
+   like make_emchar but check the validity of CHARSET and CODE.  If they
    are not valid, set C to (CODE & 0xFF) because that is usually the
    case that CCL_ReadMultibyteChar2 read an invalid code and it set
    CODE to that invalid byte.  */
@@ -847,7 +848,7 @@ static int stack_idx_of_map_multiple;
 								\
 	if ((code) >= 256)					\
 	  c2 = c1, c1 = ((code) >> 7) & 0x7F;			\
-	(c) = MAKE_CHAR (charset, c1, c2);			\
+	(c) = make_emchar (charset, c1, c2);			\
       }								\
     else							\
       (c) = (code) & 0xFF;						\
@@ -1350,7 +1351,7 @@ ccl_driver (struct ccl_program *ccl,
 	      i = reg[RRR]; /* charset */
 	      if (i == LEADING_BYTE_ASCII)
 		i = reg[rrr] & 0xFF;
-	      else if (XCHARSET_DIMENSION (CHARSET_BY_LEADING_BYTE (i)) == 1)
+	      else if (XCHARSET_DIMENSION (charset_by_leading_byte (i)) == 1)
 		i = (((i - FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7)
 		     | (reg[rrr] & 0x7F));
 	      else if (i < MAX_LEADING_BYTE_OFFICIAL_2)

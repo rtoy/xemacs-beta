@@ -66,12 +66,15 @@ urlify_filename (Intbyte *filename)
   return pseudo_url;
 }
 
+/* Convert a Win32 file name in tstr format into a local-format file name
+   in internal format. */
+
 Lisp_Object
-tstr_to_local_file_format (Extbyte *pathout)
+tstr_to_local_file_format (Extbyte *path)
 {
   Intbyte *ttlff;
 
-  TSTR_TO_C_STRING (pathout, ttlff);
+  TSTR_TO_C_STRING (path, ttlff);
   WIN32_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
 
   return build_intstring (ttlff);
@@ -253,7 +256,7 @@ mswindows_lisp_error_1 (int errnum, int no_recurse)
   TSTR_TO_C_STRING (lpMsgBuf, inres);
   len = qxestrlen (inres);
   /* Messages tend to end with a period and newline */
-  if (len >= 3 && !intbyte_strcmp (inres + len - 3, ".\r\n"))
+  if (len >= 3 && !qxestrcmp_c (inres + len - 3, ".\r\n"))
     len -= 3;
   result = make_string (inres, len);
   
@@ -329,46 +332,14 @@ otherwise it is an integer representing a ShowWindow flag:
       LISP_STRING_TO_TSTR (parameters, parmext);
     if (STRINGP (current_dir))
       LOCAL_FILE_FORMAT_TO_TSTR (current_dir, path);
-  if (STRINGP (document))
-    {
-#ifdef CYGWIN
-      Extbyte *fname1;
-      Extbyte *fname2;
-      int pos, sz;
-      LISP_STRING_TO_TSTR (document, doc);
-
-      if ((fname1 = strchr (doc, ':')) != NULL
-	  && *++fname1 == '/' && *++fname1 == '/')
-	{
-	  /* If URL style file, the innards may have Cygwin mount points and
-	     the like.  so separate out the innards, process them, and put back
-	     together. */
-	  if (qxestrncasecmp (doc, "file://", 7) == 0)
-	    {
-	      fname1++;
-	      pos = fname1 - doc;
-	      if (!(isalpha (fname1[0]) && (IS_DEVICE_SEP (fname1[1]))))
-		{
-		  sz = cygwin_posix_to_win32_path_list_buf_size (fname1);
-		  fname2 = alloca (sz + pos);
-		  qxestrncpy (fname2, doc, pos);
-		  doc = fname2;
-		  fname2 += pos;
-		  cygwin_posix_to_win32_path_list (fname1, fname2);
-		}
-	    }
-	}
-      else {
-	/* Not URL-style, must be a straight filename. */
-	LOCAL_FILE_FORMAT_TO_TSTR (document, doc);
-      }
-#endif
-
-    }
+    if (STRINGP (document))
+      LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR (document, doc);
 
     ret = (int) qxeShellExecute (NULL, opext, doc, parmext, path,
 				 (INTP (show_flag) ?
 				  XINT (show_flag) : SW_SHOWDEFAULT));
+
+    xfree (doc);
   }
 
   if (ret <= 32)

@@ -643,7 +643,7 @@ find_nonminibuffer_frame_not_on_device_predicate (Lisp_Object frame,
 {
   Lisp_Object device;
 
-  VOID_TO_LISP (device, closure);
+  device = VOID_TO_LISP (closure);
   if (FRAME_MINIBUF_ONLY_P (XFRAME (frame)))
     return 0;
   if (EQ (device, FRAME_DEVICE (XFRAME (frame))))

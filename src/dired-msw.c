@@ -76,6 +76,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "regex.h"
+#include "syntax.h"
 
 #include "sysdir.h"
 #include "sysfile.h"
@@ -198,7 +199,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	  /* PATTERN might be a flawed regular expression.  Rather than
 	     catching and signalling our own errors, we just call
 	     compile_pattern to do the work for us.  */
-	  bufp = compile_pattern (pattern, 0, Qnil, 0, ERROR_ME);
+	  bufp = compile_pattern (pattern, 0, Qnil, Qnil, 0, 0, ERROR_ME);
 	}
       /* Now *bufp is the compiled form of PATTERN; don't call anything
 	 which might compile a new regexp until we're done with the loop! */
@@ -232,6 +233,8 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	  int result;
 	  WIN32_FIND_DATAW finddat;
 	  Win32_file file;
+	  struct syntax_cache scache_struct;
+	  struct syntax_cache *scache = &scache_struct;
 
 	  if (fh == INVALID_HANDLE_VALUE)
 	    {
@@ -270,7 +273,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 	  len = eilen (filename);
 	  result = (NILP (pattern)
 		    || (0 <= re_search (bufp, eidata (filename), 
-					len, 0, len, 0)));
+					len, 0, len, 0, Qnil, 0, scache)));
 	  if (result)
 	    {
 	      if ( ! (eigetch_char (filename, 0) == '.' &&

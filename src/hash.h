@@ -44,10 +44,11 @@ struct hash_table
    automatically if the number of entries approaches the size */
 struct hash_table *make_hash_table (Elemcount size);
 
-struct hash_table *
-make_general_hash_table (Elemcount size,
-			 hash_table_hash_function hash_function,
-			 hash_table_test_function test_function);
+struct hash_table *make_general_hash_table (Elemcount size,
+					    hash_table_hash_function
+					    hash_function,
+					    hash_table_test_function
+					    test_function);
 
 /* Clear HASH-TABLE. A freshly created hash table is already cleared up. */
 void clrhash (struct hash_table *hash_table);

@@ -1423,7 +1423,7 @@ No component of the resulting pathname will be a symbolic link, as
     {
       Lisp_Object resolved_name;
       int rlen = qxestrlen (resolved_path);
-      if (elen > 0 && IS_DIRECTORY_SEP (XSTRING_BYTE (expanded_name, elen - 1))
+      if (elen > 0 && IS_DIRECTORY_SEP (string_byte (expanded_name, elen - 1))
           && !(rlen > 0 && IS_DIRECTORY_SEP (resolved_path[rlen - 1])))
 	{
 	  if (rlen + 1 > countof (resolved_path))
@@ -1657,8 +1657,8 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
   /* Remove final slash, if any (unless path is root).
      stat behaves differently depending!  */
   if (XSTRING_LENGTH (abspath) > 1
-      && IS_DIRECTORY_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1))
-      && !IS_DEVICE_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 2)))
+      && IS_DIRECTORY_SEP (string_byte (abspath, XSTRING_LENGTH (abspath) - 1))
+      && !IS_DEVICE_SEP (string_byte (abspath, XSTRING_LENGTH (abspath) - 2)))
     /* We cannot take shortcuts; they might be wrong for magic file names.  */
     abspath = Fdirectory_file_name (abspath);
   UNGCPRO;
@@ -1773,7 +1773,7 @@ A prefix arg makes KEEP-TIME non-nil.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args);
       ngcpro1.nvars = 3;
-      if (!IS_DIRECTORY_SEP (XSTRING_BYTE (newname,
+      if (!IS_DIRECTORY_SEP (string_byte (newname,
 					   XSTRING_LENGTH (newname) - 1)))
 
 	args[i++] = Fchar_to_string (Vdirectory_sep_char);
@@ -2014,7 +2014,7 @@ This is what happens in interactive use with M-x.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args);
       ngcpro1.nvars = 3;
-      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
+      if (string_byte (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_string ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
@@ -2124,7 +2124,7 @@ This happens for interactive use with M-x.
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
-  if (XSTRING_BYTE (filename, 0) == '~')
+  if (string_byte (filename, 0) == '~')
     filename = Fexpand_file_name (filename, Qnil);
   linkname = Fexpand_file_name (linkname, Qnil);
 

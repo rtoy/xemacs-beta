@@ -477,13 +477,15 @@ There are better ways of avoiding most of these warnings.  In particular:
 (put 'with-obsolete-variable 'lisp-indent-function 1)
 (defmacro with-obsolete-variable (symbol &rest body)
   "Evaluate BODY but do not warn about usage of obsolete variable SYMBOL.
-SYMBOL must be quoted.  See also `with-obsolete-function'."
+SYMBOL must be quoted and can be a list of SYMBOLS.  See also
+`with-obsolete-function'."
   `(with-byte-compiler-warnings-suppressed 'obsolete ,@body))
 
 (put 'with-obsolete-function 'lisp-indent-function 1)
 (defmacro with-obsolete-function (symbol &rest body)
   "Evaluate BODY but do not warn about usage of obsolete function SYMBOL.
-SYMBOL must be quoted.  See also `with-obsolete-variable'."
+SYMBOL must be quoted and can be a list of SYMBOLS.  See also
+`with-obsolete-variable'."
   `(with-byte-compiler-warnings-suppressed 'obsolete ,@body))
 
 

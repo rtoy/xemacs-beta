@@ -61,14 +61,17 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("#<marker 0x%lx>", (long) marker);
 
-  write_c_string (GETTEXT ("#<marker "), printcharfun);
+  write_c_string (printcharfun, GETTEXT ("#<marker "));
   if (!marker->buffer)
-    write_c_string (GETTEXT ("in no buffer"), printcharfun);
+    write_c_string (printcharfun, GETTEXT ("in no buffer"));
   else
     {
-      write_fmt_string (printcharfun, "at %ld in ", (long) marker_position (obj));
+      write_fmt_string (printcharfun, "at %ld in ",
+			(long) marker_position (obj));
       print_internal (marker->buffer->name, printcharfun, 0);
     }
+  if (marker->insertion_type)
+    write_c_string (printcharfun, " insertion-type=t");
   write_fmt_string (printcharfun, " 0x%lx>", (long) marker);
 }
 
@@ -316,7 +319,7 @@ unchain_marker (Lisp_Object m)
 }
 
 Bytebpos
-bi_marker_position (Lisp_Object marker)
+byte_marker_position (Lisp_Object marker)
 {
   Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
@@ -334,7 +337,7 @@ bi_marker_position (Lisp_Object marker)
   pos = membpos_to_bytebpos (buf, m->membpos);
 
 #ifdef ERROR_CHECK_TEXT
-  if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
+  if (pos < BYTE_BUF_BEG (buf) || pos > BYTE_BUF_Z (buf))
     abort ();
 #endif
 
@@ -349,11 +352,11 @@ marker_position (Lisp_Object marker)
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-  return bytebpos_to_charbpos (buf, bi_marker_position (marker));
+  return bytebpos_to_charbpos (buf, byte_marker_position (marker));
 }
 
 void
-set_bi_marker_position (Lisp_Object marker, Bytebpos pos)
+set_byte_marker_position (Lisp_Object marker, Bytebpos pos)
 {
   Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
@@ -362,7 +365,7 @@ set_bi_marker_position (Lisp_Object marker, Bytebpos pos)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
 #ifdef ERROR_CHECK_TEXT
-  if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
+  if (pos < BYTE_BUF_BEG (buf) || pos > BYTE_BUF_Z (buf))
     abort ();
 #endif
 
@@ -377,7 +380,7 @@ set_marker_position (Lisp_Object marker, Charbpos pos)
   if (!buf)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
-  set_bi_marker_position (marker, charbpos_to_bytebpos (buf, pos));
+  set_byte_marker_position (marker, charbpos_to_bytebpos (buf, pos));
 }
 
 static Lisp_Object
@@ -457,7 +460,7 @@ If TYPE is nil, it means the marker stays behind when you insert text at it.
    it by default (although I've debugged it).  If you want to use it,
    use extents instead.  --hniksic */
 #if 0
-xxDEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, 1, 1, 0, /*
+DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, 1, 1, 0, /*
 Return t if there are markers pointing at POSITION in the current buffer.
 */
        (position))

@@ -1,3 +1,52 @@
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* bytecomp-runtime.el (with-obsolete-variable):
+	* bytecomp-runtime.el (with-obsolete-function):
+	Doc string changes.
+
+	* compat.el:
+	* compat.el (compat-current-package):
+	* compat.el (compat-current-package)): New.
+	* compat.el (compat-define-compat-functions): New.
+	* compat.el (compat-define-group):
+	* compat.el (compat-define-functions): Removed.
+	* compat.el (compat-defun): New.
+	* compat.el (compat-define-function): New.
+	* compat.el (compat-wrap-runtime): New.
+	* compat.el (compat-wrap): New.
+	* compat.el (compat): Removed.
+	* compat.el (overlays):
+	* compat.el (overlayp): New.
+	* compat.el (make-overlay): New.
+	* compat.el (move-overlay): New.
+	* compat.el (delete-overlay): New.
+	* compat.el (overlay-start): New.
+	* compat.el (overlay-end): New.
+	* compat.el (overlay-buffer): New.
+	* compat.el (overlay-properties): New.
+	* compat.el (overlays-at): New.
+	* compat.el (overlays-in): New.
+	* compat.el (next-overlay-change): New.
+	* compat.el (previous-overlay-change): New.
+	* compat.el (overlay-lists): New.
+	* compat.el (overlay-recenter): New.
+	* compat.el (overlay-get): New.
+	* compat.el (overlay-put): New.
+	* compat.el ('delete-extent): New.
+	* compat.el ('extent-end-position): New.
+	* compat.el ('extent-start-position): New.
+	* compat.el ('set-extent-endpoints): New.
+	* compat.el ('set-extent-property): New.
+	* compat.el ('make-extent): New.
+	* compat.el (extent-property): New.
+	* compat.el (extent-at): New.
+	* compat.el (map-extents): New.  Some attempts to redo this to
+	make it truly useful and fix the "multiple versions interacting
+	with each other" problem.  Not yet done.  Currently doesn't work.
+
+	* files.el (revert-buffer-internal):
+	Use with-obsolete-variable to avoid warnings in new revert-buffer code.
+
 2002-05-02  Steve Youngs  <youngs@xemacs.org>
 
 	* package-get.el (package-get): Use 'warn' instead of 'lwarn'.

@@ -32,7 +32,7 @@ connector (const gchar *handler_name, GtkObject *object,
   Lisp_Object func;
   Lisp_Object lisp_data = Qnil;
 
-  VOID_TO_LISP (func, user_data);
+  func = VOID_TO_LISP (user_data);
 
   if (NILP (func))
     {

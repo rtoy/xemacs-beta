@@ -2,6 +2,7 @@
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994 Lucid, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -133,7 +134,7 @@ separate_textual_runs (unsigned char *text_storage,
       int dimension;
       int graphic;
 
-      BREAKUP_CHAR (ch, charset, byte1, byte2);
+      BREAKUP_EMCHAR (ch, charset, byte1, byte2);
       dimension = XCHARSET_DIMENSION (charset);
       graphic   = XCHARSET_GRAPHIC   (charset);
 
@@ -322,7 +323,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
       xpos = rb->xpos;
       width = 0;
       if (rb->type == RUNE_CHAR)
-	charset = CHAR_CHARSET (rb->object.chr.ch);
+	charset = emchar_charset (rb->object.chr.ch);
     }
 
   if (end < 0)
@@ -335,7 +336,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, CHAR_CHARSET (rb->object.chr.ch)))
+	  && EQ (charset, emchar_charset (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -358,7 +359,7 @@ gtk_output_display_block (struct window *w, struct display_line *dl, int block,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = CHAR_CHARSET (rb->object.chr.ch);
+	      charset = emchar_charset (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{

@@ -1,3 +1,881 @@
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* Makefile.in.in (batch_test_emacs):
+
+	Fix so that packages are around when testing.
+	
+	* abbrev.c (struct abbrev_match_mapper_closure):
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (abbrev_match):
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c (deadbeef_memory):
+	* alloc.c (STRING_FULLSIZE):
+	* alloc.c (sledgehammer_check_ascii_begin):
+	* alloc.c (make_uninit_string):
+	* alloc.c (set_string_char):
+	* alloc.c (init_string_ascii_begin):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (compact_string_chars):
+	* alloc.c (debug_string_purity_print):
+	* buffer.c (mark_buffer):
+	* buffer.c (print_buffer):
+	* buffer.c (finish_init_buffer):
+	* buffer.c (Fother_buffer):
+	* buffer.c (Fkill_buffer):
+	* buffer.h:
+	* buffer.h (struct buffer_text):
+	* buffer.h (struct buffer):
+	* buffer.h (BYTE_BUF_BEG):
+	* buffer.h (BYTE_BUF_BEGV):
+	* buffer.h (BYTE_BUF_ZV):
+	* buffer.h (BYTE_BUF_Z):
+	* buffer.h (BYTE_BUF_PT):
+	* buffer.h (INC_BYTEBPOS):
+	* buffer.h (make_charbpos):
+	* buffer.h (BYTE_BUF_FETCH_CHAR_RAW):
+	* buffer.h (BYTE_BUF_CHARPTR_COPY_EMCHAR):
+	* buffer.h (SET_BOTH_BUF_BEGV):
+	* buffer.h (SET_BOTH_BUF_ZV):
+	* buffer.h (BOTH_BUF_SET_PT):
+	* buffer.h (BUF_NARROWED):
+	* buffer.h (BYTE_BUF_CEILING_OF_IGNORE_ACCESSIBLE):
+	* buffer.h (BYTE_BUF_FLOOR_OF_IGNORE_ACCESSIBLE):
+	* bytecode.c (optimize_compiled_function):
+	* bytecode.c (print_compiled_function):
+	* bytecode.c (Fcompiled_function_annotation):
+	* callint.c (Fcall_interactively):
+	* casefiddle.c:
+	* casefiddle.c (casify_object):
+	* casefiddle.c (casify_region_internal):
+	* casetab.c:
+	* casetab.c (STRING256_P):
+	* casetab.c (print_case_table):
+	* casetab.c (allocate_case_table):
+	* casetab.c (Fmake_case_table):
+	* casetab.c (case_table_char):
+	* casetab.c (Fget_case_table):
+	* casetab.c (Fput_case_table):
+	* casetab.c (Fput_case_table_pair):
+	* casetab.c (Fcopy_case_table):
+	* casetab.c (compute_canon_mapper):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.c (recompute_case_table):
+	* casetab.c (convert_old_style_syntax_string):
+	* casetab.c (set_case_table):
+	* casetab.c (Fset_standard_case_table):
+	* casetab.c (syms_of_casetab):
+	* casetab.c (complex_vars_of_casetab):
+	* casetab.h:
+	* casetab.h (struct Lisp_Case_Table):
+	* charset.h:
+	* charset.h (emchar_charset):
+	* charset.h (leading_byte_private_p):
+	* charset.h (private_leading_byte_prefix):
+	* charset.h (CHARSET_PRIVATE_P):
+	* charset.h (EMCHAR_FIELD1_MASK):
+	* charset.h (emchar_field1):
+	* charset.h (MIN_EMCHAR_FIELD2_OFFICIAL):
+	* charset.h (MIN_EMCHAR_FIELD1_OFFICIAL):
+	* charset.h (MIN_EMCHAR_FIELD2_PRIVATE):
+	* charset.h (MIN_EMCHAR_FIELD1_PRIVATE):
+	* charset.h (MIN_CHAR_OFFICIAL_TYPE9N):
+	* charset.h (BREAKUP_EMCHAR_1_UNSAFE):
+	* charset.h (BREAKUP_EMCHAR):
+	* chartab.c:
+	* chartab.c (char_table_entry_hash):
+	* chartab.c (decode_char_table_range):
+	* chartab.c (encode_char_table_range):
+	* chartab.c (struct ptemap):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* chartab.c (char_table_equal):
+	* chartab.c (char_table_hash):
+	* chartab.c (set_char_table_default):
+	* chartab.c (fill_char_table):
+	* chartab.c (Freset_char_table):
+	* chartab.c (Fmake_char_table):
+	* chartab.c (get_non_ascii_char_table_value):
+	* chartab.c (Fchar_table_default):
+	* chartab.c (Fget_char_table):
+	* chartab.c (copy_mapper):
+	* chartab.c (copy_char_table_range):
+	* chartab.c (get_range_char_table):
+	* chartab.c (Fget_range_char_table):
+	* chartab.c (put_char_table):
+	* chartab.c (Fput_char_table):
+	* chartab.c (Fremove_char_table):
+	* chartab.c (map_over_charset_ascii_1):
+	* chartab.c (map_over_charset_control_1):
+	* chartab.c (map_over_charset_row):
+	* chartab.c (map_over_other_charset):
+	* chartab.c (map_char_table):
+	* chartab.c (slow_map_char_table_fun):
+	* chartab.c (Fmap_char_table):
+	* chartab.c (check_category_char):
+	* chartab.c (CATEGORY_SET):
+	* chartab.c (word_boundary_p):
+	* chartab.c (syms_of_chartab):
+	* chartab.h:
+	* chartab.h (struct Lisp_Char_Table):
+	* cmds.c:
+	* cmds.c (internal_self_insert):
+	* console-msw.h:
+	* console-stream.c (stream_clear_region):
+	* console-stream.c (stream_ring_bell):
+	* console-x.c (x_semi_canonicalize_console_connection):
+	* console.c (find_nonminibuffer_frame_not_on_console_predicate):
+	* console.h:
+	* data.c (eq_with_ebola_notice):
+	* data.c (Faref):
+	* data.c (Faset):
+	* device-msw.c (print_devmode):
+	* device.c (find_nonminibuffer_frame_not_on_device_predicate):
+	* device.h:
+	* device.h (struct pixel_to_glyph_translation_cache):
+	* dialog-msw.c (dialog_proc):
+	* dialog-x.c (maybe_run_dbox_text_callback):
+	* dired-msw.c:
+	* dired-msw.c (mswindows_get_files):
+	* dired.c:
+	* dired.c (Fdirectory_files):
+	* dired.c (file_name_completion):
+	* dired.c (user_name_completion):
+	* doc.c (unparesseuxify_doc_string):
+	* doprnt.c (emacs_doprnt_1):
+	* dumper.c:
+	* dumper.c (PDUMP_READ_ALIGNED):
+	* dumper.c (pdump_structure_size):
+	* dumper.c (pdump):
+	* dumper.c (pdump_load_finish):
+	* editfns.c:
+	* editfns.c (Fstring_to_char):
+	* editfns.c (Ftranslate_region):
+	* editfns.c (Fdelete_region):
+	* editfns.c (widen_buffer):
+	* editfns.c (Fnarrow_to_region):
+	* editfns.c (save_restriction_restore):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (print_hash_table):
+	* elhash.c (Finternal_hash_value):
+	* emacs.c:
+	* emacs.c (main_1):
+	* emacs.c (standard_args):
+	* eval.c (print_subr):
+	* eval.c (Fuser_variable_p):
+	* eval.c (backtrace_specials):
+	* eval.c (Fbacktrace):
+	* event-Xt.c (USE_CHARSET):
+	* event-Xt.c (x_keysym_to_character):
+	* event-Xt.c (emacs_Xt_format_magic_event):
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-msw.c (mswindows_find_frame):
+	* event-msw.c (FROB):
+	* event-msw.c (emacs_mswindows_format_magic_event):
+	* event-stream.c (external_debugging_print_event):
+	* event-stream.c (command_builder_find_leaf):
+	* event-stream.c (dribble_out_event):
+	* events.c (print_event_1):
+	* events.c (print_event):
+	* events.c (nth_of_key_sequence_as_event):
+	* events.c (Fevent_next):
+	* events.c (Fset_event_next):
+	* events.h:
+	* extents.c:
+	* extents.c (stack_of_extents):
+	* extents.c (memxpos_to_startind):
+	* extents.c (buffer_or_string_bytexpos_to_startind):
+	* extents.c (buffer_or_string_bytexpos_to_endind):
+	* extents.c (gap_array_adjust_markers):
+	* extents.c (gap_array_move_gap):
+	* extents.c (extent_list_locate_from_pos):
+	* extents.c (extent_list_at):
+	* extents.c (soe_dump):
+	* extents.c (soe_move):
+	* extents.c (extent_endpoint_byte):
+	* extents.c (extent_endpoint_char):
+	* extents.c (signal_single_extent_changed):
+	* extents.c (signal_extent_changed):
+	* extents.c (signal_extent_property_changed):
+	* extents.c (extent_attach):
+	* extents.c (extent_detach):
+	* extents.c (extent_in_region_p):
+	* extents.c (map_extents):
+	* extents.c (adjust_extents):
+	* extents.c (adjust_extents_for_deletion):
+	* extents.c (extent_find_end_of_run):
+	* extents.c (extent_find_beginning_of_run):
+	* extents.c (extent_fragment_update):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* extents.c (extent_remprop):
+	* extents.c (extent_endpoint_external):
+	* extents.c (Fextent_length):
+	* extents.c (Fnext_extent_change):
+	* extents.c (Fprevious_extent_change):
+	* extents.c (Fset_extent_parent):
+	* extents.c (set_extent_endpoints_1):
+	* extents.c (set_extent_endpoints):
+	* extents.c (set_extent_openness):
+	* extents.c (make_extent):
+	* extents.c (Fmake_extent):
+	* extents.c (Fset_extent_endpoints):
+	* extents.c (Fextent_in_region_p):
+	* extents.c (Fmap_extents):
+	* extents.c (struct slow_map_extent_children_arg):
+	* extents.c (slow_map_extent_children_function):
+	* extents.c (Fmap_extent_children):
+	* extents.c (struct extent_at_arg):
+	* extents.c (decode_extent_at_flag):
+	* extents.c (extent_at):
+	* extents.c (Fextent_at):
+	* extents.c (Fextents_at):
+	* extents.c (struct verify_extents_arg):
+	* extents.c (verify_extent_modification):
+	* extents.c (struct process_extents_for_insertion_arg):
+	* extents.c (process_extents_for_insertion_mapper):
+	* extents.c (process_extents_for_insertion):
+	* extents.c (struct process_extents_for_deletion_arg):
+	* extents.c (process_extents_for_deletion):
+	* extents.c (report_extent_modification_mapper):
+	* extents.c (report_extent_modification):
+	* extents.c (set_extent_invisible):
+	* extents.c (Fset_extent_face):
+	* extents.c (Fset_extent_mouse_face):
+	* extents.c (set_extent_glyph):
+	* extents.c (Fset_extent_begin_glyph_layout):
+	* extents.c (Fset_extent_end_glyph_layout):
+	* extents.c (Fset_extent_priority):
+	* extents.c (Fset_extent_property):
+	* extents.c (extent_properties):
+	* extents.c (ADD_PROP):
+	* extents.c (Fextent_properties):
+	* extents.c (do_highlight):
+	* extents.c (run_extent_copy_paste_internal):
+	* extents.c (run_extent_copy_function):
+	* extents.c (run_extent_paste_function):
+	* extents.c (run_extent_paste_function_char):
+	* extents.c (insert_extent):
+	* extents.c (struct add_string_extents_arg):
+	* extents.c (add_string_extents_mapper):
+	* extents.c (struct add_string_extents_the_hard_way_arg):
+	* extents.c (add_string_extents_the_hard_way_mapper):
+	* extents.c (add_string_extents):
+	* extents.c (struct splice_in_string_extents_arg):
+	* extents.c (splice_in_string_extents_mapper):
+	* extents.c (struct splice_in_string_extents_the_hard_way_arg):
+	* extents.c (splice_in_string_extents_the_hard_way_mapper):
+	* extents.c (splice_in_string_extents):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	* extents.c (get_char_property):
+	* extents.c (get_char_property_char):
+	* extents.c (Fget_text_property):
+	* extents.c (Fget_char_property):
+	* extents.c (struct put_text_prop_arg):
+	* extents.c (put_text_prop_mapper):
+	* extents.c (put_text_prop_openness_mapper):
+	* extents.c (put_text_prop):
+	* extents.c (Fput_text_property):
+	* extents.c (Fadd_text_properties):
+	* extents.c (Fremove_text_properties):
+	* extents.c (next_single_property_change):
+	* extents.c (previous_single_property_change):
+	* extents.h:
+	* extents.h (struct extent):
+	* faces.c (print_face):
+	* faces.c (update_face_inheritance_mapper):
+	* faces.c (ensure_face_cachel_complete):
+	* faces.c (face_cachel_charset_font_metric_info):
+	* file-coding.c (print_coding_system):
+	* file-coding.c (print_coding_system_in_print_method):
+	* file-coding.c (chain_print):
+	* file-coding.c (no_conversion_convert):
+	* file-coding.c (undecided_print):
+	* file-coding.c (gzip_print):
+	* file-coding.h (DECLARE_CODING_SYSTEM_TYPE):
+	* file-coding.h (DECODE_ADD_BINARY_CHAR):
+	* fileio.c (Ffile_truename):
+	* fileio.c (expand_and_dir_to_file):
+	* fns.c (print_bit_vector):
+	* fns.c (Flength):
+	* fns.c (Fstring_lessp):
+	* fns.c (Fsplit_path):
+	* fns.c (Ffillarray):
+	* fns.c (Fbase64_encode_string):
+	* fns.c (Fbase64_decode_string):
+	* font-lock.c:
+	* font-lock.c (find_context):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-msw.c (mswindows_get_mouse_position):
+	* frame-msw.c (mswindows_get_frame_parent):
+	* frame-x.c:
+	* frame-x.c (x_set_frame_text_value):
+	* frame.c:
+	* frame.c (allocate_frame_core):
+	* frame.c (Fignore_event):
+	* frame.h:
+	* glade.c (connector):
+	* glyphs-gtk.c:
+	* glyphs-gtk.c (convert_EImage_to_GDKImage):
+	* glyphs-gtk.c (gtk_print_image_instance):
+	* glyphs-gtk.c (gtk_locate_pixmap_file):
+	* glyphs-msw.c (mswindows_locate_pixmap_file):
+	* glyphs-msw.c (mswindows_print_image_instance):
+	* glyphs-msw.c (charset_of_text):
+	* glyphs-msw.h:
+	* glyphs-x.c (LISP_DEVICE_TO_X_SCREEN):
+	* glyphs-x.c (convert_EImage_to_XImage):
+	* glyphs-x.c (x_print_image_instance):
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs.c (check_instance_cache_mapper):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (query_string_font):
+	* glyphs.c (check_valid_xbm_inline):
+	* glyphs.c (display_table_entry):
+	* glyphs.h:
+	* gui-msw.c (mswindows_handle_gui_wm_command):
+	* gui-x.c (mark_widget_value_mapper):
+	* gui-x.c (popup_selection_callback):
+	* gui.h:
+	* gutter.h (GUTTER_POS_LOOP):
+	* hash.h:
+	* indent.c:
+	* indent.c (column_at_point):
+	* indent.c (string_column_at_point):
+	* indent.c (byte_spaces_at_point):
+	* indent.c (Fcurrent_indentation):
+	* indent.c (Fmove_to_column):
+	* insdel.c (BYTE_BUF_GPT):
+	* insdel.c (SET_BYTE_BUF_GPT):
+	* insdel.c (SET_END_SENTINEL):
+	* insdel.c (set_buffer_point):
+	* insdel.c (gap_left):
+	* insdel.c (gap_right):
+	* insdel.c (move_gap):
+	* insdel.c (merge_gap_with_end_gap):
+	* insdel.c (make_gap):
+	* insdel.c (signal_before_change):
+	* insdel.c (signal_after_change):
+	* insdel.c (buffer_insert_string_1):
+	* insdel.c (buffer_delete_range):
+	* insdel.c (buffer_replace_char):
+	* insdel.c (make_string_from_buffer_1):
+	* insdel.c (init_buffer_text):
+	* intl-win32.c:
+	* intl-win32.c (Fmswindows_get_valid_code_pages):
+	* intl-win32.c (Fmswindows_get_console_code_page):
+	* intl-win32.c (Fmswindows_set_console_code_page):
+	* intl-win32.c (Fmswindows_get_console_output_code_page):
+	* intl-win32.c (Fmswindows_set_console_output_code_page):
+	* intl-win32.c (Fmswindows_get_code_page_charset):
+	* intl-win32.c (Fmswindows_get_valid_keyboard_layouts):
+	* intl-win32.c (Fmswindows_get_keyboard_layout):
+	* intl-win32.c (Fmswindows_set_keyboard_layout):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* intl.c:
+	* intl.c (Fignore_defer_gettext):
+	* keymap.c (print_keymap):
+	* keymap.c (keymap_lookup_directly):
+	* keymap.c (keymap_store):
+	* keymap.c (define_key_check_and_coerce_keysym):
+	* keymap.c (Fdefine_key):
+	* keymap.c (Flookup_key):
+	* keymap.c (map_keymap_mapper):
+	* keymap.c (Fkey_description):
+	* lisp-disunion.h:
+	* lisp-disunion.h (VALMASK):
+	* lisp-disunion.h (VOID_TO_LISP):
+	* lisp-union.h:
+	* lisp-union.h (union Lisp_Object):
+	* lisp-union.h (XPNTRVAL):
+	* lisp-union.h (XREALINT):
+	* lisp-union.h (INTP):
+	* lisp.h:
+	* lisp.h (DECLARE_POINTER_TYPE_ARITH_COUNT):
+	* lisp.h (MAX_ALIGN_SIZE):
+	* lisp.h (struct Lisp_String):
+	* lisp.h (set_lispstringp_length):
+	* lisp.h (XSET_STRING_LENGTH):
+	* lisp.h (FLEXIBLE_ARRAY_STRUCT_SIZEOF):
+	* lisp.h (SYMBOL_IS_KEYWORD):
+	* lread.c:
+	* lrecord.h:
+	* lrecord.h (DECLARE_LRECORD):
+	* lrecord.h (DECLARE_EXTERNAL_LRECORD):
+	* lrecord.h (DECLARE_NONRECORD):
+	* lstream.c (aligned_sizeof_lstream):
+	* lstream.c (Lstream_really_write):
+	* lstream.c (make_lisp_buffer_stream_1):
+	* lstream.c (make_lisp_buffer_input_stream):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_writer):
+	* lstream.h:
+	* marker.c (print_marker):
+	* marker.c (byte_marker_position):
+	* marker.c (marker_position):
+	* marker.c (set_byte_marker_position):
+	* marker.c (set_marker_position):
+	* marker.c (Fbuffer_has_markers_at):
+	* menubar-gtk.c (__torn_off_sir):
+	* menubar-gtk.c (__activate_menu):
+	* menubar-gtk.c (__generic_button_callback):
+	* menubar-msw.c:
+	* menubar-x.c (pre_activate_callback):
+	* menubar-x.c (command_builder_operate_menu_accelerator):
+	* menubar-x.c (command_builder_find_menu_accelerator):
+	* menubar.c:
+	* menubar.c (Fnormalize_menu_item_name):
+	* minibuf.c:
+	* minibuf.c (Ftry_completion):
+	* minibuf.c (Fall_completions):
+	* minibuf.c (Fminibuffer_prompt):
+	* minibuf.c (Fminibuffer_prompt_width):
+	* minibuf.c (echo_area_append):
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_WRITE_CHAR):
+	* mule-ccl.c (CCL_WRITE_STRING):
+	* mule-ccl.c (CCL_MAKE_CHAR):
+	* mule-ccl.c (ccl_driver):
+	* mule-charset.c (Fmake_charset):
+	* mule-charset.c (Fcharset_from_attributes):
+	* mule-coding.c (byte_shift_jis_two_byte_1_p):
+	* mule-coding.c (byte_shift_jis_two_byte_2_p):
+	* mule-coding.c (byte_shift_jis_katakana_p):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* mule-coding.c (Fencode_shift_jis_char):
+	* mule-coding.c (byte_big5_two_byte_1_p):
+	* mule-coding.c (byte_big5_two_byte_2_p):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (decode_big5_char):
+	* mule-coding.c (Fencode_big5_char):
+	* mule-coding.c (charset_by_attributes_or_create_one):
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	* mule-coding.c (iso2022_print):
+	* mule-coding.c (iso2022_detect):
+	* mule-wnnfns.c (m2w):
+	* nas.c:
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-x.c (x_font_instance_properties):
+	* opaque.c (aligned_sizeof_opaque):
+	* postgresql.c (print_pgconn):
+	* postgresql.c (print_pgresult):
+	* print.c:
+	* print.c (output_string):
+	* print.c (write_string_1):
+	* print.c (write_string):
+	* print.c (write_c_string):
+	* print.c (write_eistring):
+	* print.c (write_fmt_string):
+	* print.c (write_fmt_string_lisp):
+	* print.c (stderr_out_lisp):
+	* print.c (Fterpri):
+	* print.c (Fprint):
+	* print.c (print_error_message):
+	* print.c (print_vector_internal):
+	* print.c (print_cons):
+	* print.c (print_string):
+	* print.c (print_internal):
+	* print.c (print_float):
+	* print.c (print_symbol):
+	* process-nt.c (nt_create_process):
+	* process-unix.c (close_process_descs_mapfun):
+	* process.c (print_process):
+	* process.c (get_process_from_usid):
+	* process.c (Fstart_process_internal):
+	* process.c (status_message):
+	* process.c (status_notify):
+	* process.c (Fprocess_connection):
+	* process.c (getenv_internal):
+	* process.c (putenv_internal):
+	* process.h:
+	* profile.c (get_profiling_info_maphash):
+	* profile.c (mark_profiling_info_maphash):
+	* rangetab.c (print_range_table):
+	* rangetab.c (unified_range_table_copy_data):
+	* rangetab.c (align_the_damn_table):
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (separate_textual_runs):
+	* redisplay-gtk.c (gtk_output_display_block):
+	* redisplay-msw.c (separate_textual_runs):
+	* redisplay-msw.c (mswindows_output_display_block):
+	* redisplay-output.c:
+	* redisplay-output.c (ADJ_CHARPOS):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_update_line):
+	* redisplay-x.c (separate_textual_runs):
+	* redisplay-x.c (x_output_display_block):
+	* redisplay.c:
+	* redisplay.c (position_redisplay_data_type):
+	* redisplay.c (struct prop_block):
+	* redisplay.c (generate_display_line):
+	* redisplay.c (add_hscroll_rune):
+	* redisplay.c (add_emchar_rune_1):
+	* redisplay.c (add_blank_rune):
+	* redisplay.c (add_octal_runes):
+	* redisplay.c (add_control_char_runes):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* redisplay.c (add_propagation_runes):
+	* redisplay.c (add_glyph_rune):
+	* redisplay.c (create_text_block):
+	* redisplay.c (add_margin_blank):
+	* redisplay.c (generate_modeline):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (generate_string_display_line):
+	* redisplay.c (generate_displayable_area):
+	* redisplay.c (REGEN_INC_FIND_START_END):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (regenerate_window_incrementally):
+	* redisplay.c (point_visible):
+	* redisplay.c (point_at_center):
+	* redisplay.c (update_internal_cache_list):
+	* redisplay.c (UPDATE_CACHE_RETURN):
+	* redisplay.c (pixel_to_glyph_translation):
+	* redisplay.h:
+	* redisplay.h (struct rune):
+	* redisplay.h (struct display_line):
+	* redisplay.h (struct extent_fragment):
+	* regex.c:
+	* regex.c (RE_TRANSLATE_1):
+	* regex.c (charptr_emchar):
+	* regex.c (INC_CHARPTR_FMT):
+	* regex.c (SYNTAX):
+	* regex.c (EXTEND_BUFFER):
+	* regex.c (regex_compile):
+	* regex.c (compile_range):
+	* regex.c (compile_extended_range):
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_search):
+	* regex.c (re_search_2):
+	* regex.c (REGEX_PREFETCH):
+	* regex.c (WORDCHAR_P):
+	* regex.c (re_match):
+	* regex.c (re_match_2):
+	* regex.c (re_match_2_internal):
+	* regex.c (re_compile_pattern):
+	* regex.c (re_comp):
+	* regex.c (make-backup-files): Removed.
+	* regex.c (version-control): Removed.
+	* regex.c (trim-versions-without-asking): Removed.
+	* regex.c (End): Removed.
+	* regex.h:
+	* regex.h (RE_LISP_SHORT_CONTEXT_ARGS_DECL):
+	* scrollbar-msw.c (mswindows_free_scrollbar_instance):
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
+	* scrollbar-msw.c (mswindows_handle_mousewheel_event):
+	* search.c:
+	* search.c (matcher_overflow):
+	* search.c (compile_pattern_1):
+	* search.c (compile_pattern):
+	* search.c (fixup_search_regs_for_buffer):
+	* search.c (looking_at_1):
+	* search.c (Fposix_looking_at):
+	* search.c (string_match_1):
+	* search.c (fast_string_match):
+	* search.c (byte_scan_buffer):
+	* search.c (scan_buffer):
+	* search.c (byte_find_next_newline_no_quit):
+	* search.c (byte_find_next_emchar_in_string):
+	* search.c (find_before_next_newline):
+	* search.c (skip_chars):
+	* search.c (search_command):
+	* search.c (trivial_regexp_p):
+	* search.c (search_buffer):
+	* search.c (simple_search):
+	* search.c (boyer_moore):
+	* search.c (set_search_regs):
+	* search.c (wordify):
+	* search.c (Freplace_match):
+	* search.c (match_limit):
+	* search.c (Fmatch_data):
+	* search.c (Fstore_match_data):
+	* select-x.c (hack_motif_clipboard_selection):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	* specifier.c (print_specifier):
+	* specifier.c (aligned_sizeof_specifier):
+	* specifier.c (recompute_cached_specifier_everywhere_mapfun):
+	* specifier.h:
+	* specifier.h (DECLARE_SPECIFIER_TYPE):
+	* symbols.c (Fintern):
+	* symsinit.h:
+	* syntax.c:
+	* syntax.c (struct lisp_parse_state):
+	* syntax.c (find_defun_start):
+	* syntax.c (Fset_syntax_table):
+	* syntax.c (init_syntax_cache):
+	* syntax.c (update_syntax_cache):
+	* syntax.c (Fchar_syntax):
+	* syntax.c (charset_syntax):
+	* syntax.c (syntax_match):
+	* syntax.c (Fmatching_paren):
+	* syntax.c (WORD_BOUNDARY_P):
+	* syntax.c (scan_words):
+	* syntax.c (find_start_of_comment):
+	* syntax.c (find_end_of_comment):
+	* syntax.c (Fforward_comment):
+	* syntax.c (scan_lists):
+	* syntax.c (char_quoted):
+	* syntax.c (Fbackward_prefix_chars):
+	* syntax.c (scan_sexps_forward):
+	* syntax.c (Fparse_partial_sexp):
+	* syntax.c (copy_to_mirrortab):
+	* syntax.c (copy_if_not_already_present):
+	* syntax.c (update_just_this_syntax_table):
+	* syntax.c (update_syntax_table):
+	* syntax.c (syms_of_syntax):
+	* syntax.c (vars_of_syntax):
+	* syntax.c (complex_vars_of_syntax):
+	* syntax.h:
+	* syntax.h (SYNTAX_CODE):
+	* syntax.h (SYNTAX_FROM_CODE):
+	* syntax.h (SYNTAX_PREFIX):
+	* syntax.h (struct syntax_cache):
+	* syswindows.h:
+	* tests.c (Ftest_data_format_conversion):
+	* text.c:
+	* text.c (convert_emchar_string_into_malloced_string):
+	* text.c (COPY_TEXT_BETWEEN_FORMATS):
+	* text.c (copy_buffer_text_out):
+	* text.c (find_charsets_in_intbyte_string):
+	* text.c (find_charsets_in_emchar_string):
+	* text.c (intbyte_string_displayed_columns):
+	* text.c (emchar_string_displayed_columns):
+	* text.c (intbyte_string_nonascii_chars):
+	* text.c (eicpyout_malloc_fmt):
+	* text.c (skip_ascii):
+	* text.c (charcount_to_bytecount_fun):
+	* text.c (charbpos_to_bytebpos_func):
+	* text.c (bytebpos_to_charbpos_func):
+	* text.c (buffer_mule_signal_inserted_region):
+	* text.c (buffer_mule_signal_deleted_region):
+	* text.c (get_buffer_range_char):
+	* text.c (get_buffer_range_byte):
+	* text.c (get_string_pos_char):
+	* text.c (get_string_range_char):
+	* text.c (get_buffer_or_string_pos_char):
+	* text.c (get_buffer_or_string_pos_byte):
+	* text.c (get_buffer_or_string_range_char):
+	* text.c (get_buffer_or_string_range_byte):
+	* text.c (buffer_or_string_accessible_begin_char):
+	* text.c (buffer_or_string_accessible_end_char):
+	* text.c (buffer_or_string_accessible_begin_byte):
+	* text.c (buffer_or_string_accessible_end_byte):
+	* text.c (buffer_or_string_absolute_begin_char):
+	* text.c (buffer_or_string_absolute_end_char):
+	* text.c (buffer_or_string_absolute_begin_byte):
+	* text.c (buffer_or_string_absolute_end_byte):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* text.c (non_ascii_set_charptr_emchar):
+	* text.c (non_ascii_charptr_emchar):
+	* text.c (non_ascii_valid_emchar_p):
+	* text.c (non_ascii_charptr_copy_emchar):
+	* text.c (Lstream_get_emchar_1):
+	* text.c (Fmake_char):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	* text.c (lookup_composite_char):
+	* text.c (Fmake_composite_char):
+	* text.c (Fcomposite_char_string):
+	* text.h:
+	* text.h (rep_bytes_by_first_byte):
+	* text.h (byte_ascii_p):
+	* text.h (intbyte_leading_byte_p):
+	* text.h (emchar_multibyte_p):
+	* text.h (emchar_ascii_p):
+	* text.h (assert_valid_charptr):
+	* text.h (INC_CHARPTR):
+	* text.h (INC_CHARPTR_FMT):
+	* text.h (DEC_CHARPTR_FMT):
+	* text.h (VALIDATE_CHARPTR_BACKWARD):
+	* text.h (validate_intbyte_string_backward):
+	* text.h (simple_charptr_copy_emchar):
+	* text.h (charptr_emchar):
+	* text.h (valid_emchar_p):
+	* text.h (CHAR_INTP):
+	* text.h (eicpy_lstr):
+	* text.h (eicpy_raw_fmt):
+	* text.h (eicpy_raw):
+	* text.h (eicpy_rawz_fmt):
+	* text.h (eicpy_rawz):
+	* text.h (eicpyout_alloca):
+	* text.h (eicat_lstr):
+	* text.h (GET_STRERROR):
+	* tooltalk.c (tooltalk_message_callback):
+	* tooltalk.c (tooltalk_pattern_callback):
+	* ui-byhand.c (__generic_toolbar_callback):
+	* ui-byhand.c (__emacs_gtk_ctree_recurse_internal):
+	* ui-gtk.c (emacs_gtk_object_printer):
+	* ui-gtk.c (__internal_callback_destroy):
+	* ui-gtk.c (__internal_callback_marshal):
+	* ui-gtk.c (emacs_gtk_boxed_printer):
+	* ui-gtk.c (gtk_type_to_lisp):
+	* unicode.c (sledgehammer_check_from_table):
+	* unicode.c (sledgehammer_check_to_table):
+	* unicode.c (set_unicode_conversion):
+	* unicode.c (emchar_to_unicode):
+	* unicode.c (unicode_to_char):
+	* unicode.c (recalculate_unicode_precedence):
+	* unicode.c (Fchar_to_unicode):
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* unicode.c (unicode_print):
+	* win32.c:
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (mswindows_lisp_error_1):
+	* win32.c (Fmswindows_shell_execute):
+	* window.c (print_window):
+	* window.c (print_window_config):
+	* window.c (Fcurrent_pixel_column):
+
+	Another big Ben patch.
+
+	-- FUNCTIONALITY CHANGES:
+	
+	add partial support for 8-bit-fixed, 16-bit-fixed, and
+	32-bit-fixed formats.  not quite done yet. (in particular, needs
+	functions to actually convert the buffer.) NOTE: lots of changes
+	to regex.c here.  also, many new *_fmt() inline funs that take an
+	Internal_Format argument.
+
+	redo syntax cache code.  make the cache per-buffer; keep the cache
+	valid across calls to functions that use it.  also keep it valid
+	across insertions/deletions and extent changes, as much as is
+	possible.  eliminate the junky regex-reentrancy code by passing in
+	the relevant lisp info to the regex routines as local vars.
+
+	add general mechanism in extents code for signalling extent changes.
+	
+	fix numerous problems with the case-table implementation; yoshiki
+	never properly transferred many algorithms from old-style to
+	new-style case tables.
+
+	redo char tables to support a default argument, so that mapping
+	only occurs over changed args.  change many chartab functions to
+	accept Lisp_Object instead of Lisp_Char_Table *.
+
+	comment out the code in font-lock.c by default, because
+	font-lock.el no longer uses it.  we should consider eliminating it
+	entirely.
+
+	Don't output bell as ^G in console-stream when not a TTY.
+
+	add -mswindows-termination-handle to interface with i.c, so we can
+	properly kill a build.
+
+	add more error-checking to buffer/string macros.
+
+	add some additional buffer_or_string_() funs.
+	
+	-- INTERFACE CHANGES AFFECTING MORE CODE:
+	
+	switch the arguments of write_c_string and friends to be
+	consistent with write_fmt_string, which must have printcharfun
+	first.
+
+	change BI_* macros to BYTE_* for increased clarity; similarly for
+	bi_* local vars.
+
+	change VOID_TO_LISP to be a one-argument function.  eliminate
+	no-longer-needed CVOID_TO_LISP.
+
+	-- char/string macro changes:
+	
+	rename MAKE_CHAR() to make_emchar() for slightly less confusion
+	with make_char(). (The former generates an Emchar, the latter a
+	Lisp object.  Conceivably we should rename make_char() -> wrap_char()
+	and similarly for make_int(), make_float().)
+
+	Similar changes for other *CHAR* macros -- we now consistently use
+	names with `emchar' whenever we are working with Emchars.  Any
+	remaining name with just `char' always refers to a Lisp object.
+
+	rename macros with XSTRING_* to string_* except for those that
+	reference actual fields in the Lisp_String object, following
+	conventions used elsewhere.
+
+	rename set_string_{data,length} macros (the only ones to work with
+	a Lisp_String_* instead of a Lisp_Object) to set_lispstringp_*
+	to make the difference clear.
+
+	try to be consistent about caps vs. lowercase in macro/inline-fun
+	names for chars and such, which wasn't the case before.  we now
+	reserve caps either for XFOO_ macros that reference object fields
+	(e.g. XSTRING_DATA) or for things that have non-function semantics,
+	e.g. directly modifying an arg (BREAKUP_EMCHAR) or evaluating an
+	arg (any arg) more than once.  otherwise, use lowercase.
+
+	here is a summary of most of the macros/inline funs changed by all
+	of the above changes:
+	
+	BYTE_*_P -> byte_*_p
+	XSTRING_BYTE -> string_byte
+	set_string_data/length -> set_lispstringp_data/length
+	XSTRING_CHAR_LENGTH -> string_char_length
+	XSTRING_CHAR -> string_emchar
+	INTBYTE_FIRST_BYTE_P -> intbyte_first_byte_p
+	INTBYTE_LEADING_BYTE_P -> intbyte_leading_byte_p
+	charptr_copy_char -> charptr_copy_emchar
+	LEADING_BYTE_* -> leading_byte_*
+	CHAR_* -> EMCHAR_*
+	*_CHAR_* -> *_EMCHAR_*
+	*_CHAR -> *_EMCHAR
+	CHARSET_BY_ -> charset_by_*
+	BYTE_SHIFT_JIS* -> byte_shift_jis*
+	BYTE_BIG5* -> byte_big5*
+	REP_BYTES_BY_FIRST_BYTE -> rep_bytes_by_first_byte
+	char_to_unicode -> emchar_to_unicode
+	valid_char_p -> valid_emchar_p
+	
+	Change intbyte_strcmp -> qxestrcmp_c (duplicated functionality).
+		
+	-- INTERFACE CHANGES AFFECTING LESS CODE:
+
+	use DECLARE_INLINE_HEADER in various places.
+
+	remove '#ifdef emacs' from XEmacs-only files.
+	
+	eliminate CHAR_TABLE_VALUE(), which duplicated the functionality
+	of get_char_table().
+	
+	add BUFFER_TEXT_LOOP to simplify iterations over buffer text.
+	
+	define typedefs for signed and unsigned types of fixed sizes
+	(INT_32_BIT, UINT_32_BIT, etc.).
+
+	create ALIGN_FOR_TYPE as a higher-level interface onto ALIGN_SIZE;
+	fix code to use it.
+
+	add charptr_emchar_len to return the text length of the character
+	pointed to by a ptr; use it in place of
+	charcount_to_bytecount(..., 1).  add emchar_len to return the text
+	length of a given character.
+
+	add types Bytexpos and Charxpos to generalize Bytebpos/Bytecount
+	and Charbpos/Charcount, in code (particularly, the extents code
+	and redisplay code) that works with either kind of index.  rename
+	redisplay struct params with names such as `charbpos' to
+	e.g. `charpos' when they are e.g. a Charxpos, not a Charbpos.
+
+	eliminate xxDEFUN in place of DEFUN; no longer necessary with
+	changes awhile back to doc.c.
+
+	split up big ugly combined list of EXFUNs in lisp.h on a
+	file-by-file basis, since other prototypes are similarly split.
+
+	rewrite some "*_UNSAFE" macros as inline funs and eliminate the
+	_UNSAFE suffix.
+
+	move most string code from lisp.h to text.h; the string code and
+	text.h code is now intertwined in such a fashion that they need
+	to be in the same place and partially interleaved. (you can't
+	create forward references for inline funs)
+
 2002-04-30  Charles G. Waldman <cgw@xemacs.org>
 
         * sysdep.c (sys_siglist): change "signum" to "signal"

@@ -55,8 +55,7 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 inline static Bytecount
 aligned_sizeof_opaque (Bytecount opaque_size)
 {
-  return ALIGN_SIZE (offsetof (Lisp_Opaque, data) + opaque_size,
-		     ALIGNOF (max_align_t));
+  return MAX_ALIGN_SIZE (offsetof (Lisp_Opaque, data) + opaque_size);
 }
 
 static Bytecount

@@ -1,6 +1,6 @@
 /* Functions for the X window system.
    Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2001 Ben Wing.
+   Copyright (C) 1995, 1996, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -665,7 +665,7 @@ x_set_frame_text_value (struct frame *f, Intbyte *value,
   Intbyte *ptr;
   /* Optimize for common ASCII case */
   for (ptr = value; *ptr; ptr++)
-    if (!BYTE_ASCII_P (*ptr))
+    if (!byte_ascii_p (*ptr))
       {
         const char * tmp;
         encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));

@@ -217,9 +217,9 @@ stream_output_display_block (struct window *w, struct display_line *dl,
 
 static void
 stream_clear_region (Lisp_Object window, struct device* d, struct frame * f,
-		  face_index findex, int x, int y,
-		  int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
-		  Lisp_Object background_pixmap)
+		     face_index findex, int x, int y,
+		     int width, int height, Lisp_Object fcolor,
+		     Lisp_Object bcolor, Lisp_Object background_pixmap)
 {
 }
 
@@ -233,8 +233,14 @@ static void
 stream_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
-  fputc (07, CONSOLE_STREAM_DATA (c)->out);
-  fflush (CONSOLE_STREAM_DATA (c)->out);
+  /* Don't output ^G when not a TTY -- in particular, under MS Windows, ^G
+     is interpreted as bell by the console, but not when running under
+     VC++.  Probably this would be the same under Unix. */
+  if (isatty (fileno (CONSOLE_STREAM_DATA (c)->out)))
+    {
+      fputc (07, CONSOLE_STREAM_DATA (c)->out);
+      fflush (CONSOLE_STREAM_DATA (c)->out);
+    }
 }
 
 

@@ -1,6 +1,6 @@
 /* Various functions for internationalizing XEmacs.
    Copyright (C) 1993, 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2000, 2001 Ben Wing.
+   Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -101,7 +101,7 @@ Otherwise, returns the locale, or possibly a more-specified version.
 
 Lisp_Object Qdefer_gettext;
 
-xxDEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
+DEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
 If OBJECT is of the form (defer-gettext "string"), return the string.
 The purpose of the defer-gettext symbol is to identify strings which
 are translated when they are referenced instead of when they are defined.

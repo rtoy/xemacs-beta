@@ -1,5 +1,6 @@
 /* XEmacs routines to deal with case tables.
    Copyright (C) 2000 Yoshiki Hayashi.
+   Copyright (C) 2002 Ben Wing.
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -29,6 +30,7 @@ struct Lisp_Case_Table
   Lisp_Object upcase_table;
   Lisp_Object case_canon_table;
   Lisp_Object case_eqv_table;
+  int dirty;
 };
 typedef struct Lisp_Case_Table Lisp_Case_Table;
   
@@ -39,14 +41,34 @@ DECLARE_LRECORD (case_table, Lisp_Case_Table);
 #define CHECK_CASE_TABLE(x) CHECK_RECORD (x, case_table)
 #define CONCHECK_CASE_TABLE(x) CONCHECK_RECORD (x, case_table)
 
+void recompute_case_table (Lisp_Object casetab);
+
+DECLARE_INLINE_HEADER (
+Lisp_Case_Table *
+XCASE_TABLE_UPDATE (Lisp_Object table)
+)
+{
+  Lisp_Case_Table *ct = XCASE_TABLE (table);
+  /* If the table is dirty (changes have been made without ancillary
+     structures updated), recompute first. */
+  if (ct->dirty)
+    recompute_case_table (table);
+  return ct;
+}
+
 #define CASE_TABLE_DOWNCASE(ct) ((ct)->downcase_table)
 #define CASE_TABLE_UPCASE(ct) ((ct)->upcase_table)
 #define CASE_TABLE_CANON(ct) ((ct)->case_canon_table)
 #define CASE_TABLE_EQV(ct) ((ct)->case_eqv_table)
 #define XCASE_TABLE_DOWNCASE(ct) (XCASE_TABLE (ct)->downcase_table)
 #define XCASE_TABLE_UPCASE(ct) (XCASE_TABLE (ct)->upcase_table)
-#define XCASE_TABLE_CANON(ct) (XCASE_TABLE (ct)->case_canon_table)
-#define XCASE_TABLE_EQV(ct) (XCASE_TABLE (ct)->case_eqv_table)
+/* Only do automatic updating for canon and eqv, which are the two that are
+   automatically computed and that are not up to date.  These are not
+   normally used by the simple case routines.  canon is used by
+   compare-buffer-substrings when case-insensitive and by the regex
+   routines, and eqv is used only by the Boyer-Moore search routines. */
+#define XCASE_TABLE_CANON(ct) (XCASE_TABLE_UPDATE (ct)->case_canon_table)
+#define XCASE_TABLE_EQV(ct) (XCASE_TABLE_UPDATE (ct)->case_eqv_table)
 
 #define SET_CASE_TABLE_DOWNCASE(ct, p) ((ct)->downcase_table = p)
 #define SET_CASE_TABLE_UPCASE(ct, p) ((ct)->upcase_table = p)

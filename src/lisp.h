@@ -77,6 +77,64 @@ Boston, MA 02111-1307, USA.  */
 
 #define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
 
+#if SIZEOF_SHORT == 2
+#define INT_16_BIT short
+#define UINT_16_BIT unsigned short
+#elif SIZEOF_INT == 2
+/* Bwa ha ha.  As if XEmacs could actually support such systems. */
+#define INT_16_BIT int
+#define UINT_16_BIT unsigned int
+#else
+#error Unable to find a 16-bit integral type
+#endif
+
+#if SIZEOF_INT == 4
+#define INT_32_BIT int
+#define UINT_32_BIT unsigned int
+#define MAKE_32_BIT_UNSIGNED_CONSTANT(num) num##U
+#elif SIZEOF_LONG == 4
+/* Bwa ha ha again. */
+#define INT_32_BIT long
+#define UINT_32_BIT unsigned long
+#define MAKE_32_BIT_UNSIGNED_CONSTANT(num) num##UL
+#elif SIZEOF_SHORT == 4
+/* And again. */
+#define INT_32_BIT short
+#define UINT_32_BIT unsigned short
+#define MAKE_32_BIT_UNSIGNED_CONSTANT(num) num##U
+#elif /* Unable to find a 32-bit integral type! */
+#error What kind of strange-ass system are you running on?
+#endif
+
+#if SIZEOF_LONG == 8
+#define INT_64_BIT long
+#define UINT_64_BIT unsigned long
+#define MAKE_64_BIT_UNSIGNED_CONSTANT(num) num##UL
+#elif SIZEOF_LONG_LONG == 8
+#define INT_64_BIT long long
+#define UINT_64_BIT unsigned long long
+#define MAKE_64_BIT_UNSIGNED_CONSTANT(num) num##ULL
+/* No error otherwise; just leave undefined */
+#endif
+
+#if SIZEOF_LONG_LONG == 16
+#define INT_128_BIT long long
+#define UINT_128_BIT unsigned long long
+#define MAKE_128_BIT_UNSIGNED_CONSTANT(num) num##ULL
+/* No error otherwise; just leave undefined */
+#endif
+
+/* #### Fill this in for other systems */
+#if defined (INT_64_BIT) && !(defined (i386) || defined (__i386__))
+#define EFFICIENT_INT_64_BIT INT_64_BIT
+#define EFFICIENT_UINT_64_BIT UINT_64_BIT
+#endif
+
+#if defined (INT_128_BIT)
+#define EFFICIENT_INT_128_BIT INT_128_BIT
+#define EFFICIENT_UINT_128_BIT UINT_128_BIT
+#endif
+
 /* ------------------------ basic char/int typedefs ------------------- */
 
 /* The definitions we put here use typedefs to attribute specific meaning
@@ -131,32 +189,72 @@ typedef unsigned char UChar_Binary;
 typedef char Char_ASCII;
 typedef unsigned char UChar_ASCII;
 
+/* To the user, a buffer is made up of characters.  In the non-Mule world,
+   characters and Intbytes are equivalent, restricted to the range 0 - 255.
+   In the Mule world, many more characters are possible (19 bits worth,
+   more or less), and a character requires (typically) 1 to 4 Intbytes for
+   its representation in a buffer or string.  Note that the representation
+   of a character by itself, in a variable, is very different from its
+   representation in a string of text (in a buffer or Lisp string).
 
-/* To the user, a buffer is made up of characters, declared as follows.
-   In the non-Mule world, characters and Intbytes are equivalent.
-   In the Mule world, a character requires (typically) 1 to 4
-   Intbytes for its representation in a buffer. */
+   Under Mule, text can be represented in more than one way.  The "default"
+   format is variable-width (1 to 4 bytes) and compatible with ASCII --
+   ASCII chars are stored in one byte, as themselves, and all other chars
+   use only high bytes.  The default format is currently the only format
+   used for text stored anywhere but in a buffer.  In a buffer, other
+   formats -- fixed-width formats (1, 2, or 4 bytes) -- are possible, for
+   speed.
+
+   See text.c/text.h for a detailed discussion of all of this. */
+
+/* A character, as represented on its own. */
 
 typedef int Emchar;
 
-/* Different ways of referring to a position in a buffer.  We use
-   the typedefs in preference to 'EMACS_INT' to make it clearer what
-   sort of position is being used.  See extents.c for a description
-   of the different positions.  We put them here instead of in
-   buffer.h (where they rightfully belong) to avoid syntax errors
-   in function prototypes. */
+/* The "raw value" of a character as stored in the buffer.  In the default
+   format, this is just the same as the character.  In fixed-width formats,
+   this is the actual value in the buffer, which will be limited to the
+   range as established by the format.  This is used when searching for a
+   character in a buffer -- it's faster to convert the character to the raw
+   value and look for that, than repeatedly convert each raw value in the
+   buffer into a character. */
+
+typedef int Raw_Emchar;
+
 
 #if !defined (__cplusplus) || !defined (CPLUSPLUS_INTEGRAL_CLASSES_NOT_YET)
+
+/* Counts of bytes or chars */
+
+typedef EMACS_INT Bytecount;
+typedef EMACS_INT Charcount;
+
+/* Different ways of referring to a position in a buffer.  We use
+   the typedefs in preference to 'EMACS_INT' to make it clearer what
+   sort of position is being used.  See text.c for a description
+   of the different positions.
+
+   Note that buffer positions are 1-based, and there's a gap in the middle
+   of a buffer; that's why we have separate typedefs.  For Lisp strings and
+   other strings of text, we just use Bytecount and Charcount. */
 
 typedef EMACS_INT Charbpos;
 typedef EMACS_INT Bytebpos;
 typedef EMACS_INT Membpos;
 
-/* Counts of bytes or chars */
-typedef EMACS_INT Bytecount;
-typedef EMACS_INT Charcount;
+/* Different ways of referring to a position that can be either in a buffer
+   or string; used when passing around an object that can be either a
+   buffer or string, and an associated position.  Conceptually, they
+   resolve as follows:
 
-/* Not yet used */
+   Typedef		Buffer			String
+   ------------------------------------------------------
+   Charxpos		Charbpos		Charcount
+   Bytexpos		Bytebpos		Bytecount
+   Memxpos		Membpos			Bytecount
+   
+   */
+
 typedef EMACS_INT Charxpos;
 typedef EMACS_INT Bytexpos;
 typedef EMACS_INT Memxpos;
@@ -532,14 +630,14 @@ class Memxpos
   DECLARE_BAD_MEM_INTCLASS_ARITH_COMPARE (Memxpos)
 };
 
-#define DECLARE_POINTER_TYPE_ARITH_COUNT(pointer, countcl)	\
-inline pointer operator += (pointer & x, const countcl& y)	\
-{ x += y.data; return x; }					\
-inline pointer operator -= (pointer & x, const countcl& y)	\
-{ x -= y.data; return x; }					\
-inline pointer operator + (pointer x, const countcl& y)		\
-{ return x + y.data; }						\
-inline pointer operator - (pointer x, const countcl& y)		\
+#define DECLARE_POINTER_TYPE_ARITH_COUNT(pointer, countcl)		\
+inline pointer operator += (const pointer & x, const countcl& y)	\
+{ x += y.data; return x; }						\
+inline pointer operator -= (const pointer & x, const countcl& y)	\
+{ x -= y.data; return x; }						\
+inline pointer operator + (const pointer x, const countcl& y)		\
+{ return x + y.data; }							\
+inline pointer operator - (const pointer x, const countcl& y)		\
 { return x - y.data; }
 
 #define DECLARE_INTEGRAL_TYPE_ARITH_COUNT(integral, countcl)	\
@@ -576,8 +674,8 @@ inline cl operator ?: (bool b, const cl& x, integral y)	\
   { return b ? x : cl (y); }
 #endif /* 0 */
 
-DECLARE_POINTER_TYPE_ARITH_COUNT (const Intbyte *, Bytecount);
-DECLARE_POINTER_TYPE_ARITH_COUNT (const Extbyte *, Bytecount);
+/* DECLARE_POINTER_TYPE_ARITH_COUNT (const Intbyte *, Bytecount);
+   DECLARE_POINTER_TYPE_ARITH_COUNT (const Extbyte *, Bytecount); */
 DECLARE_POINTER_TYPE_ARITH_COUNT (Intbyte *, Bytecount);
 DECLARE_POINTER_TYPE_ARITH_COUNT (Extbyte *, Bytecount);
 
@@ -757,16 +855,25 @@ template<typename T> struct alignment_trick { char c; T member; };
 #define ALIGN_SIZE(len, unit) \
   ((((len) + (unit) - 1) / (unit)) * (unit))
 
+/* ALIGN_FOR_TYPE returns the smallest size greater than or equal to LEN
+   which is aligned for the given type.  This can be used to assure that
+   data that follows a block of the returned size is of correct alignment
+   for the type (provided that the block itself is correctly aligned for
+   this type; memory returned by malloc() is guaranteed to be correctly
+   aligned for all types). */
+
+#define ALIGN_FOR_TYPE(len, type) ALIGN_SIZE (len, ALIGNOF (type))
+
 /* MAX_ALIGN_SIZE returns the smallest size greater than or equal to LEN
    which guarantees that data following a block of such size is correctly
    aligned for all types (provided that the block itself is so aligned,
    which is the case for memory returned by malloc()). */
 
-#define MAX_ALIGN_SIZE(len) ALIGN_SIZE (len, ALIGNOF (max_align_t))
+#define MAX_ALIGN_SIZE(len) ALIGN_FOR_TYPE (len, max_align_t)
 
-/* #### Yuck, this is kind of evil */
-#define ALIGN_PTR(ptr, unit) \
-  ((void *) ALIGN_SIZE ((size_t) (ptr), unit))
+/* ALIGN_PTR returns the smallest pointer >= PTR which is aligned for
+   data of TYPE. */
+#define ALIGN_PTR(ptr, type) ((void *) ALIGN_FOR_TYPE ((size_t) (ptr), type))
 
 /* ------------------------ assertions ------------------- */
 
@@ -1749,9 +1856,10 @@ EXTERNAL_PROPERTY_LIST_LOOP_7 (key, value, list, len, tail,		\
        )
 
 /* Return 1 if LIST is properly acyclic and nil-terminated, else 0. */
-INLINE_HEADER int TRUE_LIST_P (Lisp_Object object);
-INLINE_HEADER int
+DECLARE_INLINE_HEADER (
+int
 TRUE_LIST_P (Lisp_Object object)
+)
 {
   Lisp_Object hare, tortoise;
   EMACS_INT len;
@@ -1811,7 +1919,7 @@ struct Lisp_String
 	  unsigned int c_readonly :1;
 	  unsigned int lisp_readonly :1;
 	  /* Number of chars at beginning of string that are one byte in length
-	     (BYTE_ASCII_P) */
+	     (byte_ascii_p) */
 	  unsigned int ascii_begin :21;
 	} v;
     } u;
@@ -1830,187 +1938,27 @@ DECLARE_LRECORD (string, Lisp_String);
 #define CHECK_STRING(x) CHECK_RECORD (x, string)
 #define CONCHECK_STRING(x) CONCHECK_RECORD (x, string)
 
-#ifdef MULE
-
-Charcount bytecount_to_charcount (const Intbyte *ptr, Bytecount len);
-Bytecount charcount_to_bytecount (const Intbyte *ptr, Charcount len);
-
-#else /* not MULE */
-
-# define bytecount_to_charcount(ptr, len) (len)
-# define charcount_to_bytecount(ptr, len) (len)
-
-#endif /* not MULE */
+/* Most basic macros for strings -- basically just accessing or setting
+   fields -- are here.  Everything else is in text.h, since they depend on
+   stuff there. */
 
 /* Operations on Lisp_String *'s; only ones left */
-#define set_string_length(s, len) ((void) ((s)->size_ = (len)))
-#define set_string_data(s, ptr) ((void) ((s)->data_ = (ptr)))
+#define set_lispstringp_length(s, len) ((void) ((s)->size_ = (len)))
+#define set_lispstringp_data(s, ptr) ((void) ((s)->data_ = (ptr)))
 
+/* Operations on strings as Lisp_Objects.  Don't manipulate Lisp_String *'s
+   in any new code. */
 #define XSTRING_LENGTH(s) (XSTRING (s)->size_)
 #define XSTRING_PLIST(s) (XSTRING (s)->plist)
 #define XSTRING_DATA(s) (XSTRING (s)->data_ + 0)
 #define XSTRING_ASCII_BEGIN(s) (XSTRING (s)->u.v.ascii_begin + 0)
-#define XSTRING_CHAR_LENGTH(s) \
-  string_index_byte_to_char (s, XSTRING_LENGTH (s))
-#define XSTRING_BYTE(s, i) (XSTRING (s)->data_[i] + 0)
-#define set_string_byte(s, i, c) (XSTRING (s)->data_[i] = (c))
-
-#define string_byte_addr(s, i) (&((XSTRING (s))->data_[i]))
-#define XSTRING_CHAR(s, i) charptr_emchar (string_char_addr (s, i))
-#define XSET_STRING_LENGTH(s, ptr) set_string_length (XSTRING (s), ptr)
-#define XSET_STRING_DATA(s, ptr) set_string_data (XSTRING (s), ptr)
+#define XSET_STRING_LENGTH(s, ptr) set_lispstringp_length (XSTRING (s), ptr)
+#define XSET_STRING_DATA(s, ptr) set_lispstringp_data (XSTRING (s), ptr)
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
 #define XSET_STRING_ASCII_BEGIN(s, val) \
   ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
-
-#ifdef ERROR_CHECK_TEXT
-#define SLEDGEHAMMER_CHECK_ASCII_BEGIN
-#endif
-
-#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-void sledgehammer_check_ascii_begin (Lisp_Object str);
-#else
-#define sledgehammer_check_ascii_begin(str)
-#endif
-
-/* Make an alloca'd copy of a Lisp string */
-#define LISP_STRING_TO_ALLOCA(s, lval)					\
-do {									\
-  Intbyte **_lta_ = (Intbyte **) &(lval);				\
-  Lisp_Object _lta_2 = (s);						\
-  *_lta_ = alloca_array (Intbyte, 1 + XSTRING_LENGTH (_lta_2));		\
-  memcpy (*_lta_, XSTRING_DATA (_lta_2), 1 + XSTRING_LENGTH (_lta_2));	\
-} while (0)
-
-/* Make an alloca'd copy of a Intbyte * */
-#define INTBYTE_STRING_TO_ALLOCA(p, lval)		\
-do {							\
-  Intbyte **_bsta_ = (Intbyte **) &(lval);		\
-  const Intbyte *_bsta_2 = (p);				\
-  Bytecount _bsta_3 = qxestrlen (_bsta_2);		\
-  *_bsta_ = alloca_array (Intbyte, 1 + _bsta_3);	\
-  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);		\
-} while (0)
-
-#define alloca_intbytes(num) alloca_array (Intbyte, num)
-#define alloca_extbytes(num) alloca_array (Extbyte, num)
-
-void resize_string (Lisp_Object s, Bytecount pos, Bytecount delta);
-
-#ifdef MULE
-
-/* Convert a byte index into a string into a char index. */
-DECLARE_INLINE_HEADER (
-Charcount
-string_index_byte_to_char (Lisp_Object s, Bytecount idx)
-)
-{
-  Charcount retval;
-  if (idx <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = (Charcount) idx;
-  else
-    retval = (XSTRING_ASCII_BEGIN (s) +
-	      bytecount_to_charcount (XSTRING_DATA (s) +
-				      XSTRING_ASCII_BEGIN (s),
-				      idx - XSTRING_ASCII_BEGIN (s)));
-#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == bytecount_to_charcount (XSTRING_DATA (s), idx));
-#endif
-  return retval;
-}
-
-/* Convert a char index into a string into a byte index. */
-DECLARE_INLINE_HEADER (
-Bytecount
-string_index_char_to_byte (Lisp_Object s, Charcount idx)
-)
-{
-  Bytecount retval;
-  if (idx <= (Charcount) XSTRING_ASCII_BEGIN (s))
-    retval = (Bytecount) idx;
-  else
-    retval = (XSTRING_ASCII_BEGIN (s) +
-	      charcount_to_bytecount (XSTRING_DATA (s) +
-				      XSTRING_ASCII_BEGIN (s),
-				      idx - XSTRING_ASCII_BEGIN (s)));
-#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == charcount_to_bytecount (XSTRING_DATA (s), idx));
-#endif
-  return retval;
-}
-
-/* Convert a substring length (starting at byte offset OFF) from bytes to
-   chars. */
-DECLARE_INLINE_HEADER (
-Charcount
-string_offset_byte_to_char_len (Lisp_Object s, Bytecount off, Bytecount len)
-)
-{
-  Charcount retval;
-  if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = (Charcount) len;
-  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval =
-      XSTRING_ASCII_BEGIN (s) - (Charcount) off +
-	bytecount_to_charcount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
-				len - (XSTRING_ASCII_BEGIN (s) - off));
-  else
-    retval = bytecount_to_charcount (XSTRING_DATA (s) + off, len);
-#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == bytecount_to_charcount (XSTRING_DATA (s) + off, len));
-#endif
-  return retval;
-}
-
-/* Convert a substring length (starting at byte offset OFF) from chars to
-   bytes. */
-DECLARE_INLINE_HEADER (
-Bytecount
-string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
-)
-{
-  Bytecount retval;
-  /* casts to avoid errors from combining Bytecount/Charcount and warnings
-     from signed/unsigned comparisons */
-  if (off + (Bytecount) len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval = (Bytecount) len;
-  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
-    retval =
-      XSTRING_ASCII_BEGIN (s) - off +
-	charcount_to_bytecount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
-				len - (XSTRING_ASCII_BEGIN (s) -
-				       (Charcount) off));
-  else
-    retval = charcount_to_bytecount (XSTRING_DATA (s) + off, len);
-#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
-  assert (retval == charcount_to_bytecount (XSTRING_DATA (s) + off, len));
-#endif
-  return retval;
-}
-
-DECLARE_INLINE_HEADER (
-const Intbyte *
-string_char_addr (Lisp_Object s, Charcount idx)
-)
-{
-  return XSTRING_DATA (s) + string_index_char_to_byte (s, idx);
-}
-
-void set_string_char (Lisp_Object s, Charcount i, Emchar c);
-
-#else /* not MULE */
-
-#define string_index_byte_to_char(s, idx) (idx)
-#define string_index_char_to_byte(s, idx) (idx)
-#define string_offset_byte_to_char_len(s, off, len) (len)
-#define string_offset_char_to_byte_len(s, off, len) (len)
-# define string_char_addr(s, i) string_byte_addr (s, i)
-/* WARNING: If you modify an existing string, you must call
-   bump_string_modiff() afterwards. */
-# define set_string_char(s, i, c) set_string_byte (s, i, c)
-
-#endif /* not MULE */
+#define XSTRING_FORMAT(s) FORMAT_DEFAULT
 
 /* Return the true aligned size of a struct whose last member is a
    variable-length array field.  (this is known as the "struct hack") */
@@ -2028,12 +1976,12 @@ void set_string_char (Lisp_Object s, Charcount i, Emchar c);
     (offsetof (structtype, fieldname[1]) -		\
      offsetof (structtype, fieldname[0])) *		\
     (array_length))					\
- : (ALIGN_SIZE						\
+ : (ALIGN_FOR_TYPE					\
     ((offsetof (structtype, fieldname) +		\
       (offsetof (structtype, fieldname[1]) -		\
        offsetof (structtype, fieldname[0])) *		\
       (array_length)),					\
-     ALIGNOF (structtype))))
+     structtype)))
 
 /*------------------------------ vector --------------------------------*/
 
@@ -2108,17 +2056,19 @@ DECLARE_LRECORD (bit_vector, Lisp_Bit_Vector);
 #define bit_vector_length(v) ((v)->size)
 #define bit_vector_next(v) ((v)->next)
 
-INLINE_HEADER int bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n);
-INLINE_HEADER int
+DECLARE_INLINE_HEADER (
+int
 bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n)
+)
 {
   return ((v->bits[n >> LONGBITS_LOG2] >> (n & (LONGBITS_POWER_OF_2 - 1)))
 	  & 1);
 }
 
-INLINE_HEADER void set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value);
-INLINE_HEADER void
+DECLARE_INLINE_HEADER (
+void
 set_bit_vector_bit (Lisp_Bit_Vector *v, Elemcount n, int value)
+)
 {
   if (value)
     v->bits[n >> LONGBITS_LOG2] |= (1UL << (n & (LONGBITS_POWER_OF_2 - 1)));
@@ -2145,7 +2095,7 @@ struct Lisp_Symbol
 };
 
 #define SYMBOL_IS_KEYWORD(sym)						\
-  ((XSTRING_BYTE (symbol_name (XSYMBOL (sym)), 0) == ':')		\
+  ((string_byte (symbol_name (XSYMBOL (sym)), 0) == ':')		\
    && EQ (sym, oblookup (Vobarray,					\
 			 XSTRING_DATA (symbol_name (XSYMBOL (sym))),	\
 			 XSTRING_LENGTH (symbol_name (XSYMBOL (sym))))))
@@ -2232,9 +2182,10 @@ DECLARE_LRECORD (marker, Lisp_Marker);
 
 #ifdef ERROR_CHECK_TYPES
 
-INLINE_HEADER Emchar XCHAR_1 (Lisp_Object obj, const char *file, int line);
-INLINE_HEADER Emchar
+DECLARE_INLINE_HEADER (
+Emchar
 XCHAR_1 (Lisp_Object obj, const char *file, int line)
+)
 {
   assert_at_line (CHARP (obj), file, line);
   return XCHARVAL (obj);
@@ -2315,18 +2266,19 @@ DECLARE_LRECORD (float, Lisp_Float);
 #define XCHAR_OR_INT(x) XCHAR_OR_INT_1 (x, __FILE__, __LINE__) 
 #define XINT(x) XINT_1 (x, __FILE__, __LINE__) 
 
-INLINE_HEADER EMACS_INT XINT_1 (Lisp_Object obj, const char *file, int line);
-INLINE_HEADER EMACS_INT
+DECLARE_INLINE_HEADER (
+EMACS_INT
 XINT_1 (Lisp_Object obj, const char *file, int line)
+)
 {
   assert_at_line (INTP (obj), file, line);
   return XREALINT (obj);
 }
 
-INLINE_HEADER EMACS_INT XCHAR_OR_INT_1 (Lisp_Object obj, const char *file,
-					int line);
-INLINE_HEADER EMACS_INT
+DECLARE_INLINE_HEADER (
+EMACS_INT
 XCHAR_OR_INT_1 (Lisp_Object obj, const char *file, int line)
+)
 {
   assert_at_line (INTP (obj) || CHARP (obj), file, line);
   return CHARP (obj) ? XCHAR (obj) : XINT (obj);
@@ -3110,7 +3062,19 @@ extern int initialized;
 /* Prototypes for all init/syms_of/vars_of initialization functions. */
 #include "symsinit.h"
 
+/* Defined in abbrev.c */
+EXFUN (Fexpand_abbrev, 0);
+
 /* Defined in alloc.c */
+EXFUN (Fcons, 2);
+EXFUN (Flist, MANY);
+EXFUN (Fmake_byte_code, MANY);
+EXFUN (Fmake_list, 2);
+EXFUN (Fmake_string, 2);
+EXFUN (Fmake_symbol, 1);
+EXFUN (Fmake_vector, 2);
+EXFUN (Fvector, MANY);
+
 void release_breathing_space (void);
 Lisp_Object noseeum_cons (Lisp_Object, Lisp_Object);
 Lisp_Object make_vector (Elemcount, Lisp_Object);
@@ -3218,6 +3182,8 @@ extern Lisp_Object Vbefore_change_functions, Vbuffer_alist, Vbuffer_defaults;
 extern Lisp_Object Vinhibit_read_only, Vtransient_mark_mode;
 
 /* Defined in bytecode.c */
+EXFUN (Fbyte_code, 3);
+
 DECLARE_DOESNT_RETURN (invalid_byte_code
 		       (const CIntbyte *reason, Lisp_Object frob));
 
@@ -3225,6 +3191,29 @@ DECLARE_DOESNT_RETURN (invalid_byte_code
 Intbyte *egetenv (const CIntbyte *var);
 void eputenv (const CIntbyte *var, const CIntbyte *value);
 extern int env_initted;
+
+/* Defined in callint.c */
+EXFUN (Fcall_interactively, 3);
+EXFUN (Fprefix_numeric_value, 1);
+
+/* Defined in casefiddle.c */
+EXFUN (Fdowncase, 2);
+EXFUN (Fupcase, 2);
+EXFUN (Fupcase_initials, 2);
+EXFUN (Fupcase_initials_region, 3);
+EXFUN (Fupcase_region, 3);
+
+/* Defined in casetab.c */
+EXFUN (Fset_standard_case_table, 1);
+
+/* Defined in chartab.c */
+EXFUN (Freset_char_table, 1);
+
+/* Defined in cmds.c */
+EXFUN (Fbeginning_of_line, 2);
+EXFUN (Fend_of_line, 2);
+EXFUN (Fforward_char, 2);
+EXFUN (Fforward_line, 2);
 
 /* Defined in console.c */
 void stuff_buffered_input (Lisp_Object);
@@ -3237,6 +3226,32 @@ int mswindows_output_console_string (const Intbyte *ptr, Bytecount len);
 void write_string_to_mswindows_debugging_output (Intbyte *str, Bytecount len);
 
 /* Defined in data.c */
+EXFUN (Fadd1, 1);
+EXFUN (Faref, 2);
+EXFUN (Faset, 3);
+EXFUN (Fcar, 1);
+EXFUN (Fcar_safe, 1);
+EXFUN (Fcdr, 1);
+EXFUN (Fgeq, MANY);
+EXFUN (Fgtr, MANY);
+EXFUN (Findirect_function, 1);
+EXFUN (Fleq, MANY);
+EXFUN (Flistp, 1);
+EXFUN (Flss, MANY);
+EXFUN (Fmax, MANY);
+EXFUN (Fmin, MANY);
+EXFUN (Fminus, MANY);
+EXFUN (Fnumber_to_string, 1);
+EXFUN (Fplus, MANY);
+EXFUN (Fquo, MANY);
+EXFUN (Frem, 2);
+EXFUN (Fsetcar, 2);
+EXFUN (Fsetcdr, 2);
+EXFUN (Fsub1, 1);
+EXFUN (Fsubr_max_args, 1);
+EXFUN (Fsubr_min_args, 1);
+EXFUN (Ftimes, MANY);
+
 DECLARE_DOESNT_RETURN (c_write_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (lisp_write_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range (Lisp_Object, Lisp_Object));
@@ -3269,6 +3284,8 @@ Lisp_Object make_directory_hash_table (const Intbyte *);
 Lisp_Object wasteful_word_to_lisp (unsigned int);
 
 /* Defined in doc.c */
+EXFUN (Fsubstitute_command_keys, 1);
+
 Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
 				       Intbyte *name_nonreloc,
 				       Lisp_Object name_reloc,
@@ -3276,7 +3293,6 @@ Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
 Lisp_Object read_doc_string (Lisp_Object);
 
 /* Defined in doprnt.c */
-
 Bytecount emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
 			   Bytecount format_length, Lisp_Object format_reloc,
 			   va_list vargs);
@@ -3309,11 +3325,34 @@ Bytecount emacs_sprintf (Intbyte *output, const CIntbyte *format, ...)
 
 
 /* Defined in editfns.c */
+EXFUN (Fbobp, 1);
+EXFUN (Fbolp, 1);
+EXFUN (Fbuffer_substring, 3);
+EXFUN (Fchar_after, 2);
+EXFUN (Fchar_to_string, 1);
+EXFUN (Fdelete_region, 3);
+EXFUN (Feobp, 1);
+EXFUN (Feolp, 1);
+EXFUN (Ffollowing_char, 1);
+EXFUN (Fformat, MANY);
+EXFUN (Fgoto_char, 2);
+EXFUN (Finsert, MANY);
+EXFUN (Finsert_buffer_substring, 3);
+EXFUN (Finsert_char, 4);
+EXFUN (Fnarrow_to_region, 3);
+EXFUN (Fpoint, 1);
+EXFUN (Fpoint_marker, 2);
+EXFUN (Fpoint_max, 1);
+EXFUN (Fpoint_min, 1);
+EXFUN (Fpreceding_char, 1);
+EXFUN (Fsystem_name, 0);
+EXFUN (Fuser_home_directory, 0);
+EXFUN (Fuser_login_name, 1);
+EXFUN (Fwiden, 1);
+
 void uncache_home_directory (void);
 Intbyte *get_home_directory (void);
 Intbyte *user_login_name (uid_t *);
-Charbpos charbpos_clip_to_bounds (Charbpos, Charbpos, Charbpos);
-Bytebpos bytebpos_clip_to_bounds (Bytebpos, Bytebpos, Bytebpos);
 void buffer_insert1 (struct buffer *, Lisp_Object);
 Lisp_Object make_string_from_buffer (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_string_from_buffer_no_extents (struct buffer *, Charbpos, Charcount);
@@ -3329,6 +3368,9 @@ int beginning_of_line_p (struct buffer *b, Charbpos pt);
 Lisp_Object save_current_buffer_restore (Lisp_Object);
 
 /* Defined in emacs.c */
+EXFUN (Fkill_emacs, 1);
+EXFUN (Frunning_temacs_p, 0);
+
 SIGTYPE fatal_error_signal (int);
 Lisp_Object make_arg_list (int, Extbyte **);
 void make_argc_argv (Lisp_Object, int *, Extbyte ***);
@@ -3348,7 +3390,24 @@ int debug_can_access_memory (void *ptr, Bytecount len);
 void really_abort (void);
 void zero_out_command_line_status_vars (void);
 
+/* Defined in emodules.c */
+EXFUN (Flist_modules, 0);
+EXFUN (Fload_module, 3);
+
+
 /* Defined in eval.c */
+EXFUN (Fapply, MANY);
+EXFUN (Fbacktrace, 2);
+EXFUN (Fcommand_execute, 3);
+EXFUN (Fcommandp, 1);
+EXFUN (Feval, 1);
+EXFUN (Ffuncall, MANY);
+EXFUN (Ffunctionp, 1);
+EXFUN (Finteractive_p, 0);
+EXFUN (Fprogn, UNEVALLED);
+EXFUN (Fsignal, 2);
+EXFUN (Fthrow, 2);
+
 DECLARE_DOESNT_RETURN (signal_error_1 (Lisp_Object, Lisp_Object));
 void maybe_signal_error_1 (Lisp_Object, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
@@ -3544,6 +3603,17 @@ void warn_when_safe (Lisp_Object, Lisp_Object, const CIntbyte *,
 
 
 /* Defined in event-stream.c */
+EXFUN (Faccept_process_output, 3);
+EXFUN (Fadd_timeout, 4);
+EXFUN (Fdisable_timeout, 1);
+EXFUN (Fdiscard_input, 0);
+EXFUN (Fdispatch_event, 1);
+EXFUN (Fenqueue_eval_event, 2);
+EXFUN (Fnext_event, 2);
+EXFUN (Fread_key_sequence, 3);
+EXFUN (Fsit_for, 2);
+EXFUN (Fsleep_for, 1);
+
 void wait_delaying_user_input (int (*) (void *), void *);
 int detect_input_pending (void);
 void reset_this_command_keys (Lisp_Object, int);
@@ -3558,12 +3628,80 @@ void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
 
 
 /* Defined in events.c */
+EXFUN (Fcopy_event, 2);
+EXFUN (Fevent_to_character, 4);
+
 void clear_event_resource (void);
 Lisp_Object allocate_event (void);
 
 EXFUN (Fevent_x_pixel, 1);
 EXFUN (Fevent_y_pixel, 1);
 
+
+/* Defined in extents.c */
+EXFUN (Fextent_at, 5);
+EXFUN (Fextent_property, 3);
+EXFUN (Fput_text_property, 5);
+
+EXFUN (Fdetach_extent, 1);
+EXFUN (Fextent_end_position, 1);
+EXFUN (Fextent_object, 1);
+EXFUN (Fextent_properties, 1);
+EXFUN (Fextent_start_position, 1);
+EXFUN (Fget_char_property, 4);
+EXFUN (Fmake_extent, 3);
+EXFUN (Fnext_extent_change, 2);
+EXFUN (Fprevious_extent_change, 2);
+EXFUN (Fprevious_single_property_change, 4);
+EXFUN (Fset_extent_endpoints, 4);
+EXFUN (Fset_extent_parent, 2);
+EXFUN (Fset_extent_property, 3);
+
+enum extent_at_flag
+{
+  EXTENT_AT_DEFAULT = 0,
+  EXTENT_AT_AFTER = 0,
+  EXTENT_AT_BEFORE,
+  EXTENT_AT_AT
+};
+
+Bytexpos extent_endpoint_byte (EXTENT extent, int endp);
+Charxpos extent_endpoint_char (EXTENT extent, int endp);
+Bytexpos next_single_property_change (Bytexpos pos, Lisp_Object prop,
+				      Lisp_Object object, Bytexpos limit);
+Bytexpos previous_single_property_change (Bytexpos pos, Lisp_Object prop,
+					  Lisp_Object object, Bytexpos limit);
+Lisp_Object get_char_property (Bytexpos position, Lisp_Object prop,
+			       Lisp_Object object, enum extent_at_flag fl,
+			       int text_props_only);
+void adjust_extents (Lisp_Object object, Memxpos from,
+		     Memxpos to, int amount);
+void adjust_extents_for_deletion (Lisp_Object object, Bytexpos from,
+				  Bytexpos to, int gapsize,
+				  int numdel, int movegapsize);
+void verify_extent_modification (Lisp_Object object, Bytexpos from,
+				 Bytexpos to,
+				 Lisp_Object inhibit_read_only_value);
+void process_extents_for_insertion (Lisp_Object object,
+				    Bytexpos opoint, Bytecount length);
+void process_extents_for_deletion (Lisp_Object object, Bytexpos from,
+				   Bytexpos to, int destroy_them);
+/* Note the following function is in Charbpos's */
+void report_extent_modification (Lisp_Object buffer, Charbpos start,
+				 Charbpos end, int afterp);
+void add_string_extents (Lisp_Object string, struct buffer *buf,
+			 Bytexpos opoint, Bytecount length);
+void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
+			       Bytexpos opoint, Bytecount length,
+			       Bytecount pos);
+void copy_string_extents (Lisp_Object new_string,
+			  Lisp_Object old_string,
+			  Bytecount new_pos, Bytecount old_pos,
+			  Bytecount length);
+void detach_all_extents (Lisp_Object object);
+Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
+		       Lisp_Object property, EXTENT before,
+		       enum extent_at_flag at_flag, int all_extents);
 
 /* Defined in file-coding.c */
 EXFUN (Fcoding_category_list, 0);
@@ -3620,6 +3758,27 @@ int coding_system_is_binary (Lisp_Object coding_system);
 
 
 /* Defined in fileio.c */
+EXFUN (Fdirectory_file_name, 1);
+EXFUN (Fdo_auto_save, 2);
+EXFUN (Fexpand_file_name, 2);
+EXFUN (Ffile_accessible_directory_p, 1);
+EXFUN (Ffile_directory_p, 1);
+EXFUN (Ffile_executable_p, 1);
+EXFUN (Ffile_exists_p, 1);
+EXFUN (Ffile_name_absolute_p, 1);
+EXFUN (Ffile_name_as_directory, 1);
+EXFUN (Ffile_name_directory, 1);
+EXFUN (Ffile_name_nondirectory, 1);
+EXFUN (Ffile_readable_p, 1);
+EXFUN (Ffile_symlink_p, 1);
+EXFUN (Ffile_truename, 2);
+EXFUN (Ffind_file_name_handler, 2);
+EXFUN (Finsert_file_contents_internal, 7);
+EXFUN (Fmake_temp_name, 1);
+EXFUN (Fsubstitute_in_file_name, 1);
+EXFUN (Funhandled_file_name_directory, 1);
+EXFUN (Fverify_visited_file_modtime, 1);
+
 void record_auto_save (void);
 void force_auto_save_soon (void);
 DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
@@ -3635,6 +3794,8 @@ Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 int internal_delete_file (Lisp_Object);
 
 /* Defined in filelock.c */
+EXFUN (Funlock_buffer, 0);
+
 void lock_file (Lisp_Object);
 void unlock_file (Lisp_Object);
 void unlock_all_files (void);
@@ -3644,9 +3805,56 @@ void unlock_buffer (struct buffer *);
 void filemodestring (struct stat *, char *);
 
 /* Defined in floatfns.c */
+EXFUN (Ftruncate, 1);
+
 double extract_float (Lisp_Object);
 
 /* Defined in fns.c */
+EXFUN (Fappend, MANY);
+EXFUN (Fassoc, 2);
+EXFUN (Fassq, 2);
+EXFUN (Fcanonicalize_lax_plist, 2);
+EXFUN (Fcanonicalize_plist, 2);
+EXFUN (Fcheck_valid_plist, 1);
+EXFUN (Fconcat, MANY);
+EXFUN (Fcopy_alist, 1);
+EXFUN (Fcopy_list, 1);
+EXFUN (Fcopy_sequence, 1);
+EXFUN (Fcopy_tree, 2);
+EXFUN (Fdelete, 2);
+EXFUN (Fdelq, 2);
+EXFUN (Fdestructive_alist_to_plist, 1);
+EXFUN (Felt, 2);
+EXFUN (Fequal, 2);
+EXFUN (Fget, 3);
+EXFUN (Flast, 2);
+EXFUN (Flax_plist_get, 3);
+EXFUN (Flax_plist_remprop, 2);
+EXFUN (Flength, 1);
+EXFUN (Fmapcar, 2);
+EXFUN (Fmember, 2);
+EXFUN (Fmemq, 2);
+EXFUN (Fnconc, MANY);
+EXFUN (Fnreverse, 1);
+EXFUN (Fnthcdr, 2);
+EXFUN (Fold_assq, 2);
+EXFUN (Fold_equal, 2);
+EXFUN (Fold_member, 2);
+EXFUN (Fold_memq, 2);
+EXFUN (Fplist_get, 3);
+EXFUN (Fplist_member, 2);
+EXFUN (Fplist_put, 3);
+EXFUN (Fprovide, 1);
+EXFUN (Fput, 3);
+EXFUN (Frassq, 2);
+EXFUN (Fremassq, 2);
+EXFUN (Freplace_list, 2);
+EXFUN (Fsort, 2);
+EXFUN (Fstring_equal, 2);
+EXFUN (Fstring_lessp, 2);
+EXFUN (Fsubstring, 3);
+EXFUN (Fvalid_plist_p, 1);
+
 Lisp_Object list_sort (Lisp_Object, Lisp_Object,
 		       int (*) (Lisp_Object, Lisp_Object, Lisp_Object));
 Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
@@ -3686,7 +3894,15 @@ Lisp_Object add_suffix_to_symbol (Lisp_Object symbol,
 Lisp_Object add_prefix_to_symbol (const Char_ASCII *ascii_string,
 				  Lisp_Object symbol);
 
+/* Defined in frame.c */
+EXFUN (Fselected_frame, 1);
+
+/* Defined in free-hook.c */
+EXFUN (Freally_free, 1);
+
 /* Defined in glyphs.c */
+EXFUN (Fmake_glyph_internal, 1);
+
 Error_Behavior decode_error_behavior_flag (Lisp_Object);
 Lisp_Object encode_error_behavior_flag (Error_Behavior);
 
@@ -3704,7 +3920,10 @@ DECLARE_DOESNT_RETURN (gui_error (const char *reason,
 DECLARE_DOESNT_RETURN (gui_error_2 (const char *reason,
 				    Lisp_Object frob0, Lisp_Object frob1));
 /* Defined in indent.c */
-int bi_spaces_at_point (struct buffer *, Bytebpos);
+EXFUN (Findent_to, 3);
+EXFUN (Fvertical_motion, 3);
+
+int byte_spaces_at_point (struct buffer *, Bytebpos);
 int column_at_point (struct buffer *, Charbpos, int);
 int string_column_at_point (Lisp_Object, Charbpos, int);
 int current_column (struct buffer *);
@@ -3714,6 +3933,10 @@ Charbpos vmotion_pixels (Lisp_Object, Charbpos, int, int, int *);
 
 /* Defined in insdel.c */
 void set_buffer_point (struct buffer *buf, Charbpos pos, Bytebpos bipos);
+
+/* Defined in intl.c */
+EXFUN (Fgettext, 1);
+
 
 /* Defined in intl-win32.c */
 EXFUN (Fmswindows_set_current_locale, 1);
@@ -3729,9 +3952,16 @@ extern Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
 extern Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 
 /* Defined in keymap.c */
+EXFUN (Fdefine_key, 3);
+EXFUN (Fkey_description, 1);
+EXFUN (Flookup_key, 3);
+EXFUN (Fmake_sparse_keymap, 1);
+
 void where_is_to_char (Lisp_Object, Eistring *);
 
 /* Defined in lread.c */
+EXFUN (Fread, 1);
+
 void ebolify_bytecode_constants (Lisp_Object);
 void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
@@ -3754,10 +3984,20 @@ int isfloat_string (const char *);
 # define LOADHIST_ATTACH(x)
 #endif /*! LOADHIST */
 
+/* Defined in macros.c */
+EXFUN (Fexecute_kbd_macro, 2);
+
 /* Defined in marker.c */
-Bytebpos bi_marker_position (Lisp_Object);
+EXFUN (Fcopy_marker, 2);
+EXFUN (Fmake_marker, 0);
+EXFUN (Fmarker_buffer, 1);
+EXFUN (Fmarker_position, 1);
+EXFUN (Fset_marker, 3);
+EXFUN (Fset_marker_insertion_type, 2);
+
+Bytebpos byte_marker_position (Lisp_Object);
 Charbpos marker_position (Lisp_Object);
-void set_bi_marker_position (Lisp_Object, Bytebpos);
+void set_byte_marker_position (Lisp_Object, Bytebpos);
 void set_marker_position (Lisp_Object, Charbpos);
 void unchain_marker (Lisp_Object);
 Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
@@ -3798,9 +4038,18 @@ void message_no_translate (const char *, ...) PRINTF_ARGS (1, 2);
 void clear_message (void);
 
 /* Defined in mule-charset.c */
+EXFUN (Fmake_charset, 3);
+
 extern Lisp_Object Ql2r, Qr2l;
 
 /* Defined in print.c */
+EXFUN (Fdisplay_error, 2);
+EXFUN (Ferror_message_string, 1);
+EXFUN (Fprin1, 2);
+EXFUN (Fprin1_to_string, 2);
+EXFUN (Fprinc, 2);
+EXFUN (Fprint, 2);
+
 
 /* Lower-level ways to output data: */
 void print_internal (Lisp_Object, Lisp_Object, int);
@@ -3808,12 +4057,12 @@ void debug_print (Lisp_Object);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
-void write_c_string (const CIntbyte *str, Lisp_Object stream);
+void write_c_string (Lisp_Object stream, const CIntbyte *str);
 /* Same goes for this function. */
-void write_string (const Intbyte *str, Lisp_Object stream);
+void write_string (Lisp_Object stream, const Intbyte *str);
 /* Same goes for this function. */
-void write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream);
-void write_eistring (const Eistring *ei, Lisp_Object stream);
+void write_string_1 (Lisp_Object stream, const Intbyte *str, Bytecount size);
+void write_eistring (Lisp_Object stream, const Eistring *ei);
 
 /* Higher-level (printf-style) ways to output data: */
 void write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...);
@@ -3856,6 +4105,11 @@ void debug_short_backtrace (int);
 void debug_backtrace (void);
 
 /* Defined in process.c */
+EXFUN (Fdelete_process, 1);
+EXFUN (Fget_buffer_process, 1);
+EXFUN (Fget_process, 1);
+EXFUN (Fprocess_status, 1);
+
 DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
 DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
@@ -3867,6 +4121,11 @@ extern int profiling_active;
 extern int profiling_redisplay_flag;
 
 /* Defined in rangetab.c */
+EXFUN (Fclear_range_table, 1);
+EXFUN (Fget_range_table, 3);
+EXFUN (Fmake_range_table, 0);
+EXFUN (Fput_range_table, 4);
+
 void put_range_table (Lisp_Object, EMACS_INT, EMACS_INT, Lisp_Object);
 int unified_range_table_bytes_needed (Lisp_Object);
 int unified_range_table_bytes_used (void *);
@@ -3877,17 +4136,29 @@ void unified_range_table_get_range (void *, int, EMACS_INT *, EMACS_INT *,
 				    Lisp_Object *);
 
 /* Defined in search.c */
+EXFUN (Fmatch_beginning, 1);
+EXFUN (Fmatch_end, 1);
+EXFUN (Fskip_chars_backward, 3);
+EXFUN (Fskip_chars_forward, 3);
+EXFUN (Fstring_match, 4);
+
 struct re_pattern_buffer;
 struct re_registers;
-Charbpos scan_buffer (struct buffer *, Emchar, Charbpos, Charbpos, EMACS_INT, EMACS_INT *, int);
+Charbpos scan_buffer (struct buffer *, Emchar, Charbpos, Charbpos, EMACS_INT,
+		      EMACS_INT *, int);
 Charbpos find_next_newline (struct buffer *, Charbpos, int);
 Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
-Bytebpos bi_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
-Bytebpos bi_find_next_emchar_in_string (Lisp_Object, Emchar, Bytebpos, EMACS_INT);
+Bytebpos byte_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
+Bytecount byte_find_next_emchar_in_string (Lisp_Object, Emchar, Bytecount,
+					 EMACS_INT);
 Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos, int);
-struct re_pattern_buffer *compile_pattern (Lisp_Object, struct re_registers *,
-					   Lisp_Object, int, Error_Behavior);
-Bytecount fast_string_match (Lisp_Object,  const Intbyte *,
+struct re_pattern_buffer *compile_pattern (Lisp_Object pattern,
+					   struct re_registers *regp,
+					   Lisp_Object translate,
+					   Lisp_Object searchobj,
+					   struct buffer *searchbuf,
+					   int posix, Error_Behavior errb);
+Bytecount fast_string_match (Lisp_Object, const Intbyte *,
 			     Lisp_Object, Bytecount,
 			     Bytecount, int, Error_Behavior, int);
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
@@ -3900,16 +4171,37 @@ void init_interrupts_late (void);
 int begin_dont_check_for_quit (void);
 
 /* Defined in sound.c */
+EXFUN (Fding, 3);
+
 void init_device_sound (struct device *);
 DECLARE_DOESNT_RETURN (report_sound_error (const Char_ASCII *, Lisp_Object));
 
 /* Defined in specifier.c */
+EXFUN (Fadd_spec_to_specifier, 5);
+EXFUN (Fspecifier_spec_list, 4);
+
 Lisp_Object specifier_instance (Lisp_Object, Lisp_Object, Lisp_Object,
 				Error_Behavior, int, int, Lisp_Object);
 Lisp_Object specifier_instance_no_quit (Lisp_Object, Lisp_Object, Lisp_Object,
 					Error_Behavior, int, Lisp_Object);
 
 /* Defined in symbols.c */
+EXFUN (Fboundp, 1);
+EXFUN (Fbuilt_in_variable_type, 1);
+EXFUN (Fdefault_boundp, 1);
+EXFUN (Fdefault_value, 1);
+EXFUN (Ffboundp, 1);
+EXFUN (Ffset, 2);
+EXFUN (Fintern, 2);
+EXFUN (Fintern_soft, 2);
+EXFUN (Fkill_local_variable, 1);
+EXFUN (Fset, 2);
+EXFUN (Fset_default, 2);
+EXFUN (Fsymbol_function, 1);
+EXFUN (Fsymbol_name, 1);
+EXFUN (Fsymbol_plist, 1);
+EXFUN (Fsymbol_value, 1);
+
 unsigned int hash_string (const Intbyte *, Bytecount);
 Lisp_Object intern_int (const Intbyte *str);
 Lisp_Object intern (const CIntbyte *str);
@@ -3929,6 +4221,15 @@ void reject_constant_symbols (Lisp_Object sym, Lisp_Object newval,
 
 /* Defined in syntax.c */
 Charbpos scan_words (struct buffer *, Charbpos, int);
+EXFUN (Fchar_syntax, 2);
+EXFUN (Fforward_word, 2);
+extern Lisp_Object Vstandard_syntax_table;
+void signal_syntax_table_extent_changed (EXTENT extent);
+void signal_syntax_table_extent_adjust (struct buffer *buf);
+void init_buffer_syntax_cache (struct buffer *buf);
+void mark_buffer_syntax_cache (struct buffer *buf);
+void uninit_buffer_syntax_cache (struct buffer *buf);
+extern Lisp_Object Qsyntax_table;
 
 /* Defined in sysdep.c */
 long get_random (void);
@@ -3954,6 +4255,17 @@ void convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
 						Intbyte_dynarr *dyn);
 Intbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 						    Bytecount *len_out);
+Bytecount copy_text_between_formats (const Intbyte *src, Bytecount srclen,
+				     Internal_Format srcfmt,
+				     Lisp_Object srcobj,
+				     Intbyte *dst, Bytecount dstlen,
+				     Internal_Format dstfmt,
+				     Lisp_Object dstobj,
+				     Bytecount *src_used);
+Bytecount copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
+				Bytecount len, Intbyte *dst, Bytecount dstlen,
+				Internal_Format dstfmt, Lisp_Object dstobj,
+				Bytecount *src_used);
 
 /* flags for get_buffer_pos_char(), get_buffer_range_char(), etc. */
 /* At most one of GB_COERCE_RANGE and GB_NO_ERROR_IF_BAD should be
@@ -3988,24 +4300,41 @@ void get_string_range_char (Lisp_Object string, Lisp_Object from,
 void get_string_range_byte (Lisp_Object string, Lisp_Object from,
 			    Lisp_Object to, Bytecount *from_out,
 			    Bytecount *to_out, unsigned int flags);
-Charbpos get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
-				      unsigned int flags);
-Bytebpos get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
-				      unsigned int flags);
+Charxpos get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
+					unsigned int flags);
+Bytexpos get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
+					unsigned int flags);
 void get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
-				      Lisp_Object to, Charbpos *from_out,
-				      Charbpos *to_out, unsigned int flags);
+				      Lisp_Object to, Charxpos *from_out,
+				      Charxpos *to_out, unsigned int flags);
 void get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
-				      Lisp_Object to, Bytebpos *from_out,
-				      Bytebpos *to_out, unsigned int flags);
-Charbpos buffer_or_string_accessible_begin_char (Lisp_Object object);
-Charbpos buffer_or_string_accessible_end_char (Lisp_Object object);
-Bytebpos buffer_or_string_accessible_begin_byte (Lisp_Object object);
-Bytebpos buffer_or_string_accessible_end_byte (Lisp_Object object);
-Charbpos buffer_or_string_absolute_begin_char (Lisp_Object object);
-Charbpos buffer_or_string_absolute_end_char (Lisp_Object object);
-Bytebpos buffer_or_string_absolute_begin_byte (Lisp_Object object);
-Bytebpos buffer_or_string_absolute_end_byte (Lisp_Object object);
+				      Lisp_Object to, Bytexpos *from_out,
+				      Bytexpos *to_out, unsigned int flags);
+Charxpos buffer_or_string_accessible_begin_char (Lisp_Object object);
+Charxpos buffer_or_string_accessible_end_char (Lisp_Object object);
+Bytexpos buffer_or_string_accessible_begin_byte (Lisp_Object object);
+Bytexpos buffer_or_string_accessible_end_byte (Lisp_Object object);
+Charxpos buffer_or_string_absolute_begin_char (Lisp_Object object);
+Charxpos buffer_or_string_absolute_end_char (Lisp_Object object);
+Bytexpos buffer_or_string_absolute_begin_byte (Lisp_Object object);
+Bytexpos buffer_or_string_absolute_end_byte (Lisp_Object object);
+Charbpos charbpos_clip_to_bounds (Charbpos lower, Charbpos num,
+				  Charbpos upper);
+Bytebpos bytebpos_clip_to_bounds (Bytebpos lower, Bytebpos num,
+				  Bytebpos upper);
+Charxpos charxpos_clip_to_bounds (Charxpos lower, Charxpos num,
+				  Charxpos upper);
+Bytexpos bytexpos_clip_to_bounds (Bytexpos lower, Bytexpos num,
+				  Bytexpos upper);
+Charxpos buffer_or_string_clip_to_accessible_char (Lisp_Object object,
+						   Charxpos pos);
+Bytexpos buffer_or_string_clip_to_accessible_byte (Lisp_Object object,
+						   Bytexpos pos);
+Charxpos buffer_or_string_clip_to_absolute_char (Lisp_Object object,
+						 Charxpos pos);
+Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
+						 Bytexpos pos);
+
 
 #ifdef ENABLE_COMPOSITE_CHARS
 
@@ -4247,8 +4576,8 @@ void buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 					 Bytecount bytelength,
 					 Charcount charlength);
 void buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
-					Charbpos end, Bytebpos bi_start,
-					Bytebpos bi_end);
+					Charbpos end, Bytebpos byte_start,
+					Bytebpos byte_end);
 
 /* Defined in unicode.c */
 extern const struct struct_description to_unicode_description[];
@@ -4266,6 +4595,8 @@ Bytecount compute_to_unicode_table_size (Lisp_Object charset,
 #endif /* MEMORY_USAGE_STATS */
 
 /* Defined in undo.c */
+EXFUN (Fundo_boundary, 0);
+
 Lisp_Object truncate_undo_list (Lisp_Object, int, int);
 void record_extent (Lisp_Object, int);
 void record_insert (struct buffer *, Charbpos, Charcount);
@@ -4286,241 +4617,15 @@ int run_time_remap (char *);
 void memory_warnings (void *, void (*) (const char *));
 
 /* Defined in window.c */
+EXFUN (Fcurrent_window_configuration, 1);
+
 Lisp_Object save_window_excursion_unwind (Lisp_Object);
 Lisp_Object display_buffer (Lisp_Object, Lisp_Object, Lisp_Object);
 
-/*--------------- prototypes for Lisp primitives in C ------------*/
-
-/* The following were machine generated 19980312 */
-
-EXFUN (Faccept_process_output, 3);
-EXFUN (Fadd1, 1);
-EXFUN (Fadd_spec_to_specifier, 5);
-EXFUN (Fadd_timeout, 4);
-EXFUN (Fappend, MANY);
-EXFUN (Fapply, MANY);
-EXFUN (Faref, 2);
-EXFUN (Faset, 3);
-EXFUN (Fassoc, 2);
-EXFUN (Fassq, 2);
-EXFUN (Fbacktrace, 2);
-EXFUN (Fbeginning_of_line, 2);
-EXFUN (Fbobp, 1);
-EXFUN (Fbolp, 1);
-EXFUN (Fboundp, 1);
-EXFUN (Fbuffer_substring, 3);
-EXFUN (Fbuilt_in_variable_type, 1);
-EXFUN (Fbyte_code, 3);
-EXFUN (Fcall_interactively, 3);
-EXFUN (Fcanonicalize_lax_plist, 2);
-EXFUN (Fcanonicalize_plist, 2);
-EXFUN (Fcar, 1);
-EXFUN (Fcar_safe, 1);
-EXFUN (Fcdr, 1);
-EXFUN (Fchar_after, 2);
-EXFUN (Fchar_to_string, 1);
-EXFUN (Fcheck_valid_plist, 1);
-EXFUN (Fvalid_plist_p, 1);
-EXFUN (Fclear_range_table, 1);
-EXFUN (Fcommand_execute, 3);
-EXFUN (Fcommandp, 1);
-EXFUN (Fconcat, MANY);
-EXFUN (Fcons, 2);
-EXFUN (Fcopy_alist, 1);
-EXFUN (Fcopy_event, 2);
-EXFUN (Fcopy_list, 1);
-EXFUN (Fcopy_marker, 2);
-EXFUN (Fcopy_sequence, 1);
-EXFUN (Fcopy_tree, 2);
-EXFUN (Fcurrent_window_configuration, 1);
-EXFUN (Fdefault_boundp, 1);
-EXFUN (Fdefault_value, 1);
-EXFUN (Fdefine_key, 3);
-EXFUN (Fdelete, 2);
-EXFUN (Fdelete_region, 3);
-EXFUN (Fdelete_process, 1);
-EXFUN (Fdelq, 2);
-EXFUN (Fdestructive_alist_to_plist, 1);
-EXFUN (Fdgettext, 2);
-EXFUN (Fding, 3);
-EXFUN (Fdirectory_file_name, 1);
-EXFUN (Fdisable_timeout, 1);
-EXFUN (Fdiscard_input, 0);
-EXFUN (Fdispatch_event, 1);
-EXFUN (Fdisplay_error, 2);
-EXFUN (Fdo_auto_save, 2);
-EXFUN (Fdowncase, 2);
-EXFUN (Felt, 2);
-EXFUN (Fend_of_line, 2);
-EXFUN (Fenqueue_eval_event, 2);
-EXFUN (Feobp, 1);
-EXFUN (Feolp, 1);
-EXFUN (Fequal, 2);
-EXFUN (Ferror_message_string, 1);
-EXFUN (Feval, 1);
-EXFUN (Fevent_to_character, 4);
-EXFUN (Fexecute_kbd_macro, 2);
-EXFUN (Fexpand_abbrev, 0);
-EXFUN (Fexpand_file_name, 2);
-EXFUN (Fextent_at, 5);
-EXFUN (Fextent_property, 3);
-EXFUN (Ffboundp, 1);
-EXFUN (Ffile_accessible_directory_p, 1);
-EXFUN (Ffile_directory_p, 1);
-EXFUN (Ffile_executable_p, 1);
-EXFUN (Ffile_exists_p, 1);
-EXFUN (Ffile_name_absolute_p, 1);
-EXFUN (Ffile_name_as_directory, 1);
-EXFUN (Ffile_name_directory, 1);
-EXFUN (Ffile_name_nondirectory, 1);
-EXFUN (Ffile_readable_p, 1);
-EXFUN (Ffile_symlink_p, 1);
-EXFUN (Ffile_truename, 2);
-EXFUN (Ffind_file_name_handler, 2);
-EXFUN (Ffollowing_char, 1);
-EXFUN (Fformat, MANY);
-EXFUN (Fforward_char, 2);
-EXFUN (Fforward_line, 2);
-EXFUN (Ffset, 2);
-EXFUN (Ffuncall, MANY);
-EXFUN (Ffunctionp, 1);
-EXFUN (Fgeq, MANY);
-EXFUN (Fget, 3);
-EXFUN (Fget_buffer_process, 1);
-EXFUN (Fget_process, 1);
-EXFUN (Fget_range_table, 3);
-EXFUN (Fgettext, 1);
-EXFUN (Fgoto_char, 2);
-EXFUN (Fgtr, MANY);
-EXFUN (Findent_to, 3);
-EXFUN (Findirect_function, 1);
-EXFUN (Finsert, MANY);
-EXFUN (Finsert_buffer_substring, 3);
-EXFUN (Finsert_char, 4);
-EXFUN (Finsert_file_contents_internal, 7);
-EXFUN (Finteractive_p, 0);
-EXFUN (Fintern, 2);
-EXFUN (Fintern_soft, 2);
-EXFUN (Fkey_description, 1);
-EXFUN (Fkill_emacs, 1);
-EXFUN (Fkill_local_variable, 1);
-EXFUN (Flast, 2);
-EXFUN (Flax_plist_get, 3);
-EXFUN (Flax_plist_remprop, 2);
-EXFUN (Flength, 1);
-EXFUN (Fleq, MANY);
-EXFUN (Flist, MANY);
-EXFUN (Flistp, 1);
-EXFUN (Flist_modules, 0);
-EXFUN (Fload_module, 3);
-EXFUN (Flookup_key, 3);
-EXFUN (Flss, MANY);
-EXFUN (Fmake_byte_code, MANY);
-EXFUN (Fmake_charset, 3);
-EXFUN (Fmake_glyph_internal, 1);
-EXFUN (Fmake_list, 2);
-EXFUN (Fmake_marker, 0);
-EXFUN (Fmake_range_table, 0);
-EXFUN (Fmake_temp_name, 1);
-EXFUN (Fmake_sparse_keymap, 1);
-EXFUN (Fmake_string, 2);
-EXFUN (Fmake_symbol, 1);
-EXFUN (Fmake_vector, 2);
-EXFUN (Fmapcar, 2);
-EXFUN (Fmarker_buffer, 1);
-EXFUN (Fmarker_position, 1);
-EXFUN (Fmatch_beginning, 1);
-EXFUN (Fmatch_end, 1);
-EXFUN (Fmax, MANY);
-EXFUN (Fmember, 2);
-EXFUN (Fmemq, 2);
-EXFUN (Fmin, MANY);
-EXFUN (Fminus, MANY);
-EXFUN (Fnarrow_to_region, 3);
-EXFUN (Fnconc, MANY);
-EXFUN (Fnext_event, 2);
-EXFUN (Fnreverse, 1);
-EXFUN (Fnthcdr, 2);
-EXFUN (Fnumber_to_string, 1);
-EXFUN (Fold_assq, 2);
-EXFUN (Fold_equal, 2);
-EXFUN (Fold_member, 2);
-EXFUN (Fold_memq, 2);
-EXFUN (Fplist_get, 3);
-EXFUN (Fplist_member, 2);
-EXFUN (Fplist_put, 3);
-EXFUN (Fplus, MANY);
-EXFUN (Fpoint, 1);
-EXFUN (Fpoint_marker, 2);
-EXFUN (Fpoint_max, 1);
-EXFUN (Fpoint_min, 1);
-EXFUN (Fpreceding_char, 1);
-EXFUN (Fprefix_numeric_value, 1);
-EXFUN (Fprin1, 2);
-EXFUN (Fprin1_to_string, 2);
-EXFUN (Fprinc, 2);
-EXFUN (Fprint, 2);
-EXFUN (Fprocess_status, 1);
-EXFUN (Fprogn, UNEVALLED);
-EXFUN (Fprovide, 1);
-EXFUN (Fput, 3);
-EXFUN (Fput_range_table, 4);
-EXFUN (Fput_text_property, 5);
-EXFUN (Fquo, MANY);
-EXFUN (Frassq, 2);
-EXFUN (Fread, 1);
-EXFUN (Fread_key_sequence, 3);
-EXFUN (Freally_free, 1);
-EXFUN (Frem, 2);
-EXFUN (Fremassq, 2);
-EXFUN (Freplace_list, 2);
-EXFUN (Frunning_temacs_p, 0);
-EXFUN (Fselected_frame, 1);
-EXFUN (Fset, 2);
-EXFUN (Fset_default, 2);
-EXFUN (Fset_marker, 3);
-EXFUN (Fset_standard_case_table, 1);
-EXFUN (Fsetcar, 2);
-EXFUN (Fsetcdr, 2);
-EXFUN (Fsignal, 2);
-EXFUN (Fsit_for, 2);
-EXFUN (Fskip_chars_backward, 3);
-EXFUN (Fskip_chars_forward, 3);
-EXFUN (Fsleep_for, 1);
-EXFUN (Fsort, 2);
-EXFUN (Fspecifier_spec_list, 4);
-EXFUN (Fstring_equal, 2);
-EXFUN (Fstring_lessp, 2);
-EXFUN (Fstring_match, 4);
-EXFUN (Fsub1, 1);
-EXFUN (Fsubr_max_args, 1);
-EXFUN (Fsubr_min_args, 1);
-EXFUN (Fsubstitute_command_keys, 1);
-EXFUN (Fsubstitute_in_file_name, 1);
-EXFUN (Fsubstring, 3);
-EXFUN (Fsymbol_function, 1);
-EXFUN (Fsymbol_name, 1);
-EXFUN (Fsymbol_plist, 1);
-EXFUN (Fsymbol_value, 1);
-EXFUN (Fsystem_name, 0);
-EXFUN (Fthrow, 2);
-EXFUN (Ftimes, MANY);
-EXFUN (Ftruncate, 1);
-EXFUN (Fundo_boundary, 0);
-EXFUN (Funhandled_file_name_directory, 1);
-EXFUN (Funlock_buffer, 0);
-EXFUN (Fupcase, 2);
-EXFUN (Fupcase_initials, 2);
-EXFUN (Fupcase_initials_region, 3);
-EXFUN (Fupcase_region, 3);
-EXFUN (Fuser_home_directory, 0);
-EXFUN (Fuser_login_name, 1);
-EXFUN (Fvector, MANY);
-EXFUN (Fverify_visited_file_modtime, 1);
-EXFUN (Fvertical_motion, 3);
-EXFUN (Fwiden, 1);
-
 /*--------------- prototypes for constant symbols  ------------*/
+
+/* #### We should get rid of this and put the prototypes back up there in
+   #### the per-file stuff, where they belong. */
 
 /* Use the following when you have to add a bunch of symbols. */
 
@@ -4641,6 +4746,9 @@ extern Lisp_Object Qwrong_type_argument, Qyes_or_no_p;
 #undef SYMBOL_GENERAL
 
 /*--------------- prototypes for variables of type Lisp_Object  ------------*/
+
+/* #### We should get rid of this and put the prototypes back up there in
+   #### the per-file stuff, where they belong. */
 
 extern Lisp_Object Vactivate_menubar_hook;
 extern Lisp_Object Vautoload_queue, Vblank_menubar;

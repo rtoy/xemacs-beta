@@ -473,7 +473,7 @@ __generic_toolbar_callback (GtkWidget *item, gpointer user_data)
   Lisp_Object callback;
   Lisp_Object lisp_user_data;
 
-  VOID_TO_LISP (callback, user_data);
+  callback = VOID_TO_LISP (user_data);
 
   lisp_user_data = XCAR (callback);
   callback = XCDR (callback);
@@ -582,7 +582,7 @@ __emacs_gtk_ctree_recurse_internal (GtkCTree *ctree, GtkCTreeNode *node, gpointe
 {
   Lisp_Object closure;
 
-  VOID_TO_LISP (closure, user_data);
+  closure = VOID_TO_LISP (user_data);
 
   call3 (XCAR (closure),
 	 build_gtk_object (GTK_OBJECT (ctree)),

@@ -74,16 +74,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "file-coding.h"
 
-#if INTBITS == 32
-# define FOUR_BYTE_TYPE unsigned int
-#elif LONGBITS == 32
-# define FOUR_BYTE_TYPE unsigned long
-#elif SHORTBITS == 32
-# define FOUR_BYTE_TYPE unsigned short
-#else
-#error What kind of strange-ass system are we running on?
-#endif
-
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (string);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
@@ -181,7 +171,7 @@ convert_EImage_to_GDKImage (Lisp_Object device, int width, int height,
   unsigned char *data, *ip, *dp = NULL;
   quant_table *qtable = NULL;
   union {
-    FOUR_BYTE_TYPE val;
+    UINT_32_BIT val;
     char cp[4];
   } conv;
 
@@ -366,7 +356,7 @@ gtk_print_image_instance (struct Lisp_Image_Instance *p,
       if (IMAGE_INSTANCE_GTK_MASK (p))
 	write_fmt_string (printcharfun, "/0x%lx",
 			  (unsigned long) IMAGE_INSTANCE_GTK_MASK (p));
-      write_c_string (")", printcharfun);
+      write_c_string (printcharfun, ")");
       break;
 #if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
@@ -553,11 +543,11 @@ gtk_locate_pixmap_file (Lisp_Object name)
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (XSTRING_BYTE (name, 0) == '/' ||
-      (XSTRING_BYTE (name, 0) == '.' &&
-       (XSTRING_BYTE (name, 1) == '/' ||
-	(XSTRING_BYTE (name, 1) == '.' &&
-	 (XSTRING_BYTE (name, 2) == '/')))))
+  if (string_byte (name, 0) == '/' ||
+      (string_byte (name, 0) == '.' &&
+       (string_byte (name, 1) == '/' ||
+	(string_byte (name, 1) == '.' &&
+	 (string_byte (name, 2) == '/')))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return name;

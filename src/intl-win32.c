@@ -1274,7 +1274,7 @@ mswindows_get_code_page_charset (int code_page)
 
 #if 0 /* #### from Emacs 20.6; consider porting */
 
-xxDEFUN ("mswindows-get-locale-info", Fmswindows_get_locale_info, 1, 2, 0, /*
+DEFUN ("mswindows-get-locale-info", Fmswindows_get_locale_info, 1, 2, 0, /*
 Return information about the Windows locale LCID.
 By default, return a three letter locale code which encodes the default
 language as the first two characters, and the country or regionial variant
@@ -1339,7 +1339,7 @@ BOOL CALLBACK enum_code_page_fn (LPTSTR codepageNum)
   return TRUE;
 }
 
-xxDEFUN ("mswindows-get-valid-code-pages", Fmswindows_get_valid_code_pages, 0, 0, 0, /*
+DEFUN ("mswindows-get-valid-code-pages", Fmswindows_get_valid_code_pages, 0, 0, 0, /*
 Return list of all valid Windows code pages.
 */
        ())
@@ -1352,7 +1352,7 @@ Return list of all valid Windows code pages.
   return Vmswindows_valid_code_pages;
 }
 
-xxDEFUN ("mswindows-get-console-code-page", Fmswindows_get_console_code_page, 0, 0, 0, /*
+DEFUN ("mswindows-get-console-code-page", Fmswindows_get_console_code_page, 0, 0, 0, /*
 Return current Windows code page for console input.
 */
        ())
@@ -1360,7 +1360,7 @@ Return current Windows code page for console input.
   return make_int (GetConsoleCP ());
 }
 
-xxDEFUN ("mswindows-set-console-code-page", Fmswindows_set_console_code_page, 1, 1, 0, /*
+DEFUN ("mswindows-set-console-code-page", Fmswindows_set_console_code_page, 1, 1, 0, /*
 Make Windows code page CP be the current code page setting for Emacs.
 The code page setting affects keyboard input and display in tty mode.
 If successful, the new CP is returned, otherwise nil.
@@ -1378,7 +1378,7 @@ If successful, the new CP is returned, otherwise nil.
   return make_int (GetConsoleCP ());
 }
 
-xxDEFUN ("mswindows-get-console-output-code-page", Fmswindows_get_console_output_code_page, 0, 0, 0, /*
+DEFUN ("mswindows-get-console-output-code-page", Fmswindows_get_console_output_code_page, 0, 0, 0, /*
 Return current Windows code page for console output.
 */
        ())
@@ -1386,7 +1386,7 @@ Return current Windows code page for console output.
   return make_int (GetConsoleOutputCP ());
 }
 
-xxDEFUN ("mswindows-set-console-output-code-page", Fmswindows_set_console_output_code_page, 1, 1, 0, /*
+DEFUN ("mswindows-set-console-output-code-page", Fmswindows_set_console_output_code_page, 1, 1, 0, /*
 Make Windows code page CP be the current code page setting for Emacs.
 The code page setting affects keyboard input and display in tty mode.
 If successful, the new CP is returned, otherwise nil.
@@ -1404,7 +1404,7 @@ If successful, the new CP is returned, otherwise nil.
   return make_int (GetConsoleOutputCP ());
 }
 
-xxDEFUN ("mswindows-get-code-page-charset", Fmswindows_get_code_page_charset, 1, 1, 0, /*
+DEFUN ("mswindows-get-code-page-charset", Fmswindows_get_code_page_charset, 1, 1, 0, /*
 Return charset of code page CP.
 Returns nil if the code page is not valid.
 */
@@ -1423,7 +1423,7 @@ Returns nil if the code page is not valid.
   return Qnil;
 }
 
-xxDEFUN ("mswindows-get-valid-keyboard-layouts", Fmswindows_get_valid_keyboard_layouts, 0, 0, 0, /*
+DEFUN ("mswindows-get-valid-keyboard-layouts", Fmswindows_get_valid_keyboard_layouts, 0, 0, 0, /*
 Return list of Windows keyboard languages and layouts.
 The return value is a list of pairs of language id and layout id.
 */
@@ -1448,7 +1448,7 @@ The return value is a list of pairs of language id and layout id.
   return obj;
 }
 
-xxDEFUN ("mswindows-get-keyboard-layout", Fmswindows_get_keyboard_layout, 0, 0, 0, /*
+DEFUN ("mswindows-get-keyboard-layout", Fmswindows_get_keyboard_layout, 0, 0, 0, /*
 Return current Windows keyboard language and layout.
 The return value is the cons of the language id and the layout id.
 */
@@ -1460,7 +1460,7 @@ The return value is the cons of the language id and the layout id.
 		make_int ((kl >> 16) & 0xffff));
 }
 
-xxDEFUN ("mswindows-set-keyboard-layout", Fmswindows_set_keyboard_layout, 1, 1, 0, /*
+DEFUN ("mswindows-set-keyboard-layout", Fmswindows_set_keyboard_layout, 1, 1, 0, /*
 Make LAYOUT be the current keyboard layout for Emacs.
 The keyboard layout setting affects interpretation of keyboard input.
 If successful, the new layout id is returned, otherwise nil.
@@ -1827,7 +1827,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs,
   struct mswindows_multibyte_to_unicode_coding_system *data =
     XCODING_SYSTEM_TYPE_DATA (cs, mswindows_multibyte_to_unicode);
 
-  write_c_string ("(", printcharfun);
+  write_c_string (printcharfun, "(");
   if (data->locale_type == MULTIBYTE_SPECIFIED_CODE_PAGE)
     print_internal (make_int (data->cp), printcharfun, 1);
   else
@@ -1835,7 +1835,7 @@ mswindows_multibyte_to_unicode_print (Lisp_Object cs,
       write_fmt_string_lisp (printcharfun, "%s, ", 1, mswindows_multibyte_to_unicode_getprop (cs, Qlocale));
       print_internal (mswindows_multibyte_to_unicode_getprop (cs, Qcode_page), printcharfun, 0);
     }
-  write_c_string (")", printcharfun);
+  write_c_string (printcharfun, ")");
 }
 
 /* Convert multibyte to Unicode according to the specified code page

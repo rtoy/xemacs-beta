@@ -1,3 +1,20 @@
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (CFLAGS_NO_LIB): New.
+	* xemacs.mak (CFLAGS):
+	* xemacs.mak (ETAGS_DEPS):
+	* xemacs.mak (LIB_SRC_TOOLS):
+	Split up CFLAGS into a version without flags specifying the C
+	library.  The problem seems to be that minitar depends on zlib,
+	which depends specifically on libc.lib, not on any of the other C
+	libraries.  Unless you compile with libc.lib, you get errors --
+	specifically, no _errno in the other libraries, which must make it
+	something other than an int. (#### But this doesn't seem to obtain
+	in XEmacs, which also uses zlib, and can be linked with any of the
+	C libraries.  Maybe zlib is used differently and doesn't need
+	errno, or maybe XEmacs provides an int errno; ... I don't
+	understand.
+
 2002-03-26  Vin Shelton  <acs@xemacs.org>
 
 	* xemacs.mak: Added special rule to build winclient.exe.

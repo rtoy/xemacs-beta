@@ -2971,21 +2971,22 @@ at all if reversion would not cause any user-visible changes."
 	 bmin bmax)
     (save-excursion
       (set-buffer newbuf)
-      (let (buffer-read-only
-	    (buffer-undo-list t)
-	    after-change-function
-	    after-change-functions
-	    before-change-function
-	    before-change-functions)
-	(if revert-buffer-insert-file-contents-function
-	    (funcall revert-buffer-insert-file-contents-function
-		     file-name nil)
-	  (if (not (file-exists-p file-name))
-	      (error "File %s no longer exists!" file-name))
-	  (widen)
-	  (insert-file-contents file-name t nil nil t)
-	  (setq bmin (point-min)
-		bmax (point-max)))))
+      (with-obsolete-variable '(before-change-function after-change-function)
+	(let (buffer-read-only
+	      (buffer-undo-list t)
+	      after-change-function
+	      after-change-functions
+	      before-change-function
+	      before-change-functions)
+	  (if revert-buffer-insert-file-contents-function
+	      (funcall revert-buffer-insert-file-contents-function
+		       file-name nil)
+	    (if (not (file-exists-p file-name))
+		(error "File %s no longer exists!" file-name))
+	    (widen)
+	    (insert-file-contents file-name t nil nil t)
+	    (setq bmin (point-min)
+		  bmax (point-max))))))
     (if (not (and (eq bmin (point-min))
 		  (eq bmax (point-max))
 		  (eq (compare-buffer-substrings 

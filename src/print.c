@@ -416,7 +416,7 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
 	{
 	  for (iii = ccoff; iii < cclen + ccoff; iii++)
 	    {
-	      call1 (function, make_char (XSTRING_CHAR (reloc, iii)));
+	      call1 (function, make_char (string_emchar (reloc, iii)));
 	      if (STRINGP (reloc))
 		newnonreloc = XSTRING_DATA (reloc);
 	    }
@@ -526,10 +526,6 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
     }
 }
 
-/* Used for printing a single-byte character (*not* any Emchar).  */
-#define write_char_internal(string_of_length_1, stream)			\
-  output_string (stream, (const Intbyte *) (string_of_length_1),	\
-		 Qnil, 0, 1)
 
 /* Write internal-format data to STREAM.  See output_string() for
    interpretation of STREAM.
@@ -544,7 +540,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
    canonicalize_printcharfun() (i.e. Qnil means stdout, not
    Vstandard_output, etc.)  */
 void
-write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream)
+write_string_1 (Lisp_Object stream, const Intbyte *str, Bytecount size)
 {
   /* This function can GC */
 #ifdef ERROR_CHECK_TEXT
@@ -554,23 +550,23 @@ write_string_1 (const Intbyte *str, Bytecount size, Lisp_Object stream)
 }
 
 void
-write_string (const Intbyte *str, Lisp_Object stream)
+write_string (Lisp_Object stream, const Intbyte *str)
 {
   /* This function can GC */
-  write_string_1 (str, qxestrlen (str), stream);
+  write_string_1 (stream, str, qxestrlen (str));
 }
 
 void
-write_c_string (const CIntbyte *str, Lisp_Object stream)
+write_c_string (Lisp_Object stream, const CIntbyte *str)
 {
   /* This function can GC */
-  write_string_1 ((const Intbyte *) str, strlen (str), stream);
+  write_string_1 (stream, (const Intbyte *) str, strlen (str));
 }
 
 void
-write_eistring (const Eistring *ei, Lisp_Object stream)
+write_eistring (Lisp_Object stream, const Eistring *ei)
 {
-  write_string_1 (eidata (ei), eilen (ei), stream);
+  write_string_1 (stream, eidata (ei), eilen (ei));
 }
 
 /* Write a printf-style string to STREAM; see output_string(). */
@@ -587,7 +583,7 @@ write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...)
   str = emacs_vsprintf_malloc (fmt, va, &len);
   va_end (va);
   count = record_unwind_protect_freeing (str);
-  write_string_1 (str, len, stream);
+  write_string_1 (stream, str, len);
   unbind_to (count);
 }
 
@@ -613,7 +609,7 @@ write_fmt_string_lisp (Lisp_Object stream, const CIntbyte *fmt, int nargs, ...)
   va_end (va);
   str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
   count = record_unwind_protect_freeing (str);
-  write_string_1 (str, len, stream);
+  write_string_1 (stream, str, len);
   unbind_to (count);
 }
 
@@ -633,7 +629,7 @@ stderr_out_lisp (const CIntbyte *fmt, int nargs, ...)
   va_end (va);
   str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
   count = record_unwind_protect_freeing (str);
-  write_string_1 (str, len, Qexternal_debugging_output);
+  write_string_1 (Qexternal_debugging_output, str, len);
   unbind_to (count);
 }
 
@@ -745,7 +741,7 @@ If STREAM is omitted or nil, the value of `standard-output' is used.
        (stream))
 {
   /* This function can GC */
-  write_char_internal ("\n", canonicalize_printcharfun (stream));
+  write_c_string (canonicalize_printcharfun (stream), "\n");
   return Qt;
 }
 
@@ -831,9 +827,9 @@ Output stream is STREAM, or value of `standard-output' (which see).
 
   GCPRO2 (object, stream);
   stream = print_prepare (stream, &frame);
-  write_char_internal ("\n", stream);
+  write_c_string (stream, "\n");
   print_internal (object, stream, 1);
-  write_char_internal ("\n", stream);
+  write_c_string (stream, "\n");
   print_finish (stream, frame);
   UNGCPRO;
   return object;
@@ -909,7 +905,7 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
       }
     while (!NILP (tail))
       {
-	write_c_string (first ? ": " : ", ", stream);
+	write_c_string (stream, first ? ": " : ", ");
 	/* Most errors have an explanatory string as their first argument,
 	   and it looks better not to put the quotes around it. */
 	print_internal (Fcar (tail), stream,
@@ -929,7 +925,7 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
  error_throw:
   if (NILP (method))
     {
-      write_c_string (GETTEXT ("Peculiar error "), stream);
+      write_c_string (stream, GETTEXT ("Peculiar error "));
       print_internal (error_object, stream, 1);
       return;
     }
@@ -1193,17 +1189,17 @@ print_vector_internal (const char *start, const char *end,
       if (max < len) last = max;
     }
 
-  write_c_string (start, printcharfun);
+  write_c_string (printcharfun, start);
   for (i = 0; i < last; i++)
     {
       Lisp_Object elt = XVECTOR_DATA (obj)[i];
-      if (i != 0) write_char_internal (" ", printcharfun);
+      if (i != 0) write_c_string (printcharfun, " ");
       print_internal (elt, printcharfun, escapeflag);
     }
   UNGCPRO;
   if (last != len)
-    write_c_string (" ...", printcharfun);
-  write_c_string (end, printcharfun);
+    write_c_string (printcharfun, " ...");
+  write_c_string (printcharfun, end);
 }
 
 void
@@ -1224,14 +1220,14 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
       obj = XCAR (XCDR (obj));
       GCPRO2 (obj, printcharfun);
-      write_char_internal ("\'", printcharfun);
+      write_c_string (printcharfun, "\'");
       UNGCPRO;
       print_internal (obj, printcharfun, escapeflag);
       return;
     }
 
   GCPRO2 (obj, printcharfun);
-  write_char_internal ("(", printcharfun);
+  write_c_string (printcharfun, "(");
 
   {
     int len;
@@ -1244,20 +1240,20 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	 obj = XCDR (obj), len++)
       {
 	if (len > 0)
-	  write_char_internal (" ", printcharfun);
+	  write_c_string (printcharfun, " ");
 	if (EQ (obj, tortoise) && len > 0)
 	  {
 	    if (print_readably)
 	      printing_unreadable_object ("circular list");
 	    else
-	      write_c_string ("... <circular list>", printcharfun);
+	      write_c_string (printcharfun, "... <circular list>");
 	    break;
 	  }
 	if (len & 1)
 	  tortoise = XCDR (tortoise);
 	if (len > max)
 	  {
-	    write_c_string ("...", printcharfun);
+	    write_c_string (printcharfun, "...");
 	    break;
 	  }
 	print_internal (XCAR (obj), printcharfun, escapeflag);
@@ -1265,12 +1261,12 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   }
   if (!LISTP (obj))
     {
-      write_c_string (" . ", printcharfun);
+      write_c_string (printcharfun, " . ");
       print_internal (obj, printcharfun, escapeflag);
     }
   UNGCPRO;
 
-  write_char_internal (")", printcharfun);
+  write_c_string (printcharfun, ")");
   return;
 }
 
@@ -1285,7 +1281,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* We distinguish between Bytecounts and Charcounts, to make
      Vprint_string_length work correctly under Mule.  */
-  Charcount size = XSTRING_CHAR_LENGTH (obj);
+  Charcount size = string_char_length (obj);
   Charcount max = size;
   Bytecount bcmax = XSTRING_LENGTH (obj);
   struct gcpro gcpro1, gcpro2;
@@ -1308,16 +1304,16 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       /* This deals with GC-relocation and Mule. */
       output_string (printcharfun, 0, obj, 0, bcmax);
       if (max < size)
-	write_c_string (" ...", printcharfun);
+	write_c_string (printcharfun, " ...");
     }
   else
     {
       Bytecount i, last = 0;
 
-      write_char_internal ("\"", printcharfun);
+      write_c_string (printcharfun, "\"");
       for (i = 0; i < bcmax; i++)
 	{
-	  Intbyte ch = XSTRING_BYTE (obj, i);
+	  Intbyte ch = string_byte (obj, i);
 	  if (ch == '\"' || ch == '\\'
 	      || (ch == '\n' && print_escape_newlines))
 	    {
@@ -1328,14 +1324,17 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		}
 	      if (ch == '\n')
 		{
-		  write_c_string ("\\n", printcharfun);
+		  write_c_string (printcharfun, "\\n");
 		}
 	      else
 		{
-		  write_char_internal ("\\", printcharfun);
+		  Intbyte temp[2];
+		  write_c_string (printcharfun, "\\");
 		  /* This is correct for Mule because the
 		     character is either \ or " */
-		  write_char_internal (XSTRING_DATA (obj) + i, printcharfun);
+		  temp[0] = string_byte (obj, i);
+		  temp[1] = '\0';
+		  write_string (printcharfun, temp);
 		}
 	      last = i + 1;
 	    }
@@ -1346,8 +1345,8 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 			 bcmax - last);
 	}
       if (max < size)
-	write_c_string (" ...", printcharfun);
-      write_char_internal ("\"", printcharfun);
+	write_c_string (printcharfun, " ...");
+      write_c_string (printcharfun, "\"");
     }
   UNGCPRO;
 }
@@ -1472,7 +1471,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    char buf[DECIMAL_PRINT_SIZE (long) + 1];
 	    *buf = '#';
 	    long_to_string (buf + 1, i);
-	    write_c_string (buf, printcharfun);
+	    write_c_string (printcharfun, buf);
 	    return;
 	  }
     }
@@ -1490,7 +1489,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       {
 	char buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
 	long_to_string (buf, XINT (obj));
-	write_c_string (buf, printcharfun);
+	write_c_string (printcharfun, buf);
 	break;
       }
 
@@ -1571,7 +1570,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		&& print_depth > XINT (Vprint_level))
 	      {
 		GCPRO2 (obj, printcharfun);
-		write_c_string ("...", printcharfun);
+		write_c_string (printcharfun, "...");
 		UNGCPRO;
 		break;
 	      }
@@ -1596,12 +1595,11 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (print_readably)
 	  signal_error (Qinternal_error, "printing illegal data type #o%03o",
 			make_int (XTYPE (obj)));
-	write_c_string ("#<EMACS BUG: ILLEGAL DATATYPE ",
-			printcharfun);
+	write_c_string (printcharfun, "#<EMACS BUG: ILLEGAL DATATYPE ");
 	write_fmt_string (printcharfun, "(#o%3o)", (int) XTYPE (obj));
 	write_c_string
-	  (" Save your buffers immediately and please report this bug>",
-	   printcharfun);
+	  (printcharfun,
+	   " Save your buffers immediately and please report this bug>");
 #endif /* not ERROR_CHECK_TYPES */
 	break;
       }
@@ -1618,7 +1616,7 @@ print_float (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char pigbuf[350];	/* see comments in float_to_string */
 
   float_to_string (pigbuf, XFLOAT_DATA (obj));
-  write_c_string (pigbuf, printcharfun);
+  write_c_string (printcharfun, pigbuf);
 }
 #endif /* LISP_FLOAT_TYPE */
 
@@ -1655,9 +1653,9 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  Lisp_Object tem = Fassq (obj, Vprint_gensym_alist);
 	  if (CONSP (tem))
 	    {
-	      write_char_internal ("#", printcharfun);
+	      write_c_string (printcharfun, "#");
 	      print_internal (XCDR (tem), printcharfun, escapeflag);
-	      write_char_internal ("#", printcharfun);
+	      write_c_string (printcharfun, "#");
 	      UNGCPRO;
 	      return;
 	    }
@@ -1675,12 +1673,12 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		tem = make_int (1);
 	      Vprint_gensym_alist = Fcons (Fcons (obj, tem), Vprint_gensym_alist);
 
-	      write_char_internal ("#", printcharfun);
+	      write_c_string (printcharfun, "#");
 	      print_internal (tem, printcharfun, escapeflag);
-	      write_char_internal ("=", printcharfun);
+	      write_c_string (printcharfun, "=");
 	    }
 	}
-      write_c_string ("#:", printcharfun);
+      write_c_string (printcharfun, "#:");
     }
 
   /* Does it look like an integer or a float? */
@@ -1717,7 +1715,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       confusing = isfloat_string ((char *) data);
 #endif
     if (confusing)
-      write_char_internal ("\\", printcharfun);
+      write_c_string (printcharfun, "\\");
   }
 
   {
@@ -1726,7 +1724,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
     for (i = 0; i < size; i++)
       {
-	switch (XSTRING_BYTE (name, i))
+	switch (string_byte (name, i))
 	  {
 	  case  0: case  1: case  2: case  3:
 	  case  4: case  5: case  6: case  7:
@@ -1742,7 +1740,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  case '[': case ']' : case '?' :
 	    if (i > last)
 	      output_string (printcharfun, 0, name, last, i - last);
-	    write_char_internal ("\\", printcharfun);
+	    write_c_string (printcharfun, "\\");
 	    last = i;
 	  }
       }

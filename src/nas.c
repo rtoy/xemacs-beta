@@ -165,9 +165,7 @@ nas_init_play (
   if (setjmp (AuXtErrorJump))
     {
       EMACS_SIGNAL (SIGPIPE, old_sigpipe);
-#ifdef emacs
       start_interrupts ();
-#endif  
       return "error in NAS";
     }
 #endif
@@ -177,13 +175,9 @@ nas_init_play (
   AuDefaultErrorHandler = CatchErrorAndJump;
 #endif
 
-#ifdef emacs
   stop_interrupts ();
-#endif  
   aud = AuOpenServer (server, 0, NULL, 0, NULL, &err_message);
-#ifdef emacs
   start_interrupts ();
-#endif  
   if (!aud)
     {
 #ifdef ROBUST_PLAY

@@ -228,7 +228,7 @@ allocate_frame_core (Lisp_Object device)
     buf = Fcurrent_buffer ();
     /* If buf is a 'hidden' buffer (i.e. one whose name starts with
        a space), try to find another one.  */
-    if (XSTRING_CHAR (Fbuffer_name (buf), 0) == ' ')
+    if (string_emchar (Fbuffer_name (buf), 0) == ' ')
       buf = Fother_buffer (buf, Qnil, Qnil);
     Fset_window_buffer (root_window, buf, Qnil);
   }
@@ -818,7 +818,7 @@ device_selected_frame (struct device *d)
 
 #if 0 /* FSFmacs */
 
-xxDEFUN ("handle-switch-frame", Fhandle_switch_frame, 1, 2, "e", /*
+DEFUN ("handle-switch-frame", Fhandle_switch_frame, 1, 2, "e", /*
 Handle a switch-frame event EVENT.
 Switch-frame events are usually bound to this function.
 A switch-frame event tells Emacs that the window manager has requested
@@ -839,7 +839,7 @@ to that frame.
 }
 
 /* A load of garbage. */
-xxDEFUN ("ignore-event", Fignore_event, 0, 0, "", /*
+DEFUN ("ignore-event", Fignore_event, 0, 0, "", /*
 Do nothing, but preserve any prefix argument already specified.
 This is a suitable binding for iconify-frame and make-frame-visible.
 */

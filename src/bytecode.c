@@ -1798,7 +1798,7 @@ optimize_compiled_function (Lisp_Object compiled_function)
 
   if (STRINGP (f->instructions))
     {
-      /* XSTRING_LENGTH() is more efficient than XSTRING_CHAR_LENGTH(),
+      /* XSTRING_LENGTH() is more efficient than string_char_length(),
 	 which would be slightly more `proper' */
       program = alloca_array (Opbyte, 1 + 2 * XSTRING_LENGTH (f->instructions));
       optimize_byte_code (f->instructions, f->constants,
@@ -1826,7 +1826,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  write_c_string (print_readably ? "#[" : "#<compiled-function ", printcharfun);
+  write_c_string (printcharfun, print_readably ? "#[" : "#<compiled-function ");
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   if (!print_readably)
     {
@@ -1839,7 +1839,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   print_internal (compiled_function_arglist (f), printcharfun, escapeflag);
 
   /* COMPILED_INSTRUCTIONS = 1 */
-  write_c_string (" ", printcharfun);
+  write_c_string (printcharfun, " ");
   {
     struct gcpro ngcpro1;
     Lisp_Object instructions = compiled_function_instructions (f);
@@ -1848,7 +1848,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
       {
 	/* We don't usually want to see that junk in the bytecode. */
 	write_fmt_string (printcharfun, "\"...(%ld)\"",
-			  (long) XSTRING_CHAR_LENGTH (instructions));
+			  (long) string_char_length (instructions));
       }
     else
       print_internal (instructions, printcharfun, escapeflag);
@@ -1856,7 +1856,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   }
 
   /* COMPILED_CONSTANTS = 2 */
-  write_c_string (" ", printcharfun);
+  write_c_string (printcharfun, " ");
   print_internal (compiled_function_constants (f), printcharfun, escapeflag);
 
   /* COMPILED_STACK_DEPTH = 3 */
@@ -1865,7 +1865,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   /* COMPILED_DOC_STRING = 4 */
   if (docp || intp)
     {
-      write_c_string (" ", printcharfun);
+      write_c_string (printcharfun, " ");
       print_internal (compiled_function_documentation (f), printcharfun,
 		      escapeflag);
     }
@@ -1873,13 +1873,13 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
   /* COMPILED_INTERACTIVE = 5 */
   if (intp)
     {
-      write_c_string (" ", printcharfun);
+      write_c_string (printcharfun, " ");
       print_internal (compiled_function_interactive (f), printcharfun,
 		      escapeflag);
     }
 
   UNGCPRO;
-  write_c_string (print_readably ? "]" : ">", printcharfun);
+  write_c_string (printcharfun, print_readably ? "]" : ">");
 }
 
 
@@ -2221,8 +2221,7 @@ If non-nil, the return value will be a list whose first element is
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
 
-/* Remove the `xx' if you wish to restore this feature */
-xxDEFUN ("compiled-function-annotation", Fcompiled_function_annotation, 1, 1, 0, /*
+DEFUN ("compiled-function-annotation", Fcompiled_function_annotation, 1, 1, 0, /*
 Return the annotation of the compiled-function object FUNCTION, or nil.
 The annotation is a piece of information indicating where this
 compiled-function object came from.  Generally this will be

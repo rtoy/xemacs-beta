@@ -39,188 +39,20 @@ Boston, MA 02111-1307, USA.  */
 /************************************************************************/
 
 /*
-   There are three possible ways to specify positions in a buffer.  All
-   of these are one-based: the beginning of the buffer is position or
-   index 1, and 0 is not a valid position.
-
-   As a "buffer position" (typedef Charbpos):
-
-      This is an index specifying an offset in characters from the
-      beginning of the buffer.  Note that buffer positions are
-      logically *between* characters, not on a character.  The
-      difference between two buffer positions specifies the number of
-      characters between those positions.  Buffer positions are the
-      only kind of position externally visible to the user.
-
-   As a "byte index" (typedef Bytebpos):
-
-      This is an index over the bytes used to represent the characters
-      in the buffer.  If there is no Mule support, this is identical
-      to a buffer position, because each character is represented
-      using one byte.  However, with Mule support, many characters
-      require two or more bytes for their representation, and so a
-      byte index may be greater than the corresponding buffer
-      position.
-
-   As a "memory index" (typedef Membpos):
-
-      This is the byte index adjusted for the gap.  For positions
-      before the gap, this is identical to the byte index.  For
-      positions after the gap, this is the byte index plus the gap
-      size.  There are two possible memory indices for the gap
-      position; the memory index at the beginning of the gap should
-      always be used, except in code that deals with manipulating the
-      gap, where both indices may be seen.  The address of the
-      character "at" (i.e. following) a particular position can be
-      obtained from the formula
-
-        buffer_start_address + memory_index(position) - 1
-
-      except in the case of characters at the gap position.
-
-   Other typedefs:
-   ===============
-
-      Emchar:
-      -------
-        This typedef represents a single Emacs character, which can be
-	ASCII, ISO-8859, or some extended character, as would typically
-	be used for Kanji.  Note that the representation of a character
-	as an Emchar is *not* the same as the representation of that
-	same character in a string; thus, you cannot do the standard
-	C trick of passing a pointer to a character to a function that
-	expects a string.
-
-	An Emchar takes up 19 bits of representation and (for code
-	compatibility and such) is compatible with an int.  This
-	representation is visible on the Lisp level.  The important
-	characteristics	of the Emchar representation are
-
-	  -- values 0x00 - 0x7f represent ASCII.
-	  -- values 0x80 - 0xff represent the right half of ISO-8859-1.
-	  -- values 0x100 and up represent all other characters.
-
-	This means that Emchar values are upwardly compatible with
-	the standard 8-bit representation of ASCII/ISO-8859-1.
-
-      Intbyte:
-      --------
-        The data in a buffer or string is logically made up of Intbyte
-	objects, where a Intbyte takes up the same amount of space as a
-	char. (It is declared differently, though, to catch invalid
-	usages.) Strings stored using Intbytes are said to be in
-	"internal format".  The important characteristics of internal
-	format are
-
-	  -- ASCII characters are represented as a single Intbyte,
-	     in the range 0 - 0x7f.
-	  -- All other characters are represented as a Intbyte in
-	     the range 0x80 - 0x9f followed by one or more Intbytes
-	     in the range 0xa0 to 0xff.
-
-	This leads to a number of desirable properties:
-
-	  -- Given the position of the beginning of a character,
-	     you can find the beginning of the next or previous
-	     character in constant time.
-	  -- When searching for a substring or an ASCII character
-	     within the string, you need merely use standard
-	     searching routines.
-
-      array of char:
-      --------------
-        Strings that go in or out of Emacs are in "external format",
-	typedef'ed as an array of char or a char *.  There is more
-	than one external format (JIS, EUC, etc.) but they all
-	have similar properties.  They are modal encodings,
-	which is to say that the meaning of particular bytes is
-	not fixed but depends on what "mode" the string is currently
-	in (e.g. bytes in the range 0 - 0x7f might be
-	interpreted as ASCII, or as Hiragana, or as 2-byte Kanji,
-	depending on the current mode).  The mode starts out in
-	ASCII/ISO-8859-1 and is switched using escape sequences --
-	for example, in the JIS encoding, 'ESC $ B' switches to a
-	mode where pairs of bytes in the range 0 - 0x7f
-	are interpreted as Kanji characters.
-
-	External-formatted data is generally desirable for passing
-	data between programs because it is upwardly compatible
-	with standard ASCII/ISO-8859-1 strings and may require
-	less space than internal encodings such as the one
-	described above.  In addition, some encodings (e.g. JIS)
-	keep all characters (except the ESC used to switch modes)
-	in the printing ASCII range 0x20 - 0x7e, which results in
-	a much higher probability that the data will avoid being
-	garbled in transmission.  Externally-formatted data is
-	generally not very convenient to work with, however, and
-	for this reason is usually converted to internal format
-	before any work is done on the string.
-
-	NOTE: filenames need to be in external format so that
-	ISO-8859-1 characters come out correctly.
-
-      Charcount:
-      ----------
-        This typedef represents a count of characters, such as
-	a character offset into a string or the number of
-	characters between two positions in a buffer.  The
-	difference between two Charbpos's is a Charcount, and
-	character positions in a string are represented using
-	a Charcount.
-
-      Bytecount:
-      ----------
-        Similar to a Charcount but represents a count of bytes.
-	The difference between two Bytebpos's is a Bytecount.
-
-
-   Usage of the various representations:
-   =====================================
-
-   Memory indices are used in low-level functions in insdel.c and for
-   extent endpoints and marker positions.  The reason for this is that
-   this way, the extents and markers don't need to be updated for most
-   insertions, which merely shrink the gap and don't move any
-   characters around in memory.
-
-   (The beginning-of-gap memory index simplifies insertions w.r.t.
-   markers, because text usually gets inserted after markers.  For
-   extents, it is merely for consistency, because text can get
-   inserted either before or after an extent's endpoint depending on
-   the open/closedness of the endpoint.)
-
-   Byte indices are used in other code that needs to be fast,
-   such as the searching, redisplay, and extent-manipulation code.
-
-   Buffer positions are used in all other code.  This is because this
-   representation is easiest to work with (especially since Lisp
-   code always uses buffer positions), necessitates the fewest
-   changes to existing code, and is the safest (e.g. if the text gets
-   shifted underneath a buffer position, it will still point to a
-   character; if text is shifted under a byte index, it might point
-   to the middle of a character, which would be bad).
-
-   Similarly, Charcounts are used in all code that deals with strings
-   except for code that needs to be fast, which used Bytecounts.
-
-   Strings are always passed around internally using internal format.
-   Conversions between external format are performed at the time
-   that the data goes in or out of Emacs.
-
-   Working with the various representations:
-   ========================================= */
-
-/* We write things this way because it's very important the
-   MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
-   65535 is a multiple of 3, but this may not always be the
-   case.) */
-
-
-/*
-   1. Character Sets
-   =================
+   ==========================================================================
+                               1. Character Sets
+   ==========================================================================
 
    A character set (or "charset") is an ordered set of characters.
+
+   A character (which is, BTW, a surprisingly complex concept) is, in a
+   written representation of text, the most basic written unit that has a
+   meaning of its own.  It's comparable to a phoneme when analyzing words
+   in spoken speech.  Just like with a phoneme (which is an abstract
+   concept, and is represented in actual spoken speech by one or more
+   allophones, ...&&#### finish this., a character is actually an abstract
+   concept
+   
    A particular character in a charset is indexed using one or
    more "position codes", which are non-negative integers.
    The number of position codes needed to identify a particular
@@ -298,8 +130,9 @@ Boston, MA 02111-1307, USA.  */
 
    This is a bit ad-hoc but gets the job done.
 
-   2. Encodings
-   ============
+   ==========================================================================
+                               2. Encodings
+   ==========================================================================
 
    An "encoding" is a way of numerically representing
    characters from one or more character sets.  If an encoding
@@ -378,8 +211,9 @@ Boston, MA 02111-1307, USA.  */
 
    Initially, Printing-ASCII is invoked.
 
-   3. Internal Mule Encodings
-   ==========================
+   ==========================================================================
+                          3. Internal Mule Encodings
+   ==========================================================================
 
    In XEmacs/Mule, each character set is assigned a unique number,
    called a "leading byte".  This is used in the encodings of a
@@ -489,10 +323,202 @@ Boston, MA 02111-1307, USA.  */
 
    Note that character codes 0 - 255 are the same as the "binary encoding"
    described above.
-*/
 
-/*
-   About Unicode support:
+   Most of the code in XEmacs knows nothing of the representation of a
+   character other than that values 0 - 255 represent ASCII, Control 1,
+   and Latin 1.
+
+   WARNING WARNING WARNING: The Boyer-Moore code in search.c, and the
+   code in search_buffer() that determines whether that code can be used,
+   knows that "field 3" in a character always corresponds to the last
+   byte in the textual representation of the character. (This is important
+   because the Boyer-Moore algorithm works by looking at the last byte
+   of the search string and &&#### finish this.
+
+   ==========================================================================
+                  4. Buffer Positions and Other Typedefs
+   ==========================================================================
+
+   A. Buffer Positions
+   
+   There are three possible ways to specify positions in a buffer.  All
+   of these are one-based: the beginning of the buffer is position or
+   index 1, and 0 is not a valid position.
+
+   As a "buffer position" (typedef Charbpos):
+
+      This is an index specifying an offset in characters from the
+      beginning of the buffer.  Note that buffer positions are
+      logically *between* characters, not on a character.  The
+      difference between two buffer positions specifies the number of
+      characters between those positions.  Buffer positions are the
+      only kind of position externally visible to the user.
+
+   As a "byte index" (typedef Bytebpos):
+
+      This is an index over the bytes used to represent the characters
+      in the buffer.  If there is no Mule support, this is identical
+      to a buffer position, because each character is represented
+      using one byte.  However, with Mule support, many characters
+      require two or more bytes for their representation, and so a
+      byte index may be greater than the corresponding buffer
+      position.
+
+   As a "memory index" (typedef Membpos):
+
+      This is the byte index adjusted for the gap.  For positions
+      before the gap, this is identical to the byte index.  For
+      positions after the gap, this is the byte index plus the gap
+      size.  There are two possible memory indices for the gap
+      position; the memory index at the beginning of the gap should
+      always be used, except in code that deals with manipulating the
+      gap, where both indices may be seen.  The address of the
+      character "at" (i.e. following) a particular position can be
+      obtained from the formula
+
+        buffer_start_address + memory_index(position) - 1
+
+      except in the case of characters at the gap position.
+
+   B. Other Typedefs
+
+      Emchar:
+      -------
+        This typedef represents a single Emacs character, which can be
+	ASCII, ISO-8859, or some extended character, as would typically
+	be used for Kanji.  Note that the representation of a character
+	as an Emchar is *not* the same as the representation of that
+	same character in a string; thus, you cannot do the standard
+	C trick of passing a pointer to a character to a function that
+	expects a string.
+
+	An Emchar takes up 19 bits of representation and (for code
+	compatibility and such) is compatible with an int.  This
+	representation is visible on the Lisp level.  The important
+	characteristics	of the Emchar representation are
+
+	  -- values 0x00 - 0x7f represent ASCII.
+	  -- values 0x80 - 0xff represent the right half of ISO-8859-1.
+	  -- values 0x100 and up represent all other characters.
+
+	This means that Emchar values are upwardly compatible with
+	the standard 8-bit representation of ASCII/ISO-8859-1.
+
+      Intbyte:
+      --------
+        The data in a buffer or string is logically made up of Intbyte
+	objects, where a Intbyte takes up the same amount of space as a
+	char. (It is declared differently, though, to catch invalid
+	usages.) Strings stored using Intbytes are said to be in
+	"internal format".  The important characteristics of internal
+	format are
+
+	  -- ASCII characters are represented as a single Intbyte,
+	     in the range 0 - 0x7f.
+	  -- All other characters are represented as a Intbyte in
+	     the range 0x80 - 0x9f followed by one or more Intbytes
+	     in the range 0xa0 to 0xff.
+
+	This leads to a number of desirable properties:
+
+	  -- Given the position of the beginning of a character,
+	     you can find the beginning of the next or previous
+	     character in constant time.
+	  -- When searching for a substring or an ASCII character
+	     within the string, you need merely use standard
+	     searching routines.
+
+      array of char:
+      --------------
+        Strings that go in or out of Emacs are in "external format",
+	typedef'ed as an array of char or a char *.  There is more
+	than one external format (JIS, EUC, etc.) but they all
+	have similar properties.  They are modal encodings,
+	which is to say that the meaning of particular bytes is
+	not fixed but depends on what "mode" the string is currently
+	in (e.g. bytes in the range 0 - 0x7f might be
+	interpreted as ASCII, or as Hiragana, or as 2-byte Kanji,
+	depending on the current mode).  The mode starts out in
+	ASCII/ISO-8859-1 and is switched using escape sequences --
+	for example, in the JIS encoding, 'ESC $ B' switches to a
+	mode where pairs of bytes in the range 0 - 0x7f
+	are interpreted as Kanji characters.
+
+	External-formatted data is generally desirable for passing
+	data between programs because it is upwardly compatible
+	with standard ASCII/ISO-8859-1 strings and may require
+	less space than internal encodings such as the one
+	described above.  In addition, some encodings (e.g. JIS)
+	keep all characters (except the ESC used to switch modes)
+	in the printing ASCII range 0x20 - 0x7e, which results in
+	a much higher probability that the data will avoid being
+	garbled in transmission.  Externally-formatted data is
+	generally not very convenient to work with, however, and
+	for this reason is usually converted to internal format
+	before any work is done on the string.
+
+	NOTE: filenames need to be in external format so that
+	ISO-8859-1 characters come out correctly.
+
+      Charcount:
+      ----------
+        This typedef represents a count of characters, such as
+	a character offset into a string or the number of
+	characters between two positions in a buffer.  The
+	difference between two Charbpos's is a Charcount, and
+	character positions in a string are represented using
+	a Charcount.
+
+      Bytecount:
+      ----------
+        Similar to a Charcount but represents a count of bytes.
+	The difference between two Bytebpos's is a Bytecount.
+
+
+   C. Usage of the Various Representations
+
+   Memory indices are used in low-level functions in insdel.c and for
+   extent endpoints and marker positions.  The reason for this is that
+   this way, the extents and markers don't need to be updated for most
+   insertions, which merely shrink the gap and don't move any
+   characters around in memory.
+
+   (The beginning-of-gap memory index simplifies insertions w.r.t.
+   markers, because text usually gets inserted after markers.  For
+   extents, it is merely for consistency, because text can get
+   inserted either before or after an extent's endpoint depending on
+   the open/closedness of the endpoint.)
+
+   Byte indices are used in other code that needs to be fast,
+   such as the searching, redisplay, and extent-manipulation code.
+
+   Buffer positions are used in all other code.  This is because this
+   representation is easiest to work with (especially since Lisp
+   code always uses buffer positions), necessitates the fewest
+   changes to existing code, and is the safest (e.g. if the text gets
+   shifted underneath a buffer position, it will still point to a
+   character; if text is shifted under a byte index, it might point
+   to the middle of a character, which would be bad).
+
+   Similarly, Charcounts are used in all code that deals with strings
+   except for code that needs to be fast, which used Bytecounts.
+
+   Strings are always passed around internally using internal format.
+   Conversions between external format are performed at the time
+   that the data goes in or out of Emacs.
+
+   D. Working With the Various Representations
+
+   We write things this way because it's very important the
+   MAX_BYTEBPOS_GAP_SIZE_3 is a multiple of 3. (As it happens,
+   65535 is a multiple of 3, but this may not always be the
+   case. #### unfinished
+
+   ==========================================================================
+                                5. Miscellaneous
+   ==========================================================================
+
+   A. Unicode Support
 
    Adding Unicode support is very desirable.  Unicode will likely be a
    very common representation in the future, and thus we should
@@ -508,10 +534,11 @@ Boston, MA 02111-1307, USA.  */
    leading bytes and move them into private space.  The CNS charsets
    are good candidates since they are rarely used, and
    JAPANESE_JISX0208_1978 is becoming less and less used and could
-   also be dumped. */
+   also be dumped.
 
-
-/* Composite characters are characters constructed by overstriking two
+   B. Composite Characters
+      
+   Composite characters are characters constructed by overstriking two
    or more regular characters.
 
    1) The old Mule implementation involves storing composite characters
@@ -538,7 +565,9 @@ Boston, MA 02111-1307, USA.  */
       over the XEmacs process lifetime, and you only need to
       increase the size of a Mule character from 19 to 21 bits.
       Or you could use 0x8D C1 C2 C3 C4, allowing for about
-      85 million (slightly over 2^26) composite characters. */
+      85 million (slightly over 2^26) composite characters.
+
+*/
 
 
 /************************************************************************/
@@ -560,7 +589,7 @@ short three_to_one_table[1 + MAX_BYTEBPOS_GAP_SIZE_3];
    rep_bytes_by_first_byte(c) is more efficient than the equivalent
    canonical computation:
 
-   XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (c)) */
+   XCHARSET_REP_BYTES (charset_by_leading_byte (c)) */
 
 const Bytecount rep_bytes_by_first_byte[0xA0] =
 { /* 0x00 - 0x7f are for straight ASCII */
@@ -1010,7 +1039,7 @@ convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
 
 Intbyte *
 convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
-					   Bytecount *len_out)
+					    Bytecount *len_out)
 {
   /* Damn zero-termination. */
   Intbyte *str = (Intbyte *) alloca (nels * MAX_EMCHAR_LEN + 1);
@@ -1028,6 +1057,145 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
   if (len_out)
     *len_out = len;
   return str;
+}
+
+#define COPY_TEXT_BETWEEN_FORMATS(srcfmt, dstfmt)			 \
+do									 \
+{									 \
+  if (dst)								 \
+    {									 \
+      Intbyte *dstend = dst + dstlen;					 \
+      Intbyte *dstp = dst;						 \
+      const Intbyte *srcend = src + srclen;				 \
+      const Intbyte *srcp = src;					 \
+									 \
+      while (srcp < srcend)						 \
+	{								 \
+	  Emchar ch = charptr_emchar_fmt (srcp, srcfmt, srcobj);	 \
+	  Bytecount len = emchar_len_fmt (ch, dstfmt);			 \
+									 \
+	    if (dstp + len <= dstend)					 \
+	      {								 \
+		set_charptr_emchar_fmt (dstp, ch, dstfmt, dstobj);	 \
+		dstp += len;						 \
+	      }								 \
+	    else							 \
+	      break;							 \
+	  INC_CHARPTR_FMT (srcp, srcfmt);				 \
+	}								 \
+      text_checking_assert (srcp <= srcend);				 \
+      if (src_used)							 \
+	*src_used = srcp - src;						 \
+      return dstp - dst;						 \
+    }									 \
+  else									 \
+    {									 \
+      const Intbyte *srcend = src + srclen;				 \
+      const Intbyte *srcp = src;					 \
+      Bytecount total = 0;						 \
+									 \
+      while (srcp < srcend)						 \
+	{								 \
+	  total += emchar_len_fmt (charptr_emchar_fmt (srcp, srcfmt,	 \
+						       srcobj), dstfmt); \
+	  INC_CHARPTR_FMT (srcp, srcfmt);				 \
+	}								 \
+      text_checking_assert (srcp == srcend);				 \
+      if (src_used)							 \
+	*src_used = srcp - src;						 \
+      return total;							 \
+    }									 \
+}									 \
+while (0)
+
+/* Copy as much text from SRC/SRCLEN to DST/DSTLEN as will fit, converting
+   from SRCFMT/SRCOBJ to DSTFMT/DSTOBJ.  Return number of bytes stored into
+   DST as return value, and number of bytes copied from SRC through
+   SRC_USED (if not NULL).  If DST is NULL, don't actually store anything
+   and just return the size needed to store all the text.  Will not copy
+   partial characters into DST. */
+
+Bytecount
+copy_text_between_formats (const Intbyte *src, Bytecount srclen,
+			   Internal_Format srcfmt,
+			   Lisp_Object srcobj,
+			   Intbyte *dst, Bytecount dstlen,
+			   Internal_Format dstfmt,
+			   Lisp_Object dstobj,
+			   Bytecount *src_used)
+{
+  if (srcfmt == dstfmt &&
+      objects_have_same_internal_representation (srcobj, dstobj))
+    {
+      if (dst)
+	{
+	  srclen = min (srclen, dstlen);
+	  srclen = validate_intbyte_string_backward (src, srclen);
+	  memcpy (dst, src, srclen);
+	  if (src_used)
+	    *src_used = srclen;
+	  return srclen;
+	}
+      else
+	return srclen;
+    }
+  /* Everything before the final else statement is an optimization.
+     The inner loops inside COPY_TEXT_BETWEEN_FORMATS() have a number
+     of calls to *_fmt(), each of which has a switch statement in it.
+     By using constants as the FMT argument, these switch statements
+     will be optimized out of existence. */
+#define ELSE_FORMATS(fmt1, fmt2)		\
+  else if (srcfmt == fmt1 && dstfmt == fmt2)	\
+    COPY_TEXT_BETWEEN_FORMATS (fmt1, fmt2)
+  ELSE_FORMATS (FORMAT_DEFAULT, FORMAT_8_BIT_FIXED);
+  ELSE_FORMATS (FORMAT_8_BIT_FIXED, FORMAT_DEFAULT);
+  ELSE_FORMATS (FORMAT_DEFAULT, FORMAT_32_BIT_FIXED);
+  ELSE_FORMATS (FORMAT_32_BIT_FIXED, FORMAT_DEFAULT);
+  else
+    COPY_TEXT_BETWEEN_FORMATS (srcfmt, dstfmt);
+#undef ELSE_FORMATS
+}
+
+/* Copy as much buffer text in BUF, starting at POS, of length LEN, as will
+   fit into DST/DSTLEN, converting to DSTFMT.  Return number of bytes
+   stored into DST as return value, and number of bytes copied from BUF
+   through SRC_USED (if not NULL).  If DST is NULL, don't actually store
+   anything and just return the size needed to store all the text. */
+
+Bytecount
+copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
+		      Bytecount len, Intbyte *dst, Bytecount dstlen,
+		      Internal_Format dstfmt, Lisp_Object dstobj,
+		      Bytecount *src_used)
+{
+  Bytecount dst_used = 0;
+  if (src_used)
+    *src_used = 0;
+
+  {
+    BUFFER_TEXT_LOOP (buf, pos, len, runptr, runlen)
+      {
+	Bytecount the_src_used, the_dst_used;
+	
+	the_dst_used = copy_text_between_formats (runptr, runlen,
+						  BUF_FORMAT (buf),
+						  wrap_buffer (buf),
+						  dst, dstlen, dstfmt,
+						  dstobj, &the_src_used);
+	dst_used += the_dst_used;
+	if (src_used)
+	  *src_used += the_src_used;
+	if (dst)
+	  {
+	    dst += the_dst_used;
+	    dstlen -= the_dst_used;
+	    if (!dstlen)
+	      break;
+	  }
+      }
+  }
+
+  return dst_used;
 }
 
 
@@ -1055,7 +1223,7 @@ find_charsets_in_intbyte_string (unsigned char *charsets, const Intbyte *str,
 
   while (str < strend)
     {
-      charsets[CHAR_LEADING_BYTE (charptr_emchar (str)) - MIN_LEADING_BYTE] =
+      charsets[emchar_leading_byte (charptr_emchar (str)) - MIN_LEADING_BYTE] =
 	1;
       INC_CHARPTR (str);
     }
@@ -1083,7 +1251,7 @@ find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
 
   for (i = 0; i < len; i++)
     {
-      charsets[CHAR_LEADING_BYTE (str[i]) - MIN_LEADING_BYTE] = 1;
+      charsets[emchar_leading_byte (str[i]) - MIN_LEADING_BYTE] = 1;
     }
 #endif
 }
@@ -1098,7 +1266,7 @@ intbyte_string_displayed_columns (const Intbyte *str, Bytecount len)
     {
 #ifdef MULE
       Emchar ch = charptr_emchar (str);
-      cols += XCHARSET_COLUMNS (CHAR_CHARSET (ch));
+      cols += XCHARSET_COLUMNS (emchar_charset (ch));
 #else
       cols++;
 #endif
@@ -1116,7 +1284,7 @@ emchar_string_displayed_columns (const Emchar *str, Charcount len)
   int i;
 
   for (i = 0; i < len; i++)
-    cols += XCHARSET_COLUMNS (CHAR_CHARSET (str[i]));
+    cols += XCHARSET_COLUMNS (emchar_charset (str[i]));
 
   return cols;
 #else  /* not MULE */
@@ -1133,7 +1301,7 @@ intbyte_string_nonascii_chars (const Intbyte *str, Bytecount len)
 
   while (str < end)
     {
-      if (!BYTE_ASCII_P (*str))
+      if (!byte_ascii_p (*str))
 	retval++;
       INC_CHARPTR (str);
     }
@@ -1268,7 +1436,8 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 }
 
 Intbyte *
-eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt)
+eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
+		     Lisp_Object object)
 {
   Intbyte *ptr;
 
@@ -1289,32 +1458,22 @@ eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt)
 
 #ifdef MULE
 
-/* We include the basic functions here that require no specific
-   knowledge of how data is Mule-encoded into a buffer other
-   than the basic (00 - 7F), (80 - 9F), (A0 - FF) scheme.
-   Anything that requires more specific knowledge goes into
-   mule-charset.c. */
-
-/* Given a pointer to a text string and a length in bytes, return
-   the equivalent length in characters. */
-
-Charcount
-bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
+/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
+   Return pointer to the first non-ASCII byte.  optimized for long
+   stretches of ASCII. */
+inline static const Intbyte *
+skip_ascii (const Intbyte *ptr, const Intbyte *end)
 {
-  Charcount count = 0;
-  const Intbyte *end = ptr + len;
-
-#if SIZEOF_LONG == 8
-# define STRIDE_TYPE long
-# define HIGH_BIT_MASK 0x8080808080808080UL
-#elif SIZEOF_LONG_LONG == 8 && !(defined (i386) || defined (__i386__))
-# define STRIDE_TYPE long long
-# define HIGH_BIT_MASK 0x8080808080808080ULL
-#elif SIZEOF_LONG == 4
-# define STRIDE_TYPE long
-# define HIGH_BIT_MASK 0x80808080UL
+#ifdef EFFICIENT_INT_128_BIT
+# define STRIDE_TYPE INT_128_BIT
+# define HIGH_BIT_MASK \
+    MAKE_128_BIT_UNSIGNED_CONSTANT (0x80808080808080808080808080808080)
+#elif defined (EFFICIENT_INT_64_BIT)
+# define STRIDE_TYPE INT_64_BIT
+# define HIGH_BIT_MASK MAKE_64_BIT_UNSIGNED_CONSTANT (0x8080808080808080)
 #else
-# error Add support for 128-bit systems here
+# define STRIDE_TYPE INT_32_BIT
+# define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
 #endif
 
 #define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
@@ -1322,39 +1481,52 @@ bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
 #define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
 #define STRIDE sizeof (STRIDE_TYPE)
 
-  while (ptr < end)
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
     {
-      if (BYTE_ASCII_P (*ptr))
-	{
-	  /* optimize for long stretches of ASCII */
-	  if (! ALIGNED (ptr))
-	    ptr++, count++;
-	  else
-	    {
-	      const unsigned STRIDE_TYPE *ascii_end =
-		(const unsigned STRIDE_TYPE *) ptr;
-	      /* This loop screams, because we can detect ASCII
-		 characters 4 or 8 at a time. */
-	      while ((const Intbyte *) ascii_end + STRIDE <= end
-		     && !(*ascii_end & HIGH_BIT_MASK))
-		ascii_end++;
-	      if ((Intbyte *) ascii_end == ptr)
-		ptr++, count++;
-	      else
-		{
-		  count += (Intbyte *) ascii_end - ptr;
-		  ptr = (Intbyte *) ascii_end;
-		}
-	    }
-	}
-      else
-	{
-	  /* optimize for successive characters from the same charset */
-	  Intbyte leading_byte = *ptr;
-	  int bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
-	  while ((ptr < end) && (*ptr == leading_byte))
-	    ptr += bytes, count++;
-	}
+      if (ptr == end || !byte_ascii_p (*ptr))
+	return ptr;
+      ptr++;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Intbyte *) ascii_end + STRIDE <= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end++;
+  ptr = (Intbyte *) ascii_end;
+  while (ptr < end && byte_ascii_p (*ptr))
+    ptr++;
+  return ptr;
+}
+
+/* Function equivalents of bytecount_to_charcount/charcount_to_bytecount.
+   These work on strings of all sizes but are more efficient than a simple
+   loop on large strings and probably less efficient on sufficiently small
+   strings. */
+
+Charcount
+bytecount_to_charcount_fun (const Intbyte *ptr, Bytecount len)
+{
+  Charcount count = 0;
+  const Intbyte *end = ptr + len;
+  while (1)
+    {
+      const Intbyte *newptr = skip_ascii (ptr, end);
+      count += newptr - ptr;
+      ptr = newptr;
+      if (ptr == end)
+	break;
+      {
+	/* Optimize for successive characters from the same charset */
+	Intbyte leading_byte = *ptr;
+	int bytes = rep_bytes_by_first_byte (leading_byte);
+	while (ptr < end && *ptr == leading_byte)
+	  ptr += bytes, count++;
+      }
     }
 
   /* Bomb out if the specified substring ends in the middle
@@ -1368,27 +1540,26 @@ bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
   return count;
 }
 
-/* Given a pointer to a text string and a length in characters, return
-   the equivalent length in bytes. */
-
 Bytecount
-charcount_to_bytecount (const Intbyte *ptr, Charcount len)
+charcount_to_bytecount_fun (const Intbyte *ptr, Charcount len)
 {
   const Intbyte *newptr = ptr;
-
-  text_checking_assert (len >= 0);
-  while (len > 0)
+  while (1)
     {
-      INC_CHARPTR (newptr);
-      len--;
+      const Intbyte *newnewptr = skip_ascii (newptr, newptr + len);
+      len -= newnewptr - newptr;
+      newptr = newnewptr;
+      if (!len)
+	break;
+      {
+	/* Optimize for successive characters from the same charset */
+	Intbyte leading_byte = *newptr;
+	int bytes = rep_bytes_by_first_byte (leading_byte);
+	while (len > 0 && *newptr == leading_byte)
+	  newptr += bytes, len--;
+      }
     }
   return newptr - ptr;
-}
-
-inline static void
-update_entirely_ascii_p_flag (struct buffer *buf)
-{
-  buf->text->entirely_ascii_p = buf->text->z == buf->text->bufz;
 }
 
 /* The next two functions are the actual meat behind the
@@ -1422,11 +1593,11 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
 
   /* Check for some cached positions, for speed. */
   if (x == BUF_PT (buf))
-    return BI_BUF_PT (buf);
+    return BYTE_BUF_PT (buf);
   if (x == BUF_ZV (buf))
-    return BI_BUF_ZV (buf);
+    return BYTE_BUF_ZV (buf);
   if (x == BUF_BEGV (buf))
-    return BI_BUF_BEGV (buf);
+    return BYTE_BUF_BEGV (buf);
 
   bufmin = buf->text->mule_bufmin;
   bufmax = buf->text->mule_bufmax;
@@ -1474,7 +1645,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       if (diffpt < diffmax && diffpt <= diffzv)
 	{
 	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
+	  bytmax = bytmin = BYTE_BUF_PT (buf);
 	  /* We set the size to 1 even though it doesn't really
 	     matter because the new known region contains no
 	     characters.  We do this because this is the most
@@ -1486,7 +1657,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       if (diffzv < diffmax)
 	{
 	  bufmax = bufmin = BUF_ZV (buf);
-	  bytmax = bytmin = BI_BUF_ZV (buf);
+	  bytmax = bytmin = BYTE_BUF_ZV (buf);
 	  size = 1;
 	}
     }
@@ -1516,7 +1687,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       if (diffpt < diffmin && diffpt <= diffbegv)
 	{
 	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
+	  bytmax = bytmin = BYTE_BUF_PT (buf);
 	  /* We set the size to 1 even though it doesn't really
 	     matter because the new known region contains no
 	     characters.  We do this because this is the most
@@ -1528,7 +1699,7 @@ charbpos_to_bytebpos_func (struct buffer *buf, Charbpos x)
       if (diffbegv < diffmin)
 	{
 	  bufmax = bufmin = BUF_BEGV (buf);
-	  bytmax = bytmin = BI_BUF_BEGV (buf);
+	  bytmax = bytmin = BYTE_BUF_BEGV (buf);
 	  size = 1;
 	}
     }
@@ -1698,11 +1869,11 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
   int add_to_cache = 0;
 
   /* Check for some cached positions, for speed. */
-  if (x == BI_BUF_PT (buf))
+  if (x == BYTE_BUF_PT (buf))
     return BUF_PT (buf);
-  if (x == BI_BUF_ZV (buf))
+  if (x == BYTE_BUF_ZV (buf))
     return BUF_ZV (buf);
-  if (x == BI_BUF_BEGV (buf))
+  if (x == BYTE_BUF_BEGV (buf))
     return BUF_BEGV (buf);
 
   bufmin = buf->text->mule_bufmin;
@@ -1718,16 +1889,16 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
      when the size of the character just seen changes.
 
      We optimize this, however, by first shifting the known region to
-     one of the cached points if it's close by. (We don't check BI_BEG or
-     BI_Z, even though they're cached; most of the time these will be the
-     same as BI_BEGV and BI_ZV, and when they're not, they're not likely
+     one of the cached points if it's close by. (We don't check BYTE_BEG or
+     BYTE_Z, even though they're cached; most of the time these will be the
+     same as BYTE_BEGV and BYTE_ZV, and when they're not, they're not likely
      to be used.) */
 
   if (x > bytmax)
     {
       Bytebpos diffmax = x - bytmax;
-      Bytebpos diffpt = x - BI_BUF_PT (buf);
-      Bytebpos diffzv = BI_BUF_ZV (buf) - x;
+      Bytebpos diffpt = x - BYTE_BUF_PT (buf);
+      Bytebpos diffzv = BYTE_BUF_ZV (buf) - x;
       /* #### This value could stand some more exploration. */
       Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
 
@@ -1740,10 +1911,10 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 	diffzv = -diffzv;
 
       /* But also implement a heuristic that favors the known region
-	 over BI_PT or BI_ZV.  The reason for this is that switching to
-	 BI_PT or BI_ZV will wipe out the knowledge in the known region,
+	 over BYTE_PT or BYTE_ZV.  The reason for this is that switching to
+	 BYTE_PT or BYTE_ZV will wipe out the knowledge in the known region,
 	 which might be annoying if the known region is large and
-	 BI_PT or BI_ZV is not that much closer than the end of the known
+	 BYTE_PT or BYTE_ZV is not that much closer than the end of the known
 	 region. */
 
       diffzv += heuristic_hack;
@@ -1751,7 +1922,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       if (diffpt < diffmax && diffpt <= diffzv)
 	{
 	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
+	  bytmax = bytmin = BYTE_BUF_PT (buf);
 	  /* We set the size to 1 even though it doesn't really
 	     matter because the new known region contains no
 	     characters.  We do this because this is the most
@@ -1763,7 +1934,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       if (diffzv < diffmax)
 	{
 	  bufmax = bufmin = BUF_ZV (buf);
-	  bytmax = bytmin = BI_BUF_ZV (buf);
+	  bytmax = bytmin = BYTE_BUF_ZV (buf);
 	  size = 1;
 	}
     }
@@ -1774,8 +1945,8 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
   else
     {
       Bytebpos diffmin = bytmin - x;
-      Bytebpos diffpt = BI_BUF_PT (buf) - x;
-      Bytebpos diffbegv = x - BI_BUF_BEGV (buf);
+      Bytebpos diffpt = BYTE_BUF_PT (buf) - x;
+      Bytebpos diffbegv = x - BYTE_BUF_BEGV (buf);
       /* #### This value could stand some more exploration. */
       Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
 
@@ -1793,7 +1964,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       if (diffpt < diffmin && diffpt <= diffbegv)
 	{
 	  bufmax = bufmin = BUF_PT (buf);
-	  bytmax = bytmin = BI_BUF_PT (buf);
+	  bytmax = bytmin = BYTE_BUF_PT (buf);
 	  /* We set the size to 1 even though it doesn't really
 	     matter because the new known region contains no
 	     characters.  We do this because this is the most
@@ -1805,7 +1976,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
       if (diffbegv < diffmin)
 	{
 	  bufmax = bufmin = BUF_BEGV (buf);
-	  bytmax = bytmin = BI_BUF_BEGV (buf);
+	  bytmax = bytmin = BYTE_BUF_BEGV (buf);
 	  size = 1;
 	}
     }
@@ -1981,7 +2152,7 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
     }
 
   if (start >= buf->text->mule_bufmax)
-    goto done;
+    return;
 
   /* The insertion is either before the known region, in which case
      it shoves it forward; or within the known region, in which case
@@ -2054,17 +2225,15 @@ buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
 	    }
 	}
     }
- done:
-  update_entirely_ascii_p_flag (buf);
 }
 
-/* Text from START to END (equivalent in Bytebposs: from BI_START to
-   BI_END) was deleted. */
+/* Text from START to END (equivalent in Bytebpos's: from BYTE_START to
+   BYTE_END) was deleted. */
 
 void
 buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
-				   Charbpos end, Bytebpos bi_start,
-				   Bytebpos bi_end)
+				   Charbpos end, Bytebpos byte_start,
+				   Bytebpos byte_end)
 {
   int i;
 
@@ -2075,63 +2244,41 @@ buffer_mule_signal_deleted_region (struct buffer *buf, Charbpos start,
       if (buf->text->mule_charbpos_cache[i] > end)
 	{
 	  buf->text->mule_charbpos_cache[i] -= end - start;
-	  buf->text->mule_bytebpos_cache[i] -= bi_end - bi_start;
+	  buf->text->mule_bytebpos_cache[i] -= byte_end - byte_start;
 	}
       /* In the range; moves to start of range */
       else if (buf->text->mule_charbpos_cache[i] > start)
 	{
 	  buf->text->mule_charbpos_cache[i] = start;
-	  buf->text->mule_bytebpos_cache[i] = bi_start;
+	  buf->text->mule_bytebpos_cache[i] = byte_start;
 	}
     }
 
   /* We don't care about any text after the end of the known region. */
 
   end = min (end, buf->text->mule_bufmax);
-  bi_end = min (bi_end, buf->text->mule_bytmax);
+  byte_end = min (byte_end, buf->text->mule_bytmax);
   if (start >= end)
-    goto done;
+    return;
 
   /* The end of the known region offsets by the total amount of deletion,
      since it's all before it. */
 
   buf->text->mule_bufmax -= end - start;
-  buf->text->mule_bytmax -= bi_end - bi_start;
+  buf->text->mule_bytmax -= byte_end - byte_start;
 
   /* Now we don't care about any text after the start of the known region. */
 
   end = min (end, buf->text->mule_bufmin);
-  bi_end = min (bi_end, buf->text->mule_bytmin);
+  byte_end = min (byte_end, buf->text->mule_bytmin);
   if (start < end)
     {
       buf->text->mule_bufmin -= end - start;
-      buf->text->mule_bytmin -= bi_end - bi_start;
+      buf->text->mule_bytmin -= byte_end - byte_start;
     }
-
- done:
-  update_entirely_ascii_p_flag (buf);
 }
 
 #endif /* MULE */
-
-#ifdef ERROR_CHECK_TEXT
-
-Bytebpos
-charbpos_to_bytebpos (struct buffer *buf, Charbpos x)
-{
-  Bytebpos retval = real_charbpos_to_bytebpos (buf, x);
-  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, retval);
-  return retval;
-}
-
-Charbpos
-bytebpos_to_charbpos (struct buffer *buf, Bytebpos x)
-{
-  ASSERT_VALID_BYTEBPOS_UNSAFE (buf, x);
-  return real_bytebpos_to_charbpos (buf, x);
-}
-
-#endif /* ERROR_CHECK_TEXT */
 
 
 /************************************************************************/
@@ -2250,7 +2397,8 @@ get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
 
 void
 get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Charbpos *from_out, Charbpos *to_out, unsigned int flags)
+		       Charbpos *from_out, Charbpos *to_out,
+		       unsigned int flags)
 {
   /* Does not GC */
   Charbpos min_allowed, max_allowed;
@@ -2292,7 +2440,8 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 
 void
 get_buffer_range_byte (struct buffer *b, Lisp_Object from, Lisp_Object to,
-		       Bytebpos *from_out, Bytebpos *to_out, unsigned int flags)
+		       Bytebpos *from_out, Bytebpos *to_out,
+		       unsigned int flags)
 {
   Charbpos s, e;
 
@@ -2339,7 +2488,7 @@ Charcount
 get_string_pos_char (Lisp_Object string, Lisp_Object pos, unsigned int flags)
 {
   return get_string_pos_char_1 (string, pos, flags,
-				XSTRING_CHAR_LENGTH (string));
+				string_char_length (string));
 }
 
 Bytecount
@@ -2357,7 +2506,7 @@ get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 		       unsigned int flags)
 {
   Charcount min_allowed = 0;
-  Charcount max_allowed = XSTRING_CHAR_LENGTH (string);
+  Charcount max_allowed = string_char_length (string);
 
   if (NILP (from) && (flags & GB_ALLOW_NIL))
     *from_out = min_allowed;
@@ -2408,7 +2557,7 @@ get_string_range_byte (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 
 }
 
-Charbpos
+Charxpos
 get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
@@ -2417,7 +2566,7 @@ get_buffer_or_string_pos_char (Lisp_Object object, Lisp_Object pos,
     get_buffer_pos_char (XBUFFER (object), pos, flags);
 }
 
-Bytebpos
+Bytexpos
 get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 			       unsigned int flags)
 {
@@ -2428,76 +2577,146 @@ get_buffer_or_string_pos_byte (Lisp_Object object, Lisp_Object pos,
 
 void
 get_buffer_or_string_range_char (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Charbpos *from_out,
-				 Charbpos *to_out, unsigned int flags)
+				 Lisp_Object to, Charxpos *from_out,
+				 Charxpos *to_out, unsigned int flags)
 {
   if (STRINGP (object))
     get_string_range_char (object, from, to, from_out, to_out, flags);
   else
-    get_buffer_range_char (XBUFFER (object), from, to, from_out, to_out, flags);
+    get_buffer_range_char (XBUFFER (object), from, to, from_out, to_out,
+			   flags);
 }
 
 void
 get_buffer_or_string_range_byte (Lisp_Object object, Lisp_Object from,
-				 Lisp_Object to, Bytebpos *from_out,
-				 Bytebpos *to_out, unsigned int flags)
+				 Lisp_Object to, Bytexpos *from_out,
+				 Bytexpos *to_out, unsigned int flags)
 {
   if (STRINGP (object))
     get_string_range_byte (object, from, to, from_out, to_out, flags);
   else
-    get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out, flags);
+    get_buffer_range_byte (XBUFFER (object), from, to, from_out, to_out,
+			   flags);
 }
 
-Charbpos
+Charxpos
 buffer_or_string_accessible_begin_char (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object));
 }
 
-Charbpos
+Charxpos
 buffer_or_string_accessible_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
-    XSTRING_CHAR_LENGTH (object) : BUF_ZV (XBUFFER (object));
+    string_char_length (object) : BUF_ZV (XBUFFER (object));
 }
 
-Bytebpos
+Bytexpos
 buffer_or_string_accessible_begin_byte (Lisp_Object object)
 {
-  return STRINGP (object) ? 0 : BI_BUF_BEGV (XBUFFER (object));
+  return STRINGP (object) ? 0 : BYTE_BUF_BEGV (XBUFFER (object));
 }
 
-Bytebpos
+Bytexpos
 buffer_or_string_accessible_end_byte (Lisp_Object object)
 {
   return STRINGP (object) ?
-    XSTRING_LENGTH (object) : BI_BUF_ZV (XBUFFER (object));
+    XSTRING_LENGTH (object) : BYTE_BUF_ZV (XBUFFER (object));
 }
 
-Charbpos
+Charxpos
 buffer_or_string_absolute_begin_char (Lisp_Object object)
 {
   return STRINGP (object) ? 0 : BUF_BEG (XBUFFER (object));
 }
 
-Charbpos
+Charxpos
 buffer_or_string_absolute_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
-    XSTRING_CHAR_LENGTH (object) : BUF_Z (XBUFFER (object));
+    string_char_length (object) : BUF_Z (XBUFFER (object));
 }
 
-Bytebpos
+Bytexpos
 buffer_or_string_absolute_begin_byte (Lisp_Object object)
 {
-  return STRINGP (object) ? 0 : BI_BUF_BEG (XBUFFER (object));
+  return STRINGP (object) ? 0 : BYTE_BUF_BEG (XBUFFER (object));
 }
 
-Bytebpos
+Bytexpos
 buffer_or_string_absolute_end_byte (Lisp_Object object)
 {
   return STRINGP (object) ?
-    XSTRING_LENGTH (object) : BI_BUF_Z (XBUFFER (object));
+    XSTRING_LENGTH (object) : BYTE_BUF_Z (XBUFFER (object));
+}
+
+Charbpos
+charbpos_clip_to_bounds (Charbpos lower, Charbpos num, Charbpos upper)
+{
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
+}
+
+Bytebpos
+bytebpos_clip_to_bounds (Bytebpos lower, Bytebpos num, Bytebpos upper)
+{
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
+}
+
+Charxpos
+charxpos_clip_to_bounds (Charxpos lower, Charxpos num, Charxpos upper)
+{
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
+}
+
+Bytexpos
+bytexpos_clip_to_bounds (Bytexpos lower, Bytexpos num, Bytexpos upper)
+{
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
+}
+
+/* These could be implemented in terms of the get_buffer_or_string()
+   functions above, but those are complicated and handle lots of weird
+   cases stemming from uncertain external input. */
+
+Charxpos
+buffer_or_string_clip_to_accessible_char (Lisp_Object object, Charxpos pos)
+{
+  return (charxpos_clip_to_bounds
+	  (pos, buffer_or_string_accessible_begin_char (object),
+	   buffer_or_string_accessible_end_char (object)));
+}
+
+Bytexpos
+buffer_or_string_clip_to_accessible_byte (Lisp_Object object, Bytexpos pos)
+{
+  return (bytexpos_clip_to_bounds
+	  (pos, buffer_or_string_accessible_begin_byte (object),
+	   buffer_or_string_accessible_end_byte (object)));
+}
+
+Charxpos
+buffer_or_string_clip_to_absolute_char (Lisp_Object object, Charxpos pos)
+{
+  return (charxpos_clip_to_bounds
+	  (pos, buffer_or_string_absolute_begin_char (object),
+	   buffer_or_string_absolute_end_char (object)));
+}
+
+Bytexpos
+buffer_or_string_clip_to_absolute_byte (Lisp_Object object, Bytexpos pos)
+{
+  return (bytexpos_clip_to_bounds
+	  (pos, buffer_or_string_absolute_begin_byte (object),
+	   buffer_or_string_absolute_end_byte (object)));
 }
 
 
@@ -2597,7 +2816,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	for (end = ptr + len; ptr < end;)
 	  {
 	    Intbyte c =
-	      (BYTE_ASCII_P (*ptr))		   ? *ptr :
+	      (byte_ascii_p (*ptr))		   ? *ptr :
 	      (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
 	      (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
 	      '~';
@@ -2636,7 +2855,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 
       for (p = ptr; p < end; p++)
 	{
-	  if (!BYTE_ASCII_P (*p))
+	  if (!byte_ascii_p (*p))
 	    goto the_hard_way;
 	}
 
@@ -2776,9 +2995,9 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
         {
           Intbyte c = *ptr;
 
-	  if (BYTE_ASCII_P (c))
+	  if (byte_ascii_p (c))
 	    Dynarr_add (conversion_in_dynarr, c);
-	  else if (BYTE_C1_P (c))
+	  else if (byte_c1_p (c))
 	    {
 	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_CONTROL_1);
 	      Dynarr_add (conversion_in_dynarr, c + 0x20);
@@ -2819,10 +3038,10 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	{
           Intbyte c = *ptr;
 
-	  if (BYTE_ASCII_P (c))
+	  if (byte_ascii_p (c))
 	    Dynarr_add (conversion_in_dynarr, c);
 #ifdef MULE
-	  else if (BYTE_C1_P (c))
+	  else if (byte_c1_p (c))
 	    {
 	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_CONTROL_1);
 	      Dynarr_add (conversion_in_dynarr, c + 0x20);
@@ -2940,10 +3159,10 @@ non_ascii_set_charptr_emchar (Intbyte *str, Emchar c)
   Lisp_Object charset;
 
   p = str;
-  BREAKUP_CHAR (c, charset, c1, c2);
-  lb = CHAR_LEADING_BYTE (c);
-  if (LEADING_BYTE_PRIVATE_P (lb))
-    *p++ = PRIVATE_LEADING_BYTE_PREFIX (lb);
+  BREAKUP_EMCHAR (c, charset, c1, c2);
+  lb = emchar_leading_byte (c);
+  if (leading_byte_private_p (lb))
+    *p++ = private_leading_byte_prefix (lb);
   *p++ = lb;
   if (EQ (charset, Vcharset_control_1))
     c1 += 0x20;
@@ -2967,23 +3186,23 @@ non_ascii_charptr_emchar (const Intbyte *str)
   if (i0 == LEADING_BYTE_CONTROL_1)
     return (Emchar) (*++str - 0x20);
 
-  if (LEADING_BYTE_PREFIX_P (i0))
+  if (leading_byte_prefix_p (i0))
     i0 = *++str;
 
   i1 = *++str & 0x7F;
 
-  charset = CHARSET_BY_LEADING_BYTE (i0);
+  charset = charset_by_leading_byte (i0);
   if (XCHARSET_DIMENSION (charset) == 2)
     i2 = *++str & 0x7F;
 
-  return MAKE_CHAR (charset, i1, i2);
+  return make_emchar (charset, i1, i2);
 }
 
 /* Return whether CH is a valid Emchar, assuming it's non-ASCII.
-   Do not call this directly.  Use the macro valid_char_p() instead. */
+   Do not call this directly.  Use the macro valid_emchar_p() instead. */
 
 int
-non_ascii_valid_char_p (Emchar ch)
+non_ascii_valid_emchar_p (Emchar ch)
 {
   int f1, f2, f3;
 
@@ -2991,9 +3210,9 @@ non_ascii_valid_char_p (Emchar ch)
   if (ch & ~0x7FFFF)
     return 0;
 
-  f1 = CHAR_FIELD1 (ch);
-  f2 = CHAR_FIELD2 (ch);
-  f3 = CHAR_FIELD3 (ch);
+  f1 = emchar_field1 (ch);
+  f2 = emchar_field2 (ch);
+  f3 = emchar_field3 (ch);
 
   if (f1 == 0)
     {
@@ -3001,9 +3220,9 @@ non_ascii_valid_char_p (Emchar ch)
       Lisp_Object charset;
 
       /* leading byte must be correct */
-      if (f2 < MIN_CHAR_FIELD2_OFFICIAL ||
-	  (f2 > MAX_CHAR_FIELD2_OFFICIAL && f2 < MIN_CHAR_FIELD2_PRIVATE) ||
-	   f2 > MAX_CHAR_FIELD2_PRIVATE)
+      if (f2 < MIN_EMCHAR_FIELD2_OFFICIAL ||
+	  (f2 > MAX_EMCHAR_FIELD2_OFFICIAL && f2 < MIN_EMCHAR_FIELD2_PRIVATE) ||
+	   f2 > MAX_EMCHAR_FIELD2_PRIVATE)
 	return 0;
       /* octet not out of range */
       if (f3 < 0x20)
@@ -3014,7 +3233,7 @@ non_ascii_valid_char_p (Emchar ch)
 	 FIELD2_TO_OFFICIAL_LEADING_BYTE and
 	 FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
 	 */
-      charset = CHARSET_BY_LEADING_BYTE (f2 + FIELD2_TO_OFFICIAL_LEADING_BYTE);
+      charset = charset_by_leading_byte (f2 + FIELD2_TO_OFFICIAL_LEADING_BYTE);
       if (EQ (charset, Qnil))
 	return 0;
       /* check range as per size (94 or 96) of charset */
@@ -3026,9 +3245,9 @@ non_ascii_valid_char_p (Emchar ch)
       Lisp_Object charset;
 
       /* leading byte must be correct */
-      if (f1 < MIN_CHAR_FIELD1_OFFICIAL ||
-	  (f1 > MAX_CHAR_FIELD1_OFFICIAL && f1 < MIN_CHAR_FIELD1_PRIVATE) ||
-	  f1 > MAX_CHAR_FIELD1_PRIVATE)
+      if (f1 < MIN_EMCHAR_FIELD1_OFFICIAL ||
+	  (f1 > MAX_EMCHAR_FIELD1_OFFICIAL && f1 < MIN_EMCHAR_FIELD1_PRIVATE) ||
+	  f1 > MAX_EMCHAR_FIELD1_PRIVATE)
 	return 0;
       /* octets not out of range */
       if (f2 < 0x20 || f3 < 0x20)
@@ -3046,12 +3265,12 @@ non_ascii_valid_char_p (Emchar ch)
 #endif /* ENABLE_COMPOSITE_CHARS */
 
       /* charset exists */
-      if (f1 <= MAX_CHAR_FIELD1_OFFICIAL)
+      if (f1 <= MAX_EMCHAR_FIELD1_OFFICIAL)
 	charset =
-	  CHARSET_BY_LEADING_BYTE (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE);
+	  charset_by_leading_byte (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE);
       else
 	charset =
-	  CHARSET_BY_LEADING_BYTE (f1 + FIELD1_TO_PRIVATE_LEADING_BYTE);
+	  charset_by_leading_byte (f1 + FIELD1_TO_PRIVATE_LEADING_BYTE);
 
       if (EQ (charset, Qnil))
 	return 0;
@@ -3062,13 +3281,13 @@ non_ascii_valid_char_p (Emchar ch)
 }
 
 /* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro charptr_copy_char() instead.
+   directly.  Use the macro charptr_copy_emchar() instead.
    Return the number of bytes copied.  */
 
 Bytecount
-non_ascii_charptr_copy_char (const Intbyte *src, Intbyte *dst)
+non_ascii_charptr_copy_emchar (const Intbyte *src, Intbyte *dst)
 {
-  Bytecount bytes = REP_BYTES_BY_FIRST_BYTE (*src);
+  Bytecount bytes = rep_bytes_by_first_byte (*src);
   Bytecount i;
   for (i = bytes; i; i--, dst++, src++)
     *dst = *src;
@@ -3097,7 +3316,7 @@ Lstream_get_emchar_1 (Lstream *stream, int ch)
 
   str[0] = (Intbyte) ch;
 
-  for (bytes = REP_BYTES_BY_FIRST_BYTE (ch) - 1; bytes; bytes--)
+  for (bytes = rep_bytes_by_first_byte (ch) - 1; bytes; bytes--)
     {
       int c = Lstream_getc (stream);
       text_checking_assert (c >= 0);
@@ -3224,7 +3443,7 @@ are allowed:
       if (!NILP (arg2))
         invalid_argument
           ("Charset is of dimension one; second octet must be nil", arg2);
-      return make_char (MAKE_CHAR (charset, a1, 0));
+      return make_char (make_emchar (charset, a1, 0));
     }
 
   CHECK_INT (arg2);
@@ -3232,7 +3451,7 @@ are allowed:
   if (a2 < lowlim || a2 > highlim)
     args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
 
-  return make_char (MAKE_CHAR (charset, a1, a2));
+  return make_char (make_emchar (charset, a1, a2));
 #else
   int a1;
   int lowlim, highlim;
@@ -3265,8 +3484,8 @@ Return the character set of char CH.
 {
   CHECK_CHAR_COERCE_INT (ch);
 
-  return XCHARSET_NAME (CHARSET_BY_LEADING_BYTE
-			(CHAR_LEADING_BYTE (XCHAR (ch))));
+  return XCHARSET_NAME (charset_by_leading_byte
+			(emchar_leading_byte (XCHAR (ch))));
 }
 
 DEFUN ("char-octet", Fchar_octet, 1, 2, 0, /*
@@ -3280,7 +3499,7 @@ N defaults to 0 if omitted.
 
   CHECK_CHAR_COERCE_INT (ch);
 
-  BREAKUP_CHAR (XCHAR (ch), charset, octet0, octet1);
+  BREAKUP_EMCHAR (XCHAR (ch), charset, octet0, octet1);
 
   if (NILP (n) || EQ (n, Qzero))
     return make_int (octet0);
@@ -3304,7 +3523,7 @@ Return list of charset and one or two position-codes of CHAR.
   GCPRO2 (charset, rc);
   CHECK_CHAR_COERCE_INT (character);
 
-  BREAKUP_CHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
 
   if (XCHARSET_DIMENSION (Fget_charset (charset)) == 2)
     {
@@ -3341,7 +3560,7 @@ lookup_composite_char (Intbyte *str, int len)
     {
       if (composite_char_row_next >= 128)
 	invalid_operation ("No more composite chars available", lispstr);
-      emch = MAKE_CHAR (Vcharset_composite, composite_char_row_next,
+      emch = make_emchar (Vcharset_composite, composite_char_row_next,
 			composite_char_col_next);
       Fputhash (make_char (emch), lispstr,
 	        Vcomposite_char_char2string_hash_table);
@@ -3369,7 +3588,7 @@ composite_char_string (Emchar ch)
   return str;
 }
 
-xxDEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
+DEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
 Convert a string into a single composite character.
 The character is the result of overstriking all the characters in
 the string.
@@ -3381,7 +3600,7 @@ the string.
 					   XSTRING_LENGTH (string)));
 }
 
-xxDEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
+DEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
 Return a string of the characters comprising a composite character.
 */
        (ch))
@@ -3390,7 +3609,7 @@ Return a string of the characters comprising a composite character.
 
   CHECK_CHAR (ch);
   emch = XCHAR (ch);
-  if (CHAR_LEADING_BYTE (emch) != LEADING_BYTE_COMPOSITE)
+  if (emchar_leading_byte (emch) != LEADING_BYTE_COMPOSITE)
     invalid_argument ("Must be composite char", ch);
   return composite_char_string (emch);
 }

@@ -110,7 +110,7 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_fmt_string_lisp (printcharfun, "#<face %S", 1, face->name);
       if (!NILP (face->doc_string))
 	write_fmt_string_lisp (printcharfun, " %S", 1, face->doc_string);
-      write_c_string (">", printcharfun);
+      write_c_string (printcharfun, ">");
     }
 }
 
@@ -497,8 +497,8 @@ update_face_inheritance_mapper (const void *hash_key, void *hash_contents,
   struct face_inheritance_closure *fcl =
     (struct face_inheritance_closure *) face_inheritance_closure;
 
-  CVOID_TO_LISP (key, hash_key);
-  VOID_TO_LISP (contents, hash_contents);
+  key = VOID_TO_LISP (hash_key);
+  contents = VOID_TO_LISP (hash_contents);
 
   if (EQ (fcl->property, Qfont))
     {
@@ -1110,7 +1110,7 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     if (charsets[i])
       {
-	Lisp_Object charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
+	Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
 	assert (CHARSETP (charset));
 	ensure_face_cachel_contains_charset (cachel, domain, charset);
       }
@@ -1132,7 +1132,7 @@ face_cachel_charset_font_metric_info (struct face_cachel *cachel,
     {
       if (charsets[i])
 	{
-	  Lisp_Object charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
+	  Lisp_Object charset = charset_by_leading_byte (i + MIN_LEADING_BYTE);
 	  Lisp_Object font_instance = FACE_CACHEL_FONT (cachel, charset);
 	  Lisp_Font_Instance *fi = XFONT_INSTANCE (font_instance);
 

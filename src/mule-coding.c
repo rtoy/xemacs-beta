@@ -76,16 +76,25 @@ DEFINE_CODING_SYSTEM_TYPE (shift_jis);
 
 /* Is this the first byte of a Shift-JIS two-byte char? */
 
-#define BYTE_SHIFT_JIS_TWO_BYTE_1_P(c) \
-  (((c) >= 0x81 && (c) <= 0x9F) || ((c) >= 0xE0 && (c) <= 0xEF))
+inline static int
+byte_shift_jis_two_byte_1_p (int c)
+{
+  return (c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xEF);
+}
 
 /* Is this the second byte of a Shift-JIS two-byte char? */
 
-#define BYTE_SHIFT_JIS_TWO_BYTE_2_P(c) \
-  (((c) >= 0x40 && (c) <= 0x7E) || ((c) >= 0x80 && (c) <= 0xFC))
+inline static int
+byte_shift_jis_two_byte_2_p (int c)
+{
+  return (c >= 0x40 && c <= 0x7E) || (c >= 0x80 && c <= 0xFC);
+}
 
-#define BYTE_SHIFT_JIS_KATAKANA_P(c)	\
-  ((c) >= 0xA1 && (c) <= 0xDF)
+inline static int
+byte_shift_jis_katakana_p (int c)
+{
+  return c >= 0xA1 && c <= 0xDF;
+}
 
 /* Convert Shift-JIS data to internal format. */
 
@@ -105,7 +114,7 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 	  if (ch)
 	    {
 	      /* Previous character was first byte of Shift-JIS Kanji char. */
-	      if (BYTE_SHIFT_JIS_TWO_BYTE_2_P (c))
+	      if (byte_shift_jis_two_byte_2_p (c))
 		{
 		  Intbyte e1, e2;
 
@@ -123,9 +132,9 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 	    }
 	  else
 	    {
-	      if (BYTE_SHIFT_JIS_TWO_BYTE_1_P (c))
+	      if (byte_shift_jis_two_byte_1_p (c))
 		ch = c;
-	      else if (BYTE_SHIFT_JIS_KATAKANA_P (c))
+	      else if (byte_shift_jis_katakana_p (c))
 		{
 		  Dynarr_add (dst, LEADING_BYTE_KATAKANA_JISX0201);
 		  Dynarr_add (dst, c);
@@ -143,12 +152,12 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
       while (n--)
 	{
 	  Intbyte c = *src++;
-	  if (BYTE_ASCII_P (c))
+	  if (byte_ascii_p (c))
 	    {
 	      Dynarr_add (dst, c);
 	      ch = 0;
 	    }
-	  else if (INTBYTE_LEADING_BYTE_P (c))
+	  else if (intbyte_leading_byte_p (c))
 	    ch = (c == LEADING_BYTE_KATAKANA_JISX0201 ||
 		  c == LEADING_BYTE_JAPANESE_JISX0208_1978 ||
 		  c == LEADING_BYTE_JAPANESE_JISX0208) ? c : 0;
@@ -193,11 +202,11 @@ Return the corresponding character.
   CHECK_INT (XCDR (code));
   s1 = XINT (XCAR (code));
   s2 = XINT (XCDR (code));
-  if (BYTE_SHIFT_JIS_TWO_BYTE_1_P (s1) &&
-      BYTE_SHIFT_JIS_TWO_BYTE_2_P (s2))
+  if (byte_shift_jis_two_byte_1_p (s1) &&
+      byte_shift_jis_two_byte_2_p (s2))
     {
       DECODE_SHIFT_JIS (s1, s2, c1, c2);
-      return make_char (MAKE_CHAR (Vcharset_japanese_jisx0208,
+      return make_char (make_emchar (Vcharset_japanese_jisx0208,
 				   c1 & 0x7F, c2 & 0x7F));
     }
   else
@@ -214,7 +223,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
   int c1, c2, s1, s2;
 
   CHECK_CHAR_COERCE_INT (character);
-  BREAKUP_CHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
   if (EQ (charset, Vcharset_japanese_jisx0208))
     {
       ENCODE_SHIFT_JIS (c1 | 0x80, c2 | 0x80, s1, s2);
@@ -336,13 +345,19 @@ DEFINE_CODING_SYSTEM_TYPE (big5);
    contains frequently used characters and the latter contains less
    frequently used characters.  */
 
-#define BYTE_BIG5_TWO_BYTE_1_P(c) \
-  ((c) >= 0xA1 && (c) <= 0xFE)
+inline static int
+byte_big5_two_byte_1_p (int c)
+{
+  return c >= 0xA1 && c <= 0xFE;
+}
 
 /* Is this the second byte of a Shift-JIS two-byte char? */
 
-#define BYTE_BIG5_TWO_BYTE_2_P(c) \
-  (((c) >= 0x40 && (c) <= 0x7E) || ((c) >= 0xA1 && (c) <= 0xFE))
+inline static int
+byte_big5_two_byte_2_p (int c)
+{
+  return (c >= 0x40 && c <= 0x7E) || (c >= 0xA1 && c <= 0xFE);
+}
 
 /* Number of Big5 characters which have the same code in 1st byte.  */
 
@@ -434,7 +449,7 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 	  if (ch)
 	    {
 	      /* Previous character was first byte of Big5 char. */
-	      if (BYTE_BIG5_TWO_BYTE_2_P (c))
+	      if (byte_big5_two_byte_2_p (c))
 		{
 		  Intbyte b1, b2, b3;
 		  DECODE_BIG5 (ch, c, b1, b2, b3);
@@ -451,7 +466,7 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 	    }
 	  else
 	    {
-	      if (BYTE_BIG5_TWO_BYTE_1_P (c))
+	      if (byte_big5_two_byte_1_p (c))
 		ch = c;
 	      else
 		DECODE_ADD_BINARY_CHAR (c, dst);
@@ -466,12 +481,12 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
       while (n--)
 	{
 	  Intbyte c = *src++;
-	  if (BYTE_ASCII_P (c))
+	  if (byte_ascii_p (c))
 	    {
 	      /* ASCII. */
 	      Dynarr_add (dst, c);
 	    }
-	  else if (INTBYTE_LEADING_BYTE_P (c))
+	  else if (intbyte_leading_byte_p (c))
 	    {
 	      if (c == LEADING_BYTE_CHINESE_BIG5_1 ||
 		  c == LEADING_BYTE_CHINESE_BIG5_2)
@@ -510,16 +525,16 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 Emchar
 decode_big5_char (int b1, int b2)
 {
-  if (BYTE_BIG5_TWO_BYTE_1_P (b1) &&
-      BYTE_BIG5_TWO_BYTE_2_P (b2))
+  if (byte_big5_two_byte_1_p (b1) &&
+      byte_big5_two_byte_2_p (b2))
     {
       int leading_byte;
       Lisp_Object charset;
       int c1, c2;
 
       DECODE_BIG5 (b1, b2, leading_byte, c1, c2);
-      charset = CHARSET_BY_LEADING_BYTE (leading_byte);
-      return MAKE_CHAR (charset, c1 & 0x7F, c2 & 0x7F);
+      charset = charset_by_leading_byte (leading_byte);
+      return make_emchar (charset, c1 & 0x7F, c2 & 0x7F);
     }
   else
     return -1;
@@ -561,7 +576,7 @@ term `encode' is used for this operation.
   int c1, c2, b1, b2;
 
   CHECK_CHAR_COERCE_INT (character);
-  BREAKUP_CHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
   if (EQ (charset, Vcharset_chinese_big5_1) ||
       EQ (charset, Vcharset_chinese_big5_2))
     {
@@ -1210,7 +1225,7 @@ fit_to_be_escape_quoted (unsigned char c)
 static Lisp_Object
 charset_by_attributes_or_create_one (int type, Intbyte final, int dir)
 {
-  Lisp_Object charset = CHARSET_BY_ATTRIBUTES (type, final, dir);
+  Lisp_Object charset = charset_by_attributes (type, final, dir);
 
   if (NILP (charset))
     {
@@ -1801,7 +1816,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		  {
 		    Intbyte comstr[MAX_EMCHAR_LEN];
 		    Bytecount len;
-		    Emchar emch = MAKE_CHAR (Vcharset_composite, c - '0' + ' ',
+		    Emchar emch = make_emchar (Vcharset_composite, c - '0' + ' ',
 					     0);
 		    len = set_charptr_emchar (comstr, emch);
 		    Dynarr_add_many (dst, comstr, len);
@@ -1845,7 +1860,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	    }
 	  ch = 0;
 	}
-      else if (BYTE_C0_P (c) || BYTE_C1_P (c))
+      else if (byte_c0_p (c) || byte_c1_p (c))
 	{ /* Control characters */
 
 	  /***** Error-handling *****/
@@ -1885,7 +1900,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	  /* Now determine the charset. */
 	  reg = ((flags & ISO_STATE_SS2) ? 2
 		 : (flags & ISO_STATE_SS3) ? 3
-		 : !BYTE_ASCII_P (c) ? data->register_right
+		 : !byte_ascii_p (c) ? data->register_right
 		 : data->register_left);
 	  charset = data->charset[reg];
 
@@ -2121,7 +2136,7 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
     {
       c = *src++;
 
-      if (BYTE_ASCII_P (c))
+      if (byte_ascii_p (c))
 	{		/* Processing ASCII character */
 	  ch = 0;
 
@@ -2169,11 +2184,11 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
 	  char_boundary = 1;
 	}
 
-      else if (INTBYTE_LEADING_BYTE_P (c) || INTBYTE_LEADING_BYTE_P (ch))
+      else if (intbyte_leading_byte_p (c) || intbyte_leading_byte_p (ch))
 	{ /* Processing Leading Byte */
 	  ch = 0;
-	  charset = CHARSET_BY_LEADING_BYTE (c);
-	  if (LEADING_BYTE_PREFIX_P (c))
+	  charset = charset_by_leading_byte (c);
+	  if (leading_byte_prefix_p (c))
 	    ch = c;
 	  else if (!EQ (charset, Vcharset_control_1)
 		   && !EQ (charset, Vcharset_composite))
@@ -2318,7 +2333,7 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
 			    }
 			  else
 			    {
-			      Emchar emch = MAKE_CHAR (Vcharset_composite,
+			      Emchar emch = make_emchar (Vcharset_composite,
 						       ch & 0x7F, c & 0x7F);
 			      Lisp_Object lstr = composite_char_string (emch);
 			      saved_n = n;
@@ -2650,16 +2665,16 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
 {
   int i;
   
-  write_c_string ("(", printcharfun);
+  write_c_string (printcharfun, "(");
   for (i = 0; i < 4; i++)
     {
       Lisp_Object charset = coding_system_charset (cs, i);
       if (i > 0)
-	write_c_string (", ", printcharfun);
+	write_c_string (printcharfun, ", ");
       write_fmt_string (printcharfun, "g%d=", i);
       print_internal (CHARSETP (charset) ? XCHARSET_NAME (charset) : charset, printcharfun, 0);
       if (XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (cs, i))
-	write_c_string ("(force)", printcharfun);
+	write_c_string (printcharfun, "(force)");
     }
 
 #define FROB(prop)					\
@@ -2691,7 +2706,7 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun, int escapeflag)
       {
 	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s", 1, val);
       }
-    write_c_string (")", printcharfun);
+    write_c_string (printcharfun, ")");
   }
 }
 
@@ -2785,7 +2800,7 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
 	  data->saw_single_shift_just_now = 0;
 	}
       if (!(data->flags & ISO_STATE_ESCAPE)
-	  && (BYTE_C0_P (c) || BYTE_C1_P (c)))
+	  && (byte_c0_p (c) || byte_c1_p (c)))
 	{ /* control chars */
 	  switch (c)
 	    {
@@ -2807,8 +2822,8 @@ iso2022_detect (struct detection_state *st, const UExtbyte *src,
 	    }
 	}
 
-      if ((data->flags & ISO_STATE_ESCAPE) || BYTE_C0_P (c)
-          || BYTE_C1_P (c))
+      if ((data->flags & ISO_STATE_ESCAPE) || byte_c0_p (c)
+          || byte_c1_p (c))
 	{
 	  switch (parse_iso2022_esc (Qnil, data->iso, c,
 				     &data->flags, 0))

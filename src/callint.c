@@ -948,10 +948,10 @@ when reading the arguments.
 	  case '+':
 	  default:
 	    {
-	      signal_ferror (Qsyntax_error,
-			  "Invalid `interactive' control letter \"%c\" (#o%03o).",
-			  prompt_data[prompt_index],
-			  prompt_data[prompt_index]);
+	      signal_ferror
+		(Qsyntax_error,
+		 "Invalid `interactive' control letter \"%c\" (#o%03o).",
+		 prompt_data[prompt_index], prompt_data[prompt_index]);
 	    }
 	  }
 #undef PROMPT

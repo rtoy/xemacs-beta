@@ -494,7 +494,7 @@ mswindows_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int 
 
   /* Yippie! */
   ScreenToClient (hwnd, &pt);
-  VOID_TO_LISP (*frame, qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
+  *frame = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
   *x = pt.x;
   *y = pt.y;
   return 1;
@@ -746,7 +746,7 @@ mswindows_get_frame_parent (struct frame *f)
   if (hwnd)
     {
       Lisp_Object parent;
-      VOID_TO_LISP (parent, qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
+      parent = VOID_TO_LISP ((void *) qxeGetWindowLong (hwnd, XWL_FRAMEOBJ));
       assert (FRAME_MSWINDOWS_P (XFRAME (parent)));
       return parent;
     }

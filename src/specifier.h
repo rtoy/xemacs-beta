@@ -1,6 +1,6 @@
 /* Generic specifier list implementation
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 2002 Ben Wing
+   Copyright (C) 1995, 1996, 2002 Ben Wing
 
 This file is part of XEmacs.
 
@@ -282,10 +282,10 @@ extern const struct lrecord_description specifier_empty_extra_description[];
 #ifdef ERROR_CHECK_TYPES
 #define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods;		\
-INLINE_HEADER struct type##_specifier *					\
-error_check_##type##_specifier_data (Lisp_Specifier *sp);		\
-INLINE_HEADER struct type##_specifier *					\
+DECLARE_INLINE_HEADER (							\
+struct type##_specifier *						\
 error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
+)									\
 {									\
   if (SPECIFIERP (sp->magic_parent))					\
     {									\
@@ -297,10 +297,10 @@ error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
   assert (SPECIFIER_TYPE_P (sp, type));					\
   return (struct type##_specifier *) sp->data;				\
 }									\
-INLINE_HEADER Lisp_Specifier *						\
-error_check_##type##_specifier_type (Lisp_Object obj);			\
-INLINE_HEADER Lisp_Specifier *						\
+DECLARE_INLINE_HEADER (							\
+Lisp_Specifier *							\
 error_check_##type##_specifier_type (Lisp_Object obj)			\
+)									\
 {									\
   Lisp_Specifier *sp = XSPECIFIER (obj);				\
   assert (SPECIFIER_TYPE_P (sp, type));					\

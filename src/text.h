@@ -52,32 +52,68 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef MULE
 
-#define REP_BYTES_BY_FIRST_BYTE(fb) 1
-#define BYTE_ASCII_P(byte) 1
-# define MAX_EMCHAR_LEN 1
+#define rep_bytes_by_first_byte(fb) 1
+#define byte_ascii_p(byte) 1
+#define MAX_EMCHAR_LEN 1
 
 #else /* MULE */
 
 /* These are carefully designed to work if BYTE is signed or unsigned. */
 /* Note that SPC and DEL are considered ASCII, not control. */
 
-#define BYTE_ASCII_P(byte) (((byte) & ~0x7f) == 0)
-#define BYTE_C0_P(byte)    (((byte) & ~0x1f) == 0)
-#define BYTE_C1_P(byte)    (((byte) & ~0x1f) == 0x80)
+#define byte_ascii_p(byte) (((byte) & ~0x7f) == 0)
+#define byte_c0_p(byte)    (((byte) & ~0x1f) == 0)
+#define byte_c1_p(byte)    (((byte) & ~0x1f) == 0x80)
 
 /* Does BYTE represent the first byte of a character? */
 
-#define INTBYTE_FIRST_BYTE_P(byte) ((byte) < 0xA0)
+#ifdef ERROR_CHECK_TEXT
+
+DECLARE_INLINE_HEADER (
+int
+intbyte_first_byte_p_1 (int byte, const char *file, int line)
+)
+{
+  assert_at_line (byte >= 0 && byte < 256, file, line);
+  return byte < 0xA0;
+}
+
+#define intbyte_first_byte_p(byte) \
+  intbyte_first_byte_p_1 (byte, __FILE__, __LINE__) 
+
+#else
+
+#define intbyte_first_byte_p(byte) ((byte) < 0xA0)
+
+#endif
+
+#ifdef ERROR_CHECK_TEXT
 
 /* Does BYTE represent the first byte of a multi-byte character? */
 
-#define INTBYTE_LEADING_BYTE_P(byte) BYTE_C1_P (byte)
+DECLARE_INLINE_HEADER (
+int
+intbyte_leading_byte_p_1 (int byte, const char *file, int line)
+)
+{
+  assert_at_line (byte >= 0 && byte < 256, file, line);
+  return byte_c1_p (byte);
+}
+
+#define intbyte_leading_byte_p(byte) \
+  intbyte_leading_byte_p_1 (byte, __FILE__, __LINE__) 
+
+#else
+
+#define intbyte_leading_byte_p(byte) byte_c1_p (byte)
+
+#endif
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
 
    This value can be derived in other ways -- e.g. something like
-   XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (first_byte))
+   XCHARSET_REP_BYTES (charset_by_leading_byte (first_byte))
    but it's faster this way. */
 extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
@@ -85,31 +121,208 @@ extern const Bytecount rep_bytes_by_first_byte[0xA0];
 
 #ifdef ERROR_CHECK_TEXT
 
-INLINE_HEADER Bytecount REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file,
-						   int line);
-INLINE_HEADER Bytecount
-REP_BYTES_BY_FIRST_BYTE_1 (int fb, const char *file, int line)
+DECLARE_INLINE_HEADER (
+Bytecount
+rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
+)
 {
-  assert_at_line (fb < 0xA0, file, line);
+  assert_at_line (fb >= 0 && fb < 0xA0, file, line);
   return rep_bytes_by_first_byte[fb];
 }
 
-#define REP_BYTES_BY_FIRST_BYTE(fb) \
-  REP_BYTES_BY_FIRST_BYTE_1 (fb, __FILE__, __LINE__) 
+#define rep_bytes_by_first_byte(fb) \
+  rep_bytes_by_first_byte_1 (fb, __FILE__, __LINE__) 
 
 #else /* ERROR_CHECK_TEXT */
 
-#define REP_BYTES_BY_FIRST_BYTE(fb) (rep_bytes_by_first_byte[fb])
+#define rep_bytes_by_first_byte(fb) (rep_bytes_by_first_byte[fb])
 
 #endif /* ERROR_CHECK_TEXT */
 
-/* Is this character represented by more than one byte in a string? */
+/* Is this character represented by more than one byte in a string in the
+   default format? */
 
-#define CHAR_MULTIBYTE_P(c) ((c) >= 0x80)
+#define emchar_multibyte_p(c) ((c) >= 0x80)
 
-#define CHAR_ASCII_P(c) (!CHAR_MULTIBYTE_P (c))
+#define emchar_ascii_p(c) (!emchar_multibyte_p (c))
+
+/* Maximum number of bytes per Emacs character when represented as text, in
+ any format.
+ */
 
 #define MAX_EMCHAR_LEN 4
+
+#endif /* not MULE */
+
+/* ---------------- Handling non-default formats ----------------- */
+
+/* We support, at least to some extent, formats other than the default
+   variable-width format, for speed; all of these alternative formats are
+   fixed-width.  Currently we only handle these non-default formats in
+   buffers, because access to their text is strictly controlled and thus
+   the details of the format mostly compartmentalized.  The only really
+   tricky part is the search code -- the regex, Boyer-Moore, and
+   simple-search algorithms in search.c and regex.c.  All other code that
+   knows directly about the buffer representation is the basic code to
+   modify or retrieve the buffer text.
+
+   Supporting fixed-width formats in Lisp strings is harder, but possible
+   -- FSF currently does this, for example.  In this case, however,
+   probably only 8-bit-fixed is reasonable for Lisp strings -- getting
+   non-ASCII-compatible fixed-width formats to work is much, much harder
+   because a lot of code assumes that strings are ASCII-compatible
+   (i.e. ASCII + other characters represented exclusively using high-bit
+   bytes) and a lot of code mixes Lisp strings and non-Lisp strings freely.
+
+   The different possible fixed-width formats are 8-bit fixed, 16-bit
+   fixed, and 32-bit fixed.  The latter can represent all possible
+   characters, but at a substantial memory penalty.  The other two can
+   represent only a subset of the possible characters.  How these subsets
+   are defined can be simple or very tricky.
+
+   Currently we support only the default format and the 8-bit fixed format,
+   and in the latter, we only allow these to be the first 256 characters in
+   an Emchar (ASCII and Latin 1).
+   
+   One reasonable approach for 8-bit fixed is to allow the upper half to
+   represent any 1-byte charset, which is specified on a per-buffer basis.
+   This should work fairly well in practice since most documents are in
+   only one foreign language (possibly with some English mixed in).  I
+   think FSF does something like this; or at least, they have something
+   called nonascii-translation-table and use it when converting from
+   8-bit-fixed text ("unibyte text") to default text ("multibyte text").
+   With 16-bit fixed, you could do something like assign chunks of the 64K
+   worth of characters to charsets as they're encountered in documents.
+   This should work well with most Asian documents.
+
+   If/when we switch to using Unicode internally, we might have formats more
+   like this:
+
+   -- UTF-8 or some extension as the default format.  Perl uses an
+   extension that handles 64-bit chars and requires as much as 13 bytes per
+   char, vs. the standard of 31-bit chars and 6 bytes max.  UTF-8 has the
+   same basic properties as our own variable-width format (see text.c,
+   Internal String Encoding) and so most code would not need to be changed.
+
+   -- UTF-16 as a "pseudo-fixed" format (i.e. 16-bit fixed plus surrogates
+   for representing characters not in the BMP, aka >= 65536).  The vast
+   majority of documents will have no surrogates in them so byte/char
+   conversion will be very fast.
+
+   -- an 8-bit fixed format, like currently.
+   
+   -- possibly, UCS-4 as a 32-bit fixed format.
+
+   The fixed-width formats essentially treat the buffer as an array of
+   8-bit, 16-bit or 32-bit integers.  This means that how they are stored
+   in memory (in particular, big-endian or little-endian) depends on the
+   native format of the machine's processor.  It also means we have to
+   worry a bit about alignment (basically, we just need to keep the gap an
+   integral size of the character size, and get things aligned properly
+   when converting the buffer between formats).
+   */
+typedef enum internal_format
+{
+  FORMAT_DEFAULT,
+  FORMAT_8_BIT_FIXED,
+  FORMAT_16_BIT_FIXED, /* not implemented */
+  FORMAT_32_BIT_FIXED  /* not implemented */
+} Internal_Format;
+
+#ifdef MULE
+/* "OBJECT" below will usually be a buffer, string, or nil.  This needs to
+   be passed in because the interpretation of 8-bit-fixed and 16-bit-fixed
+   values may depend on the buffer, e.g. depending on what language the
+   text in the buffer is in. */
+
+/* True if Emchar CH can be represented in 8-bit-fixed format. */
+#define emchar_8_bit_fixed_p(ch, object)   (((ch) & ~0xff) == 0)
+/* Convert Emchar CH to an 8-bit int, as will be stored in the buffer. */
+#define emchar_to_raw_8_bit_fixed(ch, object) ((Intbyte) (ch))
+/* Convert the other way. */
+#define raw_8_bit_fixed_to_emchar(ch, object) ((Emchar) (ch))
+
+#define emchar_16_bit_fixed_p(ch, object)   (((ch) & ~0xffff) == 0)
+/* Convert Emchar CH to a 16-bit int, as will be stored in the buffer. */
+#define emchar_to_raw_16_bit_fixed(ch, object) ((UINT_16_BIT) (ch))
+/* Convert the other way. */
+#define raw_16_bit_fixed_to_emchar(ch, object) ((Emchar) (ch))
+
+/* Convert Emchar CH to a 32-bit int, as will be stored in the buffer. */
+#define emchar_to_raw_32_bit_fixed(ch, object) ((UINT_32_BIT) (ch))
+/* Convert the other way. */
+#define raw_32_bit_fixed_to_emchar(ch, object) ((Emchar) (ch))
+
+/* Return the "raw value" of a character as stored in the buffer.  In the
+   default format, this is just the same as the character.  In fixed-width
+   formats, this is the actual value in the buffer, which will be limited
+   to the range as established by the format.  This is used when searching
+   for a character in a buffer -- it's faster to convert the character to
+   the raw value and look for that, than repeatedly convert each raw value
+   in the buffer into a character. */
+
+DECLARE_INLINE_HEADER (
+Raw_Emchar
+emchar_to_raw (Emchar ch, Internal_Format fmt, Lisp_Object object)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return (Raw_Emchar) ch;
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (emchar_16_bit_fixed_p (ch, object));
+      return (Raw_Emchar) emchar_to_raw_16_bit_fixed (ch, object);
+    case FORMAT_32_BIT_FIXED:
+      return (Raw_Emchar) emchar_to_raw_32_bit_fixed (ch, object);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      text_checking_assert (emchar_8_bit_fixed_p (ch, object));
+      return (Raw_Emchar) emchar_to_raw_8_bit_fixed (ch, object);
+    }
+}
+
+/* Return whether CH is representable in the given format in the given
+   object. */
+
+DECLARE_INLINE_HEADER (
+int
+emchar_fits_in_format (Emchar ch, Internal_Format fmt, Lisp_Object object)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return 1;
+    case FORMAT_16_BIT_FIXED:
+      return emchar_16_bit_fixed_p (ch, object);
+    case FORMAT_32_BIT_FIXED:
+      return 1;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return emchar_8_bit_fixed_p (ch, object);
+    }
+}
+
+/* Assuming the formats are the same, return whether the two objects
+   represent text in exactly the same way. */
+
+DECLARE_INLINE_HEADER (
+int
+objects_have_same_internal_representation (Lisp_Object srcobj,
+					   Lisp_Object dstobj)
+)
+{
+  /* &&#### implement this properly when we allow per-object format
+     differences */
+  return 1;
+}
+
+#else
+
+#define emchar_to_raw(ch, fmt, object) ((Raw_Emchar) (ch))
+#define emchar_fits_in_format(ch, fmt, object) 1
+#define objects_have_same_internal_representation(srcobj, dstobj) 1
 
 #endif /* MULE */
 
@@ -132,210 +345,200 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 /*									*/
 /************************************************************************/
 
-/* NOTE: In all the following macros, we follow these rules concerning
-   multiple evaluation of the arguments:
+/*
+  Use the following functions/macros on contiguous text in any of the
+  internal formats.  Those that take a format arg work on all internal
+  formats; the others work only on the default (variable-width under Mule)
+  format.  If the text you're operating on is known to come from a buffer,
+  use the buffer-level functions in buffer.h, which automatically know the
+  correct format and handle the gap.
+
+  Some terminology:
+
+  "charptr" appearing in the macros means "internal-format text" -- type
+  `Intbyte *'.  Operations on such pointers themselves, rather than on the
+  text being pointed to, have "charptr" instead of "charptr" in the macro
+  name.  "emchar" in the macro names means an Emchar -- the representation
+  of a character as a single integer rather than a series of bytes, as part
+  of "charptr".  Many of the macros below are for converting between the
+  two representations of characters.
+
+  Note also that we try to consistently distinguish between an "Emchar" and
+  a Lisp character.  Stuff working with Lisp characters often just says
+  "char", so we consistently use "Emchar" when that's what we're working
+  with. */
+
+/* The three golden rules of macros:
 
    1) Anything that's an lvalue can be evaluated more than once.
-   2) Anything that's a Lisp Object can be evaluated more than once.
-      This should probably be changed, but this follows the way
-      that all the macros in lisp.h do things.
-   3) 'struct buffer *' arguments can be evaluated more than once.
-   4) Nothing else can be evaluated more than once.  Use inline
+
+   2) Macros where anything else can be evaluated more than once should
+      have the word "unsafe" in their name (exceptions may be made for
+      large sets of macros that evaluate arguments of certain types more
+      than once, e.g. struct buffer * arguments, when clearly indicated in
+      the macro documentation).  These macros are generally meant to be
+      called only by other macros that have already stored the calling
+      values in temporary variables.
+
+   3) Nothing else can be evaluated more than once.  Use inline
       functions, if necessary, to prevent multiple evaluation.
-   5) An exception to (4) is that there are some macros below that
-      may evaluate their arguments more than once.  They are all
-      denoted with the word "unsafe" in their name and are generally
-      meant to be called only by other macros that have already
-      stored the calling values in temporary variables.
 
+   NOTE: The functions and macros below are given full prototypes in their
+   docs, even when the implementation is a macro.  In such cases, passing
+   an argument of a type other than expected will produce undefined
+   results.  Also, given that macros can do things functions can't (in
+   particular, directly modify arguments as if they were passed by
+   reference), the declaration syntax has been extended to include the
+   call-by-reference syntax from C++, where an & after a type indicates
+   that the argument is an lvalue and is passed by reference, i.e. the
+   function can modify its value. (This is equivalent in C to passing a
+   pointer to the argument, but without the need to explicitly worry about
+   pointers.)
 
-   Use the following functions/macros on contiguous strings of data.
-   If the text you're operating on is known to come from a buffer, use
-   the buffer-level functions below -- they know about the gap and may
-   be more efficient.
+   When to capitalize macros:
 
+   -- Capitalize macros doing stuff obviously impossible with (C)
+   functions, e.g. directly modifying arguments as if they were passed by
+   reference.
 
-  ----------------------------------------------------------------------------
-     (A) For working with charptr's (pointers to internally-formatted text):
-  ----------------------------------------------------------------------------
+   -- Capitalize macros that evaluate *any* argument more than once regardless
+   of whether that's "allowed" (e.g. buffer arguments).
 
-   VALID_CHARPTR_P (ptr):
-	Given a charptr, does it point to the beginning of a character?
+   -- Capitalize macros that directly access a field in a Lisp_Object or
+   its equivalent underlying structure.  In such cases, access through the
+   Lisp_Object precedes the macro with an X, and access through the underlying
+   structure doesn't.
 
-   ASSERT_VALID_CHARPTR (ptr):
-	If error-checking is enabled, assert that the given charptr
-	points to the beginning of a character.	 Otherwise, do nothing.
+   -- Capitalize certain other basic macros relating to Lisp_Objects; e.g.
+      FRAMEP, CHECK_FRAME, etc.
 
-   INC_CHARPTR (ptr):
-	Given a charptr (assumed to point at the beginning of a character),
-	modify that pointer so it points to the beginning of the next
-	character.
-
-   DEC_CHARPTR (ptr):
-	Given a charptr (assumed to point at the beginning of a
-	character or at the very end of the text), modify that pointer
-	so it points to the beginning of the previous character.
-
-   VALIDATE_CHARPTR_BACKWARD (ptr):
-	Make sure that PTR is pointing to the beginning of a character.
-	If not, back up until this is the case.	  Note that there are not
-	too many places where it is legitimate to do this sort of thing.
-	It's an error if you're passed an "invalid" char * pointer.
-	NOTE: PTR *must* be pointing to a valid part of the string (i.e.
-	not the very end, unless the string is zero-terminated or
-	something) in order for this function to not cause crashes.
-
-   VALIDATE_CHARPTR_FORWARD (ptr):
-	Make sure that PTR is pointing to the beginning of a character.
-	If not, move forward until this is the case.  Note that there
-	are not too many places where it is legitimate to do this sort
-	of thing.  It's an error if you're passed an "invalid" char *
-	pointer.
-
-  ---------------------------------------------------------------------
-     (B) For working with the length (in bytes and characters) of a   
-         section of internally-formatted text:                        
-  ---------------------------------------------------------------------
-
-   bytecount_to_charcount (ptr, nbi):
-	Given a pointer to a text string and a length in bytes,
-	return the equivalent length in characters.
-
-   charcount_to_bytecount (ptr, nch):
-	Given a pointer to a text string and a length in characters,
-	return the equivalent length in bytes.
-
-   charptr_n_addr (ptr, n):
-	Return a pointer to the beginning of the character offset N
-	(in characters) from PTR.
-
-  -------------------------------------------------------------------------
-     (C) For retrieving or changing the character pointed to by a charptr:
-  -------------------------------------------------------------------------
-
-   charptr_emchar (ptr):
-	Retrieve the character pointed to by PTR as an Emchar.
-
-   charptr_emchar_n (ptr, n):
-	Retrieve the character at offset N (in characters) from PTR,
-	as an Emchar.
-
-   set_charptr_emchar (ptr, ch):
-	Store the character CH (an Emchar) as internally-formatted
-	text starting at PTR.  Return the number of bytes stored.
-
-   charptr_copy_char (src, dst):
-	Retrieve the character pointed to by SRC and store it as
-	internally-formatted text in DST.
-
-   ----------------------------------
-     (D) For working with Emchars:
-   ----------------------------------
-
-   [Note that there are other functions/macros for working with Emchars
-    in charset.h, for retrieving the charset of an Emchar and such.]
-
-   valid_char_p (ch):
-	Return whether the given Emchar is valid.
-
-   CHARP (ch):
-	Return whether the given Lisp_Object is a character.
-
-   CHECK_CHAR_COERCE_INT (ch):
-	Signal an error if CH is not a valid character or integer Lisp_Object.
-	If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
-	but merely by repackaging, without performing tests for char validity.
-
-   MAX_EMCHAR_LEN:
-	Maximum number of buffer bytes per Emacs character.
+   -- Try to avoid capitalizing any other macros.
 */
 
 /* ---------------------------------------------------------------------- */
-/* (A) For working with charptr's (pointers to internally-formatted text) */
+/*      Working with charptr's (pointers to internally-formatted text)    */
 /* ---------------------------------------------------------------------- */
 
+/* Given an charptr, does it point to the beginning of a character?
+ */
+
 #ifdef MULE
-# define VALID_CHARPTR_P(ptr) INTBYTE_FIRST_BYTE_P (* (unsigned char *) ptr)
+# define valid_charptr_p(ptr) intbyte_first_byte_p (* (ptr))
 #else
-# define VALID_CHARPTR_P(ptr) 1
+# define valid_charptr_p(ptr) 1
 #endif
 
-#ifdef ERROR_CHECK_TEXT
-# define ASSERT_VALID_CHARPTR(ptr) assert (VALID_CHARPTR_P (ptr))
-#else
-# define ASSERT_VALID_CHARPTR(ptr)
-#endif
+/* If error-checking is enabled, assert that the given charptr points to
+   the beginning of a character.  Otherwise, do nothing.
+   */
 
-/* Note that INC_CHARPTR() and DEC_CHARPTR() have to be written in
+#define assert_valid_charptr(ptr) text_checking_assert (valid_charptr_p (ptr))
+
+/* Given a charptr (assumed to point at the beginning of a character),
+   modify that pointer so it points to the beginning of the next character.
+
+   Note that INC_CHARPTR() and DEC_CHARPTR() have to be written in
    completely separate ways.  INC_CHARPTR() cannot use the DEC_CHARPTR()
    trick of looking for a valid first byte because it might run off
    the end of the string.  DEC_CHARPTR() can't use the INC_CHARPTR()
    method because it doesn't have easy access to the first byte of
    the character it's moving over. */
 
-#define REAL_INC_CHARPTR(ptr) \
-  ((void) ((ptr) += REP_BYTES_BY_FIRST_BYTE (* (unsigned char *) (ptr))))
+#define INC_CHARPTR(ptr) do {			\
+  assert_valid_charptr (ptr);			\
+  (ptr) += rep_bytes_by_first_byte (* (ptr));	\
+} while (0)
 
-#define REAL_INC_CHARBYTEBPOS(ptr, pos) \
-  (pos += REP_BYTES_BY_FIRST_BYTE (* (unsigned char *) (ptr)))
+#define INC_CHARPTR_FMT(ptr, fmt)					\
+do {									\
+  Internal_Format __icf_fmt = (fmt);					\
+  switch (__icf_fmt)							\
+    {									\
+    case FORMAT_DEFAULT:						\
+      INC_CHARPTR (ptr);						\
+      break;								\
+    case FORMAT_16_BIT_FIXED:						\
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));	\
+      (ptr) += 2;							\
+      break;								\
+    case FORMAT_32_BIT_FIXED:						\
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));	\
+      (ptr) += 4;							\
+      break;								\
+    default:								\
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			\
+      (ptr)++;								\
+      break;								\
+    }									\
+} while (0)
 
-#define REAL_DEC_CHARPTR(ptr) do {	\
-  (ptr)--;				\
-} while (!VALID_CHARPTR_P (ptr))
+/* Given a charptr (assumed to point at the beginning of a character or at
+   the very end of the text), modify that pointer so it points to the
+   beginning of the previous character.
+   */
 
 #ifdef ERROR_CHECK_TEXT
-#define INC_CHARPTR(ptr) do {		\
-  ASSERT_VALID_CHARPTR (ptr);		\
-  REAL_INC_CHARPTR (ptr);		\
+/* We use a separate definition to avoid warnings about unused dc_ptr1 */
+#define DEC_CHARPTR(ptr) do {						      \
+  const Intbyte *dc_ptr1 = (ptr);					      \
+  do {									      \
+    (ptr)--;								      \
+  } while (!valid_charptr_p (ptr));					      \
+  text_checking_assert (dc_ptr1 - (ptr) == rep_bytes_by_first_byte (*(ptr))); \
 } while (0)
-
-#define INC_CHARBYTEBPOS(ptr, pos) do {		\
-  ASSERT_VALID_CHARPTR (ptr);			\
-  REAL_INC_CHARBYTEBPOS (ptr, pos);		\
+#else
+#define DEC_CHARPTR(ptr) do {						      \
+  do {									      \
+    (ptr)--;								      \
+  } while (!valid_charptr_p (ptr));					      \
 } while (0)
+#endif /* ERROR_CHECK_TEXT */
 
-#define DEC_CHARPTR(ptr) do {			\
-  const Intbyte *dc_ptr1 = (ptr);		\
-  const Intbyte *dc_ptr2 = dc_ptr1;		\
-  REAL_DEC_CHARPTR (dc_ptr2);			\
-  assert (dc_ptr1 - dc_ptr2 ==			\
-	  REP_BYTES_BY_FIRST_BYTE (*dc_ptr2));	\
-  (ptr) = (Intbyte *) dc_ptr2;			\
+#define DEC_CHARPTR_FMT(ptr, fmt)					\
+do {									\
+  Internal_Format __icf_fmt = (fmt);					\
+  switch (__icf_fmt)							\
+    {									\
+    case FORMAT_DEFAULT:						\
+      DEC_CHARPTR (ptr);						\
+      break;								\
+    case FORMAT_16_BIT_FIXED:						\
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));	\
+      (ptr) -= 2;							\
+      break;								\
+    case FORMAT_32_BIT_FIXED:						\
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));	\
+      (ptr) -= 4;							\
+      break;								\
+    default:								\
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);			\
+      (ptr)--;								\
+      break;								\
+    }									\
 } while (0)
-
-#else /* ! ERROR_CHECK_TEXT */
-#define INC_CHARBYTEBPOS(ptr, pos) REAL_INC_CHARBYTEBPOS (ptr, pos)
-#define INC_CHARPTR(ptr) REAL_INC_CHARPTR (ptr)
-#define DEC_CHARPTR(ptr) REAL_DEC_CHARPTR (ptr)
-#endif /* ! ERROR_CHECK_TEXT */
 
 #ifdef MULE
+
+/* Make sure that PTR is pointing to the beginning of a character.  If not,
+   back up until this is the case.  Note that there are not too many places
+   where it is legitimate to do this sort of thing.  It's an error if
+   you're passed an "invalid" char * pointer.  NOTE: PTR *must* be pointing
+   to a valid part of the string (i.e.  not the very end, unless the string
+   is zero-terminated or something) in order for this function to not cause
+   crashes.
+   */
 
 /* Note that this reads the byte at *PTR! */
 
 #define VALIDATE_CHARPTR_BACKWARD(ptr) do {	\
-  while (!VALID_CHARPTR_P (ptr)) ptr--;		\
+  while (!valid_charptr_p (ptr)) ptr--;		\
 } while (0)
 
-/* Given a Intbyte string at PTR of size N, possibly with a partial
-   character at the end, return the size of the longest substring of
-   complete characters.  Does not assume that the byte at *(PTR + N) is
-   readable. */
-DECLARE_INLINE_HEADER (
-Bytecount
-validate_intbyte_string_backward (const Intbyte *ptr, Bytecount n)
-)
-{
-  const Intbyte *ptr2;
-
-  if (n == 0)
-    return n;
-  ptr2 = ptr + n - 1;
-  VALIDATE_CHARPTR_BACKWARD (ptr2);
-  if (ptr2 + REP_BYTES_BY_FIRST_BYTE (*ptr2) != ptr + n)
-    return ptr2 - ptr;
-  return n;
-}
+/* Make sure that PTR is pointing to the beginning of a character.  If not,
+   move forward until this is the case.  Note that there are not too many
+   places where it is legitimate to do this sort of thing.  It's an error
+   if you're passed an "invalid" char * pointer.
+   */
 
 /* This needs to be trickier than VALIDATE_CHARPTR_BACKWARD() to avoid the
    possibility of running off the end of the string. */
@@ -353,109 +556,469 @@ validate_intbyte_string_backward (const Intbyte *ptr, Bytecount n)
 #else /* not MULE */
 #define VALIDATE_CHARPTR_BACKWARD(ptr)
 #define VALIDATE_CHARPTR_FORWARD(ptr)
-#define validate_intbyte_string_backward(ptr, n) (n)
 #endif /* not MULE */
 
+#ifdef MULE
+
+/* Given a Intbyte string at PTR of size N, possibly with a partial
+   character at the end, return the size of the longest substring of
+   complete characters.  Does not assume that the byte at *(PTR + N) is
+   readable.  Note that there are not too many places where it is
+   legitimate to do this sort of thing.  It's an error if you're passed an
+   "invalid" offset. */
+
+DECLARE_INLINE_HEADER (
+Bytecount
+validate_intbyte_string_backward (const Intbyte *ptr, Bytecount n)
+)
+{
+  const Intbyte *ptr2;
+
+  if (n == 0)
+    return n;
+  ptr2 = ptr + n - 1;
+  VALIDATE_CHARPTR_BACKWARD (ptr2);
+  if (ptr2 + rep_bytes_by_first_byte (*ptr2) != ptr + n)
+    return ptr2 - ptr;
+  return n;
+}
+
+#else
+
+#define validate_intbyte_string_backward(ptr, n) (n)
+
+#endif /* MULE */
+
 /* -------------------------------------------------------------- */
-/* (B) For working with the length (in bytes and characters) of a */
-/*     section of internally-formatted text 			  */
+/*      Working with the length (in bytes and characters) of a    */
+/*               section of internally-formatted text 	          */
 /* -------------------------------------------------------------- */
 
-INLINE_HEADER const Intbyte *
-charptr_n_addr (const Intbyte *ptr, Charcount offset);
-INLINE_HEADER const Intbyte *
+#ifdef MULE
+
+Charcount bytecount_to_charcount_fun (const Intbyte *ptr, Bytecount len);
+Bytecount charcount_to_bytecount_fun (const Intbyte *ptr, Charcount len);
+
+/* Given a pointer to a text string and a length in bytes, return
+   the equivalent length in characters. */
+
+DECLARE_INLINE_HEADER (
+Charcount
+bytecount_to_charcount (const Intbyte *ptr, Bytecount len)
+)
+{
+  if (len < 20) /* Just a random guess, but it should be more or less correct.
+		   If number of bytes is small, just do a simple loop,
+		   which should be more efficient. */
+    {
+      Charcount count = 0;
+      const Intbyte *end = ptr + len;
+      while (ptr < end)
+	{
+	  INC_CHARPTR (ptr);
+	  count++;
+	}
+      /* Bomb out if the specified substring ends in the middle
+	 of a character.  Note that we might have already gotten
+	 a core dump above from an invalid reference, but at least
+	 we will get no farther than here.
+
+	 This also catches len < 0. */
+      text_checking_assert (ptr == end);
+
+      return count;
+    }
+  else
+    return bytecount_to_charcount_fun (ptr, len);
+}
+
+/* Given a pointer to a text string and a length in characters, return the
+   equivalent length in bytes.
+*/
+
+DECLARE_INLINE_HEADER (
+Bytecount
+charcount_to_bytecount (const Intbyte *ptr, Charcount len)
+)
+{
+  text_checking_assert (len >= 0);
+  if (len < 20) /* See above */
+    {
+      const Intbyte *newptr = ptr;
+      while (len > 0)
+	{
+	  INC_CHARPTR (newptr);
+	  len--;
+	}
+      return newptr - ptr;
+    }
+  else
+    return charcount_to_bytecount_fun (ptr, len);
+}
+
+/* Given a pointer to a text string in the specified format and a length in
+   bytes, return the equivalent length in characters.
+*/
+
+DECLARE_INLINE_HEADER (
+Charcount
+bytecount_to_charcount_fmt (const Intbyte *ptr, Bytecount len,
+			    Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return bytecount_to_charcount (ptr, len);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      return (Charcount) (len << 1);
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return (Charcount) (len << 2);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return (Charcount) len;
+    }
+}
+
+/* Given a pointer to a text string in the specified format and a length in
+   characters, return the equivalent length in bytes.
+*/
+
+DECLARE_INLINE_HEADER (
+Bytecount
+charcount_to_bytecount_fmt (const Intbyte *ptr, Charcount len,
+			    Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return charcount_to_bytecount (ptr, len);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      text_checking_assert (!(len & 1));
+      return (Bytecount) (len >> 1);
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (!(len & 3));
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return (Bytecount) (len >> 2);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return (Bytecount) len;
+    }
+}
+
+#else
+
+#define bytecount_to_charcount(ptr, len) ((Charcount) (len))
+#define bytecount_to_charcount_fmt(ptr, len, fmt) ((Charcount) (len))
+#define charcount_to_bytecount(ptr, len) ((Bytecount) (len))
+#define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
+
+#endif /* MULE */
+
+/* Return the length of the first character at PTR.  Equivalent to
+   charcount_to_bytecount (ptr, 1).
+
+   [Since charcount_to_bytecount() is Written as inline, a smart compiler
+   should really optimize charcount_to_bytecount (ptr, 1) to the same as
+   the following, with no error checking.  But since this idiom occurs so
+   often, we'll be helpful and define a special macro for it.]
+*/
+     
+#define charptr_emchar_len(ptr) rep_bytes_by_first_byte (*(ptr))
+
+/* Return the length of the first character at PTR, which is in the
+   specified internal format.  Equivalent to charcount_to_bytecount_fmt
+   (ptr, 1, fmt).
+*/
+     
+DECLARE_INLINE_HEADER (
+Bytecount
+charptr_emchar_len_fmt (const Intbyte *ptr, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return charptr_emchar_len (ptr);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
+
+/* Return a pointer to the beginning of the character offset N (in
+   characters) from PTR.
+*/
+
+DECLARE_INLINE_HEADER (
+const Intbyte *
 charptr_n_addr (const Intbyte *ptr, Charcount offset)
+)
 {
   return ptr + charcount_to_bytecount (ptr, offset);
 }
 
+/* Given a charptr and an offset into the text pointed to by the charptr,
+   modify the offset so it points to the beginning of the next character.
+*/
+
+#define INC_BYTECOUNT(ptr, pos) do {			\
+  assert_valid_charptr (ptr);				\
+  (pos += rep_bytes_by_first_byte (* ((ptr) + (pos))));	\
+} while (0)
+
 /* -------------------------------------------------------------------- */
-/* (C) For retrieving or changing the character pointed to by a charptr */
+/*      Retrieving or changing the character pointed to by a charptr    */
 /* -------------------------------------------------------------------- */
 
 #define simple_charptr_emchar(ptr)		((Emchar) (ptr)[0])
 #define simple_set_charptr_emchar(ptr, x) \
 	((ptr)[0] = (Intbyte) (x), (Bytecount) 1)
-#define simple_charptr_copy_char(src, dst) \
+#define simple_charptr_copy_emchar(src, dst) \
 	((dst)[0] = *(src), (Bytecount) 1)
 
 #ifdef MULE
 
 Emchar non_ascii_charptr_emchar (const Intbyte *ptr);
 Bytecount non_ascii_set_charptr_emchar (Intbyte *ptr, Emchar c);
-Bytecount non_ascii_charptr_copy_char (const Intbyte *src, Intbyte *dst);
+Bytecount non_ascii_charptr_copy_emchar (const Intbyte *src, Intbyte *dst);
 
-INLINE_HEADER Emchar charptr_emchar (const Intbyte *ptr);
-INLINE_HEADER Emchar
+/* Retrieve the character pointed to by PTR as an Emchar. */
+
+DECLARE_INLINE_HEADER (
+Emchar
 charptr_emchar (const Intbyte *ptr)
+)
 {
-  return BYTE_ASCII_P (*ptr) ?
+  return byte_ascii_p (*ptr) ?
     simple_charptr_emchar (ptr) :
     non_ascii_charptr_emchar (ptr);
 }
 
-INLINE_HEADER Bytecount set_charptr_emchar (Intbyte *ptr, Emchar x);
-INLINE_HEADER Bytecount
-set_charptr_emchar (Intbyte *ptr, Emchar x)
+/* Retrieve the character pointed to by PTR (a pointer to text in the
+   format FMT, coming from OBJECT [a buffer, string?, or nil]) as an
+   Emchar.
+
+   Note: For these and other *_fmt() functions, if you pass in a constant
+   FMT, the switch will be optimized out of existence.  Therefore, there is
+   no need to create separate versions for the various formats for
+   "efficiency reasons".  In fact, we don't really need charptr_emchar()
+   and such written separately, but they are used often so it's simpler
+   that way. */
+
+DECLARE_INLINE_HEADER (
+Emchar
+charptr_emchar_fmt (const Intbyte *ptr, Internal_Format fmt,
+		    Lisp_Object object)
+)
 {
-  return !CHAR_MULTIBYTE_P (x) ?
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return charptr_emchar (ptr);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      return raw_16_bit_fixed_to_emchar (* (UINT_16_BIT *) ptr, object);
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return raw_32_bit_fixed_to_emchar (* (UINT_32_BIT *) ptr, object);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return raw_8_bit_fixed_to_emchar (*ptr, object);
+    }
+}
+
+/* Return the character at PTR (which is in format FMT), suitable for
+   comparison with an ASCII character.  This guarantees that if the
+   character at PTR is ASCII (range 0 - 127), that character will be
+   returned; otherwise, some character outside of the ASCII range will be
+   returned, but not necessarily the character actually at PTR.  This will
+   be faster than charptr_emchar_fmt() for some formats -- in particular,
+   FORMAT_DEFAULT. */
+
+DECLARE_INLINE_HEADER (
+Emchar
+charptr_emchar_ascii_fmt (const Intbyte *ptr, Internal_Format fmt,
+			  Lisp_Object object)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return (Emchar) *ptr;
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      return raw_16_bit_fixed_to_emchar (* (UINT_16_BIT *) ptr, object);
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return raw_32_bit_fixed_to_emchar (* (UINT_32_BIT *) ptr, object);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return raw_8_bit_fixed_to_emchar (*ptr, object);
+    }
+}
+
+/* Return the "raw value" of the character at PTR, in format FMT.  This is
+   useful when searching for a character; convert the character using
+   emchar_to_raw(). */
+
+DECLARE_INLINE_HEADER (
+Raw_Emchar
+charptr_emchar_raw_fmt (const Intbyte *ptr, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return (Raw_Emchar) charptr_emchar (ptr);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      return (Raw_Emchar) (* (UINT_16_BIT *) ptr);
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      return (Raw_Emchar) (* (UINT_32_BIT *) ptr);
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return (Raw_Emchar) (*ptr);
+    }
+}
+
+/* Store the character CH (an Emchar) as internally-formatted text starting
+   at PTR.  Return the number of bytes stored.
+*/
+     
+DECLARE_INLINE_HEADER (
+Bytecount
+set_charptr_emchar (Intbyte *ptr, Emchar x)
+)
+{
+  return !emchar_multibyte_p (x) ?
     simple_set_charptr_emchar (ptr, x) :
     non_ascii_set_charptr_emchar (ptr, x);
 }
 
-INLINE_HEADER Bytecount
-charptr_copy_char (const Intbyte *src, Intbyte *dst);
-INLINE_HEADER Bytecount
-charptr_copy_char (const Intbyte *src, Intbyte *dst)
+/* Store the character CH (an Emchar) as internally-formatted text of
+   format FMT starting at PTR, which comes from OBJECT.  Return the number
+   of bytes stored.
+*/
+     
+DECLARE_INLINE_HEADER (
+Bytecount
+set_charptr_emchar_fmt (Intbyte *ptr, Emchar x, Internal_Format fmt,
+			Lisp_Object object)
+)
 {
-  return BYTE_ASCII_P (*src) ?
-    simple_charptr_copy_char (src, dst) :
-    non_ascii_charptr_copy_char (src, dst);
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return set_charptr_emchar (ptr, x);
+    case FORMAT_16_BIT_FIXED:
+      text_checking_assert (emchar_16_bit_fixed_p (x, object));
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_16_BIT));
+      * (UINT_16_BIT *) ptr = emchar_to_raw_16_bit_fixed (x, object);
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      text_checking_assert (ptr == ALIGN_PTR (ptr, UINT_32_BIT));
+      * (UINT_32_BIT *) ptr = emchar_to_raw_32_bit_fixed (x, object);
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      text_checking_assert (emchar_8_bit_fixed_p (x, object));
+      *ptr = emchar_to_raw_8_bit_fixed (x, object);
+      return 1;
+    }
+}
+
+/* Retrieve the character pointed to by SRC and store it as
+   internally-formatted text in DST.
+*/
+
+DECLARE_INLINE_HEADER (
+Bytecount
+charptr_copy_emchar (const Intbyte *src, Intbyte *dst)
+)
+{
+  return byte_ascii_p (*src) ?
+    simple_charptr_copy_emchar (src, dst) :
+    non_ascii_charptr_copy_emchar (src, dst);
 }
 
 #else /* not MULE */
 
-# define charptr_emchar(ptr)		simple_charptr_emchar (ptr)
-# define set_charptr_emchar(ptr, x)	simple_set_charptr_emchar (ptr, x)
-# define charptr_copy_char(src, dst)	simple_charptr_copy_char (src, dst)
+# define charptr_emchar(ptr) simple_charptr_emchar (ptr)
+# define charptr_emchar_fmt(ptr, fmt, object) charptr_emchar (ptr)
+# define charptr_emchar_ascii_fmt(ptr, fmt, object) charptr_emchar (ptr)
+# define charptr_emchar_raw_fmt(ptr, fmt) charptr_emchar (ptr)
+# define set_charptr_emchar(ptr, x) simple_set_charptr_emchar (ptr, x)
+# define set_charptr_emchar_fmt(ptr, x, fmt, obj) set_charptr_emchar (ptr, x)
+# define charptr_copy_emchar(src, dst) simple_charptr_copy_emchar (src, dst)
 
 #endif /* not MULE */
 
+/* Retrieve the character at offset N (in characters) from PTR, as an
+   Emchar.
+*/
+     
 #define charptr_emchar_n(ptr, offset) \
   charptr_emchar (charptr_n_addr (ptr, offset))
 
 
 /* ---------------------------- */
-/* (D) For working with Emchars */
+/*     Working with Emchars     */
 /* ---------------------------- */
+
+/* NOTE: There are other functions/macros for working with Emchars in
+   charset.h, for retrieving the charset of an Emchar, the length of an
+   Emchar when converted to text, etc.
+*/
 
 #ifdef MULE
 
-int non_ascii_valid_char_p (Emchar ch);
+int non_ascii_valid_emchar_p (Emchar ch);
 
-INLINE_HEADER int valid_char_p (Emchar ch);
-INLINE_HEADER int
-valid_char_p (Emchar ch)
+/* Return whether the given Emchar is valid.
+ */
+
+DECLARE_INLINE_HEADER (
+int
+valid_emchar_p (Emchar ch)
+)
 {
-  return (! (ch & ~0xFF)) || non_ascii_valid_char_p (ch);
+  return (! (ch & ~0xFF)) || non_ascii_valid_emchar_p (ch);
 }
 
 #else /* not MULE */
 
-#define valid_char_p(ch) (! (ch & ~0xFF))
+#define valid_emchar_p(ch) (! (ch & ~0xFF))
 
 #endif /* not MULE */
 
-#define CHAR_INTP(x) (INTP (x) && valid_char_p (XINT (x)))
+#define CHAR_INTP(x) (INTP (x) && valid_emchar_p (XINT (x)))
 
 #define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
 
-INLINE_HEADER Emchar XCHAR_OR_CHAR_INT (Lisp_Object obj);
-INLINE_HEADER Emchar
+DECLARE_INLINE_HEADER (
+Emchar
 XCHAR_OR_CHAR_INT (Lisp_Object obj)
+)
 {
   return CHARP (obj) ? XCHAR (obj) : XINT (obj);
 }
+
+/* Signal an error if CH is not a valid character or integer Lisp_Object.
+   If CH is an integer Lisp_Object, convert it to a character Lisp_Object,
+   but merely by repackaging, without performing tests for char validity.
+   */
 
 #define CHECK_CHAR_COERCE_INT(x) do {		\
   if (CHARP (x))				\
@@ -466,6 +1029,221 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
     x = wrong_type_argument (Qcharacterp, x);	\
 } while (0)
 
+
+
+/************************************************************************/
+/*									*/
+/*		          working with Lisp strings                     */
+/*									*/
+/************************************************************************/
+
+#define string_char_length(s) \
+  string_index_byte_to_char (s, XSTRING_LENGTH (s))
+#define string_byte(s, i) (XSTRING_DATA (s)[i] + 0)
+/* In case we ever allow strings to be in a different format ... */
+#define set_string_byte(s, i, c) (XSTRING_DATA (s)[i] = (c))
+
+#define ASSERT_VALID_CHAR_STRING_INDEX_UNSAFE(s, x) do {		\
+  text_checking_assert ((x) >= 0 && x <= string_char_length (s));	\
+} while (0)
+
+#define ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE(s, x) do {		\
+  text_checking_assert ((x) >= 0 && x <= XSTRING_LENGTH (s));		\
+  text_checking_assert (valid_charptr_p (string_byte_addr (s, x)));	\
+} while (0)
+
+/* Convert offset I in string S to a pointer to text there. */
+#define string_byte_addr(s, i) (&(XSTRING_DATA (s)[i]))
+/* Convert pointer to text in string S into the byte offset to that text. */
+#define string_addr_to_byte(s, ptr) ((Bytecount) ((ptr) - XSTRING_DATA (s)))
+/* Return the Emchar at *CHARACTER* offset I. */
+#define string_emchar(s, i) charptr_emchar (string_char_addr (s, i))
+
+#ifdef ERROR_CHECK_TEXT
+#define SLEDGEHAMMER_CHECK_ASCII_BEGIN
+#endif
+
+#ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+void sledgehammer_check_ascii_begin (Lisp_Object str);
+#else
+#define sledgehammer_check_ascii_begin(str)
+#endif
+
+/* Make an alloca'd copy of a Lisp string */
+#define LISP_STRING_TO_ALLOCA(s, lval)					\
+do {									\
+  Intbyte **_lta_ = (Intbyte **) &(lval);				\
+  Lisp_Object _lta_2 = (s);						\
+  *_lta_ = alloca_array (Intbyte, 1 + XSTRING_LENGTH (_lta_2));		\
+  memcpy (*_lta_, XSTRING_DATA (_lta_2), 1 + XSTRING_LENGTH (_lta_2));	\
+} while (0)
+
+/* Make an alloca'd copy of a Intbyte * */
+#define INTBYTE_STRING_TO_ALLOCA(p, lval)		\
+do {							\
+  Intbyte **_bsta_ = (Intbyte **) &(lval);		\
+  const Intbyte *_bsta_2 = (p);				\
+  Bytecount _bsta_3 = qxestrlen (_bsta_2);		\
+  *_bsta_ = alloca_array (Intbyte, 1 + _bsta_3);	\
+  memcpy (*_bsta_, _bsta_2, 1 + _bsta_3);		\
+} while (0)
+
+#define alloca_intbytes(num) alloca_array (Intbyte, num)
+#define alloca_extbytes(num) alloca_array (Extbyte, num)
+
+void resize_string (Lisp_Object s, Bytecount pos, Bytecount delta);
+
+/* Convert a byte index into a string into a char index. */
+DECLARE_INLINE_HEADER (
+Charcount
+string_index_byte_to_char (Lisp_Object s, Bytecount idx)
+)
+{
+  Charcount retval;
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, idx);
+#ifdef MULE
+  if (idx <= (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval = (Charcount) idx;
+  else
+    retval = (XSTRING_ASCII_BEGIN (s) +
+	      bytecount_to_charcount (XSTRING_DATA (s) +
+				      XSTRING_ASCII_BEGIN (s),
+				      idx - XSTRING_ASCII_BEGIN (s)));
+# ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+  assert (retval == bytecount_to_charcount (XSTRING_DATA (s), idx));
+# endif
+#else
+  retval = (Charcount) idx;
+#endif
+  /* Don't call ASSERT_VALID_CHAR_STRING_INDEX_UNSAFE() here because it will
+     call string_index_byte_to_char(). */
+  return retval;
+}
+
+/* Convert a char index into a string into a byte index. */
+DECLARE_INLINE_HEADER (
+Bytecount
+string_index_char_to_byte (Lisp_Object s, Charcount idx)
+)
+{
+  Bytecount retval;
+  ASSERT_VALID_CHAR_STRING_INDEX_UNSAFE (s, idx);
+#ifdef MULE
+  if (idx <= (Charcount) XSTRING_ASCII_BEGIN (s))
+    retval = (Bytecount) idx;
+  else
+    retval = (XSTRING_ASCII_BEGIN (s) +
+	      charcount_to_bytecount (XSTRING_DATA (s) +
+				      XSTRING_ASCII_BEGIN (s),
+				      idx - XSTRING_ASCII_BEGIN (s)));
+# ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+  assert (retval == charcount_to_bytecount (XSTRING_DATA (s), idx));
+# endif
+#else
+  retval = (Bytecount) idx;
+#endif
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, retval);
+  return retval;
+}
+
+/* Convert a substring length (starting at byte offset OFF) from bytes to
+   chars. */
+DECLARE_INLINE_HEADER (
+Charcount
+string_offset_byte_to_char_len (Lisp_Object s, Bytecount off, Bytecount len)
+)
+{
+  Charcount retval;
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, off);
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, off + len);
+#ifdef MULE
+  if (off + len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval = (Charcount) len;
+  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval =
+      XSTRING_ASCII_BEGIN (s) - (Charcount) off +
+	bytecount_to_charcount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
+				len - (XSTRING_ASCII_BEGIN (s) - off));
+  else
+    retval = bytecount_to_charcount (XSTRING_DATA (s) + off, len);
+# ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+  assert (retval == bytecount_to_charcount (XSTRING_DATA (s) + off, len));
+# endif
+#else
+  retval = (Charcount) len;
+#endif
+  return retval;
+}
+
+/* Convert a substring length (starting at byte offset OFF) from chars to
+   bytes. */
+DECLARE_INLINE_HEADER (
+Bytecount
+string_offset_char_to_byte_len (Lisp_Object s, Bytecount off, Charcount len)
+)
+{
+  Bytecount retval;
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, off);
+#ifdef MULE
+  /* casts to avoid errors from combining Bytecount/Charcount and warnings
+     from signed/unsigned comparisons */
+  if (off + (Bytecount) len <= (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval = (Bytecount) len;
+  else if (off < (Bytecount) XSTRING_ASCII_BEGIN (s))
+    retval =
+      XSTRING_ASCII_BEGIN (s) - off +
+	charcount_to_bytecount (XSTRING_DATA (s) + XSTRING_ASCII_BEGIN (s),
+				len - (XSTRING_ASCII_BEGIN (s) -
+				       (Charcount) off));
+  else
+    retval = charcount_to_bytecount (XSTRING_DATA (s) + off, len);
+# ifdef SLEDGEHAMMER_CHECK_ASCII_BEGIN
+  assert (retval == charcount_to_bytecount (XSTRING_DATA (s) + off, len));
+# endif
+#else
+  retval = (Bytecount) len;
+#endif
+  ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE (s, off + retval);
+  return retval;
+}
+
+DECLARE_INLINE_HEADER (
+const Intbyte *
+string_char_addr (Lisp_Object s, Charcount idx)
+)
+{
+  return XSTRING_DATA (s) + string_index_char_to_byte (s, idx);
+}
+
+/* WARNING: If you modify an existing string, you must call
+   bump_string_modiff() afterwards. */
+#ifdef MULE
+void set_string_char (Lisp_Object s, Charcount i, Emchar c);
+#else
+#define set_string_char(s, i, c) set_string_byte (s, i, c)
+#endif /* not MULE */
+
+/* Return index to character before the one at IDX. */
+DECLARE_INLINE_HEADER (
+Bytecount
+prev_string_index (Lisp_Object s, Bytecount idx)
+)
+{
+  const Intbyte *ptr = string_byte_addr (s, idx);
+  DEC_CHARPTR (ptr);
+  return string_addr_to_byte (s, ptr);
+}
+
+/* Return index to character after the one at IDX. */
+DECLARE_INLINE_HEADER (
+Bytecount
+next_string_index (Lisp_Object s, Bytecount idx)
+)
+{
+  const Intbyte *ptr = string_byte_addr (s, idx);
+  INC_CHARPTR (ptr);
+  return string_addr_to_byte (s, ptr);
+}
 
 
 /************************************************************************/
@@ -598,10 +1376,10 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
         that is "null-terminated" (the meaning of this depends on the nature
         of the default internal format).
    void eicpy_raw_fmt (Eistring *eistr, const Intbyte *data, Bytecount len,
-                       Internal_Format intfmt);
+                       Internal_Format intfmt, Lisp_Object object);
         ... from raw internal-format data in the specified format.
    void eicpy_rawz_fmt (Eistring *eistr, const Intbyte *data,
-                        Internal_Format intfmt);
+                        Internal_Format intfmt, Lisp_Object object);
         ... from raw internal-format data in the specified format that is
         "null-terminated" (the meaning of this depends on the nature of
         the specific format).
@@ -651,7 +1429,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
    void eicpyout_alloca_fmt (Eistring *eistr, LVALUE: Intbyte *ptr_out,
                              LVALUE: Bytecount len_out,
-                             Internal_Format intfmt);
+                             Internal_Format intfmt, Lisp_Object object);
         Like eicpyout_alloca(), but converts to the specified internal
         format. (No formats other than FORMAT_DEFAULT are currently
         implemented, and you get an assertion failure if you try.)
@@ -664,7 +1442,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
         a NULL pointer.
 
    Intbyte *eicpyout_malloc_fmt (Eistring *eistr, Internal_Format intfmt,
-                                 Bytecount *intlen_out);
+                                 Bytecount *intlen_out, Lisp_Object object);
         Like eicpyout_malloc(), but converts to the specified internal
         format. (No formats other than FORMAT_DEFAULT are currently
         implemented, and you get an assertion failure if you try.)
@@ -1007,14 +1785,6 @@ typedef struct
   Bytecount extlen_;
 } Eistring;
 
-typedef enum internal_format
-{
-  FORMAT_DEFAULT,
-  FORMAT_FIXED_8,
-  FORMAT_FIXED_16,
-  FORMAT_FIXED_32
-} Internal_Format;
-
 extern Eistring the_eistring_zero_init, the_eistring_malloc_zero_init;
 
 #define DECLARE_EISTRING(name)					\
@@ -1146,7 +1916,7 @@ do {									\
 do {									\
   Lisp_Object ei3 = (lisp_string);					\
   EI_ALLOC_AND_COPY (ei, XSTRING_DATA (ei3), XSTRING_LENGTH (ei3),	\
-		     XSTRING_CHAR_LENGTH (ei3));			\
+		     string_char_length (ei3));			\
 } while (0)
 
 #define eicpy_lstr_off(ei, lisp_string, off, charoff, len, charlen)	\
@@ -1166,7 +1936,7 @@ do {									\
   EI_ALLOC_AND_COPY (ei, ei23data + ei23off, ei23len, ei23charlen);	\
 } while (0)
 
-#define eicpy_raw_fmt(ei, ptr, len, fmt)				\
+#define eicpy_raw_fmt(ei, ptr, len, fmt, object)			\
 do {									\
   const Intbyte *ei12ptr = (ptr);					\
   Internal_Format ei12fmt = (fmt);					\
@@ -1176,17 +1946,18 @@ do {									\
 		     bytecount_to_charcount (ei12ptr, ei12len));	\
 } while (0)
 
-#define eicpy_raw(ei, ptr, len) eicpy_raw_fmt (ei, ptr, len, FORMAT_DEFAULT)
+#define eicpy_raw(ei, ptr, len) \
+  eicpy_raw_fmt (ei, ptr, len, FORMAT_DEFAULT, Qnil)
 
-#define eicpy_rawz_fmt(ei, ptr, fmt)				\
-do {								\
-  const Intbyte *ei12p1ptr = (ptr);				\
-  Internal_Format ei12p1fmt = (fmt);				\
-  assert (ei12p1fmt == FORMAT_DEFAULT);				\
-  eicpy_raw_fmt (ei, ei12p1ptr, qxestrlen (ei12p1ptr), fmt);	\
+#define eicpy_rawz_fmt(ei, ptr, fmt, object)				\
+do {									\
+  const Intbyte *ei12p1ptr = (ptr);					\
+  Internal_Format ei12p1fmt = (fmt);					\
+  assert (ei12p1fmt == FORMAT_DEFAULT);					\
+  eicpy_raw_fmt (ei, ei12p1ptr, qxestrlen (ei12p1ptr), fmt, object);	\
 } while (0)
 
-#define eicpy_rawz(ei, ptr) eicpy_rawz_fmt (ei, ptr, FORMAT_DEFAULT)
+#define eicpy_rawz(ei, ptr) eicpy_rawz_fmt (ei, ptr, FORMAT_DEFAULT, Qnil)
 
 #define eicpy_ch(ei, ch)					\
 do {								\
@@ -1261,12 +2032,12 @@ do {									\
 } while (0)
 
 #define eicpyout_alloca(eistr, ptrout, lenout) \
-  eicpyout_alloca_fmt (eistr, ptrout, lenout, FORMAT_DEFAULT)
+  eicpyout_alloca_fmt (eistr, ptrout, lenout, FORMAT_DEFAULT, Qnil)
 #define eicpyout_malloc(eistr, lenout) \
-  eicpyout_malloc_fmt (eistr, lenout, FORMAT_DEFAULT)
+  eicpyout_malloc_fmt (eistr, lenout, FORMAT_DEFAULT, Qnil)
 Intbyte *eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out,
-			      Internal_Format fmt);
-#define eicpyout_alloca_fmt(eistr, ptrout, lenout, fmt)		\
+			      Internal_Format fmt, Lisp_Object object);
+#define eicpyout_alloca_fmt(eistr, ptrout, lenout, fmt, object)	\
 do {								\
   Internal_Format ei23fmt = (fmt);				\
   Intbyte *ei23ptrout = &(ptrout);				\
@@ -1449,7 +2220,7 @@ do {							\
 do {								\
   Lisp_Object ei17 = (lisp_string);				\
   eicat_1 (ei, XSTRING_DATA (ei17), XSTRING_LENGTH (ei17),	\
-	   XSTRING_CHAR_LENGTH (ei17));				\
+	   string_char_length (ei17));				\
 } while (0)
 
 #define eicat_ch(ei, ch)				\
@@ -2023,75 +2794,11 @@ do {								\
 								\
   if (!__gserr__)						\
     {								\
-      var = alloca_intbytes (99);				\
+      var = alloca_intbytes (99);					\
       qxesprintf (var, "Unknown error %d", __gsnum__);		\
     }								\
   else								\
     EXTERNAL_TO_C_STRING (__gserr__, var, Qstrerror_encoding);	\
 } while (0)
-
-/************************************************************************/
-/*		Lisp string representation convenience functions	*/
-/************************************************************************/
-
-/* Because the representation of internally formatted data is subject
-   to change, it's bad style to do something like
-
-   strcmp (XSTRING_DATA (s), "foo")
-
-   Instead, use the portable:
-
-   intbyte_strcmp (XSTRING_DATA (s), "foo")          or
-   intbyte_memcmp (XSTRING_DATA (s), "foo", 3)
-
-*/
-
-/* Like strcmp, except first arg points at internally formatted data,
-   while the second points at a string of only ASCII chars. */
-DECLARE_INLINE_HEADER (
-int
-intbyte_strcmp (const Intbyte *bp, const char *ascii_string)
-)
-{
-#ifdef MULE
-  while (1)
-    {
-      int diff;
-      type_checking_assert (BYTE_ASCII_P (*ascii_string));
-      if ((diff = charptr_emchar (bp) - *(Intbyte *) ascii_string) != 0)
-	return diff;
-      if (*ascii_string == '\0')
-	return 0;
-      ascii_string++;
-      INC_CHARPTR (bp);
-    }
-#else
-  return strcmp ((char *)bp, ascii_string);
-#endif
-}
-
-/* Like memcmp, except first arg points at internally formatted data,
-   while the second points at a string of only ASCII chars. */
-
-DECLARE_INLINE_HEADER (
-int
-intbyte_memcmp (const Intbyte *bp, const char *ascii_string, Bytecount len)
-)
-{
-#ifdef MULE
-  while (len--)
-    {
-      int diff = charptr_emchar (bp) - *(Intbyte *) ascii_string;
-      type_checking_assert (BYTE_ASCII_P (*ascii_string));
-      if (diff != 0)
-	return diff;
-      ascii_string++;
-      INC_CHARPTR (bp);
-    }
-  return 0;
-#else
-  return memcmp (bp, ascii_string, len);
-#endif
-}
 
 #endif /* INCLUDED_text_h_ */

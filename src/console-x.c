@@ -193,7 +193,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   connection = x_device_to_console_connection (connection, errb);
 
   /* Check for a couple of standard special cases */
-  if (XSTRING_CHAR (connection, 0) == ':')
+  if (string_emchar (connection, 0) == ':')
     connection = concat2 (build_string ("localhost"), connection);
   else
     {

@@ -1464,7 +1464,7 @@ point remains at the end of the last character read from the buffer.
 }
 
 #if 0
-xxDEFUN ("eval-current-buffer", Feval_current_buffer, 0, 1, "", /*
+DEFUN ("eval-current-buffer", Feval_current_buffer, 0, 1, "", /*
 Execute the current buffer as Lisp code.
 Programs can pass argument PRINTFLAG which controls printing of output:
 nil means discard it; anything else is stream for print.

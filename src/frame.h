@@ -1,5 +1,6 @@
 /* Define frame-object for XEmacs.
    Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1995 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -246,10 +247,10 @@ DECLARE_LRECORD (frame, struct frame);
 #define FRAME_TYPE_P(f, type)	EQ (FRAME_TYPE (f), Q##type)
 
 #ifdef ERROR_CHECK_TYPES
-INLINE_HEADER struct frame *
-error_check_frame_type (struct frame * f, Lisp_Object sym);
-INLINE_HEADER struct frame *
+DECLARE_INLINE_HEADER (
+struct frame *
 error_check_frame_type (struct frame * f, Lisp_Object sym)
+)
 {
   assert (EQ (FRAME_TYPE (f), sym));
   return f;

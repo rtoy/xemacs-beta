@@ -452,10 +452,10 @@ extern const struct lrecord_description coding_system_empty_extra_description[];
 #define DECLARE_CODING_SYSTEM_TYPE(type)				\
 									\
 extern struct coding_system_methods * type##_coding_system_methods;	\
-INLINE_HEADER struct type##_coding_system *				\
-error_check_##type##_coding_system_data (Lisp_Coding_System *cs);	\
-INLINE_HEADER struct type##_coding_system *				\
+DECLARE_INLINE_HEADER (							\
+struct type##_coding_system *						\
 error_check_##type##_coding_system_data (Lisp_Coding_System *cs)	\
+)									\
 {									\
   assert (CODING_SYSTEM_TYPE_P (cs, type));				\
   /* Catch accidental use of INITIALIZE_CODING_SYSTEM_TYPE in place	\
@@ -464,19 +464,19 @@ error_check_##type##_coding_system_data (Lisp_Coding_System *cs)	\
   return (struct type##_coding_system *) cs->data;			\
 }									\
 									\
-INLINE_HEADER struct type##_coding_stream *				\
-error_check_##type##_coding_stream_data (struct coding_stream *s);	\
-INLINE_HEADER struct type##_coding_stream *				\
+DECLARE_INLINE_HEADER (							\
+struct type##_coding_stream *						\
 error_check_##type##_coding_stream_data (struct coding_stream *s)	\
+)									\
 {									\
   assert (XCODING_SYSTEM_TYPE_P (s->codesys, type));			\
   return (struct type##_coding_stream *) s->data;			\
 }									\
 									\
-INLINE_HEADER Lisp_Coding_System *					\
-error_check_##type##_coding_system_type (Lisp_Object obj);		\
-INLINE_HEADER Lisp_Coding_System *					\
+DECLARE_INLINE_HEADER (							\
+Lisp_Coding_System *							\
 error_check_##type##_coding_system_type (Lisp_Object obj)		\
+)									\
 {									\
   Lisp_Coding_System *cs = XCODING_SYSTEM (obj);			\
   assert (CODING_SYSTEM_TYPE_P (cs, type));				\
@@ -959,9 +959,9 @@ struct coding_stream
 
 #define DECODE_ADD_BINARY_CHAR(c, dst)			\
 do {							\
-  if (BYTE_ASCII_P (c))					\
+  if (byte_ascii_p (c))					\
     Dynarr_add (dst, c);				\
-  else if (BYTE_C1_P (c))				\
+  else if (byte_c1_p (c))				\
     {							\
       Dynarr_add (dst, LEADING_BYTE_CONTROL_1);		\
       Dynarr_add (dst, c + 0x20);			\

@@ -52,7 +52,7 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
     {
       Lisp_Object text_field_callback;
       Extbyte *text_field_value = wv->value;
-      VOID_TO_LISP (text_field_callback, wv->call_data);
+      text_field_callback = VOID_TO_LISP (wv->call_data);
       text_field_callback = XCAR (XCDR (text_field_callback));
       if (text_field_value)
 	{

@@ -835,6 +835,15 @@ do {								\
 
 Lisp_Object tstr_to_local_file_format (Extbyte *pathout);
 
+/* Convert from local file format, as used in XEmacs, to valid win32
+   filenames as can be given to Windows API routines.  Under native XEmacs,
+   this is a no-op, but under Cygwin, the local names look different --
+   Cygwin mount points, forward slashes, etc.  Currently, under Cygwin, we
+   actually allow local names to be of both formats, i.e. Cygwin or Win32
+   native.  So we check to see if we have Win32 native already (a cheesy
+   check, look for letter plus colon at beginning of name) and do nothing
+   in that case. */
+
 #ifdef CYGWIN
 #define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)			   \
 do {									   \
@@ -879,6 +888,56 @@ do {							\
   (pathout) = (path);					\
 } while (0)
 #endif
+
+/* Convert a local-format file name or URL in internal format into a Win32
+   file name or URL in tstr format. */
+
+#ifdef CYGWIN
+
+#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)		     \
+do									     \
+{									     \
+  Intbyte *lffmutt_fname1;						     \
+  Intbyte *lffmutt_pathint = XSTRING_DATA (lispstr);			     \
+									     \
+  if ((lffmutt_fname1 = qxestrchr (lffmutt_pathint, ':')) != NULL	     \
+      && *++lffmutt_fname1 == '/' && *++lffmutt_fname1 == '/')		     \
+    {									     \
+      /* If URL style file, the innards may have Cygwin mount points and     \
+	 the like.  so separate out the innards, process them, and put back  \
+	 together. */							     \
+      if (qxestrncasecmp_c (lffmutt_pathint, "file://", 7) == 0)	     \
+	{								     \
+	  Intbyte *lffmutt_path1, *lffmutt_path2;			     \
+	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1);   \
+	  if (lffmutt_path1 == lffmutt_pathint + 7) /* Optimization */	     \
+	    lffmutt_path2 = lffmutt_pathint;				     \
+	  else								     \
+	    {								     \
+	      lffmutt_path2 = alloca_intbytes (7 + qxestrlen (lffmutt_path1) \
+					       + 1);			     \
+	      qxestrncpy (lffmutt_path2, lffmutt_pathint, 7);		     \
+	      qxestrcpy (lffmutt_path2 + 7, lffmutt_path1);		     \
+	    }								     \
+	  C_STRING_TO_TSTR (lffmutt_path2, pathout);			     \
+	}								     \
+      else								     \
+	/* A straight URL, just convert */				     \
+	LISP_STRING_TO_TSTR (lispstr, pathout);				     \
+    }									     \
+  else									     \
+    /* Not URL-style, must be a straight filename. */			     \
+    LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout);			     \
+} while (0)
+
+#else /* not CYGWIN */
+
+  /* URL's (and everything else) are already in the right format */
+#define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout) \
+   LOCAL_FILE_FORMAT_TO_TSTR (lispstr, pathout)
+
+#endif /* not CYGWIN */
+
 
 Intbyte *urlify_filename (Intbyte *filename);
 Intbyte *mswindows_canonicalize_filename (Intbyte *name);

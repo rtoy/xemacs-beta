@@ -244,7 +244,7 @@ it defaults to the value of the variable `obarray'.
     XSYMBOL_NEXT (symbol) = 0;
   *ptr = object;
 
-  if (XSTRING_BYTE (XSYMBOL_NAME (symbol), 0) == ':' && EQ (obarray, Vobarray))
+  if (string_byte (XSYMBOL_NAME (symbol), 0) == ':' && EQ (obarray, Vobarray))
     {
       /* The LISP way is to put keywords in their own package, but we
 	 don't have packages, so we do something simpler.  Someday,

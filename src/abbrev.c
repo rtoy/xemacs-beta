@@ -76,9 +76,10 @@ Fixnum last_abbrev_location;
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
 
-struct abbrev_match_mapper_closure {
+struct abbrev_match_mapper_closure
+{
   struct buffer *buf;
-  Lisp_Char_Table *chartab;
+  Lisp_Object chartab;
   Charbpos point;
   Charcount maxlen;
   Lisp_Symbol *found;
@@ -104,7 +105,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
       return 0;
     }
   abbrev = symbol_name (sym);
-  abbrev_length = XSTRING_CHAR_LENGTH (abbrev);
+  abbrev_length = string_char_length (abbrev);
   if (abbrev_length > closure->maxlen)
     {
       /* This abbrev is too large -- it wouldn't fit. */
@@ -114,7 +115,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
      normally want to expand it.  OTOH, if the abbrev begins with
      non-word syntax (e.g. `#if'), it is OK to abbreviate it anywhere.  */
   if (abbrev_length < closure->maxlen && abbrev_length > 0
-      && (WORD_SYNTAX_P (closure->chartab, XSTRING_CHAR (abbrev, 0)))
+      && (WORD_SYNTAX_P (closure->chartab, string_emchar (abbrev, 0)))
       && (WORD_SYNTAX_P (closure->chartab,
 			 BUF_FETCH_CHAR (closure->buf,
 					 closure->point -
@@ -160,7 +161,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   closure.buf = buf;
   closure.point = BUF_PT (buf);
   closure.maxlen = closure.point - BUF_BEGV (buf);
-  closure.chartab = XCHAR_TABLE (buf->mirror_syntax_table);
+  closure.chartab = buf->mirror_syntax_table;
   closure.found = 0;
 
   map_obarray (obarray, abbrev_match_mapper, &closure);
@@ -330,7 +331,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   /* OK, we're out of the must-be-fast part.  An abbreviation matched.
      Now find the parameters, insert the expansion, and make it all
      look pretty.  */
-  abbrev_length = XSTRING_CHAR_LENGTH (symbol_name (abbrev_symbol));
+  abbrev_length = string_char_length (symbol_name (abbrev_symbol));
   abbrev_start = point - abbrev_length;
 
   expansion = symbol_value (abbrev_symbol);
@@ -386,7 +387,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
       Charbpos pos = abbrev_start;
       /* Find the initial.  */
       while (pos < point
-	     && !WORD_SYNTAX_P (XCHAR_TABLE (buf->mirror_syntax_table),
+	     && !WORD_SYNTAX_P (buf->mirror_syntax_table,
 				BUF_FETCH_CHAR (buf, pos)))
 	pos++;
       /* Change just that.  */

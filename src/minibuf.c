@@ -298,8 +298,8 @@ ignore_completion_p (Lisp_Object completion_string,
 
    To do so, there should probably be a
    map_obarray_or_alist_or_hash_table function which would be used by
-   both Ftry_completion and Fall_completions.  But would the
-   additional funcalls slow things down?  */
+   both Ftry_completion and Fall_completions.  [[ But would the
+   additional funcalls slow things down? ]] Seriously doubtful. --ben */
 
 DEFUN ("try-completion", Ftry_completion, 2, 3, 0, /*
 Return common substring of all completions of STRING in COLLECTION.
@@ -355,7 +355,7 @@ or the symbol from the obarray.
 
   bestmatch = Qnil;
   blength = 0;
-  slength = XSTRING_CHAR_LENGTH (string);
+  slength = string_char_length (string);
 
   /* If COLLECTION is not a list, set TAIL just for gc pro.  */
   tail = collection;
@@ -418,7 +418,7 @@ or the symbol from the obarray.
 
       if (STRINGP (eltstring))
 	{
-	  Charcount eltlength = XSTRING_CHAR_LENGTH (eltstring);
+	  Charcount eltlength = string_char_length (eltstring);
 	  if (slength <= eltlength
 	      && (0 > scmp (XSTRING_DATA (eltstring),
                             XSTRING_DATA (string),
@@ -562,7 +562,7 @@ or the symbol from the obarray.
     return call3 (collection, string, predicate, Qt);
 
   allmatches = Qnil;
-  slength = XSTRING_CHAR_LENGTH (string);
+  slength = string_char_length (string);
 
   /* If COLLECTION is not a list, set TAIL just for gc pro.  */
   tail = collection;
@@ -618,12 +618,12 @@ or the symbol from the obarray.
       /* Is this element a possible completion? */
 
       if (STRINGP (eltstring)
-          && (slength <= XSTRING_CHAR_LENGTH (eltstring))
+          && (slength <= string_char_length (eltstring))
           /* Reject alternatives that start with space
 	     unless the input starts with space.  */
-	  && ((XSTRING_CHAR_LENGTH (string) > 0 &&
-	       XSTRING_CHAR (string, 0) == ' ')
-	      || XSTRING_CHAR (eltstring, 0) != ' ')
+	  && ((string_char_length (string) > 0 &&
+	       string_emchar (string, 0) == ' ')
+	      || string_emchar (eltstring, 0) != ' ')
 	  && (0 > scmp (XSTRING_DATA (eltstring),
                         XSTRING_DATA (string),
                         slength)))
@@ -649,7 +649,7 @@ or the symbol from the obarray.
    implement some braindamage in FSF which we aren't including. --cet */
 
 #if 0
-xxDEFUN ("minibuffer-prompt", Fminibuffer_prompt, 0, 0, 0, /*
+DEFUN ("minibuffer-prompt", Fminibuffer_prompt, 0, 0, 0, /*
 Return the prompt string of the currently-active minibuffer.
 If no minibuffer is active, return nil.
 */
@@ -658,7 +658,7 @@ If no minibuffer is active, return nil.
   return Fcopy_sequence (Vminibuf_prompt);
 }
 
-xxDEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width, 0, 0, 0, /*
+DEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width, 0, 0, 0, /*
 Return the display width of the minibuffer prompt.
 */
 	 ())
@@ -756,7 +756,7 @@ echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
     {
       if (STRINGP (reloc))
 	nonreloc = XSTRING_DATA (reloc);
-      write_string_1 (nonreloc + offset, length, Qexternal_debugging_output);
+      write_string_1 (Qexternal_debugging_output, nonreloc + offset, length);
     }
 }
 

@@ -768,7 +768,7 @@ nt_create_process (Lisp_Process *p,
       HANDLE htmp;
       SECURITY_ATTRIBUTES sa;
 
-      sa.nLength = sizeof(sa);
+      sa.nLength = sizeof (sa);
       sa.bInheritHandle = TRUE;
       sa.lpSecurityDescriptor = NULL;
 

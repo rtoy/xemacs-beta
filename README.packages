@@ -10,27 +10,41 @@ For general XEmacs navigation tips: Press C-h t
 The XEmacs Packages Quick Start Guide
 -------------------------------------
 
-This text is intended to help you get started installing a new XEmacs
-and its packages from start.  For details see the 'Startup Paths' and
-'Packages' sections of the XEmacs info manual.
+This text is intended to help you get started installing a new XEmacs and
+its packages.  For more details see the 'Startup Paths' and 'Packages'
+sections of the XEmacs info manual.
 
 * Real Real Quickstart FAQ
 --------------------------
 
 Q. Do I need to have the packages to compile XEmacs?
-A. No, XEmacs will build and install just fine without any packages
-   installed.  However, only the most basic editing functions will be
-   available with no packages installed, so installing packages is an
+
+A. Theoretically, no -- XEmacs will build and install just fine without any
+   packages installed.  However, only the most basic editing functions will
+   be available with no packages installed, so installing packages is an
    essential part of making your installed XEmacs _useful_.
 
 Q. I really liked the old way that packages were bundled and do not
    want to mess with packages at all.
+
 A. You can grab all the packages at once like you used to with old
    XEmacs versions, skip to the 'Sumo Tarball' section below.
+
+Q. How do I tell XEmacs where to find the packages?
+
+A. Normally, you put the packages under $prefix/lib/packages, where
+   $prefix is specified using the `--prefix' parameter to `configure'.
+   (See `Package hierarchies' below).  However, if you have the packages
+   somewhere else (e.g. you're a developer and are compiling the packages
+   yourself, and want your own private copy of everything), use the
+   `--package-path' parameter, something like this:
+
+   configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
 
 Q. After installing, I want XEmacs to do `foo', but when I invoke it
    (or click the toolbar button or select the menu item), nothing (or
    an error) happens, and it used to work.
+
 A. See the first FAQ; you may be missing a package that is essential to
    you.  You can either track it down and install it, or install the
    `Sumo Tarball' (see the second FAQ).
@@ -44,7 +58,7 @@ set in stone. The XEmacs maintainers reserve the right to sacrifice
 backwards compatibility as quirks are worked out over the coming
 releases.
 
-* Some Package Theory
+* Some package theory
 ---------------------
 
 In order to reduce the size and increase the maintainability of XEmacs,
@@ -60,20 +74,35 @@ path correctly, install autoloads, etc, etc.
 * Package hierarchies
 ---------------------
 
-On Startup XEmacs looks for packages in so called package hierarchies.
-These can be specified by the 'package-path' parameter to the
-'configure' script. However by default there are three system wide
-hierarchies. ("$prefix" defaults to "/usr/local")
+On Startup XEmacs looks for packages in so-called package hierarchies.
+Normally, there are three system wide hierarchies, like this:
 
-$prefix/lib/xemacs/xemacs-packages
+$prefix/lib/xemacs/xemacs-packages/
      Normal packages go here.
 
-$prefix/lib/xemacs/mule-packages
+$prefix/lib/xemacs/mule-packages/
      Mule packages go here and are only searched by MULE-enabled XEmacsen.
 
 $prefix/lib/xemacs/site-packages/
      Local and 3rd party packages go here.
 
+This is what you get when you untar the SUMO tarballs under
+$prefix/lib/xemacs.
+
+$prefix is specified using the `--prefix' parameter to `configure', and
+defaults to `usr/local'.
+
+If your packages are located in the above directories, XEmacs will
+automatically find them at startup; however, if you have your packages
+somewhere else (e.g. you're a developer and are compiling the packages
+yourself, and want your own private copy of everything), you can tell
+XEmacs specifically where to look for the packages by using the
+`--package-path' parameter to the 'configure' script.  Normally, it looks
+like this:
+
+configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
+
+See `configure.usage' for more info about the format of this parameter.
 
 * Where to get the packages
 ---------------------------

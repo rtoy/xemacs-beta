@@ -1,6 +1,7 @@
 ;; test-harness.el --- Run Emacs Lisp test suites.
 
 ;;; Copyright (C) 1998 Free Software Foundation, Inc.
+;;; Copyright (C) 2002 Ben Wing.
 
 ;; Author: Martin Buchholz
 ;; Keywords: testing
@@ -125,20 +126,32 @@ The output file's name is made by appending `c' to the end of FILENAME."
 
 	(trick-optimizer nil)
 	(unexpected-test-suite-failure nil)
-	(debug-on-error t))
+	(debug-on-error t)
+	(pass-stream nil))
     (with-output-to-temp-buffer "*Test-Log*"
+      (princ (format "Testing %s...\n\n" filename))
+    
+      (defun Print-Failure (fmt &rest args)
+	(setq fmt (concat "FAIL: " fmt))
+	(if (noninteractive) (apply #'message fmt args))
+	(princ (concat (apply #'format fmt args) "\n")))
+
+      (defun Print-Pass (fmt &rest args)
+	(setq fmt (concat "PASS: " fmt))
+	(and test-harness-verbose
+	     (princ (concat (apply #'format fmt args) "\n"))))
+
 
       (defmacro Assert (assertion)
 	`(condition-case error-info
 	     (progn
 	       (assert ,assertion)
-	       (princ (format "PASS: %S" (quote ,assertion)))
-	       (terpri)
+	       (Print-Pass "%S" (quote ,assertion))
 	       (incf passes))
 	   (cl-assertion-failed
-	    (princ (format "FAIL: Assertion failed: %S\n" (quote ,assertion)))
+	    (Print-Failure "Assertion failed: %S" (quote ,assertion))
 	    (incf assertion-failures))
-	   (t (princ (format "FAIL: %S ==> error: %S\n" (quote ,assertion) error-info))
+	   (t (Print-Failure "%S ==> error: %S" (quote ,assertion) error-info)
 	      (incf other-failures)
 	      )))
 
@@ -148,42 +161,42 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	  `(condition-case error-info
 	       (progn
 		 (setq trick-optimizer (progn ,@body))
-		 (princ (format "FAIL: %S executed successfully, but expected error %S\n"
+		 (Print-Failure "%S executed successfully, but expected error %S"
 				,quoted-body
-				',expected-error))
+				',expected-error)
 		 (incf no-error-failures))
 	     (,expected-error
-	      (princ (format "PASS: %S ==> error %S, as expected\n"
-			     ,quoted-body ',expected-error))
+	      (Print-Pass "%S ==> error %S, as expected"
+			  ,quoted-body ',expected-error)
 	      (incf passes))
 	     (error
-	      (princ (format "FAIL: %S ==> expected error %S, got error %S instead\n"
-			     ,quoted-body ',expected-error error-info))
+	      (Print-Failure "%S ==> expected error %S, got error %S instead"
+			     ,quoted-body ',expected-error error-info)
 	      (incf wrong-error-failures)))))
 
-      (defmacro Check-Error-Message (expected-error expected-error-regexp &rest body)
+      (defmacro Check-Error-Message (expected-error expected-error-regexp
+						    &rest body)
 	(let ((quoted-body (if (= 1 (length body))
 			       `(quote ,(car body)) `(quote (progn ,@body)))))
 	  `(condition-case error-info
 	       (progn
 		 (setq trick-optimizer (progn ,@body))
-		 (princ (format "FAIL: %S executed successfully, but expected error %S\n"
-				,quoted-body
-				',expected-error))
+		 (Print-Failure "%S executed successfully, but expected error %S"
+				,quoted-body ',expected-error)
 		 (incf no-error-failures))
 	     (,expected-error
 	      (let ((error-message (second error-info)))
 		(if (string-match ,expected-error-regexp error-message)
 		    (progn
-		      (princ (format "PASS: %S ==> error %S %S, as expected\n"
-				     ,quoted-body error-message ',expected-error))
+		      (Print-Pass "%S ==> error %S %S, as expected"
+				  ,quoted-body error-message ',expected-error)
 		      (incf passes))
-		  (princ (format "FAIL: %S ==> got error %S as expected, but error message %S did not match regexp %S\n"
-				 ,quoted-body ',expected-error error-message ,expected-error-regexp))
+		  (Print-Failure "%S ==> got error %S as expected, but error message %S did not match regexp %S"
+				 ,quoted-body ',expected-error error-message ,expected-error-regexp)
 		  (incf wrong-error-failures))))
 	     (error
-	      (princ (format "FAIL: %S ==> expected error %S, got error %S instead\n"
-			     ,quoted-body ',expected-error error-info))
+	      (Print-Failure "%S ==> expected error %S, got error %S instead"
+			     ,quoted-body ',expected-error error-info)
 	      (incf wrong-error-failures)))))
 
 
@@ -201,15 +214,16 @@ The output file's name is made by appending `c' to the end of FILENAME."
 		   (setq trick-optimizer (progn ,@body))
 		   (if (string-match ,expected-message-regexp messages)
 		       (progn
-			 (princ (format "PASS: %S ==> value %S, message %S, matching %S, as expected\n"
-					,quoted-body trick-optimizer messages ',expected-message-regexp))
+			 (Print-Pass "%S ==> value %S, message %S, matching %S, as expected"
+				     ,quoted-body trick-optimizer messages ',expected-message-regexp)
 			 (incf passes))
-		     (princ (format "FAIL: %S ==> value %S, message %S, NOT matching expected %S\n"
-				    ,quoted-body  trick-optimizer messages ',expected-message-regexp))
+		     (Print-Failure "%S ==> value %S, message %S, NOT matching expected %S"
+				    ,quoted-body  trick-optimizer messages
+				    ',expected-message-regexp)
 		     (incf missing-message-failures)))
 	       (error
-		(princ (format "FAIL: %S ==> unexpected error %S\n"
-			       ,quoted-body error-info))
+		(Print-Failure "%S ==> unexpected error %S"
+			       ,quoted-body error-info)
 		(incf other-failures)))
 	     (ad-unadvise 'message))))
 
@@ -252,7 +266,7 @@ The output file's name is made by appending `c' to the end of FILENAME."
 	   (message "Unexpected error %S while executing byte-compiled code." error-info)
 	   (message "Test suite execution aborted." error-info)
 	   )))
-      (princ "\nSUMMARY:\n")
+      (princ (format "\nSUMMARY for %s:\n" filename))
       (princ (format "\t%5d passes\n" passes))
       (princ (format "\t%5d assertion failures\n" assertion-failures))
       (princ (format "\t%5d errors that should have been generated, but weren't\n" no-error-failures))

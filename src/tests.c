@@ -360,6 +360,7 @@ Test TO_EXTERNAL_FORMAT() and TO_INTERNAL_FORMAT()
   TO_INTERNAL_FORMAT (LISP_OPAQUE, opaque_dos,
 		      LISP_BUFFER, Fcurrent_buffer(),
 		      intern ("undecided"));
+  /* &&#### needs some 8-bit work here */
   DFC_CHECK_DATA (BUF_BYTE_ADDRESS (current_buffer, BUF_PT (current_buffer)),
 		  sizeof (int_foo) - 1, int_foo);
 

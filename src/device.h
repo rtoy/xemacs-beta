@@ -39,7 +39,7 @@ struct pixel_to_glyph_translation_cache
   int low_x_coord, high_x_coord, col, obj_x;
   int low_y_coord, high_y_coord, row, obj_y;
   struct window *w;
-  Charbpos charbpos;
+  Charbpos charpos;
   Charbpos closest;
   Charcount modeline_closest;
   Lisp_Object obj1, obj2;
@@ -157,10 +157,10 @@ DECLARE_LRECORD (device, struct device);
 #define DEVICE_TYPE_P(d, type)	EQ (DEVICE_TYPE (d), Q##type)
 
 #ifdef ERROR_CHECK_TYPES
-INLINE_HEADER struct device *
-error_check_device_type (struct device *d, Lisp_Object sym);
-INLINE_HEADER struct device *
+DECLARE_INLINE_HEADER (
+struct device *
 error_check_device_type (struct device *d, Lisp_Object sym)
+)
 {
   assert (EQ (DEVICE_TYPE (d), sym));
   return d;

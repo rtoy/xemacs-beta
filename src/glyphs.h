@@ -1,6 +1,6 @@
  /* Generic glyph data structures + display tables
    Copyright (C) 1994 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996 Ben Wing
+   Copyright (C) 1995, 1996, 2002 Ben Wing
 
 This file is part of XEmacs.
 
@@ -329,16 +329,21 @@ do {									   \
 
 #define INSTANTIATOR_TYPE(inst) (XVECTOR_DATA ((inst))[0])
 
-struct image_instantiator_methods *
-decode_device_ii_format (Lisp_Object device, Lisp_Object format,
-			 Error_Behavior errb);
-struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb);
+struct image_instantiator_methods *decode_device_ii_format (Lisp_Object device,
+							    Lisp_Object format,
+							    Error_Behavior
+							    errb);
+struct image_instantiator_methods *decode_image_instantiator_format
+  (Lisp_Object format, Error_Behavior errb);
 
 void add_entry_to_image_instantiator_format_list (Lisp_Object symbol,
-			struct image_instantiator_methods *meths);
-void add_entry_to_device_ii_format_list (Lisp_Object device, Lisp_Object symbol,
-			struct image_instantiator_methods *meths);
+						  struct
+						  image_instantiator_methods *
+						  meths);
+void add_entry_to_device_ii_format_list (Lisp_Object device,
+					 Lisp_Object symbol,
+					 struct image_instantiator_methods *
+					 meths);
 Lisp_Object find_keyword_in_vector (Lisp_Object vector,
 				    Lisp_Object keyword);
 Lisp_Object find_keyword_in_vector_or_given (Lisp_Object vector,
@@ -1059,28 +1064,30 @@ struct glyph_cachel
 
 #ifdef ERROR_CHECK_GLYPHS
 
-INLINE_HEADER int
-GLYPH_CACHEL_WIDTH (struct window *window, int ind);
-INLINE_HEADER int
+DECLARE_INLINE_HEADER (
+int
 GLYPH_CACHEL_WIDTH (struct window *window, int ind)
+)
 {
   int wid = Dynarr_atp (window->glyph_cachels, ind)->width;
   assert (wid >= 0 && wid < 10000);
   return wid;
 }
-INLINE_HEADER int
-GLYPH_CACHEL_ASCENT (struct window *window, int ind);
-INLINE_HEADER int
+
+DECLARE_INLINE_HEADER (
+int
 GLYPH_CACHEL_ASCENT (struct window *window, int ind)
+)
 {
   int wid = Dynarr_atp (window->glyph_cachels, ind)->ascent;
   assert (wid >= 0 && wid < 10000);
   return wid;
 }
-INLINE_HEADER int
-GLYPH_CACHEL_DESCENT (struct window *window, int ind);
-INLINE_HEADER int
+
+DECLARE_INLINE_HEADER (
+int
 GLYPH_CACHEL_DESCENT (struct window *window, int ind)
+)
 {
   int wid = Dynarr_atp (window->glyph_cachels, ind)->descent;
   assert (wid >= 0 && wid < 10000);

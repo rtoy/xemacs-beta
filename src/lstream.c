@@ -104,8 +104,8 @@ finalize_lstream (void *header, int for_disksave)
 inline static Bytecount
 aligned_sizeof_lstream (Bytecount lstream_type_specific_size)
 {
-  return ALIGN_SIZE (offsetof (Lstream, data) + lstream_type_specific_size,
-		     ALIGNOF (max_align_t));
+  return MAX_ALIGN_SIZE (offsetof (Lstream, data) +
+			 lstream_type_specific_size);
 }
 
 static Bytecount
@@ -308,13 +308,13 @@ Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 	  const unsigned char *dataend = data + size - 1;
 	  assert (size > 0); /* safety check ... */
 	  /* Optimize the most common case. */
-	  if (!BYTE_ASCII_P (*dataend))
+	  if (!byte_ascii_p (*dataend))
 	    {
 	      /* Go back to the beginning of the last (and possibly partial)
 		 character, and bump forward to see if the character is
 		 complete. */
 	      VALIDATE_CHARPTR_BACKWARD (dataend);
-	      if (dataend + REP_BYTES_BY_FIRST_BYTE (*dataend) != data + size)
+	      if (dataend + rep_bytes_by_first_byte (*dataend) != data + size)
 		/* If not, chop the size down to ignore the last char
 		   and stash it away for next time. */
 		size = dataend - data;
@@ -1586,7 +1586,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("lisp-buffer", lisp_buffer);
 
 static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
-			   int flags, const char *mode)
+			   int flags, const Char_ASCII *mode)
 {
   Lstream *lstr;
   struct lisp_buffer_stream *str;
@@ -1648,8 +1648,8 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Charbpos start, Charbpos end,
 }
 
 Lisp_Object
-make_lisp_buffer_input_stream (struct buffer *buf, Charbpos start, Charbpos end,
-			       int flags)
+make_lisp_buffer_input_stream (struct buffer *buf, Charbpos start,
+			       Charbpos end, int flags)
 {
   return make_lisp_buffer_stream_1 (buf, start, end, flags, "r");
 }
@@ -1664,66 +1664,47 @@ make_lisp_buffer_output_stream (struct buffer *buf, Charbpos pos, int flags)
 }
 
 static Bytecount
-lisp_buffer_reader (Lstream *stream, unsigned char *data,
-		    Bytecount size)
+lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
-  unsigned char *orig_data = data;
+  Intbyte *orig_data = data;
   Bytebpos start;
   Bytebpos end;
   struct buffer *buf = XBUFFER (str->buffer);
+  Bytecount src_used;
 
   if (!BUFFER_LIVE_P (buf))
     return 0; /* Fut. */
 
-  /* NOTE: We do all our operations in Bytebpos's.
-     Keep in mind that SIZE is a value in bytes, not chars. */
-
-  start = bi_marker_position (str->start);
-  end = bi_marker_position (str->end);
+  start = byte_marker_position (str->start);
+  end = byte_marker_position (str->end);
   if (!(str->flags & LSTR_IGNORE_ACCESSIBLE))
     {
-      start = bytebpos_clip_to_bounds (BI_BUF_BEGV (buf), start,
-				     BI_BUF_ZV (buf));
-      end = bytebpos_clip_to_bounds (BI_BUF_BEGV (buf), end,
-				   BI_BUF_ZV (buf));
+      start = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (buf), start,
+				       BYTE_BUF_ZV (buf));
+      end = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (buf), end,
+				     BYTE_BUF_ZV (buf));
     }
 
-  size = min (size, (Bytecount) (end - start));
-  end = start + size;
-  /* We cannot return a partial character. */
-  VALIDATE_BYTEBPOS_BACKWARD (buf, end);
-
-  while (start < end)
-    {
-      Bytebpos ceil;
-      Bytecount chunk;
-
-      if (str->flags & LSTR_IGNORE_ACCESSIBLE)
-	ceil = BI_BUF_CEILING_OF_IGNORE_ACCESSIBLE (buf, start);
-      else
-	ceil = BI_BUF_CEILING_OF (buf, start);
-      chunk = min (ceil, end) - start;
-      memcpy (data, BI_BUF_BYTE_ADDRESS (buf, start), chunk);
-      data += chunk;
-      start += chunk;
-    }
+  size = copy_buffer_text_out (buf, start, end - start, data, size,
+			       FORMAT_DEFAULT, Qnil, &src_used);
+  end = start + src_used;
 
   if (EQ (buf->selective_display, Qt) && str->flags & LSTR_SELECTIVE)
     {
       /* What a kludge.  What a kludge.  What a kludge. */
-      unsigned char *p;
+      Intbyte *p;
       for (p = orig_data; p < data; p++)
 	if (*p == '\r')
 	  *p = '\n';
     }
 
-  set_bi_marker_position (str->start, end);
-  return data - orig_data;
+  set_byte_marker_position (str->start, end);
+  return size;
 }
 
 static Bytecount
-lisp_buffer_writer (Lstream *stream, const unsigned char *data,
+lisp_buffer_writer (Lstream *stream, const Intbyte *data,
 		    Bytecount size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);

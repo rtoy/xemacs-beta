@@ -66,13 +66,13 @@ mark_widget_value_mapper (widget_value *val, void *closure)
   Lisp_Object markee;
   if (val->call_data)
     {
-      VOID_TO_LISP (markee, val->call_data);
+      markee = VOID_TO_LISP (val->call_data);
       mark_object (markee);
     }
 
   if (val->accel)
     {
-      VOID_TO_LISP (markee, val->accel);
+      markee = VOID_TO_LISP (val->accel);
       mark_object (markee);
     }
   return 0;
@@ -227,7 +227,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
     return;
   if (((EMACS_INT) client_data) == 0)
     return;
-  VOID_TO_LISP (data, client_data);
+  data = VOID_TO_LISP (client_data);
   frame = wrap_frame (f);
 
 #if 0

@@ -848,7 +848,7 @@ output_display_line (struct window *w, display_line_dynarr *cdla,
  boolean indicating success or failure.
  ****************************************************************************/
 
-#define ADJ_CHARBPOS (rb->charbpos + dl->offset)
+#define ADJ_CHARPOS (rb->charpos + dl->offset)
 #define ADJ_ENDPOS (rb->endpos + dl->offset)
 
 int
@@ -888,13 +888,13 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
 
   if (rb->cursor_type == CURSOR_OFF)
     return 0;
-  else if (ADJ_CHARBPOS == new_point
-	   || (ADJ_ENDPOS && (new_point >= ADJ_CHARBPOS)
+  else if (ADJ_CHARPOS == new_point
+	   || (ADJ_ENDPOS && (new_point >= ADJ_CHARPOS)
 	       && (new_point <= ADJ_ENDPOS)))
     {
       w->last_point_x[CURRENT_DISP] = x;
       w->last_point_y[CURRENT_DISP] = y;
-      Fset_marker (w->last_point[CURRENT_DISP], make_int (ADJ_CHARBPOS),
+      Fset_marker (w->last_point[CURRENT_DISP], make_int (ADJ_CHARPOS),
 		   w->buffer);
       dl->cursor_elt = x;
       return 1;
@@ -953,7 +953,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
       int first = 0;
       int cur_dl, up;
 
-      if (ADJ_CHARBPOS < new_point)
+      if (ADJ_CHARPOS < new_point)
 	{
 	  up = 1;
 	  cur_rb = x + 1;
@@ -991,9 +991,9 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
 
 	      if (rb->cursor_type != IGNORE_CURSOR
 		  && rb->cursor_type != NO_CURSOR &&
-		  (ADJ_CHARBPOS == new_point
-		   || (ADJ_ENDPOS && (new_point >= ADJ_CHARBPOS)
-		       && (new_point <= ADJ_CHARBPOS))))
+		  (ADJ_CHARPOS == new_point
+		   || (ADJ_ENDPOS && (new_point >= ADJ_CHARPOS)
+		       && (new_point <= ADJ_CHARPOS))))
 		{
 		  rb->cursor_type = CURSOR_ON;
 		  dl->cursor_elt = cur_rb;
@@ -1005,7 +1005,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
 		  w->last_point_x[CURRENT_DISP] = cur_rb;
 		  w->last_point_y[CURRENT_DISP] = cur_dl;
 		  Fset_marker (w->last_point[CURRENT_DISP],
-			       make_int (ADJ_CHARBPOS), w->buffer);
+			       make_int (ADJ_CHARPOS), w->buffer);
 
 		  if (!no_output_end)
 		    {
@@ -1030,7 +1030,7 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
     }
   return 0;
 }
-#undef ADJ_CHARBPOS
+#undef ADJ_CHARPOS
 #undef ADJ_ENDPOS
 
 /*****************************************************************************
@@ -2141,10 +2141,10 @@ redisplay_update_line (struct window *w, int first_line, int last_line,
 
   while (first_line <= last_line)
     {
-      Charcount old_len = (Dynarr_atp (cdla, first_line)->end_charbpos -
-			   Dynarr_atp (cdla, first_line)->charbpos);
-      Charcount new_len = (Dynarr_atp (ddla, first_line)->end_charbpos -
-			   Dynarr_atp (ddla, first_line)->charbpos);
+      Charcount old_len = (Dynarr_atp (cdla, first_line)->end_charpos -
+			   Dynarr_atp (cdla, first_line)->charpos);
+      Charcount new_len = (Dynarr_atp (ddla, first_line)->end_charpos -
+			   Dynarr_atp (ddla, first_line)->charpos);
 
       assert (Dynarr_length (cdla) == Dynarr_length (ddla));
 

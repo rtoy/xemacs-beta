@@ -1,5 +1,6 @@
 /* I-connector utility
    Copyright (C) 2000 Kirill M. Katsnelson
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -84,13 +85,23 @@ start_pump (I_connector* pi)
   CloseHandle (h_thread);
 }
 
-/*
- * Get command line, skip over the executable name, return the rest.
- */
-static LPTSTR
-get_command (void)
+static HANDLE external_event;
+
+static BOOL
+ctrl_c_handler (unsigned long type)
 {
-  LPTSTR cl = GetCommandLine ();
+  SetEvent (external_event);
+  return FALSE;
+}
+
+/* Skip over the executable name in the given command line.  Correctly
+   handles quotes in the name.  Return NULL upon error.  If
+   REQUIRE_FOLLOWING is non-zero, it's an error if no argument follows the
+   executable name. */
+
+static LPTSTR
+skip_executable_name (LPTSTR cl, int require_following)
+{
   int ix;
 
   while (1)
@@ -107,6 +118,8 @@ get_command (void)
 	{
 	  cl += ix;
 	  cl += _tcsspn (cl, _T(" \t"));
+	  if (!require_following)
+	    return cl;
 	  return *cl ? cl : NULL;
 	}
     }
@@ -133,8 +146,8 @@ main (void)
   PROCESS_INFORMATION pi;
   I_connector I_in, I_out, I_err;
   DWORD exit_code;
-
-  LPTSTR command = get_command ();
+  LPTSTR command = skip_executable_name (GetCommandLine (), 1);
+     
   if (command == NULL)
     {
       usage ();
@@ -156,15 +169,68 @@ main (void)
   CreatePipe (&I_err.source, &si.hStdError, NULL, 0);
   make_inheritable (&si.hStdError);
 
-  if (CreateProcess (NULL, command, NULL, NULL, TRUE, 0,
-		     NULL, NULL, &si, &pi) == 0)
-    {
-      _ftprintf (stderr, _T("Error %d launching `%s'\n"),
-		 GetLastError (), command);
-      return 2;
-    }
+  {
+    SECURITY_ATTRIBUTES sa;
+    LPTSTR new_command =
+      (LPTSTR) malloc (666 + sizeof (TCHAR) * _tcslen (command));
+    LPTSTR past_exe;
 
-  CloseHandle (pi.hThread);
+    if (!new_command)
+      {
+	_ftprintf (stderr, _T ("Out of memory when launching `%s'\n"),
+		   command);
+	return 2;
+      }
+
+    past_exe = skip_executable_name (command, 0);
+    if (!past_exe)
+      {
+	usage ();
+	return 1;
+      }
+
+    /* Since XEmacs isn't a console application, it can't easily be
+       terminated using ^C.  Therefore, we set up a communication path with
+       it so that when a ^C is sent to us (using GenerateConsoleCtrlEvent),
+       we in turn signals it to commit suicide. (This is cleaner than using
+       TerminateProcess()).  This makes (e.g.) the "Stop Build" command
+       from VC++ correctly terminate XEmacs.
+
+       #### This will cause problems if i.exe is used for commands other
+       than XEmacs.  We need to make behavior this a command-line
+       option. */
+
+    /* Create the event as inheritable so that we can use it to communicate
+       with the child process */
+    sa.nLength = sizeof (sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+    external_event = CreateEvent (&sa, FALSE, FALSE, NULL);
+    if (!external_event)
+      {
+	_ftprintf (stderr, _T ("Error %d creating signal event for `%s'\n"),
+		   GetLastError (), command);
+	return 2;
+      }
+
+    SetConsoleCtrlHandler ((PHANDLER_ROUTINE) ctrl_c_handler, TRUE);
+    _tcsncpy (new_command, command, past_exe - command);
+    _stprintf (new_command + (past_exe - command),
+	       /* start with space in case no args past command name */
+	       " -mswindows-termination-handle %d ", (long) external_event);
+    _tcscat (new_command, past_exe);
+    
+    if (CreateProcess (NULL, new_command, NULL, NULL, TRUE, 0,
+		       NULL, NULL, &si, &pi) == 0)
+      {
+	_ftprintf (stderr, _T("Error %d launching `%s'\n"),
+		   GetLastError (), command);
+	return 2;
+      }
+    
+    CloseHandle (pi.hThread);
+  }
+
 
   /* Start pump in each I-connector */
   start_pump (&I_in);

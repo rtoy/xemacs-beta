@@ -253,11 +253,11 @@ Fixnum debug_emacs_events;
 static void
 external_debugging_print_event (char *event_description, Lisp_Object event)
 {
-  write_c_string ("(",		     Qexternal_debugging_output);
-  write_c_string (event_description, Qexternal_debugging_output);
-  write_c_string (") ",		     Qexternal_debugging_output);
+  write_c_string (Qexternal_debugging_output, "(");
+  write_c_string (Qexternal_debugging_output, event_description);
+  write_c_string (Qexternal_debugging_output, ") ");
   print_internal (event,	     Qexternal_debugging_output, 1);
-  write_c_string ("\n",		     Qexternal_debugging_output);
+  write_c_string (Qexternal_debugging_output, "\n");
 }
 #define DEBUG_PRINT_EMACS_EVENT(event_description, event) do {	\
   if (debug_emacs_events)					\
@@ -3382,7 +3382,7 @@ command_builder_find_leaf (struct command_builder *builder,
     {
       Lisp_Object keysym =
 	XEVENT (builder->most_current_event)->event.key.keysym;
-      if (CHARP (keysym) && !CHAR_ASCII_P (XCHAR (keysym)))
+      if (CHARP (keysym) && !emchar_ascii_p (XCHAR (keysym)))
         return Vcomposed_character_default_binding;
     }
 #endif
@@ -4542,7 +4542,7 @@ dribble_out_event (Lisp_Object event)
 	  Bytecount len = set_charptr_emchar (str, ch);
 	  Lstream_write (XLSTREAM (Vdribble_file), str, len);
 	}
-      else if (XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
+      else if (string_char_length (XSYMBOL (keysym)->name) == 1)
 	/* one-char key events are printed with just the key name */
 	Fprinc (keysym, Vdribble_file);
       else if (EQ (keysym, Qreturn))

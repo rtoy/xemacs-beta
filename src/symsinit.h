@@ -111,7 +111,9 @@ void syms_of_fileio (void);
 void syms_of_filelock (void);
 void syms_of_floatfns (void);
 void syms_of_fns (void);
+#ifdef USE_C_FONT_LOCK
 void syms_of_font_lock (void);
+#endif /* USE_C_FONT_LOCK */
 void syms_of_frame (void);
 void syms_of_frame_mswindows (void);
 void syms_of_frame_tty (void);
@@ -340,8 +342,10 @@ void reinit_vars_of_fileio (void);
 void vars_of_filelock (void);
 void vars_of_floatfns (void);
 void vars_of_fns (void);
+#ifdef USE_C_FONT_LOCK
 void vars_of_font_lock (void);
 void reinit_vars_of_font_lock (void);
+#endif /* USE_C_FONT_LOCK */
 void vars_of_frame_tty (void);
 void vars_of_frame_mswindows (void);
 void reinit_vars_of_frame_mswindows (void);
@@ -461,8 +465,8 @@ void complex_vars_of_alloc (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_scrollbar (void);
 void complex_vars_of_frame (void);
-void complex_vars_of_casetab (void);
 void complex_vars_of_syntax (void);
+void complex_vars_of_casetab (void);
 void complex_vars_of_chartab (void);
 void complex_vars_of_buffer (void);
 void reinit_complex_vars_of_buffer_runtime_only (void);

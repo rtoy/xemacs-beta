@@ -1,3 +1,12 @@
+2002-05-05  Ben Wing  <ben@xemacs.org>
+
+	* i.c:
+	* i.c (skip_executable_name):
+	* i.c (main):
+	Create an inheritable event and pass it on to XEmacs, so that ^C
+	can be handled properly.  Intercept ^C and signal the event.
+	"Stop Build" in VC++ now works.
+
 2002-04-14  Ben Wing  <ben@xemacs.org>
 
 	* make-docfile.c:

@@ -259,7 +259,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Keymap *keymap = XKEYMAP (obj);
   if (print_readably)
     printing_unreadable_object ("#<keymap 0x%x>", keymap->header.uid);
-  write_c_string ("#<keymap ", printcharfun);
+  write_c_string (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
       write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
@@ -475,10 +475,10 @@ keymap_lookup_directly (Lisp_Object keymap,
   k = XKEYMAP (keymap);
 
   /* If the keysym is a one-character symbol, use the char code instead. */
-  if (SYMBOLP (keysym) && XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
+  if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
     {
       Lisp_Object i_fart_on_gcc =
-	make_char (XSTRING_CHAR (XSYMBOL (keysym)->name, 0));
+	make_char (string_emchar (XSYMBOL (keysym)->name, 0));
       keysym = i_fart_on_gcc;
     }
 
@@ -653,8 +653,8 @@ keymap_store (Lisp_Object keymap, const struct key_data *key,
 			 | XEMACS_MOD_ALT | XEMACS_MOD_SHIFT)) == 0);
 
   /* If the keysym is a one-character symbol, use the char code instead. */
-  if (SYMBOLP (keysym) && XSTRING_CHAR_LENGTH (XSYMBOL (keysym)->name) == 1)
-    keysym = make_char (XSTRING_CHAR (XSYMBOL (keysym)->name, 0));
+  if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
+    keysym = make_char (string_emchar (XSYMBOL (keysym)->name, 0));
 
   if (modifiers & XEMACS_MOD_META)     /* Utterly hateful ESC lossage */
     {
@@ -1261,10 +1261,10 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
   /* Now, check and massage the trailing keysym specifier. */
   if (SYMBOLP (*keysym))
     {
-      if (XSTRING_CHAR_LENGTH (XSYMBOL (*keysym)->name) == 1)
+      if (string_char_length (XSYMBOL (*keysym)->name) == 1)
 	{
 	  Lisp_Object ream_gcc_up_the_ass =
-	    make_char (XSTRING_CHAR (XSYMBOL (*keysym)->name, 0));
+	    make_char (string_emchar (XSYMBOL (*keysym)->name, 0));
 	  *keysym = ream_gcc_up_the_ass;
 	  goto fixnum_keysym;
 	}
@@ -1861,7 +1861,7 @@ what's in `function-key-map' and `key-translation-map'.
   if (VECTORP (keys))
     len = XVECTOR_LENGTH (keys);
   else if (STRINGP (keys))
-    len = XSTRING_CHAR_LENGTH (keys);
+    len = string_char_length (keys);
   else if (CHAR_OR_CHAR_INTP (keys) || SYMBOLP (keys) || CONSP (keys))
     {
       if (!CONSP (keys)) keys = list1 (keys);
@@ -1899,7 +1899,7 @@ what's in `function-key-map' and `key-translation-map'.
       struct key_data raw_key2;
 
       if (STRINGP (keys))
-	c = make_char (XSTRING_CHAR (keys, idx));
+	c = make_char (string_emchar (keys, idx));
       else
 	c = XVECTOR_DATA (keys) [idx];
 
@@ -2217,7 +2217,7 @@ reach a non-prefix command.
     return lookup_keys (keymap, 1, &keys, !NILP (accept_default));
   else if (STRINGP (keys))
     {
-      int length = XSTRING_CHAR_LENGTH (keys);
+      int length = string_char_length (keys);
       int i;
       struct key_data *raw_keys = alloca_array (struct key_data, length);
       if (length == 0)
@@ -2225,7 +2225,7 @@ reach a non-prefix command.
 
       for (i = 0; i < length; i++)
 	{
-          Emchar n = XSTRING_CHAR (keys, i);
+          Emchar n = string_emchar (keys, i);
 	  define_key_parser (make_char (n), &(raw_keys[i]));
 	}
       return raw_lookup_key (keymap, raw_keys, length, 0,
@@ -2984,7 +2984,7 @@ map_keymap_mapper (const struct key_data *key,
 {
   /* This function can GC */
   Lisp_Object fn;
-  VOID_TO_LISP (fn, function);
+  fn = VOID_TO_LISP (function);
   call2 (fn, make_key_description (key, 1), binding);
 }
 
@@ -3240,7 +3240,7 @@ spaces are put between sequence elements, etc...
 	{
 	  Lisp_Object s2 = Fsingle_key_description
 	    (STRINGP (keys)
-	     ? make_char (XSTRING_CHAR (keys, i))
+	     ? make_char (string_emchar (keys, i))
 	     : XVECTOR_DATA (keys)[i]);
 
 	  if (i == 0)

@@ -79,12 +79,13 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
     {
       /* #### It would be really nice if this were a proper warning
          instead of brain-dead print ro Qexternal_debugging_output.  */
-      write_c_string ("Comparison between integer and character is constant nil (",
-		      Qexternal_debugging_output);
+      write_c_string
+	(Qexternal_debugging_output,
+	 "Comparison between integer and character is constant nil (");
       Fprinc (obj1, Qexternal_debugging_output);
-      write_c_string (" and ", Qexternal_debugging_output);
+      write_c_string (Qexternal_debugging_output, " and ");
       Fprinc (obj2, Qexternal_debugging_output);
-      write_c_string (")\n", Qexternal_debugging_output);
+      write_c_string (Qexternal_debugging_output, ")\n");
       debug_short_backtrace (debug_ebola_backtrace_length);
     }
   return EQ (obj1, obj2);
@@ -721,8 +722,8 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (STRINGP (array))
     {
-      if (idx >= XSTRING_CHAR_LENGTH (array)) goto range_error;
-      return make_char (XSTRING_CHAR (array, idx));
+      if (idx >= string_char_length (array)) goto range_error;
+      return make_char (string_emchar (array, idx));
     }
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (array))
@@ -779,7 +780,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       CHECK_CHAR_COERCE_INT (newval);
-      if (idx >= XSTRING_CHAR_LENGTH (array)) goto range_error;
+      if (idx >= string_char_length (array)) goto range_error;
       set_string_char (array, idx, XCHAR (newval));
       bump_string_modiff (array);
     }

@@ -771,11 +771,11 @@ emacs_gtk_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapef
   if (print_readably)
     printing_unreadable_object ("#<GtkObject %p>", XGTK_OBJECT (obj)->object);
 
-  write_c_string ("#<GtkObject (", printcharfun);
+  write_c_string (printcharfun, "#<GtkObject (");
   if (XGTK_OBJECT (obj)->alive_p)
-    write_c_string (gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)), printcharfun);
+    write_c_string (printcharfun, gtk_type_name (GTK_OBJECT_TYPE (XGTK_OBJECT (obj)->object)));
   else
-    write_c_string ("dead", printcharfun);
+    write_c_string (printcharfun, "dead");
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_OBJECT (obj)->object);
 }
 
@@ -984,7 +984,7 @@ __internal_callback_destroy (gpointer data)
 {
   Lisp_Object lisp_data;
 
-  VOID_TO_LISP (lisp_data, data);
+  lisp_data = VOID_TO_LISP (data);
 
   ungcpro_popup_callbacks (XINT (XCAR (lisp_data)));
 }
@@ -1000,7 +1000,7 @@ __internal_callback_marshal (GtkObject *obj, gpointer data, guint n_args, GtkArg
   struct gcpro gcpro1;
   int i;
 
-  VOID_TO_LISP (callback_fn, data);
+  callback_fn = VOID_TO_LISP (data);
 
   /* Nuke the GUI_ID off the front */
   callback_fn = XCDR (callback_fn);
@@ -1079,8 +1079,8 @@ emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapefl
   if (print_readably)
     printing_unreadable_object ("#<GtkBoxed %p>", XGTK_BOXED (obj)->object);
 
-  write_c_string ("#<GtkBoxed (", printcharfun);
-  write_c_string (gtk_type_name (XGTK_BOXED (obj)->object_type), printcharfun);
+  write_c_string (printcharfun, "#<GtkBoxed (");
+  write_c_string (printcharfun, gtk_type_name (XGTK_BOXED (obj)->object_type));
   write_fmt_string (printcharfun, ") %p>", (void *) XGTK_BOXED (obj)->object);
 }
 
@@ -1479,7 +1479,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
 	{
 	  Lisp_Object rval;
 	  
-	  VOID_TO_LISP (rval, GTK_VALUE_POINTER (*arg));
+	  rval = VOID_TO_LISP (GTK_VALUE_POINTER (*arg));
 	  return (rval);
 	}
       else
@@ -1494,7 +1494,7 @@ Lisp_Object gtk_type_to_lisp (GtkArg *arg)
       {
 	Lisp_Object rval;
 
-	VOID_TO_LISP (rval, GTK_VALUE_CALLBACK (*arg).data);
+	rval = VOID_TO_LISP (GTK_VALUE_CALLBACK (*arg).data);
 
 	return (rval);
       }

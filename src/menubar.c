@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2001 Ben Wing.
+   Copyright (C) 2001, 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -339,7 +339,7 @@ This removes %_'s (accelerator indications) and converts %% to %.
 
   CHECK_STRING (name);
 
-  end = XSTRING_CHAR_LENGTH (name);
+  end = string_char_length (name);
   name_data = XSTRING_DATA (name);
 
   string_result = (Intbyte *) alloca (end * MAX_EMCHAR_LEN);

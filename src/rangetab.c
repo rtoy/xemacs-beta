@@ -57,12 +57,12 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
 
-  write_c_string ("#s(range-table data (", printcharfun);
+  write_c_string (printcharfun, "#s(range-table data (");
   for (i = 0; i < Dynarr_length (rt->entries); i++)
     {
       struct range_table_entry *rte = Dynarr_atp (rt->entries, i);
       if (i > 0)
-	write_c_string (" ", printcharfun);
+	write_c_string (printcharfun, " ");
       if (rte->first == rte->last)
 	write_fmt_string (printcharfun, "%ld ", (long) (rte->first));
       else
@@ -70,7 +70,7 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 			  (long) (rte->last));
       print_internal (rte->val, printcharfun, 1);
     }
-  write_c_string ("))", printcharfun);
+  write_c_string (printcharfun, "))");
 }
 
 static int
@@ -632,7 +632,7 @@ unified_range_table_copy_data (Lisp_Object rangetab, void *dest)
   struct unified_range_table *un;
   range_table_entry_dynarr *rted = XRANGE_TABLE (rangetab)->entries;
   int total_needed = unified_range_table_bytes_needed (rangetab);
-  void *new_dest = ALIGN_PTR ((char *) dest + 4, ALIGNOF (EMACS_INT));
+  void *new_dest = ALIGN_PTR ((char *) dest + 4, EMACS_INT);
 
   * (char *) dest = (char) ((char *) new_dest - (char *) dest);
   * ((unsigned char *) dest + 1) = total_needed & 0xFF;
@@ -661,17 +661,12 @@ static void
 align_the_damn_table (void *unrangetab)
 {
   void *cur_dest = (char *) unrangetab + * (char *) unrangetab;
-#if LONGBITS == 64
-  if ((((long) cur_dest) & 7) != 0)
-#else
-  if ((((int) cur_dest) & 3) != 0)
-#endif
+  if (cur_dest != ALIGN_PTR (cur_dest, EMACS_INT))
     {
       int count = (unified_range_table_bytes_used (unrangetab) - 4
 		   - ALIGNOF (EMACS_INT));
       /* Find the proper location, just like above. */
-      void *new_dest = ALIGN_PTR ((char *) unrangetab + 4,
-				  ALIGNOF (EMACS_INT));
+      void *new_dest = ALIGN_PTR ((char *) unrangetab + 4, EMACS_INT);
       /* memmove() works in the presence of overlapping data. */
       memmove (new_dest, cur_dest, count);
       * (char *) unrangetab = (char) ((char *) new_dest - (char *) unrangetab);

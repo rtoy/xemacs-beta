@@ -60,11 +60,11 @@ Boston, MA 02111-1307, USA.  */
   do { (buf)->text->end_gap_size = (value); } while (0)
 
 /* Gap location.  */
-#define BI_BUF_GPT(buf) ((buf)->text->gpt + 0)
-#define BUF_GPT_ADDR(buf) (BUF_BEG_ADDR (buf) + BI_BUF_GPT (buf) - 1)
+#define BYTE_BUF_GPT(buf) ((buf)->text->gpt + 0)
+#define BUF_GPT_ADDR(buf) (BUF_BEG_ADDR (buf) + BYTE_BUF_GPT (buf) - 1)
 
 /* Set gap location.  */
-#define SET_BI_BUF_GPT(buf, value) do { (buf)->text->gpt = (value); } while (0)
+#define SET_BYTE_BUF_GPT(buf, value) do { (buf)->text->gpt = (value); } while (0)
 
 /* Set end of buffer.  */
 #define SET_BOTH_BUF_Z(buf, val, bival)		\
@@ -95,7 +95,7 @@ do						\
 # define SET_GAP_SENTINEL(buf) (*BUF_GPT_ADDR (buf) = 0)
 # define BUF_END_SENTINEL_SIZE 1
 # define SET_END_SENTINEL(buf) \
-  (*(BUF_BEG_ADDR (buf) + BUF_GAP_SIZE (buf) + BI_BUF_Z (buf) - 1) = 0)
+  (*(BUF_BEG_ADDR (buf) + BUF_GAP_SIZE (buf) + BYTE_BUF_Z (buf) - 1) = 0)
 #else
 # define GAP_CAN_HOLD_SIZE_P(buf, len) (BUF_GAP_SIZE (buf) >= (len))
 # define SET_GAP_SENTINEL(buf)
@@ -137,8 +137,8 @@ do						\
 void
 set_buffer_point (struct buffer *buf, Charbpos charbpos, Bytebpos bytpos)
 {
-  assert (bytpos >= BI_BUF_BEGV (buf) && bytpos <= BI_BUF_ZV (buf));
-  if (bytpos == BI_BUF_PT (buf))
+  assert (bytpos >= BYTE_BUF_BEGV (buf) && bytpos <= BYTE_BUF_ZV (buf));
+  if (bytpos == BYTE_BUF_PT (buf))
     return;
   JUST_SET_POINT (buf, charbpos, bytpos);
   MARK_POINT_CHANGED;
@@ -261,7 +261,7 @@ gap_left (struct buffer *buf, Bytebpos pos)
 
   from = BUF_GPT_ADDR (buf);
   to = from + BUF_GAP_SIZE (buf);
-  new_s1 = BI_BUF_GPT (buf);
+  new_s1 = BYTE_BUF_GPT (buf);
 
   /* Now copy the characters.  To move the gap down,
      copy characters up.  */
@@ -303,14 +303,14 @@ gap_left (struct buffer *buf, Bytebpos pos)
      or may be where a quit was detected.  */
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      adjust_markers (mbuf, pos, BI_BUF_GPT (mbuf), BUF_GAP_SIZE (mbuf));
+      adjust_markers (mbuf, pos, BYTE_BUF_GPT (mbuf), BUF_GAP_SIZE (mbuf));
     }
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      adjust_extents (wrap_buffer (mbuf), pos, BI_BUF_GPT (mbuf),
+      adjust_extents (wrap_buffer (mbuf), pos, BYTE_BUF_GPT (mbuf),
 		      BUF_GAP_SIZE (mbuf));
     }
-  SET_BI_BUF_GPT (buf, pos);
+  SET_BYTE_BUF_GPT (buf, pos);
   SET_GAP_SENTINEL (buf);
 #ifdef ERROR_CHECK_EXTENTS
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -332,7 +332,7 @@ gap_right (struct buffer *buf, Bytebpos pos)
 
   to = BUF_GPT_ADDR (buf);
   from = to + BUF_GAP_SIZE (buf);
-  new_s1 = BI_BUF_GPT (buf);
+  new_s1 = BYTE_BUF_GPT (buf);
 
   /* Now copy the characters.  To move the gap up,
      copy characters down.  */
@@ -373,14 +373,14 @@ gap_right (struct buffer *buf, Bytebpos pos)
     int gsize = BUF_GAP_SIZE (buf);
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
-	adjust_markers (mbuf, BI_BUF_GPT (mbuf) + gsize, pos + gsize, - gsize);
+	adjust_markers (mbuf, BYTE_BUF_GPT (mbuf) + gsize, pos + gsize, - gsize);
       }
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
       {
-	adjust_extents (wrap_buffer (mbuf), BI_BUF_GPT (mbuf) + gsize,
+	adjust_extents (wrap_buffer (mbuf), BYTE_BUF_GPT (mbuf) + gsize,
 			pos + gsize, - gsize);
       }
-    SET_BI_BUF_GPT (buf, pos);
+    SET_BYTE_BUF_GPT (buf, pos);
     SET_GAP_SENTINEL (buf);
 #ifdef ERROR_CHECK_EXTENTS
     MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -389,7 +389,7 @@ gap_right (struct buffer *buf, Bytebpos pos)
       }
 #endif
   }
-  if (pos == BI_BUF_Z (buf))
+  if (pos == BYTE_BUF_Z (buf))
     {
       /* merge gap with end gap */
 
@@ -409,9 +409,9 @@ move_gap (struct buffer *buf, Bytebpos pos)
 {
   if (! BUF_BEG_ADDR (buf))
     abort ();
-  if (pos < BI_BUF_GPT (buf))
+  if (pos < BYTE_BUF_GPT (buf))
     gap_left (buf, pos);
-  else if (pos > BI_BUF_GPT (buf))
+  else if (pos > BYTE_BUF_GPT (buf))
     gap_right (buf, pos);
 }
 
@@ -434,11 +434,11 @@ merge_gap_with_end_gap (struct buffer *buf)
       tem = Vinhibit_quit;
       Vinhibit_quit = Qt;
 
-      real_gap_loc = BI_BUF_GPT (buf);
+      real_gap_loc = BYTE_BUF_GPT (buf);
       old_gap_size = BUF_GAP_SIZE (buf);
 
       /* Pretend the end gap is the gap */
-      SET_BI_BUF_GPT (buf, BI_BUF_Z (buf) + BUF_GAP_SIZE (buf));
+      SET_BYTE_BUF_GPT (buf, BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
       SET_BUF_GAP_SIZE (buf, increment);
 
       /* Move the new gap down to be consecutive with the end of the old one.
@@ -447,7 +447,7 @@ merge_gap_with_end_gap (struct buffer *buf)
 
       /* Now combine the two into one large gap.  */
       SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + old_gap_size);
-      SET_BI_BUF_GPT (buf, real_gap_loc);
+      SET_BYTE_BUF_GPT (buf, real_gap_loc);
       SET_GAP_SENTINEL (buf);
 
       /* We changed the total size of the buffer (including gap),
@@ -470,7 +470,11 @@ make_gap (struct buffer *buf, Bytecount increment)
 
   /* If we have to get more space, get enough to last a while.  We use
      a geometric progression that saves on realloc space. */
-  increment += 2000 + ((BI_BUF_Z (buf) - BI_BUF_BEG (buf)) / 8);
+  increment += 2000 + ((BYTE_BUF_Z (buf) - BYTE_BUF_BEG (buf)) / 8);
+  /* Make sure the gap is always aligned properly in case we're using a
+     16-bit or 32-bit fixed-width format. (Other sizes should already be
+     aligned in such a case.) */
+  increment = MAX_ALIGN_SIZE (increment);
 
   if (increment > BUF_END_GAP_SIZE (buf))
     {
@@ -483,7 +487,7 @@ make_gap (struct buffer *buf, Bytecount increment)
 	out_of_memory ("Maximum buffer size exceeded", Qunbound);
 
       result = BUFFER_REALLOC (buf->text->beg,
-			       BI_BUF_Z (buf) - BI_BUF_BEG (buf) +
+			       BYTE_BUF_Z (buf) - BYTE_BUF_BEG (buf) +
 			       BUF_GAP_SIZE (buf) + increment +
 			       BUF_END_SENTINEL_SIZE);
       if (result == 0)
@@ -498,11 +502,11 @@ make_gap (struct buffer *buf, Bytecount increment)
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
 
-  real_gap_loc = BI_BUF_GPT (buf);
+  real_gap_loc = BYTE_BUF_GPT (buf);
   old_gap_size = BUF_GAP_SIZE (buf);
 
   /* Call the newly allocated space a gap at the end of the whole space.  */
-  SET_BI_BUF_GPT (buf, BI_BUF_Z (buf) + BUF_GAP_SIZE (buf));
+  SET_BYTE_BUF_GPT (buf, BYTE_BUF_Z (buf) + BUF_GAP_SIZE (buf));
   SET_BUF_GAP_SIZE (buf, increment);
 
   SET_BUF_END_GAP_SIZE (buf, 0);
@@ -513,7 +517,7 @@ make_gap (struct buffer *buf, Bytecount increment)
 
   /* Now combine the two into one large gap.  */
   SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + old_gap_size);
-  SET_BI_BUF_GPT (buf, real_gap_loc);
+  SET_BYTE_BUF_GPT (buf, real_gap_loc);
   SET_GAP_SENTINEL (buf);
 
   /* We changed the total size of the buffer (including gap),
@@ -811,8 +815,7 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  buffer = wrap_buffer (mbuf);
-	  report_extent_modification (buffer, start, end, 0);
+	  report_extent_modification (wrap_buffer (mbuf), start, end, 0);
 	}
       unbind_to (speccount);
 
@@ -841,12 +844,14 @@ signal_after_change (struct buffer *buf, Charbpos start, Charbpos orig_end,
       /* always do this. */
       buffer_signal_changed_region (mbuf, start, new_end);
     }
+#ifdef USE_C_FONT_LOCK
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
       /* #### This seems inefficient.  Wouldn't it be better to just
          keep one cache per base buffer?  */
       font_lock_maybe_update_syntactic_caches (mbuf, start, orig_end, new_end);
     }
+#endif /* USE_C_FONT_LOCK */
 
   if (!inside_change_hook)
     {
@@ -1030,7 +1035,8 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 {
   /* This function can GC */
   struct gcpro gcpro1;
-  Bytebpos ind;
+  Bytebpos bytepos;
+  Bytecount length_in_buffer;
   Charcount cclen;
   int move_point = 0;
   struct buffer *mbuf;
@@ -1080,7 +1086,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
   if (pos > BUF_ZV (buf))
     pos = BUF_ZV (buf);
 
-  ind = charbpos_to_bytebpos (buf, pos);
+  bytepos = charbpos_to_bytebpos (buf, pos);
 
   /* string may have been relocated up to this point */
   if (STRINGP (reloc))
@@ -1090,20 +1096,35 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     }
   else
     cclen = bytecount_to_charcount (nonreloc + offset, length);
+  /* &&#### Here we check if the text can't fit into the format of the buffer,
+     and if so convert it to another format (either default or 32-bit-fixed,
+     according to some flag; if no flag, use default). */
+  
+  length_in_buffer = copy_text_between_formats (nonreloc + offset, length,
+						FORMAT_DEFAULT,
+						STRINGP (reloc) ? reloc : Qnil,
+						NULL, 0,
+						BUF_FORMAT (buf),
+						wrap_buffer (buf),
+						NULL);
 
-  if (ind != BI_BUF_GPT (buf))
+  if (bytepos != BYTE_BUF_GPT (buf))
     /* #### if debug-on-quit is invoked and the user changes the
        buffer, bad things can happen.  This is a rampant problem
        in Emacs. */
-    move_gap (buf, ind); /* may QUIT */
-  if (! GAP_CAN_HOLD_SIZE_P (buf, length))
+    move_gap (buf, bytepos); /* may QUIT */
+  if (! GAP_CAN_HOLD_SIZE_P (buf, length_in_buffer))
     {
-      if (BUF_END_GAP_SIZE (buf) >= length)
+      if (BUF_END_GAP_SIZE (buf) >= length_in_buffer)
 	merge_gap_with_end_gap (buf);
       else
-	make_gap (buf, length - BUF_GAP_SIZE (buf));
+	make_gap (buf, length_in_buffer - BUF_GAP_SIZE (buf));
     }
 
+  /* At this point, no more QUITting or processing of Lisp code.  Buffer is
+     in a consistent state.  Following code puts buffer in an inconsistent
+     state and can be considered a "critical section". */
+  
   insert_invalidate_line_number_cache (buf, pos, nonreloc + offset, length);
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
@@ -1114,35 +1135,63 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
   BUF_MODIFF (buf)++;
   MARK_BUFFERS_CHANGED;
 
-  /* string may have been relocated up to this point */
+  /* string may have been relocated up to this point #### if string is
+     modified during quit processing, bad things can happen. */
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
 
-  memcpy (BUF_GPT_ADDR (buf), nonreloc + offset, length);
-
-  SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) - length);
-  SET_BI_BUF_GPT (buf, BI_BUF_GPT (buf) + length);
+  copy_text_between_formats (nonreloc + offset, length, FORMAT_DEFAULT,
+			     STRINGP (reloc) ? reloc : Qnil,
+			     BUF_GPT_ADDR (buf), length_in_buffer,
+			     BUF_FORMAT (buf), wrap_buffer (buf), NULL);
+  
+  SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) - length_in_buffer);
+  SET_BYTE_BUF_GPT (buf, BYTE_BUF_GPT (buf) + length_in_buffer);
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) + cclen, BI_BUF_ZV (mbuf) + length);
+      SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) + cclen,
+		       BYTE_BUF_ZV (mbuf) + length_in_buffer);
     }
-  SET_BOTH_BUF_Z (buf, BUF_Z (buf) + cclen, BI_BUF_Z (buf) + length);
+  SET_BOTH_BUF_Z (buf, BUF_Z (buf) + cclen, BYTE_BUF_Z (buf) + length_in_buffer);
   SET_GAP_SENTINEL (buf);
   
   
 #ifdef MULE
-  buffer_mule_signal_inserted_region (buf, pos, length, cclen);
+  buffer_mule_signal_inserted_region (buf, pos, length_in_buffer, cclen);
+  /* Update our count of ASCII, 8-bit and 16-bit chars and the
+     entirely-one-byte flag */
+  {
+    const Intbyte *ptr = nonreloc + offset;
+    const Intbyte *ptrend = ptr + length;
+
+    while (ptr < ptrend)
+      {
+	Emchar ch = charptr_emchar (ptr);
+	if (emchar_ascii_p (ch))
+	  buf->text->num_ascii_chars++;
+	if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+	  buf->text->num_8_bit_fixed_chars++;
+	if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+	  buf->text->num_16_bit_fixed_chars++;
+	INC_CHARPTR (ptr);
+      }
+    
+    buf->text->entirely_one_byte_p =
+      (BUF_FORMAT (buf) == FORMAT_8_BIT_FIXED ||
+       (BUF_FORMAT (buf) == FORMAT_DEFAULT && BUF_Z (buf) == BYTE_BUF_Z (buf)));
+  }
 #endif
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      process_extents_for_insertion (wrap_buffer (mbuf), ind, length);
+      process_extents_for_insertion (wrap_buffer (mbuf), bytepos,
+				     length_in_buffer);
     }
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      /* We know the gap is at IND so the cast is OK. */
-      adjust_markers_for_insert (mbuf, (Membpos) ind, length);
+      /* We know the gap is at BYTEPOS so the cast is OK. */
+      adjust_markers_for_insert (mbuf, (Membpos) bytepos, length_in_buffer);
     }
 
   /* Point logically doesn't move, but may need to be adjusted because
@@ -1150,20 +1199,20 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
      memory index. */
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      if (BI_BUF_PT (mbuf) > ind)
+      if (BYTE_BUF_PT (mbuf) > bytepos)
 	JUST_SET_POINT (mbuf, BUF_PT (mbuf) + cclen,
-			BI_BUF_PT (mbuf) + length);
+			BYTE_BUF_PT (mbuf) + length_in_buffer);
     }
 
   /* Well, point might move. */
   if (move_point)
-    BI_BUF_SET_PT (buf, ind + length);
+    BYTE_BUF_SET_PT (buf, bytepos + length_in_buffer);
 
   if (STRINGP (reloc))
     {
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  splice_in_string_extents (reloc, mbuf, ind, length, offset);
+	  splice_in_string_extents (reloc, mbuf, bytepos, length, offset);
 	}
     }
 
@@ -1171,11 +1220,16 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     {
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
-	  /* ind - 1 is correct because the FROM argument is exclusive.
+	  /* bytepos - 1 is correct because the FROM argument is exclusive.
 	     I formerly used DEC_BYTEBPOS() but that caused problems at the
 	     beginning of the buffer. */
-	  adjust_markers (mbuf, ind - 1, ind, length);
+	  adjust_markers (mbuf, bytepos - 1, bytepos, length_in_buffer);
 	}
+    }
+
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      signal_syntax_table_extent_adjust (mbuf);
     }
 
   signal_after_change (buf, pos, pos, pos + cclen);
@@ -1266,11 +1320,12 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 {
   /* This function can GC */
   Charcount numdel;
-  Bytebpos bi_from, bi_to;
-  Bytecount bc_numdel;
+  Bytebpos byte_from, byte_to;
+  Bytecount byte_numdel;
   EMACS_INT shortage;
   struct buffer *mbuf;
   Lisp_Object bufcons;
+  int do_move_gap = 0;
 
   /* Defensive steps just in case a buffer gets deleted and a calling
      function doesn't notice it. */
@@ -1301,6 +1356,42 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
   if ((numdel = to - from) <= 0)
     return;
 
+  byte_from = charbpos_to_bytebpos (buf, from);
+  byte_to = charbpos_to_bytebpos (buf, to);
+  byte_numdel = byte_to - byte_from;
+
+  if (to == BUF_Z (buf) &&
+      byte_from > BYTE_BUF_GPT (buf))
+    /* avoid moving the gap just to delete from the bottom. */
+    do_move_gap = 0;
+  else
+    {
+      /* Make sure the gap is somewhere in or next to what we are deleting.  */
+      /* NOTE: Can QUIT! */
+      if (byte_to < BYTE_BUF_GPT (buf))
+	gap_left (buf, byte_to);
+      if (byte_from > BYTE_BUF_GPT (buf))
+	gap_right (buf, byte_from);
+      do_move_gap = 1;
+    }
+
+  /* At this point, no more QUITting or processing of Lisp code.  Buffer is
+     in a consistent state.  Following code puts buffer in an inconsistent
+     state and can be considered a "critical section". */
+
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      record_delete (mbuf, from, numdel);
+    }
+  BUF_MODIFF (buf)++;
+  MARK_BUFFERS_CHANGED;
+
+  /* We used to do the following before the gap move.  But that might QUIT,
+     and (as a result of this) the gap code always leaves the buffer in
+     a consistent state.  Therefore, it's totally safe to do these operations
+     now, and just as well not before, as we're making state changes
+     related to the deletion. */
+  
   /* Redisplay needs to know if a newline was in the deleted region.
      If we've already marked the changed region as having a deleted
      newline there is no use in performing the check. */
@@ -1316,162 +1407,98 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 	}
     }
 
-  bi_from = charbpos_to_bytebpos (buf, from);
-  bi_to = charbpos_to_bytebpos (buf, to);
-  bc_numdel = bi_to - bi_from;
-
   delete_invalidate_line_number_cache (buf, from, to);
 
-  if (to == BUF_Z (buf) &&
-      bi_from > BI_BUF_GPT (buf))
+#ifdef MULE
+  /* Update our count of ASCII, 8-bit and 16-bit chars and the
+     entirely-one-byte flag */
+  {
+    Bytebpos i;
+
+    for (i = byte_from; i < byte_to; i = next_bytebpos (buf, i))
+      {
+	Emchar ch = BYTE_BUF_FETCH_CHAR (buf, i);
+	if (emchar_ascii_p (ch))
+	  buf->text->num_ascii_chars--;
+	if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+	  buf->text->num_8_bit_fixed_chars--;
+	if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+	  buf->text->num_16_bit_fixed_chars--;
+      }
+  }
+#endif /* MULE */
+
+  /* #### Point used to be modified here, but this causes problems
+     with MULE, as point is used to calculate bytebpos's, and if the
+     offset in byte_numdel causes point to move to a non first-byte
+     location, causing some other function to throw an assertion
+     in ASSERT_VALID_BYTEBPOS. I've moved the code to right after
+     the other movements and adjustments, but before the gap is
+     moved.  -- jh 970813 */
+
+  /* Detach any extents that are completely within the range [FROM, TO],
+     if the extents are detachable.
+     
+     This must come AFTER record_delete(), so that the appropriate extents
+     will be present to be recorded, and BEFORE the gap size is increased,
+     as otherwise we will be confused about where the extents end. */
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      /* avoid moving the gap just to delete from the bottom. */
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  record_delete (mbuf, from, numdel);
-	}
-      BUF_MODIFF (buf)++;
-      MARK_BUFFERS_CHANGED;
-
-      /* #### Point used to be modified here, but this causes problems
-	 with MULE, as point is used to calculate bytebposs, and if the
-	 offset in bc_numdel causes point to move to a non first-byte
-	 location, causing some other function to throw an assertion
-	 in ASSERT_VALID_BYTEBPOS. I've moved the code to right after
-	 the other movements and adjustments, but before the gap is
-	 moved.  -- jh 970813 */
-
-      /* Detach any extents that are completely within the range [FROM, TO],
-	 if the extents are detachable.
-
-	 This must come AFTER record_delete(), so that the appropriate
-	 extents will be present to be recorded, and BEFORE the gap
-	 size is increased, as otherwise we will be confused about
-	 where the extents end. */
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  process_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to, 0);
-	}
-
-      /* Relocate all markers pointing into the new, larger gap to
-	 point at the end of the text before the gap.  */
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  adjust_markers (mbuf,
-			  (bi_to + BUF_GAP_SIZE (mbuf)),
-			  (bi_to + BUF_GAP_SIZE (mbuf)),
-			  (- bc_numdel));
-	}
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  /* Relocate any extent endpoints just like markers. */
-	  adjust_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to,
-				       BUF_GAP_SIZE (mbuf), bc_numdel, 0);
-	}
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  /* Relocate point as if it were a marker.  */
-	  if (bi_from < BI_BUF_PT (mbuf))
-	    {
-	      if (BI_BUF_PT (mbuf) < bi_to)
-		JUST_SET_POINT (mbuf, from, bi_from);
-	      else
-		JUST_SET_POINT (mbuf, BUF_PT (mbuf) - numdel,
-				BI_BUF_PT (mbuf) - bc_numdel);
-	    }
-	}
-
-      SET_BUF_END_GAP_SIZE (buf, BUF_END_GAP_SIZE (buf) + bc_numdel);
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) - numdel,
-			   BI_BUF_ZV (mbuf) - bc_numdel);
-	}
-      SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
-      SET_GAP_SENTINEL (buf);
+      process_extents_for_deletion (wrap_buffer (mbuf), byte_from, byte_to, 0);
     }
+
+  /* Relocate all markers pointing into the new, larger gap to
+     point at the end of the text before the gap.  */
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      adjust_markers (mbuf,
+		      (byte_to + BUF_GAP_SIZE (mbuf)),
+		      (byte_to + BUF_GAP_SIZE (mbuf)),
+		      (- byte_numdel -
+		       (do_move_gap ? BUF_GAP_SIZE (mbuf) : 0)));
+    }
+
+  /* Relocate any extent endpoints just like markers. */
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      adjust_extents_for_deletion (wrap_buffer (mbuf), byte_from, byte_to,
+				   BUF_GAP_SIZE (mbuf),
+				   byte_numdel,
+				   do_move_gap ? BUF_GAP_SIZE (mbuf) : 0);
+    }
+
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      /* Relocate point as if it were a marker.  */
+      if (byte_from < BYTE_BUF_PT (mbuf))
+	{
+	  if (BYTE_BUF_PT (mbuf) < byte_to)
+	    JUST_SET_POINT (mbuf, from, byte_from);
+	  else
+	    JUST_SET_POINT (mbuf, BUF_PT (mbuf) - numdel,
+			    BYTE_BUF_PT (mbuf) - byte_numdel);
+	}
+    }
+
+  if (do_move_gap)
+    SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + byte_numdel);
   else
+    SET_BUF_END_GAP_SIZE (buf, BUF_END_GAP_SIZE (buf) + byte_numdel);
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
-      /* Make sure the gap is somewhere in or next to what we are deleting.  */
-      if (bi_to < BI_BUF_GPT (buf))
-	gap_left (buf, bi_to);
-      if (bi_from > BI_BUF_GPT (buf))
-	gap_right (buf, bi_from);
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  record_delete (mbuf, from, numdel);
-	}
-      BUF_MODIFF (buf)++;
-      MARK_BUFFERS_CHANGED;
-
-      /* #### Point used to be modified here, but this causes problems
-	 with MULE, as point is used to calculate bytebposs, and if the
-	 offset in bc_numdel causes point to move to a non first-byte
-	 location, causing some other function to throw an assertion
-	 in ASSERT_VALID_BYTEBPOS. I've moved the code to right after
-	 the other movements and adjustments, but before the gap is
-	 moved.  -- jh 970813 */
-
-      /* Detach any extents that are completely within the range [FROM, TO],
-	 if the extents are detachable.
-
-	 This must come AFTER record_delete(), so that the appropriate extents
-	 will be present to be recorded, and BEFORE the gap size is increased,
-	 as otherwise we will be confused about where the extents end. */
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  process_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to, 0);
-	}
-
-      /* Relocate all markers pointing into the new, larger gap to
-	 point at the end of the text before the gap.  */
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  adjust_markers (mbuf,
-			  (bi_to + BUF_GAP_SIZE (mbuf)),
-			  (bi_to + BUF_GAP_SIZE (mbuf)),
-			  (- bc_numdel - BUF_GAP_SIZE (mbuf)));
-	}
-
-      /* Relocate any extent endpoints just like markers. */
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  adjust_extents_for_deletion (wrap_buffer (mbuf), bi_from, bi_to,
-				       BUF_GAP_SIZE (mbuf),
-				       bc_numdel, BUF_GAP_SIZE (mbuf));
-	}
-
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  /* Relocate point as if it were a marker.  */
-	  if (bi_from < BI_BUF_PT (mbuf))
-	    {
-	      if (BI_BUF_PT (mbuf) < bi_to)
-		JUST_SET_POINT (mbuf, from, bi_from);
-	      else
-		JUST_SET_POINT (mbuf, BUF_PT (mbuf) - numdel,
-				BI_BUF_PT (mbuf) - bc_numdel);
-	    }
-	}
-
-      SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + bc_numdel);
-      MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
-	{
-	  SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) - numdel,
-			   BI_BUF_ZV (mbuf) - bc_numdel);
-	}
-      SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
-      SET_BI_BUF_GPT (buf, bi_from);
-      SET_GAP_SENTINEL (buf);
+      SET_BOTH_BUF_ZV (mbuf, BUF_ZV (mbuf) - numdel,
+		       BYTE_BUF_ZV (mbuf) - byte_numdel);
     }
+  SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BYTE_BUF_Z (buf) - byte_numdel);
+  if (do_move_gap)
+    SET_BYTE_BUF_GPT (buf, byte_from);
+  SET_GAP_SENTINEL (buf);
 
 #ifdef MULE
-  buffer_mule_signal_deleted_region (buf, from, to, bi_from, bi_to);
+  buffer_mule_signal_deleted_region (buf, from, to, byte_from, byte_to);
+  buf->text->entirely_one_byte_p =
+    (BUF_FORMAT (buf) == FORMAT_8_BIT_FIXED ||
+     (BUF_FORMAT (buf) == FORMAT_DEFAULT && BUF_Z (buf) == BYTE_BUF_Z (buf)));
 #endif
 
 #ifdef ERROR_CHECK_EXTENTS
@@ -1481,6 +1508,15 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
     }
 #endif
 
+  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
+    {
+      signal_syntax_table_extent_adjust (mbuf);
+    }
+
+  /* &&#### Here we consider converting the buffer from default to
+     8-bit-fixed if is entirely 8-bit-fixed chars and has been that way for
+     a long time, e.g. 20 minutes.  And if the buffer just switched to all
+     8-bit-fixed chars, start the timer. */
   signal_after_change (buf, from, to, from);
 }
 
@@ -1496,19 +1532,20 @@ buffer_replace_char (struct buffer *buf, Charbpos pos, Emchar ch,
 		     int not_real_change, int force_lock_check)
 {
   /* This function can GC */
-  Intbyte curstr[MAX_EMCHAR_LEN];
   Intbyte newstr[MAX_EMCHAR_LEN];
-  Bytecount curlen, newlen;
+  Bytecount newlen;
+  Emchar oldch;
 
   /* Defensive steps just in case a buffer gets deleted and a calling
      function doesn't notice it. */
   if (!BUFFER_LIVE_P (buf))
     return;
 
-  curlen = BUF_CHARPTR_COPY_CHAR (buf, pos, curstr);
-  newlen = set_charptr_emchar (newstr, ch);
-
-  if (curlen == newlen)
+  newlen = set_charptr_emchar_fmt (newstr, ch, BUF_FORMAT (buf),
+				   wrap_buffer (buf));
+  oldch = BUF_FETCH_CHAR (buf, pos);
+  if (emchar_fits_in_format (ch, BUF_FORMAT (buf), wrap_buffer (buf)) &&
+      newlen == emchar_len_fmt (oldch, BUF_FORMAT (buf)))
     {
       struct buffer *mbuf;
       Lisp_Object bufcons;
@@ -1547,6 +1584,22 @@ buffer_replace_char (struct buffer *buf, Charbpos pos, Emchar ch,
 	    }
 	  BUF_MODIFF (buf)++;
 	}
+
+#ifdef MULE
+      if (emchar_ascii_p (oldch))
+	buf->text->num_ascii_chars--;
+      if (emchar_8_bit_fixed_p (oldch, wrap_buffer (buf)))
+	buf->text->num_8_bit_fixed_chars--;
+      if (emchar_16_bit_fixed_p (oldch, wrap_buffer (buf)))
+	buf->text->num_16_bit_fixed_chars--;
+      if (emchar_ascii_p (ch))
+	buf->text->num_ascii_chars++;
+      if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+	buf->text->num_8_bit_fixed_chars++;
+      if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+	buf->text->num_16_bit_fixed_chars++;
+#endif /* MULE */
+
       memcpy (BUF_BYTE_ADDRESS (buf, pos), newstr, newlen);
 
       signal_after_change (buf, pos, pos + 1, pos + 1);
@@ -1604,42 +1657,19 @@ make_string_from_buffer_1 (struct buffer *buf, Charbpos pos, Charcount length,
 			   int no_extents)
 {
   /* This function can GC */
-  Bytebpos    bi_ind = charbpos_to_bytebpos (buf, pos);
-  Bytecount bi_len = charbpos_to_bytebpos (buf, pos + length) - bi_ind;
-  Lisp_Object  val = make_uninit_string (bi_len);
+  Bytebpos bytepos = charbpos_to_bytebpos (buf, pos);
+  Bytecount bytelen = charbpos_to_bytebpos (buf, pos + length) - bytepos;
+  Bytecount needed = copy_buffer_text_out (buf, bytepos, bytelen, NULL, 0,
+					   FORMAT_DEFAULT, Qnil, NULL);
+  Lisp_Object val = make_uninit_string (needed);
 
   struct gcpro gcpro1;
   GCPRO1 (val);
 
   if (!no_extents)
-    add_string_extents (val, buf, bi_ind, bi_len);
-
-  {
-    Bytecount len1 = BI_BUF_GPT (buf) - bi_ind;
-    Intbyte *start1 = BI_BUF_BYTE_ADDRESS (buf, bi_ind);
-    Intbyte *dest = XSTRING_DATA (val);
-
-    if (len1 < 0)
-      {
-	/* Completely after gap */
-	memcpy (dest, start1, bi_len);
-      }
-    else if (bi_len <= len1)
-      {
-	/* Completely before gap */
-	memcpy (dest, start1, bi_len);
-      }
-    else
-      {
-	/* Spans gap */
-	Bytebpos pos2 = bi_ind + len1;
-	Intbyte *start2 = BI_BUF_BYTE_ADDRESS (buf, pos2);
-
-	memcpy (dest, start1, len1);
-	memcpy (dest + len1, start2, bi_len - len1);
-      }
-  }
-
+    add_string_extents (val, buf, bytepos, bytelen);
+  copy_buffer_text_out (buf, bytepos, bytelen, XSTRING_DATA (val), needed,
+			FORMAT_DEFAULT, Qnil, NULL);
   init_string_ascii_begin (val);
   sledgehammer_check_ascii_begin (val);
 
@@ -1717,7 +1747,7 @@ init_buffer_text (struct buffer *b)
 	memory_full ();
 
       SET_BUF_END_GAP_SIZE (b, 0);
-      SET_BI_BUF_GPT (b, 1);
+      SET_BYTE_BUF_GPT (b, 1);
       SET_BOTH_BUF_Z (b, 1, 1);
       SET_GAP_SENTINEL (b);
       SET_END_SENTINEL (b);
@@ -1727,9 +1757,7 @@ init_buffer_text (struct buffer *b)
 
 	b->text->mule_bufmin = b->text->mule_bufmax = 1;
 	b->text->mule_bytmin = b->text->mule_bytmax = 1;
-	b->text->mule_shifter = 0;
-	b->text->mule_three_p = 0;
-	b->text->entirely_ascii_p = 1;
+	b->text->entirely_one_byte_p = 1;
 
 	for (i = 0; i < 16; i++)
 	  {
@@ -1737,6 +1765,8 @@ init_buffer_text (struct buffer *b)
 	    b->text->mule_bytebpos_cache[i] = 1;
 	  }
       }
+      /* &&#### Set to FORMAT_8_BIT_FIXED when that code is working */
+      BUF_FORMAT (b) = FORMAT_DEFAULT;
 #endif /* MULE */
       b->text->line_number_cache = Qnil;
 
@@ -1751,11 +1781,11 @@ init_buffer_text (struct buffer *b)
     }
   else
     {
-      JUST_SET_POINT (b, BUF_PT (b->base_buffer), BI_BUF_PT (b->base_buffer));
+      JUST_SET_POINT (b, BUF_PT (b->base_buffer), BYTE_BUF_PT (b->base_buffer));
       SET_BOTH_BUF_BEGV (b, BUF_BEGV (b->base_buffer),
-			 BI_BUF_BEGV (b->base_buffer));
+			 BYTE_BUF_BEGV (b->base_buffer));
       SET_BOTH_BUF_ZV (b, BUF_ZV (b->base_buffer),
-			 BI_BUF_ZV (b->base_buffer));
+			 BYTE_BUF_ZV (b->base_buffer));
     }
 
   b->changes = xnew_and_zero (struct each_buffer_change_data);

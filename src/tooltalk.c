@@ -345,7 +345,7 @@ tooltalk_message_callback (Tt_message m, Tt_pattern p)
   fflush (tooltalk_log_file);
 #endif
 
-  VOID_TO_LISP (message_, tt_message_user (m, TOOLTALK_MESSAGE_KEY));
+  message_ = VOID_TO_LISP (tt_message_user (m, TOOLTALK_MESSAGE_KEY));
   pattern = make_tooltalk_pattern (p);
   cb = XTOOLTALK_MESSAGE (message_)->callback;
   GCPRO2 (message_, pattern);
@@ -389,7 +389,7 @@ tooltalk_pattern_callback (Tt_message m, Tt_pattern p)
 #endif
 
   message_ = make_tooltalk_message (m);
-  VOID_TO_LISP (pattern, tt_pattern_user (p, TOOLTALK_PATTERN_KEY));
+  pattern = VOID_TO_LISP (tt_pattern_user (p, TOOLTALK_PATTERN_KEY));
   cb = XTOOLTALK_PATTERN (pattern)->callback;
   GCPRO2 (message_, pattern);
   if (!NILP (Vtooltalk_pattern_handler_hook))

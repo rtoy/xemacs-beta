@@ -646,7 +646,7 @@ check_instance_cache_mapper (Lisp_Object key, Lisp_Object value,
   if (!NILP (value))
     {
       Lisp_Object window;
-      VOID_TO_LISP (window, flag_closure);
+      window = VOID_TO_LISP (flag_closure);
       assert (EQ (XIMAGE_INSTANCE_DOMAIN (value), window));
     }
 
@@ -948,37 +948,37 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
       if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)) ||
 	  !NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	{
-	  write_c_string (" @", printcharfun);
+	  write_c_string (printcharfun, " @");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
 	    write_fmt_string (printcharfun, "%ld",
 			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
 	  else
-	    write_c_string ("??", printcharfun);
-	  write_c_string (",", printcharfun);
+	    write_c_string (printcharfun, "??");
+	  write_c_string (printcharfun, ",");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	    write_fmt_string (printcharfun, "%ld",
 			      XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
 	  else
-	    write_c_string ("??", printcharfun);
+	    write_c_string (printcharfun, "??");
 	}
       if (!NILP (IMAGE_INSTANCE_PIXMAP_FG (ii)) ||
 	  !NILP (IMAGE_INSTANCE_PIXMAP_BG (ii)))
 	{
-	  write_c_string (" (", printcharfun);
+	  write_c_string (printcharfun, " (");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_FG (ii)))
 	    {
 	      print_internal
 		(XCOLOR_INSTANCE
 		 (IMAGE_INSTANCE_PIXMAP_FG (ii))->name, printcharfun, 0);
 	    }
-	  write_c_string ("/", printcharfun);
+	  write_c_string (printcharfun, "/");
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_BG (ii)))
 	    {
 	      print_internal
 		(XCOLOR_INSTANCE
 		 (IMAGE_INSTANCE_PIXMAP_BG (ii))->name, printcharfun, 0);
 	    }
-	  write_c_string (")", printcharfun);
+	  write_c_string (printcharfun, ")");
 	}
       break;
 
@@ -1002,17 +1002,17 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	 are specific to a particular frame so we want to print in their
 	 description what that frame is. */
 
-      write_c_string (" on #<", printcharfun);
+      write_c_string (printcharfun, " on #<");
       {
 	struct frame* f  = XFRAME (IMAGE_INSTANCE_FRAME (ii));
 
 	if (!FRAME_LIVE_P (f))
-	  write_c_string ("dead", printcharfun);
+	  write_c_string (printcharfun, "dead");
 	else
-	  write_c_string (DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))),
-			  printcharfun);
+	  write_c_string (printcharfun,
+	                  DEVICE_TYPE_NAME (XDEVICE (FRAME_DEVICE (f))));
       }
-      write_c_string ("-frame>", printcharfun);
+      write_c_string (printcharfun, "-frame>");
       write_fmt_string (printcharfun, " 0x%p",
 			IMAGE_INSTANCE_SUBWINDOW_ID (ii));
 
@@ -2345,7 +2345,7 @@ query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
       if (charsets[i])
 	{
 	  return FACE_CACHEL_FONT (cachel,
-				   CHARSET_BY_LEADING_BYTE (i +
+				   charset_by_leading_byte (i +
 							    MIN_LEADING_BYTE));
 
 	}
@@ -2538,7 +2538,7 @@ check_valid_xbm_inline (Lisp_Object data)
   if (!NATNUMP (height))
     invalid_argument ("Height must be a natural number", height);
 
-  if (((XINT (width) * XINT (height)) / 8) > XSTRING_CHAR_LENGTH (bits))
+  if (((XINT (width) * XINT (height)) / 8) > string_char_length (bits))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
@@ -4871,12 +4871,12 @@ display_table_entry (Emchar ch, Lisp_Object face_table,
       else if (CHAR_TABLEP (table)
 	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_CHAR)
 	{
-	  return get_char_table (ch, XCHAR_TABLE (table));
+	  return get_char_table (ch, table);
 	}
       else if (CHAR_TABLEP (table)
 	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_GENERIC)
 	{
-	  Lisp_Object gotit = get_char_table (ch, XCHAR_TABLE (table));
+	  Lisp_Object gotit = get_char_table (ch, table);
 	  if (!NILP (gotit))
 	    return gotit;
 	  else

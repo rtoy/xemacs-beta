@@ -85,16 +85,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include <X11/IntrinsicP.h>
 
-#if INTBITS == 32
-# define FOUR_BYTE_TYPE unsigned int
-#elif LONGBITS == 32
-# define FOUR_BYTE_TYPE unsigned long
-#elif SHORTBITS == 32
-# define FOUR_BYTE_TYPE unsigned short
-#else
-#error What kind of strange-ass system are we running on?
-#endif
-
 #define LISP_DEVICE_TO_X_SCREEN(dev) XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
 
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
@@ -186,7 +176,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   UChar_Binary *data, *ip, *dp;
   quant_table *qtable = 0;
   union {
-    FOUR_BYTE_TYPE val;
+    UINT_32_BIT val;
     char cp[4];
   } conv;
 
@@ -381,7 +371,7 @@ x_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_X_MASK (p));
 	}
-      write_c_string (")", printcharfun);
+      write_c_string (printcharfun, ")");
       break;
     default:
       break;
@@ -570,11 +560,11 @@ x_locate_pixmap_file (Lisp_Object name)
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (XSTRING_BYTE (name, 0) == '/' ||
-      (XSTRING_BYTE (name, 0) == '.' &&
-       (XSTRING_BYTE (name, 1) == '/' ||
-	(XSTRING_BYTE (name, 1) == '.' &&
-	 (XSTRING_BYTE (name, 2) == '/')))))
+  if (string_byte (name, 0) == '/' ||
+      (string_byte (name, 0) == '.' &&
+       (string_byte (name, 1) == '/' ||
+	(string_byte (name, 1) == '.' &&
+	 (string_byte (name, 2) == '/')))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return Fexpand_file_name (name, Qnil);

@@ -304,11 +304,11 @@ mswindows_locate_pixmap_file (Lisp_Object name)
 
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
-  if (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 0)) ||
-      (XSTRING_BYTE (name, 0) == '.' &&
-       (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 1)) ||
-	(XSTRING_BYTE (name, 1) == '.' &&
-	 (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 2)))))))
+  if (IS_DIRECTORY_SEP(string_byte (name, 0)) ||
+      (string_byte (name, 0) == '.' &&
+       (IS_DIRECTORY_SEP(string_byte (name, 1)) ||
+	(string_byte (name, 1) == '.' &&
+	 (IS_DIRECTORY_SEP(string_byte (name, 2)))))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return Fexpand_file_name (name, Qnil);
@@ -1716,7 +1716,7 @@ mswindows_print_image_instance (Lisp_Image_Instance *p,
 	  write_fmt_string (printcharfun, "/0x%lx",
 			    (unsigned long) IMAGE_INSTANCE_MSWINDOWS_MASK (p));
 	}
-      write_c_string (")", printcharfun);
+      write_c_string (printcharfun, ")");
       break;
 
     default:
@@ -1810,8 +1810,8 @@ charset_of_text (Lisp_Object text)
   for (p = XSTRING_DATA (text); *p;)
     {
       Emchar c = charptr_emchar (p);
-      if (!EQ (CHAR_CHARSET (c), Vcharset_ascii))
-	return CHAR_CHARSET (c);
+      if (!EQ (emchar_charset (c), Vcharset_ascii))
+	return emchar_charset (c);
       INC_CHARPTR (p);
     }
 #endif /* MULE */

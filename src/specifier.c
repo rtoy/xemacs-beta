@@ -279,7 +279,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
   if (NILP (the_specs))
     /* there are no global specs */
-    write_c_string ("<unspecified>", printcharfun);
+    write_c_string (printcharfun, "<unspecified>");
   else
     print_internal (the_specs, printcharfun, 1);
   if (!NILP (sp->fallback))
@@ -350,9 +350,8 @@ specifier_hash (Lisp_Object obj, int depth)
 inline static Bytecount
 aligned_sizeof_specifier (Bytecount specifier_type_specific_size)
 {
-  return ALIGN_SIZE (offsetof (Lisp_Specifier, data)
-		     + specifier_type_specific_size,
-		     ALIGNOF (max_align_t));
+  return MAX_ALIGN_SIZE (offsetof (Lisp_Specifier, data)
+			 + specifier_type_specific_size);
 }
 
 static Bytecount
@@ -2946,7 +2945,7 @@ recompute_cached_specifier_everywhere_mapfun (struct window *w,
 {
   Lisp_Object specifier = Qnil;
 
-  VOID_TO_LISP (specifier, closure);
+  specifier = VOID_TO_LISP (closure);
   recompute_one_cached_specifier_in_window (specifier, w);
   return 0;
 }

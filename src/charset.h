@@ -40,18 +40,20 @@ Boston, MA 02111-1307, USA.  */
 
 #define Vcharset_ascii Qnil
 
-#define CHAR_CHARSET(ch) Vcharset_ascii
-#define CHAR_LEADING_BYTE(ch) LEADING_BYTE_ASCII
+#define emchar_charset(ch) Vcharset_ascii
+#define emchar_leading_byte(ch) LEADING_BYTE_ASCII
+#define emchar_len(ch) 1
+#define emchar_len_fmt(ch, fmt) 1
 #define LEADING_BYTE_ASCII 0x80
 #define NUM_LEADING_BYTES 1
 #define MIN_LEADING_BYTE 0x80
 #define CHARSETP(cs) 1
-#define CHARSET_BY_LEADING_BYTE(lb) Vcharset_ascii
+#define charset_by_leading_byte(lb) Vcharset_ascii
 #define XCHARSET_LEADING_BYTE(cs) LEADING_BYTE_ASCII
 #define XCHARSET_GRAPHIC(cs) -1
 #define XCHARSET_COLUMNS(cs) 1
 #define XCHARSET_DIMENSION(cs) 1
-#define BREAKUP_CHAR(ch, charset, byte1, byte2) do {	\
+#define BREAKUP_EMCHAR(ch, charset, byte1, byte2) do {	\
   (charset) = Vcharset_ascii;				\
   (byte1) = (ch);					\
   (byte2) = 0;						\
@@ -151,13 +153,14 @@ enum LEADING_BYTE_OFFICIAL_2
 
 /* Is this leading byte for a private charset? */
 
-#define LEADING_BYTE_PRIVATE_P(lb) ((lb) >= MIN_LEADING_BYTE_PRIVATE_1)
+#define leading_byte_private_p(lb) ((lb) >= MIN_LEADING_BYTE_PRIVATE_1)
 
 /* Is this a prefix for a private leading byte? */
 
-INLINE_HEADER int LEADING_BYTE_PREFIX_P (Intbyte lb);
-INLINE_HEADER int
-LEADING_BYTE_PREFIX_P (Intbyte lb)
+DECLARE_INLINE_HEADER (
+int
+leading_byte_prefix_p (Intbyte lb)
+)
 {
   return (lb == PRE_LEADING_BYTE_PRIVATE_1 ||
 	  lb == PRE_LEADING_BYTE_PRIVATE_2);
@@ -166,7 +169,7 @@ LEADING_BYTE_PREFIX_P (Intbyte lb)
 /* Given a private leading byte, return the leading byte prefix stored
    in a string. */
 
-#define PRIVATE_LEADING_BYTE_PREFIX(lb)			\
+#define private_leading_byte_prefix(lb)			\
   ((unsigned int) (lb) < MIN_LEADING_BYTE_PRIVATE_2 ?	\
    PRE_LEADING_BYTE_PRIVATE_1 :				\
    PRE_LEADING_BYTE_PRIVATE_2)
@@ -297,7 +300,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define CHARSET_FROM_UNICODE_LEVELS(cs) ((cs)->from_unicode_levels)
 
 
-#define CHARSET_PRIVATE_P(cs) LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
+#define CHARSET_PRIVATE_P(cs) leading_byte_private_p (CHARSET_LEADING_BYTE (cs))
 
 #define XCHARSET_ID(cs)		  CHARSET_ID           (XCHARSET (cs))
 #define XCHARSET_NAME(cs)	  CHARSET_NAME         (XCHARSET (cs))
@@ -336,9 +339,10 @@ struct charset_lookup
   Intbyte next_allocated_2_byte_leading_byte;
 };
 
-INLINE_HEADER Lisp_Object CHARSET_BY_LEADING_BYTE (int lb);
-INLINE_HEADER Lisp_Object
-CHARSET_BY_LEADING_BYTE (int lb)
+DECLARE_INLINE_HEADER (
+Lisp_Object
+charset_by_leading_byte (int lb)
+)
 {
   extern struct charset_lookup *chlook;
 
@@ -351,10 +355,10 @@ CHARSET_BY_LEADING_BYTE (int lb)
   return chlook->charset_by_leading_byte[lb - MIN_LEADING_BYTE];
 }
 
-INLINE_HEADER Lisp_Object
-CHARSET_BY_ATTRIBUTES (int type, int final, int dir);
-INLINE_HEADER Lisp_Object
-CHARSET_BY_ATTRIBUTES (int type, int final, int dir)
+DECLARE_INLINE_HEADER (
+Lisp_Object
+charset_by_attributes (int type, int final, int dir)
+)
 {
   extern struct charset_lookup *chlook;
 
@@ -372,15 +376,15 @@ CHARSET_BY_ATTRIBUTES (int type, int final, int dir)
 /* The bit fields of character are divided into 3 parts:
    FIELD1(5bits):FIELD2(7bits):FIELD3(7bits) */
 
-#define CHAR_FIELD1_MASK (0x1F << 14)
-#define CHAR_FIELD2_MASK (0x7F << 7)
-#define CHAR_FIELD3_MASK 0x7F
+#define EMCHAR_FIELD1_MASK (0x1F << 14)
+#define EMCHAR_FIELD2_MASK (0x7F << 7)
+#define EMCHAR_FIELD3_MASK 0x7F
 
 /* Macros to access each field of a character code of C.  */
 
-#define CHAR_FIELD1(c) (((c) & CHAR_FIELD1_MASK) >> 14)
-#define CHAR_FIELD2(c) (((c) & CHAR_FIELD2_MASK) >> 7)
-#define CHAR_FIELD3(c)  ((c) & CHAR_FIELD3_MASK)
+#define emchar_field1(c) (((c) & EMCHAR_FIELD1_MASK) >> 14)
+#define emchar_field2(c) (((c) & EMCHAR_FIELD2_MASK) >> 7)
+#define emchar_field3(c)  ((c) & EMCHAR_FIELD3_MASK)
 
 /* Field 1, if non-zero, usually holds a leading byte for a
    dimension-2 charset.  Field 2, if non-zero, usually holds a leading
@@ -396,32 +400,32 @@ CHARSET_BY_ATTRIBUTES (int type, int final, int dir)
 
 /* Minimum and maximum allowed values for the fields. */
 
-#define MIN_CHAR_FIELD2_OFFICIAL \
+#define MIN_EMCHAR_FIELD2_OFFICIAL \
   (MIN_LEADING_BYTE_OFFICIAL_1 - FIELD2_TO_OFFICIAL_LEADING_BYTE)
-#define MAX_CHAR_FIELD2_OFFICIAL \
+#define MAX_EMCHAR_FIELD2_OFFICIAL \
   (MAX_LEADING_BYTE_OFFICIAL_1 - FIELD2_TO_OFFICIAL_LEADING_BYTE)
 
-#define MIN_CHAR_FIELD1_OFFICIAL \
+#define MIN_EMCHAR_FIELD1_OFFICIAL \
   (MIN_LEADING_BYTE_OFFICIAL_2 - FIELD1_TO_OFFICIAL_LEADING_BYTE)
-#define MAX_CHAR_FIELD1_OFFICIAL \
+#define MAX_EMCHAR_FIELD1_OFFICIAL \
   (MAX_LEADING_BYTE_OFFICIAL_2 - FIELD1_TO_OFFICIAL_LEADING_BYTE)
 
-#define MIN_CHAR_FIELD2_PRIVATE \
+#define MIN_EMCHAR_FIELD2_PRIVATE \
   (MIN_LEADING_BYTE_PRIVATE_1 - FIELD2_TO_PRIVATE_LEADING_BYTE)
-#define MAX_CHAR_FIELD2_PRIVATE \
+#define MAX_EMCHAR_FIELD2_PRIVATE \
   (MAX_LEADING_BYTE_PRIVATE_1 - FIELD2_TO_PRIVATE_LEADING_BYTE)
 
-#define MIN_CHAR_FIELD1_PRIVATE \
+#define MIN_EMCHAR_FIELD1_PRIVATE \
   (MIN_LEADING_BYTE_PRIVATE_2 - FIELD1_TO_PRIVATE_LEADING_BYTE)
-#define MAX_CHAR_FIELD1_PRIVATE \
+#define MAX_EMCHAR_FIELD1_PRIVATE \
   (MAX_LEADING_BYTE_PRIVATE_2 - FIELD1_TO_PRIVATE_LEADING_BYTE)
 
 /* Minimum character code of each <type> character.  */
 
-#define MIN_CHAR_OFFICIAL_TYPE9N    (MIN_CHAR_FIELD2_OFFICIAL <<  7)
-#define MIN_CHAR_PRIVATE_TYPE9N     (MIN_CHAR_FIELD2_PRIVATE  <<  7)
-#define MIN_CHAR_OFFICIAL_TYPE9NX9N (MIN_CHAR_FIELD1_OFFICIAL << 14)
-#define MIN_CHAR_PRIVATE_TYPE9NX9N  (MIN_CHAR_FIELD1_PRIVATE  << 14)
+#define MIN_CHAR_OFFICIAL_TYPE9N    (MIN_EMCHAR_FIELD2_OFFICIAL <<  7)
+#define MIN_CHAR_PRIVATE_TYPE9N     (MIN_EMCHAR_FIELD2_PRIVATE  <<  7)
+#define MIN_CHAR_OFFICIAL_TYPE9NX9N (MIN_EMCHAR_FIELD1_OFFICIAL << 14)
+#define MIN_CHAR_PRIVATE_TYPE9NX9N  (MIN_EMCHAR_FIELD1_PRIVATE  << 14)
 #define MIN_CHAR_COMPOSITION        (0x1F << 14)
 
 /* Leading byte of a character.
@@ -431,20 +435,21 @@ CHARSET_BY_ATTRIBUTES (int type, int final, int dir)
    FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
    */
 
-INLINE_HEADER Intbyte CHAR_LEADING_BYTE (Emchar c);
-INLINE_HEADER Intbyte
-CHAR_LEADING_BYTE (Emchar c)
+DECLARE_INLINE_HEADER (
+Intbyte
+emchar_leading_byte (Emchar c)
+)
 {
-  if (CHAR_ASCII_P (c))
+  if (emchar_ascii_p (c))
     return LEADING_BYTE_ASCII;
   else if (c < 0xA0)
     return LEADING_BYTE_CONTROL_1;
   else if (c < MIN_CHAR_OFFICIAL_TYPE9NX9N)
-    return CHAR_FIELD2 (c) + FIELD2_TO_OFFICIAL_LEADING_BYTE;
+    return emchar_field2 (c) + FIELD2_TO_OFFICIAL_LEADING_BYTE;
   else if (c < MIN_CHAR_PRIVATE_TYPE9NX9N)
-    return CHAR_FIELD1 (c) + FIELD1_TO_OFFICIAL_LEADING_BYTE;
+    return emchar_field1 (c) + FIELD1_TO_OFFICIAL_LEADING_BYTE;
   else if (c < MIN_CHAR_COMPOSITION)
-    return CHAR_FIELD1 (c) + FIELD1_TO_PRIVATE_LEADING_BYTE;
+    return emchar_field1 (c) + FIELD1_TO_PRIVATE_LEADING_BYTE;
   else
     {
 #ifdef ENABLE_COMPOSITE_CHARS
@@ -456,7 +461,50 @@ CHAR_LEADING_BYTE (Emchar c)
     }
 }
 
-#define CHAR_CHARSET(c) CHARSET_BY_LEADING_BYTE (CHAR_LEADING_BYTE (c))
+DECLARE_INLINE_HEADER (
+Bytecount
+emchar_len (Emchar c)
+)
+{
+  if (emchar_ascii_p (c))
+    return 1;
+  else if (c < MIN_CHAR_OFFICIAL_TYPE9NX9N)
+    return 2;
+  else if (c < MIN_CHAR_PRIVATE_TYPE9NX9N)
+    return 3; /* dimension-2 official or dimension-1 private */
+  else if (c < MIN_CHAR_COMPOSITION)
+    return 4;
+  else
+    {
+#ifdef ENABLE_COMPOSITE_CHARS
+#error Not yet implemented
+#else
+      abort();
+      return 0;
+#endif /* ENABLE_COMPOSITE_CHARS */
+    }
+}
+
+DECLARE_INLINE_HEADER (
+Bytecount
+emchar_len_fmt (Emchar c, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return emchar_len (c);
+    case FORMAT_16_BIT_FIXED:
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
+
+#define emchar_charset(c) charset_by_leading_byte (emchar_leading_byte (c))
 
 /* Return a character whose charset is CHARSET and position-codes are C1
    and C2.  TYPE9N character ignores C2. (For typical charsets, i.e. not
@@ -468,72 +516,63 @@ CHAR_LEADING_BYTE (Emchar c)
    FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
    */
 
-INLINE_HEADER Emchar MAKE_CHAR_1 (Lisp_Object charset, int c1, int c2);
-INLINE_HEADER Emchar
-MAKE_CHAR_1 (Lisp_Object charset, int c1, int c2)
+DECLARE_INLINE_HEADER (
+Emchar
+make_emchar (Lisp_Object charset, int c1, int c2)
+)
 {
+  Emchar retval;
   if (EQ (charset, Vcharset_ascii))
-    return c1;
+    retval = c1;
   else if (EQ (charset, Vcharset_control_1))
-    return c1 | 0x80;
+    retval = c1 | 0x80;
 #ifdef ENABLE_COMPOSITE_CHARS
   else if (EQ (charset, Vcharset_composite))
-    return (0x1F << 14) | ((c1) << 7) | (c2);
+    retval = (0x1F << 14) | ((c1) << 7) | (c2);
 #endif
   else if (XCHARSET_DIMENSION (charset) == 1)
-    return ((XCHARSET_LEADING_BYTE (charset) -
-	     FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7) | (c1);
+    retval = ((XCHARSET_LEADING_BYTE (charset) -
+	       FIELD2_TO_OFFICIAL_LEADING_BYTE) << 7) | (c1);
   else if (!XCHARSET_PRIVATE_P (charset))
-    return ((XCHARSET_LEADING_BYTE (charset) -
-	     FIELD1_TO_OFFICIAL_LEADING_BYTE) << 14) | ((c1) << 7) | (c2);
+    retval = ((XCHARSET_LEADING_BYTE (charset) -
+	       FIELD1_TO_OFFICIAL_LEADING_BYTE) << 14) | ((c1) << 7) | (c2);
   else
-    return ((XCHARSET_LEADING_BYTE (charset) -
-	     FIELD1_TO_PRIVATE_LEADING_BYTE) << 14) | ((c1) << 7) | (c2);
-}
-
-#ifdef ERROR_CHECK_TEXT
-INLINE_HEADER Emchar MAKE_CHAR (Lisp_Object charset, int c1, int c2);
-INLINE_HEADER Emchar
-MAKE_CHAR (Lisp_Object charset, int c1, int c2)
-{
-  Emchar retval = MAKE_CHAR_1 (charset, c1, c2);
-  assert (valid_char_p (retval));
+    retval = ((XCHARSET_LEADING_BYTE (charset) -
+	       FIELD1_TO_PRIVATE_LEADING_BYTE) << 14) | ((c1) << 7) | (c2);
+  text_checking_assert (valid_emchar_p (retval));
   return retval;
 }
-#else
-#define MAKE_CHAR(charset, c1, c2) MAKE_CHAR_1 (charset, c1, c2)
-#endif
 
-/* BREAKUP_CHAR_1_UNSAFE assumes that the charset has already been
+/* BREAKUP_EMCHAR_1_UNSAFE assumes that the charset has already been
    calculated, and just computes c1 and c2.
 
-   BREAKUP_CHAR also computes and stores the charset. */
+   BREAKUP_EMCHAR also computes and stores the charset. */
 
-#define BREAKUP_CHAR_1_UNSAFE(c, charset, c1, c2)	\
+#define BREAKUP_EMCHAR_1_UNSAFE(c, charset, c1, c2)	\
   XCHARSET_DIMENSION (charset) == 1			\
-  ? ((c1) = CHAR_FIELD3 (c), (c2) = 0)			\
-  : ((c1) = CHAR_FIELD2 (c),				\
-     (c2) = CHAR_FIELD3 (c))
+  ? ((c1) = emchar_field3 (c), (c2) = 0)		\
+  : ((c1) = emchar_field2 (c),				\
+     (c2) = emchar_field3 (c))
 
-INLINE_HEADER void breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1,
-				   int *c2);
-INLINE_HEADER void
-breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
+DECLARE_INLINE_HEADER (
+void
+breakup_emchar_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
+)
 {
-  text_checking_assert (valid_char_p (c));
-  *charset = CHAR_CHARSET (c);
-  BREAKUP_CHAR_1_UNSAFE (c, *charset, *c1, *c2);
+  text_checking_assert (valid_emchar_p (c));
+  *charset = emchar_charset (c);
+  BREAKUP_EMCHAR_1_UNSAFE (c, *charset, *c1, *c2);
 }
 
-/* BREAKUP_CHAR separates an Emchar into its components.  The charset of
+/* BREAKUP_EMCHAR separates an Emchar into its components.  The charset of
    character C is set to CHARSET, and the position-codes of C are set to C1
    and C2.  C2 of TYPE9N character is 0.  */
 
-#define BREAKUP_CHAR(c, charset, c1, c2) \
-  breakup_char_1 (c, &(charset), &(c1), &(c2))
+#define BREAKUP_EMCHAR(c, charset, c1, c2) \
+  breakup_emchar_1 (c, &(charset), &(c1), &(c2))
 
 void get_charset_limits (Lisp_Object charset, int *low, int *high);
-int char_to_unicode (Emchar chr);
+int emchar_to_unicode (Emchar chr);
 
 #endif /* MULE */
 

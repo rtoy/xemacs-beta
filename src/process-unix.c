@@ -129,7 +129,7 @@ static int
 close_process_descs_mapfun (const void* key, void* contents, void* arg)
 {
   Lisp_Object proc;
-  CVOID_TO_LISP (proc, contents);
+  proc = VOID_TO_LISP (contents);
   event_stream_delete_stream_pair (XPROCESS(proc)->pipe_instream,
 				   XPROCESS(proc)->pipe_outstream);
   return 0;

@@ -181,7 +181,7 @@ x_keysym_to_character (KeySym keysym)
 #ifdef MULE
   Lisp_Object charset = Qzero;
 #define USE_CHARSET(var,cs) \
-  ((var) = CHARSET_BY_LEADING_BYTE (LEADING_BYTE_##cs))
+  ((var) = charset_by_leading_byte (LEADING_BYTE_##cs))
 #else
 #define USE_CHARSET(var,lb)
 #endif /* MULE */
@@ -286,7 +286,7 @@ x_keysym_to_character (KeySym keysym)
     return Qnil;
 
 #ifdef MULE
-  return make_char (MAKE_CHAR (charset, code, 0));
+  return make_char (make_emchar (charset, code, 0));
 #else
   return make_char (code + 0x80);
 #endif
@@ -1868,8 +1868,8 @@ emacs_Xt_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
   if (CONSOLE_X_P (XCONSOLE (console)))
-    write_c_string (x_event_name (event->event.magic.underlying_x_event.type),
-		    pstream);
+    write_c_string
+      (pstream, x_event_name (event->event.magic.underlying_x_event.type));
 }
 
 static int

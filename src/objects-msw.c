@@ -939,7 +939,7 @@ mswindows_string_to_color (const Intbyte *name)
 
       for (i = 1; i < qxestrlen (name); i++)
 	{
-	  if (!BYTE_ASCII_P (name[i]) || !isxdigit ((int) name[i]))
+	  if (!byte_ascii_p (name[i]) || !isxdigit ((int) name[i]))
 	    return (COLORREF) -1;
 	}
       if (qxestrlen (name) == 7)
@@ -1910,14 +1910,14 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
       if (dim == 1)
 	{
 	  for (i = lowlim; i <= highlim; i++)
-	    if ((cp = char_to_unicode (MAKE_CHAR (charset, i, 0))) >= 0)
+	    if ((cp = emchar_to_unicode (make_emchar (charset, i, 0))) >= 0)
 	      break;
 	}
       else
 	{
 	  for (i = lowlim; i <= highlim; i++)
 	    for (j = lowlim; j <= highlim; j++)
-	      if ((cp = char_to_unicode (MAKE_CHAR (charset, i, j))) >= 0)
+	      if ((cp = emchar_to_unicode (make_emchar (charset, i, j))) >= 0)
 		break;
 	}
       

@@ -240,7 +240,7 @@ get_profiling_info_maphash (const void *void_key,
     = (struct get_profiling_info_closure *) void_closure;
   EMACS_INT val;
 
-  CVOID_TO_LISP (key, void_key);
+  key = VOID_TO_LISP (void_key);
   val = (EMACS_INT) void_val;
 
   closure->accum = Fcons (Fcons (key, make_int (val)), closure->accum);
@@ -274,7 +274,7 @@ mark_profiling_info_maphash (const void *void_key,
 {
   Lisp_Object key;
 
-  CVOID_TO_LISP (key, void_key);
+  key = VOID_TO_LISP (void_key);
   mark_object (key);
   return 0;
 }

@@ -81,17 +81,17 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (INTP (Vprint_length))
     last = min (len, XINT (Vprint_length));
-  write_c_string ("#*", printcharfun);
+  write_c_string (printcharfun, "#*");
   for (i = 0; i < last; i++)
     {
       if (bit_vector_bit (v, i))
-	write_c_string ("1", printcharfun);
+	write_c_string (printcharfun, "1");
       else
-	write_c_string ("0", printcharfun);
+	write_c_string (printcharfun, "0");
     }
 
   if (last != len)
-    write_c_string ("...", printcharfun);
+    write_c_string (printcharfun, "...");
 }
 
 static int
@@ -222,7 +222,7 @@ Return the length of vector, bit vector, list or string SEQUENCE.
 {
  retry:
   if (STRINGP (sequence))
-    return make_int (XSTRING_CHAR_LENGTH (sequence));
+    return make_int (string_char_length (sequence));
   else if (CONSP (sequence))
     {
       Elemcount len;
@@ -381,8 +381,8 @@ is implemented.
       p2 = string2;
     }
 
-  end  = XSTRING_CHAR_LENGTH (p1);
-  len2 = XSTRING_CHAR_LENGTH (p2);
+  end  = string_char_length (p1);
+  len2 = string_char_length (p2);
   if (end > len2)
     end = len2;
 
@@ -1114,7 +1114,7 @@ with `path-separator'.
   CHECK_STRING (path);
 
   while (!STRINGP (Vpath_separator)
-	 || (XSTRING_CHAR_LENGTH (Vpath_separator) != 1))
+	 || (string_char_length (Vpath_separator) != 1))
     Vpath_separator = signal_continuable_error
       (Qinvalid_state,
        "`path-separator' should be set to a single-character string",
@@ -2887,7 +2887,7 @@ ARRAY is a vector, bit vector, or string.
 
       sledgehammer_check_ascii_begin (array);
       item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
-      new_bytecount = item_bytecount * (Bytecount) XSTRING_CHAR_LENGTH (array);
+      new_bytecount = item_bytecount * (Bytecount) string_char_length (array);
 
       resize_string (array, -1, new_bytecount - old_bytecount);
 
@@ -3855,7 +3855,7 @@ into shorter lines.
 
   CHECK_STRING (string);
 
-  length = XSTRING_CHAR_LENGTH (string);
+  length = string_char_length (string);
   allength = length + length/3 + 1;
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
@@ -3930,7 +3930,7 @@ Characters out of the base64 alphabet are ignored.
 
   CHECK_STRING (string);
 
-  length = XSTRING_CHAR_LENGTH (string);
+  length = string_char_length (string);
   /* We need to allocate enough room for decoding the text. */
   XMALLOC_OR_ALLOCA (decoded, length * MAX_EMCHAR_LEN, Intbyte);
 

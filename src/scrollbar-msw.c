@@ -94,7 +94,7 @@ mswindows_free_scrollbar_instance (struct scrollbar_instance *sb)
     (void *) qxeGetWindowLong (SCROLLBAR_MSW_HANDLE (sb), GWL_USERDATA);
   Lisp_Object ptr;
 
-  VOID_TO_LISP (ptr, opaque);
+  ptr = VOID_TO_LISP (opaque);
   assert (OPAQUE_PTRP (ptr));
   ptr = Fremhash (ptr, Vmswindows_scrollbar_instance_table);
   assert (!NILP (ptr));
@@ -221,7 +221,7 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
   else
     {
       Lisp_Object ptr;
-      VOID_TO_LISP (ptr, v);
+      ptr = VOID_TO_LISP (v);
       assert (OPAQUE_PTRP (ptr));
       ptr = Fgethash (ptr, Vmswindows_scrollbar_instance_table, Qnil);
       sb = XSCROLLBAR_INSTANCE (ptr);
@@ -335,7 +335,7 @@ mswindows_handle_mousewheel_event (Lisp_Object frame, int keys, int delta,
 {
   int hasVertBar, hasHorzBar;	/* Indicates presence of scroll bars */
   unsigned wheelScrollLines = 0; /* Number of lines per wheel notch */
-  Lisp_Object win, corpore, sano;
+  Lisp_Object win = Qnil, corpore, sano;
   struct window_mirror *mirror;
   int mene, _mene, tekel, upharsin;
   Charbpos mens, sana;

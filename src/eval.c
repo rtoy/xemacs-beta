@@ -298,9 +298,9 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     printing_unreadable_object ("%s%s%s", header, name, trailer);
 
-  write_c_string (header,  printcharfun);
-  write_c_string (name,    printcharfun);
-  write_c_string (trailer, printcharfun);
+  write_c_string (printcharfun, header);
+  write_c_string (printcharfun, name);
+  write_c_string (printcharfun, trailer);
 }
 
 static const struct lrecord_description subr_description[] = {
@@ -1176,7 +1176,7 @@ for the variable is `*'.
     ((INTP (documentation) && XINT (documentation) < 0) ||
 
      (STRINGP (documentation) &&
-      (XSTRING_BYTE (documentation, 0) == '*')) ||
+      (string_byte (documentation, 0) == '*')) ||
 
      /* If (STRING . INTEGER), a negative integer means a user variable. */
      (CONSP (documentation)
@@ -5310,19 +5310,18 @@ backtrace_specials (int speccount, int speclimit, Lisp_Object stream)
           || specpdl[speccount - 1].func == specbind_unwind_local
           || specpdl[speccount - 1].func == specbind_unwind_wasnt_local)
 	{
-	  write_c_string (((!printing_bindings) ? "  # bind (" : " "),
-			  stream);
+	  write_c_string (stream, !printing_bindings ? "  # bind (" : " ");
 	  Fprin1 (specpdl[speccount - 1].symbol, stream);
 	  printing_bindings = 1;
 	}
       else
 	{
-	  if (printing_bindings) write_c_string (")\n", stream);
-	  write_c_string ("  # (unwind-protect ...)\n", stream);
+	  if (printing_bindings) write_c_string (stream, ")\n");
+	  write_c_string (stream, "  # (unwind-protect ...)\n");
 	  printing_bindings = 0;
 	}
     }
-  if (printing_bindings) write_c_string (")\n", stream);
+  if (printing_bindings) write_c_string (stream, ")\n");
 }
 
 DEFUN ("backtrace", Fbacktrace, 0, 2, "", /*
@@ -5380,15 +5379,15 @@ unwind-protects, as well as function calls, were made.
           speccount = catches->pdlcount;
           if (catchpdl == speccount)
 	    {
-	      write_c_string ("  # (catch ", stream);
+	      write_c_string (stream, "  # (catch ");
 	      Fprin1 (catches->tag, stream);
-	      write_c_string (" ...)\n", stream);
+	      write_c_string (stream, " ...)\n");
 	    }
           else
             {
-              write_c_string ("  # (condition-case ... . ", stream);
+              write_c_string (stream, "  # (condition-case ... . ");
               Fprin1 (Fcdr (Fcar (catches->tag)), stream);
-              write_c_string (")\n", stream);
+              write_c_string (stream, ")\n");
             }
           catches = catches->next;
 	}
@@ -5401,18 +5400,17 @@ unwind-protects, as well as function calls, were made.
 	      backtrace_specials (speccount, backlist->pdlcount, stream);
 	      speccount = backlist->pdlcount;
 	    }
-	  write_c_string (((backlist->debug_on_exit) ? "* " : "  "),
-			  stream);
+	  write_c_string (stream, backlist->debug_on_exit ? "* " : "  ");
 	  if (backlist->nargs == UNEVALLED)
 	    {
 	      Fprin1 (Fcons (*backlist->function, *backlist->args), stream);
-	      write_c_string ("\n", stream); /* from FSFmacs 19.30 */
+	      write_c_string (stream, "\n"); /* from FSFmacs 19.30 */
 	    }
 	  else
 	    {
 	      Lisp_Object tem = *backlist->function;
 	      Fprin1 (tem, stream); /* This can QUIT */
-	      write_c_string ("(", stream);
+	      write_c_string (stream, "(");
 	      if (backlist->nargs == MANY)
 		{
 		  int i;
@@ -5424,7 +5422,7 @@ unwind-protects, as well as function calls, were made.
 		       !NILP (tail);
 		       tail = Fcdr (tail), i++)
 		    {
-		      if (i != 0) write_c_string (" ", stream);
+		      if (i != 0) write_c_string (stream, " ");
 		      Fprin1 (Fcar (tail), stream);
 		    }
 		  NUNGCPRO;
@@ -5434,15 +5432,16 @@ unwind-protects, as well as function calls, were made.
 		  int i;
 		  for (i = 0; i < backlist->nargs; i++)
 		    {
-		      if (!i && EQ(tem, Qbyte_code)) {
-			write_c_string("\"...\"", stream);
-			continue;
-		      }
-		      if (i != 0) write_c_string (" ", stream);
+		      if (!i && EQ (tem, Qbyte_code))
+			{
+			  write_c_string (stream, "\"...\"");
+			  continue;
+			}
+		      if (i != 0) write_c_string (stream, " ");
 		      Fprin1 (backlist->args[i], stream);
 		    }
 		}
-	      write_c_string (")\n", stream);
+	      write_c_string (stream, ")\n");
 	    }
 	  backlist = backlist->next;
 	}

@@ -1,5 +1,5 @@
 /* Copyright (c) 1994, 1995 Free Software Foundation.
-   Copyright (c) 1995 Ben Wing.
+   Copyright (c) 1995, 1996 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -43,8 +43,8 @@ struct extent
 {
   struct lrecord_header lheader;
 
-  Membpos start;
-  Membpos end;
+  Memxpos start;
+  Memxpos end;
   Lisp_Object object; /* A buffer, string, Qnil (extent detached from no
 			 buffer), Qt (destroyed extent) */
 
@@ -108,6 +108,9 @@ struct extent
 #define set_extent_endpoint(e, val, endp) \
   ((endp) ? set_extent_end (e, val) : set_extent_start (e, val))
 #define extent_detached_p(e) (extent_start (e) < 0)
+
+void set_extent_endpoints (EXTENT extent, Bytexpos s, Bytexpos e,
+			   Lisp_Object object);
 
 /* Additional information that may be present in an extent.  The idea is
    that fast access is provided to this information, but since (hopefully)
@@ -177,9 +180,10 @@ void flush_cached_extent_info (Lisp_Object extent_info);
 
 #define extent_no_chase_normal_field(e, field) ((e)->flags.field)
 
-INLINE_HEADER struct extent_auxiliary *extent_aux_or_default (EXTENT e);
-INLINE_HEADER struct extent_auxiliary *
+DECLARE_INLINE_HEADER (
+struct extent_auxiliary *
 extent_aux_or_default (EXTENT e)
+)
 {
   return e->flags.has_aux ?
     XEXTENT_AUXILIARY (XCAR (e->plist)) :
@@ -217,6 +221,19 @@ extent_aux_or_default (EXTENT e)
 
 #define extent_parent(e)	extent_no_chase_aux_field (e, parent)
 #define extent_children(e)	extent_no_chase_aux_field (e, children)
+
+EXTENT extent_ancestor_1 (EXTENT e);
+
+/* extent_ancestor() chases all the parent links until there aren't any
+   more.  extent_ancestor_1() does the same thing but it a function;
+   the following optimizes the most common case. */
+DECLARE_INLINE_HEADER (
+EXTENT
+extent_ancestor (EXTENT e)
+)
+{
+  return e->flags.has_parent ? extent_ancestor_1 (e) : e;
+}
 
 #define extent_begin_glyph(e)	extent_aux_field (e, begin_glyph)
 #define extent_end_glyph(e)	extent_aux_field (e, end_glyph)
@@ -280,9 +297,13 @@ extent_aux_or_default (EXTENT e)
 #define set_extent_in_red_event_p(e, val) \
   set_extent_normal_field (e, in_red_event, val)
 
-INLINE_HEADER Lisp_Object * extent_no_chase_plist_addr (EXTENT e);
-INLINE_HEADER Lisp_Object *
+void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
+		       glyph_layout layout);
+
+DECLARE_INLINE_HEADER (
+Lisp_Object *
 extent_no_chase_plist_addr (EXTENT e)
+)
 {
   return e->flags.has_aux ? &XCDR (e->plist) : &e->plist;
 }
@@ -329,17 +350,6 @@ extent_no_chase_plist_addr (EXTENT e)
     x = wrong_type_argument (Qextent_live_p, (x));	\
 } while (0)
 
-EXFUN (Fdetach_extent, 1);
-EXFUN (Fextent_end_position, 1);
-EXFUN (Fextent_object, 1);
-EXFUN (Fextent_start_position, 1);
-EXFUN (Fmake_extent, 3);
-EXFUN (Fprevious_single_property_change, 4);
-EXFUN (Fset_extent_endpoints, 4);
-EXFUN (Fnext_extent_change, 2);
-EXFUN (Fprevious_extent_change, 2);
-EXFUN (Fset_extent_parent, 2);
-EXFUN (Fget_char_property, 4);
 
 extern int inside_undo;
 extern int in_modeline_generation;
@@ -348,68 +358,15 @@ struct extent_fragment *extent_fragment_new (Lisp_Object buffer_or_string,
 					     struct frame *frm);
 face_index extent_fragment_update (struct window *w,
 				   struct extent_fragment *ef,
-				   /* Note this is in Bytebpos' */
-				   Bytebpos pos, Lisp_Object last_glyph);
+				   Bytexpos pos, Lisp_Object last_glyph);
 void extent_fragment_delete (struct extent_fragment *ef);
-
-
-#ifdef emacs	/* things other than emacs want the structs */
 
 /* from alloc.c */
 struct extent *allocate_extent (void);
 
-/* from extents.c */
-EXTENT extent_ancestor_1 (EXTENT e);
-
-/* extent_ancestor() chases all the parent links until there aren't any
-   more.  extent_ancestor_1() does the same thing but it a function;
-   the following optimizes the most common case. */
-INLINE_HEADER EXTENT extent_ancestor (EXTENT e);
-INLINE_HEADER EXTENT
-extent_ancestor (EXTENT e)
-{
-  return e->flags.has_parent ? extent_ancestor_1 (e) : e;
-}
-
 void allocate_extent_auxiliary (EXTENT ext);
 void init_buffer_extents (struct buffer *b);
 void uninit_buffer_extents (struct buffer *b);
-typedef int (*map_extents_fun) (EXTENT extent, void *arg);
-void map_extents (Charbpos from, Charbpos to, map_extents_fun fn,
-		  void *arg, Lisp_Object obj, EXTENT after,
-		  unsigned int flags);
-
-/* Note the following five functions are NOT in Charbpos's */
-void adjust_extents (Lisp_Object object, Membpos from,
-		     Membpos to, int amount);
-void adjust_extents_for_deletion (Lisp_Object object, Bytebpos from,
-				  Bytebpos to, int gapsize,
-				  int numdel, int movegapsize);
-void verify_extent_modification (Lisp_Object object, Bytebpos from,
-				 Bytebpos to,
-				 Lisp_Object inhibit_read_only_value);
-void process_extents_for_insertion (Lisp_Object object,
-				    Bytebpos opoint, Bytecount length);
-void process_extents_for_deletion (Lisp_Object object, Bytebpos from,
-				   Bytebpos to, int destroy_them);
-void report_extent_modification (Lisp_Object, Charbpos, Charbpos, int);
-
-void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
-		       glyph_layout layout);
-
-void add_string_extents (Lisp_Object string, struct buffer *buf,
-			 Bytebpos opoint, Bytecount length);
-void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
-			       Bytebpos opoint, Bytecount length,
-			       Bytecount pos);
-void copy_string_extents (Lisp_Object new_string,
-			  Lisp_Object old_string,
-			  Bytecount new_pos, Bytecount old_pos,
-			  Bytecount length);
-
-void detach_all_extents (Lisp_Object object);
-void set_extent_endpoints (EXTENT extent, Bytebpos s, Bytebpos e,
-			   Lisp_Object object);
 
 #ifdef ERROR_CHECK_EXTENTS
 void sledgehammer_extent_check (Lisp_Object obj);
@@ -419,7 +376,5 @@ void sledgehammer_extent_check (Lisp_Object obj);
 int compute_buffer_extent_usage (struct buffer *b,
 				 struct overhead_stats *ovstats);
 #endif
-
-#endif /* emacs */
 
 #endif /* INCLUDED_extents_h_ */

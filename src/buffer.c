@@ -236,6 +236,7 @@ mark_buffer (Lisp_Object obj)
   mark_object (buf->extent_info);
   if (buf->text)
     mark_object (buf->text->line_number_cache);
+  mark_buffer_syntax_cache (buf);
 
   /* Don't mark normally through the children slot.
      (Actually, in this case, it doesn't matter.)  */
@@ -258,7 +259,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	printing_unreadable_object ("#<buffer %s>", XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
-    write_c_string ("#<killed buffer>", printcharfun);
+    write_c_string (printcharfun, "#<killed buffer>");
   else if (escapeflag)
     write_fmt_string_lisp (printcharfun, "#<buffer %S>", 1, b->name);
   else
@@ -558,7 +559,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   b->last_window_start = 1;
 
   b->name = name;
-  if (XSTRING_BYTE (name, 0) != ' ')
+  if (string_byte (name, 0) != ' ')
     b->undo_list = Qnil;
   else
     b->undo_list = Qt;
@@ -570,6 +571,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   push_buffer_alist (name, buf);
 
   init_buffer_markers (b);
+  init_buffer_syntax_cache (b);
 
   b->generated_modeline_string = Fmake_string (make_int (84), make_int (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
@@ -1005,7 +1007,7 @@ VISIBLE-OK.
       buf = Fcdr (Fcar (tail));
       if (EQ (buf, buffer))
 	continue;
-      if (XSTRING_BYTE (XBUFFER (buf)->name, 0) == ' ')
+      if (string_byte (XBUFFER (buf)->name, 0) == ' ')
 	continue;
       /* If FRAME has a buffer_predicate,
 	 disregard buffers that don't fit the predicate.  */
@@ -1243,7 +1245,9 @@ with `delete-process'.
     Freplace_buffer_in_windows (buf, Qnil, Qall);
     UNGCPRO;
 
+#ifdef USE_C_FONT_LOCK
     font_lock_buffer_was_killed (b);
+#endif
 
     /* Delete any auto-save file, if we saved it in this session.  */
     if (STRINGP (b->auto_save_file_name)
@@ -1274,6 +1278,7 @@ with `delete-process'.
       }
 
     uninit_buffer_markers (b);
+    uninit_buffer_syntax_cache (b);
 
     kill_buffer_local_variables (b);
 
@@ -1743,7 +1748,6 @@ The values returned are in the form of a plist of properties and values.
 #define ADD_BOOL(field) \
   plist = cons3 (b->text->field ? Qt : Qnil, \
 		 intern_converting_underscores_to_dashes (#field), plist)
-  ADD_BOOL (entirely_ascii_p);
   ADD_INT (bufz);
   ADD_INT (z);
   ADD_INT (mule_bufmin);
@@ -1752,6 +1756,10 @@ The values returned are in the form of a plist of properties and values.
   ADD_INT (mule_bytmax);
   ADD_INT (mule_shifter);
   ADD_BOOL (mule_three_p);
+  ADD_BOOL (entirely_one_byte_p);
+  ADD_INT (num_ascii_chars);
+  ADD_INT (num_8_bit_fixed_chars);
+  ADD_INT (num_16_bit_fixed_chars);
   {
     Lisp_Object pos[16];
     int i;

@@ -1,6 +1,7 @@
 /* Routines to compute the current syntactic context, for font-lock mode.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2002 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -42,6 +43,8 @@ Boston, MA 02111-1307, USA.  */
    that hold the current syntactic information.  This would be a big win.
    This way there would be no guessing or incorrect results.
  */
+
+#if 0 /* no longer used */
 
 #include <config.h>
 #include "lisp.h"
@@ -424,21 +427,19 @@ static void
 find_context (struct buffer *buf, Charbpos pt)
 {
   /* This function can GC */
-#ifndef emacs
-  Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
-  Lisp_Object syntaxtab = buf->syntax_table;
-#endif
   Emchar prev_c, c;
   int prev_syncode, syncode;
   Charbpos target = pt;
+  struct syntax_cache *scache;
+  
   setup_context_cache (buf, pt);
   pt = context_cache.cur_point;
 
-  SETUP_SYNTAX_CACHE (pt - 1, 1);
+  scache = setup_buffer_syntax_cache (buf, pt - 1, 1);
   if (pt > BUF_BEGV (buf))
     {
       c = BUF_FETCH_CHAR (buf, pt - 1);
-      syncode = SYNTAX_CODE_FROM_CACHE (mirrortab, c);
+      syncode = SYNTAX_CODE_FROM_CACHE (scache, c);
     }
   else
     {
@@ -479,11 +480,11 @@ find_context (struct buffer *buf, Charbpos pt)
 	    }
 	}
 
-      UPDATE_SYNTAX_CACHE_FORWARD (pt);
+      UPDATE_SYNTAX_CACHE_FORWARD (scache, pt);
       prev_c = c;
       prev_syncode = syncode;
       c = BUF_FETCH_CHAR (buf, pt);
-      syncode = SYNTAX_CODE_FROM_CACHE (mirrortab, c);
+      syncode = SYNTAX_CODE_FROM_CACHE (scache, c);
 
       if (prev_c == '\n')
 	bol_context_cache = context_cache;
@@ -494,7 +495,7 @@ find_context (struct buffer *buf, Charbpos pt)
 	  continue;
 	}
 
-      switch (SYNTAX_FROM_CACHE (mirrortab, c))
+      switch (SYNTAX_FROM_CODE (syncode))
 	{
 	case Sescape:
 	  context_cache.backslash_p = 1;
@@ -549,7 +550,7 @@ find_context (struct buffer *buf, Charbpos pt)
             else if (context_cache.context == context_none)
 	      {
 		Lisp_Object stringtermobj =
-		  syntax_match (syntax_cache.current_syntax_table, c);
+		  syntax_match (scache->current_syntax_table, c);
 		Emchar stringterm;
 
 		if (CHARP (stringtermobj))
@@ -841,3 +842,4 @@ vars_of_font_lock (void)
 {
   reinit_vars_of_font_lock ();
 }
+#endif /* 0 */

@@ -597,7 +597,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
 	      a = (Emchar) arg.l;
 
-	      if (!valid_char_p (a))
+	      if (!valid_emchar_p (a))
 		syntax_error ("invalid character value %d to %%c spec",
 			      make_char (a));
 
