@@ -44,6 +44,8 @@ This function returns non-@code{nil} if @var{object} is a specifier.
                                 Validating the components of a specifier.
 * Other Specification Functions::
                                 Other ways of working with specifications.
+* Specifier Compatibility Notes::
+                                Backward compatibility and GNU Emacs.
 @end menu
 
 @node Introduction to Specifiers
@@ -1104,7 +1106,7 @@ value will be a string, pixmap, or subwindow.
 @defun specifier-matching-instance specifier matchspec &optional domain default no-fallback
 This function returns an instance for @var{specifier} in @var{domain}
 that matches @var{matchspec}.  If no instance can be generated for
-@var{domain}, return @var{default}.
+@var{domain}, return @var{default}.  @xref{Specifier Compatibility Notes}.
 
 This function is identical to @code{specifier-instance} except that a
 specification will only be considered if it matches @var{matchspec}.
@@ -1339,17 +1341,7 @@ foo
 
 Note that since specifiers generalize both frame-local and buffer-local
 variables in a sensible way, XEmacs is not likely to put a high priority
-on implementing frame-local variables.
-@c Thanks to Jerry James for the following explanation.  He is not
-@c responsible for its use here, Stephen Turnbull is.
-In fact, some developers think that frame-local variables are evil for
-the same reason that buffer-local variables are evil: the declaration is
-both global and invisible.  That is, you cannot tell whether a variable
-is ``normal,'' buffer-local, or frame-local just by looking at it.  So
-if you have namespace management problems, and some other Lisp package
-happens to use a variable name that you already declared frame- or
-buffer-local, weird stuff happens, and it is extremely hard to track
-down.
+on implementing frame-local variables @ref{Specifier Compatibility Notes}.
 
 
 @node Creating Specifiers
@@ -1603,3 +1595,88 @@ value returned from @code{map-specifier}.  Otherwise,
 @defun specifier-locale-type-from-locale locale
 Given a specifier @var{locale}, this function returns its type.
 @end defun
+
+@node Specifier Compatibility Notes
+@section Specifier Compatibility Notes
+
+This node describes compatibility issues in the use of specifiers known
+as of 2004-01-22.
+@c I considered basing the main text on 21.4, but then future
+@c maintenance of this documentation would be a pain.
+The main text refers to XEmacs 21.5.16.
+
+Effort will be made to describe changes in the API or semantics between
+XEmacs versions accurately.  Any inaccuracy or missing information about
+backward and forward compatibility is a bug, and we greatly appreciate
+your reports, whether you can provide a patch or not.
+
+A change is reported as @dfn{changed} when we believe that the new or
+changed API will cause old code to malfunction.  When old code is
+believed to be upward compatible with the changed API, the change is
+reported as @dfn{added}.
+
+We would like to also describe compatibility with GNU Emacs, but this is
+not so high a priority.  Inaccuracies or omissions will be addressed at
+the priority of a feature request, and as such processing will be
+greatly expedited if you can provide a patch.
+@c #### xref here to bug reporting and patch submissions
+
+@c #### write and xref a file on compatibility policy
+
+@subsection Compatibility with GNU Emacs
+
+Specifiers are not used in GNU Emacs.  If your program depends on
+specifers, you will probably have to rewrite the functionality
+completely for GNU Emacs.  If you wish to maximize portability, you
+should plan to encapsulate use of specifiers.
+
+GNU Emacs provides two features for context-sensitive variables,
+buffer-local variables and frame-local variables.  XEmacs implements
+buffer-local variables 100%-compatibly with GNU Emacs.  If buffer-local
+variables will server your purpose and portability is a major concern,
+consider using them instead of specifiers.
+
+XEmacs does not implement frame-local variables at all.  In this case
+specifiers must be used to provide equivalent functionality.
+
+It is not clear whether XEmacs will provide this feature in the future.
+@c Thanks to Jerry James for the following explanation.  He is not
+@c responsible for its use here, Stephen Turnbull is.
+In fact, some core XEmacs developers think that both frame-local
+variables and buffer-local variables are evil, because the declaration
+is both global and invisible.  That is, you cannot tell whether a
+variable is ``normal,'' buffer-local, or frame-local just by looking at
+it.  So if you have namespace management problems, and some other Lisp
+package happens to use a variable name that you already declared frame-
+or buffer-local, weird stuff happens, and it is extremely hard to track
+down.
+@c #### Direct comments to xemacs-design?
+
+@subsection Backwards Compatibility with XEmacs 21.4
+
+Sorry, I'm unwilling to find out exactly when these changes were made.
+
+Changed by 21.5.16: the second argument of
+@code{specifier-matching-instance} is now a cons of a charset and a
+boolean value.  Previously it was a charset or a symbol (a name of a
+charset).  It was not documented in Info.
+
+Changed by 21.5.16: the specifier-specific error symbols
+@code{specifier_syntax_error}, @code{specifier_argument_error}, and
+@code{specifier_change_error} were removed.  (This probably only
+affected internal code.)
+
+Added by 21.5.16: @code{map-specifier} got two new arguments,
+@code{ms-tag-set} and @code{ms-exact-p}.
+
+Added by 21.5.16: when skipping instantiators, XEmacs warns at level
+`debug'.
+
+Added by 21.5.16: new convenience APIs:
+@code{instance-to-instantiator},
+@code{device-type-matches-spec},
+@code{add-tag-to-inst-list},
+@code{derive-domain-from-locale},
+@code{derive-device-type-from-tag-set},
+@code{derive-device-type-from-locale-and-tag-set}, and
+@code{derive-specifier-specs-from-locale}.

@@ -8,9 +8,14 @@
 @cindex integers
 @cindex numbers
 
-  XEmacs supports two numeric data types: @dfn{integers} and
-@dfn{floating point numbers}.  Integers are whole numbers such as
-@minus{}3, 0, #b0111, #xFEED, #o744.  Their values are exact.  The
+  XEmacs supports two to five numeric data types.  @dfn{Integers} and
+@dfn{floating point numbers} are always supported.  As a build-time
+option, @dfn{bignums}, @dfn{ratios}, and @dfn{bigfloats} may be
+enabled on some platforms.
+
+  Integers, which are what Common Lisp calls
+@dfn{fixnums}, are whole numbers such as @minus{}3, 0, #b0111, #xFEED,
+#o744.  Their values are exact, and their range is limited.  The
 number prefixes `#b', `#o', and `#x' are supported to represent numbers
 in binary, octal, and hexadecimal notation (or radix).  Floating point
 numbers are numbers with fractional parts, such as @minus{}4.5, 0.0, or
@@ -19,12 +24,43 @@ equals 150; in this example, @samp{e2} stands for ten to the second
 power, and is multiplied by 1.5.  Floating point values are not exact;
 they have a fixed, limited amount of precision.
 
+  Bignums are arbitrary precision integers.  When supported, XEmacs can
+handle any integral calculations you have enough virtual memory to
+store.  (More precisely, on current architectures the representation
+allows integers whose storage would exhaust the address space.)  They
+are notated in the same way as other integers (fixnums).  XEmacs
+automatically converts results of computations from fixnum to bignum,
+and back, depending on the storage required to represent the number.
+Thus use of bignums are entirely transparent to the user, except for a
+few special applications that expect overflows.  Ratios are rational
+numbers with arbitrary precision.  (In theory fixed-size rationals could
+be supported, but for almost all applications floats are a reasonable
+substitute for fixed-precision rationals.)  They are notated in the
+usual way with the solidus, for example 5/3 or @minus{}22/7.  Bigfloats
+are floating point numbers with arbitrary precision.  Unlike integers,
+which are always infinitely precise if they can be represented, floating
+point numbers are inherently imprecise.  Therefore XEmacs automatically
+converts @emph{from float to bigfloat} when floats and bigfloats are
+mixed in an expression, but a bigfloat will never be converted to a
+float unless the user explicitly coerces the value.  Nor will the result
+of a float operation be converted to bigfloat, except for ``contagion''
+from another operand that is already a bigfloat.
+
+  Note that the term ``integer'' is used throughout the XEmacs
+documentation and code to mean ``fixnum''.  This is inconsistent with
+Common Lisp, and likely to cause confusion.  Similarly, ``float'' is
+used to mean ``fixed precision floating point number'', and the Common
+Lisp distinctions among @dfn{short-floats}, @dfn{long-floats}, and
+bigfloats are not reflected in XEmacs terminology.
+
 @menu
 * Integer Basics::            Representation and range of integers.
-* Float Basics::	      Representation and range of floating point.
+* Rational Basics::           Representation and range of rational numbers.
+* Float Basics::              Representation and range of floating point.
+* The Bignum Extension::      Arbitrary precision integers, ratios, and floats.
 * Predicates on Numbers::     Testing for numbers.
 * Comparison of Numbers::     Equality and inequality predicates.
-* Numeric Conversions::	      Converting float to integer and vice versa.
+* Numeric Conversions::       Converting float to integer and vice versa.
 * Arithmetic Operations::     How to add, subtract, multiply and divide.
 * Rounding Operations::       Explicitly rounding floating point numbers.
 * Bitwise Operations::        Logical and, or, not, shifting.
@@ -35,24 +71,50 @@ they have a fixed, limited amount of precision.
 @node Integer Basics
 @section Integer Basics
 
-  The range of values for an integer depends on the machine.  The
-minimum range is @minus{}134217728 to 134217727 (28 bits; i.e.,
+  The range of values for an integer depends on the machine.    If a
+multiple-precision arithmetic library is available on your platform,
+support for bignums, that is, integers with arbitrary precision, maybe
+compiled in to your XEmacs.  The rest of this section assumes that the
+bignum extension is @emph{not} available.  The bignum extension and the
+user-visible differences in normal integer arithmetic are discussed in a
+separate section @ref{The Bignum Extension}.
+
+The minimum range is @minus{}1073741824 to 1073741823 (31 bits; i.e.,
 @ifinfo
--2**27
+-2**30
 @end ifinfo
 @tex
-$-2^{27}$
+$-2^{30}$
 @end tex
 to
 @ifinfo
-2**27 - 1),
+2**30 - 1),
 @end ifinfo
 @tex
-$2^{27}-1$),
+$2^{30}-1$),
 @end tex
 but some machines may provide a wider range.  Many examples in this
-chapter assume an integer has 28 bits.
+chapter assume an integer has 31 bits.
 @cindex overflow
+
+The range of fixnums is available to Lisp programs:
+
+@defvar most-positive-fixnum
+The fixed-precision integer closest in value to positive infinity.
+@end defvar
+
+@defvar most-negative-fixnum
+The fixed-precision integer closest in value to negative infinity.
+@end defvar
+
+Here is a common idiom to temporarily suppress garbage collection:
+@example
+(garbage-collect)
+(let ((gc-cons-threshold most-positive-fixnum))
+  ;; allocation-intensive computation
+  )
+(garbage-collect)
+@end example
 
   The Lisp reader reads an integer as a sequence of digits with optional
 initial sign and optional final period.
@@ -62,7 +124,7 @@ initial sign and optional final period.
  1.              ; @r{The integer 1.}
 +1               ; @r{Also the integer 1.}
 -1               ; @r{The integer @minus{}1.}
- 268435457       ; @r{Also the integer 1, due to overflow.}
+ 2147483648      ; @r{Read error, due to overflow.}
  0               ; @r{The integer 0.}
 -0               ; @r{The integer 0.}
 @end example
@@ -71,10 +133,10 @@ initial sign and optional final period.
 bitwise operators (@pxref{Bitwise Operations}), it is often helpful to
 view the numbers in their binary form.
 
-  In 28-bit binary, the decimal integer 5 looks like this:
+  In 31-bit binary, the decimal integer 5 looks like this:
 
 @example
-0000  0000 0000  0000 0000  0000 0101
+000 0000  0000 0000  0000 0000  0000 0101
 @end example
 
 @noindent
@@ -84,12 +146,12 @@ between groups of 8 bits, to make the binary integer easier to read.)
   The integer @minus{}1 looks like this:
 
 @example
-1111  1111 1111  1111 1111  1111 1111
+111 1111  1111 1111  1111 1111  1111 1111
 @end example
 
 @noindent
 @cindex two's complement
-@minus{}1 is represented as 28 ones.  (This is called @dfn{two's
+@minus{}1 is represented as 31 ones.  (This is called @dfn{two's
 complement} notation.)
 
   The negative integer, @minus{}5, is creating by subtracting 4 from
@@ -97,27 +159,27 @@ complement} notation.)
 @minus{}5 looks like this:
 
 @example
-1111  1111 1111  1111 1111  1111 1011
+111 1111  1111 1111  1111 1111  1111 1011
 @end example
 
-  In this implementation, the largest 28-bit binary integer is the
-decimal integer 134,217,727.  In binary, it looks like this:
+  In this implementation, the largest 31-bit binary integer is the
+decimal integer 1,073,741,823.  In binary, it looks like this:
 
 @example
-0111  1111 1111  1111 1111  1111 1111
+011 1111  1111 1111  1111 1111  1111 1111
 @end example
 
   Since the arithmetic functions do not check whether integers go
-outside their range, when you add 1 to 134,217,727, the value is the
-negative integer @minus{}134,217,728:
+outside their range, when you add 1 to 1,073,741,823, the value is the
+negative integer @minus{}1,073,741,824:
 
 @example
-(+ 1 134217727)
-     @result{} -134217728
-     @result{} 1000  0000 0000  0000 0000  0000 0000
+(+ 1 1073741823)
+     @result{} -1073741824
+     @result{} 100 0000  0000 0000  0000 0000  0000 0000
 @end example
 
-  Many of the following functions accept markers for arguments as well
+  Many of the arithmetic functions accept markers for arguments as well
 as integers.  (@xref{Markers}.)  More precisely, the actual arguments to
 such functions may be either integers or markers, which is why we often
 give these arguments the name @var{int-or-marker}.  When the argument
@@ -129,12 +191,28 @@ argument, all of the functions for markers and integers also work for
 floating point numbers.
 @end ignore
 
+
+@node Ratio Basics
+@section Ratio Basics
+
+Ratios (built-in rational numbers) are available only when the bignum
+extension is built into your XEmacs.  This facility is new and
+experimental.  It is discussed in a separate section for convenience of
+updating the documentation @ref{The Bignum Extension}.
+
+
 @node Float Basics
 @section Floating Point Basics
 
   XEmacs supports floating point numbers.  The precise range of floating
 point numbers is machine-specific; it is the same as the range of the C
-data type @code{double} on the machine in question.
+data type @code{double} on the machine in question.  If a
+multiple-precision arithmetic library is available on your platform,
+support for bigfloats, that is, floating point numbers with arbitrary
+precision, maybe compiled in to your XEmacs.  The rest of this section
+assumes that the bignum extension is @emph{not} available.  The bigfloat
+extension and the user-visible differences in normal float arithmetic
+are discussed in a separate section @ref{The Bignum Extension}.
 
   The printed representation for floating point numbers requires either
 a decimal point (with at least one digit following), an exponent, or
@@ -168,6 +246,293 @@ This function returns the binary exponent of @var{number}.  More
 precisely, the value is the logarithm of @var{number} base 2, rounded
 down to an integer.
 @end defun
+
+The range of floats is available to Lisp programs:
+
+@defvar most-positive-float
+The fixed-precision floating-point-number closest in value to positive
+infinity.
+@end defvar
+
+@defvar most-negative-float
+The fixed-precision floating point number closest in value to negative
+infinity.
+@end defvar
+
+@defvar least-positive-float
+The positive float closest in value to 0.  May not be normalized.
+@end defvar
+
+@defvar least-negative-float
+The positive float closest in value to 0.  Must be normalized.
+@end defvar
+
+@defvar least-positive-normalized-float
+The negative float closest in value to 0.  May not be normalized.
+@end defvar
+
+@defvar least-negative-normalized-float
+The negative float closest in value to 0.  Must be normalized.
+@end defvar
+
+Note that for floating point numbers there is an interesting limit on
+how small they can get, as well as a limit on how big they can get.  In
+some representations, a floating point number is @dfn{normalized} if the
+leading digit is non-zero.  This allows representing numbers smaller
+than the most-negative exponent can express, by having fractional
+mantissas.  This means that the number is less precise than a normalized
+floating point number, so Lisp programs can detect loss of precision due
+to unnormalized floats by checking whether the number is between
+@code{least-positive-float} and @code{least-positive-normalized-float}.
+
+
+@node The Bignum Extension
+@section The Bignum Extension
+
+  In XEmacs 21.5.18, an extension was added by @email{james@@xemacs.org,
+Jerry James} to allow linking with arbitrary-precision arithmetic
+libraries if they are available on your platform.  ``Arbitrary''
+precision means precisely what it says.  Your ability to work with large
+numbers is limited only by the amount of virtual memory (and time) you
+can throw at them.
+
+  As of 09 April 2004, support for the GNU Multiple Precision
+arithmetic library (GMP) is nearly complete, and support for the BSD
+Multiple Precision arithmetic library (MP) is being debugged.  To enable
+bignum support using GMP (respectively MP), invoke configure with your
+usual options, and add @samp{--use-number-lib=gmp} (respectively
+@samp{--use-number-lib=mp}).  The default is to disable bignum support,
+but if you are using a script to automate the build process, it may be
+convenient to explicitly disable support by @emph{appending}
+@samp{--use-number-lib=no} to your invocation of configure.  GMP has an
+MP compatibility mode, but it is not recommended, as there remain poorly
+understood bugs (even more so than for other vendors' versions of MP).
+
+  With GMP, exact arithmetic with integers and ratios of arbitrary
+precision and approximate (``floating point'') arithmetic of arbitrary
+precision are implemented efficiently in the library.  (Note that
+numerical implementations are quite delicate and sensitive to
+optimization.  If the library was poorly optimized for your hardware, as
+is often the case with Linux distributions for 80x86, you may achieve
+gains of @emph{several orders of magnitude} by rebuilding the MP
+library.  See @uref{http://www.swox.com/gmp/gmp-speed.html}.)  The MP
+implementation provides arbitrary precision integers, but ratios were
+implemented by the XEmacs implementer, Jerry James, who is not a
+numerical analyst.  Arbitrary precision floats are not available with
+MP.
+
+  The XEmacs bignum facility implements the Common Lisp notion of
+@dfn{contagion}, so that integers are always represented using the
+``smallest'' representation that is exact, and integral ratios are
+converted to integers.  Since floating point arithmetic is inherently
+imprecise, numbers are implicitly coerced to bigfloats only if other
+operands in the expression are bigfloat, and bigfloats are only coerced
+to other numerical types by explicit calls to the function @code{coerce}.
+
+  Bignum support is incomplete.  If you would like to help with bignum
+support, especially on BSD MP, please subscribe to the
+@uref{http://www.xemacs.org/Lists/#xemacs-beta, XEmacs Beta mailing
+list}, and book up on @file{number-gmp.h} and @file{number-mp.h}.  Jerry
+has promised to write internals documentation eventually, but if your
+skills run more to analysis and documentation than to writing new code,
+feel free to fill in the gap!
+
+@menu
+* Bignum Basics::             Representation and range of integers.
+* Ratio Basics::              Representation and range of rational numbers.
+* Bigfloat Basics::           Representation and range of floating point.
+* Contagion and Canonicalization::  Automatic coercion to other types.
+* Compatibility Issues::      Changes in fixed-precision arithmetic.
+@end menu
+
+
+@node Bignum Basics
+@subsection Bignum Basics
+
+In most cases, bignum support should be transparent to users and Lisp
+programmers.  A bignum-enabled XEmacs will automatically convert from
+fixnums to bignums and back in pure integer arithmetic, and for GNU MP,
+from floats to bigfloats.  (Bigfloats must be explicitly coerced to
+other types, even if they are exactly representable by less precise
+types.)  The Lisp reader and printer have been enhanced to handle
+bignums, as have the mathematical functions.  Rationals (fixnums,
+bignums, and ratios) are printed using the @samp{%d}, @samp{%o},
+@samp{%x}, and @samp{%u} format conversions.
+
+
+@node Ratio Basics
+@subsection Ratio Basics
+
+Ratios, when available have the read syntax and print representation
+@samp{3/5}.  Like other rationals (fixnums and bignums), they are
+printed using the @samp{%d}, @samp{%o}, @samp{%x}, and @samp{%u} format
+conversions.
+
+
+@node Bigfloat Basics
+@subsection Bigfloat Basics
+
+Bigfloats, when available, have the same read syntax and print
+representations as fixed-precision floats.
+
+
+@node Contagion and Canonicalization
+@subsection Contagion
+
+@dfn{Contagion} is one way to address the requirement that an arithmetic
+operation should not fail because of differing types of the operands, or
+insufficient precision in the representation.  With bignum support, we
+can represent @code{(+ most-positive-fixnum most-positive-fixnum)} (or
+@code{(* most-positive-fixnum most-positive-fixnum)}, for that matter)
+@emph{exactly}.  There should be no overflow or ``wrap-around,'' and the
+computation should not be interrupted by an error.  Contagion is the
+idea that less precise operands are converted to the more precise type,
+and then the operation is performed.  This involves no loss of
+information, and therefore it is safe to do it automatically.
+
+In XEmacs, the following rules of contagion are used:
+
+@c #### this probably wants names for each rule
+@enumerate
+@item
+If a fixnum operation would overflow or underflow, the operands are
+promoted to bignums and the operation is performed.
+
+@item
+If a fixnum and a bignum are the operands, the fixnum is promoted to
+bignum, and the operation is performed.
+
+@c #### seems plausible
+@item
+If a float operation would overflow or underflow (@emph{i.e.}, produce
+an unrepresentably small but non-zero result), the operands are
+converted to bigfloats and the operation performed.
+
+@c #### seems likely....
+@item
+If an expression mixes a rational type (fixnum, bignum, or ratio) with a
+float, the rational operand is converted to a float and the operation
+performed if the result would fit in a float, otherwise both operands
+are promoted to bigfloat, and the operation performed.
+
+@item
+If an expression mixes any other type with a bigfloat, the other operand
+is converted to bigfloat and the operation performed.
+@end enumerate
+
+Note that there is @emph{no} contagion with ratios.  Integer-to-integer
+arithmetic with truncation or rounding is useful, and familiar.
+Therefore instead of converting the result of @code{/} to ratio if it is
+non-integral, the traditional definition is maintained, and a new
+function @code{div} is provided to give a ratio result if a division
+does not come out evenly.
+
+On the other hand, the representation of arbitrary precision numbers is
+inefficient in both space and time.  The principle of
+@dfn{canonicalization} addresses this issue.  The idea of
+canonicalization is that when no information is lost, the representation
+should be demoted to the more efficient (smaller) representation.  Note
+that the inefficiency is likely to be greater than you might think.
+Experience with numerical analysis shows that in very precise
+calculations, precision tends to increase.  Thus it is typically wasted
+effort to attempt to convert to smaller representations, as the number
+is often reused and requires a larger representation.  However, XEmacs
+Lisp presumes that calculations using bignums are the exception, so it
+applies canonicalization.  The rules are
+
+@enumerate
+@item
+If a ratio is integral, demote it to a bignum.  (In XEmacs Lisp all
+ratios are arbitrary precision numbers.)
+
+@item
+If a bignum is small enough to fit in a fixnum, demote it to fixnum.
+@end enumerate
+
+Note that there are no rules to canonicalize floats or bigfloats.  This
+might seem surprising, but in both cases information will be lost.  Any
+floating point representation is implicitly approximate.  A conversion
+to a rational type, even if it seems exact, loses this information.
+More subtly, demoting a bigfloat to a smaller bigfloat or to a float
+would lose information about the precision of the result, and thus some
+information about the accuracy.  Thus floating point numbers are always
+already in canonical form.
+
+Of course the programmer can explicitly request canonicalization, or
+more coercion to another type.  Coercion uses the Common Lisp
+compatibility function @code{coerce} from the @file{cl-extra.el}
+library.  A number can be explicitly converted to canonical form
+according to the above rules using
+
+@defun canonicalize-number number
+Return the canonical form of @var{number}.
+@end defun
+
+
+@node Compatibility Issues
+@subsection Compatibility Issues
+
+  @emph{Surgeon General's Warning}: The automatic conversions cannot be
+disabled at runtime.  Old functions will not produce ratios unless there
+is a ratio operand, so there should be few surprises with type
+conflicts (the contagion rules are quite natural for Lisp programmers
+used to the behavior of integers and floats in pre-21.5.18 XEmacsen),
+but they can't be ruled out.  Also, if you work with extremely large
+numbers, your machine may arbitrarily decide to hand you an unpleasant
+surprise rather than a bignum.
+
+User-visible changes in behavior include (in probable order of annoyance)
+
+@itemize
+@item
+Arithmetic can cause a segfault, depending on your MP library.
+
+GMP by default allocates temporaries on the stack.  If you run out of
+stack space, you're dead; there is no way that we know of to reliably
+detect this condition, because @samp{alloca} is typically implemented to
+be @emph{fast} rather than robust.  If you just need a little more
+oomph, use a bigger stack (@emph{e.g.}, the @file{ulimit -s} command in
+bash(1)).  If you want robustness at the cost of speed, configure GMP
+with @samp{--disable-alloca} and rebuild the GMP library.
+
+We do not know whether BSD MP uses @samp{alloca} or not.  Please send
+any information you have as a bug report (@kbd{M-x report-xemacs-bug
+@key{RET}}), which will give us platform information.  (We do know that
+BSD MP implementations vary across vendors, but how much, we do not know
+yet.)
+
+@item
+Terminology is not Common-Lisp-conforming.  For example, ``integer'' for
+Emacs Lisp means what Common Lisp calls ``fixnum''.  This issue is being
+investigated, but the use of ``integer'' for fixnum is pervasive and may
+cause backward-compatibility and GNU-Emacs-compatibility problems.
+There are similar issues for floating point numbers.  Since Emacs Lisp
+has not had a ratio type before, there should be no problems there.
+
+@item
+An atom with ratio read syntax now returns a number, not a symbol.
+
+@item
+Many operations that used to cause a range error now succeed, with
+intermediate results and return values coerced to bignums as needed.
+
+@item
+The @samp{%u} format conversion will now give an error if its argument
+is negative.  (Without MP, it prints a number which Lisp can't read.)
+@end itemize
+
+  This is not a compatibility issue in the sense of specification, but
+careless programmers who have taken advantage of the immediate
+representation for numbers and written @code{(eq x y)} are in for a
+surprise.  This doesn't work with bignums, even if both arguments are
+bignums!  Arbitrary precision obviously requires consing new objects
+because the objects are ``large'' and of variable size, and the
+definition of @samp{eq} does not permit different objects to compare as
+equal.  Instead of @code{eq}, use @code{eql}, in which numbers of the
+same type which have equal values compare equal, or @code{=}, which does
+any necessary type coercions before comparing for equality
+@ref{Comparison of Numbers}.
+
 
 @node Predicates on Numbers
 @section Type Predicates for Numbers
@@ -224,15 +589,16 @@ compare them, then you test whether two values are the same
 @emph{object}.  By contrast, @code{=} compares only the numeric values
 of the objects.
 
-  At present, each integer value has a unique Lisp object in XEmacs Lisp.
-Therefore, @code{eq} is equivalent to @code{=} where integers are
-concerned.  It is sometimes convenient to use @code{eq} for comparing an
-unknown value with an integer, because @code{eq} does not report an
-error if the unknown value is not a number---it accepts arguments of any
-type.  By contrast, @code{=} signals an error if the arguments are not
-numbers or markers.  However, it is a good idea to use @code{=} if you
-can, even for comparing integers, just in case we change the
-representation of integers in a future XEmacs version.
+  In versions before 21.5.18, each integer value had a unique Lisp
+object in XEmacs Lisp.  Therefore, @code{eq} was equivalent to @code{=}
+where integers are concerned.  Even with the introduction of bignums, it
+is sometimes convenient to use @code{eq} for comparing an unknown value
+with an integer, because @code{eq} does not report an error if the
+unknown value is not a number---it accepts arguments of any type.  By
+contrast, @code{=} signals an error if the arguments are not numbers or
+markers.  However, it is a good idea to use @code{=} if you can, even
+for comparing exact values, because two bignums or ratios with the same
+value will often not be the same object.
 
   There is another wrinkle: because floating point arithmetic is not
 exact, it is often a bad idea to check for equality of two floating

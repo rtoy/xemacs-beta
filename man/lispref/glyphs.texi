@@ -34,6 +34,7 @@ This function returns @code{t} if @var{object} is a glyph.
 * Glyph Types::         Each glyph has a particular type.
 * Mouse Pointer::	Controlling the mouse pointer.
 * Redisplay Glyphs::    Glyphs controlling various redisplay functions.
+* Native GUI Widgets::  Complex active images treated as a single glyph.
 * Subwindows::          Inserting an externally-controlled subwindow
                           into a buffer.
 * Glyph Examples::      Examples of how to work with glyphs.
@@ -347,7 +348,7 @@ In general, it is OK to pass an instance object (e.g. as returned by
 instantiator.  In such a case, the instantiator used to create that
 instance object will be used (for example, if you set a font-instance
 object as the value of the @code{font} property, then the font name used
-to create that object will be used instead).  If some cases, however,
+to create that object will be used instead).  In some cases, however,
 doing this conversion does not make sense, and this will be noted in the
 documentation for particular types of instance objects.
 
@@ -1204,7 +1205,6 @@ applicable.  This will be a color instance or @code{nil}. (It will only
 be non-@code{nil} for colorized mono pixmaps and for pointers.)
 @end defun
 
-
 @node Glyph Types
 @section Glyph Types
 
@@ -1373,6 +1373,200 @@ called for, according to @code{selective-display-ellipses} or
 @defvr Glyph control-arrow-glyph
 This variable specifies what to use as an arrow for control characters.
 @end defvr
+
+@node Native GUI Widgets
+@section Native GUI Widgets
+@cindex native widget
+
+A ``native widget'' is a primitive GUI object defined either by the host
+GUI platform or an external toolkit, and accessed from Lisp as a
+``glyph.''
+
+@menu
+* Introduction to Widgets::     Native widgets provide tight integration of
+                                GUI features with the platform GUI.
+* Lisp API to Native Widgets::  Native widgets are glyphs.
+* Layouts::                     Specifying composite widgets from Lisp.
+* Primitive Widgets::           Catalogue of available native widgets.
+@end menu
+
+@node Introduction to Widgets
+@subsection Introduction to Native Widgets and Subwindow Glyphs
+
+Traditionally Emacsen have hidden the GUI apparatus from the Lisp
+programmer, but in XEmacs 21.4 the ability to embed autonomous GUI
+objects, called @dfn{native widgets}, in text was added to Lisp.  They
+are handled as @emph{glyphs}.  Unlike traditional XEmacs
+glyphs such images and strings, native widgets are opaque to XEmacs, and
+must be able to redraw themselves because they are implemented as
+subwindows, not as graphics drawn by XEmacs into the text window.
+
+Primitive widgets are coded in C using the underlying GUI toolkit, and
+thus are beyond the scope of the @emph{XEmacs Lisp Reference Manual}.
+However, composite widgets can be created in Lisp using ``layouts,''
+which are horizontal or vertical arrays of subwidgets.  For example, the
+search dialog is formatted using layouts.
+
+@node Lisp API to Native Widgets
+@subsection Lisp API to Native Widgets
+
+Native widgets are manipulated as @emph{glyphs} (@pxref{Glyphs}).  Thus
+they are created using @code{make-glyph}, with a format of one of the
+widget types and a @code{:data} property specific to the widget being
+instanced.
+
+However, there is a technical difference between widgets and other kinds
+of glyphs that is theoretically important, which is that because widgets
+are active (that is, they can respond to user input events themselves),
+it is possible for the user to become aware that two appearances of the
+``same'' glyph are actually separate instances.  For example, if a user
+changes an image glyph from red to blue, and the buffer containing the
+glyph appears in more than one window, the user will perceive all the
+appearances to change from red to blue simultaneously.  However, suppose
+the glyph is a button glyph (@emph{e.g.}, as used in the Customize
+buffer for the Set, Save, and Done buttons).  Then if the Customize
+buffer appears in several windows at the same time, and the user clicks
+on the button, she will only perceive the button to be depressed in the
+window where she clicked the button.
+
+It seems from this example that it is unlikely to be a problem in
+practice.  When the user is faced with an active widget, it seems likely
+that attention will focus on the widget being manipulated, and having
+other instances of the widget respond simultaneously might be more
+disconcerting than the actual case.
+
+@node Layouts
+@subsection Layouts
+
+An XEmacs @dfn{layout} is a one-dimensional array of glyphs.  It is a
+widget for controlling the positioning of children underneath it.
+Through the use of nested layouts, a widget hierarchy can be created
+which can have the appearance of any standard dialog box or similar
+arrangement; all of this is counted as one "glyph" and could appear in
+many of the places that expect a single glyph.
+
+(There are also @dfn{native layouts}, but I don't know what these are or
+how they are used.)
+
+A layout descriptor is an image instantiator, @emph{i.e.}, a vector of
+the form @samp{[FORMAT KEY-1 VALUE-1 KEY-2 VALUE-2 ...]} with format
+@code{layout}, and properties
+
+@c #### need defaults for these
+@table @code
+@item :orientation
+Specifies the orientation of the contained array of glyphs.  The value
+must be one of the symbols @code{horizontal} or @code{vertical}.
+
+@item :horizontally-justify
+Specifies the horizontal justification of the items in the array.  The
+value must be one of the symbols @code{:right}, @code{:center}, or
+@code{:left}.
+
+@item :vertically-justify
+Specifies the vertical justification of the items in the array.  The
+value must be one of the symbols @code{:center}, @code{:center}, or
+@code{:bottom}.
+
+@item :justify
+Specifies justification.  #### not understood.
+
+@item :border
+A glyph to place in the border.  The value must be an image
+instantiator.
+
+@item :items
+The glyphs controlled by the layout.  The value must be a list of image
+instantiators.
+@end table
+
+Here is the specification of the search dialog widget created by
+@code{make-search-dialog} in the @file{dialog-items} library, which
+makes use of recursive layouts.
+
+@example
+(make-glyph
+ `[layout 
+   :orientation horizontal 
+   :vertically-justify top 
+   :horizontally-justify center 
+   :border [string :data "Search"]
+   :items 
+   ([layout :orientation vertical 
+            :justify top	; implies left also
+            :items 
+            ([string :data "Search for:"]
+     	[button :descriptor "Match Case"
+     		:style toggle
+     		:selected (not case-fold-search)
+     		:callback (setq case-fold-search
+     				(not case-fold-search))]
+     	[button :descriptor "Regular Expression"
+     		:style toggle
+     		:selected search-dialog-regexp
+     		:callback (setq search-dialog-regexp
+     				(not search-dialog-regexp))]
+     	[button :descriptor "Forwards"
+     		:style radio
+     		:selected search-dialog-direction
+     		:callback (setq search-dialog-direction t)]
+     	[button :descriptor "Backwards"
+     		:style radio
+     		:selected (not search-dialog-direction)
+     		:callback (setq search-dialog-direction nil)]
+     	)]
+    [layout :orientation vertical
+            :vertically-justify top
+            :horizontally-justify right
+            :items
+            ([edit-field :width 15 :descriptor "" :active t
+     		    :initial-focus t]
+     	[button :width 10 :descriptor "Find Next"
+     		:callback-ex
+     		(lambda (image-instance event)
+     		  (search-dialog-callback ,parent
+     					  image-instance
+     					  event))]
+     	[button :width 10 :descriptor "Cancel"
+     		:callback-ex
+     		(lambda (image-instance event)
+     		  (isearch-dehighlight)
+     		  (delete-frame 
+     		   (event-channel event)))])])])
+@end example
+
+@node Primitive Widgets
+@subsection Primitive Widgets
+
+@c #### the following table should be replaced with a menu of nodes
+@table @code
+@item button
+A button widget; either a push button, radio button or toggle
+button.
+
+@item combo-box
+A drop list of selectable items in a widget, for editing text.
+
+@item edit-field
+A text editing widget.
+
+@item label
+A static, text-only, widget; for displaying text.
+
+@item progress-gauge
+A sliding widget, for showing progress.
+
+@item tab-control
+A tab widget; a series of user selectable tabs.
+
+@item tree-view
+A folding widget.
+
+@item scrollbar
+A scrollbar widget.  (#### Probably not the same as the scrollbar
+controlling an Emacs window.)
+@end table
+
 
 @node Subwindows
 @section Subwindows

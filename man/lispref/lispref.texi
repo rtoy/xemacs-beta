@@ -328,7 +328,9 @@ Editing Types
 Numbers
 
 * Integer Basics::            Representation and range of integers.
+* Ratio Basics::	      Representation and range of rational numbers.
 * Float Basics::	      Representation and range of floating point.
+* The Bignum Extension::      Arbitrary precision integers, ratios, and floats.
 * Predicates on Numbers::     Testing for numbers.
 * Comparison of Numbers::     Equality and inequality predicates.
 * Arithmetic Operations::     How to add, subtract, multiply and divide.

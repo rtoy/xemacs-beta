@@ -1487,14 +1487,9 @@ in its internal operations.)
 
 @table @code
 @item integer
-28 or 31 bits of precision, or 60 or 63 bits on 64-bit machines; the
+31 bits of precision, or 63 bits on 64-bit machines; the
 reason for this is described below when the internal Lisp object
 representation is described.
-@item float
-Same precision as a double in C.
-@item cons
-A simple container for two Lisp objects, used to implement lists and
-most other data structures in Lisp.
 @item char
 An object representing a single character of text; chars behave like
 integers in many ways but are logically considered text rather than
@@ -1511,26 +1506,41 @@ its integer equivalent, even though in no other case are objects of two
 different types @code{eq}.  The reason for this monstrosity is
 compatibility with existing code; the separation of char from integer
 came fairly recently.)
+@item float
+Same precision as a double in C.
+@item bignum
+@itemx ratio
+@itemx bigfloat
+As build-time options, arbitrary-precision numbers are available.
+Bignums are integers, and when available they remove the restriction on
+buffer size.  Ratios are non-integral rational numbers.  Bigfloats are
+arbitrary-precision floating point numbers, with precision specified at
+runtime.
 @item symbol
 An object that contains Lisp objects and is referred to by name;
 symbols are used to implement variables and named functions
 and to provide the equivalent of preprocessor constants in C.
-@item vector
-A one-dimensional array of Lisp objects providing constant-time access
-to any of the objects; access to an arbitrary object in a vector is
-faster than for lists, but the operations that can be done on a vector
-are more limited.
 @item string
 Self-explanatory; behaves much like a vector of chars
 but has a different read syntax and is stored and manipulated
 more compactly.
 @item bit-vector
 A vector of bits; similar to a string in spirit.
+@item vector
+A one-dimensional array of Lisp objects providing constant-time access
+to any of the objects; access to an arbitrary object in a vector is
+faster than for lists, but the operations that can be done on a vector
+are more limited.
 @item compiled-function
 An object containing compiled Lisp code, known as @dfn{byte code}.
 @item subr
 A Lisp primitive, i.e. a Lisp-callable function implemented in C.
+@item cons
+A simple container for two Lisp objects, used to implement lists and
+most other data structures in Lisp.
 @end table
+
+Objects which are not conses are called atoms.
 
 @cindex closure
 Note that there is no basic ``function'' type, as in more powerful
@@ -1695,7 +1705,7 @@ that they can be @emph{undeleted} after having previously been
 deleted. (This happens as a result of restoring a window configuration.)
 
 @cindex read syntax
-  Note that many types of objects have a @dfn{read syntax}, i.e. a way of
+  Many types of objects have a @dfn{read syntax}, i.e. a way of
 specifying an object of that type in Lisp code.  When you load a Lisp
 file, or type in code to be evaluated, what really happens is that the
 function @code{read} is called, which reads some text and creates an object
@@ -1714,6 +1724,14 @@ unchanged.)
 @end example
 
 converts to an integer whose value is 17297.
+
+@example
+355/113
+@end example
+
+converts to a ratio commonly used to approximate @emph{pi} when ratios
+are configured, and otherwise to a symbol whose name is ``355/113'' (for
+backward compatibility).
 
 @example
 1.983e-4
@@ -2261,6 +2279,7 @@ situations, often in code far away from where the actual breakage is.
 @menu
 * A Reader's Guide to XEmacs Coding Conventions::
 * General Coding Rules::
+* Object-Oriented Techniques for C::
 * Writing Lisp Primitives::
 * Writing Good Comments::
 * Adding Global Lisp Variables::
@@ -2480,6 +2499,109 @@ case of @code{GET_EXTERNAL_LIST_LENGTH}, validating the properness of
 the list.  The macros @code{EXTERNAL_LIST_LOOP_DELETE_IF} and
 @code{LIST_LOOP_DELETE_IF} delete elements from a lisp list satisfying some
 predicate.
+
+@node Object-Oriented Techniques for C
+@section Object-Oriented Techniques for C
+@cindex coding rules, object-oriented
+@cindex object-oriented techniques
+
+At the lowest levels, XEmacs makes heavy use of object-oriented
+techniques to promote code-sharing and uniform interfaces for different
+devices and platforms.  Commonly, but not always, such objects are
+``wrapped'' and exported to Lisp as Lisp objects.  Usually they use
+the internal structures developed for Lisp objects (the @samp{lrecord}
+structure) in order to take advantage of Lisp memory management.
+Unfortunately, XEmacs was originally written in C, so these techniques
+are based on heavy use of C macros.  Since XEmacs has been rewritten in
+``Clean C,'' @emph{i.e.}, it compiles under both C and C++, it should be
+possible to migrate to C++.  It is hoped this documentation will help
+encourage this process.
+
+@c You can't use @var{} for type below, because case is important.
+A module defining a class is likely to use most of the following
+declarations and macros.  In the following, the notation @samp{<type>}
+will stand for the full name of the class, and will be capitalized in
+the way normal for its context.  The notation @samp{<typ>} will stand
+for the abbreviated form commonly used in macro names, while @samp{ty}
+will be used as the typical name for instances of the class.  (See the
+entry for @samp{MAYBE_<TY>METH} below for an example using all three
+notations.)
+
+In the interface (@file{.h} file), the following declarations are used
+often.  Others may be used in for particular modules.  Since they're
+quite short in most cases, the definitions are given as well.  The
+generic macros used are defined in @file{lisp.h} or @file{lrecord.h}.
+
+@c #### reorganize this table into stuff used in general code, and stuff
+@c used only in declarations or initializations
+@table @samp
+@c #### declaration
+@item typedef struct Lisp_<Type> Lisp_<Type>
+This refers to the internal structure used by C code.  The XEmacs coding
+style now forbids passing pointers to @samp{Lisp_<Type>} structures into
+or out of a function; instead, a @samp{Lisp_Object} should be passed or
+returned (created using @samp{wrap_<type>}, if necessary).
+
+@c #### declaration
+@item DECLARE_LRECORD (<type>, Lisp_<Type>)
+Declares an @samp{lrecord} for @samp{<Type>}, which is the unit of
+allocation.
+
+@item #define X<TYPE>(x) XRECORD (x, <type>, Lisp_<Type>)
+Turns a @code{Lisp_Object} into a pointer to @samp{struct Lisp_<Type>}.
+
+@item #define wrap_<type>(p) wrap_record (p, <type>)
+Turns a pointer to @samp{struct Lisp_<Type>} into a @code{Lisp_Object}.
+
+@item #define <TYPE>P(x) RECORDP (x, <type>)
+Tests whether a given @code{Lisp_Object} is of type @samp{Lisp_<Type>}.
+Returns a C int, not a Lisp Boolean value.
+
+@item #define CHECK_<TYPE>(x) CHECK_RECORD (x, <type>)
+@itemx #define CONCHECK_<TYPE>(x) CONCHECK_RECORD (x, <type>)
+Tests whether a given @code{Lisp_Object} is of type @samp{Lisp_<Type>},
+and signals a Lisp error if not.  The @samp{CHECK} version of the macro
+never returns if the type is wrong, while the @samp{CONCHECK} version
+can return if the user catches it in the debugger and explicitly
+requests a return.
+
+@item #define RAW_<TYP>METH(ty, m) ((ty)->methods->m##_method)
+Return a function pointer for the method for an object @var{TY} of class
+@samp{Lisp_<Type>}, or @samp{NULL} if there is none for this type.
+
+@item #define HAS_<TYP>METH_P(ty, m) (!!RAW_<TYP>METH (ty, m))
+Test whether the class that @var{TY} is an instance of has the method.
+
+@item #define <TYP>METH(ty, m, args) ((RAW_<TYP>METH (ty, m)) args)
+Call the method on @samp{args}.  @samp{args} must be enclosed in
+parentheses in the call.  It is the programmer's responsibility to
+ensure that the method is available.  The standard convenience macro
+@samp{MAYBE_<TYP>METH} is often provided for the common case where a
+void-returning method of @samp{Type} is called.
+
+@item #define MAYBE_<TYP>METH(ty, m, args) do @{ ... @} while (0)
+Call a void-returning @samp{<Type>} method, if it exists.  Note the use
+of the @samp{do ... while (0)} idiom to give the macro call C statement
+semantics.  The full definition is equally idiomatic:
+
+@example
+#define MAYBE_<TYP>METH(ty, m, args) do @{	\
+  Lisp_<Type> *maybe_<typ>meth_ty = (ty);	\
+  if (HAS_<TYP>METH_P (maybe_<typ>meth_ty, m))	\
+    <TYP>METH (maybe_<typ>meth_ty, m, args);	\
+@} while (0)
+@end example
+@end table
+
+The use of macros for invoking an object's methods makes life a bit
+difficult for the student or maintainer when browsing the code.  In
+particular, calls are of the form @samp{<TYP>METH (ty, some_method, (x,
+y))}, but definitions typically are for @samp{<subtype>_some_method}.
+Thus, when you are trying to find calls, you need to grep for
+@samp{some_method}, but this will also catch calls and definitions of
+that method for instances of other subtypes of @samp{<Type>}, and there
+may be a rather large number of them.
+
 
 @node Writing Lisp Primitives
 @section Writing Lisp Primitives
@@ -2760,22 +2882,22 @@ But in practice, this often doesn't happen, or the CVS repository is
 later on lost or unavailable to the person doing the update.)
 
 When putting in an explicit opinion in a comment, you should
-@emph{always} attribute it with your name, and optionally the date.
-This also goes for long, complex comments explaining in detail the
-workings of something -- by putting your name there, you make it
-possible for someone who has questions about how that thing works to
-determine who wrote the comment so they can write to them.  Preferably,
-use your actual name and not your initials, unless your initials are
-generally recognized (e.g. @samp{jwz}).  You can use only your first
-name if it's obvious who you are; otherwise, give first and last name.
-If you're not a regular contributor, you might consider putting your
-email address in -- it may be in the ChangeLog, but after awhile
-ChangeLogs have a tendency of disappearing or getting
-muddled. (E.g. your comment may get copied somewhere else or even into
-another program, and tracking down the proper ChangeLog may be very
-difficult.)
+@emph{always} attribute it with your name and the date.  This also goes
+for long, complex comments explaining in detail the workings of
+something -- by putting your name there, you make it possible for
+someone who has questions about how that thing works to determine who
+wrote the comment so they can write to them.  Use your actual name or
+your alias at xemacs.org, and not your initials or nickname, unless that
+is generally recognized (e.g. @samp{jwz}).  Even then, please consider
+requesting a virtual user at xemacs.org (forwarding address; we can't
+provide an actual mailbox).  Otherwise, give first and last name.  If
+you're not a regular contributor, you might consider putting your email
+address in -- it may be in the ChangeLog, but after awhile ChangeLogs
+have a tendency of disappearing or getting muddled.  (E.g. your comment
+may get copied somewhere else or even into another program, and tracking
+down the proper ChangeLog may be very difficult.)
 
-If you come across an opinion that is not or no longer valid, or you
+If you come across an opinion that is not or is no longer valid, or you
 come across any comment that no longer applies but you want to keep it
 around, enclose it in @samp{[[ } and @samp{ ]]} marks and add a comment
 afterwards explaining why the preceding comment is no longer valid.  Put
@@ -2934,10 +3056,16 @@ An @code{Ichar} holds a single Emacs character.
 Obviously, the equality between characters and bytes is lost in the Mule
 world.  Characters can be represented by one or more bytes in the
 buffer, and @code{Ichar} is a C type large enough to hold any
-character.
+character.  (This currently isn't quite true for ISO 10646, which
+defines a character as a 31-bit non-negative quantity, while XEmacs
+characters are only 30-bits.  This is irrelevant, unless you are
+considering using the ISO 10646 private groups to support really large
+private character sets---in particular, the Mule character set!---in
+a version of XEmacs using Unicode internally.)
 
 Without Mule support, an @code{Ichar} is equivalent to an
-@code{unsigned char}.
+@code{unsigned char}.  [[This doesn't seem to be true; @file{lisp.h}
+unconditionally @samp{typedef}s @code{Ichar} to @code{int}.]]
 
 @item Ibyte
 @cindex Ibyte
@@ -2954,7 +3082,11 @@ encoded in the variable-width internal encoding.
 One character can correspond to one or more @code{Ibyte}s.  In the
 current Mule implementation, an ASCII character is represented by the
 same @code{Ibyte}, and other characters are represented by a sequence
-of two or more @code{Ibyte}s.
+of two or more @code{Ibyte}s.  (This will also be true of an
+implementation using UTF-8 as the internal encoding.  In fact, only code
+that implements character code conversions and a very few macros used to
+implement motion by whole characters will notice the difference between
+UTF-8 and the Mule encoding.)
 
 Without Mule support, there are exactly 256 characters, implicitly
 Latin-1, and each character is represented using one @code{Ibyte}, and
@@ -3046,7 +3178,10 @@ multiplying a @code{Charcount} value with @code{MAX_ICHAR_LEN} produces
 a @code{Bytecount} value.
 
 In the current Mule implementation, @code{MAX_ICHAR_LEN} equals 4.
-Without Mule, it is 1.
+Without Mule, it is 1.  In a mature Unicode-based XEmacs, it will also
+be 4 (since all Unicode characters can be encoded in UTF-8 in 4 bytes or
+less), but some versions may use up to 6, in order to use the large
+private space provided by ISO 10646 to ``mirror'' the Mule code space.
 
 @item itext_ichar
 @itemx set_itext_ichar
@@ -3184,6 +3319,9 @@ characters are converted into `~'.
 Format used for the external Unix environment---@code{argv[]}, stuff
 from @code{getenv()}, stuff from the @file{/etc/passwd} file, etc.
 This is encoded according to the encoding specified by the current locale.
+[[This is dangerous; current locale is user preference, and the system
+is probably going to be something else.  Is there anything we can do
+about it?]]
 
 @item Qfile_name
 Format used for filenames.  This is normally the same as @code{Qnative},
@@ -3373,7 +3511,10 @@ conversion themselves.  The encapsulated equivalents have a @code{qxe_}
 prefix and have string arguments of type @code{Ibyte *}, and you can
 pass internally encoded data to them, often from a Lisp string using
 @code{XSTRING_DATA}. (A better design might be to provide versions that
-accept Lisp strings directly.)
+accept Lisp strings directly.)  [[Really?  Then they'd either take
+@code{Lisp_Object}s and need to check type, or they'd take
+@code{Lisp_String}s, and violate the rules about passing any of the
+specific Lisp types.]]
 
 Also note that many internal functions, such as @code{make_string},
 accept Ibytes, which removes the need for them to convert the data they
@@ -3490,7 +3631,7 @@ To make a quantified XEmacs, do: @code{make quantmacs}.
 You simply can't dump Quantified and Purified images (unless using the
 portable dumper).  Purify gets confused when xemacs frees memory in one
 process that was allocated in a @emph{different} process on a different
-machine!.  Run it like so:
+machine!  Run it like so:
 @example
 temacs -batch -l loadup.el run-temacs @var{xemacs-args...}
 @end example
@@ -5774,7 +5915,7 @@ syntax-tests.el
 @file{test-harness.el} defines the macros @code{Assert},
 @code{Check-Error}, @code{Check-Error-Message}, and
 @code{Check-Message}.  The other files are test files, testing various
-XEmacs facilities.
+XEmacs facilities.  @xref{Regression Testing XEmacs}.
 
 
 
@@ -7124,6 +7265,9 @@ starting address if needed, and reinitialize all pointers to this
 data.  Also, rebuild all the quickly rebuildable data.
 @end enumerate
 
+Note: As of 21.5.18, the dump file has been moved inside of the
+executable, although there are still problems with this on some systems.
+
 @node Data descriptions
 @section Data descriptions
 @cindex dumping data descriptions
@@ -7427,7 +7571,8 @@ them and have them resorted by calling @code{pdump_reorganize_hash_table}.
 
 The build process will have to start a post-dump xemacs, ask it the
 loading address (which will, hopefully, be always the same between
-different xemacs invocations) and relocate the file to the new address.
+different xemacs invocations) [[unfortunately, not true on Linux with
+the ExecShield feature]] and relocate the file to the new address.
 This way the object relocation phase will not have to be done, which
 means no writes in the objects and that, because of the use of mmap, the
 dumped data will be shared between all the xemacs running on the
@@ -8697,6 +8842,9 @@ certain charsets), but these do not require new concepts.  The main
 exception is that wild-card matches in Mule have to be careful to
 swallow whole characters.  This is handled using the same basic macros
 that are used for buffer and string movements.
+
+This will also be true if a UTF-8 representation is used for the
+internal encoding.
 
 The complex algorithms for searching are for simple string searches.  In
 particular, the algorithm used for fast string searching is Boyer-Moore.

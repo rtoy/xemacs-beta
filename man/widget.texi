@@ -40,15 +40,20 @@
 @comment  node-name,  next,  previous,  up
 @section Introduction
 
-Most graphical user interface toolkits, such as Motif and XView, provide
+@c XEmacs changes to reflect history, native widgets, and GTK
+Most graphical user interface toolkits, since Motif and XView, provide
 a number of standard user interface controls (sometimes known as
-`widgets' or `gadgets').  Emacs doesn't really support anything like
-this, except for an incredible powerful text ``widget''.  On the other
-hand, Emacs does provide the necessary primitives to implement many
-other widgets within a text buffer.  The @code{widget} package
-simplifies this task.
+`widgets' or `gadgets').  Historically, Emacs didn't support anything like
+this, except for its incredible powerful text ``widget''.  However,
+since XEmacs 21.4, XEmacs has supported ``native'' widgets (GUI controls
+implemented as Lisp APIs in C for the MS Windows, Motif, Athena, and GTK
+toolkits) and libglade (GUI controls with an XML API for the GTK
+toolkit).  On the other hand, Emacs does provide the necessary
+primitives to implement many other widgets within a text buffer, and of
+course this is the only way to implement self-contained controls in a
+text terminal.  The @code{widget} package simplifies this task.
 
-The basic widgets are:
+Examples of some basic widgets include:
 
 @table @code
 @item link
@@ -83,7 +88,7 @@ list.  Each list item is itself a widget.
 
 Now of what possible use can support for widgets be in a text editor?
 I'm glad you asked.  The answer is that widgets are useful for
-implementing forms.  A @dfn{form} in emacs is a buffer where the user is
+implementing forms.  A @dfn{form} in Emacs is a buffer where the user is
 supposed to fill out a number of fields, each of which has a specific
 meaning.  The user is not supposed to change or delete any of the text
 between the fields.  Examples of forms in Emacs are the @file{forms}
@@ -100,19 +105,22 @@ More complex fields than just editable text are supported.
 You can give the user immediate feedback if he enters invalid data in a
 text field, and sometimes prevent entering invalid data.
 @item 
-You can have fixed sized fields, thus allowing multiple field to be
+You can have fixed sized fields, thus allowing multiple fields to be
 lined up in columns.
 @item
 It is simple to query or set the value of a field. 
 @item 
-Editing happens in buffer, not in the mini-buffer.
+Editing happens in a normal buffer, not in the mini-buffer.
 @item 
-Packages using the library get a uniform look, making them easier for
+Packages using the library get a uniform look-and-feel, making them easier for
 the user to learn.
 @item 
-As support for embedded graphics improve, the widget library will
+As support for embedded graphics has improved, the widget library will
 extended to support it.  This means that your code using the widget
-library will also use the new graphic features by automatic.
+library will also use the new graphic features automatically.
+@item
+A widget specification is implemented as a class, and new subclasses can
+be derived from any class, by restricting or extending the behavior.
 @end enumerate
 
 In order to minimize the code that is loaded by users who does not
@@ -120,10 +128,10 @@ create any widgets, the code has been split in two files:
 
 @table @file
 @item widget.el
-This will declare the user variables, define the function
-@code{define-widget}, and autoload the function @code{widget-create}. 
+This declares the user variables, defines the function
+@code{define-widget}, and autoloads the function @code{widget-create}. 
 @item wid-edit.el
-Everything else is here, there is no reason to load it explicitly, as
+Everything else is here.  Do not load it explicitly, as
 it will be autoloaded when needed.
 @end table
 
@@ -168,7 +176,7 @@ Select one:
 @b{[Apply Form]} @b{[Reset Form]}
 @end example
 
-The top level widgets in is example are tagged @samp{Name},
+The top level widgets in this example are tagged @samp{Name},
 @samp{Choose}, @samp{Address}, @samp{_other work_}, @samp{Numbers},
 @samp{Select multiple}, @samp{Select one}, @samp{[Apply Form]}, and
 @samp{[Reset Form]}.  There are basically two thing the user can do within

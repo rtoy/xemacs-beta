@@ -1,3 +1,73 @@
+2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Object-Oriented Techniques in XEmacs):
+	New node.
+	(The XEmacs Object System (Abstractly Speaking)):
+	Reorder the list of objects somewhat.
+	Add brief descriptions of the arbitrary-precision number types.
+	(Writing Good Comments): Slight revision, recommend @xemacs alias.
+	(Character-Related Data Types): Add a few comments re Unicode.
+	(Working With Character and Byte Positions): Ditto.
+	(General Guidelines for Writing Mule-Aware Code): Query.
+	(Conversion to and from External Data): Ditto.
+	(Techniques for XEmacs Developers): Typo.
+	(Modules for Regression Testing): Add an xref.
+	(Overview): Note that dump file is now inside the executable.
+	(Remaining issues): Mention ExecShield vs. pdumper.
+	(Searching and Matching): Mention UTF-8 wrt Mule.
+
+2004-02-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* widget.texi (Introduction): Update historical references a bit.
+	Fix many typos and grammatical problems.
+	(User Interface): Fix typo.
+
+2004-04-09  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* lispref/numbers.texi (Numbers): Describe bignums, ratios, and
+	bigfloats briefly.
+	(Integer Basics): We've had 31-bit integers for a while.  Fix the
+	statement of minimum available precision and the examples.
+	Document most-positive-fixnum and most-negative-fixnum.  Add a
+	pointer to the node "The Bignum Extension".
+	(Float Basics): Document most-positive-float, most-negative-float,
+	least-positive-float, least-positive-normalized-float,
+	least-negative-float, and least-negative-normalized-float.  Add a
+	pointer to the node "The Bignum Extension".
+	(Comparison of Numbers): Update for bignums.
+
+	(The Bignum Extension):
+	(Bignum Basics):
+	(Ratio Basics):
+	(Bigfloat Basics):
+	(Contagion and Canonicalization):
+	(Compatibility Issues):
+	New nodes.
+
+	* lispref/lispref.texi (Top):
+	* lispref/numbers.texi (Numbers): 
+	Add nodes "Ratio Basics" and "The Bignum Extension" to menus.
+
+2004-01-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/specifiers.texi: Update FSF copyright.
+       (Specifier Compatibility Notes): New node.
+
+	* lispref/glyphs.texi (Glyph Properties): Fix typo.
+	(Glyphs):
+	(Native GUI Widgets): New node.
+
+	* lispref/gutter.texi (Gutter Descriptor Format): Node deleted.
+	(Gutter):
+	(Gutter Intro): 
+	(Creating Gutter): 
+	(Specifying a Gutter): 
+	Pluralize node name to Creating Gutters.
+	(Creating Gutters): Improve explanation of gutter descriptors.
+	(Other Gutter Variables): Remove extraneous text.
+	(Common Gutter Widgets): In lieu of real documentation, at least
+	point to gutter-items.el.
+
 2004-04-06  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	Lightly revised from <psr7v1j039.fsf@diannao.ittc.ku.edu>.
