@@ -1,3 +1,9 @@
+2003-02-17  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/mule-charset.el (charsets-in-region): Remove broken
+	optimization to get slight speed-up.
+	(charsets-in-string): Use mapc to iterate in C.
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.

@@ -38,6 +38,12 @@
 
 ;;;; Classifying text according to charsets
 
+;; the old version was broken in a couple of ways
+;; this is one of several versions, I tried a hash as well as the
+;; `prev-charset' cache used in the old version, but this was definitely
+;; faster than the hash version and marginally faster than the prev-charset
+;; version
+;; #### this really needs to be moved into C
 (defun charsets-in-region (start end &optional buffer)
   "Return a list of the charsets in the region between START and END.
 BUFFER defaults to the current buffer if omitted."
@@ -49,30 +55,22 @@ BUFFER defaults to the current buffer if omitted."
 	(narrow-to-region start end)
 	(goto-char (point-min))
 	(while (not (eobp))
-	  (let* (prev-charset
-		 (ch (char-after (point)))
-		 (charset (char-charset ch)))
-	    (if (not (eq prev-charset charset))
-		(progn
-		  (setq prev-charset charset)
-		  (or (memq charset list)
-		      (setq list (cons charset list))))))
+	  ;; the first test will usually succeed on testing the
+	  ;; car of the list; don't waste time let-binding.
+	  (or (memq (char-charset (char-after (point))) list)
+	      (setq list (cons (char-charset (char-after (point))) list)))
 	  (forward-char))))
     list))
 
 (defun charsets-in-string (string)
   "Return a list of the charsets in STRING."
-  (let ((i 0)
- 	(len (length string))
- 	prev-charset charset list)
-    (while (< i len)
-      (setq charset (char-charset (aref string i)))
-      (if (not (eq prev-charset charset))
- 	  (progn
- 	    (setq prev-charset charset)
- 	    (or (memq charset list)
- 		(setq list (cons charset list)))))
-      (setq i (1+ i)))
+  (let (list)
+    (mapc (lambda (ch)
+	    ;; the first test will usually succeed on testing the
+	    ;; car of the list; don't waste time let-binding.
+	    (or (memq (char-charset ch) list)
+		(setq list (cons (char-charset ch) list))))
+	  string)
     list))
 
 (defalias 'find-charset-string 'charsets-in-string)
