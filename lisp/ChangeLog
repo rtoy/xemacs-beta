@@ -1,5 +1,10 @@
 2001-05-05  Ben Wing  <ben@xemacs.org>
 
+	* subr.el (error):
+	Add missing errors to the doc string.
+
+2001-05-05  Ben Wing  <ben@xemacs.org>
+
 	* dialog.el (make-dialog-box): fix doc string.
 	* menubar-items.el (default-menubar): Add Page Setup for Windows,
 	take out Pretty Print.
