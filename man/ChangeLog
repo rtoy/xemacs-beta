@@ -1,3 +1,8 @@
+2003-03-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/frame.texi (Gutter Basics): Describe common options for
+	buffers tab control.
+
 2003-03-11  Adrian Aichner  <adrian@xemacs.org>
 
 	* cl.texi: Change incorrect references to GNU where XEmacs is

@@ -110,12 +110,16 @@ by `buffers-tab-grouping-regexp'.")
 			"Set `buffers-tab-filter-functions' instead.")
 
 (defcustom buffers-tab-filter-functions (list 'select-buffers-tab-buffers-by-mode)
-  "*If non-nil, a list of functions specifying the buffers to include
-in the buffers tab, depending on the context.
-Each function in the list is passed two buffers, the buffer to
-potentially select and the context buffer, and should return non-nil
-if the first buffer should be selected.  The default value groups
-buffers by major mode and by `buffers-tab-grouping-regexp'."
+  "*A list of functions specifying buffers to display in the buffers tab.
+
+If nil, all buffers are kept, up to `buffers-tab-max-size', in usual order.
+Otherwise, each function in the list must take arguments (BUF1 BUF2).
+BUF1 is the candidate, and BUF2 is the current buffer (first in the buffers
+list).  The function should return non-nil if BUF1 should be added to the
+buffers tab.  BUF1 will be omitted if any of the functions returns nil.
+
+Defaults to `select-buffers-tab-buffers-by-mode', which adds BUF1 if BUF1 and
+BUF2 have the same major mode, or both match `buffers-tab-grouping-regexp'."
 
   :type '(repeat function)
   :group 'buffers-tab)

@@ -1,3 +1,52 @@
+2003-03-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gutter-items.el (buffers-tab-filter-functions): Improve docstring.
+	Suggested by a Chris Palmer <chris@nodewarrior.org> patch.
+
+2003-03-02  Stephen Turnbull  <stephen@xemacs.org>
+
+	* wid-edit.el: Many XEmacs-specific comments added.
+	(missing-package): New error type.
+	(link widget): Use it.
+	(widget-sublist):
+	Move to section with other generic utilities.
+	(sexp widget):
+	(widget-sexp-value-to-internal):
+	(widget-sexp-validate):
+	(widget-sexp-prompt-value-history):
+	(widget-sexp-prompt-value):
+	Move to top of sexp section.
+	(finder-commentary):
+	Redundant autoload removed.
+	(widget-princ-to-string):
+	Use `prin1-to-string'.  Add docstring.
+	(widget-prettyprint-to-string):
+	Use `with-temp-buffer'.  Add docstring.
+	(widget-convert):
+	Use `keywordp'.  Improve comments.
+	(symbol widget):
+	Change default value to `t' to distinguish from lists.
+	(widget-edit-functions):
+	Add docstring.
+	(widget-field-new):
+	(widget-field-list):
+	Convert comments to docstrings.
+	(widget-default-prompt-value):
+	Fix docstring, improve comments.
+	(widget-field-add-space):
+	(widget-create):
+	(widget-create-child-and-convert):
+	(widget-create-child):
+	(widget-create-child-value):
+	(push-button widget):
+	(checklist widget):
+	(option widget):
+	(radio-button-choice widget):
+	(radio widget):
+	(list widget):
+	(vector widget):
+	Improve docstrings.
+
 2003-03-06  Ben Wing  <ben@xemacs.org>
 
 	* behavior.el (define-behavior):

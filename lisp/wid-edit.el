@@ -34,7 +34,7 @@
 
 (require 'widget)
 
-(autoload 'finder-commentary "finder" nil t)
+;; XEmacs: autoload of `finder-commentary' is redundant.
 
 ;;; Customization.
 
@@ -89,7 +89,14 @@ This exists as a variable so it can be set locally in certain buffers.")
 ;; TTY gets special definitions here and in the next defface, because
 ;; the gray colors defined for other displays cause black text on a black
 ;; background, at least on light-background TTYs.
-(defface widget-field-face '((((type tty))
+(defface widget-field-face '(
+			     ;; #### sjt sez:  XEmacs doesn't like this.
+			     ;; The Custom face editor widget shows a Lisp
+			     ;; form, not a face structure.  Does it produce
+			     ;; the right face on TTYs?
+			     ;; One hypothesis is that the editor doesn't
+			     ;; grok non-default display types in the value.
+			     (((type tty))
 			      (:background "yellow3")
 			      (:foreground "black"))
 			     (((class grayscale color)
@@ -151,31 +158,50 @@ This exists as a variable so it can be set locally in certain buffers.")
       (setq plist (cddr plist)))
     plist))
 
-(defun widget-princ-to-string (object)
+(defsubst widget-princ-to-string (object)
   "Return string representation of OBJECT, any Lisp object.
-No quoting characters are used; no delimiters are printed around
-the contents of strings."
-  (with-current-buffer (get-buffer-create " *widget-tmp*")
-    (erase-buffer)
-    (princ object (current-buffer))
-    (buffer-string)))
+
+No quoting characters or string delimiters are used."
+  ;(with-current-buffer (get-buffer-create " *widget-tmp*")
+  ;  (erase-buffer)
+  ;  (princ object (current-buffer))
+  ;  (buffer-string))
+  (prin1-to-string object t)
+  )
 
 (defun widget-prettyprint-to-string (object)
-  ;; Like pp-to-string, but uses `cl-prettyprint'
-  (with-current-buffer (get-buffer-create " *widget-tmp*")
-    (erase-buffer)
+  "Use `cl-prettyprint' to generate a string representation of OBJECT.
+
+Cleans up `cl-prettyprint''s gratuitous surrounding newlines."
+  (with-temp-buffer
     (cl-prettyprint object)
     ;; `cl-prettyprint' always surrounds the text with newlines.
-    (when (eq (char-after (point-min)) ?\n)
-      (delete-region (point-min) (1+ (point-min))))
-    (when (eq (char-before (point-max)) ?\n)
-      (delete-region (1- (point-max)) (point-max)))
-    (buffer-string)))
+    (buffer-string (if (eq (char-after (point-min)) ?\n)
+		       (1+ (point-min))
+		     (point-min))
+		   (if (eq (char-before (point-max)) ?\n)
+		       (1- (point-max))
+		     (point-max)))))
 
 (defun widget-clear-undo ()
   "Clear all undo information."
   (buffer-disable-undo)
   (buffer-enable-undo))
+
+(defun widget-sublist (list start &optional end)
+  "Return the sublist of LIST from START to END.
+If END is omitted, it defaults to the length of LIST."
+  (if (> start 0) (setq list (nthcdr start list)))
+  (if end
+      (if (<= end start)
+	  nil
+	(setq list (copy-sequence list))
+	(setcdr (nthcdr (- end start 1) list) nil)
+	list)
+    (copy-sequence list)))
+
+;; Is unimplemented the right superclass?
+(define-error 'missing-package "Package not installed" 'unimplemented)
 
 (defcustom widget-menu-max-size 40
   "Largest number of items allowed in a popup-menu.
@@ -206,11 +232,10 @@ Second argument ITEMS is a list whose members are either
  indicate unselectable items.
 Optional third argument EVENT is an input event.
 
-The user is asked to choose between each NAME from the items alist,
-and the VALUE of the chosen element will be returned.  If EVENT is a
-mouse event, and the number of elements in items is less than
-`widget-menu-max-size', a popup menu will be used, otherwise the
-minibuffer."
+The user is asked to choose a NAME from the items alist, and the VALUE of
+the chosen element will be returned.  If EVENT is a mouse event, and the
+number of elements in items is less than `widget-menu-max-size', a popup
+menu will be used, otherwise the minibuffer is used."
   (cond	((and (< (length items) widget-menu-max-size)
 	      event
 	      (console-on-window-system-p))
@@ -304,15 +329,18 @@ minibuffer."
 ;;
 ;; These functions are for specifying text properties.
 
+;; XEmacs: This probably should be unnecessary with end-closed extents.
+;; If it doesn't work, it should be made to work.
 (defcustom widget-field-add-space t
   ;; Setting this to nil might be available, once some problems are resolved.
   "Non-nil means add extra space at the end of editable text fields.
 
-This is needed on all versions of Emacs.  If you don't add the space,
-it will become impossible to edit a zero size field."
+Currently should be left set to `t', because without the space it becomes
+impossible to edit a zero size field."
   :type 'boolean
   :group 'widgets)
 
+;; #### Why aren't these used in XEmacs?
 (defcustom widget-field-use-before-change
   (and (or (> emacs-minor-version 34)
 	   (> emacs-major-version 19))
@@ -348,7 +376,7 @@ new value."
     (goto-char to)
     (cond ((null (widget-get widget :size))
 	   (forward-char 1))
-	  ;; #### This comment goes outside of the save-excursion in GNU
+	  ;; XEmacs: This comment goes outside of the save-excursion in GNU.
 	  ;; Terminating space is not part of the field, but necessary in
 	  ;; order for local-map to work.  Remove next sexp if local-map works
 	  ;; at the end of the extent.
@@ -374,8 +402,9 @@ new value."
   (widget-specify-secret widget))
 
 (defun widget-specify-secret (field)
-  "Replace text in FIELD with value of `:secret', if non-nil.
+  "Replace text in FIELD with value of the `:secret' property, if non-nil.
 
+The value of the `:secret' property, if non-nil, must be a character.
 It is an error to use this function after creating the widget but before
 invoking `widget-setup'."
   (let ((secret (widget-get field :secret))
@@ -892,14 +921,16 @@ INSTANTIATOR is the vector used to create the glyph."
 ;;;###autoload
 (defun widget-create (type &rest args)
   "Create a widget of type TYPE.
-The optional ARGS are additional keyword arguments."
+
+TYPE is copied, then converted to a widget using the keyword arguments ARGS."
   (let ((widget (apply 'widget-convert type args)))
     (widget-apply widget :create)
     widget))
 
 (defun widget-create-child-and-convert (parent type &rest args)
   "As a child of widget PARENT, create a widget of type TYPE.
-The child is converted, using the keyword arguments ARGS."
+
+TYPE is copied, then converted to a widget using the keyword arguments ARGS."
   (let ((widget (apply 'widget-convert type args)))
     (widget-put widget :parent parent)
     (unless (widget-get widget :indent)
@@ -911,7 +942,8 @@ The child is converted, using the keyword arguments ARGS."
 
 (defun widget-create-child (parent type)
   "As a child of widget PARENT, create a widget of type TYPE.
-The child is not converted."
+
+TYPE is copied, then used as a widget as-is."
   (let ((widget (copy-sequence type)))
     (widget-put widget :parent parent)
     (unless (widget-get widget :indent)
@@ -922,7 +954,9 @@ The child is not converted."
     widget))
 
 (defun widget-create-child-value (parent type value)
-  "Create widget of TYPE with value VALUE."
+  "As a child of widget PARENT, create a widget with type TYPE and value VALUE.
+
+TYPE is copied, then used as a widget as-is."
   (let ((widget (copy-sequence type)))
     (widget-put widget :value (widget-apply widget :value-to-internal value))
     (widget-put widget :parent parent)
@@ -945,23 +979,28 @@ The child is not converted."
 ;;;###autoload
 (defun widget-convert (type &rest args)
   "Convert TYPE to a widget without inserting it in the buffer.
-The optional ARGS are additional keyword arguments."
+The optional ARGS are additional keyword arguments.
+
+The widget's :args property is set from the longest tail of ARGS whose cdr
+is not a keyword, or from the longest tail of TYPE's :args property whose
+cdr is not a keyword.  Keyword arguments from ARGS are set, and the :value
+property (if any) is converted from external to internal format."
   ;; Don't touch the type.
   (let* ((widget (if (symbolp type)
 		     (list type)
 		   (copy-sequence type)))
 	 (current widget)
 	 (keys args))
-    ;; First set the :args keyword.
-    (while (cdr current)		;Look in the type.
+    ;; First set the :args.
+    (while (cdr current)	; Use first non-keyword element of type.
       (let ((next (car (cdr current))))
-	(if (and (symbolp next) (eq (aref (symbol-name next) 0) ?:))
+	(if (keywordp next)
 	    (setq current (cdr (cdr current)))
 	  (setcdr current (list :args (cdr current)))
 	  (setq current nil))))
-    (while args				;Look in the args.
+    (while args			; Use first non-keyword element in ARGS.
       (let ((next (nth 0 args)))
-	(if (and (symbolp next) (eq (aref (symbol-name next) 0) ?:))
+	(if (keywordp next)
 	    (setq args (nthcdr 2 args))
 	  (widget-put widget :args args)
 	  (setq args nil))))
@@ -1447,12 +1486,12 @@ When not inside a field, move to the previous button or field."
 
 ;;; Setting up the buffer.
 
-(defvar widget-field-new nil)
-;; List of all newly created editable fields in the buffer.
+(defvar widget-field-new nil
+  "List of all newly created editable fields in the buffer.")
 (make-variable-buffer-local 'widget-field-new)
 
-(defvar widget-field-list nil)
-;; List of all editable fields in the buffer.
+(defvar widget-field-list nil
+  "List of all editable fields in the buffer.")
 (make-variable-buffer-local 'widget-field-list)
 
 ;; Is this a misnomer?
@@ -1652,12 +1691,12 @@ Optional EVENT is the event that triggered the action."
 
 ;; Made defsubst to speed up face editor creation.
 (defsubst widget-types-convert-widget (widget)
-  "Convert :args as widget types in WIDGET."
+  "Convert each member of :args in WIDGET from a widget type to a widget."
   (widget-put widget :args (mapcar 'widget-convert (widget-get widget :args)))
   widget)
 
 (defun widget-value-convert-widget (widget)
-  "Initialize :value from :args in WIDGET."
+  "Initialize :value from `(car :args)' in WIDGET, and reset :args."
   (let ((args (widget-get widget :args)))
     (when args
       (widget-put widget :value (car args))
@@ -1719,6 +1758,12 @@ If that does not exists, call the value of `widget-complete-field'."
      (goto-char from)
      ;; Parse escapes in format.
      ;; Coding this in C would speed up things *a lot*.
+     ;; sjt sez:
+     ;; There are other things to try:
+     ;; 1. Use skip-chars-forward.
+     ;; 2. Use a LIMIT (or narrow buffer?) in the search/skip expression.
+     ;; 3. Search/skip backward to allow LIMIT to be constant.
+     ;; 4. Use a char-table to dispatch to code, instead of a cond.
      (while (re-search-forward "%\\(.\\)" nil t)
        (let ((escape (aref (match-string 1) 0)))
 	 (replace-match "" t t)
@@ -1840,6 +1885,8 @@ If that does not exists, call the value of `widget-complete-field'."
 	    (widget-apply parent :button-face-get)
 	  widget-button-face))))
 
+;; Shouldn't this be like `widget-default-button-face-get', and recurse, and
+;; have a fallback?
 (defun widget-default-sample-face-get (widget)
   ;; Use :sample-face.
   (widget-get widget :sample-face))
@@ -1856,6 +1903,9 @@ If that does not exists, call the value of `widget-complete-field'."
 	after-change-functions
 	(inhibit-read-only t))
     (widget-apply widget :value-delete)
+    ;; #### In current code, these are never reinserted, but recreated.
+    ;; So they should either be destroyed, or we should think about how to
+    ;; reuse them.
     (when inactive-extent
       (detach-extent inactive-extent))
     (when button-extent
@@ -1910,7 +1960,7 @@ If that does not exists, call the value of `widget-complete-field'."
       (widget-princ-to-string (widget-get widget :value))))
 
 (defun widget-default-active (widget)
-  "Return t iff this widget active (user modifiable)."
+  "Return non-nil iff WIDGET is user-modifiable."
   (and (not (widget-get widget :inactive))
        (let ((parent (widget-get widget :parent)))
 	 (or (null parent)
@@ -1933,11 +1983,14 @@ If that does not exists, call the value of `widget-complete-field'."
   (widget-default-action widget event))
 
 (defun widget-default-prompt-value (widget prompt value unbound)
-  "Read an arbitrary value.  Stolen from `set-variable'."
+  "Read an arbitrary value."
+;; #### XEmacs: What does this mean?
+;; Stolen from `set-variable'.
 ;; (let ((initial (if unbound
 ;; nil
 ;; It would be nice if we could do a `(cons val 1)' here.
 ;; (prin1-to-string (custom-quote value))))))
+  ;; XEmacs: make this use default VALUE.  Need to check callers.
   (eval-minibuffer prompt))
 
 ;;; The `item' Widget.
@@ -1970,23 +2023,13 @@ If that does not exists, call the value of `widget-complete-field'."
 	   (and (equal head value)
 		(cons head (widget-sublist values (length value))))))))
 
-(defun widget-sublist (list start &optional end)
-  "Return the sublist of LIST from START to END.
-If END is omitted, it defaults to the length of LIST."
-  (if (> start 0) (setq list (nthcdr start list)))
-  (if end
-      (unless (<= end start)
-	(setq list (copy-sequence list))
-	(setcdr (nthcdr (- end start 1) list) nil)
-	list)
-    (copy-sequence list)))
-
 (defun widget-item-action (widget &optional event)
   ;; Just notify itself.
   (widget-apply widget :notify widget event))
 
 ;;; The `push-button' Widget.
 
+;; XEmacs: this seems to refer to button images.  How about native widgets?
 (defcustom widget-push-button-gui widget-glyph-enable
   "If non nil, use GUI push buttons when available."
   :group 'widgets
@@ -2003,7 +2046,9 @@ If END is omitted, it defaults to the length of LIST."
   :group 'widget-button)
 
 (define-widget 'push-button 'item
-  "A pushable button."
+  "A button which invokes an action.
+
+Creators should usually specify `:action' and `:help-echo' members."
   :button-prefix ""
   :button-suffix ""
   :value-create 'widget-push-button-value-create
@@ -2048,7 +2093,10 @@ If END is omitted, it defaults to the length of LIST."
   :group 'widget-button)
 
 (define-widget 'link 'item
-  "An embedded link."
+  "An embedded link.
+
+This is an abstract widget.  Subclasses should usually specify `:action'
+and `:help-echo' members."
   :button-prefix 'widget-link-prefix
   :button-suffix 'widget-link-suffix
   :help-echo "Follow the link."
@@ -2082,9 +2130,7 @@ If END is omitted, it defaults to the length of LIST."
   "Open the url specified by WIDGET."
   (if-fboundp 'browse-url
       (browse-url (widget-value widget))
-    ;; #### Should subclass a 'missing-package error.
-    (error 'unimplemented
-	   "No `browse-url' package; cannot follow URLs in this XEmacs")))
+    (error 'missing-package "Cannot browse URLs in this Emacs" 'browse-url)))
 
 ;;; The `function-link' Widget.
 
@@ -2182,7 +2228,13 @@ the earlier input."
 				      0))
 			      (widget-get widget :prompt-history))))
 
-(defvar widget-edit-functions nil)
+;; #### Should be named `widget-action-hooks'.
+(defvar widget-edit-functions nil
+  "Functions run on certain actions.
+
+Not a regular hook; each function should take a widget as an argument.
+The standard widget functions `widget-field-action', `widget-choice-action',
+and `widget-toggle-action' use `run-hook-with-args' to run these functions.")
 
 (defun widget-field-action (widget &optional event)
   ;; Edit the value in the minibuffer.
@@ -2503,7 +2555,9 @@ when he invoked the menu."
 ;;; The `checklist' Widget.
 
 (define-widget 'checklist 'default
-  "A multiple choice widget."
+  "A set widget, selecting zero or more of many.
+
+The parent of several `checkbox' widgets, one for each option."
   :convert-widget 'widget-types-convert-widget
   :format "%v"
   :offset 4
@@ -2652,7 +2706,7 @@ Return an alist of (TYPE MATCH)."
 ;;; The `option' Widget
 
 (define-widget 'option 'checklist
-  "An widget with an optional item."
+  "A widget presenting optional items for inline inclusion in a parent widget."
   :inline t)
 
 ;;; The `choice-item' Widget.
@@ -2682,7 +2736,9 @@ Return an alist of (TYPE MATCH)."
 ;;; The `radio-button-choice' Widget.
 
 (define-widget 'radio-button-choice 'default
-  "Select one of multiple options."
+  "A set widget, selecting exactly one of many options.
+
+The parent of several `radio-button' widgets, one for each option."
   :convert-widget 'widget-types-convert-widget
   :offset 4
   :format "%v"
@@ -3264,6 +3320,71 @@ link for that string."
 
 ;;; The Sexp Widgets.
 
+(define-widget 'sexp 'editable-field
+  "An arbitrary Lisp expression."
+  :tag "Lisp expression"
+  :format "%{%t%}: %v"
+  :value nil
+  :validate 'widget-sexp-validate
+  :match (lambda (widget value) t)
+  :value-to-internal 'widget-sexp-value-to-internal
+  :value-to-external (lambda (widget value) (read value))
+  :prompt-history 'widget-sexp-prompt-value-history
+  :prompt-value 'widget-sexp-prompt-value)
+
+(defun widget-sexp-value-to-internal (widget value)
+  ;; Use cl-prettyprint for printer representation.
+  (let ((pp (if (symbolp value)
+		(prin1-to-string value)
+	      (widget-prettyprint-to-string value))))
+    (if (> (length pp) 40)
+	(concat "\n" pp)
+      pp)))
+
+(defun widget-sexp-validate (widget)
+  ;; Valid if we can read the string and there is no junk left after it.
+  (save-excursion
+    (let ((buffer (set-buffer (get-buffer-create " *Widget Scratch*"))))
+      (erase-buffer)
+      (insert (widget-apply widget :value-get))
+      (goto-char (point-min))
+      (condition-case data
+	  (let ((value (read buffer)))
+	    (if (eobp)
+		(if (widget-apply widget :match value)
+		    nil
+		  (widget-put widget :error (widget-get widget :type-error))
+		  widget)
+	      (widget-put widget
+			  :error (format "Junk at end of expression: %s"
+					 (buffer-substring (point)
+							   (point-max))))
+	      widget))
+	(error (widget-put widget :error (error-message-string data))
+	       widget)))))
+
+(defvar widget-sexp-prompt-value-history nil
+  "History of input to `widget-sexp-prompt-value'.")
+
+(defun widget-sexp-prompt-value (widget prompt value unbound)
+  ;; Read an arbitrary sexp.
+  (let ((found (read-string prompt
+			    (if unbound nil (cons (prin1-to-string value) 0))
+			    (widget-get widget :prompt-history))))
+    (save-excursion
+      (let ((buffer (set-buffer (get-buffer-create " *Widget Scratch*"))))
+	(erase-buffer)
+	(insert found)
+	(goto-char (point-min))
+	(let ((answer (read buffer)))
+	  (unless (eobp)
+	    (signal 'error
+		    (list "Junk at end of expression"
+			  (buffer-substring (point) (point-max)))))
+	  answer)))))
+
+;; Various constant sexps.
+
 (define-widget 'const 'item
   "An immutable sexp."
   :prompt-value 'widget-const-prompt-value
@@ -3402,7 +3523,7 @@ It will read a directory name from the minibuffer when invoked."
 
 (define-widget 'symbol 'editable-field
   "A Lisp symbol."
-  :value nil
+  :value t
   :tag "Symbol"
   :format "%{%t%}: %v"
   :match (lambda (widget value) (symbolp value))
@@ -3557,7 +3678,8 @@ It will read a directory name from the minibuffer when invoked."
 
 (define-widget 'restricted-sexp 'sexp
   "A Lisp expression restricted to values that match.
-To use this type, you must define :match or :match-alternatives."
+
+Either the `:match' or the `:match-alternatives' property must be defined."
   :type-error "The specified value is not valid"
   :match 'widget-restricted-sexp-match
   :value-to-internal (lambda (widget value)
@@ -3605,6 +3727,7 @@ To use this type, you must define :match or :match-alternatives."
   :value ?\0
   :size 1
   :format "%{%t%}: %v"
+  ;; #### This is incorrect for Mule.
   :valid-regexp "\\`[\0-\377]\\'"
   :error "This field should contain a single character"
   :value-to-internal (lambda (widget value)
@@ -3619,12 +3742,12 @@ To use this type, you must define :match or :match-alternatives."
 	   (characterp value)))
 
 (define-widget 'list 'group
-  "A Lisp list."
+  "A Lisp list of fixed length with fixed type for each element."
   :tag "List"
   :format "%{%t%}:\n%v")
 
 (define-widget 'vector 'group
-  "A Lisp vector."
+  "A Lisp vector of fixed length with fixed type for each element."
   :tag "Vector"
   :format "%{%t%}:\n%v"
   :match 'widget-vector-match
@@ -3792,7 +3915,9 @@ To use this type, you must define :match or :match-alternatives."
       value)))
 
 (define-widget 'radio 'radio-button-choice
-  "A union of several sexp types."
+  "A set widget, selecting exactly one from many.
+
+The parent of several `radio-button' widgets, one for each option."
   :tag "Choice"
   :format "%{%t%}:\n%v"
   :prompt-value 'widget-choice-prompt-value)
