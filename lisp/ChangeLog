@@ -1,3 +1,7 @@
+2001-07-20  Steve Youngs  <youngs@xemacs.org>
+
+	* packages.el (locate-data-file): Revert Karl's patch.
+
 2001-07-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.el: define-specifier-tag 'gtk.
