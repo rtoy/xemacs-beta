@@ -183,6 +183,7 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
+			       0, /*dumpable-flag*/
                                mark_tooltalk_message, print_tooltalk_message,
                                0, 0, 0, 
 			       tooltalk_message_description,
@@ -269,6 +270,7 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
+			       0, /*dumpable-flag*/
                                mark_tooltalk_pattern, print_tooltalk_pattern,
                                0, 0, 0, 
 			       tooltalk_pattern_description,

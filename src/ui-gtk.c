@@ -328,6 +328,7 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("ffi", emacs_ffi,
+			       0, /*dumpable-flag*/
 			       mark_ffi_data, ffi_object_printer,
 			       0, 0, 0, 
 			       ffi_data_description, emacs_ffi_data);
@@ -934,6 +935,7 @@ emacs_gtk_object_finalizer (void *header, int for_disksave)
 
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
+					  0, /*dumpable-flag*/
 					  mark_gtk_object_data, /* marker function */
 					  emacs_gtk_object_printer, /* print function */
 					  emacs_gtk_object_finalizer, /* finalizer */
@@ -1109,6 +1111,12 @@ DEFUN ("gtk-signal-connect", Fgtk_signal_connect, 3, 6, 0, /*
 
 
 /* GTK_TYPE_BOXED wrapper for Emacs lisp */
+#ifdef USE_KKCC
+static const struct lrecord_description emacs_gtk_boxed_description [] = {
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static void
 emacs_gtk_boxed_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
@@ -1137,6 +1145,21 @@ emacs_gtk_boxed_hash (Lisp_Object obj, int depth)
   return (HASH2 ((unsigned long)data->object, data->object_type));
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
+					  0, /*dumpable-flag*/
+					  0, /* marker function */
+					  emacs_gtk_boxed_printer, /* print function */
+					  0, /* nuker */
+					  emacs_gtk_boxed_equality, /* equality */
+					  emacs_gtk_boxed_hash, /* hash */
+					  emacs_gtk_boxed_description, /* desc */
+					  0, /* get prop */
+					  0, /* put prop */
+					  0, /* rem prop */
+					  0, /* plist */
+					  emacs_gtk_boxed_data);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
 					  0, /* marker function */
 					  emacs_gtk_boxed_printer, /* print function */
@@ -1149,7 +1172,7 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkBoxed", emacs_gtk_boxed,
 					  0, /* rem prop */
 					  0, /* plist */
 					  emacs_gtk_boxed_data);
-
+#endif /* not USE_KKCC */
 /* Currently defined GTK_TYPE_BOXED structures are:
 
    GtkAccelGroup -

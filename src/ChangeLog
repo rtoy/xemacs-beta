@@ -1,3 +1,17 @@
+2002-08-02  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	Additions for USE_KKCC:
+	* tooltalk.c: Add dumpable-flag to tooltalk_message and
+	tooltalk_pattern.
+	* ui-gtk.c: Add dumpable-flag to emacs_ffi and emacs_gtk_object.
+	Add description for emacs_gtk_boxed.
+
+2002-08-12  Mike Sperber <mike@xemacs.org>
+
+	* event-Xt.c (x_to_emacs_keysym):
+	(enqueue_focus_event): Properly initialize event type for USE_KKCC
+	(due to suggestions from David Bush <David.Bush@intel.com>).
+
 2002-08-06  Jerry James  <james@xemacs.org>
 
  	* window.c (Fsplit_window): Count only half of the divider width

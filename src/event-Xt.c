@@ -1070,11 +1070,12 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
             Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	    Lisp_Event *ev          = XEVENT (emacs_event);
             ev->channel	            = DEVICE_CONSOLE (d);
-            ev->event_type	    = key_press_event;
             ev->timestamp	    = event->time;
+            ev->event_type	    = key_press_event;
 #ifdef USE_KKCC
-	    SET_KEY_DATA_MODIFIERS (XKEY_DATA (emacs_event), 0);
-	    SET_KEY_DATA_KEYSYM (XKEY_DATA (emacs_event), make_char (ch));
+	    XSET_EVENT_TYPE (emacs_event, key_press_event);
+	    XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (emacs_event), 0);
+	    XSET_KEY_DATA_KEYSYM (XEVENT_DATA (emacs_event), make_char (ch));
 #else
             ev->event.key.modifiers = 0;
             ev->event.key.keysym    = make_char (ch);
@@ -1684,21 +1685,24 @@ enqueue_focus_event (Widget wants_it, Lisp_Object frame, int in_p)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
   Lisp_Event *ev          = XEVENT (emacs_event);
+  XEvent *x_event;
+
+  ev->event_type = magic_event;
+
 #ifdef USE_KKCC
-  XEvent *x_event = &XMAGIC_DATA_X_EVENT(EVENT_DATA(ev));
+  XSET_EVENT_TYPE (emacs_event, magic_event);
+  x_event = &XMAGIC_DATA_X_EVENT (EVENT_DATA (ev));
 #else /* not USE_KKCC */
-  XEvent *x_event = &ev->event.magic.underlying_x_event;
+  x_event = &ev->event.magic.underlying_x_event;
 #endif /* not USE_KKCC */
 
   x_event->type = in_p ? FocusIn : FocusOut;
   x_event->xfocus.window = XtWindow (wants_it);
 
 #ifdef USE_KKCC
-  SET_EVENT_CHANNEL(ev, frame);
-  /*  SET_EVENT_TYPE(ev, magic_event); */
+  SET_EVENT_CHANNEL (ev, frame);
 #else /* not USE_KKCC */
-  ev->channel	            = frame;
-  ev->event_type	    = magic_event;
+  ev->channel = frame;
 #endif /* not USE_KKCC */
 
   enqueue_Xt_dispatch_event (emacs_event);
