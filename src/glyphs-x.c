@@ -588,20 +588,23 @@ x_locate_pixmap_file (Lisp_Object name)
 #ifdef USE_XBMLANGPATH
   {
     Ibyte *path = egetenv ("XBMLANGPATH");
-    Extbyte *pathext;
-    SubstitutionRec subs[1];
-    subs[0].match = 'B';
-    LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
-    C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
-    /* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
-       We don't.  If you want it used, set it. */
-    if (pathext &&
-	(pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
-				      subs, XtNumber (subs), 0)))
+    if (path)
       {
-	name = build_ext_string (pathext, Qfile_name);
-	XtFree (pathext);
-        return (name);
+        Extbyte *pathext;
+	SubstitutionRec subs[1];
+	subs[0].match = 'B';
+	LISP_STRING_TO_EXTERNAL (name, subs[0].substitution, Qfile_name);
+	C_STRING_TO_EXTERNAL (path, pathext, Qfile_name);
+	/* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
+           We don't.  If you want it used, set it. */
+	if (pathext &&
+	    (pathext = XtResolvePathname (display, "bitmaps", 0, 0, pathext,
+					  subs, XtNumber (subs), 0)))
+          {
+            name = build_ext_string (pathext, Qfile_name);
+	    XtFree (pathext);
+	    return (name);
+	  }
       }
   }
 #endif

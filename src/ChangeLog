@@ -1,3 +1,8 @@
+2002-07-29  Sean MacLennan <seanm@seanm.ca>
+
+	* glyphs-x.c (x_locate_pixmap_file): Test path not to be 0, before
+	using it.
+
 2002-07-29  Jonathan Harris  <jonathan@xemacs.org>
 
 	* s/win32-native.h: Define HAVE_WCHAR_H for native Win32 build.
