@@ -233,7 +233,7 @@ the Assert macro checks for correctness."
   ;; Test strings waxing and waning across the 8k BIG_STRING limit (see alloc.c)
   ;;---------------------------------------------------------------
   (defun charset-char-string (charset)
-    (let (lo hi string n)
+    (let (lo hi string n (gc-cons-threshold most-positive-fixnum))
       (if (= (charset-chars charset) 94)
 	  (setq lo 33 hi 126)
 	(setq lo 32 hi 127))
@@ -245,6 +245,7 @@ the Assert macro checks for correctness."
 	      (progn
 		(aset string n (make-char charset j))
 		(incf n)))
+	    (garbage-collect)
 	    string)
 	(progn
 	  (setq string (make-string (* (1+ (- hi lo)) (1+ (- hi lo))) ??))
@@ -254,6 +255,7 @@ the Assert macro checks for correctness."
 	      (progn
 		(aset string n (make-char charset j k))
 		(incf n))))
+	  (garbage-collect)
 	  string))))
 
   ;; The following two used to crash xemacs!
@@ -298,7 +300,13 @@ the Assert macro checks for correctness."
 			 latin2-string))
 	 (name1 (make-temp-name prefix))
 	 (name2 (make-temp-name prefix))
-	 (file-name-coding-system 'iso-8859-2))
+	 (file-name-coding-system
+	  ;; 'iso-8859-X doesn't work on darwin (as of "Panther" 10.3), it
+	  ;; seems to know that file-name-coding-system is definitely utf-8
+	  (if (string-match "darwin" system-configuration)
+	      'utf-8
+	    'iso-8859-2))
+	 )
     ;; This is how you suppress output from `message', called by `write-region'
     (flet ((append-message (&rest args) ()))
       (Assert (not (equal name1 name2)))

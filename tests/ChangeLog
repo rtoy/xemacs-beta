@@ -1,3 +1,11 @@
+2004-04-19  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* automated/mule-tests.el: Inhibit GC to speed up BIG_STRING tests.
+
+2004-04-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/mule-tests.el: Darwin doesn't like ISO 8859/2 filenames.
+
 2004-04-05  Jerry James  <james@xemacs.org>
 
 	* automated/lisp-tests.el: Add bignum and ratio tests.
