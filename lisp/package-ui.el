@@ -349,7 +349,7 @@ and whether or not it is up-to-date."
 	(message "Deleting selected packages ...") (sit-for 0)
 	(mapcar (lambda (pkg)
 		  (package-admin-delete-binary-package
-		   pkg (package-admin-get-install-dir pkg nil)))
+		   pkg (package-admin-get-install-dir pkg)))
 		(nreverse pui-deleted-packages))
 	(message "Packages deleted"))))
 	 

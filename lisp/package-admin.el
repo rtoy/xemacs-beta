@@ -135,32 +135,154 @@ to BUFFER."
 	0
       1)))
 
-(defun package-admin-get-install-dir (package pkg-dir &optional mule-related)
-  "If PKG-DIR is non-nil return that,
-else return the current location of the package if it is already installed
-or return a location appropriate for the package otherwise."
-  (if pkg-dir
+;; A few things needed by the following 2 functions.
+(eval-when-compile
+  (require 'packages)
+  (autoload 'package-get-info "package-get")
+  (autoload 'paths-decode-directory-path "find-paths")
+  (defvar package-get-install-to-user-init-directory))
+
+(defun package-admin-find-top-directory (type &optional user-dir)
+  "Return the top level directory for a package.
+
+Argument TYPE is a symbol that determines the type of package we're
+trying to find a directory for.
+
+Optional Argument USER-DIR if non-nil use directories off
+`user-init-directory'.  This overrides everything except
+\"EMACSPACKAGEPATH\".
+
+This function honours the environment variable \"EMACSPACKAGEPATH\"
+and returns directories found there as a priority.  If that variable
+doesn't exist and USER-DIR is nil, check in the normal places.
+
+If we still can't find a suitable directory, return nil.
+
+Possible values for TYPE are:
+
+    std  == For \"standard\" packages that go in '/xemacs-packages/'
+    mule == For \"mule\" packages that go in '/mule-packages/'
+    site == For \"unsupported\" packages that go in '/site-packages/'
+
+Note:  Type \"site\" is not yet fully supported."
+  (let* ((env-value (getenv "EMACSPACKAGEPATH"))
+	 top-dir)
+    ;; First, check the environment var.
+    (if env-value
+	(let ((path-list (paths-decode-directory-path env-value 'drop-empties)))
+	  (cond ((eq type 'std)
+		 (while path-list
+		   (if (equal (substring (car path-list) -16) "xemacs-packages/")
+		       (setq top-dir (car path-list)))
+		   (setq path-list (cdr path-list))))
+		((eq type 'mule)
+		 (while path-list
+		   (if (equal (substring (car path-list) -14) "mule-packages/")
+		       (setq top-dir (car path-list)))
+		   (setq path-list (cdr path-list)))))))
+    ;; Wasn't in the environment, try `user-init-directory' if
+    ;; USER-DIR is non-nil.
+    (if (and user-dir
+	     (not top-dir))
+	(cond ((eq type 'std)
+	       (setq top-dir (file-name-as-directory
+			      (expand-file-name "xemacs-packages" user-init-directory))))
+	      ((eq type 'mule)
+	       (setq top-dir (file-name-as-directory
+			      (expand-file-name "mule-packages" user-init-directory))))))
+    ;; Finally check the normal places
+    (if (not top-dir)
+	(let ((path-list (nth 1 (packages-find-packages
+				 emacs-data-roots
+				 (packages-compute-package-locations user-init-directory)))))
+	  (cond ((eq type 'std)
+		 (while path-list
+		   (if (equal (substring (car path-list) -16) "xemacs-packages/")
+		       (setq top-dir (car path-list)))
+		   (setq path-list (cdr path-list))))
+		((eq type 'mule)
+		 (while path-list
+		   (if (equal (substring (car path-list) -14) "mule-packages/")
+		       (setq top-dir (car path-list)))
+		   (setq path-list (cdr path-list)))))))
+    ;; Now return either the directory or nil.
+    top-dir))
+
+(defun package-admin-get-install-dir (package &optional pkg-dir)
+  "Find a suitable installation directory for a package.
+
+Argument PACKAGE is the package to find a installation directory for.
+Optional Argument PKG-DIR, if non-nil is a directory to use for
+installation.
+
+If PKG-DIR is non-nil and writable, return that.  Otherwise check to
+see if the PACKAGE is already installed and return that location, if
+it is writable.  Finally, fall back to the `user-init-directory' if
+all else fails.  As a side effect of installing packages under
+`user-init-directory' these packages become part of `early-packages'."
+  ;; If pkg-dir specified, return that if writable.
+  (if (and pkg-dir
+	   (file-writable-p (directory-file-name pkg-dir)))
       pkg-dir
-    (let ((package-feature (intern-soft (concat
-					 (symbol-name package) "-autoloads")))
-	  autoload-dir)
-      (when (and (not (eq package 'unknown))
-	         (featurep package-feature)
-		 (setq autoload-dir (feature-file package-feature))
-		 (setq autoload-dir (file-name-directory autoload-dir))
-		 (member autoload-dir (append early-package-load-path late-package-load-path)))
-	;; Find the corresponding entry in late-package
-	(setq pkg-dir
-	      (car-safe (member-if (lambda (h)
-			   (string-match (concat "^" (regexp-quote h))
-					 autoload-dir))
-			 (append (cdr early-packages) late-packages)))))
-      (if pkg-dir
-	  pkg-dir
-	;; Ok we need to guess
-	(if mule-related
-	    (package-admin-get-install-dir 'mule-base nil nil)
-	  (car (last late-packages)))))))
+    ;; If the user want her packages under ~/.xemacs/, do so.
+    (let ((type (package-get-info package 'category)))
+      (if package-get-install-to-user-init-directory
+	  (progn
+	    (cond ((equal type "standard")
+		   (setq pkg-dir (package-admin-find-top-directory 'std 'user-dir)))
+		  ((equal type "mule")
+		   (setq pkg-dir (package-admin-find-top-directory 'mule 'user-dir))))
+	    pkg-dir)
+	;; Maybe the package has been installed before, if so, return
+	;; that directory.
+	(let ((package-feature (intern-soft (concat
+					     (symbol-name package) "-autoloads")))
+	      autoload-dir)
+	  (when (and (not (eq package 'unknown))
+		     (featurep package-feature)
+		     (setq autoload-dir (feature-file package-feature))
+		     (setq autoload-dir (file-name-directory autoload-dir))
+		     (member autoload-dir (append early-package-load-path late-package-load-path)))
+	    ;; Find the corresponding entry in late-package
+	    (setq pkg-dir
+		  (car-safe (member-if (lambda (h)
+					 (string-match (concat "^" (regexp-quote h))
+						       autoload-dir))
+				       (append (cdr early-packages) late-packages)))))
+	  (if (and pkg-dir
+		   (file-writable-p (directory-file-name pkg-dir)))
+	      pkg-dir
+	    ;; OK, the package hasn't been previously installed so we need
+	    ;; to guess where it should go.
+	    (cond ((equal type "standard")
+		   (setq pkg-dir (package-admin-find-top-directory 'std)))
+		  ((equal type "mule")
+		   (setq pkg-dir (package-admin-find-top-directory 'mule)))
+		  (t
+		   (error "Invalid package type")))
+	    (if (and pkg-dir
+		     (file-writable-p (directory-file-name pkg-dir)))
+		pkg-dir
+	      ;; Oh no!  Either we still haven't found a suitable
+	      ;; directory, or we can't write to the one we did find.
+	      ;; Drop back to the `user-init-directory'.
+	      (if (y-or-n-p (format "Directory isn't writable, use %s instead? "
+				    user-init-directory))
+		  (progn
+		    (cond ((equal type "standard")
+			   (setq pkg-dir (package-admin-find-top-directory 'std 'user-dir)))
+			  ((equal type "mule")
+			   (setq pkg-dir (package-admin-find-top-directory 'mule 'user-dir)))
+			  (t
+			   (error "Invalid package type")))
+		    ;; Turn on `package-get-install-to-user-init-directory'
+		    ;; so we don't get asked for each package we try to
+		    ;; install in this session.
+		    (setq package-get-install-to-user-init-directory t)
+		    pkg-dir)
+		;; If we get to here XEmacs can't make up its mind and
+		;; neither can the user, nothing left to do except barf. :-(
+		(error "Can't find suitable installation directory for package: %s" package)))))))))
 
 (defun package-admin-get-manifest-file (pkg-topdir package)
   "Return the name of the MANIFEST file for package PACKAGE.
@@ -409,10 +531,11 @@ PACKAGE is a symbol, not a string."
       ;; Gads, this is ugly.  However, we're not supposed to use `concat'
       ;; in the name of portability.
       (setq package-lispdir (package-admin-get-lispdir pkg-topdir package))
-      (message "Removing old lisp directory \"%s\" ..." package-lispdir)
-      (sit-for 0)
-      (package-admin-rmtree package-lispdir)
-      (message "Removing old lisp directory \"%s\" ... done" package-lispdir))
+      (when package-lispdir
+	(message "Removing old lisp directory \"%s\" ..." package-lispdir)
+	(sit-for 0)
+	(package-admin-rmtree package-lispdir)
+	(message "Removing old lisp directory \"%s\" ... done" package-lispdir)))
     ;; Delete the package from the database of installed packages.
     (package-delete-name package)))
 

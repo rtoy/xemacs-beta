@@ -167,6 +167,12 @@ one version of a package available.")
   :type 'directory
   :group 'package-get)
 
+;;;###autoload
+(defcustom package-get-install-to-user-init-directory nil
+  "*If non-nil install packages under `user-init-directory'."
+  :type 'boolean
+  :group 'package-get)
+
 (define-widget 'host-name 'string
   "A Host name."
   :tag "Host")
@@ -889,10 +895,7 @@ successfully installed but errors occurred during initialization, or
     (if (null base-filename)
 	(error "No filename associated with package %s, version %s"
 	       package version))
-    (setq install-dir
-	  (package-admin-get-install-dir
-	   package install-dir
-	   (equal (package-get-info package 'category) "mule")))
+    (setq install-dir (package-admin-get-install-dir package install-dir))
 
     ;; If they asked for the latest using version=nil, don't get an older
     ;; version than we already have.

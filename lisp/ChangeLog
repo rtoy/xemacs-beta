@@ -1,3 +1,17 @@
+2003-03-25  Steve Youngs  <youngs@xemacs.org>
+
+	* package-admin.el: (package-admin-delete-binary-package): Only
+	delete the lisp directory if it exists.
+	(package-admin-find-top-directory): New.
+	(package-admin-get-install-dir): Use it.
+
+	* package-get.el (package-get-install-to-user-init-directory):
+	New.  If non-nil install packages under `user-init-directory'.
+	(package-get): `package-admin-get-install-dir' only takes 2 args.
+
+	* package-ui.el (pui-install-selected-packages): The 2nd arg to
+	`package-admin-get-install-dir' is optional, no need to specify nil.
+
 2003-03-24  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* wid-edit.el (widget-url-link-action): Typo fix.  Thx, Adrian!
