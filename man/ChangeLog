@@ -2,6 +2,11 @@
 
 	* XEmacs 21.5.10 "burdock" is released.
 
+2003-01-04  Steve Youngs  <youngs@xemacs.org>
+
+	* lispref/mule.texi (Charset Unification): Menu item "Internals"
+	should be "Unification Internals".
+
 2003-01-03  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs/startup.texi (Startup Paths): Hierarchy, not package, layout.
