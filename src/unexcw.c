@@ -47,6 +47,7 @@ unexec (char *, char *, void *, void *,	void *)
 #include <a.out.h>
 #endif
 
+#define STACK_SIZE 0x800000
 #define ALLOC_UNIT 0xFFFF
 #define ALLOC_MASK ~((unsigned long) (ALLOC_UNIT))
 #define ALIGN_ALLOC(addr) \
@@ -302,6 +303,9 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
     printf ("warning: new data size is < approx\n");
   f_ohdr.dsize=new_data_size;
   f_ohdr.bsize=BSS_PAD_SIZE;
+  /* Prevent stack overflow with regexp usage. */
+  f_ohdr.SizeOfStackReserve = STACK_SIZE;
+
   if (write (a_new, &f_ohdr, sizeof (f_ohdr)) != sizeof (f_ohdr))
     PERROR ("failed to write optional header");
   /* write text as is */

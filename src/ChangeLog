@@ -1,3 +1,8 @@
+2003-01-08  Andy Piper  <andy@xemacs.org>
+
+	* unexcw.c (copy_executable_and_dump_data_section): Set the stack
+	reserve size during unexec().
+
 2002-12-17  Daiki Ueno  <daiki@xemacs.org>
 
 	* process-unix.c (unix_create_process): Set pipe write descriptor
