@@ -1,3 +1,7 @@
+2004-04-06  Jerry James  <james@xemacs.org>
+
+	* configure.in: Change test -e to test -r for portability.
+
 2004-04-06  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* configure.in (use_number_lib): Accepts no to disable bignums.
