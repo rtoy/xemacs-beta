@@ -1,0 +1,349 @@
+README.integral-types
+
+The great integral types renaming.
+
+#### The content of this file was originally posted as a ChangeLog and
+should be moved to the Internals manual.
+
+The purpose of this is to rationalize the names used for various
+integral types, so that they match their intended uses and follow
+consist conventions, and eliminate types that were not semantically
+different from each other.
+
+The conventions are:
+
+-- All integral types that measure quantities of anything are
+   signed.  Some people disagree vociferously with this, but their
+   arguments are mostly theoretical, and are vastly outweighed by
+   the practical headaches of mixing signed and unsigned values,
+   and more importantly by the far increased likelihood of
+   inadvertent bugs: Because of the broken "viral" nature of
+   unsigned quantities in C (operations involving mixed
+   signed/unsigned are done unsigned, when exactly the opposite is
+   nearly always wanted), even a single error in declaring a
+   quantity unsigned that should be signed, or even the even more
+   subtle error of comparing signed and unsigned values and
+   forgetting the necessary cast, can be catastrophic, as
+   comparisons will yield wrong results.  -Wsign-compare is turned
+   on specifically to catch this, but this tends to result in a
+   great number of warnings when mixing signed and unsigned, and
+   the casts are annoying.  More has been written on this
+   elsewhere.
+
+-- All such quantity types just mentioned boil down to EMACS_INT,
+   which is 32 bits on 32-bit machines and 64 bits on 64-bit
+   machines.  This is guaranteed to be the same size as Lisp
+   objects of type `int', and (as far as I can tell) of size_t
+   (unsigned!) and ssize_t.  The only type below that is not an
+   EMACS_INT is Hashcode, which is an unsigned value of the same
+   size as EMACS_INT.
+
+-- Type names should be relatively short (no more than 10
+   characters or so), with the first letter capitalized and no
+   underscores if they can at all be avoided.
+
+-- "count" == a zero-based measurement of some quantity.  Includes
+   sizes, offsets, and indexes.
+
+-- "bpos" == a one-based measurement of a position in a buffer.
+   "Charbpos" and "Bytebpos" count text in the buffer, rather than
+   bytes in memory; thus Bytebpos does not directly correspond to
+   the memory representation.  Use "Membpos" for this.
+
+-- "Char" refers to internal-format characters, not to the C type
+   "char", which is really a byte.
+
+-- For the actual name changes, see the script below.
+
+I ran the following script to do the conversion. (NOTE: This script
+is idempotent.  You can safely run it multiple times and it will
+not screw up previous results -- in fact, it will do nothing if
+nothing has changed.  Thus, it can be run repeatedly as necessary
+to handle patches coming in from old workspaces, or old branches.)
+There are two tags, just before and just after the change:
+`pre-integral-type-rename' and `post-integral-type-rename'.  When
+merging code from the main trunk into a branch, the best thing to
+do is first merge up to `pre-integral-type-rename', then apply the
+script and associated changes, then merge from
+`post-integral-type-change' to the present. (Alternatively, just do
+the merging in one operation; but you may then have a lot of
+conflicts needing to be resolved by hand.)
+
+Script `fixtypes.sh' follows:
+
+
+----------------------------------- cut ------------------------------------
+files="*.[ch] s/*.h m/*.h config.h.in ../configure.in Makefile.in.in ../lib-src/*.[ch] ../lwlib/*.[ch]"
+gr Memory_Count Bytecount $files
+gr Lstream_Data_Count Bytecount $files
+gr Element_Count Elemcount $files
+gr Hash_Code Hashcode $files
+gr extcount bytecount $files
+gr bufpos charbpos $files
+gr bytind bytebpos $files
+gr memind membpos $files
+gr bufbyte intbyte $files
+gr Extcount Bytecount $files
+gr Bufpos Charbpos $files
+gr Bytind Bytebpos $files
+gr Memind Membpos $files
+gr Bufbyte Intbyte $files
+gr EXTCOUNT BYTECOUNT $files
+gr BUFPOS CHARBPOS $files
+gr BYTIND BYTEBPOS $files
+gr MEMIND MEMBPOS $files
+gr BUFBYTE INTBYTE $files
+gr MEMORY_COUNT BYTECOUNT $files
+gr LSTREAM_DATA_COUNT BYTECOUNT $files
+gr ELEMENT_COUNT ELEMCOUNT $files
+gr HASH_CODE HASHCODE $files
+----------------------------------- cut ------------------------------------
+
+
+	`fixtypes.sh' is a Bourne-shell script; it uses 'gr':
+
+
+----------------------------------- cut ------------------------------------
+#!/bin/sh
+
+# Usage is like this:
+
+# gr FROM TO FILES ...
+
+# globally replace FROM with TO in FILES.  FROM and TO are regular expressions.
+# backup files are stored in the `backup' directory.
+from="$1"
+to="$2"
+shift 2
+echo ${1+"$@"} | xargs global-replace "s/$from/$to/g"
+----------------------------------- cut ------------------------------------
+
+
+	`gr' in turn uses a Perl script to do its real work,
+	`global-replace', which follows:
+
+
+----------------------------------- cut ------------------------------------
+: #-*- Perl -*-
+
+### global-modify --- modify the contents of a file by a Perl expression
+
+## Copyright (C) 1999 Martin Buchholz.
+## Copyright (C) 2001 Ben Wing.
+
+## Authors: Martin Buchholz <martin@xemacs.org>, Ben Wing <ben@xemacs.org>
+## Maintainer: Ben Wing <ben@xemacs.org>
+## Current Version: 1.0, May 5, 2001
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+eval 'exec perl -w -S $0 ${1+"$@"}'
+    if 0;
+
+use strict;
+use FileHandle;
+use Carp;
+use Getopt::Long;
+use File::Basename;
+
+(my $myName = $0) =~ s@.*/@@; my $usage="
+Usage: $myName [--help] [--backup-dir=DIR] [--line-mode] [--hunk-mode]
+       PERLEXPR FILE ...
+
+Globally modify a file, either line by line or in one big hunk.
+
+Typical usage is like this:
+
+[with GNU print, GNU xargs: guaranteed to handle spaces, quotes, etc.
+ in file names]
+
+find . -name '*.[ch]' -print0 | xargs -0 $0 's/\bCONST\b/const/g'\n
+
+[with non-GNU print, xargs]
+
+find . -name '*.[ch]' -print | xargs $0 's/\bCONST\b/const/g'\n
+
+
+The file is read in, either line by line (with --line-mode specified)
+or in one big hunk (with --hunk-mode specified; it's the default), and
+the Perl expression is then evalled with \$_ set to the line or hunk of
+text, including the terminating newline if there is one.  It should
+destructively modify the value there, storing the changed result in \$_.
+
+Files in which any modifications are made are backed up to the directory
+specified using --backup-dir, or to `backup' by default.  To disable this,
+use --backup-dir= with no argument.
+
+Hunk mode is the default because it is MUCH MUCH faster than line-by-line.
+Use line-by-line only when it matters, e.g. you want to do a replacement
+only once per line (the default without the `g' argument).  Conversely,
+when using hunk mode, *ALWAYS* use `g'; otherwise, you will only make one
+replacement in the entire file!
+";
+
+my %options = ();
+$Getopt::Long::ignorecase = 0;
+&GetOptions (
+	     \%options,
+	     'help', 'backup-dir=s', 'line-mode', 'hunk-mode',
+);
+
+
+die $usage if $options{"help"} or @ARGV <= 1;
+my $code = shift;
+
+die $usage if grep (-d || ! -w, @ARGV);
+
+sub SafeOpen {
+  open ((my $fh = new FileHandle), $_[0]);
+  confess "Can't open $_[0]: $!" if ! defined $fh;
+  return $fh;
+}
+
+sub SafeClose {
+  close $_[0] or confess "Can't close $_[0]: $!";
+}
+
+sub FileContents {
+  my $fh = SafeOpen ("< $_[0]");
+  my $olddollarslash = $/;
+  local $/ = undef;
+  my $contents = <$fh>;
+  $/ = $olddollarslash;
+  return $contents;
+}
+
+sub WriteStringToFile {
+  my $fh = SafeOpen ("> $_[0]");
+  binmode $fh;
+  print $fh $_[1] or confess "$_[0]: $!\n";
+  SafeClose $fh;
+}
+
+foreach my $file (@ARGV) {
+  my $changed_p = 0;
+  my $new_contents = "";
+  if ($options{"line-mode"}) {
+    my $fh = SafeOpen $file;
+    while (<$fh>) {
+      my $save_line = $_;
+      eval $code;
+      $changed_p = 1 if $save_line ne $_;
+      $new_contents .= $_;
+    }
+  } else {
+    my $orig_contents = $_ = FileContents $file;
+    eval $code;
+    if ($_ ne $orig_contents) {
+      $changed_p = 1;
+      $new_contents = $_;
+    }
+  }
+
+  if ($changed_p) {
+    my $backdir = $options{"backup-dir"};
+    $backdir = "backup" if !defined ($backdir);
+    if ($backdir) {
+      my ($name, $path, $suffix) = fileparse ($file, "");
+      my $backfulldir = $path . $backdir;
+      my $backfile = "$backfulldir/$name";
+      mkdir $backfulldir, 0755 unless -d $backfulldir;
+      print "modifying $file (original saved in $backfile)\n";
+      rename $file, $backfile;
+    }
+    WriteStringToFile ($file, $new_contents);
+  }
+}
+----------------------------------- cut ------------------------------------
+
+
+In addition to those programs, I needed to fix up a few other
+things, particularly relating to the duplicate definitions of
+types, now that some types merged with others.  Specifically:
+
+1. in lisp.h, removed duplicate declarations of Bytecount.  The
+   changed code should now look like this: (In each code snippet
+   below, the first and last lines are the same as the original, as
+   are all lines outside of those lines.  That allows you to locate
+   the section to be replaced, and replace the stuff in that
+   section, verifying that there isn't anything new added that
+   would need to be kept.)
+
+--------------------------------- snip -------------------------------------
+/* Counts of bytes or chars */
+typedef EMACS_INT Bytecount;
+typedef EMACS_INT Charcount;
+
+/* Counts of elements */
+typedef EMACS_INT Elemcount;
+
+/* Hash codes */
+typedef unsigned long Hashcode;
+
+/* ------------------------ dynamic arrays ------------------- */
+--------------------------------- snip -------------------------------------
+
+2. in lstream.h, removed duplicate declaration of Bytecount.
+   Rewrote the comment about this type.  The changed code should
+   now look like this:
+
+
+--------------------------------- snip -------------------------------------
+#endif
+
+/* The have been some arguments over the what the type should be that
+   specifies a count of bytes in a data block to be written out or read in,
+   using Lstream_read(), Lstream_write(), and related functions.
+   Originally it was long, which worked fine; Martin "corrected" these to
+   size_t and ssize_t on the grounds that this is theoretically cleaner and
+   is in keeping with the C standards.  Unfortunately, this practice is
+   horribly error-prone due to design flaws in the way that mixed
+   signed/unsigned arithmetic happens.  In fact, by doing this change,
+   Martin introduced a subtle but fatal error that caused the operation of
+   sending large mail messages to the SMTP server under Windows to fail.
+   By putting all values back to be signed, avoiding any signed/unsigned
+   mixing, the bug immediately went away.  The type then in use was
+   Lstream_Data_Count, so that it be reverted cleanly if a vote came to
+   that.  Now it is Bytecount.
+
+   Some earlier comments about why the type must be signed: This MUST BE
+   SIGNED, since it also is used in functions that return the number of
+   bytes actually read to or written from in an operation, and these
+   functions can return -1 to signal error.
+
+   Note that the standard Unix read() and write() functions define the
+   count going in as a size_t, which is UNSIGNED, and the count going
+   out as an ssize_t, which is SIGNED.  This is a horrible design
+   flaw.  Not only is it highly likely to lead to logic errors when a
+   -1 gets interpreted as a large positive number, but operations are
+   bound to fail in all sorts of horrible ways when a number in the
+   upper-half of the size_t range is passed in -- this number is
+   unrepresentable as an ssize_t, so code that checks to see how many
+   bytes are actually written (which is mandatory if you are dealing
+   with certain types of devices) will get completely screwed up.
+
+   --ben
+*/
+
+typedef enum lstream_buffering
+--------------------------------- snip -------------------------------------
+
+
+3. in dumper.c, there are four places, all inside of switch()
+   statements, where XD_BYTECOUNT appears twice as a case tag.  In
+   each case, the two case blocks contain identical code, and you
+   should *REMOVE THE SECOND* and leave the first.
+
