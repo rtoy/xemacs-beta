@@ -187,9 +187,10 @@ static int NextInt (FILE *fstream)
  * its arguments won't have been touched.  This routine should look as much
  * like the Xlib routine XReadBitmapfile as possible.
  */
-int read_bitmap_data (FILE* fstream, unsigned int *width,
-		      unsigned int *height, UChar_Binary **datap,
-		      int *x_hot, int *y_hot)
+static int
+read_bitmap_data (FILE *fstream, unsigned int *width,
+		  unsigned int *height, UChar_Binary **datap,
+		  int *x_hot, int *y_hot)
 {
     UChar_Binary *data = NULL;		/* working variable */
     char line[MAX_SIZE];		/* input line from file */
@@ -311,12 +312,13 @@ int read_bitmap_data (FILE* fstream, unsigned int *width,
 }
 
 
-int read_bitmap_data_from_file (const char *filename,
-			       /* Remaining args are RETURNED */
-			       unsigned int *width,
-			       unsigned int *height,
-			       UChar_Binary **datap,
-			       int *x_hot, int *y_hot)
+int
+read_bitmap_data_from_file (const char *filename,
+			    /* Remaining args are RETURNED */
+			    unsigned int *width,
+			    unsigned int *height,
+			    UChar_Binary **datap,
+			    int *x_hot, int *y_hot)
 {
     FILE *fstream;
     int status;

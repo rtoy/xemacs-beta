@@ -1,3 +1,27 @@
+2001-06-08  Ben Wing  <ben@xemacs.org>
+
+	* process.el: comment about shell-command-switch.
+	* process.el (shell-quote-argument): Need to quote a null
+	argument, too.  From Dan Holmsand.
+	
+	* startup.el (normal-top-level): Delete some unused FSF junk.
+	* startup.el (command-line-early):
+	
+	* startup.el (command-line): Call MS Windows init function.
+	
+	* win32-native.el:
+	* win32-native.el (mswindows-system-shells): New.
+	* win32-native.el (mswindows-system-shell-p): New.
+	* win32-native.el (init-mswindows-at-startup): New.
+	* win32-native.el (mswindows-quote-one-vc-runtime-arg):
+	* win32-native.el (mswindows-quote-one-simple-arg):
+	* win32-native.el (mswindows-quote-one-command-arg):
+	* win32-native.el (mswindows-construct-process-command-line-alist):
+	Correct comments at top.  Correctly handle passing arguments
+	to Cygwin programs and to bash.  Fix quoting of zero-length
+	arguments (from Dan Holmsand).  Set shell-command-switch based
+	on shell-file-name, which in turn comes from env var SHELL.
+
 2001-06-03  William M. Perry  <wmperry@gnu.org>
 
 	* dialog-gtk.el (popup-builtin-open-dialog): Yikes - don't forget

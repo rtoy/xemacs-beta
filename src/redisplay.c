@@ -7102,6 +7102,10 @@ mark_redisplay (void)
   FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
     {
       struct frame *f = XFRAME (XCAR (frmcons));
+      /* #### urk!  this does tons o' crap, such as creating lots of
+	 structs, doing window system actions, etc.  we DO NOT want to
+	 be doing this -- marking should never change any state.
+	 i think we can just delete this. --ben */
       update_frame_window_mirror (f);
       mark_window_mirror (f->root_mirror);
       mark_gutters (f);

@@ -1,3 +1,30 @@
+2001-06-08  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (MS Windows):
+	* xemacs-faq.texi (Q6.2.1):
+	* xemacs-faq.texi (Q6.2.2):
+	* xemacs-faq.texi (Q6.2.3):
+	* xemacs-faq.texi (Q6.2.4):
+	* xemacs-faq.texi (Q6.2.5):
+	* xemacs-faq.texi (Q6.3.1):
+	* xemacs-faq.texi (Q6.3.2):
+	* xemacs-faq.texi (Q6.3.3):
+	* xemacs-faq.texi (Q6.3.4):
+	* xemacs-faq.texi (Q6.4.1):
+	* xemacs-faq.texi (Q6.4.2):
+	* xemacs-faq.texi (Current Events):
+	* xemacs-faq.texi (Q7.0.1):
+	* xemacs-faq.texi (Q7.0.2):
+	* xemacs-faq.texi (Q7.0.3):
+	* xemacs-faq.texi (Q7.0.4):
+	* xemacs-faq.texi (Q7.0.5):
+	* xemacs-faq.texi (Q7.0.6):
+	Merge in the rest of Hrvoje's Windows FAQ.  Redo section 7
+	to update current reality and add condensed versions of
+	new changes for 21.1 and 21.4. (Not quite done for 21.4.)
+	Lots more Windows updates.
+
 2001-05-29  Alexey Mahotkin  <alexm@hsys.msk.ru>
 
 	* xemacs/custom.texi: Documented keyboard shortcut.
