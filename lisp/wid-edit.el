@@ -1763,53 +1763,56 @@ If that does not exists, call the value of `widget-complete-field'."
      ;; 1. Use skip-chars-forward.
      ;; 2. Use a LIMIT (or narrow buffer?) in the search/skip expression.
      ;; 3. Search/skip backward to allow LIMIT to be constant.
-     ;; 4. Use a char-table to dispatch to code, instead of a cond.
      (while (re-search-forward "%\\(.\\)" nil t)
        (let ((escape (aref (match-string 1) 0)))
 	 (replace-match "" t t)
-	 (cond ((eq escape ?%)
-		(insert ?%))
-	       ((eq escape ?\[)
-		(setq button-begin (point-marker))
-		(set-marker-insertion-type button-begin nil))
-	       ((eq escape ?\])
-		(setq button-end (point-marker))
-		(set-marker-insertion-type button-end nil))
-	       ((eq escape ?\{)
-		(setq sample-begin (point)))
-	       ((eq escape ?\})
-		(setq sample-end (point)))
-	       ((eq escape ?n)
-		(when (widget-get widget :indent)
+	 (funcall
+	  (aref
+	   [(lambda ()			;?%
+	      (insert ?%))
+	    (lambda ()			;?\[
+	      (setq button-begin (point-marker))
+	      (set-marker-insertion-type button-begin nil))
+	    (lambda ()			;?\]
+	      (setq button-end (point-marker))
+	      (set-marker-insertion-type button-end nil))
+	    (lambda ()			;?\{ 
+	      (setq sample-begin (point)))
+	    (lambda ()			;?\}
+	      (setq sample-end (point)))
+	    (lambda ()			;?n 
+	      (when (widget-get widget :indent)
+		(insert ?\n)
+		(insert-char ?\  (widget-get widget :indent))))
+	    (lambda ()			;?t
+	      (let* ((tag (widget-get widget :tag))
+		     (glyph (widget-get widget :tag-glyph)))
+		(cond (glyph
+		       (setq button-glyph
+			     (widget-glyph-insert
+			      widget (or tag "Image") glyph)))
+		      (tag
+		       (insert tag))
+		      (t
+		       (princ (widget-get widget :value)
+			      (current-buffer))))))
+	    (lambda ()			;?d
+	      (let ((doc (widget-get widget :doc)))
+		(when doc
+		  (setq doc-begin (point))
+		  (insert doc)
+		  (while (eq (preceding-char) ?\n)
+		    (delete-backward-char 1))
 		  (insert ?\n)
-		  (insert-char ?\  (widget-get widget :indent))))
-	       ((eq escape ?t)
-		(let* ((tag (widget-get widget :tag))
-		       (glyph (widget-get widget :tag-glyph)))
-		  (cond (glyph
-			 (setq button-glyph
-			       (widget-glyph-insert
-				widget (or tag "Image") glyph)))
-			(tag
-			 (insert tag))
-			(t
-			 (princ (widget-get widget :value)
-				(current-buffer))))))
-	       ((eq escape ?d)
-		(let ((doc (widget-get widget :doc)))
-		  (when doc
-		    (setq doc-begin (point))
-		    (insert doc)
-		    (while (eq (preceding-char) ?\n)
-		      (delete-backward-char 1))
-		    (insert ?\n)
-		    (setq doc-end (point)))))
-	       ((eq escape ?v)
-		(if (and button-begin (not button-end))
-		    (widget-apply widget :value-create)
-		  (setq value-pos (point-marker))))
-	       (t
-		(widget-apply widget :format-handler escape)))))
+		  (setq doc-end (point)))))
+	    (lambda ()			;?v
+	      (if (and button-begin (not button-end))
+		  (widget-apply widget :value-create)
+		(setq value-pos (point-marker))))
+	    (lambda ()			;otherwise
+	      (widget-apply widget :format-handler escape))]
+	   (string-match (format "[%c\010]" escape) ;^H can't be found in buff
+			 "%[]{}ntdv\010"))))) ;so it can be 'otherwise' cond
      ;; Specify button, sample, and doc, and insert value.
      (when (and button-begin button-end)
        (unless button-glyph
