@@ -16,10 +16,6 @@
 	* event-msw.c (output_alt_keyboard_state):
 	Change C++ style comments to C style.
 
-2003-01-09  Stephen J. Turnbull  <stephen@xemacs.org>
-
-	* config.h.in: Restore USE_XFONTSET.
-
 2003-01-22  Vin Shelton  <acs@xemacs.org>
 
 	* events.h: Change illegal (for C) // comment to /* */
