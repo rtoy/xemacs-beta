@@ -1,5 +1,21 @@
 2004-05-10  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* lispref/numbers.texi (Numbers): Remove reference to "fixed-
+	precision rationals," and fix description of floating-point
+	contagion.
+	(Integer Basics, Float Basics): Fix typos.
+	(Canonicalization and Contagion): Complete rewrite.
+	(Predicates on Numbers): Add fixnump, bignump, ratiop, rationalp,
+	bigfloatp, floatingp, realp, oddp and evenp.
+	(Rational Basics): Add numerator and denominator.
+	(Random Numbers): Fix description of range, and add paranoid
+	comment about how unpredictable `(random t)' is.
+	(Canonicalization and Contagion): Renamed from Contagion and
+	Canonicalization.
+	(The Bignum Extension): Fix it in menu.
+
+2004-05-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* internals/internals.texi (Object-Oriented Techniques for C):
 	Remove reference to "encouraging port to C++".
 
