@@ -1,3 +1,8 @@
+2003-05-03  Steve Youngs  <youngs@xemacs.org>
+
+	* package-admin.el (package-admin-find-top-directory): You can't
+	concat a string & a char, so convert 'directory-sep-char' to a string.
+
 2003-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* cmdloop.el (command-error): Ensure exit msg is on separate line.

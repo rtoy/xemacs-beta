@@ -174,13 +174,13 @@ Note:  Type \"site\" is not yet fully supported."
 	  (cond ((eq type 'std)
 		 (while path-list
 		   (if (equal (substring (car path-list) -16) 
-			      (concat "xemacs-packages" directory-sep-char))
+			      (concat "xemacs-packages" (char-to-string directory-sep-char)))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list))))
 		((eq type 'mule)
 		 (while path-list
 		   (if (equal (substring (car path-list) -14) 
-			      (concat "mule-packages" directory-sep-char))
+			      (concat "mule-packages" (char-to-string directory-sep-char)))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list)))))))
     ;; Wasn't in the environment, try `user-init-directory' if
@@ -201,13 +201,13 @@ Note:  Type \"site\" is not yet fully supported."
 	  (cond ((eq type 'std)
 		 (while path-list
 		   (if (equal (substring (car path-list) -16) 
-			      (concat "xemacs-packages" directory-sep-char))
+			      (concat "xemacs-packages" (char-to-string directory-sep-char)))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list))))
 		((eq type 'mule)
 		 (while path-list
 		   (if (equal (substring (car path-list) -14) 
-			      (concat "mule-packages" directory-sep-char))
+			      (concat "mule-packages" (char-to-string directory-sep-char)))
 		       (setq top-dir (car path-list)))
 		   (setq path-list (cdr path-list)))))))
     ;; Now return either the directory or nil.
