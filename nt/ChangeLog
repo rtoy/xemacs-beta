@@ -1,3 +1,13 @@
+2001-06-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs.mak (HAVE_ZLIB): New, defaults to HAVE_PNG.
+	(USE_MINITAR): Default to HAVE_ZLIB.
+	(MSW_LIBS): Add comctl32.lib if HAVE_WIDGETS.
+	(mostlyclean, nicenclean, distclean, versionclean): Only one target
+	per invocation of $(DEL); don't use unneeded switches (WinME support).
+
+	(TEMACS_CPP_FLAGS): Add EMACS_PATCH_LEVEL.
+
 2001-05-28  Nick V. Pakoulin  <npak@ispras.ru>
 
 	* xemacs.mak (install): Replace calls to (x)copy commands with

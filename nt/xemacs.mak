@@ -46,6 +46,8 @@ XEMACSDIRSTRING=$(MAKEDIRSTRING:\\nt=)
 
 
 # Define a variable for the 'del' command to use
+# N.B. Windows Millenium Edition's ERASE can only handle one target (file or
+# wildcard) per invocation.  Make sure each use has only one target!
 DEL=-del
 
 # Define a variable for 'copy' command to use
@@ -125,6 +127,9 @@ HAVE_XPM=0
 !if !defined(HAVE_PNG)
 HAVE_PNG=0
 !endif
+!if !defined(HAVE_ZLIB)
+HAVE_ZLIB=$(HAVE_PNG)
+!endif
 !if !defined(HAVE_TIFF)
 HAVE_TIFF=0
 !endif
@@ -165,7 +170,7 @@ QUICK_BUILD=0
 USE_UNION_TYPE=0
 !endif
 !if !defined(USE_MINITAR)
-USE_MINITAR=1
+USE_MINITAR=$(HAVE_ZLIB)
 !endif
 !if !defined(USE_MINIMAL_TAGBITS)
 USE_MINIMAL_TAGBITS=0
@@ -428,7 +433,6 @@ MSW_LIBS=$(MSW_LIBS) "$(COMPFACE_DIR)\libcompface.lib"
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
 MSW_TOOLBAR_SRC=$(SRC)\toolbar.c $(SRC)\toolbar-msw.c
 MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
-MSW_LIBS=$(MSW_LIBS) comctl32.lib
 !endif
 !if $(HAVE_DIALOGS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
@@ -437,6 +441,9 @@ MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
 !endif
 !if $(HAVE_WIDGETS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_WIDGETS
+!endif
+!if $(HAVE_TOOLBARS) || $(HAVE_WIDGETS)
+MSW_LIBS=$(MSW_LIBS) comctl32.lib
 !endif
 !if $(HAVE_NATIVE_SOUND)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_NATIVE_SOUND
@@ -506,6 +513,7 @@ XEMACS_INCLUDES=\
  $(SRC)\Emacs.ad.h \
  $(SRC)\paths.h
 
+# #### Copying is cheap, we should just force these
 $(SRC)\config.h:	config.h
 	@$(COPY) config.h $(SRC)
 
@@ -864,6 +872,7 @@ TEMACS_CPP_FLAGS=-c \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  $(EMACS_BETA_VERSION) \
+ $(EMACS_PATCH_LEVEL) \
  -DXEMACS_CODENAME=\"$(xemacs_codename:&=and)\" \
  -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\" \
  -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
@@ -1433,34 +1442,56 @@ install:	all
 
 mostlyclean:
 	$(DEL) $(XEMACS)\Installation
-	$(DEL) $(OUTDIR)\*.lib $(OUTDIR)\*.obj $(OUTDIR)\*.pdb
-	$(DEL) $(OUTDIR)\*.res $(OUTDIR)\*.sbr
-	$(DEL) $(SRC)\*.exe $(SRC)\*.map $(SRC)\*.bsc $(SRC)\*.pdb
-	$(DEL) $(LIB_SRC)\*.exe $(LIB_SRC)\*.obj $(LIB_SRC)\*.pdb
+	$(DEL) $(OUTDIR)\*.lib
+	$(DEL) $(OUTDIR)\*.obj
+	$(DEL) $(OUTDIR)\*.pdb
+	$(DEL) $(OUTDIR)\*.res
+	$(DEL) $(OUTDIR)\*.sbr
+	$(DEL) $(SRC)\*.exe
+	$(DEL) $(SRC)\*.map
+	$(DEL) $(SRC)\*.bsc
+	$(DEL) $(SRC)\*.pdb
+	$(DEL) $(LIB_SRC)\*.exe
+	$(DEL) $(LIB_SRC)\*.obj
+	$(DEL) $(LIB_SRC)\*.pdb
 	$(DEL) $(LIB_SRC)\*.res
 
 clean: mostlyclean versionclean
 	$(DEL) $(XEMACS)\TAGS
 
 nicenclean: clean
-	$(DEL) $(NT)\*.bak $(NT)\*.orig $(NT)\*.rej $(NT)\*.tmp
-	$(DEL) $(LIB_SRC)\*.bak $(LIB_SRC)\*.orig $(LIB_SRC)\*.rej
+	$(DEL) $(NT)\*.bak
+	$(DEL) $(NT)\*.orig
+	$(DEL) $(NT)\*.rej
+	$(DEL) $(NT)\*.tmp
+	$(DEL) $(LIB_SRC)\*.bak
+	$(DEL) $(LIB_SRC)\*.orig
+	$(DEL) $(LIB_SRC)\*.rej
 	$(DEL) $(LIB_SRC)\*.tmp
-	$(DEL) $(SRC)\*.bak $(SRC)\*.orig $(SRC)\*.rej $(SRC)\*.tmp
-	$(DEL) /s $(LISP)\*.bak $(LISP)\*.orig $(LISP)\*.rej $(LISP)\*.tmp
+	$(DEL) $(SRC)\*.bak
+	$(DEL) $(SRC)\*.orig
+	$(DEL) $(SRC)\*.rej
+	$(DEL) $(SRC)\*.tmp
+	$(DEL) $(LISP)\*.bak
+	$(DEL) $(LISP)\*.orig
+	$(DEL) $(LISP)\*.rej
+	$(DEL) $(LISP)\*.tmp
 
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: nicenclean
-	$(DEL) $(SRC)\config.h $(SRC)\paths.h $(SRC)\Emacs.ad.h
-	$(DEL) $(LIB_SRC)\$(CONFIG_VALUES)
+	$(DEL) $(SRC)\config.h
+	$(DEL) $(SRC)\paths.h
+	$(DEL) $(SRC)\Emacs.ad.h
+	$(DEL) $(CONFIG_VALUES)
 	$(DEL) $(INFODIR)\*.info*
-	$(DEL) /s /q $(LISP)\*.elc
+	$(DEL) $(LISP)\*.elc
 
 realclean: distclean
 
 versionclean:
-	$(DEL) $(SRC)\xemacs.exe $(LIB_SRC)\DOC
+	$(DEL) $(SRC)\xemacs.exe
+	$(DEL) $(LIB_SRC)\DOC
 
 #not sure about those wildcards.  DOS wildcards are stupid compared to Unix,
 #and could end up deleting *everything* instead of just backup files or
