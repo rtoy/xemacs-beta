@@ -3056,11 +3056,13 @@ fi
 dnl Autodetect CDE
 test -z "$with_cde" && { AC_CHECK_HEADER(Dt/Dt.h,               , with_cde=no) }
 test -z "$with_cde" && { AC_CHECK_LIB(DtSvc, DtDndDragStart, [:], with_cde=no) }
-test -z "$with_cde" && with_cde=yes
-if test "$with_dragndrop" = no; then
-  AC_MSG_WARN([No CDE without generic Drag'n'Drop support])
+if test "$with_dragndrop" = "no" ; then
+  if test "$with_cde" = "yes" ; then
+    AC_MSG_WARN([--with-cde forced to \`no'; no generic Drag'n'Drop support])
+  fi
   with_cde=no
 fi
+test -z "$with_cde" && with_cde=yes
 if test "$with_cde" = "yes" ; then
   AC_DEFINE(HAVE_CDE)
   XE_PREPEND(-lDtSvc, libs_x)
@@ -3076,15 +3078,21 @@ dnl Because OffiX support currently loses when more than one display
 dnl is in use, we now disable it by default -slb 07/10/1998.
 test "$window_system" != "x11" && with_offix=no
 if test "$with_xmu" != yes -a "$with_x11" = yes; then
-  AC_MSG_WARN([No OffiX without real Xmu support])
+  if test "$with_offix" = "yes" ; then
+    AC_MSG_WARN([--with-offix forced to \`no'; no real Xmu support])
+  fi
   with_offix=no
 fi
 if test "$with_dragndrop" = no; then
-  AC_MSG_WARN([No OffiX without generic Drag'n'Drop support])
+  if test "$with_offix" = "yes" ; then
+    AC_MSG_WARN([--with-offix forced to \`no'; no generic Drag'n'Drop support])
+  fi
   with_offix=no
 fi
 if test "$with_cde" = yes; then
-  AC_MSG_WARN([CDE already found, disabling OffiX support])
+  if test "$with_offix" = "yes" ; then
+    AC_MSG_WARN([--with-offix forced to \`no'; CDE already found])
+  fi
   with_offix=no
 fi
 test -z "$with_offix" && with_offix=no
@@ -4391,7 +4399,7 @@ if test "$with_modules" != "no"; then
     if test "$with_modules" = "yes"; then
       XE_DIE("Required module support cannot be provided.")
     else
-      AC_MSG_WARN([Module support cannot be provided.])
+      echo "    No module support."
     fi
     with_modules=no
   fi
