@@ -1480,8 +1480,8 @@ enum unicode_type
 struct unicode_coding_system
 {
   enum unicode_type type;
-  int little_endian :1;
-  int need_bom :1;
+  unsigned int little_endian :1;
+  unsigned int need_bom :1;
 };
 
 #define CODING_SYSTEM_UNICODE_TYPE(codesys) \
@@ -1521,7 +1521,8 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (unicode);
         Danger, Will Robinson!  Data loss.  Should we signal user? */
 static void
 decode_unicode_char (int ch, unsigned_char_dynarr *dst,
-		     struct unicode_coding_stream *data, int ignore_bom)
+		     struct unicode_coding_stream *data,
+		     unsigned int ignore_bom)
 {
   if (ch == 0xFEFF && !data->seen_char && ignore_bom)
     ;
@@ -1554,7 +1555,7 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
 
 static void
 encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
-		       enum unicode_type type, int little_endian)
+		       enum unicode_type type, unsigned int little_endian)
 {
   switch (type)
     {
@@ -1639,7 +1640,7 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
 static void
 encode_unicode_char (Lisp_Object charset, int h, int l,
 		     unsigned_char_dynarr *dst, enum unicode_type type,
-		     int little_endian)
+		     unsigned int little_endian)
 {
 #ifdef MULE
   int code = ichar_to_unicode (make_ichar (charset, h & 127, l & 127));
@@ -1676,8 +1677,9 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
   struct unicode_coding_stream *data = CODING_STREAM_TYPE_DATA (str, unicode);
   enum unicode_type type =
     XCODING_SYSTEM_UNICODE_TYPE (str->codesys);
-  int little_endian = XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
-  int ignore_bom = XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys);
+  unsigned int little_endian =
+    XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
+  unsigned int ignore_bom = XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys);
   Bytecount orign = n;
 
   if (str->direction == CODING_DECODE)
@@ -2124,7 +2126,7 @@ struct utf_8_detector
   int seen_longer_sequence;
   int seen_iso2022_esc;
   int seen_iso_shift;
-  int seen_utf_bom:1;
+  unsigned int seen_utf_bom:1;
 };
 
 static void

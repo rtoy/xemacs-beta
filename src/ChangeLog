@@ -1,3 +1,13 @@
+2004-01-21  Jerry James  <james@xemacs.org>
+
+	* unicode.c (struct unicode_coding_system): Make one bit fields
+	unsigned.
+	* unicode.c (decode_unicode_char): Ditto.
+	* unicode.c (encode_unicode_char_1): Ditto.
+	* unicode.c (encode_unicode_char): Ditto.
+	* unicode.c (unicode_convert): Ditto.
+	* unicode.c (struct utf_8_detector): Ditto.
+
 2003-11-04  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* frame-x.c (x_wm_hack_wm_protocols):
