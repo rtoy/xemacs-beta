@@ -195,7 +195,7 @@ nas.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h sound.h sysde
 nt.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h ndir.h process.h sysdir.h sysfile.h sysproc.h syspwd.h syssignal.h systime.h syswindows.h
 ntheap.o: $(LISP_H) intl-auto-encap-win32.h sysdep.h syswindows.h
 ntplay.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h intl-auto-encap-win32.h sound.h sysfile.h syswindows.h
-number-gmp.o: $(LISP_H)
+number-gmp.o: $(LISP_H) sysproc.h syssignal.h systime.h
 number-mp.o: $(LISP_H)
 number.o: $(LISP_H)
 objects.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h conslots.h console-impl.h console-tty.h console.h device-impl.h device.h devslots.h elhash.h faces.h frame.h glyphs.h objects-impl.h objects.h redisplay.h scrollbar.h specifier.h systty.h window-impl.h window.h winslots.h
