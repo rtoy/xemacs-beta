@@ -1,3 +1,9 @@
+2001-07-25  Jim Horning  <jim.horning@lmco.com>
+
+	* xemacs/packages.texi (Package Terminology):
+	* xemacs/packages.texi (Automatically):
+	In itemize and enumerate lists @item should be on it's own line.
+
 2001-07-02  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-faq.texi (Q1.0.14): Update information following a
