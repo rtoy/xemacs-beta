@@ -15632,17 +15632,18 @@ EOF
     { echo "Error:" "Required GMP numeric support cannot be provided." >&2; exit 1; }
   fi
 elif test "$use_number_lib" = "mp"; then
-  ac_safe=`echo "mp.h" | sed 'y%./+-%__p_%'`
+  for library in "" "-lcrypto"; do
+    ac_safe=`echo "mp.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for mp.h""... $ac_c" 1>&6
-echo "configure:15638: checking for mp.h" >&5
+echo "configure:15639: checking for mp.h" >&5
 
 cat > conftest.$ac_ext <<EOF
-#line 15641 "configure"
+#line 15642 "configure"
 #include "confdefs.h"
 #include <mp.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:15646: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:15647: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -15658,14 +15659,16 @@ rm -f conftest*
 if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
   echo "$ac_t""yes" 1>&6
   
-    
-echo $ac_n "checking for mp_mfree in -lmp""... $ac_c" 1>&6
-echo "configure:15664: checking for mp_mfree in -lmp" >&5
+      
+xe_msg_checking="for mp_mfree in -lmp"
+test -n "$library" && xe_msg_checking="$xe_msg_checking using extra libs $library"
+echo $ac_n "checking "$xe_msg_checking"""... $ac_c" 1>&6
+echo "configure:15667: checking "$xe_msg_checking"" >&5
 ac_lib_var=`echo mp'_'mp_mfree | sed 'y%./+-%__p_%'`
 
-xe_check_libs=" -lmp "
+xe_check_libs=" -lmp $library"
 cat > conftest.$ac_ext <<EOF
-#line 15669 "configure"
+#line 15672 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -15676,7 +15679,7 @@ int main() {
 mp_mfree()
 ; return 0; }
 EOF
-if { (eval echo configure:15680: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:15683: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -15690,17 +15693,19 @@ xe_check_libs=""
 
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes" ; then
   echo "$ac_t""yes" 1>&6
-  have_mp_mfree=yes
+  have_mp_mfree=yes break
 else
   echo "$ac_t""no" 1>&6
 
-echo $ac_n "checking for mfree in -lmp""... $ac_c" 1>&6
-echo "configure:15699: checking for mfree in -lmp" >&5
+xe_msg_checking="for mfree in -lmp"
+test -n "$library" && xe_msg_checking="$xe_msg_checking using extra libs $library"
+echo $ac_n "checking "$xe_msg_checking"""... $ac_c" 1>&6
+echo "configure:15704: checking "$xe_msg_checking"" >&5
 ac_lib_var=`echo mp'_'mfree | sed 'y%./+-%__p_%'`
 
-xe_check_libs=" -lmp "
+xe_check_libs=" -lmp $library"
 cat > conftest.$ac_ext <<EOF
-#line 15704 "configure"
+#line 15709 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -15711,7 +15716,7 @@ int main() {
 mfree()
 ; return 0; }
 EOF
-if { (eval echo configure:15715: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:15720: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -15725,7 +15730,7 @@ xe_check_libs=""
 
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes" ; then
   echo "$ac_t""yes" 1>&6
-  have_mfree=yes
+  have_mfree=yes break
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -15738,6 +15743,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
+  done
   if test "$have_mp_mfree" = "yes"; then
     { test "$extra_verbose" = "yes" && cat << \EOF
     Defining MP_PREFIX
@@ -15747,12 +15753,12 @@ cat >> confdefs.h <<\EOF
 EOF
 }
 
-    LIBS="-lmp $LIBS" &&  if test "$extra_verbose" = "yes"; then echo "    Prepending \"-lmp\" to \$LIBS"; fi
+    LIBS="$LIBS -lmp" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"-lmp\" to \$LIBS"; fi
     echo $ac_n "checking for mp_move""... $ac_c" 1>&6
-echo "configure:15753: checking for mp_move" >&5
+echo "configure:15759: checking for mp_move" >&5
 
 cat > conftest.$ac_ext <<EOF
-#line 15756 "configure"
+#line 15762 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char mp_move(); below.  */
@@ -15775,7 +15781,7 @@ mp_move();
 
 ; return 0; }
 EOF
-if { (eval echo configure:15779: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:15785: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_func_mp_move=yes"
 else
@@ -15801,12 +15807,12 @@ else
 fi
 
   elif test "$have_mfree" = "yes"; then
-    LIBS="-lmp $LIBS" &&  if test "$extra_verbose" = "yes"; then echo "    Prepending \"-lmp\" to \$LIBS"; fi
+    LIBS="$LIBS -lmp" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"-lmp\" to \$LIBS"; fi
     echo $ac_n "checking for move""... $ac_c" 1>&6
-echo "configure:15807: checking for move" >&5
+echo "configure:15813: checking for move" >&5
 
 cat > conftest.$ac_ext <<EOF
-#line 15810 "configure"
+#line 15816 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char move(); below.  */
@@ -15829,7 +15835,7 @@ move();
 
 ; return 0; }
 EOF
-if { (eval echo configure:15833: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:15839: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_func_move=yes"
 else
@@ -15857,6 +15863,9 @@ fi
   else
     { echo "Error:" "Required MP numeric support cannot be provided." >&2; exit 1; }
   fi
+  if test "$library" = "-lcrypto"; then
+    LIBS="$LIBS -lcrypto" &&  if test "$extra_verbose" = "yes"; then echo "    Appending \"-lcrypto\" to \$LIBS"; fi
+  fi
   { test "$extra_verbose" = "yes" && cat << \EOF
     Defining WITH_NUMBER_TYPES
 EOF
@@ -15876,11 +15885,11 @@ EOF
 fi
 
 cat > conftest.$ac_ext <<EOF
-#line 15880 "configure"
+#line 15889 "configure"
 #include "confdefs.h"
 int main(int c,char *v[]){return 0;}
 EOF
-if { (eval echo configure:15884: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
+if { (eval echo configure:15893: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit $?) 2>&5
 then
   :
 else

@@ -4879,18 +4879,24 @@ if test "$use_number_lib" = "gmp"; then
     XE_DIE("Required GMP numeric support cannot be provided.")
   fi
 elif test "$use_number_lib" = "mp"; then
-  AC_CHECK_HEADER(mp.h, [
-    AC_CHECK_LIB(mp, mp_mfree, have_mp_mfree=yes, [
-      AC_CHECK_LIB(mp, mfree, have_mfree=yes)])])
+  for library in "" "-lcrypto"; do
+    AC_CHECK_HEADER(mp.h, [
+      AC_CHECK_LIB(mp, mp_mfree, have_mp_mfree=yes break, [
+	AC_CHECK_LIB(mp, mfree, have_mfree=yes break, , $library)],
+	$library)])
+  done
   if test "$have_mp_mfree" = "yes"; then
     AC_DEFINE(MP_PREFIX)
-    XE_PREPEND(-lmp, LIBS)
+    XE_APPEND(-lmp, LIBS)
     AC_CHECK_FUNC(mp_move, [AC_DEFINE(HAVE_MP_MOVE)])
   elif test "$have_mfree" = "yes"; then
-    XE_PREPEND(-lmp, LIBS)
+    XE_APPEND(-lmp, LIBS)
     AC_CHECK_FUNC(move, [AC_DEFINE(HAVE_MP_MOVE)])
   else
     XE_DIE("Required MP numeric support cannot be provided.")
+  fi
+  if test "$library" != ""; then
+    XE_APPEND($library, LIBS)
   fi
   AC_DEFINE(WITH_NUMBER_TYPES)
   AC_DEFINE(WITH_MP)
