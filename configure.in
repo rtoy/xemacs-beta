@@ -349,7 +349,10 @@ with_menubars=''
 with_scrollbars=''
 with_widgets=''
 with_dialogs=''
-with_file_coding=''
+dnl The following will be overridden if we are under Cygwin and compile
+dnl with MS Windows support.  Set this to yes as soon as we've fixed
+dnl the coding-system defaults to be binary in all cases under Unix.
+with_file_coding='no'
 cpp='' cppflags='' libs='' ldflags=''
 extra_includes=''
 dynamic=''
@@ -1945,9 +1948,9 @@ case `uname -s`:`uname -m`:$GCC_VERSION in
                     *-fno-schedule-insns*) ;;
                     *)
                         AC_MSG_RESULT(yes)
-                        AC_MSG_WARN(Don't use -O2 with gcc 2.8.1 and egcs 1.0 under SPARC architectures)
-                        AC_MSG_WARN(without also using -fno-schedule-insns.)
-                        AC_MSG_ERROR(Aborting due to known problem)
+                        AC_MSG_WARN([Don't use -O2 with gcc 2.8.1 and egcs 1.0 under SPARC architectures])
+                        AC_MSG_WARN([without also using -fno-schedule-insns.])
+                        AC_MSG_ERROR([Aborting due to known problem])
                         ;;
                 esac
                 ;;
@@ -1957,9 +1960,9 @@ case `uname -s`:`uname -m`:$GCC_VERSION in
 	dnl egcs-2.91.66 (egcs-1.1.2 release)
     Linux:alpha:egcs-2.91.*)
         AC_MSG_RESULT(yes)
-        AC_MSG_WARN(There have been reports of egcs-1.1 not compiling XEmacs correctly on)
-        AC_MSG_WARN(Alpha Linux.  There have also been reports that egcs-1.0.3a is O.K.)
-        AC_MSG_ERROR(Aborting due to known problem)
+        AC_MSG_WARN([There have been reports of egcs-1.1 not compiling XEmacs correctly on])
+        AC_MSG_WARN([Alpha Linux.  There have also been reports that egcs-1.0.3a is O.K.])
+        AC_MSG_ERROR([Aborting due to known problem])
         ;;
     *:i*86*:2.7.2*)
 	case "$CFLAGS" in
@@ -1970,9 +1973,9 @@ case `uname -s`:`uname -m`:$GCC_VERSION in
 	                    *-fno-strength-reduce*) ;;
         	            *)
                                 AC_MSG_RESULT(yes)
-                      	        AC_MSG_WARN(Don't use -O2 with gcc 2.7.2 under Intel/XXX without also using)
-	                        AC_MSG_WARN(-fno-strength-reduce.)
-        	                AC_MSG_ERROR(Aborting due to known problem)
+                      	        AC_MSG_WARN([Don't use -O2 with gcc 2.7.2 under Intel/XXX without also using])
+	                        AC_MSG_WARN([-fno-strength-reduce.])
+        	                AC_MSG_ERROR([Aborting due to known problem])
 	                        ;;
 	                esac
 	                ;;
@@ -1981,9 +1984,9 @@ case `uname -s`:`uname -m`:$GCC_VERSION in
 		 *-fno-caller-saves*) ;;
 		 *)
 	            AC_MSG_RESULT(yes)
-		    AC_MSG_WARN(Don't use -O2 with gcc 2.7.2 under Intel/XXX without also using)
-		    AC_MSG_WARN(-fno-caller-saves.)
-	            AC_MSG_ERROR(Aborting due to known problem)
+		    AC_MSG_WARN([Don't use -O2 with gcc 2.7.2 under Intel/XXX without also using])
+		    AC_MSG_WARN([-fno-caller-saves.])
+	            AC_MSG_ERROR([Aborting due to known problem])
 		    ;;
 	        esac
 		;;
@@ -2791,7 +2794,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
 
   dnl make sure we can find Intrinsic.h
   AC_CHECK_HEADER(X11/Intrinsic.h, ,
-   [AC_MSG_ERROR("Unable to find X11 header files.")])
+   [AC_MSG_ERROR([Unable to find X11 header files.])])
 
   dnl -lXt and -lX11 are required
   dnl Some broken systems require the magic "-b i486-linuxaout" flag
@@ -2799,7 +2802,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
   if test "$have_lib_x11" != "yes"; then
     AC_CHECK_LIB(X11, XGetFontProperty,
       ld_switch_x_site="-b i486-linuxaout $ld_switch_x_site",
-      [AC_MSG_ERROR("Unable to find X11 libraries.")],
+      [AC_MSG_ERROR([Unable to find X11 libraries.])],
       -b i486-linuxaout)
   fi
   libs_x="-lX11"
@@ -2810,7 +2813,7 @@ dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
 
   dnl Require -lXt
   AC_CHECK_LIB(Xt, XtOpenDisplay, XE_PREPEND(-lXt, libs_x),
-    AC_MSG_ERROR("Unable to find X11 libraries."))
+    AC_MSG_ERROR([Unable to find X11 libraries.]))
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_TRY_RUN([#include <X11/Intrinsic.h>
@@ -3352,10 +3355,10 @@ if test "$with_x11" = "yes"; then
       [
         dnl Must not be a 3d library...
         AC_CHECK_LIB($athena_variant, threeDClassRec,
-          AC_MSG_WARN("Could not find a non-3d Athena widget library."),
+          AC_MSG_WARN([Could not find a non-3d Athena widget library.]),
           athena_lib=$athena_variant)
       ],
-      AC_MSG_WARN("Could not find an Athena widget library."))
+      AC_MSG_WARN([Could not find an Athena widget library.]))
   else
     dnl The real configuration, need 3d library
     AC_CHECK_LIB($athena_variant, threeDClassRec, athena_lib=$athena_variant,
@@ -3364,18 +3367,18 @@ if test "$with_x11" = "yes"; then
       AC_CHECK_LIB(Xaw, threeDClassRec,
         [
           athena_lib=Xaw;
-          AC_MSG_WARN("Assuming that libXaw is actually $athena_variant.");
+          AC_MSG_WARN([Assuming that libXaw is actually $athena_variant.]);
         ],
-        AC_MSG_WARN("Could not find a 3d Athena widget library that looked like $athena_variant.")))
+        AC_MSG_WARN([Could not find a 3d Athena widget library that looked like $athena_variant.])))
   fi
 
   dnl Now we locate the Athena headers that we need.
   if test "$athena_3d" = "no"; then
     AC_CHECK_HEADER(X11/Xaw/ThreeD.h,
-      AC_MSG_WARN("Could not find a non-3d Athena header set."),
+      AC_MSG_WARN([Could not find a non-3d Athena header set.]),
       AC_CHECK_HEADER(X11/Xaw/XawInit.h,
         athena_h_path=X11/Xaw,
-        AC_MSG_WARN("Could not find a non-3d Athena header set.")))
+        AC_MSG_WARN([Could not find a non-3d Athena header set.])))
   else
     dnl The three-d Athena headers are so much more slippery.
     dnl Curse this `Lets replace standard libraries' thing that they did. :/
@@ -3395,7 +3398,7 @@ if test "$with_x11" = "yes"; then
       AC_CHECK_HEADER(X11/Xaw3d/XawInit.h,
         AC_CHECK_HEADER(X11/Xaw3d/ThreeD.h,
           [
-            AC_MSG_WARN("Assuming that X11/Xaw3d headers are suitable for $athena_variant.")
+            AC_MSG_WARN([Assuming that X11/Xaw3d headers are suitable for $athena_variant.])
             athena_h_path=X11/Xaw3d
           ],))
     fi
@@ -3405,7 +3408,7 @@ if test "$with_x11" = "yes"; then
       AC_CHECK_HEADER(Xaw3d/XawInit.h,
         AC_CHECK_HEADER(Xaw3d/ThreeD.h,
           [
-            AC_MSG_WARN("Assuming that Xaw3d headers are suitable for $athena_variant.")
+            AC_MSG_WARN([Assuming that Xaw3d headers are suitable for $athena_variant.])
             athena_h_path=Xaw3d
           ],))
     fi
@@ -3415,10 +3418,10 @@ if test "$with_x11" = "yes"; then
     if test -z "$athena_h_path"; then
       AC_CHECK_HEADER(X11/Xaw/ThreeD.h,
         [
-          AC_MSG_WARN("Assuming that X11/Xaw headers are suitable for $athena_variant.")
+          AC_MSG_WARN([Assuming that X11/Xaw headers are suitable for $athena_variant.])
           athena_h_path=X11/Xaw
         ],
-        AC_MSG_WARN("Could not find a suitable 3d Athena header set."))
+        AC_MSG_WARN([Could not find a suitable 3d Athena header set.]))
     fi
   fi
 
@@ -3584,7 +3587,6 @@ dnl Mule-dependent options
 dnl ----------------------
 
 test -z "$with_mule" && with_mule=no
-test -z "$with_file_coding" && with_file_coding=no
 
 dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
 dnl	echo "Attempt to Build with Mule without Mule/Lisp"
@@ -3592,6 +3594,11 @@ dnl	echo "Please install the XEmacs/Mule tarball or"
 dnl	echo "rerun configure with --with-mule=no"
 dnl	exit 1
 dnl fi
+
+if test "$with_file_coding" = "no" && test "$with_mule" = "yes"; then
+  AC_MSG_WARN([--with-file-coding forced to \`yes': Required for Mule support])
+  with_file_coding=yes
+fi
 
 if test "$with_file_coding" = "yes" && test "$with_mule" = "no"; then
   AC_DEFINE(FILE_CODING)
@@ -3705,7 +3712,7 @@ if test "$with_mule" = "yes" ; then
 else dnl "$with_mule" = "no"
   for feature in xim canna wnn; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
-      AC_MSG_WARN("--with-${feature} ignored:  Not valid without Mule support")
+      AC_MSG_WARN([--with-${feature} ignored:  Not valid without Mule support])
     fi
     eval "with_${feature}=no"
   done
@@ -4166,7 +4173,7 @@ if test "$with_tty" = "yes"  ; then
       c_switch_site="$c_switch_site -I/usr/include/ncurses"
       AC_CHECK_HEADER(ncurses/curses.h, curses_h_file=ncurses/curses.h)
       if test "$ac_cv_header_ncurses_curses_h" = "yes"
-        then AC_MSG_WARN("Your system has the bogus ncurses include bug.")
+        then AC_MSG_WARN([Your system has the bogus ncurses include bug.])
         else c_switch_site="$save_c_switch_site"
       fi
     fi
@@ -4211,7 +4218,7 @@ if test "$with_tty" = "yes"  ; then
 else dnl "$with_tty" = "no"
   for feature in ncurses gpm; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
-      AC_MSG_WARN("--with-${feature} ignored:  Not valid without TTY support")
+      AC_MSG_WARN([--with-${feature} ignored:  Not valid without TTY support])
     fi
     eval "with_${feature}=no"
   done
@@ -4381,7 +4388,7 @@ if test "$with_modules" != "no"; then
     if test "$with_modules" = "yes"; then
       XE_DIE("Required module support cannot be provided.")
     else
-      AC_MSG_WARN("Module support cannot be provided.")
+      AC_MSG_WARN([Module support cannot be provided.])
     fi
     with_modules=no
   fi
