@@ -1,3 +1,13 @@
+2001-04-07  Hrvoje Niksic  <hniksic@arsdigita.com>
+
+	* extents.c (Fset_extent_endpoints): Force creation of extent info
+	in buffer_or_string.
+
+2001-04-07  Hrvoje Niksic  <hniksic@arsdigita.com>
+
+	* extents.c (process_extents_for_insertion_mapper): Correctly
+	check for open-open zero-length extents.
+
 2001-04-02  Jan Vroonhof  <jan@xemacs.org>
 
 	* redisplay.c (add_bufbyte_string_runes): Update data->bytepos

@@ -4,7 +4,7 @@
 
 ;; Author: Adrian Aichner <adrian@xemacs.org>
 ;; Date: Sun., Apr. 20, 1997-2000.
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
