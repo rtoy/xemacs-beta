@@ -1,5 +1,10 @@
 2005-02-03  Ben Wing  <ben@xemacs.org>
 
+	* shadow.el (find-emacs-lisp-shadows):
+	Ignore custom-defines.
+
+2005-02-03  Ben Wing  <ben@xemacs.org>
+
 	* about.el:
 	* about.el (xemacs-hackers):
 	* about.el (about-personal-info):
