@@ -1811,9 +1811,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       vars_of_menubar ();
 #endif
       vars_of_minibuf ();
-#ifdef HAVE_SHLIB
       vars_of_module ();
-#endif
 #ifdef WIN32_NATIVE
       vars_of_dired_mswindows ();
       vars_of_nt ();

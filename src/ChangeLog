@@ -1,3 +1,11 @@
+2003-10-14  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in (shlib_objs): Remove emodules.o.
+	* Makefile.in.in (objs): Add emodules.o; it always has content now.
+	* emacs.c (main_1): Call vars_of_module to define module-extensions.
+	* emodules.c: Always set Vmodule_load_path and Vmodule_extensions.
+	* emodules.h: Vmodule_load_path is now static.
+
 2003-10-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* mule-charset.c (get_unallocated_leading_byte): #endif->#else.

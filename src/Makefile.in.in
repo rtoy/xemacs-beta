@@ -223,7 +223,7 @@ sheap_objs=sheap.o
 #endif
 
 #ifdef HAVE_SHLIB
-shlib_objs=sysdll.o emodules.o
+shlib_objs=sysdll.o
 # ifdef HAVE_MS_WINDOWS
 export_lib=xemacs-export.o
 xemacs-export.o: xemacs.def
@@ -258,7 +258,7 @@ objs=\
  console-stream.o\
  data.o $(database_objs) $(debug_objs) device.o dired.o doc.o doprnt.o\
  dynarr.o \
- editfns.o elhash.o emacs.o eval.o events.o\
+ editfns.o elhash.o emacs.o emodules.o eval.o events.o\
  event-stream.o $(event_unixoid_objs) $(extra_objs) extents.o\
  faces.o file-coding.o fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o \
  font-lock.o frame.o\

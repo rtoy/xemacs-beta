@@ -21,6 +21,12 @@ Boston, MA 02111-1307, USA.  */
 #include "emodules.h"
 #include "sysdll.h"
 
+/* Load path */
+static Lisp_Object Vmodule_load_path;
+
+/* Module lFile extensions */
+static Lisp_Object Vmodule_extensions;
+
 #ifdef HAVE_SHLIB
 
 /* CE-Emacs version number */
@@ -33,8 +39,6 @@ int load_modules_quietly;
    as it allows the unbinding of symbol-value-forward variables. */
 int unloading_module;
 
-/* Load path */
-Lisp_Object Vmodule_load_path;
 Lisp_Object Qdll_error;
 Lisp_Object Qmodule, Qunload_module, module_tag;
 
@@ -48,8 +52,6 @@ typedef struct _emodules_list
   void (*unload)(void); /* Module cleanup function to run before unloading */
   dll_handle dlhandle;  /* Dynamic lib handle                              */
 } emodules_list;
-
-static Lisp_Object Vmodule_extensions;
 
 static int emodules_depth;
 static dll_handle dlhandle;
@@ -576,9 +578,14 @@ reinit_vars_of_module (void)
   modnum = 0;
 }
 
+#endif /* HAVE_SHLIB */
+
 void
 vars_of_module (void)
 {
+#ifdef HAVE_SHLIB
+  Fprovide (intern ("modules"));
+
   reinit_vars_of_module ();
 
   DEFVAR_LISP ("module-version", &Vmodule_version /*
@@ -603,6 +610,14 @@ called by a Lisp function.
 */);
   load_modules_quietly = 0;
 
+  DEFVAR_BOOL ("unloading-module", &unloading_module /*
+Used internally by `unload-feature'.  Do not set this variable.
+Danger, danger, Will Robinson!
+*/);
+  unloading_module = 0;
+
+#endif /* HAVE_SHLIB */
+
   DEFVAR_LISP ("module-load-path", &Vmodule_load_path /*
 *List of directories to search for dynamic modules to load.
 Each element is a string (directory name) or nil (try default directory).
@@ -625,12 +640,6 @@ when a dynamic module is loaded.
 */);
   Vmodule_load_path = Qnil;
 
-  DEFVAR_BOOL ("unloading-module", &unloading_module /*
-Used internally by `unload-feature'.  Do not set this variable.
-Danger, danger, Will Robinson!
-*/);
-  unloading_module = 0;
-
   DEFVAR_LISP ("module-extensions", &Vmodule_extensions /*
 *List of filename extensions to use when searching for dynamic modules.
 */);
@@ -639,8 +648,4 @@ Danger, danger, Will Robinson!
 			      build_string (".dll"),
 			      build_string (".dylib"),
 			      build_string (""));
-
-  Fprovide (intern ("modules"));
 }
-
-#endif /* HAVE_SHLIB */

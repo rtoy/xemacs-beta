@@ -46,9 +46,6 @@ Boston, MA 02111-1307, USA.  */
 /* Module loading technology version number */
 extern Lisp_Object Vmodule_version;
 
-/* Load path */
-extern Lisp_Object Vmodule_load_path;
-
 /* XEmacs version Information */
 extern Lisp_Object Vemacs_major_version;
 extern Lisp_Object Vemacs_minor_version;
