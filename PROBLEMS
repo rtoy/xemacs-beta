@@ -1837,6 +1837,14 @@ problem still exists.  Also ask on xemacs-nt@xemacs.org.
 
 
 ** Cygwin
+*** XEmacs fails to start because cygXpm-noX4.dll was not found.
+
+Andy Piper <andy@xemacs.org> sez:
+
+    cygXpm-noX4 is part of the cygwin distribution under libraries or
+    graphics, but is not installed by default. You need to run the
+    cygwin setup again and select this package.
+
 *** Subprocesses do not work.
 
 You do not have "tty" in your CYGWIN environment variable.  This must

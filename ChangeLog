@@ -1,3 +1,7 @@
+2002-10-18  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
+
+	* PROBLEMS (Running/Cygwin): "No cygXpm-noX" fatal error.
+
 2002-10-17  Stephen J. Turnbull  <steve@tleepslib.sk.tsukuba.ac.jp>
 
 	* PROBLEMS (Missing charsets): Remove ambiguity.
