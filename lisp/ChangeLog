@@ -1,3 +1,8 @@
+2004-01-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* mule/japanese.el (paragraph-start, paragraph-separate):
+	Remove anchor to BOL.
+
 2004-01-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* specifier.el (canonicalize-spec): Fix typo in docstring.
