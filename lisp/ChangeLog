@@ -1,3 +1,23 @@
+2005-02-21  Ben Wing  <ben@xemacs.org>
+
+	* glyphs.el:
+	* glyphs.el (make-image-specifier):
+	* glyphs.el (glyph-property):
+	* glyphs.el (convert-glyph-property-into-specifier):
+	* glyphs.el (set-glyph-property):
+	* glyphs.el (glyph-image):
+	* glyphs.el (set-glyph-image):
+	* glyphs.el (glyph-contrib-p):
+	* glyphs.el (glyph-contrib-p-instance):
+	* glyphs.el (set-glyph-contrib-p):
+	* glyphs.el (glyph-baseline):
+	* glyphs.el (set-glyph-baseline):
+	* glyphs.el (make-glyph):
+	Update documentation of `make-glyph' and `make-image-specifier'
+	to more clearly document image instantiators and describe how
+	errors are handled in make-glyph.  Also fix symbol references in
+	doc strings to use `symbol' format, not 'symbol.
+
 2005-02-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* about.el (about-xemacs):
