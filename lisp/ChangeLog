@@ -1,3 +1,7 @@
+2003-10-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* wid-edit.el (widget-url-link-action): Fix typo.
+
 2003-10-05	Kevin Haddock	<kevinhaddock@yahoo.com>
 
 	* lisp/wid-edit.el (widget-default-create): Implemented suggested

@@ -2131,7 +2131,7 @@ and `:help-echo' members."
 
 (defun widget-url-link-action (widget &optional event)
   "Open the url specified by WIDGET."
-  (if-fboundp 'browse-url
+  (if (fboundp 'browse-url)
       (browse-url (widget-value widget))
     (error 'missing-package "Cannot browse URLs in this XEmacs" 'browse-url)))
 
