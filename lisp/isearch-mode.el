@@ -225,6 +225,13 @@ Default nil means edit the string from the search ring first."
   :type 'boolean
   :group 'isearch)
 
+(defcustom isearch-mode-line-string " Isearch"
+  "*String to display in the modeline when `isearch-mode' is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil))
+  :group 'isearch)
+
 ;;;====================================================
 ;;; Define isearch-mode keymap.
 
@@ -384,7 +391,7 @@ Default nil means edit the string from the search ring first."
 ;; Minor-mode-alist changes - kind of redundant with the
 ;; echo area, but if isearching in multiple windows, it can be useful.
 
-(add-minor-mode 'isearch-mode 'isearch-mode)
+(add-minor-mode 'isearch-mode 'isearch-mode-line-string)
 
 (defvar isearch-mode nil) ;; Name of the minor mode, if non-nil.
 (make-variable-buffer-local 'isearch-mode)

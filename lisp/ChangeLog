@@ -1,3 +1,11 @@
+2001-12-18  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* gnuserv.el: 
+	(gnuserv-mode-line-string): new customizable variable
+	(gnuserv-minor-mode): make variable buffer-local
+	* isearch-mode.el:
+	(isearch-mode-line-string): new customizable variable	
+
 2001-12-16  Andy Piper  <andy@xemacs.org>
 
 	* package-get.el (package-get-update-all): Make sure installed.db
