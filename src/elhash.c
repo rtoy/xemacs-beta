@@ -24,6 +24,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file implements the hash table lisp object type.
 
+   This implementation was mostly written by Martin Buchholz in 1997.
+
+   The Lisp-level API (derived from Common Lisp) is almost completely
+   compatible with GNU Emacs 21, even though the implementations are
+   totally independent.
+
    The hash table technique used is "linear probing".  Collisions are
    resolved by putting the item in the next empty place in the array
    following the collision.  Finding a hash entry performs a linear
@@ -1233,6 +1239,30 @@ This can be one of `non-weak', `weak', `key-weak' or `value-weak'.
    Note: We GCPRO memory on the heap, not on the stack.  There is no
    obvious reason why this is bad, but as of this writing this is the
    only known occurrence of this technique in the code.
+
+   -- Martin
+*/
+
+/* Ben disagrees with the "copying hentries" design, and says:
+
+   Another solution is the same as I've already proposed -- when
+   mapping, mark the table as "change-unsafe", and in this case, use a
+   secondary table to maintain changes.  this could be basically a
+   standard hash table, but with entries only for added or deleted
+   entries in the primary table, and a marker like Qunbound to
+   indicate a deleted entry.  puthash, gethash and remhash need a
+   single extra check for this secondary table -- totally
+   insignificant speedwise.  if you really cared about making
+   recursive maphashes completely correct, you'd have to do a bit of
+   extra work here -- when maphashing, if the secondary table exists,
+   make a copy of it, and use the copy in conjunction with the primary
+   table when mapping.  the advantages of this are
+
+   [a] easy to demonstrate correct, even with weak hashtables.
+
+   [b] no extra overhead in the general maphash case -- only when you
+       modify the table while maphashing, and even then the overhead is
+       very small.
 */
 
 static Lisp_Object
