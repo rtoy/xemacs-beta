@@ -1,3 +1,9 @@
+2001-07-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* etc/MYTHOLOGY, etc/OXYMORONS: Remove.
+	etc/VEGETABLES: Copied from xemacs-builds module, file Codenames-21.5.
+	Bring codenames into synch with reality.
+
 2001-07-18  Adrian Aichner  <adrian@xemacs.org>
 
 	* etc\TUTORIAL: Fix minor typo.
