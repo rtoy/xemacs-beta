@@ -1,3 +1,7 @@
+2001-12-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* info\.cvsignore: Correct pattern to match all info files.
+
 2001-12-18  Jan Vroonhof  <jan@xemacs.org>
 
 	* etc/photos/jan.png: Add mug shot.
