@@ -170,6 +170,14 @@ one version of a package available.")
   :group 'package-get)
 
 ;;;###autoload
+(defcustom package-get-package-index-file-location 
+  (or (getenv "EMACSPACKAGEPATH")
+      user-init-directory)
+  "*The directory where the package-index file can be found."
+  :type 'directory
+  :group 'package-get)
+
+;;;###autoload
 (defcustom package-get-install-to-user-init-directory nil
   "*If non-nil install packages under `user-init-directory'."
   :type 'boolean
@@ -372,10 +380,6 @@ with respect to `package-get-remote', or an absolute path."
   :type 'file
   :group 'package-get)
 
-(defvar package-get-user-index-filename
-  (paths-construct-path (list user-init-directory package-get-base-filename))
-  "Name for the user-specific location of the package-get database file.")
-
 (defcustom package-get-always-update nil
   "*If Non-nil always make sure we are using the latest package index (base).
 Otherwise respect the `force-current' argument of `package-get-require-base'."
@@ -489,14 +493,35 @@ If NO-REMOTE is non-nil never search remote locations."
                file)))))
 
 (defun package-get-locate-index-file (no-remote)
-  "Locate the package-get index file.  Do not return remote paths if NO-REMOTE
-is non-nil."
+  "Locate the package-get index file.  
+
+Do not return remote paths if NO-REMOTE is non-nil.  If the index
+file doesn't exist in `package-get-package-index-file-location', ask
+the user if one should be created using the index file in core as a
+template."
   (or (package-get-locate-file package-get-base-filename t no-remote)
-      (if (file-exists-p package-get-user-index-filename)
-	  package-get-user-index-filename)
-      (locate-data-file package-get-base-filename)
-      (error 'search-failed
-	     "Can't locate a package index file.")))
+      (if (file-exists-p (expand-file-name package-get-base-filename
+					   package-get-package-index-file-location))
+	  (expand-file-name package-get-base-filename
+			    package-get-package-index-file-location)
+	(if (y-or-n-p (format "No index file, shall I create one in %s? "
+			      package-get-package-index-file-location))
+	    (progn
+	      (save-excursion
+		(set-buffer 
+		 (find-file-noselect (expand-file-name
+				      package-get-base-filename
+				      package-get-package-index-file-location)))
+		(let ((coding-system-for-write 'binary))
+		  (erase-buffer)
+		  (insert-file-contents-literally
+		   (locate-data-file package-get-base-filename))
+		  (save-buffer (current-buffer))
+		  (kill-buffer (current-buffer))))
+	      (expand-file-name package-get-base-filename
+				package-get-package-index-file-location))
+	  (error 'search-failed
+		 "Can't locate a package index file.")))))
 
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,
@@ -508,8 +533,14 @@ if different."
 			  (with-temp-buffer
 			    (insert-file-contents-literally location)
 			    (md5 (current-buffer)))))
-	(unless (and location (file-writable-p location))
-	  (setq location package-get-user-index-filename))
+	(when (not (file-writable-p location))
+	  (if (y-or-n-p (format "Sorry, %s is read-only, can I use %s? "
+				location user-init-directory))
+	      (setq location (expand-file-name
+			      package-get-base-filename
+			      package-get-package-index-file-location))
+	    (error 'file-error
+		   (format "%s is read-only" location))))
 	(when (y-or-n-p (concat "Update package index in " location "? "))
 	  (let ((coding-system-for-write 'binary))
 	    (write-file location)))))))
