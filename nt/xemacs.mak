@@ -556,20 +556,28 @@ CONFIG_VALUES = $(LIB_SRC)\config.values
 !if [echo PACKAGE_PATH>>$(CONFIG_VALUES) && echo $(PATH_PACKAGEPATH)>>$(CONFIG_VALUES)]
 !endif
 
+
+LINK_DEPENDENCY_ARGS = -Fe$@ -Fd$* $** -link -incremental:no
+LINK_STANDARD_LIBRARY_ARGS = setargv.obj user32.lib wsock32.lib
+
 # Inferred rule
 {$(LIB_SRC)}.c{$(LIB_SRC)}.exe :
 	cd $(LIB_SRC)
-	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) -Fe$@ -Fd$* $** -link -incremental:no setargv.obj user32.lib wsock32.lib
+	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) $(LINK_DEPENDENCY_ARGS) $(LINK_STANDARD_LIBRARY_ARGS)
 	cd $(NT)
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(SRC)/regex.c
 $(LIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
+	cd $(LIB_SRC)
+	$(CCV) -I$(LIB_SRC) -I$(SRC) $(LIB_SRC_DEFINES) $(CFLAGS) $(LINK_DEPENDENCY_ARGS) -stack:0x800000 $(LINK_STANDARD_LIBRARY_ARGS)
+	cd $(NT)
+
 $(LIB_SRC)/movemail.exe : $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
 
 $(LIB_SRC)/minitar.exe : $(NT)/minitar.c
 	cd $(LIB_SRC)
-	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_NO_LIB) -Fe$@ -Fd$* $** -link -incremental:no "$(ZLIB_DIR)\zlib.lib"
+	$(CCV) -I"$(ZLIB_DIR)" $(LIB_SRC_DEFINES) $(CFLAGS_NO_LIB) $(LINK_DEPENDENCY_ARGS) "$(ZLIB_DIR)\zlib.lib"
 	cd $(NT)
 
 LIB_SRC_TOOLS = \

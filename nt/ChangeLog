@@ -1,6 +1,14 @@
-2002-05-10  Adrian Aichner  <adrian@xemacs.org>
+2002-05-14  Ben Wing  <ben@xemacs.org>
 
-	* xemacs.mak (OPTIMIZED_BUILD): Default variable.
+	* xemacs.mak (CONFIG_VALUES):
+	* xemacs.mak (LINK_DEPENDENCY_ARGS): New.
+	* xemacs.mak (LINK_STANDARD_LIBRARY_ARGS): New.
+	* xemacs.mak (ETAGS_DEPS):
+	* xemacs.mak (LIB_SRC_TOOLS):
+	Increase the stack of etags to 0x800000 (8 MB), same as for XEmacs
+	and enough to prevent regex crashes with complex multiline
+	regexps. (More specifically, we reach the built-in failure limit before
+	crashing the stack.  etags complains, but keeps on processing.)
 
 2002-05-06  Jonathan Harris  <jonathan@xemacs.org>
 
