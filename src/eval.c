@@ -4906,6 +4906,95 @@ record_unwind_protect (Lisp_Object (*function) (Lisp_Object arg),
 }
 
 static Lisp_Object
+restore_lisp_object (Lisp_Object cons)
+{
+  Lisp_Object opaque = XCAR (cons);
+  Lisp_Object *addr = (Lisp_Object *) get_opaque_ptr (opaque);
+  *addr = XCDR (cons);
+  free_opaque_ptr (opaque);
+  free_cons (XCONS (cons));
+  return Qnil;
+}
+
+/* Establish an unwind-protect which will restore the Lisp_Object pointed to
+   by ADDR with the value VAL. */
+int
+record_unwind_protect_restoring_lisp_object (Lisp_Object *addr,
+					     Lisp_Object val)
+{
+  Lisp_Object opaque = make_opaque_ptr (addr);
+  return record_unwind_protect (restore_lisp_object,
+				noseeum_cons (opaque, val));
+}
+
+/* Similar to specbind() but for any C variable whose value is a
+   Lisp_Object.  Sets up an unwind-protect to restore the variable
+   pointed to by ADDR to its existing value, and then changes its
+   value to NEWVAL.  Returns the previous value of specpdl_depth();
+   pass this to unbind_to() after you are done. */
+int
+internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval)
+{
+  int count = specpdl_depth ();
+  record_unwind_protect_restoring_lisp_object (addr, *addr);
+  *addr = newval;
+  return count;
+}
+
+static Lisp_Object
+restore_int (Lisp_Object cons)
+{
+  Lisp_Object opaque = XCAR (cons);
+  Lisp_Object lval = XCDR (cons);
+  int *addr = (int *) get_opaque_ptr (opaque);
+  int val;
+
+  if (INTP (lval))
+    val = XINT (lval);
+  else
+    {
+      val = (int) get_opaque_ptr (lval);
+      free_opaque_ptr (lval);
+    }
+
+  *addr = val;
+  free_opaque_ptr (opaque);
+  free_cons (XCONS (cons));
+  return Qnil;
+}
+
+/* Establish an unwind-protect which will restore the int pointed to
+   by ADDR with the value VAL.  This function works correctly with
+   all ints, even those that don't fit into a Lisp integer. */
+int
+record_unwind_protect_restoring_int (int *addr, int val)
+{
+  Lisp_Object opaque = make_opaque_ptr (addr);
+  Lisp_Object lval;
+
+  if (NUMBER_FITS_IN_AN_EMACS_INT (val))
+    lval = make_int (val);
+  else
+    lval = make_opaque_ptr ((void *) val);
+  return record_unwind_protect (restore_int, noseeum_cons (opaque, lval));
+}
+
+/* Similar to specbind() but for any C variable whose value is an int.
+   Sets up an unwind-protect to restore the variable pointed to by
+   ADDR to its existing value, and then changes its value to NEWVAL.
+   Returns the previous value of specpdl_depth(); pass this to
+   unbind_to() after you are done.  This function works correctly with
+   all ints, even those that don't fit into a Lisp integer. */
+int
+internal_bind_int (int *addr, int newval)
+{
+  int count = specpdl_depth ();
+  record_unwind_protect_restoring_int (addr, *addr);
+  *addr = newval;
+  return count;
+}
+
+static Lisp_Object
 free_pointer (Lisp_Object opaque)
 {
   xfree (get_opaque_ptr (opaque));

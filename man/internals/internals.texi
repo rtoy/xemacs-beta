@@ -117,6 +117,7 @@ This Info file contains v1.4 of the XEmacs Internals Manual, March 2001.
 * The XEmacs Object System (Abstractly Speaking)::
 * How Lisp Objects Are Represented in C::
 * Rules When Writing New C Code::
+* CVS Techniques::
 * A Summary of the Various XEmacs Modules::
 * Allocation of Objects in XEmacs Lisp::
 * Dumping::
@@ -154,7 +155,9 @@ Rules When Writing New C Code
 
 * General Coding Rules::
 * Writing Lisp Primitives::
+* Writing Good Comments::
 * Adding Global Lisp Variables::
+* Proper Use of Unsigned Types::
 * Coding for Mule::
 * Techniques for XEmacs Developers::
 
@@ -165,6 +168,10 @@ Coding for Mule
 * Conversion to and from External Data::
 * General Guidelines for Writing Mule-Aware Code::
 * An Example of Mule-Aware Code::
+
+CVS Techniques
+
+* Merging a Branch into the Trunk::
 
 A Summary of the Various XEmacs Modules
 
@@ -1839,7 +1846,7 @@ performance is an issue, use @code{type_checking_assert},
 nothing unless the corresponding configure error checking flag was
 specified.
 
-@node Rules When Writing New C Code, A Summary of the Various XEmacs Modules, How Lisp Objects Are Represented in C, Top
+@node Rules When Writing New C Code, CVS Techniques, How Lisp Objects Are Represented in C, Top
 @chapter Rules When Writing New C Code
 @cindex writing new C code, rules when
 @cindex C code, rules when writing new
@@ -3096,7 +3103,97 @@ add a DEFINE_LRECORD_IMPLEMENTATION call to @file{@var{foo}.c}
 add an INIT_LRECORD_IMPLEMENTATION call to @code{syms_of_@var{foo}.c}
 @end enumerate
 
-@node A Summary of the Various XEmacs Modules, Allocation of Objects in XEmacs Lisp, Rules When Writing New C Code, Top
+@node CVS Techniques, A Summary of the Various XEmacs Modules, Rules When Writing New C Code, Top
+@chapter CVS Techniques
+@cindex CVS techniques
+
+@menu
+* Merging a Branch into the Trunk::
+@end menu
+
+@node Merging a Branch into the Trunk
+@section Merging a Branch into the Trunk
+@cindex merging a branch into the trunk
+
+@enumerate
+@item
+If you haven't already done a merge, you will be merging from the branch
+point; otherwise you'll be merging from the last merge point, which
+should be marked by a tag, e.g. @samp{last-sync-ben-mule-21-5}.  In the
+former case, create the last-sync tag, e.g.
+
+@example
+crw rtag -r ben-mule-21-5-bp last-sync-ben-mule-21-5 xemacs
+@end example
+
+(You did create a branch point tag when you created the branch, didn't
+you?)
+
+@item
+Check everything in on your branch.
+
+@item
+Tag your branch with a pre-sync tag, e.g.
+
+@example
+crw rtag -r ben-mule-21-5 ben-mule-21-5-pre-feb-20-2002-sync xemacs
+@end example
+
+Note, you need to use rtag and specify a version with @samp{-r} (use
+@samp{-r HEAD} if necessary) so that removed files are handled correctly
+in some obscure cases.  See section 4.8 of the CVS manual.
+
+@item
+Tag the trunk so you have a stable place to merge up to in case people
+are asynchronously committing to the trunk, e.g.
+
+@example
+crw rtag -r HEAD main-branch-ben-mule-21-5-syncpoint-feb-20-2002 xemacs
+crw rtag -F -r main-branch-ben-mule-21-5-syncpoint-feb-20-2002 next-sync-ben-mule-21-5 xemacs
+@end example
+
+Use -F in the second case because the name might already exist, e.g. if
+you've already done a merge.  We make two tags because one is a
+permanent mark indicating a syncpoint when merging, and the other is a
+symbolic tag to make other operations easier.
+
+@item
+Make a backup of your source tree (not totally necessary but useful for
+reference and peace of mind): Move one level up from the top directory
+of your branch and do, e.g.
+
+@example
+cp -a mule mule-backup-2-23-02
+@end example
+
+@item
+Now, we're ready to merge!  Make sure you're in the top directory of
+your branch and do, e.g.
+
+@example
+cvs update -j last-sync-ben-mule-21-5 -j next-sync-ben-mule-21-5
+@end example
+
+@item
+Fix all merge conflicts.  Get the sucker to compile and run.
+
+@item
+Tag your branch with a post-sync tag, e.g.
+
+@example
+crw rtag -r ben-mule-21-5 ben-mule-21-5-post-feb-20-2002-sync xemacs
+@end example
+
+@item
+Update the last-sync tag, e.g.
+
+@example
+crw rtag -F -r next-sync-ben-mule-21-5 last-sync-ben-mule-21-5 xemacs
+@end example
+@end enumerate
+
+
+@node A Summary of the Various XEmacs Modules, Allocation of Objects in XEmacs Lisp, CVS Techniques, Top
 @chapter A Summary of the Various XEmacs Modules
 @cindex modules, a summary of the various XEmacs
 

@@ -774,6 +774,9 @@ enum Lisp_Type
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
 #define EMACS_INT_MAX ((EMACS_INT) ((1UL << (INT_VALBITS - 1)) -1UL))
 #define EMACS_INT_MIN (-(EMACS_INT_MAX) - 1)
+/* WARNING: evaluates its arg twice. */
+#define NUMBER_FITS_IN_AN_EMACS_INT(num) \
+  ((num) <= EMACS_INT_MAX && (num) >= EMACS_INT_MIN)
 
 #ifdef USE_UNION_TYPE
 # include "lisp-union.h"
@@ -3070,6 +3073,8 @@ void specbind (Lisp_Object, Lisp_Object);
 int record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
 int record_unwind_protect_freeing (void *ptr);
 int record_unwind_protect_freeing_dynarr (void *ptr);
+int internal_bind_int (int *addr, int newval);
+int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
 void do_autoload (Lisp_Object, Lisp_Object);
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);

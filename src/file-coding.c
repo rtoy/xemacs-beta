@@ -2037,7 +2037,7 @@ coding_reader (Lstream *stream, unsigned char *data, Bytecount size)
            and when we get 0, keep taking more data until we don't get 0 --
            we don't know how much data the conversion routine might need
            before it can generate any data of its own */
-	Bytecount readmore = max (size, 1024);
+	Bytecount readmore = max (size, str->one_byte_at_a_time ? 1 : 1024);
 
 	Dynarr_add_many (str->convert_from, 0, readmore);
 	read_size = Lstream_read (str->other_end,
@@ -2305,7 +2305,7 @@ set_coding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
 static Lisp_Object
 make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
 		      const char *mode, enum encode_decode direction,
-		      int no_close_other)
+		      int flags)
 {
   Lstream *lstr = Lstream_new (lstream_coding, mode);
   struct coding_stream *str = CODING_STREAM_DATA (lstr);
@@ -2319,29 +2319,33 @@ make_coding_stream_1 (Lstream *stream, Lisp_Object codesys,
   str->convert_to = Dynarr_new (unsigned_char);
   str->convert_from = Dynarr_new (unsigned_char);
   str->direction = direction;
-  str->no_close_other = no_close_other;
+  if (flags & CODE_FL_NO_CLOSE_OTHER)
+    str->no_close_other = 1;
+  else if (flags & CODE_FL_READ_ONE_BYTE_AT_A_TIME)
+    str->one_byte_at_a_time = 1;
+    
   set_coding_stream_coding_system (lstr, codesys);
   return wrap_lstream (lstr);
 }
 
-/* If NO_CLOSE_OTHER is non-zero, don't close STREAM (the stream at the
-   other end) when this stream is closed. */
+/* FLAGS -- #### document me.  If NO_CLOSE_OTHER is non-zero, don't close
+   STREAM (the stream at the other end) when this stream is closed. */
 Lisp_Object
 make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
-			  enum encode_decode direction, int no_close_other)
+			  enum encode_decode direction, int flags)
 {
   return make_coding_stream_1 (stream, codesys, "r", direction,
-                               no_close_other);
+                               flags);
 }
 
-/* If NO_CLOSE_OTHER is non-zero, don't close STREAM (the stream at the
-   other end) when this stream is closed. */
+/* FLAGS -- #### document me.  If NO_CLOSE_OTHER is non-zero, don't close
+   STREAM (the stream at the other end) when this stream is closed. */
 Lisp_Object
 make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
-			  enum encode_decode direction, int no_close_other)
+			  enum encode_decode direction, int flags)
 {
   return make_coding_stream_1 (stream, codesys, "w", direction,
-                               no_close_other);
+                               flags);
 }
 
 static Lisp_Object
@@ -4147,7 +4151,7 @@ detect_coding_stream (Lisp_Object stream)
   Lisp_Object binary_instream =
     make_coding_input_stream
       (XLSTREAM (stream), Qbinary,
-       CODING_ENCODE, 1);
+       CODING_ENCODE, CODE_FL_NO_CLOSE_OTHER);
   Lisp_Object decstream =
     make_coding_input_stream 
       (XLSTREAM (binary_instream),

@@ -836,7 +836,7 @@ do {							\
 } while (0)
 #define DETECTOR_HAS_METHOD(Detector, Meth)				\
   Dynarr_at (all_coding_detectors, detector_##Detector).Meth##_method =	\
-  Detector##_##Meth
+    Detector##_##Meth
   
 
 /**************************************************/
@@ -930,6 +930,9 @@ struct coding_stream
 
   /* If set, don't close the stream at the other end when being closed. */
   unsigned int no_close_other:1;
+  /* If set, read only one byte at a time from other end to avoid any
+     possible blocking. */
+  unsigned int one_byte_at_a_time:1;
   
   /* #### Temporary test */
   unsigned int finalized:1;
@@ -1057,12 +1060,15 @@ Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Lisp_Object type,
 					 Lisp_Object description,
 					 Lisp_Object props);
+
+#define CODE_FL_NO_CLOSE_OTHER (1 << 0)
+#define CODE_FL_READ_ONE_BYTE_AT_A_TIME (1 << 1)
 Lisp_Object make_coding_input_stream (Lstream *stream, Lisp_Object codesys,
 				      enum encode_decode direction,
-				      int no_close_other);
+				      int flags);
 Lisp_Object make_coding_output_stream (Lstream *stream, Lisp_Object codesys,
 				       enum encode_decode direction,
-				       int no_close_other);
+				       int flags);
 void set_detection_results (struct detection_state *st, int detector,
 			    int given);
 

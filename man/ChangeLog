@@ -1,3 +1,13 @@
+2002-04-03  Ben Wing  <ben@xemacs.org>
+
+	* internals/internals.texi (Top):
+	* internals/internals.texi (How Lisp Objects Are Represented in C):
+	* internals/internals.texi (Techniques for XEmacs Developers):
+	* internals/internals.texi (CVS Techniques):
+	* internals/internals.texi (Merging a Branch into the Trunk):
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	Add section on correctly merging a branch back into the trunk.
+
 2002-03-19  Adrian Aichner  <adrian@xemacs.org>
 
 	* widget.texi (constants): Typo fix.

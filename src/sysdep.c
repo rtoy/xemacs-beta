@@ -2234,9 +2234,6 @@ extern EMACS_INT consing_since_gc;
 Bytecount
 total_data_usage (void)
 {
-  static EMACS_INT last_consing_since_gc;
-  static void *last_sbrk;
-
 #ifdef NEED_STARTS
   void *data_start = start_of_data ();
 #else
@@ -2245,6 +2242,9 @@ total_data_usage (void)
   
 #if !defined (WIN32_NATIVE) && !defined (CYGWIN)
   void *data_end;
+
+  static EMACS_INT last_consing_since_gc;
+  static void *last_sbrk;
 
   /* Random hack to avoid calling sbrk constantly (every funcall).  #### Is
      it worth it? */

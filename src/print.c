@@ -762,7 +762,6 @@ Output stream is STREAM, or value of `standard-output' (which see).
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (object, stream);
 
-  print_depth = 0;
   stream = print_prepare (stream, &frame);
   print_internal (object, stream, 1);
   print_finish (stream, frame);
@@ -787,7 +786,6 @@ second argument NOESCAPE is non-nil.
   struct gcpro gcpro1, gcpro2, gcpro3;
   GCPRO3 (object, stream, result);
 
-  print_depth = 0;
   RESET_PRINT_GENSYM;
   print_internal (object, stream, NILP (noescape));
   RESET_PRINT_GENSYM;
@@ -813,7 +811,6 @@ Output stream is STREAM, or value of `standard-output' (which see).
 
   GCPRO2 (object, stream);
   stream = print_prepare (stream, &frame);
-  print_depth = 0;
   print_internal (object, stream, 0);
   print_finish (stream, frame);
   UNGCPRO;
@@ -834,7 +831,6 @@ Output stream is STREAM, or value of `standard-output' (which see).
 
   GCPRO2 (object, stream);
   stream = print_prepare (stream, &frame);
-  print_depth = 0;
   write_char_internal ("\n", stream);
   print_internal (object, stream, 1);
   write_char_internal ("\n", stream);
@@ -1388,6 +1384,7 @@ void
 print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
+  int specdepth;
 
   QUIT;
 
@@ -1481,7 +1478,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 
   being_printed[print_depth] = obj;
-  print_depth++;
+  specdepth = internal_bind_int (&print_depth, print_depth + 1);
 
   if (print_depth > PRINT_CIRCLE)
     signal_error (Qstack_overflow, "Apparently circular structure being printed", Qunbound);
@@ -1610,7 +1607,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
     }
 
-  print_depth--;
+  unbind_to (specdepth);
 }
 
 
@@ -1890,23 +1887,17 @@ static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
   /* This function can GC */
-  int save_print_readably = print_readably;
-  int save_print_depth    = print_depth;
-  Lisp_Object save_Vprint_length = Vprint_length;
-  Lisp_Object save_Vprint_level  = Vprint_level;
-  Lisp_Object save_Vinhibit_quit = Vinhibit_quit;
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (save_Vprint_level, save_Vprint_length, save_Vinhibit_quit);
-
-  print_depth = 0;
-  print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
-  print_unbuffered++;
-  /* Could use unwind-protect, but why bother? */
+  int specdepth = internal_bind_int (&print_depth, 0);
+  internal_bind_int (&print_readably,
+		     debug_print_readably != -1 ? debug_print_readably : 0);
+  internal_bind_int (&print_unbuffered, print_unbuffered + 1);
   if (debug_print_length > 0)
-    Vprint_length = make_int (debug_print_length);
+    internal_bind_lisp_object (&Vprint_length, make_int (debug_print_length));
   if (debug_print_level > 0)
-    Vprint_level = make_int (debug_print_level);
-
+    internal_bind_lisp_object (&Vprint_level, make_int (debug_print_level));
+  /* #### Do we need this?  It was in the old code. */
+  internal_bind_lisp_object (&Vinhibit_quit, Vinhibit_quit);
+  
   print_internal (debug_print_obj, Qexternal_debugging_output, 1);
   alternate_do_pointer = 0;
   print_internal (debug_print_obj, Qalternate_debugging_output, 1);
@@ -1915,13 +1906,7 @@ debug_print_no_newline (Lisp_Object debug_print_obj)
   print_internal (debug_print_obj, Qmswindows_debugging_output, 1);
 #endif
 
-  Vinhibit_quit  = save_Vinhibit_quit;
-  Vprint_level   = save_Vprint_level;
-  Vprint_length  = save_Vprint_length;
-  print_depth    = save_print_depth;
-  print_readably = save_print_readably;
-  print_unbuffered--;
-  UNGCPRO;
+  unbind_to (specdepth);
 }
 
 void
@@ -1937,35 +1922,20 @@ void
 debug_backtrace (void)
 {
   /* This function can GC */
-  int         old_print_readably = print_readably;
-  int         old_print_depth    = print_depth;
-  Lisp_Object old_print_length   = Vprint_length;
-  Lisp_Object old_print_level    = Vprint_level;
-  Lisp_Object old_inhibit_quit   = Vinhibit_quit;
-
-  struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (old_print_level, old_print_length, old_inhibit_quit);
-
-  print_depth = 0;
-  print_readably = 0;
-  print_unbuffered++;
-  /* Could use unwind-protect, but why bother? */
+  int specdepth = internal_bind_int (&print_depth, 0);
+  internal_bind_int (&print_readably, 0);
+  internal_bind_int (&print_unbuffered, print_unbuffered + 1);
   if (debug_print_length > 0)
-    Vprint_length = make_int (debug_print_length);
+    internal_bind_lisp_object (&Vprint_length, make_int (debug_print_length));
   if (debug_print_level > 0)
-    Vprint_level = make_int (debug_print_level);
+    internal_bind_lisp_object (&Vprint_level, make_int (debug_print_level));
+  /* #### Do we need this?  It was in the old code. */
+  internal_bind_lisp_object (&Vinhibit_quit, Vinhibit_quit);
 
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("\n");
 
-  Vinhibit_quit  = old_inhibit_quit;
-  Vprint_level   = old_print_level;
-  Vprint_length  = old_print_length;
-  print_depth    = old_print_depth;
-  print_readably = old_print_readably;
-  print_unbuffered--;
-
-  UNGCPRO;
+  unbind_to (specdepth);
 }
 
 void

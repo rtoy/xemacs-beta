@@ -1,4 +1,49 @@
-2002-03-31  Ben Wing  <ben@xemacs.org>
+2002-04-03  Ben Wing  <ben@xemacs.org>
+
+	* console-tty.c (tty_init_console):
+	* eval.c:
+	* eval.c (restore_lisp_object):
+	* eval.c (restore_int):
+	* eval.c (record_unwind_protect_restoring_int):
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	* file-coding.c (coding_reader):
+	* file-coding.c (make_coding_stream_1):
+	* file-coding.c (make_coding_input_stream):
+	* file-coding.c (make_coding_output_stream):
+	* file-coding.c (detect_coding_stream):
+	* file-coding.h:
+	* file-coding.h (DETECTOR_HAS_METHOD):
+	* file-coding.h (struct coding_stream):
+	* lisp.h:
+	* print.c (Fprin1):
+	* print.c (Fprin1_to_string):
+	* print.c (Fprinc):
+	* print.c (Fprint):
+	* print.c (print_internal):
+	* print.c (debug_print_no_newline):
+	* print.c (debug_backtrace):
+	* sysdep.c (total_data_usage):
+
+	Fix data corruption error in print.c from print_depth becoming
+	negative.  Borrow primitives internal_bind_int,
+	internal_bind_lisp_object from my stderr-proc ws, soon to be
+	integrated; use them to properly bind print_depth et al.
+
+	First fix for TTY problem.  The basic problem is I switched things
+	so that the TTY I/O is filtered through a coding system, for the
+	support of kterm and such, that speak JIS or similar
+	encodings. (#### I ***swear*** I had this working way back in
+	19.12.) Anyway, this introduced buffering issues, in which instead
+	of one char being read, it tried to read 1024 chars.  I tried
+	setting the stdin descriptor non-blocking, but it doesn't appear
+	to work on Cygwin. (#### Andy, do you know anything about this?) 
+	So I fixed it elsewhere.  If you get weirdness on the TTY, look in
+	console-tty.c and see how it gets the coding system; maybe there's
+	a way to change it (and if not, there should be!).
+
+	Also fix warning in sysdep.c.
+
+	2002-03-31  Ben Wing  <ben@xemacs.org>
 
 	* alloc.c:
 	* alloc.c (INCREMENT_CONS_COUNTER):

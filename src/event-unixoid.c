@@ -76,7 +76,6 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
   Emchar ch;
   Lisp_Object console = wrap_console (con);
 
-
   if (CONSOLE_TTY_P (con))
     ch = Lstream_get_emchar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
   else
