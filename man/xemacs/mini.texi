@@ -1,4 +1,5 @@
 
+
 @node Minibuffer, M-x, Undo, Top
 @chapter The Minibuffer
 @cindex minibuffer
@@ -31,8 +32,10 @@ cancel the command that wants the argument, and get out of the
 minibuffer, by typing @kbd{C-g}.
 
   Since the minibuffer uses the screen space of the echo area, it can
-conflict with other ways XEmacs customarily uses the echo area.  Here is
-how XEmacs handles such conflicts:
+conflict with other ways XEmacs customarily uses the echo area.  One can
+avoid such a conflict as described in @ref{Customizing Message
+Display,,,lispref, The XEmacs Lisp Reference Manual}.  Here is how
+XEmacs handles such conflicts by default:
 
 @itemize @bullet
 @item

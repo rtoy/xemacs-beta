@@ -1,3 +1,12 @@
+2003-09-20  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* xemacs/mini.texi (Minibuffer): Add customizing message display
+	reference.
+	* lispref/display.texi (Customizing Message Display): New,
+	describe `redisplay-echo-area-function',
+	`undisplay-echo-area-function', `minibuffer-echo-wait-function'.
+	(The Echo Area): Add menu.
+
 2003-09-19  Sandra Wambold  <wambold@xemacs.org>
 
 	* Makefile: add targets to produce PDF files

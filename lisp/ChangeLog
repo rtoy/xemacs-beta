@@ -1,3 +1,12 @@
+2003-09-20  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* simple.el (raw-append-message): Allow user to specify
+	alternative function for displaying message.
+	(redisplay-echo-area-function): New.
+	(clear-message): Allow user to specify function for finishing
+	message display.
+	(undisplay-echo-area-function): New.
+
 2003-09-20  James LewisMoss  <dres@lewismoss.org>
 
 	* font-menu.el (font-menu-max-number): New variable to specify

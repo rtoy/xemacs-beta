@@ -68,6 +68,7 @@ Lisp_Object Qreally_early_error_handler;
 Lisp_Object Qerrors_deactivate_region;
 
 Lisp_Object Qtop_level;
+Lisp_Object Vminibuffer_echo_wait_function;
 
 static Lisp_Object command_loop_1 (Lisp_Object dummy);
 EXFUN (Fcommand_loop_1, 0);
@@ -559,7 +560,10 @@ Don't call this unless you know what you're doing.
 	  /* Bind dont_check_for_quit to 1 so that C-g gets read in
 	     rather than quitting back to the minibuffer.  */
 	  int count = begin_dont_check_for_quit ();
-	  Fsit_for (make_int (2), Qnil);
+	  if (!NILP (Vminibuffer_echo_wait_function))
+	    call0 (Vminibuffer_echo_wait_function);
+	  else
+	    Fsit_for (make_int (2), Qnil);
 	  clear_echo_area (selected_frame (), Qnil, 0);
 	  Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
 	  unbind_to (count);
@@ -625,6 +629,15 @@ Not yet implemented.
 Not yet implemented.
 */ );
   Venter_window_hook = Qnil;
+
+  DEFVAR_LISP ("minibuffer-echo-wait-function",
+	       &Vminibuffer_echo_wait_function /*
+The function called by command loop when minibuffer was active and
+message was displayed (text appeared in \" *Echo Area*\" buffer).  It
+must wait after displaying message so that user can read it.  If the
+variable value is `nil', the equivalent of `(sit-for 2)' is run.
+*/ );
+  Vminibuffer_echo_wait_function = Qnil;
 
 #ifndef LISP_COMMAND_LOOP
   DEFVAR_LISP ("top-level", &Vtop_level /*

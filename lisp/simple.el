@@ -4052,6 +4052,16 @@ See `display-message' for some common labels.  See also `log-message'."
   :type '(repeat (symbol :tag "Label"))
   :group 'log-message)
 
+(defcustom redisplay-echo-area-function 'redisplay-echo-area
+  "The function to call to display echo area buffer."
+:type 'function
+:group 'log-message)
+
+(defcustom undisplay-echo-area-function nil
+  "The function to call to undisplay echo area buffer."
+:type 'function
+:group 'log-message)
+
 ;;Subsumed by view-lossage
 ;; Not really, I'm adding it back by popular demand. -slb
 (defun show-message-log ()
@@ -4145,6 +4155,8 @@ you should just use (message nil)."
     (remove-message label frame)
     (let ((inhibit-read-only t))
       (erase-buffer " *Echo Area*"))
+    (if undisplay-echo-area-function
+	(funcall undisplay-echo-area-function))
     ;; If outputting to the terminal, make sure we clear the left side.
     (when (or clear-stream
 	      (and (eq 'stream (frame-type frame))
@@ -4226,7 +4238,7 @@ you should just use (message nil)."
       (if (not executing-kbd-macro)
 	  (if (eq 'stream (frame-type frame))
 	      (send-string-to-terminal message stdout-p (frame-device frame))
-	    (redisplay-echo-area))))))
+	    (funcall redisplay-echo-area-function))))))
 
 (defun display-message (label message &optional frame stdout-p)
   "Print a one-line message at the bottom of the frame.  First argument

@@ -170,6 +170,9 @@ same as the minibuffer, despite the fact that the minibuffer appears
 @cite{XEmacs Lisp Reference Manual} specifies the rules for resolving conflicts
 between the echo area and the minibuffer for use of that screen space
 (@pxref{Minibuffer,, The Minibuffer, xemacs, The XEmacs Lisp Reference Manual}).
+Such a conflicts may be avoided at all as described in @ref{Customizing Message
+Display}.
+
 Error messages appear in the echo area; see @ref{Errors}.
 
 You can write output in the echo area by using the Lisp printing
@@ -347,6 +350,43 @@ point---not in the echo area at all.
 
 The value is normally @code{nil}; Lisp programs bind it to @code{t}
 for brief periods of time.
+@end defvar
+
+@menu
+* Customizing Message Display::
+@end menu
+
+@node Customizing Message Display
+@subsection Customizing Message Display
+
+Message display function specify message intended for echo area by
+putting message text into @code{" *Echo Area*"} buffer.  When event
+loop code decides to update display after displaying the message, text
+of this buffer is erased.  How exactly the text will be displayed may
+be affected by the following.
+
+@findex redisplay-echo-area
+@defvar redisplay-echo-area-function
+The function called to display echo area text.  The default variable
+value, @code{redisplay-echo-area} function, does that by displaying
+the text in the same place on the screen as the echo area.  So does
+other redisplay code.  User code can avoid this regardless of what
+redisplay code will run afterwards by erasing text of @code{" *Echo
+Area*"} buffer.
+@end defvar
+
+@defvar undisplay-echo-area-function
+The variable value, if non-@code{nil}, is called by command loop after
+erasing text of @code{" *Echo Area*"} buffer.  It must clean up data
+created by @code{redisplay-echo-area-function} value.
+@end defvar
+
+@defvar minibuffer-echo-wait-function
+The function is called by command loop only when minibuffer was active
+and message was displayed (text appeared in @code{" *Echo Area*"}
+buffer).  It must wait after displaying message so that user can read
+it.  By default, when the variable value is @code{nil}, the equivalent
+of @code{(sit-for 2)} is run.
 @end defvar
 
 @node Warnings

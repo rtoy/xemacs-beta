@@ -1,3 +1,10 @@
+2003-09-20  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* cmdloop.c (Fcommand_loop_1): Allow specifying elisp function for
+	waiting user input while displaying message while in minibuffer.
+	(Vminibuffer_echo_wait_function): New, associated variable...
+	(vars_of_cmdloop): ... initialize it.
+
 2003-09-20  James LewisMoss  <dres@lewismoss.org>
 
 	* console-impl.h (struct console_methods): add third arg to list_fonts
