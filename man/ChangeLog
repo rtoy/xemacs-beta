@@ -1,3 +1,7 @@
+2004-08-30  Jerry James  <james@xemacs.org>
+
+	* lispref/text.texi: Document text fields.
+
 2004-09-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/searching.texi (Syntax of Regexps): Add example of use
