@@ -94,7 +94,7 @@ make_string
 make_vector
 maybe_invalid_operation
 message
-new_dfc_convert_alloca		/* C_STRING_TO_EXTERNAL, ... */
+new_dfc_convert_copy_data	/* C_STRING_TO_EXTERNAL, ... */
 new_dfc_convert_malloc		/* C_STRING_TO_EXTERNAL_MALLOC, ... */
 new_dfc_convert_size		/* C_STRING_TO_EXTERNAL, ... */
 #ifdef MULE

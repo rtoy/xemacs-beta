@@ -1,3 +1,9 @@
+2004-11-11  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* text.h:
+	* xemacs.def.in.in: rename new_dfc_convert_alloca to
+	new_dfc_convert_copy_data
+
 2004-11-07  Ben Wing  <ben@xemacs.org>
 
 	* frame-x.c (x_set_frame_properties):

@@ -3000,7 +3000,7 @@ END_C_DECLS
    to choke when alloca() occurs as a funcall argument, and so we check
    this in configure.  Rewriting the expressions below to use a temporary
    variable, so that the call to alloca() is outside of
-   new_dfc_convert_alloca(), won't help because the entire NEW_DFC call
+   new_dfc_convert_copy_data(), won't help because the entire NEW_DFC call
    could be inside of a function call. */
 
 #define NEW_DFC_CONVERT_1_ALLOCA(src, src_size, type, codesys)		\
