@@ -113,6 +113,18 @@ jmp_buf AuXtErrorJump;
 # include <audio/Xtutil.h>
 #endif
 
+/* audiolib <= some version doesn't define major and minor versions */
+/* Do NOT use AudioLibraryVersion in this file. */
+#ifndef AudioLibraryVersion
+#define AudioLibraryVersion 1
+#endif
+#ifndef AudioLibraryVersionMajor
+#define AudioLibraryVersionMajor AudioLibraryVersion
+#endif
+#ifndef AudioLibraryVersionMinor
+#define AudioLibraryVersionMinor 0
+#endif
+
 #if defined (ROBUST_PLAY)
 static AuBool CatchIoErrorAndJump (AuServer *aud);
 static AuBool CatchErrorAndJump (AuServer *aud, AuErrorEvent *event);

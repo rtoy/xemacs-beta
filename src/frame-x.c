@@ -2728,9 +2728,11 @@ x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
      Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
 
      if (!EQ (font, Vthe_null_font_instance))
-       XtSetArg (al[ac], XtNfont,
-		 (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
-     ac++;
+       {
+	 XtSetArg (al[ac], XtNfont,
+		   (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
+	 ac++;
+       }
    }
   else
    abort ();

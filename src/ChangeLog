@@ -1,3 +1,12 @@
+2003-10-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* nas.c (AudioLibraryVersionMajor, AudioLibraryVersionMinor):
+	Ensure they are #define'd.
+
+2003-10-13  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* frame-x.c (x_update_frame_external_traits): Fix XtSetArg idiom.
+
 2003-10-14  Jerry James  <james@xemacs.org>
 
 	* compiler.h: Check __GNUC_PATCHLEVEL__ definition.
