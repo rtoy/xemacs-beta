@@ -1,3 +1,8 @@
+2002-04-05  Golubev I. N.  <gin@mo.msk.ru>
+
+	* .gdbinit (pptype):
+	Replace `ptype', which clashes with the gdb builtin `ptype'.
+
 2004-09-02  Yoshiki Hayashi  <yoshiki@xemacs.org>
 
 	* buffer.c (Frecord_buffer): Make sure the argument is buffer
