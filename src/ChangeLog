@@ -1,3 +1,7 @@
+2004-08-04  Jerry James  <james@xemacs.org>
+
+	* regex.c: Fix the previous patch by moving to the right place.
+
 2004-08-03  Jerry James  <james@xemacs.org>
 
 	* regex.c: Move #define gettext after #include "lisp.h" to avoid

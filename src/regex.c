@@ -118,13 +118,6 @@ typedef int Ichar;
 
 #include <string.h>
 
-/* This is for other GNU distributions with internationalized messages.  */
-#if defined (I18N3) && (defined (HAVE_LIBINTL_H) || defined (_LIBC))
-# include <libintl.h>
-#else
-# define gettext(msgid) (msgid)
-#endif
-
 /* Define the syntax stuff for \<, \>, etc.  */
 
 /* This must be nonzero for the wordchar and notwordchar pattern
@@ -173,6 +166,13 @@ init_syntax_once (void)
 #define TRANSLATE_P(tr) tr
 
 #endif /* emacs */
+
+/* This is for other GNU distributions with internationalized messages.  */
+#if defined (I18N3) && (defined (HAVE_LIBINTL_H) || defined (_LIBC))
+# include <libintl.h>
+#else
+# define gettext(msgid) (msgid)
+#endif
 
 /* Under XEmacs, this is needed because we don't define it elsewhere. */
 #ifdef SWITCH_ENUM_BUG
