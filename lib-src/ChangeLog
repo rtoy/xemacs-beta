@@ -1,3 +1,7 @@
+2003-01-28  Steve Youngs  <youngs@xemacs.org>
+
+	* rcs2log: Synch to GNU version.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.
