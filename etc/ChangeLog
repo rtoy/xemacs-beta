@@ -1,3 +1,9 @@
+2002-07-21  Steve Youngs  <youngs@xemacs.org>
+
+	* package-index.LATEST.pgp: Update.
+
+	* package-index.LATEST.gpg: Ditto.
+
 2002-07-14  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs-icon.xpm: It's XEmacs, not Xemacs.
