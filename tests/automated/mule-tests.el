@@ -319,7 +319,8 @@ the Assert macro checks for correctness."
   ;; Test Unicode-related functions
   ;;---------------------------------------------------------------
   (let* ((scaron (make-char 'latin-iso8859-2 57)))
-    (loop for code in '(#x0000 #x2222 #x4444 #xffff) do
+    ;; Used to try #x0000, but you can't change ASCII or Latin-1
+    (loop for code in '(#x0100 #x2222 #x4444 #xffff) do
       (progn
 	(set-unicode-conversion scaron code)
 	(Assert (eq code (char-to-unicode scaron)))
