@@ -1,3 +1,7 @@
+2004-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (AC_INIT_PARSE_ARGS): Use Solaris-compatible `for'.
+
 2004-01-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.in: Use XE_CFLAGS for XEMACS_CC.

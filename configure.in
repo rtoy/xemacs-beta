@@ -279,7 +279,8 @@ fi
 dnl Find the source directory.
 dnl srcdir is used internally by autoconf macros,
 dnl so parse it here.
-for xe_parse_arg; do
+for xe_parse_arg
+do
   case $xe_parse_arg in
     --srcdir) USAGE_ERROR(["The \`--srcdir' option requires a string value."]) ;;
     --srcdir=*) srcdir=`echo $xe_parse_arg | sed -e 's/--srcdir=//'` ;;
