@@ -1,3 +1,7 @@
+2003-03-30  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs.mak (install): PROBLEMS is actually in $(SRCROOT).
+
 2003-03-26  Adrian Aichner  <adrian@xemacs.org>
 
 	* xemacs.mak (install): Copy $(BLDLIB_SRC)\PROBLEMS, now that
