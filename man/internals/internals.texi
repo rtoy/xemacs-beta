@@ -5718,7 +5718,7 @@ respectively.  This is currently in beta.
 
 @file{mule-mcpath.c} provides some functions to allow for pathnames
 containing extended characters.  This code is fragmentary, obsolete, and
-completely non-working.  Instead, @var{pathname-coding-system} is used
+completely non-working.  Instead, @code{pathname-coding-system} is used
 to specify conversions of names of files and directories.  The standard
 C I/O functions like @samp{open()} are wrapped so that conversion occurs
 automatically.

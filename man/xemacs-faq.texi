@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/08/27 18:06:58 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2003/10/10 12:39:27 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -1938,7 +1938,7 @@ file @file{XKeysymDB}.
 The binary cannot find the @file{XKeysymDB} file.  The location is
 hardcoded at compile time so if the system the binary was built on puts
 it a different place than your system does, you have problems.  To fix,
-set the environment variable @var{XKEYSYMDB} to the location of the
+set the environment variable @code{XKEYSYMDB} to the location of the
 @file{XKeysymDB} file on your system or to the location of the one
 included with XEmacs which should be at
 @iftex
@@ -1951,7 +1951,7 @@ The binary is finding the XKeysymDB but it is out-of-date on your system
 and does not contain the necessary lines.  Either ask your system
 administrator to replace it with the one which comes with XEmacs (which
 is the stock R6 version and is backwards compatible) or set your
-@var{XKEYSYMDB} variable to the location of XEmacs's described above.
+@code{XKEYSYMDB} variable to the location of XEmacs's described above.
 @end itemize
 
 @node Q2.1.4, Q2.1.5, Q2.1.3, Installation
@@ -1987,7 +1987,7 @@ The buffer still exists; it just isn't in your face.
 
 Help!  I can not get XEmacs to display on my Envizex X-terminal!
 
-Try setting the @var{DISPLAY} variable using the numeric IP address of
+Try setting the @code{DISPLAY} variable using the numeric IP address of
 the host you are running XEmacs from.
 
 @node Q2.1.6, Q2.1.7, Q2.1.5, Installation

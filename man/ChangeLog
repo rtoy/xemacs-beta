@@ -1,5 +1,49 @@
 2003-10-10  Ilya N. Golubev  <gin@mo.msk.ru>
 
+	* new-users-guide/custom2.texi (Init File):
+
+	Fix up erroneous uses of @var instead of @code for the names of
+	particular variables in programming languages.
+
+2003-10-10  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* custom.texi (The Init File):
+	* xemacs-faq.texi (Q2.1.3):
+	(Q2.1.5):
+
+	* internals/internals.texi (Modules for Internationalization):
+
+	* lispref/display.texi (Beeping):
+	* lispref/ldap.texi (Encoder/Decoder Functions):
+	* lispref/markers.texi (The Mark):
+	(The Region):
+	* lispref/menus.texi (Menu Accelerator Functions):
+	* lispref/numbers.texi (Math Functions):
+	* lispref/packaging.texi (package-info.in):
+	(Makefile):
+	(Local.rules File):
+	* lispref/postgresql.texi (libpq Lisp Symbols and DataTypes):
+	(libpq Lisp Variables):
+	(Synchronous Interface Functions):
+	(Other libpq Functions):
+
+	* new-users-guide/custom2.texi (Init File):
+	(Setting Variables):
+	* new-users-guide/files.texi (File Names):
+	(Saving Files):
+	* new-users-guide/search.texi (Search and Replace):
+
+	* xemacs/custom.texi (X Resources):
+
+	Fix up erroneous uses of @var instead of @code for the names of
+	particular variables in programming languages.
+
+2003-10-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* Makefile: Remove old package and redundant cruft.
+
+2003-10-10  Ilya N. Golubev  <gin@mo.msk.ru>
+
 	* lispref/mule.texi (Charset Property Functions): Charset registry
 	can be set.
 	(Predefined Charsets): Add registry to Vietnamese charset names.

@@ -649,11 +649,11 @@ actually build the packages.
 @item XEMACS_INSTALLED_PACKAGES_ROOT
 Set this to the root of where you want the packages to be installed.
 Under this directory will hang @file{xemacs-packages} and
-@file{mule-packages}.  See @var{NONMULE_INSTALLED_PACKAGES_ROOT} and
-@var{MULE_INSTALLED_PACKAGES_ROOT}.  The default for this is
+@file{mule-packages}.  See @code{NONMULE_INSTALLED_PACKAGES_ROOT} and
+@code{MULE_INSTALLED_PACKAGES_ROOT}.  The default for this is
 @file{/usr/local/lib/xemacs}.  Which may not be what you want if you are
 developing XEmacs.  To quote the comments in
-@file{Local.rules.template}: 
+@file{Local.rules.template}:
 
 @quotation
 If you are developing XEmacs, you probably don't want to install the
@@ -677,7 +677,7 @@ configure --package-path=/src/xemacs/xemacs-packages;/src/xemacs/mule-packages
 @item symlink
 The default is unset (blank).  If you set this to @samp{t} then
 @code{make install} will create a @dfn{symlink farm} of the installed
-packages under @var{XEMACS_INSTALLED_PACKAGES_ROOT}.  Obviously, for
+packages under @code{XEMACS_INSTALLED_PACKAGES_ROOT}.  Obviously, for
 this to work, your system has to support symbolic links.  This is as
 close as you can get to @dfn{running in place} for the packages.
 
@@ -794,8 +794,8 @@ The path to msgfmt.  The default is @code{msgfmt}
 The path to your copy command (GNU cp).  The default is dependent on
 whether or not @var{symlink} is set (@samp{t}).
 
-If @var{symlink} is unset (blank), @var{RCOPY}'s default is 
-@code{cp -af}.  If @var{symlink} is set (@samp{t}), @var{RCOPY}'s
+If @var{symlink} is unset (blank), @code{RCOPY}'s default is 
+@code{cp -af}.  If @var{symlink} is set (@samp{t}), @code{RCOPY}'s
 default is @code{cp --force --recursive --symbolic-link}.
 @end table
 
@@ -803,11 +803,11 @@ It should be noted that in most cases the defaults should be fine.  Most
 people will probably only need to alter:
 
 @itemize @bullet
-@item @var{XEMACS_INSTALLED_PACKAGES_ROOT}
-@item @var{NONMULE_INSTALLED_PACKAGES_ROOT}
-@item @var{MULE_INSTALLED_PACKAGES_ROOT}
-@item @var{NONMULE_PACKAGES}
-@item @var{MULE_PACKAGES}
+@item @code{XEMACS_INSTALLED_PACKAGES_ROOT}
+@item @code{NONMULE_INSTALLED_PACKAGES_ROOT}
+@item @code{MULE_INSTALLED_PACKAGES_ROOT}
+@item @code{NONMULE_PACKAGES}
+@item @code{MULE_PACKAGES}
 @end itemize
 
 @node Creating Packages, Documenting Packages, Local.rules File, Packaging
@@ -869,15 +869,15 @@ Part of the internal package infrastructure, its value should always be
 
 @item version
 This is the XEmacs package version number of the package.  It is set
-from the @file{Makefile} variable @var{VERSION}.  This is something that
-the XEmacs Package Release Engineer deals with so there is no need for a
-package maintainer to touch it.  In @file{package-info.in} just put the
-place-marker, @samp{VERSION} here.
+from the @file{Makefile} variable @code{VERSION}.  This is something
+that the XEmacs Package Release Engineer deals with so there is no need
+for a package maintainer to touch it.  In @file{package-info.in} just
+put the place-marker, @samp{VERSION} here.
 
 @item author-version
 This is the package's internal, or @samp{upstream} version number if it
 has one.  It is set from the @file{Makefile} variable
-@var{AUTHOR_VERSION}. 
+@code{AUTHOR_VERSION}. 
 
 @item date
 This is the date of the last change made to the package.  It is
@@ -889,7 +889,7 @@ The date the package was built.  It is auto-generated.
 
 @item maintainer
 This is the name and email address of the package's maintainer.  It is
-taken from the @file{Makefile} variable @var{MAINTAINER}.
+taken from the @file{Makefile} variable @code{MAINTAINER}.
 
 @item distribution
 An unused field, leave as @samp{xemacs}
@@ -900,7 +900,7 @@ An unused field, can be any of @samp{high}, @samp{medium}, or
 
 @item category
 The @samp{category} of the package.  It is taken from the
-@file{Makefile} variable @var{CATEGORY} and can be either
+@file{Makefile} variable @code{CATEGORY} and can be either
 @samp{standard} for non-Mule packages, or @samp{mule} for Mule
 packages.  The is also provision for @samp{unsupported} in this field
 which would be for packages that XEmacs.org do not distribute.
@@ -931,9 +931,9 @@ A whitespace separated list of @emph{all} the features the package
 provides.  Surround the list with parens.
 
 @item requires
-Taken from the @file{Makefile} variable @var{REQUIRES}.  It is a list of
-all the package's dependencies, including any macros and defstructs that
-need to be inlined.
+Taken from the @file{Makefile} variable @code{REQUIRES}.  It is a list
+of all the package's dependencies, including any macros and defstructs
+that need to be inlined.
 
 @samp{REQUIRES} cannot be correctly computed from the calls to
 @code{require} in the package's library sources.  @samp{REQUIRES} is
@@ -1133,19 +1133,19 @@ Optional, but commonly used variables are explained below.
 @item ELCS_1
 A list of extra byte-compiled Lisp files used by the package to be
 installed in a subdirectory of the package's lisp directory.  The same
-care should be taken with this as with @var{ELCS} in regard to
+care should be taken with this as with @code{ELCS} in regard to
 @code{make clean}.
 
 @item ELCS_1_DEST
-The name of the subdirectory for the @var{ELCS_1} files to be installed
+The name of the subdirectory for the @code{ELCS_1} files to be installed
 to.  Be sure to include @samp{$(PACKAGE)/} as part of the name.
 
 @example
 ELCS_1_DEST = $(PACKAGE)/extra
 @end example
 
-Would put the @var{ELCS_1} files for the package, @samp{foo} into
-@file{xemacs-packages/lisp/foo/extra/}. 
+Would put the @code{ELCS_1} files for the package, @samp{foo} into
+@file{xemacs-packages/lisp/foo/extra/}.
 
 @item EARLY_GENERATED_LISP
 For additional @file{.el} files that will be generated before any
@@ -1169,8 +1169,8 @@ PRELOADS=-l ./apackage-macros.el -l ../bpackage/lisp/bpackage-macros.el
 @end example
 
 Preloads are loaded before @file{package-compile.el}, so the
-@var{load-path} is minimal.  Therefore @samp{PRELOADS} must specify a
-full path to packaged Lisp.  The base @var{load-path} does include the
+@code{load-path} is minimal.  Therefore @samp{PRELOADS} must specify a
+full path to packaged Lisp.  The base @code{load-path} does include the
 core Lisp directory, so core libraries are found.
 
 @item AUTOLOAD_PATH
@@ -1178,7 +1178,7 @@ The subdirectory in the package's source tree where the @file{.el} files
 reside.  This is where the @file{auto-autoloads.el} file will be placed.
 
 @strong{N.B.} There is no need to use this variable if the @file{.el}
-files are in the package's toplevel directory.  @var{AUTOLOAD_PATH}
+files are in the package's toplevel directory.  @code{AUTOLOAD_PATH}
 defaults to @samp{.}.
 
 @item PACKAGE_SUPPRESS
@@ -1210,7 +1210,7 @@ package's toplevel directory.  For example:
 EXPLICIT_DOCS = texi/$(PACKAGE).texi
 @end example
 
-See @var{DOCS_TXI_EXTENSION} and @var{DOCS_TEXINFO_EXTENSION} if you
+See @code{DOCS_TXI_EXTENSION} and @code{DOCS_TEXINFO_EXTENSION} if you
 don't use the @file{.texi} file extension on your Texinfo sources.
 
 @item EXTRA_TEXI_FILES
@@ -1252,7 +1252,7 @@ component of the path for a file will be stripped, so that the
 file ends up in @samp{$(DATA_DEST)}, not in a subdiredtory.
 
 @item DATA_DEST
-The directory where the files in @var{DATA_FILES} are installed to.  It
+The directory where the files in @code{DATA_FILES} are installed to.  It
 is a subdirectory of the installed @file{etc/} directory.  Be sure to
 prefix this value with @samp{$(PACKAGE)}, for example:
 
@@ -1264,12 +1264,12 @@ Would put files into @file{.../etc/$(PACKAGE)/foo/}.
 
 @item DATA_1_FILES ... DATA_35_FILES
 For data files that need to go into a different directory from
-@var{DATA_DEST}. 
+@code{DATA_DEST}. 
 
 @item DATA_1_DEST ... DATA_35_DEST
-The name of the subdirectory for files specified in @var{DATA_n_FILES}.
-And like @var{DATA_DEST}, be sure to prefix @samp{$(PACKAGE)} to the
-value of these variables.
+The name of the subdirectory for files specified in
+@code{DATA_@var{n}_FILES}.  And like @code{DATA_DEST}, be sure to prefix
+@samp{$(PACKAGE)} to the value of these variables.
 
 @item EXTRA_DEPENDENCIES
 For additional files to build that aren't appropriate to place in any
@@ -1296,7 +1296,7 @@ same as the package's.
 @item an entry in the @code{cond} in @code{package-name-to-directory}
 This is optional; it is necessary only if you keep your Lisp code
 somewhere other than the top-level directory of the package's source
-tree, eg, in @file{packages/xemacs-packages/@var{PACKAGE}/lisp}.
+tree, eg, in @file{packages/xemacs-packages/$(PACKAGE)/lisp}.
 @end table
 
 This only needs to be done once, when the package is first added to the

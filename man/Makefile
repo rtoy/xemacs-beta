@@ -280,19 +280,6 @@ $(INFODIR)/internals.info : $(internals-srcs)
 $(INFODIR)/new-users-guide.info : $(new-users-guide-srcs)
 	$(MAKEINFO) -P new-users-guide -o $(INFODIR)/new-users-guide.info new-users-guide/new-users-guide.texi
 
-# $(INFODIR)/w3.info : w3.texi
-#	$(MAKEINFO) -o $(INFODIR)/w3.info w3.texi
-
-# EMACS = ../src/xemacs
-# EMACSFLAGS = -batch -vanilla
-
-# $(INFODIR)/vm.info : vm.texi
-#	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \
-#		-f texinfo-format-buffer -f save-buffer
-#	-mv vm.info* $(INFODIR)/.
-
-# special = # $(INFODIR)/vm.info $(INFODIR)/texinfo.info
-
 xemacs : $(INFODIR)/xemacs.info
 lispref : $(INFODIR)/lispref.info
 internals : $(INFODIR)/internals.info
@@ -302,14 +289,6 @@ new-users-guide.info : $(INFODIR)/new-users-guide.info
 
 info : $(info_files)
 html : $(html_files)
-
-# tm: FRC.tm
-#	cd ./tm && $(RECURSIVE_MAKE)
-# gnats: FRC.gnats
-#	cd ./gnats && $(RECURSIVE_MAKE)
-# FRC.xemacs FRC.lispref FRC.new-users-guide FRC.internals FRC.tm FRC.gnats:
-
-.PHONY: info dvi
 
 .texi.dvi:
 	-$(TEXI2DVI) $<
@@ -403,19 +382,6 @@ $(HTMLDIR)/internals.html : $(internals-srcs)
 
 $(HTMLDIR)/new-users-guide.html : $(new-users-guide-srcs)
 	$(TEXI2HTML) -subdir $(HTMLDIR) new-users-guide/new-users-guide.texi
-
-# $(HTMLDIR)/w3.html : w3.texi
-#	$(TEXI2HTML) -subdir $(HTMLDIR) w3.texi
-
-# EMACS = ../src/xemacs
-# EMACSFLAGS = -batch -vanilla
-
-# $(HTMLDIR)/vm.html : vm.texi
-#	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \
-#		-f texinfo-format-buffer -f save-buffer
-#	-mv vm.html* $(HTMLDIR)/.
-
-# special = # $(HTMLDIR)/vm.html $(HTMLDIR)/texinfo.html
 
 xemacs : $(HTMLDIR)/xemacs.html
 lispref : $(HTMLDIR)/lispref.html
