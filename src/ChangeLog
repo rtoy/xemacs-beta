@@ -1,3 +1,8 @@
+2002-10-24  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-widget.c (layout_query_geometry): only resize dynamically
+	if static sizes haven't been set.
+
 2002-09-21  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* extents.c (Fset_extent_property): Document `syntax-table'

@@ -1301,8 +1301,7 @@ layout_post_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    characters and logical units so that frames can be sized
    appropriately. */
 
-/* Query the geometry of a layout widget. We assume that we can only
-   get here if the size is not already fixed. */
+/* Query the geometry of a layout widget. */
 static void
 layout_query_geometry (Lisp_Object image_instance, int* width,
 		       int* height, enum image_instance_geometry disp,
@@ -1359,46 +1358,50 @@ layout_query_geometry (Lisp_Object image_instance, int* width,
 
   /* Work out minimum space we need to fit all the items. This could
      have been fixed by the user. */
-  if (!NILP (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii)))
-    {
-      Lisp_Object dynamic_width =
-	eval_within_redisplay (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
-      if (INTP (dynamic_width))
-	*width = XINT (dynamic_width);
-    }
-  else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_HORIZONTAL) 
-    {
-      *width = maxpw + ((nitems + 1) * widget_instance_border_width (ii) +
-			IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2;
-    }
-  else
-    {
-      *width = maxpw + 2 * (widget_instance_border_width (ii) * 2 +
-			    IMAGE_INSTANCE_MARGIN_WIDTH (ii));
-    }
-
+  if (IMAGE_INSTANCE_SUBWINDOW_H_RESIZEP (ii)) {
+      if (!NILP (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii)))
+      {
+          Lisp_Object dynamic_width =
+              Feval (IMAGE_INSTANCE_WIDGET_WIDTH_SUBR (ii));
+          if (INTP (dynamic_width))
+              *width = XINT (dynamic_width);
+      }
+      else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_HORIZONTAL) 
+      {
+          *width = maxpw + ((nitems + 1) * widget_instance_border_width (ii) +
+                            IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2;
+      }
+      else
+      {
+          *width = maxpw + 2 * (widget_instance_border_width (ii) * 2 +
+                                IMAGE_INSTANCE_MARGIN_WIDTH (ii));
+      }
+  }
+ 
   /* Work out vertical spacings. */
-  if (!NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
-    {
-      Lisp_Object dynamic_height =
-	eval_within_redisplay (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
-      if (INTP (dynamic_height))
-	*height = XINT (dynamic_height);
-    }
-  else if (IMAGE_INSTANCE_SUBWINDOW_LOGICAL_LAYOUT (ii))
-    {
-      *height = nitems * luh + ph_adjust;
-    }
-  else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_VERTICAL)
-    {
-      *height = maxph + ((nitems + 1) * widget_instance_border_width (ii) +
-			 IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
-    }
-  else
-    {
-      *height = maxph + (2 * widget_instance_border_width (ii) +
-			 IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
-    }
+  if (IMAGE_INSTANCE_SUBWINDOW_V_RESIZEP (ii)) {
+      if (!NILP (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii)))
+      {
+          Lisp_Object dynamic_height =
+              Feval (IMAGE_INSTANCE_WIDGET_HEIGHT_SUBR (ii));
+          if (INTP (dynamic_height))
+              *height = XINT (dynamic_height);
+      }
+      else if (IMAGE_INSTANCE_SUBWINDOW_LOGICAL_LAYOUT (ii))
+      {
+          *height = nitems * luh + ph_adjust;
+      }
+      else if (IMAGE_INSTANCE_SUBWINDOW_ORIENT (ii) == LAYOUT_VERTICAL)
+      {
+          *height = maxph + ((nitems + 1) * widget_instance_border_width (ii) +
+                             IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
+      }
+      else
+      {
+          *height = maxph + (2 * widget_instance_border_width (ii) +
+                             IMAGE_INSTANCE_MARGIN_WIDTH (ii)) * 2 + ph_adjust;
+      }
+  }
 #ifdef DEBUG_WIDGET_OUTPUT
   stderr_out ("layout wants %dx%d\n", *width, *height);
 #endif
