@@ -1,3 +1,51 @@
+to 21.5.9 "brussels sprouts"
+
+The main thrust of this release is the new GC algorithms.  If you want
+to test this out configure with '--use-kkcc'.
+
+There are of course, the usual swag of bug fixes, typo fixes, and
+document updates.
+
+-- Add an extra element to the version string that can be used to
+   include a date in the version string - Youngs.
+-- Improve help string for --with-widgets configure option - Skyttä.
+-- Define runtime & build problems, and rewrite "Hannibal Lecter"
+   stuff in PROBLEMS - Turnbull.
+-- Add builtin and constant faces to font-lock-face-list - Skyttä.
+-- Japanese language fixes - Yamaoka.
+-- Fix find-library to allow Mule XEmacsen to find compressed
+   libraries - Youngs.
+-- New alias for 'delete-indentation' (join-line) - Wallington.
+-- Support docstring for define-derived-mode - Turnbull
+-- Doc fix for keybindings in term.texi and misc.texi - Skyttä.
+-- Bring package list up to date in packages.texi - Skyttä.
+-- Document purecopy as a no-op - Josefsson.
+-- New document chapter "Regression Testing XEmacs" - Turnbull.
+-- Add "USE_KKCC" option to ./nt/xemacs.mak - Aichner.
+-- New GC algorithms implemented (Turn them on with --use-kkcc
+   configure option) - Sperber, Crestani, Kaltenbach, Bush.
+-- Define HAVE_WCHAR_H for native Win32 builds - Harris.
+-- Fix x_locate_pixmap_file make sure path is not 0 - MacLennan.
+-- Fix memory leak - Verna.
+-- Add missing call to 'xfree (newname)' in 'make_coding_system_1
+   - Verna. 
+-- Fix --with-mule --with-gtk builds - Barta.
+-- Make SEPCHAR a required arg to Fsplit_string_by_char - Palmer.
+-- Make locate_file indicate success with nonnegative return if MODE
+   is nonnegative - James.
+-- Fix splitting window horizontally not splitting evenly - James.
+-- ORDINARY_LINK OK for Linux - James.
+-- Don't bogusly reinitialise ascii_character property in
+   maybe_define_x_key_as_self_inserting_character - Astapov.
+-- Add warning to SOE_DEBUG about not using until debugging functions
+   are rewritten - Turnbull.
+-- Update 'do_autoload' to GCPRO both arguments - Turnbull.
+-- Update automated tests so they don't barf if required packages
+   aren't present - Turnbull.
+-- Organise NSIG setting code for SVR4 in a better way - James.
+-- Various typo fixes - Skyttä, Turnbull, James.
+
+
 to 21.5.8 "broccoli"
 
 Lots of fixes and changes.  This release is primarily been done to
@@ -11,7 +59,7 @@ categories.  Maybe next release...
    algorithms - Sperber.
 -- Identify "--with-modules" as an autodetected configure option -
    James. 
--- Add a couple of configuration questions to PROBLEMS - Turnball.
+-- Add a couple of configuration questions to PROBLEMS - Turnbull.
 -- Test for wchar.h in configure - Sperber.
 -- Update package-index files - Youngs.
 -- s/Xemacs/XEmacs/ doc fixes - Aichner.
@@ -33,7 +81,7 @@ categories.  Maybe next release...
 -- GC fixes - Sperber.
 -- Updates to lisp.h, symbols.c for DSO's - James.
 -- Fix to mswindows_need_event - Alexander.
--- Declare Fcdr_safe to be callable from C - Turnball.
+-- Declare Fcdr_safe to be callable from C - Turnbull.
 -- Ffunctionp return nil for autoloaded macros & keymaps - Niksic.
 -- Subwindow fixes - Ueno.
 -- Include wchar.h only if available, define wclsen if not - Sperber.
