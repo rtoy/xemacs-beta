@@ -5341,7 +5341,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	case charset:
 	case charset_not:
 	  {
-	    REGISTER unsigned char c;
+	    REGISTER Ichar c;
 	    re_bool not_p = (re_opcode_t) *(p - 1) == charset_not;
 
             DEBUG_PRINT2 ("EXECUTING charset%s.\n", not_p ? "_not" : "");
@@ -5352,7 +5352,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
             /* Cast to `unsigned int' instead of `unsigned char' in case the
                bit list is a full 32 bytes long.  */
-	    if (c < (unsigned int) (*p * BYTEWIDTH)
+	    if ((unsigned int)c < (unsigned int) (*p * BYTEWIDTH)
 		&& p[1 + c / BYTEWIDTH] & (1 << (c % BYTEWIDTH)))
 	      not_p = !not_p;
 

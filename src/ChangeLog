@@ -1,3 +1,9 @@
+2003-04-04  Daiki Ueno  <daiki@xemacs.org>
+
+	* regex.c (re_match_2_internal): Fix charset/charset_not matching
+	for extended characters.  Fixes KNOWN BUG matching ASCII character
+	classes to mule characters.
+
 2003-04-14  Steve Youngs  <youngs@xemacs.org>
 
 	* glyphs.c:
@@ -8,10 +14,9 @@
 	* glyphs.c (glyph_image_instance_maybe):
 	* glyphs.c (glyph_width):
 	Work around a problem compiling with --use-union-type using
-	Intel's ICC compiler.
-	From Martin Buchholz <martin@xemacs.org>
+	Intel's ICC compiler.  From Martin Buchholz <martin@xemacs.org>
 	See
-	<http://list-archive.xemacs.org/xemacs-patches/200301/msg00132.html> 
+	<http://list-archive.xemacs.org/xemacs-patches/200301/msg00132.html>
 
 2003-04-08  Mike Sperber  <mike@xemacs.org>
 
