@@ -1,3 +1,83 @@
+to 21.5.15 "celery"
+
+Build
+
+-- Autoconf configure updates - James, Turnbull.
+-- Makefile updates - James.
+-- Minor updates to make-docfile.c - Begel.
+-- Wrap assert_failed with EXTERN_C for modules - James.
+-- Updates to modules Makefile.common - James.
+-- Include emodules.h when building modules in postgresql.c
+     and ldap.c - James.
+-- Updates to xemacs.mak - Aichner.
+-- Add some extern "C" declarations for C++ module builds
+     - James.
+-- Add casts for C++ builds in mule-canna.c - James.
+-- Add type casts in database.c to satisy C++ compilers.
+-- Log result summary of tests when the testsuite is running
+     noninteractive - Aichner.
+-- Add some tests for weak-lists - Crestani, Kaltenbach.
+
+
+Documentation
+
+-- Update README.(HYPERBOLE|OO-BROWSER) - Turnbull.
+-- Update etc/PACKAGES - Turnbull, Koch, Youngs.
+-- Update etc/sample.Xresources - Turnbull.
+-- Major update and audit of all documents relating to PUI - Youngs.
+-- Mention `line-move-ignore-invisible' (display.texi "Invisible Text")
+     - Kyllingstad.
+-- Document that end-glyph is still displayed when invisible
+     is set (extents.texi "Extent Properties") - Kyllingstad.
+-- Document that only begin-glyph is highlighted (extents.texi "Extents
+     and Events") - Kyllingstad.
+-- Various typo and docstring fixes - Turnbull, Sperber.
+-- Add missing '@end' defun in lists.texi - Shelton.
+-- Document ?\x00 read syntax and range limitations on ?\000 and 
+     ?\x00 read syntaxes (objects.texi "Character Type") - Turnbull.
+-- Document `true-list-p' (lists.texi "List-related Predicates")
+     - Turnbull.
+
+
+Internals
+
+-- KKCC updates - Crestani, Kyllingstad.
+-- Define DECLARE_MODULE_API_LRECORD when not ERROR_CHECK_TYPES
+     - James.
+-- Updates to DSO code - James.
+-- Remove unused (X)OPAQUE_MARKFUN definitions - James.
+-- GCPRO updates - Sperber.
+-- Mouse wheel fixes in event-msw.c - Kyllingstad.
+-- Use 'HAVE_DLD_INIT' instead of 'HAVE_INIT_DLD' in sysdll.c - James.
+-- Rewrite ephemeron marker code - Sperber.
+-- Fix printing of symbol names in .gdbinit - Golubev.
+-- Fixes to `update_frame_toolbars_geometry' - Sperber.
+-- Fix missing commas in `fonts' initialiser - Golubev.
+-- Add `opaque_ptr_description' - Crestani.
+-- Add `allocate_big_string_chars' - Turnbull, Buchholz.
+
+
+Lisp API
+
+-- New alias `apropos-customize' -> `customize-apropos' - Aichner.
+-- Remove unecessary arg from `pui-set-local-package-get-directory - Youngs.
+-- New key bindings in mwheel.el - Kyllingstad.
+-- Make `insert-directory' to be more like FSF version - Sperber.
+-- Window configuration fixes in isearch code - Sperber.
+-- Implement simple object finalisation in post-gc.el - Sperber.
+-- Updates to etags.el - Turnbull.
+-- Updates to cl-macs.el - Pakoulin.
+-- Fix "do-nothing" bug in `derived-mode-merge-syntax-tables' - Turnbull.
+-- Fixes to `restore-saved-window' - James.
+-- Handle missing "EMACSPACKAGEPATH" env var in 
+     `package-get-package-index-file-location' - Aichner.
+-- Fix substring errors in `package-admin-find-top-directory' - Aichner.
+-- Fix `byte-compile-lambda' so it only discards the docstring if it is
+     not also the value of the lambda - Turnbull.
+-- Don't insist in lib-src directory in `path-emacs-root-p' on WinNT - Aichner.
+-- Don't include '(' in `font-lock-function-name-face' - Aichner.
+
+
 to 21.5.14 "cassava"
 
 This release has a few documentation updates thanks to Steve

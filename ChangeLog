@@ -1,3 +1,7 @@
+2003-09-03  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.15 "celery" is released.
+
 2003-08-28  Jerry James  <james@xemacs.org>
 
 	* configure.in: Link modules with -lstdc++ if g++ is used.

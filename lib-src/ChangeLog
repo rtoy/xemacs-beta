@@ -1,3 +1,7 @@
+2003-09-03  Steve Youngs  <youngs@xemacs.org>
+
+	* XEmacs 21.5.15 "celery" is released.
+
 2003-08-29  Nickolay Pakoulin  <npak@ispras.ru>
 
 	* make-dump-id.c (main): Set "C" linking rule for dump_id

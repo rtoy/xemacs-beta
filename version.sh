@@ -2,9 +2,9 @@
 emacs_is_beta=t
 emacs_major_version=21
 emacs_minor_version=5
-emacs_beta_version=14
-xemacs_codename="cassava"
-xemacs_extra_name="(+CVS-20030903)"
+emacs_beta_version=15
+xemacs_codename="celery"
+xemacs_extra_name=
 emacs_kit_version=
 infodock_major_version=4
 infodock_minor_version=0
