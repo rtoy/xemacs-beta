@@ -171,6 +171,23 @@ libz.a in the X11 binary directory.
 
 
 ** AIX
+*** IBM compiler fails: "The character # is not a valid C source character."
+
+Most recently observed in 21.5.9, due to USE_KKCC ifdefs (they just
+happen to tickle the implementation).
+
+Valdis Kletnieks says:
+
+  The problem is that IBM defines a *MACRO* called 'memcpy', and we
+  have stuck a #ifdef/#endif inside the macro call.  As a workaround,
+  try adding '-U__STR__' to your CFLAGS - this will cause string.h to
+  not do a #define for strcpy() to __strcpy() - it uses this for
+  automatic inlining support.
+
+  (For the record, the same issue affects a number of other functions
+  defined in string.h - basically anything the compiler knows how to
+  inline.)
+
 *** On AIX 4.3, you must specify --with-dialogs=athena with configure
 
 *** The libXt shipped with AIX 4.3 up to 4.3.2 is broken.  This causes

@@ -1,3 +1,7 @@
+2002-09-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* PROBLEMS: AIX memcpy MACRO/#ifdef USE_KKCC lossage.  Thx, Valdis!
+
 2002-08-08  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (install-arch-dep): Install internal modules and
