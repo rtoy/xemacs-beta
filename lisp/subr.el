@@ -669,14 +669,14 @@ splitting points.  The substrings matching SEPARATORS are removed, and
 the substrings between the splitting points are collected as a list,
 which is returned.
 
-If SEPARATORS is non-nil, it should be a regular expression matching text
-which separates, but is not part of, the substrings.  If nil it defaults to
+If SEPARATORS is non-`nil', it should be a regular expression matching text
+which separates, but is not part of, the substrings.  If `nil' it defaults to
 `split-string-default-separators', normally \"[ \\f\\t\\n\\r\\v]+\", and
-OMIT-NULLS is forced to t.
+OMIT-NULLS is forced to `t'.
 
-If OMIT-NULLs is t, zero-length substrings are omitted from the list \(so
+If OMIT-NULLS is `t', zero-length substrings are omitted from the list \(so
 that for the default value of SEPARATORS leading and trailing whitespace
-are effectively trimmed).  If nil, all zero-length substrings are retained,
+are effectively trimmed).  If `nil', all zero-length substrings are retained,
 which correctly parses CSV format, for example.
 
 Note that the effect of `(split-string STRING)' is the same as
@@ -684,7 +684,7 @@ Note that the effect of `(split-string STRING)' is the same as
 case that you wish to retain zero-length substrings when splitting on
 whitespace, use `(split-string STRING split-string-default-separators nil)'.
 
-Modifies the match data; use `save-match-data' if necessary."
+Modifies the match data when successful; use `save-match-data' if necessary."
 
   (let ((keep-nulls (not (if separators omit-nulls t)))
 	(rexp (or separators split-string-default-separators))

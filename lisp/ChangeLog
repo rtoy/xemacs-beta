@@ -1,3 +1,7 @@
+2004-06-09  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* subr.el (split-string): Clean up docstring.
+
 2004-06-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* help.el (with-syntax-table): Removed.  (Prefer version in subr.el.)
