@@ -187,10 +187,6 @@ struct Lisp_Coding_System
   struct lcrecord_header header;
   struct coding_system_methods *methods;
 
-  /* If true, this is an internal coding system, which will not show up in
-     coding-system-list unless a special parameter is given to it. */
-  int internal_p;
-
 #define CODING_SYSTEM_SLOT_DECLARATION
 #define MARKED_SLOT(x) Lisp_Object x;
 #include "coding-system-slots.h"
@@ -198,6 +194,10 @@ struct Lisp_Coding_System
   /* Eol type requested by user.  See comment about EOL junk in
      coding-system-slots.h. */
   enum eol_type eol_type;
+
+  /* If true, this is an internal coding system, which will not show up in
+     coding-system-list unless a special parameter is given to it. */
+  int internal_p;
 
   /* type-specific extra data attached to a coding_system */
   char data[1];

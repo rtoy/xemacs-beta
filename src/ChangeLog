@@ -1,3 +1,15 @@
+2004-06-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* emacs.c:
+	* malloc.c: lim_data is a long because in some architectures
+	(eg ia-64) an int cannot hold the address range.
+	* mem-limits.h: lim-data is a long.  Linux uses getrlimit() instead
+	of ulimit() because ulimit() always returns -1.
+	* file-coding.h (struct Lisp_Coding_System): Moved a field to the
+	end of the structure to work around alignment problems on the ia-64.
+	* file-coding.c (struct convert_eol_coding_system): Added dummy
+	field to work around alignment problems on the ia-64.
+
 2004-06-08  Didier Verna  <didier@xemacs.org>
 
 	* config.h.in (EXTERN_C_BLOCK_BEGIN): Remove.

@@ -285,7 +285,7 @@ static struct mhead *nextf[30];
 static char busy[30];
 
 /* Number of bytes of writable memory we can expect to be able to get */
-extern unsigned int lim_data;
+extern unsigned long lim_data;
 
 /* Level number of warnings already issued.
   0 -- no warnings issued.

@@ -402,7 +402,7 @@ uintptr_t bss_end = 0;
 
 /* Number of bytes of writable memory we can expect to be able to get:
    Leave this as an unsigned int because it could potentially be 4G */
-unsigned int lim_data;
+unsigned long lim_data;
 
 /* WARNING!
 

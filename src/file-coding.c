@@ -3032,6 +3032,10 @@ There is one parameter: `subtype', either `cr', `lf', `crlf', or nil.
 struct convert_eol_coding_system
 {
   enum eol_type subtype;
+  int dummy; /* On some architectures (eg ia64) the portable dumper can
+                produce unaligned access errors without this field.  Probably
+                because the combined structure of this structure and
+                Lisp_Coding_System is not properly aligned. */
 };
 
 #define CODING_SYSTEM_CONVERT_EOL_SUBTYPE(codesys) \
