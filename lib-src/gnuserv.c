@@ -1,8 +1,8 @@
 /* -*-C-*-
  Server code for handling requests from clients and forwarding them
- on to the GNU Emacs process.
+ on to the XEmacs process.
 
- This file is part of GNU Emacs.
+ This file is part of XEmacs.
 
  Copying is permitted under those conditions described by the GNU
  General Public License.
@@ -166,7 +166,7 @@ ipc_init (struct msgbuf **msgpp)
 
 /*
   handle_ipc_request -- accept a request from a client, pass the request on
-  			to the GNU Emacs process, then wait for its reply and
+  			to the XEmacs process, then wait for its reply and
 			pass that on to the client.
 */
 void

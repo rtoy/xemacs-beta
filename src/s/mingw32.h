@@ -1,14 +1,14 @@
 /* system description file for mingw32.
    Copyright (C) 1993, 1994, 1995, 1999 Free Software Foundation, Inc.
 
-This file is part of GNU Emacs.
+This file is part of XEmacs.
 
-GNU Emacs is free software; you can redistribute it and/or modify
+XEmacs is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GNU Emacs is distributed in the hope that it will be useful,
+XEmacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -168,8 +168,6 @@ int kill (int pid, int sig);
 pid_t getpid (void);
 #endif
 
-#define DONT_USE_LITOUT
-
 /* Random global functions called everywhere. Implemented in nt.c */
 /* #### Most of these are FSFisms and must be avoided */
 /* #### All of these are FSFisms and must be avoided */
@@ -188,6 +186,10 @@ uid_t getuid (void);
 uid_t geteuid (void);
 gid_t getgid (void);
 gid_t getegid (void);
+
+#endif /* !NOT_C_CODE */
+
+#define DONT_USE_LITOUT
 
 /* Stuff that gets set wrongly or otherwise */
 #define HAVE_SETITIMER
@@ -210,25 +212,9 @@ gid_t getegid (void);
 #undef SYSV_SYSTEM_DIR
 #undef CLASH_DETECTION
 
-/* We now have emulation for some signals */
-#define HAVE_SIGHOLD
-#define sigset(s,h) mswindows_sigset(s,h)
-#define sighold(s) mswindows_sighold(s)
-#define sigrelse(s) mswindows_sigrelse(s)
-#define sigpause(s) mswindows_sigpause(s)
-#define signal sigset
-
-/* Defines that we need that aren't in the standard signal.h  */
-#define SIGHUP  1               /* Hang up */
-#define SIGQUIT 3               /* Quit process */
-#define SIGKILL 9               /* Die, die die */
-#define SIGALRM 14              /* Alarm */
-#define SIGPROF 29		/* Profiling timer exp */
-
 #ifndef MAXPATHLEN
 #define MAXPATHLEN      _MAX_PATH
 #endif
-#endif /* !NOT_C_CODE */
 
 /* Define for those source files that do not include enough NT 
    system files.  */

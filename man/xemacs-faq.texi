@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/06/08 12:21:15 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2001/06/10 10:42:25 $
 @sp 1
 @author Tony Rossini <rossini@@biostat.washington.edu>
 @author Ben Wing <ben@@xemacs.org>
@@ -663,7 +663,8 @@ Screen snapshots are available in the WWW version of the FAQ.
 @node Q1.0.10, Q1.0.11, Q1.0.9, Introduction
 @unnumberedsubsec Q1.0.10: Is there a port of XEmacs to Microsoft ('95 or NT)?
 
-Yes, see @ref{MS Windows}.
+Yes.  XEmacs can be built under MS Windows and is fully-featured and
+actively developed.  See @ref{MS Windows}.
 
 @node Q1.0.11, Q1.0.12, Q1.0.10, Introduction
 @unnumberedsubsec Q1.0.11: Is there a port of XEmacs to the Macintosh?
@@ -676,9 +677,18 @@ Yes, see @ref{MS Windows}.
 @c For the MacOS, there is a port of
 @c @uref{ftp://ftp.cs.cornell.edu/pub/parmet/, Emacs 18.59}.
 
-Yes, there is a port of XEmacs 19.14, tested on MacOS 7.6.1 and MacOS
-8.5.1 by @email{pjarvis@@ispchannel.com, Pitts Jarvis}.  It's available
-at @uref{http://homepage.mac.com/pjarvis/xemacs.html}.
+Yes.
+
+XEmacs 21.5 (perhaps 21.4 also?) works on MacOS X, although it certainly
+will not feel very much like a Mac application as it has no Mac-specific
+code in it.
+
+There is also a port of XEmacs 19.14 that works on all recent versions
+of MacOS, from 8.1 through MacOS X, by @email{pjarvis@@ispchannel.com,
+Pitts Jarvis}.  It runs in an equivalent of TTY mode only (one single
+Macintosh window, 25 colors), but has a large number of Mac-specific
+additions.  It's available at
+@uref{http://homepage.mac.com/pjarvis/xemacs.html}.
 
 @node Q1.0.12, Q1.0.13, Q1.0.11, Introduction
 @unnumberedsubsec Q1.0.12: Is there a port of XEmacs to NextStep?

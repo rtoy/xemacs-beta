@@ -1,4 +1,4 @@
-/* unexec for GNU Emacs on Windows NT.
+/* unexec for XEmacs on Windows NT.
    Copyright (C) 1994 Free Software Foundation, Inc.
 
 This file is part of XEmacs.

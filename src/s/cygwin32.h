@@ -2,14 +2,14 @@
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 2001 Ben Wing.
 
-This file is part of GNU Emacs.
+This file is part of XEmacs.
 
-GNU Emacs is free software; you can redistribute it and/or modify
+XEmacs is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GNU Emacs is distributed in the hope that it will be useful,
+XEmacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -77,6 +77,8 @@ int killpg (int pgrp, int sig);
 #define UNEXEC "unexcw.o"
 
 #define BROKEN_SIGIO
+
+#define CYGWIN_BROKEN_SIGNALS
 
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS

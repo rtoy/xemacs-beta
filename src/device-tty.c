@@ -209,6 +209,6 @@ init_device_tty (void)
 {
 #ifdef SIGWINCH
   if (initialized && !noninteractive)
-    signal (SIGWINCH, tty_device_size_change_signal);
+    EMACS_SIGNAL (SIGWINCH, tty_device_size_change_signal);
 #endif /* SIGWINCH */
 }

@@ -89,11 +89,22 @@ Boston, MA 02111-1307, USA.  */
    (typically, the POSIX sigaction/sigprocmask and either the older
    SYSV or BSD way).  In such a case, we prefer the POSIX way.
 
-   NOTE: We use EMACS_* macros for most signal operations, but
+   We used to say this:
+
+   [[ NOTE: We use EMACS_* macros for most signal operations, but
    just signal() for the standard signal-setting operation.
    Perhaps we should change this to EMACS_SIGNAL(), but that runs
    the risk of someone forgetting this convention and calling
-   signal() directly. */
+   signal() directly. ]]
+
+   But current policy is to avoid playing with macros as much as
+   possible, since in the long run it really just ends up creating
+   unmaintainable code -- someone newly reading the code is never
+   going to realize exactly which calls are redirected, and on
+   which systems, and where the redirection occurs.
+
+   Possibly we should use the new "qxe" convention.
+*/
 
 #ifndef NeXT
 typedef SIGTYPE (*signal_handler_t) (int);
@@ -103,12 +114,10 @@ typedef SIGTYPE (*signal_handler_t) (int);
 
 /* The POSIX way (sigaction, sigprocmask, sigpending, sigsuspend) */
 
-signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
-/* Provide our own version of signal(), that calls sigaction().  The
-   name is not sys_signal() because a function of that name exists in
-   libenergize.a */
-#undef signal
-#define signal sys_do_signal
+signal_handler_t qxe_reliable_signal (int signal_number,
+				      signal_handler_t action);
+
+#define EMACS_SIGNAL qxe_reliable_signal
 
 #define EMACS_BLOCK_SIGNAL(sig) do		\
 {						\
@@ -147,7 +156,7 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
    problems.  However, we use sigvec() because it allows us to
    request interruptible I/O. */
 
-#define signal sys_do_signal
+#define EMACS_SIGNAL qxe_reliable_signal
 
 /* Is it necessary to define sigmask like this? */
 #ifndef sigmask
@@ -169,7 +178,7 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
 /* The older SYSV way (signal/sigset, sighold, sigrelse, sigignore,
    sigpause) */
 
-#define signal sigset
+#define EMACS_SIGNAL sigset
 #define EMACS_BLOCK_SIGNAL(sig) sighold (sig)
 #define EMACS_UNBLOCK_SIGNAL(sig) sigrelse (sig)
 /* #### There's not really any simple way to implement this.
@@ -179,6 +188,28 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
 #define EMACS_WAIT_FOR_SIGNAL(sig) sigpause (sig)
 #define EMACS_REESTABLISH_SIGNAL(sig, handler)
 
+#elif defined (WIN32_NATIVE)
+
+/* MS Windows signal emulation (in turns emulates the sigset/sighold
+   paradigm) */
+
+#define EMACS_SIGNAL mswindows_sigset
+#define EMACS_BLOCK_SIGNAL(sig) mswindows_sighold (sig)
+#define EMACS_UNBLOCK_SIGNAL(sig) mswindows_sigrelse (sig)
+/* #### There's not really any simple way to implement this.
+   Since EMACS_UNBLOCK_ALL_SIGNALS() is only called once (at startup),
+   it's probably OK to just ignore it. */
+#define EMACS_UNBLOCK_ALL_SIGNALS() 0
+#define EMACS_WAIT_FOR_SIGNAL(sig) mswindows_sigpause (sig)
+#define EMACS_REESTABLISH_SIGNAL(sig, handler)
+
+/* Defines that we need that aren't in the standard signal.h  */
+#define SIGHUP  1               /* Hang up */
+#define SIGQUIT 3               /* Quit process */
+#define SIGKILL 9               /* Die, die die */
+#define SIGALRM 14              /* Alarm */
+#define SIGPROF 29		/* Profiling timer exp */
+
 #else
 
 /* The oldest SYSV way (signal only; unreliable signals) */
@@ -186,6 +217,7 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
 /* Old USG systems don't really have signal blocking.
    We indicate this by not defining EMACS_BLOCK_SIGNAL or
    EMACS_WAIT_FOR_SIGNAL. */
+#define EMACS_SIGNAL signal
 #define EMACS_UNBLOCK_SIGNAL(sig) 0
 #define EMACS_UNBLOCK_ALL_SIGNALS() 0
 #define EMACS_REESTABLISH_SIGNAL(sig, handler) do	\
@@ -205,7 +237,7 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
    reestablished (SYSV Release 2 and earlier). */
 #define OBNOXIOUS_SYSV_SIGCLD_BEHAVIOR
 
-#endif
+#endif /* different signalling methods */
 
 /* On bsd, [man says] kill does not accept a negative number to kill a pgrp.
    Must do that using the killpg call.  */
@@ -234,14 +266,20 @@ extern const char *sys_siglist[];
 SIGTYPE memory_warning_signal (int sig);
 #endif
 
-#ifdef WIN32_NATIVE
-/* Prototypes for signal functions, see nt.c */
+#if defined (WIN32_NATIVE) || defined (CYGWIN_BROKEN_SIGNALS)
 typedef void (__cdecl *mswindows_sighandler) (int);
-mswindows_sighandler mswindows_sigset (int sig, mswindows_sighandler handler);
+
+/* Prototypes for signal functions, see win32.c */
 int mswindows_sighold (int nsig);
 int mswindows_sigrelse (int nsig);
 int mswindows_sigpause (int nsig);
 int mswindows_raise (int nsig);
-#endif /* WIN32_NATIVE */
+mswindows_sighandler mswindows_sigset (int sig, mswindows_sighandler handler);
+
+#endif /* defined (WIN32_NATIVE) || defined (CYGWIN_BROKEN_SIGNALS) */
+
+signal_handler_t set_timeout_signal (int signal_number,
+				     signal_handler_t action);
+
 
 #endif /* INCLUDED_syssignal_h_ */

@@ -2517,53 +2517,62 @@ if it is a list or string."
   (interactive "*p")
   (transpose-subr 'forward-sexp arg))
 
+(defun Simple-forward-line-creating-newline ()
+  ;; Move forward over a line,
+  ;; but create a newline if none exists yet.
+  (end-of-line)
+  (if (eobp)
+      (newline)
+    (forward-char 1)))
+
+(defun Simple-transpose-lines-mover (arg)
+  (if (= arg 1)
+      (Simple-forward-line-creating-newline)
+    (forward-line arg)))
+
 (defun transpose-lines (arg)
   "Exchange current line and previous line, leaving point after both.
 With argument ARG, takes previous line and moves it past ARG lines.
 With argument 0, interchanges line point is in with line mark is in."
   (interactive "*p")
-  (transpose-subr #'(lambda (arg)
-		     (if (= arg 1)
-			 (progn
-			   ;; Move forward over a line,
-			   ;; but create a newline if none exists yet.
-			   (end-of-line)
-			   (if (eobp)
-			       (newline)
-			     (forward-char 1)))
-		       (forward-line arg)))
-		  arg))
+  (transpose-subr 'Simple-transpose-lines-mover arg))
 
 (defun transpose-line-up (arg)
   "Move current line one line up, leaving point at beginning of that line.
-This can be run repeatedly to move the current line up a number of lines."
+With argument ARG, move it ARG lines up.  This can be run repeatedly
+to move the current line up a number of lines.
+
+If the region is active, move the region up one line (or ARG lines,
+if specified).  The region will not be selected afterwards, but this
+command can still be run repeatedly to move the region up a number
+of lines."
   (interactive "*p")
-  ;; Move forward over a line,
-  ;; but create a newline if none exists yet.
-  (end-of-line)
-  (if (eobp)
-      (newline)
-    (forward-char 1))
-  (transpose-lines (- arg))
-  (forward-line -1))
+  (transpose-line-down (- arg)))
 
 (defun transpose-line-down (arg)
   "Move current line one line down, leaving point at beginning of that line.
-This can be run repeatedly to move the current line down a number of lines."
-  (interactive "*p")
-  ;; Move forward over a line,
-  ;; but create a newline if none exists yet.
-  (end-of-line)
-  (if (eobp)
-      (newline)
-    (forward-char 1))
-  (transpose-lines arg)
-  (forward-line -1))
+With argument ARG, move it ARG lines down.  This can be run repeatedly
+to move the current line down a number of lines.
 
-(defun transpose-subr (mover arg)
+If the region is active, move the region down one line (or ARG lines,
+if specified).  The region will not be selected afterwards, but this
+command can still be run repeatedly to move the region down a number
+of lines."
+  (interactive "*p")
+  (if (or (region-active-p)
+	  (getf last-command-properties 'transpose-region-by-line-command))
+      (progn
+	(transpose-subr 'Simple-transpose-lines-mover arg t)
+	(putf this-command-properties 'transpose-region-by-line-command t))
+    (Simple-forward-line-creating-newline)
+    (transpose-subr 'Simple-transpose-lines-mover arg)
+    (forward-line -1)))
+
+(defun transpose-subr (mover arg &optional move-region)
   (let (start1 end1 start2 end2)
     ;; XEmacs -- use flet instead of defining a separate function and
-    ;; relying on dynamic scope!!!
+    ;; relying on dynamic scope; use (mark t) etc; add code to support
+    ;; the new MOVE-REGION arg.
     (flet ((transpose-subr-1 ()
 	     (if (> (min end1 end2) (max start1 start2))
 		 (error "Don't have two things to transpose"))
@@ -2583,36 +2592,63 @@ This can be run repeatedly to move the current line down a number of lines."
 	      (setq end2 (point))
 	      (funcall mover -1)
 	      (setq start2 (point))
-	      (goto-char (mark t)) ; XEmacs
+	      (goto-char (mark t))
 	      (funcall mover 1)
 	      (setq end1 (point))
 	      (funcall mover -1)
 	      (setq start1 (point))
 	      (transpose-subr-1))
-	    (exchange-point-and-mark t))) ; XEmacs
-      (while (> arg 0)
-	(funcall mover -1)
-	(setq start1 (point))
-	(funcall mover 1)
-	(setq end1 (point))
-	(funcall mover 1)
-	(setq end2 (point))
-	(funcall mover -1)
-	(setq start2 (point))
-	(transpose-subr-1)
-	(goto-char end2)
-	(setq arg (1- arg)))
-      (while (< arg 0)
-	(funcall mover -1)
-	(setq start2 (point))
-	(funcall mover -1)
-	(setq start1 (point))
-	(funcall mover 1)
-	(setq end1 (point))
-	(funcall mover 1)
-	(setq end2 (point))
-	(transpose-subr-1)
-	(setq arg (1+ arg))))))
+	    (exchange-point-and-mark t)))
+      (if move-region
+	  (let ((rbeg (region-beginning))
+		(rend (region-end)))
+	    (while (> arg 0)
+	      (goto-char rend)
+	      (funcall mover 1)
+	      (setq end2 (point))
+	      (funcall mover -1)
+	      (setq start2 (point))
+	      (setq start1 rbeg end1 rend)
+	      (transpose-subr-1)
+	      (incf rbeg (- end2 start2))
+	      (incf rend (- end2 start2))
+	      (setq arg (1- arg)))
+	    (while (< arg 0)
+	      (goto-char rbeg)
+	      (funcall mover -1)
+	      (setq start1 (point))
+	      (funcall mover 1)
+	      (setq end1 (point))
+	      (setq start2 rbeg end2 rend)
+	      (transpose-subr-1)
+	      (decf rbeg (- end1 start1))
+	      (decf rend (- end1 start1))
+	      (setq arg (1+ arg)))
+	    (set-mark rbeg)
+	    (goto-char rend))
+	(while (> arg 0)
+	  (funcall mover -1)
+	  (setq start1 (point))
+	  (funcall mover 1)
+	  (setq end1 (point))
+	  (funcall mover 1)
+	  (setq end2 (point))
+	  (funcall mover -1)
+	  (setq start2 (point))
+	  (transpose-subr-1)
+	  (goto-char end2)
+	  (setq arg (1- arg)))
+	(while (< arg 0)
+	  (funcall mover -1)
+	  (setq start2 (point))
+	  (funcall mover -1)
+	  (setq start1 (point))
+	  (funcall mover 1)
+	  (setq end1 (point))
+	  (funcall mover 1)
+	  (setq end2 (point))
+	  (transpose-subr-1)
+	  (setq arg (1+ arg)))))))
 
 
 (defcustom comment-column 32

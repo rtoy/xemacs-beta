@@ -983,7 +983,7 @@ init_floatfns_very_early (void)
 {
 #ifdef LISP_FLOAT_TYPE
 # ifdef FLOAT_CATCH_SIGILL
-  signal (SIGILL, float_error);
+  EMACS_SIGNAL (SIGILL, float_error);
 # endif
   in_float = 0;
 #endif /* LISP_FLOAT_TYPE */

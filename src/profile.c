@@ -189,7 +189,7 @@ will be properly accumulated.
   if (msecs <= 0)
     msecs = 1000;
 
-  signal (SIGPROF, sigprof_handler);
+  set_timeout_signal (SIGPROF, sigprof_handler);
   foo.it_value.tv_sec = 0;
   foo.it_value.tv_usec = msecs;
   EMACS_NORMALIZE_TIME (foo.it_value);
@@ -213,7 +213,7 @@ Stop profiling.
   foo.it_interval = foo.it_value;
   qxe_setitimer (ITIMER_PROF, &foo, 0);
   profiling_active = 0;
-  signal (SIGPROF, fatal_error_signal);
+  set_timeout_signal (SIGPROF, fatal_error_signal);
   return Qnil;
 }
 

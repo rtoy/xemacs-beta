@@ -1,7 +1,7 @@
 /* -*-C-*-
- Common library code for the GNU Emacs server and client.
+ Common library code for the XEmacs server and client.
 
- This file is part of GNU Emacs.
+ This file is part of XEmacs.
 
  Copying is permitted under those conditions described by the GNU
  General Public License.

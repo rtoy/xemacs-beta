@@ -1,3 +1,10 @@
+2001-06-10  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.10):
+	* xemacs-faq.texi (Q1.0.11):
+	* xemacs-faq.texi (Q1.0.12):
+	Update sections on Windows and MacOS availability.
+
 2001-06-08  Ben Wing  <ben@xemacs.org>
 
 	* xemacs-faq.texi (Top):

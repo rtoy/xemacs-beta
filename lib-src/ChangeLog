@@ -1,3 +1,24 @@
+2001-06-10  Ben Wing  <ben@xemacs.org>
+
+	* cvtmail.c:
+	* fakemail.c:
+	* gnuserv.c:
+	* gnuserv.c (handle_ipc_request):
+	* gnuserv.h:
+	* gnuslib.c:
+	* make-msgfile.c:
+	* make-path.c:
+	* pop.c:
+	* pop.h:
+	* profile.c:
+	* tcp.c:
+	Rename 'GNU Emacs' to XEmacs in the copyright.
+	Fix comments in similar ways.
+
+	* digest-doc.c (main):
+	* sorted-doc.c (main):
+	Fix program and author name to reflect XEmacs.
+
 2001-05-06  Karl M. Hegbloom  <karlheg@hegbloom.net>
 
 	* movemail.c (lock_dot): Use mkstemp if available

@@ -142,7 +142,7 @@ reset_interval_timer (void)
 static void
 init_async_timeouts (void)
 {
-  signal (SIGALRM, alarm_signal);
+  set_timeout_signal (SIGALRM, alarm_signal);
   async_timer_suppress_count = 0;
 }
 
@@ -172,7 +172,7 @@ start_async_timeouts (void)
     {
       /* Some callers turn off async timeouts and then use the alarm
 	 for their own purposes; so reinitialize everything. */
-      signal (SIGALRM, alarm_signal);
+      set_timeout_signal (SIGALRM, alarm_signal);
       reset_interval_timer ();
     }
 }
@@ -296,6 +296,15 @@ qxe_setitimer (int kind, const struct itimerval *itnew,
 
 #endif /* HAVE_SETITIMER */
 
+signal_handler_t
+set_timeout_signal (int signal_number, signal_handler_t action)
+{
+#ifdef CYGWIN_BROKEN_SIGNALS
+  return mswindows_sigset (signal_number, action);
+#else
+  return EMACS_SIGNAL (signal_number, action);
+#endif
+}
 
 DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p, 0, 0, 0, /*
 Return non-nil if XEmacs is waiting for input from the user.
@@ -732,8 +741,8 @@ init_poll_for_sigchld (void)
 static void
 handle_signal_if_fatal (int signo)
 {
-  if (signal (signo,  fatal_error_signal) == SIG_IGN)
-    signal (signo, SIG_IGN);
+  if (EMACS_SIGNAL (signo,  fatal_error_signal) == SIG_IGN)
+    EMACS_SIGNAL (signo, SIG_IGN);
 }
 
 void
@@ -846,7 +855,7 @@ init_signals_very_early (void)
 
 #ifdef SIGDANGER
   /* This just means available memory is getting low.  */
-  signal (SIGDANGER, memory_warning_signal);
+  EMACS_SIGNAL (SIGDANGER, memory_warning_signal);
 #endif
 }
 
@@ -861,21 +870,21 @@ init_interrupts_late (void)
 {
   if (!noninteractive)
     {
-      signal (SIGINT, interrupt_signal);
+      EMACS_SIGNAL (SIGINT, interrupt_signal);
 #ifdef HAVE_TERMIO
       /* On  systems with TERMIO, C-g is set up for both SIGINT and SIGQUIT
 	 and we can't tell which one it will give us.  */
-      signal (SIGQUIT, interrupt_signal);
+      EMACS_SIGNAL (SIGQUIT, interrupt_signal);
 #endif /* HAVE_TERMIO */
       init_async_timeouts ();
 #ifdef SIGIO
-      signal (SIGIO, input_available_signal);
+      EMACS_SIGNAL (SIGIO, input_available_signal);
 # ifdef SIGPOLL /* XPG5 */
       /* Some systems (e.g. Motorola SVR4) losingly have different
 	 values for SIGIO and SIGPOLL, and send SIGPOLL instead of
 	 SIGIO.  On those same systems, an uncaught SIGPOLL kills the
 	 process. */
-      signal (SIGPOLL, input_available_signal);
+      EMACS_SIGNAL (SIGPOLL, input_available_signal);
 # endif
 #elif !defined (DONT_POLL_FOR_QUIT)
       init_poll_for_quit ();

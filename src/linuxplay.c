@@ -311,8 +311,8 @@ linux_play_data_or_file(int fd, UChar_Binary *data,
      this could lead to problems, when multiple sound cards are installed */
   mix_fd = audio_fd;
 
-  sighup_handler = signal(SIGHUP, sighandler);
-  sigint_handler = signal(SIGINT, sighandler);
+  sighup_handler = EMACS_SIGNAL (SIGHUP, sighandler);
+  sigint_handler = EMACS_SIGNAL (SIGINT, sighandler);
 
   if (!audio_init(mix_fd,audio_fd,fmt,speed,tracks,&volume,&sndcnv))
     goto END_OF_PLAY;
@@ -357,8 +357,8 @@ END_OF_PLAY:
   ioctl(audio_fd,SNDCTL_DSP_SYNC,NULL);
   ioctl(audio_fd,SNDCTL_DSP_RESET,NULL);
 
-  signal(SIGHUP,sighup_handler);
-  signal(SIGINT,sigint_handler);
+  EMACS_SIGNAL (SIGHUP,sighup_handler);
+  EMACS_SIGNAL (SIGINT,sigint_handler);
 
   if (mix_fd > 0) {
     if (audio_vol >= 0) {

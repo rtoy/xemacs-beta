@@ -506,7 +506,7 @@ fatal_error_signal (int sig)
 
   /* Now, reset our signal handler, so the next time, we just die.
      Don't do this before auto-saving. */
-  signal (sig, SIG_DFL);
+  EMACS_SIGNAL (sig, SIG_DFL);
 
   /* Keep in mind that there's more than one signal that we can crash
      on. */
@@ -631,7 +631,7 @@ memory_warning_signal (int sig)
 {
   /* #### bad bad bad; this function shouldn't do anything except
      set a flag, or weird corruption could happen. */
-  signal (sig, memory_warning_signal);
+  EMACS_SIGNAL (sig, memory_warning_signal);
 
   malloc_warning
     (GETTEXT ("Operating system warns that virtual memory is running low.\n"));

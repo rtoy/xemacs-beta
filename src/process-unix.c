@@ -108,7 +108,7 @@ static void
 close_safely (int fd)
 {
   stop_interrupts ();
-  signal (SIGALRM, close_safely_handler);
+  set_timeout_signal (SIGALRM, close_safely_handler);
   alarm (1);
   close (fd);
   alarm (0);
@@ -810,7 +810,7 @@ unix_init_process (void)
 #ifndef CANNOT_DUMP
   if (! noninteractive || initialized)
 #endif
-    signal (SIGCHLD, sigchld_handler);
+    EMACS_SIGNAL (SIGCHLD, sigchld_handler);
 }
 #endif /* SIGCHLD */
 
@@ -1032,15 +1032,15 @@ unix_create_process (Lisp_Process *p,
 	       a SIG_IGN handling from our parent (nohup) and we are in new
 	       process group.
 	    */
-	    signal (SIGHUP, SIG_DFL);
+	    EMACS_SIGNAL (SIGHUP, SIG_DFL);
 
 	    /* Set up the terminal characteristics of the pty. */
 	    child_setup_tty (xforkout);
 	  } /* if (pty_flag) */
 
 
-	signal (SIGINT,  SIG_DFL);
-	signal (SIGQUIT, SIG_DFL);
+	EMACS_SIGNAL (SIGINT,  SIG_DFL);
+	EMACS_SIGNAL (SIGQUIT, SIG_DFL);
 
 	{
 	  char *current_dir;
@@ -1287,7 +1287,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 	    break; /* perhaps should abort() if < 0?
 		      This should never happen. */
 	  old_sigpipe =
-	    (SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
+	    (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, send_process_trap);
 	  /* Lstream_write() will never successfully write less than
 	     the amount sent in.  In the worst case, it just buffers
 	     the unwritten data. */
@@ -1295,7 +1295,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 				    chunklen);
 	  {
 	    int save_errno = errno;
-	    signal (SIGPIPE, old_sigpipe);
+	    EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 	    errno = save_errno;
 	    if (writeret < 0)
 	      /* This is a real error.  Blocking errors are handled
@@ -1312,15 +1312,15 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 	      if (NILP(p->pipe_outstream))
 		return;
 	      old_sigpipe =
-		(SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
+		(SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, send_process_trap);
 	      Lstream_flush (XLSTREAM (p->pipe_outstream));
-	      signal (SIGPIPE, old_sigpipe);
+	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 	    }
 	}
     }
   else
     { /* We got here from a longjmp() from the SIGPIPE handler */
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
       /* Close the file lstream so we don't attempt to write to it further */
       /* #### There is controversy over whether this might cause fd leakage */
       /*      my tests say no. -slb */
@@ -1334,9 +1334,9 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
       invalid_operation ("SIGPIPE raised on process; closed it", p->name);
     }
 
-  old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
+  old_sigpipe = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, send_process_trap);
   Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
-  signal (SIGPIPE, old_sigpipe);
+  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 }
 
 /*
@@ -1389,9 +1389,9 @@ unix_deactivate_process (Lisp_Process *p)
     flush_pending_output (UNIX_DATA(p)->infd);
 
   /* closing the outstream could result in SIGPIPE, so ignore it. */
-  old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, SIG_IGN);
+  old_sigpipe = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGPIPE, SIG_IGN);
   usid = event_stream_delete_stream_pair (p->pipe_instream, p->pipe_outstream);
-  signal (SIGPIPE, old_sigpipe);
+  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 
   UNIX_DATA(p)->infd  = -1;
 

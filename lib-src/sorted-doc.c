@@ -204,8 +204,8 @@ main (int argc, char *argv[])
 
     printf ("\\input texinfo  @c -*-texinfo-*-\n");
     printf ("@setfilename ../info/summary\n");
-    printf ("@settitle Command Summary for GNU Emacs\n");
-    printf ("@unnumbered Command Summary for GNU Emacs\n");
+    printf ("@settitle Command Summary for XEmacs\n");
+    printf ("@unnumbered Command Summary for XEmacs\n");
     printf ("@table @asis\n");
     printf ("\n");
     printf ("@iftex\n");

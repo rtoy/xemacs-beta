@@ -605,7 +605,7 @@ save_signal_handlers (struct save_signal *saved_handlers)
   while (saved_handlers->code)
     {
       saved_handlers->handler
-	= (SIGTYPE (*) (SIG_PARAM_TYPE)) signal (saved_handlers->code, SIG_IGN);
+	= (SIGTYPE (*) (SIG_PARAM_TYPE)) EMACS_SIGNAL (saved_handlers->code, SIG_IGN);
       saved_handlers++;
     }
 }
@@ -615,7 +615,7 @@ restore_signal_handlers (struct save_signal *saved_handlers)
 {
   while (saved_handlers->code)
     {
-      signal (saved_handlers->code, saved_handlers->handler);
+      EMACS_SIGNAL (saved_handlers->code, saved_handlers->handler);
       saved_handlers++;
     }
 }
@@ -900,7 +900,7 @@ setup_pty (int fd)
   /* cause EMACS not to die when it should, i.e., when its own controlling  */
   /* tty goes away.  I've complained to the AIX developers, and they may    */
   /* change this behavior, but I'm not going to hold my breath.             */
-  signal (SIGHUP, SIG_IGN);
+  EMACS_SIGNAL (SIGHUP, SIG_IGN);
 #endif /* IBMRTAIX */
 
 #ifdef TIOCPKT
@@ -2431,7 +2431,7 @@ ERROR: XEmacs requires a working select().
 static struct sigaction new_action, old_action;
 
 signal_handler_t
-sys_do_signal (int signal_number, signal_handler_t action)
+qxe_reliable_signal (int signal_number, signal_handler_t action)
 {
 #if 0
 
@@ -2482,7 +2482,7 @@ sys_do_signal (int signal_number, signal_handler_t action)
 /* We use sigvec() rather than signal() if we have it, because
    it lets us specify interruptible system calls. */
 signal_handler_t
-sys_do_signal (int signal_number, signal_handler_t action)
+qxe_reliable_signal (int signal_number, signal_handler_t action)
 {
   struct sigvec vec, ovec;
 

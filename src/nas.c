@@ -82,37 +82,29 @@
 
 /* NAS <= 1.2p5 <audio/fileutil.h> doesn't define the NAS_ versions */
 #ifndef NAS_LITTLE_ENDIAN
-#define NAS_LITTLE_ENDIAN LITTLE_ENDIAN
-#define NAS_BIG_ENDIAN BIG_ENDIAN
+# define NAS_LITTLE_ENDIAN LITTLE_ENDIAN
+# define NAS_BIG_ENDIAN BIG_ENDIAN
 #endif
 
-#    define XTOOLKIT
-#    define XTEVENTS
-#    define ROBUST_PLAY
-#    define CACHE_SOUNDS
+#define XTOOLKIT
+#define XTEVENTS
+#define ROBUST_PLAY
+#define CACHE_SOUNDS
 
     /*
      * For old NAS libraries, force playing to be synchronous
      * and declare the long jump point locally.
      */
 
-#    if defined (NAS_NO_ERROR_JUMP)
-
-#	undef XTEVENTS
-
-#	include <setjmp.h>
-	jmp_buf AuXtErrorJump;
-#    endif
-
-#    define play_sound_file nas_play_sound_file
-#    define play_sound_data nas_play_sound_data
-#    define wait_for_sounds nas_wait_for_sounds
-#    define init_play       nas_init_play
-#    define close_down_play nas_close_down_play
+#if defined (NAS_NO_ERROR_JUMP)
+# undef XTEVENTS
+# include <setjmp.h>
+jmp_buf AuXtErrorJump;
+#endif
 
 #ifdef XTOOLKIT
-#    include <X11/Intrinsic.h>
-#    include <audio/Xtutil.h>
+# include <X11/Intrinsic.h>
+# include <audio/Xtutil.h>
 #endif
 
 #if defined (ROBUST_PLAY)
@@ -139,7 +131,7 @@ static Extbyte *aud_server;
 #endif /* XTOOLKIT */
 
 Extbyte *
-init_play (
+nas_init_play (
 #ifdef XTOOLKIT
 	   Display *display
 #else
@@ -147,7 +139,7 @@ init_play (
 #endif
 	   );
 Extbyte *
-init_play (
+nas_init_play (
 #ifdef XTOOLKIT
 	   Display *display
 #else
@@ -169,10 +161,10 @@ init_play (
 #endif
 
 #ifdef ROBUST_PLAY
-  old_sigpipe = signal (SIGPIPE, sigpipe_handle);
+  old_sigpipe = EMACS_SIGNAL (SIGPIPE, sigpipe_handle);
   if (setjmp (AuXtErrorJump))
     {
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #ifdef emacs
       start_interrupts ();
 #endif  
@@ -195,7 +187,7 @@ init_play (
   if (!aud)
     {
 #ifdef ROBUST_PLAY
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
       if (err_message == NULL)
 	return "Can't connect to audio server";
@@ -222,7 +214,7 @@ init_play (
 #endif
 
 #ifdef ROBUST_PLAY
-  signal (SIGPIPE, old_sigpipe);
+  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 
   sounds_in_play = 0;
@@ -231,7 +223,7 @@ init_play (
 }
 
 static void
-close_down_play (void)
+nas_close_down_play (void)
 
 {
   AuCloseServer (aud);
@@ -329,9 +321,9 @@ do_caching_play (Sound s,
 #endif /* CACHE_SOUNDS */
 
 
-void wait_for_sounds (void);
+void nas_wait_for_sounds (void);
 void 
-wait_for_sounds (void)
+nas_wait_for_sounds (void)
 
 {
   AuEvent         ev;
@@ -343,45 +335,46 @@ wait_for_sounds (void)
     }
 }
 
-int play_sound_file (Extbyte *sound_file, int volume);
+int nas_play_sound_file (Extbyte *sound_file, int volume);
 int
-play_sound_file (Extbyte *sound_file,
-		 int volume)
+nas_play_sound_file (Extbyte *sound_file,
+		     int volume)
 {
   SIGTYPE (*old_sigpipe) (int);
 
 #ifdef ROBUST_PLAY
-  old_sigpipe=signal (SIGPIPE, sigpipe_handle);
+  old_sigpipe = EMACS_SIGNAL (SIGPIPE, sigpipe_handle);
   if (setjmp (AuXtErrorJump))
     {
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
       return 0;
     }
 #endif
 
-  if (aud==NULL) {
-    if (aud_server != NULL)
-      {
-	Extbyte *m;
-	/* attempt to reconect */
-	if ((m=init_play (aud_server))!= NULL)
-	  {
-
+  if (aud==NULL)
+    {
+      if (aud_server != NULL)
+	{
+	  Extbyte *m;
+	  /* attempt to reconect */
+	  if ((m = nas_init_play (aud_server)) != NULL)
+	    {
+	      
 #ifdef ROBUST_PLAY
-	    signal (SIGPIPE, old_sigpipe);
+	      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
-	    return 0;
-	  }
-      }
-    else
-      {
-	sound_warn ("Attempt to play with no audio init\n");
+	      return 0;
+	    }
+	}
+      else
+	{
+	  sound_warn ("Attempt to play with no audio init\n");
 #ifdef ROBUST_PLAY
-	signal (SIGPIPE, old_sigpipe);
+	  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
-	return 0;
-      }
-  }
+	  return 0;
+	}
+    }
 
 #ifndef CACHE_SOUNDS
   sounds_in_play++;
@@ -403,7 +396,7 @@ play_sound_file (Extbyte *sound_file,
     if ((s = SoundOpenFileForReading (sound_file))==NULL)
       {
 #ifdef ROBUST_PLAY
-	signal (SIGPIPE, old_sigpipe);
+	EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 	return 0;
       }
@@ -421,26 +414,22 @@ play_sound_file (Extbyte *sound_file,
 #endif /* CACHE_SOUNDS */
 
 #ifndef XTEVENTS
-  wait_for_sounds ();
+  nas_wait_for_sounds ();
 #else
   if (!NILP (Vsynchronous_sounds))
-    {
-      wait_for_sounds ();
-    }
+    nas_wait_for_sounds ();
 #endif
 
 #ifdef ROBUST_PLAY
-  signal (SIGPIPE, old_sigpipe);
+  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 
   return 1;
 }
 
-int play_sound_data (UChar_Binary *data, int length, int volume);
+int nas_play_sound_data (UChar_Binary *data, int length, int volume);
 int
-play_sound_data (UChar_Binary *data,
-		 int length, 
-		 int volume)
+nas_play_sound_data (UChar_Binary *data, int length, int volume)
 {
   Sound s;
   int offset;
@@ -451,10 +440,10 @@ play_sound_data (UChar_Binary *data,
 #endif
 
 #ifdef ROBUST_PLAY
-  old_sigpipe = signal (SIGPIPE, sigpipe_handle);
-  if (setjmp (AuXtErrorJump) !=0)
+  old_sigpipe = EMACS_SIGNAL (SIGPIPE, sigpipe_handle);
+  if (setjmp (AuXtErrorJump) != 0)
     {
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
       return 0;
     }
 #endif
@@ -465,10 +454,10 @@ play_sound_data (UChar_Binary *data,
       {
 	Extbyte *m;
 	/* attempt to reconect */
-	if ((m = init_play (aud_server)) != NULL)
+	if ((m = nas_init_play (aud_server)) != NULL)
 	  {
 #ifdef ROBUST_PLAY
-	    signal (SIGPIPE, old_sigpipe);
+	    EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 	    return 0;
 	  }
@@ -477,7 +466,7 @@ play_sound_data (UChar_Binary *data,
       {
 	sound_warn ("Attempt to play with no audio init\n");
 #ifdef ROBUST_PLAY
-	signal (SIGPIPE, old_sigpipe);
+	EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 	return 0;
       }
@@ -487,7 +476,7 @@ play_sound_data (UChar_Binary *data,
     {
       sound_warn ("unknown sound type");
 #ifdef ROBUST_PLAY
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
       return 0;
     }
@@ -506,7 +495,7 @@ play_sound_data (UChar_Binary *data,
       sound_warn ("only understand snd and wave files at the moment");
       SoundCloseFile (s);
 #ifdef ROBUST_PLAY
-      signal (SIGPIPE, old_sigpipe);
+      EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
       return 0;
     }
@@ -526,25 +515,21 @@ play_sound_data (UChar_Binary *data,
 #else
   /* Cache the sounds in buckets on the server */
 
-  {
-    do_caching_play (s, volume, data+offset);
-  }
+  do_caching_play (s, volume, data+offset);
 #endif /* CACHE_SOUNDS */
 
 
 #ifndef XTEVENTS
-  wait_for_sounds ();
+  nas_wait_for_sounds ();
 #else
   if (!NILP (Vsynchronous_sounds))
-    {
-      wait_for_sounds ();
-    }
+    nas_wait_for_sounds ();
 #endif
 
   SoundCloseFile (s); 
 
 #ifdef ROBUST_PLAY
-  signal (SIGPIPE, old_sigpipe);
+  EMACS_SIGNAL (SIGPIPE, old_sigpipe);
 #endif
 
   return 1;
@@ -570,9 +555,7 @@ CatchIoErrorAndJump (AuServer *old_aud)
 
 #ifdef XTEVENTS
 #ifdef XTOOLKIT
-  {
-    AuXtAppRemoveAudioHandler (aud, input_id); 
-  }
+  AuXtAppRemoveAudioHandler (aud, input_id); 
 #endif
 
   if (aud)
@@ -808,36 +791,36 @@ dtell (void)
 static unsigned short
 DataReadS (int swapit)
 {
-    unsigned short us;
+  unsigned short us;
 
-    dread(&us, 2, 1);
-    if (swapit)
-	us = FileSwapS(us);
-    return us;
+  dread(&us, 2, 1);
+  if (swapit)
+    us = FileSwapS(us);
+  return us;
 }
 
 static AuUint32
 DataReadL (int swapit)
 {
-    AuUint32 ul;
+  AuUint32 ul;
 
-    dread(&ul, 4, 1);
-    if (swapit)
-	ul = FileSwapL(ul);
-    return ul;
+  dread(&ul, 4, 1);
+  if (swapit)
+    ul = FileSwapL(ul);
+  return ul;
 }
 
 static int
 readChunk (RiffChunk *c)
 {
-    int             status;
-    Char_Binary            n;
+  int             status;
+  Char_Binary            n;
 
-    if ((status = dread(c, sizeof(RiffChunk), 1)))
-	if (NAS_BIG_ENDIAN)
-	    swapl(&c->ckSize, n);
+  if ((status = dread(c, sizeof(RiffChunk), 1)))
+    if (NAS_BIG_ENDIAN)
+      swapl(&c->ckSize, n);
 
-    return status;
+  return status;
 }
 
 /* A very straight-forward translation of WaveOpenFileForReading to
@@ -847,133 +830,133 @@ static WaveInfo *
 WaveOpenDataForReading (const Char_Binary *data,
 			int length)
 {
-    RiffChunk       ck;
-    RIFF_FOURCC     fourcc;
-    AuInt32            fileSize;
-    WaveInfo       *wi;
+  RiffChunk       ck;
+  RIFF_FOURCC     fourcc;
+  AuInt32            fileSize;
+  WaveInfo       *wi;
 
     
-    if (!(wi = (WaveInfo *) malloc(sizeof(WaveInfo))))
-	return NULL;
+  if (!(wi = (WaveInfo *) malloc(sizeof(WaveInfo))))
+    return NULL;
 
-    wi->comment = NULL;
-    wi->dataOffset = wi->format = wi->writing = 0;
+  wi->comment = NULL;
+  wi->dataOffset = wi->format = wi->writing = 0;
 
-    dopen(data, length);
+  dopen(data, length);
     
-    if (!readChunk(&ck) ||
-	cmpID(&ck.ckID, RIFF_RiffID) ||
-	!readFourcc(&fourcc) ||
-	cmpID(&fourcc, RIFF_WaveID))
+  if (!readChunk(&ck) ||
+      cmpID(&ck.ckID, RIFF_RiffID) ||
+      !readFourcc(&fourcc) ||
+      cmpID(&fourcc, RIFF_WaveID))
+    Err();
+
+  fileSize = PAD2(ck.ckSize) - sizeof(RIFF_FOURCC);
+
+  while (fileSize >= sizeof(RiffChunk))
+    {
+      if (!readChunk(&ck))
 	Err();
 
-    fileSize = PAD2(ck.ckSize) - sizeof(RIFF_FOURCC);
+      fileSize -= sizeof(RiffChunk) + PAD2(ck.ckSize);
 
-    while (fileSize >= sizeof(RiffChunk))
-    {
-	if (!readChunk(&ck))
+      /* LIST chunk */
+      if (!cmpID(&ck.ckID, RIFF_ListID))
+	{
+	  if (!readFourcc(&fourcc))
 	    Err();
 
-	fileSize -= sizeof(RiffChunk) + PAD2(ck.ckSize);
-
-	/* LIST chunk */
-	if (!cmpID(&ck.ckID, RIFF_ListID))
-	{
-	    if (!readFourcc(&fourcc))
-		Err();
-
-	    /* INFO chunk */
-	    if (!cmpID(&fourcc, RIFF_ListInfoID))
+	  /* INFO chunk */
+	  if (!cmpID(&fourcc, RIFF_ListInfoID))
 	    {
-		ck.ckSize -= sizeof(RIFF_FOURCC);
+	      ck.ckSize -= sizeof(RIFF_FOURCC);
 
-		while (ck.ckSize)
+	      while (ck.ckSize)
 		{
-		    RiffChunk       c;
+		  RiffChunk       c;
 
-		    if (!readChunk(&c))
+		  if (!readChunk(&c))
+		    Err();
+
+		  /* ICMT chunk */
+		  if (!cmpID(&c.ckID, RIFF_InfoIcmtID))
+		    {
+		      if (!(wi->comment = (Extbyte *) malloc(c.ckSize)) ||
+			  !dread(wi->comment, c.ckSize, 1))
 			Err();
 
-		    /* ICMT chunk */
-		    if (!cmpID(&c.ckID, RIFF_InfoIcmtID))
-		    {
-			if (!(wi->comment = (Extbyte *) malloc(c.ckSize)) ||
-			    !dread(wi->comment, c.ckSize, 1))
-			    Err();
-
-			if (c.ckSize & 1)
-			    dgetc();	/* eat the pad byte */
+		      if (c.ckSize & 1)
+			dgetc(); /* eat the pad byte */
 		    }
-		    else
-			/* skip unknown chunk */
-			dseek(PAD2(c.ckSize), 1);
+		  else
+		    /* skip unknown chunk */
+		    dseek(PAD2(c.ckSize), 1);
 
-		    ck.ckSize -= sizeof(RiffChunk) + PAD2(c.ckSize);
+		  ck.ckSize -= sizeof(RiffChunk) + PAD2(c.ckSize);
 		}
 	    }
-	    else
-		/* skip unknown chunk */
-		dseek(PAD2(ck.ckSize) - sizeof(RIFF_FOURCC), 1);
+	  else
+	    /* skip unknown chunk */
+	    dseek(PAD2(ck.ckSize) - sizeof(RIFF_FOURCC), 1);
 	}
-	/* wave format chunk */
-	else if (!cmpID(&ck.ckID, RIFF_WaveFmtID) && !wi->format)
+      /* wave format chunk */
+      else if (!cmpID(&ck.ckID, RIFF_WaveFmtID) && !wi->format)
 	{
-	    AuInt32            dummy;
+	  AuInt32            dummy;
 
-	    wi->format = DataReadS(NAS_BIG_ENDIAN);
-	    wi->channels = DataReadS(NAS_BIG_ENDIAN);
-	    wi->sampleRate = DataReadL(NAS_BIG_ENDIAN);
+	  wi->format = DataReadS(NAS_BIG_ENDIAN);
+	  wi->channels = DataReadS(NAS_BIG_ENDIAN);
+	  wi->sampleRate = DataReadL(NAS_BIG_ENDIAN);
 
-	    /* we don't care about the next two fields */
-	    dummy = DataReadL(NAS_BIG_ENDIAN);
-	    dummy = DataReadS(NAS_BIG_ENDIAN);
+	  /* we don't care about the next two fields */
+	  dummy = DataReadL(NAS_BIG_ENDIAN);
+	  dummy = DataReadS(NAS_BIG_ENDIAN);
 
-	    if (wi->format != RIFF_WAVE_FORMAT_PCM)
-		Err();
+	  if (wi->format != RIFF_WAVE_FORMAT_PCM)
+	    Err();
 
-	    wi->bitsPerSample = DataReadS(NAS_BIG_ENDIAN);
+	  wi->bitsPerSample = DataReadS(NAS_BIG_ENDIAN);
 
-	    /* skip any other format specific fields */
-	    dseek(PAD2(ck.ckSize - 16), 1);
+	  /* skip any other format specific fields */
+	  dseek(PAD2(ck.ckSize - 16), 1);
 	}
-	/* wave data chunk */
-	else if (!cmpID(&ck.ckID, RIFF_WaveDataID) && !wi->dataOffset)
+      /* wave data chunk */
+      else if (!cmpID(&ck.ckID, RIFF_WaveDataID) && !wi->dataOffset)
 	{
-	    long endOfFile;
+	  long endOfFile;
 
-	    wi->dataOffset = dtell();
-	    wi->dataSize = ck.ckSize;
-	    dseek(0, 2);
-	    endOfFile = dtell();
+	  wi->dataOffset = dtell();
+	  wi->dataSize = ck.ckSize;
+	  dseek(0, 2);
+	  endOfFile = dtell();
 
-	    /* seek past the data */
-	    if (dseek(wi->dataOffset + PAD2(ck.ckSize), 0) ||
-		dtell() > endOfFile)
+	  /* seek past the data */
+	  if (dseek(wi->dataOffset + PAD2(ck.ckSize), 0) ||
+	      dtell() > endOfFile)
 	    {
-		/* the seek failed, assume the size is bogus */
-		dseek(0, 2);
-		wi->dataSize = dtell() - wi->dataOffset;
+	      /* the seek failed, assume the size is bogus */
+	      dseek(0, 2);
+	      wi->dataSize = dtell() - wi->dataOffset;
 	    }
 
-	    wi->dataOffset -= sizeof(long);
+	  wi->dataOffset -= sizeof(long);
 	}
-	else
-	    /* skip unknown chunk */
-	    dseek(PAD2(ck.ckSize), 1);
+      else
+	/* skip unknown chunk */
+	dseek(PAD2(ck.ckSize), 1);
     }
 
-    if (!wi->dataOffset)
-	Err();
+  if (!wi->dataOffset)
+    Err();
 
-    wi->numSamples = wi->dataSize / wi->channels / (wi->bitsPerSample >> 3);
+  wi->numSamples = wi->dataSize / wi->channels / (wi->bitsPerSample >> 3);
 
-    if (!wi->comment)
-       wi->comment = NameFromData (data + wi->dataOffset,
-                                   length - wi->dataOffset);
+  if (!wi->comment)
+    wi->comment = NameFromData (data + wi->dataOffset,
+				length - wi->dataOffset);
 
-    wi->fp = NULL;
+  wi->fp = NULL;
     
-    return wi;
+  return wi;
 }
 
 

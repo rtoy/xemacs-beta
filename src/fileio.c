@@ -206,7 +206,7 @@ restore_point_unwind (Lisp_Object point_marker)
    signal handler) because that's way too losing.
 
    (#### Actually, longjmp()ing out of the signal handler may not be
-   as losing as I thought.  See sys_do_signal() in sysdep.c.) */
+   as losing as I thought.  See qxe_reliable_signal() in sysdep.c.) */
 
 ssize_t
 read_allowing_quit (int fildes, void *buf, size_t size)

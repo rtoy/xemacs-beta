@@ -17,8 +17,8 @@ main (int argc, char *argv[])
   register int notfirst = 0;
 
   printf (".TL\n");
-  printf ("Command Summary for GNU Emacs\n");
-  printf (".AU\nRichard M. Stallman\n");
+  printf ("Command Summary for XEmacs\n");
+  printf (".AU\nThe XEmacs Advocacy Group\n");
   while ((ch = getchar ()) != EOF)
     {
       if (ch == '\037')

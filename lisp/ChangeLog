@@ -1,3 +1,40 @@
+2001-06-10  Ben Wing  <ben@xemacs.org>
+
+	* alist.el:
+	* apropos.el:
+	* autoload.el:
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-insert-header):
+	* cl-compat.el:
+	* cl-extra.el:
+	* cl-macs.el:
+	* cl-seq.el:
+	* cl.el:
+	* cmdloop.el (execute-extended-command):
+	* cus-edit.el (alloc):
+	* derived.el:
+	* gpm.el:
+	* itimer.el:
+	* lisp-mode.el (lisp-mode):
+	* shadow.el:
+	* version.el:
+	* wid-browse.el:
+	Rename 'GNU Emacs' to XEmacs in the copyright.
+	Fix other references to GNU Emacs that should be XEmacs or just
+	Emacs.
+
+	* files.el (insert-directory):
+	Fix warning.
+
+	* simple.el:
+	* simple.el (Simple-forward-line-creating-newline): New.
+	* simple.el (Simple-transpose-lines-mover): New.
+	* simple.el (transpose-line-up):
+	* simple.el (transpose-line-down):
+	* simple.el (transpose-subr):
+	transpose-line-up/down will now move the region up or down by
+	a line if active.
+	
 2001-06-08  Mike Sperber <mike@xemacs.org>
 
 	* files.el (save-some-buffers-1): Don't zap the help window right

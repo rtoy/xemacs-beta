@@ -1689,11 +1689,6 @@ sys_pipe (int * phandles)
 }
 
 void
-term_ntproc (int unused)
-{
-}
-
-void
 init_ntproc (void)
 {
   /* Initial preparation for subprocess support: replace our standard
@@ -1755,10 +1750,6 @@ init_ntproc (void)
     _fdopen (2, "w");
   }
 
-  /* unfortunately, atexit depends on implementation of malloc */
-  /* atexit (term_ntproc); */
-  signal (SIGABRT, term_ntproc);
-
   /* determine which drives are fixed, for GetCachedVolumeInformation */
   {
     /* GetDriveType must have trailing backslash. */
@@ -1804,118 +1795,6 @@ tty_canonicalize_device_connection (Lisp_Object connection,
   return Vstdio_str;
 }
 #endif
-
-/*--------------------------------------------------------------------*/
-/* Signal support                                                     */
-/*--------------------------------------------------------------------*/
-
-/* We need MS-defined signal and raise here */
-#undef signal
-#undef raise
-
-#define sigmask(nsig) (1U << nsig)
-
-/* We can support as many signals as fit into word */
-#define SIG_MAX 32
-
-/* Signal handlers. Initial value = 0 = SIG_DFL */
-static void (__cdecl *signal_handlers[SIG_MAX])(int) = {0};
-
-/* Signal block mask: bit set to 1 means blocked */
-unsigned signal_block_mask = 0;
-
-/* Signal pending mask: bit set to 1 means sig is pending */
-unsigned signal_pending_mask = 0;
-
-mswindows_sighandler
-mswindows_sigset (int nsig, mswindows_sighandler handler)
-{
-  /* We delegate some signals to the system function */
-  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
-    return signal (nsig, handler);
-
-  if (nsig < 0 || nsig > SIG_MAX)
-    {
-      errno = EINVAL;
-      return NULL;
-    }
-
-  /* Store handler ptr */
-  {
-    mswindows_sighandler old_handler = signal_handlers[nsig];
-    signal_handlers[nsig] = handler;
-    return old_handler;
-  }
-}
-  
-int
-mswindows_sighold (int nsig)
-{
-  if (nsig < 0 || nsig > SIG_MAX)
-    return errno = EINVAL;
-
-  signal_block_mask |= sigmask (nsig);
-  return 0;
-}
-
-int
-mswindows_sigrelse (int nsig)
-{
-  if (nsig < 0 || nsig > SIG_MAX)
-    return errno = EINVAL;
-
-  signal_block_mask &= ~sigmask (nsig);
-
-  if (signal_pending_mask & sigmask (nsig))
-    mswindows_raise (nsig);
-
-  return 0;
-}
-
-int
-mswindows_sigpause (int nsig)
-{
-  /* This is currently not called, because the only call to sigpause
-     inside XEmacs is with SIGCHLD parameter. Just in case, we put an
-     assert here, so anyone adds a call to sigpause will be surprised
-     (or surprise someone else...) */
-  assert (0);
-  return 0;
-}
-
-int
-mswindows_raise (int nsig)
-{
-  /* We delegate some raises to the system routine */
-  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
-    return raise (nsig);
-
-  if (nsig < 0 || nsig > SIG_MAX)
-    return errno = EINVAL;
-
-  /* If the signal is blocked, remember to issue later */
-  if (signal_block_mask & sigmask (nsig))
-    {
-      signal_pending_mask |= sigmask (nsig);
-      return 0;
-    }
-
-  if (signal_handlers[nsig] == SIG_IGN)
-    return 0;
-
-  if (signal_handlers[nsig] != SIG_DFL)
-    {
-      (*signal_handlers[nsig]) (nsig);
-      return 0;
-    }
-
-  /* Default signal actions */
-  if (nsig == SIGALRM || nsig == SIGPROF)
-    exit (3);
-
-  /* Other signals are ignored by default */
-  return 0;
-}
 
 
 /*--------------------------------------------------------------------*/

@@ -306,7 +306,7 @@ when called from Lisp."
     (setq this-command (read-command
                         ;; Note: this has the hard-wired
                         ;;  "C-u" and "M-x" string bug in common
-                        ;;  with all GNU Emacs's.
+                        ;;  with all Emacs's.
 			;; (i.e. it prints C-u and M-x regardless of
 			;; whether some other keys were actually bound
 			;; to `execute-extended-command' and 

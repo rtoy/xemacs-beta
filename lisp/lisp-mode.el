@@ -332,7 +332,7 @@ All commands in `shared-lisp-mode-map' are inherited by this map.")
   )
 
 (defun lisp-mode ()
-  "Major mode for editing Lisp code for Lisps other than GNU Emacs Lisp.
+  "Major mode for editing Lisp code for Lisps other than Emacs Lisp.
 Commands:
 Delete converts tabs to spaces as it moves back.
 Blank lines separate paragraphs.  Semicolons start comments.

@@ -29,7 +29,7 @@
 
 ;; This file is dumped with XEmacs.
 
-;; GNU Emacs is already, in a sense, object oriented -- each object
+;; XEmacs is already, in a sense, object oriented -- each object
 ;; (buffer) belongs to a class (major mode), and that class defines
 ;; the relationship between messages (input events) and methods
 ;; (commands) by means of a keymap.

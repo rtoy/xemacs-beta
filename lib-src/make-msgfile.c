@@ -206,7 +206,7 @@
 	(interactive ...)
 
   The arguments given to this program are all the C and Lisp source files
-  of GNU Emacs.  .el and .c files are allowed.  There is no support for .elc
+  of XEmacs.  .el and .c files are allowed.  There is no support for .elc
   files at this time, but they may be specified; the corresponding .el file
   will be used.  Similarly, .o files can also be specified, and the corresponding
   .c file will be used.  This helps the makefile pass the correct list of files.

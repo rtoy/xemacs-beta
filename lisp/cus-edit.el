@@ -232,7 +232,7 @@
   :group 'customize)
 
 (defgroup alloc nil
-  "Storage allocation and gc for GNU Emacs Lisp interpreter."
+  "Storage allocation and gc for XEmacs Lisp interpreter."
   :tag "Storage Allocation"
   :group 'internal)
 

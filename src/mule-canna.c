@@ -55,7 +55,7 @@ Boston, MA 02111-1307, USA.  */
 			- list of warning messages
 		DESCRIPTION:
 			Initialize ``canna'', which is a kana-to-kanji
-			converter for GNU Emacs.  The first arg
+			converter for XEmacs.  The first arg
 			specifies if inserting space character between
 			BUNSETSU when candidates are displayed.  The
 			second arg specifies server.  The third arg
@@ -69,7 +69,7 @@ Boston, MA 02111-1307, USA.  */
 			list of warning messages
 		DESCRIPTION:
 			finalize ``canna'', which is a kana-to-kanji
-			converter for GNU Emacs.  This cause to write
+			converter for XEmacs.  This cause to write
 			miscellaneous informations to kana-to-kanji
 			dictionary.
 
@@ -344,7 +344,7 @@ call_Fding (void)
 }
 
 DEFUN ("canna-initialize", Fcanna_initialize, 0, 3, 0, /*
-Initialize ``canna'', which is a kana-to-kanji converter for GNU Emacs.
+Initialize ``canna'', which is a kana-to-kanji converter for XEmacs.
 The first arg specifies if inserting space character between BUNSETSU when
 candidates are displayed.
 The second arg specifies server.
@@ -462,7 +462,7 @@ If nil is specified for each arg, the default value will be used.
 }
 
 DEFUN ("canna-finalize", Fcanna_finalize, 0, 0, 0, /*
-finalize ``canna'', which is a kana-to-kanji converter for GNU Emacs.
+finalize ``canna'', which is a kana-to-kanji converter for XEmacs.
 This cause to write miscellaneous informations to kana-to-kanji dictionary.
 */
        ())

@@ -1,8 +1,8 @@
 /* -*-C-*-
 
- Header file for the GNU Emacs server and client C code.
+ Header file for the XEmacs server and client C code.
 
- This file is part of GNU Emacs.
+ This file is part of XEmacs.
 
  Copying is permitted under those conditions described by the GNU
  General Public License.

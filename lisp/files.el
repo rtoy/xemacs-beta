@@ -3166,7 +3166,8 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
        ;; my new naming scheme. --ben
        ((and (fboundp 'mswindows-insert-directory)
 	     (eq system-type 'windows-nt))
-	(mswindows-insert-directory file switches wildcard full-directory-p))
+	(declare-fboundp (mswindows-insert-directory
+			  file switches wildcard full-directory-p)))
        (t
 	(if wildcard
 	    ;; Run ls in the directory of the file pattern we asked for.

@@ -1,4 +1,4 @@
-/* unexec for GNU Emacs on Cygwin32.
+/* unexec for XEmacs on Cygwin32.
    Copyright (C) 1994, 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.

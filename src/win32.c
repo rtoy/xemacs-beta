@@ -249,14 +249,130 @@ otherwise it is an integer representing a ShowWindow flag:
   return Qnil;
 }
 
+#if defined (WIN32_NATIVE) || defined (CYGWIN_BROKEN_SIGNALS)
+
+/* setitimer() does not exist on native MS Windows, and appears broken
+   on Cygwin (random lockups when BROKEN_SIGIO is defined), so we
+   emulate in both cases by using multimedia timers.  Furthermore,
+   the lockups still occur on Cygwin even when we do nothing but
+   use the standard signalling mechanism -- so we have to emulate
+   that, too. (But only for timeouts -- we have to use the standard
+   mechanism for SIGCHLD.  Yuck.)
+ */
+
+
+/*--------------------------------------------------------------------*/
+/*                             Signal support                         */
+/*--------------------------------------------------------------------*/
+
+#define sigmask(nsig) (1U << nsig)
+
+/* We can support as many signals as fit into word */
+#define SIG_MAX 32
+
+/* Signal handlers. Initial value = 0 = SIG_DFL */
+static mswindows_sighandler signal_handlers[SIG_MAX] = {0};
+
+/* Signal block mask: bit set to 1 means blocked */
+unsigned signal_block_mask = 0;
+
+/* Signal pending mask: bit set to 1 means sig is pending */
+unsigned signal_pending_mask = 0;
+
+mswindows_sighandler
+mswindows_sigset (int nsig, mswindows_sighandler handler)
+{
+  /* We delegate some signals to the system function */
+  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
+    return signal (nsig, handler);
+
+  if (nsig < 0 || nsig > SIG_MAX)
+    {
+      errno = EINVAL;
+      return NULL;
+    }
+
+  /* Store handler ptr */
+  {
+    mswindows_sighandler old_handler = signal_handlers[nsig];
+    signal_handlers[nsig] = handler;
+    return old_handler;
+  }
+}
+
+int
+mswindows_sighold (int nsig)
+{
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  signal_block_mask |= sigmask (nsig);
+  return 0;
+}
+
+int
+mswindows_sigrelse (int nsig)
+{
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  signal_block_mask &= ~sigmask (nsig);
+
+  if (signal_pending_mask & sigmask (nsig))
+    mswindows_raise (nsig);
+
+  return 0;
+}
+
+int
+mswindows_sigpause (int nsig)
+{
+  /* This is currently not called, because the only call to sigpause
+     inside XEmacs is with SIGCHLD parameter. Just in case, we put an
+     assert here, so anyone adds a call to sigpause will be surprised
+     (or surprise someone else...) */
+  assert (0);
+  return 0;
+}
+
+int
+mswindows_raise (int nsig)
+{
+  /* We delegate some raises to the system routine */
+  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
+    return raise (nsig);
+
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  /* If the signal is blocked, remember to issue later */
+  if (signal_block_mask & sigmask (nsig))
+    {
+      signal_pending_mask |= sigmask (nsig);
+      return 0;
+    }
+
+  if (signal_handlers[nsig] == SIG_IGN)
+    return 0;
+
+  if (signal_handlers[nsig] != SIG_DFL)
+    {
+      (*signal_handlers[nsig]) (nsig);
+      return 0;
+    }
+
+  /* Default signal actions */
+  if (nsig == SIGALRM || nsig == SIGPROF)
+    exit (3);
+
+  /* Other signals are ignored by default */
+  return 0;
+}
+
 
 /*--------------------------------------------------------------------*/
 /*                               Async timers                         */
 /*--------------------------------------------------------------------*/
-
-/* setitimer() does not exist on native MS Windows, and appears broken
-   on Cygwin (random lockups when BROKEN_SIGIO is defined), so we
-   emulate in both cases by using multimedia timers. */
 
 /* We emulate two timers, one for SIGALRM, another for SIGPROF.
 
@@ -288,11 +404,7 @@ setitimer_helper_proc (UINT uID, UINT uMsg, DWORD dwUser,
 		       DWORD dw1, DWORD dw2)
 {
   /* Just raise the signal indicated by the dwUser parameter */
-#ifdef CYGWIN
-  kill (getpid (), dwUser);
-#else
   mswindows_raise (dwUser);
-#endif
 }
 
 /* Divide time in ms specified by IT by DENOM. Return 1 ms
@@ -382,6 +494,8 @@ mswindows_setitimer (int kind, const struct itimerval *itnew,
   else
     return errno = EINVAL;
 }
+
+#endif /* defined (WIN32_NATIVE) || defined (CYGWIN_BROKEN_SIGNALS) */
 
 
 void

@@ -2032,9 +2032,9 @@ init_data_very_early (void)
   if (!initialized)
     return;
 #endif /* CANNOT_DUMP */
-  signal (SIGFPE, arith_error);
+  EMACS_SIGNAL (SIGFPE, arith_error);
 #ifdef uts
-  signal (SIGEMT, arith_error);
+  EMACS_SIGNAL (SIGEMT, arith_error);
 #endif /* uts */
 }
 

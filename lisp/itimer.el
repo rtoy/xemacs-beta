@@ -1,4 +1,4 @@
-;;; Interval timers for GNU Emacs
+;;; Interval timers for XEmacs
 ;;; Copyright (C) 1988, 1991, 1993, 1997, 1998 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify

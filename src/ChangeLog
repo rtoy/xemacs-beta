@@ -1,3 +1,145 @@
+2001-06-10  Ben Wing  <ben@xemacs.org>
+
+
+	------ signal-code changes ------
+	
+	* data.c (init_data_very_early):
+	* device-tty.c (init_device_tty):
+	* emacs.c (fatal_error_signal):
+	* emacs.c (memory_warning_signal):
+	* floatfns.c (init_floatfns_very_early):
+	* linuxplay.c (linux_play_data_or_file):
+	* nas.c (*):
+	* process-unix.c (unix_init_process):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (unix_send_process):
+	* process-unix.c (unix_deactivate_process):
+	* signal.c (handle_signal_if_fatal):
+	* signal.c (init_signals_very_early):
+	* signal.c (init_interrupts_late):
+	* sunplay.c (play_sound_file):
+	* sunplay.c (play_sound_data):
+	* sysdep.c (save_signal_handlers):
+	* sysdep.c (restore_signal_handlers):
+	* sysdep.c (setup_pty):
+	* syssignal.h (EMACS_SIGNAL):
+	use EMACS_SIGNAL everywhere instead of playing preprocessing
+	games with signal().
+
+	* s\windowsnt.h:
+	* s\mingw32.h:
+	* syssignal.h:
+	Remove mswindows signal code from s+m headers and move to
+	syssignal.h as one of the five ways of signal handling, instead of
+	playing preprocessing games.
+
+	* fileio.c:
+	* sysdep.c (qxe_reliable_signal):
+	Rename sys_do_signal to qxe_reliable_signal.
+	
+	* signal.c (set_timeout_signal):
+	* process-unix.c (close_safely):
+	* profile.c (Fstart_profiling):
+	* profile.c (Fstop_profiling):
+	* signal.c (init_async_timeouts):
+	* signal.c (start_async_timeouts):
+	Create set_timeout_signal(); use instead of just EMACS_SIGNAL to
+	establish a signal handler on a timeout signal; this does special
+	things under Cygwin.
+
+	* nt.c (init_ntproc):
+	Eliminate term_ntproc(), which is blank; used as a SIGABRT handler,
+	which was wrong anyway.
+	
+	* nt.c:
+	* win32.c:
+	* win32.c (sigmask):
+	* win32.c (mswindows_sigset):
+	* win32.c (mswindows_sighold):
+	* win32.c (mswindows_sigrelse):
+	* win32.c (mswindows_raise):
+	* win32.c (setitimer_helper_proc):
+	* win32.c (syms_of_win32):
+	Move signal code from nt.c to win32.c, since Cygwin needs it
+	too when dealing with timeout signals.
+
+	* s\cygwin32.h:
+	Define CYGWIN_BROKEN_SIGNALS.
+
+
+	------ other changes ------
+	
+	* s\mingw32.h:
+	Fix problems with NOT_C_CODE being in the wrong place and
+	excluding defines needed when building Makefile.in.in.
+	
+	* filelock.c:
+	* mule-canna.c:
+	* mule-canna.c (Fcanna_initialize):
+	* mule-canna.c (Fcanna_finalize):
+	* mule-ccl.c:
+	* mule-ccl.h:
+	* ralloc.c:
+	* unexalpha.c:
+	* unexapollo.c:
+	* unexcw.c:
+	* unexelfsgi.c:
+	* unexnt.c:
+	* unexsni.c:
+	* s\aix3-1.h:
+	* s\bsd4-1.h:
+	* s\bsd4-2.h:
+	* s\bsd4-3.h:
+	* s\cxux.h:
+	* s\cygwin32.h:
+	* s\dgux.h:
+	* s\dgux5-4r2.h:
+	* s\dgux5-4r3.h:
+	* s\dgux5-4r4.h:
+	* s\ewsux5r4.h:
+	* s\gnu.h:
+	* s\hpux.h:
+	* s\iris3-5.h:
+	* s\iris3-6.h:
+	* s\irix3-3.h:
+	* s\linux.h:
+	* s\mingw32.h:
+	* s\newsos5.h:
+	* s\nextstep.h:
+	* s\ptx.h:
+	* s\riscix1-1.h:
+	* s\riscix1-2.h:
+	* s\rtu.h:
+	* s\sco4.h:
+	* s\sco5.h:
+	* s\template.h:
+	* s\ultrix.h:
+	* s\umax.h:
+	* s\umips.h:
+	* s\unipl5-0.h:
+	* s\unipl5-2.h:
+	* s\usg5-0.h:
+	* s\usg5-2-2.h:
+	* s\usg5-2.h:
+	* s\usg5-3.h:
+	* s\usg5-4.h:
+	* s\windowsnt.h:
+	* s\xenix.h:
+	Rename 'GNU Emacs' to XEmacs in the copyright and comments.
+	
+	* nas.c (NAS_LITTLE_ENDIAN):
+	* nas.c (XTOOLKIT):
+	* nas.c (nas_play_sound_file):
+	* nas.c (nas_play_sound_data):
+	* nas.c (CatchIoErrorAndJump):
+	* nas.c (DataReadS):
+	* nas.c (DataReadL):
+	* nas.c (readChunk):
+	* nas.c (WaveOpenDataForReading):
+	Stylistic cleanup.
+	Avoid preprocessing games with names such as play_sound_file.
+
+
 2001-06-08  Ben Wing  <ben@xemacs.org>
 
 	------ gc-in-window-procedure fixes ------

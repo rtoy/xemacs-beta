@@ -144,8 +144,8 @@ play_sound_file (Extbyte *sound_file, int volume)
     }
 
   /* where to find the proto for signal()... */
-  sighup_handler = (SIGTYPE (*) (int)) signal (SIGHUP, sighandler);
-  sigint_handler = (SIGTYPE (*) (int)) signal (SIGINT, sighandler);
+  sighup_handler = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGHUP, sighandler);
+  sigint_handler = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGINT, sighandler);
 
   file_fd = open (sound_file, O_RDONLY, 0);
   if (file_fd < 0)
@@ -202,8 +202,8 @@ play_sound_file (Extbyte *sound_file, int volume)
       close (audio_fd);
     }
 
-  signal (SIGHUP, sighup_handler);
-  signal (SIGINT, sigint_handler);
+  EMACS_SIGNAL (SIGHUP, sighup_handler);
+  EMACS_SIGNAL (SIGINT, sigint_handler);
 }
 
 
@@ -235,8 +235,8 @@ play_sound_data (UChar_Binary *data, int length, int volume)
       return 0;
 
   /* where to find the proto for signal()... */
-  sighup_handler = (SIGTYPE (*) (int)) signal (SIGHUP, sighandler);
-  sigint_handler = (SIGTYPE (*) (int)) signal (SIGINT, sighandler);
+  sighup_handler = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGHUP, sighandler);
+  sigint_handler = (SIGTYPE (*) (int)) EMACS_SIGNAL (SIGINT, sighandler);
 
   if (init_device (volume, data, 0, &ilen))
     goto END_OF_PLAY;
@@ -280,8 +280,8 @@ play_sound_data (UChar_Binary *data, int length, int volume)
       close (audio_fd);
     }
 
-  signal (SIGHUP, sighup_handler);
-  signal (SIGINT, sigint_handler);
+  EMACS_SIGNAL (SIGHUP, sighup_handler);
+  EMACS_SIGNAL (SIGINT, sigint_handler);
 
   return result;
 }

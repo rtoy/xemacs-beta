@@ -1,6 +1,6 @@
 /* Synched up with: FSF 19.31. */
 
-/* Definitions file for GNU Emacs running on Mips operating system.
+/* Definitions file for XEmacs running on Mips operating system.
    That system can emulate either BSD or Sys V, in either case with changes.
    If BSD is defined, we assume BSD is being emulated; otherwise, Sys V.  */
 
