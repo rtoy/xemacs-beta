@@ -29,13 +29,9 @@ done
 
 # decide on names
 emacs_ver=${emacs_major_version}.${emacs_minor_version}.${emacs_beta_version}
-cygwin_tarball=xemacs-i686-pc-cygwin-${emacs_ver}.tar.gz
-win32_tarball=xemacs-i586-pc-win32-${emacs_ver}.tar.gz
+cygwin_tarball=xemacs-i686-pc-cygwin-${emacs_ver}${emacs_kit_version}.tar.gz
+win32_tarball=xemacs-i586-pc-win32-${emacs_ver}${emacs_kit_version}.tar.gz
 
-# create a dist directory 
-mkdir -p windows/cygwin32
-mkdir -p windows/win32
-mkdir -p /usr/local
 DISTDIR=`pwd`/windows
 
 # check to see if we should build
@@ -49,8 +45,17 @@ if [ -f Makefile ] ; then
     make distclean
 fi
 
+# nuke the dist dir.
+rm -rf windows
+
+# create a dist directory 
+mkdir -p windows/cygwin32
+mkdir -p windows/win32
+mkdir -p /usr/local
+
 # first build win32
 (cd nt;
+  nmake -f xemacs.mak clean;
   nmake -f xemacs.mak)
 (cd "${PROGRAM_FILES}";
     rm -rf ./XEmacs-${emacs_ver})
@@ -99,7 +104,8 @@ win32_tarball_size=`ls -l windows/win32/${win32_tarball} | awk '{ print $5; }'`
 
 (cd netinstall;
     make CYGWIN_SIZE=${cygwin_tarball_size} \
-	WIN32_SIZE=${win32_tarball_size} setup-bin.ini )
+	WIN32_SIZE=${win32_tarball_size} \
+	KIT_VERSION=${emacs_kit_version} setup-bin.ini )
 cp netinstall/setup-bin.ini windows
 
 # tidy up

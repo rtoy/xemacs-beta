@@ -10,6 +10,18 @@ platforms. Caveat Emptor.
 
 See the file 'CHANGES-release' for a full list of mainline changes.
 
+to XEmacs 21.4.6 "Common Lisp (Windows)"
+
+  - Made native registry entries match the installer.
+  - Fixed mousewheel lockups.
+  - Frame iconifcation fix from Adrian Aichner.
+  - Fixed some printing problems.
+  - Netinstaller updated to support kit revisions.
+  - Fixed customize popup menus.
+  - Fixed problems wiht too many dialog popups.
+  - Netinstaller fixed to correctly upgrade shortcuts when upgrading
+    core XEmacs.
+
 to XEmacs 21.4.5 "Civil Service (Windows)"
 
   - Fixed a scrollbar problem when selecting the frame with focus.
