@@ -1,3 +1,23 @@
+2004-10-14  Jerry James  <james@xemacs.org>
+
+	* compiler.h: New USED_IF_MULE and USED_IF_MULE_OR_CHECK_TEXT macros.
+	* glyphs-msw.c (charset_of_text): Use USED_IF_MULE.
+	* intl-x.c (init_x_locale): Ditto.
+	* intl-win32.c: Remove USED_IF_MULE definition.
+	* regex.h: Mark RE_LISP_SHORT_CONTEXT_ARGS_DECL arguments unused.
+	New RE_LISP_CONTEXT_ARGS_MULE_DECL macro for one unused case.
+
+	* buffer.h:
+	* device-x.c:
+	* elhash.c:
+	* objects.c:
+	* regex.c:
+	* search.c:
+	* text.c:
+	* text.h:
+	* unicode.c:
+	Mark more unused parameters.
+
 2004-09-27  Jerry James  <james@xemacs.org>
 
 	* gmalloc.c (malloc): Change log to log2 to quiet gcc 3.3.

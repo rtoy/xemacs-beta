@@ -1545,7 +1545,7 @@ simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 static Charbpos
 boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	     Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt,
-	     Lisp_Object inverse_trt, int charset_base)
+	     Lisp_Object inverse_trt, int USED_IF_MULE (charset_base))
 {
   /* &&#### needs some 8-bit work here */
   /* #### Someone really really really needs to comment the workings

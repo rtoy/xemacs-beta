@@ -204,6 +204,16 @@ Boston, MA 02111-1307, USA.  */
 #  define ATTRIBUTE_UNUSED
 # endif
 # define UNUSED(decl) UNUSED_ARG (decl) ATTRIBUTE_UNUSED
+# ifdef MULE
+#  define USED_IF_MULE(decl) decl
+# else
+#  define USED_IF_MULE(decl) UNUSED (decl)
+# endif
+# if defined (MULE) || defined (ERROR_CHECK_TEXT)
+#  define USED_IF_MULE_OR_CHECK_TEXT(decl) decl
+# else
+#  define USED_IF_MULE_OR_CHECK_TEXT(decl) UNUSED (decl)
+# endif
 #endif /* UNUSED */
 
 #ifdef DEBUG_XEMACS

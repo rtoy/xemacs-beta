@@ -26,15 +26,17 @@
 
 #ifdef emacs
 #define RE_TRANSLATE_TYPE Lisp_Object
-#define RE_LISP_SHORT_CONTEXT_ARGS_DECL , Lisp_Object lispobj, struct buffer *lispbuf
+#define RE_LISP_SHORT_CONTEXT_ARGS_DECL , Lisp_Object UNUSED (lispobj), struct buffer *UNUSED (lispbuf)
 #define RE_LISP_SHORT_CONTEXT_ARGS , lispobj, lispbuf
 #define RE_LISP_CONTEXT_ARGS_DECL , Lisp_Object lispobj, struct buffer *lispbuf, struct syntax_cache *scache
+#define RE_LISP_CONTEXT_ARGS_MULE_DECL , Lisp_Object lispobj, struct buffer *USED_IF_MULE (lispbuf), struct syntax_cache *scache
 #define RE_LISP_CONTEXT_ARGS , lispobj, lispbuf, scache
 #else
 #define RE_TRANSLATE_TYPE char *
 #define RE_LISP_SHORT_CONTEXT_ARGS_DECL
 #define RE_LISP_SHORT_CONTEXT_ARGS
 #define RE_LISP_CONTEXT_ARGS_DECL
+#define RE_LISP_CONTEXT_ARGS_MULE_DECL
 #define RE_LISP_CONTEXT_ARGS
 #define Elemcount ssize_t
 #define Bytecount ssize_t

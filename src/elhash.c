@@ -408,7 +408,13 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 }
 
 static void
-free_hentries (htentry *hentries, size_t size)
+free_hentries (htentry *hentries,
+#ifdef ERROR_CHECK_STRUCTURES
+	       size_t size
+#else
+	       size_t UNUSED (size)
+#endif
+	       )
 {
 #ifdef ERROR_CHECK_STRUCTURES
   /* Ensure a crash if other code uses the discarded entries afterwards. */

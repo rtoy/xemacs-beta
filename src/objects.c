@@ -789,7 +789,8 @@ invalidate_charset_font_caches (Lisp_Object charset)
 
 
 static Lisp_Object
-font_instantiate (Lisp_Object UNUSED (specifier), Lisp_Object matchspec,
+font_instantiate (Lisp_Object UNUSED (specifier),
+		  Lisp_Object USED_IF_MULE (matchspec),
 		  Lisp_Object domain, Lisp_Object instantiator,
 		  Lisp_Object depth)
 {

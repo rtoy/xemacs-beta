@@ -53,12 +53,6 @@ int _getmbcp (void);
 # define NO_EXT_MULTIBYTE_FEATURES
 #endif
 
-#ifdef MULE
-#define USED_IF_MULE(decl) decl
-#else
-#define USED_IF_MULE(decl) UNUSED (decl)
-#endif
-
 Lisp_Object Qmswindows_multibyte, Qmswindows_multibyte_to_unicode;
 Lisp_Object Qmswindows_tstr, Qmswindows_unicode;
 Lisp_Object Qmswindows_multibyte_system_default;

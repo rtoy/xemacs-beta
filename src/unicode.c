@@ -1234,7 +1234,7 @@ When there is no international support (i.e. the 'mule feature is not
 present), this function simply does `int-to-char' and ignores the CHARSETS
 argument.
 */
-       (code, charsets))
+       (code, USED_IF_MULE (charsets)))
 {
 #ifdef MULE
   Lisp_Object_dynarr *dyn;
@@ -1638,9 +1638,9 @@ encode_unicode_char_1 (int code, unsigned_char_dynarr *dst,
 }
 
 static void
-encode_unicode_char (Lisp_Object charset, int h, int l,
-		     unsigned_char_dynarr *dst, enum unicode_type type,
-		     unsigned int little_endian)
+encode_unicode_char (Lisp_Object USED_IF_MULE (charset), int h,
+		     int USED_IF_MULE (l), unsigned_char_dynarr *dst,
+		     enum unicode_type type, unsigned int little_endian)
 {
 #ifdef MULE
   int code = ichar_to_unicode (make_ichar (charset, h & 127, l & 127));

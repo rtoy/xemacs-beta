@@ -1800,13 +1800,7 @@ mswindows_finalize_image_instance (Lisp_Image_Instance *p)
 /************************************************************************/
 
 static Lisp_Object
-charset_of_text (Lisp_Object
-#ifdef MULE
-		 text
-#else
-		 UNUSED (text)
-#endif
-		 )
+charset_of_text (Lisp_Object USED_IF_MULE (text))
 {
 #ifdef MULE
   Ibyte *p;

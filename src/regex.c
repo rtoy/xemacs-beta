@@ -4769,7 +4769,7 @@ static int
 re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		     int size1, re_char *string2, int size2, int pos,
 		     struct re_registers *regs, int stop
-		     RE_LISP_CONTEXT_ARGS_DECL)
+		     RE_LISP_CONTEXT_ARGS_MULE_DECL)
 {
   /* General temporaries.  */
   int mcnt;
@@ -6663,7 +6663,8 @@ static int
 bcmp_translate (re_char *s1, re_char *s2,
 		REGISTER int len, RE_TRANSLATE_TYPE translate
 #ifdef emacs
-		, Internal_Format fmt, Lisp_Object lispobj
+		, Internal_Format USED_IF_MULE (fmt),
+		Lisp_Object USED_IF_MULE (lispobj)
 #endif
 		)
 {

@@ -180,7 +180,7 @@ get_x_display (Lisp_Object device)
 }
 
 static Lisp_Object
-coding_system_of_xrm_database (XrmDatabase db)
+coding_system_of_xrm_database (XrmDatabase USED_IF_MULE (db))
 {
 #ifdef MULE
   const Extbyte *locale = XrmLocaleOfDatabase (db);
@@ -1022,7 +1022,7 @@ x_error_handler_do_enqueue (Lisp_Object frame)
 }
 
 static Lisp_Object
-x_error_handler_error (Lisp_Object data, Lisp_Object dummy)
+x_error_handler_error (Lisp_Object UNUSED (data), Lisp_Object UNUSED (dummy))
 {
   return Qnil;
 }

@@ -1175,10 +1175,10 @@ while (0)
 Bytecount
 copy_text_between_formats (const Ibyte *src, Bytecount srclen,
 			   Internal_Format srcfmt,
-			   Lisp_Object srcobj,
+			   Lisp_Object USED_IF_MULE (srcobj),
 			   Ibyte *dst, Bytecount dstlen,
 			   Internal_Format dstfmt,
-			   Lisp_Object dstobj,
+			   Lisp_Object USED_IF_MULE (dstobj),
 			   Bytecount *src_used)
 {
   if (srcfmt == dstfmt &&
@@ -1270,8 +1270,9 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 /************************************************************************/
 
 void
-find_charsets_in_ibyte_string (unsigned char *charsets, const Ibyte *str,
-				 Bytecount len)
+find_charsets_in_ibyte_string (unsigned char *charsets,
+			       const Ibyte *USED_IF_MULE (str),
+			       Bytecount USED_IF_MULE (len))
 {
 #ifndef MULE
   /* Telescope this. */
@@ -1297,8 +1298,9 @@ find_charsets_in_ibyte_string (unsigned char *charsets, const Ibyte *str,
 }
 
 void
-find_charsets_in_ichar_string (unsigned char *charsets, const Ichar *str,
-				Charcount len)
+find_charsets_in_ichar_string (unsigned char *charsets,
+			       const Ichar *USED_IF_MULE (str),
+			       Charcount USED_IF_MULE (len))
 {
 #ifndef MULE
   /* Telescope this. */
@@ -1343,7 +1345,7 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 }
 
 int
-ichar_string_displayed_columns (const Ichar *str, Charcount len)
+ichar_string_displayed_columns (const Ichar *USED_IF_MULE (str), Charcount len)
 {
 #ifdef MULE
   int cols = 0;
@@ -1359,7 +1361,8 @@ ichar_string_displayed_columns (const Ichar *str, Charcount len)
 }
 
 Charcount
-ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len)
+ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
+			     Bytecount USED_IF_MULE (len))
 {
 #ifdef MULE
   const Ibyte *end = str + len;
@@ -3648,7 +3651,7 @@ are allowed:
 
  `int-to-char of the resulting ARG1' is returned, and ARG2 is always ignored. 
 */
-       (charset, arg1, arg2))
+       (charset, arg1, USED_IF_MULE (arg2)))
 {
 #ifdef MULE
   Lisp_Charset *cs;
