@@ -1,3 +1,9 @@
+2003-05-09  Andrew Begel  <abegel@CS.Berkeley.EDU>
+
+	* common/Makefile.common: Move use of srcdir below its definition.
+	* sample/internal/Makefile.in.in: Ditto.
+	* sample/external/Makefile.in.in: Ditto.
+
 2003-05-20  Jerry James  <james@xemacs.org>
 
 	* sample/internal/Makefile.in.in: Expand $^ for makes that don't

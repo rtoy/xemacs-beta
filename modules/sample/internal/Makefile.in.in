@@ -33,9 +33,6 @@ LDFLAGS=@LDFLAGS@ @sample_libs@
 SRCS=sample.c
 
 ### You should not need to modify anything below this line
-SRC_SRCS=$(SRCS:%=$(srcdir)/%)
-OBJS=$(SRCS:.c=.o)
-
 SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
@@ -52,6 +49,9 @@ with_modules=@with_modules@
 
 srcdir=@srcdir@
 VPATH=@srcdir@
+
+SRC_SRCS=$(SRCS:%=$(srcdir)/%)
+OBJS=$(SRCS:.c=.o)
 
 CC=@MOD_CC@
 MODARCHDIR=@MODARCHDIR@

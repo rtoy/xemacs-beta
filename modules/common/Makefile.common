@@ -27,9 +27,6 @@
 
 ## Note: This will be appended to the individual module Makefiles by configure.
 
-SRC_SRCS:=$(SRCS:%=$(srcdir)/%)
-OBJS=$(SRCS:.c=.o)
-
 SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
@@ -46,6 +43,9 @@ with_modules=@with_modules@
 
 srcdir=@srcdir@
 VPATH=@srcdir@
+
+SRC_SRCS:=$(SRCS:%=$(srcdir)/%)
+OBJS=$(SRCS:.c=.o)
 
 MODCC=@MOD_CC@
 MODARCHDIR=@MODARCHDIR@
