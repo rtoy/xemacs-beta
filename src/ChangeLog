@@ -1,3 +1,9 @@
+2005-01-06  Zajcev Evgeny <zevlg@yandex.ru>
+
+	* scrollbar.c (compute_scrollbar_instance_usage):
+	Only call device method compute_scrollbar_instance_usage() if it
+	is defined.
+
 2004-12-15  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* EmacsManager.c (EmacsManagerChangeSize): Respect XtGeometryNo.
