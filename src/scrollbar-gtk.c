@@ -221,6 +221,21 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 	      gtk_widget_set_usize (wid,
 				    pos_data->scrollbar_width,
 				    pos_data->scrollbar_height);
+
+	      /*
+		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
+		not performed until the GTK event loop.  However, when the
+		fontlock progress bar is run, the vertical scrollbar's height
+		is change and then changed back before events are again
+		processed.  This means that the change back is not seen and
+		the scrollbar is left too short.  Fix this by making the
+		change manually so the test above sees the change.  This does
+		not seem to cause problems in other cases.
+	       */
+
+	      wid->allocation.width = pos_data->scrollbar_width;
+	      wid->allocation.height = pos_data->scrollbar_height;
+
 	      modified_p = 1;
 	    }
 
@@ -232,6 +247,21 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
 			      wid,
 			      pos_data->scrollbar_x,
 			      pos_data->scrollbar_y);
+
+	      /*
+		UGLY! UGLY! UGLY!  Changes to wid->allocation are queued and
+		not performed until the GTK event loop.  However, when the
+		fontlock progress bar is run, the horizontal scrollbar's
+		position is change and then changed back before events are
+		again processed.  This means that the change back is not seen
+		and the scrollbar is left in the wrong position.  Fix this by
+		making the change manually so the test above sees the change.
+		This does not seem to cause problems in other cases.
+	       */
+
+	      wid->allocation.x = pos_data->scrollbar_x;
+	      wid->allocation.y = pos_data->scrollbar_y;
+
 	      modified_p = 1;
 	    }
 

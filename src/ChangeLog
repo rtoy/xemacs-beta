@@ -1,3 +1,18 @@
+2004-07-27  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* frame-gtk.c (gtk_make_frame_visible):
+	* frame-gtk.c (gtk_make_frame_invisible): Use map/unmap instead of
+	show/hide.  This is what X uses and is prevents previously hidden
+	widgets from suddenly reappearing.
+	* gtk-xemacs.c (gtk_xemacs_paint):
+	* gtk-xemacs.c (gtk_xemacs_draw):
+	* gtk-xemacs.c (gtk_xemacs_expose): Only operate if the widget is
+	drawable.
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Force
+	size and location changes so that they can be seen before the next
+	idle event.  Without this rapid changes to scrollbar properties
+	are not seen.
+
 2004-07-07  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* console-gtk-impl.h:

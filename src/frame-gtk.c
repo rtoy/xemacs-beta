@@ -1271,7 +1271,7 @@ gtk_lower_frame (struct frame *f)
 static void
 gtk_make_frame_visible (struct frame *f)
 {
-    gtk_widget_show_all (FRAME_GTK_SHELL_WIDGET (f));
+    gtk_widget_map (FRAME_GTK_SHELL_WIDGET (f));
     gtk_raise_frame_1 (f, 0);
 }
 
@@ -1279,7 +1279,7 @@ gtk_make_frame_visible (struct frame *f)
 static void
 gtk_make_frame_invisible (struct frame *f)
 {
-    gtk_widget_hide (FRAME_GTK_SHELL_WIDGET (f));
+    gtk_widget_unmap(FRAME_GTK_SHELL_WIDGET (f));
 }
 
 static int
