@@ -3146,8 +3146,29 @@ emacs_Xt_quit_p (void)
 static void
 drain_X_queue (void)
 {
+  Lisp_Object devcons, concons;
+  CONSOLE_LOOP (concons)
+  {
+    struct console *con = XCONSOLE (XCAR (concons));
+    if (!con->input_enabled)
+      continue;
+
+    CONSOLE_DEVICE_LOOP (devcons, con)
+    {
+      struct device* d;
+      Display* display;
+      d = XDEVICE (XCAR (devcons));
+      if (DEVICE_X_P (d) && DEVICE_X_DISPLAY (d)) {
+        display = DEVICE_X_DISPLAY (d);
+        while (XEventsQueued (display, QueuedAfterReading))
+          XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+      }
+    }
+  }
+  /*
   while (XtAppPending (Xt_app_con) & XtIMXEvent)
     XtAppProcessEvent (Xt_app_con, XtIMXEvent);
+  */
 }
 
 static int
