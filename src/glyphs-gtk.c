@@ -72,6 +72,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
+#if defined (HAVE_XPM)
+#include <X11/xpm.h>
+#endif
+
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (string);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
@@ -1060,93 +1064,6 @@ gtk_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /**********************************************************************
  *                             XPM                                    *
  **********************************************************************/
-static Lisp_Object
-write_lisp_string_to_temp_file (Lisp_Object string)
-{
-  Lisp_Object instream, outstream;
-  Lstream *istr, *ostr;
-  Char_Binary tempbuf[1024]; /* some random amount */
-  int fubar = 0;
-  FILE *tmpfil;
-  static Extbyte_dynarr *conversion_out_dynarr;
-  Bytecount bstart, bend;
-  Lisp_Object tempfile;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-  Lisp_Object conv_out_stream;
-  Lstream *costr;
-
-  /* This function can GC */
-  if (!conversion_out_dynarr)
-    conversion_out_dynarr = Dynarr_new (Extbyte);
-  else
-    Dynarr_reset (conversion_out_dynarr);
-
-  /* Create the temporary file ... */
-  tempfile = Fmake_temp_name (build_string ("/tmp/emacs"));
-  tmpfil = qxe_fopen (XSTRING_DATA (tempfile), "w");
-  if (!tmpfil)
-    {
-      if (tmpfil)
-	{
-	  int old_errno = errno;
-	  retry_fclose (tmpfil);
-	  qxe_unlink (XSTRING_DATA (tempfile));
-	  errno = old_errno;
-	}
-      report_file_error ("Creating temp file", tempfile);
-    }
-
-  CHECK_STRING (string);
-  get_string_range_byte (string, Qnil, Qnil, &bstart, &bend,
-			 GB_HISTORICAL_STRING_BEHAVIOR);
-  instream = make_lisp_string_input_stream (string, bstart, bend);
-  istr = XLSTREAM (instream);
-  /* setup the out stream */
-  outstream =
-    make_dynarr_output_stream ((unsigned_char_dynarr *) conversion_out_dynarr);
-  ostr = XLSTREAM (outstream);
-  /* setup the conversion stream */
-  conv_out_stream =
-    make_coding_output_stream (ostr, Qbinary, CODING_ENCODE, 0);
-  costr = XLSTREAM (conv_out_stream);
-  GCPRO4 (tempfile, instream, outstream, conv_out_stream);
-
-  /* Get the data while doing the conversion */
-  while (1)
-    {
-      int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
-      if (!size_in_bytes)
-	break;
-      /* It does seem the flushes are necessary... */
-      Lstream_write (costr, tempbuf, size_in_bytes);
-      Lstream_flush (costr);
-      Lstream_flush (ostr);
-      if (retry_fwrite ((unsigned char *)Dynarr_atp(conversion_out_dynarr, 0),
-		  Dynarr_length(conversion_out_dynarr), 1, tmpfil) != 1)
-	{
-	  fubar = 1;
-	  break;
-	}
-      /* reset the dynarr */
-      Lstream_rewind(ostr);
-    }
-  
-  if (retry_fclose (tmpfil) != 0)
-    fubar = 1;
-  Lstream_close (istr);
-  Lstream_close (costr);
-  Lstream_close (ostr);
-
-  Lstream_delete (istr);
-  Lstream_delete (ostr);
-  Lstream_delete (costr);
-
-  if (fubar)
-    report_file_error ("Writing temp file", tempfile);
-
-  UNGCPRO;
-  return tempfile;
-}
 
 struct color_symbol
 {
@@ -1234,14 +1151,13 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   GdkWindow *window = 0;
   int nsymbols = 0, i = 0;
   struct color_symbol *color_symbols = NULL;
-  GdkColor *transparent_color = NULL;
   Lisp_Object color_symbol_alist = find_keyword_in_vector (instantiator,
 							   Q_color_symbols);
   enum image_instance_type type;
   int force_mono;
   gint w, h;
-  Lisp_Object tempfile = Qnil;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  const UChar_Binary * volatile dstring;
 
   if (!DEVICE_GTK_P (XDEVICE (device)))
     gui_error ("Not a Gtk device", device);
@@ -1258,7 +1174,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			      | IMAGE_POINTER_MASK);
   force_mono = (type != IMAGE_COLOR_PIXMAP);
 
-  GCPRO4 (device, data, color_symbol_alist, tempfile);
+  GCPRO3 (device, data, color_symbol_alist);
 
   window = GET_GTK_WIDGET_WINDOW (DEVICE_GTK_APP_SHELL (XDEVICE (device)));
   cmap = DEVICE_GTK_COLORMAP (XDEVICE (device));
@@ -1269,27 +1185,55 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   assert (!NILP (data));
 
-  /* Need to get the transparent color here */
+  /* Extract all the entries from xpm-color-symbols */
   color_symbols = extract_xpm_color_names (device, domain, color_symbol_alist,
 					   &nsymbols);
-  for (i = 0; i < nsymbols; i++)
-    {
-      if (!qxestrcasecmp_c (color_symbols[i].name, "BgColor") ||
-	  !qxestrcasecmp_c (color_symbols[i].name, "None"))
-	{
-	  transparent_color = &color_symbols[i].color;
-	}
-    }
+  assert (!NILP (data));
 
-  tempfile = write_lisp_string_to_temp_file (data);
+  LISP_STRING_TO_EXTERNAL(data, dstring, Qbinary);
+
+  /*
+   * GTK only uses the 'c' color entry of an XPM and doesn't use the symbolic
+   * color names at all.  This is unfortunate because the way to change the
+   * colors from lisp is by adding the symbolic names, and the new colors, to
+   * the variable xpm-color-symbols.
+   *
+   * To get around this decode the XPM, add a 'c' entry of the desired color
+   * for each matching symbolic color, recode the XPM and pass it to GTK.  The
+   * decode and recode stages aren't too bad because this also performs the
+   * external to internal format translation, which avoids contortions like
+   * writing the XPM back to disk in order to get it processed.
+   */
   {
-    Extbyte *tempfileout;
+    XpmImage image;
+    XpmInfo info;
+    char** data;
 
-    LISP_STRING_TO_EXTERNAL (tempfile, tempfileout, Qfile_name);
-    pixmap = gdk_pixmap_create_from_xpm (window, &mask, transparent_color,
-					 tempfileout);
+    XpmCreateXpmImageFromBuffer ((char*) dstring, &image, &info);
+
+    for (i = 0; i < nsymbols; i++)
+      {
+	unsigned j;
+
+	for (j = 0; j < image.ncolors; j++)
+	  {
+	    if (image.colorTable[j].symbolic != NULL &&
+		!qxestrcasecmp_c(color_symbols[i].name, image.colorTable[j].symbolic))
+	      {
+		image.colorTable[j].c_color = (char*) xmalloc(16);
+
+		sprintf(image.colorTable[j].c_color, "#%.4x%.4x%.4x",
+			color_symbols[i].color.red, color_symbols[i].color.green,
+			color_symbols[i].color.blue);
+	      }
+	  }
+      }
+
+    XpmCreateDataFromXpmImage (&data, &image, &info);
+
+    pixmap = gdk_pixmap_create_from_xpm_d (window, &mask, NULL,
+					   data);
   }
-  qxe_unlink (XSTRING_DATA (tempfile));
 
   if (color_symbols)
     xfree (color_symbols, struct color_symbol *);
@@ -1300,7 +1244,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   gdk_window_get_geometry (pixmap, NULL, NULL, &w, &h, &depth);
 
   IMAGE_INSTANCE_GTK_PIXMAP (ii) = pixmap;
-  IMAGE_INSTANCE_GTK_MASK (ii) = mask;
+  IMAGE_INSTANCE_PIXMAP_MASK (ii) = (void*)mask;
   IMAGE_INSTANCE_GTK_COLORMAP (ii) = cmap;
   IMAGE_INSTANCE_GTK_PIXELS (ii) = 0;
   IMAGE_INSTANCE_GTK_NPIXELS (ii) = 0;

@@ -1,5 +1,14 @@
 2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
+	* glyphs-gtk.c (gtk_xpm_instantiate): Rewrite the XPM data to
+	replace symbolic color entries with the real colors specified in
+	xpm-color-symbols, before passing the XPM to gtk.
+        * glyphs-gtk.h: Use the generic pixmap_image_instance.mask for masks,
+        instead of a GTK specific field, so that it is used in by generic
+        code.
+
+2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
 	* event-gtk.c:
 	* event-gtk.c (gtk_event_to_emacs_event):
 	* menubar-gtk.c:
