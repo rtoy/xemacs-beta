@@ -1,3 +1,8 @@
+2003-10-07  Jerry James  <james@xemacs.org>
+
+	* emodules.c (vars_of_module): Make Vmodule_extensions visible to
+	Lisp.  Move assignments next to the corresponding declarations.
+
 2003-09-30  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (distclean): xemacs.def.in.in should not be

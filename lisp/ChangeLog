@@ -1,3 +1,11 @@
+2003-10-07  Jerry James  <james@xemacs.org>
+
+	* autoload.el (generate-c-file-autoloads-1): Use module-extensions
+	instead of listing the extensions.  Use locate-file instead of
+	explicitly trying each extension.
+	* code-files.el (load): Use module-extensions instead of an
+	explicit list of extensions.
+
 2003-10-02  Steve Youngs  <youngs@xemacs.org>
 
 	* about.el (xemacs-hackers): Remove me.

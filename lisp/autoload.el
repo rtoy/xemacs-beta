@@ -461,11 +461,9 @@ autoloads are generated for defuns and defmacros in FILE
 marked by `generate-c-autoload-cookie' (which see).
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
-  (let ((exists-p-format 
-	 "(file-exists-p (expand-file-name \"%s.%s\" module-directory))")
-	(autoloads-done '())
-	)
-
+  (let ((exists-p-format
+	 "(when (locate-file \"%s\" module-load-path module-extensions)\n")
+	autoloads-done)
     (save-excursion
       (save-restriction
 	(widen)
@@ -479,14 +477,7 @@ are used."
 	(if funlist
 	    (progn
 	      (message "Generating autoloads for %s..." trim-name)
-	      (princ "(when (or\n       " outbuf)
-	      (princ (format exists-p-format load-name "ell") outbuf)
-	      (princ "\n       " outbuf)
-	      (princ (format exists-p-format load-name "dll") outbuf)
-	      (princ "\n       " outbuf)
-	      (princ (format exists-p-format load-name "so") outbuf)
-	      ;; close the princ'd `or' form
-	      (princ ")\n       " outbuf)
+	      (princ (format exists-p-format load-name) outbuf)
 	      (dolist (arg funlist)
 		(goto-char (point-min))
 		(re-search-forward
@@ -508,14 +499,7 @@ are used."
 	      (return-from generate-c-file-autoloads-1 nil))
 	    
 	    (message "Generating autoloads for %s..." trim-name)
-	    (princ "(when (or\n       " outbuf)
-	    (princ (format exists-p-format load-name "ell") outbuf)
-	    (princ "\n       " outbuf)
-	    (princ (format exists-p-format load-name "dll") outbuf)
-	    (princ "\n       " outbuf)
-	    (princ (format exists-p-format load-name "so") outbuf)
-	    ;; close the princ'd `or' form
-	    (princ ")\n       " outbuf)
+	    (princ (format exists-p-format load-name) outbuf)
 	    (while match
 	      (forward-line 1)
 	      (let ((autoload (make-c-autoload load-name)))

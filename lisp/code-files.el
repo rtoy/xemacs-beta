@@ -223,15 +223,15 @@ object (the entry specified a coding system)."
   "Execute a file of Lisp code named FILE, or load a binary module.
 First tries to find a Lisp FILE with .elc appended, then with .el, then with
  FILE unmodified.  If unsuccessful, tries to find a binary module FILE with
- .ell appended, then with .dll, then with .so, and finally unmodified.
-Searches directories in load-path for Lisp files, and in module-load-path
+ the elements of `module-extensions' appended, one at a time.
+Searches directories in load-path for Lisp files, and in `module-load-path'
  for binary modules.
 If optional second arg NOERROR is non-nil,
  report no error if FILE doesn't exist.
 Print messages at start and end of loading unless
  optional third arg NOMESSAGE is non-nil.
-If optional fourth arg NOSUFFIX is non-nil, don't try adding
- suffixes .elc, .el, or .ell to the specified name FILE.
+If optional fourth arg NOSUFFIX is non-nil, don't try adding suffixes
+ .elc, .el, or elements of `module-extensions' to the specified name FILE.
 Return t if file exists."
   (declare (special load-modules-quietly))
   (let* ((filename (substitute-in-file-name file))
@@ -275,8 +275,7 @@ Return t if file exists."
 	;; The file name is invalid, or we want to load a binary module
 	(if (and (> (length filename) 0)
 		 (locate-file filename module-load-path
-			      (and (not nosuffix)
-				   '(".ell" ".dll" ".so" ""))))
+			      (and (not nosuffix) module-extensions)))
 	    (if (featurep 'modules)
 		(let ((load-modules-quietly nomessage))
 		  (declare-fboundp (load-module filename)))

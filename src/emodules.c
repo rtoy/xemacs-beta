@@ -601,6 +601,7 @@ is loaded correctly.  Setting this variable to `t' will suppress these
 messages.  This would normally only be done if `load-module' was being
 called by a Lisp function.
 */);
+  load_modules_quietly = 0;
 
   DEFVAR_LISP ("module-load-path", &Vmodule_load_path /*
 *List of directories to search for dynamic modules to load.
@@ -622,21 +623,23 @@ are similar enough to each other that XEmacs will be unable to determine
 the correctness of a dynamic module, which can have unpredictable results
 when a dynamic module is loaded.
 */);
+  Vmodule_load_path = Qnil;
 
   DEFVAR_BOOL ("unloading-module", &unloading_module /*
 Used internally by `unload-feature'.  Do not set this variable.
 Danger, danger, Will Robinson!
 */);
+  unloading_module = 0;
 
-  /* #### Export this to Lisp */
-  Vmodule_extensions = list4 (build_string (".ell"),
+  DEFVAR_LISP ("module-extensions", &Vmodule_extensions /*
+*List of filename extensions to use when searching for dynamic modules.
+*/);
+  Vmodule_extensions = list5 (build_string (".ell"),
 			      build_string (".so"),
 			      build_string (".dll"),
-			      build_string (".dylib"));
-  staticpro (&Vmodule_extensions);
+			      build_string (".dylib"),
+			      build_string (""));
 
-  load_modules_quietly = 0;
-  Vmodule_load_path = Qnil;
   Fprovide (intern ("modules"));
 }
 
