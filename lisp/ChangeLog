@@ -1,3 +1,8 @@
+2004-06-21  Adrian Aichner  <adrian@xemacs.org>
+
+	* package-ui.el (pui-help-echo): Fix false cvs conflict by
+	avoiding line solely composed of equal signs.
+
 2004-06-18  Jerry James  <james@xemacs.org>
 
 	* derived.el (define-derived-mode): Put the arguments to
