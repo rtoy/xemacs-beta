@@ -158,6 +158,7 @@ The output file's name is made by appending `c' to the end of FILENAME."
 
       (defun Print-Pass (fmt &rest args)
 	(setq fmt (concat "PASS: " fmt))
+	;; #### should warn if expecting failure here!
 	(and test-harness-verbose
 	     (princ (concat (apply #'format fmt args) "\n"))))
 

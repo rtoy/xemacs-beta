@@ -1,4 +1,11 @@
-2002-10-19  Stephen Turnbull  <steve@tleepslib1>
+2002-12-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/regexp-tests.el (Mule character class): New test
+	cases.  Based on draft patch by Daiki Ueno <daiki@xemacs.org>.
+
+	* automated/test-harness.el (Print-Pass): Comment.
+
+2002-10-19  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* automated/test-harness.el (test-harness-expect-bug): New variable.
 	(Known-Bug-Expect-Failure): New macro.
