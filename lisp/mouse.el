@@ -532,7 +532,7 @@ button is held down (see also `mouse-track-y-threshold'), then a drag
 is initiated; otherwise the gesture is considered to be a click.
 See `mouse-track'.
 
-The value should be either a number of a form to be evaluated to
+The value should be either a number or a form to be evaluated to
 produce a number.")
 
 (defvar mouse-track-y-threshold '(face-height 'default)
