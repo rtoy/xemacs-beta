@@ -1101,7 +1101,6 @@ window_modeline_height (struct window *w)
 static int
 margin_width_internal (struct window *w, int left_margin)
 {
-  struct buffer *b;
   int window_cwidth = window_char_width (w, 1);
   int margin_cwidth;
   int font_width;
@@ -1116,7 +1115,6 @@ margin_width_internal (struct window *w, int left_margin)
     return 0;
 
   window = wrap_window (w);
-  b = XBUFFER (w->buffer);
   margin_cwidth = (left_margin ? XINT (w->left_margin_width) :
 		   XINT (w->right_margin_width));
 

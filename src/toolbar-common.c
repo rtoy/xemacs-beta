@@ -167,7 +167,7 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
   int shadow_thickness = 2;
   int x_adj, y_adj, width_adj, height_adj;
   struct device *d = XDEVICE (f->device);
-  Lisp_Object instance, frame, window, glyph;
+  Lisp_Object instance, window, glyph;
   struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
   struct Lisp_Image_Instance *p;
   struct window *w;
@@ -190,7 +190,6 @@ common_output_toolbar_button (struct frame *f, Lisp_Object button)
       height_adj = - 2 * border_width;
     }
 
-  frame = wrap_frame (f);
   window = FRAME_LAST_NONMINIBUF_WINDOW (f);
   w = XWINDOW (window);
 

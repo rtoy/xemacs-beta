@@ -1,3 +1,9 @@
+2004-08-12  Jerry James  <james@xemacs.org>
+
+	* window.c (margin_width_internal): Remove unused variable b.
+	* toolbar-common.c (common_output_toolbar_button): Remove unused
+	variable frame.
+
 2004-08-10  Jerry James  <james@xemacs.org>
 
 	* emacs.c (really_abort): make its return type DOESNT_RETURN.
