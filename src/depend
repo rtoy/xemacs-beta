@@ -128,12 +128,13 @@ dired.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h 
 doc.o: $(LISP_H) buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h coding-system-slots.h file-coding.h insdel.h keymap.h lstream.h sysfile.h
 doprnt.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h lstream.h
 dragdrop.o: $(LISP_H) dragdrop.h
-dumper.o: $(LISP_H) coding-system-slots.h console-stream.h console.h elhash.h file-coding.h intl-auto-encap-win32.h lstream.h specifier.h sysfile.h syswindows.h
+dump-data.o: $(LISP_H) dump-data.h
+dumper.o: $(LISP_H) coding-system-slots.h console-stream.h console.h dump-data.h elhash.h file-coding.h intl-auto-encap-win32.h lstream.h specifier.h sysfile.h syswindows.h
 dynarr.o: $(LISP_H)
 ecrt0.o: $(CONFIG_H)
 editfns.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h commands.h console.h device.h events.h frame.h insdel.h line-number.h ndir.h process.h redisplay.h scrollbar.h sysdep.h sysdir.h sysfile.h sysproc.h syspwd.h syssignal.h systime.h window.h
 elhash.o: $(LISP_H) bytecode.h elhash.h opaque.h
-emacs.o: $(LISP_H) backtrace.h buffer.h bufslots.h casetab.h charset.h chartab.h commands.h console-msw.h console.h frame.h intl-auto-encap-win32.h paths.h process.h redisplay.h sysdep.h sysdll.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswindows.h
+emacs.o: $(LISP_H) backtrace.h buffer.h bufslots.h casetab.h charset.h chartab.h commands.h console-msw.h console.h dump-data.h frame.h intl-auto-encap-win32.h paths.h process.h redisplay.h sysdep.h sysdll.h sysfile.h sysproc.h syssignal.h systime.h systty.h syswindows.h
 emodules.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h coding-system-slots.h console.h emodules.h file-coding.h frame.h insdel.h lstream.h redisplay.h scrollbar.h sysdep.h sysdll.h window.h
 esd.o: $(LISP_H) buffer.h bufslots.h casetab.h charset.h chartab.h miscplay.h sound.h sysfile.h
 eval.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h casetab.h charset.h chartab.h commands.h conslots.h console-impl.h console.h device.h frame.h lstream.h opaque.h profile.h redisplay.h scrollbar.h window.h
