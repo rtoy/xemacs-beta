@@ -1,3 +1,13 @@
+2001-12-15  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* modeline.el:
+	(abbrev-mode-line-string): new customizable variable
+	(overwrite-mode-line-string): ditto
+	(auto-fill-mode-line-string): ditto
+	(defining-kbd-macro-mode-line-string): ditto
+	* view-less.el:
+	(view-mode-line-string): ditto
+
 2001-12-12  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* font-lock.el (font-lock-mode-line-string): new customizable

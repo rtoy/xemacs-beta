@@ -99,7 +99,16 @@
     map
     ))
 
-(add-minor-mode 'view-minor-mode " View" view-minor-mode-map)
+;;;###autoload
+(defcustom view-mode-line-string " View"
+  "*String to display in the modeline when View mode is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil)))
+
+(add-minor-mode 'view-minor-mode 
+		'view-mode-line-string 
+		view-minor-mode-map)
 
 ;;;###autoload
 (defvar view-mode-map

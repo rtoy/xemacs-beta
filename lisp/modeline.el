@@ -456,18 +456,44 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 		 (cons toggle keymap)
 		 'minor-mode-map-alist)))))
 
+(defcustom abbrev-mode-line-string " Abbrev"
+  "*String to display in the modeline when `abbrev-mode' is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil)))
+
+(defcustom overwrite-mode-line-string " Ovwrt"
+  "*String to display in the modeline when `overwrite-mode' is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil)))
+
+(defcustom auto-fill-mode-line-string " Fill"
+  "*String to display in the modeline when `auto-fill-mode' is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil)))
+
+(defcustom defining-kbd-macro-mode-line-string " Def"
+  "*String to display in the modeline when `defining-kbd-macro' is active.
+Set this to nil if you don't want a modeline indicator."
+  :type '(choice string
+		 (const :tag "none" nil)))
+
 ;; #### TODO: Add `:menu-tag' keyword to add-minor-mode.  Or create a
 ;; separate function to manage the minor mode menu.
 
 ;(put 'abbrev-mode :menu-tag "Abbreviation Expansion")
-(add-minor-mode 'abbrev-mode " Abbrev")
+(add-minor-mode 'abbrev-mode 'abbrev-mode-line-string)
 ;; only when visiting a file...
-(add-minor-mode 'overwrite-mode 'overwrite-mode)
+(add-minor-mode 'overwrite-mode 'overwrite-mode-line-string)
 ;(put 'auto-fill-function :menu-tag "Auto Fill")
-(add-minor-mode 'auto-fill-function " Fill" nil nil 'auto-fill-mode)
+(add-minor-mode 'auto-fill-function 'auto-fill-mode-line-string
+		nil nil 'auto-fill-mode)
 
 ;(put 'defining-kbd-macro :menu-tag "Keyboard Macro")
-(add-minor-mode 'defining-kbd-macro " Def" nil nil
+(add-minor-mode 'defining-kbd-macro 'defining-kbd-macro-mode-line-string
+		nil nil
 		(lambda ()
 		  (interactive)
 		  (if defining-kbd-macro
