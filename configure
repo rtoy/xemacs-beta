@@ -23770,7 +23770,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 #if HAVE_X11_XFUNCPROTO_H
 #include <X11/Xfuncproto.h>
 #endif
-#include <X11/Intrinsic.h.>
+#include <X11/Intrinsic.h>
 
 
 #include <X11/$athena_variant/XawInit.h>
