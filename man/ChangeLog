@@ -1,5 +1,8 @@
 2004-08-13  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* xemacs/help.texi (Misc Help): Info-goto-emacs-key-command-node
+	to function index.  Document Info-goto-emacs-command-node.
+
 	* lispref/positions.texi (Text Lines):  makeinfo doesn't like Note:.
 
 2004-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
