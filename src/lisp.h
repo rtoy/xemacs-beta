@@ -2859,7 +2859,7 @@ Bytecount fast_string_match (Lisp_Object,  const Bufbyte *,
 			     Bytecount, int, Error_behavior, int);
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
 void restore_match_data (void);
-extern int warn_about_possibly_incompatible_back_references;
+extern Fixnum warn_about_possibly_incompatible_back_references;
 
 
 /* Defined in signal.c */

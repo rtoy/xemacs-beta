@@ -1,3 +1,8 @@
+2001-05-05  Martin Buchholz  <martin@xemacs.org>
+
+	* search.c (warn_about_possibly_incompatible_back_references):
+	Target of a DEFVAR_INT should be a Fixnum, not int.
+
 2001-05-05  Ben Wing  <ben@xemacs.org>
 
 	* console-msw.h:

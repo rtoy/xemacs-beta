@@ -104,7 +104,7 @@ Lisp_Object Qinvalid_regexp;
 /* Regular expressions used in forward/backward-word */
 Lisp_Object Vforward_word_regexp, Vbackward_word_regexp;
 
-int warn_about_possibly_incompatible_back_references;
+Fixnum warn_about_possibly_incompatible_back_references;
 
 /* range table for use with skip_chars.  Only needed for Mule. */
 Lisp_Object Vskip_chars_range_table;
