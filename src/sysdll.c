@@ -27,6 +27,17 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "lisp.h"
 #include "sysdll.h"
 
+#ifdef DLSYM_NEEDS_UNDERSCORE
+#define MAYBE_PREPEND_UNDERSCORE(n) do {		\
+  char *buf = alloca_array (char, strlen (n) + 2);	\
+  *buf = '_';						\
+  strcpy (buf + 1, n);					\
+  n = buf;						\
+} while (0)
+#else
+#define MAYBE_PREPEND_UNDERSCORE(n)
+#endif
+
 /* This whole file is conditional upon HAVE_SHLIB */
 #ifdef HAVE_SHLIB
 
@@ -36,11 +47,19 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <dlfcn.h>
 
 #ifndef RTLD_LAZY
-# define RTLD_LAZY 1
+# ifdef DL_LAZY
+#  define RTLD_LAZY DL_LAZY
+# else
+#  define RTLD_LAZY 1
+# endif
 #endif /* RTLD_LAZY isn't defined under FreeBSD - ick */
 
 #ifndef RTLD_NOW
-# define RTLD_NOW 2
+# ifdef DL_NOW
+#  define RTLD_NOW DL_NOW
+# else
+#  define RTLD_NOW 2
+# endif
 #endif
 
 int
@@ -64,24 +83,14 @@ dll_close (dll_handle h)
 dll_func
 dll_function (dll_handle h, const char *n)
 {
-#ifdef DLSYM_NEEDS_UNDERSCORE
-  char *buf = alloca_array (char, strlen (n) + 2);
-  *buf = '_';
-  strcpy (buf + 1, n);
-  n = buf;
-#endif
+  MAYBE_PREPEND_UNDERSCORE (n);
   return (dll_func) dlsym ((void *) h, n);
 }
 
 dll_var
 dll_variable (dll_handle h, const char *n)
 {
-#ifdef DLSYM_NEEDS_UNDERSCORE
-  char *buf = alloca_array (char, strlen (n) + 2);
-  *buf = '_';
-  strcpy (buf + 1, n);
-  n = buf;
-#endif
+  MAYBE_PREPEND_UNDERSCORE (n);
   return (dll_var)dlsym ((void *)h, n);
 }
 
@@ -112,7 +121,7 @@ dll_open (const char *fname)
   /* shl_load will hang hard if passed a NULL fname. */
   if (fname == NULL) return NULL;
 
-  return (dll_handle) shl_load (fname, BIND_DEFERRED,0L);
+  return (dll_handle) shl_load (fname, BIND_DEFERRED, 0L);
 }
 
 int
@@ -241,6 +250,70 @@ const char *
 dll_error (dll_handle h)
 {
   return "Windows DLL Error";
+}
+#elif defined(HAVE_DYLD)
+/* This section supports MacOSX dynamic libraries. Dynamically
+   loadable libraries must be compiled as bundles, not dynamiclibs.
+*/
+
+#include <mach-o/dyld.h>
+
+int
+dll_init (const char *arg)
+{
+  return 0;
+}
+
+dll_handle
+dll_open (const char *fname)
+{
+  NSObjectFileImage file;
+  NSObjectFileImageReturnCode ret =
+    NSCreateObjectFileImageFromFile(fname, &file);
+  if (ret != NSObjectFileImageSuccess) {
+    return NULL;
+  }
+  NSModule out = NSLinkModule(file, fname,
+			      NSLINKMODULE_OPTION_BINDNOW |
+			      NSLINKMODULE_OPTION_PRIVATE |
+			      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+  return (dll_handle)out;
+}
+
+int
+dll_close (dll_handle h)
+{
+  return NSUnLinkModule((NSModule)h, NSUNLINKMODULE_OPTION_NONE);
+}
+
+dll_func
+dll_function (dll_handle h, const char *n)
+{
+  NSSymbol sym;
+  MAYBE_PREPEND_UNDERSCORE (n);
+  sym = NSLookupSymbolInModule((NSModule)h, n);
+  if (sym == 0) return 0;
+  return (dll_func)NSAddressOfSymbol(sym);
+}
+
+dll_var
+dll_variable (dll_handle h, const char *n)
+{
+  NSSymbol sym;
+  MAYBE_PREPEND_UNDERSCORE (n);
+  sym = NSLookupSymbolInModule((NSModule)h, n);
+  if (sym == 0) return 0;
+  return (dll_var)NSAddressOfSymbol(sym);
+}
+
+const char *
+dll_error (dll_handle h)
+{
+  NSLinkEditErrors c;
+  int errorNumber;
+  const char *fileNameWithError, *errorString;
+  NSLinkEditError(&c, &errorNumber, &fileNameWithError, &errorString);
+  return errorString;
 }
 #else
 /* Catchall if we don't know about this systems method of dynamic loading */
