@@ -1,0 +1,738 @@
+The changes in this release candidate (3) are grouped in the following
+sections.  Some patches overlap a couple of sections, I (somewhat
+arbitrarily) assigned them to the section I thought was most
+important.
+
+Please review especially the RELEASE CANDIDATE 3, RELEASE CANDIDATE 2,
+UI, and GENERAL sections, and others as you have interest/expertise.
+The MISCELLANEOUS and DOCUMENTATION sections are entirely
+uncontroversial and may safely be ignored.
+
+To see the changes since 21.4.3, use
+cvs diff -r r21-4-3 -r candidate-21-4
+To see the changes since release candidate 1, use
+cvs diff -r r21-4-4-rc1 -r candidate-21-4
+
+I'm not committed to anything here irrevocably; this is just my first pass
+at the next release candidate.  Nor are things I've not included here
+necessarily ruled out.  Let me know if anything in needs out, or anything
+out needs in, in your opinion.
+
+RELEASE CANDIDATE 3
+RELEASE CANDIDATE 2
+UI and API CHANGES
+GENERAL BUG FIXES
+MS WINDOWS - printing
+MS WINDOWS - set_file_times
+MS WINDOWS - C-g handling
+MS WINDOWS - miscellaneous
+GTK
+MISCELLANEOUS
+DOCUMENTATION
+
+RELEASE CANDIDATE 3
+
+<15196.1288.138343.769692@turnbull.sk.tsukuba.ac.jp>
+./src/ChangeLog
+2001-07-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* event-msw.c (mswindows_wnd_proc): Add GC debugging assert.
+
+<15196.462.687249.746246@turnbull.sk.tsukuba.ac.jp>
+./ChangeLog
+2001-07-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (with_esd_sound): Default to no.
+
+	* configure.usage: Various documentation improvements.
+
+	* configure.in (--with-ipv6-cname): New Boolean option.  Defaults on.
+	* configure.usage:
+	* PROBLEMS (IPv6 CNAME lookup):
+	Document it.
+
+<15196.462.687249.746246@turnbull.sk.tsukuba.ac.jp>
+./src/ChangeLog
+2001-07-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* config.h.in (IPV6_CANONICALIZE): New #define for --with-ipv6-lookup.
+	* process-unix.c (unix_canonicalize_host_name):
+	sysdep.c (init_system_name):
+	Use it to conditionally support IPv6 canonicalization.
+
+<FENWAY95sao0eCdPap400001472@fenway.corp.soundbite.com>
+./src/ChangeLog
+2001-06-05  Paul Krause  <pkrause@soundbite.com>
+
+	* event-msw.c: replace unsafe call to stderr_out with
+	mswindows_output_console_string
+
+<n162ylx0.fsf@ecf.teradyne.com>
+./ChangeLog
+2001-07-18  Adrian Aichner  <adrian@xemacs.org>
+
+	* etc\TUTORIAL: Fix minor typo.
+	* etc\TUTORIAL.de: Sync with TUTORIAL.
+
+RELEASE CANDIDATE 2
+
+Typo in ChangeLog fix due to Nix.
+
+Change format of in version.sh codename string due to Bill Gates.
+Reported by Adrian.
+
+<yosupub9h4de.fsf@jpl.org>
+./lisp/ChangeLog
+2001-07-10  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mule/kinsoku.el (kinsoku-bol-p): Work with ascii and non-ascii
+	mixed text.
+	(kinsoku-eol-p): Ditto.
+
+2001-07-09  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* mule/kinsoku.el (kinsoku-ascii-eol, kinsoku-gb-bol,
+	kinsoku-gb-eol, kinsoku-big5-bol, kinsoku-big5-eol): Assign
+	characters as the category `s' or `e' correctly.
+
+<yz17kyxzij2.fsf@milhouse.cs.cornell.edu>
+./src/Changelog
+2001-05-31  Paul Stodghill  <stodghil@cs.cornell.edu>
+
+	* event-msw.c:
+	Cygwin does not define WM_IME_xxx. Modify the #if's accordingly.
+
+<003601c0e020$67f10d40$6401a8c0@paulkrause>
+./src/ChangeLog
+2001-05-19  Paul Krause  <paulkrause1@mediaone.net>
+
+	* scrollbar-msw.c: Fixes a crash that occurs on Windows when an
+	attempt is made to scroll when no scroll bar is available.
+
+<005f01c10fbc$6c61edb0$090a050a@soundbite.com>
+./nt/ChangeLog
+2001-07-18  Paul Krause  <paulkrause1@mediaone.net>
+
+	xemacs.mak:  Improved detection for cygwin perl.
+
+	Supercedes <FENWAYUfKRfcjcMzfoV00000f4e@fenway.corp.soundbite.com>
+
+<15133.17889.988505.202517@tyranny.hsys.msk.ru>
+./man/ChangeLog
+2001-06-06  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* xemacs/mule.texi: Typo fixes and describe CCL and fonts.
+	* lispref/mule.texi: Typo fixes and describe set-charset-registry.
+
+<15133.17889.988505.202517@tyranny.hsys.msk.ru>
+./lisp/ChangeLog
+2001-06-06  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* mule/cyrillic.el: Uncomment definition of ccl-encode-koi8-r-font.
+
+./lisp/ChangeLog
+2001-06-14  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* mule/cyrillic.el:  Set up case table.
+
+<y9lofrz77zt.fsf@informatik.uni-tuebingen.de>
+./lisp/ChangeLog
+2001-06-08  Mike Sperber <mike@xemacs.org>
+
+	* files.el (save-some-buffers-1): Don't zap the help window right
+	after `map-y-or-n-p' has popped it up.
+
+<15142.14867.525787.322728@turnbull.sk.tsukuba.ac.jp>
+./nt/ChangeLog
+2001-06-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs.mak (HAVE_ZLIB): New, defaults to HAVE_PNG.
+	(USE_MINITAR): Default to HAVE_ZLIB.
+	(MSW_LIBS): Add comctl32.lib if HAVE_WIDGETS.
+	(mostlyclean, nicenclean, distclean, versionclean): Only one target
+	per invocation of $(DEL); don't use unneeded switches (WinME support).
+
+UI and API CHANGES
+
+<y9lwv966j49.fsf@sams.informatik.uni-tuebingen.de>
+./src/ChangeLog
+2001-03-31  Mike Sperber <mike@xemacs.org>
+
+	* search.c (Freplace_match): Support FSF-style specification of
+	match subexpression when applied to a buffer.
+
+<15160.50052.863645.73187@europe.nortel.com>
+./lisp/ChangeLog
+2001-06-26  Robert Pluim  <rpluim@bigfoot.com>
+
+	* packages.el (locate-library): Use read-library-name for completion.
+
+<15160.50790.460079.416332@europe.nortel.com>
+./lisp/ChangeLog
+2001-06-26  Robert Pluim  <rpluim@bigfoot.com>
+
+	* package-ui.el (pui-install-selected-packages): reverse the lists
+	of packages so that they get handled in the same order as they
+	were selected.
+
+<microsoft-free.x4pub3lxg4.fsf@slackware.mynet.pc>
+./src/ChangeLog
+2001-07-14  Sean MacLennan  <seanm@storm.ca>
+
+	* package-admin.el (package-install-hook): New.
+	(package-delete-hook): New.
+	(package-admin-add-single-file-package): Use package-delete-hook.
+
+	* package-get.el (package-get): Use package-install-hook.
+
+<sxsoftm4b29.fsf@florida.arsdigita.de>
+./lisp/ChangeLog
+2001-04-24  Hrvoje Niksic  <hniksic@arsdigita.com>
+
+	* about.el (about-mailto-link): Use compose-mail for sending mail.
+
+<muxy9sz343m.fsf@uzeb.lrde.epita.fr>
+./lisp/ChangeLog
+2001-04-17  Didier Verna  <didier@xemacs.org>
+
+	* startup.el (load-user-init-file): define `custom-file' before
+	loading the user's init file.
+
+<mux1yqqdqbq.fsf@uzeb.lrde.epita.fr>
+./lisp/ChangeLog
+2001-04-18  Didier Verna  <didier@xemacs.org>
+
+	* cus-edit.el (Custom-reset-standard): reset to standard settings
+	not only when the buffer's :custom-state is 'modified, but also
+	when it is 'set or 'saved.
+
+GENERAL BUG FIXES
+
+<uofrqvxzn.fsf@ispras.ru>
+./lisp/ChangeLog
+2001-06-15  Nick Pakoulin  <npak@ispras.ru>
+
+	* help.el (frob-help-extents): Require 'hyper-apropos for faces.
+
+<mqqoftzthg6.fsf@eng.cam.ac.uk>
+./ChangeLog
+2001-04-14  Gordon Sadler  <gbsadler1@lcisp.com>
+
+	* configure.in: Add GTK_CFLAGS to CPPFLAGS for glade.h check.
+
+<15167.31192.971882.809294@tyranny.hsys.msk.ru>
+./ChangeLog
+2001-07-01  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* configure.in (option processing):  with_widgets=m is ambiguous;
+	don't allow it.
+	(AC_CHECKING for the Athena widgets): Don't check for Athena when
+	with_widgets=no.
+
+<5020000.994949898@flashingchance>
+./src/ChangeLog
+2001-07-11  Matt Tucker  <tuck@whistlingfish.net>
+
+	* syntax.c (find_start_of_comment):
+	Fix `unbalanced parentheses' bug when dealing with mixed comment
+	styles in c++/java/etc. mode
+
+<15111.24585.586600.484683@gargle.gargle.HOWL>
+./lisp/ChangeLog
+2001-05-20  Martin Buchholz  <martin@xemacs.org>
+
+	* bytecomp.el (byte-compile-arithcompare):
+	Only optimize (= x) ==> t if byte-compile-delete-errors is not nil.
+
+<15112.31246.180077.975624@gargle.gargle.HOWL>
+./lisp/ChangeLog
+2001-05-21  Martin Buchholz  <martin@xemacs.org>
+
+	* byte-optimize.el (=): `=' is not a binary predicate!
+	Fix incorrect optimization: (= 0 0 (random 2)) ==> 0 or 1.
+	Use byte-optimize-predicate, not byte-optimize-binary-predicate,
+
+<15123.9022.247285.42002@gargle.gargle.HOWL>
+./ChangeLog
+2001-05-29  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Remove stray backslash.
+
+<15127.8885.609982.512779@gargle.gargle.HOWL>
+./tests/ChangeLog
+2001-05-29  Martin Buchholz  <martin@xemacs.org>
+
+	* automated/mule-tests.el:
+	Avoid test failure if (temp-directory) is a symlink.
+
+<B72977D8.45533%abegel@eecs.berkeley.edu>
+./src/ChangeLog
+2001-05-17  Andrew Begel  <abegel@eecs.berkeley.edu>
+
+	* lrecord.h (INIT_EXTERNAL_LRECORD_IMPLEMENTATION): Add needed cast.
+
+<B729780C.45534%abegel@eecs.berkeley.edu>
+./ChangeLog
+2001-05-17  Andrew Begel  <abegel@eecs.berkeley.edu>
+
+	* aclocal.m4 (LTLD): Don't use "gcc", use the ld reported by gcc.
+
+<87u22s1ffj.fsf@u.sanpo.t.u-tokyo.ac.jp>
+./src/ChangeLog
+2001-05-11  Yoshiki Hayashi  <yoshiki@xemacs.org>
+
+	* lisp.h (EMACS_INT_MAX): This should be one bit less since
+	EMACS_INT is signed.
+
+<200104180223.WAA13090@mclean.mail.mindspring.net>
+2001-04-17  Isaac Hollander  <ysh@mindspring.com>
+
+	* gnuserv.c (setup_table): fix 2 signed/unsigned mismatches
+	* gnuslib.c (connect_to_internet_server): fix signed/unsigned mismatch
+
+<200106220151.VAA31665@gwyn.tux.org>
+./src/ChangeLog
+
+2001-06-21  Ben Wing  <ben@xemacs.org>
+
+	* dired-msw.c (Fmswindows_insert_directory):
+	Fix problem noted by Michael Sperber with directories containing
+	[] and code that destructively modifies an existing string.
+
+<20010409161535.B15607@ool-18b88ad6.dyn.optonline.net>
+./lisp/ChangeLog
+2001-04-09  Danny Colascione  <qtmstr@optonline.net>
+
+	* menubar.el (popup-mode-menu): Make it work with
+	popup-menu-titles turned off.
+	
+<200105121126.HAA26657@gwyn.tux.org>
+./lisp/ChangeLog
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
+	* find-paths.el (paths-find-recursive-path):
+	fix error with null EXCLUDE-REGEXP.
+	
+	* font-lock.el (font-lock-mode):
+	fix problem reported by hrvoje with buffers starting with a space.
+	
+<200106220151.VAA31665@gwyn.tux.org>
+./lisp/ChangeLog
+2001-06-21  Ben Wing  <ben@xemacs.org>
+
+	* help.el (frob-help-extents): Fix problem with undefined face.
+	* update-elc.el (update-elc-files-to-compile): Compile in proper order.
+
+	* keydefs.el (global-map): Add a defn for M-?, previously
+	undefined, to access help -- in case the terminal is not set up
+	right, or f1 gets redefined.
+
+MS WINDOWS - printing
+
+<200105060838.EAA10366@gwyn.tux.org>
+./src/ChangeLog
+2001-05-06  Ben Wing  <ben@xemacs.org>
+
+	* console-msw.h:
+	* device-msw.c:
+	* device-msw.c (print_dialog_worker):
+	* device-msw.c (mswindows_handle_print_dialog_box):
+	* device-msw.c (syms_of_device_mswindows):
+	* dialog-msw.c (mswindows_make_dialog_box_internal):
+	* general-slots.h:
+	implement printing the selection when it's selected.
+
+<200105060838.EAA10366@gwyn.tux.org>
+./lisp/ChangeLog
+2001-05-06  Ben Wing  <ben@xemacs.org>
+
+	* dialog.el (make-dialog-box):
+	* menubar-items.el (default-menubar):
+	* printer.el (generic-print-buffer):
+	* printer.el (generic-print-region):
+	implement printing the selection when it's selected.
+
+MS WINDOWS - set_file_times
+
+<1yp8gt63.fsf@rapier.ecf.teradyne.com>
+./src/ChangeLog
+2001-05-29  Adrian Aichner  <adrian@xemacs.org>
+
+	* fileio.c: Include nt.h.  Remove lisp_string_set_file_times()
+	because set_file_times() now takes Lisp_Object path, instead of
+	char*.
+	* nt.c: Include buffer.h.
+	* nt.c (convert_from_time_t): New.
+	* nt.c (mswindows_utime): New.  Use utime, since SetFileTime does
+	not set mtime correctly.
+	* nt.h: Declare mswindows_utime().
+	* sysdep.c (set_file_times): set_file_times() now takes Lisp_Object
+	path, instead of char*.
+	* systime.h: Include <sys/utime.h> on WIN32_NATIVE.
+
+<200106020618.CAA12498@gwyn.tux.org>
+./src/ChangeLog
+2001-06-01  Ben Wing  <ben@xemacs.org>
+
+	* nt.c (mswindows_utime):
+	* nt.c (close_file_data):
+	fix off-by-one-indirection error.
+
+MS WINDOWS - C-g handling
+
+<200105311247.IAA28237@gwyn.tux.org>
+./src/ChangeLog addition:
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	For 21.4:
+
+	(Stephen, just take all event-msw.c patches.  This includes
+	the "iconify" fix below.)
+
+	* event-msw.c:
+	* event-msw.c (mswindows_dequeue_dispatch_event):
+	* event-msw.c (assert):
+	* event-msw.c (emacs_mswindows_quit_p):
+	* event-msw.c (debug_mswin_messages):
+	* event-msw.c (debug_output_mswin_message):
+	* event-msw.c (vars_of_event_mswindows):
+	Fix yet more problems with C-g handling.
+	Implement debug-mswindows-events.
+
+MS WINDOWS - miscellaneous
+
+<15119.11444.70000.574489@gargle.gargle.HOWL>
+./src/ChangeLog
+2001-05-25  Craig Lanning  <CraigL@Knology.net>
+
+	* s\mingw32.h:
+	Properly find MinGW's <process.h> inside Cygwin's restructured
+	include directories.  Don't try to include <cygwin/version.h>
+	since we are dropping support for MinGW in versions of Cygwin
+	earlier than b21.
+	* nt.c:
+	Drop support for MinGW in versions of Cygwin before b21.
+	* sysdep.c:
+	Properly find MinGW's <process.h> inside Cygwin's restructured
+	include directories.
+	* syswindows.h:
+	Drop support for MinGW in versions of Cygwin before b21.
+	* unexcw.c:
+	Even though a.out.h is no longer detected by configure, allow
+	MinGW to use it until we figure out how to do the job with Win32.
+
+<FENWAYUfKRfcjcMzfoV00000f4e@fenway.corp.soundbite.com>
+./nt/ChangeLog
+2001-05-28  Paul Krause  <pkrause@soundbite.com>
+
+	* xemacs.mak (DEPEND): defined(_) isn't a reliable method for
+	detecting if perl is from cygwin. Check $OSNAME as a backup.
+
+	DISCARDED: Superseded <005f01c10fbc$6c61edb0$090a050a@soundbite.com>
+
+<4.3.2.7.2.20010517121830.00b0a920@san-francisco.beasys.com>
+./netinstall/ChangeLog
+2001-05-17  Andy Piper  <andy@xemacs.org>
+
+	* sysfile.h: don't assume that file attributes are boolean
+
+2001-05-17  Andy Piper  <andy@xemacs.org>
+
+	* win32.h:
+	* win32.h (NOCOMATTRIBUTE): sync with latest cygwin version.
+
+<62532263.3200087799@[148.59.233.133]>
+./src/ChangeLog
+2001-05-29  Mike Alexander  <mta@arbortext.com>
+
+	* console-msw.h (FRAME_MSPRINTER_CHARHEIGHT): Unswap
+	FRAME_MSPRINTER_CHARWIDTH and FRAME_MSPRINTER_CHARHEIGHT
+
+<200105121126.HAA26657@gwyn.tux.org>
+./src/ChangeLog
+2001-05-12  Ben Wing  <ben@xemacs.org>
+
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	eliminate cygwin warnings.
+
+<200105231035.GAA13007@gwyn.tux.org>
+./src/ChangeLog
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* device-msw.c (msprinter_init_device):
+	signal an error rather than crash with an unavailable network
+	printer (from Mike Alexander).
+	
+	* event-msw.c:
+	* event-msw.c (struct winsock_stream):
+	* event-msw.c (winsock_writer):
+	* event-msw.c (winsock_closer):
+	* event-msw.c (make_winsock_stream_1):
+	cleanup headers.  fix (hopefully) an error with data corruption
+	when sending to a network connection.
+
+	* fileio.c (Fexpand_file_name): Fix evil code that attempts
+	to handle the ~user prefix by (a) always assuming we're referencing
+	ourselves and not even verifying the user -- hence any file with
+	a tilde as its first char is invalid! (b) if there wasn't a slash
+	following the filename, the pointer was set *past* the end of
+	file and we started reading from uninitialized memory.  Now we
+	simply treat these as files, always.
+
+	* buffer.c (common_init_complex_vars_of_buffer): comment change.
+	
+<200105231147.HAA15653@gwyn.tux.org>
+./src/ChangeLog
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* event-msw.c (winsock_writer):
+	* event-msw.c (winsock_closer):
+	prior kludgy code was clobbering the buffer, thinking it was
+	"unused" space to store an unneeded return value; instead, use
+	the variable we've already got staring us in the face.
+
+<4.3.2.7.2.20010524160839.02dfa610@pop>
+./src/ChangeLog
+2001-05-24  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* event-msw.c (WM_DROPFILES): Use correct type for OLE characters.
+	
+GTK
+
+<86snhme1pz.fsf@hel.bp.aventail.com>
+./src/ChangeLog
+2001-05-30  William M. Perry  <wmperry@gnu.org>
+
+	* event-gtk.c: Check for buttons as modifier keys.
+
+<8666eh375k.fsf@hel.bp.aventail.com>
+./lisp/ChangeLog
+2001-05-31  William M. Perry  <wmperry@gnu.org>
+
+	* font-menu.el: Avoid arithmetic with 'nil' when using the font menu
+	in XEmacs/GTK.
+
+<863d9hf0rd.fsf@hel.bp.aventail.com>
+./lisp/ChangeLog
+2001-06-03  William M. Perry  <wmperry@gnu.org>
+
+	* dialog-gtk.el (popup-builtin-open-dialog): Don't forget to
+	return the filename selected by the user!
+
+<987338379.7732.0.camel@loki.lausch.at>
+./src/ChangeLog
+2001-04-15  Michael Lausch  <mla@1012surf.net>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Call
+	gtk_widget_request_size() to give scrollbar >0 width for
+	GTK >1.2.8.
+
+<86ae3t378p.fsf@hel.bp.aventail.com>
+./src/ChangeLog
+2001-05-20  Drazen Kacar  <dave@arsdigita.com>
+
+	* glyphs-gtk.c (gtk_resource_instantiate): C++ comment -> #if 0
+
+<15189.33914.633203.591427@turnbull.sk.tsukuba.ac.jp>
+./lisp/ChangeLog
+2001-07-18  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* specifier.el: define-specifier-tag 'gtk.
+
+MISCELLANEOUS
+
+<200105230148.VAA13292@mclean.mail.mindspring.net>
+./src/ChangeLog
+2001-05-22  Isaac Hollander  <ysh@mindspring.com>
+
+	* Makefile.in.in: Use TAR macro instead of hardcoding
+	  tar.  Allows use of GNU tar instead of system tar
+
+DOCUMENTATION
+
+A bunch of typo fixes from the late Beta Release Engineer with no
+ChangeLogs; leave them that way in memorium.
+
+<iluk82vvtx8.fsf@barbar.josefsson.org>
+./man/ChangeLog
+2001-06-02  Simon Josefsson  <simon@josefsson.org>
+
+	* internals/internals.texi (Techniques for XEmacs Developers): Fix
+	typo in ./configure line.
+
+<87bsof9zbk.fsf@n-pl.org>
+./ChangeLog
+2001-05-27  Kazuo Oishi  <oishi@n-pl.org>
+
+	* etc/xemacs-ja.1: Replace with new translation.
+
+<20010529193619.2664.qmail@hsys.msk.ru>
+./man/ChangeLog
+2001-05-29  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* xemacs/custom.texi: Documented keyboard shortcut.
+
+	* xemacs/mule.texi: Updated to match reality; tiny fixes.
+
+<20010529193619.2664.qmail@hsys.msk.ru>
+./lisp/ChangeLog
+2001-05-29  Alexey Mahotkin  <alexm@hsys.msk.ru>
+
+	* coding.el: Tiny typo fixed.
+
+<200106081225.IAA31075@gwyn.tux.org>
+./man/ChangeLog
+2001-06-08  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (MS Windows):
+	* xemacs-faq.texi (Q6.2.1):
+	* xemacs-faq.texi (Q6.2.2):
+	* xemacs-faq.texi (Q6.2.3):
+	* xemacs-faq.texi (Q6.2.4):
+	* xemacs-faq.texi (Q6.2.5):
+	* xemacs-faq.texi (Q6.3.1):
+	* xemacs-faq.texi (Q6.3.2):
+	* xemacs-faq.texi (Q6.3.3):
+	* xemacs-faq.texi (Q6.3.4):
+	* xemacs-faq.texi (Q6.4.1):
+	* xemacs-faq.texi (Q6.4.2):
+	* xemacs-faq.texi (Current Events):
+	* xemacs-faq.texi (Q7.0.1):
+	* xemacs-faq.texi (Q7.0.2):
+	* xemacs-faq.texi (Q7.0.3):
+	* xemacs-faq.texi (Q7.0.4):
+	* xemacs-faq.texi (Q7.0.5):
+	* xemacs-faq.texi (Q7.0.6):
+	Merge in the rest of Hrvoje's Windows FAQ.  Redo section 7
+	to update current reality and add condensed versions of
+	new changes for 21.1 and 21.4. (Not quite done for 21.4.)
+	Lots more Windows updates.
+
+<200106101053.GAA12271@gwyn.tux.org>
+./man/ChangeLog
+2001-06-10  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.10):
+	* xemacs-faq.texi (Q1.0.11):
+	* xemacs-faq.texi (Q1.0.12):
+	Update sections on Windows and MacOS availability.
+
+<8zi7hxlo.fsf@ecf.teradyne.com>
+./man/ChangeLog
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* lispref\windows.texi (Window Configurations): Fix typos.
+	* lispref\x-windows.texi (Resources): Ditto.
+	* internals\internals.texi (XEmacs From the Inside): Ditto.
+	* emodules.texi (Initialization Mode): Ditto.
+	* xemacs-faq.texi (Q6.3.2): Ditto.
+
+<1ynzhwt3.fsf@ecf.teradyne.com>
+./man/ChangeLog
+2001-07-02  Adrian Aichner  <adrian@xemacs.org>
+
+	* xemacs-faq.texi (Q1.0.14): Update information following a
+	request by Tom Mostyn.
+
+./man/ChangeLog
+2001-06-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/programs.texi: Add node name (Top) to Ebrowse xref.
+
+[Long since committed; added ChangeLog]
+<scm66jlgfkm.fsf@hookah.kazbek.ispras.ru>
+./lisp/ChangeLog
+2001-01-12  Nick V. Pakoulin  <npak@ispras.ru>
+
+	* cl-macs.el (cl-upcase-arg): New function.
+	(cl-function-arglist): New function.
+	(cl-transform-lambda): Automatically add CL-style lambda list to
+	documentation string using functions above.
+
+<200105170631.CAA32586@gwyn.tux.org>
+./man/ChangeLog
+2001-05-16  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (Installation):
+	* xemacs-faq.texi (Q2.1.15):
+	* xemacs-faq.texi (Q2.1.18):
+	* xemacs-faq.texi (Q2.1.19):
+	document how to debug X errors
+	
+<200105200118.VAA32224@gwyn.tux.org>
+./src/ChangeLog
+2001-05-19  Ben Wing  <ben@xemacs.org>
+
+	* eval.c: doc comment about gcpro'ing in record_unwind_protect.
+
+	* process-nt.c:
+	* process-nt.c (vars_of_process_nt):
+	remove unused mswindows-quote-process-args.  rec for 21.4.
+	
+<200105231035.GAA13007@gwyn.tux.org>
+./nt/ChangeLog
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (installation):
+	call `ver' to get the exact os version and put it in the
+	installation; suggestion from adrian.
+
+<200105231035.GAA13007@gwyn.tux.org>
+./ChangeLog addition
+2001-05-23  Ben Wing  <ben@xemacs.org>
+
+	* etc\sample.init.el:
+	* etc\sample.init.el (Init-safe-require): New.
+	* etc\sample.init.el ((fboundp 'pending-delete-mode)):
+	* etc\sample.init.el ((eq system-type 'windows-nt)):
+	* etc\sample.init.el (dired):
+	* etc\sample.init.el ((Init-safe-require 'efs-auto)):
+	* etc\sample.init.el (completer):
+	* etc\sample.init.el (crypt):
+	* etc\sample.init.el (filladapt):
+	* etc\sample.init.el ((fboundp 'turn-on-lazy-lock)):
+	* etc\sample.init.el ((fboundp 'resize-minibuffer-mode)):
+	* etc\sample.init.el ((Init-safe-require 'scroll-in-place)):
+	Rewrite to be much more careful about loading features -- now
+	it decays gracefully even in the complete absence of packages.
+	Also avoid doing obnoxious things when loading efs.
+
+<200105311247.IAA28237@gwyn.tux.org>
+./man/ChangeLog
+2001-05-30  Ben Wing  <ben@xemacs.org>
+
+	* xemacs-faq.texi (Top):
+	* xemacs-faq.texi (MS Windows):
+	* xemacs-faq.texi (Q6.0.1):
+	* xemacs-faq.texi (Q6.0.2):
+	* xemacs-faq.texi (Q6.0.3):
+	* xemacs-faq.texi (Q6.0.4):
+	* xemacs-faq.texi (Q6.1.1):
+	* xemacs-faq.texi (Q6.1.4):
+	* xemacs-faq.texi (Q6.1.5):
+	* xemacs-faq.texi (Q6.1.6):
+	* xemacs-faq.texi (Q6.2.1):
+	* xemacs-faq.texi (Q6.2.2):
+	* xemacs-faq.texi (Q6.3.1):
+	* xemacs-faq.texi (Q6.3.2):
+	* xemacs-faq.texi (Q6.3.3):
+	* xemacs-faq.texi (Q6.4.1):
+	* xemacs-faq.texi (Current Events):
+	Major rewrite.
+	Update all MS Windows info to current.
+	Redo section 6.1 almost completely.
+	Incorporate sections 1 and 2 of Hrvoje's FAQ.
+
+<8zhqhahu.fsf@ecf.teradyne.com>
+./lisp/ChangeLog
+2001-07-15  Adrian Aichner  <adrian@xemacs.org>
+
+	* about.el (about-personal-info): Fix word duplication typos.
+	* dialog.el (make-dialog-box): Ditto.
+	* lisp-mode.el (lisp-indent-function): Ditto.
+	* package-admin.el (package-admin-delete-binary-package): Ditto.
+	* package-get.el (package-get-staging-dir): Ditto.
+
