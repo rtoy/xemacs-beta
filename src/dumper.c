@@ -1595,8 +1595,17 @@ pdump_load (const Extbyte *argv0)
 	    }
 	  strcpy (w, name);
 
-	  if (!access (exe_path, X_OK))
-	    break;
+#undef access /* avoid !@#$%^& encapsulated access */
+#undef stat   /* avoid !@#$%^& encapsulated stat */
+
+	  {
+	    struct stat statbuf;
+	    if (access (exe_path, X_OK) == 0
+		&& stat (exe_path, &statbuf) == 0
+		&& ! S_ISDIR (statbuf.st_mode))
+	      break;
+	  }
+
 	  if (!*p)
 	    {
 	      /* Oh well, let's have some kind of default */

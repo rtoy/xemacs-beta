@@ -1,3 +1,10 @@
+2003-05-09  Martin Buchholz  <martin@xemacs.org>
+
+	* dumper.c (pdump_load): Pdump'ed XEmacs can't find its .dmp file.
+	Scenario: Prepend ~/bin to PATH; then `mkdir ~/bin/xemacs'
+	Result: "temacs can only be run in -batch mode."
+	Fix: Check xemacs executable candidate for directory-ness.
+
 2003-05-06  Martin Buchholz  <martin@xemacs.org>
 
 	* database.c: Berkeley DB wants __STDC__ to be defined.
