@@ -42,7 +42,7 @@ use the Options menu or `set-eol-detection'."
   ;; set-eol-detection to be called.  We will init everything appropriately
   ;; later in the same file, when reset-language-environment is called.
   :initialize #'(lambda (var val)
-		  (setq eol-detection-enabled-p val))
+		  (setq eol-detection-enabled-p (eval val)))
   :set #'(lambda (var val)
 	   (set-eol-detection val)
 	   (setq eol-detection-enabled-p val)))
