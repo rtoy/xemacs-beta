@@ -1,3 +1,18 @@
+2001-10-29  Andy Piper  <andy@xemacs.org>
+
+	* code-files.el (toggle-buffer-file-coding-system): mark buffer as
+	modified when changing coding system.
+
+	* toolbar-items.el (toolbar-dired): Use interactive "D" spec so
+	that we invoke the GUI directory selector.
+
+2001-10-25  Andy Piper  <andy@xemacs.org>
+
+	* dialog.el (make-dialog-box): use new directory dialog support.
+	* minibuf.el (read-file-name-1): ditto.
+	(read-file-name): ditto.
+	(read-directory-name): ditto.
+
 2001-09-28  Ben Wing  <ben@xemacs.org>
 
 	* font-lock.el:

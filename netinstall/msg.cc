@@ -16,8 +16,6 @@
 /* The purpose of this file is to centralize all the message
    functions. */
 
-static char *cvsid = "\n%%% $Id: msg.cc,v 1.3 2001/04/13 09:11:35 michaels Exp $\n";
-
 #include "win32.h"
 #include <stdio.h>
 #include <stdarg.h>

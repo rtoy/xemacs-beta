@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #define VERTICAL_SCROLLBAR_DRAG_HACK
 
 static int vertical_drag_in_progress = 0;
+extern Lisp_Object mswindows_find_frame (HWND hwnd);
 
 /* As long as the HWND is around, the scrollbar instance must be GC-protected.
    We have gotten crashes, apparently from trying to access a dead, freed
@@ -235,9 +236,9 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
       f = XFRAME (frame);
     }
 
-  /* SB_LINEDOWN == SB_CHARLEFT etc.  This is the way they will
-     always be -- any Windows is binary compatible backward with
-     old programs. */
+  /* SB_LINEDOWN == SB_CHARLEFT etc. This is the way they will
+     always be - any Windows is binary compatible backward with
+     old programs */
 
   switch (code)
     {

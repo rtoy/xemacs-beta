@@ -28,6 +28,7 @@
 #define IDS_DOWNLOAD_INCOMPLETE         26
 #define IDS_INSTALL_INCOMPLETE          27
 #define IDS_ROOT_NOCYGWIN               28
+#define IDS_CREATE_DIR   29
 #define IDD_ROOT                        101
 #define IDD_SOURCE                      102
 #define IDD_OTHER_URL                   103

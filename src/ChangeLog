@@ -1,3 +1,33 @@
+2001-10-26  Mike Alexander  <mta@arbortext.com>
+
+	* event-msw.c (slurper_free_shared_data_maybe): Free the pipe handle.
+
+2001-10-25  Andy Piper  <andy@xemacs.org>
+
+	* ChangeLog:
+	* dialog-msw.c (handle_directory_proc): new function.
+	 (handle_directory_dialog_box): new fucntion.
+	 (handle_file_dialog_box): use new directory dialog support.
+	 (mswindows_make_dialog_box_internal): ditto.
+	* event-msw.c (mswindows_wnd_proc): minor fix to scrollbar event
+	handling.
+	(mswindows_find_frame): make global.
+	* fileio.c (Fexpand_file_name): build fix.
+	* general-slots.h: add Qdirectory.
+	* scrollbar-msw.c (mswindows_handle_scrollbar_event): fix focus
+	handling.
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT): fix problem with
+	cygwin not leaving win32 paths unchanged.
+	* win32.c (Fmswindows_cygwin_to_win32_path): new function. Use the
+	cygwin runtime to do path conversion.
+	(Fmswindows_shell_execute): fix cygwin handling of URLs.
+	(syms_of_win32): add new function.
+	* window.c (window_loop): build fix.
+
+2001-10-15  Andy Piper  <andy@xemacs.org>
+
+	(Fmswindows_shell_execute): fix handling of URL's under cygwin.
+
 2001-08-30   Daiki Ueno  <ueno@unixuser.org>
 
 	* process-unix.c (unix_open_multicast_group): Remove too much

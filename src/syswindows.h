@@ -85,6 +85,7 @@ extern __inline void *GetFiberData (void);
 #  define Status int
 # endif
 # include <mmsystem.h>
+# include <shlobj.h>
 # include <shellapi.h>
 # include <ddeml.h>
 #endif
@@ -120,6 +121,17 @@ extern __inline void *GetFiberData (void);
 #endif
 #ifndef PHYSICALOFFSETY
 #define PHYSICALOFFSETY 113
+#endif
+
+/* shlobj.h defines. */
+#ifndef BIF_EDITBOX
+#define BIF_EDITBOX 0x10
+#endif
+#ifndef BIF_VALIDATE
+#define BIF_VALIDATE 0x20
+#endif
+#ifndef BFFM_VALIDATEFAILED
+#define BFFM_VALIDATEFAILED 3
 #endif
 
 /* windows.h defines. */
@@ -261,12 +273,15 @@ do {									\
      is ASCII-compatible, and so these functions will work fine with	\
      this data. */							\
   Lisp_Object ltwff1 = (path);						\
-  int ltwff2 =								\
-    cygwin_posix_to_win32_path_list_buf_size ((char *)			\
-					      XSTRING_DATA (ltwff1));	\
-  pathout = (Intbyte *) alloca (ltwff2);				\
-  cygwin_posix_to_win32_path_list ((char *) XSTRING_DATA (ltwff1),	\
-				   (char *) pathout);			\
+  Intbyte* ltwffp = XSTRING_DATA (ltwff1);				\
+  if (isalpha (ltwffp[0]) && (IS_DEVICE_SEP (ltwffp[1])))			\
+    pathout = ltwffp;							\
+  else {									\
+    int ltwff2 =								\
+      cygwin_posix_to_win32_path_list_buf_size ((char*)ltwffp);	\
+    pathout = (Intbyte *) alloca (ltwff2);				\
+    cygwin_posix_to_win32_path_list ((char*) ltwffp, (char*) pathout);	\
+  }									\
 } while (0)
 #else
 #define LOCAL_TO_WIN32_FILE_FORMAT(path, pathout)	\

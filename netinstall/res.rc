@@ -33,7 +33,7 @@ STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "XEmacs Setup"
 FONT 8, "MS Sans Serif"
 BEGIN
-    PUSHBUTTON      "Next >",IDOK,199,176,45,15,WS_DISABLED | WS_GROUP
+    PUSHBUTTON      "Next >",IDOK,199,176,45,15, WS_GROUP
     PUSHBUTTON      "Cancel",IDCANCEL,256,176,45,15
     CONTROL         "Download from the Internet",IDC_SOURCE_DOWNLOAD,"Button",
                     BS_AUTORADIOBUTTON | WS_TABSTOP,127,102,152,10
@@ -516,11 +516,12 @@ BEGIN
     IDS_ERR_OPEN_READ       "Can't open %s for reading: %s"
     IDS_ROOT_ABSOLUTE       "The install directory must be absolute, with both a drive letter and leading slash, like C:\\Cygwin"
     IDS_DOWNLOAD_COMPLETE   "Download Complete"
-    IDS_CVSID               "\n%%% $Id: res.rc,v 1.6 2001/10/26 02:42:53 andyp Exp $\n"
+    IDS_CVSID               "\n%%% $Id: res.rc,v 1.7 2001/10/30 05:13:28 andyp Exp $\n"
     IDS_NOLOGFILE           "Cannot open log file %s for writing"
     IDS_UNINSTALL_COMPLETE  "Uninstalls complete."
     IDS_WININET             "Unable to find or load the Internet Explorer 5 DLLs"
     IDS_ERR_CHDIR           "Could not change dir to %s"
+    IDS_CREATE_DIR           "The directory %s does not exist, create it?"
     IDS_OLD_SETUP_VERSION   "This setup is version %s, but setup.ini claims version %s is available.\nYou might want to upgrade to get the latest features and bug fixes."
     IDS_DOWNLOAD_FAILED     "Unable to download %s"
     IDS_DOWNLOAD_INCOMPLETE "Download Incomplete.  Try again?"

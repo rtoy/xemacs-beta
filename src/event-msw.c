@@ -229,6 +229,7 @@ slurper_free_shared_data_maybe (struct ntpipe_slurp_stream_shared_data* s)
       CloseHandle (s->hev_thread);
       CloseHandle (s->hev_caller);
       CloseHandle (s->hev_unsleep);
+      CloseHandle (s->hpipe);
       s->inuse_p = 0;
     }
 }
@@ -2835,7 +2836,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 					       MAKEPOINTS (lParam)))
 	  {
 	    GCPRO2 (emacs_event, fobj);
-	    mswindows_pump_outstanding_events ();	/* Can GC */
+	    if (UNBOUNDP(mswindows_pump_outstanding_events ()))	/* Can GC */
+	      SendMessage (hwnd, WM_CANCELMODE, 0, 0);
 	    UNGCPRO;
 	  }
 	else
