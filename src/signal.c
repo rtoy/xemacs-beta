@@ -436,10 +436,6 @@ check_what_happened (void)
      code. */
 
 #ifdef ERROR_CHECK_TRAPPING_PROBLEMS
-  assert_with_message
-    (proper_redisplay_wrapping_in_place (),
-     "QUIT called from within redisplay without being properly wrapped");
-
   /* When in a critical section, don't reset something_happened, so that
      every single QUIT will verify proper wrapping. (something_happened
      was set by enter_redisplay_critical_section() and will be reset
@@ -982,6 +978,14 @@ KERNEL32! BaseProcessStart@4 + 115547 bytes
 
   if (quit_check_signal_happened)
     {
+#ifdef ERROR_CHECK_TRAPPING_PROBLEMS
+      /* Since the code below can call Lisp, make sure that proper wrapping is
+	 in place during redisplay. */
+      assert_with_message
+	(proper_redisplay_wrapping_in_place (),
+	 "QUIT called from within redisplay without being properly wrapped");
+#endif
+
       /* Since arbitrary Lisp code may be executed (e.g. through a menu
          filter, see backtrace directly above), GC might happen,
          which would majorly fuck a lot of things, e.g. re_match()

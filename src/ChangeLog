@@ -1,3 +1,9 @@
+2004-04-15  Jerry James  <james@xemacs.org>
+
+	* signal.c (check_what_happened): Remove check for proper
+	redisplay wrapping.
+	* signal.c (check_quit): Put the check here instead.
+
 2004-04-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* emacs.c (main_1): dumped_data_max_size and dumped_data_align_offset
