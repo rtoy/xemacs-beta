@@ -1924,7 +1924,8 @@ mswindows_print_font_instance (Lisp_Font_Instance *f,
 }
 
 static Lisp_Object
-mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
+mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device,
+		      Lisp_Object maxnumber)
 {
   struct device *d = XDEVICE (device);
   Lisp_Object font_list = Qnil, fonttail, result = Qnil;

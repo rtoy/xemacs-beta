@@ -207,7 +207,8 @@ struct console_methods
 						Error_Behavior errb);
   Lisp_Object (*font_instance_properties_method) (Lisp_Font_Instance *);
   Lisp_Object (*list_fonts_method) (Lisp_Object pattern,
-				    Lisp_Object device);
+				    Lisp_Object device,
+				    Lisp_Object maxnumber);
   Lisp_Object (*find_charset_font_method) (Lisp_Object device,
 					   Lisp_Object font,
 					   Lisp_Object charset,

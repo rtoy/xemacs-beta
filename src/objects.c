@@ -507,17 +507,18 @@ Return the properties (an alist or nil) of FONT-INSTANCE.
 			     font_instance_properties, (f));
 }
 
-DEFUN ("list-fonts", Flist_fonts, 1, 2, 0, /*
+DEFUN ("list-fonts", Flist_fonts, 1, 3, 0, /*
 Return a list of font names matching the given pattern.
 DEVICE specifies which device to search for names, and defaults to the
 currently selected device.
 */
-       (pattern, device))
+       (pattern, device, maxnumber))
 {
   CHECK_STRING (pattern);
   device = wrap_device (decode_device (device));
 
-  return MAYBE_LISP_DEVMETH (XDEVICE (device), list_fonts, (pattern, device));
+  return MAYBE_LISP_DEVMETH (XDEVICE (device), list_fonts, (pattern, device,
+							    maxnumber));
 }
 
 

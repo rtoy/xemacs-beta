@@ -359,7 +359,7 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-gtk_list_fonts (Lisp_Object pattern, Lisp_Object device)
+gtk_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 {
   const char *patternext;
 

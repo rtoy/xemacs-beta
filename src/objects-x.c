@@ -853,17 +853,23 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-x_list_fonts (Lisp_Object pattern, Lisp_Object device)
+x_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 {
   Extbyte **names;
   int count = 0;
+  int max_number = MAX_FONT_COUNT;
   Lisp_Object result = Qnil;
   const Extbyte *patternext;
 
   LISP_STRING_TO_EXTERNAL (pattern, patternext, Qx_font_name_encoding);
 
+  if (!NILP(maxnumber) && INTP(maxnumber))
+    {
+      max_number = XINT(maxnumber);
+    }
+
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
-		      patternext, MAX_FONT_COUNT, &count);
+		      patternext, max_number, &count);
   while (count--)
     result = Fcons (build_ext_string (names[count], Qx_font_name_encoding),
 		    result);

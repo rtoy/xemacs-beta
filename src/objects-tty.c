@@ -291,7 +291,7 @@ tty_finalize_font_instance (Lisp_Font_Instance *f)
 }
 
 static Lisp_Object
-tty_list_fonts (Lisp_Object pattern, Lisp_Object device)
+tty_list_fonts (Lisp_Object pattern, Lisp_Object device, Lisp_Object maxnumber)
 {
   return list1 (build_string ("normal"));
 }

@@ -1,3 +1,21 @@
+2003-09-20  James LewisMoss  <dres@lewismoss.org>
+
+	* console-impl.h (struct console_methods): add third arg to list_fonts
+
+	* objects.c (Flist_fonts): Add third arg to list-fonts: maxnumber
+
+	* objects-gtk.c (gtk_list_fonts): Add third (ignored) arg for
+	maxnumber.
+
+	* objects-msw.c (mswindows_list_fonts): Add third (ignored) arg for
+	maxnumber.
+
+	* objects-tty.c (tty_list_fonts): Add third (ignored) arg for
+	maxnumber.
+
+	* objects-x.c (x_list_fonts): Add third arg to specify the maximum
+	fonts recieved from the server.
+
 2003-09-13  Martin Buchholz  <martin@xemacs.org>
 
 	* s/sol2.h: Use OS_RELEASE=os_release_major*100+os_release_minor

@@ -1,3 +1,11 @@
+2003-09-20  James LewisMoss  <dres@lewismoss.org>
+
+	* font-menu.el (font-menu-max-number): New variable to specify
+	the maximum recieved fonts.
+
+	* x-font-menu.el (x-reset-device-font-menus): Use new variable
+	(font-menu-max-number) to list-fonts.
+
 2002-09-20  James LewisMoss  <dres@lewismoss.org>
 
 	* gnuserv.el (gnuserv-edit-files): fallback to gtk if x device

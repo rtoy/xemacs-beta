@@ -96,7 +96,8 @@ or if you change your font path, you can call this to re-initialize the menus."
 	family size weight entry monospaced-p
 	dev-cache cache families sizes weights)
     (dolist (name (cond ((null debug)	; debugging kludge
-			 (list-fonts "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device))
+			 (list-fonts "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device
+				     font-menu-max-number))
 			((stringp debug) (split-string debug "\n"))
 			(t debug)))
       (when (and (string-match x-font-regexp-ascii name)

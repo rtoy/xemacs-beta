@@ -132,6 +132,11 @@ affect one frame instead of all frames."
   :type 'boolean
   :group 'font-menu)
 
+(defcustom font-menu-max-number nil
+  "The maximum number of fonts retrieved from the server"
+  :type 'integer
+  :group 'font-menu)
+
 (defvaralias 'font-menu-max-items 'menu-max-items)
 (defvaralias 'font-menu-submenu-name-format 'menu-submenu-name-format)
 
