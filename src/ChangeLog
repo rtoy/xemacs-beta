@@ -1,3 +1,17 @@
+2002-06-07  William M. Perry  <wmperry@gnu.org>
+
+	* frame-x.c (init_x_prop_symbols): Don't attempt to expose the
+	toolbar pixels from the EmacsFrame widget, they no longer exist.
+	(x_frame_properties): Ditto.
+	(x_internal_frame_property_p): Don't check them for internal-ness
+	either.
+
+	* EmacsFrame.c: Removed references to the resources for toolbar
+	colors.  These are now controlled completely by the 'toolbar'
+	face.
+
+	* EmacsFrameP.h: Removed obsolete toolbar pixel slots.
+
 2002-06-05  Ben Wing  <ben@xemacs.org>
 
 	* README.integral-types: Removed.

@@ -57,12 +57,6 @@ typedef struct {
   int		bottom_toolbar_border_width;	/* ... of bottom toolbar */
   int		left_toolbar_border_width;	/* ... of left toolbar */
   int		right_toolbar_border_width;	/* ... of right toolbar */
-  Pixel		top_toolbar_shadow_pixel;
-  Pixel		bottom_toolbar_shadow_pixel;
-  Pixel		background_toolbar_pixel;
-  Pixel		foreground_toolbar_pixel;
-  Pixmap	top_toolbar_shadow_pixmap;
-  Pixmap	bottom_toolbar_shadow_pixmap;
   Dimension	toolbar_shadow_thickness;
   unsigned char scrollbar_placement;
   int		interline;		/* skips between lines */

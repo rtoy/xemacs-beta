@@ -453,14 +453,6 @@ init_x_prop_symbols (void)
   def (Qunsplittable, XtNunsplittable);
 #endif
   defi(Qinternal_border_width, XtNinternalBorderWidth);
-#ifdef HAVE_TOOLBARS
-  def (Qtop_toolbar_shadow_color, XtNtopToolBarShadowColor);
-  def (Qbottom_toolbar_shadow_color, XtNbottomToolBarShadowColor);
-  def (Qbackground_toolbar_color, XtNbackgroundToolBarColor);
-  def (Qtop_toolbar_shadow_pixmap, XtNtopToolBarShadowPixmap);
-  def (Qbottom_toolbar_shadow_pixmap, XtNbottomToolBarShadowPixmap);
-  defi(Qtoolbar_shadow_thickness, XtNtoolBarShadowThickness);
-#endif
   def (Qscrollbar_placement, XtNscrollBarPlacement);
   defi(Qinter_line_space, XtNinterline);
   /* font, foreground */
@@ -567,16 +559,6 @@ x_frame_property (struct frame *f, Lisp_Object property)
     return make_int (w->emacs_frame.internal_border_width);
   if (EQ (Qborder_color, property))
     return color_to_string (gw, w->core.border_pixel);
-#ifdef HAVE_TOOLBARS
-  if (EQ (Qtop_toolbar_shadow_color, property))
-    return color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel);
-  if (EQ (Qbottom_toolbar_shadow_color, property))
-    return color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel);
-  if (EQ (Qbackground_toolbar_color, property))
-    return color_to_string (gw, w->emacs_frame.background_toolbar_pixel);
-  if (EQ (Qtoolbar_shadow_thickness, property))
-    return make_int (w->emacs_frame.toolbar_shadow_thickness);
-#endif /* HAVE_TOOLBARS */
   if (EQ (Qinter_line_space, property))
     return make_int (w->emacs_frame.interline);
   if (EQ (Qwindow_id, property))
@@ -593,12 +575,6 @@ x_internal_frame_property_p (struct frame *f, Lisp_Object property)
     || EQ (property, Qborder_width)
     || EQ (property, Qinternal_border_width)
     || EQ (property, Qborder_color)
-#ifdef HAVE_TOOLBARS
-    || EQ (property, Qtop_toolbar_shadow_color)
-    || EQ (property, Qbottom_toolbar_shadow_color)
-    || EQ (property, Qbackground_toolbar_color)
-    || EQ (property, Qtoolbar_shadow_thickness)
-#endif /* HAVE_TOOLBARS */
     || EQ (property, Qinter_line_space)
     || EQ (property, Qwindow_id)
     || STRINGP (property);
@@ -615,21 +591,6 @@ x_frame_properties (struct frame *f)
 
   props = cons3 (Qwindow_id, Fx_window_id (wrap_frame (f)), props);
   props = cons3 (Qinter_line_space, make_int (w->emacs_frame.interline), props);
-
-#ifdef HAVE_TOOLBARS
-  props = cons3 (Qtoolbar_shadow_thickness,
-		 make_int (w->emacs_frame.toolbar_shadow_thickness),
-		 props);
-  props = cons3 (Qbackground_toolbar_color,
-		 color_to_string (gw, w->emacs_frame.background_toolbar_pixel),
-		 props);
-  props = cons3 (Qbottom_toolbar_shadow_color,
-		 color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel),
-		 props);
-  props = cons3 (Qtop_toolbar_shadow_color,
-		 color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel),
-		 props);
-#endif /* HAVE_TOOLBARS */
 
   props = cons3 (Qborder_color,
 		 color_to_string (gw, w->core.border_pixel), props);
