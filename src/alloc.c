@@ -3323,7 +3323,7 @@ static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
 static int kkcc_gc_stack_size;
 
 #ifdef DEBUG_XEMACS
-#define KKCC_BT_STACK_SIZE 4096
+#define KKCC_BT_STACK_SIZE 524288
 
 static struct
 {

@@ -1,5 +1,10 @@
 2005-03-13  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
+	* alloc.c (KKCC_BT_STACK_SIZE): Temporary fix for KKCC
+	backtrace. Thanks to Adrian.
+
+2005-03-13  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
 	Fix native Windows build if DEBUG_XEMACS is not defined.
 	* alloc.c (MALLOC_BEGIN): Remove unused parameter.
 	* intl-win32.c (unicode_multibyte_convert_size): Move function
