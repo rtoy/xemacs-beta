@@ -181,7 +181,7 @@ is a list of menu items, as above."
 				    (reverse easy-menu-all-popups))
 			    (let ((same-as-menu
 				   (car easy-menu-all-popups)))
-			      (cons (normalize-menu-item-name
+			      (cons (normalize-menu-text
 				     (car same-as-menu))
 				    (cdr same-as-menu)))))
 
@@ -208,7 +208,7 @@ is a list of menu items, as above."
 				    (reverse easy-menu-all-popups))
 			    (let ((same-as-menu
 				   (car easy-menu-all-popups)))
-			      (cons (normalize-menu-item-name
+			      (cons (normalize-menu-text
 				     (car same-as-menu))
 				    (cdr same-as-menu)))))
 

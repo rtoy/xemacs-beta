@@ -1,7 +1,7 @@
 /* Implements an elisp-programmable menubar.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 2001, 2002 Ben Wing.
+   Copyright (C) 2001, 2002, 2003 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -326,14 +326,51 @@ See menubar.el for many more examples.
   return Qnil;
 }
 
-DEFUN ("normalize-menu-item-name", Fnormalize_menu_item_name, 1, 2, 0, /*
+DEFUN ("compare-menu-text", Fcompare_menu_text, 2, 2, 0, /*
+Compare the text of two menu items, ignoring accelerator specs and case.
+Also treat %% as a single %.  Return < 0 if STRING1 is less than STRING2,
+0 if equal, > 0 if STRING1 is greater than STRING2.
+*/
+       (string1, string2))
+{
+  Ibyte *p;
+  Ibyte *q;
+
+  CHECK_STRING (string1);
+  CHECK_STRING (string2);
+
+  p = XSTRING_DATA (string1);
+  q = XSTRING_DATA (string2);
+
+  for (;;)
+    {
+      Ichar val;
+      if (*p == '%' && *(p + 1) == '%')
+	p++;
+      else if (*p == '%' && *(p + 1) == '_')
+	p += 2;
+      if (*q == '%' && *(q + 1) == '%')
+	q++;
+      else if (*q == '%' && *(q + 1) == '_')
+	q += 2;
+      if (!*p || !*q)
+	return make_int (*p - *q);
+      val = DOWNCASE (0, itext_ichar (p)) - DOWNCASE (0, itext_ichar (q));
+      if (val)
+	return make_int (val);
+      INC_IBYTEPTR (p);
+      INC_IBYTEPTR (q);
+    }
+}
+
+DEFUN ("normalize-menu-text", Fnormalize_menu_text, 1, 1, 0, /*
 Convert a menu item name string into normal form, and return the new string.
 Menu item names should be converted to normal form before being compared.
 This removes %_'s (accelerator indications) and converts %% to %.
+The returned string may be the same string as the original.
 */
-       (name, buffer))
+       (name))
 {
-  struct buffer *buf = decode_buffer (buffer, 0);
   Charcount end;
   int i;
   Ibyte *name_data;
@@ -352,7 +389,6 @@ This removes %_'s (accelerator indications) and converts %% to %.
   for (i = 0; i < end; i++)
     {
       elt = itext_ichar (name_data);
-      elt = DOWNCASE (buf, elt);
       if (expecting_underscore)
 	{
 	  expecting_underscore = 0;
@@ -400,7 +436,8 @@ syms_of_menubar (void)
   DEFSYMBOL (Qmenu_escape);
 
   DEFSUBR (Fpopup_menu);
-  DEFSUBR (Fnormalize_menu_item_name);
+  DEFSUBR (Fcompare_menu_text);
+  DEFSUBR (Fnormalize_menu_text);
   DEFSUBR (Fmenu_find_real_submenu);
 }
 

@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1991-4, 1997-1998 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 1995, 1996 Ben Wing.
+;; Copyright (C) 1995, 1996, 2003 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: internal, extensions, dumped
@@ -163,17 +163,27 @@ See `current-menubar' for a description of the syntax of a menubar."
       (setq menu (cdr menu)))))
 
 
-;;; menu manipulation functions
+;;; basic menu manipulation functions
 
-(defun find-menu-item (menubar item-path-list &optional parent)
-  "Search MENUBAR for item given by ITEM-PATH-LIST starting from PARENT.
+(defun menu-item-text (item &optional normalize)
+  "Return the text that is displayed for a menu item.
+If ITEM is a string (unselectable text), it is returned; otherwise,
+the first element of the cons or vector is returned.
+If NORMALIZE is non-nil, pass the text through `normalize-menu-text'
+before being returned, to remove accelerator specs and convert %% to %."
+  (let ((val (if (stringp item) item (elt item 0))))
+    (if normalize (normalize-menu-text val) val)))
+
+(defun find-menu-item (menubar item-path-list)
+  "Search MENUBAR for item given by ITEM-PATH-LIST.
 Returns (ITEM . PARENT), where PARENT is the immediate parent of
  the item found.
 If the item does not exist, the car of the returned value is nil.
 If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
+  (find-menu-item-1 menubar item-path-list))
+
+(defun find-menu-item-1 (menubar item-path-list &optional parent)
   (check-argument-type 'listp item-path-list)
-  (unless parent
-    (setq item-path-list (mapcar 'normalize-menu-item-name item-path-list)))
   (if (not (consp menubar))
       nil
     (let ((rest menubar)
@@ -184,14 +194,9 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	(setq rest (cddr rest)))
       (while rest
 	(if (and (car rest)
-		 (equal (car item-path-list)
-			(normalize-menu-item-name
-			 (cond ((vectorp (car rest))
-				(aref (car rest) 0))
-			       ((stringp (car rest))
-				(car rest))
-			       (t
-				(caar rest))))))
+		 (stringp (car item-path-list))
+		 (= 0 (compare-menu-text (car item-path-list)
+					 (menu-item-text (car rest)))))
 	    (setq result (car rest)
 		  rest nil)
 	  (setq rest (cdr rest))))
@@ -208,7 +213,6 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 (defun add-menu-item-1 (leaf-p menu-path new-item before in-menu)
   ;; This code looks like it could be cleaned up some more
   ;; Do we really need 6 calls to find-menu-item?
-  (when before (setq before (normalize-menu-item-name before)))
   (let* ((item-name
 	  (cond ((vectorp new-item) (aref new-item 0))
 		((consp   new-item) (car  new-item))
@@ -463,6 +467,151 @@ under the toplevel \"File\" menu.  (\"Menu\" \"Foo\" \"Item\") means the
 menu item called \"Item\" under the \"Foo\" submenu of \"Menu\"."
   (enable-menu-item-1 path t nil))
 
+
+;;; functions for manipulating whole menus -- adding accelerators, sorting,
+;;; splitting long menus, etc.
+
+(defun submenu-generate-accelerator-spec (list &optional omit-chars-list)
+  "Add auto-generated accelerator specifications to a submenu.
+This can be used to add accelerators to the return value of a menu filter
+function.  It correctly ignores unselectable items.  It will destructively
+modify the list passed to it.  If an item already has an auto-generated
+accelerator spec, this will be removed before the new one is added, making
+this function idempotent.
+
+If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
+which will not be used as accelerators."
+  (let ((n 0))
+    (dolist (item list list)
+      (cond
+       ((or (vectorp item) (consp item))
+	(incf n)
+	(setf (elt item 0)
+	      (concat
+	       (menu-item-generate-accelerator-spec n omit-chars-list)
+	       (menu-item-strip-accelerator-spec (elt item 0)))))))))
+
+(defun menu-item-strip-accelerator-spec (item)
+  "Strip an auto-generated accelerator spec off of ITEM.
+ITEM should be a string.  This removes specs added by
+`menu-item-generate-accelerator-spec' and `submenu-generate-accelerator-spec'."
+  (if (string-match "%_. " item)
+      (substring item 4)
+    item))
+
+(defun menu-item-generate-accelerator-spec (n &optional omit-chars-list)
+  "Return an accelerator specification for use with auto-generated menus.
+This should be concat'd onto the beginning of each menu line.  The spec
+allows the Nth line to be selected by the number N.  '0' is used for the
+10th line, and 'a' through 'z' are used for the following 26 lines.
+
+If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
+which will not be used as accelerators."
+  (cond ((< n 10) (concat "%_" (int-to-string n) " "))
+	((= n 10) "%_0 ")
+	((<= n 36)
+	 (setq n (- n 10))
+	 (let ((m 0))
+	   (while (> n 0)
+	     (setq m (1+ m))
+	     (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
+			  omit-chars-list)
+	       (setq m (1+ m)))
+	     (setq n (1- n)))
+	   (if (<= m 26)
+	       (concat
+		"%_"
+		(char-to-string (int-to-char (+ m (- (char-to-int ?a) 1))))
+		" ")
+	     "")))
+	(t "")))
+
+(defcustom menu-max-items 25
+  "*Maximum number of items in generated menus.
+If number of entries in such a menu is larger than this value, split menu
+into submenus of nearly equal length (see `menu-submenu-max-items').  If
+nil, never split menu into submenus."
+  :group 'menu
+  :type '(choice (const :tag "no submenus" nil)
+		 (integer)))
+
+(defcustom menu-submenu-max-items 20
+  "*Maximum number of items in submenus when splitting menus.
+We split large menus into submenus of this many items, and then balance
+them out as much as possible (otherwise the last submenu may have very few
+items)."
+  :group 'menu
+  :type 'integer)
+
+(defcustom menu-submenu-name-format "%-12.12s ... %.12s"
+  "*Format specification of the submenu name when splitting menus.
+Used by `menu-split-long-menu' if the number of entries in a menu is
+larger than `menu-menu-max-items'.
+This string should contain one %s for the name of the first entry and
+one %s for the name of the last entry in the submenu.
+If the value is a function, it should return the submenu name.  The
+function is be called with two arguments, the names of the first and
+the last entry in the menu."
+  :group 'menu
+  :type '(choice (string :tag "Format string")
+		 (function)))
+
+(defun menu-split-long-menu-and-sort (menu)
+  "Sort MENU, split according to `menu-max-items' and add accelerator specs.
+This is useful for menus generated by filter functions, to make them look
+nice.  This is equivalent to
+
+\(menu-split-long-menu (menu-sort-menu menu))
+
+and you can call those functions individually if necessary.
+You can also call `submenu-generate-accelerator-spec' yourself to add
+accelerator specs -- this works even if the specs have already been added."
+  (menu-split-long-menu (menu-sort-menu menu)))
+
+(defun menu-split-long-menu (menu)
+  "Split MENU according to `menu-max-items' and add accelerator specs.
+If MENU already has accelerator specs, they will be removed and new ones
+generated.  You should normally use `menu-split-long-menu-and-sort' instead.
+The menu should already be sorted to get meaningful results when it is
+split, since the outer menus are of the format `FROM ... TO'."
+  (let ((len (length menu)))
+    (if (or (null menu-max-items)
+	    (<= len menu-max-items))
+	(submenu-generate-accelerator-spec menu)
+      (let* ((outer (/ (+ len (1- menu-submenu-max-items))
+		       menu-submenu-max-items))
+	     (inner (/ (+ len (1- outer)) outer))
+	     (result nil))
+	(while menu
+	  (let ((sub nil)
+		(from (car menu)))
+	    (dotimes (foo (min inner len))
+	      (setq sub  (cons (car menu) sub)
+		    menu (cdr menu)))
+	    (setq len (- len inner))
+	    (let* ((to (car sub))
+		   (ftext (menu-item-strip-accelerator-spec
+			   (menu-item-text from)))
+		   (ttext (menu-item-strip-accelerator-spec
+			   (menu-item-text to))))
+	      (setq sub (nreverse sub))
+	      (setq result
+		    (cons (cons (if (stringp menu-submenu-name-format)
+				    (format menu-submenu-name-format
+					    ftext ttext)
+				  (funcall menu-submenu-name-format
+					   ftext ttext))
+				(submenu-generate-accelerator-spec sub))
+			  result)))))
+	(submenu-generate-accelerator-spec (nreverse result))))))
+
+(defun menu-sort-menu (menu)
+  "Sort MENU alphabetically.
+You should normally use `menu-split-long-menu-and-sort' instead."
+  (sort menu
+	#'(lambda (a b) (< (compare-menu-text
+			    (menu-item-text a) (menu-item-text b))
+			   0))))
 
 
 ;;;;;;; popup menus

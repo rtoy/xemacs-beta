@@ -1,5 +1,59 @@
 2005-02-02  Ben Wing  <ben@xemacs.org>
 
+	* easymenu.el (easy-menu-add):
+	* easymenu.el (easy-menu-remove):
+	* map-ynp.el (map-y-or-n-p):
+	Use normalize-menu-text not normalize-menu-item-name.
+
+	* menubar-items.el (submenu-generate-accelerator-spec): Removed.
+	* menubar.el (submenu-generate-accelerator-spec): New.
+	Move to menubar.el and rewrite for cleanliness.
+	
+	* menubar-items.el (coding-system-menu-filter):
+	Use menu-split-long-menu-and-sort.
+	
+	* menubar-items.el (menu-item-strip-accelerator-spec): Removed.
+	* menubar-items.el (menu-item-generate-accelerator-spec): Removed.
+	* menubar-items.el (menu-max-items): Removed.
+	* menubar-items.el (menu-submenu-max-items): Removed.
+	* menubar-items.el (menu-submenu-name-format): Removed.
+	* menubar-items.el (menu-split-long-menu): Removed.
+	* menubar-items.el (menu-sort-menu): Removed.
+	* menubar.el (menu-item-strip-accelerator-spec): New.
+	* menubar.el (menu-item-generate-accelerator-spec): New.
+	* menubar.el (menu-max-items): New.
+	* menubar.el (menu-submenu-max-items): New.
+	* menubar.el (menu-submenu-name-format): New.
+	* menubar.el (menu-split-long-menu): New.
+	* menubar.el (menu-sort-menu): New.
+	Move to menubar.el.
+	
+	* menubar.el (menu-item-text): New.
+	* menubar.el (menu-split-long-menu-and-sort): New.
+	New funs.
+	
+	* menubar.el (find-menu-item):
+	* menubar.el (find-menu-item-1): New.
+	Split up find-menu-item w/find-menu-item-1, since PARENT is not
+	an external item.
+	Rewrite to use compare-menu-text.
+	
+	* menubar.el (add-menu-item-1):
+	Don't normalize items as find-menu-item does not need it.
+
+	* menubar-items.el (default-menubar):
+	Delete old Behavior menu defn, replaced by behavior-menu-filter.
+	Planning to [[Delete many menus from Tools menu -- they have been
+	integrated as part of the behavior system.]] Currently the new
+	Tools menu (very short, just a call to the behavior-menu-filter)
+	is commented out, and the old Toold menu defn remains.  Once the
+	new packages are in place (c. 1 or 2 weeks), I'll make the
+	switchover.
+	
+	Use menu-split-long-menu-and-sort.
+
+2005-02-02  Ben Wing  <ben@xemacs.org>
+
 	* cus-dep.el (Custom-make-dependencies-1):
 	If a directory has no custom dependencies, write a blank
 	custom-load file rather than deleting the file, so that
@@ -182,55 +236,6 @@
 	* behavior.el (behavior-menu-filter-1): New.
 	* behavior.el (behavior-menu-filter): New.
 	Major update.  Add documentation of how it works.
-	
-	* easymenu.el (easy-menu-add):
-	* easymenu.el (easy-menu-remove):
-	* map-ynp.el (map-y-or-n-p):
-	Use normalize-menu-text not normalize-menu-item-name.
-
-	* menubar-items.el (submenu-generate-accelerator-spec): Removed.
-	* menubar.el (submenu-generate-accelerator-spec): New.
-	Move to menubar.el and rewrite for cleanliness.
-	
-	* menubar-items.el (coding-system-menu-filter):
-	Use menu-split-long-menu-and-sort.
-	
-	* menubar-items.el (menu-item-strip-accelerator-spec): Removed.
-	* menubar-items.el (menu-item-generate-accelerator-spec): Removed.
-	* menubar-items.el (menu-max-items): Removed.
-	* menubar-items.el (menu-submenu-max-items): Removed.
-	* menubar-items.el (menu-submenu-name-format): Removed.
-	* menubar-items.el (menu-split-long-menu): Removed.
-	* menubar-items.el (menu-sort-menu): Removed.
-	* menubar.el (menu-item-strip-accelerator-spec): New.
-	* menubar.el (menu-item-generate-accelerator-spec): New.
-	* menubar.el (menu-max-items): New.
-	* menubar.el (menu-submenu-max-items): New.
-	* menubar.el (menu-submenu-name-format): New.
-	* menubar.el (menu-split-long-menu): New.
-	* menubar.el (menu-sort-menu): New.
-	Move to menubar.el.
-	
-	* menubar.el (menu-item-text): New.
-	* menubar.el (menu-split-long-menu-and-sort): New.
-	New funs.
-	
-	* menubar-items.el (default-menubar):
-	Delete many menus from Tools menu -- they have been integrated
-	as part of the behavior system.
-
-	Delete old Behavior menu defn.  Use behavior-menu-filter.
-
-	Use menu-split-long-menu-and-sort.
-	
-	* menubar.el (find-menu-item):
-	* menubar.el (find-menu-item-1): New.
-	Split up find-menu-item w/find-menu-item-1, since PARENT is not
-	an external item.
-	Rewrite to use compare-menu-text.
-	
-	* menubar.el (add-menu-item-1):
-	Don't normalize items as find-menu-item does not need it.
 	
 	* mwheel.el:
 	* mwheel.el ('mwheel): New.

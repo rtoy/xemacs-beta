@@ -67,148 +67,6 @@ LABEL-LENGTH characters of value."
 	      list
 	    (butlast list (- (length list) count)))))
 
-(defun submenu-generate-accelerator-spec (list &optional omit-chars-list)
-  "Add auto-generated accelerator specifications to a submenu.
-This can be used to add accelerators to the return value of a menu filter
-function.  It correctly ignores unselectable items.  It will destructively
-modify the list passed to it.  If an item already has an auto-generated
-accelerator spec, this will be removed before the new one is added, making
-this function idempotent.
-
-If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
-which will not be used as accelerators."
-  (let ((n 0))
-    (dolist (item list list)
-      (cond
-       ((vectorp item)
-	(setq n (1+ n))
-	(aset item 0
-	      (concat
-	       (menu-item-generate-accelerator-spec n omit-chars-list)
-	       (menu-item-strip-accelerator-spec (aref item 0)))))
-       ((consp item)
-	(setq n (1+ n))
-	(setcar item
-		(concat
-		 (menu-item-generate-accelerator-spec n omit-chars-list)
-		 (menu-item-strip-accelerator-spec (car item)))))))))
-
-(defun menu-item-strip-accelerator-spec (item)
-  "Strip an auto-generated accelerator spec off of ITEM.
-ITEM should be a string.  This removes specs added by
-`menu-item-generate-accelerator-spec' and `submenu-generate-accelerator-spec'."
-  (if (string-match "%_. " item)
-      (substring item 4)
-    item))
-
-(defun menu-item-generate-accelerator-spec (n &optional omit-chars-list)
-  "Return an accelerator specification for use with auto-generated menus.
-This should be concat'd onto the beginning of each menu line.  The spec
-allows the Nth line to be selected by the number N.  '0' is used for the
-10th line, and 'a' through 'z' are used for the following 26 lines.
-
-If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
-which will not be used as accelerators."
-  (cond ((< n 10) (concat "%_" (int-to-string n) " "))
-	((= n 10) "%_0 ")
-	((<= n 36)
-	 (setq n (- n 10))
-	 (let ((m 0))
-	   (while (> n 0)
-	     (setq m (1+ m))
-	     (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
-			  omit-chars-list)
-	       (setq m (1+ m)))
-	     (setq n (1- n)))
-	   (if (<= m 26)
-	       (concat
-		"%_"
-		(char-to-string (int-to-char (+ m (- (char-to-int ?a) 1))))
-		" ")
-	     "")))
-	(t "")))
-
-(defcustom menu-max-items 25
-  "*Maximum number of items in generated menus.
-If number of entries in such a menu is larger than this value, split menu
-into submenus of nearly equal length (see `menu-submenu-max-items').  If
-nil, never split menu into submenus."
-  :group 'menu
-  :type '(choice (const :tag "no submenus" nil)
-		 (integer)))
-
-(defcustom menu-submenu-max-items 20
-  "*Maximum number of items in submenus when splitting menus.
-We split large menus into submenus of this many items, and then balance
-them out as much as possible (otherwise the last submenu may have very few
-items)."
-  :group 'menu
-  :type 'integer)
-
-(defcustom menu-submenu-name-format "%-12.12s ... %.12s"
-  "*Format specification of the submenu name when splitting menus.
-Used by `menu-split-long-menu' if the number of entries in a menu is
-larger than `menu-menu-max-items'.
-This string should contain one %s for the name of the first entry and
-one %s for the name of the last entry in the submenu.
-If the value is a function, it should return the submenu name.  The
-function is be called with two arguments, the names of the first and
-the last entry in the menu."
-  :group 'menu
-  :type '(choice (string :tag "Format string")
-		 (function)))
-
-(defun menu-split-long-menu (menu)
-  "Split MENU according to `menu-max-items' and add accelerator specs.
-
-You should normally use the idiom
-
-\(menu-split-long-menu (menu-sort-menu menu))
-
-See also `menu-sort-menu'."
-  (let ((len (length menu)))
-    (if (or (null menu-max-items)
-	    (<= len menu-max-items))
-	(submenu-generate-accelerator-spec menu)
-      (let* ((outer (/ (+ len (1- menu-submenu-max-items))
-		       menu-submenu-max-items))
-	     (inner (/ (+ len (1- outer)) outer))
-	     (result nil))
-	(while menu
-	  (let ((sub nil)
-		(from (car menu)))
-	    (dotimes (foo (min inner len))
-	      (setq sub  (cons (car menu) sub)
-		    menu (cdr menu)))
-	    (setq len (- len inner))
-	    (let ((to (car sub)))
-	      (setq sub (nreverse sub))
-	      (setq result
-		    (cons (cons (if (stringp menu-submenu-name-format)
-				    (format menu-submenu-name-format
-					    (menu-item-strip-accelerator-spec
-					     (aref from 0))
-					    (menu-item-strip-accelerator-spec
-					     (aref to 0)))
-				  (funcall menu-submenu-name-format
-					   (menu-item-strip-accelerator-spec
-					    (aref from 0))
-					   (menu-item-strip-accelerator-spec
-					    (aref to 0))))
-				(submenu-generate-accelerator-spec sub))
-			  result)))))
-	(submenu-generate-accelerator-spec (nreverse result))))))
-
-(defun menu-sort-menu (menu)
-  "Sort MENU alphabetically.
-
-You should normally use the idiom
-
-\(menu-split-long-menu (menu-sort-menu menu))
-
-See also `menu-split-long-menu'."
-  (sort menu
-	#'(lambda (a b) (string-lessp (aref a 0) (aref b 0)))))
 
 (defun coding-system-menu-filter (fun active &optional dots)
   "Filter for menu entries with a submenu listing all coding systems.
@@ -225,21 +83,20 @@ Write your filter like this:
     (lambda (entry) ...)
     (lambda (entry) ...))
 "
-  (menu-split-long-menu
-   (menu-sort-menu
-    (mapcar
-     #'(lambda (_csmf_entry)
-	 `[ ,(concat (coding-system-description _csmf_entry)
-		     (if dots "..." ""))
-	    (funcall ,fun ',_csmf_entry)
-	    :active (funcall ,active ',_csmf_entry)
-	    ])
-     (delete-if
-      #'(lambda (name)
-	  (or (coding-system-alias-p name)
-	      (not (eq name (coding-system-name
-			     (coding-system-base name))))))
-      (coding-system-list))))))
+  (menu-split-long-menu-and-sort
+   (mapcar
+    #'(lambda (_csmf_entry)
+	`[ ,(concat (coding-system-description _csmf_entry)
+		    (if dots "..." ""))
+	   (funcall ,fun ',_csmf_entry)
+	   :active (funcall ,active ',_csmf_entry)
+	   ])
+    (delete-if
+     #'(lambda (name)
+	 (or (coding-system-alias-p name)
+	     (not (eq name (coding-system-name
+			    (coding-system-base name))))))
+     (coding-system-list)))))
 
 (defconst default-menubar
 ; (purecopy-menubar ;purespace is dead
@@ -422,7 +279,6 @@ Write your filter like this:
        )
       )
 
-
      ("C%_mds"
       ["Repeat Last Comple%_x Command..." repeat-complex-command]
       ["E%_valuate Lisp Expression..." eval-expression]
@@ -554,17 +410,27 @@ Write your filter like this:
 	["Tab to Tab %_Stop" tab-to-tab-stop]
 	["Edit Ta%_b Stops" edit-tab-stops]
 	)
-	"---"
-       ("Spell-Chec%_k"
-	["%_Buffer" ispell-buffer
-	 :active (fboundp 'ispell-buffer)]
-	"---"
-	["%_Word" ispell-word]
-	["%_Complete Word" ispell-complete-word]
-	["%_Region" ispell-region]
+       "---"
+       ("%_Tags"
+	["%_Find Tag..." find-tag]
+	["Find %_Other Window..." find-tag-other-window]
+	["%_Next Tag..." (find-tag nil)]
+	["N%_ext Other Window..." (find-tag-other-window nil)]
+	["Next %_File" next-file]
+	"-----"
+	["Tags %_Search..." tags-search]
+	["Tags %_Replace..." tags-query-replace]
+	["%_Continue Search/Replace" tags-loop-continue]
+	"-----"
+	["%_Pop stack" pop-tag-mark]
+	["%_Apropos..." tags-apropos]
+	"-----"
+	["%_Set Tags Table File..." visit-tags-table]
 	)
        )
-     
+
+     ;; #### Delete this entire menu as soon as the new package source is
+     ;; committed.
      ("%_Tools"
       ("%_Packages"
        ("%_Set Download Site"
@@ -816,24 +682,10 @@ Write your filter like this:
       "----"
       )
 
-     ("%_Options"
-      ("%_Behaviors"
-       :filter 
-       (lambda (menu)
-	 (menu-split-long-menu
-	  (menu-sort-menu
-	   (loop for behavior being the hash-keys in behavior-hash-table
-	     using (hash-value plist)
-	     collect (vector (format "%s (%s)" behavior
-				     (getf plist :short-doc))
-			     `(if (memq ',behavior enabled-behavior-list)
-				  (disable-behavior ',behavior)
-				(enable-behavior ',behavior))
-			     :style 'toggle
-			     :selected `(memq ',behavior
-					      enabled-behavior-list))
-	     )))))
+;      ("%_Tools"
+;       :filter behavior-menu-filter)
 
+     ("%_Options"
       ("%_Advanced (Customize)"
        ("%_Emacs" :filter (lambda (&rest junk)
 			    (cdr (custom-menu-create 'emacs))))
@@ -1142,17 +994,16 @@ Write your filter like this:
 	     ("Set %_Language Environment"
 	      :filter
 	      (lambda (menu)
-		(menu-split-long-menu
-		 (menu-sort-menu
-		  (mapcar #'(lambda (entry)
-			      `[ ,(car entry)
-				 (set-language-environment ',(car entry))
-				 :style radio
-				 :selected
-				 ,(equal (car entry)
-					 current-language-environment)])
-			  language-info-alist)
-		  ))))
+		(menu-split-long-menu-and-sort
+		 (mapcar #'(lambda (entry)
+			     `[ ,(car entry)
+				(set-language-environment ',(car entry))
+				:style radio
+				:selected
+				,(equal (car entry)
+					current-language-environment)])
+			 language-info-alist)
+		 )))
 	     ["%_Toggle Input Method" toggle-input-method]
 	     ["Select %_Input Method" set-input-method]
 	     )))
@@ -1681,18 +1532,17 @@ Write your filter like this:
 	     ("Describe %_Language Support"
 	      :filter
 	      (lambda (menu)
-		(menu-split-long-menu
-		 (menu-sort-menu
-		  (mapcar #'(lambda (entry)
-			      `[ ,(car entry)
-				 (describe-language-environment
-				  ',(car entry))
+		(menu-split-long-menu-and-sort
+		 (mapcar #'(lambda (entry)
+			     `[ ,(car entry)
+				(describe-language-environment
+				 ',(car entry))
 				:style radio
 				:selected
 				,(equal (car entry)
 					current-language-environment)])
-			  language-info-alist)
-		  ))))
+			 language-info-alist)
+		 )))
 	     ["Describe %_Input Method" describe-input-method]
 	     ["Describe Current %_Coding Systems"
 	      describe-current-coding-system]

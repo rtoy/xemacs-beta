@@ -231,8 +231,9 @@ ESC or `q' to exit;\n"
 					    (lambda (elt)
 					      (format "%c to %s"
 						      (nth 0 elt)
-						      (normalize-menu-item-name
-						       (nth 2 elt)))))
+						      (downcase
+						       (normalize-menu-text
+							(nth 2 elt))))))
 					   action-alist
 					   ";\n")
 				(if action-alist ";\n")
