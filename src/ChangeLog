@@ -929,7 +929,6 @@
 	path, instead of char*.
 	* systime.h: Include <sys/utime.h> on WIN32_NATIVE.
 
->>>>>>> 1.354
 2001-05-30  William M. Perry  <wmperry@gnu.org>
 
 	* emacs-marshals.c: Regenerated from lisp.

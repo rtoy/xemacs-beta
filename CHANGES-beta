@@ -1,4 +1,92 @@
 to 21.5.2 "artichoke"
+-- fixes and improvements -- Ben Wing
+   -- etags.c synched to upstream
+   -- lisp/term/*.el cleanup
+   -- miscellaneous help improvements
+   -- transpose-line-up/down maybe moves the region
+   -- MS Windows init improvements
+   -- add scroll-in-place, jka-compr, efs, some fixes in behavior-defs.el
+   -- paths-find-recursive-path: fix error with null EXCLUDE-REGEXP
+   -- font-lock-mode: fix problem with buffers starting with a space
+   -- make find-library search patch configurable
+   -- fix Dired problem with directories containing [] and code that
+      destructively modifies an existing string
+   -- stop mark_window_as_deleted from deleting information that needs to
+      be accessed by set-window-configuration
+   -- Lisp object structure rationalization
+   -- fix two nasty bugs in the unwinding code
+   -- fix mouse wheel/dead window crash under MS Windows
+   -- mswindows_utime, close_file_data: fix off-by-one-indirection error
+   -- control-G handling fixes for MS Windows
+   -- debug-mswindows-events and related code introduced
+   -- rearrange the signal-handling code to eliminate the former
+      spaghetti logic paths in it; document; fix numerous bugs
+   -- maintain the "iconified" state, to fix the "can't delete a frame" bug
+   -- use CBufbyte instead of char for error/warning functions
+   -- prepare to remove encapsulation
+   -- make play_sound_data return an int, like all other such functions
+   -- use EMACS_SIGNAL to avoid preprocessing games with signal()
+   -- gc-in-window-procedure fixes
+   -- Cygwin setitimer fixes
+   -- windows shell fixes
+   -- more structured errors
+   -- MS Windows network stream data corruption fixes
+   -- fix ~user file name handling
+   -- rename MAX_PATH to standard PATH_MAX
+   -- fix error compiling regexps with back-references in them
+
+-- fixes and improvements -- Martin Buchholz
+   -- byte optimizer fixes
+   -- move alloca twiddling after the feature test definitions, but
+      before the first "real" code
+   -- internal DECIMAL_PRINT_SIZE macro
+   -- s&m elimination: Eliminate the need to define HAVE_PTYS in s&m files
+   -- avoid test failure if (temp-directory) is a symlink
+   -- handle buggy Sun realloc()
+
+-- GTK fixes -- Bill Perry
+   -- GTK popup dialog fix
+   -- GTK added to font-window system mappings
+   -- gtk-marshal.el updated for new hash.c, and generator fixes,
+   -- GTK scrollbar fixes
+   -- buttons are now modifiers, so selection with the mouse works again
+   -- fix the disappearing GTK scrollbar problem
+
+-- movemail.c uses mkstemp if available -- Karl M. Hegbloom
+-- specifiers may now conditionalize on GTK -- Stephen J. Turnbull
+-- new hooks for package installation and deletion -- Sean MacLennan
+-- locate-library completes and other package UI improvements -- Robert Pluim
+-- save-some-buffers doesn't prematurely zap help window -- Michael Sperber
+-- MS windows subprocess quoting arguments -- Ben Wing, Dan Holmsand
+-- remove side effects from font-lock-compile-keywords -- Daiki Ueno
+-- custom-display works on the GTK platform -- Karl Hegbloom
+-- mouse-track fixes -- Adrian Aichner, Ben Wing
+-- dragdrop fix for windowless events -- Mike Alexander
+-- fix `unbalanced parentheses' bug in syntax -- Matt Tucker
+-- gpmevent.c header inclusion fixes -- Bill Perry
+-- make more glyph code shared across platforms -- Ben Wing, Bill Perry
+-- remove lisp_string_set_file_times() because set_file_times() now
+   takes Lisp_Object path, instead of char* -- Adrian Aichner and Ben Wing
+-- allow preemption on redisplay -- Kirill 'Big K' Katsnelson
+-- new, faster implementation of long_to_string -- Hrvoje Niksic
+-- Qccl_error: New error -- Yoshiki Hayashi
+-- remove support for old beta versions of cygwin -- Ben Wing, Craig Lanning
+-- fix crash with an unavailable network printer -- Mike Alexander
+-- add support for MacOS X -- Greg Parkin and Martin Buchholz
+-- better win9x (including WinMe) support -- Ben Wing, Stephen J. Turnbull
+-- fix off-by-one error in EMACS_INT_MAX -- Yoshiki Hayashi
+
+-- warning, style, and doc fixes and improvements
+   -- warning fixes -- Ben Wing, Kirill 'Big K' Katsnelson, Martin Buchholz
+   -- eliminate numerous C++ errors -- Ben Wing, Martin Buchholz
+   -- code style corrections -- Ben Wing, Martin Buchholz
+   -- build improvements -- Ben Wing, Martin Buchholz
+   -- configure improvements and fixes -- Martin Buchholz, Ben Wing,
+      Stephen J. Turnbull
+   -- doc updates -- Adrian Aichner, Ben Wing, Alexey Mahotkin, Steve
+      Youngs, Stephen J. Turnbull, Yoshiki Hayashi, Steve Youngs, Paul
+      Stodghill, Malcolm Purvis, Jim Horning, Nick V. Pakoulin, Kirill
+      'Big K' Katsnelson
 
 to 21.5.1 "anise"
 -- This release contains a huge pile of changes by Ben Wing, including
