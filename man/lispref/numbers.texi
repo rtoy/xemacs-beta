@@ -408,6 +408,13 @@ conversions.
 Bigfloats, when available, have the same read syntax and print
 representations as fixed-precision floats.
 
+It is possible to make bigfloat the default floating point format by
+setting @code{default-float-precision} to a non-zero value.  Precision
+is given in bits, with a maximum precision of @code{bigfloat-max-prec}.
+@c #### is this true?
+Bigfloats are created automatically when a number with yes
+
+
 
 @node Canonicalization and Contagion
 @subsection Canonicalization and Contagion

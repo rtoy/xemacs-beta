@@ -1,3 +1,25 @@
+2004-07-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/glyphs.texi: Complete reorganization, some content updated.
+	* lispref/lispref.texi (Top): Update menu to match.
+	* lispref/extents.texi (Extent Properties): Update xref.
+
+2004-06-29  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Modules for Other Aspects of the Lisp
+	Interpreter and Object System): Add description of Sextword syntax
+	class (now obsolete).
+
+2004-06-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Techniques for XEmacs Developers): Be
+	specific when discussing optimization.
+	(Techniques for XEmacs Developers): Fragments that are meaningly
+	by themselves or contain placeholders should be @samp, not @code.
+	(Modules for Internationalization): Add description of mule-coding.c
+	and further deprecate mule.c.
+	(Modules for Regression Testing): Add {tag,weak}-tests.el to list.
+
 2004-07-05  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs-faq.texi (Q3.10.2): Mention that `pending-delete' is in
