@@ -2969,7 +2969,7 @@ static void
 kkcc_gc_stack_init (void)
 {
   kkcc_gc_stack_size = KKCC_INIT_GC_STACK_SIZE;
-  kkcc_gc_stack_ptr = 
+  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
     malloc (kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
   if (!kkcc_gc_stack_ptr) 
     {
@@ -2993,7 +2993,7 @@ static void
 kkcc_gc_stack_realloc (void)
 {
   kkcc_gc_stack_size *= 2;
-  kkcc_gc_stack_ptr = 
+  kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
     realloc (kkcc_gc_stack_ptr, 
 	     kkcc_gc_stack_size * sizeof (kkcc_gc_stack_entry));
   if (!kkcc_gc_stack_ptr) 

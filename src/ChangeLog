@@ -1,3 +1,9 @@
+2003-08-19  René Kyllingstad <listmailxemacs@kyllingstad.com>
+
+	* alloc.c (kkcc_gc_stack_init): 
+	(kkcc_gc_stack_realloc): Missing casts for the return value of
+	malloc and realloc.
+
 2003-08-18  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (export_lib): New.
