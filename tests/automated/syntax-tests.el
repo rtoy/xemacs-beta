@@ -127,16 +127,25 @@
 
 ;; Test forward-comment at buffer boundaries
 (with-temp-buffer
-  (c-mode)
-  (insert "// comment\n")
-  (forward-comment -2)
-  (Assert (eq (point) (point-min)))
+  (if (not (fboundp 'c-mode))
+      ;; #### This whole thing should go inside a macro Skip-Test
+      (let* ((reason "c-mode unavailable")
+	     (count (gethash reason skipped-test-reasons)))
+	;;(message "%S: %S" reason count)
+	(puthash reason (if (null count) 1 (1+ count))
+		 skipped-test-reasons)
+	(Print-Skip "comment and parse-partial-sexp tests" reason))
+    (c-mode)
+    
+    (insert "// comment\n")
+    (forward-comment -2)
+    (Assert (eq (point) (point-min)))
 
-  (let ((point (point)))
-	(insert "/* comment */")
-	(goto-char point)
-	(forward-comment 2)
-	(Assert (eq (point) (point-max)))
+    (let ((point (point)))
+      (insert "/* comment */")
+      (goto-char point)
+      (forward-comment 2)
+      (Assert (eq (point) (point-max)))
 
-	;; this last used to crash
-	(parse-partial-sexp point (point-max))))
+      ;; this last used to crash
+      (parse-partial-sexp point (point-max)))))

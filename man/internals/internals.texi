@@ -3503,6 +3503,48 @@ the running and collection of results from the @code{Assert},
 @code{Check-Error}, @code{Check-Error-Message}, and @code{Check-Message}
 macros.
 
+In general, you should avoid using functionality from packages in your
+tests, because you can't be sure that everyone will have the required
+package.  However, if you've got a test that works, by all means add it.
+Simply wrap the test in an appropriate test, add a notice that the test
+was skipped, and update the @code{skipped-test-reasons} hashtable.
+Here's an example from @file{syntax-tests.el}:
+
+@example
+;; Test forward-comment at buffer boundaries
+(with-temp-buffer
+
+  ;; try to use exactly what you need: featurep, boundp, fboundp
+  (if (not (fboundp 'c-mode))
+
+      ;; We should provide a standard function for this boilerplate,
+      ;; probably called `Skip-Test' -- check for that API with C-h f
+      (let* ((reason "c-mode unavailable")
+	     (count (gethash reason skipped-test-reasons)))
+	(puthash reason (if (null count) 1 (1+ count))
+		 skipped-test-reasons)
+	(Print-Skip "comment and parse-partial-sexp tests" reason))
+
+    ;; and here's the test code
+    (c-mode)
+    (insert "// comment\n")
+    (forward-comment -2)
+    (Assert (eq (point) (point-min)))
+    (let ((point (point)))
+      (insert "/* comment */")
+      (goto-char point)
+      (forward-comment 2)
+      (Assert (eq (point) (point-max)))
+      (parse-partial-sexp point (point-max)))))
+@end example
+
+@code{Skip-Test} is intended for use with features that are normally
+present in typical configurations.  For truly optional features, or
+tests that apply to one of several alternative implementations (eg, to
+GTK widgets, but not Athena, Motif, MS Windows, or Carbon), simply
+silently omit the test.
+
+
 @node CVS Techniques, A Summary of the Various XEmacs Modules, Regression Testing XEmacs, Top
 @chapter CVS Techniques
 @cindex CVS techniques
