@@ -1459,6 +1459,7 @@ delete_frame_internal (struct frame *f, int force,
   Lisp_Object device;
   Lisp_Object console;
   struct gcpro gcpro1;
+  int depth;
 
   /* OK to delete an already deleted frame. */
   if (!FRAME_LIVE_P (f))
@@ -1682,6 +1683,10 @@ delete_frame_internal (struct frame *f, int force,
 
   /* After this point, no errors must be allowed to occur. */
 
+  /* Checking for QUIT can run all sorts of weird code and may be deadly
+     so don't let it happen. */
+  depth = begin_dont_check_for_quit ();
+
 #ifdef HAVE_MENUBARS
   free_frame_menubars (f);
 #endif
@@ -1821,6 +1826,8 @@ delete_frame_internal (struct frame *f, int force,
   f->frametype = dead_console;
 
   note_object_deleted (frame);
+
+  unbind_to (depth);
 
   UNGCPRO;
 }

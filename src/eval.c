@@ -5930,25 +5930,47 @@ unbind_to_1 (int count, Lisp_Object value)
 void
 unbind_to_hairy (int count)
 {
-  Lisp_Object oquit;
-
   ++specpdl_ptr;
   ++specpdl_depth_counter;
 
-  /* Allow QUIT within unwind-protect routines, but defer any existing QUIT
-     until afterwards. */
-  check_quit (); /* make Vquit_flag accurate */
-  oquit = Vquit_flag;
-  Vquit_flag = Qnil;
-
   while (specpdl_depth_counter != count)
     {
+      Lisp_Object oquit = Qunbound;
+
+      /* Do this check BEFORE decrementing the values below, because once
+	 they're decremented, GC protection is lost on
+	 specpdl_ptr->old_value. */
+      if (specpdl_ptr->func == Fprogn)
+	{
+	  /* Allow QUIT within unwind-protect routines, but defer any
+	     existing QUIT until afterwards.  Only do this, however, for
+	     unwind-protects established by Lisp code, not by C code
+	     (e.g. free_opaque_ptr() or something), because the act of
+	     checking for QUIT can cause all sorts of weird things to
+	     happen, since it churns the event loop -- redisplay, running
+	     Lisp, etc.  Code should not have to worry about this just
+	     because of establishing an unwind-protect. */
+	  check_quit (); /* make Vquit_flag accurate */
+	  oquit = Vquit_flag;
+	  Vquit_flag = Qnil;
+	}
+
       --specpdl_ptr;
       --specpdl_depth_counter;
 
+      /* #### At this point, there is no GC protection on old_value.  This
+	 could be a real problem, depending on what unwind-protect function
+	 is called.  It looks like it just so happens that the ones
+	 actually called don't have a problem with this, e.g. Fprogn.  But
+	 we should look into fixing this. (Many unwind-protect functions
+	 free values.  Is it a problem if freed values are
+	 GC-protected?) */
       if (specpdl_ptr->func != 0)
-        /* An unwind-protect */
-	(*specpdl_ptr->func) (specpdl_ptr->old_value);
+	{
+	  /* An unwind-protect */
+	  (*specpdl_ptr->func) (specpdl_ptr->old_value);
+	}
+	  
       else
 	{
 	  /* We checked symbol for validity when we specbound it,
@@ -5979,8 +6001,10 @@ unbind_to_hairy (int count)
         }
 #endif
 #endif
+
+      if (!UNBOUNDP (oquit))
+	Vquit_flag = oquit;
     }
-  Vquit_flag = oquit;
   check_specbind_stack_sanity ();
 }
 

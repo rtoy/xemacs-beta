@@ -1,3 +1,14 @@
+2003-02-19  Ben Wing  <ben@xemacs.org>
+
+	* eval.c (unbind_to_hairy):
+	Don't check_quit() unless we're unbinding a real Lisp
+	`unwind-protect' since check_quit() does lots of weird things and
+	not all callers are prepared for it.
+	* frame.c:
+	* frame.c (delete_frame_internal):
+	Make absolutely sure there is no quit checking while we are in a
+	"critical section" during frame deletion.
+
 2003-02-16  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.11 "cabbage" is released.
