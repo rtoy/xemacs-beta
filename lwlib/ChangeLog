@@ -1,3 +1,9 @@
+2004-04-23  Jerry James  <james@xemacs.org>
+
+	* xlwradio.c (RadioExpose): Do not blindly copy one GC over
+	another.  It messes up the ref counts and is wrong for radio
+	buttons in any case.
+
 2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.17 "chayote" is released.
