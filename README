@@ -1,7 +1,83 @@
-This directory tree holds version 21.2 of XEmacs, the extensible,
-customizable, self-documenting real-time display editor.  This version
-of XEmacs also runs on various Microsoft Windows platforms including
-MS Windows '95 and MS Windows NT and Cygwin.
+This directory tree holds version 21.5 of XEmacs.
+
+
+
+*** What is XEmacs?
+
+XEmacs is a powerful, highly customizable open source text editor and
+application development system, with full GUI support.  It is protected
+under the GNU Public License and related to other versions of Emacs, in
+particular GNU Emacs.  Its emphasis is on modern graphical user
+interface support and an open software development model, similar to
+Linux.  XEmacs has an active development community numbering in the
+hundreds (and thousands of active beta testers on top of this), and runs
+on all versions of MS Windows, on Linux, and on nearly every other
+version of Unix in existence.  Support for XEmacs has been supplied by
+Sun Microsystems, University of Illinois, Lucid, ETL/Electrotechnical
+Laboratory, Amdahl Corporation, BeOpen, and others, as well as the
+unpaid time of a great number of individual developers.
+
+
+
+*** What platforms does it run on?
+
+  -- MS Windows (It has been tested on NT, 2000, 95, 98, and ME; you
+                 can also compile Cygwin and MinGW versions.)
+  -- Unix (It is regularly tested on Linux, Solaris, SunOS, HP/UX,
+           FreeBSD, OpenBSD, BSD/OS aka BSDI, Tru64 aka DEC/OSF, SCO5,
+           and probably others.  It should work on all versions of Unix
+           created in the last 10 years or so, perhaps with a bit of
+           work on more obscure platforms to correct bit-rot.  It uses
+           a sophisticated configuration system to auto-detect zillions
+           of features that are implemented differently in different
+           versions of Unix, so it will probably work on your vendor's
+           version, possibly with a bit of tweaking, even if we've
+           never heard of it.)
+  -- MacOS/X (As an X Windows application.  Unfortunately there is no
+              support currently for MacOS-specific features.)
+
+  There is also a port of XEmacs 19.14 (an older version, circa 1996)
+  for all versions of MacOS, with extensive support for MacOS-specific
+  features.  See the FAQ for more details.
+
+  There are rumors of an in-progress port to OS/2.  See the FAQ.
+
+  XEmacs will probably never work on MS/DOS or Windows 3.1, and we're
+  not particularly interested in patches for these platforms, as they
+  would introduce huge amounts of code clutter due to the woefully
+  underfeatured nature of these systems. (See GNU Emacs for a port to
+  MS/DOS.)
+
+
+
+*** Where's the FAQ?
+
+Look at `man/xemacs-faq.texi'.
+
+For the very latest version, see
+http://cvs.xemacs.org/cgi-bin/cvswebxe/xemacs/man/xemacs-faq.texi.
+
+
+
+*** Where's the latest version?
+
+For up-to-date information on XEmacs, see http://www.xemacs.org.
+
+To download XEmacs, see http://ftp.xemacs.org/ or
+ftp://ftp.xemacs.org/pub/xemacs/.
+
+For the latest experimental sources, see http://cvs.xemacs.org/, which
+gives instructions on how to get started with CVS access.
+
+There are numerous mailing lists for discussion of XEmacs.  The
+current description of these lists can be found at
+http://www.xemacs.org/Lists/, or see `etc/MAILINGLISTS'.  General
+discussion of bugs, new features, etc. takes place on
+xemacs-beta@xemacs.org.
+
+
+
+*** How do I build and install XEmacs?
 
 See the file `etc/NEWS' for information on new features and other
 user-visible changes since the last version of XEmacs.
@@ -10,22 +86,31 @@ The file `INSTALL' in this directory says how to bring up XEmacs on
 Unix and Cygwin, once you have loaded the entire subtree of this
 directory.
 
-The file `PROBLEMS' contains information on many common problems that
-occur in building, installing and running XEmacs.
-
 See the file `nt/README' for instructions on building XEmacs for
 Microsoft Windows.
 
 The file 'README.packages' will guide you in the installation of
 (essential) add on packages.
 
-Reports of bugs in XEmacs should be posted to the newsgroup
-comp.emacs.xemacs or sent to the mailing list xemacs@xemacs.org.  See
-the "Bugs" section of the XEmacs manual for more information on how to
-report bugs.  (The file `BUGS' in this directory explains how you can
-find and read that section using the Info files that come with
-XEmacs.)  See `etc/MAILINGLISTS' for more information on mailing lists
-relating to XEmacs and other GNU products.
+
+
+*** How do I deal with bugs or with problems building, installing, or running?
+
+The file `PROBLEMS' contains information on many common problems that
+occur in building, installing and running XEmacs.
+
+Reports of bugs in XEmacs should be sent to xemacs-beta@xemacs.org.
+You can also post to the newsgroup comp.emacs.xemacs (or equivalentlt,
+send to the mailing list xemacs@xemacs.org), but it is less likely
+that the developers will see it in a timely fashion.  See the "Bugs"
+section of the XEmacs manual for more information on how to report
+bugs.  (The file `BUGS' in this directory explains how you can find
+and read that section using the Info files that come with XEmacs.)
+See `etc/MAILINGLISTS' for more information on mailing lists relating
+to XEmacs.
+
+
+*** What's the basic layout of the code?
 
 The file `configure' is a shell script to acclimate XEmacs to the
 oddities of your processor and operating system.  It will create a
@@ -45,19 +130,16 @@ The file `Makefile.in' is a template used by `configure' to create
 
 There are several subdirectories:
 
-`src' holds the C code for Emacs (the XEmacs Lisp interpreter and its
+`src' holds the C code for XEmacs (the XEmacs Lisp interpreter and its
     primitives, the redisplay code, and some basic editing functions).
-`lisp' holds the Emacs Lisp code for XEmacs (most everything else).
+`lisp' holds the XEmacs Lisp code for XEmacs (most everything else).
 `lib-src' holds the source code for some utility programs for use by
     or with XEmacs, like movemail and etags.
 `etc' holds miscellaneous architecture-independent data files
     XEmacs uses, like the tutorial text and the Zippy the Pinhead quote
     database.  The contents of the `lisp', `info' and `man'
     subdirectories are architecture-independent too.
-`lwlib' holds the C code for the toolkit objects used by XEmacs.
-
+`lwlib' holds the C code for the X toolkit objects used by XEmacs.
 `info' holds the Info documentation tree for XEmacs.
-`man' holds the source code for the XEmacs info documentation tree.
-
-`nt' holds configuration files for compiling XEmacs under Microsoft Windows
-    NT.  The support for NT is very tentative right now.
+`man' holds the source code for the XEmacs online documentation.
+`nt' holds files used compiling XEmacs under Microsoft Windows.
