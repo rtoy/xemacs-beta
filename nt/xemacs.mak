@@ -45,12 +45,16 @@ MAKEDIRSTRING=$(MAKEDIR:\=\\)
 XEMACSDIRSTRING=$(MAKEDIRSTRING:\\nt=)
 
 
-# Define a variable for the 'del' command to use
-# N.B. Windows Millenium Edition's ERASE can only handle one target (file or
-# wildcard) per invocation.  Make sure each use has only one target!
-DEL=-del
+# Common operations
 
-# Define a variable for 'copy' command to use
+# Note that some versions of some commands are deficient.
+
+# Define the 'del' command to use
+# WinME's DEL command can only handle one argument and only has the /P flag.
+# So only delete one glob at a time.  Override flags in config.inc.
+DEL=del
+
+# Define the 'copy' command to use
 # Suppress confirmation for overwriting files
 COPY=xcopy /q /y
 COPYDIR=xcopy /q /y /e
@@ -434,16 +438,16 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
 MSW_TOOLBAR_SRC=$(SRC)\toolbar.c $(SRC)\toolbar-msw.c
 MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
 !endif
-!if $(HAVE_DIALOGS)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
-MSW_DIALOG_SRC=$(SRC)\dialog.c $(SRC)\dialog-msw.c
-MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
-!endif
 !if $(HAVE_WIDGETS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_WIDGETS
 !endif
 !if $(HAVE_TOOLBARS) || $(HAVE_WIDGETS)
 MSW_LIBS=$(MSW_LIBS) comctl32.lib
+!endif
+!if $(HAVE_DIALOGS)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
+MSW_DIALOG_SRC=$(SRC)\dialog.c $(SRC)\dialog-msw.c
+MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
 !endif
 !if $(HAVE_NATIVE_SOUND)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_NATIVE_SOUND
@@ -1084,12 +1088,12 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS) $(OUTDIR)\xemacs.res
 !if $(DEBUG_XEMACS)
 	@dir /b/s $(OUTDIR)\*.sbr > bscmake.tmp
 	bscmake -nologo -o$(TEMACS_BROWSE) @bscmake.tmp
-	$(DEL) bscmake.tmp
+	-$(DEL) bscmake.tmp
 !endif
 !if $(USE_PORTABLE_DUMPER)
-	@if exist $(SRC)\dump-id.c del $(SRC)\dump-id.c
+	@if exist $(SRC)\dump-id.c $(DEL) $(SRC)\dump-id.c
 # make a new dump id file.  There is probably a better way to do this, but this works
-	@if exist $(OUTDIR)\dump-id.obj del $(OUTDIR)\dump-id.obj
+	@if exist $(OUTDIR)\dump-id.obj $(DEL) $(OUTDIR)\dump-id.obj
 	nmake -nologo -f xemacs.mak OUTDIR=$(OUTDIR) $(OUTDIR)\dump-id.obj
 	link.exe @<<
   $(TEMACS_LFLAGS) -out:$@ $(TEMACS_OBJS) $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
@@ -1142,7 +1146,7 @@ tags:
 	@echo	(setq tag-table-alist
 	@echo	  '(("$(XEMACSDIRSTRING)\\" . "$(XEMACSDIRSTRING)\\")))
 	cd $(XEMACS)
-	$(DEL) TAGS
+	-$(DEL) TAGS
 	set PATH=lib-src;%PATH%
 # we need to double ^, but only before backslash!  Doubling it elsewhere
 # causes problems.  I don't understand this -- CMD.EXE uses ^ as a quoting
@@ -1358,11 +1362,11 @@ LOADPATH=$(LISP)
 
 # Rebuild docfile target
 docfile ::
-	if exist $(DOC) del $(DOC)
+	if exist $(DOC) $(DEL) $(DOC)
 docfile :: $(DOC)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(DOC_SRC10) $(DOC_SRC11)
-	if exist $(DOC) del $(DOC)
+	if exist $(DOC) $(DEL) $(DOC)
 	set EMACSBOOTSTRAPLOADPATH=$(LISP);$(PACKAGE_PATH)
 	set EMACSBOOTSTRAPMODULEPATH=$(MODULES)
 	$(TEMACS_BATCH) -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
@@ -1403,7 +1407,7 @@ $(PROGNAME) : $(TEMACS) $(TEMACS_DIR)\NEEDTODUMP
 	link.exe @<<
   $(TEMACS_LFLAGS) -section:.rsrc,rw -out:xemacs.exe $(TEMACS_OBJS) $(OUTDIR)\xemacs.res $(TEMACS_LIBS) $(OUTDIR)\dump-id.obj
 <<
-	$(DEL) $(TEMACS_DIR)\xemacs.dmp
+	-$(DEL) $(TEMACS_DIR)\xemacs.dmp
 !endif
 	cd $(NT)
 	@if not exist $(TEMACS_DIR)\SATISFIED nmake -nologo -f xemacs.mak $@
@@ -1423,7 +1427,7 @@ install:	all
 	@echo PlaceHolder > PlaceHolder
 	@$(COPY) PROBLEMS "$(INSTALL_DIR)\"
 	@$(COPY) PlaceHolder "$(INSTALL_DIR)\lock\"
-	$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
+	-$(DEL) "$(INSTALL_DIR)\lock\PlaceHolder"
 	@$(COPY) $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
 	@$(COPY) $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
 	@$(COPY) $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
@@ -1433,71 +1437,85 @@ install:	all
 	@$(COPYDIR) $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
 	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
-	$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
+	-$(DEL) "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\mule-packages\"
-	$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
+	-$(DEL) "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
 	@$(COPY) PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
-	$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
-	$(DEL) PlaceHolder
+	-$(DEL) "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
+	-$(DEL) PlaceHolder
 
 mostlyclean:
-	$(DEL) $(XEMACS)\Installation
-	$(DEL) $(OUTDIR)\*.lib
-	$(DEL) $(OUTDIR)\*.obj
-	$(DEL) $(OUTDIR)\*.pdb
-	$(DEL) $(OUTDIR)\*.res
-	$(DEL) $(OUTDIR)\*.sbr
-	$(DEL) $(SRC)\*.exe
-	$(DEL) $(SRC)\*.map
-	$(DEL) $(SRC)\*.bsc
-	$(DEL) $(SRC)\*.pdb
-	$(DEL) $(LIB_SRC)\*.exe
-	$(DEL) $(LIB_SRC)\*.obj
-	$(DEL) $(LIB_SRC)\*.pdb
-	$(DEL) $(LIB_SRC)\*.res
+	-$(DEL) $(XEMACS)\Installation
+	-$(DEL) $(OUTDIR)\*.lib
+	-$(DEL) $(OUTDIR)\*.obj
+	-$(DEL) $(OUTDIR)\*.pdb
+	-$(DEL) $(OUTDIR)\*.res
+	-$(DEL) $(OUTDIR)\*.sbr
+	-$(DEL) $(SRC)\*.exe
+	-$(DEL) $(SRC)\*.map
+	-$(DEL) $(SRC)\*.bsc
+	-$(DEL) $(SRC)\*.pdb
+	-$(DEL) $(LIB_SRC)\*.exe
+	-$(DEL) $(LIB_SRC)\*.obj
+	-$(DEL) $(LIB_SRC)\*.pdb
+	-$(DEL) $(LIB_SRC)\*.res
 
 clean: mostlyclean versionclean
-	$(DEL) $(XEMACS)\TAGS
+	-$(DEL) $(XEMACS)\TAGS
 
 nicenclean: clean
-	$(DEL) $(NT)\*.bak
-	$(DEL) $(NT)\*.orig
-	$(DEL) $(NT)\*.rej
-	$(DEL) $(NT)\*.tmp
-	$(DEL) $(LIB_SRC)\*.bak
-	$(DEL) $(LIB_SRC)\*.orig
-	$(DEL) $(LIB_SRC)\*.rej
-	$(DEL) $(LIB_SRC)\*.tmp
-	$(DEL) $(SRC)\*.bak
-	$(DEL) $(SRC)\*.orig
-	$(DEL) $(SRC)\*.rej
-	$(DEL) $(SRC)\*.tmp
-	$(DEL) $(LISP)\*.bak
-	$(DEL) $(LISP)\*.orig
-	$(DEL) $(LISP)\*.rej
-	$(DEL) $(LISP)\*.tmp
+	-$(DEL) $(NT)\*.bak
+	-$(DEL) $(NT)\*.orig
+	-$(DEL) $(NT)\*.rej
+	-$(DEL) $(NT)\*.tmp
+	-$(DEL) $(LIB_SRC)\*.bak
+	-$(DEL) $(LIB_SRC)\*.orig
+	-$(DEL) $(LIB_SRC)\*.rej
+	-$(DEL) $(LIB_SRC)\*.tmp
+	-$(DEL) $(SRC)\*.bak
+	-$(DEL) $(SRC)\*.orig
+	-$(DEL) $(SRC)\*.rej
+	-$(DEL) $(SRC)\*.tmp
+	-$(DEL) $(LISP)\*.bak
+	-$(DEL) $(LISP)\*.orig
+	-$(DEL) $(LISP)\*.rej
+	-$(DEL) $(LISP)\*.tmp
+
+# Convenience target.
+# Reproducing the configuration is just a matter of copying, and if
+# we use the same directory for Cygwin builds these must go.  We don't
+# want to use distclean.
+configclean:
+	-$(DEL) $(SRC)\config.h
+	-$(DEL) $(SRC)\paths.h
+	-$(DEL) $(SRC)\Emacs.ad.h
 
 ## This is used in making a distribution.
 ## Do not use it on development directories!
-distclean: nicenclean
-	$(DEL) $(SRC)\config.h
-	$(DEL) $(SRC)\paths.h
-	$(DEL) $(SRC)\Emacs.ad.h
-	$(DEL) $(CONFIG_VALUES)
-	$(DEL) $(INFODIR)\*.info*
-	$(DEL) $(LISP)\*.elc
+distclean: nicenclean configclean
+	-$(DEL) $(LIB_SRC)\$(CONFIG_VALUES)
+	-$(DEL) $(INFODIR)\*.info*
+	-$(DEL) $(LISP)\*.elc
+	-$(DEL) $(LISP)\mule\*.elc
+	-$(DEL) $(LISP)\term\*.elc
 
 realclean: distclean
 
 versionclean:
-	$(DEL) $(SRC)\xemacs.exe
-	$(DEL) $(LIB_SRC)\DOC
+	-$(DEL) $(SRC)\xemacs.exe
+	-$(DEL) $(LIB_SRC)\DOC
 
 #not sure about those wildcards.  DOS wildcards are stupid compared to Unix,
 #and could end up deleting *everything* instead of just backup files or
-#whatever.
-#extraclean: realclean
-#	$(DEL) *~ *.*~ #* m\*~ m\#* s\*~ s\#*
+#whatever.  So just leave it at "realclean"
+extraclean: realclean
+#	-$(DEL) *~
+#	-$(DEL)  *.*~
+#	-$(DEL)  #*
+#	-$(DEL)  m\*~
+#	-$(DEL)  m\#*
+#	-$(DEL)  s\*~
+#	-$(DEL)  s\#*
 
 depend:
 	cd $(SRC)

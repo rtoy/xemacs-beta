@@ -1,3 +1,21 @@
+2001-07-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs.mak (configclean):
+	New target.  Convenience for multiplatform builds (need to delete
+	the native config.h since it's newer than config.h.in).
+	(distclean): Use it.
+
+	* xemacs.mak (DEL):
+	Remove error-suppressing "-" from definition.  Use variable in
+	shell structured commands.  Prefix "-" to existing uses.
+	(DELS, DELSQ):
+	Remove definitions, WinME can't hack the switches.
+	(distclean):
+	Clean subdirectories of $(LISP) explicitly.
+
+	* xemacs.mak:
+	Move HAVE_WIDGET and HAVE_TOOLBAR configuration together.
+
 2001-06-12  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* xemacs.mak (HAVE_ZLIB): New, defaults to HAVE_PNG.
