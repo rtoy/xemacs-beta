@@ -1,3 +1,8 @@
+2002-05-21  Jonathan Harris  <jonathan@xemacs.org>
+
+	* device-msw.c (mswindows_handle_page_setup_dialog_box):
+	Fix detection of metric units to work on Win95
+
 2002-05-17  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* eldap.c (print_ldap): swap arguments of write_c_string.
