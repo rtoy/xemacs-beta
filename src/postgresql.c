@@ -269,6 +269,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
 #else
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("pgconn", pgconn,
+			       0, /*dumpable-flag*/
 			       mark_pgconn, print_pgconn, finalize_pgconn,
 			       NULL, NULL,
 			       pgconn_description,
@@ -401,6 +402,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
 #else
 #ifdef USE_KKCC
 DEFINE_LRECORD_IMPLEMENTATION ("pgresult", pgresult,
+			       0, /*dumpable-flag*/			       
 			       mark_pgresult, print_pgresult, finalize_pgresult,
 			       NULL, NULL,
 			       pgresult_description,

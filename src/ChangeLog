@@ -1,3 +1,8 @@
+2002-08-02  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* postgresql.c: Add dumpable-flag to pgconn and pgresult for
+	USE_KKCC.
+
 2002-07-31  Didier Verna  <didier@xemacs.org>
 
 	* file-coding.c (make_coding_system_1): Add missing call to
