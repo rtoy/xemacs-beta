@@ -797,6 +797,8 @@ typedef unsigned long Hashcode;
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#elif defined(HAVE_INTPTR_T_IN_SYS_TYPES_H)
+/* included elsewhere */
 #elif SIZEOF_VOID_P == SIZEOF_INT
 typedef int intptr_t;
 typedef unsigned int uintptr_t;

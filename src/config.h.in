@@ -892,6 +892,11 @@ extern "C" {
 #undef SIZEOF_LONG_LONG
 #undef SIZEOF_VOID_P
 
+/* some systems (Cygwin) typedef u?intptr_t in <sys/types.h>
+   but the standard is <inttypes.h>
+   ugliness due to last-resort conditional typedef'ing in lisp.h */
+#undef HAVE_INTPTR_T_IN_SYS_TYPES_H
+
 /* Does the keyword `inline' exist?  */
 #undef inline
 
