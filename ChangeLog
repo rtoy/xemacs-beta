@@ -1,5 +1,11 @@
 2004-12-05  Ben Wing  <ben@xemacs.org>
 
+	* README.packages:
+	Fix error in specifying standard package location.
+	Document --package-prefix.
+
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
 	* configure.usage:
 	* configure.in (AC_INIT_PARSE_ARGS):
 	* configure.in (TAB):

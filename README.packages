@@ -32,14 +32,14 @@ A. You can grab all the packages at once like you used to with old
 
 Q. How do I tell XEmacs where to find the packages?
 
-A. Normally, you put the packages under $prefix/lib/packages, where
+A. Normally, you put the packages under $prefix/lib/xemacs, where
    $prefix is specified using the `--prefix' parameter to `configure'.
    (See `Package hierarchies' below).  However, if you have the packages
    somewhere else (e.g. you're a developer and are compiling the packages
    yourself, and want your own private copy of everything), use the
-   `--package-path' parameter, something like this:
-
-   configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
+   `--package-prefix' parameter to `configure' to specify the directory prefix
+   under which you have placed the `xemacs-packages' and (if MULE support
+   exists) `mule-packages' directories.
 
 Q. After installing, I want XEmacs to do `foo', but when I invoke it
    (or click the toolbar button or select the menu item), nothing (or
@@ -97,10 +97,9 @@ automatically find them at startup; however, if you have your packages
 somewhere else (e.g. you're a developer and are compiling the packages
 yourself, and want your own private copy of everything), you can tell
 XEmacs specifically where to look for the packages by using the
-`--package-path' parameter to the 'configure' script.  Normally, it looks
-like this:
-
-configure --package-path="~/.xemacs::/src/xemacs/site-packages:/src/xemacs/xemacs-packages:/src/xemacs/mule-packages" ...
+`--package-prefix' parameter to 'configure' to specify the directory prefix
+under which you have placed the `xemacs-packages' and (if MULE support
+exists) `mule-packages' directories.
 
 See `configure.usage' for more info about the format of this parameter.
 
