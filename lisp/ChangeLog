@@ -1,5 +1,11 @@
 2005-01-09  Adrian Aichner  <adrian@xemacs.org>
 
+	* dumped-lisp.el (preloaded-file-list): Fix typo in
+	"mule-win32-init" path in preloaded-file-list, as suggected by
+	Alejandro L~pez-Valencia.
+
+2005-01-09  Adrian Aichner  <adrian@xemacs.org>
+
 	* process.el (start-process-shell-command): Correct docstring.
 
 2005-01-03  Mike Sperber  <mike@xemacs.org>
