@@ -1,3 +1,9 @@
+2002-07-05  Jonathan Harris  <jonathan@xemacs.org>
+
+	* emacs.c (main_1): Conditionalise calls to
+	syms_of_dired_mswindows() and vars_of_dired_mswindows() on
+	WIN32_NATIVE instead of redundant HAVE_MSW_C_DIRED
+	
 2002-07-03  Mike Sperber <mike@xemacs.org>
 
 	* emacs.c (main_1): We need to call init_ralloc twice for PDUMP,

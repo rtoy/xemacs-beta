@@ -1362,10 +1362,8 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       syms_of_scrollbar_mswindows ();
 #endif
 #endif	/* HAVE_MS_WINDOWS */
-#ifdef HAVE_MSW_C_DIRED
-      syms_of_dired_mswindows ();
-#endif
 #ifdef WIN32_NATIVE
+      syms_of_dired_mswindows ();
       syms_of_nt ();
 #endif
 #if defined (WIN32_NATIVE) || defined (CYGWIN)
@@ -1772,6 +1770,7 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
       vars_of_module ();
 #endif
 #ifdef WIN32_NATIVE
+      vars_of_dired_mswindows ();
       vars_of_nt ();
 #endif
       vars_of_objects ();
@@ -1875,9 +1874,6 @@ main_1 (int argc, Extbyte **argv, Extbyte **envp, int restart)
 #endif
 #ifdef HAVE_MENUBARS
       vars_of_menubar_mswindows ();
-#endif
-#ifdef HAVE_MSW_C_DIRED
-      vars_of_dired_mswindows ();
 #endif
 #ifdef HAVE_DIALOGS
       vars_of_dialog_mswindows ();
