@@ -1030,7 +1030,9 @@ circumstances."
 			   '(x) locale tags))
      (when (featurep 'mswindows)
        (frob-face-property face 'font 'mswindows-make-font-bold
-			   '(mswindows) locale tags))
+			   '(mswindows) locale tags)
+       (frob-face-property face 'font 'mswindows-make-font-bold
+			   '(msprinter) locale tags))
      )
    '(([default] . [bold])
      ([bold] . t)
@@ -1060,7 +1062,9 @@ how this function works."
 			   '(x) locale tags))
      (when (featurep 'mswindows)
        (frob-face-property face 'font 'mswindows-make-font-italic
-			   '(mswindows) locale tags))
+			   '(mswindows) locale tags)
+       (frob-face-property face 'font 'mswindows-make-font-italic
+			   '(msprinter) locale tags))
      )
    '(([default] . [italic])
      ([bold] . [bold-italic])
@@ -1091,7 +1095,9 @@ argument and for more specifics on exactly how this function works."
 			   '(x) locale tags))
      (when (featurep 'mswindows)
        (frob-face-property face 'font 'mswindows-make-font-bold-italic
-			   '(mswindows) locale tags))
+			   '(mswindows) locale tags)
+       (frob-face-property face 'font 'mswindows-make-font-bold-italic
+			   '(msprinter) locale tags))
      )
    '(([default] . [italic])
      ([bold] . [bold-italic])
@@ -1121,7 +1127,9 @@ specifics on exactly how this function works."
 			   '(x) locale tags))
      (when (featurep 'mswindows)
        (frob-face-property face 'font 'mswindows-make-font-unbold
-			   '(mswindows) locale tags))
+			   '(mswindows) locale tags)
+       (frob-face-property face 'font 'mswindows-make-font-unbold
+			   '(msprinter) locale tags))
      )
    '(([default] . t)
      ([bold] . [default])
@@ -1151,7 +1159,9 @@ specifics on exactly how this function works."
 			   '(x) locale tags))
      (when (featurep 'mswindows)
        (frob-face-property face 'font 'mswindows-make-font-unitalic
-			   '(mswindows) locale tags))
+			   '(mswindows) locale tags)
+       (frob-face-property face 'font 'mswindows-make-font-unitalic
+			   '(msprinter) locale tags))
      )
    '(([default] . t)
      ([bold] . t)
@@ -1174,7 +1184,9 @@ because they don't make sense in this context."
 			'(x) locale))
   (when (featurep 'mswindows)
     (frob-face-property face 'font 'mswindows-find-smaller-font
-			'(mswindows) locale)))
+			'(mswindows) locale)
+    (frob-face-property face 'font 'mswindows-find-smaller-font
+			'(msprinter) locale)))
 
 (defun make-face-larger (face &optional locale)
   "Make the font of FACE be larger, if possible.
@@ -1186,7 +1198,9 @@ See `make-face-smaller' for the semantics of the LOCALE argument."
 			'(x) locale))
   (when (featurep 'mswindows)
     (frob-face-property face 'font 'mswindows-find-larger-font
-			'(mswindows) locale)))
+			'(mswindows) locale)
+    (frob-face-property face 'font 'mswindows-find-larger-font
+			'(msprinter) locale)))
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."

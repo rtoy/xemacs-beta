@@ -1,3 +1,14 @@
+2001-04-25  IKEYAMA Tomonori <tomonori@suiyokai.org>
+
+	* faces.el (make-face-bold):
+	* faces.el (make-face-italic):
+	* faces.el (make-face-bold-italic):
+	* faces.el (make-face-unbold):
+	* faces.el (make-face-unitalic):
+	* faces.el (make-face-smaller):
+	* faces.el (make-face-larger):
+	Call frob-face-property each for mswindows and msprinter.
+
 2001-04-24  Hrvoje Niksic  <hniksic@arsdigita.com>
 
 	* about.el (about-finish-buffer): Make sure the last change works
