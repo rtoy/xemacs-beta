@@ -1,3 +1,7 @@
+2001-07-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.2 "artichoke" is released.
+
 2001-07-20  Steve Youngs  <youngs@xemacs.org>
 
 	* packages.el (locate-data-file): Revert Karl's patch.
