@@ -698,8 +698,10 @@ The default is to autodetect native and NAS sound support."])
 	    flock )	val=flock ;;
 	    file | dot ) val=file  ;;
 	    locking )	val=locking  ;;
+            mmdf ) val=mmdf ;;
+            pop ) val=pop ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
-  \`lockf', \`flock', \`file', \`locking', or \`mmdf'."]) ;;
+  \`lockf', \`flock', \`file', \`dot', \`locking', \`mmdf', or \`pop'."]) ;;
 	  esac
           eval "$opt=\"$val\""
         ;;
@@ -785,7 +787,7 @@ The default is to autodetect native and NAS sound support."])
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | \
-	archlibdir | docdir | package_path | moduledir )
+	archlibdir | docdir | package_path | package_prefix | moduledir )
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -806,6 +808,7 @@ The default is to autodetect native and NAS sound support."])
              etcdir  )  AC_DEFINE(ETCDIR_USER_DEFINED) ;;
              infodir ) AC_DEFINE(INFODIR_USER_DEFINED) ;;
              infopath ) AC_DEFINE(INFOPATH_USER_DEFINED) ;;
+             package_prefix ) AC_DEFINE(PACKAGE_PATH_USER_DEFINED) ;;
              package_path ) AC_DEFINE(PACKAGE_PATH_USER_DEFINED) ;;
              datadir )
 	        AC_DEFINE(INFODIR_USER_DEFINED)
@@ -1952,7 +1955,7 @@ test "$extra_verbose" = "yes" && \
   objects_machine objects_system c_switch_machine c_switch_system
   ld_switch_machine ld_switch_system unexec ld_switch_shared
   ld lib_gcc ld_text_start_addr start_files ordinary_link
-  have_terminfo mail_use_flock mail_use_lockf) && echo ""
+  have_terminfo mail_use_flock mail_use_lockf mail_using_locking) && echo ""
 
 dnl Pick up mingw include path
 dnl We only cope with headers in mingw, not mingw32: no previous version of
@@ -2809,7 +2812,8 @@ elif test "$mail_locking" = "locking"; then AC_DEFINE(MAIL_LOCK_LOCKING)
 elif test "$mail_locking" = "pop"; then
   with_pop=yes
   mail_locking=
-else mail_locking="dot-locking"; AC_DEFINE(MAIL_LOCK_DOT)
+elif test "$mail_locking" = "mmdf"; then AC_DEFINE(MAIL_LOCK_MMDF)
+else mail_locking="file"; AC_DEFINE(MAIL_LOCK_DOT)
 fi
 test "$mail_locking" = "lockf" -a "$ac_cv_func_lockf" != "yes" && \
   XE_DIE("lockf mail locking requested but not available.")
@@ -5204,6 +5208,14 @@ while true; do
   esac
 done
 AC_SUBST(INFOPATH)
+
+if test -z "$package_path" && test -n "$package_prefix" ; then
+  if test "$with_mule" = "yes" ; then
+    package_path="~/.xemacs::${package_prefix}/site-packages:${package_prefix}/xemacs-packages:${package_prefix}/mule-packages"
+  else
+    package_path="~/.xemacs::${package_prefix}/site-packages:${package_prefix}/xemacs-packages"
+  fi
+fi
 
 AC_SUBST(package_path)
 AC_SUBST(PACKAGE_PATH_USER_DEFINED)

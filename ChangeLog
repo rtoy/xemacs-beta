@@ -1,3 +1,13 @@
+2004-12-05  Ben Wing  <ben@xemacs.org>
+
+	* configure.usage:
+	* configure.in (AC_INIT_PARSE_ARGS):
+	* configure.in (TAB):
+	* configure.in (XE_COMPUTE_RUNPATH):
+	* configure:
+	Support --package-prefix and mmdf and pop arguments to --mail-locking.
+	Document in configure.usage.
+
 2004-11-12  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
 
 	* configure:

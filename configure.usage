@@ -98,6 +98,17 @@ Run-time path-searching options:
                         searched before the installation packages.
 --with-site-modules=no  Disable site-modules directory in the XEmacs hierarchy,
                         which is searched before the installation modules.
+--package-prefix=PATH   Specify a directory under which packages will
+                        be searched.  The directories `xemacs-packages' and
+                        (if MULE support exists) `mule-packages' (along with,
+                        optionally, `site-packages') should exist under this
+                        directory.  This is preferred to specifying
+                        `--package-path' directly and is equivalent to
+                        --package-path="~/.xemacs::${package-prefix}/\
+                        site-packages:${package_prefix}/xemacs-packages:\
+                        ${package_prefix}/mule-packages"
+                        (or the same without `.../mule-packages' if no
+                        MULE support exists)
 --package-path=PATH     Directories to search for packages to dump with xemacs.
                         PATH splits into three parts separated by double
                         colons (::), an early, a late, and a last part,
@@ -259,8 +270,10 @@ Mail options:
 -------------
 
 --mail-locking=TYPE (*) Specify the locking to be used by movemail to prevent
-                        concurrent updates of mail spool files. Valid types
-                        are `lockf', `flock', `dot', `locking' or `mmdf'.
+                        concurrent updates of mail spool files.  Valid types
+                        are `lockf', `flock', `file', `dot' (same as `file'),
+                        `locking', `mmdf' and `pop' (equivalent to
+                        `--with-pop=yes').
 --with-pop              Support POP for mail retrieval.
 --with-kerberos         Support Kerberos-authenticated POP.
 --with-hesiod           Support Hesiod to get the POP server host.
