@@ -242,6 +242,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGEN_H
 #undef HAVE_LOCALE_H
+#undef HAVE_WCHAR_H
 #undef HAVE_MACH_MACH_H
 #undef HAVE_SYS_PARAM_H
 #undef HAVE_SYS_PSTAT_H

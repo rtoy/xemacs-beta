@@ -3328,6 +3328,23 @@ qxe_ctime (const time_t *t)
   return ctime_static;
 }
 
+/************************************************************************/
+/*                  Emulation of missing functions from wchar.h         */
+/************************************************************************/
+
+#ifndef HAVE_WCHAR_H
+size_t
+wcslen(const wchar_t *s)
+{
+  const wchar_t *p = s;
+
+  while (*p++)
+    ;
+  
+  return p - s;
+}
+#endif
+
 
 /************************************************************************/
 /*                  Emulations of missing system calls                  */

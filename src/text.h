@@ -33,7 +33,11 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_text_h_
 #define INCLUDED_text_h_
 
+#ifdef HAVE_WCHAR_H
 #include <wchar.h>
+#else
+size_t wcslen(const wchar_t *);
+#endif
 
 /* ---------------------------------------------------------------------- */
 /*                     Super-basic character properties                   */
