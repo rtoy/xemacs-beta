@@ -1,3 +1,14 @@
+2003-01-11  Mike Sperber  <mike@xemacs.org>
+
+	* window.c (Fdelete_window): Make sure that
+	f->last_nonminibuf_window is set to a live window once we're done.
+	(contains_window): Abstract this code out of Fdelete_window.
+
+2003-01-10  Mike Sperber  <mike@xemacs.org>
+
+	* window.c (Fdelete_other_windows): Prevent crash for combination
+	windows.
+
 2003-01-08  Mike Sperber <mike@xemacs.org>
 
 	* console.h (CDFW_CONSOLE): Don't lead to a crash if we're dealing

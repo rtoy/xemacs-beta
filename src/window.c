@@ -2150,6 +2150,20 @@ mark_window_as_deleted (struct window *w)
   note_object_deleted (wrap_window (w));
 }
 
+/* Check if window contains pwindow. */
+
+static int
+contains_window (Lisp_Object window, Lisp_Object pwindow)
+{
+    while (!NILP (pwindow))
+      {
+	if (EQ (window, pwindow))
+	  return 1;
+	pwindow = XWINDOW (pwindow)->parent;
+      }
+    return 0;
+}
+
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
 Remove WINDOW from the display.  Default is selected window.
 If window is the only one on its frame, the frame is deleted as well.
@@ -2226,35 +2240,27 @@ will automatically call `save-buffers-kill-emacs'.)
      So, we check by scanning all the ancestors of the
      frame's selected window and comparing each one with
      WINDOW.  */
-  {
-    Lisp_Object pwindow;
+  if (contains_window (window, FRAME_SELECTED_WINDOW (f)))
+    {
+      Lisp_Object alternative;
+      alternative = Fnext_window (window, Qlambda, Qnil, Qnil);
+      
+      /* #### */
+      /* If we're about to delete the selected window on the
+	 selected frame, then we should use Fselect_window to select
+	 the new window.  On the other hand, if we're about to
+	 delete the selected window on any other frame, we shouldn't do
+	 anything but set the frame's selected_window slot.  */
+      if (EQ (frame, Fselected_frame (Qnil)))
+	Fselect_window (alternative, Qnil);
+      else
+	set_frame_selected_window (f, alternative);
+    }
 
-    pwindow = FRAME_SELECTED_WINDOW (f);
-
-    while (!NILP (pwindow))
-      {
-	if (EQ (window, pwindow))
-	  break;
-	pwindow = XWINDOW (pwindow)->parent;
-      }
-
-    if (EQ (window, pwindow))
-      {
-	/* OK, we found it. */
-	Lisp_Object alternative;
-	alternative = Fnext_window (window, Qlambda, Qnil, Qnil);
-
-	/* If we're about to delete the selected window on the
-	   selected frame, then we should use Fselect_window to select
-	   the new window.  On the other hand, if we're about to
-	   delete the selected window on any other frame, we shouldn't do
-	   anything but set the frame's selected_window slot.  */
-	if (EQ (frame, Fselected_frame (Qnil)))
-	  Fselect_window (alternative, Qnil);
-	else
-	  set_frame_selected_window (f, alternative);
-      }
-  }
+  /* Some display parameters (gutter display specifically) depend on
+     FRAME_LAST_NONMINIBUF (f) to be set to a live window.  Ensure that. */
+  if (contains_window (window, FRAME_LAST_NONMINIBUF_WINDOW (f)))
+    f->last_nonminibuf_window = Fnext_window (window, Qlambda, Qnil, Qnil);
 
   /* w->buffer is nil in a non-leaf window; in this case,
      get rid of the markers we maintain that point into that buffer. */
@@ -3194,11 +3200,15 @@ value is reasonable when this function is called.
        (window))
 {
   struct window *w = decode_window (window);
-  struct buffer *b = XBUFFER (w->buffer);
+  struct buffer *b;
   Charbpos start_pos;
   int old_top = WINDOW_TOP (w);
 
+  if (NILP (WINDOW_BUFFER (w)))
+    invalid_operation ("Can't delete other windows of combination", window);
+
   window = wrap_window (w);
+  b = XBUFFER (WINDOW_BUFFER (w));
 
   if (MINI_WINDOW_P (w) && old_top > 0)
     invalid_operation ("Can't expand minibuffer to full frame", Qunbound);
