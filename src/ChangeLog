@@ -1,3 +1,16 @@
+2004-05-21  Jerry James  <james@xemacs.org>
+
+	* floatfns.c (Ffloat): Add missing return keyword.
+	* number.h: Declare Qbignump, Qratiop, and Qbigfloatp in every case. 
+	* number.c: Ditto.
+	* number.c (syms_of_number): Ditto.  Declare
+	Fbigfloat_get_precision and Fbigfloat_set_precision.
+	* number.c (Fbigfloat_get_precision): New function.
+	* number.c (Fbigfloat_set_precision): New function.
+	* number.c (vars_of_number): Clarify that default-float-precision
+	of 0 means to create normal floats.  Change bigfloat-max-prec to
+	bigfloat-maximum-precision.
+
 2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* glyphs-gtk.c (gtk_xpm_instantiate): Rewrite the XPM data to

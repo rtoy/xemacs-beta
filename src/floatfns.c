@@ -781,7 +781,7 @@ Return the floating point number numerically equal to NUMBER.
 
 #ifdef HAVE_RATIO
   if (RATIOP (number))
-    make_float (ratio_to_double (XRATIO_DATA (number)));
+    return make_float (ratio_to_double (XRATIO_DATA (number)));
 #endif
 
   if (FLOATP (number))		/* give 'em the same float back */

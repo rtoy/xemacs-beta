@@ -311,7 +311,7 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 (defun cl-random-time ()
   (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
     (while (>= (decf i) 0) (setq v (+ (* v 3) (aref time i))))
-    (if (featurep 'number-types)
+    (if (featurep 'bignum)
 	(coerce-number v 'fixnum)
       v)))
 

@@ -1,3 +1,8 @@
+2004-05-21  Jerry James  <james@xemacs.org>
+
+	* cl.el (cl-random-time): Chop a bignum down to a fixnum if
+	(featurep 'bignum), not if (featurep 'number-types).
+
 2004-05-15  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* gtk-widgets.el: New import: gtk-accel-group-new.

@@ -106,7 +106,6 @@ extern bignum scratch_bignum, scratch_bignum2;
 
 #else /* !HAVE_BIGNUM */
 
-extern Lisp_Object Qbignump;
 #define BIGNUMP(x)         0
 #define CHECK_BIGNUM(x)    dead_wrong_type_argument (Qbignump, x)
 #define CONCHECK_BIGNUM(x) dead_wrong_type_argument (Qbignump, x)
@@ -116,6 +115,7 @@ typedef void bignum;
 
 #endif /* HAVE_BIGNUM */
 
+extern Lisp_Object Qbignump;
 EXFUN (Fbignump, 1);
 
 
@@ -189,7 +189,6 @@ extern ratio scratch_ratio;
 
 #else /* !HAVE_RATIO */
 
-extern Lisp_Object Qratiop;
 #define RATIOP(x)          0
 #define CHECK_RATIO(x)     dead_wrong_type_argument (Qratiop, x)
 #define CONCHECK_RATIO(x)  dead_wrong_type_argument (Qratiop, x)
@@ -199,6 +198,7 @@ typedef void ratio;
 
 #endif /* HAVE_RATIO */
 
+extern Lisp_Object Qratiop;
 EXFUN (Fratiop, 1);
 
 
@@ -262,7 +262,6 @@ extern bigfloat scratch_bigfloat, scratch_bigfloat2;
 
 #else /* !HAVE_BIGFLOAT */
 
-extern Lisp_Object Qbigfloatp;
 #define BIGFLOATP(x)         0
 #define CHECK_BIGFLOAT(x)    dead_wrong_type_argument (Qbigfloatp, x)
 #define CONCHECK_BIGFLOAT(x) dead_wrong_type_argument (Qbigfloatp, x)
@@ -272,6 +271,7 @@ typedef void bigfloat;
 
 #endif /* HAVE_BIGFLOAT */
 
+extern Lisp_Object Qbigfloatp;
 EXFUN (Fbigfloatp, 1);
 
 /********************************* Floating *********************************/

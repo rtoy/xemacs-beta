@@ -72,11 +72,9 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bignum", bignum, 0, 0, bignum_print,
 				     0, bignum_equal, bignum_hash,
 				     bignum_description, Lisp_Bignum);
 
-#else /* !HAVE_BIGNUM */
+#endif /* HAVE_BIGNUM */
 
 Lisp_Object Qbignump;
-
-#endif /* HAVE_BIGNUM */
 
 DEFUN ("bignump", Fbignump, 1, 1, 0, /*
 Return t if OBJECT is a bignum, nil otherwise.
@@ -150,11 +148,9 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("ratio", ratio, 0, 0, ratio_print,
 				     0, ratio_equal, ratio_hash,
 				     ratio_description, Lisp_Ratio);
 
-#else /* !HAVE_RATIO */
+#endif /* HAVE_RATIO */
 
 Lisp_Object Qratiop;
-
-#endif /* HAVE_RATIO */
 
 DEFUN ("ratiop", Fratiop, 1, 1, 0, /*
 Return t if OBJECT is a ratio, nil otherwise.
@@ -239,11 +235,9 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bigfloat", bigfloat, 1, 0,
 				     bigfloat_equal, bigfloat_hash,
 				     bigfloat_description, Lisp_Bigfloat);
 
-#else /* !HAVE_BIGFLOAT */
+#endif /* HAVE_BIGFLOAT */
 
 Lisp_Object Qbigfloatp;
-
-#endif /* HAVE_BIGFLOAT */
 
 DEFUN ("bigfloatp", Fbigfloatp, 1, 1, 0, /*
 Return t if OBJECT is a bigfloat, nil otherwise.
@@ -251,6 +245,53 @@ Return t if OBJECT is a bigfloat, nil otherwise.
        (object))
 {
   return BIGFLOATP (object) ? Qt : Qnil;
+}
+
+DEFUN ("bigfloat-get-precision", Fbigfloat_get_precision, 1, 1, 0, /*
+Return the precision of bigfloat F as an integer.
+*/
+       (f))
+{
+  CHECK_BIGFLOAT (f);
+#ifdef HAVE_BIGNUM
+  bignum_set_ulong (scratch_bignum, XBIGFLOAT_GET_PREC (f));
+  return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
+#else
+  return make_int ((int) XBIGFLOAT_GET_PREC (f));
+#endif
+}
+
+DEFUN ("bigfloat-set-precision", Fbigfloat_set_precision, 2, 2, 0, /*
+Set the precision of F, a bigfloat, to PRECISION, a nonnegative integer.
+The new precision of F is returned.  Note that the return value may differ
+from PRECISION if the underlying library is unable to support exactly
+PRECISION bits of precision.
+*/
+       (f, precision))
+{
+  unsigned long prec;
+
+  CHECK_BIGFLOAT (f);
+  if (INTP (precision))
+    {
+      prec = (XINT (precision) <= 0) ? 1UL : (unsigned long) XINT (precision);
+    }
+#ifdef HAVE_BIGNUM
+  else if (BIGNUMP (precision))
+    {
+      prec = bignum_fits_ulong_p (XBIGNUM_DATA (precision))
+	? bignum_to_ulong (XBIGNUM_DATA (precision))
+	: UINT_MAX;
+    }
+#endif
+  else
+    {
+      dead_wrong_type_argument (Qintegerp, f);
+      return Qnil;
+    }
+
+  XBIGFLOAT_SET_PREC (f, prec);
+  return Fbigfloat_get_precision (f);
 }
 
 static int
@@ -669,15 +710,9 @@ syms_of_number (void)
   DEFSYMBOL (Qrationalp);
   DEFSYMBOL (Qfloatingp);
   DEFSYMBOL (Qrealp);
-#ifndef HAVE_BIGNUM
   DEFSYMBOL (Qbignump);
-#endif
-#ifndef HAVE_RATIO
   DEFSYMBOL (Qratiop);
-#endif
-#ifndef HAVE_BIGFLOAT
   DEFSYMBOL (Qbigfloatp);
-#endif
 
   /* Functions */
   DEFSUBR (Fbignump);
@@ -689,6 +724,8 @@ syms_of_number (void)
   DEFSUBR (Fnumerator);
   DEFSUBR (Fdenominator);
   DEFSUBR (Fbigfloatp);
+  DEFSUBR (Fbigfloat_get_precision);
+  DEFSUBR (Fbigfloat_set_precision);
   DEFSUBR (Ffloatingp);
   DEFSUBR (Frealp);
   DEFSUBR (Fcanonicalize_number);
@@ -705,15 +742,15 @@ vars_of_number (void)
      we can put bignums in them. */
   DEFVAR_LISP_MAGIC ("default-float-precision", &Vdefault_float_precision, /*
 The default floating-point precision for newly created floating point values.
-This should be 0 for the precision of the machine-supported floating point
-type (the C double type), or an unsigned integer no greater than
-bigfloat-max-prec (currently the size of a C unsigned long).
+This should be 0 to create Lisp float types, or an unsigned integer no greater
+than `bigfloat-maximum-precision' to create Lisp bigfloat types with the
+indicated precision.
 */ default_float_precision_changed);
   Vdefault_float_precision = make_int (0);
 
-  DEFVAR_CONST_LISP ("bigfloat-max-prec", &Vbigfloat_max_prec /*
+  DEFVAR_CONST_LISP ("bigfloat-maximum-precision", &Vbigfloat_max_prec /*
 The maximum number of bits of precision a bigfloat can have.
-This is currently the value of ULONG_MAX on the target machine.
+This is determined by the underlying library used to implement bigfloats.
 */);
 
 #ifdef HAVE_BIGFLOAT
