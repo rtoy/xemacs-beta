@@ -1,3 +1,7 @@
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
 2003-11-06  Adrian Aichner  <adrian@xemacs.org>
 
 	* minitar.c (Usage): Change return type to void.

@@ -1,3 +1,7 @@
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
 2004-01-21  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (mmencode): Pass $(ldflags) to the compiler.

@@ -1,3 +1,7 @@
+2004-03-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.17 "chayote" is released.
+
 2004-03-18  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* configure.in (Compiler feature macros): Define _POSIX_C_SOURCE
