@@ -410,11 +410,7 @@ Returns t if both are found, nil otherwise.  As a side effect, set
 	result
       nil)))
 
-;;; FIXME: There's something strange happening with verifying the
-;;; package-index file, it is reporting "The message was corrupt" even
-;;; though verifying from the command line (outside of XEmacs) reports
-;;; a good signature. --SY
-(defcustom package-get-require-signed-base-updates nil
+(defcustom package-get-require-signed-base-updates (package-get-pgp-available-p)
   "*If non-nil, try to verify the package index database via PGP.
 
 If nil, no PGP verification is done.  If the package index database
