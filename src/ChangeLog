@@ -1,5 +1,7 @@
 2001-05-25  Martin Buchholz  <martin@xemacs.org>
 
+	* fns.c (base64_conversion_error): Fix compile warning.
+
 	* realpath.c: This file doesn't deal with internal
 	representation.  Define DONT_ENCAPSULATE.
 	Fixes crash in test suite.

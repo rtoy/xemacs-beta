@@ -3421,7 +3421,7 @@ static short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-DOESNT_RETURN
+static DOESNT_RETURN
 base64_conversion_error (const char *reason, Lisp_Object frob)
 {
   signal_error (Qbase64_conversion_error, reason, frob);
