@@ -1,3 +1,9 @@
+2001-12-26  Adrian Aichner  <adrian@xemacs.org>
+
+	* printer.el (generic-print-region): Pass on arguments start, end,
+	and buffer to lpr-region.  The original problem was pointed out by
+	Nevin Kapur.
+
 2001-12-26  John Paul Wallington  <jpw@shootybangbang.com>
 
 	* keydefs.el (global-map): add a defn for C-x 5 1, previously
