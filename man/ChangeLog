@@ -1,3 +1,9 @@
+2002-11-12  Ilya N. Golubev  <gin@mo.msk.ru>
+
+	* xemacs/custom.texi (Face Customization):
+	(Faces):
+	Document face-frob-from-locale-first variable.
+
 2002-12-03  Didier Verna  <didier@xemacs.org>
 
 	* xemacs-faq.texi (Customization): add missing menu entry for Q3.2.7.
