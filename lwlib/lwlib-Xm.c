@@ -824,7 +824,7 @@ void
 xm_update_one_widget (widget_instance* instance, Widget widget,
 		      widget_value* val, Boolean deep_p)
 {
-  WidgetClass class;
+  WidgetClass class_;
   Arg al [20];
   int ac = 0;
 
@@ -840,25 +840,25 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
   /* Common to all label like widgets */
   xm_safe_update_label (instance, widget, val);
 #endif
-  class = XtClass (widget);
+  class_ = XtClass (widget);
   /* Class specific things */
-  if (class == xmPushButtonWidgetClass ||
-      class == xmArrowButtonWidgetClass)
+  if (class_ == xmPushButtonWidgetClass ||
+      class_ == xmArrowButtonWidgetClass)
     {
       xm_update_pushbutton (instance, widget, val);
     }
 #ifdef LWLIB_MENUBARS_MOTIF
-  else if (class == xmCascadeButtonWidgetClass)
+  else if (class_ == xmCascadeButtonWidgetClass)
     {
       xm_update_cascadebutton (instance, widget, val);
     }
 #endif
-  else if (class == xmToggleButtonWidgetClass
-	   || class == xmToggleButtonGadgetClass)
+  else if (class_ == xmToggleButtonWidgetClass
+	   || class_ == xmToggleButtonGadgetClass)
     {
       xm_update_toggle (instance, widget, val);
     }
-  else if (class == xmRowColumnWidgetClass)
+  else if (class_ == xmRowColumnWidgetClass)
     {
       Boolean radiobox = 0;
 
@@ -872,31 +872,31 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
 	xm_update_menu (instance, widget, val, deep_p);
 #endif
     }
-  else if (class == xmTextWidgetClass)
+  else if (class_ == xmTextWidgetClass)
     {
       xm_update_text (instance, widget, val);
     }
-  else if (class == xmTextFieldWidgetClass)
+  else if (class_ == xmTextFieldWidgetClass)
     {
       xm_update_text_field (instance, widget, val);
     }
-  else if (class == xmListWidgetClass)
+  else if (class_ == xmListWidgetClass)
     {
       xm_update_list (instance, widget, val);
     }
 #if defined (LWLIB_WIDGETS_MOTIF) && XmVERSION > 1
-  else if (class == xmComboBoxWidgetClass)
+  else if (class_ == xmComboBoxWidgetClass)
     {
       xm_update_combo_box (instance, widget, val);
     }
 #endif
 #ifdef LWLIB_SCROLLBARS_MOTIF
-  else if (class == xmScrollBarWidgetClass)
+  else if (class_ == xmScrollBarWidgetClass)
     {
       xm_update_scrollbar (instance, widget, val);
     }
 #endif
-  else if (class == xmScaleWidgetClass)
+  else if (class_ == xmScaleWidgetClass)
     {
       xm_update_progress (instance, widget, val);
     }
@@ -910,7 +910,7 @@ void
 xm_update_one_value (widget_instance* instance, Widget widget,
 		     widget_value* val)
 {
-  WidgetClass class = XtClass (widget);
+  WidgetClass class_ = XtClass (widget);
   widget_value *old_wv;
 
   /* copy the call_data slot into the "return" widget_value */
@@ -921,28 +921,28 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 	break;
       }
 
-  if (class == xmToggleButtonWidgetClass || class == xmToggleButtonGadgetClass)
+  if (class_ == xmToggleButtonWidgetClass || class_ == xmToggleButtonGadgetClass)
     {
       Arg al [1];
       XtSetArg (al [0], XmNset, &val->selected);
       XtGetValues (widget, al, 1);
       val->edited = True;
     }
-  else if (class == xmTextWidgetClass)
+  else if (class_ == xmTextWidgetClass)
     {
       if (val->value)
 	XtFree (val->value);
       val->value = XmTextGetString (widget);
       val->edited = True;
     }
-  else if (class == xmTextFieldWidgetClass)
+  else if (class_ == xmTextFieldWidgetClass)
     {
       if (val->value)
 	XtFree (val->value);
       val->value = XmTextFieldGetString (widget);
       val->edited = True;
     }
-  else if (class == xmRowColumnWidgetClass)
+  else if (class_ == xmRowColumnWidgetClass)
     {
       Boolean radiobox = 0;
       {
@@ -973,9 +973,9 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 	  val->edited = True;
 	}
     }
-  else if (class == xmListWidgetClass
+  else if (class_ == xmListWidgetClass
 #if defined (LWLIB_WIDGETS_MOTIF) && XmVERSION > 1
-	   || class == xmComboBoxWidgetClass
+	   || class_ == xmComboBoxWidgetClass
 #endif
 	   )
     {
@@ -983,7 +983,7 @@ xm_update_one_value (widget_instance* instance, Widget widget,
       int* pos_list;
       Widget list = widget;
 #if defined (LWLIB_WIDGETS_MOTIF) && XmVERSION > 1
-      if (class == xmComboBoxWidgetClass)
+      if (class_ == xmComboBoxWidgetClass)
 	list = CB_List (widget);
 #endif
       if (XmListGetSelectedPos (list, &pos_list, &pos_cnt))
@@ -1008,7 +1008,7 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 	}
     }
 #ifdef LWLIB_SCROLLBARS_MOTIF
-  else if (class == xmScrollBarWidgetClass)
+  else if (class_ == xmScrollBarWidgetClass)
     {
       /* This function is not used by the scrollbar. */
       return;

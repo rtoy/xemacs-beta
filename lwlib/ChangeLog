@@ -1,3 +1,20 @@
+2002-12-16  Ben Wing  <ben@xemacs.org>
+
+	* lwlib-Xlw.c (xlw_update_one_widget):
+	* lwlib-Xm.c (xm_update_one_widget):
+	* lwlib-Xm.c (xm_update_one_value):
+	* lwlib.c:
+	* lwlib.c (merge_scrollbar_values):
+	* xlwmenu.c:
+	* xlwmenu.c (display_menu):
+	* xlwmenu.c (XlwMenuInitialize):
+	* xlwmenu.c (XlwMenuSetValues):
+	* xlwradio.c:
+	* xlwradio.c (RadioClassPartInit):
+	* xlwradio.c (RadioSet):
+	* xlwradio.c (RadioUnset):
+	class -> class_, new -> new_.
+
 2003-01-04  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.10 "burdock" is released.

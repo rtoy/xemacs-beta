@@ -196,24 +196,24 @@ copy_scrollbar_values (widget_value *val, widget_value *copy)
  * to new->scrollbar_data.
  */
 static Boolean
-merge_scrollbar_values (widget_value *old, widget_value *new)
+merge_scrollbar_values (widget_value *old, widget_value *new_)
 {
   Boolean changed = False;
 
-  if (new->scrollbar_data && !old->scrollbar_data)
+  if (new_->scrollbar_data && !old->scrollbar_data)
     {
-      copy_scrollbar_values (new, old);
+      copy_scrollbar_values (new_, old);
       changed = True;
     }
-  else if (!new->scrollbar_data && old->scrollbar_data)
+  else if (!new_->scrollbar_data && old->scrollbar_data)
     {
       free (old->scrollbar_data);
       old->scrollbar_data = NULL;
     }
-  else if (new->scrollbar_data && old->scrollbar_data)
+  else if (new_->scrollbar_data && old->scrollbar_data)
     {
       scrollbar_values *old_sb = old->scrollbar_data;
-      scrollbar_values *new_sb = new->scrollbar_data;
+      scrollbar_values *new_sb = new_->scrollbar_data;
 
       if ((old_sb->line_increment   != new_sb->line_increment)	 ||
 	  (old_sb->page_increment   != new_sb->page_increment)	 ||
@@ -836,6 +836,8 @@ initialize_widget_instance (widget_instance *instance)
     }
 }
 
+#if defined (NEED_LUCID) || defined (NEED_ATHENA) || defined (NEED_MOTIF)
+
 /* strcasecmp() is not sufficiently portable or standard,
    and it's easier just to write our own. */
 static int
@@ -851,8 +853,6 @@ ascii_strcasecmp (const char *s1, const char *s2)
       if (c1 == '\0') return 0;
     }
 }
-
-#if defined (NEED_LUCID) || defined (NEED_ATHENA) || defined (NEED_MOTIF)
 
 static widget_creation_function
 find_in_table (const char *type, const widget_creation_entry table[])

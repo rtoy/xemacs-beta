@@ -200,9 +200,9 @@ RadioClassInit (void)
 }
 
 static	void
-RadioClassPartInit (WidgetClass class)
+RadioClassPartInit (WidgetClass class_)
 {
-  RadioWidgetClass c     = (RadioWidgetClass) class ;
+  RadioWidgetClass c     = (RadioWidgetClass) class_ ;
   RadioWidgetClass super = (RadioWidgetClass)c->core_class.superclass ;
 
   if( c->radio_class.drawDiamond == NULL  ||
@@ -480,14 +480,14 @@ RadioSet (Widget   w,
 	  Cardinal *num_params) /* unused */
 {
     RadioWidget	rw = (RadioWidget)w;
-    RadioWidgetClass class = (RadioWidgetClass) w->core.widget_class ;
+    RadioWidgetClass class_ = (RadioWidgetClass) w->core.widget_class ;
 
     if( rw->command.set )
       return ;
 
     rw->command.set = TRUE ;
     if( XtIsRealized(w) )
-      class->radio_class.drawDiamond(w) ;
+      class_->radio_class.drawDiamond(w) ;
 }
 
 
@@ -499,14 +499,14 @@ RadioUnset (Widget   w,
 	    Cardinal *num_params) /* unused */
 {
     RadioWidget	rw = (RadioWidget)w;
-    RadioWidgetClass class = (RadioWidgetClass) w->core.widget_class ;
+    RadioWidgetClass class_ = (RadioWidgetClass) w->core.widget_class ;
 
     if( ! rw->command.set )
       return ;
 
     rw->command.set = FALSE ;
     if( XtIsRealized(w) )
-      class->radio_class.drawDiamond(w) ;
+      class_->radio_class.drawDiamond(w) ;
 }
 
 

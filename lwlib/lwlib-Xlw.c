@@ -535,12 +535,12 @@ void
 xlw_update_one_widget (widget_instance* instance, Widget widget,
 		       widget_value* val, Boolean deep_p)
 {
-  WidgetClass class = XtClass (widget);
+  WidgetClass class_ = XtClass (widget);
 
   if (0)
     ;
 #ifdef LWLIB_MENUBARS_LUCID
-  else if (class == xlwMenuWidgetClass)
+  else if (class_ == xlwMenuWidgetClass)
     {
       XlwMenuWidget mw;
       Arg al [1];
@@ -553,13 +553,13 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
     }
 #endif
 #ifdef LWLIB_SCROLLBARS_LUCID
-  else if (class == xlwScrollBarWidgetClass)
+  else if (class_ == xlwScrollBarWidgetClass)
     {
       xlw_update_scrollbar (instance, widget, val);
     }
 #endif
 #ifdef LWLIB_TABS_LUCID
-  else if (class == tabsWidgetClass)
+  else if (class_ == tabsWidgetClass)
     {
       xlw_update_tab_control (instance, widget, val);
     }

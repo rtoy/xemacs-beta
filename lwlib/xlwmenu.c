@@ -151,13 +151,13 @@ xlwMenuResources[] =
 };
 #undef offset
 
-static Boolean XlwMenuSetValues (Widget current, Widget request, Widget new,
+static Boolean XlwMenuSetValues (Widget current, Widget request, Widget new_,
 				 ArgList args, Cardinal *num_args);
 static void XlwMenuRealize (Widget w, Mask *valueMask,
 			    XSetWindowAttributes *attributes);
 static void XlwMenuRedisplay (Widget w, XEvent *ev, Region region);
 static void XlwMenuResize (Widget w);
-static void XlwMenuInitialize (Widget request, Widget new, ArgList args,
+static void XlwMenuInitialize (Widget request, Widget new_, ArgList args,
 			       Cardinal *num_args);
 static void XlwMenuDestroy (Widget w);
 static void XlwMenuClassInitialize (void);
@@ -2200,7 +2200,7 @@ size_menu (XlwMenuWidget mw, int level)
 static void
 display_menu (XlwMenuWidget mw, int level, Boolean just_compute_p,
 	      XPoint *highlighted_pos, XPoint *hit, widget_value **hit_return,
-	      widget_value *this, widget_value *that)
+	      widget_value *this_, widget_value *that)
 {
   widget_value *val;
   widget_value *following_item;
@@ -2272,7 +2272,7 @@ display_menu (XlwMenuWidget mw, int level, Boolean just_compute_p,
 	}
 
       just_compute_this_one_p =
-	just_compute_p || ((this || that) && val != this &&  val != that);
+	just_compute_p || ((this_ || that) && val != this_ &&  val != that);
 
       start.x = where.x;
       start.y = where.y;
@@ -3000,11 +3000,11 @@ default_font_of_font_list (XmFontList font_list)
 #endif /* NEED_MOTIF */
 
 static void
-XlwMenuInitialize (Widget request, Widget new, ArgList args,
+XlwMenuInitialize (Widget request, Widget new_, ArgList args,
 		   Cardinal *num_args)
 {
   /* Get the GCs and the widget size */
-  XlwMenuWidget mw = (XlwMenuWidget)new;
+  XlwMenuWidget mw = (XlwMenuWidget)new_;
   Window window = RootWindowOfScreen (DefaultScreenOfDisplay (XtDisplay (mw)));
   Display *display = XtDisplay (mw);
 
@@ -3163,11 +3163,11 @@ XlwMenuDestroy (Widget w)
 }
 
 static Boolean
-XlwMenuSetValues (Widget current, Widget request, Widget new, ArgList args,
+XlwMenuSetValues (Widget current, Widget request, Widget new_, ArgList args,
 		  Cardinal *num_args)
 {
   XlwMenuWidget oldmw = (XlwMenuWidget)current;
-  XlwMenuWidget newmw = (XlwMenuWidget)new;
+  XlwMenuWidget newmw = (XlwMenuWidget)new_;
   Boolean redisplay = False;
   int i;
 
