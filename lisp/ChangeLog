@@ -1,3 +1,8 @@
+2005-02-19  Norbert Koch  <viteno@xemacs.org>
+
+	* package-ui.el (pui-list-packages): The longest package name now
+	has 20 characters.  Adapt the display.
+
 2005-02-18  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.19 "chives" is released.

@@ -607,11 +607,11 @@ Warning: No download sites specified.  Package index may be out of date.
 "))
     
     (if pui-list-verbose
-	(insert "                 Latest Installed
-  Package name   Vers.  Vers.   Description
+	(insert "                       Latest Installed
+  Package name         Vers.  Vers.   Description
 ")
-      (insert "                 Latest
-  Package name   Vers.  Description
+      (insert "                       Latest
+  Package name         Vers.  Description
 "))
     (insert sep-string)
     (setq start (point))
@@ -640,13 +640,13 @@ Warning: No download sites specified.  Package index may be out of date.
 		  ((numberp current-vers)
 		   (setq current-vers (format "%.2f" current-vers))))
 		 (insert
-		  (format "%s %-15s %-5.2f  %-5s  %s\n"
+		  (format "%s %-20s %-5.2f  %-5s  %s\n"
 			  (car disp) pkg-sym 
 			  (if (stringp version)
 			      (string-to-number version)
 			    version)
 			  current-vers desc)))
-	     (insert (format "%s %-15s %-5s %s\n"
+	     (insert (format "%s %-20s %-5s %s\n"
 			     (car disp)
 			     pkg-sym version desc)))
 	   (save-excursion
