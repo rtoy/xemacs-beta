@@ -1,3 +1,16 @@
+2004-06-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (Autodetection of Gdk libraries and includes):
+	Don't allow mixing of GTK with other toolkits.
+
+2004-06-12  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in: Improve style of WARNINGs.
+
+2004-05-20  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (HAVE_GPM): Die if GPM requested but not found.
+
 2004-05-10  Jerry James  <james@xemacs.org>
 
 	* aclocal.m4: Typo fix.

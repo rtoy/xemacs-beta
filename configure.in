@@ -1763,7 +1763,7 @@ case "$opsys" in
     AC_DEFINE(_XOPEN_SOURCE,500)
     AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
     ;;
-  freebsd4.9)
+  freebsd4.[5-9])
     AC_DEFINE(_POSIX_C_SOURCE,199506L)
     dnl #### Do we want these too?  Apparently yes for _XOPEN_SOURCE=500.
     AC_DEFINE(_XOPEN_SOURCE,500)
@@ -2923,10 +2923,24 @@ if test "${GTK_CONFIG}" != "no"; then
 
       window_system=gtk
       with_gtk=yes
-      with_x11=no
+      if test "$with_x11" != "no"; then
+	AC_MSG_WARN([Configuring GTK, forcing with_x11 to no])
+	with_x11=no
+      fi
+
+      for feature in scrollbars toolbars menubars dialogs widgets
+      do
+        eval "feature_value=\${with_${feature}}"
+	case "${feature_value}" in
+	yes|no|gtk|"" )
+	    ;;
+	* )
+	  AC_MSG_WARN([${feature_value} requested for ${feature}, forcing to gtk]) ;;
+	esac
+      done
 
       test "${with_scrollbars}" != "no" && with_scrollbars=gtk
-      test "${with_toolbars}" != no && with_toolbars=gtk
+      test "${with_toolbars}" != "no" && with_toolbars=gtk
       test "${with_menubars}" != "no" && with_menubars=gtk
       test "${with_dialogs}" != "no" && with_dialogs=gtk
       test "${with_widgets}" != "no" && with_widgets=gtk
@@ -4756,12 +4770,19 @@ if test "$with_tty" = "yes"  ; then
   AC_DEFINE_UNQUOTED(CURSES_H_FILE, "${curses_h_file-curses.h}")
   AC_DEFINE_UNQUOTED(TERM_H_FILE, "${term_h_file-term.h}")
 
-  dnl Autodetect gpm
-  test -z "$with_gpm" && { AC_CHECK_HEADER(gpm.h, , with_gpm=no) }
-  test -z "$with_gpm" && { AC_CHECK_LIB(gpm, Gpm_Open, with_gpm=yes, with_gpm=no) }
-  if test "$with_gpm" = "yes"; then
-    AC_DEFINE(HAVE_GPM)
-    XE_PREPEND(-lgpm, LIBS)
+  dnl General Purpose Mouse (libgpm) support
+  if test "$with_gpm" != "no"; then
+    AC_CHECK_HEADER(gpm.h, [
+      AC_CHECK_LIB(gpm, Gpm_Open, have_gpm=yes)])
+    if test "$have_gpm" = "yes"; then
+      with_gpm=yes
+      AC_DEFINE(HAVE_GPM)
+      XE_PREPEND(-lgpm, LIBS)
+    else
+      test "$with_gpm" = "yes" && \
+        XE_DIE("GPM requested, but gpm.h or libgpm seems to be missing.")
+      with_gpm=no
+    fi
   fi
 
 else dnl "$with_tty" = "no"
@@ -5554,19 +5575,19 @@ if test "$use_union_type" = yes ; then
   echo "  WARNING: ---------------------------------------------------------"
   echo "  WARNING: This tends to trigger compiler bugs, especially when"
   echo "  WARNING: combined with MULE and ERROR_CHECKING.  Crashes have"
-  echo "  WARNING: been seen with various versions of GCC, and recently"
-  echo "  WARNING: with Visual C++ as well."
+  echo "  WARNING: been seen with various versions of GCC (up to about 2.95),"
+  echo "  WARNING: and recently with Visual C++ as well (mid-2003)."
+  echo "  WARNING: More recent versions may be safer, or not."
   echo "  WARNING: ---------------------------------------------------------"
 fi
-test "$use_union_type" = yes && echo "  WARNING: Use of the union type may cause crashes due to compiler bugs."
 test "$use_kkcc" = yes && echo "  Using the new GC algorithms."
 test "$pdump" = yes && echo "  Using the new portable dumper."
 test "$debug" = yes && echo "  Compiling in support for extra debugging code."
 test "$usage_tracking" = yes && echo "  Compiling in support for active usage tracking (Sun internal)."
 if test "$error_check_extents $error_check_types $error_check_text $error_check_gc $error_check_malloc $error_check_glyphs $error_check_byte_code $error_check_display $error_check_structures" \
   != "no no no no no no no no no"; then
+  echo "  Compiling in support for runtime error checking."
   echo "  WARNING: ---------------------------------------------------------"
-  echo "  WARNING: Compiling in support for runtime error checking."
   echo "  WARNING: XEmacs will run noticeably more slowly as a result."
   echo "  WARNING: Error checking is on by default for XEmacs beta releases."
   echo "  WARNING: ---------------------------------------------------------"

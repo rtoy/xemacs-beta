@@ -456,7 +456,7 @@ install-arch-indep: mkdir info
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	    chmod 0644 ${mandir}/$${page}${manext} ; \
 	  done
-	@echo "If you would like to save approximately 2M of disk space, do"
+	@echo "If you would like to save approximately 4M of disk space, do"
 	@echo "make gzip-el"
 	@echo "or you may run "
 	@echo ${srcdir}/lib-src/gzip-el.sh lispdir " from the command line."
