@@ -1192,6 +1192,7 @@ trivial_regexp_p (Lisp_Object regexp)
     {
       switch (*s++)
 	{
+	/* #### howcum ']' doesn't appear here, but ... */
 	case '.': case '*': case '+': case '?': case '[': case '^': case '$':
 	  return 0;
 	case '\\':
@@ -1199,9 +1200,11 @@ trivial_regexp_p (Lisp_Object regexp)
 	    return 0;
 	  switch (*s++)
 	    {
+	    /* ... ')' does appear here?  ('<' and '>' can appear singly.) */
+	    /* #### are there other constructs to check? */
 	    case '|': case '(': case ')': case '`': case '\'': case 'b':
 	    case 'B': case '<': case '>': case 'w': case 'W': case 's':
-	    case 'S': case '=':
+	    case 'S': case '=': case '{': case '}':
 #ifdef MULE
 	    /* 97/2/25 jhod Added for category matches */
 	    case 'c': case 'C':

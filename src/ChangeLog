@@ -1,3 +1,9 @@
+2003-09-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* search.c (trivial_regexp_p): Regexps containing "\{" are
+	nontrivial.  Thanks to Manfred Bartz for reporting the bug and
+	Stefan Monnier for suggesting a diagnosis.
+
 2003-09-26  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.16 "celeriac" is released.
