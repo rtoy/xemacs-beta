@@ -23078,6 +23078,40 @@ specifiers and @file{fontconfig} overlap, we should consider using
 of @file{Xft}'s rendering functionality should be separated from use of
 @file{fontconfig}.
 
+@item Font menus
+The @samp{Options->Font} and @samp{Options->Font Sizes} menus are
+broken, by design, not just by @file{Xft}.  Although they work better
+in Eric and Matthias's patch than in Stephen's, even their version has
+the problem that many fonts are unavailable because they don't match the
+current size---which is very strange, since @file{Xft} fonts are of
+course scalable.  But the whole idea of requiring that the font match
+the size is strange.  And the @samp{Options->Font Weights} menu is just
+disabled, and has been for eons.
+
+@item X resources
+Currently in Stephen's patch there are @emph{four} treatments of font
+resources.  There are the @samp{XEmacs.@var{face}.attributeFont}
+resources used to set a single global font specification.  In the
+widgets, some (still) have a @samp{font} resource using the automatic
+@file{Xt} resource conversion to @samp{FontStruct}, some have separate
+@samp{font} and @samp{xftFont} resources with the former automatically
+converted to @samp{FontStruct} by @file{Xt} and the latter left as a
+string, to be converted by @samp{XftParseName} later, and some have a
+single @samp{font} resource which is converted to @samp{FontStruct} by
+@file{Xt} or the latter left as a string, depending on whether
+@file{Xft} was enabled by @samp{configure} or not.
+
+Stephen thinks that all of these should be converted to use the face
+approach, perhaps with some way to set specifications for individual
+widgets, frames, or buffers.  This will require some careful design work
+to incorporate face support in the widgets.  We should just accept any
+or all of @samp{font}, @samp{fontSet}, and @samp{fontList} resources,
+treat them all as lists of font names, either @samp{XLFD}- or
+@file{fontconfig}-style, parse them ourselves (ie, not use the @file{Xt}
+resource manager), and add them to font specifiers as appropriate.  But
+this will require a bit of thought to obey POLA vis-a-vis usual @file{Xt}
+conventions.
+
 @item Rendering engine objects
 With the introduction of the ``Xft patch,'' the X11, Macintosh, and MS
 Windows platforms are all able to support multiple font rendering
@@ -23151,6 +23185,10 @@ relabel them.
 A third problem is that you generally can't tell if there are ``holes''
 in the repertoire until you try to display the glyph.
 
+All of this tends to break standard idioms for handling Mule fonts in
+@file{init} files because they depend on charsets being disjoint
+repertoires.
+
 The TrueType fonts (and the later OpenType standard) provides for a
 proper character set query (as a Boolean vector indexed by Unicode code
 points), as well as providing a list of supported languages.
@@ -23181,6 +23219,21 @@ Stephen has a branch containing his stuff in XEmacs CVS.  The branch
 point tag is @samp{sjt-xft-bp}, roughly corresponding to XEmacs 21.5.18,
 and branch tag is @samp{sjt-xft}.
 
+@subsubsection Bugs Reported in sjt-xft
+
+@table @code
+@item ChangeLogs
+A lot of these, especially for Eric and Matthias's work, are missing.
+Mea culpa.
+
+@item Options->Font
+@itemx Options->Font Size
+These menus don't work.  All fonts are greyed out.  All sizes are
+available, but many (most?) faces don't change size, in particular,
+@samp{default} does not.
+@end table
+
+
 @node Better Rendering Support -- Configuration with the Interim Patches, , Better Rendering Support -- Current Status, Future Work -- Better Rendering Support
 @subsection Better Rendering Support -- Configuration with the Interim Patches
 @cindex better rendering support, configuration with the interim patches
@@ -23194,12 +23247,35 @@ mind when configuring:
 The only way to configure widget fonts at the present time is to use X
 resources (or hack the source and rebuild).  Currently supported widgets
 are
-    @itemize
-    @item
-    menubars
-    @item
-    tab controls
-    @end itemize
+@itemize
+@item
+menubars
+@item
+tab controls
+@end itemize
+
+Here are the resources I use.  @strong{Warning:} @emph{This interface
+will change.}  The tab control has separate Font and XftFont resources,
+and uses the X resource manager to instantiate a FontStruct from the
+Font resource.  The menubar on the other hand uses Font for both, but
+converts to FontStruct if Xft is not compiled in, and leaves it as a
+string if Xft is compiled in.  There is no equivalent facility for
+XftFont yet, and creating one that handles both FontStruct and XftFont
+depending on XEmacs's configuration and the font name seems error-prone
+at best.  Probably we will revert to a simple string representation for
+this resource, and convert to a face in XEmacs rather than a font in
+Xt/Xft.
+@example
+XEmacs*Tabs.xftFont: Bitstream Vera Sans-18 
+XEmacs*menubar.font: Bitstream Vera Sans-18
+XEmacs.modeline.attributeFont: Bitstream Charter-26
+XEmacs.default.attributeFont: Bitstream Vera Sans Mono-24
+@end example
+No, I don't understand why I need to use different point sizes to get
+what looks like good balance to my eyes.  I do highly recommend use of a
+proportional font in the modeline because it allows a lot more text to
+fit there.
+
 @item
 Because fonts supporting other languages tend to support English as
 well, if you want to use one font for English and another for the other

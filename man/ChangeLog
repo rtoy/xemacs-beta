@@ -1,5 +1,15 @@
 2004-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* internals/internals.texi (Better Rendering Support --
+	Configuration with the Interim Patches):
+	Add documentation of X resources, especially for GUI elements.
+	(Better Rendering Support -- Implementation):
+	More comments about specification and design issues.
+	(Better Rendering Support -- Current Status):
+	New subsubsection "Bugs Reported in sjt-xft".
+
+2004-11-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* internals/internals.texi (Future Work -- Better Rendering Support):
 	New node.
 	(Top): 
