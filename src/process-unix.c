@@ -1938,7 +1938,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
   memset (&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
   sa.sin_port = theport;
-  sa.sin_addr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
+  sa.sin_addr.s_addr = inet_addr ((char *) XSTRING_DATA (dest));
 
   /* Socket configuration for reading ------------------------ */
 
@@ -1961,7 +1961,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest,
     }
 
   /* join multicast group */
-  imr.imr_multiaddr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
+  imr.imr_multiaddr.s_addr = inet_addr ((char *) XSTRING_DATA (dest));
   imr.imr_interface.s_addr = htonl (INADDR_ANY);
   if (setsockopt (rs, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		  &imr, sizeof (struct ip_mreq)) < 0)

@@ -1,3 +1,8 @@
+2001-08-30   Daiki Ueno  <ueno@unixuser.org>
+
+	* process-unix.c (unix_open_multicast_group): Remove too much
+	conversion between host and network byte order.
+
 2001-09-19  Ben Wing  <ben@xemacs.org>
 
 	* abbrev.c (abbrev_match_mapper):
@@ -995,7 +1000,7 @@
 	   great number of warnings when mixing signed and unsigned, and
 	   the casts are annoying.  More has been written on this
 	   elsewhere.
-	
+
 	-- All such quantity types just mentioned boil down to EMACS_INT,
 	   which is 32 bits on 32-bit machines and 64 bits on 64-bit
 	   machines.  This is guaranteed to be the same size as Lisp
@@ -1003,29 +1008,29 @@
 	   (unsigned!) and ssize_t.  The only type below that is not an
 	   EMACS_INT is Hashcode, which is an unsigned value of the same
 	   size as EMACS_INT.
-	
+
 	-- Type names should be relatively short (no more than 10
 	   characters or so), with the first letter capitalized and no
 	   underscores if they can at all be avoided.
-	
+
 	-- "count" == a zero-based measurement of some quantity.  Includes
 	   sizes, offsets, and indexes.
-	
+
 	-- "bpos" == a one-based measurement of a position in a buffer.
 	   "Charbpos" and "Bytebpos" count text in the buffer, rather than
 	   bytes in memory; thus Bytebpos does not directly correspond to
 	   the memory representation.  Use "Membpos" for this.
-	
+
 	-- "Char" refers to internal-format characters, not to the C type
 	   "char", which is really a byte.
-	
+
 	-- For the actual name changes, see the script below.
-	
+
 	I ran the following script to do the conversion. (NOTE: This script
 	is idempotent.  You can safely run it multiple times and it will
 	not screw up previous results -- in fact, it will do nothing if
 	nothing has changed.  Thus, it can be run repeatedly as necessary
-	to handle patches coming in from old workspaces, or old branches.) 
+	to handle patches coming in from old workspaces, or old branches.)
 	There are two tags, just before and just after the change:
 	`pre-integral-type-rename' and `post-integral-type-rename'.  When
 	merging code from the main trunk into a branch, the best thing to
@@ -1289,7 +1294,7 @@ typedef unsigned long Hashcode;
    SIGNED, since it also is used in functions that return the number of
    bytes actually read to or written from in an operation, and these
    functions can return -1 to signal error.
-   
+
    Note that the standard Unix read() and write() functions define the
    count going in as a size_t, which is UNSIGNED, and the count going
    out as an ssize_t, which is SIGNED.  This is a horrible design
@@ -1318,7 +1323,7 @@ typedef enum lstream_buffering
 	* fileio.c (normalize_filename):
 	* fileio.c (Fexpand_file_name):
 	Fix various C++ compile errors in Andy's recent code.
-	
+
 	* callint.c (Fcall_interactively):
 	* editfns.c (Ftemp_directory):
 	* editfns.c (Fuser_full_name):
@@ -1326,7 +1331,7 @@ typedef enum lstream_buffering
 	* lread.c (locate_file_map_suffixes):
 	* redisplay-x.c (x_ring_bell):
 	Fix sign-compare warnings.
-	
+
 	* scrollbar-msw.c:
 	* scrollbar-msw.c (mswindows_handle_scrollbar_event):
 	Fix crash under MS Windows.  See comment around line 223 for
@@ -1834,7 +1839,7 @@ typedef enum lstream_buffering
 	the point of entry/exit); and (d) there's no reasonable
 	possibility it will refer to a value greater than 2G, or if it
 	could, other things in XEmacs would break.
-	
+
 	Put parens around all sizeof args in case we decide to macro-ize
 	this. (I don't think it's necessary.  Now that we've turned
 	sign-compare warnings back on, we will get warnings wherever the
@@ -1933,7 +1938,7 @@ typedef enum lstream_buffering
 	* sysdir.h:
 	Do some hackery to avoid shadowing warnings.
 
-	* s\esix.h: 
+	* s\esix.h:
 	* m\tad68k.h:
 	Comment out redefinition of select (we don't have our own version
 	anyway, and we play preprocessor games with select in sysdir.h).
@@ -2001,9 +2006,9 @@ typedef enum lstream_buffering
 	* eval.c (Ffunction_min_args):
 	* eval.c (Ffunction_max_args):
 	Correct documentation.
-	
+
 	* elhash.c (Fremhash): Doc correction.
-	
+
 	---------------------------------------------------------------
 	                     LISP OBJECT CLEANUP:
 	---------------------------------------------------------------
@@ -2087,7 +2092,7 @@ typedef enum lstream_buffering
 	builds on union, it doesn't matter.)
 
 	Update the sample Lisp object definition in lrecord.h accordingly.
-	
+
 	* dumper.c (pdump_dump_root_objects):
 	* dumper.c (pdump_load_finish):
 	Fix places in dumper that referenced wrap_object to reference
@@ -2157,7 +2162,7 @@ typedef enum lstream_buffering
 
 	* dialog-msw.c:
 	Use internal_object_printer, since this object should not escape.
-	
+
 	---------------------------------------------------------------
  	  FIXING A CRASH THAT I HIT ONCE (AND A RELATED BAD BEHAVIOR):
 	---------------------------------------------------------------
@@ -2174,7 +2179,7 @@ typedef enum lstream_buffering
 	(2) catches need to be unwound one at a time when calling
 	unwind-protect code, rather than all at once at the end; otherwise,
 	incorrect behavior can result. (A comment shows exactly how.)
-	
+
 	* backtrace.h:
 	Improve comment about FSF differences in the handler stack.
 
@@ -2191,7 +2196,7 @@ typedef enum lstream_buffering
 	lurking bugs where such objects are freed too soon.  The only safe
 	way to fix these problems (and it fixes both problems at once) is
 	to make both of these structures Lisp objects.
-	
+
 	* lrecord.h (lrecord_type):
 	* emacs.c (main_1):
 	* inline.c:
@@ -2260,14 +2265,14 @@ typedef enum lstream_buffering
 	update_frame_window_mirrors().  It was extremely questionable
 	before, and now totally impossible, since it will create
 	Lisp objects during redisplay.
-	
+
 	* frame.c (mark_frame):
 	Mark the scrollbar instances, which are now Lisp objects.
 	Call mark_gutter() here, not in mark_redisplay().
-	
+
 	* gutter.c:
 	Update comments about correct marking.
-	
+
 	---------------------------------------------------------------
  	                  ISSUES BROUGHT UP BY MARTIN:
 	---------------------------------------------------------------
@@ -2299,7 +2304,7 @@ typedef enum lstream_buffering
 	* signal.c (qxe_setitimer):
 	Fix problem identified by Martin with Linux and g++ due to
 	non-standard declaration of setitimer().
-	
+
 	* systime.h:
 	Update the docs for "qxe_" to point out why making the
 	encapsulation explicit is always the right way to go. (setitimer()
@@ -2331,7 +2336,7 @@ typedef enum lstream_buffering
 
 
 	------ signal-code changes ------
-	
+
 	* data.c (init_data_very_early):
 	* device-tty.c (init_device_tty):
 	* emacs.c (fatal_error_signal):
@@ -2365,7 +2370,7 @@ typedef enum lstream_buffering
 	* fileio.c:
 	* sysdep.c (qxe_reliable_signal):
 	Rename sys_do_signal to qxe_reliable_signal.
-	
+
 	* signal.c (set_timeout_signal):
 	* process-unix.c (close_safely):
 	* profile.c (Fstart_profiling):
@@ -2379,7 +2384,7 @@ typedef enum lstream_buffering
 	* nt.c (init_ntproc):
 	Eliminate term_ntproc(), which is blank; used as a SIGABRT handler,
 	which was wrong anyway.
-	
+
 	* nt.c:
 	* win32.c:
 	* win32.c (sigmask):
@@ -2397,11 +2402,11 @@ typedef enum lstream_buffering
 
 
 	------ other changes ------
-	
+
 	* s\mingw32.h:
 	Fix problems with NOT_C_CODE being in the wrong place and
 	excluding defines needed when building Makefile.in.in.
-	
+
 	* filelock.c:
 	* mule-canna.c:
 	* mule-canna.c (Fcanna_initialize):
@@ -2455,7 +2460,7 @@ typedef enum lstream_buffering
 	* s\windowsnt.h:
 	* s\xenix.h:
 	Rename 'GNU Emacs' to XEmacs in the copyright and comments.
-	
+
 	* nas.c (NAS_LITTLE_ENDIAN):
 	* nas.c (XTOOLKIT):
 	* nas.c (nas_play_sound_file):
@@ -2472,7 +2477,7 @@ typedef enum lstream_buffering
 2001-06-08  Ben Wing  <ben@xemacs.org>
 
 	------ gc-in-window-procedure fixes ------
-	
+
 	* alloc.c:
 	* alloc.c (struct post_gc_action):
 	* alloc.c (register_post_gc_action):
@@ -2501,12 +2506,12 @@ typedef enum lstream_buffering
 	Add comment about the utter evilness of what's going down here.
 
 	------ cygwin setitimer fixes ------
-	
+
 	* Makefile.in.in (sheap_objs):
 	* Makefile.in.in (profile_objs):
 	* Makefile.in.in (objs):
 	Compile profile.c only when HAVE_SETITIMER.
-	
+
 	* nt.c (mswindows_sigset):
 	* nt.c (mswindows_sighold):
 	* nt.c (mswindows_sigrelse):
@@ -2514,23 +2519,23 @@ typedef enum lstream_buffering
 	* nt.c (mswindows_raise):
 	* nt.c (close_file_data):
 	Style fixes.
-	
+
 	* nt.c:
 	Move setitimer() emulation to win32.c, because Cygwin needs it too.
-	
+
 	* profile.c:
 	* profile.c (Fstart_profiling):
 	* profile.c (Fstop_profiling):
 	Make sure we don't compile if no setitimer().  Use qxe_setitimer()
 	instead of just plain setitimer().
-	
+
 	* signal.c:
 	* signal.c (set_one_shot_timer):
 	* signal.c (alarm):
 	Define qxe_setitimer() as an encapsulation around setitimer() --
 	call setitimer() directly unless Cygwin or MS Win, in which case
 	we use our simulated version in win32.c.
-	
+
 	* systime.h:
 	* systime.h (struct itimerval):
 	* systime.h (ITIMER_REAL):
@@ -2550,7 +2555,7 @@ typedef enum lstream_buffering
 	to directly invoke the signal handlers.
 
 	------ windows shell fixes ------
-	
+
 	* callproc.c:
 	* ntproc.c:
 	Comments about how these two files must die.
@@ -2560,7 +2565,7 @@ typedef enum lstream_buffering
 	not just COMSPEC. (more correct and closer to FSF.) Don't
 	force a value for SHELL into the environment. (Comments added
 	to explain why not.)
-	
+
 	* nt.c (init_user_info):
 	Don't shove a fabricated SHELL into the environment.  See above.
 
@@ -2569,8 +2574,8 @@ typedef enum lstream_buffering
 	* glyphs-shared.c (read_bitmap_data): static.
 	* glyphs-shared.c (read_bitmap_data_from_file):
 	Style correction.
-	
-	
+
+
 
 2001-06-06  Ben Wing  <ben@xemacs.org>
 
@@ -2643,7 +2648,7 @@ typedef enum lstream_buffering
 	* fileio.c (report_error_with_errno):
 	* fileio.c (report_file_error):
 	Use CBufbyte instead of char for error/warning functions.
-	
+
 	* linuxplay.c:
 	* linuxplay.c (DONT_ENCAPSULATE):
 	* miscplay.c:
@@ -2660,13 +2665,13 @@ typedef enum lstream_buffering
 	Put back #include <audio.h> accidentally removed.
 	Make play_sound_data return an int, like all other
 	such functions in *play.c.
-	
+
 	* sound.c:
 	Fix up documentation of `play-sound'.
-	
+
 	* sysfile.h:
 	Don't include sys/fcntl.h, as per Martin's advice.
-	
+
 
 2001-06-04  William M. Perry  <wmperry@gnu.org>
 
@@ -2749,9 +2754,9 @@ typedef enum lstream_buffering
 	* event-msw.c (vars_of_event_mswindows):
 	Fix yet more problems with C-g handling.
 	Implement debug-mswindows-events.
-	
+
 	For 21.5:
-	
+
 	* event-stream.c:
 	* event-stream.c (add_low_level_timeout):
 	* event-stream.c (event_stream_generate_wakeup):
@@ -2812,7 +2817,7 @@ typedef enum lstream_buffering
 	properties of the char/unsigned char typedefs.  Add
 	SChar_Binary as an explicitly `signed' version of Char_Binary
 	and put back the `signed' declarations in miscplay.c.
-	
+
 	* alloc.c (build_string):
 	* alloc.c (build_ext_string):
 	* alloc.c (build_translated_string):
@@ -2896,7 +2901,7 @@ typedef enum lstream_buffering
 2001-05-29  Mike Alexander  <mta@arbortext.com>
 
 	* console-msw.h (FRAME_MSPRINTER_CHARHEIGHT): Unswap
-	FRAME_MSPRINTER_CHARWIDTH and FRAME_MSPRINTER_CHARHEIGHT 
+	FRAME_MSPRINTER_CHARWIDTH and FRAME_MSPRINTER_CHARHEIGHT
 
 2001-05-26  Ben Wing  <ben@xemacs.org>
 
@@ -4071,11 +4076,11 @@ typedef enum lstream_buffering
 2001-05-23  Ben Wing  <ben@xemacs.org>
 
 	for 21.4:
-	
+
 	* device-msw.c (msprinter_init_device):
 	signal an error rather than crash with an unavailable network
 	printer (from Mike Alexander).
-	
+
 	* event-msw.c:
 	* event-msw.c (struct winsock_stream):
 	* event-msw.c (winsock_writer):
@@ -4093,16 +4098,16 @@ typedef enum lstream_buffering
 	simply treat these as files, always.
 
 	optionally for 21.4 (doc fix):
-	
+
 	* lread.c (pas_de_holgazan_ici):
 	* lread.c (load_force_doc_string_unwind):
 	cambia de pas_de_lache_ici -- al minimo usa la palabra certa.
-	
+
 	for 21.5:
-	
+
 	* frame.c (restore_frame_list_to_its_unbesmirched_state):
 	fix warnings.
-	
+
 	* emacs.c (make_arg_list_1):
 	* nt.c (win32_get_long_filename):
 	* nt.c (init_environment):
@@ -4120,23 +4125,23 @@ typedef enum lstream_buffering
 	* unexnt.c (unexec):
 	* unexnt.c (get_bss_info_from_map_file):
 	rename MAX_PATH to standard PATH_MAX.
-	
+
 	* process-nt.c:
 	* realpath.c:
 	cleanup headers.
-	
+
 	* process-unix.c (get_internet_address):
 	* sysdep.c (init_system_name):
 	* systime.h:
 	* syswindows.h:
 	kill BROKEN_CYGWIN and support for way old beta versions of cygwin.
-	
+
 	* sysfile.h:
 	use _MAX_PATH (Windows) preferentially for PATH_MAX if defined.
 	include io.h on Cygwin (we need get_osfhandle()).  include
 	sys/fcntl.h always, since we were including it in various
 	header files anyway.
-	
+
 	* unexcw.c:
 	* unexcw.c (DONT_ENCAPSULATE):
 	* unexcw.c (CHECK_AOUT_POS):
@@ -4149,7 +4154,7 @@ typedef enum lstream_buffering
 	of PERROR.
 
 	* buffer.c (common_init_complex_vars_of_buffer): comment change.
-	
+
 	* database.c:
 	* debug.h (struct debug_classes):
 	* device-tty.c:
@@ -4222,13 +4227,13 @@ typedef enum lstream_buffering
 	* event-msw.c (mswindows_find_frame):
 	we might receive scrollbar events on windows without scrollbars
 	(e.g. holding down and moving the wheel button).
-	
+
 	* dired.c (user_name_completion): win9x support.
 
 	* eval.c: doc comment about gcpro'ing in record_unwind_protect.
 
 	* frame-msw.c (msprinter_init_frame_3): typo.
-	
+
 	* frame.c:
 	* frame.c (restore_frame_list_to_its_unbesmirched_state):
 	* frame.c (Fmake_frame):
@@ -4237,7 +4242,7 @@ typedef enum lstream_buffering
 	* process-nt.c:
 	* process-nt.c (vars_of_process_nt):
 	remove unused mswindows-quote-process-args.  rec for 21.4.
-	
+
 	* unexcw.c (PERROR): use do/while.
 
 2001-05-03  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
@@ -4253,7 +4258,7 @@ typedef enum lstream_buffering
 
 	* console.h (struct console_methods): Added flags member.
 	(CONSOLE_IMPLEMENTATION_FLAGS): Defined.
-	(CONMETH_IMPL_FLAG): 
+	(CONMETH_IMPL_FLAG):
 	(CONSOLE_IMPL_FLAG): Macro to check implememntation flags.
 	Defined XDEVIMPF_DONT_PREEMPT_REDISPLAY.
 
@@ -4356,14 +4361,14 @@ typedef enum lstream_buffering
 
 2001-05-11  Mike Alexander  <mta@arbortext.com>
 
-	* event-msw.c (mswindows_need_event_in_modal_loop): 
+	* event-msw.c (mswindows_need_event_in_modal_loop):
 	(mswindows_need_event):
 	Fix indentation.
 
 2001-05-12  Ben Wing  <ben@xemacs.org>
 
 	* .cvsignore: add xemacs.opt, a VC-generated file.
-	
+
 2001-05-12  Ben Wing  <ben@xemacs.org>
 
 	* event-msw.c (mswindows_dde_callback):
@@ -4384,12 +4389,12 @@ typedef enum lstream_buffering
 	* dired.c (user_name_completion):
 	* dired.c (syms_of_dired):
 	implement user-name-all-completions under Windows.
-	
+
 	* emacs.c:
 	* emacs.c (syms_of_emacs):
 	create new function force-debugging-signal (only when DEBUG_XEMACS)
 	to breakpoint or abort to the debugger.
-	
+
 	* file-coding.c:
 	* file-coding.c (syms_of_file_coding):
 	* file-coding.h:
@@ -4463,7 +4468,7 @@ typedef enum lstream_buffering
 	implement printing the selection when it's selected.
 
 	unrelated:
-	
+
 	* mule-charset.c (Fset_charset_ccl_program):
 	* mule-charset.c (invalidate_charset_font_caches):
 	force redisplay when set-charset-ccl-program called.
@@ -4564,7 +4569,7 @@ typedef enum lstream_buffering
 	* callint.c (Finteractive):
 	Add lots of documentation -- exactly what the Lisp equivalents of
 	all the interactive specs are.
-	
+
 	* console.h (struct console): change type of quit_char to Emchar.
 
 	* event-msw.c (lstream_type_create_mswindows_selectable): spacing
@@ -4675,7 +4680,7 @@ typedef enum lstream_buffering
 	* editfns.c (Fwiden):
 	* editfns.c (Fnarrow_to_region):
 	remove bogus lines setting zmacs_region_stays to 0.
-	
+
 	* scrollbar-msw.c (mswindows_handle_mousewheel_event):
 	remove debug lines.
 
@@ -4696,7 +4701,7 @@ typedef enum lstream_buffering
 
 	* cmdloop.c (call_command_loop):
 	Fix braino in bit-rotting code.
-	
+
 	* event-stream.c:
 	* event-stream.c (Fnext_event):
 	* event-stream.c (is_scrollbar_event):
@@ -4828,14 +4833,14 @@ typedef enum lstream_buffering
 
 	Augment documentation of the most common motion commands to make
 	note of the shifted-motion support.
-	
+
 2001-03-02  Ben Wing  <ben@xemacs.org>
 
 	* nt.c (mswindows_fstat):
 	* nt.c (mswindows_stat):
 	* search.c (boyer_moore):
 	Fix compile warnings under Windows.
-	
+
 	* sysdep.c (sys_readdir):
 	Fix buggy filename-conversion code under Mule.
 
@@ -4909,7 +4914,7 @@ typedef enum lstream_buffering
 
 	Undid the last change, since it is more controversial than I
 	thought.  It should be back in at some point soon.
-	
+
 2001-02-25  Ben Wing  <ben@xemacs.org>
 
 	* buffer.c:
@@ -4982,7 +4987,7 @@ typedef enum lstream_buffering
 	* md5.c (Fmd5):
 	* process-nt.c (nt_send_process):
 	* process-unix.c (unix_send_process):
-	
+
 	Correct Lstream lossage due to mixing of signed and unsigned
 	quantities.  All Lstream uses of size_t and ssize_t are now a
 	single signed data type Lstream_data_count.  This fixes problems
@@ -4995,9 +5000,9 @@ typedef enum lstream_buffering
 
 2001-02-21  Martin Buchholz  <martin@xemacs.org>
 
-	* lisp-union.h (XSETINT): 
+	* lisp-union.h (XSETINT):
 	(XSETCHAR):
-	(XSETOBJ): 
+	(XSETOBJ):
 	Reverse previous change of 2001-02-06.
 
 2001-02-20  Matt Tucker  <tuck@whistlingfish.net>
@@ -5016,7 +5021,7 @@ typedef enum lstream_buffering
 2001-02-18  Wim Dumon  <wim@easics.be>
 
 	* insdel.c (prepare_to_modify_buffer): Also check for
-	supersession when clash-detection is enabled. 
+	supersession when clash-detection is enabled.
 
 2001-02-17  Matt Tucker  <tuck@whistlingfish.net>
 
@@ -5045,7 +5050,7 @@ typedef enum lstream_buffering
 
 2001-02-17  Martin Buchholz  <martin@xemacs.org>
 
-	* alloc.c (Fgarbage_collect): 
+	* alloc.c (Fgarbage_collect):
 	* alloc.c (make_bit_vector_from_byte_vector):
 	-Wsign-compare-correctness.
 
@@ -5057,7 +5062,7 @@ typedef enum lstream_buffering
 
 2001-02-15  Martin Buchholz  <martin@xemacs.org>
 
-	* mule-canna.c (canna-func-delete_previous): 
+	* mule-canna.c (canna-func-delete_previous):
 	Rename to canna-func-delete-previous.
 
 2001-02-14  Martin Buchholz  <martin@xemacs.org>
@@ -5108,7 +5113,7 @@ typedef enum lstream_buffering
 	* font-lock.c.
 	* regex.c.
 	* search.c.
-	
+
 2001-02-09  Martin Buchholz  <martin@xemacs.org>
 
 	* regex.c (Boolean): Renamed to `re_bool', to avoid conflict with
@@ -5142,12 +5147,12 @@ typedef enum lstream_buffering
 	* dumper.c (pdump_scan_by_alignment): Likewise.
 	Don't iterate through unnecessary alignments.
 	* dumper.c (pdump_file_get): No need to align result of malloc().
-	* dumper.c (pdump_mallocadr): Remove.  
+	* dumper.c (pdump_mallocadr): Remove.
 	The result of malloc() is guaranteed to be maximally aligned.
 	* dumper.c: s/elmt/elt/g;
 	* dumper.c (pdump_object_table): Allocate dynamically, not statically.
 	* dumper.c (pdump_alert_undump_object): Likewise.
-	* dumper.c (pdump_align_table): 
+	* dumper.c (pdump_align_table):
 	Don't support alignments > 64.
 	Store ALIGNOF's, not shift counts, in table.
 
@@ -5360,9 +5365,9 @@ typedef enum lstream_buffering
 2001-01-25  Martin Buchholz  <martin@xemacs.org>
 
 	Type fiddling for window_config.saved_windows_count
-	* window.c (struct window_config): 
+	* window.c (struct window_config):
 	Make saved_windows_count member unsigned.
-	* window.c (sizeof_window_config_for_n_windows): 
+	* window.c (sizeof_window_config_for_n_windows):
 	Make parameter unsigned.
 	* window.c (mark_window_config):
 	* window.c (window_config_equal):
@@ -5384,7 +5389,7 @@ typedef enum lstream_buffering
 	* alloc.c (sweep_bit_vectors_1):
 	* fns.c (size_bit_vector):
 	Update all callers of FLEXIBLE_ARRAY_STRUCT_SIZEOF to add new arg.
-	* window.c (sizeof_window_config_for_n_windows): 
+	* window.c (sizeof_window_config_for_n_windows):
 	Use FLEXIBLE_ARRAY_STRUCT_SIZEOF.
 
 2001-01-24  Martin Buchholz  <martin@xemacs.org>
@@ -5458,7 +5463,7 @@ typedef enum lstream_buffering
 	Fix printf warnings: int format, long int arg.
 	* regex.c (DECLARE_DESTINATION): Use DECLARE_NOTHING.
 	(PUSH_FAILURE_POINT): Use correct printf formats.
-	(POP_FAILURE_POINT): Use correct printf formats.  
+	(POP_FAILURE_POINT): Use correct printf formats.
 	Use do {...} while (0)
 
 2001-01-20  Martin Buchholz <martin@xemacs.org>
