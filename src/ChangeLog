@@ -1,3 +1,48 @@
+2002-06-27  Mike Sperber <mike@xemacs.org>
+
+	* eval.c (Ffuncall): Run `post-gc-hook' if GC just happened.
+
+	* alloc.c (garbage_collect_1): Delay running `post-gc-hook' until later.
+
+	* data.c (prune_weak_boxes): Rewrite for better readability.
+
+2002-06-23  Martin Köbele  <martin@mkoebele.de>
+	    Jens Müller <jmueller@informatik.uni-tuebingen.de>
+	    Mike Sperber <mike@xemacs.org>
+
+        * lrecord.h (lrecord_type): add lrecord_type_ephemeron  to lrecord_type enumeration.
+
+	* lisp.h (XEPHEMERON): 
+	(XEPHEMERON_REF): 
+	(XEPHEMERON_NEXT): 
+	(XEPHEMERON_FINALIZER): 
+	(XSET_EPHEMERON_NEXT): 
+	(XSET_EPHEMERON_VALUE): 
+	(XSET_EPHEMERON_KEY): 
+	(wrap_ephemeron): 
+	(EPHEMERONP): 
+	(CHECK_EPHEMERON): 
+	(CONCHECK_EPHEMERON): 
+        (struct ephemeron): Add representation of ephemerons.
+
+        * alloc.c (garbage_collect_1):
+        (finish_marking_ephemerons):
+        (prune_ephemerons): Call.
+
+        * data.c:
+        (finish_marking_ephemerons):
+        (prune_ephemerons):
+        (mark_ephemeron):
+        (print_ephemeron):
+        (ephemeron_equal)
+        (ephemeron_hash)::
+        (make_ephemeron):
+        (Fmake_ephemeron):
+        (Fephemeronp):
+        (Fephemeron_ref):
+        (syms_of_data):
+        (vars_of_data): Add implementation of ephemerons
+
 2002-06-28  Steve Youngs  <youngs@xemacs.org>
 
 	* inline.c: Include device-impl.h, extents-impl.h, frame-impl.h,
@@ -5,7 +50,6 @@
 	Remove console.h, extents.h, frame.h and objects.h because the
 	*-impl.h files include them.
 	
-
 2002-06-17  Jerry James  <james@xemacs.org>
 
 	* sysdll.c: Remove RTLD_GLOBAL initialization.
