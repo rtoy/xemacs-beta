@@ -1,3 +1,15 @@
+2003-08-25  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+
+	* alloc.c (kkcc_gc_stack_init):
+	(kkcc_gc_stack_free):
+	(kkcc_gc_stack_realloc):
+	(kkcc_gc_stack_full):
+	(kkcc_gc_stack_empty):
+	(kkcc_gc_stack_push):
+	(kkcc_gc_stack_pop): Remove kkcc_gc_stack_count.
+	(mark_object_maybe_checking_free): Push on stack instead of marking.
+	(garbage_collect_1): Invoke kkcc_marking after finish_marking_*.
+	
 2003-08-21  Jerry James  <james@xemacs.org>
 
 	* lrecord.h (DECLARE_MODULE_API_LRECORD): Also define when not

@@ -2962,8 +2962,8 @@ typedef struct
 
 static kkcc_gc_stack_entry *kkcc_gc_stack_ptr;
 static kkcc_gc_stack_entry *kkcc_gc_stack_top;
+static kkcc_gc_stack_entry *kkcc_gc_stack_last_entry;
 static int kkcc_gc_stack_size;
-static int kkcc_gc_stack_count;
 
 static void
 kkcc_gc_stack_init (void)
@@ -2977,7 +2977,7 @@ kkcc_gc_stack_init (void)
       exit(23);
     }
   kkcc_gc_stack_top = kkcc_gc_stack_ptr - 1;
-  kkcc_gc_stack_count = 0;
+  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
 }
 
 static void
@@ -2992,6 +2992,7 @@ kkcc_gc_stack_free (void)
 static void
 kkcc_gc_stack_realloc (void)
 {
+  int current_offset = (int)(kkcc_gc_stack_top - kkcc_gc_stack_ptr);
   kkcc_gc_stack_size *= 2;
   kkcc_gc_stack_ptr = (kkcc_gc_stack_entry *)
     realloc (kkcc_gc_stack_ptr, 
@@ -3001,13 +3002,14 @@ kkcc_gc_stack_realloc (void)
       stderr_out ("stack realloc failed for size %d\n", kkcc_gc_stack_size);
       exit(23);
     }
-  kkcc_gc_stack_top = kkcc_gc_stack_ptr + kkcc_gc_stack_count - 1;
+  kkcc_gc_stack_top = kkcc_gc_stack_ptr + current_offset;
+  kkcc_gc_stack_last_entry = kkcc_gc_stack_ptr + kkcc_gc_stack_size - 1;
 }
 
 static int
 kkcc_gc_stack_full (void)
 {
-  if (kkcc_gc_stack_count > (kkcc_gc_stack_size - 1))
+  if (kkcc_gc_stack_top >= kkcc_gc_stack_last_entry)
     return 1;
   return 0;
 }
@@ -3015,7 +3017,7 @@ kkcc_gc_stack_full (void)
 static int
 kkcc_gc_stack_empty (void)
 {
-  if (kkcc_gc_stack_count == 0)
+  if (kkcc_gc_stack_top < kkcc_gc_stack_ptr)
     return 1;
   return 0;
 }
@@ -3025,9 +3027,7 @@ kkcc_gc_stack_push (void *data, const struct memory_description *desc)
 {
   if (kkcc_gc_stack_full ())
       kkcc_gc_stack_realloc();
-
   kkcc_gc_stack_top++;
-  kkcc_gc_stack_count++;
   kkcc_gc_stack_top->data = data;
   kkcc_gc_stack_top->desc = desc;
 }
@@ -3037,10 +3037,7 @@ kkcc_gc_stack_pop (void) //void *data, const struct memory_description *desc)
 {
   if (kkcc_gc_stack_empty ())
     return 0;
-
   kkcc_gc_stack_top--;
-  kkcc_gc_stack_count--;
-
   return kkcc_gc_stack_top + 1;
 }
 
@@ -3329,7 +3326,8 @@ mark_object_maybe_checking_free (Lisp_Object obj, int allow_free)
 #endif /* NOT USE_KKCC */
 }
 #else
-#define mark_object_maybe_checking_free(obj, allow_free) mark_object (obj)
+#define mark_object_maybe_checking_free(obj, allow_free) 	\
+      kkcc_gc_stack_push_lisp_object (obj)
 #endif /* ERROR_CHECK_GC */
 
 
@@ -4706,7 +4704,6 @@ garbage_collect_1 (void)
 
 #ifdef USE_KKCC
   kkcc_marking ();
-  kkcc_gc_stack_free ();
 #endif /* USE_KKCC */
 
   /* At this point, we know which objects need to be finalized: we
@@ -4716,6 +4713,11 @@ garbage_collect_1 (void)
 	 finish_marking_weak_lists       () > 0 ||
 	 finish_marking_weak_hash_tables () > 0)
     ;
+
+#ifdef USE_KKCC
+  kkcc_marking ();
+  kkcc_gc_stack_free ();
+#endif /* USE_KKCC */
 
   /* And prune (this needs to be called after everything else has been
      marked and before we do any sweeping). */
