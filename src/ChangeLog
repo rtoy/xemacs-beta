@@ -1,3 +1,7 @@
+2003-08-18  Jerry James  <james@xemacs.org>
+
+	* opaque.h: Remove unused (X)OPAQUE_MARKFUN definitions.
+
 2003-08-12  Mike Sperber  <mike@xemacs.org>
 
 	* bytecode.c (GCPRO_STACK): Added.
