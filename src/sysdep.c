@@ -456,10 +456,38 @@ child_setup_tty (int out)
   assert (isatty(out));
   s.main.c_oflag |= OPOST;	/* Enable output postprocessing */
   s.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL on output */
+
+  {
+    /* Disable all output delays. */
+    tcflag_t delay_mask = 0;
 #ifdef NLDLY
-  s.main.c_oflag &= ~(NLDLY|CRDLY|TABDLY|BSDLY|VTDLY|FFDLY);
-  				/* No output delays */
+    delay_mask |= NLDLY;
 #endif
+#ifdef CRDLY
+    delay_mask |= CRDLY;
+#endif
+#ifdef TABDLY
+    delay_mask |= TABDLY;	/* Also disables tab expansion (Posix). */
+#endif
+#ifdef BSDLY
+    delay_mask |= BSDLY;
+#endif
+#ifdef VTDLY
+    delay_mask |= VTDLY;
+#endif
+#ifdef FFDLY
+    delay_mask |= FFDLY;
+#endif
+    s.main.c_oflag &= ~delay_mask;
+  }
+
+#ifdef OXTABS
+  /* Posix defines the TAB3 value for TABDLY to mean: expand tabs to spaces.
+     On those systems tab expansion would be disabled by the above code.
+     BSD systems use an independent flag, OXTABS. */
+  s.main.c_oflag &= ~OXTABS;	/* Disable tab expansion */
+#endif
+
   s.main.c_lflag &= ~ECHO;	/* Disable echo */
   s.main.c_lflag |= ISIG;	/* Enable signals */
 #ifdef IUCLC
@@ -468,7 +496,7 @@ child_setup_tty (int out)
 #ifdef OLCUC
   s.main.c_oflag &= ~OLCUC;	/* Disable upcasing on output.  */
 #endif
-  s.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
+
 #if defined (CSIZE) && defined (CS8)
   s.main.c_cflag = (s.main.c_cflag & ~CSIZE) | CS8; /* Don't strip 8th bit */
 #endif
@@ -1590,7 +1618,17 @@ tty_init_sys_modes_on_device (struct device *d)
     tty.main.c_iflag &= ~IXON;	/* Disable start/stop output control */
   tty.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL
 				   on output */
-  tty.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
+
+#if 0
+  /* We used to disable tab expansion here, but this is the user's decision. */
+#if defined (TABDLY) && defined (TAB3)
+  if ((tty.main.c_oflag & TABDLY) == TAB3)
+    tty.main.c_oflag &= ~TABDLY; /* Disable tab expansion (Posix). */
+#elif defined (OXTABS)
+  tty.main.c_oflag &= ~OXTABS;	 /* Disable tab expansion (BSD). */
+#endif
+#endif /* 0 */
+
 #ifdef CS8
   if (TTY_FLAGS (con).meta_key)
     {
@@ -3017,7 +3055,7 @@ sys_readdir (DIR *dirp)
     Extcount external_len = strlen (rtnval->d_name);
     const Bufbyte *internal_name;
     Bytecount internal_len;
-    
+
     TO_INTERNAL_FORMAT (DATA, (external_name, external_len),
 			ALLOCA, (internal_name, internal_len),
 			Qfile_name);

@@ -1,3 +1,21 @@
+2001-05-05  Martin Buchholz  <martin@xemacs.org>
+
+	TTY configury portability improvements.
+	Support systems which use OXTABS instead of TAB3, without any s&m.
+	* s/bsd386.h: Remove definitions for system symbols TABDLY and OXTABS.
+	* s/freebsd.h: Likewise.
+	* s/gnu.h: Likewise.
+	* s/netbsd.h: Likewise.
+	* s/nextstep.h: Remove definitions for TAB3 and BSD_TERMIOS.
+	* systty.h:
+	Fix up (unused) tty tab delay/expansion code.
+	Better preprocessor symbol hygiene.
+	Remove BSD_TERMIOS cruft.
+	* sysdep.c (child_setup_tty): More careful code.  Check for OXTABS.
+	* sysdep.c (tty_init_sys_modes_on_device):
+	Tab expansion disabling code was buggy.  So I fixed it.
+	But it shouldn't have been done at all.  So I also #if 0'ed it.
+
 2001-05-06  Ben Wing  <ben@xemacs.org>
 
 	* console-msw.h:

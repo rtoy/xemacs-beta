@@ -27,29 +27,6 @@ Boston, MA 02111-1307, USA.  */
 # define HAVE_TCATTR
 #endif
 
-/* If we defined these before and we are about to redefine them,
-   prevent alarming warnings.  */
-#ifdef BSD_TERMIOS
-#undef NL0
-#undef NL1
-#undef CR0
-#undef CR1
-#undef CR2
-#undef CR3
-#undef TAB0
-#undef TAB1
-#undef TAB2
-#undef XTABS
-#undef BS0
-#undef BS1
-#undef FF0
-#undef FF1
-#undef ECHO
-#undef NOFLSH
-#undef TOSTOP
-#undef FLUSHO
-#undef PENDIN
-#endif
 
 /* Include the proper files.  */
 
@@ -393,27 +370,12 @@ int emacs_set_tty (int fd, struct emacs_tty *settings, int flushp);
 /*                Define EMACS_TTY_TABS_OK                   */
 /* --------------------------------------------------------- */
 
-#ifdef HAVE_TERMIOS
-
-#ifdef TABDLY
-#define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
+#if defined (TABDLY) && defined (TAB3)
+#  define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
+#elif defined (OXTABS)
+#  define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & OXTABS) != OXTABS)
 #else
-#define EMACS_TTY_TABS_OK(p) 1
-#endif /* TABDLY */
-
-#else /* not def HAVE_TERMIOS */
-#ifdef HAVE_TERMIO
-
-#define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
-
-#else /* neither HAVE_TERMIO nor HAVE_TERMIOS */
-#ifdef WIN32_NATIVE
-#define EMACS_TTY_TABS_OK(p) 0
-#else /* not WIN32_NATIVE */
-#define EMACS_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
-#endif /* not WIN32_NATIVE */
-
-#endif /* not def HAVE_TERMIO */
-#endif /* not def HAVE_TERMIOS */
+#  define EMACS_TTY_TABS_OK(p) 1
+#endif
 
 #endif /* INCLUDED_systty_h_ */
