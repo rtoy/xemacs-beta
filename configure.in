@@ -1248,7 +1248,6 @@ case "$canonical" in
   dnl Darwin, a.k.a. MacOS X (based on Mach and Freebsd)
   *-*-darwin*)
     opsys=darwin
-    RANLIB="ranlib -c" dnl Avoids a link error with lwlib-config.c
     ;;
 
   dnl Data General AViiON Machines
@@ -1609,9 +1608,9 @@ dnl --------------------------------------------------------------
 
 if test -z "$pdump"; then
   case "$opsys" in
-    linux* )  pdump=yes ;;    dnl glibc 2.3.1 seems to hose unexec
-    darwin )  pdump=yes ;;    dnl No "native" working dumper available
-    *)        pdump=no ;;
+    linux* )  pdump=yes ;;          dnl glibc 2.3.1 seems to hose unexec
+    darwin )  pdump=yes ;;          dnl No "native" working dumper available
+    * )       pdump=no ;;
   esac
 fi
 
@@ -1638,8 +1637,11 @@ else dnl "$dynamic" = "no"
   esac
 fi
 
-dnl Use xlc by default on AIX
-case "$opsys" in aix*) NON_GNU_CC=xlc ;; esac
+dnl Tools configuration
+case "$opsys" in
+  aix* )   NON_GNU_CC=xlc ;;      dnl Use xlc by default on AIX
+  darwin ) RANLIB="ranlib -c" ;;  dnl Avoid link error in lwlib-config.c
+esac
 
 stack_trace_eye_catcher=`echo ${PROGNAME}_${version}_${canonical} | sed 'y/.-/__/'`
 AC_DEFINE_UNQUOTED(STACK_TRACE_EYE_CATCHER, $stack_trace_eye_catcher)
@@ -2524,6 +2526,16 @@ AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_CHECK_TYPE(ssize_t, int)
+
+dnl not AC_CHECK_TYPE; lisp.h does hairy conditional typedef
+if test "$ac_cv_header_inttypes_h" != "yes"; then
+AC_MSG_CHECKING(for intptr_t in sys/types.h)
+AC_TRY_COMPILE([#include <sys/types.h>
+intptr_t x;
+],[],[AC_MSG_RESULT(yes)
+      AC_DEFINE(HAVE_INTPTR_T_IN_SYS_TYPES_H,1)],
+     [AC_MSG_RESULT(no)])
+fi
 
 dnl check for Unix98 socklen_t
 AC_MSG_CHECKING(for socklen_t)
@@ -4621,11 +4633,32 @@ yes
 #if DB_VERSION_MAJOR > 2
 yes
 #endif
-], [AC_MSG_RESULT(3); dbfunc=db_create],[
-    AC_MSG_RESULT(2); dbfunc=db_open])],[
-    AC_MSG_RESULT(1); dbfunc=dbopen])
+], [AC_EGREP_CPP(yes,
+[#include <$db_h_file>
+#if DB_VERSION_MAJOR > 3
+yes
+#endif
+], [AC_MSG_RESULT(4); dbfunc=db_create; dbver=4],[
+    AC_MSG_RESULT(3); dbfunc=db_create; dbver=3])],[
+    AC_MSG_RESULT(2); dbfunc=db_open; dbver=2])],[
+    AC_MSG_RESULT(1); dbfunc=dbopen; dbver=1])
     AC_CHECK_FUNC($dbfunc,     with_database_berkdb=yes need_libdb=no, [
     AC_CHECK_LIB(db, $dbfunc,  with_database_berkdb=yes need_libdb=yes)])
+  fi
+
+  dnl Berk db 4.1 decorates public functions with version information
+  if test "$with_database_berkdb" != "yes" -a "$dbver" = "4"; then
+    rm -f $tempcname
+    echo "#include <$db_h_file>" > $tempcname
+    echo "configure___ dbfunc=db_create" >> $tempcname
+    define(TAB, [	])dnl
+    changequote(, )dnl
+    eval `$CPP -Isrc $tempcname \
+	| sed -n -e "s/[ TAB]*=[ TAB\"]*/='/" -e "s/[ TAB\"]*\$/'/" -e "s/^configure___//p"`
+    changequote([, ])dnl
+    rm -f $tempcname
+    AC_MSG_WARN("db_create is really $dbfunc")
+    AC_CHECK_LIB(db, $dbfunc,  with_database_berkdb=yes need_libdb=yes)
   fi
 
   if test "$with_database_berkdb" = "yes"; then

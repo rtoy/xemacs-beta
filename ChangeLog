@@ -1,3 +1,9 @@
+2003-05-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.in (darwin): Collect random kludges in one place.
+	(cygwin): Check for intptr_t in <sys/types.h>.
+	(Berkeley db): Handle 4.1 functions decorated with version info.
+
 2003-04-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* PROBLEMS (Windows): New: auxiliary programs for Windows.
