@@ -1782,14 +1782,17 @@ return 11;
 return 12;
 #elif defined __USLC__ && defined __SCO_VERSION__
 return 13;
+#elif defined __INTEL_COMPILER
+return 14;
 #else
 return 0;
 #endif
 }], [],
 [case "$conftest_rc" in
-  11) echo "You appear to be using the SunPro C compiler."; __SUNPRO_C=yes ;;
-  12) echo "You appear to be using the DEC C compiler."   ; __DECC=yes ;;
-  13) echo "You appear to be using the SCO C compiler."   ; __USLC__=yes ;;
+  11) echo "You appear to be using the SunPro C compiler." ; __SUNPRO_C=yes ;;
+  12) echo "You appear to be using the DEC C compiler."    ; __DECC=yes ;;
+  13) echo "You appear to be using the SCO C compiler."    ; __USLC__=yes ;;
+  14) echo "You appear to be using the Intel C++ compiler."; __ICC=yes ;;
 esac])
 
 
@@ -2006,6 +2009,8 @@ if test "$cflags_specified" = "no"; then
     CFLAGS="-O3"
   elif test "$CC" = "xlc"; then
     CFLAGS="-g -O3 -qstrict -qnoansialias -qlibansi -qro -qmaxmem=20000"
+  elif test "$__ICC" = "yes"; then
+    CFLAGS="-g -O3 -Ob2"
   dnl ### Add optimal CFLAGS support for other compilers HERE!
   else
     CFLAGS="-O" ;dnl The only POSIX-approved flag
@@ -2049,6 +2054,8 @@ if test "$cflags_warning_specified" = "no"; then
     esac
   elif test "$CC" = "xlc"; then
     cflags_warning="-qinfo"
+  elif test "$__ICC" = "yes"; then
+    cflags_warning="-Wall -w1"
   dnl ### Add optimal cflags_warning support for other compilers HERE!
   fi
 fi
