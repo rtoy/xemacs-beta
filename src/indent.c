@@ -132,7 +132,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
   int tab_width = XINT (buf->tab_width);
   int post_tab;
   Charbpos pos = init_pos;
-  Emchar c;
+  Ichar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
   col = tab_seen = post_tab = 0;
@@ -170,7 +170,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (emchar_charset (c));
+	  col += XCHARSET_COLUMNS (ichar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */
@@ -202,7 +202,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
   int tab_seen;
   int post_tab;
   Charbpos pos = init_pos;
-  Emchar c;
+  Ichar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
   col = tab_seen = post_tab = 0;
@@ -213,7 +213,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
 	break;
 
       pos--;
-      c = string_emchar (s, pos);
+      c = string_ichar (s, pos);
       if (c == '\t')
 	{
 	  if (tab_seen)
@@ -227,7 +227,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
 	break;
       else
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (emchar_charset (c));
+	  col += XCHARSET_COLUMNS (ichar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */
@@ -345,7 +345,7 @@ byte_spaces_at_point (struct buffer *b, Bytebpos byte_pos)
 {
   Bytebpos byte_end = BYTE_BUF_ZV (b);
   int col = 0;
-  Emchar c;
+  Ichar c;
   int tab_width = XINT (b->tab_width);
 
   if (tab_width <= 0 || tab_width > 1000)
@@ -410,7 +410,7 @@ Returns the actual column that it moved to.
   int tab_width = XINT (buf->tab_width);
 
   int prev_col = 0;
-  Emchar c = 0;
+  Ichar c = 0;
 
   buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -457,7 +457,7 @@ Returns the actual column that it moved to.
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
 #ifdef MULE
-	  col += XCHARSET_COLUMNS (emchar_charset (c));
+	  col += XCHARSET_COLUMNS (ichar_charset (c));
 #else
 	  col ++;
 #endif /* MULE */

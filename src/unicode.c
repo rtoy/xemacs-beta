@@ -61,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 
      -- If from_unicode_levels == 1, from_unicode_table is a 256-element
      array of shorts (octet 1 in high byte, octet 2 in low byte; we don't
-     store Emchars directly to save space).
+     store Ichars directly to save space).
 
      -- If from_unicode_levels == 2, from_unicode_table is a
      256-element array of short * pointers, each of which points to a
@@ -586,8 +586,8 @@ sledgehammer_check_from_table (Lisp_Object charset, void *table, int level,
 		Lisp_Object char_charset;
 		int c1, c2;
 
-		assert (valid_emchar_p (tab[i]));
-		BREAKUP_EMCHAR (tab[i], char_charset, c1, c2);
+		assert (valid_ichar_p (tab[i]));
+		BREAKUP_ICHAR (tab[i], char_charset, c1, c2);
 		assert (EQ (charset, char_charset));
 		if (XCHARSET_DIMENSION (charset) == 1)
 		  {
@@ -669,15 +669,15 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 	    if (tab[i] != -1)
 	      {
 		int u4, u3, u2, u1, levels;
-		Emchar ch;
-		Emchar this_ch;
+		Ichar ch;
+		Ichar this_ch;
 		short val;
 		void *frtab = XCHARSET_FROM_UNICODE_TABLE (charset);
 
 		if (XCHARSET_DIMENSION (charset) == 1)
-		  this_ch = make_emchar (charset, i + 32, 0);
+		  this_ch = make_ichar (charset, i + 32, 0);
 		else
-		  this_ch = make_emchar (charset, codetop + 32, i + 32);
+		  this_ch = make_ichar (charset, codetop + 32, i + 32);
 
 		assert (tab[i] >= 0);
 		BREAKUP_UNICODE_CODE (tab[i], u4, u3, u2, u1, levels);
@@ -692,7 +692,7 @@ sledgehammer_check_to_table (Lisp_Object charset, void *table, int level,
 		  default: abort ();
 		  }
 
-		ch = make_emchar (charset, val >> 8, val & 0xFF);
+		ch = make_ichar (charset, val >> 8, val & 0xFF);
 		assert (ch == this_ch);
 
 		switch (XCHARSET_FROM_UNICODE_LEVELS (charset))
@@ -776,12 +776,12 @@ sledgehammer_check_unicode_tables (Lisp_Object charset)
 #endif /* SLEDGEHAMMER_CHECK_UNICODE */
 
 static void
-set_unicode_conversion (Emchar chr, int code)
+set_unicode_conversion (Ichar chr, int code)
 {
   Lisp_Object charset;
   int c1, c2;
 
-  BREAKUP_EMCHAR (chr, charset, c1, c2);
+  BREAKUP_ICHAR (chr, charset, c1, c2);
 
   assert (!EQ (charset, Vcharset_ascii));
   assert (!EQ (charset, Vcharset_control_1));
@@ -913,16 +913,16 @@ set_unicode_conversion (Emchar chr, int code)
 }
 
 int
-emchar_to_unicode (Emchar chr)
+ichar_to_unicode (Ichar chr)
 {
   Lisp_Object charset;
   int c1, c2;
 
-  type_checking_assert (valid_emchar_p (chr));
+  type_checking_assert (valid_ichar_p (chr));
   if (chr < 256)
     return (int) chr;
 
-  BREAKUP_EMCHAR (chr, charset, c1, c2);
+  BREAKUP_ICHAR (chr, charset, c1, c2);
   if (EQ (charset, Vcharset_composite))
     return -1; /* #### don't know how to handle */
   else if (XCHARSET_DIMENSION (charset) == 1)
@@ -931,7 +931,7 @@ emchar_to_unicode (Emchar chr)
     return ((int **) XCHARSET_TO_UNICODE_TABLE (charset))[c1 - 32][c2 - 32];
 }
 
-static Emchar
+static Ichar
 unicode_to_char (int code, Lisp_Object_dynarr *charsets)
 {
   int u1, u2, u3, u4;
@@ -941,7 +941,7 @@ unicode_to_char (int code, Lisp_Object_dynarr *charsets)
 
   type_checking_assert (code >= 0);
   if (code < 256)
-    return (Emchar) code;
+    return (Ichar) code;
 
   BREAKUP_UNICODE_CODE (code, u4, u3, u2, u1, code_levels);
 
@@ -964,11 +964,11 @@ unicode_to_char (int code, Lisp_Object_dynarr *charsets)
 	    }
 
 	  if (retval != -1)
-	    return make_emchar (charset, retval >> 8, retval & 0xFF);
+	    return make_ichar (charset, retval >> 8, retval & 0xFF);
 	}
     }
 
-  return (Emchar) -1;
+  return (Ichar) -1;
 }
 
 static void
@@ -1100,7 +1100,7 @@ CHARACTER is one of the following:
   CHECK_CHAR (character);
   CHECK_NATNUM (code);
 
-  charset = emchar_charset (XCHAR (character));
+  charset = ichar_charset (XCHAR (character));
   if (EQ (charset, Vcharset_ascii) ||
       EQ (charset, Vcharset_control_1) ||
       EQ (charset, Vcharset_composite))
@@ -1122,7 +1122,7 @@ this function simply does `char-to-int'.
 {
   CHECK_CHAR (character);
 #ifdef MULE
-  return make_int (emchar_to_unicode (XCHAR (character)));
+  return make_int (ichar_to_unicode (XCHAR (character)));
 #else
   return Fchar_to_int (character);
 #endif /* MULE */
@@ -1156,7 +1156,7 @@ argument..
 
   if (NILP (charsets))
     {
-      Emchar ret = unicode_to_char (c, unicode_precedence_dynarr);
+      Ichar ret = unicode_to_char (c, unicode_precedence_dynarr);
       if (ret == -1)
 	return Qnil;
       return make_char (ret);
@@ -1166,7 +1166,7 @@ argument..
   memset (lbs, 0, NUM_LEADING_BYTES * sizeof (int));
   add_charsets_to_precedence_list (charsets, lbs, dyn);
   {
-    Emchar ret = unicode_to_char (c, unicode_precedence_dynarr);
+    Ichar ret = unicode_to_char (c, unicode_precedence_dynarr);
     Dynarr_free (dyn);
     if (ret == -1)
       return Qnil;
@@ -1323,7 +1323,7 @@ Unicode tables:
 
 	  if (big5)
 	    {
-	      Emchar ch = decode_big5_char (cp1high, cp1low);
+	      Ichar ch = decode_big5_char (cp1high, cp1low);
 	      if (ch == -1)
 
 		warn_when_safe (Qunicode, Qwarning,
@@ -1336,7 +1336,7 @@ Unicode tables:
 	  else
 	    {
 	      int l1, h1, l2, h2;
-	      Emchar emch;
+	      Ichar emch;
 
 	      switch (XCHARSET_TYPE (charset))
 		{
@@ -1352,8 +1352,8 @@ Unicode tables:
 	      if (cp1high < l2 || cp1high > h2 || cp1low < l1 || cp1low > h1)
 		goto out_of_range;
 
-	      emch = (cp1high == 0 ? make_emchar (charset, cp1low, 0) :
-		      make_emchar (charset, cp1high, cp1low));
+	      emch = (cp1high == 0 ? make_ichar (charset, cp1low, 0) :
+		      make_ichar (charset, cp1high, cp1low));
 	      set_unicode_conversion (emch, cp2);
 	    }
 	}
@@ -1434,14 +1434,14 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
   else
     {
 #ifdef MULE
-      Emchar chr = unicode_to_char (ch, unicode_precedence_dynarr);
+      Ichar chr = unicode_to_char (ch, unicode_precedence_dynarr);
 
       if (chr != -1)
 	{
-	  Intbyte work[MAX_EMCHAR_LEN];
+	  Ibyte work[MAX_ICHAR_LEN];
 	  int len;
 
-	  len = set_charptr_emchar (work, chr);
+	  len = set_itext_ichar (work, chr);
 	  Dynarr_add_many (dst, work, len);
 	}
       else
@@ -1451,7 +1451,7 @@ decode_unicode_char (int ch, unsigned_char_dynarr *dst,
 	  Dynarr_add (dst, 46 + 128);
 	}
 #else
-      Dynarr_add (dst, (Intbyte) ch);
+      Dynarr_add (dst, (Ibyte) ch);
 #endif /* MULE */
     }
 
@@ -1548,7 +1548,7 @@ encode_unicode_char (Lisp_Object charset, int h, int l,
 		     int little_endian)
 {
 #ifdef MULE
-  int code = emchar_to_unicode (make_emchar (charset, h & 127, l & 127));
+  int code = ichar_to_unicode (make_ichar (charset, h & 127, l & 127));
 
   if (code == -1)
     {
@@ -1697,7 +1697,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
       /* flags for handling composite chars.  We do a little switcheroo
 	 on the source while we're outputting the composite char. */
       Bytecount saved_n = 0;
-      const Intbyte *saved_src = NULL;
+      const Ibyte *saved_src = NULL;
       int in_composite = 0;
 
     back_to_square_n:
@@ -1711,7 +1711,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 
       while (n--)
 	{
-	  Intbyte c = *src++;
+	  Ibyte c = *src++;
 
 #ifdef MULE
 	  if (byte_ascii_p (c))
@@ -1724,7 +1724,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 	      char_boundary = 1;
 	    }
 #ifdef MULE
-	  else if (intbyte_leading_byte_p (c) || intbyte_leading_byte_p (ch))
+	  else if (ibyte_leading_byte_p (c) || ibyte_leading_byte_p (ch))
 	    {			/* Processing Leading Byte */
 	      ch = 0;
 	      charset = charset_by_leading_byte (c);
@@ -1768,7 +1768,7 @@ unicode_convert (struct coding_stream *str, const UExtbyte *src,
 				}
 			      else
 				{
-				  Emchar emch = make_emchar (Vcharset_composite,
+				  Ichar emch = make_ichar (Vcharset_composite,
 							   ch & 0x7F,
 							   c & 0x7F);
 				  Lisp_Object lstr =

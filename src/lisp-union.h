@@ -140,7 +140,7 @@ volatile_make_int (EMACS_INT val)
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-make_char_1 (Emchar val)
+make_char_1 (Ichar val)
 )
 {
   Lisp_Object obj;

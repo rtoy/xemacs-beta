@@ -116,7 +116,7 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
 	      /* Previous character was first byte of Shift-JIS Kanji char. */
 	      if (byte_shift_jis_two_byte_2_p (c))
 		{
-		  Intbyte e1, e2;
+		  Ibyte e1, e2;
 
 		  Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0208);
 		  DECODE_SHIFT_JIS (ch, c, e1, e2);
@@ -151,13 +151,13 @@ shift_jis_convert (struct coding_stream *str, const UExtbyte *src,
     {
       while (n--)
 	{
-	  Intbyte c = *src++;
+	  Ibyte c = *src++;
 	  if (byte_ascii_p (c))
 	    {
 	      Dynarr_add (dst, c);
 	      ch = 0;
 	    }
-	  else if (intbyte_leading_byte_p (c))
+	  else if (ibyte_leading_byte_p (c))
 	    ch = (c == LEADING_BYTE_KATAKANA_JISX0201 ||
 		  c == LEADING_BYTE_JAPANESE_JISX0208_1978 ||
 		  c == LEADING_BYTE_JAPANESE_JISX0208) ? c : 0;
@@ -206,7 +206,7 @@ Return the corresponding character.
       byte_shift_jis_two_byte_2_p (s2))
     {
       DECODE_SHIFT_JIS (s1, s2, c1, c2);
-      return make_char (make_emchar (Vcharset_japanese_jisx0208,
+      return make_char (make_ichar (Vcharset_japanese_jisx0208,
 				     c1 & 0x7F, c2 & 0x7F));
     }
   else
@@ -223,7 +223,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
   int c1, c2, s1, s2;
 
   CHECK_CHAR_COERCE_INT (character);
-  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_ICHAR (XCHAR (character), charset, c1, c2);
   if (EQ (charset, Vcharset_japanese_jisx0208))
     {
       ENCODE_SHIFT_JIS (c1 | 0x80, c2 | 0x80, s1, s2);
@@ -451,7 +451,7 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
 	      /* Previous character was first byte of Big5 char. */
 	      if (byte_big5_two_byte_2_p (c))
 		{
-		  Intbyte b1, b2, b3;
+		  Ibyte b1, b2, b3;
 		  DECODE_BIG5 (ch, c, b1, b2, b3);
 		  Dynarr_add (dst, b1);
 		  Dynarr_add (dst, b2);
@@ -480,13 +480,13 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
     {
       while (n--)
 	{
-	  Intbyte c = *src++;
+	  Ibyte c = *src++;
 	  if (byte_ascii_p (c))
 	    {
 	      /* ASCII. */
 	      Dynarr_add (dst, c);
 	    }
-	  else if (intbyte_leading_byte_p (c))
+	  else if (ibyte_leading_byte_p (c))
 	    {
 	      if (c == LEADING_BYTE_CHINESE_BIG5_1 ||
 		  c == LEADING_BYTE_CHINESE_BIG5_2)
@@ -522,7 +522,7 @@ big5_convert (struct coding_stream *str, const UExtbyte *src,
   return orign;
 }
 
-Emchar
+Ichar
 decode_big5_char (int b1, int b2)
 {
   if (byte_big5_two_byte_1_p (b1) &&
@@ -534,7 +534,7 @@ decode_big5_char (int b1, int b2)
 
       DECODE_BIG5 (b1, b2, leading_byte, c1, c2);
       charset = charset_by_leading_byte (leading_byte);
-      return make_emchar (charset, c1 & 0x7F, c2 & 0x7F);
+      return make_ichar (charset, c1 & 0x7F, c2 & 0x7F);
     }
   else
     return -1;
@@ -552,7 +552,7 @@ decodes an external representation.
 */
        (code))
 {
-  Emchar ch;
+  Ichar ch;
 
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
@@ -576,7 +576,7 @@ term `encode' is used for this operation.
   int c1, c2, b1, b2;
 
   CHECK_CHAR_COERCE_INT (character);
-  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_ICHAR (XCHAR (character), charset, c1, c2);
   if (EQ (charset, Vcharset_chinese_big5_1) ||
       EQ (charset, Vcharset_chinese_big5_2))
     {
@@ -1223,7 +1223,7 @@ fit_to_be_escape_quoted (unsigned char c)
 }
 
 static Lisp_Object
-charset_by_attributes_or_create_one (int type, Intbyte final, int dir)
+charset_by_attributes_or_create_one (int type, Ibyte final, int dir)
 {
   Lisp_Object charset = charset_by_attributes (type, final, dir);
 
@@ -1802,23 +1802,23 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 		  break;
 		case ISO_ESC_END_COMPOSITE:
 		  {
-		    Intbyte comstr[MAX_EMCHAR_LEN];
+		    Ibyte comstr[MAX_ICHAR_LEN];
 		    Bytecount len;
-		    Emchar emch = lookup_composite_char (Dynarr_atp (dst, 0),
+		    Ichar emch = lookup_composite_char (Dynarr_atp (dst, 0),
 							 Dynarr_length (dst));
 		    dst = real_dst;
-		    len = set_charptr_emchar (comstr, emch);
+		    len = set_itext_ichar (comstr, emch);
 		    Dynarr_add_many (dst, comstr, len);
 		    break;
 		  }
 #else
 		case ISO_ESC_START_COMPOSITE:
 		  {
-		    Intbyte comstr[MAX_EMCHAR_LEN];
+		    Ibyte comstr[MAX_ICHAR_LEN];
 		    Bytecount len;
-		    Emchar emch = make_emchar (Vcharset_composite, c - '0' + ' ',
+		    Ichar emch = make_ichar (Vcharset_composite, c - '0' + ' ',
 					     0);
-		    len = set_charptr_emchar (comstr, emch);
+		    len = set_itext_ichar (comstr, emch);
 		    Dynarr_add_many (dst, comstr, len);
 		    break;
 		  }
@@ -2101,11 +2101,11 @@ ensure_shift_out (struct coding_stream *str, unsigned_char_dynarr *dst)
 /* Convert internally-formatted data to ISO2022 format. */
 
 static Bytecount
-iso2022_encode (struct coding_stream *str, const Intbyte *src,
+iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		unsigned_char_dynarr *dst, Bytecount n)
 {
   unsigned char charmask;
-  Intbyte c;
+  Ibyte c;
   unsigned char char_boundary;
   unsigned int ch             = str->ch;
   Lisp_Object codesys         = str->codesys;
@@ -2121,7 +2121,7 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
   /* flags for handling composite chars.  We do a little switcheroo
      on the source while we're outputting the composite char. */
   Bytecount saved_n = 0;
-  const Intbyte *saved_src = NULL;
+  const Ibyte *saved_src = NULL;
   int in_composite = 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
 
@@ -2184,7 +2184,7 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
 	  char_boundary = 1;
 	}
 
-      else if (intbyte_leading_byte_p (c) || intbyte_leading_byte_p (ch))
+      else if (ibyte_leading_byte_p (c) || ibyte_leading_byte_p (ch))
 	{ /* Processing Leading Byte */
 	  ch = 0;
 	  charset = charset_by_leading_byte (c);
@@ -2333,7 +2333,7 @@ iso2022_encode (struct coding_stream *str, const Intbyte *src,
 			    }
 			  else
 			    {
-			      Emchar emch = make_emchar (Vcharset_composite,
+			      Ichar emch = make_ichar (Vcharset_composite,
 						       ch & 0x7F, c & 0x7F);
 			      Lisp_Object lstr = composite_char_string (emch);
 			      saved_n = n;

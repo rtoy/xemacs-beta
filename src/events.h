@@ -288,7 +288,7 @@ struct key_data
      *ONLY* in alt_keychars for all control keys.  What about the
      English speaker who temporarily switches to the French layout and
      finds C-q mapped to C-a?) */
-  Emchar alt_keychars[KEYCHAR_LAST];
+  Ichar alt_keychars[KEYCHAR_LAST];
 #endif /* MULE */
 };
 
@@ -595,7 +595,7 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 
 /* from events.c */
 void format_event_object (Eistring *buf, Lisp_Event *event, int brief);
-void character_to_event (Emchar c, Lisp_Event *event,
+void character_to_event (Ichar c, Lisp_Event *event,
                          struct console *con,
                          int use_console_meta_flag,
                          int do_backspace_mapping);
@@ -620,7 +620,7 @@ Lisp_Object copy_event_chain (Lisp_Object event_chain);
    (keyboard press, menu, scrollbar, mouse button) */
 int command_event_p (Lisp_Object event);
 void define_self_inserting_symbol (Lisp_Object, Lisp_Object);
-Emchar event_to_character (Lisp_Event *, int, int, int);
+Ichar event_to_character (Lisp_Event *, int, int, int);
 struct console *event_console_or_selected (Lisp_Object event);
 
 /* from event-stream.c */
@@ -784,7 +784,7 @@ struct command_builder
     Lisp_Object first_mungeable_event;
   } munge_me[2];
 
-  Intbyte *echo_buf;
+  Ibyte *echo_buf;
   Bytecount echo_buf_length;          /* size of echo_buf */
   Bytecount echo_buf_index;           /* index into echo_buf
                                        * -1 before doing echoing for new cmd */

@@ -313,7 +313,7 @@ Lstream_really_write (Lstream *lstr, const unsigned char *data, int size)
 	      /* Go back to the beginning of the last (and possibly partial)
 		 character, and bump forward to see if the character is
 		 complete. */
-	      VALIDATE_CHARPTR_BACKWARD (dataend);
+	      VALIDATE_IBYTEPTR_BACKWARD (dataend);
 	      if (dataend + rep_bytes_by_first_byte (*dataend) != data + size)
 		/* If not, chop the size down to ignore the last char
 		   and stash it away for next time. */
@@ -674,7 +674,7 @@ Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
       /* It's quite possible for us to get passed an incomplete
 	 character at the end.  We need to spit back that
 	 incomplete character. */
-      Bytecount newoff = validate_intbyte_string_backward (p, off);
+      Bytecount newoff = validate_ibyte_string_backward (p, off);
       if (newoff < off)
 	{
 	  Lstream_unread (lstr, p + newoff, off - newoff);
@@ -984,7 +984,7 @@ struct filedesc_stream
 {
   int fd;
   int pty_max_bytes;
-  Intbyte eof_char;
+  Ibyte eof_char;
   int starting_pos;
   int current_pos;
   int end_pos;
@@ -1182,7 +1182,7 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
      in pty-flushing mode. */
   if (need_newline)
     {
-      Intbyte nl = '\n';
+      Ibyte nl = '\n';
       Bytecount retval2 = str->allow_quit ?
 	write_allowing_quit (str->fd, &nl, 1) :
 	retry_write (str->fd, &nl, 1);
@@ -1265,7 +1265,7 @@ filedesc_was_blocked_p (Lstream *stream)
 
 void
 filedesc_stream_set_pty_flushing (Lstream *stream, int pty_max_bytes,
-				  Intbyte eof_char)
+				  Ibyte eof_char)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   str->pty_max_bytes = pty_max_bytes;
@@ -1323,15 +1323,15 @@ lisp_string_reader (Lstream *stream, unsigned char *data,
   struct lisp_string_stream *str = LISP_STRING_STREAM_DATA (stream);
   /* Don't lose if the string shrank past us ... */
   Bytecount offset = min (str->offset, XSTRING_LENGTH (str->obj));
-  Intbyte *strstart = XSTRING_DATA (str->obj);
-  Intbyte *start = strstart + offset;
+  Ibyte *strstart = XSTRING_DATA (str->obj);
+  Ibyte *start = strstart + offset;
 
   /* ... or if someone changed the string and we ended up in the
      middle of a character. */
   /* Being in the middle of a character is `normal' unless
      LSTREAM_NO_PARTIAL_CHARS - mrb */
   if (stream->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
-    VALIDATE_CHARPTR_BACKWARD (start);
+    VALIDATE_IBYTEPTR_BACKWARD (start);
   offset = start - strstart;
   size = min (size, (Bytecount) (str->end - offset));
   memcpy (data, start, size);
@@ -1351,9 +1351,9 @@ lisp_string_rewinder (Lstream *stream)
   /* ... or if someone changed the string and we ended up in the
      middle of a character. */
   {
-    Intbyte *strstart = XSTRING_DATA (str->obj);
-    Intbyte *start = strstart + pos;
-    VALIDATE_CHARPTR_BACKWARD (start);
+    Ibyte *strstart = XSTRING_DATA (str->obj);
+    Ibyte *start = strstart + pos;
+    VALIDATE_IBYTEPTR_BACKWARD (start);
     pos = start - strstart;
   }
   str->offset = pos;
@@ -1521,7 +1521,7 @@ resizing_buffer_to_lisp_string (Lstream *stream)
 
 /* Note: If you have a dynarr whose type is not unsigned_char_dynarr
    but which is really just an unsigned_char_dynarr (e.g. its type
-   is Intbyte or Extbyte), just cast to unsigned_char_dynarr. */
+   is Ibyte or Extbyte), just cast to unsigned_char_dynarr. */
 
 #define DYNARR_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, dynarr)
@@ -1664,7 +1664,7 @@ make_lisp_buffer_output_stream (struct buffer *buf, Charbpos pos, int flags)
 }
 
 static Bytecount
-lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
+lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
   Bytebpos start;
@@ -1692,7 +1692,7 @@ lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
   if (EQ (buf->selective_display, Qt) && str->flags & LSTR_SELECTIVE)
     {
       /* What a kludge.  What a kludge.  What a kludge. */
-      Intbyte *p;
+      Ibyte *p;
       for (p = data; p < data + src_used; p++)
 	if (*p == '\r')
 	  *p = '\n';
@@ -1703,7 +1703,7 @@ lisp_buffer_reader (Lstream *stream, Intbyte *data, Bytecount size)
 }
 
 static Bytecount
-lisp_buffer_writer (Lstream *stream, const Intbyte *data,
+lisp_buffer_writer (Lstream *stream, const Ibyte *data,
 		    Bytecount size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);

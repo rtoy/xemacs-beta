@@ -1410,7 +1410,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 
 
 DOESNT_RETURN
-invalid_byte_code (const CIntbyte *reason, Lisp_Object frob)
+invalid_byte_code (const CIbyte *reason, Lisp_Object frob)
 {
   signal_error (Qinvalid_byte_code, reason, frob);
 }
@@ -1439,8 +1439,8 @@ check_constants_index (int idx, Lisp_Object constants)
 
 /* Get next character from Lisp instructions string. */
 #define READ_INSTRUCTION_CHAR(lvalue) do {				\
-  (lvalue) = charptr_emchar (ptr);					\
-  INC_CHARPTR (ptr);							\
+  (lvalue) = itext_ichar (ptr);					\
+  INC_IBYTEPTR (ptr);							\
   *icounts_ptr++ = program_ptr - program;				\
   if (lvalue > UCHAR_MAX)						\
     invalid_byte_code							\
@@ -1546,8 +1546,8 @@ optimize_byte_code (/* in */
 
   Opbyte *program_ptr = program;
 
-  const Intbyte *ptr = XSTRING_DATA (instructions);
-  const Intbyte * const end = ptr + instructions_length;
+  const Ibyte *ptr = XSTRING_DATA (instructions);
+  const Ibyte * const end = ptr + instructions_length;
 
   *varbind_count = 0;
 
@@ -1994,9 +1994,9 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     /* Invert action performed by optimize_byte_code() */
     Lisp_Opaque *opaque = XOPAQUE (f->instructions);
 
-    Intbyte * const buffer =
-      alloca_array (Intbyte, OPAQUE_SIZE (opaque) * MAX_EMCHAR_LEN);
-    Intbyte *bp = buffer;
+    Ibyte * const buffer =
+      alloca_array (Ibyte, OPAQUE_SIZE (opaque) * MAX_ICHAR_LEN);
+    Ibyte *bp = buffer;
 
     const Opbyte * const program = (const Opbyte *) OPAQUE_DATA (opaque);
     const Opbyte *program_ptr = program;
@@ -2005,7 +2005,7 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     while (program_ptr < program_end)
       {
 	Opcode opcode = (Opcode) READ_UINT_1;
-	bp += set_charptr_emchar (bp, opcode);
+	bp += set_itext_ichar (bp, opcode);
 	switch (opcode)
 	  {
 	  case Bvarref+7:
@@ -2014,8 +2014,8 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
 	  case Bcall+7:
 	  case Bunbind+7:
 	  case Bconstant2:
-	    bp += set_charptr_emchar (bp, READ_UINT_1);
-	    bp += set_charptr_emchar (bp, READ_UINT_1);
+	    bp += set_itext_ichar (bp, READ_UINT_1);
+	    bp += set_itext_ichar (bp, READ_UINT_1);
 	    break;
 
 	  case Bvarref+6:
@@ -2026,7 +2026,7 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
 	  case BlistN:
 	  case BconcatN:
 	  case BinsertN:
-	    bp += set_charptr_emchar (bp, READ_UINT_1);
+	    bp += set_itext_ichar (bp, READ_UINT_1);
 	    break;
 
 	  case Bgoto:
@@ -2040,8 +2040,8 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
 	      Opbyte *buf2p = buf2;
 	      /* Convert back to program-relative address */
 	      WRITE_INT16 (jump + (program_ptr - 2 - program), buf2p);
-	      bp += set_charptr_emchar (bp, buf2[0]);
-	      bp += set_charptr_emchar (bp, buf2[1]);
+	      bp += set_itext_ichar (bp, buf2[0]);
+	      bp += set_itext_ichar (bp, buf2[1]);
 	      break;
 	    }
 
@@ -2050,7 +2050,7 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
 	  case BRgotoifnonnil:
 	  case BRgotoifnilelsepop:
 	  case BRgotoifnonnilelsepop:
-	    bp += set_charptr_emchar (bp, READ_INT_1 + 127);
+	    bp += set_itext_ichar (bp, READ_INT_1 + 127);
 	    break;
 
 	  default:

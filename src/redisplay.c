@@ -82,11 +82,11 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HAVE_TTY */
 
 /* Note: We have to be careful throughout this code to properly handle
-   and differentiate between Intbytes and Emchars.
+   and differentiate between Ibytes and Ichars.
 
-   Since strings are generally composed of Intbytes, I've taken the tack
-   that any contiguous set of Intbytes is called a "string", while
-   any contiguous set of Emchars is called an "array". */
+   Since strings are generally composed of Ibytes, I've taken the tack
+   that any contiguous set of Ibytes is called a "string", while
+   any contiguous set of Ichars is called an "array". */
 
 /* Return value to indicate a failure by an add_*_rune routine to add
    a rune, but no propagation information needs to be returned. */
@@ -118,9 +118,9 @@ typedef struct position_redisplay_data_type
   struct device *d;
   struct display_block *db;
   struct display_line *dl;
-  Emchar ch;		/* Character that is to be added.  This is
+  Ichar ch;		/* Character that is to be added.  This is
 			   used to communicate this information to
-			   add_emchar_rune(). */
+			   add_ichar_rune(). */
   Lisp_Object last_charset; /* The charset of the previous character.
 			       Used to optimize some lookups -- we
 			       only have to do some things when
@@ -149,7 +149,7 @@ typedef struct position_redisplay_data_type
 			   This is also used rather cheesily to
 			   communicate the width of the eol-cursor-size
 			   blank that exists at the end of the line.
-			   add_emchar_rune() is called cheesily with
+			   add_ichar_rune() is called cheesily with
 			   the non-printing char '\n', which is stuck
 			   in the output routines with its width being
 			   BLANK_WIDTH. */
@@ -217,7 +217,7 @@ enum prop_type
 };
 
 /* Data that should be propagated to the next line.  Either a single
-   Emchar, a string of Intbyte's or a glyph.
+   Ichar, a string of Ibyte's or a glyph.
 
    The actual data that is propagated ends up as a Dynarr of these
    blocks.
@@ -230,7 +230,7 @@ enum prop_type
    instance. Most e-lisp relies on clipping so we preserve this
    behavior.
 
-   #### It's unclean that both Emchars and Intbytes are here.
+   #### It's unclean that both Ichars and Ibytes are here.
    */
 
 typedef struct prop_block prop_block;
@@ -242,13 +242,13 @@ struct prop_block
   {
     struct
     {
-      Intbyte *str;
+      Ibyte *str;
       Bytecount len; /* length of the string. */
     } p_string;
 
     struct
     {
-      Emchar ch;
+      Ichar ch;
       Bytebpos byte_cursor_charpos; /* NOTE: is in Bytebpos's */
       unsigned int cursor_type :3;
     } p_char;
@@ -298,7 +298,7 @@ static void create_left_glyph_block (struct window *w,
 static void create_right_glyph_block (struct window *w,
 				      struct display_line *dl);
 static void redisplay_windows (Lisp_Object window, int skip_selected);
-static void decode_mode_spec (struct window *w, Emchar spec, int type);
+static void decode_mode_spec (struct window *w, Ichar spec, int type);
 static void free_display_line (struct display_line *dl);
 static void update_line_start_cache (struct window *w, Charbpos from,
 				     Charbpos to, Charbpos point,
@@ -348,7 +348,7 @@ Fixnum cache_adjustment;
 
 /* This holds a string representing the text corresponding to a single
    modeline % spec. */
-static Intbyte_dynarr *mode_spec_intbyte_string;
+static Ibyte_dynarr *mode_spec_ibyte_string;
 
 int in_display;		/* 1 if in redisplay.  */
 
@@ -519,13 +519,13 @@ Lisp_Object Qtop_bottom;
 /***************************************************************************/
 
 static int
-redisplay_text_width_emchar_string (struct window *w, int findex,
-				    Emchar *str, Charcount len)
+redisplay_text_width_ichar_string (struct window *w, int findex,
+				    Ichar *str, Charcount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
   Lisp_Object window;
 
-  find_charsets_in_emchar_string (charsets, str, len);
+  find_charsets_in_ichar_string (charsets, str, len);
   window = wrap_window (w);
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
@@ -534,51 +534,51 @@ redisplay_text_width_emchar_string (struct window *w, int findex,
 			       WINDOW_FACE_CACHEL (w, findex), str, len));
 }
 
-static Emchar_dynarr *rtw_emchar_dynarr;
+static Ichar_dynarr *rtw_ichar_dynarr;
 
 int
 redisplay_text_width_string (struct window *w, int findex,
-			     Intbyte *nonreloc, Lisp_Object reloc,
+			     Ibyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount len)
 {
-  if (!rtw_emchar_dynarr)
-    rtw_emchar_dynarr = Dynarr_new (Emchar);
-  Dynarr_reset (rtw_emchar_dynarr);
+  if (!rtw_ichar_dynarr)
+    rtw_ichar_dynarr = Dynarr_new (Ichar);
+  Dynarr_reset (rtw_ichar_dynarr);
 
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
-  convert_intbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
-  return redisplay_text_width_emchar_string
-    (w, findex, Dynarr_atp (rtw_emchar_dynarr, 0),
-     Dynarr_length (rtw_emchar_dynarr));
+  convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
+  return redisplay_text_width_ichar_string
+    (w, findex, Dynarr_atp (rtw_ichar_dynarr, 0),
+     Dynarr_length (rtw_ichar_dynarr));
 }
 
 int
 redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
-				   Intbyte *nonreloc, Lisp_Object reloc,
+				   Ibyte *nonreloc, Lisp_Object reloc,
 				   Bytecount offset, Bytecount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
   Lisp_Object frame;
   struct face_cachel cachel;
 
-  if (!rtw_emchar_dynarr)
-    rtw_emchar_dynarr = Dynarr_new (Emchar);
-  Dynarr_reset (rtw_emchar_dynarr);
+  if (!rtw_ichar_dynarr)
+    rtw_ichar_dynarr = Dynarr_new (Ichar);
+  Dynarr_reset (rtw_ichar_dynarr);
 
   fixup_internal_substring (nonreloc, reloc, offset, &len);
   if (STRINGP (reloc))
     nonreloc = XSTRING_DATA (reloc);
-  convert_intbyte_string_into_emchar_dynarr (nonreloc, len, rtw_emchar_dynarr);
-  find_charsets_in_intbyte_string (charsets, nonreloc, len);
+  convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
+  find_charsets_in_ibyte_string (charsets, nonreloc, len);
   reset_face_cachel (&cachel);
   cachel.face = face;
   frame = wrap_frame (f);
   ensure_face_cachel_complete (&cachel, frame, charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (f)),
-		  text_width, (f, &cachel, Dynarr_atp (rtw_emchar_dynarr, 0),
-			       Dynarr_length (rtw_emchar_dynarr)));
+		  text_width, (f, &cachel, Dynarr_atp (rtw_ichar_dynarr, 0),
+			       Dynarr_length (rtw_ichar_dynarr)));
 }
 
 /* Return the display block from DL of the given TYPE.  A display line
@@ -750,7 +750,7 @@ calculate_yoffset (struct display_line *dl, struct display_block *fixup)
    If the baseline is completely blank, or contains no manually positioned
    glyphs, then the textual baseline is simply the baseline of the default font.
    (The `contains no manually positioned glyphs' part is actually done for
-   us by `add_emchar_rune'.)
+   us by `add_ichar_rune'.)
 
    If the baseline contains pixmaps, and they're all manually positioned, then
    the textual baseline location is constrained that way, and we need do no
@@ -961,10 +961,10 @@ add_hscroll_rune (pos_data *data)
    to fit the rune on the display block (as determined by the MAX_PIXPOS)
    then it adds nothing and returns ADD_FAILED.  If
    NO_CONTRIBUTE_TO_LINE_HEIGHT is non-zero, don't allow the char's height
-   to affect the total line height. (See add_intbyte_string_runes()). */
+   to affect the total line height. (See add_ibyte_string_runes()). */
 
 static prop_block_dynarr *
-add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
+add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 {
   struct rune rb, *crb;
   int width, local;
@@ -990,7 +990,7 @@ add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
     }
   else
     {
-      Lisp_Object charset = emchar_charset (data->ch);
+      Lisp_Object charset = ichar_charset (data->ch);
       if (!EQ (charset, data->last_charset) ||
 	  data->findex != data->last_findex)
 	{
@@ -1013,10 +1013,10 @@ add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 	  fi = XFONT_INSTANCE (font_instance);
 	  if (!fi->proportional_p || data->font_is_bogus)
 	    {
-	      Emchar ch = data->font_is_bogus ? '~' : data->ch;
+	      Ichar ch = data->font_is_bogus ? '~' : data->ch;
 
 	      data->last_char_width =
-		redisplay_text_width_emchar_string (XWINDOW (data->window), 
+		redisplay_text_width_ichar_string (XWINDOW (data->window), 
 						    data->findex, &ch, 1);
 	    }
 	  else
@@ -1034,7 +1034,7 @@ add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 
       width = data->last_char_width;
       if (width < 0) /* proportional fonts */
-	width = redisplay_text_width_emchar_string (XWINDOW (data->window),
+	width = redisplay_text_width_ichar_string (XWINDOW (data->window),
 						    data->findex,
 						    &data->ch, 1);
     }
@@ -1110,12 +1110,12 @@ add_emchar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 }
 
 static prop_block_dynarr *
-add_emchar_rune (pos_data *data)
+add_ichar_rune (pos_data *data)
 {
-  return add_emchar_rune_1 (data, 0);
+  return add_ichar_rune_1 (data, 0);
 }
 
-/* Given a string C_STRING of length C_LENGTH, call add_emchar_rune for
+/* Given a string C_STRING of length C_LENGTH, call add_ichar_rune for
    each character in the string.  Propagate any left-over data unless
    NO_PROP is non-zero.  If NO_CONTRIBUTE_TO_LINE_HEIGHT is non-zero, don't
    allow this character to increase the total height of the line. (This is
@@ -1124,11 +1124,11 @@ add_emchar_rune (pos_data *data)
    whether glyph-contrib-p is true.) */
 
 static prop_block_dynarr *
-add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
+add_ibyte_string_runes (pos_data *data, Ibyte *c_string,
 			  Bytecount c_length, int no_prop,
 			  int no_contribute_to_line_height)
 {
-  Intbyte *pos, *end = c_string + c_length;
+  Ibyte *pos, *end = c_string + c_length;
   prop_block_dynarr *prop;
 
   /* #### This function is too simplistic.  It needs to do the same
@@ -1139,11 +1139,11 @@ add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
 
   for (pos = c_string; pos < end;)
     {
-      Intbyte *old_pos = pos;
+      Ibyte *old_pos = pos;
 
-      data->ch = charptr_emchar (pos);
+      data->ch = itext_ichar (pos);
 
-      prop = add_emchar_rune_1 (data, no_contribute_to_line_height);
+      prop = add_ichar_rune_1 (data, no_contribute_to_line_height);
 
       if (prop)
 	{
@@ -1156,7 +1156,7 @@ add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
 	      prop = Dynarr_new (prop_block);
 
 	      pb.type = PROP_STRING;
-	      pb.data.p_string.str = xnew_array (Intbyte, len);
+	      pb.data.p_string.str = xnew_array (Ibyte, len);
 	      strncpy ((char *) pb.data.p_string.str, (char *) pos, len);
 	      pb.data.p_string.len = len;
 
@@ -1164,7 +1164,7 @@ add_intbyte_string_runes (pos_data *data, Intbyte *c_string,
 	      return prop;
 	    }
 	}
-      INC_CHARPTR (pos);
+      INC_IBYTEPTR (pos);
       assert (pos <= end);
       /* #### Duplicate code from add_string_to_fstring_db_runes
 	 should we do more?*/
@@ -1262,7 +1262,7 @@ add_blank_rune (pos_data *data, struct window *w, int char_tab_width)
 
 #define ADD_NEXT_OCTAL_RUNE_CHAR do				\
 {								\
-  if (add_failed || (add_failed = add_emchar_rune (data)))	\
+  if (add_failed || (add_failed = add_ichar_rune (data)))	\
     {								\
       struct prop_block pb;					\
       if (!prop)						\
@@ -1279,7 +1279,7 @@ static prop_block_dynarr *
 add_octal_runes (pos_data *data)
 {
   prop_block_dynarr *add_failed, *prop = 0;
-  Emchar orig_char = data->ch;
+  Ichar orig_char = data->ch;
   int orig_cursor_type = data->cursor_type;
 
   /* Initialize */
@@ -1355,7 +1355,7 @@ add_control_char_runes (pos_data *data, struct buffer *b)
   if (!NILP (b->ctl_arrow))
     {
       prop_block_dynarr *prop;
-      Emchar orig_char = data->ch;
+      Ichar orig_char = data->ch;
       int old_cursor_type = data->cursor_type;
 
       /* Initialize */
@@ -1396,7 +1396,7 @@ add_control_char_runes (pos_data *data, struct buffer *b)
 	data->ch = orig_char ^ 0100;
       data->cursor_type = IGNORE_CURSOR;
 
-      if (add_emchar_rune (data))
+      if (add_ichar_rune (data))
 	{
 	  struct prop_block pb;
 	  if (!prop)
@@ -1424,7 +1424,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 
   if (STRINGP (entry))
     {
-      prop = add_intbyte_string_runes (data,
+      prop = add_ibyte_string_runes (data,
 				       XSTRING_DATA   (entry),
 				       XSTRING_LENGTH (entry),
 				       0, 0);
@@ -1450,7 +1450,7 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
   else if (CHAR_OR_CHAR_INTP (entry))
     {
       data->ch = XCHAR_OR_CHAR_INT (entry);
-      prop = add_emchar_rune (data);
+      prop = add_ichar_rune (data);
     }
   else if (CONSP (entry))
     {
@@ -1460,33 +1460,33 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	{
 	  Lisp_Object format = XCAR (XCDR (entry));
 	  Bytebpos len = XSTRING_LENGTH (format);
-	  Intbyte *src = XSTRING_DATA (format), *end = src + len;
-	  Intbyte *result = alloca_array (Intbyte, len);
-	  Intbyte *dst = result;
+	  Ibyte *src = XSTRING_DATA (format), *end = src + len;
+	  Ibyte *result = alloca_array (Ibyte, len);
+	  Ibyte *dst = result;
 
 	  while (src < end)
 	    {
-	      Emchar c = charptr_emchar (src);
-	      INC_CHARPTR (src);
+	      Ichar c = itext_ichar (src);
+	      INC_IBYTEPTR (src);
 	      if (c != '%' || src == end)
-		dst += set_charptr_emchar (dst, c);
+		dst += set_itext_ichar (dst, c);
 	      else
 		{
-		  c = charptr_emchar (src);
-		  INC_CHARPTR (src);
+		  c = itext_ichar (src);
+		  INC_IBYTEPTR (src);
 		  switch (c)
 		    {
 		      /*case 'x':
 		      dst += long_to_string_base ((char *)dst, data->ch, 16);
 		      break;*/
 		    case '%':
-		      dst += set_charptr_emchar (dst, '%');
+		      dst += set_itext_ichar (dst, '%');
 		      break;
 		      /* #### unimplemented */
 		    }
 		}
 	    }
-	  prop = add_intbyte_string_runes (data, result, dst - result, 0, 0);
+	  prop = add_ibyte_string_runes (data, result, dst - result, 0, 0);
 	}
     }
 
@@ -1560,7 +1560,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  data->ch = pb->data.p_char.ch;
 	  data->byte_cursor_charpos = pb->data.p_char.byte_cursor_charpos;
 	  data->cursor_type = pb->data.p_char.cursor_type;
-	  add_failed = add_emchar_rune (data);
+	  add_failed = add_ichar_rune (data);
 
 	  if (add_failed)
 	    goto oops_no_more_space;
@@ -1569,7 +1569,7 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  if (pb->data.p_string.str)
 	    xfree (pb->data.p_string.str);
 	  /* #### bogus bogus -- this doesn't do anything!
-	     Should probably call add_intbyte_string_runes(),
+	     Should probably call add_ibyte_string_runes(),
 	     once that function is fixed. */
 	  break;
 	case PROP_MINIBUF_PROMPT:
@@ -1583,8 +1583,8 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 
 	    while (pb->data.p_string.len > 0)
 	      {
-		data->ch = charptr_emchar (pb->data.p_string.str);
-		add_failed = add_emchar_rune (data);
+		data->ch = itext_ichar (pb->data.p_string.str);
+		add_failed = add_ichar_rune (data);
 
 		if (add_failed)
 		  {
@@ -1595,8 +1595,8 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 		else
 		  {
 		    /* Complicated equivalent of ptr++, len-- */
-		    Intbyte *oldpos = pb->data.p_string.str;
-		    INC_CHARPTR (pb->data.p_string.str);
+		    Ibyte *oldpos = pb->data.p_string.str;
+		    INC_IBYTEPTR (pb->data.p_string.str);
 		    pb->data.p_string.len -= pb->data.p_string.str - oldpos;
 		  }
 	      }
@@ -1873,7 +1873,7 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 	  data->byte_start_col_enabled = 0;
 	  if (!allow_cursor)
 	    data->byte_charpos = 0;
-	  add_intbyte_string_runes (data, XSTRING_DATA (string),
+	  add_ibyte_string_runes (data, XSTRING_DATA (string),
 				    XSTRING_LENGTH (string), 0, 1);
 	  data->findex = orig_findex;
 	  data->byte_charpos = orig_charpos;
@@ -2072,7 +2072,7 @@ create_text_block (struct window *w, struct display_line *dl,
 
      Since more than one display table is possible, you have
      great flexibility in mapping ranges of characters.  */
-  Emchar printable_min = (CHAR_OR_CHAR_INTP (b->ctl_arrow)
+  Ichar printable_min = (CHAR_OR_CHAR_INTP (b->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (b->ctl_arrow)
 			  : ((EQ (b->ctl_arrow, Qt) || EQ (b->ctl_arrow, Qnil))
 			     ? 255 : 160));
@@ -2373,7 +2373,7 @@ create_text_block (struct window *w, struct display_line *dl,
 		    }
 		  else {
 		    data.blank_width = DEVMETH (d, eol_cursor_width, ());
-		    add_emchar_rune (&data); /* discard prop data. */
+		    add_ichar_rune (&data); /* discard prop data. */
 		    goto done;
 		  }
 		}
@@ -2436,7 +2436,7 @@ create_text_block (struct window *w, struct display_line *dl,
 			 is the EOL cursor width and whose character is
 			 the non-printing character '\n'. */
 		      data.blank_width = DEVMETH (d, eol_cursor_width, ());
-		      *prop = add_emchar_rune (&data);
+		      *prop = add_ichar_rune (&data);
 		    }
 
 		  /* We need to set data.byte_charpos to the start of the
@@ -2462,7 +2462,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	      else
 		{
 		  data.blank_width = DEVMETH (d, eol_cursor_width, ());
-		  *prop = add_emchar_rune (&data);
+		  *prop = add_ichar_rune (&data);
 		}
 
 	      goto done;
@@ -2527,7 +2527,7 @@ create_text_block (struct window *w, struct display_line *dl,
 		  data.start_col_xoffset = 0;
 		  data.byte_start_col_enabled = 0;
 
-		  add_emchar_rune (&data);
+		  add_ichar_rune (&data);
 		}
 
 	      /* This had better be a newline but doing it this way
@@ -2542,7 +2542,7 @@ create_text_block (struct window *w, struct display_line *dl,
              just add it. */
 	  else if (data.ch >= printable_min)
 	    {
-	      *prop = add_emchar_rune (&data);
+	      *prop = add_ichar_rune (&data);
 	      if (*prop)
 		goto done;
 	    }
@@ -2602,7 +2602,7 @@ create_text_block (struct window *w, struct display_line *dl,
 	     often bites people who carelessly use `char' instead
 	     of `unsigned char'.)
 	     */
-	  else if (data.ch < 0x100 && iscntrl ((Intbyte) data.ch))
+	  else if (data.ch < 0x100 && iscntrl ((Ibyte) data.ch))
 	    {
 	      *prop = add_control_char_runes (&data, b);
 
@@ -2624,7 +2624,7 @@ create_text_block (struct window *w, struct display_line *dl,
              then just add it. */
 	  else
 	    {
-	      *prop = add_emchar_rune (&data);
+	      *prop = add_ichar_rune (&data);
 	      if (*prop)
 		goto done;
 	    }
@@ -2685,7 +2685,7 @@ done:
 		  data.ch = '\n';
 		  data.blank_width = DEVMETH (d, eol_cursor_width, ());
 
-		  add_emchar_rune (&data);
+		  add_ichar_rune (&data);
 		}
 	    }
 
@@ -2771,7 +2771,7 @@ done:
       data.byte_start_col_enabled = 0;
 
       data.max_pixpos += data.blank_width;
-      add_emchar_rune (&data);
+      add_ichar_rune (&data);
       data.max_pixpos -= data.blank_width;
 
       /* #### urk!  Chuck, this shit is bad news.  Going around
@@ -2932,7 +2932,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
 
   if (STRINGP (Voverlay_arrow_string))
     {
-      add_intbyte_string_runes
+      add_ibyte_string_runes
 	(&data,
 	 XSTRING_DATA   (Voverlay_arrow_string),
 	 XSTRING_LENGTH (Voverlay_arrow_string),
@@ -3771,7 +3771,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
     {
       int elt;
       Bytecount len;
-      Intbyte *strdata;
+      Ibyte *strdata;
       struct buffer *buf = XBUFFER (WINDOW_BUFFER (w));
 
       in_modeline_generation = 1;
@@ -3787,7 +3787,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
         {
           if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
             {
-              len += (set_charptr_emchar
+              len += (set_itext_ichar
                       (strdata + len, Dynarr_atp (db->runes,
                                                   elt)->object.chr.ch));
             }
@@ -3918,13 +3918,13 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
 }
 
 static Charcount
-add_string_to_fstring_db_runes (pos_data *data, const Intbyte *str,
+add_string_to_fstring_db_runes (pos_data *data, const Ibyte *str,
                                 Charcount pos, Charcount min_pos,
 				Charcount max_pos)
 {
   /* This function has been Mule-ized. */
   Charcount end;
-  const Intbyte *cur_pos = str;
+  const Ibyte *cur_pos = str;
   struct display_block *db = data->db;
 
   data->blank_width = space_width (XWINDOW (data->window));
@@ -3938,12 +3938,12 @@ add_string_to_fstring_db_runes (pos_data *data, const Intbyte *str,
 
   while (pos < end && *cur_pos)
     {
-      const Intbyte *old_cur_pos = cur_pos;
+      const Ibyte *old_cur_pos = cur_pos;
       int succeeded;
 
-      data->ch = charptr_emchar (cur_pos);
-      succeeded = (add_emchar_rune (data) != ADD_FAILED);
-      INC_CHARPTR (cur_pos);
+      data->ch = itext_ichar (cur_pos);
+      succeeded = (add_ichar_rune (data) != ADD_FAILED);
+      INC_IBYTEPTR (cur_pos);
       if (succeeded)
         {
           pos++;
@@ -4029,11 +4029,11 @@ tail_recurse:
       /* A string.  Add to the display line and check for %-constructs
          within it. */
 
-      Intbyte *this = XSTRING_DATA (elt);
+      Ibyte *this = XSTRING_DATA (elt);
 
       while ((pos < max_pos || max_pos == -1) && *this)
         {
-          Intbyte *last = this;
+          Ibyte *last = this;
 
           while (*this && *this != '%')
             this++;
@@ -4050,7 +4050,7 @@ tail_recurse:
 		{
 		  Charcount tmp_max = (max_pos == -1 ? pos + size - *offset :
 				       min (pos + size - *offset, max_pos));
-		  const Intbyte *tmp_last = charptr_n_addr (last, *offset);
+		  const Ibyte *tmp_last = itext_n_addr (last, *offset);
 
 		  pos = add_string_to_fstring_db_runes (data, tmp_last,
 							pos, pos, tmp_max);
@@ -4094,7 +4094,7 @@ tail_recurse:
                     {
                       int cur_pixsize;
                       int dash_pixsize;
-                      Intbyte ch = '-';
+                      Ibyte ch = '-';
                       SET_CURRENT_MODE_CHARS_PIXSIZE;
 
                       dash_pixsize =
@@ -4107,26 +4107,26 @@ tail_recurse:
 
                   while (num_to_add--)
                     pos = add_string_to_fstring_db_runes
-                      (data, (const Intbyte *) "-", pos, pos, max_pos);
+                      (data, (const Ibyte *) "-", pos, pos, max_pos);
                 }
               else if (*this != 0)
                 {
-                  Emchar ch = charptr_emchar (this);
-                  Intbyte *str;
+                  Ichar ch = itext_ichar (this);
+                  Ibyte *str;
 		  Charcount size;
 
                   decode_mode_spec (w, ch, type);
 
-                  str = Dynarr_atp (mode_spec_intbyte_string, 0);
+                  str = Dynarr_atp (mode_spec_ibyte_string, 0);
 		  size = bytecount_to_charcount
 		    /* Skip the null character added by `decode_mode_spec' */
-		    (str, Dynarr_length (mode_spec_intbyte_string)) - 1;
+		    (str, Dynarr_length (mode_spec_ibyte_string)) - 1;
 
 		  if (size <= *offset)
 		    *offset -= size;
 		  else
 		    {
-		      const Intbyte *tmp_str = charptr_n_addr (str, *offset);
+		      const Ibyte *tmp_str = itext_n_addr (str, *offset);
 
 		      /* #### NOTE: I don't understand why a tmp_max is not
 			 computed and used here as in the plain string case
@@ -4140,7 +4140,7 @@ tail_recurse:
 
               /* NOT this++.  There could be any sort of character at
                  the current position. */
-              INC_CHARPTR (this);
+              INC_IBYTEPTR (this);
             }
 
           if (max_pixsize > 0)
@@ -4165,14 +4165,14 @@ tail_recurse:
              don't check for % within it.  */
           if (STRINGP (tem))
             {
-	      Intbyte *str = XSTRING_DATA (tem);
+	      Ibyte *str = XSTRING_DATA (tem);
 	      Charcount size = string_char_length (tem);
 
 	      if (size <= *offset)
 		*offset -= size;
 	      else
 		{
-		  const Intbyte *tmp_str = charptr_n_addr (str, *offset);
+		  const Ibyte *tmp_str = itext_n_addr (str, *offset);
 
 		  /* #### NOTE: I don't understand why a tmp_max is not
 		     computed and used here as in the plain string case
@@ -4370,8 +4370,8 @@ tail_recurse:
 	  *offset -= size;
 	else
 	  {
-	    const Intbyte *tmp_str =
-	      charptr_n_addr ((const Intbyte *) str, *offset);
+	    const Ibyte *tmp_str =
+	      itext_n_addr ((const Ibyte *) str, *offset);
 
 	    /* #### NOTE: I don't understand why a tmp_max is not computed and
 	       used here as in the plain string case above. -- dv */
@@ -4384,7 +4384,7 @@ tail_recurse:
 
   if (min_pos > pos)
     {
-      add_string_to_fstring_db_runes (data, (const Intbyte *) "", pos,
+      add_string_to_fstring_db_runes (data, (const Ibyte *) "", pos,
 				      min_pos, -1);
     }
 
@@ -4573,7 +4573,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
      Since more than one display table is possible, you have
      great flexibility in mapping ranges of characters.  */
-  Emchar printable_min = b ? (CHAR_OR_CHAR_INTP (b->ctl_arrow)
+  Ichar printable_min = b ? (CHAR_OR_CHAR_INTP (b->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (b->ctl_arrow)
 			  : ((EQ (b->ctl_arrow, Qt) || EQ (b->ctl_arrow, Qnil))
 			     ? 255 : 160)) : 255;
@@ -4792,7 +4792,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	 a line are handled correctly. */
       else if (Dynarr_length (data.ef->end_glyphs) > 0)
 	{
-	  data.ch = string_emchar (disp_string, data.byte_charpos);
+	  data.ch = string_ichar (disp_string, data.byte_charpos);
 	  *prop = add_glyph_runes (&data, END_GLYPHS);
 
 	  if (*prop) {
@@ -4803,7 +4803,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
       /* If there are begin glyphs, add them to the line. */
       else if (Dynarr_length (data.ef->begin_glyphs) > 0)
 	{
-	  data.ch = string_emchar (disp_string, data.byte_charpos);
+	  data.ch = string_ichar (disp_string, data.byte_charpos);
 	  *prop = add_glyph_runes (&data, BEGIN_GLYPHS);
 
 	  if (*prop) {
@@ -4821,7 +4821,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	{
 	  Lisp_Object entry = Qnil;
 	  /* Get the character at the current buffer position. */
-	  data.ch = string_emchar (disp_string, data.byte_charpos);
+	  data.ch = string_ichar (disp_string, data.byte_charpos);
 	  if (!NILP (face_dt) || !NILP (window_dt))
 	    entry = display_table_entry (data.ch, face_dt, window_dt);
 
@@ -4850,7 +4850,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
              just add it. */
 	  else if (data.ch >= printable_min)
 	    {
-	      *prop = add_emchar_rune (&data);
+	      *prop = add_ichar_rune (&data);
 	      if (*prop)
 		goto done;
 	    }
@@ -4909,7 +4909,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	     often bites people who carelessly use `char' instead
 	     of `unsigned char'.)
 	     */
-	  else if (data.ch < 0x100 && iscntrl ((Intbyte) data.ch))
+	  else if (data.ch < 0x100 && iscntrl ((Ibyte) data.ch))
 	    {
 	      *prop = add_control_char_runes (&data, b);
 
@@ -4931,7 +4931,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
              then just add it. */
 	  else
 	    {
-	      *prop = add_emchar_rune (&data);
+	      *prop = add_ichar_rune (&data);
 	      if (*prop)
 		goto done;
 	    }
@@ -4982,7 +4982,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 	      Bytecount byte_pos;
 
 	      /* Now find the start of the next line. */
-	      byte_pos = byte_find_next_emchar_in_string (disp_string, '\n',
+	      byte_pos = byte_find_next_ichar_in_string (disp_string, '\n',
 						      data.byte_charpos, 1);
 
 	      data.cursor_type = NO_CURSOR;
@@ -5007,10 +5007,10 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
 	  if (truncate_win && data.byte_charpos == byte_string_zv)
 	    {
-	      const Intbyte *endb = charptr_n_addr (XSTRING_DATA (disp_string),
+	      const Ibyte *endb = itext_n_addr (XSTRING_DATA (disp_string),
 						    byte_string_zv);
-	      DEC_CHARPTR (endb);
-	      if (charptr_emchar (endb) != '\n')
+	      DEC_IBYTEPTR (endb);
+	      if (itext_ichar (endb) != '\n')
 		{
 		  /* #### Damn this losing shit. */
 		  data.byte_charpos++;
@@ -6934,7 +6934,7 @@ window_line_number (struct window *w, int type)
 
 /* Given a character representing an object in a modeline
    specification, return a string (stored into the global array
-   `mode_spec_intbyte_string') with the information that object
+   `mode_spec_ibyte_string') with the information that object
    represents.
 
    This function is largely unchanged from previous versions of the
@@ -6945,13 +6945,13 @@ window_line_number (struct window *w, int type)
 */
 
 static void
-decode_mode_spec (struct window *w, Emchar spec, int type)
+decode_mode_spec (struct window *w, Ichar spec, int type)
 {
   Lisp_Object obj = Qnil;
   const char *str = NULL;
   struct buffer *b = XBUFFER (w->buffer);
 
-  Dynarr_reset (mode_spec_intbyte_string);
+  Dynarr_reset (mode_spec_ibyte_string);
 
   switch (spec)
     {
@@ -6976,8 +6976,8 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 
 	long_to_string (buf, col);
 
-	Dynarr_add_many (mode_spec_intbyte_string,
-			 (const Intbyte *) buf, strlen (buf));
+	Dynarr_add_many (mode_spec_ibyte_string,
+			 (const Ibyte *) buf, strlen (buf));
 
 	goto decode_mode_spec_done;
       }
@@ -7110,7 +7110,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	    percent = 99;
 
 	  sprintf (buf, "%d%%", percent);
-	  Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) buf,
+	  Dynarr_add_many (mode_spec_ibyte_string, (Ibyte *) buf,
 			   strlen (buf));
 
 	  goto decode_mode_spec_done;
@@ -7161,7 +7161,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	  else
 	    sprintf (buf, "%d%%", percent);
 
-	  Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) buf,
+	  Dynarr_add_many (mode_spec_ibyte_string, (Ibyte *) buf,
 			   strlen (buf));
 
 	  goto decode_mode_spec_done;
@@ -7186,7 +7186,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	}
 
       for (i = 0; i < command_loop_level; i++)
-	Dynarr_add (mode_spec_intbyte_string, '[');
+	Dynarr_add (mode_spec_ibyte_string, '[');
 
       goto decode_mode_spec_done;
     }
@@ -7203,7 +7203,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	}
 
       for (i = 0; i < command_loop_level; i++)
-	Dynarr_add (mode_spec_intbyte_string, ']');
+	Dynarr_add (mode_spec_ibyte_string, ']');
 
       goto decode_mode_spec_done;
     }
@@ -7215,14 +7215,14 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
     }
 
   if (STRINGP (obj))
-    Dynarr_add_many (mode_spec_intbyte_string,
+    Dynarr_add_many (mode_spec_ibyte_string,
 		     XSTRING_DATA   (obj),
 		     XSTRING_LENGTH (obj));
   else if (str)
-    Dynarr_add_many (mode_spec_intbyte_string, (Intbyte *) str, strlen (str));
+    Dynarr_add_many (mode_spec_ibyte_string, (Ibyte *) str, strlen (str));
 
 decode_mode_spec_done:
-  Dynarr_add (mode_spec_intbyte_string, '\0');
+  Dynarr_add (mode_spec_ibyte_string, '\0');
 }
 
 /* Given a display line, free all of its data structures. */
@@ -9406,8 +9406,8 @@ init_redisplay (void)
     {
       if (!cmotion_display_lines)
 	cmotion_display_lines = Dynarr_new (display_line);
-      if (!mode_spec_intbyte_string)
-	mode_spec_intbyte_string = Dynarr_new (Intbyte);
+      if (!mode_spec_ibyte_string)
+	mode_spec_ibyte_string = Dynarr_new (Ibyte);
       if (!formatted_string_extent_dynarr)
 	formatted_string_extent_dynarr = Dynarr_new (EXTENT);
       if (!formatted_string_extent_start_dynarr)

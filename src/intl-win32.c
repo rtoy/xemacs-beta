@@ -1867,13 +1867,13 @@ convert_multibyte_to_unicode_malloc (const Extbyte *src, Bytecount n,
    See above for why this exists, and the TO_INTERNAL_FORMAT() macros
    aren't just used. */
 
-Intbyte *
+Ibyte *
 convert_multibyte_to_internal_malloc (const Extbyte *src, Bytecount n,
 				      int cp, Bytecount *size_out)
 {
   Bytecount size;
   Extbyte *unidata = convert_multibyte_to_unicode_malloc (src, n, cp, &size);
-  Intbyte *intdata;
+  Ibyte *intdata;
 
   TO_INTERNAL_FORMAT (DATA, (unidata, size), MALLOC, (intdata, size),
 		      Qmswindows_unicode);

@@ -319,10 +319,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 #endif
 
 Extbyte *
-menu_separator_style_and_to_external (const Intbyte *s)
+menu_separator_style_and_to_external (const Ibyte *s)
 {
-  const Intbyte *p;
-  Intbyte first;
+  const Ibyte *p;
+  Ibyte first;
 
   if (!s || s[0] == '\0')
     return NULL;
@@ -358,7 +358,7 @@ add_accel_and_to_external (Lisp_Object string)
   int i;
   int found_accel = 0;
   Extbyte *retval;
-  Intbyte *name = XSTRING_DATA (string);
+  Ibyte *name = XSTRING_DATA (string);
 
   for (i = 0; name[i]; ++i)
     if (name[i] == '%' && name[i+1] == '_')
@@ -372,7 +372,7 @@ add_accel_and_to_external (Lisp_Object string)
   else
     {
       Bytecount namelen = XSTRING_LENGTH (string);
-      Intbyte *chars = (Intbyte *) ALLOCA (namelen + 3);
+      Ibyte *chars = (Ibyte *) ALLOCA (namelen + 3);
       chars[0] = '%';
       chars[1] = '_';
       memcpy (chars + 2, name, namelen + 1);
@@ -488,7 +488,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
   CHECK_SYMBOL (pgui->style);
   if (NILP (pgui->style))
     {
-      Intbyte *intname;
+      Ibyte *intname;
       Bytecount intlen;
       /* If the callback is nil, treat this item like unselectable text.
 	 This way, dashes will show up as a separator. */

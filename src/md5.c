@@ -553,7 +553,7 @@ file-coding or Mule support.  Otherwise, they are ignored.
   /* Get the data while doing the conversion.  */
   while (1)
     {
-      Intbyte tempbuf[1024];	/* some random amount */
+      Ibyte tempbuf[1024];	/* some random amount */
       Bytecount size_in_bytes =
 	Lstream_read (XLSTREAM (instream), tempbuf, sizeof (tempbuf));
       if (!size_in_bytes)

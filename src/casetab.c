@@ -312,11 +312,11 @@ compute_up_or_eqv_mapper (struct chartab_range *range,
 			  Lisp_Object table, Lisp_Object val, void *arg)
 {
   Lisp_Object inverse = VOID_TO_LISP (arg);
-  Emchar toch = XCHAR (val);
+  Ichar toch = XCHAR (val);
 
   if (range->type == CHARTAB_RANGE_CHAR && range->ch != toch)
     {
-      Emchar c = TRT_TABLE_OF (inverse, toch);
+      Ichar c = TRT_TABLE_OF (inverse, toch);
       SET_TRT_TABLE_OF (inverse, toch, range->ch);
       SET_TRT_TABLE_OF (inverse, range->ch, c);
     }
@@ -372,10 +372,10 @@ This is the one used for new buffers.
 static void
 convert_old_style_syntax_string (Lisp_Object table, Lisp_Object string)
 {
-  Emchar i;
+  Ichar i;
   
   for (i = 0; i < 256; i++)
-    SET_TRT_TABLE_OF (table, i, string_emchar (string, i));
+    SET_TRT_TABLE_OF (table, i, string_ichar (string, i));
 }
 
 static Lisp_Object
@@ -511,7 +511,7 @@ syms_of_casetab (void)
 void
 complex_vars_of_casetab (void)
 {
-  REGISTER Emchar i;
+  REGISTER Ichar i;
 
   staticpro (&Vstandard_case_table);
 

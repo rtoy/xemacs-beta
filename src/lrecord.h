@@ -352,7 +352,7 @@ extern int gc_in_progress;
    {
      struct lrecord_header lheader;
      Bytecount size;
-     Intbyte *data;
+     Ibyte *data;
      Lisp_Object plist;
    };
 

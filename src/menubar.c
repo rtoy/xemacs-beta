@@ -331,10 +331,10 @@ This removes %_'s (accelerator indications) and converts %% to %.
   struct buffer *buf = decode_buffer (buffer, 0);
   Charcount end;
   int i;
-  Intbyte *name_data;
-  Intbyte *string_result;
-  Intbyte *string_result_ptr;
-  Emchar elt;
+  Ibyte *name_data;
+  Ibyte *string_result;
+  Ibyte *string_result_ptr;
+  Ichar elt;
   int expecting_underscore = 0;
 
   CHECK_STRING (name);
@@ -342,11 +342,11 @@ This removes %_'s (accelerator indications) and converts %% to %.
   end = string_char_length (name);
   name_data = XSTRING_DATA (name);
 
-  string_result = (Intbyte *) ALLOCA (end * MAX_EMCHAR_LEN);
+  string_result = (Ibyte *) ALLOCA (end * MAX_ICHAR_LEN);
   string_result_ptr = string_result;
   for (i = 0; i < end; i++)
     {
-      elt = charptr_emchar (name_data);
+      elt = itext_ichar (name_data);
       elt = DOWNCASE (buf, elt);
       if (expecting_underscore)
 	{
@@ -355,20 +355,20 @@ This removes %_'s (accelerator indications) and converts %% to %.
 	    {
 	    case '%':
 	      /* Allow `%%' to mean `%'.  */
-	      string_result_ptr += set_charptr_emchar (string_result_ptr, '%');
+	      string_result_ptr += set_itext_ichar (string_result_ptr, '%');
 	      break;
 	    case '_':
 	      break;
 	    default:
-	      string_result_ptr += set_charptr_emchar (string_result_ptr, '%');
-	      string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
+	      string_result_ptr += set_itext_ichar (string_result_ptr, '%');
+	      string_result_ptr += set_itext_ichar (string_result_ptr, elt);
 	    }
 	}
       else if (elt == '%')
 	expecting_underscore = 1;
       else
-	string_result_ptr += set_charptr_emchar (string_result_ptr, elt);
-      INC_CHARPTR (name_data);
+	string_result_ptr += set_itext_ichar (string_result_ptr, elt);
+      INC_IBYTEPTR (name_data);
     }
 
   if (string_result_ptr - string_result == XSTRING_LENGTH (name)

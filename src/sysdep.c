@@ -569,10 +569,10 @@ static void
 sys_subshell (void)
 {
   Lisp_Object dir;
-  Intbyte *str = 0;
+  Ibyte *str = 0;
   Bytecount len;
   struct gcpro gcpro1;
-  Intbyte *sh = 0;
+  Ibyte *sh = 0;
   Extbyte *shext;
 
   /* Use our buffer's default directory for the subshell.  */
@@ -590,7 +590,7 @@ sys_subshell (void)
   dir = Funhandled_file_name_directory (dir);
   dir = expand_and_dir_to_file (dir, Qnil);
 
-  str = (Intbyte *) ALLOCA (XSTRING_LENGTH (dir) + 2);
+  str = (Ibyte *) ALLOCA (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);
   if (!IS_ANY_SEP (str[len - 1]))
@@ -743,10 +743,10 @@ get_pty_max_bytes (int fd)
 
 /* Figure out the eof character for the FD. */
 
-Intbyte
+Ibyte
 get_eof_char (int fd)
 {
-  const Intbyte ctrl_d = (Intbyte) '\004';
+  const Ibyte ctrl_d = (Ibyte) '\004';
 
   if (!isatty (fd))
     return ctrl_d;
@@ -759,9 +759,9 @@ get_eof_char (int fd)
     if ((int) strlen ((const char *) t.c_cc) < (VEOF + 1))
       return ctrl_d;
     else
-      return (Intbyte) t.c_cc[VEOF];
+      return (Ibyte) t.c_cc[VEOF];
 #endif
-    return t.c_cc[VEOF] == _POSIX_VDISABLE ? ctrl_d : (Intbyte) t.c_cc[VEOF];
+    return t.c_cc[VEOF] == _POSIX_VDISABLE ? ctrl_d : (Ibyte) t.c_cc[VEOF];
   }
 #else /* ! HAVE_TERMIOS */
   /* On Berkeley descendants, the following IOCTL's retrieve the
@@ -770,7 +770,7 @@ get_eof_char (int fd)
   {
     struct tchars c;
     ioctl (fd, TIOCGETC, &c);
-    return (Intbyte) c.t_eofc;
+    return (Ibyte) c.t_eofc;
   }
 #else /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
   /* On SYSV descendants, the TCGETA ioctl retrieves the current control
@@ -782,7 +782,7 @@ get_eof_char (int fd)
     if ((int) strlen ((const char *) t.c_cc) < (VINTR + 1))
       return ctrl_d;
     else
-      return (Intbyte) t.c_cc[VINTR];
+      return (Ibyte) t.c_cc[VINTR];
   }
 #else /* ! defined (TCGETA) */
   /* Rather than complain, we'll just guess ^D, which is what
@@ -2324,7 +2324,7 @@ init_system_name (void)
   Vsystem_name = build_string (hostname);
 #endif /* HAVE_GETHOSTNAME  */
   {
-    Intbyte *p;
+    Ibyte *p;
     Bytecount i;
 
     for (i = 0, p = XSTRING_DATA (Vsystem_name);
@@ -2563,7 +2563,7 @@ retry_open (const Extbyte *path, int oflag, ...)
    external encoding, interruptions, etc. */
 
 int
-qxe_open (const Intbyte *path, int oflag, ...)
+qxe_open (const Ibyte *path, int oflag, ...)
 {
   Extbyte *pathout;
   int mode;
@@ -2586,7 +2586,7 @@ qxe_open (const Intbyte *path, int oflag, ...)
    is not interrupted by C-g.  However, the worst that can happen is
    the fallback to simple open().  */
 int
-qxe_interruptible_open (const Intbyte *path, int oflag, int mode)
+qxe_interruptible_open (const Ibyte *path, int oflag, int mode)
 {
   /* This function can GC */
   Extbyte *pathout;
@@ -2773,7 +2773,7 @@ retry_fopen (const Extbyte *path, const Char_ASCII *mode)
 }
 
 FILE *
-qxe_fopen (const Intbyte *path, const Char_ASCII *mode)
+qxe_fopen (const Ibyte *path, const Char_ASCII *mode)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -2854,7 +2854,7 @@ retry_fwrite (const void *ptr, size_t size, size_t nitem, FILE *stream)
 /********************* directory calls *******************/
 
 int
-qxe_chdir (const Intbyte *path)
+qxe_chdir (const Ibyte *path)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -2869,7 +2869,7 @@ qxe_chdir (const Intbyte *path)
 }
 
 int
-qxe_mkdir (const Intbyte *path, mode_t mode)
+qxe_mkdir (const Ibyte *path, mode_t mode)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -2884,7 +2884,7 @@ qxe_mkdir (const Intbyte *path, mode_t mode)
 }
 
 DIR *
-qxe_opendir (const Intbyte *filename)
+qxe_opendir (const Ibyte *filename)
 {
 #ifdef WIN32_NATIVE
   return mswindows_opendir (filename);
@@ -2921,7 +2921,7 @@ qxe_readdir (DIR *dirp)
   {
     const Extbyte * const external_name = (const Extbyte *) rtnval->d_name;
     Bytecount external_len = strlen (rtnval->d_name);
-    const Intbyte *internal_name;
+    const Ibyte *internal_name;
     Bytecount internal_len;
 
     TO_INTERNAL_FORMAT (DATA, (external_name, external_len),
@@ -2934,13 +2934,13 @@ qxe_readdir (DIR *dirp)
       return rtnval;
 
     { /* Non-ASCII filename */
-      static Intbyte_dynarr *internal_DIRENTRY;
+      static Ibyte_dynarr *internal_DIRENTRY;
       if (!internal_DIRENTRY)
-        internal_DIRENTRY = Dynarr_new (Intbyte);
+        internal_DIRENTRY = Dynarr_new (Ibyte);
       else
         Dynarr_reset (internal_DIRENTRY);
 
-      Dynarr_add_many (internal_DIRENTRY, (Intbyte *) rtnval,
+      Dynarr_add_many (internal_DIRENTRY, (Ibyte *) rtnval,
                        offsetof (DIRENTRY, d_name));
 
 
@@ -2969,7 +2969,7 @@ qxe_closedir (DIR *dirp)
 }
 
 int
-qxe_rmdir (const Intbyte *path)
+qxe_rmdir (const Ibyte *path)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -2983,7 +2983,7 @@ qxe_rmdir (const Intbyte *path)
 #endif
 }
 
-Intbyte *
+Ibyte *
 qxe_allocating_getcwd (void)
 {
 #ifdef HAVE_GETCWD
@@ -3005,7 +3005,7 @@ qxe_allocating_getcwd (void)
 
       if (ret)
 	{
-	  Intbyte *retin;
+	  Ibyte *retin;
 	  TSTR_TO_C_STRING_MALLOC (ret, retin);
 	  xfree (cwd);
 	  return retin;
@@ -3014,7 +3014,7 @@ qxe_allocating_getcwd (void)
       Extbyte *ret = getcwd (cwd, cwdsize);
       if (ret)
 	{
-	  Intbyte *retin;
+	  Ibyte *retin;
 	  EXTERNAL_TO_C_STRING_MALLOC (ret, retin, Qfile_name);
 	  xfree (cwd);
 	  return retin;
@@ -3034,7 +3034,7 @@ qxe_allocating_getcwd (void)
     }
 #else
   Extbyte chingame_limitos_arbitrarios[PATH_MAX];
-  Intbyte *ret2;
+  Ibyte *ret2;
 
   if (!getwd (chingame_limitos_arbitrarios))
     return 0;
@@ -3046,7 +3046,7 @@ qxe_allocating_getcwd (void)
 /***************** file-information calls ******************/
 
 int
-qxe_access (const Intbyte *path, int mode)
+qxe_access (const Ibyte *path, int mode)
 {
 #ifdef WIN32_NATIVE
   return mswindows_access (path, mode);
@@ -3059,7 +3059,7 @@ qxe_access (const Intbyte *path, int mode)
 
 #if defined (HAVE_EACCESS)
 int
-qxe_eaccess (const Intbyte *path, int mode)
+qxe_eaccess (const Ibyte *path, int mode)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -3068,7 +3068,7 @@ qxe_eaccess (const Intbyte *path, int mode)
 #endif /* defined (HAVE_EACCESS) */
 
 int
-qxe_lstat (const Intbyte *path, struct stat *buf)
+qxe_lstat (const Ibyte *path, struct stat *buf)
 {
   /* if system does not have symbolic links, it does not have lstat.
      In that case, use ordinary stat instead.  */
@@ -3083,7 +3083,7 @@ qxe_lstat (const Intbyte *path, struct stat *buf)
 
 #if defined (HAVE_READLINK)
 int
-qxe_readlink (const Intbyte *path, Intbyte *buf, size_t bufsiz)
+qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz)
 {
   int retval;
   Extbyte *pathout;
@@ -3093,7 +3093,7 @@ qxe_readlink (const Intbyte *path, Intbyte *buf, size_t bufsiz)
   if (retval < 0)
     return retval;
   {
-    Intbyte *intbuf;
+    Ibyte *intbuf;
     Bytecount tamanho;
 
     TO_INTERNAL_FORMAT (DATA, (buf, retval),
@@ -3118,7 +3118,7 @@ qxe_fstat (int fd, struct stat *buf)
 }
 
 int
-qxe_stat (const Intbyte *path, struct stat *buf)
+qxe_stat (const Ibyte *path, struct stat *buf)
 {
 #ifdef WIN32_NATIVE
   return mswindows_stat (path, buf);
@@ -3133,7 +3133,7 @@ qxe_stat (const Intbyte *path, struct stat *buf)
 /****************** file-manipulation calls *****************/
 
 int
-qxe_chmod (const Intbyte *path, mode_t mode)
+qxe_chmod (const Ibyte *path, mode_t mode)
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -3149,7 +3149,7 @@ qxe_chmod (const Intbyte *path, mode_t mode)
 
 #if defined (HAVE_LINK)
 int
-qxe_link (const Intbyte *existing, const Intbyte *new)
+qxe_link (const Ibyte *existing, const Ibyte *new)
 {
 #ifdef WIN32_NATIVE
   return mswindows_link (existing, new);
@@ -3163,7 +3163,7 @@ qxe_link (const Intbyte *existing, const Intbyte *new)
 #endif /* defined (HAVE_LINK) */
 
 int
-qxe_rename (const Intbyte *old, const Intbyte *new)
+qxe_rename (const Ibyte *old, const Ibyte *new)
 {
 #ifdef WIN32_NATIVE
   /* Windows rename fails if NEW exists */
@@ -3184,7 +3184,7 @@ qxe_rename (const Intbyte *old, const Intbyte *new)
 
 #if defined (HAVE_SYMLINK)
 int
-qxe_symlink (const Intbyte *name1, const Intbyte *name2)
+qxe_symlink (const Ibyte *name1, const Ibyte *name2)
 {
   Extbyte *name1out, *name2out;
   PATHNAME_CONVERT_OUT (name1, name1out);
@@ -3194,7 +3194,7 @@ qxe_symlink (const Intbyte *name1, const Intbyte *name2)
 #endif /* defined (HAVE_SYMLINK) */
 
 int
-qxe_unlink (const Intbyte *path)
+qxe_unlink (const Ibyte *path)
 {
 #ifdef WIN32_NATIVE
   return mswindows_unlink (path);
@@ -3209,8 +3209,8 @@ qxe_unlink (const Intbyte *path)
 /****************** process calls *****************/
 
 int
-qxe_execve (const Intbyte *filename, Intbyte * const argv[],
-	    Intbyte * const envp[])
+qxe_execve (const Ibyte *filename, Ibyte * const argv[],
+	    Ibyte * const envp[])
 {
   int i, argc, envc;
   Extbyte *pathext;
@@ -3288,7 +3288,7 @@ copy_in_passwd (struct passwd *pwd)
 }
 
 struct passwd *
-qxe_getpwnam (const Intbyte *name)
+qxe_getpwnam (const Ibyte *name)
 {
 #ifdef WIN32_NATIVE
   /* Synthetic versions are defined in nt.c and already do conversion. */
@@ -3325,14 +3325,14 @@ qxe_getpwent (void)
 
 /****************** time calls *****************/
 
-static Intbyte *ctime_static;
+static Ibyte *ctime_static;
 
-Intbyte *
+Ibyte *
 qxe_ctime (const time_t *t)
 {
   Extbyte *str = (Extbyte *) ctime (t);
   if (!str) /* can happen on MS Windows */
-    return (Intbyte *) "Sun Jan 01 00:00:00 1970";
+    return (Ibyte *) "Sun Jan 01 00:00:00 1970";
   if (ctime_static)
     xfree (ctime_static);
   EXTERNAL_TO_C_STRING_MALLOC (str, ctime_static, Qnative);

@@ -72,7 +72,7 @@ allocate_nearest_color (GdkColormap *colormap, GdkVisual *visual,
 }
 
 int
-gtk_parse_nearest_color (struct device *d, GdkColor *color, Intbyte *name,
+gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
 			 Bytecount len, Error_Behavior errb)
 {
   GdkColormap *cmap;
@@ -379,7 +379,7 @@ gtk_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
 static int
 gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			       const Intbyte *nonreloc, Lisp_Object reloc,
+			       const Ibyte *nonreloc, Lisp_Object reloc,
 			       Bytecount offset, Bytecount length)
 {
   if (UNBOUNDP (charset))
@@ -391,7 +391,7 @@ gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
      */
   if (EQ (charset, Vcharset_ascii))
     {
-      const Intbyte *the_nonreloc = nonreloc;
+      const Ibyte *the_nonreloc = nonreloc;
       int i;
       Bytecount the_length = length;
 
@@ -403,7 +403,7 @@ gtk_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 	{
 	  for (i = 0;; i++)
 	    {
-	      const Intbyte *new_nonreloc = (const Intbyte *)
+	      const Ibyte *new_nonreloc = (const Ibyte *)
 		memchr (the_nonreloc, '-', the_length);
 	      if (!new_nonreloc)
 		break;
@@ -499,7 +499,7 @@ gtk_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset
   /* #### This code seems awfully bogus -- mrb */
   for (i = 0; i < count; i ++)
     {
-      const Intbyte *intname;
+      const Ibyte *intname;
       Bytecount intlen;
 
       TO_INTERNAL_FORMAT (C_STRING, names[i], ALLOCA, (intname, intlen),

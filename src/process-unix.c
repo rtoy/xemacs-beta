@@ -206,7 +206,7 @@ static int allocate_pty_the_old_fashioned_way (void);
 #ifndef MAX_PTYNAME_LEN
 #define MAX_PTYNAME_LEN 64
 #endif
-static Intbyte pty_name[MAX_PTYNAME_LEN];
+static Ibyte pty_name[MAX_PTYNAME_LEN];
 
 /* Open an available pty, returning a file descriptor.
    Return -1 on failure.
@@ -228,8 +228,8 @@ allocate_pty (void)
      grovelling code in allocate_pty_the_old_fashioned_way(). */
   int master_fd = -1;
   const Extbyte *slave_name = NULL;
-  const CIntbyte *clone = NULL;
-  static const CIntbyte * const clones[] =
+  const CIbyte *clone = NULL;
+  static const CIbyte * const clones[] =
     /* Different pty master clone devices */
     {
       "/dev/ptmx",      /* Various systems */
@@ -283,7 +283,7 @@ allocate_pty (void)
     for (i = 0; i < countof (clones); i++)
       {
 	clone = clones[i];
-	master_fd = qxe_open ((Intbyte *) clone,
+	master_fd = qxe_open ((Ibyte *) clone,
 			      O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
 	if (master_fd >= 0)
 	  goto have_master;
@@ -311,7 +311,7 @@ allocate_pty (void)
 
  have_slave_name:
   {
-    Intbyte *slaveint;
+    Ibyte *slaveint;
 
     EXTERNAL_TO_C_STRING (slave_name, slaveint, Qfile_name);
     qxestrncpy (pty_name, slaveint, sizeof (pty_name));
@@ -869,7 +869,7 @@ relocate_fd (int fd, int min)
       int newfd = dup (fd);
       if (newfd == -1)
 	{
-	  Intbyte *errmess;
+	  Ibyte *errmess;
 	  GET_STRERROR (errmess, errno);
 	  stderr_out ("Error while setting up child: %s\n", errmess);
 	  _exit (1);
@@ -894,11 +894,11 @@ relocate_fd (int fd, int min)
    parent.  */
 
 static void
-child_setup (int in, int out, int err, Intbyte **new_argv,
+child_setup (int in, int out, int err, Ibyte **new_argv,
 	     Lisp_Object current_dir)
 {
-  Intbyte **env;
-  Intbyte *pwd;
+  Ibyte **env;
+  Ibyte *pwd;
 
 #ifdef SET_EMACS_PRIORITY
   if (emacs_priority != 0)
@@ -921,7 +921,7 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
     REGISTER Bytecount i;
 
     i = XSTRING_LENGTH (current_dir);
-    pwd = alloca_array (Intbyte, i + 6);
+    pwd = alloca_array (Ibyte, i + 6);
     memcpy (pwd, "PWD=", 4);
     memcpy (pwd + 4, XSTRING_DATA (current_dir), i);
     i += 4;
@@ -951,10 +951,10 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
 
   /* Set `env' to a vector of the strings in Vprocess_environment.  */
   /* + 2 to include PWD and terminating 0.  */
-  env = alloca_array (Intbyte *, XINT (Flength (Vprocess_environment)) + 2);
+  env = alloca_array (Ibyte *, XINT (Flength (Vprocess_environment)) + 2);
   {
     REGISTER Lisp_Object tail;
-    Intbyte **new_env = env;
+    Ibyte **new_env = env;
 
     /* If we have a PWD envvar and we know the real current directory,
        pass one down, but with corrected value.  */
@@ -966,8 +966,8 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
 	 CONSP (tail) && STRINGP (XCAR (tail));
 	 tail = XCDR (tail))
       {
-      Intbyte **ep = env;
-      Intbyte *envvar = XSTRING_DATA (XCAR (tail));
+      Ibyte **ep = env;
+      Ibyte *envvar = XSTRING_DATA (XCAR (tail));
 
       /* See if envvar duplicates any string already in the env.
 	 If so, don't put it in.
@@ -975,7 +975,7 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
 	 we keep the definition that comes first in process-environment.  */
       for (; ep != new_env; ep++)
 	{
-	  Intbyte *p = *ep, *q = envvar;
+	  Ibyte *p = *ep, *q = envvar;
 	  while (1)
 	    {
 	      if (*q == 0)
@@ -988,7 +988,7 @@ child_setup (int in, int out, int err, Intbyte **new_argv,
 	      p++, q++;
 	    }
 	}
-      if (pwd && !qxestrncmp ((Intbyte *) "PWD=", envvar, 4))
+      if (pwd && !qxestrncmp ((Ibyte *) "PWD=", envvar, 4))
 	{
 	  *new_env++ = pwd;
 	  pwd = 0;
@@ -1272,7 +1272,7 @@ unix_create_process (Lisp_Process *p,
 	EMACS_SIGNAL (SIGQUIT, SIG_DFL);
 
 	{
-	  Intbyte **new_argv = alloca_array (Intbyte *, nargv + 2);
+	  Ibyte **new_argv = alloca_array (Ibyte *, nargv + 2);
 	  int i;
 
 	  /* Nothing below here GCs so our string pointers shouldn't move. */
@@ -1509,7 +1509,7 @@ unix_send_process (Lisp_Object proc, struct lstream *lstream)
       /* use a reasonable-sized buffer (somewhere around the size of the
 	 stream buffer) so as to avoid inundating the stream with blocked
 	 data. */
-      Intbyte chunkbuf[512];
+      Ibyte chunkbuf[512];
       Bytecount chunklen;
 
       while (1)
@@ -1591,10 +1591,10 @@ unix_process_send_eof (Lisp_Object proc)
      character in init_process_io_handles but here it simply screws
      things up. */
 #if 0
-  Intbyte eof_char = get_eof_char (XPROCESS (proc));
+  Ibyte eof_char = get_eof_char (XPROCESS (proc));
   send_process (proc, Qnil, &eof_char, 0, 1);
 #else
-  send_process (proc, Qnil, (const Intbyte *) "\004", 0, 1);
+  send_process (proc, Qnil, (const Ibyte *) "\004", 0, 1);
 #endif
   return 1;
 }
@@ -1732,7 +1732,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
       /* If possible, send signals to the entire pgrp
 	 by sending an input character to it.  */
       {
-        Intbyte sigchar = process_signal_char (d->subtty, signo);
+        Ibyte sigchar = process_signal_char (d->subtty, signo);
         if (sigchar)
 	  {
 	    send_process (proc, Qnil, &sigchar, 0, 1);
@@ -1833,7 +1833,7 @@ unix_canonicalize_host_name (Lisp_Object host)
   retval = getaddrinfo (ext_host, NULL, &hints, &res);
   if (retval != 0)
     {
-      CIntbyte *gai_err;
+      CIbyte *gai_err;
 
       EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
 			    Qstrerror_encoding);
@@ -1929,7 +1929,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host,
     retval = getaddrinfo (ext_host, portstring, &hints, &res);
     if (retval != 0)
       {
-	CIntbyte *gai_err;
+	CIbyte *gai_err;
 
 	EXTERNAL_TO_C_STRING (gai_strerror (retval), gai_err,
 			      Qstrerror_encoding);

@@ -494,7 +494,7 @@ init_x_prop_symbols (void)
 static Lisp_Object
 color_to_string (Widget w, unsigned long pixel)
 {
-  Intbyte buf[255];
+  Ibyte buf[255];
 
   XColor color;
   color.pixel = pixel;
@@ -653,7 +653,7 @@ x_frame_properties (struct frame *f)
    individual properties. */
 
 static void
-x_set_frame_text_value (struct frame *f, Intbyte *value,
+x_set_frame_text_value (struct frame *f, Ibyte *value,
 			String Xt_resource_name,
 			String Xt_resource_encoding_name)
 {
@@ -662,7 +662,7 @@ x_set_frame_text_value (struct frame *f, Intbyte *value,
   String old_XtValue = NULL;
 
 #ifdef MULE
-  Intbyte *ptr;
+  Ibyte *ptr;
   /* Optimize for common ASCII case */
   for (ptr = value; *ptr; ptr++)
     if (!byte_ascii_p (*ptr))
@@ -687,13 +687,13 @@ x_set_frame_text_value (struct frame *f, Intbyte *value,
 }
 
 static void
-x_set_title_from_intbyte (struct frame *f, Intbyte *name)
+x_set_title_from_ibyte (struct frame *f, Ibyte *name)
 {
   x_set_frame_text_value (f, name, XtNtitle, XtNtitleEncoding);
 }
 
 static void
-x_set_icon_name_from_intbyte (struct frame *f, Intbyte *name)
+x_set_icon_name_from_ibyte (struct frame *f, Ibyte *name)
 {
   x_set_frame_text_value (f, name, XtNiconName, XtNiconNameEncoding);
 }
@@ -1266,7 +1266,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  filePath = transferInfo->dropData->data.files[ii];
 	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
           /* #### Mule-izing required */
-	  l_data = Fcons (make_string ((Intbyte* )hurl,
+	  l_data = Fcons (make_string ((Ibyte* )hurl,
 				       strlen (hurl)),
 			  l_data);
 	  xfree (hurl);
@@ -1288,11 +1288,11 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	  /* let us forget this name thing for now... */
  	  /* filePath = transferInfo->dropData->data.buffers[ii].name;
 	     path = (filePath == NULL) ? Qnil
-	     : make_string ((Intbyte *)filePath, strlen (filePath)); */
+	     : make_string ((Ibyte *)filePath, strlen (filePath)); */
 	  /* what, if the data is no text, and how can I tell it? */
-	  l_data = Fcons ( list3 ( list1 ( make_string ((Intbyte *)"text/plain", 10) ),
-				   make_string ((Intbyte *)"8bit", 4),
-				   make_string ((Intbyte *)transferInfo->dropData->data.buffers[ii].bp,
+	  l_data = Fcons ( list3 ( list1 ( make_string ((Ibyte *)"text/plain", 10) ),
+				   make_string ((Ibyte *)"8bit", 4),
+				   make_string ((Ibyte *)transferInfo->dropData->data.buffers[ii].bp,
 						transferInfo->dropData->data.buffers[ii].size) ),
 			   l_data );
  	}
@@ -2289,7 +2289,7 @@ a string.
 */
        (frame))
 {
-  Intbyte str[255];
+  Ibyte str[255];
   struct frame *f = decode_x_frame (frame);
 
   qxesprintf (str, "%lu", XtWindow (FRAME_X_TEXT_WIDGET (f)));
@@ -2821,8 +2821,8 @@ console_type_create_frame_x (void)
   CONSOLE_HAS_METHOD (x, internal_frame_property_p);
   CONSOLE_HAS_METHOD (x, frame_properties);
   CONSOLE_HAS_METHOD (x, set_frame_properties);
-  CONSOLE_HAS_METHOD (x, set_title_from_intbyte);
-  CONSOLE_HAS_METHOD (x, set_icon_name_from_intbyte);
+  CONSOLE_HAS_METHOD (x, set_title_from_ibyte);
+  CONSOLE_HAS_METHOD (x, set_icon_name_from_ibyte);
   CONSOLE_HAS_METHOD (x, frame_visible_p);
   CONSOLE_HAS_METHOD (x, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (x, frame_iconified_p);

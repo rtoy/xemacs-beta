@@ -1396,7 +1396,7 @@ redisplay_output_layout (Lisp_Object domain,
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object rest, window = DOMAIN_WINDOW (domain);
-  Emchar_dynarr *buf = Dynarr_new (Emchar);
+  Ichar_dynarr *buf = Dynarr_new (Ichar);
   struct window *w = XWINDOW (window);
   struct device *d = DOMAIN_XDEVICE (domain);
   int layout_height, layout_width;
@@ -1539,12 +1539,12 @@ redisplay_output_layout (Lisp_Object domain,
 			unsigned char charsets[NUM_LEADING_BYTES];
 			struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
-			find_charsets_in_intbyte_string (charsets,
+			find_charsets_in_ibyte_string (charsets,
 							 XSTRING_DATA (string),
 							 XSTRING_LENGTH (string));
 			ensure_face_cachel_complete (cachel, window, charsets);
 
-			convert_intbyte_string_into_emchar_dynarr
+			convert_ibyte_string_into_ichar_dynarr
 			  (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 
 			redisplay_normalize_display_box (&cdb, &cdga);

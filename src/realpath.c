@@ -55,13 +55,13 @@ Boston, MA 02111-1307, USA.  */
 #if defined (WIN32_NATIVE)
 /* Length of start of absolute filename. */
 # define ABS_LENGTH(name) (mswindows_abs_start (name))
-static int mswindows_abs_start (const Intbyte *name);
+static int mswindows_abs_start (const Ibyte *name);
 # define readlink_and_correct_case mswindows_readlink_and_correct_case
 #else
 # ifdef CYGWIN
 #  ifdef WIN32_FILENAMES
 #   define ABS_LENGTH(name) (mswindows_abs_start (name))
-static int mswindows_abs_start (const Intbyte * name);
+static int mswindows_abs_start (const Ibyte * name);
 #  else
 #   define ABS_LENGTH(name) (IS_DIRECTORY_SEP (*name) ? \
                              (IS_DIRECTORY_SEP (name[1]) ? 2 : 1) : 0)
@@ -81,14 +81,14 @@ static int mswindows_abs_start (const Intbyte * name);
    are lower-cased. Directories must be given without trailing
    '/'. One day, this could read Win2K's reparse points. */
 static int
-mswindows_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
+mswindows_readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 				     int size)
 {
   int len = 0;
   int err = 0;
-  const Intbyte *lastname;
+  const Ibyte *lastname;
   int count = 0;
-  const Intbyte *tmp;
+  const Ibyte *tmp;
   DECLARE_EISTRING (result);
   
   assert (*name);
@@ -155,7 +155,7 @@ mswindows_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
 #ifdef CYGWIN
 /* Call readlink and try to find out the correct case for the file. */
 static int
-cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
+cygwin_readlink_and_correct_case (const Ibyte *name, Ibyte *buf,
 				  int size)
 {
   int n = qxe_readlink (name, buf, size);
@@ -163,8 +163,8 @@ cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
     {
       /* The file may exist, but isn't a symlink. Try to find the
          right name. */
-      Intbyte *tmp =
-	(Intbyte *) ALLOCA (cygwin_posix_to_win32_path_list_buf_size
+      Ibyte *tmp =
+	(Ibyte *) ALLOCA (cygwin_posix_to_win32_path_list_buf_size
 			    ((char *) name));
       cygwin_posix_to_win32_path_list ((char *) name, (char *) tmp);
       n = mswindows_readlink_and_correct_case (tmp, buf, size);
@@ -179,7 +179,7 @@ cygwin_readlink_and_correct_case (const Intbyte *name, Intbyte *buf,
 #endif
 /* Length of start of absolute filename. */
 static int 
-mswindows_abs_start (const Intbyte *name)
+mswindows_abs_start (const Ibyte *name)
 {
   if (isalpha (*name) && IS_DEVICE_SEP (name[1])
       && IS_DIRECTORY_SEP (name[2]))
@@ -194,15 +194,15 @@ mswindows_abs_start (const Intbyte *name)
 /* Mule Note: This function works with and returns
    internally-formatted strings. */
 
-Intbyte *
-qxe_realpath (const Intbyte *path, Intbyte *resolved_path)
+Ibyte *
+qxe_realpath (const Ibyte *path, Ibyte *resolved_path)
 {
-  Intbyte copy_path[PATH_MAX];
-  Intbyte *new_path = resolved_path;
-  Intbyte *max_path;
+  Ibyte copy_path[PATH_MAX];
+  Ibyte *new_path = resolved_path;
+  Ibyte *max_path;
 #if defined (HAVE_READLINK) || defined (WIN32_NATIVE)
   int readlinks = 0;
-  Intbyte link_path[PATH_MAX];
+  Ibyte link_path[PATH_MAX];
   int n;
   int abslen = ABS_LENGTH (path);
 #endif

@@ -247,7 +247,7 @@ do {								\
 int set_file_times (Lisp_Object path, EMACS_TIME atime, EMACS_TIME mtime);
 void get_process_times (double *user_time, double *system_time,
 			double *real_time);
-Intbyte *qxe_ctime (const time_t *value);
+Ibyte *qxe_ctime (const time_t *value);
 
 #endif
 

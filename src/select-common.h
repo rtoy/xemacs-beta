@@ -210,13 +210,13 @@ lisp_data_to_selection_data (struct device *d,
     }
   else if (CHARP (obj))
     {
-      Intbyte buf[MAX_EMCHAR_LEN];
+      Ibyte buf[MAX_ICHAR_LEN];
       Bytecount len;
       const Extbyte *extval;
       Bytecount extvallen;
 
       *format_ret = 8;
-      len = set_charptr_emchar (buf, XCHAR (obj));
+      len = set_itext_ichar (buf, XCHAR (obj));
       TO_EXTERNAL_FORMAT (DATA, (buf, len),
 			  ALLOCA, (extval, extvallen),
 			  Qctext);

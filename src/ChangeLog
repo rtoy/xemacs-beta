@@ -1,3 +1,859 @@
+2002-06-05  Ben Wing  <ben@xemacs.org>
+
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (abbrev_oblookup):
+	* abbrev.c (obarray_has_blank_p):
+	* abbrev.c (abbrev_count_case):
+	* alloc.c (make_uninit_string):
+	* alloc.c (resize_string):
+	* alloc.c (set_string_char):
+	* alloc.c (Fmake_string):
+	* alloc.c (Fstring):
+	* alloc.c (init_string_ascii_begin):
+	* alloc.c (make_string):
+	* alloc.c (build_intstring):
+	* alloc.c (build_string):
+	* alloc.c (build_msg_intstring):
+	* alloc.c (build_msg_string):
+	* alloc.c (make_string_nocopy):
+	* alloc.c (debug_string_purity_print):
+	* alloc.c (garbage_collect_1):
+	* buffer.c:
+	* buffer.c (Fgenerate_new_buffer_name):
+	* buffer.c (directory_is_current_directory):
+	* buffer.c (get_initial_directory):
+	* buffer.c (init_initial_directory):
+	* buffer.h:
+	* buffer.h (struct buffer_text):
+	* buffer.h (VALIDATE_BYTEBPOS_BACKWARD):
+	* buffer.h (VALIDATE_BYTEBPOS_FORWARD):
+	* buffer.h (BYTE_BUF_FETCH_CHAR):
+	* buffer.h (BYTE_BUF_FETCH_CHAR_RAW):
+	* buffer.h (BYTE_BUF_ITEXT_COPY_ICHAR):
+	* buffer.h (BUFFER_TEXT_LOOP):
+	* buffer.h (BUFFER_ALLOC):
+	* bytecode.c (invalid_byte_code):
+	* bytecode.c (READ_INSTRUCTION_CHAR):
+	* bytecode.c (optimize_byte_code):
+	* bytecode.c (compiled_function_instructions):
+	* callint.c (callint_prompt):
+	* callint.c (PROMPT):
+	* casefiddle.c (casify_object):
+	* casefiddle.c (casify_region_internal):
+	* casetab.c (compute_up_or_eqv_mapper):
+	* casetab.c (convert_old_style_syntax_string):
+	* casetab.c (complex_vars_of_casetab):
+	* charset.h:
+	* charset.h (ichar_charset):
+	* charset.h (BREAKUP_ICHAR):
+	* charset.h (struct Lisp_Charset):
+	* charset.h (CHARSET_LEADING_BYTE):
+	* charset.h (struct charset_lookup):
+	* charset.h (ICHAR_FIELD1_MASK):
+	* charset.h (ichar_field1):
+	* charset.h (MIN_ICHAR_FIELD2_OFFICIAL):
+	* charset.h (MIN_ICHAR_FIELD1_OFFICIAL):
+	* charset.h (MIN_ICHAR_FIELD2_PRIVATE):
+	* charset.h (MIN_ICHAR_FIELD1_PRIVATE):
+	* charset.h (MIN_CHAR_OFFICIAL_TYPE9N):
+	* charset.h (BREAKUP_ICHAR_1_UNSAFE):
+	* chartab.c (get_non_ascii_char_table_value):
+	* chartab.c (put_char_table):
+	* chartab.c (map_over_charset_ascii_1):
+	* chartab.c (map_over_charset_row):
+	* chartab.c (map_over_other_charset):
+	* chartab.c (map_char_table):
+	* chartab.c (chartab_instantiate):
+	* chartab.c (check_category_char):
+	* chartab.c (Fcheck_category_at):
+	* chartab.c (Fchar_in_category_p):
+	* chartab.c (word_boundary_p):
+	* chartab.h:
+	* chartab.h (struct chartab_range):
+	* cmds.c:
+	* cmds.c (Fself_insert_command):
+	* cmds.c (internal_self_insert):
+	* console-gtk.h:
+	* console-msw.c (GetConsoleHwnd):
+	* console-msw.c (mswindows_output_console_string):
+	* console-msw.c (Fmswindows_debugging_output):
+	* console-msw.c (write_string_to_mswindows_debugging_output):
+	* console-msw.c (DSTRING):
+	* console-msw.c (DSYMNAME):
+	* console-msw.h:
+	* console-stream.c (stream_text_width):
+	* console-tty.c (tty_init_console):
+	* console-x.c (split_up_display_spec):
+	* console-x.c (x_semi_canonicalize_console_connection):
+	* console-x.h:
+	* console.h (struct console_methods):
+	* console.h (struct console):
+	* data.c (Fsubr_interactive):
+	* data.c (Faref):
+	* device-msw.c (msprinter_default_printer):
+	* device-msw.c (sync_printer_with_devmode):
+	* device-x.c (sanity_check_geometry_resource):
+	* device-x.c (signal_if_x_error):
+	* device-x.c (x_IO_error_handler):
+	* device-x.c (Fx_get_resource_prefix):
+	* dialog-msw.c (button_width):
+	* dialog-msw.c (handle_question_dialog_box):
+	* dired-msw.c (struct):
+	* dired-msw.c (mswindows_get_files):
+	* dired-msw.c (mswindows_format_file):
+	* dired-msw.c (Fmswindows_insert_directory):
+	* dired.c (Fdirectory_files):
+	* dired.c (file_name_completion_stat):
+	* dired.c (file_name_completion):
+	* dired.c (struct user_name):
+	* dired.c (user_name_completion):
+	* dired.c (make_directory_hash_table):
+	* dired.c (Ffile_attributes):
+	* doc.c (unparesseuxify_doc_string):
+	* doc.c (get_doc_string):
+	* doc.c (weird_doc):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c (union printf_arg):
+	* doprnt.c (doprnt_2):
+	* doprnt.c (parse_off_posnum):
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (emacs_doprnt_1):
+	* doprnt.c (emacs_doprnt_va):
+	* doprnt.c (emacs_doprnt):
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	* doprnt.c (emacs_sprintf_string_lisp):
+	* doprnt.c (emacs_vsprintf_malloc_lisp):
+	* doprnt.c (emacs_sprintf_malloc_lisp):
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_sprintf_string):
+	* doprnt.c (emacs_vsprintf_malloc):
+	* doprnt.c (emacs_sprintf_malloc):
+	* doprnt.c (emacs_vsprintf):
+	* doprnt.c (emacs_sprintf):
+	* editfns.c:
+	* editfns.c (init_editfns):
+	* editfns.c (Fchar_to_string):
+	* editfns.c (Fstring_to_char):
+	* editfns.c (Ftemp_directory):
+	* editfns.c (Fuser_login_name):
+	* editfns.c (user_login_name):
+	* editfns.c (Fuser_full_name):
+	* editfns.c (get_home_directory):
+	* editfns.c (Fuser_home_directory):
+	* editfns.c (Fcurrent_time_string):
+	* editfns.c (Fcurrent_time_zone):
+	* editfns.c (Finsert_char):
+	* editfns.c (Fcompare_buffer_substrings):
+	* editfns.c (Fsubst_char_in_region):
+	* editfns.c (Ftranslate_region):
+	* editfns.c (Fchar_equal):
+	* eldap.c (Fldap_open):
+	* emodules.c (emodules_load):
+	* emodules.c (emodules_doc_subr):
+	* emodules.c (emodules_doc_sym):
+	* eval.c (print_subr):
+	* eval.c (build_error_data):
+	* eval.c (signal_error):
+	* eval.c (maybe_signal_error):
+	* eval.c (signal_continuable_error):
+	* eval.c (maybe_signal_continuable_error):
+	* eval.c (signal_error_2):
+	* eval.c (maybe_signal_error_2):
+	* eval.c (signal_continuable_error_2):
+	* eval.c (maybe_signal_continuable_error_2):
+	* eval.c (signal_ferror):
+	* eval.c (maybe_signal_ferror):
+	* eval.c (signal_continuable_ferror):
+	* eval.c (maybe_signal_continuable_ferror):
+	* eval.c (signal_ferror_with_frob):
+	* eval.c (maybe_signal_ferror_with_frob):
+	* eval.c (signal_continuable_ferror_with_frob):
+	* eval.c (maybe_signal_continuable_ferror_with_frob):
+	* eval.c (syntax_error):
+	* eval.c (syntax_error_2):
+	* eval.c (maybe_syntax_error):
+	* eval.c (sferror):
+	* eval.c (sferror_2):
+	* eval.c (maybe_sferror):
+	* eval.c (invalid_argument):
+	* eval.c (invalid_argument_2):
+	* eval.c (maybe_invalid_argument):
+	* eval.c (invalid_constant):
+	* eval.c (invalid_constant_2):
+	* eval.c (maybe_invalid_constant):
+	* eval.c (invalid_operation):
+	* eval.c (invalid_operation_2):
+	* eval.c (maybe_invalid_operation):
+	* eval.c (invalid_change):
+	* eval.c (invalid_change_2):
+	* eval.c (maybe_invalid_change):
+	* eval.c (invalid_state):
+	* eval.c (invalid_state_2):
+	* eval.c (maybe_invalid_state):
+	* eval.c (wtaerror):
+	* eval.c (stack_overflow):
+	* eval.c (out_of_memory):
+	* eval.c (printing_unreadable_object):
+	* eval.c (struct call_trapping_problems):
+	* eval.c (call_trapping_problems):
+	* eval.c (va_call_trapping_problems):
+	* eval.c (calln_trapping_problems):
+	* eval.c (call0_trapping_problems):
+	* eval.c (call1_trapping_problems):
+	* eval.c (call2_trapping_problems):
+	* eval.c (call3_trapping_problems):
+	* eval.c (call4_trapping_problems):
+	* eval.c (call5_trapping_problems):
+	* eval.c (eval_in_buffer_trapping_problems):
+	* eval.c (run_hook_trapping_problems):
+	* eval.c (safe_run_hook_trapping_problems):
+	* eval.c (run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (run_hook_with_args_trapping_problems):
+	* eval.c (va_run_hook_with_args_trapping_problems):
+	* eval.c (va_run_hook_with_args_in_buffer_trapping_problems):
+	* eval.c (warn_when_safe):
+	* event-Xt.c (x_keysym_to_character):
+	* event-Xt.c (x_to_emacs_keysym):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-Xt.c (check_for_tty_quit_char):
+	* event-gtk.c (gtk_to_emacs_keysym):
+	* event-gtk.c (dragndrop_data_received):
+	* event-gtk.c (check_for_tty_quit_char):
+	* event-msw.c (mswindows_dde_callback):
+	* event-msw.c (mswindows_wnd_proc):
+	* event-stream.c (allocate_command_builder):
+	* event-stream.c (echo_key_event):
+	* event-stream.c (maybe_kbd_translate):
+	* event-stream.c (command_builder_find_leaf_no_mule_processing):
+	* event-stream.c (command_builder_find_leaf):
+	* event-stream.c (lookup_command_event):
+	* event-stream.c (dribble_out_event):
+	* event-unixoid.c (read_event_from_tty_or_stream_desc):
+	* event-unixoid.c (event_stream_unixoid_create_io_streams):
+	* events.c (character_to_event):
+	* events.c (event_to_character):
+	* events.c (Fevent_to_character):
+	* events.c (nth_of_key_sequence_as_event):
+	* events.h:
+	* events.h (struct key_data):
+	* events.h (struct command_builder):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (make_coding_system_1):
+	* file-coding.c (no_conversion_convert):
+	* file-coding.c (convert_eol_convert):
+	* file-coding.c (look_for_coding_system_magic_cookie):
+	* file-coding.h:
+	* fileio.c:
+	* fileio.c (report_file_type_error):
+	* fileio.c (report_error_with_errno):
+	* fileio.c (report_file_error):
+	* fileio.c (lisp_strerror):
+	* fileio.c (Ffile_name_directory):
+	* fileio.c (Ffile_name_nondirectory):
+	* fileio.c (file_name_as_directory):
+	* fileio.c (Ffile_name_as_directory):
+	* fileio.c (directory_file_name):
+	* fileio.c (Fdirectory_file_name):
+	* fileio.c (Fmake_temp_name):
+	* fileio.c (if):
+	* fileio.c (Ffile_truename):
+	* fileio.c (Fsubstitute_in_file_name):
+	* fileio.c (Ffile_name_absolute_p):
+	* fileio.c (check_writable):
+	* fileio.c (Ffile_writable_p):
+	* fileio.c (Ffile_symlink_p):
+	* fileio.c (a_write):
+	* filelock.c (struct):
+	* filelock.c (MAKE_LOCK_NAME):
+	* filelock.c (fill_in_lock_file_name):
+	* filelock.c (lock_file_1):
+	* filelock.c (current_lock_owner):
+	* filelock.c (lock_if_free):
+	* filelock.c (lock_file):
+	* filelock.c (unlock_file):
+	* filelock.c (Ffile_locked_p):
+	* fns.c:
+	* fns.c (Fstring_lessp):
+	* fns.c (concat):
+	* fns.c (split_string_by_ichar_1):
+	* fns.c (split_external_path):
+	* fns.c (split_env_path):
+	* fns.c (Fsplit_string_by_char):
+	* fns.c (Fsplit_path):
+	* fns.c (Ffillarray):
+	* fns.c (mapcar1):
+	* fns.c (ADVANCE_INPUT):
+	* fns.c (base64_encode_1):
+	* fns.c (STORE_BYTE):
+	* fns.c (base64_decode_1):
+	* fns.c (Fbase64_encode_region):
+	* fns.c (Fbase64_encode_string):
+	* fns.c (Fbase64_decode_region):
+	* fns.c (Fbase64_decode_string):
+	* fns.c (vars_of_fns):
+	* font-lock.c (struct context_cache):
+	* font-lock.c (find_context):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_set_title_from_ibyte):
+	* frame-gtk.c (gtk_set_icon_name_from_ibyte):
+	* frame-gtk.c (console_type_create_frame_gtk):
+	* frame-msw.c (mswindows_set_title_from_ibyte):
+	* frame-msw.c (console_type_create_frame_mswindows):
+	* frame-x.c (color_to_string):
+	* frame-x.c (x_set_frame_text_value):
+	* frame-x.c (x_set_title_from_ibyte):
+	* frame-x.c (x_set_icon_name_from_ibyte):
+	* frame-x.c (x_cde_transfer_callback):
+	* frame-x.c (Fx_window_id):
+	* frame-x.c (console_type_create_frame_x):
+	* frame.c:
+	* frame.c (allocate_frame_core):
+	* frame.c (Fmake_frame):
+	* frame.c (generate_title_string):
+	* frame.c (update_frame_title):
+	* frame.c (init_frame):
+	* glyphs-eimage.c (my_jpeg_output_message):
+	* glyphs-eimage.c (gif_instantiate):
+	* glyphs-msw.c (struct color_symbol):
+	* glyphs-msw.c (xpm_to_eimage):
+	* glyphs-msw.c (struct):
+	* glyphs-msw.c (resource_name_to_resource):
+	* glyphs-msw.c (mswindows_xface_instantiate):
+	* glyphs-msw.c (charset_of_text):
+	* glyphs-msw.c (mswindows_widget_instantiate):
+	* glyphs-x.c (x_locate_pixmap_file):
+	* glyphs-x.c (x_xface_instantiate):
+	* glyphs-x.c (safe_XLoadFont):
+	* glyphs-x.c (font_instantiate):
+	* glyphs.c (print_image_instance):
+	* glyphs.c (signal_image_error):
+	* glyphs.c (signal_image_error_2):
+	* glyphs.c (signal_double_image_error):
+	* glyphs.c (signal_double_image_error_2):
+	* glyphs.c (query_string_geometry):
+	* glyphs.c (query_string_font):
+	* glyphs.c (display_table_entry):
+	* glyphs.h:
+	* gpmevent.c (tty_get_foreign_selection):
+	* gui-x.c (menu_separator_style_and_to_external):
+	* gui-x.c (add_accel_and_to_external):
+	* gui-x.c (button_item_to_widget_value):
+	* gui-x.h:
+	* gui.c (separator_string_p):
+	* gui.c (gui_name_accelerator):
+	* gui.h:
+	* hpplay.c (player_error_internal):
+	* indent.c (column_at_point):
+	* indent.c (string_column_at_point):
+	* indent.c (byte_spaces_at_point):
+	* indent.c (Fmove_to_column):
+	* insdel.c (gap_left):
+	* insdel.c (gap_right):
+	* insdel.c (make_gap):
+	* insdel.c (fixup_internal_substring):
+	* insdel.c (buffer_insert_string_1):
+	* insdel.c (buffer_insert_raw_string_1):
+	* insdel.c (buffer_insert_c_string_1):
+	* insdel.c (buffer_insert_emacs_char_1):
+	* insdel.c (buffer_insert_c_char_1):
+	* insdel.c (buffer_delete_range):
+	* insdel.c (buffer_replace_char):
+	* insdel.h:
+	* intl-win32.c (convert_multibyte_to_internal_malloc):
+	* keymap.c (make_key_description):
+	* keymap.c (keymap_lookup_directly):
+	* keymap.c (keymap_store):
+	* keymap.c (define_key_check_and_coerce_keysym):
+	* keymap.c (Fdefine_key):
+	* keymap.c (Flookup_key):
+	* keymap.c (map_keymap_sort_predicate):
+	* keymap.c (Fkey_description):
+	* keymap.c (Ftext_char_description):
+	* keymap.c (describe_map):
+	* keymap.c (vars_of_keymap):
+	* line-number.c (insert_invalidate_line_number_cache):
+	* line-number.h:
+	* lisp-disunion.h:
+	* lisp-union.h:
+	* lisp.h:
+	* lisp.h (struct):
+	* lisp.h (struct Lisp_String):
+	* lisp.h (XCHAR):
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lread.c:
+	* lread.c (readchar):
+	* lread.c (unreadchar):
+	* lread.c (Fload_internal):
+	* lread.c (locate_file_map_suffixes):
+	* lread.c (locate_file_in_directory_mapper):
+	* lread.c (locate_file_construct_suffixed_files_mapper):
+	* lread.c (readevalloop):
+	* lread.c (read0):
+	* lread.c (read_escape):
+	* lread.c (read_atom_0):
+	* lread.c (read_atom):
+	* lread.c (parse_integer):
+	* lread.c (read_bit_vector):
+	* lread.c (read_structure):
+	* lread.c (reader_nextchar):
+	* lread.c (read1):
+	* lread.c (isfloat_string):
+	* lread.c (sequence_reader):
+	* lread.c (read_list_conser):
+	* lread.c (read_list):
+	* lread.c (read_vector):
+	* lread.c (read_compiled_function):
+	* lrecord.h:
+	* lstream.c:
+	* lstream.c (Lstream_really_write):
+	* lstream.c (Lstream_read_1):
+	* lstream.c (struct filedesc_stream):
+	* lstream.c (filedesc_writer):
+	* lstream.c (filedesc_stream_set_pty_flushing):
+	* lstream.c (lisp_string_reader):
+	* lstream.c (lisp_string_rewinder):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_writer):
+	* lstream.h:
+	* lstream.h (Lstream_get_ichar):
+	* md5.c (Fmd5):
+	* menubar-msw.c:
+	* menubar-msw.c (mswindows_translate_menu_or_dialog_item):
+	* menubar-msw.c (displayable_menu_item):
+	* menubar-msw.c (populate_menu_add_item):
+	* menubar-msw.c (mswindows_char_is_accelerator):
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	* menubar.c (Fnormalize_menu_item_name):
+	* minibuf.c (scmp_1):
+	* minibuf.c (regexp_ignore_completion_p):
+	* minibuf.c (Fall_completions):
+	* minibuf.c (echo_area_append):
+	* minibuf.c (echo_area_message):
+	* minibuf.c (message_internal):
+	* minibuf.c (message_append_internal):
+	* minibuf.c (message_1):
+	* minibuf.c (message_append_1):
+	* mule-ccl.c:
+	* mule-ccl.c (CCL_WRITE_CHAR):
+	* mule-ccl.c (CCL_WRITE_STRING):
+	* mule-ccl.c (CCL_MAKE_CHAR):
+	* mule-charset.c (make_charset):
+	* mule-charset.c (Fmake_charset):
+	* mule-coding.c (shift_jis_convert):
+	* mule-coding.c (Fdecode_shift_jis_char):
+	* mule-coding.c (Fencode_shift_jis_char):
+	* mule-coding.c (big5_convert):
+	* mule-coding.c (decode_big5_char):
+	* mule-coding.c (Fdecode_big5_char):
+	* mule-coding.c (Fencode_big5_char):
+	* mule-coding.c (charset_by_attributes_or_create_one):
+	* mule-coding.c (iso2022_decode):
+	* mule-coding.c (iso2022_encode):
+	* mule-wnnfns.c (Fwnn_dict_list):
+	* mule-wnnfns.c (Fwnn_fuzokugo_get):
+	* mule-wnnfns.c (m2w):
+	* ndir.h:
+	* nt.c:
+	* nt.c (getpwnam):
+	* nt.c (parse_root):
+	* nt.c (get_long_basename):
+	* nt.c (mswindows_get_long_filename):
+	* nt.c (is_unc_volume):
+	* nt.c (nt_get_resource):
+	* nt.c (init_mswindows_environment):
+	* nt.c (volume_info_data):
+	* nt.c (lookup_volume_info):
+	* nt.c (add_volume_info):
+	* nt.c (get_cached_volume_information):
+	* nt.c (get_volume_info):
+	* nt.c (is_exec):
+	* nt.c (mswindows_opendir):
+	* nt.c (mswindows_readdir):
+	* nt.c (open_unc_volume):
+	* nt.c (read_unc_volume):
+	* nt.c (unc_volume_file_attributes):
+	* nt.c (mswindows_access):
+	* nt.c (mswindows_link):
+	* nt.c (mswindows_rename):
+	* nt.c (mswindows_unlink):
+	* nt.c (mswindows_fstat):
+	* nt.c (mswindows_stat):
+	* nt.c (mswindows_getdcwd):
+	* nt.c (open_input_file):
+	* nt.c (open_output_file):
+	* nt.c (mswindows_executable_type):
+	* nt.c (Fmswindows_short_file_name):
+	* nt.c (Fmswindows_long_file_name):
+	* nt.c (init_nt):
+	* objects-gtk.c (gtk_parse_nearest_color):
+	* objects-gtk.c (gtk_font_spec_matches_charset):
+	* objects-gtk.c (gtk_find_charset_font):
+	* objects-gtk.h:
+	* objects-msw.c (hexval):
+	* objects-msw.c (mswindows_string_to_color):
+	* objects-msw.c (match_font):
+	* objects-msw.c (font_enum_callback_2):
+	* objects-msw.c (create_hfont_from_font_spec):
+	* objects-msw.c (initialize_font_instance):
+	* objects-msw.c (mswindows_list_fonts):
+	* objects-msw.c (mswindows_font_instance_truename):
+	* objects-msw.c (mswindows_font_spec_matches_charset_stage_1):
+	* objects-msw.c (mswindows_font_spec_matches_charset):
+	* objects-tty.c (tty_initialize_font_instance):
+	* objects-tty.c (tty_font_spec_matches_charset):
+	* objects-tty.c (tty_find_charset_font):
+	* objects-x.c (x_font_instance_properties):
+	* objects-x.c (x_font_spec_matches_charset):
+	* objects-x.c (x_find_charset_font):
+	* objects.c (font_spec_matches_charset):
+	* objects.h:
+	* postgresql.c (init_postgresql_from_environment):
+	* print.c:
+	* print.c (write_string_to_stdio_stream):
+	* print.c (std_handle_out_va):
+	* print.c (stderr_out):
+	* print.c (stdout_out):
+	* print.c (debug_out):
+	* print.c (fatal):
+	* print.c (output_string):
+	* print.c (write_string_1):
+	* print.c (write_string):
+	* print.c (write_c_string):
+	* print.c (write_fmt_string):
+	* print.c (write_fmt_string_lisp):
+	* print.c (stderr_out_lisp):
+	* print.c (Fwrite_char):
+	* print.c (float_to_string):
+	* print.c (print_string):
+	* print.c (print_internal):
+	* print.c (print_symbol):
+	* print.c (Falternate_debugging_output):
+	* print.c (write_string_to_alternate_debugging_output):
+	* print.c (Fexternal_debugging_output):
+	* process-nt.c (mswindows_compare_env):
+	* process-nt.c (nt_create_process):
+	* process-nt.c (nt_send_process):
+	* process-unix.c:
+	* process-unix.c (allocate_pty):
+	* process-unix.c (relocate_fd):
+	* process-unix.c (child_setup):
+	* process-unix.c (unix_create_process):
+	* process-unix.c (unix_send_process):
+	* process-unix.c (unix_process_send_eof):
+	* process-unix.c (unix_kill_child_process):
+	* process-unix.c (unix_canonicalize_host_name):
+	* process-unix.c (unix_open_network_stream):
+	* process.c (read_process_output):
+	* process.c (send_process):
+	* process.c (status_message):
+	* process.c (decode_signal):
+	* process.c (getenv_internal):
+	* process.c (putenv_internal):
+	* process.c (Fgetenv):
+	* process.c (egetenv):
+	* process.c (eputenv):
+	* process.c (init_xemacs_process):
+	* procimpl.h:
+	* realpath.c:
+	* realpath.c (mswindows_readlink_and_correct_case):
+	* realpath.c (cygwin_readlink_and_correct_case):
+	* realpath.c (mswindows_abs_start):
+	* realpath.c (qxe_realpath):
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (separate_textual_runs):
+	* redisplay-gtk.c (gtk_text_width):
+	* redisplay-gtk.c (gtk_output_display_block):
+	* redisplay-gtk.c (gtk_output_string):
+	* redisplay-msw.c (separate_textual_runs):
+	* redisplay-msw.c (mswindows_output_cursor):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_output_display_block):
+	* redisplay-msw.c (mswindows_text_width):
+	* redisplay-output.c (redisplay_output_layout):
+	* redisplay-tty.c:
+	* redisplay-tty.c (tty_text_width):
+	* redisplay-tty.c (tty_output_display_block):
+	* redisplay-tty.c (tty_output_ibyte_string):
+	* redisplay-tty.c (tty_output_ichar_dynarr):
+	* redisplay-tty.c (substitute_in_dynamic_color_string):
+	* redisplay-tty.c (set_foreground_to):
+	* redisplay-tty.c (set_background_to):
+	* redisplay-x.c:
+	* redisplay-x.c (separate_textual_runs):
+	* redisplay-x.c (x_text_width):
+	* redisplay-x.c (x_output_display_block):
+	* redisplay-x.c (x_output_string):
+	* redisplay.c:
+	* redisplay.c (position_redisplay_data_type):
+	* redisplay.c (struct prop_block):
+	* redisplay.c (redisplay_text_width_ichar_string):
+	* redisplay.c (redisplay_text_width_string):
+	* redisplay.c (redisplay_frame_text_width_string):
+	* redisplay.c (add_ichar_rune_1):
+	* redisplay.c (add_ichar_rune):
+	* redisplay.c (add_ibyte_string_runes):
+	* redisplay.c (ADD_NEXT_OCTAL_RUNE_CHAR):
+	* redisplay.c (add_octal_runes):
+	* redisplay.c (add_control_char_runes):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* redisplay.c (add_propagation_runes):
+	* redisplay.c (add_glyph_rune):
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_overlay_glyph_block):
+	* redisplay.c (generate_formatted_string_db):
+	* redisplay.c (add_string_to_fstring_db_runes):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (decode_mode_spec):
+	* redisplay.c (init_redisplay):
+	* redisplay.h:
+	* redisplay.h (struct rune):
+	* regex.c:
+	* regex.c (RE_TRANSLATE_1):
+	* regex.c (itext_ichar):
+	* regex.c (INC_IBYTEPTR):
+	* regex.c (PATFETCH_RAW):
+	* regex.c (PATUNFETCH):
+	* regex.c (regex_compile):
+	* regex.c (compile_range):
+	* regex.c (compile_extended_range):
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_search_2):
+	* regex.c (re_match_2_internal):
+	* search.c:
+	* search.c (TRANSLATE):
+	* search.c (fixup_search_regs_for_string):
+	* search.c (fast_string_match):
+	* search.c (byte_scan_buffer):
+	* search.c (scan_buffer):
+	* search.c (byte_find_next_ichar_in_string):
+	* search.c (skip_chars):
+	* search.c (trivial_regexp_p):
+	* search.c (search_buffer):
+	* search.c (simple_search):
+	* search.c (boyer_moore):
+	* search.c (wordify):
+	* search.c (Freplace_match):
+	* search.c (Fregexp_quote):
+	* select-common.h (lisp_data_to_selection_data):
+	* select-gtk.c (atom_to_symbol):
+	* select-x.c (x_atom_to_symbol):
+	* select-x.c (hack_motif_clipboard_selection):
+	* select-x.c (Fx_store_cutbuffer_internal):
+	* sound.h (sound_perror):
+	* symbols.c (intern_int):
+	* symbols.c (intern):
+	* symbols.c (intern_converting_underscores_to_dashes):
+	* symbols.c (oblookup):
+	* symbols.c (hash_string):
+	* symbols.c (init_symbols_once_early):
+	* symbols.c (defsymbol_massage_name_1):
+	* symbols.c (defsymbol_nodump):
+	* symbols.c (defsymbol):
+	* symbols.c (defvar_magic):
+	* syntax.c (struct lisp_parse_state):
+	* syntax.c (syntax_match):
+	* syntax.c (WORD_BOUNDARY_P):
+	* syntax.c (scan_words):
+	* syntax.c (find_start_of_comment):
+	* syntax.c (Fforward_comment):
+	* syntax.c (scan_lists):
+	* syntax.c (Fbackward_prefix_chars):
+	* syntax.c (scan_sexps_forward):
+	* syntax.c (complex_vars_of_syntax):
+	* syntax.h:
+	* sysdep.c:
+	* sysdep.c (sys_subshell):
+	* sysdep.c (get_eof_char):
+	* sysdep.c (init_system_name):
+	* sysdep.c (qxe_open):
+	* sysdep.c (qxe_interruptible_open):
+	* sysdep.c (qxe_fopen):
+	* sysdep.c (qxe_chdir):
+	* sysdep.c (qxe_mkdir):
+	* sysdep.c (qxe_opendir):
+	* sysdep.c (qxe_readdir):
+	* sysdep.c (qxe_rmdir):
+	* sysdep.c (qxe_allocating_getcwd):
+	* sysdep.c (qxe_access):
+	* sysdep.c (qxe_eaccess):
+	* sysdep.c (qxe_lstat):
+	* sysdep.c (qxe_readlink):
+	* sysdep.c (qxe_stat):
+	* sysdep.c (qxe_chmod):
+	* sysdep.c (qxe_link):
+	* sysdep.c (qxe_rename):
+	* sysdep.c (qxe_symlink):
+	* sysdep.c (qxe_unlink):
+	* sysdep.c (qxe_execve):
+	* sysdep.c (qxe_getpwnam):
+	* sysdep.c (qxe_ctime):
+	* sysdep.h:
+	* sysdir.h:
+	* sysdir.h (qxe_allocating_getcwd):
+	* sysfile.h:
+	* sysfile.h (DECLARE_INLINE_HEADER):
+	* sysproc.h:
+	* syspwd.h:
+	* systime.h:
+	* syswindows.h:
+	* syswindows.h (LOCAL_FILE_FORMAT_TO_TSTR):
+	* syswindows.h (LOCAL_TO_WIN32_FILE_FORMAT):
+	* syswindows.h (WIN32_TO_LOCAL_FILE_FORMAT):
+	* syswindows.h (LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR):
+	* syswindows.h (file_data):
+	* syswindows.h (DECLARE_INLINE_HEADER):
+	* termcap.c (tgetent):
+	* tests.c (Ftest_data_format_conversion):
+	* text.c:
+	* text.c (qxesprintf):
+	* text.c (qxestrcasecmp):
+	* text.c (ascii_strcasecmp):
+	* text.c (qxestrcasecmp_c):
+	* text.c (qxestrcasecmp_i18n):
+	* text.c (qxestrncasecmp):
+	* text.c (ascii_strncasecmp):
+	* text.c (qxestrncasecmp_c):
+	* text.c (qxestrncasecmp_i18n):
+	* text.c (qxememcmp):
+	* text.c (qxememcmp4):
+	* text.c (qxememcasecmp):
+	* text.c (qxememcasecmp4):
+	* text.c (qxetextcmp):
+	* text.c (qxetextcmp_matching):
+	* text.c (qxetextcasecmp):
+	* text.c (qxetextcasecmp_matching):
+	* text.c (lisp_strcasecmp):
+	* text.c (convert_ibyte_string_into_ichar_dynarr):
+	* text.c (convert_ibyte_string_into_ichar_string):
+	* text.c (convert_ichar_string_into_ibyte_dynarr):
+	* text.c (convert_ichar_string_into_malloced_string):
+	* text.c (COPY_TEXT_BETWEEN_FORMATS):
+	* text.c (copy_text_between_formats):
+	* text.c (copy_buffer_text_out):
+	* text.c (find_charsets_in_ibyte_string):
+	* text.c (find_charsets_in_ichar_string):
+	* text.c (ibyte_string_displayed_columns):
+	* text.c (ichar_string_displayed_columns):
+	* text.c (ibyte_string_nonascii_chars):
+	* text.c (eistr_casefiddle_1):
+	* text.c (eito_malloc_1):
+	* text.c (eicmp_1):
+	* text.c (eicpyout_malloc_fmt):
+	* text.c (skip_ascii):
+	* text.c (bytecount_to_charcount_fun):
+	* text.c (charcount_to_bytecount_fun):
+	* text.c (struct):
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	* text.c (non_ascii_set_itext_ichar):
+	* text.c (non_ascii_itext_ichar):
+	* text.c (non_ascii_valid_ichar_p):
+	* text.c (non_ascii_itext_copy_ichar):
+	* text.c (Lstream_get_ichar_1):
+	* text.c (Lstream_fput_ichar):
+	* text.c (Lstream_funget_ichar):
+	* text.c (Fmake_char):
+	* text.c (Fchar_charset):
+	* text.c (Fchar_octet):
+	* text.c (Fsplit_char):
+	* text.c (lookup_composite_char):
+	* text.c (composite_char_string):
+	* text.c (Fcomposite_char_string):
+	* text.c (reinit_vars_of_text):
+	* text.h:
+	* text.h (MAX_ICHAR_LEN):
+	* text.h (ibyte_first_byte_p):
+	* text.h (ibyte_leading_byte_p):
+	* text.h (ichar_multibyte_p):
+	* text.h (ichar_ascii_p):
+	* text.h (ichar_16_bit_fixed_p):
+	* text.h (ichar_to_raw):
+	* text.h (valid_ibyteptr_p):
+	* text.h (assert_valid_ibyteptr):
+	* text.h (INC_IBYTEPTR):
+	* text.h (INC_IBYTEPTR_FMT):
+	* text.h (DEC_IBYTEPTR):
+	* text.h (DEC_IBYTEPTR_FMT):
+	* text.h (VALIDATE_IBYTEPTR_BACKWARD):
+	* text.h (VALIDATE_IBYTEPTR_FORWARD):
+	* text.h (validate_ibyte_string_backward):
+	* text.h (itext_ichar_len):
+	* text.h (INC_BYTECOUNT):
+	* text.h (simple_itext_ichar):
+	* text.h (itext_ichar):
+	* text.h (valid_ichar_p):
+	* text.h (CHAR_INTP):
+	* text.h (ASSERT_VALID_BYTE_STRING_INDEX_UNSAFE):
+	* text.h (LISP_STRING_TO_ALLOCA):
+	* text.h (alloca_ibytes):
+	* text.h (struct):
+	* text.h (EI_ALLOC):
+	* text.h (eicpy_lstr_off):
+	* text.h (eicpy_raw_fmt):
+	* text.h (eicpy_rawz_fmt):
+	* text.h (eicpy_ch):
+	* text.h (eireset):
+	* text.h (eito_alloca):
+	* text.h (DECLARE_INLINE_HEADER):
+	* text.h (eigetch):
+	* text.h (eicat_c):
+	* text.h (eicat_raw):
+	* text.h (eicat_rawz):
+	* text.h (eicat_ch):
+	* text.h (eisub_1):
+	* text.h (eisub_ch):
+	* text.h (EI_CASECHANGE):
+	* text.h (DFC_LISP_STRING_USE_CONVERTED_DATA):
+	* text.h (GET_STRERROR):
+	* toolbar-common.c (common_output_toolbar_button):
+	* tooltalk.c (check_status):
+	* tooltalk.c (tt_message_arg_bval_vector):
+	* ui-gtk.c (lisp_to_gtk_type):
+	* unexnt.c (unexec):
+	* unexnt.c (get_bss_info_from_map_file):
+	* unicode.c:
+	* unicode.c (sledgehammer_check_from_table):
+	* unicode.c (sledgehammer_check_to_table):
+	* unicode.c (set_unicode_conversion):
+	* unicode.c (ichar_to_unicode):
+	* unicode.c (unicode_to_char):
+	* unicode.c (Fchar_to_unicode):
+	* unicode.c (Funicode_to_char):
+	* unicode.c (decode_unicode_char):
+	* unicode.c (encode_unicode_char):
+	* unicode.c (unicode_convert):
+	* win32.c (urlify_filename):
+	* win32.c (tstr_to_local_file_format):
+	* win32.c (mswindows_canonicalize_filename):
+	* win32.c (mswindows_lisp_error_1):
+	* win32.c (Fmswindows_cygwin_to_win32_path):
+
+	Text/char naming rationalization.
+
+	[a] distinguish between "charptr" when it refers to operations on
+	the pointer itself and when it refers to operations on text; and
+	[b] use consistent naming for everything referring to internal
+	format, i.e.
+ 
+	Itext == text in internal format
+	Ibyte == a byte in such text
+	Ichar == a char as represented in internal character format
+ 
+	thus e.g.
+ 
+	set_charptr_emchar -> set_itext_ichar
+
+	The pre and post tags on either side of this change are:
+	
+	pre-internal-format-textual-renaming
+	post-internal-format-textual-renaming
+
+	See the Internals Manual for details of exactly how this was done,
+	how to handle the change in your workspace, etc.
+	
 2002-06-04  Andy Piper  <andy@xemacs.org>
 
 	* glyphs-widget.c (widget_logical_unit_height): don't try and

@@ -174,7 +174,7 @@ check_obarray (Lisp_Object obarray)
 }
 
 Lisp_Object
-intern_int (const Intbyte *str)
+intern_int (const Ibyte *str)
 {
   Bytecount len = qxestrlen (str);
   Lisp_Object obarray = Vobarray;
@@ -192,22 +192,22 @@ intern_int (const Intbyte *str)
 }
 
 Lisp_Object
-intern (const CIntbyte *str)
+intern (const CIbyte *str)
 {
-  return intern_int ((Intbyte *) str);
+  return intern_int ((Ibyte *) str);
 }
 
 Lisp_Object
-intern_converting_underscores_to_dashes (const CIntbyte *str)
+intern_converting_underscores_to_dashes (const CIbyte *str)
 {
   Bytecount len = strlen (str);
-  CIntbyte *tmp = alloca_extbytes (len + 1);
+  CIbyte *tmp = alloca_extbytes (len + 1);
   Bytecount i;
   strcpy (tmp, str);
   for (i = 0; i < len; i++)
     if (tmp[i] == '_')
       tmp[i] = '-';
-  return intern_int ((Intbyte *) tmp);
+  return intern_int ((Ibyte *) tmp);
 }
 
 DEFUN ("intern", Fintern, 1, 2, 0, /*
@@ -354,7 +354,7 @@ OBARRAY defaults to the value of the variable `obarray'.
    Also store the bucket number in oblookup_last_bucket_number.  */
 
 Lisp_Object
-oblookup (Lisp_Object obarray, const Intbyte *ptr, Bytecount size)
+oblookup (Lisp_Object obarray, const Ibyte *ptr, Bytecount size)
 {
   unsigned int hash, obsize;
   Lisp_Symbol *tail;
@@ -393,7 +393,7 @@ oblookup (Lisp_Object obarray, const Intbyte *ptr, Bytecount size)
    Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
    Do a web search for "g_str_hash X31_HASH" if you want to know more. */
 unsigned int
-hash_string (const Intbyte *ptr, Bytecount len)
+hash_string (const Ibyte *ptr, Bytecount len)
 {
   unsigned int hash;
 
@@ -3227,7 +3227,7 @@ init_symbols_once_early (void)
 
   /* Bootstrapping problem: Qnil isn't set when make_string_nocopy is
      called the first time. */
-  Qnil = Fmake_symbol (make_string_nocopy ((const Intbyte *) "nil", 3));
+  Qnil = Fmake_symbol (make_string_nocopy ((const Ibyte *) "nil", 3));
   XSTRING_PLIST (XSYMBOL (Qnil)->name) = Qnil;
   XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
   XSYMBOL (Qnil)->plist = Qnil;
@@ -3286,7 +3286,7 @@ defsymbol_massage_name_1 (Lisp_Object *location, const char *name, int dump_p,
   for (i = 0; i < len; i++)
     if (temp[i] == '_')
       temp[i] = '-';
-  *location = Fintern (make_string ((const Intbyte *) temp, len), Qnil);
+  *location = Fintern (make_string ((const Ibyte *) temp, len), Qnil);
   if (dump_p)
     staticpro (location);
   else
@@ -3321,7 +3321,7 @@ defsymbol_massage_multiword_predicate (Lisp_Object *location, const char *name)
 void
 defsymbol_nodump (Lisp_Object *location, const char *name)
 {
-  *location = Fintern (make_string_nocopy ((const Intbyte *) name,
+  *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
   staticpro_nodump (location);
@@ -3330,7 +3330,7 @@ defsymbol_nodump (Lisp_Object *location, const char *name)
 void
 defsymbol (Lisp_Object *location, const char *name)
 {
-  *location = Fintern (make_string_nocopy ((const Intbyte *) name,
+  *location = Fintern (make_string_nocopy ((const Ibyte *) name,
 					   strlen (name)),
 		       Qnil);
   staticpro (location);
@@ -3592,7 +3592,7 @@ defvar_magic (const char *symbol_name, const struct symbol_value_forward *magic)
     sym = Fintern (build_string (symbol_name), Qnil);
   else
 #endif
-    sym = Fintern (make_string_nocopy ((const Intbyte *) symbol_name,
+    sym = Fintern (make_string_nocopy ((const Ibyte *) symbol_name,
 				       strlen (symbol_name)), Qnil);
 
   XSYMBOL (sym)->value = wrap_pointer_1 (magic);

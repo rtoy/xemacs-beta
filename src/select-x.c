@@ -179,7 +179,7 @@ x_atom_to_symbol (struct device *d, Atom atom)
 #endif
 
   {
-    Intbyte *intstr;
+    Ibyte *intstr;
     Extbyte *str = XGetAtomName (display, atom);
 
     if (! str) return Qnil;
@@ -287,13 +287,13 @@ hack_motif_clipboard_selection (Atom selection_atom,
 #endif
       XmString fmh;
       String encoding = "STRING";
-      const Intbyte *data  = XSTRING_DATA (selection_value);
+      const Ibyte *data  = XSTRING_DATA (selection_value);
       Bytecount bytes = XSTRING_LENGTH (selection_value);
 
 #ifdef MULE
       {
 	enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
-	const Intbyte *ptr = data, *end = ptr + bytes;
+	const Ibyte *ptr = data, *end = ptr + bytes;
 	/* Optimize for the common ASCII case */
 	while (ptr <= end)
 	  {
@@ -1294,12 +1294,12 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  const Intbyte *data  = XSTRING_DATA (string);
+  const Ibyte *data  = XSTRING_DATA (string);
   Bytecount bytes = XSTRING_LENGTH (string);
   Bytecount bytes_remaining;
   Bytecount max_bytes = SELECTION_QUANTUM (display);
 #ifdef MULE
-  const Intbyte *ptr, *end;
+  const Ibyte *ptr, *end;
   enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
 #endif
 

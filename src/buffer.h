@@ -76,7 +76,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct buffer_text
 {
-  Intbyte *beg;		/* Actual address of buffer contents. */
+  Ibyte *beg;		/* Actual address of buffer contents. */
   Bytebpos gpt;		/* Index of gap in buffer. */
   Bytebpos z;		/* Index of end of buffer. */
   Charbpos bufz;		/* Equivalent as a Charbpos. */
@@ -329,7 +329,7 @@ for (mps_bufcons = Qunbound,					\
 
 /* Address of byte at position POS in buffer, no error checking. */
 DECLARE_INLINE_HEADER (
-Intbyte *
+Ibyte *
 BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (struct buffer *buf, Bytebpos pos)
 )
 {
@@ -349,7 +349,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
   switch (BUF_FORMAT (buf))
     {
     case FORMAT_DEFAULT:
-      return intbyte_first_byte_p (*BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x));
+      return ibyte_first_byte_p (*BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x));
     case FORMAT_16_BIT_FIXED:
       return ((x - 1) & 1) == 0;
     case FORMAT_32_BIT_FIXED:
@@ -413,8 +413,8 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     {									\
     case FORMAT_DEFAULT:						\
       {									\
-	Intbyte *VBB_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!intbyte_first_byte_p (*VBB_ptr))			\
+	Ibyte *VBB_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
+	while (!ibyte_first_byte_p (*VBB_ptr))			\
 	  VBB_ptr--, (x)--;						\
       }									\
       break;								\
@@ -445,8 +445,8 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
     {									\
     case FORMAT_DEFAULT:						\
       {									\
-	Intbyte *VBF_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
-	while (!intbyte_first_byte_p (*VBF_ptr))			\
+	Ibyte *VBF_ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, x);	\
+	while (!ibyte_first_byte_p (*VBF_ptr))			\
 	  VBF_ptr++, (x)++;						\
       }									\
       break;								\
@@ -491,7 +491,7 @@ VALID_BYTEBPOS_P (struct buffer *buf, Bytebpos x)
 
 /*  Given a byte position (assumed to point at the beginning of a
     character), modify that value so it points to the beginning of the
-    previous character.  Unlike for DEC_CHARPTR(), we can do all the
+    previous character.  Unlike for DEC_IBYTEPTR(), we can do all the
     assert()s because there are sentinels at the beginning of the gap and
     the end of the buffer.
 
@@ -826,7 +826,7 @@ next_bytexpos (Lisp_Object obj, Bytebpos x)
 /* Convert the address of a byte in the buffer into a position.  */
 DECLARE_INLINE_HEADER (
 Bytebpos
-BYTE_BUF_PTR_BYTE_POS (struct buffer *buf, Intbyte *ptr)
+BYTE_BUF_PTR_BYTE_POS (struct buffer *buf, Ibyte *ptr)
 )
 {
   Bytebpos retval = (ptr - buf->text->beg + 1
@@ -841,7 +841,7 @@ BYTE_BUF_PTR_BYTE_POS (struct buffer *buf, Intbyte *ptr)
 
 /* Address of byte at position POS in buffer. */
 DECLARE_INLINE_HEADER (
-Intbyte *
+Ibyte *
 BYTE_BUF_BYTE_ADDRESS (struct buffer *buf, Bytebpos pos)
 )
 {
@@ -854,7 +854,7 @@ BYTE_BUF_BYTE_ADDRESS (struct buffer *buf, Bytebpos pos)
 
 /* Address of byte before position POS in buffer. */
 DECLARE_INLINE_HEADER (
-Intbyte *
+Ibyte *
 BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
 )
 {
@@ -874,29 +874,29 @@ BYTE_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytebpos pos)
 /* The character at position POS in buffer. */
 
 #define BYTE_BUF_FETCH_CHAR(buf, pos)					   \
-   charptr_emchar_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf), \
+   itext_ichar_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf), \
 		       wrap_buffer (buf))
 #define BUF_FETCH_CHAR(buf, pos) \
   BYTE_BUF_FETCH_CHAR (buf, charbpos_to_bytebpos (buf, pos))
 
 /* The "raw value" of the character at position POS in buffer.
-   See emchar_to_raw(). */
+   See ichar_to_raw(). */
 
 #define BYTE_BUF_FETCH_CHAR_RAW(buf, pos)				 \
-   charptr_emchar_raw_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf))
+   itext_ichar_raw_fmt (BYTE_BUF_BYTE_ADDRESS (buf, pos), BUF_FORMAT (buf))
 #define BUF_FETCH_CHAR_RAW(buf, pos) \
   BYTE_BUF_FETCH_CHAR_RAW (buf, charbpos_to_bytebpos (buf, pos))
 
 /* The character at position POS in buffer, as a string.  This is
-   equivalent to set_charptr_emchar (str, BUF_FETCH_CHAR (buf, pos))
+   equivalent to set_itext_ichar (str, BUF_FETCH_CHAR (buf, pos))
    but is faster for Mule. */
 
-# define BYTE_BUF_CHARPTR_COPY_EMCHAR(buf, pos, str)		\
+# define BYTE_BUF_ITEXT_COPY_ICHAR(buf, pos, str)		\
   (BUF_FORMAT (buf) == FORMAT_DEFAULT ?				\
-   charptr_copy_emchar (BYTE_BUF_BYTE_ADDRESS (buf, pos), str) :	\
-   set_charptr_emchar (str, BYTE_BUF_FETCH_CHAR (buf, pos)))
-#define BUF_CHARPTR_COPY_EMCHAR(buf, pos, str) \
-  BYTE_BUF_CHARPTR_COPY_EMCHAR (buf, charbpos_to_bytebpos (buf, pos), str)
+   itext_copy_ichar (BYTE_BUF_BYTE_ADDRESS (buf, pos), str) :	\
+   set_itext_ichar (str, BYTE_BUF_FETCH_CHAR (buf, pos)))
+#define BUF_ITEXT_COPY_ICHAR(buf, pos, str) \
+  BYTE_BUF_ITEXT_COPY_ICHAR (buf, charbpos_to_bytebpos (buf, pos), str)
 
 
 /************************************************************************/
@@ -1059,7 +1059,7 @@ BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
       {
 	Bytebpos ceil = BYTE_BUF_CEILING_OF (buf, pos);
 	ceil = min (to, ceil);
-	process_intbyte_string (BYTE_BUF_BYTE_ADDRESS (buf, pos), ceil - pos);
+	process_ibyte_string (BYTE_BUF_BYTE_ADDRESS (buf, pos), ceil - pos);
 	pos = ceil;
       }
   }
@@ -1115,7 +1115,7 @@ BUFFER_MIRROR_SYNTAX_TABLE (struct buffer *buf)
    NOTE: This must be surrounded with braces! */
 
 #define BUFFER_TEXT_LOOP(buf, pos, len, runptr, runlen)			      \
-Intbyte *runptr;							      \
+Ibyte *runptr;							      \
 Bytecount runlen;							      \
 Bytebpos BTL_pos = (pos);						      \
 Bytebpos BTL_len = (len);						      \
@@ -1154,18 +1154,18 @@ char *r_re_alloc (unsigned char **, size_t);
 void r_alloc_free (unsigned char **);
 
 #define BUFFER_ALLOC(data, size) \
-  ((Intbyte *) r_alloc ((unsigned char **) &data, (size) * sizeof(Intbyte)))
+  ((Ibyte *) r_alloc ((unsigned char **) &data, (size) * sizeof(Ibyte)))
 #define BUFFER_REALLOC(data, size) \
-  ((Intbyte *) r_re_alloc ((unsigned char **) &data, (size) * sizeof(Intbyte)))
+  ((Ibyte *) r_re_alloc ((unsigned char **) &data, (size) * sizeof(Ibyte)))
 #define BUFFER_FREE(data) r_alloc_free ((unsigned char **) &(data))
 #define R_ALLOC_DECLARE(var,data) r_alloc_declare (&(var), data)
 
 #else /* !REL_ALLOC */
 
 #define BUFFER_ALLOC(data,size)\
-	(data = xnew_array (Intbyte, size))
+	(data = xnew_array (Ibyte, size))
 #define BUFFER_REALLOC(data,size)\
-	((Intbyte *) xrealloc (data, (size) * sizeof(Intbyte)))
+	((Ibyte *) xrealloc (data, (size) * sizeof(Ibyte)))
 /* Avoid excess parentheses, or syntax errors may rear their heads. */
 #define BUFFER_FREE(data) xfree (data)
 #define R_ALLOC_DECLARE(var,data)
@@ -1187,8 +1187,8 @@ void r_alloc_free (unsigned char **);
 
 #define MAKE_TRT_TABLE() Fmake_char_table (Qgeneric)
 DECLARE_INLINE_HEADER (
-Emchar
-TRT_TABLE_OF (Lisp_Object table, Emchar ch)
+Ichar
+TRT_TABLE_OF (Lisp_Object table, Ichar ch)
 )
 {
   Lisp_Object TRT_char;
@@ -1219,7 +1219,7 @@ BUFFER_CASE_TABLE (struct buffer *buf)
 
 DECLARE_INLINE_HEADER (
 int
-UPPERCASEP (struct buffer *buf, Emchar ch)
+UPPERCASEP (struct buffer *buf, Ichar ch)
 )
 {
   return DOWNCASE_TABLE_OF (buf, ch) != ch;
@@ -1229,7 +1229,7 @@ UPPERCASEP (struct buffer *buf, Emchar ch)
 
 DECLARE_INLINE_HEADER (
 int
-LOWERCASEP (struct buffer *buf, Emchar ch)
+LOWERCASEP (struct buffer *buf, Ichar ch)
 )
 {
   return (UPCASE_TABLE_OF   (buf, ch) != ch &&
@@ -1240,7 +1240,7 @@ LOWERCASEP (struct buffer *buf, Emchar ch)
 
 DECLARE_INLINE_HEADER (
 int
-NOCASEP (struct buffer *buf, Emchar ch)
+NOCASEP (struct buffer *buf, Ichar ch)
 )
 {
   return UPCASE_TABLE_OF (buf, ch) == ch;
@@ -1249,8 +1249,8 @@ NOCASEP (struct buffer *buf, Emchar ch)
 /* Upcase a character, or make no change if that cannot be done.  */
 
 DECLARE_INLINE_HEADER (
-Emchar
-UPCASE (struct buffer *buf, Emchar ch)
+Ichar
+UPCASE (struct buffer *buf, Ichar ch)
 )
 {
   return (DOWNCASE_TABLE_OF (buf, ch) == ch) ? UPCASE_TABLE_OF (buf, ch) : ch;

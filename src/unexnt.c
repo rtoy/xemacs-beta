@@ -176,14 +176,14 @@ _start (void)
 
 /* Dump out .data and .bss sections into a new executable.  */
 int
-unexec (Intbyte *new_name, Intbyte *old_name, unsigned int start_data,
+unexec (Ibyte *new_name, Ibyte *old_name, unsigned int start_data,
 	unsigned int start_bss, unsigned int entry_address)
 {
   file_data in_file, out_file;
-  Intbyte *out_filename = alloca_intbytes (qxestrlen (new_name) + 10);
-  Intbyte *in_filename = alloca_intbytes (qxestrlen (old_name) + 10);
+  Ibyte *out_filename = alloca_ibytes (qxestrlen (new_name) + 10);
+  Ibyte *in_filename = alloca_ibytes (qxestrlen (old_name) + 10);
   unsigned long size;
-  Intbyte *ptr;
+  Ibyte *ptr;
   HINSTANCE hImagehelp;
   
   /* Make sure that the input and output filenames have the
@@ -286,7 +286,7 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
 			    DWORD *p_bss_size)
 {
   int n, start, len;
-  Intbyte *map_filename = alloca_intbytes (qxestrlen (p_infile->name) + 10);
+  Ibyte *map_filename = alloca_ibytes (qxestrlen (p_infile->name) + 10);
   Extbyte buffer[256];
   FILE *map;
 

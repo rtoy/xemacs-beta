@@ -77,7 +77,7 @@ tty_init_console (struct console *con, Lisp_Object props)
     CHECK_STRING (terminal_type);
   else
     {
-      Intbyte *temp_type = egetenv ("TERM");
+      Ibyte *temp_type = egetenv ("TERM");
 
       if (!temp_type)
 	{
@@ -143,7 +143,7 @@ tty_init_console (struct console *con, Lisp_Object props)
        would have two controlling TTY's, which is not allowed). */
 
     EMACS_GET_TTY_PROCESS_GROUP (tty_con->infd, &tty_pg);
-    cfd = qxe_open ((Intbyte *) "/dev/tty", O_RDWR, 0);
+    cfd = qxe_open ((Ibyte *) "/dev/tty", O_RDWR, 0);
     EMACS_GET_TTY_PROCESS_GROUP (cfd, &controlling_tty_pg);
     retry_close (cfd);
     if (tty_pg == controlling_tty_pg)

@@ -116,7 +116,7 @@ int print_unbuffered;
 
 FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
-static void write_string_to_alternate_debugging_output (Intbyte *str,
+static void write_string_to_alternate_debugging_output (Ibyte *str,
 							Bytecount len);
 
 
@@ -127,7 +127,7 @@ int stdout_needs_newline;
 
 static void
 write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      const Intbyte *ptr, Bytecount len,
+			      const Ibyte *ptr, Bytecount len,
 			      int must_flush)
 {
   Extbyte *extptr = 0;
@@ -207,15 +207,15 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
    mswindows_output_console_string().  */
 
 static void
-std_handle_out_va (FILE *stream, const CIntbyte *fmt, va_list args,
+std_handle_out_va (FILE *stream, const CIbyte *fmt, va_list args,
 		   int debug_output_as_well)
 {
-  Intbyte kludge[8192];
+  Ibyte kludge[8192];
   Bytecount kludgelen;
 
   if (initialized && !inhibit_non_essential_printing_operations)
     fmt = GETTEXT (fmt);
-  vsprintf ((CIntbyte *) kludge, fmt, args);
+  vsprintf ((CIbyte *) kludge, fmt, args);
   kludgelen = qxestrlen (kludge);
 
   write_string_to_stdio_stream (stream, 0, kludge, kludgelen, 1);
@@ -236,7 +236,7 @@ std_handle_out_va (FILE *stream, const CIntbyte *fmt, va_list args,
    conversion in such cases. */
 
 void
-stderr_out (const CIntbyte *fmt, ...)
+stderr_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -248,7 +248,7 @@ stderr_out (const CIntbyte *fmt, ...)
    window under MS Windows).  Works like stderr_out(). */
 
 void
-stdout_out (const CIntbyte *fmt, ...)
+stdout_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -262,7 +262,7 @@ stdout_out (const CIntbyte *fmt, ...)
    Works like stderr_out(). */
 
 void
-debug_out (const CIntbyte *fmt, ...)
+debug_out (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -271,7 +271,7 @@ debug_out (const CIntbyte *fmt, ...)
 }
 
 DOESNT_RETURN
-fatal (const CIntbyte *fmt, ...)
+fatal (const CIbyte *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -302,7 +302,7 @@ fatal (const CIntbyte *fmt, ...)
 */
 
 static void
-output_string (Lisp_Object function, const Intbyte *nonreloc,
+output_string (Lisp_Object function, const Ibyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
@@ -312,7 +312,7 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  const Intbyte *newnonreloc = nonreloc;
+  const Ibyte *newnonreloc = nonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -343,7 +343,7 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
 	     we inhibit GC.  */
 	  if (len < 65536)
 	    {
-	      Intbyte *copied = alloca_array (Intbyte, len);
+	      Ibyte *copied = alloca_array (Ibyte, len);
 	      memcpy (copied, newnonreloc + offset, len);
 	      Lstream_write (XLSTREAM (function), copied, len);
 	    }
@@ -416,7 +416,7 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
 	{
 	  for (iii = ccoff; iii < cclen + ccoff; iii++)
 	    {
-	      call1 (function, make_char (string_emchar (reloc, iii)));
+	      call1 (function, make_char (string_ichar (reloc, iii)));
 	      if (STRINGP (reloc))
 		newnonreloc = XSTRING_DATA (reloc);
 	    }
@@ -426,7 +426,7 @@ output_string (Lisp_Object function, const Intbyte *nonreloc,
 	  for (iii = ccoff; iii < cclen + ccoff; iii++)
 	    {
 	      call1 (function,
-		     make_char (charptr_emchar_n (newnonreloc, iii)));
+		     make_char (itext_ichar_n (newnonreloc, iii)));
 	    }
 	}
     }
@@ -540,7 +540,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
    canonicalize_printcharfun() (i.e. Qnil means stdout, not
    Vstandard_output, etc.)  */
 void
-write_string_1 (Lisp_Object stream, const Intbyte *str, Bytecount size)
+write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size)
 {
   /* This function can GC */
 #ifdef ERROR_CHECK_TEXT
@@ -550,17 +550,17 @@ write_string_1 (Lisp_Object stream, const Intbyte *str, Bytecount size)
 }
 
 void
-write_string (Lisp_Object stream, const Intbyte *str)
+write_string (Lisp_Object stream, const Ibyte *str)
 {
   /* This function can GC */
   write_string_1 (stream, str, qxestrlen (str));
 }
 
 void
-write_c_string (Lisp_Object stream, const CIntbyte *str)
+write_c_string (Lisp_Object stream, const CIbyte *str)
 {
   /* This function can GC */
-  write_string_1 (stream, (const Intbyte *) str, strlen (str));
+  write_string_1 (stream, (const Ibyte *) str, strlen (str));
 }
 
 void
@@ -572,10 +572,10 @@ write_eistring (Lisp_Object stream, const Eistring *ei)
 /* Write a printf-style string to STREAM; see output_string(). */
 
 void
-write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...)
+write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
 {
   va_list va;
-  Intbyte *str;
+  Ibyte *str;
   Bytecount len;
   int count;
 
@@ -594,12 +594,12 @@ write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...)
    This would require some rewriting of the doprnt() functions, though. */
 
 void
-write_fmt_string_lisp (Lisp_Object stream, const CIntbyte *fmt, int nargs, ...)
+write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, int nargs, ...)
 {
   Lisp_Object *args = alloca_array (Lisp_Object, nargs);
   va_list va;
   int i;
-  Intbyte *str;
+  Ibyte *str;
   Bytecount len;
   int count;
 
@@ -614,12 +614,12 @@ write_fmt_string_lisp (Lisp_Object stream, const CIntbyte *fmt, int nargs, ...)
 }
 
 void
-stderr_out_lisp (const CIntbyte *fmt, int nargs, ...)
+stderr_out_lisp (const CIbyte *fmt, int nargs, ...)
 {
   Lisp_Object *args = alloca_array (Lisp_Object, nargs);
   va_list va;
   int i;
-  Intbyte *str;
+  Ibyte *str;
   Bytecount len;
   int count;
 
@@ -641,11 +641,11 @@ STREAM defaults to the value of `standard-output' (which see).
        (character, stream))
 {
   /* This function can GC */
-  Intbyte str[MAX_EMCHAR_LEN];
+  Ibyte str[MAX_ICHAR_LEN];
   Bytecount len;
 
   CHECK_CHAR_COERCE_INT (character);
-  len = set_charptr_emchar (str, XCHAR (character));
+  len = set_itext_ichar (str, XCHAR (character));
   output_string (canonicalize_printcharfun (stream), str, Qnil, 0, len);
   return character;
 }
@@ -991,7 +991,7 @@ Lisp_Object Vfloat_output_format;
 void
 float_to_string (char *buf, double data)
 {
-  Intbyte *cp, c;
+  Ibyte *cp, c;
   int width;
 
   if (NILP (Vfloat_output_format)
@@ -1036,7 +1036,7 @@ float_to_string (char *buf, double data)
      representation of that form not be corrupted by the printer.
    */
   {
-    Intbyte *s = (Intbyte *) buf; /* don't use signed chars here!
+    Ibyte *s = (Ibyte *) buf; /* don't use signed chars here!
 				     isdigit() can't hack them! */
     if (*s == '-') s++;
     for (; *s; s++)
@@ -1313,7 +1313,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (printcharfun, "\"");
       for (i = 0; i < bcmax; i++)
 	{
-	  Intbyte ch = string_byte (obj, i);
+	  Ibyte ch = string_byte (obj, i);
 	  if (ch == '\"' || ch == '\\'
 	      || (ch == '\n' && print_escape_newlines))
 	    {
@@ -1328,7 +1328,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		}
 	      else
 		{
-		  Intbyte temp[2];
+		  Ibyte temp[2];
 		  write_c_string (printcharfun, "\\");
 		  /* This is correct for Mule because the
 		     character is either \ or " */
@@ -1497,7 +1497,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       {
 	/* God intended that this be #\..., you know. */
 	char buf[16];
-	Emchar ch = XCHAR (obj);
+	Ichar ch = XCHAR (obj);
 	char *p = buf;
 	*p++ = '?';
 	if (ch < 32)
@@ -1546,14 +1546,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	else if (ch < 160)
 	  {
 	    *p++ = '\\', *p++ = '^';
-	    p += set_charptr_emchar ((Intbyte *) p, ch + 64);
+	    p += set_itext_ichar ((Ibyte *) p, ch + 64);
 	  }
 	else
 	  {
-	    p += set_charptr_emchar ((Intbyte *) p, ch);
+	    p += set_itext_ichar ((Ibyte *) p, ch);
 	  }
 
-	output_string (printcharfun, (Intbyte *) buf, Qnil, 0, p - buf);
+	output_string (printcharfun, (Ibyte *) buf, Qnil, 0, p - buf);
 
 	break;
       }
@@ -1683,7 +1683,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   /* Does it look like an integer or a float? */
   {
-    Intbyte *data = XSTRING_DATA (name);
+    Ibyte *data = XSTRING_DATA (name);
     Bytecount confusing = 0;
 
     if (size == 0)
@@ -1764,18 +1764,18 @@ to 0.
 */
        (character))
 {
-  Intbyte str[MAX_EMCHAR_LEN];
+  Ibyte str[MAX_ICHAR_LEN];
   Bytecount len;
 
   CHECK_CHAR_COERCE_INT (character);
-  len = set_charptr_emchar (str, XCHAR (character));
+  len = set_itext_ichar (str, XCHAR (character));
   write_string_to_alternate_debugging_output (str, len);
   
   return character;
 }
 
 static void
-write_string_to_alternate_debugging_output (Intbyte *str, Bytecount len)
+write_string_to_alternate_debugging_output (Ibyte *str, Bytecount len)
 {
   int extlen;
   const Extbyte *extptr;
@@ -1842,11 +1842,11 @@ the output also will be logged to this file.
 				  print_unbuffered);
   else
     {
-      Intbyte str[MAX_EMCHAR_LEN];
+      Ibyte str[MAX_ICHAR_LEN];
       Bytecount len;
 
       CHECK_CHAR_COERCE_INT (char_or_string);
-      len = set_charptr_emchar (str, XCHAR (char_or_string));
+      len = set_itext_ichar (str, XCHAR (char_or_string));
       write_string_to_stdio_stream (file, con, str, len, print_unbuffered);
     }
 

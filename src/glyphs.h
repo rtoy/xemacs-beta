@@ -1149,7 +1149,7 @@ int compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 /*				Display Tables				*/
 /************************************************************************/
 
-Lisp_Object display_table_entry (Emchar, Lisp_Object, Lisp_Object);
+Lisp_Object display_table_entry (Ichar, Lisp_Object, Lisp_Object);
 void get_display_tables (struct window *, face_index,
 			 Lisp_Object *, Lisp_Object *);
 

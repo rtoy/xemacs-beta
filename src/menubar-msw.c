@@ -121,7 +121,7 @@ static HMENU top_level_menu;
 
 /*
  * Translate X accelerator syntax to win32 accelerator syntax.
- * accel = (Emchar*) to receive the accelerator character
+ * accel = (Ichar*) to receive the accelerator character
  *         or NULL to suppress accelerators in the menu or dialog item.
  *
  * %% is replaced with %
@@ -135,10 +135,10 @@ static HMENU top_level_menu;
  */
 
 Lisp_Object
-mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
+mswindows_translate_menu_or_dialog_item (Lisp_Object item, Ichar *accel)
 {
   Bytecount len = XSTRING_LENGTH (item);
-  Intbyte *it = (Intbyte *) ALLOCA (2 * len + 42), *ptr = it;
+  Ibyte *it = (Ibyte *) ALLOCA (2 * len + 42), *ptr = it;
 
   memcpy (ptr, XSTRING_DATA (item), len + 1);
   if (accel)
@@ -146,7 +146,7 @@ mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
 
   /* Escape '&' as '&&' */
   
-  while ((ptr = (Intbyte *) memchr (ptr, '&', len - (ptr - it))) != NULL)
+  while ((ptr = (Ibyte *) memchr (ptr, '&', len - (ptr - it))) != NULL)
     {
       memmove (ptr + 1, ptr, (len - (ptr - it)) + 1);
       len++;
@@ -156,7 +156,7 @@ mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
   /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
      and `%%' with `%'. */
   ptr = it;
-  while ((ptr = (Intbyte *) memchr (ptr, '%', len - (ptr - it))) != NULL)
+  while ((ptr = (Ibyte *) memchr (ptr, '%', len - (ptr - it))) != NULL)
     {
       if (*(ptr + 1) == '_')
 	{
@@ -164,7 +164,7 @@ mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
 	    {
 	      *ptr = '&';
 	      if (!*accel)
-		*accel = DOWNCASE (0, charptr_emchar (ptr + 2));
+		*accel = DOWNCASE (0, itext_ichar (ptr + 2));
 	      memmove (ptr + 1, ptr + 2, len - (ptr - it + 2) + 1);
 	      len--;
 	    }
@@ -189,7 +189,7 @@ mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
       /* Force a default accelerator */
       ptr = it;
       memmove (ptr + 1, ptr, len + 1);
-      *accel = DOWNCASE (0, charptr_emchar (ptr + 1));
+      *accel = DOWNCASE (0, itext_ichar (ptr + 1));
       *ptr = '&';
 
       len++;
@@ -204,7 +204,7 @@ mswindows_translate_menu_or_dialog_item (Lisp_Object item, Emchar *accel)
  */
 
 static Lisp_Object
-displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
+displayable_menu_item (Lisp_Object gui_item, int bar_p, Ichar *accel)
 {
   Lisp_Object left, right = Qnil;
 
@@ -336,7 +336,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Object gui_item = allocate_gui_item ();
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2, gcpro3;
-      Emchar accel;
+      Ichar accel;
       Extbyte *itemext;
 
       GCPRO3 (gui_item, path, *accel_list);
@@ -394,7 +394,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       Lisp_Object gui_item = gui_parse_item_keywords (item);
       Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
       struct gcpro gcpro1, gcpro2;
-      Emchar accel;
+      Ichar accel;
       Extbyte *itemext;
 
       GCPRO2 (gui_item, *accel_list);
@@ -672,7 +672,7 @@ menu_cleanup (struct frame *f)
 }
 
 int
-mswindows_char_is_accelerator (struct frame *f, Emchar ch)
+mswindows_char_is_accelerator (struct frame *f, Ichar ch)
 {
   Lisp_Object hash = FRAME_MSWINDOWS_MENU_HASH_TABLE (f);
 

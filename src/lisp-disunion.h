@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.  */
 
  XTYPE     The type bits of a Lisp_Object
  XPNTRVAL  The value bits of a Lisp_Object storing a pointer
- XCHARVAL  The value bits of a Lisp_Object storing a Emchar
+ XCHARVAL  The value bits of a Lisp_Object storing a Ichar
  XREALINT  The value bits of a Lisp_Object storing an integer, signed
  XUINT     The value bits of a Lisp_Object storing an integer, unsigned
  INTP      Non-zero if this Lisp_Object is an integer

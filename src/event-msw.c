@@ -1769,8 +1769,8 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	{
 	  DWORD len = DdeGetData (hdata, NULL, 0, 0);
 	  LPBYTE extcmd = (LPBYTE) ALLOCA (len + 1);
-	  Intbyte *cmd;
-	  Intbyte *end;
+	  Ibyte *cmd;
+	  Ibyte *end;
 	  struct gcpro gcpro1, gcpro2;
 	  Lisp_Object l_dndlist = Qnil;
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
@@ -2361,7 +2361,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	  }
 	else	/* Normal keys & modifiers */
 	  {
-	    Emchar quit_ch =
+	    Ichar quit_ch =
 	      CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
 	    POINT pnt = { LOWORD (GetMessagePos()), HIWORD (GetMessagePos()) };
 	    MSG msg, tranmsg;
@@ -2426,8 +2426,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		int mods_with_quit = mods;
 		int length;
 		Extbyte extchar[4];
-		Intbyte *intchar;
-		Emchar ch;
+		Ibyte *intchar;
+		Ichar ch;
 
 		if (XEUNICODE_P)
 		  {
@@ -2435,7 +2435,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 		    TO_INTERNAL_FORMAT (DATA, (extchar, length),
 					C_STRING_ALLOCA, (intchar),
 					Qmswindows_unicode);
-		    ch = charptr_emchar (intchar);
+		    ch = itext_ichar (intchar);
 		  }
 		else
 		  {
@@ -2447,7 +2447,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				   the following */
 				((LCID) GetKeyboardLayout (0) & 0xFFFF),
 				NULL));
-		    ch = charptr_emchar (intchar);
+		    ch = itext_ichar (intchar);
 		    xfree (intchar);
 		  }
 
@@ -2565,7 +2565,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				 (HKL) lcid);
 			    if (tounret > 0)
 			      {
-				Intbyte *intchar;
+				Ibyte *intchar;
 
 				TO_INTERNAL_FORMAT
 				  (DATA,
@@ -2573,7 +2573,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				   C_STRING_ALLOCA, intchar,
 				   Qmswindows_unicode);
 				XEVENT (lastev)->event.key.alt_keychars[i] =
-				  charptr_emchar (intchar);
+				  itext_ichar (intchar);
 			      }
 			  }
 			else
@@ -2594,7 +2594,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				   it's like WM_IME_CHAR: DBCS chars
 				   have the lead byte in bits 8-15 of
 				   the short. */
-				Intbyte *intchar;
+				Ibyte *intchar;
 				Extbyte mbstuff[2];
 				Bytecount mblength = 0;
 				WORD thechar = received_keys[tounret - 1];
@@ -2611,14 +2611,14 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 				   NULL);
 
 				XEVENT (lastev)->event.key.alt_keychars[i] =
-				  charptr_emchar (intchar);
+				  itext_ichar (intchar);
 				xfree (intchar);
 			      }
 			  }
 		      }
 		    else
 		      {
-			Emchar altch;
+			Ichar altch;
 
 			if (virtual_key >= 'A' && virtual_key <= 'Z')
 			  altch =
@@ -3354,7 +3354,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	filecount = qxeDragQueryFile ((HDROP) wParam, 0xffffffff, NULL, 0);
 	for (i = 0; i < filecount; i++)
 	  {
-	    Intbyte *fname;
+	    Ibyte *fname;
 	    Extbyte *fname_ext;
 	    Bytecount fnamelen;
 	    Charcount len = qxeDragQueryFile ((HDROP) wParam, i, NULL, 0);
@@ -3545,7 +3545,7 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
          HIMC imc = ImmGetContext (hwnd);
 	 Extbyte *result;
          Bytecount len;
-	 Intbyte *resultint, *endptr;
+	 Ibyte *resultint, *endptr;
 	 Bytecount lenint;
 	 int speccount;
 
@@ -3571,12 +3571,12 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 
 	 while (resultint < endptr)
 	   {
-	     Emchar ch = charptr_emchar (resultint);
+	     Ichar ch = itext_ichar (resultint);
 	      if (ch == ' ')
 		mswindows_enqueue_keypress_event (hwnd, QKspace, 0);
 	      else
 		mswindows_enqueue_keypress_event (hwnd, make_char (ch), 0);
-	     INC_CHARPTR (resultint);
+	     INC_IBYTEPTR (resultint);
 	   }
 
 	 unbind_to (speccount);

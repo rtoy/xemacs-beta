@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #include "chartab.h"
 
 #define TRANSLATE(table, pos)	\
- (!NILP (table) ? TRT_TABLE_OF (table, (Emchar) pos) : pos)
+ (!NILP (table) ? TRT_TABLE_OF (table, (Ichar) pos) : pos)
 
 #define REGEXP_CACHE_SIZE 20
 
@@ -112,10 +112,10 @@ Lisp_Object Vskip_chars_range_table;
 
 static void set_search_regs (struct buffer *buf, Charbpos beg, Charcount len);
 static void save_search_regs (void);
-static Charbpos simple_search (struct buffer *buf, Intbyte *base_pat,
+static Charbpos simple_search (struct buffer *buf, Ibyte *base_pat,
 			       Bytecount len, Bytebpos pos, Bytebpos lim,
 			       EMACS_INT n, Lisp_Object trt);
-static Charbpos boyer_moore (struct buffer *buf, Intbyte *base_pat,
+static Charbpos boyer_moore (struct buffer *buf, Ibyte *base_pat,
 			     Bytecount len, Bytebpos pos, Bytebpos lim,
 			     EMACS_INT n, Lisp_Object trt,
 			     Lisp_Object inverse_trt, int charset_base);
@@ -271,7 +271,7 @@ fixup_search_regs_for_string (Lisp_Object string)
   int num_regs = search_regs.num_regs;
 
   /* #### bytecount_to_charcount() is not that efficient.  This function
-     could be faster if it did its own conversion (using INC_CHARPTR()
+     could be faster if it did its own conversion (using INC_IBYTEPTR()
      and such), because the register ends are likely to be somewhat ordered.
      (Even if not, you could sort them.)
 
@@ -496,13 +496,13 @@ tables) and defaults to the current buffer.
    This does not clobber the match data. */
 
 Bytecount
-fast_string_match (Lisp_Object regexp,  const Intbyte *nonreloc,
+fast_string_match (Lisp_Object regexp,  const Ibyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
 		   Bytecount length, int case_fold_search,
 		   Error_Behavior errb, int no_quit)
 {
   Bytecount val;
-  Intbyte *newnonreloc = (Intbyte *) nonreloc;
+  Ibyte *newnonreloc = (Ibyte *) nonreloc;
   struct re_pattern_buffer *bufp;
   struct syntax_cache scache_struct;
   struct syntax_cache *scache = &scache_struct;
@@ -598,7 +598,7 @@ newline_cache_on_off (struct buffer *buf)
    If ALLOW_QUIT is non-zero, call QUIT periodically. */
 
 static Bytebpos
-byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
+byte_scan_buffer (struct buffer *buf, Ichar target, Bytebpos st, Bytebpos en,
 		EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   Bytebpos lim = en > 0 ? en :
@@ -616,7 +616,7 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
       Internal_Format fmt = buf->text->format;
       /* Check for char that's unrepresentable in the buffer -- it
          certainly can't be there. */
-      if (!emchar_fits_in_format (target, fmt, wrap_buffer (buf)))
+      if (!ichar_fits_in_format (target, fmt, wrap_buffer (buf)))
 	{
 	  *shortage = count;
 	  return lim;
@@ -627,9 +627,9 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
 	 we do it the "hard" way.  Note that this way works for all
 	 characters and all formats, but the other way is faster. */
       else if (! (fmt == FORMAT_8_BIT_FIXED ||
-		  (fmt == FORMAT_DEFAULT && emchar_ascii_p (target))))
+		  (fmt == FORMAT_DEFAULT && ichar_ascii_p (target))))
 	{
-	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
+	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st < lim && count > 0)
 	    {
 	      if (BYTE_BUF_FETCH_CHAR_RAW (buf, st) == raw)
@@ -640,15 +640,15 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
       else
 #endif
 	{
-	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
+	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st < lim && count > 0)
 	    {
 	      Bytebpos ceil;
-	      Intbyte *bufptr;
+	      Ibyte *bufptr;
 
 	      ceil = BYTE_BUF_CEILING_OF (buf, st);
 	      ceil = min (lim, ceil);
-	      bufptr = (Intbyte *) memchr (BYTE_BUF_BYTE_ADDRESS (buf, st),
+	      bufptr = (Ibyte *) memchr (BYTE_BUF_BYTE_ADDRESS (buf, st),
 					   raw, ceil - st);
 	      if (bufptr)
 		{
@@ -672,15 +672,15 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
       Internal_Format fmt = buf->text->format;
       /* Check for char that's unrepresentable in the buffer -- it
          certainly can't be there. */
-      if (!emchar_fits_in_format (target, fmt, wrap_buffer (buf)))
+      if (!ichar_fits_in_format (target, fmt, wrap_buffer (buf)))
 	{
 	  *shortage = -count;
 	  return lim;
 	}
       else if (! (fmt == FORMAT_8_BIT_FIXED ||
-		  (fmt == FORMAT_DEFAULT && emchar_ascii_p (target))))
+		  (fmt == FORMAT_DEFAULT && ichar_ascii_p (target))))
 	{
-	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
+	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st > lim && count < 0)
 	    {
 	      DEC_BYTEBPOS (buf, st);
@@ -691,12 +691,12 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
       else
 #endif
 	{
-	  Raw_Emchar raw = emchar_to_raw (target, fmt, wrap_buffer (buf));
+	  Raw_Ichar raw = ichar_to_raw (target, fmt, wrap_buffer (buf));
 	  while (st > lim && count < 0)
 	    {
 	      Bytebpos floor;
-	      Intbyte *bufptr;
-	      Intbyte *floorptr;
+	      Ibyte *bufptr;
+	      Ibyte *floorptr;
 
 	      floor = BYTE_BUF_FLOOR_OF (buf, st);
 	      floor = max (lim, floor);
@@ -709,7 +709,7 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
 		  /* At this point, both ST and BUFPTR refer to the same
 		     character.  When the loop terminates, ST will
 		     always point to the last character we tried. */
-		  if (*bufptr == (Intbyte) raw)
+		  if (*bufptr == (Ibyte) raw)
 		    {
 		      count++;
 		      break;
@@ -737,7 +737,7 @@ byte_scan_buffer (struct buffer *buf, Emchar target, Bytebpos st, Bytebpos en,
 }
 
 Charbpos
-scan_buffer (struct buffer *buf, Emchar target, Charbpos start, Charbpos end,
+scan_buffer (struct buffer *buf, Ichar target, Charbpos start, Charbpos end,
 	     EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
   Bytebpos byte_retval;
@@ -772,11 +772,11 @@ find_next_newline (struct buffer *buf, Charbpos from, int count)
 }
 
 Bytecount
-byte_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytecount st,
+byte_find_next_ichar_in_string (Lisp_Object str, Ichar target, Bytecount st,
 			       EMACS_INT count)
 {
   Bytebpos lim = XSTRING_LENGTH (str) -1;
-  Intbyte *s = XSTRING_DATA (str);
+  Ibyte *s = XSTRING_DATA (str);
 
   assert (count >= 0);
 
@@ -790,7 +790,7 @@ byte_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytecount st,
     {
       while (st < lim && count > 0)
 	{
-	  if (string_emchar (str, st) == target)
+	  if (string_ichar (str, st) == target)
 	    count--;
 	  INC_BYTECOUNT (s, st);
 	}
@@ -800,7 +800,7 @@ byte_find_next_emchar_in_string (Lisp_Object str, Emchar target, Bytecount st,
     {
       while (st < lim && count > 0)
 	{
-	  Intbyte *bufptr = (Intbyte *) memchr (charptr_n_addr (s, st),
+	  Ibyte *bufptr = (Ibyte *) memchr (itext_n_addr (s, st),
 						(int) target, lim - st);
 	  if (bufptr)
 	    {
@@ -834,8 +834,8 @@ static Lisp_Object
 skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    Lisp_Object string, Lisp_Object lim)
 {
-  REGISTER Intbyte *p, *pend;
-  REGISTER Emchar c;
+  REGISTER Ibyte *p, *pend;
+  REGISTER Ichar c;
   /* We store the first 256 chars in an array here and the rest in
      a range table. */
   unsigned char fastmap[0400];
@@ -875,8 +875,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
   while (p != pend)
     {
-      c = charptr_emchar (p);
-      INC_CHARPTR (p);
+      c = itext_ichar (p);
+      INC_IBYTEPTR (p);
       if (syntaxp)
 	{
 	  if (c < 0400 && syntax_spec_code[c] < (unsigned char) Smax)
@@ -889,16 +889,16 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  if (c == '\\')
 	    {
 	      if (p == pend) break;
-	      c = charptr_emchar (p);
-	      INC_CHARPTR (p);
+	      c = itext_ichar (p);
+	      INC_IBYTEPTR (p);
 	    }
 	  if (p != pend && *p == '-')
 	    {
-	      Emchar cend;
+	      Ichar cend;
 
 	      p++;
 	      if (p == pend) break;
-	      cend = charptr_emchar (p);
+	      cend = itext_ichar (p);
 	      while (c <= cend && c < 0400)
 		{
 		  fastmap[c] = 1;
@@ -907,7 +907,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      if (c <= cend)
 		Fput_range_table (make_int (c), make_int (cend), Qt,
 				  Vskip_chars_range_table);
-	      INC_CHARPTR (p);
+	      INC_IBYTEPTR (p);
 	    }
 	  else
 	    {
@@ -972,7 +972,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  {
 	    while (BUF_PT (buf) < limit)
 	      {
-		Emchar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf));
+		Ichar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf));
 		if ((ch < 0400) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
@@ -987,7 +987,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	  {
 	    while (BUF_PT (buf) > limit)
 	      {
-		Emchar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1);
+		Ichar ch = BUF_FETCH_CHAR (buf, BUF_PT (buf) - 1);
 		if ((ch < 0400) ? fastmap[ch] :
 		    (NILP (Fget_range_table (make_int (ch),
 					     Vskip_chars_range_table,
@@ -1135,7 +1135,7 @@ static int
 trivial_regexp_p (Lisp_Object regexp)
 {
   Bytecount len = XSTRING_LENGTH (regexp);
-  Intbyte *s = XSTRING_DATA (regexp);
+  Ibyte *s = XSTRING_DATA (regexp);
   while (--len >= 0)
     {
       switch (*s++)
@@ -1185,7 +1185,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	       Lisp_Object inverse_trt, int posix)
 {
   Bytecount len = XSTRING_LENGTH (string);
-  Intbyte *base_pat = XSTRING_DATA (string);
+  Ibyte *base_pat = XSTRING_DATA (string);
   REGISTER EMACS_INT i, j;
   Bytebpos p1, p2;
   Bytecount s1, s2;
@@ -1278,15 +1278,15 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
     {
       int charset_base = -1;
       int boyer_moore_ok = 1;
-      Intbyte *pat = 0;
-      Intbyte *patbuf = alloca_array (Intbyte, len * MAX_EMCHAR_LEN);
+      Ibyte *pat = 0;
+      Ibyte *patbuf = alloca_array (Ibyte, len * MAX_ICHAR_LEN);
       pat = patbuf;
 #ifdef MULE
       /* &&#### needs some 8-bit work here */
       while (len > 0)
 	{
-	  Intbyte tmp_str[MAX_EMCHAR_LEN];
-	  Emchar c, translated, inverse;
+	  Ibyte tmp_str[MAX_ICHAR_LEN];
+	  Ichar c, translated, inverse;
 	  Bytecount orig_bytelen, new_bytelen, inv_bytelen;
 
 	  /* If we got here and the RE flag is set, it's because
@@ -1297,13 +1297,13 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	      len--;
 	      base_pat++;
 	    }
-	  c = charptr_emchar (base_pat);
+	  c = itext_ichar (base_pat);
 	  translated = TRANSLATE (trt, c);
 	  inverse = TRANSLATE (inverse_trt, c);
 
-	  orig_bytelen = charptr_emchar_len (base_pat);
-	  inv_bytelen = set_charptr_emchar (tmp_str, inverse);
-	  new_bytelen = set_charptr_emchar (tmp_str, translated);
+	  orig_bytelen = itext_ichar_len (base_pat);
+	  inv_bytelen = set_itext_ichar (tmp_str, inverse);
+	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
 	  if (new_bytelen != orig_bytelen || inv_bytelen != orig_bytelen)
 	    boyer_moore_ok = 0;
@@ -1311,7 +1311,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	    {
 	      /* Keep track of which character set row
 		 contains the characters that need translation.  */
-	      int charset_base_code = c & ~EMCHAR_FIELD3_MASK;
+	      int charset_base_code = c & ~ICHAR_FIELD3_MASK;
 	      if (charset_base == -1)
 		charset_base = charset_base_code;
 	      else if (charset_base != charset_base_code)
@@ -1360,7 +1360,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
    boyer_moore cannot work.  */
 
 static Charbpos
-simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
+simple_search (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	       Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt)
 {
   int forward = n > 0;
@@ -1373,16 +1373,16 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	  {
 	    Bytecount this_len = len;
 	    Bytebpos this_pos = pos;
-	    Intbyte *p = base_pat;
+	    Ibyte *p = base_pat;
 	    if (pos >= lim)
 	      goto stop;
 
 	    while (this_len > 0)
 	      {
-		Emchar pat_ch, buf_ch;
+		Ichar pat_ch, buf_ch;
 		Bytecount pat_len;
 
-		pat_ch = charptr_emchar (p);
+		pat_ch = itext_ichar (p);
 		buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
 
 		buf_ch = TRANSLATE (trt, buf_ch);
@@ -1390,7 +1390,7 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		if (buf_ch != pat_ch)
 		  break;
 
-		pat_len = charptr_emchar_len (p);
+		pat_len = itext_ichar_len (p);
 		p += pat_len;
 		this_len -= pat_len;
 		INC_BYTEBPOS (buf, this_pos);
@@ -1412,18 +1412,18 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	  {
 	    Bytecount this_len = len;
 	    Bytebpos this_pos = pos;
-	    Intbyte *p;
+	    Ibyte *p;
 	    if (pos <= lim)
 	      goto stop;
 	    p = base_pat + len;
 
 	    while (this_len > 0)
 	      {
-		Emchar pat_ch, buf_ch;
+		Ichar pat_ch, buf_ch;
 
-		DEC_CHARPTR (p);
+		DEC_IBYTEPTR (p);
 		DEC_BYTEBPOS (buf, this_pos);
-		pat_ch = charptr_emchar (p);
+		pat_ch = itext_ichar (p);
 		buf_ch = BYTE_BUF_FETCH_CHAR (buf, this_pos);
 
 		buf_ch = TRANSLATE (trt, buf_ch);
@@ -1431,7 +1431,7 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		if (buf_ch != pat_ch)
 		  break;
 
-		this_len -= charptr_emchar_len (p);
+		this_len -= itext_ichar_len (p);
 	      }
 	    if (this_len == 0)
 	      {
@@ -1481,7 +1481,7 @@ simple_search (struct buffer *buf, Intbyte *base_pat, Bytecount len,
    If that criterion is not satisfied, do not call this function.  */
 	    
 static Charbpos
-boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
+boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
 	     Bytebpos pos, Bytebpos lim, EMACS_INT n, Lisp_Object trt,
 	     Lisp_Object inverse_trt, int charset_base)
 {
@@ -1522,13 +1522,13 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
   Bytebpos limit;
   Bytecount stride_for_teases = 0;
   REGISTER EMACS_INT i, j;
-  Intbyte *pat, *pat_end;
-  REGISTER Intbyte *cursor, *p_limit, *ptr2;
-  Intbyte simple_translate[0400];
+  Ibyte *pat, *pat_end;
+  REGISTER Ibyte *cursor, *p_limit, *ptr2;
+  Ibyte simple_translate[0400];
   REGISTER int direction = ((n > 0) ? 1 : -1);
 #ifdef MULE
-  Intbyte translate_prev_byte = 0;
-  Intbyte translate_anteprev_byte = 0;
+  Ibyte translate_prev_byte = 0;
+  Ibyte translate_anteprev_byte = 0;
 #endif
 #ifdef C_ALLOCA
   EMACS_INT BM_tab_space[0400];
@@ -1589,34 +1589,34 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
      in the pattern.  Others don't matter anyway!  */
   xzero (simple_translate);
   for (i = 0; i < 0400; i++)
-    simple_translate[i] = (Intbyte) i;
+    simple_translate[i] = (Ibyte) i;
   i = 0;
   while (i != infinity)
     {
-      Intbyte *ptr = base_pat + i;
+      Ibyte *ptr = base_pat + i;
       i += direction;
       if (i == dirlen)
 	i = infinity;
       if (!NILP (trt))
 	{
 #ifdef MULE
-	  Emchar ch, untranslated;
+	  Ichar ch, untranslated;
 	  int this_translated = 1;
 
 	  /* Is *PTR the last byte of a character?  */
-	  if (pat_end - ptr == 1 || intbyte_first_byte_p (ptr[1]))
+	  if (pat_end - ptr == 1 || ibyte_first_byte_p (ptr[1]))
 	    {
-	      Intbyte *charstart = ptr;
-	      while (!intbyte_first_byte_p (*charstart))
+	      Ibyte *charstart = ptr;
+	      while (!ibyte_first_byte_p (*charstart))
 		charstart--;
-	      untranslated = charptr_emchar (charstart);
-	      if (charset_base == (untranslated & ~EMCHAR_FIELD3_MASK))
+	      untranslated = itext_ichar (charstart);
+	      if (charset_base == (untranslated & ~ICHAR_FIELD3_MASK))
 		{
 		  ch = TRANSLATE (trt, untranslated);
-		  if (!intbyte_first_byte_p (*ptr))
+		  if (!ibyte_first_byte_p (*ptr))
 		    {
 		      translate_prev_byte = ptr[-1];
-		      if (!intbyte_first_byte_p (translate_prev_byte))
+		      if (!ibyte_first_byte_p (translate_prev_byte))
 			translate_anteprev_byte = ptr[-2];
 		    }
 		}
@@ -1643,7 +1643,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	     see comment in casetab.c. */
 	  if (this_translated)
 	    {
-	      Emchar starting_ch = ch;
+	      Ichar starting_ch = ch;
 	      EMACS_INT starting_j = j;
 	      while (1)
 		{
@@ -1656,7 +1656,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		  /* For all the characters that map into CH,
 		     set up simple_translate to map the last byte
 		     into STARTING_J.  */
-		  simple_translate[j] = (Intbyte) starting_j;
+		  simple_translate[j] = (Ibyte) starting_j;
 		  if (ch == starting_ch)
 		    break;
 		  BM_tab[j] = dirlen - i;
@@ -1673,7 +1673,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	     see comment in casetab.c. */
 	  while ((j = TRANSLATE (inverse_trt, j)) != k)
 	    {
-	      simple_translate[j] = (Intbyte) k;
+	      simple_translate[j] = (Ibyte) k;
 	      BM_tab[j] = dirlen - i;
 	    }
 #endif
@@ -1699,7 +1699,7 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
   while (n != 0)
     {
       Bytebpos tail_end;
-      Intbyte *tail_end_ptr;
+      Ibyte *tail_end_ptr;
       /* It's been reported that some (broken) compiler thinks
 	 that Boolean expressions in an arithmetic context are
 	 unsigned.  Using an explicit ?1:0 prevents this.  */
@@ -1782,14 +1782,14 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 		  while ((i -= direction) + direction != 0)
 		    {
 #ifdef MULE
-		      Emchar ch;
+		      Ichar ch;
 		      cursor -= direction;
 		      /* Translate only the last byte of a character.  */
 		      if ((cursor == tail_end_ptr
-			   || intbyte_first_byte_p (cursor[1]))
-			  && (intbyte_first_byte_p (cursor[0])
+			   || ibyte_first_byte_p (cursor[1]))
+			  && (ibyte_first_byte_p (cursor[0])
 			      || (translate_prev_byte == cursor[-1]
-				  && (intbyte_first_byte_p (translate_prev_byte)
+				  && (ibyte_first_byte_p (translate_prev_byte)
 				      || translate_anteprev_byte == cursor[-2]))))
 			ch = simple_translate[*cursor];
 		      else
@@ -1869,17 +1869,17 @@ boyer_moore (struct buffer *buf, Intbyte *base_pat, Bytecount len,
 	      while ((i -= direction) + direction != 0)
 		{
 #ifdef MULE
-		  Emchar ch;
-		  Intbyte *ptr;
+		  Ichar ch;
+		  Ibyte *ptr;
 #endif
 		  pos -= direction;
 #ifdef MULE
 		  ptr = BYTE_BUF_BYTE_ADDRESS_NO_VERIFY (buf, pos);
 		  if ((ptr == tail_end_ptr
-		       || intbyte_first_byte_p (ptr[1]))
-		      && (intbyte_first_byte_p (ptr[0])
+		       || ibyte_first_byte_p (ptr[1]))
+		      && (ibyte_first_byte_p (ptr[0])
 			  || (translate_prev_byte == ptr[-1]
-			      && (intbyte_first_byte_p (translate_prev_byte)
+			      && (ibyte_first_byte_p (translate_prev_byte)
 				  || translate_anteprev_byte == ptr[-2]))))
 		    ch = simple_translate[*ptr];
 		  else
@@ -1967,37 +1967,37 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   len = string_char_length (string);
 
   for (i = 0; i < len; i++)
-    if (!WORD_SYNTAX_P (syntax_table, string_emchar (string, i)))
+    if (!WORD_SYNTAX_P (syntax_table, string_ichar (string, i)))
       {
 	punct_count++;
 	if (i > 0 && WORD_SYNTAX_P (syntax_table,
-				    string_emchar (string, i - 1)))
+				    string_ichar (string, i - 1)))
           word_count++;
       }
-  if (WORD_SYNTAX_P (syntax_table, string_emchar (string, len - 1)))
+  if (WORD_SYNTAX_P (syntax_table, string_ichar (string, len - 1)))
     word_count++;
   if (!word_count) return build_string ("");
 
   {
     /* The following value is an upper bound on the amount of storage we
        need.  In non-Mule, it is exact. */
-    Intbyte *storage =
-      (Intbyte *) ALLOCA (XSTRING_LENGTH (string) - punct_count +
+    Ibyte *storage =
+      (Ibyte *) ALLOCA (XSTRING_LENGTH (string) - punct_count +
                           5 * (word_count - 1) + 4);
-    Intbyte *o = storage;
+    Ibyte *o = storage;
 
     *o++ = '\\';
     *o++ = 'b';
 
     for (i = 0; i < len; i++)
       {
-	Emchar ch = string_emchar (string, i);
+	Ichar ch = string_ichar (string, i);
 
 	if (WORD_SYNTAX_P (syntax_table, ch))
-	  o += set_charptr_emchar (o, ch);
+	  o += set_itext_ichar (o, ch);
 	else if (i > 0
 		 && WORD_SYNTAX_P (syntax_table,
-				   string_emchar (string, i - 1))
+				   string_ichar (string, i - 1))
 		 && --word_count)
 	  {
 	    *o++ = '\\';
@@ -2287,7 +2287,7 @@ match since only regular expressions have distinguished subexpressions.
   int some_lowercase;
   int some_uppercase;
   int some_nonuppercase_initial;
-  Emchar c, prevc;
+  Ichar c, prevc;
   Charcount inslen;
   struct buffer *buf;
   Lisp_Object syntax_table;
@@ -2375,7 +2375,7 @@ match since only regular expressions have distinguished subexpressions.
 	  if (NILP (string))
 	    c = BUF_FETCH_CHAR (buf, pos);
 	  else
-	    c = string_emchar (string, pos);
+	    c = string_ichar (string, pos);
 
 	  if (LOWERCASEP (buf, c))
 	    {
@@ -2460,10 +2460,10 @@ match since only regular expressions have distinguished subexpressions.
 	      Charcount substart = -1;
 	      Charcount subend   = -1;
 
-	      c = string_emchar (replacement, strpos);
+	      c = string_ichar (replacement, strpos);
 	      if (c == '\\' && strpos < stlen - 1)
 		{
-		  c = string_emchar (replacement, ++strpos);
+		  c = string_ichar (replacement, ++strpos);
 		  if (c == '&')
 		    {
 		      literal_end = strpos - 1;
@@ -2553,8 +2553,8 @@ match since only regular expressions have distinguished subexpressions.
 
 	  for (strpos = 0; strpos < stlen; strpos++)
 	    {
-	      Emchar curchar = string_emchar (replacement, strpos);
-	      Emchar newchar = -1;
+	      Ichar curchar = string_ichar (replacement, strpos);
+	      Ichar newchar = -1;
 	      if (i < Dynarr_length (ul_pos_dynarr) &&
 		  strpos == Dynarr_at (ul_pos_dynarr, i))
 		{
@@ -2614,7 +2614,7 @@ match since only regular expressions have distinguished subexpressions.
 	   */
 	  Charcount offset = BUF_PT (buf) - search_regs.start[sub];
 
-	  c = string_emchar (replacement, strpos);
+	  c = string_ichar (replacement, strpos);
 	  if (c == '\\' && strpos < stlen - 1)
 	    {
 	      /* XXX FIXME: replacing just a substring non-literally
@@ -2623,7 +2623,7 @@ match since only regular expressions have distinguished subexpressions.
 		 <duwe@caldera.de> claims Finsert_buffer_substring already
 		 handles this correctly.
 	      */
-	      c = string_emchar (replacement, ++strpos);
+	      c = string_ichar (replacement, ++strpos);
 	      if (c == '&')
 		Finsert_buffer_substring
                   (buffer,
@@ -2686,8 +2686,8 @@ match since only regular expressions have distinguished subexpressions.
 
       for (pos = BUF_PT (buf) - inslen; pos < eend; pos++)
 	{
-	  Emchar curchar = BUF_FETCH_CHAR (buf, pos);
-	  Emchar newchar = -1;
+	  Ichar curchar = BUF_FETCH_CHAR (buf, pos);
+	  Ichar newchar = -1;
 	  if (i < Dynarr_length (ul_pos_dynarr) &&
 	      pos == Dynarr_at (ul_pos_dynarr, i))
 	    {
@@ -2963,12 +2963,12 @@ Return a regexp string which matches exactly STRING and nothing else.
 */
        (string))
 {
-  REGISTER Intbyte *in, *out, *end;
-  REGISTER Intbyte *temp;
+  REGISTER Ibyte *in, *out, *end;
+  REGISTER Ibyte *temp;
 
   CHECK_STRING (string);
 
-  temp = (Intbyte *) ALLOCA (XSTRING_LENGTH (string) * 2);
+  temp = (Ibyte *) ALLOCA (XSTRING_LENGTH (string) * 2);
 
   /* Now copy the data into the new string, inserting escapes. */
 
@@ -2978,15 +2978,15 @@ Return a regexp string which matches exactly STRING and nothing else.
 
   while (in < end)
     {
-      Emchar c = charptr_emchar (in);
+      Ichar c = itext_ichar (in);
 
       if (c == '[' || c == ']'
 	  || c == '*' || c == '.' || c == '\\'
 	  || c == '?' || c == '+'
 	  || c == '^' || c == '$')
 	*out++ = '\\';
-      out += set_charptr_emchar (out, c);
-      INC_CHARPTR (in);
+      out += set_itext_ichar (out, c);
+      INC_IBYTEPTR (in);
     }
 
   return make_string (temp, out - temp);

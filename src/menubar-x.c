@@ -117,7 +117,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 
   if (STRINGP (desc))
     {
-      Intbyte *string_chars = XSTRING_DATA (desc);
+      Ibyte *string_chars = XSTRING_DATA (desc);
       wv->type = (separator_string_p (string_chars) ? SEPARATOR_TYPE :
 		  TEXT_TYPE);
       if (wv->type == SEPARATOR_TYPE)
@@ -252,7 +252,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      title_wv->enabled = 1;
 	      title_wv->next = sep_wv;
 	      sep_wv->type = SEPARATOR_TYPE;
-	      sep_wv->value = menu_separator_style_and_to_external ((Intbyte *) "==");
+	      sep_wv->value = menu_separator_style_and_to_external ((Ibyte *) "==");
 	      sep_wv->next = 0;
 
 	      wv->contents = title_wv;

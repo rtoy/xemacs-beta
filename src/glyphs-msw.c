@@ -720,7 +720,7 @@ mswindows_resize_dibitmap_instance (Lisp_Image_Instance *ii,
 
 struct color_symbol
 {
-  Intbyte *	name;
+  Ibyte *	name;
   COLORREF	color;
 };
 
@@ -899,7 +899,7 @@ static int xpm_to_eimage (Lisp_Object image, const Extbyte *buffer,
       if (xpmimage.colorTable[i].c_color)
 	{
 	  colortbl[i]=
-	    mswindows_string_to_color ((Intbyte *)
+	    mswindows_string_to_color ((Ibyte *)
 				       xpmimage.colorTable[i].c_color);
 	  goto label_found_color;
 	}
@@ -1094,7 +1094,7 @@ mswindows_resource_possible_dest_types (void)
 
 typedef struct
 {
-  CIntbyte *name;
+  CIbyte *name;
   int	resource_id;
 } resource_t;
 
@@ -1175,7 +1175,7 @@ resource_name_to_resource (Lisp_Object name, int type)
 
   do
     {
-      if (!qxestrcasecmp_i18n ((Intbyte *) res->name, XSTRING_DATA (name)))
+      if (!qxestrcasecmp_i18n ((Ibyte *) res->name, XSTRING_DATA (name)))
 	return res->resource_id;
     }
   while ((++res)->name);
@@ -1637,7 +1637,7 @@ mswindows_xface_instantiate (Lisp_Object image_instance,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
   UChar_Binary *p, *bits, *bp;
-  const CIntbyte * volatile emsg = 0;
+  const CIbyte * volatile emsg = 0;
   const UChar_Binary * volatile dstring;
 
   assert (!NILP (data));
@@ -1803,16 +1803,16 @@ static Lisp_Object
 charset_of_text (Lisp_Object text)
 {
 #ifdef MULE
-  Intbyte *p;
+  Ibyte *p;
 
   if (NILP (text))
     return Vcharset_ascii;
   for (p = XSTRING_DATA (text); *p;)
     {
-      Emchar c = charptr_emchar (p);
-      if (!EQ (emchar_charset (c), Vcharset_ascii))
-	return emchar_charset (c);
-      INC_CHARPTR (p);
+      Ichar c = itext_ichar (p);
+      if (!EQ (ichar_charset (c), Vcharset_ascii))
+	return ichar_charset (c);
+      INC_IBYTEPTR (p);
     }
 #endif /* MULE */
 
@@ -2213,7 +2213,7 @@ mswindows_widget_instantiate (Lisp_Object image_instance,
 			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 			      int dest_mask, Lisp_Object domain,
-			      const CIntbyte *class, int flags, int exflags)
+			      const CIbyte *class, int flags, int exflags)
 {
   /* this function can call lisp */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);

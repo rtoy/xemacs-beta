@@ -93,7 +93,7 @@ static void syntax_cache_table_was_changed (struct buffer *buf);
 struct lisp_parse_state
 {
   int depth;		/* Depth at end of parsing */
-  Emchar instring;	/* -1 if not within string, else desired terminator */
+  Ichar instring;	/* -1 if not within string, else desired terminator */
   int incomment;	/* Nonzero if within a comment at end of parsing */
   int comstyle;		/* comment style a=0, or b=1, or ST_COMMENT_STYLE */
   int quoted;		/* Nonzero if just after an escape char at end of
@@ -590,7 +590,7 @@ charset_syntax (struct buffer *buf, Lisp_Object charset, int *multi_p_out)
 #endif
 
 Lisp_Object
-syntax_match (Lisp_Object syntax_table, Emchar ch)
+syntax_match (Lisp_Object syntax_table, Ichar ch)
 {
   Lisp_Object code = get_char_table (ch, syntax_table);
   Lisp_Object code2 = code;
@@ -631,7 +631,7 @@ syntax table.
    There is no word boundary between two word-constituent ASCII
    characters.  */
 #define WORD_BOUNDARY_P(c1, c2)			\
-  (!(emchar_ascii_p (c1) && emchar_ascii_p (c2))	\
+  (!(ichar_ascii_p (c1) && ichar_ascii_p (c2))	\
    && word_boundary_p (c1, c2))
 #endif
 
@@ -643,7 +643,7 @@ Charbpos
 scan_words (struct buffer *buf, Charbpos from, int count)
 {
   Charbpos limit = count > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
-  Emchar ch0, ch1;
+  Ichar ch0, ch1;
   enum syntaxcode code;
   struct syntax_cache *scache = setup_buffer_syntax_cache (buf, from, count);
 
@@ -790,7 +790,7 @@ static int
 find_start_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
 		       int comstyle)
 {
-  Emchar c;
+  Ichar c;
   enum syntaxcode code;
 
   /* Look back, counting the parity of string-quotes,
@@ -803,7 +803,7 @@ find_start_of_comment (struct buffer *buf, Charbpos from, Charbpos stop,
      which is I+2X quotes from the comment-end.
      PARITY is current parity of quotes from the comment end.  */
   int parity = 0;
-  Emchar my_stringend = 0;
+  Ichar my_stringend = 0;
   int string_lossage = 0;
   Charbpos comment_end = from;
   Charbpos comstart_pos = 0;
@@ -1065,7 +1065,7 @@ COUNT defaults to 1, and BUFFER defaults to the current buffer.
 {
   Charbpos from;
   Charbpos stop;
-  Emchar c;
+  Ichar c;
   enum syntaxcode code;
   int syncode;
   EMACS_INT n;
@@ -1255,7 +1255,7 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 	    int sexpflag, int noerror)
 {
   Charbpos stop;
-  Emchar c;
+  Ichar c;
   int quoted;
   int mathexit = 0;
   enum syntaxcode code;
@@ -1400,12 +1400,12 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 	    case Sstring_fence:
 	    case Sstring:
               {
-		Emchar stringterm;
+		Ichar stringterm;
 
 		if (code != Sstring_fence)
 		  {
 		    /* XEmacs change: call syntax_match on character */
-		    Emchar ch = BUF_FETCH_CHAR (buf, from - 1);
+		    Ichar ch = BUF_FETCH_CHAR (buf, from - 1);
 		    Lisp_Object stermobj =
 		      syntax_match (scache->current_syntax_table, ch);
 
@@ -1580,12 +1580,12 @@ scan_lists (struct buffer *buf, Charbpos from, int count, int depth,
 	    case Sstring_fence:
 	    case Sstring:
               {
-		Emchar stringterm;
+		Ichar stringterm;
 
 		if (code != Sstring_fence)
 		  {
 		/* XEmacs change: call syntax_match() on character */
-                Emchar ch = BUF_FETCH_CHAR (buf, from);
+                Ichar ch = BUF_FETCH_CHAR (buf, from);
 		    Lisp_Object stermobj =
 		      syntax_match (scache->current_syntax_table, ch);
 
@@ -1736,7 +1736,7 @@ Optional arg BUFFER defaults to the current buffer.
   struct buffer *buf = decode_buffer (buffer, 0);
   Charbpos beg = BUF_BEGV (buf);
   Charbpos pos = BUF_PT (buf);
-  Emchar c = '\0'; /* initialize to avoid compiler warnings */
+  Ichar c = '\0'; /* initialize to avoid compiler warnings */
   struct syntax_cache *scache;
   
   scache = setup_buffer_syntax_cache (buf, pos, -1);
@@ -1862,7 +1862,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 
   while (from < end)
     {
-      Emchar c;
+      Ichar c;
       int syncode;
 
       QUIT;
@@ -2010,7 +2010,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  else
 	    {
 	      /* XEmacs change: call syntax_match() on character */
-	      Emchar ch = BUF_FETCH_CHAR (buf, from - 1);
+	      Ichar ch = BUF_FETCH_CHAR (buf, from - 1);
 	      Lisp_Object stermobj =
 		syntax_match (scache->current_syntax_table, ch);
 
@@ -2377,7 +2377,7 @@ define_standard_syntax (const char *p, enum syntaxcode syn)
 void
 complex_vars_of_syntax (void)
 {
-  Emchar i;
+  Ichar i;
   const char *p;
   /* Set this now, so first buffer creation can refer to it. */
   /* Make it nil before calling copy-syntax-table

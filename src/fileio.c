@@ -134,7 +134,7 @@ EXFUN (Frunning_temacs_p, 0);
 
 DOESNT_RETURN
 report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
-			const CIntbyte *string, Lisp_Object data)
+			const CIbyte *string, Lisp_Object data)
 {
   struct gcpro gcpro1;
   Lisp_Object errdata = build_error_data (NULL, data);
@@ -148,7 +148,7 @@ report_file_type_error (Lisp_Object errtype, Lisp_Object oserrmess,
 
 DOESNT_RETURN
 report_error_with_errno (Lisp_Object errtype,
-			 const CIntbyte *string, Lisp_Object data)
+			 const CIbyte *string, Lisp_Object data)
 {
   report_file_type_error (errtype, lisp_strerror (errno), string, data);
 }
@@ -156,7 +156,7 @@ report_error_with_errno (Lisp_Object errtype,
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (const CIntbyte *string, Lisp_Object data)
+report_file_error (const CIbyte *string, Lisp_Object data)
 {
   report_error_with_errno (Qfile_error, string, data);
 }
@@ -171,7 +171,7 @@ lisp_strerror (int errnum)
   Extbyte *ret = strerror (errnum);
   if (!ret)
     {
-      Intbyte ffff[99];
+      Ibyte ffff[99];
       qxesprintf (ffff, "Unknown error %d", errnum);
       return build_intstring (ffff);
     }
@@ -332,8 +332,8 @@ Given a Unix syntax file name, returns a string ending in slash.
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
   /* This function synched with Emacs 21.0.103. */
-  Intbyte *beg;
-  Intbyte *p;
+  Ibyte *beg;
+  Ibyte *p;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -367,10 +367,10 @@ Given a Unix syntax file name, returns a string ending in slash.
   /* Expansion of "c:" to drive and default directory.  */
   if (p[-1] == ':')
     {
-      Intbyte *res;
-      Intbyte *wd = mswindows_getdcwd (toupper (*beg) - 'A' + 1);
+      Ibyte *res;
+      Ibyte *wd = mswindows_getdcwd (toupper (*beg) - 'A' + 1);
       
-      res = alloca_array (Intbyte,
+      res = alloca_array (Ibyte,
 			  (wd ? qxestrlen (wd) : 0) + 10); /* go overboard */
       if (p == beg + 4 && IS_DIRECTORY_SEP (*beg) && beg[1] == ':')
 	{
@@ -382,7 +382,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	{
 	  qxestrcat (res, wd);
 	  if (!IS_DIRECTORY_SEP (res[qxestrlen (res) - 1]))
-	    qxestrcat (res, (Intbyte *) "/");
+	    qxestrcat (res, (Ibyte *) "/");
 	  beg = res;
 	  p = beg + qxestrlen (beg);
 	}
@@ -395,7 +395,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	 an analogous call in FSF 21. */
   {
     Bytecount len = p - beg;
-    Intbyte *newbeg = alloca_intbytes (len + 1);
+    Ibyte *newbeg = alloca_ibytes (len + 1);
     Lisp_Object return_me;
 
     qxestrncpy (newbeg, beg, len);
@@ -420,7 +420,7 @@ or the entire name if it contains no slash.
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
   /* This function synched with Emacs 21.0.103. */
-  Intbyte *beg, *p, *end;
+  Ibyte *beg, *p, *end;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -472,8 +472,8 @@ get a current directory to run processes in.
 }
 
 
-static Intbyte *
-file_name_as_directory (Intbyte *out, Intbyte *in)
+static Ibyte *
+file_name_as_directory (Ibyte *out, Ibyte *in)
 {
   /* This function cannot GC */
   int size = qxestrlen (in);
@@ -509,7 +509,7 @@ except for (file-name-as-directory \"\") => \"./\".
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
-  Intbyte *buf;
+  Ibyte *buf;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -520,7 +520,7 @@ except for (file-name-as-directory \"\") => \"./\".
   if (!NILP (handler))
     return call2_check_string (handler, Qfile_name_as_directory, filename);
 
-  buf = alloca_intbytes (XSTRING_LENGTH (filename) + 10);
+  buf = alloca_ibytes (XSTRING_LENGTH (filename) + 10);
   return build_intstring (file_name_as_directory (buf, XSTRING_DATA (filename)));
 }
 
@@ -532,7 +532,7 @@ except for (file-name-as-directory \"\") => \"./\".
  */
 
 static int
-directory_file_name (const Intbyte *src, Intbyte *dst)
+directory_file_name (const Ibyte *src, Ibyte *dst)
 {
   /* This function cannot GC */
   long slen = qxestrlen (src);
@@ -559,7 +559,7 @@ In Unix-syntax, this function just removes the final slash.
        (directory))
 {
   /* This function can GC.  GC checked 2000-07-28 ben */
-  Intbyte *buf;
+  Ibyte *buf;
   Lisp_Object handler;
 
   CHECK_STRING (directory);
@@ -574,7 +574,7 @@ In Unix-syntax, this function just removes the final slash.
   handler = Ffind_file_name_handler (directory, Qdirectory_file_name);
   if (!NILP (handler))
     return call2_check_string (handler, Qdirectory_file_name, directory);
-  buf = (Intbyte *) ALLOCA (XSTRING_LENGTH (directory) + 20);
+  buf = (Ibyte *) ALLOCA (XSTRING_LENGTH (directory) + 20);
   directory_file_name (XSTRING_DATA (directory), buf);
   return build_intstring (buf);
 }
@@ -617,7 +617,7 @@ which puts the file in the OS-specified temporary directory.
   };
 
   Bytecount len;
-  Intbyte *p, *data;
+  Ibyte *p, *data;
   Lisp_Object handler;
 
   CHECK_STRING (prefix);
@@ -641,7 +641,7 @@ which puts the file in the OS-specified temporary directory.
      that's less of a concern. --ben */
 
   len = XSTRING_LENGTH (prefix);
-  data = alloca_intbytes (len + 7);
+  data = alloca_ibytes (len + 7);
   memcpy (data, XSTRING_DATA (prefix), len);
   p = data + len;
   p[6] = '\0';
@@ -715,11 +715,11 @@ See also the function `substitute-in-file-name'.
 {
   /* This function can GC.  GC-checked 2000-11-18.
      This function synched with Emacs 21.0.103. */
-  Intbyte *nm;
+  Ibyte *nm;
 
-  Intbyte *newdir, *p, *o;
+  Ibyte *newdir, *p, *o;
   int tlen;
-  Intbyte *target;
+  Ibyte *target;
 #ifdef WIN32_FILENAMES
   int drive = 0;
   int collapse_newdir = 1;
@@ -807,7 +807,7 @@ See also the function `substitute-in-file-name'.
 #ifdef WIN32_FILENAMES
   /* We will force directory separators to be either all \ or /, so make
      a local copy to modify, even if there ends up being no change. */
-  nm = qxestrcpy (alloca_intbytes (qxestrlen (nm) + 1), nm);
+  nm = qxestrcpy (alloca_ibytes (qxestrlen (nm) + 1), nm);
 
   /* Note if special escape prefix is present, but remove for now.  */
   if (nm[0] == '/' && nm[1] == ':')
@@ -819,7 +819,7 @@ See also the function `substitute-in-file-name'.
   /* Find and remove drive specifier if present; this makes nm absolute
      even if the rest of the name appears to be relative. */
   {
-    Intbyte *colon = qxestrrchr (nm, ':');
+    Ibyte *colon = qxestrrchr (nm, ':');
 
     if (colon)
       {
@@ -906,7 +906,7 @@ See also the function `substitute-in-file-name'.
 #ifdef WIN32_FILENAMES
 	  if (drive || IS_DIRECTORY_SEP (nm[1]))
 	    {
-	      Intbyte *newnm;
+	      Ibyte *newnm;
 	  
 	      if (IS_DIRECTORY_SEP (nm[1]))
 		{
@@ -960,10 +960,10 @@ See also the function `substitute-in-file-name'.
       if (IS_DIRECTORY_SEP (nm[1])
 	  || nm[1] == 0)	/* ~ by itself */
 	{
-	  Intbyte *homedir = get_home_directory ();
+	  Ibyte *homedir = get_home_directory ();
 
 	  if (!homedir)
-	    newdir = (Intbyte *) "";
+	    newdir = (Ibyte *) "";
 	  else
 	    newdir = homedir;
 
@@ -976,7 +976,7 @@ See also the function `substitute-in-file-name'.
 	{
 	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)); p++)
 	    DO_NOTHING;
-	  o = (Intbyte *) ALLOCA (p - nm + 1);
+	  o = (Ibyte *) ALLOCA (p - nm + 1);
 	  memcpy (o, nm, p - nm);
 	  o [p - nm] = 0;
 
@@ -987,7 +987,7 @@ See also the function `substitute-in-file-name'.
 #ifndef WIN32_NATIVE
 #ifdef CYGWIN
 	  {
-	    Intbyte *user;
+	    Ibyte *user;
 
 	    if ((user = user_login_name (NULL)) != NULL)
 	      {
@@ -1009,7 +1009,7 @@ See also the function `substitute-in-file-name'.
 	  speed_up_interrupts ();
 	  if (pw)
 	    {
-	      newdir = (Intbyte *) pw->pw_dir;
+	      newdir = (Ibyte *) pw->pw_dir;
 	      nm = p;
 	      /* FSF: if WIN32_NATIVE, collapse_newdir = 0;
 		 not possible here. */
@@ -1033,10 +1033,10 @@ See also the function `substitute-in-file-name'.
       /* Get default directory if needed to make nm absolute. */
       if (!IS_DIRECTORY_SEP (nm[0]))
 	{
-	  Intbyte *newcwd = mswindows_getdcwd (toupper (drive) - 'A' + 1);
+	  Ibyte *newcwd = mswindows_getdcwd (toupper (drive) - 'A' + 1);
 	  if (newcwd)
 	    {
-	      INTBYTE_STRING_TO_ALLOCA (newcwd, newdir);
+	      IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
 	      xfree (newcwd);
 	    }
 	  else
@@ -1046,7 +1046,7 @@ See also the function `substitute-in-file-name'.
       if (!newdir)
 	{
 	  /* Either nm starts with /, or drive isn't mounted. */
-	  newdir = (Intbyte *) ALLOCA (4);
+	  newdir = (Ibyte *) ALLOCA (4);
 	  newdir[0] = DRIVE_LETTER (drive);
 	  newdir[1] = ':';
 	  newdir[2] = '/';
@@ -1110,7 +1110,7 @@ See also the function `substitute-in-file-name'.
 	    }
 	  if (!IS_DIRECTORY_SEP (nm[0]))
 	    {
-	      Intbyte *tmp = (Intbyte *) ALLOCA (qxestrlen (newdir) +
+	      Ibyte *tmp = (Ibyte *) ALLOCA (qxestrlen (newdir) +
 						 qxestrlen (nm) + 2);
 	      file_name_as_directory (tmp, newdir);
 	      qxestrcat (tmp, nm);
@@ -1119,18 +1119,18 @@ See also the function `substitute-in-file-name'.
 	  if (drive)
 	    {
 #ifdef WIN32_NATIVE
-	      Intbyte *newcwd = mswindows_getdcwd (toupper (drive) - 'A' + 1);
+	      Ibyte *newcwd = mswindows_getdcwd (toupper (drive) - 'A' + 1);
 	      if (newcwd)
 		{
-		  INTBYTE_STRING_TO_ALLOCA (newcwd, newdir);
+		  IBYTE_STRING_TO_ALLOCA (newcwd, newdir);
 		  xfree (newcwd);
 		}
 	      else
 #endif
-		INTBYTE_STRING_TO_ALLOCA ((Intbyte *) "/", newdir);
+		IBYTE_STRING_TO_ALLOCA ((Ibyte *) "/", newdir);
 	    }
 	  else
-	    INTBYTE_STRING_TO_ALLOCA (get_initial_directory (0, 0), newdir);
+	    IBYTE_STRING_TO_ALLOCA (get_initial_directory (0, 0), newdir);
 	}
 
       /* Strip off drive name from prefix, if present. */
@@ -1151,8 +1151,8 @@ See also the function `substitute-in-file-name'.
 	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
 	    {
 	      newdir =
-		(Intbyte *)
-		  qxestrcpy ((Intbyte *) ALLOCA (qxestrlen (newdir) + 1),
+		(Ibyte *)
+		  qxestrcpy ((Ibyte *) ALLOCA (qxestrlen (newdir) + 1),
 			     newdir);
 	      p = newdir + 2;
 	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
@@ -1161,7 +1161,7 @@ See also the function `substitute-in-file-name'.
 	      *p = 0;
 	    }
 	  else
-	    newdir = (Intbyte *) "";
+	    newdir = (Ibyte *) "";
 	}
     }
 #endif /* WIN32_FILENAMES */
@@ -1177,7 +1177,7 @@ See also the function `substitute-in-file-name'.
 #endif
 	  )
 	{
-	  Intbyte *temp = (Intbyte *) ALLOCA (length);
+	  Ibyte *temp = (Ibyte *) ALLOCA (length);
 	  memcpy (temp, newdir, length - 1);
 	  temp[length - 1] = 0;
 	  newdir = temp;
@@ -1193,10 +1193,10 @@ See also the function `substitute-in-file-name'.
   /* Reserve space for drive specifier and escape prefix, since either
      or both may need to be inserted.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
-  target = (Intbyte *) ALLOCA (tlen + 4);
+  target = (Ibyte *) ALLOCA (tlen + 4);
   target += 4;
 #else  /* not WIN32_FILENAMES */
-  target = (Intbyte *) ALLOCA (tlen);
+  target = (Ibyte *) ALLOCA (tlen);
 #endif /* not WIN32_FILENAMES */
   *target = 0;
 
@@ -1297,7 +1297,7 @@ See also the function `substitute-in-file-name'.
   *o = '\0';
 
   {
-    Intbyte *newtarget = mswindows_canonicalize_filename (target);
+    Ibyte *newtarget = mswindows_canonicalize_filename (target);
     Lisp_Object result = build_intstring (newtarget);
     xfree (newtarget);
 
@@ -1341,10 +1341,10 @@ No component of the resulting pathname will be a symbolic link, as
   }
 
   {
-    Intbyte resolved_path[PATH_MAX];
+    Ibyte resolved_path[PATH_MAX];
     Bytecount elen = XSTRING_LENGTH (expanded_name);
-    Intbyte *path;
-    Intbyte *p;
+    Ibyte *path;
+    Ibyte *p;
 
     LISP_STRING_TO_ALLOCA (expanded_name, path);
     p = path;
@@ -1372,7 +1372,7 @@ No component of the resulting pathname will be a symbolic link, as
 	   realpath()s, we just use our own version in realpath.c. */
 	for (;;)
 	  {
-	    Intbyte *pos;
+	    Ibyte *pos;
 
 #ifdef WIN32_FILENAMES
 	    if (IS_DRIVE (p[0]) && IS_DEVICE_SEP (p[1]) 
@@ -1466,13 +1466,13 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben. */
-  Intbyte *nm;
+  Ibyte *nm;
 
-  Intbyte *s, *p, *o, *x, *endp;
-  Intbyte *target = 0;
+  Ibyte *s, *p, *o, *x, *endp;
+  Ibyte *target = 0;
   int total = 0;
   int substituted = 0;
-  Intbyte *xnm;
+  Ibyte *xnm;
   Lisp_Object handler;
 
   CHECK_STRING (filename);
@@ -1550,7 +1550,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Intbyte *) ALLOCA (s - o + 1);
+	target = (Ibyte *) ALLOCA (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1558,7 +1558,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIntbyte *) target);
+	o = egetenv ((CIbyte *) target);
 	if (!o) goto badvar;
 	total += qxestrlen (o);
 	substituted = 1;
@@ -1569,7 +1569,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   /* If substitution required, recopy the filename and do it */
   /* Make space in stack frame for the new copy */
-  xnm = (Intbyte *) ALLOCA (XSTRING_LENGTH (filename) + total + 1);
+  xnm = (Ibyte *) ALLOCA (XSTRING_LENGTH (filename) + total + 1);
   x = xnm;
 
   /* Copy the rest of the name through, replacing $ constructs with values */
@@ -1601,7 +1601,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  }
 
 	/* Copy out the variable name */
-	target = (Intbyte *) ALLOCA (s - o + 1);
+	target = (Ibyte *) ALLOCA (s - o + 1);
 	qxestrncpy (target, o, s - o);
 	target[s - o] = 0;
 #ifdef WIN32_NATIVE
@@ -1609,7 +1609,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 #endif /* WIN32_NATIVE */
 
 	/* Get variable value */
-	o = egetenv ((CIntbyte *) target);
+	o = egetenv ((CIbyte *) target);
 	if (!o)
 	  goto badvar;
 
@@ -2204,7 +2204,7 @@ On Unix, this is a name starting with a `/' or a `~'.
        (filename))
 {
   /* This function does not GC */
-  Intbyte *ptr;
+  Ibyte *ptr;
 
   CHECK_STRING (filename);
   ptr = XSTRING_DATA (filename);
@@ -2240,7 +2240,7 @@ check_executable (Lisp_Object filename)
 /* Return nonzero if file FILENAME exists and can be written.  */
 
 static int
-check_writable (const Intbyte *filename)
+check_writable (const Ibyte *filename)
 {
 #ifdef HAVE_EACCESS
   return (qxe_eaccess (filename, W_OK) >= 0);
@@ -2379,7 +2379,7 @@ Return t if file FILENAME can be written or created by you.
   GCPRO1 (abspath);
   dir = Ffile_name_directory (abspath);
   UNGCPRO;
-  return (check_writable (!NILP (dir) ? XSTRING_DATA (dir) : (Intbyte *) "")
+  return (check_writable (!NILP (dir) ? XSTRING_DATA (dir) : (Ibyte *) "")
 	  ? Qt : Qnil);
 }
 
@@ -2393,7 +2393,7 @@ Otherwise returns nil.
   /* This function can GC.  GC checked 1997.04.10. */
   /* XEmacs change: run handlers even if local machine doesn't have symlinks */
 #ifdef HAVE_READLINK
-  Intbyte *buf;
+  Ibyte *buf;
   int bufsize;
   int valsize;
   Lisp_Object val;
@@ -2416,7 +2416,7 @@ Otherwise returns nil.
   bufsize = 100;
   while (1)
     {
-      buf = xnew_array_and_zero (Intbyte, bufsize);
+      buf = xnew_array_and_zero (Ibyte, bufsize);
       valsize = qxe_readlink (XSTRING_DATA (filename),
 			      buf, bufsize);
       if (valsize < bufsize) break;
@@ -2730,7 +2730,7 @@ under Mule, is very difficult.)
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   Lisp_Object handler = Qnil, val;
   int total;
-  Intbyte read_buf[READ_BUF_SIZE];
+  Ibyte read_buf[READ_BUF_SIZE];
   int mc_count;
   struct buffer *buf = current_buffer;
   Lisp_Object curbuf;
@@ -3594,14 +3594,14 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 	nextpos = INT_MAX;
 #ifdef MULE
       /* If there are annotations left and we have Mule, then we
-	 have to do the I/O one emchar at a time so we can
+	 have to do the I/O one ichar at a time so we can
 	 determine when to insert the annotation. */
       if (!NILP (*annot))
 	{
-	  Emchar ch;
-	  while (pos != nextpos && (ch = Lstream_get_emchar (instr)) != EOF)
+	  Ichar ch;
+	  while (pos != nextpos && (ch = Lstream_get_ichar (instr)) != EOF)
 	    {
-	      if (Lstream_put_emchar (outstr, ch) < 0)
+	      if (Lstream_put_ichar (outstr, ch) < 0)
 		return -1;
 	      pos++;
 	    }

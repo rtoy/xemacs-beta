@@ -47,13 +47,13 @@ pfNetApiBufferFree_t xNetApiBufferFree;
    #### This comes from code that just prepended `file:', which is not
    good.  See comment in mswindows_dde_callback(), case XTYP_EXECUTE.
   */
-Intbyte *
-urlify_filename (Intbyte *filename)
+Ibyte *
+urlify_filename (Ibyte *filename)
 {
-  Intbyte *pseudo_url;
+  Ibyte *pseudo_url;
   
   WIN32_TO_LOCAL_FILE_FORMAT (filename, filename);
-  pseudo_url = xnew_array (Intbyte, 5 + qxestrlen (filename) + 1);
+  pseudo_url = xnew_array (Ibyte, 5 + qxestrlen (filename) + 1);
   qxestrcpy_c (pseudo_url, "file:");
   qxestrcat (pseudo_url, filename);
   /* URL's only have /, no backslash */
@@ -72,7 +72,7 @@ urlify_filename (Intbyte *filename)
 Lisp_Object
 tstr_to_local_file_format (Extbyte *path)
 {
-  Intbyte *ttlff;
+  Ibyte *ttlff;
 
   TSTR_TO_C_STRING (path, ttlff);
   WIN32_TO_LOCAL_FILE_FORMAT (ttlff, ttlff);
@@ -85,10 +85,10 @@ tstr_to_local_file_format (Extbyte *path)
    components to lower case.  Return a newly malloc()ed string.
 */
 
-Intbyte *
-mswindows_canonicalize_filename (Intbyte *name)
+Ibyte *
+mswindows_canonicalize_filename (Ibyte *name)
 {
-  Intbyte *fp = name;
+  Ibyte *fp = name;
   DECLARE_EISTRING (newname);
   DECLARE_EISTRING (component);
   int do_casefrob = 1;
@@ -107,7 +107,7 @@ mswindows_canonicalize_filename (Intbyte *name)
 
   while (1)
     {
-      Emchar ch = charptr_emchar (fp);
+      Ichar ch = itext_ichar (fp);
       if (LOWERCASEP (0, ch))
 	do_casefrob = 0;	/* don't convert this element */
 
@@ -128,7 +128,7 @@ mswindows_canonicalize_filename (Intbyte *name)
       else
 	eicat_ch (component, ch);
 
-      INC_CHARPTR (fp);
+      INC_IBYTEPTR (fp);
     }
 
   return eicpyout_malloc (newname, 0);
@@ -182,7 +182,7 @@ mswindows_lisp_error_1 (int errnum, int no_recurse)
 {
   LPTSTR lpMsgBuf;
   Lisp_Object result;
-  Intbyte *inres;
+  Ibyte *inres;
   Bytecount len;
   int i;
 
@@ -375,7 +375,7 @@ No expansion is performed, all conversion is done by the cygwin runtime.
 */
        (path))
 {
-  Intbyte *p;
+  Ibyte *p;
   CHECK_STRING (path);
 
   /* There appears to be a bug in the cygwin conversion routines in

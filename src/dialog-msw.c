@@ -256,7 +256,7 @@ button_width (Lisp_Object text)
   /* !!#### do Japanese chars count as two? */
   int width =
     X_DLU_PER_CHAR *
-      intbyte_string_displayed_columns (XSTRING_DATA (text),
+      ibyte_string_displayed_columns (XSTRING_DATA (text),
 					XSTRING_LENGTH (text));
   return max (X_MIN_BUTTON, width);
 }
@@ -588,14 +588,14 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
   
   /* Determine the final width layout */
   {
-    Intbyte *p = XSTRING_DATA (question);
+    Ibyte *p = XSTRING_DATA (question);
     Charcount string_max = 0, this_length = 0;
     while (1)
       {
-	Emchar ch = charptr_emchar (p);
-	INC_CHARPTR (p);
+	Ichar ch = itext_ichar (p);
+	INC_IBYTEPTR (p);
 	
-	if (ch == (Emchar)'\n' || ch == (Emchar)'\0')
+	if (ch == (Ichar)'\n' || ch == (Ichar)'\0')
 	  {
 	    string_max = max (this_length, string_max);
 	    this_length = 0;
@@ -603,7 +603,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	else
 	  ++this_length;
 	
-	if (ch == (Emchar)'\0')
+	if (ch == (Ichar)'\0')
 	  break;
       }
     
@@ -618,17 +618,17 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
   
   /* Now calculate the height for the text control */
   {
-    Intbyte *p = XSTRING_DATA (question);
+    Ibyte *p = XSTRING_DATA (question);
     Charcount break_at = text_width / X_DLU_PER_CHAR;
     Charcount char_pos = 0;
     int num_lines = 1;
-    Emchar ch;
+    Ichar ch;
     
-    while ((ch = charptr_emchar (p)) != (Emchar) '\0')
+    while ((ch = itext_ichar (p)) != (Ichar) '\0')
       {
-	INC_CHARPTR (p);
-	char_pos += ch != (Emchar) '\n';
-	if (ch == (Emchar) '\n' || char_pos == break_at)
+	INC_IBYTEPTR (p);
+	char_pos += ch != (Ichar) '\n';
+	if (ch == (Ichar) '\n' || char_pos == break_at)
 	  {
 	    ++num_lines;
 	    char_pos = 0;
@@ -721,7 +721,7 @@ handle_question_dialog_box (struct frame *f, Lisp_Object keys)
 	
 	/* Next thing to add is control text, as Unicode string */
 	{
-	  Emchar accel_unused;
+	  Ichar accel_unused;
 	  
 	  push_lisp_string_as_unicode
 	    (template_,

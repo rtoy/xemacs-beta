@@ -68,7 +68,7 @@ atom_to_symbol (struct device *d, GdkAtom atom)
   if (atom == GDK_SELECTION_SECONDARY) return (QSECONDARY);
 
   {
-    Intbyte *intstr;
+    Ibyte *intstr;
     Extbyte *str = gdk_atom_name (atom);
 
     if (! str) return Qnil;

@@ -259,7 +259,7 @@ adjust_markers_for_insert (struct buffer *buf, Membpos ind, Bytecount amount)
 static void
 gap_left (struct buffer *buf, Bytebpos pos)
 {
-  Intbyte *to, *from;
+  Ibyte *to, *from;
   Bytecount i;
   Bytebpos new_s1;
   struct buffer *mbuf;
@@ -330,7 +330,7 @@ gap_left (struct buffer *buf, Bytebpos pos)
 static void
 gap_right (struct buffer *buf, Bytebpos pos)
 {
-  Intbyte *to, *from;
+  Ibyte *to, *from;
   Bytecount i;
   Bytebpos new_s1;
   struct buffer *mbuf;
@@ -469,7 +469,7 @@ merge_gap_with_end_gap (struct buffer *buf)
 static void
 make_gap (struct buffer *buf, Bytecount increment)
 {
-  Intbyte *result;
+  Ibyte *result;
   Lisp_Object tem;
   Bytebpos real_gap_loc;
   Bytecount old_gap_size;
@@ -1005,7 +1005,7 @@ prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
 /************************************************************************/
 
 void
-fixup_internal_substring (const Intbyte *nonreloc, Lisp_Object reloc,
+fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
 			  Bytecount offset, Bytecount *len)
 {
   assert ((nonreloc && NILP (reloc)) || (!nonreloc && STRINGP (reloc)));
@@ -1047,7 +1047,7 @@ fixup_internal_substring (const Intbyte *nonreloc, Lisp_Object reloc,
 
 Charcount
 buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
-			const Intbyte *nonreloc, Lisp_Object reloc,
+			const Ibyte *nonreloc, Lisp_Object reloc,
 			Bytecount offset, Bytecount length,
 			int flags)
 {
@@ -1181,19 +1181,19 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
   /* Update our count of ASCII, 8-bit and 16-bit chars and the
      entirely-one-byte flag */
   {
-    const Intbyte *ptr = nonreloc + offset;
-    const Intbyte *ptrend = ptr + length;
+    const Ibyte *ptr = nonreloc + offset;
+    const Ibyte *ptrend = ptr + length;
 
     while (ptr < ptrend)
       {
-	Emchar ch = charptr_emchar (ptr);
-	if (emchar_ascii_p (ch))
+	Ichar ch = itext_ichar (ptr);
+	if (ichar_ascii_p (ch))
 	  buf->text->num_ascii_chars++;
-	if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+	if (ichar_8_bit_fixed_p (ch, wrap_buffer (buf)))
 	  buf->text->num_8_bit_fixed_chars++;
-	if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+	if (ichar_16_bit_fixed_p (ch, wrap_buffer (buf)))
 	  buf->text->num_16_bit_fixed_chars++;
-	INC_CHARPTR (ptr);
+	INC_IBYTEPTR (ptr);
       }
     
     buf->text->entirely_one_byte_p =
@@ -1268,7 +1268,7 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 
 Charcount
 buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
-			    const Intbyte *nonreloc, Bytecount length,
+			    const Ibyte *nonreloc, Bytecount length,
 			    int flags)
 {
   /* This function can GC */
@@ -1294,17 +1294,17 @@ buffer_insert_c_string_1 (struct buffer *buf, Charbpos pos, const char *s,
 {
   /* This function can GC */
   const char *translated = GETTEXT (s);
-  return buffer_insert_string_1 (buf, pos, (const Intbyte *) translated, Qnil,
+  return buffer_insert_string_1 (buf, pos, (const Ibyte *) translated, Qnil,
 				 0, strlen (translated), flags);
 }
 
 Charcount
-buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos, Emchar ch,
+buffer_insert_emacs_char_1 (struct buffer *buf, Charbpos pos, Ichar ch,
 			    int flags)
 {
   /* This function can GC */
-  Intbyte str[MAX_EMCHAR_LEN];
-  Bytecount len = set_charptr_emchar (str, ch);
+  Ibyte str[MAX_ICHAR_LEN];
+  Bytecount len = set_itext_ichar (str, ch);
   return buffer_insert_string_1 (buf, pos, str, Qnil, 0, len, flags);
 }
 
@@ -1313,7 +1313,7 @@ buffer_insert_c_char_1 (struct buffer *buf, Charbpos pos, char c,
 			int flags)
 {
   /* This function can GC */
-  return buffer_insert_emacs_char_1 (buf, pos, (Emchar) (unsigned char) c,
+  return buffer_insert_emacs_char_1 (buf, pos, (Ichar) (unsigned char) c,
 				     flags);
 }
 
@@ -1437,12 +1437,12 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 
     for (i = byte_from; i < byte_to; i = next_bytebpos (buf, i))
       {
-	Emchar ch = BYTE_BUF_FETCH_CHAR (buf, i);
-	if (emchar_ascii_p (ch))
+	Ichar ch = BYTE_BUF_FETCH_CHAR (buf, i);
+	if (ichar_ascii_p (ch))
 	  buf->text->num_ascii_chars--;
-	if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+	if (ichar_8_bit_fixed_p (ch, wrap_buffer (buf)))
 	  buf->text->num_8_bit_fixed_chars--;
-	if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+	if (ichar_16_bit_fixed_p (ch, wrap_buffer (buf)))
 	  buf->text->num_16_bit_fixed_chars--;
       }
   }
@@ -1548,24 +1548,24 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 /* Replace the character at POS in buffer B with CH. */
 
 void
-buffer_replace_char (struct buffer *buf, Charbpos pos, Emchar ch,
+buffer_replace_char (struct buffer *buf, Charbpos pos, Ichar ch,
 		     int not_real_change, int force_lock_check)
 {
   /* This function can GC */
-  Intbyte newstr[MAX_EMCHAR_LEN];
+  Ibyte newstr[MAX_ICHAR_LEN];
   Bytecount newlen;
-  Emchar oldch;
+  Ichar oldch;
 
   /* Defensive steps just in case a buffer gets deleted and a calling
      function doesn't notice it. */
   if (!BUFFER_LIVE_P (buf))
     return;
 
-  newlen = set_charptr_emchar_fmt (newstr, ch, BUF_FORMAT (buf),
+  newlen = set_itext_ichar_fmt (newstr, ch, BUF_FORMAT (buf),
 				   wrap_buffer (buf));
   oldch = BUF_FETCH_CHAR (buf, pos);
-  if (emchar_fits_in_format (ch, BUF_FORMAT (buf), wrap_buffer (buf)) &&
-      newlen == emchar_len_fmt (oldch, BUF_FORMAT (buf)))
+  if (ichar_fits_in_format (ch, BUF_FORMAT (buf), wrap_buffer (buf)) &&
+      newlen == ichar_len_fmt (oldch, BUF_FORMAT (buf)))
     {
       struct buffer *mbuf;
       Lisp_Object bufcons;
@@ -1606,17 +1606,17 @@ buffer_replace_char (struct buffer *buf, Charbpos pos, Emchar ch,
 	}
 
 #ifdef MULE
-      if (emchar_ascii_p (oldch))
+      if (ichar_ascii_p (oldch))
 	buf->text->num_ascii_chars--;
-      if (emchar_8_bit_fixed_p (oldch, wrap_buffer (buf)))
+      if (ichar_8_bit_fixed_p (oldch, wrap_buffer (buf)))
 	buf->text->num_8_bit_fixed_chars--;
-      if (emchar_16_bit_fixed_p (oldch, wrap_buffer (buf)))
+      if (ichar_16_bit_fixed_p (oldch, wrap_buffer (buf)))
 	buf->text->num_16_bit_fixed_chars--;
-      if (emchar_ascii_p (ch))
+      if (ichar_ascii_p (ch))
 	buf->text->num_ascii_chars++;
-      if (emchar_8_bit_fixed_p (ch, wrap_buffer (buf)))
+      if (ichar_8_bit_fixed_p (ch, wrap_buffer (buf)))
 	buf->text->num_8_bit_fixed_chars++;
-      if (emchar_16_bit_fixed_p (ch, wrap_buffer (buf)))
+      if (ichar_16_bit_fixed_p (ch, wrap_buffer (buf)))
 	buf->text->num_16_bit_fixed_chars++;
 #endif /* MULE */
 

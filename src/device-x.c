@@ -220,7 +220,7 @@ sanity_check_geometry_resource (Display *dpy)
   strcat (buf2, "._no_._such_._resource_.Geometry");
   if (XrmGetResource (XtDatabase (dpy), buf1, buf2, &type, &value) == True)
     {
-      Intbyte *app_name_int, *app_class_int, *value_addr_int;
+      Ibyte *app_name_int, *app_class_int, *value_addr_int;
       Lisp_Object codesys = coding_system_of_xrm_database (XtDatabase (dpy));
       EXTERNAL_TO_C_STRING (app_name, app_name_int, codesys);
       EXTERNAL_TO_C_STRING (app_class, app_class_int, codesys);
@@ -1122,7 +1122,7 @@ int
 signal_if_x_error (Display *dpy, int resumable_p)
 {
   Extbyte buf[1024];
-  Intbyte num[100];
+  Ibyte num[100];
   Lisp_Object data;
   if (! x_error_occurred_p (dpy))
     return 0;
@@ -1164,7 +1164,7 @@ x_IO_error_handler (Display *disp)
     {
       int depth = begin_dont_check_for_quit ();
       /* We're going down. */
-      Intbyte *errmess;
+      Ibyte *errmess;
       GET_STRERROR (errmess, errno);
       stderr_out ("\n%s: Fatal I/O Error %d (%s) on display "
 		  "connection \"%s\"\n",
@@ -1180,7 +1180,7 @@ x_IO_error_handler (Display *disp)
     }
   else
     {
-      Intbyte *errmess;
+      Ibyte *errmess;
       GET_STRERROR (errmess, errno);
       warn_when_safe
 	(Qx, Qcritical,
@@ -1596,9 +1596,9 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   if (!display)
     return Qnil;
 
-  return Fcons (make_string ((Intbyte *) Dynarr_atp (name_Extbyte_dynarr, 0),
+  return Fcons (make_string ((Ibyte *) Dynarr_atp (name_Extbyte_dynarr, 0),
 			     Dynarr_length (name_Extbyte_dynarr)),
-		make_string ((Intbyte *) Dynarr_atp (class_Extbyte_dynarr, 0),
+		make_string ((Ibyte *) Dynarr_atp (class_Extbyte_dynarr, 0),
 			     Dynarr_length (class_Extbyte_dynarr)));
 }
 

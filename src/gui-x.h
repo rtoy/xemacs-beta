@@ -77,7 +77,7 @@ int button_item_to_widget_value (Lisp_Object gui_object_instance,
 				 int menu_entry_p, int accel_p);
 widget_value * gui_items_to_widget_values (Lisp_Object gui_object_instance,
 					   Lisp_Object items, int accel_p);
-Extbyte *menu_separator_style_and_to_external (const Intbyte *s);
+Extbyte *menu_separator_style_and_to_external (const Ibyte *s);
 Lisp_Object widget_value_unwind (Lisp_Object closure);
 
 #endif /* INCLUDED_gui_x_h_ */

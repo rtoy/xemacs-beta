@@ -427,7 +427,7 @@ Lisp_Object
 msprinter_default_printer (void)
 {
   Extbyte name[666];
-  Intbyte *nameint;
+  Ibyte *nameint;
 
   if (qxeGetProfileString (XETEXT ("windows"), XETEXT ("device"), NULL, name,
 			   sizeof (name) / XETCHAR_SIZE) <= 0)
@@ -596,7 +596,7 @@ sync_printer_with_devmode (struct device* d, DEVMODEW* devmode_in,
 	     Nothing wrong on the Windows side, just forge a unique
 	     connection name. Use the memory address of d as a unique
 	     suffix. */
-	  Intbyte new_connext[20];
+	  Ibyte new_connext[20];
 
 	  qxesprintf (new_connext, ":%X", d->header.uid);
 	  new_connection = concat2 (devname, build_intstring (new_connext));

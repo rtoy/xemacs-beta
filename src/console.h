@@ -162,8 +162,8 @@ struct console_methods
   int (*frame_visible_p_method) (struct frame *f);
   int (*frame_totally_visible_p_method) (struct frame *f);
   int (*frame_iconified_p_method) (struct frame *f);
-  void (*set_title_from_intbyte_method) (struct frame *f, Intbyte *title);
-  void (*set_icon_name_from_intbyte_method) (struct frame *f, Intbyte *title);
+  void (*set_title_from_ibyte_method) (struct frame *f, Ibyte *title);
+  void (*set_icon_name_from_ibyte_method) (struct frame *f, Ibyte *title);
   void (*set_frame_pointer_method) (struct frame *f);
   void (*set_frame_icon_method) (struct frame *f);
   void (*popup_menu_method) (Lisp_Object menu, Lisp_Object event);
@@ -176,7 +176,7 @@ struct console_methods
   int (*left_margin_width_method) (struct window *);
   int (*right_margin_width_method) (struct window *);
   int (*text_width_method) (struct frame *f, struct face_cachel *cachel,
-			    const Emchar *str, Charcount len);
+			    const Ichar *str, Charcount len);
   void (*output_display_block_method) (struct window *, struct display_line *,
 				       int, int, int, int, int, int, int);
   int (*divider_height_method) (void);
@@ -203,7 +203,7 @@ struct console_methods
 				face_index findex, int cursor_start, int cursor_width,
 				int cursor_height, int offset_bitmap);
   void (*output_string_method) (struct window *w, struct display_line *dl,
-				Emchar_dynarr *buf, int xpos, int xoffset,
+				Ichar_dynarr *buf, int xpos, int xoffset,
 				int start_pixpos, int width, face_index findex,
 				int cursor, int cursor_start, int cursor_width,
 				int cursor_height);
@@ -246,7 +246,7 @@ struct console_methods
 					   Lisp_Object charset);
   int (*font_spec_matches_charset_method) (struct device *d,
 					   Lisp_Object charset,
-					   const Intbyte *nonreloc,
+					   const Ibyte *nonreloc,
 					   Lisp_Object reloc,
 					   Bytecount offset,
 					   Bytecount length);
@@ -445,7 +445,7 @@ struct console
   /* Character that causes a quit.  Normally C-g.
      #### Should be possible for this not to be ASCII. (Currently works
      under Windows.) */
-  Emchar quit_char;
+  Ichar quit_char;
 
   /* ----- begin partially-completed console localization of
            event loop ---- */

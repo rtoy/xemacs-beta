@@ -136,11 +136,11 @@ DECLARE_LRECORD (char_table, Lisp_Char_Table);
 
 Lisp_Object get_non_ascii_char_table_value (Lisp_Char_Table *ct,
 					    int leading_byte,
-					    Emchar c);
+					    Ichar c);
 
 DECLARE_INLINE_HEADER (
 Lisp_Object
-get_char_table (Emchar ch, Lisp_Object table)
+get_char_table (Ichar ch, Lisp_Object table)
 )
 {
   Lisp_Object retval;
@@ -150,7 +150,7 @@ get_char_table (Emchar ch, Lisp_Object table)
     retval = ct->ascii[ch];
   else
     {
-      unsigned char lb = emchar_leading_byte (ch);
+      unsigned char lb = ichar_leading_byte (ch);
       if (!CHAR_TABLE_ENTRYP (ct->level1[lb - MIN_LEADING_BYTE]))
 	retval = ct->level1[lb - MIN_LEADING_BYTE];
       else
@@ -178,7 +178,7 @@ enum chartab_range_type
 struct chartab_range
 {
   enum chartab_range_type type;
-  Emchar ch;
+  Ichar ch;
   Lisp_Object charset;
   int row;
 };
@@ -197,7 +197,7 @@ Lisp_Object get_range_char_table (struct chartab_range *range,
 				  Lisp_Object table, Lisp_Object multi);
 void copy_char_table_range (Lisp_Object from, Lisp_Object to,
 			    struct chartab_range *range);
-int word_boundary_p (Emchar c1, Emchar c2);
+int word_boundary_p (Ichar c1, Ichar c2);
 
 EXFUN (Fcopy_char_table, 1);
 EXFUN (Fmake_char_table, 1);
@@ -209,7 +209,7 @@ extern Lisp_Object Vall_syntax_tables;
 
 
 #ifdef MULE
-int check_category_char (Emchar ch, Lisp_Object ctbl, int designator,
+int check_category_char (Ichar ch, Lisp_Object ctbl, int designator,
 			 int not_p);
 
 extern Lisp_Object Vstandard_category_table;

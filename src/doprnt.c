@@ -69,7 +69,7 @@ union printf_arg
   long l;
   unsigned long ul;
   double d;
-  Intbyte *bp;
+  Ibyte *bp;
 };
 
 /* We maintain a list of all the % specs in the specification,
@@ -99,7 +99,7 @@ typedef struct
    Note that MINLEN and MAXLEN are Charcounts but LEN is a Bytecount. */
 
 static void
-doprnt_2 (Lisp_Object stream, const Intbyte *string, Bytecount len,
+doprnt_2 (Lisp_Object stream, const Ibyte *string, Bytecount len,
 	  Charcount minlen, Charcount maxlen, int minus_flag, int zero_flag)
 {
   Lstream *lstr = XLSTREAM (stream);
@@ -121,11 +121,11 @@ doprnt_2 (Lisp_Object stream, const Intbyte *string, Bytecount len,
       Lstream_putc (lstr, zero_flag ? '0' : ' ');
 }
 
-static const Intbyte *
-parse_off_posnum (const Intbyte *start, const Intbyte *end, int *returned_num)
+static const Ibyte *
+parse_off_posnum (const Ibyte *start, const Ibyte *end, int *returned_num)
 {
-  Intbyte arg_convert[100];
-  REGISTER Intbyte *arg_ptr = arg_convert;
+  Ibyte arg_convert[100];
+  REGISTER Ibyte *arg_ptr = arg_convert;
 
   *returned_num = -1;
   while (start != end && isdigit (*start))
@@ -160,23 +160,23 @@ parse_off_posnum (const Intbyte *start, const Intbyte *end, int *returned_num)
   } while (0)
 
 static printf_spec_dynarr *
-parse_doprnt_spec (const Intbyte *format, Bytecount format_length)
+parse_doprnt_spec (const Ibyte *format, Bytecount format_length)
 {
-  const Intbyte *fmt = format;
-  const Intbyte *fmt_end = format + format_length;
+  const Ibyte *fmt = format;
+  const Ibyte *fmt_end = format + format_length;
   printf_spec_dynarr *specs = Dynarr_new (printf_spec);
   int prev_argnum = 0;
 
   while (1)
     {
       struct printf_spec spec;
-      const Intbyte *text_end;
-      Intbyte ch;
+      const Ibyte *text_end;
+      Ibyte ch;
 
       xzero (spec);
       if (fmt == fmt_end)
 	return specs;
-      text_end = (Intbyte *) memchr (fmt, '%', fmt_end - fmt);
+      text_end = (Ibyte *) memchr (fmt, '%', fmt_end - fmt);
       if (!text_end)
 	text_end = fmt_end;
       spec.text_before = fmt - format;
@@ -198,7 +198,7 @@ parse_doprnt_spec (const Intbyte *format, Bytecount format_length)
 
 	  /* Is there a field number specifier? */
 	  {
-	    const Intbyte *ptr;
+	    const Ibyte *ptr;
 	    int fieldspec;
 
 	    ptr = parse_off_posnum (fmt, fmt_end, &fieldspec);
@@ -384,7 +384,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
       else if (strchr (double_converters, ch))
 	arg.d = va_arg (vargs, double);
       else if (strchr (string_converters, ch))
-	arg.bp = va_arg (vargs, Intbyte *);
+	arg.bp = va_arg (vargs, Ibyte *);
       else abort ();
 
       Dynarr_add (args, arg);
@@ -405,7 +405,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
    standard sprintf() behavior or `format' behavior.) */
 
 static Bytecount
-emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
+emacs_doprnt_1 (Lisp_Object stream, const Ibyte *format_nonreloc,
 		Bytecount format_length, Lisp_Object format_reloc,
 		int nargs, const Lisp_Object *largs, va_list vargs)
 {
@@ -461,7 +461,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
       if (ch == '%')
 	{
-	  doprnt_2 (stream, (Intbyte *) &ch, 1, 0, -1, 0, 0);
+	  doprnt_2 (stream, (Ibyte *) &ch, 1, 0, -1, 0, 0);
 	  continue;
 	}
 
@@ -504,7 +504,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
       else if (ch == 'S' || ch == 's')
 	{
-	  Intbyte *string;
+	  Ibyte *string;
 	  Bytecount string_len;
 
 	  if (!largs)
@@ -520,7 +520,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 		 Do not hide bugs. --ben
 	      */
 	      if (!string)
-		string = (Intbyte *) "(null)";
+		string = (Ibyte *) "(null)";
 #else
 	      assert (string);
 #endif
@@ -591,17 +591,17 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 
 	  if (ch == 'c')
 	    {
-	      Emchar a;
+	      Ichar a;
 	      Bytecount charlen;
-	      Intbyte charbuf[MAX_EMCHAR_LEN];
+	      Ibyte charbuf[MAX_ICHAR_LEN];
 
-	      a = (Emchar) arg.l;
+	      a = (Ichar) arg.l;
 
-	      if (!valid_emchar_p (a))
+	      if (!valid_ichar_p (a))
 		syntax_error ("invalid character value %d to %%c spec",
 			      make_int (a));
 
-	      charlen = set_charptr_emchar (charbuf, a);
+	      charlen = set_itext_ichar (charbuf, a);
 	      doprnt_2 (stream, charbuf, charlen, spec->minwidth,
 			-1, spec->minus_flag, spec->zero_flag);
 	    }
@@ -658,7 +658,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
 		    sprintf (text_to_print, constructed_spec, arg.l);
 		}
 
-	      doprnt_2 (stream, (Intbyte *) text_to_print,
+	      doprnt_2 (stream, (Ibyte *) text_to_print,
 			strlen (text_to_print), 0, -1, 0, 0);
 	    }
 	}
@@ -673,7 +673,7 @@ emacs_doprnt_1 (Lisp_Object stream, const Intbyte *format_nonreloc,
  */
 
 Bytecount
-emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
+emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
 		 Bytecount format_length, Lisp_Object format_reloc,
 		 va_list vargs)
 {
@@ -686,7 +686,7 @@ emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
  */
 
 Bytecount
-emacs_doprnt (Lisp_Object stream, const Intbyte *format_nonreloc,
+emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
 	      Bytecount format_length, Lisp_Object format_reloc,
 	      int nargs, const Lisp_Object *largs, ...)
 {
@@ -714,7 +714,7 @@ emacs_doprnt (Lisp_Object stream, const Intbyte *format_nonreloc,
    */
 
 Lisp_Object
-emacs_vsprintf_string_lisp (const CIntbyte *format_nonreloc,
+emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
 			    Lisp_Object format_reloc, int nargs,
 			    const Lisp_Object *largs)
 {
@@ -725,7 +725,7 @@ emacs_vsprintf_string_lisp (const CIntbyte *format_nonreloc,
   gcpro1.nvars = nargs;
 
   stream = make_resizing_buffer_output_stream ();
-  emacs_doprnt (stream, (Intbyte *) format_nonreloc, format_nonreloc ?
+  emacs_doprnt (stream, (Ibyte *) format_nonreloc, format_nonreloc ?
 		strlen (format_nonreloc) : 0,
 		format_reloc, nargs, largs);
   Lstream_flush (XLSTREAM (stream));
@@ -740,7 +740,7 @@ emacs_vsprintf_string_lisp (const CIntbyte *format_nonreloc,
    (using variable arguments), rather than as an array. */
 
 Lisp_Object
-emacs_sprintf_string_lisp (const CIntbyte *format_nonreloc,
+emacs_sprintf_string_lisp (const CIbyte *format_nonreloc,
 			   Lisp_Object format_reloc, int nargs, ...)
 {
   Lisp_Object *args = alloca_array (Lisp_Object, nargs);
@@ -760,13 +760,13 @@ emacs_sprintf_string_lisp (const CIntbyte *format_nonreloc,
 /* Like emacs_vsprintf_string_lisp() but returns a malloc()ed memory block.
    Return length out through LEN_OUT, if not null. */
 
-Intbyte *
-emacs_vsprintf_malloc_lisp (const CIntbyte *format_nonreloc,
+Ibyte *
+emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
 			    Lisp_Object format_reloc, int nargs,
 			    const Lisp_Object *largs, Bytecount *len_out)
 {
   Lisp_Object stream;
-  Intbyte *retval;
+  Ibyte *retval;
   Bytecount len;
   struct gcpro gcpro1, gcpro2;
 
@@ -774,12 +774,12 @@ emacs_vsprintf_malloc_lisp (const CIntbyte *format_nonreloc,
   gcpro1.nvars = nargs;
 
   stream = make_resizing_buffer_output_stream ();
-  emacs_doprnt (stream, (Intbyte *) format_nonreloc, format_nonreloc ?
+  emacs_doprnt (stream, (Ibyte *) format_nonreloc, format_nonreloc ?
 		strlen (format_nonreloc) : 0,
 		format_reloc, nargs, largs);
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = (Intbyte *) xmalloc (len + 1);
+  retval = (Ibyte *) xmalloc (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   retval[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
@@ -793,14 +793,14 @@ emacs_vsprintf_malloc_lisp (const CIntbyte *format_nonreloc,
 /* Like emacs_sprintf_string_lisp() but returns a malloc()ed memory block.
    Return length out through LEN_OUT, if not null. */
 
-Intbyte *
-emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIntbyte *format_nonreloc,
+Ibyte *
+emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIbyte *format_nonreloc,
 			   Lisp_Object format_reloc, int nargs, ...)
 {
   Lisp_Object *args = alloca_array (Lisp_Object, nargs);
   va_list va;
   int i;
-  Intbyte *retval;
+  Ibyte *retval;
 
   va_start (va, nargs);
   for (i = 0; i < nargs; i++)
@@ -815,13 +815,13 @@ emacs_sprintf_malloc_lisp (Bytecount *len_out, const CIntbyte *format_nonreloc,
    from Lisp strings is OK because we explicitly inhibit GC. */
 
 Lisp_Object
-emacs_vsprintf_string (const CIntbyte *format, va_list vargs)
+emacs_vsprintf_string (const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   Lisp_Object obj;
   int count = begin_gc_forbidden ();
 
-  emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+  emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
 		   vargs);
   Lstream_flush (XLSTREAM (stream));
   obj = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
@@ -835,7 +835,7 @@ emacs_vsprintf_string (const CIntbyte *format, va_list vargs)
    from Lisp strings is OK because we explicitly inhibit GC. */
 
 Lisp_Object
-emacs_sprintf_string (const CIntbyte *format, ...)
+emacs_sprintf_string (const CIbyte *format, ...)
 {
   va_list vargs;
   Lisp_Object retval;
@@ -850,20 +850,20 @@ emacs_sprintf_string (const CIntbyte *format, ...)
    from Lisp strings is OK because we explicitly inhibit GC.  Return
    length out through LEN_OUT, if not null. */
 
-Intbyte *
-emacs_vsprintf_malloc (const CIntbyte *format, va_list vargs,
+Ibyte *
+emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
 		       Bytecount *len_out)
 {
   int count = begin_gc_forbidden ();
   Lisp_Object stream = make_resizing_buffer_output_stream ();
-  Intbyte *retval;
+  Ibyte *retval;
   Bytecount len;
 
-  emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+  emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
 		   vargs);
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
-  retval = (Intbyte *) xmalloc (len + 1);
+  retval = (Ibyte *) xmalloc (len + 1);
   memcpy (retval, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   retval[len] = '\0';
   end_gc_forbidden (count);
@@ -878,11 +878,11 @@ emacs_vsprintf_malloc (const CIntbyte *format, va_list vargs,
    from Lisp strings is OK because we explicitly inhibit GC.  Return length
    out through LEN_OUT, if not null. */
 
-Intbyte *
-emacs_sprintf_malloc (Bytecount *len_out, const CIntbyte *format, ...)
+Ibyte *
+emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
 {
   va_list vargs;
-  Intbyte *retval;
+  Ibyte *retval;
 
   va_start (vargs, format);
   retval = emacs_vsprintf_malloc (format, vargs, len_out);
@@ -895,14 +895,14 @@ emacs_sprintf_malloc (Bytecount *len_out, const CIntbyte *format, ...)
    because we explicitly inhibit GC.  */
 
 Bytecount
-emacs_vsprintf (Intbyte *output, const CIntbyte *format, va_list vargs)
+emacs_vsprintf (Ibyte *output, const CIbyte *format, va_list vargs)
 {
   Bytecount retval;
   int count = begin_gc_forbidden ();
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   Bytecount len;
 
-  retval = emacs_doprnt_va (stream, (Intbyte *) format, strlen (format), Qnil,
+  retval = emacs_doprnt_va (stream, (Ibyte *) format, strlen (format), Qnil,
 			    vargs);
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
@@ -919,7 +919,7 @@ emacs_vsprintf (Intbyte *output, const CIntbyte *format, va_list vargs)
    because we explicitly inhibit GC.  */
 
 Bytecount
-emacs_sprintf (Intbyte *output, const CIntbyte *format, ...)
+emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
 {
   va_list vargs;
   Bytecount retval;

@@ -56,10 +56,10 @@ See `popup-menu' and `popup-dialog-box'.
 #endif /* HAVE_POPUPS */
 
 int
-separator_string_p (const Intbyte *s)
+separator_string_p (const Ibyte *s)
 {
-  const Intbyte *p;
-  Intbyte first;
+  const Ibyte *p;
+  Ibyte first;
 
   if (!s || s[0] == '\0')
     return 0;
@@ -410,7 +410,7 @@ gui_item_accelerator (Lisp_Object gui_item)
 Lisp_Object
 gui_name_accelerator (Lisp_Object nm)
 {
-  Intbyte *name = XSTRING_DATA (nm);
+  Ibyte *name = XSTRING_DATA (nm);
 
   while (*name)
     {
@@ -421,13 +421,13 @@ gui_name_accelerator (Lisp_Object nm)
 	    return Qnil;
 	  if (*name == '_' && *(name + 1))
 	    {
-	      Emchar accelerator = charptr_emchar (name + 1);
+	      Ichar accelerator = itext_ichar (name + 1);
 	      return make_char (DOWNCASE (0, accelerator));
 	    }
 	}
-	INC_CHARPTR (name);
+	INC_IBYTEPTR (name);
     }
-  return make_char (DOWNCASE (0, charptr_emchar (XSTRING_DATA (nm))));
+  return make_char (DOWNCASE (0, itext_ichar (XSTRING_DATA (nm))));
 }
 
 /*

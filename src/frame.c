@@ -125,7 +125,7 @@ static void frame_conversion_internal (struct frame *f, int pixel_to_char,
 static struct display_line title_string_display_line;
 /* Used by generate_title_string. Global because they get used so much that
    the dynamic allocation time adds up. */
-static Emchar_dynarr *title_string_emchar_dynarr;
+static Ichar_dynarr *title_string_ichar_dynarr;
 
 
 static Lisp_Object
@@ -234,7 +234,7 @@ allocate_frame_core (Lisp_Object device)
     buf = Fcurrent_buffer ();
     /* If buf is a 'hidden' buffer (i.e. one whose name starts with
        a space), try to find another one.  */
-    if (string_emchar (Fbuffer_name (buf), 0) == ' ')
+    if (string_ichar (Fbuffer_name (buf), 0) == ' ')
       buf = Fother_buffer (buf, Qnil, Qnil);
     Fset_window_buffer (root_window, buf, Qnil);
   }
@@ -411,7 +411,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   else
     name = build_string ("emacs");
 
-  if (!NILP (Fstring_match (make_string ((const Intbyte *) "\\.", 2), name,
+  if (!NILP (Fstring_match (make_string ((const Ibyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
     syntax_error (". not allowed in frame names", name);
 
@@ -3217,7 +3217,7 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
 
 
 /* The caller is responsible for freeing the returned string. */
-static Intbyte *
+static Ibyte *
 generate_title_string (struct window *w, Lisp_Object format_str,
 		       face_index findex, int type)
 {
@@ -3232,19 +3232,19 @@ generate_title_string (struct window *w, Lisp_Object format_str,
   generate_formatted_string_db (format_str, Qnil, w, dl, db, findex, 0,
                                 -1, type);
 
-  Dynarr_reset (title_string_emchar_dynarr);
+  Dynarr_reset (title_string_ichar_dynarr);
   while (elt < Dynarr_length (db->runes))
     {
       if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
-	Dynarr_add (title_string_emchar_dynarr,
+	Dynarr_add (title_string_ichar_dynarr,
 		    Dynarr_atp (db->runes, elt)->object.chr.ch);
       elt++;
     }
 
   return
-    convert_emchar_string_into_malloced_string
-    (Dynarr_atp (title_string_emchar_dynarr, 0),
-     Dynarr_length (title_string_emchar_dynarr), 0);
+    convert_ichar_string_into_malloced_string
+    (Dynarr_atp (title_string_ichar_dynarr, 0),
+     Dynarr_length (title_string_ichar_dynarr), 0);
 }
 
 void
@@ -3253,7 +3253,7 @@ update_frame_title (struct frame *f)
   struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
   Lisp_Object title_format;
   Lisp_Object icon_format;
-  Intbyte *title;
+  Ibyte *title;
 
   /* We don't change the title for the minibuffer unless the frame
      only has a minibuffer. */
@@ -3268,14 +3268,14 @@ update_frame_title (struct frame *f)
   title_format = symbol_value_in_buffer (Qframe_title_format,      w->buffer);
   icon_format  = symbol_value_in_buffer (Qframe_icon_title_format, w->buffer);
 
-  if (HAS_FRAMEMETH_P (f, set_title_from_intbyte))
+  if (HAS_FRAMEMETH_P (f, set_title_from_ibyte))
     {
       title = generate_title_string (w, title_format,
 				     DEFAULT_INDEX, CURRENT_DISP);
-      FRAMEMETH (f, set_title_from_intbyte, (f, title));
+      FRAMEMETH (f, set_title_from_ibyte, (f, title));
     }
 
-  if (HAS_FRAMEMETH_P (f, set_icon_name_from_intbyte))
+  if (HAS_FRAMEMETH_P (f, set_icon_name_from_ibyte))
     {
       if (!EQ (icon_format, title_format) || !title)
 	{
@@ -3285,7 +3285,7 @@ update_frame_title (struct frame *f)
 	  title = generate_title_string (w, icon_format,
 					 DEFAULT_INDEX, CURRENT_DISP);
 	}
-      FRAMEMETH (f, set_icon_name_from_intbyte, (f, title));
+      FRAMEMETH (f, set_icon_name_from_ibyte, (f, title));
     }
 
   if (title)
@@ -3355,7 +3355,7 @@ init_frame (void)
   if (!initialized)
 #endif
     {
-      title_string_emchar_dynarr = Dynarr_new (Emchar);
+      title_string_ichar_dynarr = Dynarr_new (Ichar);
       xzero (title_string_display_line);
     }
 }

@@ -48,7 +48,7 @@ typedef struct
 
 #ifdef WIN32_NATIVE
 
-DIR *mswindows_opendir (const Intbyte *filename);
+DIR *mswindows_opendir (const Ibyte *filename);
 int mswindows_closedir (DIR *dirp);
 struct direct *mswindows_readdir (DIR *dirp);
 

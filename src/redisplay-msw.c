@@ -84,7 +84,7 @@ typedef struct textual_run
 
 static int
 separate_textual_runs (textual_run **run_storage_ptr,
-		       const Emchar *str, Charcount len)
+		       const Ichar *str, Charcount len)
 {
   static WCHAR *ext_storage;
   static int ext_storage_size; /* in WCHARS! */
@@ -99,15 +99,15 @@ separate_textual_runs (textual_run **run_storage_ptr,
   if (len == 0)
     return 0;
 
-  prev_charset = emchar_charset (str[0]);
+  prev_charset = ichar_charset (str[0]);
 
   for (i = 1; i <= len; i++)
     {
-      if (i == len || !EQ (emchar_charset (str[i]), prev_charset))
+      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
 	{
 	  int j;
-	  Intbyte *int_storage =
-	    alloca_intbytes (MAX_EMCHAR_LEN * (i - runbegin));
+	  Ibyte *int_storage =
+	    alloca_ibytes (MAX_ICHAR_LEN * (i - runbegin));
 	  int int_storage_ptr = 0;
 	  Extbyte *alloca_ext_storage;
 	  int nchars;
@@ -115,7 +115,7 @@ separate_textual_runs (textual_run **run_storage_ptr,
 	  int_storage_ptr = 0;
 	  for (j = runbegin; j < i; j++)
 	    int_storage_ptr +=
-	      set_charptr_emchar (int_storage + int_storage_ptr, str[j]);
+	      set_itext_ichar (int_storage + int_storage_ptr, str[j]);
 	  TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr),
 			      ALLOCA, (alloca_ext_storage, nchars),
 			      Qmswindows_unicode);
@@ -134,7 +134,7 @@ separate_textual_runs (textual_run **run_storage_ptr,
 	  runs_so_far++;
 	  runbegin = i;
 	  if (i < len)
-	    prev_charset = emchar_charset (str[i]);
+	    prev_charset = ichar_charset (str[i]);
 	}
     }
 
@@ -307,7 +307,7 @@ mswindows_output_blank (struct window *w, struct display_line *dl,
  ****************************************************************************/
 static void
 mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
-			 int width, face_index findex, Emchar ch, int image_p)
+			 int width, face_index findex, Ichar ch, int image_p)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -425,7 +425,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
  DL		Display line that this text is on.  The values in the
  		structure are used to determine the vertical position and
 		clipping range of the text.
- BUF		Dynamic array of Emchars specifying what is actually to be
+ BUF		Dynamic array of Ichars specifying what is actually to be
 		drawn.
  XPOS		X position in pixels where the text should start being drawn.
  XOFFSET	Number of pixels to be chopped off the left side of the
@@ -438,7 +438,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
  ****************************************************************************/
 static void
 mswindows_output_string (struct window *w, struct display_line *dl,
-			 Emchar_dynarr *buf, int xpos, int xoffset, int clip_start,
+			 Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
 			 int width, face_index findex,
 			 int cursor, int cursor_start, int cursor_width,
 			 int cursor_height)
@@ -1024,7 +1024,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 				int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  Emchar_dynarr *buf = Dynarr_new (Emchar);
+  Ichar_dynarr *buf = Dynarr_new (Ichar);
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -1047,7 +1047,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
   xpos = rb->xpos;
   width = 0;
   if (rb->type == RUNE_CHAR)
-    charset = emchar_charset (rb->object.chr.ch);
+    charset = ichar_charset (rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -1059,7 +1059,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, emchar_charset (rb->object.chr.ch)))
+	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -1081,7 +1081,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = emchar_charset (rb->object.chr.ch);
+	      charset = ichar_charset (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -1290,7 +1290,7 @@ mswindows_output_vertical_divider (struct window *w, int clear_unused)
  ****************************************************************************/
 static int
 mswindows_text_width (struct frame *f, struct face_cachel *cachel,
-		      const Emchar *str, Charcount len)
+		      const Ichar *str, Charcount len)
 {
   HDC hdc = get_frame_dc (f, 0);
   int width_so_far = 0;

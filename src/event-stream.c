@@ -372,7 +372,7 @@ allocate_command_builder (Lisp_Object console, int with_echo_buf)
     {
       /* #### This badly needs to be turned into a Dynarr */
       builder->echo_buf_length = 300; /* #### Kludge */
-      builder->echo_buf = xnew_array (Intbyte, builder->echo_buf_length);
+      builder->echo_buf = xnew_array (Ibyte, builder->echo_buf_length);
       builder->echo_buf[0] = 0;
     }
   else
@@ -752,7 +752,7 @@ echo_key_event (struct command_builder *command_builder,
   /* This function can GC */
   DECLARE_EISTRING_MALLOC (buf);
   Bytecount buf_index = command_builder->echo_buf_index;
-  Intbyte *e;
+  Ibyte *e;
   Bytecount len;
 
   if (buf_index < 0)
@@ -859,7 +859,7 @@ reset_key_echo (struct command_builder *command_builder,
 static void
 maybe_kbd_translate (Lisp_Object event)
 {
-  Emchar c;
+  Ichar c;
   int did_translate = 0;
 
   if (XEVENT_TYPE (event) != key_press_event)
@@ -3343,7 +3343,7 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
     {
       Lisp_Object terminal = builder->most_current_event;
       struct key_data *key = &XEVENT (terminal)->event.key;
-      Emchar c = 0;
+      Ichar c = 0;
       if ((key->modifiers & XEMACS_MOD_SHIFT)
           || (CHAR_OR_CHAR_INTP (key->keysym)
               && ((c = XCHAR_OR_CHAR_INT (key->keysym)),
@@ -3432,7 +3432,7 @@ command_builder_find_leaf (struct command_builder *builder,
     {
       Lisp_Object keysym =
 	XEVENT (builder->most_current_event)->event.key.keysym;
-      if (CHARP (keysym) && !emchar_ascii_p (XCHAR (keysym)))
+      if (CHARP (keysym) && !ichar_ascii_p (XCHAR (keysym)))
         return Vcomposed_character_default_binding;
     }
 #endif
@@ -3902,7 +3902,7 @@ lookup_command_event (struct command_builder *command_builder,
 
 		if (len + buf_index + 1 <= command_builder->echo_buf_length)
 		  {
-		    Intbyte *echo = command_builder->echo_buf + buf_index;
+		    Ibyte *echo = command_builder->echo_buf + buf_index;
 		    memcpy (echo, XSTRING_DATA (prompt), len);
 		    echo[len] = 0;
 		  }
@@ -4616,9 +4616,9 @@ dribble_out_event (Lisp_Object event)
       Lisp_Object keysym = XEVENT (event)->event.key.keysym;
       if (CHARP (XEVENT (event)->event.key.keysym))
 	{
-	  Emchar ch = XCHAR (keysym);
-	  Intbyte str[MAX_EMCHAR_LEN];
-	  Bytecount len = set_charptr_emchar (str, ch);
+	  Ichar ch = XCHAR (keysym);
+	  Ibyte str[MAX_ICHAR_LEN];
+	  Bytecount len = set_itext_ichar (str, ch);
 	  Lstream_write (XLSTREAM (Vdribble_file), str, len);
 	}
       else if (string_char_length (XSYMBOL (keysym)->name) == 1)

@@ -46,14 +46,14 @@ Lisp_Object QSsubstitute;
 
 Lisp_Object
 unparesseuxify_doc_string (int fd, EMACS_INT position,
-                           Intbyte *name_nonreloc, Lisp_Object name_reloc,
+                           Ibyte *name_nonreloc, Lisp_Object name_reloc,
 			   int standard_doc_file)
 {
-  Intbyte buf[512 * 32 + 1];
-  Intbyte *buffer = buf;
+  Ibyte buf[512 * 32 + 1];
+  Ibyte *buffer = buf;
   int buffer_size = sizeof (buf);
-  Intbyte *from, *to;
-  REGISTER Intbyte *p = buffer;
+  Ibyte *from, *to;
+  REGISTER Ibyte *p = buffer;
   Lisp_Object return_me;
   Lisp_Object fdstream = Qnil, instream = Qnil;
   struct gcpro gcpro1, gcpro2;
@@ -97,14 +97,14 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       /* Switch to a bigger buffer if we need one.  */
       if (space_left == 0)
 	{
-          Intbyte *old_buffer = buffer;
+          Ibyte *old_buffer = buffer;
 	  if (buffer == buf)
 	    {
-	      buffer = (Intbyte *) xmalloc (buffer_size *= 2);
+	      buffer = (Ibyte *) xmalloc (buffer_size *= 2);
 	      memcpy (buffer, old_buffer, p - old_buffer);
 	    }
 	  else
-            buffer = (Intbyte *) xrealloc (buffer, buffer_size *= 2);
+            buffer = (Ibyte *) xrealloc (buffer, buffer_size *= 2);
           p += buffer - old_buffer;
 	  space_left = buffer_size - (p - buffer);
 	}
@@ -123,7 +123,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
       if (!nread)
 	break;
       {
-	Intbyte *p1 = qxestrchr (p, '\037'); /* End of doc string marker */
+	Ibyte *p1 = qxestrchr (p, '\037'); /* End of doc string marker */
 	if (p1)
 	  {
 	    *p1 = 0;
@@ -194,7 +194,7 @@ static Lisp_Object
 get_doc_string (Lisp_Object filepos)
 {
   REGISTER int fd;
-  REGISTER Intbyte *name_nonreloc = 0;
+  REGISTER Ibyte *name_nonreloc = 0;
   EMACS_INT position;
   Lisp_Object file, tem;
   Lisp_Object name_reloc = Qnil;
@@ -235,7 +235,7 @@ get_doc_string (Lisp_Object filepos)
       /* sizeof ("../lib-src/") == 12 */
       if (minsize < 12)
 	minsize = 12;
-      name_nonreloc = alloca_intbytes (minsize + XSTRING_LENGTH (file) + 8);
+      name_nonreloc = alloca_ibytes (minsize + XSTRING_LENGTH (file) + 8);
       string_join (name_nonreloc, Vdoc_directory, file);
     }
   else
@@ -249,10 +249,10 @@ get_doc_string (Lisp_Object filepos)
       if (purify_flag)
 	{
 	    /* sizeof ("../lib-src/") == 12 */
-	  name_nonreloc = (Intbyte *) ALLOCA (12 + XSTRING_LENGTH (file) + 8);
+	  name_nonreloc = (Ibyte *) ALLOCA (12 + XSTRING_LENGTH (file) + 8);
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../lib-src. */
-	  qxestrcpy (name_nonreloc, (Intbyte *) "../lib-src/");
+	  qxestrcpy (name_nonreloc, (Ibyte *) "../lib-src/");
 	  qxestrcat (name_nonreloc, XSTRING_DATA (file));
 
 	  fd = qxe_open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
@@ -422,7 +422,7 @@ translation.
 }
 
 static void
-weird_doc (Lisp_Object sym, const CIntbyte *weirdness, const CIntbyte *type,
+weird_doc (Lisp_Object sym, const CIbyte *weirdness, const CIbyte *type,
 	   int pos)
 {
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
@@ -441,12 +441,12 @@ when doc strings are referred to in the dumped Emacs.
        (filename))
 {
   int fd;
-  Intbyte buf[1024 + 1];
+  Ibyte buf[1024 + 1];
   REGISTER int filled;
   REGISTER int pos;
-  REGISTER Intbyte *p, *end;
+  REGISTER Ibyte *p, *end;
   Lisp_Object sym, fun, tem;
-  Intbyte *name;
+  Ibyte *name;
 
   /* This function should not pass the data it's reading through a coding
      stream.  The reason is that the only purpose of this function is to
@@ -467,7 +467,7 @@ when doc strings are referred to in the dumped Emacs.
   if (!NILP (Vdoc_directory))
     {
       CHECK_STRING (Vdoc_directory);
-      name = alloca_intbytes (XSTRING_LENGTH (filename)
+      name = alloca_ibytes (XSTRING_LENGTH (filename)
 			      + XSTRING_LENGTH (Vdoc_directory)
 			      + 1);
       qxestrcpy (name, XSTRING_DATA (Vdoc_directory));
@@ -475,8 +475,8 @@ when doc strings are referred to in the dumped Emacs.
   else
 #endif /* CANNOT_DUMP */
     {
-      name = alloca_intbytes (XSTRING_LENGTH (filename) + 14);
-      qxestrcpy (name, (Intbyte *) "../lib-src/");
+      name = alloca_ibytes (XSTRING_LENGTH (filename) + 14);
+      qxestrcpy (name, (Ibyte *) "../lib-src/");
     }
 
   qxestrcat (name, XSTRING_DATA (filename));
@@ -801,18 +801,18 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
        (string))
 {
   /* This function can GC */
-  Intbyte *buf;
+  Ibyte *buf;
   int changed = 0;
-  REGISTER Intbyte *strdata;
-  REGISTER Intbyte *bufp;
+  REGISTER Ibyte *strdata;
+  REGISTER Ibyte *bufp;
   Bytecount strlength;
   Bytecount idx;
   Bytecount bsize;
-  Intbyte *new;
+  Ibyte *new;
   Lisp_Object tem = Qnil;
   Lisp_Object keymap = Qnil;
   Lisp_Object name = Qnil;
-  Intbyte *start;
+  Ibyte *start;
   Bytecount length;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
@@ -847,14 +847,14 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
   strlength = XSTRING_LENGTH (string);
   bsize = 1 + strlength;
-  buf = (Intbyte *) xmalloc (bsize);
+  buf = (Ibyte *) xmalloc (bsize);
   bufp = buf;
 
   /* Have to reset strdata every time GC might be called */
   strdata = XSTRING_DATA (string);
   for (idx = 0; idx < strlength; )
     {
-      Intbyte *strp = strdata + idx;
+      Ibyte *strp = strdata + idx;
 
       if (strp[0] != '\\')
 	{
@@ -919,7 +919,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 
 	    if (NILP (tem))	/* but not on any keys */
 	      {
-		new = (Intbyte *) xrealloc (buf, bsize += 4);
+		new = (Ibyte *) xrealloc (buf, bsize += 4);
 		bufp += new - buf;
 		buf = new;
 		memcpy (bufp, "M-x ", 4);
@@ -993,7 +993,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	  length = XSTRING_LENGTH (tem);
 	subst:
 	  bsize += length;
-	  new = (Intbyte *) xrealloc (buf, bsize);
+	  new = (Ibyte *) xrealloc (buf, bsize);
 	  bufp += new - buf;
 	  buf = new;
 	  memcpy (bufp, start, length);

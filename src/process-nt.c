@@ -700,8 +700,8 @@ ensure_console_window_exists (void)
 int
 mswindows_compare_env (const void *strp1, const void *strp2)
 {
-  const Intbyte *str1 = *(const Intbyte **)strp1,
-    *str2 = *(const Intbyte **)strp2;
+  const Ibyte *str1 = *(const Ibyte **)strp1,
+    *str2 = *(const Ibyte **)strp2;
 
   while (*str1 && *str2 && *str1 != '=' && *str2 != '=')
     {
@@ -751,7 +751,7 @@ nt_create_process (Lisp_Process *p,
     /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
        errors. This leads to bogus error message. */
     DWORD image_type;
-    Intbyte *p = qxestrrchr (XSTRING_DATA (program), '.');
+    Ibyte *p = qxestrrchr (XSTRING_DATA (program), '.');
     if (p != NULL &&
 	(qxestrcasecmp (p, ".exe") == 0 ||
 	 qxestrcasecmp (p, ".com") == 0 ||
@@ -860,9 +860,9 @@ nt_create_process (Lisp_Process *p,
      Vprocess_environment terminated by 2 nuls.  */
 
   {
-    Intbyte **env;
+    Ibyte **env;
     REGISTER Lisp_Object tem;
-    REGISTER Intbyte **new_env;
+    REGISTER Ibyte **new_env;
     REGISTER int new_length = 0, i;
 
     for (tem = Vprocess_environment;
@@ -883,7 +883,7 @@ nt_create_process (Lisp_Process *p,
     */
 
     /* new_length + 1 to include terminating 0.  */
-    env = new_env = alloca_array (Intbyte *, new_length + 1);
+    env = new_env = alloca_array (Ibyte *, new_length + 1);
 
     /* Copy the Vprocess_environment strings into new_env.  */
     for (tem = Vprocess_environment;
@@ -891,15 +891,15 @@ nt_create_process (Lisp_Process *p,
  	  && STRINGP (XCAR (tem)));
  	 tem = XCDR (tem))
       {
-	Intbyte **ep = env;
-	Intbyte *string = XSTRING_DATA (XCAR (tem));
+	Ibyte **ep = env;
+	Ibyte *string = XSTRING_DATA (XCAR (tem));
 	/* See if this string duplicates any string already in the env.
 	   If so, don't put it in.
 	   When an env var has multiple definitions,
 	   we keep the definition that comes first in process-environment.  */
 	for (; ep != new_env; ep++)
 	  {
-	    Intbyte *p = *ep, *q = string;
+	    Ibyte *p = *ep, *q = string;
 	    while (1)
 	      {
 		if (*q == 0)
@@ -919,7 +919,7 @@ nt_create_process (Lisp_Process *p,
 
     /* Sort the environment variables */
     new_length = new_env - env;
-    qsort (env, new_length, sizeof (Intbyte *), mswindows_compare_env);
+    qsort (env, new_length, sizeof (Ibyte *), mswindows_compare_env);
 
     {
       DECLARE_EISTRING (envout);
@@ -943,13 +943,13 @@ nt_create_process (Lisp_Process *p,
        while leaving the real app name as argv[0].  */
     if (is_dos_app)
       {
-	cmdname = (Intbyte *) ALLOCA (PATH_MAX);
+	cmdname = (Ibyte *) ALLOCA (PATH_MAX);
 	if (egetenv ("CMDPROXY"))
 	  qxestrcpy (cmdname, egetenv ("CMDPROXY"));
 	else
 	  {
 	    qxestrcpy (cmdname, XSTRING_DATA (Vinvocation_directory));
-	    qxestrcat (cmdname, (Intbyte *) "cmdproxy.exe");
+	    qxestrcat (cmdname, (Ibyte *) "cmdproxy.exe");
 	  }
       }
 #endif
@@ -1095,7 +1095,7 @@ nt_send_process (Lisp_Object proc, struct lstream *lstream)
   /* use a reasonable-sized buffer (somewhere around the size of the
      stream buffer) so as to avoid inundating the stream with blocked
      data. */
-  Intbyte chunkbuf[512];
+  Ibyte chunkbuf[512];
   Bytecount chunklen;
 
   while (1)

@@ -691,13 +691,13 @@ as CHAR-TABLE.  The values will not themselves be copied.
 /* called from get_char_table(). */
 Lisp_Object
 get_non_ascii_char_table_value (Lisp_Char_Table *ct, int leading_byte,
-				Emchar c)
+				Ichar c)
 {
   Lisp_Object val;
   Lisp_Object charset = charset_by_leading_byte (leading_byte);
   int byte1, byte2;
 
-  BREAKUP_EMCHAR_1_UNSAFE (c, charset, byte1, byte2);
+  BREAKUP_ICHAR_1_UNSAFE (c, charset, byte1, byte2);
   val = ct->level1[leading_byte - MIN_LEADING_BYTE];
   if (CHAR_TABLE_ENTRYP (val))
     {
@@ -1026,7 +1026,7 @@ put_char_table (Lisp_Object table, struct chartab_range *range,
 	Lisp_Object charset;
 	int byte1, byte2;
 
-	BREAKUP_EMCHAR (range->ch, charset, byte1, byte2);
+	BREAKUP_ICHAR (range->ch, charset, byte1, byte2);
 	if (EQ (charset, Vcharset_ascii))
 	  ct->ascii[byte1] = val;
 	else if (EQ (charset, Vcharset_control_1))
@@ -1137,7 +1137,7 @@ map_over_charset_ascii_1 (Lisp_Char_Table *ct,
 
   for (i = start, retval = 0; i <= stop && retval == 0; i++)
     {
-      rainj.ch = (Emchar) i;
+      rainj.ch = (Ichar) i;
       if (!UNBOUNDP (ct->ascii[i]))
 	retval = (fn) (&rainj, wrap_char_table (ct), ct->ascii[i], arg);
     }
@@ -1218,7 +1218,7 @@ map_over_charset_row (Lisp_Char_Table *ct,
 
       for (i = start, retval = 0; i <= stop && retval == 0; i++)
 	{
-	  rainj.ch = make_emchar (charset, row, i);
+	  rainj.ch = make_ichar (charset, row, i);
 	  if (!UNBOUNDP (cte->level2[i - 32]))
 	    retval = (fn) (&rainj, wrap_char_table (ct), cte->level2[i - 32],
 			   arg);
@@ -1266,7 +1266,7 @@ map_over_other_charset (Lisp_Char_Table *ct, int lb,
 
 	for (i = start, retval = 0; i <= stop && retval == 0; i++)
 	  {
-	    rainj.ch = make_emchar (charset, i, 0);
+	    rainj.ch = make_ichar (charset, i, 0);
 	    if (!UNBOUNDP (cte->level2[i - 32]))
 	      retval = (fn) (&rainj, wrap_char_table (ct), cte->level2[i - 32],
 			     arg);
@@ -1358,7 +1358,7 @@ map_char_table (Lisp_Object table,
 
     case CHARTAB_RANGE_CHAR:
       {
-	Emchar ch = range->ch;
+	Ichar ch = range->ch;
 	Lisp_Object val = get_char_table (ch, table);
 	struct chartab_range rainj;
 
@@ -1505,9 +1505,9 @@ chartab_instantiate (Lisp_Object data)
         {
 	  if (CHAR_OR_CHAR_INTP (XCAR (range)))
 	    {
-	      Emchar first = XCHAR_OR_CHAR_INT (Fcar (range));
-	      Emchar last = XCHAR_OR_CHAR_INT (Fcar (Fcdr (range)));
-	      Emchar i;
+	      Ichar first = XCHAR_OR_CHAR_INT (Fcar (range));
+	      Ichar last = XCHAR_OR_CHAR_INT (Fcar (Fcdr (range)));
+	      Ichar i;
 
 	      for (i = first; i <= last; i++)
 		 Fput_char_table (make_char (i), val, chartab);
@@ -1571,7 +1571,7 @@ check_category_table (Lisp_Object object, Lisp_Object default_)
 }
 
 int
-check_category_char (Emchar ch, Lisp_Object table,
+check_category_char (Ichar ch, Lisp_Object table,
 		     int designator, int not_p)
 {
   REGISTER Lisp_Object temp;
@@ -1595,7 +1595,7 @@ use, and defaults to BUFFER's category table.
        (position, designator, buffer, category_table))
 {
   Lisp_Object ctbl;
-  Emchar ch;
+  Ichar ch;
   int des;
   struct buffer *buf = decode_buffer (buffer, 0);
 
@@ -1615,7 +1615,7 @@ and defaults to the current buffer's category table.
        (character, designator, category_table))
 {
   Lisp_Object ctbl;
-  Emchar ch;
+  Ichar ch;
   int des;
 
   CHECK_CATEGORY_DESIGNATOR (designator);
@@ -1706,7 +1706,7 @@ Valid values are nil or a bit vector of size 95.
    directly.  */
 
 int
-word_boundary_p (Emchar c1, Emchar c2)
+word_boundary_p (Ichar c1, Ichar c2)
 {
   Lisp_Object category_set1, category_set2;
   Lisp_Object tail;
@@ -1719,7 +1719,7 @@ word_boundary_p (Emchar c1, Emchar c2)
     c2 = cmpchar_component (c2, 0, 1);
 #endif
 
-  if (EQ (emchar_charset (c1), emchar_charset (c2)))
+  if (EQ (ichar_charset (c1), ichar_charset (c2)))
     {
       tail = Vword_separating_categories;
       default_result = 0;

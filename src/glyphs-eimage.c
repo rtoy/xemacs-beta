@@ -302,7 +302,7 @@ METHODDEF void
 my_jpeg_output_message (j_common_ptr cinfo)
 {
   Extbyte buffer[JMSG_LENGTH_MAX];
-  Intbyte *intbuf;
+  Ibyte *intbuf;
 
   /* Create the message */
   (*cinfo->err->format_message) (cinfo, buffer);
@@ -635,7 +635,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       {
 	/* An error was signaled. No clean up is needed, as unwind handles that
 	   for us.  Just pass the error along. */
-	Intbyte *interr;
+	Ibyte *interr;
 	Lisp_Object errstring;
 	EXTERNAL_TO_C_STRING (gif_err.err_str, interr, Qnative);
 	errstring = build_msg_intstring (interr);

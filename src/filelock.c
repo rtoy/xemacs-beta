@@ -78,8 +78,8 @@ int inhibit_clash_detection;
 
 typedef struct
 {
-  Intbyte *user;
-  Intbyte *host;
+  Ibyte *user;
+  Ibyte *host;
   pid_t pid;
 } lock_info_type;
 
@@ -93,14 +93,14 @@ typedef struct
 /* Write the name of the lock file for FN into LFNAME.  Length will be
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = (Intbyte *) ALLOCA (XSTRING_LENGTH (file) + 2 + 1), \
+  (lock = (Ibyte *) ALLOCA (XSTRING_LENGTH (file) + 2 + 1), \
    fill_in_lock_file_name (lock, file))
 
 static void
-fill_in_lock_file_name (Intbyte *lockfile, Lisp_Object fn)
+fill_in_lock_file_name (Ibyte *lockfile, Lisp_Object fn)
 {
-  Intbyte *file_name = XSTRING_DATA (fn);
-  Intbyte *p;
+  Ibyte *file_name = XSTRING_DATA (fn);
+  Ibyte *p;
   Bytecount dirlen;
 
   for (p = file_name + XSTRING_LENGTH (fn) - 1;
@@ -121,24 +121,24 @@ fill_in_lock_file_name (Intbyte *lockfile, Lisp_Object fn)
    Return 1 if successful, 0 if not.  */
 
 static int
-lock_file_1 (Intbyte *lfname, int force)
+lock_file_1 (Ibyte *lfname, int force)
 {
   /* Does not GC. */
   int err;
-  Intbyte *lock_info_str;
-  Intbyte *host_name;
-  Intbyte *user_name = user_login_name (NULL);
+  Ibyte *lock_info_str;
+  Ibyte *host_name;
+  Ibyte *user_name = user_login_name (NULL);
 
   if (user_name == NULL)
-    user_name = (Intbyte *) "";
+    user_name = (Ibyte *) "";
 
   if (STRINGP (Vsystem_name))
     host_name = XSTRING_DATA (Vsystem_name);
   else
-    host_name = (Intbyte *) "";
+    host_name = (Ibyte *) "";
 
   lock_info_str =
-    (Intbyte *) ALLOCA (qxestrlen (user_name) + qxestrlen (host_name)
+    (Ibyte *) ALLOCA (qxestrlen (user_name) + qxestrlen (host_name)
 			+ LOCK_PID_MAX + 5);
 
   qxesprintf (lock_info_str, "%s@%s.%d", user_name, host_name, qxe_getpid ());
@@ -159,20 +159,20 @@ lock_file_1 (Intbyte *lfname, int force)
    or -1 if something is wrong with the locking mechanism.  */
 
 static int
-current_lock_owner (lock_info_type *owner, Intbyte *lfname)
+current_lock_owner (lock_info_type *owner, Ibyte *lfname)
 {
   /* Does not GC. */
   int len, ret;
   int local_owner = 0;
-  Intbyte *at, *dot;
-  Intbyte *lfinfo = 0;
+  Ibyte *at, *dot;
+  Ibyte *lfinfo = 0;
   int bufsize = 50;
   /* Read arbitrarily-long contents of symlink.  Similar code in
      file-symlink-p in fileio.c.  */
   do
     {
       bufsize *= 2;
-      lfinfo = (Intbyte *) xrealloc (lfinfo, bufsize);
+      lfinfo = (Ibyte *) xrealloc (lfinfo, bufsize);
       len = qxe_readlink (lfname, lfinfo, bufsize);
     }
   while (len >= bufsize);
@@ -204,16 +204,16 @@ current_lock_owner (lock_info_type *owner, Intbyte *lfname)
     return -1;
   }
   len = at - lfinfo;
-  owner->user = (Intbyte *) xmalloc (len + 1);
+  owner->user = (Ibyte *) xmalloc (len + 1);
   qxestrncpy (owner->user, lfinfo, len);
   owner->user[len] = 0;
 
   /* The PID is everything after the last `.'.  */
-  owner->pid = atoi ((CIntbyte *) dot + 1);
+  owner->pid = atoi ((CIbyte *) dot + 1);
 
   /* The host is everything in between.  */
   len = dot - at - 1;
-  owner->host = (Intbyte *) xmalloc (len + 1);
+  owner->host = (Ibyte *) xmalloc (len + 1);
   qxestrncpy (owner->host, at + 1, len);
   owner->host[len] = 0;
 
@@ -257,10 +257,10 @@ current_lock_owner (lock_info_type *owner, Intbyte *lfname)
    Return -1 if cannot lock for any other reason.  */
 
 static int
-lock_if_free (lock_info_type *clasher, Intbyte *lfname)
+lock_if_free (lock_info_type *clasher, Ibyte *lfname)
 {
   /* Does not GC. */
-  if (lock_file_1 ((Intbyte *) lfname, 0) == 0)
+  if (lock_file_1 ((Ibyte *) lfname, 0) == 0)
     {
       int locker;
 
@@ -309,7 +309,7 @@ lock_file (Lisp_Object fn)
      comment.  -slb */
 
   register Lisp_Object attack, orig_fn;
-  register Intbyte *lfname, *locker;
+  register Ibyte *lfname, *locker;
   lock_info_type lock_info;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object old_current_buffer;
@@ -346,7 +346,7 @@ lock_file (Lisp_Object fn)
     goto done;
 
   /* Else consider breaking the lock */
-  locker = (Intbyte *) ALLOCA (qxestrlen (lock_info.user)
+  locker = (Ibyte *) ALLOCA (qxestrlen (lock_info.user)
 			       + qxestrlen (lock_info.host)
 			       + LOCK_PID_MAX + 9);
   qxesprintf (locker, "%s@%s (pid %d)", lock_info.user, lock_info.host,
@@ -371,7 +371,7 @@ void
 unlock_file (Lisp_Object fn)
 {
   /* This can GC */
-  register Intbyte *lfname;
+  register Ibyte *lfname;
   struct gcpro gcpro1;
 
   GCPRO1 (fn);
@@ -454,7 +454,7 @@ t if it is locked by you, else a string of the name of the locker.
        (filename))
 {
   Lisp_Object ret;
-  register Intbyte *lfname;
+  register Ibyte *lfname;
   int owner;
   lock_info_type locker;
   struct gcpro gcpro1;

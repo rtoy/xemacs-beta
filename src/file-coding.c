@@ -1018,9 +1018,9 @@ static void
 setup_eol_coding_systems (Lisp_Object codesys)
 {
   int len = XSTRING_LENGTH (XSYMBOL (XCODING_SYSTEM_NAME (codesys))->name);
-  Intbyte *codesys_name = (Intbyte *) ALLOCA (len + 7);
+  Ibyte *codesys_name = (Ibyte *) ALLOCA (len + 7);
   int mlen = -1;
-  Intbyte *codesys_mnemonic = 0;
+  Ibyte *codesys_mnemonic = 0;
   Lisp_Object codesys_name_sym, sub_codesys;
   int i;
 
@@ -1030,7 +1030,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
   if (STRINGP (XCODING_SYSTEM_MNEMONIC (codesys)))
     {
       mlen = XSTRING_LENGTH (XCODING_SYSTEM_MNEMONIC (codesys));
-      codesys_mnemonic = (Intbyte *) ALLOCA (mlen + 7);
+      codesys_mnemonic = (Ibyte *) ALLOCA (mlen + 7);
       memcpy (codesys_mnemonic,
 	      XSTRING_DATA (XCODING_SYSTEM_MNEMONIC (codesys)), mlen);
     }
@@ -1144,10 +1144,10 @@ make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
 
   if (prefix)
     {
-      Intbyte *newname =
+      Ibyte *newname =
 	emacs_sprintf_malloc (NULL, "%s-%s-%d",
 			      prefix,
-			      NILP (name_or_existing) ? (Intbyte *) "nil" :
+			      NILP (name_or_existing) ? (Ibyte *) "nil" :
 			      XSTRING_DATA (Fsymbol_name (XCODING_SYSTEM_NAME
 							  (name_or_existing))),
 			      ++coding_system_tick);
@@ -1262,7 +1262,7 @@ make_coding_system_1 (Lisp_Object name_or_existing, Char_ASCII *prefix,
 	   creating will have canonicalization expansion done on it,
 	   leading to infinite recursion.  So we have to generate a new,
 	   internal coding system with the previous value of CANONICAL. */
-	Intbyte *newname =
+	Ibyte *newname =
 	  emacs_sprintf_malloc
 	    (NULL, "internal-eol-copy-%s-%d",
 	     XSTRING_DATA (Fsymbol_name (name_or_existing)),
@@ -2950,7 +2950,7 @@ no_conversion_convert (struct coding_stream *str,
 	      Dynarr_add (dst, c);
 	    }
 #ifdef MULE
-	  else if (intbyte_leading_byte_p (c))
+	  else if (ibyte_leading_byte_p (c))
 	    {
 	      assert (ch == 0);
 	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
@@ -3110,7 +3110,7 @@ convert_eol_init_coding_stream (struct coding_stream *str)
 }
 
 static Bytecount
-convert_eol_convert (struct coding_stream *str, const Intbyte *src,
+convert_eol_convert (struct coding_stream *str, const Ibyte *src,
 		     unsigned_char_dynarr *dst, Bytecount n)
 {
   if (str->direction == CODING_DECODE)
@@ -3121,11 +3121,11 @@ convert_eol_convert (struct coding_stream *str, const Intbyte *src,
       if (data->actual == EOL_AUTODETECT)
 	{
 	  Bytecount n2 = n;
-	  const Intbyte *src2 = src;
+	  const Ibyte *src2 = src;
   
 	  for (; n2; n2--)
 	    {
-	      Intbyte c = *src2++;
+	      Ibyte c = *src2++;
 	      if (c == '\n')
 		{
 		  data->actual = EOL_LF;
@@ -3164,12 +3164,12 @@ convert_eol_convert (struct coding_stream *str, const Intbyte *src,
 	Dynarr_add_many (dst, src, n);
       else
 	{
-	  const Intbyte *end = src + n;
+	  const Ibyte *end = src + n;
 	  while (1)
 	    {
 	      /* Find the next section with no \r and add it. */
-	      const Intbyte *runstart = src;
-	      src = (Intbyte *) memchr (src, '\r', end - src);
+	      const Ibyte *runstart = src;
+	      src = (Ibyte *) memchr (src, '\r', end - src);
 	      if (!src)
 		src = end;
 	      Dynarr_add_many (dst, runstart, src - runstart);
@@ -3201,7 +3201,7 @@ convert_eol_convert (struct coding_stream *str, const Intbyte *src,
     {
       enum eol_type subtype =
 	XCODING_SYSTEM_CONVERT_EOL_SUBTYPE (str->codesys);
-      const Intbyte *end = src + n;
+      const Ibyte *end = src + n;
 
       /* We try to be relatively efficient here. */
       if (subtype == EOL_LF)
@@ -3211,8 +3211,8 @@ convert_eol_convert (struct coding_stream *str, const Intbyte *src,
 	  while (1)
 	    {
 	      /* Find the next section with no \n and add it. */
-	      const Intbyte *runstart = src;
-	      src = (Intbyte *) memchr (src, '\n', end - src);
+	      const Ibyte *runstart = src;
+	      src = (Ibyte *) memchr (src, '\n', end - src);
 	      if (!src)
 		src = end;
 	      Dynarr_add_many (dst, runstart, src - runstart);
@@ -3789,11 +3789,11 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 			    *(p-1) == ';')))
 		  {
 		    Bytecount n;
-		    Intbyte *name;
+		    Ibyte *name;
 		    
 		    p += LENGTH ("coding:");
 		    while (*p == ' ' || *p == '\t') p++;
-		    name = alloca_intbytes (suffix - p + 1);
+		    name = alloca_ibytes (suffix - p + 1);
 		    memcpy (name, p, suffix - p);
 		    name[suffix - p] = '\0';
 

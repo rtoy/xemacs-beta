@@ -355,50 +355,50 @@ void Lstream_unset_character_mode (Lstream *lstr);
 
 
 /************************************************************************/
-/*             working with an Lstream as a stream of Emchars           */
+/*             working with an Lstream as a stream of Ichars           */
 /************************************************************************/
 
 #ifdef MULE
 
 DECLARE_INLINE_HEADER (
-Emchar
-Lstream_get_emchar (Lstream *stream)
+Ichar
+Lstream_get_ichar (Lstream *stream)
 )
 {
   int c = Lstream_getc (stream);
   return (c < 0x80		/* c == EOF || byte_ascii_p (c) */
-	  ? (Emchar) c
-	  : Lstream_get_emchar_1 (stream, c));
+	  ? (Ichar) c
+	  : Lstream_get_ichar_1 (stream, c));
 }
 
-/* Write an Emchar to a stream.  Return value is 0 for success, -1 for
+/* Write an Ichar to a stream.  Return value is 0 for success, -1 for
    failure. */
 
 DECLARE_INLINE_HEADER (
 int
-Lstream_put_emchar (Lstream *stream, Emchar ch)
+Lstream_put_ichar (Lstream *stream, Ichar ch)
 )
 {
-  return emchar_ascii_p (ch) ?
+  return ichar_ascii_p (ch) ?
     Lstream_putc (stream, ch) :
-    Lstream_fput_emchar (stream, ch);
+    Lstream_fput_ichar (stream, ch);
 }
 
 DECLARE_INLINE_HEADER (
 void
-Lstream_unget_emchar (Lstream *stream, Emchar ch)
+Lstream_unget_ichar (Lstream *stream, Ichar ch)
 )
 {
-  if (emchar_ascii_p (ch))
+  if (ichar_ascii_p (ch))
     Lstream_ungetc (stream, ch);
   else
-    Lstream_funget_emchar (stream, ch);
+    Lstream_funget_ichar (stream, ch);
 }
 #else /* not MULE */
 
-# define Lstream_get_emchar(stream) Lstream_getc (stream)
-# define Lstream_put_emchar(stream, ch) Lstream_putc (stream, ch)
-# define Lstream_unget_emchar(stream, ch) Lstream_ungetc (stream, ch)
+# define Lstream_get_ichar(stream) Lstream_getc (stream)
+# define Lstream_put_ichar(stream, ch) Lstream_putc (stream, ch)
+# define Lstream_unget_ichar(stream, ch) Lstream_ungetc (stream, ch)
 
 #endif /* not MULE */
 
@@ -433,7 +433,7 @@ Lisp_Object make_filedesc_output_stream (int filedesc, int offset, int count,
 					 int flags);
 void filedesc_stream_set_pty_flushing (Lstream *stream,
 				       int pty_max_bytes,
-				       Intbyte eof_char);
+				       Ibyte eof_char);
 int filedesc_stream_fd (Lstream *stream);
 Lisp_Object make_lisp_string_input_stream (Lisp_Object string,
 					   Bytecount offset,

@@ -1057,7 +1057,7 @@ Lisp_Object coding_stream_coding_system (Lstream *stream);
 void set_coding_stream_coding_system (Lstream *stream,
 				      Lisp_Object codesys);
 Lisp_Object detect_coding_stream (Lisp_Object stream);
-Emchar decode_big5_char (int o1, int o2);
+Ichar decode_big5_char (int o1, int o2);
 void add_entry_to_coding_system_type_list (struct coding_system_methods *m);
 Lisp_Object make_internal_coding_system (Lisp_Object existing,
 					 Char_ASCII *prefix,

@@ -387,8 +387,8 @@ is implemented.
     end = len2;
 
   {
-    Intbyte *ptr1 = XSTRING_DATA (p1);
-    Intbyte *ptr2 = XSTRING_DATA (p2);
+    Ibyte *ptr1 = XSTRING_DATA (p1);
+    Ibyte *ptr2 = XSTRING_DATA (p2);
 
     /* #### It is not really necessary to do this: We could compare
        byte-by-byte and still get a reasonable comparison, since this
@@ -399,10 +399,10 @@ is implemented.
        aren't really well-defined anyway. */
     for (i = 0; i < end; i++)
       {
-	if (charptr_emchar (ptr1) != charptr_emchar (ptr2))
-	  return charptr_emchar (ptr1) < charptr_emchar (ptr2) ? Qt : Qnil;
-	INC_CHARPTR (ptr1);
-	INC_CHARPTR (ptr2);
+	if (itext_ichar (ptr1) != itext_ichar (ptr2))
+	  return itext_ichar (ptr1) < itext_ichar (ptr2) ? Qt : Qnil;
+	INC_IBYTEPTR (ptr1);
+	INC_IBYTEPTR (ptr2);
       }
   }
   /* Can't do i < len2 because then comparison between "foo" and "foo^@"
@@ -614,8 +614,8 @@ concat (int nargs, Lisp_Object *args,
   Lisp_Object last_tail;
   Lisp_Object prev;
   struct merge_string_extents_struct *args_mse = 0;
-  Intbyte *string_result = 0;
-  Intbyte *string_result_ptr = 0;
+  Ibyte *string_result = 0;
+  Ibyte *string_result_ptr = 0;
   struct gcpro gcpro1;
   int sdep = specpdl_depth ();
 
@@ -725,7 +725,7 @@ concat (int nargs, Lisp_Object *args,
 	   O(N^2) yuckage. */
         val = Qnil;
 	string_result =
-	  (Intbyte *) MALLOC_OR_ALLOCA (total_length * MAX_EMCHAR_LEN);
+	  (Ibyte *) MALLOC_OR_ALLOCA (total_length * MAX_ICHAR_LEN);
 	string_result_ptr = string_result;
         break;
       default:
@@ -748,8 +748,8 @@ concat (int nargs, Lisp_Object *args,
       Charcount thisleni = 0;
       Charcount thisindex = 0;
       Lisp_Object seq = args[argnum];
-      Intbyte *string_source_ptr = 0;
-      Intbyte *string_prev_result_ptr = string_result_ptr;
+      Ibyte *string_source_ptr = 0;
+      Ibyte *string_prev_result_ptr = string_result_ptr;
 
       if (!CONSP (seq))
 	{
@@ -783,8 +783,8 @@ concat (int nargs, Lisp_Object *args,
 
 	      if (STRINGP (seq))
 		{
-		  elt = make_char (charptr_emchar (string_source_ptr));
-		  INC_CHARPTR (string_source_ptr);
+		  elt = make_char (itext_ichar (string_source_ptr));
+		  INC_IBYTEPTR (string_source_ptr);
 		}
 	      else if (VECTORP (seq))
                 elt = XVECTOR_DATA (seq)[thisindex];
@@ -814,7 +814,7 @@ concat (int nargs, Lisp_Object *args,
 	  else
 	    {
 	      CHECK_CHAR_COERCE_INT (elt);
-	      string_result_ptr += set_charptr_emchar (string_result_ptr,
+	      string_result_ptr += set_itext_ichar (string_result_ptr,
 						       XCHAR (elt));
 	    }
 	}
@@ -1029,26 +1029,26 @@ are copied to the new string.
 /* Split STRING into a list of substrings.  The substrings are the
    parts of original STRING separated by SEPCHAR.  */
 static Lisp_Object
-split_string_by_emchar_1 (const Intbyte *string, Bytecount size,
-			  Emchar sepchar)
+split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
+			  Ichar sepchar)
 {
   Lisp_Object result = Qnil;
-  const Intbyte *end = string + size;
+  const Ibyte *end = string + size;
 
   while (1)
     {
-      const Intbyte *p = string;
+      const Ibyte *p = string;
       while (p < end)
 	{
-	  if (charptr_emchar (p) == sepchar)
+	  if (itext_ichar (p) == sepchar)
 	    break;
-	  INC_CHARPTR (p);
+	  INC_IBYTEPTR (p);
 	}
       result = Fcons (make_string (string, p - string), result);
       if (p < end)
 	{
 	  string = p;
-	  INC_CHARPTR (string);	/* skip sepchar */
+	  INC_IBYTEPTR (string);	/* skip sepchar */
 	}
       else
 	break;
@@ -1063,7 +1063,7 @@ Lisp_Object
 split_external_path (const Extbyte *path)
 {
   Bytecount newlen;
-  Intbyte *newpath;
+  Ibyte *newpath;
   if (!path)
     return Qnil;
 
@@ -1076,20 +1076,20 @@ split_external_path (const Extbyte *path)
   if (!newlen)
     return Qnil;
 
-  return split_string_by_emchar_1 (newpath, newlen, SEPCHAR);
+  return split_string_by_ichar_1 (newpath, newlen, SEPCHAR);
 }
 
 Lisp_Object
-split_env_path (const CIntbyte *evarname, const Intbyte *default_)
+split_env_path (const CIbyte *evarname, const Ibyte *default_)
 {
-  const Intbyte *path = 0;
+  const Ibyte *path = 0;
   if (evarname)
     path = egetenv (evarname);
   if (!path)
     path = default_;
   if (!path)
     return Qnil;
-  return split_string_by_emchar_1 (path, qxestrlen (path), SEPCHAR);
+  return split_string_by_ichar_1 (path, qxestrlen (path), SEPCHAR);
 }
 
 /* Ben thinks this function should not exist or be exported to Lisp.
@@ -1102,7 +1102,7 @@ Split STRING into a list of substrings originally separated by SEPCHAR.
 {
   CHECK_STRING (string);
   CHECK_CHAR (sepchar);
-  return split_string_by_emchar_1 (XSTRING_DATA (string),
+  return split_string_by_ichar_1 (XSTRING_DATA (string),
 				   XSTRING_LENGTH (string),
 				   XCHAR (sepchar));
 }
@@ -1126,9 +1126,9 @@ with `path-separator'.
        "`path-separator' should be set to a single-character string",
        Vpath_separator);
 
-  return (split_string_by_emchar_1
+  return (split_string_by_ichar_1
 	  (XSTRING_DATA (path), XSTRING_LENGTH (path),
-	   charptr_emchar (XSTRING_DATA (Vpath_separator))));
+	   itext_ichar (XSTRING_DATA (Vpath_separator))));
 }
 
 
@@ -2911,15 +2911,15 @@ ARRAY is a vector, bit vector, or string.
       Bytecount old_bytecount = XSTRING_LENGTH (array);
       Bytecount new_bytecount;
       Bytecount item_bytecount;
-      Intbyte item_buf[MAX_EMCHAR_LEN];
-      Intbyte *p;
-      Intbyte *end;
+      Ibyte item_buf[MAX_ICHAR_LEN];
+      Ibyte *p;
+      Ibyte *end;
 
       CHECK_CHAR_COERCE_INT (item);
       CHECK_LISP_WRITEABLE (array);
 
       sledgehammer_check_ascii_begin (array);
-      item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
+      item_bytecount = set_itext_ichar (item_buf, XCHAR (item));
       new_bytecount = item_bytecount * (Bytecount) string_char_length (array);
 
       resize_string (array, -1, new_bytecount - old_bytecount);
@@ -3186,15 +3186,15 @@ mapcar1 (Elemcount leni, Lisp_Object *vals,
     {
       /* The string data of `sequence' might be relocated during GC. */
       Bytecount slen = XSTRING_LENGTH (sequence);
-      Intbyte *p = alloca_array (Intbyte, slen);
-      Intbyte *end = p + slen;
+      Ibyte *p = alloca_array (Ibyte, slen);
+      Ibyte *end = p + slen;
 
       memcpy (p, XSTRING_DATA (sequence), slen);
 
       while (p < end)
 	{
-	  args[1] = make_char (charptr_emchar (p));
-	  INC_CHARPTR (p);
+	  args[1] = make_char (itext_ichar (p));
+	  INC_IBYTEPTR (p);
 	  result = Ffuncall (2, args);
 	  if (vals) vals[gcpro1.nvars++] = result;
 	}
@@ -3635,23 +3635,23 @@ base64_conversion_error (const char *reason, Lisp_Object frob)
 }
 
 #define ADVANCE_INPUT(c, stream)					\
- ((ec = Lstream_get_emchar (stream)) == -1 ? 0 :			\
+ ((ec = Lstream_get_ichar (stream)) == -1 ? 0 :			\
   ((ec > 255) ?								\
    (base64_conversion_error ("Non-ascii character in base64 input",	\
     make_char (ec)), 0)							\
-   : (c = (Intbyte)ec), 1))
+   : (c = (Ibyte)ec), 1))
 
 static Bytebpos
-base64_encode_1 (Lstream *istream, Intbyte *to, int line_break)
+base64_encode_1 (Lstream *istream, Ibyte *to, int line_break)
 {
   EMACS_INT counter = 0;
-  Intbyte *e = to;
-  Emchar ec;
+  Ibyte *e = to;
+  Ichar ec;
   unsigned int value;
 
   while (1)
     {
-      Intbyte c;
+      Ibyte c;
       if (!ADVANCE_INPUT (c, istream))
 	break;
 
@@ -3701,9 +3701,9 @@ base64_encode_1 (Lstream *istream, Intbyte *to, int line_break)
 
 /* Get next character from the stream, except that non-base64
    characters are ignored.  This is in accordance with rfc2045.  EC
-   should be an Emchar, so that it can hold -1 as the value for EOF.  */
+   should be an Ichar, so that it can hold -1 as the value for EOF.  */
 #define ADVANCE_INPUT_IGNORE_NONBASE64(ec, stream, streampos) do {	\
-  ec = Lstream_get_emchar (stream);					\
+  ec = Lstream_get_ichar (stream);					\
   ++streampos;								\
   /* IS_BASE64 may not be called with negative arguments so check for	\
      EOF first. */							\
@@ -3712,20 +3712,20 @@ base64_encode_1 (Lstream *istream, Intbyte *to, int line_break)
 } while (1)
 
 #define STORE_BYTE(pos, val, ccnt) do {					\
-  pos += set_charptr_emchar (pos, (Emchar)((unsigned char)(val)));	\
+  pos += set_itext_ichar (pos, (Ichar)((unsigned char)(val)));	\
   ++ccnt;								\
 } while (0)
 
 static Bytebpos
-base64_decode_1 (Lstream *istream, Intbyte *to, Charcount *ccptr)
+base64_decode_1 (Lstream *istream, Ibyte *to, Charcount *ccptr)
 {
   Charcount ccnt = 0;
-  Intbyte *e = to;
+  Ibyte *e = to;
   EMACS_INT streampos = 0;
 
   while (1)
     {
-      Emchar ec;
+      Ichar ec;
       unsigned long value;
 
       /* Process first byte of a quadruplet.  */
@@ -3797,7 +3797,7 @@ into shorter lines.
 */
        (start, end, no_line_break))
 {
-  Intbyte *encoded;
+  Ibyte *encoded;
   Bytebpos encoded_length;
   Charcount allength, length;
   struct buffer *buf = current_buffer;
@@ -3816,9 +3816,9 @@ into shorter lines.
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
-  /* We needn't multiply allength with MAX_EMCHAR_LEN because all the
+  /* We needn't multiply allength with MAX_ICHAR_LEN because all the
      base64 characters will be single-byte.  */
-  encoded = (Intbyte *) MALLOC_OR_ALLOCA (allength);
+  encoded = (Ibyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
@@ -3849,7 +3849,7 @@ into shorter lines.
 {
   Charcount allength, length;
   Bytebpos encoded_length;
-  Intbyte *encoded;
+  Ibyte *encoded;
   Lisp_Object input, result;
   int speccount = specpdl_depth();
 
@@ -3860,7 +3860,7 @@ into shorter lines.
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   input = make_lisp_string_input_stream (string, 0, -1);
-  encoded = (Intbyte *) MALLOC_OR_ALLOCA (allength);
+  encoded = (Ibyte *) MALLOC_OR_ALLOCA (allength);
   encoded_length = base64_encode_1 (XLSTREAM (input), encoded,
 				    NILP (no_line_break));
   if (encoded_length > allength)
@@ -3881,7 +3881,7 @@ Characters out of the base64 alphabet are ignored.
 {
   struct buffer *buf = current_buffer;
   Charbpos begv, zv, old_pt = BUF_PT (buf);
-  Intbyte *decoded;
+  Ibyte *decoded;
   Bytebpos decoded_length;
   Charcount length, cc_decoded_length;
   Lisp_Object input;
@@ -3894,9 +3894,9 @@ Characters out of the base64 alphabet are ignored.
 
   input = make_lisp_buffer_input_stream (buf, begv, zv, 0);
   /* We need to allocate enough room for decoding the text. */
-  decoded = (Intbyte *) MALLOC_OR_ALLOCA (length * MAX_EMCHAR_LEN);
+  decoded = (Ibyte *) MALLOC_OR_ALLOCA (length * MAX_ICHAR_LEN);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded, &cc_decoded_length);
-  if (decoded_length > length * MAX_EMCHAR_LEN)
+  if (decoded_length > length * MAX_ICHAR_LEN)
     abort ();
   Lstream_delete (XLSTREAM (input));
 
@@ -3922,7 +3922,7 @@ Characters out of the base64 alphabet are ignored.
 */
        (string))
 {
-  Intbyte *decoded;
+  Ibyte *decoded;
   Bytebpos decoded_length;
   Charcount length, cc_decoded_length;
   Lisp_Object input, result;
@@ -3932,12 +3932,12 @@ Characters out of the base64 alphabet are ignored.
 
   length = string_char_length (string);
   /* We need to allocate enough room for decoding the text. */
-  decoded = (Intbyte *) MALLOC_OR_ALLOCA (length * MAX_EMCHAR_LEN);
+  decoded = (Ibyte *) MALLOC_OR_ALLOCA (length * MAX_ICHAR_LEN);
 
   input = make_lisp_string_input_stream (string, 0, -1);
   decoded_length = base64_decode_1 (XLSTREAM (input), decoded,
 				    &cc_decoded_length);
-  if (decoded_length > length * MAX_EMCHAR_LEN)
+  if (decoded_length > length * MAX_ICHAR_LEN)
     abort ();
   Lstream_delete (XLSTREAM (input));
 
@@ -4057,7 +4057,7 @@ The directory separator in search paths, as a string.
 */ );
   {
     char c = SEPCHAR;
-    Vpath_separator = make_string ((Intbyte *) &c, 1);
+    Vpath_separator = make_string ((Ibyte *) &c, 1);
   }
 
   DEFVAR_BOOL ("require-prints-loading-message",

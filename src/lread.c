@@ -223,14 +223,14 @@ continuable_read_syntax_error (const char *string)
 
 
 /* Handle unreading and rereading of characters. */
-static Emchar
+static Ichar
 readchar (Lisp_Object readcharfun)
 {
   /* This function can GC */
 
   if (BUFFERP (readcharfun))
     {
-      Emchar c;
+      Ichar c;
       struct buffer *b = XBUFFER (readcharfun);
 
       if (!BUFFER_LIVE_P (b))
@@ -245,7 +245,7 @@ readchar (Lisp_Object readcharfun)
     }
   else if (LSTREAMP (readcharfun))
     {
-      Emchar c = Lstream_get_emchar (XLSTREAM (readcharfun));
+      Ichar c = Lstream_get_ichar (XLSTREAM (readcharfun));
 #ifdef DEBUG_XEMACS /* testing Mule */
       static int testing_mule = 0; /* Change via debugger */
       if (testing_mule)
@@ -259,7 +259,7 @@ readchar (Lisp_Object readcharfun)
     }
   else if (MARKERP (readcharfun))
     {
-      Emchar c;
+      Ichar c;
       Charbpos mpos = marker_position (readcharfun);
       struct buffer *inbuffer = XMARKER (readcharfun)->buffer;
 
@@ -283,7 +283,7 @@ readchar (Lisp_Object readcharfun)
    If the stream is a user function, call it with the char as argument.  */
 
 static void
-unreadchar (Lisp_Object readcharfun, Emchar c)
+unreadchar (Lisp_Object readcharfun, Ichar c)
 {
   if (c == -1)
     /* Don't back up the pointer if we're unreading the end-of-input mark,
@@ -293,7 +293,7 @@ unreadchar (Lisp_Object readcharfun, Emchar c)
     BUF_SET_PT (XBUFFER (readcharfun), BUF_PT (XBUFFER (readcharfun)) - 1);
   else if (LSTREAMP (readcharfun))
     {
-      Lstream_unget_emchar (XLSTREAM (readcharfun), c);
+      Lstream_unget_ichar (XLSTREAM (readcharfun), c);
 #ifdef DEBUG_XEMACS /* testing Mule */
       {
         static int testing_mule = 0; /* Set this using debugger */
@@ -313,7 +313,7 @@ unreadchar (Lisp_Object readcharfun, Emchar c)
 static Lisp_Object read0 (Lisp_Object readcharfun);
 static Lisp_Object read1 (Lisp_Object readcharfun);
 static Lisp_Object read_list (Lisp_Object readcharfun,
-                              Emchar terminator,
+                              Ichar terminator,
                               int allow_dotted_lists,
 			      int check_for_doc_references);
 
@@ -523,7 +523,7 @@ encoding detection or end-of-line detection.
      Unix truly sucks. */
   if (XSTRING_LENGTH (file) > 0)
     {
-      Intbyte *foundstr;
+      Ibyte *foundstr;
       int foundlen;
 
       fd = locate_file (Vload_path, file,
@@ -544,7 +544,7 @@ encoding detection or end-of-line detection.
 	    }
 	}
 
-      foundstr = (Intbyte *) ALLOCA (XSTRING_LENGTH (found) + 1);
+      foundstr = (Ibyte *) ALLOCA (XSTRING_LENGTH (found) + 1);
       qxestrcpy (foundstr, XSTRING_DATA (found));
       foundlen = qxestrlen (foundstr);
 
@@ -861,11 +861,11 @@ locate_file_find_directory_hash_table (Lisp_Object directory)
    FUN returns non-zero. */
 static void
 locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
-			  int (*fun) (Intbyte *, void *),
+			  int (*fun) (Ibyte *, void *),
 			  void *arg)
 {
   /* This function can GC */
-  Intbyte *fn;
+  Ibyte *fn;
   int fn_len, max;
 
   /* Calculate maximum size of any filename made from
@@ -888,7 +888,7 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
     max = XSTRING_LENGTH (suffixes);
 
   fn_len = XSTRING_LENGTH (filename);
-  fn = (Intbyte *) ALLOCA (max + fn_len + 1);
+  fn = (Ibyte *) ALLOCA (max + fn_len + 1);
   memcpy (fn, XSTRING_DATA (filename), fn_len);
 
   /* Loop over suffixes.  */
@@ -918,11 +918,11 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
   else
     {
       /* Case c) */
-      const Intbyte *nsuffix = XSTRING_DATA (suffixes);
+      const Ibyte *nsuffix = XSTRING_DATA (suffixes);
 
       while (1)
 	{
-	  Intbyte *esuffix = qxestrchr (nsuffix, ':');
+	  Ibyte *esuffix = qxestrchr (nsuffix, ':');
 	  Bytecount lsuffix = esuffix ? esuffix - nsuffix :
 	    qxestrlen (nsuffix);
 
@@ -949,7 +949,7 @@ struct locate_file_in_directory_mapper_closure
 };
 
 static int
-locate_file_in_directory_mapper (Intbyte *fn, void *arg)
+locate_file_in_directory_mapper (Ibyte *fn, void *arg)
 {
   struct locate_file_in_directory_mapper_closure *closure =
     (struct locate_file_in_directory_mapper_closure *) arg;
@@ -1057,7 +1057,7 @@ locate_file_without_hash (Lisp_Object path, Lisp_Object str,
 }
 
 static int
-locate_file_construct_suffixed_files_mapper (Intbyte *fn, void *arg)
+locate_file_construct_suffixed_files_mapper (Ibyte *fn, void *arg)
 {
   Lisp_Object *tail = (Lisp_Object *) arg;
   *tail = Fcons (build_intstring (fn), *tail);
@@ -1314,7 +1314,7 @@ readevalloop (Lisp_Object readcharfun,
               int printflag)
 {
   /* This function can GC */
-  REGISTER Emchar c;
+  REGISTER Ichar c;
   REGISTER Lisp_Object val = Qnil;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2;
@@ -1564,7 +1564,7 @@ read0 (Lisp_Object readcharfun)
 
   if (CONSP (val) && UNBOUNDP (XCAR (val)))
     {
-      Emchar c = XCHAR (XCDR (val));
+      Ichar c = XCHAR (XCDR (val));
       free_cons (val);
       return Fsignal (Qinvalid_read_syntax,
 		      list1 (Fchar_to_string (make_char (c))));
@@ -1573,11 +1573,11 @@ read0 (Lisp_Object readcharfun)
   return val;
 }
 
-static Emchar
+static Ichar
 read_escape (Lisp_Object readcharfun)
 {
   /* This function can GC */
-  Emchar c = readchar (readcharfun);
+  Ichar c = readchar (readcharfun);
 
   if (c < 0)
     signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
@@ -1653,7 +1653,7 @@ read_escape (Lisp_Object readcharfun)
     case '7':
       /* An octal escape, as in ANSI C.  */
       {
-	REGISTER Emchar i = c - '0';
+	REGISTER Ichar i = c - '0';
 	REGISTER int count = 0;
 	while (++count < 3)
 	  {
@@ -1677,12 +1677,12 @@ read_escape (Lisp_Object readcharfun)
 	 mean, anyways, if the internal representation is hidden?
          This is also consistent with the treatment of octal escapes. */
       {
-	REGISTER Emchar i = 0;
+	REGISTER Ichar i = 0;
 	REGISTER int count = 0;
 	while (++count <= 2)
 	  {
 	    c = readchar (readcharfun);
-	    /* Remember, can't use isdigit(), isalpha() etc. on Emchars */
+	    /* Remember, can't use isdigit(), isalpha() etc. on Ichars */
 	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
 	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
             else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
@@ -1709,10 +1709,10 @@ read_escape (Lisp_Object readcharfun)
 
 /* read symbol-constituent stuff into `Vread_buffer_stream'. */
 static Bytecount
-read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
+read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
 {
   /* This function can GC */
-  Emchar c = ((firstchar) >= 0 ? firstchar : readchar (readcharfun));
+  Ichar c = ((firstchar) >= 0 ? firstchar : readchar (readcharfun));
   Lstream_rewind (XLSTREAM (Vread_buffer_stream));
 
   *saw_a_backslash = 0;
@@ -1735,7 +1735,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
 	    signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
 	  *saw_a_backslash = 1;
 	}
-      Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), c);
+      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), c);
       QUIT;
       c = readchar (readcharfun);
     }
@@ -1743,17 +1743,17 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
   if (c >= 0)
     unreadchar (readcharfun, c);
   /* blasted terminating 0 */
-  Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), 0);
+  Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), 0);
   Lstream_flush (XLSTREAM (Vread_buffer_stream));
 
   return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
-static Lisp_Object parse_integer (const Intbyte *buf, Bytecount len, int base);
+static Lisp_Object parse_integer (const Ibyte *buf, Bytecount len, int base);
 
 static Lisp_Object
 read_atom (Lisp_Object readcharfun,
-           Emchar firstchar,
+           Ichar firstchar,
            int uninterned_symbol)
 {
   /* This function can GC */
@@ -1804,7 +1804,7 @@ read_atom (Lisp_Object readcharfun,
 		return make_int (number);
 	      }
 #else
-              return parse_integer ((Intbyte *) read_ptr, len, 10);
+              return parse_integer ((Ibyte *) read_ptr, len, 10);
 #endif
 	    }
 	}
@@ -1817,10 +1817,10 @@ read_atom (Lisp_Object readcharfun,
   {
     Lisp_Object sym;
     if (uninterned_symbol)
-      sym = Fmake_symbol ( make_string ((Intbyte *) read_ptr, len));
+      sym = Fmake_symbol ( make_string ((Ibyte *) read_ptr, len));
     else
       {
-	Lisp_Object name = make_string ((Intbyte *) read_ptr, len);
+	Lisp_Object name = make_string ((Ibyte *) read_ptr, len);
 	sym = Fintern (name, Qnil);
       }
     return sym;
@@ -1829,10 +1829,10 @@ read_atom (Lisp_Object readcharfun,
 
 
 static Lisp_Object
-parse_integer (const Intbyte *buf, Bytecount len, int base)
+parse_integer (const Ibyte *buf, Bytecount len, int base)
 {
-  const Intbyte *lim = buf + len;
-  const Intbyte *p = buf;
+  const Ibyte *lim = buf + len;
+  const Ibyte *p = buf;
   EMACS_UINT num = 0;
   int negativland = 0;
 
@@ -1919,7 +1919,7 @@ read_bit_vector (Lisp_Object readcharfun)
   while (1)
     {
       unsigned char bit;
-      Emchar c = readchar (readcharfun);
+      Ichar c = readchar (readcharfun);
       if (c == '0')
 	bit = 0;
       else if (c == '1')
@@ -1993,7 +1993,7 @@ recognized_structure_type (Lisp_Object type)
 static Lisp_Object
 read_structure (Lisp_Object readcharfun)
 {
-  Emchar c = readchar (readcharfun);
+  Ichar c = readchar (readcharfun);
   Lisp_Object list = Qnil;
   Lisp_Object orig_list = Qnil;
   Lisp_Object already_seen = Qnil;
@@ -2082,11 +2082,11 @@ static Lisp_Object read_vector (Lisp_Object readcharfun, int terminator);
 
 /* Get the next character; filter out whitespace and comments */
 
-static Emchar
+static Ichar
 reader_nextchar (Lisp_Object readcharfun)
 {
   /* This function can GC */
-  Emchar c;
+  Ichar c;
 
  retry:
   QUIT;
@@ -2131,7 +2131,7 @@ list2_pure (int pure, Lisp_Object a, Lisp_Object b)
 static Lisp_Object
 read1 (Lisp_Object readcharfun)
 {
-  Emchar c;
+  Ichar c;
 
 retry:
   c = reader_nextchar (readcharfun);
@@ -2142,7 +2142,7 @@ retry:
       {
 #ifdef LISP_BACKQUOTES	/* old backquote compatibility in lisp reader */
 	/* if this is disabled, then other code in eval.c must be enabled */
-	Emchar ch = reader_nextchar (readcharfun);
+	Ichar ch = reader_nextchar (readcharfun);
 	switch (ch)
 	  {
 	  case '`':
@@ -2228,7 +2228,7 @@ retry:
 	c = readchar (readcharfun);
 	unreadchar (readcharfun, c);
 
-	/* Can't use isdigit on Emchars */
+	/* Can't use isdigit on Ichars */
 	if (c < '0' || c > '9')
 	  return noseeum_cons (Qunbound, make_char ('.'));
 
@@ -2290,7 +2290,7 @@ retry:
 	      while (1)
 		{
 		  Lisp_Object beg, end, plist;
-		  Emchar ch;
+		  Ichar ch;
 		  int invalid = 0;
 
 		  beg = read1 (readcharfun);
@@ -2535,7 +2535,7 @@ retry:
 		  cancel = 1;
 	      }
 	    else
-	      Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), c);
+	      Lstream_put_ichar (XLSTREAM (Vread_buffer_stream), c);
 	    QUIT;
 	  }
 	if (c < 0)
@@ -2578,7 +2578,7 @@ int
 isfloat_string (const char *cp)
 {
   int state = 0;
-  const Intbyte *ucp = (const Intbyte *) cp;
+  const Ibyte *ucp = (const Ibyte *) cp;
 
   if (*ucp == '+' || *ucp == '-')
     ucp++;
@@ -2626,7 +2626,7 @@ isfloat_string (const char *cp)
 
 static void *
 sequence_reader (Lisp_Object readcharfun,
-                 Emchar terminator,
+                 Ichar terminator,
                  void *state,
                  void * (*conser) (Lisp_Object readcharfun,
                                    void *state, Charcount len))
@@ -2635,7 +2635,7 @@ sequence_reader (Lisp_Object readcharfun,
 
   for (len = 0; ; len++)
     {
-      Emchar ch;
+      Ichar ch;
 
       QUIT;
       ch = reader_nextchar (readcharfun);
@@ -2661,7 +2661,7 @@ struct read_list_state
     Lisp_Object tail;
     int length;
     int allow_dotted_lists;
-    Emchar terminator;
+    Ichar terminator;
   };
 
 static void *
@@ -2675,7 +2675,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
   if (CONSP (elt) && UNBOUNDP (XCAR (elt)))
     {
       Lisp_Object tem = elt;
-      Emchar ch;
+      Ichar ch;
 
       elt = XCDR (elt);
       free_cons (tem);
@@ -2757,7 +2757,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 
 static Lisp_Object
 read_list (Lisp_Object readcharfun,
-           Emchar terminator,
+           Ichar terminator,
            int allow_dotted_lists,
 	   int check_for_doc_references)
 {
@@ -2851,7 +2851,7 @@ read_list (Lisp_Object readcharfun,
 
 static Lisp_Object
 read_vector (Lisp_Object readcharfun,
-             Emchar terminator)
+             Ichar terminator)
 {
   Lisp_Object tem;
   Lisp_Object *p;
@@ -2888,7 +2888,7 @@ read_vector (Lisp_Object readcharfun,
 }
 
 static Lisp_Object
-read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
+read_compiled_function (Lisp_Object readcharfun, Ichar terminator)
 {
   /* Accept compiled functions at read-time so that we don't
      have to build them at load-time. */

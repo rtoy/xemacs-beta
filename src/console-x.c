@@ -48,21 +48,21 @@ static void
 split_up_display_spec (Lisp_Object display, int *hostname_length,
 		       int *display_length, int *screen_length)
 {
-  Intbyte *beg = XSTRING_DATA (display);
-  Intbyte *end = beg + XSTRING_LENGTH (display);
-  Intbyte *p = end;
+  Ibyte *beg = XSTRING_DATA (display);
+  Ibyte *end = beg + XSTRING_LENGTH (display);
+  Ibyte *p = end;
 
   while (p > beg)
     {
-      DEC_CHARPTR (p);
-      if (charptr_emchar (p) == ':')
+      DEC_IBYTEPTR (p);
+      if (itext_ichar (p) == ':')
 	{
 	  *hostname_length = p - beg;
 
 	  while (p < end - 1)
 	    {
-	      INC_CHARPTR (p);
-	      if (charptr_emchar (p) == '.')
+	      INC_IBYTEPTR (p);
+	      if (itext_ichar (p) == '.')
 		{
 		  *display_length = p - beg - *hostname_length;
 		  *screen_length = end - p;
@@ -193,20 +193,20 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   connection = x_device_to_console_connection (connection, errb);
 
   /* Check for a couple of standard special cases */
-  if (string_emchar (connection, 0) == ':')
+  if (string_ichar (connection, 0) == ':')
     connection = concat2 (build_string ("localhost"), connection);
   else
     {
       /* connection =~ s/^unix:/localhost:/; */
-      const Intbyte *p   = XSTRING_DATA (connection);
-      const Intbyte *end = XSTRING_DATA (connection) + XSTRING_LENGTH (connection);
+      const Ibyte *p   = XSTRING_DATA (connection);
+      const Ibyte *end = XSTRING_DATA (connection) + XSTRING_LENGTH (connection);
       int i;
 
       for (i = 0; i < (int) sizeof ("unix:") - 1; i++)
 	{
-	  if (p == end || charptr_emchar (p) != "unix:"[i])
+	  if (p == end || itext_ichar (p) != "unix:"[i])
 	    goto ok;
-	  INC_CHARPTR (p);
+	  INC_IBYTEPTR (p);
 	}
 
       connection = concat2 (build_string ("localhost:"),

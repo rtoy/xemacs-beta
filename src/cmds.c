@@ -318,7 +318,7 @@ COUNT was explicitly specified.
   return Fdelete_char (make_int (- n), killp);
 }
 
-static void internal_self_insert (Emchar ch, int noautofill);
+static void internal_self_insert (Ichar ch, int noautofill);
 
 DEFUN ("self-insert-command", Fself_insert_command, 1, 1, "*p", /*
 Insert the character you type.
@@ -328,7 +328,7 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
        (count))
 {
   /* This function can GC */
-  Emchar ch;
+  Ichar ch;
   Lisp_Object c;
   EMACS_INT n;
 
@@ -364,12 +364,12 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
    A value of 2 means this did things that call for an undo boundary.  */
 
 static void
-internal_self_insert (Emchar c1, int noautofill)
+internal_self_insert (Ichar c1, int noautofill)
 {
   /* This function can GC */
   /* int hairy = 0; -- unused */
   REGISTER enum syntaxcode synt;
-  REGISTER Emchar c2;
+  REGISTER Ichar c2;
   Lisp_Object overwrite;
   Lisp_Object syntax_table;
   struct buffer *buf = current_buffer;

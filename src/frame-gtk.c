@@ -276,7 +276,7 @@ gtk_frame_properties (struct frame *f)
    individual properties. */
 
 static void
-gtk_set_frame_text_value (struct frame *f, Intbyte *value,
+gtk_set_frame_text_value (struct frame *f, Ibyte *value,
 			  void (*func) (gpointer, gchar *),
 			  gpointer arg)
 {
@@ -287,7 +287,7 @@ gtk_set_frame_text_value (struct frame *f, Intbyte *value,
 
 #ifdef MULE
   {
-    Intbyte *ptr;
+    Ibyte *ptr;
     
     /* Optimize for common ASCII case */
     for (ptr = value; *ptr; ptr++)
@@ -305,7 +305,7 @@ gtk_set_frame_text_value (struct frame *f, Intbyte *value,
 }
 
 static void
-gtk_set_title_from_intbyte (struct frame *f, Intbyte *name)
+gtk_set_title_from_ibyte (struct frame *f, Ibyte *name)
 {
   if (GTK_IS_WINDOW (FRAME_GTK_SHELL_WIDGET (f)))
     gtk_set_frame_text_value (f, name,
@@ -314,7 +314,7 @@ gtk_set_title_from_intbyte (struct frame *f, Intbyte *name)
 }
 
 static void
-gtk_set_icon_name_from_intbyte (struct frame *f, Intbyte *name)
+gtk_set_icon_name_from_ibyte (struct frame *f, Ibyte *name)
 {
   gtk_set_frame_text_value (f, name,
 			    (void (*)(gpointer, gchar *))
@@ -1430,8 +1430,8 @@ console_type_create_frame_gtk (void)
   CONSOLE_HAS_METHOD (gtk, internal_frame_property_p);
   CONSOLE_HAS_METHOD (gtk, frame_properties);
   CONSOLE_HAS_METHOD (gtk, set_frame_properties);
-  CONSOLE_HAS_METHOD (gtk, set_title_from_intbyte);
-  CONSOLE_HAS_METHOD (gtk, set_icon_name_from_intbyte);
+  CONSOLE_HAS_METHOD (gtk, set_title_from_ibyte);
+  CONSOLE_HAS_METHOD (gtk, set_icon_name_from_ibyte);
   CONSOLE_HAS_METHOD (gtk, frame_visible_p);
   CONSOLE_HAS_METHOD (gtk, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (gtk, frame_iconified_p);

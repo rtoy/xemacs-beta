@@ -40,7 +40,7 @@ struct passwd
 #ifdef emacs
 
 struct passwd *getpwuid (uid_t uid);
-struct passwd *getpwnam (const Intbyte *name);
+struct passwd *getpwnam (const Ibyte *name);
 uid_t getuid (void);
 uid_t geteuid (void);
 gid_t getgid (void);
@@ -52,7 +52,7 @@ gid_t getegid (void);
 
 #ifdef emacs
 
-struct passwd *qxe_getpwnam (const Intbyte *name);
+struct passwd *qxe_getpwnam (const Ibyte *name);
 struct passwd *qxe_getpwuid (uid_t uid);
 struct passwd *qxe_getpwent (void);
 

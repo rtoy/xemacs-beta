@@ -287,7 +287,7 @@ x_keysym_to_character (KeySym keysym)
     return Qnil;
 
 #ifdef MULE
-  return make_char (make_emchar (charset, code, 0));
+  return make_char (make_ichar (charset, code, 0));
 #else
   return make_char (code + 0x80);
 #endif
@@ -1050,7 +1050,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
       {
 	/* Generate multiple emacs events */
 	struct device *d = get_device_from_display (event->display);
-        Emchar ch;
+        Ichar ch;
 	Lisp_Object instream, fb_instream;
 	Lstream *istr;
 	struct gcpro gcpro1, gcpro2;
@@ -1065,7 +1065,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	istr = XLSTREAM (instream);
 
 	GCPRO2 (instream, fb_instream);
-        while ((ch = Lstream_get_emchar (istr)) != EOF)
+        while ((ch = Lstream_get_ichar (istr)) != EOF)
           {
             Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	    Lisp_Event *ev          = XEVENT (emacs_event);
@@ -1402,7 +1402,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		    {
 		      len = strlen ((char*)data);
 		      hurl = dnd_url_hexify_string ((char *)data, "file:");
-		      l_item = make_string ((Intbyte *)hurl, strlen (hurl));
+		      l_item = make_string ((Ibyte *)hurl, strlen (hurl));
 		      l_dndlist = Fcons (l_item, l_dndlist);
 		      data += len + 1;
 		      xfree (hurl);
@@ -1412,8 +1412,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		break;
 	      case DndText:
 		l_type = Qdragdrop_MIME;
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Intbyte *)"text/plain", 10) ),
-					    make_string ((Intbyte *)"8bit", 4),
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Ibyte *)"text/plain", 10) ),
+					    make_string ((Ibyte *)"8bit", 4),
 					    make_ext_string ((Extbyte *)data,
 							     strlen((char *)data),
 							     Qctext) ) );
@@ -1438,7 +1438,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		{
 		  char *hurl = dnd_url_hexify_string ((char *) data, "file:");
 
-		  l_dndlist = list1 ( make_string ((Intbyte *)hurl,
+		  l_dndlist = list1 ( make_string ((Ibyte *)hurl,
 						   strlen (hurl)) );
 		  l_type = Qdragdrop_URL;
 
@@ -1454,8 +1454,8 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 		l_type = Qdragdrop_URL;
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = list1 ( list3 ( list1 ( make_string ((Intbyte *)"application/octet-stream", 24) ),
-					    make_string ((Intbyte *)"8bit", 4),
+		l_dndlist = list1 ( list3 ( list1 ( make_string ((Ibyte *)"application/octet-stream", 24) ),
+					    make_string ((Ibyte *)"8bit", 4),
 					    make_ext_string ((Extbyte *)data,
 							     size,
 							     Qbinary) ) );
@@ -2960,7 +2960,7 @@ check_for_tty_quit_char (struct device *d)
   SELECT_TYPE temp_mask;
   int infd = DEVICE_INFD (d);
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  Emchar quit_char = CONSOLE_QUIT_CHAR (con);
+  Ichar quit_char = CONSOLE_QUIT_CHAR (con);
 
   FD_ZERO (&temp_mask);
   FD_SET (infd, &temp_mask);
@@ -2968,7 +2968,7 @@ check_for_tty_quit_char (struct device *d)
   while (1)
     {
       Lisp_Object event;
-      Emchar the_char;
+      Ichar the_char;
 
       if (!poll_fds_for_input (temp_mask))
 	return;

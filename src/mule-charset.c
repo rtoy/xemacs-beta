@@ -204,7 +204,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
 static Lisp_Object
 make_charset (int id, Lisp_Object name, int rep_bytes,
 	      int type, int columns, int graphic,
-	      Intbyte final, int direction,  Lisp_Object short_name,
+	      Ibyte final, int direction,  Lisp_Object short_name,
 	      Lisp_Object long_name, Lisp_Object doc,
 	      Lisp_Object reg, int overwrite)
 {
@@ -470,7 +470,7 @@ character set.  Recognized properties are:
        (name, doc_string, props))
 {
   int id, dimension = 1, chars = 94, graphic = 0, columns = -1;
-  Intbyte final = 0;
+  Ibyte final = 0;
   int direction = CHARSET_LEFT_TO_RIGHT;
   int type;
   Lisp_Object registry = Qnil;
@@ -606,7 +606,7 @@ character set.  Recognized properties are:
 
   if (temporary)
     {
-      Intbyte tempname[80];
+      Ibyte tempname[80];
 
       qxesprintf (tempname, "___temporary___%d__", id);
       name = intern_int (tempname);
@@ -654,7 +654,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
 {
   Lisp_Object new_charset = Qnil;
   int id, dimension, columns, graphic;
-  Intbyte final;
+  Ibyte final;
   int direction, type;
   Lisp_Object registry, doc_string, short_name, long_name;
   Lisp_Charset *cs;

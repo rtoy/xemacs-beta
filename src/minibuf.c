@@ -206,7 +206,7 @@ Lowest-level interface to minibuffers.  Don't call this.
    if IGNORE_CASE is true. */
 
 Charcount
-scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
+scmp_1 (const Ibyte *s1, const Ibyte *s2, Charcount len,
 	int ignore_case)
 {
   Charcount l = len;
@@ -215,14 +215,14 @@ scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
     {
       while (l)
         {
-          Emchar c1 = DOWNCASE (0, charptr_emchar (s1));
-          Emchar c2 = DOWNCASE (0, charptr_emchar (s2));
+          Ichar c1 = DOWNCASE (0, itext_ichar (s1));
+          Ichar c2 = DOWNCASE (0, itext_ichar (s2));
 
           if (c1 == c2)
             {
               l--;
-              INC_CHARPTR (s1);
-              INC_CHARPTR (s2);
+              INC_IBYTEPTR (s1);
+              INC_IBYTEPTR (s2);
             }
           else
             break;
@@ -230,11 +230,11 @@ scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
     }
   else
     {
-      while (l && charptr_emchar (s1) == charptr_emchar (s2))
+      while (l && itext_ichar (s1) == itext_ichar (s2))
 	{
 	  l--;
-	  INC_CHARPTR (s1);
-	  INC_CHARPTR (s2);
+	  INC_IBYTEPTR (s1);
+	  INC_IBYTEPTR (s2);
 	}
     }
 
@@ -245,7 +245,7 @@ scmp_1 (const Intbyte *s1, const Intbyte *s2, Charcount len,
 
 
 int
-regexp_ignore_completion_p (const Intbyte *nonreloc,
+regexp_ignore_completion_p (const Ibyte *nonreloc,
 			    Lisp_Object reloc, Bytecount offset,
 			    Bytecount length)
 {
@@ -622,8 +622,8 @@ or the symbol from the obarray.
           /* Reject alternatives that start with space
 	     unless the input starts with space.  */
 	  && ((string_char_length (string) > 0 &&
-	       string_emchar (string, 0) == ' ')
-	      || string_emchar (eltstring, 0) != ' ')
+	       string_ichar (string, 0) == ' ')
+	      || string_ichar (eltstring, 0) != ' ')
 	  && (0 > scmp (XSTRING_DATA (eltstring),
                         XSTRING_DATA (string),
                         slength)))
@@ -708,7 +708,7 @@ clear_echo_area_from_print (struct frame *f, Lisp_Object label, int no_restore)
 }
 
 void
-echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
+echo_area_append (struct frame *f, const Ibyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length,
 		  Lisp_Object label)
 {
@@ -761,7 +761,7 @@ echo_area_append (struct frame *f, const Intbyte *nonreloc, Lisp_Object reloc,
 }
 
 void
-echo_area_message (struct frame *f, const Intbyte *nonreloc,
+echo_area_message (struct frame *f, const Ibyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset, Bytecount length,
 		   Lisp_Object label)
 {
@@ -805,7 +805,7 @@ echo_area_contents (struct frame *f)
 /* Dump an informative message to the echo area.  This function takes a
    string in internal format. */
 void
-message_internal (const Intbyte *nonreloc, Lisp_Object reloc,
+message_internal (const Ibyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -815,7 +815,7 @@ message_internal (const Intbyte *nonreloc, Lisp_Object reloc,
 }
 
 void
-message_append_internal (const Intbyte *nonreloc, Lisp_Object reloc,
+message_append_internal (const Ibyte *nonreloc, Lisp_Object reloc,
 			 Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -829,7 +829,7 @@ message_append_internal (const Intbyte *nonreloc, Lisp_Object reloc,
    on the format string; message_no_translate() does not. */
 
 static void
-message_1 (const CIntbyte *fmt, va_list args)
+message_1 (const CIbyte *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)
@@ -847,7 +847,7 @@ message_1 (const CIntbyte *fmt, va_list args)
 }
 
 static void
-message_append_1 (const CIntbyte *fmt, va_list args)
+message_append_1 (const CIbyte *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)

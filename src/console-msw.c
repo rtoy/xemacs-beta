@@ -92,7 +92,7 @@ static HWND
 GetConsoleHwnd (void)
 { 
   HWND hwndFound;
-  Intbyte newtitleint[200];
+  Ibyte newtitleint[200];
   Extbyte *newtitle;
   Extbyte *oldtitle;
   int numchars;
@@ -234,7 +234,7 @@ mswindows_ensure_console_buffered (void)
 int mswindows_message_outputted;
 
 int
-mswindows_output_console_string (const Intbyte *ptr, Bytecount len)
+mswindows_output_console_string (const Ibyte *ptr, Bytecount len)
 {
   DWORD num_written;
 
@@ -270,11 +270,11 @@ This function can be used as the STREAM argument of Fprint() or the like.
       (XSTRING_DATA (char_or_string), XSTRING_LENGTH (char_or_string));
   else
     {
-      Intbyte str[MAX_EMCHAR_LEN];
+      Ibyte str[MAX_ICHAR_LEN];
       Bytecount len;
 
       CHECK_CHAR_COERCE_INT (char_or_string);
-      len = set_charptr_emchar (str, XCHAR (char_or_string));
+      len = set_itext_ichar (str, XCHAR (char_or_string));
       write_string_to_mswindows_debugging_output (str, len);
     }
 
@@ -282,7 +282,7 @@ This function can be used as the STREAM argument of Fprint() or the like.
 }
 
 void
-write_string_to_mswindows_debugging_output (Intbyte *str, Bytecount len)
+write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len)
 {
   const Extbyte *extptr;
   if (initialized && !inhibit_non_essential_printing_operations)
@@ -338,8 +338,8 @@ DCONSCDR (Lisp_Object obj)
   return (CONSP (obj) && CONSP (XCDR (obj))) ? XCONS (XCDR (obj)) : 0;
 }
 
-Intbyte *DSTRING (Lisp_Object obj);
-Intbyte *
+Ibyte *DSTRING (Lisp_Object obj);
+Ibyte *
 DSTRING (Lisp_Object obj)
 {
   return STRINGP (obj) ? XSTRING_DATA (obj) : NULL;
@@ -359,8 +359,8 @@ DSYMBOL (Lisp_Object obj)
   return SYMBOLP (obj) ? XSYMBOL (obj) : NULL;
 }
 
-Intbyte *DSYMNAME (Lisp_Object obj);
-Intbyte *
+Ibyte *DSYMNAME (Lisp_Object obj);
+Ibyte *
 DSYMNAME (Lisp_Object obj)
 {
   return SYMBOLP (obj) ? XSTRING_DATA (XSYMBOL (obj)->name) : NULL;

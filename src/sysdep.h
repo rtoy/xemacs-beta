@@ -45,7 +45,7 @@ void set_exclusive_use (int fd);
 void set_descriptor_non_blocking (int fd);
 
 int get_pty_max_bytes (int fd);
-Intbyte get_eof_char (int fd);
+Ibyte get_eof_char (int fd);
 
 /* Wait for subprocess with process id `pid' to terminate and
    make sure it will get eliminated (not remain forever as a zombie) */

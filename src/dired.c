@@ -78,7 +78,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   Lisp_Object handler;
   struct re_pattern_buffer *bufp = NULL;
   int speccount = specpdl_depth ();
-  Intbyte *statbuf, *statbuf_tail;
+  Ibyte *statbuf, *statbuf_tail;
 
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (directory, list);
@@ -103,7 +103,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   directory = Ffile_name_as_directory (directory);
   directorylen = XSTRING_LENGTH (directory);
 
-  statbuf = (Intbyte *) ALLOCA (directorylen + MAXNAMLEN + 1);
+  statbuf = (Ibyte *) ALLOCA (directorylen + MAXNAMLEN + 1);
   memcpy (statbuf, XSTRING_DATA (directory), directorylen);
   statbuf_tail = statbuf + directorylen;
 
@@ -168,7 +168,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 
 	  {
 	    Lisp_Object name =
-	      make_string ((Intbyte *)dp->d_name, len);
+	      make_string ((Ibyte *)dp->d_name, len);
 	    if (!NILP (full))
 	      name = concat2 (directory, name);
 
@@ -250,7 +250,7 @@ file_name_completion_stat (Lisp_Object directory, DIRENTRY *dp,
   Bytecount len = NAMLEN (dp);
   Bytecount pos = XSTRING_LENGTH (directory);
   int value;
-  Intbyte *fullname = (Intbyte *) ALLOCA (len + pos + 2);
+  Ibyte *fullname = (Ibyte *) ALLOCA (len + pos + 2);
 
   memcpy (fullname, XSTRING_DATA (directory), pos);
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))
@@ -353,13 +353,13 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 	  Charcount cclen;
           int directoryp;
           int ignored_extension_p = 0;
-	  Intbyte *d_name;
+	  Ibyte *d_name;
 
 	  dp = qxe_readdir (d);
 	  if (!dp) break;
 
-	  /* Cast to Intbyte* is OK, as qxe_readdir() Mule-encapsulates.  */
-	  d_name = (Intbyte *) dp->d_name;
+	  /* Cast to Ibyte* is OK, as qxe_readdir() Mule-encapsulates.  */
+	  d_name = (Ibyte *) dp->d_name;
 	  len = NAMLEN (dp);
 	  cclen = bytecount_to_charcount (d_name, len);
 
@@ -402,7 +402,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 		      skip = cclen - string_char_length (elt);
 		      if (skip < 0) continue;
 
-		      if (0 > scmp (charptr_n_addr (d_name, skip),
+		      if (0 > scmp (itext_n_addr (d_name, skip),
 				    XSTRING_DATA (elt),
 				    string_char_length (elt)))
 			{
@@ -447,8 +447,8 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
           else
             {
               Charcount compare = min (bestmatchsize, cclen);
-              Intbyte *p1 = XSTRING_DATA (bestmatch);
-              Intbyte *p2 = d_name;
+              Ibyte *p1 = XSTRING_DATA (bestmatch);
+              Ibyte *p2 = d_name;
               Charcount matchsize = scmp (p1, p2, compare);
 
               if (matchsize < 0)
@@ -489,7 +489,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
               if (directoryp
                   && compare == matchsize
                   && bestmatchsize > matchsize
-                  && IS_ANY_SEP (charptr_emchar_n (p1, matchsize)))
+                  && IS_ANY_SEP (itext_ichar_n (p1, matchsize)))
                 matchsize++;
               bestmatchsize = matchsize;
             }
@@ -559,7 +559,7 @@ These are all the user names which begin with PARTIAL-USERNAME.
 
 struct user_name
 {
-  Intbyte *ptr;
+  Ibyte *ptr;
   Bytecount len;
 };
 
@@ -649,7 +649,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 	  DO_REALLOC (user_cache.user_names, user_cache.size,
 		      user_cache.length + 1, struct user_name);
 	  user_cache.user_names[user_cache.length].ptr =
-	    (Intbyte *) xstrdup (pwd->pw_name);
+	    (Ibyte *) xstrdup (pwd->pw_name);
 	  user_cache.user_names[user_cache.length].len = strlen (pwd->pw_name);
 	  user_cache.length++;
         }
@@ -717,7 +717,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
   for (i = 0; i < user_cache.length; i++)
     {
-      Intbyte *u_name = user_cache.user_names[i].ptr;
+      Ibyte *u_name = user_cache.user_names[i].ptr;
       Bytecount len   = user_cache.user_names[i].len;
       /* scmp() works in chars, not bytes, so we have to compute this: */
       Charcount cclen = bytecount_to_charcount (u_name, len);
@@ -751,8 +751,8 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
       else
         {
           Charcount compare = min (bestmatchsize, cclen);
-          Intbyte *p1 = XSTRING_DATA (bestmatch);
-          Intbyte *p2 = u_name;
+          Ibyte *p1 = XSTRING_DATA (bestmatch);
+          Ibyte *p2 = u_name;
           Charcount matchsize = scmp_1 (p1, p2, compare, 0);
 
           if (matchsize < 0)
@@ -776,7 +776,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
 
 
 Lisp_Object
-make_directory_hash_table (const Intbyte *path)
+make_directory_hash_table (const Ibyte *path)
 {
   DIR *d;
   if ((d = qxe_opendir (path)))
@@ -789,8 +789,8 @@ make_directory_hash_table (const Intbyte *path)
 	{
 	  Bytecount len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
-	    /* Cast to Intbyte* is OK, as qxe_readdir() Mule-encapsulates.  */
-	    Fputhash (make_string ((Intbyte *) dp->d_name, len), Qt, hash);
+	    /* Cast to Ibyte* is OK, as qxe_readdir() Mule-encapsulates.  */
+	    Fputhash (make_string ((Ibyte *) dp->d_name, len), Qt, hash);
 	}
       qxe_closedir (d);
       return hash;
@@ -867,7 +867,7 @@ If file does not exist, returns nil.
 
 #if 0 /* #### shouldn't this apply to WIN32_NATIVE and maybe CYGWIN? */
   {
-    Intbyte *tmpnam = XSTRING_DATA (Ffile_name_nondirectory (filename));
+    Ibyte *tmpnam = XSTRING_DATA (Ffile_name_nondirectory (filename));
     Bytecount l = qxestrlen (tmpnam);
 
     if (l >= 5
@@ -907,7 +907,7 @@ If file does not exist, returns nil.
   if (XINT (values[7]) != s.st_size)
     values[7] = make_int (-1);
   filemodestring (&s, modes);
-  values[8] = make_string ((Intbyte *) modes, 10);
+  values[8] = make_string ((Ibyte *) modes, 10);
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */
   {
     struct stat sdir;

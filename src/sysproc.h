@@ -178,8 +178,8 @@ Boston, MA 02111-1307, USA.  */
 #endif /* no FD_SET */
 
 int poll_fds_for_input (SELECT_TYPE mask);
-int qxe_execve (const Intbyte *filename, Intbyte * const argv[],
-		Intbyte * const envp[]);
+int qxe_execve (const Ibyte *filename, Ibyte * const argv[],
+		Ibyte * const envp[]);
 pid_t qxe_getpid (void);
 
 /* #### I would really like to delete the remaining synchronous code entirely.

@@ -92,7 +92,7 @@ struct context_cache
   enum syntactic_context context;	/* single-char-syntax state */
   enum block_comment_context ccontext;	/* block-comment state */
   enum comment_style style;		/* which comment group */
-  Emchar scontext;			/* active string delimiter */
+  Ichar scontext;			/* active string delimiter */
   int depth;				/* depth in parens */
   int backslash_p;			/* just read a backslash */
   int needs_its_head_reexamined;	/* we're apparently outside of
@@ -428,7 +428,7 @@ static void
 find_context (struct buffer *buf, Charbpos pt)
 {
   /* This function can GC */
-  Emchar prev_c, c;
+  Ichar prev_c, c;
   int prev_syncode, syncode;
   Charbpos target = pt;
   struct syntax_cache *scache;
@@ -563,7 +563,7 @@ find_context (struct buffer *buf, Charbpos pt)
 	      {
 		Lisp_Object stringtermobj =
 		  syntax_match (scache->current_syntax_table, c);
-		Emchar stringterm;
+		Ichar stringterm;
 
 		if (CHARP (stringtermobj))
 		  stringterm = XCHAR (stringtermobj);

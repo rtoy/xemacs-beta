@@ -31,15 +31,15 @@ int play_sound_data (UChar_Binary *data, int length, int volume);
 
 # define sound_perror(string)						 \
 do {									 \
-  Intbyte *errmess;							 \
-  Intbyte *string_int;							 \
+  Ibyte *errmess;							 \
+  Ibyte *string_int;							 \
   GET_STRERROR (errmess, errno);					 \
   EXTERNAL_TO_C_STRING (string, string_int, Qnative);			 \
   warn_when_safe (Qsound, Qerror, "audio: %s, %s", string_int, errmess); \
 } while (0)
 # define sound_warn(string)					\
 do {								\
-  Intbyte *string_int;						\
+  Ibyte *string_int;						\
   EXTERNAL_TO_C_STRING (GETTEXT (string), string_int, Qnative);	\
   warn_when_safe (Qsound, Qwarning, "audio: %s", string_int);	\
 } while (0)

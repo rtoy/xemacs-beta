@@ -1794,7 +1794,7 @@ The initial value is set from the PGDATESTYLE environment variable.
 void
 init_postgresql_from_environment (void)
 {
-  Intbyte *p;
+  Ibyte *p;
 
 #define FROB(envvar, var)			\
   if ((p = egetenv (envvar)))			\

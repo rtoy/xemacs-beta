@@ -364,7 +364,7 @@ If non-nil, the return value will be a list whose first element is
 */
        (subr))
 {
-  const CIntbyte *prompt;
+  const CIbyte *prompt;
   CHECK_SUBR (subr);
   prompt = XSUBR (subr)->prompt;
   return prompt ? list2 (Qinteractive, build_msg_string (prompt)) : Qnil;
@@ -723,7 +723,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       if (idx >= string_char_length (array)) goto range_error;
-      return make_char (string_emchar (array, idx));
+      return make_char (string_ichar (array, idx));
     }
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (array))

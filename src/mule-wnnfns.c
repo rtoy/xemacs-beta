@@ -517,7 +517,7 @@ Return information of dictionaries.
          fname and comment must be ASCII strings! */
       val =
 	Fcons (Fcons (make_int (dicinfo->dic_no),
-		      list4 (make_string ((Intbyte *) (dicinfo->fname),
+		      list4 (make_string ((Ibyte *) (dicinfo->fname),
 					  strlen (dicinfo->fname)),
 			     make_string (comment, strlen ((char *) comment)),
 			     make_int (dicinfo->gosuu),
@@ -1190,7 +1190,7 @@ For Wnn.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_fuzokugo_get (wnnfns_buf[snum], fname) < 0) return Qnil;
-  return make_string ((Intbyte *) fname, strlen (fname));
+  return make_string ((Ibyte *) fname, strlen (fname));
 }
 
 
@@ -1981,7 +1981,7 @@ m2w (unsigned char *mp, w_char *wp)
 
   while ((ch = *mp++) != 0)
     {
-      if (intbyte_leading_byte_p (ch))
+      if (ibyte_leading_byte_p (ch))
 	{
 	  switch (ch)
 	    {

@@ -159,7 +159,7 @@ struct rune
     /* CHAR */
     struct
     {
-      Emchar ch;		/* Character of this rune. */
+      Ichar ch;		/* Character of this rune. */
     } chr;
 
     /* HLINE */
@@ -683,11 +683,11 @@ extern Lisp_Object Qtop_bottom;
 EXFUN (Fredraw_frame, 2);
 
 int redisplay_text_width_string (struct window *w, int findex,
-				 Intbyte *nonreloc, Lisp_Object reloc,
+				 Ibyte *nonreloc, Lisp_Object reloc,
 				 Bytecount offset, Bytecount len);
 int redisplay_frame_text_width_string (struct frame *f,
 				       Lisp_Object face,
-				       Intbyte *nonreloc,
+				       Ibyte *nonreloc,
 				       Lisp_Object reloc,
 				       Bytecount offset, Bytecount len);
 int redisplay_frame (struct frame *f, int preemption_check);

@@ -101,7 +101,7 @@ vars_of_regex (void)
 
 #endif /* MULE */
 
-#define RE_TRANSLATE_1(ch) TRT_TABLE_OF (translate, (Emchar) ch)
+#define RE_TRANSLATE_1(ch) TRT_TABLE_OF (translate, (Ichar) ch)
 #define TRANSLATE_P(tr) (!NILP (tr))
 
 /* Converts the pointer to the char to BEG-based offset from the start.	 */
@@ -142,9 +142,9 @@ offset_to_charxpos (Lisp_Object lispobj, int off)
 
 #include <stdlib.h>
 
-#define charptr_emchar(str)				((Emchar) (str)[0])
-#define charptr_emchar_fmt(str, fmt, object)		((Emchar) (str)[0])
-#define charptr_emchar_ascii_fmt(str, fmt, object)	((Emchar) (str)[0])
+#define itext_ichar(str)				((Ichar) (str)[0])
+#define itext_ichar_fmt(str, fmt, object)		((Ichar) (str)[0])
+#define itext_ichar_ascii_fmt(str, fmt, object)	((Ichar) (str)[0])
 
 #if (LONGBITS > INTBITS)
 # define EMACS_INT long
@@ -152,14 +152,14 @@ offset_to_charxpos (Lisp_Object lispobj, int off)
 # define EMACS_INT int
 #endif
 
-typedef int Emchar;
+typedef int Ichar;
 
-#define INC_CHARPTR(p) ((p)++)
-#define INC_CHARPTR_FMT(p, fmt) ((p)++)
-#define DEC_CHARPTR(p) ((p)--)
-#define DEC_CHARPTR_FMT(p, fmt) ((p)--)
-#define charptr_emchar_len(ptr) 1
-#define charptr_emchar_len_fmt(ptr, fmt) 1
+#define INC_IBYTEPTR(p) ((p)++)
+#define INC_IBYTEPTR_FMT(p, fmt) ((p)++)
+#define DEC_IBYTEPTR(p) ((p)--)
+#define DEC_IBYTEPTR_FMT(p, fmt) ((p)--)
+#define itext_ichar_len(ptr) 1
+#define itext_ichar_len_fmt(ptr, fmt) 1
 
 #include <string.h>
 
@@ -1595,12 +1595,12 @@ static unsigned char reg_unset_dummy;
 #define PATFETCH_RAW(c)							\
   do {if (p == pend) return REG_EEND;					\
     assert (p < pend);							\
-    c = charptr_emchar (p); 						\
-    INC_CHARPTR (p);							\
+    c = itext_ichar (p); 						\
+    INC_IBYTEPTR (p);							\
   } while (0)
 
 /* Go backwards one character in the pattern.  */
-#define PATUNFETCH DEC_CHARPTR (p)
+#define PATUNFETCH DEC_IBYTEPTR (p)
 
 /* If `translate' is non-null, return translate[D], else just D.  We
    cast the subscript to translate because some data is declared as
@@ -3185,10 +3185,10 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 #else
 	    {
 	      Bytecount bt_count;
-	      Intbyte tmp_buf[MAX_EMCHAR_LEN];
+	      Ibyte tmp_buf[MAX_ICHAR_LEN];
 	      int i;
 
-	      bt_count = set_charptr_emchar (tmp_buf, c);
+	      bt_count = set_itext_ichar (tmp_buf, c);
 
 	      for (i = 0; i < bt_count; i++)
 		{
@@ -3402,7 +3402,7 @@ static reg_errcode_t
 compile_range (re_char **p_ptr, re_char *pend, RE_TRANSLATE_TYPE translate,
 	       reg_syntax_t syntax, unsigned char *buf_end)
 {
-  Emchar this_char;
+  Ichar this_char;
 
   re_char *p = *p_ptr;
   int range_start, range_end;
@@ -3448,20 +3448,20 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
 			RE_TRANSLATE_TYPE translate,
 			reg_syntax_t syntax, Lisp_Object rtab)
 {
-  Emchar this_char, range_start, range_end;
-  const Intbyte *p;
+  Ichar this_char, range_start, range_end;
+  const Ibyte *p;
 
   if (*p_ptr == pend)
     return REG_ERANGE;
 
-  p = (const Intbyte *) *p_ptr;
-  range_end = charptr_emchar (p);
+  p = (const Ibyte *) *p_ptr;
+  range_end = itext_ichar (p);
   p--; /* back to '-' */
-  DEC_CHARPTR (p); /* back to start of range */
+  DEC_IBYTEPTR (p); /* back to start of range */
   /* We also want to fetch the endpoints without translating them; the
      appropriate translation is done in the bit-setting loop below.  */
-  range_start = charptr_emchar (p);
-  INC_CHARPTR (*p_ptr);
+  range_start = itext_ichar (p);
+  INC_IBYTEPTR (*p_ptr);
 
   /* If the start is after the end, the range is empty.  */
   if (range_start > range_end)
@@ -3471,8 +3471,8 @@ compile_extended_range (re_char **p_ptr, re_char *pend,
      ranges entirely within the first 256 chars. */
 
   if ((range_start >= 0x100 || range_end >= 0x100)
-      && emchar_leading_byte (range_start) !=
-      emchar_leading_byte (range_end))
+      && ichar_leading_byte (range_start) !=
+      ichar_leading_byte (range_end))
     return REG_ERANGESPAN;
 
   /* #### This might be way inefficient if the range encompasses 10,000
@@ -3639,7 +3639,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		EMACS_INT first, last;
 		Lisp_Object dummy_val;
 		int jj;
-		Intbyte strr[MAX_EMCHAR_LEN];
+		Ibyte strr[MAX_ICHAR_LEN];
 
 		unified_range_table_get_range (p, i, &first, &last,
 					       &dummy_val);
@@ -3648,11 +3648,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		/* Ranges below 0x100 can span charsets, but there
 		   are only two (Control-1 and Latin-1), and
 		   either first or last has to be in them. */
-		set_charptr_emchar (strr, first);
+		set_itext_ichar (strr, first);
 		fastmap[*strr] = 1;
 		if (last < 0x100)
 		  {
-		    set_charptr_emchar (strr, last);
+		    set_itext_ichar (strr, last);
 		    fastmap[*strr] = 1;
 		  }
 	      }
@@ -4102,7 +4102,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	{
 	  d = ((const unsigned char *)
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	  range = charptr_emchar_len_fmt (d, fmt);
+	  range = itext_ichar_len_fmt (d, fmt);
 	}
     }
 
@@ -4181,25 +4181,25 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	      /* We want to find the next location (including the current
 		 one) where the previous char is a newline, so back up one
 		 and search forward for a newline. */
-	      DEC_CHARPTR_FMT (d, fmt);	/* Ok, since startpos != size1. */
+	      DEC_IBYTEPTR_FMT (d, fmt);	/* Ok, since startpos != size1. */
 
 	      /* Written out as an if-else to avoid testing `translate'
 		 inside the loop.  */
 	      if (TRANSLATE_P (translate))
 		while (d < stop_d &&
-		       RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj))
+		       RE_TRANSLATE_1 (itext_ichar_fmt (d, fmt, lispobj))
 		       != '\n')
-		  INC_CHARPTR_FMT (d, fmt);
+		  INC_IBYTEPTR_FMT (d, fmt);
 	      else
 		while (d < stop_d &&
-		       charptr_emchar_ascii_fmt (d, fmt, lispobj) != '\n')
-		  INC_CHARPTR_FMT (d, fmt);
+		       itext_ichar_ascii_fmt (d, fmt, lispobj) != '\n')
+		  INC_IBYTEPTR_FMT (d, fmt);
 
 	      /* If we were stopped by a newline, skip forward over it.
 		 Otherwise we will get in an infloop when our start position
 		 was at begline. */
 	      if (d < stop_d)
-		INC_CHARPTR_FMT (d, fmt);
+		INC_IBYTEPTR_FMT (d, fmt);
 	      range -= d - orig_d;
 	      startpos += d - orig_d;
 #if 1
@@ -4209,12 +4209,12 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	  else if (range < 0)
 	    {
 	      /* We're lazy, like in the fastmap code below */
-	      Emchar c;
+	      Ichar c;
 
 	      d = ((const unsigned char *)
 		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	      DEC_CHARPTR_FMT (d, fmt);
-	      c = charptr_emchar_fmt (d, fmt, lispobj);
+	      DEC_IBYTEPTR_FMT (d, fmt);
+	      c = itext_ichar_fmt (d, fmt, lispobj);
 	      c = RE_TRANSLATE (c);
 	      if (c != '\n')
 		goto advance;
@@ -4261,17 +4261,17 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		    {
 		      re_char *old_d = d;
 #ifdef MULE
-		      Intbyte tempch[MAX_EMCHAR_LEN];
-		      Emchar buf_ch =
-			RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj));
-		      set_charptr_emchar (tempch, buf_ch);
+		      Ibyte tempch[MAX_ICHAR_LEN];
+		      Ichar buf_ch =
+			RE_TRANSLATE_1 (itext_ichar_fmt (d, fmt, lispobj));
+		      set_itext_ichar (tempch, buf_ch);
 		      if (fastmap[*tempch])
 			break;
 #else
 		      if (fastmap[(unsigned char) RE_TRANSLATE_1 (*d)])
 			break;
 #endif /* MULE */
-		      INC_CHARPTR_FMT (d, fmt);
+		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
 #if 1
 		assert (!forward_search_p || range >= 0);
@@ -4284,12 +4284,12 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		  while (range > lim)
 		    {
 		      re_char *old_d = d;
-		      Intbyte tempch[MAX_EMCHAR_LEN];
-		      Emchar buf_ch = charptr_emchar_fmt (d, fmt, lispobj);
-		      set_charptr_emchar (tempch, buf_ch);
+		      Ibyte tempch[MAX_ICHAR_LEN];
+		      Ichar buf_ch = itext_ichar_fmt (d, fmt, lispobj);
+		      set_itext_ichar (tempch, buf_ch);
 		      if (fastmap[*tempch])
 			break;
-		      INC_CHARPTR_FMT (d, fmt);
+		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
 #if 1
 		assert (!forward_search_p || range >= 0);
@@ -4302,7 +4302,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		  while (range > lim && !fastmap[*d])
 		    {
 		      re_char *old_d = d;
-		      INC_CHARPTR (d);
+		      INC_IBYTEPTR (d);
 		      range -= (d - old_d);
 #if 1
 		assert (!forward_search_p || range >= 0);
@@ -4321,10 +4321,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
 #ifdef MULE
 	      {
-		Intbyte tempch[MAX_EMCHAR_LEN];
-		Emchar buf_ch =
-		  RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj));
-		set_charptr_emchar (tempch, buf_ch);
+		Ibyte tempch[MAX_ICHAR_LEN];
+		Ichar buf_ch =
+		  RE_TRANSLATE (itext_ichar_fmt (d, fmt, lispobj));
+		set_itext_ichar (tempch, buf_ch);
 		if (!fastmap[*tempch])
 		  goto advance;
 	      }
@@ -4367,7 +4367,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	  Bytecount d_size;
 	  d = ((const unsigned char *)
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
-	  d_size = charptr_emchar_len_fmt (d, fmt);
+	  d_size = itext_ichar_len_fmt (d, fmt);
 	  range -= d_size;
 #if 1
 		assert (!forward_search_p || range >= 0);
@@ -4381,8 +4381,8 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	     string1/string2 boundary, we want to backup into string1. */
 	  d = ((const unsigned char *)
 	       (startpos > size1 ? string2 - size1 : string1) + startpos);
-	  DEC_CHARPTR_FMT (d, fmt);
-	  d_size = charptr_emchar_len_fmt (d, fmt);
+	  DEC_IBYTEPTR_FMT (d, fmt);
+	  d_size = itext_ichar_len_fmt (d, fmt);
 	  range += d_size;
 #if 1
 		assert (!forward_search_p || range >= 0);
@@ -4972,13 +4972,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		  Bytecount pat_len;
 
 		  REGEX_PREFETCH ();
-		  if (RE_TRANSLATE_1 (charptr_emchar_fmt (d, fmt, lispobj))
-		      != charptr_emchar (p))
+		  if (RE_TRANSLATE_1 (itext_ichar_fmt (d, fmt, lispobj))
+		      != itext_ichar (p))
                     goto fail;
 
-		  pat_len = charptr_emchar_len (p);
+		  pat_len = itext_ichar_len (p);
 		  p += pat_len;
-		  INC_CHARPTR_FMT (d, fmt);
+		  INC_IBYTEPTR_FMT (d, fmt);
 		  
 		  mcnt -= pat_len;
 #else /* not MULE */
@@ -5003,13 +5003,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		      Bytecount pat_len;
 
 		      REGEX_PREFETCH ();
-		      if (charptr_emchar_fmt (d, fmt, lispobj) !=
-			  charptr_emchar (p))
+		      if (itext_ichar_fmt (d, fmt, lispobj) !=
+			  itext_ichar (p))
 			goto fail;
 
-		      pat_len = charptr_emchar_len (p);
+		      pat_len = itext_ichar_len (p);
 		      p += pat_len;
-		      INC_CHARPTR_FMT (d, fmt);
+		      INC_IBYTEPTR_FMT (d, fmt);
 		  
 		      mcnt -= pat_len;
 		    }
@@ -5038,15 +5038,15 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           REGEX_PREFETCH ();
 
           if ((!(bufp->syntax & RE_DOT_NEWLINE) &&
-	       RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj)) == '\n')
+	       RE_TRANSLATE (itext_ichar_fmt (d, fmt, lispobj)) == '\n')
               || (bufp->syntax & RE_DOT_NOT_NULL &&
-		  RE_TRANSLATE (charptr_emchar_fmt (d, fmt, lispobj)) ==
+		  RE_TRANSLATE (itext_ichar_fmt (d, fmt, lispobj)) ==
 		  '\000'))
 	    goto fail;
 
           SET_REGS_MATCHED ();
           DEBUG_PRINT2 ("  Matched `%d'.\n", *d);
-	  INC_CHARPTR_FMT (d, fmt); /* XEmacs change */
+	  INC_IBYTEPTR_FMT (d, fmt); /* XEmacs change */
 	  break;
 
 
@@ -5059,7 +5059,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             DEBUG_PRINT2 ("EXECUTING charset%s.\n", not_p ? "_not" : "");
 
 	    REGEX_PREFETCH ();
-	    c = charptr_emchar_fmt (d, fmt, lispobj);
+	    c = itext_ichar_fmt (d, fmt, lispobj);
 	    c = RE_TRANSLATE (c); /* The character to match.  */
 
             /* Cast to `unsigned int' instead of `unsigned char' in case the
@@ -5073,7 +5073,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    if (!not_p) goto fail;
 
 	    SET_REGS_MATCHED ();
-            INC_CHARPTR_FMT (d, fmt); /* XEmacs change */
+            INC_IBYTEPTR_FMT (d, fmt); /* XEmacs change */
 	    break;
 	  }
 
@@ -5081,13 +5081,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	case charset_mule:
 	case charset_mule_not:
 	  {
-	    REGISTER Emchar c;
+	    REGISTER Ichar c;
 	    re_bool not_p = (re_opcode_t) *(p - 1) == charset_mule_not;
 
             DEBUG_PRINT2 ("EXECUTING charset_mule%s.\n", not_p ? "_not" : "");
 
 	    REGEX_PREFETCH ();
-	    c = charptr_emchar_fmt (d, fmt, lispobj);
+	    c = itext_ichar_fmt (d, fmt, lispobj);
 	    c = RE_TRANSLATE (c); /* The character to match.  */
 
 	    if (EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
@@ -5098,7 +5098,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    if (!not_p) goto fail;
 
 	    SET_REGS_MATCHED ();
-	    INC_CHARPTR_FMT (d, fmt);
+	    INC_IBYTEPTR_FMT (d, fmt);
 	    break;
 	  }
 #endif /* MULE */
@@ -5384,8 +5384,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           else
 	    {
 	      re_char *d2 = d;
-	      DEC_CHARPTR (d2);
-	      if (charptr_emchar_ascii_fmt (d2, fmt, lispobj) == '\n' &&
+	      DEC_IBYTEPTR (d2);
+	      if (itext_ichar_ascii_fmt (d2, fmt, lispobj) == '\n' &&
 		  bufp->newline_anchor)
 		break;
 	    }
@@ -5404,8 +5404,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
           /* We have to ``prefetch'' the next character.  */
           else if ((d == end1 ?
-		    charptr_emchar_ascii_fmt (string2, fmt, lispobj) :
-		    charptr_emchar_ascii_fmt (d, fmt, lispobj)) == '\n'
+		    itext_ichar_ascii_fmt (string2, fmt, lispobj) :
+		    itext_ichar_ascii_fmt (d, fmt, lispobj)) == '\n'
                    && bufp->newline_anchor)
             {
               break;
@@ -5793,15 +5793,15 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		/* emch1 is the character before d, syn1 is the syntax of
 		   emch1, emch2 is the character at d, and syn2 is the
 		   syntax of emch2. */
-		Emchar emch1, emch2;
+		Ichar emch1, emch2;
 		int syn1, syn2;
 #ifdef emacs
 		Charxpos pos_before;
 #endif
 
-		DEC_CHARPTR_FMT (d_before, fmt);
-		emch1 = charptr_emchar_fmt (d_before, fmt, lispobj);
-		emch2 = charptr_emchar_fmt (d_after, fmt, lispobj);
+		DEC_IBYTEPTR_FMT (d_before, fmt);
+		emch1 = itext_ichar_fmt (d_before, fmt, lispobj);
+		emch2 = itext_ichar_fmt (d_after, fmt, lispobj);
 
 #ifdef emacs
 		pos_before =
@@ -5838,7 +5838,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 	      */
 	    re_char *dtmp = POS_AFTER_GAP_UNSAFE (d);
-	    Emchar emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
+	    Ichar emch = itext_ichar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
@@ -5848,8 +5848,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    if (AT_STRINGS_BEG (d))
 	      break;
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
-	    DEC_CHARPTR_FMT (dtmp, fmt);
-	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
+	    DEC_IBYTEPTR_FMT (dtmp, fmt);
+	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
 	    UPDATE_SYNTAX_CACHE_BACKWARD (scache, charpos - 1);
 #endif
@@ -5872,20 +5872,20 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      The or condition is incorrect (reversed).
 	      */
 	    re_char *dtmp;
-	    Emchar emch;
+	    Ichar emch;
 #ifdef emacs
 	    Charxpos charpos = offset_to_charxpos (lispobj, PTR_TO_OFFSET (d));
 	    UPDATE_SYNTAX_CACHE (scache, charpos);
 #endif
 	    dtmp = POS_BEFORE_GAP_UNSAFE (d);
-	    DEC_CHARPTR_FMT (dtmp, fmt);
-	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
+	    DEC_IBYTEPTR_FMT (dtmp, fmt);
+	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
 	    if (SYNTAX_FROM_CACHE (scache, emch) != Sword)
 	      goto fail;
 	    if (AT_STRINGS_END (d))
 	      break;
 	    dtmp = POS_AFTER_GAP_UNSAFE (d);
-	    emch = charptr_emchar_fmt (dtmp, fmt, lispobj);
+	    emch = itext_ichar_fmt (dtmp, fmt, lispobj);
 #ifdef emacs
 	    UPDATE_SYNTAX_CACHE_FORWARD (scache, charpos + 1);
 #endif
@@ -5932,16 +5932,16 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	matchornotsyntax:
 	  {
 	    int matches;
-	    Emchar emch;
+	    Ichar emch;
 
 	    REGEX_PREFETCH ();
 	    UPDATE_SYNTAX_CACHE
 	      (scache, offset_to_charxpos (lispobj, PTR_TO_OFFSET (d)));
 
-	    emch = charptr_emchar_fmt (d, fmt, lispobj);
+	    emch = itext_ichar_fmt (d, fmt, lispobj);
 	    matches = (SYNTAX_FROM_CACHE (scache, emch) ==
 		       (enum syntaxcode) mcnt);
-	    INC_CHARPTR_FMT (d, fmt);
+	    INC_IBYTEPTR_FMT (d, fmt);
 	    if (matches != should_succeed)
 	      goto fail;
 	    SET_REGS_MATCHED ();
@@ -5966,12 +5966,12 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  should_succeed = 1;
         matchornotcategory:
 	  {
-	    Emchar emch;
+	    Ichar emch;
 
 	    mcnt = *p++;
 	    REGEX_PREFETCH ();
-	    emch = charptr_emchar_fmt (d, fmt, lispobj);
-	    INC_CHARPTR_FMT (d, fmt);
+	    emch = itext_ichar_fmt (d, fmt, lispobj);
+	    INC_IBYTEPTR_FMT (d, fmt);
 	    if (check_category_char (emch, BUFFER_CATEGORY_TABLE (lispbuf),
 				     mcnt, should_succeed))
 	      goto fail;
@@ -6326,16 +6326,16 @@ bcmp_translate (re_char *s1, re_char *s2,
 
   while (p1 != p1_end && p2 != p2_end)
     {
-      Emchar p1_ch, p2_ch;
+      Ichar p1_ch, p2_ch;
 
-      p1_ch = charptr_emchar_fmt (p1, fmt, lispobj);
-      p2_ch = charptr_emchar_fmt (p2, fmt, lispobj);
+      p1_ch = itext_ichar_fmt (p1, fmt, lispobj);
+      p2_ch = itext_ichar_fmt (p2, fmt, lispobj);
 
       if (RE_TRANSLATE_1 (p1_ch)
 	  != RE_TRANSLATE_1 (p2_ch))
 	return 1;
-      INC_CHARPTR_FMT (p1, fmt);
-      INC_CHARPTR_FMT (p2, fmt);
+      INC_IBYTEPTR_FMT (p1, fmt);
+      INC_IBYTEPTR_FMT (p2, fmt);
     }
 #else /* not MULE */
   while (len)

@@ -1935,7 +1935,7 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   
   set_lispstringp_data (s, BIG_STRING_FULLSIZE_P (fullsize)
-		   ? xnew_array (Intbyte, length + 1)
+		   ? xnew_array (Ibyte, length + 1)
 		   : allocate_string_chars_struct (wrap_string (s),
 						   fullsize)->chars);
 
@@ -2006,7 +2006,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	    memmove (XSTRING_DATA (s) + pos + delta,
 		     XSTRING_DATA (s) + pos, len);
 	  XSET_STRING_DATA
-	    (s, (Intbyte *) xrealloc (XSTRING_DATA (s),
+	    (s, (Ibyte *) xrealloc (XSTRING_DATA (s),
 				      XSTRING_LENGTH (s) + delta + 1));
 	  if (delta > 0 && pos >= 0)
 	    memmove (XSTRING_DATA (s) + pos + delta, XSTRING_DATA (s) + pos,
@@ -2014,9 +2014,9 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	}
       else /* String has been demoted from BIG_STRING. */
 	{
-	  Intbyte *new_data =
+	  Ibyte *new_data =
 	    allocate_string_chars_struct (s, newfullsize)->chars;
-	  Intbyte *old_data = XSTRING_DATA (s);
+	  Ibyte *old_data = XSTRING_DATA (s);
 
 	  if (pos >= 0)
 	    {
@@ -2039,7 +2039,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	     constraints). */
 	  if (pos >= 0)
 	    {
-	      Intbyte *addroff = pos + XSTRING_DATA (s);
+	      Ibyte *addroff = pos + XSTRING_DATA (s);
 
 	      memmove (addroff + delta, addroff,
 		       /* +1 due to zero-termination. */
@@ -2048,10 +2048,10 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 	}
       else
 	{
-	  Intbyte *old_data = XSTRING_DATA (s);
-	  Intbyte *new_data =
+	  Ibyte *old_data = XSTRING_DATA (s);
+	  Ibyte *new_data =
 	    BIG_STRING_FULLSIZE_P (newfullsize)
-	    ? xnew_array (Intbyte, XSTRING_LENGTH (s) + delta + 1)
+	    ? xnew_array (Ibyte, XSTRING_LENGTH (s) + delta + 1)
 	    : allocate_string_chars_struct (s, newfullsize)->chars;
 
 	  if (pos >= 0)
@@ -2100,12 +2100,12 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 /* WARNING: If you modify an existing string, you must call
    CHECK_LISP_WRITEABLE() before and bump_string_modiff() afterwards. */
 void
-set_string_char (Lisp_Object s, Charcount i, Emchar c)
+set_string_char (Lisp_Object s, Charcount i, Ichar c)
 {
-  Intbyte newstr[MAX_EMCHAR_LEN];
+  Ibyte newstr[MAX_ICHAR_LEN];
   Bytecount bytoff = string_index_char_to_byte (s, i);
-  Bytecount oldlen = charptr_emchar_len (XSTRING_DATA (s) + bytoff);
-  Bytecount newlen = set_charptr_emchar (newstr, c);
+  Bytecount oldlen = itext_ichar_len (XSTRING_DATA (s) + bytoff);
+  Bytecount newlen = set_itext_ichar (newstr, c);
 
   sledgehammer_check_ascii_begin (s);
   if (oldlen != newlen)
@@ -2144,8 +2144,8 @@ LENGTH must be a non-negative integer.
   CHECK_NATNUM (length);
   CHECK_CHAR_COERCE_INT (character);
   {
-    Intbyte init_str[MAX_EMCHAR_LEN];
-    int len = set_charptr_emchar (init_str, XCHAR (character));
+    Ibyte init_str[MAX_ICHAR_LEN];
+    int len = set_itext_ichar (init_str, XCHAR (character));
     Lisp_Object val = make_uninit_string (len * XINT (length));
 
     if (len == 1)
@@ -2158,11 +2158,11 @@ LENGTH must be a non-negative integer.
     else
       {
 	EMACS_INT i;
-	Intbyte *ptr = XSTRING_DATA (val);
+	Ibyte *ptr = XSTRING_DATA (val);
 
 	for (i = XINT (length); i; i--)
 	  {
-	    Intbyte *init_ptr = init_str;
+	    Ibyte *init_ptr = init_str;
 	    switch (len)
 	      {
 	      case 4: *ptr++ = *init_ptr++;
@@ -2182,14 +2182,14 @@ Concatenate all the argument characters and make the result a string.
 */
        (int nargs, Lisp_Object *args))
 {
-  Intbyte *storage = alloca_array (Intbyte, nargs * MAX_EMCHAR_LEN);
-  Intbyte *p = storage;
+  Ibyte *storage = alloca_array (Ibyte, nargs * MAX_ICHAR_LEN);
+  Ibyte *p = storage;
 
   for (; nargs; nargs--, args++)
     {
       Lisp_Object lisp_char = *args;
       CHECK_CHAR_COERCE_INT (lisp_char);
-      p += set_charptr_emchar (p, XCHAR (lisp_char));
+      p += set_itext_ichar (p, XCHAR (lisp_char));
     }
   return make_string (storage, p - storage);
 }
@@ -2202,7 +2202,7 @@ init_string_ascii_begin (Lisp_Object string)
 #ifdef MULE
   int i;
   Bytecount length = XSTRING_LENGTH (string);
-  Intbyte *contents = XSTRING_DATA (string);
+  Ibyte *contents = XSTRING_DATA (string);
 
   for (i = 0; i < length; i++)
     {
@@ -2220,7 +2220,7 @@ init_string_ascii_begin (Lisp_Object string)
 /* Take some raw memory, which MUST already be in internal format,
    and package it up into a Lisp string. */
 Lisp_Object
-make_string (const Intbyte *contents, Bytecount length)
+make_string (const Ibyte *contents, Bytecount length)
 {
   Lisp_Object val;
 
@@ -2250,17 +2250,17 @@ make_ext_string (const Extbyte *contents, EMACS_INT length,
 }
 
 Lisp_Object
-build_intstring (const Intbyte *str)
+build_intstring (const Ibyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
   return make_string (str, (str ? qxestrlen (str) : (Bytecount) 0));
 }
 
 Lisp_Object
-build_string (const CIntbyte *str)
+build_string (const CIbyte *str)
 {
   /* Some strlen's crash and burn if passed null. */
-  return make_string ((const Intbyte *) str, (str ? strlen (str) : 0));
+  return make_string ((const Ibyte *) str, (str ? strlen (str) : 0));
 }
 
 Lisp_Object
@@ -2272,19 +2272,19 @@ build_ext_string (const Extbyte *str, Lisp_Object coding_system)
 }
 
 Lisp_Object
-build_msg_intstring (const Intbyte *str)
+build_msg_intstring (const Ibyte *str)
 {
   return build_intstring (GETTEXT (str));
 }
 
 Lisp_Object
-build_msg_string (const CIntbyte *str)
+build_msg_string (const CIbyte *str)
 {
   return build_string (CGETTEXT (str));
 }
 
 Lisp_Object
-make_string_nocopy (const Intbyte *contents, Bytecount length)
+make_string_nocopy (const Ibyte *contents, Bytecount length)
 {
   Lisp_String *s;
   Lisp_Object val;
@@ -2299,7 +2299,7 @@ make_string_nocopy (const Intbyte *contents, Bytecount length)
   set_lheader_implementation (&s->u.lheader, &lrecord_string);
   SET_C_READONLY_RECORD_HEADER (&s->u.lheader);
   s->plist = Qnil;
-  set_lispstringp_data (s, (Intbyte *) contents);
+  set_lispstringp_data (s, (Ibyte *) contents);
   set_lispstringp_length (s, length);
   val = wrap_string (s);
   init_string_ascii_begin (val);
@@ -3315,7 +3315,7 @@ debug_string_purity_print (Lisp_Object p)
   stderr_out ("\"");
   for (i = 0; i < s; i++)
   {
-    Emchar ch = string_emchar (p, i);
+    Ichar ch = string_ichar (p, i);
     if (ch < 32 || ch >= 126)
       stderr_out ("\\%03o", ch);
     else if (ch == '\\' || ch == '\"')
@@ -3656,7 +3656,7 @@ garbage_collect_1 (void)
 		     build_msg_string (gc_default_message));
 	  args[1] = build_string ("...");
 	  whole_msg = Fconcat (2, args);
-	  echo_area_message (f, (Intbyte *) 0, whole_msg, 0, -1,
+	  echo_area_message (f, (Ibyte *) 0, whole_msg, 0, -1,
 			     Qgarbage_collecting);
 	}
     }
@@ -3819,7 +3819,7 @@ garbage_collect_1 (void)
 			 build_msg_string (gc_default_message));
 	      args[1] = build_msg_string ("... done");
 	      whole_msg = Fconcat (2, args);
-	      echo_area_message (selected_frame (), (Intbyte *) 0,
+	      echo_area_message (selected_frame (), (Ibyte *) 0,
 				 whole_msg, 0, -1,
 				 Qgarbage_collecting);
 	    }

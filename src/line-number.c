@@ -158,7 +158,7 @@ invalidate_line_number_cache (struct buffer *b, Charbpos pos)
    This will do nothing if the cache is uninitialized.  */
 void
 insert_invalidate_line_number_cache (struct buffer *b, Charbpos pos,
-				     const Intbyte *nonreloc, Bytecount length)
+				     const Ibyte *nonreloc, Bytecount length)
 {
   if (NILP (b->text->line_number_cache))
     return;

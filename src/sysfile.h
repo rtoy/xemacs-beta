@@ -327,8 +327,8 @@ Boston, MA 02111-1307, USA.  */
 ssize_t retry_read (int, void *, size_t);
 ssize_t retry_write (int, const void *, size_t);
 int retry_open (const Extbyte *path, int oflag, ...);
-int qxe_open (const Intbyte *path, int oflag, ...);
-int qxe_interruptible_open (const Intbyte *path, int oflag, int mode);
+int qxe_open (const Ibyte *path, int oflag, ...);
+int qxe_interruptible_open (const Ibyte *path, int oflag, int mode);
 int retry_close (int);
 Bytecount read_allowing_quit (int fildes, void *buf, Bytecount size);
 Bytecount write_allowing_quit (int fildes, const void *buf,
@@ -339,34 +339,34 @@ Bytecount write_allowing_quit (int fildes, const void *buf,
 size_t retry_fread (void *, size_t, size_t, FILE *);
 size_t retry_fwrite (const void *, size_t, size_t, FILE *);
 FILE *retry_fopen (const Extbyte *path, const Char_ASCII *mode);
-FILE *qxe_fopen (const Intbyte *path, const Char_ASCII *mode);
+FILE *qxe_fopen (const Ibyte *path, const Char_ASCII *mode);
 int retry_fclose (FILE *);
 
 /* encapsulations: file-information calls */
 
-int qxe_access (const Intbyte *path, int mode);
-int qxe_eaccess (const Intbyte *path, int mode);
-int qxe_lstat (const Intbyte *path, struct stat *buf);
-int qxe_readlink (const Intbyte *path, Intbyte *buf, size_t bufsiz);
+int qxe_access (const Ibyte *path, int mode);
+int qxe_eaccess (const Ibyte *path, int mode);
+int qxe_lstat (const Ibyte *path, struct stat *buf);
+int qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz);
 int qxe_fstat (int fd, struct stat *buf);
-int qxe_stat (const Intbyte *path, struct stat *buf);
-Intbyte *qxe_realpath (const Intbyte *path, Intbyte resolved_path []);
+int qxe_stat (const Ibyte *path, struct stat *buf);
+Ibyte *qxe_realpath (const Ibyte *path, Ibyte resolved_path []);
 
 /* encapsulations: file-manipulation calls */
 
-int qxe_chmod (const Intbyte *path, mode_t mode);
+int qxe_chmod (const Ibyte *path, mode_t mode);
 
 #if defined (HAVE_LINK)
-int qxe_link (const Intbyte *existing, const Intbyte *new);
+int qxe_link (const Ibyte *existing, const Ibyte *new);
 #endif /* defined (HAVE_LINK) */
 
-int qxe_rename (const Intbyte *old, const Intbyte *new);
+int qxe_rename (const Ibyte *old, const Ibyte *new);
 
 #if defined (HAVE_SYMLINK)
-int qxe_symlink (const Intbyte *name1, const Intbyte *name2);
+int qxe_symlink (const Ibyte *name1, const Ibyte *name2);
 #endif /* defined (HAVE_SYMLINK) */
 
-int qxe_unlink (const Intbyte *path);
+int qxe_unlink (const Ibyte *path);
 
 #endif /* emacs */
 
@@ -426,7 +426,7 @@ const char *strerror (int);
 #define SEPCHAR ';'
 #define DEFAULT_DIRECTORY_SEP '\\'
 
-DECLARE_INLINE_HEADER (Intbyte sysfile_get_directory_sep (void))
+DECLARE_INLINE_HEADER (Ibyte sysfile_get_directory_sep (void))
 {
   if (!CHARP (Vdirectory_sep_char)
       || (XCHAR (Vdirectory_sep_char) != '/'
@@ -458,12 +458,12 @@ DECLARE_INLINE_HEADER (Intbyte sysfile_get_directory_sep (void))
 
 #define IS_DEVICE_SEP(c) ((c) == DEVICE_SEP)
 
-DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (Emchar c))
+DECLARE_INLINE_HEADER (int IS_DIRECTORY_SEP (Ichar c))
 {
   return (c == '/' || c == '\\');
 }
 
-DECLARE_INLINE_HEADER (int IS_ANY_SEP (Emchar c))
+DECLARE_INLINE_HEADER (int IS_ANY_SEP (Ichar c))
 {
   return (c == '/' || c == '\\' || c == ':');
 }

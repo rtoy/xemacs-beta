@@ -118,7 +118,7 @@ typedef struct
   FILETIME ftLastWriteTime;
   DWORD nFileSizeHigh;
   DWORD nFileSizeLow;
-  Intbyte *cFileName;
+  Ibyte *cFileName;
 } Win32_file;
   
 typedef struct
@@ -284,7 +284,7 @@ mswindows_get_files (Lisp_Object dirfile, int nowild, Lisp_Object pattern,
 		       hide_dot)))
 		{
 		  file.cFileName =
-		    (Intbyte *) xmalloc (sizeof (Intbyte) * (1 + len));
+		    (Ibyte *) xmalloc (sizeof (Ibyte) * (1 + len));
 		  memcpy (file.cFileName, eidata (filename), len);
 		  file.cFileName[len] = '\0';
 		  Dynarr_add (files, file);
@@ -306,7 +306,7 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
   Lisp_Object luser;
   double file_size;
   DECLARE_EISTRING (puta);
-  CIntbyte buf[666];
+  CIbyte buf[666];
 
   file_size =
     file->nFileSizeHigh * (double)UINT_MAX + file->nFileSizeLow;
@@ -334,11 +334,11 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
       is_executable = 1;
     else if (qxestrcharlen (file->cFileName) > 4)
       {
-	Intbyte *end = file->cFileName + qxestrlen (file->cFileName);
-	DEC_CHARPTR (end);
-	DEC_CHARPTR (end);
-	DEC_CHARPTR (end);
-	DEC_CHARPTR (end);
+	Ibyte *end = file->cFileName + qxestrlen (file->cFileName);
+	DEC_IBYTEPTR (end);
+	DEC_IBYTEPTR (end);
+	DEC_IBYTEPTR (end);
+	DEC_IBYTEPTR (end);
 	if (qxestrcasecmp (end, ".exe") == 0
 	    || qxestrcasecmp (end, ".com") == 0
 	    || qxestrcasecmp (end, ".bat") == 0
@@ -364,14 +364,14 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
     sprintf (buf, "%-9d", 0);
   else
     {
-      Intbyte *str;
+      Ibyte *str;
 
       str = XSTRING_DATA (luser);
       sprintf (buf, "%-8s ", str);
     }
-  eicat_raw (puta, (Intbyte *) buf, strlen (buf));
+  eicat_raw (puta, (Ibyte *) buf, strlen (buf));
   {
-    CIntbyte *cptr = buf;
+    CIbyte *cptr = buf;
     sprintf (buf, "%-8d ", getgid ());
     cptr += 9;
     if (file_size > 99999999.0)
@@ -388,7 +388,7 @@ mswindows_format_file (Win32_file *file, int display_size, int add_newline)
       ++cptr;
     {
       time_t t, now;
-      Intbyte *ctimebuf;
+      Ibyte *ctimebuf;
 
       if (
 #if 0
@@ -470,14 +470,14 @@ switches do not contain `d', so that a full listing is expected.
 
   if (!NILP (switches))
     {
-      Intbyte *cptr, *cptr_end;
+      Ibyte *cptr, *cptr_end;
 
       CHECK_STRING (switches);
       cptr = XSTRING_DATA (switches);
       cptr_end = cptr + XSTRING_LENGTH (switches);
       while (cptr < cptr_end)
 	{
-	  Emchar ch = charptr_emchar (cptr);
+	  Ichar ch = itext_ichar (cptr);
 	  switch (ch)
 	    {
 	    case 'A':
@@ -500,7 +500,7 @@ switches do not contain `d', so that a full listing is expected.
 	      sort_by = MSWINDOWS_SORT_BY_MOD_DATE;
 	      break;
 	    }
-	  INC_CHARPTR (cptr);
+	  INC_IBYTEPTR (cptr);
 	}
     }
 

@@ -115,7 +115,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
      normally want to expand it.  OTOH, if the abbrev begins with
      non-word syntax (e.g. `#if'), it is OK to abbreviate it anywhere.  */
   if (abbrev_length < closure->maxlen && abbrev_length > 0
-      && (WORD_SYNTAX_P (closure->chartab, string_emchar (abbrev, 0)))
+      && (WORD_SYNTAX_P (closure->chartab, string_ichar (abbrev, 0)))
       && (WORD_SYNTAX_P (closure->chartab,
 			 BUF_FETCH_CHAR (closure->buf,
 					 closure->point -
@@ -125,7 +125,7 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
     }
   /* Match abbreviation string against buffer text.  */
   {
-    Intbyte *ptr = XSTRING_DATA (abbrev);
+    Ibyte *ptr = XSTRING_DATA (abbrev);
     Charcount idx;
 
     for (idx = 0; idx < abbrev_length; idx++)
@@ -133,11 +133,11 @@ abbrev_match_mapper (Lisp_Object symbol, void *arg)
 	if (DOWNCASE (closure->buf,
 		      BUF_FETCH_CHAR (closure->buf,
 				      closure->point - abbrev_length + idx))
-	    != DOWNCASE (closure->buf, charptr_emchar (ptr)))
+	    != DOWNCASE (closure->buf, itext_ichar (ptr)))
 	  {
 	    break;
 	  }
-	INC_CHARPTR (ptr);
+	INC_IBYTEPTR (ptr);
       }
     if (idx == abbrev_length)
       {
@@ -183,7 +183,7 @@ static Lisp_Symbol *
 abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 {
   Charbpos wordstart, wordend;
-  Intbyte *word, *p;
+  Ibyte *word, *p;
   Charbpos idx;
   Lisp_Object lookup;
 
@@ -231,13 +231,13 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
   if (wordend <= wordstart)
     return 0;
 
-  p = word = (Intbyte *) ALLOCA (MAX_EMCHAR_LEN * (wordend - wordstart));
+  p = word = (Ibyte *) ALLOCA (MAX_ICHAR_LEN * (wordend - wordstart));
   for (idx = wordstart; idx < wordend; idx++)
     {
-      Emchar c = BUF_FETCH_CHAR (buf, idx);
+      Ichar c = BUF_FETCH_CHAR (buf, idx);
       if (UPPERCASEP (buf, c))
 	c = DOWNCASE (buf, c);
-      p += set_charptr_emchar (p, c);
+      p += set_itext_ichar (p, c);
     }
   lookup = oblookup (obarray, word, p - word);
   if (SYMBOLP (lookup) && !NILP (symbol_value (XSYMBOL (lookup))))
@@ -250,7 +250,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 static int
 obarray_has_blank_p (Lisp_Object obarray)
 {
-  return !ZEROP (oblookup (obarray, (Intbyte *)" ", 1));
+  return !ZEROP (oblookup (obarray, (Ibyte *)" ", 1));
 }
 
 /* Analyze case in the buffer substring, and report it.  */
@@ -261,7 +261,7 @@ abbrev_count_case (struct buffer *buf, Charbpos pos, Charcount length,
   *lccount = *uccount = 0;
   while (length--)
     {
-      Emchar c = BUF_FETCH_CHAR (buf, pos);
+      Ichar c = BUF_FETCH_CHAR (buf, pos);
       if (UPPERCASEP (buf, c))
 	++*uccount;
       else if (LOWERCASEP (buf, c))

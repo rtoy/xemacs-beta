@@ -145,7 +145,7 @@ struct buffer buffer_local_flags;
 /* This is the initial (startup) directory, as used for the *scratch* buffer.
    This is no longer global.  Use get_initial_directory() to retrieve it.
  */
-static Intbyte *initial_directory;
+static Ibyte *initial_directory;
 
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above. */
@@ -713,7 +713,7 @@ even if a buffer with that name exists.
 {
   REGISTER Lisp_Object gentemp, tem;
   int count;
-  Intbyte number[10];
+  Ibyte number[10];
 
   CHECK_STRING (name);
 
@@ -2762,13 +2762,13 @@ handled:
 #ifndef WIN32_NATIVE
 /* Is PWD another name for `.' ? */
 static int
-directory_is_current_directory (Intbyte *pwd)
+directory_is_current_directory (Ibyte *pwd)
 {
   struct stat dotstat, pwdstat;
 
   return (IS_DIRECTORY_SEP (*pwd)
 	  && qxe_stat (pwd, &pwdstat) == 0
-	  && qxe_stat ((Intbyte *) ".", &dotstat) == 0
+	  && qxe_stat ((Ibyte *) ".", &dotstat) == 0
 	  && dotstat.st_ino == pwdstat.st_ino
 	  && dotstat.st_dev == pwdstat.st_dev);
 }
@@ -2776,8 +2776,8 @@ directory_is_current_directory (Intbyte *pwd)
 
 /* A stand-in for getcwd() #### Fix not to depend on arbitrary size limits */
 
-Intbyte *
-get_initial_directory (Intbyte *pathname, Bytecount size)
+Ibyte *
+get_initial_directory (Ibyte *pathname, Bytecount size)
 {
   if (pathname)
     {
@@ -2793,7 +2793,7 @@ init_initial_directory (void)
   /* This function can GC */
 
 #ifndef WIN32_NATIVE
-  Intbyte *pwd;
+  Ibyte *pwd;
 #endif
 
   /* If PWD is accurate, use it instead of calling getcwd.  This is faster
@@ -2806,7 +2806,7 @@ init_initial_directory (void)
 #endif
     if ((initial_directory = qxe_allocating_getcwd ()) == NULL)
       {
-	Intbyte *errmess;
+	Ibyte *errmess;
 	GET_STRERROR (errmess, errno);
 	fatal ("`getcwd' failed: %s\n", errmess);
       }
@@ -2819,7 +2819,7 @@ init_initial_directory (void)
 
     if (! IS_DIRECTORY_SEP (initial_directory[len - 1]))
       {
-	XREALLOC_ARRAY (initial_directory, Intbyte, len + 2);
+	XREALLOC_ARRAY (initial_directory, Ibyte, len + 2);
 	initial_directory[len] = DIRECTORY_SEP;
 	initial_directory[len + 1] = '\0';
       }
@@ -2827,7 +2827,7 @@ init_initial_directory (void)
 
 #ifdef WIN32_NATIVE
   {
-    Intbyte *newinit = mswindows_canonicalize_filename (initial_directory);
+    Ibyte *newinit = mswindows_canonicalize_filename (initial_directory);
     xfree (initial_directory);
     initial_directory = newinit;
   }

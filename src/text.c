@@ -382,41 +382,41 @@ Boston, MA 02111-1307, USA.  */
 
    B. Other Typedefs
 
-      Emchar:
+      Ichar:
       -------
         This typedef represents a single Emacs character, which can be
 	ASCII, ISO-8859, or some extended character, as would typically
 	be used for Kanji.  Note that the representation of a character
-	as an Emchar is *not* the same as the representation of that
+	as an Ichar is *not* the same as the representation of that
 	same character in a string; thus, you cannot do the standard
 	C trick of passing a pointer to a character to a function that
 	expects a string.
 
-	An Emchar takes up 19 bits of representation and (for code
+	An Ichar takes up 19 bits of representation and (for code
 	compatibility and such) is compatible with an int.  This
 	representation is visible on the Lisp level.  The important
-	characteristics	of the Emchar representation are
+	characteristics	of the Ichar representation are
 
 	  -- values 0x00 - 0x7f represent ASCII.
 	  -- values 0x80 - 0xff represent the right half of ISO-8859-1.
 	  -- values 0x100 and up represent all other characters.
 
-	This means that Emchar values are upwardly compatible with
+	This means that Ichar values are upwardly compatible with
 	the standard 8-bit representation of ASCII/ISO-8859-1.
 
-      Intbyte:
+      Ibyte:
       --------
-        The data in a buffer or string is logically made up of Intbyte
-	objects, where a Intbyte takes up the same amount of space as a
+        The data in a buffer or string is logically made up of Ibyte
+	objects, where a Ibyte takes up the same amount of space as a
 	char. (It is declared differently, though, to catch invalid
-	usages.) Strings stored using Intbytes are said to be in
+	usages.) Strings stored using Ibytes are said to be in
 	"internal format".  The important characteristics of internal
 	format are
 
-	  -- ASCII characters are represented as a single Intbyte,
+	  -- ASCII characters are represented as a single Ibyte,
 	     in the range 0 - 0x7f.
-	  -- All other characters are represented as a Intbyte in
-	     the range 0x80 - 0x9f followed by one or more Intbytes
+	  -- All other characters are represented as a Ibyte in
+	     the range 0x80 - 0x9f followed by one or more Ibytes
 	     in the range 0xa0 to 0xff.
 
 	This leads to a number of desirable properties:
@@ -632,7 +632,7 @@ static int composite_char_col_next;
 /* Most are inline functions in lisp.h */
 
 int
-qxesprintf (Intbyte *buffer, const CIntbyte *format, ...)
+qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
 {
   va_list args;
   int retval;
@@ -645,7 +645,7 @@ qxesprintf (Intbyte *buffer, const CIntbyte *format, ...)
 }
 
 /* strcasecmp() implementation from BSD */
-static Intbyte strcasecmp_charmap[] = {
+static Ibyte strcasecmp_charmap[] = {
         '\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007',
         '\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
         '\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
@@ -691,9 +691,9 @@ static Intbyte strcasecmp_charmap[] = {
 */
 
 int
-qxestrcasecmp (const Intbyte *s1, const Intbyte *s2)
+qxestrcasecmp (const Ibyte *s1, const Ibyte *s2)
 {
-  Intbyte *cm = strcasecmp_charmap;
+  Ibyte *cm = strcasecmp_charmap;
 
   while (cm[*s1] == cm[*s2++])
     if (*s1++ == '\0')
@@ -705,32 +705,32 @@ qxestrcasecmp (const Intbyte *s1, const Intbyte *s2)
 int
 ascii_strcasecmp (const Char_ASCII *s1, const Char_ASCII *s2)
 {
-  return qxestrcasecmp ((const Intbyte *) s1, (const Intbyte *) s2);
+  return qxestrcasecmp ((const Ibyte *) s1, (const Ibyte *) s2);
 }
 
 int
-qxestrcasecmp_c (const Intbyte *s1, const Char_ASCII *s2)
+qxestrcasecmp_c (const Ibyte *s1, const Char_ASCII *s2)
 {
-  return qxestrcasecmp (s1, (const Intbyte *) s2);
+  return qxestrcasecmp (s1, (const Ibyte *) s2);
 }
 
 /* An internationalized version that collapses case in a general fashion.
  */
 
 int
-qxestrcasecmp_i18n (const Intbyte *s1, const Intbyte *s2)
+qxestrcasecmp_i18n (const Ibyte *s1, const Ibyte *s2)
 {
   while (*s1 && *s2)
     {
-      if (DOWNCASE (0, charptr_emchar (s1)) !=
-	  DOWNCASE (0, charptr_emchar (s2)))
+      if (DOWNCASE (0, itext_ichar (s1)) !=
+	  DOWNCASE (0, itext_ichar (s2)))
 	break;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
     }
 
-  return (DOWNCASE (0, charptr_emchar (s1)) -
-	  DOWNCASE (0, charptr_emchar (s2)));
+  return (DOWNCASE (0, itext_ichar (s1)) -
+	  DOWNCASE (0, itext_ichar (s2)));
 }
 
 /* The only difference between these next two and
@@ -739,9 +739,9 @@ qxestrcasecmp_i18n (const Intbyte *s1, const Intbyte *s2)
    the mem...() versions would would run off the end. */
 
 int
-qxestrncasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
+qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len)
 {
-  Intbyte *cm = strcasecmp_charmap;
+  Ibyte *cm = strcasecmp_charmap;
 
   while (len--)
     {
@@ -759,13 +759,13 @@ qxestrncasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
 int
 ascii_strncasecmp (const Char_ASCII *s1, const Char_ASCII *s2, Bytecount len)
 {
-  return qxestrncasecmp ((const Intbyte *) s1, (const Intbyte *) s2, len);
+  return qxestrncasecmp ((const Ibyte *) s1, (const Ibyte *) s2, len);
 }
 
 int
-qxestrncasecmp_c (const Intbyte *s1, const Char_ASCII *s2, Bytecount len)
+qxestrncasecmp_c (const Ibyte *s1, const Char_ASCII *s2, Bytecount len)
 {
-  return qxestrncasecmp (s1, (const Intbyte *) s2, len);
+  return qxestrncasecmp (s1, (const Ibyte *) s2, len);
 }
 
 /* Compare LEN_FROM_S1 worth of characters from S1 with the same number of
@@ -775,20 +775,20 @@ qxestrncasecmp_c (const Intbyte *s1, const Char_ASCII *s2, Bytecount len)
    with S1. */
 
 int
-qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2,
+qxestrncasecmp_i18n (const Ibyte *s1, const Ibyte *s2,
 		     Bytecount len_from_s1)
 {
   while (len_from_s1 > 0)
     {
-      const Intbyte *old_s1 = s1;
-      int diff = (DOWNCASE (0, charptr_emchar (s1)) -
-		  DOWNCASE (0, charptr_emchar (s2)));
+      const Ibyte *old_s1 = s1;
+      int diff = (DOWNCASE (0, itext_ichar (s1)) -
+		  DOWNCASE (0, itext_ichar (s2)));
       if (diff != 0)
 	return diff;
       if (!*s1)
 	return 0;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
       len_from_s1 -= s1 - old_s1;
     }
 
@@ -796,14 +796,14 @@ qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2,
 }
 
 int
-qxememcmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
+qxememcmp (const Ibyte *s1, const Ibyte *s2, Bytecount len)
 {
   return memcmp (s1, s2, len);
 }
 
 int
-qxememcmp4 (const Intbyte *s1, Bytecount len1,
-	    const Intbyte *s2, Bytecount len2)
+qxememcmp4 (const Ibyte *s1, Bytecount len1,
+	    const Ibyte *s2, Bytecount len2)
 {
   int retval = qxememcmp (s1, s2, min (len1, len2));
   if (retval)
@@ -812,9 +812,9 @@ qxememcmp4 (const Intbyte *s1, Bytecount len1,
 }
 
 int
-qxememcasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
+qxememcasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len)
 {
-  Intbyte *cm = strcasecmp_charmap;
+  Ibyte *cm = strcasecmp_charmap;
 
   while (len--)
     {
@@ -828,8 +828,8 @@ qxememcasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len)
 }
 
 int
-qxememcasecmp4 (const Intbyte *s1, Bytecount len1,
-		const Intbyte *s2, Bytecount len2)
+qxememcasecmp4 (const Ibyte *s1, Bytecount len1,
+		const Ibyte *s2, Bytecount len2)
 {
   int retval = qxememcasecmp (s1, s2, min (len1, len2));
   if (retval)
@@ -838,22 +838,22 @@ qxememcasecmp4 (const Intbyte *s1, Bytecount len1,
 }
 
 /* Do a character-by-character comparison, returning "which is greater" by
-   comparing the Emchar values. (#### Should have option to compare Unicode
+   comparing the Ichar values. (#### Should have option to compare Unicode
    points) */
 
 int
-qxetextcmp (const Intbyte *s1, Bytecount len1,
-	    const Intbyte *s2, Bytecount len2)
+qxetextcmp (const Ibyte *s1, Bytecount len1,
+	    const Ibyte *s2, Bytecount len2)
 {
   while (len1 > 0 && len2 > 0)
     {
-      const Intbyte *old_s1 = s1;
-      const Intbyte *old_s2 = s2;
-      int diff = charptr_emchar (s1) - charptr_emchar (s2);
+      const Ibyte *old_s1 = s1;
+      const Ibyte *old_s2 = s2;
+      int diff = itext_ichar (s1) - itext_ichar (s2);
       if (diff != 0)
 	return diff;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
       len1 -= s1 - old_s1;
       len2 -= s2 - old_s2;
     }
@@ -863,20 +863,20 @@ qxetextcmp (const Intbyte *s1, Bytecount len1,
 }
 
 int
-qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
-		     const Intbyte *s2, Bytecount len2,
+qxetextcmp_matching (const Ibyte *s1, Bytecount len1,
+		     const Ibyte *s2, Bytecount len2,
 		     Charcount *matching)
 {
   *matching = 0;
   while (len1 > 0 && len2 > 0)
     {
-      const Intbyte *old_s1 = s1;
-      const Intbyte *old_s2 = s2;
-      int diff = charptr_emchar (s1) - charptr_emchar (s2);
+      const Ibyte *old_s1 = s1;
+      const Ibyte *old_s2 = s2;
+      int diff = itext_ichar (s1) - itext_ichar (s2);
       if (diff != 0)
 	return diff;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
       len1 -= s1 - old_s1;
       len2 -= s2 - old_s2;
       (*matching)++;
@@ -887,7 +887,7 @@ qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
 }
 
 /* Do a character-by-character comparison, returning "which is greater" by
-   comparing the Emchar values, case insensitively (by downcasing both
+   comparing the Ichar values, case insensitively (by downcasing both
    first). (#### Should have option to compare Unicode points)
 
    In this case, both lengths must be specified becaused downcasing can
@@ -897,19 +897,19 @@ qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
    is "greater". */
 
 int
-qxetextcasecmp (const Intbyte *s1, Bytecount len1,
-		const Intbyte *s2, Bytecount len2)
+qxetextcasecmp (const Ibyte *s1, Bytecount len1,
+		const Ibyte *s2, Bytecount len2)
 {
   while (len1 > 0 && len2 > 0)
     {
-      const Intbyte *old_s1 = s1;
-      const Intbyte *old_s2 = s2;
-      int diff = (DOWNCASE (0, charptr_emchar (s1)) -
-		  DOWNCASE (0, charptr_emchar (s2)));
+      const Ibyte *old_s1 = s1;
+      const Ibyte *old_s2 = s2;
+      int diff = (DOWNCASE (0, itext_ichar (s1)) -
+		  DOWNCASE (0, itext_ichar (s2)));
       if (diff != 0)
 	return diff;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
       len1 -= s1 - old_s1;
       len2 -= s2 - old_s2;
     }
@@ -922,21 +922,21 @@ qxetextcasecmp (const Intbyte *s1, Bytecount len1,
    beginning that match. */
 
 int
-qxetextcasecmp_matching (const Intbyte *s1, Bytecount len1,
-			 const Intbyte *s2, Bytecount len2,
+qxetextcasecmp_matching (const Ibyte *s1, Bytecount len1,
+			 const Ibyte *s2, Bytecount len2,
 			 Charcount *matching)
 {
   *matching = 0;
   while (len1 > 0 && len2 > 0)
     {
-      const Intbyte *old_s1 = s1;
-      const Intbyte *old_s2 = s2;
-      int diff = (DOWNCASE (0, charptr_emchar (s1)) -
-		  DOWNCASE (0, charptr_emchar (s2)));
+      const Ibyte *old_s1 = s1;
+      const Ibyte *old_s2 = s2;
+      int diff = (DOWNCASE (0, itext_ichar (s1)) -
+		  DOWNCASE (0, itext_ichar (s2)));
       if (diff != 0)
 	return diff;
-      INC_CHARPTR (s1);
-      INC_CHARPTR (s2);
+      INC_IBYTEPTR (s1);
+      INC_IBYTEPTR (s2);
       len1 -= s1 - old_s1;
       len2 -= s2 - old_s2;
       (*matching)++;
@@ -949,11 +949,11 @@ qxetextcasecmp_matching (const Intbyte *s1, Bytecount len1,
 int
 lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2)
 {
-  Intbyte *cm = strcasecmp_charmap;
-  Intbyte *p1 = XSTRING_DATA (s1);
-  Intbyte *p2 = XSTRING_DATA (s2);
-  Intbyte *e1 = p1 + XSTRING_LENGTH (s1);
-  Intbyte *e2 = p2 + XSTRING_LENGTH (s2);
+  Ibyte *cm = strcasecmp_charmap;
+  Ibyte *p1 = XSTRING_DATA (s1);
+  Ibyte *p2 = XSTRING_DATA (s2);
+  Ibyte *e1 = p1 + XSTRING_LENGTH (s1);
+  Ibyte *e2 = p2 + XSTRING_LENGTH (s2);
 
   /* again, we use a symmetric algorithm and favor clarity over
      nanosecond improvements. */
@@ -985,74 +985,74 @@ lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2)
 /* NOTE: Does not reset the Dynarr. */
 
 void
-convert_intbyte_string_into_emchar_dynarr (const Intbyte *str, Bytecount len,
-					   Emchar_dynarr *dyn)
+convert_ibyte_string_into_ichar_dynarr (const Ibyte *str, Bytecount len,
+					   Ichar_dynarr *dyn)
 {
-  const Intbyte *strend = str + len;
+  const Ibyte *strend = str + len;
 
   while (str < strend)
     {
-      Emchar ch = charptr_emchar (str);
+      Ichar ch = itext_ichar (str);
       Dynarr_add (dyn, ch);
-      INC_CHARPTR (str);
+      INC_IBYTEPTR (str);
     }
 }
 
 Charcount
-convert_intbyte_string_into_emchar_string (const Intbyte *str, Bytecount len,
-					   Emchar *arr)
+convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
+					   Ichar *arr)
 {
-  const Intbyte *strend = str + len;
+  const Ibyte *strend = str + len;
   Charcount newlen = 0;
   while (str < strend)
     {
-      Emchar ch = charptr_emchar (str);
+      Ichar ch = itext_ichar (str);
       arr[newlen++] = ch;
-      INC_CHARPTR (str);
+      INC_IBYTEPTR (str);
     }
   return newlen;
 }
 
-/* Convert an array of Emchars into the equivalent string representation.
-   Store into the given Intbyte dynarr.  Does not reset the dynarr.
+/* Convert an array of Ichars into the equivalent string representation.
+   Store into the given Ibyte dynarr.  Does not reset the dynarr.
    Does not add a terminating zero. */
 
 void
-convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
-					  Intbyte_dynarr *dyn)
+convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
+					  Ibyte_dynarr *dyn)
 {
-  Intbyte str[MAX_EMCHAR_LEN];
+  Ibyte str[MAX_ICHAR_LEN];
   int i;
 
   for (i = 0; i < nels; i++)
     {
-      Bytecount len = set_charptr_emchar (str, arr[i]);
+      Bytecount len = set_itext_ichar (str, arr[i]);
       Dynarr_add_many (dyn, str, len);
     }
 }
 
-/* Convert an array of Emchars into the equivalent string representation.
+/* Convert an array of Ichars into the equivalent string representation.
    Malloc the space needed for this and return it.  If LEN_OUT is not a
-   NULL pointer, store into LEN_OUT the number of Intbytes in the
-   malloc()ed string.  Note that the actual number of Intbytes allocated
+   NULL pointer, store into LEN_OUT the number of Ibytes in the
+   malloc()ed string.  Note that the actual number of Ibytes allocated
    is one more than this: the returned string is zero-terminated. */
 
-Intbyte *
-convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
+Ibyte *
+convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
 					    Bytecount *len_out)
 {
   /* Damn zero-termination. */
-  Intbyte *str = (Intbyte *) ALLOCA (nels * MAX_EMCHAR_LEN + 1);
-  Intbyte *strorig = str;
+  Ibyte *str = (Ibyte *) ALLOCA (nels * MAX_ICHAR_LEN + 1);
+  Ibyte *strorig = str;
   Bytecount len;
 
   int i;
 
   for (i = 0; i < nels; i++)
-    str += set_charptr_emchar (str, arr[i]);
+    str += set_itext_ichar (str, arr[i]);
   *str = '\0';
   len = str - strorig;
-  str = (Intbyte *) xmalloc (1 + len);
+  str = (Ibyte *) xmalloc (1 + len);
   memcpy (str, strorig, 1 + len);
   if (len_out)
     *len_out = len;
@@ -1064,24 +1064,24 @@ do									 \
 {									 \
   if (dst)								 \
     {									 \
-      Intbyte *dstend = dst + dstlen;					 \
-      Intbyte *dstp = dst;						 \
-      const Intbyte *srcend = src + srclen;				 \
-      const Intbyte *srcp = src;					 \
+      Ibyte *dstend = dst + dstlen;					 \
+      Ibyte *dstp = dst;						 \
+      const Ibyte *srcend = src + srclen;				 \
+      const Ibyte *srcp = src;					 \
 									 \
       while (srcp < srcend)						 \
 	{								 \
-	  Emchar ch = charptr_emchar_fmt (srcp, srcfmt, srcobj);	 \
-	  Bytecount len = emchar_len_fmt (ch, dstfmt);			 \
+	  Ichar ch = itext_ichar_fmt (srcp, srcfmt, srcobj);	 \
+	  Bytecount len = ichar_len_fmt (ch, dstfmt);			 \
 									 \
 	    if (dstp + len <= dstend)					 \
 	      {								 \
-		set_charptr_emchar_fmt (dstp, ch, dstfmt, dstobj);	 \
+		set_itext_ichar_fmt (dstp, ch, dstfmt, dstobj);	 \
 		dstp += len;						 \
 	      }								 \
 	    else							 \
 	      break;							 \
-	  INC_CHARPTR_FMT (srcp, srcfmt);				 \
+	  INC_IBYTEPTR_FMT (srcp, srcfmt);				 \
 	}								 \
       text_checking_assert (srcp <= srcend);				 \
       if (src_used)							 \
@@ -1090,15 +1090,15 @@ do									 \
     }									 \
   else									 \
     {									 \
-      const Intbyte *srcend = src + srclen;				 \
-      const Intbyte *srcp = src;					 \
+      const Ibyte *srcend = src + srclen;				 \
+      const Ibyte *srcp = src;					 \
       Bytecount total = 0;						 \
 									 \
       while (srcp < srcend)						 \
 	{								 \
-	  total += emchar_len_fmt (charptr_emchar_fmt (srcp, srcfmt,	 \
+	  total += ichar_len_fmt (itext_ichar_fmt (srcp, srcfmt,	 \
 						       srcobj), dstfmt); \
-	  INC_CHARPTR_FMT (srcp, srcfmt);				 \
+	  INC_IBYTEPTR_FMT (srcp, srcfmt);				 \
 	}								 \
       text_checking_assert (srcp == srcend);				 \
       if (src_used)							 \
@@ -1116,10 +1116,10 @@ while (0)
    partial characters into DST. */
 
 Bytecount
-copy_text_between_formats (const Intbyte *src, Bytecount srclen,
+copy_text_between_formats (const Ibyte *src, Bytecount srclen,
 			   Internal_Format srcfmt,
 			   Lisp_Object srcobj,
-			   Intbyte *dst, Bytecount dstlen,
+			   Ibyte *dst, Bytecount dstlen,
 			   Internal_Format dstfmt,
 			   Lisp_Object dstobj,
 			   Bytecount *src_used)
@@ -1130,7 +1130,7 @@ copy_text_between_formats (const Intbyte *src, Bytecount srclen,
       if (dst)
 	{
 	  srclen = min (srclen, dstlen);
-	  srclen = validate_intbyte_string_backward (src, srclen);
+	  srclen = validate_ibyte_string_backward (src, srclen);
 	  memcpy (dst, src, srclen);
 	  if (src_used)
 	    *src_used = srclen;
@@ -1164,7 +1164,7 @@ copy_text_between_formats (const Intbyte *src, Bytecount srclen,
 
 Bytecount
 copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
-		      Bytecount len, Intbyte *dst, Bytecount dstlen,
+		      Bytecount len, Ibyte *dst, Bytecount dstlen,
 		      Internal_Format dstfmt, Lisp_Object dstobj,
 		      Bytecount *src_used)
 {
@@ -1213,14 +1213,14 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 /************************************************************************/
 
 void
-find_charsets_in_intbyte_string (unsigned char *charsets, const Intbyte *str,
+find_charsets_in_ibyte_string (unsigned char *charsets, const Ibyte *str,
 				 Bytecount len)
 {
 #ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
 #else
-  const Intbyte *strend = str + len;
+  const Ibyte *strend = str + len;
   memset (charsets, 0, NUM_LEADING_BYTES);
 
   /* #### SJT doesn't like this. */
@@ -1232,15 +1232,15 @@ find_charsets_in_intbyte_string (unsigned char *charsets, const Intbyte *str,
 
   while (str < strend)
     {
-      charsets[emchar_leading_byte (charptr_emchar (str)) - MIN_LEADING_BYTE] =
+      charsets[ichar_leading_byte (itext_ichar (str)) - MIN_LEADING_BYTE] =
 	1;
-      INC_CHARPTR (str);
+      INC_IBYTEPTR (str);
     }
 #endif
 }
 
 void
-find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
+find_charsets_in_ichar_string (unsigned char *charsets, const Ichar *str,
 				Charcount len)
 {
 #ifndef MULE
@@ -1260,40 +1260,40 @@ find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
 
   for (i = 0; i < len; i++)
     {
-      charsets[emchar_leading_byte (str[i]) - MIN_LEADING_BYTE] = 1;
+      charsets[ichar_leading_byte (str[i]) - MIN_LEADING_BYTE] = 1;
     }
 #endif
 }
 
 int
-intbyte_string_displayed_columns (const Intbyte *str, Bytecount len)
+ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
 {
   int cols = 0;
-  const Intbyte *end = str + len;
+  const Ibyte *end = str + len;
 
   while (str < end)
     {
 #ifdef MULE
-      Emchar ch = charptr_emchar (str);
-      cols += XCHARSET_COLUMNS (emchar_charset (ch));
+      Ichar ch = itext_ichar (str);
+      cols += XCHARSET_COLUMNS (ichar_charset (ch));
 #else
       cols++;
 #endif
-      INC_CHARPTR (str);
+      INC_IBYTEPTR (str);
     }
 
   return cols;
 }
 
 int
-emchar_string_displayed_columns (const Emchar *str, Charcount len)
+ichar_string_displayed_columns (const Ichar *str, Charcount len)
 {
 #ifdef MULE
   int cols = 0;
   int i;
 
   for (i = 0; i < len; i++)
-    cols += XCHARSET_COLUMNS (emchar_charset (str[i]));
+    cols += XCHARSET_COLUMNS (ichar_charset (str[i]));
 
   return cols;
 #else  /* not MULE */
@@ -1302,17 +1302,17 @@ emchar_string_displayed_columns (const Emchar *str, Charcount len)
 }
 
 Charcount
-intbyte_string_nonascii_chars (const Intbyte *str, Bytecount len)
+ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len)
 {
 #ifdef MULE
-  const Intbyte *end = str + len;
+  const Ibyte *end = str + len;
   Charcount retval = 0;
 
   while (str < end)
     {
       if (!byte_ascii_p (*str))
 	retval++;
-      INC_CHARPTR (str);
+      INC_IBYTEPTR (str);
     }
 
   return retval;
@@ -1327,17 +1327,17 @@ intbyte_string_nonascii_chars (const Intbyte *str, Bytecount len)
 /***************************************************************************/
 
 int
-eistr_casefiddle_1 (Intbyte *olddata, Bytecount len, Intbyte *newdata,
+eistr_casefiddle_1 (Ibyte *olddata, Bytecount len, Ibyte *newdata,
 		    int downp)
 {
-  Intbyte *endp = olddata + len;
-  Intbyte *newp = newdata;
+  Ibyte *endp = olddata + len;
+  Ibyte *newp = newdata;
   int changedp = 0;
 
   while (olddata < endp)
     {
-      Emchar c = charptr_emchar (olddata);
-      Emchar newc;
+      Ichar c = itext_ichar (olddata);
+      Ichar newc;
 
       if (downp)
 	newc = DOWNCASE (0, c);
@@ -1347,8 +1347,8 @@ eistr_casefiddle_1 (Intbyte *olddata, Bytecount len, Intbyte *newdata,
       if (c != newc)
 	changedp = 1;
 
-      newp += set_charptr_emchar (newp, newc);
-      INC_CHARPTR (olddata);
+      newp += set_itext_ichar (newp, newc);
+      INC_IBYTEPTR (olddata);
     }
 
   *newp = '\0';
@@ -1376,11 +1376,11 @@ eito_malloc_1 (Eistring *ei)
   ei->mallocp_ = 1;
   if (ei->data_)
     {
-      Intbyte *newdata;
+      Ibyte *newdata;
 
       ei->max_size_allocated_ =
 	eifind_large_enough_buffer (0, ei->bytelen_ + 1);
-      newdata = (Intbyte *) xmalloc (ei->max_size_allocated_);
+      newdata = (Ibyte *) xmalloc (ei->max_size_allocated_);
       memcpy (newdata, ei->data_, ei->bytelen_ + 1);
       ei->data_ = newdata;
     }
@@ -1399,7 +1399,7 @@ eito_malloc_1 (Eistring *ei)
 
 int
 eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
-	 Bytecount len, Charcount charlen, const Intbyte *data,
+	 Bytecount len, Charcount charlen, const Ibyte *data,
 	 const Eistring *ei2, int is_c, int fold_case)
 {
   assert ((off < 0) != (charoff < 0));
@@ -1422,7 +1422,7 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
 
   {
     Bytecount dstlen;
-    const Intbyte *src = ei->data_, *dst;
+    const Ibyte *src = ei->data_, *dst;
 
     if (data)
       {
@@ -1444,14 +1444,14 @@ eicmp_1 (Eistring *ei, Bytecount off, Charcount charoff,
   }
 }
 
-Intbyte *
+Ibyte *
 eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
 		     Lisp_Object object)
 {
-  Intbyte *ptr;
+  Ibyte *ptr;
 
   assert (fmt == FORMAT_DEFAULT);
-  ptr = xnew_array (Intbyte, eistr->bytelen_ + 1);
+  ptr = xnew_array (Ibyte, eistr->bytelen_ + 1);
   if (len_out)
     *len_out = eistr->bytelen_;
   memcpy (ptr, eistr->data_, eistr->bytelen_ + 1);
@@ -1470,8 +1470,8 @@ eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
 /* Skip as many ASCII bytes as possible in the memory block [PTR, END).
    Return pointer to the first non-ASCII byte.  optimized for long
    stretches of ASCII. */
-inline static const Intbyte *
-skip_ascii (const Intbyte *ptr, const Intbyte *end)
+inline static const Ibyte *
+skip_ascii (const Ibyte *ptr, const Ibyte *end)
 {
 #ifdef EFFICIENT_INT_128_BIT
 # define STRIDE_TYPE INT_128_BIT
@@ -1503,10 +1503,10 @@ skip_ascii (const Intbyte *ptr, const Intbyte *end)
   ascii_end = (const unsigned STRIDE_TYPE *) ptr;
   /* This loop screams, because we can detect ASCII
      characters 4 or 8 at a time. */
-  while ((const Intbyte *) ascii_end + STRIDE <= end
+  while ((const Ibyte *) ascii_end + STRIDE <= end
 	 && !(*ascii_end & HIGH_BIT_MASK))
     ascii_end++;
-  ptr = (Intbyte *) ascii_end;
+  ptr = (Ibyte *) ascii_end;
   while (ptr < end && byte_ascii_p (*ptr))
     ptr++;
   return ptr;
@@ -1518,20 +1518,20 @@ skip_ascii (const Intbyte *ptr, const Intbyte *end)
    strings. */
 
 Charcount
-bytecount_to_charcount_fun (const Intbyte *ptr, Bytecount len)
+bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len)
 {
   Charcount count = 0;
-  const Intbyte *end = ptr + len;
+  const Ibyte *end = ptr + len;
   while (1)
     {
-      const Intbyte *newptr = skip_ascii (ptr, end);
+      const Ibyte *newptr = skip_ascii (ptr, end);
       count += newptr - ptr;
       ptr = newptr;
       if (ptr == end)
 	break;
       {
 	/* Optimize for successive characters from the same charset */
-	Intbyte leading_byte = *ptr;
+	Ibyte leading_byte = *ptr;
 	int bytes = rep_bytes_by_first_byte (leading_byte);
 	while (ptr < end && *ptr == leading_byte)
 	  ptr += bytes, count++;
@@ -1550,19 +1550,19 @@ bytecount_to_charcount_fun (const Intbyte *ptr, Bytecount len)
 }
 
 Bytecount
-charcount_to_bytecount_fun (const Intbyte *ptr, Charcount len)
+charcount_to_bytecount_fun (const Ibyte *ptr, Charcount len)
 {
-  const Intbyte *newptr = ptr;
+  const Ibyte *newptr = ptr;
   while (1)
     {
-      const Intbyte *newnewptr = skip_ascii (newptr, newptr + len);
+      const Ibyte *newnewptr = skip_ascii (newptr, newptr + len);
       len -= newnewptr - newptr;
       newptr = newnewptr;
       if (!len)
 	break;
       {
 	/* Optimize for successive characters from the same charset */
-	Intbyte leading_byte = *newptr;
+	Ibyte leading_byte = *newptr;
 	int bytes = rep_bytes_by_first_byte (leading_byte);
 	while (len > 0 && *newptr == leading_byte)
 	  newptr += bytes, len--;
@@ -2735,8 +2735,8 @@ buffer_or_string_clip_to_absolute_byte (Lisp_Object object, Bytexpos pos)
 
 typedef struct
 {
-  Dynarr_declare (Intbyte_dynarr *);
-} Intbyte_dynarr_dynarr;
+  Dynarr_declare (Ibyte_dynarr *);
+} Ibyte_dynarr_dynarr;
 
 typedef struct
 {
@@ -2744,7 +2744,7 @@ typedef struct
 } Extbyte_dynarr_dynarr;
 
 static Extbyte_dynarr_dynarr *conversion_out_dynarr_list;
-static Intbyte_dynarr_dynarr *conversion_in_dynarr_list;
+static Ibyte_dynarr_dynarr *conversion_in_dynarr_list;
 
 static int dfc_convert_to_external_format_in_use;
 static int dfc_convert_to_internal_format_in_use;
@@ -2791,7 +2791,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
       sink_type   != DFC_TYPE_LISP_LSTREAM &&
       coding_system_is_binary (coding_system))
     {
-      const Intbyte *ptr;
+      const Ibyte *ptr;
       Bytecount len;
 
       if (source_type == DFC_TYPE_LISP_STRING)
@@ -2801,23 +2801,23 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	}
       else
 	{
-	  ptr = (Intbyte *) source->data.ptr;
+	  ptr = (Ibyte *) source->data.ptr;
 	  len = source->data.len;
 	}
 
 #ifdef MULE
       {
-	const Intbyte *end;
+	const Ibyte *end;
 	for (end = ptr + len; ptr < end;)
 	  {
-	    Intbyte c =
+	    Ibyte c =
 	      (byte_ascii_p (*ptr))		   ? *ptr :
 	      (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
 	      (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
 	      '~';
 
 	    Dynarr_add (conversion_out_dynarr, (Extbyte) c);
-	    INC_CHARPTR (ptr);
+	    INC_IBYTEPTR (ptr);
 	  }
 	text_checking_assert (ptr == end);
       }
@@ -2832,9 +2832,9 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	   sink_type   != DFC_TYPE_LISP_LSTREAM &&
 	   dfc_coding_system_is_unicode (coding_system))
     {
-      const Intbyte *ptr, *p;
+      const Ibyte *ptr, *p;
       Bytecount len;
-      const Intbyte *end;
+      const Ibyte *end;
 
       if (source_type == DFC_TYPE_LISP_STRING)
 	{
@@ -2843,7 +2843,7 @@ dfc_convert_to_external_format (dfc_conversion_type source_type,
 	}
       else
 	{
-	  ptr = (Intbyte *) source->data.ptr;
+	  ptr = (Ibyte *) source->data.ptr;
 	  len = source->data.len;
 	}
       end = ptr + len;
@@ -2956,7 +2956,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
      esp. given that this code conversion occurs in many very hidden
      places. */
   int count = begin_gc_forbidden ();
-  Intbyte_dynarr *conversion_in_dynarr;
+  Ibyte_dynarr *conversion_in_dynarr;
 
   type_checking_assert
     ((source_type == DFC_TYPE_DATA ||
@@ -2967,7 +2967,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
   if (Dynarr_length (conversion_in_dynarr_list) <=
       dfc_convert_to_internal_format_in_use)
-    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Intbyte));
+    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Ibyte));
   conversion_in_dynarr = Dynarr_at (conversion_in_dynarr_list,
 				    dfc_convert_to_internal_format_in_use);
   Dynarr_reset (conversion_in_dynarr);
@@ -2982,13 +2982,13 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       coding_system_is_binary (coding_system))
     {
 #ifdef MULE
-      const Intbyte *ptr = (const Intbyte *) source->data.ptr;
+      const Ibyte *ptr = (const Ibyte *) source->data.ptr;
       Bytecount len = source->data.len;
-      const Intbyte *end = ptr + len;
+      const Ibyte *end = ptr + len;
 
       for (; ptr < end; ptr++)
         {
-          Intbyte c = *ptr;
+          Ibyte c = *ptr;
 
 	  if (byte_ascii_p (c))
 	    Dynarr_add (conversion_in_dynarr, c);
@@ -3013,9 +3013,9 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	   sink_type   != DFC_TYPE_LISP_LSTREAM &&
 	   dfc_coding_system_is_unicode (coding_system))
     {
-      const Intbyte *ptr = (const Intbyte *) source->data.ptr + 1;
+      const Ibyte *ptr = (const Ibyte *) source->data.ptr + 1;
       Bytecount len = source->data.len;
-      const Intbyte *end = ptr + len;
+      const Ibyte *end = ptr + len;
 
       if (len & 1)
 	goto the_hard_way;
@@ -3026,12 +3026,12 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 	    goto the_hard_way;
 	}
 
-      ptr = (const Intbyte *) source->data.ptr;
+      ptr = (const Ibyte *) source->data.ptr;
       end = ptr + len;
 
       for (; ptr < end; ptr += 2)
 	{
-          Intbyte c = *ptr;
+          Ibyte c = *ptr;
 
 	  if (byte_ascii_p (c))
 	    Dynarr_add (conversion_in_dynarr, c);
@@ -3135,27 +3135,27 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
 
 
 /************************************************************************/
-/*                       Basic Emchar functions                         */
+/*                       Basic Ichar functions                         */
 /************************************************************************/
 
 #ifdef MULE
 
 /* Convert a non-ASCII Mule character C into a one-character Mule-encoded
    string in STR.  Returns the number of bytes stored.
-   Do not call this directly.  Use the macro set_charptr_emchar() instead.
+   Do not call this directly.  Use the macro set_itext_ichar() instead.
  */
 
 Bytecount
-non_ascii_set_charptr_emchar (Intbyte *str, Emchar c)
+non_ascii_set_itext_ichar (Ibyte *str, Ichar c)
 {
-  Intbyte *p;
-  Intbyte lb;
+  Ibyte *p;
+  Ibyte lb;
   int c1, c2;
   Lisp_Object charset;
 
   p = str;
-  BREAKUP_EMCHAR (c, charset, c1, c2);
-  lb = emchar_leading_byte (c);
+  BREAKUP_ICHAR (c, charset, c1, c2);
+  lb = ichar_leading_byte (c);
   if (leading_byte_private_p (lb))
     *p++ = private_leading_byte_prefix (lb);
   *p++ = lb;
@@ -3170,16 +3170,16 @@ non_ascii_set_charptr_emchar (Intbyte *str, Emchar c)
 
 /* Return the first character from a Mule-encoded string in STR,
    assuming it's non-ASCII.  Do not call this directly.
-   Use the macro charptr_emchar() instead. */
+   Use the macro itext_ichar() instead. */
 
-Emchar
-non_ascii_charptr_emchar (const Intbyte *str)
+Ichar
+non_ascii_itext_ichar (const Ibyte *str)
 {
-  Intbyte i0 = *str, i1, i2 = 0;
+  Ibyte i0 = *str, i1, i2 = 0;
   Lisp_Object charset;
 
   if (i0 == LEADING_BYTE_CONTROL_1)
-    return (Emchar) (*++str - 0x20);
+    return (Ichar) (*++str - 0x20);
 
   if (leading_byte_prefix_p (i0))
     i0 = *++str;
@@ -3190,14 +3190,14 @@ non_ascii_charptr_emchar (const Intbyte *str)
   if (XCHARSET_DIMENSION (charset) == 2)
     i2 = *++str & 0x7F;
 
-  return make_emchar (charset, i1, i2);
+  return make_ichar (charset, i1, i2);
 }
 
-/* Return whether CH is a valid Emchar, assuming it's non-ASCII.
-   Do not call this directly.  Use the macro valid_emchar_p() instead. */
+/* Return whether CH is a valid Ichar, assuming it's non-ASCII.
+   Do not call this directly.  Use the macro valid_ichar_p() instead. */
 
 int
-non_ascii_valid_emchar_p (Emchar ch)
+non_ascii_valid_ichar_p (Ichar ch)
 {
   int f1, f2, f3;
 
@@ -3205,9 +3205,9 @@ non_ascii_valid_emchar_p (Emchar ch)
   if (ch & ~0x7FFFF)
     return 0;
 
-  f1 = emchar_field1 (ch);
-  f2 = emchar_field2 (ch);
-  f3 = emchar_field3 (ch);
+  f1 = ichar_field1 (ch);
+  f2 = ichar_field2 (ch);
+  f3 = ichar_field3 (ch);
 
   if (f1 == 0)
     {
@@ -3215,9 +3215,9 @@ non_ascii_valid_emchar_p (Emchar ch)
       Lisp_Object charset;
 
       /* leading byte must be correct */
-      if (f2 < MIN_EMCHAR_FIELD2_OFFICIAL ||
-	  (f2 > MAX_EMCHAR_FIELD2_OFFICIAL && f2 < MIN_EMCHAR_FIELD2_PRIVATE) ||
-	   f2 > MAX_EMCHAR_FIELD2_PRIVATE)
+      if (f2 < MIN_ICHAR_FIELD2_OFFICIAL ||
+	  (f2 > MAX_ICHAR_FIELD2_OFFICIAL && f2 < MIN_ICHAR_FIELD2_PRIVATE) ||
+	   f2 > MAX_ICHAR_FIELD2_PRIVATE)
 	return 0;
       /* octet not out of range */
       if (f3 < 0x20)
@@ -3240,9 +3240,9 @@ non_ascii_valid_emchar_p (Emchar ch)
       Lisp_Object charset;
 
       /* leading byte must be correct */
-      if (f1 < MIN_EMCHAR_FIELD1_OFFICIAL ||
-	  (f1 > MAX_EMCHAR_FIELD1_OFFICIAL && f1 < MIN_EMCHAR_FIELD1_PRIVATE) ||
-	  f1 > MAX_EMCHAR_FIELD1_PRIVATE)
+      if (f1 < MIN_ICHAR_FIELD1_OFFICIAL ||
+	  (f1 > MAX_ICHAR_FIELD1_OFFICIAL && f1 < MIN_ICHAR_FIELD1_PRIVATE) ||
+	  f1 > MAX_ICHAR_FIELD1_PRIVATE)
 	return 0;
       /* octets not out of range */
       if (f2 < 0x20 || f3 < 0x20)
@@ -3260,7 +3260,7 @@ non_ascii_valid_emchar_p (Emchar ch)
 #endif /* ENABLE_COMPOSITE_CHARS */
 
       /* charset exists */
-      if (f1 <= MAX_EMCHAR_FIELD1_OFFICIAL)
+      if (f1 <= MAX_ICHAR_FIELD1_OFFICIAL)
 	charset =
 	  charset_by_leading_byte (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE);
       else
@@ -3276,11 +3276,11 @@ non_ascii_valid_emchar_p (Emchar ch)
 }
 
 /* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro charptr_copy_emchar() instead.
+   directly.  Use the macro itext_copy_ichar() instead.
    Return the number of bytes copied.  */
 
 Bytecount
-non_ascii_charptr_copy_emchar (const Intbyte *src, Intbyte *dst)
+non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 {
   Bytecount bytes = rep_bytes_by_first_byte (*src);
   Bytecount i;
@@ -3293,46 +3293,46 @@ non_ascii_charptr_copy_emchar (const Intbyte *src, Intbyte *dst)
 
 
 /************************************************************************/
-/*                        streams of Emchars                            */
+/*                        streams of Ichars                            */
 /************************************************************************/
 
 #ifdef MULE
 
-/* Treat a stream as a stream of Emchar's rather than a stream of bytes.
+/* Treat a stream as a stream of Ichar's rather than a stream of bytes.
    The functions below are not meant to be called directly; use
    the macros in insdel.h. */
 
-Emchar
-Lstream_get_emchar_1 (Lstream *stream, int ch)
+Ichar
+Lstream_get_ichar_1 (Lstream *stream, int ch)
 {
-  Intbyte str[MAX_EMCHAR_LEN];
-  Intbyte *strptr = str;
+  Ibyte str[MAX_ICHAR_LEN];
+  Ibyte *strptr = str;
   Bytecount bytes;
 
-  str[0] = (Intbyte) ch;
+  str[0] = (Ibyte) ch;
 
   for (bytes = rep_bytes_by_first_byte (ch) - 1; bytes; bytes--)
     {
       int c = Lstream_getc (stream);
       text_checking_assert (c >= 0);
-      *++strptr = (Intbyte) c;
+      *++strptr = (Ibyte) c;
     }
-  return charptr_emchar (str);
+  return itext_ichar (str);
 }
 
 int
-Lstream_fput_emchar (Lstream *stream, Emchar ch)
+Lstream_fput_ichar (Lstream *stream, Ichar ch)
 {
-  Intbyte str[MAX_EMCHAR_LEN];
-  Bytecount len = set_charptr_emchar (str, ch);
+  Ibyte str[MAX_ICHAR_LEN];
+  Bytecount len = set_itext_ichar (str, ch);
   return Lstream_write (stream, str, len);
 }
 
 void
-Lstream_funget_emchar (Lstream *stream, Emchar ch)
+Lstream_funget_ichar (Lstream *stream, Ichar ch)
 {
-  Intbyte str[MAX_EMCHAR_LEN];
-  Bytecount len = set_charptr_emchar (str, ch);
+  Ibyte str[MAX_ICHAR_LEN];
+  Bytecount len = set_itext_ichar (str, ch);
   Lstream_unread (stream, str, len);
 }
 
@@ -3438,7 +3438,7 @@ are allowed:
       if (!NILP (arg2))
         invalid_argument
           ("Charset is of dimension one; second octet must be nil", arg2);
-      return make_char (make_emchar (charset, a1, 0));
+      return make_char (make_ichar (charset, a1, 0));
     }
 
   CHECK_INT (arg2);
@@ -3446,7 +3446,7 @@ are allowed:
   if (a2 < lowlim || a2 > highlim)
     args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
 
-  return make_char (make_emchar (charset, a1, a2));
+  return make_char (make_ichar (charset, a1, a2));
 #else
   int a1;
   int lowlim, highlim;
@@ -3480,7 +3480,7 @@ Return the character set of char CH.
   CHECK_CHAR_COERCE_INT (ch);
 
   return XCHARSET_NAME (charset_by_leading_byte
-			(emchar_leading_byte (XCHAR (ch))));
+			(ichar_leading_byte (XCHAR (ch))));
 }
 
 DEFUN ("char-octet", Fchar_octet, 1, 2, 0, /*
@@ -3494,7 +3494,7 @@ N defaults to 0 if omitted.
 
   CHECK_CHAR_COERCE_INT (ch);
 
-  BREAKUP_EMCHAR (XCHAR (ch), charset, octet0, octet1);
+  BREAKUP_ICHAR (XCHAR (ch), charset, octet0, octet1);
 
   if (NILP (n) || EQ (n, Qzero))
     return make_int (octet0);
@@ -3518,7 +3518,7 @@ Return list of charset and one or two position-codes of CHAR.
   GCPRO2 (charset, rc);
   CHECK_CHAR_COERCE_INT (character);
 
-  BREAKUP_EMCHAR (XCHAR (character), charset, c1, c2);
+  BREAKUP_ICHAR (XCHAR (character), charset, c1, c2);
 
   if (XCHARSET_DIMENSION (Fget_charset (charset)) == 2)
     {
@@ -3542,20 +3542,20 @@ Return list of charset and one or two position-codes of CHAR.
 
 #ifdef ENABLE_COMPOSITE_CHARS
 
-Emchar
-lookup_composite_char (Intbyte *str, int len)
+Ichar
+lookup_composite_char (Ibyte *str, int len)
 {
   Lisp_Object lispstr = make_string (str, len);
   Lisp_Object ch = Fgethash (lispstr,
 			     Vcomposite_char_string2char_hash_table,
 			     Qunbound);
-  Emchar emch;
+  Ichar emch;
 
   if (UNBOUNDP (ch))
     {
       if (composite_char_row_next >= 128)
 	invalid_operation ("No more composite chars available", lispstr);
-      emch = make_emchar (Vcharset_composite, composite_char_row_next,
+      emch = make_ichar (Vcharset_composite, composite_char_row_next,
 			composite_char_col_next);
       Fputhash (make_char (emch), lispstr,
 	        Vcomposite_char_char2string_hash_table);
@@ -3574,7 +3574,7 @@ lookup_composite_char (Intbyte *str, int len)
 }
 
 Lisp_Object
-composite_char_string (Emchar ch)
+composite_char_string (Ichar ch)
 {
   Lisp_Object str = Fgethash (make_char (ch),
 			      Vcomposite_char_char2string_hash_table,
@@ -3600,11 +3600,11 @@ Return a string of the characters comprising a composite character.
 */
        (ch))
 {
-  Emchar emch;
+  Ichar emch;
 
   CHECK_CHAR (ch);
   emch = XCHAR (ch);
-  if (emchar_leading_byte (emch) != LEADING_BYTE_COMPOSITE)
+  if (ichar_leading_byte (emch) != LEADING_BYTE_COMPOSITE)
     invalid_argument ("Must be composite char", ch);
   return composite_char_string (emch);
 }
@@ -3650,8 +3650,8 @@ reinit_vars_of_text (void)
 {
   int i;
 
-  conversion_in_dynarr_list = Dynarr_new2 (Intbyte_dynarr_dynarr,
-					   Intbyte_dynarr *);
+  conversion_in_dynarr_list = Dynarr_new2 (Ibyte_dynarr_dynarr,
+					   Ibyte_dynarr *);
   conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
 					    Extbyte_dynarr *);
 

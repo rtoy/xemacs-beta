@@ -66,13 +66,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* encapsulation: directory calls */
 
-int qxe_chdir (const Intbyte *path);
-int qxe_mkdir (const Intbyte *path, mode_t mode);
-DIR *qxe_opendir (const Intbyte *filename);
+int qxe_chdir (const Ibyte *path);
+int qxe_mkdir (const Ibyte *path, mode_t mode);
+DIR *qxe_opendir (const Ibyte *filename);
 DIRENTRY *qxe_readdir (DIR *dirp);
 int qxe_closedir (DIR *dirp);
-int qxe_rmdir (const Intbyte *path);
+int qxe_rmdir (const Ibyte *path);
 
-Intbyte *qxe_allocating_getcwd (void);
+Ibyte *qxe_allocating_getcwd (void);
 
 #endif /* INCLUDED_sysdir_h_ */

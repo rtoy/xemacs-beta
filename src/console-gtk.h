@@ -218,7 +218,7 @@ void signal_special_gtk_user_event (Lisp_Object channel, Lisp_Object function,
 void gtk_redraw_exposed_area (struct frame *f, int x, int y,
 			    int width, int height);
 void gtk_output_string (struct window *w, struct display_line *dl,
-		      Emchar_dynarr *buf, int xpos, int xoffset,
+		      Ichar_dynarr *buf, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);

@@ -73,11 +73,11 @@ int fake_event_occurred;
 int
 read_event_from_tty_or_stream_desc (Lisp_Event *event, struct console *con)
 {
-  Emchar ch;
+  Ichar ch;
   Lisp_Object console = wrap_console (con);
 
   if (CONSOLE_TTY_P (con))
-    ch = Lstream_get_emchar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
+    ch = Lstream_get_ichar (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
   else
     {
       /* #### Definitely something strange here.  We should be setting
@@ -316,7 +316,7 @@ event_stream_unixoid_create_io_streams (void* inhandle, void* outhandle,
   /* FLAGS is process->pty_flag for UNIX_PROCESSES */
   if ((flags & STREAM_PTY_FLUSHING) && outfd >= 0)
     {
-      Intbyte eof_char = get_eof_char (outfd);
+      Ibyte eof_char = get_eof_char (outfd);
       int pty_max_bytes = get_pty_max_bytes (outfd);
       filedesc_stream_set_pty_flushing (XLSTREAM (*outstream), pty_max_bytes,
 					eof_char);

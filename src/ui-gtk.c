@@ -1525,7 +1525,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
       return (0);
     case GTK_TYPE_CHAR:
       {
-	Emchar c;
+	Ichar c;
 
 	CHECK_CHAR_COERCE_INT (obj);
 	c = XCHAR (obj);
@@ -1534,7 +1534,7 @@ int lisp_to_gtk_type (Lisp_Object obj, GtkArg *arg)
       break;
     case GTK_TYPE_UCHAR:
       {
-	Emchar c;
+	Ichar c;
 
 	CHECK_CHAR_COERCE_INT (obj);
 	c = XCHAR (obj);

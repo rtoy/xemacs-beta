@@ -127,7 +127,7 @@ struct textual_run
 static int
 separate_textual_runs (unsigned char *text_storage,
 		       struct textual_run *run_storage,
-		       const Emchar *str, Charcount len)
+		       const Ichar *str, Charcount len)
 {
   Lisp_Object prev_charset = Qunbound; /* not Qnil because that is a
 					  possible valid charset when
@@ -141,13 +141,13 @@ separate_textual_runs (unsigned char *text_storage,
 
   for (i = 0; i < len; i++)
     {
-      Emchar ch = str[i];
+      Ichar ch = str[i];
       Lisp_Object charset;
       int byte1, byte2;
       int dimension;
       int graphic;
 
-      BREAKUP_EMCHAR (ch, charset, byte1, byte2);
+      BREAKUP_ICHAR (ch, charset, byte1, byte2);
       dimension = XCHARSET_DIMENSION (charset);
       graphic   = XCHARSET_GRAPHIC   (charset);
 
@@ -245,7 +245,7 @@ x_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
    */
 
 static int
-x_text_width (struct frame *f, struct face_cachel *cachel, const Emchar *str,
+x_text_width (struct frame *f, struct face_cachel *cachel, const Ichar *str,
 	      Charcount len)
 {
   int width_so_far = 0;
@@ -322,7 +322,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 			int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  Emchar_dynarr *buf = Dynarr_new (Emchar);
+  Ichar_dynarr *buf = Dynarr_new (Ichar);
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -345,7 +345,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
   findex = rb->findex;
   xpos = rb->xpos;
   if (rb->type == RUNE_CHAR)
-    charset = emchar_charset (rb->object.chr.ch);
+    charset = ichar_charset (rb->object.chr.ch);
 
   if (end < 0)
     end = Dynarr_length (rba);
@@ -357,7 +357,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
-	  && EQ (charset, emchar_charset (rb->object.chr.ch)))
+	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
 	{
 	  Dynarr_add (buf, rb->object.chr.ch);
 	  width += rb->width;
@@ -380,7 +380,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 	    {
 	      findex = rb->findex;
 	      xpos = rb->xpos;
-	      charset = emchar_charset (rb->object.chr.ch);
+	      charset = ichar_charset (rb->object.chr.ch);
 
 	      if (rb->cursor_type == CURSOR_ON)
 		{
@@ -747,7 +747,7 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
  DL		Display line that this text is on.  The values in the
  		structure are used to determine the vertical position and
 		clipping range of the text.
- BUF		Dynamic array of Emchars specifying what is actually to be
+ BUF		Dynamic array of Ichars specifying what is actually to be
 		drawn.
  XPOS		X position in pixels where the text should start being drawn.
  XOFFSET	Number of pixels to be chopped off the left side of the
@@ -769,7 +769,7 @@ x_get_gc (struct device *d, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
  ****************************************************************************/
 void
 x_output_string (struct window *w, struct display_line *dl,
-		 Emchar_dynarr *buf, int xpos, int xoffset, int clip_start,
+		 Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
 		 int width, face_index findex, int cursor,
 		 int cursor_start, int cursor_width, int cursor_height)
 {

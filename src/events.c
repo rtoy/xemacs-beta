@@ -959,7 +959,7 @@ command_event_p (Lisp_Object event)
 
 
 void
-character_to_event (Emchar c, Lisp_Event *event, struct console *con,
+character_to_event (Ichar c, Lisp_Event *event, struct console *con,
 		    int use_console_meta_flag, int do_backspace_mapping)
 {
   Lisp_Object k = Qnil;
@@ -1038,13 +1038,13 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
  */
 Lisp_Object Vcharacter_set_property;
 
-Emchar
+Ichar
 event_to_character (Lisp_Event *event,
 		    int allow_extra_modifiers,
 		    int allow_meta,
 		    int allow_non_ascii)
 {
-  Emchar c = 0;
+  Ichar c = 0;
   Lisp_Object code;
 
   if (event->event_type != key_press_event)
@@ -1122,7 +1122,7 @@ Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
 */
      (event, allow_extra_modifiers, allow_meta, allow_non_ascii))
 {
-  Emchar c;
+  Ichar c;
   CHECK_LIVE_EVENT (event);
   c = event_to_character (XEVENT (event),
 			  !NILP (allow_extra_modifiers),
@@ -1187,7 +1187,7 @@ nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
 
   if (STRINGP (seq))
     {
-      Emchar ch = string_emchar (seq, n);
+      Ichar ch = string_ichar (seq, n);
       Fcharacter_to_event (make_char (ch), event, Qnil, Qnil);
     }
   else

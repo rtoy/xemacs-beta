@@ -178,7 +178,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object props,
 
 static int
 stream_text_width (struct frame *f, struct face_cachel *cachel,
-		   const Emchar *str, Charcount len)
+		   const Ichar *str, Charcount len)
 {
   return len;
 }

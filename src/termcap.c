@@ -380,7 +380,7 @@ tgetent (bp, name)
 
   /* Here we know we must search a file and tem has its name.  */
 
-  fd = qxe_open ((Intbyte *) tem, 0, 0);
+  fd = qxe_open ((Ibyte *) tem, 0, 0);
   if (fd < 0)
     return -1;
 

@@ -440,8 +440,8 @@ make_key_description (const struct key_data *key, int prettify)
 	 "9" as its name.
        */
       /* !!#### I'm not sure how correct this is. */
-      Intbyte str [1 + MAX_EMCHAR_LEN];
-      Bytecount count = set_charptr_emchar (str, XCHAR (keysym));
+      Ibyte str [1 + MAX_ICHAR_LEN];
+      Bytecount count = set_itext_ichar (str, XCHAR (keysym));
       str[count] = 0;
       keysym = intern_int (str);
     }
@@ -478,7 +478,7 @@ keymap_lookup_directly (Lisp_Object keymap,
   if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
     {
       Lisp_Object i_fart_on_gcc =
-	make_char (string_emchar (XSYMBOL (keysym)->name, 0));
+	make_char (string_ichar (XSYMBOL (keysym)->name, 0));
       keysym = i_fart_on_gcc;
     }
 
@@ -654,7 +654,7 @@ keymap_store (Lisp_Object keymap, const struct key_data *key,
 
   /* If the keysym is a one-character symbol, use the char code instead. */
   if (SYMBOLP (keysym) && string_char_length (XSYMBOL (keysym)->name) == 1)
-    keysym = make_char (string_emchar (XSYMBOL (keysym)->name, 0));
+    keysym = make_char (string_ichar (XSYMBOL (keysym)->name, 0));
 
   if (modifiers & XEMACS_MOD_META)     /* Utterly hateful ESC lossage */
     {
@@ -1264,7 +1264,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
       if (string_char_length (XSYMBOL (*keysym)->name) == 1)
 	{
 	  Lisp_Object ream_gcc_up_the_ass =
-	    make_char (string_emchar (XSYMBOL (*keysym)->name, 0));
+	    make_char (string_ichar (XSYMBOL (*keysym)->name, 0));
 	  *keysym = ream_gcc_up_the_ass;
 	  goto fixnum_keysym;
 	}
@@ -1291,7 +1291,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 
   if (SYMBOLP (*keysym))
     {
-      Intbyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
+      Ibyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
 
       /* FSFmacs uses symbols with the printed representation of keysyms in
 	 their names, like 'M-x, and we use the syntax '(meta x).  So, to avoid
@@ -1899,7 +1899,7 @@ what's in `function-key-map' and `key-translation-map'.
       struct key_data raw_key2;
 
       if (STRINGP (keys))
-	c = make_char (string_emchar (keys, idx));
+	c = make_char (string_ichar (keys, idx));
       else
 	c = XVECTOR_DATA (keys) [idx];
 
@@ -2225,7 +2225,7 @@ reach a non-prefix command.
 
       for (i = 0; i < length; i++)
 	{
-          Emchar n = string_emchar (keys, i);
+          Ichar n = string_ichar (keys, i);
 	  define_key_parser (make_char (n), &(raw_keys[i]));
 	}
       return raw_lookup_key (keymap, raw_keys, length, 0,
@@ -2922,8 +2922,8 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 
   /* otherwise, string-sort them. */
   {
-    Intbyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
-    Intbyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
+    Ibyte *s1 = XSTRING_DATA (XSYMBOL (obj1)->name);
+    Ibyte *s2 = XSTRING_DATA (XSYMBOL (obj2)->name);
     return 0 > qxestrcmp (s1, s2) ? 1 : -1;
   }
 }
@@ -3240,7 +3240,7 @@ spaces are put between sequence elements, etc...
 	{
 	  Lisp_Object s2 = Fsingle_key_description
 	    (STRINGP (keys)
-	     ? make_char (string_emchar (keys, i))
+	     ? make_char (string_ichar (keys, i))
 	     : XVECTOR_DATA (keys)[i]);
 
 	  if (i == 0)
@@ -3338,12 +3338,12 @@ of a character from a buffer rather than a key read from the user.
 */
        (chr))
 {
-  Intbyte buf[200];
-  Intbyte *p;
-  Emchar c;
+  Ibyte buf[200];
+  Ibyte *p;
+  Ichar c;
   Lisp_Object ctl_arrow = current_buffer->ctl_arrow;
   int ctl_p = !NILP (ctl_arrow);
-  Emchar printable_min = (CHAR_OR_CHAR_INTP (ctl_arrow)
+  Ichar printable_min = (CHAR_OR_CHAR_INTP (ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (ctl_arrow)
 			  : ((EQ (ctl_arrow, Qt) || NILP (ctl_arrow))
 			     ? 256 : 160));
@@ -3366,7 +3366,7 @@ of a character from a buffer rather than a key read from the user.
 
   if (c >= printable_min)
     {
-      p += set_charptr_emchar (p, c);
+      p += set_itext_ichar (p, c);
     }
   else if (c < 040 && ctl_p)
     {
@@ -3399,7 +3399,7 @@ of a character from a buffer rather than a key read from the user.
     }
   else
     {
-      p += set_charptr_emchar (p, c);
+      p += set_itext_ichar (p, c);
     }
 
   *p = 0;
@@ -4149,7 +4149,7 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
   struct describe_map_closure describe_map_closure;
   Lisp_Object list = Qnil;
   struct buffer *buf = XBUFFER (buffer);
-  Emchar printable_min = (CHAR_OR_CHAR_INTP (buf->ctl_arrow)
+  Ichar printable_min = (CHAR_OR_CHAR_INTP (buf->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (buf->ctl_arrow)
 			  : ((EQ (buf->ctl_arrow, Qt)
 			      || EQ (buf->ctl_arrow, Qnil))
@@ -4197,8 +4197,8 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	  if (SYMBOLP (keysym))
 	    {
 	      Lisp_Object code = Fget (keysym, Vcharacter_set_property, Qnil);
-	      Emchar c = (CHAR_OR_CHAR_INTP (code)
-			  ? XCHAR_OR_CHAR_INT (code) : (Emchar) -1);
+	      Ichar c = (CHAR_OR_CHAR_INTP (code)
+			  ? XCHAR_OR_CHAR_INT (code) : (Ichar) -1);
 	      /* Calling Fsingle_key_description() would cons more */
 #if 0                           /* This is bogus */
 	      if (EQ (keysym, QKlinefeed))
@@ -4417,7 +4417,7 @@ Incremented for each change to any keymap.
 
   staticpro (&Vcurrent_global_map);
 
-  Vsingle_space_string = make_string ((const Intbyte *) " ", 1);
+  Vsingle_space_string = make_string ((const Ibyte *) " ", 1);
   staticpro (&Vsingle_space_string);
 }
 

@@ -915,7 +915,7 @@ Lisp_Object Vfont_signature_data;
 /************************************************************************/
 
 static int
-hexval (Intbyte c)
+hexval (Ibyte c)
 {
   /* assumes ASCII and isxdigit (c) */
   if (c >= 'a')
@@ -927,7 +927,7 @@ hexval (Intbyte c)
 }
 
 COLORREF
-mswindows_string_to_color (const Intbyte *name)
+mswindows_string_to_color (const Ibyte *name)
 {
   int i;
 
@@ -968,7 +968,7 @@ mswindows_string_to_color (const Intbyte *name)
     {
       unsigned int r, g, b;
 
-      if (sscanf ((CIntbyte *) name, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3)
+      if (sscanf ((CIbyte *) name, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3)
 	{
 	  int len = qxestrlen (name);
 	  if (len == 18)
@@ -990,8 +990,8 @@ mswindows_string_to_color (const Intbyte *name)
     }
   else if (*name)	/* Can't be an empty string */
     {
-      Intbyte *nospaces = (Intbyte *) ALLOCA (qxestrlen (name) + 1);
-      Intbyte *c = nospaces;
+      Ibyte *nospaces = (Ibyte *) ALLOCA (qxestrlen (name) + 1);
+      Ibyte *c = nospaces;
       while (*name)
 	if (*name != ' ')
 	  *c++ = *name++;
@@ -1032,10 +1032,10 @@ mswindows_color_to_string (COLORREF color)
  * the corresponding field in the other pattern is either identical or blank.
  */
 static int
-match_font (Intbyte *pattern1, Intbyte *pattern2,
-	    Intbyte *fontname)
+match_font (Ibyte *pattern1, Ibyte *pattern2,
+	    Ibyte *fontname)
 {
-  Intbyte *c1 = pattern1, *c2 = pattern2, *e1 = 0, *e2 = 0;
+  Ibyte *c1 = pattern1, *c2 = pattern2, *e1 = 0, *e2 = 0;
   int i;
 
   if (fontname)
@@ -1093,10 +1093,10 @@ static int CALLBACK
 font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
 		      int FontType, struct font_enum_t *font_enum)
 {
-  Intbyte fontname[MSW_FONTSIZE * 2 * MAX_EMCHAR_LEN]; /* should be enough :)*/
+  Ibyte fontname[MSW_FONTSIZE * 2 * MAX_ICHAR_LEN]; /* should be enough :)*/
   Lisp_Object fontname_lispstr;
   int i;
-  Intbyte *facename;
+  Ibyte *facename;
 
   /*
    * The enumerated font weights are not to be trusted because:
@@ -1110,7 +1110,7 @@ font_enum_callback_2 (ENUMLOGFONTEXW *lpelfe, NEWTEXTMETRICEXW *lpntme,
    * those fonts that do get enumerated with different weights.
    */
   TSTR_TO_C_STRING (lpelfe->elfLogFont.lfFaceName, facename);
-  if (charptr_emchar (facename) == '@')
+  if (itext_ichar (facename) == '@')
     /* This is a font for writing vertically. We ignore it. */
     return 1;
 
@@ -1321,7 +1321,7 @@ static void
 mswindows_finalize_font_instance (Lisp_Font_Instance *f);
 
 static HFONT
-create_hfont_from_font_spec (const Intbyte *namestr,
+create_hfont_from_font_spec (const Ibyte *namestr,
 			     HDC hdc,
 			     Lisp_Object name_for_errors,
 			     Lisp_Object device_font_list,
@@ -1330,9 +1330,9 @@ create_hfont_from_font_spec (const Intbyte *namestr,
   LOGFONTW logfont;
   int fields, i;
   int pt;
-  Intbyte fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
-  Intbyte effects[LF_FACESIZE], charset[LF_FACESIZE];
-  Intbyte *c;
+  Ibyte fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
+  Ibyte effects[LF_FACESIZE], charset[LF_FACESIZE];
+  Ibyte *c;
   HFONT hfont;
 
   /*
@@ -1348,7 +1348,7 @@ create_hfont_from_font_spec (const Intbyte *namestr,
    *	Courier New:Bold Italic:10:underline strikeout:western
    */
 
-  fields = sscanf ((CIntbyte *) namestr, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
+  fields = sscanf ((CIbyte *) namestr, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
 		   fontname, weight, points, effects, charset);
 
   /* This function is implemented in a fairly ad-hoc manner.
@@ -1451,7 +1451,7 @@ create_hfont_from_font_spec (const Intbyte *namestr,
   logfont.lfStrikeOut = FALSE;
   if (fields >= 4 && effects[0] != '\0')
     {
-      Intbyte *effects2;
+      Ibyte *effects2;
 
       /* Maybe split effects into effects and effects2 */
       if ((c = qxestrchr (effects, ' ')))
@@ -1552,7 +1552,7 @@ create_hfont_from_font_spec (const Intbyte *namestr,
   if (!NILP (device_font_list))
     {
       Lisp_Object fonttail;
-      Intbyte truename[MSW_FONTSIZE];
+      Ibyte truename[MSW_FONTSIZE];
 
       qxesprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects,
 		  charset);
@@ -1592,7 +1592,7 @@ initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
 {
   HFONT hfont, hfont2;
   TEXTMETRICW metrics;
-  Intbyte *namestr = XSTRING_DATA (name);
+  Ibyte *namestr = XSTRING_DATA (name);
 
   hfont = create_hfont_from_font_spec (namestr, hdc, name, device_font_list,
 				       errb);
@@ -1698,7 +1698,7 @@ mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 
   LIST_LOOP (fonttail, font_list)
     {
-      Intbyte fontname[MSW_FONTSIZE];
+      Ibyte fontname[MSW_FONTSIZE];
 
       if (match_font (XSTRING_DATA (XCAR (fonttail)), XSTRING_DATA (pattern),
 		      fontname))
@@ -1728,8 +1728,8 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
      with initialize_font_instance(). */
 
   int nsep = 0;
-  Intbyte *ptr = (Intbyte *) XSTRING_DATA (f->name);
-  Intbyte *name = (Intbyte *) ALLOCA (XSTRING_LENGTH (f->name) + 19);
+  Ibyte *ptr = (Ibyte *) XSTRING_DATA (f->name);
+  Ibyte *name = (Ibyte *) ALLOCA (XSTRING_LENGTH (f->name) + 19);
 
   qxestrcpy (name, ptr);
 
@@ -1762,7 +1762,7 @@ mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
 #ifdef MULE
 
 static int
-mswindows_font_spec_matches_charset_stage_1 (const Intbyte *font_charset,
+mswindows_font_spec_matches_charset_stage_1 (const Ibyte *font_charset,
 					     Lisp_Object charset)
 {
   int i, ms_charset = 0;
@@ -1800,13 +1800,13 @@ mswindows_font_spec_matches_charset_stage_1 (const Intbyte *font_charset,
 
 static int
 mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-				     const Intbyte *nonreloc,
+				     const Ibyte *nonreloc,
 				     Lisp_Object reloc,
 				     Bytecount offset, Bytecount length)
 {
-  const Intbyte *the_nonreloc = nonreloc;
+  const Ibyte *the_nonreloc = nonreloc;
   int i;
-  const Intbyte *c;
+  const Ibyte *c;
   Bytecount the_length = length;
 
 /* The idea is that, when trying to find a suitable font for a character,
@@ -1831,7 +1831,7 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
   c = the_nonreloc;
   for (i = 0; i < 4; i++)
     {
-      Intbyte *newc = (Intbyte *) memchr (c, ':', the_length);
+      Ibyte *newc = (Ibyte *) memchr (c, ':', the_length);
       if (!newc)
 	break;
       newc++;
@@ -1910,14 +1910,14 @@ mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
       if (dim == 1)
 	{
 	  for (i = lowlim; i <= highlim; i++)
-	    if ((cp = emchar_to_unicode (make_emchar (charset, i, 0))) >= 0)
+	    if ((cp = ichar_to_unicode (make_ichar (charset, i, 0))) >= 0)
 	      break;
 	}
       else
 	{
 	  for (i = lowlim; i <= highlim; i++)
 	    for (j = lowlim; j <= highlim; j++)
-	      if ((cp = emchar_to_unicode (make_emchar (charset, i, j))) >= 0)
+	      if ((cp = ichar_to_unicode (make_ichar (charset, i, j))) >= 0)
 		break;
 	}
       

@@ -928,7 +928,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
     case IMAGE_POINTER:
       if (STRINGP (IMAGE_INSTANCE_PIXMAP_FILENAME (ii)))
 	{
-	  Intbyte *s;
+	  Ibyte *s;
 	  Lisp_Object filename = IMAGE_INSTANCE_PIXMAP_FILENAME (ii);
 	  s = qxestrrchr (XSTRING_DATA (filename), '/');
 	  if (s)
@@ -2127,19 +2127,19 @@ invalidate_glyph_geometry_maybe (Lisp_Object glyph_or_ii, struct window* w)
 /*                              error helpers                           */
 /************************************************************************/
 DOESNT_RETURN
-signal_image_error (const CIntbyte *reason, Lisp_Object frob)
+signal_image_error (const CIbyte *reason, Lisp_Object frob)
 {
   signal_error (Qimage_conversion_error, reason, frob);
 }
 
 DOESNT_RETURN
-signal_image_error_2 (const CIntbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
+signal_image_error_2 (const CIbyte *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error_2 (Qimage_conversion_error, reason, frob0, frob1);
 }
 
 DOESNT_RETURN
-signal_double_image_error (const CIntbyte *string1, const CIntbyte *string2,
+signal_double_image_error (const CIbyte *string1, const CIbyte *string2,
 			   Lisp_Object data)
 {
   signal_error_1 (Qimage_conversion_error,
@@ -2149,7 +2149,7 @@ signal_double_image_error (const CIntbyte *string1, const CIntbyte *string2,
 }
 
 DOESNT_RETURN
-signal_double_image_error_2 (const CIntbyte *string1, const CIntbyte *string2,
+signal_double_image_error_2 (const CIbyte *string1, const CIbyte *string2,
 			     Lisp_Object data1, Lisp_Object data2)
 {
   signal_error_1 (Qimage_conversion_error,
@@ -2280,7 +2280,7 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
   if (height)
     {
       /* Compute string metric info */
-      find_charsets_in_intbyte_string (charsets,
+      find_charsets_in_ibyte_string (charsets,
 				       XSTRING_DATA   (string),
 				       XSTRING_LENGTH (string));
 
@@ -2330,7 +2330,7 @@ query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
   Lisp_Object frame = DOMAIN_FRAME (domain);
 
   /* Compute string font info */
-  find_charsets_in_intbyte_string (charsets,
+  find_charsets_in_ibyte_string (charsets,
 				   XSTRING_DATA   (string),
 				   XSTRING_LENGTH (string));
 
@@ -4849,7 +4849,7 @@ get_display_tables (struct window *w, face_index findex,
 }
 
 Lisp_Object
-display_table_entry (Emchar ch, Lisp_Object face_table,
+display_table_entry (Ichar ch, Lisp_Object face_table,
 		     Lisp_Object window_table)
 {
   Lisp_Object tail;

@@ -40,7 +40,7 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 
   if (CHAR_OR_CHAR_INTP (string_or_char))
     {
-      Emchar c;
+      Ichar c;
       CHECK_CHAR_COERCE_INT (string_or_char);
       c = XCHAR (string_or_char);
       c = (flag == CASE_DOWN) ? DOWNCASE (buf, c) : UPCASE (buf, c);
@@ -50,17 +50,17 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
   if (STRINGP (string_or_char))
     {
       Lisp_Object syntax_table = buf->mirror_syntax_table;
-      Intbyte *storage =
-	alloca_array (Intbyte, XSTRING_LENGTH (string_or_char) *
-		      MAX_EMCHAR_LEN);
-      Intbyte *newp = storage;
-      Intbyte *oldp = XSTRING_DATA (string_or_char);
-      Intbyte *endp = oldp + XSTRING_LENGTH (string_or_char);
+      Ibyte *storage =
+	alloca_array (Ibyte, XSTRING_LENGTH (string_or_char) *
+		      MAX_ICHAR_LEN);
+      Ibyte *newp = storage;
+      Ibyte *oldp = XSTRING_DATA (string_or_char);
+      Ibyte *endp = oldp + XSTRING_LENGTH (string_or_char);
       int wordp = 0, wordp_prev;
 
       while (oldp < endp)
 	{
-	  Emchar c = charptr_emchar (oldp);
+	  Ichar c = itext_ichar (oldp);
 	  switch (flag)
 	    {
 	    case CASE_UP:
@@ -84,8 +84,8 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 	      break;
 	    }
 
-	  newp += set_charptr_emchar (newp, c);
-	  INC_CHARPTR (oldp);
+	  newp += set_itext_ichar (newp, c);
+	  INC_IBYTEPTR (oldp);
 	}
 
       return make_string (storage, newp - storage);
@@ -173,8 +173,8 @@ casify_region_internal (enum case_action flag, Lisp_Object start,
 
   for (pos = s; pos < e; pos++)
     {
-      Emchar oldc = BUF_FETCH_CHAR (buf, pos);
-      Emchar c = oldc;
+      Ichar oldc = BUF_FETCH_CHAR (buf, pos);
+      Ichar c = oldc;
 
       switch (flag)
 	{

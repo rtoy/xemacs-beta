@@ -82,7 +82,7 @@ void
 init_editfns (void)
 {
 /* Only used in removed code below. */
-  Intbyte *p;
+  Ibyte *p;
 
   environbuf = 0;
 
@@ -108,7 +108,7 @@ Convert CHARACTER to a one-character string containing that character.
        (character))
 {
   Bytecount len;
-  Intbyte str[MAX_EMCHAR_LEN];
+  Ibyte str[MAX_ICHAR_LEN];
 
   if (EVENTP (character))
     {
@@ -121,7 +121,7 @@ Convert CHARACTER to a one-character string containing that character.
 
   CHECK_CHAR_COERCE_INT (character);
 
-  len = set_charptr_emchar (str, XCHAR (character));
+  len = set_itext_ichar (str, XCHAR (character));
   return make_string (str, len);
 }
 
@@ -134,7 +134,7 @@ An empty string will return the constant `nil'.
   CHECK_STRING (string);
 
   if (XSTRING_LENGTH (string) != 0)
-    return make_char (string_emchar (string, 0));
+    return make_char (string_ichar (string, 0));
   else
     /* This used to return Qzero.  That is broken, broken, broken. */
     /* It might be kinder to signal an error directly. -slb */
@@ -592,22 +592,22 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
 */
        ())
 {
-  Intbyte *tmpdir;
+  Ibyte *tmpdir;
 #if defined(WIN32_NATIVE)
   tmpdir = egetenv ("TEMP");
   if (!tmpdir)
     tmpdir = egetenv ("TMP");
   if (!tmpdir)
-    tmpdir = (Intbyte *) "c:\\";
+    tmpdir = (Ibyte *) "c:\\";
 #else /* WIN32_NATIVE */
  tmpdir = egetenv ("TMPDIR");
  if (!tmpdir)
     {
       struct stat st;
       int myuid = getuid ();
-      Intbyte *login_name = user_login_name (NULL);
+      Ibyte *login_name = user_login_name (NULL);
       DECLARE_EISTRING (eipath);
-      Intbyte *path;
+      Ibyte *path;
 
       eicpy_c (eipath, "/tmp/");
       eicat_rawz (eipath, login_name);
@@ -642,7 +642,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
 	  if (qxe_stat (path, &st) == 0 && S_ISDIR (st.st_mode))
 	    tmpdir = path;
 	  else
-	    tmpdir = (Intbyte *) "/tmp";
+	    tmpdir = (Ibyte *) "/tmp";
 	}
     }
 #endif
@@ -660,7 +660,7 @@ ignored and this function returns the login name for that UID, or nil.
 */
        (uid))
 {
-  Intbyte *returned_name;
+  Ibyte *returned_name;
   uid_t local_uid;
 
   if (!NILP (uid))
@@ -689,21 +689,21 @@ ignored and this function returns the login name for that UID, or nil.
    WARNING: The string returned comes from the data of a Lisp string and
    therefore will become garbage after the next GC.
 */
-Intbyte *
+Ibyte *
 user_login_name (uid_t *uid)
 {
   /* uid == NULL to return name of this user */
   if (uid != NULL)
     {
       struct passwd *pw = qxe_getpwuid (*uid);
-      return pw ? (Intbyte *) pw->pw_name : NULL;
+      return pw ? (Ibyte *) pw->pw_name : NULL;
     }
   else
     {
       /* #### - when euid != uid, then LOGNAME and USER are leftovers from the
 	 old environment (I site observed behavior on sunos and linux), so the
 	 environment variables should be disregarded in that case.  --Stig */
-      Intbyte *user_name = egetenv ("LOGNAME");
+      Ibyte *user_name = egetenv ("LOGNAME");
       if (!user_name)
 	user_name = egetenv (
 #ifdef WIN32_NATIVE
@@ -723,7 +723,7 @@ user_login_name (uid_t *uid)
 	     cannot be determined.
 	  */
 	  /* !!#### fix up in my mule ws */
-	  return (Intbyte *) (pw ? pw->pw_name : "unknown");
+	  return (Ibyte *) (pw ? pw->pw_name : "unknown");
 #else
 	  /* For all but Cygwin return NULL (nil) */
 	  return pw ? pw->pw_name : NULL;
@@ -774,7 +774,7 @@ value of `user-full-name' is returned.
   Lisp_Object user_name;
   struct passwd *pw = NULL;
   Lisp_Object tem;
-  const Intbyte *p, *q;
+  const Ibyte *p, *q;
 
   if (NILP (user) && STRINGP (Vuser_full_name))
     return Vuser_full_name;
@@ -792,10 +792,10 @@ value of `user-full-name' is returned.
   /* #### - Stig sez: this should return nil instead of "unknown" when pw==0 */
   /* Ben sez: bad idea because it's likely to break something */
 #ifndef AMPERSAND_FULL_NAME
-  p = (Intbyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  p = (Ibyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
   q = qxestrchr (p, ',');
 #else
-  p = (Intbyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  p = (Ibyte *) (pw ? USER_FULL_NAME : "unknown"); /* don't gettext */
   q = qxestrchr (p, ',');
 #endif
   tem = ((!NILP (user) && !pw)
@@ -823,7 +823,7 @@ value of `user-full-name' is returned.
   return tem;
 }
 
-static Intbyte *cached_home_directory;
+static Ibyte *cached_home_directory;
 
 void
 uncache_home_directory (void)
@@ -834,7 +834,7 @@ uncache_home_directory (void)
 }
 
 /* Returns the home directory */
-Intbyte *
+Ibyte *
 get_home_directory (void)
 {
   int output_home_warning = 0;
@@ -847,13 +847,13 @@ get_home_directory (void)
       else
 	{
 #if defined (WIN32_NATIVE)
-	  Intbyte *homedrive, *homepath;
+	  Ibyte *homedrive, *homepath;
 
 	  if ((homedrive = egetenv ("HOMEDRIVE")) != NULL &&
 	      (homepath = egetenv ("HOMEPATH")) != NULL)
 	    {
 	      cached_home_directory =
-		(Intbyte *) xmalloc (qxestrlen (homedrive) +
+		(Ibyte *) xmalloc (qxestrlen (homedrive) +
 				     qxestrlen (homepath) + 1);
 	      qxesprintf (cached_home_directory, "%s%s",
 			  homedrive,
@@ -861,7 +861,7 @@ get_home_directory (void)
 	    }
 	  else
 	    {
-	      cached_home_directory = qxestrdup ((Intbyte *) "C:\\");
+	      cached_home_directory = qxestrdup ((Ibyte *) "C:\\");
 	      output_home_warning = 1;
 	    }
 #else	/* !WIN32_NATIVE */
@@ -871,7 +871,7 @@ get_home_directory (void)
 	   * We probably should try to extract pw_dir from /etc/passwd,
 	   * before falling back to this.
 	   */
-	  cached_home_directory = qxestrdup ((Intbyte *) "/");
+	  cached_home_directory = qxestrdup ((Ibyte *) "/");
 	  output_home_warning = 1;
 #endif	/* !WIN32_NATIVE */
 	}
@@ -894,7 +894,7 @@ Return the user's home directory, as a string.
 */
        ())
 {
-  Intbyte *path = get_home_directory ();
+  Ibyte *path = get_home_directory ();
 
   return !path ? Qnil :
     Fexpand_file_name (Fsubstitute_in_file_name (build_intstring (path)),
@@ -1229,7 +1229,7 @@ and from `file-attributes'.
        (specified_time))
 {
   time_t value;
-  Intbyte *the_ctime;
+  Ibyte *the_ctime;
   EMACS_INT len; /* this is what make_ext_string() accepts; ####
 		    should it be an Bytecount? */
 
@@ -1316,7 +1316,7 @@ the data it can't find.
 	tem = build_ext_string (s, Qnative);
       else
 	{
-	  Intbyte buf[6];
+	  Ibyte buf[6];
 
 	  /* No local time zone name is available; use "+-NNNN" instead.  */
 	  int am = (offset < 0 ? -offset : offset) / 60;
@@ -1558,12 +1558,12 @@ text into.  If BUFFER is nil, the current buffer is assumed.
        (character, count, ignored, buffer))
 {
   /* This function can GC */
-  REGISTER Intbyte *string;
+  REGISTER Ibyte *string;
   REGISTER Bytecount slen;
   REGISTER Bytecount i, j;
   REGISTER Bytecount n;
   REGISTER Bytecount charlen;
-  Intbyte str[MAX_EMCHAR_LEN];
+  Ibyte str[MAX_ICHAR_LEN];
   struct buffer *b = decode_buffer (buffer, 1);
   int cou;
 
@@ -1576,12 +1576,12 @@ text into.  If BUFFER is nil, the current buffer is assumed.
       cou = XINT (count);
     }
 
-  charlen = set_charptr_emchar (str, XCHAR (character));
+  charlen = set_itext_ichar (str, XCHAR (character));
   n = cou * charlen;
   if (n <= 0)
     return Qnil;
   slen = min (n, (Bytecount) 768);
-  string = alloca_array (Intbyte, slen);
+  string = alloca_array (Ibyte, slen);
   /* Write as many copies of the character into the temp string as will fit. */
   for (i = 0; i + charlen <= slen; i += charlen)
     for (j = 0; j < charlen; j++)
@@ -1703,8 +1703,8 @@ determines whether case is significant or ignored.
 
   for (i = 0; i < length; i++)
     {
-      Emchar c1 = BUF_FETCH_CHAR (bp1, begp1 + i);
-      Emchar c2 = BUF_FETCH_CHAR (bp2, begp2 + i);
+      Ichar c1 = BUF_FETCH_CHAR (bp1, begp1 + i);
+      Ichar c2 = BUF_FETCH_CHAR (bp2, begp2 + i);
       if (!NILP (trt))
 	{
 	  c1 = TRT_TABLE_OF (trt, c1);
@@ -1751,7 +1751,7 @@ and don't mark the buffer as really changed.
 {
   /* This function can GC */
   Charbpos pos, stop;
-  Emchar fromc, toc;
+  Ichar fromc, toc;
   int mc_count;
   struct buffer *buf = current_buffer;
   int count = specpdl_depth ();
@@ -1832,7 +1832,7 @@ Returns the number of substitutions performed.
   int cnt = 0;		/* Number of changes made. */
   int mc_count;
   struct buffer *buf = current_buffer;
-  Emchar oc;
+  Ichar oc;
 
   get_buffer_range_char (buf, start, end, &pos, &stop, 0);
   mc_count = begin_multiple_change (buf, pos, stop);
@@ -1840,18 +1840,18 @@ Returns the number of substitutions performed.
     {
       Charcount size = string_char_length (table);
 #ifdef MULE
-      /* Under Mule, string_emchar(n) is O(n), so for large tables or
-         large regions it makes sense to create an array of Emchars.  */
+      /* Under Mule, string_ichar(n) is O(n), so for large tables or
+         large regions it makes sense to create an array of Ichars.  */
       if (size * (stop - pos) > 65536)
 	{
-	  Emchar *etable = alloca_array (Emchar, size);
-	  convert_intbyte_string_into_emchar_string
+	  Ichar *etable = alloca_array (Ichar, size);
+	  convert_ibyte_string_into_ichar_string
 	    (XSTRING_DATA (table), XSTRING_LENGTH (table), etable);
 	  for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	    {
 	      if (oc < size)
 		{
-		  Emchar nc = etable[oc];
+		  Ichar nc = etable[oc];
 		  if (nc != oc)
 		    {
 		      buffer_replace_char (buf, pos, nc, 0, 0);
@@ -1867,7 +1867,7 @@ Returns the number of substitutions performed.
 	    {
 	      if (oc < size)
 		{
-		  Emchar nc = string_emchar (table, oc);
+		  Ichar nc = string_ichar (table, oc);
 		  if (nc != oc)
 		    {
 		      buffer_replace_char (buf, pos, nc, 0, 0);
@@ -1890,7 +1890,7 @@ Returns the number of substitutions performed.
 	    retry:
 	      if (CHAR_OR_CHAR_INTP (replacement))
 		{
-		  Emchar nc = XCHAR_OR_CHAR_INT (replacement);
+		  Ichar nc = XCHAR_OR_CHAR_INT (replacement);
 		  if (nc != oc)
 		    {
 		      buffer_replace_char (buf, pos, nc, 0, 0);
@@ -1924,7 +1924,7 @@ Returns the number of substitutions performed.
 	retry2:
 	  if (CHAR_OR_CHAR_INTP (replacement))
 	    {
-	      Emchar nc = XCHAR_OR_CHAR_INT (replacement);
+	      Ichar nc = XCHAR_OR_CHAR_INT (replacement);
 	      if (nc != oc)
 		{
 		  buffer_replace_char (buf, pos, nc, 0, 0);
@@ -2230,7 +2230,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (character1, character2, buffer))
 {
-  Emchar x1, x2;
+  Ichar x1, x2;
   struct buffer *b = decode_buffer (buffer, 1);
 
   CHECK_CHAR_COERCE_INT (character1);

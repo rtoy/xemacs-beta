@@ -798,7 +798,7 @@ DECLARE_INLINE_HEADER (int unicode_char_to_text (int ch, Extbyte *t))
 Extbyte *convert_multibyte_to_unicode_malloc (const Extbyte *src,
 					      Bytecount n,
 					      int cp, Bytecount *size_out);
-Intbyte *convert_multibyte_to_internal_malloc (const Extbyte *src,
+Ibyte *convert_multibyte_to_internal_malloc (const Extbyte *src,
 					       Bytecount n,
 					       int cp, Bytecount *size_out);
 void convert_multibyte_to_unicode_dynarr (const Extbyte *src, Bytecount n,
@@ -827,7 +827,7 @@ int cygwin_posix_to_win32_path_list_buf_size (const char *);
 
 #define LOCAL_FILE_FORMAT_TO_TSTR(path, out)			\
 do {								\
-  Intbyte *lttff;						\
+  Ibyte *lttff;						\
 								\
   LOCAL_TO_WIN32_FILE_FORMAT (XSTRING_DATA (path), lttff);	\
   C_STRING_TO_TSTR (lttff, out);				\
@@ -854,14 +854,14 @@ do {									   \
      get 7-bit ISO2022-encoded data.  We know that our internal format	   \
      is ASCII-compatible, and so these functions will work fine with	   \
      this data. */							   \
-  Intbyte *ltwffp = (path);						   \
+  Ibyte *ltwffp = (path);						   \
   if (isalpha (ltwffp[0]) && (IS_DEVICE_SEP (ltwffp[1])))		   \
     pathout = ltwffp;							   \
   else									   \
     {									   \
       int ltwff2 =							   \
         cygwin_posix_to_win32_path_list_buf_size ((char *) ltwffp);	   \
-      pathout = (Intbyte *) ALLOCA (ltwff2);				   \
+      pathout = (Ibyte *) ALLOCA (ltwff2);				   \
       cygwin_posix_to_win32_path_list ((char *) ltwffp, (char *) pathout); \
     }									   \
 } while (0)
@@ -875,10 +875,10 @@ do {							\
 #ifdef CYGWIN
 #define WIN32_TO_LOCAL_FILE_FORMAT(path, pathout)			\
 do {									\
-  Intbyte *wtlff1 = (path);						\
+  Ibyte *wtlff1 = (path);						\
   int wtlff2 =								\
     cygwin_win32_to_posix_path_list_buf_size ((char *) wtlff1);		\
-  Intbyte *wtlff3 = (Intbyte *) ALLOCA (wtlff2);			\
+  Ibyte *wtlff3 = (Ibyte *) ALLOCA (wtlff2);			\
   cygwin_win32_to_posix_path_list ((char *) wtlff1, (char *) wtlff3);	\
   (pathout) = wtlff3;							\
 } while (0)
@@ -897,8 +897,8 @@ do {							\
 #define LOCAL_FILE_FORMAT_MAYBE_URL_TO_TSTR(lispstr, pathout)		     \
 do									     \
 {									     \
-  Intbyte *lffmutt_fname1;						     \
-  Intbyte *lffmutt_pathint = XSTRING_DATA (lispstr);			     \
+  Ibyte *lffmutt_fname1;						     \
+  Ibyte *lffmutt_pathint = XSTRING_DATA (lispstr);			     \
 									     \
   if ((lffmutt_fname1 = qxestrchr (lffmutt_pathint, ':')) != NULL	     \
       && *++lffmutt_fname1 == '/' && *++lffmutt_fname1 == '/')		     \
@@ -908,13 +908,13 @@ do									     \
 	 together. */							     \
       if (qxestrncasecmp_c (lffmutt_pathint, "file://", 7) == 0)	     \
 	{								     \
-	  Intbyte *lffmutt_path1, *lffmutt_path2;			     \
+	  Ibyte *lffmutt_path1, *lffmutt_path2;			     \
 	  LOCAL_TO_WIN32_FILE_FORMAT (lffmutt_pathint + 7, lffmutt_path1);   \
 	  if (lffmutt_path1 == lffmutt_pathint + 7) /* Optimization */	     \
 	    lffmutt_path2 = lffmutt_pathint;				     \
 	  else								     \
 	    {								     \
-	      lffmutt_path2 = alloca_intbytes (7 + qxestrlen (lffmutt_path1) \
+	      lffmutt_path2 = alloca_ibytes (7 + qxestrlen (lffmutt_path1) \
 					       + 1);			     \
 	      qxestrncpy (lffmutt_path2, lffmutt_pathint, 7);		     \
 	      qxestrcpy (lffmutt_path2 + 7, lffmutt_path1);		     \
@@ -939,10 +939,10 @@ do									     \
 #endif /* not CYGWIN */
 
 
-Intbyte *urlify_filename (Intbyte *filename);
-Intbyte *mswindows_canonicalize_filename (Intbyte *name);
+Ibyte *urlify_filename (Ibyte *filename);
+Ibyte *mswindows_canonicalize_filename (Ibyte *name);
 #define MSWINDOWS_NORMALIZE_FILENAME(name) \
-  INTBYTE_STRING_TO_ALLOCA (mswindows_canonicalize_filename (name), name)
+  IBYTE_STRING_TO_ALLOCA (mswindows_canonicalize_filename (name), name)
 
 /* ------------------- Functions needed dynamic binding ------------------- */
 
@@ -961,7 +961,7 @@ extern pfNetApiBufferFree_t xNetApiBufferFree;
 
 typedef struct file_data
 {
-  const Intbyte  *name;
+  const Ibyte  *name;
   unsigned long  size;
   HANDLE         file;
   HANDLE         file_mapping;
@@ -980,8 +980,8 @@ typedef struct file_data
 	  ((void *)(RVA_TO_OFFSET(var,section) +	\
 		    (char *)(filedata).file_base))
 
-int open_input_file (file_data *p_file, const Intbyte *name);
-int open_output_file (file_data *p_file, const Intbyte *name,
+int open_input_file (file_data *p_file, const Ibyte *name);
+int open_output_file (file_data *p_file, const Ibyte *name,
 		      unsigned long size);
 void close_file_data (file_data *p_file);
 
@@ -1037,21 +1037,21 @@ unsigned char *round_to_next (unsigned char *address,
 #ifdef WIN32_NATIVE
 DECLARE_INLINE_HEADER (int strcasecmp (const char *a, const char *b))
 {
-  return qxestrcasecmp ((const Intbyte *) a, (const Intbyte *) b);
+  return qxestrcasecmp ((const Ibyte *) a, (const Ibyte *) b);
 }
 #endif /* WIN32_NATIVE */
 
 /* in nt.c */
-int mswindows_access (const Intbyte *path, int mode);
-int mswindows_link (const Intbyte *old, const Intbyte *new);
-int mswindows_rename (const Intbyte *oldname, const Intbyte *newname);
-int mswindows_unlink (const Intbyte *path);
-int mswindows_stat (const Intbyte *path, struct stat *buf);
+int mswindows_access (const Ibyte *path, int mode);
+int mswindows_link (const Ibyte *old, const Ibyte *new);
+int mswindows_rename (const Ibyte *oldname, const Ibyte *newname);
+int mswindows_unlink (const Ibyte *path);
+int mswindows_stat (const Ibyte *path, struct stat *buf);
 int mswindows_fstat (int desc, struct stat *buf);
 time_t mswindows_convert_time (FILETIME ft);
-void mswindows_executable_type (const Intbyte * filename, int * is_dos_app,
+void mswindows_executable_type (const Ibyte * filename, int * is_dos_app,
 				int * is_cygnus_app);
-Intbyte *mswindows_getdcwd (int drivelet);
+Ibyte *mswindows_getdcwd (int drivelet);
 
 /* In process-nt.c */
 extern int mswindows_compare_env (const void *strp1, const void *strp2);

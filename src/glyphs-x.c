@@ -583,7 +583,7 @@ x_locate_pixmap_file (Lisp_Object name)
 
 #ifdef USE_XBMLANGPATH
   {
-    Intbyte *path = egetenv ("XBMLANGPATH");
+    Ibyte *path = egetenv ("XBMLANGPATH");
     Extbyte *pathext;
     SubstitutionRec subs[1];
     subs[0].match = 'B';
@@ -610,7 +610,7 @@ x_locate_pixmap_file (Lisp_Object name)
 			  "bitmapFilePath", "BitmapFilePath", &type, &value)
 	  && !strcmp (type, "String"))
 	{
-	  Intbyte *path;
+	  Ibyte *path;
 
 	  EXTERNAL_TO_C_STRING (value.addr, path, Qfile_name);
 	  Vx_bitmap_file_path = split_env_path (0, path);
@@ -1562,7 +1562,7 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
   UChar_Binary *p, *bits, *bp;
-  const CIntbyte * volatile emsg = 0;
+  const CIbyte * volatile emsg = 0;
   const UChar_Binary * volatile dstring;
 
   assert (!NILP (data));
@@ -1802,7 +1802,7 @@ XLoadFont_error_handler (Display *dpy, XErrorEvent *xerror)
 }
 
 static Font
-safe_XLoadFont (Display *dpy, Intbyte *name)
+safe_XLoadFont (Display *dpy, Ibyte *name)
 {
   Font font;
   int (*old_handler) (Display *, XErrorEvent *);
@@ -1837,7 +1837,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Display *dpy;
   XColor fg, bg;
   Font source, mask;
-  Intbyte source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
+  Ibyte source_name[PATH_MAX], mask_name[PATH_MAX], dummy;
   int source_char, mask_char;
   int count;
   Lisp_Object foreground, background;

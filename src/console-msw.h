@@ -347,7 +347,7 @@ Lisp_Object mswindows_protect_modal_loop (const char *error_string,
 					  Lisp_Object barg, int flags);
 void mswindows_unmodalize_signal_maybe (void);
 
-COLORREF mswindows_string_to_color (const Intbyte *name);
+COLORREF mswindows_string_to_color (const Ibyte *name);
 
 #ifdef HAVE_WIN32_PROCESSES
 HANDLE get_nt_process_handle_only_first_time (Lisp_Process *p);
@@ -364,9 +364,9 @@ void mswindows_get_workspace_coords (RECT *rc);
 Lisp_Object mswindows_enumerate_fonts (HDC hdc);
 
 #ifdef HAVE_MENUBARS
-int mswindows_char_is_accelerator (struct frame *f, Emchar ch);
+int mswindows_char_is_accelerator (struct frame *f, Ichar ch);
 Lisp_Object mswindows_translate_menu_or_dialog_item (Lisp_Object item,
-						     Emchar *accel);
+						     Ichar *accel);
 #endif
 
 #ifdef HAVE_TOOLBARS

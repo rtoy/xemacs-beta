@@ -1052,7 +1052,7 @@ read_process_output (Lisp_Object process, int read_stderr)
 {
   /* This function can GC */
   Bytecount nbytes, nchars;
-  Intbyte chars[1025];
+  Ibyte chars[1025];
   Lisp_Object outstream;
   Lisp_Process *p = XPROCESS (process);
   Lisp_Object filter = read_stderr ? p->stderr_filter : p->filter;
@@ -1171,7 +1171,7 @@ Return non-nil if process has stderr separate from stdout.
 
 void
 send_process (Lisp_Object process,
-              Lisp_Object relocatable, const Intbyte *nonrelocatable,
+              Lisp_Object relocatable, const Ibyte *nonrelocatable,
               int start, int len)
 {
   /* This function can GC */
@@ -1605,7 +1605,7 @@ status_message (Lisp_Process *p)
       else
 	string2 = build_string ("\n");
       set_string_char (string, 0,
-		       DOWNCASE (0, string_emchar (string, 0)));
+		       DOWNCASE (0, string_ichar (string, 0)));
       return concat2 (string, string2);
     }
   else if (EQ (symbol, Qexit))
@@ -1804,7 +1804,7 @@ decode_signal (Lisp_Object signal_)
     return XINT (signal_);
   else
     {
-      Intbyte *name;
+      Ibyte *name;
 
       CHECK_SYMBOL (signal_);
       name = XSTRING_DATA (XSYMBOL (signal_)->name);
@@ -2278,9 +2278,9 @@ t or pty (pty) or stream (socket connection).
 
 
 static int
-getenv_internal (const Intbyte *var,
+getenv_internal (const Ibyte *var,
 		 Bytecount varlen,
-		 Intbyte **value,
+		 Ibyte **value,
 		 Bytecount *valuelen)
 {
   Lisp_Object scan;
@@ -2312,9 +2312,9 @@ getenv_internal (const Intbyte *var,
 }
 
 static void
-putenv_internal (const Intbyte *var,
+putenv_internal (const Ibyte *var,
 		 Bytecount varlen,
-		 const Intbyte *value,
+		 const Ibyte *value,
 		 Bytecount valuelen)
 {
   Lisp_Object scan;
@@ -2377,7 +2377,7 @@ When invoked interactively, prints the value in the echo area.
 */
        (var, interactivep))
 {
-  Intbyte *value;
+  Ibyte *value;
   Bytecount valuelen;
   Lisp_Object v = Qnil;
   struct gcpro gcpro1;
@@ -2418,23 +2418,23 @@ When invoked interactively, prints the value in the echo area.
    WARNING: This value points into Lisp string data and thus will become
    invalid after a GC. */
 
-Intbyte *
-egetenv (const CIntbyte *var)
+Ibyte *
+egetenv (const CIbyte *var)
 {
   /* This cannot GC -- 7-28-00 ben */
-  Intbyte *value;
+  Ibyte *value;
   Bytecount valuelen;
 
-  if (getenv_internal ((const Intbyte *) var, strlen (var), &value, &valuelen))
+  if (getenv_internal ((const Ibyte *) var, strlen (var), &value, &valuelen))
     return value;
   else
     return 0;
 }
 
 void
-eputenv (const CIntbyte *var, const CIntbyte *value)
+eputenv (const CIbyte *var, const CIbyte *value)
 {
-  putenv_internal ((Intbyte *) var, strlen (var), (Intbyte *) value,
+  putenv_internal ((Ibyte *) var, strlen (var), (Ibyte *) value,
 		   strlen (value));
 }
 
@@ -2469,14 +2469,14 @@ init_xemacs_process (void)
   {
     /* Initialize shell-file-name from environment variables or best guess. */
 #ifdef WIN32_NATIVE
-    const Intbyte *shell = egetenv ("SHELL");
+    const Ibyte *shell = egetenv ("SHELL");
     if (!shell) shell = egetenv ("COMSPEC");
     /* Should never happen! */
     if (!shell) shell =
-      (Intbyte *) (GetVersion () & 0x80000000 ? "command" : "cmd");
+      (Ibyte *) (GetVersion () & 0x80000000 ? "command" : "cmd");
 #else /* not WIN32_NATIVE */
-    const Intbyte *shell = egetenv ("SHELL");
-    if (!shell) shell = (Intbyte *) "/bin/sh";
+    const Ibyte *shell = egetenv ("SHELL");
+    if (!shell) shell = (Ibyte *) "/bin/sh";
 #endif
 
 #if 0 /* defined (WIN32_NATIVE) */
@@ -2497,7 +2497,7 @@ init_xemacs_process (void)
 
     if (!egetenv ("SHELL"))
       {
-	Intbyte *faux_var = alloca_array (Intbyte, 7 + qxestrlen (shell));
+	Ibyte *faux_var = alloca_array (Ibyte, 7 + qxestrlen (shell));
 	qxesprintf (faux_var, "SHELL=%s", shell);
 	Vprocess_environment = Fcons (build_intstring (faux_var),
 				      Vprocess_environment);

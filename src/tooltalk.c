@@ -296,7 +296,7 @@ check_status (Tt_status st)
 {
   if (tt_is_err (st))
     {
-      CIntbyte *err;
+      CIbyte *err;
 
       EXTERNAL_TO_C_STRING (tt_status_message (st), err, Qnative);
       signal_error (Qtooltalk_error, err, Qunbound);
@@ -527,7 +527,7 @@ static Lisp_Object
 tt_message_arg_bval_vector (Tt_message m, int n)
 {
   /* !!#### This function has not been Mule-ized */
-  Intbyte *value;
+  Ibyte *value;
   int len = 0;
 
   check_status (tt_message_arg_bval (m, n, &value, &len));

@@ -445,7 +445,7 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
   if (event->length != 1)
     {
       /* Generate multiple emacs events */
-      Emchar ch;
+      Ichar ch;
       Lisp_Object instream, fb_instream;
       Lstream *istr;
       struct gcpro gcpro1, gcpro2;
@@ -462,7 +462,7 @@ gtk_to_emacs_keysym (struct device *d, GdkEventKey *event, int simple_p)
       istr = XLSTREAM (instream);
 
       GCPRO2 (instream, fb_instream);
-      while ((ch = Lstream_get_emchar (istr)) != EOF)
+      while ((ch = Lstream_get_ichar (istr)) != EOF)
 	{
 	  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	  struct Lisp_Event *ev = XEVENT (emacs_event);
@@ -1008,7 +1008,7 @@ dragndrop_data_received (GtkWidget          *widget,
       /* Random filename */
       char *hurl = dnd_url_hexify_string (data->data, "file:");
 
-      l_dndlist = list1 (make_string ((Intbyte *)hurl, strlen (hurl)));
+      l_dndlist = list1 (make_string ((Ibyte *)hurl, strlen (hurl)));
       l_type = Qdragdrop_URL;
 
       xfree (hurl);
@@ -1553,7 +1553,7 @@ check_for_tty_quit_char (struct device *d)
   SELECT_TYPE temp_mask;
   int infd = DEVICE_INFD (d);
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
-  Emchar quit_char = CONSOLE_QUIT_CHAR (con);
+  Ichar quit_char = CONSOLE_QUIT_CHAR (con);
 
   FD_ZERO (&temp_mask);
   FD_SET (infd, &temp_mask);
@@ -1561,7 +1561,7 @@ check_for_tty_quit_char (struct device *d)
   while (1)
     {
       Lisp_Object event;
-      Emchar the_char;
+      Ichar the_char;
 
       if (!poll_fds_for_input (temp_mask))
 	return;

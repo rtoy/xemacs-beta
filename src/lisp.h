@@ -194,20 +194,20 @@ Boston, MA 02111-1307, USA.  */
    functions declared as such. */
 
 /* The data representing the text in a buffer is logically a set
-   of Intbytes, declared as follows. */
+   of Ibytes, declared as follows. */
 
-typedef unsigned char Intbyte;
+typedef unsigned char Ibyte;
 
 /* The following should be used when you are working with internal data
    but for whatever reason need to have it declared a "char *".  Examples
    are function arguments whose values are most commonly literal strings,
    or where you have to apply a stdlib string function to internal data.
 
-   In general, you should avoid this where possible and use Intbyte instead,
+   In general, you should avoid this where possible and use Ibyte instead,
    for consistency.  For example, the new Mule workspace contains
-   Intbyte versions of the stdlib string functions. */
+   Ibyte versions of the stdlib string functions. */
 
-typedef char CIntbyte;
+typedef char CIbyte;
 
 /* The data representing a string in "external" format (binary or any
    external encoding) is logically a set of Extbytes, declared as
@@ -230,9 +230,9 @@ typedef char Char_ASCII;
 typedef unsigned char UChar_ASCII;
 
 /* To the user, a buffer is made up of characters.  In the non-Mule world,
-   characters and Intbytes are equivalent, restricted to the range 0 - 255.
+   characters and Ibytes are equivalent, restricted to the range 0 - 255.
    In the Mule world, many more characters are possible (19 bits worth,
-   more or less), and a character requires (typically) 1 to 4 Intbytes for
+   more or less), and a character requires (typically) 1 to 4 Ibytes for
    its representation in a buffer or string.  Note that the representation
    of a character by itself, in a variable, is very different from its
    representation in a string of text (in a buffer or Lisp string).
@@ -249,7 +249,7 @@ typedef unsigned char UChar_ASCII;
 
 /* A character, as represented on its own. */
 
-typedef int Emchar;
+typedef int Ichar;
 
 /* The "raw value" of a character as stored in the buffer.  In the default
    format, this is just the same as the character.  In fixed-width formats,
@@ -259,7 +259,7 @@ typedef int Emchar;
    value and look for that, than repeatedly convert each raw value in the
    buffer into a character. */
 
-typedef int Raw_Emchar;
+typedef int Raw_Ichar;
 
 
 #if !defined (__cplusplus) || !defined (CPLUSPLUS_INTEGRAL_CLASSES_NOT_YET)
@@ -714,9 +714,9 @@ inline cl operator ?: (bool b, const cl& x, integral y)	\
   { return b ? x : cl (y); }
 #endif /* 0 */
 
-/* DECLARE_POINTER_TYPE_ARITH_COUNT (const Intbyte *, Bytecount);
+/* DECLARE_POINTER_TYPE_ARITH_COUNT (const Ibyte *, Bytecount);
    DECLARE_POINTER_TYPE_ARITH_COUNT (const Extbyte *, Bytecount); */
-DECLARE_POINTER_TYPE_ARITH_COUNT (Intbyte *, Bytecount);
+DECLARE_POINTER_TYPE_ARITH_COUNT (Ibyte *, Bytecount);
 DECLARE_POINTER_TYPE_ARITH_COUNT (Extbyte *, Bytecount);
 
 DECLARE_INTEGRAL_TYPE_ARITH_COUNT (int, Bytecount);
@@ -738,7 +738,7 @@ DECLARE_INTEGRAL_TYPE_COMPARE (unsigned long, Bytecount);
 DECLARE_INTEGRAL_TYPE_COMPARE (unsigned long, Charcount);
 
 #if 0 /* doesn't work */
-inline Bytecount operator - (const Intbyte *x, const Intbyte *y)	\
+inline Bytecount operator - (const Ibyte *x, const Ibyte *y)	\
   { return Bytecount (x - y); }
 #endif
 
@@ -1302,8 +1302,8 @@ typedef struct Lisp_Gui_Item Lisp_Gui_Item;
 
 typedef struct
 {
-  Dynarr_declare (Intbyte);
-} Intbyte_dynarr;
+  Dynarr_declare (Ibyte);
+} Ibyte_dynarr;
 
 typedef struct
 {
@@ -1312,8 +1312,8 @@ typedef struct
 
 typedef struct
 {
-  Dynarr_declare (Emchar);
-} Emchar_dynarr;
+  Dynarr_declare (Ichar);
+} Ichar_dynarr;
 
 typedef struct
 {
@@ -2074,7 +2074,7 @@ struct Lisp_String
 	} v;
     } u;
   Bytecount size_;
-  Intbyte *data_;
+  Ibyte *data_;
   Lisp_Object plist;
 };
 typedef struct Lisp_String Lisp_String;
@@ -2336,7 +2336,7 @@ DECLARE_LRECORD (marker, Lisp_Marker);
 #ifdef ERROR_CHECK_TYPES
 
 DECLARE_INLINE_HEADER (
-Emchar
+Ichar
 XCHAR_1 (Lisp_Object obj, const char *file, int line)
 )
 {
@@ -2348,7 +2348,7 @@ XCHAR_1 (Lisp_Object obj, const char *file, int line)
 
 #else /* no error checking */
 
-#define XCHAR(x) ((Emchar) XCHARVAL (x))
+#define XCHAR(x) ((Ichar) XCHARVAL (x))
 
 #endif /* no error checking */
 
@@ -2899,7 +2899,7 @@ unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
    returned string.  See Fgettext().
 
    CGETTEXT() is the same as GETTEXT() but works with char * strings
-   instead of Intbyte * strings.
+   instead of Ibyte * strings.
 
    build_msg_string() is a shorthand for build_string (GETTEXT (x)).
    build_msg_intstring() is a shorthand for build_intstring (GETTEXT (x)).
@@ -3346,17 +3346,17 @@ extern int purify_flag;
 extern EMACS_INT gc_generation_number[1];
 int c_readonly (Lisp_Object);
 int lisp_readonly (Lisp_Object);
-Lisp_Object build_intstring (const Intbyte *);
-Lisp_Object build_string (const CIntbyte *);
+Lisp_Object build_intstring (const Ibyte *);
+Lisp_Object build_string (const CIbyte *);
 Lisp_Object build_ext_string (const Extbyte *, Lisp_Object);
-Lisp_Object build_msg_intstring (const Intbyte *);
-Lisp_Object build_msg_string (const CIntbyte *);
-Lisp_Object make_string (const Intbyte *, Bytecount);
+Lisp_Object build_msg_intstring (const Ibyte *);
+Lisp_Object build_msg_string (const CIbyte *);
+Lisp_Object make_string (const Ibyte *, Bytecount);
 Lisp_Object make_ext_string (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
 Lisp_Object make_float (double);
-Lisp_Object make_string_nocopy (const Intbyte *, Bytecount);
+Lisp_Object make_string_nocopy (const Ibyte *, Bytecount);
 void free_cons (Lisp_Object);
 void free_list (Lisp_Object);
 void free_alist (Lisp_Object);
@@ -3389,7 +3389,7 @@ Lisp_Object get_truename_buffer (Lisp_Object);
 void switch_to_buffer (Lisp_Object, Lisp_Object);
 extern int find_file_compare_truenames;
 extern int find_file_use_truenames;
-Intbyte *get_initial_directory (Intbyte *pathname, Bytecount size);
+Ibyte *get_initial_directory (Ibyte *pathname, Bytecount size);
 extern Lisp_Object Vbuffer_alist;
 void set_buffer_internal (struct buffer *b);
 struct buffer *decode_buffer (Lisp_Object buffer, int allow_string);
@@ -3432,7 +3432,7 @@ extern Lisp_Object Vinhibit_read_only, Vtransient_mark_mode;
 EXFUN (Fbyte_code, 3);
 
 DECLARE_DOESNT_RETURN (invalid_byte_code
-		       (const CIntbyte *reason, Lisp_Object frob));
+		       (const CIbyte *reason, Lisp_Object frob));
 
 /* Defined in callint.c */
 EXFUN (Fcall_interactively, 3);
@@ -3464,8 +3464,8 @@ void stuff_buffered_input (Lisp_Object);
 EXFUN (Fmswindows_message_box, 3);
 extern int mswindows_message_outputted;
 void mswindows_hide_console (void);
-int mswindows_output_console_string (const Intbyte *ptr, Bytecount len);
-void write_string_to_mswindows_debugging_output (Intbyte *str, Bytecount len);
+int mswindows_output_console_string (const Ibyte *ptr, Bytecount len);
+void write_string_to_mswindows_debugging_output (Ibyte *str, Bytecount len);
 
 /* Defined in data.c */
 EXFUN (Fadd1, 1);
@@ -3522,47 +3522,47 @@ Lisp_Object word_to_lisp (unsigned int);
 unsigned int lisp_to_word (Lisp_Object);
 
 /* Defined in dired.c */
-Lisp_Object make_directory_hash_table (const Intbyte *);
+Lisp_Object make_directory_hash_table (const Ibyte *);
 Lisp_Object wasteful_word_to_lisp (unsigned int);
 
 /* Defined in doc.c */
 EXFUN (Fsubstitute_command_keys, 1);
 
 Lisp_Object unparesseuxify_doc_string (int fd, EMACS_INT position,
-				       Intbyte *name_nonreloc,
+				       Ibyte *name_nonreloc,
 				       Lisp_Object name_reloc,
 				       int standard_doc_file);
 Lisp_Object read_doc_string (Lisp_Object);
 
 /* Defined in doprnt.c */
-Bytecount emacs_doprnt_va (Lisp_Object stream, const Intbyte *format_nonreloc,
+Bytecount emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
 			   Bytecount format_length, Lisp_Object format_reloc,
 			   va_list vargs);
-Bytecount emacs_doprnt (Lisp_Object stream, const Intbyte *format_nonreloc,
+Bytecount emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
 			Bytecount format_length, Lisp_Object format_reloc,
 			int nargs, const Lisp_Object *largs, ...);
-Lisp_Object emacs_vsprintf_string_lisp (const CIntbyte *format_nonreloc,
+Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
 				   Lisp_Object format_reloc, int nargs,
 				   const Lisp_Object *largs);
-Lisp_Object emacs_sprintf_string_lisp (const CIntbyte *format_nonreloc,
+Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc,
 				 Lisp_Object format_reloc, int nargs, ...);
-Intbyte *emacs_vsprintf_malloc_lisp (const CIntbyte *format_nonreloc,
+Ibyte *emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
 				     Lisp_Object format_reloc, int nargs,
 				     const Lisp_Object *largs,
 				     Bytecount *len_out);
-Intbyte *emacs_sprintf_malloc_lisp (Bytecount *len_out,
-				    const CIntbyte *format_nonreloc,
+Ibyte *emacs_sprintf_malloc_lisp (Bytecount *len_out,
+				    const CIbyte *format_nonreloc,
 				    Lisp_Object format_reloc, int nargs, ...);
-Lisp_Object emacs_vsprintf_string (const CIntbyte *format, va_list vargs);
-Lisp_Object emacs_sprintf_string (const CIntbyte *format, ...)
+Lisp_Object emacs_vsprintf_string (const CIbyte *format, va_list vargs);
+Lisp_Object emacs_sprintf_string (const CIbyte *format, ...)
      PRINTF_ARGS (1, 2);
-Intbyte *emacs_vsprintf_malloc (const CIntbyte *format, va_list vargs,
+Ibyte *emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
 				Bytecount *len_out);
-Intbyte *emacs_sprintf_malloc (Bytecount *len_out, const CIntbyte *format, ...)
+Ibyte *emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
-Bytecount emacs_vsprintf (Intbyte *output, const CIntbyte *format,
+Bytecount emacs_vsprintf (Ibyte *output, const CIbyte *format,
 			  va_list vargs);
-Bytecount emacs_sprintf (Intbyte *output, const CIntbyte *format, ...)
+Bytecount emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 
@@ -3593,8 +3593,8 @@ EXFUN (Fuser_login_name, 1);
 EXFUN (Fwiden, 1);
 
 void uncache_home_directory (void);
-Intbyte *get_home_directory (void);
-Intbyte *user_login_name (uid_t *);
+Ibyte *get_home_directory (void);
+Ibyte *user_login_name (uid_t *);
 void buffer_insert1 (struct buffer *, Lisp_Object);
 Lisp_Object make_string_from_buffer (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_string_from_buffer_no_extents (struct buffer *, Charbpos, Charcount);
@@ -3618,7 +3618,7 @@ Lisp_Object make_arg_list (int, Extbyte **);
 void make_argc_argv (Lisp_Object, int *, Extbyte ***);
 void free_argc_argv (Extbyte **);
 Lisp_Object split_external_path (const Extbyte *path);
-Lisp_Object split_env_path (const CIntbyte *evarname, const Intbyte *default_);
+Lisp_Object split_env_path (const CIbyte *evarname, const Ibyte *default_);
 
 /* Nonzero means don't do interactive redisplay and don't change tty modes */
 extern int noninteractive, noninteractive1;
@@ -3659,50 +3659,50 @@ Lisp_Object maybe_signal_continuable_error_1 (Lisp_Object, Lisp_Object,
 					      Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror
 						  (Lisp_Object,
-						   const CIntbyte *,
+						   const CIbyte *,
 						   ...), 2, 3);
 void maybe_signal_ferror (Lisp_Object, Lisp_Object, Error_Behavior,
-			  const CIntbyte *, ...) PRINTF_ARGS (4, 5);
-Lisp_Object signal_continuable_ferror (Lisp_Object, const CIntbyte *, ...)
+			  const CIbyte *, ...) PRINTF_ARGS (4, 5);
+Lisp_Object signal_continuable_ferror (Lisp_Object, const CIbyte *, ...)
      PRINTF_ARGS (2, 3);
 Lisp_Object maybe_signal_continuable_ferror (Lisp_Object, Lisp_Object,
 					     Error_Behavior,
-					     const CIntbyte *, ...)
+					     const CIbyte *, ...)
      PRINTF_ARGS (4, 5);
 
-Lisp_Object build_error_data (const CIntbyte *reason, Lisp_Object frob);
-DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const CIntbyte *,
+Lisp_Object build_error_data (const CIbyte *reason, Lisp_Object frob);
+DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, const CIbyte *,
 				     Lisp_Object));
-void maybe_signal_error (Lisp_Object, const CIntbyte *, Lisp_Object,
+void maybe_signal_error (Lisp_Object, const CIbyte *, Lisp_Object,
 			 Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error (Lisp_Object, const CIntbyte *,
+Lisp_Object signal_continuable_error (Lisp_Object, const CIbyte *,
 				      Lisp_Object);
-Lisp_Object maybe_signal_continuable_error (Lisp_Object, const CIntbyte *,
+Lisp_Object maybe_signal_continuable_error (Lisp_Object, const CIbyte *,
 					    Lisp_Object,
 					    Lisp_Object, Error_Behavior);
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (signal_ferror_with_frob
 						  (Lisp_Object, Lisp_Object,
-						   const CIntbyte *,
+						   const CIbyte *,
 						   ...), 3, 4);
 void maybe_signal_ferror_with_frob (Lisp_Object, Lisp_Object, Lisp_Object,
 				    Error_Behavior,
-				    const CIntbyte *, ...) PRINTF_ARGS (5, 6);
+				    const CIbyte *, ...) PRINTF_ARGS (5, 6);
 Lisp_Object signal_continuable_ferror_with_frob (Lisp_Object, Lisp_Object,
-						 const CIntbyte *,
+						 const CIbyte *,
 						 ...) PRINTF_ARGS (3, 4);
 Lisp_Object maybe_signal_continuable_ferror_with_frob (Lisp_Object,
 						       Lisp_Object,
 						       Lisp_Object,
 						       Error_Behavior,
-						       const CIntbyte *, ...)
+						       const CIbyte *, ...)
      PRINTF_ARGS (5, 6);
-DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const CIntbyte *,
+DECLARE_DOESNT_RETURN (signal_error_2 (Lisp_Object, const CIbyte *,
 				       Lisp_Object, Lisp_Object));
-void maybe_signal_error_2 (Lisp_Object, const CIntbyte *, Lisp_Object,
+void maybe_signal_error_2 (Lisp_Object, const CIbyte *, Lisp_Object,
 			   Lisp_Object, Lisp_Object, Error_Behavior);
-Lisp_Object signal_continuable_error_2 (Lisp_Object, const CIntbyte *,
+Lisp_Object signal_continuable_error_2 (Lisp_Object, const CIbyte *,
 					Lisp_Object, Lisp_Object);
-Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const CIntbyte *,
+Lisp_Object maybe_signal_continuable_error_2 (Lisp_Object, const CIbyte *,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object,
 					      Error_Behavior);
@@ -3713,60 +3713,60 @@ DECLARE_DOESNT_RETURN (signal_malformed_property_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_circular_list_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (signal_circular_property_list_error (Lisp_Object));
 
-DECLARE_DOESNT_RETURN (syntax_error (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (syntax_error (const CIbyte *reason,
 				     Lisp_Object frob));
-DECLARE_DOESNT_RETURN (syntax_error_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (syntax_error_2 (const CIbyte *reason,
 				       Lisp_Object frob1,
 				       Lisp_Object frob2));
-void maybe_syntax_error (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_syntax_error (const CIbyte *, Lisp_Object, Lisp_Object,
 			 Error_Behavior);
-DECLARE_DOESNT_RETURN (sferror (const CIntbyte *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (sferror_2 (const CIntbyte *reason, Lisp_Object frob1,
+DECLARE_DOESNT_RETURN (sferror (const CIbyte *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (sferror_2 (const CIbyte *reason, Lisp_Object frob1,
 				  Lisp_Object frob2));
-void maybe_sferror (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_sferror (const CIbyte *, Lisp_Object, Lisp_Object,
 		    Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_argument (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_argument (const CIbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_argument_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_argument_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_argument (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_argument (const CIbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_operation (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_operation (const CIbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_operation_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_operation_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_operation (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_operation (const CIbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_state (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_state (const CIbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_state_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_state_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_state (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_state (const CIbyte *, Lisp_Object, Lisp_Object,
 			  Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_change (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_change (const CIbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_change_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_change_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_change (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_change (const CIbyte *, Lisp_Object, Lisp_Object,
 			   Error_Behavior);
-DECLARE_DOESNT_RETURN (invalid_constant (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_constant (const CIbyte *reason,
 					 Lisp_Object frob));
-DECLARE_DOESNT_RETURN (invalid_constant_2 (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (invalid_constant_2 (const CIbyte *reason,
 					   Lisp_Object frob1,
 					   Lisp_Object frob2));
-void maybe_invalid_constant (const CIntbyte *, Lisp_Object, Lisp_Object,
+void maybe_invalid_constant (const CIbyte *, Lisp_Object, Lisp_Object,
 			     Error_Behavior);
-DECLARE_DOESNT_RETURN (wtaerror (const CIntbyte *reason, Lisp_Object frob));
-DECLARE_DOESNT_RETURN (out_of_memory (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (wtaerror (const CIbyte *reason, Lisp_Object frob));
+DECLARE_DOESNT_RETURN (out_of_memory (const CIbyte *reason,
 				      Lisp_Object frob));
-DECLARE_DOESNT_RETURN (stack_overflow (const CIntbyte *reason,
+DECLARE_DOESNT_RETURN (stack_overflow (const CIbyte *reason,
 				       Lisp_Object frob));
 DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (printing_unreadable_object
-						  (const CIntbyte *,
+						  (const CIbyte *,
 						   ...), 1, 2);
 
 Lisp_Object signal_void_function_error (Lisp_Object);
@@ -3937,7 +3937,7 @@ int internal_bind_lisp_object (Lisp_Object *addr, Lisp_Object newval);
 void do_autoload (Lisp_Object, Lisp_Object);
 Lisp_Object un_autoload (Lisp_Object);
 void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
-void warn_when_safe (Lisp_Object, Lisp_Object, const CIntbyte *,
+void warn_when_safe (Lisp_Object, Lisp_Object, const CIbyte *,
 		     ...) PRINTF_ARGS (3, 4);
 
 
@@ -4121,13 +4121,13 @@ EXFUN (Fverify_visited_file_modtime, 1);
 void record_auto_save (void);
 void force_auto_save_soon (void);
 DECLARE_DOESNT_RETURN (report_error_with_errno (Lisp_Object errtype,
-						const CIntbyte *string,
+						const CIbyte *string,
 						Lisp_Object data));
 DECLARE_DOESNT_RETURN (report_file_type_error (Lisp_Object errtype,
 					       Lisp_Object oserrmess,
-					       const CIntbyte *string,
+					       const CIbyte *string,
 					       Lisp_Object data));
-DECLARE_DOESNT_RETURN (report_file_error (const CIntbyte *, Lisp_Object));
+DECLARE_DOESNT_RETURN (report_file_error (const CIbyte *, Lisp_Object));
 Lisp_Object lisp_strerror (int);
 Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
 int internal_delete_file (Lisp_Object);
@@ -4361,22 +4361,22 @@ extern int popup_menu_titles;
 
 /* Defined in minibuf.c */
 extern int minibuf_level;
-Charcount scmp_1 (const Intbyte *, const Intbyte *, Charcount, int);
+Charcount scmp_1 (const Ibyte *, const Ibyte *, Charcount, int);
 #define scmp(s1, s2, len) scmp_1 (s1, s2, len, completion_ignore_case)
 extern int completion_ignore_case;
-int regexp_ignore_completion_p (const Intbyte *, Lisp_Object,
+int regexp_ignore_completion_p (const Ibyte *, Lisp_Object,
 				Bytecount, Bytecount);
 Lisp_Object clear_echo_area (struct frame *, Lisp_Object, int);
 Lisp_Object clear_echo_area_from_print (struct frame *, Lisp_Object, int);
-void echo_area_append (struct frame *, const Intbyte *, Lisp_Object,
+void echo_area_append (struct frame *, const Ibyte *, Lisp_Object,
 		       Bytecount, Bytecount, Lisp_Object);
-void echo_area_message (struct frame *, const Intbyte *, Lisp_Object,
+void echo_area_message (struct frame *, const Ibyte *, Lisp_Object,
 			Bytecount, Bytecount, Lisp_Object);
 Lisp_Object echo_area_status (struct frame *);
 int echo_area_active (struct frame *);
 Lisp_Object echo_area_contents (struct frame *);
-void message_internal (const Intbyte *, Lisp_Object, Bytecount, Bytecount);
-void message_append_internal (const Intbyte *, Lisp_Object,
+void message_internal (const Ibyte *, Lisp_Object, Bytecount, Bytecount);
+void message_append_internal (const Ibyte *, Lisp_Object,
 			      Bytecount, Bytecount);
 void message (const char *, ...) PRINTF_ARGS (1, 2);
 void message_append (const char *, ...) PRINTF_ARGS (1, 2);
@@ -4403,22 +4403,22 @@ void debug_print (Lisp_Object);
 /* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
  * Note: stream should be defaulted before calling
  *  (eg Qnil means stdout, not Vstandard_output, etc) */
-void write_c_string (Lisp_Object stream, const CIntbyte *str);
+void write_c_string (Lisp_Object stream, const CIbyte *str);
 /* Same goes for this function. */
-void write_string (Lisp_Object stream, const Intbyte *str);
+void write_string (Lisp_Object stream, const Ibyte *str);
 /* Same goes for this function. */
-void write_string_1 (Lisp_Object stream, const Intbyte *str, Bytecount size);
+void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
 /* Higher-level (printf-style) ways to output data: */
-void write_fmt_string (Lisp_Object stream, const CIntbyte *fmt, ...);
-void write_fmt_string_lisp (Lisp_Object stream, const CIntbyte *fmt,
+void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...);
+void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
 			    int nargs, ...);
-void stderr_out (const CIntbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIntbyte *, int nargs, ...);
-void stdout_out (const CIntbyte *, ...) PRINTF_ARGS (1, 2);
-void debug_out (const CIntbyte *, ...) PRINTF_ARGS (1, 2);
-DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (fatal (const CIntbyte *,
+void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void stderr_out_lisp (const CIbyte *, int nargs, ...);
+void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS (fatal (const CIbyte *,
 							   ...), 1, 2);
 
 /* Internal functions: */
@@ -4460,8 +4460,8 @@ DECLARE_DOESNT_RETURN (report_process_error (const char *, Lisp_Object));
 DECLARE_DOESNT_RETURN (report_network_error (const char *, Lisp_Object));
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
-Intbyte *egetenv (const CIntbyte *var);
-void eputenv (const CIntbyte *var, const CIntbyte *value);
+Ibyte *egetenv (const CIbyte *var);
+void eputenv (const CIbyte *var, const CIbyte *value);
 extern int env_initted;
 
 /* Defined in profile.c */
@@ -4494,12 +4494,12 @@ EXFUN (Fstring_match, 4);
 
 struct re_pattern_buffer;
 struct re_registers;
-Charbpos scan_buffer (struct buffer *, Emchar, Charbpos, Charbpos, EMACS_INT,
+Charbpos scan_buffer (struct buffer *, Ichar, Charbpos, Charbpos, EMACS_INT,
 		      EMACS_INT *, int);
 Charbpos find_next_newline (struct buffer *, Charbpos, int);
 Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
 Bytebpos byte_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
-Bytecount byte_find_next_emchar_in_string (Lisp_Object, Emchar, Bytecount,
+Bytecount byte_find_next_ichar_in_string (Lisp_Object, Ichar, Bytecount,
 					 EMACS_INT);
 Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos, int);
 struct re_pattern_buffer *compile_pattern (Lisp_Object pattern,
@@ -4508,7 +4508,7 @@ struct re_pattern_buffer *compile_pattern (Lisp_Object pattern,
 					   Lisp_Object searchobj,
 					   struct buffer *searchbuf,
 					   int posix, Error_Behavior errb);
-Bytecount fast_string_match (Lisp_Object, const Intbyte *,
+Bytecount fast_string_match (Lisp_Object, const Ibyte *,
 			     Lisp_Object, Bytecount,
 			     Bytecount, int, Error_Behavior, int);
 Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
@@ -4551,11 +4551,11 @@ EXFUN (Fsymbol_name, 1);
 EXFUN (Fsymbol_plist, 1);
 EXFUN (Fsymbol_value, 1);
 
-unsigned int hash_string (const Intbyte *, Bytecount);
-Lisp_Object intern_int (const Intbyte *str);
-Lisp_Object intern (const CIntbyte *str);
-Lisp_Object intern_converting_underscores_to_dashes (const CIntbyte *str);
-Lisp_Object oblookup (Lisp_Object, const Intbyte *, Bytecount);
+unsigned int hash_string (const Ibyte *, Bytecount);
+Lisp_Object intern_int (const Ibyte *str);
+Lisp_Object intern (const CIbyte *str);
+Lisp_Object intern_converting_underscores_to_dashes (const CIbyte *str);
+Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
 void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
 Lisp_Object indirect_function (Lisp_Object, int);
 Lisp_Object symbol_value_in_buffer (Lisp_Object, Lisp_Object);
@@ -4585,34 +4585,34 @@ long get_random (void);
 void seed_random (long arg);
 
 /* Defined in text.c */
-void find_charsets_in_intbyte_string (unsigned char *charsets,
-				      const Intbyte *str,
+void find_charsets_in_ibyte_string (unsigned char *charsets,
+				      const Ibyte *str,
 				      Bytecount len);
-void find_charsets_in_emchar_string (unsigned char *charsets,
-				     const Emchar *str,
+void find_charsets_in_ichar_string (unsigned char *charsets,
+				     const Ichar *str,
 				     Charcount len);
-int intbyte_string_displayed_columns (const Intbyte *str, Bytecount len);
-int emchar_string_displayed_columns (const Emchar *str, Charcount len);
-Charcount intbyte_string_nonascii_chars (const Intbyte *str, Bytecount len);
-void convert_intbyte_string_into_emchar_dynarr (const Intbyte *str,
+int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
+int ichar_string_displayed_columns (const Ichar *str, Charcount len);
+Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
+void convert_ibyte_string_into_ichar_dynarr (const Ibyte *str,
 						Bytecount len,
-						Emchar_dynarr *dyn);
-Charcount convert_intbyte_string_into_emchar_string (const Intbyte *str,
+						Ichar_dynarr *dyn);
+Charcount convert_ibyte_string_into_ichar_string (const Ibyte *str,
 						     Bytecount len,
-						     Emchar *arr);
-void convert_emchar_string_into_intbyte_dynarr (Emchar *arr, int nels,
-						Intbyte_dynarr *dyn);
-Intbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
+						     Ichar *arr);
+void convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
+						Ibyte_dynarr *dyn);
+Ibyte *convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
 						    Bytecount *len_out);
-Bytecount copy_text_between_formats (const Intbyte *src, Bytecount srclen,
+Bytecount copy_text_between_formats (const Ibyte *src, Bytecount srclen,
 				     Internal_Format srcfmt,
 				     Lisp_Object srcobj,
-				     Intbyte *dst, Bytecount dstlen,
+				     Ibyte *dst, Bytecount dstlen,
 				     Internal_Format dstfmt,
 				     Lisp_Object dstobj,
 				     Bytecount *src_used);
 Bytecount copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
-				Bytecount len, Intbyte *dst, Bytecount dstlen,
+				Bytecount len, Ibyte *dst, Bytecount dstlen,
 				Internal_Format dstfmt, Lisp_Object dstobj,
 				Bytecount *src_used);
 
@@ -4687,8 +4687,8 @@ Bytexpos buffer_or_string_clip_to_absolute_byte (Lisp_Object object,
 
 #ifdef ENABLE_COMPOSITE_CHARS
 
-Emchar lookup_composite_char (Intbyte *str, int len);
-Lisp_Object composite_char_string (Emchar ch);
+Ichar lookup_composite_char (Ibyte *str, int len);
+Lisp_Object composite_char_string (Ichar ch);
 #endif /* ENABLE_COMPOSITE_CHARS */
 
 EXFUN (Ffind_charset, 1);
@@ -4720,205 +4720,205 @@ extern Lisp_Object Vcharset_chinese_big5_1;
 extern Lisp_Object Vcharset_chinese_big5_2;
 extern Lisp_Object Vcharset_composite;
 
-Emchar Lstream_get_emchar_1 (Lstream *stream, int first_char);
-int Lstream_fput_emchar (Lstream *stream, Emchar ch);
-void Lstream_funget_emchar (Lstream *stream, Emchar ch);
+Ichar Lstream_get_ichar_1 (Lstream *stream, int first_char);
+int Lstream_fput_ichar (Lstream *stream, Ichar ch);
+void Lstream_funget_ichar (Lstream *stream, Ichar ch);
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrdup (const Intbyte *s))
+DECLARE_INLINE_HEADER (Ibyte *qxestrdup (const Ibyte *s))
 {
-  return (Intbyte *) xstrdup ((const char *) s);
+  return (Ibyte *) xstrdup ((const char *) s);
 }
 
-DECLARE_INLINE_HEADER (Bytecount qxestrlen (const Intbyte *s))
+DECLARE_INLINE_HEADER (Bytecount qxestrlen (const Ibyte *s))
 {
   return strlen ((const char *) s);
 }
 
-DECLARE_INLINE_HEADER (Charcount qxestrcharlen (const Intbyte *s))
+DECLARE_INLINE_HEADER (Charcount qxestrcharlen (const Ibyte *s))
 {
   return bytecount_to_charcount (s, qxestrlen (s));
 }
 
-DECLARE_INLINE_HEADER (int qxestrcmp (const Intbyte *s1,
-				      const Intbyte *s2))
+DECLARE_INLINE_HEADER (int qxestrcmp (const Ibyte *s1,
+				      const Ibyte *s2))
 {
   return strcmp ((const char *) s1, (const char *) s2);
 }
 
-DECLARE_INLINE_HEADER (int qxestrcmp_c (const Intbyte *s1,
+DECLARE_INLINE_HEADER (int qxestrcmp_c (const Ibyte *s1,
 					const char *s2))
 {
   return strcmp ((const char *) s1, s2);
 }
 
-DECLARE_INLINE_HEADER (int qxestrncmp (const Intbyte *string1,
-				       const Intbyte *string2,
+DECLARE_INLINE_HEADER (int qxestrncmp (const Ibyte *string1,
+				       const Ibyte *string2,
 				       Bytecount count))
 {
   return strncmp ((const char *) string1, (const char *) string2,
 		  (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (int qxestrncmp_c (const Intbyte *string1,
+DECLARE_INLINE_HEADER (int qxestrncmp_c (const Ibyte *string1,
 					 const char *string2,
 					 Bytecount count))
 {
   return strncmp ((const char *) string1, string2, (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrcpy (Intbyte *strDest,
-					   const Intbyte *strSource))
+DECLARE_INLINE_HEADER (Ibyte *qxestrcpy (Ibyte *strDest,
+					   const Ibyte *strSource))
 {
-  return (Intbyte *) strcpy ((char *) strDest, (const char *) strSource);
+  return (Ibyte *) strcpy ((char *) strDest, (const char *) strSource);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrcpy_c (Intbyte *strDest,
+DECLARE_INLINE_HEADER (Ibyte *qxestrcpy_c (Ibyte *strDest,
 					     const char *strSource))
 {
-  return (Intbyte *) strcpy ((char *) strDest, strSource);
+  return (Ibyte *) strcpy ((char *) strDest, strSource);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrncpy (Intbyte *strDest,
-					    const Intbyte *strSource,
+DECLARE_INLINE_HEADER (Ibyte *qxestrncpy (Ibyte *strDest,
+					    const Ibyte *strSource,
 					    Bytecount count))
 {
-  return (Intbyte *) strncpy ((char *) strDest, (const char *) strSource,
+  return (Ibyte *) strncpy ((char *) strDest, (const char *) strSource,
 			      (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrncpy_c (Intbyte *strDest,
+DECLARE_INLINE_HEADER (Ibyte *qxestrncpy_c (Ibyte *strDest,
 					      const char *strSource,
 					      Bytecount count))
 {
-  return (Intbyte *) strncpy ((char *) strDest, strSource, (size_t) count);
+  return (Ibyte *) strncpy ((char *) strDest, strSource, (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrcat (Intbyte *strDest,
-					   const Intbyte *strSource))
+DECLARE_INLINE_HEADER (Ibyte *qxestrcat (Ibyte *strDest,
+					   const Ibyte *strSource))
 {
-  return (Intbyte *) strcat ((char *) strDest, (const char *) strSource);
+  return (Ibyte *) strcat ((char *) strDest, (const char *) strSource);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrcat_c (Intbyte *strDest,
+DECLARE_INLINE_HEADER (Ibyte *qxestrcat_c (Ibyte *strDest,
 					     const char *strSource))
 {
-  return (Intbyte *) strcat ((char *) strDest, strSource);
+  return (Ibyte *) strcat ((char *) strDest, strSource);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrncat (Intbyte *strDest,
-					    const Intbyte *strSource,
+DECLARE_INLINE_HEADER (Ibyte *qxestrncat (Ibyte *strDest,
+					    const Ibyte *strSource,
 					    Bytecount count))
 {
-  return (Intbyte *) strncat ((char *) strDest, (const char *) strSource,
+  return (Ibyte *) strncat ((char *) strDest, (const char *) strSource,
 			      (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrncat_c (Intbyte *strDest,
+DECLARE_INLINE_HEADER (Ibyte *qxestrncat_c (Ibyte *strDest,
 					      const char *strSource,
 					      Bytecount count))
 {
-  return (Intbyte *) strncat ((char *) strDest, strSource, (size_t) count);
+  return (Ibyte *) strncat ((char *) strDest, strSource, (size_t) count);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrchr (const Intbyte *s, Emchar c))
+DECLARE_INLINE_HEADER (Ibyte *qxestrchr (const Ibyte *s, Ichar c))
 {
   assert (c >= 0 && c <= 255);
-  return (Intbyte *) strchr ((const char *) s, c);
+  return (Ibyte *) strchr ((const char *) s, c);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrrchr (const Intbyte *s, Emchar c))
+DECLARE_INLINE_HEADER (Ibyte *qxestrrchr (const Ibyte *s, Ichar c))
 {
   assert (c >= 0 && c <= 255);
-  return (Intbyte *) strrchr ((const char *) s, c);
+  return (Ibyte *) strrchr ((const char *) s, c);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrstr (const Intbyte *string1,
-					   const Intbyte *string2))
+DECLARE_INLINE_HEADER (Ibyte *qxestrstr (const Ibyte *string1,
+					   const Ibyte *string2))
 {
-  return (Intbyte *) strstr ((const char *) string1, (const char *) string2);
+  return (Ibyte *) strstr ((const char *) string1, (const char *) string2);
 }
 
-DECLARE_INLINE_HEADER (Bytecount qxestrcspn (const Intbyte *string,
-					     const CIntbyte *strCharSet))
+DECLARE_INLINE_HEADER (Bytecount qxestrcspn (const Ibyte *string,
+					     const CIbyte *strCharSet))
 {
   return (Bytecount) strcspn ((const char *) string, strCharSet);
 }
 
-DECLARE_INLINE_HEADER (Bytecount qxestrspn (const Intbyte *string,
-					    const CIntbyte *strCharSet))
+DECLARE_INLINE_HEADER (Bytecount qxestrspn (const Ibyte *string,
+					    const CIbyte *strCharSet))
 {
   return (Bytecount) strspn ((const char *) string, strCharSet);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrpbrk (const Intbyte *string,
-					    const CIntbyte *strCharSet))
+DECLARE_INLINE_HEADER (Ibyte *qxestrpbrk (const Ibyte *string,
+					    const CIbyte *strCharSet))
 {
-  return (Intbyte *) strpbrk ((const char *) string, strCharSet);
+  return (Ibyte *) strpbrk ((const char *) string, strCharSet);
 }
 
-DECLARE_INLINE_HEADER (Intbyte *qxestrtok (Intbyte *strToken,
-					   const CIntbyte *strDelimit))
+DECLARE_INLINE_HEADER (Ibyte *qxestrtok (Ibyte *strToken,
+					   const CIbyte *strDelimit))
 {
-  return (Intbyte *) strtok ((char *) strToken, strDelimit);
+  return (Ibyte *) strtok ((char *) strToken, strDelimit);
 }
 
-DECLARE_INLINE_HEADER (double qxestrtod (const Intbyte *nptr,
-					 Intbyte **endptr))
+DECLARE_INLINE_HEADER (double qxestrtod (const Ibyte *nptr,
+					 Ibyte **endptr))
 {
   return strtod ((const char *) nptr, (char **) endptr);
 }
 
-DECLARE_INLINE_HEADER (long qxestrtol (const Intbyte *nptr, Intbyte **endptr,
+DECLARE_INLINE_HEADER (long qxestrtol (const Ibyte *nptr, Ibyte **endptr,
 				       int base))
 {
   return strtol ((const char *) nptr, (char **) endptr, base);
 }
 
-DECLARE_INLINE_HEADER (unsigned long qxestrtoul (const Intbyte *nptr,
-						 Intbyte **endptr,
+DECLARE_INLINE_HEADER (unsigned long qxestrtoul (const Ibyte *nptr,
+						 Ibyte **endptr,
 						 int base))
 {
   return strtoul ((const char *) nptr, (char **) endptr, base);
 }
 
-DECLARE_INLINE_HEADER (int qxeatoi (const Intbyte *string))
+DECLARE_INLINE_HEADER (int qxeatoi (const Ibyte *string))
 {
   return atoi ((const char *) string);
 }
 
-int qxesprintf (Intbyte *buffer, const CIntbyte *format, ...)
+int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */
 #define qxestrcoll DO NOT USE.
 #define qxestrxfrm DO NOT USE.
 
-int qxestrcasecmp (const Intbyte *s1, const Intbyte *s2);
-int qxestrcasecmp_c (const Intbyte *s1, const Char_ASCII *s2);
-int qxestrcasecmp_i18n (const Intbyte *s1, const Intbyte *s2);
+int qxestrcasecmp (const Ibyte *s1, const Ibyte *s2);
+int qxestrcasecmp_c (const Ibyte *s1, const Char_ASCII *s2);
+int qxestrcasecmp_i18n (const Ibyte *s1, const Ibyte *s2);
 int ascii_strcasecmp (const Char_ASCII *s1, const Char_ASCII *s2);
 int lisp_strcasecmp (Lisp_Object s1, Lisp_Object s2);
 int lisp_strcasecmp_i18n (Lisp_Object s1, Lisp_Object s2);
-int qxestrncasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len);
-int qxestrncasecmp_c (const Intbyte *s1, const Char_ASCII *s2, Bytecount len);
-int qxestrncasecmp_i18n (const Intbyte *s1, const Intbyte *s2, Bytecount len);
+int qxestrncasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
+int qxestrncasecmp_c (const Ibyte *s1, const Char_ASCII *s2, Bytecount len);
+int qxestrncasecmp_i18n (const Ibyte *s1, const Ibyte *s2, Bytecount len);
 int ascii_strncasecmp (const Char_ASCII *s1, const Char_ASCII *s2,
 		       Bytecount len);
-int qxememcmp (const Intbyte *s1, const Intbyte *s2, Bytecount len);
-int qxememcmp4 (const Intbyte *s1, Bytecount len1,
-		const Intbyte *s2, Bytecount len2);
-int qxememcasecmp (const Intbyte *s1, const Intbyte *s2, Bytecount len);
-int qxememcasecmp4 (const Intbyte *s1, Bytecount len1,
-		    const Intbyte *s2, Bytecount len2);
-int qxetextcmp (const Intbyte *s1, Bytecount len1,
-		const Intbyte *s2, Bytecount len2);
-int qxetextcmp_matching (const Intbyte *s1, Bytecount len1,
-			 const Intbyte *s2, Bytecount len2,
+int qxememcmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
+int qxememcmp4 (const Ibyte *s1, Bytecount len1,
+		const Ibyte *s2, Bytecount len2);
+int qxememcasecmp (const Ibyte *s1, const Ibyte *s2, Bytecount len);
+int qxememcasecmp4 (const Ibyte *s1, Bytecount len1,
+		    const Ibyte *s2, Bytecount len2);
+int qxetextcmp (const Ibyte *s1, Bytecount len1,
+		const Ibyte *s2, Bytecount len2);
+int qxetextcmp_matching (const Ibyte *s1, Bytecount len1,
+			 const Ibyte *s2, Bytecount len2,
 			 Charcount *matching);
-int qxetextcasecmp (const Intbyte *s1, Bytecount len1,
-		    const Intbyte *s2, Bytecount len2);
-int qxetextcasecmp_matching (const Intbyte *s1, Bytecount len1,
-			     const Intbyte *s2, Bytecount len2,
+int qxetextcasecmp (const Ibyte *s1, Bytecount len1,
+		    const Ibyte *s2, Bytecount len2);
+int qxetextcasecmp_matching (const Ibyte *s1, Bytecount len1,
+			     const Ibyte *s2, Bytecount len2,
 			     Charcount *matching);
 
 void buffer_mule_signal_inserted_region (struct buffer *buf, Charbpos start,
@@ -4954,7 +4954,7 @@ void record_change (struct buffer *, Charbpos, Charcount);
 
 /* Defined in unex*.c */
 #ifdef WIN32_NATIVE
-int unexec (Intbyte *, Intbyte *, uintptr_t, uintptr_t, uintptr_t);
+int unexec (Ibyte *, Ibyte *, uintptr_t, uintptr_t, uintptr_t);
 #else
 int unexec (Extbyte *, Extbyte *, uintptr_t, uintptr_t, uintptr_t);
 #endif

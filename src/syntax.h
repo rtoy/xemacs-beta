@@ -82,7 +82,7 @@ enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
 
 DECLARE_INLINE_HEADER (
 int
-WORD_SYNTAX_P (Lisp_Object table, Emchar c)
+WORD_SYNTAX_P (Lisp_Object table, Ichar c)
 )
 {
   return SYNTAX (table, c) == Sword;
@@ -242,7 +242,7 @@ int char_quoted (struct buffer *buf, Charbpos pos);
 
 /* NOTE: This does not refer to the mirror table, but to the
    syntax table itself. */
-Lisp_Object syntax_match (Lisp_Object table, Emchar ch);
+Lisp_Object syntax_match (Lisp_Object table, Ichar ch);
 
 extern int no_quit_in_re_search;
 

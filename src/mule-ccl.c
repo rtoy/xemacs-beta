@@ -728,23 +728,23 @@ static int stack_idx_of_map_multiple;
 	  }							\
 	else							\
 	  {							\
-	    Intbyte work[MAX_EMCHAR_LEN];			\
+	    Ibyte work[MAX_ICHAR_LEN];			\
 	    int len;						\
-	    len = non_ascii_set_charptr_emchar (work, ch);	\
+	    len = non_ascii_set_itext_ichar (work, ch);	\
 	    Dynarr_add_many (destination, work, len);		\
 	  }							\
       }								\
     else							\
       {								\
-	if (!emchar_multibyte_p(ch))				\
+	if (!ichar_multibyte_p(ch))				\
 	  {							\
 	    Dynarr_add (destination, ch);			\
 	  }							\
 	else							\
 	  {							\
-	    Intbyte work[MAX_EMCHAR_LEN];			\
+	    Ibyte work[MAX_ICHAR_LEN];			\
 	    int len;						\
-	    len = non_ascii_set_charptr_emchar (work, ch);	\
+	    len = non_ascii_set_itext_ichar (work, ch);	\
 	    Dynarr_add_many (destination, work, len);		\
 	  }							\
       }								\
@@ -755,7 +755,7 @@ static int stack_idx_of_map_multiple;
    cannot handle a multibyte string except for Control-1 characters. */
 #define CCL_WRITE_STRING(len)					\
   do {								\
-    Intbyte work[MAX_EMCHAR_LEN];				\
+    Ibyte work[MAX_ICHAR_LEN];				\
     int ch, bytes;						\
     if (!destination)						\
       CCL_INVALID_CMD;						\
@@ -783,7 +783,7 @@ static int stack_idx_of_map_multiple;
 	      }							\
 	    else						\
 	      {							\
-		bytes = non_ascii_set_charptr_emchar (work, ch); \
+		bytes = non_ascii_set_itext_ichar (work, ch); \
 		Dynarr_add_many (destination, work, len);	\
 	      }							\
 	  }							\
@@ -794,13 +794,13 @@ static int stack_idx_of_map_multiple;
 	  {							\
 	    ch = ((XINT (ccl_prog[ic + (i / 3)]))		\
 		  >> ((2 - (i % 3)) * 8)) & 0xFF;		\
-	    if (!emchar_multibyte_p(ch))				\
+	    if (!ichar_multibyte_p(ch))				\
 	      {							\
 		Dynarr_add (destination, ch);			\
 	      }							\
 	    else						\
 	      {							\
-		bytes = non_ascii_set_charptr_emchar (work, ch); \
+		bytes = non_ascii_set_itext_ichar (work, ch); \
 		Dynarr_add_many (destination, work, len);	\
 	      }							\
 	  }							\
@@ -828,7 +828,7 @@ static int stack_idx_of_map_multiple;
 
 
 /* Set C to the character code made from CHARSET and CODE.  This is
-   like make_emchar but check the validity of CHARSET and CODE.  If they
+   like make_ichar but check the validity of CHARSET and CODE.  If they
    are not valid, set C to (CODE & 0xFF) because that is usually the
    case that CCL_ReadMultibyteChar2 read an invalid code and it set
    CODE to that invalid byte.  */
@@ -848,7 +848,7 @@ static int stack_idx_of_map_multiple;
 								\
 	if ((code) >= 256)					\
 	  c2 = c1, c1 = ((code) >> 7) & 0x7F;			\
-	(c) = make_emchar (charset, c1, c2);			\
+	(c) = make_ichar (charset, c1, c2);			\
       }								\
     else							\
       (c) = (code) & 0xFF;						\
