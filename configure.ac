@@ -11,7 +11,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&AS_MESSAGE_LOG_FD'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&AS_MESSAGE_LOG_FD'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&AS_MESSAGE_LOG_FD'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 ])
@@ -1706,12 +1706,12 @@ if test "${with_cflags_warning-unset}" != unset
   else cflags_warning_specified=no;
 fi
 
-if test "${cflags_optimization-unset}" != unset
+if test "${with_cflags_optimization-unset}" != unset
   then cflags_optimization_specified=yes;
   else cflags_optimization_specified=no;
 fi
 
-if test "${cflags_debugging-unset}" != unset
+if test "${with_cflags_debugging-unset}" != unset
   then cflags_debugging_specified=yes;
   else cflags_debugging_specified=no;
 fi
@@ -2048,11 +2048,11 @@ fi
 dnl Calculate optimization flags.  These will be off by default in beta
 dnl versions and on in release versions.
 
-if test -z "$with_optimization" ; then
-  if test -n "$emacs_is_beta" ; then
-    with_optimization=no
-  else
+if test -z "$with_optimization"; then
+  if test -z "$emacs_is_beta" -o "$cflags_optimization_specified" = "yes"; then
     with_optimization=yes
+  else
+    with_optimization=no
   fi
 fi
 
@@ -3811,7 +3811,7 @@ if test "$window_system" != "none"; then
   png_problem=""
   test -z "$with_png" && { AC_CHECK_FUNC(pow,                  ,with_png=no) }
   test -z "$with_png" && { AC_CHECK_HEADER(png.h,              ,with_png=no) }
-  test -z "$with_png" && { AC_CHECK_LIB(png, png_read_image,[:],with_png=no) }
+  test -z "$with_png" && { AC_CHECK_LIB(png, png_read_image,[:],with_png=no,[-lz]) }
   if test -z "$with_png"; then
     AC_MSG_CHECKING(for workable png version information)
     xe_check_libs="-lpng -lz"
@@ -3847,7 +3847,7 @@ if test "$window_system" != "none"; then
 
   dnl autodetect TIFF
   test -z "$with_tiff" && { AC_CHECK_HEADER(tiffio.h,            ,with_tiff=no) }
-  test -z "$with_tiff" && { AC_CHECK_LIB(tiff, TIFFClientOpen,[:],with_tiff=no) }
+  test -z "$with_tiff" && { AC_CHECK_LIB(tiff, TIFFClientOpen,[:],with_tiff=no,[-lz]) }
   test -z "$with_tiff" && with_tiff=yes
   if test "$with_tiff" = "yes"; then
     AC_DEFINE(HAVE_TIFF)

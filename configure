@@ -1584,7 +1584,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -3468,12 +3468,12 @@ if test "${with_cflags_warning-unset}" != unset
   else cflags_warning_specified=no;
 fi
 
-if test "${cflags_optimization-unset}" != unset
+if test "${with_cflags_optimization-unset}" != unset
   then cflags_optimization_specified=yes;
   else cflags_optimization_specified=no;
 fi
 
-if test "${cflags_debugging-unset}" != unset
+if test "${with_cflags_debugging-unset}" != unset
   then cflags_debugging_specified=yes;
   else cflags_debugging_specified=no;
 fi
@@ -3485,7 +3485,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
@@ -4412,7 +4412,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -4422,7 +4422,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 echo "$as_me:$LINENO: checking how to run the C preprocessor" >&5
@@ -4653,7 +4653,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -4707,7 +4707,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
@@ -5433,7 +5433,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -5444,7 +5444,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
@@ -6170,7 +6170,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -6181,7 +6181,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
@@ -6907,7 +6907,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -6977,7 +6977,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 echo "$as_me:$LINENO: checking how to run the C preprocessor" >&5
@@ -7208,7 +7208,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -7718,11 +7718,11 @@ echo "$as_me: WARNING: gcc and XEMACS_CC are mismatched; XE_CFLAGS may be wrong"
 fi
 
 
-if test -z "$with_optimization" ; then
-  if test -n "$emacs_is_beta" ; then
-    with_optimization=no
-  else
+if test -z "$with_optimization"; then
+  if test -z "$emacs_is_beta" -o "$cflags_optimization_specified" = "yes"; then
     with_optimization=yes
+  else
+    with_optimization=no
   fi
 fi
 
@@ -8037,7 +8037,7 @@ xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_swit
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $libs_gtk $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
-ac_compile='$CC -c $CFLAGS'"$xe_cppflags"' conftest.$ac_ext >&5'
+ac_compile='$CC -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
@@ -22645,7 +22645,7 @@ if test "${ac_cv_lib_png_png_read_image+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpng  $LIBS"
+LIBS="-lpng -lz $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -22931,7 +22931,7 @@ if test "${ac_cv_lib_tiff_TIFFClientOpen+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ltiff  $LIBS"
+LIBS="-ltiff -lz $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF

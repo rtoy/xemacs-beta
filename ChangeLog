@@ -1,3 +1,14 @@
+2005-03-15  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (--with-cflags-optimization):
+	 (--with-cflags-debugging):
+	If the user specifies them, use them, and don't make her beg.
+	* configure.ac (Autodetect PNG): PNG & TIFF need -lz in AC_CHECK_LIB.
+
+2005-03-15  Malcolm Purvis  <malcolmp@xemacs.org>
+
+	* configure.ac: Fix problems with OpenBSD /bin/sh.  
+
 2005-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac (TAB): Check $ac_cv_build, not $canonical, when
