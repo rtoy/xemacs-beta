@@ -131,11 +131,21 @@ static const struct lrecord_description bit_vector_description[] = {
 };
 
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
+					      1, /*dumpable-flag*/
+					      mark_bit_vector, print_bit_vector, 0,
+					      bit_vector_equal, bit_vector_hash,
+					      bit_vector_description, size_bit_vector,
+					      Lisp_Bit_Vector);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
 					      mark_bit_vector, print_bit_vector, 0,
 					      bit_vector_equal, bit_vector_hash,
 					      bit_vector_description, size_bit_vector,
 					      Lisp_Bit_Vector);
+#endif /* not USE_KKCC */
+
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
 Return the argument unchanged.

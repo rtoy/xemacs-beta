@@ -318,6 +318,27 @@ static Lisp_Object recursive_sit_for;
 
 static Lisp_Object Vcommand_builder_free_list;
 
+#ifdef USE_KKCC
+static const struct lrecord_description munging_key_translation_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct munging_key_translation, first_mungeable_event) },
+  { XD_END }
+};
+
+static const struct struct_description munging_key_translation_description = {
+  sizeof (Lisp_Object),
+  munging_key_translation_description_1
+};
+
+static const struct lrecord_description command_builder_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct command_builder, current_events) },
+  { XD_LISP_OBJECT, offsetof (struct command_builder, most_current_event) },
+  { XD_LISP_OBJECT, offsetof (struct command_builder, last_non_munged_event) },
+  { XD_LISP_OBJECT, offsetof (struct command_builder, console) },
+  { XD_STRUCT_ARRAY, offsetof (struct command_builder, munge_me), 2, &munging_key_translation_description },
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_command_builder (Lisp_Object obj)
 {
@@ -344,10 +365,19 @@ finalize_command_builder (void *header, int for_disksave)
     }
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
+			       0, /*dumpable-flag*/
+                               mark_command_builder, internal_object_printer,
+			       finalize_command_builder, 0, 0, 
+			       command_builder_description,
+			       struct command_builder);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
                                mark_command_builder, internal_object_printer,
 			       finalize_command_builder, 0, 0, 0,
 			       struct command_builder);
+#endif /* not USE_KKCC */
 
 static void
 reset_command_builder_event_chain (struct command_builder *builder)
@@ -761,7 +791,11 @@ echo_key_event (struct command_builder *command_builder,
       clear_echo_area (selected_frame (), Qnil, 0);
     }
 
-  format_event_object (buf, XEVENT (event), 1);
+#ifdef USE_KKCC
+  format_event_object (buf, event, 1);
+#else /* not USE_KKCC */
+  format_event_object (buf, XEVENT(event), 1);
+#endif /* not USE_KKCC */
   len = eilen (buf);
 
   if (len + buf_index + 4 > command_builder->echo_buf_length)
@@ -876,44 +910,89 @@ maybe_kbd_translate (Lisp_Object event)
 				      Qnil);
       if (!NILP (traduit) && SYMBOLP (traduit))
 	{
+#ifdef USE_KKCC
+	  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), traduit);
+	  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), 0);
+#else /* not USE_KKCC */
 	  XEVENT (event)->event.key.keysym = traduit;
 	  XEVENT (event)->event.key.modifiers = 0;
+#endif /* not USE_KKCC */
 	  did_translate = 1;
 	}
       else if (CHARP (traduit))
 	{
+#ifdef USE_KKCC
+	  Lisp_Object ev2 = Fmake_event(Qnil, Qnil);
+#else /* not USE_KKCC */
 	  Lisp_Event ev2;
 
 	  /* This used to call Fcharacter_to_event() directly into EVENT,
 	     but that can eradicate timestamps and other such stuff.
 	     This way is safer. */
 	  zero_event (&ev2);
+#endif /* not USE_KKCC */
+
+#ifdef USE_KKCC
+	  character_to_event (XCHAR (traduit), XEVENT (ev2),
+			      XCONSOLE (XEVENT_CHANNEL (event)), 1, 1);
+	  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), XKEY_DATA_KEYSYM (XEVENT_DATA (ev2)));
+	  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), 
+                               XKEY_DATA_MODIFIERS (XEVENT_DATA (ev2)));
+#else /* not USE_KKCC */
 	  character_to_event (XCHAR (traduit), &ev2,
 			      XCONSOLE (EVENT_CHANNEL (XEVENT (event))), 1, 1);
 	  XEVENT (event)->event.key.keysym = ev2.event.key.keysym;
 	  XEVENT (event)->event.key.modifiers = ev2.event.key.modifiers;
+#endif /* not USE_KKCC */
 	  did_translate = 1;
 	}
     }
 
   if (!did_translate)
     {
+#ifdef USE_KKCC
+      Lisp_Object traduit = Fgethash (XKEY_DATA_KEYSYM (XEVENT_DATA (event)),
+				      Vkeyboard_translate_table, Qnil);
+#else /* not USE_KKCC */
       Lisp_Object traduit = Fgethash (XEVENT (event)->event.key.keysym,
 				      Vkeyboard_translate_table, Qnil);
+#endif /* not USE_KKCC */
       if (!NILP (traduit) && SYMBOLP (traduit))
 	{
+#ifdef USE_KKCC
+	  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), traduit);
+#else /* not USE_KKCC */
 	  XEVENT (event)->event.key.keysym = traduit;
+#endif /* not USE_KKCC */
 	  did_translate = 1;
 	}
       else if (CHARP (traduit))
 	{
+#ifdef USE_KKCC
+	  Lisp_Object ev2 = Fmake_event(Qnil, Qnil);
+#else /* not USE_KKCC */
 	  Lisp_Event ev2;
 
+	  /* This used to call Fcharacter_to_event() directly into EVENT,
+	     but that can eradicate timestamps and other such stuff.
+	     This way is safer. */
 	  zero_event (&ev2);
+#endif /* not USE_KKCC */
+
+#ifdef USE_KKCC
+	  character_to_event (XCHAR (traduit), XEVENT (ev2),
+			      XCONSOLE (XEVENT_CHANNEL (event)), 1, 1);
+	  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), XKEY_DATA_KEYSYM (XEVENT_DATA (ev2)));
+	  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event),
+                               XKEY_DATA_MODIFIERS (XEVENT_DATA (event)) |
+                               XKEY_DATA_MODIFIERS (XEVENT_DATA (ev2)));
+#else /* not USE_KKCC */
 	  character_to_event (XCHAR (traduit), &ev2,
 			      XCONSOLE (EVENT_CHANNEL (XEVENT (event))), 1, 1);
 	  XEVENT (event)->event.key.keysym = ev2.event.key.keysym;
 	  XEVENT (event)->event.key.modifiers |= ev2.event.key.modifiers;
+#endif /* not USE_KKCC */
+
 	  did_translate = 1;
 	}
     }
@@ -1230,9 +1309,16 @@ static const struct lrecord_description timeout_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("timeout", timeout,
+			       1, /*dumpable-flag*/
+			       mark_timeout, internal_object_printer,
+			       0, 0, 0, timeout_description, Lisp_Timeout);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("timeout", timeout,
 			       mark_timeout, internal_object_printer,
 			       0, 0, 0, timeout_description, Lisp_Timeout);
+#endif /* not USE_KKCC */
 
 /* Generate a timeout and return its ID. */
 
@@ -1628,11 +1714,17 @@ void
 enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object)
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
-
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (event, magic_eval_event);
+  /* channel for magic_eval events is nil */
+  XSET_MAGIC_EVAL_DATA_INTERNAL_FUNCTION (XEVENT_DATA (event), fun);
+  XSET_MAGIC_EVAL_DATA_OBJECT (XEVENT_DATA (event), object);
+#else /* not USE_KKCC */
   XEVENT (event)->event_type = magic_eval_event;
   /* channel for magic_eval events is nil */
   XEVENT (event)->event.magic_eval.internal_function = fun;
   XEVENT (event)->event.magic_eval.object = object;
+#endif /* not USE_KKCC */
   enqueue_command_event (event);
 }
 
@@ -1647,10 +1739,17 @@ are received.
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
 
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (event, eval_event);
+  /* channel for eval events is nil */
+  XSET_EVAL_DATA_FUNCTION (XEVENT_DATA (event), function);
+  XSET_EVAL_DATA_OBJECT (XEVENT_DATA (event), object);
+#else /* not USE_KKCC */
   XEVENT (event)->event_type = eval_event;
   /* channel for eval events is nil */
   XEVENT (event)->event.eval.function = function;
   XEVENT (event)->event.eval.object = object;
+#endif /* not USE_KKCC */
   enqueue_command_event (event);
 
   return event;
@@ -1661,7 +1760,16 @@ enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 			 Lisp_Object object)
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
-
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (event, misc_user_event);
+  XSET_EVENT_CHANNEL (event, channel);
+  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), function);
+  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), object);
+  XSET_MISC_USER_DATA_BUTTON (XEVENT_DATA (event), 0);
+  XSET_MISC_USER_DATA_MODIFIERS (XEVENT_DATA (event), 0);
+  XSET_MISC_USER_DATA_X (XEVENT_DATA (event), -1);
+  XSET_MISC_USER_DATA_Y (XEVENT_DATA (event), -1);
+#else /* not USE_KKCC */
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
   XEVENT (event)->event.misc.function  = function;
@@ -1670,6 +1778,7 @@ enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
   XEVENT (event)->event.misc.modifiers = 0;
   XEVENT (event)->event.misc.x         = -1;
   XEVENT (event)->event.misc.y         = -1;
+#endif /* not USE_KKCC */
   enqueue_command_event (event);
 
   return event;
@@ -1682,6 +1791,16 @@ enqueue_misc_user_event_pos (Lisp_Object channel, Lisp_Object function,
 {
   Lisp_Object event = Fmake_event (Qnil, Qnil);
 
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (event, misc_user_event);
+  XSET_EVENT_CHANNEL (event, channel);
+  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), function);
+  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), object);
+  XSET_MISC_USER_DATA_BUTTON (XEVENT_DATA (event), button);
+  XSET_MISC_USER_DATA_MODIFIERS (XEVENT_DATA (event), modifiers);
+  XSET_MISC_USER_DATA_X (XEVENT_DATA (event), x);
+  XSET_MISC_USER_DATA_Y (XEVENT_DATA (event), y);
+#else /* not USE_KKCC */
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
   XEVENT (event)->event.misc.function  = function;
@@ -1690,6 +1809,7 @@ enqueue_misc_user_event_pos (Lisp_Object channel, Lisp_Object function,
   XEVENT (event)->event.misc.modifiers = modifiers;
   XEVENT (event)->event.misc.x         = x;
   XEVENT (event)->event.misc.y         = y;
+#endif /* not USE_KKCC */
   enqueue_command_event (event);
 
   return event;
@@ -2074,10 +2194,23 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
       /* If this was a timeout, then we need to extract some data
 	 out of the returned closure and might need to resignal
 	 it. */
+#ifdef USE_KKCC
+      if (EVENT_TYPE (e) == timeout_event)
+#else /* not USE_KKCC */
       if (e->event_type == timeout_event)
+#endif /* not USE_KKCC */
 	{
 	  Lisp_Object tristan, isolde;
 
+#ifdef USE_KKCC
+	  XSET_TIMEOUT_DATA_ID_NUMBER (EVENT_DATA (e), 
+                          event_stream_resignal_wakeup (XTIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (e)), 0, &tristan, &isolde));
+
+          XSET_TIMEOUT_DATA_FUNCTION (EVENT_DATA (e), tristan);
+          XSET_TIMEOUT_DATA_OBJECT (EVENT_DATA (e), isolde);
+	  /* next_event_internal() doesn't print out timeout events
+	     because of the extra info we just set. */
+#else /* not USE_KKCC */
 	  e->event.timeout.id_number =
 	    event_stream_resignal_wakeup (e->event.timeout.interval_id, 0,
 					  &tristan, &isolde);
@@ -2086,13 +2219,18 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
 	  e->event.timeout.object = isolde;
 	  /* next_event_internal() doesn't print out timeout events
 	     because of the extra info we just set. */
+#endif /* not USE_KKCC */
 	  DEBUG_PRINT_EMACS_EVENT ("real, timeout", target_event);
 	}
 
       /* If we read a ^G, then set quit-flag and try to QUIT.
 	 This may be blocked (see above).
        */
+#ifdef USE_KKCC
+      if (EVENT_TYPE (e) == key_press_event &&
+#else /* not USE_KKCC */
       if (e->event_type == key_press_event &&
+#endif /* not USE_KKCC */
 	  event_matches_key_specifier_p
 	  (e, make_char (CONSOLE_QUIT_CHAR (XCONSOLE (EVENT_CHANNEL (e))))))
 	{
@@ -2453,7 +2591,7 @@ but it also makes a provision for displaying keystrokes in the echo area.
   /* This function can GC */
   struct gcpro gcpro1;
   GCPRO1 (event);
-
+   
   maybe_echo_keys (XCOMMAND_BUILDER
 		   (XCONSOLE (Vselected_console)->
 		    command_builder), 0); /* #### This sucks bigtime */
@@ -2741,7 +2879,11 @@ Return non-nil iff we received any output before the timeout expired.
 	case process_event:
 	  {
 	    if (NILP (process) ||
+#ifdef USE_KKCC
+                EQ (XPROCESS_DATA_PROCESS (XEVENT_DATA (event)), process))
+#else /* not USE_KKCC */
                 EQ (XEVENT (event)->event.process.process, process))
+#endif /* not USE_KKCC */
 	      {
                 done = 1;
 		/* RMS's version always returns nil when proc is nil,
@@ -3023,15 +3165,25 @@ execute_internal_event (Lisp_Object event)
 
     case eval_event:
       {
+#ifdef USE_KKCC
+	call1 (XEVAL_DATA_FUNCTION (XEVENT_DATA (event)),
+	       XEVAL_DATA_OBJECT (XEVENT_DATA (event)));
+#else /* not USE_KKCC */
 	call1 (XEVENT (event)->event.eval.function,
 	       XEVENT (event)->event.eval.object);
+#endif /* not USE_KKCC */
 	return;
       }
 
     case magic_eval_event:
       {
+#ifdef USE_KKCC
+	XMAGIC_EVAL_DATA_INTERNAL_FUNCTION (XEVENT_DATA (event))
+	  XMAGIC_EVAL_DATA_OBJECT (XEVENT_DATA (event));
+#else /* not USE_KKCC */
 	(XEVENT (event)->event.magic_eval.internal_function)
 	  (XEVENT (event)->event.magic_eval.object);
+#endif /* not USE_KKCC */
 	return;
       }
 
@@ -3044,7 +3196,11 @@ execute_internal_event (Lisp_Object event)
 
     case process_event:
       {
+#ifdef USE_KKCC
+	Lisp_Object p = XPROCESS_DATA_PROCESS (XEVENT_DATA (event));
+#else /* not USE_KKCC */
 	Lisp_Object p = XEVENT (event)->event.process.process;
+#endif /* not USE_KKCC */
 	Charcount readstatus;
 	int iter;
 
@@ -3137,16 +3293,21 @@ execute_internal_event (Lisp_Object event)
     case timeout_event:
       {
 	Lisp_Event *e = XEVENT (event);
+
+#ifdef USE_KKCC
+	if (!NILP (XTIMEOUT_DATA_FUNCTION (EVENT_DATA (e))))
+	  call1 (XTIMEOUT_DATA_FUNCTION (EVENT_DATA (e)),
+                 XTIMEOUT_DATA_OBJECT (EVENT_DATA (e)));
+#else /* not USE_KKCC */
 	if (!NILP (e->event.timeout.function))
 	  call1 (e->event.timeout.function,
 		 e->event.timeout.object);
+#endif /* not USE_KKCC */
 	return;
       }
     case magic_event:
-      {
 	event_stream_handle_magic_event (XEVENT (event));
 	return;
-      }
     default:
       abort ();
     }
@@ -3297,8 +3458,13 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
   if (XEVENT_TYPE (evee) == misc_user_event)
     {
       if (allow_misc_user_events_p && (NILP (XEVENT_NEXT (evee))))
+#ifdef USE_KKCC
+	return list2  (XEVAL_DATA_FUNCTION (XEVENT_DATA (evee)),
+		       XEVAL_DATA_OBJECT (XEVENT_DATA (evee)));
+#else /* not USE_KKCC */
 	return list2 (XEVENT (evee)->event.eval.function,
 		      XEVENT (evee)->event.eval.object);
+#endif /* not USE_KKCC */
       else
 	return Qnil;
     }
@@ -3355,12 +3521,23 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
       && !NILP (Vretry_undefined_key_binding_unshifted))
     {
       Lisp_Object terminal = builder->most_current_event;
+#ifdef USE_KKCC
+      Lisp_Key_Data* key = XKEY_DATA (XEVENT_DATA (terminal));
+#else /* not USE_KKCC */
       struct key_data *key = &XEVENT (terminal)->event.key;
+#endif /* not USE_KKCC */
       Ichar c = 0;
+#ifdef USE_KKCC
+      if ((KEY_DATA_MODIFIERS (key) & XEMACS_MOD_SHIFT)
+          || (CHAR_OR_CHAR_INTP (KEY_DATA_KEYSYM(key))
+              && ((c = XCHAR_OR_CHAR_INT (KEY_DATA_KEYSYM(key))),
+		  c >= 'A' && c <= 'Z')))
+#else /* not USE_KKCC */
       if ((key->modifiers & XEMACS_MOD_SHIFT)
           || (CHAR_OR_CHAR_INTP (key->keysym)
               && ((c = XCHAR_OR_CHAR_INT (key->keysym)),
 		  c >= 'A' && c <= 'Z')))
+#endif /* not USE_KKCC */
         {
 	  Lisp_Object neubauten = copy_command_builder (builder, 0);
 	  struct command_builder *neub = XCOMMAND_BUILDER (neubauten);
@@ -3368,12 +3545,21 @@ command_builder_find_leaf_no_mule_processing (struct command_builder *builder,
 
 	  GCPRO1 (neubauten);
           terminal = event_chain_tail (neub->current_events);
+#ifdef USE_KKCC
+	  key = XKEY_DATA (XEVENT_DATA (terminal));
+
+          if (KEY_DATA_MODIFIERS (key) & XEMACS_MOD_SHIFT)
+            SET_KEY_DATA_MODIFIERS (key, (KEY_DATA_MODIFIERS (key) & (~ XEMACS_MOD_SHIFT)));
+          else
+            SET_KEY_DATA_KEYSYM (key, make_char (c + 'a' - 'A'));
+#else /* not USE_KKCC */
 	  key = &XEVENT (terminal)->event.key;
 
           if (key->modifiers & XEMACS_MOD_SHIFT)
             key->modifiers &= (~ XEMACS_MOD_SHIFT);
           else
             key->keysym = make_char (c + 'a' - 'A');
+#endif /* not USE_KKCC */
 
           result =
 	    command_builder_find_leaf_no_mule_processing
@@ -3443,8 +3629,13 @@ command_builder_find_leaf (struct command_builder *builder,
   if (XEVENT_TYPE (builder->most_current_event) == key_press_event
       && !NILP (Vcomposed_character_default_binding))
     {
+#ifdef USE_KKCC
+      Lisp_Object keysym =
+	XKEY_DATA_KEYSYM(XEVENT (builder->most_current_event));
+#else /* not USE_KKCC */
       Lisp_Object keysym =
 	XEVENT (builder->most_current_event)->event.key.keysym;
+#endif /* not USE_KKCC */
       if (CHARP (keysym) && !ichar_ascii_p (XCHAR (keysym)))
         return Vcomposed_character_default_binding;
     }
@@ -3867,11 +4058,23 @@ lookup_command_event (struct command_builder *command_builder,
 	   */
 	Fcopy_event (event, recent);
 	e = XEVENT (recent);
+#ifdef USE_KKCC
+	if (EVENT_TYPE (e) == key_press_event)
+          XSET_KEY_DATA_MODIFIERS (EVENT_DATA (e), 
+                          XKEY_DATA_MODIFIERS (EVENT_DATA (e)) | 
+                          XEMACS_MOD_META);
+	else if (EVENT_TYPE (e) == button_press_event
+		 || EVENT_TYPE (e) == button_release_event)
+          XSET_BUTTON_DATA_MODIFIERS (EVENT_DATA (e), 
+                              XBUTTON_DATA_MODIFIERS (EVENT_DATA (e)) |
+                              XEMACS_MOD_META);
+#else /* not USE_KKCC */
 	if (e->event_type == key_press_event)
 	  e->event.key.modifiers |= XEMACS_MOD_META;
 	else if (e->event_type == button_press_event
 		 || e->event_type == button_release_event)
 	  e->event.button.modifiers |= XEMACS_MOD_META;
+#endif /* not USE_KKCC */
 	else
 	  abort ();
 
@@ -3965,9 +4168,15 @@ is_scrollbar_event (Lisp_Object event)
 #ifdef HAVE_SCROLLBARS
   Lisp_Object fun;
 
+#ifdef USE_KKCC
+  if (XEVENT_TYPE (event) != misc_user_event)
+    return 0;
+  fun = XMISC_USER_DATA_FUNCTION(XEVENT_DATA (event));
+#else /* not USE_KKCC */
   if (XEVENT (event)->event_type != misc_user_event)
     return 0;
   fun = XEVENT (event)->event.misc.function;
+#endif /* not USE_KKCC */
 
   return (EQ (fun, Qscrollbar_line_up) ||
 	  EQ (fun, Qscrollbar_line_down) ||
@@ -4104,11 +4313,19 @@ execute_command_event (struct command_builder *command_builder,
 
     pre_command_hook ();
 
+#ifdef USE_KKCC
+    if (XEVENT_TYPE (event) == misc_user_event)
+      {
+	call1 (XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event)),
+	       XMISC_USER_DATA_OBJECT (XEVENT_DATA (event)));
+      }
+#else /* not USE_KKCC */
     if (XEVENT (event)->event_type == misc_user_event)
       {
 	call1 (XEVENT (event)->event.eval.function,
 	       XEVENT (event)->event.eval.object);
       }
+#endif /* not USE_KKCC */
     else
       {
 	Fcommand_execute (Vthis_command, Qnil, Qnil);
@@ -4292,7 +4509,11 @@ Magic events are handled as necessary.
     Fselect_console (console);
 
   command_builder = XCOMMAND_BUILDER (XCONSOLE (console)->command_builder);
+#ifdef USE_KKCC
+  switch (XEVENT_TYPE (event))
+#else /* not USE_KKCC */
   switch (XEVENT (event)->event_type)
+#endif /* not USE_KKCC */
     {
     case button_press_event:
     case button_release_event:
@@ -4454,6 +4675,17 @@ Magic events are handled as necessary.
 	   (a lambda expression).  So in the `eval' case I'll just
 	   convert it into a lambda expression.
 	   */
+#ifdef USE_KKCC
+	if (EQ (XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event)), Qcall_interactively)
+	    && SYMBOLP (XMISC_USER_DATA_OBJECT (XEVENT_DATA (event))))
+	  Vthis_command = XMISC_USER_DATA_OBJECT (XEVENT_DATA (event));
+	else if (EQ (XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event)), Qeval))
+	  Vthis_command =
+	    Fcons (Qlambda, Fcons (Qnil, XMISC_USER_DATA_OBJECT (XEVENT_DATA (event))));
+	else if (SYMBOLP (XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event))))
+	  /* A scrollbar command or the like. */
+	  Vthis_command = XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event));
+#else /* not USE_KKCC */
 	if (EQ (XEVENT (event)->event.eval.function, Qcall_interactively)
 	    && SYMBOLP (XEVENT (event)->event.eval.object))
 	  Vthis_command = XEVENT (event)->event.eval.object;
@@ -4463,6 +4695,7 @@ Magic events are handled as necessary.
 	else if (SYMBOLP (XEVENT (event)->event.eval.function))
 	  /* A scrollbar command or the like. */
 	  Vthis_command = XEVENT (event)->event.eval.function;
+#endif /* not USE_KKCC */
 	else
 	  /* Huh? */
 	  Vthis_command = Qnil;
@@ -4479,10 +4712,8 @@ Magic events are handled as necessary.
 	break;
       }
     default:
-      {
 	execute_internal_event (event);
 	break;
-      }
     }
   return Qnil;
 }
@@ -4556,7 +4787,11 @@ See `function-key-map' for more details.
 	execute_internal_event (event);
       else
 	{
+#ifdef USE_KKCC
+	  if (XEVENT_TYPE (event) == misc_user_event)
+#else /* not USE_KKCC */
 	  if (XEVENT (event)->event_type == misc_user_event)
+#endif /* not USE_KKCC */
 	    reset_current_events (command_builder);
 	  result = lookup_command_event (command_builder, event, 1);
 	  if (!KEYMAPP (result))
@@ -4623,11 +4858,19 @@ dribble_out_event (Lisp_Object event)
   if (NILP (Vdribble_file))
     return;
 
+#ifdef USE_KKCC
+  if (XEVENT_TYPE (event) == key_press_event &&
+      !XKEY_DATA_MODIFIERS (XEVENT_DATA (event)))
+    {
+      Lisp_Object keysym = XKEY_DATA_KEYSYM (XEVENT_DATA (event));
+      if (CHARP (XKEY_DATA_KEYSYM (XEVENT_DATA (event))))
+#else /* not USE_KKCC */
   if (XEVENT (event)->event_type == key_press_event &&
       !XEVENT (event)->event.key.modifiers)
     {
       Lisp_Object keysym = XEVENT (event)->event.key.keysym;
       if (CHARP (XEVENT (event)->event.key.keysym))
+#endif /* not USE_KKCC */
 	{
 	  Ichar ch = XCHAR (keysym);
 	  Ibyte str[MAX_ICHAR_LEN];

@@ -77,6 +77,14 @@ EXFUN (Fcenter_to_window_line, 2);
 static void update_scrollbar_instance (struct window *w, int vertical,
 				       struct scrollbar_instance *instance);
 
+#ifdef USE_KKCC
+static const struct lrecord_description scrollbar_instance_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct scrollbar_instance, mirror) },
+  { XD_LISP_OBJECT, offsetof (struct scrollbar_instance, next) },
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 
 static Lisp_Object
 mark_scrollbar_instance (Lisp_Object obj)
@@ -89,10 +97,19 @@ mark_scrollbar_instance (Lisp_Object obj)
     return Qnil;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("scrollbar-instance", scrollbar_instance,
+			       0, /*dumpable-flag*/
+			       mark_scrollbar_instance,
+			       internal_object_printer, 0, 0, 0, 
+			       scrollbar_instance_description,
+			       struct scrollbar_instance);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("scrollbar-instance", scrollbar_instance,
 			       mark_scrollbar_instance,
 			       internal_object_printer, 0, 0, 0, 0,
 			       struct scrollbar_instance);
+#endif /* not USE_KKCC */
 
 static void
 free_scrollbar_instance (struct scrollbar_instance *instance,

@@ -166,9 +166,16 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " 0x%x>", frm->header.uid);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
+			       0, /*dumpable-flag*/
+                               mark_frame, print_frame, 0, 0, 0, 0,
+			       struct frame);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
                                mark_frame, print_frame, 0, 0, 0, 0,
 			       struct frame);
+#endif /* not USE_KKCC */
 
 static void
 nuke_all_frame_slots (struct frame *f)
@@ -1896,10 +1903,17 @@ defaults to the selected device.  If the mouse position can't be determined
   if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
     {
       Lisp_Object event = Fmake_event (Qnil, Qnil);
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (event, pointer_motion_event);
+      XSET_EVENT_CHANNEL (event, frame);
+      XSET_MOTION_DATA_X (XEVENT_DATA (event), intx);
+      XSET_MOTION_DATA_Y (XEVENT_DATA (event), inty);
+#else /* not USE_KKCC */
       XEVENT (event)->event_type = pointer_motion_event;
       XEVENT (event)->channel = frame;
       XEVENT (event)->event.motion.x = intx;
       XEVENT (event)->event.motion.y = inty;
+#endif /* not USE_KKCC */
       return event;
     }
   else

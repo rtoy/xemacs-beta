@@ -156,11 +156,20 @@ static const struct lrecord_description range_table_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
+			       1, /*dumpable-flag*/
+                               mark_range_table, print_range_table, 0,
+			       range_table_equal, range_table_hash,
+			       range_table_description,
+			       Lisp_Range_Table);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
                                mark_range_table, print_range_table, 0,
 			       range_table_equal, range_table_hash,
 			       range_table_description,
 			       Lisp_Range_Table);
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                        Range table operations                        */

@@ -138,6 +138,47 @@ Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
 
+#ifdef USE_KKCC
+static const struct lrecord_description empty_process_data_description [] = {
+  { XD_END }
+};
+
+static const struct lrecord_description unix_process_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct unix_process_data, tty_name) },
+  { XD_END }
+};
+
+static const struct struct_description process_data_description []= {
+  { unix_process, unix_process_data_description},
+  { nt_process, empty_process_data_description},
+  { XD_END }
+};
+
+static const struct lrecord_description process_description [] = {
+  { XD_INT, offsetof (Lisp_Process, process_type) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, name) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, command) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, filter) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_filter) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, sentinel) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, buffer) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, mark) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_buffer) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, stderr_mark) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, pid) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_instream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_outstream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, pipe_errstream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_instream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_outstream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, coding_errstream) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Process, status_symbol) },
+  { XD_UNION, offsetof (Lisp_Process, process_data), 
+    XD_INDIRECT (0, 0), process_data_description },
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_process (Lisp_Object object)
 {
@@ -214,9 +255,16 @@ finalize_process (void *header, int for_disksave)
     }
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("process", process,
+			       0, /*dumpable-flag*/
+                               mark_process, print_process, finalize_process,
+                               0, 0, process_description, Lisp_Process);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("process", process,
                                mark_process, print_process, finalize_process,
                                0, 0, 0, Lisp_Process);
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       basic process accessors                        */
@@ -531,6 +579,14 @@ make_process_internal (Lisp_Object name)
 
   p->process_data = 0;
   MAYBE_PROCMETH (alloc_process_data, (p));
+
+#ifdef USE_KKCC
+#ifdef HAVE_MS_WINDOWS
+  p->process_type = nt_process;
+#else /*HAVE_MS_WINDOWS*/
+  p->process_type = unix_process;
+#endif /*HAVE_MS_WINDOWS*/
+#endif /* USE_KKCC */
 
   val = wrap_process (p);
 

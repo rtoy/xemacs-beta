@@ -281,10 +281,18 @@ static const struct lrecord_description keymap_description[] = {
 };
 
 /* No need for keymap_equal #### Why not? */
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
+			       1, /*dumpable-flag*/
+                               mark_keymap, print_keymap, 0, 0, 0,
+			       keymap_description,
+			       Lisp_Keymap);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
                                mark_keymap, print_keymap, 0, 0, 0,
 			       keymap_description,
 			       Lisp_Keymap);
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */
@@ -428,11 +436,17 @@ control_meta_superify (Lisp_Object frob, int modifiers)
 }
 
 static Lisp_Object
+#ifdef USE_KKCC
+make_key_description (const Lisp_Key_Data *key, int prettify)
+{
+  Lisp_Object keysym = KEY_DATA_KEYSYM(key);
+  int modifiers = KEY_DATA_MODIFIERS (key);
+#else /* not USE_KKCC */
 make_key_description (const struct key_data *key, int prettify)
 {
   Lisp_Object keysym = key->keysym;
   int modifiers = key->modifiers;
-
+#endif /* not USE_KKCC */
   if (prettify && CHARP (keysym))
     {
       /* This is a little slow, but (control a) is prettier than (control 65).
@@ -456,7 +470,11 @@ make_key_description (const struct key_data *key, int prettify)
 
 static Lisp_Object
 raw_lookup_key (Lisp_Object keymap,
+#ifdef USE_KKCC
+                const Lisp_Key_Data *raw_keys, int raw_keys_count,
+#else /* not USE_KKCC */
                 const struct key_data *raw_keys, int raw_keys_count,
+#endif /* not USE_KKCC */
                 int keys_so_far, int accept_default);
 
 /* Relies on caller to gc-protect args */
@@ -640,11 +658,20 @@ create_bucky_submap (Lisp_Keymap *k, int modifiers,
 
 /* Relies on caller to gc-protect keymap, keysym, value */
 static void
+#ifdef USE_KKCC
+keymap_store (Lisp_Object keymap, const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
 keymap_store (Lisp_Object keymap, const struct key_data *key,
+#endif /* not USE_KKCC */
               Lisp_Object value)
 {
+#ifdef USE_KKCC
+  Lisp_Object keysym = KEY_DATA_KEYSYM (key);
+  int modifiers = KEY_DATA_MODIFIERS (key);
+#else /* not USE_KKCC */
   Lisp_Object keysym = key->keysym;
   int modifiers = key->modifiers;
+#endif /* not USE_KKCC */
   Lisp_Keymap *k = XKEYMAP (keymap);
 
   modifiers &= ~(XEMACS_MOD_BUTTON1 | XEMACS_MOD_BUTTON2 | XEMACS_MOD_BUTTON3
@@ -1054,14 +1081,28 @@ get_keyelt (Lisp_Object object, int accept_default)
   if (!NILP (map))
     {
       Lisp_Object idx = Fcdr (object);
+#ifdef USE_KKCC
+      Lisp_Key_Data indirection;
+#else /* not USE_KKCC */
       struct key_data indirection;
+#endif /* not USE_KKCC */
       if (CHARP (idx))
 	{
+#ifdef USE_KKCC
+	  Lisp_Object event = Fmake_event (Qnil, Qnil);
+          struct gcpro gcpro1;
+          GCPRO1 (event);
+	  XSET_EVENT_TYPE (event, empty_event);
+	  character_to_event (XCHAR (idx), XEVENT (event),
+			      XCONSOLE (Vselected_console), 0, 0);
+	  indirection = *XKEY_DATA (XEVENT_DATA (event));
+#else /* not USE_KKCC */
 	  Lisp_Event event;
 	  event.event_type = empty_event;
 	  character_to_event (XCHAR (idx), &event,
 			      XCONSOLE (Vselected_console), 0, 0);
 	  indirection = event.event.key;
+#endif /* not USE_KKCC */
 	}
       else if (CONSP (idx))
 	{
@@ -1073,7 +1114,11 @@ get_keyelt (Lisp_Object object, int accept_default)
       else if (SYMBOLP (idx))
 	{
 	  indirection.keysym = idx;
+#ifdef USE_KKCC
+	  SET_KEY_DATA_MODIFIERS (&indirection, XINT (XCDR (idx)));
+#else /* not USE_KKCC */
 	  indirection.modifiers = 0;
+#endif /* not USE_KKCC */
 	}
       else
 	{
@@ -1099,13 +1144,24 @@ get_keyelt (Lisp_Object object, int accept_default)
 }
 
 static Lisp_Object
+#ifdef USE_KKCC
+keymap_lookup_1 (Lisp_Object keymap, const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
 keymap_lookup_1 (Lisp_Object keymap, const struct key_data *key,
+#endif /* not USE_KKCC */
                  int accept_default)
 {
   /* This function can GC */
+#ifdef USE_KKCC
+  return get_keyelt (keymap_lookup_directly (keymap,
+					     KEY_DATA_KEYSYM (key), 
+                                             KEY_DATA_MODIFIERS (key)),
+		     accept_default);
+#else /* not USE_KKCC */
   return get_keyelt (keymap_lookup_directly (keymap,
 					     key->keysym, key->modifiers),
 		     accept_default);
+#endif /* not USE_KKCC */
 }
 
 
@@ -1398,30 +1454,86 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
  */
 
 static void
+#ifdef USE_KKCC
+define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
+#else /* not USE_KKCC */
 define_key_parser (Lisp_Object spec, struct key_data *returned_value)
+#endif /* not USE_KKCC */
 {
   if (CHAR_OR_CHAR_INTP (spec))
     {
+#ifdef USE_KKCC
+      Lisp_Object event = Fmake_event (Qnil, Qnil);
+      struct gcpro gcpro1;
+      GCPRO1 (event);
+      XSET_EVENT_TYPE (event, empty_event);
+      character_to_event (XCHAR_OR_CHAR_INT (spec), XEVENT (event),
+			  XCONSOLE (Vselected_console), 0, 0);
+      SET_KEY_DATA_KEYSYM (returned_value, XKEY_DATA_KEYSYM (XEVENT_DATA (event)));
+      SET_KEY_DATA_MODIFIERS (returned_value, 
+                              XKEY_DATA_MODIFIERS (XEVENT_DATA (event)));
+#else /* not USE_KKCC */
       Lisp_Event event;
       event.event_type = empty_event;
       character_to_event (XCHAR_OR_CHAR_INT (spec), &event,
 			  XCONSOLE (Vselected_console), 0, 0);
       returned_value->keysym    = event.event.key.keysym;
       returned_value->modifiers = event.event.key.modifiers;
+#endif /* not USE_KKCC */
     }
   else if (EVENTP (spec))
     {
+#ifdef USE_KKCC
+      switch (XEVENT_TYPE (spec))
+#else /* not USE_KKCC */
       switch (XEVENT (spec)->event_type)
+#endif /* not USE_KKCC */
 	{
 	case key_press_event:
           {
+#ifdef USE_KKCC
+            SET_KEY_DATA_KEYSYM (returned_value, XKEY_DATA_KEYSYM (XEVENT_DATA (spec)));
+            SET_KEY_DATA_MODIFIERS (returned_value, XKEY_DATA_MODIFIERS (XEVENT_DATA (spec)));
+#else /* not USE_KKCC */
             returned_value->keysym    = XEVENT (spec)->event.key.keysym;
             returned_value->modifiers = XEVENT (spec)->event.key.modifiers;
+#endif /* not USE_KKCC */
 	    break;
           }
 	case button_press_event:
 	case button_release_event:
 	  {
+#ifdef USE_KKCC
+	    int down = (XEVENT_TYPE (spec) == button_press_event);
+	    switch (XBUTTON_DATA_BUTTON (XEVENT_DATA (spec)))
+	      {
+	      case 1:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton1 : Qbutton1up)); 
+		break;
+	      case 2:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton2 : Qbutton2up)); 
+		break;
+	      case 3:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton3 : Qbutton3up)); 
+		break;
+	      case 4:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton4 : Qbutton4up)); 
+		break;
+	      case 5:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton5 : Qbutton5up)); 
+		break;
+	      case 6:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton6 : Qbutton6up)); 
+		break;
+	      case 7:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton7 : Qbutton7up)); 
+		break;
+	      default:
+		SET_KEY_DATA_KEYSYM (returned_value, (down ? Qbutton0 : Qbutton0up)); 
+		break;
+	      }
+	    SET_KEY_DATA_MODIFIERS (returned_value, XBUTTON_DATA_MODIFIERS (XEVENT_DATA (spec)));
+#else /* not USE_KKCC */
 	    int down = (XEVENT (spec)->event_type == button_press_event);
 	    switch (XEVENT (spec)->event.button.button)
 	      {
@@ -1443,6 +1555,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 		returned_value->keysym = (down ? Qbutton0 : Qbutton0up); break;
 	      }
 	    returned_value->modifiers = XEVENT (spec)->event.button.modifiers;
+#endif /* not USE_KKCC */
 	    break;
 	  }
 	default:
@@ -1455,8 +1568,13 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       if (bucky_sym_to_bucky_bit (spec) != 0)
         invalid_argument ("Key is a modifier name", spec);
       define_key_check_and_coerce_keysym (spec, &spec, 0);
+#ifdef USE_KKCC
+      SET_KEY_DATA_KEYSYM (returned_value, spec);
+      SET_KEY_DATA_MODIFIERS (returned_value, 0);
+#else /* not USE_KKCC */
       returned_value->keysym = spec;
       returned_value->modifiers = 0;
+#endif /* not USE_KKCC */
     }
   else if (CONSP (spec))
     {
@@ -1491,8 +1609,13 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 			   "List must be nil-terminated", spec);
 
       define_key_check_and_coerce_keysym (spec, &keysym, modifiers);
+#ifdef USE_KKCC
+      SET_KEY_DATA_KEYSYM(returned_value, keysym);
+      SET_KEY_DATA_MODIFIERS (returned_value, modifiers);
+#else /* not USE_KKCC */
       returned_value->keysym = keysym;
       returned_value->modifiers = modifiers;
+#endif /* not USE_KKCC */
     }
   else
     {
@@ -1506,7 +1629,11 @@ void
 key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
                         int allow_menu_events)
 {
+#ifdef USE_KKCC
+  Lisp_Key_Data raw_key;
+#else /* not USE_KKCC */
   struct key_data raw_key;
+#endif /* not USE_KKCC */
 
   if (allow_menu_events &&
       CONSP (list) &&
@@ -1521,10 +1648,17 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
 	fn = Qcall_interactively;
       else
 	fn = Qeval;
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (event, misc_user_event);
+      XSET_EVENT_CHANNEL (event, wrap_frame (selected_frame));
+      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), fn);
+      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), arg);
+#else /* not USE_KKCC */
       XEVENT (event)->channel = wrap_frame (selected_frame ());
       XEVENT (event)->event_type = misc_user_event;
       XEVENT (event)->event.eval.function = fn;
       XEVENT (event)->event.eval.object = arg;
+#endif /* not USE_KKCC */
       return;
     }
 
@@ -1541,10 +1675,17 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
     invalid_operation ("Mouse-clicks can't appear in saved keyboard macros",
 		       Qunbound);
 
+#ifdef USE_KKCC
+  XSET_EVENT_CHANNEL (event, Vselected_console);
+  XSET_EVENT_TYPE (event, key_press_event);
+  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), raw_key.keysym);
+  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), KEY_DATA_MODIFIERS (&raw_key));
+#else /* not USE_KKCC */
   XEVENT (event)->channel = Vselected_console;
   XEVENT (event)->event_type = key_press_event;
   XEVENT (event)->event.key.keysym = raw_key.keysym;
   XEVENT (event)->event.key.modifiers = raw_key.modifiers;
+#endif /* not USE_KKCC */
 }
 
 
@@ -1589,8 +1730,13 @@ event_matches_key_specifier_p (Lisp_Event *event, Lisp_Object key_specifier)
       ch2 = event_to_character (XEVENT (event2), 0, 0, 0);
       retval = (ch1 >= 0 && ch2 >= 0 && ch1 == ch2);
     }
+#ifdef USE_KKCC
+  else if (EQ (XKEY_DATA_KEYSYM (EVENT_DATA (event)), XKEY_DATA_KEYSYM (XEVENT_DATA (event2))) &&
+	   XKEY_DATA_MODIFIERS (EVENT_DATA (event)) == XKEY_DATA_MODIFIERS (XEVENT_DATA (event2)))
+#else /* not USE_KKCC */
   else if (EQ (event->event.key.keysym, XEVENT (event2)->event.key.keysym) &&
 	   event->event.key.modifiers == XEVENT (event2)->event.key.modifiers)
+#endif /* not USE_KKCC */
     retval = 1;
   else
     retval = 0;
@@ -1600,8 +1746,23 @@ event_matches_key_specifier_p (Lisp_Event *event, Lisp_Object key_specifier)
 }
 
 static int
+#ifdef USE_KKCC
+meta_prefix_char_p (const Lisp_Key_Data *key)
+#else /* not USE_KKCC */
 meta_prefix_char_p (const struct key_data *key)
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
+  struct gcpro gcpro1;
+  GCPRO1 (event);
+
+  XSET_EVENT_TYPE (event, key_press_event);
+  XSET_EVENT_CHANNEL (event, Vselected_console);
+  XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), KEY_DATA_KEYSYM (key));
+  XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), KEY_DATA_MODIFIERS (key));
+  return event_matches_key_specifier_p (XEVENT(event), Vmeta_prefix_char);
+#else /* not USE_KKCC */
   Lisp_Event event;
 
   event.event_type = key_press_event;
@@ -1609,6 +1770,7 @@ meta_prefix_char_p (const struct key_data *key)
   event.event.key.keysym = key->keysym;
   event.event.key.modifiers = key->modifiers;
   return event_matches_key_specifier_p (&event, Vmeta_prefix_char);
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-matches-key-specifier-p", Fevent_matches_key_specifier_p, 2, 2, 0, /*
@@ -1622,28 +1784,49 @@ This can be useful, e.g., to determine if the user pressed `help-char' or
   return (event_matches_key_specifier_p (XEVENT (event), key_specifier)
 	  ? Qt : Qnil);
 }
-
+#ifdef USE_KKCC
+#define MACROLET(k,m) do {		\
+  SET_KEY_DATA_KEYSYM(returned_value, k);		\
+  SET_KEY_DATA_MODIFIERS(returned_value, m);    	\
+  RETURN_SANS_WARNINGS;			\
+} while (0)
+#else /* not USE_KKCC */
 #define MACROLET(k,m) do {		\
   returned_value->keysym = (k);		\
   returned_value->modifiers = (m);	\
   RETURN_SANS_WARNINGS;			\
 } while (0)
-
+#endif /* not USE_KKCC */
 /* ASCII grunge.
    Given a keysym, return another keysym/modifier pair which could be
    considered the same key in an ASCII world.  Backspace returns ^H, for
    example.
  */
 static void
+#ifdef USE_KKCC
+define_key_alternate_name (Lisp_Key_Data *key,
+                           Lisp_Key_Data *returned_value)
+#else /* not USE_KKCC */
 define_key_alternate_name (struct key_data *key,
                            struct key_data *returned_value)
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  Lisp_Object keysym = KEY_DATA_KEYSYM (key);
+  int modifiers = KEY_DATA_MODIFIERS (key);
+#else /* not USE_KKCC */
   Lisp_Object keysym = key->keysym;
   int modifiers = key->modifiers;
+#endif /* not USE_KKCC */
   int modifiers_sans_control = (modifiers & (~XEMACS_MOD_CONTROL));
   int modifiers_sans_meta = (modifiers & (~XEMACS_MOD_META));
+#ifdef USE_KKCC
+  SET_KEY_DATA_KEYSYM (returned_value, Qnil); /* By default, no "alternate" key */
+  SET_KEY_DATA_MODIFIERS (returned_value, 0);
+#else /* not USE_KKCC */
   returned_value->keysym = Qnil; /* By default, no "alternate" key */
   returned_value->modifiers = 0;
+#endif /* not USE_KKCC */
   if (modifiers_sans_meta == XEMACS_MOD_CONTROL)
     {
       if (EQ (keysym, QKspace))
@@ -1694,8 +1877,11 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   Lisp_Object new_keys;
   int i;
   Lisp_Object mpc_binding;
+#ifdef USE_KKCC
+  Lisp_Key_Data meta_key;
+#else /* not USE_KKCC */
   struct key_data meta_key;
-
+#endif /* not USE_KKCC */
   if (NILP (Vmeta_prefix_char) ||
       (INTP (Vmeta_prefix_char) && !CHAR_INTP (Vmeta_prefix_char)))
     return;
@@ -1896,9 +2082,13 @@ what's in `function-key-map' and `key-translation-map'.
   while (1)
     {
       Lisp_Object c;
+#ifdef USE_KKCC
+      Lisp_Key_Data raw_key1;
+      Lisp_Key_Data raw_key2;
+#else /* not USE_KKCC */
       struct key_data raw_key1;
       struct key_data raw_key2;
-
+#endif /* not USE_KKCC */
       if (STRINGP (keys))
 	c = make_char (string_ichar (keys, idx));
       else
@@ -2012,7 +2202,11 @@ what's in `function-key-map' and `key-translation-map'.
 struct raw_lookup_key_mapper_closure
 {
   int remaining;
+#ifdef USE_KKCC
+  const Lisp_Key_Data *raw_keys;
+#else /* not USE_KKCC */
   const struct key_data *raw_keys;
+#endif /* not USE_KKCC */
   int raw_keys_count;
   int keys_so_far;
   int accept_default;
@@ -2023,7 +2217,11 @@ static Lisp_Object raw_lookup_key_mapper (Lisp_Object k, void *);
 /* Caller should gc-protect args (keymaps may autoload) */
 static Lisp_Object
 raw_lookup_key (Lisp_Object keymap,
+#ifdef USE_KKCC
+                const Lisp_Key_Data *raw_keys, int raw_keys_count,
+#else /* not USE_KKCC */
                 const struct key_data *raw_keys, int raw_keys_count,
+#endif /* not USE_KKCC */
                 int keys_so_far, int accept_default)
 {
   /* This function can GC */
@@ -2046,7 +2244,11 @@ raw_lookup_key_mapper (Lisp_Object k, void *arg)
   int accept_default = c->accept_default;
   int remaining = c->remaining;
   int keys_so_far = c->keys_so_far;
+#ifdef USE_KKCC
+  const Lisp_Key_Data *raw_keys = c->raw_keys;
+#else /* not USE_KKCC */
   const struct key_data *raw_keys = c->raw_keys;
+#endif /* not USE_KKCC */
   Lisp_Object cmd;
 
   if (! meta_prefix_char_p (&(raw_keys[0])))
@@ -2099,7 +2301,11 @@ raw_lookup_key_mapper (Lisp_Object k, void *arg)
 				  keys_so_far + 1, accept_default);
 	  else if ((raw_keys[1].modifiers & XEMACS_MOD_META) == 0)
 	    {
+#ifdef USE_KKCC
+	      Lisp_Key_Data metified;
+#else /* not USE_KKCC */
 	      struct key_data metified;
+#endif /* not USE_KKCC */
 	      metified.keysym = raw_keys[1].keysym;
 	      metified.modifiers = raw_keys[1].modifiers |
 		(unsigned char) XEMACS_MOD_META;
@@ -2131,8 +2337,13 @@ lookup_keys (Lisp_Object keymap, int nkeys, Lisp_Object *keys,
              int accept_default)
 {
   /* This function can GC */
+#ifdef USE_KKCC
+  Lisp_Key_Data kkk[20];
+  Lisp_Key_Data *raw_keys;
+#else /* not USE_KKCC */
   struct key_data kkk[20];
   struct key_data *raw_keys;
+#endif /* not USE_KKCC */
   int i;
 
   if (nkeys == 0)
@@ -2141,7 +2352,11 @@ lookup_keys (Lisp_Object keymap, int nkeys, Lisp_Object *keys,
   if (nkeys < countof (kkk))
     raw_keys = kkk;
   else
+#ifdef USE_KKCC
+    raw_keys = alloca_array (Lisp_Key_Data, nkeys);
+#else /* not USE_KKCC */
     raw_keys = alloca_array (struct key_data, nkeys);
+#endif /* not USE_KKCC */
 
   for (i = 0; i < nkeys; i++)
     {
@@ -2155,11 +2370,19 @@ lookup_events (Lisp_Object event_head, int nmaps, Lisp_Object keymaps[],
                int accept_default)
 {
   /* This function can GC */
+#ifdef USE_KKCC
+  Lisp_Key_Data kkk[20];
+#else /* not USE_KKCC */
   struct key_data kkk[20];
+#endif /* not USE_KKCC */
   Lisp_Object event;
 
   int nkeys;
+#ifdef USE_KKCC
+  Lisp_Key_Data *raw_keys;
+#else /* not USE_KKCC */
   struct key_data *raw_keys;
+#endif /* not USE_KKCC */
   Lisp_Object tem = Qnil;
   struct gcpro gcpro1, gcpro2;
   int iii;
@@ -2171,7 +2394,11 @@ lookup_events (Lisp_Object event_head, int nmaps, Lisp_Object keymaps[],
   if (nkeys < countof (kkk))
     raw_keys = kkk;
   else
+#ifdef USE_KKCC
+    raw_keys = alloca_array (Lisp_Key_Data, nkeys);
+#else /* not USE_KKCC */
     raw_keys = alloca_array (struct key_data, nkeys);
+#endif /* not USE_KKCC */
 
   nkeys = 0;
   EVENT_CHAIN_LOOP (event, event_head)
@@ -2220,7 +2447,11 @@ reach a non-prefix command.
     {
       int length = string_char_length (keys);
       int i;
+#ifdef USE_KKCC
+      Lisp_Key_Data *raw_keys = alloca_array (Lisp_Key_Data, length);
+#else /* not USE_KKCC */
       struct key_data *raw_keys = alloca_array (struct key_data, length);
+#endif /* not USE_KKCC */
       if (length == 0)
 	return Qnil;
 
@@ -2799,7 +3030,11 @@ Return the current global keymap.
 
 struct map_keymap_unsorted_closure
 {
+#ifdef USE_KKCC
+  void (*fn) (const Lisp_Key_Data *, Lisp_Object binding, void *arg);
+#else /* not USE_KKCC */
   void (*fn) (const struct key_data *, Lisp_Object binding, void *arg);
+#endif /* not USE_KKCC */
   void *arg;
   int modifiers;
 };
@@ -2827,7 +3062,11 @@ map_keymap_unsorted_mapper (Lisp_Object keysym, Lisp_Object value,
     }
   else
     {
+#ifdef USE_KKCC
+      Lisp_Key_Data key;
+#else /* not USE_KKCC */
       struct key_data key;
+#endif /* not USE_KKCC */
       key.keysym = keysym;
       key.modifiers = modifiers;
       ((*closure->fn) (&key, value, closure->arg));
@@ -2934,7 +3173,11 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
 static void
 map_keymap_sorted (Lisp_Object keymap_table,
                    int modifiers,
+#ifdef USE_KKCC
+                   void (*function) (const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
                    void (*function) (const struct key_data *key,
+#endif /* not USE_KKCC */
                                      Lisp_Object binding,
                                      void *map_keymap_sorted_closure),
                    void *map_keymap_sorted_closure)
@@ -2967,7 +3210,11 @@ map_keymap_sorted (Lisp_Object keymap_table,
 			   map_keymap_sorted_closure);
       else
 	{
+#ifdef USE_KKCC
+	  Lisp_Key_Data k;
+#else /* not USE_KKCC */
 	  struct key_data k;
+#endif /* not USE_KKCC */
 	  k.keysym = keysym;
 	  k.modifiers = modifiers;
 	  ((*function) (&k, binding, map_keymap_sorted_closure));
@@ -2979,7 +3226,11 @@ map_keymap_sorted (Lisp_Object keymap_table,
 
 /* used by Fmap_keymap() */
 static void
+#ifdef USE_KKCC
+map_keymap_mapper (const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
 map_keymap_mapper (const struct key_data *key,
+#endif /* not USE_KKCC */
                    Lisp_Object binding,
                    void *function)
 {
@@ -2992,7 +3243,11 @@ map_keymap_mapper (const struct key_data *key,
 
 static void
 map_keymap (Lisp_Object keymap_table, int sort_first,
+#ifdef USE_KKCC
+            void (*function) (const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
             void (*function) (const struct key_data *key,
+#endif /* not USE_KKCC */
                               Lisp_Object binding,
                               void *fn_arg),
             void *fn_arg)
@@ -3091,7 +3346,11 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       Lisp_Object vec;
       int j;
       int len;
+#ifdef USE_KKCC
+      Lisp_Key_Data key;
+#else /* not USE_KKCC */
       struct key_data key;
+#endif /* not USE_KKCC */
       key.keysym = keysym;
       key.modifiers = modifiers;
 
@@ -3179,7 +3438,11 @@ then the value includes only maps for prefixes that start with PREFIX.
       NGCPRO1 (p);
       for (iii = 0; iii < len; iii++)
 	{
+#ifdef USE_KKCC
+	  Lisp_Key_Data key;
+#else /* not USE_KKCC */
 	  struct key_data key;
+#endif /* not USE_KKCC */
 	  define_key_parser (Faref (prefix, make_int (iii)), &key);
 	  XVECTOR_DATA (p)[iii] = make_key_description (&key, 1);
 	}
@@ -3275,6 +3538,17 @@ of a key read from the user rather than a character from a buffer.
       
       if (!EVENTP (key))
 	{
+#ifdef USE_KKCC
+	  Lisp_Object event = Fmake_event (Qnil, Qnil);
+	  XSET_EVENT_TYPE (event, empty_event);
+	  CHECK_CHAR_COERCE_INT (key);
+	  character_to_event (XCHAR (key), XEVENT(event),
+			      XCONSOLE (Vselected_console), 0, 1);
+	  format_event_object (buf, event, 1);
+	}
+      else
+	format_event_object (buf, key, 1);
+#else /* not USE_KKCC */
 	  Lisp_Event event;
 	  event.event_type = empty_event;
 	  CHECK_CHAR_COERCE_INT (key);
@@ -3284,6 +3558,7 @@ of a key read from the user rather than a character from a buffer.
 	}
       else
 	format_event_object (buf, XEVENT (key), 1);
+#endif /* not USE_KKCC */
       str = eimake_string (buf);
       eifree (buf);
       return str;
@@ -3507,7 +3782,11 @@ where_is_to_char (Lisp_Object definition, Eistring *buffer)
 
 
 static Lisp_Object
+#ifdef USE_KKCC
+raw_keys_to_keys (Lisp_Key_Data *keys, int count)
+#else /* not USE_KKCC */
 raw_keys_to_keys (struct key_data *keys, int count)
+#endif /* not USE_KKCC */
 {
   Lisp_Object result = make_vector (count, Qnil);
   while (count--)
@@ -3517,17 +3796,33 @@ raw_keys_to_keys (struct key_data *keys, int count)
 
 
 static void
+#ifdef USE_KKCC
+format_raw_keys (Lisp_Key_Data *keys, int count, Eistring *buf)
+#else /* not USE_KKCC */
 format_raw_keys (struct key_data *keys, int count, Eistring *buf)
+#endif /* not USE_KKCC */
 {
   int i;
+#ifdef USE_KKCC
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
+  XSET_EVENT_TYPE (event, key_press_event);
+  XSET_EVENT_CHANNEL (event, Vselected_console);
+#else /* not USE_KKCC */
   Lisp_Event event;
   event.event_type = key_press_event;
   event.channel = Vselected_console;
+#endif /* not USE_KKCC */
   for (i = 0; i < count; i++)
     {
+#ifdef USE_KKCC
+      XSET_KEY_DATA_KEYSYM (XEVENT_DATA (event), keys[i].keysym);
+      XSET_KEY_DATA_MODIFIERS (XEVENT_DATA (event), KEY_DATA_MODIFIERS (&keys[i]));
+      format_event_object (buf, event, 1);
+#else /* not USE_KKCC */
       event.event.key.keysym    = keys[i].keysym;
       event.event.key.modifiers = keys[i].modifiers;
       format_event_object (buf, &event, 1);
+#endif /* not USE_KKCC */
       if (i < count - 1)
 	eicat_c (buf, " ");
     }
@@ -3563,7 +3858,11 @@ struct where_is_closure
     int keys_count;
     int modifiers_so_far;
     Eistring *target_buffer;
+#ifdef USE_KKCC
+    Lisp_Key_Data *keys_so_far;
+#else /* not USE_KKCC */
     struct key_data *keys_so_far;
+#endif /* not USE_KKCC */
     int keys_so_far_total_size;
     int keys_so_far_malloced;
   };
@@ -3592,7 +3891,11 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	 Verify that these bindings aren't shadowed by other bindings
 	 in the shadow maps.  Either nil or number as value from
 	 raw_lookup_key() means undefined.  */
+#ifdef USE_KKCC
+      Lisp_Key_Data *so_far = c->keys_so_far;
+#else /* not USE_KKCC */
       struct key_data *so_far = c->keys_so_far;
+#endif /* not USE_KKCC */
 
       for (;;) /* loop over all keys that match */
 	{
@@ -3600,7 +3903,11 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  int i;
 
 	  so_far [keys_count].keysym = k;
+#ifdef USE_KKCC
+	  SET_KEY_DATA_MODIFIERS (&so_far [keys_count], modifiers_so_far);
+#else /* not USE_KKCC */
 	  so_far [keys_count].modifiers = modifiers_so_far;
+#endif /* not USE_KKCC */
 
 	  /* now loop over all shadow maps */
 	  for (i = 0; i < c->shadow_count; i++)
@@ -3681,10 +3988,18 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	lower_modifiers = (modifiers_so_far | bucky);
       else
 	{
+#ifdef USE_KKCC
+	  Lisp_Key_Data *so_far = c->keys_so_far;
+#else /* not USE_KKCC */
 	  struct key_data *so_far = c->keys_so_far;
+#endif /* not USE_KKCC */
 	  lower_modifiers = 0;
 	  so_far [lower_keys_count].keysym = key;
+#ifdef USE_KKCC
+	  SET_KEY_DATA_MODIFIERS (&so_far [lower_keys_count], modifiers_so_far);
+#else /* not USE_KKCC */
 	  so_far [lower_keys_count].modifiers = modifiers_so_far;
+#endif /* not USE_KKCC */
 	  lower_keys_count++;
 	}
 
@@ -3693,12 +4008,24 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  int size = lower_keys_count + 50;
 	  if (! c->keys_so_far_malloced)
 	    {
+#ifdef USE_KKCC
+	      Lisp_Key_Data *new = xnew_array (Lisp_Key_Data, size);
+#else /* not USE_KKCC */
 	      struct key_data *new = xnew_array (struct key_data, size);
+#endif /* not USE_KKCC */
 	      memcpy ((void *)new, (const void *)c->keys_so_far,
+#ifdef USE_KKCC
+		      c->keys_so_far_total_size * sizeof (Lisp_Key_Data));
+#else /* not USE_KKCC */
 		      c->keys_so_far_total_size * sizeof (struct key_data));
+#endif /* not USE_KKCC */
 	    }
 	  else
+#ifdef USE_KKCC
+	    XREALLOC_ARRAY (c->keys_so_far, Lisp_Key_Data, size);
+#else /* not USE_KKCC */
 	    XREALLOC_ARRAY (c->keys_so_far, struct key_data, size);
+#endif /* not USE_KKCC */
 
 	  c->keys_so_far_total_size = size;
 	  c->keys_so_far_malloced = 1;
@@ -3732,7 +4059,11 @@ where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
   /* This function can GC */
   Lisp_Object result = Qnil;
   int i;
+#ifdef USE_KKCC
+  Lisp_Key_Data raw[20];
+#else /* not USE_KKCC */
   struct key_data raw[20];
+#endif /* not USE_KKCC */
   struct where_is_closure c;
 
   c.definition = definition;
@@ -3947,7 +4278,11 @@ struct describe_map_closure
 
 struct describe_map_shadow_closure
   {
+#ifdef USE_KKCC
+    const Lisp_Key_Data *raw_key;
+#else /* not USE_KKCC */
     const struct key_data *raw_key;
+#endif /* not USE_KKCC */
     Lisp_Object self;
   };
 
@@ -3960,9 +4295,15 @@ describe_map_mapper_shadow_search (Lisp_Object map, void *arg)
   if (EQ (map, c->self))
     return Qzero;		/* Not shadowed; terminate search */
 
+#ifdef USE_KKCC
+  return !NILP (keymap_lookup_directly (map,
+					KEY_DATA_KEYSYM (c->raw_key),
+					KEY_DATA_MODIFIERS (c->raw_key)))
+#else /* not USE_KKCC */
   return !NILP (keymap_lookup_directly (map,
 					c->raw_key->keysym,
 					c->raw_key->modifiers))
+#endif /* not USE_KKCC */
     ? Qt : Qnil;
 }
 
@@ -3970,21 +4311,35 @@ describe_map_mapper_shadow_search (Lisp_Object map, void *arg)
 static Lisp_Object
 keymap_lookup_inherited_mapper (Lisp_Object km, void *arg)
 {
+#ifdef USE_KKCC
+  Lisp_Key_Data *k = (Lisp_Key_Data *) arg;
+  return keymap_lookup_directly (km, KEY_DATA_KEYSYM (k), KEY_DATA_MODIFIERS (k));
+#else /* not USE_KKCC */
   struct key_data *k = (struct key_data *) arg;
   return keymap_lookup_directly (km, k->keysym, k->modifiers);
+#endif /* not USE_KKCC */
 }
 
 
 static void
+#ifdef USE_KKCC
+describe_map_mapper (const Lisp_Key_Data *key,
+#else /* not USE_KKCC */
 describe_map_mapper (const struct key_data *key,
+#endif /* not USE_KKCC */
                      Lisp_Object binding,
 		     void *describe_map_closure)
 {
   /* This function can GC */
   struct describe_map_closure *closure =
     (struct describe_map_closure *) describe_map_closure;
+#ifdef USE_KKCC
+  Lisp_Object keysym = KEY_DATA_KEYSYM (key);
+  int modifiers = KEY_DATA_MODIFIERS (key);
+#else /* not USE_KKCC */
   Lisp_Object keysym = key->keysym;
   int modifiers = key->modifiers;
+#endif /* not USE_KKCC */
 
   /* Don't mention suppressed commands.  */
   if (SYMBOLP (binding)

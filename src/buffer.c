@@ -277,9 +277,16 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 /* We do not need a finalize method to handle a buffer's children list
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
+			       0, /*dumpable-flag*/
+                               mark_buffer, print_buffer, 0, 0, 0, 0,
+			       struct buffer);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
                                mark_buffer, print_buffer, 0, 0, 0, 0,
 			       struct buffer);
+#endif /* not USE_KKCC */
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 Return t if OBJECT is an editor buffer.
@@ -2073,7 +2080,6 @@ List of functions called with no args to query before killing a buffer.
       = intern (lname);							      \
   }									      \
 } while (0)
-
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun)		\
 	DEFVAR_BUFFER_LOCAL_1 (lname, field_name,			\
 			       SYMVAL_CURRENT_BUFFER_FORWARD, magicfun)

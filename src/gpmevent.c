@@ -158,19 +158,35 @@ This function is the process handler for the GPM connection.
     {
     case GPM_DOWN:
     case GPM_UP:
+#ifdef USE_KKCC
+      SET_EVENT_TYPE (event,
+	(ev.type & GPM_DOWN) ? button_press_event : button_release_event);
+      XSET_BUTTON_DATA_X (EVENT_DATA (event), ev.x);
+      XSET_BUTTON_DATA_Y (EVENT_DATA (event), ev.y);
+      XSET_BUTTON_DATA_BUTTON (EVENT_DATA (event), button);
+      XSET_BUTTON_DATA_MODIFIERS (EVENT_DATA (event), modifiers);
+#else /* not USE_KKCC */
       event->event_type =
 	(ev.type & GPM_DOWN) ? button_press_event : button_release_event;
       event->event.button.x         = ev.x;
       event->event.button.y         = ev.y;
       event->event.button.button    = button;
       event->event.button.modifiers = modifiers;
+#endif /* not USE_KKCC */
       break;
     case GPM_MOVE:
     case GPM_DRAG:
+#ifdef USE_KKCC
+      SET_EVENT_TYPE (event, pointer_motion_event);
+      XSET_MOTION_DATA_X (EVENT_DATA (event), ev.x);
+      XSET_MOTION_DATA_Y (EVENT_DATA (event), ev.y);
+      XSET_MOTION_DATA_MODIFIERS (EVENT_DATA (event), modifiers);
+#else /* not USE_KKCC */
       event->event_type             = pointer_motion_event;
       event->event.motion.x         = ev.x;
       event->event.motion.y         = ev.y;
       event->event.motion.modifiers = modifiers;
+#endif /* not USE_KKCC */
     default:
       /* This will never happen */
       break;
@@ -435,7 +451,11 @@ static void gpm_next_event_cb (Lisp_Event *event)
 	   ** William M. Perry - Nov 9, 1999
 	   */
 
+#ifdef USE_KKCC
+	  Gpm_DrawPointer (XMOTION_DATA_X (EVENT_DATA (event)),XMOTION_DATA_Y (EVENT_DATA (event)), fd);
+#else /* not USE_KKCC */
 	  Gpm_DrawPointer (event->event.motion.x,event->event.motion.y, fd);
+#endif /* not USE_KKCC */
 	}
 
       return;

@@ -95,9 +95,16 @@ mark_popup_data (Lisp_Object obj)
   return data->last_menubar_buffer;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
+			       0, /*dumpable-flag*/
+                               mark_popup_data, internal_object_printer,
+			       0, 0, 0, 0, struct popup_data);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
                                mark_popup_data, internal_object_printer,
 			       0, 0, 0, 0, struct popup_data);
+#endif /* not USE_KKCC */
 
 /* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
    (id . popup-data) for GCPRO'ing the callbacks of the popup menus
@@ -250,10 +257,17 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
     {
       event = Fmake_event (Qnil, Qnil);
 
+#ifdef USE_KKCC
+      XSET_EVENT_TYPE (event, misc_user_event);
+      XSET_EVENT_CHANNEL (event, frame);
+      XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qrun_hooks);
+      XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), Qmenu_no_selection_hook);
+#else /* not USE_KKCC */
       XEVENT (event)->event_type = misc_user_event;
       XEVENT (event)->channel = frame;
       XEVENT (event)->event.eval.function = Qrun_hooks;
       XEVENT (event)->event.eval.object = Qmenu_no_selection_hook;
+#endif /* not USE_KKCC */
     }
   else
     {
@@ -271,11 +285,18 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 	{
 	  event = Fmake_event (Qnil, Qnil);
 
+#ifdef USE_KKCC
+	  XSET_EVENT_TYPE (event, misc_user_event);
+	  XSET_EVENT_CHANNEL (event, frame);
+	  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), Qeval);
+	  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), list4 (Qfuncall, callback_ex, image_instance, event));
+#else /* not USE_KKCC */
 	  XEVENT (event)->event_type = misc_user_event;
 	  XEVENT (event)->channel = frame;
 	  XEVENT (event)->event.eval.function = Qeval;
 	  XEVENT (event)->event.eval.object =
 	    list4 (Qfuncall, callback_ex, image_instance, event);
+#endif /* not USE_KKCC */
 	}
       else if (NILP (callback) || UNBOUNDP (callback))
 	event = Qnil;
@@ -286,10 +307,17 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 	  event = Fmake_event (Qnil, Qnil);
 
 	  get_gui_callback (callback, &fn, &arg);
+#ifdef USE_KKCC
+	  XSET_EVENT_TYPE (event, misc_user_event);
+	  XSET_EVENT_CHANNEL (event, frame);
+	  XSET_MISC_USER_DATA_FUNCTION (XEVENT_DATA (event), fn);
+	  XSET_MISC_USER_DATA_OBJECT (XEVENT_DATA (event), arg);
+#else /* not USE_KKCC */
 	  XEVENT (event)->event_type = misc_user_event;
 	  XEVENT (event)->channel = frame;
 	  XEVENT (event)->event.eval.function = fn;
 	  XEVENT (event)->event.eval.object = arg;
+#endif /* not USE_KKCC */
 	}
     }
 

@@ -1229,11 +1229,20 @@ image_instance_hash (Lisp_Object obj, int depth)
 		 0));
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
+			       0, /*dumpable-flag*/
+			       mark_image_instance, print_image_instance,
+			       finalize_image_instance, image_instance_equal,
+			       image_instance_hash, 0,
+			       Lisp_Image_Instance);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
 			       mark_image_instance, print_image_instance,
 			       finalize_image_instance, image_instance_equal,
 			       image_instance_hash, 0,
 			       Lisp_Image_Instance);
+#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_image_instance (Lisp_Object governing_domain, Lisp_Object parent,
@@ -3683,12 +3692,22 @@ static const struct lrecord_description glyph_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC 
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
+					  1, /*dumpable-flag*/
+					  mark_glyph, print_glyph, 0,
+					  glyph_equal, glyph_hash, glyph_description,
+					  glyph_getprop, glyph_putprop,
+					  glyph_remprop, glyph_plist,
+					  Lisp_Glyph);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
 					  mark_glyph, print_glyph, 0,
 					  glyph_equal, glyph_hash, glyph_description,
 					  glyph_getprop, glyph_putprop,
 					  glyph_remprop, glyph_plist,
 					  Lisp_Glyph);
+#endif /* not USE_KKCC */
 
 Lisp_Object
 allocate_glyph (enum glyph_type type,
@@ -4670,7 +4689,7 @@ unmap_subwindow (Lisp_Object subwindow)
   register_ignored_expose (f, IMAGE_INSTANCE_DISPLAY_X (ii),
 			   IMAGE_INSTANCE_DISPLAY_Y (ii),
 			   IMAGE_INSTANCE_DISPLAY_WIDTH (ii),
-			   IMAGE_INSTANCE_DISPLAY_HEIGHT (ii));
+			   IMAGE_INSTANCE_DISPLAY_HEIGHT (ii));  
   IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (ii) = 0;
 
   MAYBE_DEVMETH (XDEVICE (IMAGE_INSTANCE_DEVICE (ii)),
@@ -4944,7 +4963,7 @@ Don't use this.
 	    {
 	      /* Increment the index of the image slice we are currently
 		 viewing. */
-	      IMAGE_INSTANCE_PIXMAP_SLICE (ii) =
+	      IMAGE_INSTANCE_PIXMAP_SLICE (ii) = 
 		(IMAGE_INSTANCE_PIXMAP_SLICE (ii) + 1)
 		% IMAGE_INSTANCE_PIXMAP_MAXSLICE (ii);
 	      /* We might need to kick redisplay at this point - but we

@@ -46,6 +46,19 @@ Boston, MA 02111-1307, USA.  */
 /* GCC does not like forward enum declaration. This needs to be
    defined here. What a disgust! */
 
+#ifdef USE_KKCC
+enum console_variant
+{
+  dead_console,
+  tty_console,
+  gtk_console,
+  x_console,
+  mswindows_console,
+  stream_console
+};
+
+#endif /* USE_KKCC */
+
 enum device_metrics
 {
   DM_color_default, DM_color_select, DM_color_balloon, DM_color_3d_face,
@@ -120,6 +133,11 @@ void add_entry_to_console_type_list (Lisp_Object symbol,
 				     struct console_methods *type);
 struct console_methods *decode_console_type (Lisp_Object type,
 					     Error_Behavior errb);
+
+#ifdef USE_KKCC
+enum console_variant get_console_variant (Lisp_Object type);
+#endif /* USE_KKCC */
+
 void delete_console_internal (struct console *con, int force,
 			      int from_kill_emacs, int from_io_error);
 void io_error_delete_console (Lisp_Object console);

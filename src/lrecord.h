@@ -77,6 +77,7 @@ struct lrecord_header
   unsigned int lisp_readonly :1;
 
   unsigned int unused :21;
+
 };
 
 struct lrecord_implementation;
@@ -165,6 +166,17 @@ enum lrecord_type
   lrecord_type_extent_auxiliary,
   lrecord_type_marker,
   lrecord_type_event,
+#ifdef USE_KKCC
+  lrecord_type_key_data,
+  lrecord_type_button_data,
+  lrecord_type_motion_data,
+  lrecord_type_process_data,
+  lrecord_type_timeout_data,
+  lrecord_type_eval_data,
+  lrecord_type_misc_user_data,
+  lrecord_type_magic_eval_data,
+  lrecord_type_magic_data,
+#endif /* USE_KKCC */
   lrecord_type_keymap,
   lrecord_type_command_builder,
   lrecord_type_timeout,
@@ -208,6 +220,10 @@ extern int lrecord_type_count;
 struct lrecord_implementation
 {
   const char *name;
+
+  /* information for the dumper: is the object dumpable and should it 
+     be dumped. */
+  unsigned int dumpable :1;
 
   /* `marker' is called at GC time, to make sure that all Lisp_Objects
      pointed to by this object get properly marked.  It should call
@@ -303,6 +319,10 @@ extern int gc_in_progress;
 #define SET_LISP_READONLY_RECORD_HEADER(lheader) \
   ((void) ((lheader)->lisp_readonly = 1))
 #define RECORD_MARKER(lheader) lrecord_markers[(lheader)->type]
+
+#ifdef USE_KKCC
+#define RECORD_DUMPABLE(lheader) (lrecord_implementations_table[(lheader)->type])->dumpable
+#endif /* USE_KKCC */
 
 /* External description stuff
 
@@ -635,31 +655,83 @@ struct struct_description
 # define DECLARE_ERROR_CHECK_TYPES(c_name, structtype)
 #endif
 
+
+#ifdef USE_KKCC
+#define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+
+#define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+
+#define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+
+#define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+
+#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+
+#define DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
+
+#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+
+#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
+const struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    lrecord_type_##c_name, basic_p }
+
+#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+
+#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
+int lrecord_type_##c_name;						\
+struct lrecord_implementation lrecord_##c_name =			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    lrecord_type_last_built_in_type, basic_p }
+
+#else /* not USE_KKCC */
+
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
 
 #define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
 #define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
 
 #define DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
-#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
 const struct lrecord_implementation lrecord_##c_name =			\
-  { name, marker, printer, nuker, equal, hash, desc,			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_##c_name, basic_p }
 
@@ -667,22 +739,22 @@ const struct lrecord_implementation lrecord_##c_name =			\
 DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
 #define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
 DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
 
 #define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
-MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,0,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
 
-#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,dumpable,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPES(c_name, structtype)			\
 int lrecord_type_##c_name;						\
 struct lrecord_implementation lrecord_##c_name =			\
-  { name, marker, printer, nuker, equal, hash, desc,			\
+  { name, dumpable, marker, printer, nuker, equal, hash, desc,		\
     getprop, putprop, remprop, plist, size, sizer,			\
     lrecord_type_last_built_in_type, basic_p }
-
+#endif /* not USE_KKCC */
 
 extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
 

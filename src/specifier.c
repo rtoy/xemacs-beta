@@ -407,6 +407,16 @@ const struct lrecord_description specifier_empty_extra_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
+					1, /*dumpable-flag*/
+					mark_specifier, print_specifier,
+					finalize_specifier,
+					specifier_equal, specifier_hash,
+					specifier_description,
+					sizeof_specifier,
+					Lisp_Specifier);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					mark_specifier, print_specifier,
 					finalize_specifier,
@@ -414,6 +424,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					specifier_description,
 					sizeof_specifier,
 					Lisp_Specifier);
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       Creating specifiers                            */

@@ -1959,6 +1959,16 @@ static const struct lrecord_description compiled_function_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
+				     1, /*dumpable_flag*/
+				     mark_compiled_function,
+				     print_compiled_function, 0,
+				     compiled_function_equal,
+				     compiled_function_hash,
+				     compiled_function_description,
+				     Lisp_Compiled_Function);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     mark_compiled_function,
 				     print_compiled_function, 0,
@@ -1966,6 +1976,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     compiled_function_hash,
 				     compiled_function_description,
 				     Lisp_Compiled_Function);
+#endif /* not USE_KKCC */
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 Return t if OBJECT is a byte-compiled function object.

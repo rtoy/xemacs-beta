@@ -41,6 +41,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
 
+#ifdef USE_KKCC
+#include "console-x.h"
+#endif /* USE_KKCC */
+
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
    eventually.
@@ -69,6 +73,634 @@ clear_event_resource (void)
   Vevent_resource = Qnil;
 }
 
+#ifdef USE_KKCC
+/* Make sure we lose quickly if we try to use this event */
+static void
+deinitialize_event (Lisp_Object ev)
+{
+  Lisp_Event *event = XEVENT (ev);
+
+  set_event_type (event, dead_event);
+  SET_EVENT_CHANNEL (event, Qnil);
+  set_lheader_implementation (&event->lheader, &lrecord_event);
+  XSET_EVENT_NEXT (ev, Qnil);
+  XSET_EVENT_DATA (ev, Qnil);
+}
+
+/* Set everything to zero or nil so that it's predictable. */
+void
+zero_event (Lisp_Event *e)
+{
+  SET_EVENT_DATA (e, Qnil);
+  set_event_type (e, empty_event);
+  SET_EVENT_NEXT (e, Qnil);
+  SET_EVENT_CHANNEL (e, Qnil);
+  SET_EVENT_TIMESTAMP_ZERO (e);
+}
+
+static const struct lrecord_description event_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Event, next) },
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Event, channel) },
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Event, event_data) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_event (Lisp_Object obj)
+{
+  mark_object (XEVENT_DATA(obj));
+  mark_object (XEVENT_CHANNEL(obj));
+  return (XEVENT_NEXT(obj));
+}
+
+
+static const struct lrecord_description key_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Key_Data, keysym) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_key_data (Lisp_Object obj)
+{
+  return (XKEY_DATA_KEYSYM(obj));
+}
+
+
+static const struct lrecord_description button_data_description [] = {
+  { XD_END }
+};
+
+static Lisp_Object
+mark_button_data (Lisp_Object obj)
+{
+  return Qnil;
+}
+
+
+static const struct lrecord_description motion_data_description [] = {
+  { XD_END }
+};
+
+static Lisp_Object
+mark_motion_data (Lisp_Object obj)
+{
+  return Qnil;
+}
+
+
+static const struct lrecord_description process_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Process_Data, process) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_process_data (Lisp_Object obj)
+{
+  return (XPROCESS_DATA_PROCESS(obj));
+}
+
+
+static const struct lrecord_description timeout_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Timeout_Data, function) },
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Timeout_Data, object) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_timeout_data (Lisp_Object obj)
+{
+  mark_object (XTIMEOUT_DATA_FUNCTION(obj));
+  return (XTIMEOUT_DATA_OBJECT(obj));
+}
+
+
+static const struct lrecord_description eval_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Eval_Data, function) },
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Eval_Data, object) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_eval_data (Lisp_Object obj)
+{
+  mark_object (XEVAL_DATA_FUNCTION(obj));
+  return (XEVAL_DATA_OBJECT(obj));
+}
+
+
+static const struct lrecord_description misc_user_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Misc_User_Data, function) },
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Misc_User_Data, object) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_misc_user_data (Lisp_Object obj)
+{
+  mark_object (XMISC_USER_DATA_FUNCTION(obj));
+  return (XMISC_USER_DATA_OBJECT(obj));
+}
+
+
+static const struct lrecord_description magic_eval_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_Magic_Eval_Data, object) },
+  { XD_END }
+};
+
+static Lisp_Object
+mark_magic_eval_data (Lisp_Object obj)
+{
+  return (XMAGIC_EVAL_DATA_OBJECT(obj));
+}
+
+
+static const struct lrecord_description magic_data_description [] = {
+  { XD_END }
+};
+
+static Lisp_Object
+mark_magic_data (Lisp_Object obj)
+{
+  return Qnil;
+}
+
+
+
+static void
+print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<event>");
+
+  switch (XEVENT_TYPE (obj))
+    {
+    case key_press_event:
+      write_c_string (printcharfun, "#<keypress-event ");
+      break;
+    case button_press_event:
+      write_c_string (printcharfun, "#<buttondown-event ");
+      break;
+    case button_release_event:
+      write_c_string (printcharfun, "#<buttonup-event ");
+      break;
+    case magic_eval_event:
+      write_c_string (printcharfun, "#<magic-eval-event ");
+      break;
+    case magic_event:
+      write_c_string (printcharfun, "#<magic-event ");         
+      break;
+    case pointer_motion_event:
+      write_c_string (printcharfun, "#<motion-event ");
+      break;
+    case process_event:
+	write_c_string (printcharfun, "#<process-event ");
+	break;
+    case timeout_event:
+	write_c_string (printcharfun, "#<timeout-event ");
+	break;
+    case misc_user_event:
+	write_c_string (printcharfun, "#<misc-user-event ");
+	break;
+    case eval_event:
+	write_c_string (printcharfun, "#<eval-event ");
+	break;
+    case empty_event:
+	write_c_string (printcharfun, "#<empty-event>");
+        return;
+    case dead_event:
+	write_c_string (printcharfun, "#<DEALLOCATED-EVENT>");
+        return;
+    default:
+	write_c_string (printcharfun, "#<UNKNOWN-EVENT-TYPE>");
+        return;
+      }
+  
+  print_internal (XEVENT_DATA (obj), printcharfun, 1);
+  write_c_string (printcharfun, ">");
+}
+
+
+static void
+print_key_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  char buf[128];
+  if (print_readably)
+    printing_unreadable_object ("#<key_data>");
+
+  sprintf (buf, "#<key_data ");
+  /*  format_event_data_object (buf + 11, obj, 0);
+  sprintf (buf + strlen (buf), ">");
+  write_c_string (printcharfun, buf);*/
+}
+
+static void
+print_button_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  char buf[128];
+  if (print_readably)
+    printing_unreadable_object ("#<button_data>");
+
+  sprintf (buf, "#<button_data ");
+  /*  format_event_data_object (buf + 14, obj, 0);
+  sprintf (buf + strlen (buf), ">");
+  write_c_string (printcharfun, buf);*/
+}
+
+
+static void
+print_motion_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  char buf[64];
+  Lisp_Object Vx, Vy;
+
+  if (print_readably)
+    printing_unreadable_object ("#<motion_data>");
+
+  Vx = XMOTION_DATA_X (obj);
+  Vy = XMOTION_DATA_Y (obj);
+  sprintf (buf, "#<motion-data %ld, %ld>", (long) XINT (Vx), (long) XINT (Vy));
+  write_c_string (printcharfun, buf);
+}
+
+
+static void
+print_process_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<process_data>");
+
+  write_c_string (print_readably, "#<process-data ");
+  print_internal (XPROCESS_DATA_PROCESS (obj), printcharfun, 1);
+  write_c_string (printcharfun, ">");
+}
+
+
+static void
+print_timeout_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<timeout_data>");
+
+  write_c_string (printcharfun, "#<timeout-data ");
+  print_internal (XTIMEOUT_DATA_OBJECT (obj), printcharfun, 1);
+  write_c_string (printcharfun, ">");
+}
+
+
+static void
+print_eval_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<eval_data>");
+
+  write_c_string (printcharfun, "#<eval-data ");
+  print_internal (XEVAL_DATA_FUNCTION (obj), printcharfun, 1);
+  write_c_string (printcharfun, " ");
+  print_internal (XEVAL_DATA_OBJECT (obj), printcharfun, 1);
+  write_c_string (printcharfun, ">");
+}
+
+
+static void
+print_misc_user_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  if (print_readably)
+    printing_unreadable_object ("#<misc_user_data>");
+
+  write_c_string (printcharfun, "#<misc-user-data ");
+  print_internal (XMISC_USER_DATA_FUNCTION (obj), printcharfun, 1);
+  write_c_string (printcharfun, " ");
+  print_internal (XMISC_USER_DATA_OBJECT (obj), printcharfun, 1);
+  write_c_string (printcharfun, ">");
+}
+
+
+static void
+print_magic_eval_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  //  char buf[128];
+
+  if (print_readably)
+    printing_unreadable_object ("#<magic_eval_data>");
+
+  /*  format_event_data_object (buf + 18, obj, 0);*/
+}
+
+
+static void
+print_magic_data (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  char buf[128];
+
+  if (print_readably)
+    printing_unreadable_object ("#<magic_data>");
+
+  sprintf (buf, "#<magic-data ");
+  /*  format_event_data_object (buf + 13, obj, 0);
+  sprintf (buf + strlen (buf), ">");
+  write_c_string (print_readably, buf);*/
+}
+
+
+static int
+event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  Lisp_Event *e1 = XEVENT (obj1);
+  Lisp_Event *e2 = XEVENT (obj2);
+
+  if (EVENT_TYPE (e1) != EVENT_TYPE (e2)) return 0;
+  if (!EQ (EVENT_CHANNEL (e1), EVENT_CHANNEL (e2))) return 0;
+/*  if (EVENT_TIMESTAMP (e1) != EVENT_TIMESTAMP (e2)) return 0; */
+  switch (EVENT_TYPE (e1))
+    {
+    default: abort ();
+
+    case process_event:
+    case timeout_event:
+    case pointer_motion_event:
+    case key_press_event:
+    case button_press_event:
+    case button_release_event:
+    case misc_user_event:
+    case eval_event:
+    case magic_eval_event:
+      return internal_equal (EVENT_DATA (e1), EVENT_DATA (e2), 0);
+
+    case magic_event:
+      {
+	struct console *con = XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e1)));
+
+#ifdef HAVE_X_WINDOWS
+	if (CONSOLE_X_P (con))
+	  return (XMAGIC_DATA_X_EVENT (EVENT_DATA (e1)).xany.serial ==
+		  XMAGIC_DATA_X_EVENT (EVENT_DATA (e2)).xany.serial);
+#endif
+#ifdef HAVE_GTK
+	if (CONSOLE_GTK_P (con))
+	  return (XMAGIC_DATA_GTK_EVENT (EVENT_DATA (e1)) ==
+		  XMAGIC_DATA_GTK_EVENT (EVENT_DATA (e2)));
+#endif
+#ifdef HAVE_MS_WINDOWS
+	if (CONSOLE_MSWINDOWS_P (con))
+	  return (!memcmp(&XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e1)),
+			  &XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e2)),
+			  sizeof (union magic_data)));
+#endif
+	abort ();
+	return 1; /* not reached */
+      }
+
+    case empty_event:      /* Empty and deallocated events are equal. */
+    case dead_event:
+      return 1;
+    }
+}
+
+static int
+key_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (EQ (XKEY_DATA_KEYSYM (obj1), XKEY_DATA_KEYSYM (obj2)) &&
+          (XKEY_DATA_MODIFIERS (obj1) == XKEY_DATA_MODIFIERS (obj2)));
+}
+
+static int
+button_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (XBUTTON_DATA_BUTTON (obj1) == XBUTTON_DATA_BUTTON (obj2) &&
+          XBUTTON_DATA_MODIFIERS (obj1) == XBUTTON_DATA_MODIFIERS (obj2));
+}
+
+static int
+motion_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (XMOTION_DATA_X (obj1) == XMOTION_DATA_X (obj2) &&
+          XMOTION_DATA_Y (obj1) == XMOTION_DATA_Y (obj2));
+}
+
+static int
+process_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return EQ (XPROCESS_DATA_PROCESS (obj1), XPROCESS_DATA_PROCESS (obj2));
+}
+
+static int
+timeout_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (internal_equal (XTIMEOUT_DATA_FUNCTION (obj1),
+                          XTIMEOUT_DATA_FUNCTION (obj2), 0) &&
+          internal_equal (XTIMEOUT_DATA_OBJECT (obj1),
+                          XTIMEOUT_DATA_OBJECT (obj2), 0));
+}
+
+static int
+eval_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (internal_equal (XEVAL_DATA_FUNCTION (obj1),
+                          XEVAL_DATA_FUNCTION (obj2), 0) &&
+          internal_equal (XEVAL_DATA_OBJECT (obj1),
+                          XEVAL_DATA_OBJECT (obj2), 0));
+}
+
+static int
+misc_user_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (internal_equal (XMISC_USER_DATA_FUNCTION (obj1), 
+                          XMISC_USER_DATA_FUNCTION (obj2), 0) &&
+          internal_equal (XMISC_USER_DATA_OBJECT (obj1), 
+                          XMISC_USER_DATA_OBJECT (obj2), 0) &&
+	      /* is this really needed for equality
+	         or is x and y also important? */
+          XMISC_USER_DATA_BUTTON (obj1) == XMISC_USER_DATA_BUTTON (obj2) &&
+          XMISC_USER_DATA_MODIFIERS (obj1) == 
+          XMISC_USER_DATA_MODIFIERS (obj2));
+}
+
+static int
+magic_eval_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+  return (XMAGIC_EVAL_DATA_INTERNAL_FUNCTION (obj1) ==
+          XMAGIC_EVAL_DATA_INTERNAL_FUNCTION (obj2) &&
+          internal_equal (XMAGIC_EVAL_DATA_OBJECT (obj1),
+                          XMAGIC_EVAL_DATA_OBJECT (obj2), 0));
+}
+
+static int
+magic_data_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{assert (0); return 0;}
+
+static unsigned long
+event_hash (Lisp_Object obj, int depth)
+{
+  Lisp_Event *e = XEVENT (obj);
+  unsigned long hash;
+
+  hash = HASH2 (EVENT_TYPE (e), LISP_HASH (EVENT_CHANNEL (e)));
+  switch (EVENT_TYPE (e))
+    {
+    case process_event:
+    case timeout_event:
+    case key_press_event:
+    case button_press_event:
+    case button_release_event:
+    case pointer_motion_event:
+    case misc_user_event:
+    case eval_event:
+    case magic_eval_event:
+      return HASH2 (hash, internal_hash (EVENT_DATA (e), depth + 1));
+
+    case magic_event:
+      {
+	struct console *con = XCONSOLE (CDFW_CONSOLE (EVENT_CHANNEL (e)));
+#ifdef HAVE_X_WINDOWS
+	if (CONSOLE_X_P (con))
+	  return HASH2 (hash, XMAGIC_DATA_X_EVENT (EVENT_DATA (e)).xany.serial);
+#endif
+#ifdef HAVE_GTK
+	if (CONSOLE_GTK_P (con))
+	  return HASH2 (hash, XMAGIC_DATA_GTK_EVENT (EVENT_DATA (e)));
+#endif
+#ifdef HAVE_MS_WINDOWS
+	if (CONSOLE_MSWINDOWS_P (con))
+	  return HASH2 (hash, XMAGIC_DATA_MSWINDOWS_EVENT (EVENT_DATA (e)));
+#endif
+	abort ();
+	return 0;
+      }
+
+    case empty_event:
+    case dead_event:
+      return hash;
+
+    default:
+      abort ();
+    }
+
+  return 0; /* unreached */
+}
+
+static unsigned long
+key_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 (LISP_HASH (XKEY_DATA_KEYSYM (obj)),
+                XKEY_DATA_MODIFIERS (obj));
+}
+
+static unsigned long
+button_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 (XBUTTON_DATA_BUTTON (obj), XBUTTON_DATA_MODIFIERS (obj));
+}
+
+static unsigned long
+motion_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 (XMOTION_DATA_X (obj), XMOTION_DATA_Y (obj));
+}
+
+static unsigned long
+process_data_hash (Lisp_Object obj, int depth)
+{
+  return LISP_HASH (XPROCESS_DATA_PROCESS (obj));
+}
+
+static unsigned long
+timeout_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 (internal_hash (XTIMEOUT_DATA_FUNCTION (obj), depth + 1),
+                internal_hash (XTIMEOUT_DATA_OBJECT (obj), depth + 1));
+}
+
+static unsigned long
+eval_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 (internal_hash (XEVAL_DATA_FUNCTION (obj), depth + 1),
+                internal_hash (XEVAL_DATA_OBJECT (obj), depth + 1));
+}
+
+static unsigned long
+misc_user_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH4 (internal_hash (XMISC_USER_DATA_FUNCTION (obj), depth + 1),
+                internal_hash (XMISC_USER_DATA_OBJECT (obj), depth + 1),
+                XMISC_USER_DATA_BUTTON (obj), XMISC_USER_DATA_MODIFIERS (obj));
+}
+
+static unsigned long
+magic_eval_data_hash (Lisp_Object obj, int depth)
+{
+  return HASH2 ((unsigned long) XMAGIC_EVAL_DATA_INTERNAL_FUNCTION (obj),
+                internal_hash (XMAGIC_EVAL_DATA_OBJECT (obj), depth + 1));
+}
+
+static unsigned long
+magic_data_hash (Lisp_Object obj, int depth)
+{assert(0); return 1;}
+
+DEFINE_LRECORD_IMPLEMENTATION ("key-data", key_data,
+			       0, /*dumpable-flag*/
+                               mark_key_data, 
+                               print_key_data, 0, 
+                               key_data_equal, key_data_hash, key_data_description, 
+                               Lisp_Key_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("button-data", button_data,
+			       0, /*dumpable-flag*/
+                               mark_button_data, print_button_data, 0, 
+                               button_data_equal, button_data_hash, button_data_description, 
+                               Lisp_Button_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("motion-data", motion_data,
+			       0, /*dumpable-flag*/
+                               mark_motion_data, print_motion_data, 0, 
+                               motion_data_equal, motion_data_hash, motion_data_description,
+                               Lisp_Motion_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("process-data", process_data,
+			       0, /*dumpable-flag*/
+                               mark_process_data, 
+                               print_process_data, 0,
+                               process_data_equal, process_data_hash, process_data_description,
+                               Lisp_Process_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("timeout-data", timeout_data,
+			       0, /*dumpable-flag*/
+                               mark_timeout_data,
+                               print_timeout_data, 0,
+                               timeout_data_equal, timeout_data_hash, timeout_data_description,
+                               Lisp_Timeout_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("eval-data", eval_data,
+			       0, /*dumpable-flag*/
+                               mark_eval_data, 
+                               print_eval_data, 0, 
+                               eval_data_equal, eval_data_hash, eval_data_description,
+                               Lisp_Eval_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("misc-user-data", misc_user_data,
+			       0, /*dumpable-flag*/
+                               mark_misc_user_data,
+                               print_misc_user_data,
+                               0, misc_user_data_equal, 
+                               misc_user_data_hash, misc_user_data_description, 
+                               Lisp_Misc_User_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("magic-eval-data", magic_eval_data,
+			       0, /*dumpable-flag*/
+                               mark_magic_eval_data, 
+                               print_magic_eval_data, 0, 
+                               magic_eval_data_equal,
+                               magic_eval_data_hash, magic_eval_data_description, 
+                               Lisp_Magic_Eval_Data);
+
+DEFINE_LRECORD_IMPLEMENTATION ("magic-data", magic_data,
+			       0, /*dumpable-flag*/
+                               mark_magic_data, print_magic_data, 0,
+                               magic_data_equal, magic_data_hash, magic_data_description,
+                               Lisp_Magic_Data);
+
+
+
+#else /* not USE_KKCC */
 /* Make sure we lose quickly if we try to use this event */
 static void
 deinitialize_event (Lisp_Object ev)
@@ -323,10 +955,19 @@ event_hash (Lisp_Object obj, int depth)
 
   return 0; /* unreached */
 }
+#endif /* not USE_KKCC */
 
+
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
+				     0, /*dumpable-flag*/
+				     mark_event, print_event, 0, event_equal,
+				     event_hash, 0/*event_description*/, Lisp_Event);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
 				     mark_event, print_event, 0, event_equal,
 				     event_hash, 0, Lisp_Event);
+#endif /* not USE_KKCC */
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
 Return a new event of type TYPE, with properties described by PLIST.
@@ -404,7 +1045,11 @@ WARNING: the event object returned may be a reused one; see the function
          PLIST.  In fact, processing PLIST would be wrong, because the
          sanitizing process would fill in the properties
          (e.g. CHANNEL), which we don't want in empty events.  */
+#ifdef USE_KKCC
+      set_event_type (e, empty_event);
+#else /* not USE_KKCC */
       e->event_type = empty_event;
+#endif /* not USE_KKCC */
       if (!NILP (plist))
 	invalid_operation ("Cannot set properties of empty event", plist);
       UNGCPRO;
@@ -412,19 +1057,42 @@ WARNING: the event object returned may be a reused one; see the function
     }
   else if (EQ (type, Qkey_press))
     {
+#ifdef USE_KKCC
+      set_event_type (e, key_press_event);
+      XSET_KEY_DATA_KEYSYM (EVENT_DATA (e), Qunbound);
+#else /* not USE_KKCC */
       e->event_type = key_press_event;
       e->event.key.keysym = Qunbound;
+#endif /* not USE_KKCC */
     }
   else if (EQ (type, Qbutton_press))
+#ifdef USE_KKCC
+    set_event_type (e, button_press_event);
+#else /* not USE_KKCC */
     e->event_type = button_press_event;
+#endif /* not USE_KKCC */
   else if (EQ (type, Qbutton_release))
+#ifdef USE_KKCC
+    set_event_type (e, button_release_event);
+#else /* not USE_KKCC */
     e->event_type = button_release_event;
+#endif /* not USE_KKCC */
   else if (EQ (type, Qmotion))
+#ifdef USE_KKCC
+    set_event_type (e, pointer_motion_event);
+#else /* not USE_KKCC */
     e->event_type = pointer_motion_event;
+#endif /* not USE_KKCC */
   else if (EQ (type, Qmisc_user))
     {
+#ifdef USE_KKCC
+      set_event_type (e, misc_user_event);
+      XSET_MISC_USER_DATA_FUNCTION (EVENT_DATA (e), Qnil); 
+      XSET_MISC_USER_DATA_OBJECT (EVENT_DATA (e), Qnil);
+#else /* not USE_KKCC */
       e->event_type = misc_user_event;
       e->event.eval.function = e->event.eval.object = Qnil;
+#endif /* not USE_KKCC */
     }
   else
     {
@@ -445,7 +1113,11 @@ WARNING: the event object returned may be a reused one; see the function
       {
 	if (EQ (keyword, Qchannel))
 	  {
+#ifdef USE_KKCC
+	    if (EVENT_TYPE(e) == key_press_event)
+#else /* not USE_KKCC */
 	    if (e->event_type == key_press_event)
+#endif /* not USE_KKCC */
 	      {
 		if (!CONSOLEP (value))
 		  value = wrong_type_argument (Qconsolep, value);
@@ -459,12 +1131,20 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qkey))
 	  {
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case key_press_event:
 		if (!SYMBOLP (value) && !CHARP (value))
 		  invalid_argument ("Invalid event key", value);
+#ifdef USE_KKCC
+		XSET_KEY_DATA_KEYSYM (EVENT_DATA(e), value);
+#else /* not USE_KKCC */
 		e->event.key.keysym = value;
+#endif /* not USE_KKCC */
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -476,14 +1156,26 @@ WARNING: the event object returned may be a reused one; see the function
 	    CHECK_NATNUM (value);
 	    check_int_range (XINT (value), 0, 7);
 
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case button_press_event:
 	      case button_release_event:
+#ifdef USE_KKCC
+		XSET_BUTTON_DATA_BUTTON (EVENT_DATA (e), XINT (value));
+#else /* not USE_KKCC */
 		e->event.button.button = XINT (value);
+#endif /* not USE_KKCC */
 		break;
 	      case misc_user_event:
+#ifdef USE_KKCC
+		XSET_MISC_USER_DATA_BUTTON (EVENT_DATA (e), XINT (value));
+#else /* not USE_KKCC */
 		e->event.misc.button = XINT (value);
+#endif /* not USE_KKCC */
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -512,20 +1204,40 @@ WARNING: the event object returned may be a reused one; see the function
 		  invalid_constant ("Invalid key modifier", sym);
 	      }
 
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case key_press_event:
+#ifdef USE_KKCC
+                XSET_KEY_DATA_MODIFIERS (EVENT_DATA (e), modifiers);
+#else /* not USE_KKCC */
 		e->event.key.modifiers = modifiers;
+#endif /* not USE_KKCC */
 		break;
 	      case button_press_event:
 	      case button_release_event:
+#ifdef USE_KKCC
+                XSET_BUTTON_DATA_MODIFIERS (EVENT_DATA (e), modifiers);
+#else /* not USE_KKCC */
 		e->event.button.modifiers = modifiers;
+#endif /* not USE_KKCC */
 		break;
 	      case pointer_motion_event:
+#ifdef USE_KKCC
+                XSET_MOTION_DATA_MODIFIERS (EVENT_DATA (e), modifiers);
+#else /* not USE_KKCC */
 		e->event.motion.modifiers = modifiers;
+#endif /* not USE_KKCC */
 		break;
 	      case misc_user_event:
+#ifdef USE_KKCC
+                XSET_MISC_USER_DATA_MODIFIERS (EVENT_DATA (e), modifiers);
+#else /* not USE_KKCC */
 		e->event.misc.modifiers = modifiers;
+#endif /* not USE_KKCC */
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -534,7 +1246,11 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qx))
 	  {
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case pointer_motion_event:
 	      case button_press_event:
@@ -552,7 +1268,11 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qy))
 	  {
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case pointer_motion_event:
 	      case button_press_event:
@@ -570,14 +1290,26 @@ WARNING: the event object returned may be a reused one; see the function
 	else if (EQ (keyword, Qtimestamp))
 	  {
 	    CHECK_NATNUM (value);
+#ifdef USE_KKCC
+	    SET_EVENT_TIMESTAMP (e, XINT (value));
+#else /* not USE_KKCC */
 	    e->timestamp = XINT (value);
+#endif /* not USE_KKCC */
 	  }
 	else if (EQ (keyword, Qfunction))
 	  {
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case misc_user_event:
+#ifdef USE_KKCC
+                XSET_MISC_USER_DATA_FUNCTION (EVENT_DATA (e), value);
+#else /* not USE_KKCC */
 		e->event.eval.function = value;
+#endif /* not USE_KKCC */
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -586,10 +1318,18 @@ WARNING: the event object returned may be a reused one; see the function
 	  }
 	else if (EQ (keyword, Qobject))
 	  {
+#ifdef USE_KKCC
+	    switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
 	    switch (e->event_type)
+#endif /* not USE_KKCC */
 	      {
 	      case misc_user_event:
+#ifdef USE_KKCC
+                XSET_MISC_USER_DATA_OBJECT (EVENT_DATA (e), value);
+#else /* not USE_KKCC */
 		e->event.eval.object = value;
+#endif /* not USE_KKCC */
 		break;
 	      default:
 		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
@@ -604,7 +1344,11 @@ WARNING: the event object returned may be a reused one; see the function
   /* Insert the channel, if missing. */
   if (NILP (EVENT_CHANNEL (e)))
     {
+#ifdef USE_KKCC
+      if (EVENT_TYPE (e) == key_press_event)
+#else /* not USE_KKCC */
       if (e->event_type == key_press_event)
+#endif /* not USE_KKCC */
 	EVENT_CHANNEL (e) = Vselected_console;
       else
 	EVENT_CHANNEL (e) = Fselected_frame (Qnil);
@@ -620,17 +1364,32 @@ WARNING: the event object returned may be a reused one; see the function
       switch (e->event_type)
 	{
 	case pointer_motion_event:
+#ifdef USE_KKCC
+	  XSET_MOTION_DATA_X (EVENT_DATA (e), coord_x);
+	  XSET_MOTION_DATA_Y (EVENT_DATA (e), coord_y);
+#else /* not USE_KKCC */
 	  e->event.motion.x = coord_x;
 	  e->event.motion.y = coord_y;
+#endif /* not USE_KKCC */
 	  break;
 	case button_press_event:
 	case button_release_event:
+#ifdef USE_KKCC
+	  XSET_BUTTON_DATA_X (EVENT_DATA (e), coord_x);
+	  XSET_BUTTON_DATA_Y (EVENT_DATA (e), coord_y);
+#else /* not USE_KKCC */
 	  e->event.button.x = coord_x;
 	  e->event.button.y = coord_y;
+#endif /* not USE_KKCC */
 	  break;
 	case misc_user_event:
+#ifdef USE_KKCC
+	  XSET_MISC_USER_DATA_X (EVENT_DATA (e), coord_x);
+	  XSET_MISC_USER_DATA_Y (EVENT_DATA (e), coord_y);
+#else /* not USE_KKCC */
 	  e->event.misc.x = coord_x;
 	  e->event.misc.y = coord_y;
+#endif /* not USE_KKCC */
 	  break;
 	default:
 	  abort();
@@ -638,27 +1397,47 @@ WARNING: the event object returned may be a reused one; see the function
     }
 
   /* Finally, do some more validation.  */
+#ifdef USE_KKCC
+  switch (EVENT_TYPE(e))
+#else /* not USE_KKCC */
   switch (e->event_type)
+#endif /* not USE_KKCC */
     {
     case key_press_event:
+#ifdef USE_KKCC
+      if (UNBOUNDP (XKEY_DATA_KEYSYM (EVENT_DATA (e))))
+#else /* not USE_KKCC */
       if (UNBOUNDP (e->event.key.keysym))
+#endif /* not USE_KKCC */
 	sferror ("A key must be specified to make a keypress event",
 		      plist);
       break;
     case button_press_event:
+#ifdef USE_KKCC
+      if (!XBUTTON_DATA_BUTTON (EVENT_DATA (e)))
+#else /* not USE_KKCC */
       if (!e->event.button.button)
+#endif /* not USE_KKCC */
 	sferror
 	  ("A button must be specified to make a button-press event",
 	   plist);
       break;
     case button_release_event:
+#ifdef USE_KKCC
+      if (!XBUTTON_DATA_BUTTON (EVENT_DATA (e)))
+#else /* not USE_KKCC */
       if (!e->event.button.button)
+#endif /* not USE_KKCC */
 	sferror
 	  ("A button must be specified to make a button-release event",
 	   plist);
       break;
     case misc_user_event:
+#ifdef USE_KKCC
+      if (NILP (XMISC_USER_DATA_FUNCTION (EVENT_DATA (e))))
+#else /* not USE_KKCC */
       if (NILP (e->event.misc.function))
+#endif /* not USE_KKCC */
 	sferror ("A function must be specified to make a misc-user event",
 		      plist);
       break;
@@ -669,6 +1448,114 @@ WARNING: the event object returned may be a reused one; see the function
   UNGCPRO;
   return event;
 }
+
+
+#ifdef USE_KKCC
+
+Lisp_Object 
+make_key_data (void)
+{
+  Lisp_Object data = allocate_key_data ();
+
+  XSET_KEY_DATA_KEYSYM (data, Qnil);
+  XSET_KEY_DATA_MODIFIERS (data, 0);  
+  
+  return data;
+}
+
+Lisp_Object
+make_button_data (void)
+{
+  Lisp_Object data = allocate_button_data ();
+
+  XSET_BUTTON_DATA_BUTTON (data, 0);
+  XSET_BUTTON_DATA_MODIFIERS (data, 0);
+  XSET_BUTTON_DATA_X (data, 0);
+  XSET_BUTTON_DATA_Y (data, 0);
+  
+  return data;
+}
+
+Lisp_Object
+make_motion_data (void)
+{
+  Lisp_Object data = allocate_motion_data ();
+
+  XSET_MOTION_DATA_X (data, 0);
+  XSET_MOTION_DATA_Y (data, 0);
+  XSET_MOTION_DATA_MODIFIERS (data, 0);
+  
+  return data;
+}
+
+Lisp_Object
+make_process_data (void)
+{
+  Lisp_Object data = allocate_process_data ();
+
+  XSET_PROCESS_DATA_PROCESS (data, Qnil);
+  
+  return data;
+}
+
+Lisp_Object
+make_timeout_data (void)
+{
+  Lisp_Object data = allocate_timeout_data ();
+
+  XSET_TIMEOUT_DATA_INTERVAL_ID (data, 0);
+  XSET_TIMEOUT_DATA_ID_NUMBER(data, 0);
+  XSET_TIMEOUT_DATA_FUNCTION(data, Qnil);
+  XSET_TIMEOUT_DATA_OBJECT (data, Qnil);
+  
+  return data;
+}
+
+Lisp_Object
+make_magic_eval_data (void)
+{
+  Lisp_Object data = allocate_magic_eval_data ();
+
+  XSET_MAGIC_EVAL_DATA_OBJECT (data, Qnil);
+  XSET_MAGIC_EVAL_DATA_INTERNAL_FUNOBJ (data, 0);
+  
+  return data;
+}
+
+Lisp_Object
+make_eval_data (void)
+{
+  Lisp_Object data = allocate_eval_data ();
+
+  XSET_EVAL_DATA_FUNCTION (data, Qnil);
+  XSET_EVAL_DATA_OBJECT (data, Qnil);  
+
+  return data;
+}
+
+Lisp_Object
+make_magic_data (void)
+{
+  return allocate_magic_data ();
+}
+
+Lisp_Object
+make_misc_user_data (void)
+{
+  Lisp_Object data = allocate_misc_user_data ();
+
+  XSET_MISC_USER_DATA_FUNCTION (data, Qnil);
+  XSET_MISC_USER_DATA_OBJECT (data, Qnil);
+  XSET_MISC_USER_DATA_BUTTON (data, Qnil);
+  XSET_MISC_USER_DATA_MODIFIERS (data, 0);
+  XSET_MISC_USER_DATA_X (data, 0);
+  XSET_MISC_USER_DATA_Y (data, 0);
+
+  return data;
+}
+#endif /* USE_KKCC */
+
+
 
 DEFUN ("deallocate-event", Fdeallocate_event, 1, 1, 0, /*
 Allow the given event structure to be reused.
@@ -719,6 +1606,60 @@ that it is safe to do so.
   return Qnil;
 }
 
+#ifdef USE_KKCC
+void
+copy_event_data (Lisp_Object dest, Lisp_Object src)
+{
+  switch (XRECORD_LHEADER (dest)->type) {
+  case lrecord_type_key_data:
+    XSET_KEY_DATA_KEYSYM (dest, XKEY_DATA_KEYSYM (src));
+    XSET_KEY_DATA_MODIFIERS (dest, XKEY_DATA_MODIFIERS (src));
+    break;
+  case lrecord_type_button_data:
+    XSET_BUTTON_DATA_BUTTON (dest, XBUTTON_DATA_BUTTON (src));
+    XSET_BUTTON_DATA_MODIFIERS (dest, XBUTTON_DATA_MODIFIERS (src));
+    XSET_BUTTON_DATA_X (dest, XBUTTON_DATA_X (src));
+    XSET_BUTTON_DATA_Y (dest, XBUTTON_DATA_Y (src));
+    break;
+  case lrecord_type_motion_data:
+    XSET_MOTION_DATA_X (dest, XMOTION_DATA_X (src));
+    XSET_MOTION_DATA_Y (dest, XMOTION_DATA_Y (src));
+    XSET_MOTION_DATA_MODIFIERS (dest, XMOTION_DATA_MODIFIERS (src));
+    break;
+  case lrecord_type_process_data:
+    XSET_PROCESS_DATA_PROCESS (dest, XPROCESS_DATA_PROCESS (src));
+    break;
+  case lrecord_type_timeout_data:
+    XSET_TIMEOUT_DATA_INTERVAL_ID (dest, XTIMEOUT_DATA_INTERVAL_ID (src));
+    XSET_TIMEOUT_DATA_ID_NUMBER (dest, XTIMEOUT_DATA_ID_NUMBER (src));
+    XSET_TIMEOUT_DATA_FUNCTION (dest, XTIMEOUT_DATA_FUNCTION (src));
+    XSET_TIMEOUT_DATA_OBJECT (dest, XTIMEOUT_DATA_OBJECT (src));
+    break;
+  case lrecord_type_eval_data:
+    XSET_EVAL_DATA_FUNCTION (dest, XEVAL_DATA_FUNCTION (src));
+    XSET_EVAL_DATA_OBJECT (dest, XEVAL_DATA_OBJECT (src));
+    break;    
+  case lrecord_type_misc_user_data:
+    XSET_MISC_USER_DATA_FUNCTION (dest, XMISC_USER_DATA_FUNCTION (src));
+    XSET_MISC_USER_DATA_OBJECT (dest, XMISC_USER_DATA_OBJECT (src));
+    XSET_MISC_USER_DATA_BUTTON (dest, XMISC_USER_DATA_BUTTON (src));
+    XSET_MISC_USER_DATA_MODIFIERS (dest, XMISC_USER_DATA_MODIFIERS (src));
+    XSET_MISC_USER_DATA_X (dest, XMISC_USER_DATA_X (src));
+    XSET_MISC_USER_DATA_Y (dest, XMISC_USER_DATA_Y (src));
+    break;
+  case lrecord_type_magic_eval_data:
+    XSET_MAGIC_EVAL_DATA_INTERNAL_FUNCTION (dest, XMAGIC_EVAL_DATA_INTERNAL_FUNCTION (src));
+    XSET_MAGIC_EVAL_DATA_OBJECT (dest, XMAGIC_EVAL_DATA_OBJECT (src));
+    break;
+  case lrecord_type_magic_data:
+    XSET_MAGIC_DATA_UNDERLYING (dest, XMAGIC_DATA_UNDERLYING (src));
+    break;
+  default:
+    break;
+  }
+}
+#endif /* USE_KKCC */
+
 DEFUN ("copy-event", Fcopy_event, 1, 2, 0, /*
 Make a copy of the event object EVENT1.
 If a second event argument EVENT2 is given, EVENT1 is copied into
@@ -743,6 +1684,14 @@ function `deallocate-event'.
   assert (XEVENT_TYPE (event1) <= last_event_type);
   assert (XEVENT_TYPE (event2) <= last_event_type);
 
+#ifdef USE_KKCC
+  XSET_EVENT_TYPE (event2, XEVENT_TYPE (event1));
+  XSET_EVENT_CHANNEL (event2, XEVENT_CHANNEL (event1));
+  XSET_EVENT_TIMESTAMP (event2, XEVENT_TIMESTAMP (event1));
+  copy_event_data (XEVENT_DATA (event2), XEVENT_DATA (event1));
+
+  return event2;
+#else /* not USE_KKCC */
   {
     Lisp_Event *ev2 = XEVENT (event2);
     Lisp_Event *ev1 = XEVENT (event1);
@@ -754,6 +1703,7 @@ function `deallocate-event'.
 
     return event2;
   }
+#endif /* not USE_KKCC */
 }
 
 
@@ -964,7 +1914,11 @@ character_to_event (Ichar c, Lisp_Event *event, struct console *con,
 {
   Lisp_Object k = Qnil;
   int m = 0;
+#ifdef USE_KKCC
+  if (EVENT_TYPE (event) == dead_event)
+#else /* not USE_KKCC */
   if (event->event_type == dead_event)
+#endif /* not USE_KKCC */
     invalid_argument ("character-to-event called with a deallocated event!", Qunbound);
 
 #ifndef MULE
@@ -1021,11 +1975,19 @@ character_to_event (Ichar c, Lisp_Event *event, struct console *con,
   else if (c == ' ')
     k = QKspace;
 
+#ifdef USE_KKCC
+  set_event_type (event, key_press_event);
+  SET_EVENT_TIMESTAMP_ZERO (event); /* #### */
+  SET_EVENT_CHANNEL (event, wrap_console (con));
+  XSET_KEY_DATA_KEYSYM (EVENT_DATA (event), (!NILP (k) ? k : make_char (c)));
+  XSET_KEY_DATA_MODIFIERS (EVENT_DATA (event), m);
+#else /* not USE_KKCC */
   event->event_type	     = key_press_event;
   event->timestamp	     = 0; /* #### */
   event->channel	     = wrap_console (con);
   event->event.key.keysym    = (!NILP (k) ? k : make_char (c));
   event->event.key.modifiers = m;
+#endif /* not USE_KKCC */
 }
 
 /* This variable controls what character name -> character code mapping
@@ -1047,32 +2009,65 @@ event_to_character (Lisp_Event *event,
   Ichar c = 0;
   Lisp_Object code;
 
+#ifdef USE_KKCC
+  if (EVENT_TYPE (event) != key_press_event)
+#else /* not USE_KKCC */
   if (event->event_type != key_press_event)
+#endif /* not USE_KKCC */
     {
+#ifdef USE_KKCC
+      assert (EVENT_TYPE (event) != dead_event);
+#else /* not USE_KKCC */
       assert (event->event_type != dead_event);
+#endif /* not USE_KKCC */
       return -1;
     }
   if (!allow_extra_modifiers &&
+#ifdef USE_KKCC
+      XKEY_DATA_MODIFIERS (EVENT_DATA (event)) & (XEMACS_MOD_SUPER|XEMACS_MOD_HYPER|XEMACS_MOD_ALT))
+#else /* not USE_KKCC */
       event->event.key.modifiers & (XEMACS_MOD_SUPER|XEMACS_MOD_HYPER|XEMACS_MOD_ALT))
+#endif /* not USE_KKCC */
     return -1;
+#ifdef USE_KKCC
+  if (CHAR_OR_CHAR_INTP (XKEY_DATA_KEYSYM (EVENT_DATA (event))))
+    c = XCHAR_OR_CHAR_INT (XKEY_DATA_KEYSYM (EVENT_DATA (event)));
+  else if (!SYMBOLP (XKEY_DATA_KEYSYM (EVENT_DATA (event))))
+#else /* not USE_KKCC */
   if (CHAR_OR_CHAR_INTP (event->event.key.keysym))
     c = XCHAR_OR_CHAR_INT (event->event.key.keysym);
   else if (!SYMBOLP (event->event.key.keysym))
+#endif /* not USE_KKCC */
     abort ();
   else if (allow_non_ascii && !NILP (Vcharacter_set_property)
 	   /* Allow window-system-specific extensibility of
 	      keysym->code mapping */
+#ifdef USE_KKCC
+	   && CHAR_OR_CHAR_INTP (code = Fget (XKEY_DATA_KEYSYM (EVENT_DATA (event)),
+					      Vcharacter_set_property,
+					      Qnil)))
+#else /* not USE_KKCC */
 	   && CHAR_OR_CHAR_INTP (code = Fget (event->event.key.keysym,
 					      Vcharacter_set_property,
 					      Qnil)))
+#endif /* not USE_KKCC */
     c = XCHAR_OR_CHAR_INT (code);
+#ifdef USE_KKCC
+  else if (CHAR_OR_CHAR_INTP (code = Fget (XKEY_DATA_KEYSYM (EVENT_DATA (event)),
+					   Qascii_character, Qnil)))
+#else /* not USE_KKCC */
   else if (CHAR_OR_CHAR_INTP (code = Fget (event->event.key.keysym,
 					   Qascii_character, Qnil)))
+#endif /* not USE_KKCC */
     c = XCHAR_OR_CHAR_INT (code);
   else
     return -1;
 
+#ifdef USE_KKCC
+  if (XKEY_DATA_MODIFIERS (EVENT_DATA (event)) & XEMACS_MOD_CONTROL)
+#else /* not USE_KKCC */
   if (event->event.key.modifiers & XEMACS_MOD_CONTROL)
+#endif /* not USE_KKCC */
     {
       if (c >= 'a' && c <= 'z')
 	c -= ('a' - 'A');
@@ -1090,7 +2085,11 @@ event_to_character (Lisp_Event *event,
 	if (! allow_extra_modifiers) return -1;
     }
 
+#ifdef USE_KKCC
+  if (XKEY_DATA_MODIFIERS (EVENT_DATA (event)) & XEMACS_MOD_META)
+#else /* not USE_KKCC */
   if (event->event.key.modifiers & XEMACS_MOD_META)
+#endif /* not USE_KKCC */
     {
       if (! allow_meta) return -1;
       if (c & 0200) return -1;		/* don't allow M-oslash (overlap) */
@@ -1217,22 +2216,37 @@ key_sequence_to_event_chain (Lisp_Object seq)
   return head;
 }
 
+
 /* Concatenate a string description of EVENT onto the end of BUF.  If
    BRIEF, use short forms for keys, e.g. C- instead of control-. */
 
+#ifdef USE_KKCC
+void
+format_event_object (Eistring *buf, Lisp_Object event, int brief)
+#else /* not USE_KKCC */
 void
 format_event_object (Eistring *buf, Lisp_Event *event, int brief)
+#endif /* not USE_KKCC */
 {
   int mouse_p = 0;
   int mod = 0;
   Lisp_Object key;
 
+#ifdef USE_KKCC
+  switch (EVENT_TYPE (XEVENT(event)))
+#else /* not USE_KKCC */
   switch (event->event_type)
+#endif /* not USE_KKCC */
     {
     case key_press_event:
       {
+#ifdef USE_KKCC
+	mod = XKEY_DATA_MODIFIERS (XEVENT_DATA(event));
+	key = XKEY_DATA_KEYSYM (XEVENT_DATA(event));
+#else /* not USE_KKCC */
         mod = event->event.key.modifiers;
         key = event->event.key.keysym;
+#endif /* not USE_KKCC */
         /* Hack. */
         if (! brief && CHARP (key) &&
             mod & (XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER |
@@ -1252,8 +2266,13 @@ format_event_object (Eistring *buf, Lisp_Event *event, int brief)
     case button_press_event:
       {
         mouse_p++;
+#ifdef USE_KKCC
+	mod = XBUTTON_DATA_MODIFIERS (XEVENT_DATA(event));
+	key = make_char (XBUTTON_DATA_BUTTON (XEVENT_DATA(event)) + '0');
+#else /* not USE_KKCC */
         mod = event->event.button.modifiers;
         key = make_char (event->event.button.button + '0');
+#endif /* not USE_KKCC */
         break;
       }
     case magic_event:
@@ -1263,7 +2282,11 @@ format_event_object (Eistring *buf, Lisp_Event *event, int brief)
 	GCPRO1 (stream);
 
 	stream = make_resizing_buffer_output_stream ();
+#ifdef USE_KKCC
+	event_stream_format_magic_event (XEVENT(event), stream);
+#else /* not USE_KKCC */
 	event_stream_format_magic_event (event, stream);
+#endif /* not USE_KKCC */
 	Lstream_flush (XLSTREAM (stream));
 	eicat_raw (buf, resizing_buffer_stream_ptr (XLSTREAM (stream)),
 		   Lstream_byte_count (XLSTREAM (stream)));
@@ -1325,6 +2348,7 @@ format_event_object (Eistring *buf, Lisp_Event *event, int brief)
     eicat_c (buf, "up");
 }
 
+
 DEFUN ("eventp", Feventp, 1, 1, 0, /*
 True if OBJECT is an event object.
 */
@@ -1338,8 +2362,13 @@ True if OBJECT is an event object that has not been deallocated.
 */
        (object))
 {
+#ifdef USE_KKCC
+  return EVENTP (object) && XEVENT_TYPE (object) != dead_event ?
+    Qt : Qnil;
+#else /* not USE_KKCC */
   return EVENTP (object) && XEVENT (object)->event_type != dead_event ?
     Qt : Qnil;
+#endif /* not USE_KKCC */
 }
 
 #if 0 /* debugging functions */
@@ -1405,7 +2434,11 @@ empty		The event has been allocated but not assigned.
        (event))
 {
   CHECK_LIVE_EVENT (event);
+#ifdef USE_KKCC
+  switch (XEVENT_TYPE (event))
+#else /* not USE_KKCC */
   switch (XEVENT (event)->event_type)
+#endif /* not USE_KKCC */
     {
     case key_press_event:	return Qkey_press;
     case button_press_event:	return Qbutton_press;
@@ -1441,8 +2474,13 @@ See also `current-event-timestamp'.
   /* This junk is so that timestamps don't get to be negative, but contain
      as many bits as this particular emacs will allow.
    */
+#ifdef USE_KKCC
+  return make_int (((1L << (VALBITS - 1)) - 1) &
+		      XEVENT_TIMESTAMP (event));
+#else /* not USE_KKCC */
   return make_int (((1L << (VALBITS - 1)) - 1) &
 		      XEVENT (event)->timestamp);
+#endif /* not USE_KKCC */
 }
 
 #define TIMESTAMP_HALFSPACE (1L << (VALBITS - 2))
@@ -1467,12 +2505,31 @@ See also `event-timestamp' and `current-event-timestamp'.
     return t1 - t2 < TIMESTAMP_HALFSPACE ? Qnil : Qt;
 }
 
+#ifdef USE_KKCC
+#define CHECK_EVENT_TYPE(e,t1,sym) do {		\
+  CHECK_LIVE_EVENT (e);				\
+  if (XEVENT_TYPE (e) != (t1))	        	\
+    e = wrong_type_argument (sym,e);		\
+} while (0)
+#else /* not USE_KKCC */
 #define CHECK_EVENT_TYPE(e,t1,sym) do {		\
   CHECK_LIVE_EVENT (e);				\
   if (XEVENT(e)->event_type != (t1))		\
     e = wrong_type_argument (sym,e);		\
 } while (0)
+#endif /* not USE_KKCC */
 
+#ifdef USE_KKCC
+#define CHECK_EVENT_TYPE2(e,t1,t2,sym) do {		\
+  CHECK_LIVE_EVENT (e);					\
+  {							\
+    emacs_event_type CET_type = XEVENT_TYPE (e);	\
+    if (CET_type != (t1) &&				\
+	CET_type != (t2))				\
+      e = wrong_type_argument (sym,e);			\
+  }							\
+} while (0)
+#else /* not USE_KKCC */
 #define CHECK_EVENT_TYPE2(e,t1,t2,sym) do {		\
   CHECK_LIVE_EVENT (e);					\
   {							\
@@ -1482,7 +2539,20 @@ See also `event-timestamp' and `current-event-timestamp'.
       e = wrong_type_argument (sym,e);			\
   }							\
 } while (0)
+#endif /* not USE_KKCC */
 
+#ifdef USE_KKCC
+#define CHECK_EVENT_TYPE3(e,t1,t2,t3,sym) do {		\
+  CHECK_LIVE_EVENT (e);					\
+  {							\
+    emacs_event_type CET_type = XEVENT_TYPE (e);	\
+    if (CET_type != (t1) &&				\
+	CET_type != (t2) &&				\
+	CET_type != (t3))				\
+      e = wrong_type_argument (sym,e);			\
+  }							\
+} while (0)
+#else /* not USE_KKCC */
 #define CHECK_EVENT_TYPE3(e,t1,t2,t3,sym) do {		\
   CHECK_LIVE_EVENT (e);					\
   {							\
@@ -1493,6 +2563,7 @@ See also `event-timestamp' and `current-event-timestamp'.
       e = wrong_type_argument (sym,e);			\
   }							\
 } while (0)
+#endif /* not USE_KKCC */
 
 DEFUN ("event-key", Fevent_key, 1, 1, 0, /*
 Return the Keysym of the key-press event EVENT.
@@ -1501,7 +2572,11 @@ This will be a character if the event is associated with one, else a symbol.
        (event))
 {
   CHECK_EVENT_TYPE (event, key_press_event, Qkey_press_event_p);
+#ifdef USE_KKCC
+  return XKEY_DATA_KEYSYM (XEVENT_DATA (event));
+#else /* not USE_KKCC */
   return XEVENT (event)->event.key.keysym;
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-button", Fevent_button, 1, 1, 0, /*
@@ -1513,10 +2588,17 @@ Return the button-number of the button-press or button-release event EVENT.
   CHECK_EVENT_TYPE3 (event, button_press_event, button_release_event,
 		     misc_user_event, Qbutton_event_p);
 #ifdef HAVE_WINDOW_SYSTEM
+#ifdef USE_KKCC
+  if ( XEVENT_TYPE (event) == misc_user_event)
+    return make_int (XMISC_USER_DATA_BUTTON (XEVENT_DATA (event)));
+  else
+    return make_int (XBUTTON_DATA_BUTTON (XEVENT_DATA (event)));
+#else /* not USE_KKCC */
   if ( XEVENT (event)->event_type == misc_user_event)
     return make_int (XEVENT (event)->event.misc.button);
   else
     return make_int (XEVENT (event)->event.button.button);
+#endif /* not USE_KKCC */
 #else /* !HAVE_WINDOW_SYSTEM */
   return Qzero;
 #endif /* !HAVE_WINDOW_SYSTEM */
@@ -1532,6 +2614,23 @@ See also the function `event-modifiers'.
 {
  again:
   CHECK_LIVE_EVENT (event);
+#ifdef USE_KKCC
+  switch (XEVENT_TYPE (event))
+    {
+    case key_press_event:
+      return make_int (XKEY_DATA_MODIFIERS (XEVENT_DATA (event)));
+    case button_press_event:
+    case button_release_event:
+      return make_int (XBUTTON_DATA_MODIFIERS (XEVENT_DATA (event)));
+    case pointer_motion_event:
+      return make_int (XMOTION_DATA_MODIFIERS (XEVENT_DATA (event)));
+    case misc_user_event:
+      return make_int (XMISC_USER_DATA_MODIFIERS (XEVENT_DATA (event)));
+    default:
+      event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
+      goto again;
+    }
+#else /* not USE_KKCC */
   switch (XEVENT (event)->event_type)
     {
     case key_press_event:
@@ -1547,6 +2646,7 @@ See also the function `event-modifiers'.
       event = wrong_type_argument (intern ("key-or-mouse-event-p"), event);
       goto again;
     }
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-modifiers", Fevent_modifiers, 1, 1, 0, /*
@@ -1619,6 +2719,26 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
   struct window *w;
   struct frame *f;
 
+#ifdef USE_KKCC
+  if (XEVENT_TYPE (event) == pointer_motion_event)
+    {
+      *x = XMOTION_DATA_X (XEVENT_DATA (event));
+      *y = XMOTION_DATA_Y (XEVENT_DATA (event));
+    }
+  else if (XEVENT_TYPE (event) == button_press_event ||
+	   XEVENT_TYPE (event) == button_release_event)
+    {
+      *x = XBUTTON_DATA_X (XEVENT_DATA (event));
+      *y = XBUTTON_DATA_Y (XEVENT_DATA (event));
+    }
+  else if (XEVENT_TYPE (event) == misc_user_event)
+    {
+      *x = XMISC_USER_DATA_X (XEVENT_DATA (event));
+      *y = XMISC_USER_DATA_Y (XEVENT_DATA (event));
+    }
+  else
+    return 0;
+#else /* not USE_KKCC */
   if (XEVENT (event)->event_type == pointer_motion_event)
     {
       *x = XEVENT (event)->event.motion.x;
@@ -1637,7 +2757,7 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
     }
   else
     return 0;
-
+#endif /* not USE_KKCC */
   f = XFRAME (EVENT_CHANNEL (XEVENT (event)));
 
   if (relative)
@@ -1774,6 +2894,27 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
   Lisp_Object ret_obj1, ret_obj2;
 
   CHECK_LIVE_EVENT (event);
+#ifdef USE_KKCC
+  frame = XEVENT_CHANNEL (event);
+  switch (XEVENT_TYPE (event))
+    {
+    case pointer_motion_event :
+      pix_x = XMOTION_DATA_X (XEVENT_DATA (event));
+      pix_y = XMOTION_DATA_Y (XEVENT_DATA (event));
+      break;
+    case button_press_event :
+    case button_release_event :
+      pix_x = XBUTTON_DATA_X (XEVENT_DATA (event));
+      pix_y = XBUTTON_DATA_Y (XEVENT_DATA (event));
+      break;
+    case misc_user_event :
+      pix_x = XMISC_USER_DATA_X (XEVENT_DATA (event));
+      pix_y = XMISC_USER_DATA_Y (XEVENT_DATA (event));
+      break;
+    default:
+      dead_wrong_type_argument (Qmouse_event_p, event);
+    }
+#else /* not USE_KKCC */
   frame = XEVENT (event)->channel;
   switch (XEVENT (event)->event_type)
     {
@@ -1793,6 +2934,7 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
     default:
       dead_wrong_type_argument (Qmouse_event_p, event);
     }
+#endif /* not USE_KKCC */
 
   result = pixel_to_glyph_translation (XFRAME (frame), pix_x, pix_y,
 				       &ret_x, &ret_y, &ret_obj_x, &ret_obj_y,
@@ -2101,8 +3243,13 @@ Return the process of the process-output event EVENT.
 */
        (event))
 {
+#ifdef USE_KKCC
+  CHECK_EVENT_TYPE (event, process_event, Qprocess_event_p);
+  return XPROCESS_DATA_PROCESS (XEVENT_DATA (event));
+#else /* not USE_KKCC */
   CHECK_EVENT_TYPE (event, process_event, Qprocess_event_p);
   return XEVENT (event)->event.process.process;
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-function", Fevent_function, 1, 1, 0, /*
@@ -2113,6 +3260,20 @@ EVENT should be a timeout, misc-user, or eval event.
 {
  again:
   CHECK_LIVE_EVENT (event);
+#ifdef USE_KKCC
+  switch (XEVENT_TYPE (event))
+    {
+    case timeout_event:
+      return XTIMEOUT_DATA_FUNCTION (XEVENT_DATA (event));
+    case misc_user_event:
+      return XMISC_USER_DATA_FUNCTION (XEVENT_DATA (event));
+    case eval_event:
+      return XEVAL_DATA_FUNCTION (XEVENT_DATA (event));
+    default:
+      event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
+      goto again;
+    }
+#else /* not USE_KKCC */
   switch (XEVENT (event)->event_type)
     {
     case timeout_event:
@@ -2125,6 +3286,7 @@ EVENT should be a timeout, misc-user, or eval event.
       event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
       goto again;
     }
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-object", Fevent_object, 1, 1, 0, /*
@@ -2135,6 +3297,20 @@ EVENT should be a timeout, misc-user, or eval event.
 {
  again:
   CHECK_LIVE_EVENT (event);
+#ifdef USE_KKCC
+  switch (XEVENT_TYPE (event))
+    {
+    case timeout_event:
+      return XTIMEOUT_DATA_OBJECT (XEVENT_DATA (event));
+    case misc_user_event:
+      return XMISC_USER_DATA_OBJECT (XEVENT_DATA (event));
+    case eval_event:
+      return XEVAL_DATA_OBJECT (XEVENT_DATA (event));
+    default:
+      event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
+      goto again;
+    }
+#else /* not USE_KKCC */
   switch (XEVENT (event)->event_type)
     {
     case timeout_event:
@@ -2147,6 +3323,7 @@ EVENT should be a timeout, misc-user, or eval event.
       event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
       goto again;
     }
+#endif /* not USE_KKCC */
 }
 
 DEFUN ("event-properties", Fevent_properties, 1, 1, 0, /*
@@ -2165,18 +3342,30 @@ This is in the form of a property list (alternating keyword/value pairs).
 
   props = cons3 (Qtimestamp, Fevent_timestamp (event), props);
 
+#ifdef USE_KKCC
+  switch (EVENT_TYPE (e))
+#else /* not USE_KKCC */
   switch (e->event_type)
+#endif /* not USE_KKCC */
     {
     default: abort ();
 
     case process_event:
+#ifdef USE_KKCC
+      props = cons3 (Qprocess, XPROCESS_DATA_PROCESS (EVENT_DATA (e)), props);
+#else /* not USE_KKCC */
       props = cons3 (Qprocess, e->event.process.process, props);
+#endif /* not USE_KKCC */
       break;
 
     case timeout_event:
       props = cons3 (Qobject,	Fevent_object	(event), props);
       props = cons3 (Qfunction, Fevent_function (event), props);
+#ifdef USE_KKCC
+      props = cons3 (Qid, make_int (XTIMEOUT_DATA_ID_NUMBER (EVENT_DATA (e))), props);
+#else /* not USE_KKCC */
       props = cons3 (Qid, make_int (e->event.timeout.id_number), props);
+#endif /* not USE_KKCC */
       break;
 
     case key_press_event:
@@ -2236,6 +3425,17 @@ void
 syms_of_events (void)
 {
   INIT_LRECORD_IMPLEMENTATION (event);
+#ifdef USE_KKCC
+  INIT_LRECORD_IMPLEMENTATION (key_data);
+  INIT_LRECORD_IMPLEMENTATION (button_data);
+  INIT_LRECORD_IMPLEMENTATION (motion_data);
+  INIT_LRECORD_IMPLEMENTATION (process_data);
+  INIT_LRECORD_IMPLEMENTATION (timeout_data);
+  INIT_LRECORD_IMPLEMENTATION (eval_data);
+  INIT_LRECORD_IMPLEMENTATION (misc_user_data);
+  INIT_LRECORD_IMPLEMENTATION (magic_eval_data);
+  INIT_LRECORD_IMPLEMENTATION (magic_data);
+#endif /* USE_KKCC */  
 
   DEFSUBR (Fcharacter_to_event);
   DEFSUBR (Fevent_to_character);

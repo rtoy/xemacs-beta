@@ -138,12 +138,23 @@ static const struct lrecord_description char_table_entry_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
+			       1, /* dumpable flag */
+                               mark_char_table_entry, internal_object_printer,
+			       0, char_table_entry_equal,
+			       char_table_entry_hash,
+			       char_table_entry_description,
+			       Lisp_Char_Table_Entry);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
                                mark_char_table_entry, internal_object_printer,
 			       0, char_table_entry_equal,
 			       char_table_entry_hash,
 			       char_table_entry_description,
 			       Lisp_Char_Table_Entry);
+#endif /* not USE_KKCC */
+
 #endif /* MULE */
 
 static Lisp_Object
@@ -389,11 +400,20 @@ static const struct lrecord_description char_table_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
+			       1, /*dumpable-flag*/
+                               mark_char_table, print_char_table, 0,
+			       char_table_equal, char_table_hash,
+			       char_table_description,
+			       Lisp_Char_Table);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
                                mark_char_table, print_char_table, 0,
 			       char_table_equal, char_table_hash,
 			       char_table_description,
 			       Lisp_Char_Table);
+#endif /* not USE_KKCC */
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.

@@ -61,6 +61,10 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 #include "console-stream.h"
 
+#ifdef USE_KKCC
+#include "file-coding.h"
+#endif /* USE_KKCC */
+
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
 #endif
@@ -937,6 +941,20 @@ static const struct lrecord_description cons_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
+				     1, /*dumpable-flag*/
+				     mark_cons, print_cons, 0,
+				     cons_equal,
+				     /*
+				      * No `hash' method needed.
+				      * internal_hash knows how to
+				      * handle conses.
+				      */
+				     0,
+				     cons_description,
+				     Lisp_Cons);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     mark_cons, print_cons, 0,
 				     cons_equal,
@@ -948,6 +966,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
 				     0,
 				     cons_description,
 				     Lisp_Cons);
+#endif /* not USE_KKCC */
 
 DEFUN ("cons", Fcons, 2, 2, 0, /*
 Create a new cons, give it CAR and CDR as components, and return it.
@@ -1155,13 +1174,22 @@ static const struct lrecord_description vector_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
+				       1, /*dumpable-flag*/
+				       mark_vector, print_vector, 0,
+				       vector_equal,
+				       vector_hash,
+				       vector_description,
+				       size_vector, Lisp_Vector);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
 				       mark_vector, print_vector, 0,
 				       vector_equal,
 				       vector_hash,
 				       vector_description,
 				       size_vector, Lisp_Vector);
-
+#endif /* not USE_KKCC */
 /* #### should allocate `small' vectors from a frob-block */
 static Lisp_Vector *
 make_vector_internal (Elemcount sizei)
@@ -1661,6 +1689,133 @@ allocate_event (void)
   return wrap_event (e);
 }
 
+#ifdef USE_KKCC
+DECLARE_FIXED_TYPE_ALLOC (key_data, Lisp_Key_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_key_data 1000
+
+Lisp_Object
+allocate_key_data (void)
+{
+  Lisp_Key_Data *d;
+
+  ALLOCATE_FIXED_TYPE (key_data, Lisp_Key_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_key_data);
+
+  return wrap_key_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (button_data, Lisp_Button_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_button_data 1000
+
+Lisp_Object
+allocate_button_data (void)
+{
+  Lisp_Button_Data *d;
+
+  ALLOCATE_FIXED_TYPE (button_data, Lisp_Button_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_button_data);
+
+  return wrap_button_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (motion_data, Lisp_Motion_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_motion_data 1000
+
+Lisp_Object
+allocate_motion_data (void)
+{
+  Lisp_Motion_Data *d;
+
+  ALLOCATE_FIXED_TYPE (motion_data, Lisp_Motion_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_motion_data);
+
+  return wrap_motion_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (process_data, Lisp_Process_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_process_data 1000
+
+Lisp_Object
+allocate_process_data (void)
+{
+  Lisp_Process_Data *d;
+
+  ALLOCATE_FIXED_TYPE (process_data, Lisp_Process_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_process_data);
+
+  return wrap_process_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (timeout_data, Lisp_Timeout_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_timeout_data 1000
+
+Lisp_Object
+allocate_timeout_data (void)
+{
+  Lisp_Timeout_Data *d;
+
+  ALLOCATE_FIXED_TYPE (timeout_data, Lisp_Timeout_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_timeout_data);
+
+  return wrap_timeout_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (magic_data, Lisp_Magic_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_data 1000
+
+Lisp_Object
+allocate_magic_data (void)
+{
+  Lisp_Magic_Data *d;
+
+  ALLOCATE_FIXED_TYPE (magic_data, Lisp_Magic_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_magic_data);
+
+  return wrap_magic_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (magic_eval_data, Lisp_Magic_Eval_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_magic_eval_data 1000
+
+Lisp_Object
+allocate_magic_eval_data (void)
+{
+  Lisp_Magic_Eval_Data *d;
+
+  ALLOCATE_FIXED_TYPE (magic_eval_data, Lisp_Magic_Eval_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_magic_eval_data);
+
+  return wrap_magic_eval_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (eval_data, Lisp_Eval_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_eval_data 1000
+
+Lisp_Object
+allocate_eval_data (void)
+{
+  Lisp_Eval_Data *d;
+
+  ALLOCATE_FIXED_TYPE (eval_data, Lisp_Eval_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_eval_data);
+
+  return wrap_eval_data(d);
+}
+
+DECLARE_FIXED_TYPE_ALLOC (misc_user_data, Lisp_Misc_User_Data);
+#define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_misc_user_data 1000
+
+Lisp_Object
+allocate_misc_user_data (void)
+{
+  Lisp_Misc_User_Data *d;
+
+  ALLOCATE_FIXED_TYPE (misc_user_data, Lisp_Misc_User_Data, d);
+  set_lheader_implementation (&d->lheader, &lrecord_misc_user_data);
+
+  return wrap_misc_user_data(d);
+}
+#endif /* USE_KKCC */
 
 /************************************************************************/
 /*			 Marker allocation				*/
@@ -1799,6 +1954,18 @@ string_plist (Lisp_Object string)
    is done with the ADDITIONAL_FREE_string macro, which is the
    standard way to do finalization when using
    SWEEP_FIXED_TYPE_BLOCK(). */
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
+						1, /*dumpable-flag*/
+						mark_string, print_string,
+						0, string_equal, 0,
+						string_description,
+						string_getprop,
+						string_putprop,
+						string_remprop,
+						string_plist,
+						Lisp_String);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						mark_string, print_string,
 						0, string_equal, 0,
@@ -1808,7 +1975,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("string", string,
 						string_remprop,
 						string_plist,
 						Lisp_String);
-
+#endif /* not USE_KKCC */
 /* String blocks contain this many useful bytes. */
 #define STRING_CHARS_BLOCK_SIZE					\
   ((Bytecount) (8192 - MALLOC_OVERHEAD -			\
@@ -2380,9 +2547,17 @@ mark_lcrecord_list (Lisp_Object obj)
   return Qnil;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
+			       0, /*dumpable-flag*/
+			       mark_lcrecord_list, internal_object_printer,
+			       0, 0, 0, 0, struct lcrecord_list);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
 			       mark_lcrecord_list, internal_object_printer,
 			       0, 0, 0, 0, struct lcrecord_list);
+#endif /* not USE_KKCC */
+
 Lisp_Object
 make_lcrecord_list (Elemcount size,
 		    const struct lrecord_implementation *implementation)
@@ -2663,7 +2838,342 @@ staticpro_nodump (Lisp_Object *varaddress)
 #define GC_CHECK_LHEADER_INVARIANTS(lheader)
 #endif
 
-
+
+
+#ifdef USE_KKCC
+/* The following functions implement the new mark algorithm. 
+   They mark objects according to their descriptions. They 
+   are modeled on the corresponding pdumper procedures. */
+
+static void mark_struct_contents (const void *data,
+						   const struct struct_description *
+						   sdesc,
+						   int count);
+
+/* This function extracts the value of a count variable described somewhere 
+   else in the description. It is converted corresponding to the type */ 
+static EMACS_INT
+get_indirect_count (EMACS_INT code,
+			  const struct lrecord_description *idesc,
+			  const void *idata)
+{
+  EMACS_INT count;
+  const void *irdata;
+
+  int line = XD_INDIRECT_VAL (code);
+  int delta = XD_INDIRECT_DELTA (code);
+
+  irdata = ((char *)idata) + idesc[line].offset;
+  switch (idesc[line].type)
+    {
+    case XD_BYTECOUNT:
+      count = *(Bytecount *)irdata;
+      break;
+    case XD_ELEMCOUNT:
+      count = *(Elemcount *)irdata;
+      break;
+    case XD_HASHCODE:
+      count = *(Hashcode *)irdata;
+      break;
+    case XD_INT:
+      count = *(int *)irdata;
+      break;
+    case XD_LONG:
+      count = *(long *)irdata;
+      break;
+    default:
+      stderr_out ("Unsupported count type : %d (line = %d, code = %ld)\n",
+		  idesc[line].type, line, (long)code);
+      count = 0; /* warning suppression */
+      abort ();
+    }
+  count += delta;
+  return count;
+}
+
+/* This function is called to mark the elements of an object. It processes
+   the description of the object and calls mark object with every described
+   object. */
+static void
+mark_with_description (const void *lheader, const struct lrecord_description *desc)
+{
+  int pos;
+
+  static const Lisp_Object *last_occured_object = (Lisp_Object *) 0;
+  static int mark_last_occured_object = 0;
+
+ reprocess_desc:
+  for (pos=0; desc[pos].type != XD_END; pos++)
+    {
+      const void *rdata = (const char *)lheader + desc[pos].offset;
+      switch (desc[pos].type) {
+      case XD_LISP_OBJECT: 
+	{
+	  const Lisp_Object *stored_obj = (const Lisp_Object *)rdata;
+	  if (!(*stored_obj)){
+	    break;
+	  }
+
+	  if (desc[pos+1].type == XD_END)
+	    {
+	      mark_last_occured_object = 1;
+	      last_occured_object = stored_obj;
+	      break;
+	    }
+	  else
+	    {
+	      mark_object (*stored_obj);
+	    }
+	  
+	  
+	  break;
+	}
+      case XD_LISP_OBJECT_ARRAY:
+	{
+	  int i;
+	  EMACS_INT count = desc[pos].data1;
+	  if (XD_IS_INDIRECT (count))
+	    count = get_indirect_count (count, desc, lheader);
+	
+	  for (i = 0; i < count; i++)
+	    {
+	      const Lisp_Object *stored_obj = ((const Lisp_Object *)rdata) + i;
+	      if (!(*stored_obj))
+		{
+		  break;
+		}
+
+	      mark_object (*stored_obj);
+	    }
+	  break;
+	}
+      case XD_SPECIFIER_END:
+	desc = ((const Lisp_Specifier *)lheader)->methods->extra_description;
+	goto reprocess_desc;
+	break;
+      case XD_CODING_SYSTEM_END:
+	desc = ((const Lisp_Coding_System *)lheader)->methods->extra_description;
+	goto reprocess_desc;
+	break;
+      case XD_BYTECOUNT:
+	break;
+      case XD_ELEMCOUNT:
+	break;
+      case XD_HASHCODE:
+	break;
+      case XD_INT:
+	break;
+      case XD_LONG:
+	break;
+      case XD_INT_RESET:
+	break;
+      case XD_LO_LINK:
+	break;
+      case XD_OPAQUE_PTR:
+	break;
+      case XD_OPAQUE_DATA_PTR:
+	break;
+      case XD_C_STRING:
+	break;
+      case XD_DOC_STRING:
+	break;
+      case XD_STRUCT_PTR:
+	{
+	  EMACS_INT count = desc[pos].data1;
+	  const struct struct_description *sdesc = desc[pos].data2;
+	  const char *dobj = *(const char **)rdata;
+	  if (dobj)
+	    {
+	      if (XD_IS_INDIRECT (count))
+		count = get_indirect_count (count, desc, lheader);
+	      mark_struct_contents (dobj, sdesc, count);
+	    }
+	  break;
+	}
+      case XD_STRUCT_ARRAY:
+	{
+	  EMACS_INT count = desc[pos].data1;
+	  const struct struct_description *sdesc = desc[pos].data2;
+		      
+	  if (XD_IS_INDIRECT (count))
+	    count = get_indirect_count (count, desc, lheader);
+		      
+	  mark_struct_contents (rdata, sdesc, count);
+	  break;
+	}
+      case XD_UNION:
+	{
+	  int count = 0;
+	  int variant = desc[pos].data1;
+	  const struct struct_description *sdesc = desc[pos].data2;
+	  const char *dobj = *(const char **)rdata;
+	  if (XD_IS_INDIRECT (variant))
+	    variant = get_indirect_count (variant, desc, lheader);
+	  
+	  for (count=0; sdesc[count].size != XD_END; count++)
+	    {
+	      if (sdesc[count].size == variant)
+		{
+		  mark_with_description(dobj, sdesc[count].description);
+		  break;
+		}
+	    }
+	  break;
+	}
+		    
+      default:
+	stderr_out ("Unsupported description type : %d\n", desc[pos].type);
+	abort ();
+      }
+    }
+
+  if (mark_last_occured_object)
+    {
+      mark_object(*last_occured_object);
+      mark_last_occured_object = 0;
+    }
+}
+
+
+/* This function calculates the size of a described struct. */
+static Bytecount
+structure_size (const void *obj, const struct struct_description *sdesc)
+{
+  int max_offset = -1;
+  int max_offset_pos = -1;
+  int size_at_max = 0;
+  int pos;
+  const struct lrecord_description *desc;
+  void *rdata;
+
+  if (sdesc->size)
+    return sdesc->size;
+
+  desc = sdesc->description;
+
+  for (pos = 0; desc[pos].type != XD_END; pos++)
+    {
+      if (desc[pos].offset == max_offset)
+	{
+	  stderr_out ("Two relocatable elements at same offset?\n");
+	  abort ();
+	}
+      else if (desc[pos].offset > max_offset)
+	{
+	  max_offset = desc[pos].offset;
+	  max_offset_pos = pos;
+	}
+    }
+
+  if (max_offset_pos < 0)
+    return 0;
+
+  pos = max_offset_pos;
+  rdata = (char *) obj + desc[pos].offset;
+
+  switch (desc[pos].type)
+    {
+    case XD_LISP_OBJECT_ARRAY:
+      {
+	EMACS_INT val = desc[pos].data1;
+	if (XD_IS_INDIRECT (val))
+	  val = get_indirect_count (val, desc, obj);
+	size_at_max = val * sizeof (Lisp_Object);
+	break;
+      }
+    case XD_LISP_OBJECT:
+    case XD_LO_LINK:
+      size_at_max = sizeof (Lisp_Object);
+      break;
+    case XD_OPAQUE_PTR:
+      size_at_max = sizeof (void *);
+      break;
+    case XD_STRUCT_PTR:
+      {
+	EMACS_INT val = desc[pos].data1;
+	if (XD_IS_INDIRECT (val))
+	  val = get_indirect_count (val, desc, obj);
+	size_at_max = val * sizeof (void *);
+	break;
+      }
+      break;
+    case XD_STRUCT_ARRAY:
+      {
+	EMACS_INT val = desc[pos].data1;
+
+	if (XD_IS_INDIRECT (val))
+	  val = get_indirect_count (val, desc, obj);
+	    
+	size_at_max = val * structure_size (rdata, desc[pos].data2);
+	break;
+      }
+      break;
+    case XD_OPAQUE_DATA_PTR:
+      size_at_max = sizeof (void *);
+      break;
+    case XD_UNION:
+      abort ();
+      break;
+    case XD_C_STRING:
+      size_at_max = sizeof (void *);
+      break;
+    case XD_DOC_STRING:
+      size_at_max = sizeof (void *);
+      break;
+    case XD_INT_RESET:
+      size_at_max = sizeof (int);
+      break;
+    case XD_BYTECOUNT:
+      size_at_max = sizeof (Bytecount);
+      break;
+    case XD_ELEMCOUNT:
+      size_at_max = sizeof (Elemcount);
+      break;
+    case XD_HASHCODE:
+      size_at_max = sizeof (Hashcode);
+      break;
+    case XD_INT:
+      size_at_max = sizeof (int);
+      break;
+    case XD_LONG:
+      size_at_max = sizeof (long);
+      break;
+    case XD_SPECIFIER_END:
+    case XD_CODING_SYSTEM_END:
+      stderr_out
+	("Should not be seeing XD_SPECIFIER_END or\n"
+	 "XD_CODING_SYSTEM_END outside of struct Lisp_Specifier\n"
+	 "and struct Lisp_Coding_System.\n");
+      abort ();
+    default:
+      stderr_out ("Unsupported dump type : %d\n", desc[pos].type);
+      abort ();
+    }
+
+  return ALIGN_SIZE (max_offset + size_at_max, ALIGNOF (max_align_t));
+}
+
+
+/* This function loops all elements of a struct pointer and calls 
+   mark_with_description with each element. */
+static void
+mark_struct_contents (const void *data,
+				const struct struct_description *sdesc,
+				int count)
+{
+  int i;
+  Bytecount elsize;
+  elsize = structure_size (data, sdesc);
+
+  for (i = 0; i < count; i++)
+    {
+      mark_with_description (((char *) data) + elsize * i,
+					  sdesc->description);
+    }
+}
+
+#endif /* USE_KKCC */  
+
 /* Mark reference to a Lisp_Object.  If the object referred to has not been
    seen yet, recursively mark all the references contained in it. */
 
@@ -2680,6 +3190,10 @@ mark_object (Lisp_Object obj)
   if (XTYPE (obj) == Lisp_Type_Record)
     {
       struct lrecord_header *lheader = XRECORD_LHEADER (obj);
+#ifdef USE_KKCC
+      const struct lrecord_implementation *imp;
+      const struct lrecord_description *desc;
+#endif /* USE_KKCC */      
 
       GC_CHECK_LHEADER_INVARIANTS (lheader);
 
@@ -2692,11 +3206,30 @@ mark_object (Lisp_Object obj)
 	{
 	  MARK_RECORD_HEADER (lheader);
 
-	  if (RECORD_MARKER (lheader))
+#ifdef USE_KKCC
+	  imp = LHEADER_IMPLEMENTATION (lheader);
+	  desc = imp->description;
+	  
+	  if (desc) /* && !CONSP(obj))*/  /* KKCC cons special case */
 	    {
-	      obj = RECORD_MARKER (lheader) (obj);
-	      if (!NILP (obj)) goto tail_recurse;
+	      mark_with_description (lheader, desc);
 	    }
+	  
+	  else 
+	    {
+
+#endif /* USE_KKCC */
+
+
+	      if (RECORD_MARKER (lheader))
+		{
+		  obj = RECORD_MARKER (lheader) (obj);
+		  if (!NILP (obj)) goto tail_recurse;
+		}
+
+#ifdef USE_KKCC
+	    }
+#endif /* USE_KKCC */
 	}
     }
 }
@@ -3133,6 +3666,91 @@ sweep_events (void)
   SWEEP_FIXED_TYPE_BLOCK (event, Lisp_Event);
 }
 
+#ifdef USE_KKCC
+
+static void
+sweep_key_data (void)
+{
+#define UNMARK_key_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_key_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (key_data, Lisp_Key_Data);
+}
+
+static void
+sweep_button_data (void)
+{
+#define UNMARK_button_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_button_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (button_data, Lisp_Button_Data);
+}
+
+static void
+sweep_motion_data (void)
+{
+#define UNMARK_motion_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_motion_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (motion_data, Lisp_Motion_Data);
+}
+
+static void
+sweep_process_data (void)
+{
+#define UNMARK_process_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_process_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (process_data, Lisp_Process_Data);
+}
+
+static void
+sweep_timeout_data (void)
+{
+#define UNMARK_timeout_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_timeout_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (timeout_data, Lisp_Timeout_Data);
+}
+
+static void
+sweep_magic_data (void)
+{
+#define UNMARK_magic_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_magic_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (magic_data, Lisp_Magic_Data);
+}
+
+static void
+sweep_magic_eval_data (void)
+{
+#define UNMARK_magic_eval_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_magic_eval_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (magic_eval_data, Lisp_Magic_Eval_Data);
+}
+
+static void
+sweep_eval_data (void)
+{
+#define UNMARK_eval_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_eval_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (eval_data, Lisp_Eval_Data);
+}
+
+static void
+sweep_misc_user_data (void)
+{
+#define UNMARK_misc_user_data(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#define ADDITIONAL_FREE_misc_user_data(ptr)
+
+  SWEEP_FIXED_TYPE_BLOCK (misc_user_data, Lisp_Misc_User_Data);
+}
+
+#endif /* USE_KKCC */
+
 static void
 sweep_markers (void)
 {
@@ -3442,6 +4060,18 @@ gc_sweep (void)
   sweep_markers ();
 
   sweep_events ();
+
+#ifdef USE_KKCC
+  sweep_key_data ();
+  sweep_button_data ();
+  sweep_motion_data ();
+  sweep_process_data ();
+  sweep_timeout_data ();
+  sweep_magic_data ();
+  sweep_magic_eval_data ();
+  sweep_eval_data ();
+  sweep_misc_user_data ();
+#endif /* USE_KKCC */
 
 #ifdef PDUMP
   pdump_objects_unmark ();
@@ -3880,7 +4510,6 @@ Garbage collection happens automatically if you cons more than
   Lisp_Object pl = Qnil;
   int i;
   int gc_count_vector_total_size = 0;
-
   garbage_collect_1 ();
 
   for (i = 0; i < lrecord_type_count; i++)
@@ -4229,6 +4858,17 @@ common_init_alloc_once_early (void)
   init_marker_alloc ();
   init_extent_alloc ();
   init_event_alloc ();
+#ifdef USE_KKCC
+  init_key_data_alloc ();
+  init_button_data_alloc ();
+  init_motion_data_alloc ();
+  init_process_data_alloc ();
+  init_timeout_data_alloc ();
+  init_magic_data_alloc ();
+  init_magic_eval_data_alloc ();
+  init_eval_data_alloc ();
+  init_misc_user_data_alloc ();
+#endif /* USE_KKCC */
 
   ignore_malloc_warnings = 0;
 

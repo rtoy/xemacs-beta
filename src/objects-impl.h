@@ -103,6 +103,10 @@ struct Lisp_Color_Instance
   Lisp_Object name;
   Lisp_Object device;
 
+#ifdef USE_KKCC
+  enum console_variant color_instance_type;
+#endif /* USE_KKCC */
+
   /* console-type-specific data */
   void *data;
 };
@@ -124,6 +128,10 @@ struct Lisp_Font_Instance
 			   if they know it, and nil otherwise; we should
 			   check this and enforce it as a general policy) */
   Lisp_Object device;
+
+#ifdef USE_KKCC
+  enum console_variant font_instance_type;
+#endif /* USE_KKCC */
 
   unsigned short ascent;	/* extracted from `font', or made up */
   unsigned short descent;

@@ -1,3 +1,93 @@
+2002-07-17  Marcus Crestani  <crestani@informatik.uni-tuebingen.de>
+	    Markus Kaltenbach  <makalten@informatik.uni-tuebingen.de>
+	    Mike Sperber <mike@xemacs.org>
+
+	configure flag to turn these changes on: --use-kkcc
+	
+	First we added a dumpable flag to lrecord_implementation. It shows,
+	if the object is dumpable and should be processed by the dumper.
+	* lrecord.h (struct lrecord_implementation): added dumpable flag
+	(MAKE_LRECORD_IMPLEMENTATION): fitted the different makro definitions
+	to the new lrecord_implementation and their calls.
+
+	Then we changed mark_object, that it no longer needs a mark method for
+	those types that have pdump descritions.
+	* alloc.c: 
+	(mark_object): If the object has a description, the new mark algorithm
+	is called, and the object is marked according to its description. 
+	Otherwise it uses the mark method like before.
+	
+	These procedures mark objects according to their descriptions. They 
+	are modeled on the corresponding pdumper procedures.
+	(mark_with_description): 
+	(get_indirect_count): 
+	(structure_size): 
+	(mark_struct_contents): 
+	These procedures still call mark_object, this is needed while there are
+	Lisp_Objects without descriptions left.
+
+	We added pdump descriptions for many Lisp_Objects:
+	* extents.c: extent_auxiliary_description
+	* database.c: database_description
+	* gui.c: gui_item_description
+	* scrollbar.c: scrollbar_instance_description
+	* toolbar.c: toolbar_button_description
+	* event-stream.c: command_builder_description
+	* mule-charset.c: charset_description
+	* device-msw.c: devmode_description
+	* dialog-msw.c: mswindows_dialog_id_description
+	* eldap.c: ldap_description
+	* postgresql.c: pgconn_description
+			pgresult_description
+	* tooltalk.c: tooltalk_message_description
+		      tooltalk_pattern_description
+	* ui-gtk.c: emacs_ffi_description
+	            emacs_gtk_object_description
+
+	* events.c:
+	* events.h:
+	* event-stream.c:
+	* event-Xt.c:
+	* event-gtk.c:
+	* event-tty.c:
+	To write a pdump description for Lisp_Event, we converted every struct
+	in the union event to a Lisp_Object. So we created nine new 
+	Lisp_Objects: Lisp_Key_Data, Lisp_Button_Data, Lisp_Motion_Data,
+	Lisp_Process_Data, Lisp_Timeout_Data, Lisp_Eval_Data, 
+	Lisp_Misc_User_Data, Lisp_Magic_Data, Lisp_Magic_Eval_Data.
+	We also wrote makro selectors and mutators for the fields of the new 
+	designed Lisp_Event and added everywhere these new abstractions.
+
+
+	We implemented XD_UNION support in (mark_with_description), so
+	we can describe exspecially console/device specific data with XD_UNION.
+	To describe with XD_UNION, we added a field to these objects, which 
+	holds the variant type of the object. This field is initialized in 
+	the appendant constructor. The variant is an integer, it has also to 
+	be described in an description, if XD_UNION is used.
+
+	XD_UNION is used in following descriptions:	
+	* console.c: console_description
+	(get_console_variant): returns the variant
+	(create_console): added variant initialization
+	* console.h (console_variant): the different console types
+	* console-impl.h (struct console): added enum console_variant contype
+
+	* device.c: device_description
+	(Fmake_device): added variant initialization
+	* device-impl.h (struct device): added enum console_variant devtype
+
+	* objects.c: image_instance_description
+	             font_instance_description
+	(Fmake_color_instance): added variant initialization
+	(Fmake_font_instance): added variant initialization
+	* objects-impl.h (struct Lisp_Color_Instance): added color_instance_type
+	* objects-impl.h (struct Lisp_Font_Instance): added font_instance_type
+
+	* process.c: process_description
+	(make_process_internal): added variant initialization
+	* process.h (process_variant): the different process types
+
 2002-07-27  Steve Youngs  <youngs@xemacs.org>
 
 	* XEmacs 21.5.8 "broccoli" is released.

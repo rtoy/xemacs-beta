@@ -98,6 +98,13 @@ make_ldap (Lisp_LDAP *ldap)
   return wrap_ldap (ldap);
 }
 
+#ifdef USE_KKCC
+static const struct lrecord_description ldap_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct Lisp_LDAP, host) },
+  { XD_END }
+};
+#endif USE_KKCC
+
 static Lisp_Object
 mark_ldap (Lisp_Object obj)
 {
@@ -142,10 +149,15 @@ finalize_ldap (void *header, int for_disksave)
   ldap->ld = NULL;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap,
+                               mark_ldap, print_ldap, finalize_ldap,
+                               NULL, NULL, ldap_description, Lisp_LDAP);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap,
                                mark_ldap, print_ldap, finalize_ldap,
                                NULL, NULL, 0, Lisp_LDAP);
-
+#endif /* not USE_KKCC */
 
 
 

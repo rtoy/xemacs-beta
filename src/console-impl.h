@@ -407,6 +407,10 @@ struct console
   /* Description of this console's methods.  */
   struct console_methods *conmeths;
 
+#ifdef USE_KKCC
+  enum console_variant contype;
+#endif /* USE_KKCC */  
+
   /* A structure of auxiliary data specific to the console type.
      struct x_console is used for X window frames; defined in console-x.h
      struct tty_console is used to TTY's; defined in console-tty.h */

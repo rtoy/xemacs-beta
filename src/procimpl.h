@@ -149,6 +149,10 @@ struct Lisp_Process
   Lisp_Object coding_outstream;
   Lisp_Object coding_errstream;
 
+#ifdef USE_KKCC
+  enum process_variant process_type;
+#endif /* USE_KKCC */
+
   /* Implementation dependent data */
   void *process_data;
 };
@@ -185,5 +189,25 @@ void send_process (Lisp_Object proc,
 		   Lisp_Object relocatable,
 		   const Ibyte *nonrelocatable,
 		   int start, int len);
+
+#ifdef USE_KKCC
+struct unix_process_data
+{
+  /* Non-0 if this is really a ToolTalk channel. */
+  int connected_via_filedesc_p;
+  /* Descriptor by which we read from this process.  -1 for dead process */
+  int infd;
+  /* Descriptor by which we read stderr from this process.  -1 for
+     dead process */
+  int errfd;
+  /* Descriptor for the tty which this process is using.
+     -1 if we didn't record it (on some systems, there's no need).  */
+  int subtty;
+  /* Name of subprocess terminal. */
+  Lisp_Object tty_name;
+  /* Non-false if communicating through a pty.  */
+  char pty_flag;
+};
+#endif /* USE_KKCC */
 
 #endif /* INCLUDED_procimpl_h_ */

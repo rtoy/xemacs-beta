@@ -591,7 +591,12 @@ pdump_register_object (Lisp_Object obj)
 
   imp = LHEADER_IMPLEMENTATION (objh);
 
+#ifdef USE_KKCC
+  if (imp->description
+      && RECORD_DUMPABLE(objh))
+#else /* not USE_KKCC */
   if (imp->description)
+#endif /* not USE_KKCC */    
     {
       int me = depth++;
       if (me > 65536)

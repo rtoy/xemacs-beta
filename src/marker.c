@@ -103,10 +103,18 @@ static const struct lrecord_description marker_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
+				     1, /*dumpable-flag*/
+				     mark_marker, print_marker, 0,
+				     marker_equal, marker_hash, marker_description,
+				     Lisp_Marker);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
 				     mark_marker, print_marker, 0,
 				     marker_equal, marker_hash, marker_description,
 				     Lisp_Marker);
+#endif /* not USE_KKCC */
 
 /* Operations on markers. */
 

@@ -27,6 +27,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "systime.h"
 
+#ifdef USE_KKCC
+#include "opaque.h"
+#endif /* USE_KKCC */
+
 /* There is one object called an event_stream.  This object contains
    callback functions for doing the window-system-dependent operations
    that XEmacs requires.
@@ -227,6 +231,18 @@ struct event_stream
 
 extern struct event_stream *event_stream;
 
+#ifdef USE_KKCC
+Lisp_Object make_key_data (void);
+Lisp_Object make_button_data (void);
+Lisp_Object make_motion_data (void);
+Lisp_Object make_process_data (void);
+Lisp_Object make_timeout_data (void);
+Lisp_Object make_magic_data (void);
+Lisp_Object make_magic_eval_data (void);
+Lisp_Object make_eval_data (void);
+Lisp_Object make_misc_user_data (void);
+#endif USE_KKCC
+
 typedef enum emacs_event_type
 {
   empty_event,
@@ -262,8 +278,15 @@ enum alternative_key_chars
 
 #endif /* MULE */
 
+#ifdef USE_KKCC
+struct Lisp_Key_Data
+#else /* not USE_KKCC */
 struct key_data
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   /* What keysym this is; a character or a symbol. */
   Lisp_Object keysym;
   /* Modifiers held down when key was pressed: control, meta, etc.
@@ -292,8 +315,36 @@ struct key_data
 #endif /* MULE */
 };
 
+#ifdef USE_KKCC
+typedef struct Lisp_Key_Data Lisp_Key_Data;
+
+DECLARE_LRECORD (key_data, Lisp_Key_Data);
+#define XKEY_DATA(x) XRECORD (x, key_data, Lisp_Key_Data)
+#define wrap_key_data(p) wrap_record (p, key_data)
+#define KEY_DATAP(x) RECORDP (x, key_data)
+#define CHECK_KEY_DATA(x) CHECK_RECORD (x, key_data)
+#define CONCHECK_KEY_DATA(x) CONCHECK_RECORD (x, key_data)
+
+#define XKEY_DATA_KEYSYM(d) (XKEY_DATA (d)->keysym)
+#define KEY_DATA_KEYSYM(d) ((d)->keysym)
+#define XKEY_DATA_MODIFIERS(d) (XKEY_DATA (d)->modifiers)
+#define KEY_DATA_MODIFIERS(d) ((d)->modifiers)
+
+#define XSET_KEY_DATA_KEYSYM(d, k) (XKEY_DATA (d)->keysym = (k))
+#define SET_KEY_DATA_KEYSYM(d, k) ((d)->keysym = k)
+#define XSET_KEY_DATA_MODIFIERS(d, m) (XKEY_DATA (d)->modifiers = m)
+#define SET_KEY_DATA_MODIFIERS(d, m) ((d)->modifiers = m)
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Button_Data
+#else /* not USE_KKCC */
 struct button_data
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   /* What button went down or up. */
   int button;
   /* Bucky-bits on that button: shift, control, meta, etc.  Also
@@ -302,22 +353,91 @@ struct button_data
   /*  Where it was at the button-state-change (in pixels). */
   int x, y;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Button_Data Lisp_Button_Data;
 
+DECLARE_LRECORD (button_data, Lisp_Button_Data);
+#define XBUTTON_DATA(x) XRECORD (x, button_data, Lisp_Button_Data)
+#define wrap_button_data(p) wrap_record (p, button_data)
+#define BUTTON_DATAP(x) RECORDP (x, button_data)
+#define CHECK_BUTTON_DATA(x) CHECK_RECORD (x, button_data)
+#define CONCHECK_BUTTON_DATA(x) CONCHECK_RECORD (x, button_data)
+
+#define XBUTTON_DATA_BUTTON(d) (XBUTTON_DATA (d)->button)
+#define XBUTTON_DATA_MODIFIERS(d) (XBUTTON_DATA (d)->modifiers)
+#define XBUTTON_DATA_X(d) (XBUTTON_DATA (d)->x)
+#define XBUTTON_DATA_Y(d) (XBUTTON_DATA (d)->y)
+
+#define XSET_BUTTON_DATA_BUTTON(d, b) (XBUTTON_DATA (d)->button = (b))
+#define XSET_BUTTON_DATA_MODIFIERS(d, m) (XBUTTON_DATA (d)->modifiers = (m))
+#define XSET_BUTTON_DATA_X(d, new_x) (XBUTTON_DATA (d)->x = (new_x))
+#define XSET_BUTTON_DATA_Y(d, new_y) (XBUTTON_DATA (d)->y = (new_y))
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Motion_Data
+#else /* not USE_KKCC */
 struct motion_data
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   /* Where it was after it moved (in pixels). */
   int x, y;
   /* Bucky-bits down when the motion was detected. */
   int modifiers;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Motion_Data Lisp_Motion_Data;
 
+DECLARE_LRECORD (motion_data, Lisp_Motion_Data);
+#define XMOTION_DATA(x) XRECORD (x, motion_data, Lisp_Motion_Data)
+#define wrap_motion_data(p) wrap_record (p, motion_data)
+#define MOTION_DATAP(x) RECORDP (x, motion_data)
+#define CHECK_MOTION_DATA(x) CHECK_RECORD (x, motion_data)
+#define CONCHECK_MOTION_DATA(x) CONCHECK_RECORD (x, motion_data)
+
+#define XMOTION_DATA_X(d) (XMOTION_DATA (d)->x)
+#define XMOTION_DATA_Y(d) (XMOTION_DATA (d)->y)
+#define XMOTION_DATA_MODIFIERS(d) (XMOTION_DATA (d)->modifiers)
+
+#define XSET_MOTION_DATA_X(d, new_x) (XMOTION_DATA (d)->x = (new_x))
+#define XSET_MOTION_DATA_Y(d, new_y) (XMOTION_DATA (d)->y = (new_y))
+#define XSET_MOTION_DATA_MODIFIERS(d, m) (XMOTION_DATA (d)->modifiers = (m))
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Process_Data
+#else /* not USE_KKCC */
 struct process_data
+#endif /* not USE_KKCC */
 {
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   /* the XEmacs "process" object in question */
   Lisp_Object process;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Process_Data Lisp_Process_Data;
 
+DECLARE_LRECORD (process_data, Lisp_Process_Data);
+#define XPROCESS_DATA(x) XRECORD (x, process_data, Lisp_Process_Data)
+#define wrap_process_data(p) wrap_record (p, process_data)
+#define PROCESS_DATAP(x) RECORDP (x, process_data)
+#define CHECK_PROCESS_DATA(x) CHECK_RECORD (x, process_data)
+#define CONCHECK_PROCESS_DATA(x) CONCHECK_RECORD (x, process_data)
+
+#define XPROCESS_DATA_PROCESS(d) (XPROCESS_DATA (d)->process)
+#define XSET_PROCESS_DATA_PROCESS(d, p) (XPROCESS_DATA (d)->process = (p))
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Timeout_Data
+#else /* not USE_KKCC */
 struct timeout_data
+#endif /* not USE_KKCC */
 {
 /*
     interval_id		The ID returned when the associated call to
@@ -332,13 +452,40 @@ struct timeout_data
 			processed.
     object		The object passed to that function.
 */
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   int interval_id;
   int id_number;
   Lisp_Object function;
   Lisp_Object object;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Timeout_Data Lisp_Timeout_Data;
 
+DECLARE_LRECORD (timeout_data, Lisp_Timeout_Data);
+#define XTIMEOUT_DATA(x) XRECORD (x, timeout_data, Lisp_Timeout_Data)
+#define wrap_timeout_data(p) wrap_record(p, timeout_data)
+#define TIMEOUT_DATAP(x) RECORDP (x, timeout_data)
+#define CHECK_TIMEOUT_DATA(x) CHECK_RECORD (x, timeout_data)
+#define CONCHECK_TIMEOUT_DATA(x) CONCHECK_RECORD (x, timeout_data)
+
+#define XTIMEOUT_DATA_INTERVAL_ID(d) XTIMEOUT_DATA (d)->interval_id
+#define XTIMEOUT_DATA_ID_NUMBER(d) XTIMEOUT_DATA (d)->id_number
+#define XTIMEOUT_DATA_FUNCTION(d) XTIMEOUT_DATA (d)->function
+#define XTIMEOUT_DATA_OBJECT(d) XTIMEOUT_DATA (d)->object
+
+#define XSET_TIMEOUT_DATA_INTERVAL_ID(d, i) XTIMEOUT_DATA (d)->interval_id = (i)
+#define XSET_TIMEOUT_DATA_ID_NUMBER(d, n) XTIMEOUT_DATA (d)->id_number = (n)
+#define XSET_TIMEOUT_DATA_FUNCTION(d, f) XTIMEOUT_DATA (d)->function = f
+#define XSET_TIMEOUT_DATA_OBJECT(d, o) XTIMEOUT_DATA (d)->object = o
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Eval_Data
+#else /* not USE_KKCC */
 struct eval_data
+#endif /* not USE_KKCC */
 {
 /* This kind of event is used internally; sometimes the window system
    interface would like to inform XEmacs of some user action (such as
@@ -350,11 +497,34 @@ struct eval_data
     function		An elisp function to call with this event object.
     object		Argument of function.
 */
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   Lisp_Object function;
   Lisp_Object object;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Eval_Data Lisp_Eval_Data;
 
+DECLARE_LRECORD (eval_data, Lisp_Eval_Data);
+#define XEVAL_DATA(x) XRECORD (x, eval_data, Lisp_Eval_Data)
+#define wrap_eval_data(p) wrap_record(p, eval_data)
+#define EVAL_DATAP(x) RECORDP (x, eval_data)
+#define CHECK_EVAL_DATA(x) CHECK_RECORD (x, eval_data)
+#define CONCHECK_EVAL_DATA(x) CONCHECK_RECORD (x, eval_data)
+
+#define XEVAL_DATA_FUNCTION(d) (XEVAL_DATA (d)->function)
+#define XEVAL_DATA_OBJECT(d) (XEVAL_DATA (d)->object)
+
+#define XSET_EVAL_DATA_FUNCTION(d, f) (XEVAL_DATA (d)->function = f)
+#define XSET_EVAL_DATA_OBJECT(d, o) (XEVAL_DATA (d)->object = o)
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+struct Lisp_Misc_User_Data
+#else /* not USE_KKCC */
 struct misc_user_data
+#endif /* not USE_KKCC */
 {
 /* #### The misc-user type is serious junk.  It should be separated
    out into different events.  There's no reason to create
@@ -376,14 +546,48 @@ struct misc_user_data
 			by the XEmacs Drag'n'Drop system. Don't depend on their
 			values for other types of misc_user_events.
 */
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   Lisp_Object function;
   Lisp_Object object;
   int button;
   int modifiers;
   int x, y;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Misc_User_Data Lisp_Misc_User_Data;
 
+DECLARE_LRECORD (misc_user_data, Lisp_Misc_User_Data);
+#define XMISC_USER_DATA(x) XRECORD (x, misc_user_data, Lisp_Misc_User_Data)
+#define wrap_misc_user_data(p) wrap_record(p, misc_user_data)
+#define MISC_USER_DATAP(x) RECORDP (x, misc_user_data)
+#define CHECK_MISC_USER_DATA(x) CHECK_RECORD (x, misc_user_data)
+#define CONCHECK_MISC_USER_DATA(x) CONCHECK_RECORD (x, misc_user_data)
+
+#define XMISC_USER_DATA_FUNCTION(d) (XMISC_USER_DATA (d)->function)
+#define XMISC_USER_DATA_OBJECT(d) (XMISC_USER_DATA (d)->object)
+#define XMISC_USER_DATA_BUTTON(d) (XMISC_USER_DATA (d)->button)
+#define XMISC_USER_DATA_MODIFIERS(d) (XMISC_USER_DATA (d)->modifiers)
+#define XMISC_USER_DATA_X(d) (XMISC_USER_DATA (d)->x)
+#define XMISC_USER_DATA_Y(d) (XMISC_USER_DATA (d)->y)
+
+#define XSET_MISC_USER_DATA_FUNCTION(d, f) (XMISC_USER_DATA (d)->function = (f))
+#define XSET_MISC_USER_DATA_OBJECT(d, o) (XMISC_USER_DATA (d)->object = (o))
+#define XSET_MISC_USER_DATA_BUTTON(d, b) (XMISC_USER_DATA (d)->button = (b))
+#define XSET_MISC_USER_DATA_MODIFIERS(d, m) (XMISC_USER_DATA (d)->modifiers = (m))
+#define XSET_MISC_USER_DATA_X(d, new_x) (XMISC_USER_DATA (d)->x = (new_x))
+#define XSET_MISC_USER_DATA_Y(d, new_y) (XMISC_USER_DATA (d)->y = (new_y))
+#endif /* USE_KKCC */
+
+#ifdef USE_KKCC
+typedef void (*lisp_obj_arg_fun) (Lisp_Object);
+
+
+struct Lisp_Magic_Eval_Data
+#else /* not USE_KKCC */
 struct magic_eval_data
+#endif /* not USE_KKCC */
 {
 /* This is like an eval event but its contents are not
    Lisp-accessible.  This allows for "internal eval events" that call
@@ -398,9 +602,32 @@ struct magic_eval_data
     object		Argument of function.
 
 */
+#ifdef USE_KKCC
+  struct lrecord_header lheader;
+#endif /* USE_KKCC */
   void (*internal_function) (Lisp_Object);
   Lisp_Object object;
 };
+#ifdef USE_KKCC
+typedef struct Lisp_Magic_Eval_Data Lisp_Magic_Eval_Data;
+
+DECLARE_LRECORD (magic_eval_data, Lisp_Magic_Eval_Data);
+#define XMAGIC_EVAL_DATA(x) XRECORD (x, magic_eval_data, Lisp_Magic_Eval_Data)
+#define wrap_magic_eval_data(p) wrap_record(p, magic_eval_data)
+#define MAGIC_EVAL_DATAP(x) RECORDP (x, magic_eval_data)
+#define CHECK_MAGIC_EVAL_DATA(x) CHECK_RECORD (x, magic_eval_data)
+#define CONCHECK_MAGIC_EVAL_DATA(x) CONCHECK_RECORD (x, magic_eval_data)
+
+#define XMAGIC_EVAL_DATA_INTERNAL_FUNCTION(d) \
+  XMAGIC_EVAL_DATA (d)->internal_function
+#define XMAGIC_EVAL_DATA_INTERNAL_FUNOBJ(d) (XMAGIC_EVAL_DATA (d)->internal_function)
+#define XMAGIC_EVAL_DATA_OBJECT(d) (XMAGIC_EVAL_DATA (d)->object)
+
+#define XSET_MAGIC_EVAL_DATA_INTERNAL_FUNCTION(d, f) \
+  (XMAGIC_EVAL_DATA (d)->internal_function = f)
+#define XSET_MAGIC_EVAL_DATA_INTERNAL_FUNOBJ(d, f) (XMAGIC_EVAL_DATA (d)->internal_function = (f))
+#define XSET_MAGIC_EVAL_DATA_OBJECT(d, o) (XMAGIC_EVAL_DATA (d)->object = (o))
+#endif /* USE_KKCC */
 
 #if defined (HAVE_X_WINDOWS) && defined(emacs)
 # include <X11/Xlib.h>
@@ -410,6 +637,53 @@ struct magic_eval_data
 #include <gdk/gdk.h>
 #endif
 
+
+#ifdef USE_KKCC
+struct Lisp_Magic_Data
+{
+  struct lrecord_header lheader;
+
+  union {
+#ifdef HAVE_GTK
+    GdkEvent          gdk_event;
+#endif
+#ifdef HAVE_X_WINDOWS
+    XEvent            x_event;
+#endif
+#ifdef HAVE_MS_WINDOWS
+    int               mswindows_event;
+#endif
+  } underlying;
+};
+
+typedef struct Lisp_Magic_Data Lisp_Magic_Data;
+
+DECLARE_LRECORD (magic_data, Lisp_Magic_Data);
+#define XMAGIC_DATA(x) XRECORD (x, magic_data, Lisp_Magic_Data)
+#define wrap_magic_data(p) wrap_record(p, magic_data)
+#define MAGIC_DATAP(x) RECORDP (x, magic_data)
+#define CHECK_MAGIC_DATA(x) CHECK_RECORD (x, magic_data)
+#define CONCHECK_MAGIC_DATA(x) CONCHECK_RECORD (x, magic_data)
+
+#define XMAGIC_DATA_UNDERLYING(d) (XMAGIC_DATA (d)->underlying)
+#define XSET_MAGIC_DATA_UNDERLYING(d, u) (XMAGIC_DATA (d)->underlying = (u))
+
+#ifdef HAVE_GTK
+#define XMAGIC_DATA_GDK_EVENT(d) (XMAGIC_DATA (d)->underlying.gdk_event)
+#define XSET_MAGIC_DATA_GDK_EVENT(d, e) (XMAGIC_DATA (d)->underlying.gdk_event = (e))
+#endif /*HAVE_GTK*/
+
+#ifdef HAVE_X_WINDOWS
+#define XMAGIC_DATA_X_EVENT(d) (XMAGIC_DATA (d)->underlying.x_event)
+#define XSET_MAGIC_DATA_X_EVENT(d, e) (XMAGIC_DATA (d)->underlying.x_event = (e))
+#endif
+
+#ifdef HAVE_MS_WINDOWS
+#define XMAGIC_DATA_MSWINDOWS_EVENT(d) (XMAGIC_DATA (d)->underlying.mswindows_event)
+#define XSET_MAGIC_DATA_MSWINDOWS_EVENT(d, e) (XMAGIC_DATA (d)->underlying.mswindows_event = (e))
+#endif
+
+#else /* not USE_KKCC */
 union magic_data
 {
 /* No user-serviceable parts within.  This is for things like
@@ -436,6 +710,8 @@ union magic_data
   int               underlying_mswindows_event;
 #endif
 };
+#endif /* not USE_KKCC */
+
 
 struct Lisp_Timeout
 {
@@ -506,8 +782,11 @@ struct Lisp_Event
      started.  Currently they are raw server timestamps. (The X
      protocol doesn't provide any easy way of translating between
      server time and real process time; yuck.) */
-
   unsigned int          timestamp;
+
+#ifdef USE_KKCC
+  Lisp_Object event_data;
+#else /* not USE_KKCC */
   union
     {
       struct key_data           key;
@@ -520,6 +799,7 @@ struct Lisp_Event
       union magic_data          magic;
       struct magic_eval_data    magic_eval;
     } event;
+#endif /* not USE_KKCC */
 };
 
 DECLARE_LRECORD (event, Lisp_Event);
@@ -536,7 +816,93 @@ DECLARE_LRECORD (command_builder, struct command_builder);
 #define XEVENT_TYPE(a) (XEVENT (a)->event_type)
 #define EVENT_NEXT(a) ((a)->next)
 #define XEVENT_NEXT(e) (XEVENT (e)->next)
+#ifdef USE_KKCC
+#else /* not USE_KKCC */
 #define XSET_EVENT_NEXT(e, n) do { (XEVENT (e)->next = (n)); } while (0)
+#endif /* not USE_KKCC */
+
+#ifdef USE_KKCC
+#define XEVENT_DATA(ev) (XEVENT (ev)->event_data)
+#define EVENT_DATA(ev) ((ev)->event_data)
+#define XEVENT_CHANNEL(ev) (XEVENT (ev)->channel)
+#define EVENT_CHANNEL(ev) ((ev)->channel)
+#define EVENT_TIMESTAMP(ev)                                     \
+  ((ev)->timestamp)
+#define XEVENT_TIMESTAMP(ev) EVENT_TIMESTAMP (XEVENT (ev))
+
+#define SET_EVENT_TIMESTAMP_ZERO(ev) \
+  ((ev)->timestamp = Qzero)
+#define SET_EVENT_TIMESTAMP(ev, t)                      \
+  (ev)->timestamp = (t)
+#define XSET_EVENT_TIMESTAMP(ev, t) SET_EVENT_TIMESTAMP (XEVENT (ev), t)
+
+
+#define SET_EVENT_CHANNEL(ev, c)                        \
+do {                                                    \
+  Lisp_Event *mac_event = (ev);                         \
+  mac_event->channel = (c);                             \
+} while (0)
+#define XSET_EVENT_CHANNEL(ev, c) SET_EVENT_CHANNEL (XEVENT (ev), c) 
+
+#define SET_EVENT_DATA(ev, d)                           \
+do {                                                    \
+  Lisp_Event *mac_event = (ev);                         \
+  mac_event->event_data = (d);                          \
+} while (0)
+#define XSET_EVENT_DATA(ev, d) SET_EVENT_DATA (XEVENT (ev), d)
+
+INLINE_HEADER  void set_event_type(struct Lisp_Event *event, emacs_event_type t);
+INLINE_HEADER  void
+set_event_type(struct Lisp_Event *event, emacs_event_type t) 
+{
+  event->event_type = t;
+
+  switch (t) {
+  case key_press_event:
+    event->event_data = make_key_data ();
+    break;
+  case button_press_event:
+  case button_release_event:
+    event->event_data = make_button_data ();
+    break;
+  case pointer_motion_event:
+    event->event_data = make_motion_data ();
+    break;
+  case process_event:
+    event->event_data = make_process_data ();
+    break;
+  case timeout_event:
+    event->event_data = make_timeout_data ();
+    break;
+  case magic_event:
+    event->event_data = make_magic_data ();
+    break;
+  case magic_eval_event:
+    event->event_data = make_magic_eval_data ();
+    break;
+  case eval_event:
+    event->event_data = make_eval_data ();
+    break;
+  case misc_user_event:
+    event->event_data = make_misc_user_data ();
+    break;
+  default:
+    break;
+  }
+}
+#define XSET_EVENT_TYPE(ev, t) set_event_type (XEVENT (ev), t)
+#define SET_EVENT_TYPE(ev, t) set_event_type (ev, t)
+
+
+#define SET_EVENT_NEXT(ev, n)                           \
+do {                                                    \
+  Lisp_Event *mac_event = (ev);                         \
+  mac_event->next = (n);                                \
+} while (0)
+#define XSET_EVENT_NEXT(ev, n) SET_EVENT_NEXT (XEVENT (ev), n)
+
+#endif /* USE_KKCC */
+
 
 #define EVENT_CHAIN_LOOP(event, chain) \
   for (event = chain; !NILP (event); event = XEVENT_NEXT (event))
@@ -594,7 +960,15 @@ extern Lisp_Object Vmodifier_keys_sticky_time;
 #define KEYSYM(x) (intern (x))
 
 /* from events.c */
+#ifdef USE_KKCC
+void format_event_object (Eistring *buf, Lisp_Object event, int brief);
+#else /* not USE_KKCC */
 void format_event_object (Eistring *buf, Lisp_Event *event, int brief);
+#endif /* not USE_KKCC */
+#ifdef USE_KKCC
+//void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);
+void copy_event_data (Lisp_Object dest, Lisp_Object src);
+#endif /* USE_KKCC */
 void character_to_event (Ichar c, Lisp_Event *event,
                          struct console *con,
                          int use_console_meta_flag,
@@ -783,8 +1157,8 @@ struct command_builder
        the first that can begin a function key sequence. */
     Lisp_Object first_mungeable_event;
   } munge_me[2];
-
   Ibyte *echo_buf;
+
   Bytecount echo_buf_length;          /* size of echo_buf */
   Bytecount echo_buf_index;           /* index into echo_buf
                                        * -1 before doing echoing for new cmd */

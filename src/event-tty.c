@@ -66,13 +66,21 @@ emacs_tty_remove_timeout (int id)
 static void
 tty_timeout_to_emacs_event (Lisp_Event *emacs_event)
 {
-  emacs_event->event_type = timeout_event;
   /* timeout events have nil as channel */
+#ifdef USE_KKCC
+  SET_EVENT_TYPE (emacs_event, timeout_event);
+  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
+  XSET_TIMEOUT_DATA_INTERVAL_ID (EVENT_DATA (emacs_event), pop_low_level_timeout (&tty_timer_queue, 0));
+  XSET_TIMEOUT_DATA_FUNCTION (EVENT_DATA (emacs_event), Qnil);
+  XSET_TIMEOUT_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
+#else /* not USE_KKCC */
+  emacs_event->event_type = timeout_event;
   emacs_event->timestamp  = 0; /* #### */
   emacs_event->event.timeout.interval_id =
     pop_low_level_timeout (&tty_timer_queue, 0);
   emacs_event->event.timeout.function = Qnil;
   emacs_event->event.timeout.object = Qnil;
+#endif /* not USE_KKCC */
 }
 
 
@@ -160,10 +168,17 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 
 		  assert (p);
 		  process = wrap_process (p);
+#ifdef USE_KKCC
+		  set_event_type (emacs_event, process_event);
+		  /* process events have nil as channel */
+		  SET_EVENT_TIMESTAMP_ZERO (emacs_event); /* #### */
+		  XSET_PROCESS_DATA_PROCESS (EVENT_DATA (emacs_event), process);
+#else /* not USE_KKCC */
 		  emacs_event->event_type = process_event;
 		  /* process events have nil as channel */
 		  emacs_event->timestamp  = 0; /* #### */
 		  emacs_event->event.process.process = process;
+#endif /* not USE_KKCC */
 		  return;
 		}
 	    }
@@ -172,10 +187,17 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
 	  /* Return a dummy event, so that a cycle of the command loop will
 	     occur. */
 	  drain_signal_event_pipe ();
+#ifdef USE_KKCC
+	  set_event_type (emacs_event, eval_event);
+	  /* eval events have nil as channel */
+	  XSET_EVAL_DATA_FUNCTION (EVENT_DATA (emacs_event), Qidentity);
+	  XSET_EVAL_DATA_OBJECT (EVENT_DATA (emacs_event), Qnil);
+#else /* not USE_KKCC */
 	  emacs_event->event_type = eval_event;
 	  /* eval events have nil as channel */
 	  emacs_event->event.eval.function = Qidentity;
 	  emacs_event->event.eval.object = Qnil;
+#endif /* not USE_KKCC */
 	  return;
 	}
       else if (ndesc == 0) /* timeout fired */

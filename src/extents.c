@@ -909,6 +909,21 @@ free_extent_list (Extent_List *el)
 /*                       Auxiliary extent structure                     */
 /************************************************************************/
 
+#ifdef USE_KKCC
+static const struct lrecord_description extent_auxiliary_description[] ={
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, begin_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, end_glyph) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, parent) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, children) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, invisible) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, read_only) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, mouse_face) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, initial_redisplay_function) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, before_change_functions) },
+  { XD_LISP_OBJECT, offsetof (struct extent_auxiliary, after_change_functions) },
+  { XD_END }
+};
+#endif /* USE_KKCC */
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj)
 {
@@ -925,10 +940,16 @@ mark_extent_auxiliary (Lisp_Object obj)
   return data->parent;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
+			       0, /*dumpable-flag*/
+                               mark_extent_auxiliary, internal_object_printer,
+			       0, 0, 0, extent_auxiliary_description, struct extent_auxiliary);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
                                mark_extent_auxiliary, internal_object_printer,
 			       0, 0, 0, 0, struct extent_auxiliary);
-
+#endif /* not USE_KKCC */
 void
 allocate_extent_auxiliary (EXTENT ext)
 {
@@ -971,6 +992,17 @@ allocate_extent_auxiliary (EXTENT ext)
 static struct stack_of_extents *allocate_soe (void);
 static void free_soe (struct stack_of_extents *soe);
 static void soe_invalidate (Lisp_Object obj);
+
+#ifdef USE_KKCC
+static const struct struct_description extent_list_description = {
+};
+
+static const struct lrecord_description extent_info_description [] = {
+  { XD_STRUCT_PTR, offsetof (struct extent_info, extents), 
+    XD_INDIRECT (0, 0), &extent_list_description },
+  { XD_END }
+};
+#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_extent_info (Lisp_Object obj)
@@ -1022,10 +1054,19 @@ finalize_extent_info (void *header, int for_disksave)
     }
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
+			       0, /*dumpable-flag*/
+                               mark_extent_info, internal_object_printer,
+			       finalize_extent_info, 0, 0, 
+			       0 /*extent_info_description*/,
+			       struct extent_info);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
                                mark_extent_info, internal_object_printer,
 			       finalize_extent_info, 0, 0, 0,
 			       struct extent_info);
+#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_extent_info (void)
@@ -3175,6 +3216,22 @@ extent_plist (Lisp_Object obj)
   return Fextent_properties (obj);
 }
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
+						1, /*dumpable-flag*/
+						mark_extent,
+						print_extent,
+						/* NOTE: If you declare a
+						   finalization method here,
+						   it will NOT be called.
+						   Shaft city. */
+						0,
+						extent_equal, extent_hash,
+						extent_description,
+						extent_getprop, extent_putprop,
+						extent_remprop, extent_plist,
+						struct extent);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
 						mark_extent,
 						print_extent,
@@ -3188,7 +3245,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
 						extent_getprop, extent_putprop,
 						extent_remprop, extent_plist,
 						struct extent);
-
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*			basic extent accessors				*/

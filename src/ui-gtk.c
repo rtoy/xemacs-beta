@@ -298,6 +298,13 @@ allocate_ffi_data (void)
   return (data);
 }
 
+#ifdef USE_KKCC
+static const struct lrecord_description ffi_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct emacs_ffi_data, function_name) }, 
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_ffi_data (Lisp_Object obj)
 {
@@ -319,9 +326,16 @@ ffi_object_printer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " %p>", (void *)XFFI (obj)->function_ptr);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("ffi", emacs_ffi,
+			       mark_ffi_data, ffi_object_printer,
+			       0, 0, 0, 
+			       ffi_data_description, emacs_ffi_data);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("ffi", emacs_ffi,
 			       mark_ffi_data, ffi_object_printer,
 			       0, 0, 0, NULL, emacs_ffi_data);
+#endif /* not USE_KKCC */
 
 typedef GtkObject * (*__OBJECT_fn) ();
 typedef gint (*__INT_fn) ();
@@ -885,6 +899,13 @@ object_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
   return (1);
 }
 
+#ifdef USE_KKCC
+static const struct lrecord_description gtk_object_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct emacs_gtk_object_data, plist) }, 
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_gtk_object_data (Lisp_Object obj)
 {
@@ -911,6 +932,20 @@ emacs_gtk_object_finalizer (void *header, int for_disksave)
     }
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
+					  mark_gtk_object_data, /* marker function */
+					  emacs_gtk_object_printer, /* print function */
+					  emacs_gtk_object_finalizer, /* finalizer */
+					  0, /* equality */
+					  0, /* hash */
+					  gtk_object_data_description, /* desc */
+					  object_getprop, /* get prop */
+					  object_putprop, /* put prop */
+					  0, /* rem prop */
+					  0, /* plist */
+					  emacs_gtk_object_data);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
 					  mark_gtk_object_data, /* marker function */
 					  emacs_gtk_object_printer, /* print function */
@@ -923,6 +958,7 @@ DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("GtkObject", emacs_gtk_object,
 					  0, /* rem prop */
 					  0, /* plist */
 					  emacs_gtk_object_data);
+#endif /* not USE_KKCC */
 
 static emacs_gtk_object_data *
 allocate_emacs_gtk_object_data (void)

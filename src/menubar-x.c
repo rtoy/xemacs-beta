@@ -672,12 +672,21 @@ make_dummy_xbutton_event (XEvent *dummy, Widget daddy, Lisp_Event *eev)
     {
       Position shellx, shelly, framex, framey;
       Arg al [2];
+#ifdef USE_KKCC
+      btn->time = EVENT_TIMESTAMP (eev);
+      btn->button = XBUTTON_DATA_BUTTON (EVENT_DATA (eev));
+      btn->root = RootWindowOfScreen (XtScreen (daddy));
+      btn->subwindow = (Window) NULL;
+      btn->x = XBUTTON_DATA_X (EVENT_DATA (eev));
+      btn->y = XBUTTON_DATA_Y (EVENT_DATA (eev));
+#else /* not USE_KKCC */
       btn->time = eev->timestamp;
       btn->button = eev->event.button.button;
       btn->root = RootWindowOfScreen (XtScreen (daddy));
       btn->subwindow = (Window) NULL;
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
+#endif /* not USE_KKCC */
       shellx = shelly = 0;
 #ifndef HAVE_WMCOMMAND
       {

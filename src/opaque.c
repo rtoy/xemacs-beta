@@ -112,11 +112,20 @@ static const struct lrecord_description opaque_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
+					1, /*dumpable-flag*/
+					0, print_opaque, 0,
+					equal_opaque, hash_opaque,
+					opaque_description,
+					sizeof_opaque, Lisp_Opaque);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
 					0, print_opaque, 0,
 					equal_opaque, hash_opaque,
 					opaque_description,
 					sizeof_opaque, Lisp_Opaque);
+#endif /* not USE_KKCC */
 
 /* stuff to handle opaque pointers */
 
@@ -144,10 +153,18 @@ hash_opaque_ptr (Lisp_Object obj, int depth)
   return (unsigned long) XOPAQUE_PTR (obj)->ptr;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
+			       0, /*dumpable-flag*/
+			       0, print_opaque_ptr, 0,
+			       equal_opaque_ptr, hash_opaque_ptr, 0,
+			       Lisp_Opaque_Ptr);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("opaque-ptr", opaque_ptr,
 			       0, print_opaque_ptr, 0,
 			       equal_opaque_ptr, hash_opaque_ptr, 0,
 			       Lisp_Opaque_Ptr);
+#endif /* not USE_KKCC */
 
 Lisp_Object
 make_opaque_ptr (void *val)

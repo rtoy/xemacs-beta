@@ -77,6 +77,10 @@ struct device
      through device->console, but it's faster this way. */
   struct console_methods *devmeths;
 
+#ifdef USE_KKCC
+  enum console_variant devtype;
+#endif /* USE_KKCC */  
+
   /* A structure of auxiliary data specific to the device type.
      struct x_device is used for X window frames; defined in console-x.h
      struct tty_device is used to TTY's; defined in console-tty.h */

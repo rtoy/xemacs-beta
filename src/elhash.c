@@ -429,12 +429,22 @@ const struct lrecord_description hash_table_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
+			       1, /*dumpable-flag*/
+                               mark_hash_table, print_hash_table,
+			       finalize_hash_table,
+			       hash_table_equal, hash_table_hash,
+			       hash_table_description,
+			       Lisp_Hash_Table);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("hash-table", hash_table,
                                mark_hash_table, print_hash_table,
 			       finalize_hash_table,
 			       hash_table_equal, hash_table_hash,
 			       hash_table_description,
 			       Lisp_Hash_Table);
+#endif /* not USE_KKCC */
 
 static Lisp_Hash_Table *
 xhash_table (Lisp_Object hash_table)

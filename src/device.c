@@ -45,6 +45,19 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 
+#ifdef USE_KKCC
+#include "console-tty-impl.h"
+#ifdef HAVE_MS_WINDOWS
+#include "console-msw-impl.h"
+#endif
+#ifdef HAVE_X_WINDOWS
+#include "console-x-impl.h"
+#endif
+#ifdef HAVE_GTK
+#include "console-gtk-impl.h"
+#endif
+#endif /* USE_KKCC */
+
 #ifdef HAVE_SCROLLBARS
 #include "scrollbar.h"
 #endif
@@ -84,6 +97,84 @@ Lisp_Object Qdelete_device_hook;
 Lisp_Object Vdevice_class_list;
 
 
+
+#ifdef USE_KKCC
+
+static const struct lrecord_description empty_devdata_description [] = {
+  { XD_END }
+};
+
+static const struct lrecord_description mswindows_devdata_description [] = {
+#ifdef HAVE_MS_WINDOWS
+  { XD_LISP_OBJECT, offsetof (struct mswindows_device, fontlist) },
+#endif
+  { XD_END }
+};
+
+static const struct lrecord_description gtk_devdata_description [] = {
+#ifdef HAVE_GTK
+  { XD_LISP_OBJECT, offsetof (struct gtk_device, x_keysym_map_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct gtk_device, WM_COMMAND_frame) },
+#endif
+  { XD_END }
+};
+
+static const struct lrecord_description x_devdata_description [] = {
+#ifdef HAVE_X_WINDOWS
+  { XD_LISP_OBJECT, offsetof (struct x_device, x_keysym_map_hash_table) },
+  { XD_LISP_OBJECT, offsetof (struct x_device, WM_COMMAND_frame) },
+#endif
+  { XD_END }
+};
+
+static const struct struct_description devdata_description []= {
+  { dead_console, empty_devdata_description},
+  { tty_console, empty_devdata_description},
+  { gtk_console, gtk_devdata_description},
+  { x_console, x_devdata_description},
+  { mswindows_console, mswindows_devdata_description},
+  { stream_console, empty_devdata_description},
+  { XD_END }
+};
+
+static const struct lrecord_description conmeths_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct console_methods, symbol) },
+  { XD_END }
+};
+
+static const struct struct_description conmeths_description = {
+  sizeof (struct console_methods),
+  conmeths_description_1
+};
+
+static const struct lrecord_description device_description [] = {
+  { XD_INT, offsetof (struct device, devtype) },
+  { XD_LISP_OBJECT, offsetof (struct device, name) },
+  { XD_LISP_OBJECT, offsetof (struct device, connection) },
+  { XD_LISP_OBJECT, offsetof (struct device, canon_connection) },
+  { XD_LISP_OBJECT, offsetof (struct device, frame_list) },
+  { XD_LISP_OBJECT, offsetof (struct device, console) },
+  { XD_LISP_OBJECT, offsetof (struct device, selected_frame) },
+  { XD_LISP_OBJECT, offsetof (struct device, frame_with_focus_real) },
+  { XD_LISP_OBJECT, offsetof (struct device, frame_with_focus_for_hooks) },
+  { XD_LISP_OBJECT, offsetof (struct device, frame_that_ought_to_have_focus) },
+  { XD_LISP_OBJECT, offsetof (struct device, device_class) },
+  { XD_LISP_OBJECT, offsetof (struct device, user_defined_tags) },
+  { XD_LISP_OBJECT, offsetof (struct device, color_instance_cache) },
+  { XD_LISP_OBJECT, offsetof (struct device, font_instance_cache) },
+#ifdef MULE
+  { XD_LISP_OBJECT, offsetof (struct device, charset_font_cache_stage_1) },
+  { XD_LISP_OBJECT, offsetof (struct device, charset_font_cache_stage_2) },
+#endif
+  { XD_LISP_OBJECT, offsetof (struct device, image_instance_cache) },
+  { XD_LISP_OBJECT, offsetof (struct device, frame_list) },
+  { XD_STRUCT_PTR, offsetof (struct device, devmeths), 1, &conmeths_description },
+  { XD_UNION, offsetof (struct device, device_data), 
+    XD_INDIRECT (0, 0), devdata_description },
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_device (Lisp_Object obj)
 {
@@ -117,9 +208,17 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " 0x%x>", d->header.uid);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("device", device,
+			       0, /*dumpable-flag*/
+			       mark_device, print_device, 0, 0, 0, 
+			       device_description,
+			       struct device);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("device", device,
 			       mark_device, print_device, 0, 0, 0, 0,
 			       struct device);
+#endif /* not USE_KKCC */
 
 int
 valid_device_class_p (Lisp_Object class)
@@ -603,6 +702,9 @@ have no effect.
   device = wrap_device (d);
 
   d->devmeths = con->conmeths;
+#ifdef USE_KKCC
+  d->devtype = get_console_variant (type);
+#endif /* USE_KKCC */
 
   DEVICE_NAME (d) = name;
   DEVICE_CONNECTION (d) =

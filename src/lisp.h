@@ -1525,7 +1525,6 @@ int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 /* OK, you can open them again */
 
-
 /************************************************************************/
 /**		     Definitions of basic Lisp objects		       **/
 /************************************************************************/
@@ -3425,6 +3424,20 @@ extern char *pdump_start, *pdump_end;
 #else
 #define DUMPEDP(adr) 0
 #endif
+
+
+#ifdef USE_KKCC
+Lisp_Object allocate_event (void);
+Lisp_Object allocate_key_data (void);
+Lisp_Object allocate_button_data (void);
+Lisp_Object allocate_motion_data (void);
+Lisp_Object allocate_process_data (void);
+Lisp_Object allocate_timeout_data (void);
+Lisp_Object allocate_magic_data (void);
+Lisp_Object allocate_magic_eval_data (void);
+Lisp_Object allocate_eval_data (void);
+Lisp_Object allocate_misc_user_data (void);
+#endif /* USE_KKCC */
 
 /* Defined in buffer.c */
 Lisp_Object get_truename_buffer (Lisp_Object);

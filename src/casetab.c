@@ -105,9 +105,17 @@ static const struct lrecord_description case_table_description [] = {
   { XD_END }
 };
 
+
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION("case-table", case_table,
+			      1, /*dumpable-flag*/
+			      mark_case_table, print_case_table, 0,
+			      0, 0, case_table_description, Lisp_Case_Table);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("case-table", case_table,
 			      mark_case_table, print_case_table, 0,
 			      0, 0, case_table_description, Lisp_Case_Table);
+#endif /* not USE_KKCC */
 
 static Lisp_Object
 allocate_case_table (int init_tables)

@@ -621,6 +621,16 @@ static const struct lrecord_description coding_system_description[] =
   { XD_CODING_SYSTEM_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
+					1, /*dumpable-flag*/
+					mark_coding_system,
+					print_coding_system,
+					finalize_coding_system,
+					0, 0, coding_system_description,
+					sizeof_coding_system,
+					Lisp_Coding_System);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					mark_coding_system,
 					print_coding_system,
@@ -628,7 +638,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("coding-system", coding_system,
 					0, 0, coding_system_description,
 					sizeof_coding_system,
 					Lisp_Coding_System);
-
+#endif /* not USE_KKCC */
 
 /************************************************************************/
 /*                       Creating coding systems                        */

@@ -35,6 +35,10 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "window.h"
 
+#ifdef USE_KKCC
+#include "objects-tty-impl.h"
+#endif /* USE_KKCC */
+
 /* Objects that are substituted when an instantiation fails.
    If we leave in the Qunbound value, we will probably get crashes. */
 Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
@@ -57,6 +61,36 @@ finalose (void *ptr)
  ****************************************************************************/
 
 Lisp_Object Qcolor_instancep;
+
+#ifdef USE_KKCC
+static const struct lrecord_description empty_color_instance_data_description [] = {
+  { XD_END }
+};
+
+static const struct lrecord_description tty_color_instance_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_color_instance_data, symbol) },
+  { XD_END }
+};
+
+static const struct struct_description color_instance_data_description []= {
+  { dead_console, empty_color_instance_data_description},
+  { tty_console, tty_color_instance_data_description},
+  { gtk_console, empty_color_instance_data_description},
+  { x_console, empty_color_instance_data_description},
+  { mswindows_console, empty_color_instance_data_description},
+  { stream_console, empty_color_instance_data_description},
+  { XD_END }
+};
+
+static const struct lrecord_description color_instance_description[] = {
+  { XD_INT, offsetof (Lisp_Color_Instance, color_instance_type) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Color_Instance, name)},
+  { XD_LISP_OBJECT, offsetof (Lisp_Color_Instance, device)},
+  { XD_UNION, offsetof (Lisp_Color_Instance, data), 
+    XD_INDIRECT (0, 0), color_instance_data_description },
+  {XD_END}
+};
+#endif /* USE_KKCC */
 
 static Lisp_Object
 mark_color_instance (Lisp_Object obj)
@@ -122,11 +156,21 @@ color_instance_hash (Lisp_Object obj, int depth)
 				    LISP_HASH (obj)));
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
+			       0, /*dumpable-flag*/
+			       mark_color_instance, print_color_instance,
+			       finalize_color_instance, color_instance_equal,
+			       color_instance_hash, 
+			       color_instance_description,
+			       Lisp_Color_Instance);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
 			       mark_color_instance, print_color_instance,
 			       finalize_color_instance, color_instance_equal,
 			       color_instance_hash, 0,
 			       Lisp_Color_Instance);
+#endif /* not USE_KKCC */
 
 DEFUN ("make-color-instance", Fmake_color_instance, 1, 3, 0, /*
 Return a new `color-instance' object named NAME (a string).
@@ -157,6 +201,9 @@ is deallocated as well.
   c->name = name;
   c->device = device;
   c->data = 0;
+#ifdef USE_KKCC
+  c->color_instance_type = get_console_variant(XDEVICE_TYPE(c->device));
+#endif /* USE_KKCC */
 
   retval = MAYBE_INT_DEVMETH (XDEVICE (device), initialize_color_instance,
 			      (c, name, device,
@@ -231,6 +278,37 @@ Lisp_Object Qfont_instancep;
 
 static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
 						    Error_Behavior errb);
+#ifdef USE_KKCC
+static const struct lrecord_description empty_font_instance_data_description [] = {
+  { XD_END }
+};
+
+static const struct lrecord_description tty_font_instance_data_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_font_instance_data, charset) },
+  { XD_END }
+};
+
+static const struct struct_description font_instance_data_description []= {
+  { dead_console, empty_font_instance_data_description},
+  { tty_console, tty_font_instance_data_description},
+  { gtk_console, empty_font_instance_data_description},
+  { x_console, empty_font_instance_data_description},
+  { mswindows_console, empty_font_instance_data_description},
+  { stream_console, empty_font_instance_data_description},
+  { XD_END }
+};
+
+static const struct lrecord_description font_instance_description[] = {
+  { XD_INT, offsetof (Lisp_Font_Instance, font_instance_type) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, name)},
+  { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, truename)},
+  { XD_LISP_OBJECT, offsetof (Lisp_Font_Instance, device)},
+  { XD_UNION, offsetof (Lisp_Font_Instance, data), 
+    XD_INDIRECT (0, 0), font_instance_data_description },
+  {XD_END}
+};
+#endif /* USE_KKCC */
+
 
 static Lisp_Object
 mark_font_instance (Lisp_Object obj)
@@ -294,10 +372,19 @@ font_instance_hash (Lisp_Object obj, int depth)
 			depth + 1);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
+			       0, /*dumpable-flag*/
+			       mark_font_instance, print_font_instance,
+			       finalize_font_instance, font_instance_equal,
+			       font_instance_hash, font_instance_description, Lisp_Font_Instance);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
 			       mark_font_instance, print_font_instance,
 			       finalize_font_instance, font_instance_equal,
 			       font_instance_hash, 0, Lisp_Font_Instance);
+#endif /* not USE_KKCC */
+
 
 DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
 Return a new `font-instance' object named NAME.
@@ -330,6 +417,9 @@ these objects are GCed, the underlying X data is deallocated as well.
   f->device = device;
 
   f->data = 0;
+#ifdef USE_KKCC
+  f->font_instance_type = get_console_variant(XDEVICE_TYPE(f->device));
+#endif /* USE_KKCC */
 
   /* Stick some default values here ... */
   f->ascent = f->height = 1;

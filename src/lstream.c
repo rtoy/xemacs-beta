@@ -114,10 +114,18 @@ sizeof_lstream (const void *header)
   return aligned_sizeof_lstream (((const Lstream *) header)->imp->size);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
+					0, /*dumpable-flag*/
+					mark_lstream, print_lstream,
+					finalize_lstream, 0, 0, 0,
+					sizeof_lstream, Lstream);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
 					mark_lstream, print_lstream,
 					finalize_lstream, 0, 0, 0,
 					sizeof_lstream, Lstream);
+#endif /* not USE_KKCC */
 
 
 /* Change the buffering of a stream.  See lstream.h.  By default the

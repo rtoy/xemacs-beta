@@ -196,10 +196,16 @@ static const struct lrecord_description charset_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
+			       1, /* dumpable flag */
+                               mark_charset, print_charset, finalize_charset,
+			       0, 0, charset_description, Lisp_Charset);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
                                mark_charset, print_charset, finalize_charset,
 			       0, 0, charset_description, Lisp_Charset);
-
+#endif /* not USE_KKCC */
 /* Make a new charset. */
 /* #### SJT Should generic properties be allowed? */
 static Lisp_Object

@@ -105,6 +105,70 @@ Lisp_Object Vconsole_type_list;
 console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 
+
+#ifdef USE_KKCC
+
+static const struct lrecord_description empty_condata_description [] = {
+  { XD_END }
+};
+
+static const struct lrecord_description tty_condata_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct tty_console, terminal_type) },
+  { XD_LISP_OBJECT, offsetof (struct tty_console, instream) },
+  { XD_LISP_OBJECT, offsetof (struct tty_console, outstream) },
+  { XD_END }
+};
+
+static const struct struct_description condata_description []= {
+  { dead_console, empty_condata_description },
+  { tty_console, tty_condata_description },
+  { gtk_console, empty_condata_description },
+  { x_console, empty_condata_description },
+  { mswindows_console, empty_condata_description },
+  { stream_console, empty_condata_description },
+  { XD_END }
+};
+
+static const struct lrecord_description conmeths_description_1 [] = {
+  { XD_LISP_OBJECT, offsetof (struct console_methods, symbol) },
+  /*{ XD_LISP_OBJECT, offsetof (struct console_methods, predicate_symbol) },
+    { XD_LISP_OBJECT, offsetof (struct console_methods, image_conversion_list) },*/
+  { XD_END }
+};
+
+static const struct struct_description conmeths_description = {
+  sizeof (struct console_methods),
+  conmeths_description_1
+};
+
+static const struct lrecord_description console_description [] = {
+  { XD_INT, offsetof (struct console, contype) },
+  { XD_LISP_OBJECT, offsetof (struct console, name) },
+  { XD_LISP_OBJECT, offsetof (struct console, connection) },
+  { XD_LISP_OBJECT, offsetof (struct console, canon_connection) },
+  { XD_LISP_OBJECT, offsetof (struct console, device_list) },
+  { XD_LISP_OBJECT, offsetof (struct console, selected_device) },
+  { XD_LISP_OBJECT, offsetof (struct console, last_nonminibuf_frame) },
+  { XD_LISP_OBJECT, offsetof (struct console, overriding_terminal_local_map) },
+  { XD_LISP_OBJECT, offsetof (struct console, last_command) },
+  { XD_LISP_OBJECT, offsetof (struct console, prefix_arg) },
+  { XD_LISP_OBJECT, offsetof (struct console, command_builder) },
+  { XD_LISP_OBJECT, offsetof (struct console, defining_kbd_macro) },
+  { XD_LISP_OBJECT, offsetof (struct console, kbd_macro_builder) },
+  { XD_LISP_OBJECT, offsetof (struct console, last_kbd_macro) },
+#ifdef HAVE_TTY
+  { XD_LISP_OBJECT, offsetof (struct console, tty_erase_char) },
+#endif
+  { XD_LISP_OBJECT, offsetof (struct console, default_minibuffer_frame) },
+  { XD_LISP_OBJECT, offsetof (struct console, function_key_map) },
+  { XD_STRUCT_PTR, offsetof (struct console, conmeths), 1, &conmeths_description },
+  { XD_UNION, offsetof (struct console, console_data), 
+    XD_INDIRECT (0, 0), condata_description },
+  { XD_END }
+};
+
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_console (Lisp_Object obj)
 {
@@ -140,9 +204,17 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, " 0x%x>", con->header.uid);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("console", console,
+			       0, /*dumpable-flag*/
+			       mark_console, print_console, 0, 0, 0, 
+			       console_description,
+			       struct console);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("console", console,
 			       mark_console, print_console, 0, 0, 0, 0,
 			       struct console);
+#endif /* not USE_KKCC */
 
 static struct console *
 allocate_console (void)
@@ -190,6 +262,40 @@ decode_console_type (Lisp_Object type, Error_Behavior errb)
 
   return 0;
 }
+
+#ifdef USE_KKCC
+enum console_variant
+get_console_variant (Lisp_Object type)
+{
+  if (EQ (type, Qtty)) 
+    {
+      return tty_console;
+    }
+
+  if (EQ (type, Qgtk)) 
+    {
+      return gtk_console;
+    }
+
+  if (EQ (type, Qx)) 
+    {
+      return x_console;
+    }
+
+  if (EQ (type, Qmswindows)) 
+    {
+      return mswindows_console;
+    }
+
+  if (EQ (type, Qstream)) 
+    {
+      return stream_console;
+    }
+
+  abort (); /* should never happen */
+  return dead_console; 
+}
+#endif /* USE_KKCC */
 
 int
 valid_console_type_p (Lisp_Object type)
@@ -493,6 +599,9 @@ create_console (Lisp_Object name, Lisp_Object type, Lisp_Object connection,
   GCPRO1 (console);
 
   con->conmeths = decode_console_type (type, ERROR_ME);
+#ifdef USE_KKCC
+  con->contype = get_console_variant (type);
+#endif /* USE_KKCC */
 
   CONSOLE_NAME (con) = name;
   CONSOLE_CONNECTION (con) =

@@ -136,6 +136,17 @@ symbol_remprop (Lisp_Object symbol, Lisp_Object property)
   return external_remprop (&XSYMBOL (symbol)->plist, property, 0, ERROR_ME);
 }
 
+#ifdef USE_KKCC
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
+						1, /*dumpable-flag*/
+						mark_symbol, print_symbol,
+						0, 0, 0, symbol_description,
+						symbol_getprop,
+						symbol_putprop,
+						symbol_remprop,
+						Fsymbol_plist,
+						Lisp_Symbol);
+#else /* not USE_KKCC */
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
 						mark_symbol, print_symbol,
 						0, 0, 0, symbol_description,
@@ -144,7 +155,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("symbol", symbol,
 						symbol_remprop,
 						Fsymbol_plist,
 						Lisp_Symbol);
-
+#endif /* not USE_KKCC */
 
 /**********************************************************************/
 /*                              Intern				      */
@@ -1007,6 +1018,41 @@ static const struct lrecord_description symbol_value_varalias_description[] = {
   { XD_END }
 };
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
+			       symbol_value_forward,
+			       1, /*dumpable-flag*/
+			       0,
+			       print_symbol_value_magic, 0, 0, 0,
+			       symbol_value_forward_description,
+			       struct symbol_value_forward);
+
+DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-buffer-local",
+			       symbol_value_buffer_local,
+			       1, /*dumpable-flag*/
+			       mark_symbol_value_buffer_local,
+			       print_symbol_value_magic, 0, 0, 0,
+			       symbol_value_buffer_local_description,
+			       struct symbol_value_buffer_local);
+
+DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-lisp-magic",
+			       symbol_value_lisp_magic,
+			       1, /*dumpable-flag*/
+			       mark_symbol_value_lisp_magic,
+			       print_symbol_value_magic, 0, 0, 0,
+			       symbol_value_lisp_magic_description,
+			       struct symbol_value_lisp_magic);
+
+DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
+			       symbol_value_varalias,
+			       1, /*dumpable-flag*/
+			       mark_symbol_value_varalias,
+			       print_symbol_value_magic, 0, 0, 0,
+			       symbol_value_varalias_description,
+			       struct symbol_value_varalias);
+
+#else /* not USE_KKCC */
+
 DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-forward",
 			       symbol_value_forward,
 			       0,
@@ -1034,7 +1080,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("symbol-value-varalias",
 			       print_symbol_value_magic, 0, 0, 0,
 			       symbol_value_varalias_description,
 			       struct symbol_value_varalias);
-
+#endif /* not USE_KKCC */
 
 /* Getting and setting values of symbols */
 
@@ -3373,7 +3419,6 @@ check_sane_subr (Lisp_Subr *subr, Lisp_Object sym)
 	assert (subr->max_args <= SUBR_MAX_ARGS);
 	assert (subr->min_args <= subr->max_args);
       }
-
     assert (UNBOUNDP (XSYMBOL (sym)->function));
   }
 }

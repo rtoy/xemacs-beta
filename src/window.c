@@ -231,10 +231,16 @@ make_saved_buffer_point_cache (void)
   return make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, HASH_TABLE_EQ);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("window", window,
+			       0, /*dumpable-flag*/
+                               mark_window, print_window, finalize_window,
+			       0, 0, 0, struct window);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("window", window,
                                mark_window, print_window, finalize_window,
 			       0, 0, 0, struct window);
-
+#endif /* not USE_KKCC */
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
   p->field[CURRENT_DISP] = initialization;		\
@@ -336,6 +342,12 @@ allocate_window (void)
    because neither structure is created very often (only when windows are
    created or deleted). --ben */
 
+#ifdef USE_KKCC
+static const struct lrecord_description window_mirror_description [] = {
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_window_mirror (Lisp_Object obj)
 {
@@ -368,9 +380,16 @@ mark_window_mirror (Lisp_Object obj)
     return Qnil;
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
+			       0, /*dumpable-flag*/
+                               mark_window_mirror, internal_object_printer,
+			       0, 0, 0, 0/*window_mirror_description*/, struct window_mirror);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_IMPLEMENTATION ("window-mirror", window_mirror,
                                mark_window_mirror, internal_object_printer,
 			       0, 0, 0, 0, struct window_mirror);
+#endif /* not USE_KKCC */
 
 /* Create a new window mirror structure and associated redisplay
    structs. */
@@ -5192,6 +5211,19 @@ struct window_config
 #define WINDOW_CONFIGURATIONP(x) RECORDP (x, window_configuration)
 #define CHECK_WINDOW_CONFIGURATION(x) CHECK_RECORD (x, window_configuration)
 
+#ifdef USE_KKCC
+static const struct struct_description saved_window_description = {
+};
+
+static const struct lrecord_description window_config_description [] = {
+  { XD_LISP_OBJECT, offsetof (struct window_config, current_window) },
+  { XD_LISP_OBJECT, offsetof (struct window_config, current_buffer) },
+  { XD_LISP_OBJECT, offsetof (struct window_config, minibuffer_scroll_window) },
+  { XD_LISP_OBJECT, offsetof (struct window_config, root_window) },
+  { XD_END }
+};
+#endif /* USE_KKCC */
+
 static Lisp_Object
 mark_window_config (Lisp_Object obj)
 {
@@ -5251,13 +5283,23 @@ print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_fmt_string (printcharfun, "0x%x>", config->header.uid);
 }
 
+#ifdef USE_KKCC
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
+					window_configuration,
+					0, /*dumpable-flag*/
+					mark_window_config,
+					print_window_config,
+					0, 0, 0, 
+					0/*window_config_description*/, sizeof_window_config,
+					struct window_config);
+#else /* not USE_KKCC */
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
 					window_configuration,
 					mark_window_config,
 					print_window_config,
 					0, 0, 0, 0, sizeof_window_config,
 					struct window_config);
-
+#endif /* not USE_KKCC */
 
 /* Returns a boolean indicating whether the two saved windows are
    identical. */
