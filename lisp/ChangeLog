@@ -1,3 +1,8 @@
+2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* code-process.el (call-process-region): Fix region deletion bug.
+	Report by Katsumi Yamaoka <b9yvfcyuscf.fsf@jpl.org>.
+
 2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.18 "chestnut" is released.

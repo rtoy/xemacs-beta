@@ -165,27 +165,27 @@ with SIGINT, then with SIGKILL if you quit again before the process exits.
 
 The read/write coding systems used for process I/O on the process are
 the same as for `call-process'."
-  ;; We used to delete the text before calling call-process; that was when
-  ;; a temporary file was used to pass the text to call-process.  Now that
-  ;; we don't do that, we delete the text afterward; if it's being inserted
-  ;; in the same buffer, make sure we track the insertion, and don't get
-  ;; any of it in the deleted region.  We keep marker s before the
-  ;; insertion and e afterward.  Finally we delete the regions before
-  ;; and after the insertion.
-  (let ((s (and deletep (copy-marker (point))))
-	(e (and deletep (copy-marker (point) t))))
-    (let ((retval
-	   (apply #'call-process program (list (current-buffer) start end)
-		  buffer displayp args)))
-      ;; If start and end were the same originally, e will be beyond s now
-      (when (and deletep (> e s))
-	;; APA: Is it always correct to honor narrowing, which affects
-	;; (point-min) and (point-max)?
-	;; Delete region before insertion.
-	(delete-region (point-min) s)
-	;; Delete region after insertion.
-	(delete-region e (point-max)))
-      retval)))
+
+  ;; We can't delete the region before feeding it to `call-process', so we
+  ;; take care not to delete the insertion when we delete the region.  START
+  ;; and END may not be markers; copy them.  (point) will end up after the
+  ;; insertion.  A copy of (point) tracks the beginning of the insertion.
+
+  (let ((s (and deletep (copy-marker start)))         ;  Only YOU can
+	(e (and deletep (copy-marker end t)))         ;     prevent
+	(p (and deletep (copy-marker (point))))       ; excess consing!
+	(retval
+	 (apply #'call-process program (list (current-buffer) start end)
+		buffer displayp args)))
+    (when deletep
+      (if (<= s p e)
+	  ;; region was split by insertion
+	  ;; the order checks are gilt lilies
+	  (progn (when (< (point) e) (delete-region (point) e))
+		 (when (< s p) (delete-region s p)))
+	;; insertion was outside of region
+	(delete-region s e)))
+    retval))
 
 (defun start-process (name buffer program &rest program-args)
   "Start a program in a subprocess.  Return the process object for it.

@@ -1,11 +1,17 @@
+2004-10-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/os-tests.el: New file.  Add tests for bug reported by
+	Katsumi Yamaoka 2004-10-26 <b9yvfcyuscf.fsf@jpl.org>.  Test
+	suggested by Katsumi Yamaoka <b9yoeipvwn0.fsf@jpl.org>.
+
 2004-10-22  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* XEmacs 21.5.18 "chestnut" is released.
 
 2004-10-07  Stephen J. Turnbull  <stephen@xemacs.org>
 
-	* automated/regexp-tests.el: Add tests for bug identified by
-	Steve Youngs 2004-09-30 <microsoft-free.87ekkjhj7t.fsf@youngs.au.com>
+	* automated/regexp-tests.el: Add tests for bug identified by Steve
+	Youngs 2004-09-30 <microsoft-free.87ekkjhj7t.fsf@youngs.au.com>.
 
 2004-09-08  Stephen J. Turnbull  <stephen@xemacs.org>
 
