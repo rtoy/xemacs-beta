@@ -1,3 +1,9 @@
+2003-08-05  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/packaging.texi (Creating Packages):
+	* xemacs/packages.texi (Creating Packages):
+	Style guideline for package-info.in description.
+
 2003-06-30  Vin Shelton  <acs@xemacs.org>
 
 	* lispref/lists.texi (List-related Predicates): Add @end defun.
