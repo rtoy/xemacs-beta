@@ -55,6 +55,7 @@ Lisp_Object Qsetting_constant;
 Lisp_Object Qediting_error;
 Lisp_Object Qbeginning_of_buffer, Qend_of_buffer, Qbuffer_read_only;
 Lisp_Object Qio_error, Qfile_error, Qconversion_error, Qend_of_file;
+Lisp_Object Qtext_conversion_error;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
 Lisp_Object Qsingularity_error, Qoverflow_error, Qunderflow_error;
 Lisp_Object Qintegerp, Qnatnump, Qsymbolp;
@@ -2099,6 +2100,7 @@ init_errors_once_early (void)
   DEFERROR_STANDARD (Qfile_error, Qio_error);
   DEFERROR (Qend_of_file, "End of file or stream", Qfile_error);
   DEFERROR_STANDARD (Qconversion_error, Qio_error);
+  DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
   DEFERROR (Qarith_error, "Arithmetic error", Qinvalid_operation);
   DEFERROR (Qrange_error, "Arithmetic range error", Qarith_error);

@@ -325,13 +325,13 @@ DEPEND=0
 ! if defined(_)
 !  if [perl -p -e "s/^\\x23if defined(.+)/!if defined$$1/; s/^\\x23e/!e/;" \
 	-e "s/([\\s=^])([\\w\\d\\.\\-^]+\\.[ch^])/$$1$(SRC:\=\\\\)\\\\$$2/g;" \
-	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2/;" \
+	-e "s/^(.+)\\.o:(.+)/$(OUTDIR:\=\\\\)\\\\$$1.obj:$$2 $(NT:\=\\\\)\\\\config.inc/;" \
 	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
 !  endif
 ! else
 !  if [perl -p -e "s/^\x23if defined(.+)/!if defined$$1/; s/^\x23e/!e/;" \
 	-e "s/([\s=^])([\w\d\.\-^]+\.[ch^])/$$1$(SRC:\=\\)\\$$2/g;" \
-	-e "s/^(.+)\.o:(.+)/$(OUTDIR:\=\\)\\$$1.obj:$$2/;" \
+	-e "s/^(.+)\.o:(.+)/$(OUTDIR:\=\\)\\$$1.obj:$$2 $(NT:\=\\)\\config.inc/;" \
 	< $(SRC)\depend > $(OUTDIR)\depend.tmp]
 !  endif
 ! endif
@@ -605,7 +605,7 @@ $(LASTFILE): $(XEMACS_INCLUDES) $(LASTFILE_OBJS)
 	link.exe -lib -nologo -out:$@ $(LASTFILE_OBJS)
 
 $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
-	 $(CCV) $(LASTFILE_FLAGS) $**
+	 $(CCV) $(LASTFILE_FLAGS) $(LASTFILE_SRC)\$(@B).c
 
 !endif
 
@@ -632,22 +632,22 @@ $(LWLIB): $(LWLIB_OBJS)
 	link.exe -lib -nologo -out:$@ $(LWLIB_OBJS)
 
 $(OUTDIR)\lwlib-utils.obj:	$(LWLIB_SRCDIR)\lwlib-utils.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 $(OUTDIR)\lwlib-Xaw.obj:	$(LWLIB_SRCDIR)\lwlib-Xaw.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 $(OUTDIR)\lwlib-Xlw.obj:	$(LWLIB_SRCDIR)\lwlib-Xlw.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 $(OUTDIR)\lwlib.obj:		$(LWLIB_SRCDIR)\lwlib.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 $(OUTDIR)\xlwmenu.obj:		$(LWLIB_SRCDIR)\xlwmenu.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 $(OUTDIR)\xlwscrollbar.obj:	$(LWLIB_SRCDIR)\xlwscrollbar.c
-	 $(CCV) $(LWLIB_FLAGS) $**
+	 $(CCV) $(LWLIB_FLAGS) $(LWLIB_SRCDIR)\$(@B).c
 
 !endif
 #------------------------------------------------------------------------------
@@ -1053,10 +1053,10 @@ TEMACS_OBJS= \
 $(OUTDIR)\emacs.obj:	$(XEMACS)\version.sh
 
 $(OUTDIR)\TopLevelEmacsShell.obj:	$(TEMACS_SRC)\EmacsShell-sub.c
-	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $** -Fo$@
+	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL $(TEMACS_SRC)\$(@B).c -Fo$@
 
 $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
-	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $** -Fo$@
+	$(CCV) $(TEMACS_CPP_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $(TEMACS_SRC)\$(@B).c -Fo$@
 
 $(OUTDIR)\alloc.obj: $(TEMACS_SRC)\alloc.c
 

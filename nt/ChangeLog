@@ -1,3 +1,14 @@
+2001-05-26  Ben Wing  <ben@xemacs.org>
+
+	* xemacs.mak (DEPEND):
+	* xemacs.mak (LASTFILE_OBJS):
+	* xemacs.mak (LWLIB_OBJS):
+	* xemacs.mak (TEMACS_OBJS):
+	fix use of targets so that config.h doesn't end up being passed
+	to the C compiler as an input file; that creates warnings.
+	put back config.inc into depend-file targets; removed previously
+	in a wrong attempt to fix this same problem.
+
 2001-05-24  Ben Wing  <ben@xemacs.org>
 
 	* xemacs.mak (DOC):
