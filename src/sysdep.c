@@ -123,6 +123,12 @@ static void hft_reset (struct console *c);
 #include <sys/termio.h>
 #endif
 
+#ifdef HAVE_TTY
+#define USED_IF_TTY(decl) decl
+#else
+#define USED_IF_TTY(decl) UNUSED (decl)
+#endif
+
 
 /************************************************************************/
 /*                         subprocess control                           */
@@ -190,7 +196,13 @@ set_exclusive_use (
 }
 
 void
-set_descriptor_non_blocking (int fd)
+set_descriptor_non_blocking (
+#if defined (STRIDE) || (defined (pfa) && defined (HAVE_PTYS)) || defined (AIX) || defined (F_SETFL)
+			     int fd
+#else
+			     int UNUSED (fd)
+#endif
+			     )
 {
 /* Stride people say it's a mystery why this is needed
    as well as the O_NDELAY, but that it fails without this.  */
@@ -710,7 +722,13 @@ sys_suspend (void)
 
 /* Suspend a process if possible; give terminal to its superior.  */
 void
-sys_suspend_process (int process)
+sys_suspend_process (
+#ifdef SIGTSTP
+		     int process
+#else
+		     int UNUSED (process)
+#endif
+		     )
 {
     /* I don't doubt that it is possible to suspend processes on
      * VMS machines or thost that use USG_JOBCTRL,
@@ -726,7 +744,13 @@ sys_suspend_process (int process)
    so that the function works even when fd is not a pty. */
 
 int
-get_pty_max_bytes (int fd)
+get_pty_max_bytes (
+#if defined (HAVE_FPATHCONF) && defined (_PC_MAX_CANON)
+		   int fd
+#else
+		   int UNUSED (fd)
+#endif
+		   )
 {
   /* DEC OSF 4.0 fpathconf returns 255, but xemacs hangs on long shell
      input lines if we return 253.  252 is OK!.  So let's leave a bit
@@ -811,7 +835,13 @@ get_eof_char (int fd)
    to HEIGHT and WIDTH.  This is used mainly with ptys.  */
 
 int
-set_window_size (int fd, int height, int width)
+set_window_size (
+#if defined (TIOCSWINSZ) || defined (TIOCSSIZE)
+		 int fd, int height, int width
+#else
+		 int UNUSED (fd), int UNUSED (height), int UNUSED (width)
+#endif
+		 )
 {
 #ifdef TIOCSWINSZ
 
@@ -844,7 +874,13 @@ set_window_size (int fd, int height, int width)
 /* Set up the proper status flags for use of a pty.  */
 
 void
-setup_pty (int fd)
+setup_pty (
+#ifdef TIOCPKT
+	   int fd
+#else
+	   int UNUSED (fd)
+#endif
+	   )
 {
 #ifdef IBMRTAIX
   /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
@@ -1732,7 +1768,13 @@ tty_init_sys_modes_on_device (struct device *d)
 #endif /* HAVE_TTY */
 
 void
-init_one_device (struct device *d)
+init_one_device (
+#if defined(HAVE_TTY) || (defined(SIGIO) && !defined(BROKEN_SIGIO))
+		 struct device *d
+#else
+		 struct device *UNUSED (d)
+#endif
+		 )
 {
 #ifdef HAVE_TTY
   if (DEVICE_TTY_P (d))
@@ -1782,7 +1824,7 @@ reinit_initial_console (void)
    At the time this is called, init_sys_modes has not been done yet.  */
 
 int
-tabs_safe_p (struct device *d)
+tabs_safe_p (struct device *USED_IF_TTY (d))
 {
 #ifdef HAVE_TTY
   if (DEVICE_TTY_P (d))
@@ -2521,7 +2563,7 @@ strerror (int errnum)
 /* Ben sez: read Dick Gabriel's essay about the Worse Is Better
    approach to programming and its connection to the silly
    interruptible-system-call business.  To find it, look on
-   Jamie's home page (http://www.jwz.org/worse-is-better.html). */
+   Jamie's home page (http://www.jwz.org/doc/worse-is-better.html). */
 
 #ifdef WIN32_NATIVE
 
@@ -2893,7 +2935,13 @@ qxe_chdir (const Ibyte *path)
 }
 
 int
-qxe_mkdir (const Ibyte *path, mode_t mode)
+qxe_mkdir (const Ibyte *path,
+#ifdef WIN32_NATIVE
+	   mode_t UNUSED (mode)
+#else
+	   mode_t mode
+#endif
+	   )
 {
   Extbyte *pathout;
   PATHNAME_CONVERT_OUT (path, pathout);
@@ -3512,7 +3560,14 @@ gettimeofday (struct timeval *tp, struct timezone *tzp)
    access to those functions goes through the following. */
 
 int
-set_file_times (Lisp_Object path, EMACS_TIME atime, EMACS_TIME mtime)
+set_file_times (
+#if defined (WIN32_NATIVE) || defined (HAVE_UTIME) || defined (HAVE_UTIMES)
+		Lisp_Object path, EMACS_TIME atime, EMACS_TIME mtime
+#else
+		Lisp_Object UNUSED (path), EMACS_TIME UNUSED (atime),
+		EMACS_TIME UNUSED (mtime)
+#endif
+		)
 {
 #if defined (WIN32_NATIVE)
   struct utimbuf utb;
@@ -3552,7 +3607,13 @@ static int process_times_available;
    for increased accuracy. */
 
 static int
-get_process_times_1 (long *user_ticks, long *system_ticks)
+get_process_times_1 (
+#if defined (CLOCKS_PER_SEC) || defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WIN32_NATIVE)
+		     long *user_ticks, long *system_ticks
+#else
+		     long *UNUSED (user_ticks), long *UNUSED (system_ticks)
+#endif
+		     )
 {
 #if defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WIN32_NATIVE)
   /* We have the POSIX times() function available. */

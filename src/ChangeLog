@@ -1,3 +1,11 @@
+2004-10-19  Jerry James  <james@xemacs.org>
+
+	* events.c: Define USED_IF_TTY and USED_IF_TOOLBARS.  Use them to
+	mark more unused parameters.
+	* console.c: Define USED_IF_TTY and use it.
+	* sysdep.c: Define USED_IF_TTY.  Mark more unused parameters.
+	Update a URL in a comment.
+
 2004-10-16  Malcolm Purvis  <malcolmp@xemacs.org>
 
 	* gtk-xemacs.c (gtk_xemacs_size_allocate): Cast pointer to right type.

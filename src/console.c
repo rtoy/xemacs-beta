@@ -43,6 +43,12 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty-impl.h"
 #endif
 
+#ifdef HAVE_TTY
+#define USED_IF_TTY(decl) decl
+#else
+#define USED_IF_TTY(decl) UNUSED (decl)
+#endif
+
 Lisp_Object Vconsole_list, Vselected_console;
 
 Lisp_Object Vcreate_console_hook, Vdelete_console_hook;
@@ -1024,7 +1030,7 @@ Otherwise it is assumed to be the selected console.
 Some operating systems cannot stop processes and resume them later.
 On such systems, who knows what will happen.
 */
-       (console))
+       (USED_IF_TTY (console)))
 {
 #ifdef HAVE_TTY
   struct console *con = decode_console (console);
@@ -1061,7 +1067,7 @@ DEFUN ("resume-console", Fresume_console, 1, 1, "", /*
 Re-initialize a previously suspended console.
 For tty consoles, do stuff to the tty to make it sane again.
 */
-       (console))
+       (USED_IF_TTY (console)))
 {
 #ifdef HAVE_TTY
   struct console *con = decode_console (console);
@@ -1109,7 +1115,7 @@ Optional fifth arg CONSOLE specifies console to make changes to; nil means
  the selected console.
 See also `current-input-mode'.
 */
-       (UNUSED (ignored), flow, meta, quit, console))
+       (UNUSED (ignored), USED_IF_TTY (flow), meta, quit, console))
 {
   struct console *con = decode_console (console);
   int meta_key = (!CONSOLE_TTY_P (con) ? 1 :

@@ -41,6 +41,18 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty-impl.h" /* for stuff in character_to_event */
 
+#ifdef HAVE_TTY
+#define USED_IF_TTY(decl) decl
+#else
+#define USED_IF_TTY(decl) UNUSED (decl)
+#endif
+
+#ifdef HAVE_TOOLBARS
+#define USED_IF_TOOLBARS(decl) decl
+#else
+#define USED_IF_TOOLBARS(decl) UNUSED (decl)
+#endif
+
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed
    eventually.
@@ -1210,7 +1222,8 @@ command_event_p (Lisp_Object event)
 
 void
 character_to_event (Ichar c, Lisp_Event *event, struct console *con,
-		    int use_console_meta_flag, int do_backspace_mapping)
+		    int use_console_meta_flag,
+		    int USED_IF_TTY (do_backspace_mapping))
 {
   Lisp_Object k = Qnil;
   int m = 0;
@@ -2383,7 +2396,7 @@ DEFUN ("event-toolbar-button", Fevent_toolbar_button, 1, 1, 0, /*
 Return the toolbar button that the mouse event EVENT occurred over.
 If the event did not occur over a toolbar button, nil is returned.
 */
-       (event))
+       (USED_IF_TOOLBARS (event)))
 {
 #ifdef HAVE_TOOLBARS
   Lisp_Object button;
