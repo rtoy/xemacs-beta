@@ -192,6 +192,8 @@ never to encode any characters outside this range -- all the rest are
 for private, corporate or internal use."
    type utf-16))
 
+(define-coding-system-alias 'utf-16-be 'utf-16) 
+
 (make-coding-system
  'utf-16-bom 'unicode
  "UTF-16 w/BOM"
@@ -228,6 +230,8 @@ writing and strip it off when reading."
 See `utf-16' coding system."
    type utf-16
    little-endian t))
+
+(define-coding-system-alias 'utf-16-le 'utf-16-little-endian) 
 
 (make-coding-system
  'utf-16-little-endian-bom 'unicode

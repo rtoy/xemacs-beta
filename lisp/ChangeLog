@@ -1,3 +1,9 @@
+2005-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el: 
+	Add coding system aliases for utf-16-be and utf-16-le, for 
+	improved compatibility with Mule-UCS and the FSF.  
+
 2005-02-07  Ben Wing  <ben@xemacs.org>
 
 	* menubar.el (find-menu-item-1):
