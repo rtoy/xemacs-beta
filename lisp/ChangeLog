@@ -1,3 +1,10 @@
+2003-08-03  Mike Sperber  <mike@xemacs.org>
+
+	* files.el (insert-directory): Massage somewhat to be slightly
+	closer to FSF version.  Support "--dired" as argument for GNU ls,
+	and, if given, create extents with 'dired-file-name property set
+	to t, similar to what the FSF version does.
+
 2003-07-31  Mike Sperber  <mike@xemacs.org>
 
 	* isearch-mode.el (isearch-mode-help): 

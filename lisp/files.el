@@ -4072,6 +4072,9 @@ PATTERN that already quotes some of the special characters."
 ;;   		 dired-insert-headerline
 ;;   		 dired-after-subdir-garbage (defines what a "total" line is)
 ;;   - variable dired-subdir-regexp
+;; - may be passed "--dired" as argument in SWITCHES.
+;;   Filename handlers might have to remove this switch if their
+;;   "ls" command does not support it.
 
 ;; END SYNC WITH FSF 21.2.
 
@@ -4089,70 +4092,109 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
   ;; We need the directory in order to find the right handler.
   (let ((handler (find-file-name-handler (expand-file-name file)
 					 'insert-directory)))
-    (if handler
-	(funcall handler 'insert-directory file switches
-		 wildcard full-directory-p)
-      (cond
-       ;; [mswindows-insert-directory should be called
-       ;; nt-insert-directory - kkm].  not true any more according to
-       ;; my new naming scheme. --ben
-       ((and (fboundp 'mswindows-insert-directory)
-	     (eq system-type 'windows-nt))
-	(declare-fboundp (mswindows-insert-directory
-			  file switches wildcard full-directory-p)))
-       (t
-	(if wildcard
-	    ;; Run ls in the directory of the file pattern we asked for.
-	    (let ((default-directory
-                      (if (file-name-absolute-p file)
-                          (file-name-directory file)
-                          (file-name-directory (expand-file-name file))))
-		  (pattern (file-name-nondirectory file))
-		  (start 0))
-	      ;; Quote some characters that have special meanings in shells;
-	      ;; but don't quote the wildcards--we want them to be special.
-	      ;; We also currently don't quote the quoting characters
-	      ;; in case people want to use them explicitly to quote
-	      ;; wildcard characters.
-              ;;#### Unix-specific
-	      (while (string-match "[ \t\n;<>&|()#$]" pattern start)
-		(setq pattern
-		      (concat (substring pattern 0 (match-beginning 0))
-			      "\\"
-			      (substring pattern (match-beginning 0)))
-		      start (1+ (match-end 0))))
-	      (call-process shell-file-name nil t nil
-			    "-c" (concat "\\"  ;; Disregard shell aliases!
-					 insert-directory-program
-					 " -d "
-					 (if (stringp switches)
-					     switches
-					   (mapconcat 'identity switches " "))
-					 " "
-					 pattern)))
-	  ;; SunOS 4.1.3, SVr4 and others need the "." to list the
-	  ;; directory if FILE is a symbolic link.
-	  (apply 'call-process
-		 insert-directory-program nil t nil
-		 (let (list)
-		   (if (listp switches)
-		       (setq list switches)
-		     (if (not (equal switches ""))
-			 (progn
-			   ;; Split the switches at any spaces
-			   ;; so we can pass separate options as separate args.
-			   (while (string-match " " switches)
-			     (setq list (cons (substring switches 0 (match-beginning 0))
-					      list)
-				   switches (substring switches (match-end 0))))
-			   (setq list (cons switches list)))))
-		   (append list
-			   (list
-			    (if full-directory-p
-				(concat (file-name-as-directory file)
-					;;#### Unix-specific
-					".")
-			      file)))))))))))
+    (cond
+     (handler
+      (funcall handler 'insert-directory file switches
+	       wildcard full-directory-p))
+     ;; [mswindows-insert-directory should be called
+     ;; nt-insert-directory - kkm].  not true any more according to
+     ;; my new naming scheme. --ben
+     ((and (fboundp 'mswindows-insert-directory)
+	   (eq system-type 'windows-nt))
+      (declare-fboundp (mswindows-insert-directory
+			file switches wildcard full-directory-p)))
+     (t
+      (let* ((beg (point))
+	     (result
+	      (if wildcard
+		  ;; Run ls in the directory of the file pattern we asked for.
+		  (let ((default-directory
+			  (if (file-name-absolute-p file)
+			      (file-name-directory file)
+			    (file-name-directory (expand-file-name file))))
+			(pattern (file-name-nondirectory file))
+			(start 0))
+		    ;; Quote some characters that have special meanings in shells;
+		    ;; but don't quote the wildcards--we want them to be special.
+		    ;; We also currently don't quote the quoting characters
+		    ;; in case people want to use them explicitly to quote
+		    ;; wildcard characters.
+		    ;;#### Unix-specific
+		    (while (string-match "[ \t\n;<>&|()#$]" pattern start)
+		      (setq pattern
+			    (concat (substring pattern 0 (match-beginning 0))
+				    "\\"
+				    (substring pattern (match-beginning 0)))
+			    start (1+ (match-end 0))))
+		    (call-process shell-file-name nil t nil
+				  "-c" (concat "\\" ;; Disregard shell aliases!
+					       insert-directory-program
+					       " -d "
+					       (if (stringp switches)
+						   switches
+						 (mapconcat 'identity switches " "))
+					       " "
+					       pattern)))
+		;; SunOS 4.1.3, SVr4 and others need the "." to list the
+		;; directory if FILE is a symbolic link.
+		(apply 'call-process
+		       insert-directory-program nil t nil
+		       (let (list)
+			 (if (listp switches)
+			     (setq list switches)
+			   (if (not (equal switches ""))
+			       (let ((switches switches))
+				 ;; Split the switches at any spaces
+				 ;; so we can pass separate options as separate args.
+				 (while (string-match " " switches)
+				   (setq list (cons (substring switches 0 (match-beginning 0))
+						    list)
+					 switches (substring switches (match-end 0))))
+				 (setq list (cons switches list)))))
+			 (append list
+				 (list
+				  (if full-directory-p
+				      (concat (file-name-as-directory file)
+					      ;;#### Unix-specific
+					      ".")
+				    file))))))))
+	;; If `insert-directory-program' failed, signal an error.
+	(if (/= result 0)
+	    ;; On non-Posix systems, we cannot open a directory, so
+	    ;; don't even try, because that will always result in
+	    ;; the ubiquitous "Access denied".  Instead, show the
+	    ;; command line so the user can try to guess what went wrong.
+	    (error "Listing directory failed."))
+
+	(when (or (and (listp switches)
+		       (member "--dired" switches))
+		  (string-match "--dired\\>" switches))
+	  (forward-line -2)
+	  (when (looking-at "//SUBDIRED//")
+	    (delete-region (point) (progn (forward-line 1) (point)))
+	    (forward-line -1))
+	  (let ((end (line-end-position)))
+	    (forward-word 1)
+	    (forward-char 3)
+	    (while (< (point) end)
+	      (let ((start (+ beg (read (current-buffer))))
+		    (end (+ beg (read (current-buffer)))))
+		(if (= (char-after end) ?\n)
+		    (let ((filename-extent (make-extent start end)))
+		      (set-extent-property filename-extent 'dired-file-name t)
+		      (set-extent-property filename-extent 'start-open t)
+		      (set-extent-property filename-extent 'end-open t))
+		  ;; It seems that we can't trust ls's output as to
+		  ;; byte positions of filenames.
+		  (map-extents
+		   #'(lambda (extent maparg)
+		       (delete-extent extent)
+		       nil)
+		   nil beg (point) nil nil 'dired-file-name)
+		  (end-of-line))))
+	    (goto-char end)
+	    (beginning-of-line)
+	    (delete-region (point) (progn (forward-line 2) (point))))))))))
 
 ;; BEGIN SYNC WITH FSF 21.2.
 
