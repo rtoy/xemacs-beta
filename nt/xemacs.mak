@@ -42,18 +42,17 @@ MAKEROOT=$(MAKEDIR:\nt=)
 # Put these before including config.inc so they can be overridden there.
 # Note that some versions of some commands are deficient.
 
-# Define the 'del' command to use
+# Define a variable for the 'del' command to use.
 # WinME's DEL command can only handle one argument and only has the /P flag.
 # So only delete one glob at a time.  Override flags in config.inc.
-DEL=del
+DEL=-del
 
 # Tell COPY, MOVE, and XCOPY to suppress confirmation for overwriting
 # files.
-# set COPYCMD=/y
+COPYCMD=/y
 # Define the 'copy' command to use.
-# Use /r (instead of /y), which exists on Windows NT 4 and 5.
-COPY=xcopy /q /r
-COPYDIR=xcopy /q /r /e
+COPY=xcopy /q
+COPYDIR=xcopy /q /e
 
 ########################### Includes, and source and build tree determination.
 
@@ -631,6 +630,9 @@ TEMACS_CPP_FLAGS_NO_CFLAGS=-c $(CPLUSPLUS_COMPILE_FLAGS) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  $(EMACS_BETA_VERSION) $(EMACS_PATCH_LEVEL) \
  -DXEMACS_CODENAME=\"$(xemacs_codename:&=and)\" \
+!if defined(xemacs_extra_name)
+ -DXEMACS_EXTRA_NAME=\"$(xemacs_extra_name:"=)\" \
+!endif
  -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\" \
  -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
 TEMACS_CPP_FLAGS=$(CFLAGS) $(TEMACS_CPP_FLAGS_NO_CFLAGS)
@@ -822,6 +824,7 @@ $(SRC)\config.h:	$(SRC)\config.h.in
 # #### you use xcopy to copy a file from one name to another, it
 # #### PROMPTS you to see if you meant the second as a directory!  and
 # #### no switch to mean "no of course, you idiots, it's a file!"
+	set COPYCMD=$(COPYCMD)
 	@copy $(SRC)\config.h.in $(SRC)\config.h
 
 #$(SRC)\Emacs.ad.h: $(SRCROOT)\etc\Emacs.ad
@@ -831,11 +834,11 @@ $(SRC)\config.h:	$(SRC)\config.h.in
 #	!"cd $(SRC); cp paths.h.in paths.h"
 
 $(SRC)\Emacs.ad.h:	$(NT)\Emacs.ad.h
-	set COPYCMD=/y
+	set COPYCMD=$(COPYCMD)
 	@$(COPY) $(NT)\Emacs.ad.h $(SRC)
 
 $(SRC)\paths.h:	$(NT)\paths.h
-	set COPYCMD=/y
+	set COPYCMD=$(COPYCMD)
 	@$(COPY) $(NT)\paths.h $(SRC)
 
 
@@ -1443,7 +1446,7 @@ tags:
 # use this rule to install the system
 install:	all
 	cd $(NT)
-	set COPYCMD=/y
+	set COPYCMD=$(COPYCMD)
 	@echo Installing in $(INSTALL_DIR) ...
 	@echo PlaceHolder > PlaceHolder
 	@$(COPY) $(SRCROOT)\PROBLEMS "$(INSTALL_DIR)\"
