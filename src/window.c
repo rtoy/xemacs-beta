@@ -3838,7 +3838,7 @@ returned.
 	/* In the new scheme, we are symmetric with respect to separators
 	   so there is no need to do weird things here. */
 	{
-	  psize = WINDOW_WIDTH (o) >> 1;
+	  psize = (WINDOW_WIDTH (o) + window_divider_width (o)) >> 1;
 	  csize = window_pixel_width_to_char_width (o, psize, 0);
         }
       else
