@@ -193,8 +193,10 @@
 ! *menubar*FontSet:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*, \
 !			-*-*-*-*-*-*-*-120-*-jisx0208.1983-0
 !
-*menubar*Font: 			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
+*menubar*Font:			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
 *popup*Font:			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
+*menubar*FontSet:		-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
+*popup*FontSet:			-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*
 
 ! Gui elements share this font
 !
